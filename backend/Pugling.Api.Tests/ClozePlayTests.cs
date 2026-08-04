@@ -22,10 +22,12 @@ public class ClozePlayTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     {
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
             new { name = TestApi.UniqueName("Englisch-Cloze") }));
-        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit 1", orderIndex = 1 }));
+        var seriesId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            "/api/v1/creator/textbook-series", new { name = TestApi.UniqueName("Englisch-Cloze-Reihe"), subjectId }));
+        var seriesUnitId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units", new { label = "Unit 1", orderIndex = 1 }));
         return await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/cloze", new
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/cloze", new
             {
                 // Deliberately NOT the seeded title: the seed test below looks its exercise up by name, and
                 // a fixture sharing that name would make the lookup depend on the query plan.

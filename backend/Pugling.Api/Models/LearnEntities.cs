@@ -1,8 +1,12 @@
 namespace Pugling.Api.Models;
 
 // The shared learn catalog:
-//   Subject -> Chapter -> Exercise (typed)
-// The catalog is maintained ONCE (not per child) and assigned to children later.
+//   Subject -> ExerciseCategory (controlled vocabulary)
+//   TextbookSeries -> SeriesUnit -> Exercise (typed; see CurriculumEntities.cs for the series/unit)
+// The catalog is maintained ONCE (not per child) and assigned to children later. Subject is reached
+// from an Exercise only transitively (Exercise -> SeriesUnit -> TextbookSeries -> SubjectId) - see
+// B-106 T-01: a series that is meant to carry exercises must have its SubjectId set, enforced as a
+// guard on exercise creation, not as a NOT NULL column (a series without any exercise may stay subject-less).
 
 /// <summary>School subject in the catalog (e.g. English, maths).</summary>
 public class Subject
@@ -10,8 +14,6 @@ public class Subject
     public int Id { get; set; }
     public string Name { get; set; } = "";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-    public List<Chapter> Chapters { get; set; } = new();
 
     /// <summary>Subject-dependent exercise categories (e.g. grammar/vocabulary for English).</summary>
     public List<ExerciseCategory> Categories { get; set; } = new();
@@ -31,28 +33,16 @@ public class ExerciseCategory
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
-/// <summary>Chapter within a subject.</summary>
-public class Chapter
-{
-    public int Id { get; set; }
-    public int SubjectId { get; set; }
-    public Subject? Subject { get; set; }
-    public string Name { get; set; } = "";
-    public int OrderIndex { get; set; }
-
-    public List<Exercise> Exercises { get; set; } = new();
-}
-
 /// <summary>
-/// An exercise within a chapter. The shared fields are typed;
+/// An exercise within a textbook series unit. The shared fields are typed;
 /// the type-specific part sits as JSON in <see cref="ConfigJson"/>
 /// and is read/written in the API as its own schema per type.
 /// </summary>
 public class Exercise
 {
     public int Id { get; set; }
-    public int ChapterId { get; set; }
-    public Chapter? Chapter { get; set; }
+    public int SeriesUnitId { get; set; }
+    public SeriesUnit? SeriesUnit { get; set; }
     /// <summary>Exercise type key (e.g. <c>"Vocabulary"</c>) – resolved through the <see cref="ExerciseTypeRegistry"/>; determines how <see cref="ConfigJson"/> is interpreted.</summary>
     public string Type { get; set; } = "";
     public string Title { get; set; } = "";

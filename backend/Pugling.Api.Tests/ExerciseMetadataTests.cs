@@ -10,15 +10,27 @@ namespace Pugling.Api.Tests;
 /// </summary>
 public class ExerciseMetadataTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
-    // Creates a subject + a category and returns (subjectId, chapterId, categoryId).
-    private static async Task<(int subjectId, int chapterId, int categoryId)> SetupAsync(HttpClient father, string subject)
+    // Creates a subject + textbook series + series unit + a category and returns (subjectId, seriesId, seriesUnitId, categoryId).
+    private static async Task<(int subjectId, int seriesId, int seriesUnitId, int categoryId)> SetupAsync(HttpClient father, string subject)
     {
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = subject }));
-        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Kapitel 1", orderIndex = 1 }));
+        var seriesId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/textbook-series",
+            new
+            {
+                name = TestApi.UniqueName($"Reihe-{subject}"),
+                publisher = (string?)null,
+                subjectName = (string?)null,
+                subjectId,
+                schoolTypes = (string?)null,
+                sourceLanguage = (string?)null,
+                targetLanguage = (string?)null,
+                notes = (string?)null,
+            }));
+        var seriesUnitId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units", new { label = "Kapitel 1", orderIndex = 1 }));
         var categoryId = await TestApi.IdAsync(await father.PostAsJsonAsync(
             $"/api/v1/creator/subjects/{subjectId}/categories", new { name = "Grammatik" }));
-        return (subjectId, chapterId, categoryId);
+        return (subjectId, seriesId, seriesUnitId, categoryId);
     }
 
     private static object ArithmeticBody(string title, int categoryId, int gradeMin, int gradeMax, string schoolTypes) => new
@@ -38,8 +50,8 @@ public class ExerciseMetadataTests(PuglingWebAppFactory factory) : IClassFixture
     public async Task Uebung_TraegtMetadaten_UndFilterFindetSie()
     {
         var father = await TestApi.FatherAsync(factory);
-        var (subjectId, chapterId, categoryId) = await SetupAsync(father, $"Meta-Fach-{Guid.NewGuid():N}");
-        var basePath = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic";
+        var (subjectId, seriesId, seriesUnitId, categoryId) = await SetupAsync(father, $"Meta-Fach-{Guid.NewGuid():N}");
+        var basePath = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic";
 
         // Create with metadata: grade 5-7, Gymnasium.
         var created = await father.PostAsJsonAsync(basePath, ArithmeticBody("Grammatik-Drill", categoryId, 5, 7, "Gymnasium"));
@@ -58,8 +70,8 @@ public class ExerciseMetadataTests(PuglingWebAppFactory factory) : IClassFixture
     public async Task Filter_SchliesstFalscheKlassenstufeUndSchulartAus()
     {
         var father = await TestApi.FatherAsync(factory);
-        var (subjectId, chapterId, categoryId) = await SetupAsync(father, $"Meta-Fach-{Guid.NewGuid():N}");
-        var basePath = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic";
+        var (subjectId, seriesId, seriesUnitId, categoryId) = await SetupAsync(father, $"Meta-Fach-{Guid.NewGuid():N}");
+        var basePath = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic";
         await father.PostAsJsonAsync(basePath, ArithmeticBody("Nur-Gym-5bis7", categoryId, 5, 7, "Gymnasium"));
 
         // Grade 3 is below GradeMin → no hit.
@@ -79,9 +91,9 @@ public class ExerciseMetadataTests(PuglingWebAppFactory factory) : IClassFixture
     public async Task Uebung_MitFremderArt_Wird_Abgelehnt()
     {
         var father = await TestApi.FatherAsync(factory);
-        var (subjectId, chapterId, _) = await SetupAsync(father, $"Meta-Fach-{Guid.NewGuid():N}");
-        var (_, _, fremdeArtId) = await SetupAsync(father, $"Anderes-Fach-{Guid.NewGuid():N}");
-        var basePath = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic";
+        var (_, seriesId, seriesUnitId, _) = await SetupAsync(father, $"Meta-Fach-{Guid.NewGuid():N}");
+        var (_, _, _, fremdeArtId) = await SetupAsync(father, $"Anderes-Fach-{Guid.NewGuid():N}");
+        var basePath = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic";
 
         // The category belongs to another subject → BadRequest.
         var res = await father.PostAsJsonAsync(basePath, ArithmeticBody("Falsche Art", fremdeArtId, 5, 7, "Gymnasium"));

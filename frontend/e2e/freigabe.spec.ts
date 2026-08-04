@@ -26,19 +26,29 @@ async function vaterLogin(page: Page) {
 test("Eigene Übung zurückziehen und wieder freigeben", async ({ page }) => {
   await vaterLogin(page);
 
-  // Fach + Kapitel im Katalog (geteilt, darum je Lauf eindeutig benannt).
+  // Fach im Katalog + Lehrwerk-Reihe/Unit unter Lehrwerke (geteilt, darum je Lauf eindeutig benannt).
+  // Seit B-106 hängt jede Übung an einer Lehrwerk-Unit statt an einem Kapitel.
   await page.goto("/vater/katalog");
   await page.getByPlaceholder("z. B. Französisch").fill(SUBJECT);
   await page.getByRole("button", { name: "Neues Fach anlegen" }).click();
   await expect(page.locator("#ca-subject")).toHaveValue(/\d+/);
-  await page.getByPlaceholder("z. B. Unit 1").fill("Unit 1");
-  await page.getByRole("button", { name: "Neues Kapitel anlegen" }).click();
-  await expect(page.getByText("Kapitel angelegt.")).toBeVisible();
+
+  await page.goto("/vater/lehrwerke");
+  await page.locator("#ns-name").fill(SUBJECT);
+  await page.locator("#ns-subject").selectOption({ label: SUBJECT });
+  await page.getByRole("button", { name: "Reihe anlegen" }).click();
+  await expect(page.getByText(/steht im Katalog/)).toBeVisible();
+  const seriesRow = page.getByRole("row", { name: new RegExp(SUBJECT) });
+  await seriesRow.getByRole("button", { name: "Units" }).click();
+  await page.locator('[id^="unit-label-new"]').fill("Unit 1");
+  await page.getByRole("button", { name: "Unit hinzufügen" }).click();
+  await expect(page.getByText("Unit 1")).toBeVisible();
 
   // Eine eigene Übung anlegen – sie ist standardmäßig für alle zuweisbar.
   await page.goto("/vater/exercises/neu");
   await page.locator('select[aria-label="Fach"]').selectOption({ label: SUBJECT });
-  await page.locator('select[aria-label="Kapitel"]').selectOption({ label: "Unit 1" });
+  await page.locator('select[aria-label="Reihe"]').selectOption({ label: SUBJECT });
+  await page.locator('select[aria-label="Unit"]').selectOption({ label: "Unit 1" });
   await page.locator("#ex-title").fill(EXERCISE);
   await page.locator("#vp-word").fill(`ebb${RUN}`);
   await page.locator("#vp-translation").fill("Ebbe");
@@ -52,7 +62,7 @@ test("Eigene Übung zurückziehen und wieder freigeben", async ({ page }) => {
   /*
    * In der Verwaltung: noch freigegeben, darum kein Kennzeichen.
    *
-   * Die Prüfungen greifen bewusst **seitenweit** statt über einen Zeilen-Container: Fach und Kapitel sind
+   * Die Prüfungen greifen bewusst **seitenweit** statt über einen Zeilen-Container: Fach und Unit sind
    * für diesen Lauf frisch angelegt und enthalten genau diese eine Übung. Ein `div`-Container per `.last()`
    * zu erraten trifft je nach Verschachtelung die falsche Ebene – und genau daran ist dieser Test erst
    * gescheitert, obwohl die Oberfläche stimmte.

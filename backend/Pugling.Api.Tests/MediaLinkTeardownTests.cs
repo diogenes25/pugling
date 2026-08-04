@@ -60,8 +60,8 @@ public class MediaLinkTeardownTests(PuglingWebAppFactory factory) : IClassFixtur
         var (_, vocabKey) = await TestApi.CreateStoreVocabAsync(creator, Eindeutig("horse"), "das Pferd");
         var exerciseId = await TestApi.CreateVocabRefExerciseAsync(creator, vocabKey);
         var uebung = await Json(await creator.GetAsync($"/api/v1/creator/exercises/{exerciseId}"));
-        var itemsUrl = $"/api/v1/creator/subjects/{uebung.GetProperty("subjectId").GetInt32()}"
-            + $"/chapters/{uebung.GetProperty("chapterId").GetInt32()}/vocabulary/{exerciseId}/items";
+        var itemsUrl = $"/api/v1/creator/textbook-series/{uebung.GetProperty("seriesId").GetInt32()}"
+            + $"/units/{uebung.GetProperty("seriesUnitId").GetInt32()}/vocabulary/{exerciseId}/items";
         var itemId = (await Json(await creator.GetAsync(itemsUrl)))[0].GetProperty("id").GetInt32();
 
         // On the exercise …

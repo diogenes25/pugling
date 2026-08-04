@@ -124,7 +124,7 @@ public sealed class ExamPlanner(CreatorPipeline pipeline, CreatorApi creator, Su
     private async Task<string> DeriveTitleAsync(ExamRequest request, CancellationToken ct)
     {
         var briefing = await pipeline.BriefAsync(request.Base, ct);
-        var subject = briefing.Profile?.Unit?.Label ?? request.Base.Topic ?? briefing.ChapterName;
+        var subject = briefing.Profile?.Unit?.Label ?? request.Base.Topic ?? briefing.SeriesUnitLabel;
         return $"Übungsklausur: {subject}";
     }
 

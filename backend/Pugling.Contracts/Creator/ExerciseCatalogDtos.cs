@@ -10,7 +10,7 @@ namespace Pugling.Contracts.Creator;
 /// attribution of the shared library (<c>null</c> = seeded system exercise); <c>IsOwn</c> = the requesting supervisor
 /// may change/delete the exercise.
 /// </summary>
-public record ExerciseSummary(int Id, int ChapterId, int SubjectId, string Type, string Title,
+public record ExerciseSummary(int Id, int SeriesId, int SeriesUnitId, int? SubjectId, string Type, string Title,
     int? GradeMin, int? GradeMax, SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName,
     int? AuthorAdultId, string? AuthorName, bool IsOwn, bool IsOwner, bool ExecutePublic, string? Description,
     bool DefaultUseLeitner, bool DefaultRequireTypedTest, int? DefaultItemCount);
@@ -18,9 +18,10 @@ public record ExerciseSummary(int Id, int ChapterId, int SubjectId, string Type,
 /// <summary>
 /// Complete, type-spanning view of an exercise including raw config and all metadata –
 /// the basis for editing (load config into the type-specific editor; saving goes through
-/// the per-type PUT <c>.../chapters/{}/&lt;type&gt;/{id}</c>).
+/// the per-type PUT <c>.../textbook-series/{seriesId}/units/{seriesUnitId}/&lt;type&gt;/{id}</c>,
+/// where <see cref="SeriesId"/> supplies the route segment the flat cross-catalog view has no other way to know).
 /// </summary>
-public record ExerciseDetail(int Id, int ChapterId, string ChapterName, int SubjectId, string SubjectName,
+public record ExerciseDetail(int Id, int SeriesId, int SeriesUnitId, string SeriesUnitLabel, int? SubjectId, string SubjectName,
     string Type, string Title, int OrderIndex, int RewardPoints, int? GradeMin, int? GradeMax,
     SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName,
     SuggestedBonus? SuggestedBonus, int? DefaultStage, int? DefaultItemCount,

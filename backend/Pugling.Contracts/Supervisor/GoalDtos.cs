@@ -6,7 +6,7 @@ namespace Pugling.Contracts.Supervisor;
 // the bracket and without the reward log (see docs/lernziele-objectives-plan.md).
 
 /// <summary>Evaluated key result of an objective.</summary>
-public record KeyResultResponse(int Id, int ObjectiveId, int SubjectId, int? ChapterId, int? ExerciseId,
+public record KeyResultResponse(int Id, int ObjectiveId, int SubjectId, int? SeriesUnitId, int? ExerciseId,
     string Scope, KeyResultMetric Metric, int TargetValue, int CurrentValue, int ProgressPercent,
     string Status, string? Title);
 
@@ -17,7 +17,7 @@ public record ObjectiveResponse(int Id, int ChildId, string Title, string? Motiv
     IReadOnlyList<KeyResultResponse> KeyResults, DateTime CreatedAt);
 
 /// <summary>Creation of a key result (scope + metric + target value + optional title).</summary>
-public record CreateKeyResultRequest(int SubjectId, int? ChapterId, int? ExerciseId,
+public record CreateKeyResultRequest(int SubjectId, int? SeriesUnitId, int? ExerciseId,
     KeyResultMetric Metric, int TargetValue, string? Title);
 
 /// <summary>Creation of an objective; key results can be supplied inline.</summary>

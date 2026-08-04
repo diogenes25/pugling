@@ -1,17 +1,24 @@
+import { useState } from "react";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { SCHOOL_TYPES } from "../lib/labels";
 import { useExerciseTypes } from "../lib/exerciseTypes";
-import type { CategoryResponse, ChapterResponse, SchoolType, SubjectResponse } from "../lib/types";
+import type { CategoryResponse, SchoolType, SeriesUnitResponse, SubjectResponse, TextbookSeriesResponse } from "../lib/types";
 
 /**
- * Faceted Filter für die Katalog-Übungssuche (Fach, Kapitel, Klasse, Schulart, Typ, Art, Freitext).
+ * Faceted Filter für die Katalog-Übungssuche (Fach, Lehrwerk-Unit, Klasse, Schulart, Typ, Art, Freitext).
  * Ersetzt das unübersichtliche flache Pulldown beim Zusammenstellen eines Lehrplans. Die Komponente
  * ist zustandslos: der Aufrufer hält den {@link ExerciseFilter} und führt die eigentliche Suche aus.
+ *
+ * Seit B-106 hängt jede Übung an einer Lehrwerk-Unit statt an einem Kapitel; die Reihe (`series`) ist
+ * nur eine Zwischenstufe der Auswahl hier im Browser (Reihe → Unit), sie geht nicht in den Filter selbst.
+ * Die Reihen-Auswahl lebt bewusst nur lokal (nicht aus `value.seriesUnitId` rückableitbar) – die Komponente
+ * darf darum nur mit einem **leeren** `value.seriesUnitId` gestartet werden; ein vorbelegter Aufruf ließe
+ * „Unit" einen Wert zeigen, während „Reihe" auf „– alle –" stünde und das Feld gesperrt bliebe.
  */
 export interface ExerciseFilter {
   subjectId?: number;
-  chapterId?: number;
+  seriesUnitId?: number;
   grade?: number;
   schoolType?: SchoolType;
   categoryId?: number;
@@ -26,17 +33,23 @@ export function ExerciseFilterBar({ value, onChange, subjects }: {
   onChange: (next: ExerciseFilter) => void;
   subjects: SubjectResponse[];
 }) {
-  // Kapitel + Arten hängen am gewählten Fach und werden reaktiv nachgeladen.
+  // Reihe ist nur eine lokale Zwischenauswahl (Reihe → Unit); Arten hängen am gewählten Fach.
+  const [seriesId, setSeriesId] = useState<number | "">("");
   const types = useExerciseTypes();
-  const chapters = useAsync<ChapterResponse[]>(
-    () => (value.subjectId ? api.chapters(value.subjectId) : Promise.resolve([])), [value.subjectId]);
+  const series = useAsync<TextbookSeriesResponse[]>(
+    () => api.textbookSeries(value.subjectId ? { subjectId: value.subjectId } : {}), [value.subjectId]);
+  const units = useAsync<SeriesUnitResponse[]>(
+    () => (seriesId ? api.seriesUnits(seriesId) : Promise.resolve([])), [seriesId]);
   const categories = useAsync<CategoryResponse[]>(
     () => (value.subjectId ? api.categories(value.subjectId) : Promise.resolve([])), [value.subjectId]);
 
   const set = (patch: Partial<ExerciseFilter>) => onChange({ ...value, ...patch });
-  // Fachwechsel macht die fachabhängigen Facetten (Kapitel, Art) hinfällig → mit zurücksetzen.
-  const setSubject = (subjectId?: number) => onChange({ ...value, subjectId, chapterId: undefined, categoryId: undefined });
-  const hasFilter = value.subjectId != null || value.chapterId != null || value.grade != null
+  // Fachwechsel macht die fachabhängigen Facetten (Reihe/Unit, Art) hinfällig → mit zurücksetzen.
+  const setSubject = (subjectId?: number) => {
+    setSeriesId("");
+    onChange({ ...value, subjectId, seriesUnitId: undefined, categoryId: undefined });
+  };
+  const hasFilter = value.subjectId != null || value.seriesUnitId != null || value.grade != null
     || value.schoolType != null || value.categoryId != null || value.type != null || (value.search ?? "") !== "";
 
   return (
@@ -50,11 +63,19 @@ export function ExerciseFilterBar({ value, onChange, subjects }: {
         </select>
       </div>
       <div className="field" style={{ minWidth: 150 }}>
-        <label>Kapitel</label>
-        <select aria-label="Kapitel-Filter" value={value.chapterId ?? ""} disabled={!value.subjectId}
-          onChange={(e) => set({ chapterId: e.target.value ? Number(e.target.value) : undefined })}>
+        <label>Reihe</label>
+        <select aria-label="Reihe-Filter" value={seriesId}
+          onChange={(e) => { const v = e.target.value ? Number(e.target.value) : ""; setSeriesId(v); set({ seriesUnitId: undefined }); }}>
           <option value="">– alle –</option>
-          {chapters.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          {series.data?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
+      </div>
+      <div className="field" style={{ minWidth: 150 }}>
+        <label>Unit</label>
+        <select aria-label="Unit-Filter" value={value.seriesUnitId ?? ""} disabled={!seriesId}
+          onChange={(e) => set({ seriesUnitId: e.target.value ? Number(e.target.value) : undefined })}>
+          <option value="">– alle –</option>
+          {units.data?.map((u) => <option key={u.id} value={u.id}>{u.label}</option>)}
         </select>
       </div>
       <div className="field" style={{ maxWidth: 110 }}>

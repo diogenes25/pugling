@@ -267,3 +267,6 @@ vergleichbar mit einer eigenständigen DB-Umbau-Etappe, aber (dank Entscheidung 
 - **2026-08-04** — geschätzt: Größe L (Grammatik-Taxonomie bewusst zurückgestellt, sonst wäre die Story
   XL geworden), `wo: beides`, `migration: ja`, `vertragsbruch: ja`; Risiken, Angriffsplan (Backend zuerst)
   und Testweg ergänzt (autonom getroffen, Nutzerauftrag).
+- **2026-08-04** — Querverweis: [B-106](B-106-lehrwerkgetriebener-katalog.md) verschmilzt `Exercise` mit
+  `SeriesUnit`; diese Story bleibt voraussichtlich unabhängig (innere Reihen-Struktur, nicht die
+  Kapitel-Zuordnung), bei `SeriesUnit`-Feldtypwechseln gegenprüfen — kein Status-Wechsel hier.

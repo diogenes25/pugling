@@ -23,7 +23,7 @@ Response — `HTTP 201`:
   "id": 5,
   "name": "Doku-Fach",
   "createdAt": "<timestamp>",
-  "chaptersCount": 0
+  "categoriesCount": 0
 }
 ```
 
@@ -54,9 +54,9 @@ Response — `HTTP 400`:
 }
 ```
 
-## Kapitel anlegen
+## Lehrwerk-Reihe anlegen
 
-`POST /api/v1/creator/subjects/5/chapters`
+`POST /api/v1/creator/textbook-series`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -64,8 +64,54 @@ Request:
 
 ```json
 {
-  "name": "Kapitel 1",
-  "orderIndex": 1
+  "name": "Doku-Reihe",
+  "publisher": null,
+  "subjectName": null,
+  "subjectId": 5,
+  "schoolTypes": null,
+  "sourceLanguage": null,
+  "targetLanguage": null,
+  "notes": null
+}
+```
+
+Response — `HTTP 201`:
+
+```json
+{
+  "id": 5,
+  "name": "Doku-Reihe",
+  "slug": "doku-reihe",
+  "publisher": null,
+  "subjectName": null,
+  "subjectId": 5,
+  "schoolTypes": "None",
+  "sourceLanguage": null,
+  "targetLanguage": null,
+  "notes": null,
+  "ownerAdultId": 1,
+  "isOwn": true,
+  "unitCount": 0,
+  "createdAt": "<timestamp>"
+}
+```
+
+## Unit anlegen
+
+`POST /api/v1/creator/textbook-series/5/units`
+
+Rolle: **father** — `Authorization: Bearer <father-token>`
+
+Request:
+
+```json
+{
+  "label": "Unit 1",
+  "grade": null,
+  "orderIndex": 1,
+  "topics": null,
+  "grammar": null,
+  "vocabularyNotes": null
 }
 ```
 
@@ -74,16 +120,20 @@ Response — `HTTP 201`:
 ```json
 {
   "id": 7,
-  "subjectId": 5,
-  "name": "Kapitel 1",
+  "seriesId": 5,
+  "grade": null,
   "orderIndex": 1,
-  "exercisesCount": 0
+  "label": "Unit 1",
+  "topics": null,
+  "grammar": null,
+  "vocabularyNotes": null,
+  "createdAt": "<timestamp>"
 }
 ```
 
 ## Vokabel-Übung anlegen
 
-`POST /api/v1/creator/subjects/5/chapters/7/vocabulary`
+`POST /api/v1/creator/textbook-series/5/units/7/vocabulary`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -107,7 +157,7 @@ Response — `HTTP 201`:
 ```json
 {
   "id": 13,
-  "chapterId": 7,
+  "seriesUnitId": 7,
   "type": "Vocabulary",
   "title": "Begr\u00FC\u00DFungen",
   "orderIndex": 1,
@@ -142,7 +192,7 @@ Response — `HTTP 201`:
 
 ## Vokabelpaar hinzufügen
 
-`POST /api/v1/creator/subjects/5/chapters/7/vocabulary/13/items`
+`POST /api/v1/creator/textbook-series/5/units/7/vocabulary/13/items`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -165,7 +215,7 @@ Response — `HTTP 201`:
   "front": "hello",
   "back": "hallo",
   "hint": null,
-  "_self": "/api/v1/creator/subjects/5/chapters/7/vocabulary/13/items/15",
+  "_self": "/api/v1/creator/textbook-series/5/units/7/vocabulary/13/items/15",
   "vocabulary": "/api/v1/creator/vocabulary/16"
 }
 ```
@@ -242,7 +292,7 @@ Response — `HTTP 409`:
 
 ### Verwendete Übung löschen — Fehlerfall
 
-`DELETE /api/v1/creator/subjects/5/chapters/7/vocabulary/13`
+`DELETE /api/v1/creator/textbook-series/5/units/7/vocabulary/13`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -261,7 +311,7 @@ Response — `HTTP 409`:
 
 ### Fremd-Autor-Übung bearbeiten — Fehlerfall
 
-`PUT /api/v1/creator/subjects/1/chapters/6/vocabulary/10`
+`PUT /api/v1/creator/textbook-series/1/units/6/vocabulary/10`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -291,7 +341,7 @@ Response — `HTTP 403`:
 
 ## Leseübung anlegen
 
-`POST /api/v1/creator/subjects/5/chapters/7/reading`
+`POST /api/v1/creator/textbook-series/5/units/7/reading`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -324,7 +374,7 @@ Response — `HTTP 201`:
 ```json
 {
   "id": 14,
-  "chapterId": 7,
+  "seriesUnitId": 7,
   "type": "Reading",
   "title": "Der Wetterbericht",
   "orderIndex": 3,
@@ -366,7 +416,7 @@ Response — `HTTP 201`:
 
 ## Lückentext anlegen
 
-`POST /api/v1/creator/subjects/5/chapters/7/cloze`
+`POST /api/v1/creator/textbook-series/5/units/7/cloze`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -404,7 +454,7 @@ Response — `HTTP 201`:
 ```json
 {
   "id": 15,
-  "chapterId": 7,
+  "seriesUnitId": 7,
   "type": "Cloze",
   "title": "Present Simple",
   "orderIndex": 4,
@@ -455,7 +505,7 @@ Response — `HTTP 201`:
 
 ## Aufsatz anlegen
 
-`POST /api/v1/creator/subjects/5/chapters/7/essays`
+`POST /api/v1/creator/textbook-series/5/units/7/essays`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -489,7 +539,7 @@ Response — `HTTP 201`:
 ```json
 {
   "id": 16,
-  "chapterId": 7,
+  "seriesUnitId": 7,
   "type": "Essay",
   "title": "My last holiday",
   "orderIndex": 5,
@@ -532,7 +582,7 @@ Response — `HTTP 201`:
 
 ## Hörübung anlegen
 
-`POST /api/v1/creator/subjects/5/chapters/7/listening`
+`POST /api/v1/creator/textbook-series/5/units/7/listening`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -566,7 +616,7 @@ Response — `HTTP 201`:
 ```json
 {
   "id": 17,
-  "chapterId": 7,
+  "seriesUnitId": 7,
   "type": "Listening",
   "title": "At the station",
   "orderIndex": 6,
@@ -609,7 +659,7 @@ Response — `HTTP 201`:
 
 ## Grammatikübung anlegen
 
-`POST /api/v1/creator/subjects/5/chapters/7/grammar`
+`POST /api/v1/creator/textbook-series/5/units/7/grammar`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -643,7 +693,7 @@ Response — `HTTP 201`:
 ```json
 {
   "id": 18,
-  "chapterId": 7,
+  "seriesUnitId": 7,
   "type": "Grammar",
   "title": "Simple Past",
   "orderIndex": 7,
@@ -686,7 +736,7 @@ Response — `HTTP 201`:
 
 ## Zuordnungsübung anlegen
 
-`POST /api/v1/creator/subjects/5/chapters/7/matching`
+`POST /api/v1/creator/textbook-series/5/units/7/matching`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -718,7 +768,7 @@ Response — `HTTP 201`:
 ```json
 {
   "id": 19,
-  "chapterId": 7,
+  "seriesUnitId": 7,
   "type": "Matching",
   "title": "Countries \u0026 capitals",
   "orderIndex": 8,
@@ -759,7 +809,7 @@ Response — `HTTP 201`:
 
 ## Übersetzungsübung anlegen
 
-`POST /api/v1/creator/subjects/5/chapters/7/translation`
+`POST /api/v1/creator/textbook-series/5/units/7/translation`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -798,7 +848,7 @@ Response — `HTTP 201`:
 ```json
 {
   "id": 20,
-  "chapterId": 7,
+  "seriesUnitId": 7,
   "type": "Translation",
   "title": "Everyday phrases",
   "orderIndex": 9,
@@ -850,7 +900,7 @@ Response — `HTTP 201`:
 
 ## Feste Rechenaufgaben anlegen
 
-`POST /api/v1/creator/subjects/5/chapters/7/arithmetic`
+`POST /api/v1/creator/textbook-series/5/units/7/arithmetic`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -883,7 +933,7 @@ Response — `HTTP 201`:
 ```json
 {
   "id": 21,
-  "chapterId": 7,
+  "seriesUnitId": 7,
   "type": "Arithmetic",
   "title": "Kopfrechnen gemischt",
   "orderIndex": 10,
@@ -925,7 +975,7 @@ Response — `HTTP 201`:
 
 ## Rechen-Drill (Regeln) anlegen
 
-`POST /api/v1/creator/subjects/5/chapters/7/arithmetic-drill`
+`POST /api/v1/creator/textbook-series/5/units/7/arithmetic-drill`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -954,7 +1004,7 @@ Response — `HTTP 201`:
 ```json
 {
   "id": 22,
-  "chapterId": 7,
+  "seriesUnitId": 7,
   "type": "ArithmeticDrill",
   "title": "Einmaleins-Drill",
   "orderIndex": 11,
@@ -993,7 +1043,7 @@ Response — `HTTP 201`:
 
 ## Merkliste anlegen
 
-`POST /api/v1/creator/subjects/5/chapters/7/list`
+`POST /api/v1/creator/textbook-series/5/units/7/list`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -1030,7 +1080,7 @@ Response — `HTTP 201`:
 ```json
 {
   "id": 23,
-  "chapterId": 7,
+  "seriesUnitId": 7,
   "type": "List",
   "title": "Die vier Himmelsrichtungen",
   "orderIndex": 12,
@@ -1076,7 +1126,7 @@ Response — `HTTP 201`:
 
 ## Birkenbihl-Übung anlegen
 
-`POST /api/v1/creator/subjects/5/chapters/7/birkenbihl`
+`POST /api/v1/creator/textbook-series/5/units/7/birkenbihl`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -1100,7 +1150,7 @@ Response — `HTTP 201`:
 ```json
 {
   "id": 24,
-  "chapterId": 7,
+  "seriesUnitId": 7,
   "type": "Birkenbihl",
   "title": "Birkenbihl: Small talk",
   "orderIndex": 13,

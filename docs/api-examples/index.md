@@ -1,11 +1,11 @@
 # API-Beispiele – Übersicht
 
-Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesamt **142** Beispiele in **12** Gruppen.
+Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesamt **143** Beispiele in **12** Gruppen.
 
 | Gruppe | Beispiele | Fehlerfälle | Datei |
 | --- | ---: | ---: | --- |
 | auth | 6 | 3 | [`auth.md`](./auth.md) |
-| catalog | 21 | 5 | [`catalog.md`](./catalog.md) |
+| catalog | 22 | 5 | [`catalog.md`](./catalog.md) |
 | children | 7 | 2 | [`children.md`](./children.md) |
 | class-tests | 3 | 2 | [`class-tests.md`](./class-tests.md) |
 | exercise-grants | 7 | 3 | [`exercise-grants.md`](./exercise-grants.md) |
@@ -63,7 +63,6 @@ Verifiziert: **34 / 58** Codes aus `ApiErrors`.
 - `bad_request` — Generischer 400-Default (`ForStatus`): nur Sicherheitsnetz für Framework-Antworten ohne spezifischen Code – alle regulären 400-Pfade tragen bereits einen fachlichen Code.
 - `concurrency_conflict` — Erfordert eine echte Schreib-Kollision (Doppelklick/Retry) über das Concurrency-Token; in-process nicht deterministisch per HTTP auslösbar (siehe SkinPurchaseTests, direkt über DbContext).
 - `duplicate_achievement` — Über HTTP im In-Process-Test nicht erreichbar.
-- `duplicate_chapter_name` — Über HTTP im In-Process-Test nicht erreichbar.
 - `duplicate_email` — Über HTTP im In-Process-Test nicht erreichbar.
 - `duplicate_profile_name` — Über HTTP im In-Process-Test nicht erreichbar.
 - `duplicate_vocabulary_in_exercise` — Über HTTP im In-Process-Test nicht erreichbar.
@@ -82,5 +81,6 @@ Verifiziert: **34 / 58** Codes aus `ApiErrors`.
 - `purchase_not_open` — Über HTTP im In-Process-Test nicht erreichbar.
 - `rate_limited` — Login-Rate-Limit ist in der Test-Factory bewusst abgeschaltet (`RateLimiting:LoginEnabled=false`), sonst würden die vielen Test-Logins scheitern.
 - `remark_comment_not_found` — Über HTTP im In-Process-Test nicht erreichbar.
+- `series_without_subject` — Über HTTP im In-Process-Test nicht erreichbar.
 - `unknown_exercise_type` — Über HTTP im In-Process-Test nicht erreichbar.
 - `vocabulary_not_assigned` — Über HTTP im In-Process-Test nicht erreichbar.

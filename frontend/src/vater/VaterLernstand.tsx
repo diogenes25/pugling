@@ -5,7 +5,7 @@ import { useAsync } from "../lib/useAsync";
 import { MasteryPill } from "../components/MasteryPill";
 import { PAGE_SIZE, Pager } from "../components/ListControls";
 import type {
-  ChapterProgress, ChildResponse, ExerciseProgress, ItemHistoryEntry, ItemProgressResponse,
+  SeriesUnitProgress, ChildResponse, ExerciseProgress, ItemHistoryEntry, ItemProgressResponse,
   MasteryRollup, Paged, SubjectProgress, WordMastery,
 } from "../lib/types";
 
@@ -18,7 +18,7 @@ import type {
  * * **„Was sitzt nicht?"** → das Wort-Rollup. Ein Wort steckt oft in mehreren Übungen; der Durchschnitt
  *   über alle Vorkommen sagt mehr als eine einzelne Übungszeile. Standard ist der Filter auf die schwachen
  *   Wörter, denn das ist die Arbeitsliste.
- * * **„Wo im Stoff stehen wir?"** → der Katalog-Drilldown (Fach → Kapitel → Übung → Wort). Das `active`-Flag
+ * * **„Wo im Stoff stehen wir?"** → der Katalog-Drilldown (Fach → Lehrwerk-Unit → Übung → Wort). Das `active`-Flag
  *   trennt aktuell zugewiesene Übungen von nur noch historischen; ohne es sähe abgehängter Stoff wie
  *   laufender aus.
  */
@@ -249,16 +249,16 @@ function CatalogDrilldown({ childId }: { childId: number }) {
               <div className="row" style={{ alignItems: "center", gap: 8 }}>
                 <b>{s.name}</b>
                 {s.active && <span className="pill lime">aktiv</span>}
-                <span className="muted">{s.chapterCount} Kapitel · {s.exerciseCount} Übungen</span>
+                <span className="muted">{s.seriesUnitCount} Units · {s.exerciseCount} Übungen</span>
                 <span style={{ marginLeft: "auto" }} />
                 <RollupSummary r={s.progress} />
                 <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
                   aria-expanded={openSubject === s.subjectId}
                   onClick={() => setOpenSubject(openSubject === s.subjectId ? null : s.subjectId)}>
-                  {openSubject === s.subjectId ? "Schließen" : "Kapitel"}
+                  {openSubject === s.subjectId ? "Schließen" : "Units"}
                 </button>
               </div>
-              {openSubject === s.subjectId && <Chapters childId={childId} subjectId={s.subjectId} />}
+              {openSubject === s.subjectId && <SeriesUnits childId={childId} subjectId={s.subjectId} />}
             </div>
           ))}
           {subjects.data?.length === 0 && (
@@ -270,40 +270,40 @@ function CatalogDrilldown({ childId }: { childId: number }) {
   );
 }
 
-function Chapters({ childId, subjectId }: { childId: number; subjectId: number }) {
-  const chapters = useAsync<ChapterProgress[]>(() => api.childLearnChapters(childId, subjectId), [childId, subjectId]);
+function SeriesUnits({ childId, subjectId }: { childId: number; subjectId: number }) {
+  const units = useAsync<SeriesUnitProgress[]>(() => api.childLearnSeriesUnits(childId, subjectId), [childId, subjectId]);
   const [open, setOpen] = useState<number | null>(null);
 
-  if (chapters.loading) return <div className="loading">Lade Kapitel…</div>;
-  if (chapters.error) return <div className="banner err">{chapters.error}</div>;
+  if (units.loading) return <div className="loading">Lade Units…</div>;
+  if (units.error) return <div className="banner err">{units.error}</div>;
 
   return (
     <div style={{ marginTop: 8, paddingLeft: 12, borderLeft: "2px solid var(--stroke)" }}>
-      {chapters.data?.map((c) => (
-        <div key={c.chapterId} style={{ marginTop: 6 }}>
+      {units.data?.map((u) => (
+        <div key={u.seriesUnitId} style={{ marginTop: 6 }}>
           <div className="row" style={{ alignItems: "center", gap: 8 }}>
-            <span>{c.name}</span>
-            {c.active && <span className="pill lime">aktiv</span>}
-            <span className="muted">{c.exerciseCount} Übungen</span>
+            <span>{u.name}</span>
+            {u.active && <span className="pill lime">aktiv</span>}
+            <span className="muted">{u.exerciseCount} Übungen</span>
             <span style={{ marginLeft: "auto" }} />
-            <RollupSummary r={c.progress} />
+            <RollupSummary r={u.progress} />
             <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
-              aria-expanded={open === c.chapterId}
-              onClick={() => setOpen(open === c.chapterId ? null : c.chapterId)}>
-              {open === c.chapterId ? "Schließen" : "Übungen"}
+              aria-expanded={open === u.seriesUnitId}
+              onClick={() => setOpen(open === u.seriesUnitId ? null : u.seriesUnitId)}>
+              {open === u.seriesUnitId ? "Schließen" : "Übungen"}
             </button>
           </div>
-          {open === c.chapterId && <Exercises childId={childId} subjectId={subjectId} chapterId={c.chapterId} />}
+          {open === u.seriesUnitId && <Exercises childId={childId} subjectId={subjectId} seriesUnitId={u.seriesUnitId} />}
         </div>
       ))}
-      {chapters.data?.length === 0 && <p className="muted">Keine Kapitel mit Stoff.</p>}
+      {units.data?.length === 0 && <p className="muted">Keine Units mit Stoff.</p>}
     </div>
   );
 }
 
-function Exercises({ childId, subjectId, chapterId }: { childId: number; subjectId: number; chapterId: number }) {
+function Exercises({ childId, subjectId, seriesUnitId }: { childId: number; subjectId: number; seriesUnitId: number }) {
   const exercises = useAsync<ExerciseProgress[]>(
-    () => api.childLearnExercises(childId, subjectId, chapterId), [childId, subjectId, chapterId]);
+    () => api.childLearnExercises(childId, subjectId, seriesUnitId), [childId, subjectId, seriesUnitId]);
   const [open, setOpen] = useState<number | null>(null);
 
   if (exercises.loading) return <div className="loading">Lade Übungen…</div>;
@@ -325,20 +325,20 @@ function Exercises({ childId, subjectId, chapterId }: { childId: number; subject
             </button>
           </div>
           {open === e.exerciseId && (
-            <ExerciseItems childId={childId} subjectId={subjectId} chapterId={chapterId} exerciseId={e.exerciseId} />
+            <ExerciseItems childId={childId} subjectId={subjectId} seriesUnitId={seriesUnitId} exerciseId={e.exerciseId} />
           )}
         </div>
       ))}
-      {exercises.data?.length === 0 && <p className="muted">Keine Vokabelübungen in diesem Kapitel.</p>}
+      {exercises.data?.length === 0 && <p className="muted">Keine Vokabelübungen in dieser Unit.</p>}
     </div>
   );
 }
 
-function ExerciseItems({ childId, subjectId, chapterId, exerciseId }: {
-  childId: number; subjectId: number; chapterId: number; exerciseId: number;
+function ExerciseItems({ childId, subjectId, seriesUnitId, exerciseId }: {
+  childId: number; subjectId: number; seriesUnitId: number; exerciseId: number;
 }) {
   const items = useAsync<ItemProgressResponse[]>(
-    () => api.childLearnItems(childId, subjectId, chapterId, exerciseId), [childId, subjectId, chapterId, exerciseId]);
+    () => api.childLearnItems(childId, subjectId, seriesUnitId, exerciseId), [childId, subjectId, seriesUnitId, exerciseId]);
 
   if (items.loading) return <div className="loading">Lade Wörter…</div>;
   if (items.error) return <div className="banner err">{items.error}</div>;

@@ -202,7 +202,6 @@ public class SchemaGuardTests
             ["AchievementAward.AchievementId"] = DeleteBehavior.Cascade, // -> Achievement
             ["ActivationRequest.ChildId"] = DeleteBehavior.Cascade, // -> Child
             ["ActivationRequest.ShopArticleId"] = DeleteBehavior.SetNull, // -> ShopArticle
-            ["Chapter.SubjectId"] = DeleteBehavior.Cascade, // -> Subject
             ["ChildInterest.ChildId"] = DeleteBehavior.Cascade, // -> Child
             ["ChildInterest.InterestTagId"] = DeleteBehavior.Cascade, // -> InterestTag
             ["ChildInventory.ChildId"] = DeleteBehavior.Cascade, // -> Child
@@ -219,7 +218,7 @@ public class SchemaGuardTests
             ["DailyBoxClaim.ChildId"] = DeleteBehavior.Cascade, // -> Child
             ["Exercise.AuthorAdultId"] = DeleteBehavior.SetNull, // -> Adult
             ["Exercise.CategoryId"] = DeleteBehavior.SetNull, // -> ExerciseCategory
-            ["Exercise.ChapterId"] = DeleteBehavior.Cascade, // -> Chapter
+            ["Exercise.SeriesUnitId"] = DeleteBehavior.Cascade, // -> SeriesUnit
             ["ExerciseCategory.SubjectId"] = DeleteBehavior.Cascade, // -> Subject
             ["ExerciseGrant.CreatorId"] = DeleteBehavior.Cascade, // -> Adult
             ["ExerciseGrant.ExerciseId"] = DeleteBehavior.Cascade, // -> Exercise
@@ -233,9 +232,9 @@ public class SchemaGuardTests
             ["ItemReviewEvent.ChildId"] = DeleteBehavior.Cascade, // -> Child
             // The history outlives the item: the statement "answered correctly" still holds.
             ["ItemReviewEvent.ItemId"] = DeleteBehavior.SetNull, // -> ExerciseItem
-            ["KeyResult.ChapterId"] = DeleteBehavior.Restrict, // -> Chapter (remove the goal first, then the chapter)
             ["KeyResult.ExerciseId"] = DeleteBehavior.Restrict, // -> Exercise (ditto)
             ["KeyResult.ObjectiveId"] = DeleteBehavior.Cascade, // -> Objective
+            ["KeyResult.SeriesUnitId"] = DeleteBehavior.Restrict, // -> SeriesUnit (remove the goal first, then the series unit)
             // Cascade: a goal on a deleted subject is meaningless.
             ["KeyResult.SubjectId"] = DeleteBehavior.Cascade, // -> Subject
             ["Klassenarbeit.ChildId"] = DeleteBehavior.Cascade, // -> Child

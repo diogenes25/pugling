@@ -2,8 +2,8 @@ namespace Pugling.Agent.Creator;
 
 /// <summary>
 /// The request to the agent: <b>on whose behalf</b> (creator profile), <b>for whom</b> (child - or
-/// nobody, which produces a general catalog exercise), <b>where</b> in the catalog (subject/chapter),
-/// <b>what</b> (exercise type, topic, scope) and under which safety rules (dry run, self-test).
+/// nobody, which produces a general catalog exercise), <b>where</b> in the catalog (series/series unit,
+/// since B-106), <b>what</b> (exercise type, topic, scope) and under which safety rules (dry run, self-test).
 /// </summary>
 /// <param name="ChildId">
 /// The child this is tailored to (profile, interests, learning progress) - or <c>null</c> for a
@@ -22,8 +22,9 @@ namespace Pugling.Agent.Creator;
 /// and unit determine the material, but its interests are left out. For exercises meant for the shared
 /// catalog but aligned to a specific child's standing.
 /// </param>
-/// <param name="SubjectId">Target subject in the catalog.</param>
-/// <param name="ChapterId">Target chapter in the catalog.</param>
+/// <param name="SubjectId">Subject in the catalog (profile matching); reached transitively from the series otherwise.</param>
+/// <param name="SeriesId">Target textbook series in the catalog.</param>
+/// <param name="SeriesUnitId">Target series unit the exercise is created under.</param>
 /// <param name="TypeKey">Exercise-type key from the manifest (e.g. <c>Vocabulary</c>, <c>Cloze</c>).</param>
 /// <param name="Topic">Free-text topic or textbook unit ("Unit 3: Animals").</param>
 /// <param name="ItemCount">Desired number of tasks.</param>
@@ -43,7 +44,8 @@ public sealed record GenerationRequest(
     int? UnitId,
     bool General,
     int SubjectId,
-    int ChapterId,
+    int SeriesId,
+    int SeriesUnitId,
     string TypeKey,
     string? Topic,
     int ItemCount,

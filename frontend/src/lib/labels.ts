@@ -18,6 +18,8 @@ const POINT_KIND_LABELS: Record<PointKind, string> = {
   GoalPenalty: "Pflicht gerissen (Malus)",
   ObjectiveCoins: "Ziel-Etappe erreicht",
   ObjectiveGems: "Ziel-Etappe erreicht (Gems)",
+  DailyBoxCoins: "Tägliche Belohnungsbox",
+  DailyBoxGems: "Tägliche Belohnungsbox (Gems)",
 };
 export const pointKindLabel = (k: PointKind): string => POINT_KIND_LABELS[k] ?? k;
 

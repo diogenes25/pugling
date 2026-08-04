@@ -55,20 +55,20 @@ public sealed class StudentApi(HttpClient http)
             + PuglingHttp.Query(("search", search), ("active", active), ("sort", sort), ("dir", dir),
                 ("skip", skip), ("take", take)), ct);
 
-    /// <summary>The chapters of a subject with aggregated progress.</summary>
-    public Task<IReadOnlyList<ChapterProgressResponse>> ListChapterProgressAsync(int childId, int subjectId,
+    /// <summary>The series units of a subject with aggregated progress.</summary>
+    public Task<IReadOnlyList<SeriesUnitProgressResponse>> ListSeriesUnitProgressAsync(int childId, int subjectId,
         string? search = null, bool? active = null, string? sort = null, string? dir = null,
         int skip = 0, int take = 50, CancellationToken ct = default) =>
-        Http.GetAsync<IReadOnlyList<ChapterProgressResponse>>($"{Root}/children/{childId}/learn/subjects/{subjectId}/chapters"
+        Http.GetAsync<IReadOnlyList<SeriesUnitProgressResponse>>($"{Root}/children/{childId}/learn/subjects/{subjectId}/series-units"
             + PuglingHttp.Query(("search", search), ("active", active), ("sort", sort), ("dir", dir),
                 ("skip", skip), ("take", take)), ct);
 
-    /// <summary>The vocabulary exercises of a chapter with the child's progress per exercise.</summary>
+    /// <summary>The vocabulary exercises of a series unit with the child's progress per exercise.</summary>
     public Task<IReadOnlyList<ExerciseProgressResponse>> ListExerciseProgressAsync(int childId, int subjectId,
-        int chapterId, string? search = null, bool? active = null, string? sort = null, string? dir = null,
+        int seriesUnitId, string? search = null, bool? active = null, string? sort = null, string? dir = null,
         int skip = 0, int take = 50, CancellationToken ct = default) =>
         Http.GetAsync<IReadOnlyList<ExerciseProgressResponse>>(
-            $"{Root}/children/{childId}/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary"
+            $"{Root}/children/{childId}/learn/subjects/{subjectId}/series-units/{seriesUnitId}/vocabulary"
             + PuglingHttp.Query(("search", search), ("active", active), ("sort", sort), ("dir", dir),
                 ("skip", skip), ("take", take)), ct);
 

@@ -432,15 +432,18 @@ public static class Seed
     private static void SeedTeacherLibrary(PuglingDbContext db)
     {
         const string teacherEmail = "englischlehrer@example.com";
-        const string chapterName = "Unit 5 – Global challenges (Klasse 9)";
+        const string unitLabel = "Unit 5 – Global challenges (Klasse 9)";
 
         var englisch = db.Subjects.FirstOrDefault(s => s.Name == "Englisch");
         if (englisch is null) return;
 
-        // Anchor idempotency on the content, not only on the account: if the demo chapter already exists there
+        var series = db.TextbookSeries.FirstOrDefault(s => s.Slug == "green-line-1");
+        if (series is null) return;
+
+        // Anchor idempotency on the content, not only on the account: if the demo unit already exists there
         // is nothing to do - otherwise a teacher account created elsewhere would silently suppress the catalog
         // content.
-        if (db.Chapters.Any(c => c.SubjectId == englisch.Id && c.Name == chapterName)) return;
+        if (db.SeriesUnits.Any(u => u.SeriesId == series.Id && u.Label == unitLabel)) return;
 
         var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
         string Json<T>(T config) => JsonSerializer.Serialize(config, options);
@@ -459,15 +462,15 @@ public static class Seed
         var grammatik = db.ExerciseCategories.FirstOrDefault(c => c.SubjectId == englisch.Id && c.Name == "Grammatik");
         var vokabeln = db.ExerciseCategories.FirstOrDefault(c => c.SubjectId == englisch.Id && c.Name == "Vokabeln");
 
-        var chapter = new Chapter { SubjectId = englisch.Id, Name = chapterName, OrderIndex = 5 };
-        db.Chapters.Add(chapter);
+        var unit = new SeriesUnit { SeriesId = series.Id, Grade = 9, OrderIndex = 5, Label = unitLabel };
+        db.SeriesUnits.Add(unit);
         db.SaveChanges();
 
         const SchoolTypes gym = SchoolTypes.Gymnasium;
 
         var vocab = new Exercise
         {
-            ChapterId = chapter.Id,
+            SeriesUnitId = unit.Id,
             AuthorAdultId = teacher.Id,
             Type = ExerciseTypeKeys.Vocabulary,
             Title = "Vocabulary: The environment",
@@ -498,7 +501,7 @@ public static class Seed
         // A grade 9 classic: if-clauses type II (conditional). A cloze text with a word bank.
         var conditionals = new Exercise
         {
-            ChapterId = chapter.Id,
+            SeriesUnitId = unit.Id,
             AuthorAdultId = teacher.Id,
             Type = ExerciseTypeKeys.Cloze,
             Title = "Grammar: Conditional sentences (type II)",
@@ -523,7 +526,7 @@ public static class Seed
 
         var translation = new Exercise
         {
-            ChapterId = chapter.Id,
+            SeriesUnitId = unit.Id,
             AuthorAdultId = teacher.Id,
             Type = ExerciseTypeKeys.Translation,
             Title = "Translation: Talking about the future",
@@ -601,71 +604,79 @@ public static class Seed
 
         var frVokabeln = new ExerciseCategory { Name = "Vokabeln" };
         var frGrammatik = new ExerciseCategory { Name = "Grammatik" };
+        var franzoesisch = new Subject { Name = "Französisch", Categories = { frVokabeln, frGrammatik } };
+        db.Subjects.Add(franzoesisch);
+        db.SaveChanges();
 
-        var franzoesisch = new Subject
+        var decouvertes = new TextbookSeries
         {
-            Name = "Französisch",
-            Categories = { frVokabeln, frGrammatik },
-            Chapters =
+            Name = "Découvertes 1",
+            Slug = "decouvertes-1",
+            SubjectId = franzoesisch.Id,
+            SubjectName = "Französisch",
+            SourceLanguage = "fr",
+            TargetLanguage = "de",
+        };
+        db.TextbookSeries.Add(decouvertes);
+        db.SaveChanges();
+
+        var enVilleUnit = new SeriesUnit { SeriesId = decouvertes.Id, Grade = 8, OrderIndex = 1, Label = "Unité 2 – En ville" };
+        db.SeriesUnits.Add(enVilleUnit);
+        db.SaveChanges();
+
+        var frExercises = new List<Exercise>
+        {
+            new()
             {
-                new Chapter
+                SeriesUnitId = enVilleUnit.Id,
+                Type = ExerciseTypeKeys.Vocabulary,
+                Title = "Vokabeln: En ville",
+                OrderIndex = 1,
+                RewardPoints = 10,
+                GradeMin = 7, GradeMax = 9,
+                SchoolTypes = SchoolTypes.Realschule | SchoolTypes.Gymnasium,
+                Source = "Découvertes 1, Unité 2",
+                Category = frVokabeln,
+                ConfigJson = Json(new VocabularyConfig
                 {
-                    Name = "Unité 2 – En ville",
-                    OrderIndex = 1,
-                    Exercises =
+                    Direction = "front-to-back",
+                    SourceLang = "fr",
+                    TargetLang = "de",
+                    Items =
                     {
-                        new Exercise
-                        {
-                            Type = ExerciseTypeKeys.Vocabulary,
-                            Title = "Vokabeln: En ville",
-                            OrderIndex = 1,
-                            RewardPoints = 10,
-                            GradeMin = 7, GradeMax = 9,
-                            SchoolTypes = SchoolTypes.Realschule | SchoolTypes.Gymnasium,
-                            Source = "Découvertes 1, Unité 2",
-                            Category = frVokabeln,
-                            ConfigJson = Json(new VocabularyConfig
-                            {
-                                Direction = "front-to-back",
-                                SourceLang = "fr",
-                                TargetLang = "de",
-                                Items =
-                                {
-                                    new VocabItem("la ville", "die Stadt"),
-                                    new VocabItem("la rue", "die Straße"),
-                                    new VocabItem("le magasin", "das Geschäft"),
-                                    new VocabItem("acheter", "kaufen"),
-                                    new VocabItem("manger", "essen"),
-                                }
-                            }),
-                        },
-                        new Exercise
-                        {
-                            Type = ExerciseTypeKeys.Cloze,
-                            Title = "Lückentext: Au magasin",
-                            OrderIndex = 2,
-                            RewardPoints = 15,
-                            GradeMin = 7, GradeMax = 9,
-                            SchoolTypes = SchoolTypes.Realschule | SchoolTypes.Gymnasium,
-                            Source = "Découvertes 1, Unité 2",
-                            Category = frGrammatik,
-                            ConfigJson = Json(new ClozeConfig
-                            {
-                                Text = "Je {{1}} du pain à la {{2}}.",
-                                Gaps =
-                                {
-                                    new Gap(1, "mange", new List<string> { "achète" }),
-                                    new Gap(2, "boulangerie", new List<string> { "maison" }),
-                                },
-                                WordBank = new List<string> { "mange", "achète", "boulangerie", "maison" },
-                            }),
-                        },
+                        new VocabItem("la ville", "die Stadt"),
+                        new VocabItem("la rue", "die Straße"),
+                        new VocabItem("le magasin", "das Geschäft"),
+                        new VocabItem("acheter", "kaufen"),
+                        new VocabItem("manger", "essen"),
                     }
-                },
-            }
+                }),
+            },
+            new()
+            {
+                SeriesUnitId = enVilleUnit.Id,
+                Type = ExerciseTypeKeys.Cloze,
+                Title = "Lückentext: Au magasin",
+                OrderIndex = 2,
+                RewardPoints = 15,
+                GradeMin = 7, GradeMax = 9,
+                SchoolTypes = SchoolTypes.Realschule | SchoolTypes.Gymnasium,
+                Source = "Découvertes 1, Unité 2",
+                Category = frGrammatik,
+                ConfigJson = Json(new ClozeConfig
+                {
+                    Text = "Je {{1}} du pain à la {{2}}.",
+                    Gaps =
+                    {
+                        new Gap(1, "mange", new List<string> { "achète" }),
+                        new Gap(2, "boulangerie", new List<string> { "maison" }),
+                    },
+                    WordBank = new List<string> { "mange", "achète", "boulangerie", "maison" },
+                }),
+            },
         };
 
-        db.Subjects.Add(franzoesisch);
+        db.Exercises.AddRange(frExercises);
         db.SaveChanges();
     }
 
@@ -706,8 +717,8 @@ public static class Seed
 
         var englisch = db.Subjects.FirstOrDefault(s => s.Name == "Englisch");
         var mathe = db.Subjects.FirstOrDefault(s => s.Name == "Mathe");
-        var exEnglisch = db.Exercises.Where(e => e.Chapter!.Subject!.Name == "Englisch").OrderBy(e => e.Id).ToList();
-        var exMathe = db.Exercises.Where(e => e.Chapter!.Subject!.Name == "Mathe").OrderBy(e => e.Id).ToList();
+        var exEnglisch = db.Exercises.Where(e => e.SeriesUnit!.Series!.Subject!.Name == "Englisch").OrderBy(e => e.Id).ToList();
+        var exMathe = db.Exercises.Where(e => e.SeriesUnit!.Series!.Subject!.Name == "Mathe").OrderBy(e => e.Id).ToList();
 
         // Two example tags - one set by the supervisor, one by the child.
         var tagUnit1 = new Tag { ChildId = child.Id, Name = "Unit 1", Color = "#3b82f6", CreatedBy = TaggedBy.Vater };
@@ -969,6 +980,12 @@ public static class Seed
         db.SaveChanges();
     }
 
+    /// <summary>
+    /// Since B-106: exercises hang off a textbook series unit, not a chapter (T-01/T-03). "Green Line 1"
+    /// (Klett) is the real, catalogued series for Englisch - it echoes the freetext <c>Textbook</c> entry
+    /// <see cref="SeedStudentProfile"/> already creates, so the seed tells one consistent story instead of
+    /// two. The other subjects get one pauschal series/unit each, just enough to carry their exercises.
+    /// </summary>
     private static void SeedCatalog(PuglingDbContext db)
     {
         if (db.Subjects.Any()) return;
@@ -980,154 +997,169 @@ public static class Seed
         var enVokabeln = new ExerciseCategory { Name = "Vokabeln" };
         var enGrammatik = new ExerciseCategory { Name = "Grammatik" };
         var enLeseverstehen = new ExerciseCategory { Name = "Leseverstehen" };
-
-        var englisch = new Subject
-        {
-            Name = "Englisch",
-            Categories = { enVokabeln, enGrammatik, enLeseverstehen },
-            Chapters =
-            {
-                new Chapter
-                {
-                    Name = "Unit 1 – Greetings",
-                    OrderIndex = 1,
-                    Exercises =
-                    {
-                        new Exercise
-                        {
-                            Type = ExerciseTypeKeys.Vocabulary,
-                            Title = "Begrüßungen",
-                            OrderIndex = 1,
-                            RewardPoints = 10,
-                            GradeMin = 5, GradeMax = 6,
-                            SchoolTypes = SchoolTypes.Realschule | SchoolTypes.Gymnasium,
-                            Source = "Green Line 1, Unit 1",
-                            Category = enVokabeln,
-                            ConfigJson = Json(new VocabularyConfig
-                            {
-                                Direction = "front-to-back",
-                                SourceLang = "en",
-                                TargetLang = "de",
-                                Items =
-                                {
-                                    new VocabItem("hello", "hallo"),
-                                    new VocabItem("goodbye", "auf Wiedersehen"),
-                                    new VocabItem("please", "bitte", "Höflichkeit"),
-                                }
-                            }),
-                        },
-                        new Exercise
-                        {
-                            Type = ExerciseTypeKeys.Cloze,
-                            Title = "Lückentext: A short dialogue",
-                            OrderIndex = 2,
-                            RewardPoints = 15,
-                            GradeMin = 5, GradeMax = 7,
-                            SchoolTypes = SchoolTypes.Realschule | SchoolTypes.Gymnasium,
-                            Source = "Green Line 1, Unit 1",
-                            Category = enGrammatik,
-                            ConfigJson = Json(new ClozeConfig
-                            {
-                                Text = "A: {{1}}, how are you? B: I'm {{2}}, thank you.",
-                                Gaps =
-                                {
-                                    new Gap(1, "Hello", new List<string> { "Hi" }),
-                                    new Gap(2, "fine", new List<string> { "good", "well" }),
-                                },
-                                WordBank = new List<string> { "Hello", "Hi", "fine", "good", "well" },
-                            }),
-                        },
-                        // Birkenbihl: word-for-word decoding (grammar-independent) + the natural translation.
-                        new Exercise
-                        {
-                            Type = ExerciseTypeKeys.Birkenbihl,
-                            Title = "Birkenbihl: Getting to know each other",
-                            OrderIndex = 3,
-                            RewardPoints = 10,
-                            GradeMin = 5, GradeMax = 8,
-                            SchoolTypes = SchoolTypes.Gymnasium,
-                            Category = enLeseverstehen,
-                            ConfigJson = Json(new BirkenbihlConfig
-                            {
-                                LearningLang = "en",
-                                NativeLang = "de",
-                                NextSentenceId = 3,
-                                NextWordId = 9,
-                                Sentences =
-                                {
-                                    new BirkenbihlSentence(1, "What is your name?", "Wie heißt du?",
-                                        [new WordPair(1, "What", "Was", null), new WordPair(2, "is", "ist", null),
-                                         new WordPair(3, "your", "dein", null), new WordPair(4, "name", "Name", null)]),
-                                    new BirkenbihlSentence(2, "Where do you live?", "Wo wohnst du?",
-                                        [new WordPair(5, "Where", "Wo", null), new WordPair(6, "do", "tust", null),
-                                         new WordPair(7, "you", "du", null), new WordPair(8, "live", "wohnen", null)]),
-                                }
-                            }),
-                        },
-                    }
-                },
-                new Chapter { Name = "Unit 2 – Family", OrderIndex = 2 },
-            }
-        };
+        var englisch = new Subject { Name = "Englisch", Categories = { enVokabeln, enGrammatik, enLeseverstehen } };
 
         var maGrundrechenarten = new ExerciseCategory { Name = "Grundrechenarten" };
         var maAlgebra = new ExerciseCategory { Name = "Algebra" };
+        var mathe = new Subject { Name = "Mathe", Categories = { maGrundrechenarten, maAlgebra } };
 
-        var mathe = new Subject
+        var erdkunde = new Subject { Name = "Erdkunde" };
+
+        db.Subjects.AddRange(englisch, mathe, erdkunde);
+        db.SaveChanges();
+
+        // The real, catalogued series: units mirror the two chapters the catalog used to carry directly.
+        var greenLine = new TextbookSeries
         {
-            Name = "Mathe",
-            Categories = { maGrundrechenarten, maAlgebra },
-            Chapters =
+            Name = "Green Line 1",
+            Slug = "green-line-1",
+            Publisher = "Klett",
+            SubjectId = englisch.Id,
+            SubjectName = "Englisch",
+            SourceLanguage = "en",
+            TargetLanguage = "de",
+        };
+        db.TextbookSeries.Add(greenLine);
+        db.SaveChanges();
+
+        var greetingsUnit = new SeriesUnit { SeriesId = greenLine.Id, Grade = 5, OrderIndex = 1, Label = "Unit 1 – Greetings" };
+        var familyUnit = new SeriesUnit { SeriesId = greenLine.Id, Grade = 5, OrderIndex = 2, Label = "Unit 2 – Family" };
+        db.SeriesUnits.AddRange(greetingsUnit, familyUnit);
+
+        // Pauschal series/unit per remaining subject - just a carrier for their exercises (B-106 T-03), no
+        // claim to lehrwerk-typical differentiation.
+        var matheSeries = new TextbookSeries { Name = "Mathe-Sammlung", Slug = "mathe-sammlung", SubjectId = mathe.Id, SubjectName = "Mathe" };
+        var erdkundeSeries = new TextbookSeries { Name = "Erdkunde-Sammlung", Slug = "erdkunde-sammlung", SubjectId = erdkunde.Id, SubjectName = "Erdkunde" };
+        db.TextbookSeries.AddRange(matheSeries, erdkundeSeries);
+        db.SaveChanges();
+
+        var einmaleinsUnit = new SeriesUnit { SeriesId = matheSeries.Id, OrderIndex = 1, Label = "Einmaleins" };
+        var deutschlandUnit = new SeriesUnit { SeriesId = erdkundeSeries.Id, OrderIndex = 1, Label = "Deutschland" };
+        db.SeriesUnits.AddRange(einmaleinsUnit, deutschlandUnit);
+        db.SaveChanges();
+
+        var englischExercises = new List<Exercise>
+        {
+            new()
             {
-                new Chapter
+                SeriesUnitId = greetingsUnit.Id,
+                Type = ExerciseTypeKeys.Vocabulary,
+                Title = "Begrüßungen",
+                OrderIndex = 1,
+                RewardPoints = 10,
+                GradeMin = 5, GradeMax = 6,
+                SchoolTypes = SchoolTypes.Realschule | SchoolTypes.Gymnasium,
+                Source = "Green Line 1, Unit 1",
+                Category = enVokabeln,
+                ConfigJson = Json(new VocabularyConfig
                 {
-                    Name = "Einmaleins",
-                    OrderIndex = 1,
-                    Exercises =
+                    Direction = "front-to-back",
+                    SourceLang = "en",
+                    TargetLang = "de",
+                    Items =
                     {
-                        // Fixed tasks: a manually maintained list (like vocabulary).
-                        new Exercise
-                        {
-                            Type = ExerciseTypeKeys.Arithmetic,
-                            Title = "Das kleine 1×1 (7er-Reihe)",
-                            OrderIndex = 1,
-                            RewardPoints = 10,
-                            GradeMin = 3, GradeMax = 5,
-                            SchoolTypes = SchoolTypes.None,
-                            Category = maGrundrechenarten,
-                            ConfigJson = Json(new ArithmeticConfig
-                            {
-                                Problems =
-                                {
-                                    new ArithmeticProblem("7 × 6", 42),
-                                    new ArithmeticProblem("7 × 8", 56),
-                                    new ArithmeticProblem("63 ÷ 9", 7),
-                                }
-                            }),
-                        },
-                        // Random tasks: the rules are stored, the tasks are generated on demand by
-                        // POST …/arithmetic-drill/{id}/generate.
-                        new Exercise
-                        {
-                            Type = ExerciseTypeKeys.ArithmeticDrill,
-                            Title = "Kopfrechnen bis 20",
-                            OrderIndex = 2,
-                            RewardPoints = 15,
-                            GradeMin = 2, GradeMax = 4,
-                            SchoolTypes = SchoolTypes.None,
-                            Category = maGrundrechenarten,
-                            ConfigJson = Json(new ArithmeticDrillConfig
-                            {
-                                Operations = new() { ArithmeticOperation.Addition, ArithmeticOperation.Subtraction },
-                                MinOperand = 1,
-                                MaxOperand = 20,
-                                ProblemCount = 10,
-                                AllowNegativeResults = false,
-                            }),
-                        },
+                        new VocabItem("hello", "hallo"),
+                        new VocabItem("goodbye", "auf Wiedersehen"),
+                        new VocabItem("please", "bitte", "Höflichkeit"),
                     }
-                },
-            }
+                }),
+            },
+            new()
+            {
+                SeriesUnitId = greetingsUnit.Id,
+                Type = ExerciseTypeKeys.Cloze,
+                Title = "Lückentext: A short dialogue",
+                OrderIndex = 2,
+                RewardPoints = 15,
+                GradeMin = 5, GradeMax = 7,
+                SchoolTypes = SchoolTypes.Realschule | SchoolTypes.Gymnasium,
+                Source = "Green Line 1, Unit 1",
+                Category = enGrammatik,
+                ConfigJson = Json(new ClozeConfig
+                {
+                    Text = "A: {{1}}, how are you? B: I'm {{2}}, thank you.",
+                    Gaps =
+                    {
+                        new Gap(1, "Hello", new List<string> { "Hi" }),
+                        new Gap(2, "fine", new List<string> { "good", "well" }),
+                    },
+                    WordBank = new List<string> { "Hello", "Hi", "fine", "good", "well" },
+                }),
+            },
+            // Birkenbihl: word-for-word decoding (grammar-independent) + the natural translation.
+            new()
+            {
+                SeriesUnitId = greetingsUnit.Id,
+                Type = ExerciseTypeKeys.Birkenbihl,
+                Title = "Birkenbihl: Getting to know each other",
+                OrderIndex = 3,
+                RewardPoints = 10,
+                GradeMin = 5, GradeMax = 8,
+                SchoolTypes = SchoolTypes.Gymnasium,
+                Category = enLeseverstehen,
+                ConfigJson = Json(new BirkenbihlConfig
+                {
+                    LearningLang = "en",
+                    NativeLang = "de",
+                    NextSentenceId = 3,
+                    NextWordId = 9,
+                    Sentences =
+                    {
+                        new BirkenbihlSentence(1, "What is your name?", "Wie heißt du?",
+                            [new WordPair(1, "What", "Was", null), new WordPair(2, "is", "ist", null),
+                             new WordPair(3, "your", "dein", null), new WordPair(4, "name", "Name", null)]),
+                        new BirkenbihlSentence(2, "Where do you live?", "Wo wohnst du?",
+                            [new WordPair(5, "Where", "Wo", null), new WordPair(6, "do", "tust", null),
+                             new WordPair(7, "you", "du", null), new WordPair(8, "live", "wohnen", null)]),
+                    }
+                }),
+            },
+        };
+
+        var matheExercises = new List<Exercise>
+        {
+            // Fixed tasks: a manually maintained list (like vocabulary).
+            new()
+            {
+                SeriesUnitId = einmaleinsUnit.Id,
+                Type = ExerciseTypeKeys.Arithmetic,
+                Title = "Das kleine 1×1 (7er-Reihe)",
+                OrderIndex = 1,
+                RewardPoints = 10,
+                GradeMin = 3, GradeMax = 5,
+                SchoolTypes = SchoolTypes.None,
+                Category = maGrundrechenarten,
+                ConfigJson = Json(new ArithmeticConfig
+                {
+                    Problems =
+                    {
+                        new ArithmeticProblem("7 × 6", 42),
+                        new ArithmeticProblem("7 × 8", 56),
+                        new ArithmeticProblem("63 ÷ 9", 7),
+                    }
+                }),
+            },
+            // Random tasks: the rules are stored, the tasks are generated on demand by
+            // POST …/arithmetic-drill/{id}/generate.
+            new()
+            {
+                SeriesUnitId = einmaleinsUnit.Id,
+                Type = ExerciseTypeKeys.ArithmeticDrill,
+                Title = "Kopfrechnen bis 20",
+                OrderIndex = 2,
+                RewardPoints = 15,
+                GradeMin = 2, GradeMax = 4,
+                SchoolTypes = SchoolTypes.None,
+                Category = maGrundrechenarten,
+                ConfigJson = Json(new ArithmeticDrillConfig
+                {
+                    Operations = new() { ArithmeticOperation.Addition, ArithmeticOperation.Subtraction },
+                    MinOperand = 1,
+                    MaxOperand = 20,
+                    ProblemCount = 10,
+                    AllowNegativeResults = false,
+                }),
+            },
         };
 
         // Federal state -> capital (the basis for the list AND the matching pairs).
@@ -1141,49 +1173,41 @@ public static class Seed
             ("Sachsen-Anhalt", "Magdeburg"), ("Schleswig-Holstein", "Kiel"), ("Thüringen", "Erfurt"),
         ];
 
-        var erdkunde = new Subject
+        var erdkundeExercises = new List<Exercise>
         {
-            Name = "Erdkunde",
-            Chapters =
+            // List: enumerate all federal states (order does not matter).
+            new()
             {
-                new Chapter
+                SeriesUnitId = deutschlandUnit.Id,
+                Type = ExerciseTypeKeys.List,
+                Title = "Die 16 Bundesländer",
+                OrderIndex = 1,
+                RewardPoints = 15,
+                ConfigJson = Json(new ListConfig
                 {
-                    Name = "Deutschland",
-                    OrderIndex = 1,
-                    Exercises =
-                    {
-                        // List: enumerate all federal states (order does not matter).
-                        new Exercise
-                        {
-                            Type = ExerciseTypeKeys.List,
-                            Title = "Die 16 Bundesländer",
-                            OrderIndex = 1,
-                            RewardPoints = 15,
-                            ConfigJson = Json(new ListConfig
-                            {
-                                Instruction = "Nenne alle 16 Bundesländer.",
-                                Items = laender.Select(l => new ListEntry(l.Land)).ToList(),
-                            }),
-                        },
-                        // Matching by the flashcard principle: federal state -> capital.
-                        new Exercise
-                        {
-                            Type = ExerciseTypeKeys.Matching,
-                            Title = "Bundesland → Landeshauptstadt",
-                            OrderIndex = 2,
-                            RewardPoints = 20,
-                            ConfigJson = Json(new MatchingConfig
-                            {
-                                Instruction = "Ordne jedem Bundesland seine Landeshauptstadt zu.",
-                                Pairs = laender.Select(l => new MatchPair(l.Land, l.Hauptstadt)).ToList(),
-                            }),
-                        },
-                    }
-                },
-            }
+                    Instruction = "Nenne alle 16 Bundesländer.",
+                    Items = laender.Select(l => new ListEntry(l.Land)).ToList(),
+                }),
+            },
+            // Matching by the flashcard principle: federal state -> capital.
+            new()
+            {
+                SeriesUnitId = deutschlandUnit.Id,
+                Type = ExerciseTypeKeys.Matching,
+                Title = "Bundesland → Landeshauptstadt",
+                OrderIndex = 2,
+                RewardPoints = 20,
+                ConfigJson = Json(new MatchingConfig
+                {
+                    Instruction = "Ordne jedem Bundesland seine Landeshauptstadt zu.",
+                    Pairs = laender.Select(l => new MatchPair(l.Land, l.Hauptstadt)).ToList(),
+                }),
+            },
         };
 
-        db.Subjects.AddRange(englisch, mathe, erdkunde);
+        db.Exercises.AddRange(englischExercises);
+        db.Exercises.AddRange(matheExercises);
+        db.Exercises.AddRange(erdkundeExercises);
         db.SaveChanges();
     }
 }

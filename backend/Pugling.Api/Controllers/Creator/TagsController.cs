@@ -217,8 +217,8 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
         // The route therefore returned 500 on every call - noticed only when C3 called it for the first time.
         var exercises = await db.Exercises
             .Where(e => db.ExerciseTags.Any(x => x.TagId == tagId && x.ExerciseId == e.Id))
-            .Include(e => e.Chapter!).ThenInclude(c => c.Subject)
-            .OrderBy(e => e.Chapter!.SubjectId).ThenBy(e => e.ChapterId).ThenBy(e => e.OrderIndex).ThenBy(e => e.Id)
+            .Include(e => e.SeriesUnit!).ThenInclude(u => u.Series!).ThenInclude(s => s.Subject)
+            .OrderBy(e => e.SeriesUnit!.Series!.SubjectId).ThenBy(e => e.SeriesUnitId).ThenBy(e => e.OrderIndex).ThenBy(e => e.Id)
             .AsNoTracking()
             .ToPagedListAsync(Response, skip, take, ct);
         return exercises.Select(ExerciseBriefMapping.From).ToList();

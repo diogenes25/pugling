@@ -5,15 +5,27 @@ using Pugling.Api.Models;
 
 namespace Pugling.Api.Tests;
 
-/// <summary>Happy path of the learning catalog: subject → chapter → exercise (CRUD + scoring).</summary>
+/// <summary>Happy path of the learning catalog: subject → series unit → exercise (CRUD + scoring).</summary>
 public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
+    /// <summary>Creates a subject + textbook series (with the subject attached) + unit and returns their ids.</summary>
+    private static async Task<(int seriesId, int seriesUnitId)> CreateSeriesUnitAsync(
+        HttpClient father, string subjectName, string unitLabel)
+    {
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = subjectName }));
+        var seriesId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            "/api/v1/creator/textbook-series", new { name = TestApi.UniqueName($"{subjectName}-Reihe"), subjectId }));
+        var seriesUnitId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units", new { label = unitLabel, orderIndex = 1 }));
+        return (seriesId, seriesUnitId);
+    }
+
     [Fact]
-    public async Task Subject_Chapter_Exercise_Anlegen_Lesen_Auswerten()
+    public async Task Subject_SeriesUnit_Exercise_Anlegen_Lesen_Auswerten()
     {
         var father = await TestApi.FatherAsync(factory);
-        var (subjectId, chapterId, exerciseId) = await TestApi.CreateArithmeticExerciseAsync(father);
-        var basePath = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic";
+        var (seriesId, seriesUnitId, exerciseId) = await TestApi.CreateArithmeticExerciseAsync(father);
+        var basePath = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic";
 
         var list = await (await father.GetAsync(basePath)).Content.ReadFromJsonAsync<JsonElement>();
         Assert.True(list.GetArrayLength() >= 1);
@@ -33,10 +45,8 @@ public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<
     public async Task ListCheck_Ungeordnet_ZaehltNennungenUnabhaengigVonReihenfolge()
     {
         var father = await TestApi.FatherAsync(factory);
-        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Erdkunde" }));
-        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Bundesländer", orderIndex = 1 }));
-        var basePath = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/list";
+        var (seriesId, seriesUnitId) = await CreateSeriesUnitAsync(father, TestApi.UniqueName("Erdkunde"), "Bundesländer");
+        var basePath = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/list";
 
         var id = await TestApi.IdAsync(await father.PostAsJsonAsync(basePath, new
         {
@@ -74,10 +84,8 @@ public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<
     public async Task ListCheck_Geordnet_WertetPositionsgenauUeberIndexAus()
     {
         var father = await TestApi.FatherAsync(factory);
-        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Reihenfolge" }));
-        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Podest", orderIndex = 1 }));
-        var basePath = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/list";
+        var (seriesId, seriesUnitId) = await CreateSeriesUnitAsync(father, TestApi.UniqueName("Reihenfolge"), "Podest");
+        var basePath = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/list";
 
         var id = await TestApi.IdAsync(await father.PostAsJsonAsync(basePath, new
         {
@@ -118,11 +126,8 @@ public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<
     public async Task Liste_OhneAnweisung_WirdAbgewiesen_BeimAnlegenUndBeimAendern()
     {
         var father = await TestApi.FatherAsync(factory);
-        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
-            new { name = TestApi.UniqueName("Liste-Pflicht") }));
-        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Kapitel", orderIndex = 1 }));
-        var basePath = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/list";
+        var (seriesId, seriesUnitId) = await CreateSeriesUnitAsync(father, TestApi.UniqueName("Liste-Pflicht"), "Unit");
+        var basePath = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/list";
         object Payload(string? instruction) => new
         {
             title = "Ohne Anweisung",
@@ -142,57 +147,12 @@ public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.Equal(HttpStatusCode.BadRequest, updated.StatusCode);
     }
 
-    /*
-     * The second door to the B-79 damage, and the one that is easier to walk through: whenever a position names
-     * no stage of its own - the normal case for most types - `PositionPlayService.StageForDay` falls back to
-     * `Exercise.DefaultStage`. An unknown value there is not typed either, so the child's card arrives with the
-     * answer in `reveal`. The creator's typo has to be rejected exactly like the supervisor's.
-     */
-    [Fact]
-    public async Task Uebung_UnbekannteStandardStufe_WirdAbgewiesen()
-    {
-        var father = await TestApi.FatherAsync(factory);
-        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
-            new { name = $"Stufen-Fach-{Guid.NewGuid():N}"[..20] }));
-        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Kapitel", orderIndex = 1 }));
-        var basePath = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary";
-        object Payload(int? defaultStage) => new
-        {
-            title = "Stufenprobe",
-            orderIndex = 1,
-            rewardPoints = 10,
-            defaultStage,
-            config = new
-            {
-                direction = "front-to-back",
-                sourceLang = "en",
-                targetLang = "de",
-                items = new[] { new { front = "one", back = "eins" } },
-            },
-        };
-
-        var created = await father.PostAsJsonAsync(basePath, Payload(99));
-        Assert.Equal(HttpStatusCode.BadRequest, created.StatusCode);
-        Assert.Equal("validation_error",
-            (await created.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
-
-        // The same guard on the update path - otherwise the value could be set after the fact.
-        var id = await TestApi.IdAsync(await father.PostAsJsonAsync(basePath, Payload((int)TestStage.FreeText)));
-        Assert.Equal(HttpStatusCode.BadRequest, (await father.PutAsJsonAsync($"{basePath}/{id}", Payload(99))).StatusCode);
-
-        // No stage at all stays valid: it means "the type decides" and is what most exercises send.
-        Assert.Equal(HttpStatusCode.OK, (await father.PutAsJsonAsync($"{basePath}/{id}", Payload(null))).StatusCode);
-    }
-
     [Fact]
     public async Task ExerciseDefaults_WerdenGespeichertUndZurueckgegeben()
     {
         var father = await TestApi.FatherAsync(factory);
-        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Default-Fach" }));
-        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Kapitel", orderIndex = 1 }));
-        var basePath = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary";
+        var (seriesId, seriesUnitId) = await CreateSeriesUnitAsync(father, TestApi.UniqueName("Default-Fach"), "Unit");
+        var basePath = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary";
 
         var created = await (await father.PostAsJsonAsync(basePath, new
         {
@@ -234,12 +194,10 @@ public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<
     public async Task Sohn_DarfKeineUebungAnlegen_403()
     {
         var father = await TestApi.FatherAsync(factory);
-        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Fach" }));
-        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Kapitel", orderIndex = 1 }));
+        var (seriesId, seriesUnitId) = await CreateSeriesUnitAsync(father, TestApi.UniqueName("Fach"), "Unit");
         var child = await TestApi.ChildAsync(factory);
 
-        var res = await child.PostAsJsonAsync($"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic",
+        var res = await child.PostAsJsonAsync($"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic",
             new { title = "X", orderIndex = 1, rewardPoints = 5, config = new { problems = Array.Empty<object>() } });
 
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);

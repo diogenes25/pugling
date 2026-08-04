@@ -234,7 +234,7 @@ export type MasteryRollup = S["MasteryRollup"];
 /** `active` = enthält mindestens eine über einen aktiven Plan zugewiesene Übung (sonst nur Historie). */
 export type SubjectProgress = S["SubjectProgressResponse"];
 
-export type ChapterProgress = S["ChapterProgressResponse"];
+export type SeriesUnitProgress = S["SeriesUnitProgressResponse"];
 
 export type ExerciseProgress = S["ExerciseProgressResponse"];
 
@@ -273,14 +273,9 @@ export type UpdateObjectiveRequest = S["UpdateObjectiveRequest"];
 /** Teil-Update einer Etappe; der Scope bleibt fix. */
 export type UpdateKeyResultRequest = S["UpdateKeyResultRequest"];
 
-// ---- Katalog: Fächer, Kapitel, Übungssuche ----
+// ---- Katalog: Fächer, Lehrwerk-Units, Übungssuche ----
 
 export type SubjectResponse = S["SubjectResponse"];
-
-export type ChapterResponse = S["ChapterResponse"];
-
-/** Partielle Änderung eines Kapitels (Name/Reihenfolge). */
-export type UpdateChapterDto = S["UpdateChapterDto"];
 
 /** Vollständige Sicht einer Übung inkl. roher Config + Metadaten (zum Anzeigen/Bearbeiten). */
 export type ExerciseDetail = S["ExerciseDetail"];

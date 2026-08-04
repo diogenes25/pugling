@@ -314,10 +314,12 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         // A reverse exercise: after the swap the (spoken) word is the solution. The listening stage must then
         // NOT include the audio source, otherwise it would speak the answer.
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Audio-Ref" }));
-        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "U1", orderIndex = 1 }));
+        var seriesId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            "/api/v1/creator/textbook-series", new { name = TestApi.UniqueName("Audio-Ref-Reihe"), subjectId }));
+        var seriesUnitId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units", new { label = "U1", orderIndex = 1 }));
         var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary", new
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary", new
             {
                 title = "Rueckwaerts",
                 orderIndex = 1,
@@ -341,10 +343,12 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     {
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
             new { name = TestApi.UniqueName("Hoerverstehen") }));
-        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit 1", orderIndex = 1 }));
+        var seriesId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            "/api/v1/creator/textbook-series", new { name = TestApi.UniqueName("Hoerverstehen-Reihe"), subjectId }));
+        var seriesUnitId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units", new { label = "Unit 1", orderIndex = 1 }));
         return await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/listening", new
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/listening", new
             {
                 title = "Wettervorhersage",
                 orderIndex = 1,

@@ -9,21 +9,23 @@ namespace Pugling.Api.Tests;
 /// </summary>
 public class PagingTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
-    /// <summary>Creates <paramref name="count"/> arithmetic exercises in a fresh chapter; returns subject/chapter.</summary>
-    private static async Task<(int subjectId, int chapterId)> SeedExercisesAsync(HttpClient father, int count)
+    /// <summary>Creates <paramref name="count"/> arithmetic exercises in a fresh series unit; returns subject/series/unit.</summary>
+    private static async Task<(int subjectId, int seriesId, int seriesUnitId)> SeedExercisesAsync(HttpClient father, int count)
     {
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Paging-Fach" }));
-        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Kapitel", orderIndex = 1 }));
+        var seriesId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/textbook-series",
+            new { name = TestApi.UniqueName("Paging-Reihe"), subjectId }));
+        var seriesUnitId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units", new { label = "Kapitel" }));
         for (var i = 0; i < count; i++)
-            await father.PostAsJsonAsync($"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic", new
+            await father.PostAsJsonAsync($"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic", new
             {
                 title = $"Aufgabe {i}",
                 orderIndex = i,
                 rewardPoints = 5,
                 config = new { problems = new[] { new { prompt = "1 + 1", answer = 2, tolerance = 0 } } },
             });
-        return (subjectId, chapterId);
+        return (subjectId, seriesId, seriesUnitId);
     }
 
     private static int TotalCount(HttpResponseMessage res) =>
@@ -45,8 +47,8 @@ public class PagingTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     public async Task TypedList_LiefertSeitenMitGesamtzahlImHeader()
     {
         var father = await TestApi.FatherAsync(factory);
-        var (subjectId, chapterId) = await SeedExercisesAsync(father, 5);
-        var basePath = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic";
+        var (_, seriesId, seriesUnitId) = await SeedExercisesAsync(father, 5);
+        var basePath = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic";
 
         var page1 = await father.GetAsync($"{basePath}?skip=0&take=2");
         var page2 = await father.GetAsync($"{basePath}?skip=2&take=2");
@@ -92,7 +94,7 @@ public class PagingTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     {
         var father = await TestApi.FatherAsync(factory);
         // Filter on our own subject, so that the seeded exercises do not mix into the result.
-        var (subjectId, _) = await SeedExercisesAsync(father, 4); // titles: "Aufgabe 0".."Aufgabe 3"
+        var (subjectId, _, _) = await SeedExercisesAsync(father, 4); // titles: "Aufgabe 0".."Aufgabe 3"
         var basePath = $"/api/v1/creator/exercises?subjectId={subjectId}";
 
         var asc = await StringsAsync(await father.GetAsync($"{basePath}&sort=title"), "title");
@@ -126,8 +128,8 @@ public class PagingTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     public async Task Take0_LiefertNurDieGesamtzahl_OhneZeilen()
     {
         var father = await TestApi.FatherAsync(factory);
-        var (subjectId, chapterId) = await SeedExercisesAsync(father, 3);
-        var basePath = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic";
+        var (_, seriesId, seriesUnitId) = await SeedExercisesAsync(father, 3);
+        var basePath = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic";
 
         // take=0 = the pure figure: the total in the header, but no rows (it saves the projection).
         var res = await father.GetAsync($"{basePath}?take=0");

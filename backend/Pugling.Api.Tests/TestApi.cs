@@ -69,28 +69,57 @@ internal static class TestApi
         return await IdAsync(res);
     }
 
-    /// <summary>Creates (as the supervisor) subject → chapter → an arithmetic exercise and returns their ids.</summary>
+    /// <summary>Creates (as the creator) a textbook series with a subject and one unit and returns their ids.</summary>
+    /// <param name="father">Logged-in creator/supervisor client.</param>
+    /// <param name="subjectId">Subject the series is anchored to (a series without one can't host exercises).</param>
+    /// <param name="unitLabel">Label of the single unit created for the series.</param>
+    public static async Task<(int seriesId, int seriesUnitId)> CreateSeriesAndUnitAsync(
+        HttpClient father, int subjectId, string unitLabel = "Unit 1")
+    {
+        var seriesId = await IdAsync(await father.PostAsJsonAsync("/api/v1/creator/textbook-series", new
+        {
+            name = UniqueName("Reihe"),
+            publisher = (string?)null,
+            subjectName = (string?)null,
+            subjectId,
+            schoolTypes = (object?)null,
+            sourceLanguage = (string?)null,
+            targetLanguage = (string?)null,
+            notes = (string?)null,
+        }));
+        var seriesUnitId = await IdAsync(await father.PostAsJsonAsync($"/api/v1/creator/textbook-series/{seriesId}/units", new
+        {
+            label = unitLabel,
+            grade = (int?)null,
+            orderIndex = 1,
+            topics = (string?)null,
+            grammar = (string?)null,
+            vocabularyNotes = (string?)null,
+        }));
+        return (seriesId, seriesUnitId);
+    }
+
+    /// <summary>Creates (as the supervisor) subject → series/unit → an arithmetic exercise and returns their ids.</summary>
     /// <param name="father">Logged-in creator/supervisor client.</param>
     /// <param name="problems">
     /// Problems for the exercise; empty = the one default problem "7 × 6". Multiple are needed as soon as a
     /// hit rate between 0% and 100% needs to be tested.
     /// </param>
-    public static async Task<(int subjectId, int chapterId, int exerciseId)> CreateArithmeticExerciseAsync(
+    public static async Task<(int subjectId, int seriesUnitId, int exerciseId)> CreateArithmeticExerciseAsync(
         HttpClient father, params (string Prompt, int Answer)[] problems)
     {
         var tasks = problems.Length > 0 ? problems : [("7 × 6", 42)];
         var subjectId = await IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = UniqueName("Katalog-Test") }));
-        var chapterId = await IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Kapitel 1", orderIndex = 1 }));
+        var (seriesId, seriesUnitId) = await CreateSeriesAndUnitAsync(father, subjectId, "Kapitel 1");
         var exerciseId = await IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic", new
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic", new
             {
                 title = "Kleines 1×1",
                 orderIndex = 1,
                 rewardPoints = 10,
                 config = new { problems = tasks.Select(t => new { prompt = t.Prompt, answer = t.Answer, tolerance = 0 }) },
             }));
-        return (subjectId, chapterId, exerciseId);
+        return (subjectId, seriesUnitId, exerciseId);
     }
 
     /// <summary>Creates (as the supervisor) a vocabulary exercise in the catalog and returns its id.</summary>
@@ -98,10 +127,9 @@ internal static class TestApi
     {
         var vocab = items.Length > 0 ? items : [("hello", "hallo"), ("goodbye", "tschüss")];
         var subjectId = await IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = UniqueName("Englisch-Pos") }));
-        var chapterId = await IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit 1", orderIndex = 1 }));
+        var (seriesId, seriesUnitId) = await CreateSeriesAndUnitAsync(father, subjectId);
         return await IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary", new
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary", new
             {
                 title = "Begrüßungen",
                 orderIndex = 1,
@@ -154,10 +182,9 @@ internal static class TestApi
         foreach (var key in keys) ids.Add(await ResolveVocabIdAsync(father, key));
 
         var subjectId = await IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = UniqueName("Englisch-Ref") }));
-        var chapterId = await IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit 1", orderIndex = 1 }));
+        var (seriesId, seriesUnitId) = await CreateSeriesAndUnitAsync(father, subjectId);
         return await IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary", new
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary", new
             {
                 title = "Vokabeln (Store)",
                 orderIndex = 1,

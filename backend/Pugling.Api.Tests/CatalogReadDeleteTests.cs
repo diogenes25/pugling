@@ -5,7 +5,7 @@ using System.Text.Json;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// The read and delete path of the creator catalog: single views, lists, and removing chapter/category/
+/// The read and delete path of the creator catalog: single views, lists, and removing series-unit/category/
 /// cloze/unit/vocabulary resources along with their links.
 /// <para>
 /// Added while closing the coverage gap (docs/codequalitaet-gates-plan.md, C3). The pattern there was
@@ -25,22 +25,22 @@ public class CatalogReadDeleteTests(PuglingWebAppFactory factory) : IClassFixtur
     }
 
     [Fact]
-    public async Task Kapitel_Einzelansicht_Zeigt_Das_Kapitel_Eines_Fremden_Fachs_Nicht()
+    public async Task Unit_Einzelansicht_Zeigt_Die_Unit_Einer_Fremden_Reihe_Nicht()
     {
         var creator = await TestApi.FatherAsync(factory);
-        var subjectId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/subjects", new { name = Eindeutig("Fach") }));
-        var chapterId = await TestApi.IdAsync(await creator.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit 3", orderIndex = 3 }));
+        var seriesId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/textbook-series", new { name = Eindeutig("Reihe") }));
+        var unitId = await TestApi.IdAsync(await creator.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units", new { label = "Unit 3", orderIndex = 3 }));
 
-        var kapitel = await Json(await creator.GetAsync($"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}"));
-        Assert.Equal("Unit 3", kapitel.GetProperty("name").GetString());
-        Assert.Equal(subjectId, kapitel.GetProperty("subjectId").GetInt32());
+        var unit = await Json(await creator.GetAsync($"/api/v1/creator/textbook-series/{seriesId}/units/{unitId}"));
+        Assert.Equal("Unit 3", unit.GetProperty("label").GetString());
+        Assert.Equal(seriesId, unit.GetProperty("seriesId").GetInt32());
 
-        // Under a different subject this chapter does not exist - otherwise the subject in the path would be
-        // pure decoration and every chapter id globally guessable.
-        var anderesFach = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/subjects", new { name = Eindeutig("Fach") }));
+        // Under a different series this unit does not exist - otherwise the series in the path would be
+        // pure decoration and every unit id globally guessable.
+        var andereReihe = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/textbook-series", new { name = Eindeutig("Reihe") }));
         Assert.Equal(HttpStatusCode.NotFound,
-            (await creator.GetAsync($"/api/v1/creator/subjects/{anderesFach}/chapters/{chapterId}")).StatusCode);
+            (await creator.GetAsync($"/api/v1/creator/textbook-series/{andereReihe}/units/{unitId}")).StatusCode);
     }
 
     [Fact]
@@ -132,11 +132,24 @@ public class CatalogReadDeleteTests(PuglingWebAppFactory factory) : IClassFixtur
     {
         var creator = await TestApi.FatherAsync(factory);
         var (_, key) = await TestApi.CreateStoreVocabAsync(creator, Eindeutig("hedgehog"), "Igel");
-        var exerciseId = await TestApi.CreateVocabRefExerciseAsync(creator, key);
-        // The exercise route needs subject and chapter; both sit on the exercise itself.
-        var uebung = await Json(await creator.GetAsync($"/api/v1/creator/exercises/{exerciseId}"));
-        var basis = $"/api/v1/creator/subjects/{uebung.GetProperty("subjectId").GetInt32()}"
-            + $"/chapters/{uebung.GetProperty("chapterId").GetInt32()}/vocabulary/{exerciseId}/items";
+        var vocabId = await TestApi.ResolveVocabIdAsync(creator, key);
+
+        // The exercise route needs the series and the unit; the exercise detail no longer carries a series
+        // id (only seriesUnitId/subjectId), so the fixture is built directly instead of read back.
+        var subjectId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/subjects", new { name = Eindeutig("Fach") }));
+        var seriesId = await TestApi.IdAsync(await creator.PostAsJsonAsync(
+            "/api/v1/creator/textbook-series", new { name = Eindeutig("Reihe"), subjectId }));
+        var seriesUnitId = await TestApi.IdAsync(await creator.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units", new { label = "Unit 1", orderIndex = 1 }));
+        var basis = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary";
+        var exerciseId = await TestApi.IdAsync(await creator.PostAsJsonAsync(basis, new
+        {
+            title = "Vokabeln (Store)",
+            orderIndex = 1,
+            rewardPoints = 10,
+            config = new { direction = "front-to-back", refs = new[] { new { vocabularyId = vocabId } } },
+        }));
+        basis = $"{basis}/{exerciseId}/items";
 
         var items = await Json(await creator.GetAsync(basis));
         var itemId = items[0].GetProperty("id").GetInt32();

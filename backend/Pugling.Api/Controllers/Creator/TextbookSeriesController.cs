@@ -151,19 +151,28 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Deletes a series along with its units (owner only). Deliberately <b>without</b> a usage lock: child textbooks
-    /// and profiles only lose the assignment (SetNull) and remain usable with their free text.
+    /// Deletes a series along with its units and their exercises (owner only). Not possible while an
+    /// exercise in it is used in a study plan, a class test or an objective milestone (B-106: exercises
+    /// now cascade from series → unit). Child textbooks and profiles pointing at the series itself only
+    /// lose the assignment (SetNull) and remain usable with their free text.
     /// </summary>
     [HttpDelete("{seriesId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Delete(int seriesId, CancellationToken ct = default)
     {
         var series = await db.TextbookSeries.FirstOrDefaultAsync(s => s.Id == seriesId, ct);
         if (series is null) return NotFound();
         if (!ClaimsPrincipalExtensions.IsOwnedBy(series.OwnerAdultId, User.CreatorId()))
             return this.ProblemWithCode(ApiErrors.NotOwner, "Only the owner may delete this textbook series.");
+        if (await ExerciseUsageQueries.AnyBlockingAsync(db,
+                db.Exercises.Where(x => x.SeriesUnit!.SeriesId == seriesId),
+                db.SeriesUnits.Where(u => u.SeriesId == seriesId), ct))
+            return this.ProblemWithCode(ApiErrors.ExerciseInUse,
+                "Content in this series is still used in a study plan, a class test or an objective "
+                + "milestone; remove it there first.");
 
         db.TextbookSeries.Remove(series);
         await db.SaveChangesAsync(ct);

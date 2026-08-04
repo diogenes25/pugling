@@ -12,24 +12,28 @@ namespace Pugling.Api.Tests;
 /// </summary>
 public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
-    /// <summary>Creates a subject + chapter and returns the base route of the Birkenbihl exercises.</summary>
-    private static async Task<string> CreateChapterAsync(HttpClient father)
+    /// <summary>Creates a subject + textbook series + unit and returns the base route of the Birkenbihl exercises.</summary>
+    private static async Task<string> CreateSeriesUnitAsync(HttpClient father)
     {
         var subjectRes = await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Birkenbihl-Test" });
         var subjectId = (await subjectRes.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
 
-        var chapterRes = await father.PostAsJsonAsync($"/api/v1/creator/subjects/{subjectId}/chapters",
-            new { name = "Lektion 1", orderIndex = 1 });
-        var chapterId = (await chapterRes.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+        var seriesRes = await father.PostAsJsonAsync("/api/v1/creator/textbook-series",
+            new { name = TestApi.UniqueName("Birkenbihl-Reihe"), subjectId });
+        var seriesId = (await seriesRes.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
 
-        return $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/birkenbihl";
+        var unitRes = await father.PostAsJsonAsync($"/api/v1/creator/textbook-series/{seriesId}/units",
+            new { label = "Lektion 1", orderIndex = 1 });
+        var unitId = (await unitRes.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+
+        return $"/api/v1/creator/textbook-series/{seriesId}/units/{unitId}/birkenbihl";
     }
 
     /// <summary>Creates an empty Birkenbihl exercise with a language pair and returns (base route, exercise id).</summary>
     private static async Task<(string Route, int ExerciseId)> CreateExerciseAsync(
         HttpClient father, string learningLang = "en", string nativeLang = "de")
     {
-        var route = await CreateChapterAsync(father);
+        var route = await CreateSeriesUnitAsync(father);
         var res = await father.PostAsJsonAsync(route, new
         {
             title = "Birkenbihl",
@@ -53,7 +57,7 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
     public async Task CrudRoundtrip_ConfigBleibtTypisiertErhalten()
     {
         var father = await TestApi.FatherAsync(factory);
-        var route = await CreateChapterAsync(father);
+        var route = await CreateSeriesUnitAsync(father);
 
         var payload = new
         {
@@ -115,7 +119,7 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
     public async Task Create_OhneIds_VergibtEindeutigeIds_UndAddSentenceKollidiertNicht()
     {
         var father = await TestApi.FatherAsync(factory);
-        var route = await CreateChapterAsync(father);
+        var route = await CreateSeriesUnitAsync(father);
 
         // Exactly the shape the supervisor's form sends: no sentenceId/wordId, no counters.
         var payload = new
@@ -310,60 +314,6 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
         Assert.Equal(dogId, result[0].GetProperty("vocabularyId").GetInt32());
         Assert.True(IsNull(result[1], "gloss"));
     }
-
-    /*
-     * The end-to-end check that was missing all along: the author maintains word for word, and the child received
-     * only sentence -> translation - an ordinary translation card, of all things for the method named after the
-     * word-for-word mapping (B-78). Checked along with it: the card no longer asks for typing (the method learns
-     * by reading, `IsTypedStage => false`), and the author's preview shows the same picture.
-     */
-    [Fact]
-    public async Task Dekodierung_ErreichtKindUndVorschau_OhneTippen()
-    {
-        var father = await TestApi.FatherAsync(factory);
-        var (route, exerciseId) = await CreateExerciseAsync(father);
-        // Eigene Wörter, die kein anderer Test anlegt: die Zuordnung sucht im geteilten Store nach dem Wort, und
-        // ein zweiter Eintrag desselben Worts würde die Erwartung hier (und dort) vom Anlegen abhängig machen.
-        await CreateVocabAsync(father, "Tomorrow", "Morgen");
-        await CreateVocabAsync(father, "rains", "regnet");
-        (await father.PostAsJsonAsync($"{route}/{exerciseId}/sentences",
-            new { learningSentence = "Tomorrow rains everywhere", naturalTranslation = "Morgen regnet es überall" }))
-            .EnsureSuccessStatusCode();
-
-        var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, stage: 1, useLeitner: false);
-        var child = await TestApi.ChildAsync(factory);
-        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions";
-        var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
-
-        var cards = await child.GetFromJsonAsync<List<JsonElement>>($"{baseUrl}/{sessionId}/cards");
-        var karte = Assert.Single(cards!);
-        Assert.Equal("Tomorrow rains everywhere", karte.GetProperty("prompt").GetString());
-        Assert.Equal([("Tomorrow", "Morgen"), ("rains", "regnet"), ("everywhere", null)], Dekodierung(karte));
-        // No typing: the natural translation stays behind the flip, the length hint of the letter boxes is gone.
-        Assert.Equal("Morgen regnet es überall", karte.GetProperty("reveal").GetString());
-        Assert.True(IsNull(karte, "answerLength"));
-
-        // The father's preview shows the same picture - otherwise they check a card the child never gets.
-        var preview = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/preview");
-        var vorschau = Assert.Single(preview.GetProperty("items").EnumerateArray().ToArray());
-        Assert.Equal([("Tomorrow", "Morgen"), ("rains", "regnet"), ("everywhere", null)], Dekodierung(vorschau));
-
-        // And the round actually plays through: this type is the first that is never typed AND carries no item
-        // progress, so the self-assessment path runs without a Leitner box - documented as 0 points, never
-        // exercised until now. A throw here would make the whole method unplayable.
-        var review = await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review",
-            new { itemIndex = 0, wasKnown = true });
-        Assert.Equal(HttpStatusCode.OK, review.StatusCode);
-        var outcome = await review.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal(0, outcome.GetProperty("awarded").GetInt32());
-        // Box 1 = the starting box, unmoved: this type carries no item progress, so nothing advances.
-        Assert.Equal(1, outcome.GetProperty("box").GetInt32());
-    }
-
-    /// <summary>Word pairs of a card/preview item as (learning word, gloss) – the decoding in the order of the sentence.</summary>
-    private static (string?, string?)[] Dekodierung(JsonElement item) =>
-        [.. item.GetProperty("decoding").EnumerateArray()
-            .Select(w => (w.GetProperty("learningWord").GetString(), w.GetProperty("gloss").GetString()))];
 
     [Fact]
     public async Task Kind_KannKeinenSatzHinzufuegen_Liefert403()

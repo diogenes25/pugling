@@ -8,7 +8,8 @@ import { ExerciseEditModal } from "./ExerciseEditModal";
 import { ExercisePreviewModal } from "./ExercisePreviewModal";
 import { PAGE_SIZE, Pager, SortControl } from "../components/ListControls";
 import type {
-  ChapterResponse, ExerciseSortKey, ExerciseSummary, ExerciseUsage, Paged, SortDir, SubjectResponse,
+  ExerciseSortKey, ExerciseSummary, ExerciseUsage, Paged, SeriesUnitResponse, SortDir, SubjectResponse,
+  TextbookSeriesResponse,
 } from "../lib/types";
 import { isKnownType } from "./exerciseConfig";
 import { useExerciseTypes } from "../lib/exerciseTypes";
@@ -21,9 +22,10 @@ import { useExerciseTypes } from "../lib/exerciseTypes";
  * abgeschlossener Vorgang und liegt auf `/vater/exercises/neu`. Siehe
  * docs/vater-informationsarchitektur-plan.md.
  *
- * Fach und Kapitel sind hier **Filter**, nicht Pflicht: die Liste erscheint, sobald ein Fach gewählt ist –
- * das Kapitel schränkt weiter ein. (Vorher blieb die Seite leer, bis auch ein Kapitel gewählt war, weil
- * die Auswahl zum Anlegen gehörte, nicht zum Suchen.)
+ * Fach und Lehrwerk-Unit sind hier **Filter**, nicht Pflicht: die Liste erscheint, sobald ein Fach gewählt
+ * ist – die Unit schränkt weiter ein. (Vorher blieb die Seite leer, bis auch ein Kapitel gewählt war, weil
+ * die Auswahl zum Anlegen gehörte, nicht zum Suchen.) Seit B-106 hängt jede Übung an einer Lehrwerk-Unit
+ * statt an einem Kapitel; die Reihe ist hier nur die Zwischenstufe der Auswahl (Reihe → Unit).
  */
 export function VaterExercises() {
   /*
@@ -35,18 +37,22 @@ export function VaterExercises() {
    */
   const [params, setParams] = useSearchParams();
   const subjectId: number | "" = Number(params.get("subjectId")) || "";
-  const chapterId: number | "" = Number(params.get("chapterId")) || "";
+  const seriesId: number | "" = Number(params.get("seriesId")) || "";
+  const seriesUnitId: number | "" = Number(params.get("seriesUnitId")) || "";
   /** Filter setzen = Adresse setzen. `replace`, damit Filtern keine Historie aus Zwischenständen baut. */
-  function setFilter(next: { subjectId: number | ""; chapterId: number | "" }) {
+  function setFilter(next: { subjectId: number | ""; seriesId: number | ""; seriesUnitId: number | "" }) {
     const q = new URLSearchParams();
     if (next.subjectId !== "") q.set("subjectId", String(next.subjectId));
-    if (next.chapterId !== "") q.set("chapterId", String(next.chapterId));
+    if (next.seriesId !== "") q.set("seriesId", String(next.seriesId));
+    if (next.seriesUnitId !== "") q.set("seriesUnitId", String(next.seriesUnitId));
     setParams(q, { replace: true });
   }
 
   const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
-  const chapters = useAsync<ChapterResponse[]>(
-    () => (subjectId ? api.chapters(Number(subjectId)) : Promise.resolve([])), [subjectId]);
+  const series = useAsync<TextbookSeriesResponse[]>(
+    () => api.textbookSeries(subjectId ? { subjectId: Number(subjectId) } : {}), [subjectId]);
+  const units = useAsync<SeriesUnitResponse[]>(
+    () => (seriesId ? api.seriesUnits(Number(seriesId)) : Promise.resolve([])), [seriesId]);
 
   // Routen-Segment und Anzeigename der Typen kommen vom Server (Typ-Manifest), nicht aus einer Tabelle hier.
   const types = useExerciseTypes();
@@ -67,19 +73,19 @@ export function VaterExercises() {
     () => (subjectId
       ? api.searchExercises({
         subjectId: Number(subjectId),
-        chapterId: chapterId !== "" ? Number(chapterId) : undefined,
+        seriesUnitId: seriesUnitId !== "" ? Number(seriesUnitId) : undefined,
         mineOnly: !showShared, sort, dir, skip, take: PAGE_SIZE,
       })
       : Promise.resolve({ items: [], total: 0 })),
-    [subjectId, chapterId, showShared, sort, dir, skip]);
+    [subjectId, seriesUnitId, showShared, sort, dir, skip]);
   // Filter-/Sortier-Wechsel springt auf Seite 1 zurück (sonst leere Seite jenseits des Bestands). Der Reset
   // geschieht in der Render-Phase (nicht per Effekt), damit die Liste nicht erst mit altem skip nachlädt.
-  const filterKey = `${subjectId}|${chapterId}|${showShared}|${sort}|${dir}`;
+  const filterKey = `${subjectId}|${seriesUnitId}|${showShared}|${sort}|${dir}`;
   const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
   if (prevFilterKey !== filterKey) { setPrevFilterKey(filterKey); setSkip(0); }
 
-  /** Die Auswahl wandert als Query mit – die Anlege-Seite startet damit im richtigen Kapitel. */
-  const createHref = `/vater/exercises/neu${subjectId ? `?subjectId=${subjectId}${chapterId ? `&chapterId=${chapterId}` : ""}` : ""}`;
+  /** Die Auswahl wandert als Query mit – die Anlege-Seite startet damit in derselben Reihe/Unit. */
+  const createHref = `/vater/exercises/neu${params.size > 0 ? `?${params}` : ""}`;
 
   return (
     <>
@@ -108,17 +114,25 @@ export function VaterExercises() {
         <div className="field">
           <label htmlFor="ex-subject">Fach</label>
           <select id="ex-subject" aria-label="Fach" value={subjectId}
-            onChange={(e) => setFilter({ subjectId: e.target.value ? Number(e.target.value) : "", chapterId: "" })}>
+            onChange={(e) => setFilter({ subjectId: e.target.value ? Number(e.target.value) : "", seriesId: "", seriesUnitId: "" })}>
             <option value="">– wählen –</option>
             {subjects.data?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </div>
         <div className="field">
-          <label htmlFor="ex-chapter">Kapitel <span className="muted">(optional)</span></label>
-          <select id="ex-chapter" aria-label="Kapitel" value={chapterId} disabled={!subjectId}
-            onChange={(e) => setFilter({ subjectId, chapterId: e.target.value ? Number(e.target.value) : "" })}>
+          <label htmlFor="ex-series">Reihe <span className="muted">(optional)</span></label>
+          <select id="ex-series" aria-label="Reihe" value={seriesId} disabled={!subjectId}
+            onChange={(e) => setFilter({ subjectId, seriesId: e.target.value ? Number(e.target.value) : "", seriesUnitId: "" })}>
             <option value="">– alle –</option>
-            {chapters.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            {series.data?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="ex-unit">Unit <span className="muted">(optional)</span></label>
+          <select id="ex-unit" aria-label="Unit" value={seriesUnitId} disabled={!seriesId}
+            onChange={(e) => setFilter({ subjectId, seriesId, seriesUnitId: e.target.value ? Number(e.target.value) : "" })}>
+            <option value="">– alle –</option>
+            {units.data?.map((u) => <option key={u.id} value={u.id}>{u.label}</option>)}
           </select>
         </div>
       </div>
@@ -153,7 +167,7 @@ export function VaterExercises() {
           : (existing.data?.items.length ?? 0) === 0 ? <div className="muted">Noch keine Übungen.</div> : (
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {existing.data?.items.map((e) => (
-              <ExerciseManageRow key={e.id} exercise={e} subjectId={Number(subjectId)}
+              <ExerciseManageRow key={e.id} exercise={e}
                 route={types?.route(e.type) ?? null} label={typeLabel(e.type)} onChanged={existing.reload}
                 onPreview={() => setPreview({ id: e.id, title: e.title })} onEdit={() => setEditing(e)} />
             ))}
@@ -246,8 +260,8 @@ function UsagePanel({ usage, exercise, busy, onToggleSharing }: {
 }
 
 /** Eine Zeile der Übungsliste mit Verwendungs-Anzeige, Testmodus und Löschen (409-bewusst). */
-function ExerciseManageRow({ exercise, subjectId, route, label, onChanged, onPreview, onEdit }: {
-  exercise: ExerciseSummary; subjectId: number;
+function ExerciseManageRow({ exercise, route, label, onChanged, onPreview, onEdit }: {
+  exercise: ExerciseSummary;
   /** Routen-Segment des Typs aus dem Manifest; `null` = der Server kennt den Typ nicht. */
   route: string | null;
   label: string;
@@ -269,7 +283,7 @@ function ExerciseManageRow({ exercise, subjectId, route, label, onChanged, onPre
   async function remove() {
     if (!confirmAction("Diese Übung wirklich löschen? Zuordnungen in Lehrplänen können betroffen sein.")) return;
     setBusy(true); setErr(null);
-    try { await api.deleteExercise(subjectId, exercise.chapterId, route!, exercise.id); onChanged(); }
+    try { await api.deleteExercise(exercise.seriesId, exercise.seriesUnitId, route!, exercise.id); onChanged(); }
     catch (e) { setErr(errorMessage(e)); setBusy(false); }
   }
   /*

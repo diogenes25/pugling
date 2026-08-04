@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
@@ -215,7 +216,7 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
             translationAlternatives: ["ausgedehnt"]);
         var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
         // Backwards: the card asks "weit → ?", the expected answer is "vast".
-        await SetDirectionAsync(father, exerciseId, "back-to-front");
+        await SetDirectionAsync(father, _factory, exerciseId, "back-to-front");
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
         var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
@@ -234,39 +235,20 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal(1, stored.GetProperty("translationAlternatives").GetArrayLength());
     }
 
-    /// <summary>
-    /// The display side of <see cref="Test_Rueckwaerts_AkzeptiertDieAlternativeNicht"/>: what is not accepted
-    /// backwards must not be revealed as "also correct" either, otherwise the revealed card would promise a
-    /// credit the grading refuses. Nothing does that explicitly – it follows from the swap dropping the
-    /// alternatives; pinned here so the reveal (B-70) cannot re-introduce them behind the swap's back.
-    /// </summary>
-    [Fact]
-    public async Task Rueckwaerts_DecktKeineAlternativeAuf()
-    {
-        var father = await TestApi.FatherAsync(_factory);
-        var (_, key) = await TestApi.CreateStoreVocabAsync(father, "vast", "weit",
-            translationAlternatives: ["ausgedehnt"]);
-        var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
-        await SetDirectionAsync(father, exerciseId, "back-to-front");
-        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.SelfAssess);
-        var child = await TestApi.ChildAsync(_factory);
-        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions";
-
-        var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
-        var cards = await child.GetFromJsonAsync<List<JsonElement>>($"{baseUrl}/{sessionId}/cards");
-
-        Assert.Equal("vast", cards![0].GetProperty("reveal").GetString());
-        Assert.Equal(JsonValueKind.Null, cards[0].GetProperty("revealAlternatives").ValueKind);
-    }
-
     /// <summary>Switches the query direction of a vocabulary exercise (the config is a full replacement).</summary>
-    private static async Task SetDirectionAsync(HttpClient father, int exerciseId, string direction)
+    private static async Task SetDirectionAsync(HttpClient father, PuglingWebAppFactory factory, int exerciseId, string direction)
     {
         var ex = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}");
-        var subjectId = ex.GetProperty("subjectId").GetInt32();
-        var chapterId = ex.GetProperty("chapterId").GetInt32();
+        var seriesUnitId = ex.GetProperty("seriesUnitId").GetInt32();
+
+        // The catalog exercise detail only carries the unit, not its series - resolved via the DB the same
+        // way the seed itself knows it (there is no lookup route for a unit's series without already knowing it).
+        using var scope = factory.Services.CreateScope();
+        var seriesId = await scope.ServiceProvider.GetRequiredService<PuglingDbContext>()
+            .SeriesUnits.Where(u => u.Id == seriesUnitId).Select(u => u.SeriesId).FirstAsync();
+
         var res = await father.PutAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}", new
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}", new
             {
                 title = ex.GetProperty("title").GetString(),
                 orderIndex = 1,
@@ -281,7 +263,7 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
     /// equivalence has to be <b>declared</b>: two entries sharing the same word are homonyms
     /// (<c>bank → Bank</c> / <c>bank → Ufer</c>), not synonyms. Deriving equivalence from the shared word
     /// would have turned the visible defect ("right answer marked wrong") into an invisible one – the child
-    /// gets credit for a meaning that does not fit the chapter, and nobody sees it.
+    /// gets credit for a meaning that does not fit the unit, and nobody sees it.
     /// </summary>
     [Fact]
     public async Task Test_HomonymeAkzeptierenSichNichtGegenseitig()

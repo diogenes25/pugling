@@ -9,6 +9,37 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
 {
     private readonly PuglingWebAppFactory _factory = factory;
 
+    /// <summary>
+    /// Creates (as the creator) subject + textbook series (with the subject attached) + unit + a vocabulary
+    /// exercise, so the test keeps the series/unit ids at hand instead of reading them back from the exercise
+    /// detail - the detail no longer carries a series id (only <c>seriesUnitId</c>/<c>subjectId</c>).
+    /// </summary>
+    private async Task<(int seriesId, int seriesUnitId, int exerciseId)> CreateVocabExerciseAsync()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            "/api/v1/creator/subjects", new { name = TestApi.UniqueName("Kat-Mgmt-Fach") }));
+        var seriesId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            "/api/v1/creator/textbook-series", new { name = TestApi.UniqueName("Kat-Mgmt-Reihe"), subjectId }));
+        var seriesUnitId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units", new { label = "Unit 1", orderIndex = 1 }));
+        var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary", new
+            {
+                title = "Begrüßungen",
+                orderIndex = 1,
+                rewardPoints = 10,
+                config = new
+                {
+                    direction = "front-to-back",
+                    sourceLang = "en",
+                    targetLang = "de",
+                    items = new[] { new { front = "hello", back = "hallo" }, new { front = "goodbye", back = "tschüss" } },
+                },
+            }));
+        return (seriesId, seriesUnitId, exerciseId);
+    }
+
     [Fact]
     public async Task Detail_LiefertTypConfigUndMetadaten()
     {
@@ -24,65 +55,7 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
         Assert.False(string.IsNullOrEmpty(detail.GetProperty("subjectName").GetString()));
     }
 
-    [Fact]
-    public async Task Kapitel_MitVorhandenemNamen_Liefert409()
-    {
-        var father = await TestApi.FatherAsync(_factory);
-        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            "/api/v1/creator/subjects", new { name = $"Dublette-Fach {Guid.NewGuid():N}" }));
-
-        var first = await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit 1", orderIndex = 1 });
-        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
-
-        // Two "Unit 1" in the same subject are a duplicate. Without the pre-check in the controller the unique
-        // index would come through as an unhandled 500 - the test pins both down: status AND code.
-        var second = await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit 1", orderIndex = 2 });
-        Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
-        var problem = await second.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal("duplicate_chapter_name", problem.GetProperty("code").GetString());
-
-        // B-97: the SAME conflict via PATCH. Without a pre-check the rename runs straight into the unique
-        // index, and the caller gets a 500 with a half-written state instead of the code that already exists.
-        var thirdId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit 2", orderIndex = 3 }));
-        var renamed = await father.PatchAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{thirdId}", new { name = "Unit 1" });
-        Assert.Equal(HttpStatusCode.Conflict, renamed.StatusCode);
-        Assert.Equal("duplicate_chapter_name",
-            (await renamed.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
-
-        // The rejected PATCH must leave the chapter untouched - a 409 that already renamed would be worse
-        // than the 500 it replaces.
-        var unchanged = await (await father.GetAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{thirdId}")).Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal("Unit 2", unchanged.GetProperty("name").GetString());
-
-        // Renaming to its OWN name stays legal: the row must not collide with itself.
-        var selfRename = await father.PatchAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{thirdId}", new { name = "Unit 2", orderIndex = 4 });
-        Assert.Equal(HttpStatusCode.OK, selfRename.StatusCode);
-
-        // A whitespace name is rejected like an empty one - what Create forbids, PATCH must not allow. Without
-        // this the name would be written as "", and the SECOND empty name would hit the unique index as a 500:
-        // the duplicate check alone does not close the path it was added to.
-        var blank = await father.PatchAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{thirdId}", new { name = "   " });
-        Assert.Equal(HttpStatusCode.BadRequest, blank.StatusCode);
-        Assert.Equal("validation_error",
-            (await blank.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
-        var stillNamed = await (await father.GetAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{thirdId}")).Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal("Unit 2", stillNamed.GetProperty("name").GetString());
-
-        // The same name under a DIFFERENT subject stays allowed - unique is (subject, name), not the name.
-        var otherSubject = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            "/api/v1/creator/subjects", new { name = $"Dublette-Fach-2 {Guid.NewGuid():N}" }));
-        var elsewhere = await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{otherSubject}/chapters", new { name = "Unit 1", orderIndex = 1 });
-        Assert.Equal(HttpStatusCode.Created, elsewhere.StatusCode);
-    }
+    // Chapter uniqueness removed with B-106; SeriesUnit has no equivalent constraint.
 
     [Fact]
     public async Task Usage_ListetLehrplanMitKind()
@@ -117,38 +90,30 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
     public async Task Delete_ReferenzierteUebung_Liefert409()
     {
         var father = await TestApi.FatherAsync(_factory);
-        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var (seriesId, seriesUnitId, exerciseId) = await CreateVocabExerciseAsync();
         TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)Pugling.Api.Models.TestStage.FreeText);
 
-        var detail = await (await father.GetAsync($"/api/v1/creator/exercises/{exerciseId}"))
-            .Content.ReadFromJsonAsync<JsonElement>();
-        var (subjectId, chapterId) = (detail.GetProperty("subjectId").GetInt32(), detail.GetProperty("chapterId").GetInt32());
-
-        var res = await father.DeleteAsync($"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}");
+        var res = await father.DeleteAsync($"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}");
         Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
     }
 
     /// <summary>
-    /// Chapter and subject cascade onto their exercises – but the FK <c>PlanPosition→Exercise</c> is
+    /// Series unit and series cascade onto their exercises – but the FK <c>PlanPosition→Exercise</c> is
     /// Restrict. Without its own check, the deletion would crash as an FK violation in a bare 500; here
     /// the same clear <c>exercise_in_use</c> conflict must come up as with directly deleting the exercise.
     /// </summary>
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task Delete_KapitelOderFach_MitVerwendeterUebung_Liefert409(bool wholeSubject)
+    public async Task Delete_UnitOderReihe_MitVerwendeterUebung_Liefert409(bool wholeSeries)
     {
         var father = await TestApi.FatherAsync(_factory);
-        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var (seriesId, seriesUnitId, exerciseId) = await CreateVocabExerciseAsync();
         TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)Pugling.Api.Models.TestStage.FreeText);
 
-        var detail = await (await father.GetAsync($"/api/v1/creator/exercises/{exerciseId}"))
-            .Content.ReadFromJsonAsync<JsonElement>();
-        var (subjectId, chapterId) = (detail.GetProperty("subjectId").GetInt32(), detail.GetProperty("chapterId").GetInt32());
-
-        var res = await father.DeleteAsync(wholeSubject
-            ? $"/api/v1/creator/subjects/{subjectId}"
-            : $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}");
+        var res = await father.DeleteAsync(wholeSeries
+            ? $"/api/v1/creator/textbook-series/{seriesId}"
+            : $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}");
 
         Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
         var problem = await res.Content.ReadFromJsonAsync<JsonElement>();
@@ -156,36 +121,48 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
     }
 
     [Fact]
-    public async Task Delete_KapitelUndFach_OhneVerwendung_Loescht()
+    public async Task Delete_UnitUndReihe_OhneVerwendung_Loescht()
     {
         var father = await TestApi.FatherAsync(_factory);
-        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
-        var detail = await (await father.GetAsync($"/api/v1/creator/exercises/{exerciseId}"))
-            .Content.ReadFromJsonAsync<JsonElement>();
-        var (subjectId, chapterId) = (detail.GetProperty("subjectId").GetInt32(), detail.GetProperty("chapterId").GetInt32());
+        var (seriesId, seriesUnitId, exerciseId) = await CreateVocabExerciseAsync();
 
         // The protection only applies to *used* exercises - the cascade onto unused ones stays allowed.
         Assert.Equal(HttpStatusCode.NoContent,
-            (await father.DeleteAsync($"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}")).StatusCode);
+            (await father.DeleteAsync($"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound,
             (await father.GetAsync($"/api/v1/creator/exercises/{exerciseId}")).StatusCode);
         Assert.Equal(HttpStatusCode.NoContent,
-            (await father.DeleteAsync($"/api/v1/creator/subjects/{subjectId}")).StatusCode);
+            (await father.DeleteAsync($"/api/v1/creator/textbook-series/{seriesId}")).StatusCode);
     }
 
     [Fact]
     public async Task Delete_UnbenutzteUebung_Loescht()
     {
         var father = await TestApi.FatherAsync(_factory);
-        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
-        var detail = await (await father.GetAsync($"/api/v1/creator/exercises/{exerciseId}"))
-            .Content.ReadFromJsonAsync<JsonElement>();
-        var (subjectId, chapterId) = (detail.GetProperty("subjectId").GetInt32(), detail.GetProperty("chapterId").GetInt32());
+        var (seriesId, seriesUnitId, exerciseId) = await CreateVocabExerciseAsync();
 
-        var res = await father.DeleteAsync($"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}");
+        var res = await father.DeleteAsync($"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}");
         Assert.Equal(HttpStatusCode.NoContent, res.StatusCode);
 
         var after = await father.GetAsync($"/api/v1/creator/exercises/{exerciseId}");
+        Assert.Equal(HttpStatusCode.NotFound, after.StatusCode);
+    }
+
+    /// <summary>
+    /// Since B-106 a subject no longer cascades onto exercises (those hang off a textbook series unit) -
+    /// deleting it only clears the FK on series/exercise categories pointing at it, never a 409.
+    /// </summary>
+    [Fact]
+    public async Task Delete_Subject_Loescht()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            "/api/v1/creator/subjects", new { name = TestApi.UniqueName("Kat-Mgmt-Loesch-Fach") }));
+
+        var res = await father.DeleteAsync($"/api/v1/creator/subjects/{subjectId}");
+        Assert.Equal(HttpStatusCode.NoContent, res.StatusCode);
+
+        var after = await father.GetAsync($"/api/v1/creator/subjects/{subjectId}");
         Assert.Equal(HttpStatusCode.NotFound, after.StatusCode);
     }
 }

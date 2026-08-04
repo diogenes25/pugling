@@ -25,10 +25,22 @@ public class ExerciseChoicesTests(PuglingWebAppFactory factory) : IClassFixture<
     {
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
             new { name = TestApi.UniqueName($"Auswahl-{route}") }));
-        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit 1", orderIndex = 1 }));
+        var seriesId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/textbook-series",
+            new
+            {
+                name = TestApi.UniqueName($"Reihe-{route}"),
+                publisher = (string?)null,
+                subjectName = (string?)null,
+                subjectId,
+                schoolTypes = (string?)null,
+                sourceLanguage = (string?)null,
+                targetLanguage = (string?)null,
+                notes = (string?)null,
+            }));
+        var seriesUnitId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units", new { label = "Unit 1", orderIndex = 1 }));
         return await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/{route}",
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/{route}",
             new { title = TestApi.UniqueName("Auswahl-Übung"), orderIndex = 1, rewardPoints = 5, config }));
     }
 

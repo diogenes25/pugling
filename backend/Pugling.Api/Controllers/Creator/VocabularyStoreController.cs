@@ -387,24 +387,24 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
                 i.Exercise!.Id,
                 i.Exercise.Title,
                 i.Exercise.Type,
-                i.Exercise.ChapterId,
-                SubjectId = i.Exercise.Chapter!.SubjectId,
+                i.Exercise.SeriesUnitId,
+                SubjectId = i.Exercise.SeriesUnit!.Series!.SubjectId,
             })
             .Distinct()
             .ToListAsync(ct);
         var used = viaItems
-            .Select(e => new VocabUsage(e.Id, e.Title, e.Type.ToString(), e.ChapterId, e.SubjectId))
+            .Select(e => new VocabUsage(e.Id, e.Title, e.Type.ToString(), e.SeriesUnitId, e.SubjectId))
             .ToList();
 
         // Cloze texts: a key reference in the ConfigJson.
-        var clozeCandidates = await db.Exercises.AsNoTracking().Include(e => e.Chapter)
+        var clozeCandidates = await db.Exercises.AsNoTracking().Include(e => e.SeriesUnit!).ThenInclude(u => u.Series!)
             .Where(e => e.Type == ExerciseTypeKeys.Cloze && e.ConfigJson.Contains(key))
             .ToListAsync(ct);
         foreach (var e in clozeCandidates)
         {
             var referenced = JsonSerializer.Deserialize<ClozeConfig>(e.ConfigJson, JsonOptions)?.Gaps.Any(g => g.VocabKey == key) ?? false;
             if (referenced)
-                used.Add(new VocabUsage(e.Id, e.Title, e.Type.ToString(), e.ChapterId, e.Chapter?.SubjectId ?? 0));
+                used.Add(new VocabUsage(e.Id, e.Title, e.Type.ToString(), e.SeriesUnitId, e.SeriesUnit?.Series?.SubjectId));
         }
         return used;
     }

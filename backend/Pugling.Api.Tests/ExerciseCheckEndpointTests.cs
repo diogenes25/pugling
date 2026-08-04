@@ -16,21 +16,33 @@ namespace Pugling.Api.Tests;
 /// </summary>
 public class ExerciseCheckEndpointTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
-    /// <summary>Subject + chapter under which the exercises of this test hang.</summary>
-    private static async Task<string> ChapterBaseAsync(HttpClient creator, string fach)
+    /// <summary>Subject + textbook series + series unit under which the exercises of this test hang.</summary>
+    private static async Task<string> SeriesUnitBaseAsync(HttpClient creator, string fach)
     {
         var subjectId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/subjects",
             new { name = $"{fach}-{Guid.NewGuid():N}"[..20] }));
-        var chapterId = await TestApi.IdAsync(await creator.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Kapitel 1", orderIndex = 1 }));
-        return $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}";
+        var seriesId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/textbook-series",
+            new
+            {
+                name = $"Reihe-{fach}-{Guid.NewGuid():N}"[..20],
+                publisher = (string?)null,
+                subjectName = (string?)null,
+                subjectId,
+                schoolTypes = (string?)null,
+                sourceLanguage = (string?)null,
+                targetLanguage = (string?)null,
+                notes = (string?)null,
+            }));
+        var seriesUnitId = await TestApi.IdAsync(await creator.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units", new { label = "Kapitel 1", orderIndex = 1 }));
+        return $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}";
     }
 
     [Fact]
     public async Task Rechen_Drill_Erzeugt_Aufgaben_Reproduzierbar_Und_Bewertet_Sie()
     {
         var creator = await TestApi.FatherAsync(factory);
-        var basis = await ChapterBaseAsync(creator, "Drill");
+        var basis = await SeriesUnitBaseAsync(creator, "Drill");
         var exerciseId = await TestApi.IdAsync(await creator.PostAsJsonAsync($"{basis}/arithmetic-drill", new
         {
             title = "Kopfrechnen",
@@ -65,7 +77,7 @@ public class ExerciseCheckEndpointTests(PuglingWebAppFactory factory) : IClassFi
     public async Task Zuordnungs_Uebung_Bewertet_Paare()
     {
         var creator = await TestApi.FatherAsync(factory);
-        var basis = await ChapterBaseAsync(creator, "Matching");
+        var basis = await SeriesUnitBaseAsync(creator, "Matching");
         var exerciseId = await TestApi.IdAsync(await creator.PostAsJsonAsync($"{basis}/matching", new
         {
             title = "Tier zu Laut",
@@ -87,7 +99,7 @@ public class ExerciseCheckEndpointTests(PuglingWebAppFactory factory) : IClassFi
     public async Task Birkenbihl_Satz_Laesst_Sich_Wieder_Loeschen()
     {
         var creator = await TestApi.FatherAsync(factory);
-        var basis = await ChapterBaseAsync(creator, "Birkenbihl");
+        var basis = await SeriesUnitBaseAsync(creator, "Birkenbihl");
         var exerciseId = await TestApi.IdAsync(await creator.PostAsJsonAsync($"{basis}/birkenbihl", new
         {
             title = "Erste Sätze",

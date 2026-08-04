@@ -205,3 +205,6 @@ bestehendem Muster (`ExamPlanner`), ein neuer CLI-Verb, keine neuen Contracts, k
   Plan-Erzeugung fest.
 - **2026-08-03** — geschätzt: autonom getroffen, Nutzerauftrag 2026-08-04. **M**, `wo: backend`,
   `migration: nein`, `vertragsbruch: nein`. Nicht umgesetzt.
+- **2026-08-04** — Querverweis: [B-106](B-106-lehrwerkgetriebener-katalog.md) verschmilzt `Exercise` mit
+  `SeriesUnit`; diese Story bräuchte danach nur eine Parameter-Anpassung (`SeriesUnitId` statt
+  `ChapterId`), keinen strukturellen Umbau — kein Status-Wechsel hier.

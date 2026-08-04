@@ -89,7 +89,7 @@ Response — `HTTP 409`:
 
 ## Nicht öffentlich ausführbare Übung anlegen
 
-`POST /api/v1/creator/subjects/5/chapters/7/vocabulary`
+`POST /api/v1/creator/textbook-series/5/units/7/vocabulary`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -114,7 +114,7 @@ Response — `HTTP 201`:
 ```json
 {
   "id": 25,
-  "chapterId": 7,
+  "seriesUnitId": 7,
   "type": "Vocabulary",
   "title": "Nur intern",
   "orderIndex": 2,

@@ -14,7 +14,7 @@ namespace Pugling.Api.Controllers.Creator;
 /// <summary>Shared route prefix of all exercise types.</summary>
 internal static class ExerciseRoutes
 {
-    public const string Base = ApiRoutes.Creator + "/subjects/{subjectId:int}/chapters/{chapterId:int}";
+    public const string Base = ApiRoutes.Creator + "/textbook-series/{seriesId:int}/units/{seriesUnitId:int}";
 }
 
 /// <summary>
@@ -35,7 +35,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     /// Ensures on create/change that all store entries referenced by ID exist and – if
     /// inline vocabulary entries without an ID are present – that the language codes are set (needed to create them in the store).
     /// </summary>
-    protected override async Task<string?> ValidateConfigAsync(int subjectId, VocabularyConfig config, CancellationToken ct = default)
+    protected override async Task<string?> ValidateConfigAsync(int seriesId, VocabularyConfig config, CancellationToken ct = default)
     {
         if (config.Refs is { Count: > 0 } refs)
         {
@@ -95,9 +95,9 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ExerciseResponse<VocabularyConfig>>> RefsFromTags(
-        int subjectId, int chapterId, int exerciseId, RefsFromTagsDto dto, CancellationToken ct = default)
+        int seriesId, int seriesUnitId, int exerciseId, RefsFromTagsDto dto, CancellationToken ct = default)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
+        var exercise = await FindAsync(seriesId, seriesUnitId, exerciseId, ct);
         if (exercise is null) return NotFound();
         if (EnsureCanWrite(exercise) is { } forbidden) return forbidden;
 
@@ -125,38 +125,38 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     // ---- Single items (vocabulary pairs) as their own sub-resource -----------------------------------------
 
     // A concrete path (like VocabLink.Path); the route template ApiRoutes.Creator carries the version placeholder.
-    private static string ItemSelf(int subjectId, int chapterId, int exerciseId, int itemId) =>
-        $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items/{itemId}";
+    private static string ItemSelf(int seriesId, int seriesUnitId, int exerciseId, int itemId) =>
+        $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}/items/{itemId}";
 
-    private static VocabItemResponse MapItem(int subjectId, int chapterId, int exerciseId, ExerciseItem item) =>
+    private static VocabItemResponse MapItem(int seriesId, int seriesUnitId, int exerciseId, ExerciseItem item) =>
         new(item.Id, item.OrderIndex, item.VocabularyId, item.Vocabulary?.Word ?? "", item.Vocabulary?.Translation ?? "",
-            item.Hint, ItemSelf(subjectId, chapterId, exerciseId, item.Id), VocabLink.Path + item.VocabularyId);
+            item.Hint, ItemSelf(seriesId, seriesUnitId, exerciseId, item.Id), VocabLink.Path + item.VocabularyId);
 
     /// <summary>All items of the exercise in order (front/back from the store).</summary>
     [HttpGet("{exerciseId:int}/items")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IEnumerable<VocabItemResponse>>> ListItems(int subjectId, int chapterId, int exerciseId, CancellationToken ct = default)
+    public async Task<ActionResult<IEnumerable<VocabItemResponse>>> ListItems(int seriesId, int seriesUnitId, int exerciseId, CancellationToken ct = default)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
+        var exercise = await FindAsync(seriesId, seriesUnitId, exerciseId, ct);
         if (exercise is null) return NotFound();
         var rows = await Db.ExerciseItems.AsNoTracking().Include(i => i.Vocabulary)
             .Where(i => i.ExerciseId == exerciseId)
             .OrderBy(i => i.OrderIndex).ThenBy(i => i.Id)
             .ToListAsync(ct);
-        return rows.Select(i => MapItem(subjectId, chapterId, exerciseId, i)).ToList();
+        return rows.Select(i => MapItem(seriesId, seriesUnitId, exerciseId, i)).ToList();
     }
 
     /// <summary>A single item of the exercise.</summary>
     [HttpGet("{exerciseId:int}/items/{itemId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<VocabItemResponse>> GetItem(int subjectId, int chapterId, int exerciseId, int itemId, CancellationToken ct = default)
+    public async Task<ActionResult<VocabItemResponse>> GetItem(int seriesId, int seriesUnitId, int exerciseId, int itemId, CancellationToken ct = default)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
+        var exercise = await FindAsync(seriesId, seriesUnitId, exerciseId, ct);
         if (exercise is null) return NotFound();
         var item = await FindItemAsync(exerciseId, itemId, ct);
         return item is null
             ? this.ProblemWithCode(ApiErrors.ItemNotFound, "The exercise item does not exist in this exercise.")
-            : MapItem(subjectId, chapterId, exerciseId, item);
+            : MapItem(seriesId, seriesUnitId, exerciseId, item);
     }
 
     /// <summary>Adds a vocabulary pair to the exercise (by store id or inline). New items land at the end.</summary>
@@ -165,9 +165,9 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<VocabItemResponse>> AddItem(int subjectId, int chapterId, int exerciseId, VocabItemInput body, CancellationToken ct)
+    public async Task<ActionResult<VocabItemResponse>> AddItem(int seriesId, int seriesUnitId, int exerciseId, VocabItemInput body, CancellationToken ct)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
+        var exercise = await FindAsync(seriesId, seriesUnitId, exerciseId, ct);
         if (exercise is null) return NotFound();
         if (EnsureCanWrite(exercise) is { } forbidden) return forbidden;
 
@@ -198,8 +198,8 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         await Db.SaveChangesAsync(ct);
 
         item.Vocabulary = await Db.Vocabularies.FindAsync([vocabId], ct);
-        return CreatedAtAction(nameof(GetItem), new { subjectId, chapterId, exerciseId, itemId = item.Id },
-            MapItem(subjectId, chapterId, exerciseId, item));
+        return CreatedAtAction(nameof(GetItem), new { seriesId, seriesUnitId, exerciseId, itemId = item.Id },
+            MapItem(seriesId, seriesUnitId, exerciseId, item));
     }
 
     /// <summary>Changes an item: swap the vocabulary entry (by id or inline), adjust the hint or order.</summary>
@@ -207,9 +207,9 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<VocabItemResponse>> PatchItem(int subjectId, int chapterId, int exerciseId, int itemId, VocabItemInput body, CancellationToken ct)
+    public async Task<ActionResult<VocabItemResponse>> PatchItem(int seriesId, int seriesUnitId, int exerciseId, int itemId, VocabItemInput body, CancellationToken ct)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
+        var exercise = await FindAsync(seriesId, seriesUnitId, exerciseId, ct);
         if (exercise is null) return NotFound();
         if (EnsureCanWrite(exercise) is { } forbidden) return forbidden;
         var item = await FindItemAsync(exerciseId, itemId, ct);
@@ -233,7 +233,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         await Db.SaveChangesAsync(ct);
 
         item.Vocabulary = await Db.Vocabularies.FindAsync([item.VocabularyId], ct);
-        return MapItem(subjectId, chapterId, exerciseId, item);
+        return MapItem(seriesId, seriesUnitId, exerciseId, item);
     }
 
     /// <summary>Removes an item from the exercise.</summary>
@@ -241,9 +241,9 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteItem(int subjectId, int chapterId, int exerciseId, int itemId, CancellationToken ct)
+    public async Task<IActionResult> DeleteItem(int seriesId, int seriesUnitId, int exerciseId, int itemId, CancellationToken ct)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
+        var exercise = await FindAsync(seriesId, seriesUnitId, exerciseId, ct);
         if (exercise is null) return NotFound();
         if (EnsureCanWrite(exercise) is { } forbidden) return forbidden;
         var item = await FindItemAsync(exerciseId, itemId, ct);
@@ -308,7 +308,7 @@ public class ClozeController(PuglingDbContext db, ExerciseTypeRegistry registry)
     protected override string TypeKey => ExerciseTypeKeys.Cloze;
 
     /// <summary>Ensures on create/change that all store keys referenced in gaps exist.</summary>
-    protected override async Task<string?> ValidateConfigAsync(int subjectId, ClozeConfig config, CancellationToken ct = default)
+    protected override async Task<string?> ValidateConfigAsync(int seriesId, ClozeConfig config, CancellationToken ct = default)
     {
         var keys = config.Gaps.Where(g => !string.IsNullOrWhiteSpace(g.VocabKey))
             .Select(g => g.VocabKey!).Distinct().ToList();
@@ -358,8 +358,8 @@ public class MatchingController(PuglingDbContext db, ExerciseTypeRegistry regist
     /// <summary>Evaluates the matches: per pair, the right side given for the left side counts.</summary>
     [HttpPost("{exerciseId:int}/check")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public Task<ActionResult<CheckResult>> Check(int subjectId, int chapterId, int exerciseId, CheckDto body, CancellationToken ct = default) =>
-        RunCheckAsync(subjectId, chapterId, exerciseId, body, ct);
+    public Task<ActionResult<CheckResult>> Check(int seriesId, int seriesUnitId, int exerciseId, CheckDto body, CancellationToken ct = default) =>
+        RunCheckAsync(seriesId, seriesUnitId, exerciseId, body, ct);
 }
 
 /// <summary>
@@ -374,14 +374,14 @@ public class TranslationController(PuglingDbContext db, ExerciseTypeRegistry reg
     protected override string TypeKey => ExerciseTypeKeys.Translation;
 
     /// <summary>Requires the language codes as soon as pairs without <see cref="TranslationItem.VocabularyId"/> need to be created.</summary>
-    protected override Task<string?> ValidateConfigAsync(int subjectId, TranslationConfig config, CancellationToken ct = default) =>
+    protected override Task<string?> ValidateConfigAsync(int seriesId, TranslationConfig config, CancellationToken ct = default) =>
         Task.FromResult(config.Items.Any(i => i.VocabularyId is null)
             && (string.IsNullOrWhiteSpace(config.SourceLang) || string.IsNullOrWhiteSpace(config.TargetLang))
             ? "sourceLang and targetLang are required to create translation pairs in the store."
             : null);
 
     /// <summary>Creates each not-yet-linked pair in the store (or finds it) and links it by ID.</summary>
-    protected override async Task NormalizeConfigAsync(int subjectId, TranslationConfig config, CancellationToken ct = default)
+    protected override async Task NormalizeConfigAsync(int seriesId, TranslationConfig config, CancellationToken ct = default)
     {
         var pending = new List<(int Index, Vocabulary Vocab)>();
         for (var i = 0; i < config.Items.Count; i++)
@@ -483,9 +483,9 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<DecodedSentence>> AddSentence(
-        int subjectId, int chapterId, int exerciseId, BirkenbihlSentenceInput body, CancellationToken ct)
+        int seriesId, int seriesUnitId, int exerciseId, BirkenbihlSentenceInput body, CancellationToken ct)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
+        var exercise = await FindAsync(seriesId, seriesUnitId, exerciseId, ct);
         if (exercise is null) return NotFound();
         if (EnsureCanWrite(exercise) is { } forbidden) return forbidden;
         if (string.IsNullOrWhiteSpace(body.LearningSentence)) return this.ProblemWithCode(ApiErrors.ValidationError, "The sentence in the learning language is required.");
@@ -513,7 +513,7 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
         await Db.SaveChangesAsync(ct);
 
         var result = new DecodedSentence(sentenceId, sentence.LearningSentence, sentence.NaturalTranslation, words);
-        return CreatedAtAction(nameof(Get), new { subjectId, chapterId, exerciseId }, result);
+        return CreatedAtAction(nameof(Get), new { seriesId, seriesUnitId, exerciseId }, result);
     }
 
     /// <summary>
@@ -525,9 +525,9 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<DecodedWord>> SetWord(
-        int subjectId, int chapterId, int exerciseId, int wordId, WordOverride body, CancellationToken ct)
+        int seriesId, int seriesUnitId, int exerciseId, int wordId, WordOverride body, CancellationToken ct)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
+        var exercise = await FindAsync(seriesId, seriesUnitId, exerciseId, ct);
         if (exercise is null) return NotFound();
         if (EnsureCanWrite(exercise) is { } forbidden) return forbidden;
 
@@ -573,9 +573,9 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
     [HttpGet("{exerciseId:int}/words/{wordId:int}/candidates")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IReadOnlyList<VocabCandidate>>> WordCandidates(
-        int subjectId, int chapterId, int exerciseId, int wordId, CancellationToken ct)
+        int seriesId, int seriesUnitId, int exerciseId, int wordId, CancellationToken ct)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
+        var exercise = await FindAsync(seriesId, seriesUnitId, exerciseId, ct);
         if (exercise is null) return NotFound();
 
         var config = ConfigOf(exercise);
@@ -592,9 +592,9 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteSentence(
-        int subjectId, int chapterId, int exerciseId, int sentenceId, CancellationToken ct)
+        int seriesId, int seriesUnitId, int exerciseId, int sentenceId, CancellationToken ct)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
+        var exercise = await FindAsync(seriesId, seriesUnitId, exerciseId, ct);
         if (exercise is null) return NotFound();
         if (EnsureCanWrite(exercise) is { } forbidden) return forbidden;
 
@@ -647,8 +647,8 @@ public class ArithmeticController(PuglingDbContext db, ExerciseTypeRegistry regi
     /// <summary>Evaluates the child's solutions against the stored problems (numeric, with tolerance).</summary>
     [HttpPost("{exerciseId:int}/check")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public Task<ActionResult<CheckResult>> Check(int subjectId, int chapterId, int exerciseId, CheckDto body, CancellationToken ct = default) =>
-        RunCheckAsync(subjectId, chapterId, exerciseId, body, ct);
+    public Task<ActionResult<CheckResult>> Check(int seriesId, int seriesUnitId, int exerciseId, CheckDto body, CancellationToken ct = default) =>
+        RunCheckAsync(seriesId, seriesUnitId, exerciseId, body, ct);
 }
 
 /// <summary>
@@ -673,9 +673,9 @@ public class ArithmeticDrillController(PuglingDbContext db, ExerciseTypeRegistry
     [HttpPost("{exerciseId:int}/generate")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<GeneratedDrill>> Generate(int subjectId, int chapterId, int exerciseId, [FromQuery] int? seed, CancellationToken ct = default)
+    public async Task<ActionResult<GeneratedDrill>> Generate(int seriesId, int seriesUnitId, int exerciseId, [FromQuery] int? seed, CancellationToken ct = default)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
+        var exercise = await FindAsync(seriesId, seriesUnitId, exerciseId, ct);
         if (exercise is null) return NotFound();
         if (ArithmeticDrillExerciseType.Validate(ConfigOf(exercise)) is { } error) return this.ProblemWithCode(ApiErrors.ValidationError, error);
 
@@ -687,9 +687,9 @@ public class ArithmeticDrillController(PuglingDbContext db, ExerciseTypeRegistry
     [HttpPost("{exerciseId:int}/check")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<CheckResult>> Check(int subjectId, int chapterId, int exerciseId, CheckDto body, CancellationToken ct = default)
+    public async Task<ActionResult<CheckResult>> Check(int seriesId, int seriesUnitId, int exerciseId, CheckDto body, CancellationToken ct = default)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
+        var exercise = await FindAsync(seriesId, seriesUnitId, exerciseId, ct);
         if (exercise is null) return NotFound();
         if (ArithmeticDrillExerciseType.Validate(ConfigOf(exercise)) is { } error) return this.ProblemWithCode(ApiErrors.ValidationError, error);
 
@@ -714,7 +714,7 @@ public class ListController(PuglingDbContext db, ExerciseTypeRegistry registry)
     /// something without saying what. The play path can supply the rule ("one that has not come up yet") but
     /// never the subject, and <c>ItemsOf</c> sees only the config – not even the exercise title is reachable there.
     /// </summary>
-    protected override Task<string?> ValidateConfigAsync(int subjectId, ListConfig config, CancellationToken ct = default) =>
+    protected override Task<string?> ValidateConfigAsync(int seriesId, ListConfig config, CancellationToken ct = default) =>
         Task.FromResult(string.IsNullOrWhiteSpace(config.Instruction)
             ? "Instruction is required for a list: it is the only question the card can show."
             : null);
@@ -722,6 +722,6 @@ public class ListController(PuglingDbContext db, ExerciseTypeRegistry registry)
     /// <summary>Evaluates the given entries – as a set, or position-exact with <c>Ordered</c>.</summary>
     [HttpPost("{exerciseId:int}/check")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public Task<ActionResult<CheckResult>> Check(int subjectId, int chapterId, int exerciseId, CheckDto body, CancellationToken ct = default) =>
-        RunCheckAsync(subjectId, chapterId, exerciseId, body, ct);
+    public Task<ActionResult<CheckResult>> Check(int seriesId, int seriesUnitId, int exerciseId, CheckDto body, CancellationToken ct = default) =>
+        RunCheckAsync(seriesId, seriesUnitId, exerciseId, body, ct);
 }

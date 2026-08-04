@@ -33,10 +33,12 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
         var ownerPin = "3141";
         var owner = await NewFatherAsync("Übungs-Owner", ownerPin);
         var subjectId = await TestApi.IdAsync(await owner.PostAsJsonAsync("/api/v1/creator/subjects", new { name = $"Scope-Fach {Guid.NewGuid():N}" }));
-        var chapterId = await TestApi.IdAsync(await owner.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit", orderIndex = 1 }));
+        var seriesId = await TestApi.IdAsync(await owner.PostAsJsonAsync(
+            "/api/v1/creator/textbook-series", new { name = $"Scope-Reihe {Guid.NewGuid():N}", subjectId }));
+        var seriesUnitId = await TestApi.IdAsync(await owner.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units", new { label = "Unit" }));
         var exerciseId = await TestApi.IdAsync(await owner.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary",
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary",
             new
             {
                 title = "Geteilte Wörter",
@@ -68,7 +70,7 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
 
         // And the delete fails - with a message that names the same number instead of staying silent.
         var del = await owner.DeleteAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}");
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}");
         Assert.Equal(HttpStatusCode.Conflict, del.StatusCode);
         var problem = await del.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("exercise_in_use", problem.GetProperty("code").GetString());
@@ -110,10 +112,12 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
     {
         var creator = await NewFatherAsync("Nur-Creator", "1618");
         var subjectId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/subjects", new { name = $"Lehrer-Fach {Guid.NewGuid():N}" }));
-        var chapterId = await TestApi.IdAsync(await creator.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit", orderIndex = 1 }));
+        var seriesId = await TestApi.IdAsync(await creator.PostAsJsonAsync(
+            "/api/v1/creator/textbook-series", new { name = $"Lehrer-Reihe {Guid.NewGuid():N}", subjectId }));
+        var seriesUnitId = await TestApi.IdAsync(await creator.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units", new { label = "Unit" }));
         var exerciseId = await TestApi.IdAsync(await creator.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary",
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary",
             new
             {
                 title = "Lehrer-Material",
@@ -149,7 +153,7 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
 
         // The delete stays blocked and names the *sites* - that is where somebody would have to clean up.
         var del = await creator.DeleteAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}");
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}");
         Assert.Equal(HttpStatusCode.Conflict, del.StatusCode);
         var detail = (await del.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("detail").GetString()!;
         Assert.Contains("2 usages outside your care", detail);
@@ -162,13 +166,14 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
         var (_, key) = await TestApi.CreateStoreVocabAsync(father, "harbour", "Hafen");
         var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
         var detail = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}");
-        var s = detail.GetProperty("subjectId").GetInt32();
-        var c = detail.GetProperty("chapterId").GetInt32();
+        var seriesId = detail.GetProperty("seriesId").GetInt32();
+        var seriesUnitId = detail.GetProperty("seriesUnitId").GetInt32();
 
         var usage = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/usage");
         Assert.Equal(0, usage.GetProperty("otherLearnersCount").GetInt32());
 
-        var del = await father.DeleteAsync($"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}");
+        var del = await father.DeleteAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}");
         Assert.Equal(HttpStatusCode.NoContent, del.StatusCode);
     }
 }

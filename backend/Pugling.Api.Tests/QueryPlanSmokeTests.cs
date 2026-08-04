@@ -103,8 +103,9 @@ public sealed class QueryPlanSmokeTests
 
         var child = new Child { Name = "P", Pin = "1234" };
         var subject = new Subject { Name = "E" };
-        var chapter = new Chapter { Subject = subject, Name = "C", OrderIndex = 1 };
-        var exercise = new Exercise { Chapter = chapter, Type = "Vocabulary", Title = "X", OrderIndex = 1, RewardPoints = 1 };
+        var series = new TextbookSeries { Subject = subject, Name = "S", Slug = "query-plan-series" };
+        var seriesUnit = new SeriesUnit { Series = series, Label = "C", OrderIndex = 1 };
+        var exercise = new Exercise { SeriesUnit = seriesUnit, Type = "Vocabulary", Title = "X", OrderIndex = 1, RewardPoints = 1 };
         var vocab = new Vocabulary { Key = "k", SourceLanguage = "en", TargetLanguage = "de", Word = "w", Translation = "t" };
         var item = new ExerciseItem { Exercise = exercise, Vocabulary = vocab, OrderIndex = 0 };
         var position = new PlanPosition { Exercise = exercise, Order = 0 };
@@ -118,7 +119,7 @@ public sealed class QueryPlanSmokeTests
         };
 
         db.AddRange(
-            child, subject, chapter, exercise, vocab, item, plan,
+            child, subject, series, seriesUnit, exercise, vocab, item, plan,
             new PracticeSession { StudyPlan = plan, PlanPosition = position, Day = day, ActiveSeconds = 30 },
             new TestAttempt
             {

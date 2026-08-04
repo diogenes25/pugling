@@ -1,6 +1,6 @@
 namespace Pugling.Contracts.Student;
 
-// Contract of the catalog-hierarchical progress view (subject → chapter → exercise → item), derived from
+// Contract of the catalog-hierarchical progress view (subject → series unit → exercise → item), derived from
 // the child's study plans. It complements the flat vocabulary view in ProgressDtos.cs; both views
 // deliberately share the item DTO (identical shape). Plus the child's view on missions/awards.
 //
@@ -13,10 +13,10 @@ public record MasteryRollup(
     int AvgMasteryPercent, int SeenCount, int CorrectCount, int CorrectPercent, DateTime? LastActivityAt);
 
 /// <summary>Progress of a subject. <paramref name="Active"/> = contains ≥1 exercise currently assigned (via an active plan).</summary>
-public record SubjectProgressResponse(int SubjectId, string Name, int ChapterCount, int ExerciseCount, bool Active, MasteryRollup Progress);
+public record SubjectProgressResponse(int SubjectId, string Name, int SeriesUnitCount, int ExerciseCount, bool Active, MasteryRollup Progress);
 
-/// <summary>Progress of a chapter. <paramref name="Active"/> = contains ≥1 exercise currently assigned.</summary>
-public record ChapterProgressResponse(int ChapterId, string Name, int OrderIndex, int ExerciseCount, bool Active, MasteryRollup Progress);
+/// <summary>Progress of a series unit. <paramref name="Active"/> = contains ≥1 exercise currently assigned.</summary>
+public record SeriesUnitProgressResponse(int SeriesUnitId, string Name, int OrderIndex, int ExerciseCount, bool Active, MasteryRollup Progress);
 
 /// <summary>Progress of a single vocabulary exercise. <paramref name="Active"/> = currently assigned via an active plan.</summary>
 public record ExerciseProgressResponse(int ExerciseId, string Title, int OrderIndex, bool Active, MasteryRollup Progress);

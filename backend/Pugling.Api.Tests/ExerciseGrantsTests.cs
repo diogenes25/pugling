@@ -16,15 +16,27 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
         return (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
     }
 
-    /// <summary>Creates (as the creator) subject → chapter → vocabulary exercise and returns their ids (incl. execute visibility).</summary>
-    private static async Task<(int subjectId, int chapterId, int exerciseId)> CreateVocabAsync(HttpClient father, bool executePublic = true)
+    /// <summary>Creates (as the creator) subject → textbook series → series unit → vocabulary exercise and returns their ids (incl. execute visibility).</summary>
+    private static async Task<(int seriesId, int seriesUnitId, int exerciseId)> CreateVocabAsync(HttpClient father, bool executePublic = true)
     {
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Grant-Fach" }));
-        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Kapitel", orderIndex = 1 }));
+        var seriesId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/textbook-series",
+            new
+            {
+                name = TestApi.UniqueName("Grant-Reihe"),
+                publisher = (string?)null,
+                subjectName = (string?)null,
+                subjectId,
+                schoolTypes = (string?)null,
+                sourceLanguage = (string?)null,
+                targetLanguage = (string?)null,
+                notes = (string?)null,
+            }));
+        var seriesUnitId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units", new { label = "Kapitel", orderIndex = 1 }));
         var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary", VocabPayload(executePublic)));
-        return (subjectId, chapterId, exerciseId);
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary", VocabPayload(executePublic)));
+        return (seriesId, seriesUnitId, exerciseId);
     }
 
     private static object VocabPayload(bool executePublic = true, string title = "Wörter") => new
@@ -74,10 +86,10 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
     public async Task OhneGrant_KannFremderCreatorNichtAendern_MitWriteGrantSchon()
     {
         var f1 = await TestApi.FatherAsync(factory);
-        var (subjectId, chapterId, exerciseId) = await CreateVocabAsync(f1);
+        var (seriesId, seriesUnitId, exerciseId) = await CreateVocabAsync(f1);
         var id2 = await RegisterFatherAsync("2222");
         var f2 = await TestApi.FatherAsync(factory, id2, "2222");
-        var url = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}";
+        var url = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}";
 
         // Without a right: 403 not_author.
         var denied = await f2.PutAsJsonAsync(url, VocabPayload());
@@ -95,12 +107,12 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
     public async Task WriteGrantee_DarfWederLoeschenNochGranten_403NotOwner()
     {
         var f1 = await TestApi.FatherAsync(factory);
-        var (subjectId, chapterId, exerciseId) = await CreateVocabAsync(f1);
+        var (seriesId, seriesUnitId, exerciseId) = await CreateVocabAsync(f1);
         var id2 = await RegisterFatherAsync("2222");
         var f2 = await TestApi.FatherAsync(factory, id2, "2222");
         await f1.PostAsJsonAsync($"/api/v1/creator/exercises/{exerciseId}/grants", new { creatorId = id2, permission = "Write" });
 
-        var del = await f2.DeleteAsync($"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}");
+        var del = await f2.DeleteAsync($"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}");
         Assert.Equal(HttpStatusCode.Forbidden, del.StatusCode);
         await AssertCodeAsync(del, "not_owner");
 
@@ -176,11 +188,11 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
     public async Task Admin_DarfFremdeUebungAendernUndLoeschen()
     {
         var f1 = await TestApi.FatherAsync(factory);
-        var (subjectId, chapterId, exerciseId) = await CreateVocabAsync(f1);
+        var (seriesId, seriesUnitId, exerciseId) = await CreateVocabAsync(f1);
         var adminId = await RegisterFatherAsync("9999");
         MakeAdmin(adminId);
         var admin = await TestApi.FatherAsync(factory, adminId, "9999");
-        var url = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}";
+        var url = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}";
 
         // Write with a CHANGED title and read it back: a PUT that leaves the exercise untouched also answers
         // 200. Before, the test sent the same values that were already there - the success status was asserted,
@@ -198,9 +210,9 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
     public async Task Admin_KannVerwaisteUebungBearbeiten_AutorNichtMehr()
     {
         var f1 = await TestApi.FatherAsync(factory);
-        var (subjectId, chapterId, exerciseId) = await CreateVocabAsync(f1);
+        var (seriesId, seriesUnitId, exerciseId) = await CreateVocabAsync(f1);
         OrphanExercise(exerciseId); // no owner left → editable for nobody (except an admin)
-        var url = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}";
+        var url = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}";
 
         // Even the original author has no write right left without a grant.
         Assert.Equal(HttpStatusCode.Forbidden, (await f1.PutAsJsonAsync(url, VocabPayload())).StatusCode);
@@ -225,11 +237,23 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
         var father = await TestApi.FatherAsync(factory);
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
             new { name = $"Grant-Zaehlung {Guid.NewGuid():N}" }));
-        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Kapitel 1", orderIndex = 1 }));
+        var seriesId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/textbook-series",
+            new
+            {
+                name = TestApi.UniqueName("Grant-Zaehlung-Reihe"),
+                publisher = (string?)null,
+                subjectName = (string?)null,
+                subjectId,
+                schoolTypes = (string?)null,
+                sourceLanguage = (string?)null,
+                targetLanguage = (string?)null,
+                notes = (string?)null,
+            }));
+        var seriesUnitId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units", new { label = "Kapitel 1", orderIndex = 1 }));
 
         var created = await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary", VocabPayload());
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary", VocabPayload());
         created.EnsureSuccessStatusCode();
         var body = await created.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(1, body.GetProperty("grantCount").GetInt32());
@@ -258,14 +282,14 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
     public async Task VokabelListe_FiltertNachIsOwnUndIsOwner()
     {
         var f1 = await TestApi.FatherAsync(factory);
-        var (subjectId, chapterId, ownExerciseId) = await CreateVocabAsync(f1);
+        var (seriesId, seriesUnitId, ownExerciseId) = await CreateVocabAsync(f1);
 
         var id2 = await RegisterFatherAsync("2222");
         var f2 = await TestApi.FatherAsync(factory, id2, "2222");
         var foreignExerciseId = await TestApi.IdAsync(await f2.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary", VocabPayload()));
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary", VocabPayload()));
 
-        var baseUrl = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary";
+        var baseUrl = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary";
         var ownDetail = await f1.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{ownExerciseId}");
         var ownCreatorId = ownDetail.GetProperty("authorAdultId").GetInt32();
 

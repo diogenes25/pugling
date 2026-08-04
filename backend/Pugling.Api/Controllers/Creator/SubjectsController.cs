@@ -22,7 +22,7 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
     public async Task<IEnumerable<SubjectResponse>> List(CancellationToken ct = default) =>
         await db.Subjects
             .OrderBy(s => s.Name)
-            .Select(s => new SubjectResponse(s.Id, s.Name, s.CreatedAt, s.Chapters.Count))
+            .Select(s => new SubjectResponse(s.Id, s.Name, s.CreatedAt, s.Categories.Count))
             .ToListAsync(ct);
 
     /// <summary>A single subject.</summary>
@@ -32,7 +32,7 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
     {
         var subject = await db.Subjects
             .Where(s => s.Id == subjectId)
-            .Select(s => new SubjectResponse(s.Id, s.Name, s.CreatedAt, s.Chapters.Count))
+            .Select(s => new SubjectResponse(s.Id, s.Name, s.CreatedAt, s.Categories.Count))
             .FirstOrDefaultAsync(ct);
         return subject is null ? NotFound() : subject;
     }
@@ -65,29 +65,21 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
         await db.SaveChangesAsync(ct);
 
         return new SubjectResponse(subject.Id, subject.Name, subject.CreatedAt,
-            await db.Chapters.CountAsync(c => c.SubjectId == subjectId, ct));
+            await db.ExerciseCategories.CountAsync(c => c.SubjectId == subjectId, ct));
     }
 
     /// <summary>
-    /// Deletes a subject along with all its chapters and exercises. Not possible while an exercise under it
-    /// is used in a study plan or a class test.
+    /// Deletes a subject along with its exercise categories. Since B-106 a subject no longer cascades to
+    /// any exercise (those hang off a textbook series unit instead) - deleting it only clears the FK on
+    /// textbook series that reference it (SetNull) and on exercises pointing at one of its categories.
     /// </summary>
     [HttpDelete("{subjectId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Delete(int subjectId, CancellationToken ct = default)
     {
         var subject = await db.Subjects.FindAsync([subjectId], ct);
         if (subject is null) return NotFound();
-        // Subject→Chapter→Exercise cascades, PlanPosition→Exercise is Restrict. Which tables block the delete
-        // is known by ExerciseUsageQueries - only the scope and the message live here.
-        if (await ExerciseUsageQueries.AnyBlockingAsync(db,
-                db.Exercises.Where(x => x.Chapter!.SubjectId == subjectId),
-                db.Chapters.Where(c => c.SubjectId == subjectId), ct))
-            return this.ProblemWithCode(ApiErrors.ExerciseInUse,
-                "Content in this subject is still used in a study plan, a class test or an objective "
-                + "milestone; remove it there first.");
         db.Subjects.Remove(subject);
         await db.SaveChangesAsync(ct);
         return NoContent();

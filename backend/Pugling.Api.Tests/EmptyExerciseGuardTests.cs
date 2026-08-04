@@ -18,18 +18,30 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
 {
     private readonly PuglingWebAppFactory _factory = factory;
 
-    private static async Task<(int subjectId, int chapterId)> ChapterAsync(HttpClient father, string name)
+    private static async Task<(int seriesId, int seriesUnitId)> SeriesUnitAsync(HttpClient father, string name)
     {
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name }));
-        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit", orderIndex = 1 }));
-        return (subjectId, chapterId);
+        var seriesId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/textbook-series",
+            new
+            {
+                name = TestApi.UniqueName($"Reihe-{name}"),
+                publisher = (string?)null,
+                subjectName = (string?)null,
+                subjectId,
+                schoolTypes = (string?)null,
+                sourceLanguage = (string?)null,
+                targetLanguage = (string?)null,
+                notes = (string?)null,
+            }));
+        var seriesUnitId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units", new { label = "Unit", orderIndex = 1 }));
+        return (seriesId, seriesUnitId);
     }
 
     /// <summary>Vocabulary exercise without a single word – the data state reported by remark 13.</summary>
-    private static async Task<int> EmptyVocabExerciseAsync(HttpClient father, int subjectId, int chapterId) =>
+    private static async Task<int> EmptyVocabExerciseAsync(HttpClient father, int seriesId, int seriesUnitId) =>
         await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary",
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary",
             new { title = "Einfach Vokabeln", orderIndex = 1, rewardPoints = 10, config = new { direction = "front-to-back" } }));
 
     private static async Task<int> EmptyPlanAsync(HttpClient father, int childId = 1) =>
@@ -40,7 +52,7 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
     public async Task LeereVokabeluebung_LaesstSichNichtZuweisen()
     {
         var father = await TestApi.FatherAsync(_factory);
-        var (s, c) = await ChapterAsync(father, "Leer-Zuweisen");
+        var (s, c) = await SeriesUnitAsync(father, "Leer-Zuweisen");
         var exerciseId = await EmptyVocabExerciseAsync(father, s, c);
         var planId = await EmptyPlanAsync(father);
 
@@ -79,20 +91,20 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
     public async Task ErstAnlegenDannFuellen_BleibtMoeglich()
     {
         var father = await TestApi.FatherAsync(_factory);
-        var (s, c) = await ChapterAsync(father, "Erst-Leer-Dann-Voll");
+        var (s, c) = await SeriesUnitAsync(father, "Erst-Leer-Dann-Voll");
         var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary",
+            $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary",
             new { title = "Wird noch gefüllt", orderIndex = 1, rewardPoints = 10, config = new { direction = "front-to-back", sourceLang = "en", targetLang = "de" } }));
 
         // Creating it without words is allowed (no 400) …
         var addRes = await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items",
+            $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary/{exerciseId}/items",
             new { front = "sun", back = "Sonne" });
         Assert.Equal(HttpStatusCode.Created, addRes.StatusCode);
 
         // The word is really in there - a 201 on the item POST says nothing about that.
         var items = await father.GetFromJsonAsync<List<JsonElement>>(
-            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items");
+            $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary/{exerciseId}/items");
         Assert.Contains(items!, i => i.GetProperty("front").GetString() == "sun");
 
         // … and once it is filled the barrier no longer bites.
@@ -111,9 +123,9 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
     public async Task Aufsatz_OhneItems_BleibtZuweisbar()
     {
         var father = await TestApi.FatherAsync(_factory);
-        var (s, c) = await ChapterAsync(father, "Aufsatz-Zuweisen");
+        var (s, c) = await SeriesUnitAsync(father, "Aufsatz-Zuweisen");
         var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{s}/chapters/{c}/essays",
+            $"/api/v1/creator/textbook-series/{s}/units/{c}/essays",
             new { title = "Brief über Hobbys", orderIndex = 1, rewardPoints = 10, config = new { prompt = "Schreibe einen Brief.", minWords = 80 } }));
         var planId = await EmptyPlanAsync(father);
 
@@ -144,7 +156,7 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
     public async Task Vorschau_LeereVokabeluebung_MeldetExerciseEmpty()
     {
         var father = await TestApi.FatherAsync(_factory);
-        var (s, c) = await ChapterAsync(father, "Leer-Vorschau");
+        var (s, c) = await SeriesUnitAsync(father, "Leer-Vorschau");
         var exerciseId = await EmptyVocabExerciseAsync(father, s, c);
 
         var res = await father.GetAsync($"/api/v1/creator/exercises/{exerciseId}/preview");
@@ -163,14 +175,20 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
     {
         var father = await TestApi.FatherAsync(_factory);
         var (_, key) = await TestApi.CreateStoreVocabAsync(father, "bridge", "Brücke");
-        var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
-        var detail = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}");
-        var subjectId = detail.GetProperty("subjectId").GetInt32();
-        var chapterId = detail.GetProperty("chapterId").GetInt32();
-        var itemsUrl = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items";
+        var (s, c) = await SeriesUnitAsync(father, "Refs-Ohne-Treffer");
+        var vocabularyId = await TestApi.ResolveVocabIdAsync(father, key);
+        var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary", new
+            {
+                title = "Vokabeln (Store)",
+                orderIndex = 1,
+                rewardPoints = 10,
+                config = new { direction = "front-to-back", refs = new[] { new { vocabularyId } } },
+            }));
+        var itemsUrl = $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary/{exerciseId}/items";
 
         var res = await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/refs-from-tags",
+            $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary/{exerciseId}/refs-from-tags",
             new { tags = new[] { "gibt-es-nicht" } });
 
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
@@ -187,13 +205,19 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
     {
         var father = await TestApi.FatherAsync(_factory);
         var (_, key) = await TestApi.CreateStoreVocabAsync(father, "river", "Fluss");
-        var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
-        var detail = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}");
-        var s = detail.GetProperty("subjectId").GetInt32();
-        var c = detail.GetProperty("chapterId").GetInt32();
+        var (s, c) = await SeriesUnitAsync(father, "Refs-Ohne-Tags");
+        var vocabularyId = await TestApi.ResolveVocabIdAsync(father, key);
+        var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary", new
+            {
+                title = "Vokabeln (Store)",
+                orderIndex = 1,
+                rewardPoints = 10,
+                config = new { direction = "front-to-back", refs = new[] { new { vocabularyId } } },
+            }));
 
         var res = await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/refs-from-tags",
+            $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary/{exerciseId}/refs-from-tags",
             new { tags = Array.Empty<string>() });
 
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);

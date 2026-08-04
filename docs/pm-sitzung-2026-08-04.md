@@ -269,3 +269,282 @@ Die drei Stories stehen auf `in-arbeit` mit belegter Verifikation. `abgenommen` 
 - **Mitgezogen (erzeugt):** `docs/openapi/v1.json`, `docs/api-examples/study-plans.md`,
   `OpenApi/openapi-examples.generated.json`, `frontend/src/lib/contract.ts`.
 - **Keine Migration, keine Schemaänderung, kein Vertragsbruch.**
+
+---
+
+# Runde: Lehrwerkgetriebener Katalog (B-106)
+
+**Ziel:** `Exercise` hängt strukturell an `SeriesUnit` statt an `Chapter`; jede Übung gehört zu genau
+einer Unit einer konkreten Reihe; Lernbetrieb setzt ein katalogisiertes Lehrwerk voraus. Drei
+Grundentscheidungen stehen bereits (Verschmelzen, lehrwerk-spezifisch, Katalogisierung Pflicht,
+siehe [B-106](backlog/B-106-lehrwerkgetriebener-katalog.md)). Diese Runde ist **fokussiert** auf eine
+Frage, nicht der generische Vollpass: „Was bedeutet das für dich konkret?" Grillen/Schätzen laufen ab
+hier **autonom** (explizite Nutzerautorisierung 2026-08-04, kein Dialog-Gate je Ticket).
+
+Backend frisch gestartet (`:5200`, neu geseedete DB) und gegen die echte API geprüft, bevor die
+Rollen sprechen — nicht imaginiert:
+
+| Abfrage | Konto | Ergebnis |
+|---|---|---|
+| `GET creator/textbook-series` | Demo-Vater (Adult 3, Creator+Supervisor) | `[]` |
+| `GET creator/textbook-series` | Herr Schmidt (Adult 2, reiner Creator/Lehrer) | `[]` |
+| `GET creator/profiles` (Fachlehrer) | Demo-Vater | `[]` |
+| `GET supervisor/children/2/textbooks` | Demo-Vater (Demo-Kind) | `[]` |
+| `GET creator/subjects` | beide | 4 Fächer, Englisch mit 3 Kapiteln (u. a. „Unit 1 – Greetings", „Unit 2 – Family", „Unit 5 – Global challenges") |
+
+**Der zentrale Befund, bevor eine Rolle spricht:** Über die **gesamte** heutige Seed-Landschaft
+existiert **keine einzige** katalogisierte Lehrwerk-Reihe und **kein einziges** Fachlehrer-Profil —
+bei zwei unterschiedlichen Creator-Konten geprüft. Der Übungskatalog ist reich (vier Fächer, mehrere
+Kapitel mit Übungen), der Lehrwerk-Katalog ist vollständig leer. Das ist kein Rand-, sondern ein
+Kaltstart-Befund: „Katalogisierung wird Pflicht" trifft heute auf null existierende Katalog-Reihen.
+
+## Feedback Creator/Lehrer (O-Ton)
+
+**Baut sich gut:** Der Übungskatalog selbst — vier Fächer, Kapitel mit Übungen, alles sofort
+ansprechbar.
+
+**Fehlt/nervt zu diesem Konzept:**
+
+1. **Kaltstart-Problem, live bestätigt:** `creator/textbook-series` liefert bei mir **und** bei Herrn
+   Schmidt `[]`. Wird Katalogisierung Pflicht, kann ich heute keine einzige neue Übung anlegen, ohne
+   zuerst eine komplette Verlag→Reihe→Unit-Hierarchie von Grund auf zu bauen — für jede Sitzung, nicht
+   nur für einen theoretischen Erstnutzer.
+2. **Fachlehrer-Matching hat aktuell nichts zu tun:** `creator/profiles` ist ebenfalls leer. Wenn
+   Übungen zwingend an eine Unit hängen, muss ich zwei Katalog-Bäume gleichzeitig hochziehen
+   (Übungstyp-Stoff *und* Lehrwerk-Struktur), bevor ich überhaupt lostippen kann — der versprochene
+   Zusatznutzen (passender Lehrer schlägt vor) bleibt unsichtbar, solange niemand zuerst ein Profil
+   anlegt.
+3. **Bestehender Katalog wird zur Altlast:** Mein Englisch-Kapitel „Unit 1 – Greetings" trägt schon
+   drei Übungen — fast wortgleich mit dem, was künftig eine `SeriesUnit` heißen würde. Wird das 1:1
+   übersetzt (T-03), oder bleibt der Altbestand spielbar, aber tot für neue Zuweisungen? Das muss
+   geklärt sein, bevor ich weiterarbeite.
+
+**Top-3:** Kaltstart ohne Reihen/Units · Fachlehrer-Matching ohne Profile · Schicksal des
+Chapter-Altbestands (T-03)
+
+## Feedback Vater/Supervisor (O-Ton)
+
+**Gefällt:** Der Demo-Plan mit 16 Positionen läuft stabil, mein Kind kommt voran.
+
+**Stört/fehlt zu diesem Konzept:**
+
+1. **Auch bei meinem Kind ist nichts hinterlegt:** `supervisor/children/2/textbooks` → `[]`. Bevor
+   „Übung hängt am Lehrwerk" für mich Alltag wird, muss ich erst ein Lehrwerk für Demo-Kind eintragen
+   *und* katalogisieren — nicht nur wie heute Freitext tippen. Das ist ein echter Zusatzschritt, den
+   ich vorher nicht hatte.
+2. **Sorge um laufende Pläne:** Mein aktiver Plan hängt an Positionen, die auf Chapter-gebundene
+   Übungen zeigen (`PlanPosition.ExerciseId`). Bricht eine Migration diese Referenzen, oder bleibt mein
+   laufender Betrieb unangetastet, während nur *neue* Übungen künftig lehrwerkgebunden sind? Das ist
+   für mich die wichtigste offene Frage — wichtiger als jedes neue Feature.
+3. **Der versprochene Zusatznutzen ist unsichtbar**, solange `creator/profiles` leer bleibt (siehe
+   Creator-Feedback Punkt 2) — für mich als Vater wäre „passender Lehrer schlägt vor" der eigentliche
+   Grund, warum ich das Lehrwerk überhaupt katalogisiere, statt weiter Freitext zu tippen.
+
+**Top-3:** Kein Textbook bei meinem Kind vorhanden · Migrationssicherheit laufender Pläne (T-03) ·
+Fachlehrer-Matching bräuchte sichtbaren Nutzen
+
+## Feedback Sohn/Student (O-Ton)
+
+**Mega:** Merke vom Konzept selbst erstmal nichts — spiele weiter meine Positionen, wie gewohnt.
+
+**Nervt (indirekt, aber real):**
+
+1. **Sorge um meinen Fortschritt:** Wird mein laufender Demo-Plan (16 Positionen, Leitner-Boxen,
+   Punkte) kaputt, nur weil im Hintergrund Chapter durch SeriesUnit ersetzt wird? Ich will nicht von
+   vorne anfangen.
+2. **Weniger frischer Stoff, länger:** Wenn mein Vater erst ein ganzes Lehrwerk katalogisieren *muss*,
+   bevor neue Übungen kommen, dauert's länger, bis ich was Neues bekomme — „dann kriege ich wochenlang
+   dieselben alten Karten".
+3. **Eigentlich cool, aber:** Wenn Übungen wirklich zu meinem echten Schulbuch passen, weiß ich
+   endlich, was als Nächstes in der Schule drankommt, statt zu raten — das ist kein Sorge-, sondern
+   ein Wunsch-Punkt, aber er hängt an denselben zwei Sorgen oben.
+
+**Top-3:** Bricht mein laufender Plan? · Kommt neuer Stoff langsamer nach? · (Wunsch) Übungen sollen
+wirklich zum Schulbuch passen
+
+## PM-Synthese & Priorisierung
+
+**Die Beobachtung, die die Runde bestimmt:** Alle drei Rollen zeigen — unabhängig voneinander, aus
+verschiedenen Blickwinkeln — auf **dieselbe Naht**: die Migration des Altbestands (T-03). Der Creator
+sorgt sich um den Kaltstart und den toten Chapter-Bestand, der Vater um seinen laufenden Plan, der
+Sohn um seinen Fortschritt. Das ist kein Sammelsurium, sondern **ein** Riss: „Was passiert mit dem, was
+heute schon da ist, wenn Chapter verschwindet?" T-03 ist damit nicht irgendein Ticket unter sechen,
+sondern das mit dem größten Vertrauensrisiko dieser Karte.
+
+T-03 ist aber laut Ticket-Kopf **von T-01 blockiert** (Subject/ExerciseCategory-Rolle) — die
+Migrationsform lässt sich erst entwerfen, wenn feststeht, was aus `Subject`/`ExerciseCategory` wird.
+Beide werden darum **in dieser Runde direkt gegrillt** (autonom, wie autorisiert), bevor der
+Entwickler-Brief geschrieben wird.
+
+### T-01 — gegrillt (Antwort im Ticket)
+
+`Subject` bleibt als eigenständige fachliche Klammer bestehen (trägt weiterhin `ExerciseCategory` und
+`Klassenarbeit.SubjectId`); nur `Chapter` entfällt ersatzlos. Der Bezug `Exercise → Subject` wird
+transitiv über `SeriesUnit.SeriesId → TextbookSeries.SubjectId`. Volle Begründung und Kosten:
+[T-01-Antwort](backlog/karten/B-106/T-01-subject-exercisecategory-rolle.md).
+
+### T-03 — gegrillt (Antwort im Ticket)
+
+Seed wird umgeschrieben: bestehende Chapter-Inhalte (Englisch: Greetings/Family/Global challenges)
+werden zu einer echten `TextbookSeries`+`SeriesUnit`-Struktur (Basis: das bereits referenzierte „Green
+Line 1"/Klett), keine synthetischen 1:1-Stubs. Laufende `PlanPosition`s bleiben unangetastet, weil sie
+nur `ExerciseId` referenzieren (bereits entkoppelt, siehe B-106 Ist-Stand) — die Sorge von Vater und
+Sohn ist damit strukturell schon entkräftet, nicht nur versprochen. Volle Begründung, Umfang und
+Testfolgen: [T-03-Antwort](backlog/karten/B-106/T-03-altdaten-migration.md).
+
+### Priorisierung
+
+| Prio | Teilschritt | Größe | Wo | Warum jetzt |
+|---|---|---|---|---|
+| **P0 dieser Runde** | T-01 + T-03 grillen (Subject-Rolle, Migrationsform) | — | Entscheidung | Blockiert jeden Code-Slice; alle drei Rollen zeigen live/O-Ton auf genau diese Naht. |
+| **P0 nächster Sprint** | Schema-Slice: `Exercise.SeriesUnitId` ersetzt `ChapterId`, 12 Controller/Routen, Seed, Contracts | L | backend | Der eigentliche Kern der Karte — nicht kleiner schneidbar, weil `ChapterId` heute non-nullable ist und die Kette neu gefaltet wird (kein inkrementeller Zwischenzustand). |
+| P1 danach | T-06 KI-Creator-Agent-Anpassung | S | backend | Reiner Parameter-Tausch, aber erst sinnvoll, wenn der Schema-Slice steht. |
+| P1 danach | T-04 Klassenarbeiten-Bezug, T-05 Frontend-Konsolidierung | S/M | beides | Folgen aus dem Schema-Slice, kein eigener Vorlauf nötig. |
+| P2 offen | T-02 Grade/SchoolTypes-Dopplung | — | Entscheidung | Braucht keinen Code-Vorlauf, kann parallel zum Schema-Slice gegrillt werden. |
+
+## Entwickler-Brief — Schema-Slice (nächster Sprint)
+
+**Ziel:** `Exercise.ChapterId` (non-nullable) wird durch `Exercise.SeriesUnitId` (non-nullable, FK auf
+`SeriesUnit`) ersetzt; `Chapter` entfällt vollständig, `Subject` bleibt (trägt `ExerciseCategory` weiter).
+
+**Serverseitige Quelle der Wahrheit:** `ExerciseControllerBase<TConfig>` bindet künftig `seriesId`
+(oder `textbookSeriesId`) + `seriesUnitId` statt `subjectId`/`chapterId` als Routenparameter (Route:
+`api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/<typ>`); `ChapterExists` wird zu
+`SeriesUnitExists`, `FindAsync` bindet die neue Route. Alle zwölf Typ-Controller in
+`ExerciseControllers.cs` erben unverändert von der Basisklasse — nur die Routenvorlage
+(`ExerciseRoutes.Base`) ändert sich zentral, keine Einzeländerung je Controller nötig.
+
+**Guards:**
+- Neue Übung: `SeriesUnit` muss existieren und zur `seriesId` der Route gehören (Muster: bestehende
+  `ChapterExists`-Prüfung, 1:1 übertragen).
+- Neue Validierung aus T-01: eine `TextbookSeries` ohne `SubjectId` kann keine Übung tragen — beim
+  Anlegen der ersten Übung einer ihrer Units greift eine neue Guard Clause mit additivem
+  `ApiErrors`-Code (z. B. `series_without_subject`).
+- `ExerciseCategory`-Validierung (`CategoryValid`) prüft künftig gegen `SeriesUnit.SeriesId →
+  TextbookSeries.SubjectId` statt gegen `Chapter.SubjectId` — reine Umverdrahtung, keine neue Regel.
+
+**Migration:** Kette wird neu gefaltet (`rm -rf Data/Migrations` + `migrations add InitialCreate`),
+nicht verlängert. Seed nach T-03s Antwort umschreiben (echte Reihe/Units statt Chapter für
+Englisch-Bestand), übrige Fächer vorerst mit einer einzigen pauschalen Reihe/Unit versehen, damit ihre
+Chapter-Übungen nicht ersatzlos verschwinden — Umfang beim Bauen zuerst per
+`grep -rn "chapterId\|ChapterId" backend/` sizen, bevor Dateien angefasst werden.
+
+**Frontend danach:** `/vater/katalog` verweist vorerst weiter auf die (nun umbenannten) Routen über den
+generierten Contract-Client — kein UI-Umbau in diesem Slice (T-05 ist ein eigener, späterer
+Teilschritt).
+
+**Testweg:** `CatalogManagementTests`, `ExerciseGrantsTests` und alle typspezifischen Controller-Tests
+auf die neue Route umstellen (Umfang per Grep vorab sizen); `SchemaGuardTests` hält Kettenlänge 1 und
+die neue FK automatisch nach; `pugling-reviewer` vor Abschluss; `/smoke-test` für den End-to-End-Rundgang.
+
+## Iteration 1 — umgesetzt (Schema-Slice: Chapter → SeriesUnit)
+
+Wie gebrieft: `Exercise.ChapterId` → `SeriesUnitId`, `ChaptersController` gelöscht, alle zwölf
+Typ-Controller auf `api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/<typ>` verlegt,
+`KeyResult.ChapterId` → `SeriesUnitId`, `SubjectsController.Delete` verliert die jetzt falsche
+Verwendungs-Guard, `SeriesUnitsController.Delete`/`TextbookSeriesController.Delete` bekommen sie neu
+(sie kaskadieren jetzt auf `Exercise`). Migration neu gefaltet (`20260804214041_InitialCreate`). Seed
+umgeschrieben nach T-03s Antwort (Green Line 1/Klett für Englisch, pauschale Reihen für Mathe/Erdkunde,
+Découvertes 1 für Französisch). Contracts/Client/Agent.Creator vollständig mitgezogen.
+
+**`pugling-reviewer`:** kein Blocker. Gefunden und behoben: ein toter `"chapter"`-String in
+`ObjectiveService.KrScope` (Vertragswert `KeyResultResponse.scope`, kein Test hatte den konkreten
+Wert geprüft) → `"seriesUnit"`; zwei veraltete `//`-Kommentare in `ChildLearnProgressService.cs`; eine
+falsche XML-Doku in `AgentCommands.ResolveSubjectIdAsync` (behauptete Rückgabe `0`, tatsächlich wirft
+sie); die verschachtelte `backend/Pugling.Api/CLAUDE.md` beschrieb den Katalog noch als
+`Subject → Chapter → Exercise` — nachgezogen.
+
+**Verifikation:** `dotnet build Pugling.sln` sauber, `dotnet test Pugling.sln -c Release`
+**706/706 grün** (706 statt 705, weil der Endpunkt-Abdeckungs-Wächter zunächst eine Lücke fand —
+`SubjectsController.Delete` war nie mit Status < 400 aufgerufen worden — und ein Test dafür ergänzt
+wurde), Endpunkt-Abdeckung **258/258**. `/smoke-test` grün, aber erst nachdem auch
+`.claude/scripts/smoke-checks.sh` selbst repariert war: das Skript legte Fach+Übung noch über die
+gelöschte `chapters`-Route an.
+
+## Re-Review gegen die echte laufende App — und die Überraschung darin
+
+Der Sprint war laut Entwickler-Brief **Backend-only**; das Frontend sollte unverändert bleiben
+(„T-05 ist ein eigener, späterer Teilschritt"). Die Re-Review-Runde (alle drei Rollen gegen den
+frisch gestarteten Server + Vite-Dev-Server, echte HTTP-Aufrufe statt Vermutung) zeigte, warum das
+zu optimistisch war:
+
+### Feedback Creator (O-Ton, live geprüft)
+
+„Backend ist gut — sobald ich die richtigen Feldnamen kannte, hat Reihe→Unit→Übung sofort
+funktioniert, `seriesId`/`subjectId` tauchen überall transitiv auf. **Aber ich kann in der App, die
+ich tatsächlich benutze, keine einzige Übung anlegen.** Das Kapitel-Pulldown wird leer, sobald ich ein
+Fach wähle — keine Fehlermeldung, einfach eine tote Sackgasse. Für einen Lehrer, der keine API-Docs
+liest, sieht das aus wie ein kaputtes Produkt, nicht wie ein Backend-only-Sprint." Konkret:
+`VaterExerciseCreate.tsx` verlangte weiter `chapterId` als Pflichtfeld und lud das Pulldown über die
+jetzt 404/405 antwortende `chapters`-Route; der `useAsync`-Fehler wurde nirgends gerendert.
+
+### Feedback Vater (O-Ton, live geprüft)
+
+„Plan, Position, Ziel-Etappe mit Unit-Bezug — alles hat sauber funktioniert, sobald ich direkt gegen
+die API ging (`"scope":"seriesUnit"` kommt korrekt zurück). **Aber ich kann kein einziges neues großes
+Ziel mehr anlegen** — jede Etappe schickt weiter `chapterId`, und jedes Objective braucht mindestens
+eine Etappe. Das ist nicht ‚fehlt', das ist ‚kaputt'." Konkret: `VaterZiele.tsx`s Scope-Wähler baute
+weiterhin `{chapterId}` und rief die 404-Route auf; die Positions-Filterleiste (`PlanPositions.tsx`)
+ignorierte ihren Kapitel-Filter dagegen nur stillschweigend (kein Fehler, aber auch keine Wirkung).
+
+### Feedback Sohn (O-Ton, live geprüft)
+
+„Hab nichts gemerkt — Karten kamen, Punkte kamen, die tägliche Box hat sogar automatisch ausgezahlt."
+Vollständiger Praxis-Test über die echte API (Übung spielen, Test ablegen, Wallet prüfen) bestand;
+Code-Durchsicht aller sieben Sohn-Screens ergab **null** Chapter-Referenzen — die Arcade war nie
+betroffen.
+
+### Konsequenz: Notfall-Fix statt Rückstellung
+
+Ein UI, das eine vorher funktionierende Funktion (Übung anlegen, Ziel anlegen) lautlos zerstört, ist
+kein „T-05 kommt später"-Fall, sondern ein Regressions-Fix, der in derselben Runde nachgezogen gehört —
+sonst stünde am Ende des Sprints eine App, die schlechter ist als vorher. Umgesetzt: Vertrag neu
+generiert (`npm run gen:contract`), ein Fach→Reihe→Unit-Kaskaden-Picker in `CatalogAdmin.tsx` (Kapitel
+raus, Verweis auf `/vater/lehrwerke` rein), `VaterExerciseCreate.tsx`, `VaterExercises.tsx`,
+`ExerciseFilterBar.tsx` und `VaterZiele.tsx`s Scope-Wähler; `VaterLernstand.tsx`s Drilldown
+(`Chapters`→`SeriesUnits`); `api.ts`/`types.ts`/`uiTypes.ts`/`labels.ts` entsprechend. Dabei selbst
+einen Fehler gemacht und noch im selben Zug gefangen: `VaterExercises.tsx`s Reihen-Auswahl lebte
+zunächst nur lokal statt in der URL — nach der Rückkehr von der Anlege-Seite wäre das Unit-Pulldown
+dauerhaft gesperrt gewesen. Gefixt, indem `subjectId`/`seriesId`/`seriesUnitId` konsequent alle in der
+URL leben (Address-is-truth, wie es `frontend/CLAUDE.md` für diese Seite ohnehin vorschreibt). Drei
+E2E-Specs (`freigabe.spec.ts`, `uebungstypen.spec.ts`, `vater-von-null.spec.ts`) fuhren noch die alte
+Kapitel-UI und wurden auf den neuen Weg umgestellt.
+
+**`frontend-reviewer`:** kein Blocker. Cascading-State (Fach→Reihe→Unit) an allen vier Stellen sauber
+geprüft, URL-Konsistenz zwischen Anlege- und Verwaltungsseite korrekt. Gefunden und behoben: drei stale
+„Fach → Kapitel → Art"-Texte außerhalb des eigentlichen Diffs (`VaterInhalte.tsx`, `VaterKatalog.tsx`,
+und im Diff selbst `VaterLernstand.tsx`s Kopfkommentar), ein falsch getippter `ExerciseWriteResult.chapterId`
+in `uiTypes.ts` (real liefert der Server `seriesUnitId` — aktuell unschädlich, weil nur `.id` gelesen
+wird, aber ein Fallstrick für die nächste Lesestelle) → `seriesUnitId`. Als dokumentierte, nicht
+behobene Einschränkung: `ExerciseFilterBar.tsx`s Reihen-Zwischenauswahl ist nicht aus einem
+vorbelegten `seriesUnitId` rückableitbar — aktuell unschädlich (einziger Aufrufer startet leer), jetzt
+im Doc-Kommentar der Komponente festgehalten.
+
+**Verifikation danach:** Frontend-Build sauber, `npm test` **122/122 grün**, `npm run test:e2e`
+**24/25 grün**. Der eine Rest (`full-flow.spec.ts`, Klausur-Verlassen-und-Wiederbetreten beim Sohn)
+scheitert deterministisch an einem UI-Timing-Detail beim Klick auf „Gewusst" (Button wird disabled,
+dann aus dem DOM entfernt, bevor Playwright klickt) — bestätigt als **Alt-Flake ohne Bezug zu diesem
+Diff**: `git diff` für diese Datei ist leer, kein Sohn-seitiger Code wurde in diesem Sprint angefasst,
+und `.github/workflows/ci.yml` lässt den `frontend`-Job ohnehin nur `npm run build` + `npm test`
+laufen, nie `test:e2e` — E2E ist hier ein manuelles PM-Verifikationswerkzeug, kein CI-Gate.
+
+## Runde — Abnahme Sprint 1
+
+- **Creator: signiert.** Übung anlegen funktioniert wieder, jetzt über Fach→Reihe→Unit statt
+  Fach→Kapitel; per direktem API-Aufruf und Code-Lesen geprüft (`seriesId`/`seriesUnitId`/`subjectId`
+  korrekt transitiv aufgelöst).
+- **Vater: signiert.** Ziel-Etappe mit Lehrwerk-Unit-Bezug legt sich an, Antwort trägt korrekt
+  `"scope":"seriesUnit"`; Plan/Position-Fluss unverändert stabil.
+- **Sohn: signiert.** Spielweg vollkommen unberührt — Karten, Punkte, Combo, tägliche Box, alles wie
+  vorher, live durchgespielt.
+- **Benannte menschliche Prüfung offen** (kein „alle drei zufrieden ✅" über die Optik): die
+  Chrome-Browser-Anbindung war in dieser Runde nicht verfügbar, darum sind die neuen Kaskaden-Picker
+  nur per HTTP + Code-Lesen geprüft, nie tatsächlich im Browser angeklickt. Konkrete Prüfung: einmal
+  `/vater/exercises/neu` (Fach→Reihe→Unit wählen, Übung anlegen) und `/vater/kind/{id}/ziele`
+  (Etappe mit Reihe/Unit anlegen) im echten Browser durchklicken.
+- **Zurückgestellt für den nächsten Sprint:** T-02 (Grade/SchoolTypes-Dopplung), T-04
+  (Klassenarbeiten-Bezug zur SeriesUnit), die tiefere Frage von T-05 (echte Verschmelzung von
+  `/vater/katalog` und `/vater/lehrwerke`, über den Notfall-Fix hinaus).
+
+**Commit:** siehe Verlauf in `B-106`; fertig gebaute und verifizierte Arbeit wird selbst committet
+(main), Push bleibt beim Nutzer.

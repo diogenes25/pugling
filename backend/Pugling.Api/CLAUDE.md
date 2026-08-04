@@ -51,9 +51,12 @@ Der Umbau, der diese Regeln eingezogen hat, samt Begründungen, bewussten Verzic
 
 ## Lern-Katalog
 
-`Subject → Chapter → Exercise` (typisiert, Config als JSON), ein Controller je `ExerciseType`, CRUD geerbt
-aus `ExerciseControllerBase<TConfig>` ([Controllers/Creator/ExerciseControllers.cs](Controllers/Creator/ExerciseControllers.cs)).
-Route: `api/v1/creator/subjects/{}/chapters/{}/<typ>`.
+Seit B-106 hängt jede Übung zwingend an einer Lehrwerk-`SeriesUnit` (`Exercise.SeriesUnitId`, Cascade) statt
+an einem eigenen `Chapter` (entfernt) – Katalogisierung ist damit Pflicht, kein Freitext-Fallback mehr. Der
+`Subject`-Bezug ist optional und läuft transitiv über die Reihe (`SeriesUnit.Series.SubjectId`); typisiert,
+Config als JSON, ein Controller je `ExerciseType`, CRUD geerbt aus `ExerciseControllerBase<TConfig>`
+([Controllers/Creator/ExerciseControllers.cs](Controllers/Creator/ExerciseControllers.cs)).
+Route: `api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/<typ>`.
 
 **Vokabelübungen** halten ihre Paare als **eigene Ebene**: stabil identifizierte `ExerciseItem`s in einer
 Tabelle (nicht in der `ConfigJson`), CRUD unter `…/vocabulary/{exerciseId}/items/{itemId}`. Ein Item ist eine

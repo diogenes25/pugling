@@ -533,7 +533,7 @@ Response — `HTTP 200`:
   },
   "dailyBox": {
     "claimedToday": true,
-    "coinsAwarded": 27,
+    "coinsAwarded": 12,
     "gemsAwarded": 0,
     "streakAtClaim": 1
   }
@@ -692,7 +692,7 @@ Response — `HTTP 400`:
 
 ### Tag-Schnappschuss ohne Treffer — Fehlerfall
 
-`POST /api/v1/creator/subjects/5/chapters/7/vocabulary/27/refs-from-tags`
+`POST /api/v1/creator/textbook-series/5/units/7/vocabulary/27/refs-from-tags`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 

@@ -104,7 +104,7 @@ public class ObjectiveEvaluationService(PuglingDbContext db, ChildLearnProgressS
         {
             var current = kr.Metric == KeyResultMetric.ClassTestGrade
                 ? BestGradeTimesTen(grades, kr.SubjectId, o.Start)
-                : MasteryCurrent(kr.Metric, eval.For(kr.SubjectId, kr.ChapterId, kr.ExerciseId));
+                : MasteryCurrent(kr.Metric, eval.For(kr.SubjectId, kr.SeriesUnitId, kr.ExerciseId));
             var achieved = IsAchieved(kr.Metric, current, kr.TargetValue);
             return new KeyResultEval(kr, current, achieved,
                 ProgressPercent(kr.Metric, current, kr.TargetValue, achieved),

@@ -26,8 +26,8 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     /// Searches exercises over the metadata. All parameters are optional and are AND-combined.
     /// Nullable bounds/school type "None" mean "always matches" and are not excluded.
     /// </summary>
-    /// <param name="subjectId">Subject.</param>
-    /// <param name="chapterId">Chapter (usually implies a subject).</param>
+    /// <param name="subjectId">Subject (reached transitively through the series of the exercise's unit).</param>
+    /// <param name="seriesUnitId">Series unit (usually implies a subject).</param>
     /// <param name="grade">Grade level of the child; matches if it lies within [GradeMin, GradeMax].</param>
     /// <param name="schoolType">School type; matches if the exercise includes it or applies to all.</param>
     /// <param name="categoryId">Subject-dependent category.</param>
@@ -35,14 +35,14 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     /// <param name="search">Free text in title or description (substring).</param>
     /// <param name="mineOnly">Only own exercises of the requesting adult (management rather than discovery).</param>
     /// <param name="sort">Sort column: <c>title</c>, <c>type</c>, <c>grade</c>, <c>source</c>, <c>created</c>.
-    /// Short form <c>-title</c> = descending. Without a value: subject → chapter → order.</param>
+    /// Short form <c>-title</c> = descending. Without a value: subject → series unit → order.</param>
     /// <param name="dir"><c>asc</c> (default) or <c>desc</c>; takes precedence over a <c>-</c> prefix in <paramref name="sort"/>.</param>
     /// <param name="skip">Number of entries to skip (paging).</param>
     /// <param name="take">Maximum number of hits (1..500). Total count in the <c>X-Total-Count</c> header.</param>
     /// <param name="ct">Cancellation token.</param>
     [HttpGet]
     public async Task<IEnumerable<ExerciseSummary>> Search(
-        [FromQuery] int? subjectId, [FromQuery] int? chapterId, [FromQuery] int? grade, [FromQuery] SchoolTypes? schoolType,
+        [FromQuery] int? subjectId, [FromQuery] int? seriesUnitId, [FromQuery] int? grade, [FromQuery] SchoolTypes? schoolType,
         [FromQuery] int? categoryId, [FromQuery] string? type, [FromQuery] string? search,
         [FromQuery] bool? mineOnly, [FromQuery] string? sort = null, [FromQuery] string? dir = null,
         [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake, CancellationToken ct = default)
@@ -58,10 +58,10 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
                 && (g.Permission == GrantPermission.Owner || g.Permission == GrantPermission.Write)));
 
         if (subjectId is int sid)
-            query = query.Where(e => e.Chapter!.SubjectId == sid);
+            query = query.Where(e => e.SeriesUnit!.Series!.SubjectId == sid);
 
-        if (chapterId is int chid)
-            query = query.Where(e => e.ChapterId == chid);
+        if (seriesUnitId is int uid)
+            query = query.Where(e => e.SeriesUnitId == uid);
 
         if (grade is int g)
             query = query.Where(e => (e.GradeMin == null || e.GradeMin <= g)
@@ -85,7 +85,7 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
         }
 
         return await ApplySort(query, SortingExtensions.ParseSort(sort, dir))
-            .Select(e => new ExerciseSummary(e.Id, e.ChapterId, e.Chapter!.SubjectId, e.Type, e.Title,
+            .Select(e => new ExerciseSummary(e.Id, e.SeriesUnit!.SeriesId, e.SeriesUnitId, e.SeriesUnit!.Series!.SubjectId, e.Type, e.Title,
                 e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category!.Name,
                 e.AuthorAdultId, e.Author!.Name,
                 // IsOwn = may change (owner/write grant); IsOwner = may manage (owner grant). An admin sees both as true.
@@ -119,8 +119,8 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
             ("created", false) => q.OrderBy(e => e.CreatedAt).ThenBy(e => e.Id),
             ("created", true) => q.OrderByDescending(e => e.CreatedAt).ThenBy(e => e.Id),
             // The domain default order (no per-column clickable sort key): ascending on purpose - reversing the
-            // catalog tree (subject → chapter → order) would make no sense.
-            _ => q.OrderBy(e => e.Chapter!.SubjectId).ThenBy(e => e.ChapterId).ThenBy(e => e.OrderIndex).ThenBy(e => e.Id),
+            // catalog tree (subject → series unit → order) would make no sense.
+            _ => q.OrderBy(e => e.SeriesUnit!.Series!.SubjectId).ThenBy(e => e.SeriesUnitId).ThenBy(e => e.OrderIndex).ThenBy(e => e.Id),
         };
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -132,7 +132,7 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     public async Task<ActionResult<ExerciseDetail>> Get(int id, CancellationToken ct = default)
     {
         var e = await db.Exercises.AsNoTracking()
-            .Include(x => x.Chapter!).ThenInclude(c => c.Subject)
+            .Include(x => x.SeriesUnit!).ThenInclude(u => u.Series!).ThenInclude(s => s.Subject)
             .Include(x => x.Category)
             .Include(x => x.Author)
             .Include(x => x.Grants)
@@ -141,8 +141,8 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
 
         var fid = User.AdultId();
         var isAdmin = User.IsAdmin();
-        return new ExerciseDetail(e.Id, e.ChapterId, e.Chapter?.Name ?? "", e.Chapter?.SubjectId ?? 0,
-            e.Chapter?.Subject?.Name ?? "", e.Type.ToString(), e.Title, e.OrderIndex, e.RewardPoints,
+        return new ExerciseDetail(e.Id, e.SeriesUnit!.SeriesId, e.SeriesUnitId, e.SeriesUnit?.Label ?? "", e.SeriesUnit?.Series?.SubjectId,
+            e.SeriesUnit?.Series?.Subject?.Name ?? "", e.Type.ToString(), e.Title, e.OrderIndex, e.RewardPoints,
             e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category?.Name,
             e.SuggestedBonus, e.DefaultStage, e.DefaultItemCount,
             e.AuthorAdultId, e.Author?.Name,

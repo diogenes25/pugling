@@ -7,7 +7,8 @@ namespace Pugling.Api.Services.Student;
 
 /// <summary>
 /// Child-centric drill-down view of vocabulary learning progress along the catalog hierarchy
-/// (subject → chapter → exercise → item). Complements the flat <see cref="Controllers.Student.ChildVocabularyProgressController"/> view
+/// (subject → series unit → exercise → item; subject is reached transitively through the exercise's
+/// series unit, see B-106 T-01). Complements the flat <see cref="Controllers.Student.ChildVocabularyProgressController"/> view
 /// with aggregated roll-ups per level. Displays the <b>relevant set</b>: everything assigned to the child via a
 /// <see cref="StudyPlan"/> (even with 0% progress, so coverage is visible)
 /// <b>plus</b> everything for which progress already exists (<see cref="ItemProgress"/>) – so progress once
@@ -22,15 +23,15 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
     /// <summary>The mastery threshold (percent) below which an item counts as "weak" – shared with the flat view.</summary>
     private const int WeakBelowPercent = ItemProgress.WeakBelowPercent;
 
-    // MasteryRollup/Subject-/Chapter-/ExerciseProgressResponse/ItemProgressResponse live in the contract
+    // MasteryRollup/Subject-/SeriesUnit-/ExerciseProgressResponse/ItemProgressResponse live in the contract
     // project (Pugling.Contracts.Student); the flat and the hierarchical view share the item DTO.
 
     // One vocabulary exercise relevant to the view (assigned and/or with progress) plus its catalog coordinates.
     // Active = referenced by at least one ACTIVE plan of the child.
     internal record RelevantExercise(int ExerciseId, string Title, int ExerciseOrder,
-        int ChapterId, string ChapterName, int ChapterOrder, int SubjectId, bool Active);
+        int SeriesUnitId, string SeriesUnitLabel, int SeriesUnitOrder, int SubjectId, bool Active);
 
-    // Raw aggregate of an item set: summable, so exercise → chapter → subject rolls up without another DB query.
+    // Raw aggregate of an item set: summable, so exercise → series unit → subject rolls up without another DB query.
     private record Agg(int TotalItems, int Introduced, int Mastered, int Weak,
         int Seen, int Correct, int MasterySum, DateTime? LastActivity);
 
@@ -66,15 +67,19 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
 
         // Catalog coordinates (item-tracked types only, today vocabulary).
         var itemProgressKeys = registry.KeysSupportingItemProgress;
+        // Subject is reached transitively through the unit's series (SeriesUnit has no SubjectId of its own,
+        // B-106 T-01) - exercises whose series carries no subject are excluded, same as everywhere else.
         var coords = await (
             from ex in db.Exercises.AsNoTracking()
             where allIds.Contains(ex.Id) && itemProgressKeys.Contains(ex.Type)
-            join ch in db.Chapters.AsNoTracking() on ex.ChapterId equals ch.Id
-            select new { ex.Id, ex.Title, ExOrder = ex.OrderIndex, ChId = ch.Id, ChName = ch.Name, ChOrder = ch.OrderIndex, ch.SubjectId })
+            join u in db.SeriesUnits.AsNoTracking() on ex.SeriesUnitId equals u.Id
+            join s in db.TextbookSeries.AsNoTracking() on u.SeriesId equals s.Id
+            where s.SubjectId != null
+            select new { ex.Id, ex.Title, ExOrder = ex.OrderIndex, UnitId = u.Id, UnitLabel = u.Label, UnitOrder = u.OrderIndex, SubjectId = s.SubjectId!.Value })
             .ToListAsync(ct);
 
         return coords
-            .Select(c => new RelevantExercise(c.Id, c.Title, c.ExOrder, c.ChId, c.ChName, c.ChOrder, c.SubjectId, activeIds.Contains(c.Id)))
+            .Select(c => new RelevantExercise(c.Id, c.Title, c.ExOrder, c.UnitId, c.UnitLabel, c.UnitOrder, c.SubjectId, activeIds.Contains(c.Id)))
             .ToList();
     }
 
@@ -165,7 +170,7 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
 
         var rows = relevant.GroupBy(r => r.SubjectId)
             .Select(g => new SubjectProgressResponse(g.Key, names.GetValueOrDefault(g.Key, ""),
-                g.Select(r => r.ChapterId).Distinct().Count(), g.Count(), g.Any(r => r.Active),
+                g.Select(r => r.SeriesUnitId).Distinct().Count(), g.Count(), g.Any(r => r.Active),
                 ToRollup(Combine(g.Select(r => AggFor(r.ExerciseId, total, prog))))))
             .AsEnumerable();
 
@@ -195,7 +200,7 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
         var (total, prog) = await LoadAggAsync(childId, relevant.Select(r => r.ExerciseId).ToList(), ct);
         var name = await db.Subjects.AsNoTracking().Where(s => s.Id == subjectId).Select(s => s.Name).FirstOrDefaultAsync(ct) ?? "";
         return new SubjectProgressResponse(subjectId, name,
-            relevant.Select(r => r.ChapterId).Distinct().Count(), relevant.Count, relevant.Any(r => r.Active),
+            relevant.Select(r => r.SeriesUnitId).Distinct().Count(), relevant.Count, relevant.Any(r => r.Active),
             ToRollup(Combine(relevant.Select(r => AggFor(r.ExerciseId, total, prog)))));
     }
 
@@ -203,44 +208,44 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
     /// Chapters of a subject with progress; <c>null</c> if the subject is not relevant. Filter/sorting as
     /// for subjects (sort keys additionally <c>order</c> [default, chapter order]).
     /// </summary>
-    public async Task<List<ChapterProgressResponse>?> ChaptersAsync(int childId, int subjectId, string? search,
+    public async Task<List<SeriesUnitProgressResponse>?> SeriesUnitsAsync(int childId, int subjectId, string? search,
         (string? Key, bool Desc) sort, bool? active, CancellationToken ct = default)
     {
         var relevant = (await LoadRelevantAsync(childId, ct)).Where(r => r.SubjectId == subjectId).ToList();
         if (relevant.Count == 0) return null;
 
         var (total, prog) = await LoadAggAsync(childId, relevant.Select(r => r.ExerciseId).ToList(), ct);
-        var rows = relevant.GroupBy(r => new { r.ChapterId, r.ChapterName, r.ChapterOrder })
-            .Select(g => new ChapterProgressResponse(g.Key.ChapterId, g.Key.ChapterName, g.Key.ChapterOrder, g.Count(), g.Any(r => r.Active),
+        var rows = relevant.GroupBy(r => new { r.SeriesUnitId, r.SeriesUnitLabel, r.SeriesUnitOrder })
+            .Select(g => new SeriesUnitProgressResponse(g.Key.SeriesUnitId, g.Key.SeriesUnitLabel, g.Key.SeriesUnitOrder, g.Count(), g.Any(r => r.Active),
                 ToRollup(Combine(g.Select(r => AggFor(r.ExerciseId, total, prog))))))
             .AsEnumerable();
 
         if (active is { } act) rows = rows.Where(r => r.Active == act);
         if (!string.IsNullOrWhiteSpace(search)) rows = rows.Where(r => Matches(r.Name, search.Trim()));
 
-        return SortChapters(rows, sort).ToList();
+        return SortSeriesUnits(rows, sort).ToList();
     }
 
-    private static IEnumerable<ChapterProgressResponse> SortChapters(IEnumerable<ChapterProgressResponse> rows, (string? Key, bool Desc) s) =>
+    private static IEnumerable<SeriesUnitProgressResponse> SortSeriesUnits(IEnumerable<SeriesUnitProgressResponse> rows, (string? Key, bool Desc) s) =>
         s.Key?.ToLowerInvariant() switch
         {
-            "name" => Order(rows, r => r.Name, s.Desc).ThenBy(r => r.ChapterId),
-            "mastery" => Order(rows, r => r.Progress.AvgMasteryPercent, s.Desc).ThenBy(r => r.ChapterId),
-            "coverage" => Order(rows, r => Coverage(r.Progress), s.Desc).ThenBy(r => r.ChapterId),
-            "weak" => Order(rows, r => r.Progress.WeakItems, s.Desc).ThenBy(r => r.ChapterId),
-            "activity" => Order(rows, r => r.Progress.LastActivityAt, s.Desc).ThenBy(r => r.ChapterId),
-            _ => rows.OrderBy(r => r.OrderIndex).ThenBy(r => r.ChapterId),
+            "name" => Order(rows, r => r.Name, s.Desc).ThenBy(r => r.SeriesUnitId),
+            "mastery" => Order(rows, r => r.Progress.AvgMasteryPercent, s.Desc).ThenBy(r => r.SeriesUnitId),
+            "coverage" => Order(rows, r => Coverage(r.Progress), s.Desc).ThenBy(r => r.SeriesUnitId),
+            "weak" => Order(rows, r => r.Progress.WeakItems, s.Desc).ThenBy(r => r.SeriesUnitId),
+            "activity" => Order(rows, r => r.Progress.LastActivityAt, s.Desc).ThenBy(r => r.SeriesUnitId),
+            _ => rows.OrderBy(r => r.OrderIndex).ThenBy(r => r.SeriesUnitId),
         };
 
     /// <summary>
     /// Relevant vocabulary exercises of a chapter with progress per exercise; <c>null</c> if the chapter is not relevant.
     /// Filter/sorting as for chapters (sort keys additionally <c>title</c>, <c>active</c>; default <c>order</c>).
     /// </summary>
-    public async Task<List<ExerciseProgressResponse>?> ExercisesAsync(int childId, int subjectId, int chapterId, string? search,
+    public async Task<List<ExerciseProgressResponse>?> ExercisesAsync(int childId, int subjectId, int seriesUnitId, string? search,
         (string? Key, bool Desc) sort, bool? active, CancellationToken ct = default)
     {
         var relevant = (await LoadRelevantAsync(childId, ct))
-            .Where(r => r.SubjectId == subjectId && r.ChapterId == chapterId).ToList();
+            .Where(r => r.SubjectId == subjectId && r.SeriesUnitId == seriesUnitId).ToList();
         if (relevant.Count == 0) return null;
 
         var (total, prog) = await LoadAggAsync(childId, relevant.Select(r => r.ExerciseId).ToList(), ct);
@@ -268,9 +273,9 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
         };
 
     /// <summary>Checks whether this vocabulary exercise is relevant for the child under exactly this subject/chapter (leaf guard).</summary>
-    public async Task<bool> IsRelevantExerciseAsync(int childId, int subjectId, int chapterId, int exerciseId, CancellationToken ct = default) =>
+    public async Task<bool> IsRelevantExerciseAsync(int childId, int subjectId, int seriesUnitId, int exerciseId, CancellationToken ct = default) =>
         (await LoadRelevantAsync(childId, ct))
-            .Any(r => r.SubjectId == subjectId && r.ChapterId == chapterId && r.ExerciseId == exerciseId);
+            .Any(r => r.SubjectId == subjectId && r.SeriesUnitId == seriesUnitId && r.ExerciseId == exerciseId);
 
     /// <summary>
     /// Item learning progress of the child for an exercise. Default: weakest first. Optional <paramref name="search"/>
@@ -348,11 +353,11 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
         }
 
         /// <summary>Roll-up for a scope (subject, optionally chapter/exercise). Empty roll-up if nothing matches.</summary>
-        public MasteryRollup For(int subjectId, int? chapterId, int? exerciseId)
+        public MasteryRollup For(int subjectId, int? seriesUnitId, int? exerciseId)
         {
             var parts = _relevant
                 .Where(r => r.SubjectId == subjectId
-                    && (chapterId is null || r.ChapterId == chapterId)
+                    && (seriesUnitId is null || r.SeriesUnitId == seriesUnitId)
                     && (exerciseId is null || r.ExerciseId == exerciseId))
                 .Select(r => AggFor(r.ExerciseId, _total, _prog))
                 .ToList();

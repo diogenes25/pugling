@@ -382,7 +382,7 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
   // Die Gesamtzahl wird mitgeführt: der Server liefert nur eine Seite, und eine still gekappte
   // Auswahlliste liest sich wie „mehr gibt es nicht".
   const exercises = useAsync<Paged<ExerciseSummary>>(() => api.searchExercises(filter),
-    [filter.subjectId, filter.chapterId, filter.grade, filter.schoolType, filter.categoryId, filter.type, filter.search]);
+    [filter.subjectId, filter.seriesUnitId, filter.grade, filter.schoolType, filter.categoryId, filter.type, filter.search]);
   const [exerciseId, setExerciseId] = useState<number | "">("");
   const [settings, setSettings] = useState<PositionSettings>(defaultSettings());
 
@@ -401,7 +401,7 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
 
   return (
     <form className="card" onSubmit={add} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      {/* Umfangreiche Filterleiste statt flachem Pulldown: Fach/Kapitel/Klasse/Schulart/Typ/Art/Freitext. */}
+      {/* Umfangreiche Filterleiste statt flachem Pulldown: Fach/Reihe/Unit/Klasse/Schulart/Typ/Art/Freitext. */}
       <ExerciseFilterBar value={filter} onChange={setFilter} subjects={subjects.data ?? []} />
 
       <div className="field">

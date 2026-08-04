@@ -107,31 +107,31 @@ public static class ExerciseUsageQueries
     }
 
     /// <summary>
-    /// Does <b>any</b> exercise from <paramref name="scope"/> block deletion? For the levels above the
-    /// exercise: a subject or chapter cascades to its exercises, and <c>PlanPosition→Exercise</c> is
+    /// Does <b>any</b> exercise from <paramref name="scope"/> block deletion? For the level above the
+    /// exercise: a series unit cascades to its exercises, and <c>PlanPosition→Exercise</c> is
     /// <c>Restrict</c> – without this pre-check, deletion dies as an FK violation in a bare 500,
     /// instead of saying what is in the way.
     /// <para>
-    /// It lives here and not in the two controllers, because the answer to "which tables block
+    /// It lives here and not in the callers, because the answer to "which tables block
     /// the deletion of an exercise" needs <b>one</b> place. Previously the line was written out three
     /// times verbatim; a fourth referencing table would have had to be found in all three places – and
     /// the one forgotten would again be a 500. The <i>message texts</i> stay with the callers: they name
-    /// the level ("in this subject" / "in this chapter") and are not the same statement.
+    /// the level ("in this subject" / "in this unit") and are not the same statement.
     /// </para>
     /// </summary>
     public static async Task<bool> AnyBlockingAsync(
-        PuglingDbContext db, IQueryable<Exercise> scope, IQueryable<Chapter> chapterScope, CancellationToken ct)
+        PuglingDbContext db, IQueryable<Exercise> scope, IQueryable<SeriesUnit> seriesUnitScope, CancellationToken ct)
     {
         var ids = scope.Select(x => x.Id);
-        var chapterIds = chapterScope.Select(c => c.Id);
+        var seriesUnitIds = seriesUnitScope.Select(u => u.Id);
         return await db.PlanPositions.AsNoTracking().AnyAsync(p => ids.Contains(p.ExerciseId), ct)
             || await db.KlassenarbeitExercises.AsNoTracking().AnyAsync(x => ids.Contains(x.ExerciseId), ct)
-            // Goal milestones point at the exercise OR directly at the chapter - both FKs are Restrict, and a
-            // chapter goal hangs on no exercise. Checking only the exercise scope would let deleting a chapter
-            // with a chapter goal run into the FK violation.
+            // Goal milestones point at the exercise OR directly at the series unit - both FKs are Restrict, and a
+            // unit goal hangs on no exercise. Checking only the exercise scope would let deleting a unit
+            // with a unit goal run into the FK violation.
             || await db.KeyResults.AsNoTracking().AnyAsync(k =>
                 (k.ExerciseId != null && ids.Contains(k.ExerciseId.Value))
-                || (k.ChapterId != null && chapterIds.Contains(k.ChapterId.Value)), ct);
+                || (k.SeriesUnitId != null && seriesUnitIds.Contains(k.SeriesUnitId.Value)), ct);
     }
 
     /// <summary>

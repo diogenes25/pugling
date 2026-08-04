@@ -147,13 +147,13 @@ public class SeedContractTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task Lehrer_Darf_Seine_Geseedete_Uebung_Bearbeiten()
     {
-        int subjectId, chapterId, exerciseId;
+        int seriesId, seriesUnitId, exerciseId;
         using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-            var uebung = await db.Exercises.AsNoTracking().Include(e => e.Chapter)
+            var uebung = await db.Exercises.AsNoTracking().Include(e => e.SeriesUnit)
                 .FirstAsync(e => e.AuthorAdultId == 2 && e.Type == Pugling.Api.Exercises.ExerciseTypeKeys.Vocabulary);
-            (subjectId, chapterId, exerciseId) = (uebung.Chapter!.SubjectId, uebung.ChapterId, uebung.Id);
+            (seriesId, seriesUnitId, exerciseId) = (uebung.SeriesUnit!.SeriesId, uebung.SeriesUnitId, uebung.Id);
         }
 
         // The check runs through an *additive* write (creating an item), not through the full PUT: the same
@@ -161,7 +161,7 @@ public class SeedContractTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         // returns 403 for another creator (ExerciseItemsAndProgressTests) - here it has to succeed.
         var lehrer = await TestApi.FatherAsync(factory, id: 2, pin: "9999");
         var res = await lehrer.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items",
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}/items",
             new { front = "climate", back = "Klima" });
 
         Assert.Equal(HttpStatusCode.Created, res.StatusCode);

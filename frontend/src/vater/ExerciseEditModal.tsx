@@ -177,7 +177,7 @@ function MetaEditor({ detail, type, route, onSaved }: {
           sourceLang: form.sourceLang || null, targetLang: form.targetLang || null }
       : detail.config;
     const ok = await action.run(() => api.updateExercise(
-      detail.subjectId, detail.chapterId, route, detail.id, payloadFrom(detail, form, config)), "Gespeichert.");
+      detail.seriesId, detail.seriesUnitId, route, detail.id, payloadFrom(detail, form, config)), "Gespeichert.");
     if (ok) onSaved();
   }
 
@@ -291,7 +291,7 @@ function ContentEditor({ detail, type, route, onSaved }: {
     const problem = contentProblem(type, rows, extra, 0);
     if (problem) { action.fail(problem); return; }
     const ok = await action.run(() => api.updateExercise(
-      detail.subjectId, detail.chapterId, route, detail.id,
+      detail.seriesId, detail.seriesUnitId, route, detail.id,
       payloadFrom(detail, initialForm(detail), buildTypeConfig(type, rows, extra))), "Inhalt gespeichert.");
     if (ok) onSaved();
   }
@@ -319,7 +319,7 @@ function ContentEditor({ detail, type, route, onSaved }: {
  */
 function ItemEditor({ detail }: { detail: ExerciseDetail }) {
   const items = useAsync<VocabItemResponse[]>(
-    () => api.exerciseItems(detail.subjectId, detail.chapterId, detail.id), [detail.id]);
+    () => api.exerciseItems(detail.seriesId, detail.seriesUnitId, detail.id), [detail.id]);
   const action = useAction();
 
   async function act(fn: () => Promise<unknown>, okText: string) {
@@ -360,10 +360,10 @@ function ItemEditor({ detail }: { detail: ExerciseDetail }) {
               {items.data.map((it, i) => (
                 <ItemRow key={it.id} item={it} position={i + 1} busy={action.busy} exerciseId={detail.id}
                   storeHref={storeHref(it.front)}
-                  onHint={(hint) => act(() => api.patchExerciseItem(detail.subjectId, detail.chapterId, detail.id, it.id, { hint }), "Hinweis gespeichert.")}
+                  onHint={(hint) => act(() => api.patchExerciseItem(detail.seriesId, detail.seriesUnitId, detail.id, it.id, { hint }), "Hinweis gespeichert.")}
                   onRemove={() => {
                     if (!confirmAction(`„${it.front} → ${it.back}" aus dieser Übung entfernen? Die Vokabel bleibt im Store.`)) return;
-                    act(() => api.deleteExerciseItem(detail.subjectId, detail.chapterId, detail.id, it.id), "Wort entfernt.");
+                    act(() => api.deleteExerciseItem(detail.seriesId, detail.seriesUnitId, detail.id, it.id), "Wort entfernt.");
                   }} />
               ))}
               {items.data.length === 0 && <tr><td colSpan={5} className="muted">Noch keine Wörter – unten hinzufügen.</td></tr>}
@@ -373,7 +373,7 @@ function ItemEditor({ detail }: { detail: ExerciseDetail }) {
       )}
 
       <AddItem detail={detail} busy={action.busy}
-        onAdd={(body) => act(() => api.addExerciseItem(detail.subjectId, detail.chapterId, detail.id, body), "Wort hinzugefügt.")} />
+        onAdd={(body) => act(() => api.addExerciseItem(detail.seriesId, detail.seriesUnitId, detail.id, body), "Wort hinzugefügt.")} />
 
       <StatusBanner message={action.message} />
     </section>

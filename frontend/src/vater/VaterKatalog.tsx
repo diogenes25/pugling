@@ -4,7 +4,8 @@ import { CatalogAdmin } from "./CatalogAdmin";
 import type { SubjectResponse } from "../lib/types";
 
 /**
- * Der Katalog als eigener Bereich: **Fach → Kapitel → Art**.
+ * Der Katalog als eigener Bereich: **Fach → Art**. Übungen selbst hängen seit B-106 an einer
+ * Lehrwerk-Unit (`/vater/lehrwerke`), nicht mehr an einem Kapitel des Fachs.
  *
  * Er lag eingeklappt auf der Übungen-Seite und war darum kaum zu finden (Anmerkung 12). Der Katalog ist
  * die *Behälter-Hierarchie* der Übungen und wird von **allen Vätern geteilt** – das macht ihn zu einem
@@ -19,8 +20,8 @@ export function VaterKatalog() {
     <>
       <h2 className="h-section">Katalog</h2>
       <p className="sub">
-        Fächer, Kapitel und Arten sind der <strong>gemeinsame</strong> Rahmen aller Übungen – auch der von
-        anderen Vätern. Hier legst du sie an, benennst sie um und löschst sie.
+        Fächer und Arten sind der <strong>gemeinsame</strong> Rahmen aller Übungen – auch der von anderen
+        Vätern. Hier legst du sie an, benennst sie um und löschst sie.
       </p>
       {subjects.error && <div className="banner err">{subjects.error}</div>}
       {/*

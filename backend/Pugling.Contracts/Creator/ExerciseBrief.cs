@@ -8,9 +8,9 @@ namespace Pugling.Contracts.Creator;
 /// the listening transcript. Endpoints listing exercises are reachable for a student token (tags, class
 /// tests), so a config field here would hand the child the answer to every assigned exercise – the very
 /// assurance the play path upholds by withholding <c>reveal</c>. Whoever needs the configuration reads
-/// the creator-gated type detail (<c>creator/subjects/{}/chapters/{}/&lt;type&gt;/{id}</c>).
+/// the creator-gated type detail (<c>creator/textbook-series/{}/units/{}/&lt;type&gt;/{id}</c>).
 /// </para>
 /// </summary>
 public record ExerciseBrief(
-    int Id, int ChapterId, string ChapterName, int? SubjectId, string SubjectName,
+    int Id, int SeriesUnitId, string SeriesUnitLabel, int? SubjectId, string SubjectName,
     string Type, string Title, int RewardPoints);

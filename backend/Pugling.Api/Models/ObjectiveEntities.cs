@@ -55,12 +55,12 @@ public class KeyResult
     public int ObjectiveId { get; set; }
     public Objective? Objective { get; set; }
 
-    // --- Catalog scope (hierarchy: Exercise ⊂ Chapter ⊂ Subject) ---
+    // --- Catalog scope (hierarchy: Exercise ⊂ SeriesUnit ⊂ Subject) ---
     /// <summary>Subject of the milestone (mandatory).</summary>
     public int SubjectId { get; set; }
-    /// <summary>Optional: chapter; <c>null</c> = the whole subject. Only allowed for mastery metrics.</summary>
-    public int? ChapterId { get; set; }
-    /// <summary>Optional: a concrete vocabulary exercise; requires <see cref="ChapterId"/>. Mastery metrics only.</summary>
+    /// <summary>Optional: series unit; <c>null</c> = the whole subject. Only allowed for mastery metrics.</summary>
+    public int? SeriesUnitId { get; set; }
+    /// <summary>Optional: a concrete vocabulary exercise; requires <see cref="SeriesUnitId"/>. Mastery metrics only.</summary>
     public int? ExerciseId { get; set; }
 
     // --- Goal ---

@@ -19,8 +19,8 @@ public sealed record CreatorBriefing(
     ChildFacts? Child,
     int SubjectId,
     string SubjectName,
-    int ChapterId,
-    string ChapterName,
+    int SeriesUnitId,
+    string SeriesUnitLabel,
     string? Topic,
     string SourceLang,
     string TargetLang,
@@ -84,7 +84,7 @@ public sealed record CreatorBriefing(
 
         text.AppendLine("## Der Lernstoff (fest vorgegeben)");
         text.AppendLine($"- Fach: {SubjectName}");
-        text.AppendLine($"- Kapitel: {ChapterName}");
+        text.AppendLine($"- Unit: {SeriesUnitLabel}");
         if (!string.IsNullOrWhiteSpace(Topic)) text.AppendLine($"- Thema: {Topic}");
         if (Profile?.ToPromptText() is { Length: > 0 } material) text.Append(material);
         // Without a cataloged textbook, the child's free-text book carries the subject matter.

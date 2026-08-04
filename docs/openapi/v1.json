@@ -5764,12 +5764,12 @@
         }
       }
     },
-    "/api/v1/student/children/{childId}/learn/subjects/{subjectId}/chapters": {
+    "/api/v1/student/children/{childId}/learn/subjects/{subjectId}/series-units": {
       "get": {
         "tags": [
           "Student \u2013 Child Progress"
         ],
-        "summary": "Chapters of a subject with progress (404 if the subject is not relevant). Filters as for subjects;\nsort additionally \u0060order\u0060 (default, chapter order). Total count in the \u0060X-Total-Count\u0060 header.",
+        "summary": "Series units of a subject with progress (404 if the subject is not relevant). Filters as for subjects;\nsort additionally \u0060order\u0060 (default, unit order). Total count in the \u0060X-Total-Count\u0060 header.",
         "parameters": [
           {
             "name": "childId",
@@ -5864,7 +5864,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ChapterProgressResponse"
+                    "$ref": "#/components/schemas/SeriesUnitProgressResponse"
                   }
                 }
               }
@@ -5873,12 +5873,12 @@
         }
       }
     },
-    "/api/v1/student/children/{childId}/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary": {
+    "/api/v1/student/children/{childId}/learn/subjects/{subjectId}/series-units/{seriesUnitId}/vocabulary": {
       "get": {
         "tags": [
           "Student \u2013 Child Progress"
         ],
-        "summary": "Relevant vocabulary exercises of a chapter with progress per exercise (404 if the chapter is not relevant).\nFilters as for chapters; sort additionally \u0060title\u0060, \u0060active\u0060 (default \u0060order\u0060).\nTotal count in the \u0060X-Total-Count\u0060 header.",
+        "summary": "Relevant vocabulary exercises of a series unit with progress per exercise (404 if the unit is not relevant).\nFilters as for series units; sort additionally \u0060title\u0060, \u0060active\u0060 (default \u0060order\u0060).\nTotal count in the \u0060X-Total-Count\u0060 header.",
         "parameters": [
           {
             "name": "childId",
@@ -5901,7 +5901,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -5992,12 +5992,12 @@
         }
       }
     },
-    "/api/v1/student/children/{childId}/learn/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items": {
+    "/api/v1/student/children/{childId}/learn/subjects/{subjectId}/series-units/{seriesUnitId}/vocabulary/{exerciseId}/items": {
       "get": {
         "tags": [
           "Student \u2013 Child Progress"
         ],
-        "summary": "Item learning progress of the child for a relevant vocabulary exercise, weakest first\n(404 if the exercise is neither assigned to the child under this subject/chapter nor carries progress).\nsearch filters by word/translation; sort: \u0060word\u0060, \u0060mastery\u0060, \u0060box\u0060,\n\u0060seen\u0060, \u0060activity\u0060. Total count in the \u0060X-Total-Count\u0060 header.",
+        "summary": "Item learning progress of the child for a relevant vocabulary exercise, weakest first\n(404 if the exercise is neither assigned to the child under this subject/series unit nor carries progress).\nsearch filters by word/translation; sort: \u0060word\u0060, \u0060mastery\u0060, \u0060box\u0060,\n\u0060seen\u0060, \u0060activity\u0060. Total count in the \u0060X-Total-Count\u0060 header.",
         "parameters": [
           {
             "name": "childId",
@@ -6020,7 +6020,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -8649,319 +8649,6 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters": {
-      "get": {
-        "tags": [
-          "Creator \u2013 Chapters"
-        ],
-        "summary": "List of a subject\u0027s chapters.",
-        "parameters": [
-          {
-            "name": "subjectId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ChapterResponse"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Creator \u2013 Chapters"
-        ],
-        "summary": "Creates a chapter under a subject.",
-        "parameters": [
-          {
-            "name": "subjectId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateChapterDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateChapterDto"
-              }
-            },
-            "application/*\u002Bjson": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateChapterDto"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChapterResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}": {
-      "get": {
-        "tags": [
-          "Creator \u2013 Chapters"
-        ],
-        "summary": "A single chapter.",
-        "parameters": [
-          {
-            "name": "subjectId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "chapterId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChapterResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Creator \u2013 Chapters"
-        ],
-        "summary": "Changes a chapter (partial).",
-        "parameters": [
-          {
-            "name": "subjectId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "chapterId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateChapterDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateChapterDto"
-              }
-            },
-            "application/*\u002Bjson": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateChapterDto"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChapterResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Creator \u2013 Chapters"
-        ],
-        "summary": "Deletes a chapter along with all its exercises. Not possible while an exercise in it is used in\na study plan or a class test.",
-        "parameters": [
-          {
-            "name": "subjectId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "chapterId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No Content",
-            "content": {
-              "application/json": {}
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/creator/cloze-texts": {
       "get": {
         "tags": [
@@ -9633,7 +9320,7 @@
           {
             "name": "subjectId",
             "in": "query",
-            "description": "Subject.",
+            "description": "Subject (reached transitively through the series of the exercise\u0027s unit).",
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
               "type": [
@@ -9644,9 +9331,9 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "query",
-            "description": "Chapter (usually implies a subject).",
+            "description": "Series unit (usually implies a subject).",
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
               "type": [
@@ -9717,7 +9404,7 @@
           {
             "name": "sort",
             "in": "query",
-            "description": "Sort column: \u0060title\u0060, \u0060type\u0060, \u0060grade\u0060, \u0060source\u0060, \u0060created\u0060.\n    Short form \u0060-title\u0060 = descending. Without a value: subject \u2192 chapter \u2192 order.",
+            "description": "Sort column: \u0060title\u0060, \u0060type\u0060, \u0060grade\u0060, \u0060source\u0060, \u0060created\u0060.\n    Short form \u0060-title\u0060 = descending. Without a value: subject \u2192 series unit \u2192 order.",
             "schema": {
               "type": "string"
             }
@@ -10245,7 +9932,7 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/refs-from-tags": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}/refs-from-tags": {
       "post": {
         "tags": [
           "Creator \u2013 Vocabulary"
@@ -10253,7 +9940,7 @@
         "summary": "Sets the items of the exercise as a snapshot to the current vocabulary of the named tags (optionally only\nbase forms, optionally all tags via AND). The adult thereby materializes \u0022all words from unit 3\u0022 \u2013 the\nreconciliation preserves the id (and the progress) of surviving words; only dropped ones disappear.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -10263,7 +9950,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -10337,7 +10024,7 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}/items": {
       "get": {
         "tags": [
           "Creator \u2013 Vocabulary"
@@ -10345,7 +10032,7 @@
         "summary": "All items of the exercise in order (front/back from the store).",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -10355,7 +10042,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -10408,7 +10095,7 @@
         "summary": "Adds a vocabulary pair to the exercise (by store id or inline). New items land at the end.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -10418,7 +10105,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -10502,7 +10189,7 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items/{itemId}": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}/items/{itemId}": {
       "get": {
         "tags": [
           "Creator \u2013 Vocabulary"
@@ -10510,7 +10197,7 @@
         "summary": "A single item of the exercise.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -10520,7 +10207,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -10580,7 +10267,7 @@
         "summary": "Changes an item: swap the vocabulary entry (by id or inline), adjust the hint or order.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -10590,7 +10277,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -10690,7 +10377,7 @@
         "summary": "Removes an item from the exercise.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -10700,7 +10387,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -10760,17 +10447,17 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary": {
       "get": {
         "tags": [
           "Creator \u2013 Vocabulary"
         ],
-        "summary": "List of the exercises of this type in the chapter.",
+        "summary": "List of the exercises of this type in the series unit.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
-            "description": "Subject the chapter belongs to.",
+            "description": "Series the unit belongs to.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -10779,9 +10466,9 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
-            "description": "Chapter whose exercises are read.",
+            "description": "Series unit whose exercises are read.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -10866,7 +10553,7 @@
         ],
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -10876,7 +10563,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -10940,7 +10627,7 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}": {
       "get": {
         "tags": [
           "Creator \u2013 Vocabulary"
@@ -10948,7 +10635,7 @@
         "summary": "A single exercise.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -10958,7 +10645,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -11007,7 +10694,7 @@
         ],
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -11017,7 +10704,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -11097,7 +10784,7 @@
         "summary": "Deletes an exercise. Not possible while it is embedded in a study plan or a class test.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -11107,7 +10794,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -11157,17 +10844,17 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/reading": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/reading": {
       "get": {
         "tags": [
           "Creator \u2013 Reading"
         ],
-        "summary": "List of the exercises of this type in the chapter.",
+        "summary": "List of the exercises of this type in the series unit.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
-            "description": "Subject the chapter belongs to.",
+            "description": "Series the unit belongs to.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -11176,9 +10863,9 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
-            "description": "Chapter whose exercises are read.",
+            "description": "Series unit whose exercises are read.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -11263,7 +10950,7 @@
         ],
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -11273,7 +10960,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -11337,7 +11024,7 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/reading/{exerciseId}": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/reading/{exerciseId}": {
       "get": {
         "tags": [
           "Creator \u2013 Reading"
@@ -11345,7 +11032,7 @@
         "summary": "A single exercise.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -11355,7 +11042,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -11404,7 +11091,7 @@
         ],
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -11414,7 +11101,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -11494,7 +11181,7 @@
         "summary": "Deletes an exercise. Not possible while it is embedded in a study plan or a class test.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -11504,7 +11191,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -11554,17 +11241,17 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/cloze": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/cloze": {
       "get": {
         "tags": [
           "Creator \u2013 Cloze"
         ],
-        "summary": "List of the exercises of this type in the chapter.",
+        "summary": "List of the exercises of this type in the series unit.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
-            "description": "Subject the chapter belongs to.",
+            "description": "Series the unit belongs to.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -11573,9 +11260,9 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
-            "description": "Chapter whose exercises are read.",
+            "description": "Series unit whose exercises are read.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -11660,7 +11347,7 @@
         ],
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -11670,7 +11357,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -11734,7 +11421,7 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/cloze/{exerciseId}": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/cloze/{exerciseId}": {
       "get": {
         "tags": [
           "Creator \u2013 Cloze"
@@ -11742,7 +11429,7 @@
         "summary": "A single exercise.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -11752,7 +11439,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -11801,7 +11488,7 @@
         ],
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -11811,7 +11498,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -11891,7 +11578,7 @@
         "summary": "Deletes an exercise. Not possible while it is embedded in a study plan or a class test.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -11901,7 +11588,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -11951,17 +11638,17 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/essays": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/essays": {
       "get": {
         "tags": [
           "Creator \u2013 Essays"
         ],
-        "summary": "List of the exercises of this type in the chapter.",
+        "summary": "List of the exercises of this type in the series unit.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
-            "description": "Subject the chapter belongs to.",
+            "description": "Series the unit belongs to.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -11970,9 +11657,9 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
-            "description": "Chapter whose exercises are read.",
+            "description": "Series unit whose exercises are read.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -12057,7 +11744,7 @@
         ],
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -12067,7 +11754,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -12131,7 +11818,7 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/essays/{exerciseId}": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/essays/{exerciseId}": {
       "get": {
         "tags": [
           "Creator \u2013 Essays"
@@ -12139,7 +11826,7 @@
         "summary": "A single exercise.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -12149,7 +11836,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -12198,7 +11885,7 @@
         ],
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -12208,7 +11895,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -12288,7 +11975,7 @@
         "summary": "Deletes an exercise. Not possible while it is embedded in a study plan or a class test.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -12298,7 +11985,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -12348,17 +12035,17 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/listening": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/listening": {
       "get": {
         "tags": [
           "Creator \u2013 Listening"
         ],
-        "summary": "List of the exercises of this type in the chapter.",
+        "summary": "List of the exercises of this type in the series unit.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
-            "description": "Subject the chapter belongs to.",
+            "description": "Series the unit belongs to.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -12367,9 +12054,9 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
-            "description": "Chapter whose exercises are read.",
+            "description": "Series unit whose exercises are read.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -12454,7 +12141,7 @@
         ],
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -12464,7 +12151,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -12528,7 +12215,7 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/listening/{exerciseId}": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/listening/{exerciseId}": {
       "get": {
         "tags": [
           "Creator \u2013 Listening"
@@ -12536,7 +12223,7 @@
         "summary": "A single exercise.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -12546,7 +12233,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -12595,7 +12282,7 @@
         ],
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -12605,7 +12292,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -12685,7 +12372,7 @@
         "summary": "Deletes an exercise. Not possible while it is embedded in a study plan or a class test.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -12695,7 +12382,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -12745,17 +12432,17 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/grammar": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/grammar": {
       "get": {
         "tags": [
           "Creator \u2013 Grammar"
         ],
-        "summary": "List of the exercises of this type in the chapter.",
+        "summary": "List of the exercises of this type in the series unit.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
-            "description": "Subject the chapter belongs to.",
+            "description": "Series the unit belongs to.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -12764,9 +12451,9 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
-            "description": "Chapter whose exercises are read.",
+            "description": "Series unit whose exercises are read.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -12851,7 +12538,7 @@
         ],
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -12861,7 +12548,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -12925,7 +12612,7 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/grammar/{exerciseId}": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/grammar/{exerciseId}": {
       "get": {
         "tags": [
           "Creator \u2013 Grammar"
@@ -12933,7 +12620,7 @@
         "summary": "A single exercise.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -12943,7 +12630,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -12992,7 +12679,7 @@
         ],
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -13002,7 +12689,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -13082,7 +12769,7 @@
         "summary": "Deletes an exercise. Not possible while it is embedded in a study plan or a class test.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -13092,7 +12779,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -13142,7 +12829,7 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/matching/{exerciseId}/check": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/matching/{exerciseId}/check": {
       "post": {
         "tags": [
           "Creator \u2013 Matching"
@@ -13150,7 +12837,7 @@
         "summary": "Evaluates the matches: per pair, the right side given for the left side counts.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -13160,7 +12847,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -13224,17 +12911,17 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/matching": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/matching": {
       "get": {
         "tags": [
           "Creator \u2013 Matching"
         ],
-        "summary": "List of the exercises of this type in the chapter.",
+        "summary": "List of the exercises of this type in the series unit.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
-            "description": "Subject the chapter belongs to.",
+            "description": "Series the unit belongs to.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -13243,9 +12930,9 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
-            "description": "Chapter whose exercises are read.",
+            "description": "Series unit whose exercises are read.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -13330,7 +13017,7 @@
         ],
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -13340,7 +13027,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -13404,7 +13091,7 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/matching/{exerciseId}": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/matching/{exerciseId}": {
       "get": {
         "tags": [
           "Creator \u2013 Matching"
@@ -13412,7 +13099,7 @@
         "summary": "A single exercise.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -13422,7 +13109,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -13471,7 +13158,7 @@
         ],
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -13481,7 +13168,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -13561,7 +13248,7 @@
         "summary": "Deletes an exercise. Not possible while it is embedded in a study plan or a class test.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -13571,7 +13258,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -13621,17 +13308,17 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/translation": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/translation": {
       "get": {
         "tags": [
           "Creator \u2013 Translation"
         ],
-        "summary": "List of the exercises of this type in the chapter.",
+        "summary": "List of the exercises of this type in the series unit.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
-            "description": "Subject the chapter belongs to.",
+            "description": "Series the unit belongs to.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -13640,9 +13327,9 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
-            "description": "Chapter whose exercises are read.",
+            "description": "Series unit whose exercises are read.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -13727,7 +13414,7 @@
         ],
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -13737,7 +13424,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -13801,7 +13488,7 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/translation/{exerciseId}": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/translation/{exerciseId}": {
       "get": {
         "tags": [
           "Creator \u2013 Translation"
@@ -13809,7 +13496,7 @@
         "summary": "A single exercise.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -13819,7 +13506,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -13868,7 +13555,7 @@
         ],
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -13878,7 +13565,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -13958,7 +13645,7 @@
         "summary": "Deletes an exercise. Not possible while it is embedded in a study plan or a class test.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -13968,7 +13655,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -14018,7 +13705,7 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/birkenbihl/{exerciseId}/sentences": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/birkenbihl/{exerciseId}/sentences": {
       "post": {
         "tags": [
           "Creator \u2013 Birkenbihl"
@@ -14026,7 +13713,7 @@
         "summary": "Decodes a sentence automatically via the vocabulary store and \u003Cb\u003Esaves\u003C/b\u003E it in the exercise.\nEvery word gets an exercise-wide unique \u0060wordId\u0060 (\u2192 individually exchangeable later), the sentence\ngets a \u0060sentenceId\u0060. Unknown words come back with an empty gloss; ambiguous ones with candidates.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -14036,7 +13723,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -14120,7 +13807,7 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/birkenbihl/{exerciseId}/words/{wordId}": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/birkenbihl/{exerciseId}/words/{wordId}": {
       "put": {
         "tags": [
           "Creator \u2013 Birkenbihl"
@@ -14128,7 +13815,7 @@
         "summary": "Swaps the meaning of a single word (homonym correction). With \u0060vocabularyId\u0060, the gloss follows\nthe chosen card; with only \u0060gloss\u0060, a free gloss without a card is set.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -14138,7 +13825,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -14232,7 +13919,7 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/birkenbihl/{exerciseId}/words/{wordId}/candidates": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/birkenbihl/{exerciseId}/words/{wordId}/candidates": {
       "get": {
         "tags": [
           "Creator \u2013 Birkenbihl"
@@ -14240,7 +13927,7 @@
         "summary": "All matching vocabulary cards for the current spelling of a word (for choosing the meaning).",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -14250,7 +13937,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -14307,7 +13994,7 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/birkenbihl/{exerciseId}/sentences/{sentenceId}": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/birkenbihl/{exerciseId}/sentences/{sentenceId}": {
       "delete": {
         "tags": [
           "Creator \u2013 Birkenbihl"
@@ -14315,7 +14002,7 @@
         "summary": "Removes a sentence from the exercise.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -14325,7 +14012,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -14435,17 +14122,17 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/birkenbihl": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/birkenbihl": {
       "get": {
         "tags": [
           "Creator \u2013 Birkenbihl"
         ],
-        "summary": "List of the exercises of this type in the chapter.",
+        "summary": "List of the exercises of this type in the series unit.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
-            "description": "Subject the chapter belongs to.",
+            "description": "Series the unit belongs to.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -14454,9 +14141,9 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
-            "description": "Chapter whose exercises are read.",
+            "description": "Series unit whose exercises are read.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -14541,7 +14228,7 @@
         ],
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -14551,7 +14238,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -14615,7 +14302,7 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/birkenbihl/{exerciseId}": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/birkenbihl/{exerciseId}": {
       "get": {
         "tags": [
           "Creator \u2013 Birkenbihl"
@@ -14623,7 +14310,7 @@
         "summary": "A single exercise.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -14633,7 +14320,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -14682,7 +14369,7 @@
         ],
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -14692,7 +14379,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -14772,7 +14459,7 @@
         "summary": "Deletes an exercise. Not possible while it is embedded in a study plan or a class test.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -14782,7 +14469,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -14832,7 +14519,7 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic/{exerciseId}/check": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic/{exerciseId}/check": {
       "post": {
         "tags": [
           "Creator \u2013 Arithmetic"
@@ -14840,7 +14527,7 @@
         "summary": "Evaluates the child\u0027s solutions against the stored problems (numeric, with tolerance).",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -14850,7 +14537,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -14914,17 +14601,17 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic": {
       "get": {
         "tags": [
           "Creator \u2013 Arithmetic"
         ],
-        "summary": "List of the exercises of this type in the chapter.",
+        "summary": "List of the exercises of this type in the series unit.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
-            "description": "Subject the chapter belongs to.",
+            "description": "Series the unit belongs to.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -14933,9 +14620,9 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
-            "description": "Chapter whose exercises are read.",
+            "description": "Series unit whose exercises are read.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -15020,7 +14707,7 @@
         ],
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -15030,7 +14717,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -15094,7 +14781,7 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic/{exerciseId}": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic/{exerciseId}": {
       "get": {
         "tags": [
           "Creator \u2013 Arithmetic"
@@ -15102,7 +14789,7 @@
         "summary": "A single exercise.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -15112,7 +14799,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -15161,7 +14848,7 @@
         ],
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -15171,7 +14858,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -15251,7 +14938,7 @@
         "summary": "Deletes an exercise. Not possible while it is embedded in a study plan or a class test.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -15261,7 +14948,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -15311,15 +14998,15 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic-drill/{exerciseId}/generate": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic-drill/{exerciseId}/generate": {
       "post": {
         "tags": [
           "Creator \u2013 Arithmetic Drill"
         ],
-        "summary": "Generates a random set according to the stored rules. The used\n\u0060Seed\u0060 is also returned \u2013 send it along with the later Task\u0026lt;ActionResult\u0026lt;CheckResult\u0026gt;\u0026gt; ArithmeticDrillController.Check(int subjectId, int chapterId, int exerciseId, CheckDto body, CancellationToken ct = default(CancellationToken)), so exactly this set is evaluated.",
+        "summary": "Generates a random set according to the stored rules. The used\n\u0060Seed\u0060 is also returned \u2013 send it along with the later Task\u0026lt;ActionResult\u0026lt;CheckResult\u0026gt;\u0026gt; ArithmeticDrillController.Check(int seriesId, int seriesUnitId, int exerciseId, CheckDto body, CancellationToken ct = default(CancellationToken)), so exactly this set is evaluated.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -15329,7 +15016,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -15395,7 +15082,7 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic-drill/{exerciseId}/check": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic-drill/{exerciseId}/check": {
       "post": {
         "tags": [
           "Creator \u2013 Arithmetic Drill"
@@ -15403,7 +15090,7 @@
         "summary": "Evaluates a previously generated set: the same \u0060Seed\u0060 is regenerated and checked.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -15413,7 +15100,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -15487,17 +15174,17 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic-drill": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic-drill": {
       "get": {
         "tags": [
           "Creator \u2013 Arithmetic Drill"
         ],
-        "summary": "List of the exercises of this type in the chapter.",
+        "summary": "List of the exercises of this type in the series unit.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
-            "description": "Subject the chapter belongs to.",
+            "description": "Series the unit belongs to.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -15506,9 +15193,9 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
-            "description": "Chapter whose exercises are read.",
+            "description": "Series unit whose exercises are read.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -15593,7 +15280,7 @@
         ],
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -15603,7 +15290,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -15667,7 +15354,7 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/arithmetic-drill/{exerciseId}": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic-drill/{exerciseId}": {
       "get": {
         "tags": [
           "Creator \u2013 Arithmetic Drill"
@@ -15675,7 +15362,7 @@
         "summary": "A single exercise.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -15685,7 +15372,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -15734,7 +15421,7 @@
         ],
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -15744,7 +15431,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -15824,7 +15511,7 @@
         "summary": "Deletes an exercise. Not possible while it is embedded in a study plan or a class test.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -15834,7 +15521,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -15884,7 +15571,7 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/list/{exerciseId}/check": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/list/{exerciseId}/check": {
       "post": {
         "tags": [
           "Creator \u2013 List"
@@ -15892,7 +15579,7 @@
         "summary": "Evaluates the given entries \u2013 as a set, or position-exact with \u0060Ordered\u0060.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -15902,7 +15589,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -15966,17 +15653,17 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/list": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/list": {
       "get": {
         "tags": [
           "Creator \u2013 List"
         ],
-        "summary": "List of the exercises of this type in the chapter.",
+        "summary": "List of the exercises of this type in the series unit.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
-            "description": "Subject the chapter belongs to.",
+            "description": "Series the unit belongs to.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -15985,9 +15672,9 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
-            "description": "Chapter whose exercises are read.",
+            "description": "Series unit whose exercises are read.",
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -16072,7 +15759,7 @@
         ],
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -16082,7 +15769,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -16146,7 +15833,7 @@
         }
       }
     },
-    "/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/list/{exerciseId}": {
+    "/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/list/{exerciseId}": {
       "get": {
         "tags": [
           "Creator \u2013 List"
@@ -16154,7 +15841,7 @@
         "summary": "A single exercise.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -16164,7 +15851,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -16213,7 +15900,7 @@
         ],
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -16223,7 +15910,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -16303,7 +15990,7 @@
         "summary": "Deletes an exercise. Not possible while it is embedded in a study plan or a class test.",
         "parameters": [
           {
-            "name": "subjectId",
+            "name": "seriesId",
             "in": "path",
             "required": true,
             "schema": {
@@ -16313,7 +16000,7 @@
             }
           },
           {
-            "name": "chapterId",
+            "name": "seriesUnitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -18644,7 +18331,7 @@
         "tags": [
           "Creator \u2013 Textbook Series"
         ],
-        "summary": "Deletes a unit (owner of the series only). Child textbooks pointing to it only lose the\nassignment (SetNull) \u2013 the child\u0027s learning progress does not hang off the unit.",
+        "summary": "Deletes a unit along with its exercises (owner of the series only). Not possible while an\nexercise in it is used in a study plan, a class test or an objective milestone. Child textbooks\npointing to the unit itself only lose the assignment (SetNull) \u2013 the child\u0027s learning progress\ndoes not hang off the unit directly.",
         "parameters": [
           {
             "name": "seriesId",
@@ -18686,6 +18373,16 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -18873,7 +18570,7 @@
         "tags": [
           "Creator \u2013 Subjects"
         ],
-        "summary": "Deletes a subject along with all its chapters and exercises. Not possible while an exercise under it\nis used in a study plan or a class test.",
+        "summary": "Deletes a subject along with its exercise categories. Since B-106 a subject no longer cascades to\nany exercise (those hang off a textbook series unit instead) - deleting it only clears the FK on\ntextbook series that reference it (SetNull) and on exercises pointing at one of its categories.",
         "parameters": [
           {
             "name": "subjectId",
@@ -18895,16 +18592,6 @@
           },
           "404": {
             "description": "Not Found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -20034,7 +19721,7 @@
         "tags": [
           "Creator \u2013 Textbook Series"
         ],
-        "summary": "Deletes a series along with its units (owner only). Deliberately \u003Cb\u003Ewithout\u003C/b\u003E a usage lock: child textbooks\nand profiles only lose the assignment (SetNull) and remain usable with their free text.",
+        "summary": "Deletes a series along with its units and their exercises (owner only). Not possible while an\nexercise in it is used in a study plan, a class test or an objective milestone (B-106: exercises\nnow cascade from series \u2192 unit). Child textbooks and profiles pointing at the series itself only\nlose the assignment (SetNull) and remain usable with their free text.",
         "parameters": [
           {
             "name": "seriesId",
@@ -20066,6 +19753,16 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -22353,101 +22050,6 @@
         },
         "description": "An exercise category within a subject."
       },
-      "ChapterProgressResponse": {
-        "required": [
-          "active",
-          "chapterId",
-          "exerciseCount",
-          "name",
-          "orderIndex",
-          "progress"
-        ],
-        "type": "object",
-        "properties": {
-          "chapterId": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
-          },
-          "name": {
-            "type": "string"
-          },
-          "orderIndex": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
-          },
-          "exerciseCount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
-          },
-          "active": {
-            "type": "boolean"
-          },
-          "progress": {
-            "$ref": "#/components/schemas/MasteryRollup"
-          }
-        },
-        "description": "Progress of a chapter. Active = contains \u22651 exercise currently assigned."
-      },
-      "ChapterResponse": {
-        "required": [
-          "exercisesCount",
-          "id",
-          "name",
-          "orderIndex",
-          "subjectId"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
-          },
-          "subjectId": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
-          },
-          "name": {
-            "type": "string"
-          },
-          "orderIndex": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
-          },
-          "exercisesCount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
-          }
-        },
-        "description": "A chapter within a subject."
-      },
       "CheckDto": {
         "required": [
           "answers"
@@ -23034,27 +22636,6 @@
         },
         "description": "Input for creating a category."
       },
-      "CreateChapterDto": {
-        "required": [
-          "name",
-          "orderIndex"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "orderIndex": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
-          }
-        },
-        "description": "Input for creating a chapter."
-      },
       "CreateChildDto": {
         "required": [
           "name"
@@ -23462,7 +23043,7 @@
             ],
             "format": "int32"
           },
-          "chapterId": {
+          "seriesUnitId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "null",
@@ -25039,10 +24620,10 @@
       },
       "ExerciseBrief": {
         "required": [
-          "chapterId",
-          "chapterName",
           "id",
           "rewardPoints",
+          "seriesUnitId",
+          "seriesUnitLabel",
           "subjectName",
           "title",
           "type"
@@ -25057,7 +24638,7 @@
             ],
             "format": "int32"
           },
-          "chapterId": {
+          "seriesUnitId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -25065,7 +24646,7 @@
             ],
             "format": "int32"
           },
-          "chapterName": {
+          "seriesUnitLabel": {
             "type": "string"
           },
           "subjectId": {
@@ -25095,7 +24676,7 @@
             "format": "int32"
           }
         },
-        "description": "            Lean, type-spanning view of a catalog exercise \u2013 for lists in which exercises of\n            different types appear together (tagged exercises, exercises of a class test).\n            Deliberately WITHOUT the type-specific configuration: it carries the solutions, alternatives and\nthe listening transcript. Endpoints listing exercises are reachable for a student token (tags, class\ntests), so a config field here would hand the child the answer to every assigned exercise \u2013 the very\nassurance the play path upholds by withholding reveal. Whoever needs the configuration reads\nthe creator-gated type detail (creator/subjects/{}/chapters/{}/\u0026lt;type\u0026gt;/{id})."
+        "description": "            Lean, type-spanning view of a catalog exercise \u2013 for lists in which exercises of\n            different types appear together (tagged exercises, exercises of a class test).\n            Deliberately WITHOUT the type-specific configuration: it carries the solutions, alternatives and\nthe listening transcript. Endpoints listing exercises are reachable for a student token (tags, class\ntests), so a config field here would hand the child the answer to every assigned exercise \u2013 the very\nassurance the play path upholds by withholding reveal. Whoever needs the configuration reads\nthe creator-gated type detail (creator/textbook-series/{}/units/{}/\u0026lt;type\u0026gt;/{id})."
       },
       "ExerciseCheckMode": {
         "enum": [
@@ -25109,8 +24690,6 @@
       },
       "ExerciseDetail": {
         "required": [
-          "chapterId",
-          "chapterName",
           "config",
           "defaultRequireTypedTest",
           "defaultUseLeitner",
@@ -25122,7 +24701,9 @@
           "orderIndex",
           "rewardPoints",
           "schoolTypes",
-          "subjectId",
+          "seriesId",
+          "seriesUnitId",
+          "seriesUnitLabel",
           "subjectName",
           "title",
           "type"
@@ -25137,7 +24718,7 @@
             ],
             "format": "int32"
           },
-          "chapterId": {
+          "seriesId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -25145,12 +24726,21 @@
             ],
             "format": "int32"
           },
-          "chapterName": {
+          "seriesUnitId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "seriesUnitLabel": {
             "type": "string"
           },
           "subjectId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
+              "null",
               "integer",
               "string"
             ],
@@ -25299,7 +24889,7 @@
             "type": "boolean"
           }
         },
-        "description": "Complete, type-spanning view of an exercise including raw config and all metadata \u2013\nthe basis for editing (load config into the type-specific editor; saving goes through\nthe per-type PUT \u0060.../chapters/{}/\u0026lt;type\u0026gt;/{id}\u0060)."
+        "description": "Complete, type-spanning view of an exercise including raw config and all metadata \u2013\nthe basis for editing (load config into the type-specific editor; saving goes through\nthe per-type PUT \u0060.../textbook-series/{seriesId}/units/{seriesUnitId}/\u0026lt;type\u0026gt;/{id}\u0060,\nwhere int ExerciseDetail.SeriesId supplies the route segment the flat cross-catalog view has no other way to know)."
       },
       "ExercisePayloadOfArithmeticConfig": {
         "required": [
@@ -26805,7 +26395,6 @@
       },
       "ExerciseResponseOfArithmeticConfig": {
         "required": [
-          "chapterId",
           "createdAt",
           "defaultRequireTypedTest",
           "defaultUseLeitner",
@@ -26817,6 +26406,7 @@
           "orderIndex",
           "rewardPoints",
           "schoolTypes",
+          "seriesUnitId",
           "title",
           "type"
         ],
@@ -26830,7 +26420,7 @@
             ],
             "format": "int32"
           },
-          "chapterId": {
+          "seriesUnitId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -26987,7 +26577,6 @@
       },
       "ExerciseResponseOfArithmeticDrillConfig": {
         "required": [
-          "chapterId",
           "createdAt",
           "defaultRequireTypedTest",
           "defaultUseLeitner",
@@ -26999,6 +26588,7 @@
           "orderIndex",
           "rewardPoints",
           "schoolTypes",
+          "seriesUnitId",
           "title",
           "type"
         ],
@@ -27012,7 +26602,7 @@
             ],
             "format": "int32"
           },
-          "chapterId": {
+          "seriesUnitId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -27169,7 +26759,6 @@
       },
       "ExerciseResponseOfBirkenbihlConfig": {
         "required": [
-          "chapterId",
           "createdAt",
           "defaultRequireTypedTest",
           "defaultUseLeitner",
@@ -27181,6 +26770,7 @@
           "orderIndex",
           "rewardPoints",
           "schoolTypes",
+          "seriesUnitId",
           "title",
           "type"
         ],
@@ -27194,7 +26784,7 @@
             ],
             "format": "int32"
           },
-          "chapterId": {
+          "seriesUnitId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -27351,7 +26941,6 @@
       },
       "ExerciseResponseOfClozeConfig": {
         "required": [
-          "chapterId",
           "createdAt",
           "defaultRequireTypedTest",
           "defaultUseLeitner",
@@ -27363,6 +26952,7 @@
           "orderIndex",
           "rewardPoints",
           "schoolTypes",
+          "seriesUnitId",
           "title",
           "type"
         ],
@@ -27376,7 +26966,7 @@
             ],
             "format": "int32"
           },
-          "chapterId": {
+          "seriesUnitId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -27533,7 +27123,6 @@
       },
       "ExerciseResponseOfEssayConfig": {
         "required": [
-          "chapterId",
           "createdAt",
           "defaultRequireTypedTest",
           "defaultUseLeitner",
@@ -27545,6 +27134,7 @@
           "orderIndex",
           "rewardPoints",
           "schoolTypes",
+          "seriesUnitId",
           "title",
           "type"
         ],
@@ -27558,7 +27148,7 @@
             ],
             "format": "int32"
           },
-          "chapterId": {
+          "seriesUnitId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -27715,7 +27305,6 @@
       },
       "ExerciseResponseOfGrammarConfig": {
         "required": [
-          "chapterId",
           "createdAt",
           "defaultRequireTypedTest",
           "defaultUseLeitner",
@@ -27727,6 +27316,7 @@
           "orderIndex",
           "rewardPoints",
           "schoolTypes",
+          "seriesUnitId",
           "title",
           "type"
         ],
@@ -27740,7 +27330,7 @@
             ],
             "format": "int32"
           },
-          "chapterId": {
+          "seriesUnitId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -27897,7 +27487,6 @@
       },
       "ExerciseResponseOfListConfig": {
         "required": [
-          "chapterId",
           "createdAt",
           "defaultRequireTypedTest",
           "defaultUseLeitner",
@@ -27909,6 +27498,7 @@
           "orderIndex",
           "rewardPoints",
           "schoolTypes",
+          "seriesUnitId",
           "title",
           "type"
         ],
@@ -27922,7 +27512,7 @@
             ],
             "format": "int32"
           },
-          "chapterId": {
+          "seriesUnitId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -28079,7 +27669,6 @@
       },
       "ExerciseResponseOfListeningConfig": {
         "required": [
-          "chapterId",
           "createdAt",
           "defaultRequireTypedTest",
           "defaultUseLeitner",
@@ -28091,6 +27680,7 @@
           "orderIndex",
           "rewardPoints",
           "schoolTypes",
+          "seriesUnitId",
           "title",
           "type"
         ],
@@ -28104,7 +27694,7 @@
             ],
             "format": "int32"
           },
-          "chapterId": {
+          "seriesUnitId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -28261,7 +27851,6 @@
       },
       "ExerciseResponseOfMatchingConfig": {
         "required": [
-          "chapterId",
           "createdAt",
           "defaultRequireTypedTest",
           "defaultUseLeitner",
@@ -28273,6 +27862,7 @@
           "orderIndex",
           "rewardPoints",
           "schoolTypes",
+          "seriesUnitId",
           "title",
           "type"
         ],
@@ -28286,7 +27876,7 @@
             ],
             "format": "int32"
           },
-          "chapterId": {
+          "seriesUnitId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -28443,7 +28033,6 @@
       },
       "ExerciseResponseOfReadingConfig": {
         "required": [
-          "chapterId",
           "createdAt",
           "defaultRequireTypedTest",
           "defaultUseLeitner",
@@ -28455,6 +28044,7 @@
           "orderIndex",
           "rewardPoints",
           "schoolTypes",
+          "seriesUnitId",
           "title",
           "type"
         ],
@@ -28468,7 +28058,7 @@
             ],
             "format": "int32"
           },
-          "chapterId": {
+          "seriesUnitId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -28625,7 +28215,6 @@
       },
       "ExerciseResponseOfTranslationConfig": {
         "required": [
-          "chapterId",
           "createdAt",
           "defaultRequireTypedTest",
           "defaultUseLeitner",
@@ -28637,6 +28226,7 @@
           "orderIndex",
           "rewardPoints",
           "schoolTypes",
+          "seriesUnitId",
           "title",
           "type"
         ],
@@ -28650,7 +28240,7 @@
             ],
             "format": "int32"
           },
-          "chapterId": {
+          "seriesUnitId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -28807,7 +28397,6 @@
       },
       "ExerciseResponseOfVocabularyConfig": {
         "required": [
-          "chapterId",
           "createdAt",
           "defaultRequireTypedTest",
           "defaultUseLeitner",
@@ -28819,6 +28408,7 @@
           "orderIndex",
           "rewardPoints",
           "schoolTypes",
+          "seriesUnitId",
           "title",
           "type"
         ],
@@ -28832,7 +28422,7 @@
             ],
             "format": "int32"
           },
-          "chapterId": {
+          "seriesUnitId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -29022,7 +28612,6 @@
       },
       "ExerciseSummary": {
         "required": [
-          "chapterId",
           "defaultRequireTypedTest",
           "defaultUseLeitner",
           "executePublic",
@@ -29030,7 +28619,8 @@
           "isOwn",
           "isOwner",
           "schoolTypes",
-          "subjectId",
+          "seriesId",
+          "seriesUnitId",
           "title",
           "type"
         ],
@@ -29044,7 +28634,15 @@
             ],
             "format": "int32"
           },
-          "chapterId": {
+          "seriesId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "seriesUnitId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -29055,6 +28653,7 @@
           "subjectId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
+              "null",
               "integer",
               "string"
             ],
@@ -30031,7 +29630,7 @@
             ],
             "format": "int32"
           },
-          "chapterId": {
+          "seriesUnitId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "null",
@@ -32467,7 +32066,6 @@
               "concurrency_conflict",
               "conflict",
               "duplicate_achievement",
-              "duplicate_chapter_name",
               "duplicate_email",
               "duplicate_key",
               "duplicate_profile_name",
@@ -32507,6 +32105,7 @@
               "remark_comment_not_found",
               "remark_not_found",
               "remark_scope_forbidden",
+              "series_without_subject",
               "shop_insufficient_stock",
               "shop_listing_inactive",
               "skin_already_unlocked",
@@ -33358,6 +32957,53 @@
         },
         "description": "The image valid after reshuffling."
       },
+      "SeriesUnitProgressResponse": {
+        "required": [
+          "active",
+          "exerciseCount",
+          "name",
+          "orderIndex",
+          "progress",
+          "seriesUnitId"
+        ],
+        "type": "object",
+        "properties": {
+          "seriesUnitId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "orderIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "exerciseCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "progress": {
+            "$ref": "#/components/schemas/MasteryRollup"
+          }
+        },
+        "description": "Progress of a series unit. Active = contains \u22651 exercise currently assigned."
+      },
       "SeriesUnitResponse": {
         "required": [
           "createdAt",
@@ -34099,10 +33745,10 @@
       "SubjectProgressResponse": {
         "required": [
           "active",
-          "chapterCount",
           "exerciseCount",
           "name",
           "progress",
+          "seriesUnitCount",
           "subjectId"
         ],
         "type": "object",
@@ -34118,7 +33764,7 @@
           "name": {
             "type": "string"
           },
-          "chapterCount": {
+          "seriesUnitCount": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -34145,7 +33791,7 @@
       },
       "SubjectResponse": {
         "required": [
-          "chaptersCount",
+          "categoriesCount",
           "createdAt",
           "id",
           "name"
@@ -34167,7 +33813,7 @@
             "type": "string",
             "format": "date-time"
           },
-          "chaptersCount": {
+          "categoriesCount": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -35104,27 +34750,6 @@
           }
         },
         "description": "Partial change to a category; empty fields remain unchanged."
-      },
-      "UpdateChapterDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "orderIndex": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "null",
-              "integer",
-              "string"
-            ],
-            "format": "int32"
-          }
-        },
-        "description": "Partial change to a chapter; empty fields remain unchanged."
       },
       "UpdateChildDto": {
         "type": "object",
@@ -37088,9 +36713,8 @@
       },
       "VocabUsage": {
         "required": [
-          "chapterId",
           "exerciseId",
-          "subjectId",
+          "seriesUnitId",
           "title",
           "type"
         ],
@@ -37110,7 +36734,7 @@
           "type": {
             "type": "string"
           },
-          "chapterId": {
+          "seriesUnitId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -37121,6 +36745,7 @@
           "subjectId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
+              "null",
               "integer",
               "string"
             ],
@@ -37337,9 +36962,6 @@
     },
     {
       "name": "Creator \u2013 Birkenbihl"
-    },
-    {
-      "name": "Creator \u2013 Chapters"
     },
     {
       "name": "Creator \u2013 Cloze"

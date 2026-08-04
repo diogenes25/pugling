@@ -66,7 +66,7 @@ export type VocabSortKey = "key" | "word" | "translation" | "pos" | "created";
  */
 export interface ExerciseSearchParams {
   subjectId?: number;
-  chapterId?: number;
+  seriesUnitId?: number;
   grade?: number;
   schoolType?: components["schemas"]["SchoolTypes"];
   categoryId?: number;
@@ -156,7 +156,7 @@ export interface CreateExercisePayload {
  */
 export interface ExerciseWriteResult {
   id: number;
-  chapterId: number;
+  seriesUnitId: number;
   type: string;
   title: string;
   config: unknown;

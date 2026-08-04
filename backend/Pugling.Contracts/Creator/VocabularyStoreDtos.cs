@@ -43,7 +43,7 @@ public record UpdateVocabularyDto(string? Version, string? SourceLanguage, strin
     List<string>? TranslationAlternatives = null, bool ClearTranslationAlternatives = false);
 
 /// <summary>An exercise that references this vocabulary entry (vocabulary refs resp. cloze gap).</summary>
-public record VocabUsage(int ExerciseId, string Title, string Type, int ChapterId, int SubjectId);
+public record VocabUsage(int ExerciseId, string Title, string Type, int SeriesUnitId, int? SubjectId);
 
 /// <summary>Request for the existence check: words (for text extraction) and/or keys (for ref validation).</summary>
 public record LookupRequest(string? SourceLanguage, string? TargetLanguage, List<string>? Words, List<string>? Keys);

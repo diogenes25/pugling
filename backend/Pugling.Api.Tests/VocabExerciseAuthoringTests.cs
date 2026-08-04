@@ -13,12 +13,24 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
 {
     private readonly PuglingWebAppFactory _factory = factory;
 
-    private static async Task<(int subjectId, int chapterId)> ChapterAsync(HttpClient f, string name)
+    /// <summary>Creates subject → series (with the subject set) → unit; returns their ids.</summary>
+    private static async Task<(int subjectId, int seriesId, int seriesUnitId)> SeriesUnitAsync(HttpClient f, string name)
     {
         var s = await TestApi.IdAsync(await f.PostAsJsonAsync("/api/v1/creator/subjects", new { name }));
-        var c = await TestApi.IdAsync(await f.PostAsJsonAsync($"/api/v1/creator/subjects/{s}/chapters",
-            new { name = "Unit", orderIndex = 1 }));
-        return (s, c);
+        var sr = await TestApi.IdAsync(await f.PostAsJsonAsync("/api/v1/creator/textbook-series", new
+        {
+            name = $"{name} Reihe",
+            publisher = (string?)null,
+            subjectName = (string?)null,
+            subjectId = s,
+            schoolTypes = (object?)null,
+            sourceLanguage = (string?)null,
+            targetLanguage = (string?)null,
+            notes = (string?)null,
+        }));
+        var c = await TestApi.IdAsync(await f.PostAsJsonAsync($"/api/v1/creator/textbook-series/{sr}/units",
+            new { label = "Unit", grade = (int?)null, orderIndex = 1, topics = (string?)null, grammar = (string?)null, vocabularyNotes = (string?)null }));
+        return (s, sr, c);
     }
 
     private static async Task<JsonElement> CreateVocabAsync(HttpClient f, object body)
@@ -39,9 +51,9 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
         var vocabId = vocab.GetProperty("id").GetInt32();
         var key = vocab.GetProperty("key").GetString();
 
-        var (s, c) = await ChapterAsync(father, "Cloze-Store");
+        var (_, sr, c) = await SeriesUnitAsync(father, "Cloze-Store");
         var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{s}/chapters/{c}/cloze", new
+            $"/api/v1/creator/textbook-series/{sr}/units/{c}/cloze", new
             {
                 title = "Lückentext Unit",
                 orderIndex = 1,
@@ -74,8 +86,8 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
     public async Task Cloze_MitUnbekanntemVocabKey_Liefert400()
     {
         var father = await TestApi.FatherAsync(_factory);
-        var (s, c) = await ChapterAsync(father, "Cloze-Bad");
-        var res = await father.PostAsJsonAsync($"/api/v1/creator/subjects/{s}/chapters/{c}/cloze", new
+        var (_, sr, c) = await SeriesUnitAsync(father, "Cloze-Bad");
+        var res = await father.PostAsJsonAsync($"/api/v1/creator/textbook-series/{sr}/units/{c}/cloze", new
         {
             title = "Kaputt",
             orderIndex = 1,
@@ -96,18 +108,18 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
         await CreateVocabAsync(father, new { sourceLanguage = "en", targetLanguage = "de", word = "walked", translation = "ging", baseFormKey = walkKey, baseFormRelation = "Simple Past", tags = new[] { "UnitP2" } });
         await CreateVocabAsync(father, new { sourceLanguage = "en", targetLanguage = "de", word = "jump", translation = "springen", tags = new[] { "UnitP2" } });
 
-        var (s, c) = await ChapterAsync(father, "Refs-Tags");
+        var (_, sr, c) = await SeriesUnitAsync(father, "Refs-Tags");
         var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary",
+            $"/api/v1/creator/textbook-series/{sr}/units/{c}/vocabulary",
             new { title = "Unit-Vokabeln", orderIndex = 1, rewardPoints = 10, config = new { direction = "front-to-back", refs = Array.Empty<string>() } }));
 
         (await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/refs-from-tags",
+            $"/api/v1/creator/textbook-series/{sr}/units/{c}/vocabulary/{exerciseId}/refs-from-tags",
             new { tags = new[] { "UnitP2" }, baseFormsOnly = true })).EnsureSuccessStatusCode();
 
         // The snapshot materializes the words as items (one level deeper), no longer in the config.
         var items = await father.GetFromJsonAsync<List<JsonElement>>(
-            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items");
+            $"/api/v1/creator/textbook-series/{sr}/units/{c}/vocabulary/{exerciseId}/items");
         var fronts = items!.Select(i => i.GetProperty("front").GetString()).ToList();
         Assert.Equal(2, fronts.Count); // walk + jump, NOT walked (inflected)
         Assert.Contains("walk", fronts);
@@ -122,8 +134,8 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
     public async Task VocabExercise_MitUnbekanntemRef_Liefert400()
     {
         var father = await TestApi.FatherAsync(_factory);
-        var (s, c) = await ChapterAsync(father, "Ref-Bad");
-        var res = await father.PostAsJsonAsync($"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary",
+        var (_, sr, c) = await SeriesUnitAsync(father, "Ref-Bad");
+        var res = await father.PostAsJsonAsync($"/api/v1/creator/textbook-series/{sr}/units/{c}/vocabulary",
             new { title = "Kaputt", orderIndex = 1, rewardPoints = 10, config = new { direction = "front-to-back", refs = new[] { "gibt_es_nicht" } } });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
@@ -151,10 +163,10 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
     public async Task VocabExercise_InlineItemsOhneId_WerdenImStoreAngelegtUndVerlinkt()
     {
         var father = await TestApi.FatherAsync(_factory);
-        var (s, c) = await ChapterAsync(father, "Inline-Autolink");
+        var (_, sr, c) = await SeriesUnitAsync(father, "Inline-Autolink");
 
         var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary", new
+            $"/api/v1/creator/textbook-series/{sr}/units/{c}/vocabulary", new
             {
                 title = "Inline-Vokabeln",
                 orderIndex = 1,
@@ -170,7 +182,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
 
         // The inline items are materialized as items of their own (one level deeper) and linked to the store.
         var items = await father.GetFromJsonAsync<List<JsonElement>>(
-            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items");
+            $"/api/v1/creator/textbook-series/{sr}/units/{c}/vocabulary/{exerciseId}/items");
         Assert.Equal(2, items!.Count);
         foreach (var it in items!)
         {
@@ -192,11 +204,11 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
         var father = await TestApi.FatherAsync(_factory);
         var v = await CreateVocabAsync(father, new { sourceLanguage = "en", targetLanguage = "de", word = "bridge", translation = "Brücke" });
         var vocabId = v.GetProperty("id").GetInt32();
-        var (s, c) = await ChapterAsync(father, "Inline-IdOnly");
+        var (_, sr, c) = await SeriesUnitAsync(father, "Inline-IdOnly");
 
         // An inline item without front/back - only the store id. Front/back come from the linked store entry.
         var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary", new
+            $"/api/v1/creator/textbook-series/{sr}/units/{c}/vocabulary", new
             {
                 title = "Nur-Id",
                 orderIndex = 1,
@@ -205,7 +217,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
             }));
 
         var items = await father.GetFromJsonAsync<List<JsonElement>>(
-            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items");
+            $"/api/v1/creator/textbook-series/{sr}/units/{c}/vocabulary/{exerciseId}/items");
         var item = Assert.Single(items!);
         Assert.Equal(vocabId, item.GetProperty("vocabularyId").GetInt32());
         Assert.Equal("bridge", item.GetProperty("front").GetString());
@@ -218,14 +230,14 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
         var father = await TestApi.FatherAsync(_factory);
         var v = await CreateVocabAsync(father, new { sourceLanguage = "en", targetLanguage = "de", word = "castle", translation = "Schloss" });
         var vocabId = v.GetProperty("id").GetInt32();
-        var (s, c) = await ChapterAsync(father, "ItemEP-IdOnly");
+        var (_, sr, c) = await SeriesUnitAsync(father, "ItemEP-IdOnly");
         var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary",
+            $"/api/v1/creator/textbook-series/{sr}/units/{c}/vocabulary",
             new { title = "Hülle", orderIndex = 1, rewardPoints = 10, config = new { direction = "front-to-back", sourceLang = "en", targetLang = "de" } }));
 
         // An item through the item endpoint with the VocabularyId only (front/back empty → from the store).
         var res = await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items", new { vocabularyId = vocabId });
+            $"/api/v1/creator/textbook-series/{sr}/units/{c}/vocabulary/{exerciseId}/items", new { vocabularyId = vocabId });
         Assert.Equal(HttpStatusCode.Created, res.StatusCode);
         var item = await res.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(vocabId, item.GetProperty("vocabularyId").GetInt32());
@@ -237,8 +249,8 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
     public async Task InlineItem_OhneIdUndOhneFrontBack_Liefert400()
     {
         var father = await TestApi.FatherAsync(_factory);
-        var (s, c) = await ChapterAsync(father, "Inline-Leer");
-        var res = await father.PostAsJsonAsync($"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary", new
+        var (_, sr, c) = await SeriesUnitAsync(father, "Inline-Leer");
+        var res = await father.PostAsJsonAsync($"/api/v1/creator/textbook-series/{sr}/units/{c}/vocabulary", new
         {
             title = "Leeres Item",
             orderIndex = 1,

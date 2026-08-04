@@ -26,12 +26,12 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
     private static DateOnly Today => DateOnly.FromDateTime(DateTime.UtcNow);
 
     private static string KrScope(KeyResult k) =>
-        k.ExerciseId is not null ? "exercise" : k.ChapterId is not null ? "chapter" : "subject";
+        k.ExerciseId is not null ? "exercise" : k.SeriesUnitId is not null ? "seriesUnit" : "subject";
 
     private static KeyResultResponse MapKr(ObjectiveEvaluationService.KeyResultEval e)
     {
         var k = e.KeyResult;
-        return new KeyResultResponse(k.Id, k.ObjectiveId, k.SubjectId, k.ChapterId, k.ExerciseId,
+        return new KeyResultResponse(k.Id, k.ObjectiveId, k.SubjectId, k.SeriesUnitId, k.ExerciseId,
             // Metric travels as the ENUM, not as ToString(): the wire value is identical, but a consumer
             // generated from the document then gets the value list instead of a bare `string`.
             KrScope(k), k.Metric, k.TargetValue, e.Current, e.ProgressPercent, e.Status, k.Title);
@@ -47,7 +47,7 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
     }
 
     // Target value/scope rules per metric; null = ok. ClassTestGrade: subject scope only, grade 1.0..6.0 (×10 = 10..60).
-    private async Task<ApiError?> ValidateKeyResultAsync(int subjectId, int? chapterId, int? exerciseId,
+    private async Task<ApiError?> ValidateKeyResultAsync(int subjectId, int? seriesUnitId, int? exerciseId,
         KeyResultMetric metric, int targetValue, CancellationToken ct)
     {
         if (!Enum.IsDefined(metric))
@@ -55,8 +55,8 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
 
         if (metric == KeyResultMetric.ClassTestGrade)
         {
-            if (chapterId is not null || exerciseId is not null)
-                return ApiErrors.ValidationError; // grades hang on the subject, not on a chapter/exercise
+            if (seriesUnitId is not null || exerciseId is not null)
+                return ApiErrors.ValidationError; // grades hang on the subject, not on a series unit/exercise
             if (targetValue is < 10 or > 60)
                 return ApiErrors.ValidationError;
         }
@@ -72,14 +72,16 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
 
         if (!await db.Subjects.AsNoTracking().AnyAsync(s => s.Id == subjectId, ct))
             return ApiErrors.InvalidReference;
-        if (chapterId is { } chId && !await db.Chapters.AsNoTracking().AnyAsync(c => c.Id == chId && c.SubjectId == subjectId, ct))
+        // A unit's subject is reached transitively through its series (SeriesUnit has no SubjectId of its own).
+        if (seriesUnitId is { } unitId
+            && !await db.SeriesUnits.AsNoTracking().AnyAsync(u => u.Id == unitId && u.Series!.SubjectId == subjectId, ct))
             return ApiErrors.InvalidReference;
         if (exerciseId is { } exId)
         {
-            if (chapterId is null)
-                return ApiErrors.ValidationError; // an exercise scope requires a chapter
+            if (seriesUnitId is null)
+                return ApiErrors.ValidationError; // an exercise scope requires a series unit
             var type = await db.Exercises.AsNoTracking()
-                .Where(e => e.Id == exId && e.ChapterId == chapterId).Select(e => e.Type).FirstOrDefaultAsync(ct);
+                .Where(e => e.Id == exId && e.SeriesUnitId == seriesUnitId).Select(e => e.Type).FirstOrDefaultAsync(ct);
             if (type is null || registry.ByKey(type)?.SupportsObjectives != true)
                 return ApiErrors.InvalidReference; // item-tracked types only (today vocabulary)
         }
@@ -132,12 +134,12 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
         var keyResults = new List<KeyResult>();
         foreach (var kr in req.KeyResults ?? [])
         {
-            if (await ValidateKeyResultAsync(kr.SubjectId, kr.ChapterId, kr.ExerciseId, kr.Metric, kr.TargetValue, ct) is { } err)
+            if (await ValidateKeyResultAsync(kr.SubjectId, kr.SeriesUnitId, kr.ExerciseId, kr.Metric, kr.TargetValue, ct) is { } err)
                 return new ObjectiveResult(null, err);
             keyResults.Add(new KeyResult
             {
                 SubjectId = kr.SubjectId,
-                ChapterId = kr.ChapterId,
+                SeriesUnitId = kr.SeriesUnitId,
                 ExerciseId = kr.ExerciseId,
                 Metric = kr.Metric,
                 TargetValue = kr.TargetValue,
@@ -207,14 +209,14 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
         var objective = await db.Objectives.FirstOrDefaultAsync(o => o.Id == objectiveId && o.ChildId == childId, ct);
         if (objective is null) return new KeyResultResult(null, null);
 
-        if (await ValidateKeyResultAsync(req.SubjectId, req.ChapterId, req.ExerciseId, req.Metric, req.TargetValue, ct) is { } err)
+        if (await ValidateKeyResultAsync(req.SubjectId, req.SeriesUnitId, req.ExerciseId, req.Metric, req.TargetValue, ct) is { } err)
             return new KeyResultResult(null, err);
 
         var kr = new KeyResult
         {
             ObjectiveId = objectiveId,
             SubjectId = req.SubjectId,
-            ChapterId = req.ChapterId,
+            SeriesUnitId = req.SeriesUnitId,
             ExerciseId = req.ExerciseId,
             Metric = req.Metric,
             TargetValue = req.TargetValue,
@@ -235,7 +237,7 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
         var metric = req.Metric ?? kr.Metric;
         var target = req.TargetValue ?? kr.TargetValue;
         // Re-check metric/target value only (they depend on each other) - the scope stays valid unchanged.
-        if (await ValidateKeyResultAsync(kr.SubjectId, kr.ChapterId, kr.ExerciseId, metric, target, ct) is { } err)
+        if (await ValidateKeyResultAsync(kr.SubjectId, kr.SeriesUnitId, kr.ExerciseId, metric, target, ct) is { } err)
             return new KeyResultResult(null, err);
 
         kr.Metric = metric;

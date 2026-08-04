@@ -103,10 +103,12 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
         var father = await TestApi.FatherAsync(_factory);
         // A pure content exercise (reading comprehension) → the goal is "done" as soon as a real learn session exists.
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Info-Fach" }));
-        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "K1", orderIndex = 1 }));
+        var seriesId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/textbook-series",
+            new { name = TestApi.UniqueName("Info-Reihe"), subjectId }));
+        var seriesUnitId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units", new { label = "K1" }));
         var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/reading",
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/reading",
             new { title = "Text", orderIndex = 1, rewardPoints = 5, config = new { text = "Ein kurzer Text.", questions = Array.Empty<object>() } }));
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText, useLeitner: false);
         var child = await TestApi.ChildAsync(_factory);
@@ -135,10 +137,12 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
         bool useLeitner = false)
     {
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Lese-Fach" }));
-        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "K1", orderIndex = 1 }));
+        var seriesId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/textbook-series",
+            new { name = TestApi.UniqueName("Lese-Reihe"), subjectId }));
+        var seriesUnitId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units", new { label = "K1" }));
         var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/reading",
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/reading",
             new
             {
                 title = "Text",

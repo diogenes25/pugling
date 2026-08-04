@@ -12,7 +12,7 @@ namespace Pugling.Api.Controllers.Creator;
 // ExercisePayload<TConfig>/ExerciseResponse<TConfig> live in the contract project (Pugling.Contracts.Creator).
 
 /// <summary>
-/// Shared CRUD logic for all exercise types under a chapter.
+/// Shared CRUD logic for all exercise types under a textbook series unit.
 /// Concrete controllers set only the route + <see cref="Type"/>; the type-specific
 /// configuration (<typeparamref name="TConfig"/>) is stored as JSON and
 /// transferred fully typed in the API.
@@ -35,9 +35,9 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     /// source of truth). Derived controllers whose type offers a direct check expose their
     /// thin <c>/check</c> action on top of it.
     /// </summary>
-    protected async Task<ActionResult<CheckResult>> RunCheckAsync(int subjectId, int chapterId, int exerciseId, CheckDto body, CancellationToken ct = default)
+    protected async Task<ActionResult<CheckResult>> RunCheckAsync(int seriesId, int seriesUnitId, int exerciseId, CheckDto body, CancellationToken ct = default)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
+        var exercise = await FindAsync(seriesId, seriesUnitId, exerciseId, ct);
         if (exercise is null) return NotFound();
         return registry.Require(TypeKey).Check(exercise.ConfigJson, body.Answers, body.Seed) is { } result
             ? result
@@ -49,7 +49,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     /// override this to e.g. check store references (vocabulary keys); return value = error text (→ 400)
     /// or <c>null</c> if everything is fine.
     /// </summary>
-    protected virtual Task<string?> ValidateConfigAsync(int subjectId, TConfig config, CancellationToken ct = default) =>
+    protected virtual Task<string?> ValidateConfigAsync(int seriesId, TConfig config, CancellationToken ct = default) =>
         Task.FromResult<string?>(null);
 
     /// <summary>
@@ -89,14 +89,24 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     // No default for `ct` in the helpers: it would make the call site look correct while the client's
     // cancellation fizzles out - and neither CA2016 nor the signature guard sees an omitted optional
     // argument. Without a default the compiler forces you to pass it on.
-    private Task<bool> ChapterExists(int subjectId, int chapterId, CancellationToken ct) =>
-        db.Chapters.AnyAsync(c => c.Id == chapterId && c.SubjectId == subjectId, ct);
+    private Task<bool> SeriesUnitExists(int seriesId, int seriesUnitId, CancellationToken ct) =>
+        db.SeriesUnits.AnyAsync(u => u.Id == seriesUnitId && u.SeriesId == seriesId, ct);
+
+    /// <summary>
+    /// The subject a series is allowed to carry exercises under (B-106 T-01): a series without a set
+    /// <see cref="TextbookSeries.SubjectId"/> may not host any exercise - <c>null</c> reads as "series has
+    /// no subject", not as "no restriction".
+    /// </summary>
+    private Task<int?> SeriesSubjectIdAsync(int seriesId, CancellationToken ct) =>
+        db.TextbookSeries.Where(s => s.Id == seriesId).Select(s => (int?)s.SubjectId).FirstOrDefaultAsync(ct);
 
     /// <summary>Checks that a set category belongs to the exercise's subject (prevents foreign subjects).</summary>
-    private Task<bool> CategoryValid(int subjectId, int? categoryId, CancellationToken ct) =>
+    private Task<bool> CategoryValid(int? subjectId, int? categoryId, CancellationToken ct) =>
         categoryId is null
             ? Task.FromResult(true)
-            : db.ExerciseCategories.AnyAsync(c => c.Id == categoryId && c.SubjectId == subjectId, ct);
+            : subjectId is null
+                ? Task.FromResult(false)
+                : db.ExerciseCategories.AnyAsync(c => c.Id == categoryId && c.SubjectId == subjectId, ct);
 
     /// <summary>
     /// Checks the <b>write permission</b> (change) on an exercise: the catalog is global (every creator may find
@@ -119,10 +129,10 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             : this.ProblemWithCode(ApiErrors.NotOwner, "Only an owner can delete this exercise or manage its permissions.");
 
     /// <summary>Loads an exercise of this type incl. its grants (for permission checking/display); basis for derived additional endpoints.</summary>
-    protected Task<Exercise?> FindAsync(int subjectId, int chapterId, int exerciseId, CancellationToken ct) =>
+    protected Task<Exercise?> FindAsync(int seriesId, int seriesUnitId, int exerciseId, CancellationToken ct) =>
         db.Exercises.Include(e => e.Category).Include(e => e.Grants)
-            .FirstOrDefaultAsync(e => e.Id == exerciseId && e.ChapterId == chapterId
-                && e.Type == TypeKey && e.Chapter!.SubjectId == subjectId, ct);
+            .FirstOrDefaultAsync(e => e.Id == exerciseId && e.SeriesUnitId == seriesUnitId
+                && e.Type == TypeKey && e.SeriesUnit!.SeriesId == seriesId, ct);
 
     /// <summary>Deserializes the typed configuration of an exercise (never null; falls back to default).</summary>
     protected TConfig ConfigOf(Exercise exercise) =>
@@ -136,16 +146,16 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     protected ExerciseResponse<TConfig> Map(Exercise e, int? fid)
     {
         var isAdmin = User.IsAdmin();
-        return new(e.Id, e.ChapterId, e.Type.ToString(), e.Title, e.OrderIndex, e.RewardPoints, e.CreatedAt, ConfigForResponse(e), e.SuggestedBonus,
+        return new(e.Id, e.SeriesUnitId, e.Type.ToString(), e.Title, e.OrderIndex, e.RewardPoints, e.CreatedAt, ConfigForResponse(e), e.SuggestedBonus,
             e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category?.Name,
             e.AuthorAdultId, ExercisePermissionService.CanWrite(e.Grants, fid, isAdmin), ExercisePermissionService.CanAdminister(e.Grants, fid, isAdmin),
             e.ExecutePublic, e.Grants.Count, e.Description,
             e.DefaultUseLeitner, e.DefaultRequireTypedTest, e.DefaultStage, e.DefaultItemCount);
     }
 
-    /// <summary>List of the exercises of this type in the chapter.</summary>
-    /// <param name="subjectId">Subject the chapter belongs to.</param>
-    /// <param name="chapterId">Chapter whose exercises are read.</param>
+    /// <summary>List of the exercises of this type in the series unit.</summary>
+    /// <param name="seriesId">Series the unit belongs to.</param>
+    /// <param name="seriesUnitId">Series unit whose exercises are read.</param>
     /// <param name="isOwn">Optional permission filter on write permission (owner/write grant; admin counts as <c>true</c>).</param>
     /// <param name="isOwner">Optional permission filter on administration permission (owner grant; admin counts as <c>true</c>).</param>
     /// <param name="skip">Number of entries to skip (paging).</param>
@@ -154,13 +164,13 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<ExerciseResponse<TConfig>>>> List(
-        int subjectId, int chapterId,
+        int seriesId, int seriesUnitId,
         [FromQuery] bool? isOwn = null,
         [FromQuery] bool? isOwner = null,
         [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake,
         CancellationToken ct = default)
     {
-        if (!await ChapterExists(subjectId, chapterId, ct)) return NotFound();
+        if (!await SeriesUnitExists(seriesId, seriesUnitId, ct)) return NotFound();
         var fid = User.AdultId();
         var isAdmin = User.IsAdmin();
 
@@ -168,7 +178,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             .AsNoTracking()
             .Include(e => e.Category)
             .Include(e => e.Grants)
-            .Where(e => e.ChapterId == chapterId && e.Type == TypeKey);
+            .Where(e => e.SeriesUnitId == seriesUnitId && e.Type == TypeKey);
 
         // isOwn/isOwner mirror the response fields and allow lists of "what may I change/manage".
         // An admin has both implicitly; so *true* filters return the normal list for an admin, *false* an empty one.
@@ -215,34 +225,39 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     /// <summary>A single exercise.</summary>
     [HttpGet("{exerciseId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ExerciseResponse<TConfig>>> Get(int subjectId, int chapterId, int exerciseId, CancellationToken ct = default)
+    public async Task<ActionResult<ExerciseResponse<TConfig>>> Get(int seriesId, int seriesUnitId, int exerciseId, CancellationToken ct = default)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
+        var exercise = await FindAsync(seriesId, seriesUnitId, exerciseId, ct);
         return exercise is null ? NotFound() : Map(exercise, User.AdultId());
     }
 
-    /// <summary>Creates an exercise of this type in the chapter.</summary>
+    /// <summary>Creates an exercise of this type in the series unit.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ExerciseResponse<TConfig>>> Create(int subjectId, int chapterId, ExercisePayload<TConfig> body, CancellationToken ct = default)
+    public async Task<ActionResult<ExerciseResponse<TConfig>>> Create(int seriesId, int seriesUnitId, ExercisePayload<TConfig> body, CancellationToken ct = default)
     {
-        if (!await ChapterExists(subjectId, chapterId, ct)) return NotFound();
+        if (!await SeriesUnitExists(seriesId, seriesUnitId, ct)) return NotFound();
         if (string.IsNullOrWhiteSpace(body.Title)) return this.ProblemWithCode(ApiErrors.ValidationError, "Title is required.");
+        // A series without a subject may not host any exercise (B-106 T-01) - checked before the category,
+        // because a missing subject makes *any* category reference foreign, not just a wrong one.
+        var subjectId = await SeriesSubjectIdAsync(seriesId, ct);
+        if (subjectId is null)
+            return this.ProblemWithCode(ApiErrors.SeriesWithoutSubject, "This textbook series has no subject assigned yet; set one before adding exercises.");
         if (!await CategoryValid(subjectId, body.CategoryId, ct)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Unknown category for this subject.");
         // The default stage reaches the child too: PositionPlayService.StageForDay falls back to it whenever the
         // position names no stage of its own - the normal case for most types (see StageValidation).
         if (StageValidation.ProblemText(registry.ByKey(TypeKey), body.DefaultStage) is { } createStageErr)
             return this.ProblemWithCode(ApiErrors.ValidationError, createStageErr);
         var config = body.Config ?? new TConfig();
-        if (await ValidateConfigAsync(subjectId, config, ct) is { } createErr) return this.ProblemWithCode(ApiErrors.ValidationError, createErr);
+        if (await ValidateConfigAsync(seriesId, config, ct) is { } createErr) return this.ProblemWithCode(ApiErrors.ValidationError, createErr);
         NormalizeConfig(config);
-        await NormalizeConfigAsync(subjectId, config, ct);
+        await NormalizeConfigAsync(seriesId, config, ct);
 
         var exercise = new Exercise
         {
-            ChapterId = chapterId,
+            SeriesUnitId = seriesUnitId,
             Type = TypeKey,
             Title = body.Title.Trim(),
             Description = string.IsNullOrWhiteSpace(body.Description) ? null : body.Description.Trim(),
@@ -291,19 +306,20 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         if (exercise.CategoryId is not null)
             exercise.Category = await db.ExerciseCategories.FindAsync([exercise.CategoryId], ct);
 
-        return CreatedAtAction(nameof(Get), new { subjectId, chapterId, exerciseId = exercise.Id }, Map(exercise, User.AdultId()));
+        return CreatedAtAction(nameof(Get), new { seriesId, seriesUnitId, exerciseId = exercise.Id }, Map(exercise, User.AdultId()));
     }
 
     /// <summary>Replaces an exercise completely (incl. config).</summary>
     [HttpPut("{exerciseId:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ExerciseResponse<TConfig>>> Update(int subjectId, int chapterId, int exerciseId, ExercisePayload<TConfig> body, CancellationToken ct = default)
+    public async Task<ActionResult<ExerciseResponse<TConfig>>> Update(int seriesId, int seriesUnitId, int exerciseId, ExercisePayload<TConfig> body, CancellationToken ct = default)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
+        var exercise = await FindAsync(seriesId, seriesUnitId, exerciseId, ct);
         if (exercise is null) return NotFound();
         if (EnsureCanWrite(exercise) is { } forbidden) return forbidden;
         if (string.IsNullOrWhiteSpace(body.Title)) return this.ProblemWithCode(ApiErrors.ValidationError, "Title is required.");
+        var subjectId = await SeriesSubjectIdAsync(seriesId, ct);
         if (!await CategoryValid(subjectId, body.CategoryId, ct)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Unknown category for this subject.");
         // Execute visibility is an owner right (controlled sharing) - a write grantee must not toggle it.
         if (body.ExecutePublic != exercise.ExecutePublic && EnsureCanAdminister(exercise) is { } adminForbidden) return adminForbidden;
@@ -311,7 +327,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         if (StageValidation.ProblemText(registry.ByKey(TypeKey), body.DefaultStage) is { } updateStageErr)
             return this.ProblemWithCode(ApiErrors.ValidationError, updateStageErr);
         var config = body.Config ?? new TConfig();
-        if (await ValidateConfigAsync(subjectId, config, ct) is { } updateErr) return this.ProblemWithCode(ApiErrors.ValidationError, updateErr);
+        if (await ValidateConfigAsync(seriesId, config, ct) is { } updateErr) return this.ProblemWithCode(ApiErrors.ValidationError, updateErr);
         NormalizeConfig(config);
 
         exercise.ExecutePublic = body.ExecutePublic;
@@ -346,9 +362,9 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Delete(int subjectId, int chapterId, int exerciseId, CancellationToken ct)
+    public async Task<IActionResult> Delete(int seriesId, int seriesUnitId, int exerciseId, CancellationToken ct)
     {
-        var exercise = await FindAsync(subjectId, chapterId, exerciseId, ct);
+        var exercise = await FindAsync(seriesId, seriesUnitId, exerciseId, ct);
         if (exercise is null) return NotFound();
         if (EnsureCanAdminister(exercise) is { } forbidden) return forbidden;
         /*

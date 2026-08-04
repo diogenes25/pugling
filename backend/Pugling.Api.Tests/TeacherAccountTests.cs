@@ -84,10 +84,29 @@ public class TeacherAccountTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         var subjectId = await TestApi.IdAsync(await teacher.PostAsJsonAsync("/api/v1/creator/subjects",
             new { name = $"Lehrer-Fach {Guid.NewGuid():N}" }));
-        var chapterId = await TestApi.IdAsync(await teacher.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit", orderIndex = 1 }));
+        var seriesId = await TestApi.IdAsync(await teacher.PostAsJsonAsync("/api/v1/creator/textbook-series", new
+        {
+            name = $"Lehrer-Reihe {Guid.NewGuid():N}",
+            publisher = (string?)null,
+            subjectName = (string?)null,
+            subjectId,
+            schoolTypes = (object?)null,
+            sourceLanguage = (string?)null,
+            targetLanguage = (string?)null,
+            notes = (string?)null,
+        }));
+        var seriesUnitId = await TestApi.IdAsync(await teacher.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units", new
+            {
+                label = "Unit",
+                grade = (int?)null,
+                orderIndex = 1,
+                topics = (string?)null,
+                grammar = (string?)null,
+                vocabularyNotes = (string?)null,
+            }));
         var exerciseId = await TestApi.IdAsync(await teacher.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary",
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary",
             new
             {
                 title = "Lehrer-Material",

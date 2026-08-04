@@ -210,3 +210,6 @@ Migrationskette und die G2-FK-Tabelle; `/smoke-test` gegen einen laufenden Serve
   getroffen, Nutzerauftrag 2026-08-04.
 - **2026-08-03** — geschätzt: Größe M, `wo: backend`, `migration: ja`, `vertragsbruch: nein`, Angriffsplan
   und Testweg festgelegt, autonom getroffen, Nutzerauftrag 2026-08-04.
+- **2026-08-04** — Querverweis: [B-106](B-106-lehrwerkgetriebener-katalog.md) verschmilzt `Exercise` mit
+  `SeriesUnit`; sobald `Chapter` entfällt, verliert diese Story ihren Chapter-Anteil (das Owner-Muster
+  wandert sinngemäß auf `SeriesUnit`) — kein Status-Wechsel hier, Neubewertung bei B-106s Bau.

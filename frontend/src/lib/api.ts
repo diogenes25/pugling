@@ -1,12 +1,12 @@
 import type {
-  AchievementDef, UpdateAchievementDto, AchievementStatus, AnswerDto, CategoryResponse, ChapterResponse, ChildResponse, CreateAchievementDto,
+  AchievementDef, UpdateAchievementDto, AchievementStatus, AnswerDto, CategoryResponse, ChildResponse, CreateAchievementDto,
   CreateChildDto, CreateExercisePayload, CreateKlassenarbeitDto, CreateMissionDto, CreatePlanDto, CreateVocabularyDto,
   UpdateChildDto, SupervisorLink, SupervisorRelation, TimetableEntry, CreateTimetableEntryDto,
   ClozeResponse, CreateClozeDto, UpdateClozeDto,
   ExerciseGrant, GrantPermission,
   CreateAdultDto, AdultResponse, UpdateAdultDto,
   ExerciseDetail, ExercisePreviewAnswer, ExercisePreviewData, ExercisePreviewResult, ExerciseTypeManifest,
-  UpdateChapterDto, CreateChildTagDto, ExerciseWriteResult,
+  CreateChildTagDto, ExerciseWriteResult,
   ExerciseSearchParams, ExerciseSharing, ExerciseSummary, MeResponse, TeacherAccount, CreateTeacherDto, UpdateMyAccountDto, ExerciseUsage, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
   KlassenarbeitResponse, KlassenarbeitStatus, LoginResponse, MissionDef, UpdateMissionDto, MissionStatus, PlanResponse,
   ChildrenDashboard, CreatePositionDto, PositionResponse, PositionReport, UpdatePositionDto, OverviewResponse, PositionSession, PracticeCard,
@@ -15,7 +15,7 @@ import type {
   TestAttemptResponse, TestNextResponse, TestAnswerAck, TestSubmitResponse, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
   VocabBatchResult, VocabularyResponse, VocabTagResponse, ChildTagResponse, Wallet, WalletBalance, WalletEntry, ChildPointsEntry, Currency,
   Paged, VocabularySearchParams, VocabItemInput, VocabItemResponse, VocabLookupResponse,
-  ChapterProgress, ExerciseProgress, ItemHistoryEntry, ItemProgressResponse, SubjectProgress, WordMastery,
+  SeriesUnitProgress, ExerciseProgress, ItemHistoryEntry, ItemProgressResponse, SubjectProgress, WordMastery,
   CreateKeyResultRequest, CreateObjectiveRequest, GoalStatus, KeyResult,
   Objective, ObjectiveKind, UpdateKeyResultRequest, UpdateObjectiveRequest,
   ShopArticle, CreateShopArticleDto, UpdateShopArticleDto, ShopListing, CreateShopListingDto, UpdateShopListingDto,
@@ -292,17 +292,13 @@ export const api = {
     http<ClozeResponse>(`${V1}/creator/cloze-texts/${id}`, "PATCH", dto),
   deleteClozeText: (id: number) => http<void>(`${V1}/creator/cloze-texts/${id}`, "DELETE"),
 
-  // ---- Vater: Katalog (Fächer, Kapitel, Übungssuche über Metadaten) ----
+  // ---- Vater: Katalog (Fächer, Lehrwerk-Units, Übungssuche über Metadaten) ----
   subjects: () => http<SubjectResponse[]>(`${V1}/creator/subjects`),
   createSubject: (name: string) => http<SubjectResponse>(`${V1}/creator/subjects`, "POST", { name }),
   updateSubject: (subjectId: number, name: string) =>
     http<SubjectResponse>(`${V1}/creator/subjects/${subjectId}`, "PATCH", { name }),
-  /** Löscht das Fach **samt Kapiteln und Übungen** – scheitert, solange eine Übung in einem Plan steckt. */
+  /** Löscht das Fach – die Reihen/Übungen selbst hängen seit B-106 an der Lehrwerk-Unit, nicht am Fach. */
   deleteSubject: (subjectId: number) => http<void>(`${V1}/creator/subjects/${subjectId}`, "DELETE"),
-  updateChapter: (subjectId: number, chapterId: number, dto: UpdateChapterDto) =>
-    http<ChapterResponse>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}`, "PATCH", dto),
-  deleteChapter: (subjectId: number, chapterId: number) =>
-    http<void>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}`, "DELETE"),
 
   // „Arten" (Kategorien) sind fachabhängig und dienen der Vorfilterung im Katalog.
   createCategory: (subjectId: number, name: string) =>
@@ -311,16 +307,13 @@ export const api = {
     http<CategoryResponse>(`${V1}/creator/subjects/${subjectId}/categories/${categoryId}`, "PATCH", { name }),
   deleteCategory: (subjectId: number, categoryId: number) =>
     http<void>(`${V1}/creator/subjects/${subjectId}/categories/${categoryId}`, "DELETE"),
-  chapters: (subjectId: number) =>
-    http<ChapterResponse[]>(`${V1}/creator/subjects/${subjectId}/chapters`),
-  createChapter: (subjectId: number, name: string, orderIndex: number) =>
-    http<ChapterResponse>(`${V1}/creator/subjects/${subjectId}/chapters`, "POST", { name, orderIndex }),
   // Fachabhängige Arten ("Kategorien") – zur Vorfilterung im Katalog/Planbau.
   categories: (subjectId: number) =>
     http<CategoryResponse[]>(`${V1}/creator/subjects/${subjectId}/categories`),
-  // Übung eines Typs im Kapitel anlegen. Das Routen-Segment (vocabulary/arithmetic/…) bestimmt den Typ.
-  createExercise: (subjectId: number, chapterId: number, typeRoute: string, payload: CreateExercisePayload) =>
-    http<ExerciseWriteResult>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}/${typeRoute}`, "POST", payload),
+  // Übung eines Typs in der Lehrwerk-Unit anlegen (Pflicht seit B-106). Das Routen-Segment
+  // (vocabulary/arithmetic/…) bestimmt den Typ.
+  createExercise: (seriesId: number, seriesUnitId: number, typeRoute: string, payload: CreateExercisePayload) =>
+    http<ExerciseWriteResult>(`${V1}/creator/textbook-series/${seriesId}/units/${seriesUnitId}/${typeRoute}`, "POST", payload),
   /**
    * Typ-Manifest: welche Übungstypen der Server kennt, wie sie heißen und unter welchem Routen-Segment
    * ihre Autoren-CRUD liegt. Einmal laden statt Tabellen im Frontend pflegen (siehe lib/exerciseTypes.ts).
@@ -342,10 +335,10 @@ export const api = {
   checkPreviewExercise: (id: number, answers: ExercisePreviewAnswer[], stage?: number) =>
     http<ExercisePreviewResult>(`${V1}/creator/exercises/${id}/preview/check`, "POST", { answers, stage }),
   // Ersetzen (PUT) bzw. Löschen laufen über die per-Typ-Route.
-  updateExercise: (subjectId: number, chapterId: number, typeRoute: string, id: number, payload: CreateExercisePayload) =>
-    http<ExerciseWriteResult>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}/${typeRoute}/${id}`, "PUT", payload),
-  deleteExercise: (subjectId: number, chapterId: number, typeRoute: string, id: number) =>
-    http<void>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}/${typeRoute}/${id}`, "DELETE"),
+  updateExercise: (seriesId: number, seriesUnitId: number, typeRoute: string, id: number, payload: CreateExercisePayload) =>
+    http<ExerciseWriteResult>(`${V1}/creator/textbook-series/${seriesId}/units/${seriesUnitId}/${typeRoute}/${id}`, "PUT", payload),
+  deleteExercise: (seriesId: number, seriesUnitId: number, typeRoute: string, id: number) =>
+    http<void>(`${V1}/creator/textbook-series/${seriesId}/units/${seriesUnitId}/${typeRoute}/${id}`, "DELETE"),
 
   // RWX-Rechte an einer Übung: mehrere Owner möglich, Write/Execute je Creator. Lesen darf jeder – dafür
   // gibt es kein Grant. Rechte vergeben/entziehen darf nur ein Owner.
@@ -373,18 +366,18 @@ export const api = {
 
   // Vokabelpaare einer Übung: eigene Ebene mit stabilen Ids, daher CRUD statt „ganze Config ersetzen".
   // Genau deshalb lässt sich ein Wort nachtragen, ohne den Lernstand der übrigen Items zu verlieren.
-  exerciseItems: (subjectId: number, chapterId: number, exerciseId: number) =>
-    http<VocabItemResponse[]>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}/vocabulary/${exerciseId}/items`),
-  addExerciseItem: (subjectId: number, chapterId: number, exerciseId: number, body: VocabItemInput) =>
-    http<VocabItemResponse>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}/vocabulary/${exerciseId}/items`, "POST", body),
-  patchExerciseItem: (subjectId: number, chapterId: number, exerciseId: number, itemId: number, body: VocabItemInput) =>
-    http<VocabItemResponse>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}/vocabulary/${exerciseId}/items/${itemId}`, "PATCH", body),
-  deleteExerciseItem: (subjectId: number, chapterId: number, exerciseId: number, itemId: number) =>
-    http<void>(`${V1}/creator/subjects/${subjectId}/chapters/${chapterId}/vocabulary/${exerciseId}/items/${itemId}`, "DELETE"),
+  exerciseItems: (seriesId: number, seriesUnitId: number, exerciseId: number) =>
+    http<VocabItemResponse[]>(`${V1}/creator/textbook-series/${seriesId}/units/${seriesUnitId}/vocabulary/${exerciseId}/items`),
+  addExerciseItem: (seriesId: number, seriesUnitId: number, exerciseId: number, body: VocabItemInput) =>
+    http<VocabItemResponse>(`${V1}/creator/textbook-series/${seriesId}/units/${seriesUnitId}/vocabulary/${exerciseId}/items`, "POST", body),
+  patchExerciseItem: (seriesId: number, seriesUnitId: number, exerciseId: number, itemId: number, body: VocabItemInput) =>
+    http<VocabItemResponse>(`${V1}/creator/textbook-series/${seriesId}/units/${seriesUnitId}/vocabulary/${exerciseId}/items/${itemId}`, "PATCH", body),
+  deleteExerciseItem: (seriesId: number, seriesUnitId: number, exerciseId: number, itemId: number) =>
+    http<void>(`${V1}/creator/textbook-series/${seriesId}/units/${seriesUnitId}/vocabulary/${exerciseId}/items/${itemId}`, "DELETE"),
   searchExercises: (p: ExerciseSearchParams = {}) => {
     const q = new URLSearchParams();
     if (p.subjectId != null) q.set("subjectId", String(p.subjectId));
-    if (p.chapterId != null) q.set("chapterId", String(p.chapterId));
+    if (p.seriesUnitId != null) q.set("seriesUnitId", String(p.seriesUnitId));
     if (p.grade != null) q.set("grade", String(p.grade));
     if (p.schoolType && p.schoolType !== "None") q.set("schoolType", p.schoolType);
     if (p.categoryId != null) q.set("categoryId", String(p.categoryId));
@@ -495,16 +488,16 @@ export const api = {
   childItemHistory: (childId: number, itemId: number, take = 20) =>
     httpPaged<ItemHistoryEntry>(`${V1}/student/children/${childId}/vocabulary-progress/${itemId}/history?take=${take}`),
 
-  // Katalog-hierarchischer Drilldown (Fach → Kapitel → Übung → Item), abgeleitet aus den Lehrplänen.
+  // Katalog-hierarchischer Drilldown (Fach → Lehrwerk-Unit → Übung → Item), abgeleitet aus den Lehrplänen.
   childLearnSubjects: (childId: number) =>
     http<SubjectProgress[]>(`${V1}/student/children/${childId}/learn/subjects`),
-  childLearnChapters: (childId: number, subjectId: number) =>
-    http<ChapterProgress[]>(`${V1}/student/children/${childId}/learn/subjects/${subjectId}/chapters`),
-  childLearnExercises: (childId: number, subjectId: number, chapterId: number) =>
-    http<ExerciseProgress[]>(`${V1}/student/children/${childId}/learn/subjects/${subjectId}/chapters/${chapterId}/vocabulary`),
-  childLearnItems: (childId: number, subjectId: number, chapterId: number, exerciseId: number) =>
+  childLearnSeriesUnits: (childId: number, subjectId: number) =>
+    http<SeriesUnitProgress[]>(`${V1}/student/children/${childId}/learn/subjects/${subjectId}/series-units`),
+  childLearnExercises: (childId: number, subjectId: number, seriesUnitId: number) =>
+    http<ExerciseProgress[]>(`${V1}/student/children/${childId}/learn/subjects/${subjectId}/series-units/${seriesUnitId}/vocabulary`),
+  childLearnItems: (childId: number, subjectId: number, seriesUnitId: number, exerciseId: number) =>
     http<ItemProgressResponse[]>(
-      `${V1}/student/children/${childId}/learn/subjects/${subjectId}/chapters/${chapterId}/vocabulary/${exerciseId}/items`),
+      `${V1}/student/children/${childId}/learn/subjects/${subjectId}/series-units/${seriesUnitId}/vocabulary/${exerciseId}/items`),
 
   // ---- Ziele über dem Lernstand: Objectives (Klammer) mit ihren Etappen (Key Results) ----
   // Sie werden bei jeder Abfrage live aus dem Lernstand ausgewertet – deshalb keine „Fortschritt

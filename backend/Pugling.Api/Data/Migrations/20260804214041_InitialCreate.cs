@@ -511,27 +511,6 @@ namespace Pugling.Api.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Chapters",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    SubjectId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    OrderIndex = table.Column<int>(type: "INTEGER", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Chapters", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Chapters_Subjects_SubjectId",
-                        column: x => x.SubjectId,
-                        principalTable: "Subjects",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "ExerciseCategories",
                 columns: table => new
                 {
@@ -901,56 +880,6 @@ namespace Pugling.Api.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Exercises",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    ChapterId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Type = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    Description = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
-                    OrderIndex = table.Column<int>(type: "INTEGER", nullable: false),
-                    RewardPoints = table.Column<int>(type: "INTEGER", nullable: false),
-                    ConfigJson = table.Column<string>(type: "TEXT", nullable: false),
-                    SuggestedBonus = table.Column<string>(type: "TEXT", nullable: true),
-                    DefaultStage = table.Column<int>(type: "INTEGER", nullable: true),
-                    DefaultItemCount = table.Column<int>(type: "INTEGER", nullable: true),
-                    DefaultUseLeitner = table.Column<bool>(type: "INTEGER", nullable: false),
-                    DefaultRequireTypedTest = table.Column<bool>(type: "INTEGER", nullable: false),
-                    GradeMin = table.Column<int>(type: "INTEGER", nullable: true),
-                    GradeMax = table.Column<int>(type: "INTEGER", nullable: true),
-                    SchoolTypes = table.Column<int>(type: "INTEGER", nullable: false),
-                    Source = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
-                    CategoryId = table.Column<int>(type: "INTEGER", nullable: true),
-                    AuthorAdultId = table.Column<int>(type: "INTEGER", nullable: true),
-                    ExecutePublic = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: true),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Exercises", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Exercises_Adults_AuthorAdultId",
-                        column: x => x.AuthorAdultId,
-                        principalTable: "Adults",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
-                    table.ForeignKey(
-                        name: "FK_Exercises_Chapters_ChapterId",
-                        column: x => x.ChapterId,
-                        principalTable: "Chapters",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Exercises_ExerciseCategories_CategoryId",
-                        column: x => x.CategoryId,
-                        principalTable: "ExerciseCategories",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "KlassenarbeitTags",
                 columns: table => new
                 {
@@ -1085,6 +1014,103 @@ namespace Pugling.Api.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Exercises",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    SeriesUnitId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Type = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
+                    OrderIndex = table.Column<int>(type: "INTEGER", nullable: false),
+                    RewardPoints = table.Column<int>(type: "INTEGER", nullable: false),
+                    ConfigJson = table.Column<string>(type: "TEXT", nullable: false),
+                    SuggestedBonus = table.Column<string>(type: "TEXT", nullable: true),
+                    DefaultStage = table.Column<int>(type: "INTEGER", nullable: true),
+                    DefaultItemCount = table.Column<int>(type: "INTEGER", nullable: true),
+                    DefaultUseLeitner = table.Column<bool>(type: "INTEGER", nullable: false),
+                    DefaultRequireTypedTest = table.Column<bool>(type: "INTEGER", nullable: false),
+                    GradeMin = table.Column<int>(type: "INTEGER", nullable: true),
+                    GradeMax = table.Column<int>(type: "INTEGER", nullable: true),
+                    SchoolTypes = table.Column<int>(type: "INTEGER", nullable: false),
+                    Source = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    CategoryId = table.Column<int>(type: "INTEGER", nullable: true),
+                    AuthorAdultId = table.Column<int>(type: "INTEGER", nullable: true),
+                    ExecutePublic = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: true),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Exercises", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Exercises_Adults_AuthorAdultId",
+                        column: x => x.AuthorAdultId,
+                        principalTable: "Adults",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_Exercises_ExerciseCategories_CategoryId",
+                        column: x => x.CategoryId,
+                        principalTable: "ExerciseCategories",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_Exercises_SeriesUnits_SeriesUnitId",
+                        column: x => x.SeriesUnitId,
+                        principalTable: "SeriesUnits",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Textbooks",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    ChildId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    SubjectName = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    SubjectId = table.Column<int>(type: "INTEGER", nullable: true),
+                    Grade = table.Column<int>(type: "INTEGER", nullable: true),
+                    Publisher = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    Isbn = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    CurrentChapter = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    SeriesId = table.Column<int>(type: "INTEGER", nullable: true),
+                    CurrentUnitId = table.Column<int>(type: "INTEGER", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Textbooks", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Textbooks_Children_ChildId",
+                        column: x => x.ChildId,
+                        principalTable: "Children",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Textbooks_SeriesUnits_CurrentUnitId",
+                        column: x => x.CurrentUnitId,
+                        principalTable: "SeriesUnits",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_Textbooks_Subjects_SubjectId",
+                        column: x => x.SubjectId,
+                        principalTable: "Subjects",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_Textbooks_TextbookSeries_SeriesId",
+                        column: x => x.SeriesId,
+                        principalTable: "TextbookSeries",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ExerciseGrants",
                 columns: table => new
                 {
@@ -1177,7 +1203,7 @@ namespace Pugling.Api.Data.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     ObjectiveId = table.Column<int>(type: "INTEGER", nullable: false),
                     SubjectId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ChapterId = table.Column<int>(type: "INTEGER", nullable: true),
+                    SeriesUnitId = table.Column<int>(type: "INTEGER", nullable: true),
                     ExerciseId = table.Column<int>(type: "INTEGER", nullable: true),
                     Metric = table.Column<string>(type: "TEXT", nullable: false),
                     TargetValue = table.Column<int>(type: "INTEGER", nullable: false),
@@ -1186,12 +1212,6 @@ namespace Pugling.Api.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_KeyResults", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_KeyResults_Chapters_ChapterId",
-                        column: x => x.ChapterId,
-                        principalTable: "Chapters",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_KeyResults_Exercises_ExerciseId",
                         column: x => x.ExerciseId,
@@ -1204,6 +1224,12 @@ namespace Pugling.Api.Data.Migrations
                         principalTable: "Objectives",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_KeyResults_SeriesUnits_SeriesUnitId",
+                        column: x => x.SeriesUnitId,
+                        principalTable: "SeriesUnits",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_KeyResults_Subjects_SubjectId",
                         column: x => x.SubjectId,
@@ -1284,53 +1310,6 @@ namespace Pugling.Api.Data.Migrations
                         principalTable: "StudyPlans",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Textbooks",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    ChildId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    SubjectName = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
-                    SubjectId = table.Column<int>(type: "INTEGER", nullable: true),
-                    Grade = table.Column<int>(type: "INTEGER", nullable: true),
-                    Publisher = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
-                    Isbn = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
-                    CurrentChapter = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
-                    SeriesId = table.Column<int>(type: "INTEGER", nullable: true),
-                    CurrentUnitId = table.Column<int>(type: "INTEGER", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Textbooks", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Textbooks_Children_ChildId",
-                        column: x => x.ChildId,
-                        principalTable: "Children",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Textbooks_SeriesUnits_CurrentUnitId",
-                        column: x => x.CurrentUnitId,
-                        principalTable: "SeriesUnits",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
-                    table.ForeignKey(
-                        name: "FK_Textbooks_Subjects_SubjectId",
-                        column: x => x.SubjectId,
-                        principalTable: "Subjects",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
-                    table.ForeignKey(
-                        name: "FK_Textbooks_TextbookSeries_SeriesId",
-                        column: x => x.SeriesId,
-                        principalTable: "TextbookSeries",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -1841,12 +1820,6 @@ namespace Pugling.Api.Data.Migrations
                 filter: "[Email] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Chapters_SubjectId_Name",
-                table: "Chapters",
-                columns: new[] { "SubjectId", "Name" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_ChildInterests_ChildId_InterestTagId",
                 table: "ChildInterests",
                 columns: new[] { "ChildId", "InterestTagId" },
@@ -1986,9 +1959,9 @@ namespace Pugling.Api.Data.Migrations
                 column: "CategoryId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Exercises_ChapterId",
+                name: "IX_Exercises_SeriesUnitId",
                 table: "Exercises",
-                column: "ChapterId");
+                column: "SeriesUnitId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Exercises_Type",
@@ -2049,21 +2022,9 @@ namespace Pugling.Api.Data.Migrations
                 column: "ItemId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_KeyResults_ChapterId",
-                table: "KeyResults",
-                column: "ChapterId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_KeyResults_ExerciseId",
                 table: "KeyResults",
                 column: "ExerciseId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_KeyResults_ObjectiveId_ChapterId_Metric",
-                table: "KeyResults",
-                columns: new[] { "ObjectiveId", "ChapterId", "Metric" },
-                unique: true,
-                filter: "[ChapterId] IS NOT NULL AND [ExerciseId] IS NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_KeyResults_ObjectiveId_ExerciseId_Metric",
@@ -2073,11 +2034,23 @@ namespace Pugling.Api.Data.Migrations
                 filter: "[ExerciseId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_KeyResults_ObjectiveId_SeriesUnitId_Metric",
+                table: "KeyResults",
+                columns: new[] { "ObjectiveId", "SeriesUnitId", "Metric" },
+                unique: true,
+                filter: "[SeriesUnitId] IS NOT NULL AND [ExerciseId] IS NULL");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_KeyResults_ObjectiveId_SubjectId_Metric",
                 table: "KeyResults",
                 columns: new[] { "ObjectiveId", "SubjectId", "Metric" },
                 unique: true,
-                filter: "[ChapterId] IS NULL AND [ExerciseId] IS NULL");
+                filter: "[SeriesUnitId] IS NULL AND [ExerciseId] IS NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_KeyResults_SeriesUnitId",
+                table: "KeyResults",
+                column: "SeriesUnitId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_KeyResults_SubjectId",
@@ -2625,9 +2598,6 @@ namespace Pugling.Api.Data.Migrations
                 name: "TestAttempts");
 
             migrationBuilder.DropTable(
-                name: "SeriesUnits");
-
-            migrationBuilder.DropTable(
                 name: "VocabTags");
 
             migrationBuilder.DropTable(
@@ -2646,25 +2616,25 @@ namespace Pugling.Api.Data.Migrations
                 name: "PlanPositions");
 
             migrationBuilder.DropTable(
-                name: "TextbookSeries");
-
-            migrationBuilder.DropTable(
                 name: "Exercises");
 
             migrationBuilder.DropTable(
                 name: "StudyPlans");
 
             migrationBuilder.DropTable(
-                name: "Adults");
-
-            migrationBuilder.DropTable(
-                name: "Chapters");
-
-            migrationBuilder.DropTable(
                 name: "ExerciseCategories");
 
             migrationBuilder.DropTable(
+                name: "SeriesUnits");
+
+            migrationBuilder.DropTable(
                 name: "Children");
+
+            migrationBuilder.DropTable(
+                name: "TextbookSeries");
+
+            migrationBuilder.DropTable(
+                name: "Adults");
 
             migrationBuilder.DropTable(
                 name: "Subjects");

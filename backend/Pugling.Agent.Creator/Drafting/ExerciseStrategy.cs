@@ -111,14 +111,14 @@ public abstract class ExerciseStrategy<TDraft, TConfig>(
             return new GenerationOutcome(TypeKey, title, json, [], null, null, false);
 
         var payload = await ToPayloadAsync(draft, briefing, request, ct);
-        var created = await Creator.CreateExerciseAsync<TConfig>(request.SubjectId, request.ChapterId, route, payload, ct);
+        var created = await Creator.CreateExerciseAsync<TConfig>(request.SeriesId, request.SeriesUnitId, route, payload, ct);
 
         var percent = await SelfTestAsync(created.Id, draft, ct);
         var rolledBack = false;
         if (percent != 100 && request.Strict)
         {
             // An exercise that contradicts its own solutions must not stay in the catalog.
-            await Creator.DeleteExerciseAsync(request.SubjectId, request.ChapterId, route, created.Id, ct);
+            await Creator.DeleteExerciseAsync(request.SeriesId, request.SeriesUnitId, route, created.Id, ct);
             rolledBack = true;
         }
 

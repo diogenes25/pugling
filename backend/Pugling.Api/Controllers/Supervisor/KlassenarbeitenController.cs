@@ -296,14 +296,14 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
 
     // ---- Helpers ----
 
-    /// <summary>Loads exercises by predicate incl. chapter/subject, sorted and without tracking.</summary>
+    /// <summary>Loads exercises by predicate incl. series unit/subject, sorted and without tracking.</summary>
     private async Task<List<ExerciseBrief>> LoadExercisesAsync(
         System.Linq.Expressions.Expression<Func<Exercise, bool>> predicate, CancellationToken ct)
     {
         var exercises = await db.Exercises
             .Where(predicate)
-            .Include(e => e.Chapter!).ThenInclude(c => c.Subject)
-            .OrderBy(e => e.Chapter!.SubjectId).ThenBy(e => e.ChapterId).ThenBy(e => e.OrderIndex)
+            .Include(e => e.SeriesUnit!).ThenInclude(u => u.Series!).ThenInclude(s => s.Subject)
+            .OrderBy(e => e.SeriesUnit!.Series!.SubjectId).ThenBy(e => e.SeriesUnitId).ThenBy(e => e.OrderIndex)
             .AsNoTracking()
             .ToListAsync(ct);
         return exercises.Select(ExerciseBriefMapping.From).ToList();

@@ -1,6 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Pugling.Api.Data;
 
 namespace Pugling.Api.Tests;
 
@@ -20,14 +23,35 @@ public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFi
         return (id, await TestApi.FatherAsync(factory, id, pin));
     }
 
-    /// <summary>Creates, as a teacher, subject → chapter → a 9th-grade Gymnasium vocabulary exercise; returns the ids.</summary>
-    private static async Task<(int subjectId, int chapterId, int exerciseId)> CreateGrade9GymExerciseAsync(HttpClient teacher)
+    /// <summary>Creates, as a teacher, subject → series/unit → a 9th-grade Gymnasium vocabulary exercise; returns the ids.</summary>
+    private static async Task<(int subjectId, int seriesId, int seriesUnitId, int exerciseId)> CreateGrade9GymExerciseAsync(HttpClient teacher)
     {
         var subjectId = await TestApi.IdAsync(await teacher.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Englisch (geteilt)" }));
-        var chapterId = await TestApi.IdAsync(await teacher.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit 5 – Global challenges", orderIndex = 5 }));
+        // A series' slug creation is idempotent (reused on a matching name) - a per-call unique name keeps
+        // this fixture from silently reattaching to a different test's series when the DB is shared.
+        var seriesId = await TestApi.IdAsync(await teacher.PostAsJsonAsync("/api/v1/creator/textbook-series", new
+        {
+            name = $"Green Line 5 (geteilt {Guid.NewGuid():N})",
+            publisher = (string?)null,
+            subjectName = (string?)null,
+            subjectId,
+            schoolTypes = (object?)null,
+            sourceLanguage = (string?)null,
+            targetLanguage = (string?)null,
+            notes = (string?)null,
+        }));
+        var seriesUnitId = await TestApi.IdAsync(await teacher.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units", new
+            {
+                label = "Unit 5 – Global challenges",
+                grade = (int?)null,
+                orderIndex = 5,
+                topics = (string?)null,
+                grammar = (string?)null,
+                vocabularyNotes = (string?)null,
+            }));
         var exerciseId = await TestApi.IdAsync(await teacher.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary", new
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary", new
             {
                 title = "Vocabulary: The environment",
                 orderIndex = 1,
@@ -48,14 +72,14 @@ public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFi
                     },
                 },
             }));
-        return (subjectId, chapterId, exerciseId);
+        return (subjectId, seriesId, seriesUnitId, exerciseId);
     }
 
     [Fact]
     public async Task Lehrer_ErstelltUebung_TraegtAutorschaftUndIstEditierbar()
     {
         var (teacherId, teacher) = await RegisterAndLoginAsync("Herr Schmidt", "7777");
-        var (subjectId, _, exerciseId) = await CreateGrade9GymExerciseAsync(teacher);
+        var (subjectId, _, _, exerciseId) = await CreateGrade9GymExerciseAsync(teacher);
 
         // The teacher's catalog search: grade 9 + Gymnasium + subject → their exercise with attribution + IsOwn.
         var hits = await (await teacher.GetAsync(
@@ -73,7 +97,7 @@ public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFi
     {
         // 1) The teacher creates the exercise.
         var (teacherId, teacher) = await RegisterAndLoginAsync("Frau Meier", "7777");
-        var (subjectId, chapterId, exerciseId) = await CreateGrade9GymExerciseAsync(teacher);
+        var (subjectId, seriesId, seriesUnitId, exerciseId) = await CreateGrade9GymExerciseAsync(teacher);
 
         // 2) Another adult registers and creates a child.
         var (_, other) = await RegisterAndLoginAsync("Papa Müller", "8888");
@@ -97,11 +121,11 @@ public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFi
             config = new { direction = "front-to-back", items = new[] { new { front = "x", back = "y" } } },
         };
         var put = await other.PutAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}", putBody);
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}", putBody);
         Assert.Equal(HttpStatusCode.Forbidden, put.StatusCode);
 
         var del = await other.DeleteAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}");
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}");
         Assert.Equal(HttpStatusCode.Forbidden, del.StatusCode);
 
         // 5) But they may take it into a study plan of their OWN (the catalog is globally usable).
@@ -120,7 +144,7 @@ public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFi
 
         // 7) The teacher themselves may still change their exercise.
         var teacherPut = await teacher.PutAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}",
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}",
             new
             {
                 title = "Vocabulary: The environment (überarbeitet)",
@@ -145,11 +169,17 @@ public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFi
         var seeded = hits.EnumerateArray().First();
         Assert.True(seeded.GetProperty("authorAdultId").ValueKind == JsonValueKind.Null);
 
-        var subjectId = seeded.GetProperty("subjectId").GetInt32();
-        var chapterId = seeded.GetProperty("chapterId").GetInt32();
+        var seriesUnitId = seeded.GetProperty("seriesUnitId").GetInt32();
         var id = seeded.GetProperty("id").GetInt32();
+
+        // The catalog search only carries the unit, not its series - resolved via the DB the same way the
+        // seed itself knows it (there is no lookup route for a unit's series without already knowing it).
+        using var scope = factory.Services.CreateScope();
+        var seriesId = await scope.ServiceProvider.GetRequiredService<PuglingDbContext>()
+            .SeriesUnits.Where(u => u.Id == seriesUnitId).Select(u => u.SeriesId).FirstAsync();
+
         var del = await father.DeleteAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{id}");
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{id}");
         Assert.Equal(HttpStatusCode.Forbidden, del.StatusCode);
     }
 }

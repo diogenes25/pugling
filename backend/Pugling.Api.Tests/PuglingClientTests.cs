@@ -63,12 +63,14 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
     }
 
     [Fact]
-    public async Task Creator_legt_Fach_Kapitel_und_typisierte_Uebung_an()
+    public async Task Creator_legt_Fach_Reihe_Einheit_und_typisierte_Uebung_an()
     {
         var creator = Creator();
 
         var subject = await creator.CreateSubjectAsync(new CreateSubjectDto("Client-Test Englisch"));
-        var chapter = await creator.CreateChapterAsync(subject.Id, new CreateChapterDto("Unit 1", 1));
+        var series = await creator.CreateSeriesAsync(new CreateTextbookSeriesDto(
+            "Client-Test Reihe", null, null, subject.Id, null, null, null, null));
+        var unit = await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto("Unit 1", null, 1, null, null, null));
 
         var payload = new ExercisePayload<VocabularyConfig>("Classroom words", 1, 10, new VocabularyConfig
         {
@@ -77,14 +79,14 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
             TargetLang = "de",
             Items = [new VocabItem("the blackboard", "die Tafel"), new VocabItem("the break", "die Pause")],
         });
-        var exercise = await creator.CreateExerciseAsync(subject.Id, chapter.Id, "vocabulary", payload);
+        var exercise = await creator.CreateExerciseAsync(series.Id, unit.Id, "vocabulary", payload);
 
         Assert.Equal("Vocabulary", exercise.Type);
         Assert.True(exercise.IsOwn);
         Assert.True(exercise.IsOwner);
 
         // The inline vocabulary must be materialized as its own item tier and linked in the store.
-        var items = await creator.ListItemsAsync(subject.Id, chapter.Id, exercise.Id);
+        var items = await creator.ListItemsAsync(series.Id, unit.Id, exercise.Id);
         Assert.Equal(2, items.Count);
         Assert.All(items, i => Assert.True(i.VocabularyId > 0));
         Assert.Contains(items, i => i.Front == "the blackboard" && i.Back == "die Tafel");
@@ -118,8 +120,10 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
 
         // Create the content as the creator …
         var subject = await creator.CreateSubjectAsync(new CreateSubjectDto("Client-Test Steuerung"));
-        var chapter = await creator.CreateChapterAsync(subject.Id, new CreateChapterDto("Kapitel 1", 1));
-        var exercise = await creator.CreateExerciseAsync(subject.Id, chapter.Id, "matching",
+        var series = await creator.CreateSeriesAsync(new CreateTextbookSeriesDto(
+            "Client-Test Steuerung Reihe", null, null, subject.Id, null, null, null, null));
+        var unit = await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto("Einheit 1", null, 1, null, null, null));
+        var exercise = await creator.CreateExerciseAsync(series.Id, unit.Id, "matching",
             new ExercisePayload<MatchingConfig>("Verben zuordnen", 1, 8, new MatchingConfig
             {
                 Instruction = "Match the infinitive with its past simple form.",
@@ -287,9 +291,11 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
 
         // 400 with field errors: Birkenbihl accepts no sentences without a decoding.
         var subject = await creator.CreateSubjectAsync(new CreateSubjectDto("Client-Test Fehler"));
-        var chapter = await creator.CreateChapterAsync(subject.Id, new CreateChapterDto("Kapitel", 1));
+        var series = await creator.CreateSeriesAsync(new CreateTextbookSeriesDto(
+            "Client-Test Fehler Reihe", null, null, subject.Id, null, null, null, null));
+        var unit = await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto("Kapitel", null, 1, null, null, null));
         var invalid = await Assert.ThrowsAsync<PuglingApiException>(() =>
-            creator.CreateExerciseAsync(subject.Id, chapter.Id, "birkenbihl",
+            creator.CreateExerciseAsync(series.Id, unit.Id, "birkenbihl",
                 new ExercisePayload<BirkenbihlConfig>("Ohne Dekodierung", 1, 5, new BirkenbihlConfig
                 {
                     LearningLang = "en",
@@ -320,8 +326,10 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
         var creator = Creator();
 
         var subject = await creator.CreateSubjectAsync(new CreateSubjectDto("Client-Test Birkenbihl"));
-        var chapter = await creator.CreateChapterAsync(subject.Id, new CreateChapterDto("Kapitel", 1));
-        var exercise = await creator.CreateExerciseAsync(subject.Id, chapter.Id, "birkenbihl",
+        var series = await creator.CreateSeriesAsync(new CreateTextbookSeriesDto(
+            "Client-Test Birkenbihl Reihe", null, null, subject.Id, null, null, null, null));
+        var unit = await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto("Kapitel", null, 1, null, null, null));
+        var exercise = await creator.CreateExerciseAsync(series.Id, unit.Id, "birkenbihl",
             new ExercisePayload<BirkenbihlConfig>("At the school gate", 1, 15, new BirkenbihlConfig
             {
                 LearningLang = "en",
@@ -329,7 +337,7 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
                 Sentences = [],
             }));
 
-        var sentence = await creator.AddBirkenbihlSentenceAsync(subject.Id, chapter.Id, exercise.Id,
+        var sentence = await creator.AddBirkenbihlSentenceAsync(series.Id, unit.Id, exercise.Id,
             new BirkenbihlSentenceInput("I go to school every day.", "Ich gehe jeden Tag zur Schule."));
 
         Assert.Equal(1, sentence.SentenceId);

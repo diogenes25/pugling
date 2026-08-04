@@ -92,10 +92,22 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
         var father = await TestApi.FatherAsync(_factory);
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
             new { name = TestApi.UniqueName("Vorschau-Liste") }));
-        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Kapitel", orderIndex = 1 }));
+        var seriesId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/textbook-series",
+            new
+            {
+                name = TestApi.UniqueName("Reihe-Vorschau-Liste"),
+                publisher = (string?)null,
+                subjectName = (string?)null,
+                subjectId,
+                schoolTypes = (string?)null,
+                sourceLanguage = (string?)null,
+                targetLanguage = (string?)null,
+                notes = (string?)null,
+            }));
+        var seriesUnitId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units", new { label = "Kapitel", orderIndex = 1 }));
         var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/list", new
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/list", new
             {
                 title = TestApi.UniqueName("Drei Bundesländer (Vorschau)"),
                 orderIndex = 1,

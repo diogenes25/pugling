@@ -25,14 +25,26 @@ public class ExerciseSharingTests(PuglingWebAppFactory factory) : IClassFixture<
     }
 
     /// <summary>Creates a populated, publicly assignable vocabulary exercise and returns its ids.</summary>
-    private static async Task<(int subjectId, int chapterId, int exerciseId)> PublishVocabAsync(HttpClient creator)
+    private static async Task<(int subjectId, int seriesUnitId, int exerciseId)> PublishVocabAsync(HttpClient creator)
     {
         var subjectId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/subjects",
             new { name = $"Sharing-Fach {Guid.NewGuid():N}" }));
-        var chapterId = await TestApi.IdAsync(await creator.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit", orderIndex = 1 }));
+        var seriesId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/textbook-series",
+            new
+            {
+                name = $"Sharing-Reihe {Guid.NewGuid():N}",
+                publisher = (string?)null,
+                subjectName = (string?)null,
+                subjectId,
+                schoolTypes = (string?)null,
+                sourceLanguage = (string?)null,
+                targetLanguage = (string?)null,
+                notes = (string?)null,
+            }));
+        var seriesUnitId = await TestApi.IdAsync(await creator.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units", new { label = "Unit", orderIndex = 1 }));
         var exerciseId = await TestApi.IdAsync(await creator.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary",
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary",
             new
             {
                 title = "Veröffentlicht",
@@ -47,7 +59,7 @@ public class ExerciseSharingTests(PuglingWebAppFactory factory) : IClassFixture<
                     items = new[] { new { front = "cloud", back = "Wolke" } },
                 },
             }));
-        return (subjectId, chapterId, exerciseId);
+        return (subjectId, seriesUnitId, exerciseId);
     }
 
     private async Task<(int planId, HttpClient family)> FamilyWithPlanAsync(string name, string pin)

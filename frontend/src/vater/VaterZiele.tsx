@@ -7,8 +7,9 @@ import { useAction, type ActionState } from "../lib/useAction";
 import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
 import type {
-  ChapterResponse, ChildResponse, CreateKeyResultRequest, ExerciseSummary, GoalStatus, KeyResult,
-  KeyResultMetric, Objective, ObjectiveKind, Paged, SubjectResponse,
+  ChildResponse, CreateKeyResultRequest, ExerciseSummary, GoalStatus, KeyResult,
+  KeyResultMetric, Objective, ObjectiveKind, Paged, SeriesUnitResponse, SubjectResponse,
+  TextbookSeriesResponse,
 } from "../lib/types";
 
 /**
@@ -111,32 +112,37 @@ export function VaterZiele() {
   );
 }
 
-// ─── Scope-Wähler (Fach → optional Kapitel → optional Übung) ──────────────────
+// ─── Scope-Wähler (Fach → optional Lehrwerk-Unit → optional Übung) ────────────
 
-interface Scope { subjectId: number | ""; chapterId: number | ""; exerciseId: number | ""; }
+interface Scope { subjectId: number | ""; seriesId: number | ""; seriesUnitId: number | ""; exerciseId: number | ""; }
 
-const emptyScope: Scope = { subjectId: "", chapterId: "", exerciseId: "" };
+const emptyScope: Scope = { subjectId: "", seriesId: "", seriesUnitId: "", exerciseId: "" };
 
 /**
- * Der Geltungsbereich eines Ziels. Das Fach ist Pflicht, Kapitel und Übung engen weiter ein – je enger, je
- * konkreter die Aussage („in dieser einen Übung" statt „im ganzen Fach").
+ * Der Geltungsbereich eines Ziels. Das Fach ist Pflicht, Reihe/Unit und Übung engen weiter ein – je enger,
+ * je konkreter die Aussage („in dieser einen Übung" statt „im ganzen Fach"). Die Reihe ist nur eine lokale
+ * Zwischenstufe der Auswahl (Reihe → Unit); sie geht selbst nicht in den Scope, den der Server sieht –
+ * dort zählt seit B-106 die Unit (`seriesUnitId`, ex-`chapterId`).
  */
 function ScopePicker({ value, onChange, subjects }: {
   value: Scope; onChange: (s: Scope) => void; subjects: SubjectResponse[];
 }) {
   // Eigene Id-Basis je Instanz: der Wähler steht ggf. mehrfach im DOM (Lernziel + Etappe zugleich).
   const uid = useId();
-  const chapters = useAsync<ChapterResponse[]>(
-    () => (value.subjectId === "" ? Promise.resolve([]) : api.chapters(Number(value.subjectId))), [value.subjectId]);
+  const series = useAsync<TextbookSeriesResponse[]>(
+    () => (value.subjectId === "" ? Promise.resolve([]) : api.textbookSeries({ subjectId: Number(value.subjectId) })),
+    [value.subjectId]);
+  const units = useAsync<SeriesUnitResponse[]>(
+    () => (value.seriesId === "" ? Promise.resolve([]) : api.seriesUnits(Number(value.seriesId))), [value.seriesId]);
   const exercises = useAsync<Paged<ExerciseSummary>>(
     () => (value.subjectId === ""
       ? Promise.resolve({ items: [], total: 0 })
       : api.searchExercises({
         subjectId: Number(value.subjectId),
-        chapterId: value.chapterId === "" ? undefined : Number(value.chapterId),
+        seriesUnitId: value.seriesUnitId === "" ? undefined : Number(value.seriesUnitId),
         type: "Vocabulary", take: 100,
       })),
-    [value.subjectId, value.chapterId]);
+    [value.subjectId, value.seriesUnitId]);
 
   return (
     <>
@@ -149,11 +155,19 @@ function ScopePicker({ value, onChange, subjects }: {
         </select>
       </div>
       <div className="field">
-        <label htmlFor={`${uid}-chapter`}>Kapitel <span className="muted">(optional)</span></label>
-        <select id={`${uid}-chapter`} value={value.chapterId} disabled={value.subjectId === ""}
-          onChange={(e) => onChange({ ...value, chapterId: e.target.value === "" ? "" : Number(e.target.value), exerciseId: "" })}>
+        <label htmlFor={`${uid}-series`}>Reihe <span className="muted">(optional)</span></label>
+        <select id={`${uid}-series`} value={value.seriesId} disabled={value.subjectId === ""}
+          onChange={(e) => onChange({ ...value, seriesId: e.target.value === "" ? "" : Number(e.target.value), seriesUnitId: "", exerciseId: "" })}>
           <option value="">ganzes Fach</option>
-          {chapters.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          {series.data?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
+      </div>
+      <div className="field">
+        <label htmlFor={`${uid}-unit`}>Unit <span className="muted">(optional)</span></label>
+        <select id={`${uid}-unit`} value={value.seriesUnitId} disabled={value.seriesId === ""}
+          onChange={(e) => onChange({ ...value, seriesUnitId: e.target.value === "" ? "" : Number(e.target.value), exerciseId: "" })}>
+          <option value="">ganze Reihe</option>
+          {units.data?.map((u) => <option key={u.id} value={u.id}>{u.label}</option>)}
         </select>
       </div>
       <div className="field">
@@ -170,7 +184,7 @@ function ScopePicker({ value, onChange, subjects }: {
 
 const scopeToDto = (s: Scope) => ({
   subjectId: Number(s.subjectId),
-  chapterId: s.chapterId === "" ? null : Number(s.chapterId),
+  seriesUnitId: s.seriesUnitId === "" ? null : Number(s.seriesUnitId),
   exerciseId: s.exerciseId === "" ? null : Number(s.exerciseId),
 });
 

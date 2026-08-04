@@ -200,11 +200,11 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
 
             await CaptureAuthAsync(anon);
             await CaptureChildrenAsync(father, father2, foreignChildId);
-            var (docSubjectId, docChapterId, docExerciseId) = await CaptureCatalogAsync(father);
-            await CaptureExerciseTypesAsync(father, docSubjectId, docChapterId);
-            await CaptureGrantsAsync(father, father2, father2Id, foreignChildId, docSubjectId, docChapterId, docExerciseId);
+            var (docSubjectId, docSeriesId, docSeriesUnitId, docExerciseId) = await CaptureCatalogAsync(father);
+            await CaptureExerciseTypesAsync(father, docSeriesId, docSeriesUnitId);
+            await CaptureGrantsAsync(father, father2, father2Id, foreignChildId, docSeriesId, docSeriesUnitId, docExerciseId);
             await CaptureMeAsync(father, child);
-            await CaptureStudyPlansAsync(father, father2, child, docSubjectId, docChapterId, docExerciseId);
+            await CaptureStudyPlansAsync(father, father2, child, docSeriesId, docSeriesUnitId, docExerciseId);
             await CaptureClassTestsAsync(father);
             await CaptureVocabularyAsync(father);
             await CaptureTagsAsync(father, child, foreignChildId);
@@ -259,7 +259,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     }
 
     // ── catalog ─────────────────────────────────────────────────────────────────────────────────
-    private async Task<(int subjectId, int chapterId, int exerciseId)> CaptureCatalogAsync(HttpClient father)
+    private async Task<(int subjectId, int seriesId, int seriesUnitId, int exerciseId)> CaptureCatalogAsync(HttpClient father)
     {
         const string g = "catalog";
         var subject = await Capture(father, g, "Fach anlegen", HttpMethod.Post, "/api/v1/creator/subjects",
@@ -269,14 +269,30 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         await Capture(father, g, "Fach ohne Namen anlegen", HttpMethod.Post, "/api/v1/creator/subjects",
             new { name = "" }, HttpStatusCode.BadRequest, ApiErrors.ValidationError.Code);
 
-        var chapter = await Capture(father, g, "Kapitel anlegen", HttpMethod.Post, $"/api/v1/creator/subjects/{subjectId}/chapters",
-            new { name = "Kapitel 1", orderIndex = 1 }, HttpStatusCode.Created);
-        var chapterId = chapter.GetProperty("id").GetInt32();
+        // A series needs its subject set - only then can it host exercises (series_without_subject otherwise).
+        var series = await Capture(father, g, "Lehrwerk-Reihe anlegen", HttpMethod.Post, "/api/v1/creator/textbook-series",
+            new
+            {
+                name = "Doku-Reihe",
+                publisher = (string?)null,
+                subjectName = (string?)null,
+                subjectId,
+                schoolTypes = (string?)null,
+                sourceLanguage = (string?)null,
+                targetLanguage = (string?)null,
+                notes = (string?)null,
+            }, HttpStatusCode.Created);
+        var seriesId = series.GetProperty("id").GetInt32();
+
+        var unit = await Capture(father, g, "Unit anlegen", HttpMethod.Post, $"/api/v1/creator/textbook-series/{seriesId}/units",
+            new { label = "Unit 1", grade = (int?)null, orderIndex = 1, topics = (string?)null, grammar = (string?)null, vocabularyNotes = (string?)null },
+            HttpStatusCode.Created);
+        var seriesUnitId = unit.GetProperty("id").GetInt32();
 
         // The exercise is created as a shell (settings only); the vocabulary pairs come underneath through the
         // item endpoint as their own sub-resource (items are a tier of their own, see VocabularyController).
         var exercise = await Capture(father, g, "Vokabel-Übung anlegen", HttpMethod.Post,
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary",
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary",
             new
             {
                 title = "Begrüßungen",
@@ -289,11 +305,11 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         // A vocabulary pair through the item endpoint: inline via front/back - without a vocabularyId the entry
         // is created in the store. (With a vocabularyId the id suffices; front/back would come from the store.)
         await Capture(father, g, "Vokabelpaar hinzufügen", HttpMethod.Post,
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items",
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}/items",
             new { front = "hello", back = "hallo" }, HttpStatusCode.Created);
         // Create a second pair directly (not as an example), so that the exercise carries two items for the play flow.
         (await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items",
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}/items",
             new { front = "goodbye", back = "tschüss" })).EnsureSuccessStatusCode();
 
         await Capture(father, g, "Unbekannte Übung lesen", HttpMethod.Get, "/api/v1/creator/exercises/999999",
@@ -307,23 +323,23 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         // An exercise sitting in a study plan cannot be deleted (position reference → 409).
         TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.FreeText);
         await Capture(father, g, "Verwendete Übung löschen", HttpMethod.Delete,
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}",
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}",
             null, HttpStatusCode.Conflict, ApiErrors.ExerciseInUse.Code);
 
         // Editing an exercise of another author (teacher library, AuthorAdultId = teacher) → 403 not_author.
         var foreign = await FindForeignAuthoredExerciseAsync(father);
-        if (foreign is { } ex)
+        if (foreign is { } ex && await FindSeriesIdForUnitAsync(father, ex.SubjectId, ex.SeriesUnitId) is int foreignSeriesId)
             await Capture(father, g, "Fremd-Autor-Übung bearbeiten", HttpMethod.Put,
-                $"/api/v1/creator/subjects/{ex.SubjectId}/chapters/{ex.ChapterId}/vocabulary/{ex.Id}",
+                $"/api/v1/creator/textbook-series/{foreignSeriesId}/units/{ex.SeriesUnitId}/vocabulary/{ex.Id}",
                 new { title = "Übernahmeversuch", orderIndex = 1, rewardPoints = 1, config = new { } },
                 HttpStatusCode.Forbidden, ApiErrors.NotAuthor.Code);
 
-        return (subjectId, chapterId, exerciseId);
+        return (subjectId, seriesId, seriesUnitId, exerciseId);
     }
 
     // ── exercise grants (RWX: owner/write/execute + the execute gate) ─────────────────────────────────
     private async Task CaptureGrantsAsync(HttpClient father, HttpClient father2, int father2Id,
-        int foreignChildId, int subjectId, int chapterId, int exerciseId)
+        int foreignChildId, int seriesId, int seriesUnitId, int exerciseId)
     {
         const string g = "exercise-grants";
 
@@ -344,7 +360,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
 
         // Execute gate: another creator must not assign an exercise that is not publicly executable.
         var privateEx = await Capture(father, g, "Nicht öffentlich ausführbare Übung anlegen", HttpMethod.Post,
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary",
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary",
             new
             {
                 title = "Nur intern",
@@ -368,10 +384,10 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     // ── exercise types (one verified create POST per type) ─────────────────────────────────────
     // Vocabulary is already covered in CaptureCatalogAsync; here the remaining types, so that EVERY type POST
     // carries a verified request/response example into the OpenAPI spec (and thus the Bruno collection).
-    private async Task CaptureExerciseTypesAsync(HttpClient father, int subjectId, int chapterId)
+    private async Task CaptureExerciseTypesAsync(HttpClient father, int seriesId, int seriesUnitId)
     {
         const string g = "catalog";
-        string Base(string type) => $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/{type}";
+        string Base(string type) => $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/{type}";
 
         await Capture(father, g, "Leseübung anlegen", HttpMethod.Post, Base("reading"),
             new
@@ -538,7 +554,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             }, HttpStatusCode.Created);
     }
 
-    private sealed record ForeignExercise(int Id, int SubjectId, int ChapterId);
+    private sealed record ForeignExercise(int Id, int? SubjectId, int SeriesUnitId);
 
     /// <summary>Searches the catalog for a vocabulary exercise with a foreign author (≠ father, ≠ system) for the not_author case.</summary>
     private static async Task<ForeignExercise?> FindForeignAuthoredExerciseAsync(HttpClient father)
@@ -550,7 +566,26 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             var isOwn = e.TryGetProperty("isOwn", out var o) && o.GetBoolean();
             if (author is { } id && id != 1 && !isOwn)
                 return new ForeignExercise(e.GetProperty("id").GetInt32(),
-                    e.GetProperty("subjectId").GetInt32(), e.GetProperty("chapterId").GetInt32());
+                    e.TryGetProperty("subjectId", out var s) && s.ValueKind == JsonValueKind.Number ? s.GetInt32() : (int?)null,
+                    e.GetProperty("seriesUnitId").GetInt32());
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Resolves the textbook series a unit belongs to: a search hit only carries the unit id, but the
+    /// nested exercise routes need the series id too. Scoped by the exercise's subject (if any) to keep the
+    /// series/unit scan small.
+    /// </summary>
+    private static async Task<int?> FindSeriesIdForUnitAsync(HttpClient father, int? subjectId, int seriesUnitId)
+    {
+        var seriesQuery = subjectId is int sid ? $"?subjectId={sid}&take=500" : "?take=500";
+        var seriesList = await father.GetFromJsonAsync<List<JsonElement>>($"/api/v1/creator/textbook-series{seriesQuery}");
+        foreach (var series in seriesList ?? [])
+        {
+            var seriesId = series.GetProperty("id").GetInt32();
+            var units = await father.GetFromJsonAsync<List<JsonElement>>($"/api/v1/creator/textbook-series/{seriesId}/units");
+            if (units!.Any(u => u.GetProperty("id").GetInt32() == seriesUnitId)) return seriesId;
         }
         return null;
     }
@@ -606,7 +641,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
 
     // ── study-plans / positions / practice / tests ────────────────────────────────────────────────
     private async Task CaptureStudyPlansAsync(HttpClient father, HttpClient father2, HttpClient child,
-        int docSubjectId, int docChapterId, int docExerciseId)
+        int docSeriesId, int docSeriesUnitId, int docExerciseId)
     {
         const string g = "study-plans";
 
@@ -690,7 +725,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
 
         // A test on a reading exercise without checkable content → no_checkable_content.
         var reading = await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{docSubjectId}/chapters/{docChapterId}/reading",
+            $"/api/v1/creator/textbook-series/{docSeriesId}/units/{docSeriesUnitId}/reading",
             new { title = "Leseverstehen (leer)", orderIndex = 2, rewardPoints = 5, config = new { text = "A short text without questions.", questions = Array.Empty<object>() } });
         reading.EnsureSuccessStatusCode();
         var readingExerciseId = (await reading.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
@@ -705,7 +740,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         // Assigning a vocabulary exercise that is not filled yet → exercise_empty. The difference to the case
         // above is the point: there "nothing to check" is a property of the type, here it is an unfinished state.
         var emptyVocab = await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{docSubjectId}/chapters/{docChapterId}/vocabulary",
+            $"/api/v1/creator/textbook-series/{docSeriesId}/units/{docSeriesUnitId}/vocabulary",
             new { title = "Vokabeln (noch leer)", orderIndex = 3, rewardPoints = 5, config = new { direction = "front-to-back" } });
         emptyVocab.EnsureSuccessStatusCode();
         var emptyVocabId = (await emptyVocab.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
@@ -716,7 +751,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         // A tag snapshot without hits → no_tag_matches (the exercise stays unchanged). Its own code, so that a
         // caller can tell it apart from "no tag sent at all" (validation_error).
         await Capture(father, g, "Tag-Schnappschuss ohne Treffer", HttpMethod.Post,
-            $"/api/v1/creator/subjects/{docSubjectId}/chapters/{docChapterId}/vocabulary/{emptyVocabId}/refs-from-tags",
+            $"/api/v1/creator/textbook-series/{docSeriesId}/units/{docSeriesUnitId}/vocabulary/{emptyVocabId}/refs-from-tags",
             new { tags = new[] { "gibt-es-nicht" } }, HttpStatusCode.BadRequest, ApiErrors.NoTagMatches.Code);
 
         // Deleting a position that has been played → position_has_data.

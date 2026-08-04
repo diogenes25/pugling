@@ -7,8 +7,8 @@ import { FieldLabel } from "../components/InfoHint";
 import { SCHOOL_TYPES } from "../lib/labels";
 import { LANGUAGES } from "../lib/languages";
 import type {
-  ChapterResponse, CreateExercisePayload, ExerciseTypeKey, PartOfSpeech, SchoolType, SubjectResponse,
-  VocabTagResponse, VocabularyResponse,
+  CreateExercisePayload, ExerciseTypeKey, PartOfSpeech, SchoolType, SubjectResponse,
+  TextbookSeriesResponse, SeriesUnitResponse, VocabTagResponse, VocabularyResponse,
 } from "../lib/types";
 import { POS, POS_LABEL } from "../lib/vocab";
 // Die typ-spezifische Inhalts-Maschinerie ist mit dem Bearbeiten-Dialog geteilt: Schreiben (buildTypeConfig)
@@ -26,21 +26,26 @@ import { useExerciseTypes } from "../lib/exerciseTypes";
  * einem `<form>` (Anmerkung 11: „das ist mir zu unaufgeräumt"). Erstellen ist ein abgeschlossener
  * Vorgang; die Bestandsliste ist eine Daueraufgabe. Siehe docs/vater-informationsarchitektur-plan.md.
  *
- * Fach und Kapitel sind hier reine **Auswahl**. Das Anlegen der beiden saß früher als „Neues Fach" /
- * „Neues Kapitel" gleichberechtigt neben den Pulldowns – prominent für etwas, das man selten tut, und
- * dazu am falschen Ort: der Katalog ist unter allen Vätern geteilt. Er hat jetzt seine eigene Seite,
- * hier steht nur der Weg dorthin.
+ * Fach, Reihe und Unit sind hier reine **Auswahl**. Das Anlegen von Fach/Reihe/Unit saß früher als
+ * „Neues Fach" / „Neues Kapitel" gleichberechtigt neben den Pulldowns – prominent für etwas, das man
+ * selten tut, und dazu am falschen Ort: der Katalog ist unter allen Vätern geteilt. Fach hat seine
+ * eigene Seite (`/vater/katalog`), Reihe/Unit ihre eigene (`/vater/lehrwerke`); hier steht nur der Weg
+ * dorthin. Seit B-106 hängt jede Übung zwingend an einer Lehrwerk-Unit statt an einem Kapitel –
+ * Katalogisierung ist Pflicht.
  */
 export function VaterExerciseCreate() {
-  // Fach/Kapitel kommen aus der Verwaltung mit (`+ Neue Übung` reicht sie als Query durch), damit der
+  // Reihe/Unit kommen aus der Verwaltung mit (`+ Neue Übung` reicht sie als Query durch), damit der
   // Vater seine Auswahl nicht zweimal trifft.
   const [params] = useSearchParams();
   const [subjectId, setSubjectId] = useState<number | "">(Number(params.get("subjectId")) || "");
-  const [chapterId, setChapterId] = useState<number | "">(Number(params.get("chapterId")) || "");
+  const [seriesId, setSeriesId] = useState<number | "">(Number(params.get("seriesId")) || "");
+  const [seriesUnitId, setSeriesUnitId] = useState<number | "">(Number(params.get("seriesUnitId")) || "");
 
   const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
-  const chapters = useAsync<ChapterResponse[]>(
-    () => (subjectId ? api.chapters(Number(subjectId)) : Promise.resolve([])), [subjectId]);
+  const series = useAsync<TextbookSeriesResponse[]>(
+    () => api.textbookSeries(subjectId ? { subjectId: Number(subjectId) } : {}), [subjectId]);
+  const units = useAsync<SeriesUnitResponse[]>(
+    () => (seriesId ? api.seriesUnits(Number(seriesId)) : Promise.resolve([])), [seriesId]);
 
   // Routen-Segment und Anzeigename der Typen kommen vom Server (Typ-Manifest), nicht aus einer Tabelle hier.
   const types = useExerciseTypes();
@@ -100,8 +105,8 @@ export function VaterExerciseCreate() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null); setOkMsg(null);
-    if (!subjectId) { setError("Bitte ein Fach wählen."); return; }
-    if (!chapterId) { setError("Bitte ein Kapitel wählen."); return; }
+    if (!seriesId) { setError("Bitte eine Lehrwerk-Reihe wählen."); return; }
+    if (!seriesUnitId) { setError("Bitte eine Unit wählen."); return; }
     if (!title.trim()) { setError("Bitte einen Titel angeben."); return; }
     // Die Meldung kommt aus der Typ-Prüfung: sie nennt, WAS fehlt (bei zwölf Typen sagt ein
     // Sammelsatz wie „Inhalt angeben" zu wenig).
@@ -113,7 +118,7 @@ export function VaterExerciseCreate() {
     try {
       // orderIndex ans Ende der EIGENEN Übungen setzen – nicht der (evtl. mitgezählten) geteilten Bibliothek.
       const own = await api.searchExercises({
-        subjectId: Number(subjectId), chapterId: Number(chapterId),
+        seriesUnitId: Number(seriesUnitId),
         mineOnly: true, take: 1,
       });
       const payload: CreateExercisePayload = {
@@ -132,7 +137,7 @@ export function VaterExerciseCreate() {
         defaultStage: type === "Vocabulary" && defaultStage !== "" ? Number(defaultStage) : null,
         defaultItemCount: defaultItemCount === "" ? null : Number(defaultItemCount),
       };
-      const created = await api.createExercise(Number(subjectId), Number(chapterId), route, payload);
+      const created = await api.createExercise(Number(seriesId), Number(seriesUnitId), route, payload);
       setOkMsg(`Übung „${payload.title}" angelegt.`);
       setJustCreated({ id: created.id, title: payload.title });
       setTitle("");
@@ -146,8 +151,12 @@ export function VaterExerciseCreate() {
     }
   }
 
-  /** Zurück in die Verwaltung – mit derselben Auswahl, damit die Liste gleich das richtige Kapitel zeigt. */
-  const manageHref = `/vater/exercises${subjectId ? `?subjectId=${subjectId}${chapterId ? `&chapterId=${chapterId}` : ""}` : ""}`;
+  /** Zurück in die Verwaltung – mit derselben Auswahl, damit die Liste gleich dieselbe Unit zeigt. */
+  const manageParams = new URLSearchParams();
+  if (subjectId) manageParams.set("subjectId", String(subjectId));
+  if (seriesId) manageParams.set("seriesId", String(seriesId));
+  if (seriesUnitId) manageParams.set("seriesUnitId", String(seriesUnitId));
+  const manageHref = `/vater/exercises${manageParams.size > 0 ? `?${manageParams}` : ""}`;
 
   return (
     // Der Testmodus-Dialog steht bewusst NEBEN dem Formular, nicht darin: er bringt ein eigenes `<form>`
@@ -163,30 +172,38 @@ export function VaterExerciseCreate() {
     </div>
 
     <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-      {/* Fach & Kapitel – Auswahl, nicht Anlegen (das gehört in den Katalog). */}
+      {/* Fach (nur Filter) & Lehrwerk-Reihe/Unit – Auswahl, nicht Anlegen (das gehört in den Katalog). */}
       <section className="card">
-        <h3 style={{ marginTop: 0 }}>Fach &amp; Kapitel</h3>
+        <h3 style={{ marginTop: 0 }}>Lehrwerk-Reihe &amp; Unit</h3>
         <div className="form-grid">
           <div className="field">
-            <label htmlFor="ex-subject">Fach</label>
+            <label htmlFor="ex-subject">Fach <span className="muted">(filtert nur die Reihen)</span></label>
             <select id="ex-subject" aria-label="Fach" value={subjectId}
-              onChange={(e) => { setSubjectId(e.target.value ? Number(e.target.value) : ""); setChapterId(""); }}>
-              <option value="">– wählen –</option>
+              onChange={(e) => { setSubjectId(e.target.value ? Number(e.target.value) : ""); setSeriesId(""); setSeriesUnitId(""); }}>
+              <option value="">– alle –</option>
               {subjects.data?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
           </div>
           <div className="field">
-            <label htmlFor="ex-chapter">Kapitel</label>
-            <select id="ex-chapter" aria-label="Kapitel" value={chapterId} disabled={!subjectId}
-              onChange={(e) => setChapterId(e.target.value ? Number(e.target.value) : "")}>
+            <label htmlFor="ex-series">Reihe</label>
+            <select id="ex-series" aria-label="Reihe" value={seriesId}
+              onChange={(e) => { setSeriesId(e.target.value ? Number(e.target.value) : ""); setSeriesUnitId(""); }}>
               <option value="">– wählen –</option>
-              {chapters.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              {series.data?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="ex-unit">Unit</label>
+            <select id="ex-unit" aria-label="Unit" value={seriesUnitId} disabled={!seriesId}
+              onChange={(e) => setSeriesUnitId(e.target.value ? Number(e.target.value) : "")}>
+              <option value="">– wählen –</option>
+              {units.data?.map((u) => <option key={u.id} value={u.id}>{u.label}</option>)}
             </select>
           </div>
         </div>
         <p className="muted" style={{ fontSize: 13, marginBottom: 0 }}>
-          Fehlt ein Fach oder Kapitel? Beides legst du im <Link to="/vater/katalog">Katalog</Link> an – er
-          gilt für <strong>alle</strong> Väter und gehört darum nicht ins Anlege-Formular.
+          Fehlt eine Reihe oder Unit? Beides legst du unter <Link to="/vater/lehrwerke">📕 Lehrwerke</Link> an – sie
+          gelten für <strong>alle</strong> Väter und gehören darum nicht ins Anlege-Formular.
         </p>
       </section>
 

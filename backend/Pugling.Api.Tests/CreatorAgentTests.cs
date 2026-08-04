@@ -48,19 +48,21 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     private AgentCommands Commands(CreatorApi creator, CreatorPipeline pipeline) =>
         new(creator, pipeline, new ExamPlanner(pipeline, creator, new SupervisorApi(Authenticated())));
 
-    /// <summary>Creates an empty subject with a chapter so that every test stands on its own.</summary>
-    private static async Task<(int SubjectId, int ChapterId)> FreshChapterAsync(CreatorApi creator, string name)
+    /// <summary>Creates an empty subject with a catalogued series/unit so that every test stands on its own.</summary>
+    private static async Task<(int SubjectId, int SeriesId, int SeriesUnitId)> FreshChapterAsync(CreatorApi creator, string name)
     {
         var subject = await creator.CreateSubjectAsync(new CreateSubjectDto($"Agent-Test {name} {Guid.NewGuid():N}"));
-        var chapter = await creator.CreateChapterAsync(subject.Id, new CreateChapterDto("Unit 1", 1));
-        return (subject.Id, chapter.Id);
+        var series = await creator.CreateSeriesAsync(new CreateTextbookSeriesDto(
+            $"Agent-Reihe {name} {Guid.NewGuid():N}", null, subject.Name, subject.Id, null, null, null, null));
+        var unit = await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto("Unit 1", null, 1, null, null, null));
+        return (subject.Id, series.Id, unit.Id);
     }
 
-    private static GenerationRequest Request(int subjectId, int chapterId, string type,
+    private static GenerationRequest Request(int subjectId, int seriesId, int seriesUnitId, string type,
         int count = 3, IReadOnlyList<string>? words = null, bool dryRun = false, bool strict = true,
         int? childId = 1, int? profileId = null, int? unitId = null, bool general = false) =>
         new(ChildId: childId, ProfileId: profileId, UnitId: unitId, General: general,
-            SubjectId: subjectId, ChapterId: chapterId, TypeKey: type,
+            SubjectId: subjectId, SeriesId: seriesId, SeriesUnitId: seriesUnitId, TypeKey: type,
             Topic: "Unit 1: Animals", ItemCount: count, Words: words ?? [], UseWeakWords: false,
             SourceLang: "en", TargetLang: "de", RewardPoints: 10, DryRun: dryRun, Strict: strict);
 
@@ -75,9 +77,9 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     public async Task Vokabeluebung_entsteht_aus_dem_Entwurf_und_besteht_den_Selbsttest()
     {
         var (pipeline, creator, chat) = BuildAgent(VocabularyJson);
-        var (subjectId, chapterId) = await FreshChapterAsync(creator, "Vokabeln");
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Vokabeln");
 
-        var (briefing, outcome) = await pipeline.CreateAsync(Request(subjectId, chapterId, "Vocabulary"));
+        var (briefing, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Vocabulary"));
 
         Assert.Empty(outcome.Violations);
         Assert.True(outcome.Published, $"Selbsttest: {outcome.SelfTestPercent} %");
@@ -85,7 +87,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.Equal("Tiere auf dem Bauernhof", outcome.Title);
 
         // The word pairs must sit in the catalog as their own item tier and be linked in the vocabulary store.
-        var items = await creator.ListItemsAsync(subjectId, chapterId, outcome.ExerciseId!.Value);
+        var items = await creator.ListItemsAsync(seriesId, seriesUnitId, outcome.ExerciseId!.Value);
         Assert.Equal(3, items.Count);
         Assert.All(items, i => Assert.True(i.VocabularyId > 0));
         Assert.Contains(items, i => i.Front == "the horse" && i.Back == "das Pferd");
@@ -100,9 +102,9 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     public async Task Trockenlauf_plant_die_Uebung_ohne_sie_anzulegen()
     {
         var (pipeline, creator, _) = BuildAgent(VocabularyJson);
-        var (subjectId, chapterId) = await FreshChapterAsync(creator, "Trockenlauf");
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Trockenlauf");
 
-        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, chapterId, "Vocabulary", dryRun: true));
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Vocabulary", dryRun: true));
 
         Assert.True(outcome.DraftAccepted);
         Assert.Null(outcome.ExerciseId);
@@ -120,9 +122,9 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
               {"front":"the horse","back":"das Pferd","hint":null}]}
             """;
         var (pipeline, creator, chat) = BuildAgent(broken, VocabularyJson);
-        var (subjectId, chapterId) = await FreshChapterAsync(creator, "Reparatur");
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Reparatur");
 
-        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, chapterId, "Vocabulary"));
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Vocabulary"));
 
         Assert.Equal(2, chat.Calls);
         Assert.True(outcome.Published);
@@ -137,9 +139,9 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
             {"title":"Tiere","items":[{"front":"the horse","back":"the horse","hint":null}]}
             """;
         var (pipeline, creator, _) = BuildAgent(broken);
-        var (subjectId, chapterId) = await FreshChapterAsync(creator, "Ablehnung");
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Ablehnung");
 
-        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, chapterId, "Vocabulary"));
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Vocabulary"));
 
         Assert.False(outcome.DraftAccepted);
         Assert.Null(outcome.ExerciseId);
@@ -154,10 +156,10 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         // The "model" replaces two prescribed words with its own - exactly the case the core rule forbids
         // (interests dress the material up, they do not change it).
         var (pipeline, creator, _) = BuildAgent(VocabularyJson);
-        var (subjectId, chapterId) = await FreshChapterAsync(creator, "Wortschatz");
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Wortschatz");
 
         var (_, outcome) = await pipeline.CreateAsync(
-            Request(subjectId, chapterId, "Vocabulary", words: ["the horse", "the tractor", "the barn"]));
+            Request(subjectId, seriesId, seriesUnitId, "Vocabulary", words: ["the horse", "the tractor", "the barn"]));
 
         Assert.False(outcome.DraftAccepted);
         var violation = Assert.Single(outcome.Violations, v => v.Contains("Pflicht-Wortschatz"));
@@ -169,7 +171,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     public async Task Bekannte_Vokabeln_werden_verlinkt_statt_dupliziert()
     {
         var (pipeline, creator, _) = BuildAgent(VocabularyJson);
-        var (subjectId, chapterId) = await FreshChapterAsync(creator, "Dedupe");
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Dedupe");
         await creator.CreateVocabularyAsync(
             new CreateVocabularyDto(null, "en", "de", "the horse", "das Pferd", PartOfSpeech.Noun));
 
@@ -180,10 +182,10 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var before = await KnownHorsesAsync(creator);
         Assert.NotEmpty(before);
 
-        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, chapterId, "Vocabulary"));
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Vocabulary"));
 
         Assert.Equal(before, await KnownHorsesAsync(creator));
-        var items = await creator.ListItemsAsync(subjectId, chapterId, outcome.ExerciseId!.Value);
+        var items = await creator.ListItemsAsync(seriesId, seriesUnitId, outcome.ExerciseId!.Value);
         Assert.Contains(Assert.Single(items, i => i.Front == "the horse").VocabularyId, before);
     }
 
@@ -204,9 +206,9 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
              "wordBank":["horse","sheep","stable","tractor","fence"]}
             """;
         var (pipeline, creator, _) = BuildAgent(cloze);
-        var (subjectId, chapterId) = await FreshChapterAsync(creator, "Cloze");
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Cloze");
 
-        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, chapterId, "Cloze"));
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Cloze"));
 
         Assert.Empty(outcome.Violations);
         Assert.True(outcome.Published, $"Selbsttest: {outcome.SelfTestPercent} %");
@@ -224,9 +226,9 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
              "wordBank":["horse","sheep","stable"]}
             """;
         var (pipeline, creator, _) = BuildAgent(cloze);
-        var (subjectId, chapterId) = await FreshChapterAsync(creator, "Cloze-kaputt");
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Cloze-kaputt");
 
-        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, chapterId, "Cloze"));
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Cloze"));
 
         Assert.False(outcome.DraftAccepted);
         Assert.Contains(outcome.Violations, v => v.Contains("{{4}}"));
@@ -249,9 +251,9 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var (pipeline, creator, _) = BuildAgent(
             """{"title":"Tiere"}""",
             """{"title":"Tiere","items":[{"back":"das Pferd"},{"back":"das Schaf"},{"back":"die Ziege"}]}""");
-        var (subjectId, chapterId) = await FreshChapterAsync(creator, "Nullfelder");
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Nullfelder");
 
-        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, chapterId, "Vocabulary"));
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Vocabulary"));
 
         Assert.False(outcome.DraftAccepted);
         Assert.Contains(outcome.Violations, v => v.Contains("Vorderseite"));
@@ -274,9 +276,9 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
              "wordBank":["horse","sheep","stable"]}
             """;
         var (pipeline, creator, _) = BuildAgent(cloze);
-        var (subjectId, chapterId) = await FreshChapterAsync(creator, "Cloze-doppelt");
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Cloze-doppelt");
 
-        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, chapterId, "Cloze"));
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Cloze"));
 
         Assert.False(outcome.DraftAccepted);
         Assert.Contains(outcome.Violations, v => v.Contains("{{2}} steht 2×"));
@@ -284,19 +286,19 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
-    /// <c>--chapter</c> without <c>--subject</c> used to be silently dropped: the exercise ended up in
-    /// the first chapter of the first subject. A silent reach into the wrong shelf is worse than an
+    /// <c>--series-unit</c> without <c>--series</c> used to be silently dropped: the exercise ended up in
+    /// the first unit of the first series. A silent reach into the wrong shelf is worse than an
     /// error message.
     /// </summary>
     [Fact]
     public async Task Ein_unbekanntes_Kapitel_wird_gemeldet_statt_still_ins_erste_zu_schreiben()
     {
         var (pipeline, creator, _) = BuildAgent(VocabularyJson);
-        // There are subjects with chapters - without the check exactly one of them would be picked silently.
+        // There are series with units - without the check exactly one of them would be picked silently.
         await FreshChapterAsync(creator, "Kapitel-Wahl");
         var commands = Commands(creator, pipeline);
 
-        var command = CommandLine.Parse(["briefing", "--child", "1", "--chapter", "999999"]);
+        var command = CommandLine.Parse(["briefing", "--child", "1", "--series-unit", "999999"]);
         var error = await Assert.ThrowsAsync<AgentUsageException>(() => commands.RunAsync(command, default));
 
         Assert.Contains("999999", error.Message);
@@ -334,10 +336,10 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
               {"prompt":"She ___ (to ride) every day.","answer":"rides","ruleHint":"3. Person Singular: -s"}]}
             """;
         var (pipeline, creator, _) = BuildAgent(translation, grammar);
-        var (subjectId, chapterId) = await FreshChapterAsync(creator, "Weitere Typen");
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Weitere Typen");
 
-        var (_, translated) = await pipeline.CreateAsync(Request(subjectId, chapterId, "Translation"));
-        var (_, grammarOutcome) = await pipeline.CreateAsync(Request(subjectId, chapterId, "Grammar"));
+        var (_, translated) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Translation"));
+        var (_, grammarOutcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Grammar"));
 
         Assert.True(translated.Published, $"Übersetzung – Selbsttest: {translated.SelfTestPercent} %");
         Assert.True(grammarOutcome.Published, $"Grammatik – Selbsttest: {grammarOutcome.SelfTestPercent} %");
@@ -347,7 +349,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     public async Task Das_Briefing_traegt_Profil_Interessen_und_Lehrbuch_in_den_Prompt()
     {
         var (pipeline, creator, _) = BuildAgent(VocabularyJson);
-        var (subjectId, chapterId) = await FreshChapterAsync(creator, "Briefing");
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Briefing");
         var supervisor = new SupervisorApi(Authenticated());
         await supervisor.UpdateChildAsync(1, new UpdateChildDto(null, null, null, null, null,
             Interests: ["Fußball", "Minecraft"]));
@@ -357,7 +359,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         await supervisor.SetInterestsAsync(1, new SetChildInterestsDto(
             [new ChildInterestInput(3, Label: "Weltraum"), new ChildInterestInput(-3, Label: "Spinnen")]));
 
-        var briefing = await pipeline.BriefAsync(Request(subjectId, chapterId, "Vocabulary"));
+        var briefing = await pipeline.BriefAsync(Request(subjectId, seriesId, seriesUnitId, "Vocabulary"));
         var prompt = briefing.ToPromptText();
 
         Assert.Contains("Fußball", prompt);
@@ -419,10 +421,10 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     public async Task Eine_allgemeine_Uebung_entsteht_ohne_Kind_mit_den_Metadaten_des_Profils()
     {
         var (pipeline, creator, chat) = BuildAgent(ProfileVocabularyJson);
-        var (subjectId, chapterId) = await FreshChapterAsync(creator, "Allgemein");
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Allgemein");
         var (series, unit, profile) = await FreshProfileAsync(creator, subjectId, "Allgemein");
 
-        var request = Request(subjectId, chapterId, "Vocabulary", childId: null, profileId: profile.Id, unitId: unit.Id);
+        var request = Request(subjectId, seriesId, seriesUnitId, "Vocabulary", childId: null, profileId: profile.Id, unitId: unit.Id);
         var (briefing, outcome) = await pipeline.CreateAsync(request);
 
         Assert.True(outcome.Published, $"Selbsttest: {outcome.SelfTestPercent} %");
@@ -458,11 +460,11 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     public async Task Der_Stoff_der_Unit_steht_im_Prompt()
     {
         var (pipeline, creator, _) = BuildAgent(VocabularyJson);
-        var (subjectId, chapterId) = await FreshChapterAsync(creator, "Unit-Stoff");
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Unit-Stoff");
         var (series, unit, profile) = await FreshProfileAsync(creator, subjectId, "Unit-Stoff");
 
         var briefing = await pipeline.BriefAsync(
-            Request(subjectId, chapterId, "Vocabulary", childId: null, profileId: profile.Id, unitId: unit.Id));
+            Request(subjectId, seriesId, seriesUnitId, "Vocabulary", childId: null, profileId: profile.Id, unitId: unit.Id));
         var prompt = briefing.ToPromptText();
 
         Assert.Contains($"Lehrwerk: {series.Name} (Cornelsen)", prompt);
@@ -481,12 +483,12 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     public async Task Eine_Unit_aus_einer_fremden_Reihe_wird_gemeldet()
     {
         var (pipeline, creator, _) = BuildAgent(VocabularyJson);
-        var (subjectId, chapterId) = await FreshChapterAsync(creator, "Fremde-Unit");
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Fremde-Unit");
         var (_, _, profile) = await FreshProfileAsync(creator, subjectId, "Fremde-Unit");
         var (_, foreignUnit, _) = await FreshProfileAsync(creator, subjectId, "Fremdwerk");
 
         var error = await Assert.ThrowsAsync<AgentUsageException>(() => pipeline.BriefAsync(
-            Request(subjectId, chapterId, "Vocabulary", childId: null, profileId: profile.Id, unitId: foreignUnit.Id)));
+            Request(subjectId, seriesId, seriesUnitId, "Vocabulary", childId: null, profileId: profile.Id, unitId: foreignUnit.Id)));
 
         Assert.Contains(foreignUnit.Id.ToString(), error.Message);
     }
@@ -507,12 +509,12 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
             """;
         var (pipeline, creator, _) = BuildAgent(ProfileVocabularyJson, cloze);
         var supervisor = new SupervisorApi(Authenticated());
-        var (subjectId, chapterId) = await FreshChapterAsync(creator, "Klausur");
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Klausur");
         var (_, unit, profile) = await FreshProfileAsync(creator, subjectId, "Klausur");
 
         var planner = new ExamPlanner(pipeline, creator, supervisor);
         var outcome = await planner.RunAsync(new ExamRequest(
-            Request(subjectId, chapterId, "Vocabulary", profileId: profile.Id, unitId: unit.Id),
+            Request(subjectId, seriesId, seriesUnitId, "Vocabulary", profileId: profile.Id, unitId: unit.Id),
             Types: ["Vocabulary", "Cloze"], PerType: 3,
             ScheduledDate: new DateOnly(2026, 9, 15), Title: null));
 
@@ -540,12 +542,12 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         // The one prepared answer only fits the vocabulary part; the cloze part fails the rules.
         var (pipeline, creator, _) = BuildAgent(ProfileVocabularyJson);
         var supervisor = new SupervisorApi(Authenticated());
-        var (subjectId, chapterId) = await FreshChapterAsync(creator, "Klausur-kaputt");
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Klausur-kaputt");
         var (_, unit, profile) = await FreshProfileAsync(creator, subjectId, "Klausur-kaputt");
 
         var planner = new ExamPlanner(pipeline, creator, supervisor);
         var outcome = await planner.RunAsync(new ExamRequest(
-            Request(subjectId, chapterId, "Vocabulary", profileId: profile.Id, unitId: unit.Id),
+            Request(subjectId, seriesId, seriesUnitId, "Vocabulary", profileId: profile.Id, unitId: unit.Id),
             Types: ["Vocabulary", "Cloze"], PerType: 3, ScheduledDate: null, Title: "Übungsklausur Test"));
 
         Assert.False(outcome.Complete);
@@ -560,10 +562,10 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     public async Task Ein_unbekannter_Uebungstyp_scheitert_mit_klarer_Ansage()
     {
         var (pipeline, creator, _) = BuildAgent(VocabularyJson);
-        var (subjectId, chapterId) = await FreshChapterAsync(creator, "Unbekannt");
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Unbekannt");
 
         var error = await Assert.ThrowsAsync<AgentUsageException>(() =>
-            pipeline.CreateAsync(Request(subjectId, chapterId, "Birkenbihl")));
+            pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Birkenbihl")));
 
         Assert.Contains("Vocabulary", error.Message);
     }

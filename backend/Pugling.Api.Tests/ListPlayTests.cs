@@ -31,10 +31,12 @@ public class ListPlayTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     {
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
             new { name = TestApi.UniqueName("Erdkunde-Liste") }));
-        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Deutschland", orderIndex = 1 }));
+        var seriesId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/textbook-series",
+            new { name = TestApi.UniqueName("Erdkunde-Reihe"), subjectId }));
+        var seriesUnitId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units", new { label = "Deutschland" }));
         return await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/list", new
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/list", new
             {
                 // Not the seeded title: the seed test below looks its exercise up by name.
                 title = TestApi.UniqueName("Drei Bundesländer (Fixture)"),

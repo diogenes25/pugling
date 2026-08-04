@@ -68,14 +68,8 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
             return new Ziel(c, $"/api/v1/creator/subjects/{id}");
         }, []),
 
-        new(typeof(UpdateChapterDto), "name", "Kapitel neu", async f =>
-        {
-            var c = await TestApi.FatherAsync(f);
-            var subject = await TestApi.IdAsync(await c.PostAsJsonAsync("/api/v1/creator/subjects", new { name = Eindeutig("Fach") }));
-            var id = await TestApi.IdAsync(await c.PostAsJsonAsync($"/api/v1/creator/subjects/{subject}/chapters",
-                new { name = "Kapitel 1", orderIndex = 1 }));
-            return new Ziel(c, $"/api/v1/creator/subjects/{subject}/chapters/{id}");
-        }, []),
+        // UpdateChapterDto/ChaptersController were removed with B-106 (Chapter merged into SeriesUnit);
+        // UpdateSeriesUnitDto below covers the successor's PATCH round trip.
 
         new(typeof(UpdateCategoryDto), "name", "Kategorie neu", async f =>
         {

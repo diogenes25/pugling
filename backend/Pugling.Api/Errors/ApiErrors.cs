@@ -69,8 +69,8 @@ public static class ApiErrors
     public static readonly ApiError ActivationNotPending = new("activation_not_pending", 409, "Activation request is not pending.");
     /// <summary>Key already exists (e.g. vocabulary/cloze/media key) (409).</summary>
     public static readonly ApiError DuplicateKey = new("duplicate_key", 409, "Key already exists.");
-    /// <summary>The subject already has a chapter with this name (409).</summary>
-    public static readonly ApiError DuplicateChapterName = new("duplicate_chapter_name", 409, "The subject already has a chapter with this name.");
+    /// <summary>A textbook series without a subject may not host any exercise (B-106 T-01) (400).</summary>
+    public static readonly ApiError SeriesWithoutSubject = new("series_without_subject", 400, "This textbook series has no subject assigned yet.");
     /// <summary>The child already has an award for this metric and threshold (409).</summary>
     public static readonly ApiError DuplicateAchievement = new("duplicate_achievement", 409, "The child already has an award for this metric and threshold.");
     /// <summary>This vocabulary entry is already an item of the exercise – a word may have only one item per exercise (409).</summary>

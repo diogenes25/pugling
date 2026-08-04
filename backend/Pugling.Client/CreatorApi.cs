@@ -41,27 +41,11 @@ public sealed class CreatorApi(HttpClient http)
     public Task<SubjectResponse> UpdateSubjectAsync(int subjectId, UpdateSubjectDto dto, CancellationToken ct = default) =>
         Http.PatchAsync<SubjectResponse>($"{Root}/subjects/{subjectId}", dto, ct);
 
-    /// <summary>Deletes a subject (cascades chapters and exercises).</summary>
+    /// <summary>Deletes a subject (its exercise categories cascade; series/exercises only lose the FK).</summary>
     public Task DeleteSubjectAsync(int subjectId, CancellationToken ct = default) =>
         Http.SendAsync(HttpMethod.Delete, $"{Root}/subjects/{subjectId}", null, ct);
 
-    // ---------------------------------------------------------------- Chapters & categories
-
-    /// <summary>Chapters of a subject.</summary>
-    public Task<IReadOnlyList<ChapterResponse>> ListChaptersAsync(int subjectId, CancellationToken ct = default) =>
-        Http.GetAsync<IReadOnlyList<ChapterResponse>>($"{Root}/subjects/{subjectId}/chapters", ct);
-
-    /// <summary>Creates a chapter.</summary>
-    public Task<ChapterResponse> CreateChapterAsync(int subjectId, CreateChapterDto dto, CancellationToken ct = default) =>
-        Http.PostAsync<ChapterResponse>($"{Root}/subjects/{subjectId}/chapters", dto, ct);
-
-    /// <summary>Updates a chapter.</summary>
-    public Task<ChapterResponse> UpdateChapterAsync(int subjectId, int chapterId, UpdateChapterDto dto, CancellationToken ct = default) =>
-        Http.PatchAsync<ChapterResponse>($"{Root}/subjects/{subjectId}/chapters/{chapterId}", dto, ct);
-
-    /// <summary>Deletes a chapter (cascades exercises).</summary>
-    public Task DeleteChapterAsync(int subjectId, int chapterId, CancellationToken ct = default) =>
-        Http.SendAsync(HttpMethod.Delete, $"{Root}/subjects/{subjectId}/chapters/{chapterId}", null, ct);
+    // ---------------------------------------------------------------- Categories
 
     /// <summary>Subject-dependent categories (controlled vocabulary for catalog pre-filtering).</summary>
     public Task<IReadOnlyList<CategoryResponse>> ListCategoriesAsync(int subjectId, CancellationToken ct = default) =>
@@ -214,48 +198,48 @@ public sealed class CreatorApi(HttpClient http)
     /// manifest (e.g. <c>vocabulary</c>, <c>cloze</c>, <c>essays</c>), <typeparamref name="TConfig"/>
     /// the corresponding config class from the contract.
     /// </summary>
-    public Task<ExerciseResponse<TConfig>> CreateExerciseAsync<TConfig>(int subjectId, int chapterId,
+    public Task<ExerciseResponse<TConfig>> CreateExerciseAsync<TConfig>(int seriesId, int seriesUnitId,
         string authoringRoute, ExercisePayload<TConfig> payload, CancellationToken ct = default) =>
-        Http.PostAsync<ExerciseResponse<TConfig>>(ExercisePath(subjectId, chapterId, authoringRoute), payload, ct);
+        Http.PostAsync<ExerciseResponse<TConfig>>(ExercisePath(seriesId, seriesUnitId, authoringRoute), payload, ct);
 
     /// <summary>Reads a typed exercise including its config.</summary>
-    public Task<ExerciseResponse<TConfig>> GetExerciseAsync<TConfig>(int subjectId, int chapterId,
+    public Task<ExerciseResponse<TConfig>> GetExerciseAsync<TConfig>(int seriesId, int seriesUnitId,
         string authoringRoute, int exerciseId, CancellationToken ct = default) =>
-        Http.GetAsync<ExerciseResponse<TConfig>>($"{ExercisePath(subjectId, chapterId, authoringRoute)}/{exerciseId}", ct);
+        Http.GetAsync<ExerciseResponse<TConfig>>($"{ExercisePath(seriesId, seriesUnitId, authoringRoute)}/{exerciseId}", ct);
 
     /// <summary>Replaces a typed exercise (PUT – the config is fully overwritten).</summary>
-    public Task<ExerciseResponse<TConfig>> UpdateExerciseAsync<TConfig>(int subjectId, int chapterId,
+    public Task<ExerciseResponse<TConfig>> UpdateExerciseAsync<TConfig>(int seriesId, int seriesUnitId,
         string authoringRoute, int exerciseId, ExercisePayload<TConfig> payload, CancellationToken ct = default) =>
-        Http.PutAsync<ExerciseResponse<TConfig>>($"{ExercisePath(subjectId, chapterId, authoringRoute)}/{exerciseId}", payload, ct);
+        Http.PutAsync<ExerciseResponse<TConfig>>($"{ExercisePath(seriesId, seriesUnitId, authoringRoute)}/{exerciseId}", payload, ct);
 
     /// <summary>Deletes an exercise (owner only).</summary>
-    public Task DeleteExerciseAsync(int subjectId, int chapterId, string authoringRoute, int exerciseId,
+    public Task DeleteExerciseAsync(int seriesId, int seriesUnitId, string authoringRoute, int exerciseId,
         CancellationToken ct = default) =>
-        Http.SendAsync(HttpMethod.Delete, $"{ExercisePath(subjectId, chapterId, authoringRoute)}/{exerciseId}", null, ct);
+        Http.SendAsync(HttpMethod.Delete, $"{ExercisePath(seriesId, seriesUnitId, authoringRoute)}/{exerciseId}", null, ct);
 
     // ---------------------------------------------------------------- Vocabulary items
 
     /// <summary>The materialized vocabulary pairs of a vocabulary exercise.</summary>
-    public Task<IReadOnlyList<VocabItemResponse>> ListItemsAsync(int subjectId, int chapterId, int exerciseId,
+    public Task<IReadOnlyList<VocabItemResponse>> ListItemsAsync(int seriesId, int seriesUnitId, int exerciseId,
         CancellationToken ct = default) =>
-        Http.GetAsync<IReadOnlyList<VocabItemResponse>>($"{ItemsPath(subjectId, chapterId, exerciseId)}", ct);
+        Http.GetAsync<IReadOnlyList<VocabItemResponse>>($"{ItemsPath(seriesId, seriesUnitId, exerciseId)}", ct);
 
     /// <summary>
     /// Appends an item. Either via <c>VocabularyId</c> (existing store vocabulary entry) or inline via
     /// Front/Back – the latter requires the exercise config to carry <c>sourceLang</c>/<c>targetLang</c>.
     /// </summary>
-    public Task<VocabItemResponse> AddItemAsync(int subjectId, int chapterId, int exerciseId, VocabItemInput input,
+    public Task<VocabItemResponse> AddItemAsync(int seriesId, int seriesUnitId, int exerciseId, VocabItemInput input,
         CancellationToken ct = default) =>
-        Http.PostAsync<VocabItemResponse>($"{ItemsPath(subjectId, chapterId, exerciseId)}", input, ct);
+        Http.PostAsync<VocabItemResponse>($"{ItemsPath(seriesId, seriesUnitId, exerciseId)}", input, ct);
 
     /// <summary>Updates an item (omitted fields remain unchanged).</summary>
-    public Task<VocabItemResponse> UpdateItemAsync(int subjectId, int chapterId, int exerciseId, int itemId,
+    public Task<VocabItemResponse> UpdateItemAsync(int seriesId, int seriesUnitId, int exerciseId, int itemId,
         VocabItemInput input, CancellationToken ct = default) =>
-        Http.PatchAsync<VocabItemResponse>($"{ItemsPath(subjectId, chapterId, exerciseId)}/{itemId}", input, ct);
+        Http.PatchAsync<VocabItemResponse>($"{ItemsPath(seriesId, seriesUnitId, exerciseId)}/{itemId}", input, ct);
 
     /// <summary>Removes an item. Avoid in already-assigned exercises – this shifts learning progress.</summary>
-    public Task DeleteItemAsync(int subjectId, int chapterId, int exerciseId, int itemId, CancellationToken ct = default) =>
-        Http.SendAsync(HttpMethod.Delete, $"{ItemsPath(subjectId, chapterId, exerciseId)}/{itemId}", null, ct);
+    public Task DeleteItemAsync(int seriesId, int seriesUnitId, int exerciseId, int itemId, CancellationToken ct = default) =>
+        Http.SendAsync(HttpMethod.Delete, $"{ItemsPath(seriesId, seriesUnitId, exerciseId)}/{itemId}", null, ct);
 
     // ---------------------------------------------------------------- Birkenbihl
 
@@ -264,25 +248,25 @@ public sealed class CreatorApi(HttpClient http)
     /// against the vocabulary store. Sentences <b>cannot</b> be supplied inline when creating – the exercise
     /// is created empty and then filled via this endpoint.
     /// </summary>
-    public Task<DecodedSentence> AddBirkenbihlSentenceAsync(int subjectId, int chapterId, int exerciseId,
+    public Task<DecodedSentence> AddBirkenbihlSentenceAsync(int seriesId, int seriesUnitId, int exerciseId,
         BirkenbihlSentenceInput input, CancellationToken ct = default) =>
         Http.PostAsync<DecodedSentence>(
-            $"{ExercisePath(subjectId, chapterId, "birkenbihl")}/{exerciseId}/sentences", input, ct);
+            $"{ExercisePath(seriesId, seriesUnitId, "birkenbihl")}/{exerciseId}/sentences", input, ct);
 
     /// <summary>Swaps the meaning of a single decoded word (homonym correction).</summary>
-    public Task<DecodedWord> OverrideBirkenbihlWordAsync(int subjectId, int chapterId, int exerciseId, int wordId,
+    public Task<DecodedWord> OverrideBirkenbihlWordAsync(int seriesId, int seriesUnitId, int exerciseId, int wordId,
         WordOverride input, CancellationToken ct = default) =>
         Http.PutAsync<DecodedWord>(
-            $"{ExercisePath(subjectId, chapterId, "birkenbihl")}/{exerciseId}/words/{wordId}", input, ct);
+            $"{ExercisePath(seriesId, seriesUnitId, "birkenbihl")}/{exerciseId}/words/{wordId}", input, ct);
 
     // ---------------------------------------------------------------- Catalog, preview, rights
 
     /// <summary>Child-neutral catalog search over the metadata (all filters optional, AND-combined).</summary>
-    public Task<IReadOnlyList<ExerciseSummary>> SearchExercisesAsync(int? subjectId = null, int? chapterId = null,
+    public Task<IReadOnlyList<ExerciseSummary>> SearchExercisesAsync(int? subjectId = null, int? seriesUnitId = null,
         int? grade = null, SchoolTypes? schoolType = null, int? categoryId = null, string? type = null,
         string? search = null, bool? mineOnly = null, int skip = 0, int take = 50, CancellationToken ct = default) =>
         Http.GetAsync<IReadOnlyList<ExerciseSummary>>($"{Root}/exercises" + PuglingHttp.Query(
-            ("subjectId", subjectId), ("chapterId", chapterId), ("grade", grade), ("schoolType", schoolType),
+            ("subjectId", subjectId), ("seriesUnitId", seriesUnitId), ("grade", grade), ("schoolType", schoolType),
             ("categoryId", categoryId), ("type", type), ("search", search), ("mineOnly", mineOnly),
             ("skip", skip), ("take", take)), ct);
 
@@ -485,9 +469,9 @@ public sealed class CreatorApi(HttpClient http)
     public Task UnlinkItemMediaAsync(int exerciseId, int itemId, int linkId, CancellationToken ct = default) =>
         Http.SendAsync(HttpMethod.Delete, $"{Root}/exercises/{exerciseId}/items/{itemId}/media/{linkId}", null, ct);
 
-    private static string ExercisePath(int subjectId, int chapterId, string authoringRoute) =>
-        $"{Root}/subjects/{subjectId}/chapters/{chapterId}/{authoringRoute}";
+    private static string ExercisePath(int seriesId, int seriesUnitId, string authoringRoute) =>
+        $"{Root}/textbook-series/{seriesId}/units/{seriesUnitId}/{authoringRoute}";
 
-    private static string ItemsPath(int subjectId, int chapterId, int exerciseId) =>
-        $"{ExercisePath(subjectId, chapterId, "vocabulary")}/{exerciseId}/items";
+    private static string ItemsPath(int seriesId, int seriesUnitId, int exerciseId) =>
+        $"{ExercisePath(seriesId, seriesUnitId, "vocabulary")}/{exerciseId}/items";
 }

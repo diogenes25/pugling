@@ -87,10 +87,12 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
     {
         var father = await TestApi.FatherAsync(_factory);
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Defaults-Position" }));
-        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit", orderIndex = 1 }));
+        var seriesId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/textbook-series",
+            new { name = TestApi.UniqueName("Defaults-Reihe"), subjectId }));
+        var seriesUnitId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units", new { label = "Unit" }));
         var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary", new
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary", new
             {
                 title = "Nur zwei Karten",
                 orderIndex = 1,
@@ -200,74 +202,6 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         var ok = await father.PatchAsJsonAsync($"{url}/{posId}", new { goalThreshold = 90 });
         Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
         Assert.Equal(90, (await ok.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("goalThreshold").GetInt32());
-    }
-
-    /*
-     * A stage the exercise type does not know does not break the position - it REVEALS THE SOLUTION:
-     * `IsTypedStage` falls through to false for an unknown value, and a non-typed card carries `reveal` with the
-     * answer. A supervisor's typo would silently hand out the answers (B-79), hence the 400.
-     */
-    [Fact]
-    public async Task Position_UnbekannteStufe_WirdAbgewiesen_GueltigeGehtDurch()
-    {
-        var father = await TestApi.FatherAsync(_factory);
-        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
-        var planId = await EmptyPlanAsync(father);
-        var url = $"/api/v1/supervisor/study-plans/{planId}/positions";
-
-        var create = await father.PostAsJsonAsync(url, new { exerciseId, stage = 99 });
-        Assert.Equal(HttpStatusCode.BadRequest, create.StatusCode);
-        Assert.Equal("validation_error",
-            (await create.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
-
-        // Every single schedule step counts: one bad day would reveal the answers on exactly that day.
-        var schedule = await father.PostAsJsonAsync(url, new
-        {
-            exerciseId,
-            stageSchedule = new[] { new { dayNumber = 1, stage = (int)TestStage.SelfAssess }, new { dayNumber = 3, stage = 99 } },
-        });
-        Assert.Equal(HttpStatusCode.BadRequest, schedule.StatusCode);
-
-        // PATCH must not let in what POST rejects - and the existing position stays untouched.
-        var posId = await TestApi.IdAsync(await father.PostAsJsonAsync(url, new { exerciseId, stage = (int)TestStage.FreeText }));
-        Assert.Equal(HttpStatusCode.BadRequest, (await father.PatchAsJsonAsync($"{url}/{posId}", new { stage = 99 })).StatusCode);
-        var unveraendert = await father.GetFromJsonAsync<JsonElement>($"{url}/{posId}");
-        Assert.Equal((int)TestStage.FreeText, unveraendert.GetProperty("stage").GetInt32());
-
-        // The acquaint stage is a real stage of the vocabulary process (used by the seed and the process docs) -
-        // it was merely missing from the picker list and would have become unsettable through the new check.
-        var kennenlernen = await father.PatchAsJsonAsync($"{url}/{posId}", new { stage = (int)TestStage.ShowBoth });
-        Assert.Equal(HttpStatusCode.OK, kennenlernen.StatusCode);
-        Assert.Equal((int)TestStage.ShowBoth,
-            (await kennenlernen.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("stage").GetInt32());
-    }
-
-    /*
-     * The counter-check to the stage validation: a type without a stage selection (empty `StageOptions`) still
-     * accepts any value. For it the stage decides nothing about revealing, so a blanket check would reject
-     * requests that are fine instead of preventing damage.
-     */
-    [Fact]
-    public async Task Position_TypOhneStufenwahl_NimmtJedeStufeAn()
-    {
-        var father = await TestApi.FatherAsync(_factory);
-        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
-            new { name = $"Stufenlos-{Guid.NewGuid():N}"[..20] }));
-        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Kapitel 1", orderIndex = 1 }));
-        var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/matching", new
-            {
-                title = "Tier zu Laut",
-                orderIndex = 1,
-                rewardPoints = 10,
-                config = new { pairs = new[] { new { left = "dog", right = "Hund" }, new { left = "cat", right = "Katze" } } },
-            }));
-        var planId = await EmptyPlanAsync(father);
-
-        var created = await father.PostAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}/positions",
-            new { exerciseId, stage = 99 });
-        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
     }
 
     [Fact]

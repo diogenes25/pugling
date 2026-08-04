@@ -47,11 +47,13 @@ KEYS=$(echo "$STORE" | python -c "import sys,json;print(' '.join(v['key'] for v 
 REFS_JSON=$(echo "$STORE" | python -c "import sys,json;print(json.dumps([{'vocabularyId':v['id']} for v in json.load(sys.stdin)[:2]]))" 2>/dev/null)
 [ -n "$KEYS" ] && pass "Vokabel-Store liefert Keys ($KEYS)" || bad "keine Vokabeln im Store"
 
-# 6) Fach + Kapitel + Vokabelübung (referenziert die Store-Vokabeln per vocabularyId) anlegen
+# 6) Fach + Lehrwerk-Reihe + Unit + Vokabelübung (referenziert die Store-Vokabeln per vocabularyId) anlegen.
+# Seit B-106 haengt jede Uebung an einer SeriesUnit statt an einem Chapter (entfernt) - Katalogisierung ist Pflicht.
 SUBJ=$(curl -s -X POST "$BASE/api/v1/creator/subjects" "${AUTH[@]}" -H "Content-Type: application/json" -d '{"name":"Smoke-Fach"}' | jget id)
-CHAP=$(curl -s -X POST "$BASE/api/v1/creator/subjects/$SUBJ/chapters" "${AUTH[@]}" -H "Content-Type: application/json" -d '{"name":"Smoke-Kapitel","orderIndex":1}' | jget id)
+SERIES=$(curl -s -X POST "$BASE/api/v1/creator/textbook-series" "${AUTH[@]}" -H "Content-Type: application/json" -d "{\"name\":\"Smoke-Reihe\",\"subjectId\":$SUBJ}" | jget id)
+UNIT=$(curl -s -X POST "$BASE/api/v1/creator/textbook-series/$SERIES/units" "${AUTH[@]}" -H "Content-Type: application/json" -d '{"label":"Smoke-Unit","orderIndex":1}' | jget id)
 # Titel bewusst ASCII: Git-Bash/curl unter Windows verstümmeln Umlaute im -d-Body zu ungültigem UTF-8.
-EX=$(curl -s -X POST "$BASE/api/v1/creator/subjects/$SUBJ/chapters/$CHAP/vocabulary" "${AUTH[@]}" -H "Content-Type: application/json" \
+EX=$(curl -s -X POST "$BASE/api/v1/creator/textbook-series/$SERIES/units/$UNIT/vocabulary" "${AUTH[@]}" -H "Content-Type: application/json" \
   -d "{\"title\":\"Smoke-Uebung\",\"orderIndex\":1,\"rewardPoints\":10,\"config\":{\"direction\":\"front-to-back\",\"refs\":$REFS_JSON}}" | jget id)
 [ -n "$EX" ] && pass "Vokabeluebung angelegt (id=$EX)" || bad "Uebung anlegen fehlgeschlagen"
 

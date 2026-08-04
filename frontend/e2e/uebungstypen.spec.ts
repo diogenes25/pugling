@@ -38,20 +38,29 @@ async function createExercise(page: Page, type: string, title: string, fill: () 
 test("Jeder Übungstyp des Manifests lässt sich im UI anlegen", async ({ page }) => {
   await vaterLogin(page);
 
-  // Fach + Kapitel einmal anlegen (global, darum je Lauf eindeutig benannt). Das gehört seit dem
-  // IA-Umbau in den Katalog – er ist unter allen Vätern geteilt und darum kein Teil des Formulars.
+  // Fach einmal anlegen (global, darum je Lauf eindeutig benannt) + Lehrwerk-Reihe/Unit unter Lehrwerke.
+  // Seit B-106 hängt jede Übung an einer Lehrwerk-Unit statt an einem Kapitel.
   await page.goto("/vater/katalog");
   await page.getByPlaceholder("z. B. Französisch").fill(SUBJECT);
   await page.getByRole("button", { name: "Neues Fach anlegen" }).click();
   await expect(page.locator("#ca-subject")).toHaveValue(/\d+/);
-  await page.getByPlaceholder("z. B. Unit 1").fill(CHAPTER);
-  await page.getByRole("button", { name: "Neues Kapitel anlegen" }).click();
-  await expect(page.getByText("Kapitel angelegt.")).toBeVisible();
 
-  // Anlegen ist eine eigene Route; Fach und Kapitel werden dort ausgewählt.
+  await page.goto("/vater/lehrwerke");
+  await page.locator("#ns-name").fill(SUBJECT);
+  await page.locator("#ns-subject").selectOption({ label: SUBJECT });
+  await page.getByRole("button", { name: "Reihe anlegen" }).click();
+  await expect(page.getByText(/steht im Katalog/)).toBeVisible();
+  const seriesRow = page.getByRole("row", { name: new RegExp(SUBJECT) });
+  await seriesRow.getByRole("button", { name: "Units" }).click();
+  await page.locator('[id^="unit-label-new"]').fill(CHAPTER);
+  await page.getByRole("button", { name: "Unit hinzufügen" }).click();
+  await expect(page.getByText(CHAPTER)).toBeVisible();
+
+  // Anlegen ist eine eigene Route; Fach, Reihe und Unit werden dort ausgewählt.
   await page.goto("/vater/exercises/neu");
   await page.locator('select[aria-label="Fach"]').selectOption({ label: SUBJECT });
-  await page.locator('select[aria-label="Kapitel"]').selectOption({ label: CHAPTER });
+  await page.locator('select[aria-label="Reihe"]').selectOption({ label: SUBJECT });
+  await page.locator('select[aria-label="Unit"]').selectOption({ label: CHAPTER });
 
   // ---------- Leseverständnis ----------
   await createExercise(page, "Reading", `Lesen ${RUN}`, async () => {
@@ -124,9 +133,9 @@ test("Jeder Übungstyp des Manifests lässt sich im UI anlegen", async ({ page }
 
   // ---------- Verwaltung: alle sechs stehen in der Liste ----------
   // Mit ihrem deutschen Namen aus dem Manifest. Die Auswahl reist als Query mit, damit die Liste
-  // gleich das richtige Kapitel zeigt – genau das tut auch der Knopf „Übungen verwalten".
+  // gleich dieselbe Unit zeigt – genau das tut auch der Knopf „Übungen verwalten".
   await page.getByRole("link", { name: /Übungen verwalten/ }).click();
-  await expect(page).toHaveURL(/\/vater\/exercises\?subjectId=\d+&chapterId=\d+/);
+  await expect(page).toHaveURL(/\/vater\/exercises\?subjectId=\d+&seriesId=\d+&seriesUnitId=\d+/);
   for (const label of ["Leseverständnis", "Hörverständnis", "Aufsatz", "Grammatik", "Übersetzung", "Rechen-Drill"]) {
     await expect(page.getByText(`· ${label}`, { exact: false }).first()).toBeVisible();
   }

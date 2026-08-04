@@ -114,13 +114,16 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Deletes a unit (owner of the series only). Child textbooks pointing to it only lose the
-    /// assignment (SetNull) – the child's learning progress does not hang off the unit.
+    /// Deletes a unit along with its exercises (owner of the series only). Not possible while an
+    /// exercise in it is used in a study plan, a class test or an objective milestone. Child textbooks
+    /// pointing to the unit itself only lose the assignment (SetNull) – the child's learning progress
+    /// does not hang off the unit directly.
     /// </summary>
     [HttpDelete("{unitId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Delete(int seriesId, int unitId, CancellationToken ct)
     {
         var unit = await db.SeriesUnits.Include(u => u.Series)
@@ -128,6 +131,13 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
         if (unit is null) return NotFound();
         if (!ClaimsPrincipalExtensions.IsOwnedBy(unit.Series?.OwnerAdultId, User.CreatorId()))
             return this.ProblemWithCode(ApiErrors.NotOwner, "Only the owner of the series may delete its units.");
+        // Unit→exercise cascades, PlanPosition→Exercise is Restrict - cf. ExerciseControllerBase.Delete.
+        if (await ExerciseUsageQueries.AnyBlockingAsync(db,
+                db.Exercises.Where(x => x.SeriesUnitId == unitId),
+                db.SeriesUnits.Where(u => u.Id == unitId), ct))
+            return this.ProblemWithCode(ApiErrors.ExerciseInUse,
+                "Content in this unit is still used in a study plan, a class test or an objective "
+                + "milestone; remove it there first.");
 
         db.SeriesUnits.Remove(unit);
         await db.SaveChangesAsync(ct);

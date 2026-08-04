@@ -65,7 +65,7 @@ export function VaterInhalte() {
       </p>
       <div className="vater-grid">
         <HubCard to="/vater/katalog" icon="🗂️" title="Katalog"
-          text="Fach → Kapitel → Art. Der Rahmen jeder Übung – und er ist unter allen Vätern geteilt." />
+          text="Fach → Art. Der Rahmen jeder Übung – und er ist unter allen Vätern geteilt." />
         <HubCard to="/vater/vocab" icon="🔤" title="Vokabeln"
           text="Der Wortspeicher. Dieselbe Vokabel bleibt über Übungen hinweg verknüpft, samt Lernstand." />
         <HubCard to="/vater/lueckentexte" icon="📄" title="Lückentexte"

@@ -219,3 +219,6 @@ Batch-Pfad im `MediaSelector` (B-03), deutlich mehr als eine lokalisierte Ein-Pu
 - **2026-08-04** — geschätzt: Größe M, `wo: beides`, `migration: nein`, `vertragsbruch: nein`; Risiken,
   Angriffsplan (Backend zuerst, mit realer Reihenfolge-Abhängigkeit zu B-63) und Testweg ergänzt (autonom
   getroffen, Nutzerauftrag).
+- **2026-08-04** — Querverweis: [B-106](B-106-lehrwerkgetriebener-katalog.md) verschmilzt `Exercise` mit
+  `SeriesUnit` und macht diese Story nach ihrem Bau voraussichtlich gegenstandslos (verworfen erst nach
+  dem Bau von B-106, nicht schon jetzt) — kein Status-Wechsel hier.

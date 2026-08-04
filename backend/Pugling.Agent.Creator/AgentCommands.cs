@@ -116,7 +116,7 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
             ? $"Für:     {briefing.Audience}"
               + (briefing.Interests.Count > 0 ? $" (Interessen: {string.Join(", ", briefing.Interests)})" : "")
             : "Für:     den gemeinsamen Katalog (allgemeine Übung)");
-        Console.WriteLine($"Ort:     {briefing.SubjectName} › {briefing.ChapterName}");
+        Console.WriteLine($"Ort:     {briefing.SubjectName} › {briefing.SeriesUnitLabel}");
         if (briefing.Source is { } source) Console.WriteLine($"Quelle:  {source}");
         Console.WriteLine($"Typ:     {outcome.TypeKey}");
         Console.WriteLine($"Titel:   {outcome.Title}");
@@ -216,8 +216,8 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
     /// <summary>
     /// Builds the request from the command line. Either <c>--child</c> (individual) or <c>--profile</c>
     /// (general) must be present - without either, both the target audience and the subject knowledge
-    /// would be missing. Subject and chapter may be omitted: then the profile's subject applies, otherwise
-    /// the first subject with a chapter.
+    /// would be missing. Series and series unit may be omitted: then the profile's series applies,
+    /// otherwise the first series with a unit.
     /// </summary>
     private async Task<GenerationRequest> BuildRequestAsync(CommandLine command, bool typeRequired, CancellationToken ct)
     {
@@ -228,7 +228,8 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
                 "Gib --child <id> für eine individuelle Übung oder --profile <id> für eine allgemeine an.");
 
         var profile = profileId is int id ? await LoadProfileAsync(id, ct) : null;
-        var (subjectId, chapterId) = await ResolveLocationAsync(command, profile?.SubjectId, ct);
+        var (seriesId, seriesUnitId) = await ResolveLocationAsync(command, profile?.SeriesId, ct);
+        var subjectId = profile?.SubjectId ?? await ResolveSubjectIdAsync(seriesId, ct);
 
         return new GenerationRequest(
             ChildId: childId,
@@ -236,7 +237,8 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
             UnitId: command.Value("unit") is not null ? command.RequiredInt("unit") : null,
             General: command.Flag("general"),
             SubjectId: subjectId,
-            ChapterId: chapterId,
+            SeriesId: seriesId,
+            SeriesUnitId: seriesUnitId,
             TypeKey: typeRequired ? command.RequiredValue("type") : command.Value("type") ?? "Vocabulary",
             Topic: command.Value("topic"),
             ItemCount: command.Int("count", DefaultItemCount),
@@ -264,37 +266,51 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
         }
     }
 
-    private async Task<(int SubjectId, int ChapterId)> ResolveLocationAsync(CommandLine command,
-        int? profileSubjectId, CancellationToken ct)
+    /// <summary>
+    /// Resolves the target series/unit (since B-106, exercises hang off a series unit, not a chapter).
+    /// <c>--series</c>/<c>--series-unit</c> may be omitted: then the profile's series applies, otherwise
+    /// the first series with a unit.
+    /// </summary>
+    private async Task<(int SeriesId, int SeriesUnitId)> ResolveLocationAsync(CommandLine command,
+        int? profileSeriesId, CancellationToken ct)
     {
-        var wantedSubject = command.Value("subject") is not null ? command.RequiredInt("subject") : profileSubjectId;
-        var wantedChapter = command.Value("chapter") is not null ? command.RequiredInt("chapter") : (int?)null;
+        var wantedSeries = command.Value("series") is not null ? command.RequiredInt("series") : profileSeriesId;
+        var wantedUnit = command.Value("series-unit") is not null ? command.RequiredInt("series-unit") : (int?)null;
 
-        if (wantedSubject is { } subjectId && wantedChapter is { } chapterId) return (subjectId, chapterId);
+        if (wantedSeries is { } seriesId && wantedUnit is { } seriesUnitId) return (seriesId, seriesUnitId);
 
-        var subjects = await creator.ListSubjectsAsync(ct);
-        foreach (var subject in subjects.Where(s => wantedSubject is null || s.Id == wantedSubject))
+        var series = await creator.ListSeriesAsync(ct: ct);
+        foreach (var s in series.Where(s => wantedSeries is null || s.Id == wantedSeries))
         {
-            var chapters = await creator.ListChaptersAsync(subject.Id, ct);
-            if (chapters.Count == 0) continue;
+            var units = await creator.ListUnitsAsync(s.Id, ct: ct);
+            if (units.Count == 0) continue;
 
-            // `--chapter` without `--subject`: the chapter determines the subject. It used to fall through
-            // silently and the exercise landed in the FIRST chapter of the FIRST subject - a silent grab into
+            // `--series-unit` without `--series`: the unit determines the series. It used to fall through
+            // silently and the exercise landed in the FIRST unit of the FIRST series - a silent grab into
             // the wrong shelf is worse than an error message.
-            if (wantedChapter is { } wanted)
+            if (wantedUnit is { } wanted)
             {
-                if (chapters.Any(c => c.Id == wanted)) return (subject.Id, wanted);
+                if (units.Any(u => u.Id == wanted)) return (s.Id, wanted);
                 continue;
             }
 
-            return (subject.Id, chapters[0].Id);
+            return (s.Id, units[0].Id);
         }
 
-        throw new AgentUsageException(wantedChapter is { } missing
-            ? $"Kapitel {missing} gibt es nicht"
-              + (wantedSubject is { } id ? $" im Fach {id}" : " in keinem Fach")
+        throw new AgentUsageException(wantedUnit is { } missing
+            ? $"Unit {missing} gibt es nicht"
+              + (wantedSeries is { } id ? $" in Reihe {id}" : " in keiner Reihe")
               + " – prüfe die Id mit 'pugling-creator types' bzw. im Vater-Web."
-            : "Es gibt kein Fach mit Kapitel – lege erst Katalog-Struktur an oder gib --subject und --chapter an.");
+            : "Es gibt keine Reihe mit Unit – lege erst Lehrwerk-Struktur an oder gib --series und --series-unit an.");
+    }
+
+    /// <summary>The subject a series carries (for profile matching); throws if the series has none set.</summary>
+    private async Task<int> ResolveSubjectIdAsync(int seriesId, CancellationToken ct)
+    {
+        var series = await creator.GetSeriesAsync(seriesId, ct);
+        return series.SubjectId
+            ?? throw new AgentUsageException(
+                $"Reihe {seriesId} ({series.Name}) hat kein Fach zugeordnet – setze eines im Vater-Web, bevor du Übungen anlegst.");
     }
 
     /// <summary>Date option in ISO format; a typo should produce an error message, not today's date.</summary>

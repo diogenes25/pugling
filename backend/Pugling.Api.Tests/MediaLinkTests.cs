@@ -267,14 +267,14 @@ public class MediaLinkTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     private static async Task<int> FirstItemVocabIdAsync(HttpClient father, int exerciseId) =>
         (await ItemsAsync(father, exerciseId))[0].GetProperty("vocabularyId").GetInt32();
 
-    /// <summary>Reads items via the exercise's HATEOAS link - without repeating subject/chapter in the test.</summary>
+    /// <summary>Reads items via the exercise's HATEOAS link - without repeating series/unit in the test.</summary>
     private static async Task<JsonElement> ItemsAsync(HttpClient father, int exerciseId)
     {
         var exercise = await GetAsync(father, $"/api/v1/creator/exercises/{exerciseId}");
-        var subjectId = exercise.GetProperty("subjectId").GetInt32();
-        var chapterId = exercise.GetProperty("chapterId").GetInt32();
+        var seriesId = exercise.GetProperty("seriesId").GetInt32();
+        var seriesUnitId = exercise.GetProperty("seriesUnitId").GetInt32();
         return await GetAsync(father,
-            $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items");
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}/items");
     }
 
     private static JsonElement Single(JsonElement array)

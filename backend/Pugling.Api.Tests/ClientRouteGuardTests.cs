@@ -104,7 +104,7 @@ public class ClientRouteGuardTests(PuglingWebAppFactory factory) : IClassFixture
         var segments = ManifestSegments();
 
         var offenders = segments
-            .Select(s => $"/api/v1/creator/subjects/{{}}/chapters/{{}}/{s}")
+            .Select(s => $"/api/v1/creator/textbook-series/{{}}/units/{{}}/{s}")
             .Where(p => !known.Contains(p))
             .ToList();
 
@@ -305,7 +305,7 @@ public class ClientRouteGuardTests(PuglingWebAppFactory factory) : IClassFixture
     /// Resolves one hole of an interpolated string.
     /// <para>
     /// <b>Why the depth counter.</b> Bindings can form a cycle – swapped arguments at a path helper
-    /// (<c>ItemsPath(chapterId, subjectId, …)</c>) map <c>a → b</c> and <c>b → a</c>, and that is exactly the
+    /// (<c>ItemsPath(seriesUnitId, seriesId, …)</c>) map <c>a → b</c> and <c>b → a</c>, and that is exactly the
     /// defect class this guard exists for. A <see cref="StackOverflowException"/> cannot be caught: it kills
     /// the test host, and all 600-plus tests fall without a cause. Degrading to a placeholder instead lets the
     /// comparison report the wrong path.
@@ -403,7 +403,7 @@ public class ClientRouteGuardTests(PuglingWebAppFactory factory) : IClassFixture
     /// <summary>
     /// The interpolated strings of a line, with their content unescaped of nothing – the brace depth is tracked
     /// so a <b>nested string literal inside a hole</b> does not end the scan. That is not academic: with
-    /// <c>ExercisePath(subjectId, chapterId, "birkenbihl")</c> the client has exactly this shape, and it is what
+    /// <c>ExercisePath(seriesId, seriesUnitId, "birkenbihl")</c> the client has exactly this shape, and it is what
     /// a line-wise regex would trip over.
     /// </summary>
     private static IEnumerable<Interpolated> InterpolatedStrings(string line)

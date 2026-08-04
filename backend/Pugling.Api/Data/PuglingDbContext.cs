@@ -24,9 +24,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<SeriesUnit> SeriesUnits => Set<SeriesUnit>();
     public DbSet<CreatorProfile> CreatorProfiles => Set<CreatorProfile>();
 
-    // Learn catalog: Subject -> Chapter -> Exercise (typed)
+    // Learn catalog: Subject holds ExerciseCategory; Exercise hangs off TextbookSeries -> SeriesUnit (typed)
     public DbSet<Subject> Subjects => Set<Subject>();
-    public DbSet<Chapter> Chapters => Set<Chapter>();
     public DbSet<Exercise> Exercises => Set<Exercise>();
     public DbSet<ExerciseCategory> ExerciseCategories => Set<ExerciseCategory>();
     // RWX rights of individual creators on an exercise (owner/write/execute).
@@ -410,9 +409,6 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
 
         ApplyExplicitCascades(modelBuilder);
 
-        // Chapter names are unique per subject: two "Unit 1" in the same subject are a duplicate, and pick
-        // lists such as the agent's assignment hang on the name.
-        modelBuilder.Entity<Chapter>().HasIndex(c => new { c.SubjectId, c.Name }).IsUnique();
         // At least an index on the subject name: `Subjects` had none besides the primary key, although every
         // catalog view searches and sorts by it.
         modelBuilder.Entity<Subject>().HasIndex(s => s.Name);
@@ -615,23 +611,23 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         // Subject = cascade: a goal on a deleted subject is meaningless. (Two independent roots - Subject and
         // Objective -, no diamond; the same construction as ItemProgress.)
         //
-        // Chapter/exercise = **Restrict**, deliberately not SetNull: SetNull would silently widen a chapter goal
-        // into a subject goal, i.e. secretly move the bar. Restrict means: remove the goal first, then the
-        // chapter. So that this does not become a bare 500, `ExerciseUsageQueries` knows about the milestones -
+        // SeriesUnit/exercise = **Restrict**, deliberately not SetNull: SetNull would silently widen a unit
+        // goal into a subject goal, i.e. secretly move the bar. Restrict means: remove the goal first, then the
+        // unit. So that this does not become a bare 500, `ExerciseUsageQueries` knows about the milestones -
         // as it already does about the study plan positions.
         modelBuilder.Entity<KeyResult>(e =>
         {
             e.HasOne<Subject>().WithMany().HasForeignKey(k => k.SubjectId).OnDelete(DeleteBehavior.Cascade);
-            e.HasOne<Chapter>().WithMany().HasForeignKey(k => k.ChapterId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<SeriesUnit>().WithMany().HasForeignKey(k => k.SeriesUnitId).OnDelete(DeleteBehavior.Restrict);
             e.HasOne<Exercise>().WithMany().HasForeignKey(k => k.ExerciseId).OnDelete(DeleteBehavior.Restrict);
 
             // The same milestone twice in the same goal would be a duplicate - and `RewardPerKeyResult` would pay
             // twice. Three FILTERED uniques, because SQLite treats NULLs as distinct: a single index over the
             // nullable scope columns would not hold the invariant.
             e.HasIndex(k => new { k.ObjectiveId, k.SubjectId, k.Metric }).IsUnique()
-                .HasFilter("[ChapterId] IS NULL AND [ExerciseId] IS NULL");
-            e.HasIndex(k => new { k.ObjectiveId, k.ChapterId, k.Metric }).IsUnique()
-                .HasFilter("[ChapterId] IS NOT NULL AND [ExerciseId] IS NULL");
+                .HasFilter("[SeriesUnitId] IS NULL AND [ExerciseId] IS NULL");
+            e.HasIndex(k => new { k.ObjectiveId, k.SeriesUnitId, k.Metric }).IsUnique()
+                .HasFilter("[SeriesUnitId] IS NOT NULL AND [ExerciseId] IS NULL");
             e.HasIndex(k => new { k.ObjectiveId, k.ExerciseId, k.Metric }).IsUnique()
                 .HasFilter("[ExerciseId] IS NOT NULL");
         });
@@ -884,13 +880,10 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     /// </summary>
     private static void ApplyExplicitCascades(ModelBuilder modelBuilder)
     {
-        // Catalog: subject ⇒ chapter ⇒ exercise. Deleting a subject drops the whole branch (the Restrict guard
+        // Catalog: series ⇒ unit ⇒ exercise. Deleting a unit drops its exercises (the Restrict guard
         // on PlanPosition→Exercise catches beforehand whatever still sits in a study plan).
-        modelBuilder.Entity<Chapter>()
-            .HasOne(c => c.Subject).WithMany(s => s.Chapters).HasForeignKey(c => c.SubjectId)
-            .OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<Exercise>()
-            .HasOne(x => x.Chapter).WithMany(c => c.Exercises).HasForeignKey(x => x.ChapterId)
+            .HasOne(x => x.SeriesUnit).WithMany().HasForeignKey(x => x.SeriesUnitId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // Everything hanging on the child that is pointless without it: study plans, the ledger, the goals.

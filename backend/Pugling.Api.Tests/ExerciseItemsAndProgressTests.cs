@@ -19,9 +19,20 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
     private static async Task<(int s, int c, int exerciseId)> VocabWithItemsAsync(HttpClient f, params (string Front, string Back)[] items)
     {
         var vocab = items.Length > 0 ? items : [("hello", "hallo")];
-        var s = await TestApi.IdAsync(await f.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Items-Fach" }));
-        var c = await TestApi.IdAsync(await f.PostAsJsonAsync($"/api/v1/creator/subjects/{s}/chapters", new { name = "Unit", orderIndex = 1 }));
-        var exerciseId = await TestApi.IdAsync(await f.PostAsJsonAsync($"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary", new
+        var subjectId = await TestApi.IdAsync(await f.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Items-Fach" }));
+        var s = await TestApi.IdAsync(await f.PostAsJsonAsync("/api/v1/creator/textbook-series", new
+        {
+            name = TestApi.UniqueName("Items-Reihe"),
+            publisher = (string?)null,
+            subjectName = (string?)null,
+            subjectId,
+            schoolTypes = (string?)null,
+            sourceLanguage = (string?)null,
+            targetLanguage = (string?)null,
+            notes = (string?)null,
+        }));
+        var c = await TestApi.IdAsync(await f.PostAsJsonAsync($"/api/v1/creator/textbook-series/{s}/units", new { label = "Unit", orderIndex = 1 }));
+        var exerciseId = await TestApi.IdAsync(await f.PostAsJsonAsync($"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary", new
         {
             title = "Items-Übung",
             orderIndex = 1,
@@ -40,14 +51,14 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
         var (s, c, exerciseId) = await VocabWithItemsAsync(father, ("hello", "hallo"));
 
         var items = await father.GetFromJsonAsync<List<JsonElement>>(
-            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items");
+            $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary/{exerciseId}/items");
         var vocabularyId = items!.Single().GetProperty("vocabularyId").GetInt32();
 
         // The same store entry a second time: two items on the same word would create two competing
         // ItemProgress rows, and the progress of that same word would drift apart within one exercise.
         // The DB forbids it (unique), the controller reports it as a 409.
         var again = await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items",
+            $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary/{exerciseId}/items",
             new { vocabularyId });
         Assert.Equal(HttpStatusCode.Conflict, again.StatusCode);
         var problem = await again.Content.ReadFromJsonAsync<JsonElement>();
@@ -59,7 +70,7 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
     {
         var father = await TestApi.FatherAsync(_factory);
         var (s, c, exerciseId) = await VocabWithItemsAsync(father, ("hello", "hallo"));
-        var itemsUrl = $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items";
+        var itemsUrl = $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary/{exerciseId}/items";
 
         // POST inline (creating in the store) + POST with an existing store id.
         var (storeId, _) = await TestApi.CreateStoreVocabAsync(father, "dog", "Hund");
@@ -91,7 +102,7 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
         var father = await TestApi.FatherAsync(_factory);
         var (s, c, exerciseId) = await VocabWithItemsAsync(father);
         var res = await father.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items", new { hint = "nix" });
+            $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary/{exerciseId}/items", new { hint = "nix" });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
 
@@ -114,7 +125,7 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
         var stranger = await TestApi.FatherAsync(_factory, otherId, "2222");
 
         var res = await stranger.PostAsJsonAsync(
-            $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items", new { front = "sun", back = "Sonne" });
+            $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary/{exerciseId}/items", new { front = "sun", back = "Sonne" });
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
     }
 
@@ -206,7 +217,7 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
     {
         var father = await TestApi.FatherAsync(_factory);
         var (s, c, exerciseId) = await VocabWithItemsAsync(father, ("hello", "hallo"), ("bye", "tschuess"));
-        var itemsUrl = $"/api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items";
+        var itemsUrl = $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary/{exerciseId}/items";
         var firstId = (await father.GetFromJsonAsync<List<JsonElement>>(itemsUrl))![0].GetProperty("id").GetInt32();
 
         // Take it into a study plan → the progress hangs on the position/item order.

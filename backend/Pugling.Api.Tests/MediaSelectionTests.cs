@@ -433,10 +433,12 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
         else
         {
             var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = marker }));
-            var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-                $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Unit", orderIndex = 1 }));
+            var seriesId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/textbook-series",
+                new { name = $"{marker}-Reihe", subjectId }));
+            var seriesUnitId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+                $"/api/v1/creator/textbook-series/{seriesId}/units", new { label = "Unit" }));
             exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-                $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary", new
+                $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary", new
                 {
                     title = $"{marker}-Uebung",
                     orderIndex = 1,
@@ -453,7 +455,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
                 }));
 
             var items = await GetAsync(father,
-                $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items");
+                $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}/items");
             itemId = items[0].GetProperty("id").GetInt32();
             vocabularyId = items[0].GetProperty("vocabularyId").GetInt32();
 

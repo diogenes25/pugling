@@ -21,10 +21,11 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
     public async Task<CreatorBriefing> BuildAsync(GenerationRequest request, CancellationToken ct = default)
     {
         var subject = await creator.GetSubjectAsync(request.SubjectId, ct);
-        var chapter = (await creator.ListChaptersAsync(request.SubjectId, ct))
-            .FirstOrDefault(c => c.Id == request.ChapterId)
+        var targetSeries = await creator.GetSeriesAsync(request.SeriesId, ct);
+        var targetUnit = (await creator.ListUnitsAsync(request.SeriesId, ct: ct))
+            .FirstOrDefault(u => u.Id == request.SeriesUnitId)
             ?? throw new AgentUsageException(
-                $"Kapitel {request.ChapterId} gehört nicht zu Fach {request.SubjectId} ({subject.Name}).");
+                $"Unit {request.SeriesUnitId} gehört nicht zu Reihe {request.SeriesId} ({targetSeries.Name}).");
 
         var child = request.ChildId is int childId ? await LoadChildAsync(childId, request, ct) : null;
         var profile = await ResolveProfileAsync(request, ct);
@@ -32,7 +33,7 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
 
         // Existing titles go into the prompt as "do not repeat" - that prevents near-duplicates.
         var existing = await creator.SearchExercisesAsync(subjectId: request.SubjectId,
-            chapterId: request.ChapterId, take: 50, ct: ct);
+            seriesUnitId: request.SeriesUnitId, take: 50, ct: ct);
 
         // Vocabulary priority: explicitly given > the child's weak words > (empty, then the model picks).
         IReadOnlyList<string> requiredWords = request.Words.Count > 0
@@ -46,8 +47,8 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
             Child: request.General ? null : child,
             SubjectId: subject.Id,
             SubjectName: subject.Name,
-            ChapterId: chapter.Id,
-            ChapterName: chapter.Name,
+            SeriesUnitId: targetUnit.Id,
+            SeriesUnitLabel: targetUnit.Label,
             Topic: request.Topic,
             // Explicitly set languages beat the profile; without either, the usual defaults apply.
             SourceLang: request.SourceLang ?? profile?.SourceLang ?? "en",

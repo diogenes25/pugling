@@ -21,7 +21,7 @@ public record ExercisePayload<TConfig>(string Title, int OrderIndex, int RewardP
 /// write grant); <paramref name="IsOwner"/> = may <b>manage</b> it (owner: delete, grant permissions,
 /// toggle visibility); <paramref name="ExecutePublic"/> = assignable to everyone.
 /// </summary>
-public record ExerciseResponse<TConfig>(int Id, int ChapterId, string Type, string Title,
+public record ExerciseResponse<TConfig>(int Id, int SeriesUnitId, string Type, string Title,
     int OrderIndex, int RewardPoints, DateTime CreatedAt, TConfig Config, SuggestedBonus? SuggestedBonus,
     int? GradeMin, int? GradeMax, SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName,
     int? AuthorAdultId, bool IsOwn, bool IsOwner, bool ExecutePublic, int GrantCount, string? Description,

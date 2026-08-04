@@ -4,35 +4,33 @@ import { api } from "../lib/api";
 import { confirmAction } from "../lib/ui";
 import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
-import type { CategoryResponse, ChapterResponse, SubjectResponse } from "../lib/types";
+import type { CategoryResponse, SubjectResponse } from "../lib/types";
 
 /*
- * Katalog-Verwaltung: Fach, Kapitel und „Art" anlegen, umbenennen und löschen.
+ * Katalog-Verwaltung: Fach und „Art" anlegen, umbenennen und löschen.
  *
  * Korrigieren ging lange nicht – ein Tippfehler im Fachnamen blieb für alle sichtbar, denn der Katalog ist
- * **global**: Fächer und Kapitel teilen sich alle Väter. Genau deshalb warnt das Löschen hier deutlich und
- * nennt die Kaskade.
+ * **global**: Fächer teilen sich alle Väter. Genau deshalb warnt das Löschen hier deutlich.
  *
  * Die „Art" (Kategorie) ist fachabhängig und dient der Vorfilterung im Katalog – sie ist der einzige
  * Ordnungsbegriff, den der Vater selbst erfinden darf.
  *
+ * Seit B-106 hängt jede Übung an einer Lehrwerk-Unit statt an einem Kapitel (entfernt) – die Reihen/Units
+ * werden auf der eigenen Seite `/vater/lehrwerke` verwaltet (VaterLehrwerke.tsx), nicht mehr hier.
+ *
  * Der Bereich lag früher **eingeklappt** auf der Übungen-Seite und war darum kaum zu finden; er hat jetzt
  * eine eigene Route (`/vater/katalog`, siehe docs/vater-informationsarchitektur-plan.md). Ein eigener Ort
- * muss sich nicht aufklappen – der Einklapper und sein „Schließen" sind entfallen. Weil das Anlegen von
- * Fach und Kapitel bisher nur am Anlege-Formular hing, steht es jetzt **auch hier**: sonst wäre der
- * Katalog eine Seite, auf der man nur umbenennen und löschen kann.
+ * muss sich nicht aufklappen – der Einklapper und sein „Schließen" sind entfallen.
  */
 export function CatalogAdmin({ subjects, onCatalogChanged }: {
   subjects: SubjectResponse[];
-  /** Wird nach **jeder** Änderung gerufen – die Auswahllisten der Seite zeigen sonst gelöschte Kapitel weiter. */
+  /** Wird nach **jeder** Änderung gerufen – die Auswahllisten der Seite zeigen sonst gelöschte Fächer weiter. */
   onCatalogChanged: () => void;
 }) {
   const [subjectId, setSubjectId] = useState<number | "">("");
   const action = useAction();
 
   const subject = subjects.find((s) => s.id === subjectId);
-  const chapters = useAsync<ChapterResponse[]>(
-    () => (subjectId === "" ? Promise.resolve([]) : api.chapters(Number(subjectId))), [subjectId]);
   const categories = useAsync<CategoryResponse[]>(
     () => (subjectId === "" ? Promise.resolve([]) : api.categories(Number(subjectId))), [subjectId]);
 
@@ -40,7 +38,6 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
   async function act(fn: () => Promise<unknown>, okText: string, reload?: () => void) {
     if (!await action.run(fn, okText)) return;
     reload?.();
-    // Auch die Seite drumherum: ein hier gelöschtes Kapitel stünde sonst weiter im Kapitel-Pulldown.
     onCatalogChanged();
   }
 
@@ -81,30 +78,15 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
             onSave={(name) => act(() => api.updateSubject(subject.id, name), "Fach umbenannt.")}
             onDelete={() => {
               if (!confirmAction(
-                `Fach „${subject.name}" wirklich löschen? Alle ${subject.chaptersCount} Kapitel und deren `
-                + "Übungen gehen mit. Übungen, die in einem Lehrplan stecken, verhindern das Löschen.")) return;
+                `Fach „${subject.name}" wirklich löschen? Lehrwerk-Reihen und Übungen behalten ihren Inhalt, `
+                + "verlieren aber die Zuordnung zu diesem Fach.")) return;
               act(() => api.deleteSubject(subject.id), "Fach gelöscht.", () => setSubjectId(""));
             }} />
 
-          <h4 className="h-section" style={{ fontSize: 15, marginTop: 14 }}>
-            Kapitel {chapters.data ? `(${chapters.data.length})` : ""}
-          </h4>
-          {chapters.data?.map((c) => (
-            <NameRow key={c.id} busy={action.busy} fieldId={`ca-chapter-${c.id}`} label={`Kapitel #${c.orderIndex}`}
-              srName={`Kapitel „${c.name}"`} value={c.name}
-              onSave={(name) => act(() => api.updateChapter(subject.id, c.id, { name }), "Kapitel umbenannt.", chapters.reload)}
-              onDelete={() => {
-                if (!confirmAction(`Kapitel „${c.name}" samt seinen Übungen löschen? `
-                  + "Übungen, die in einem Lehrplan stecken, verhindern das Löschen.")) return;
-                act(() => api.deleteChapter(subject.id, c.id), "Kapitel gelöscht.", chapters.reload);
-              }} />
-          ))}
-          {chapters.data?.length === 0 && <p className="muted">Noch keine Kapitel.</p>}
-          {/* `orderIndex` ans Ende: das Kapitel folgt dem Stoff, und die Reihenfolge trägt Bedeutung. */}
-          <NewName fieldId="ca-new-chapter" label="Neues Kapitel" placeholder="z. B. Unit 1"
-            busy={action.busy} onCreate={(name) => act(
-              () => api.createChapter(subject.id, name, (chapters.data?.length ?? 0) + 1),
-              "Kapitel angelegt.", chapters.reload)} />
+          <p className="muted" style={{ fontSize: 13 }}>
+            Lehrwerk-Reihen und ihre Units verwaltest du auf der Seite <a href="/vater/lehrwerke">📕 Lehrwerke</a> –
+            jede Übung hängt seit Kurzem an einer Unit statt an einem Kapitel.
+          </p>
 
           <h4 className="h-section" style={{ fontSize: 15, marginTop: 14 }}>
             Arten {categories.data ? `(${categories.data.length})` : ""}
