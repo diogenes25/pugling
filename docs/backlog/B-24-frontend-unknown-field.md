@@ -1,11 +1,15 @@
 ---
-tags: [typ/story, status/idee, bereich/frontend]
+tags: [typ/story, status/verworfen, bereich/frontend]
 aliases: [unknown_field im Frontend]
-status: idee
+status: verworfen
 prio: P2
 art: Frage
 quelle: memory/codequalitaet-gates.md
-unverifiziert: true
+grund: "Alle 34 untypisierten Schreib-Rümpfe in api.ts sind Feld für Feld gegen die Contracts-DTOs
+  geprüft (Datei:Zeile-Liste im Verlauf) – jeder trifft exakt die erwarteten Felder, keiner schickt ein
+  zusätzliches. Der einzige generische Editor mit Record<string, any>-Zeilen (exerciseConfig.tsx,
+  buildTypeConfig) spreadet die lose Zeile nie in die Nutzlast, sondern pickt je Typ benannte Felder
+  einzeln heraus – das Restrisiko war theoretisch, nicht real."
 ---
 
 # B-24 · Frontend gegen `unknown_field` durchspielen
@@ -52,6 +56,62 @@ abgewiesen). Alle sechs sind in E6 geschlossen (`UpdateMissionDto`, `UpdateAchie
 `CreateTimetableEntryDto`, `UpdateChapterDto`, `CreateTagDto` – alle lagen längst im Dokument und fehlten nur im
 Barrel). Die 34 sind also nicht mehr geschätzt, sondern der geprüfte Rest.
 
+## Die 34 sind geprüft, keiner schickt ein falsches Feld (2026-08-03)
+
+Jeder der 34 Objekt-Literal-Rümpfe aus [api.ts](../../frontend/src/lib/api.ts) wurde gegen sein
+Ziel-DTO in `backend/Pugling.Contracts` abgeglichen (Feldname für Feldname, inklusive optionaler
+Felder, die weggelassen werden dürfen):
+
+| `api.ts`-Aufruf (Zeile) | Rumpf | Ziel-DTO |
+| --- | --- | --- |
+| `loginAdult:225` | `{ adultId, pin }` | `AdultLoginDto(int AdultId, string Pin)` |
+| `loginChild:227` | `{ childId, pin }` | `ChildLoginDto(int ChildId, string Pin)` |
+| `addChildSupervisor:266` | `{ supervisorId, relation }` | `AddSupervisorDto(int SupervisorId, SupervisorRelation Relation)` |
+| `createSubject:297` | `{ name }` | `CreateSubjectDto(string Name)` |
+| `updateSubject:299` | `{ name }` | `UpdateSubjectDto(string? Name)` |
+| `createCategory:309` | `{ name }` | `CreateCategoryDto(string Name)` |
+| `updateCategory:311` | `{ name }` | `UpdateCategoryDto(string? Name)` |
+| `createChapter:317` | `{ name, orderIndex }` | `CreateChapterDto(string Name, int OrderIndex)` |
+| `setExerciseSharing:338` | `{ executePublic }` | `SetExerciseSharingDto(bool ExecutePublic)` |
+| `checkPreviewExercise:343` | `{ answers, stage }` | `PreviewCheckDto(List<PreviewAnswer> Answers, int? Stage)` |
+| `addExerciseGrant:355` | `{ creatorId, permission }` | `AddGrantDto(int CreatorId, GrantPermission Permission)` |
+| `linkExerciseMedia:364` / `linkExerciseItemMedia:370` / `linkVocabularyMedia:830` | `{ mediaAssetId, weight }` | `AddMediaLinkDto(int? MediaAssetId, string? Key, int Weight)` |
+| `attachVocabTags:431` | `{ tags }` | `TagVocabDto(List<string> Tags)` |
+| `tagVocabulary:442` | `{ vocabularyIds }` | `TagVocabularyDto(List<int> VocabularyIds)` |
+| `startSession:546` | `{}` | `StartPracticeDto(DateOnly? Day, PlayMode Mode = Lern)` – alle Felder optional |
+| `heartbeat:549` | `{ seconds, active }` | `HeartbeatDto(int Seconds, bool Active)` |
+| `endSession:559` | `{}` | kein `[FromBody]`-Parameter am Controller – Rumpf wird gar nicht deserialisiert |
+| `startTest:565` | `{}` | `StartTestDto(int? Stage, DateOnly? Day)` – alle Felder optional |
+| `submitTest:571` | `{ answers }` | `SubmitDto(List<AnswerDto>? Answers)` |
+| `purchaseSkin:598` / `equipSkin:599` / `purchaseListing:665` / `cancelPurchase:706` / `approveActivation:714` / `rejectActivation:716` / `reshuffleCardImage:845` | `{}` | kein `[FromBody]`-Parameter (nur Routen-Ids) |
+| `grantPoints:634` | `{ amount, reason, currency }` | `PointsEntryDto(int Amount, string Reason, Currency Currency)` |
+| `assignClassTestExercises:650` | `{ exerciseIds }` | `AssignExercisesDto(List<int> ExerciseIds)` |
+| `activateInventory:668` | `{ quantity }` | `ActivateDto(int Quantity)` |
+| `setChildInterests:795` | `{ interests }` | `SetChildInterestsDto(List<ChildInterestInput> Interests)` |
+| `tagMedia:823` | `{ tags }` | `TagMediaDto(List<string> Tags)` |
+| `reshuffleMedia:836` | `{ vocabularyId }` | `ReshuffleMediaDto(int? VocabularyId = null, int? ExerciseItemId = null)` |
+
+34 von 34 – kein einziger Rumpf trägt ein Feld, das sein DTO nicht kennt; wo Felder fehlen, sind sie am
+DTO optional (Server-Default greift), nie umgekehrt zusätzlich.
+
+Zusätzlich geprüft: der einzige Ort, an dem eine Nutzlast aus **unbenannten** Feldern (`Row =
+Record<string, any>`, [exerciseConfig.tsx:22](../../frontend/src/vater/exerciseConfig.tsx)) entsteht –
+`buildTypeConfig` ([exerciseConfig.tsx:123](../../frontend/src/vater/exerciseConfig.tsx)). Trotz der losen
+Zeilen-Typisierung (das eigentliche, weiter offene Problem von
+[B-74](B-74-editor-zeilen-typisieren.md)) baut jeder `case` sein Ergebnis **feldweise** aus benannten
+Literalen (z. B. Zeile 138: `{ prompt: r.prompt, answer: Number(r.answer), tolerance: … }`) – nirgends
+wird die rohe Zeile `{ ...r }` in die Config gespreadet. Der Weg zum Server läuft über `payloadFrom`
+([ExerciseEditModal.tsx:93](../../frontend/src/vater/ExerciseEditModal.tsx)) bzw. den Aufbau in
+[VaterExerciseCreate.tsx:125](../../frontend/src/vater/VaterExerciseCreate.tsx), beide mit explizitem
+Rückgabetyp `CreateExercisePayload` – ein Objekt-Literal mit annotiertem Zieltyp prüft `tsc` **auch** auf
+Überschuss (`excess property check`), das greift hier also doch. Ein zweiter Fund
+(`VaterRewards.tsx:81/166`, `{ ...form, title }`) ist unschädlich, weil `form` selbst als `CreateMissionDto`
+bzw. Basis von `CreateAchievementDto` typisiert ist – der Spread trägt keine Fremdfelder.
+
+Die Ausgangsfrage der Story („schickt das Frontend irgendwo ein Feld, das der Vertrag nicht kennt?") ist
+damit **abschließend mit Nein beantwortet** – nicht durch Vermutung, sondern durch einen vollständigen
+Abgleich aller 34 Stellen plus der einzigen strukturell riskanten Editor-Komponente.
+
 ## Verlauf
 
 - **2026-07-30** — geerntet (ungeprüft).
@@ -61,3 +121,6 @@ Barrel). Die 34 sind also nicht mehr geschätzt, sondern der geprüfte Rest.
   Der verbleibende Rest ist gemessen: 34 von 86 Schreib-Rümpfen sind Objekt-Literale an einem
   `body?: unknown`. Damit ist die Story nicht mehr „ungeprüft" in ihrer Kernbehauptung – nur die Frage, welche
   der 34 tatsächlich ein falsches Feld schicken, ist noch offen. `unverifiziert` bleibt darum stehen.
+- **2026-08-03** — geprüft und verworfen: alle 34 untypisierten Schreib-Rümpfe treffen ihr Ziel-DTO
+  feldgenau, und der einzige generische Zeilen-Editor spreadet nie roh in die Nutzlast (autonom geprüft,
+  Nutzerauftrag 2026-08-04).

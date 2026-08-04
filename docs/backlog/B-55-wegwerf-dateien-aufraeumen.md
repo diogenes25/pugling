@@ -1,9 +1,13 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/qualitaet, bereich/tests]
+tags: [typ/story, status/geschaetzt, bereich/qualitaet, bereich/tests]
 aliases: [Temp-Ordner aufräumen, Wegwerf-Dateien, Temp-Leck]
-status: ausformuliert
+status: geschaetzt
 prio: P3
 art: Aufräumen
+groesse: S
+wo: beides
+migration: nein
+vertragsbruch: nein
 quelle: docs/backlog/B-41-produktions-startup-smoke.md
 ---
 
@@ -50,28 +54,93 @@ liefe er, ist schlimmer als keiner.
 
 ## Offene Punkte
 
-1. **Braucht das ein Tor, oder reichen die zwei Reparaturen?** Ein Wächter müsste den Temp-Ordner vor und
-   nach dem Lauf zählen — das ist eine Kopplung an die Maschine, die in CI (frischer Runner) nichts findet
-   und lokal von jedem parallel laufenden Testprozess gestört wird. **Empfehlung:** kein Tor, aber ein Satz
-   in `backend/Pugling.Api.Tests`-Nähe bzw. `CLAUDE.md`: *wer eine Wegwerf-Datei anlegt, löscht sie im
-   selben Objekt* — und der Verweis auf die `DisposeAsync`-Falle, weil sie nicht erratbar ist.
-2. **Playwright: Aufräumen im `globalTeardown` oder gar nicht?** Ein `globalTeardown` löscht am Ende des
-   Laufs; bei einem roten Lauf ist die DB aber gelegentlich das einzige, woran man den Zustand noch
-   nachsehen kann. **Empfehlung:** aufräumen, aber nur bei grünem Lauf — oder schlicht immer, weil `trace`
-   und `screenshot` den Befund ohnehin tragen (`playwright.config.ts:29-30`).
-3. **Sollen die vorhandenen 934 Reste im selben Zug weg?** Das ist eine einmalige Handlung, kein Code.
-   **Empfehlung:** ja, und in der Story vermerken, dass es passiert ist — sonst misst die nächste Zählung
-   Altlast und hält sie für ein neues Leck.
+1. ~~Braucht das ein Tor, oder reichen die zwei Reparaturen?~~ → siehe Entscheidung 1.
+2. ~~Playwright: Aufräumen im `globalTeardown` oder gar nicht?~~ → siehe Entscheidung 2.
+3. ~~Sollen die vorhandenen 934 Reste im selben Zug weg?~~ → siehe Entscheidung 3.
+
+## Entscheidungen
+
+1. **Kein Tor — Regel als Doku, nicht als Wächter.** Ein Zähl-Wächter koppelt an die Maschine: ein
+   frischer CI-Runner hat nie etwas anzusammeln, und lokal stört ihn jeder parallel laufende Testprozess
+   (eigener `pugling_test_*`-Bestand). Statt eines Tors bekommt das Testprojekt sein erstes
+   `backend/Pugling.Api.Tests/CLAUDE.md` mit der Regel *wer eine Wegwerf-Datei anlegt, löscht sie im
+   selben Objekt* plus dem Verweis auf die `DisposeAsync`-Falle (bereits als Doc-Kommentar in
+   [PuglingWebAppFactory.cs:86-97](../../backend/Pugling.Api.Tests/PuglingWebAppFactory.cs) belegt: xUnit
+   entsorgt Klassen-Fixtures über `IAsyncDisposable`, `Dispose(bool)` läuft dafür **nie**). **Kosten:** eine
+   neue, dauerhaft zu pflegende Datei — gerechtfertigt, weil sie beim Arbeiten in diesem Testprojekt
+   automatisch lädt (wie die vier bestehenden verschachtelten `CLAUDE.md`), ein Tor das nicht könnte.
+2. **Playwright-Teardown läuft unconditional, nicht nur bei Grün.** `trace: "retain-on-failure"` und
+   `screenshot: "only-on-failure"` (`playwright.config.ts:29-30`) tragen den Befund eines roten Laufs
+   bereits; ein bedingtes Aufräumen bräuchte zusätzlich, den Laufstatus im `globalTeardown` überhaupt zu
+   kennen (Playwright reicht ihn dort nicht direkt durch), nur um denselben Fall doppelt abzusichern.
+   **Kosten:** bei einem roten Lauf ist die rohe SQLite-Datei nicht mehr per Hand inspizierbar — trace
+   deckt das in der Praxis ab; wer die DB doch braucht, kommentiert den Teardown-Aufruf für den einen Lauf
+   aus.
+3. **Die 934 Altlast-Einträge werden gelöscht — als Teil der Bau-Etappe (`in-arbeit`), nicht in dieser
+   Schätz-Sitzung.** Der Nutzer hat die Freigabe am 2026-08-01 bereits erteilt (Ist-Stand-Tabelle). Diese
+   Sitzung ändert ausschließlich diese Story-Datei; die Löschung ist eine echte Handlung mit
+   Seiteneffekt und gehört in den Bau-Schritt, wo `## Verlauf` das Datum trägt. **Kosten:** keine — reine
+   Reihenfolge-Klarstellung, kein Aufschub der Sache selbst.
 
 ## Akzeptanzkriterien
 
-1. `QueryPlanSmokeTests` löscht seine Datei am Ende des Tests — auch wenn eine Zusicherung darin fällt.
-2. Der Playwright-Lauf lässt weder `pugling-e2e-*.db` noch `pugling-e2e-media-*/` zurück.
+1. `QueryPlanSmokeTests` löscht seine Datei am Ende des Tests — auch wenn eine Zusicherung darin fällt
+   (`try`/`finally`, plus `SqliteConnection.ClearPool` vor dem `File.Delete`, sonst hält der Pool das
+   Handle offen wie beim B-41-Fund).
+2. Der Playwright-Lauf lässt weder `pugling-e2e-*.db` noch `pugling-e2e-media-*/` zurück — über ein
+   `globalTeardown`, das unconditional (auch bei Rot) läuft.
 3. **Gegenprobe je Stelle:** Temp-Einträge des jeweiligen Musters vor und nach einem Lauf zählen, Delta
    **0** — und einmal mit ausgebautem Aufräumen gegengeprüft, dass die Zählung überhaupt anschlägt.
 4. Die 934 Altlast-Einträge (inkl. der 26 handbenannten) sind gelöscht, das Datum steht im Verlauf.
-5. Die Regel „wer eine Wegwerf-Datei anlegt, löscht sie im selben Objekt" steht dort, wo sie gelesen wird,
-   **mit** dem `IAsyncDisposable`-Fallstrick — sonst tritt der nächste hinein.
+5. Die Regel „wer eine Wegwerf-Datei anlegt, löscht sie im selben Objekt" steht in
+   `backend/Pugling.Api.Tests/CLAUDE.md`, **mit** dem `IAsyncDisposable`-Fallstrick — sonst tritt der
+   nächste hinein.
+
+## Schätzung
+
+- **Größe:** S — drei kleine, voneinander unabhängige Reparaturen (ein `try`/`finally` in einem
+  Backend-Test, ein `globalTeardown`-Modul im Frontend-E2E, eine neue kurze `CLAUDE.md`) plus eine
+  einmalige Löschaktion ohne Code. Kein Einzelteil erreicht die Substanz des M-Ankers (vokabel-basierter
+  Batch-Pfad im `MediaSelector`, B-03).
+- **Wo:** `beides` — Backend (`Pugling.Api.Tests`) **und** Frontend-E2E-Infrastruktur
+  (`playwright.config.ts` + neues `frontend/e2e/global-teardown.ts`). Backend zuerst.
+- **Migration:** nein — keine Schemaänderung.
+- **Vertragsbruch:** nein — `Pugling.Contracts` ist nicht betroffen.
+
+### Risiken
+
+- **`globalTeardown` kennt `dbFile`/`mediaDir` nicht von selbst.** Playwright lädt Config und Teardown als
+  getrennte Module; die Pfade müssen aus `playwright.config.ts` in ein gemeinsames, einmal ausgewertetes
+  Modul wandern (z. B. `frontend/e2e/temp-paths.ts`), sonst berechnet der Teardown mit einem neuen
+  `Date.now()` andere Dateinamen und löscht nichts.
+- **Derselbe Pool-Fallstrick wie bei B-41** kann sich in `QueryPlanSmokeTests` wiederholen, wenn
+  `SqliteConnection.ClearPool` vor dem `File.Delete` vergessen wird — `File.Delete` schlägt dann
+  still im `catch` fehl, nicht sichtbar im Testergebnis.
+- **Manuelles Löschen der 934 Altlast-Dateien** darf keinen laufenden Testprozess treffen — vor dem
+  Löschen prüfen, dass kein `dotnet test`/`npm run test:e2e` gerade läuft.
+
+### Angriffsplan (Backend zuerst)
+
+1. **Backend:** `QueryPlanSmokeTests.cs` — `dbPath`-Handling in `try`/`finally` fassen, `con` schließen,
+   `SqliteConnection.ClearPool` vor `File.Delete`, kurzer Doc-Kommentar mit Verweis auf den B-41-Fund.
+2. **Backend:** `backend/Pugling.Api.Tests/CLAUDE.md` neu anlegen mit der Regel aus Entscheidung 1 und dem
+   `IAsyncDisposable`-Fallstrick-Verweis.
+3. **Frontend:** `frontend/e2e/global-teardown.ts` neu, exportiert aus einem gemeinsamen Modul mit
+   `playwright.config.ts` berechnete `dbFile`/`mediaDir`-Pfade; `globalTeardown` in der Config eintragen.
+4. **Einmalig, danach:** die 934 Altlast-Einträge (Ist-Stand-Tabelle) löschen, Datum in `## Verlauf`.
+
+### Testweg
+
+- Backend: `dotnet test --filter FullyQualifiedName~QueryPlanSmokeTests` zweimal laufen lassen, dabei
+  `%TEMP%` auf `pugling-queryplan-*.db` zählen (vorher/nachher, Delta 0); einmal mit auskommentiertem
+  `finally` gegenprüfen, dass die Zählung dann tatsächlich einen Rest zeigt (AC3).
+  `Pugling.Api.Tests` insgesamt bleibt Teil des bestehenden Test-Gates (`dotnet test Pugling.sln -c
+  Release`).
+- Frontend: `npm run test:e2e` einmal laufen lassen, danach `%TEMP%` auf `pugling-e2e-*.db` und
+  `pugling-e2e-media-*` prüfen (leer). Kein neuer Vitest-Test nötig — der Beleg ist die Zählung, kein
+  Unit-Test einer Config-Datei.
+- Kein automatisches Tor (Entscheidung 1) — die Gegenprobe ist eine einmalige, in dieser Story
+  dokumentierte Handlung, keine dauerhafte CI-Prüfung.
 
 ## Verlauf
 
@@ -79,3 +148,10 @@ liefe er, ist schlimmer als keiner.
   Aufräumen des dortigen Lecks die zwei verbliebenen Erzeuger sichtbar gemacht hat. Alle drei am Code
   belegt, die Mengen gezählt statt geschätzt. Der B-41-Anteil (23 888 Dateien, 16,1 GB) ist am selben Tag
   gelöscht worden.
+- **2026-08-04** — gegrillt: alle drei offenen Punkte in Entscheidungen überführt — kein Tor (Regel als
+  neues `backend/Pugling.Api.Tests/CLAUDE.md` statt Wächter), Playwright-Teardown unconditional statt nur
+  bei Grün, Löschung der 934 Altlast-Dateien verschoben in den Bau-Schritt (autonom getroffen,
+  Nutzerauftrag). Beide `Datei:Zeile`-Belege im Ist-Stand (`QueryPlanSmokeTests.cs:28`,
+  `playwright.config.ts:11`/`:14`) gegen den heutigen Code geprüft — unverändert, keine Korrektur nötig.
+- **2026-08-04** — geschätzt: `groesse: S`, `wo: beides`, `migration: nein`, `vertragsbruch: nein`; Risiken,
+  Angriffsplan (Backend zuerst) und Testweg ergänzt (autonom getroffen, Nutzerauftrag).
