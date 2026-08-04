@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/doku]
+tags: [typ/story, status/abgenommen, bereich/doku]
 aliases: [XML-Docs auf Englisch, Doku-Übersetzung]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Aufräumen
 groesse: S
@@ -47,9 +47,15 @@ Sitzung** es pflegt. Nicht hier wiederholen — ein zweites Glossar wäre eine z
 
 ## Akzeptanzkriterien
 
-1. `Models/` und `Data/` sind übersetzt, mit demselben Glossar.
-2. Branch nach `db-struktur-umbau` gemergt.
-3. Die Konvention „Doku auf Deutsch" in `CLAUDE.md` ist auf den neuen Stand gezogen.
+1. ~~`Models/` und `Data/` sind übersetzt, mit demselben Glossar.~~ — erledigt (Etappe 7 am 2026-08-01,
+   24 Dateien / 398 `<summary>`); am 2026-08-04 gegengeprüft: **null** deutsche Signalwörter in `///`-Zeilen
+   unter `Models/` und `Data/`.
+2. ~~Branch nach `db-struktur-umbau` gemergt.~~ — erledigt, Merge-Commit `08c2dcf` („Englische XML-Docs mit
+   dem DB-Umbau zusammengefuehrt"); der Branch `docs/xml-docs-englisch` existiert nicht mehr, `main` enthält
+   alle Übersetzungs-Commits.
+3. ~~Die Konvention „Doku auf Deutsch" in `CLAUDE.md` ist auf den neuen Stand gezogen.~~ — erledigt
+   (`CLAUDE.md:94` „Code-Doku auf Englisch – ausnahmslos"); ein Vollscan über alle `CLAUDE.md` findet keine
+   zweite, widersprechende Sprachregel mehr.
 
 ## Schätzung
 
@@ -69,3 +75,33 @@ Sitzung** es pflegt. Nicht hier wiederholen — ein zweites Glossar wäre eine z
 - **2026-07-30** — als Sammel-Story geerntet, zunächst falsch als „offen, Größe L" beschrieben.
   Am selben Tag gegen Branch `docs/xml-docs-englisch` und die Memory-Notiz korrigiert: nur Etappe 7
   (`Models/` + `Data/`) und der Merge sind offen — Stufe daher `in-arbeit`, Größe S.
+- **2026-08-04** — **abgenommen.** Im Plandokument [translate.md](../translate.md) steht keine offene Etappe
+  mehr (0–9 alle „durch", Kopf-Tag `status/abgeschlossen`) — die Bedingung der Sammel-Story ist damit
+  erfüllt. Nicht abgeschrieben, sondern nachgemessen:
+  - **Testzahl:** `dotnet test Pugling.sln -c Release` → **687/687 grün**, 0 Warnungen (die
+    Fortschrittstabelle nennt noch 615 — die Suite ist seit dem 2026-08-01 gewachsen, der Stand dort ist
+    nicht falsch, nur älter). Das ist zugleich der im Testweg genannte `dotnet build Pugling.sln`, denn
+    `TreatWarningsAsErrors` macht CS1591/CS1570 zum Fehler.
+  - **Restefund:** Ein Scan über alle fünf Backend-Projekte auf deutsche Signalwörter (`der|die|das|und|für|
+    nicht|wird|eine|ist|Gibt|Liefert|Erstellt|Eindeutige|…`) findet in `///`-Zeilen **6** Treffer, alle
+    Fehlalarm (englisches „would **die** with a stack trace" in `DraftRules.cs:34`; fünfmal die deutschen
+    Artikel als *Inhalt* der Genus-Doku in `VocabBaseTypes.cs:39-54`), und in `//`-Zeilen **0**.
+  - **Merge:** `08c2dcf`; die Übersetzungs-Commits `2250ae7`, `2595d2d`, `f68a048`, `5197833`, `ce5b357`,
+    `2ccee38`, `f671ddb`, `109ca72` sind in `main`.
+  - **Doku-Tor** (`wo: doku`): `npx markdownlint-cli2` **war zuerst rot** — 6 Befunde in drei *fremden*
+    Stories (`B-12`, `B-13`, `B-71`) aus der noch uncommitteten Grooming-Runde: dreimal MD036
+    (`**Risiken**` ohne Doppelpunkt liest der Linter als Überschrift) und dreimal MD029, weil B-13s
+    Offene-Punkte-Liste die Durchstreichung **vor** die Nummer setzte (`~~1. …~~`) und damit die ersten
+    zwei Einträge gar keine Listenelemente waren. Beides in der Form korrigiert, die der Bereich sonst
+    verwendet (`**Risiken:**`, `1. ~~…~~`); danach **0 Befunde in 172 Dateien**. In B-08 selbst war kein
+    Befund.
+
+  Bewusst **nicht** gefahren: `/smoke-test` bzw. ein E2E. Die Story hat kein Verhalten geändert — geliefert
+  wurde Kommentartext, und kein Test liest `///`-Wortlaut ([translate.md](../translate.md), Abschnitt
+  „Ausgangsbefund"). Ein grüner Durchstich wäre hier ein Ritual ohne Aussage; die tragende Zusicherung ist
+  der Build mit scharfem CS1591/CS1570 plus der Restefund oben.
+
+  Über den Zuschnitt hinaus geliefert (kein Scope-Betrug, aber es gehört ins Protokoll): Etappe 8 hat die
+  ~2650 `//`-Kommentare mitgenommen und Etappe 9 die Meldungstexte der Wächter — beides war hier
+  ausdrücklich **nicht** Teil der Story. Die Konvention in `CLAUDE.md` deckt das inzwischen ab
+  („ausnahmslos"), darum entsteht daraus keine Folge-Story.
