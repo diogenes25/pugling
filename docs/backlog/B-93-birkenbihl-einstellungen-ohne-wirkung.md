@@ -30,6 +30,22 @@ die man **setzen kann** und die dann **nichts tun**; genau die Fehlerklasse, geg
    hat" — der **Positions-Test** ist aber eine andere, erreichbare Oberfläche. Entweder trägt sie die
    Dekodierung mit, oder eine Birkenbihl-Position sollte gar keinen Abschlusstest anbieten.
 
+   Belegt am 2026-08-04 (Code-Review der B-70/B-78/B-79-Commits, unabhängig nachgeprüft): Die geteilte
+   Facetten-Projektion **führt** die Dekodierung (`Services/Shared/PositionPlayService.cs:143`, gefüllt
+   `:186`) und die Autoren-Vorschau reicht sie durch (`Services/Creator/ExercisePreviewService.cs:115`) —
+   allein die Klausur-Projektion lässt sie fallen (`Controllers/Student/PositionTestsController.cs:73-77`
+   listet `f.Decoding` nicht auf), und im Vertrag fehlt das Feld ganz
+   (`Pugling.Contracts/Student/TestDtos.cs:30-32`). Das Gegenargument steht schon im Code, für den Lesetext:
+   „sonst wäre die Klausur die härtere Aufgabe bei weniger Material" (`frontend/src/sohn/SohnTest.tsx:150`,
+   `f.Passage` wird deshalb mitgegeben). Reichweite: das Kind stolpert **nicht** hinein — Birkenbihl ist
+   `ExerciseCheckMode.None` (`Exercises/BuiltInExerciseTypes.cs:123`) und die Arcade zeigt den Test-Einstieg
+   nur bei `pos.testable` (`frontend/src/sohn/SohnHome.tsx:141`); erreichbar bleibt er über die API und den
+   Vater-Pfad, denn `PositionTestsController.Start` prüft den `CheckMode` nicht.
+
+   Wenn Punkt 2 als „Dekodierung mittragen" entschieden wird, ist das Feld **additiv** (kein Vertragsbruch);
+   der Riegel-Weg („kein Test für diesen Typ") braucht zusätzlich einen eigenen Fehlercode in `ApiErrors`,
+   damit der Aufrufer die Ursache maschinell unterscheiden kann.
+
 Beides ist heute niemandem passiert, und beides ist ein Weg, auf dem eine Einstellung eine Wirkung
 verspricht, die sie nicht hat.
 
@@ -48,3 +64,7 @@ verspricht, die sie nicht hat.
   Beide Punkte am Code belegt (der Reviewer nennt `PositionPracticeController.cs:337` und
   `PositionProgressService.cs:94`), aber nicht am laufenden System nachgespielt. `prio: P3`: kein
   Bestandsschaden, kein Kind betroffen — es ist die Möglichkeit, sich selbst in die Irre zu stellen.
+- **2026-08-04** — Punkt 2 mit Belegen unterfüttert (Facetten, Vertrag, `CheckMode`, UI-Bedingung) aus dem
+  Code-Review der B-70/B-78/B-79-Commits. Die Stufe bleibt `idee`: es fehlen weiter User Story,
+  „echte Lücke" und Akzeptanzkriterien. Eine dort begonnene Zweitstory wurde eingezogen, statt eine
+  Dublette zu führen (die Id `B-94` bleibt darum unbenutzt).
