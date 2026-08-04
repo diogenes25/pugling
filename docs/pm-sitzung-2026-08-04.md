@@ -548,3 +548,19 @@ laufen, nie `test:e2e` — E2E ist hier ein manuelles PM-Verifikationswerkzeug, 
 
 **Commit:** siehe Verlauf in `B-106`; fertig gebaute und verifizierte Arbeit wird selbst committet
 (main), Push bleibt beim Nutzer.
+
+## Sprint 2 (autonom) — die drei verbliebenen Tickets
+
+Kein neuer Live-Test nötig: T-02, T-04 und die tiefere Frage von T-05 sind reine Design-Entscheidungen,
+keine vom Live-Test aufgeworfenen Beschwerden. Alle drei gegrillt, alle drei enden ohne Code-Änderung
+(volle Begründung in den jeweiligen Tickets):
+
+- **T-02** (Grade/SchoolTypes): keine Dopplung — `Exercise`s Such-Metadaten (Spanne) und des Lehrwerks
+  reale Struktur (Einzelwert) beantworten verschiedene Fragen.
+- **T-04** (Klassenarbeit-Bezug): bleibt bewusst lehrwerk-agnostisch, war das schon vor dieser Karte.
+- **T-05** (tiefer): der Notfall-Fix aus Sprint 1 *ist* die Antwort — deckt sich mit B-106s eigener
+  „Außerhalb des Ziels"-Abgrenzung.
+
+Damit sind alle sechs B-106-Tickets entschieden; kein weiterer Code-Sprint für diese Karte in Sicht.
+Einzig offen bleibt die in Sprint 1 benannte menschliche Browser-Prüfung der neuen Fach→Reihe→Unit-
+Picker — B-106 bleibt bis dahin bewusst auf `in-arbeit`, nicht `abgenommen`.

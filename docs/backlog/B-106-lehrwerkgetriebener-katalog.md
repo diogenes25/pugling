@@ -104,17 +104,20 @@ Der KI-Lehrplan-Generator selbst (B-19), die innere Verlag/Reihen-Struktur (B-63
 
 ## Offene Punkte
 
+Alle sechs Klärungs-Tickets sind entschieden — Details je Ticket, hier nur das Ergebnis:
+
 1. ~~Welche Rolle behalten `Subject`/`ExerciseCategory` nach der Verschmelzung?~~ → siehe
    Entscheidung 4 ([T-01](karten/B-106/T-01-subject-exercisecategory-rolle.md), entschieden).
-2. Grade/SchoolTypes-Dopplung zwischen `Exercise`-Metadaten und Lehrwerk — eine Wahrheit oder zwei? →
-   [T-02](karten/B-106/T-02-grade-schooltypes-dopplung.md)
+2. ~~Grade/SchoolTypes-Dopplung zwischen `Exercise`-Metadaten und Lehrwerk?~~ → keine Dopplung, zwei
+   verschiedene Fragen (Spanne vs. Einzelwert), kein Schema-Umbau
+   ([T-02](karten/B-106/T-02-grade-schooltypes-dopplung.md), entschieden).
 3. ~~Wie wird der Chapter-Altbestand (Übungen, Testdaten, Seed) migriert?~~ → siehe Entscheidung 5
    ([T-03](karten/B-106/T-03-altdaten-migration.md), entschieden).
-4. Bekommt `Klassenarbeit` einen `SeriesUnit`-Bezug, oder bleibt sie unverändert? →
-   [T-04](karten/B-106/T-04-klassenarbeiten-bezug.md)
-5. Wie verschmelzen `/vater/katalog` und `/vater/lehrwerke` im Frontend? Ein Notfall-Fix (siehe Verlauf)
-   hat die Übungs-Anlage wieder bedienbar gemacht, ohne die eigentliche Frage zu entscheiden →
-   [T-05](karten/B-106/T-05-frontend-konsolidierung.md)
+4. ~~Bekommt `Klassenarbeit` einen `SeriesUnit`-Bezug?~~ → nein, bewusst lehrwerk-agnostisch wie schon
+   heute ([T-04](karten/B-106/T-04-klassenarbeiten-bezug.md), entschieden).
+5. ~~Wie verschmelzen `/vater/katalog` und `/vater/lehrwerke` im Frontend?~~ → zwei verlinkte, getrennte
+   Ansichten (bereits umgesetzt im Notfall-Fix, siehe Verlauf) — deckt sich mit „Außerhalb des Ziels"
+   unten ([T-05](karten/B-106/T-05-frontend-konsolidierung.md), entschieden).
 6. ~~Wie muss der KI-Creator-Agent (`BriefingBuilder`, `CreatorPipeline`) angepasst werden?~~ →
    entschieden ([T-06](karten/B-106/T-06-ki-creator-agent-anpassung.md)): reiner Parameter-Tausch,
    erzwungen durch den Wegfall von `Chapter`, keine gestalterische Änderung.
@@ -197,3 +200,16 @@ Vorläufig — die Karte ist Planung, wird pro Sprint geschärft:
   im Browser durchklicken, bevor diese Sprint-Abnahme als vollständig gilt. T-02, T-04 und die tiefere
   Frage von T-05 (echte Verschmelzung von `/vater/katalog` und `/vater/lehrwerke`, über den Notfall-Fix
   hinaus) bleiben offen für den nächsten Sprint.
+- **2026-08-05** — Sprint 2 (autonom, ohne Dialog-Gate): die drei verbliebenen Tickets geprüft und
+  gegrillt. **T-02** (Grade/SchoolTypes): keine Dopplung — `Exercise.GradeMin/Max`/`SchoolTypes` sind
+  Such-Metadaten der geteilten Bibliothek, `SeriesUnit.Grade`/`TextbookSeries.SchoolTypes` beschreiben
+  das reale Lehrwerk; unterschiedliche Form (Spanne vs. Einzelwert) bestätigt die unterschiedliche
+  Aussage. Kein Code. **T-04** (Klassenarbeit-Bezug): bleibt bewusst lehrwerk-agnostisch — war schon vor
+  dieser Karte schon fach-/kapitelübergreifend zulässig, kein Live-Befund verlangt eine Einschränkung.
+  Kein Code. **T-05** (tiefere Frage): der Notfall-Fix aus Sprint 1 *ist* bereits die Antwort — „zwei
+  verlinkte, getrennte Ansichten" deckt sich mit B-106s eigener Abgrenzung („Frontend-Detailarbeit über
+  das Zusammenführen … hinaus" liegt außerhalb des Ziels). Formal entschieden, kein weiterer Code.
+  **Damit sind alle sechs Tickets entschieden und alle daraus entstandenen Code-Änderungen liegen im
+  Sprint-1-Commit** — kein dritter Sprint mit neuem Code nötig. Einzig offen: die in Sprint 1 benannte
+  menschliche Browser-Prüfung der neuen Kaskaden-Picker (Chrome-Anbindung war beide Male nicht
+  verfügbar). Status bleibt bewusst `in-arbeit`, nicht `abgenommen`, bis diese Prüfung erfolgt ist.
