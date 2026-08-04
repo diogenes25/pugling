@@ -102,6 +102,13 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         return null;
     }
 
+    // Why an invalid stage matters (it reveals the answer instead of breaking) and why the check is shared with
+    // the creator's `DefaultStage`: see StageValidation. The schedule is checked step by step - one bad day would
+    // be enough to hand out the solutions on that day.
+    private string? StageProblem(Exercise exercise, int? stage, List<StageStep>? schedule) =>
+        StageValidation.ProblemText(types.ByKey(exercise.Type),
+            [stage, .. schedule?.Select(s => (int?)s.Stage) ?? []]);
+
     /// <summary>A single position.</summary>
     [HttpGet("{positionId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -132,6 +139,9 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         if (await IsUnfilledAsync(exercise, ct))
             return this.ProblemWithCode(ApiErrors.ExerciseEmpty,
                 "This exercise has no items yet. Add its content before assigning it to a study plan.");
+        // Only checkable once the exercise (and thus its type) is known - unlike the threshold above.
+        if (StageProblem(exercise, dto.Stage, dto.StageSchedule) is { } stageProblem)
+            return this.ProblemWithCode(ApiErrors.ValidationError, stageProblem);
 
         var order = dto.Order ?? ((await db.PlanPositions.Where(p => p.StudyPlanId == planId)
             .MaxAsync(p => (int?)p.Order, ct)) ?? -1) + 1;
@@ -185,6 +195,10 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
 
         var pos = await FindAsync(planId, positionId, ct);
         if (pos is null) return NotFound();
+        // Same check as in Create, and before the first assignment: a rejected PATCH must leave the position
+        // untouched, not half-written.
+        if (pos.Exercise is { } exercise && StageProblem(exercise, dto.Stage, dto.StageSchedule) is { } stageProblem)
+            return this.ProblemWithCode(ApiErrors.ValidationError, stageProblem);
 
         if (dto.Order is not null) pos.Order = dto.Order.Value;
         if (dto.Stage is not null) pos.Stage = dto.Stage;

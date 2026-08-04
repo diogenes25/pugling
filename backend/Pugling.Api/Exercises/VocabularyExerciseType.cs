@@ -72,9 +72,16 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
     /// </summary>
     public override bool AudioReplacesPrompt(int stage) => (TestStage)stage == TestStage.Audio;
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// <b>Every</b> stage of the type, not just the interesting ones: the list is also the set the write path
+    /// validates a position's stage against (see <c>PlanPositionsController.StageProblem</c>), so a stage
+    /// missing here would be unsettable even though the model, the seed and the process documentation use it.
+    /// <c>ShowBoth</c> was exactly that case - the acquaint stage of the vocabulary process, reachable through
+    /// the API but named by no picker.
+    /// </summary>
     public override IReadOnlyList<StageOption> StageOptions { get; } =
     [
+        new((int)TestStage.ShowBoth, "Beide zeigen (Kennenlernen)"),
         new((int)TestStage.SelfAssess, "Selbsteinschätzung"),
         new((int)TestStage.MultipleChoice, "Multiple-Choice"),
         new((int)TestStage.LetterBoxes, "Buchstabenkästchen"),

@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Pugling.Api.Exercises;
+using Pugling.Api.Models;
 
 namespace Pugling.Api.Tests;
 
@@ -44,6 +45,39 @@ public class ExerciseTypeManifestTests(PuglingWebAppFactory factory) : IClassFix
                 Assert.Null(m.Method);
             }
         }
+    }
+
+    /*
+     * `StageOptions` is more than a picker for the preview: the same list is the permitted set the write path
+     * validates a position's stage against (PlanPositionsController.StageProblem). A value the stage enum knows
+     * but this list omits would therefore become unsettable - silently, and noticed only by whoever plays the
+     * position. That was exactly TestStage.ShowBoth (B-79).
+     *
+     * The map is pinned on purpose: a new type *with* stages has to add a line here, and a type without a stage
+     * selection (matching, essay, ...) is meant to keep its empty list - the check stays off for it.
+     */
+    [Fact]
+    public void StageOptions_Enthalten_JedenWert_DesZugehoerigenStufenEnums()
+    {
+        var registry = factory.Services.GetRequiredService<ExerciseTypeRegistry>();
+        var stageEnums = new Dictionary<string, Type>
+        {
+            [ExerciseTypeKeys.Vocabulary] = typeof(TestStage),
+            [ExerciseTypeKeys.Cloze] = typeof(ClozeStage),
+        };
+
+        foreach (var (key, stageEnum) in stageEnums)
+        {
+            var type = registry.ByKey(key);
+            Assert.NotNull(type);
+            Assert.Equal(
+                Enum.GetValues(stageEnum).Cast<int>().Order(),
+                type.StageOptions.Select(o => o.Value).Order());
+            Assert.All(type.StageOptions, o => Assert.False(string.IsNullOrWhiteSpace(o.Label)));
+        }
+
+        foreach (var type in registry.All.Where(t => !stageEnums.ContainsKey(t.Key)))
+            Assert.Empty(type.StageOptions);
     }
 
     [Fact]

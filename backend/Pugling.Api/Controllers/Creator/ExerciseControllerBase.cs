@@ -231,6 +231,10 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         if (!await ChapterExists(subjectId, chapterId, ct)) return NotFound();
         if (string.IsNullOrWhiteSpace(body.Title)) return this.ProblemWithCode(ApiErrors.ValidationError, "Title is required.");
         if (!await CategoryValid(subjectId, body.CategoryId, ct)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Unknown category for this subject.");
+        // The default stage reaches the child too: PositionPlayService.StageForDay falls back to it whenever the
+        // position names no stage of its own - the normal case for most types (see StageValidation).
+        if (StageValidation.ProblemText(registry.ByKey(TypeKey), body.DefaultStage) is { } createStageErr)
+            return this.ProblemWithCode(ApiErrors.ValidationError, createStageErr);
         var config = body.Config ?? new TConfig();
         if (await ValidateConfigAsync(subjectId, config, ct) is { } createErr) return this.ProblemWithCode(ApiErrors.ValidationError, createErr);
         NormalizeConfig(config);
@@ -303,6 +307,9 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         if (!await CategoryValid(subjectId, body.CategoryId, ct)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Unknown category for this subject.");
         // Execute visibility is an owner right (controlled sharing) - a write grantee must not toggle it.
         if (body.ExecutePublic != exercise.ExecutePublic && EnsureCanAdminister(exercise) is { } adminForbidden) return adminForbidden;
+        // Same check as in Create, and before the first assignment - a rejected PUT must not half-write.
+        if (StageValidation.ProblemText(registry.ByKey(TypeKey), body.DefaultStage) is { } updateStageErr)
+            return this.ProblemWithCode(ApiErrors.ValidationError, updateStageErr);
         var config = body.Config ?? new TConfig();
         if (await ValidateConfigAsync(subjectId, config, ct) is { } updateErr) return this.ProblemWithCode(ApiErrors.ValidationError, updateErr);
         NormalizeConfig(config);

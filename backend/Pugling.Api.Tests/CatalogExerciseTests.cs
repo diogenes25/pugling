@@ -142,6 +142,49 @@ public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.Equal(HttpStatusCode.BadRequest, updated.StatusCode);
     }
 
+    /*
+     * The second door to the B-79 damage, and the one that is easier to walk through: whenever a position names
+     * no stage of its own - the normal case for most types - `PositionPlayService.StageForDay` falls back to
+     * `Exercise.DefaultStage`. An unknown value there is not typed either, so the child's card arrives with the
+     * answer in `reveal`. The creator's typo has to be rejected exactly like the supervisor's.
+     */
+    [Fact]
+    public async Task Uebung_UnbekannteStandardStufe_WirdAbgewiesen()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = $"Stufen-Fach-{Guid.NewGuid():N}"[..20] }));
+        var chapterId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/subjects/{subjectId}/chapters", new { name = "Kapitel", orderIndex = 1 }));
+        var basePath = $"/api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary";
+        object Payload(int? defaultStage) => new
+        {
+            title = "Stufenprobe",
+            orderIndex = 1,
+            rewardPoints = 10,
+            defaultStage,
+            config = new
+            {
+                direction = "front-to-back",
+                sourceLang = "en",
+                targetLang = "de",
+                items = new[] { new { front = "one", back = "eins" } },
+            },
+        };
+
+        var created = await father.PostAsJsonAsync(basePath, Payload(99));
+        Assert.Equal(HttpStatusCode.BadRequest, created.StatusCode);
+        Assert.Equal("validation_error",
+            (await created.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+
+        // The same guard on the update path - otherwise the value could be set after the fact.
+        var id = await TestApi.IdAsync(await father.PostAsJsonAsync(basePath, Payload((int)TestStage.FreeText)));
+        Assert.Equal(HttpStatusCode.BadRequest, (await father.PutAsJsonAsync($"{basePath}/{id}", Payload(99))).StatusCode);
+
+        // No stage at all stays valid: it means "the type decides" and is what most exercises send.
+        Assert.Equal(HttpStatusCode.OK, (await father.PutAsJsonAsync($"{basePath}/{id}", Payload(null))).StatusCode);
+    }
+
     [Fact]
     public async Task ExerciseDefaults_WerdenGespeichertUndZurueckgegeben()
     {
