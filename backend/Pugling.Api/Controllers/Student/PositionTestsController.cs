@@ -24,7 +24,7 @@ namespace Pugling.Api.Controllers.Student;
 [ServiceFilter(typeof(PlanOwnershipFilter))]
 public class PositionTestsController(PuglingDbContext db, PositionPlayService play,
     PositionProgressService progress, GamificationService gamification, AnswerGrader grader,
-    ItemProgressService itemProgress) : ControllerBase
+    ItemProgressService itemProgress, DailyBoxService dailyBox) : ControllerBase
 {
     /// <summary>Default pass threshold when the position sets no threshold of its own.</summary>
     private const int DefaultPassPercent = 80;
@@ -417,9 +417,11 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
 
         // Book the position's goal points (idempotent) BEFORE the gamification, so that coin-based missions
         // already see the fresh credit.
-        await progress.EvaluateAndAwardAsync(plan, attempt.Day, ct);
+        var dayOverview = await progress.EvaluateAndAwardAsync(plan, attempt.Day, ct);
         // Also evaluate metric-based missions/awards (e.g. "tests passed") on test completion.
         await gamification.EvaluateAndAwardAsync(plan.ChildId, attempt.Day, ct);
+        // The daily reward box: same occasion as the goal reward above, once the day's duty is fully met.
+        await dailyBox.EvaluateAndAwardAsync(plan, attempt.Day, dayOverview, ct);
 
         // The wrong mentions ride along only where they exist: in set mode the outcomes above name what the
         // child FORGOT, and without this list what it actually typed would silently disappear.

@@ -7,7 +7,7 @@ namespace Pugling.Contracts.Student;
 
 /// <summary>Daily mission: the plan overview plus today's rollup over its positions.</summary>
 public record OverviewResponse(int PlanId, string Title, DateOnly StartDate, DateOnly EndDate, bool Active,
-    int CurrentStreak, DayOverview Today);
+    int CurrentStreak, DayOverview Today, DailyBoxStatus DailyBox);
 
 /// <summary>Day-by-day progress over the entire run (completed days, goals reached, points).</summary>
 public record ProgressResponse(int PlanId, DateOnly StartDate, DateOnly EndDate, int DaysComplete,

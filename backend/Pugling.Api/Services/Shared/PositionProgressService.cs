@@ -367,6 +367,33 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     }
 
     /// <summary>
+    /// How far back <see cref="StreakBoundedAsync"/> counts at most. The daily reward box's escalation
+    /// tiers (B-105) cap at 30 days, so a streak at or beyond this bound already sits in the highest tier -
+    /// counting further would cost EF round-trips without ever changing the reward. Same reasoning as
+    /// <see cref="MaxSettleLookbackDays"/> for the equally full-runtime-shaped penalty settlement.
+    /// </summary>
+    private const int MaxStreakLookbackDays = 45;
+
+    /// <summary>
+    /// Consecutive fully met days up to and including <paramref name="today"/>, walked backward and
+    /// short-circuited on the first open day - unlike <see cref="Streak"/>, this does NOT scan the plan's
+    /// entire runtime via <see cref="ProgressAsync"/>. Gives the identical result to
+    /// <c>Streak(await ProgressAsync(plan, today, ct), today)</c> for any streak within
+    /// <see cref="MaxStreakLookbackDays"/>; only exists for callers on a write path (the daily box) where
+    /// the exact value beyond that bound doesn't change the outcome.
+    /// </summary>
+    public async Task<int> StreakBoundedAsync(StudyPlan plan, DateOnly today, CancellationToken ct = default)
+    {
+        var streak = 0;
+        for (var day = today; streak < MaxStreakLookbackDays && day >= plan.StartDate; day = day.AddDays(-1))
+        {
+            if (!(await ComputeDayAsync(plan, day, ct)).DutyDone) break;
+            streak++;
+        }
+        return streak;
+    }
+
+    /// <summary>
     /// Processed history for the supervisor evaluation view: the key figures (<see cref="ProgressView.DaysComplete"/>
     /// / <see cref="ProgressView.TotalPoints"/> / <see cref="ProgressView.CurrentStreak"/>) always relate to
     /// the <b>entire</b> runtime; the filter (<paramref name="from"/>/<paramref name="to"/>/<paramref name="dutyDone"/>)

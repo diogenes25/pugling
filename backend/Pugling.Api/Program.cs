@@ -162,6 +162,9 @@ builder.Services.AddScoped<WalletService>();
 builder.Services.AddScoped<ShopService>();
 builder.Services.AddScoped<MetricsService>();
 builder.Services.AddScoped<GamificationService>();
+// Daily reward box: the positive counterpart to the PenaltyCoins stick (B-105).
+builder.Services.Configure<DailyBoxOptions>(builder.Configuration.GetSection(DailyBoxOptions.SectionName));
+builder.Services.AddScoped<DailyBoxService>();
 // The position-based learning engine: practice/Leitner per study plan position.
 builder.Services.AddScoped<PositionPlayService>();
 // Goal/points engine of the position model: the done rule per check mode + idempotent goal points.

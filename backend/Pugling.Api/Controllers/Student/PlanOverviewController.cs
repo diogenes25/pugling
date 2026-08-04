@@ -19,7 +19,7 @@ namespace Pugling.Api.Controllers.Student;
 [Produces("application/json")]
 [Authorize]
 [ServiceFilter(typeof(PlanOwnershipFilter))]
-public class PlanOverviewController(PuglingDbContext db, PositionProgressService progress) : ControllerBase
+public class PlanOverviewController(PuglingDbContext db, PositionProgressService progress, DailyBoxService dailyBox) : ControllerBase
 {
     // No default for `ct`: it would make the call site look correct while the client's cancellation fizzles out.
     private Task<StudyPlan?> GetPlan(int planId, CancellationToken ct) =>
@@ -36,8 +36,9 @@ public class PlanOverviewController(PuglingDbContext db, PositionProgressService
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var days = await progress.ProgressAsync(plan, today, ct);
         var todayOverview = await progress.ComputeDayAsync(plan, today, ct);
+        var boxStatus = await dailyBox.StatusAsync(plan.ChildId, today, ct);
         return new OverviewResponse(plan.Id, plan.Title, plan.StartDate, plan.EndDate, plan.Active,
-            PositionProgressService.Streak(days, today), todayOverview);
+            PositionProgressService.Streak(days, today), todayOverview, boxStatus);
     }
 
     /// <summary>

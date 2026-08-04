@@ -85,6 +85,28 @@ public class AchievementAward
     public DateTime EarnedAt { get; set; } = DateTime.UtcNow;
 }
 
+/// <summary>
+/// Records the one-off daily reward box for a fully met day (all of the child's mandatory plan-position
+/// goals reached) - the positive counterpart to <see cref="PositionGoalPenalty"/>. A unique index on
+/// <c>(ChildId, Day)</c> guarantees the lazy evaluation at the practice/test-completion seams never grants
+/// a second box on the same calendar day, exactly as <see cref="PositionGoalReward"/> does per position.
+/// <see cref="StreakAtClaim"/> is a snapshot of the consecutive-fully-met-days streak at award time, so the
+/// history stays traceable even as the (recomputed) live streak moves on. Deliberately coins/gems only -
+/// no skin-drop rarity concept exists yet (see B-105).
+/// </summary>
+public class DailyBoxClaim
+{
+    public int Id { get; set; }
+    public int ChildId { get; set; }
+    public Child? Child { get; set; }
+    public DateOnly Day { get; set; }
+    public int CoinsAwarded { get; set; }
+    public int GemsAwarded { get; set; }
+    /// <summary>Consecutive fully-met days up to and including <see cref="Day"/> (streak snapshot).</summary>
+    public int StreakAtClaim { get; set; }
+    public DateTime AwardedAt { get; set; } = DateTime.UtcNow;
+}
+
 // Note: the former "offer" system (Reward/RewardRedemption/OfferPeriod) was removed - the family shop
 // (ShopArticle/ShopListing/ShopPurchase/ActivationRequest) is the only way coins are spent.
 // The ledger kind PointKind.Reward remains only as a tombstone for historical entries.

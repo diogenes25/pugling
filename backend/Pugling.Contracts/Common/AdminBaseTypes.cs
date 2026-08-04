@@ -65,4 +65,8 @@ public enum PointKind
     ObjectiveCoins = 12,
     /// <summary>Reward for an achieved stretch objective or one of its milestones (gems).</summary>
     ObjectiveGems = 13,
+    /// <summary>Coins from the daily reward box (granted once per fully met day; see <see cref="DailyBoxGems"/>).</summary>
+    DailyBoxCoins = 14,
+    /// <summary>Gems from the daily reward box (same occasion as <see cref="DailyBoxCoins"/>).</summary>
+    DailyBoxGems = 15,
 }

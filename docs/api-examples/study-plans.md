@@ -530,6 +530,12 @@ Response — `HTTP 200`:
         "pointsGoalMet": 20
       }
     ]
+  },
+  "dailyBox": {
+    "claimedToday": true,
+    "coinsAwarded": 27,
+    "gemsAwarded": 0,
+    "streakAtClaim": 1
   }
 }
 ```

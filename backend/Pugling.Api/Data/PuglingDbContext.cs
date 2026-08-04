@@ -84,6 +84,9 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<Achievement> Achievements => Set<Achievement>();
     public DbSet<AchievementAward> AchievementAwards => Set<AchievementAward>();
 
+    /// <summary>Daily reward box: one claim per (child, day) - the positive counterpart to <see cref="PositionGoalPenalty"/>.</summary>
+    public DbSet<DailyBoxClaim> DailyBoxClaims => Set<DailyBoxClaim>();
+
     // Family shop: the supervisor's catalog (articles + listings), the child's aggregated inventory,
     // purchase history and activation requests
     public DbSet<ShopArticle> ShopArticles => Set<ShopArticle>();
@@ -720,6 +723,15 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         {
             e.HasIndex(a => a.AchievementId).IsUnique();
             e.HasOne(a => a.Achievement).WithMany().HasForeignKey(a => a.AchievementId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Daily reward box: at most one per (child, day) - the idempotency guarantee for the lazy award at
+        // the practice/test-completion seams (mirrors PositionGoalPenalty for the negative side). Cascade
+        // with the child, like the other per-child gamification logs.
+        modelBuilder.Entity<DailyBoxClaim>(e =>
+        {
+            e.HasIndex(c => new { c.ChildId, c.Day }).IsUnique();
+            e.HasOne(c => c.Child).WithMany().HasForeignKey(c => c.ChildId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // Shop article: a family-internal article number, unique; belongs to the adult (cascade).

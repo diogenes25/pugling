@@ -20,3 +20,9 @@ public record ProgressDay(DateOnly Day, bool DutyDone, int GoalsTotal, int Goals
 /// <summary>Aggregated history: run-wide metrics plus a filtered/sorted list of days.</summary>
 public record ProgressView(int DaysComplete, int TotalDays, int TotalPoints, int CurrentStreak,
     IReadOnlyList<ProgressDay> Days);
+
+/// <summary>
+/// Today's daily reward box status: whether it has already been claimed and, if so, what it held. Read-only -
+/// the box is granted only at the practice/test-completion write seams, never as a side effect of this view.
+/// </summary>
+public record DailyBoxStatus(bool ClaimedToday, int? CoinsAwarded, int? GemsAwarded, int StreakAtClaim);

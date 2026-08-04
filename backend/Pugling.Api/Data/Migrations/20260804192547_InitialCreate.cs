@@ -302,6 +302,30 @@ namespace Pugling.Api.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "DailyBoxClaims",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    ChildId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Day = table.Column<DateOnly>(type: "TEXT", nullable: false),
+                    CoinsAwarded = table.Column<int>(type: "INTEGER", nullable: false),
+                    GemsAwarded = table.Column<int>(type: "INTEGER", nullable: false),
+                    StreakAtClaim = table.Column<int>(type: "INTEGER", nullable: false),
+                    AwardedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DailyBoxClaims", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DailyBoxClaims_Children_ChildId",
+                        column: x => x.ChildId,
+                        principalTable: "Children",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Missions",
                 columns: table => new
                 {
@@ -1913,6 +1937,12 @@ namespace Pugling.Api.Data.Migrations
                 columns: new[] { "SubjectId", "SeriesId" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_DailyBoxClaims_ChildId_Day",
+                table: "DailyBoxClaims",
+                columns: new[] { "ChildId", "Day" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ExerciseCategories_SubjectId_Name",
                 table: "ExerciseCategories",
                 columns: new[] { "SubjectId", "Name" },
@@ -2485,6 +2515,9 @@ namespace Pugling.Api.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "CreatorProfiles");
+
+            migrationBuilder.DropTable(
+                name: "DailyBoxClaims");
 
             migrationBuilder.DropTable(
                 name: "ExerciseGrants");

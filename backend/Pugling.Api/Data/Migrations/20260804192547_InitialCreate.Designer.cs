@@ -11,7 +11,7 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Data.Migrations
 {
     [DbContext(typeof(PuglingDbContext))]
-    [Migration("20260803223259_InitialCreate")]
+    [Migration("20260804192547_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -618,6 +618,38 @@ namespace Pugling.Api.Data.Migrations
                     b.HasIndex("SubjectId", "SeriesId");
 
                     b.ToTable("CreatorProfiles");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.DailyBoxClaim", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("AwardedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ChildId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CoinsAwarded")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("GemsAwarded")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("StreakAtClaim")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChildId", "Day")
+                        .IsUnique();
+
+                    b.ToTable("DailyBoxClaims");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.Exercise", b =>
@@ -2734,6 +2766,17 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("Series");
 
                     b.Navigation("Subject");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.DailyBoxClaim", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Child", "Child")
+                        .WithMany()
+                        .HasForeignKey("ChildId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Child");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.Exercise", b =>

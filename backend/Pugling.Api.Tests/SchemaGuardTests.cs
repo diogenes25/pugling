@@ -216,6 +216,7 @@ public class SchemaGuardTests
             ["CreatorProfile.OwnerAdultId"] = DeleteBehavior.SetNull, // -> Adult
             ["CreatorProfile.SeriesId"] = DeleteBehavior.SetNull, // -> TextbookSeries
             ["CreatorProfile.SubjectId"] = DeleteBehavior.SetNull, // -> Subject
+            ["DailyBoxClaim.ChildId"] = DeleteBehavior.Cascade, // -> Child
             ["Exercise.AuthorAdultId"] = DeleteBehavior.SetNull, // -> Adult
             ["Exercise.CategoryId"] = DeleteBehavior.SetNull, // -> ExerciseCategory
             ["Exercise.ChapterId"] = DeleteBehavior.Cascade, // -> Chapter

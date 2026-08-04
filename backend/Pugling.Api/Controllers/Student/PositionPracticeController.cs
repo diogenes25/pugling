@@ -24,7 +24,7 @@ namespace Pugling.Api.Controllers.Student;
 public class PositionPracticeController(PuglingDbContext db, PositionPlayService play, ScoringService scoring,
     PositionProgressService progress, GamificationService gamification, AnswerGrader grader,
     ItemProgressService itemProgress, MediaSelector selector, ILogger<PositionPracticeController> logger,
-    TimeProvider time)
+    TimeProvider time, DailyBoxService dailyBox)
     : ControllerBase
 {
     /// <summary>Upper bound of the seconds creditable per heartbeat (anti time cheat).</summary>
@@ -458,8 +458,10 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
 
         // The position's goal points (idempotent): this mainly covers pure content/reading exercises whose goal
         // is met by a round played far enough. BEFORE the gamification, so that missions see the credit.
-        await progress.EvaluateAndAwardAsync(plan, session.Day, ct);
+        var dayOverview = await progress.EvaluateAndAwardAsync(plan, session.Day, ct);
         await gamification.EvaluateAndAwardAsync(plan.ChildId, session.Day, ct);
+        // The daily reward box: same occasion as the goal reward above, once the day's duty is fully met.
+        await dailyBox.EvaluateAndAwardAsync(plan, session.Day, dayOverview, ct);
         return Map(session);
     }
 }
