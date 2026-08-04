@@ -186,3 +186,11 @@ hält die Story bereits auf L, ohne dass etwas Wesentliches fehlt, um sie in ein
   Schritt, Zuweisung nur in den aktiven Plan.
 - **2026-08-03** — geschätzt: Größe L, `wo: backend`, `migration: nein`, `vertragsbruch: nein`, Risiken,
   Angriffsplan und Testweg ergänzt; kein XL-Split nötig (autonom getroffen, Nutzerauftrag 2026-08-04).
+- **2026-08-04** — **Eingang aus der API-Design-Runde** (`docs/api-design-bewertung.md`, Vorschlag B7,
+  Arbeitsrunde PM/API-Designer/Entwickler): Ein **Bulk-POST für Plan-Positionen** gehört hierher und **nicht**
+  in eine eigene Story — gemessen hat das Frontend genau **eine** Aufrufstelle, die genau **eine** Position je
+  Aufruf setzt (`frontend/src/vater/PlanPositions.tsx:395`, ein `action.run` je Position), und der
+  Lehrplan-Assistent hat **keinen** Bulk-Pfad. Ein Batch-Endpunkt hätte heute also keinen Aufrufer; der
+  Supervisor-Agent dieser Story wäre der erste. Auflage, falls er ihn braucht: Er trägt das Enum aus
+  [B-59](B-59-status-strings-ohne-werteliste.md) (Entscheidung 3), **keinen** neuen nackten Status-String —
+  sonst wird B-59 dadurch teurer.

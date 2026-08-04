@@ -213,3 +213,12 @@ keine Fachlogik, nur den Wire-Typ, und die bestehenden Assertions sind bereits d
 - **2026-08-03** — **geschätzt** (autonom getroffen, Nutzerauftrag 2026-08-04): Größe S, `wo: beides`
   (abweichend von der Erstannahme, siehe Schätzung), `migration: nein`, `vertragsbruch: ja`; kein XL-Split
   nötig.
+- **2026-08-04** — **unabhängig bestätigt** durch `docs/api-design-bewertung.md` (Vorschlag A4) und die
+  Arbeitsrunde PM/API-Designer/Entwickler: der Bericht fand `BatchItemResult.Status` selbständig und schlug
+  **wortgleich** dasselbe Enum vor (`BatchItemStatus { Created, Existing, Updated, NotFound, Error }`), ohne
+  `GoalStatus`/`KeyResultScope` zu sehen. Er wurde als Dublette zurückgezogen, diese Story bleibt die
+  Quelle. Zwei Anmerkungen aus der Runde: (a) Der Bericht schlug an anderer Stelle erneut einen generischen
+  Wächter gegen nackte Status-Strings vor — **Entscheidung 5 hat das begründet abgelehnt**, die Frage ist
+  nicht neu offen. (b) Eine echte Ergänzung wäre ein Zähl-Kopf oder Summen-Objekt an den Batch-Antworten,
+  damit ein Aufrufer nicht 500 Elemente durchzählt; bewusst **nicht** als eigene Story angelegt, weil kein
+  Aufrufer gemessen ist, der das braucht — sie steht hier, damit sie beim Bau von B-59 auf dem Tisch liegt.

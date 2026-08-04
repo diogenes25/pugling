@@ -1,0 +1,110 @@
+---
+tags: [typ/story, status/ausformuliert, bereich/backend, bereich/api, bereich/doku]
+aliases: [401 nicht deklariert, 24 Operationen ohne summary, X-Total-Count im Dokument, Dokument-Bündel]
+status: ausformuliert
+prio: P3
+art: Aufräumen
+groesse: ""
+wo: ""
+migration: ""
+vertragsbruch: ""
+quelle: docs/api-design-bewertung.md (Vorschläge B4, B5, B6) — Arbeitsrunde PM/API-Designer/Entwickler am 2026-08-04
+grund: ""
+ersetzt_durch: []
+---
+
+# B-100 · Das Vertragsdokument verschweigt 401, `X-Total-Count` und 24 Operationsnamen
+
+Das OpenAPI-Dokument beschreibt die Leitung an drei Stellen unvollständig: `401` steht an 5 von 323
+Operationen (obwohl fast alle Authentifizierung verlangen), **keine** Antwort deklariert einen Kopf — auch die
+31 paginierten nicht, die `X-Total-Count` senden — und **24 Operationen tragen keinen Namen**: genau die 12
+POST und 12 PUT, mit denen Übungen angelegt und ersetzt werden. Dazu zwei fehlende Laufzeit-Köpfe an den
+Login-Türen.
+
+## User Story
+
+Als **Mensch oder KI-Creator, der die API über ihr Dokument liest**, möchte ich, dass jede Operation einen
+Namen trägt und ihre möglichen Antworten nennt, damit ich nicht im Quelltext nachsehen muss, was das Scalar-UI
+verschweigt.
+
+## Ist-Stand am Code
+
+- **401/403:** an 5 von 323 Operationen deklariert (aus `docs/openapi/v1.json` ausgezählt, beide Rollen
+  unabhängig auf dieselbe Zahl gekommen).
+- **Antwort-Köpfe:** 0 Operationen mit `headers`, obwohl `httpPaged` im Frontend `X-Total-Count` von Hand
+  liest.
+- **24 Operationen ohne `summary`:** exakt die 12 POST + 12 PUT der Übungs-Controller. Die Doku-Kommentare
+  **existieren** an `Controllers/Creator/ExerciseControllerBase.cs:224` und `:297` und kommen bei
+  `List`/`Get`/`Delete` derselben Basisklasse durch — nur bei `Create`/`Update` nicht.
+- **Die Infrastruktur ist da:** vier Operation-/Schema-Transformer stehen in `Program.cs:283-408`; der
+  Fehlercode-`enum`-Transformer ist das exakte Vorbild für beide neuen.
+- **Laufzeit-Köpfe:** `Program.cs:250-258` setzt nur `RejectionStatusCode`, kein `OnRejected` (also kein
+  `Retry-After`); `Controllers/AuthController.cs:48-99` (die drei Login-Türen) und `GET auth/me` setzen kein
+  `Cache-Control: no-store`.
+
+## Die echte Lücke
+
+Keine Falschaussage, sondern eine **Auslassung** — und das ist der Grund für `art: Aufräumen` statt `Defekt`
+(siehe Entscheidung 1). Betroffen ist, wer die API über das Dokument liest: der Mensch im Scalar-UI und der
+KI-Creator. Der *generierte* Vertrag leidet nicht, und das war in der Runde die entscheidende Messung.
+
+## Ergebnis der Arbeitsrunde vom 2026-08-04
+
+1. **`art: Aufräumen`, nicht `Defekt` — hier hat der API-Designer seine eigene Hochstufung widerlegt.**
+   Er hatte angekündigt, B4 werde zum Defekt, falls `frontend/src/lib/contract.ts` am Dokument hängt.
+   Es hängt daran (`frontend/scripts/gen-contract.mjs:10` liest `docs/openapi/v1.json`, an
+   `postinstall`/`predev`/`prebuild`) — **aber der generierte Typ wird für Antworten nie gelesen**: das
+   401-Handling ist ein untypisierter globaler Check auf dem rohen `Response`
+   (`frontend/src/lib/api.ts:170`), und `X-Total-Count` liest `httpPaged` ebenfalls von Hand (0 Treffer auf
+   `responses[…]` außerhalb von `contract.ts`). Dazu das begriffliche Argument: eine **fehlende**
+   `responses`-Deklaration ist in OpenAPI keine Falschaussage — undeklarierte Status sind nicht
+   ausgeschlossen. Genau diese Linie zieht [B-60](B-60-flags-enum-im-dokument.md) für sich selbst
+   („die einzige, bei der die Aussage falsch statt nur fehlend ist"). Würde eine Auslassung `Defekt`
+   heißen, wäre die Kategorie wertlos.
+   *Was das kippen würde:* sobald irgendwo `paths[…]["get"]["responses"]["401"]` typisiert gelesen wird, ist
+   es ein Defekt. Heute tut es niemand.
+2. **`[EndpointSummary]` direkt, ohne Ursachenforschung.** Der Bericht wollte erst herausfinden, *warum* die
+   Auflösung bei `Create`/`Update` scheitert (unverifizierter Verdacht: der generische Parametertyp im
+   Doc-Schlüssel). Beide Rollen sind sich einig, dass das eine Recherche mit offenem Ende in einem
+   Fremdgenerator ist — und dass der „Notausgang" das **bessere Ergebnis** liefert: „Legt eine Vokabelübung
+   an" statt zwölfmal derselben generischen Zeile.
+3. **`Retry-After` fällt weg, `Cache-Control: no-store` bleibt.** Ein `Retry-After` hat kein Publikum (die
+   429 trifft nur die eigene Login-Maske, und der Vater versucht es in fünf Sekunden erneut). Ein Token in
+   einem Proxy-Cache ist dagegen ein echtes kleines Loch. Der `no-store`-Teil gehört **nicht** in den
+   Dokument-Commit (er ändert das Dokument nicht) — eigener Commit in derselben Story.
+4. **Das Bündel — vier Stories, ein Branch, EINE Regenerierung.** B4, B5 und die schon geschätzten
+   [B-56](B-56-problemdetails-required-extensions.md) und [B-60](B-60-flags-enum-im-dokument.md) greifen alle
+   in dieselbe Transformer-Kette und lassen alle `ContractDocumentTests` das 900-KB-Dokument neu schreiben.
+   Getrennt gebaut sind das vier Commits mit je einem unlesbaren Riesendiff, in dem die eigentliche Änderung
+   untergeht. **Reihenfolge:** B-60 (Schema-Ebene) → B-56 (`required` über alle Schemas, muss gegen ein
+   Dokument prüfen, das B-60 schon enthält) → B4 (Operation-Ebene, additiv) → B5 (reiner Text) → **eine**
+   Regenerierung als letzter, eigener Hunk.
+   **Zusätzlicher Fund:** B-56 und B-60 beanspruchen **beide** „Punkt 5" derselben Testmethode
+   `Vertragsdokument_BeschreibtDieLeitungWahrheitsgemaess`. Getrennt gebaut muss die zweite Story die erste
+   umnummerieren, und ihr eigener Text veraltet dabei. Im Bündel werden es Punkt 5 bis 8 in einer
+   Bearbeitung.
+   **Auflage (sonst ist der Commit nicht abnahmefähig):** ein Branch mit **je einem Commit pro Story**, und
+   **vor** der ersten Codezeile werden die Assertions der beiden `Defekt`-Stories einzeln gegen `HEAD`
+   gefahren (`--filter ContractDocumentTests`) und die roten Läufe in deren `## Verlauf` protokolliert —
+   nach der Regenerierung ist alles gleichzeitig grün und der Einzelnachweis „vorher rot" nicht mehr zu
+   führen.
+5. Vorschätzung für diese Story (B4+B5+`no-store`): **S**, `wo: backend`, keine Migration, kein
+   Vertragsbruch.
+
+## Akzeptanzkriterien
+
+1. Jede nicht-`[AllowAnonymous]`-Operation im Dokument deklariert `401` (und bei rollen-gegateten `403`) mit
+   `ProblemDetails`; die Zahl steigt von 5 auf die tatsächliche Menge.
+2. Jede Operation mit `skip`/`take` deklariert den Antwort-Kopf `X-Total-Count`.
+3. Keine Operation im Dokument ohne `summary` — die 24 Übungs-Operationen tragen **typ-spezifische** Namen
+   („Legt eine Vokabelübung an"), nicht zwölfmal denselben Satz.
+4. Die drei Login-Actions und `GET auth/me` antworten mit `Cache-Control: no-store`.
+5. Das Tor „keine Operation ohne `summary`" (Ausnahmeliste **leer**) steht — **nach** der Reparatur, siehe
+   [B-101](B-101-fehlercodes-und-drei-waechter.md).
+6. `ContractDocumentTests` bleibt grün, und das eingecheckte `v1.json` ist in **einem** Hunk gewachsen.
+
+## Verlauf
+
+- **2026-08-04** — angelegt aus `docs/api-design-bewertung.md` (B4, B5, B6) und der Arbeitsrunde. Die
+  Herabstufung auf `Aufräumen` ist eine Selbstkorrektur des API-Designers gegen seine eigene Ankündigung;
+  die Bündel-Auflage und der Fund zur doppelt beanspruchten Testnummer stammen aus Runde 2.

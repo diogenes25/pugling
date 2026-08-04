@@ -176,3 +176,17 @@ M-Anker B-03/B-10.
 - **2026-08-03** — geschätzt: Größe S, Angriffsplan ein Filter in `EnumSchemaHelp` plus eine generische
   Assertion in `ContractDocumentTests`, Testweg `ContractDocumentTests` gefolgt vom vollen Suite-Lauf
   (autonom getroffen, Nutzerauftrag 2026-08-04).
+- **2026-08-04** — **gehört in ein Bündel**, Ergebnis der Arbeitsrunde PM/API-Designer/Entwickler zu
+  `docs/api-design-bewertung.md`: Diese Story, [B-60](B-60-flags-enum-im-dokument.md) und die beiden neuen
+  Punkte aus [B-100](B-100-vertragsdokument-unterdeklariert.md) greifen alle in dieselbe
+  Transformer-Kette (`Program.cs:283-408`) und lassen alle `ContractDocumentTests` das 900-KB-Dokument neu
+  schreiben — getrennt gebaut sind es vier Commits mit je einem unlesbaren Riesendiff. **Reihenfolge:**
+  B-60 → **B-56** → B4 → B5, dann **eine** Regenerierung als letzter, eigener Hunk; B-56 nach B-60, weil
+  die generische `required`-Assertion gegen ein Dokument prüfen muss, das B-60 schon enthält.
+  **Kollision, die beim getrennten Bau Arbeit vernichtet:** B-56 (Entscheidung 4) und B-60
+  (Akzeptanzkriterium 3) beanspruchen **beide** „Punkt 5" derselben Testmethode
+  `Vertragsdokument_BeschreibtDieLeitungWahrheitsgemaess` — die zweite Story müsste die erste umnummerieren
+  und ihr eigener Text veraltet dabei; im Bündel werden es Punkt 5 bis 8 in einer Bearbeitung.
+  **Auflage für die Abnahme:** die rote Probe dieser Story **vor** der ersten Codezeile einzeln gegen `HEAD`
+  fahren (`--filter ContractDocumentTests`) und hier protokollieren — nach der Regenerierung ist alles
+  gleichzeitig grün und „vorher rot" nicht mehr zu belegen.

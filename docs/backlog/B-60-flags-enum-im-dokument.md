@@ -188,3 +188,16 @@ Verhaltensänderung zur Laufzeit.
   der Stelle verweist selbst schon auf diese Story).
 - **2026-08-04** — **geschätzt** (autonom getroffen, Nutzerauftrag): Größe S, `wo: backend` (kein
   Frontend-Handcode nötig), `migration: nein`, `vertragsbruch: nein`; kein XL-Split nötig.
+- **2026-08-04** — **gehört in ein Bündel und läuft darin zuerst**, Ergebnis der Arbeitsrunde
+  PM/API-Designer/Entwickler zu `docs/api-design-bewertung.md`: mit
+  [B-56](B-56-problemdetails-required-extensions.md) und den beiden neuen Punkten aus
+  [B-100](B-100-vertragsdokument-unterdeklariert.md) in **einen** Branch, Reihenfolge **B-60** → B-56 → B4 →
+  B5, dann **eine** Regenerierung von `docs/openapi/v1.json` als letzter, eigener Hunk. B-60 zuerst, weil es
+  auf der Schema-Ebene arbeitet (`schema.Enum` je Typ) und B-56 gegen ein Dokument prüfen muss, das es schon
+  enthält. Die Begründung dieser Story („die einzige, bei der die Aussage **falsch** statt nur **fehlend**
+  ist — darum `Defekt`") hat in der Runde zusätzlich die Einordnung von B4 entschieden: eine fehlende
+  `responses`-Deklaration bleibt `Aufräumen`, sonst wird die Kategorie wertlos.
+  **Kollision:** B-60 (Akzeptanzkriterium 3) und B-56 (Entscheidung 4) beanspruchen beide „Punkt 5"
+  derselben Testmethode `Vertragsdokument_BeschreibtDieLeitungWahrheitsgemaess`; im Bündel werden es Punkt 5
+  bis 8 in einer Bearbeitung. **Auflage:** die rote Probe **vor** der ersten Codezeile einzeln gegen `HEAD`
+  fahren und hier protokollieren.
