@@ -192,4 +192,4 @@ Idempotenz-Index, PointKind-Paar, Options-Klasse), kein neues Konzept außer der
   gesamte Plan-Laufzeit für die Streak-Berechnung, statt wie `SettleClosedPeriodsAsync` einen
   begrenzten Rückblick zu nutzen) wurde behoben: neue `PositionProgressService.StreakBoundedAsync`
   (kurzschließend, 45 Tage Deckel – die Eskalationsstufen enden ohnehin bei 30) ersetzt den
-  Vollständig-Scan auf dem Schreibpfad; die Suite bleibt danach grün. Commit folgt als nächster Eintrag.
+  Vollständig-Scan auf dem Schreibpfad; die Suite bleibt danach grün. Commit `2d7f900`, dazu dieser.
