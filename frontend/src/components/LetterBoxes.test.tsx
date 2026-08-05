@@ -48,10 +48,36 @@ describe("LetterBoxes", () => {
     render(<LetterBoxes length={LENGTH} value="" onChange={onChange} pattern={PATTERN} />);
 
     fireEvent.change(screen.getByLabelText("Buchstabe 1 von 10"), { target: { value: "t" } });
-    // Beide festen Leerzeichen (Index 2 und 7) sind schon Teil des gemeldeten Werts - "t" plus die zwei
-    // festen Leerzeichen, die noch leeren tippbaren Stellen tragen nichts zum String bei -, ohne dass sie
-    // je getippt wurden.
-    expect(onChange).toHaveBeenCalledWith("t  ");
+    // Beide festen Leerzeichen (Index 2 und 7) sind schon Teil des gemeldeten Werts, ohne dass sie je
+    // getippt wurden - und der Wert ist STELLENGETREU: jede noch leere tippbare Stelle trägt ein
+    // Leerzeichen bei, damit `value[i]` dasselbe Kästchen bezeichnet wie `i`.
+    expect(onChange).toHaveBeenCalledWith(`t${" ".repeat(LENGTH - 1)}`);
+  });
+
+  // Der Wert muss stellengetreu bleiben, sonst rutscht das feste Maskenzeichen in ein tippbares Kästchen:
+  // ein `join("")` über die Rohwerte überspringt leere Stellen, feste Zeichen tragen aber immer bei.
+  it("laesst das feste Leerzeichen nicht in ein tippbares Kaestchen rutschen", () => {
+    // Maske eines zweiteiligen Worts: Index 5 ist das feste Leerzeichen, alles andere ist zu tippen.
+    const onChange = vi.fn();
+    const { rerender } = render(<LetterBoxes length={9} value="" onChange={onChange} pattern="_____ ___" />);
+
+    fireEvent.change(screen.getByLabelText("Buchstabe 1 von 9"), { target: { value: "g" } });
+    const gemeldet = onChange.mock.calls[0][0] as string;
+    expect(gemeldet[5]).toBe(" ");
+
+    // Mit diesem Wert neu gerendert bleibt das zweite Kästchen leer (nicht das Leerzeichen von Index 5),
+    // ist also wegen `maxLength={1}` weiter beschreibbar.
+    rerender(<LetterBoxes length={9} value={gemeldet} onChange={onChange} pattern="_____ ___" />);
+    expect(screen.getByLabelText<HTMLInputElement>("Buchstabe 2 von 9").value).toBe("");
+
+    // Und eine übersprungene Stelle verschiebt die späteren Buchstaben nicht: das 7. Kästchen schreibt an
+    // Stelle 6, nicht dorthin, wo ein kollabierter String es hinlegen würde.
+    fireEvent.change(screen.getByLabelText("Buchstabe 7 von 9"), { target: { value: "t" } });
+    const aufrufe = onChange.mock.calls;
+    const zweiter = aufrufe[aufrufe.length - 1][0] as string;
+    expect(zweiter[0]).toBe("g");
+    expect(zweiter[5]).toBe(" ");
+    expect(zweiter[6]).toBe("t");
   });
 
   it("ohne pattern verhaelt sich die Komponente wie zuvor (jedes Feld tippbar)", () => {

@@ -10,6 +10,10 @@ import { useRef } from "react";
  * reiner Text gerendert (kein `<input>`, damit sie nie im Tab-/Sprung-Fokus auftauchen) und tragen ihren
  * Wert unabhängig vom bisherigen `value` bei – so ist der zusammengesetzte String ab dem ersten Tastendruck
  * korrekt, auch an Stellen, die das Kind nie berührt.
+ *
+ * Der gemeldete Wert ist darum **stellengetreu und immer `length` Zeichen lang** (siehe `compose`): nur so
+ * bezeichnet `value[i]` dasselbe Kästchen wie `i`. Serverseitig kostet das nichts – `StageMechanics.Normalize`
+ * trimmt und faltet Leerzeichen vor dem Vergleich.
  */
 export function LetterBoxes({ length, value, onChange, onSubmit, pattern }: {
   length: number;
@@ -20,7 +24,20 @@ export function LetterBoxes({ length, value, onChange, onSubmit, pattern }: {
 }) {
   const refs = useRef<(HTMLInputElement | null)[]>([]);
   const isFixed = (i: number) => pattern != null && pattern[i] !== "_";
-  const chars = Array.from({ length }, (_, i) => isFixed(i) ? pattern![i] : (value[i] ?? ""));
+  // An einer TIPPBAREN Stelle heißt ein Leerzeichen "noch leer", nicht "Leerzeichen getippt": die Maske
+  // erklärt jedes Zeichen, das kein Buchstabe/keine Ziffer ist, für fest (`StageMechanics.LetterBoxPattern`) –
+  // ein Leerzeichen kann dort also nie zur Lösung gehören. Ohne diese Rücklesung stünde die Füllung aus
+  // `compose` als sichtbares, wegen `maxLength={1}` sogar vollbesetztes Zeichen im Kästchen.
+  const chars = Array.from({ length }, (_, i) =>
+    isFixed(i) ? pattern![i] : (value[i] === " " ? "" : (value[i] ?? "")));
+
+  /**
+   * Setzt den Wert aus ALLEN Stellen zusammen und hält ihn dabei genau `length` Zeichen lang: eine noch leere
+   * tippbare Stelle trägt ein Leerzeichen bei, kein Nichts. Ein `join("")` über die Rohwerte überspringt die
+   * leeren Stellen, während feste Maskenzeichen immer beitragen – Wert- und Kästchen-Index laufen dann
+   * auseinander, und das Kästchen unter dem Cursor zeigt plötzlich das Maskenzeichen der übernächsten Stelle.
+   */
+  const compose = (next: readonly string[]) => next.map((c) => c || " ").join("");
 
   // Das nächste TIPPBARE Feld in eine Richtung - überspringt beliebig viele feste Felder am Stück
   // (z. B. ", " oder ein Bindestrich neben einem Leerzeichen), nicht nur ein einzelnes.
@@ -34,7 +51,7 @@ export function LetterBoxes({ length, value, onChange, onSubmit, pattern }: {
     const ch = raw.slice(-1); // nur das zuletzt getippte Zeichen übernehmen
     const next = chars.slice();
     next[i] = ch;
-    onChange(next.join(""));
+    onChange(compose(next));
     if (ch) {
       const target = nextEditable(i, 1);
       if (target < length) refs.current[target]?.focus();
