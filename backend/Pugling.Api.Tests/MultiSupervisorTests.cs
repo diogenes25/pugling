@@ -24,13 +24,13 @@ public class MultiSupervisorTests(PuglingWebAppFactory factory) : IClassFixture<
     public async Task ZweiSupervisor_GemeinsamesWallet_AberEinloesungAusstellergebunden()
     {
         // Supervisor A = the seeded father (id 1), student = the seeded son (id 1, 50 coins starting balance).
-        var supA = await TestApi.FatherAsync(_factory);
+        var supA = await TestApi.AdultAsync(_factory);
 
         // Register supervisor B (anonymously) and log in.
         var reg = await _factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/adults",
             new { name = "Mama", email = (string?)null, pin = "2222" });
         var supBId = await TestApi.IdAsync(reg);
-        var supB = await TestApi.FatherAsync(_factory, supBId, "2222");
+        var supB = await TestApi.AdultAsync(_factory, supBId, "2222");
 
         // A makes B a co-supervisor of student 1.
         (await supA.PostAsJsonAsync("/api/v1/supervisor/children/1/supervisors",
@@ -73,7 +73,7 @@ public class MultiSupervisorTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Betreuer_Liste_Und_Entfernen_Der_Letzte_Bleibt()
     {
-        var supA = await TestApi.FatherAsync(_factory);
+        var supA = await TestApi.AdultAsync(_factory);
         var childId = await TestApi.IdAsync(await supA.PostAsJsonAsync("/api/v1/supervisor/children",
             new { name = "Betreutes Kind", pin = "6201" }));
         var url = $"/api/v1/supervisor/children/{childId}/supervisors";
@@ -105,7 +105,7 @@ public class MultiSupervisorTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task ErneutesHinzufuegen_Meldet200_MitDerGespeichertenBeziehungNichtDerNeuen()
     {
-        var supA = await TestApi.FatherAsync(_factory);
+        var supA = await TestApi.AdultAsync(_factory);
         var childId = await TestApi.IdAsync(await supA.PostAsJsonAsync("/api/v1/supervisor/children",
             new { name = "B-98-Kind", pin = "6301" }));
         var url = $"/api/v1/supervisor/children/{childId}/supervisors";

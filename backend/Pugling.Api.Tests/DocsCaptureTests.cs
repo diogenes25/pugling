@@ -190,12 +190,12 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         try
         {
             var anon = factory.CreateClient();
-            var father = await TestApi.FatherAsync(factory);       // father (id 1 / PIN 0000)
+            var father = await TestApi.AdultAsync(factory);       // father (id 1 / PIN 0000)
             var child = await TestApi.ChildAsync(factory);         // child (id 1 / PIN 1111)
 
             // A second adult (anonymous registration) for the cross-ownership 404/403.
             var father2Id = await TestApi.IdAsync(await anon.PostAsJsonAsync("/api/v1/supervisor/adults", new { name = "Zweiter Papa", pin = "2222" }));
-            var father2 = await TestApi.FatherAsync(factory, father2Id, "2222");
+            var father2 = await TestApi.AdultAsync(factory, father2Id, "2222");
             var foreignChildId = await TestApi.IdAsync(await father2.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Fremdes Kind", pin = "3333" }));
 
             await CaptureAuthAsync(anon);

@@ -10,7 +10,7 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task Tag_Anlegen_UebungMarkieren_Auflisten()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (_, _, exerciseId) = await TestApi.CreateArithmeticExerciseAsync(father);
 
         var tagId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/tags",
@@ -31,7 +31,7 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task Tag_VokabelMarkieren_ForVocabulary_Detach()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (vocabId, _) = await TestApi.CreateStoreVocabAsync(father, "house", "Haus");
 
         var tagId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/tags",
@@ -59,7 +59,7 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task Tag_VokabelMarkieren_FremderVater_Verboten()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (vocabId, _) = await TestApi.CreateStoreVocabAsync(father, "car", "Auto");
         var tagId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/tags",
             new { childId = 1, name = "Fremd", color = "#ef4444" }));
@@ -68,7 +68,7 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
         var res = await factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/adults", new { name = "Papa2", pin = "2222" });
         res.EnsureSuccessStatusCode();
         var id2 = (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
-        var father2 = await TestApi.FatherAsync(factory, id2, "2222");
+        var father2 = await TestApi.AdultAsync(factory, id2, "2222");
 
         Assert.Equal(HttpStatusCode.Forbidden, (await father2.GetAsync($"/api/v1/creator/tags/for-vocabulary/{vocabId}?childId=1")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound,
@@ -80,7 +80,7 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task Kind_MarkiertNurZugewieseneUebungen_SonstExerciseNotAssigned()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var nichtZugewiesen = await TestApi.CreateVocabExerciseAsync(father);
         var zugewiesen = await TestApi.CreateVocabExerciseAsync(father);
         TestApi.SeedLeitnerPosition(factory, zugewiesen, stage: 1);
@@ -127,7 +127,7 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
     {
         // The second half of "assigned": a direct KlassenarbeitExercise row. Without its own case, deleting
         // that query would leave the suite green while the child loses half of what the story grants it.
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var klassenarbeitId = (await (await father.PostAsJsonAsync("/api/v1/supervisor/class-tests",
             new { childId = 1, title = "Direkt zugewiesen", scheduledDate = "2099-06-01" }))
@@ -150,7 +150,7 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
         // The circular path: a class test counts the exercises of a linked tag as relevant material. Were
         // "assigned" read from that set, marking would be what makes an exercise assigned - and the barrier
         // would collapse into itself. It tests green until someone actually walks the loop.
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var nichtZugewiesen = await TestApi.CreateVocabExerciseAsync(father);
 
         var verknuepfterTag = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/tags",
@@ -186,7 +186,7 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task Kind_MarkiertNurZugewieseneVokabeln_SonstVocabularyNotAssigned()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (fremd, _) = await TestApi.CreateStoreVocabAsync(father, TestApi.UniqueName("cathedral"), "die Kathedrale");
         var (zugewiesen, zugewiesenKey) = await TestApi.CreateStoreVocabAsync(father, TestApi.UniqueName("bridge"), "die Brücke");
         // Assigned means: the word occurs in an exercise that a plan position gives the child - the word
@@ -238,7 +238,7 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
         // exercises. Today they hold through the delegation to AssignedExerciseIdsAsync alone - and E2 was
         // originally written as "a join BEFORE that helper, not a second helper", so whoever rebuilds it that
         // way would read a green suite as proof while the circular path is open again for words.
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (klausurVokabel, klausurKey) = await TestApi.CreateStoreVocabAsync(father, TestApi.UniqueName("castle"), "die Burg");
         var (rundwegVokabel, rundwegKey) = await TestApi.CreateStoreVocabAsync(father, TestApi.UniqueName("harbour"), "der Hafen");
 
@@ -279,7 +279,7 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task Kind_LiestUeberDenTagKeineUebersetzung_VaterLiestSieUndDerLehrerScheitertNichtAnDerRolle()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (vocabId, _) = await TestApi.CreateStoreVocabAsync(father, TestApi.UniqueName("library"), "die Bibliothek");
         var tagId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/tags",
             new { childId = 1, name = TestApi.UniqueName("Leseprobe") }));
@@ -302,7 +302,7 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
         var teacher = await factory.CreateClient().PostAsJsonAsync("/api/v1/creator/teacher-accounts",
             new { name = TestApi.UniqueName("Frau Klee"), email = (string?)null, pin = "4242" });
         teacher.EnsureSuccessStatusCode();
-        var lehrer = await TestApi.FatherAsync(factory,
+        var lehrer = await TestApi.AdultAsync(factory,
             (await teacher.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("creatorId").GetInt32(), "4242");
         Assert.Equal(HttpStatusCode.NotFound, (await lehrer.GetAsync($"/api/v1/creator/tags/{tagId}/vocabulary")).StatusCode);
     }
@@ -310,7 +310,7 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task Timetable_EintragAnlegen_Auflisten()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Sport" }));
 
         var create = await father.PostAsJsonAsync("/api/v1/supervisor/children/1/timetable",
@@ -326,7 +326,7 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task Tag_Uebungen_Lesen_Zuordnung_Loesen_Und_Tag_Loeschen()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var tagId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/tags",
             new { childId = 1, name = $"Löschtag-{Guid.NewGuid():N}"[..14] }));
@@ -355,7 +355,7 @@ public class TagsRatingsTimetableTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task Stundenplan_Eintrag_Laesst_Sich_Loeschen()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
             new { name = $"Stundenplan-{Guid.NewGuid():N}"[..18] }));
         var entryId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children/1/timetable",

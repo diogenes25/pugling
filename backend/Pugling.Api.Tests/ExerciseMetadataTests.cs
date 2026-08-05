@@ -49,7 +49,7 @@ public class ExerciseMetadataTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task Uebung_TraegtMetadaten_UndFilterFindetSie()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (subjectId, seriesId, seriesUnitId, categoryId) = await SetupAsync(father, $"Meta-Fach-{Guid.NewGuid():N}");
         var basePath = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic";
 
@@ -69,7 +69,7 @@ public class ExerciseMetadataTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task Filter_SchliesstFalscheKlassenstufeUndSchulartAus()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (subjectId, seriesId, seriesUnitId, categoryId) = await SetupAsync(father, $"Meta-Fach-{Guid.NewGuid():N}");
         var basePath = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic";
         await father.PostAsJsonAsync(basePath, ArithmeticBody("Nur-Gym-5bis7", categoryId, 5, 7, "Gymnasium"));
@@ -90,7 +90,7 @@ public class ExerciseMetadataTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task Uebung_MitFremderArt_Wird_Abgelehnt()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (_, seriesId, seriesUnitId, _) = await SetupAsync(father, $"Meta-Fach-{Guid.NewGuid():N}");
         var (_, _, _, fremdeArtId) = await SetupAsync(father, $"Anderes-Fach-{Guid.NewGuid():N}");
         var basePath = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic";

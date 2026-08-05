@@ -18,7 +18,7 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     // Combo off (threshold 0), so that only mission/achievement points show up.
     private async Task<(int planId, int positionId, int sessionId)> SetupAsync()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.SelfAssess, comboThreshold: 0);
         var child = await TestApi.ChildAsync(factory);
@@ -39,7 +39,7 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task Mission_BeiZielerreichung_EinmaligBelohnt_UndAlsErfuelltSichtbar()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var missionTitle = "TEST Tagesziel 2 Treffer";
         await father.PostAsJsonAsync("/api/v1/supervisor/children/1/missions", new
         {
@@ -81,7 +81,7 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task Einmal_Mission_WirdNichtDoppeltBelohnt_UndDieDatenbankHaeltDagegen()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var missionTitle = "TEST Einmal 1 Treffer";
         var missionId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children/1/missions", new
         {
@@ -120,7 +120,7 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task Auszeichnung_BeiSchwelle_EinmaligVerliehen_UndAlsErreichtSichtbar()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var title = "TEST Badge 1 Treffer";
         await father.PostAsJsonAsync("/api/v1/supervisor/children/1/achievements", new
         {
@@ -163,7 +163,7 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task Auszeichnung_MitVorhandenerSchwelle_Liefert409_AufBeidenSchreibwegen()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var url = "/api/v1/supervisor/children/1/achievements";
         var metric = "MinutesPracticed";
         var threshold = 4711; // outside the seeded thresholds, so the case stands on its own
@@ -218,7 +218,7 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task Mission_NeueWoerter_ZaehltErstmalsEingefuehrteInhalte()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var missionTitle = "TEST 2 neue Wörter";
         await father.PostAsJsonAsync("/api/v1/supervisor/children/1/missions", new
         {
@@ -244,7 +244,7 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task Mission_GeuebteMinuten_ZaehltAktiveSekunden()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var missionTitle = "TEST 1 Minute geübt";
         await father.PostAsJsonAsync("/api/v1/supervisor/children/1/missions", new
         {
@@ -272,7 +272,7 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task Missionen_NurEigene_FremdesKindBekommt404()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         // Child 999 does not belong to the adult → the ChildOwnershipFilter returns 404 (no enumeration).
         var res = await father.GetAsync("/api/v1/supervisor/children/999/missions");
         Assert.Equal(System.Net.HttpStatusCode.NotFound, res.StatusCode);

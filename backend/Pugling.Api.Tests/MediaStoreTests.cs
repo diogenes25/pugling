@@ -14,7 +14,7 @@ public class MediaStoreTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
     [Fact]
     public async Task Anlegen_MitVariantenUndTags_LiefertBeideAchsen()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
 
         var create = await father.PostAsJsonAsync("/api/v1/creator/media", new
         {
@@ -43,7 +43,7 @@ public class MediaStoreTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
     [Fact]
     public async Task OhneKey_WirdEindeutigerKeyAusBeschreibungErzeugt()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var body = new { description = "Flash rennt sehr schnell" };
 
         var first = await father.PostAsJsonAsync("/api/v1/creator/media", body);
@@ -59,7 +59,7 @@ public class MediaStoreTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
     [Fact]
     public async Task DoppelterKey_Liefert409()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var dto = new { key = "dupe-media-key", description = "Irgendein Motiv" };
 
         Assert.Equal(HttpStatusCode.Created, (await father.PostAsJsonAsync("/api/v1/creator/media", dto)).StatusCode);
@@ -72,7 +72,7 @@ public class MediaStoreTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
     [Fact]
     public async Task BeschreibungIstPflicht_SieIstZugleichDerAltText()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var res = await father.PostAsJsonAsync("/api/v1/creator/media", new { description = "   " });
 
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
@@ -82,7 +82,7 @@ public class MediaStoreTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
     [Fact]
     public async Task ZweiteVarianteMitGleichemZweckUndFormat_Liefert409()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var id = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/media",
             new { description = "Ein Hund schläft" }));
 
@@ -110,7 +110,7 @@ public class MediaStoreTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
     [Fact]
     public async Task Varianten_SindNachZweckSortiert_NichtAlphabetisch()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var id = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/media",
             new { description = "Ein Fuchs springt" }));
 
@@ -139,7 +139,7 @@ public class MediaStoreTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
     [Fact]
     public async Task FremdeVariante_LiefertEigenenFehlercode()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var assetA = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/media", new { description = "Motiv A" }));
         var assetB = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/media", new { description = "Motiv B" }));
 
@@ -154,7 +154,7 @@ public class MediaStoreTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
     [Fact]
     public async Task MaxRating_FiltertNichtKindgerechteDarstellungenAus()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var marker = "rating-filter-motiv";
 
         await father.PostAsJsonAsync("/api/v1/creator/media",
@@ -174,7 +174,7 @@ public class MediaStoreTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
     [Fact]
     public async Task TagFilter_FindetDarstellungenUeberDieGeteilteTaxonomie()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var marker = "tagfilter-motiv";
 
         await father.PostAsJsonAsync("/api/v1/creator/media", new
@@ -203,7 +203,7 @@ public class MediaStoreTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
     [Fact]
     public async Task TagLoesen_LaesstDasSchlagwortImKatalog()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var id = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/media",
             new { description = "Ein Fussballspieler schiesst", tags = new[] { "Fußball" } }));
 

@@ -53,7 +53,7 @@ public class ExerciseChoicesTests(PuglingWebAppFactory factory) : IClassFixture<
 
     private async Task<JsonElement> PlayAsync(string route, object config, int stage)
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await CreateAsync(father, route, config);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, stage);
         var child = await TestApi.ChildAsync(_factory);
@@ -158,7 +158,7 @@ public class ExerciseChoicesTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Klausur_LiefertDieAntwortmoeglichkeitenEbenfalls()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await CreateAsync(father, "reading", new
         {
             text = "B lives in York.",
@@ -183,7 +183,7 @@ public class ExerciseChoicesTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Testmodus_ZeigtDieAntwortmoeglichkeiten()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await CreateAsync(father, "reading", new
         {
             text = "B lives in York.",
@@ -288,7 +288,7 @@ public class ExerciseChoicesTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Hoerverstehen_KlausurUndTestmodus_LiefernDieMoeglichkeiten()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await CreateAsync(father, "listening", new
         {
             audioUrl = "https://example.invalid/dialogue.mp3",

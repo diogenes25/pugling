@@ -67,7 +67,7 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
     /// Loads all listings (<see cref="ShopListing"/>s) of the adult incl. their article and applies
     /// due refill rules idempotently.
     /// </summary>
-    public async Task<IReadOnlyList<ShopListing>> ListingsForFatherAsync(
+    public async Task<IReadOnlyList<ShopListing>> ListingsForSupervisorAsync(
         int supervisorId, bool activeOnly, DateTime nowUtc, CancellationToken ct = default)
     {
         var query = db.ShopListings

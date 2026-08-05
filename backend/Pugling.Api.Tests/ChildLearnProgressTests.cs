@@ -93,7 +93,7 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task Hierarchie_AggregiertFortschritt_ZeigtAbdeckung_UndBlattItems()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         // Unique words, so that the per-child shared progress/store does not collide with other tests.
         var (subjectId, _, seriesUnitId, ex1) = await VocabAsync(father, "Progress-Fach", "Geübt", ("quokka", "Kurzschwanzkänguru"), ("axolotl", "Axolotl"));
         var (_, _, _, ex2) = await VocabAsync(father, "Progress-Fach-B", "Ungeübt", ("pangolin", "Schuppentier"), ("tapir", "Tapir"));
@@ -146,7 +146,7 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task UngeübteAberZugewieseneÜbung_ErscheintMitNullFortschritt()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (_, _, _, ex1) = await VocabAsync(father, "Null-Fach", "Geübt", ("okapi", "Okapi"));
         var (subjectId, _, seriesUnitId, ex2) = await VocabAsync(father, "Null-Fach-B", "Nie geübt", ("numbat", "Ameisenbeutler"), ("dugong", "Dugong"));
         SeedPlanWithTwoPositions(ex1, ex2);
@@ -164,7 +164,7 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task NichtZugewiesenesFach_Und_NichtZugewieseneÜbung_Liefern404()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         // A subject with an exercise but NO plan → not assigned to the child.
         var (subjectId, _, seriesUnitId, exerciseId) = await VocabAsync(father, "Waise-Fach", "Ohne Plan", ("caracal", "Karakal"));
 
@@ -179,7 +179,7 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task FremdesKind_Liefert404_SohnSiehtEigenen()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (_, _, _, ex1) = await VocabAsync(father, "Ownership-Fach", "Geübt", ("serval", "Serval"));
         var (_, _, _, ex2) = await VocabAsync(father, "Ownership-Fach-B", "Ungeübt", ("gerenuk", "Giraffengazelle"));
         SeedPlanWithTwoPositions(ex1, ex2);
@@ -197,7 +197,7 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task AbgehängterPlan_MachtÜbungInaktiv_FortschrittBleibt()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         // Both exercises in the SAME subject/series unit, so that the vocabulary list shows both.
         var (subjectId, seriesId, seriesUnitId, ex1) = await VocabAsync(father, "Retention-Fach", "Geübt", ("wombat", "Wombat"), ("kakapo", "Kakapo"));
         var ex2 = await VocabInAsync(father, seriesId, seriesUnitId, "Ungeübt", ("quoll", "Beutelmarder"));
@@ -230,7 +230,7 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task ActiveFilter_TrenntAktivVonInaktiv()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (subjectId, seriesId, seriesUnitId, exAktiv) = await VocabAsync(father, "Filter-Fach", "Aktiv", ("dingo", "Dingo"));
         var exInaktiv = await VocabInAsync(father, seriesId, seriesUnitId, "Inaktiv", ("bilby", "Bilby"));
         SeedPlan(active: true, exAktiv);
@@ -250,7 +250,7 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task SucheUndSortierung_AufÜbungen()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (subjectId, seriesId, seriesUnitId, exTiere) = await VocabAsync(father, "Sort-Fach", "Tiere", ("emu", "Emu"));
         var exFarben = await VocabInAsync(father, seriesId, seriesUnitId, "Farben", ("mauve", "Malvenfarben"));
         SeedPlan(active: true, exTiere, exFarben);

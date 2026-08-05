@@ -16,7 +16,7 @@ public class MediaUploadTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     [Fact]
     public async Task Upload_ErzeugtDieAufloesungenUndEinePlatzhalterfarbe()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
 
         var res = await UploadAsync(father, Png(1000, 500, SKColors.CornflowerBlue),
             "Eine breite Stadtansicht", tags: "Stadt, Foto");
@@ -50,7 +50,7 @@ public class MediaUploadTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     [Fact]
     public async Task HochgeladeneDatei_IstUeberIhreUrlAbrufbar()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var asset = await (await UploadAsync(father, Png(300, 300, SKColors.Tomato), "Ein rotes Quadrat"))
             .Content.ReadFromJsonAsync<JsonElement>();
 
@@ -70,7 +70,7 @@ public class MediaUploadTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     [Fact]
     public async Task KleineQuelle_WirdNichtHochskaliert_UndDoppelteGroessenEntfallen()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var asset = await (await UploadAsync(father, Png(64, 64, SKColors.Green), "Ein winziges Symbol"))
             .Content.ReadFromJsonAsync<JsonElement>();
 
@@ -84,7 +84,7 @@ public class MediaUploadTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     [Fact]
     public async Task KeineBilddatei_Liefert400MitEigenemCode()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var res = await UploadAsync(father, "kein Bild, nur Text"u8.ToArray(), "Kaputte Datei", fileName: "x.png");
 
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
@@ -94,7 +94,7 @@ public class MediaUploadTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     [Fact]
     public async Task BeschreibungIstPflicht_SieIstDerAltText()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var res = await UploadAsync(father, Png(100, 100, SKColors.Gray), description: "   ");
 
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
@@ -104,7 +104,7 @@ public class MediaUploadTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     [Fact]
     public async Task LoeschenRaeumtDieDateienMitWeg()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var asset = await (await UploadAsync(father, Png(200, 200, SKColors.Purple), "Wird gleich gelöscht"))
             .Content.ReadFromJsonAsync<JsonElement>();
         var id = asset.GetProperty("id").GetInt32();

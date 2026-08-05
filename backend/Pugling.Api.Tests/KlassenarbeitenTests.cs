@@ -10,7 +10,7 @@ public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Create_Get_List_Practice()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
 
         var create = await father.PostAsJsonAsync("/api/v1/supervisor/class-tests", new
         {
@@ -35,7 +35,7 @@ public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<
     public async Task Repeat_LiefertSchlechtBenoteteSeedArbeit()
     {
         // The seed creates a written test with grade 4.5 for child 1 - it has to show up in the repeat endpoint.
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
 
         var repeat = await (await father.GetAsync("/api/v1/supervisor/class-tests/repeat?childId=1")).Content.ReadFromJsonAsync<JsonElement>();
 
@@ -47,7 +47,7 @@ public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<
     {
         // Mirrors the UI loop: plan a test → assign an exercise → enter the grade (PATCH) → the exercise is
         // visible in preparation and (with a bad grade) in the child's repeat list.
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (_, _, exerciseId) = await TestApi.CreateArithmeticExerciseAsync(father);
 
         var id = (await (await father.PostAsJsonAsync("/api/v1/supervisor/class-tests", new
@@ -80,7 +80,7 @@ public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Vater_KannKlassenarbeitFuerFremdesKindNichtAnlegen_403()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
 
         // childId 999 belongs to no child of this adult.
         var res = await father.PostAsJsonAsync("/api/v1/supervisor/class-tests", new { childId = 999, title = "X", scheduledDate = "2099-01-15" });
@@ -103,7 +103,7 @@ public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Uebungs_Zuordnung_Laesst_Sich_Wieder_Loesen()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var id = await AnlegenAsync(father, "Zuordnung lösen");
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         (await father.PostAsJsonAsync($"/api/v1/supervisor/class-tests/{id}/exercises",
@@ -125,7 +125,7 @@ public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Tag_Verknuepfen_Und_Wieder_Loesen()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var id = await AnlegenAsync(father, "Tag verknüpfen");
         var tagId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/tags",
             new { childId = 1, name = $"Unit-{Guid.NewGuid():N}"[..12] }));
@@ -146,7 +146,7 @@ public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<
     {
         // The interesting domain error case: a tag always belongs to *one* child. If it could be attached to
         // another child's test, "relevant exercises" would drag in foreign material.
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var id = await AnlegenAsync(father, "Fremder Tag");
         var anderesKind = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
             new { name = "Geschwister", pin = "6101" }));
@@ -163,7 +163,7 @@ public class KlassenarbeitenTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Loeschen_Entfernt_Die_Klassenarbeit()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var id = await AnlegenAsync(father, "Zum Löschen");
 
         Assert.Equal(HttpStatusCode.NoContent, (await father.DeleteAsync($"/api/v1/supervisor/class-tests/{id}")).StatusCode);

@@ -14,7 +14,7 @@ public class MissionsAdminTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     [Fact]
     public async Task Vater_KannMission_Anlegen_Schalten_Loeschen()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var childId = await TestApi.IdAsync(
             await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Missions-Kind", pin = "8001" }));
 
@@ -51,7 +51,7 @@ public class MissionsAdminTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     {
         // The ownership filter bites before the controller: a child not belonging to the adult yields neither
         // a list nor a creation - checked here through a non-existent child.
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
 
         var res = await father.GetAsync("/api/v1/supervisor/children/999999/missions");
 
@@ -63,7 +63,7 @@ public class MissionsAdminTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     [Fact]
     public async Task Auszeichnungen_Liste_Und_Loeschen()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
             new { name = "Auszeichnungs-Kind", pin = "6301" }));
         var url = $"/api/v1/supervisor/children/{childId}/achievements";

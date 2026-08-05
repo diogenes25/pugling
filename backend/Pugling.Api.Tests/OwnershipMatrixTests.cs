@@ -29,7 +29,7 @@ public class OwnershipMatrixTests(PuglingWebAppFactory factory) : IClassFixture<
     public async Task Fremder_Supervisor_Kommt_An_Keine_Kindes_Oder_Plan_Gebundene_Action()
     {
         var victim = await FremdeWeltAsync();
-        var attacker = await TestApi.FatherAsync(factory); // the seeded adult 1 - none of this belongs to them
+        var attacker = await TestApi.AdultAsync(factory); // the seeded adult 1 - none of this belongs to them
         await PruefeMatrixAsync(attacker, victim, "fremder Supervisor");
     }
 
@@ -50,7 +50,7 @@ public class OwnershipMatrixTests(PuglingWebAppFactory factory) : IClassFixture<
         var registered = await factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/adults",
             new { name = "Fremder Papa", pin = "2222" });
         var otherAdultId = await TestApi.IdAsync(registered);
-        var owner = await TestApi.FatherAsync(factory, otherAdultId, "2222");
+        var owner = await TestApi.AdultAsync(factory, otherAdultId, "2222");
 
         var childId = await TestApi.IdAsync(await owner.PostAsJsonAsync("/api/v1/supervisor/children",
             new { name = "Fremdes Kind", pin = "3333" }));

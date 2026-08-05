@@ -56,7 +56,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task Kauf_MitCoinsUndGems_BuchtAbUndSenktBestand_ErhoehtInventar()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9301");
         var articleId = await CreateArticleAsync(father, new
         {
@@ -117,7 +117,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task KaufBeleg_NimmtDenAngebotsTitel_UndSonstDenDesArtikels()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9303");
         var articleId = await CreateArticleAsync(father, new
         {
@@ -164,7 +164,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task GekaufterArtikel_ErscheintImEigenenBestand()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9302");
         var articleId = await CreateArticleAsync(father, new
         {
@@ -204,7 +204,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task ZweiKaeufe_GleicherArtikel_AddierenImInventar()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9310");
         var articleId = await CreateArticleAsync(father, new
         {
@@ -245,7 +245,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task Kauf_OhneBestand_409_KeineAbbuchung()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9304");
         var articleId = await CreateArticleAsync(father, new
         {
@@ -275,7 +275,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task Sohn_SiehtKeineAngeboteAusFremderFamilie()
     {
-        var fatherA = await TestApi.FatherAsync(factory);
+        var fatherA = await TestApi.AdultAsync(factory);
         var (_, child) = await FreshChildAsync(fatherA, "9305");
 
         // Create an article/listing owned by someone else
@@ -307,7 +307,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task Storno_ErstattetCoinsUndGems_ReduzuiertInventar()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9303");
         var articleId = await CreateArticleAsync(father, new
         {
@@ -350,7 +350,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task DoppelStorno_ErstattetNurEinmal()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9306");
         var articleId = await CreateArticleAsync(father, new
         {
@@ -393,7 +393,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task Aktivierung_SohnStellt_VaterGenehmigt_InventarSinkt()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9307");
         var articleId = await CreateArticleAsync(father, new
         {
@@ -439,7 +439,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task Aktivierung_VaterLehntAb_InventarBleibt()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9308");
         var articleId = await CreateArticleAsync(father, new
         {
@@ -478,7 +478,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task Aktivierung_MehrAlsInventar_400()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9309");
         var articleId = await CreateArticleAsync(father, new
         {
@@ -508,7 +508,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task Aktivierung_DoppelGenehmigung_409()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9311");
         var articleId = await CreateArticleAsync(father, new
         {
@@ -546,7 +546,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task Affordances_NurBeiFaelligemStatus()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9312");
         var articleId = await CreateArticleAsync(father, new
         {
@@ -610,7 +610,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task ArtikelAnlegen_UndLesen_RoundTrip()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var articleId = await CreateArticleAsync(father, new
         {
             articleNumber = "CRUD-001",
@@ -628,7 +628,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task ArtikelAnlegen_DoppelteNummer_409()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         await CreateArticleAsync(father, new
         {
             articleNumber = "DUP-NUM",
@@ -652,7 +652,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task ArtikelPatch_TitelUndNummer_Aendert()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var articleId = await CreateArticleAsync(father, new
         {
             articleNumber = "OLD-001",
@@ -670,7 +670,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task ArtikelPatch_LeererTitel_400()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var articleId = await CreateArticleAsync(father, new
         {
             articleNumber = "ETITLE-001",
@@ -686,7 +686,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task ArtikelLoeschen_EntferntEintrag()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var articleId = await CreateArticleAsync(father, new
         {
             articleNumber = "DEL-001",
@@ -706,7 +706,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task ListingAnlegen_UndLesen_RoundTrip()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var articleId = await CreateArticleAsync(father, new
         {
             articleNumber = "LST-001",
@@ -733,7 +733,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task ListingAnlegen_BeidePreisNull_400()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var articleId = await CreateArticleAsync(father, new
         {
             articleNumber = "ZEROPRICE",
@@ -750,7 +750,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task ListingPatch_Deaktivieren()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var articleId = await CreateArticleAsync(father, new
         {
             articleNumber = "DEACT-001",
@@ -775,7 +775,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task ListingLoeschen_EntferntEintrag()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var articleId = await CreateArticleAsync(father, new
         {
             articleNumber = "DELLIST-001",
@@ -803,7 +803,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task Kauf_OhneCoins_400_KeineAbbuchung()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9350");
         // No balance
 
@@ -835,7 +835,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task Kauf_OhneGems_400()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9351");
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points",
             new { amount = 500, reason = "Coins" })).EnsureSuccessStatusCode();
@@ -866,7 +866,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task Kauf_InaktivesAngebot_400()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9352");
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points",
             new { amount = 500, reason = "Coins" })).EnsureSuccessStatusCode();
@@ -900,7 +900,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task KaufAffordances_NurBeiFaelligemStatus()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9353");
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points",
             new { amount = 300, reason = "Coins" })).EnsureSuccessStatusCode();
@@ -943,7 +943,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task Paging_KaufHistorie_LiefertXTotalCount()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9354");
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points",
             new { amount = 2000, reason = "Coins" })).EnsureSuccessStatusCode();
@@ -975,7 +975,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task Paging_Aktivierungen_LiefertXTotalCount()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9355");
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points",
             new { amount = 500, reason = "Coins" })).EnsureSuccessStatusCode();
@@ -1015,7 +1015,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         // second wallet write started in parallel fail (cf. SkinPurchaseTests.ConcurrencyToken) and the funds
         // check cannot be bypassed twice. The listing stamp alone protects the same stock only - across
         // different listings the balance would stay unprotected.
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9360");
         var articleId = await CreateArticleAsync(father, new
         {
@@ -1055,7 +1055,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         // The request check is not transactional: two open requests can exceed the inventory in sum. Binding is
         // only the funds check at approval time - it must not silently clamp the inventory to 0 but has to
         // reject the second approval (no free allowance).
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9361");
         var articleId = await CreateArticleAsync(father, new
         {
@@ -1103,7 +1103,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task Aktivierung_QuantityNull_400_ValidationError()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (_, child) = await FreshChildAsync(father, "9362");
         var articleId = await CreateArticleAsync(father, new
         {
@@ -1125,7 +1125,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     public async Task Artikel_UndAngebot_LassenSichEinzelnLesen()
     {
         // Symmetry with PATCH/DELETE: the single resource can be fetched by GET too (read-after-write).
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var articleId = await CreateArticleAsync(father, new
         {
             articleNumber = "GET-001",
@@ -1162,7 +1162,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     public async Task Artikel_EinzelabrufFremderVater_404()
     {
         // Ownership: another adult must not see the article through the single GET.
-        var owner = await TestApi.FatherAsync(factory);
+        var owner = await TestApi.AdultAsync(factory);
         var articleId = await CreateArticleAsync(owner, new
         {
             articleNumber = "OWN-001",
@@ -1173,7 +1173,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var anon = factory.CreateClient();
         var strangerId = await TestApi.IdAsync(
             await anon.PostAsJsonAsync("/api/v1/supervisor/adults", new { name = "Fremder Papa", pin = "2222" }));
-        var stranger = await TestApi.FatherAsync(factory, strangerId, "2222");
+        var stranger = await TestApi.AdultAsync(factory, strangerId, "2222");
 
         Assert.Equal(HttpStatusCode.NotFound,
             (await stranger.GetAsync($"/api/v1/supervisor/shop/articles/{articleId}")).StatusCode);
@@ -1184,7 +1184,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     {
         // An invalid enum value should not just yield "value is not of the expected type" but name the faulty
         // field AND list the allowed values (without leaking the DTO type).
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var res = await father.PostAsJsonAsync("/api/v1/supervisor/shop/articles", new
         {
             articleNumber = "TV-900",
@@ -1221,7 +1221,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task ArtikelLoeschen_LaesstBezahltesInventarStehen()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9361");
         var articleId = await CreateArticleAsync(father, new
         {
@@ -1278,7 +1278,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task Kaufhistorie_UeberFuenfzig_IstUeberPagingErreichbar()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9401");
 
         // 60 purchases seeded directly - the fixed Take(50) this story removes would otherwise force 60 real
@@ -1328,7 +1328,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task Kaufhistorie_StornoZwischenZweiSeiten_UeberspringtKeineZeile()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9402");
 
         // Seeded like the B-99 case: without a listing the cancellation skips the inventory step, which is
@@ -1374,7 +1374,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     {
         // Same defect one level up (B-113): the supervisor's own purchase list had the same mutable-first
         // ordering that B-110 removed on the child's side.
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "9403");
         int[] ids;
         using (var scope = factory.Services.CreateScope())
@@ -1417,7 +1417,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     {
         // Same defect, same fix, at the activation-request queue (B-113): approving/rejecting is the
         // ROUTINE case there, not an edge case, so the old status-first grouping bit harder here.
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (childId, _) = await FreshChildAsync(father, "9404");
         int[] ids;
         using (var scope = factory.Services.CreateScope())

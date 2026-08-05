@@ -18,7 +18,7 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task BestandenerPositionsTest_ErfuelltTagesziel_UndBuchtZielpunkteEinmalig()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father); // hello→hallo, goodbye→tschüss
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
@@ -83,7 +83,7 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task ZielOhnePunkte_ErfuelltDiePflicht_BuchtAberNichts()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
             new { name = "Nullpunkt-Kind", pin = "7101" }));
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
@@ -133,7 +133,7 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task NebenlaeufigeZielbuchung_VerliertDasRennen_OhneFehlerUndOhneDoppelbuchung()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
@@ -191,7 +191,7 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task Wochenziel_WirdImVerlauf_NurEinmalGezaehlt()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText,
             cadence: GoalCadence.Weekly, pointsGoalMet: 20);
@@ -231,7 +231,7 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task Verlauf_Progress_UnterstuetztFilterSortUndPaging()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, _) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText); // plan: today..today+5 = 6 days
         var child = await TestApi.ChildAsync(_factory);

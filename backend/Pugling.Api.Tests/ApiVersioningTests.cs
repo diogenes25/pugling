@@ -13,7 +13,7 @@ public class ApiVersioningTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     [Fact]
     public async Task V1_IstErreichbar_UnbekannteVersion_Wird_Abgelehnt()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
 
         // A declared version works.
         Assert.Equal(HttpStatusCode.OK, (await father.GetAsync("/api/v1/creator/subjects")).StatusCode);
@@ -26,7 +26,7 @@ public class ApiVersioningTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     [Fact]
     public async Task FachFehler_LiefertStrukturiertesProblemDetails()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
 
         // An empty name → 400 with a structured ProblemDetails body (not a bare string).
         var res = await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "" });

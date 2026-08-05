@@ -26,7 +26,7 @@ public class BirkenbihlDecodingServiceTests(PuglingWebAppFactory factory) : ICla
     public async Task Lookup_WortCaseInsensitiv_AberSprachcodeExakt()
     {
         // Create the vocabulary entry in the store under the codes "en"/"de" …
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         await TestApi.CreateStoreVocabAsync(father, "house", "Haus", src: "en", tgt: "de");
 
         using var scope = factory.Services.CreateScope();

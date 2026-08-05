@@ -116,3 +116,24 @@ Weil der Sohn unbeaufsichtigt lernt und Punkte etwas „wert" sind, erzwingt der
 7. **Idempotente Belohnungen** — Tages-Punkte, Missionen und Auszeichnungen fließen nie doppelt (Unique-Index).
 
 Details der Bewertung: [05 · Punkte & Bonus](05-punkte-und-bonus.md).
+
+---
+
+## 6. Admin — Plattform-Superuser (Break-Glass)
+
+Neben Creator, Supervisor und Student gibt es einen **vierten, quer liegenden Akteur**: `Roles.Admin`.
+Kein Konto trägt diese Rolle heute im Seed — sie ist Break-Glass, keine Produktrolle.
+
+- **Zweck:** Superuser-Zugriff für Notfälle, z. B. um verwaiste Übungen ohne Owner zu reparieren.
+- **Vergabe:** ausschließlich über das Flag `Adult.IsAdmin`, gesetzt direkt in der DB oder im Seed —
+  **bewusst keine API** dafür (keine Selbst-Eskalation).
+- **Wirkung:** `user.IsAdmin()` umgeht die komplette RWX-Prüfung an Übungen
+  (`ExercisePermissionService.cs:24,34,46`) — ein Admin darf jede Übung lesen, schreiben und zuweisen,
+  unabhängig von Grant/Ownership.
+- **JWT-Fallstrick:** Rollen stecken im Token — ein frisch gesetztes `IsAdmin` wirkt erst nach der
+  **nächsten** Anmeldung, nicht sofort.
+- **Handlungsanweisung für ein neues Privileg:** einen eigenen, engen Schalter bauen (Muster
+  `RemarkOptions.GlobalRead`), nicht `Roles.Admin` erweitern oder wiederverwenden. `Roles.Admin` wurde
+  bereits einmal als Bedingung für ein Anmerkungs-Sichtbarkeitsfeature erwogen und **verworfen**, weil
+  ihre Breite jedem debuggenden Vater zugleich erlaubt hätte, fremde Übungen zu ändern
+  ([docs/anmerkungen-plan.md](../docs/anmerkungen-plan.md), Abschnitt zu `RemarkOptions.GlobalRead`).

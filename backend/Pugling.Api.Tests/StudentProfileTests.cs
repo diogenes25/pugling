@@ -16,7 +16,7 @@ public class StudentProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task Vater_KannProfilfelder_AnlegenUndAendern()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
 
         var created = await (await father.PostAsJsonAsync("/api/v1/supervisor/children", new
         {
@@ -53,7 +53,7 @@ public class StudentProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task Vater_KannLehrbuch_Anlegen_Lesen_Aendern_Loeschen()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var childId = await TestApi.IdAsync(
             await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Buch-Kind", pin = "8101" }));
 
@@ -92,7 +92,7 @@ public class StudentProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task Lehrbuch_MitUngueltigemFach_Ist400()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var childId = await TestApi.IdAsync(
             await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Fach-Kind", pin = "8102" }));
 
@@ -105,7 +105,7 @@ public class StudentProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task Vater_KommtNichtAnLehrbuecherFremderKinder_403Oder404()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
 
         var res = await father.GetAsync("/api/v1/supervisor/children/999999/textbooks");
 
@@ -115,7 +115,7 @@ public class StudentProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task LoeschenDesKindes_RaeumtLehrbuecherMitAb()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var childId = await TestApi.IdAsync(
             await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Cascade-Kind", pin = "8103" }));
         var bookId = await TestApi.IdAsync(await father.PostAsJsonAsync(

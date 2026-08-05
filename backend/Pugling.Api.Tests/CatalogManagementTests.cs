@@ -16,7 +16,7 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
     /// </summary>
     private async Task<(int seriesId, int seriesUnitId, int exerciseId)> CreateVocabExerciseAsync()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync(
             "/api/v1/creator/subjects", new { name = TestApi.UniqueName("Kat-Mgmt-Fach") }));
         var seriesId = await TestApi.IdAsync(await father.PostAsJsonAsync(
@@ -43,7 +43,7 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task Detail_LiefertTypConfigUndMetadaten()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
 
         var detail = await (await father.GetAsync($"/api/v1/creator/exercises/{exerciseId}"))
@@ -60,7 +60,7 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task Usage_ListetLehrplanMitKind()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, _) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)Pugling.Api.Models.TestStage.FreeText);
 
@@ -76,7 +76,7 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task Usage_OhneVerwendung_IstLeer()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
 
         var usage = await (await father.GetAsync($"/api/v1/creator/exercises/{exerciseId}/usage"))
@@ -89,7 +89,7 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task Delete_ReferenzierteUebung_Liefert409()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (seriesId, seriesUnitId, exerciseId) = await CreateVocabExerciseAsync();
         TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)Pugling.Api.Models.TestStage.FreeText);
 
@@ -107,7 +107,7 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
     [InlineData(true)]
     public async Task Delete_UnitOderReihe_MitVerwendeterUebung_Liefert409(bool wholeSeries)
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (seriesId, seriesUnitId, exerciseId) = await CreateVocabExerciseAsync();
         TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)Pugling.Api.Models.TestStage.FreeText);
 
@@ -123,7 +123,7 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task Delete_UnitUndReihe_OhneVerwendung_Loescht()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (seriesId, seriesUnitId, exerciseId) = await CreateVocabExerciseAsync();
 
         // The protection only applies to *used* exercises - the cascade onto unused ones stays allowed.
@@ -138,7 +138,7 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task Delete_UnbenutzteUebung_Loescht()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (seriesId, seriesUnitId, exerciseId) = await CreateVocabExerciseAsync();
 
         var res = await father.DeleteAsync($"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}");
@@ -155,7 +155,7 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task Delete_Subject_Loescht()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync(
             "/api/v1/creator/subjects", new { name = TestApi.UniqueName("Kat-Mgmt-Loesch-Fach") }));
 

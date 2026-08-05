@@ -15,7 +15,7 @@ public class MediaLinkTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task EineVokabel_TraegtMehrereDarstellungen()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (vocabId, _) = await TestApi.CreateStoreVocabAsync(father, "run", "laufen");
 
         foreach (var (key, description, weight) in new[]
@@ -42,7 +42,7 @@ public class MediaLinkTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task EinBild_DientMehrerenVokabeln()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var assetId = await CreateAssetAsync(father, "link_shared_running", "Laufendes Einhorn");
 
         // "run" (en→de) and "laufen" (de→en) are separate store rows - the same image serves both.
@@ -62,7 +62,7 @@ public class MediaLinkTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task DasselbeBild_ZweimalAmSelbenTraeger_Liefert409()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var assetId = await CreateAssetAsync(father, "link_dupe", "Ein Motiv");
         var (vocabId, _) = await TestApi.CreateStoreVocabAsync(father, "dupe-word", "Dublette");
 
@@ -76,7 +76,7 @@ public class MediaLinkTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task ZuordnungPerKey_FuerAgentenDieUeberSprechendeKeysArbeiten()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         await CreateAssetAsync(father, "link_by_key_motiv", "Per Key zugeordnet");
         var (vocabId, _) = await TestApi.CreateStoreVocabAsync(father, "keyword", "Schluesselwort");
 
@@ -91,7 +91,7 @@ public class MediaLinkTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task WederIdNochKey_Liefert400()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (vocabId, _) = await TestApi.CreateStoreVocabAsync(father, "leer-ref", "Ohne Referenz");
 
         var res = await father.PostAsJsonAsync($"/api/v1/creator/vocabulary/{vocabId}/media", new { weight = 1 });
@@ -103,7 +103,7 @@ public class MediaLinkTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task ItemZuordnung_StehtNebenDerStoreZuordnung()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("cat", "Katze"));
         var itemId = await FirstItemIdAsync(father, exerciseId);
         var vocabId = await FirstItemVocabIdAsync(father, exerciseId);
@@ -127,7 +127,7 @@ public class MediaLinkTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task Titelbild_HaengtAnDerUebung_OhneWortbezug()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("story", "Geschichte"));
         var assetId = await CreateAssetAsync(father, "link_cover", "Aufmacher der Lektion");
 
@@ -143,7 +143,7 @@ public class MediaLinkTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task FremdesItem_UeberFremdeUebung_WirdNichtGetroffen()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var exerciseA = await TestApi.CreateVocabExerciseAsync(father, ("alpha", "Alpha"));
         var exerciseB = await TestApi.CreateVocabExerciseAsync(father, ("beta", "Beta"));
         var itemOfA = await FirstItemIdAsync(father, exerciseA);
@@ -159,9 +159,9 @@ public class MediaLinkTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task OhneSchreibrecht_BleibtDieUebungZu_DerStoreAberOffen()
     {
-        var owner = await TestApi.FatherAsync(factory);
+        var owner = await TestApi.AdultAsync(factory);
         // Herr Schmidt (seed account 2) is a creator but not the author of this exercise.
-        var stranger = await TestApi.FatherAsync(factory, id: 2, pin: "9999");
+        var stranger = await TestApi.AdultAsync(factory, id: 2, pin: "9999");
 
         var exerciseId = await TestApi.CreateVocabExerciseAsync(owner, ("locked", "gesperrt"));
         var assetId = await CreateAssetAsync(stranger, "link_stranger", "Motiv eines Fremden");
@@ -181,7 +181,7 @@ public class MediaLinkTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task Loesen_LaesstDasBildImStore()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var assetId = await CreateAssetAsync(father, "link_survives", "Bleibt im Store");
         var (vocabId, _) = await TestApi.CreateStoreVocabAsync(father, "detach-word", "loesen");
 
@@ -198,7 +198,7 @@ public class MediaLinkTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task FremdeZuordnung_UeberFremdenTraeger_Liefert404()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var assetId = await CreateAssetAsync(father, "link_wrong_carrier", "Motiv");
         var (vocabA, _) = await TestApi.CreateStoreVocabAsync(father, "carrier-a", "Traeger A");
         var (vocabB, _) = await TestApi.CreateStoreVocabAsync(father, "carrier-b", "Traeger B");
@@ -214,7 +214,7 @@ public class MediaLinkTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task RangAendern_SortiertDieAuswahlNeu()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (vocabId, _) = await TestApi.CreateStoreVocabAsync(father, "rank-word", "Rang");
         var first = await CreateAssetAsync(father, "link_rank_a", "Motiv A");
         var second = await CreateAssetAsync(father, "link_rank_b", "Motiv B");
@@ -239,7 +239,7 @@ public class MediaLinkTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task BildLoeschen_RaeumtSeineZuordnungenAb()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var assetId = await CreateAssetAsync(father, "link_cascade", "Verschwindet gleich");
         var (vocabId, _) = await TestApi.CreateStoreVocabAsync(father, "cascade-word", "Kaskade");
         await father.PostAsJsonAsync($"/api/v1/creator/vocabulary/{vocabId}/media", new { mediaAssetId = assetId });

@@ -23,7 +23,7 @@ public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Subject_SeriesUnit_Exercise_Anlegen_Lesen_Auswerten()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (seriesId, seriesUnitId, exerciseId) = await TestApi.CreateArithmeticExerciseAsync(father);
         var basePath = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic";
 
@@ -44,7 +44,7 @@ public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task ListCheck_Ungeordnet_ZaehltNennungenUnabhaengigVonReihenfolge()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (seriesId, seriesUnitId) = await CreateSeriesUnitAsync(father, TestApi.UniqueName("Erdkunde"), "Bundesländer");
         var basePath = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/list";
 
@@ -83,7 +83,7 @@ public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task ListCheck_Geordnet_WertetPositionsgenauUeberIndexAus()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (seriesId, seriesUnitId) = await CreateSeriesUnitAsync(father, TestApi.UniqueName("Reihenfolge"), "Podest");
         var basePath = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/list";
 
@@ -125,7 +125,7 @@ public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Liste_OhneAnweisung_WirdAbgewiesen_BeimAnlegenUndBeimAendern()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (seriesId, seriesUnitId) = await CreateSeriesUnitAsync(father, TestApi.UniqueName("Liste-Pflicht"), "Unit");
         var basePath = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/list";
         object Payload(string? instruction) => new
@@ -150,7 +150,7 @@ public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task ExerciseDefaults_WerdenGespeichertUndZurueckgegeben()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (seriesId, seriesUnitId) = await CreateSeriesUnitAsync(father, TestApi.UniqueName("Default-Fach"), "Unit");
         var basePath = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary";
 
@@ -193,7 +193,7 @@ public class CatalogExerciseTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Sohn_DarfKeineUebungAnlegen_403()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (seriesId, seriesUnitId) = await CreateSeriesUnitAsync(father, TestApi.UniqueName("Fach"), "Unit");
         var child = await TestApi.ChildAsync(factory);
 

@@ -27,7 +27,7 @@ public class PatchClearFieldTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Kind_Geburtsjahr_und_Klasse_lassen_sich_leeren()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
             new { name = $"Clear-Kind {Guid.NewGuid():N}", birthYear = 2013, grade = 6, pin = "1111" }));
 
@@ -51,7 +51,7 @@ public class PatchClearFieldTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Lueckentext_Uebersetzung_und_Wortpool_lassen_sich_leeren()
     {
-        var creator = await TestApi.FatherAsync(factory);
+        var creator = await TestApi.AdultAsync(factory);
         var id = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/cloze-texts", new
         {
             key = $"cz_clear_{Guid.NewGuid():N}",
@@ -88,7 +88,7 @@ public class PatchClearFieldTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Fachlehrer_Profil_wird_wieder_fachneutral_und_werkunabhaengig()
     {
-        var creator = await TestApi.FatherAsync(factory);
+        var creator = await TestApi.AdultAsync(factory);
         var seriesId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/textbook-series",
             new { name = $"Clear-Reihe {Guid.NewGuid():N}", subjectName = "Englisch", sourceLanguage = "en", targetLanguage = "de" }));
         var subjectId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/subjects",
@@ -125,7 +125,7 @@ public class PatchClearFieldTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Lehrbuch_Reihenwechsel_verwirft_die_Unit_der_alten_Reihe()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
             new { name = $"Buch-Kind {Guid.NewGuid():N}", pin = "1111" }));
 
@@ -157,7 +157,7 @@ public class PatchClearFieldTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Lehrbuch_laesst_sich_aus_dem_Katalog_loesen()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
             new { name = $"Katalog-Kind {Guid.NewGuid():N}", pin = "1111" }));
         var seriesId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/textbook-series",

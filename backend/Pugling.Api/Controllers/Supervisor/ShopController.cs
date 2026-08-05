@@ -177,7 +177,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
             .FirstOrDefaultAsync(a => a.Id == articleId && a.AdultId == supervisorId, ct);
         if (article is null) return NotFound();
 
-        var listings = await shop.ListingsForFatherAsync(supervisorId, activeOnly: false, DateTime.UtcNow, ct);
+        var listings = await shop.ListingsForSupervisorAsync(supervisorId, activeOnly: false, DateTime.UtcNow, ct);
         return listings.Where(l => l.ShopArticleId == articleId).Select(MapListing).ToList();
     }
 

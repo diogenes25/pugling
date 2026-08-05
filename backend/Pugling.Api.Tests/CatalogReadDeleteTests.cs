@@ -27,7 +27,7 @@ public class CatalogReadDeleteTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task Unit_Einzelansicht_Zeigt_Die_Unit_Einer_Fremden_Reihe_Nicht()
     {
-        var creator = await TestApi.FatherAsync(factory);
+        var creator = await TestApi.AdultAsync(factory);
         var seriesId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/textbook-series", new { name = Eindeutig("Reihe") }));
         var unitId = await TestApi.IdAsync(await creator.PostAsJsonAsync(
             $"/api/v1/creator/textbook-series/{seriesId}/units", new { label = "Unit 3", orderIndex = 3 }));
@@ -46,7 +46,7 @@ public class CatalogReadDeleteTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task Uebungs_Kategorien_Lesen_Und_Loeschen()
     {
-        var creator = await TestApi.FatherAsync(factory);
+        var creator = await TestApi.AdultAsync(factory);
         var subjectId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/subjects", new { name = Eindeutig("Fach") }));
         var url = $"/api/v1/creator/subjects/{subjectId}/categories";
         var categoryId = await TestApi.IdAsync(await creator.PostAsJsonAsync(url, new { name = "Grammatik" }));
@@ -62,7 +62,7 @@ public class CatalogReadDeleteTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task Lueckentexte_Lesen_Per_Id_Und_Key_Und_Loeschen()
     {
-        var creator = await TestApi.FatherAsync(factory);
+        var creator = await TestApi.AdultAsync(factory);
         var key = Eindeutig("cz");
         var id = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/cloze-texts", new
         {
@@ -89,7 +89,7 @@ public class CatalogReadDeleteTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task Buchreihen_Liste_Und_Unit_Loeschen()
     {
-        var creator = await TestApi.FatherAsync(factory);
+        var creator = await TestApi.AdultAsync(factory);
         var seriesId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/textbook-series",
             new { name = Eindeutig("Access"), sourceLanguage = "en", targetLanguage = "de" }));
         var unitId = await TestApi.IdAsync(await creator.PostAsJsonAsync(
@@ -109,7 +109,7 @@ public class CatalogReadDeleteTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task Store_Vokabel_Loeschen_Nur_Wenn_Keine_Uebung_Sie_Nutzt()
     {
-        var creator = await TestApi.FatherAsync(factory);
+        var creator = await TestApi.AdultAsync(factory);
         var (unbenutztId, _) = await TestApi.CreateStoreVocabAsync(creator, Eindeutig("lonely"), "einsam");
         var (_, benutztKey) = await TestApi.CreateStoreVocabAsync(creator, Eindeutig("used"), "benutzt");
         await TestApi.CreateVocabRefExerciseAsync(creator, benutztKey);
@@ -130,7 +130,7 @@ public class CatalogReadDeleteTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task Vokabel_Item_Einzeln_Lesen()
     {
-        var creator = await TestApi.FatherAsync(factory);
+        var creator = await TestApi.AdultAsync(factory);
         var (_, key) = await TestApi.CreateStoreVocabAsync(creator, Eindeutig("hedgehog"), "Igel");
         var vocabId = await TestApi.ResolveVocabIdAsync(creator, key);
 
@@ -164,7 +164,7 @@ public class CatalogReadDeleteTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task Vokabel_Tags_Anhaengen_Und_Wieder_Loesen()
     {
-        var creator = await TestApi.FatherAsync(factory);
+        var creator = await TestApi.AdultAsync(factory);
         var (vocabId, _) = await TestApi.CreateStoreVocabAsync(creator, Eindeutig("otter"), "Otter");
         var url = $"/api/v1/creator/vocabulary/{vocabId}/tags";
 
@@ -184,7 +184,7 @@ public class CatalogReadDeleteTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task Uebungs_Recht_Laesst_Sich_Zurueckziehen()
     {
-        var owner = await TestApi.FatherAsync(factory);
+        var owner = await TestApi.AdultAsync(factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(owner);
         var fremderId = await TestApi.IdAsync(await factory.CreateClient().PostAsJsonAsync(
             "/api/v1/supervisor/adults", new { name = "Kollege", pin = "6501" }));

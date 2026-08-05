@@ -21,7 +21,7 @@ public class ExerciseSharingTests(PuglingWebAppFactory factory) : IClassFixture<
     {
         var id = await TestApi.IdAsync(await _factory.CreateClient()
             .PostAsJsonAsync("/api/v1/supervisor/adults", new { name, pin }));
-        return (await TestApi.FatherAsync(_factory, id, pin), id);
+        return (await TestApi.AdultAsync(_factory, id, pin), id);
     }
 
     /// <summary>Creates a populated, publicly assignable vocabulary exercise and returns its ids.</summary>

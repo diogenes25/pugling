@@ -110,7 +110,7 @@ public class ListPlayTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task Klausur_UngeordneteListe_ZaehltJedeNennungUnabhaengigVonDerKarte()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await CreateListAsync(father, ordered: false);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(
             _factory, exerciseId, (int)TestStage.FreeText, useLeitner: false);
@@ -134,7 +134,7 @@ public class ListPlayTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task Klausur_WiederholteNennung_ZaehltEinmalUndErscheintAlsFehlnennung()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await CreateListAsync(father, ordered: false);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(
             _factory, exerciseId, (int)TestStage.FreeText, useLeitner: false);
@@ -159,7 +159,7 @@ public class ListPlayTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task Karte_WeistDieMengenRegelAus_GeordneteListeNicht()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var child = await TestApi.ChildAsync(_factory);
 
         var unordered = await CreateListAsync(father, ordered: false);
@@ -179,7 +179,7 @@ public class ListPlayTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task Klausur_GeordneteListe_WertetWeiterPositionsgenau()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await CreateListAsync(father, ordered: true);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(
             _factory, exerciseId, (int)TestStage.FreeText, useLeitner: false);
@@ -204,7 +204,7 @@ public class ListPlayTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task Uebungsrunde_AntwortBestimmtDenEintrag_WiederholungBewegtNichts()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await CreateListAsync(father, ordered: false);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);

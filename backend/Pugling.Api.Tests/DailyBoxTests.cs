@@ -15,7 +15,7 @@ public class DailyBoxTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task BestandenerPositionsTest_ErfuelltTagesziel_GewaehrtGenauEineBoxProTag()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father); // hello→hallo, goodbye→tschüss
         var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(factory);
@@ -72,7 +72,7 @@ public class DailyBoxTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task SiebenTageStreak_SkaliertDieBoxUeberDieBasisspanneHinaus()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
             new { name = "Streak-Kind", pin = "8302" }));
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);

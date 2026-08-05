@@ -165,6 +165,11 @@ Lernstand – positionsgebunden *und* plan-übergreifend je Vokabel-Item.
   für Endpunkte unter `{childId}` den `[ServiceFilter(typeof(ChildOwnershipFilter))]` nutzen
   (nicht inline wiederholen). Sonst `AuthAccess` explizit. Kindbezogene Ressourcen leben unter
   `api/v1/supervisor/children/{childId}/…`; top-level Aggregate, die nur nach Kind filtern, nehmen `?childId=`.
+- **Lösungsfeld-Regel**: Gibt eine Action in ihrem Nutzlast-Graphen ein Feld namens
+  `Answer`/`Solution`/`CorrectAnswer`/`Translation` heraus, muss sie auf eine Rollenmenge **ohne**
+  `Student` gegated sein (`Creator` oder `Supervisor` genügt je einzeln) – nicht zu verwechseln mit
+  `Expected` (Reveal nach der Antwort, erlaubt). Mechanisch gehalten von
+  `ConventionGuardTests.Actions_Mit_Loesungsfeld_Sind_Vor_Dem_Studenten_Gegated`.
 - **EF**: `AsNoTracking()` für Lesequeries, in DB filtern (`Where` vor `ToListAsync`), N+1 via `Include`/
   Projektion vermeiden, `async`/`Async`-Suffix, `CancellationToken` durchreichen.
 - **Rolle & Selbstbetrug**: Für den Sohn serverseitig erzwingen (Stufe aus dem Fahrplan, Heartbeat clampen,

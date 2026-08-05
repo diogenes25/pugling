@@ -31,7 +31,7 @@ public class OwnershipTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     public async Task Vater_SiehtNurEigenenDatensatz()
     {
         await RegisterFatherAsync("2222"); // a second adult now exists …
-        var father1 = await TestApi.FatherAsync(factory);
+        var father1 = await TestApi.AdultAsync(factory);
 
         var list = await (await father1.GetAsync("/api/v1/supervisor/adults")).Content.ReadFromJsonAsync<JsonElement>();
 
@@ -44,7 +44,7 @@ public class OwnershipTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     public async Task Vater_KannAufFremdenVaterNichtZugreifen_403()
     {
         var id2 = await RegisterFatherAsync("2222");
-        var father1 = await TestApi.FatherAsync(factory);
+        var father1 = await TestApi.AdultAsync(factory);
 
         Assert.Equal(HttpStatusCode.Forbidden, (await father1.GetAsync($"/api/v1/supervisor/adults/{id2}")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await father1.DeleteAsync($"/api/v1/supervisor/adults/{id2}")).StatusCode);
@@ -55,24 +55,24 @@ public class OwnershipTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     {
         // The second adult creates a child …
         var id2 = await RegisterFatherAsync("2222");
-        var father2 = await TestApi.FatherAsync(factory, id2, "2222");
+        var father2 = await TestApi.AdultAsync(factory, id2, "2222");
         var child2 = await TestApi.IdAsync(await father2.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Kind2" }));
 
         // … the first adult must not see it (ChildOwnershipFilter → 404, no enumeration).
-        var father1 = await TestApi.FatherAsync(factory);
+        var father1 = await TestApi.AdultAsync(factory);
         Assert.Equal(HttpStatusCode.NotFound, (await father1.GetAsync($"/api/v1/supervisor/children/{child2}")).StatusCode);
     }
 
     [Fact]
     public async Task FremderVater_KannPlanNichtSehen_403()
     {
-        var father1 = await TestApi.FatherAsync(factory);
+        var father1 = await TestApi.AdultAsync(factory);
         var planId = await TestApi.CreateEmptyPlanAsync(father1);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father1);
         var (reportPlanId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.SelfAssess);
 
         var id2 = await RegisterFatherAsync("2222");
-        var father2 = await TestApi.FatherAsync(factory, id2, "2222");
+        var father2 = await TestApi.AdultAsync(factory, id2, "2222");
 
         Assert.Equal(HttpStatusCode.Forbidden, (await father2.GetAsync($"/api/v1/supervisor/study-plans/{planId}")).StatusCode);
 
@@ -87,7 +87,7 @@ public class OwnershipTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     public async Task Sohn_KannPlanEinesAnderenKindes_NichtBenutzen_403()
     {
         // The adult creates a second child and seeds a position plan for it …
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var otherChildId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Bruder" }));
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.SelfAssess, childId: otherChildId);

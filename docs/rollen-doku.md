@@ -74,7 +74,7 @@ Diese Seiten betreffen alle drei Rollen oder erklären die Doku selbst:
 | --- | --- |
 | [docs/grundprinzip.md](grundprinzip.md) | Fachliches Drei-Ebenen-Modell. |
 | [wiki/01 · Überblick & Architektur](../wiki/01-ueberblick-architektur.md) | Technische Landkarte über Rollen, Datenmodell, Services und End-to-End-Loop. |
-| [wiki/02 · Authentifizierung](../wiki/02-authentifizierung.md) | Accounts, Rollenclaims, Ownership und Anti-Schummel-Regeln. |
+| [wiki/02 · Authentifizierung](../wiki/02-authentifizierung.md) | Accounts, Rollenclaims, Ownership, Anti-Schummel-Regeln — und die vierte, quer liegende `Admin`-Rolle (Break-Glass). |
 | [wiki/07 · API-Referenz](../wiki/07-api-referenz.md) | Endpunkt-Index, jetzt zusätzlich nach Rollen gegliedert. |
 | [wiki/09 · LLM-Kochbuch](../wiki/09-llm-kochbuch.md) | Prompt → fertiger Lernplan über die API. |
 | [docs/obsidian.md](obsidian.md) | Doku-Konventionen, Tags und Wissenskarte. |

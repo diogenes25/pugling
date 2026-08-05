@@ -51,7 +51,7 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task LeereVokabeluebung_LaesstSichNichtZuweisen()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (s, c) = await SeriesUnitAsync(father, "Leer-Zuweisen");
         var exerciseId = await EmptyVocabExerciseAsync(father, s, c);
         var planId = await EmptyPlanAsync(father);
@@ -71,7 +71,7 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task GefuellteVokabeluebung_LaesstSichWeiterZuweisen()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (_, k1) = await TestApi.CreateStoreVocabAsync(father, "spring", "Frühling");
         var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, k1);
         var planId = await EmptyPlanAsync(father);
@@ -90,7 +90,7 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task ErstAnlegenDannFuellen_BleibtMoeglich()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (s, c) = await SeriesUnitAsync(father, "Erst-Leer-Dann-Voll");
         var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
             $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary",
@@ -122,7 +122,7 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task Aufsatz_OhneItems_BleibtZuweisbar()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (s, c) = await SeriesUnitAsync(father, "Aufsatz-Zuweisen");
         var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
             $"/api/v1/creator/textbook-series/{s}/units/{c}/essays",
@@ -155,7 +155,7 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task Vorschau_LeereVokabeluebung_MeldetExerciseEmpty()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (s, c) = await SeriesUnitAsync(father, "Leer-Vorschau");
         var exerciseId = await EmptyVocabExerciseAsync(father, s, c);
 
@@ -173,7 +173,7 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task RefsFromTags_OhneTreffer_LaesstItemsUnberuehrt()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (_, key) = await TestApi.CreateStoreVocabAsync(father, "bridge", "Brücke");
         var (s, c) = await SeriesUnitAsync(father, "Refs-Ohne-Treffer");
         var vocabularyId = await TestApi.ResolveVocabIdAsync(father, key);
@@ -203,7 +203,7 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task RefsFromTags_OhneTags_BleibtValidierungsfehler()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (_, key) = await TestApi.CreateStoreVocabAsync(father, "river", "Fluss");
         var (s, c) = await SeriesUnitAsync(father, "Refs-Ohne-Tags");
         var vocabularyId = await TestApi.ResolveVocabIdAsync(father, key);

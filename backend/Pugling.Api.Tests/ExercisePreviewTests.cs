@@ -26,7 +26,7 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Vokabel_Preview_LiefertAufgabenOhneLoesung_UndBewertetOhneNebenwirkung()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("hello", "hallo"), ("goodbye", "tschüss"));
 
         var before = Counts();
@@ -65,7 +65,7 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Rechen_Preview_BewertetGetippteAntwort()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (_, _, exerciseId) = await TestApi.CreateArithmeticExerciseAsync(father);
 
         var before = Counts();
@@ -89,7 +89,7 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Liste_Preview_BewertetAlsMenge_UndWeistDieRegelAus()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
             new { name = TestApi.UniqueName("Vorschau-Liste") }));
         var seriesId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/textbook-series",
@@ -145,7 +145,7 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Preview_UnbekannteUebung_Liefert404()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var res = await father.GetAsync("/api/v1/creator/exercises/999999/preview");
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
     }
@@ -153,7 +153,7 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Preview_NurFuerVater()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var child = await TestApi.ChildAsync(_factory);
 
@@ -164,7 +164,7 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Preview_StufeUmschalten_MultipleChoice_LiefertAuswahl()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("hello", "hallo"), ("goodbye", "tschüss"), ("cat", "Katze"));
 
         // stage=6 (multiple choice): typed, every task carries choices; the switchable stages come along.
@@ -192,7 +192,7 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Preview_Hoerstufe_LiefertAudioquelle_OhneLoesung()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (id, key) = await TestApi.CreateStoreVocabAsync(father, "hello", "hallo");
         // Add pronunciation audio (PATCH) - only then can the listening stage "read out" the word.
         var patch = await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{id}",

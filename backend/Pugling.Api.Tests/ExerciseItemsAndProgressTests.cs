@@ -47,7 +47,7 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
     [Fact]
     public async Task Item_MitBereitsEnthaltenerVokabel_Liefert409()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (s, c, exerciseId) = await VocabWithItemsAsync(father, ("hello", "hallo"));
 
         var items = await father.GetFromJsonAsync<List<JsonElement>>(
@@ -68,7 +68,7 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
     [Fact]
     public async Task Items_CrudFullCycle_InlineUndPerStoreId()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (s, c, exerciseId) = await VocabWithItemsAsync(father, ("hello", "hallo"));
         var itemsUrl = $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary/{exerciseId}/items";
 
@@ -99,7 +99,7 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
     [Fact]
     public async Task AddItem_OhneVokabelAngabe_Liefert400()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (s, c, exerciseId) = await VocabWithItemsAsync(father);
         var res = await father.PostAsJsonAsync(
             $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary/{exerciseId}/items", new { hint = "nix" });
@@ -109,7 +109,7 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
     [Fact]
     public async Task AddItem_FremderVater_Liefert403()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (s, c, exerciseId) = await VocabWithItemsAsync(father);
 
         // A second adult (not the author) must not change the exercise's items.
@@ -122,7 +122,7 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
             db.SaveChanges();
             otherId = other.Id;
         }
-        var stranger = await TestApi.FatherAsync(_factory, otherId, "2222");
+        var stranger = await TestApi.AdultAsync(_factory, otherId, "2222");
 
         var res = await stranger.PostAsJsonAsync(
             $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary/{exerciseId}/items", new { front = "sun", back = "Sonne" });
@@ -134,7 +134,7 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
     [Fact]
     public async Task Practice_SchreibtItemFortschritt_UndHistorie_UndWortRollup()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         // Unique words, so that the per-child shared progress/store does not collide with other tests.
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("apple", "Apfel"), ("banana", "Banane"));
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
@@ -189,7 +189,7 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
     [Fact]
     public async Task WiederholteAntwort_TreibtBeherrschungNichtHoch_HistorieLoggtTrotzdem()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         // Unique words (no collision with the per-child shared progress of other tests).
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("zebra", "Zebra"), ("tiger", "Tiger"));
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
@@ -215,7 +215,7 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
     [Fact]
     public async Task ItemMutation_BeiInPlanUebung_BlocktIndexVerschiebung_ErlaubtAnhaengen()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (s, c, exerciseId) = await VocabWithItemsAsync(father, ("hello", "hallo"), ("bye", "tschuess"));
         var itemsUrl = $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary/{exerciseId}/items";
         var firstId = (await father.GetFromJsonAsync<List<JsonElement>>(itemsUrl))![0].GetProperty("id").GetInt32();

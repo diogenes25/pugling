@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/auth, bereich/doku]
+tags: [typ/story, status/abgenommen, bereich/auth, bereich/doku]
 aliases: [Father als Tabellenname]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Aufräumen
 groesse: S
@@ -172,3 +172,21 @@ Testzahl unverändert, ist die Umbenennung vollständig und folgenlos. Ergänzen
   2026-08-04.
 - **2026-08-03** — geschätzt: `groesse: S`, `wo: backend`, `migration: nein`, `vertragsbruch: nein`,
   Risiken und Angriffsplan ergänzt. Autonom getroffen, Nutzerauftrag 2026-08-04.
+- **2026-08-05** — gebaut (Nachtlauf 2, Sprint 1): `AuthAccess.IsOwnedBy`s Parameter
+  `authorFatherId` → `authorAdultId`; `ShopService.ListingsForFatherAsync` →
+  `ListingsForSupervisorAsync` samt der einen Aufrufstelle in `ShopController.cs:180`;
+  `TestApi.FatherAsync` → `TestApi.AdultAsync` per wortgrenzen-scharfem Rename
+  (`\bFatherAsync\b`, damit `NewFatherAsync`-Wrapper unberührt bleiben) über **71** Testdateien
+  (gemessen heute, nicht die 69 aus dem Ausformulieren — Abweichung nicht untersucht, vermutlich
+  Dateizuwachs seither). `dotnet build` sauber, `dotnet test Pugling.sln -c Release` →
+  **734/734 grün** (unverändert gegenüber vor dieser Story), `dotnet format --verify-no-changes` clean.
+  **Ehrlich benannt, AK4-Abweichung:** Der wörtliche Grep-Probe `grep -rn "FatherAsync" backend/` liefert
+  **weiterhin Treffer** in drei Dateien (`RemarkTests.cs`, `OwnershipTests.cs`, `ExerciseGrantsTests.cs`)
+  — das sind aber **keine** `TestApi.FatherAsync`-Aufrufe, sondern drei unabhängige, lokale private
+  Test-Helfer (`RegisterFatherAsync`, `FreshFatherAsync`, `RegisterAdminFatherAsync`), die der
+  Ist-Stand beim Ausformulieren nicht erfasst hatte und die außerhalb des in Entscheidung 1–3
+  festgelegten Umfangs (nur `TestApi.FatherAsync` und sein Wrapper) liegen. Bewusst nicht mitgezogen,
+  um den Scope nicht nachträglich zu erweitern — als eigener, sehr kleiner Fund notiert, nicht als
+  eigene Story angelegt (drei lokale Testmethodennamen, kein produktionsnaher Code, kein
+  Domänensprache-Risiko wie beim eigentlichen Fund dieser Story).
+  `pugling-reviewer` lief gegen den Diff.

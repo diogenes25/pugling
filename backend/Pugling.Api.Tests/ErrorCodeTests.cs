@@ -87,7 +87,7 @@ public class ErrorCodeTests(SchemaOnlyWebAppFactory factory) : IClassFixture<Sch
     public async Task FalscheRolle_LiefertForbidden()
     {
         // Path (c): a supervisor token on a child-only route (me/*) → 403 forbidden.
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var res = await father.GetAsync("/api/v1/student/me/points");
 
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
@@ -98,7 +98,7 @@ public class ErrorCodeTests(SchemaOnlyWebAppFactory factory) : IClassFixture<Sch
     public async Task UnbekannteRessource_LiefertNotFound()
     {
         // Path: a bare NotFound() from a controller → the [ApiController] auto-conversion through the factory.
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var res = await father.GetAsync("/api/v1/creator/subjects/999999");
 
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
@@ -109,7 +109,7 @@ public class ErrorCodeTests(SchemaOnlyWebAppFactory factory) : IClassFixture<Sch
     public async Task FremderPlan_OwnershipFilter_LiefertProblemDetailsMitCode()
     {
         // Regression guard: the PlanOwnershipFilter used to return a raw German string.
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var res = await father.GetAsync("/api/v1/supervisor/study-plans/999999/positions");
 
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
@@ -122,7 +122,7 @@ public class ErrorCodeTests(SchemaOnlyWebAppFactory factory) : IClassFixture<Sch
     public async Task SkinDoppeltKaufen_LiefertSkinAlreadyUnlocked()
     {
         // Path (a): the starter skin "pug" is already unlocked → buying it again gives 409.
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var childId = await TestApi.IdAsync(
             await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Code-Kind", pin = "7401" }));
         var child = await TestApi.ChildAsync(factory, childId, "7401");
@@ -136,7 +136,7 @@ public class ErrorCodeTests(SchemaOnlyWebAppFactory factory) : IClassFixture<Sch
     [Fact]
     public async Task SkinOhneGems_LiefertInsufficientGems()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var childId = await TestApi.IdAsync(
             await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Code-Kind", pin = "7402" }));
         var child = await TestApi.ChildAsync(factory, childId, "7402");

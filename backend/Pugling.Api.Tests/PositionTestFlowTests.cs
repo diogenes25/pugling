@@ -19,7 +19,7 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task Test_AlleRichtig_Bestanden_100Prozent()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
@@ -44,7 +44,7 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task Test_HalbRichtig_UnterStandardgrenze_NichtBestanden()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
@@ -64,7 +64,7 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task Test_EigeneZielSchwelle_WirdRespektiert()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         // A position with a milder pass threshold (40 %): 50 % then suffice.
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText, goalThreshold: 40);
@@ -95,7 +95,7 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
     [InlineData(90, false)]  // 50 % miss a strict percent threshold
     public async Task Test_KatalogCheck_SchwelleIstProzent(int goalThreshold, bool expectPassed)
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (_, _, exerciseId) = await TestApi.CreateArithmeticExerciseAsync(
             father, ("1 + 1", 2), ("2 + 2", 4), ("3 + 3", 6), ("4 + 4", 8));
         var (planId, positionId) = TestApi.SeedLeitnerPosition(
@@ -138,7 +138,7 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task Test_ErgebnisGenauAufDerSchwelle_IstBestanden()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father); // hello→hallo, goodbye→tschüss
         // A threshold of exactly 50 %: with two tasks one correct answer is exactly the bound.
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText,
@@ -181,7 +181,7 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
     public async Task Test_GleichwertigeUebersetzung_WirdAlsRichtigGewertet(
         int stage, string word, string translation, string alternative)
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (_, key) = await TestApi.CreateStoreVocabAsync(father, word, translation,
             translationAlternatives: [alternative]);
         var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
@@ -211,7 +211,7 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task Test_Rueckwaerts_AkzeptiertDieAlternativeNicht()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (id, key) = await TestApi.CreateStoreVocabAsync(father, "vast", "weit",
             translationAlternatives: ["ausgedehnt"]);
         var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
@@ -268,7 +268,7 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task Test_HomonymeAkzeptierenSichNichtGegenseitig()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (_, geld) = await TestApi.CreateStoreVocabAsync(father, "bank", "Bank");
         var (_, ufer) = await TestApi.CreateStoreVocabAsync(father, "bank", "Ufer");
         var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, geld, ufer);
@@ -297,7 +297,7 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
     {
         // The single view of the attempt (a C3 coverage gap): it is the evaluation the child sees after
         // submitting - and the only place where the per-item results can be read.
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
@@ -326,7 +326,7 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task LetterBoxes_ImTest_TraegtDieselbeMaskeWieDieUebung()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("aufwachsen", "to grow up"));
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.LetterBoxes);
         var child = await TestApi.ChildAsync(_factory);
@@ -350,7 +350,7 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task Submit_MeldetVerbleibendeVersuche_ProTag()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
@@ -382,7 +382,7 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task Submit_SupervisorVersuch_LiefertKonstantenFuellwert()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);

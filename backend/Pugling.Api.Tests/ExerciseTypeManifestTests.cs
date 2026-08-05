@@ -83,7 +83,7 @@ public class ExerciseTypeManifestTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task Manifest_IstFuerBeideRollenLesbar_UndVollstaendig()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var son = await TestApi.ChildAsync(factory);
 
         var res = await father.GetAsync("/api/v1/creator/exercise-types");
@@ -106,7 +106,7 @@ public class ExerciseTypeManifestTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task Einzelabruf_LiefertTyp_UndUnbekanntes404()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
 
         var ok = await father.GetAsync("/api/v1/creator/exercise-types/Birkenbihl");
         Assert.Equal(HttpStatusCode.OK, ok.StatusCode);

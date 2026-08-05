@@ -23,7 +23,7 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task Position_Anlegen_Abrufen_Spielen()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (_, k1) = await TestApi.CreateStoreVocabAsync(father, "spring", "Frühling");
         var (_, k2) = await TestApi.CreateStoreVocabAsync(father, "autumn", "Herbst");
         var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, k1, k2);
@@ -50,7 +50,7 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task Position_Loeschen_OhneVerlauf204_MitVerlauf409()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (_, key) = await TestApi.CreateStoreVocabAsync(father, "winter", "Winter");
         var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
         var planId = await EmptyPlanAsync(father);
@@ -76,7 +76,7 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task Position_UnbekannteUebung_Liefert400()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var planId = await EmptyPlanAsync(father);
         var res = await father.PostAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}/positions", new { exerciseId = 999999 });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
@@ -85,7 +85,7 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task Position_UebernimmtExerciseDefaults_UndOrderStrategyIstApiSichtbar()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Defaults-Position" }));
         var seriesId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/textbook-series",
             new { name = TestApi.UniqueName("Defaults-Reihe"), subjectId }));
@@ -147,7 +147,7 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task Plan_Loeschen_EntferntPlanMitGespielterPosition()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (_, key) = await TestApi.CreateStoreVocabAsync(father, "summer", "Sommer");
         var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
         var planId = await EmptyPlanAsync(father);
@@ -183,7 +183,7 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
     [InlineData(-5)]
     public async Task Position_SchwelleAusserhalbProzent_WirdAbgewiesen(int goalThreshold)
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var planId = await EmptyPlanAsync(father);
         var url = $"/api/v1/supervisor/study-plans/{planId}/positions";
@@ -232,7 +232,7 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task RequireTypedTest_AufEinemTypOhneGetippteStufe_WirdAbgewiesen()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await CreateBirkenbihlExerciseAsync(father);
         var planId = await EmptyPlanAsync(father);
         var url = $"/api/v1/supervisor/study-plans/{planId}/positions";
@@ -257,7 +257,7 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
     public async Task Einzelne_Position_Wird_Gelesen_Eine_Fremde_Nicht()
     {
         // The single view of the position (a C3 coverage gap): only the list was covered so far.
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var planId = await EmptyPlanAsync(father);
         var url = $"/api/v1/supervisor/study-plans/{planId}/positions";

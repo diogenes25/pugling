@@ -33,7 +33,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task Erfassen_LiefertId_UndSpeichertKontext()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
 
         var res = await father.PostAsJsonAsync(Url, new
         {
@@ -71,7 +71,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task OhneKategorie_BleibtUnspecified()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var res = await father.PostAsJsonAsync(Url, new { text = "Nur schnell notiert" });
         var dto = await res.Content.ReadFromJsonAsync<JsonElement>();
 
@@ -82,7 +82,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task LeererText_IstValidierungsfehler()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var res = await father.PostAsJsonAsync(Url, new { text = "   " });
 
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
@@ -101,7 +101,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task Sohn_SiehtEigene_AberNichtDieDesVaters()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var child = await TestApi.ChildAsync(_factory);
 
         var supervisorId = await CreateAsync(father, "Interne Notiz mit Codebezug");
@@ -124,7 +124,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task Vater_SiehtDieAnmerkungSeinesKindes()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var child = await TestApi.ChildAsync(_factory);
 
         var childRemark = await CreateAsync(child, "Der Shop-Kauf fühlt sich komisch an");
@@ -139,10 +139,10 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task FremderSupervisor_TauchtNichtInDerVorgabesichtAuf()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var child = await TestApi.ChildAsync(_factory);
         // Adult 2 is the seeded teacher - they supervise no child.
-        var teacher = await TestApi.FatherAsync(_factory, id: 2, pin: "9999");
+        var teacher = await TestApi.AdultAsync(_factory, id: 2, pin: "9999");
 
         var fatherRemark = await CreateAsync(father, "Nur für Papa");
         var childRemark = await CreateAsync(child, "Nur für den Sohn");
@@ -166,7 +166,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task MineFilter_BlendetFremdeAus()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var child = await TestApi.ChildAsync(_factory);
 
         var own = await CreateAsync(father, "Eigene Beobachtung");
@@ -188,7 +188,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task Antwort_BleibtAuchBeiZurueckgestellt_Erhalten()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var id = await CreateAsync(father, "Wie ändere ich meine E-Mail?");
 
         var res = await father.PatchAsJsonAsync($"{Url}/{id}", new
@@ -213,7 +213,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task Patch_NullLaesstWerteStehen_ClearLeertSie()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var id = await CreateAsync(father, "Ursprungstext", new { route = "/vater/shop", appArea = "vater", childId = 1 });
         await father.PatchAsJsonAsync($"{Url}/{id}", new { answer = "Erste Antwort", answeredBy = "claude-code" });
 
@@ -237,7 +237,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task Patch_LeererText_IstValidierungsfehler()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var id = await CreateAsync(father, "Bleibt so");
 
         var res = await father.PatchAsJsonAsync($"{Url}/{id}", new { text = "  " });
@@ -250,7 +250,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task Folgeanmerkung_VerweistAufDenVorgaenger()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var parent = await CreateAsync(father, "Warum gibt es kein E-Mail-Formular?");
 
         var res = await father.PostAsJsonAsync(Url, new
@@ -267,8 +267,8 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task Folgeanmerkung_AufFremdenVorgaenger_WirdAbgelehnt()
     {
-        var father = await TestApi.FatherAsync(_factory);
-        var teacher = await TestApi.FatherAsync(_factory, id: 2, pin: "9999");
+        var father = await TestApi.AdultAsync(_factory);
+        var teacher = await TestApi.AdultAsync(_factory, id: 2, pin: "9999");
         var foreign = await CreateAsync(father, "Fremde Anmerkung");
 
         // Otherwise the reference would allow inferring the existence of other people's entries.
@@ -281,8 +281,8 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task Loeschen_EntferntNurEigenSichtbare()
     {
-        var father = await TestApi.FatherAsync(_factory);
-        var teacher = await TestApi.FatherAsync(_factory, id: 2, pin: "9999");
+        var father = await TestApi.AdultAsync(_factory);
+        var teacher = await TestApi.AdultAsync(_factory, id: 2, pin: "9999");
         var id = await CreateAsync(father, "Zum Löschen");
 
         Assert.Equal(HttpStatusCode.NotFound, (await teacher.DeleteAsync($"{Url}/{id}")).StatusCode);
@@ -293,7 +293,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task UngueltigerKontext_VerhindertDasErfassenNicht()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
 
         // The widget sends context ids automatically - including ones read from the URL. If one points
         // nowhere (a deleted child, a typo in `/vater/kind/999`), that must NOT destroy the text: the
@@ -328,7 +328,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task GueltigerKontext_BleibtErhalten()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         // The counter-check to the test above: the validation must not throw away valid references with them.
         var id = await CreateAsync(father, "Mit echtem Kind-Bezug", new { route = "/vater/kind/1", appArea = "vater", childId = 1 });
 
@@ -339,7 +339,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task Antwort_KorrigierenLaesstDenUrheberStehen()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var id = await CreateAsync(father, "Frage mit zweistufiger Antwort");
         await father.PatchAsJsonAsync($"{Url}/{id}", new { answer = "Erste Fassung", answeredBy = "claude-code" });
 
@@ -355,7 +355,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task FremderKontextBezug_WirdVerworfen_UndVerraetNichts()
     {
-        var teacher = await TestApi.FatherAsync(_factory, id: 2, pin: "9999");
+        var teacher = await TestApi.AdultAsync(_factory, id: 2, pin: "9999");
 
         // Child 1 exists but belongs to adult 1. If the id came back, the answer would be an oracle for which
         // ids exist - other people's child/plan ids could be tried out.
@@ -373,7 +373,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task Sohn_SiehtDieAntwortAufSeineEigeneAnmerkungNicht()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var child = await TestApi.ChildAsync(_factory);
         var id = await CreateAsync(child, "Die Karte laedt langsam");
 
@@ -399,7 +399,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task Export_LiefertMarkdownMitKontextUndAntwort()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var id = await CreateAsync(father, "Export-Beobachtung zum Shop", new
         {
             route = "/vater/shop",
@@ -435,7 +435,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task Export_FiltertNachStatus()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var offen = await CreateAsync(father, "Bleibt offen");
         var erledigt = await CreateAsync(father, "Ist erledigt");
         await father.PatchAsJsonAsync($"{Url}/{erledigt}", new { status = "Done" });
@@ -449,7 +449,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task Export_UeberlebtBacktickImKontext()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         // The buffer comes from the frontend and can be filled freely through the API. An embedded ``` would
         // close a naive code block early and tear the document apart from there on.
         var id = await CreateAsync(father, "Mit Zaun im Kontext", new
@@ -481,7 +481,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task Liste_FiltertUndPagt()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         await CreateAsync(father, "Bug A", extra: new { category = "Bug" });
         await CreateAsync(father, "Bug B", extra: new { category = "Bug" });
         var idea = await CreateAsync(father, "Idee C", extra: new { category = "Idea" });
@@ -517,7 +517,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task Verlauf_IstChronologisch_UndZaehltAnDerAnmerkung()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var id = await CreateAsync(father, "Der Löschen-Knopf ist nicht zu sehen");
 
         await CommentAsync(father, id, "Gemessen: die Tabelle braucht 868px.", author: "Assistant", label: "claude-code");
@@ -544,7 +544,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task MenschlicherBeitrag_HoltErledigteAnmerkungZurueck_AssistentNicht()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var id = await CreateAsync(father, "Tags sollten sichtbar sein");
 
         (await father.PatchAsJsonAsync($"{Url}/{id}", new { status = "Done", answer = "Belegt: keine Tag-Spalte." }))
@@ -567,7 +567,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task MenschlicherBeitrag_LaesstOffeneAnmerkungInRuhe()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var id = await CreateAsync(father, "Noch offen");
 
         await CommentAsync(father, id, "Ergänzung: tritt nur im Firefox auf.");
@@ -579,8 +579,8 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task EigenenBeitragEntfernen_FremdenNicht()
     {
-        var father = await TestApi.FatherAsync(_factory);
-        var teacher = await TestApi.FatherAsync(_factory, id: 2, pin: "9999");
+        var father = await TestApi.AdultAsync(_factory);
+        var teacher = await TestApi.AdultAsync(_factory, id: 2, pin: "9999");
         var id = await CreateAsync(father, "Beitrag zurücknehmen");
         var comment = await CommentAsync(father, id, "Tippfehler-Beitrag");
         var commentId = comment.GetProperty("id").GetInt32();
@@ -599,7 +599,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task Sohn_SiehtDenVerlaufNicht_UndSchreibtKeinen()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var child = await TestApi.ChildAsync(_factory);
         var own = await CreateAsync(child, "Die Übung war doof");
         await CommentAsync(father, own, "Notiert.", author: "Assistant");
@@ -618,7 +618,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task LeererBeitrag_IstValidierungsfehler()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var id = await CreateAsync(father, "Mit leerem Beitrag");
 
         var res = await father.PostAsJsonAsync($"{Url}/{id}/comments", new { body = "   " });
@@ -636,7 +636,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     private async Task<HttpClient> FreshFatherAsync(string pin)
     {
         var id = await RegisterFatherAsync("Wegwerf-Vater", pin);
-        return await TestApi.FatherAsync(_factory, id, pin);
+        return await TestApi.AdultAsync(_factory, id, pin);
     }
 
     private async Task<int> RegisterFatherAsync(string name, string pin)
@@ -674,13 +674,13 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     private async Task<HttpClient> FatherWithoutGlobalReadAsync(int id = 1, string pin = "0000")
     {
         var narrow = _factory.WithWebHostBuilder(b => b.UseSetting("Remarks:GlobalRead", "false"));
-        return await TestApi.FatherAsync(narrow, id, pin);
+        return await TestApi.AdultAsync(narrow, id, pin);
     }
 
     [Fact]
     public async Task JedesVaterKonto_LiestMitScopeAll_AlleAnmerkungen()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var foreign = await CreateAsync(father, "Beobachtung aus einem anderen Konto");
 
         // A freshly registered throwaway account: no children, no exercises, NO admin flag.
@@ -698,7 +698,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task FremdeAnmerkung_LaesstSichBeantwortenUndKommentieren()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var foreign = await CreateAsync(father, "Frage aus einem anderen Testkonto");
         var fresh = await FreshFatherAsync("6102");
 
@@ -723,7 +723,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task Sohn_LiestNiemalsAlleKonten_AuchNichtMitGlobalRead()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var child = await TestApi.ChildAsync(_factory);
         var foreign = await CreateAsync(father, "Interne Notiz mit Codebezug");
 
@@ -740,7 +740,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task OhneGlobalRead_IstScopeAll_403_UndDieEngeSichtBleibt()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var own = await CreateAsync(father, "Eigene Anmerkung bei abgeschaltetem Schalter");
 
         var narrow = await FatherWithoutGlobalReadAsync();
@@ -758,7 +758,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task OhneGlobalRead_TraegtDieAdminRolle_WeiterhinAlsBreakGlass()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var foreign = await CreateAsync(father, "Nur per Break-Glass erreichbar");
 
         var adminId = await RegisterAdminFatherAsync("6103");
@@ -771,7 +771,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task Export_MitScopeAll_TraegtDenVerlauf_UndOhneGlobalRead_403()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var id = await CreateAsync(father, "Export mit Verlauf");
         await CommentAsync(father, id, "Umsetzungsnotiz für den Export.", author: "Assistant", label: "claude-code");
 

@@ -30,7 +30,7 @@ public class ObjectiveTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task Committed_ZahltEtappeUndAbschluss_InMuenzen_UndIstIdempotent()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var subjectId = await SubjectAsync(father, "Obj-Committed");
         var childId = await FreshChildIdAsync(father, "7101");
 
@@ -76,7 +76,7 @@ public class ObjectiveTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task Stretch_ZahltNurErreichteEtappe_InGems_KeinAbschluss()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var subjectId = await SubjectAsync(father, "Obj-Stretch");
         var childId = await FreshChildIdAsync(father, "7102");
 
@@ -116,7 +116,7 @@ public class ObjectiveTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task ClassTestGrade_AlsAnker_WirdAusDerNoteErreicht()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var subjectId = await SubjectAsync(father, "Obj-Note");
         var childId = await FreshChildIdAsync(father, "7103");
 
@@ -152,7 +152,7 @@ public class ObjectiveTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task Validierung_UndRollen()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var subjectId = await SubjectAsync(father, "Obj-Valid");
         var childId = await FreshChildIdAsync(father, "7104");
 
@@ -212,7 +212,7 @@ public class ObjectiveTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task Etappen_CrudUnterObjective()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var subjectId = await SubjectAsync(father, "Obj-KR-Crud");
         var childId = await FreshChildIdAsync(father, "7105");
 
@@ -246,7 +246,7 @@ public class ObjectiveTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task Dublette_InnerhalbEinesPosts_Meldet409_UndLegtKeinZielAn()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var subjectId = await SubjectAsync(father, "Obj-Dublette-Inline");
         var childId = await FreshChildIdAsync(father, "7401");
 
@@ -270,7 +270,7 @@ public class ObjectiveTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task Dublette_AlsZweiterKeyResultPost_Meldet409()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var subjectId = await SubjectAsync(father, "Obj-Dublette-Post");
         var childId = await FreshChildIdAsync(father, "7402");
 
@@ -294,7 +294,7 @@ public class ObjectiveTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task Dublette_UeberPatchAufBestehendenMeilenstein_Meldet409_UndLaesstIhnUnveraendert()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var subjectId = await SubjectAsync(father, "Obj-Dublette-Patch");
         var childId = await FreshChildIdAsync(father, "7403");
 
@@ -328,7 +328,7 @@ public class ObjectiveTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task Meilenstein_BehaeltEigeneMetrik_KeineSelbstkollision()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var subjectId = await SubjectAsync(father, "Obj-KeineSelbstkollision");
         var childId = await FreshChildIdAsync(father, "7404");
 
@@ -367,7 +367,7 @@ public class ObjectiveTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task Liste_Zeigt_Die_Ziele_Des_Kindes_Und_Loeschen_Entfernt_Sie()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var subjectId = await SubjectAsync(father, "Obj-Liste");
         var childId = await FreshChildIdAsync(father, "7301");
         var ersterId = await AnlegenAsync(father, childId, subjectId, "Erstes Ziel");
@@ -385,7 +385,7 @@ public class ObjectiveTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task Sohn_Liest_Sein_Ziel_Einzeln_Ein_Deaktiviertes_Nicht()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var subjectId = await SubjectAsync(father, "Obj-Sohnsicht");
         var childId = await FreshChildIdAsync(father, "7302");
         var objectiveId = await AnlegenAsync(father, childId, subjectId, "Mein großes Ziel");

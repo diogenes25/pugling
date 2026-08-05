@@ -40,7 +40,7 @@ public class ContentExercisePlayTests(PuglingWebAppFactory factory) : IClassFixt
 
     private async Task<JsonElement> PlayAsync(string route, object config)
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await CreateAsync(father, route, config);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
@@ -116,7 +116,7 @@ public class ContentExercisePlayTests(PuglingWebAppFactory factory) : IClassFixt
     [Fact]
     public async Task VokabelHoerstufe_LiefertKeinenPrompt_AndereStufenSchon()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (_, key) = await TestApi.CreateStoreVocabAsync(father, TestApi.UniqueName("hello"), "hallo");
         var vocabId = await TestApi.ResolveVocabIdAsync(father, key);
         (await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{vocabId}",
@@ -144,7 +144,7 @@ public class ContentExercisePlayTests(PuglingWebAppFactory factory) : IClassFixt
     [Fact]
     public async Task Hoerstufe_OhneAufnahme_BehaeltDenPrompt()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("silent", "still"));
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.Audio);
         var child = await TestApi.ChildAsync(_factory);
@@ -162,7 +162,7 @@ public class ContentExercisePlayTests(PuglingWebAppFactory factory) : IClassFixt
     [Fact]
     public async Task Hoerstufe_MitLeererAufnahme_BehaeltDenPromptEbenfalls()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (_, key) = await TestApi.CreateStoreVocabAsync(father, TestApi.UniqueName("blank"), "leer");
         var vocabId = await TestApi.ResolveVocabIdAsync(father, key);
         (await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{vocabId}",
@@ -194,7 +194,7 @@ public class ContentExercisePlayTests(PuglingWebAppFactory factory) : IClassFixt
     [Fact]
     public async Task Testmodus_ZeigtDenselbenInhaltWieDieKarte()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await CreateAsync(father, "reading", new
         {
             text = Text,
@@ -217,7 +217,7 @@ public class ContentExercisePlayTests(PuglingWebAppFactory factory) : IClassFixt
     [Fact]
     public async Task Testmodus_VerschweigtDasWortAufDerHoerstufe_WieDieKarte()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (_, key) = await TestApi.CreateStoreVocabAsync(father, TestApi.UniqueName("audio"), "ton");
         var vocabId = await TestApi.ResolveVocabIdAsync(father, key);
         (await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{vocabId}",
@@ -237,7 +237,7 @@ public class ContentExercisePlayTests(PuglingWebAppFactory factory) : IClassFixt
     [Fact]
     public async Task Klausur_LiefertDenTextEbenfalls()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await CreateAsync(father, "reading", new
         {
             text = Text,

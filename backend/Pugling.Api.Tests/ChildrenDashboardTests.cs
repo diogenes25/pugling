@@ -18,7 +18,7 @@ public class ChildrenDashboardTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task Dashboard_SpiegeltTagessoll_VorUndNachTestabschluss()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father); // hello→hallo, goodbye→tschüss
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);

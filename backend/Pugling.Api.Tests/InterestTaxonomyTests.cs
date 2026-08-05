@@ -14,7 +14,7 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task Anlegen_IstIdempotent_UndLeitetDenSlugAusDemLabelAb()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
 
         var first = await father.PostAsJsonAsync("/api/v1/creator/interest-tags",
             new { label = "Rocket League", facet = "Franchise" });
@@ -31,7 +31,7 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task Diakritika_TreffenDenselbenTag()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
 
         var withAccent = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/interest-tags",
             new { label = "Pokémon", facet = "Franchise" }));
@@ -44,7 +44,7 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task Synonym_VerhindertEineDublette()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var canonical = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/interest-tags", new
         {
             label = "Lego Technic",
@@ -63,7 +63,7 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task KindInteressen_TreffenDieselbenTagsWieBildSchlagworte()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
 
         // The creator tags an image …
         await father.PostAsJsonAsync("/api/v1/creator/media", new
@@ -85,7 +85,7 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task NegativesGewicht_BildetEineAbneigungAb()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         await SetInterestsAsync(father, new object[]
         {
             new { label = "Weltraum", weight = 3 },
@@ -104,7 +104,7 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task GewichtAusserhalbDerSkala_Liefert400()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var res = await father.PutAsJsonAsync("/api/v1/supervisor/children/1/interests", new
         {
             interests = new object[] { new { label = "Angeln", weight = 9 } },
@@ -117,7 +117,7 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task Put_ErsetztDieMengeVollstaendig()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         await SetInterestsAsync(father, new object[]
         {
             new { label = "Segeln", weight = 2 },
@@ -135,7 +135,7 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task LeeresPut_EntferntAlleInteressen()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         await SetInterestsAsync(father, new object[] { new { label = "Schach", weight = 1 } });
 
         await SetInterestsAsync(father, []);
@@ -146,7 +146,7 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task AllowedContentRating_IstDefaultStrengUndNurVomSupervisorHebbar()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
             new { name = "Rating-Kind", pin = "4321" }));
 
@@ -164,7 +164,7 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
     public async Task FremdesKind_BleibtVerschlossen()
     {
         // The demo adult from the seed (created after the father and the teacher, hence id 3).
-        var demoSupervisor = await TestApi.FatherAsync(factory, id: 3, pin: "0001");
+        var demoSupervisor = await TestApi.AdultAsync(factory, id: 3, pin: "0001");
         var res = await demoSupervisor.GetAsync("/api/v1/supervisor/children/1/interests");
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
     }
@@ -178,7 +178,7 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
     public async Task Backfill_UebernimmtFreitextInteressenDerBestandskinder()
     {
         // The demo adult from the seed (created after the father and the teacher, hence id 3).
-        var demoSupervisor = await TestApi.FatherAsync(factory, id: 3, pin: "0001");
+        var demoSupervisor = await TestApi.AdultAsync(factory, id: 3, pin: "0001");
         var children = await GetAsync(demoSupervisor, "/api/v1/supervisor/children");
         var demoChildId = children.EnumerateArray()
             .First(c => c.GetProperty("name").GetString() == "Demo-Kind").GetProperty("id").GetInt32();
@@ -206,7 +206,7 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task ZweiSchreibweisenInEinemAufruf_TreffenDenselbenTag()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
             new { name = "Slug-Kollision", pin = "4711" }));
 
@@ -233,7 +233,7 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task Gewicht_Einzeln_Setzen_Und_Interesse_Wieder_Entfernen()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
             new { name = "Interessen-Kind", pin = "6401" }));
         var tagId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/interest-tags",
@@ -263,7 +263,7 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task Interessen_Tag_Laesst_Sich_Aus_Dem_Katalog_Loeschen()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var tagId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/interest-tags",
             new { label = $"Einhorn-{Guid.NewGuid():N}"[..16] }));
 

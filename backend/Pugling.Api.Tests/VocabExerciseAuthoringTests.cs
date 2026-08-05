@@ -45,7 +45,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
     [Fact]
     public async Task Cloze_MitVocabKey_LoestLoesungAusStoreAuf_UndReagiertAufAenderung()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var vocab = await CreateVocabAsync(father,
             new { sourceLanguage = "en", targetLanguage = "de", word = "opportunity", translation = "Gelegenheit" });
         var vocabId = vocab.GetProperty("id").GetInt32();
@@ -85,7 +85,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
     [Fact]
     public async Task Cloze_MitUnbekanntemVocabKey_Liefert400()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (_, sr, c) = await SeriesUnitAsync(father, "Cloze-Bad");
         var res = await father.PostAsJsonAsync($"/api/v1/creator/textbook-series/{sr}/units/{c}/cloze", new
         {
@@ -102,7 +102,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
     [Fact]
     public async Task RefsFromTags_NurGrundformen_SchreibtSnapshotInRefs()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var walk = await CreateVocabAsync(father, new { sourceLanguage = "en", targetLanguage = "de", word = "walk", translation = "gehen", tags = new[] { "UnitP2" } });
         var walkKey = walk.GetProperty("key").GetString();
         await CreateVocabAsync(father, new { sourceLanguage = "en", targetLanguage = "de", word = "walked", translation = "ging", baseFormKey = walkKey, baseFormRelation = "Simple Past", tags = new[] { "UnitP2" } });
@@ -133,7 +133,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
     [Fact]
     public async Task VocabExercise_MitUnbekanntemRef_Liefert400()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (_, sr, c) = await SeriesUnitAsync(father, "Ref-Bad");
         var res = await father.PostAsJsonAsync($"/api/v1/creator/textbook-series/{sr}/units/{c}/vocabulary",
             new { title = "Kaputt", orderIndex = 1, rewardPoints = 10, config = new { direction = "front-to-back", refs = new[] { "gibt_es_nicht" } } });
@@ -143,7 +143,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
     [Fact]
     public async Task VocabUsage_ListetReferenzierendeUebung_UndLoeschenIst409()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var v = await CreateVocabAsync(father, new { sourceLanguage = "en", targetLanguage = "de", word = "kite", translation = "Drachen" });
         var vocabId = v.GetProperty("id").GetInt32();
         var key = v.GetProperty("key").GetString();
@@ -162,7 +162,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
     [Fact]
     public async Task VocabExercise_InlineItemsOhneId_WerdenImStoreAngelegtUndVerlinkt()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (_, sr, c) = await SeriesUnitAsync(father, "Inline-Autolink");
 
         var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
@@ -201,7 +201,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
     [Fact]
     public async Task InlineItem_NurVocabularyId_ZiehtFrontBackAusStore()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var v = await CreateVocabAsync(father, new { sourceLanguage = "en", targetLanguage = "de", word = "bridge", translation = "Brücke" });
         var vocabId = v.GetProperty("id").GetInt32();
         var (_, sr, c) = await SeriesUnitAsync(father, "Inline-IdOnly");
@@ -227,7 +227,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
     [Fact]
     public async Task ItemEndpunkt_NurVocabularyId_LiefertFrontBackAusStore()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var v = await CreateVocabAsync(father, new { sourceLanguage = "en", targetLanguage = "de", word = "castle", translation = "Schloss" });
         var vocabId = v.GetProperty("id").GetInt32();
         var (_, sr, c) = await SeriesUnitAsync(father, "ItemEP-IdOnly");
@@ -248,7 +248,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
     [Fact]
     public async Task InlineItem_OhneIdUndOhneFrontBack_Liefert400()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (_, sr, c) = await SeriesUnitAsync(father, "Inline-Leer");
         var res = await father.PostAsJsonAsync($"/api/v1/creator/textbook-series/{sr}/units/{c}/vocabulary", new
         {
@@ -265,7 +265,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
     [Fact]
     public async Task VocabularyList_FiltertNachWordUndTranslation()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         await CreateVocabAsync(father, new { sourceLanguage = "en", targetLanguage = "de", word = "elephant", translation = "Elefant" });
         await CreateVocabAsync(father, new { sourceLanguage = "en", targetLanguage = "de", word = "mouse", translation = "Maus" });
 

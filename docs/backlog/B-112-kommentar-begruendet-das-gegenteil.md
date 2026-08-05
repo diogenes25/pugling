@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend]
+tags: [typ/story, status/abgenommen, bereich/frontend]
 aliases: [Kommentar gegen die Bedingung]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Aufräumen
 groesse: XS
@@ -98,3 +98,16 @@ einen Kommentar wäre Unsinn, und die Bedingung selbst ist schon durch das Verha
   `frontend/CLAUDE.md`, der Code also richtig — die Story schrumpft damit von „Bedingung prüfen" auf
   „Begründung reparieren". **Bewusst nicht in den Sprint aufgenommen** (siehe
   `docs/pm-sitzung-2026-08-05.md`): sie dient dem Sprint-Ziel nicht.
+- **2026-08-05** — gebaut (Nachtlauf 2, Sprint 1 „Rollen-/Bezeichner-Konsistenz"): Kommentar in
+  `ExerciseEditModal.tsx:353` auf Englisch umgeschrieben, benennt beide Gründe und verweist auf
+  `frontend/CLAUDE.md`. `npm run build` clean, `npm test -- --run` → **153/153 grün** (unverändert).
+- **2026-08-05** — `frontend-reviewer` fand einen **echten Defekt im eigenen Increment**: der erste
+  Kommentar-Entwurf hatte die beiden Begründungshälften vertauscht — er schrieb „`loading` allein ließe
+  den Spinner ewig neben der Fehlermeldung stehen", tatsächlich ist es umgekehrt: `useAsync.ts:36` setzt
+  `loading` im `finally`-Block **immer** auf `false`, auch nach einem Fehler — „Spinner für immer" kann
+  also nur passieren, wenn **`data === null`** allein geprüft wird (der Fehlerpfad füllt `data` nie).
+  `loading` allein wäre umgekehrt das Reload-Problem: `data` bleibt über einen `reload` erhalten, `loading`
+  wird neu gesetzt, also verdeckte „nur `loading`" die schon sichtbare Tabelle während des Nachladens.
+  Nachgerechnet gegen `useAsync.ts:25-39` — der Befund ist korrekt. Kommentar entsprechend korrigiert,
+  `npm run build` erneut clean. **Diese Entgleitung ist der Grund, warum der Nachtlauf nach diesem Sprint
+  endet** (Freigabe 3, `docs/nachtlauf.md`): ein Review-Fund im eigenen Increment vor der Abnahme.

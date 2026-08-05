@@ -137,7 +137,7 @@ public class AccountSelfServiceTests(PuglingWebAppFactory factory) : IClassFixtu
     public async Task Vater_KannSichEbenfallsSelbstVerwalten()
     {
         // The path applies to both kinds of adult - not only as a stopgap for the teacher.
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var res = await father.PatchAsJsonAsync("/api/v1/auth/me", new { name = "Papa" });
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
         var body = await res.Content.ReadFromJsonAsync<JsonElement>();

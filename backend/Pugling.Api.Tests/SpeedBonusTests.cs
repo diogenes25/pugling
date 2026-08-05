@@ -31,7 +31,7 @@ public class SpeedBonusTests : IClassFixture<PuglingWebAppFactory>
     // Combo deliberately off (threshold 0), so that only the speed bonus takes effect.
     private async Task<(int planId, int positionId, int sessionId)> SetupAsync(int thresholdSeconds, int bonus)
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.SelfAssess,
             comboThreshold: 0, speedThresholdSeconds: thresholdSeconds, speedBonusPoints: bonus);

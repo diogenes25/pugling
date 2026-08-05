@@ -10,7 +10,7 @@ public class VocabularyStoreTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Create_Get_ByKey_List()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var create = await father.PostAsJsonAsync("/api/v1/creator/vocabulary", new
         {
             key = "en_cat_de_katze",
@@ -36,7 +36,7 @@ public class VocabularyStoreTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task DoppelterKey_Liefert409()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var dto = new
         {
             key = "en_dog_de_hund",
@@ -58,7 +58,7 @@ public class VocabularyStoreTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Uebersetzungsvarianten_UeberlebenAlleSchreibwege()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
 
         var created = await father.PostAsJsonAsync("/api/v1/creator/vocabulary", new
         {
@@ -105,7 +105,7 @@ public class VocabularyStoreTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task Uebersetzung_AufEineVarianteGesetzt_LaesstSieNichtDoppeltStehen()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (id, _) = await TestApi.CreateStoreVocabAsync(father, "enormous", "riesig",
             translationAlternatives: ["sehr groß"]);
 

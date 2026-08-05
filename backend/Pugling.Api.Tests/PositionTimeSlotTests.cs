@@ -24,7 +24,7 @@ public class PositionTimeSlotTests(PuglingWebAppFactory factory) : IClassFixture
     /// <summary>Plan with one position on a fresh vocabulary exercise; returns the ids and the supervisor client.</summary>
     private async Task<(HttpClient Father, int PlanId, int PositionId)> SetupAsync(object? timeSlots = null)
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
             new { name = TestApi.UniqueName("Kind"), pin = "1111" }));
         var planId = await TestApi.CreateEmptyPlanAsync(father, childId);
@@ -102,7 +102,7 @@ public class PositionTimeSlotTests(PuglingWebAppFactory factory) : IClassFixture
     [InlineData("13:00", "15:00", 25.0)]  // beyond the upper bound
     public async Task Unwirksame_Fenster_Werden_Abgelehnt(string start, string end, double multiplier)
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
             new { name = TestApi.UniqueName("Kind"), pin = "1111" }));
         var planId = await TestApi.CreateEmptyPlanAsync(father, childId);
@@ -176,7 +176,7 @@ public class PositionTimeSlotScoringTests(TimeSlotsOnFactory factory) : IClassFi
     [Fact]
     public async Task Positions_Fenster_Verdoppelt_Die_Punkte_Der_Antwort()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.SelfAssess,
             comboThreshold: 0,
@@ -197,7 +197,7 @@ public class PositionTimeSlotScoringTests(TimeSlotsOnFactory factory) : IClassFi
     [Fact]
     public async Task Ohne_Positions_Fenster_Bleiben_Die_Basispunkte_Stehen()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.SelfAssess,
             comboThreshold: 0);

@@ -56,7 +56,7 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task CrudRoundtrip_ConfigBleibtTypisiertErhalten()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var route = await CreateSeriesUnitAsync(father);
 
         var payload = new
@@ -118,7 +118,7 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task Create_OhneIds_VergibtEindeutigeIds_UndAddSentenceKollidiertNicht()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var route = await CreateSeriesUnitAsync(father);
 
         // Exactly the shape the supervisor's form sends: no sentenceId/wordId, no counters.
@@ -181,7 +181,7 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task AddSentence_VerlinktBekannteWoerter_LaesstUnbekannteLeer()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (route, exerciseId) = await CreateExerciseAsync(father);
         var howId = await CreateVocabAsync(father, "How", "Wie");
         var areId = await CreateVocabAsync(father, "are", "bist");
@@ -216,7 +216,7 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task Homonym_LiefertKandidaten_UndWirdPerWortEndpunktKorrigiert()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (route, exerciseId) = await CreateExerciseAsync(father);
         var geldId = await CreateVocabAsync(father, "bank", "Bank");
         var uferId = await CreateVocabAsync(father, "bank", "Ufer");
@@ -256,7 +256,7 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task GleichesWort_InZweiSaetzen_HatEigeneWordId_UndWirdUnabhaengigGeaendert()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (route, exerciseId) = await CreateExerciseAsync(father);
         await CreateVocabAsync(father, "red", "rot");
 
@@ -292,7 +292,7 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task Decode_Zustandslos_LiefertTupelOhnePersistenz()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var dogId = await CreateVocabAsync(father, "dog", "Hund");
 
         var res = await father.PostAsJsonAsync("/api/v1/creator/birkenbihl/decode", new
@@ -318,7 +318,7 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task Kind_KannKeinenSatzHinzufuegen_Liefert403()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (route, exerciseId) = await CreateExerciseAsync(father);
 
         var child = await TestApi.ChildAsync(factory);
@@ -336,7 +336,7 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task PositionsTest_ZeigtDieselbeDekodierungWieDieUebungskarte()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var route = await CreateSeriesUnitAsync(father);
         var createRes = await father.PostAsJsonAsync(route, new
         {

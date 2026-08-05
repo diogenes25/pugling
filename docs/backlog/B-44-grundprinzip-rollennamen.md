@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/doku, rolle/creator, rolle/supervisor, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/doku, rolle/creator, rolle/supervisor, rolle/student]
 aliases: [Rollennamen, Vater ist keine Ebene]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Aufräumen
 groesse: XS
@@ -208,3 +208,12 @@ nur ohne die Prüfung, weil hier keine mechanische möglich/sinnvoll ist (Entsch
 - **2026-08-03** — geschätzt: Größe XS, `wo: doku`, `migration: nein`, `vertragsbruch: nein`, Angriffsplan
   und Testweg (kein automatisierter Test, Begründung siehe Entscheidung 6) festgelegt; autonom getroffen,
   Nutzerauftrag 2026-08-04.
+- **2026-08-05** — gebaut (Nachtlauf 2, Sprint 1): Frontmatter-Alias auf `Creator-Supervisor-Student`
+  geändert; Überblickstabelle auf Creator/Supervisor/Student vereinheitlicht; beide H2-Titel auf
+  „Supervisor"/„Student" umbenannt; Fließtext von Ebene 2/3 und „Warum diese Trennung wichtig ist" auf
+  Supervisor/Student als Akteur umgestellt, mit den zwei bewussten Ausnahmen aus Entscheidung 5 (der Satz
+  „Der Vater ist der Supervisor." zu Beginn von Ebene 2, und „Der Loop an einem konkreten Beispiel"
+  unverändert); Fußnote zum Creator/`childId`-Satz mit Verweis auf B-46 ergänzt. `docs/grundprinzip.md`
+  ist die einzige geänderte Datei (AK8 — keine Fußnote in `endpunkt-beziehungen.md` nötig, da AK6 keine
+  Ergänzung dort über die neue Fußnote in `grundprinzip.md` hinaus verlangte). `markdownlint-cli2` →
+  **0 Issues**.

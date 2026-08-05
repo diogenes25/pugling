@@ -20,7 +20,7 @@ public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFi
         var reg = await factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/adults", new { name, pin });
         reg.EnsureSuccessStatusCode();
         var id = (await reg.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
-        return (id, await TestApi.FatherAsync(factory, id, pin));
+        return (id, await TestApi.AdultAsync(factory, id, pin));
     }
 
     /// <summary>Creates, as a teacher, subject → series/unit → a 9th-grade Gymnasium vocabulary exercise; returns the ids.</summary>

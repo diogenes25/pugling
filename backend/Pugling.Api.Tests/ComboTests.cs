@@ -13,7 +13,7 @@ public class ComboTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWeb
 {
     private async Task<(int planId, int positionId, int sessionId)> SetupAsync(int threshold, int bonus)
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father); // hello, goodbye → 2 fällige Items
         var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.SelfAssess,
             comboThreshold: threshold, comboBonusPoints: bonus);
@@ -50,7 +50,7 @@ public class ComboTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWeb
         await ReviewAsync(child, planId, positionId, sid, 0);
         await ReviewAsync(child, planId, positionId, sid, 1); // Schwelle 2 erreicht → Combo-Bonus
 
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var points = await (await father.GetAsync("/api/v1/supervisor/children/1/points"))
             .Content.ReadFromJsonAsync<JsonElement>();
         var combo = points.GetProperty("entries").EnumerateArray()

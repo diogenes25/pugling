@@ -23,7 +23,7 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
     {
         var id = await TestApi.IdAsync(await _factory.CreateClient()
             .PostAsJsonAsync("/api/v1/supervisor/adults", new { name, pin }));
-        return await TestApi.FatherAsync(_factory, id, pin);
+        return await TestApi.AdultAsync(_factory, id, pin);
     }
 
     [Fact]
@@ -88,7 +88,7 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task EigeneVerwendung_WirdWeiterhinBenanntUndNichtAlsFremdGezaehlt()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (_, key) = await TestApi.CreateStoreVocabAsync(father, "castle", "Burg");
         var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
         var planId = await TestApi.IdAsync(await father.PostAsJsonAsync(
@@ -162,7 +162,7 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
     [Fact]
     public async Task UnbenutzteUebung_MeldetNullUndLaesstSichLoeschen()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (_, key) = await TestApi.CreateStoreVocabAsync(father, "harbour", "Hafen");
         var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
         var detail = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}");

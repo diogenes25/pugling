@@ -87,8 +87,8 @@ public static class ClaimsPrincipalExtensions
     /// If the author is missing (seeded system exercise) or the <c>fid</c> is missing, the result is
     /// <c>false</c> (fail-closed) – otherwise a missing claim would wrongly unlock system exercises.
     /// </summary>
-    public static bool IsOwnedBy(int? authorFatherId, int? supervisorId) =>
-        authorFatherId is { } author && author == supervisorId;
+    public static bool IsOwnedBy(int? authorAdultId, int? supervisorId) =>
+        authorAdultId is { } author && author == supervisorId;
 }
 
 /// <summary>

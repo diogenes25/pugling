@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/doku, bereich/backend]
+tags: [typ/story, status/abgenommen, bereich/doku, bereich/backend]
 aliases: [Lösungsfeld-Regel, Tor folgt dem Geheimnis, Rollenreichweite eines Lese-DTOs]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Aufräumen
 groesse: XS
@@ -172,3 +172,12 @@ inhaltliche Abnahme ist das Gegenlesen aus Schritt 2 des Angriffsplans.
   `vertragsbruch: nein` (keine Entity, kein DTO, keine Route berührt). Testweg ist `markdownlint-cli2` plus
   Gegenlesen der Namensliste gegen `ConventionGuardTests.cs` — kein Integrationstest, kein E2E, kein
   `/smoke-test`, da reine Doku-Änderung ohne Laufzeit-Effekt.
+- **2026-08-05** — gebaut (Nachtlauf 2, Sprint 1): Zeile in der Root-`CLAUDE.md` unter „Konventionen"
+  ergänzt, direkt nach „Eigentum" — Namensliste (`Answer`/`Solution`/`CorrectAnswer`/`Translation`),
+  Rollenbedingung („ohne Student"), `Expected`-Abgrenzung und der Wächtername
+  `ConventionGuardTests.Actions_Mit_Loesungsfeld_Sind_Vor_Dem_Studenten_Gegated` wortgleich gegen
+  `ConventionGuardTests.cs:300,318-327` gegengelesen. `docs/codequalitaet-gates-plan.md` byte-identisch
+  gelassen (AK3). `markdownlint-cli2` → **0 Issues**. **Ehrlich benannt:** Root-`CLAUDE.md` war zum
+  Zeitpunkt dieser Änderung bereits mit 20546 B über dem 19000-B-Budget (`context-budget.sh`), unabhängig
+  von dieser Story; die neue Zeile (+685 B) vergrößert die bestehende Überschreitung, kompensiert sie aber
+  nicht — das Warn-Tor blockt nicht, die Kompensation ist bewusst nicht Teil dieser XS-Story.

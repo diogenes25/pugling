@@ -22,7 +22,7 @@ public class AdultLifecycleTests(PuglingWebAppFactory factory) : IClassFixture<P
     {
         var id = await TestApi.IdAsync(await factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/adults",
             new { name = "Papa", email, pin }));
-        return (await TestApi.FatherAsync(factory, id, pin), id);
+        return (await TestApi.AdultAsync(factory, id, pin), id);
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public class AdultLifecycleTests(PuglingWebAppFactory factory) : IClassFixture<P
         Assert.False(await db.Adults.AnyAsync(a => a.Id == vaterId));
         Assert.True(await db.Children.AnyAsync(c => c.Id == childId));
         // And the mother is still a supervisor - she did not lose the child along with them.
-        var mutter = await TestApi.FatherAsync(factory, mutterId, "5109");
+        var mutter = await TestApi.AdultAsync(factory, mutterId, "5109");
         Assert.Equal(HttpStatusCode.OK, (await mutter.GetAsync($"/api/v1/supervisor/children/{childId}")).StatusCode);
     }
 

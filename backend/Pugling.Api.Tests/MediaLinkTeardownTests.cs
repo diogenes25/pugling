@@ -37,7 +37,7 @@ public class MediaLinkTeardownTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task Motiv_Ueber_Den_Schluessel_Finden_Und_Verschlagworten()
     {
-        var creator = await TestApi.FatherAsync(factory);
+        var creator = await TestApi.AdultAsync(factory);
         var (assetId, key, _) = await MotivAsync(creator);
 
         // The key is the stable domain identifier of a motif (authors reference it, not the id).
@@ -55,7 +55,7 @@ public class MediaLinkTeardownTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task Bild_An_Uebung_Und_Item_Laesst_Sich_Wieder_Loesen()
     {
-        var creator = await TestApi.FatherAsync(factory);
+        var creator = await TestApi.AdultAsync(factory);
         var (assetId, _, _) = await MotivAsync(creator);
         var (_, vocabKey) = await TestApi.CreateStoreVocabAsync(creator, Eindeutig("horse"), "das Pferd");
         var exerciseId = await TestApi.CreateVocabRefExerciseAsync(creator, vocabKey);
@@ -84,7 +84,7 @@ public class MediaLinkTeardownTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task Bild_Variante_Laesst_Sich_Loeschen()
     {
-        var creator = await TestApi.FatherAsync(factory);
+        var creator = await TestApi.AdultAsync(factory);
         var (assetId, _, variantId) = await MotivAsync(creator);
         var url = $"/api/v1/creator/media/{assetId}/variants";
 

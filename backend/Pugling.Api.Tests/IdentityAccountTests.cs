@@ -28,7 +28,7 @@ public class IdentityAccountTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task VaterToken_TraegtCreatorUndSupervisorRolle_UndErreichtBeideEbenen()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
 
         var me = await MeAsync(father);
         var roles = me.GetProperty("roles").EnumerateArray().Select(r => r.GetString()).ToList();
@@ -57,7 +57,7 @@ public class IdentityAccountTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task KontoLogin_MitKontoId_LiefertMehrrollenToken()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var accountId = (await MeAsync(father)).GetProperty("accountId").GetInt32();
 
         var anon = _factory.CreateClient();
@@ -74,7 +74,7 @@ public class IdentityAccountTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task KontoLogin_MitFalscherPin_Ist401()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var accountId = (await MeAsync(father)).GetProperty("accountId").GetInt32();
 
         var anon = _factory.CreateClient();
@@ -85,8 +85,8 @@ public class IdentityAccountTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task WiederholterLogin_ErzeugtKeinZweitesKonto()
     {
-        var first = (await MeAsync(await TestApi.FatherAsync(_factory))).GetProperty("accountId").GetInt32();
-        var second = (await MeAsync(await TestApi.FatherAsync(_factory))).GetProperty("accountId").GetInt32();
+        var first = (await MeAsync(await TestApi.AdultAsync(_factory))).GetProperty("accountId").GetInt32();
+        var second = (await MeAsync(await TestApi.AdultAsync(_factory))).GetProperty("accountId").GetInt32();
         Assert.Equal(first, second); // EnsureForAdultAsync is idempotent
     }
 
@@ -99,7 +99,7 @@ public class IdentityAccountTests(PuglingWebAppFactory factory) : IClassFixture<
     [Fact]
     public async Task UmbenanntesKind_MeldetSichMitDemNeuenNamenAn()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
             new { name = "Kind Alt", pin = "3131" }));
         var accountId = (await MeAsync(await TestApi.ChildAsync(_factory, childId, "3131")))

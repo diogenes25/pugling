@@ -41,7 +41,7 @@ public class ExerciseCheckEndpointTests(PuglingWebAppFactory factory) : IClassFi
     [Fact]
     public async Task Rechen_Drill_Erzeugt_Aufgaben_Reproduzierbar_Und_Bewertet_Sie()
     {
-        var creator = await TestApi.FatherAsync(factory);
+        var creator = await TestApi.AdultAsync(factory);
         var basis = await SeriesUnitBaseAsync(creator, "Drill");
         var exerciseId = await TestApi.IdAsync(await creator.PostAsJsonAsync($"{basis}/arithmetic-drill", new
         {
@@ -76,7 +76,7 @@ public class ExerciseCheckEndpointTests(PuglingWebAppFactory factory) : IClassFi
     [Fact]
     public async Task Zuordnungs_Uebung_Bewertet_Paare()
     {
-        var creator = await TestApi.FatherAsync(factory);
+        var creator = await TestApi.AdultAsync(factory);
         var basis = await SeriesUnitBaseAsync(creator, "Matching");
         var exerciseId = await TestApi.IdAsync(await creator.PostAsJsonAsync($"{basis}/matching", new
         {
@@ -98,7 +98,7 @@ public class ExerciseCheckEndpointTests(PuglingWebAppFactory factory) : IClassFi
     [Fact]
     public async Task Birkenbihl_Satz_Laesst_Sich_Wieder_Loeschen()
     {
-        var creator = await TestApi.FatherAsync(factory);
+        var creator = await TestApi.AdultAsync(factory);
         var basis = await SeriesUnitBaseAsync(creator, "Birkenbihl");
         var exerciseId = await TestApi.IdAsync(await creator.PostAsJsonAsync($"{basis}/birkenbihl", new
         {

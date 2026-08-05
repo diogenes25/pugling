@@ -33,7 +33,7 @@ public class SecurityHardeningTests(PuglingWebAppFactory factory) : IClassFixtur
     public async Task GeseederterLogin_FunktioniertMitGehashterPin()
     {
         // The seed hashes the PIN "0000"; the login must still go through.
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var res = await father.GetAsync("/api/v1/auth/me");
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
     }

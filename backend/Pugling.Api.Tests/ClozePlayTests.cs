@@ -59,7 +59,7 @@ public class ClozePlayTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task Lueckentext_KartenWeisenIhreLueckeAus()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await CreateClozeAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)ClozeStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
@@ -78,7 +78,7 @@ public class ClozePlayTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task Wortbankstufe_LiefertDieGanzeWortbank_FreitextstufeKeine()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await CreateClozeAsync(father);
         var child = await TestApi.ChildAsync(_factory);
 
@@ -110,7 +110,7 @@ public class ClozePlayTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task Wortbankstufe_WirdVomServerBewertet_NichtSelbstEingeschaetzt()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await CreateClozeAsync(father);
         var (planId, positionId) =
             TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)ClozeStage.TranslationWordBank);
@@ -139,7 +139,7 @@ public class ClozePlayTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task Klausur_WeistDieLueckeGenauSoAus()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await CreateClozeAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(
             _factory, exerciseId, (int)ClozeStage.FreeText, requireTypedTest: true);
@@ -168,7 +168,7 @@ public class ClozePlayTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task Vokabelkarte_TraegtKeineLueckennummer()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("a", "1"));
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);

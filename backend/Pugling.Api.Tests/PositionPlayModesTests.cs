@@ -23,7 +23,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task LernModus_LiefertKartenEinzelnUeberCursor_UndSchliesstAbMitDone()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ThreeWords);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
@@ -73,7 +73,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task InfoModus_LiefertAlleKartenAlsBatch_UndSchreibtKeinFeedback()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ThreeWords);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
@@ -100,7 +100,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task InfoModus_ErfuelltDasTagesziel_Nicht()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         // A pure content exercise (reading comprehension) → the goal is "done" as soon as a real learn session exists.
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Info-Fach" }));
         var seriesId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/textbook-series",
@@ -161,7 +161,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task LernModus_ReineInhaltsuebung_BlosseAnwesenheit_ErfuelltDieTagespflichtNicht()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (planId, positionId) = await SeedReadingPositionAsync(father, questions: 2);
         var child = await TestApi.ChildAsync(_factory);
         var baseUrl = TestApi.PracticeBase(planId, positionId);
@@ -183,7 +183,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task LernModus_ReineInhaltsuebung_GespielteRunde_ErfuelltDieTagespflicht()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (planId, positionId) = await SeedReadingPositionAsync(father, questions: 2);
         var child = await TestApi.ChildAsync(_factory);
         var baseUrl = TestApi.PracticeBase(planId, positionId);
@@ -211,7 +211,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task LernModus_InhaltsuebungOhneInhalt_OeffnenUndSchliessen_ErfuelltDieTagespflichtNicht()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (planId, positionId) = await SeedReadingPositionAsync(father, questions: 0);
         var child = await TestApi.ChildAsync(_factory);
         var baseUrl = TestApi.PracticeBase(planId, positionId);
@@ -235,7 +235,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task LernModus_InhaltsuebungOhneInhalt_VerweilteRunde_ErfuelltDieTagespflicht()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (planId, positionId) = await SeedReadingPositionAsync(father, questions: 0);
         var child = await TestApi.ChildAsync(_factory);
         var baseUrl = TestApi.PracticeBase(planId, positionId);
@@ -256,7 +256,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task LernModus_PoolVorhandenAberNichtsFaellig_ErfuelltDieTagespflicht()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (planId, positionId) = await SeedReadingPositionAsync(father, questions: 2, useLeitner: true);
         var tomorrow = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
         using (var scope = _factory.Services.CreateScope())
@@ -290,7 +290,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task KlausurModus_StartOhneAufgaben_FragenEinzelnOhneKorrektheit_AbschlussMitScorecard()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ThreeWords);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
@@ -332,7 +332,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task Strategie_Serial_SpieltStrengNachIndex()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, [("a", "1"), ("b", "2"), ("c", "3"), ("d", "4"), ("e", "5")]);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText,
             orderStrategy: PracticeOrder.Serial);
@@ -355,7 +355,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task KlausurModus_VerlassenerVersuch_SchreibtKeinenLernstand_UndWirdFortgesetzt()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ThreeWords);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
@@ -404,7 +404,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task KlausurModus_DritterVersuchDesTages_WirdAbgewiesen_VaterNicht()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ThreeWords);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
@@ -436,7 +436,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task KlausurModus_WochenZiel_DeckelGiltProTag_NichtProWoche()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ThreeWords);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText,
             cadence: GoalCadence.Weekly);
@@ -482,7 +482,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task KlausurModus_VorschauDesVaters_KostetDenSohnKeinenVersuch_UndWirdNichtFortgesetzt()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ThreeWords);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
@@ -513,7 +513,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task InfoModus_ServiertAuchNichtFaelligeKarten_ImGegensatzZuLern()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ThreeWords);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
@@ -538,7 +538,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
     [Fact]
     public async Task Strategie_Random_SpieltAlleFaelligenGenauEinmal()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, [("a", "1"), ("b", "2"), ("c", "3"), ("d", "4"), ("e", "5")]);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText,
             orderStrategy: PracticeOrder.Random);

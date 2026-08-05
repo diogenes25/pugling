@@ -32,7 +32,7 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task Reihe_und_Units_koennen_angelegt_gelesen_und_geaendert_werden()
     {
-        var creator = await TestApi.FatherAsync(factory);
+        var creator = await TestApi.AdultAsync(factory);
         var seriesId = await CreateSeriesAsync(creator, "Access");
 
         var unitId = await TestApi.IdAsync(await creator.PostAsJsonAsync($"{SeriesRoot}/{seriesId}/units", new
@@ -79,7 +79,7 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task Dieselbe_Reihe_zweimal_angelegt_liefert_dieselbe_Reihe()
     {
-        var creator = await TestApi.FatherAsync(factory);
+        var creator = await TestApi.AdultAsync(factory);
         var name = $"Green Line {Guid.NewGuid():N}";
 
         var first = await creator.PostAsJsonAsync(SeriesRoot, new { name, publisher = "Klett" });
@@ -97,12 +97,12 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task Ein_fremder_Creator_darf_lesen_aber_nicht_aendern()
     {
-        var owner = await TestApi.FatherAsync(factory);
+        var owner = await TestApi.AdultAsync(factory);
         var seriesId = await CreateSeriesAsync(owner, "Lighthouse");
 
         var strangerId = await TestApi.IdAsync(await owner.PostAsJsonAsync("/api/v1/supervisor/adults",
             new { name = $"Fremder {Guid.NewGuid():N}", pin = "4321" }));
-        var stranger = await TestApi.FatherAsync(factory, strangerId, "4321");
+        var stranger = await TestApi.AdultAsync(factory, strangerId, "4321");
 
         Assert.Equal(HttpStatusCode.OK, (await stranger.GetAsync($"{SeriesRoot}/{seriesId}")).StatusCode);
 
@@ -120,7 +120,7 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task Profil_CRUD_prueft_Fach_und_Reihe()
     {
-        var creator = await TestApi.FatherAsync(factory);
+        var creator = await TestApi.AdultAsync(factory);
         var seriesId = await CreateSeriesAsync(creator, "Access");
 
         var profile = await (await creator.PostAsJsonAsync(ProfileRoot, new
@@ -172,7 +172,7 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task Das_Matching_stellt_den_Reihen_Treffer_nach_vorn()
     {
-        var creator = await TestApi.FatherAsync(factory);
+        var creator = await TestApi.AdultAsync(factory);
         var subjectId = await TestApi.IdAsync(
             await creator.PostAsJsonAsync("/api/v1/creator/subjects", new { name = $"Englisch {Guid.NewGuid():N}" }));
         var seriesId = await CreateSeriesAsync(creator, "Access", subjectId: subjectId);
@@ -235,7 +235,7 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task Das_Matching_haelt_die_Rangfolge_der_Gewichte_ein()
     {
-        var creator = await TestApi.FatherAsync(factory);
+        var creator = await TestApi.AdultAsync(factory);
         var subjectId = await TestApi.IdAsync(
             await creator.PostAsJsonAsync("/api/v1/creator/subjects", new { name = $"Englisch {Guid.NewGuid():N}" }));
         var seriesId = await CreateSeriesAsync(creator, "Access", subjectId: subjectId);
@@ -306,13 +306,13 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task Ein_fremdes_Kind_wird_beim_Matching_abgewiesen()
     {
-        var supervisor = await TestApi.FatherAsync(factory);
+        var supervisor = await TestApi.AdultAsync(factory);
         var childId = await TestApi.IdAsync(await supervisor.PostAsJsonAsync("/api/v1/supervisor/children",
             new { name = "Fremd-Kind", pin = "8211", grade = 8 }));
 
         var strangerId = await TestApi.IdAsync(await supervisor.PostAsJsonAsync("/api/v1/supervisor/adults",
             new { name = $"Fremder {Guid.NewGuid():N}", pin = "4322" }));
-        var stranger = await TestApi.FatherAsync(factory, strangerId, "4322");
+        var stranger = await TestApi.AdultAsync(factory, strangerId, "4322");
 
         var response = await stranger.GetAsync($"{ProfileRoot}/match?childId={childId}");
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
@@ -329,7 +329,7 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task Eine_Unit_aus_fremder_Reihe_am_Lehrbuch_wird_abgewiesen()
     {
-        var creator = await TestApi.FatherAsync(factory);
+        var creator = await TestApi.AdultAsync(factory);
         var seriesId = await CreateSeriesAsync(creator, "Access");
         var otherSeriesId = await CreateSeriesAsync(creator, "Green Line");
         var foreignUnitId = await TestApi.IdAsync(await creator.PostAsJsonAsync(
@@ -367,7 +367,7 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task Eine_geloeschte_Reihe_leert_nur_die_Zuordnungen()
     {
-        var creator = await TestApi.FatherAsync(factory);
+        var creator = await TestApi.AdultAsync(factory);
         var seriesId = await CreateSeriesAsync(creator, "Access");
         var unitId = await TestApi.IdAsync(await creator.PostAsJsonAsync(
             $"{SeriesRoot}/{seriesId}/units", new { label = "Unit 1", grade = 8 }));

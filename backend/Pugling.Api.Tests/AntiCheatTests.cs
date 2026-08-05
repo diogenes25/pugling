@@ -12,7 +12,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
 {
     private async Task<(int planId, int positionId)> SetupAsync(int stage = (int)TestStage.SelfAssess)
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         return TestApi.SeedLeitnerPosition(factory, exerciseId, stage);
     }
@@ -21,7 +21,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     public async Task Heartbeat_ClamptUebertriebeneSekunden()
     {
         var (planId, positionId) = await SetupAsync();
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var sid = await TestApi.StartPositionSessionAsync(father, planId, positionId);
 
         var hb = await father.PostAsJsonAsync(
@@ -36,7 +36,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     public async Task Heartbeat_InaktivOderNichtPositiv_RechnetKeineZeitAn()
     {
         var (planId, positionId) = await SetupAsync();
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var sid = await TestApi.StartPositionSessionAsync(father, planId, positionId);
         var url = $"{TestApi.PracticeBase(planId, positionId)}/{sid}/heartbeat";
 
@@ -85,7 +85,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     public async Task Vater_DarfFremdenTagNachtragen()
     {
         var (planId, positionId) = await SetupAsync();
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var yesterday = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-1).ToString("yyyy-MM-dd");
 
         var res = await father.PostAsJsonAsync(
@@ -105,7 +105,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     public async Task Sohn_KannInaktivenPlanNichtUeben_403()
     {
         var (planId, positionId) = await SetupAsync();
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
 
         // No cherry-picking: the child can no longer practice the deactivated plan.
@@ -131,7 +131,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         // Start the session WHILE the plan is still playable.
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
 
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
 
         var res = await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/end", new { });
@@ -147,7 +147,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     public async Task Sohn_KannInaktivenPlanNichtTesten_403()
     {
         var (planId, positionId) = await SetupAsync();
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
 
         var child = await TestApi.ChildAsync(factory);
@@ -160,7 +160,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     public async Task Vater_DarfInaktivenPlanTrotzdemDurchspielen()
     {
         var (planId, positionId) = await SetupAsync();
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
 
         // The supervisor stays exempt for preview/catch-up - even with an inactive plan.
@@ -182,7 +182,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     public async Task Sohn_ListeZeigtInaktivenPlanNicht()
     {
         var (planId, _) = await SetupAsync();
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
 
         var child = await TestApi.ChildAsync(factory);
@@ -207,7 +207,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     public async Task Sohn_StudentPlanListe_ZeigtInaktivenPlanNicht()
     {
         var (planId, _) = await SetupAsync();
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
 
         // No cherry-picking: the deactivated plan does not show up in the child's discovery.
@@ -221,7 +221,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     public async Task Vater_DarfStudentPlanListeNicht_403()
     {
         await SetupAsync();
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
 
         // student/study-plans is child-only (a role gate); the supervisor reads plans under supervisor/.
         var res = await father.GetAsync("/api/v1/student/study-plans");
@@ -232,7 +232,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task AktivierenEinesPlans_DeaktiviertAndereDesKindes()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planA, _) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.SelfAssess);
         var (planB, _) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.SelfAssess);
@@ -253,7 +253,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task IsPlayable_False_WennAktivAberNochNichtGestartet()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         // An active plan whose runtime only starts in the future → not (yet) playable today.
         var future = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(7).ToString("yyyy-MM-dd");
         var planId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/study-plans",
@@ -273,7 +273,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var sessionId = await TestApi.StartPositionSessionAsync(child, planId, positionId);
 
         // … then the supervisor deactivates the plan (or it expires).
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
 
         // Through the still open session the child must not keep scoring points.
@@ -293,7 +293,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var attemptId = attempt.GetProperty("attemptId").GetInt32();
 
         // … then the plan is deactivated.
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}", new { active = false })).EnsureSuccessStatusCode();
 
         // Submitting (and scoring) the open attempt must fail (the plan check runs before any grading).
@@ -306,7 +306,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task Hoerstufe_RueckwaertsRichtung_GibtKeineAudioquellePreis()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (id, key) = await TestApi.CreateStoreVocabAsync(father, "hello", "hallo");
         (await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{id}",
             new { pronunciationAudioUrl = "https://example.test/hello.mp3" })).EnsureSuccessStatusCode();
@@ -388,7 +388,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         // every item as its own field (`ItemReport.Answer`) - also for cards with `introduced: false`, which the
         // child has never been shown. No ownership check catches that, the plan really is the child's own; the
         // report simply is the supervisor's evaluation, so the tier role is the wall.
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father); // hello→hallo, goodbye→tschüss
         var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(factory);
@@ -410,7 +410,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     [Fact]
     public async Task Kind_LiestUeberTagsUndKlassenarbeit_KeineUebungskonfiguration()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var exerciseId = await HoerverstehenMitTranskriptAsync(father);
         var child = await TestApi.ChildAsync(factory);
 

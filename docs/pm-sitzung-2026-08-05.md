@@ -307,3 +307,127 @@ Nichtverfügbarkeit, unabhängig vom Befehl. Der Index im Repo spiegelt darum **
 Zahl zeigt.
 
 Die fünf Prüfpunkte für den Morgen stehen in [docs/nachtlauf.md](nachtlauf.md#am-morgen-fünf-zeilen-prüfen).
+
+## Nachtlauf 2 — Vorlauf
+
+Vom Nutzer am Abend desselben Tages neu beauftragt, nach demselben Auftragstext wie oben, aber mit einer
+geänderten Freigabe 3 ([docs/nachtlauf.md](nachtlauf.md), heute aktualisiert): **mehrere thematisch
+verwandte Sprints** statt genau einem, Retro bleibt je Sprint auf „nur vorschlagen" beschränkt, ein
+Defekt im eigenen Increment beendet die ganze Nacht statt nur den Sprint, ausgesprochen große Stories
+werden geteilt statt gebaut. Neu dazu: die Chrome-Extension ist in dieser Sitzung erreichbar (geprüft per
+`tabs_context_mcp`, ein Tab verbunden) — ein echter Browser-Rollengang ist damit möglich, wo er sich
+lohnt; und der Skill `web-design-guidelines` steht für UI-Stories zusätzlich zur Verfügung.
+
+**Buildbares Material zu Beginn:** 14 `Aufräumen`-Stories bereits `geschaetzt` (B-25/27/32/44/47/49/51/
+55/58/59/74/83/88/112), 4 `Aufräumen` `ausformuliert` (B-95/100/101/102), 2 `Aufräumen` + 1 `Defekt`
+`idee` (B-107/108/109). `Wunsch`/`Frage` (33 Stories) bleiben gesperrt; B-07/B-31 warten weiter extern.
+
+Vier thematische Sprints gebildet (nach Themengebiet, nicht nach Zeitbudget):
+
+| Sprint | Thema | Stories |
+| --- | --- | --- |
+| 1 | Rollen-/Bezeichner-Konsistenz | B-44, B-32, B-51, B-83, B-112 |
+| 2 | Testsuite-Qualität & Determinismus | B-88, B-27, B-55, B-58 |
+| 3 | CI/Deploy-Tooling | B-25, B-47 |
+| 4 | Typsicherheit stärken | B-59, B-74, B-49 |
+
+## Nachtlauf-2-Sprint 1 — Ziel & Umfang
+
+**Sprint-Ziel:** *Wer die Rollen-Dokumentation oder den Auth-Code liest, findet dort, was der Code
+längst tut — Creator/Supervisor/Student statt Vater/Kind als Ebenen-Namen, keinen `Father`-Bezeichner
+mehr für eine `Adult`-Zeile, die vierte `Admin`-Rolle sichtbar, und die Lösungsfeld-Regel dort, wo man
+sie vor dem Schreiben eines DTOs liest.*
+
+**Umfang:** B-44 (grundprinzip.md), B-32 (Father→Adult-Bezeichner), B-51 (Admin-Rolle dokumentieren),
+B-83 (Lösungsfeld-Regel in CLAUDE.md), B-112 (Kommentar-Korrektur). Alle fünf `art: Aufräumen`, alle
+bereits `geschaetzt` bzw. (B-112) mit vollständiger Schätzung.
+
+**Entwickler-Brief:**
+
+- Kein Verhalten ändert sich — die Abnahme ist „alles so grün wie vorher" plus die inhaltliche Richtigkeit
+  der neuen Doku-Zeilen gegen den tatsächlichen Code.
+- Backend zuerst (B-32, einziger Code-Eingriff dieses Sprints): drei Bezeichner umbenennen, dann die
+  Doku-Stories (B-44, B-51, B-83) und der eine Frontend-Kommentar (B-112).
+- Testweg: `dotnet build`/`dotnet test Pugling.sln -c Release`/`dotnet format --verify-no-changes` fürs
+  Backend, `npm run build`/`npm test -- --run` fürs Frontend, `markdownlint-cli2` für alle geänderten
+  `.md`-Dateien.
+
+## Nachtlauf-2-Iteration 1 — umgesetzt
+
+**Backend** (B-32): `AuthAccess.cs` (`authorFatherId` → `authorAdultId`), `ShopService.cs`/
+`ShopController.cs` (`ListingsForFatherAsync` → `ListingsForSupervisorAsync`), `TestApi.cs` + 70 weitere
+Testdateien (`FatherAsync` → `AdultAsync`, wortgrenzen-scharf per Regex, `NewFatherAsync`-Wrapper
+unberührt).
+
+**Doku** (B-44, B-51, B-83): `docs/grundprinzip.md` auf Supervisor/Student umgestellt (Alias, Tabelle,
+zwei H2-Titel, Fließtext, Fußnote zu B-46) mit den zwei bewussten Ausnahmen aus B-44s Entscheidung 5;
+neuer Abschnitt „Admin — Plattform-Superuser" in `wiki/02-authentifizierung.md` plus Verweiszeile in
+`docs/rollen-doku.md`; neue Konventionszeile zur Lösungsfeld-Regel in der Root-`CLAUDE.md`.
+
+**Frontend** (B-112): Kommentar in `ExerciseEditModal.tsx:353` auf Englisch umgeschrieben, benennt beide
+Gründe der Bedingung.
+
+**Verifikation (gemessen):** Backend `dotnet build` sauber, `dotnet test Pugling.sln -c Release` →
+**734/734 grün** (unverändert), `dotnet format --verify-no-changes` clean. Frontend `npm run build`
+sauber, `npm test -- --run` → **153/153 grün** (unverändert). `markdownlint-cli2` gegen alle vier
+geänderten `.md`-Dateien → **0 Issues**.
+
+**Ehrlich benannter Nebenfund (kein Fehler, keine eigene Story):** B-32s AK4-Grep-Probe
+(`grep -rn "FatherAsync" backend/`) zeigt weiterhin drei Treffer in `RemarkTests.cs`/`OwnershipTests.cs`/
+`ExerciseGrantsTests.cs` — das sind unabhängige, lokale private Test-Helfer
+(`RegisterFatherAsync`/`FreshFatherAsync`/`RegisterAdminFatherAsync`), die der Ist-Stand von B-32 nicht
+erfasst hatte. Außerhalb des Story-Umfangs (nur `TestApi.FatherAsync`), bewusst nicht mitgezogen.
+`CLAUDE.md`s eigenes Kontext-Budget war schon **vor** B-83 um 1546 B über der 19000-B-Grenze; B-83s neue
+Zeile (+685 B) vergrößert das bestehende, nicht von diesem Sprint verursachte Defizit, kompensiert es
+aber nicht (Warn-Tor, kein Blocker).
+
+## Runde — Abnahme Nachtlauf-2-Sprint-1 (Rollengang)
+
+- **Vater/Creator/Sohn: Regression, kein sichtbarer Pfad geändert.** Alle fünf Stories sind
+  `art: Aufräumen` ohne beabsichtigte Verhaltensänderung; belegt durch die grüne Gesamtsuite (734/734
+  Backend, 153/153 Frontend) und beide Reviewer-Läufe ohne Blocker.
+- **Browser-Rollengang versucht, nicht gelungen — ehrlich benannt statt verschwiegen.** Die
+  Chrome-Extension war verbunden (Freigabe 6), `/vater/exercises` und `/vater` luden sichtbar korrekt
+  (Seiteninhalt per `get_page_text` gelesen, Demo-Vater #3 eingeloggt), aber das native `<select>` „Fach"
+  ließ sich über die verfügbaren Automatisierungs-Aktionen (Klick auf Option, Pfeiltaste+Enter) nicht
+  befüllen — kein Absturz, sondern eine Automatisierungsgrenze dieses spezifischen Steuerelements.
+  Da B-112s Änderung ohnehin nur einen Kommentar betrifft (keine Zeile, die zur Laufzeit ein anderes
+  Verhalten zeigt), ist der dokumentierte Ersatz aus `docs/nachtlauf.md` („Wenn kein Browser da ist")
+  hier ausreichend: die grüne Suite plus der `frontend-reviewer`, der den Code um die Stelle gelesen hat.
+- **Kein Rollengang, der einen Defekt hätte verstecken können**, weil keine der fünf Stories einen
+  Pfad berührt, den ein Rollengang prüfen würde (keine neue Bedingung, kein neuer Endpunkt, keine
+  geänderte Rückgabe) — der einzige Fund dieses Sprints (siehe Retro) kam ohnehin aus dem
+  `frontend-reviewer`, nicht aus einem fehlenden Rollengang.
+
+## Retrospektive — Nachtlauf 2, Sprint 1
+
+**Nachschau:** Vor diesem Sprint stand der Index bei „Nachgeschaut 18 von 49" (Stand nach der Erprobung
+vom selben Tag). Dieser Nachtlauf beginnt eine neue Runde und schuldet keine Nachschau der *vorigen*
+Runde erneut — B-113/B-116/B-117 (aus der Erprobung) sind bereits durch deren eigene Retro geprüft.
+Für **diesen** Sprint gilt die Nachschau-Pflicht dem *nächsten* Zyklus; hier stattdessen die einzige
+Handlung, die jetzt fällig ist: der Fund aus Step 5 selbst, siehe unten.
+
+**Was dieser Sprint über die eigenen Tore gelernt hat:** Der `frontend-reviewer` fand in B-112 einen
+**echten Defekt im eigenen Increment** — der von mir geschriebene Kommentar hatte die beiden Hälften der
+Begründung vertauscht (siehe B-112s `## Verlauf`). Kein Test hätte das gefangen (es ist eine reine
+Prosa-Aussage in einem Kommentar), nur ein Reviewer, der den referenzierten Code (`useAsync.ts`)
+tatsächlich nachrechnet statt den Kommentar für bare Münze zu nehmen. Das ist genau die Fehlerklasse,
+vor der die Nachtlauf-Auflagen 4/5 warnen: eine Behauptung, die plausibel klingt und falsch ist.
+
+**Der Mechanismus:** Kein neuer Gate — das bestehende Tor (`frontend-reviewer` vor jeder Abnahme, Step 5)
+hat **funktioniert**, genau wie vorgesehen. Es braucht keine Verschärfung; es hat den Fund gemacht, für
+den es da ist, bevor irgendetwas als `abgenommen` markiert wurde.
+
+**Warum die Nacht hier endet (Freigabe 3):** Ein Review-Fund im eigenen Increment dieses Sprints ist
+laut Auftrag der Grund, den gesamten Lauf zu beenden, nicht nur den Sprint — unabhängig davon, dass der
+Fund vor der Abnahme kam und behoben wurde. Die Qualitätsschwelle ist einmal gerutscht; Weiterlaufen in
+Sprint 2–4 wäre die falsche Reaktion. Die drei noch nicht begonnenen Sprints (Testsuite-Qualität,
+CI/Deploy-Tooling, Typsicherheit) bleiben `geschaetzt` und liegen für die nächste Sitzung bereit.
+
+## Ende des Nachtlaufs 2
+
+Ein Sprint gebaut und abgenommen (B-44, B-32, B-51, B-83, B-112), drei weitere geplante Sprints
+(Testsuite-Qualität: B-88/27/55/58; CI/Deploy-Tooling: B-25/47; Typsicherheit: B-59/74/49) nicht
+angefasst — Freigabe 3 (Review-Fund im eigenen Increment) beendet die Nacht nach Sprint 1. Kein
+`Wunsch`/`Frage`-Punkt wurde angetroffen, da alle fünf Stories `art: Aufräumen` waren. Nichts ist
+gepusht.

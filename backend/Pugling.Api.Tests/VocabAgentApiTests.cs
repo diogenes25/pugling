@@ -29,7 +29,7 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     [Fact]
     public async Task WortOhneUebersetzung_WirdAngelegt_TranslationLeer()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
 
         var res = await father.PostAsJsonAsync("/api/v1/creator/vocabulary",
             new { sourceLanguage = "fa", targetLanguage = "fb", word = "solo" });
@@ -43,7 +43,7 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     [Fact]
     public async Task Filter_Untranslated_Incomplete_Linked()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         const string sl = "flt";
 
         // without a translation → untranslated + incomplete
@@ -73,7 +73,7 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     [Fact]
     public async Task Linked_Filter_TrenntGrundformVonFlektierterForm()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         const string sl = "lnk";
 
         var baseForm = await CreateAsync(father, new { sourceLanguage = sl, targetLanguage = "fb", word = "swim", translation = "schwimmen" });
@@ -98,7 +98,7 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     [Fact]
     public async Task Lookup_FindetVorhandene_MeldetFehlende()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         await CreateAsync(father, new { sourceLanguage = "lkp", targetLanguage = "fb", word = "banana", translation = "Banane" });
 
         var res = await father.PostAsJsonAsync("/api/v1/creator/vocabulary/lookup",
@@ -117,7 +117,7 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     [Fact]
     public async Task Batch_IstIdempotent_ExplizitenKeys()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         object batch = new[]
         {
             new { key = "batch_alpha", sourceLanguage = "bat", targetLanguage = "fb", word = "alpha", translation = "a" },
@@ -134,7 +134,7 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     [Fact]
     public async Task BatchPatch_TraegtUebersetzungenNach()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var a = await CreateAsync(father, new { sourceLanguage = "bpa", targetLanguage = "fb", word = "uno" });
         var b = await CreateAsync(father, new { sourceLanguage = "bpa", targetLanguage = "fb", word = "due" });
 
@@ -153,7 +153,7 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     [Fact]
     public async Task Forms_LiefertGrundformFamilieMitLabel()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         const string sl = "fam";
         var baseForm = await CreateAsync(father, new { sourceLanguage = sl, targetLanguage = "fb", word = "go", translation = "gehen" });
         var baseKey = baseForm.GetProperty("key").GetString();
@@ -172,7 +172,7 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     [Fact]
     public async Task Tags_AnlegenFilternUndOder_Loeschen()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         const string sl = "tag";
         var k5 = Uri.EscapeDataString("Kapitel 5");
         var k7 = Uri.EscapeDataString("Klasse 7");
@@ -205,7 +205,7 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     [Fact]
     public async Task Tag_ErneutAnlegen_LiefertDenEchtenVerlinkungszaehler()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         const string sl = "tagcount";
         var tagName = "Zaehl-Tag";
 
@@ -230,7 +230,7 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     [Fact]
     public async Task List_SetztTotalCountHeader()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         await CreateAsync(father, new { sourceLanguage = "hdr", targetLanguage = "fb", word = "x", translation = "x" });
 
         var res = await father.GetAsync("/api/v1/creator/vocabulary?sourceLanguage=hdr");

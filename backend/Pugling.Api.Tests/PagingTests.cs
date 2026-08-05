@@ -46,7 +46,7 @@ public class PagingTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task TypedList_LiefertSeitenMitGesamtzahlImHeader()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (_, seriesId, seriesUnitId) = await SeedExercisesAsync(father, 5);
         var basePath = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic";
 
@@ -74,7 +74,7 @@ public class PagingTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task CatalogSearch_IstPaginierbar()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         await SeedExercisesAsync(father, 4);
 
         // Robust against the exercises present in the development seed: count the full set once …
@@ -92,7 +92,7 @@ public class PagingTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task CatalogSearch_SortiertNachTitel_AufUndAbsteigend()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         // Filter on our own subject, so that the seeded exercises do not mix into the result.
         var (subjectId, _, _) = await SeedExercisesAsync(father, 4); // titles: "Aufgabe 0".."Aufgabe 3"
         var basePath = $"/api/v1/creator/exercises?subjectId={subjectId}";
@@ -111,7 +111,7 @@ public class PagingTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task VocabularyStore_SortiertNachWort()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         // A distinctive prefix + the search filter isolates the three test words from any seeded stock.
         await TestApi.CreateStoreVocabAsync(father, "zzzbanana", "Banane");
         await TestApi.CreateStoreVocabAsync(father, "zzzapple", "Apfel");
@@ -127,7 +127,7 @@ public class PagingTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     [Fact]
     public async Task Take0_LiefertNurDieGesamtzahl_OhneZeilen()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (_, seriesId, seriesUnitId) = await SeedExercisesAsync(father, 3);
         var basePath = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic";
 

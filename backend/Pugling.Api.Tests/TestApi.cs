@@ -29,7 +29,7 @@ internal static class TestApi
     }
 
     /// <summary>Client with a father token (default: the seeded father, id 1 / PIN 0000).</summary>
-    public static async Task<HttpClient> FatherAsync(WebApplicationFactory<Program> f, int id = 1, string pin = "0000")
+    public static async Task<HttpClient> AdultAsync(WebApplicationFactory<Program> f, int id = 1, string pin = "0000")
     {
         var c = f.CreateClient();
         c.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await TokenAsync(c, "adult", new { adultId = id, pin }));

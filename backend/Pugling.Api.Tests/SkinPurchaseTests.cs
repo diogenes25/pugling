@@ -42,7 +42,7 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task NeuesKind_StartetMitGratisStarter()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (_, child) = await FreshChildAsync(father, "7001");
 
         var state = await (await child.GetAsync("/api/v1/student/me/skins")).Content.ReadFromJsonAsync<JsonElement>();
@@ -55,7 +55,7 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task Kauf_OhneDeckung_400()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (_, child) = await FreshChildAsync(father, "7002");
 
         var res = await child.PostAsJsonAsync("/api/v1/student/me/skins/fox/purchase", new { });
@@ -66,7 +66,7 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task Kauf_MitDeckung_BuchtGemsAb_UndRuestetAus()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "7003");
 
         // Provide gems (2500) so that the ninja (2000) is affordable.
@@ -92,7 +92,7 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task Muenzen_ZahlenKeineSkins()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (childId, child) = await FreshChildAsync(father, "7007");
 
         // Coins only (Manual → coins), no gems: the skin purchase must still fail on the funds check.
@@ -106,7 +106,7 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task Kauf_BereitsBesessen_409()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (_, child) = await FreshChildAsync(father, "7004");
 
         var res = await child.PostAsJsonAsync("/api/v1/student/me/skins/pug/purchase", new { });
@@ -117,7 +117,7 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task Kauf_UnbekannterSkin_404()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (_, child) = await FreshChildAsync(father, "7005");
 
         var res = await child.PostAsJsonAsync("/api/v1/student/me/skins/banane/purchase", new { });
@@ -128,7 +128,7 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task Ausruesten_NichtBesessen_400()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var (_, child) = await FreshChildAsync(father, "7006");
 
         var res = await child.PostAsJsonAsync("/api/v1/student/me/skins/ninja/equip", new { });
@@ -139,7 +139,7 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task Vater_HatKeinenZugriffAufSkins_403()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
 
         var res = await father.GetAsync("/api/v1/student/me/skins");
 
@@ -152,7 +152,7 @@ public class SkinPurchaseTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         // Proves the safeguard behind the 409 on parallel purchases: if two contexts load the same child and
         // both write (bumping the stamp), the second has to fail with a DbUpdateConcurrencyException - that way
         // no second entry can bypass the funds check and debit twice.
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var childId = await TestApi.IdAsync(
             await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Token-Kind", pin = "7100" }));
 

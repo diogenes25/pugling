@@ -39,7 +39,7 @@ public class SeedContractTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     {
         var c = factory.CreateClient();
 
-        // Adult 1 - the father. The default in tutorial-api.sh and TestApi.FatherAsync.
+        // Adult 1 - the father. The default in tutorial-api.sh and TestApi.AdultAsync.
         var papa = await LoginAsync(c, "adult", new { adultId = 1, pin = "0000" });
         Assert.Equal("Papa", papa.GetProperty("name").GetString());
         Assert.Equal("Supervisor", papa.GetProperty("role").GetString());
@@ -159,7 +159,7 @@ public class SeedContractTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         // The check runs through an *additive* write (creating an item), not through the full PUT: the same
         // rights path (`EnsureCanWrite` → grant), but without replacing the seeded exercise. That very call
         // returns 403 for another creator (ExerciseItemsAndProgressTests) - here it has to succeed.
-        var lehrer = await TestApi.FatherAsync(factory, id: 2, pin: "9999");
+        var lehrer = await TestApi.AdultAsync(factory, id: 2, pin: "9999");
         var res = await lehrer.PostAsJsonAsync(
             $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}/items",
             new { front = "climate", back = "Klima" });

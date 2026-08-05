@@ -16,7 +16,7 @@ public class ReviewGradingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     // Exercise: hello→hallo, goodbye→tschüss. The schedule stage is selectable (free text=4 → a real server-side check).
     private async Task<(int planId, int positionId, int sessionId)> SetupAsync(int stage = (int)TestStage.FreeText, bool requireTyped = false)
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, stage, requireTypedTest: requireTyped);
         var child = await TestApi.ChildAsync(factory);

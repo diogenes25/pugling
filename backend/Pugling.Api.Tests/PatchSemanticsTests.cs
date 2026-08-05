@@ -63,7 +63,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
     [
         new(typeof(UpdateSubjectDto), "name", "Fach neu", async f =>
         {
-            var c = await TestApi.FatherAsync(f);
+            var c = await TestApi.AdultAsync(f);
             var id = await TestApi.IdAsync(await c.PostAsJsonAsync("/api/v1/creator/subjects", new { name = Eindeutig("Fach") }));
             return new Ziel(c, $"/api/v1/creator/subjects/{id}");
         }, []),
@@ -73,7 +73,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         new(typeof(UpdateCategoryDto), "name", "Kategorie neu", async f =>
         {
-            var c = await TestApi.FatherAsync(f);
+            var c = await TestApi.AdultAsync(f);
             var subject = await TestApi.IdAsync(await c.PostAsJsonAsync("/api/v1/creator/subjects", new { name = Eindeutig("Fach") }));
             var id = await TestApi.IdAsync(await c.PostAsJsonAsync($"/api/v1/creator/subjects/{subject}/categories",
                 new { name = "Grammatik" }));
@@ -82,7 +82,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         new(typeof(UpdateClozeDto), "title", "Lückentext neu", async f =>
         {
-            var c = await TestApi.FatherAsync(f);
+            var c = await TestApi.AdultAsync(f);
             var id = await TestApi.IdAsync(await c.PostAsJsonAsync("/api/v1/creator/cloze-texts", new
             {
                 key = Eindeutig("cz"),
@@ -99,7 +99,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         new(typeof(UpdateInterestTagDto), "label", "Interesse neu", async f =>
         {
-            var c = await TestApi.FatherAsync(f);
+            var c = await TestApi.AdultAsync(f);
             var id = await TestApi.IdAsync(await c.PostAsJsonAsync("/api/v1/creator/interest-tags",
                 new { label = Eindeutig("Fußball") }));
             return new Ziel(c, $"/api/v1/creator/interest-tags/{id}");
@@ -107,7 +107,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         new(typeof(UpdateTagDto), "name", "Tag neu", async f =>
         {
-            var c = await TestApi.FatherAsync(f);
+            var c = await TestApi.AdultAsync(f);
             var childId = await NeuesKindAsync(c);
             var id = await TestApi.IdAsync(await c.PostAsJsonAsync("/api/v1/creator/tags",
                 new { childId, name = Eindeutig("Unit"), color = "#abc" }));
@@ -116,7 +116,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         new(typeof(UpdateVocabTagDto), "name", "Vokabel-Tag neu", async f =>
         {
-            var c = await TestApi.FatherAsync(f);
+            var c = await TestApi.AdultAsync(f);
             var id = await TestApi.IdAsync(await c.PostAsJsonAsync("/api/v1/creator/vocabulary/tags",
                 new { name = Eindeutig("Thema"), color = "#def" }));
             return new Ziel(c, $"/api/v1/creator/vocabulary/tags/{id}");
@@ -124,7 +124,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         new(typeof(UpdateVocabularyDto), "translation", "die Kuh", async f =>
         {
-            var c = await TestApi.FatherAsync(f);
+            var c = await TestApi.AdultAsync(f);
             // With alternatives from the start - `clearTranslationAlternatives` proves nothing on an entry
             // that has none.
             var (id, _) = await TestApi.CreateStoreVocabAsync(c, Eindeutig("cow"), "das Rind",
@@ -134,14 +134,14 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         new(typeof(UpdateTextbookSeriesDto), "name", "Reihe neu", async f =>
         {
-            var c = await TestApi.FatherAsync(f);
+            var c = await TestApi.AdultAsync(f);
             var id = await NeueReiheAsync(c);
             return new Ziel(c, $"/api/v1/creator/textbook-series/{id}");
         }, []),
 
         new(typeof(UpdateSeriesUnitDto), "label", "Unit neu", async f =>
         {
-            var c = await TestApi.FatherAsync(f);
+            var c = await TestApi.AdultAsync(f);
             var series = await NeueReiheAsync(c);
             var id = await TestApi.IdAsync(await c.PostAsJsonAsync(
                 $"/api/v1/creator/textbook-series/{series}/units", new { label = "Unit 1", grade = 5 }));
@@ -150,7 +150,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         new(typeof(UpdateCreatorProfileDto), "name", "Frau Schmidt", async f =>
         {
-            var c = await TestApi.FatherAsync(f);
+            var c = await TestApi.AdultAsync(f);
             var series = await NeueReiheAsync(c);
             var subject = await TestApi.IdAsync(await c.PostAsJsonAsync("/api/v1/creator/subjects", new { name = Eindeutig("Fach") }));
             var id = await TestApi.IdAsync(await c.PostAsJsonAsync("/api/v1/creator/profiles", new
@@ -170,14 +170,14 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         new(typeof(UpdateMediaAssetDto), "description", "Ein Pferd auf der Weide", async f =>
         {
-            var c = await TestApi.FatherAsync(f);
+            var c = await TestApi.AdultAsync(f);
             var id = await NeuesMotivAsync(c);
             return new Ziel(c, $"/api/v1/creator/media/{id}");
         }, []),
 
         new(typeof(UpdateMediaVariantDto), "url", "https://example.test/neu.webp", async f =>
         {
-            var c = await TestApi.FatherAsync(f);
+            var c = await TestApi.AdultAsync(f);
             var asset = await NeuesMotivAsync(c);
             var id = await TestApi.IdAsync(await c.PostAsJsonAsync($"/api/v1/creator/media/{asset}/variants",
                 new { purpose = "Card", url = "https://example.test/alt.webp", width = 400, height = 300 }));
@@ -203,7 +203,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         new(typeof(UpdateChildDto), "name", "Kind neu", async f =>
         {
-            var c = await TestApi.FatherAsync(f);
+            var c = await TestApi.AdultAsync(f);
             var id = await TestApi.IdAsync(await c.PostAsJsonAsync("/api/v1/supervisor/children",
                 new { name = Eindeutig("Kind"), birthYear = 2013, grade = 6, pin = "1111" }));
             return new Ziel(c, $"/api/v1/supervisor/children/{id}");
@@ -211,7 +211,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         new(typeof(UpdateTextbookDto), "title", "Access 7", async f =>
         {
-            var c = await TestApi.FatherAsync(f);
+            var c = await TestApi.AdultAsync(f);
             var childId = await NeuesKindAsync(c);
             var series = await NeueReiheAsync(c);
             var unit = await TestApi.IdAsync(await c.PostAsJsonAsync(
@@ -225,7 +225,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         new(typeof(UpdateMissionDto), "title", "Mission neu", async f =>
         {
-            var c = await TestApi.FatherAsync(f);
+            var c = await TestApi.AdultAsync(f);
             var childId = await NeuesKindAsync(c);
             var id = await TestApi.IdAsync(await c.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/missions",
                 new { title = "Zehn Wörter", metric = "NewWords", target = 10, period = "Daily", rewardPoints = 5 }));
@@ -234,7 +234,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         new(typeof(UpdateAchievementDto), "title", "Auszeichnung neu", async f =>
         {
-            var c = await TestApi.FatherAsync(f);
+            var c = await TestApi.AdultAsync(f);
             var childId = await NeuesKindAsync(c);
             var id = await TestApi.IdAsync(await c.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/achievements",
                 new { title = "Hundert Wörter", metric = "NewWords", threshold = 100, rewardPoints = 50 }));
@@ -243,7 +243,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         new(typeof(UpdateClassTestDto), "title", "Klassenarbeit neu", async f =>
         {
-            var c = await TestApi.FatherAsync(f);
+            var c = await TestApi.AdultAsync(f);
             var childId = await NeuesKindAsync(c);
             // `Create` returns `KlassenarbeitDetail` - the id sits one level deeper than usual.
             var angelegt = await c.PostAsJsonAsync("/api/v1/supervisor/class-tests",
@@ -256,7 +256,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         new(typeof(UpdatePlanDto), "title", "Plan neu", async f =>
         {
-            var c = await TestApi.FatherAsync(f);
+            var c = await TestApi.AdultAsync(f);
             var childId = await NeuesKindAsync(c);
             var id = await TestApi.CreateEmptyPlanAsync(c, childId);
             return new Ziel(c, $"/api/v1/supervisor/study-plans/{id}");
@@ -264,7 +264,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         new(typeof(UpdatePositionDto), "stage", 3, async f =>
         {
-            var c = await TestApi.FatherAsync(f);
+            var c = await TestApi.AdultAsync(f);
             var childId = await NeuesKindAsync(c);
             var planId = await TestApi.CreateEmptyPlanAsync(c, childId);
             var exerciseId = await TestApi.CreateVocabExerciseAsync(c);
@@ -281,7 +281,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         new(typeof(UpdateShopArticleDto), "title", "Artikel neu", async f =>
         {
-            var c = await TestApi.FatherAsync(f);
+            var c = await TestApi.AdultAsync(f);
             var id = await TestApi.IdAsync(await c.PostAsJsonAsync("/api/v1/supervisor/shop/articles",
                 new { articleNumber = Eindeutig("A"), title = "Eis", unitType = "Stueck", actionType = "Suessigkeit" }));
             return new Ziel(c, $"/api/v1/supervisor/shop/articles/{id}");
@@ -289,7 +289,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         new(typeof(UpdateShopListingDto), "title", "Angebot neu", async f =>
         {
-            var c = await TestApi.FatherAsync(f);
+            var c = await TestApi.AdultAsync(f);
             var article = await TestApi.IdAsync(await c.PostAsJsonAsync("/api/v1/supervisor/shop/articles",
                 new { articleNumber = Eindeutig("A"), title = "Eis", unitType = "Stueck", actionType = "Suessigkeit" }));
             var id = await TestApi.IdAsync(await c.PostAsJsonAsync($"/api/v1/supervisor/shop/articles/{article}/listings",
@@ -299,21 +299,21 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         new(typeof(UpdateObjectiveRequest), "title", "Objective neu", async f =>
         {
-            var c = await TestApi.FatherAsync(f);
+            var c = await TestApi.AdultAsync(f);
             var (childId, _, objectiveId) = await NeuesObjectiveAsync(c);
             return new Ziel(c, $"/api/v1/supervisor/children/{childId}/objectives/{objectiveId}");
         }, []),
 
         new(typeof(UpdateKeyResultRequest), "title", "Etappe neu", async f =>
         {
-            var c = await TestApi.FatherAsync(f);
+            var c = await TestApi.AdultAsync(f);
             var (childId, keyResultId, objectiveId) = await NeuesObjectiveAsync(c);
             return new Ziel(c, $"/api/v1/supervisor/children/{childId}/objectives/{objectiveId}/key-results/{keyResultId}");
         }, []),
 
         new(typeof(UpdateRemarkDto), "text", "Text geändert", async f =>
         {
-            var c = await TestApi.FatherAsync(f);
+            var c = await TestApi.AdultAsync(f);
             var childId = await NeuesKindAsync(c);
             var exerciseId = await TestApi.CreateVocabExerciseAsync(c);
             var planId = await TestApi.CreateEmptyPlanAsync(c, childId);
@@ -540,6 +540,6 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
     {
         var id = await TestApi.IdAsync(await f.CreateClient().PostAsJsonAsync("/api/v1/supervisor/adults",
             new { name = Eindeutig("Papa"), email, pin = "4444" }));
-        return (await TestApi.FatherAsync(f, id, "4444"), id);
+        return (await TestApi.AdultAsync(f, id, "4444"), id);
     }
 }

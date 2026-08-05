@@ -20,7 +20,7 @@ public class UnknownFieldTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task Unbekanntes_Feld_wird_abgelehnt_mit_eigenem_Code()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
 
         // `method` belonged to the plan-wide StudyPlanItem/Method model, which was removed completely during
         // the study plan rebuild - exactly the kind of outdated field the server used to swallow.
@@ -52,7 +52,7 @@ public class UnknownFieldTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     {
         // The counter-check (self-protection against a false green): the test above would also be green if the
         // endpoint rejected every body. The same payload without the legacy field has to go through.
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
 
         var planId = await TestApi.CreateEmptyPlanAsync(father);
 

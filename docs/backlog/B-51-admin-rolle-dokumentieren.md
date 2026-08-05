@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/doku, bereich/auth]
+tags: [typ/story, status/abgenommen, bereich/doku, bereich/auth]
 aliases: [Admin-Rolle, Break-Glass, vierter Akteur]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Aufräumen
 groesse: XS
@@ -178,3 +178,10 @@ aktuellen Code (`AuthAccess.cs:35-38`, `AdminEntities.cs:50-55`, `TokenService.c
 - **2026-08-03** — geschätzt (autonom getroffen, Nutzerauftrag 2026-08-04): Größe XS, `wo: doku`,
   `migration: nein`, `vertragsbruch: nein`, Testweg `markdownlint-cli2` plus manuelle Gegenprüfung der
   Code-Belege.
+- **2026-08-05** — gebaut (Nachtlauf 2, Sprint 1): Abschnitt „6. Admin — Plattform-Superuser (Break-Glass)"
+  in `wiki/02-authentifizierung.md` ergänzt (Zweck, Vergabe nur via DB/Seed, Bypass-Wirkung mit
+  Zeilenverweis auf `ExercisePermissionService.cs:24,34,46`, JWT-Fallstrick, Handlungsanweisung samt
+  Verweis auf `docs/anmerkungen-plan.md`); Verweiszeile in `docs/rollen-doku.md` → „Übergreifende
+  Orientierung" ergänzt. `docs/grundprinzip.md` unangetastet (AK3). `markdownlint-cli2` gegen beide
+  Dateien → **0 Issues**. Gegenlesen der Code-Belege gegen den heutigen Stand:
+  `ExercisePermissionService.cs:24,34,46` trägt weiterhin genau die drei `user.IsAdmin()`-Stellen.

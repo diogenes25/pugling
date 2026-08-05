@@ -15,7 +15,7 @@ public class PositionVocabRefTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task VokabelUebung_MitStoreRefs_LiefertKartenUndBewertetAusDemStore()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (_, k1) = await TestApi.CreateStoreVocabAsync(father, "hello", "hallo");
         var (_, k2) = await TestApi.CreateStoreVocabAsync(father, "bye", "tschüss");
         var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, k1, k2);
@@ -38,7 +38,7 @@ public class PositionVocabRefTests(PuglingWebAppFactory factory) : IClassFixture
     [Fact]
     public async Task StoreAenderung_WirktSofortInDerUebung()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (id, key) = await TestApi.CreateStoreVocabAsync(father, "cat", "Katze");
         var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);

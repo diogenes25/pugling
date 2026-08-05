@@ -48,7 +48,7 @@ public class PflichtMalusTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task GerissenePflicht_ZiehtMuenzMalusAb_ErlaubtSchuld_UndIstIdempotent()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var childId = await FreshChildIdAsync(father, "7001");
 
@@ -96,7 +96,7 @@ public class PflichtMalusTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task MalusBuchungstext_BenenntTagesZielUndWochenziel_JeweilsRichtig()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var childId = await FreshChildIdAsync(father, "7004");
 
@@ -124,7 +124,7 @@ public class PflichtMalusTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task InaktiverPlan_ErzeugtKeinenMalus()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var childId = await FreshChildIdAsync(father, "7003");
 
@@ -143,7 +143,7 @@ public class PflichtMalusTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task VaterSchenkt_MuenzenUndGems_LandenImWallet()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var childId = await FreshChildIdAsync(father, "7002");
 
         // Give away coins (the default currency) and - newly - gems through the same endpoint.

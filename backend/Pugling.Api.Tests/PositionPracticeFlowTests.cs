@@ -19,7 +19,7 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task Vokabel_Position_RichtigGetippt_BringtPunkteUndBoxAufstieg()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
@@ -61,7 +61,7 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task Selbsteinschaetzung_DecktJedeGleichwertigeUebersetzungAuf()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var (_, key) = await TestApi.CreateStoreVocabAsync(father, "huge", "riesig",
             translationAlternatives: ["sehr groß"]);
         var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
@@ -94,7 +94,7 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task LetterBoxes_MehrteiligeLoesung_TraegtDieMaskeMitFestenTrennzeichen()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         // Front/back swapped on purpose: direction is front-to-back, and the ANSWER (the typed side) is the
         // one that needs a space to test the mask - "to grow up" as a translation, not the prompt.
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("aufwachsen", "to grow up"));
@@ -113,7 +113,7 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task ShowBoth_ZeigtBeideSeitenSofort_UndIstAlsAnzeigenurMarkiert()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.ShowBoth);
         var child = await TestApi.ChildAsync(_factory);
@@ -128,7 +128,7 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task ShowBoth_ZaehltAlsGeuebtAberNichtAlsTrefferOderBoxbewegung()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         // A fresh child: an isolated wallet, so the coin count below is not contaminated by other tests
         // sharing the default child (id 1) in this fixture's database.
@@ -164,7 +164,7 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task ShowBoth_AlsKlausurstufe_WirdAbgelehnt()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.ShowBoth);
         var child = await TestApi.ChildAsync(_factory);
@@ -183,7 +183,7 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task ShowBoth_OhneLeitner_IstNichtPruefbar_UndDieGespielteRundeErfuelltDiePflicht()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
             new { name = "Kennenlern-Kind", pin = "7502" }));
@@ -221,7 +221,7 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task ShowBoth_PracticeSessionTraegtTestableFalse()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
             new { name = "Kennenlern-Kind-2", pin = "7503" }));
@@ -244,7 +244,7 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task GetippteStufe_PracticeSessionTraegtTestableTrue()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
@@ -257,7 +257,7 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task Vokabel_Position_ZweiteWertungAmSelbenTag_WirdNichtGewertet()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
@@ -279,7 +279,7 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task Vokabel_Position_FalscheAntwort_BleibtInBox1UndFaellig()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
@@ -296,7 +296,7 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
     [Fact]
     public async Task Position_UnbekanntFuerDenPlan_LiefertNotFound()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);
@@ -312,7 +312,7 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
     {
         // The single view of the session (a C3 coverage gap): the client fetches it after a reload to find
         // cursor and mode again without starting a second session.
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(_factory);

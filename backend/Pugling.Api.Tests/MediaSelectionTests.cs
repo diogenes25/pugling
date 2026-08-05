@@ -30,7 +30,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task DasInteresseDesKindes_EntscheidetWelcheDarstellungKommt()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var setup = await ScenarioAsync(father, "auswahl-interesse");
 
         // The child likes unicorns, not superheroes - of three renditions the unicorn has to come.
@@ -44,7 +44,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task Abneigung_SchliesstAus_StattNurSchlechterZuRanken()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var setup = await ScenarioAsync(father, "auswahl-abneigung");
 
         // "Comic" is strongly positive, but the unicorn additionally carries a rejected tag. A plain score sum
@@ -58,7 +58,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task Eignung_UeberDerFreigabe_KommtNie()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var setup = await ScenarioAsync(father, "auswahl-rating", includeMature: true);
 
         // The child "likes" the tag of the unreleased image most - the rating still wins.
@@ -71,7 +71,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task DieWahlBleibtStabil_AuchWennSpaeterEinBesseresBildDazukommt()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var setup = await ScenarioAsync(father, "auswahl-konstanz");
         await SetInterestsAsync(father, setup.ChildId, [("Einhorn", 1)]);
 
@@ -91,7 +91,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task AnderesBild_TauschtAus_UndZiehtDasAbgelehnteNieWieder()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var setup = await ScenarioAsync(father, "auswahl-reshuffle");
         await SetInterestsAsync(father, setup.ChildId, [("Einhorn", 3)]);
 
@@ -124,7 +124,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task OhneAlternative_BleibtDasBildStehen_StattZuVerschwinden()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var setup = await ScenarioAsync(father, "auswahl-letztes", assetCount: 1);
 
         var before = (await FirstCardAsync(father, setup, SelfAssess)).GetProperty("imageUrl").GetString();
@@ -152,7 +152,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task Punktgleichstand_WirdDeterministischGebrochen_NichtZufaellig()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var setup = await ScenarioAsync(father, "auswahl-gleichstand", assetCount: 0);
 
         // Two renditions without tags and with the same editorial rank: identical score (0 - the child has no
@@ -204,7 +204,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task Abschlusstest_SchreibtKeineBildwahlFest()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var setup = await ScenarioAsync(father, "klausur-keine-wahl");
         await SetInterestsAsync(father, setup.ChildId, [("Einhorn", 3)]);
         // A blank slate: whatever picks exist after the run were written by the run.
@@ -259,7 +259,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task UnzulaessigGewordeneWahl_WirdZurueckgezogen_StattDieKarteZuVerbrennen()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var setup = await ScenarioAsync(father, "auswahl-veraltet");
         await SetInterestsAsync(father, setup.ChildId, [("Einhorn", 3)]);
 
@@ -283,7 +283,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task AnderesBild_AufGetippterStufe_GibtNichtsHeraus()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var setup = await ScenarioAsync(father, "reshuffle-stufe");
         await SetInterestsAsync(father, setup.ChildId, [("Einhorn", 3)]);
         var sohn = await TestApi.ChildAsync(factory, setup.ChildId, ChildPin);
@@ -308,7 +308,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task AnderesBild_NurFuerKartenDerSitzung()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var setup = await ScenarioAsync(father, "reshuffle-index");
         var sohn = await TestApi.ChildAsync(factory, setup.ChildId, ChildPin);
 
@@ -324,7 +324,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task AnderesBild_ImStillgelegtenPlan_BleibtDemSohnVerschlossen()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var setup = await ScenarioAsync(father, "reshuffle-plan");
         await SetInterestsAsync(father, setup.ChildId, [("Einhorn", 3)]);
         var sohn = await TestApi.ChildAsync(factory, setup.ChildId, ChildPin);
@@ -343,7 +343,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task GetippteStufen_ZeigenKeinBild_DennEinMotivVerraetDieBedeutung()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var setup = await ScenarioAsync(father, "auswahl-anticheat");
         await SetInterestsAsync(father, setup.ChildId, [("Einhorn", 3)]);
 
@@ -365,7 +365,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task ItemZuordnung_SchlaegtDieStoreZuordnung()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var setup = await ScenarioAsync(father, "auswahl-kaskade");
         await SetInterestsAsync(father, setup.ChildId, [("Einhorn", 3)]);
 
@@ -384,7 +384,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task OhneZuordnung_BleibtDieKarteBildlos_StattEinenNotnagelZuZeigen()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var setup = await ScenarioAsync(father, "auswahl-leer", assetCount: 0);
 
         var card = await FirstCardAsync(father, setup, SelfAssess);
@@ -394,7 +394,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task ZweiKinder_BekommenIhrJeweilsPassendesBild()
     {
-        var father = await TestApi.FatherAsync(factory);
+        var father = await TestApi.AdultAsync(factory);
         var first = await ScenarioAsync(father, "auswahl-kind-a");
         // A second child on the same exercise: the same material, a different profile.
         var second = await ScenarioAsync(father, "auswahl-kind-b", reuse: first);

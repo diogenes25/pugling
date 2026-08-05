@@ -12,7 +12,7 @@ public class VocabTwoStepTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task Einfach_OhneKeyUndWortart_GeneriertKeyUndDefaultOther()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
 
         var res = await father.PostAsJsonAsync("/api/v1/creator/vocabulary",
             new { sourceLanguage = "en", targetLanguage = "de", word = "cat", translation = "Katze" });
@@ -26,7 +26,7 @@ public class VocabTwoStepTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task Einfach_ZweiGleiche_ErhaltenEindeutigeKeys()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         object body = new { sourceLanguage = "en", targetLanguage = "de", word = "dog", translation = "Hund" };
 
         var first = await (await father.PostAsJsonAsync("/api/v1/creator/vocabulary", body)).Content.ReadFromJsonAsync<JsonElement>();
@@ -41,7 +41,7 @@ public class VocabTwoStepTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task Komplex_SpaeterPerPatch_ErgaenztNounUndWortart()
     {
-        var father = await TestApi.FatherAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
         var created = await (await father.PostAsJsonAsync("/api/v1/creator/vocabulary",
             new { sourceLanguage = "en", targetLanguage = "de", word = "house", translation = "Haus" }))
             .Content.ReadFromJsonAsync<JsonElement>();
