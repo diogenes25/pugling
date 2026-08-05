@@ -27,7 +27,7 @@ namespace Pugling.Api.Tests;
 /// last run.
 /// </para>
 /// </summary>
-public class ClientRouteGuardTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
+public class ClientRouteGuardTests(SchemaOnlyWebAppFactory factory) : IClassFixture<SchemaOnlyWebAppFactory>
 {
     /// <summary>
     /// The path helpers of the client that the resolver follows. Deliberately a <b>closed list</b>: a fifth

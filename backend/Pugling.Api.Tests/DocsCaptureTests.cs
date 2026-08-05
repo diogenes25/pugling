@@ -1138,6 +1138,13 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         File.WriteAllText(Path.Combine(outDir, "index.md"), NormalizeTrailingNewline(RenderIndex(groups)));
     }
 
+    // Written atomically (B-57): OpenApiExampleCatalog.Load can run concurrently in the same test process
+    // (no [Collection] serializes DocsCaptureTests against OpenApiExampleTests/ClientRouteGuardTests/
+    // ErrorCodeTests) and reads this exact file with a plain File.OpenRead. A direct File.WriteAllText
+    // truncates first and fills in afterward - a reader landing in between sees either a locked file
+    // (IOException) or a torn, partially-written one (JsonException). Writing to a temp file in the SAME
+    // directory and renaming it in is a metadata-only operation on NTFS: any reader sees either the complete
+    // old file or the complete new one, never a partial write.
     private void WriteOpenApiExamples()
     {
         var outDir = Path.Combine(RepoRoot(), "backend", "Pugling.Api", "OpenApi");
@@ -1146,7 +1153,41 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         var usedKeys = new HashSet<string>(StringComparer.Ordinal);
         var examples = _entries.Select(e => ToOpenApiExample(e, usedKeys)).ToList();
         var json = JsonSerializer.Serialize(examples, Indented);
-        File.WriteAllText(Path.Combine(outDir, "openapi-examples.generated.json"), json);
+        var finalPath = Path.Combine(outDir, "openapi-examples.generated.json");
+        // Same directory as the final file - required for the rename to be a same-volume metadata operation
+        // instead of a cross-volume copy, which would reintroduce exactly the torn-read window this avoids.
+        var tempPath = Path.Combine(outDir, $"{Path.GetRandomFileName()}.tmp");
+        try
+        {
+            File.WriteAllText(tempPath, json);
+            MoveWithRetry(tempPath, finalPath);
+        }
+        catch
+        {
+            // A failed move must not leave a stray temp file behind in the source tree.
+            if (File.Exists(tempPath)) File.Delete(tempPath);
+            throw;
+        }
+    }
+
+    // On Windows, replacing finalPath while OpenApiExampleCatalog.Load has it open for read (FileShare.Read,
+    // no FileShare.Delete) briefly denies the rename itself - a transient window, not a real failure. A short
+    // retry rides it out instead of surfacing a spurious crash from a reader that will have closed the handle
+    // within microseconds.
+    private static void MoveWithRetry(string tempPath, string finalPath)
+    {
+        for (var attempt = 1; ; attempt++)
+        {
+            try
+            {
+                File.Move(tempPath, finalPath, overwrite: true);
+                return;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException && attempt < 20)
+            {
+                Thread.Sleep(5);
+            }
+        }
     }
 
     // Non-JSON responses go into the catalog without a body: the transformer parses the value

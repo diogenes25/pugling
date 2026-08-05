@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/qualitaet, bereich/tests]
+tags: [typ/story, status/abgenommen, bereich/qualitaet, bereich/tests]
 aliases: [Beispielkatalog-Rennen, openapi-examples IOException]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: S
@@ -176,3 +176,29 @@ M-Anker B-03/B-10.
 - **2026-08-03** — geschätzt: Größe S, `wo: backend`, keine Migration, kein Vertragsbruch, Angriffsplan in
   fünf Schritten, Testweg `OpenApiExampleCatalogConcurrencyTests.cs` plus fünf bestehende Regressionstests
   (autonom getroffen, Nutzerauftrag 2026-08-04).
+- **2026-08-05** — im Autonomen Modus gebaut, ohne Rückfrage je Ticket: `DocsCaptureTests.WriteOpenApiExamples`
+  schreibt jetzt über eine Temp-Datei im selben Verzeichnis + `File.Move(overwrite: true)` (mit kurzer
+  Retry-Schleife, `MoveWithRetry`); `ClientRouteGuardTests`/`ErrorCodeTests` laufen gegen eine neue
+  `SchemaOnlyWebAppFactory` mit `OpenApi:ExamplesEnabled=false` (Entscheidung 4). Der erste Entwurf des
+  Concurrency-Tests (Entscheidung 5) hat mehrfach die Marschrichtung geändert, weil die reale Racing-Probe
+  gegen echte Disk-/OS-Zeitwerte auf dieser Windows-Maschine einen fremden Störfaktor maß: **jede** frische
+  Datei-Schreib-/Umbenennungsoperation — unsicher oder atomar — kann kurz (20-65 ms) exklusiv gesperrt sein,
+  fast sicher Windows-Echtzeit-Virenschutz beim Scannen der berührten Datei, unabhängig vom eigentlichen
+  Fehlerbild (zerrissener JSON-Inhalt). Ein kontinuierlich pollender Reader auf einem `Task.Run` wurde unter
+  dem vollen `dotnet test Pugling.sln`-Lauf (726 Tests, xunit.v3 parallelisiert jede Testklasse mangels
+  `[Collection]`) zudem gelegentlich durch Thread-Pool-Druck verhungert und lieferte falsch-grüne Ergebnisse.
+  Endgültiger Testaufbau: der Schreiber pausiert **selbst erzwungen** mitten im Schreiben (kein Wetten auf
+  reale I/O-Geschwindigkeit mehr), ein Reader auf einem dedizierten `Thread` (nicht Thread-Pool) pollt
+  währenddessen; das beweist deterministisch „kein Reader sieht je den halbgeschriebenen Temp-Inhalt" — die
+  eigentliche Story-Fehlerklasse — nicht „ein Reader während des Renames selbst ist sicher" (bleibt
+  akzeptierte, im Risiken-Abschnitt schon benannte Annahme, siehe Klassenkommentar in
+  `OpenApiExampleCatalogConcurrencyTests.cs`). Rote Probe vorab bestätigt (`UnsicheresSchreiben_ErzeugtLeseFehler`
+  scheiterte gegen den ursprünglichen `File.WriteAllText`-Schreiber), danach grün, 25+ Wiederholungen isoliert
+  sowie zweimal der volle `dotnet test Pugling.sln -c Release` → **726/726 grün**. `pugling-reviewer` fand
+  einen echten (wenn auch seltenen) Hänger-Fall — der Reader-Thread lief bei einem Writer-Fehler vor dem
+  Pause-Callback endlos weiter — behoben mit `try`/`finally` ums Schreiben; außerdem die Doku im
+  Klassenkommentar auf die engere, tatsächlich bewiesene Eigenschaft geschärft. Die vom `DailyBoxService`
+  verursachte Zufallsrauschen in `docs/api-examples/study-plans.md`/`openapi-examples.generated.json`
+  (unabhängig von dieser Story, siehe [B-107](B-107-dailybox-zufallswert-in-docs-capture.md)) trat bei jedem
+  Testlauf neu auf und wurde vor dem Commit auf die eingecheckten Werte zurückgesetzt. Commit: siehe Verlauf
+  des Repos (B-57-Commit). Status → `abgenommen`.

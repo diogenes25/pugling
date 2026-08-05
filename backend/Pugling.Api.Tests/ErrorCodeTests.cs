@@ -11,7 +11,7 @@ namespace Pugling.Api.Tests;
 /// <c>type</c> URI matches it, <c>traceId</c> is preserved, and the OpenAPI <c>enum</c> matches the
 /// registry (drift protection).
 /// </summary>
-public class ErrorCodeTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
+public class ErrorCodeTests(SchemaOnlyWebAppFactory factory) : IClassFixture<SchemaOnlyWebAppFactory>
 {
     private static async Task<JsonElement> BodyAsync(HttpResponseMessage res) =>
         await res.Content.ReadFromJsonAsync<JsonElement>();

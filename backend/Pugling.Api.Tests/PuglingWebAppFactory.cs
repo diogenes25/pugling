@@ -151,3 +151,26 @@ public sealed class PuglingWebAppFactory : PuglingWebAppFactoryBase
         builder.UseSetting("Scoring:TimeSlotsEnabled", "false");
     }
 }
+
+/// <summary>
+/// Same as <see cref="PuglingWebAppFactory"/> (login rate limit off, time slots neutralized), but additionally
+/// switches off <c>OpenApi:ExamplesEnabled</c> (B-57): for test classes that only read <c>paths</c> or
+/// <c>components.schemas</c> from the live document (<see cref="ClientRouteGuardTests"/>,
+/// <see cref="ErrorCodeTests"/>) - never the examples themselves - this removes their otherwise unnecessary
+/// exposure to <c>OpenApiExampleCatalog.Load</c> racing <c>DocsCaptureTests</c>' write of the very file it
+/// reads, in the same parallel test run. <c>PuglingWebAppFactory</c> itself cannot be reused here: it is
+/// <c>sealed</c>, so a distinct factory type is the only way to opt out for just these two classes.
+/// </summary>
+public sealed class SchemaOnlyWebAppFactory : PuglingWebAppFactoryBase
+{
+    /// <inheritdoc />
+    protected override string EnvironmentName => "Development";
+
+    /// <inheritdoc />
+    protected override void ConfigureFactory(IWebHostBuilder builder)
+    {
+        builder.UseSetting("RateLimiting:LoginEnabled", "false");
+        builder.UseSetting("Scoring:TimeSlotsEnabled", "false");
+        builder.UseSetting("OpenApi:ExamplesEnabled", "false");
+    }
+}
