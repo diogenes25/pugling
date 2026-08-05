@@ -75,14 +75,25 @@ worauf du schaust und **warum es weh tut**, wenn es fehlt; die Regeln selbst leb
   Umschalter (**nicht** `role="tab"` ohne die volle Tab-Semantik); Popover schließt per Escape und Klick
   daneben.
 - `prefersReducedMotion` respektieren, bevor animiert wird.
-- Für tiefergehende UI-Kritik: den Skill `web-design-guidelines` ziehen — er prüft gegen die Web Interface
-  Guidelines und ergänzt diesen Befund, ersetzt ihn nicht.
+- **Welchen Skill du ziehst, hängt von der Frage ab** — beide ergänzen diesen Befund, ersetzen ihn nicht:
+  - `web-design-guidelines` für den **breiten** Durchgang (Web Interface Guidelines: Layout, Interaktion,
+    Beschriftung, A11y-Grundlage).
+  - `accessibility` für alles, was **Screenreader, Tastatur oder dynamische Meldungen** betrifft — er führt
+    WCAG 2.2 samt Mustern (`aria-live`, `role="alert"`, SC 4.1.3 Status Messages) und geht dort tiefer.
+    Anlass für den Zeiger: ein dauerhafter Fehler-Banner ohne `role` ist am 2026-08-05 nur zufällig
+    aufgefallen, während der flüchtige Toast daneben korrekt `role="status"` trug.
 
-**6. Die drei Fallen, die in diesem Repo schon zugeschlagen haben**
+**6. Die Fallen, die in diesem Repo schon zugeschlagen haben**
 
-- **`useAsync` + `loading`:** `{loading ? "Lade…" : rows}` hängt bei **jeder** Änderung alle Zeilen aus —
-  aufgeklappte Bereiche und ihr Zustand sind weg. Der Platzhalter darf nur greifen, solange es noch keine
-  Daten gibt (`loading && data === null`). Getroffen hat es `VaterKatalog` und `VaterExercises`.
+- **`useAsync` + `loading` — und die Falle IM Gegenmittel:** `{loading ? "Lade…" : rows}` hängt bei jeder
+  Änderung alle Zeilen aus (getroffen: `VaterKatalog`, `VaterExercises`). Der Platzhalter darf nur greifen,
+  solange es noch keine Daten gibt (`loading && data === null`) — **aber diese Bedingung zieht zwei
+  Situationen zusammen.** `useAsync` lässt `data` bei *jedem* Dep-Wechsel stehen, also gilt sie auch, wenn
+  eine **andere** Abfrage läuft: beim Blättern bleiben die alten Zeilen im Bild, und weil `Pager` keinen
+  Ladezustand kennt, gibt es überhaupt keine Rückmeldung mehr (B-116, entgangen bei B-89). Frag darum immer
+  beides: *Wiederholt sich dieselbe Abfrage* (dann stehen lassen) *oder läuft eine andere* (dann braucht der
+  Wechsel ein eigenes Signal)? Ein Wechsel der **Auswahl** ist meist entschärft, weil das Repo per `key=`
+  neu montiert — Blättern und Sortieren sind es nicht.
 - **Ein `alive`-Flag schützt nur den State, nicht den abgeschickten POST.** Ein Effekt, der eine Mutation
   auslöst, braucht ein **Ref-Gate**, sonst läuft sie doppelt.
 - **PUT ist Vollersatz:** beim Bearbeiten den geladenen `config`/`suggestedBonus`/`executePublic`
