@@ -427,7 +427,8 @@ Was er nicht leisten kann, ist, einen flüchtigen Blick von einem sorgfältigen 
 nachgetragen ist der Durchgang vom 2026-08-04: welche Stories er abdeckte, ist nicht belegt — und ein
 geratener Nenner wäre schlimmer als ein kleiner.
 
-**Unbeaufsichtigt** (über Nacht) braucht dieser Lauf drei Vorab-Freigaben und endet nach *einem* Sprint;
+**Unbeaufsichtigt** (über Nacht) braucht dieser Lauf mehrere Vorab-Freigaben; seit der Erprobung vom
+2026-08-05 darf er mehrere thematisch verwandte Sprints hintereinander fahren statt nur einen.
 Auftragstext und ehrliche Erwartung stehen in [nachtlauf.md](../nachtlauf.md).
 
 ### Warum der Defekt eine eigene Story braucht
