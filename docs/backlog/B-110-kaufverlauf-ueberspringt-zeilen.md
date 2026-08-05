@@ -152,3 +152,25 @@ anpassen); die sichtbare Reihenfolge stornierter Käufe ändert sich.
   unaufgefordert zu starten. Die Eintrittsbedingung ist damit nicht erfüllt — sie wird benannt, nicht
   umgangen. Fund bei der eigenen Verifikation: dieselbe Zeile steht eine Ebene höher noch einmal, und der
   Vater-Client blättert dort überhaupt nicht → eigene Story B-113.
+- **2026-08-05** — **Selbst-Check statt Reviewer-Lauf** (`pugling-reviewer` und `frontend-reviewer` sind
+  je dreimal an einem serverseitigen `529 Overloaded` abgebrochen; die Freigabe des Nutzers lag vor). Das
+  ist der **schwächere Beleg** und ersetzt den Reviewer nicht — die Story bleibt darum `in-arbeit`.
+  Geprüft wurden die Punkte, die dem Reviewer aufgetragen waren:
+  - **Trägt die Argumentation?** Ja, und belegt: `PurchasedAt` wird genau einmal geschrieben
+    (`ShopService.cs:190`, beim Anlegen) und danach nie mehr — der Sortierschlüssel kann sich also nicht
+    bewegen. `ShopPurchases` wird **nirgends** gelöscht (kein `Remove`/`RemoveRange` im ganzen Backend),
+    ein Nachrücken von hinten gibt es also nicht. Und `PurchaseAsync` hat genau **einen** Aufrufer,
+    `MeController.cs:282` — ein Kauf entsteht nur durch das Kind selbst, weshalb das Verwerfen im Client
+    die einzige verbleibende Verschiebung (Einfügen am Kopf) vollständig abdeckt. Kein zweiter Supervisor
+    kann sie auslösen.
+  - **Test.** Die vier Seed-Zeitstempel sind verschieden (`AddMinutes(-i)`), die PIN `9402` kollidiert mit
+    keinem anderen Test (nur B-99 benutzt `9401`). `SupervisorId = 1` ist eine Annahme über den geseedeten
+    Vater; stimmt sie nicht mehr, schlägt der Storno-Aufruf **laut** fehl (`Assert.Equal(OK, …)`), nicht
+    still — vertretbar.
+  - **Konventionen.** `AsNoTracking`, `ct` durchgereicht, in der DB gefiltert, kein N+1, Kommentare und
+    `///` englisch.
+  - **Fachliche Folge.** Keine Doku und kein Test behauptet die Owned-zuerst-Gruppierung (gesucht in
+    `docs/` und im Backend); die Oberfläche trägt die Storno-Pille. Die Änderung überstimmt also keine
+    Abwägung.
+  - **Ein echter Fund, der über den Auftrag hinausgeht** → in B-113 eingetragen: es sind **drei** Stellen
+    derselben Klasse, nicht eine, und zwei davon werden tatsächlich geblättert.

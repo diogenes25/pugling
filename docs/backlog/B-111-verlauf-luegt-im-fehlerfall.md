@@ -116,3 +116,23 @@ mit geschärfter Bedingung.
   dieser Sitzung, keine Agenten unaufgefordert zu starten). Der **Rollengang** deckt diese Story nur
   teilweise: der Fehlerfall ist auf Kartenebene bewiesen, nicht im Browser — ihn dort zu erzeugen hieße,
   den Server künstlich kaputt zu machen. Argumentierte Ausnahme, keine stille Lücke.
+- **2026-08-05** — **Selbst-Check statt Reviewer-Lauf** (`frontend-reviewer` dreimal an `529 Overloaded`
+  abgebrochen, Freigabe lag vor). Schwächerer Beleg, ersetzt den Reviewer nicht — Stufe bleibt
+  `in-arbeit`. Er hat aber **zwei echte Mängel in der eigenen Arbeit** gefunden, beide sofort behoben:
+  - **Ein Rennen zwischen Kauf und laufendem Nachladen.** Eine Seitenanfrage, die vor dem Verwerfen
+    losgeschickt wurde, hängte ihr Ergebnis danach trotzdem ein: sie trägt den Offset des alten Stands,
+    also landete Seite 2 im frisch geleerten Zustand — die Liste begann bei Zeile 21, `historyLoaded`
+    stand auf `true`, und der eben getätigte Kauf fehlte. Also genau die Lüge, gegen die B-110 angetreten
+    ist, nur über einen anderen Weg. Behoben mit einem Generationszähler (`historyGeneration`), der eine
+    veraltete Antwort verwirft.
+  - **Der dauerhafte Fehler-Banner war stumm.** Der 2-Sekunden-Toast trägt `role="status"`, der Zustand,
+    der *bleibt*, trug nichts — ein Screenreader bekam die flüchtige Meldung und nicht den Befund. Beide
+    Banner tragen jetzt `role="alert"`.
+  - **Eine Korrektur an der eigenen Begründung** (Entscheidung 2 in B-110): „kein `X-Total-Count`" ist nur
+    die halbe Wahrheit — der Client kennt die alte Gesamtzahl und könnte den neuen Kauf vorne anhängen und
+    hochzählen. Der tragende Grund ist ein anderer: eine Gesamtzahl clientseitig fortzuschreiben führt
+    Server-Zustand doppelt und driftet, sobald sich sonst etwas geändert hat (etwa ein Storno). **Preis
+    dieser Entscheidung, ehrlich benannt:** wer viele Seiten nachgeladen hatte, verliert sie beim Kauf und
+    muss erneut blättern.
+  - Verifikation nach den Korrekturen: **152/152** Frontend, Build sauber, `e2e/shop-verlauf.spec.ts`
+    grün.

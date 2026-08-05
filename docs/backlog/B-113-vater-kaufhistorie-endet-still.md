@@ -66,10 +66,32 @@ höher wird eine eigene Story, statt die laufende zu dehnen).
 2. **Nur die Sortierung angleichen oder auch den `status`-Filter der UI anbieten?** Empfehlung: nur die
    Sortierung und der Pager. Der Filter existiert am Endpunkt, aber niemand hat ihn angefragt — er
    gehört in eine eigene Idee, wenn er auffällt.
-3. **Gilt derselbe Fund für weitere `…Async`-Listen im Vater-Web, die ungeblättert geladen werden?**
-   Empfehlung: **einmal messen** (Suche nach Aufrufen ohne `skip`/`take` gegen geblätterte Endpunkte),
-   bevor diese Story geschätzt wird — es könnte ein Muster statt eines Einzelfalls sein. Das ist die
-   Sorte Zahl, die diese Story von „XS" auf „M" heben oder in eine Sammel-Story verwandeln kann.
+3. ~~**Gilt derselbe Fund für weitere Listen?**~~ → **gemessen am 2026-08-05, es ist ein Muster.** Die
+   Antwort steht unten; offen bleibt allein die *Entscheidung*, ob diese Story alle drei Stellen trägt
+   oder geteilt wird. Empfehlung: **eine Story für alle drei** — es ist eine Regel („der Sortierschlüssel
+   eines geblätterten Endpunkts muss unveränderlich sein und einen `Id`-Tiebreaker haben"), und drei
+   Stories würden sie dreimal begründen. Größe damit **M**, nicht XS. Folge, die mit entschieden wird:
+   **der heutige Titel ist dann zu eng** („Kaufhistorie des Vaters") und wandert mit dem Zuschnitt.
+
+## Die Messung: drei Stellen, nicht eine (2026-08-05)
+
+Gesucht wurde nach `? 0 : 1` in `OrderBy` über dem ganzen Backend. Ergebnis:
+
+| Stelle | Sortiert nach | Geblättert? | Wirkt heute? |
+| --- | --- | --- | --- |
+| `Controllers/Supervisor/ShopController.cs:347` | `Status == Owned ? 0 : 1` | `skip`/`take` am Endpunkt, **Client blättert nicht** | stiller Schnitt bei 100 |
+| `Controllers/Supervisor/ShopController.cs:389` | `Status == Pending ? 0 : 1` (Aktivierungsanfragen) | `skip`/`take`, `ToPagedListAsync` | **ja** — genehmigen/ablehnen ändert genau diesen Schlüssel |
+| `Controllers/Student/MeController.cs:374` | `Status == Pending ? 0 : 1` (Anfragen des Kindes) | `skip`/`take`, `ToPagedListAsync` | ja, sobald der Client blättert |
+
+Zwei Verschärfungen gegenüber der ursprünglichen Annahme:
+
+- Bei den **Aktivierungsanfragen** ist die Statusänderung nicht der Ausnahmefall, sondern der
+  Regelbetrieb: der Vater genehmigt oder lehnt ab, und genau das verschiebt die Zeile aus der ersten
+  Gruppe. Von den drei Stellen ist das die gefährlichste.
+- **Beiden Anfrage-Listen fehlt der `Id`-Tiebreaker**: sie enden auf `ThenByDescending(r => r.RequestedAt)`
+  ohne weiteres Kriterium. Zwei Anfragen in derselben Sekunde haben damit **keine** definierte Reihenfolge,
+  auch ohne jede Statusänderung — zwei Abrufe derselben Seite können unterschiedliche Zeilen liefern. Das
+  ist ein eigener, unabhängiger Defekt derselben Familie.
 
 ## Akzeptanzkriterien
 
@@ -85,3 +107,9 @@ höher wird eine eigene Story, statt die laufende zu dehnen).
   noch?". Ist-Stand mit `Datei:Zeile` belegt; bewusst **nicht** in B-110 aufgenommen, Begründung oben.
   Nicht geschätzt: der offene Punkt 3 (ist es ein Muster?) verändert die Größe, und das ist eine Messung,
   keine Schätzung.
+- **2026-08-05** — offener Punkt 3 **gemessen**, nicht geschätzt (Abschnitt „Die Messung"): es sind drei
+  Stellen, zwei davon werden tatsächlich geblättert, und beiden Anfrage-Listen fehlt zusätzlich der
+  `Id`-Tiebreaker. Der Fund kam aus dem **Selbst-Check** zu B-110, nachdem `pugling-reviewer` dreimal an
+  einem serverseitigen `529` abgebrochen war — also aus derselben Frage, die dem Reviewer aufgetragen war
+  („wo steht diese Zeile noch?"). Die Story bleibt `ausformuliert`: die Zahl liegt vor, die Entscheidung
+  über den Zuschnitt (eine Story oder drei) gehört in die Grill-Runde.
