@@ -158,7 +158,8 @@ Response — `HTTP 201`:
   "reviewCount": 0,
   "mode": "Lern",
   "cursor": 0,
-  "total": 2
+  "total": 2,
+  "testable": true
 }
 ```
 
@@ -277,7 +278,8 @@ Response — `HTTP 201`:
   "reviewCount": 0,
   "mode": "Info",
   "cursor": 0,
-  "total": 2
+  "total": 2,
+  "testable": true
 }
 ```
 
@@ -544,8 +546,8 @@ Response — `HTTP 200`:
   },
   "dailyBox": {
     "claimedToday": true,
-    "coinsAwarded": 23,
-    "gemsAwarded": 1,
+    "coinsAwarded": 10,
+    "gemsAwarded": 2,
     "streakAtClaim": 1
   }
 }

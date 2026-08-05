@@ -61,6 +61,15 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             && type.IsDisplayOnlyStage(PositionPlayService.StageForDay(pos, plan, day, type));
 
     /// <summary>
+    /// Is the position testable on <paramref name="day"/>? False for content types without a check mode
+    /// (nothing to grade) and for a free display stage (<see cref="IsDisplayOnlyDay"/>, B-96/B-114) - the
+    /// exam rejects that stage with <c>stage_not_testable</c>, so every client affordance that offers a
+    /// test/exam action has to gate on this rather than on the exercise type alone.
+    /// </summary>
+    public bool IsTestable(PlanPosition pos, StudyPlan plan, DateOnly day) =>
+        CheckModeOf(pos) != ExerciseCheckMode.None && !IsDisplayOnlyDay(pos, plan, day);
+
+    /// <summary>
     /// Minimum practice seconds an <b>empty</b> round must carry when the exercise has no content atoms at
     /// all. Deliberately weak – seconds are producible by leaving a tab open – but it is the only evidence
     /// that exists there, and it is strictly more than "a POST happened". See <see cref="IsGoalMetAsync"/>.
@@ -178,7 +187,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             var goalMet = pos.Cadence == GoalCadence.None || await IsGoalMetAsync(pos, plan, day, ct);
             // Testable is about TODAY, not just about the type: on a free display stage (B-96) the exam
             // answers 400, so a client that offered its test button would send the child into a dead end.
-            var testable = checkMode != ExerciseCheckMode.None && !IsDisplayOnlyDay(pos, plan, day);
+            var testable = IsTestable(pos, plan, day);
 
             statuses.Add(new PositionStatus(
                 pos.Id, pos.ExerciseId, pos.Exercise?.Title ?? "", pos.Exercise?.Type.ToString() ?? "",

@@ -30,9 +30,12 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     /// <summary>Upper bound of the seconds creditable per heartbeat (anti time cheat).</summary>
     private const int MaxHeartbeatSeconds = 120;
 
-    private static SessionResponse Map(PracticeSession s) =>
+    // Not static (B-114 follow-up): Testable needs `progress`, and PlanPosition/StudyPlan are only
+    // reliably present when the caller loaded them - see `GetSession`'s Includes and `Start`'s assignment.
+    private SessionResponse Map(PracticeSession s) =>
         new(s.Id, s.StudyPlanId, s.PlanPositionId ?? 0, s.Day, s.StartedAt, s.EndedAt, s.ActiveSeconds,
-            s.Reviews.Count, s.Mode, s.Cursor, s.Order.Count);
+            s.Reviews.Count, s.Mode, s.Cursor, s.Order.Count,
+            s.PlanPosition is { } pos && pos.StudyPlan is { } plan && progress.IsTestable(pos, plan, s.Day));
 
     // No default for `ct`: it would make the call site look correct while the client's cancellation fizzles
     // out - neither CA2016 nor the guard sees an omitted optional argument.
@@ -46,6 +49,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
 
     private Task<PracticeSession?> GetSession(int planId, int positionId, int sessionId, CancellationToken ct) =>
         db.PracticeSessions.Include(s => s.Reviews)
+            .Include(s => s.PlanPosition!).ThenInclude(p => p.Exercise)
+            .Include(s => s.PlanPosition!).ThenInclude(p => p.StudyPlan)
             .FirstOrDefaultAsync(s => s.Id == sessionId && s.StudyPlanId == planId && s.PlanPositionId == positionId, ct);
 
     /// <summary>Starts a practice session for the position. Day only for backdating (father); otherwise today.</summary>
@@ -66,7 +71,9 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
 
         var day = dto.Day ?? today;
-        var session = new PracticeSession { StudyPlanId = planId, PlanPositionId = positionId, Day = day, Mode = dto.Mode };
+        // Assigned directly (not reloaded via GetSession) so Map() can compute Testable right away - pos
+        // already carries Exercise + StudyPlan from GetPosition above.
+        var session = new PracticeSession { StudyPlanId = planId, PlanPositionId = positionId, Day = day, Mode = dto.Mode, PlanPosition = pos };
         // Freeze the order ONCE (per the position's strategy) so that it does not shift during the run and
         // cursor (learn) and batch (info/offline) use the same stable sequence.
         // Info = free practice: the whole scope-filtered pool (no Leitner due date), so that already learned

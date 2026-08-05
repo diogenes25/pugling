@@ -211,6 +211,49 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
         JsonAssert.True(nachher, "goalMet");
     }
 
+    /// <summary>
+    /// B-117 (found in a browser rollengang of B-114): the position CARD already knew it could not be
+    /// tested (<see cref="ShowBoth_OhneLeitner_IstNichtPruefbar_UndDieGespielteRundeErfuelltDiePflicht"/>),
+    /// but the SESSION did not - <c>SohnPractice.tsx</c>'s "Weiter zum Test"/"Zum Test" buttons after a
+    /// round (or when nothing is due) had no field to gate on and always offered the exam, which then
+    /// answered <c>stage_not_testable</c> and rendered its raw English detail text straight to the child.
+    /// </summary>
+    [Fact]
+    public async Task ShowBoth_PracticeSessionTraegtTestableFalse()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = "Kennenlern-Kind-2", pin = "7503" }));
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.ShowBoth,
+            childId: childId, cadence: GoalCadence.Daily, useLeitner: false);
+        var child = await TestApi.ChildAsync(_factory, childId, "7503");
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions";
+
+        var start = await (await child.PostAsJsonAsync(baseUrl, new { })).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.False(start.GetProperty("testable").GetBoolean());
+
+        // Re-reading the same session (as the "done"/"empty" screens do) must agree - not just the start response.
+        var sessionId = start.GetProperty("id").GetInt32();
+        var reread = await child.GetFromJsonAsync<JsonElement>($"{baseUrl}/{sessionId}");
+        Assert.False(reread.GetProperty("testable").GetBoolean());
+    }
+
+    /// <summary>Gegenprobe zu <see cref="ShowBoth_PracticeSessionTraegtTestableFalse"/>: eine normale,
+    /// getippte Stufe bleibt testbar.</summary>
+    [Fact]
+    public async Task GetippteStufe_PracticeSessionTraegtTestableTrue()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+        var child = await TestApi.ChildAsync(_factory);
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions";
+
+        var start = await (await child.PostAsJsonAsync(baseUrl, new { })).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.True(start.GetProperty("testable").GetBoolean());
+    }
+
     [Fact]
     public async Task Vokabel_Position_ZweiteWertungAmSelbenTag_WirdNichtGewertet()
     {

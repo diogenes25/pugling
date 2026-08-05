@@ -4697,7 +4697,7 @@
         "tags": [
           "Supervisor \u2013 Shop"
         ],
-        "summary": "Activation requests of a child, optionally filtered by status (open ones first).",
+        "summary": "Activation requests of a child, optionally filtered by status.",
         "parameters": [
           {
             "name": "childId",
@@ -33170,6 +33170,7 @@
           "positionId",
           "reviewCount",
           "startedAt",
+          "testable",
           "total"
         ],
         "type": "object",
@@ -33247,9 +33248,12 @@
               "string"
             ],
             "format": "int32"
+          },
+          "testable": {
+            "type": "boolean"
           }
         },
-        "description": "A running or finished practice session on a position."
+        "description": "A running or finished practice session on a position. Testable mirrors\n\u0060PositionStatus.Testable\u0060 (B-114) for this session\u0027s day: false on a free display stage, so a\nclient offering \u0022continue to the test\u0022 after the round (or when nothing is due) can gate on it instead\nof sending the child into the exam\u0027s \u0060stage_not_testable\u0060 dead end."
       },
       "SetChildInterestsDto": {
         "required": [

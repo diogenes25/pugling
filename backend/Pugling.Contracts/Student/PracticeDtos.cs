@@ -3,10 +3,15 @@ namespace Pugling.Contracts.Student;
 // Contract of the practice loop (Leitner) of one study plan position. Server-authoritative: the server
 // picks the card, grades the answer and drives the cursor - the frontend only renders.
 
-/// <summary>A running or finished practice session on a position.</summary>
+/// <summary>
+/// A running or finished practice session on a position. <paramref name="Testable"/> mirrors
+/// <c>PositionStatus.Testable</c> (B-114) for this session's day: false on a free display stage, so a
+/// client offering "continue to the test" after the round (or when nothing is due) can gate on it instead
+/// of sending the child into the exam's <c>stage_not_testable</c> dead end.
+/// </summary>
 public record SessionResponse(int Id, int PlanId, int PositionId, DateOnly Day,
     DateTime StartedAt, DateTime? EndedAt, int ActiveSeconds, int ReviewCount,
-    PlayMode Mode, int Cursor, int Total);
+    PlayMode Mode, int Cursor, int Total, bool Testable);
 
 /// <summary>
 /// Start payload of a practice session. <paramref name="Mode"/> selects the playback mode (default
