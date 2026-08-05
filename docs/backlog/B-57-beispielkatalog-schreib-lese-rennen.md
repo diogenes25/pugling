@@ -200,5 +200,5 @@ M-Anker B-03/B-10.
   Klassenkommentar auf die engere, tatsächlich bewiesene Eigenschaft geschärft. Die vom `DailyBoxService`
   verursachte Zufallsrauschen in `docs/api-examples/study-plans.md`/`openapi-examples.generated.json`
   (unabhängig von dieser Story, siehe [B-107](B-107-dailybox-zufallswert-in-docs-capture.md)) trat bei jedem
-  Testlauf neu auf und wurde vor dem Commit auf die eingecheckten Werte zurückgesetzt. Commit: siehe Verlauf
-  des Repos (B-57-Commit). Status → `abgenommen`.
+  Testlauf neu auf und wurde vor dem Commit auf die eingecheckten Werte zurückgesetzt. Commit `a19a702`,
+  dazu dieser. Status → `abgenommen`.
