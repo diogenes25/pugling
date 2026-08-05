@@ -349,11 +349,14 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (57)
+### Offen (61)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-07](B-07-db-umbau-restetappen.md) | DB-Struktur-Umbau: der offene Betriebsschritt | Aufräumen | `geschaetzt` | P1 | XS | backend | — |
+| [B-110](B-110-kaufverlauf-ueberspringt-zeilen.md) | Der Kaufverlauf überspringt Zeilen und verpasst den eigenen Kauf | Defekt | `in-arbeit` | P2 | S | beides | — |
+| [B-111](B-111-verlauf-luegt-im-fehlerfall.md) | Scheitert das Laden des Verlaufs, sagt die App „Noch nichts gekauft" | Defekt | `in-arbeit` | P2 | XS | frontend | — |
+| [B-113](B-113-vater-kaufhistorie-endet-still.md) | Die Kaufhistorie des Vaters endet still bei 100 Zeilen — B-99 eine Ebene höher | Defekt | `ausformuliert` | P2 | — | — | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-48](B-48-anonyme-registrierung-produktion.md) | Anonyme Registrierung ist auch in Produktion offen | Frage | `geschaetzt` | P2 | S | backend | — |
 | [B-11](B-11-uebungen-veroeffentlichen.md) | Übungen ausdrücklich veröffentlichen | Wunsch | `geschaetzt` | P2 | S | frontend | — |
@@ -388,6 +391,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-71](B-71-inline-vokabelliste-ohne-varianten.md) | Die Inline-Vokabelliste im Übungs-Editor kann keine gleichwertigen Übersetzungen anlegen | Wunsch | `geschaetzt` | P3 | M | beides | — |
 | [B-85](B-85-i18n-infrastruktur-sohn-arcade-englisch.md) | i18n-Infrastruktur + Sohn-Arcade auf Englisch (erste Teilstufe der Mehrsprachigkeit) | Wunsch | `geschaetzt` | P3 | L | frontend | — |
 | [B-86](B-86-uebungstyp-manifest-anzeigenamen-schluessel.md) | Das Übungstyp-Manifest liefert Anzeigenamen als Daten, nicht als Schlüssel | Wunsch | `geschaetzt` | P3 | M | beides | Vertrag |
+| [B-112](B-112-kommentar-begruendet-das-gegenteil.md) | Ein Kommentar begründet das Gegenteil der Bedingung unter ihm | Aufräumen | `geschaetzt` | P3 | XS | frontend | — |
 | [B-25](B-25-vite-pwa-peer-konflikt.md) | Peer-Konflikt `vite-plugin-pwa` ↔ `vite@8` lösen | Aufräumen | `geschaetzt` | P3 | XS | frontend | — |
 | [B-32](B-32-father-tabellenname.md) | `Father` heißt noch `Father`, obwohl die Zeile `Adult` ist | Aufräumen | `geschaetzt` | P3 | S | backend | — |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `geschaetzt` | P3 | S | backend | — |
@@ -471,7 +475,6 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-104](B-104-keyresult-dublette-zahlt-doppelt.md) | `abgenommen` | Abschnitt „Entscheidungen" |
 | [B-107](B-107-dailybox-zufallswert-in-docs-capture.md) | `idee` | Abschnitt „Verlauf" |
 | [B-108](B-108-requiretypedtest-default-am-uebungstyp.md) | `idee` | Abschnitt „Verlauf" |
-| [B-109](B-109-full-flow-spec-flackert-bei-frage-3.md) | `idee` | Abschnitt „Verlauf" |
 | [B-93](B-93-birkenbihl-einstellungen-ohne-wirkung.md) | `abgenommen` | Abschnitt „Entscheidungen" |
 | [B-96](B-96-showboth-stufe-ohne-mechanik.md) | `abgenommen` | Abschnitt „Entscheidungen" |
 | [B-98](B-98-idempotenter-link-post-luegt.md) | `abgenommen` | Abschnitt „Entscheidungen" |
