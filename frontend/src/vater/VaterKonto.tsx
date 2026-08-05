@@ -80,7 +80,7 @@ function AccountView({ childId }: { childId: number }) {
             </table>
           </div>
         )}
-        {account.data && <Pager skip={acctSkip} take={PAGE_SIZE} total={account.data.total} onSkip={setAcctSkip} />}
+        {account.data && <Pager skip={acctSkip} take={PAGE_SIZE} total={account.data.total} onSkip={setAcctSkip} busy={account.loading} />}
       </section>
     </>
   );

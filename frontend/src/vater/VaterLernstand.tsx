@@ -104,7 +104,7 @@ function WeakWords({ childId }: { childId: number }) {
           </table>
         </div>
       )}
-      {words.data && <Pager skip={skip} take={PAGE_SIZE} total={words.data.total} onSkip={setSkip} />}
+      {words.data && <Pager skip={skip} take={PAGE_SIZE} total={words.data.total} onSkip={setSkip} busy={words.loading} />}
     </section>
   );
 }

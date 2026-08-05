@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useId, useRef } from "react";
 import type { SortDir } from "../lib/types";
 
 /**
@@ -11,25 +11,41 @@ import type { SortDir } from "../lib/types";
 /** Einheitliche Seitengröße der Vater-Tabellen (klein fürs UI; der Server-Default wäre 100). */
 export const PAGE_SIZE = 25;
 
-/** „‹ Zurück · 26–50 von 312 · Weiter ›". Rendert nichts, wenn alles auf eine Seite passt. */
-export function Pager({ skip, take, total, onSkip }: {
+/**
+ * „‹ Zurück · 26–50 von 312 · Weiter ›". Rendert nichts, wenn alles auf eine Seite passt.
+ *
+ * `busy` (B-116): während die nächste Seite lädt, sperrt der Pager beide Knöpfe und hält die
+ * zuletzt bekannte Spanne fest, statt sie aus dem neuen `skip` zu berechnen – sonst behauptet die
+ * `aria-live`-Zeile schon die neue Seite, während die Tabelle noch die alte zeigt, und ein zweiter
+ * Klick könnte eine Seite überspringen.
+ */
+export function Pager({ skip, take, total, onSkip, busy }: {
   skip: number;
   take: number;
   total: number;
   onSkip: (skip: number) => void;
+  busy?: boolean;
 }) {
-  if (total <= take) return null;
-  const from = total === 0 ? 0 : skip + 1;
-  const to = Math.min(skip + take, total);
-  const canPrev = skip > 0;
-  const canNext = skip + take < total;
+  // While busy, the caller's `skip` already points at the requested page but `total`/the row count
+  // still describe the OLD one (that is exactly what "busy" means here) - showing the new skip against
+  // the old total would announce a page that has not arrived yet. So the shown span freezes on the
+  // last known-good values and only catches up once busy clears.
+  const shown = useRef({ skip, take, total });
+  if (!busy) shown.current = { skip, take, total };
+  const { skip: shownSkip, take: shownTake, total: shownTotal } = shown.current;
+
+  if (shownTotal <= shownTake) return null;
+  const from = shownTotal === 0 ? 0 : shownSkip + 1;
+  const to = Math.min(shownSkip + shownTake, shownTotal);
+  const canPrev = shownSkip > 0;
+  const canNext = shownSkip + shownTake < shownTotal;
   return (
     <div className="pager">
       <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
-        disabled={!canPrev} onClick={() => onSkip(Math.max(0, skip - take))}>‹ Zurück</button>
-      <span className="muted tabnum" aria-live="polite">{from}–{to} von {total}</span>
+        disabled={busy || !canPrev} onClick={() => onSkip(Math.max(0, skip - take))}>‹ Zurück</button>
+      <span className="muted tabnum" aria-live="polite">{from}–{to} von {shownTotal}</span>
       <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
-        disabled={!canNext} onClick={() => onSkip(skip + take)}>Weiter ›</button>
+        disabled={busy || !canNext} onClick={() => onSkip(skip + take)}>Weiter ›</button>
     </div>
   );
 }

@@ -33,6 +33,23 @@ describe("Pager", () => {
     // Nicht „51–75": die Obergrenze ist der Gesamtbestand, nicht das Seitenende.
     expect(screen.getByText("51–60 von 60")).toBeDefined();
   });
+
+  it("B-116: sperrt beide Knöpfe und hält die alte Spanne, solange die neue Seite lädt", () => {
+    const { rerender } = render(<Pager skip={0} take={25} total={60} onSkip={() => {}} busy={false} />);
+    expect(screen.getByText("1–25 von 60")).toBeDefined();
+
+    // "Weiter" geklickt: der Aufrufer hat skip schon auf 25 gesetzt, aber die neue Seite ist noch nicht
+    // da (busy=true) - die Anzeige darf die neue Seite nicht behaupten, bevor sie im Bild ist.
+    rerender(<Pager skip={25} take={25} total={60} onSkip={() => {}} busy={true} />);
+    expect(screen.getByRole("button", { name: "‹ Zurück" }).hasAttribute("disabled")).toBe(true);
+    expect(screen.getByRole("button", { name: "Weiter ›" }).hasAttribute("disabled")).toBe(true);
+    expect(screen.getByText("1–25 von 60")).toBeDefined();
+
+    // Die Seite ist da: busy fällt, jetzt darf die Anzeige nachziehen.
+    rerender(<Pager skip={25} take={25} total={60} onSkip={() => {}} busy={false} />);
+    expect(screen.getByRole("button", { name: "‹ Zurück" }).hasAttribute("disabled")).toBe(false);
+    expect(screen.getByText("26–50 von 60")).toBeDefined();
+  });
 });
 
 describe("TruncationHint", () => {

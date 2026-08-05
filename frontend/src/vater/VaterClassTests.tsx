@@ -140,7 +140,7 @@ function ClassTestManager({ childId }: { childId: number }) {
             </table>
           </div>
         )}
-        {list.data && <Pager skip={skip} take={PAGE_SIZE} total={list.data.total} onSkip={setSkip} />}
+        {list.data && <Pager skip={skip} take={PAGE_SIZE} total={list.data.total} onSkip={setSkip} busy={list.loading} />}
         {openId !== null && <ClassTestDetail key={openId} id={openId}
           subjectId={list.data?.items.find((k) => k.id === openId)?.subjectId ?? null} onChanged={reloadAll} />}
       </section>

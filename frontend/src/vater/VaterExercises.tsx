@@ -173,7 +173,7 @@ export function VaterExercises() {
             ))}
           </div>
         )}
-        {existing.data && <Pager skip={skip} take={PAGE_SIZE} total={existing.data.total} onSkip={setSkip} />}
+        {existing.data && <Pager skip={skip} take={PAGE_SIZE} total={existing.data.total} onSkip={setSkip} busy={existing.loading} />}
       </section>
     )}
 

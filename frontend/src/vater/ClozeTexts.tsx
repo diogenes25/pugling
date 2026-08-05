@@ -114,7 +114,7 @@ export function ClozeTexts() {
           </table>
         </div>
       )}
-      {list.data && <Pager skip={skip} take={PAGE_SIZE} total={list.data.total} onSkip={setSkip} />}
+      {list.data && <Pager skip={skip} take={PAGE_SIZE} total={list.data.total} onSkip={setSkip} busy={list.loading} />}
 
       {editing && (
         <ClozeForm key={editing.id} existing={editing}
