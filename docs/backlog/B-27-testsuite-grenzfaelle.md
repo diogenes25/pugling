@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/qualitaet, bereich/tests]
+tags: [typ/story, status/abgenommen, bereich/qualitaet, bereich/tests]
 aliases: [Testsuite-Sensitivität, Grenzfälle, ScoringService-Grenzen]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Aufräumen
 groesse: S
@@ -170,3 +170,13 @@ gemessen wird nicht.
 - **2026-08-04** — geschätzt (autonom getroffen, Nutzerauftrag): `groesse: S`, `wo: backend`,
   `migration: nein`, `vertragsbruch: nein`. Angriffsplan und Testweg stehen in `## Schätzung`; kein XL-Split
   nötig, der Zuschnitt bleibt eine einzelne, Host-freie Testdatei.
+- **2026-08-06** — gebaut (Nachtlauf 2, Sprint 2): neue Host-freie Klasse `ScoringServiceBoundaryTests.cs`
+  mit fünf Theory-Fällen (Speed-Untergrenze exakt 1,0s, Speed-Obergrenze exakt an der Schwelle,
+  Combo-Schwelle exakt/knapp verfehlt, Zeitfenster exakt an `Start`/`End`, Punkte-Boden bei Box 5/6/7).
+  **Rote Proben, alle fünf einzeln gegengeprüft** (Operator in `ScoringService.cs` kurz gekippt, exakt der
+  erwartete Fall rot, zurückgenommen): `s >= MinSpeedSeconds` → `>` (Erwartet 5/Gemessen 0),
+  `s <= SpeedThreshold` → `<` (Erwartet 5/Gemessen 0), `combo % Threshold == 0` → `== 1` (Erwartet
+  5/Gemessen 0), `time < s.End` → `<=` (Erwartet 10/Gemessen 20), `Math.Max(2, 8-box)` → `8-box` (Erwartet
+  2/Gemessen 1). `ScoringService.cs` danach byte-identisch zu HEAD (`git diff` leer). `dotnet test
+  Pugling.sln -c Release` → **746/746 grün**. `pugling-reviewer` hat alle fünf Theorien einzeln gegen die
+  echte Logik nachgerechnet, kein Blocker.

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, bereich/tests, bereich/qualitaet]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/tests, bereich/qualitaet]
 aliases: [Assistent ohne Durchstich, Wizard-E2E]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Aufräumen
 groesse: S
@@ -141,3 +141,16 @@ und `tsc` sieht keine verwechselten Zahlenfelder (`pointsGoalMet` gegen `penalty
   Nutzerauftrag).
 - **2026-08-04** — geschätzt: `groesse: S`, `wo: frontend`, `migration: nein`, `vertragsbruch: nein`,
   Risiken, Angriffsplan und Testweg ergänzt (autonom getroffen, Nutzerauftrag).
+- **2026-08-06** — gebaut (Nachtlauf 2, Sprint 2): neuer Spec `frontend/e2e/assistent.spec.ts` — neues
+  Kind (Lauf-Suffix), Fach Englisch, eine seed-stabile Übung (Suche nach „environment"), Feinschliff
+  bewusst von der Vorbelegung abweichend (95%/7 statt 80/5), Doppelklick auf „✅ Lehrplan erstellen" mit
+  Zählung der `POST …/supervisor/children` (genau 1), Positions-Zeile geprüft auf beide Werte.
+  **Gegenprobe (kein Produktivcode für diese Story, aber der Fehlerklasse wegen durchgeführt):**
+  `goalThreshold`/`penaltyCoins` in `VaterWizard.tsx` testweise vertauscht → Test sofort rot
+  (`Received: "…bestehen ab 7% … Malus −95…"` statt 95/7), zurückgenommen (`git diff` danach leer).
+  **Rollengang:** dieser Spec selbst ist der Rollengang (pm-loop: eine E2E, die den Weg fährt, zählt als
+  Rollengang) — echter Browser gegen echten Server, derselbe Weg, den ein Vater ginge.
+  `npm run test:e2e` → **27/28 grün** (einziger Ausfall: der vorbestehende B-109-Flake in
+  `full-flow.spec.ts`, unverändert). `frontend-reviewer` bestätigte Selektoren, Konventionstreue und dass
+  die Assertions gegen den echten Render-Code (`PlanPositions.tsx:500,506`) und die echte Sperre
+  (`VaterWizard.tsx`) geprüft sind, kein Blocker.

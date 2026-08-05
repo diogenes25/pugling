@@ -410,7 +410,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
                 pos.ComboThreshold, pos.ComboBonusPoints, pos.SpeedThresholdSeconds, pos.SpeedBonusPoints,
                 pos.TimeSlots);
             var score = scoring.ScoreReview(cfg, preReviewCount, preBox, prog.Box, wasCorrect, combo,
-                DateTime.Now, elapsedSeconds);
+                time.GetLocalNow().DateTime, elapsedSeconds);
             foreach (var c in score.Contributions)
                 db.ChildPointsEntries.Add(new ChildPointsEntry { ChildId = plan.ChildId, Kind = c.Kind, Amount = c.Amount, Reason = c.Reason });
             awarded = score.BasePoints;

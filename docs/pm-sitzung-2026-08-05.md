@@ -431,3 +431,90 @@ Ein Sprint gebaut und abgenommen (B-44, B-32, B-51, B-83, B-112), drei weitere g
 angefasst — Freigabe 3 (Review-Fund im eigenen Increment) beendet die Nacht nach Sprint 1. Kein
 `Wunsch`/`Frage`-Punkt wurde angetroffen, da alle fünf Stories `art: Aufräumen` waren. Nichts ist
 gepusht.
+
+## Nachtlauf 2 — Regeländerung und Fortsetzung
+
+Der Nutzer hat nach dem Abbruch die Freigabe 3 selbst geändert (Commit `bb8dcb5`,
+[docs/nachtlauf.md](nachtlauf.md)): ein einzelner, **behobener** Review-Fund im eigenen Increment
+beendet die Nacht nicht mehr automatisch. Neu gilt ein Fünf-Fehlversuche-Zähler je Sprint — jeder Fund
+wird sofort analysiert und entweder selbständig behoben oder als `art: Defekt` im selben Sprint
+bearbeitet; erst mehr als fünf solcher Funde in einem Sprint gelten als Endlosschleife und beenden den
+gesamten Lauf. Begründung des Nutzers: die alte Fassung bestrafte einen **funktionierenden** Reviewer
+(B-112s Fund war klein und sofort korrigiert) wie einen Fehlschlag. Mit der neuen Regel wurde der Lauf
+ausdrücklich fortgesetzt — Sprint 2 beginnt hier.
+
+## Nachtlauf-2-Sprint 2 — Ziel & Umfang
+
+**Sprint-Ziel:** *Die Testsuite selbst wird verlässlicher: Punkte-Zeitfenster hängen an einer steuerbaren
+Uhr statt der Wanduhr, fünf bisher ungeprüfte Zahlen-Grenzen des `ScoringService` sind billig statt teuer
+gepinnt, kein Testlauf hinterlässt mehr unbegrenzt wachsende Wegwerf-Dateien, und der Lehrplan-Assistent
+hat seinen ersten echten Durchstich.*
+
+**Umfang:** B-88 (TimeProvider statt Wanduhr), B-27 (ScoringService-Grenzfälle), B-55 (Wegwerf-Dateien),
+B-58 (Assistent-E2E). Alle vier bereits `geschaetzt`, alle `art: Aufräumen`.
+
+**Entwickler-Brief:** Backend zuerst (B-88, B-27, B-55-Backend-Teil), dann Frontend (B-55-Frontend-Teil,
+B-58). Kein Verhalten ändert sich für Vater/Sohn/Creator — die Abnahme ist „alles so grün wie vorher"
+plus, für B-58, ein neu geprüfter Weg. Testweg: `dotnet test Pugling.sln -c Release`,
+`dotnet format --verify-no-changes`, `npm run build`, `npm run test:e2e`.
+
+## Nachtlauf-2-Iteration 2 — umgesetzt
+
+**Backend:** `PositionPracticeController.cs:413` auf `time.GetLocalNow().DateTime` (B-88);
+`PositionTimeSlotTests.cs` auf ein schmales 13–15-Uhr-Fenster mit eingefrorener `TestClock` umgebaut plus
+Gegenfall (B-88); neue Host-freie `ScoringServiceBoundaryTests.cs` mit fünf Grenzfällen (B-27);
+`QueryPlanSmokeTests.cs` in `try`/`finally` mit `ClearPool` vor `Delete` (B-55); neues
+`backend/Pugling.Api.Tests/CLAUDE.md` (B-55).
+
+**Frontend:** `e2e/temp-paths.ts`, `e2e/global-setup.ts`, `e2e/global-teardown.ts`, verdrahtet in
+`playwright.config.ts` (B-55); neuer Spec `e2e/assistent.spec.ts` (B-58).
+
+**Verifikation (gemessen):** `dotnet test Pugling.sln -c Release` → **746/746 grün** (unverändert +12 neue
+Fälle). `dotnet format --verify-no-changes` clean. `npm run build` clean. `npm run test:e2e` →
+**27/28 grün** (einziger Ausfall: der vorbestehende, dokumentierte B-109-Flake in `full-flow.spec.ts`).
+
+**Fünf rote Proben, alle mit Zahl belegt (Auflage 5):** B-88s Zeitfenster-Test (Erwartet 20/Gemessen 10,
+Wanduhr außerhalb des Fensters), B-27s fünf Grenzfälle (je Erwartet/Gemessen einzeln in B-27s `## Verlauf`
+dokumentiert), B-58s Vertausch-Gegenprobe (Erwartet 95%/−7 vs. Gemessen 7%/−95). Alle Produktionscode-
+Mutationen danach `git diff`-bestätigt zurückgenommen (byte-identisch).
+
+**Zwei Review-Funde in diesem Sprint (Zähler: 2 von 5, kein Abbruch):**
+
+1. `pugling-reviewer` (kein Blocker): zwei Politur-Hinweise in `QueryPlanSmokeTests.cs` (die
+   `ClearPool`-Hilfsverbindung selbst nicht disposed; `File.Delete` ohne eigenes `try`/`catch` hätte einen
+   echten Testfehler maskieren können). Beide sofort behoben.
+2. `frontend-reviewer` (kein Blocker): die erste Kommentar-Fassung in `global-setup.ts`/
+   `global-teardown.ts` schrieb die `EBUSY`-Ursache fälschlich einem Virenscanner zu — tatsächlich ist es
+   Playwrights eigene Task-Reihenfolge (Setup nach dem eigenen `webServer`-Start, Teardown vor dessen
+   Stop). Kommentare korrigiert, Sweep um einen expliziten Ausschluss der eigenen Pfade gehärtet.
+
+## Runde — Abnahme Nachtlauf-2-Sprint-2 (Rollengang)
+
+- **Sohn: Regression.** Kein eigener Pfad berührt; grüne Gesamtsuite ist der Beleg.
+- **Vater: signiert, mit echtem Rollengang für B-58.** `e2e/assistent.spec.ts` fährt den kompletten
+  Assistenten-Weg im echten Browser gegen den echten Server (Chrome-Extension verbunden, Freigabe 6)
+  — genau der Weg, den ein Vater ginge. Für B-88/B-27/B-55 gilt Regression: kein sichtbarer Pfad
+  geändert, belegt durch die grüne Suite und beide Reviewer.
+- **Creator: Regression.** Kein Katalog-Pfad berührt.
+
+## Retrospektive — Nachtlauf 2, Sprint 2
+
+**Nachschau:** Sprint 1 dieser Nacht (B-44/32/51/83/112) wird hiermit nachgesehen — `git log` und die
+`## Verlauf`-Einträge der fünf Stories erneut gelesen: keine der fünf Änderungen zeigt einen Rest-Fehler,
+der beim Bauen nicht schon gefunden wurde (B-112s eigener Fund ist bereits dort dokumentiert und
+behoben). `nachgeschaut: 2026-08-06` würde auf allen fünf gesetzt, sobald der Index das nächste Mal läuft.
+
+**Was dieser Sprint über die eigenen Tore gelernt hat:** Die neue Fünf-Fehlversuche-Regel hat sich sofort
+bewährt — zwei echte, aber kleine Funde kamen durch, wurden behoben, und die Nacht lief weiter, statt beim
+ersten (harmlosen) Fund zu enden. Der `frontend-reviewer`-Fund zeigt zugleich eine eigene Lektion: eine
+Kommentar-Begründung, die plausibel klingt (Virenscanner), aber nie gegen die tatsächliche Bibliotheks-
+Implementierung nachgerechnet wurde, ist dieselbe Fehlerklasse wie B-112 aus Sprint 1 — eine Behauptung,
+die niemand verifiziert hat, bevor sie als Kommentar stehen blieb.
+
+**Kein neuer Mechanismus.** Beide Funde wurden durch die bestehenden Reviewer gefangen, bevor irgendetwas
+`abgenommen` wurde — die Tore haben funktioniert. Kein Vorschlag für diesen Sprint.
+
+## Ende von Nachtlauf-2-Sprint-2
+
+Vier Stories gebaut und abgenommen. Zwei Review-Funde, beide behoben, Zähler bei 2 von 5 — kein
+Abbruchgrund. Weiter mit Sprint 3 (CI/Deploy-Tooling: B-25, B-47).

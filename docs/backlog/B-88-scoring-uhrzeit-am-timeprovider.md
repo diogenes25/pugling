@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/punkte, bereich/tests, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/punkte, bereich/tests, rolle/student]
 aliases: [Scoring-Uhrzeit, DateTime.Now im Punkte-Pfad]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Aufräumen
 groesse: XS
@@ -174,3 +174,12 @@ dem Test-Pfad ziehen), vergleichbar mit dem XS-Anker B-02 (zwei Sätze plus der 
 - **2026-08-04** — geschätzt: Größe XS, `wo: backend`, `migration: nein`, `vertragsbruch: nein`,
   Angriffsplan eine Produktionszeile plus Testumbau in `PositionTimeSlotTests.cs`, Testweg
   `PositionTimeSlotScoringTests` + volle Regression (autonom getroffen, Nutzerauftrag).
+- **2026-08-06** — gebaut (Nachtlauf 2, Sprint 2 „Testsuite-Qualität & Determinismus"):
+  `PositionPracticeController.cs:413` auf `time.GetLocalNow().DateTime` umgestellt.
+  `Positions_Fenster_Verdoppelt_Die_Punkte_Der_Antwort` auf ein schmales 13:00–15:00-Fenster mit
+  eingefrorener `TestClock` umgebaut (statt Ganztags-Fenster), neuer Gegenfall
+  `Positions_Fenster_Ausserhalb_Laesst_Punkte_Unveraendert` (Uhr auf 10:00, Faktor bleibt aus).
+  **Rote Probe:** `DateTime.Now` testweise zurückgesetzt → `Positions_Fenster_Verdoppelt_…` sofort rot
+  (`Expected: 20, Actual: 10`, an der echten Wanduhr ~00:21 außerhalb des Fensters), zurückgenommen.
+  `dotnet test Pugling.sln -c Release` → **746/746 grün**, `dotnet format --verify-no-changes` clean.
+  `pugling-reviewer` lief gegen den gesamten Sprint-2-Diff, kein Blocker.

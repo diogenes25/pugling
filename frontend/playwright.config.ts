@@ -1,21 +1,23 @@
 import { defineConfig, devices } from "@playwright/test";
-import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { dbFile, mediaDir } from "./e2e/temp-paths";
 
 // ESM: __dirname existiert nicht → aus import.meta.url ableiten.
 const here = path.dirname(fileURLToPath(import.meta.url));
 
+// dbFile/mediaDir kommen aus e2e/temp-paths.ts (B-55) - geteilt mit e2e/global-teardown.ts, damit der
+// Teardown dieselben Dateinamen berechnet statt eigene mit einem neuen `Date.now()` zu erfinden.
 // Frische Wegwerf-DB je Testlauf → Backend seedet Papa(#1/0000) + Sohn(#1/1111) + Vokabeln neu.
-// Die echte pugling.db bleibt unangetastet.
-const dbFile = path.join(os.tmpdir(), `pugling-e2e-${Date.now()}.db`);
-// Auch die hochgeladenen Bilder in einen Wegwerf-Ordner – sonst sammelt der Entwicklungsbaum
-// (backend/Pugling.Api/media-uploads) mit jedem Testlauf Dateien an.
-const mediaDir = path.join(os.tmpdir(), `pugling-e2e-media-${Date.now()}`);
+// Die echte pugling.db bleibt unangetastet. Auch die hochgeladenen Bilder liegen in einem
+// Wegwerf-Ordner – sonst sammelt der Entwicklungsbaum (backend/Pugling.Api/media-uploads) mit jedem
+// Testlauf Dateien an.
 const backendDir = path.resolve(here, "../backend/Pugling.Api");
 
 export default defineConfig({
   testDir: "./e2e",
+  globalSetup: "./e2e/global-setup.ts",
+  globalTeardown: "./e2e/global-teardown.ts",
   timeout: 60_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,

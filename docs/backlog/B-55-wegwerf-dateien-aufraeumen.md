@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/qualitaet, bereich/tests]
+tags: [typ/story, status/abgenommen, bereich/qualitaet, bereich/tests]
 aliases: [Temp-Ordner aufräumen, Wegwerf-Dateien, Temp-Leck]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Aufräumen
 groesse: S
@@ -155,3 +155,23 @@ liefe er, ist schlimmer als keiner.
   `playwright.config.ts:11`/`:14`) gegen den heutigen Code geprüft — unverändert, keine Korrektur nötig.
 - **2026-08-04** — geschätzt: `groesse: S`, `wo: beides`, `migration: nein`, `vertragsbruch: nein`; Risiken,
   Angriffsplan (Backend zuerst) und Testweg ergänzt (autonom getroffen, Nutzerauftrag).
+- **2026-08-06** — gebaut (Nachtlauf 2, Sprint 2). **Backend:** `QueryPlanSmokeTests.cs` in `try`/`finally`
+  gefasst, `SqliteConnection.ClearPool` vor `File.Delete`. **Gegenprobe:** vor dem Fix 424→425 Dateien
+  (`pugling-queryplan-*.db` in `%TEMP%`) nach einem Lauf (Leck bestätigt), nach dem Fix zweimal
+  hintereinander Delta **0**. Neues `backend/Pugling.Api.Tests/CLAUDE.md` mit der Aufräum-Regel und dem
+  `IAsyncDisposable`-Fallstrick. **Frontend:** `e2e/temp-paths.ts` (geteiltes Modul), `e2e/global-setup.ts`
+  (räumt fremde `pugling-e2e-*`-Leichen vor jedem Lauf, schließt die eigenen Pfade explizit aus) und
+  `e2e/global-teardown.ts` (bestmögliches Löschen der eigenen Dateien, `Promise.allSettled`, nie werfend)
+  in `playwright.config.ts` verdrahtet. **Abweichung vom ursprünglichen Plan, gemessen statt vermutet:**
+  ein reines `globalTeardown` genügt nicht – das Backend dieses Laufs läuft zum Teardown-Zeitpunkt noch
+  (Playwright stoppt `webServer` erst danach), sein SQLite-Verbindungspool hält `dbFile` deterministisch
+  offen; `EBUSY` blieb über zwei Minuten linearen Backoffs bestehen. Der `global-setup`-Sweep im
+  **nächsten** Lauf ist die tatsächliche Garantie, nicht der Teardown-Versuch – gemessen: 951→3 Einträge
+  nach einem Lauf, stabil bei 3 nach einem zweiten. Einmalig 447 Alt-Dateien gelöscht (425 `queryplan`,
+  22 benannte Reste). `frontend-reviewer` fand einen echten, aber unterhalb der Blocker-Schwelle
+  liegenden Fund: die erste Kommentar-Fassung schrieb die Ursache fälschlich einem Virenscanner zu,
+  tatsächlich ist es Playwrights Task-Reihenfolge (Setup läuft **nach** dem eigenen `webServer`-Start,
+  Teardown **vor** dessen Stop) – Kommentare korrigiert, Sweep härtet zusätzlich die eigenen Pfade aus.
+  `dotnet test Pugling.sln -c Release` → **746/746 grün**, `npm run build` clean, `npm run test:e2e` →
+  **27/28 grün** (der eine Ausfall ist der vorbestehende, dokumentierte B-109-Flake in
+  `full-flow.spec.ts`, unverändert).

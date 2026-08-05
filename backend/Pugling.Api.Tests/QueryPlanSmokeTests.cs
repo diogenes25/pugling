@@ -25,68 +25,83 @@ public sealed class QueryPlanSmokeTests
     [Fact]
     public async Task Hotpath_Queries_Use_Expected_Indexes()
     {
+        // Throwaway DB file (B-55): deleted in the `finally` below, no matter which assertion fails first.
+        // `ClearPool` runs before the delete - Microsoft.Data.Sqlite pools native handles per connection
+        // string, so without it the file can stay locked even after every `SqliteConnection` is disposed.
         var dbPath = Path.Combine(Path.GetTempPath(), $"pugling-queryplan-{Guid.NewGuid():N}.db");
-        var options = new DbContextOptionsBuilder<PuglingDbContext>()
-            .UseSqlite($"Data Source={dbPath}")
-            .Options;
-
-        Ids ids;
-        await using (var db = new PuglingDbContext(options))
+        var connectionString = $"Data Source={dbPath}";
+        try
         {
-            await db.Database.MigrateAsync();
-            ids = await SeedGraphAsync(db);
-        }
+            var options = new DbContextOptionsBuilder<PuglingDbContext>()
+                .UseSqlite(connectionString)
+                .Options;
 
-        await using var con = new SqliteConnection($"Data Source={dbPath}");
-        await con.OpenAsync();
+            Ids ids;
+            await using (var db = new PuglingDbContext(options))
+            {
+                await db.Database.MigrateAsync();
+                ids = await SeedGraphAsync(db);
+            }
 
-        await AssertUsesIndexAsync(con,
+            await using var con = new SqliteConnection(connectionString);
+            await con.OpenAsync();
+
+            await AssertUsesIndexAsync(con,
             $"SELECT Id FROM ChildPointsEntries WHERE ChildId = {ids.Child} ORDER BY CreatedAt DESC, Id DESC LIMIT 20;",
             "IX_ChildPointsEntries_ChildId_CreatedAt_Id");
 
-        // Since the enum convention, `Kind` sits in the DB as TEXT (the contract always spoke strings anyway).
-        // The composite index has to apply to that too - which is exactly what this assurance checks.
-        await AssertUsesIndexAsync(con,
-            $"SELECT SUM(Amount) FROM ChildPointsEntries WHERE ChildId = {ids.Child} AND Kind IN ('Base', 'Combo', 'Manual');",
-            "IX_ChildPointsEntries_ChildId_Kind");
+            // Since the enum convention, `Kind` sits in the DB as TEXT (the contract always spoke strings anyway).
+            // The composite index has to apply to that too - which is exactly what this assurance checks.
+            await AssertUsesIndexAsync(con,
+                $"SELECT SUM(Amount) FROM ChildPointsEntries WHERE ChildId = {ids.Child} AND Kind IN ('Base', 'Combo', 'Manual');",
+                "IX_ChildPointsEntries_ChildId_Kind");
 
-        await AssertUsesIndexAsync(con,
-            $"SELECT EXISTS(SELECT 1 FROM PracticeSessions WHERE PlanPositionId = {ids.Position} AND Day >= '2026-01-01' AND Day <= '2026-12-31' AND Mode = 1);",
-            "IX_PracticeSessions_PlanPositionId_Day_Mode");
+            await AssertUsesIndexAsync(con,
+                $"SELECT EXISTS(SELECT 1 FROM PracticeSessions WHERE PlanPositionId = {ids.Position} AND Day >= '2026-01-01' AND Day <= '2026-12-31' AND Mode = 1);",
+                "IX_PracticeSessions_PlanPositionId_Day_Mode");
 
-        await AssertUsesIndexAsync(con,
-            $"SELECT EXISTS(SELECT 1 FROM TestAttempts WHERE PlanPositionId = {ids.Position} AND Day >= '2026-01-01' AND Day <= '2026-12-31' AND CompletedAt IS NOT NULL AND Passed = 1);",
-            "IX_TestAttempts_PlanPositionId_Day_CompletedAt_Passed");
+            await AssertUsesIndexAsync(con,
+                $"SELECT EXISTS(SELECT 1 FROM TestAttempts WHERE PlanPositionId = {ids.Position} AND Day >= '2026-01-01' AND Day <= '2026-12-31' AND CompletedAt IS NOT NULL AND Passed = 1);",
+                "IX_TestAttempts_PlanPositionId_Day_CompletedAt_Passed");
 
-        await AssertUsesIndexAsync(con,
-            $"SELECT Id FROM PlanPositions WHERE StudyPlanId = {ids.Plan} ORDER BY `Order`, Id LIMIT 20;",
-            "IX_PlanPositions_StudyPlanId_Order_Id");
+            await AssertUsesIndexAsync(con,
+                $"SELECT Id FROM PlanPositions WHERE StudyPlanId = {ids.Plan} ORDER BY `Order`, Id LIMIT 20;",
+                "IX_PlanPositions_StudyPlanId_Order_Id");
 
-        await AssertUsesIndexAsync(con,
-            $"SELECT COUNT(*) FROM PracticeSessions WHERE StudyPlanId = {ids.Plan} AND Day >= '2026-01-01' AND Day <= '2026-12-31';",
-            "IX_PracticeSessions_StudyPlanId_Day");
+            await AssertUsesIndexAsync(con,
+                $"SELECT COUNT(*) FROM PracticeSessions WHERE StudyPlanId = {ids.Plan} AND Day >= '2026-01-01' AND Day <= '2026-12-31';",
+                "IX_PracticeSessions_StudyPlanId_Day");
 
-        await AssertUsesIndexAsync(con,
-            $"SELECT COUNT(*) FROM TestAttempts WHERE StudyPlanId = {ids.Plan} AND Day >= '2026-01-01' AND Day <= '2026-12-31';",
-            "IX_TestAttempts_StudyPlanId_Day");
+            await AssertUsesIndexAsync(con,
+                $"SELECT COUNT(*) FROM TestAttempts WHERE StudyPlanId = {ids.Plan} AND Day >= '2026-01-01' AND Day <= '2026-12-31';",
+                "IX_TestAttempts_StudyPlanId_Day");
 
-        await AssertUsesIndexAsync(con,
-            $"SELECT COUNT(*) FROM ItemProgress WHERE ChildId = {ids.Child} AND ExerciseId = {ids.Exercise};",
-            "IX_ItemProgress_ChildId_ExerciseId");
+            await AssertUsesIndexAsync(con,
+                $"SELECT COUNT(*) FROM ItemProgress WHERE ChildId = {ids.Child} AND ExerciseId = {ids.Exercise};",
+                "IX_ItemProgress_ChildId_ExerciseId");
 
-        // The hottest creator path: the duplicate lookup when creating vocabulary. It ran as a full table scan,
-        // because the query compared `LOWER(Word)` - no column index applies over an expression. Only the
-        // NOCASE collation + dropping the ToLower() make it usable; this assurance is the proof that both work
-        // together and not just that the index exists.
-        await AssertUsesIndexAsync(con,
-            "SELECT Id FROM Vocabularies WHERE Word = 'w';",
-            "IX_Vocabularies_Word");
+            // The hottest creator path: the duplicate lookup when creating vocabulary. It ran as a full table scan,
+            // because the query compared `LOWER(Word)` - no column index applies over an expression. Only the
+            // NOCASE collation + dropping the ToLower() make it usable; this assurance is the proof that both work
+            // together and not just that the index exists.
+            await AssertUsesIndexAsync(con,
+                "SELECT Id FROM Vocabularies WHERE Word = 'w';",
+                "IX_Vocabularies_Word");
 
-        // The opposite direction of the media link ("which links does this asset have?"). The three filtered
-        // unique indexes start with MediaAssetId but cannot serve this query.
-        await AssertUsesIndexAsync(con,
-            "SELECT Id FROM MediaLinks WHERE MediaAssetId = 1;",
-            "IX_MediaLinks_MediaAssetId");
+            // The opposite direction of the media link ("which links does this asset have?"). The three filtered
+            // unique indexes start with MediaAssetId but cannot serve this query.
+            await AssertUsesIndexAsync(con,
+                "SELECT Id FROM MediaLinks WHERE MediaAssetId = 1;",
+                "IX_MediaLinks_MediaAssetId");
+        }
+        finally
+        {
+            using (var pooled = new SqliteConnection(connectionString))
+                SqliteConnection.ClearPool(pooled);
+            // Best-effort, like PuglingWebAppFactoryBase.CleanUp(): a delete failing here (e.g. a virus
+            // scanner still holding the handle) must not mask the real assertion failure from `try`.
+            try { if (File.Exists(dbPath)) File.Delete(dbPath); } catch { /* best effort */ }
+        }
     }
 
     /// <summary>The ids of the fixture rows – the queries above filter on real values, not guessed ones.</summary>

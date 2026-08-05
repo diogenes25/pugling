@@ -169,20 +169,33 @@ public class PositionTimeSlotScoringTests(TimeSlotsOnFactory factory) : IClassFi
     }
 
     /// <summary>
-    /// New content yields <c>NewContentPoints</c> (10) as its base; the position's window doubles it. The
-    /// window covers the whole day, so the expectation holds no matter when the suite runs – the global
-    /// windows are neutralized in the factory for the same reason.
+    /// Freezes the host's clock at a specific local wall-clock hour, on whatever calendar day is
+    /// "now" – only the <see cref="TimeOnly"/> component reaches the scoring path
+    /// (<c>ScoringService.MultiplierAt</c>), so the date itself is irrelevant.
+    /// </summary>
+    private static void FreezeAtLocalHour(TimeSlotsOnFactory factory, int hour)
+    {
+        factory.Clock.FreezeNow();
+        var frozenLocal = factory.Clock.GetLocalNow().DateTime;
+        var target = frozenLocal.Date + TimeSpan.FromHours(hour);
+        factory.Clock.Advance(target - frozenLocal);
+    }
+
+    /// <summary>
+    /// New content yields <c>NewContentPoints</c> (10) as its base; the position's window (13:00-15:00)
+    /// doubles it once the clock sits inside it (B-88: before this, the window covered the whole day and
+    /// never exercised a real edge – <see cref="Positions_Fenster_Ausserhalb_Laesst_Punkte_Unveraendert"/>
+    /// is the counter-sample outside the same window).
     /// </summary>
     [Fact]
     public async Task Positions_Fenster_Verdoppelt_Die_Punkte_Der_Antwort()
     {
+        FreezeAtLocalHour(factory, 14);
         var father = await TestApi.AdultAsync(factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.SelfAssess,
             comboThreshold: 0,
-            // MaxValue, not 23:59:59: the end is EXCLUSIVE, so the last second of the day would otherwise fall
-            // outside the window - a flake that only shows up around midnight.
-            timeSlots: [new ScoringTimeSlot { Name = "Ganztags", Start = TimeOnly.MinValue, End = TimeOnly.MaxValue, Multiplier = 2.0 }]);
+            timeSlots: [new ScoringTimeSlot { Name = "Nachmittag", Start = new TimeOnly(13, 0), End = new TimeOnly(15, 0), Multiplier = 2.0 }]);
 
         var child = await TestApi.ChildAsync(factory);
         var sessionId = await TestApi.StartPositionSessionAsync(child, planId, positionId);
@@ -191,6 +204,31 @@ public class PositionTimeSlotScoringTests(TimeSlotsOnFactory factory) : IClassFi
 
         var outcome = await res.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(20, outcome.GetProperty("awarded").GetInt32());
+    }
+
+    /// <summary>
+    /// Same window as above (13:00-15:00 ×2.0), clock frozen at 10:00 – outside it. The counter-proof for
+    /// B-88's rewrite: it demonstrates the window is actually clock-<b>dependent</b> now, not just that a
+    /// window without one (<see cref="Ohne_Positions_Fenster_Bleiben_Die_Basispunkte_Stehen"/>) is a
+    /// different case.
+    /// </summary>
+    [Fact]
+    public async Task Positions_Fenster_Ausserhalb_Laesst_Punkte_Unveraendert()
+    {
+        FreezeAtLocalHour(factory, 10);
+        var father = await TestApi.AdultAsync(factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.SelfAssess,
+            comboThreshold: 0,
+            timeSlots: [new ScoringTimeSlot { Name = "Nachmittag", Start = new TimeOnly(13, 0), End = new TimeOnly(15, 0), Multiplier = 2.0 }]);
+
+        var child = await TestApi.ChildAsync(factory);
+        var sessionId = await TestApi.StartPositionSessionAsync(child, planId, positionId);
+        var res = await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, itemIndex: 0, wasKnown: true);
+        res.EnsureSuccessStatusCode();
+
+        var outcome = await res.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(10, outcome.GetProperty("awarded").GetInt32());
     }
 
     /// <summary>The counter-sample on the same host: without a window the base points stay untouched.</summary>
