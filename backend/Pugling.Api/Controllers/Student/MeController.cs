@@ -412,10 +412,13 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
 
         // Paged instead of a fixed cutoff (B-99): the history otherwise ended silently once a child had
         // bought enough - X-Total-Count lets the frontend show "51 of 137" and load the rest.
+        // The ordering must not be able to MOVE a row (B-110): offset paging is only sound over a stable
+        // sequence, and grouping cancelled purchases last did exactly that - a cancellation between two
+        // page requests shifted everything behind it forward and skipped a row for good. Purchase time is
+        // immutable; the client marks cancellations with a pill instead of a position.
         var purchases = await db.ShopPurchases.AsNoTracking()
             .Where(p => p.ChildId == childId)
-            .OrderBy(p => p.Status == ShopPurchaseStatus.Owned ? 0 : 1)
-            .ThenByDescending(p => p.PurchasedAt).ThenByDescending(p => p.Id)
+            .OrderByDescending(p => p.PurchasedAt).ThenByDescending(p => p.Id)
             .Select(p => new MyShopPurchaseResponse(
                 p.Id, p.ShopListingId, p.ArticleNumber, p.Title,
                 p.CoinPrice, p.GemPrice, p.UnitsPerPurchase, p.Status, p.PurchasedAt, p.ClosedAt))

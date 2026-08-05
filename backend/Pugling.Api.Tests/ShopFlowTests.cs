@@ -1316,4 +1316,56 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var page3Body = await page3.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(10, page3Body.GetProperty("purchases").GetArrayLength()); // rows 51..60 - past the old Take(50)
     }
+
+    // ─── B-110: offset paging is only sound over an ordering that cannot move ──────────────
+
+    /// <summary>
+    /// A cancellation between two page requests must not push a row out of the child's reach. While the
+    /// history was partitioned by the mutable <c>Status</c> (Owned first), cancelling a row on page one
+    /// sent it to the back, moved every row behind it one position forward, and the row that would have
+    /// opened page two was skipped for good - the silent gap B-99 set out to remove.
+    /// </summary>
+    [Fact]
+    public async Task Kaufhistorie_StornoZwischenZweiSeiten_UeberspringtKeineZeile()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var (childId, child) = await FreshChildAsync(father, "9402");
+
+        // Seeded like the B-99 case: without a listing the cancellation skips the inventory step, which is
+        // not what this test is about. Distinct timestamps give the ordering something to be stable about.
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            for (var i = 0; i < 4; i++)
+                db.ShopPurchases.Add(new ShopPurchase
+                {
+                    ChildId = childId,
+                    SupervisorId = 1,
+                    ArticleNumber = $"SORT-{i}",
+                    Title = $"Kauf {i}",
+                    CoinPrice = 10,
+                    UnitsPerPurchase = 1,
+                    PurchasedAt = DateTime.UtcNow.AddMinutes(-i),
+                });
+            await db.SaveChangesAsync();
+        }
+
+        var seite1 = await JsonAsync(await child.GetAsync("/api/v1/student/me/shop?purchaseSkip=0&purchaseTake=2"));
+        var idsSeite1 = seite1.GetProperty("purchases").EnumerateArray()
+            .Select(p => p.GetProperty("id").GetInt32()).ToList();
+        Assert.Equal(2, idsSeite1.Count);
+
+        // The supervisor cancels a row the child has already seen - the race behind every "load more".
+        Assert.Equal(HttpStatusCode.OK, (await father.PostAsJsonAsync(
+            $"/api/v1/supervisor/children/{childId}/shop/purchases/{idsSeite1[0]}/cancel", new { })).StatusCode);
+
+        var seite2 = await JsonAsync(await child.GetAsync("/api/v1/student/me/shop?purchaseSkip=2&purchaseTake=2"));
+        var idsSeite2 = seite2.GetProperty("purchases").EnumerateArray()
+            .Select(p => p.GetProperty("id").GetInt32()).ToList();
+
+        // Both pages together must reach every row exactly once: four rows, four distinct ids, no repeat.
+        var beideSeiten = idsSeite1.Concat(idsSeite2).ToList();
+        Assert.Equal(4, beideSeiten.Distinct().Count());
+        Assert.Equal(beideSeiten.Count, beideSeiten.Distinct().Count());
+    }
 }
