@@ -34452,9 +34452,18 @@
               "null",
               "string"
             ]
+          },
+          "decoding": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/WordPair"
+            }
           }
         },
-        "description": "An exam question \u2013 without the solution, except at stages that reveal it by design. Deliberately\n\u003Cb\u003Ewithout\u003C/b\u003E an image: the exam shows none, and a field that is always null is the kind of silent lie\nthe API otherwise rejects with \u0060unknown_field\u0060.\nGapIndex is no such lie: it names the asked placeholder {{n}} of Prompt and is null\nonly for types whose atoms already stand on their own. The exam needs it just as much as the practice\ncard \u2013 it is where a child gets stuck for good, because there is no going back.AnyOrder likewise: it says that any entry not yet named counts (a set instead of a sequence). The\nexam is where that matters most \u2013 there is no second try, so a card whose rule the child has to guess is\nlost for good.Type is the exercise type key, as the practice card has carried all along: the renderer needs it to\ntell an ordered list (where \u0022entry 8\u0022 is the address of the card) from a vocabulary card, and both\narrive with the same fields otherwise.RevealAlternatives lists the equally valid answers beside Reveal and is set exactly where\nReveal is \u2013 see PracticeCard.AnswerPattern (B-66) is the letter-box mask, same as on PracticeCard \u2013 the exam\u0027s\nletter boxes fix punctuation/spacing exactly like practice does."
+        "description": "An exam question \u2013 without the solution, except at stages that reveal it by design. Deliberately\n\u003Cb\u003Ewithout\u003C/b\u003E an image: the exam shows none, and a field that is always null is the kind of silent lie\nthe API otherwise rejects with \u0060unknown_field\u0060.\nGapIndex is no such lie: it names the asked placeholder {{n}} of Prompt and is null\nonly for types whose atoms already stand on their own. The exam needs it just as much as the practice\ncard \u2013 it is where a child gets stuck for good, because there is no going back.AnyOrder likewise: it says that any entry not yet named counts (a set instead of a sequence). The\nexam is where that matters most \u2013 there is no second try, so a card whose rule the child has to guess is\nlost for good.Type is the exercise type key, as the practice card has carried all along: the renderer needs it to\ntell an ordered list (where \u0022entry 8\u0022 is the address of the card) from a vocabulary card, and both\narrive with the same fields otherwise.RevealAlternatives lists the equally valid answers beside Reveal and is set exactly where\nReveal is \u2013 see PracticeCard.AnswerPattern (B-66) is the letter-box mask, same as on PracticeCard \u2013 the exam\u0027s\nletter boxes fix punctuation/spacing exactly like practice does.Decoding (B-93) is the word-for-word decoding (Birkenbihl), same as PracticeCard \u2013\nthe exam must not show less material than practice, or it would be the harder task with less to go on."
       },
       "TestNextResponse": {
         "required": [

@@ -9,6 +9,7 @@ import { ClozePrompt } from "../components/ClozePrompt";
 import { ListRule } from "../components/ListRule";
 import { Passage } from "../components/Passage";
 import { RevealAlternatives } from "../components/RevealAlternatives";
+import { BirkenbihlDecoding } from "../components/BirkenbihlDecoding";
 import type { AnswerDto, TestItem, TestSubmitResponse } from "../lib/types";
 
 // Vokabel-Teststufen (numerisch, serverseitig erzwungen): 1 Zeigen … 5 Hören.
@@ -155,6 +156,9 @@ export function SohnTest() {
           <AudioButton url={item.audioUrl} autoPlay={!item.prompt} withControls={!!item.prompt} />
         )}
         <ClozePrompt text={item.prompt} gapIndex={item.gapIndex} className="test-prompt" />
+        {/* Auf der VORDERSEITE, direkt unter dem Satz, wie beim Üben (B-93): die Klausur darf nicht weniger
+            Stoff zeigen als die Übung, sonst wäre sie die härtere Aufgabe bei weniger Material. */}
+        <BirkenbihlDecoding decoding={item.decoding} />
         <ListRule type={item.type} anyOrder={item.anyOrder} itemIndex={item.itemIndex} />
         {item.hint && typed && <div className="sub" style={{ marginTop: 6 }}>💡 {item.hint}</div>}
 

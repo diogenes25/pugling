@@ -327,4 +327,54 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
 
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
     }
+
+    /*
+     * B-93: the exam question must not show less material than the practice card - both hang off the same
+     * PositionPlayService.CardFacets projection, but the exam's TestItem used to drop the decoding on the
+     * floor (B-78's own contract only carried it on PracticeCard/PreviewItem).
+     */
+    [Fact]
+    public async Task PositionsTest_ZeigtDieselbeDekodierungWieDieUebungskarte()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var route = await CreateSeriesUnitAsync(father);
+        var createRes = await father.PostAsJsonAsync(route, new
+        {
+            title = "Satz",
+            orderIndex = 1,
+            rewardPoints = 10,
+            config = new
+            {
+                learningLang = "en",
+                nativeLang = "de",
+                sentences = new[]
+                {
+                    new
+                    {
+                        sentenceId = 1,
+                        learningSentence = "What is your name?",
+                        naturalTranslation = "Wie heißt du?",
+                        decoding = new[]
+                        {
+                            new { wordId = 1, learningWord = "What", gloss = "Was", vocabularyId = (int?)null },
+                            new { wordId = 2, learningWord = "is", gloss = "ist", vocabularyId = (int?)null },
+                        },
+                    },
+                },
+            },
+        });
+        var exerciseId = (await createRes.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, stage: 0, useLeitner: false);
+        var child = await TestApi.ChildAsync(factory);
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
+        var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
+
+        var next = await (await child.GetAsync($"{baseUrl}/{attemptId}/next")).Content.ReadFromJsonAsync<JsonElement>();
+        var decoding = next.GetProperty("item").GetProperty("decoding").EnumerateArray().ToArray();
+        Assert.Equal(2, decoding.Length);
+        Assert.Equal("What", decoding[0].GetProperty("learningWord").GetString());
+        Assert.Equal("Was", decoding[0].GetProperty("gloss").GetString());
+        Assert.Equal("is", decoding[1].GetProperty("learningWord").GetString());
+    }
 }

@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/backend, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/backend, rolle/supervisor]
 aliases: [RequireTypedTest bei Birkenbihl, Einstellung ohne Wirkung, Birkenbihl in der Klausur]
-status: ausformuliert
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: S
+wo: beides
+migration: nein
+vertragsbruch: nein
 quelle: docs/backlog/B-78-birkenbihl-dekodierung-erreicht-kind-nicht.md (pugling-reviewer, Befund 4 + Notiz)
 ---
 
@@ -75,28 +75,42 @@ Die zweite Hälfte teilt dabei ihre Ursache mit
 [B-96](B-96-showboth-stufe-ohne-mechanik.md): eine Stufe bzw. Einstellung, die angeboten und validiert wird,
 aber im Spielpfad keine Entsprechung hat. Wer beide baut, sollte die Prüf-Hilfsfunktion einmal schreiben.
 
-## Offene Punkte
+## Offene Punkte (gegrillt)
 
 1. Punkt 1: Prüfung beim Anlegen/Ändern der Position (`requireTypedTest: true` für einen Typ, der nie
-   getippt ist, → `400`)? Empfehlung: ja, analog `ThresholdProblem` — dieselbe Begründung, dieselbe Stelle.
-   Braucht eine Auskunft „hat dieser Typ überhaupt eine getippte Stufe" statt einer Prüfung je Stufe.
+   getippt ist, → `400`)? **Entscheidung: ja**, analog `ThresholdProblem` — dieselbe Begründung, dieselbe
+   Stelle. Neue Typ-Auskunft `IExerciseType.SupportsRequireTypedTest` (Default `true`, Birkenbihl `false`)
+   statt einer Prüfung je Stufe. Kosten: ein Interface-Mitglied plus ein Override, ein neuer Helfer
+   `RequireTypedTestProblem` im bestehenden Muster von `ThresholdProblem`/`TimeSlotProblem`, verankert am
+   **effektiven** Wert (Positions-Override **oder** der geerbte Übungs-Default) in `Create`, am expliziten
+   Feld in `Update` (die Übung/ihr Typ ändert sich auf einem PATCH nie).
 2. Punkt 2: Trägt der Positions-Test die Dekodierung mit, oder verweigert eine Position dieses Typs den
-   Abschlusstest? Empfehlung: mittragen — die Klausur soll nicht weniger zeigen als die Übung; „kein Test
-   für diesen Typ" wäre die größere Änderung und nähme dem Vater eine Kontrollmöglichkeit.
+   Abschlusstest? **Entscheidung: mittragen** — die Klausur soll nicht weniger zeigen als die Übung; „kein
+   Test für diesen Typ" wäre die größere Änderung und nähme dem Vater eine Kontrollmöglichkeit. Kosten: ein
+   additives Feld `TestItem.Decoding` (Contracts), eine Zeile in `PositionTestsController.ToItem`, eine
+   Zeile im Sohn-Test-Frontend (`SohnTest.tsx`, die Komponente selbst ist schon anderswo getestet).
 
 ## Akzeptanzkriterien
 
-Entwurf — final erst nach der Grill-Runde, weil beide Punkte je zwei zulässige Auflösungen haben:
-
 1. `POST`/`PATCH` einer Position mit `requireTypedTest: true` auf eine Übung, deren Typ **keine** getippte
-   Stufe kennt, wird mit `ProblemDetails` und maschinenlesbarem `code` abgewiesen — oder die Einstellung
-   wirkt (Entscheidung zu Punkt 1). Ein stilles Annehmen ohne Wirkung gilt in keinem Fall als erfüllt.
-2. Der Abschlusstest einer Birkenbihl-Position zeigt dieselbe Wort-für-Wort-Dekodierung wie die Übungskarte
-   — oder eine Position dieses Typs verweigert den Abschlusstest mit eigenem Fehlercode (Entscheidung zu
-   Punkt 2).
+   Stufe kennt, wird mit `ProblemDetails` und maschinenlesbarem `code` abgewiesen. Ein stilles Annehmen ohne
+   Wirkung gilt in keinem Fall als erfüllt.
+2. Der Abschlusstest einer Birkenbihl-Position zeigt dieselbe Wort-für-Wort-Dekodierung wie die Übungskarte.
 3. Je Punkt ein Integrationstest, der **vor** der Änderung rot war (Abnahmeform für `art: Defekt`).
 4. Die Prüfung hängt nicht an einem `Include`, das niemand einfordert — dieselbe Auflage wie in
    [B-95](B-95-stufenwaechter-haengt-am-include.md).
+
+## Schätzung
+
+`groesse: S`, `wo: beides` (Backend zuerst: Typ-Fähigkeit + Prüfung + Decoding-Feld; Frontend nur eine
+Zeile in `SohnTest.tsx`), `migration: nein` (keine neue Spalte, `RequireTypedTest` bleibt wie es ist),
+`vertragsbruch: nein` (additives `TestItem.Decoding`-Feld, kein bestehendes Feld ändert Form/Bedeutung).
+Angriffsplan: `IExerciseType.SupportsRequireTypedTest` (Default `true`, `BirkenbihlExerciseType` → `false`)
+→ `RequireTypedTestProblem` in `PlanPositionsController.Create`/`Update` → `TestItem.Decoding` additiv →
+`PositionTestsController.ToItem` reicht `f.Decoding` durch (dieselbe `CardFacets`-Projektion, kein zweiter
+Pfad) → `SohnTest.tsx` rendert `BirkenbihlDecoding` wie `SohnPractice.tsx` es schon tut. Testweg: ein
+Integrationstest je Punkt (`PlanPositionCrudTests`, `BirkenbihlExerciseTests`), rot gegen den Vorzustand
+per `git stash` der Implementierung verifiziert.
 
 ## Verlauf
 
@@ -114,3 +128,14 @@ Entwurf — final erst nach der Grill-Runde, weil beide Punkte je zwei zulässig
   `unverifiziert` ist entfallen, weil es laut [README](README.md) nur auf `idee` gehört — es war die einzige
   Meldung des Index-Wächters. Die Akzeptanzkriterien bleiben ein **Entwurf**: beide Punkte haben je zwei
   zulässige Auflösungen (ablehnen oder mittragen), und diese Wahl gehört in die Grill-Runde.
+- **2026-08-05** — im Autonomen Modus gegrillt (beide Empfehlungen aus der Ausformulierung übernommen:
+  ablehnen für Punkt 1, mittragen für Punkt 2), geschätzt und gebaut. Rote Probe zuerst: beide neuen Tests
+  scheiterten gegen den Vorzustand (`git stash` der Implementierung) — `RequireTypedTest_...` erwartete
+  400, bekam 201; `PositionsTest_ZeigtDieselbeDekodierung...` scheiterte mit `KeyNotFoundException`
+  (kein `decoding`-Feld im `TestItem`). `dotnet test Pugling.sln -c Release` → **724/724 grün** (722 + 2
+  neu). `pugling-reviewer` fand keinen Blocker; ein Nice-to-have (`DefaultRequireTypedTest` am Übungstyp
+  selbst ungeprüft — dieselbe Fehlerklasse eine Ebene höher, aber ohne heutigen Schaden, weil die Position
+  den effektiven Wert ohnehin abweist) als [B-108](B-108-requiretypedtest-default-am-uebungstyp.md)
+  aufgenommen statt hier mitgelöst. Frontend: `npm run build` (Typecheck) und `npm test` weiter 136/136
+  unverändert (reine Verdrahtung einer bereits getesteten Komponente). Commit: siehe Repo-Verlauf
+  (B-93-Commit). Status → `abgenommen`.

@@ -30,11 +30,15 @@ namespace Pugling.Contracts.Student;
 /// <c>AnswerPattern</c> (B-66) is the letter-box mask, same as on <see cref="PracticeCard"/> – the exam's
 /// letter boxes fix punctuation/spacing exactly like practice does.
 /// </para>
+/// <para>
+/// <c>Decoding</c> (B-93) is the word-for-word decoding (Birkenbihl), same as <see cref="PracticeCard"/> –
+/// the exam must not show less material than practice, or it would be the harder task with less to go on.
+/// </para>
 /// </summary>
 public record TestItem(int ItemIndex, string? Prompt, int Stage, string? Reveal, int? AnswerLength, string? Hint,
     IReadOnlyList<string>? Choices, string? AudioUrl, int? GapIndex = null, string? Passage = null,
     bool AnyOrder = false, string? Type = null, IReadOnlyList<string>? RevealAlternatives = null,
-    string? AnswerPattern = null);
+    string? AnswerPattern = null, IReadOnlyList<WordPair>? Decoding = null);
 
 /// <summary>
 /// Response of the test start. Class-test mode is strictly server-driven: <b>no</b> questions are sent

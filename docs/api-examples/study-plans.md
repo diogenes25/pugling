@@ -404,7 +404,8 @@ Response — `HTTP 200`:
     "anyOrder": false,
     "type": "Vocabulary",
     "revealAlternatives": null,
-    "answerPattern": null
+    "answerPattern": null,
+    "decoding": null
   },
   "done": false,
   "cursor": 0,

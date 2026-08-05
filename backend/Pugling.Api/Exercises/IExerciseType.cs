@@ -107,6 +107,15 @@ public interface IExerciseType
     /// <summary>May objectives/key results be set for this type?</summary>
     bool SupportsObjectives { get; }
 
+    /// <summary>
+    /// Does the type have ANY typed stage at all (<see cref="IsTypedStage"/> can be <c>true</c> for at least
+    /// one stage)? Default <c>true</c> - most types do. A type whose <see cref="IsTypedStage"/> is constant
+    /// <c>false</c> (Birkenbihl: it learns by reading, never by typing) overrides this to <c>false</c>, so a
+    /// position's <see cref="PlanPosition.RequireTypedTest"/> can be rejected at write time (B-93) instead of
+    /// silently never applying (a graded attempt that can never happen).
+    /// </summary>
+    bool SupportsRequireTypedTest { get; }
+
     /// <summary>How the content is resolved (purely from config or additionally from the store).</summary>
     StoreResolution StoreResolution { get; }
 }

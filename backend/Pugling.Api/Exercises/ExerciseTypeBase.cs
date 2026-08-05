@@ -61,6 +61,9 @@ public abstract class ExerciseTypeBase : IExerciseType
     public virtual bool SupportsObjectives => false;
 
     /// <inheritdoc/>
+    public virtual bool SupportsRequireTypedTest => true;
+
+    /// <inheritdoc/>
     public virtual StoreResolution StoreResolution => StoreResolution.None;
 
     /// <summary>Deserializes the typed config (never null; falls back to default).</summary>

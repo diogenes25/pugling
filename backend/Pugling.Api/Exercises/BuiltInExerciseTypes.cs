@@ -144,6 +144,13 @@ public sealed class BirkenbihlExerciseType : ExerciseTypeBase
     /// </para>
     /// </summary>
     public override bool IsTypedStage(int stage) => false;
+
+    /// <summary>
+    /// No stage of this type is ever typed (B-93) - a position's <c>RequireTypedTest</c> would otherwise be
+    /// accepted but never apply, because <see cref="PositionPracticeController"/> only scores a typed answer
+    /// or an untyped one that is NOT gated by <c>RequireTypedTest</c>.
+    /// </summary>
+    public override bool SupportsRequireTypedTest => false;
 }
 
 /// <summary>Cloze: one item per gap; store-backed (the solution can come from the vocabulary store).</summary>

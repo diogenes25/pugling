@@ -204,6 +204,55 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal(90, (await ok.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("goalThreshold").GetInt32());
     }
 
+    /// <summary>Creates an empty Birkenbihl exercise (a type with no typed stage at all) and returns its id.</summary>
+    private static async Task<int> CreateBirkenbihlExerciseAsync(HttpClient father)
+    {
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = TestApi.UniqueName("Birkenbihl-Position-Test") }));
+        var seriesId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/textbook-series",
+            new { name = TestApi.UniqueName("Birkenbihl-Reihe"), subjectId }));
+        var unitId = await TestApi.IdAsync(await father.PostAsJsonAsync($"/api/v1/creator/textbook-series/{seriesId}/units",
+            new { label = "Lektion 1", orderIndex = 1 }));
+        return await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{unitId}/birkenbihl", new
+            {
+                title = "Birkenbihl",
+                orderIndex = 1,
+                rewardPoints = 10,
+                config = new { learningLang = "en", nativeLang = "de" },
+            }));
+    }
+
+    /*
+     * RequireTypedTest gates PositionPracticeController's `scored` on `typed || !RequireTypedTest`. Birkenbihl's
+     * IsTypedStage is constant false (it learns by reading, never by typing) - so a position with
+     * requireTypedTest: true on this type would never score, silently, and the father would only notice after
+     * weeks of an unmet goal (B-93).
+     */
+    [Fact]
+    public async Task RequireTypedTest_AufEinemTypOhneGetippteStufe_WirdAbgewiesen()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var exerciseId = await CreateBirkenbihlExerciseAsync(father);
+        var planId = await EmptyPlanAsync(father);
+        var url = $"/api/v1/supervisor/study-plans/{planId}/positions";
+
+        var create = await father.PostAsJsonAsync(url, new { exerciseId, requireTypedTest = true });
+        Assert.Equal(HttpStatusCode.BadRequest, create.StatusCode);
+        Assert.Equal("validation_error",
+            (await create.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+
+        // Not afterwards either: otherwise PATCH would let in exactly what POST rejects.
+        var posId = await TestApi.IdAsync(await father.PostAsJsonAsync(url, new { exerciseId }));
+        var patch = await father.PatchAsJsonAsync($"{url}/{posId}", new { requireTypedTest = true });
+        Assert.Equal(HttpStatusCode.BadRequest, patch.StatusCode);
+
+        // A type that DOES have a typed stage (vocabulary) is unaffected - the same setting still works there.
+        var vocabId = await TestApi.CreateVocabExerciseAsync(father);
+        var vocabPos = await father.PostAsJsonAsync(url, new { exerciseId = vocabId, requireTypedTest = true });
+        Assert.Equal(HttpStatusCode.Created, vocabPos.StatusCode);
+    }
+
     [Fact]
     public async Task Einzelne_Position_Wird_Gelesen_Eine_Fremde_Nicht()
     {
