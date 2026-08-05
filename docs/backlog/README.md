@@ -495,16 +495,12 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (64)
+### Offen (60)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [B-114](B-114-showboth-position-unspielbar.md) | Eine Kennenlern-Position hatte für das Kind keinen einzigen Knopf — und kostete Münzen | Defekt | `in-arbeit` | P1 | S | beides | — |
 | [B-07](B-07-db-umbau-restetappen.md) | DB-Struktur-Umbau: der offene Betriebsschritt | Aufräumen | `geschaetzt` | P1 | XS | backend | — |
-| [B-110](B-110-kaufverlauf-ueberspringt-zeilen.md) | Der Kaufverlauf überspringt Zeilen und verpasst den eigenen Kauf | Defekt | `in-arbeit` | P2 | S | beides | — |
-| [B-111](B-111-verlauf-luegt-im-fehlerfall.md) | Scheitert das Laden des Verlaufs, sagt die App „Noch nichts gekauft" | Defekt | `in-arbeit` | P2 | XS | frontend | — |
-| [B-115](B-115-buchstabenkaestchen-index-drift.md) | Übersprang das Kind ein Buchstabenkästchen, rutschten alle folgenden Zeichen | Defekt | `in-arbeit` | P2 | XS | frontend | — |
-| [B-113](B-113-vater-kaufhistorie-endet-still.md) | Die Kaufhistorie des Vaters endet still bei 100 Zeilen — B-99 eine Ebene höher | Defekt | `ausformuliert` | P2 | — | — | — |
+| [B-113](B-113-vater-kaufhistorie-endet-still.md) | Drei geblätterte Listen mit veränderlicher Sortierung — der Vater erreicht keine von ihnen vollständig | Defekt | `geschaetzt` | P2 | M | beides | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-48](B-48-anonyme-registrierung-produktion.md) | Anonyme Registrierung ist auch in Produktion offen | Frage | `geschaetzt` | P2 | S | backend | — |
 | [B-11](B-11-uebungen-veroeffentlichen.md) | Übungen ausdrücklich veröffentlichen | Wunsch | `geschaetzt` | P2 | S | frontend | — |
@@ -565,7 +561,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-06](B-06-cloze-preview-bild.md) | Cloze-Vorschau kann kein Bild zeigen | Wunsch | `geschaetzt` | P6 | XS | backend | — |
 
 <details>
-<summary>Abgenommen (42)</summary>
+<summary>Abgenommen (46)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -576,6 +572,10 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-104](B-104-keyresult-dublette-zahlt-doppelt.md) | Derselbe Meilenstein zweimal: drei Schreibpfade laufen ungeprüft in einen Unique-Index, und dort hängt Geld | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-105](B-105-taegliche-belohnungsbox.md) | Tägliche Belohnungsbox: Loot-Box + Streak als positives Gegenstück zum Stick | Wunsch | `abgenommen` | P4 | S | backend | Migration |
 | [B-106](B-106-lehrwerkgetriebener-katalog.md) | Übungen hängen künftig am Lehrwerk, nicht am Kapitel | Wunsch | `abgenommen` | P1 | L | beides | — |
+| [B-110](B-110-kaufverlauf-ueberspringt-zeilen.md) | Der Kaufverlauf überspringt Zeilen und verpasst den eigenen Kauf | Defekt | `abgenommen` | P2 | S | beides | — |
+| [B-111](B-111-verlauf-luegt-im-fehlerfall.md) | Scheitert das Laden des Verlaufs, sagt die App „Noch nichts gekauft" | Defekt | `abgenommen` | P2 | XS | frontend | — |
+| [B-114](B-114-showboth-position-unspielbar.md) | Eine Kennenlern-Position hatte für das Kind keinen einzigen Knopf — und kostete Münzen | Defekt | `abgenommen` | P1 | S | beides | — |
+| [B-115](B-115-buchstabenkaestchen-index-drift.md) | Übersprang das Kind ein Buchstabenkästchen, rutschten alle folgenden Zeichen | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-26](B-26-e2e-in-ci.md) | Der E2E-Nachtlauf ist rot – und niemand erfährt es | Defekt | `abgenommen` | P1 | S | frontend | — |
 | [B-37](B-37-uebung-abbruch-unvollendet.md) | Abgebrochene Runden: Pflicht härten, Klausur deckeln | Defekt | `abgenommen` | P1 | M | beides | — |
 | [B-40](B-40-client-routen-waechter.md) | Routen aus `Pugling.Client` gegen das OpenAPI-Dokument halten | Aufräumen | `abgenommen` | P3 | XS | backend | — |
@@ -614,7 +614,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 
 </details>
 
-### Wartet auf Zutun von außen (6)
+### Wartet auf Zutun von außen (2)
 
 Diese Stories kommen **im Repo nicht weiter** — es fehlt ein Schritt, den nur ein Mensch
 oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird gerade gebaut".
@@ -622,26 +622,22 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | Id | Story | Stufe | Wartet auf |
 | --- | --- | --- | --- |
 | [B-07](B-07-db-umbau-restetappen.md) | DB-Struktur-Umbau: der offene Betriebsschritt | `geschaetzt` | einen Handgriff des Betreibers an der Azure-Instanz |
-| [B-110](B-110-kaufverlauf-ueberspringt-zeilen.md) | Der Kaufverlauf überspringt Zeilen und verpasst den eigenen Kauf | `in-arbeit` | pugling-reviewer und frontend-reviewer |
-| [B-111](B-111-verlauf-luegt-im-fehlerfall.md) | Scheitert das Laden des Verlaufs, sagt die App „Noch nichts gekauft" | `in-arbeit` | frontend-reviewer |
-| [B-114](B-114-showboth-position-unspielbar.md) | Eine Kennenlern-Position hatte für das Kind keinen einzigen Knopf — und kostete Münzen | `in-arbeit` | pugling-reviewer und frontend-reviewer |
-| [B-115](B-115-buchstabenkaestchen-index-drift.md) | Übersprang das Kind ein Buchstabenkästchen, rutschten alle folgenden Zeichen | `in-arbeit` | frontend-reviewer |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 
 ### Nach der Abnahme entgangen (5)
 
-**Nachgeschaut: 14 von 42 abgenommenen** — und in 4 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 28 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 14 von 46 abgenommenen** — und in 4 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 32 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
-| [B-110](B-110-kaufverlauf-ueberspringt-zeilen.md) | Der Kaufverlauf überspringt Zeilen und verpasst den eigenen Kauf | [B-99] | `in-arbeit` |
-| [B-111](B-111-verlauf-luegt-im-fehlerfall.md) | Scheitert das Laden des Verlaufs, sagt die App „Noch nichts gekauft" | [B-99] | `in-arbeit` |
-| [B-114](B-114-showboth-position-unspielbar.md) | Eine Kennenlern-Position hatte für das Kind keinen einzigen Knopf — und kostete Münzen | [B-96] | `in-arbeit` |
-| [B-115](B-115-buchstabenkaestchen-index-drift.md) | Übersprang das Kind ein Buchstabenkästchen, rutschten alle folgenden Zeichen | [B-66] | `in-arbeit` |
+| [B-110](B-110-kaufverlauf-ueberspringt-zeilen.md) | Der Kaufverlauf überspringt Zeilen und verpasst den eigenen Kauf | [B-99] | `abgenommen` |
+| [B-111](B-111-verlauf-luegt-im-fehlerfall.md) | Scheitert das Laden des Verlaufs, sagt die App „Noch nichts gekauft" | [B-99] | `abgenommen` |
+| [B-114](B-114-showboth-position-unspielbar.md) | Eine Kennenlern-Position hatte für das Kind keinen einzigen Knopf — und kostete Münzen | [B-96] | `abgenommen` |
+| [B-115](B-115-buchstabenkaestchen-index-drift.md) | Übersprang das Kind ein Buchstabenkästchen, rutschten alle folgenden Zeichen | [B-66] | `abgenommen` |
 | [B-116](B-116-blaettern-ohne-rueckmeldung.md) | Beim Blättern gibt es keine Rückmeldung mehr — und der Pager meldet eine Seite, die noch nicht da ist | [B-89] | `ausformuliert` |
 
 <details>
-<summary>Nie nachgeschaut (28) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (32) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -654,6 +650,10 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-10](B-10-zeitfenster-pro-kind.md) | Zeitfenster (Punkte-Faktor) je Pflicht statt global |
 | [B-105](B-105-taegliche-belohnungsbox.md) | Tägliche Belohnungsbox: Loot-Box + Streak als positives Gegenstück zum Stick |
 | [B-106](B-106-lehrwerkgetriebener-katalog.md) | Übungen hängen künftig am Lehrwerk, nicht am Kapitel |
+| [B-110](B-110-kaufverlauf-ueberspringt-zeilen.md) | Der Kaufverlauf überspringt Zeilen und verpasst den eigenen Kauf |
+| [B-111](B-111-verlauf-luegt-im-fehlerfall.md) | Scheitert das Laden des Verlaufs, sagt die App „Noch nichts gekauft" |
+| [B-114](B-114-showboth-position-unspielbar.md) | Eine Kennenlern-Position hatte für das Kind keinen einzigen Knopf — und kostete Münzen |
+| [B-115](B-115-buchstabenkaestchen-index-drift.md) | Übersprang das Kind ein Buchstabenkästchen, rutschten alle folgenden Zeichen |
 | [B-26](B-26-e2e-in-ci.md) | Der E2E-Nachtlauf ist rot – und niemand erfährt es |
 | [B-37](B-37-uebung-abbruch-unvollendet.md) | Abgebrochene Runden: Pflicht härten, Klausur deckeln |
 | [B-40](B-40-client-routen-waechter.md) | Routen aus `Pugling.Client` gegen das OpenAPI-Dokument halten |

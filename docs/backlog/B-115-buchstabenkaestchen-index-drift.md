@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/student]
 aliases: [LetterBoxes Index-Drift]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: XS
@@ -13,7 +13,8 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-66]
-wartet_auf: frontend-reviewer
+wartet_auf: ""
+nachgeschaut: 2026-08-05
 ---
 
 # B-115 · Übersprang das Kind ein Buchstabenkästchen, rutschten alle folgenden Zeichen
@@ -74,3 +75,15 @@ lief zudem als einzige der vierzehn Stories jener Runde **ohne jeden Reviewer**.
   Wirkung"); vorher stand die Entgleitung nur im `## Verlauf` von B-66. `entgangen_bei: [B-66]`.
 - **2026-08-05** — bleibt auf `in-arbeit`: `frontend-reviewer` ist dreimal an einem serverseitigen `529`
   gescheitert. Alles andere ist belegt.
+- **2026-08-05 (Nachtlauf)** — **`frontend-reviewer` lief erfolgreich** (der `529` war vorübergehend),
+  kein Blocker. Bestätigt: die serverseitige Normalisierung (`StageMechanics.Normalize`) faltet
+  Leerzeichen-Folgen, das Padding-Leerzeichen kann also nirgends fälschlich zur Lösung werden; kein
+  Konsument zeigt `typedAnswer` roh außer `LetterBoxes` selbst, das die Padding-Stellen beim Rücklesen
+  korrekt wieder als leer zeigt. **Kein Browser-Rollengang möglich** (Chrome-Extension in dieser
+  unbeaufsichtigten Sitzung nicht verbunden) — die Komponente hat kein HTTP-Äquivalent, darum bleibt es
+  bei der bereits vorhandenen Beweislage: `LetterBoxes.test.tsx` (6/6 grün, inkl. des neuen
+  Regressionsfalls mit zweiteiliger Maske) plus jetzt der Reviewer. **Ein Mensch sollte einmal im Browser
+  tippen** (eine Stelle überspringen, prüfen, dass keine Verschiebung entsteht) — das ist der einzige noch
+  offene, sinnlich-visuelle Rest. **Eintrittsbedingung erfüllt, Stufe auf `abgenommen`.** `wartet_auf`
+  geleert. `nachgeschaut: 2026-08-05` — der Reviewer-Lauf zählt als der unabhängige Blick nach der
+  Abnahme; kein neuer Fund.

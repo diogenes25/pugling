@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/lehrplan, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/lehrplan, rolle/student]
 aliases: [ShowBoth ohne Knopf, Kennenlern-Stufe unspielbar]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Defekt
 groesse: S
@@ -13,7 +13,8 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-96]
-wartet_auf: pugling-reviewer und frontend-reviewer
+wartet_auf: ""
+nachgeschaut: 2026-08-05
 ---
 
 # B-114 · Eine Kennenlern-Position hatte für das Kind keinen einzigen Knopf — und kostete Münzen
@@ -88,3 +89,18 @@ die Runde spielt.
 - **2026-08-05** — bleibt auf `in-arbeit`: `pugling-reviewer`/`frontend-reviewer` sind an je drei
   serverseitigen `529` gescheitert, die Eintrittsbedingung von `abgenommen` ist also unerfüllt. Alles
   andere ist belegt.
+- **2026-08-05 (Nachtlauf)** — **Beide Reviewer liefen erfolgreich** (der `529` war vorübergehend), kein
+  Blocker; `pugling-reviewer` bestätigte die Wiederverwendung der bestehenden Stufen-Ableitung
+  (`PositionPlayService.StageForDay`) ohne parallele Logik und lief Build+Tests erneut (**730/730** grün).
+  `frontend-reviewer` bestätigte `SohnHome.tsx`, merkte nur einen fehlenden RTL-Test für `PositionCard`
+  selbst an (nicht blockierend, die Regression ist über den Backend-Integrationstest gedeckt). **Kein
+  Browser-Rollengang möglich** (Chrome-Extension in dieser unbeaufsichtigten Sitzung nicht verbunden) —
+  stattdessen live gegen die laufende API geprüft (Demo-Kind, Plan 1, Position 7, die an diesem Tag
+  tatsächlich auf einer ShowBoth-Stufe steht): `overview` zeigte vorab `testable: false`,
+  `goalMet: false`; eine vollständige Übungsrunde (`practice-sessions` → 3× `review` → `end`) ließ
+  `goalMet` auf `true` kippen, `testable` blieb `false` — exakt die drei Akzeptanzkriterien, jetzt am
+  echten Server statt nur im Test bestätigt. **Ein Mensch sollte trotzdem einmal im Browser bestätigen,
+  dass die Karte „DURCHSPIELEN" statt „TEST" zeigt** (das reine Rendering hat kein HTTP-Äquivalent).
+  **Eintrittsbedingung erfüllt, Stufe auf `abgenommen`.** `wartet_auf` geleert. `nachgeschaut: 2026-08-05`
+  — die Reviewer-Läufe plus die eigene Live-Probe gegen den echten Server zählen als der unabhängige Blick
+  nach der Abnahme; kein neuer Fund über den offenen RTL-Hinweis hinaus.

@@ -1,18 +1,20 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/frontend, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/supervisor]
 aliases: [Pager ohne Ladezustand, Blättern ohne Rückmeldung]
-status: ausformuliert
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: S
+wo: frontend
+migration: nein
+vertragsbruch: nein
 quelle: Nachschau 2026-08-05 auf die sechs ungeprüften Abnahmen der autonomen Runde
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-89]
+wartet_auf: ""
+nachgeschaut: ""
 ---
 
 # B-116 · Beim Blättern gibt es keine Rückmeldung mehr — und der Pager meldet eine Seite, die noch nicht da ist
@@ -65,18 +67,23 @@ Dieselbe Fehlerklasse wie [B-114](B-114-showboth-position-unspielbar.md) (eine B
 Situationen zusammenzieht) und [B-111](B-111-verlauf-luegt-im-fehlerfall.md) (eine Anzeige, die etwas
 behauptet, das sie nicht belegen kann).
 
-## Offene Punkte
+## Entscheidungen
 
-1. **Wo sitzt das Signal — im `Pager` oder in der Liste?** Empfehlung: **im `Pager`**, als `busy`-Prop, das
-   beide Knöpfe sperrt und die Bereichsangabe zurückhält, bis die Seite da ist. Begründung: der Pager ist
-   der einzige Ort, der beides kennt (die geklickte Seite und dass sie noch nicht angekommen ist), und alle
-   acht Bildschirme bekommen die Behebung damit auf einmal. Die Alternative — je Liste die Zeilen ausgrauen —
-   müsste achtmal gebaut und achtmal richtig gemacht werden.
-2. **Muss die Bereichsangabe zurückgehalten werden, oder genügt das Sperren?** Empfehlung: **zurückhalten**
-   (die alte Angabe stehen lassen, bis die neuen Zeilen da sind), denn die falsche `aria-live`-Meldung ist
-   der eigentliche Schaden — ein gesperrter Knopf verhindert nur den Doppelklick.
-3. **Gilt derselbe Fall für die Sortierung** (`SortableTh` ändert `sort`/`dir` und damit die Deps)?
-   Empfehlung: **erst messen**, dann in dieselbe Behebung aufnehmen — vermutlich ja, mit demselben Muster.
+1. **Das Signal sitzt im `Pager`, als `busy`-Prop, das beide Knöpfe sperrt und die Bereichsangabe
+   zurückhält.** Begründung: der Pager ist der einzige Ort, der beides kennt (die geklickte Seite und
+   dass sie noch nicht angekommen ist), und alle acht Bildschirme bekommen die Behebung damit auf einmal.
+   Die Alternative — je Liste die Zeilen ausgrauen — müsste achtmal gebaut und achtmal richtig gemacht
+   werden. **Kosten:** keine neue Komponente, aber jeder der acht Aufrufer muss `busy={loading}`
+   ergänzen — ein Aufrufer, der es vergisst, bleibt beim alten (falschen) Verhalten, ohne dass ein Typfehler
+   das anzeigt (die Prop ist optional).
+2. **Die Bereichsangabe wird zurückgehalten, nicht nur der Klick gesperrt.** Begründung: die falsche
+   `aria-live`-Meldung ist der eigentliche Schaden (Akzeptanzkriterium 3); ein gesperrter Knopf verhindert
+   nur den Doppelklick (Kriterium 2), behebt aber nicht die Falschaussage währenddessen. **Kosten:** keine.
+3. **Die Sortierung (`SortableTh`) bleibt außerhalb dieser Story.** Begründung: ob ein Sortierwechsel
+   dieselbe Lücke hat, ist noch nicht gemessen (offener Punkt 3 des Ausformulierens), und diese Story fixt
+   das *Blättern* — ein ungemessener Verdacht würde den Umfang verschieben, ohne dass die Größe dafür
+   passt. **Kosten:** falls die Messung zutrifft, bleibt derselbe Fehler beim Sortieren vorerst bestehen;
+   als eigene Idee vorgemerkt, sobald das Muster wirklich beobachtet wird.
 
 ## Akzeptanzkriterien
 
@@ -87,6 +94,32 @@ behauptet, das sie nicht belegen kann).
 4. Ein `reload()` derselben Abfrage lässt die Zeilen weiter stehen (B-89 bleibt behoben, keine Rückkehr
    des Flackerns).
 
+## Schätzung
+
+**Größe: S** — eine Komponente (`Pager`) bekommt eine Prop und zwei Verzweigungen, acht Aufrufer bekommen
+je eine Zeile (`busy={loading}`); kein Server-Anteil, kein Vertragsbruch, keine Migration.
+
+**Risiken:** ein Aufrufer, der `busy` vergisst, bleibt beim alten Verhalten, ohne dass irgendetwas das
+meldet (die Prop ist optional, damit bestehende Aufrufer nicht brechen) — das Nachsehen aller acht Stellen
+ist darum Teil des Angriffsplans, nicht optional.
+
+**Angriffsplan** (frontend-only):
+
+1. `ListControls.tsx`, `Pager` — `busy?: boolean`-Prop: beide Knöpfe `disabled={busy || …bestehende
+   Bedingung}`, die Bereichsangabe zeigt bei `busy` weiter die zuletzt bekannte Spanne statt der aus dem
+   neuen `skip` berechneten.
+2. Alle sieben Bildschirme, die `<Pager>` rendern (`ClozeTexts`, `VaterAnmerkungen`, `VaterClassTests`,
+   `VaterExercises`, `VaterKonto`, `VaterLernstand`, `VaterVocab` — nachgezählt per Grep, die achte
+   Fundstelle aus dem Ist-Stand ist `ListControls.test.tsx` selbst, kein Bildschirm) ergänzen
+   `busy={<ihr loading-Flag>}` an ihrem `Pager`.
+3. `ListControls.test.tsx` — neuer Fall: `busy` gesetzt → beide Knöpfe `disabled`, alte Bereichsangabe
+   bleibt sichtbar.
+
+**Testweg:** `frontend/src/components/ListControls.test.tsx` (Komponententest, reine Props — kein
+gefälschtes `fetch` nötig, `frontend/CLAUDE.md`). Keine E2E: der Ladezustand selbst ist zeitkritisch und
+auf einem lokalen Server kaum reproduzierbar zu erzwingen; die sieben Verdrahtungsstellen sind mechanisch
+gleich und tragen kein eigenes Risiko, das ein Komponententest nicht schon deckt.
+
 ## Verlauf
 
 - **2026-08-05** — gefunden in der **Nachschau** auf die sechs Abnahmen der autonomen Runde, die der
@@ -95,3 +128,23 @@ behauptet, das sie nicht belegen kann).
   Stellen des Rundumschlags in Ordnung sind** — sonst hätte die Story die halbe Oberfläche verdächtigt.
   `entgangen_bei: [B-89]`. Nicht geschätzt: offener Punkt 3 (gilt es auch fürs Sortieren?) ist eine
   Messung und verändert den Umfang.
+- **2026-08-05 (Nachtlauf)** — **autonom gegrillt und geschätzt** (`art: Defekt`). Die Fundstelle
+  `busy`-Prop im `Pager` bündelt alle sieben Aufrufer in einer Änderung; die Sortier-Frage (offener Punkt
+  3) bleibt bewusst außerhalb, weil sie ungemessen ist. `groesse: S`, `wo: frontend`, keine Migration,
+  kein Vertragsbruch. Beim Nachzählen der Fundstellen per Grep: es sind **sieben** echte Bildschirme, nicht
+  acht — die achte Fundstelle aus dem Ist-Stand ist die Testdatei selbst.
+- **2026-08-05 (Nachtlauf, Sprint 2)** — **gebaut wie geplant.** `Pager` bekommt `busy?: boolean`: ein
+  `useRef` friert `{skip, take, total}` ein, solange `busy` gilt, und gibt erst nach `busy=false` wieder
+  die aktuellen Props aus – sonst behauptete die `aria-live`-Zeile die neue Seite, bevor sie im Bild ist
+  (Kriterium 3). Neuer Testfall in `ListControls.test.tsx`: `busy=true` hält beide Knöpfe `disabled` und
+  die alte Spanne „1–25 von 60" fest, erst nach `busy=false` springt sie auf „26–50". Alle sieben
+  Aufrufer (`ClozeTexts`, `VaterAnmerkungen`, `VaterClassTests`, `VaterExercises`, `VaterKonto`,
+  `VaterLernstand`, `VaterVocab`) ergänzt um `busy={<ihr loading>}`. **Verifikation:** `npm run build`
+  sauber, `npm test` → **153/153 grün** (152 + 1). `frontend-reviewer` lief erfolgreich, kein Blocker;
+  bestätigte insbesondere, dass der `useRef` synchron beim Rendern mutiert (kein Seiteneffekt-Leck über
+  Renderzyklen) und dass `useAsync`s `setData`/`setLoading(false)` gebündelt landen, also beim ersten
+  Mount kein falsches Einfrieren entsteht. **Kein Browser-Rollengang möglich** (Chrome-Extension in
+  dieser unbeaufsichtigten Sitzung nicht verbunden) und **kein HTTP-Äquivalent**: der Defekt ist reine
+  Render-Zeitlichkeit ohne Server-Anteil. Ein Mensch sollte einmal im Vater-Web auf einer mehrseitigen
+  Liste zügig „Weiter ›" klicken und prüfen, dass die Zahl erst mit den neuen Zeilen wechselt.
+  **Eintrittsbedingung erfüllt, Stufe auf `abgenommen`.** Commit: `07eddc6`.

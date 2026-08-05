@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/shop, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/shop, rolle/student]
 aliases: [Kaufverlauf-Paging, Verlauf überspringt Zeilen]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: S
@@ -13,7 +13,8 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-99]
-wartet_auf: pugling-reviewer und frontend-reviewer
+wartet_auf: ""
+nachgeschaut: 2026-08-05
 ---
 
 # B-110 · Der Kaufverlauf überspringt Zeilen und verpasst den eigenen Kauf
@@ -180,3 +181,13 @@ anpassen); die sichtbare Reihenfolge stornierter Käufe ändert sich.
   Kaufhistorie gebaut und damit die vorhandene veränderliche Sortierung erst schädlich gemacht; `HistoryTab`
   trägt den B-99-Vermerk in der eigenen Dokumentation. Der Defekt saß also in Arbeit, die beim Fund schon
   `abgenommen` war — er zählt in die Wirkungs-Zahl (README → „Die eine Zahl über die Wirkung").
+- **2026-08-05 (Nachtlauf)** — **`pugling-reviewer` und `frontend-reviewer` liefen erfolgreich** (der
+  `529` vom Vortag war vorübergehend). Beide fanden **keinen Blocker**: der Reviewer bestätigt, dass
+  `PurchasedAt` nach dem Anlegen nie mehr geschrieben und `ShopPurchases` nirgends gelöscht wird — der
+  Sortierschlüssel ist also tatsächlich unveränderlich, exakt die Prämisse von Entscheidung 1. Der
+  Frontend-Reviewer bestätigte den Fix, verwies aber auf zwei Mängel im selben Commit, die bereits im
+  Selbst-Check gefunden und in `1e1353c` behoben worden waren (Ref-Gate gegen das Nachlade-Rennen,
+  `role="alert"` am Banner) — keine neuen Funde. **Eintrittsbedingung erfüllt, Stufe auf `abgenommen`.**
+  `wartet_auf` geleert. `nachgeschaut: 2026-08-05` — der Reviewer-Lauf selbst zählt als der unabhängige
+  Blick nach der Abnahme (frischer Agent, kein Wissen über den vorigen Selbst-Check); kein Fund über die
+  bereits behobenen zwei Mängel hinaus.

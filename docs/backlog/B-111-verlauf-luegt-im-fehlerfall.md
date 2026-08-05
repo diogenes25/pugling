@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/shop, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/shop, rolle/student]
 aliases: [Noch nichts gekauft im Fehlerfall]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: XS
@@ -13,7 +13,8 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-99]
-wartet_auf: frontend-reviewer
+wartet_auf: ""
+nachgeschaut: 2026-08-05
 ---
 
 # B-111 · Scheitert das Laden des Verlaufs, sagt die App „Noch nichts gekauft"
@@ -140,3 +141,10 @@ mit geschärfter Bedingung.
     grün.
 - **2026-08-05** — `entgangen_bei: [B-99]` gesetzt: `HistoryTab` samt der Zwei-Zustands-Anzeige entstand in
   B-99, der Defekt saß beim Fund also in abgenommener Arbeit. Zählt in die Wirkungs-Zahl.
+- **2026-08-05 (Nachtlauf)** — **`frontend-reviewer` lief erfolgreich** (der `529` vom Vortag war
+  vorübergehend). Kein Blocker; die zwei Mängel aus dem Selbst-Check (Rennen, stummer Banner) waren zum
+  Zeitpunkt dieses Laufs bereits in `1e1353c` behoben und wurden vom Reviewer nur noch bestätigt, nicht neu
+  gefunden. **Eintrittsbedingung erfüllt, Stufe auf `abgenommen`.** `wartet_auf` geleert. Der Rollengang
+  bleibt wie vermerkt teilweise: der Fehlerfall selbst ist Kartenebene, nicht Browser — argumentierte
+  Ausnahme, keine Lücke. `nachgeschaut: 2026-08-05` — der Reviewer-Lauf zählt als der unabhängige Blick
+  nach der Abnahme; kein neuer Fund.

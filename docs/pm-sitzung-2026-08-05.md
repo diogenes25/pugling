@@ -172,3 +172,138 @@ darauf, weil ein Tor Arbeit wäre.
 
 **Was bewusst ungedeckt bleibt:** dass `full-flow.spec.ts` weiter ein einzelner Ausfallpunkt für seine
 verbleibenden Blöcke ist. Das aufzuteilen ist B-109s Entscheidung, nicht die dieses Sprints.
+
+## Nachtlauf — Vorlauf
+
+Vom Nutzer beauftragt (`docs/nachtlauf.md`, wörtlicher Auftragstext) mit den drei dort dokumentierten
+Freigaben: autonomes Grillen nur für `art: Defekt`/`Aufräumen`, Selbst-Check statt Reviewer nur wenn dieser
+unerreichbar ist (Stufe bleibt dann `in-arbeit`), genau **ein** Sprint mit Retro-Vorschlag statt -Landung.
+
+**Vier liegen gebliebene Stories zuerst geprüft:** B-110, B-111, B-114, B-115 standen seit dem Vortag auf
+`in-arbeit`/`wartet_auf`, weil `pugling-reviewer`/`frontend-reviewer` an sechs serverseitigen `529`
+gescheitert waren. Erneuter Versuch: **alle fünf Reviewer-Läufe (2× je B-110/B-111/B-114, 1× B-115)
+liefen jetzt durch**, kein Blocker. B-114 zusätzlich live gegen die laufende API bestätigt (Demo-Kind,
+Position 7: `testable` blieb `false`, `goalMet` kippte nach einer vollständigen Übungsrunde auf `true`).
+Alle vier auf `abgenommen` gehoben, `wartet_auf` geleert, `nachgeschaut: 2026-08-05` gesetzt (der
+frische Reviewer-Blick zählt als der unabhängige Blick nach der Abnahme). Kein Browser-Rollengang möglich
+(keine Chrome-Extension in dieser unbeaufsichtigten Sitzung) — je eine Zeile im `## Verlauf` benennt das
+und den offenen Handgriff für einen Menschen.
+
+## Sprint 2 — Ziel & Umfang
+
+**Sprint-Ziel:** *Der Vater kann jede geblätterte Liste im Familien-Shop vollständig erreichen, und wenn
+er blättert, sagt ihm die Oberfläche, dass die neue Seite noch lädt — statt eine veraltete Seite für die
+neue zu halten.*
+
+**Umfang:** B-113, B-116. Beide kamen als `ausformuliert` (Defekt) aus dem Vortag; da `art: Defekt` gilt,
+autonom gegrillt und geschätzt (README → „Der Backlog-Lauf"). Beim Grillen von B-113 ein Fund, der die
+eigene Vorannahme korrigiert: die beiden Aktivierungs-Anfrage-Listen sind — entgegen der ursprünglichen
+Vermutung im Ist-Stand — **nicht** bereits geblättert dargestellt; nur die Kaufhistorie bekommt darum
+einen echten Pager, die beiden Anfrage-Listen nur die Sortierungs-Korrektur (Begründung: kostenlos zu
+messende Zeilenzahl heute, das belegte Risiko liegt bei der Kaufhistorie, aus der der Vater storniert).
+
+**Entwickler-Brief:**
+
+- **Quelle der Wahrheit:** die Ordnung einer server-paginierten Liste gehört dem Server und muss
+  unveränderlich sein — dieselbe Regel wie B-110, jetzt an drei weiteren Stellen (Kaufhistorie
+  Vater-Sicht, zwei Aktivierungs-Anfrage-Listen) durchgezogen, plus ein fehlender `Id`-Tiebreaker an
+  beiden Anfrage-Listen.
+- **Der Ladezustand beim Blättern gehört in den `Pager`**, nicht in jede der sieben Listen einzeln: er ist
+  der einzige Ort, der sowohl die geklickte Seite als auch deren Ankunft kennt.
+- **Backend zuerst:** `ShopController.cs`/`MeController.cs` — Sortierung entschärfen, Tiebreaker ergänzen.
+- **Dann Frontend:** `ListControls.tsx` `Pager` bekommt `busy`; sieben Aufrufer verdrahten es; `api.ts`
+  `childPurchases` wird paginiert; `VaterShop.tsx` bekommt den Pager für die Kaufhistorie.
+- **Testweg:** je ein Integrationstest für die Storno-/Genehmigungs-Race (Gegenstück zu B-110s Test);
+  ein Komponententest für den `busy`-Zustand des `Pager`.
+
+## Iteration 2 — umgesetzt
+
+**Backend:** `ShopController.cs:347` (Kaufhistorie) auf `PurchasedAt desc, Id desc` ohne
+`Owned`-vor-`Cancelled`-Gruppierung; `ShopController.cs:389` und `MeController.cs:374` (beide
+Aktivierungs-Anfrage-Listen) auf `RequestedAt desc, Id desc` mit ergänztem `Id`-Tiebreaker. **Rote Probe
+zuerst:** zwei neue Integrationstests (`ShopFlowTests.cs`) scheiterten gegen den Vorzustand exakt wie
+B-110s Vorbild (`Expected: 4, Actual: 3`), grün nach dem Fix.
+
+**Frontend:** `ListControls.tsx` `Pager` bekommt `busy?: boolean` — ein `useRef` friert die zuletzt
+gezeigte Spanne ein, solange `busy` gilt; alle sieben Aufrufer (`ClozeTexts`, `VaterAnmerkungen`,
+`VaterClassTests`, `VaterExercises`, `VaterKonto`, `VaterLernstand`, `VaterVocab`) verdrahtet.
+`api.ts` `childPurchases` von einem Status-Parameter auf `httpPaged` mit `skip`/`take` umgestellt
+(Muster wie `classTests`/`childPoints`); `VaterShop.tsx`s `ChildShopView` hält `purchaseSkip` und rendert
+den `Pager` unter der Kauf-Tabelle.
+
+**Verifikation (gemessen):** Backend `dotnet test -c Release` → **732/732 grün** (730 + 2 neue).
+Frontend `npm run build` sauber, `npm test` → **153/153 grün** (152 + 1 neuer). `dotnet format
+--verify-no-changes` clean. `pugling-reviewer` und `frontend-reviewer` liefen beide erfolgreich, kein
+Blocker. **Live gegen die laufende API geprüft** (Demo-Vater/Demo-Kind, vier eingefügte Käufe): Seite 1
+und Seite 2 lieferten korrekt `X-Total-Count: 4` und die erwarteten Ids ohne Überlappung. Der geplante
+Storno-Nachweis auf demselben Weg scheiterte an einem `409 concurrency_conflict` — Artefakt der rohen
+SQL-Einfügung der Testzeilen (kein EF-Pfad), kein Produktdefekt; die Zeilen wurden entfernt. Derselbe
+Nachweis steht bereits belegt in den beiden neuen Integrationstests, die über den echten EF-Pfad laufen.
+
+## Runde — Abnahme Sprint 2 (Rollengang)
+
+- **Vater: signiert, mit benanntem Rest.** Die Ordnungs-/Tiebreaker-Korrektur ist durch die zwei neuen
+  Integrationstests (roter Vorzustand → grün) und die Live-Probe gegen die laufende API belegt
+  (`X-Total-Count`, keine Lücke über zwei Seiten). Der `busy`-Ladezustand des `Pager` ist durch den neuen
+  Komponententest und den Reviewer belegt. **Kein Browser-Rollengang möglich** (keine Chrome-Extension in
+  dieser unbeaufsichtigten Sitzung) — benannt, nicht verschwiegen: ein Mensch sollte einmal im Vater-Web
+  die Kaufhistorie blättern (dabei einen Kauf stornieren) und auf einer mehrseitigen Liste zügig „Weiter"
+  klicken, um beides selbst zu sehen.
+- **Sohn: Regression, kein eigener Pfad berührt.** Backend-Suite grün (732/732), Frontend-Suite grün
+  (153/153), eigene Specs unberührt. Eine Nebenwirkung ausdrücklich benannt: `MeController.cs`s
+  `MyActivations` (Sohns eigene Sicht auf seine Aktivierungsanfragen) trägt dieselbe
+  Sortierungs-Korrektur — die Reihenfolge dort ändert sich ebenfalls von „offen zuerst" auf „neueste
+  zuerst", was für den Sohn nur eine andere Anordnung derselben, ohnehin nach Status eingefärbten Zeilen
+  bedeutet. Keine Sohn-Spec prüft diese Reihenfolge; nichts davon ist rot geworden.
+- **Creator: Regression, kein Pfad berührt.** Kein Katalog-Code angefasst; die Creator-E2E-Specs sind Teil
+  der grünen Gesamtsuite.
+
+## Retrospektive — Sprint 2
+
+**Nachschau:** B-110, B-111, B-114, B-115 (Vorlauf dieser Sitzung) — je ein frischer Reviewer-Lauf ohne
+Kenntnis des vorigen Selbst-Checks, plus bei B-114 eine Live-Probe gegen die echte API. Ergebnis: **kein
+neuer Fund** über das bereits Dokumentierte hinaus. `nachgeschaut: 2026-08-05` auf allen vier gesetzt.
+Index-Stand: **Nachgeschaut 18 von 48** (B-113/B-116 sind zu frisch für diese Runde und zählen erst im
+nächsten Nachtlauf/PM-Zyklus in den Nenner).
+
+**Was dieser Sprint über die eigenen Tore gelernt hat:** `pugling-reviewer` hat für B-113 ausdrücklich
+berichtet, dass sein eigener `dotnet build`/`dotnet test`-Lauf am selben Datei-Lock scheiterte, der auch
+meinen ersten Build-Versuch traf (ein laufender `dotnet run`-Dev-Server sperrt die Debug-Ausgabe —
+CLAUDE.md → „Arbeitsweise" nennt das für den Test-Gate-Hook, aber ein Reviewer-Agent, der von Null einen
+Build/Test-Lauf startet, weiß das nicht von sich aus). Der Agent hat das transparent benannt und ist auf
+Diff-Lektüre zurückgefallen — das ist der **richtige** Umgang mit einem gescheiterten Verifikationsschritt
+(benennen statt verschweigen), aber es hätte auch anders laufen können: eine Formulierung, die den
+fehlgeschlagenen Build nur als Nebensatz in einem sonst souverän klingenden Bericht erwähnt, ist leicht zu
+überlesen, wenn niemand den vollen Text liest. In dieser Sitzung war das folgenlos, weil die eigene
+Verifikation (`-c Release`) bereits vorlag — aber ein Reviewer-Lauf, dessen Build/Test-Schritt lautlos
+ausfällt, ist strukturell derselbe Fall wie der Selbst-Check-statt-Reviewer aus dem Vorlauf: ein
+schwächerer Beleg, der aussieht wie der volle.
+
+**Vorschlag für einen Mechanismus (nicht gelandet — Freigabe 3 dieses Nachtlaufs):** die
+Agenten-Definitionen von `pugling-reviewer`/`frontend-reviewer` (`.claude/agents/*.md`, falls dort
+Build/Test-Befehle stehen) um die Anweisung ergänzen, `dotnet build`/`dotnet test` **immer mit
+`-c Release`** zu fahren — dieselbe Regel, die der Test-Gate-Hook schon befolgt, nur bisher nicht dem
+Reviewer mitgegeben. Das ist eine Entscheidung (welcher Text wo steht), kein mechanisches Tor: eine
+Build-Konfiguration lässt sich nicht durch einen Guard-Test erzwingen, den ein Subagent vor seinem eigenen
+Lauf liest. Wo die Zeile landet und ob sie reicht, entscheidet der Nutzer am Morgen.
+
+**Was bewusst ungedeckt bleibt:** ob ein Reviewer-Lauf seinen eigenen Verifikationsstatus (verifiziert vs.
+nur gelesen) strukturiert statt in Prosa berichten sollte — das wäre der schärfere, aber auch teurere
+Fix (Schema-Änderung an der Agentenausgabe) und ist diesem Nachtlauf zu groß.
+
+## Ende des Nachtlaufs
+
+Genau **ein** Sprint (Freigabe 3) — der Lauf endet hier. Offene `Wunsch`/`Frage`-Punkte wurden keine
+angetroffen: B-113 und B-116 waren beide `art: Defekt` und damit autonom grillbar; kein Halt war nötig.
+Nichts ist gepusht. Commits: `ff6b1a3` (B-113 Backend), `07eddc6` (B-116), `9f475ea` (B-113 Frontend);
+die Backlog-Dateien selbst sind noch unkommittiert.
+
+**Ehrlich benannt:** `.claude/scripts/backlog-index.sh` lief einmal erfolgreich direkt nach den vier
+Reviewer-Nachträgen (B-110/B-111/B-114/B-115 stehen im Index als `abgenommen`), ließ sich danach in
+dieser Sitzung aber nicht erneut ausführen — das Werkzeug selbst meldete wiederholt eine temporäre
+Nichtverfügbarkeit, unabhängig vom Befehl. Der Index im Repo spiegelt darum **B-113/B-116 und die
+`nachgeschaut`-Setzungen dieser Retro noch nicht**. Das ist ohnehin der erste Schritt der Morgen-Prüfung
+(unten) — hier nur vorab benannt, damit es niemanden überrascht, falls „60 offen" im Index noch die alte
+Zahl zeigt.
+
+Die fünf Prüfpunkte für den Morgen stehen in [docs/nachtlauf.md](nachtlauf.md#am-morgen-fünf-zeilen-prüfen).
