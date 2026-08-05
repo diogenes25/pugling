@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/qualitaet, bereich/api]
+tags: [typ/story, status/abgenommen, bereich/qualitaet, bereich/api]
 aliases: [ProblemDetails required extensions]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: S
@@ -190,3 +190,14 @@ M-Anker B-03/B-10.
   **Auflage für die Abnahme:** die rote Probe dieser Story **vor** der ersten Codezeile einzeln gegen `HEAD`
   fahren (`--filter ContractDocumentTests`) und hier protokollieren — nach der Regenerierung ist alles
   gleichzeitig grün und „vorher rot" nicht mehr zu belegen.
+- **2026-08-05** — im Autonomen Modus gebaut, nach B-60 wie in der Bündel-Notiz vorgesehen (Punkt 6 statt
+  des kollidierenden Punkt 5). **Auflage erfüllt:** rote Probe einzeln gegen `HEAD` gefahren (`git stash`
+  von `EnumSchemaHelp.cs`, neue Testklasse behalten) — `--filter ContractDocumentTests` scheiterte mit
+  genau einem Fund: „Required fields without a matching property: ProblemDetails.extensions", exakt wie
+  vorhergesagt. Danach implementiert: `dotnet test Pugling.sln -c Release` → **724/724 grün**.
+  `docs/openapi/v1.json`-Diff exakt 3 Zeilen (das `required: ["extensions"]`-Feld unter `ProblemDetails`
+  entfernt) — nichts sonst bewegt sich. `pugling-reviewer` fand keinen Blocker; bestätigt, dass
+  `JsonPropertyInfo.IsExtensionData` sich wie erwartet verhält (das war das im Risiko-Abschnitt benannte
+  Restrisiko) und dass `properties.extensions` **nicht** versehentlich ergänzt wurde (Akzeptanzkriterium 2).
+  Kein Frontend-Anteil, `npm run build` als Kontrolle weiter grün. Commit: siehe Repo-Verlauf
+  (B-56-Commit). Status → `abgenommen`.

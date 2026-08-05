@@ -32115,9 +32115,6 @@
         "description": "Overall result of a test-mode run."
       },
       "ProblemDetails": {
-        "required": [
-          "extensions"
-        ],
         "type": "object",
         "properties": {
           "type": {

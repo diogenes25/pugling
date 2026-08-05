@@ -130,6 +130,19 @@ public class ContractDocumentTests
         Assert.True(flagsWithEnumList.Count == 0,
             $"[Flags] enums with an `enum` value list in the document (rejects valid combinations): "
             + $"{string.Join(", ", flagsWithEnumList)}");
+
+        // 6. No schema demands a `required` field it does not itself describe under `properties` - the
+        // document would be self-contradictory (ProblemDetails.Extensions, a [JsonExtensionData] catch-all,
+        // was exactly this case, B-56). Generic over every schema, not hardcoded to that one type name.
+        var requiredWithoutProperty = schemas
+            .SelectMany(s => (s.Value!["required"]?.AsArray() ?? [])
+                .Select(r => r!.GetValue<string>())
+                .Where(name => s.Value!["properties"]?[name] is null)
+                .Select(name => $"{s.Key}.{name}"))
+            .ToList();
+        Assert.True(requiredWithoutProperty.Count == 0,
+            $"Required fields without a matching property (the document demands something it never describes): "
+            + $"{string.Join(", ", requiredWithoutProperty)}");
     }
 
     private static async Task<string> GenerateAsync()

@@ -29,6 +29,12 @@ public static class EnumSchemaHelp
         var required = new List<string>();
         foreach (var property in typeInfo.Properties)
         {
+            // Extension-data properties (`[JsonExtensionData]`, e.g. ProblemDetails.Extensions) are a
+            // catch-all for arbitrary extra keys, not a named field - the generator itself already leaves
+            // them out of `properties`. A get-only reference type like this one is otherwise non-nullable
+            // and would land in `required` without ever being described (B-56): the document would demand a
+            // field it does not itself know.
+            if (property.IsExtensionData) continue;
             if (property.IsRequired || IsNonNullable(property, nullability))
                 required.Add(property.Name);
         }
