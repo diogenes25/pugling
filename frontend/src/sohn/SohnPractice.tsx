@@ -175,13 +175,20 @@ export function SohnPractice() {
   if (phase === "error") return <div className="sohn-body"><div className="error-box">{error}</div>
     <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>Zur Basis</button></div>;
 
+  // B-117: eine Anzeigestufe (ShowBoth, B-96) kennt keinen Test - die Klausur antwortet dort mit
+  // `stage_not_testable`. Ohne dieses Gate bot der Bildschirm den Knopf trotzdem an und schickte in die
+  // rohe Fehlerseite, die exakt dieselbe Fehlerklasse ist, die B-114 an der Tageskarte schon behoben hat.
+  const testable = session.current?.testable ?? true;
+
   if (phase === "empty") return (
     <div className="sohn-body">
       <div className="card" style={{ textAlign: "center" }}>
         <div className="screen-title">Nichts fällig 🎉</div>
-        <p className="sub">Alle Karten sind aktuell weit genug im Kasten. Mach den Test oder komm später wieder.</p>
+        <p className="sub">{testable
+          ? "Alle Karten sind aktuell weit genug im Kasten. Mach den Test oder komm später wieder."
+          : "Alle Karten sind aktuell weit genug im Kasten. Komm später wieder."}</p>
       </div>
-      <button type="button" className="btn" onClick={() => nav(`/sohn/test/${positionId}`)}>🎯 Zum Test</button>
+      {testable && <button type="button" className="btn" onClick={() => nav(`/sohn/test/${positionId}`)}>🎯 Zum Test</button>}
       <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>Zur Basis</button>
     </div>
   );
@@ -194,7 +201,7 @@ export function SohnPractice() {
           <div className="card">🪙<span style={{ color: "var(--gold)" }}>+{earned}</span></div>
           <div className="card">🃏<span>{cards.length} Karten</span></div>
         </div>
-        <button type="button" className="btn gold" onClick={() => nav(`/sohn/test/${positionId}`)} style={{ marginTop: 10 }}>🎯 Weiter zum Test</button>
+        {testable && <button type="button" className="btn gold" onClick={() => nav(`/sohn/test/${positionId}`)} style={{ marginTop: 10 }}>🎯 Weiter zum Test</button>}
         <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>Zur Basis</button>
       </div>
     </div>
