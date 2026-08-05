@@ -52,6 +52,15 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         pos.Exercise is { } ex ? registry.ByKey(ex.Type)?.Manifest.CheckMode ?? ExerciseCheckMode.None : ExerciseCheckMode.None;
 
     /// <summary>
+    /// Is the stage that applies on <paramref name="day"/> a free display stage (B-96)? Such a day has no
+    /// question to grade, so the exam rejects it (<c>ApiErrors.StageNotTestable</c>) – which is why every rule
+    /// that would otherwise demand a test attempt has to know about it.
+    /// </summary>
+    public bool IsDisplayOnlyDay(PlanPosition pos, StudyPlan plan, DateOnly day) =>
+        pos.Exercise is { } ex && registry.ByKey(ex.Type) is { } type
+            && type.IsDisplayOnlyStage(PositionPlayService.StageForDay(pos, plan, day, type));
+
+    /// <summary>
     /// Minimum practice seconds an <b>empty</b> round must carry when the exercise has no content atoms at
     /// all. Deliberately weak – seconds are producible by leaving a tab open – but it is the only evidence
     /// that exists there, and it is strictly more than "a POST happened". See <see cref="IsGoalMetAsync"/>.
@@ -81,6 +90,26 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// checkable types (test/catalog check) count as done as soon as a test has been
     /// passed within the period (with <see cref="PlanPosition.RequireTypedTest"/> only a graded attempt counts).
     /// <para>
+    /// A <b>free display stage</b> (B-96) is measured by the played round as well, even on a checkable type:
+    /// the exam refuses that stage, so demanding a test attempt would make the obligation unmeetable and book
+    /// a penalty for a duty the product itself blocks. It is a fallback, not a replacement – a period whose
+    /// evaluated day carries a real stage keeps requiring the test.
+    /// </para>
+    /// </summary>
+    public async Task<bool> IsGoalMetAsync(PlanPosition pos, StudyPlan plan, DateOnly day, CancellationToken ct = default)
+    {
+        var (from, to) = PeriodRange(pos.Cadence, day);
+        if (CheckModeOf(pos) == ExerciseCheckMode.None || IsDisplayOnlyDay(pos, plan, day))
+            return await PlayedRoundMeetsGoalAsync(pos, from, to, ct);
+
+        return await db.TestAttempts.AnyAsync(t =>
+            t.PlanPositionId == pos.Id && t.Day >= from && t.Day <= to
+            && t.CompletedAt != null && t.Passed && (!pos.RequireTypedTest || t.Graded), ct);
+    }
+
+    /// <summary>
+    /// Did a learn round in [<paramref name="from"/>,<paramref name="to"/>] carry the position's goal?
+    /// <para>
     /// An <b>empty</b> frozen order has two causes that look identical on the session but mean the opposite:
     /// either the position has a pool and Leitner simply had nothing due (nothing to play → done), or the
     /// exercise carries no content atoms at all (an essay, a text without questions). Only the pool tells
@@ -88,35 +117,28 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// and closing a round, which is exactly the presence this rule exists to reject.
     /// </para>
     /// </summary>
-    public async Task<bool> IsGoalMetAsync(PlanPosition pos, DateOnly day, CancellationToken ct = default)
+    private async Task<bool> PlayedRoundMeetsGoalAsync(PlanPosition pos, DateOnly from, DateOnly to,
+        CancellationToken ct)
     {
-        var (from, to) = PeriodRange(pos.Cadence, day);
-        if (CheckModeOf(pos) == ExerciseCheckMode.None)
-        {
-            // Only real learning sessions count towards the goal - info sessions (free practice without
-            // feedback) do not. The set is filtered in the DB; the comparison cursor↔Order.Count then runs in
-            // memory, because `Order` is a JSON column - `s.Order.Count` is not translatable and would silently
-            // force client-side evaluation over ALL sessions.
-            var rounds = await db.PracticeSessions.AsNoTracking()
-                .Where(s => s.PlanPositionId == pos.Id && s.Day >= from && s.Day <= to && s.Mode == PlayMode.Lern)
-                .Select(s => new { s.Cursor, s.Order, s.ActiveSeconds, s.EndedAt })
-                .ToListAsync(ct);
-            if (rounds.Any(r => PlayedEnough(pos, r.Cursor, r.Order.Count))) return true;
+        // Only real learning sessions count towards the goal - info sessions (free practice without
+        // feedback) do not. The set is filtered in the DB; the comparison cursor↔Order.Count then runs in
+        // memory, because `Order` is a JSON column - `s.Order.Count` is not translatable and would silently
+        // force client-side evaluation over ALL sessions.
+        var rounds = await db.PracticeSessions.AsNoTracking()
+            .Where(s => s.PlanPositionId == pos.Id && s.Day >= from && s.Day <= to && s.Mode == PlayMode.Lern)
+            .Select(s => new { s.Cursor, s.Order, s.ActiveSeconds, s.EndedAt })
+            .ToListAsync(ct);
+        if (rounds.Any(r => PlayedEnough(pos, r.Cursor, r.Order.Count))) return true;
 
-            var emptyRounds = rounds.Where(r => r.Order.Count == 0).ToList();
-            if (emptyRounds.Count == 0) return false;
-            // The pool is the only thing that separates "nothing was due" from "there is nothing at all";
-            // it is queried here and not above so that the normal, played round costs no extra round-trip.
-            var items = await play.ItemsOfAsync(pos, ct: ct);
-            if (play.PoolSize(pos, items.Count) > 0) return true;
-            // Contentless exercise: there is no cursor to measure. What is left as evidence is that the child
-            // stayed for a while and closed the round on purpose - see MinSecondsForContentlessRound.
-            return emptyRounds.Any(r => r.EndedAt != null && r.ActiveSeconds >= MinSecondsForContentlessRound);
-        }
-
-        return await db.TestAttempts.AnyAsync(t =>
-            t.PlanPositionId == pos.Id && t.Day >= from && t.Day <= to
-            && t.CompletedAt != null && t.Passed && (!pos.RequireTypedTest || t.Graded), ct);
+        var emptyRounds = rounds.Where(r => r.Order.Count == 0).ToList();
+        if (emptyRounds.Count == 0) return false;
+        // The pool is the only thing that separates "nothing was due" from "there is nothing at all";
+        // it is queried here and not above so that the normal, played round costs no extra round-trip.
+        var items = await play.ItemsOfAsync(pos, ct: ct);
+        if (play.PoolSize(pos, items.Count) > 0) return true;
+        // Contentless exercise: there is no cursor to measure. What is left as evidence is that the child
+        // stayed for a while and closed the round on purpose - see MinSecondsForContentlessRound.
+        return emptyRounds.Any(r => r.EndedAt != null && r.ActiveSeconds >= MinSecondsForContentlessRound);
     }
 
     // ---- Rollup + points ---- ----
@@ -153,12 +175,15 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             var items = await play.ItemsOfAsync(pos, ct: ct);
             var poolSize = play.PoolSize(pos, items.Count);
             var dueCount = pos.UseLeitner ? (await play.DueItemIndicesAsync(pos, day, ct: ct)).Count : 0;
-            var goalMet = pos.Cadence == GoalCadence.None || await IsGoalMetAsync(pos, day, ct);
+            var goalMet = pos.Cadence == GoalCadence.None || await IsGoalMetAsync(pos, plan, day, ct);
+            // Testable is about TODAY, not just about the type: on a free display stage (B-96) the exam
+            // answers 400, so a client that offered its test button would send the child into a dead end.
+            var testable = checkMode != ExerciseCheckMode.None && !IsDisplayOnlyDay(pos, plan, day);
 
             statuses.Add(new PositionStatus(
                 pos.Id, pos.ExerciseId, pos.Exercise?.Title ?? "", pos.Exercise?.Type.ToString() ?? "",
                 manifest?.Renderer ?? "", pos.Order, pos.Cadence, checkMode, pos.UseLeitner,
-                checkMode != ExerciseCheckMode.None, goalMet, dueCount, poolSize, pos.PointsGoalMet));
+                testable, goalMet, dueCount, poolSize, pos.PointsGoalMet));
         }
 
         // The day's obligation = every position with a goal (daily today / weekly this week) done.
@@ -187,7 +212,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         var positions = await LoadPositionsAsync(plan.Id, ct);
         foreach (var pos in positions.Where(p => p.Cadence != GoalCadence.None && p.PointsGoalMet > 0))
         {
-            if (!await IsGoalMetAsync(pos, day, ct)) continue;
+            if (!await IsGoalMetAsync(pos, plan, day, ct)) continue;
             var periodStart = PeriodStart(pos.Cadence, day);
             var cadence = pos.Cadence;
             if (await db.PositionGoalRewards.AnyAsync(r => r.PlanPositionId == pos.Id
@@ -301,7 +326,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
                         && r.Cadence == cadence && r.PeriodStart == from, ct)) continue;
                 // Safeguard against a race with the reward path (PointsGoalMet == 0 books no reward, yet the
                 // goal can still be met): punish only when the period was actually missed.
-                if (await IsGoalMetAsync(pos, to, ct)) continue;
+                if (await IsGoalMetAsync(pos, plan, to, ct)) continue;
 
                 db.PositionGoalPenalties.Add(new PositionGoalPenalty
                 {

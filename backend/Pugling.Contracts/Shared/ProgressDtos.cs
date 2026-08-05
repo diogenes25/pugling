@@ -3,7 +3,14 @@ namespace Pugling.Contracts.Shared;
 // Tier-spanning contract of study plan progress: the child reads its daily mission from it,
 // the supervisor the same rollup as history/reporting.
 
-/// <summary>Status of a single position for one day – enough for the student client to render the right action.</summary>
+/// <summary>
+/// Status of a single position for one day – enough for the student client to render the right action.
+/// <para>
+/// <c>Testable</c> is about <b>this day</b>, not merely about the exercise type: it is false on a free display
+/// stage (B-96), because the exam refuses that stage. A client therefore offers practice whenever the position
+/// uses Leitner or is not testable today – the two together always leave exactly one playable way in.
+/// </para>
+/// </summary>
 public record PositionStatus(
     int PositionId, int ExerciseId, string ExerciseTitle, string ExerciseType, string Renderer,
     int Order, GoalCadence Cadence, ExerciseCheckMode CheckMode, bool UseLeitner, bool Testable,

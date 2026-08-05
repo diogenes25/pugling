@@ -31658,7 +31658,7 @@
             "format": "int32"
           }
         },
-        "description": "Status of a single position for one day \u2013 enough for the student client to render the right action."
+        "description": "Status of a single position for one day \u2013 enough for the student client to render the right action.\nTestable is about this day, not merely about the exercise type: it is false on a free display\nstage (B-96), because the exam refuses that stage. A client therefore offers practice whenever the position\nuses Leitner or is not testable today \u2013 the two together always leave exactly one playable way in."
       },
       "PracticeCard": {
         "required": [

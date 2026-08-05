@@ -175,6 +175,42 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
         Assert.Equal("stage_not_testable", (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
     }
 
+    /// <summary>
+    /// A display-only day must leave exactly one playable way in, and that way has to discharge the duty.
+    /// Otherwise the position is a dead end: the daily mission offers only the test button, the test answers
+    /// <c>stage_not_testable</c>, and a mandatory cadence books the coin penalty for a duty the product blocks.
+    /// </summary>
+    [Fact]
+    public async Task ShowBoth_OhneLeitner_IstNichtPruefbar_UndDieGespielteRundeErfuelltDiePflicht()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = "Kennenlern-Kind", pin = "7502" }));
+        // Exactly the shape the seed and the father's wizard produce: a display stage, no Leitner, daily duty.
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.ShowBoth,
+            childId: childId, cadence: GoalCadence.Daily, useLeitner: false);
+        var child = await TestApi.ChildAsync(_factory, childId, "7502");
+
+        var vorher = (await child.GetFromJsonAsync<JsonElement>($"/api/v1/student/study-plans/{planId}/overview"))
+            .GetProperty("today").GetProperty("positions").EnumerateArray().Single();
+        // Not testable TODAY although the type has a check mode - the client must not offer the test button.
+        Assert.Equal("StudyPlanTest", vorher.GetProperty("checkMode").GetString());
+        Assert.False(vorher.GetProperty("testable").GetBoolean());
+        Assert.False(vorher.GetProperty("goalMet").GetBoolean());
+
+        // Play the whole round: two cards, "Weiter" each time (no verdict on this stage).
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions";
+        var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
+        foreach (var itemIndex in new[] { 0, 1 })
+            Assert.Equal(HttpStatusCode.OK,
+                (await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review", new { itemIndex })).StatusCode);
+
+        var nachher = (await child.GetFromJsonAsync<JsonElement>($"/api/v1/student/study-plans/{planId}/overview"))
+            .GetProperty("today").GetProperty("positions").EnumerateArray().Single();
+        JsonAssert.True(nachher, "goalMet");
+    }
+
     [Fact]
     public async Task Vokabel_Position_ZweiteWertungAmSelbenTag_WirdNichtGewertet()
     {

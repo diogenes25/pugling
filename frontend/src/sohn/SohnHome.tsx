@@ -117,7 +117,10 @@ function HomeForPlan({
 }
 
 function PositionCard({ pos }: { pos: PositionStatus }) {
-  const canPractice = pos.useLeitner || (!pos.testable && pos.checkMode === "None");
+  // Genau ein Weg muss immer offen sein: Üben, wenn Leitner läuft ODER heute nichts zu prüfen ist. `testable`
+  // ist eine TAGES-Aussage des Servers (auch falsch auf einer Kennenlern-Stufe, B-96) – nicht `checkMode`
+  // abfragen, sonst hat eine Position mit Prüfmodus an einem nicht prüfbaren Tag überhaupt keinen Knopf.
+  const canPractice = pos.useLeitner || !pos.testable;
   const practiceLabel = pos.useLeitner
     ? `▶ ÜBEN${pos.dueCount > 0 ? ` (${pos.dueCount} fällig)` : ""}`
     : "▶ DURCHSPIELEN";
