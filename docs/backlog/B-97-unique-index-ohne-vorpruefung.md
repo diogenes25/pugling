@@ -94,6 +94,7 @@ bestehenden Vorprüfungen im Projekt und die Folge von Entscheidung 2 (kein glob
 wird: der Fall braucht zwei Erwachsene, die im selben Moment denselben Namen vergeben.
 
 **Angriffsplan** (Backend zuerst, es gibt keinen Frontend-Anteil):
+
 1. `ApiErrors.DuplicateAchievement` additiv ergänzen.
 2. Testfälle **zuerst** schreiben und rot laufen lassen (Abnahmeform `Defekt`).
 3. `ChaptersController.Update` und die beiden Abzeichen-Pfade um die Vorprüfung ergänzen.

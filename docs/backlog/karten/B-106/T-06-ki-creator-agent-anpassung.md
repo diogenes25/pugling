@@ -27,4 +27,3 @@ separater Chapter-Pfad mehr). `CreatorAgentTests.cs` ist vollständig mitgezogen
 heute Reihe+Unit, ~20 Aufrufstellen umgestellt, der `--chapter`→`--series-unit`-CLI-Test aktualisiert).
 Verifiziert: 706/706 Backend-Tests grün, `dotnet build Pugling.sln` sauber. B-19 (Schüler-Profil für den
 KI-Lehrplan) trifft damit bereits auf die neue Signatur, kein Nacharbeiten nötig, wenn diese Story startet.
-

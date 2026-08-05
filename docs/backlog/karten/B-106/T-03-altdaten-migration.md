@@ -49,4 +49,3 @@ heutige Freitext-`Textbook`-Eintrag), die übrigen drei Fächer bekommen nur ein
 
 **Verlauf:** 2026-08-04 — gegrillt, autonom entschieden (Nutzerauftrag 2026-08-04, PM-Loop Runde
 „Lehrwerkgetriebener Katalog"), grundiert durch dieselbe Live-Prüfung wie T-01.
-

@@ -11,7 +11,7 @@ tags: [bereich/api, bereich/architektur]
 > `auth/…` und `remarks/…`, PIN-Login statt OAuth, SQLite, kein GraphQL, Kettenlänge 1 bei den
 > Migrationen, keine echte Schema-Versionierung. Abwärtskompatibilität ist **kein** Kriterium – v1 ist
 > unveröffentlicht und darf brechen.
-
+>
 > **Nachtrag 2026-08-04 — dieser Bericht ist nicht das Ergebnis, sondern seine Vorlage.** In einer
 > Arbeitsrunde PM / API-Designer / Entwickler wurde jeder Vorschlag gegen den Code und gegen die Kosten
 > dieses Repos verhandelt. Ergebnis: **B1** (Idempotenz-Schlüssel) und **B2** (ETag/`If-Match`) sind

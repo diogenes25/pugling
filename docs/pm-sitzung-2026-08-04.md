@@ -272,7 +272,7 @@ Die drei Stories stehen auf `in-arbeit` mit belegter Verifikation. `abgenommen` 
 
 ---
 
-# Runde: Lehrwerkgetriebener Katalog (B-106)
+## Runde: Lehrwerkgetriebener Katalog (B-106)
 
 **Ziel:** `Exercise` hängt strukturell an `SeriesUnit` statt an `Chapter`; jede Übung gehört zu genau
 einer Unit einer konkreten Reihe; Lernbetrieb setzt ein katalogisiertes Lehrwerk voraus. Drei
@@ -298,7 +298,7 @@ bei zwei unterschiedlichen Creator-Konten geprüft. Der Übungskatalog ist reich
 Kapitel mit Übungen), der Lehrwerk-Katalog ist vollständig leer. Das ist kein Rand-, sondern ein
 Kaltstart-Befund: „Katalogisierung wird Pflicht" trifft heute auf null existierende Katalog-Reihen.
 
-## Feedback Creator/Lehrer (O-Ton)
+### Feedback Creator/Lehrer (O-Ton)
 
 **Baut sich gut:** Der Übungskatalog selbst — vier Fächer, Kapitel mit Übungen, alles sofort
 ansprechbar.
@@ -322,7 +322,7 @@ ansprechbar.
 **Top-3:** Kaltstart ohne Reihen/Units · Fachlehrer-Matching ohne Profile · Schicksal des
 Chapter-Altbestands (T-03)
 
-## Feedback Vater/Supervisor (O-Ton)
+### Feedback Vater/Supervisor (O-Ton)
 
 **Gefällt:** Der Demo-Plan mit 16 Positionen läuft stabil, mein Kind kommt voran.
 
@@ -343,7 +343,7 @@ Chapter-Altbestands (T-03)
 **Top-3:** Kein Textbook bei meinem Kind vorhanden · Migrationssicherheit laufender Pläne (T-03) ·
 Fachlehrer-Matching bräuchte sichtbaren Nutzen
 
-## Feedback Sohn/Student (O-Ton)
+### Feedback Sohn/Student (O-Ton)
 
 **Mega:** Merke vom Konzept selbst erstmal nichts — spiele weiter meine Positionen, wie gewohnt.
 
@@ -362,7 +362,7 @@ Fachlehrer-Matching bräuchte sichtbaren Nutzen
 **Top-3:** Bricht mein laufender Plan? · Kommt neuer Stoff langsamer nach? · (Wunsch) Übungen sollen
 wirklich zum Schulbuch passen
 
-## PM-Synthese & Priorisierung
+### PM-Synthese & Priorisierung
 
 **Die Beobachtung, die die Runde bestimmt:** Alle drei Rollen zeigen — unabhängig voneinander, aus
 verschiedenen Blickwinkeln — auf **dieselbe Naht**: die Migration des Altbestands (T-03). Der Creator
@@ -376,14 +376,14 @@ Migrationsform lässt sich erst entwerfen, wenn feststeht, was aus `Subject`/`Ex
 Beide werden darum **in dieser Runde direkt gegrillt** (autonom, wie autorisiert), bevor der
 Entwickler-Brief geschrieben wird.
 
-### T-01 — gegrillt (Antwort im Ticket)
+#### T-01 — gegrillt (Antwort im Ticket)
 
 `Subject` bleibt als eigenständige fachliche Klammer bestehen (trägt weiterhin `ExerciseCategory` und
 `Klassenarbeit.SubjectId`); nur `Chapter` entfällt ersatzlos. Der Bezug `Exercise → Subject` wird
 transitiv über `SeriesUnit.SeriesId → TextbookSeries.SubjectId`. Volle Begründung und Kosten:
 [T-01-Antwort](backlog/karten/B-106/T-01-subject-exercisecategory-rolle.md).
 
-### T-03 — gegrillt (Antwort im Ticket)
+#### T-03 — gegrillt (Antwort im Ticket)
 
 Seed wird umgeschrieben: bestehende Chapter-Inhalte (Englisch: Greetings/Family/Global challenges)
 werden zu einer echten `TextbookSeries`+`SeriesUnit`-Struktur (Basis: das bereits referenzierte „Green
@@ -392,7 +392,7 @@ nur `ExerciseId` referenzieren (bereits entkoppelt, siehe B-106 Ist-Stand) — d
 Sohn ist damit strukturell schon entkräftet, nicht nur versprochen. Volle Begründung, Umfang und
 Testfolgen: [T-03-Antwort](backlog/karten/B-106/T-03-altdaten-migration.md).
 
-### Priorisierung
+#### Priorisierung
 
 | Prio | Teilschritt | Größe | Wo | Warum jetzt |
 |---|---|---|---|---|
@@ -402,7 +402,7 @@ Testfolgen: [T-03-Antwort](backlog/karten/B-106/T-03-altdaten-migration.md).
 | P1 danach | T-04 Klassenarbeiten-Bezug, T-05 Frontend-Konsolidierung | S/M | beides | Folgen aus dem Schema-Slice, kein eigener Vorlauf nötig. |
 | P2 offen | T-02 Grade/SchoolTypes-Dopplung | — | Entscheidung | Braucht keinen Code-Vorlauf, kann parallel zum Schema-Slice gegrillt werden. |
 
-## Entwickler-Brief — Schema-Slice (nächster Sprint)
+### Entwickler-Brief — Schema-Slice (nächster Sprint)
 
 **Ziel:** `Exercise.ChapterId` (non-nullable) wird durch `Exercise.SeriesUnitId` (non-nullable, FK auf
 `SeriesUnit`) ersetzt; `Chapter` entfällt vollständig, `Subject` bleibt (trägt `ExerciseCategory` weiter).
@@ -415,6 +415,7 @@ Testfolgen: [T-03-Antwort](backlog/karten/B-106/T-03-altdaten-migration.md).
 (`ExerciseRoutes.Base`) ändert sich zentral, keine Einzeländerung je Controller nötig.
 
 **Guards:**
+
 - Neue Übung: `SeriesUnit` muss existieren und zur `seriesId` der Route gehören (Muster: bestehende
   `ChapterExists`-Prüfung, 1:1 übertragen).
 - Neue Validierung aus T-01: eine `TextbookSeries` ohne `SubjectId` kann keine Übung tragen — beim
@@ -437,7 +438,7 @@ Teilschritt).
 auf die neue Route umstellen (Umfang per Grep vorab sizen); `SchemaGuardTests` hält Kettenlänge 1 und
 die neue FK automatisch nach; `pugling-reviewer` vor Abschluss; `/smoke-test` für den End-to-End-Rundgang.
 
-## Iteration 1 — umgesetzt (Schema-Slice: Chapter → SeriesUnit)
+### Iteration 1 — umgesetzt (Schema-Slice: Chapter → SeriesUnit)
 
 Wie gebrieft: `Exercise.ChapterId` → `SeriesUnitId`, `ChaptersController` gelöscht, alle zwölf
 Typ-Controller auf `api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/<typ>` verlegt,
@@ -461,14 +462,14 @@ wurde), Endpunkt-Abdeckung **258/258**. `/smoke-test` grün, aber erst nachdem a
 `.claude/scripts/smoke-checks.sh` selbst repariert war: das Skript legte Fach+Übung noch über die
 gelöschte `chapters`-Route an.
 
-## Re-Review gegen die echte laufende App — und die Überraschung darin
+### Re-Review gegen die echte laufende App — und die Überraschung darin
 
 Der Sprint war laut Entwickler-Brief **Backend-only**; das Frontend sollte unverändert bleiben
 („T-05 ist ein eigener, späterer Teilschritt"). Die Re-Review-Runde (alle drei Rollen gegen den
 frisch gestarteten Server + Vite-Dev-Server, echte HTTP-Aufrufe statt Vermutung) zeigte, warum das
 zu optimistisch war:
 
-### Feedback Creator (O-Ton, live geprüft)
+#### Feedback Creator (O-Ton, live geprüft)
 
 „Backend ist gut — sobald ich die richtigen Feldnamen kannte, hat Reihe→Unit→Übung sofort
 funktioniert, `seriesId`/`subjectId` tauchen überall transitiv auf. **Aber ich kann in der App, die
@@ -478,7 +479,7 @@ liest, sieht das aus wie ein kaputtes Produkt, nicht wie ein Backend-only-Sprint
 `VaterExerciseCreate.tsx` verlangte weiter `chapterId` als Pflichtfeld und lud das Pulldown über die
 jetzt 404/405 antwortende `chapters`-Route; der `useAsync`-Fehler wurde nirgends gerendert.
 
-### Feedback Vater (O-Ton, live geprüft)
+#### Feedback Vater (O-Ton, live geprüft)
 
 „Plan, Position, Ziel-Etappe mit Unit-Bezug — alles hat sauber funktioniert, sobald ich direkt gegen
 die API ging (`"scope":"seriesUnit"` kommt korrekt zurück). **Aber ich kann kein einziges neues großes
@@ -487,14 +488,14 @@ eine Etappe. Das ist nicht ‚fehlt', das ist ‚kaputt'." Konkret: `VaterZiele.
 weiterhin `{chapterId}` und rief die 404-Route auf; die Positions-Filterleiste (`PlanPositions.tsx`)
 ignorierte ihren Kapitel-Filter dagegen nur stillschweigend (kein Fehler, aber auch keine Wirkung).
 
-### Feedback Sohn (O-Ton, live geprüft)
+#### Feedback Sohn (O-Ton, live geprüft)
 
 „Hab nichts gemerkt — Karten kamen, Punkte kamen, die tägliche Box hat sogar automatisch ausgezahlt."
 Vollständiger Praxis-Test über die echte API (Übung spielen, Test ablegen, Wallet prüfen) bestand;
 Code-Durchsicht aller sieben Sohn-Screens ergab **null** Chapter-Referenzen — die Arcade war nie
 betroffen.
 
-### Konsequenz: Notfall-Fix statt Rückstellung
+#### Konsequenz: Notfall-Fix statt Rückstellung
 
 Ein UI, das eine vorher funktionierende Funktion (Übung anlegen, Ziel anlegen) lautlos zerstört, ist
 kein „T-05 kommt später"-Fall, sondern ein Regressions-Fix, der in derselben Runde nachgezogen gehört —
@@ -528,7 +529,7 @@ Diff**: `git diff` für diese Datei ist leer, kein Sohn-seitiger Code wurde in d
 und `.github/workflows/ci.yml` lässt den `frontend`-Job ohnehin nur `npm run build` + `npm test`
 laufen, nie `test:e2e` — E2E ist hier ein manuelles PM-Verifikationswerkzeug, kein CI-Gate.
 
-## Runde — Abnahme Sprint 1
+### Runde — Abnahme Sprint 1
 
 - **Creator: signiert.** Übung anlegen funktioniert wieder, jetzt über Fach→Reihe→Unit statt
   Fach→Kapitel; per direktem API-Aufruf und Code-Lesen geprüft (`seriesId`/`seriesUnitId`/`subjectId`
@@ -549,7 +550,7 @@ laufen, nie `test:e2e` — E2E ist hier ein manuelles PM-Verifikationswerkzeug, 
 **Commit:** siehe Verlauf in `B-106`; fertig gebaute und verifizierte Arbeit wird selbst committet
 (main), Push bleibt beim Nutzer.
 
-## Sprint 2 (autonom) — die drei verbliebenen Tickets
+### Sprint 2 (autonom) — die drei verbliebenen Tickets
 
 Kein neuer Live-Test nötig: T-02, T-04 und die tiefere Frage von T-05 sind reine Design-Entscheidungen,
 keine vom Live-Test aufgeworfenen Beschwerden. Alle drei gegrillt, alle drei enden ohne Code-Änderung

@@ -49,4 +49,3 @@ selbst.
 „Lehrwerkgetriebener Katalog"), grundiert durch die Live-Prüfung derselben Runde
 (`docs/pm-sitzung-2026-08-04.md`): `creator/textbook-series` und `creator/profiles` liefern über die
 gesamte Seed-Landschaft `[]`.
-

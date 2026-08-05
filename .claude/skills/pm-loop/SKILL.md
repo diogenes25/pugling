@@ -391,7 +391,15 @@ already stamped `abgenommen`.
 ## Session log — the durable artifact
 
 Mirror the established format in `docs/pm-sitzung-2026-07-04.md`. One file per session date; append
-rounds as the loop iterates. Skeleton:
+rounds as the loop iterates.
+
+**Exactly one `#` per file.** A further round is `## Runde N — …` with `###` subsections, never a second
+`#` — the file has one title, and rounds are its sections. This is not cosmetic: `docs/` is linted
+(MD025 forbids a second top-level heading), and the round appended on 2026-08-04 broke the Markdown-Lint
+job in CI, where it stayed red until 2026-08-05. `.claude/` itself is *not* linted, so this sentence is
+the only thing standing between an appended round and a red gate.
+
+Skeleton:
 
 ```markdown
 # PM-Sitzung: <kurzer Fokus>
