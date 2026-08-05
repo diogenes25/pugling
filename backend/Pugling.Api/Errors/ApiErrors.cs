@@ -80,6 +80,8 @@ public static class ApiErrors
     /// otherwise pay twice for the same milestone.
     /// </summary>
     public static readonly ApiError DuplicateKeyResult = new("duplicate_key_result", 409, "This goal already has a key result with this scope and metric.");
+    /// <summary>A test cannot be started on a free display stage (B-96) – a test without a question is not a test (400).</summary>
+    public static readonly ApiError StageNotTestable = new("stage_not_testable", 400, "This stage is a free display stage and cannot be tested.");
     /// <summary>Image variant does not exist / does not belong to this asset (404).</summary>
     public static readonly ApiError MediaVariantNotFound = new("media_variant_not_found", 404, "Media variant not found.");
     /// <summary>The asset already has a variant for this purpose and format (409).</summary>

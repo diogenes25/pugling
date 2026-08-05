@@ -488,11 +488,12 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
         var child = await TestApi.ChildAsync(_factory);
         var testsUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
 
-        // Two father previews, both left open and both at a stage of his choosing.
+        // Two father previews, both left open and both at a stage of his choosing (not ShowBoth: a free
+        // display stage cannot be tested at all since B-96, by the father either).
         var fathersIds = new List<int>();
         for (var i = 0; i < 2; i++)
             fathersIds.Add(await TestApi.IdWithKeyAsync(
-                await father.PostAsJsonAsync(testsUrl, new { stage = (int)TestStage.ShowBoth }), "attemptId"));
+                await father.PostAsJsonAsync(testsUrl, new { stage = (int)TestStage.SelfAssess }), "attemptId"));
 
         // The child gets a NEW attempt at ITS scheduled stage, not the father's open one.
         var mine = await (await child.PostAsJsonAsync(testsUrl, new { })).Content.ReadFromJsonAsync<JsonElement>();

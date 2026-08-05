@@ -53,12 +53,17 @@ public record HeartbeatDto(int Seconds, bool Active);
 /// <c>Decoding</c> is the word-for-word decoding of the sentence (Birkenbihl) – the method itself, so it belongs
 /// on the <b>front</b> of the card next to <c>Prompt</c>, not behind the reveal. <c>null</c> for every other type.
 /// </para>
+/// <para>
+/// <c>DisplayOnly</c> (B-96) marks a free display stage ("getting acquainted"): both sides are shown at
+/// once, there is no self-assessment and no Leitner movement. Distinct from typed-ness – the frontend must
+/// not infer it from <c>Reveal</c> being set, because self-assessment stages set it too.
+/// </para>
 /// </summary>
 public record PracticeCard(int ItemIndex, int Stage, string Type, string? Prompt,
     string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices, string? AudioUrl,
     string? ImageUrl = null, string? ImageAlt = null, int? GapIndex = null, string? Passage = null,
     bool AnyOrder = false, IReadOnlyList<string>? RevealAlternatives = null,
-    IReadOnlyList<WordPair>? Decoding = null);
+    IReadOnlyList<WordPair>? Decoding = null, bool DisplayOnly = false);
 
 /// <summary>The next card in learn mode (or <c>Done</c>), server-driven via the session cursor.</summary>
 public record NextResponse(PracticeCard? Card, bool Done, int Cursor, int Total);

@@ -42,6 +42,13 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
     public override bool IsTypedStage(int stage) => StageMechanics.IsTyped((TestStage)stage);
 
     /// <summary>
+    /// <c>ShowBoth</c> ("getting acquainted"): both sides visible at once, no self-assessment, no grading, no
+    /// Leitner movement (B-96) – the labeled "Kennenlernen" step of the process, distinct from
+    /// <see cref="TestStage.SelfAssess"/> which the child judges itself against.
+    /// </summary>
+    public override bool IsDisplayOnlyStage(int stage) => (TestStage)stage == TestStage.ShowBoth;
+
+    /// <summary>
     /// Multiple-choice options on the stage named after them: correct answer plus up to three distractors from
     /// the remaining items. The pool itself is <see cref="StageMechanics.DistractorPool"/> – shared with the
     /// matching distractor stage, which asks the same question of the same data.

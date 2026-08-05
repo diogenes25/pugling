@@ -107,7 +107,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var f = PositionPlayService.CardFacets(PositionPlayService.ConfigOf(exercise), items, item, type, stage, typed);
         return new PracticeCard(index, stage, type.Key, f.Prompt,
             f.Hint, f.AnswerLength, f.Reveal, f.Choices, f.AudioUrl, f.ImageUrl, f.ImageAlt, f.GapIndex, f.Passage,
-            f.AnyOrder, f.RevealAlternatives, f.Decoding);
+            f.AnyOrder, f.RevealAlternatives, f.Decoding, type.IsDisplayOnlyStage(stage));
     }
 
     /// <summary>
@@ -304,6 +304,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
         var stage = PositionPlayService.StageForDay(pos, plan, session.Day, type);
         var typed = type.IsTypedStage(stage);
+        var displayOnly = type.IsDisplayOnlyStage(stage);
 
         // A set-graded exercise (an unordered list) is not answered card by card: any entry not yet named today
         // counts, and the ANSWER decides which entry it credits - not the card it arrived on. A miss credits
@@ -334,7 +335,9 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
 
         var due = prog is null || prog.DueOn is null || prog.DueOn <= session.Day;
         var alreadyScoredToday = prog?.LastReviewedAt is { } last && DateOnly.FromDateTime(last) == session.Day;
-        var scored = prog is not null && (typed || !pos.RequireTypedTest) && due && !alreadyScoredToday;
+        // A free display stage (B-96) counts as practiced (session/heartbeat/missions still see it) but never
+        // as a graded hit: no points, no Leitner movement - "Kennenlernen" must not be the cheapest way to coins.
+        var scored = prog is not null && (typed || !pos.RequireTypedTest) && due && !alreadyScoredToday && !displayOnly;
 
         // Combo/answer time BEFORE adding the new review (EF fixup would otherwise count it in).
         var prevStreak = 0;
@@ -374,10 +377,13 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // In set mode the credited entry is the subject of the record - and a miss is recorded for NOBODY:
         // booking it against the card's own entry would claim the child got that particular one wrong, which is
         // exactly the false attribution this story removes.
+        // A display-only stage (B-96) never carries a verdict at all - `wasCorrect` here would just be the
+        // ungated `dto.WasKnown` claim, and the history must not show a "correctly answered" Kennenlernen card
+        // when there was no judgment to make.
         if (creditedIndex is { } recorded)
         {
-            await itemProgress.RecordAsync(plan.ChildId, pos.ExerciseId, items[recorded], wasCorrect, stage,
-                typed ? dto.GivenAnswer : null, ItemReviewSource.Practice, positionId, session.Day, countsForMastery: scored, ct: ct);
+            await itemProgress.RecordAsync(plan.ChildId, pos.ExerciseId, items[recorded], wasCorrect && !displayOnly,
+                stage, typed ? dto.GivenAnswer : null, ItemReviewSource.Practice, positionId, session.Day, countsForMastery: scored, ct: ct);
         }
 
         // Points/box only on Leitner positions and only for graded cards (anti-farming). Otherwise 0.

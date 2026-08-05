@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/uebungen, lerntechnik/vokabeln, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/uebungen, lerntechnik/vokabeln, rolle/supervisor]
 aliases: [Beide zeigen ohne Mechanik, ShowBoth-Stufe]
-status: ausformuliert
+status: abgenommen
 prio: P2
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: M
+wo: beides
+migration: nein
+vertragsbruch: nein
 quelle: Code-Review 2026-08-04 der Commits 3be7409…f8b0c99 (B-70/B-78/B-79)
 grund: ""
 ersetzt_durch: []
@@ -59,17 +59,27 @@ Zwei Wege stehen offen, und sie unterscheiden sich in den Kosten deutlich: die S
 beide Seiten, keine Bewertung, kein Leitner-Fortschritt) oder sie **nicht mehr anbieten** (aus dem Manifest
 nehmen; der Enum-Wert bleibt, weil Seed und Bestandsdaten ihn tragen).
 
-## Offene Punkte
+## Offene Punkte (gegrillt)
 
-1. **Bauen oder zurückziehen?** Empfehlung: **bauen** — die Stufe hat einen echten didaktischen Platz (erste
-   Begegnung mit neuem Wortschatz, siehe Leitner/Birkenbihl) und der Seed benutzt sie als ersten Schritt
-   seines Fahrplans. Zurückziehen wäre billiger, nähme dem Fahrplan aber seinen Einstieg.
-2. **Wenn gebaut: zählt eine Kennenlern-Runde für die Pflicht?** Empfehlung: sie zählt als *geübt* (Minuten,
-   Sitzung, Missionen), aber **nicht** als Treffer und **nicht** für die Leitner-Kastenbewegung — sonst ist
-   „Kennenlernen" der billigste Weg zu Münzen, und das Punktesystem belohnt Nichtstun.
-3. **Braucht die Klausur die Stufe?** Empfehlung: **nein** — eine Prüfung ohne Frage ist keine. Dann muss der
-   Abschlusstest sie ablehnen (heute nimmt er sie an, siehe `AntiCheatTests.cs:61`, wo genau das als
-   Anti-Cheat-Fall geprüft wird — der Fall gehört überprüft, nicht übernommen).
+1. **Bauen oder zurückziehen?** Entscheidung: **bauen** — die Stufe hat einen echten didaktischen Platz
+   (erste Begegnung mit neuem Wortschatz, siehe Leitner/Birkenbihl) und der Seed benutzt sie als ersten
+   Schritt seines Fahrplans. Kosten: ein neues `IExerciseType`-Interface-Mitglied (`IsDisplayOnlyStage`,
+   additiv mit Default `false`), ein Override, ein neues Contract-Feld (`PracticeCard.DisplayOnly`,
+   additiv), Anpassungen in `PositionPracticeController`/`PositionTestsController`, ein Frontend-Zweig.
+2. **Zählt eine Kennenlern-Runde für die Pflicht?** Entscheidung: sie zählt als *geübt* (Minuten, Sitzung,
+   Missionen: `IntroducedAt`/`DueOn` werden gestempelt), aber **nicht** als Treffer und **nicht** für die
+   Leitner-Kastenbewegung — sonst ist „Kennenlernen" der billigste Weg zu Münzen. Kosten: `scored` in
+   `PositionPracticeController.Review` schließt `IsDisplayOnlyStage` zusätzlich aus; ein Nachtrag aus dem
+   `pugling-reviewer`-Befund beim Bau schließt zusätzlich die reine Verlaufszeile (`ItemReviewEvent`) ein —
+   sie darf auch bei gespooftem `wasKnown: true` kein „richtig" tragen, sonst zeigt der Vater-Verlauf ein
+   Urteil, das die Stufe nie gefällt hat.
+3. **Braucht die Klausur die Stufe?** Entscheidung: **nein** — eine Prüfung ohne Frage ist keine. Der
+   Abschlusstest lehnt sie jetzt für Kind **und** Vater-Vorschau ab (`ApiErrors.StageNotTestable`, additiv,
+   400). Der in der Story benannte `AntiCheatTests.cs:61` blieb beim Überprüfen unverändert richtig: er
+   testet, dass das kindliche `dto.Stage` überhaupt ignoriert wird (nicht den ShowBoth-Fall selbst) und
+   bleibt aussagekräftig. Ein anderer Bestandstest (`PositionPlayModesTests`, Vater-Vorschau) nutzte
+   `ShowBoth` nur zufällig als „irgendeine vom Vater gewählte Stufe" und wurde auf `SelfAssess`
+   umgestellt (legitime Anpassung, keine Verwässerung — geprüft vom `pugling-reviewer`).
 
 ## Akzeptanzkriterien
 
@@ -82,6 +92,20 @@ nehmen; der Enum-Wert bleibt, weil Seed und Bestandsdaten ihn tragen).
 4. Ein Test hält die Entscheidung fest — kein „grün wie vorher": vorher ist die Stufe von `SelfAssess` nicht
    unterscheidbar, ein Test darauf wäre also heute schon grün.
 
+## Schätzung
+
+`groesse: M`, `wo: beides` (Backend zuerst), `migration: nein`, `vertragsbruch: nein` (additiv: neues
+Interface-Mitglied mit Default, neues Contract-Feld, neuer Fehlercode). Angriffsplan: Plugin-Erweiterung
+(`IExerciseType.IsDisplayOnlyStage`, Override in `VocabularyExerciseType`) → Übungspfad
+(`PositionPracticeController`: Karte flaggen, `scored`/Verlaufszeile ausschließen) → Klausurpfad
+(`PositionTestsController`: `stage_not_testable` vor der ersten Zuweisung) → Frontend (`SohnPractice.tsx`:
+Karte sofort beidseitig zeigen, „Weiter"-Knopf statt Urteil). Testweg: vier neue Backend-Tests in
+`PositionPracticeFlowTests.cs` (Karte+Flag, Nicht-Wertung inkl. Verlaufszeile, Klausur-Ablehnung), rot
+verifiziert per `git stash` der Implementierung; ein Bestandstest angepasst (`PositionPlayModesTests`);
+Frontend-Logik als reine Funktion (`reviewFeedback`) ausgelagert und mit 5 Vitest-Fällen abgedeckt (Muster
+`SelfAssessAnswer.test.tsx`) — kein Playwright nötig, `SohnPractice.tsx` bleibt sonst ein
+fetch-getriebener Bildschirm (Grenze aus `frontend/CLAUDE.md`).
+
 ## Verlauf
 
 - **2026-08-04** — angelegt aus dem Code-Review der B-70/B-78/B-79-Commits; Ist-Stand direkt am Code
@@ -89,3 +113,13 @@ nehmen; der Enum-Wert bleibt, weil Seed und Bestandsdaten ihn tragen).
   weil `B-93` beim Anlegen schon vergeben war (der committete Index war stale) — `B-94` bleibt darum
   unbenutzt: die Nummer trug kurzzeitig eine Dublette zu [B-93](B-93-birkenbihl-einstellungen-ohne-wirkung.md)
   und wird nicht neu vergeben.
+- **2026-08-05** — im Autonomen Modus gegrillt, geschätzt und gebaut. Rote Probe zuerst: alle neuen Tests
+  scheiterten gegen den Vorzustand (fehlendes `displayOnly`-Feld, gewertete Punkte/Box, 201 statt 400 bei
+  der Klausur). `dotnet test Pugling.sln -c Release` → **713/713 grün**. `pugling-reviewer` fand einen
+  nicht-blockierenden Zusatzbefund (rohe `WasCorrect` in der `ItemReviewEvent`-Verlaufszeile trotz
+  `displayOnly`) — direkt behoben und mit einer zusätzlichen Assertion belegt, danach erneut 713/713.
+  `frontend-reviewer` fand einen **Blocker** (jede Kennenlern-Karte zeigte fälschlich „Leider nicht.", weil
+  der Client `wasCorrect` ungeprüft auswertete) — behoben durch Auslagern der Feedback-Regel in die reine
+  Funktion `reviewFeedback` (Muster `SelfAssessAnswer`), mit 5 neuen Vitest-Fällen belegt; danach ohne
+  Blocker. Frontend: `npm run build` (Typecheck) grün, `npm test` → **127/127** (122 + 5 neu). Commit:
+  siehe Repo-Verlauf (B-96-Commit). Status → `abgenommen`.

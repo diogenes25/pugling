@@ -188,7 +188,8 @@ Response — `HTTP 200`:
     "passage": null,
     "anyOrder": false,
     "revealAlternatives": null,
-    "decoding": null
+    "decoding": null,
+    "displayOnly": false
   },
   "done": false,
   "cursor": 0,
@@ -239,7 +240,8 @@ Response — `HTTP 200`:
     "passage": null,
     "anyOrder": false,
     "revealAlternatives": null,
-    "decoding": null
+    "decoding": null,
+    "displayOnly": false
   },
   "done": false
 }
@@ -303,7 +305,8 @@ Response — `HTTP 200`:
     "passage": null,
     "anyOrder": false,
     "revealAlternatives": null,
-    "decoding": null
+    "decoding": null,
+    "displayOnly": false
   },
   {
     "itemIndex": 0,
@@ -321,7 +324,8 @@ Response — `HTTP 200`:
     "passage": null,
     "anyOrder": false,
     "revealAlternatives": null,
-    "decoding": null
+    "decoding": null,
+    "displayOnly": false
   }
 ]
 ```
@@ -533,8 +537,8 @@ Response — `HTTP 200`:
   },
   "dailyBox": {
     "claimedToday": true,
-    "coinsAwarded": 22,
-    "gemsAwarded": 1,
+    "coinsAwarded": 19,
+    "gemsAwarded": 0,
     "streakAtClaim": 1
   }
 }

@@ -89,6 +89,73 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
         return cards![0];
     }
 
+    // ─────────────────────────────────── B-96: ShowBoth is a free display stage, not self-assessment
+
+    [Fact]
+    public async Task ShowBoth_ZeigtBeideSeitenSofort_UndIstAlsAnzeigenurMarkiert()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.ShowBoth);
+        var child = await TestApi.ChildAsync(_factory);
+
+        var karte = await ErsteKarteAsync(child, planId, positionId);
+        // Both sides at once - front (prompt) AND back (reveal), like self-assessment, but flagged distinctly.
+        Assert.Equal("hello", karte.GetProperty("prompt").GetString());
+        Assert.Equal("hallo", karte.GetProperty("reveal").GetString());
+        Assert.True(karte.GetProperty("displayOnly").GetBoolean());
+    }
+
+    [Fact]
+    public async Task ShowBoth_ZaehltAlsGeuebtAberNichtAlsTrefferOderBoxbewegung()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        // A fresh child: an isolated wallet, so the coin count below is not contaminated by other tests
+        // sharing the default child (id 1) in this fixture's database.
+        var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = "ShowBoth-Kind", pin = "7501" }));
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.ShowBoth, childId: childId);
+        var child = await TestApi.ChildAsync(_factory, childId, "7501");
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions";
+        var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
+
+        // Even a client claiming "wasKnown: true" must not be scored or move the box - the server enforces
+        // this from the stage, not from trusting the client's self-report (there is none on this stage).
+        var review = await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review",
+            new { itemIndex = 0, wasKnown = true });
+        var outcome = await review.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(0, outcome.GetProperty("awarded").GetInt32());
+        Assert.Equal(1, outcome.GetProperty("box").GetInt32()); // unmoved (default box 1, never applied)
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        var prog = db.PositionItemProgress.Single(p => p.PlanPositionId == positionId && p.ItemIndex == 0);
+        Assert.Equal(1, prog.Box);
+        Assert.Equal(0, prog.ReviewCount); // ApplyReview never ran - "practiced" is not "reviewed"
+        // But it IS counted as practiced: the introduction is stamped, same as any other first contact.
+        Assert.NotNull(prog.IntroducedAt);
+        Assert.Equal(0, db.ChildPointsEntries.Count(e => e.ChildId == childId && e.Kind == PointKind.Base));
+        // The cross-plan history must not carry a verdict either - a spoofed "wasKnown: true" must not turn
+        // into a "correctly answered" row on a stage that never judges anything (pugling-reviewer finding).
+        var historyRow = db.ItemReviewEvents.Single(e => e.ChildId == childId && e.PlanPositionId == positionId);
+        Assert.False(historyRow.WasCorrect);
+    }
+
+    [Fact]
+    public async Task ShowBoth_AlsKlausurstufe_WirdAbgelehnt()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.ShowBoth);
+        var child = await TestApi.ChildAsync(_factory);
+
+        var res = await child.PostAsJsonAsync(
+            $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests", new { });
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+        Assert.Equal("stage_not_testable", (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+    }
+
     [Fact]
     public async Task Vokabel_Position_ZweiteWertungAmSelbenTag_WirdNichtGewertet()
     {

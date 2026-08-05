@@ -16,6 +16,30 @@ const SMALL_EMOJI = ["👍", "⭐", "🔥", "💪", "✨"];
 
 type Phase = "loading" | "front" | "back" | "done" | "empty" | "error";
 
+/**
+ * Wie eine Review-Antwort dargestellt wird – als reine Regel statt inline in `judge()`, damit sie ohne
+ * Bildschirm und `fetch` prüfbar ist (Muster `SelfAssessAnswer`).
+ * <p>
+ * `displayOnly` (ShowBoth/B-96, Kennenlernen) gibt IMMER `"none"` zurück, unabhängig von
+ * `outcome.wasCorrect`: der Server wertet diese Stufe nie (siehe `PositionPracticeController.Review`),
+ * `wasCorrect` steht dort einfach auf `false`, weil kein `wasKnown` mitgeschickt wird – ohne diese
+ * Sonderregel läse das Kind nach jeder betrachteten Karte ein „Leider nicht.", ein Urteil, das die Stufe
+ * per Story-Vorgabe gerade NICHT fällen darf.
+ */
+export function reviewFeedback(outcome: ReviewOutcome | null | undefined, displayOnly: boolean):
+  | { kind: "none" }
+  | { kind: "correct"; awarded: number; combo: number; comboBonus: number; speedBonus: number; box: number }
+  | { kind: "wrong"; expected: string | null } {
+  if (!outcome || displayOnly) return { kind: "none" };
+  if (outcome.wasCorrect) {
+    return {
+      kind: "correct", awarded: outcome.awarded, combo: outcome.combo,
+      comboBonus: outcome.comboBonus, speedBonus: outcome.speedBonus, box: outcome.box,
+    };
+  }
+  return { kind: "wrong", expected: outcome.expected ?? null };
+}
+
 export function SohnPractice() {
   const { planId, refreshWallet, setStreak, celebrate } = useSohn();
   const { positionId: positionIdRaw } = useParams();
@@ -102,33 +126,30 @@ export function SohnPractice() {
     setBusy(true);
     try {
       const outcome = await api.review(planId, positionId, session.current.id, { itemIndex: card.itemIndex, ...payload });
-      if (!outcome) {
-        setLastOutcome(null);
-        setCombo(0);
-      } else {
-        setLastOutcome(outcome);
-        setCombo(outcome.combo);
-        if (outcome.wasCorrect) {
-          setEarned((e) => e + outcome.awarded + outcome.comboBonus + outcome.speedBonus);
-          if (outcome.comboBonus > 0) {
-            const tier = outcome.combo >= 10 ? "big" : "medium";
-            celebrate(tier, tier === "big" ? "🥷" : "🎉", `COMBO ×${outcome.combo}`, `+${outcome.comboBonus} 🪙 Bonus`);
-          } else {
-            celebrate("small", SMALL_EMOJI[outcome.combo % SMALL_EMOJI.length]);
-          }
-          if (outcome.awarded > 0) {
-            setToast(`+${outcome.awarded} 🪙${outcome.box ? ` · Box ${outcome.box}` : ""}`);
-            setTimeout(() => setToast(null), 1100);
-          }
-          refreshWallet();
+      setLastOutcome(outcome ?? null);
+      setCombo(outcome?.combo ?? 0);
+      const feedback = reviewFeedback(outcome, card.displayOnly ?? false);
+      if (feedback.kind === "correct") {
+        setEarned((e) => e + feedback.awarded + feedback.comboBonus + feedback.speedBonus);
+        if (feedback.comboBonus > 0) {
+          const tier = feedback.combo >= 10 ? "big" : "medium";
+          celebrate(tier, tier === "big" ? "🥷" : "🎉", `COMBO ×${feedback.combo}`, `+${feedback.comboBonus} 🪙 Bonus`);
         } else {
-          // Ohne getroffenen Eintrag gibt es keine Lösung zu nennen: bei einer Menge (ungeordnete Liste) wäre
-          // „Lösung: Hessen" willkürlich, solange ein Dutzend Einträge offen ist – und verriete einen, der noch
-          // gefragt wird. Der Server liefert dann `null`, und hier bleibt es bei der schlichten Absage.
-          setToast(outcome.expected ? `Lösung: ${outcome.expected}` : "Leider nicht.");
-          setTimeout(() => setToast(null), 1600);
+          celebrate("small", SMALL_EMOJI[feedback.combo % SMALL_EMOJI.length]);
         }
+        if (feedback.awarded > 0) {
+          setToast(`+${feedback.awarded} 🪙${feedback.box ? ` · Box ${feedback.box}` : ""}`);
+          setTimeout(() => setToast(null), 1100);
+        }
+        refreshWallet();
+      } else if (feedback.kind === "wrong") {
+        // Ohne getroffenen Eintrag gibt es keine Lösung zu nennen: bei einer Menge (ungeordnete Liste) wäre
+        // „Lösung: Hessen" willkürlich, solange ein Dutzend Einträge offen ist – und verriete einen, der noch
+        // gefragt wird. Der Server liefert dann `null`, und hier bleibt es bei der schlichten Absage.
+        setToast(feedback.expected ? `Lösung: ${feedback.expected}` : "Leider nicht.");
+        setTimeout(() => setToast(null), 1600);
       }
+      // feedback.kind === "none": kein Outcome ODER eine Anzeigenurstufe (ShowBoth) - kein Urteil, kein Toast.
     } catch { /* Bewertung ist idempotent genug; UI läuft weiter */ }
     next();
     judging.current = false;
@@ -177,7 +198,7 @@ export function SohnPractice() {
   );
 
   const card = cards[idx];
-  const typed = card.reveal === null; // getippte Stufe → Eingabe; sonst Flip-Karte (Selbsteinschätzung)
+  const typed = card.reveal === null; // getippte Stufe → Eingabe; sonst Flip-Karte (Selbsteinschätzung) oder ShowBoth (sofort offen, kein Urteil)
   const submitTyped = () => { if (typedAnswer.trim()) judge(card, { givenAnswer: typedAnswer }); };
 
   /**
@@ -266,8 +287,10 @@ export function SohnPractice() {
               ? <div className="sub">💡 {card.hint}</div>
               : <button type="button" className="btn ghost small" style={{ marginTop: 6 }} onClick={() => setHintShown(true)}>💡 Tipp</button>
           )}
-          {phase === "back" && card.reveal && <div className="rev">→ {card.reveal}</div>}
-          {phase === "back" && card.reveal && <RevealAlternatives alternatives={card.revealAlternatives} />}
+          {/* ShowBoth (B-96): a free display stage shows both sides at once, no flip needed - the server
+              flags this via `displayOnly`, distinct from self-assessment which reveals only after "Umdrehen". */}
+          {(phase === "back" || card.displayOnly) && card.reveal && <div className="rev">→ {card.reveal}</div>}
+          {(phase === "back" || card.displayOnly) && card.reveal && <RevealAlternatives alternatives={card.revealAlternatives} />}
         </div>
 
         {/* Gruppe statt loser Knöpfe: ein Screenreader liest sonst „Leeds, Schaltfläche" ohne Bezug zur
@@ -301,6 +324,9 @@ export function SohnPractice() {
             )}
             <button type="button" className="btn lime" style={{ marginTop: 10 }} disabled={!typedAnswer.trim()} onClick={submitTyped}>Prüfen</button>
           </div>
+        ) : card.displayOnly ? (
+          // Kennenlernen: no judgment to make, so no "Gewusst?" buttons - just move on.
+          <button type="button" className="btn lime" disabled={busy} onClick={() => judge(card, {})}>Weiter →</button>
         ) : phase === "front" ? (
           <button type="button" className="btn" onClick={() => setPhase("back")}>Umdrehen 🔄</button>
         ) : (

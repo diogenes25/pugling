@@ -168,6 +168,10 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         if (play.TypeOf(pos.Exercise) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
         var stage = User.IsSupervisor() && dto.Stage is not null ? dto.Stage.Value : PositionPlayService.StageForDay(pos, plan, day, type);
+        // A free display stage (B-96) has no question to grade - a test without a question is not a test,
+        // regardless of who requests it (student schedule or supervisor preview).
+        if (type.IsDisplayOnlyStage(stage))
+            return this.ProblemWithCode(ApiErrors.StageNotTestable, "This stage is a free display stage and cannot be tested.");
         var typed = type.IsTypedStage(stage);
 
         // The test is a position check: test the contents already introduced, otherwise the whole pool

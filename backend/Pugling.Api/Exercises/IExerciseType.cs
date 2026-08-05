@@ -62,6 +62,13 @@ public interface IExerciseType
     bool IsTypedStage(int stage);
 
     /// <summary>
+    /// Is the stage a free display stage – both sides shown at once, no self-assessment, no grading, no
+    /// Leitner box movement? Neither typed nor self-assessed; a third state next to <see cref="IsTypedStage"/>
+    /// (default <c>false</c> – most stages are one or the other).
+    /// </summary>
+    bool IsDisplayOnlyStage(int stage);
+
+    /// <summary>
     /// The options offered for the task, or <c>null</c> if the type/stage has none. Takes
     /// <paramref name="configJson"/> like <see cref="Check"/> does, because a pool need not be derivable from
     /// the atoms: vocabulary builds distractors out of the sibling items, the cloze reads the word bank the

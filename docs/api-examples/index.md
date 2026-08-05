@@ -19,7 +19,7 @@ Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesa
 
 ## Fehler-Code-Abdeckung
 
-Verifiziert: **34 / 59** Codes aus `ApiErrors`.
+Verifiziert: **34 / 60** Codes aus `ApiErrors`.
 
 | Code | Beispiel |
 | --- | --- |
@@ -83,5 +83,6 @@ Verifiziert: **34 / 59** Codes aus `ApiErrors`.
 - `rate_limited` — Login-Rate-Limit ist in der Test-Factory bewusst abgeschaltet (`RateLimiting:LoginEnabled=false`), sonst würden die vielen Test-Logins scheitern.
 - `remark_comment_not_found` — Über HTTP im In-Process-Test nicht erreichbar.
 - `series_without_subject` — Über HTTP im In-Process-Test nicht erreichbar.
+- `stage_not_testable` — Über HTTP im In-Process-Test nicht erreichbar.
 - `unknown_exercise_type` — Über HTTP im In-Process-Test nicht erreichbar.
 - `vocabulary_not_assigned` — Über HTTP im In-Process-Test nicht erreichbar.
