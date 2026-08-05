@@ -62,13 +62,19 @@ export function SohnShop() {
   // ein zweiter Aufruf im selben Tick (Tab erneut geöffnet, bevor die erste Seite durch ist) sähe die
   // Sperre also noch offen und hängte dieselben Zeilen doppelt an (Muster judging.current/useAction).
   const loadingHistory = useRef(false);
+  // Zählt jedes Verwerfen des Verlaufs. Eine Anfrage, die VOR dem Verwerfen losgeschickt wurde, darf ihr
+  // Ergebnis danach nicht mehr einhängen: sie trägt den Offset des alten Stands, und ihre Seite 2 landete
+  // sonst im frisch geleerten Zustand – die Liste begänne bei Zeile 21 und der eben getätigte Kauf fehlte.
+  const historyGeneration = useRef(0);
   const loadMoreHistory = useCallback(async () => {
     if (loadingHistory.current) return;
     loadingHistory.current = true;
+    const generation = historyGeneration.current;
     setHistoryLoading(true);
     setHistoryError(null);
     try {
       const page = await api.shopPurchasesPage(history.length, HISTORY_PAGE);
+      if (generation !== historyGeneration.current) return; // Verlauf wurde inzwischen verworfen
       setHistory((prev) => [...prev, ...page.items]);
       setHistoryTotal(page.total);
       setHistoryLoaded(true);
@@ -105,6 +111,7 @@ export function SohnShop() {
       // ein Anhängen aus `next.purchases` käme ohne `X-Total-Count` (der `http`-Helfer liest keine
       // Header), und „X von Y" wäre danach falsch. Ohne das Verwerfen fehlte der eigene Kauf im Verlauf,
       // solange die Sitzung läuft – und „Mehr laden" holte die zuletzt gezeigte Zeile ein zweites Mal.
+      historyGeneration.current += 1;
       setHistory([]);
       setHistoryTotal(0);
       setHistoryLoaded(false);
@@ -320,7 +327,9 @@ export function HistoryTab({ purchases, total, loading, error, onLoadMore }: {
     if (error != null)
       return (
         <div className="list">
-          <div className="banner err">{error}</div>
+          {/* `role="alert"` wie beim Toast: der dauerhafte Befund war vorher der einzige stumme – ein
+              Screenreader bekam die 2-Sekunden-Meldung, aber nicht den Zustand, der bleibt. */}
+          <div className="banner err" role="alert">{error}</div>
           <button type="button" className="btn ghost small" disabled={loading} onClick={onLoadMore}>
             {loading ? "Lädt…" : "Nochmal versuchen"}
           </button>
@@ -333,7 +342,7 @@ export function HistoryTab({ purchases, total, loading, error, onLoadMore }: {
     <div className="list">
       {/* Scheitert eine SPÄTERE Seite, bleiben die schon geladenen Zeilen stehen - der "Mehr laden"-Knopf
           darunter ist dann selbst der Wiederholen-Knopf. */}
-      {error != null && <div className="banner err">{error}</div>}
+      {error != null && <div className="banner err" role="alert">{error}</div>}
       {purchases.map((p) => (
         <div key={p.id} className="row" style={{ justifyContent: "space-between", padding: "8px 0" }}>
           <div>
