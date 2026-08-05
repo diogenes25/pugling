@@ -303,8 +303,16 @@ builder.Services.AddOpenApi(o =>
             // generator annotates them as integer without a value list - so write reality into the schema:
             // string + explicit enum values, plus the values in the description for Swagger/Scalar.
             schema.Type = JsonSchemaType.String;
-            schema.Enum = [.. names.Select(n => (JsonNode)JsonValue.Create(n))];
-            var hint = $"Allowed values: {string.Join(", ", names)}.";
+            // A [Flags] enum travels as a COMMA-SEPARATED COMBINATION (e.g. "Realschule, Gymnasium"), not one
+            // of the single names - an `enum` list of just the individual names would reject exactly the
+            // values the server actually sends (B-60). Structural check on the attribute, not on the type
+            // name, so every future [Flags] type is covered for free (same rule as
+            // PuglingDbContext.ApplyEnumConvention's [Flags] exception).
+            if (!enumType.IsDefined(typeof(FlagsAttribute), inherit: false))
+                schema.Enum = [.. names.Select(n => (JsonNode)JsonValue.Create(n))];
+            var hint = enumType.IsDefined(typeof(FlagsAttribute), inherit: false)
+                ? $"Comma-separated combination of: {string.Join(", ", names)}."
+                : $"Allowed values: {string.Join(", ", names)}.";
             schema.Description = string.IsNullOrEmpty(schema.Description) ? hint : $"{schema.Description}\n\n{hint}";
         }
         else if (schema.Properties is { Count: > 0 })

@@ -116,6 +116,20 @@ public class ContractDocumentTests
         Assert.True(requiredClearSwitches.Count == 0,
             $"Clear switches declared as required: {string.Join(", ", requiredClearSwitches)}. A form that "
             + "changes one field would have to send them along in order to clear nothing.");
+
+        // 5. A [Flags] enum travels as a COMMA-SEPARATED COMBINATION (e.g. "Realschule, Gymnasium"), never one
+        // of the single names - an `enum` list of just the individual names would reject exactly the values the
+        // server actually sends (B-60). Reflective over the [Flags] TYPES themselves, not over a type name
+        // like "SchoolTypes" - otherwise a second [Flags] type introduced later would slip past this gate
+        // silently, exactly the blind spot this closes.
+        var flagsWithEnumList = typeof(PointKind).Assembly.GetTypes()
+            .Where(t => t.IsEnum && t.IsDefined(typeof(FlagsAttribute), inherit: false))
+            .Where(t => schemas.ContainsKey(t.Name) && schemas[t.Name]!["enum"] is not null)
+            .Select(t => t.Name)
+            .ToList();
+        Assert.True(flagsWithEnumList.Count == 0,
+            $"[Flags] enums with an `enum` value list in the document (rejects valid combinations): "
+            + $"{string.Join(", ", flagsWithEnumList)}");
     }
 
     private static async Task<string> GenerateAsync()

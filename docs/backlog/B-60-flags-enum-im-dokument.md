@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/backend, bereich/qualitaet]
+tags: [typ/story, status/abgenommen, bereich/backend, bereich/qualitaet]
 aliases: [SchoolTypes im Dokument, Flags-Enum als Werteliste]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: S
@@ -201,3 +201,18 @@ Verhaltensänderung zur Laufzeit.
   derselben Testmethode `Vertragsdokument_BeschreibtDieLeitungWahrheitsgemaess`; im Bündel werden es Punkt 5
   bis 8 in einer Bearbeitung. **Auflage:** die rote Probe **vor** der ersten Codezeile einzeln gegen `HEAD`
   fahren und hier protokollieren.
+- **2026-08-05** — im Autonomen Modus gebaut, **einzeln** committet statt im ursprünglich geplanten
+  gemeinsamen Branch mit B-56 (Projekt-Konvention: ein Commit je Story) — die Reihenfolge B-60 zuerst
+  bleibt aber eingehalten, B-56 baut als Punkt 6 auf demselben Testkörper auf. Rote Probe **vor** der
+  Codeänderung protokolliert (Auflage aus der Kollisionsnotiz): `git stash` von `Program.cs`,
+  `Vertragsdokument_BeschreibtDieLeitungWahrheitsgemaess` scheiterte mit „[Flags] enums with an `enum`
+  value list … SchoolTypes" — danach implementiert, grün. `dotnet test Pugling.sln -c Release` →
+  **716/716 grün**. `docs/openapi/v1.json`-Diff exakt wie vorhergesagt: nur die `SchoolTypes`-Schema-Node
+  (Enum-Liste entfernt, Beschreibungstext umformuliert). `pugling-reviewer` fand keinen Blocker am Fix
+  selbst, aber einen Nebenbefund: `docs/api-examples/study-plans.md` und
+  `openapi-examples.generated.json` trugen zusätzlich einen nicht-deterministischen Diff
+  (`dailyBox.coinsAwarded`, `Random.Shared` in `DailyBoxService` ohne Seed) — zurückgesetzt, damit der
+  Commit ausschließlich B-60 zeigt, und als [B-107](B-107-dailybox-zufallswert-in-docs-capture.md) neu
+  aufgenommen statt hier mitgelöst. Frontend unverändert (Entscheidung 3): `npm run build` regeneriert
+  `SchoolTypes` korrekt als `string`, `npm test` weiter 131/131. Commit: siehe Repo-Verlauf
+  (B-60-Commit). Status → `abgenommen`.

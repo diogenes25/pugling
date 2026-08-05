@@ -32966,17 +32966,8 @@
         "description": "A grading criterion of an essay."
       },
       "SchoolTypes": {
-        "enum": [
-          "None",
-          "Grundschule",
-          "Hauptschule",
-          "Realschule",
-          "Gymnasium",
-          "Gesamtschule",
-          "Berufsschule"
-        ],
         "type": "string",
-        "description": "School types for which an exercise is suitable. A \u0060[Flags]\u0060 enum so that an exercise\ncan be assigned to multiple school types (e.g. Realschule | Gymnasium).\nSchoolTypes.None means \u0022for all school types\u0022 (no filter exclusion).\n\nAllowed values: None, Grundschule, Hauptschule, Realschule, Gymnasium, Gesamtschule, Berufsschule."
+        "description": "School types for which an exercise is suitable. A \u0060[Flags]\u0060 enum so that an exercise\ncan be assigned to multiple school types (e.g. Realschule | Gymnasium).\nSchoolTypes.None means \u0022for all school types\u0022 (no filter exclusion).\n\nComma-separated combination of: None, Grundschule, Hauptschule, Realschule, Gymnasium, Gesamtschule, Berufsschule."
       },
       "ScoringTimeSlot": {
         "required": [
