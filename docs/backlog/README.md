@@ -423,13 +423,12 @@ nicht mechanisch prüfbar, nur ihre *Aufzeichnung*. Was der Mechanismus leistet,
 **sichtbar** zu machen — eine fehlende Zeile in einem datierten Protokoll und ein Nenner, der nicht wächst.
 Was er nicht leisten kann, ist, einen flüchtigen Blick von einem sorgfältigen zu unterscheiden.
 
-**Der Stand der Nachschau heute:** von den vierzehn Abnahmen der autonomen Runde vom 2026-08-05 hat der
-Code-Review am Folgetag genau **acht** erfasst (die Commits `4469662…b20600f`: B-104, B-96, B-98, B-99,
-B-60, B-66, B-93, B-56). Die übrigen sechs — B-57, B-61, B-62, B-72, B-84, B-89 — wurden **nie**
-nachgesehen und stehen im Arbeitsvorrat. In **drei** der acht geprüften steckte ein durchgekommener Defekt
-(B-99 zweimal, B-96, B-66). Der Durchgang vom 2026-08-04 ist bewusst **nicht** nachgetragen: welche Stories
-er abdeckte und ob B-93/B-96 seiner Arbeit zuzurechnen sind, ist nicht belegt — und ein geratener Nenner
-wäre schlimmer als ein kleiner.
+**Der Stand** steht im Index (er rechnet ihn), die Herkunft in den Protokollen. Bewusst **nicht**
+nachgetragen ist der Durchgang vom 2026-08-04: welche Stories er abdeckte, ist nicht belegt — und ein
+geratener Nenner wäre schlimmer als ein kleiner.
+
+**Unbeaufsichtigt** (über Nacht) braucht dieser Lauf drei Vorab-Freigaben und endet nach *einem* Sprint;
+Auftragstext und ehrliche Erwartung stehen in [nachtlauf.md](../nachtlauf.md).
 
 ### Warum der Defekt eine eigene Story braucht
 

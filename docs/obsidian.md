@@ -127,6 +127,7 @@ Der Graph-Hub: Bereich → maßgebliche Seite(n). Von hier aus ist jede Domäne 
 | **Datenmodell / EF-Struktur** (Umbau: Stand, Entscheidungen, offene Etappen) | [docs/db-struktur-umbau-plan.md](db-struktur-umbau-plan.md) |
 | **Deployment** (Single-Host, Fallstricke, derzeit stillgelegt) | [docs/deployment-azure.md](deployment-azure.md) |
 | **Offene Ideen & User-Stories** (der Bereich mit Stufen-Kette, `/backlog`) | [docs/backlog/](backlog/README.md) |
+| **Nachtlauf** (unbeaufsichtigter Backlog-Lauf: Auftragstext, Freigaben, Grenzen) | [docs/nachtlauf.md](nachtlauf.md) |
 | Grill-Protokoll Vokabellernen (Quelle der Stories B-01…B-06) | [docs/backlog-vokabellernen.md](backlog-vokabellernen.md) |
 | KI-Gedächtnis | `MEMORY.md` + Notizen im Memory-Ordner (eigene Vault) |
 
