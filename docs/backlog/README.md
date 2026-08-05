@@ -29,7 +29,7 @@ weiterzuschieben, solange sie nicht erfüllt ist — statt die Lücke stillschwe
 | `gegrillt` | Jeder offene Punkt ist **entweder** eine nummerierte Entscheidung (Begründung **und** Kosten) **oder** ausdrücklich zurückgestellt; erledigte durchgestrichen statt gelöscht. Akzeptanzkriterien final. | **Mensch**, im Dialog |
 | `geschaetzt` | `groesse`, `wo`, `migration`, `vertragsbruch` gesetzt; Risiken; Angriffsplan (Reihenfolge, Backend zuerst); Testweg (welcher Integrationstest / E2E / `/smoke-test`). | Entwickler (Skill) |
 | `in-arbeit` | Es wird gebaut; `## Verlauf` wächst mit. | Entwickler |
-| `abgenommen` | Verifikation **belegt**: echte Testzahl, gelaufener `/smoke-test` bzw. E2E, bei Backend-Änderungen zusätzlich `pugling-reviewer`, **Commit(s) genannt** — und der **Rollengang** an der laufenden App (`pm-loop` Step 6) oder, wenn er ausfiel, eine Zeile im `## Verlauf`, die das ausdrücklich benennt. | Entwickler |
+| `abgenommen` | Verifikation **belegt**: echte Testzahl, gelaufener `/smoke-test` bzw. E2E, bei Backend-Änderungen zusätzlich `pugling-reviewer`, **Commit(s) genannt** — und der **Rollengang** an der laufenden App (`pm-loop` Step 6; eine E2E, die den Weg fährt, zählt als Rollengang) oder, wenn er ausfiel, eine Zeile im `## Verlauf`, die das ausdrücklich benennt. | Entwickler |
 | `verworfen` | Begründung im Feld `grund`. Bei „geteilt" zusätzlich `ersetzt_durch`. | Mensch |
 
 `verworfen` ist ein **Ziel, kein Scheitern.** Mehrere Punkte im Projekt sind bewusste Nicht-Ziele; als
@@ -85,6 +85,21 @@ Im Gegenbeispiel derselben Woche hat der Rollengang genau das geleistet: B-106s 
 ohne Reviewer-Blocker, und *dann* konnte der Creator keine Übung mehr anlegen
 ([Protokoll](../pm-sitzung-2026-08-04.md), „Re-Review gegen die echte laufende App"). Der Unterschied
 zwischen den beiden Runden ist nicht die Sorgfalt beim Bauen, sondern dieser eine Schritt.
+
+**Eine E2E, die den Weg fährt, ist der Rollengang** — und wo das geht, ist sie die bessere Wahl: sie
+treibt eine echte Oberfläche in einem echten Browser gegen einen echten Server, nur wiederholt sie sich,
+statt einmal stattzufinden. Vorbild `frontend/e2e/shop-verlauf.spec.ts` (B-110): sie fährt „Verlauf
+ansehen → kaufen → Verlauf ansehen", also genau die Reihenfolge, in der der Fehler auftrat. Zwei Dinge
+bleiben beim Menschen bzw. beim Komponententest, und sie zu benennen ist eine *argumentierte* Ausnahme,
+keine Lücke: das sinnliche Urteil („fühlt sich das richtig an", Klang, Animation) und Fehlerzustände, die
+einen künstlich kaputten Server bräuchten.
+
+**Wenn der Reviewer nicht laufen darf, bleibt die Story auf `in-arbeit`.** Die Eintrittsbedingung nennt
+ihn, und eine Sitzung kann die Regel tragen, keine Agenten unaufgefordert zu starten. Dann ist der
+ehrliche Ausgang: alles andere belegt, Stufe `in-arbeit`, eine `## Verlauf`-Zeile mit dem Grund — und die
+Freigabe beim Nutzer erfragen. Nicht erlaubt ist, den eigenen Blick auf den Diff „das Review" zu nennen;
+ein Selbst-Check ist der schwächere Beleg und muss, wenn er überhaupt zählt, als solcher beschriftet sein.
+So gelaufen am 2026-08-05 bei B-110/B-111.
 
 ## Frontmatter
 
@@ -178,6 +193,18 @@ Wird eine Story zu groß (XL) oder stellt sich als Bündel heraus, geht die **al
 `grund: geteilt` und `ersetzt_durch: [B-41, B-42]`; die neuen Stories tragen `quelle: B-19`. Keine Sub-Ids
 (`B-19a`) — sonst bleibt eine leere Hülle stehen, und beim zweiten Teilen entsteht `B-19a1`. Die Spur ist
 in beide Richtungen lesbar, wie `Remark.ParentRemarkId`.
+
+### Ein Fund beim Bauen wird eine eigene Story, nicht ein Anhang an die laufende
+
+Beim Verifizieren fällt regelmäßig etwas auf, das *nebenan* liegt — dieselbe Fehlerklasse eine Ebene höher,
+dieselbe Zeile in einem zweiten Controller. Die Regel: **eigene Story, wenn das Ziel der laufenden ohne sie
+erfüllt ist**, mit einem Satz in der neuen Story, warum sie nicht mitgenommen wurde. Belege: B-97 → B-104
+(dieselbe Unique-Index-Klasse in einem anderen Dienst) und B-110 → B-113 (dieselbe veränderliche Sortierung
+in der Vater-Sicht, gefunden bei der Frage „wo steht diese Zeile noch?").
+
+Beide Reflexe daneben kosten: **mitschlucken** heißt, dass die laufende Story kein Ende hat und ihre
+Akzeptanzkriterien nichts mehr bedeuten; **liegenlassen** verliert die teuerste Sorte Wissen — das, was man
+nur findet, während man ohnehin genau hinsieht.
 
 ## Karten: Vorhaben, die nicht in eine Sitzung passen
 

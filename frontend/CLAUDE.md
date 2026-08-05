@@ -42,9 +42,8 @@ RTL das **nicht** selbst (Begründung in [src/test-setup.ts](src/test-setup.ts),
 Regeln hier, Wege durch die App bei Playwright. Klicks per `fireEvent`, nie `node.click()`.
 
 **Eine Fläche je E2E-Spec** – Neues als eigene Datei, nicht als Block am Ende einer bestehenden: eine Spec
-bricht beim ersten Rot ab und nimmt alles Nachfolgende mit, und „E2E ist rot" nennt den Schritt, nie den
-Umfang ([B-109](../docs/backlog/B-109-full-flow-spec-flackert-bei-frage-3.md) hat so vier Flächen
-stillgelegt). Der Durchstich bleibt **ein** Weg, Neues steht daneben.
+bricht beim ersten Rot ab und nimmt alles Nachfolgende mit ([B-109](../docs/backlog/B-109-full-flow-spec-flackert-bei-frage-3.md)
+legte so vier Flächen still). Der Durchstich bleibt **ein** Weg.
 
 **Jeder Knopf, der eine Mutation auslöst, trägt `disabled={busy}`** – auch wenn `useAction` seinen
 Wiedereintritt selbst sperrt (`useRef`, synchron): es ist der Wartepunkt der Playwright-Actionability und der
@@ -53,15 +52,12 @@ sichtbare Grund, warum eine verworfene zweite Aktion nicht wie „nichts passier
 die Sohn-Arcade (B-49) folgt ihr noch nicht. **Erfolg darf stumm bleiben** (`run` ohne `okText`), wo die
 Änderung selbst die Rückmeldung ist – so der Tag-Editor im Vokabel-Store; ein Banner je Chip wäre Lärm.
 
-**Neue Abhängigkeiten bitte mit `--legacy-peer-deps` installieren:** `vite-plugin-pwa@0.21` deklariert
-Peer `vite@^3…^6`, installiert ist `vite@8` – jede Neuauflösung bricht sonst mit `ERESOLVE` ab
-(vorbestehend, der Build läuft trotzdem). **Das gilt auch für `npm ci`** und damit für jede frische
-Maschine: CI (`ci.yml`, Job `frontend`) und Deploy (`deploy-azure.yml`) installieren deshalb mit dem Flag –
-ohne es scheiterte ein Deploy drei Wochen unbemerkt am Install
-([codequalitaet-gates-plan.md](../docs/codequalitaet-gates-plan.md), D1).
-**Preis des Flags: npm installiert fehlende Peers nicht** – jeder gebrauchte Peer muss selbst in den
-`devDependencies` stehen (darum `@testing-library/dom`; fehlt es, fällt der ganze Vitest-Lauf mit
-„Cannot find module").
+**Installieren immer mit `--legacy-peer-deps`, auch `npm ci`:** `vite-plugin-pwa@0.21` will Peer
+`vite@^3…^6`, installiert ist `vite@8` – jede Neuauflösung bricht sonst mit `ERESOLVE` (vorbestehend, der
+Build läuft trotzdem). CI und Deploy tun es deshalb ebenfalls; warum es dort weh tat, steht in
+[codequalitaet-gates-plan.md](../docs/codequalitaet-gates-plan.md) (D1). **Preis: npm installiert fehlende
+Peers nicht** – jeder gebrauchte Peer muss selbst in den `devDependencies` stehen (darum
+`@testing-library/dom`; fehlt es, fällt der ganze Vitest-Lauf mit „Cannot find module").
 
 Rollen im SPA: `/` Produktseite, `/vater` Web-Admin, `/sohn` Arcade-PWA.
 API-Client unter [src/lib/](src/lib/), kein HTTP daneben.

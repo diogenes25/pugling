@@ -158,10 +158,14 @@ process being skipped, motivation. A single agent has none of those; it has a di
 (plausible work that was never exercised). So the sprint is defined by **scope and evidence, not by a
 clock**:
 
-- **A sprint is one red thread over 3–6 stories**, every one of them already at `geschaetzt`
+- **A sprint is one red thread over at most six stories**, every one of them already at `geschaetzt`
   (`docs/backlog/README.md` — that stage *is* the Definition of Ready). It ends in a commit-able
   increment that has been through Step 6. It is **not** a duration: "Sprint 1" of B-106 was one schema
   slice, "Sprint 2" was three decisions and no code at all.
+- **Take as few as the thread demands — there is no lower bound, and a sprint of one is legitimate.**
+  The *cap* has a reason (Step 6 has to stay affordable); a floor would only force a lone defect to wait
+  for two companions it has nothing to do with. Sprint 1 of 2026-08-05 ran two stories and was cut
+  correctly: the third candidate on the table (B-112) served the goal not at all and stayed out.
 - **The cap is not tidiness — it is what keeps Step 6 affordable.** Three roles × fourteen stories is
   a walkthrough nobody runs, and the run of 2026-08-05 proves it: fourteen stories accepted, thirteen
   with a reviewer, eight with smoke/E2E, **zero with a role walkthrough** — and two real defects
@@ -173,6 +177,14 @@ clock**:
   Scope may change inside the sprint when the goal demands it (B-106 pulled a frontend emergency fix
   forward rather than shipping an app that was worse than before) — the goal is the commitment, not
   the ticket list.
+
+**Refinement is its own phase, and it is usually the bigger half.** A sprint *starts* from stories that
+are already `geschaetzt`. When the input is fresh — a code review, `anmerkungen`, a role's complaint —
+then getting three candidates from `idee` to `geschaetzt` is the work, and the build is the small part
+(measured on 2026-08-05: three stories researched, two built, and the research dominated). So: name the
+refinement separately in the log, never fold it into the sprint's size, and do not promise a "small
+sprint" because the stories are XS — an XS story that does not exist yet is not XS. Refinement is a
+running activity, not an event; it may serve future sprints as well as this one.
 
 **Deliberately not imported from Scrum's textbook**, because each would cost something and buy
 nothing here:
@@ -226,6 +238,20 @@ Before you let any role look again:
 - Run the **`pugling-reviewer`** agent (correctness + project conventions) and fold in its
   correctness findings before sign-off; note cleanup-only findings as non-blocking refactors.
 
+**If you may not start agents, say so and stop at `in-arbeit` — do not quietly re-label the evidence.**
+A session can carry a standing rule against spawning agents unasked, and the reviewer is an entry
+condition for `abgenommen` (`docs/backlog/README.md`). Then the honest outcome is: everything else
+verified, story stays `in-arbeit`, and one `## Verlauf` line names *why* the condition is unmet. Ask the
+user for the one word that unblocks it. What is **not** allowed is calling your own reading of the diff
+"the review" — a self-check is weaker evidence and must be labelled as such if it is used at all.
+(Happened on 2026-08-05: B-110/B-111 were fully verified and still stayed `in-arbeit`.)
+
+**A finding that surfaces *during* verification becomes its own story — it does not widen this sprint.**
+The rule is the repo's own precedent (B-97 → B-104, and B-110 → B-113 on 2026-08-05): file it if the
+sprint goal is met without it, and say in the new story that it was deliberately left out and why.
+Swallowing it means the sprint never ends; ignoring it means the most expensive kind of knowledge — found
+by looking closely, at the moment you were already looking — evaporates.
+
 ## Step 6 — Re-review with all three roles, and gate on their acceptance
 
 Bring each role (Creator, Vater, Sohn) back to the *now-changed running app* and have it check its
@@ -241,6 +267,19 @@ If the walkthrough genuinely cannot run (no server reachable, no browser binding
 **recorded** outcome, not a silent omission: one line in each affected story's `## Verlauf` naming what
 was verified instead (HTTP + code reading) and what a human still has to click. A story that reaches
 `abgenommen` without either the walkthrough or that line is mis-stamped.
+
+**A walk can be machine-walked, and where it can, prefer that.** A Playwright spec drives the real UI in a
+real browser against a real server — that *is* the walk, except it repeats forever instead of once, which
+makes it strictly better than a one-off click-through (B-110's `e2e/shop-verlauf.spec.ts` walks
+"open the history → buy → open it again", the exact order in which the bug appeared). Two things it cannot
+do, and they stay with the roles: it cannot judge whether something *feels* right (Step 6's third outcome
+covers that), and it cannot cheaply produce failure states that need a broken server — those belong at
+component level, and saying so is an argued exception, not a gap.
+
+**The two roles whose tier did not change are regression witnesses, not a second opinion.** Record what
+they actually did — "suite green, their own specs green, no path of theirs touched by the diff" — and
+nothing more. Inventing O-Ton for a role that had no contact with the change is exactly the hollow stamp
+this step exists to prevent.
 
 - **Signed off:** the role walked its acceptance conditions against the running product and they
   hold. Record the sign-off in its own words, and note anything it explicitly deferred.
@@ -297,6 +336,16 @@ Every finding that arrived by another route is a retro input by definition: a ma
 `anmerkungen` entry from the real user, a human noticing something in the browser. The loop was supposed
 to catch it and didn't.
 
+**Verify the retrospective's own premise before you land anything on it — this is the step's sharpest
+rule.** A retro conclusion is a claim about how *this system* behaves ("nobody is notified", "no test
+covers that", "CI does not run it"), and it is the one claim nobody ever re-reads, because it arrives as
+the justification of a rule rather than as a finding. Hold it to the same standard as an `ausformuliert`
+Ist-Stand: read the workflow file, the config, the test — do not reason from memory or from a sentence in
+an older protocol. On 2026-08-05 the first draft of a retro asserted that a red E2E reaches nobody because
+CI does not run it; `.github/workflows/e2e.yml` runs it on every PR and nightly and delivers red as a
+stateful issue (B-26). The false premise would have shipped as the reason for a permanent rule. Correcting
+it made the finding *sharper*, not weaker — the signal exists, it just never names the blast radius.
+
 Then land **exactly one change to a mechanism**, in this session, before the sprint closes:
 
 - Prefer a **gate over prose** — a guard test, an assertion, a hook — because this repo's whole stance is
@@ -305,6 +354,12 @@ Then land **exactly one change to a mechanism**, in this session, before the spr
   is loaded when it matters: the nested `CLAUDE.md` of the affected area, or a line in the skill that
   drives the work — **not** the root `CLAUDE.md`, which is resident context for every session and has a
   measured budget (`.claude/scripts/context-budget.sh`).
+- **Prose in a resident file has to be paid for in the same pass.** Run the budget script after landing it;
+  if the file went over, compress or relocate something of comparable size right there — a passage whose
+  full reasoning already lives in `docs/` is the first candidate. One rule per sprint against a fixed
+  budget overflows within a few sprints, so "put it in the area's `CLAUDE.md`" is only honest if the pass
+  includes the payment. (On 2026-08-05 `frontend/CLAUDE.md` had 13 bytes of headroom and the retro's rule
+  put it 387 over — the debt was reported instead of paid, which is the weaker outcome.)
 - "No mechanism would have caught this" is a permitted answer, but it must be **argued** — name why the
   failure is genuinely unmechanizable (subjective-sensory judgment is the usual honest case, per Step 6's
   third outcome) rather than defaulting to it because inventing a gate is work.
