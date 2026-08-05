@@ -140,11 +140,12 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// </summary>
     public static (string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices,
         string? AudioUrl, string? ImageUrl, string? ImageAlt, int? GapIndex, string? Prompt, string? Passage,
-        bool AnyOrder, IReadOnlyList<string>? RevealAlternatives, IReadOnlyList<WordPair>? Decoding)
+        bool AnyOrder, IReadOnlyList<string>? RevealAlternatives, IReadOnlyList<WordPair>? Decoding,
+        string? AnswerPattern)
         CardFacets(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, IExerciseType type,
             int stage, bool typed)
     {
-        var (letterBoxLength, audioUrl, imageUrl) = type.StageFacets(item, stage);
+        var (letterBoxLength, audioUrl, imageUrl, answerPattern) = type.StageFacets(item, stage);
         return (
             typed ? item.Hint : null,
             letterBoxLength,
@@ -183,7 +184,9 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
             typed || item.AcceptedAnswers.Count <= 1 ? null : item.AcceptedAnswers.Skip(1).ToList(),
             // The word-for-word decoding, unconditional like the passage: it is the method the exercise is named
             // after, not the solution to withhold. Without it a Birkenbihl card is an ordinary translation card.
-            item.Decoding);
+            item.Decoding,
+            // The letter-box mask (B-66) - null outside that stage, same condition as `letterBoxLength`.
+            answerPattern);
     }
 
     /// <summary>

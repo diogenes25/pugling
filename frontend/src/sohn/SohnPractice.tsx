@@ -305,7 +305,7 @@ export function SohnPractice() {
         ) : typed ? (
           <div>
             {card.answerLength ? (
-              <LetterBoxes length={card.answerLength} value={typedAnswer} onChange={setTypedAnswer} onSubmit={submitTyped} />
+              <LetterBoxes length={card.answerLength} value={typedAnswer} onChange={setTypedAnswer} onSubmit={submitTyped} pattern={card.answerPattern ?? undefined} />
             ) : (
               <form onSubmit={(e) => { e.preventDefault(); submitTyped(); }}>
                 <input

@@ -15,11 +15,13 @@ namespace Pugling.Contracts.Creator;
 /// the trial run they assign on contradicts the exam. <c>RevealAlternatives</c> holds the equally valid answers
 /// beside <c>Reveal</c>, so the author sees what the child will be shown as "also correct". <c>Decoding</c> is
 /// the word-for-word decoding (Birkenbihl) for the same reason: whoever maintains it has to be able to check it
-/// the way the child receives it.
+/// the way the child receives it. <c>AnswerPattern</c> (B-66) is the letter-box mask, same as the child's card -
+/// the preview must show the same fixed punctuation/spacing, not a bare length.
 /// </summary>
 public record PreviewItem(int ItemIndex, string? Prompt, int? GapIndex, string? Hint, int? AnswerLength, string? Reveal,
     IReadOnlyList<string>? Choices, string? AudioUrl, string? Passage = null, bool AnyOrder = false,
-    IReadOnlyList<string>? RevealAlternatives = null, IReadOnlyList<WordPair>? Decoding = null);
+    IReadOnlyList<string>? RevealAlternatives = null, IReadOnlyList<WordPair>? Decoding = null,
+    string? AnswerPattern = null);
 
 /// <summary>
 /// The playable state of an exercise in test mode: type, chosen stage, whether typed, the problems and

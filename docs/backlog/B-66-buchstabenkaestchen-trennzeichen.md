@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, bereich/frontend, lerntechnik/vokabeln, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/training, bereich/frontend, lerntechnik/vokabeln, rolle/student]
 aliases: [Buchstabenkästchen Trennzeichen, Leerzeichen tippen]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: M
@@ -209,3 +209,15 @@ Länge.
   Entscheidungen überführt (autonom getroffen, Nutzerauftrag).
 - **2026-08-04** — geschätzt: `groesse: M`, `wo: beides`, `migration: nein`, `vertragsbruch: nein`,
   Risiken, Angriffsplan (Backend zuerst) und Testweg ergänzt (autonom getroffen, Nutzerauftrag).
+- **2026-08-05** — im Autonomen Modus gebaut, exakt nach Angriffsplan. Backend: `IExerciseType.StageFacets`
+  um `AnswerPattern` erweitert (alle drei Implementierer), `StageMechanics.LetterBoxPattern` als Helfer,
+  durchgereicht über `PositionPlayService.CardFacets` in alle drei DTOs (`PracticeCard`, `TestItem`,
+  `PreviewItem`). Frontend: `LetterBoxes.tsx` rendert feste Maskenstellen als Text (nie fokussierbar) und
+  überspringt sie beim Sprung vorwärts/rückwärts auch über mehrere aufeinanderfolgende Stellen hinweg; alle
+  drei Aufrufstellen (Sohn-Übung, Sohn-Test, Vater-Vorschau) reichen `pattern` durch. Rote Probe zuerst:
+  4 neue Backend-Tests scheiterten am Compile (kein `LetterBoxPattern`), 4 von 5 neuen RTL-Tests scheiterten
+  gegen den Vorzustand (falscher Fokus-Sprung, fehlendes Masken-Feld im komponierten Wert). `dotnet test
+  Pugling.sln -c Release` → **722/722 grün** (716 + 6 neu: 4 Unit-Tests `StageMechanicsTests` + 2
+  Integrationstests Übung/Test). `npm run build` (Typecheck) und `npm test` → **136/136** (131 + 5 neu,
+  `LetterBoxes.test.tsx`). Punkt 6 der Akzeptanzkriterien (Wortreihenfolge) bewusst nicht angefasst
+  (Entscheidung 4). Commit: siehe Repo-Verlauf (B-66-Commit). Status → `abgenommen`.

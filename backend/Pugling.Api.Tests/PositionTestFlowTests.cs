@@ -320,4 +320,22 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal(2, fertig.GetProperty("results").GetArrayLength());
         Assert.Equal(HttpStatusCode.NotFound, (await child.GetAsync($"{baseUrl}/{attemptId + 999}")).StatusCode);
     }
+
+    // ─────────────────────────────────── B-66: the exam question carries the same letter-box mask
+
+    [Fact]
+    public async Task LetterBoxes_ImTest_TraegtDieselbeMaskeWieDieUebung()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("aufwachsen", "to grow up"));
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.LetterBoxes);
+        var child = await TestApi.ChildAsync(_factory);
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
+        var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
+
+        var next = await (await child.GetAsync($"{baseUrl}/{attemptId}/next")).Content.ReadFromJsonAsync<JsonElement>();
+        var item = next.GetProperty("item");
+        Assert.Equal(10, item.GetProperty("answerLength").GetInt32());
+        Assert.Equal("__ ____ __", item.GetProperty("answerPattern").GetString());
+    }
 }

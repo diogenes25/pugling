@@ -169,7 +169,7 @@ export function SohnTest() {
             </div>
           ) : item.answerLength ? (
             <div style={{ marginTop: 10 }}>
-              <LetterBoxes length={item.answerLength} value={typedAnswer} onChange={setTypedAnswer} onSubmit={submitTyped} />
+              <LetterBoxes length={item.answerLength} value={typedAnswer} onChange={setTypedAnswer} onSubmit={submitTyped} pattern={item.answerPattern ?? undefined} />
               <button type="button" className="btn lime" style={{ marginTop: 10 }} disabled={busy || !typedAnswer.trim()} onClick={submitTyped}>Weiter →</button>
             </div>
           ) : (

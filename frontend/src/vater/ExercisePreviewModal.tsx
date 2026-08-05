@@ -195,7 +195,7 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
                     // Buchstabenkästchen: dieselbe Komponente wie in der Sohn-App.
                     <div style={{ marginTop: 8 }}>
                       <LetterBoxes length={it.answerLength} value={a?.givenAnswer ?? ""}
-                        onChange={(v) => setText(it.itemIndex, v)} onSubmit={submit} />
+                        onChange={(v) => setText(it.itemIndex, v)} onSubmit={submit} pattern={it.answerPattern ?? undefined} />
                     </div>
                   ) : data.typed ? (
                     <input

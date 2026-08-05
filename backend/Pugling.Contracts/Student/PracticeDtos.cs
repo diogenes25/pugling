@@ -58,12 +58,17 @@ public record HeartbeatDto(int Seconds, bool Active);
 /// once, there is no self-assessment and no Leitner movement. Distinct from typed-ness – the frontend must
 /// not infer it from <c>Reveal</c> being set, because self-assessment stages set it too.
 /// </para>
+/// <para>
+/// <c>AnswerPattern</c> (B-66) is the letter-box mask: an underscore per letter/digit to type, every other
+/// character (space, hyphen, …) kept literally – already fixed by the solution, so the child never types
+/// it. <c>null</c> outside the letter-box stage, same as <c>AnswerLength</c>.
+/// </para>
 /// </summary>
 public record PracticeCard(int ItemIndex, int Stage, string Type, string? Prompt,
     string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices, string? AudioUrl,
     string? ImageUrl = null, string? ImageAlt = null, int? GapIndex = null, string? Passage = null,
     bool AnyOrder = false, IReadOnlyList<string>? RevealAlternatives = null,
-    IReadOnlyList<WordPair>? Decoding = null, bool DisplayOnly = false);
+    IReadOnlyList<WordPair>? Decoding = null, bool DisplayOnly = false, string? AnswerPattern = null);
 
 /// <summary>The next card in learn mode (or <c>Done</c>), server-driven via the session cursor.</summary>
 public record NextResponse(PracticeCard? Card, bool Done, int Cursor, int Total);

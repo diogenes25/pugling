@@ -81,8 +81,13 @@ public interface IExerciseType
     /// (otherwise <c>null</c>). Here – and only here – the type also decides whether an image would
     /// give away the solution: it is <b>stricter</b> for images than for audio, because a motif shows
     /// the meaning in both query directions, while the pronunciation only reads out one word.
+    /// <para>
+    /// <c>AnswerPattern</c> is the letter-box mask (B-66): an underscore per letter/digit to type, every
+    /// other character (space, punctuation, hyphen) kept literally – it is already fixed by the solution and
+    /// typing it teaches nothing. <c>null</c> outside the letter-box stage, same as <c>LetterBoxLength</c>.
+    /// </para>
     /// </summary>
-    (int? LetterBoxLength, string? AudioUrl, string? ImageUrl) StageFacets(ContentItem item, int stage);
+    (int? LetterBoxLength, string? AudioUrl, string? ImageUrl, string? AnswerPattern) StageFacets(ContentItem item, int stage);
 
     /// <summary>
     /// Does the recording <b>replace</b> the prompt at this stage, instead of accompanying it? Only the type

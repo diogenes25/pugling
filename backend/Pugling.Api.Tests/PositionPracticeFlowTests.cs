@@ -89,6 +89,25 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
         return cards![0];
     }
 
+    // ─────────────────────────────────── B-66: the letter-box mask fixes punctuation/spacing
+
+    [Fact]
+    public async Task LetterBoxes_MehrteiligeLoesung_TraegtDieMaskeMitFestenTrennzeichen()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        // Front/back swapped on purpose: direction is front-to-back, and the ANSWER (the typed side) is the
+        // one that needs a space to test the mask - "to grow up" as a translation, not the prompt.
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("aufwachsen", "to grow up"));
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.LetterBoxes);
+        var child = await TestApi.ChildAsync(_factory);
+        var karte = await ErsteKarteAsync(child, planId, positionId);
+
+        Assert.Equal(10, karte.GetProperty("answerLength").GetInt32()); // "to grow up".Length
+        Assert.Equal("__ ____ __", karte.GetProperty("answerPattern").GetString());
+        // Still withheld like the length - a typed stage never reveals the solution itself.
+        Assert.Equal(JsonValueKind.Null, karte.GetProperty("reveal").ValueKind);
+    }
+
     // ─────────────────────────────────── B-96: ShowBoth is a free display stage, not self-assessment
 
     [Fact]

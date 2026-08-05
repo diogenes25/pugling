@@ -112,6 +112,6 @@ public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrade
         // No image in preview mode: the selection hangs on a child's profile, but here the supervisor tries
         // things out child-neutrally. An arbitrary image would mislead - it would not show what their child sees.
         return new PreviewItem(item.Index, f.Prompt, f.GapIndex, f.Hint, f.AnswerLength, f.Reveal,
-            f.Choices, f.AudioUrl, f.Passage, f.AnyOrder, f.RevealAlternatives, f.Decoding);
+            f.Choices, f.AudioUrl, f.Passage, f.AnyOrder, f.RevealAlternatives, f.Decoding, f.AnswerPattern);
     }
 }

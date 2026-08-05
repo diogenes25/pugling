@@ -31,6 +31,16 @@ public static class StageMechanics
         string.Join(' ', (s ?? "").Trim().ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries));
 
     /// <summary>
+    /// The letter-box mask of an answer (B-66): an underscore for every letter/digit to type, every other
+    /// character (space, hyphen, apostrophe, comma, …) kept literally and not entered by the child - it is
+    /// already fixed by the solution, and typing it is fumbling, not learning. "not a letter or digit" instead
+    /// of a positive list of separators on purpose: closed and language-independent, so a forgotten character
+    /// in some future language's solution can never slip through unmasked.
+    /// </summary>
+    public static string LetterBoxPattern(string answer) =>
+        new([.. answer.Select(c => char.IsLetterOrDigit(c) ? '_' : c)]);
+
+    /// <summary>
     /// Multiple-choice pool built from the exercise itself: the atom's own solution plus up to
     /// <paramref name="maxDistractors"/> wrong options taken from the other atoms, rotated deterministically
     /// by index so the solution is not always in front. No randomness on purpose – the same card must offer

@@ -189,7 +189,8 @@ Response — `HTTP 200`:
     "anyOrder": false,
     "revealAlternatives": null,
     "decoding": null,
-    "displayOnly": false
+    "displayOnly": false,
+    "answerPattern": null
   },
   "done": false,
   "cursor": 0,
@@ -241,7 +242,8 @@ Response — `HTTP 200`:
     "anyOrder": false,
     "revealAlternatives": null,
     "decoding": null,
-    "displayOnly": false
+    "displayOnly": false,
+    "answerPattern": null
   },
   "done": false
 }
@@ -306,7 +308,8 @@ Response — `HTTP 200`:
     "anyOrder": false,
     "revealAlternatives": null,
     "decoding": null,
-    "displayOnly": false
+    "displayOnly": false,
+    "answerPattern": null
   },
   {
     "itemIndex": 0,
@@ -325,7 +328,8 @@ Response — `HTTP 200`:
     "anyOrder": false,
     "revealAlternatives": null,
     "decoding": null,
-    "displayOnly": false
+    "displayOnly": false,
+    "answerPattern": null
   }
 ]
 ```
@@ -399,7 +403,8 @@ Response — `HTTP 200`:
     "passage": null,
     "anyOrder": false,
     "type": "Vocabulary",
-    "revealAlternatives": null
+    "revealAlternatives": null,
+    "answerPattern": null
   },
   "done": false,
   "cursor": 0,

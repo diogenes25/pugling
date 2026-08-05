@@ -68,10 +68,11 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
     /// exactly the stage where the image serves its purpose, namely memorization.
     /// </para>
     /// </summary>
-    public override (int? LetterBoxLength, string? AudioUrl, string? ImageUrl) StageFacets(ContentItem item, int stage) =>
+    public override (int? LetterBoxLength, string? AudioUrl, string? ImageUrl, string? AnswerPattern) StageFacets(ContentItem item, int stage) =>
         ((TestStage)stage == TestStage.LetterBoxes ? item.Answer.Length : null,
          (TestStage)stage == TestStage.Audio ? item.AudioUrl : null,
-         IsTypedStage(stage) ? null : item.ImageUrl);
+         IsTypedStage(stage) ? null : item.ImageUrl,
+         (TestStage)stage == TestStage.LetterBoxes ? StageMechanics.LetterBoxPattern(item.Answer) : null);
 
     /// <summary>
     /// At the listening stage the recording <b>is</b> the question: showing the word next to it would make

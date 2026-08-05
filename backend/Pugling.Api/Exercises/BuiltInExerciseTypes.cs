@@ -55,8 +55,8 @@ public sealed class ListeningExerciseType : ExerciseTypeBase
     /// supervisor picks - it is what the exercise IS, and a listening comprehension without its audio is an
     /// unanswerable question.
     /// </summary>
-    public override (int? LetterBoxLength, string? AudioUrl, string? ImageUrl) StageFacets(ContentItem item, int stage) =>
-        (null, item.AudioUrl, null);
+    public override (int? LetterBoxLength, string? AudioUrl, string? ImageUrl, string? AnswerPattern) StageFacets(ContentItem item, int stage) =>
+        (null, item.AudioUrl, null, null);
 
     /// <inheritdoc cref="AnswerChecking.ChoicesOf"/>
     public override IReadOnlyList<string>? Choices(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, int stage) =>
