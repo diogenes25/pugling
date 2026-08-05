@@ -12,6 +12,7 @@ quelle: Code-Review 2026-08-05 der Commits 4469662…b20600f (Befund 5)
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+entgangen_bei: [B-99]
 ---
 
 # B-111 · Scheitert das Laden des Verlaufs, sagt die App „Noch nichts gekauft"
@@ -136,3 +137,5 @@ mit geschärfter Bedingung.
     muss erneut blättern.
   - Verifikation nach den Korrekturen: **152/152** Frontend, Build sauber, `e2e/shop-verlauf.spec.ts`
     grün.
+- **2026-08-05** — `entgangen_bei: [B-99]` gesetzt: `HistoryTab` samt der Zwei-Zustands-Anzeige entstand in
+  B-99, der Defekt saß beim Fund also in abgenommener Arbeit. Zählt in die Wirkungs-Zahl.

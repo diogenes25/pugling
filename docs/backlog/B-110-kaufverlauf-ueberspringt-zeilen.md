@@ -12,6 +12,7 @@ quelle: Code-Review 2026-08-05 der Commits 4469662…b20600f (Befund 4)
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+entgangen_bei: [B-99]
 ---
 
 # B-110 · Der Kaufverlauf überspringt Zeilen und verpasst den eigenen Kauf
@@ -174,3 +175,7 @@ anpassen); die sichtbare Reihenfolge stornierter Käufe ändert sich.
     Abwägung.
   - **Ein echter Fund, der über den Auftrag hinausgeht** → in B-113 eingetragen: es sind **drei** Stellen
     derselben Klasse, nicht eine, und zwei davon werden tatsächlich geblättert.
+- **2026-08-05** — `entgangen_bei: [B-99]` gesetzt. Begründung der Zuordnung: B-99 hat das Offset-Paging der
+  Kaufhistorie gebaut und damit die vorhandene veränderliche Sortierung erst schädlich gemacht; `HistoryTab`
+  trägt den B-99-Vermerk in der eigenen Dokumentation. Der Defekt saß also in Arbeit, die beim Fund schon
+  `abgenommen` war — er zählt in die Wirkungs-Zahl (README → „Die eine Zahl über die Wirkung").

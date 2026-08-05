@@ -118,6 +118,7 @@ quelle: docs/backlog-vokabellernen.md#fund-1   # Pflicht — woher die Idee kam
 unverifiziert: true       # nur auf 'idee'
 grund: ""                 # nur bei 'verworfen'
 ersetzt_durch: []         # nur bei 'verworfen: geteilt'
+entgangen_bei: []         # nur bei 'art: Defekt' — welche ABGENOMMENE Story ihn durchgelassen hat
 ---
 ```
 
@@ -342,6 +343,75 @@ gescheitert ist (siehe [oben](#der-rollengang-fällt-am-leichtesten-weg--und-kos
 **je Sprint** geführt, nicht je Story — deshalb hat ein Sprint eine Obergrenze
 (`pm-loop`, „The Sprint"). Fällt er aus, steht das als Zeile im `## Verlauf`, nicht im Nichts.
 
+## Die eine Zahl über die Wirkung: was die Abnahme durchgelassen hat
+
+Alles andere in diesem Bereich misst **Einhaltung** — gesetzte Felder, vorhandene Abschnitte, echte
+Testzahlen, gelaufene Schritte. Keine davon beantwortet „ist die App besser als vorige Woche". Genau
+eine Zahl kann das, und sie steht im Index: **Defekte, die in schon abgenommener Arbeit gefunden wurden.**
+
+Getragen wird sie von einem Feld auf der Defekt-Story:
+
+```yaml
+entgangen_bei: [B-99]     # dieser Defekt saß in Arbeit, die bereits `abgenommen` war
+```
+
+### Was zählt — und was ausdrücklich nicht
+
+Die Zahl misst, was die **Abnahme durchgelassen** hat. Sie ist kein Zähler für „Folgearbeit". Die
+Unterscheidung ist der ganze Wert des Felds, darum an echten Fällen dieses Bereichs:
+
+| Fall | Beispiel | Zählt? |
+| --- | --- | --- |
+| Defekt in Code, der beim Fund schon `abgenommen` war | B-110/B-111 in der Kaufhistorie aus B-99 | **ja** |
+| Gefunden bei der Verifikation der Story selbst, vor ihrer Abnahme | B-113 während B-110 `in-arbeit` war | nein — das Tor hat gehalten |
+| Reviewer-Befund vor dem Sign-off | B-93 (zum B-78-Bau), B-104 (zum B-97-Bau) | nein — das ist Step 5 bei der Arbeit |
+| „Befund außerhalb des Diffs" | B-80, B-82, B-84 | nein — der Fehler liegt in älterem Code, nicht in der geprüften Arbeit |
+| Abspaltung einer Grill-Entscheidung | B-72, B-77, B-78 (aus B-69/B-76) | nein — nie ausgeliefert, nichts entgangen |
+| Nicht zuordenbar (Altbestand vor diesem Bereich) | B-109 | Feld bleibt leer, und das ist keine Nachlässigkeit |
+
+### Der Nenner ist die Falle
+
+**Es gibt bewusst keine Quote.** „4 von 42 abgenommenen" läse sich wie eine Fehlerrate von zehn Prozent
+und wäre eine Lüge über die 38, die **nie nachgeprüft** wurden. Ein fehlender Eintrag heißt „nicht
+beobachtet", niemals „sauber". Die Quote, die etwas bedeuten würde, hätte als Nenner die *nachträglich
+geprüften* Stories — und dieser Nenner ist heute **zwei Durchgänge** (die Code-Reviews vom 2026-08-04 und
+2026-08-05), beide von Hand angestoßen.
+
+Daraus folgt die Bedingung, ohne die die Messung wertlos ist: **es muss regelmäßig jemand nach der
+Abnahme hinsehen.** Bleibt die Zahl bei null, weil niemand nachschaut, misst sie nichts — sie sinkt nicht,
+sie verschwindet nur aus dem Blick. Das ist die Gegenprobe zur Zahl selbst.
+
+### Warum der Defekt eine eigene Story braucht
+
+Ein Defekt in abgenommener Arbeit bekommt eine **eigene Story**, auch wenn er in fünf Minuten behoben ist.
+Sonst steht er als Zeile im `## Verlauf` der alten Story und fehlt in der Messung — genau so waren die
+zwei wichtigsten Fälle vom 2026-08-05 (B-114, B-115) zuerst unsichtbar, obwohl sie der Anlass für diese
+Zahl sind. Die Story darf dünn sein; sie muss nur existieren und das Feld tragen.
+
+### „Je Sprint" braucht kein eigenes Feld
+
+Das Feld zeigt auf die **abgenommene Story**, nicht auf einen Sprint — Sprints haben in diesem Bereich
+keine Id, und eine zweite einzuführen wäre ein Feld, das bei jeder Story gepflegt werden müsste, damit es
+in seltenen Fällen etwas aggregiert. Die Zuordnung läuft stattdessen über die Story: ihr `## Verlauf` nennt
+das Protokoll, in dem sie gebaut wurde. Aus `entgangen_bei: [B-99]` wird so „Sprint/Runde, in der B-99
+abgenommen wurde".
+
+**Der Stand heute, so gelesen:** alle **vier** erfassten Entgleitungen zeigen auf B-99, B-96 und B-66 —
+also auf **dieselbe** Runde, die autonome Bau-Runde vom 2026-08-05 mit ihren vierzehn Abnahmen. Genau die
+Runde, die **keinen einzigen Rollengang** geführt hat. Das ist die Grundlinie, an der sich künftige Sprints
+messen.
+
+Und die notwendige Einschränkung dazu, damit die Grundlinie nicht mehr behauptet als sie kann: **Sprint 1
+(2026-08-05, B-110/B-111) steht bei null — aber niemand hat ihn nachgeprüft.** Diese Null ist kein Erfolg,
+sie ist eine Nichtbeobachtung. Erst der nächste nachträgliche Blick auf abgenommene Arbeit macht aus ihr
+eine Aussage.
+
+### Was man mit der Zahl macht
+
+Nach dem dritten oder vierten Sprint sagt sie, ob das Rollengang-Tor wirkt. **Steigt sie, ist die Abnahme
+zu weich.** Und wenn sie steigt, ist die richtige Reaktion, das Tor zu **verwerfen oder umzubauen** — nicht
+es zu verschärfen: eine Bedingung, die nicht hält, wird durch mehr Text nicht besser.
+
 ## Hygiene: der Bereich darf nicht nur wachsen
 
 Ein Backlog, der nur wächst, ist der Zettelberg, den er ersetzen sollte — nur mit YAML davor. Darum meldet
@@ -376,13 +446,15 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (61)
+### Offen (63)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| [B-114](B-114-showboth-position-unspielbar.md) | Eine Kennenlern-Position hatte für das Kind keinen einzigen Knopf — und kostete Münzen | Defekt | `in-arbeit` | P1 | S | beides | — |
 | [B-07](B-07-db-umbau-restetappen.md) | DB-Struktur-Umbau: der offene Betriebsschritt | Aufräumen | `geschaetzt` | P1 | XS | backend | — |
 | [B-110](B-110-kaufverlauf-ueberspringt-zeilen.md) | Der Kaufverlauf überspringt Zeilen und verpasst den eigenen Kauf | Defekt | `in-arbeit` | P2 | S | beides | — |
 | [B-111](B-111-verlauf-luegt-im-fehlerfall.md) | Scheitert das Laden des Verlaufs, sagt die App „Noch nichts gekauft" | Defekt | `in-arbeit` | P2 | XS | frontend | — |
+| [B-115](B-115-buchstabenkaestchen-index-drift.md) | Übersprang das Kind ein Buchstabenkästchen, rutschten alle folgenden Zeichen | Defekt | `in-arbeit` | P2 | XS | frontend | — |
 | [B-113](B-113-vater-kaufhistorie-endet-still.md) | Die Kaufhistorie des Vaters endet still bei 100 Zeilen — B-99 eine Ebene höher | Defekt | `ausformuliert` | P2 | — | — | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-48](B-48-anonyme-registrierung-produktion.md) | Anonyme Registrierung ist auch in Produktion offen | Frage | `geschaetzt` | P2 | S | backend | — |
@@ -491,6 +563,15 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-99](B-99-kaufhistorie-endet-lautlos.md) | Die Kaufhistorie des Kindes endet lautlos bei 50 Zeilen | Defekt | `abgenommen` | P2 | S | beides | — |
 
 </details>
+
+### Nach der Abnahme entgangen (4)
+
+| Defekt | Titel | Entgangen bei | Stufe |
+| --- | --- | --- | --- |
+| [B-110](B-110-kaufverlauf-ueberspringt-zeilen.md) | Der Kaufverlauf überspringt Zeilen und verpasst den eigenen Kauf | [B-99] | `in-arbeit` |
+| [B-111](B-111-verlauf-luegt-im-fehlerfall.md) | Scheitert das Laden des Verlaufs, sagt die App „Noch nichts gekauft" | [B-99] | `in-arbeit` |
+| [B-114](B-114-showboth-position-unspielbar.md) | Eine Kennenlern-Position hatte für das Kind keinen einzigen Knopf — und kostete Münzen | [B-96] | `in-arbeit` |
+| [B-115](B-115-buchstabenkaestchen-index-drift.md) | Übersprang das Kind ein Buchstabenkästchen, rutschten alle folgenden Zeichen | [B-66] | `in-arbeit` |
 
 ### ⚠ Stufe behauptet, Datei belegt nicht
 

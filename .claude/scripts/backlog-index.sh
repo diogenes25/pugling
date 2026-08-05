@@ -60,9 +60,14 @@ offen=""
 fertig=""
 verworfen=""
 unbelegt=""
+# Die eine Zahl, die etwas über die WIRKUNG des Verfahrens sagt und nicht über seine Einhaltung: Defekte,
+# die in bereits abgenommener Arbeit gefunden wurden (Feld `entgangen_bei`). Alles andere im Index zählt
+# Regelkonformität; das hier zählt, was die Abnahme durchgelassen hat.
+entgangen=""
 n_offen=0
 n_fertig=0
 n_verworfen=0
+n_entgangen=0
 
 # Trägt die Datei den Abschnitt, den ihre Stufe verlangt? Tolerant gematcht: die dünnen Stories fassen
 # "Ist-Stand am Code · Entscheidungen" in EINER Überschrift zusammen und verlinken ein Protokoll.
@@ -149,6 +154,14 @@ for f in docs/backlog/B-*.md; do
   luecke="$(belege "$f" "$status")"
   [ -n "$luecke" ] && unbelegt="${unbelegt}| [$id]($base) | \`$status\` | $(printf '%s' "$luecke" | sed 's/|/\\|/g') |"$'\n'
 
+  # Entgleitung: dieser Defekt steckte in Arbeit, die schon `abgenommen` war. Nur bei `art: Defekt`
+  # gezählt – ein Wunsch, der später auffällt, ist kein Qualitätsverlust, sondern ein Wunsch.
+  ez="$(fm "$f" entgangen_bei)"
+  if [ -n "$ez" ] && [ "$ez" != "[]" ] && [ "$art" = "Defekt" ]; then
+    entgangen="${entgangen}| [$id]($base) | $titel | $(printf '%s' "$ez" | sed 's/|/\\|/g') | \`$status\` |"$'\n'
+    n_entgangen=$((n_entgangen + 1))
+  fi
+
   case "$status" in
     abgenommen)
       fertig="${fertig}${row}"$'\n'
@@ -190,6 +203,18 @@ shopt -u nullglob
       printf '%s\n%s\n' "$head_row" "$sep_row"
       printf '%s' "$fertig"
       printf '\n</details>\n'
+    fi
+
+    # Bewusst NICHT als Quote „x von y abgenommenen" ausgegeben: eine Entgleitung ist nur dort sichtbar,
+    # wo hinterher jemand hingesehen hat. Ein Nenner aus allen abgenommenen Stories läse sich wie eine
+    # Fehlerrate und wäre eine Lüge über die 38, die nie nachgeprüft wurden.
+    printf '\n%s\n\n' "### Nach der Abnahme entgangen ($n_entgangen)"
+    if [ "$n_entgangen" -eq 0 ]; then
+      printf '%s\n' "*Keine erfasst* — das heißt **nicht** \"keine vorhanden\": ohne einen Blick nach der"
+      printf '%s\n' "Abnahme entsteht hier kein Eintrag. Siehe den Abschnitt über die Wirkungs-Zahl oben."
+    else
+      printf '%s\n%s\n' "| Defekt | Titel | Entgangen bei | Stufe |" "| --- | --- | --- | --- |"
+      printf '%s' "$entgangen"
     fi
 
     if [ -n "$unbelegt" ]; then
