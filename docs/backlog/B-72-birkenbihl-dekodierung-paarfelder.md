@@ -256,5 +256,5 @@ Wire-Format des `POST` bleibt, wie es ist.
   `ConfigEditor` für jeden Typ in einem echten `<form>`) – `RepeatedPairFields` fehlte darum der
   Enter-Schutz, den `RepeatedTextFields` für genau dieses Formular schon trägt; ein Enter im Wortpaar-Feld
   hätte die Übung vorzeitig abgeschickt. Behoben (gleicher `onKeyDown`-Schutz wie im Vorbild, neuer Testfall),
-  dazu ein 🟢-Fund (`disabled` fehlte an den Inputs, nur an den Buttons) mitbehoben. Commit `<hash>`.
-  Status → `abgenommen`.
+  dazu ein 🟢-Fund (`disabled` fehlte an den Inputs, nur an den Buttons) mitbehoben. Commit `b33b0c5`,
+  dazu dieser. Status → `abgenommen`.
