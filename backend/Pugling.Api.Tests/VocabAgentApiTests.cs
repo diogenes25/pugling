@@ -203,6 +203,31 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     }
 
     [Fact]
+    public async Task Tag_ErneutAnlegen_LiefertDenEchtenVerlinkungszaehler()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        const string sl = "tagcount";
+        var tagName = "Zaehl-Tag";
+
+        // Two entries carry the tag - created through the vocabulary attach path (the same VocabTagLink rows
+        // a real usage would produce).
+        await CreateAsync(father, new { sourceLanguage = sl, targetLanguage = "fb", word = "one", translation = "eins", tags = new[] { tagName } });
+        await CreateAsync(father, new { sourceLanguage = sl, targetLanguage = "fb", word = "two", translation = "zwei", tags = new[] { tagName } });
+
+        // Re-creating the SAME tag name is the idempotent "already exists" branch (B-98): it must report the
+        // REAL link count, not the always-0 value of an unloaded navigation.
+        var again = await father.PostAsJsonAsync("/api/v1/creator/vocabulary/tags", new { name = tagName });
+        Assert.Equal(HttpStatusCode.OK, again.StatusCode);
+        var body = await again.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(2, body.GetProperty("vocabCount").GetInt32());
+
+        // Matches what the listing endpoint reports for the same tag - one source of truth.
+        var list = await father.GetFromJsonAsync<JsonElement>("/api/v1/creator/vocabulary/tags");
+        var listedCount = list.EnumerateArray().Single(t => t.GetProperty("name").GetString() == tagName).GetProperty("vocabCount").GetInt32();
+        Assert.Equal(listedCount, body.GetProperty("vocabCount").GetInt32());
+    }
+
+    [Fact]
     public async Task List_SetztTotalCountHeader()
     {
         var father = await TestApi.FatherAsync(_factory);

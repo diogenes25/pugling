@@ -130,8 +130,14 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         var g1 = await f1.PostAsJsonAsync($"/api/v1/creator/exercises/{exerciseId}/grants", new { creatorId = id2, permission = "Write" });
         var g2 = await f1.PostAsJsonAsync($"/api/v1/creator/exercises/{exerciseId}/grants", new { creatorId = id2, permission = "Write" });
+        // B-98: 201 only on the real insert; the idempotent repeat answers 200 with the STORED grant, not an
+        // invented one - a second 201 would claim a second grant was created, which never happened.
         Assert.Equal(HttpStatusCode.Created, g1.StatusCode);
-        Assert.Equal(HttpStatusCode.Created, g2.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, g2.StatusCode);
+        var g1Body = await g1.Content.ReadFromJsonAsync<JsonElement>();
+        var g2Body = await g2.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(g1Body.GetProperty("grantedByAdultId").GetInt32(), g2Body.GetProperty("grantedByAdultId").GetInt32());
+        Assert.Equal(g1Body.GetProperty("createdAt").GetDateTime(), g2Body.GetProperty("createdAt").GetDateTime());
 
         var list = await f1.GetFromJsonAsync<List<JsonElement>>($"/api/v1/creator/exercises/{exerciseId}/grants");
         // Exactly one owner (the creator's auto grant) + exactly one (non-duplicated) write.

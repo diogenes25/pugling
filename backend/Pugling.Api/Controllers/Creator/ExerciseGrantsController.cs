@@ -50,10 +50,12 @@ public class ExerciseGrantsController(PuglingDbContext db, ExercisePermissionSer
 
     /// <summary>
     /// Grants a creator a permission (Owner/Write/Execute). Only an owner may grant; the beneficiary
-    /// creator must exist. Idempotent: an already existing (creator, permission) pair is not duplicated.
+    /// creator must exist. Idempotent: an already existing (creator, permission) pair is not duplicated -
+    /// then answers <c>200</c> with the stored grant (not the caller's values), <c>201</c> only on a real insert.
     /// </summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -63,20 +65,22 @@ public class ExerciseGrantsController(PuglingDbContext db, ExercisePermissionSer
         var creator = await db.Adults.FirstOrDefaultAsync(f => f.Id == dto.CreatorId, ct);
         if (creator is null) return this.ProblemWithCode(ApiErrors.InvalidReference, "Creator not found.");
 
-        if (!await db.ExerciseGrants.AnyAsync(g =>
-            g.ExerciseId == exerciseId && g.CreatorId == dto.CreatorId && g.Permission == dto.Permission, ct))
+        var existing = await db.ExerciseGrants.AsNoTracking().FirstOrDefaultAsync(g =>
+            g.ExerciseId == exerciseId && g.CreatorId == dto.CreatorId && g.Permission == dto.Permission, ct);
+        if (existing is not null)
+            return Ok(new GrantResponse(creator.Id, creator.Name, dto.Permission, existing.GrantedByAdultId, existing.CreatedAt));
+
+        var grant = new ExerciseGrant
         {
-            db.ExerciseGrants.Add(new ExerciseGrant
-            {
-                ExerciseId = exerciseId,
-                CreatorId = dto.CreatorId,
-                Permission = dto.Permission,
-                GrantedByAdultId = User.AdultId(),
-            });
-            await db.SaveChangesAsync(ct);
-        }
+            ExerciseId = exerciseId,
+            CreatorId = dto.CreatorId,
+            Permission = dto.Permission,
+            GrantedByAdultId = User.AdultId(),
+        };
+        db.ExerciseGrants.Add(grant);
+        await db.SaveChangesAsync(ct);
         return CreatedAtAction(nameof(List), new { exerciseId },
-            new GrantResponse(creator.Id, creator.Name, dto.Permission, User.AdultId(), DateTime.UtcNow));
+            new GrantResponse(creator.Id, creator.Name, dto.Permission, grant.GrantedByAdultId, grant.CreatedAt));
     }
 
     /// <summary>

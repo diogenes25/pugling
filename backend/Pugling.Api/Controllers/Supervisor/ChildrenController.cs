@@ -153,10 +153,12 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
     /// <summary>
     /// Adds another supervisor to the student (e.g. mother/grandmother). The acting supervisor
     /// must already supervise the student (<see cref="ChildOwnershipFilter"/>); the new supervisor must exist.
-    /// Idempotent: an existing supervision link is not duplicated.
+    /// Idempotent: an existing supervision link is not duplicated - then answers <c>200</c> with the stored
+    /// link (its own relation, not the caller's), <c>201</c> only on a real insert.
     /// </summary>
     [HttpPost("{childId:int}/supervisors")]
     [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<SupervisorLinkResponse>> AddSupervisor(int childId, AddSupervisorDto dto, CancellationToken ct = default)
@@ -164,13 +166,16 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         var supervisor = await db.Adults.FirstOrDefaultAsync(f => f.Id == dto.SupervisorId, ct);
         if (supervisor is null) return this.ProblemWithCode(ApiErrors.InvalidReference, "Supervisor not found.");
 
-        if (!await db.SupervisorLinks.AnyAsync(l => l.StudentId == childId && l.SupervisorId == dto.SupervisorId, ct))
-        {
-            db.SupervisorLinks.Add(new SupervisorLink { StudentId = childId, SupervisorId = dto.SupervisorId, Relation = dto.Relation });
-            await db.SaveChangesAsync(ct);
-        }
+        var existing = await db.SupervisorLinks.AsNoTracking()
+            .FirstOrDefaultAsync(l => l.StudentId == childId && l.SupervisorId == dto.SupervisorId, ct);
+        if (existing is not null)
+            return Ok(new SupervisorLinkResponse(supervisor.Id, supervisor.Name, existing.Relation, existing.CreatedAt));
+
+        var link = new SupervisorLink { StudentId = childId, SupervisorId = dto.SupervisorId, Relation = dto.Relation };
+        db.SupervisorLinks.Add(link);
+        await db.SaveChangesAsync(ct);
         return CreatedAtAction(nameof(Supervisors), new { childId },
-            new SupervisorLinkResponse(supervisor.Id, supervisor.Name, dto.Relation, DateTime.UtcNow));
+            new SupervisorLinkResponse(supervisor.Id, supervisor.Name, link.Relation, link.CreatedAt));
     }
 
     /// <summary>Removes a supervision link. The last supervisor cannot be removed (the student would be orphaned).</summary>

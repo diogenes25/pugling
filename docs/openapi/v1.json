@@ -1559,7 +1559,7 @@
         "tags": [
           "Supervisor \u2013 Children"
         ],
-        "summary": "Adds another supervisor to the student (e.g. mother/grandmother). The acting supervisor\nmust already supervise the student (ChildOwnershipFilter); the new supervisor must exist.\nIdempotent: an existing supervision link is not duplicated.",
+        "summary": "Adds another supervisor to the student (e.g. mother/grandmother). The acting supervisor\nmust already supervise the student (ChildOwnershipFilter); the new supervisor must exist.\nIdempotent: an existing supervision link is not duplicated - then answers \u0060200\u0060 with the stored\nlink (its own relation, not the caller\u0027s), \u0060201\u0060 only on a real insert.",
         "parameters": [
           {
             "name": "childId",
@@ -1595,6 +1595,16 @@
         "responses": {
           "201": {
             "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupervisorLinkResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
@@ -16138,7 +16148,7 @@
         "tags": [
           "Creator \u2013 Exercise Grants"
         ],
-        "summary": "Grants a creator a permission (Owner/Write/Execute). Only an owner may grant; the beneficiary\ncreator must exist. Idempotent: an already existing (creator, permission) pair is not duplicated.",
+        "summary": "Grants a creator a permission (Owner/Write/Execute). Only an owner may grant; the beneficiary\ncreator must exist. Idempotent: an already existing (creator, permission) pair is not duplicated -\nthen answers \u0060200\u0060 with the stored grant (not the caller\u0027s values), \u0060201\u0060 only on a real insert.",
         "parameters": [
           {
             "name": "exerciseId",
@@ -16174,6 +16184,16 @@
         "responses": {
           "201": {
             "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrantResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {

@@ -99,4 +99,32 @@ public class MultiSupervisorTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.Equal(HttpStatusCode.NotFound, (await supA.DeleteAsync($"{url}/{omaId}")).StatusCode);
         Assert.Equal(1, (await (await supA.GetAsync(url)).Content.ReadFromJsonAsync<JsonElement>()).GetArrayLength());
     }
+
+    // ─────────────────────────────────── B-98: the idempotent repeat answers 200 with the STORED link
+
+    [Fact]
+    public async Task ErneutesHinzufuegen_Meldet200_MitDerGespeichertenBeziehungNichtDerNeuen()
+    {
+        var supA = await TestApi.FatherAsync(_factory);
+        var childId = await TestApi.IdAsync(await supA.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = "B-98-Kind", pin = "6301" }));
+        var url = $"/api/v1/supervisor/children/{childId}/supervisors";
+
+        var reg = await _factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/adults",
+            new { name = "Onkel", pin = "6302" });
+        var onkelId = await TestApi.IdAsync(reg);
+
+        var first = await supA.PostAsJsonAsync(url, new { supervisorId = onkelId, relation = "Guardian" });
+        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+
+        // A second POST with a DIFFERENT relation must not overwrite it and must not claim a second insert:
+        // 200, and the ORIGINALLY stored relation, not the caller's new one.
+        var second = await supA.PostAsJsonAsync(url, new { supervisorId = onkelId, relation = "Other" });
+        Assert.Equal(HttpStatusCode.OK, second.StatusCode);
+        var body = await second.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("Guardian", body.GetProperty("relation").GetString());
+
+        var firstBody = await first.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(firstBody.GetProperty("createdAt").GetDateTime(), body.GetProperty("createdAt").GetDateTime());
+    }
 }

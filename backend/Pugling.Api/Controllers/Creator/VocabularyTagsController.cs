@@ -41,7 +41,12 @@ public class VocabularyTagsController(PuglingDbContext db) : ControllerBase
 
         var existing = await db.VocabTags.FirstOrDefaultAsync(t => t.Name == name, ct);
         if (existing is not null)
-            return Ok(new VocabTagResponse(existing.Id, existing.Name, existing.Color, existing.Links.Count, existing.CreatedAt));
+        {
+            // `existing.Links` is never loaded here (no Include, no lazy loading) - reading its .Count would
+            // silently report 0 regardless of how many vocabulary entries actually carry the tag (B-98).
+            var linkCount = await db.VocabTagLinks.CountAsync(l => l.VocabTagId == existing.Id, ct);
+            return Ok(new VocabTagResponse(existing.Id, existing.Name, existing.Color, linkCount, existing.CreatedAt));
+        }
 
         var tag = new VocabTag { Name = name, Color = dto.Color?.Trim() is { Length: > 0 } c ? c : null };
         db.VocabTags.Add(tag);

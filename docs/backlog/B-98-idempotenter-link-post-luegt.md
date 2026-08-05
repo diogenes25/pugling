@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/backend, bereich/api]
+tags: [typ/story, status/abgenommen, bereich/backend, bereich/api]
 aliases: [201 ohne Insert, erfundene Antwortwerte, idempotenter Link-POST]
-status: ausformuliert
+status: abgenommen
 prio: P2
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: S
+wo: backend
+migration: nein
+vertragsbruch: ja
 quelle: docs/api-design-bewertung.md (Vorschlag A2) — Arbeitsrunde PM/API-Designer/Entwickler am 2026-08-04
 grund: ""
 ersetzt_durch: []
@@ -63,7 +63,7 @@ und (3) **kein** heutiger Schaden — aber ein `201` ohne Erzeugung ist eine Fal
 unabhängig davon, ob sie gerade jemand liest, und ein Test hält sie fest. Genau darüber ging der Streit in
 der Runde: „niemand liest es" begründet, warum es nicht **drängt**, nicht, warum es richtig ist.
 
-## Ergebnis der Arbeitsrunde vom 2026-08-04
+## Ergebnis der Arbeitsrunde vom 2026-08-04 (gegrillt)
 
 1. **Alle drei Stellen, als eine Regel.** Formulierung für `backend/Pugling.Api/CLAUDE.md`: *„Ein
    idempotenter Link-POST antwortet `201` nur bei tatsächlichem Insert, sonst `200` mit der **gelesenen**
@@ -91,8 +91,28 @@ der Runde: „niemand liest es" begründet, warum es nicht **drängt**, nicht, w
 5. Ein Integrationstest je Fall, der vorher rot war; `ExerciseGrantsTests` prüft die neue Semantik statt der
    alten.
 
+## Schätzung
+
+`groesse: S`, `wo: backend`, `migration: nein`, `vertragsbruch: ja` (201 → 200 im idempotenten Zweig, in
+v1 zulässig — betrifft laut Leser-Messung nur Tests, kein Frontend/Client-Konsument). Angriffsplan: alle
+drei Stellen als eine Regel („Insert → 201, sonst 200 mit der gelesenen Zeile"), reihum
+`VocabularyTagsController` (nur Zähler, Statuscode war schon richtig) →
+`ExerciseGrantsController` → `ChildrenController.AddSupervisor`. Testweg: ein Integrationstest je Stelle,
+rot gegen den Vorzustand (`git stash` der drei Controller), dazu der bestehende
+`ExerciseGrantsTests.GrantIstIdempotent_UndListeZeigtOwner`-Test korrigiert (er schrieb die falsche
+Erwartung fest, siehe „Ergebnis der Arbeitsrunde" Punkt 4).
+
 ## Verlauf
 
 - **2026-08-04** — angelegt aus `docs/api-design-bewertung.md` (A2) und der Arbeitsrunde. Der API-Designer
   hatte (2)/(3) zunächst zurückgezogen („kein Leser"), nach dem Vertragsargument des Entwicklers wieder
   aufgenommen; die Leser-Messung und der Test-Fund stammen aus Runde 2.
+- **2026-08-05** — im Autonomen Modus gegrillt (Arbeitsrunden-Ergebnis vom 2026-08-04 als Entscheidung
+  übernommen), geschätzt und gebaut. Rote Probe zuerst: alle drei neuen Tests scheiterten gegen den
+  Vorzustand (`vocabCount` 0 statt 2, `201` statt `200`). `pugling-reviewer` fand keinen Blocker; ein
+  Politur-Hinweis (`AsNoTracking()` im reinen Lese-Zweig von zwei Controllern) direkt übernommen und erneut
+  grün getestet — der TOCTOU-Hinweis des Reviewers ist ausdrücklich derselbe vorbestehende, bewusst
+  nicht adressierte Zustand wie vor dem Fix (Entscheidung 3: „kein Tor"). `dotnet test Pugling.sln -c
+  Release` → **715/715 grün** (713 + 2 neue Fakten in bestehenden Testklassen). Frontend: `npm run build`
+  (Contract-Regenerierung, Typecheck) und `npm test` (127/127) unverändert grün — kein Quellcode-Zweig
+  betroffen. Commit: siehe Repo-Verlauf (B-98-Commit). Status → `abgenommen`.
