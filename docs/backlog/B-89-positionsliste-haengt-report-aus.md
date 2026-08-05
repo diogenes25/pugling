@@ -240,4 +240,4 @@ zu werden.
   Früh-Return-Kette fällt beim Reload korrekt durch, alle Stichproben der „inert"-Einstufung bestätigt,
   beide identischen Stellen-Paare in `VaterShop.tsx`/`VaterRewards.tsx` tatsächlich beide gefixt (nicht
   nur eine durch eine mehrdeutige Ersetzung), die AK-5-Abweichung eigenständig nachvollzogen und für
-  tragfähig befunden (🟡, kein Blocker). Commit `<hash>`. Status → `abgenommen`.
+  tragfähig befunden (🟡, kein Blocker). Commit `b9b8279`, dazu dieser. Status → `abgenommen`.
