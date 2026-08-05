@@ -343,9 +343,12 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         var query = db.ShopPurchases.AsNoTracking().Where(p => p.ChildId == childId && p.SupervisorId == fid);
         if (status is not null) query = query.Where(p => p.Status == status);
 
+        // The ordering must not be able to MOVE a row (B-110/B-113): offset paging is only sound over a
+        // stable sequence, and grouping cancelled purchases last did exactly that - approving/cancelling
+        // between two page requests shifted rows and skipped one for good. Purchase time is immutable;
+        // the client marks cancellations with a pill instead of a position.
         return await query
-            .OrderBy(p => p.Status == ShopPurchaseStatus.Owned ? 0 : 1)
-            .ThenByDescending(p => p.PurchasedAt).ThenByDescending(p => p.Id)
+            .OrderByDescending(p => p.PurchasedAt).ThenByDescending(p => p.Id)
             .Select(p => MapPurchase(p))
             .ToPagedListAsync(Response, skip, take, ct);
     }
@@ -371,7 +374,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
 
     // ─── Activation requests ─────────────────────────────────────────────────
 
-    /// <summary>Activation requests of a child, optionally filtered by status (open ones first).</summary>
+    /// <summary>Activation requests of a child, optionally filtered by status.</summary>
     [HttpGet("~/" + ApiRoutes.Supervisor + "/children/{childId:int}/shop/activations")]
     [ServiceFilter(typeof(ChildOwnershipFilter))]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -385,9 +388,10 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
         var query = db.ActivationRequests.AsNoTracking().Where(r => r.ChildId == childId && r.SupervisorId == fid);
         if (status is not null) query = query.Where(r => r.Status == status);
 
+        // Same rule as the purchase history above (B-113): the order must not move under approve/reject,
+        // and two requests within the same second need a tiebreaker or repeated page reads could disagree.
         return await query
-            .OrderBy(r => r.Status == ActivationRequestStatus.Pending ? 0 : 1)
-            .ThenByDescending(r => r.RequestedAt)
+            .OrderByDescending(r => r.RequestedAt).ThenByDescending(r => r.Id)
             .Select(r => MapActivation(r))
             .ToPagedListAsync(Response, skip, take, ct);
     }

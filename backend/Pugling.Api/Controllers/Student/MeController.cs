@@ -370,9 +370,10 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         var query = db.ActivationRequests.AsNoTracking().Where(r => r.ChildId == cid);
         if (status is not null) query = query.Where(r => r.Status == status);
 
+        // Same rule as the purchase history below (B-113): the order must not move under approve/reject,
+        // and two requests within the same second need a tiebreaker or repeated page reads could disagree.
         return await query
-            .OrderBy(r => r.Status == ActivationRequestStatus.Pending ? 0 : 1)
-            .ThenByDescending(r => r.RequestedAt)
+            .OrderByDescending(r => r.RequestedAt).ThenByDescending(r => r.Id)
             .Select(r => MapActivation(r))
             .ToPagedListAsync(Response, skip, take, ct);
     }

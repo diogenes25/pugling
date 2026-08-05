@@ -1368,4 +1368,91 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         Assert.Equal(4, beideSeiten.Distinct().Count());
         Assert.Equal(beideSeiten.Count, beideSeiten.Distinct().Count());
     }
+
+    [Fact]
+    public async Task VaterKaufhistorie_StornoZwischenZweiSeiten_UeberspringtKeineZeile()
+    {
+        // Same defect one level up (B-113): the supervisor's own purchase list had the same mutable-first
+        // ordering that B-110 removed on the child's side.
+        var father = await TestApi.FatherAsync(factory);
+        var (childId, child) = await FreshChildAsync(father, "9403");
+        int[] ids;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            var purchases = Enumerable.Range(0, 4).Select(i => new ShopPurchase
+            {
+                ChildId = childId,
+                SupervisorId = 1,
+                ArticleNumber = $"VSORT-{i}",
+                Title = $"Kauf {i}",
+                CoinPrice = 10,
+                UnitsPerPurchase = 1,
+                PurchasedAt = DateTime.UtcNow.AddMinutes(-i),
+            }).ToList();
+            db.ShopPurchases.AddRange(purchases);
+            await db.SaveChangesAsync();
+            ids = purchases.Select(p => p.Id).ToArray();
+        }
+
+        var seite1 = await JsonAsync(await father.GetAsync(
+            $"/api/v1/supervisor/children/{childId}/shop/purchases?skip=0&take=2"));
+        var idsSeite1 = seite1.EnumerateArray().Select(p => p.GetProperty("id").GetInt32()).ToList();
+        Assert.Equal(2, idsSeite1.Count);
+
+        Assert.Equal(HttpStatusCode.OK, (await father.PostAsJsonAsync(
+            $"/api/v1/supervisor/children/{childId}/shop/purchases/{idsSeite1[0]}/cancel", new { })).StatusCode);
+
+        var seite2 = await JsonAsync(await father.GetAsync(
+            $"/api/v1/supervisor/children/{childId}/shop/purchases?skip=2&take=2"));
+        var idsSeite2 = seite2.EnumerateArray().Select(p => p.GetProperty("id").GetInt32()).ToList();
+
+        var beideSeiten = idsSeite1.Concat(idsSeite2).ToList();
+        Assert.Equal(ids.Length, beideSeiten.Distinct().Count());
+        Assert.Equal(beideSeiten.Count, beideSeiten.Distinct().Count());
+    }
+
+    [Fact]
+    public async Task VaterAktivierungen_GenehmigungZwischenZweiSeiten_UeberspringtKeineZeile()
+    {
+        // Same defect, same fix, at the activation-request queue (B-113): approving/rejecting is the
+        // ROUTINE case there, not an edge case, so the old status-first grouping bit harder here.
+        var father = await TestApi.FatherAsync(factory);
+        var (childId, _) = await FreshChildAsync(father, "9404");
+        int[] ids;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            var requests = Enumerable.Range(0, 4).Select(i => new ActivationRequest
+            {
+                ChildId = childId,
+                SupervisorId = 1,
+                RequestedQuantity = 1,
+                ArticleTitle = $"Anfrage {i}",
+                UnitType = UnitType.Stueck,
+                ActionType = ActionType.Sonstiges,
+                RequestedAt = DateTime.UtcNow.AddMinutes(-i),
+            }).ToList();
+            db.ActivationRequests.AddRange(requests);
+            await db.SaveChangesAsync();
+            ids = requests.Select(r => r.Id).ToArray();
+        }
+
+        var seite1 = await JsonAsync(await father.GetAsync(
+            $"/api/v1/supervisor/children/{childId}/shop/activations?skip=0&take=2"));
+        var idsSeite1 = seite1.EnumerateArray().Select(r => r.GetProperty("id").GetInt32()).ToList();
+        Assert.Equal(2, idsSeite1.Count);
+
+        // Reject needs no inventory - the point here is the reordering, not the activation itself.
+        Assert.Equal(HttpStatusCode.OK, (await father.PostAsJsonAsync(
+            $"/api/v1/supervisor/children/{childId}/shop/activations/{idsSeite1[0]}/reject", new { })).StatusCode);
+
+        var seite2 = await JsonAsync(await father.GetAsync(
+            $"/api/v1/supervisor/children/{childId}/shop/activations?skip=2&take=2"));
+        var idsSeite2 = seite2.EnumerateArray().Select(r => r.GetProperty("id").GetInt32()).ToList();
+
+        var beideSeiten = idsSeite1.Concat(idsSeite2).ToList();
+        Assert.Equal(ids.Length, beideSeiten.Distinct().Count());
+        Assert.Equal(beideSeiten.Count, beideSeiten.Distinct().Count());
+    }
 }
