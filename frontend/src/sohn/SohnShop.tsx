@@ -35,6 +35,10 @@ export function SohnShop() {
   const [historyTotal, setHistoryTotal] = useState(0);
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
+  // Eigener Fehler-State, nicht der geteilte `msg`-Toast (B-111): der Toast ist nach 2 s weg, und danach
+  // stand die Karte da und behauptete „Noch nichts gekauft" – eine Aussage über die Vergangenheit des
+  // Kindes, die sie nach einem gescheiterten Request nicht belegen kann.
+  const [historyError, setHistoryError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -62,13 +66,17 @@ export function SohnShop() {
     if (loadingHistory.current) return;
     loadingHistory.current = true;
     setHistoryLoading(true);
+    setHistoryError(null);
     try {
       const page = await api.shopPurchasesPage(history.length, HISTORY_PAGE);
       setHistory((prev) => [...prev, ...page.items]);
       setHistoryTotal(page.total);
       setHistoryLoaded(true);
     } catch (e) {
+      // Zweimal, weil es zwei Fragen beantwortet: der Toast, dass der Klick angekommen ist, der
+      // Karten-Zustand, was jetzt gilt (B-111).
       flash(errorMessage(e));
+      setHistoryError(errorMessage(e));
     } finally {
       loadingHistory.current = false;
       setHistoryLoading(false);
@@ -93,6 +101,14 @@ export function SohnShop() {
     try {
       const next = await api.purchaseListing(listing.id);
       setView(next);
+      // Den geladenen Verlauf verwerfen, nicht ergänzen (B-110): der neue Kauf sitzt am Kopf der Liste,
+      // ein Anhängen aus `next.purchases` käme ohne `X-Total-Count` (der `http`-Helfer liest keine
+      // Header), und „X von Y" wäre danach falsch. Ohne das Verwerfen fehlte der eigene Kauf im Verlauf,
+      // solange die Sitzung läuft – und „Mehr laden" holte die zuletzt gezeigte Zeile ein zweites Mal.
+      setHistory([]);
+      setHistoryTotal(0);
+      setHistoryLoaded(false);
+      setHistoryError(null);
       refreshWallet(); // Münzstand im HUD real aktualisieren (nach Kauf niedriger)
       celebrate("medium", ACTION_EMOJI[listing.actionType], "GEKAUFT!", listing.title);
     } catch (e) {
@@ -152,7 +168,8 @@ export function SohnShop() {
         : tab === "buy" ? <BuyTab listings={view.available} busy={busy} onBuy={buy} />
         : tab === "stuff" ? <StuffTab inventory={view.inventory} busy={busy} onActivate={requestActivation} />
         : tab === "requests" ? <RequestsTab activations={activations} />
-        : <HistoryTab purchases={history} total={historyTotal} loading={historyLoading} onLoadMore={loadMoreHistory} />}
+        : <HistoryTab purchases={history} total={historyTotal} loading={historyLoading}
+            error={historyError} onLoadMore={loadMoreHistory} />}
 
       {msg && <div className="toast" role="status" aria-live="polite">{msg}</div>}
     </div>
@@ -291,14 +308,32 @@ function RequestsTab({ activations }: { activations: MyActivation[] }) {
 /**
  * Kaufhistorie mit "mehr laden" statt einer stillen Abschnittsgrenze (B-99): der Server sagt über
  * `total` die echte Gesamtzahl, damit "X von Y" ehrlich ist statt einer Liste, die einfach aufhört.
+ *
+ * Die Karte kennt drei Zustände, nicht zwei (B-111): eine leere Liste heißt nur dann "nichts gekauft",
+ * wenn wirklich geladen wurde. Ist das Laden gescheitert, ist "leer" eine Unbekannte – und die als
+ * Auskunft über die Vergangenheit des Kindes auszugeben, war die Lüge, die es hier zu vermeiden gilt.
  */
-export function HistoryTab({ purchases, total, loading, onLoadMore }: {
-  purchases: MyShopPurchase[]; total: number; loading: boolean; onLoadMore: () => void;
+export function HistoryTab({ purchases, total, loading, error, onLoadMore }: {
+  purchases: MyShopPurchase[]; total: number; loading: boolean; error: string | null; onLoadMore: () => void;
 }) {
-  if (!loading && purchases.length === 0)
+  if (purchases.length === 0) {
+    if (error != null)
+      return (
+        <div className="list">
+          <div className="banner err">{error}</div>
+          <button type="button" className="btn ghost small" disabled={loading} onClick={onLoadMore}>
+            {loading ? "Lädt…" : "Nochmal versuchen"}
+          </button>
+        </div>
+      );
+    if (loading) return null; // Weder "nichts gekauft" noch ein Fehler steht fest, solange geladen wird.
     return <p className="sub">Noch nichts gekauft. Hol dir im Tab <b>Kaufen</b> etwas Schönes! 🎁</p>;
+  }
   return (
     <div className="list">
+      {/* Scheitert eine SPÄTERE Seite, bleiben die schon geladenen Zeilen stehen - der "Mehr laden"-Knopf
+          darunter ist dann selbst der Wiederholen-Knopf. */}
+      {error != null && <div className="banner err">{error}</div>}
       {purchases.map((p) => (
         <div key={p.id} className="row" style={{ justifyContent: "space-between", padding: "8px 0" }}>
           <div>
