@@ -41,6 +41,11 @@ RTL das **nicht** selbst (Begründung in [src/test-setup.ts](src/test-setup.ts),
 `src/test-setup.test.tsx`). **Grenze: kein nachgebauter Bildschirm mit gefälschtem `fetch`** – Bausteine und
 Regeln hier, Wege durch die App bei Playwright. Klicks per `fireEvent`, nie `node.click()`.
 
+**Eine Fläche je E2E-Spec** – Neues als eigene Datei, nicht als Block am Ende einer bestehenden: eine Spec
+bricht beim ersten Rot ab und nimmt alles Nachfolgende mit, und „E2E ist rot" nennt den Schritt, nie den
+Umfang ([B-109](../docs/backlog/B-109-full-flow-spec-flackert-bei-frage-3.md) hat so vier Flächen
+stillgelegt). Der Durchstich bleibt **ein** Weg, Neues steht daneben.
+
 **Jeder Knopf, der eine Mutation auslöst, trägt `disabled={busy}`** – auch wenn `useAction` seinen
 Wiedereintritt selbst sperrt (`useRef`, synchron): es ist der Wartepunkt der Playwright-Actionability und der
 sichtbare Grund, warum eine verworfene zweite Aktion nicht wie „nichts passiert" aussieht. Die Sperre gilt je
