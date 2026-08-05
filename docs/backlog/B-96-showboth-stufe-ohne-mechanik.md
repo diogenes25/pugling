@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: Code-Review 2026-08-04 der Commits 3be7409…f8b0c99 (B-70/B-78/B-79)
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-08-05
 ---
 
 # B-96 · „Beide zeigen (Kennenlernen)" ist eine Beschriftung ohne eigene Stufe

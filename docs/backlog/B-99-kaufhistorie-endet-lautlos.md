@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: docs/api-design-bewertung.md (Vorschlag B3) — Arbeitsrunde PM/API-Designer/Entwickler am 2026-08-04
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-08-05
 ---
 
 # B-99 · Die Kaufhistorie des Kindes endet lautlos bei 50 Zeilen

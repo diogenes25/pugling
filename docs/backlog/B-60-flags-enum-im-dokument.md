@@ -9,6 +9,7 @@ wo: backend
 migration: nein
 vertragsbruch: nein
 quelle: docs/testabdeckung-plan.md
+nachgeschaut: 2026-08-05
 ---
 
 # B-60 · Das Vertragsdokument verbietet einen `SchoolTypes`-Wert, den Server und Frontend täglich austauschen

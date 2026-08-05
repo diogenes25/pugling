@@ -11,6 +11,7 @@ vertragsbruch: ja
 quelle: docs/api-design-bewertung.md (Vorschlag A2) — Arbeitsrunde PM/API-Designer/Entwickler am 2026-08-04
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-08-05
 ---
 
 # B-98 · Drei idempotente Schreibpfade antworten mit erfundenen Werten, zwei davon mit `201 Created`

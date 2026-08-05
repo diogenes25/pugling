@@ -64,10 +64,18 @@ unbelegt=""
 # die in bereits abgenommener Arbeit gefunden wurden (Feld `entgangen_bei`). Alles andere im Index zählt
 # Regelkonformität; das hier zählt, was die Abnahme durchgelassen hat.
 entgangen=""
+# Der NENNER zur Zahl oben, und der Grund, warum sie überhaupt etwas bedeutet: `nachgeschaut` hält je
+# abgenommener Story fest, ob nach der Abnahme noch einmal jemand hingesehen hat. Ohne dieses Feld ist
+# eine leere Entgleitungs-Liste nicht von „nie geprüft" zu unterscheiden — und genau diese Verwechslung
+# macht Qualitätszahlen wertlos. Ein Blick, der NICHTS findet, wird darum genauso eingetragen.
+nie_geschaut=""
+geschaut_ids=""
+ziel_ids=""
 n_offen=0
 n_fertig=0
 n_verworfen=0
 n_entgangen=0
+n_geschaut=0
 
 # Trägt die Datei den Abschnitt, den ihre Stufe verlangt? Tolerant gematcht: die dünnen Stories fassen
 # "Ist-Stand am Code · Entscheidungen" in EINER Überschrift zusammen und verlinken ein Protokoll.
@@ -160,12 +168,21 @@ for f in docs/backlog/B-*.md; do
   if [ -n "$ez" ] && [ "$ez" != "[]" ] && [ "$art" = "Defekt" ]; then
     entgangen="${entgangen}| [$id]($base) | $titel | $(printf '%s' "$ez" | sed 's/|/\\|/g') | \`$status\` |"$'\n'
     n_entgangen=$((n_entgangen + 1))
+    # Ziel-Ids für die Trefferquote merken: aus "[B-99, B-66]" wird " B-99 B-66 ".
+    ziel_ids="$ziel_ids $(printf '%s' "$ez" | tr -d '[]' | tr ',' ' ')"
   fi
 
   case "$status" in
     abgenommen)
       fertig="${fertig}${row}"$'\n'
       n_fertig=$((n_fertig + 1))
+      ng="$(fm "$f" nachgeschaut)"
+      if [ -n "$ng" ] && [ "$ng" != '""' ]; then
+        n_geschaut=$((n_geschaut + 1))
+        geschaut_ids="$geschaut_ids $id"
+      else
+        nie_geschaut="${nie_geschaut}| [$id]($base) | $titel |"$'\n'
+      fi
       ;;
     verworfen)
       grund="$(fm "$f" grund)"; [ -n "$grund" ] || grund="—"
@@ -205,16 +222,32 @@ shopt -u nullglob
       printf '\n</details>\n'
     fi
 
-    # Bewusst NICHT als Quote „x von y abgenommenen" ausgegeben: eine Entgleitung ist nur dort sichtbar,
-    # wo hinterher jemand hingesehen hat. Ein Nenner aus allen abgenommenen Stories läse sich wie eine
-    # Fehlerrate und wäre eine Lüge über die 38, die nie nachgeprüft wurden.
+    # Die Quote läuft über die NACHGESCHAUTEN, nie über alle abgenommenen: eine Entgleitung ist nur dort
+    # sichtbar, wo hinterher jemand hingesehen hat. „4 von 42" läse sich wie eine Fehlerrate und wäre eine
+    # Lüge über die nie geprüften.
+    n_ziele=0
+    for z in $(printf '%s' "$ziel_ids" | tr ' ' '\n' | sort -u); do
+      [ -n "$z" ] || continue
+      case " $geschaut_ids " in *" $z "*) n_ziele=$((n_ziele + 1)) ;; esac
+    done
+    n_nie=$((n_fertig - n_geschaut))
+
     printf '\n%s\n\n' "### Nach der Abnahme entgangen ($n_entgangen)"
+    printf '%s\n\n' "**Nachgeschaut: $n_geschaut von $n_fertig abgenommenen** — und in $n_ziele davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen $n_nie sind **unbeobachtet**, nicht sauber."
     if [ "$n_entgangen" -eq 0 ]; then
-      printf '%s\n' "*Keine erfasst* — das heißt **nicht** \"keine vorhanden\": ohne einen Blick nach der"
-      printf '%s\n' "Abnahme entsteht hier kein Eintrag. Siehe den Abschnitt über die Wirkungs-Zahl oben."
+      printf '%s\n' "*Keine Entgleitung erfasst.*"
     else
       printf '%s\n%s\n' "| Defekt | Titel | Entgangen bei | Stufe |" "| --- | --- | --- | --- |"
       printf '%s' "$entgangen"
+    fi
+
+    if [ -n "$nie_geschaut" ]; then
+      printf '\n<details>\n<summary>Nie nachgeschaut (%s) — Arbeitsvorrat der Nachschau</summary>\n\n' "$n_nie"
+      printf '%s\n' "Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt"
+      printf '%s\n\n' "danach \`nachgeschaut: <Datum>\` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht."
+      printf '%s\n%s\n' "| Id | Story |" "| --- | --- |"
+      printf '%s' "$nie_geschaut"
+      printf '\n</details>\n'
     fi
 
     if [ -n "$unbelegt" ]; then

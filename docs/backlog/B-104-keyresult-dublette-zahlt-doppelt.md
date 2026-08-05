@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: pugling-reviewer zum B-97-Bau, Befund 2 (2026-08-04)
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-08-05
 ---
 
 # B-104 · Derselbe Meilenstein zweimal: drei Schreibpfade laufen ungeprüft in einen Unique-Index, und dort hängt Geld

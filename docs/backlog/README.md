@@ -119,6 +119,7 @@ unverifiziert: true       # nur auf 'idee'
 grund: ""                 # nur bei 'verworfen'
 ersetzt_durch: []         # nur bei 'verworfen: geteilt'
 entgangen_bei: []         # nur bei 'art: Defekt' — welche ABGENOMMENE Story ihn durchgelassen hat
+nachgeschaut: ""          # nur bei 'abgenommen' — Datum des Blicks NACH der Abnahme (auch ohne Fund!)
 ---
 ```
 
@@ -369,17 +370,44 @@ Unterscheidung ist der ganze Wert des Felds, darum an echten Fällen dieses Bere
 | Abspaltung einer Grill-Entscheidung | B-72, B-77, B-78 (aus B-69/B-76) | nein — nie ausgeliefert, nichts entgangen |
 | Nicht zuordenbar (Altbestand vor diesem Bereich) | B-109 | Feld bleibt leer, und das ist keine Nachlässigkeit |
 
-### Der Nenner ist die Falle
+### Der Nenner ist die Falle — darum ist er ein Feld
 
-**Es gibt bewusst keine Quote.** „4 von 42 abgenommenen" läse sich wie eine Fehlerrate von zehn Prozent
-und wäre eine Lüge über die 38, die **nie nachgeprüft** wurden. Ein fehlender Eintrag heißt „nicht
-beobachtet", niemals „sauber". Die Quote, die etwas bedeuten würde, hätte als Nenner die *nachträglich
-geprüften* Stories — und dieser Nenner ist heute **zwei Durchgänge** (die Code-Reviews vom 2026-08-04 und
-2026-08-05), beide von Hand angestoßen.
+**Die Quote läuft nie über alle abgenommenen Stories.** „4 von 42" läse sich wie zehn Prozent Fehlerrate
+und wäre eine Lüge über die, die **nie nachgeprüft** wurden. Ein fehlender Eintrag heißt „nicht
+beobachtet", niemals „sauber".
 
-Daraus folgt die Bedingung, ohne die die Messung wertlos ist: **es muss regelmäßig jemand nach der
-Abnahme hinsehen.** Bleibt die Zahl bei null, weil niemand nachschaut, misst sie nichts — sie sinkt nicht,
-sie verschwindet nur aus dem Blick. Das ist die Gegenprobe zur Zahl selbst.
+Damit der Unterschied überhaupt existiert, trägt jede abgenommene Story das Gegenstück:
+
+```yaml
+nachgeschaut: 2026-08-05   # nach der Abnahme hat noch einmal jemand hingesehen
+```
+
+**Ein Blick, der nichts findet, wird genauso eingetragen** — das ist die tragende Hälfte der Regel. Sonst
+ist „sauber geprüft" von „nie angesehen" nicht zu unterscheiden, und genau diese Verwechslung macht jede
+Qualitätszahl wertlos. Der Index rechnet daraus die einzige ehrliche Quote (*„Nachgeschaut: X von Y — und
+in Z davon steckte ein durchgekommener Defekt"*) und führt die nie geprüften als **Arbeitsvorrat der
+Nachschau** auf.
+
+### Der Auslöser: die Nachschau ist die Pflichthandlung der Retro
+
+Ohne Auslöser bleibt die Zahl bei null, weil niemand hinsieht — sie sinkt dann nicht, sie verschwindet aus
+dem Blick. Der Auslöser sitzt darum in `pm-loop` **Step 8** und ist die *einzige Pflichthandlung* der
+Retrospektive: sie liest die Zeile „Nachgeschaut: X von Y" aus diesem Index, und ist die Arbeit des
+**vorigen** Sprints nicht unter den X, wird sie jetzt angesehen. Das Ergebnis steht als erste Zeile unter
+`## Retrospektive` im Protokoll — **ein Sprint ohne Nachschau-Zeile ist nicht geschlossen.**
+
+Das ist kein Tor im harten Sinn, und der Grund dafür ist ehrlich zu benennen: die Handlung „hinsehen" ist
+nicht mechanisch prüfbar, nur ihre *Aufzeichnung*. Was der Mechanismus leistet, ist, das Weglassen
+**sichtbar** zu machen — eine fehlende Zeile in einem datierten Protokoll und ein Nenner, der nicht wächst.
+Was er nicht leisten kann, ist, einen flüchtigen Blick von einem sorgfältigen zu unterscheiden.
+
+**Der Stand der Nachschau heute:** von den vierzehn Abnahmen der autonomen Runde vom 2026-08-05 hat der
+Code-Review am Folgetag genau **acht** erfasst (die Commits `4469662…b20600f`: B-104, B-96, B-98, B-99,
+B-60, B-66, B-93, B-56). Die übrigen sechs — B-57, B-61, B-62, B-72, B-84, B-89 — wurden **nie**
+nachgesehen und stehen im Arbeitsvorrat. In **drei** der acht geprüften steckte ein durchgekommener Defekt
+(B-99 zweimal, B-96, B-66). Der Durchgang vom 2026-08-04 ist bewusst **nicht** nachgetragen: welche Stories
+er abdeckte und ob B-93/B-96 seiner Arbeit zuzurechnen sind, ist nicht belegt — und ein geratener Nenner
+wäre schlimmer als ein kleiner.
 
 ### Warum der Defekt eine eigene Story braucht
 
@@ -566,12 +594,59 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 
 ### Nach der Abnahme entgangen (4)
 
+**Nachgeschaut: 8 von 42 abgenommenen** — und in 3 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 34 sind **unbeobachtet**, nicht sauber.
+
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
 | [B-110](B-110-kaufverlauf-ueberspringt-zeilen.md) | Der Kaufverlauf überspringt Zeilen und verpasst den eigenen Kauf | [B-99] | `in-arbeit` |
 | [B-111](B-111-verlauf-luegt-im-fehlerfall.md) | Scheitert das Laden des Verlaufs, sagt die App „Noch nichts gekauft" | [B-99] | `in-arbeit` |
 | [B-114](B-114-showboth-position-unspielbar.md) | Eine Kennenlern-Position hatte für das Kind keinen einzigen Knopf — und kostete Münzen | [B-96] | `in-arbeit` |
 | [B-115](B-115-buchstabenkaestchen-index-drift.md) | Übersprang das Kind ein Buchstabenkästchen, rutschten alle folgenden Zeichen | [B-66] | `in-arbeit` |
+
+<details>
+<summary>Nie nachgeschaut (34) — Arbeitsvorrat der Nachschau</summary>
+
+Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
+danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
+
+| Id | Story |
+| --- | --- |
+| [B-01](B-01-bildwahl-einfrieren.md) | Abschlusstest friert Bildwahlen ein, die er nie zeigt |
+| [B-02](B-02-itemcount-hilfetext.md) | Der Hilfetext erklärt `ItemCount` falsch herum |
+| [B-08](B-08-xml-docs-englisch.md) | XML-Doc-Kommentare im Backend auf Englisch übersetzen |
+| [B-10](B-10-zeitfenster-pro-kind.md) | Zeitfenster (Punkte-Faktor) je Pflicht statt global |
+| [B-105](B-105-taegliche-belohnungsbox.md) | Tägliche Belohnungsbox: Loot-Box + Streak als positives Gegenstück zum Stick |
+| [B-106](B-106-lehrwerkgetriebener-katalog.md) | Übungen hängen künftig am Lehrwerk, nicht am Kapitel |
+| [B-26](B-26-e2e-in-ci.md) | Der E2E-Nachtlauf ist rot – und niemand erfährt es |
+| [B-37](B-37-uebung-abbruch-unvollendet.md) | Abgebrochene Runden: Pflicht härten, Klausur deckeln |
+| [B-40](B-40-client-routen-waechter.md) | Routen aus `Pugling.Client` gegen das OpenAPI-Dokument halten |
+| [B-41](B-41-produktions-startup-smoke.md) | Der Produktionspfad des Starts ist der einzige ohne Test |
+| [B-42](B-42-openapi-typen-generieren.md) | TypeScript-Typen aus dem OpenAPI-Dokument erzeugen statt von Hand pflegen |
+| [B-43](B-43-frontend-komponententests.md) | Die Doppelklick-Lücke in `useAction` – und die fehlende Ebene für unsichtbare Zusicherungen |
+| [B-52](B-52-testabdeckung-paket.md) | Sammel-Story: das Testabdeckungs-Paket |
+| [B-53](B-53-wizard-doppelklick.md) | Zwei Klicks im Lehrplan-Assistenten legen zwei Kinder und zwei Pläne an |
+| [B-54](B-54-objectivecard-schreib-primitive.md) | Fünf Knöpfe im Vater-Web gehen an den Schreib-Primitiven vorbei |
+| [B-57](B-57-beispielkatalog-schreib-lese-rennen.md) | Im Testlauf lesen und schreiben zwei Stellen gleichzeitig dieselbe Katalogdatei |
+| [B-61](B-61-reste-der-schreib-primitiven-runde.md) | Zwei Reste aus der Schreib-Primitiven-Runde |
+| [B-62](B-62-reste-aus-dem-b37-review.md) | Drei Reste aus dem B-37-Review (Sohn-Arcade) |
+| [B-65](B-65-vokabel-mehrere-uebersetzungen.md) | Eine Vokabel mit zwei richtigen Übersetzungen wertet eine davon falsch |
+| [B-69](B-69-wiederhol-felder-alternativen.md) | Kommagetrennte Sammelfelder: einer davon nimmt gar keine zweite Alternative an |
+| [B-70](B-70-selbsteinschaetzung-nur-primaerloesung.md) | Die Selbsteinschätzung zeigt nur die primäre Übersetzung |
+| [B-72](B-72-birkenbihl-dekodierung-paarfelder.md) | Die Birkenbihl-Dekodierung trägt zwei Trennzeichen in einem Feld |
+| [B-73](B-73-auswahl-feld-ohne-wirkung.md) | Das Auswahl-Feld verspricht Multiple-Choice, das Kind bekommt Freitext |
+| [B-75](B-75-lese-hoerverstehen-ohne-inhalt.md) | Lese- und Hörverstehen kommen ohne ihren Inhalt beim Kind an |
+| [B-76](B-76-lueckentext-karte-ohne-luecke.md) | Der Lückentext sagt dem Kind nicht, welche Lücke gemeint ist |
+| [B-77](B-77-liste-menge-als-folge.md) | Beim Spielen wird eine ungeordnete Liste als Folge bewertet |
+| [B-78](B-78-birkenbihl-dekodierung-erreicht-kind-nicht.md) | Die Birkenbihl-Dekodierung erreicht das Kind nicht |
+| [B-79](B-79-position-stufe-unvalidiert.md) | Die Stufe einer Position wird gegen nichts geprüft |
+| [B-80](B-80-tags-geben-fremde-konfiguration-preis.md) | Das Kind kann die Lösungen jeder Übung lesen |
+| [B-81](B-81-vokabel-tags-geben-uebersetzungen-preis.md) | Über die Vokabel-Tags kann ein Kind jede Übersetzung des Stores lesen |
+| [B-82](B-82-positions-report-gibt-loesungen-preis.md) | Über den Positions-Report kann ein Kind die Lösung jeder Karte lesen |
+| [B-84](B-84-api-beispiele-behaupten-unerreichbarkeit.md) | Die API-Beispiele behaupten Unerreichbarkeit, wo nur nichts mitgeschnitten wurde |
+| [B-89](B-89-positionsliste-haengt-report-aus.md) | Die Positionsliste hängt bei jeder Änderung den aufgeklappten Report aus |
+| [B-97](B-97-unique-index-ohne-vorpruefung.md) | Zwei Schreibpfade laufen ungeprüft in einen Unique-Index und antworten mit 500 |
+
+</details>
 
 ### ⚠ Stufe behauptet, Datei belegt nicht
 

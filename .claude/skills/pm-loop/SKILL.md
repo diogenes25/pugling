@@ -329,7 +329,20 @@ The sprint's last event, and the only one that **produces** something instead of
 It inspects the *process*, not the product: anything wrong with the software is a story in
 `docs/backlog/`, but anything that let a wrong thing *through* belongs here.
 
-Ask one question, and answer it with evidence from this sprint only:
+**First, the one step that cannot be skipped: the Nachschau.** Before anything else, run the backlog index
+and read one line: *"Nachgeschaut: X von Y abgenommenen"*. If the work accepted in the **previous** sprint
+is not among the X, look at it now — take those stories' commits, review them, and record the result: file
+each escape as its own `Defekt` story with `entgangen_bei`, and set `nachgeschaut: <Datum>` on every story
+you examined, **including the ones where you found nothing**. A clean look that goes unrecorded is
+indistinguishable from no look, and then the effect number is decoration
+(`docs/backlog/README.md` → "Die eine Zahl über die Wirkung").
+
+This is the retro's only *mandatory action*, and the reason is arithmetic: the number that says whether the
+acceptance gate works can only ever be produced afterwards, by looking. Nothing else in this loop produces
+it. Write the result into the protocol under `## Retrospektive` as its first line — a sprint whose
+retrospective has no Nachschau line did not close.
+
+Then ask one question, and answer it with evidence from this sprint only:
 
 **What did this sprint's own gates miss — and did any finding reach us from outside the loop?**
 Every finding that arrived by another route is a retro input by definition: a manual `/code-review`, an
@@ -406,6 +419,7 @@ rounds as the loop iterates. Skeleton:
 <Sign-off je Rolle in eigenen Worten, oder was noch fehlt; ausgefallener Rollengang ausdrücklich benannt>
 
 ## Retrospektive
+**Nachschau:** <welche abgenommenen Stories nachgesehen · was gefunden · `nachgeschaut` gesetzt> · Index: X von Y
 <Was die eigenen Tore durchgelassen haben · der EINE Mechanismus, der es jetzt deckt · was bewusst ungedeckt bleibt>
 
 ## Offene Roadmap (priorisiert)  ·  Konkreter Änderungsstand (für Review)

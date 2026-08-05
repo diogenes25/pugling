@@ -9,6 +9,7 @@ wo: backend
 migration: nein
 vertragsbruch: nein
 quelle: docs/backlog/B-42-openapi-typen-generieren.md
+nachgeschaut: 2026-08-05
 ---
 
 # B-56 · `ProblemDetails` fordert im Schema ein Feld, das es nicht beschreibt

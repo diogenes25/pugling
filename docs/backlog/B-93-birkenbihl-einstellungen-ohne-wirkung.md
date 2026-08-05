@@ -9,6 +9,7 @@ wo: beides
 migration: nein
 vertragsbruch: nein
 quelle: docs/backlog/B-78-birkenbihl-dekodierung-erreicht-kind-nicht.md (pugling-reviewer, Befund 4 + Notiz)
+nachgeschaut: 2026-08-05
 ---
 
 # B-93 · Zwei Birkenbihl-Einstellungen, die lautlos nichts tun

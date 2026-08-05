@@ -9,6 +9,7 @@ wo: beides
 migration: nein
 vertragsbruch: nein
 quelle: remark #13 (Punkte 1 und 3)
+nachgeschaut: 2026-08-05
 ---
 
 # B-66 · Das Buchstabenkästchen lässt Leer- und Satzzeichen tippen, die schon feststehen
