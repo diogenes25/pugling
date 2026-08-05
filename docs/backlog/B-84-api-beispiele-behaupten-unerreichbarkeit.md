@@ -203,4 +203,4 @@ Dokumentationserzeugung ohne Laufzeit-Effekt am Produkt.
   seither weiter, eine feste Zahl im Fließtext veraltet zuverlässig wieder). `dotnet test Pugling.sln
   -c Release` → **728/728 grün**, `markdownlint-cli2` für beide geänderten Dateien grün (die sieben
   gemeldeten Befunde liegen alle in unberührten Fremddateien). Kein Reviewer-Agent nötig (`wo: doku`, per
-  Schätzung). Commit `<hash>`. Status → `abgenommen`.
+  Schätzung). Commit `ff0b25b`, dazu dieser. Status → `abgenommen`.
