@@ -69,6 +69,9 @@ Stufenspezifisch:
   Offene Punkte als Fragenliste formulieren, **je mit deiner Empfehlung** — das ist das Material der
   Grill-Runde.
 - **→ `gegrillt`**: siehe Grill-Runde. Erledigte offene Punkte ~~durchstreichen~~, nicht löschen.
+  Selbst grillen darfst du **nur** unter einer ausdrücklichen Freigabe und **nur** bei `art: Defekt`
+  oder `Aufräumen` — bei `Wunsch` und `Frage` bleibt es beim Dialog, auch mit guter Begründung
+  (Regel und Kosten: README → „Der Backlog-Lauf").
 - **→ `geschaetzt`**: Größe an den Ankern im README ausrichten, nicht frei schätzen. `migration` und
   `vertragsbruch` sind ja/nein und **nachzusehen**, nicht zu vermuten: Schemaänderung ⇒ `migration: ja`
   (die Kette wird neu gefaltet, `SchemaGuardTests` hält Länge 1); Änderung an `Pugling.Contracts` ⇒
@@ -76,7 +79,10 @@ Stufenspezifisch:
   (welche Testklasse, welcher E2E, `/smoke-test`) — „wird getestet" ist kein Testweg.
 - **→ `in-arbeit` / `abgenommen`**: bauen nach den Konventionen der [CLAUDE.md](../../../CLAUDE.md).
   `abgenommen` verlangt **belegte** Verifikation: echte Testzahl, gelaufener E2E/`/smoke-test`, den
-  passenden Reviewer, Commit. Eine hoffnungsvolle Formulierung ist hier eine Lüge mit Haltbarkeitsdatum.
+  passenden Reviewer, Commit — **und den Rollengang an der laufenden App** (`pm-loop` Step 6) oder eine
+  `## Verlauf`-Zeile, die seinen Ausfall benennt. Der Reviewer beantwortet „ist der Code richtig?", nicht
+  „kann das Kind spielen?"; woran das gemessen wurde, steht im README. Eine hoffnungsvolle Formulierung
+  ist hier eine Lüge mit Haltbarkeitsdatum.
 
 ### Die Fachbrille kommt aus `wo` — nicht aus dem Gedächtnis
 

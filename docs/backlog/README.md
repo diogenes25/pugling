@@ -29,7 +29,7 @@ weiterzuschieben, solange sie nicht erfüllt ist — statt die Lücke stillschwe
 | `gegrillt` | Jeder offene Punkt ist **entweder** eine nummerierte Entscheidung (Begründung **und** Kosten) **oder** ausdrücklich zurückgestellt; erledigte durchgestrichen statt gelöscht. Akzeptanzkriterien final. | **Mensch**, im Dialog |
 | `geschaetzt` | `groesse`, `wo`, `migration`, `vertragsbruch` gesetzt; Risiken; Angriffsplan (Reihenfolge, Backend zuerst); Testweg (welcher Integrationstest / E2E / `/smoke-test`). | Entwickler (Skill) |
 | `in-arbeit` | Es wird gebaut; `## Verlauf` wächst mit. | Entwickler |
-| `abgenommen` | Verifikation **belegt**: echte Testzahl, gelaufener `/smoke-test` bzw. E2E, bei Backend-Änderungen zusätzlich `pugling-reviewer`, und **Commit(s) genannt**. | Entwickler |
+| `abgenommen` | Verifikation **belegt**: echte Testzahl, gelaufener `/smoke-test` bzw. E2E, bei Backend-Änderungen zusätzlich `pugling-reviewer`, **Commit(s) genannt** — und der **Rollengang** an der laufenden App (`pm-loop` Step 6) oder, wenn er ausfiel, eine Zeile im `## Verlauf`, die das ausdrücklich benennt. | Entwickler |
 | `verworfen` | Begründung im Feld `grund`. Bei „geteilt" zusätzlich `ersetzt_durch`. | Mensch |
 
 `verworfen` ist ein **Ziel, kein Scheitern.** Mehrere Punkte im Projekt sind bewusste Nicht-Ziele; als
@@ -64,6 +64,27 @@ von zwei Dutzend Ideen es als Nächstes recherchiert.
 Die Prios der Erst-Ernte sind **am 2026-07-30 vom Nutzer im Triage-Durchgang bestätigt** worden (Vorschlag
 vorgelegt, Abweichungen übernommen) — sie sind keine Maschinen-Schätzung. Der Weg bleibt so: `/backlog`
 schlägt vor, der Mensch entscheidet in einer Runde.
+
+### Der Rollengang fällt am leichtesten weg — und kostet am meisten
+
+Von den Belegen, die `abgenommen` verlangt, ist der Rollengang der einzige, den **kein Tor** erzwingt:
+Testzahl, Reviewer und Commit stehen schwarz auf weiß da, „hat sich jemand als Sohn hingesetzt?" nicht.
+Genau deshalb steht er seit dem 2026-08-05 in der Eintrittsbedingung, und zwar mit einer *sichtbaren*
+Ausnahme statt eines stillen Weglassens.
+
+Der Anlass ist gemessen, nicht befürchtet. Die autonome Bau-Runde vom 2026-08-05 hat vierzehn Stories
+abgenommen: **13 von 14** mit Reviewer, **8 von 14** mit `/smoke-test` oder E2E, **0 von 14** mit einem
+Rollengang. Der Code-Review am Tag danach fand zwei echte Defekte — beide in Stories dieser Runde
+([B-96](B-96-showboth-stufe-ohne-mechanik.md), [B-66](B-66-buchstabenkaestchen-trennzeichen.md)). B-96
+trägt vier Reviewer-Erwähnungen, eine rote Probe und eine grüne Suite; die neue Anzeigenurstufe machte
+die Position für das Kind trotzdem unspielbar (kein Knopf) und buchte ihm nachts Malus-Münzen ab. Ein
+halbminütiger Gang als Sohn hätte das gefunden. Der Reviewer nicht — er beantwortet „ist der Code
+richtig?", nicht „kann das Kind spielen?".
+
+Im Gegenbeispiel derselben Woche hat der Rollengang genau das geleistet: B-106s Sprint 1 war grün und
+ohne Reviewer-Blocker, und *dann* konnte der Creator keine Übung mehr anlegen
+([Protokoll](../pm-sitzung-2026-08-04.md), „Re-Review gegen die echte laufende App"). Der Unterschied
+zwischen den beiden Runden ist nicht die Sorgfalt beim Bauen, sondern dieser eine Schritt.
 
 ## Frontmatter
 
@@ -262,6 +283,38 @@ scharf (Begründung **und** Kosten je Entscheidung, echte Testzahlen, genannte C
 `abgenommen`); nur *wer* die Entscheidung trifft und *wie oft* pro Sitzung ändert sich. Ohne diese
 ausdrückliche Freigabe gilt wieder der Standard — die Erlaubnis gehört zum Vorhaben, nicht zum Repo.
 
+#### Der Backlog-Lauf: dieselbe Freigabe, aber offen statt je Vorhaben
+
+„Arbeite das Backlog ab" ist eine **größere** Freigabe als die für B-106: sie gilt nicht für ein
+Vorhaben, dessen Ende man sieht, sondern für eine Liste, die weiterwächst. Damit sie trotzdem eine
+Grenze hat, gelten für den Backlog-Lauf drei Zusätze — sie sind der Preis dafür, dass niemand je Story
+gefragt wird.
+
+**1. Was der Agent selbst grillen darf, entscheidet `art`.**
+
+| `art` | Grillen | Warum |
+| --- | --- | --- |
+| `Defekt` | **autonom** | Der Code verengt die Antwort: „richtig herstellen" ist keine Produktentscheidung, und ein Regressionstest belegt sie. |
+| `Aufräumen` | **autonom** | Kein Verhalten ändert sich; die Suite ist der Beleg. |
+| `Frage` | **nur im Dialog** | Ein Prüfauftrag endet oft in `verworfen` — also darin, Arbeit zu *streichen*. Das ist eine Wertentscheidung. |
+| `Wunsch` | **nur im Dialog** | Neue Fähigkeiten sind Produktrichtung und Geschmack. Dafür hat der Agent keine Legitimation, auch mit guter Begründung nicht. |
+
+Der Schnitt läuft an einem Feld, das es ohnehin gibt, statt an einer zweiten Liste. **Kosten:** ein
+Lauf bleibt an jedem `Wunsch` stehen und liefert weniger, als das Backlog hergibt — gewollt. Die
+35 offenen P3 sind überwiegend Wünsche; ein Lauf, der sie mitentscheidet, baut das Produkt eines
+Agenten, nicht deines.
+
+**2. Der Lauf hält an — und zwar an einem Ergebnis, nicht an einer leeren Liste.** Halt am Sprint-Ende,
+wenn eines von beiden zutrifft: die Retrospektive hat ein **neues Tor** erzeugt (das willst du sehen,
+bevor es weitere Arbeit prägt), oder ein Review hat einen Defekt **im Increment dieses Sprints** gefunden
+(dann ist die Qualitätsschwelle gerutscht, und Weiterlaufen ist die falsche Reaktion). „Backlog leer" ist
+keine Abbruchbedingung — es ist kein erreichbarer Zustand.
+
+**3. Der Rollengang bleibt Pflicht**, und das ist die Bedingung, an der die 14er-Runde vom 2026-08-05
+gescheitert ist (siehe [oben](#der-rollengang-fällt-am-leichtesten-weg--und-kostet-am-meisten)). Er wird
+**je Sprint** geführt, nicht je Story — deshalb hat ein Sprint eine Obergrenze
+(`pm-loop`, „The Sprint"). Fällt er aus, steht das als Zeile im `## Verlauf`, nicht im Nichts.
+
 ## Hygiene: der Bereich darf nicht nur wachsen
 
 Ein Backlog, der nur wächst, ist der Zettelberg, den er ersetzen sollte — nur mit YAML davor. Darum meldet
@@ -296,17 +349,11 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (68)
+### Offen (57)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-07](B-07-db-umbau-restetappen.md) | DB-Struktur-Umbau: der offene Betriebsschritt | Aufräumen | `geschaetzt` | P1 | XS | backend | — |
-| [B-60](B-60-flags-enum-im-dokument.md) | Das Vertragsdokument verbietet einen `SchoolTypes`-Wert, den Server und Frontend täglich austauschen | Defekt | `geschaetzt` | P2 | S | backend | — |
-| [B-66](B-66-buchstabenkaestchen-trennzeichen.md) | Das Buchstabenkästchen lässt Leer- und Satzzeichen tippen, die schon feststehen | Defekt | `geschaetzt` | P2 | M | beides | — |
-| [B-104](B-104-keyresult-dublette-zahlt-doppelt.md) | Derselbe Meilenstein zweimal: drei Schreibpfade laufen ungeprüft in einen Unique-Index, und dort hängt Geld | Defekt | `ausformuliert` | P2 | — | — | — |
-| [B-96](B-96-showboth-stufe-ohne-mechanik.md) | „Beide zeigen (Kennenlernen)" ist eine Beschriftung ohne eigene Stufe | Defekt | `ausformuliert` | P2 | — | — | — |
-| [B-98](B-98-idempotenter-link-post-luegt.md) | Drei idempotente Schreibpfade antworten mit erfundenen Werten, zwei davon mit `201 Created` | Defekt | `ausformuliert` | P2 | — | — | — |
-| [B-99](B-99-kaufhistorie-endet-lautlos.md) | Die Kaufhistorie des Kindes endet lautlos bei 50 Zeilen | Defekt | `ausformuliert` | P2 | — | — | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-48](B-48-anonyme-registrierung-produktion.md) | Anonyme Registrierung ist auch in Produktion offen | Frage | `geschaetzt` | P2 | S | backend | — |
 | [B-11](B-11-uebungen-veroeffentlichen.md) | Übungen ausdrücklich veröffentlichen | Wunsch | `geschaetzt` | P2 | S | frontend | — |
@@ -322,14 +369,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-27](B-27-testsuite-grenzfaelle.md) | Die Grenzen des `ScoringService` als Tabelle statt als Flow | Aufräumen | `geschaetzt` | P2 | S | backend | — |
 | [B-44](B-44-grundprinzip-rollennamen.md) | Grundprinzip auf Supervisor/Student umschreiben — „Vater" ist keine Ebene | Aufräumen | `geschaetzt` | P2 | XS | doku | — |
 | [B-58](B-58-assistent-e2e.md) | Der Lehrplan-Assistent hat keinen Durchstich | Aufräumen | `geschaetzt` | P2 | S | frontend | — |
-| [B-56](B-56-problemdetails-required-extensions.md) | `ProblemDetails` fordert im Schema ein Feld, das es nicht beschreibt | Defekt | `geschaetzt` | P3 | S | backend | — |
-| [B-57](B-57-beispielkatalog-schreib-lese-rennen.md) | Im Testlauf lesen und schreiben zwei Stellen gleichzeitig dieselbe Katalogdatei | Defekt | `geschaetzt` | P3 | S | backend | — |
-| [B-61](B-61-reste-der-schreib-primitiven-runde.md) | Zwei Reste aus der Schreib-Primitiven-Runde | Defekt | `geschaetzt` | P3 | S | frontend | — |
-| [B-62](B-62-reste-aus-dem-b37-review.md) | Drei Reste aus dem B-37-Review (Sohn-Arcade) | Defekt | `geschaetzt` | P3 | S | beides | — |
-| [B-72](B-72-birkenbihl-dekodierung-paarfelder.md) | Die Birkenbihl-Dekodierung trägt zwei Trennzeichen in einem Feld | Defekt | `geschaetzt` | P3 | S | frontend | — |
-| [B-84](B-84-api-beispiele-behaupten-unerreichbarkeit.md) | Die API-Beispiele behaupten Unerreichbarkeit, wo nur nichts mitgeschnitten wurde | Defekt | `geschaetzt` | P3 | S | doku | — |
-| [B-89](B-89-positionsliste-haengt-report-aus.md) | Die Positionsliste hängt bei jeder Änderung den aufgeklappten Report aus | Defekt | `geschaetzt` | P3 | L | frontend | — |
-| [B-93](B-93-birkenbihl-einstellungen-ohne-wirkung.md) | Zwei Birkenbihl-Einstellungen, die lautlos nichts tun | Defekt | `ausformuliert` | P3 | — | — | — |
+| [B-109](B-109-full-flow-spec-flackert-bei-frage-3.md) | `full-flow.spec.ts` hängt reproduzierbar bei „Frage 3/5" der Klausur | Defekt | `idee` | P3 | — | — | — |
 | [B-17](B-17-birkenbihl-sprachcodes.md) | Sprachcode-Normalisierung bei der Vokabel-Dekodierung | Frage | `geschaetzt` | P3 | XS | frontend | — |
 | [B-03](B-03-lueckensaetze-mit-bild.md) | Lückensätze mit Bild als Vokabel-Vertiefung | Wunsch | `geschaetzt` | P3 | M | backend | — |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `geschaetzt` | P3 | L | backend | Migration |
@@ -362,6 +402,8 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-101](B-101-fehlercodes-und-drei-waechter.md) | Drei generische Fehlercodes ersetzen — und die drei Wächter, die daraus reif geworden sind | Aufräumen | `ausformuliert` | P3 | — | — | — |
 | [B-102](B-102-token-vorgabewert-regel-schaerfen.md) | Die Token-Regel im Startkontext ist zu weit formuliert — 55 Signaturen „verstoßen" gegen eine Compilerregel | Aufräumen | `ausformuliert` | P3 | — | — | — |
 | [B-95](B-95-stufenwaechter-haengt-am-include.md) | Die Stufenprüfung beim PATCH einer Position hängt an einem `Include`, das niemand einfordert | Aufräumen | `ausformuliert` | P3 | — | — | — |
+| [B-107](B-107-dailybox-zufallswert-in-docs-capture.md) | `DailyBoxService` würfelt ohne Seed – der Doku-Capture-Snapshot ist dadurch nicht byte-stabil | Aufräumen | `idee` | P3 | — | — | — |
+| [B-108](B-108-requiretypedtest-default-am-uebungstyp.md) | `DefaultRequireTypedTest` am Übungstyp selbst ungeprüft — dieselbe Fehlerklasse eine Ebene höher als B-93 | Aufräumen | `idee` | P3 | — | — | — |
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration? |
 | [B-90](B-90-server-sprachfeld.md) | Server-Sprachfeld an `Adult`/`Child` | Wunsch | `idee` | P4 | — | — | — |
 | [B-91](B-91-vater-web-extraktion-englisch.md) | Vater-Web-Textkorpus auf Übersetzungsschlüssel umstellen (Englisch) | Wunsch | `idee` | P4 | — | — | — |
@@ -370,7 +412,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-06](B-06-cloze-preview-bild.md) | Cloze-Vorschau kann kein Bild zeigen | Wunsch | `geschaetzt` | P6 | XS | backend | — |
 
 <details>
-<summary>Abgenommen (28)</summary>
+<summary>Abgenommen (42)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -378,6 +420,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-02](B-02-itemcount-hilfetext.md) | Der Hilfetext erklärt `ItemCount` falsch herum | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-08](B-08-xml-docs-englisch.md) | XML-Doc-Kommentare im Backend auf Englisch übersetzen | Aufräumen | `abgenommen` | P3 | S | doku | — |
 | [B-10](B-10-zeitfenster-pro-kind.md) | Zeitfenster (Punkte-Faktor) je Pflicht statt global | Wunsch | `abgenommen` | P2 | M | beides | Migration |
+| [B-104](B-104-keyresult-dublette-zahlt-doppelt.md) | Derselbe Meilenstein zweimal: drei Schreibpfade laufen ungeprüft in einen Unique-Index, und dort hängt Geld | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-105](B-105-taegliche-belohnungsbox.md) | Tägliche Belohnungsbox: Loot-Box + Streak als positives Gegenstück zum Stick | Wunsch | `abgenommen` | P4 | S | backend | Migration |
 | [B-106](B-106-lehrwerkgetriebener-katalog.md) | Übungen hängen künftig am Lehrwerk, nicht am Kapitel | Wunsch | `abgenommen` | P1 | L | beides | — |
 | [B-26](B-26-e2e-in-ci.md) | Der E2E-Nachtlauf ist rot – und niemand erfährt es | Defekt | `abgenommen` | P1 | S | frontend | — |
@@ -389,9 +432,16 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-52](B-52-testabdeckung-paket.md) | Sammel-Story: das Testabdeckungs-Paket | Aufräumen | `abgenommen` | P2 | L | beides | — |
 | [B-53](B-53-wizard-doppelklick.md) | Zwei Klicks im Lehrplan-Assistenten legen zwei Kinder und zwei Pläne an | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-54](B-54-objectivecard-schreib-primitive.md) | Fünf Knöpfe im Vater-Web gehen an den Schreib-Primitiven vorbei | Defekt | `abgenommen` | P2 | S | frontend | — |
+| [B-56](B-56-problemdetails-required-extensions.md) | `ProblemDetails` fordert im Schema ein Feld, das es nicht beschreibt | Defekt | `abgenommen` | P3 | S | backend | — |
+| [B-57](B-57-beispielkatalog-schreib-lese-rennen.md) | Im Testlauf lesen und schreiben zwei Stellen gleichzeitig dieselbe Katalogdatei | Defekt | `abgenommen` | P3 | S | backend | — |
+| [B-60](B-60-flags-enum-im-dokument.md) | Das Vertragsdokument verbietet einen `SchoolTypes`-Wert, den Server und Frontend täglich austauschen | Defekt | `abgenommen` | P2 | S | backend | — |
+| [B-61](B-61-reste-der-schreib-primitiven-runde.md) | Zwei Reste aus der Schreib-Primitiven-Runde | Defekt | `abgenommen` | P3 | S | frontend | — |
+| [B-62](B-62-reste-aus-dem-b37-review.md) | Drei Reste aus dem B-37-Review (Sohn-Arcade) | Defekt | `abgenommen` | P3 | S | beides | — |
 | [B-65](B-65-vokabel-mehrere-uebersetzungen.md) | Eine Vokabel mit zwei richtigen Übersetzungen wertet eine davon falsch | Defekt | `abgenommen` | P1 | M | beides | Migration |
+| [B-66](B-66-buchstabenkaestchen-trennzeichen.md) | Das Buchstabenkästchen lässt Leer- und Satzzeichen tippen, die schon feststehen | Defekt | `abgenommen` | P2 | M | beides | — |
 | [B-69](B-69-wiederhol-felder-alternativen.md) | Kommagetrennte Sammelfelder: einer davon nimmt gar keine zweite Alternative an | Defekt | `abgenommen` | P2 | M | frontend | — |
 | [B-70](B-70-selbsteinschaetzung-nur-primaerloesung.md) | Die Selbsteinschätzung zeigt nur die primäre Übersetzung | Defekt | `abgenommen` | P2 | S | beides | — |
+| [B-72](B-72-birkenbihl-dekodierung-paarfelder.md) | Die Birkenbihl-Dekodierung trägt zwei Trennzeichen in einem Feld | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-73](B-73-auswahl-feld-ohne-wirkung.md) | Das Auswahl-Feld verspricht Multiple-Choice, das Kind bekommt Freitext | Defekt | `abgenommen` | P2 | S | beides | — |
 | [B-75](B-75-lese-hoerverstehen-ohne-inhalt.md) | Lese- und Hörverstehen kommen ohne ihren Inhalt beim Kind an | Defekt | `abgenommen` | P1 | M | beides | Vertrag |
 | [B-76](B-76-lueckentext-karte-ohne-luecke.md) | Der Lückentext sagt dem Kind nicht, welche Lücke gemeint ist | Defekt | `abgenommen` | P1 | M | beides | — |
@@ -401,9 +451,31 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-80](B-80-tags-geben-fremde-konfiguration-preis.md) | Das Kind kann die Lösungen jeder Übung lesen | Defekt | `abgenommen` | P1 | S | backend | Vertrag |
 | [B-81](B-81-vokabel-tags-geben-uebersetzungen-preis.md) | Über die Vokabel-Tags kann ein Kind jede Übersetzung des Stores lesen | Defekt | `abgenommen` | P1 | S | backend | — |
 | [B-82](B-82-positions-report-gibt-loesungen-preis.md) | Über den Positions-Report kann ein Kind die Lösung jeder Karte lesen | Defekt | `abgenommen` | P1 | M | beides | Vertrag |
+| [B-84](B-84-api-beispiele-behaupten-unerreichbarkeit.md) | Die API-Beispiele behaupten Unerreichbarkeit, wo nur nichts mitgeschnitten wurde | Defekt | `abgenommen` | P3 | S | doku | — |
+| [B-89](B-89-positionsliste-haengt-report-aus.md) | Die Positionsliste hängt bei jeder Änderung den aufgeklappten Report aus | Defekt | `abgenommen` | P3 | L | frontend | — |
+| [B-93](B-93-birkenbihl-einstellungen-ohne-wirkung.md) | Zwei Birkenbihl-Einstellungen, die lautlos nichts tun | Defekt | `abgenommen` | P3 | S | beides | — |
+| [B-96](B-96-showboth-stufe-ohne-mechanik.md) | „Beide zeigen (Kennenlernen)" ist eine Beschriftung ohne eigene Stufe | Defekt | `abgenommen` | P2 | M | beides | — |
 | [B-97](B-97-unique-index-ohne-vorpruefung.md) | Zwei Schreibpfade laufen ungeprüft in einen Unique-Index und antworten mit 500 | Defekt | `abgenommen` | P2 | XS | backend | — |
+| [B-98](B-98-idempotenter-link-post-luegt.md) | Drei idempotente Schreibpfade antworten mit erfundenen Werten, zwei davon mit `201 Created` | Defekt | `abgenommen` | P2 | S | backend | Vertrag |
+| [B-99](B-99-kaufhistorie-endet-lautlos.md) | Die Kaufhistorie des Kindes endet lautlos bei 50 Zeilen | Defekt | `abgenommen` | P2 | S | beides | — |
 
 </details>
+
+### ⚠ Stufe behauptet, Datei belegt nicht
+
+Diese Stories tragen einen `status`, dessen Eintrittsbedingung in der Datei nicht
+vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
+
+| Id | Stufe | Fehlt |
+| --- | --- | --- |
+| [B-104](B-104-keyresult-dublette-zahlt-doppelt.md) | `abgenommen` | Abschnitt „Entscheidungen" |
+| [B-107](B-107-dailybox-zufallswert-in-docs-capture.md) | `idee` | Abschnitt „Verlauf" |
+| [B-108](B-108-requiretypedtest-default-am-uebungstyp.md) | `idee` | Abschnitt „Verlauf" |
+| [B-109](B-109-full-flow-spec-flackert-bei-frage-3.md) | `idee` | Abschnitt „Verlauf" |
+| [B-93](B-93-birkenbihl-einstellungen-ohne-wirkung.md) | `abgenommen` | Abschnitt „Entscheidungen" |
+| [B-96](B-96-showboth-stufe-ohne-mechanik.md) | `abgenommen` | Abschnitt „Entscheidungen" |
+| [B-98](B-98-idempotenter-link-post-luegt.md) | `abgenommen` | Abschnitt „Entscheidungen" |
+| [B-99](B-99-kaufhistorie-endet-lautlos.md) | `abgenommen` | Abschnitt „Entscheidungen" |
 
 <details>
 <summary>Verworfen (9)</summary>

@@ -10,6 +10,9 @@ description: >-
   round, decide what to build next, prioritize a backlog, synthesize Creator/Vater/Sohn needs into
   dev work, or says "PM-Sitzung", "pm-loop", "iterate on the product", "was bauen wir als Nächstes",
   "Feedback-Runde", or "koordiniere Creator, Vater und Sohn".
+  It also holds the sprint mechanics: running a sprint over several backlog stories with one Sprint-Ziel,
+  the mandatory Rollengang before `abgenommen`, the Retrospektive that turns each lesson into a gate, and
+  an authorized autonomous backlog run ("arbeite das Backlog ab", "Sprint fahren", "Retrospektive").
   This is NOT the file-based `lehrplan-autor`/`lehrplan-lerner` course format — it drives the Pugling app itself.
 ---
 
@@ -131,12 +134,59 @@ restated — two durable lists drift, and the stale one is the one someone reads
 **A story that doesn't fit one sitting runs as a Karte** (`docs/backlog/README.md`, "Karten") — its
 open questions become Ticket-Frontier entries the PM works through one sitting at a time. By default
 those tickets fall *only in dialogue with the user*, never decided by the agent alone
-(`docs/backlog/README.md:239`). If — and only if — the user has explicitly authorized a fully
-autonomous run for this specific initiative (see `docs/backlog/README.md`, "Autonomer Modus"), the PM
-may grill tickets itself (reasoned, with cost, exactly as in dialogue — just without the round-trip)
-and loop Steps 3–6 across sprints without a human gate between them. B-106 is the worked example;
-its full trace lives in `docs/pm-sitzung-2026-08-04.md`. Never assume this authorization from a
-single past session — it must be granted per initiative.
+(`docs/backlog/README.md`, "Wayfinding operations" → the four ticket types). If — and only if — the
+user has explicitly authorized a fully autonomous run for this specific initiative (see
+`docs/backlog/README.md`, "Autonomer Modus"), the PM may grill tickets itself (reasoned, with cost,
+exactly as in dialogue — just without the round-trip) and loop Steps 3–6 across sprints without a
+human gate between them. B-106 is the worked example; its full trace lives in
+`docs/pm-sitzung-2026-08-04.md`. Never assume this authorization from a single past session — it must
+be granted per initiative.
+
+**An open-ended "work the backlog" grant is wider than that, and carries its own three limits**
+(`docs/backlog/README.md`, "Der Backlog-Lauf"): what the agent may grill alone is decided by `art`
+(`Defekt`/`Aufräumen` yes, `Wunsch`/`Frage` only in dialogue — a new capability is product direction,
+and the agent has no standing to choose it); the run **stops** at the end of a sprint whose
+retrospective produced a new gate, or whose own increment turned out to carry a defect; and the role
+walkthrough stays mandatory per sprint. Read that section before running such a loop — the limits are
+what make the grant answerable, not decoration on it.
+
+## The Sprint — the unit one cycle commits to
+
+This loop is Scrum-shaped, but only where Scrum solves a problem this setup actually has. Scrum's
+cadence machinery exists to manage *human* uncertainty — unreliable estimates, people losing sync,
+process being skipped, motivation. A single agent has none of those; it has a different failure mode
+(plausible work that was never exercised). So the sprint is defined by **scope and evidence, not by a
+clock**:
+
+- **A sprint is one red thread over 3–6 stories**, every one of them already at `geschaetzt`
+  (`docs/backlog/README.md` — that stage *is* the Definition of Ready). It ends in a commit-able
+  increment that has been through Step 6. It is **not** a duration: "Sprint 1" of B-106 was one schema
+  slice, "Sprint 2" was three decisions and no code at all.
+- **The cap is not tidiness — it is what keeps Step 6 affordable.** Three roles × fourteen stories is
+  a walkthrough nobody runs, and the run of 2026-08-05 proves it: fourteen stories accepted, thirteen
+  with a reviewer, eight with smoke/E2E, **zero with a role walkthrough** — and two real defects
+  surfaced the next day, both in that batch (B-96, B-66). B-106, which did run the walkthrough, caught
+  its regression *inside* the sprint. Same care while building; the difference was this one step.
+- **Write one Sprint Goal, in a sentence, from a role's seat** — "the son can play every position
+  assigned to him without hitting a dead end", not "finish B-93/B-96/B-99". A goal phrased from a seat
+  is *falsifiable in Step 6*; a list of ids is not, and a list is what the 2026-08-05 run had instead.
+  Scope may change inside the sprint when the goal demands it (B-106 pulled a frontend emergency fix
+  forward rather than shipping an app that was worse than before) — the goal is the commitment, not
+  the ticket list.
+
+**Deliberately not imported from Scrum's textbook**, because each would cost something and buy
+nothing here:
+
+- **Story points and velocity** — `groesse` is anchored to real events of this repo (README,
+  "Größen-Anker"), which is better. And the binding constraint on an agent is context and token
+  budget, not elapsed time; velocity would measure the wrong axis confidently.
+- **A Daily** for a single agent — there is no one to sync with. Its one real analogue appears only
+  when work fans out; see Step 4.
+- **A Scrum Master** — that accountability is process integrity, and here it is discharged
+  mechanically: guard tests, entry conditions, the test-gate hook, the generated index. A role that
+  reminds an agent of rules a gate already enforces is theatre.
+- **A separate Sprint Backlog artifact** — the story files plus the Entwickler-Brief *are* it. A second
+  list is the "zweiter Ablageort" the backlog README forbids, and the stale one always wins.
 
 ## Step 4 — Brief the developer and build it, API-First
 
@@ -150,6 +200,20 @@ it, honoring every convention in `CLAUDE.md`:
 - **Then the frontend** consumes the new server state through the central client/types.
 - For a large item you may delegate the implementation to a subagent, but you own the brief and the
   acceptance check.
+
+**One brief per sprint, not per story.** Each story already carries its own `Angriffsplan` from
+`geschaetzt`; the brief is the layer above — the shared thread, the order between the stories, and the
+one Sprint Goal they answer to. Fourteen attack plans with no brief above them is a batch, not a sprint,
+and nothing in it can be reviewed as a whole.
+
+**If you fan work out, add the one thing a Daily is actually for: an integration checkpoint.** Parallel
+subagents (especially in worktrees, `isolation: "worktree"`) create a real merge problem a lone agent
+never has. Then, at every fan-in: merge, run the **full** suite plus the guard tests, and confirm the
+sprint goal still holds — before any further story starts. Two traps here, both already paid for in this
+repo: the hooks measure `$CLAUDE_PROJECT_DIR`, so a worktree build/test hits the **main** worktree (a
+red message from a foreign tree is not yours to "fix"), and `SchemaGuardTests` keeps the migration chain
+at length 1 — two branches that each fold the chain cannot be merged, only rebuilt. Sequential is the
+default; fan out only when the stories genuinely don't touch the same files.
 
 ## Step 5 — Verify for real, then review
 
@@ -166,6 +230,17 @@ Before you let any role look again:
 
 Bring each role (Creator, Vater, Sohn) back to the *now-changed running app* and have it check its
 own Top-3 against what shipped. Three honest outcomes — no others:
+
+**This step is the entry condition for `abgenommen`, and the autonomous mode does not relax it**
+(`docs/backlog/README.md` — the stage table and "Der Rollengang fällt am leichtesten weg"). It runs
+**once per sprint**, which is why a sprint has an upper bound at all. All three roles walk, not only the
+one whose tier changed: the role that owns the changed tier walks its acceptance list, the other two walk
+for regression — that is precisely how B-106 established "Spielweg vollkommen unberührt … live
+durchgespielt" and how it caught a Creator-side wall that build, tests and reviewer had all passed.
+If the walkthrough genuinely cannot run (no server reachable, no browser binding available), that is a
+**recorded** outcome, not a silent omission: one line in each affected story's `## Verlauf` naming what
+was verified instead (HTTP + code reading) and what a human still has to click. A story that reaches
+`abgenommen` without either the walkthrough or that line is mis-stamped.
 
 - **Signed off:** the role walked its acceptance conditions against the running product and they
   hold. Record the sign-off in its own words, and note anything it explicitly deferred.
@@ -202,10 +277,48 @@ When each of the three roles is either signed off or resting on a named device/h
    from your prose.
 3. Update the memory pointer (`MEMORY.md` + the session's memory file) if this cycle changed the
    product's direction, per the memory rules.
+4. **Run Step 8.** The sprint is not closed until the retrospective has produced its one change — that
+   is the step that turns this cycle's lesson into something the next cycle cannot skip.
 
 Report to the user honestly: what shipped, what's verified, and what's deferred. "Alle drei
 zufrieden, 98/98 grün, Sound-Feature bewusst auf nächste Runde geschoben" beats a shiny "all done" —
 the roles can tell the difference, and so can the next session reading your log.
+
+## Step 8 — Retrospective: turn the lesson into a mechanism
+
+The sprint's last event, and the only one that **produces** something instead of checking something.
+It inspects the *process*, not the product: anything wrong with the software is a story in
+`docs/backlog/`, but anything that let a wrong thing *through* belongs here.
+
+Ask one question, and answer it with evidence from this sprint only:
+
+**What did this sprint's own gates miss — and did any finding reach us from outside the loop?**
+Every finding that arrived by another route is a retro input by definition: a manual `/code-review`, an
+`anmerkungen` entry from the real user, a human noticing something in the browser. The loop was supposed
+to catch it and didn't.
+
+Then land **exactly one change to a mechanism**, in this session, before the sprint closes:
+
+- Prefer a **gate over prose** — a guard test, an assertion, a hook — because this repo's whole stance is
+  "mechanische Tore statt Disziplin" (`CLAUDE.md`). A rule nobody enforces decays into a rule nobody reads.
+- Prose is the right answer when the thing to change is a *decision*, not a check. Then it goes where it
+  is loaded when it matters: the nested `CLAUDE.md` of the affected area, or a line in the skill that
+  drives the work — **not** the root `CLAUDE.md`, which is resident context for every session and has a
+  measured budget (`.claude/scripts/context-budget.sh`).
+- "No mechanism would have caught this" is a permitted answer, but it must be **argued** — name why the
+  failure is genuinely unmechanizable (subjective-sensory judgment is the usual honest case, per Step 6's
+  third outcome) rather than defaulting to it because inventing a gate is work.
+- If the change **is a new gate, the run stops here** so the human sees it before it shapes further work
+  (`docs/backlog/README.md`, "Der Backlog-Lauf", limit 2).
+
+Record it in the session log under `## Retrospektive` — what slipped, what mechanism now covers it, and
+what deliberately stays uncovered.
+
+Two data points from this project on why the event is worth its cost. It has effectively happened once,
+informally: after B-106 the loop's own rules were rewritten, which is what produced the Autonomer Modus
+(`2e954f6`) — a retro outcome without a retro. And the 2026-08-05 batch had no retro at all; its six
+review findings arrived a day later through a separate manual pass, by which time fourteen stories were
+already stamped `abgenommen`.
 
 ## Session log — the durable artifact
 
@@ -226,11 +339,18 @@ rounds as the loop iterates. Skeleton:
 ## PM-Synthese & Priorisierung (→ Entwickler)
 <Beobachtung + Backlog-Tabelle P0…P3 + roter Faden>
 
+## Sprint N — Ziel & Umfang
+**Sprint-Ziel:** <ein Satz aus einer Rollensicht, in Step 6 widerlegbar>
+**Umfang:** <3–6 Story-Ids, alle auf `geschaetzt`>  ·  **Entwickler-Brief:** <Ziel · Quelle der Wahrheit · Guards · Migration · Testweg>
+
 ## Iteration N — umgesetzt
-<Entwickler-Brief · Backend (API-First) · Frontend · Verifikation (Testcount)>
+<Backend (API-First) · Frontend · Verifikation (Testcount)>
 
 ## Runde N — Re-Review / Abnahme
-<Sign-off je Rolle in eigenen Worten, oder was noch fehlt>
+<Sign-off je Rolle in eigenen Worten, oder was noch fehlt; ausgefallener Rollengang ausdrücklich benannt>
+
+## Retrospektive
+<Was die eigenen Tore durchgelassen haben · der EINE Mechanismus, der es jetzt deckt · was bewusst ungedeckt bleibt>
 
 ## Offene Roadmap (priorisiert)  ·  Konkreter Änderungsstand (für Review)
 ```
