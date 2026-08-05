@@ -71,11 +71,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
-      # `--legacy-peer-deps`: vite-plugin-pwa@0.21 deklariert Peer `vite ^3…^6`, installiert ist `vite@8`.
-      # Ohne das Flag bricht `npm ci` mit ERESOLVE ab (siehe frontend/CLAUDE.md und Etappe D1).
       - name: Abhängigkeiten installieren
         working-directory: frontend
-        run: npm ci --legacy-peer-deps
+        run: npm ci
 
       # Nur Chromium: playwright.config.ts fährt genau ein Projekt (`devices["Desktop Chrome"]`, ohne
       # `channel`, also das gebündelte Chromium). Firefox und WebKit mitzuladen kostete Minuten für

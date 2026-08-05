@@ -177,14 +177,9 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      # **`--legacy-peer-deps` ist keine Bequemlichkeit, sondern der dokumentierte Stand des Projekts**
-      # (frontend/CLAUDE.md): `vite-plugin-pwa@0.21` deklariert Peer `vite ^3…^6`, installiert ist
-      # `vite@8`. Ohne das Flag bricht `npm ci` mit ERESOLVE ab, bevor eine Zeile geprüft wird –
-      # gemessen, und zwar seit dem Vite-8-Sprung (2c4eb69, 2026-07-05) auch im Deploy-Workflow, der
-      # daran 24 Tage lang unbemerkt scheiterte. Genau dieser blinde Fleck ist der Grund für dieses Tor.
       - name: Abhängigkeiten installieren
         working-directory: frontend
-        run: npm ci --legacy-peer-deps
+        run: npm ci
 
       # `npm run build` = `prebuild` (Vertragstypen aus docs/openapi/v1.json erzeugen) + `tsc -b` +
       # `vite build`. Der Typecheck ist der eigentliche Gewinn – **er ist seit B-42/E6 das Vertragstor des

@@ -44,11 +44,13 @@ Browser-App den Paging-Header nicht lesen.
 > Familie mit**. Ein Deployment, das diesen Ordner nicht persistent hält (App-Service-Storage, Volume
 > oder Blob-Ablage über `IMediaStorage`), verliert sie genauso, nur langsamer.
 
-## Fallstrick 1 · `npm ci` braucht `--legacy-peer-deps`
+## Fallstrick 1 (behoben seit B-25) · `npm ci` brauchte `--legacy-peer-deps`
 
-`vite-plugin-pwa@0.21` deklariert als Peer `vite@^3…^6`, installiert ist aber `vite@8`. Jede
-**frische** Auflösung bricht darum mit `ERESOLVE` ab – und `npm ci` ist immer eine frische Auflösung.
-Lokal fällt das nie auf, weil dort ein `node_modules` liegt.
+`vite-plugin-pwa@0.21` deklarierte als Peer `vite@^3…^6`, installiert war aber `vite@8`. Jede
+**frische** Auflösung brach darum mit `ERESOLVE` ab – und `npm ci` ist immer eine frische Auflösung.
+Lokal fiel das nie auf, weil dort ein `node_modules` liegt. **Seit
+[B-25](backlog/B-25-vite-pwa-peer-konflikt.md) (`vite-plugin-pwa@^1.3.0`) ist der Konflikt gelöst** –
+`npm ci` läuft ohne das Flag, hier wie in `ci.yml`/`e2e.yml`.
 
 **Was es gekostet hat:** der Deploy scheiterte vom **2026-07-05** (Vite-8-Sprung, `2c4eb69`) bis zum
 **2026-07-29** an genau dieser Zeile – 24 Tage, unbemerkt, weil niemand das Ergebnis des Workflows las.
@@ -57,7 +59,6 @@ derselben Umgebung** ausführt.
 
 **Konsequenz für jede Neufassung:**
 
-- `npm ci --legacy-peer-deps`, nicht `npm ci`.
 - **Dieselbe Node-Version wie `ci.yml`** (`NODE_VERSION: "20"`). Ein Tor, das eine andere Umgebung prüft
   als die, in der gebaut und deployt wird, bewacht nichts. `setup-node` zieht bei `"20"` das neueste
   20.x und erfüllt damit die `engines` von `vite@8` (`^20.19.0 || >=22.12.0`) – wer hier auf ein

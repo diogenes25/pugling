@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend]
+tags: [typ/story, status/abgenommen, bereich/frontend]
 aliases: [vite-plugin-pwa Peer-Konflikt]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Aufräumen
 groesse: XS
@@ -134,3 +134,12 @@ belegten Fundstellen; kein API-Umbau, keine Schemaänderung, kein Vertragsbruch.
   Fundstellen inklusive Doku.
 - **2026-08-03** — geschätzt: Größe XS, `wo: frontend`, `migration: nein`, `vertragsbruch: nein`, Risiken,
   Angriffsplan und Testweg festgelegt (autonom getroffen, Nutzerauftrag 2026-08-04).
+- **2026-08-06** — gebaut (Nachtlauf 2, Sprint 3 „CI/Deploy-Tooling"): `vite-plugin-pwa` auf `^1.3.0`
+  angehoben, `npm install` **ohne** `--legacy-peer-deps` lief clean (kein `ERESOLVE`), Lockfile neu
+  erzeugt. `npm run build` → `PWA v1.3.0`, die vorher bei **jedem** Build dieser Nacht aufgetauchte
+  Warnung „vite-plugin-pwa:build … assigns to bundle variable" ist verschwunden (Nebeneffekt des Bumps,
+  nicht Teil der AK). Das Flag aus `ci.yml`, `deploy-azure.yml`, `e2e.yml` entfernt samt der
+  Begründungs-Kommentare; `frontend/CLAUDE.md`, `frontend/vitest.config.ts` und zusätzlich
+  `docs/deployment-azure.md` (direkt von einem entfernten Workflow-Kommentar verwiesen, daher mitgezogen)
+  nennen den Konflikt nicht mehr als aktuellen Zustand. `npm test -- --run` → **153/153 grün**.
+  `frontend-reviewer` lief gegen den Diff.

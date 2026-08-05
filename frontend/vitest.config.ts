@@ -7,7 +7,7 @@ import { defineConfig } from "vitest/config";
  * durch die App.
  *
  * Bewusst eine **eigene** Konfiguration statt eines `test`-Blocks in `vite.config.ts`: Die PWA-Erzeugung
- * dort hat im Testlauf nichts zu suchen (und `vite-plugin-pwa` verträgt sich ohnehin nicht mit vite 8).
+ * dort hat im Testlauf nichts zu suchen.
  */
 export default defineConfig({
   test: {

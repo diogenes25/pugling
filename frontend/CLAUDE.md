@@ -52,12 +52,10 @@ sichtbare Grund, warum eine verworfene zweite Aktion nicht wie „nichts passier
 die Sohn-Arcade (B-49) folgt ihr noch nicht. **Erfolg darf stumm bleiben** (`run` ohne `okText`), wo die
 Änderung selbst die Rückmeldung ist – so der Tag-Editor im Vokabel-Store; ein Banner je Chip wäre Lärm.
 
-**Installieren immer mit `--legacy-peer-deps`, auch `npm ci`:** `vite-plugin-pwa@0.21` will Peer
-`vite@^3…^6`, installiert ist `vite@8` – jede Neuauflösung bricht sonst mit `ERESOLVE` (vorbestehend, der
-Build läuft trotzdem). CI und Deploy tun es deshalb ebenfalls; warum es dort weh tat, steht in
-[codequalitaet-gates-plan.md](../docs/codequalitaet-gates-plan.md) (D1). **Preis: npm installiert fehlende
-Peers nicht** – jeder gebrauchte Peer muss selbst in den `devDependencies` stehen (darum
-`@testing-library/dom`; fehlt es, fällt der ganze Vitest-Lauf mit „Cannot find module").
+**Normales `npm install`/`npm ci` genügt** (seit [B-25](../docs/backlog/B-25-vite-pwa-peer-konflikt.md),
+`vite-plugin-pwa@^1.3.0`) – der frühere Peer-Konflikt mit `vite@8` ist gelöst, `--legacy-peer-deps` ist
+nirgends mehr nötig, auch nicht in CI/Deploy. Der historische Schaden (24 Tage unbemerkt scheiternder
+Deploy) steht in [docs/codequalitaet-gates-plan.md](../docs/codequalitaet-gates-plan.md) (D1).
 
 Rollen im SPA: `/` Produktseite, `/vater` Web-Admin, `/sohn` Arcade-PWA.
 API-Client unter [src/lib/](src/lib/), kein HTTP daneben.

@@ -518,3 +518,48 @@ die niemand verifiziert hat, bevor sie als Kommentar stehen blieb.
 
 Vier Stories gebaut und abgenommen. Zwei Review-Funde, beide behoben, Zähler bei 2 von 5 — kein
 Abbruchgrund. Weiter mit Sprint 3 (CI/Deploy-Tooling: B-25, B-47).
+
+## Nachtlauf-2-Sprint 3 — Ziel & Umfang
+
+**Sprint-Ziel:** *Ein frischer Checkout oder CI-Runner installiert die Frontend-Abhängigkeiten ohne einen
+vergessenen Sonderschalter.*
+
+**Umfang:** **nur B-25** — B-47 (Deploy-Artefakt-Smoke) bleibt vor dem Bauen erneut geprüft `geschaetzt`:
+seine eigene Entscheidung 1 verlangt, dass der `workflow_run`-Block in `deploy-azure.yml` wieder scharf
+ist, bevor gebaut wird. Nachgesehen: der Block ist weiterhin auskommentiert
+(`.github/workflows/deploy-azure.yml:28-31`, wartet auf die Azure-Reaktivierung aus B-33/B-07). Kein
+Verstoß gegen die Eintrittsbedingung — B-47 wartet auf ein externes Ereignis, ist also kein Fall für
+diesen Sprint.
+
+**Entwickler-Brief:** `vite-plugin-pwa` auf `^1.3.0` anheben (löst den Peer-Konflikt mit `vite@8`), das
+Flag `--legacy-peer-deps` aus den drei Workflow-Dateien und der zugehörigen Doku entfernen. Kein
+Backend-Anteil.
+
+## Nachtlauf-2-Iteration 3 — umgesetzt
+
+`frontend/package.json`: `vite-plugin-pwa` `^0.21.1` → `^1.3.0`, Lockfile neu erzeugt. `--legacy-peer-deps`
+entfernt aus `ci.yml`, `deploy-azure.yml`, `e2e.yml`; `frontend/CLAUDE.md`, `frontend/vitest.config.ts`
+und `docs/deployment-azure.md` (Fallstrick 1, direkt von einem entfernten Workflow-Kommentar verwiesen)
+nennen den Konflikt nicht mehr als aktuellen Zustand.
+
+**Verifikation (gemessen):** `npm install` ohne Flag → clean, kein `ERESOLVE`. `npm run build` →
+`PWA v1.3.0`; die vite-plugin-pwa-Bundle-Warnung, die diese Nacht bei **jedem** Build erschien, ist als
+Nebeneffekt verschwunden. `npm test -- --run` → **153/153 grün**. `frontend-reviewer` lief gegen den
+Diff, kein Blocker.
+
+## Runde — Abnahme Nachtlauf-2-Sprint-3 (Rollengang)
+
+Reines Tooling ohne Laufzeit-Effekt auf eine der drei Rollen — kein Rollengang nötig, Regression über
+die grüne Suite und den Reviewer belegt.
+
+## Retrospektive — Nachtlauf 2, Sprint 3
+
+**Nachschau:** Sprint 2 (B-88/27/55/58) nachgesehen — keine der vier Stories zeigt einen Rest-Fehler
+über die bereits im Sprint dokumentierten und behobenen zwei Funde hinaus.
+
+**Kein neuer Mechanismus.** Reine Abhängigkeitspflege, kein Prozess-Fund in diesem Sprint.
+
+## Ende von Nachtlauf-2-Sprint-3
+
+Eine Story gebaut und abgenommen, eine bewusst nicht angefasst (wartet extern). Kein Review-Fund —
+Zähler bleibt bei 2 von 5. Weiter mit Sprint 4 (Typsicherheit: B-59, B-74, B-49).
