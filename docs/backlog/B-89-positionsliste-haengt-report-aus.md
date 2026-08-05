@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: docs/backlog/B-10-zeitfenster-pro-kind.md
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-08-05
 ---
 
 # B-89 · Die Positionsliste hängt bei jeder Änderung den aufgeklappten Report aus
@@ -244,3 +245,10 @@ zu werden.
 - **2026-08-05** — Nachtrag zur neuen Eintrittsbedingung (README → „Der Rollengang fällt am leichtesten
   weg"): **kein Rollengang geführt.** Belegt waren die Suite und der Reviewer, nicht aber ein Gang als
   Vater an der laufenden App. Kein Schaden bekannt — die Lücke steht hier, statt still zu bleiben.
+- **2026-08-05** — **Nachschau** (Selbst-Check, kein Reviewer-Lauf): **ein Befund**, aufgenommen als
+  [B-116](B-116-blaettern-ohne-rueckmeldung.md). Der Rundumschlag hat zwei Situationen gleich behandelt, die
+  sich nur technisch gleichen: „dieselbe Abfrage wiederholen" (`reload()` — hier war Stehenlassen der
+  Auftrag) und „eine andere Abfrage läuft" (Blättern — hier war der Spinner die einzige Rückmeldung, und
+  der `Pager` hat keinen eigenen Ladezustand). Ausdrücklich mitgeprüft und in Ordnung: bei einem Wechsel
+  der Auswahl montiert das Repo per `key=` neu, die Hooks starten dort also mit `data === null`. Von 29
+  Stellen ist damit genau der Blätter-Fall betroffen, nicht die halbe Oberfläche.

@@ -9,6 +9,7 @@ wo: frontend
 migration: nein
 vertragsbruch: nein
 quelle: B-69 (Entscheidung 2)
+nachgeschaut: 2026-08-05
 ---
 
 # B-72 · Die Birkenbihl-Dekodierung trägt zwei Trennzeichen in einem Feld
@@ -261,3 +262,10 @@ Wire-Format des `POST` bleibt, wie es ist.
 - **2026-08-05** — Nachtrag zur neuen Eintrittsbedingung (README → „Der Rollengang fällt am leichtesten
   weg"): **kein Rollengang geführt.** Belegt waren die Suite und der Reviewer, nicht aber ein Gang als
   Creator an der laufenden App. Kein Schaden bekannt — die Lücke steht hier, statt still zu bleiben.
+- **2026-08-05** — **Nachschau** (Selbst-Check): **kein Befund.** Der Rundlauf ist symmetrisch geprüft
+  (`buildTypeConfig` → `nonEmptyPairs`, `configToEditorState` → `{word, gloss}`) — genau die Stelle, an der
+  bei B-66 der Fehler saß. `RepeatedPairFields` hält kontrollierte Felder, der Fokus-Index nach `add()`
+  stimmt, und `nonEmptyPairs` trimmt und verwirft Zeilen ohne Wort. Der `pairs: unknown`-Durchgang in
+  `RowRepeatedPairField` ist mit `Array.isArray(pairs) ? pairs : []` defensiv verengt, ein Alt-String
+  stürzt also nicht ab. Vermerkt in [B-74](B-74-editor-zeilen-typisieren.md): die Sicherheit hängt hier an
+  dieser Prüfung, nicht am Compiler (`Row = Record<string, any>`).

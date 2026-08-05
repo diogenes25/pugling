@@ -117,6 +117,22 @@ diesen Sprint gezogen — B-110s Ziel ist ohne sie erfüllt, dasselbe Muster wie
 
 ## Retrospektive
 
+**Nachschau:** die sechs Abnahmen der autonomen Runde vom 2026-08-05, die der Code-Review vom Folgetag
+**nicht** abgedeckt hatte — B-57, B-61, B-62, B-72, B-84, B-89. Als **Selbst-Check** geführt, weil
+`pugling-reviewer` und `frontend-reviewer` je dreimal an einem serverseitigen `529` abgebrochen sind; das
+ist der schwächere Beleg und steht so in jeder der sechs Stories. Ergebnis: **ein Befund** in B-89, als
+[B-116](backlog/B-116-blaettern-ohne-rueckmeldung.md) aufgenommen (`entgangen_bei: [B-89]`) — der
+Rundumschlag hat „dieselbe Abfrage wiederholen" und „andere Abfrage läuft" gleich behandelt und dem
+Blättern damit jede Rückmeldung genommen. Fünf ohne Befund, jede mit dem geprüften Punkt im `## Verlauf`
+(bei B-62 die nachgerechnete Behauptung „dieselbe Tageszählung wie `Start`" — sie stimmt wortgleich; bei
+B-72 der Rundlauf, also genau die Stelle, an der B-66 gescheitert war). `nachgeschaut: 2026-08-05` auf
+allen sechs, **auch auf den fünf sauberen** — sonst wäre der Blick nicht von „nie angesehen" zu
+unterscheiden.
+
+Damit steht der Nenner der Wirkungs-Zahl bei **14 von 42**, und die Quote bei **4 von 14** geprüften
+Stories mit einer Entgleitung. Die Grundlinie 3-von-8 hat sich also *nicht* bestätigt — sie war zu
+pessimistisch. Alle vier betroffenen Stories stammen weiter aus derselben Runde ohne Rollengang.
+
 **Was die eigenen Tore durchgelassen haben:** nichts aus diesem Sprint — aber der Sprint hat gezeigt,
 *warum* die Runde vom Vortag zwei Defekte durchließ, und zwar an einer Stelle, die niemand vermutet hatte.
 

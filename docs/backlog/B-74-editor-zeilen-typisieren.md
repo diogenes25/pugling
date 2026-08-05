@@ -248,3 +248,8 @@ ein HTTP-Durchgang bewiese hier nichts, was `tsc` und die bestehenden Frontend-T
   `.cs`-Datei an und ändert an keiner Server-Config-Form etwas. Sechs Schritte, Testweg ist in erster Linie
   `tsc --noEmit`/`npm run build` (der eigentliche Zweck der Story) plus das bestehende Vitest-/E2E-Netz aus
   B-69 als Beleg für Verhaltensgleichheit; `/smoke-test` entfällt begründet.
+- **2026-08-05** — aus der Nachschau zu B-72 nachgetragen: die Birkenbihl-Dekodierung ist inzwischen ein
+  **zweites** Feld, dessen Sicherheit nicht am Compiler hängt, sondern an einer Laufzeitprüfung
+  (`RowRepeatedPairField` nimmt `pairs: unknown` und verengt mit `Array.isArray(pairs) ? pairs : []`). Das
+  ist heute korrekt und stürzt auch bei Altdaten nicht ab — aber es ist ein weiterer Beleg dafür, was
+  `Row = Record<string, any>` kostet: jede neue Feldform muss ihre Typprüfung selbst mitbringen.

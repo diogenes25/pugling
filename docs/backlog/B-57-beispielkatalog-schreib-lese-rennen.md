@@ -9,6 +9,7 @@ wo: backend
 migration: nein
 vertragsbruch: nein
 quelle: docs/backlog/B-42-openapi-typen-generieren.md
+nachgeschaut: 2026-08-05
 ---
 
 # B-57 · Im Testlauf lesen und schreiben zwei Stellen gleichzeitig dieselbe Katalogdatei
@@ -206,3 +207,9 @@ M-Anker B-03/B-10.
   weg"): **kein Rollengang geführt, und keiner möglich** — die Änderung wirkt nicht zur Laufzeit für
   Creator, Vater oder Sohn (sie betrifft den Testlauf selbst). Belegt bleiben Suite und Reviewer; das ist hier die
   vollständige Verifikation, keine Lücke.
+- **2026-08-05** — **Nachschau** (Selbst-Check, kein Reviewer-Lauf; Protokoll `docs/pm-sitzung-2026-08-05.md`):
+  **kein Befund.** Die Änderung berührt keinen Produktionscode — sie führt `SchemaOnlyWebAppFactory` ein,
+  die für zwei Testklassen `OpenApi:ExamplesEnabled` abschaltet, damit sie nicht mehr gegen die Datei
+  lesen, die `DocsCaptureTests` im selben parallelen Lauf schreibt. Geprüft: die beiden Klassen lesen
+  wirklich nur `paths`/`components.schemas`, und die Suite ist grün (730/730), das Verhalten der übrigen
+  Tests also unverändert.

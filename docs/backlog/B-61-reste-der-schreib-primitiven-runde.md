@@ -9,6 +9,7 @@ wo: frontend
 migration: nein
 vertragsbruch: nein
 quelle: docs/backlog/B-54-objectivecard-schreib-primitive.md
+nachgeschaut: 2026-08-05
 ---
 
 # B-61 · Zwei Reste aus der Schreib-Primitiven-Runde
@@ -228,3 +229,8 @@ nötig – rein clientseitig, keine Backend-Änderung, keine neue Route.
 - **2026-08-05** — Nachtrag zur neuen Eintrittsbedingung (README → „Der Rollengang fällt am leichtesten
   weg"): **kein Rollengang geführt.** Belegt waren die Suite und der Reviewer, nicht aber ein Gang als
   Vater an der laufenden App. Kein Schaden bekannt — die Lücke steht hier, statt still zu bleiben.
+- **2026-08-05** — **Nachschau** (Selbst-Check): **kein Befund.** `onCreate` liefert jetzt
+  `Promise<boolean>`, und das Eingabefeld leert sich nur bei Erfolg — konsistent zu `TagAdder.onAdd`. Der
+  Doppelklick ist am Primitiv gesperrt (`useAction`, `useRef`), nicht an dieser Stelle. Einzige denkbare
+  Kleinigkeit, ausdrücklich **nicht** als Defekt gewertet: tippt jemand während des laufenden Requests
+  weiter, wird sein neuer Text nach dem Erfolg mitgeleert — dasselbe Verhalten wie im Vorbild.

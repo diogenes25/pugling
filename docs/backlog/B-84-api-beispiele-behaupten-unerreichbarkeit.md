@@ -12,6 +12,7 @@ vertragsbruch: nein
 quelle: B-81 (Abnahme, Reviewer-Befund außerhalb des Schnitts)
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-08-05
 ---
 
 # B-84 · Die API-Beispiele behaupten Unerreichbarkeit, wo nur nichts mitgeschnitten wurde
@@ -208,3 +209,8 @@ Dokumentationserzeugung ohne Laufzeit-Effekt am Produkt.
   weg"): **kein Rollengang geführt, und keiner möglich** — die Änderung wirkt nicht zur Laufzeit für
   Creator, Vater oder Sohn (reine Doku-Erzeugung). Belegt bleiben Suite und Reviewer; das ist hier die
   vollständige Verifikation, keine Lücke.
+- **2026-08-05** — **Nachschau** (Selbst-Check): **kein Befund.** Die Behebung ersetzt nicht nur die
+  falsche Behauptung, sie **sichert sie ab**: `DocsCaptureTests` prüft, dass der alte Wortlaut nicht mehr
+  im erzeugten Dokument steht und der neue drin ist — der Satz kann also nicht zurückkehren, ohne einen
+  Test rot zu machen. Die Lese-nach-Schreib-Stelle ist im Kommentar als rennfrei begründet (synchron,
+  derselbe Thread), und das deckt sich mit dem, was B-57 im selben Lauf am Katalog-Rennen geändert hat.

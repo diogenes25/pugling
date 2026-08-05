@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: docs/backlog/B-37-uebung-abbruch-unvollendet.md
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-08-05
 ---
 
 # B-62 · Drei Reste aus dem B-37-Review (Sohn-Arcade)
@@ -267,3 +268,11 @@ Benannt, nicht behauptet:
 - **2026-08-05** — Nachtrag zur neuen Eintrittsbedingung (README → „Der Rollengang fällt am leichtesten
   weg"): **kein Rollengang geführt.** Belegt waren die Suite und der Reviewer, nicht aber ein Gang als
   Sohn an der laufenden App. Kein Schaden bekannt — die Lücke steht hier, statt still zu bleiben.
+- **2026-08-05** — **Nachschau** (Selbst-Check): **kein Befund am Kern.** Die tragende Behauptung des
+  Kommentars — „dieselbe Tageszählung, die `Start` für die Obergrenze benutzt" — ist nachgeprüft und
+  **stimmt wortgleich**: `PositionTestsController.cs:160-161` (Start) und `:435-436` (Submit) tragen
+  dasselbe Prädikat, `AttemptsRemaining` kann dem Tor also nicht widersprechen.
+  **Eine Anmerkung, bewusst ohne eigene Story:** `Submit` rechnet gegen `attempt.Day`, das nächste Tor
+  gegen „heute". Wer über UTC-Mitternacht hinweg abgibt, bekommt die Restzahl des Vortags — die Anzeige
+  verschweigt dann einen erlaubten Versuch. Sehr seltenes Fenster, Richtung konservativ (sie verspricht
+  nichts, was nicht geht), und es ist der in `CLAUDE.md` unter „Zeit/UTC" ohnehin benannte Vorbehalt.
