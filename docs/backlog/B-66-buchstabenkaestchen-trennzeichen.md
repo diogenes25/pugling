@@ -221,3 +221,12 @@ Länge.
   Integrationstests Übung/Test). `npm run build` (Typecheck) und `npm test` → **136/136** (131 + 5 neu,
   `LetterBoxes.test.tsx`). Punkt 6 der Akzeptanzkriterien (Wortreihenfolge) bewusst nicht angefasst
   (Entscheidung 4). Commit: siehe Repo-Verlauf (B-66-Commit). Status → `abgenommen`.
+- **2026-08-05** — Nachtrag zur neuen Eintrittsbedingung (README → „Der Rollengang fällt am leichtesten
+  weg"): **weder Rollengang noch Reviewer geführt — und hier hat es gekostet.** Der Code-Review am selben
+  Tag fand, dass `compose` den gemeldeten Wert per `join("")` aus den Rohwerten zusammensetzte: eine noch
+  leere tippbare Stelle trug nichts bei, ein festes Maskenzeichen aber immer. Wer eine Stelle übersprang,
+  verschob damit alle folgenden Zeichen — das Kästchen unter dem Cursor zeigte plötzlich das Maskenzeichen
+  der übernächsten Stelle. Behoben in `ec3ba19`: der Wert ist immer genau `length` Zeichen lang und
+  stellengetreu, eine leere tippbare Stelle trägt ein Leerzeichen (gefahrlos, weil die Maske jedes
+  Nicht-Alphanumerische für fest erklärt und der Server ohnehin normalisiert); Regressionstest mit
+  zweiteiliger Maske, 149/149 grün.

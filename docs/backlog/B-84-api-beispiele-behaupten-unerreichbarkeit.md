@@ -204,3 +204,7 @@ Dokumentationserzeugung ohne Laufzeit-Effekt am Produkt.
   -c Release` → **728/728 grün**, `markdownlint-cli2` für beide geänderten Dateien grün (die sieben
   gemeldeten Befunde liegen alle in unberührten Fremddateien). Kein Reviewer-Agent nötig (`wo: doku`, per
   Schätzung). Commit `ff0b25b`, dazu dieser. Status → `abgenommen`.
+- **2026-08-05** — Nachtrag zur neuen Eintrittsbedingung (README → „Der Rollengang fällt am leichtesten
+  weg"): **kein Rollengang geführt, und keiner möglich** — die Änderung wirkt nicht zur Laufzeit für
+  Creator, Vater oder Sohn (reine Doku-Erzeugung). Belegt bleiben Suite und Reviewer; das ist hier die
+  vollständige Verifikation, keine Lücke.

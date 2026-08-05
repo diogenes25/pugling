@@ -122,3 +122,6 @@ per `git stash` der Implementierung, dann grün nach dem Bau.
   den drei DB-Indizes verifiziert, Konventionen eingehalten, einzige bekannte Lücke — Check-then-write nicht
   atomar — dieselbe akzeptierte Entscheidung wie in B-97). Commit: siehe Verlauf des Repos (B-104-Commit).
   Status → `abgenommen`.
+- **2026-08-05** — Nachtrag zur neuen Eintrittsbedingung (README → „Der Rollengang fällt am leichtesten
+  weg"): **kein Rollengang geführt.** Belegt waren die Suite und der Reviewer, nicht aber ein Gang als
+  Vater an der laufenden App. Kein Schaden bekannt — die Lücke steht hier, statt still zu bleiben.

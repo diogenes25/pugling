@@ -264,3 +264,6 @@ Benannt, nicht behauptet:
   `full-flow.spec.ts` flackert unabhängig von dieser Story bei „Frage 3/5" – per `git stash` gegen den
   unveränderten Stand verifiziert, dass derselbe Fehler schon vor B-62 bestand; nicht behoben (außerhalb des
   Zuschnitts), aber notiert. Commit `2a2356e`, dazu dieser. Status → `abgenommen`.
+- **2026-08-05** — Nachtrag zur neuen Eintrittsbedingung (README → „Der Rollengang fällt am leichtesten
+  weg"): **kein Rollengang geführt.** Belegt waren die Suite und der Reviewer, nicht aber ein Gang als
+  Sohn an der laufenden App. Kein Schaden bekannt — die Lücke steht hier, statt still zu bleiben.

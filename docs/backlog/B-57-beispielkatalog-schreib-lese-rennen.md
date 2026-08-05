@@ -202,3 +202,7 @@ M-Anker B-03/B-10.
   (unabhängig von dieser Story, siehe [B-107](B-107-dailybox-zufallswert-in-docs-capture.md)) trat bei jedem
   Testlauf neu auf und wurde vor dem Commit auf die eingecheckten Werte zurückgesetzt. Commit `a19a702`,
   dazu dieser. Status → `abgenommen`.
+- **2026-08-05** — Nachtrag zur neuen Eintrittsbedingung (README → „Der Rollengang fällt am leichtesten
+  weg"): **kein Rollengang geführt, und keiner möglich** — die Änderung wirkt nicht zur Laufzeit für
+  Creator, Vater oder Sohn (sie betrifft den Testlauf selbst). Belegt bleiben Suite und Reviewer; das ist hier die
+  vollständige Verifikation, keine Lücke.

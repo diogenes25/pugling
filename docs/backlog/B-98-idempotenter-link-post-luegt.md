@@ -116,3 +116,6 @@ Erwartung fest, siehe „Ergebnis der Arbeitsrunde" Punkt 4).
   Release` → **715/715 grün** (713 + 2 neue Fakten in bestehenden Testklassen). Frontend: `npm run build`
   (Contract-Regenerierung, Typecheck) und `npm test` (127/127) unverändert grün — kein Quellcode-Zweig
   betroffen. Commit: siehe Repo-Verlauf (B-98-Commit). Status → `abgenommen`.
+- **2026-08-05** — Nachtrag zur neuen Eintrittsbedingung (README → „Der Rollengang fällt am leichtesten
+  weg"): **kein Rollengang geführt.** Belegt waren die Suite und der Reviewer, nicht aber ein Gang als
+  Vater an der laufenden App. Kein Schaden bekannt — die Lücke steht hier, statt still zu bleiben.

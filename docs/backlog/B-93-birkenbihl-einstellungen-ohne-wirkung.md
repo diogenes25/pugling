@@ -139,3 +139,6 @@ per `git stash` der Implementierung verifiziert.
   aufgenommen statt hier mitgelöst. Frontend: `npm run build` (Typecheck) und `npm test` weiter 136/136
   unverändert (reine Verdrahtung einer bereits getesteten Komponente). Commit: siehe Repo-Verlauf
   (B-93-Commit). Status → `abgenommen`.
+- **2026-08-05** — Nachtrag zur neuen Eintrittsbedingung (README → „Der Rollengang fällt am leichtesten
+  weg"): **kein Rollengang geführt.** Belegt waren die Suite und der Reviewer, nicht aber ein Gang als
+  Sohn an der laufenden App. Kein Schaden bekannt — die Lücke steht hier, statt still zu bleiben.

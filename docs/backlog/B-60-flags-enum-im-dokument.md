@@ -216,3 +216,6 @@ Verhaltensänderung zur Laufzeit.
   aufgenommen statt hier mitgelöst. Frontend unverändert (Entscheidung 3): `npm run build` regeneriert
   `SchoolTypes` korrekt als `string`, `npm test` weiter 131/131. Commit: siehe Repo-Verlauf
   (B-60-Commit). Status → `abgenommen`.
+- **2026-08-05** — Nachtrag zur neuen Eintrittsbedingung (README → „Der Rollengang fällt am leichtesten
+  weg"): **kein Rollengang geführt.** Belegt waren die Suite und der Reviewer, nicht aber ein Gang als
+  Creator an der laufenden App. Kein Schaden bekannt — die Lücke steht hier, statt still zu bleiben.

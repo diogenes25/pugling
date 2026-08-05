@@ -241,3 +241,6 @@ zu werden.
   beide identischen Stellen-Paare in `VaterShop.tsx`/`VaterRewards.tsx` tatsächlich beide gefixt (nicht
   nur eine durch eine mehrdeutige Ersetzung), die AK-5-Abweichung eigenständig nachvollzogen und für
   tragfähig befunden (🟡, kein Blocker). Commit `b9b8279`, dazu dieser. Status → `abgenommen`.
+- **2026-08-05** — Nachtrag zur neuen Eintrittsbedingung (README → „Der Rollengang fällt am leichtesten
+  weg"): **kein Rollengang geführt.** Belegt waren die Suite und der Reviewer, nicht aber ein Gang als
+  Vater an der laufenden App. Kein Schaden bekannt — die Lücke steht hier, statt still zu bleiben.

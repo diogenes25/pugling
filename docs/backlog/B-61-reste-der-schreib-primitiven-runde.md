@@ -225,3 +225,6 @@ nötig – rein clientseitig, keine Backend-Änderung, keine neue Route.
   grün. `frontend-reviewer` fand keine Blocker (Vertrag zu `TagAdder`/den sechs `data === null`-Dateien
   deckungsgleich, keine Selektor-Fragilität, Kapitel→Art-Ersatz als sachgerecht bestätigt). Commit `9e16921`,
   dazu dieser. Status → `abgenommen`.
+- **2026-08-05** — Nachtrag zur neuen Eintrittsbedingung (README → „Der Rollengang fällt am leichtesten
+  weg"): **kein Rollengang geführt.** Belegt waren die Suite und der Reviewer, nicht aber ein Gang als
+  Vater an der laufenden App. Kein Schaden bekannt — die Lücke steht hier, statt still zu bleiben.

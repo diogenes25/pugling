@@ -108,3 +108,6 @@ Vitest (Muster `SelfAssessAnswer.test.tsx`), eine kurze Ergänzung in `full-flow
   nicht von mir gestarteten Dev-Server-Prozess belegt; die neuen Zeilen folgen aber exakt dem
   Locator-Muster der übrigen Datei. `npm run build` (Typecheck) und `npm test` → **131/131** (127 + 4 neu,
   `HistoryTab.test.tsx`) grün. Commit: siehe Repo-Verlauf (B-99-Commit). Status → `abgenommen`.
+- **2026-08-05** — Nachtrag zur neuen Eintrittsbedingung (README → „Der Rollengang fällt am leichtesten
+  weg"): **kein Rollengang geführt.** Belegt waren die Suite und der Reviewer, nicht aber ein Gang als
+  Sohn an der laufenden App. Kein Schaden bekannt — die Lücke steht hier, statt still zu bleiben.

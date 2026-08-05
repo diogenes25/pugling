@@ -123,3 +123,13 @@ fetch-getriebener Bildschirm (Grenze aus `frontend/CLAUDE.md`).
   Funktion `reviewFeedback` (Muster `SelfAssessAnswer`), mit 5 neuen Vitest-Fällen belegt; danach ohne
   Blocker. Frontend: `npm run build` (Typecheck) grün, `npm test` → **127/127** (122 + 5 neu). Commit:
   siehe Repo-Verlauf (B-96-Commit). Status → `abgenommen`.
+- **2026-08-05** — Nachtrag zur neuen Eintrittsbedingung (README → „Der Rollengang fällt am leichtesten
+  weg"): **kein Rollengang geführt — und hier hat es gekostet.** Der Code-Review am selben Tag fand, dass
+  eine `ShowBoth`-Position ohne Leitner dem Kind **keinen einzigen Knopf** zeigte: `Testable` war eine
+  Aussage über den Übungstyp, nicht über den Tag, also bot der Server nur die Klausur an — und die
+  antwortet auf dieser Stufe mit 400 `stage_not_testable`. Zugleich verlangte `IsGoalMetAsync` für
+  `StudyPlanTest` einen bestandenen Versuch, womit ein Tagesziel unerfüllbar blieb und nachts
+  Malus-Münzen kostete. Behoben in `e2d622b`: `IsDisplayOnlyDay`, `Testable` als Tages-Aussage, Rückfall
+  der Pflicht auf die gespielte Runde, `SohnHome` fragt `testable` statt `checkMode`; neuer
+  Integrationstest, gegen den Vorzustand rot geprüft, 729/729 grün. Ein halbminütiger Gang als Sohn hätte
+  den Befund **vor** der Abnahme geliefert — das ist der Anlass für die neue Bedingung.

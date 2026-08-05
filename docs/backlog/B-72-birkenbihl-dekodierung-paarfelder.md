@@ -258,3 +258,6 @@ Wire-Format des `POST` bleibt, wie es ist.
   hätte die Übung vorzeitig abgeschickt. Behoben (gleicher `onKeyDown`-Schutz wie im Vorbild, neuer Testfall),
   dazu ein 🟢-Fund (`disabled` fehlte an den Inputs, nur an den Buttons) mitbehoben. Commit `b33b0c5`,
   dazu dieser. Status → `abgenommen`.
+- **2026-08-05** — Nachtrag zur neuen Eintrittsbedingung (README → „Der Rollengang fällt am leichtesten
+  weg"): **kein Rollengang geführt.** Belegt waren die Suite und der Reviewer, nicht aber ein Gang als
+  Creator an der laufenden App. Kein Schaden bekannt — die Lücke steht hier, statt still zu bleiben.

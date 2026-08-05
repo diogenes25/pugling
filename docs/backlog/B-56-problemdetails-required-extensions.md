@@ -201,3 +201,7 @@ M-Anker B-03/B-10.
   Restrisiko) und dass `properties.extensions` **nicht** versehentlich ergänzt wurde (Akzeptanzkriterium 2).
   Kein Frontend-Anteil, `npm run build` als Kontrolle weiter grün. Commit: siehe Repo-Verlauf
   (B-56-Commit). Status → `abgenommen`.
+- **2026-08-05** — Nachtrag zur neuen Eintrittsbedingung (README → „Der Rollengang fällt am leichtesten
+  weg"): **kein Rollengang geführt, und keiner möglich** — die Änderung wirkt nicht zur Laufzeit für
+  Creator, Vater oder Sohn (sie betrifft das Vertragsdokument, nicht das Verhalten). Belegt bleiben Suite und Reviewer; das ist hier die
+  vollständige Verifikation, keine Lücke.
