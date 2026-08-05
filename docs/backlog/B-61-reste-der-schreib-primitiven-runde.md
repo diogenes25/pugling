@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend]
+tags: [typ/story, status/abgenommen, bereich/frontend]
 aliases: [CatalogAdmin leert unbedingt, Kinderliste flackert]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: S
@@ -211,3 +211,17 @@ nötig – rein clientseitig, keine Backend-Änderung, keine neue Route.
 - **2026-08-03** — **geschätzt** (autonom getroffen, Nutzerauftrag 2026-08-04): **S**, `wo: frontend`,
   keine Migration, kein Vertragsbruch. Angriffsplan, Risiken und Testweg (Erweiterung von
   `vater-von-null.spec.ts`, kein neues Spec, kein `/smoke-test`) stehen oben.
+- **2026-08-05** — im Autonomen Modus gebaut, ohne Rückfrage je Ticket: `CatalogAdmin`s `act()`/`createSubject()`
+  liefern jetzt `Promise<boolean>`, `NewName.onCreate` übernimmt exakt das `TagAdder.onAdd`-Muster (Feld nur
+  bei `true` geleert); `VaterDashboard`s „Heute"- und „Kinder"-Tabelle nutzen jetzt
+  `x.loading && x.data === null` wie die sechs anderen Dateien, die dritte optisch gleiche Stelle (`plans`,
+  Entscheidung 5) blieb unberührt. **Abweichung von AK 2/5:** die Story sprach von einem Kapitel-Duplikat,
+  aber Kapitel sind seit [B-106](B-106-lehrwerkgetriebener-katalog.md) aus `CatalogAdmin` verschwunden
+  (jetzt unter `/vater/lehrwerke`) – der Nachweis lief stattdessen über „Art" (Kategorie), denselben
+  `NewName`/`act()`-Codepfad mit derselben `ApiErrors.Conflict`-Ablehnung. Rote Probe vorab bestätigt: mit
+  gestashten Implementierungsdateien (nur `CatalogAdmin.tsx`/`VaterDashboard.tsx`, Testdatei blieb) schlug
+  `vater-von-null.spec.ts` exakt an der neuen „Kinder"-Flicker-Zusicherung fehl (1 statt 0 `.loading`-Elemente);
+  nach dem Zurückholen grün. `tsc -b` sauber, `npm test` **136/136 grün**, `vater-von-null.spec.ts` zweimal
+  grün. `frontend-reviewer` fand keine Blocker (Vertrag zu `TagAdder`/den sechs `data === null`-Dateien
+  deckungsgleich, keine Selektor-Fragilität, Kapitel→Art-Ersatz als sachgerecht bestätigt). Commit `<hash>`.
+  Status → `abgenommen`.

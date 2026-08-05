@@ -45,7 +45,7 @@ export function VaterDashboard() {
     <>
       <section>
         <h2 className="h-section">Heute</h2>
-        {today.loading ? <div className="loading">Lade…</div> : today.error ? <div className="banner err">{today.error}</div> : (
+        {today.loading && today.data === null ? <div className="loading">Lade…</div> : today.error ? <div className="banner err">{today.error}</div> : (
           <table className="table">
             <thead><tr><th>Kind</th><th>Status</th><th className="num">Ziele</th><th className="num">Punkte heute</th></tr></thead>
             <tbody>
@@ -70,7 +70,7 @@ export function VaterDashboard() {
 
       <section>
         <h2 className="h-section">Kinder</h2>
-        {children.loading ? <div className="loading">Lade…</div> : children.error ? <div className="banner err">{children.error}</div> : (
+        {children.loading && children.data === null ? <div className="loading">Lade…</div> : children.error ? <div className="banner err">{children.error}</div> : (
           <table className="table">
             <thead><tr><th>Id</th><th>Name</th><th>Klasse</th><th>Schulart</th><th>Interessen</th><th className="num">🪙</th><th className="num">💎</th></tr></thead>
             <tbody>

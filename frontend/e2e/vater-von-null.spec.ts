@@ -75,11 +75,30 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
 
   // ---------- 2. Kind mit PIN anlegen ----------
   // Die PIN ist der Login des Kindes; ohne sie kommt es nicht in seine App (Schritt 9 prüft genau das).
+  //
+  // Zugleich der Beleg für B-61 AK 4: `addChild` ruft nach dem Anlegen `children.reload()` auf; die
+  // GET-Antwort wird hier künstlich verzögert, damit die Prüfung unten nicht zufällig grün ist, weil der
+  // Server ohnehin schneller war als der Assert. Ohne den `data === null`-Wächter (VaterDashboard.tsx)
+  // ersetzte `{children.loading ? "Lade…" : …}` die schon sichtbare (noch leere) Tabelle kurz durch die
+  // Ladeanzeige – strukturell geprüft, nicht zeitkritisch (Entscheidung 7).
+  let releaseChildrenReload: (() => void) | undefined;
+  const childrenReloadHeld = new Promise<void>((resolve) => { releaseChildrenReload = resolve; });
+  await vater.route("**/api/v1/supervisor/children", async (route) => {
+    if (route.request().method() !== "GET") return route.fallback();
+    await childrenReloadHeld;
+    return route.fallback();
+  });
+
   await vater.locator("#new-child-name").fill(CHILD.name);
   await vater.locator("#new-child-grade").fill("5");
   await vater.locator("#new-child-pin").fill(CHILD.pin);
   await vater.getByRole("button", { name: "Kind anlegen" }).click();
   await expect(vater.getByText("Kind angelegt.")).toBeVisible();
+  // Die verzögerte Kinderliste läuft noch – die Sektion darf jetzt keine Ladeanzeige zeigen.
+  const kinderSection = vater.locator("section", { has: vater.getByRole("heading", { name: "Kinder" }) });
+  await expect(kinderSection.locator(".loading")).toHaveCount(0);
+  releaseChildrenReload!();
+  await vater.unroute("**/api/v1/supervisor/children");
 
   const childLink = vater.getByRole("link", { name: CHILD.name });
   await expect(childLink).toBeVisible();
@@ -115,6 +134,21 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
   await vater.getByPlaceholder("z. B. Französisch").fill(SUBJECT);
   await vater.getByRole("button", { name: "Neues Fach anlegen" }).click();
   await expect(vater.locator("#ca-subject")).toHaveValue(/\d+/);
+
+  // ---------- 4a. Ein abgelehntes Anlegen (Namensduplikat) darf den Feldinhalt nicht wegwerfen (B-61) ----------
+  // Kapitel sind seit B-106 nach /vater/lehrwerke gewandert; der real noch existierende Dedup-Pfad in
+  // CatalogAdmin ist die "Art" (ExerciseCategoriesController.Create lehnt einen zweiten gleichen Namen im
+  // selben Fach mit ApiErrors.Conflict ab). Vorher leerte `NewName.onSubmit` das Feld unbedingt (B-61 AK 1/2).
+  const ART = `Grammatik ${RUN}`;
+  await vater.getByPlaceholder("z. B. Grammatik").fill(ART);
+  await vater.getByRole("button", { name: "Neue Art anlegen" }).click();
+  await expect(vater.getByText("Art angelegt.")).toBeVisible();
+
+  await vater.getByPlaceholder("z. B. Grammatik").fill(ART);
+  await vater.getByRole("button", { name: "Neue Art anlegen" }).click();
+  await expect(vater.locator(".banner.err")).toBeVisible();
+  // Der Kern des Defekts: der getippte Text stand vorher nicht mehr da, egal ob abgelehnt oder nicht.
+  await expect(vater.getByPlaceholder("z. B. Grammatik")).toHaveValue(ART);
 
   await vater.goto("/vater/lehrwerke");
   await vater.locator("#ns-name").fill(SUBJECT);

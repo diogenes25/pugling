@@ -34,19 +34,25 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
   const categories = useAsync<CategoryResponse[]>(
     () => (subjectId === "" ? Promise.resolve([]) : api.categories(Number(subjectId))), [subjectId]);
 
-  /** Mutation ausführen und danach die betroffene Liste **und** die Seite drumherum auffrischen. */
+  /**
+   * Mutation ausführen und danach die betroffene Liste **und** die Seite drumherum auffrischen. Liefert,
+   * ob es geklappt hat – `NewName` leert sein Feld nur dann (wie `TagAdder.onAdd`).
+   */
   async function act(fn: () => Promise<unknown>, okText: string, reload?: () => void) {
-    if (!await action.run(fn, okText)) return;
+    const ok = await action.run(fn, okText);
+    if (!ok) return false;
     reload?.();
     onCatalogChanged();
+    return true;
   }
 
   /** Neues Fach anlegen und **gleich auswählen** – Kapitel und Arten hängen daran, der Weg geht weiter. */
   async function createSubject(name: string) {
     const created = await action.runFor(() => api.createSubject(name), "Fach angelegt.");
-    if (!created) return;
+    if (!created) return false;
     setSubjectId(created.id);
     onCatalogChanged();
+    return true;
   }
 
   return (
@@ -154,12 +160,17 @@ function NewName({ fieldId, label, placeholder, busy, onCreate }: {
   fieldId: string; label: string; placeholder: string;
   /** Läuft schon eine Mutation? Dann sperren – wie in `NameRow`, hier fehlte es. */
   busy: boolean;
-  onCreate: (name: string) => void;
+  /** Liefert, ob es geklappt hat – nur dann wird das Eingabefeld geleert (wie `TagAdder.onAdd`). */
+  onCreate: (name: string) => Promise<boolean>;
 }) {
   const [name, setName] = useState("");
   return (
     <form className="row" style={{ gap: 6, alignItems: "flex-end", marginTop: 8 }}
-      onSubmit={(e) => { e.preventDefault(); if (name.trim()) { onCreate(name.trim()); setName(""); } }}>
+      onSubmit={async (e) => {
+        e.preventDefault();
+        const trimmed = name.trim();
+        if (trimmed && await onCreate(trimmed)) setName("");
+      }}>
       <div className="field" style={{ flex: 1, minWidth: 200 }}>
         <label htmlFor={fieldId}>{label}</label>
         <input id={fieldId} value={name} onChange={(e) => setName(e.target.value)} placeholder={placeholder} />
