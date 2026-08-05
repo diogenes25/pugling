@@ -71,6 +71,12 @@ entgangen=""
 nie_geschaut=""
 geschaut_ids=""
 ziel_ids=""
+# `in-arbeit` trug bisher zwei Bedeutungen: „wird gebaut" und „fertig, haengt an einem Schritt ausserhalb
+# des Repos". Die zweite ist unsichtbar geparkte Arbeit — vier Stories lagen so da, ohne dass eine Liste
+# es gesagt haette. `wartet_auf` trennt das, stufenunabhaengig: es sammelt alles, was ohne Zutun von
+# aussen nicht weitergeht (Reviewer, Betreiber-Handgriff, Klang am echten Geraet).
+wartet=""
+n_wartet=0
 n_offen=0
 n_fertig=0
 n_verworfen=0
@@ -172,6 +178,12 @@ for f in docs/backlog/B-*.md; do
     ziel_ids="$ziel_ids $(printf '%s' "$ez" | tr -d '[]' | tr ',' ' ')"
   fi
 
+  wa="$(fm "$f" wartet_auf)"
+  if [ -n "$wa" ] && [ "$wa" != '""' ] && [ "$status" != "abgenommen" ] && [ "$status" != "verworfen" ]; then
+    wartet="${wartet}| [$id]($base) | $titel | \`$status\` | $(printf '%s' "$wa" | sed 's/|/\\|/g') |"$'\n'
+    n_wartet=$((n_wartet + 1))
+  fi
+
   case "$status" in
     abgenommen)
       fertig="${fertig}${row}"$'\n'
@@ -231,6 +243,14 @@ shopt -u nullglob
       case " $geschaut_ids " in *" $z "*) n_ziele=$((n_ziele + 1)) ;; esac
     done
     n_nie=$((n_fertig - n_geschaut))
+
+    if [ -n "$wartet" ]; then
+      printf '\n%s\n\n' "### Wartet auf Zutun von außen ($n_wartet)"
+      printf '%s\n' "Diese Stories kommen **im Repo nicht weiter** — es fehlt ein Schritt, den nur ein Mensch"
+      printf '%s\n\n' "oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit\" im Sinne von „wird gerade gebaut\"."
+      printf '%s\n%s\n' "| Id | Story | Stufe | Wartet auf |" "| --- | --- | --- | --- |"
+      printf '%s' "$wartet"
+    fi
 
     printf '\n%s\n\n' "### Nach der Abnahme entgangen ($n_entgangen)"
     printf '%s\n\n' "**Nachgeschaut: $n_geschaut von $n_fertig abgenommenen** — und in $n_ziele davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen $n_nie sind **unbeobachtet**, nicht sauber."

@@ -9,6 +9,7 @@ wo: frontend
 migration: nein
 vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-07-05.md
+wartet_auf: ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen
 ---
 
 # B-31 · Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören

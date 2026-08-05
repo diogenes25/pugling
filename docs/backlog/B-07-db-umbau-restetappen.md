@@ -9,6 +9,7 @@ wo: backend
 migration: nein
 vertragsbruch: nein
 quelle: docs/db-struktur-umbau-plan.md
+wartet_auf: einen Handgriff des Betreibers an der Azure-Instanz
 ---
 
 # B-07 · DB-Struktur-Umbau: der offene Betriebsschritt

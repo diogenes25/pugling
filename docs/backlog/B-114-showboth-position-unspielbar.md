@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-96]
+wartet_auf: pugling-reviewer und frontend-reviewer
 ---
 
 # B-114 · Eine Kennenlern-Position hatte für das Kind keinen einzigen Knopf — und kostete Münzen

@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-66]
+wartet_auf: frontend-reviewer
 ---
 
 # B-115 · Übersprang das Kind ein Buchstabenkästchen, rutschten alle folgenden Zeichen

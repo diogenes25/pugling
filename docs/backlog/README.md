@@ -42,6 +42,27 @@ in einem halben Jahr wie eine gelieferte Funktion gelesen. Der Grund gehört ins
 durch E13"). Das ist passiert, bevor dieser Satz hier stand: der Wächter hat es an neun fehlenden Belegen
 gemeldet.
 
+### `wartet_auf`: fertig ist nicht dasselbe wie in Arbeit
+
+`in-arbeit` trug zwei Bedeutungen, und die zweite war unsichtbar: „wird gerade gebaut" und „fertig
+gebaut, belegt, hängt nur noch an einem Schritt außerhalb des Repos". Am 2026-08-05 lagen **vier**
+Stories in der zweiten (B-110, B-111, B-114, B-115 — die Reviewer waren an sechs serverseitigen `529`
+gescheitert), und keine Liste sagte es. Wer die Sitzung danach aufnahm, hätte sie für unfertige Arbeit
+gehalten.
+
+```yaml
+wartet_auf: frontend-reviewer      # kurz und konkret; leer, sobald der Schritt getan ist
+```
+
+Das Feld ist **stufenunabhängig** — es sammelt alles, was ohne Zutun von außen nicht weitergeht, und
+genau das macht es nützlich: der Index führt es als eigenen Abschnitt, und dort steht seit dem ersten
+Lauf, warum das einzige **P1** des Bereichs nie wandert (B-07 wartet auf einen Handgriff an der
+Azure-Instanz) und dass B-31 ohne ein echtes Handy nicht zu beantworten ist. Beides war vorher nur
+Prosa in den Stories.
+
+Es ist **keine** Eintrittsbedingung und ändert keine Stufe. Es beantwortet die eine Frage, die eine
+Stufe nicht beantworten kann: *liegt das an mir oder an jemand anderem?*
+
 ### Die Eintrittsbedingung darf in einem verlinkten Protokoll stehen
 
 Ist-Stand und Entscheidungen dürfen **statt in der Story** in einem verlinkten Abschnitt eines *datierten
@@ -120,6 +141,7 @@ grund: ""                 # nur bei 'verworfen'
 ersetzt_durch: []         # nur bei 'verworfen: geteilt'
 entgangen_bei: []         # nur bei 'art: Defekt' — welche ABGENOMMENE Story ihn durchgelassen hat
 nachgeschaut: ""          # nur bei 'abgenommen' — Datum des Blicks NACH der Abnahme (auch ohne Fund!)
+wartet_auf: ""            # haengt an einem Schritt ausserhalb des Repos (Mensch, Geraet, Werkzeug)
 ---
 ```
 
@@ -591,6 +613,20 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-99](B-99-kaufhistorie-endet-lautlos.md) | Die Kaufhistorie des Kindes endet lautlos bei 50 Zeilen | Defekt | `abgenommen` | P2 | S | beides | — |
 
 </details>
+
+### Wartet auf Zutun von außen (6)
+
+Diese Stories kommen **im Repo nicht weiter** — es fehlt ein Schritt, den nur ein Mensch
+oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird gerade gebaut".
+
+| Id | Story | Stufe | Wartet auf |
+| --- | --- | --- | --- |
+| [B-07](B-07-db-umbau-restetappen.md) | DB-Struktur-Umbau: der offene Betriebsschritt | `geschaetzt` | einen Handgriff des Betreibers an der Azure-Instanz |
+| [B-110](B-110-kaufverlauf-ueberspringt-zeilen.md) | Der Kaufverlauf überspringt Zeilen und verpasst den eigenen Kauf | `in-arbeit` | pugling-reviewer und frontend-reviewer |
+| [B-111](B-111-verlauf-luegt-im-fehlerfall.md) | Scheitert das Laden des Verlaufs, sagt die App „Noch nichts gekauft" | `in-arbeit` | frontend-reviewer |
+| [B-114](B-114-showboth-position-unspielbar.md) | Eine Kennenlern-Position hatte für das Kind keinen einzigen Knopf — und kostete Münzen | `in-arbeit` | pugling-reviewer und frontend-reviewer |
+| [B-115](B-115-buchstabenkaestchen-index-drift.md) | Übersprang das Kind ein Buchstabenkästchen, rutschten alle folgenden Zeichen | `in-arbeit` | frontend-reviewer |
+| [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 
 ### Nach der Abnahme entgangen (4)
 

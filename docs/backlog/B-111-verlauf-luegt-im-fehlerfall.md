@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-99]
+wartet_auf: frontend-reviewer
 ---
 
 # B-111 · Scheitert das Laden des Verlaufs, sagt die App „Noch nichts gekauft"

@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-99]
+wartet_auf: pugling-reviewer und frontend-reviewer
 ---
 
 # B-110 · Der Kaufverlauf überspringt Zeilen und verpasst den eigenen Kauf
