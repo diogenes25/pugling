@@ -93,7 +93,7 @@ function ArticleCatalog() {
       </form>
       <StatusBanner message={action.message} style={{ marginTop: 10 }} />
 
-      {list.loading ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
+      {list.loading && list.data === null ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
         <div style={{ overflowX: "auto", marginTop: 10 }}>
           <table className="table">
             <thead><tr><th>Nr.</th><th>Titel</th><th>Art</th><th>Einheit</th><th></th></tr></thead>
@@ -251,7 +251,7 @@ function ListingManager({ article }: { article: ShopArticle }) {
       </form>
       <StatusBanner message={action.message} style={{ marginTop: 10 }} />
 
-      {list.loading ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
+      {list.loading && list.data === null ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
         <div style={{ overflowX: "auto", marginTop: 10 }}>
           <table className="table">
             <thead><tr><th>Angebot</th><th>Menge</th><th>Preis</th><th>Bestand</th><th>Auffüllen</th><th>Status</th><th></th></tr></thead>
@@ -393,7 +393,7 @@ function ChildShopView({ childId }: { childId: number }) {
       <StatusBanner message={action.message} style={{ marginTop: 10 }} />
 
       <h4 className="h-section" style={{ fontSize: 16, marginTop: 14 }}>Offene Aktivierungsanfragen</h4>
-      {activations.loading ? <div className="loading">Lade…</div> : activations.error ? <div className="banner err">{activations.error}</div> : (
+      {activations.loading && activations.data === null ? <div className="loading">Lade…</div> : activations.error ? <div className="banner err">{activations.error}</div> : (
         <div style={{ overflowX: "auto" }}>
           <table className="table">
             <thead><tr><th>Belohnung</th><th>Menge</th><th>Angefragt</th><th>Status</th><th></th></tr></thead>
@@ -419,7 +419,7 @@ function ChildShopView({ childId }: { childId: number }) {
       )}
 
       <h4 className="h-section" style={{ fontSize: 16, marginTop: 14 }}>Inventar</h4>
-      {inventory.loading ? <div className="loading">Lade…</div> : inventory.error ? <div className="banner err">{inventory.error}</div> : (
+      {inventory.loading && inventory.data === null ? <div className="loading">Lade…</div> : inventory.error ? <div className="banner err">{inventory.error}</div> : (
         <div style={{ overflowX: "auto" }}>
           <table className="table">
             <thead><tr><th>Artikel</th><th className="num">Menge</th></tr></thead>
@@ -439,7 +439,7 @@ function ChildShopView({ childId }: { childId: number }) {
       )}
 
       <h4 className="h-section" style={{ fontSize: 16, marginTop: 14 }}>Käufe</h4>
-      {purchases.loading ? <div className="loading">Lade…</div> : purchases.error ? <div className="banner err">{purchases.error}</div> : (
+      {purchases.loading && purchases.data === null ? <div className="loading">Lade…</div> : purchases.error ? <div className="banner err">{purchases.error}</div> : (
         <div style={{ overflowX: "auto" }}>
           <table className="table">
             <thead><tr><th>Titel</th><th>Preis</th><th>Gekauft</th><th>Status</th><th></th></tr></thead>

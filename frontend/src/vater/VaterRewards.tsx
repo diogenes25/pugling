@@ -115,7 +115,7 @@ function MissionManager({ childId }: { childId: number }) {
       </form>
       <StatusBanner message={action.message} style={{ marginTop: 10 }} />
 
-      {list.loading ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
+      {list.loading && list.data === null ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
         <div style={{ overflowX: "auto", marginTop: 10 }}>
           <table className="table">
             <thead><tr><th>Titel</th><th>Ziel</th><th>Zeitraum</th><th>Belohnung</th><th>Status</th><th></th></tr></thead>
@@ -200,7 +200,7 @@ function AchievementManager({ childId }: { childId: number }) {
       </form>
       <StatusBanner message={action.message} style={{ marginTop: 10 }} />
 
-      {list.loading ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
+      {list.loading && list.data === null ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
         <div style={{ overflowX: "auto", marginTop: 10 }}>
           <table className="table">
             <thead><tr><th></th><th>Titel</th><th>Schwelle</th><th>Belohnung</th><th>Status</th><th></th></tr></thead>

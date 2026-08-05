@@ -26,7 +26,7 @@ export function VaterPlanDetail() {
     if (await action.run(() => api.deletePlan(id))) nav("/vater");
   }
 
-  if (plan.loading) return <div className="loading">Lade Plan…</div>;
+  if (plan.loading && plan.data === null) return <div className="loading">Lade Plan…</div>;
   if (plan.error || !plan.data) return <div className="banner err">{plan.error ?? "Plan nicht gefunden."}</div>;
   const p = plan.data;
 

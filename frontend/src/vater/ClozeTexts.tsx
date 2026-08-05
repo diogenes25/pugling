@@ -86,7 +86,7 @@ export function ClozeTexts() {
       </form>
 
       {list.error && <div className="banner err">{list.error}</div>}
-      {list.loading ? <div className="loading">Lade…</div> : (
+      {list.loading && list.data === null ? <div className="loading">Lade…</div> : (
         <div style={{ overflowX: "auto", marginTop: 8 }}>
           <table className="table">
             <thead><tr><th>Titel</th><th>Sprachen</th><th>Text</th><th className="num">Lücken</th><th /></tr></thead>

@@ -315,7 +315,7 @@ export function VaterWizard() {
           </div>
           <TruncationHint shown={exercises.data?.items.length ?? 0} total={exercises.data?.total ?? 0} />
 
-          {exercises.loading ? <div className="loading">Lade Übungen…</div> : filteredExercises.length === 0 ? (
+          {exercises.loading && exercises.data === null ? <div className="loading">Lade Übungen…</div> : filteredExercises.length === 0 ? (
             <div className="banner err">
               Keine passenden Übungen im Katalog. Lege welche unter „Übungen" an (Fach {subject?.name ?? "?"}).
             </div>

@@ -80,7 +80,7 @@ function WeakWords({ childId }: { childId: number }) {
       </p>
 
       {words.error && <div className="banner err">{words.error}</div>}
-      {words.loading ? <div className="loading">Lade…</div> : (
+      {words.loading && words.data === null ? <div className="loading">Lade…</div> : (
         <div style={{ overflowX: "auto" }}>
           <table className="table">
             <thead><tr>
@@ -242,7 +242,7 @@ function CatalogDrilldown({ childId }: { childId: number }) {
         laufenden Plan zugewiesen; ohne Marke ist der Stoff nur noch Historie.
       </p>
       {subjects.error && <div className="banner err">{subjects.error}</div>}
-      {subjects.loading ? <div className="loading">Lade…</div> : (
+      {subjects.loading && subjects.data === null ? <div className="loading">Lade…</div> : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {subjects.data?.map((s) => (
             <div key={s.subjectId} className="card" style={{ padding: "8px 12px" }}>

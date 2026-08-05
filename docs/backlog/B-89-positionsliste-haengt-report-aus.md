@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/supervisor]
 aliases: [Positionsliste Ladezustand, aufgeklappter Report schließt]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: L
@@ -220,3 +220,24 @@ zu werden.
   mit im Umfang, zwei gezielte Regressionstests statt 30).
 - **2026-08-04** — geschätzt: autonom getroffen, Nutzerauftrag. `groesse: L` (Breite, nicht Komplexität),
   `wo: frontend`, `migration: nein`, `vertragsbruch: nein`, Angriffsplan und Testweg festgelegt.
+- **2026-08-05** — im Autonomen Modus gebaut, ohne Rückfrage je Ticket, exakt nach Angriffsplan: alle 29
+  lebenden Fundstellen (`PlanPositions.tsx:51`/`:409`, `VaterPlanDetail.tsx:29` als Früh-Return, plus die
+  28 weiteren aus der Tabelle) bekamen `X.loading` → `X.loading && X.data === null` an der jeweils
+  syntaktisch richtigen Stelle ihrer Bedingungskette. Die 11 verbliebenen inerten Stellen (12 minus
+  `VaterDashboard.tsx:73`, das schon durch [B-61](B-61-reste-der-schreib-primitiven-runde.md) denselben
+  Guard trägt) blieben bewusst unberührt (Entscheidung 1). **Abweichung von AK 5:** die zwei dort
+  verlangten dedizierten RTL-Tests (`PlanPositions.tsx`, `VaterPlanDetail.tsx`, Muster „`reload()` bei
+  befülltem `data` auslösen") wurden **nicht** gebaut – beide Screens holen ihre Daten direkt über
+  `useAsync(() => api.…)`, ein Test müsste dafür `../lib/api` oder `../lib/useAsync` mocken, wofür im
+  gesamten Frontend kein einziger Präzedenzfall existiert (`grep` bestätigt) und was die in
+  `frontend/CLAUDE.md` festgehaltene Grenze „kein nachgebauter Bildschirm mit gefälschtem `fetch`"
+  verletzt hätte – dieselbe Grenze, an der schon die vier BEREITS korrekten Vorbilder
+  (`VaterKatalog.tsx`, `VaterExercises.tsx`, `VaterVocab.tsx`, `VaterZiele.tsx`) laut Entscheidung 4 ohne
+  dedizierten Test geblieben sind. `npm run build` sauber, `npm test` **148/148 grün** (unverändert zur
+  Zahl vor dieser Story – bewusst keine neuen Tests, siehe eben). `frontend-reviewer` bestätigte
+  unabhängig: alle 29 Stellen syntaktisch korrekt (inkl. des im Risiko-Abschnitt vorab benannten
+  Sonderfalls `VaterClassTests.tsx:194` mit dritter Kettenbedingung), `VaterPlanDetail.tsx`s
+  Früh-Return-Kette fällt beim Reload korrekt durch, alle Stichproben der „inert"-Einstufung bestätigt,
+  beide identischen Stellen-Paare in `VaterShop.tsx`/`VaterRewards.tsx` tatsächlich beide gefixt (nicht
+  nur eine durch eine mehrdeutige Ersetzung), die AK-5-Abweichung eigenständig nachvollzogen und für
+  tragfähig befunden (🟡, kein Blocker). Commit `<hash>`. Status → `abgenommen`.

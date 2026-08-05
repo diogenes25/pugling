@@ -309,7 +309,7 @@ function MatchPanel({ childId, childName, books }: {
       )}
 
       {matches.error && <div className="banner err">{matches.error}</div>}
-      {matches.loading ? <div className="loading">Lade…</div>
+      {matches.loading && matches.data === null ? <div className="loading">Lade…</div>
         : matches.data?.length === 0 ? (
           <p className="muted">
             Kein Profil passt zu {childName} – prüfe Klasse und Schulart am Kind, oder lege unter{" "}

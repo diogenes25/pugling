@@ -51,7 +51,7 @@ export function VaterFachlehrer() {
         </label>
 
         {list.error && <div className="banner err">{list.error}</div>}
-        {list.loading ? <div className="loading">Lade…</div> : (
+        {list.loading && list.data === null ? <div className="loading">Lade…</div> : (
           <table className="table">
             <thead><tr><th>Profil</th><th>Fach</th><th>Klassen</th><th>Lehrwerk</th><th /></tr></thead>
             <tbody>

@@ -50,7 +50,7 @@ export function InterestTagAdmin() {
       </form>
 
       {tags.error && <div className="banner err">{tags.error}</div>}
-      {tags.loading ? <div className="loading">Lade…</div> : (
+      {tags.loading && tags.data === null ? <div className="loading">Lade…</div> : (
         <div style={{ overflowX: "auto", marginTop: 8 }}>
           <table className="table">
             <thead>

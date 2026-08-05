@@ -61,7 +61,7 @@ function AccountView({ childId }: { childId: number }) {
 
       <section>
         <h3 className="h-section">Buchungsverlauf {account.data ? `(${account.data.total})` : ""}</h3>
-        {account.loading ? <div className="loading">Lade…</div> : account.error ? <div className="banner err">{account.error}</div> : (
+        {account.loading && account.data === null ? <div className="loading">Lade…</div> : account.error ? <div className="banner err">{account.error}</div> : (
           <div style={{ overflowX: "auto" }}>
             <table className="table">
               <thead><tr><th>Datum</th><th>Kategorie</th><th>Grund</th><th className="num">Münzen</th></tr></thead>

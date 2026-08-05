@@ -352,7 +352,7 @@ function ItemEditor({ detail }: { detail: ExerciseDetail }) {
       {items.error && <div className="banner err">{items.error}</div>}
       {/* Auf `loading` prüfen, nicht auf „noch keine Daten": nach einem Fehler bleibt `data` null, und
           der Spinner stünde neben der Fehlermeldung für immer. */}
-      {items.loading ? <div className="loading">Lade Wortpaare…</div> : items.data && (
+      {items.loading && items.data === null ? <div className="loading">Lade Wortpaare…</div> : items.data && (
         <div style={{ overflowX: "auto" }}>
           <table className="table">
             <thead><tr><th>#</th><th>Wort</th><th>Übersetzung</th><th>Hinweis</th><th /></tr></thead>

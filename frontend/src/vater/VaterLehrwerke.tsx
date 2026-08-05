@@ -51,7 +51,7 @@ export function VaterLehrwerke() {
         </form>
 
         {list.error && <div className="banner err">{list.error}</div>}
-        {list.loading ? <div className="loading">Lade…</div> : (
+        {list.loading && list.data === null ? <div className="loading">Lade…</div> : (
           <table className="table">
             <thead><tr><th>Reihe</th><th>Fach</th><th>Schulart</th><th>Units</th><th /></tr></thead>
             <tbody>

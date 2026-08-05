@@ -48,7 +48,7 @@ export function PlanPositions({ planId }: { planId: number }) {
 
       <AddPosition planId={planId} action={action} onAdded={positions.reload} />
 
-      {positions.loading ? <div className="loading">Lade Positionen…</div> : positions.error ? (
+      {positions.loading && positions.data === null ? <div className="loading">Lade Positionen…</div> : positions.error ? (
         <div className="banner err">{positions.error}</div>
       ) : (
         <div style={{ overflowX: "auto", marginTop: 12 }}>
@@ -406,7 +406,7 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
 
       <div className="field">
         <label>Übung aus dem Katalog <span className="muted">({results.length} Treffer)</span></label>
-        {exercises.loading ? <div className="loading">Lade…</div> : (
+        {exercises.loading && exercises.data === null ? <div className="loading">Lade…</div> : (
           <div role="radiogroup" aria-label="Übung wählen"
             style={{ maxHeight: 240, overflowY: "auto", border: "1px solid var(--stroke)", borderRadius: 8, display: "flex", flexDirection: "column" }}>
             {results.map((ex) => (

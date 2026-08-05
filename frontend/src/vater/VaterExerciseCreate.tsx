@@ -402,7 +402,7 @@ function VocabRefPicker({ selected, setSelected, extra, setExtra }: {
         </span>
       </div>
       <input placeholder="Store durchsuchen…" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Vokabel-Store durchsuchen" />
-      {store.loading ? <div className="loading">Lade…</div> : (
+      {store.loading && store.data === null ? <div className="loading">Lade…</div> : (
         <div style={{ maxHeight: 240, overflowY: "auto", display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))", gap: 6 }}>
           {(store.data ?? []).map((v) => (
             <label key={v.id} className="checkline" style={{ padding: 6, border: "1px solid var(--stroke)", borderRadius: 8 }}>

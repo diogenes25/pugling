@@ -143,7 +143,7 @@ export function VaterAnmerkungen() {
         )}
       </div>
 
-      {list.loading ? <div className="loading">Lade…</div>
+      {list.loading && list.data === null ? <div className="loading">Lade…</div>
         : list.error ? <div className="banner err">{list.error}</div>
           : (
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>

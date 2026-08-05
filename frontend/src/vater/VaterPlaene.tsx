@@ -71,7 +71,7 @@ export function VaterPlaene() {
         </div>
       </section>
 
-      {plans.loading ? <div className="loading">Lade…</div> : plans.error ? <div className="banner err">{plans.error}</div> : (
+      {plans.loading && plans.data === null ? <div className="loading">Lade…</div> : plans.error ? <div className="banner err">{plans.error}</div> : (
         <table className="table">
           <thead><tr><th>Titel</th><th>Kind</th><th className="num">Übungen</th><th>Zeitraum</th><th>Status</th></tr></thead>
           <tbody>

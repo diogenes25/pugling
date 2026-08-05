@@ -104,7 +104,7 @@ function MediaLinkEditor({ heading, hint, empty, word, load, deps, onLink, onUnl
       <p className="muted" style={{ marginTop: 0, fontSize: 13 }}>{hint}</p>
       {links.error && <div className="banner err">{links.error}</div>}
 
-      {links.loading ? <div className="loading">Lade…</div> : (
+      {links.loading && links.data === null ? <div className="loading">Lade…</div> : (
         (links.data ?? []).length === 0
           ? <p className="muted">{empty}</p>
           : (

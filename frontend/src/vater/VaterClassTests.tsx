@@ -113,7 +113,7 @@ function ClassTestManager({ childId }: { childId: number }) {
 
       <section>
         <h3 className="h-section">Geplant & geschrieben {list.data ? `(${list.data.total})` : ""}</h3>
-        {list.loading ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
+        {list.loading && list.data === null ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
           <div style={{ overflowX: "auto" }}>
             <table className="table">
               <thead><tr><th>Titel</th><th>Termin</th><th>Status</th><th>Übungen</th><th>Note</th><th>Aktion</th></tr></thead>
@@ -191,7 +191,7 @@ function ClassTestDetail({ id, subjectId, onChanged }:
 
   return (
     <div className="card" style={{ marginTop: 10 }}>
-      {detail.loading ? <div className="loading">Lade…</div> : detail.error ? <div className="banner err">{detail.error}</div> : detail.data && (
+      {detail.loading && detail.data === null ? <div className="loading">Lade…</div> : detail.error ? <div className="banner err">{detail.error}</div> : detail.data && (
         <>
           <div className="row">
             <b>{detail.data.klassenarbeit.title}</b>
@@ -215,7 +215,7 @@ function ClassTestDetail({ id, subjectId, onChanged }:
             <input aria-label="Suche im Katalog" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Suche im Katalog…" style={{ maxWidth: 260 }} />
             <button type="submit" className="btn ghost inline-btn" style={{ width: "auto" }}>Suchen</button>
           </form>
-          {found.loading ? <div className="loading">Lade…</div> : found.data && (
+          {found.loading && found.data === null ? <div className="loading">Lade…</div> : found.data && (
             found.data.items.length === 0 ? <p className="muted">Keine passenden Übungen im Katalog.</p> : (
               <ul>
                 {found.data.items.map((e) => (
@@ -251,7 +251,7 @@ function RepeatPanel({ repeat }: { repeat: ReturnType<typeof useAsync<Klassenarb
   return (
     <section>
       <h3 className="h-section">Wiederholen: schwach benotete Arbeiten</h3>
-      {repeat.loading ? <div className="loading">Lade…</div> : repeat.error ? <div className="banner err">{repeat.error}</div> : repeat.data && (
+      {repeat.loading && repeat.data === null ? <div className="loading">Lade…</div> : repeat.error ? <div className="banner err">{repeat.error}</div> : repeat.data && (
         repeat.data.sources.length === 0
           ? <p className="muted">Keine Arbeiten mit Note ≥ {repeat.data.minBadGrade.toFixed(1)} – nichts nachzuholen. 👍</p>
           : (
