@@ -396,7 +396,8 @@ rounds as the loop iterates. Skeleton:
 
 ## Sprint N — Ziel & Umfang
 **Sprint-Ziel:** <ein Satz aus einer Rollensicht, in Step 6 widerlegbar>
-**Umfang:** <3–6 Story-Ids, alle auf `geschaetzt`>  ·  **Entwickler-Brief:** <Ziel · Quelle der Wahrheit · Guards · Migration · Testweg>
+**Umfang:** <bis zu 6 Story-Ids, alle auf `geschaetzt`; was nicht dem Ziel dient, bleibt draußen — mit Namen>
+**Entwickler-Brief:** <Ziel · Quelle der Wahrheit · Guards · Migration · Testweg>
 
 ## Iteration N — umgesetzt
 <Backend (API-First) · Frontend · Verifikation (Testcount)>
