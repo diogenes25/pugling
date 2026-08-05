@@ -60,6 +60,24 @@ describe("Rundlauf über die umgestellten Listenfelder", () => {
 
     expect(rows[0].choices).toEqual(["Leeds", MIT_KOMMA]);
   });
+
+  /*
+   * B-72: die Dekodierung führte bisher EIN kommagetrenntes Sammelfeld ("Wort:wörtlich, Wort:wörtlich"),
+   * doppelt zerlegt (erst an ",", dann an ":"). Ein Komma ODER ein Doppelpunkt in Wort oder Glosse zerriss
+   * den Eintrag lautlos in zusätzliche, falsche Paare - eine wörtliche Glosse mit einer Umschreibung
+   * ("is:isst, gerade") ist genau dieser Fall, kein Rand. Seit dieser Story ist `decoding` ein Array aus
+   * Paaren (kein Split mehr), darum muss der Rundlauf beide Zeichen unversehrt tragen.
+   */
+  it("Birkenbihl: ein Wortpaar mit Komma UND Doppelpunkt in der Glosse bleibt EIN Paar", () => {
+    const { config, rows } = rundlauf("Birkenbihl",
+      [{ text: "She is about to leave.", naturalTranslation: "Sie ist im Begriff zu gehen.",
+        decoding: [{ word: "is:about", gloss: "ist:im Begriff zu, gerade" }] }],
+      { learningLang: "en", nativeLang: "de" });
+
+    const sentences = config as { sentences: { decoding: { learningWord: string; gloss: string | null }[] }[] };
+    expect(sentences.sentences[0].decoding).toEqual([{ learningWord: "is:about", gloss: "ist:im Begriff zu, gerade" }]);
+    expect(rows[0].decoding).toEqual([{ word: "is:about", gloss: "ist:im Begriff zu, gerade" }]);
+  });
 });
 
 describe("Leere Listen", () => {

@@ -1,6 +1,7 @@
 import { useId } from "react";
 import { InfoHint } from "../components/InfoHint";
 import { RepeatedTextFields, nonEmpty } from "../components/RepeatedTextFields";
+import { RepeatedPairFields, nonEmptyPairs, type Pair } from "../components/RepeatedPairFields";
 import type { HelpTopic } from "../lib/fieldHelp";
 import { LANGUAGES } from "../lib/languages";
 import type { ArithmeticOperation, ExerciseTypeKey } from "../lib/types";
@@ -100,7 +101,7 @@ export function emptyRow(type: ExerciseTypeKey): Row {
     case "Cloze": return { index: 1, answer: "", alternatives: [], vocabKey: null };
     case "Matching": return { left: "", right: "" };
     case "List": return { value: "", alternatives: [] };
-    case "Birkenbihl": return { text: "", decoding: "", naturalTranslation: "" };
+    case "Birkenbihl": return { text: "", decoding: [], naturalTranslation: "" };
     case "Reading":
     case "Listening": return { prompt: "", choices: [], answer: "" };
     case "Essay": return { criterion: "", maxScore: "5" };
@@ -216,10 +217,9 @@ export function buildTypeConfig(
       // sentenceId/wordId lässt der Server beim Speichern vergeben (NormalizeConfig).
       return { learningLang: extra.learningLang ?? "", nativeLang: extra.nativeLang ?? "",
         sentences: rows.map((r) => ({ learningSentence: r.text, naturalTranslation: r.naturalTranslation,
-          // Dekodierung als "Wort:wörtlich, Wort:wörtlich" eingegeben – hier in WordPair-Liste geparst.
-          decoding: (r.decoding ?? "").split(",").map((p: string) => p.split(":"))
-            .filter((kv: string[]) => kv[0]?.trim())
-            .map((kv: string[]) => ({ learningWord: kv[0].trim(), gloss: (kv[1] ?? "").trim() || null })) })) };
+          // Dekodierung als eigene Paar-Zeilen (Wort, Glosse) eingegeben - kein Trennzeichen-Split mehr,
+          // ein Komma oder Doppelpunkt in Wort/Glosse zerriss den Eintrag vorher lautlos (B-72).
+          decoding: nonEmptyPairs(r.decoding ?? []) })) };
   }
 }
 
@@ -309,7 +309,7 @@ export function configToEditorState(type: ExerciseTypeKey, config: unknown): { r
         list(c.sentences).map((s) => ({
           text: s.learningSentence ?? "",
           naturalTranslation: s.naturalTranslation ?? "",
-          decoding: list(s.decoding).map((w) => `${w.learningWord}:${w.gloss ?? ""}`).join(", "),
+          decoding: list(s.decoding).map((w) => ({ word: w.learningWord ?? "", gloss: w.gloss ?? "" })),
         })),
         { learningLang: str(c.learningLang), nativeLang: str(c.nativeLang) });
   }
@@ -556,7 +556,8 @@ export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, re
           </>}
           {type === "Birkenbihl" && <>
             <RowField label="Satz (Lernsprache)" value={r.text} onChange={(v) => patchRow(i, { text: v })} />
-            <RowField label="Dekodierung (Wort:wörtlich, …)" value={r.decoding} onChange={(v) => patchRow(i, { decoding: v })} placeholder="What:Was, is:ist" />
+            <RowRepeatedPairField label="Dekodierung" wordLabel="Wort" glossLabel="wörtlich"
+              scope={`Satz ${i + 1}`} pairs={r.decoding} onChange={(v) => patchRow(i, { decoding: v })} />
             <RowField label="Natürliche Übersetzung" value={r.naturalTranslation} onChange={(v) => patchRow(i, { naturalTranslation: v })} />
           </>}
           <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => removeRow(i)} aria-label="Zeile entfernen">×</button>
@@ -613,6 +614,28 @@ export function RowRepeatedField({ label, values, onChange, scope, placeholder, 
       </span>
       <RepeatedTextFields label={label} scope={scope} placeholder={placeholder}
         values={Array.isArray(values) ? values : []} onChange={onChange} />
+    </div>
+  );
+}
+
+/**
+ * Wie {@link RowRepeatedField}, aber für Paare (Muster {@link RepeatedPairFields}) - bislang nur für die
+ * Birkenbihl-Dekodierung gebraucht (Wort der Lernsprache, wörtliche Glosse).
+ */
+export function RowRepeatedPairField({ label, wordLabel, glossLabel, pairs, onChange, scope }: {
+  /** Überschrift über beiden Feldern (z. B. „Dekodierung"). */
+  label: string;
+  wordLabel: string;
+  glossLabel: string;
+  pairs: unknown;
+  onChange: (pairs: Pair[]) => void;
+  scope: string;
+}) {
+  return (
+    <div className="field" style={{ flex: 1, minWidth: 220 }}>
+      <span className="label-row">{label}</span>
+      <RepeatedPairFields wordLabel={wordLabel} glossLabel={glossLabel} scope={scope}
+        pairs={Array.isArray(pairs) ? pairs : []} onChange={onChange} />
     </div>
   );
 }

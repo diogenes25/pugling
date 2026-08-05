@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/creator]
 aliases: [Dekodierung Paar-Felder, Wort:wörtlich]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: S
@@ -244,3 +244,17 @@ Wire-Format des `POST` bleibt, wie es ist.
   `.cs`-Datei an. Sieben Schritte, beginnend mit dem roten Regressionstest gegen den heutigen `split(",")`.
   Größter Unterschied zu B-69: kein zweiter Editor und kein bestehender E2E, dafür bleibt der Leseweg ohne
   Oberfläche ungeprüft — Testweg ist darum zwei neue Vitest-Dateien, `/smoke-test` entfällt begründet.
+- **2026-08-05** — im Autonomen Modus gebaut, ohne Rückfrage je Ticket, exakt nach Angriffsplan: neue
+  Komponente `RepeatedPairFields` (zwei Felder je Zeile, „+ Wort", Entfernen, Fokus aufs neue Wort-Feld),
+  `Row.decoding` von `string` auf `{word, gloss}[]` umgestellt (`emptyRow`, `buildTypeConfig` via neuem
+  `nonEmptyPairs`, `configToEditorState`), `ConfigEditor` nutzt einen neuen `RowRepeatedPairField`-Wrapper.
+  Rote Probe zuerst: der neue Rundlauf-Testfall in `exerciseConfig.test.ts` (Wort **und** Glosse mit Komma
+  *und* Doppelpunkt) warf gegen den Vorzustand `TypeError: split is not a function`, weil die neue
+  Array-Form auf den alten String-Code trifft – danach grün. `npm run build` sauber, `npm test`
+  **148/148 grün** (141 + 7 neue). `frontend-reviewer` fand einen echten 🟡-Befund: anders als der
+  (unerreichbare) Leseweg ist der Birkenbihl-**Schreibweg** live (`VaterExerciseCreate.tsx` rendert
+  `ConfigEditor` für jeden Typ in einem echten `<form>`) – `RepeatedPairFields` fehlte darum der
+  Enter-Schutz, den `RepeatedTextFields` für genau dieses Formular schon trägt; ein Enter im Wortpaar-Feld
+  hätte die Übung vorzeitig abgeschickt. Behoben (gleicher `onKeyDown`-Schutz wie im Vorbild, neuer Testfall),
+  dazu ein 🟢-Fund (`disabled` fehlte an den Inputs, nur an den Buttons) mitbehoben. Commit `<hash>`.
+  Status → `abgenommen`.
