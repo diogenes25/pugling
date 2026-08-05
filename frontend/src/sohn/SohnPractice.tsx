@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ApiError, api, errorMessage } from "../lib/api";
+import { useOncePerKey } from "../lib/useOncePerKey";
 import { useSohn } from "./SohnApp";
 import { LetterBoxes } from "../components/LetterBoxes";
 import { AudioButton } from "../components/AudioButton";
@@ -72,25 +73,27 @@ export function SohnPractice() {
   const session = useRef<PositionSession | null>(null);
   const startedIso = useRef<number>(Date.now());
 
-  // Sitzung starten + fällige Karten laden.
-  useEffect(() => {
-    if (!planId || !positionId) { nav("/sohn"); return; }
-    let alive = true;
-    (async () => {
-      try {
-        const sess = await api.startSession(planId, positionId);
-        if (!alive) return;
-        session.current = sess;
-        const due = await api.cards(planId, positionId, sess.id);
-        if (!alive) return;
-        setCards(due);
-        setPhase(due.length === 0 ? "empty" : "front");
-      } catch (e) {
-        if (alive) { setError(errorMessage(e)); setPhase("error"); }
-      }
-    })();
-    return () => { alive = false; };
-  }, [planId, positionId, nav]);
+  // Ohne Ziel navigiert weg - nichts zu laden.
+  useEffect(() => { if (!planId || !positionId) nav("/sohn"); }, [planId, positionId, nav]);
+
+  // Sitzung starten + fällige Karten laden - wie `startedFor` in `SohnTest.tsx`, aber über `useOncePerKey`:
+  // ein Remount (React-StrictMode im Dev, generell) legte vorher zwei `PracticeSession`-Zeilen an, die
+  // zweite blieb bei Cursor 0 offen liegen (B-62). Ein reiner Boolean-Gate reicht dafür nicht - siehe
+  // `useOncePerKey`s eigene Dokumentation für den Stolperstein, den diese Reparatur selbst erst aufdeckte.
+  useOncePerKey(
+    planId && positionId ? `${planId}:${positionId}` : null,
+    async () => {
+      const sess = await api.startSession(planId!, positionId);
+      const due = await api.cards(planId!, positionId, sess.id);
+      return { sess, due };
+    },
+    ({ sess, due }) => {
+      session.current = sess;
+      setCards(due);
+      setPhase(due.length === 0 ? "empty" : "front");
+    },
+    (e) => { setError(errorMessage(e)); setPhase("error"); },
+  );
 
   // Heartbeat: alle 12s aktive Zeit melden (Server clamped ohnehin). Session am Ende schließen.
   useEffect(() => {

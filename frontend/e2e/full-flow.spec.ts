@@ -1,4 +1,5 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
+import { vaterLogin, sohnLogin } from "./helpers";
 
 // End-to-End des vertikalen Durchstichs im Positions-Modell:
 //   Vater legt (Web) einen Lehrplan-Container an und hängt eine Katalog-Übung als Position hinein
@@ -12,28 +13,11 @@ const FATHER = { id: "1", pin: "0000" };
 const CHILD = { id: "1", pin: "1111" };
 const EXERCISE = "Vokabeln: En ville";
 
-async function vaterLogin(page: Page) {
-  await page.goto("/vater");
-  await page.locator("#fid").fill(FATHER.id);
-  await page.locator("#pin").fill(FATHER.pin);
-  await page.getByRole("button", { name: "Anmelden" }).click();
-  await expect(page.getByRole("heading", { name: "Kinder" })).toBeVisible();
-}
-
-async function sohnLogin(page: Page) {
-  await page.goto("/sohn");
-  await page.locator("#childId").fill(CHILD.id);
-  for (const d of CHILD.pin.split("")) {
-    await page.locator(".keys button", { hasText: new RegExp(`^${d}$`) }).first().click();
-  }
-  await page.getByRole("button", { name: "▶ LOS" }).click();
-}
-
 test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", async ({ browser }) => {
   // ---------- VATER (Web) ----------
   const vaterCtx = await browser.newContext();
   const vater = await vaterCtx.newPage();
-  await vaterLogin(vater);
+  await vaterLogin(vater, FATHER);
 
   // Lehrplan = leerer Container (Titel/Kind/Laufzeit sind vorbelegt) → anlegen und auf die Plan-Seite.
   // Der Weg läuft über die Perspektive „Zuweisen": dort liegen die Pläne, und „+ Neuer Plan" ist eine
@@ -66,7 +50,7 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   // ---------- SOHN (App) ----------
   const sohnCtx = await browser.newContext();
   const sohn = await sohnCtx.newPage();
-  await sohnLogin(sohn);
+  await sohnLogin(sohn, CHILD);
 
   // Basis: Tagesmission sichtbar
   await expect(sohn.getByText("Tagesmission")).toBeVisible();
@@ -118,7 +102,11 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   await expect(testCounter).toHaveText(`Frage 2 / ${testTotal}`);
   await sohn.getByRole("button", { name: "Später weiter" }).click();
   await expect(sohn.getByText("Tagesmission")).toBeVisible();
-  await sohn.getByRole("link", { name: /TEST/ }).click();
+  // Auf die Positions-Karte der Übung gescoped, nicht global: jede testbare Karte trägt genau einen
+  // TEST-Link, aber sobald ein Plan eine zweite testbare Position bekommt, träfe ein ungescopter Locator
+  // zwei Treffer und Playwrights Strict-Mode bräche ab (B-62) - heute geht das nur gut, weil dieser Plan
+  // nur eine Position trägt.
+  await sohn.locator(".card", { hasText: EXERCISE }).getByRole("link", { name: /TEST/ }).click();
   await expect(testCounter).toHaveText(`Frage 2 / ${testTotal}`);
 
   for (let i = 1; i < testTotal; i++) await answerOne();

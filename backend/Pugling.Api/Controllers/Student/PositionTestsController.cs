@@ -427,10 +427,18 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         // The daily reward box: same occasion as the goal reward above, once the day's duty is fully met.
         await dailyBox.EvaluateAndAwardAsync(plan, attempt.Day, dayOverview, ct);
 
+        // Same daily count Start already uses for the cap (used >= MaxAttemptsPerDay) - this attempt's own
+        // row was inserted at Start, so counting now naturally includes it (1st of 2 -> remaining 1, 2nd -> 0).
+        // A supervisor attempt is exempt from the cap, so the field is constant filler there (Entscheidung 3).
+        var attemptsRemaining = attempt.BySupervisor
+            ? MaxAttemptsPerDay
+            : Math.Max(0, MaxAttemptsPerDay - await db.TestAttempts
+                .CountAsync(t => t.PlanPositionId == positionId && t.Day == attempt.Day && !t.BySupervisor, ct));
+
         // The wrong mentions ride along only where they exist: in set mode the outcomes above name what the
         // child FORGOT, and without this list what it actually typed would silently disappear.
         return new SubmitResponse(attempt.Id, attempt.StageValue, attempt.TotalItems, attempt.CorrectItems,
-            attempt.ScorePercent, attempt.Passed, passPercent, outcomes,
+            attempt.ScorePercent, attempt.Passed, passPercent, outcomes, attemptsRemaining,
             wrongMentions.Count > 0 ? wrongMentions : null);
     }
 }

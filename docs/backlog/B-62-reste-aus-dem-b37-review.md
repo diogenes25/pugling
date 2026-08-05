@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/backend, bereich/frontend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/backend, bereich/frontend, rolle/student]
 aliases: [Sohn-Arcade Reste B-37, Doppelte Übungssitzung, Nochmal versuchen ohne Versuch]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: S
@@ -237,3 +237,30 @@ Benannt, nicht behauptet:
   `wo: beides`, `migration: nein`, `vertragsbruch: nein` (beides nachgesehen: keine neue Spalte, additives
   Feld statt Vertragsbruch). Fünf Risiken, das teuerste ist die Reihenfolge Backend → `gen:contract` →
   Frontend (R2) und ein bestehender Frontend-Test, der das neue Pflichtfeld nachziehen muss (R1).
+- **2026-08-05** — im Autonomen Modus gebaut, ohne Rückfrage je Ticket, in der Reihenfolge des Angriffsplans
+  (Backend zuerst). Punkt 2: `SubmitResponse.AttemptsRemaining` additiv ergänzt (`PositionTestsController.Submit`
+  berechnet ihn aus derselben Tageszählung wie `Start`s Deckel-Prüfung, Supervisor-Versuch liefert konstant
+  `MaxAttemptsPerDay`); `TestResult`s Retry-Knopf blendet sich bei `attemptsRemaining <= 0` aus. Punkt 1:
+  `SohnPractice.tsx` bekam zunächst wörtlich Entscheidung 1s `startedFor`-Ref-Muster – das deckte beim
+  eigenen E2E-Beleg einen echten, zuvor unbekannten Fehler auf: kombiniert mit dem bestehenden `alive`-Flag
+  blieb der Bildschirm unter React-StrictMode (Dev) bei „wird geladen…" hängen, weil der erste
+  Effekt-Durchlauf `alive` schon auf `false` setzte, bevor der zweite (überlebende) Durchlauf sein Ergebnis
+  je sah. Repariert mit einem neuen, generischen Hook `useOncePerKey` (`frontend/src/lib/`), der die
+  Promise selbst statt nur eines Booleans je Schlüssel cached – eine begründete Abweichung von der
+  wörtlichen Entscheidung, weil das wörtliche Muster den Fehler nachweislich reproduziert hätte. Punkt 3:
+  `e2e/helpers.ts` mit `vaterLogin`/`sohnLogin`, `full-flow.spec.ts` auf den Import umgestellt plus
+  TEST-Link auf die Positions-Karte gescoped; neues `e2e/uebung-abbruch.spec.ts` klickt „Runde beenden" und
+  prüft per direkter Server-Probe (`GET .../practice-sessions/{id}`), dass `endedAt` gesetzt ist – nicht
+  „andere Sitzungs-Id beim erneuten Eintritt" wie ursprünglich in Entscheidung 4 skizziert, weil
+  `PositionPracticeController.Start` ohnehin bei jedem Aufruf bedingungslos eine neue Zeile anlegt (kein
+  Resume für Practice, anders als beim Test) – diese Zusicherung wäre unabhängig vom Fix immer grün gewesen
+  und hätte nichts bewiesen. `dotnet test Pugling.sln -c Release` → **728/728 grün**, `npm test` **141/141
+  grün** (136 + 5 neue), `tsc -b` sauber. `pugling-reviewer` (Backend-Drittel von Punkt 2) fand keine
+  Blocker. `frontend-reviewer` fand einen echten Testlücken-Befund: der erste `useOncePerKey`-Testfall
+  nutzte `rerender()` mit unverändertem Schlüssel statt eines echten `React.StrictMode`-Wrappers und wäre
+  darum auch gegen die fehlerhafte Erstversuch-Implementierung grün geblieben – behoben (Test läuft jetzt
+  mit `wrapper: StrictMode`), dazu ein dokumentierender Kommentar zum unkritischen Randfall
+  `key: X → null → X` (Fund als 🟢, nicht blockierend). Eine dritte, vorbestehende Erkenntnis am Rande:
+  `full-flow.spec.ts` flackert unabhängig von dieser Story bei „Frage 3/5" – per `git stash` gegen den
+  unveränderten Stand verifiziert, dass derselbe Fehler schon vor B-62 bestand; nicht behoben (außerhalb des
+  Zuschnitts), aber notiert. Commit `<hash>`. Status → `abgenommen`.

@@ -317,7 +317,10 @@ export function TestResult({ result, skin, onHome, onRetry }: {
           </div>
         )}
 
-        {!result.passed && <button type="button" className="btn gold" onClick={onRetry}>Nochmal versuchen</button>}
+        {/* Ohne attemptsRemaining bot der Knopf einen Versuch an, den der Server längst abgewiesen hätte
+            (ApiErrors.TestAttemptsExhausted, B-62) - ein Klick danach landete nur in der Fehlerbox. */}
+        {!result.passed && result.attemptsRemaining > 0 &&
+          <button type="button" className="btn gold" onClick={onRetry}>Nochmal versuchen</button>}
         <button type="button" className="btn ghost" onClick={onHome}>Zur Basis</button>
       </div>
     </div>

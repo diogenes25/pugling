@@ -338,4 +338,73 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal(10, item.GetProperty("answerLength").GetInt32());
         Assert.Equal("__ ____ __", item.GetProperty("answerPattern").GetString());
     }
+
+    // ─────────────────────────────────── B-62: SubmitResponse.AttemptsRemaining
+
+    /// <summary>
+    /// <c>Submit</c> reports the same daily count <c>Start</c> already uses for the
+    /// <c>TestAttemptsExhausted</c> cap - after the first of two daily attempts one remains, after the
+    /// second none does. Without this field the result screen could only guess whether "try again" would
+    /// actually work, and the child's second click landed as a rejection it had no way to see coming.
+    /// </summary>
+    [Fact]
+    public async Task Submit_MeldetVerbleibendeVersuche_ProTag()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+        var child = await TestApi.ChildAsync(_factory);
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
+
+        var firstAttemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
+        var firstSubmit = await (await child.PostAsJsonAsync($"{baseUrl}/{firstAttemptId}/submit", new
+        {
+            answers = new[] { new { itemIndex = 0, givenAnswer = "hallo" }, new { itemIndex = 1, givenAnswer = "tschüss" } },
+        })).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(1, firstSubmit.GetProperty("attemptsRemaining").GetInt32());
+
+        var secondAttemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
+        var secondSubmit = await (await child.PostAsJsonAsync($"{baseUrl}/{secondAttemptId}/submit", new
+        {
+            answers = new[] { new { itemIndex = 0, givenAnswer = "hallo" }, new { itemIndex = 1, givenAnswer = "tschüss" } },
+        })).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(0, secondSubmit.GetProperty("attemptsRemaining").GetInt32());
+
+        // The cap itself (already covered by DocsCaptureTests) still applies - a third start is rejected.
+        Assert.Equal(HttpStatusCode.Conflict, (await child.PostAsJsonAsync(baseUrl, new { })).StatusCode);
+    }
+
+    /// <summary>
+    /// A supervisor attempt never counts against the child's daily cap (<see cref="TestAttempt.BySupervisor"/>),
+    /// so the field is constant filler there, not a real count - regardless of how many child attempts
+    /// already ran that same day.
+    /// </summary>
+    [Fact]
+    public async Task Submit_SupervisorVersuch_LiefertKonstantenFuellwert()
+    {
+        var father = await TestApi.FatherAsync(_factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+        var child = await TestApi.ChildAsync(_factory);
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
+
+        // Exhaust the child's two daily attempts first - the supervisor's own attempt below must stay
+        // unaffected by that count.
+        for (var i = 0; i < 2; i++)
+        {
+            var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
+            (await child.PostAsJsonAsync($"{baseUrl}/{attemptId}/submit", new
+            {
+                answers = new[] { new { itemIndex = 0, givenAnswer = "hallo" }, new { itemIndex = 1, givenAnswer = "tschüss" } },
+            })).EnsureSuccessStatusCode();
+        }
+
+        var supervisorAttemptId = await TestApi.IdWithKeyAsync(
+            await father.PostAsJsonAsync(baseUrl, new { stage = (int)TestStage.FreeText }), "attemptId");
+        var supervisorSubmit = await (await father.PostAsJsonAsync($"{baseUrl}/{supervisorAttemptId}/submit", new
+        {
+            answers = new[] { new { itemIndex = 0, givenAnswer = "hallo" }, new { itemIndex = 1, givenAnswer = "tschüss" } },
+        })).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(2, supervisorSubmit.GetProperty("attemptsRemaining").GetInt32());
+    }
 }

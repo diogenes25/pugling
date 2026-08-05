@@ -470,6 +470,7 @@ Response — `HTTP 200`:
       "gapIndex": null
     }
   ],
+  "attemptsRemaining": 1,
   "wrongMentions": null
 }
 ```

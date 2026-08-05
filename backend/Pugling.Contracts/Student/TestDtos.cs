@@ -85,7 +85,14 @@ public record ItemOutcome(int ItemIndex, string Prompt, string Expected, string?
 /// there. Without this list the review screen would show what the child <i>forgot</i> but silently drop what
 /// it actually typed.
 /// </para>
+/// <para>
+/// <see cref="AttemptsRemaining"/> is the daily test attempts left after this one (never negative) - lets
+/// the result screen decide on its own whether to offer "try again" instead of the child hitting a
+/// rejection after an already-spent click. For a supervisor attempt this is always <c>MaxAttemptsPerDay</c>:
+/// the daily cap never applies to them, so the value is filler here, not a statement about attempts
+/// actually left.
+/// </para>
 /// </summary>
 public record SubmitResponse(int AttemptId, int Stage, int TotalItems, int CorrectItems,
-    int ScorePercent, bool Passed, int PassPercent, IReadOnlyList<ItemOutcome> Items,
+    int ScorePercent, bool Passed, int PassPercent, IReadOnlyList<ItemOutcome> Items, int AttemptsRemaining,
     IReadOnlyList<string>? WrongMentions = null);

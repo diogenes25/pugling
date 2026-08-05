@@ -15,7 +15,7 @@ describe("TestResult", () => {
   // B-77/R3 nur auffiel, WEIL `contract.ts` generiert ist.
   const base: Omit<TestSubmitResponse, "items" | "wrongMentions"> = {
     attemptId: 1, stage: 4, totalItems: 3, correctItems: 2, scorePercent: 67,
-    passed: false, passPercent: 90,
+    passed: false, passPercent: 90, attemptsRemaining: 1,
   };
   const view = (result: TestSubmitResponse) =>
     render(<TestResult result={result} skin={DEFAULT_SKIN} onHome={() => {}} onRetry={() => {}} />);
@@ -67,5 +67,19 @@ describe("TestResult", () => {
 
     expect(screen.queryAllByLabelText("gesuchte Lücke")).toHaveLength(2);
     expect(container.textContent).not.toContain("{{");
+  });
+
+  /**
+   * Ohne diese Bedingung bot der Knopf einen Versuch an, den der Server längst abgewiesen hätte
+   * (ApiErrors.TestAttemptsExhausted, B-62) - ein Klick danach landete nur in der Fehlerbox.
+   */
+  it("verbirgt den Retry-Knopf, wenn keine Tages-Versuche mehr übrig sind", () => {
+    view({ ...base, items: listItems, attemptsRemaining: 0 });
+    expect(screen.queryByRole("button", { name: "Nochmal versuchen" })).toBeNull();
+  });
+
+  it("zeigt den Retry-Knopf bei verbleibenden Versuchen weiter an", () => {
+    view({ ...base, items: listItems, attemptsRemaining: 1 });
+    expect(screen.getByRole("button", { name: "Nochmal versuchen" })).toBeTruthy();
   });
 });
