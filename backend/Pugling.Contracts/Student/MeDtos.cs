@@ -37,7 +37,12 @@ public record MyActivationResponse(int Id, int? ShopArticleId, string ArticleTit
     UnitType UnitType, ActionType ActionType, int RequestedQuantity,
     ActivationRequestStatus Status, DateTime RequestedAt, DateTime? ClosedAt);
 
-/// <summary>The child's shop view: wallet, purchasable offers, aggregated inventory and purchase history.</summary>
+/// <summary>
+/// The child's shop view: wallet, purchasable offers, aggregated inventory and purchase history.
+/// <c>Purchases</c> is paged (<c>purchaseSkip</c>/<c>purchaseTake</c> query parameters on the endpoint,
+/// total count in the <c>X-Total-Count</c> response header) - it no longer silently ends at a fixed
+/// row count (B-99).
+/// </summary>
 public record ShopViewResponse(int Coins, int Gems,
     IReadOnlyList<ShopListingResponse> Available,
     IReadOnlyList<MyInventoryItemResponse> Inventory,

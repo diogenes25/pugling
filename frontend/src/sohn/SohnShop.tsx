@@ -1,11 +1,15 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { confirmAction } from "../lib/ui";
 import { ACTION_EMOJI, priceLabel, unitAmount } from "../lib/shop";
-import type { MyInventoryItem, MyActivation, ShopAvailableListing, ShopView } from "../lib/types";
+import type { MyInventoryItem, MyActivation, MyShopPurchase, ShopAvailableListing, ShopView } from "../lib/types";
 import { useSohn } from "./SohnApp";
 
-type Tab = "buy" | "stuff" | "requests";
+type Tab = "buy" | "stuff" | "requests" | "history";
+
+// Wie viele Zeilen ein "Mehr laden" auf einmal nachlaedt (B-99: die Kaufhistorie hatte vorher einen
+// stillen Take(50)-Deckel und keinen Weg zu aelteren Zeilen).
+const HISTORY_PAGE = 20;
 
 const STATUS_PILL: Record<MyActivation["status"], { cls: string; label: string }> = {
   Pending: { cls: "gold", label: "wartet" },
@@ -27,6 +31,10 @@ export function SohnShop() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [history, setHistory] = useState<MyShopPurchase[]>([]);
+  const [historyTotal, setHistoryTotal] = useState(0);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -43,6 +51,35 @@ export function SohnShop() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  // Lädt die nächste Seite der Kaufhistorie nach ("mehr laden"); beim ersten Öffnen des Verlauf-Tabs
+  // wird die erste Seite geholt (B-99: kein stiller Abschnitt mehr bei Zeile 50).
+  // Sperre über ein Ref, nicht über `historyLoading` (State): der State steht erst nach dem Re-Render,
+  // ein zweiter Aufruf im selben Tick (Tab erneut geöffnet, bevor die erste Seite durch ist) sähe die
+  // Sperre also noch offen und hängte dieselben Zeilen doppelt an (Muster judging.current/useAction).
+  const loadingHistory = useRef(false);
+  const loadMoreHistory = useCallback(async () => {
+    if (loadingHistory.current) return;
+    loadingHistory.current = true;
+    setHistoryLoading(true);
+    try {
+      const page = await api.shopPurchasesPage(history.length, HISTORY_PAGE);
+      setHistory((prev) => [...prev, ...page.items]);
+      setHistoryTotal(page.total);
+      setHistoryLoaded(true);
+    } catch (e) {
+      flash(errorMessage(e));
+    } finally {
+      loadingHistory.current = false;
+      setHistoryLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [history.length]);
+
+  function openHistoryTab() {
+    setTab("history");
+    if (!historyLoaded) void loadMoreHistory();
+  }
 
   function flash(text: string) {
     setMsg(text);
@@ -106,6 +143,7 @@ export function SohnShop() {
         <TabButton active={tab === "requests"} onClick={() => setTab("requests")}>
           Anfragen{activations.some((a) => a.status === "Pending") ? " •" : ""}
         </TabButton>
+        <TabButton active={tab === "history"} onClick={openHistoryTab}>Verlauf</TabButton>
       </div>
 
       {loading ? <div className="loading">Lade Shop…</div>
@@ -113,7 +151,8 @@ export function SohnShop() {
         : !view ? null
         : tab === "buy" ? <BuyTab listings={view.available} busy={busy} onBuy={buy} />
         : tab === "stuff" ? <StuffTab inventory={view.inventory} busy={busy} onActivate={requestActivation} />
-        : <RequestsTab activations={activations} />}
+        : tab === "requests" ? <RequestsTab activations={activations} />
+        : <HistoryTab purchases={history} total={historyTotal} loading={historyLoading} onLoadMore={loadMoreHistory} />}
 
       {msg && <div className="toast" role="status" aria-live="polite">{msg}</div>}
     </div>
@@ -245,6 +284,35 @@ function RequestsTab({ activations }: { activations: MyActivation[] }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+/**
+ * Kaufhistorie mit "mehr laden" statt einer stillen Abschnittsgrenze (B-99): der Server sagt über
+ * `total` die echte Gesamtzahl, damit "X von Y" ehrlich ist statt einer Liste, die einfach aufhört.
+ */
+export function HistoryTab({ purchases, total, loading, onLoadMore }: {
+  purchases: MyShopPurchase[]; total: number; loading: boolean; onLoadMore: () => void;
+}) {
+  if (!loading && purchases.length === 0)
+    return <p className="sub">Noch nichts gekauft. Hol dir im Tab <b>Kaufen</b> etwas Schönes! 🎁</p>;
+  return (
+    <div className="list">
+      {purchases.map((p) => (
+        <div key={p.id} className="row" style={{ justifyContent: "space-between", padding: "8px 0" }}>
+          <div>
+            <b>{p.title}</b>
+            <div className="sub">{priceLabel(p.coinPrice, p.gemPrice)} · {new Date(p.purchasedAt).toLocaleDateString()}</div>
+          </div>
+          {p.status === "Cancelled" && <span className="pill red">storniert</span>}
+        </div>
+      ))}
+      {purchases.length < total && (
+        <button type="button" className="btn ghost small" style={{ marginTop: 8 }} disabled={loading} onClick={onLoadMore}>
+          {loading ? "Lädt…" : `Mehr laden (${purchases.length} von ${total})`}
+        </button>
+      )}
     </div>
   );
 }

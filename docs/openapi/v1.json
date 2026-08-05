@@ -7091,7 +7091,35 @@
         "tags": [
           "Student \u2013 Shop"
         ],
-        "summary": "Family shop: active listings of the father, aggregated inventory and purchase history of the child.",
+        "summary": "Family shop: active listings of the father, aggregated inventory and purchase history of the child.\nThe purchase history is paged (purchaseSkip/purchaseTake), total\ncount in the \u0060X-Total-Count\u0060 header - a fixed \u0060Take(50)\u0060 used to end the history silently\n(B-99).",
+        "parameters": [
+          {
+            "name": "purchaseSkip",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "purchaseTake",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 100
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -33683,7 +33711,7 @@
             }
           }
         },
-        "description": "The child\u0027s shop view: wallet, purchasable offers, aggregated inventory and purchase history."
+        "description": "The child\u0027s shop view: wallet, purchasable offers, aggregated inventory and purchase history.\n\u0060Purchases\u0060 is paged (\u0060purchaseSkip\u0060/\u0060purchaseTake\u0060 query parameters on the endpoint,\ntotal count in the \u0060X-Total-Count\u0060 response header) - it no longer silently ends at a fixed\nrow count (B-99)."
       },
       "SkinStateResponse": {
         "required": [

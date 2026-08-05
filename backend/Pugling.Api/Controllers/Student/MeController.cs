@@ -242,16 +242,21 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
 
     /// <summary>
     /// Family shop: active listings of the father, aggregated inventory and purchase history of the child.
+    /// The purchase history is paged (<paramref name="purchaseSkip"/>/<paramref name="purchaseTake"/>), total
+    /// count in the <c>X-Total-Count</c> header - a fixed <c>Take(50)</c> used to end the history silently
+    /// (B-99).
     /// </summary>
     [HttpGet("shop")]
     [Tags("Student – Shop")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ShopViewResponse>> Shop(CancellationToken ct = default)
+    public async Task<ActionResult<ShopViewResponse>> Shop(
+        [FromQuery] int purchaseSkip = 0, [FromQuery] int purchaseTake = PagingExtensions.DefaultTake,
+        CancellationToken ct = default)
     {
         var cid = User.ChildId();
         if (cid is null) return Forbid();
-        return await ShopViewAsync(cid.Value, ct);
+        return await ShopViewAsync(cid.Value, purchaseSkip, purchaseTake, ct);
     }
 
     /// <summary>
@@ -277,7 +282,8 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         var result = await shop.PurchaseAsync(cid.Value, listingId, DateTime.UtcNow, ct);
         return result.Error switch
         {
-            ShopService.ShopError.None => await ShopViewAsync(cid.Value, ct),
+            // The freshly bought item sorts first anyway (Owned-first, then newest) - the first page is right.
+            ShopService.ShopError.None => await ShopViewAsync(cid.Value, 0, PagingExtensions.DefaultTake, ct),
             ShopService.ShopError.NotFound => this.ProblemWithCode(ShopService.ToApiError(result.Error), "Shop listing not found."),
             ShopService.ShopError.ListingInactive => this.ProblemWithCode(ShopService.ToApiError(result.Error), "This shop listing is no longer available."),
             ShopService.ShopError.InsufficientStock => this.ProblemWithCode(ShopService.ToApiError(result.Error), "This shop listing is out of stock."),
@@ -375,7 +381,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         new(r.Id, r.ShopArticleId, r.ArticleTitle, r.UnitType, r.ActionType,
             r.RequestedQuantity, r.Status, r.RequestedAt, r.ClosedAt);
 
-    private async Task<ShopViewResponse> ShopViewAsync(int childId, CancellationToken ct)
+    private async Task<ShopViewResponse> ShopViewAsync(int childId, int purchaseSkip, int purchaseTake, CancellationToken ct)
     {
         var balances = await wallet.BalancesAsync(childId, ct);
         var now = DateTime.UtcNow;
@@ -404,6 +410,8 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
                 i.UnitType, i.ActionType, i.Quantity))
             .ToListAsync(ct);
 
+        // Paged instead of a fixed cutoff (B-99): the history otherwise ended silently once a child had
+        // bought enough - X-Total-Count lets the frontend show "51 of 137" and load the rest.
         var purchases = await db.ShopPurchases.AsNoTracking()
             .Where(p => p.ChildId == childId)
             .OrderBy(p => p.Status == ShopPurchaseStatus.Owned ? 0 : 1)
@@ -411,8 +419,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
             .Select(p => new MyShopPurchaseResponse(
                 p.Id, p.ShopListingId, p.ArticleNumber, p.Title,
                 p.CoinPrice, p.GemPrice, p.UnitsPerPurchase, p.Status, p.PurchasedAt, p.ClosedAt))
-            .Take(50)
-            .ToListAsync(ct);
+            .ToPagedListAsync(Response, purchaseSkip, purchaseTake, ct);
 
         return new ShopViewResponse(balances.Coins, balances.Gems, available, inventory, purchases);
     }

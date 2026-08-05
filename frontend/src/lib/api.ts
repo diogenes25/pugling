@@ -19,7 +19,7 @@ import type {
   CreateKeyResultRequest, CreateObjectiveRequest, GoalStatus, KeyResult,
   Objective, ObjectiveKind, UpdateKeyResultRequest, UpdateObjectiveRequest,
   ShopArticle, CreateShopArticleDto, UpdateShopArticleDto, ShopListing, CreateShopListingDto, UpdateShopListingDto,
-  InventoryItem, MyInventoryItem, ShopPurchase, ActivationRequest, ShopPurchaseStatus, ActivationRequestStatus,
+  InventoryItem, MyInventoryItem, ShopPurchase, MyShopPurchase, ActivationRequest, ShopPurchaseStatus, ActivationRequestStatus,
   ShopView, MyActivation,
   ContentRating, InterestTagResponse, CreateInterestTagDto, UpdateInterestTagDto,
   ChildInterestResponse, ChildInterestInput,
@@ -654,6 +654,14 @@ export const api = {
   // Die Shop-Sicht bündelt Salden + kaufbare Angebote + Inventar + Kaufhistorie; Kauf und Aktivierung
   // liefern jeweils den frischen Stand zurück, damit der Client nicht separat nachladen muss.
   shopView: () => http<ShopView>(`${V1}/student/me/shop`),
+  // The purchase history is paged (B-99, a fixed cutoff used to end it silently): a page of `purchases`
+  // plus the REAL total from `X-Total-Count`, read off the same bundled endpoint via its query params.
+  shopPurchasesPage: async (skip: number, take: number): Promise<Paged<MyShopPurchase>> => {
+    const res = await request(`${V1}/student/me/shop?purchaseSkip=${skip}&purchaseTake=${take}`, "GET");
+    const text = await res.text();
+    const view = (text ? JSON.parse(text) : undefined) as ShopView;
+    return { items: view.purchases, total: totalFrom(res, view.purchases.length) };
+  },
   purchaseListing: (listingId: number) =>
     http<ShopView>(`${V1}/student/me/shop/listings/${listingId}/purchase`, "POST", {}),
   myInventory: () => http<MyInventoryItem[]>(`${V1}/student/me/shop/inventory`),

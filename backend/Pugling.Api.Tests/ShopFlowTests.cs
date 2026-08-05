@@ -1272,4 +1272,48 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         Assert.Equal(120, vaterPosten.GetProperty("quantity").GetInt32());
         Assert.Equal("Fernsehen", vaterPosten.GetProperty("title").GetString());
     }
+
+    // ─── B-99: the purchase history no longer ends silently at a fixed cutoff ─────────────
+
+    [Fact]
+    public async Task Kaufhistorie_UeberFuenfzig_IstUeberPagingErreichbar()
+    {
+        var father = await TestApi.FatherAsync(factory);
+        var (childId, child) = await FreshChildAsync(father, "9401");
+
+        // 60 purchases seeded directly - the fixed Take(50) this story removes would otherwise force 60 real
+        // purchases through the API just to prove a paging bug, which is slow and buys nothing extra.
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            for (var i = 0; i < 60; i++)
+            {
+                db.ShopPurchases.Add(new ShopPurchase
+                {
+                    ChildId = childId,
+                    SupervisorId = 1,
+                    ArticleNumber = $"HIST-{i:00}",
+                    Title = $"Artikel {i}",
+                    CoinPrice = 10,
+                    UnitsPerPurchase = 1,
+                    PurchasedAt = DateTime.UtcNow.AddMinutes(-i),
+                });
+            }
+            await db.SaveChangesAsync();
+        }
+
+        // The default call (no paging params) must announce the REAL total via X-Total-Count - not just
+        // silently hand back whatever fits, the way the old fixed Take(50) did.
+        var byDefault = await child.GetAsync("/api/v1/student/me/shop");
+        Assert.Equal("60", Assert.Single(byDefault.Headers.GetValues("X-Total-Count")));
+
+        // A caller that pages explicitly reaches every row, including the ones past the old cutoff.
+        var page1 = await JsonAsync(await child.GetAsync("/api/v1/student/me/shop?purchaseSkip=0&purchaseTake=20"));
+        Assert.Equal(20, page1.GetProperty("purchases").GetArrayLength());
+
+        var page3 = await child.GetAsync("/api/v1/student/me/shop?purchaseSkip=50&purchaseTake=20");
+        Assert.Equal("60", Assert.Single(page3.Headers.GetValues("X-Total-Count")));
+        var page3Body = await page3.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(10, page3Body.GetProperty("purchases").GetArrayLength()); // rows 51..60 - past the old Take(50)
+    }
 }

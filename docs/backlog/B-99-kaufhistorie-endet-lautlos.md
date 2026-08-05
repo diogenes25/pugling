@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/backend, bereich/gamification, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/backend, bereich/gamification, rolle/student]
 aliases: [Kaufhistorie bei 50 abgeschnitten, stille Take(50), Shop-Paging]
-status: ausformuliert
+status: abgenommen
 prio: P2
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: S
+wo: beides
+migration: nein
+vertragsbruch: nein
 quelle: docs/api-design-bewertung.md (Vorschlag B3) — Arbeitsrunde PM/API-Designer/Entwickler am 2026-08-04
 grund: ""
 ersetzt_durch: []
@@ -48,7 +48,7 @@ Handlungsbedarf überzeichnet: von den 35 wachsen in dieser App real **sieben** 
 durch eine Familie, eine Woche, ein Lehrwerk oder ein Manifest begrenzt. **Eine** Stelle verliert heute Daten
 sichtbar, und das ist diese.
 
-## Ergebnis der Arbeitsrunde vom 2026-08-04
+## Ergebnis der Arbeitsrunde vom 2026-08-04 (gegrillt)
 
 1. **Die kleinste Variante bauen, nicht das Programm:** `?purchaseTake=`/`?purchaseSkip=` deklarieren und
    `X-Total-Count` setzen — **statt** einen neuen Student-Endpunkt anzulegen. Vorschätzung **S**,
@@ -79,8 +79,32 @@ sichtbar, und das ist diese.
    ohne Hinweis.
 4. Ein Integrationstest legt >50 Käufe an und war vor der Änderung rot.
 
+## Schätzung
+
+`groesse: S`, `wo: beides` (Backend: additive Query-Parameter am Bundle-Endpunkt; Frontend: der
+Sohn-Shop hatte bislang **gar keine** Verlaufs-Ansicht — `view.purchases` wurde geladen, aber nirgends
+gezeigt), `migration: nein`, `vertragsbruch: nein`. Angriffsplan: `purchaseSkip`/`purchaseTake` an
+`MeController.Shop`/`ShopViewAsync`, `.Take(50)` durch den geteilten `ToPagedListAsync`-Helfer ersetzt
+→ Client-Methode `shopPurchasesPage` (eigener Zuschnitt, weil `httpPaged` ein Objekt mit
+verschachteltem Array nicht parst) → neuer „Verlauf"-Tab im Sohn-Shop mit „Mehr laden" (Anhängen statt
+Pager, passend zur Arcade). Testweg: ein Integrationstest mit 60 direkt geseedeten `ShopPurchase`-Zeilen
+(rot gegen den Vorzustand, `git stash` von `MeController.cs`), eine reine `HistoryTab`-Komponente per
+Vitest (Muster `SelfAssessAnswer.test.tsx`), eine kurze Ergänzung in `full-flow.spec.ts`.
+
 ## Verlauf
 
 - **2026-08-04** — angelegt aus `docs/api-design-bewertung.md` (B3) und der Arbeitsrunde. Der Bericht nannte
   einen Endpunkt, den es nicht gibt (`student/me/shop/purchases`); die Rechnung „50 Zeilen in 4–12 Monaten"
   und die Korrektur „sieben statt zwei wachsende Listen" stammen aus Runde 2.
+- **2026-08-05** — im Autonomen Modus gegrillt (Arbeitsrunden-Ergebnis übernommen), geschätzt und gebaut.
+  Rote Probe zuerst: der neue Backend-Test scheiterte gegen den Vorzustand (kein `X-Total-Count`-Header).
+  `dotnet test Pugling.sln -c Release` → **716/716 grün**. `pugling-reviewer` fand keinen Blocker (nur
+  einen Doku-Hinweis am Contract-Record, direkt ergänzt). `frontend-reviewer` fand zwei Punkte: die
+  Nachlade-Sperre stand auf `useState` statt `useRef` (derselbe Fallstrick, den `useAction`/
+  `SohnPractice.tsx` im Projekt schon einmal gelöst haben — zwei überlappende Aufrufe hätten Zeilen
+  doppelt angehängt) und keine E2E-Abdeckung für den neuen Tab. Beides behoben: `useRef`-Sperre nach
+  demselben Muster, eine kurze Ergänzung in `full-flow.spec.ts` (Verlauf-Tab öffnen, den eben getätigten
+  Kauf sehen). Den E2E-Lauf selbst konnte ich nicht gegenprüfen — Port 5200 war von einem vorbestehenden,
+  nicht von mir gestarteten Dev-Server-Prozess belegt; die neuen Zeilen folgen aber exakt dem
+  Locator-Muster der übrigen Datei. `npm run build` (Typecheck) und `npm test` → **131/131** (127 + 4 neu,
+  `HistoryTab.test.tsx`) grün. Commit: siehe Repo-Verlauf (B-99-Commit). Status → `abgenommen`.

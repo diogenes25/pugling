@@ -147,6 +147,10 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   await expect(sohn.locator(".cel-title", { hasText: "GEKAUFT!" })).toBeVisible();
   await sohn.getByRole("button", { name: /^Sachen/ }).click();
   await expect(sohn.getByRole("button", { name: "Einlösen beantragen" }).first()).toBeVisible();
+  // Kaufhistorie (B-99): der eben getätigte Kauf ist im Verlauf-Tab sichtbar - der Tab existierte vorher
+  // gar nicht, die Käufe lagen unerreichbar im Bundle.
+  await sohn.getByRole("button", { name: "Verlauf" }).click();
+  await expect(sohn.locator(".list .row").first()).toBeVisible();
 
   // ---------- VATER sieht Fortschritt ----------
   await vater.goto(planUrl);
