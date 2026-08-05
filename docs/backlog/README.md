@@ -360,6 +360,10 @@ wenn eines von beiden zutrifft: die Retrospektive hat ein **neues Tor** erzeugt 
 bevor es weitere Arbeit prägt), oder ein Review hat einen Defekt **im Increment dieses Sprints** gefunden
 (dann ist die Qualitätsschwelle gerutscht, und Weiterlaufen ist die falsche Reaktion). „Backlog leer" ist
 keine Abbruchbedingung — es ist kein erreichbarer Zustand.
+**Für den Nachtlauf speziell gilt seit 2026-08-06 eine feinere Fassung dieses zweiten Punkts**
+(behebbare Review-Funde werden sofort behoben bzw. im selben Sprint als Defekt bearbeitet; erst mehr als
+fünf davon in einem Sprint gelten als Endlosschleife und beenden die Nacht) — siehe
+[nachtlauf.md](../nachtlauf.md), Freigabe 3.
 
 **3. Der Rollengang bleibt Pflicht**, und das ist die Bedingung, an der die 14er-Runde vom 2026-08-05
 gescheitert ist (siehe [oben](#der-rollengang-fällt-am-leichtesten-weg--und-kostet-am-meisten)). Er wird

@@ -33,11 +33,19 @@ Freigaben für diesen Lauf:
    ist keine Bedingung. Nach JEDEM Sprint läuft der Rollengang (Step 6) und die
    Retrospektive (Step 8) einzeln; die Retro darf ihren Mechanismus in jedem einzelnen
    Sprint der Nacht nur VORSCHLAGEN, nie landen – das gilt durchgehend, nicht nur für den
-   letzten Sprint. Findet ein Review einen Defekt im eigenen Increment eines Sprints,
-   endet der GESAMTE Lauf dort, nicht nur dieser eine Sprint. Ausgesprochen große Stories
-   (faktisch XL) werden im Nachtlauf nicht gebaut – sie werden nach dem bestehenden
-   Teilen-Mechanismus (`docs/backlog/README.md` → „Teilen und Zusammenlegen") in kleinere
-   Stories zerlegt, und dieses Teilen selbst ist eine zulässige Tätigkeit dieses Laufs.
+   letzten Sprint. Findet ein Review (gleich welche Art – Agent, Selbst-Check, ein roter
+   Test) einen Fehler, wird er sofort analysiert: lässt er sich selbständig beheben, wird
+   er **behoben**, nicht nur gemeldet; sonst wird er als `art: Defekt` ins Backlog
+   aufgenommen und **im selben Sprint** bearbeitet wie jeder andere Defekt (autonom
+   grillbar, Freigabe 1) – abweichend von der sonstigen Regel „Fund wird eigene Story,
+   kein Anhang" (`docs/backlog/README.md`), weil er die Qualität des laufenden Increments
+   selbst betrifft, nicht eine benachbarte Fläche. Ein Zähler **je Sprint** zählt jeden so
+   gefundenen Fehler; überschreitet er **5**, ist das keine Korrektur mehr, sondern eine
+   Endlosschleife – dann endet der GESAMTE Lauf sofort, nicht nur dieser Sprint.
+   Ausgesprochen große Stories (faktisch XL) werden im Nachtlauf nicht gebaut – sie werden
+   nach dem bestehenden Teilen-Mechanismus (`docs/backlog/README.md` → „Teilen und
+   Zusammenlegen") in kleinere Stories zerlegt, und dieses Teilen selbst ist eine zulässige
+   Tätigkeit dieses Laufs.
 
 Zwei Auflagen, weil ich das am Morgen nachprüfen will und nicht glauben soll:
 4. „Kein Befund" gilt nur mit benanntem Prüfpunkt. Jede `nachgeschaut`-Zeile sagt, WAS
@@ -78,9 +86,21 @@ Jede setzt eine Schutzregel aus, und jede hat ihren Preis:
    mehrere neue Dauerregeln, die niemand gesehen hat. Die Freigabe setzt genau das außer Kraft, und zwar
    für **jeden** Sprint der Nacht, nicht nur den letzten — so bleibt „mehr als ein Sprint" trotzdem sicher.
    **Preis:** ein Vorschlags-Stapel statt einer gelandeten Regel; was davon gilt, entscheidest du am
-   Morgen. Ein Defekt im eigenen Increment eines Sprints bleibt der einzige Grund, der den **gesamten**
-   Lauf beendet statt nur den einen Sprint — dort ist die Qualitätsschwelle gerutscht, und das betrifft
-   die Nacht als Ganzes, nicht nur ein Thema.
+   Morgen.
+
+   **Ein Review-Fund selbst ist seit 2026-08-06 kein Sofort-Stopp mehr — ein Fünf-Fehlversuche-Zähler
+   ist es.** Die erste Fassung dieser Freigabe ließ jeden im eigenen Increment gefundenen Defekt die
+   ganze Nacht beenden, egal wie klein und egal ob schon behoben (gemessen am 2026-08-05: ein
+   vertauschter Kommentar in B-112, vom `frontend-reviewer` gefunden, sofort korrigiert — und trotzdem
+   Grund für den Abbruch). Das war zu scharf: es bestrafte einen **funktionierenden** Prüfschritt wie
+   einen Fehlschlag. Jetzt gilt: jeder Fund wird sofort analysiert und, wenn selbständig behebbar,
+   **behoben**; sonst als `art: Defekt` im **selben** Sprint bearbeitet, nicht auf später verschoben.
+   Erst wenn das **mehr als fünfmal** im selben Sprint passiert, ist das kein normales
+   Finden-und-Beheben mehr, sondern ein Zeichen, dass etwas an dieser Arbeit strukturell nicht
+   konvergiert — und **das** beendet den gesamten Lauf, nicht das einzelne Auftreten eines Fehlers.
+   **Preis:** die Nacht kann jetzt tatsächlich an einem hartnäckigen Fehler hängen bleiben, bevor sie
+   abbricht (bis zu fünf Versuche), statt beim ersten Anzeichen zu enden — das ist gewollt, denn ein
+   Reviewer, der tut, wofür er da ist, soll die Nacht nicht länger vorzeitig beenden.
 
 ## Wenn der Lauf mit Sonnet fährt
 
@@ -140,9 +160,10 @@ Halt-Bedingungen greift (siehe unten).
   wartet extern (`wartet_auf`) oder ist zu groß und noch nicht geteilt (Freigabe 3).
 - An jedem `Wunsch`/`Frage` (Freigabe 1) — notiert, nicht entschieden; der Lauf macht mit dem nächsten
   baubaren Thema weiter, statt dort ganz zu enden.
-- Wenn ein Review einen Defekt **im eigenen Increment** eines Sprints findet (Freigabe 3): dann ist die
-  Qualitätsschwelle gerutscht, und Weiterlaufen wäre die falsche Reaktion — das beendet die **ganze**
-  Nacht, nicht nur den einen Sprint.
+- Wenn derselbe Sprint **mehr als fünf** Review-Funde durchläuft (Freigabe 3, Fund → beheben oder als
+  Defekt bearbeiten, je einer zählt): das ist keine normale Korrektur mehr, sondern eine Endlosschleife
+  — das beendet die **ganze** Nacht, nicht nur den einen Sprint. Ein einzelner behobener Fund tut das
+  nicht mehr (Stand 2026-08-06; vorher jeder einzelne Fund).
 - An einer Story, die auf etwas außerhalb wartet (`wartet_auf`) — Gerät, Betreiber-Handgriff, echtes Ohr.
 
 ## Wenn kein Browser da ist
