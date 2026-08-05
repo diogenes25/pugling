@@ -223,5 +223,5 @@ nötig – rein clientseitig, keine Backend-Änderung, keine neue Route.
   `vater-von-null.spec.ts` exakt an der neuen „Kinder"-Flicker-Zusicherung fehl (1 statt 0 `.loading`-Elemente);
   nach dem Zurückholen grün. `tsc -b` sauber, `npm test` **136/136 grün**, `vater-von-null.spec.ts` zweimal
   grün. `frontend-reviewer` fand keine Blocker (Vertrag zu `TagAdder`/den sechs `data === null`-Dateien
-  deckungsgleich, keine Selektor-Fragilität, Kapitel→Art-Ersatz als sachgerecht bestätigt). Commit `<hash>`.
-  Status → `abgenommen`.
+  deckungsgleich, keine Selektor-Fragilität, Kapitel→Art-Ersatz als sachgerecht bestätigt). Commit `9e16921`,
+  dazu dieser. Status → `abgenommen`.
