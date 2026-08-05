@@ -115,6 +115,31 @@ je Sprint plus „genau ein Sprint" begrenzt die Nacht zusätzlich. Ein Nachtlau
   Qualitätsschwelle gerutscht, und Weiterlaufen wäre die falsche Reaktion.
 - An einer Story, die auf etwas außerhalb wartet (`wartet_auf`) — Gerät, Betreiber-Handgriff, echtes Ohr.
 
+## Wenn kein Browser da ist
+
+Ein unbeaufsichtigter Lauf hat **strukturell nie einen Browser-Rollengang** — die Chrome-Extension bindet
+sich nicht an eine Sitzung, in der niemand zusieht. Gemessen am Nachtlauf vom 2026-08-05 (Sprint 2, B-113/
+B-114/B-115/B-116, [Protokoll](pm-sitzung-2026-08-05.md)): jede der vier Stories musste den Rollengang mit
+etwas anderem ersetzen — Integrationstests, ein Komponententest, oder ein Live-Aufruf gegen die laufende
+API — und jede Story trägt die Ersatz-Zeile ausdrücklich im `## Verlauf`, statt den fehlenden Rollengang zu
+verschweigen (pm-loop Step 6 verlangt genau das).
+
+**Die einzige Beleg-Art, die diese Lücke wirklich schließt, ist eine E2E-Spec.** Sie fährt den echten
+Browser gegen den echten Server — das *ist* der Rollengang, nur wiederholbar statt einmalig (dieselbe
+Begründung wie bei B-110s `e2e/shop-verlauf.spec.ts`). Alles andere (Integrationstest, Live-`curl`,
+Komponententest) ist ein schwächerer, aber ehrlicher Ersatz für exakt das, was ohne Browser nicht geht:
+das *Aussehen* zu beurteilen. Ein Nachtlauf, der eine sinnlich-visuelle Frage klärt (B-115: „verschiebt
+sich ein Zeichen im Kästchen sichtbar?"), kann das nachts grundsätzlich nicht — das ist kein Fehler des
+Laufs, sondern der Grund, warum Step 6 den dritten Ausgang „delivered, pending device/human check" kennt.
+
+**Falls du selbst live gegen die API prüfst** (Demo-Kind/Demo-Vater eignen sich, `docs/backlog/README.md`
+kennt die PINs nicht extra, sie stehen im Seed): Testzeilen immer über den **echten Endpunkt** anlegen
+(Kauf, Aktivierungsanfrage, …), nie per rohem SQL-`INSERT` in `pugling.db`. Grund, gemessen am 2026-08-05:
+eine roh eingefügte `ShopPurchase`-Zeile ließ sich nicht stornieren (`409 concurrency_conflict`) — kein
+Produktdefekt, sondern ein `ConcurrencyStamp`, den nur der EF-Pfad korrekt setzt. Der Umweg über die
+echte API kostet ein paar Zeilen mehr, spart aber die Verwechslung zwischen einem echten Befund und einem
+Artefakt des eigenen Kurzschritts.
+
 ## Am Morgen: fünf Zeilen prüfen
 
 1. `bash .claude/scripts/backlog-index.sh` läuft ~4–5 min — danach im Index: **Offen**, **Nachgeschaut

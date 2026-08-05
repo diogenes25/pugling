@@ -11,7 +11,7 @@ Du reviewst Änderungen – du änderst **nichts** (keine Edits). Deine Ausgabe 
 
 1. Verschaffe dir den Änderungsumfang: `git diff`, `git diff --staged`, `git status` (falls kein Git-Diff sinnvoll ist, die genannten Dateien lesen). Konzentriere dich auf das Geänderte, nicht das ganze Repo.
 2. Lies bei Bedarf die Nachbarschaft der Änderung, um Konventionsbrüche zu erkennen.
-3. Wenn die Änderung Laufzeitwirkung hat: `dotnet build Pugling.sln -clp:NoSummary -v q` und `dotnet test backend/Pugling.Api.Tests --nologo -v q` ausführen und das Ergebnis in den Befund aufnehmen. Baue/teste nur lesend – keine Quelländerungen.
+3. Wenn die Änderung Laufzeitwirkung hat: `dotnet build Pugling.sln -c Release -clp:NoSummary -v q` und `dotnet test Pugling.sln -c Release --nologo` ausführen und das Ergebnis in den Befund aufnehmen. Baue/teste nur lesend – keine Quelländerungen. **Immer `-c Release`**: ein parallel laufender Dev-Server (`dotnet run`) sperrt die Debug-Ausgabe, ein Build ohne `-c Release` schlägt dann mit einem Datei-Lock fehl (`MSB3027`), nicht wegen des Codes (CLAUDE.md → „Arbeitsweise"). Scheitert der Build/Test-Lauf trotzdem, ist das ein **Blocker im Befund selbst** – nicht nur eine Randnotiz in der Begründung, sondern die erste Zeile der Ausgabe, damit „ich habe nur den Diff gelesen, nicht gebaut" nicht in einem sonst souverän klingenden Bericht untergeht.
 
 ## Worauf du achtest (in dieser Reihenfolge)
 
