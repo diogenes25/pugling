@@ -697,11 +697,13 @@ export const api = {
   // Kindbezogene Sicht: Inventar, Käufe (stornierbar) und Aktivierungsanfragen (genehmigen/ablehnen).
   childInventory: (childId: number) =>
     http<InventoryItem[]>(`${V1}/supervisor/children/${childId}/shop/inventory`),
-  childPurchases: (childId: number, status?: ShopPurchaseStatus) => {
+  // Server-paginiert (B-113): der Vater storniert aus dieser Liste heraus, eine Zeile hinter der
+  // Server-Grenze wäre für ihn unerreichbar - siehe ListControls.tsx `Pager`.
+  childPurchases: (childId: number, opts: { status?: ShopPurchaseStatus; skip?: number; take?: number } = {}) => {
     const q = new URLSearchParams();
-    if (status) q.set("status", status);
-    const qs = q.toString();
-    return http<ShopPurchase[]>(`${V1}/supervisor/children/${childId}/shop/purchases${qs ? `?${qs}` : ""}`);
+    if (opts.status) q.set("status", opts.status);
+    appendPaging(q, opts);
+    return httpPaged<ShopPurchase>(`${V1}/supervisor/children/${childId}/shop/purchases?${q.toString()}`);
   },
   cancelPurchase: (childId: number, purchaseId: number) =>
     http<ShopPurchase>(`${V1}/supervisor/children/${childId}/shop/purchases/${purchaseId}/cancel`, "POST", {}),

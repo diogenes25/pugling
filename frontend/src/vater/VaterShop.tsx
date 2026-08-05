@@ -1,6 +1,7 @@
 import { useId, useState } from "react";
 import { StatusBanner } from "../components/StatusBanner";
 import { FieldLabel } from "../components/InfoHint";
+import { PAGE_SIZE, Pager } from "../components/ListControls";
 import { api } from "../lib/api";
 import { useAction, type ActionState } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
@@ -9,7 +10,7 @@ import { confirmAction } from "../lib/ui";
 import { ACTION_LABEL, ACTION_OPTIONS, REFILL_LABEL, UNIT_LABEL, UNIT_OPTIONS, priceLabel, unitAmount } from "../lib/shop";
 import type {
   ActionType, ActivationRequest, ChildResponse, CreateShopArticleDto, CreateShopListingDto,
-  InventoryItem, ShopArticle, ShopListing, ShopPurchase, ShopRefillKind, UnitType, UpdateShopListingDto,
+  InventoryItem, Paged, ShopArticle, ShopListing, ShopPurchase, ShopRefillKind, UnitType, UpdateShopListingDto,
 } from "../lib/types";
 
 /** Auffüll-Regeln zur Auswahl (Reihenfolge = wie oft man sie braucht). */
@@ -368,7 +369,9 @@ function ChildShopManager() {
 
 function ChildShopView({ childId }: { childId: number }) {
   const activations = useAsync<ActivationRequest[]>(() => api.childActivations(childId), [childId]);
-  const purchases = useAsync<ShopPurchase[]>(() => api.childPurchases(childId), [childId]);
+  const [purchaseSkip, setPurchaseSkip] = useState(0);
+  const purchases = useAsync<Paged<ShopPurchase>>(
+    () => api.childPurchases(childId, { skip: purchaseSkip, take: PAGE_SIZE }), [childId, purchaseSkip]);
   const inventory = useAsync<InventoryItem[]>(() => api.childInventory(childId), [childId]);
   const action = useAction();
 
@@ -444,7 +447,7 @@ function ChildShopView({ childId }: { childId: number }) {
           <table className="table">
             <thead><tr><th>Titel</th><th>Preis</th><th>Gekauft</th><th>Status</th><th></th></tr></thead>
             <tbody>
-              {purchases.data?.map((p) => (
+              {purchases.data?.items.map((p) => (
                 <tr key={p.id}>
                   <td>{p.title}</td>
                   <td>{priceLabel(p.coinPrice, p.gemPrice)}</td>
@@ -457,11 +460,12 @@ function ChildShopView({ childId }: { childId: number }) {
                   </td>
                 </tr>
               ))}
-              {purchases.data?.length === 0 && <tr><td colSpan={5} className="muted">Noch keine Käufe.</td></tr>}
+              {purchases.data?.items.length === 0 && <tr><td colSpan={5} className="muted">Noch keine Käufe.</td></tr>}
             </tbody>
           </table>
         </div>
       )}
+      {purchases.data && <Pager skip={purchaseSkip} take={PAGE_SIZE} total={purchases.data.total} onSkip={setPurchaseSkip} busy={purchases.loading} />}
     </>
   );
 }
