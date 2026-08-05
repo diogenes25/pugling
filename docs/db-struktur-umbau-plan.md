@@ -635,9 +635,11 @@ ihrer Etappe: ein verwaister Inventar-Posten ist nicht mehr **einlösbar** (E6),
    Testklasse gegen dieselbe DB mehrfach durchläuft. Wer eine neue Eindeutigkeit einführt, muss mit
    genau dieser Sorte Kollision rechnen – und mit einem **500 statt 409**, solange die Vorprüfung fehlt.
 6. **`DocsCaptureTests` zählt nur, was es selbst aufruft.** Ein neuer Fehlercode erscheint in
-   `docs/api-examples/index.md` als „Über HTTP im In-Process-Test nicht erreichbar", auch wenn ein anderer
-   Test ihn sehr wohl über HTTP prüft. 21 der 54 Codes sind dort ohnehin nicht abgedeckt – das ist der
-   Normalzustand, kein Befund.
+   `docs/api-examples/index.md` als „Von DocsCaptureTests nicht mitgeschnitten" (seit
+   [B-84](backlog/B-84-api-beispiele-behaupten-unerreichbarkeit.md) die wahre Formulierung – vorher
+   behauptete der Satz „über HTTP nicht erreichbar", was für die meisten betroffenen Codes schlicht falsch
+   war), auch wenn ein anderer Test ihn sehr wohl über HTTP prüft. Ein guter Teil der Codes ist dort ohnehin
+   nicht abgedeckt – das ist der Normalzustand, kein Befund.
 7. **Der Stop-Hook testet die ganze Solution** (~55 s) und der Edit-Hook baut nach jeder `.cs`-Änderung
    das besitzende Projekt. Bei einer Reihe zusammengehöriger Edits ruhig weiterarbeiten; der Hook nennt
    die kaputten Aufrufstellen und ist damit die schnellste Liste dessen, was noch nachzuziehen ist.

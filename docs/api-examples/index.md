@@ -62,27 +62,27 @@ Verifiziert: **34 / 60** Codes aus `ApiErrors`.
 
 - `bad_request` — Generischer 400-Default (`ForStatus`): nur Sicherheitsnetz für Framework-Antworten ohne spezifischen Code – alle regulären 400-Pfade tragen bereits einen fachlichen Code.
 - `concurrency_conflict` — Erfordert eine echte Schreib-Kollision (Doppelklick/Retry) über das Concurrency-Token; in-process nicht deterministisch per HTTP auslösbar (siehe SkinPurchaseTests, direkt über DbContext).
-- `duplicate_achievement` — Über HTTP im In-Process-Test nicht erreichbar.
-- `duplicate_email` — Über HTTP im In-Process-Test nicht erreichbar.
-- `duplicate_key_result` — Über HTTP im In-Process-Test nicht erreichbar.
-- `duplicate_profile_name` — Über HTTP im In-Process-Test nicht erreichbar.
-- `duplicate_vocabulary_in_exercise` — Über HTTP im In-Process-Test nicht erreichbar.
-- `exercise_not_assigned` — Über HTTP im In-Process-Test nicht erreichbar.
-- `http_error` — Über HTTP im In-Process-Test nicht erreichbar.
+- `duplicate_achievement` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
+- `duplicate_email` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
+- `duplicate_key_result` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
+- `duplicate_profile_name` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
+- `duplicate_vocabulary_in_exercise` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
+- `exercise_not_assigned` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
+- `http_error` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
 - `internal_error` — 500-Fallback für unbehandelte Ausnahmen – kein sicherer, gezielter Auslöser über die öffentliche API.
-- `item_not_found` — Über HTTP im In-Process-Test nicht erreichbar.
-- `media_already_linked` — Über HTTP im In-Process-Test nicht erreichbar.
-- `media_link_not_found` — Über HTTP im In-Process-Test nicht erreichbar.
-- `media_no_alternative` — Über HTTP im In-Process-Test nicht erreichbar.
-- `media_not_an_image` — Über HTTP im In-Process-Test nicht erreichbar.
-- `media_not_on_card` — Über HTTP im In-Process-Test nicht erreichbar.
-- `media_upload_too_large` — Über HTTP im In-Process-Test nicht erreichbar.
-- `media_variant_exists` — Über HTTP im In-Process-Test nicht erreichbar.
-- `media_variant_not_found` — Über HTTP im In-Process-Test nicht erreichbar.
-- `purchase_not_open` — Über HTTP im In-Process-Test nicht erreichbar.
+- `item_not_found` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
+- `media_already_linked` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
+- `media_link_not_found` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
+- `media_no_alternative` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
+- `media_not_an_image` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
+- `media_not_on_card` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
+- `media_upload_too_large` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
+- `media_variant_exists` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
+- `media_variant_not_found` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
+- `purchase_not_open` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
 - `rate_limited` — Login-Rate-Limit ist in der Test-Factory bewusst abgeschaltet (`RateLimiting:LoginEnabled=false`), sonst würden die vielen Test-Logins scheitern.
-- `remark_comment_not_found` — Über HTTP im In-Process-Test nicht erreichbar.
-- `series_without_subject` — Über HTTP im In-Process-Test nicht erreichbar.
-- `stage_not_testable` — Über HTTP im In-Process-Test nicht erreichbar.
-- `unknown_exercise_type` — Über HTTP im In-Process-Test nicht erreichbar.
-- `vocabulary_not_assigned` — Über HTTP im In-Process-Test nicht erreichbar.
+- `remark_comment_not_found` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
+- `series_without_subject` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
+- `stage_not_testable` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
+- `unknown_exercise_type` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
+- `vocabulary_not_assigned` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.

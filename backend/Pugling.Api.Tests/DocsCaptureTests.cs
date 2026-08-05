@@ -219,6 +219,14 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             if (_entries.Count > 0) WriteMarkdown();
             if (completed) WriteOpenApiExamples();
         }
+
+        // B-84: "Über HTTP im In-Process-Test nicht erreichbar." claimed unreachability for codes this
+        // generator simply never called - 14 of the (then) 19 affected codes were already triggered via
+        // HTTP elsewhere in the suite. Write-then-read here is race-free by construction: WriteMarkdown()
+        // above already completed synchronously on this same thread.
+        var indexMd = File.ReadAllText(Path.Combine(RepoRoot(), "docs", "api-examples", "index.md"));
+        Assert.DoesNotContain("Über HTTP im In-Process-Test nicht erreichbar.", indexMd);
+        Assert.Contains("Von DocsCaptureTests nicht mitgeschnitten", indexMd);
     }
 
     // ── auth ────────────────────────────────────────────────────────────────────────────────────
@@ -1315,7 +1323,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         else
         {
             foreach (var code in missing)
-                sb.AppendLine($"- `{code}` — {(reasons.TryGetValue(code, out var r) ? r : "Über HTTP im In-Process-Test nicht erreichbar.")}");
+                sb.AppendLine($"- `{code}` — {(reasons.TryGetValue(code, out var r) ? r : "Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.")}");
             sb.AppendLine();
         }
         return sb.ToString();

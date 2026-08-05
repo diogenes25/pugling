@@ -1,8 +1,8 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/doku, bereich/backend]
+tags: [typ/story, status/abgenommen, bereich/doku, bereich/backend]
 aliases: [Fehlercode nicht erreichbar, api-examples Generator-Vorgabe,
   Verifiziert-Zähler lügt]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: S
@@ -194,3 +194,13 @@ Dokumentationserzeugung ohne Laufzeit-Effekt am Produkt.
 - **2026-08-03** — geschätzt: Größe S, `wo: doku`, `migration: nein`, `vertragsbruch: nein`, Testweg über
   einen Regressionstest in `DocsCaptureTests.CaptureAll` selbst — autonom getroffen, Nutzerauftrag
   2026-08-04.
+- **2026-08-05** — im Autonomen Modus gebaut, exakt nach Angriffsplan: `RenderIndex`s Default-Satz
+  umformuliert („Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP
+  auslöst, ist hier nicht geprüft."), die vier handgeschriebenen `reasons` unverändert. Rote Probe zuerst:
+  die neue Zusicherung am Ende von `CaptureAll` (liest `docs/api-examples/index.md` zurück) scheiterte
+  gegen den alten Satz, danach grün. Das Zitat in `docs/db-struktur-umbau-plan.md` (Fallstrick 6)
+  nachgezogen, dabei die inzwischen veraltete Zahl „21 der 54" entfernt statt aktualisiert (Codes wachsen
+  seither weiter, eine feste Zahl im Fließtext veraltet zuverlässig wieder). `dotnet test Pugling.sln
+  -c Release` → **728/728 grün**, `markdownlint-cli2` für beide geänderten Dateien grün (die sieben
+  gemeldeten Befunde liegen alle in unberührten Fremddateien). Kein Reviewer-Agent nötig (`wo: doku`, per
+  Schätzung). Commit `<hash>`. Status → `abgenommen`.
