@@ -263,4 +263,4 @@ Benannt, nicht behauptet:
   `key: X → null → X` (Fund als 🟢, nicht blockierend). Eine dritte, vorbestehende Erkenntnis am Rande:
   `full-flow.spec.ts` flackert unabhängig von dieser Story bei „Frage 3/5" – per `git stash` gegen den
   unveränderten Stand verifiziert, dass derselbe Fehler schon vor B-62 bestand; nicht behoben (außerhalb des
-  Zuschnitts), aber notiert. Commit `<hash>`. Status → `abgenommen`.
+  Zuschnitts), aber notiert. Commit `2a2356e`, dazu dieser. Status → `abgenommen`.
