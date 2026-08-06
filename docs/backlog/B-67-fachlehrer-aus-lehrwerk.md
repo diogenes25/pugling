@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, bereich/katalog, rolle/creator]
+tags: [typ/story, status/in-arbeit, bereich/frontend, bereich/katalog, rolle/creator]
 aliases: [Fachlehrer vorbelegen, Profil aus Reihe]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: S
@@ -190,3 +190,11 @@ Interaktionsebene (Batch, Liste, neuer Screen) entsteht wie beim `MediaSelector`
   getroffen, Nutzerauftrag).
 - **2026-08-04** — geschätzt: Größe S, `wo: frontend`, `migration: nein`, `vertragsbruch: nein`; Risiken,
   Angriffsplan und Testweg ergänzt (autonom getroffen, Nutzerauftrag).
+- **2026-08-06** — in Arbeit: `touched`/`derived`-Zustand und `deriveFromSeries` in
+  [VaterFachlehrer.tsx](../../frontend/src/vater/VaterFachlehrer.tsx) ergänzt (`ProfileForm` exportiert),
+  Hinweistext „aus dem Lehrwerk übernommen" im bestehenden `muted`-Stil ergänzt. Neuer Komponententest
+  [VaterFachlehrer.test.tsx](../../frontend/src/vater/VaterFachlehrer.test.tsx) deckt die drei Fälle aus
+  Akzeptanzkriterium 6 ab (Reihe wählen → leere Felder gefüllt; berührtes Feld bleibt unverändert; Reihe
+  ohne Katalog-Fach lässt das Fach-Pulldown in Ruhe) — 3 von 3 grün. Gesamte Suite weiter grün
+  (`npm test`: 156/156, 24 Dateien), `npm run build` (`tsc -b && vite build`) fehlerfrei. Kein Backend-
+  Anteil, kein neuer Endpunkt, kein Contract geändert. `frontend-reviewer` und Rollengang stehen noch aus.

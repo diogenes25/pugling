@@ -118,12 +118,15 @@ function gradeRange(p: CreatorProfileResponse): React.ReactNode {
   return p.gradeMin != null ? `ab Klasse ${p.gradeMin}` : `bis Klasse ${p.gradeMax}`;
 }
 
+/** Die drei Felder, die sich beim Wählen eines Lehrwerks aus dessen Reihe ableiten lassen. */
+type DerivableField = "subjectId" | "sourceLang" | "targetLang";
+
 /**
  * Ein Formular für Anlegen und Ändern. Die Klassenstufen sind bewusst optional: ein leeres Feld heißt
  * „unterrichtet jede Stufe" – und genau dann bekommt das Profil beim Matching *keine* Stufen-Punkte,
  * damit der Generalist den Fachlehrer nicht schlägt.
  */
-function ProfileForm({ profile, subjects, series, onDone }: {
+export function ProfileForm({ profile, subjects, series, onDone }: {
   profile?: CreatorProfileResponse;
   subjects: SubjectResponse[];
   series: TextbookSeriesResponse[];
@@ -144,11 +147,45 @@ function ProfileForm({ profile, subjects, series, onDone }: {
     active: profile?.active ?? true,
   });
   const [types, setTypes] = useState<string[]>(profile?.defaultTypes ?? []);
+  // "berührt" heißt „vom Nutzer selbst geändert" – erst das unterscheidet ein leeres Feld von einem Feld,
+  // das nur die Vorgabe `en`/`de` trägt (B-67, Entscheidung 1). `derived` trägt nur die Anzeige des Hinweises.
+  const [touched, setTouched] = useState<Set<DerivableField>>(new Set());
+  const [derived, setDerived] = useState<Set<DerivableField>>(new Set());
   const action = useAction();
   const id = profile ? `p${profile.id}` : "new";
 
   function up<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {
     setForm((f) => ({ ...f, [k]: v }));
+  }
+
+  function touch(field: DerivableField) {
+    setTouched((t) => new Set(t).add(field));
+    setDerived((d) => { if (!d.has(field)) return d; const next = new Set(d); next.delete(field); return next; });
+  }
+
+  /** Beim Wählen einer Reihe: nur Felder überschreiben, die der Nutzer noch nicht selbst geändert hat. */
+  function deriveFromSeries(seriesId: string) {
+    up("seriesId", seriesId);
+    const chosen = series.find((s) => String(s.id) === seriesId);
+    if (!chosen) return;
+    // Ein Freitext-`subjectName` ohne Katalog-Fach lässt sich im Pulldown nicht abbilden (Entscheidung 2).
+    const fields: Array<[DerivableField, string | null | undefined]> = [
+      ["subjectId", chosen.subjectId != null ? String(chosen.subjectId) : null],
+      ["sourceLang", chosen.sourceLanguage],
+      ["targetLang", chosen.targetLanguage],
+    ];
+    const applicable = fields.filter(([field, value]) => value && !touched.has(field)) as Array<[DerivableField, string]>;
+    if (applicable.length === 0) return;
+    setForm((f) => {
+      const next = { ...f };
+      for (const [field, value] of applicable) next[field] = value;
+      return next;
+    });
+    setDerived((d) => {
+      const next = new Set(d);
+      for (const [field] of applicable) next.add(field);
+      return next;
+    });
   }
 
   async function submit(e: React.FormEvent) {
@@ -219,10 +256,14 @@ function ProfileForm({ profile, subjects, series, onDone }: {
         </div>
         <div className="field">
           <label htmlFor={`fl-subject-${id}`}>Fach</label>
-          <select id={`fl-subject-${id}`} value={form.subjectId} onChange={(e) => up("subjectId", e.target.value)}>
+          <select
+            id={`fl-subject-${id}`} value={form.subjectId}
+            onChange={(e) => { up("subjectId", e.target.value); touch("subjectId"); }}
+          >
             <option value="">– fachneutral –</option>
             {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
+          {derived.has("subjectId") && <span className="muted" style={{ fontSize: 13 }}>aus dem Lehrwerk übernommen</span>}
         </div>
         <div className="field">
           <label htmlFor={`fl-school-${id}`}>Schulart</label>
@@ -247,7 +288,7 @@ function ProfileForm({ profile, subjects, series, onDone }: {
         </div>
         <div className="field">
           <label htmlFor={`fl-series-${id}`}>Lehrwerk</label>
-          <select id={`fl-series-${id}`} value={form.seriesId} onChange={(e) => up("seriesId", e.target.value)}>
+          <select id={`fl-series-${id}`} value={form.seriesId} onChange={(e) => deriveFromSeries(e.target.value)}>
             <option value="">– werkunabhängig –</option>
             {series.map((s) => (
               <option key={s.id} value={s.id}>{s.name}{s.publisher ? ` (${s.publisher})` : ""}</option>
@@ -256,11 +297,19 @@ function ProfileForm({ profile, subjects, series, onDone }: {
         </div>
         <div className="field">
           <label htmlFor={`fl-src-${id}`}>Lernsprache</label>
-          <input id={`fl-src-${id}`} value={form.sourceLang} onChange={(e) => up("sourceLang", e.target.value)} placeholder="en" />
+          <input
+            id={`fl-src-${id}`} value={form.sourceLang} placeholder="en"
+            onChange={(e) => { up("sourceLang", e.target.value); touch("sourceLang"); }}
+          />
+          {derived.has("sourceLang") && <span className="muted" style={{ fontSize: 13 }}>aus dem Lehrwerk übernommen</span>}
         </div>
         <div className="field">
           <label htmlFor={`fl-tgt-${id}`}>Muttersprache</label>
-          <input id={`fl-tgt-${id}`} value={form.targetLang} onChange={(e) => up("targetLang", e.target.value)} placeholder="de" />
+          <input
+            id={`fl-tgt-${id}`} value={form.targetLang} placeholder="de"
+            onChange={(e) => { up("targetLang", e.target.value); touch("targetLang"); }}
+          />
+          {derived.has("targetLang") && <span className="muted" style={{ fontSize: 13 }}>aus dem Lehrwerk übernommen</span>}
         </div>
       </div>
 
