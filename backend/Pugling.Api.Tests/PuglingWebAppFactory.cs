@@ -149,6 +149,15 @@ public sealed class PuglingWebAppFactory : PuglingWebAppFactoryBase
         // `db.TimeSlots.ExecuteDelete()` AFTER startup - now it is a setting BEFORE it, because the slots are
         // configuration and no longer a table.
         builder.UseSetting("Scoring:TimeSlotsEnabled", "false");
+        // Same reason, second source: the daily box draws coins/gems from [Min,Max] via `Random.Shared`, so the
+        // checked-in example under docs/api-examples/ moved with every run (measured: coins 10 vs. 27, gems 2 vs.
+        // 0) and D4 failed in CI on an unrelated change. Collapsing each range to a single value keeps the draw
+        // itself in play but makes it constant; the streak tier still multiplies it, which is the part the tests
+        // are about.
+        builder.UseSetting("Gamification:DailyBox:MinCoins", "20");
+        builder.UseSetting("Gamification:DailyBox:MaxCoins", "20");
+        builder.UseSetting("Gamification:DailyBox:MinGems", "2");
+        builder.UseSetting("Gamification:DailyBox:MaxGems", "2");
     }
 }
 

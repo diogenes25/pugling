@@ -65,7 +65,7 @@ public class DailyBoxTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
 
     /// <summary>
     /// A streak of 7 consecutive fully met days (six seeded past days plus today) crosses the first
-    /// escalation tier (×1.5) - the box's coin draw must then exceed the base range's maximum.
+    /// escalation tier (×1.5) - the box's coin draw must then come out multiplied.
     /// Past days are seeded via passed <see cref="TestAttempt"/> rows, exactly the evidence
     /// <c>PositionProgressService.IsGoalMetAsync</c> itself reads for a closed daily period.
     /// </summary>
@@ -119,8 +119,9 @@ public class DailyBoxTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var box = overview.GetProperty("dailyBox");
         JsonAssert.True(box, "claimedToday");
         Assert.Equal(7, box.GetProperty("streakAtClaim").GetInt32());
-        // Base range is [10,30]; the ×1.5 tier from streak 7 pushes the ceiling to 45.
-        Assert.InRange(box.GetProperty("coinsAwarded").GetInt32(), 10, 45);
+        // PuglingWebAppFactory pins the coin draw to 20, so the ×1.5 tier from streak 7 is provable as an exact
+        // value instead of a range that a non-escalated draw could also satisfy.
+        Assert.Equal(30, box.GetProperty("coinsAwarded").GetInt32());
 
         using var check = factory.Services.CreateScope();
         var checkDb = check.ServiceProvider.GetRequiredService<PuglingDbContext>();
