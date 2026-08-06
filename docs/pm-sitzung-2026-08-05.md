@@ -424,7 +424,7 @@ Fund vor der Abnahme kam und behoben wurde. Die Qualitätsschwelle ist einmal ge
 Sprint 2–4 wäre die falsche Reaktion. Die drei noch nicht begonnenen Sprints (Testsuite-Qualität,
 CI/Deploy-Tooling, Typsicherheit) bleiben `geschaetzt` und liegen für die nächste Sitzung bereit.
 
-## Ende des Nachtlaufs 2
+## Abbruch des Nachtlaufs 2 nach Sprint 1 (später zurückgenommen)
 
 Ein Sprint gebaut und abgenommen (B-44, B-32, B-51, B-83, B-112), drei weitere geplante Sprints
 (Testsuite-Qualität: B-88/27/55/58; CI/Deploy-Tooling: B-25/47; Typsicherheit: B-59/74/49) nicht
