@@ -115,6 +115,8 @@ public static class ApiErrors
     /// (<c>CreatorProfile(OwnerAdultId, Name)</c>) – it is the display name in the profile picker.
     /// </summary>
     public static readonly ApiError DuplicateProfileName = new("duplicate_profile_name", 409, "A profile with this name already exists.");
+    /// <summary>An exercise category with this name already exists in the subject (409).</summary>
+    public static readonly ApiError DuplicateCategoryName = new("duplicate_category_name", 409, "A category with this name already exists in this subject.");
     /// <summary>Exercise is used in a study plan/class test and cannot be deleted (409).</summary>
     public static readonly ApiError ExerciseInUse = new("exercise_in_use", 409, "Exercise is in use.");
     /// <summary>Exercise is not publicly executable and may not be assigned without an execute/write/owner permission (403).</summary>

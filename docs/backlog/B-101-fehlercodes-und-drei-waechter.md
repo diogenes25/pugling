@@ -1,16 +1,18 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/backend, bereich/api, bereich/qualitaet]
+tags: [typ/story, status/abgenommen, bereich/backend, bereich/api, bereich/qualitaet]
 aliases: [generischer Conflict, Conflict-Tor, Platzhalter-Tor, Paging-Obergrenze]
-status: ausformuliert
+status: abgenommen
 prio: P3
 art: Aufräumen
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: S
+wo: backend
+migration: nein
+vertragsbruch: nein
 quelle: docs/api-design-bewertung.md (Vorschläge A3, A5, B3-Tor) — Arbeitsrunde PM/API-Designer/Entwickler am 2026-08-04
 grund: ""
 ersetzt_durch: []
+nachgeschaut: ""
+wartet_auf: ""
 ---
 
 # B-101 · Drei generische Fehlercodes ersetzen — und die drei Wächter, die daraus reif geworden sind
@@ -100,22 +102,58 @@ Von den **fünf** im Bericht vorgeschlagenen Wächtern sind nach der Runde **dre
 [B-100](B-100-vertragsdokument-unterdeklariert.md) gezogen werden darf — vorher ist es kein Tor, sondern ein
 blockierter Build.
 
+## Entscheidungen
+
+Eigene Liste, eigene Nummerierung — verweist im Text auf die drei Wächter aus „Ergebnis der Arbeitsrunde"
+oben (dort als 1–3 nummeriert) über ihre Namen, nicht über ihre Nummer.
+
+1. **Wächter 2 (Platzhaltername) und 3 (Paging) nach [B-121](B-121-platzhalter-und-paging-tore.md)
+   abgespalten — Wächter 1 (kein generischer `Conflict`) bleibt hier.** Begründung: Beim Implementieren von
+   Wächter 2 (die Rot-Liste-Auflage aus dem obigen Punkt 2) fiel eine **dritte, im Bericht nicht erfasste**
+   Inkonsistenz auf derselben Fehlerklasse auf — das Sammlungs-Segment `units` trägt sowohl `{unitId}`
+   (`SeriesUnitsController`, eigene Route `textbook-series/{seriesId}/units`) als auch `{seriesUnitId}`
+   (`ExerciseRoutes.Base` in `Controllers/Creator/ExerciseControllers.cs:17`, von allen 13
+   Übungstyp-Controllern geerbt). Diese Rot-Liste korrekt zu bauen heißt jetzt: alle vier Segmente
+   (`exercises`, `media`, `vocabulary`, `units`) gegen die *tatsächliche* Route-Oberfläche verifizieren,
+   nicht gegen die Bericht-Prosa — und `tags` dazu, macht fünf. Wächter 3 (Paging) braucht dieselbe
+   Sorgfalt (die 35 exakt zu zählenden Endpunkte sind eine Momentaufnahme, kein Vorschlag). Beides in
+   derselben Sitzung wie der risikoarme Code-Fix zu bauen hätte den ganzen Fortschritt an einem einzigen,
+   ungeprüften mechanischen Tor riskiert (README: „ein Fund beim Bauen wird eine eigene Story, wenn das Ziel
+   der laufenden ohne ihn erfüllt ist"). Kosten: B-101s AK3/AK4 werden zu B-121, `groesse` sinkt von M auf S;
+   der `units`-Fund geht als Ist-Stand in B-121 mit, nicht verloren.
+
 ## Akzeptanzkriterien
 
 1. `ApiErrors.Conflict` kommt unter `Controllers/**` nicht mehr vor; ein Tor mit leerer Ausnahmeliste hält
    das.
 2. `PATCH auth/me` mit einer belegten E-Mail antwortet mit `code: duplicate_email`; ein Kategorie-Konflikt
    mit `code: duplicate_category_name`.
-3. Ein Tor lehnt eine neue Route ab, die in einem bestehenden Sammlungs-Segment einen zweiten
-   Platzhalternamen einführt; seine Rot-Liste trägt je Eintrag den geduldeten Zweitnamen **und** dessen
-   Grund.
-4. Die zu Paging beschlossene Form (a/b/beide) steht als Tor, und die Zahl bzw. die Ausnahmeliste ist im
-   Testcode begründet.
-5. Alles so grün wie vorher — kein Verhalten ändert sich (Abnahmeform für `art: Aufräumen`), abgesehen von
-   den drei spezifischeren Codes.
+3. Alles so grün wie vorher — kein Verhalten ändert sich (Abnahmeform für `art: Aufräumen`), abgesehen von
+   den zwei spezifischeren Codes.
+
+**Nach [B-121](B-121-platzhalter-und-paging-tore.md) abgespalten** (siehe „## Entscheidungen"): das
+Platzhalter-Tor (ehem. AK3) und das Paging-Tor (ehem. AK4).
+
+## Schätzung
+
+**Größe S** (Anker: „`childId` aus dem Test-Pfad ziehen", B-01, plus ein neuer `ApiErrors`-Code und ein
+Wächter-Test etwas größer) — `wo: backend`. `migration: nein`. `vertragsbruch: nein`: ein Code wird
+*spezifischer*, das ist für einen Client additiv (kein Feld verschwindet, kein Status ändert sich).
+
+### Testweg
+
+`ConventionGuardTests.Controller_Nennt_Keinen_Generischen_Conflict_Code` (neu, Ausnahmeliste leer) plus die
+bestehenden `AccountSelfServiceTests.FremdeEMail_WirdAbgewiesen` und `DocsCaptureTests`-Capture „Doppelte
+Art anlegen" (beide bereits vorhanden, Erwartung auf den neuen Code umgestellt statt eines neuen Tests).
 
 ## Verlauf
 
 - **2026-08-04** — angelegt aus `docs/api-design-bewertung.md` (A3, A5, B3-Tor) und der Arbeitsrunde. Von
   fünf vorgeschlagenen Toren sind drei übrig; die Tripel-Auflage für die Rot-Liste und die exakte statt
   obere Pinnung sind Ergebnisse der zweiten Runde.
+- **2026-08-06** — gegrillt, geschätzt und (im reduzierten Umfang AK1–3) abgenommen: autonom, Nachtlauf-
+  Freigabe 1 (`art: Aufräumen`). `DuplicateEmail`/`DuplicateCategoryName` eingesetzt, neuer Wächter gegen
+  `ApiErrors.Conflict` unter `Controllers/**` (leere Ausnahmeliste, self-protection ≥30 Dateien). Zwei
+  bestehende Tests (`AccountSelfServiceTests`, `DocsCaptureTests`) mussten auf den spezifischeren Code
+  umgestellt werden — das *ist* der belegte Vorher/Nachher-Beweis, kein neuer roter Test nötig. Volle Suite
+  grün (Zahl im Sprint-Protokoll `docs/pm-sitzung-2026-08-06.md`). AK3/AK4 nach B-121 abgespalten.

@@ -326,7 +326,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         await Capture(father, g, "Art (Kategorie) anlegen", HttpMethod.Post, $"/api/v1/creator/subjects/{subjectId}/categories",
             new { name = "Vokabeln" }, HttpStatusCode.Created);
         await Capture(father, g, "Doppelte Art anlegen", HttpMethod.Post, $"/api/v1/creator/subjects/{subjectId}/categories",
-            new { name = "Vokabeln" }, HttpStatusCode.Conflict, ApiErrors.Conflict.Code);
+            new { name = "Vokabeln" }, HttpStatusCode.Conflict, ApiErrors.DuplicateCategoryName.Code);
 
         // An exercise sitting in a study plan cannot be deleted (position reference → 409).
         TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.FreeText);

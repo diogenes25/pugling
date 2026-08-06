@@ -19,12 +19,12 @@ Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesa
 
 ## Fehler-Code-Abdeckung
 
-Verifiziert: **34 / 60** Codes aus `ApiErrors`.
+Verifiziert: **34 / 61** Codes aus `ApiErrors`.
 
 | Code | Beispiel |
 | --- | --- |
 | `activation_not_pending` | shop – Aktivierung erneut genehmigen |
-| `conflict` | catalog – Doppelte Art anlegen |
+| `duplicate_category_name` | catalog – Doppelte Art anlegen |
 | `duplicate_key` | vocabulary – Vokabel mit doppeltem Key |
 | `duplicate_tag_name` | tags – Tag mit doppeltem Namen |
 | `exercise_empty` | study-plans – Ungefüllte Übung zuweisen |
@@ -62,6 +62,7 @@ Verifiziert: **34 / 60** Codes aus `ApiErrors`.
 
 - `bad_request` — Generischer 400-Default (`ForStatus`): nur Sicherheitsnetz für Framework-Antworten ohne spezifischen Code – alle regulären 400-Pfade tragen bereits einen fachlichen Code.
 - `concurrency_conflict` — Erfordert eine echte Schreib-Kollision (Doppelklick/Retry) über das Concurrency-Token; in-process nicht deterministisch per HTTP auslösbar (siehe SkinPurchaseTests, direkt über DbContext).
+- `conflict` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
 - `duplicate_achievement` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
 - `duplicate_email` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
 - `duplicate_key_result` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.

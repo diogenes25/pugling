@@ -32206,6 +32206,7 @@
               "concurrency_conflict",
               "conflict",
               "duplicate_achievement",
+              "duplicate_category_name",
               "duplicate_email",
               "duplicate_key",
               "duplicate_key_result",

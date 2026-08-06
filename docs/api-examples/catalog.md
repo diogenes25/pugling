@@ -281,11 +281,11 @@ Response — `HTTP 409`:
 
 ```json
 {
-  "type": "https://pugling.app/errors/conflict",
-  "title": "Conflict.",
+  "type": "https://pugling.app/errors/duplicate_category_name",
+  "title": "A category with this name already exists in this subject.",
   "status": 409,
   "detail": "This category already exists in the subject.",
-  "code": "conflict",
+  "code": "duplicate_category_name",
   "traceId": "<trace-id>"
 }
 ```

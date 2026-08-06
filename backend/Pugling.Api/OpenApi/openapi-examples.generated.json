@@ -281,9 +281,9 @@
     "role": "father",
     "requestBodyJson": "{\n  \u0022name\u0022: \u0022Vokabeln\u0022\n}",
     "expectedStatus": 409,
-    "responseBodyJson": "{\n  \u0022type\u0022: \u0022https://pugling.app/errors/conflict\u0022,\n  \u0022title\u0022: \u0022Conflict.\u0022,\n  \u0022status\u0022: 409,\n  \u0022detail\u0022: \u0022This category already exists in the subject.\u0022,\n  \u0022code\u0022: \u0022conflict\u0022,\n  \u0022traceId\u0022: \u0022\u003Ctrace-id\u003E\u0022\n}",
+    "responseBodyJson": "{\n  \u0022type\u0022: \u0022https://pugling.app/errors/duplicate_category_name\u0022,\n  \u0022title\u0022: \u0022A category with this name already exists in this subject.\u0022,\n  \u0022status\u0022: 409,\n  \u0022detail\u0022: \u0022This category already exists in the subject.\u0022,\n  \u0022code\u0022: \u0022duplicate_category_name\u0022,\n  \u0022traceId\u0022: \u0022\u003Ctrace-id\u003E\u0022\n}",
     "isError": true,
-    "expectedCode": "conflict"
+    "expectedCode": "duplicate_category_name"
   },
   {
     "key": "catalog-verwendete-ubung-loschen",

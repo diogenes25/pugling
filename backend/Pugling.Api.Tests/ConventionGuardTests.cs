@@ -66,6 +66,43 @@ public class ConventionGuardTests
             + string.Join("\n", offenders));
     }
 
+    // ─────────────────────────────────────────────────────── (e) no generic Conflict in a controller
+
+    [Fact]
+    public void Controller_Nennt_Keinen_Generischen_Conflict_Code()
+    {
+        // ApiErrors.Conflict is the framework/middleware safety net (ApiErrors.ForStatus) for a 409 that
+        // reaches no more specific handling - a controller that reaches for it directly always had a more
+        // specific business condition available (B-101: AuthController had DuplicateEmail two files away,
+        // ExerciseCategoriesController's sibling chapter check already had its own code). An empty exception
+        // list is the point: the moment a fourth generic use appears, it gets its own code before this test
+        // is touched, not an entry added to a list that would otherwise only grow.
+        var controllerDir = Path.Combine(RepoRoot(), "backend", "Pugling.Api", "Controllers");
+        var files = Directory.GetFiles(controllerDir, "*.cs", SearchOption.AllDirectories);
+        var forbidden = new Regex(@"\bApiErrors\.Conflict\b", RegexOptions.Compiled);
+
+        var offenders = new List<string>();
+        foreach (var file in files)
+        {
+            var lineNo = 0;
+            foreach (var raw in File.ReadLines(file))
+            {
+                lineNo++;
+                var line = raw.TrimStart();
+                if (line.StartsWith("//", StringComparison.Ordinal) || line.StartsWith('*'))
+                    continue;
+                if (forbidden.IsMatch(line))
+                    offenders.Add($"{Path.GetFileName(file)}:{lineNo}: {line}");
+            }
+        }
+
+        Assert.True(files.Length >= 30, $"Zu wenige Controller-Dateien gefunden ({files.Length}) – Pfad falsch?");
+        Assert.True(offenders.Count == 0,
+            "Ein Controller meldet einen fachlichen Konflikt nicht generisch, sondern über einen eigenen "
+            + "ApiErrors-Code (siehe ApiErrors.Conflict selbst - es bleibt der Fallback von ApiErrors.ForStatus):\n"
+            + string.Join("\n", offenders));
+    }
+
     // ─────────────────────────────────────────────────────── (c) the contract lives in Pugling.Contracts
 
     [Fact]

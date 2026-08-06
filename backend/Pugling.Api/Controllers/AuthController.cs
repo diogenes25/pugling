@@ -171,7 +171,7 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
         {
             var email = dto.Email.Trim();
             if (email.Length > 0 && await db.Accounts.AnyAsync(a => a.Id != accountId && a.Email == email, ct))
-                return this.ProblemWithCode(ApiErrors.Conflict, "This e-mail is already used by another account.");
+                return this.ProblemWithCode(ApiErrors.DuplicateEmail, "This e-mail is already used by another account.");
             adult.Email = email.Length == 0 ? null : email;
         }
         if (dto.ClearEmail) adult.Email = null;

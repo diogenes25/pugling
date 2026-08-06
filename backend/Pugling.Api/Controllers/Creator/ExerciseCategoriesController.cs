@@ -63,7 +63,7 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
 
         var name = dto.Name.Trim();
         if (await db.ExerciseCategories.AnyAsync(c => c.SubjectId == subjectId && c.Name == name, ct))
-            return this.ProblemWithCode(ApiErrors.Conflict, "This category already exists in the subject.");
+            return this.ProblemWithCode(ApiErrors.DuplicateCategoryName, "This category already exists in the subject.");
 
         var category = new ExerciseCategory { SubjectId = subjectId, Name = name };
         db.ExerciseCategories.Add(category);
@@ -89,7 +89,7 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
             if (name.Length == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Name must not be empty.");
             if (name != category.Name &&
                 await db.ExerciseCategories.AnyAsync(c => c.SubjectId == subjectId && c.Name == name, ct))
-                return this.ProblemWithCode(ApiErrors.Conflict, "This category already exists in the subject.");
+                return this.ProblemWithCode(ApiErrors.DuplicateCategoryName, "This category already exists in the subject.");
             category.Name = name;
         }
         await db.SaveChangesAsync(ct);

@@ -141,3 +141,83 @@ schon Altschulden trägt.
 gesehen und behoben; eine zu scharf formulierte AK, die die Story selbst schon transparent macht). Kein
 Gate wird gezogen — die bestehenden (rote Probe vor jedem Fix, `context-budget.sh`, `pugling-reviewer`)
 haben in beiden Fällen genau das geleistet, wofür sie da sind.
+
+## Sprint 3 — Ziel & Umfang
+
+**Sprint-Ziel:** Ein fachlicher Konflikt (doppelte E-Mail, doppelter Kategorie-Name) trägt einen eigenen,
+spezifischen Code statt eines nackten `conflict` — und ein mechanisches Tor mit leerer Ausnahmeliste hält
+das für die Zukunft, statt sich auf Disziplin zu verlassen.
+**Umfang:** B-101 — ursprünglich zusammen mit B-100 geplant (beide aus derselben 2026-08-04-Arbeitsrunde),
+aber B-100 (OpenAPI-Vertragsdokument-Transformer über 24+31+5 Operationen, Regenerierung des 900-KB-
+Dokuments) ist ein eigenständig großer Umfang mit anderer Risikoklasse als B-101s Drei-Zeilen-Fix — beide
+im selben Sprint hätten den überschaubaren Fortschritt an den riskanteren Teil gekoppelt. B-100 bleibt
+`ausformuliert`/`geschaetzt` für einen eigenen Sprint (siehe „Stand am Ende dieser Sitzung" unten).
+**Entwickler-Brief:** Ziel: die drei generischen `ApiErrors.Conflict`-Stellen durch spezifische Codes
+ersetzen, dann ein Tor mit leerer Ausnahmeliste ziehen. Quelle der Wahrheit:
+`AuthController.cs`/`ExerciseCategoriesController.cs`. Guards: neuer `ConventionGuardTests`-Fall
+(Source-Scan, Vorbild `Actions_Melden_Fehler_Nur_Ueber_ProblemWithCode`). Migration: nein. Vertragsbruch:
+nein (additiv). Testweg: zwei bestehende Tests (`AccountSelfServiceTests`, `DocsCaptureTests`) auf den
+spezifischeren Code umgestellt statt eines neuen roten Tests — die Umstellung selbst ist der Vorher/
+Nachher-Beleg.
+
+## Iteration 3 — umgesetzt
+
+- `ApiErrors.cs`: neuer Code `DuplicateCategoryName` (409), additiv.
+- `AuthController.cs`: `PATCH auth/me` nutzt jetzt `DuplicateEmail` statt `Conflict` (der Code existierte
+  bereits, war hier nur nicht verdrahtet).
+- `ExerciseCategoriesController.cs`: `Create`/`Update` nutzen jetzt `DuplicateCategoryName`.
+- Neuer Wächter `ConventionGuardTests.Controller_Nennt_Keinen_Generischen_Conflict_Code` — leere
+  Ausnahmeliste, Self-Protection ≥30 Controller-Dateien.
+- **Beim Bauen des zweiten (jetzt abgespaltenen) Wächters — Platzhaltername je Sammlungs-Segment — fiel eine
+  dritte, im Bericht nicht erfasste Inkonsistenz auf:** `units/{unitId}` (`SeriesUnitsController`) vs.
+  `units/{seriesUnitId}` (`ExerciseRoutes.Base`, von 13 Übungstyp-Controllern geerbt). Statt das Tor auf
+  einer unvollständigen Grundlage zu bauen, als eigene Story [B-121](../backlog/B-121-platzhalter-und-paging-tore.md)
+  gefasst (Entscheidung 4 in B-101) — dort auch das Paging-Tor, das dieselbe Sorgfalt braucht (35 exakt zu
+  zählende Endpunkte, keine übernommene Zahl).
+- Zwei bestehende Tests umgestellt: `AccountSelfServiceTests.FremdeEMail_WirdAbgewiesen` (`"conflict"` →
+  `"duplicate_email"`), `DocsCaptureTests`s „Doppelte Art anlegen"-Capture (`ApiErrors.Conflict.Code` →
+  `ApiErrors.DuplicateCategoryName.Code`) — beide Umstellungen selbst sind der Beleg, dass sich das
+  Verhalten geändert hat.
+
+**Rote Probe:** kein neuer Test von Grund auf; die zwei bestehenden Tests liefen vor der Umstellung ihrer
+Erwartung mit dem alten Code grün (das ist der unveränderte Vorzustand), nach der Umstellung ihrer
+Erwartung UND des Produktivcodes wieder grün — der eigentliche Beleg ist der neue Wächter selbst: vor dem
+Fix hätte er mit 3 Fundstellen rot geschlagen (nicht gesondert reproduziert, da der Fix bereits in derselben
+Änderung stand — anders als bei B-108 war hier kein Zwischenschritt mit `git stash` nötig, weil die Story
+keinen Verhaltens-Fall hat, der vor UND nach dem Fix beobachtbar bleibt).
+
+Volle Suite: **750/750 grün** (749 vor dieser Story + 1 neuer Wächtertest).
+
+## Runde — Abnahme Sprint 3 (Rollengang: Regression)
+
+Keine neue Fähigkeit, keine sichtbare Oberfläche — die geänderten Codes sind für heutige Clients additiv
+(kein Client verzweigt auf `duplicate_email`/`duplicate_category_name`, beide waren vorher am selben Ort ein
+nacktes `conflict`). Ersatz: volle Suite plus `pugling-reviewer` (keine Blocker; Nice-to-have-Hinweis zum
+Wächter-Docstring, nicht umgesetzt — reine Doku-Ergänzung ohne Testwirkung).
+
+**Ergebnis:** B-101 (reduzierter Umfang AK1–3) ist `abgenommen`. B-121 (Platzhalter-/Paging-Tore, inkl. dem
+neuen `units`-Fund) und B-100 bleiben offen für einen künftigen Sprint.
+
+## Retrospektive — Sprint 3
+
+**Nachschau:** bereits in der Retro zu Sprint 1+2 dieser Sitzung erledigt (derselbe vorige Sprint,
+2026-08-05 Nachtlauf-2-Sprint-4); kein zweiter Nachhol-Bedarf für denselben Vorsprung.
+
+**Was dieser Sprint gelernt hat:** Ein mechanisches Tor braucht dieselbe Disziplin wie ein Ist-Stand —
+„gegen den Code belegen, nicht gegen die Bericht-Prosa" (README, „Ausformulieren heißt gegen den Code
+belegen") gilt nicht nur für `ausformuliert`, sondern auch fürs tatsächliche **Bauen** eines Wächters: der
+Bericht vom 2026-08-04 kannte vier Segmente, die Route-Oberfläche hat fünf. Das ist genau der Fund, den ein
+sorgfältiges Vorgehen erst beim Hinsehen macht, nicht beim Zusammenfassen einer Notiz.
+
+**Kein neuer Mechanismus** — die Lehre ist prozedural (wie diese Sitzung selbst vorgegangen ist), nicht
+etwas, das ein Gate im Produkt fangen könnte. Stattdessen als konkrete Konsequenz gehandelt: B-121 trägt
+den Fund jetzt explizit, statt dass er in einem Kommentar verloren geht.
+
+## Stand am Ende dieser Sitzung
+
+Vier Stories abgenommen (B-102, B-95, B-108, B-101), zwei Commits bisher gesetzt (ein dritter für Sprint 3
+folgt) — nichts gepusht, das bleibt beim Nutzer. Kein Abbruchgrund ist
+eingetreten (kein neues Gate aus einer Retro, kein Defekt im eigenen Increment über 5 Funde). Offen für
+einen weiteren Sprint dieser Nacht: B-121 (Platzhalter-/Paging-Tore), B-100 (Vertragsdokument, eigener
+großer Umfang), sowie die drei frischen `idee`-Stories B-118/B-119/B-120, die vor dem Bau erst gegen den
+Code recherchiert werden müssten.

@@ -107,7 +107,7 @@ public class AccountSelfServiceTests(PuglingWebAppFactory factory) : IClassFixtu
         var (_, second) = await NewTeacherAsync("Frau Zweit", "5656");
         var res = await second.PatchAsJsonAsync("/api/v1/auth/me", new { email = mail });
         Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
-        Assert.Equal("conflict", (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+        Assert.Equal("duplicate_email", (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
     }
 
     [Fact]
