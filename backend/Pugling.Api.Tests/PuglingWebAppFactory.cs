@@ -162,7 +162,9 @@ public sealed class PuglingWebAppFactory : PuglingWebAppFactoryBase
 }
 
 /// <summary>
-/// Same as <see cref="PuglingWebAppFactory"/> (login rate limit off, time slots neutralized), but additionally
+/// Like <see cref="PuglingWebAppFactory"/> it switches the login rate limit off and neutralizes the time slots
+/// - it deliberately skips that factory's daily-box pin, because these classes never claim a box and write no
+/// documentation, so the draw cannot reach anything they assert. Additionally it
 /// switches off <c>OpenApi:ExamplesEnabled</c> (B-57): for test classes that only read <c>paths</c> or
 /// <c>components.schemas</c> from the live document (<see cref="ClientRouteGuardTests"/>,
 /// <see cref="ErrorCodeTests"/>) - never the examples themselves - this removes their otherwise unnecessary

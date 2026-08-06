@@ -500,7 +500,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (45)
+### Offen (44)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -517,7 +517,6 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-50](B-50-kind-beschreibt-sich-selbst.md) | Das Kind beschreibt sich selbst: Interessen in einem geführten Prozess | Wunsch | `geschaetzt` | P2 | L | beides | — |
 | [B-63](B-63-lehrwerk-hierarchie.md) | Das Lehrwerk ist eine Ebene aus Freitext, gebraucht wird eine Hierarchie mit Listen | Wunsch | `geschaetzt` | P2 | L | beides | Migration + Vertrag |
 | [B-67](B-67-fachlehrer-aus-lehrwerk.md) | Der Fachlehrer fragt nach Fach und Sprachen, die im gewählten Lehrwerk längst stehen | Wunsch | `geschaetzt` | P2 | S | frontend | — |
-| [B-109](B-109-full-flow-spec-flackert-bei-frage-3.md) | `full-flow.spec.ts` hängt reproduzierbar bei „Frage 3/5" der Klausur | Defekt | `idee` | P3 | — | — | — |
 | [B-17](B-17-birkenbihl-sprachcodes.md) | Sprachcode-Normalisierung bei der Vokabel-Dekodierung | Frage | `geschaetzt` | P3 | XS | frontend | — |
 | [B-03](B-03-lueckensaetze-mit-bild.md) | Lückensätze mit Bild als Vokabel-Vertiefung | Wunsch | `geschaetzt` | P3 | M | backend | — |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `geschaetzt` | P3 | L | backend | Migration |
@@ -541,8 +540,8 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-101](B-101-fehlercodes-und-drei-waechter.md) | Drei generische Fehlercodes ersetzen — und die drei Wächter, die daraus reif geworden sind | Aufräumen | `ausformuliert` | P3 | — | — | — |
 | [B-102](B-102-token-vorgabewert-regel-schaerfen.md) | Die Token-Regel im Startkontext ist zu weit formuliert — 55 Signaturen „verstoßen" gegen eine Compilerregel | Aufräumen | `ausformuliert` | P3 | — | — | — |
 | [B-95](B-95-stufenwaechter-haengt-am-include.md) | Die Stufenprüfung beim PATCH einer Position hängt an einem `Include`, das niemand einfordert | Aufräumen | `ausformuliert` | P3 | — | — | — |
-| [B-107](B-107-dailybox-zufallswert-in-docs-capture.md) | `DailyBoxService` würfelt ohne Seed – der Doku-Capture-Snapshot ist dadurch nicht byte-stabil | Aufräumen | `idee` | P3 | — | — | — |
 | [B-108](B-108-requiretypedtest-default-am-uebungstyp.md) | `DefaultRequireTypedTest` am Übungstyp selbst ungeprüft — dieselbe Fehlerklasse eine Ebene höher als B-93 | Aufräumen | `idee` | P3 | — | — | — |
+| [B-118](B-118-dailybox-spanne-ohne-zusicherung.md) | Keine Zusicherung sieht die Ziehungsspanne der Tagesbox mehr | Aufräumen | `idee` | P3 | — | — | — |
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration? |
 | [B-90](B-90-server-sprachfeld.md) | Server-Sprachfeld an `Adult`/`Child` | Wunsch | `idee` | P4 | — | — | — |
 | [B-91](B-91-vater-web-extraktion-englisch.md) | Vater-Web-Textkorpus auf Übersetzungsschlüssel umstellen (Englisch) | Wunsch | `idee` | P4 | — | — | — |
@@ -551,7 +550,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-06](B-06-cloze-preview-bild.md) | Cloze-Vorschau kann kein Bild zeigen | Wunsch | `geschaetzt` | P6 | XS | backend | — |
 
 <details>
-<summary>Abgenommen (62)</summary>
+<summary>Abgenommen (64)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -562,6 +561,8 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-104](B-104-keyresult-dublette-zahlt-doppelt.md) | Derselbe Meilenstein zweimal: drei Schreibpfade laufen ungeprüft in einen Unique-Index, und dort hängt Geld | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-105](B-105-taegliche-belohnungsbox.md) | Tägliche Belohnungsbox: Loot-Box + Streak als positives Gegenstück zum Stick | Wunsch | `abgenommen` | P4 | S | backend | Migration |
 | [B-106](B-106-lehrwerkgetriebener-katalog.md) | Übungen hängen künftig am Lehrwerk, nicht am Kapitel | Wunsch | `abgenommen` | P1 | L | beides | — |
+| [B-107](B-107-dailybox-zufallswert-in-docs-capture.md) | `DailyBoxService` würfelt ohne Seed – der Doku-Capture-Snapshot ist dadurch nicht byte-stabil | Aufräumen | `abgenommen` | P3 | XS | backend | — |
+| [B-109](B-109-full-flow-spec-flackert-bei-frage-3.md) | `full-flow.spec.ts` hängt reproduzierbar bei „Frage 3/5" der Klausur | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-110](B-110-kaufverlauf-ueberspringt-zeilen.md) | Der Kaufverlauf überspringt Zeilen und verpasst den eigenen Kauf | Defekt | `abgenommen` | P2 | S | beides | — |
 | [B-111](B-111-verlauf-luegt-im-fehlerfall.md) | Scheitert das Laden des Verlaufs, sagt die App „Noch nichts gekauft" | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-112](B-112-kommentar-begruendet-das-gegenteil.md) | Ein Kommentar begründet das Gegenteil der Bedingung unter ihm | Aufräumen | `abgenommen` | P3 | XS | frontend | — |
@@ -632,7 +633,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (6)
 
-**Nachgeschaut: 18 von 62 abgenommenen** — und in 5 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 44 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 18 von 64 abgenommenen** — und in 5 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 46 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -644,7 +645,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-117](B-117-uebungsbildschirm-bietet-test-trotz-anzeigestufe.md) | Nach der Übungsrunde bietet der Bildschirm einen Test an, den es für diese Stufe nicht gibt | [B-114] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (44) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (46) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -657,6 +658,8 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-10](B-10-zeitfenster-pro-kind.md) | Zeitfenster (Punkte-Faktor) je Pflicht statt global |
 | [B-105](B-105-taegliche-belohnungsbox.md) | Tägliche Belohnungsbox: Loot-Box + Streak als positives Gegenstück zum Stick |
 | [B-106](B-106-lehrwerkgetriebener-katalog.md) | Übungen hängen künftig am Lehrwerk, nicht am Kapitel |
+| [B-107](B-107-dailybox-zufallswert-in-docs-capture.md) | `DailyBoxService` würfelt ohne Seed – der Doku-Capture-Snapshot ist dadurch nicht byte-stabil |
+| [B-109](B-109-full-flow-spec-flackert-bei-frage-3.md) | `full-flow.spec.ts` hängt reproduzierbar bei „Frage 3/5" der Klausur |
 | [B-112](B-112-kommentar-begruendet-das-gegenteil.md) | Ein Kommentar begründet das Gegenteil der Bedingung unter ihm |
 | [B-113](B-113-vater-kaufhistorie-endet-still.md) | Drei geblätterte Listen mit veränderlicher Sortierung — der Vater erreicht keine von ihnen vollständig |
 | [B-116](B-116-blaettern-ohne-rueckmeldung.md) | Beim Blättern gibt es keine Rückmeldung mehr — und der Pager meldet eine Seite, die noch nicht da ist |
@@ -706,8 +709,8 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | Id | Stufe | Fehlt |
 | --- | --- | --- |
 | [B-104](B-104-keyresult-dublette-zahlt-doppelt.md) | `abgenommen` | Abschnitt „Entscheidungen" |
-| [B-107](B-107-dailybox-zufallswert-in-docs-capture.md) | `idee` | Abschnitt „Verlauf" |
 | [B-108](B-108-requiretypedtest-default-am-uebungstyp.md) | `idee` | Abschnitt „Verlauf" |
+| [B-118](B-118-dailybox-spanne-ohne-zusicherung.md) | `idee` | Abschnitt „Verlauf" |
 | [B-93](B-93-birkenbihl-einstellungen-ohne-wirkung.md) | `abgenommen` | Abschnitt „Entscheidungen" |
 | [B-96](B-96-showboth-stufe-ohne-mechanik.md) | `abgenommen` | Abschnitt „Entscheidungen" |
 | [B-98](B-98-idempotenter-link-post-luegt.md) | `abgenommen` | Abschnitt „Entscheidungen" |

@@ -40,8 +40,10 @@ public class DailyBoxTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         JsonAssert.True(box, "claimedToday");
         var coins = box.GetProperty("coinsAwarded").GetInt32();
         var gems = box.GetProperty("gemsAwarded").GetInt32();
-        Assert.InRange(coins, 10, 30);
-        Assert.InRange(gems, 0, 2);
+        // Exact values, not the appsettings ranges: PuglingWebAppFactory pins the draw, so a range assertion
+        // would name bounds this host does not use and hold no matter what the box paid out.
+        Assert.Equal(20, coins);
+        Assert.Equal(2, gems);
         Assert.Equal(1, box.GetProperty("streakAtClaim").GetInt32());
 
         using (var scope = factory.Services.CreateScope())
