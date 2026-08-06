@@ -106,6 +106,13 @@ Punkte oben.
 
 ## Wieder scharf stellen
 
+**Vor allem anderen: die Datenbank umstellen.** Die Azure-DB stammt aus der alten Migrationskette und wird
+vom Historien-Guard abgewiesen – ohne diesen Schritt startet die App nach dem Deploy gar nicht, und die
+vier Punkte unten sind dann umsonst. Er steht als eigene Story in
+[B-07](backlog/B-07-db-umbau-restetappen.md); die Einzelheiten (zwei App Settings, warum beide in denselben
+Vorgang gehören, wie der Rollback aussieht) im Plandokument
+[db-struktur-umbau-plan.md](db-struktur-umbau-plan.md), Abschnitt „Betriebsschritt".
+
 1. **Secret setzen:** `AZURE_WEBAPP_PUBLISH_PROFILE` (Portal → App Service → „Bereitstellungscenter"
    bzw. „Veröffentlichungsprofil abrufen"). Prüfen mit `gh secret list` – die Liste war zuletzt **leer**,
    es fehlt also nicht nur dieses Secret.

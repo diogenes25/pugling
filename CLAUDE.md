@@ -221,7 +221,8 @@ Lernstand – positionsgebunden *und* plan-übergreifend je Vokabel-Item.
   `PUGLING_SKIP_TEST_GATE=1` schaltet ab, wenn rot der beabsichtigte Zwischenstand eines Umbaus ist.
   `Release` ist Absicht: ein parallel laufender Dev-Server sperrt sonst die Debug-Ausgabe.
   Dasselbe Tor steht in CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) vor jedem Push und
-  Pull Request; das Azure-Deploy hängt per `workflow_run` daran und läuft **nur bei grün** an.
+  Pull Request. Das **Azure-Deploy ist stillgelegt** (nur `workflow_dispatch`) – Grund und Weg zurück:
+  [docs/deployment-azure.md](docs/deployment-azure.md).
   Daneben warnt (ohne zu blocken) `.claude/scripts/context-budget.sh`, wenn die dauerhaft geladenen
   Anweisungsdateien ihr Budget reißen – dann gehört etwas nach `docs/` oder in eine verschachtelte
   `CLAUDE.md`, nicht in den Startkontext.
