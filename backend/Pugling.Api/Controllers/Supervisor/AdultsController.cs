@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
@@ -47,10 +48,16 @@ public class AdultsController(PuglingDbContext db, AccountService accounts) : Co
     }
 
     /// <summary>Creates a new father (registration, reachable without login).</summary>
+    // Same throttle as the login (B-48): anonymous and writing is the one combination a script can abuse
+    // without limit - unbounded accounts, or squatting the e-mail addresses of real people via the
+    // uniqueness check. The registration itself stays open on purpose (bootstrap, E2E, several families
+    // and teachers per instance); only the missing brake is closed, with the policy that already exists.
     [HttpPost]
     [AllowAnonymous]
+    [EnableRateLimiting("login")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<AdultResponse>> Create(CreateAdultDto dto, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(dto.Name)) return this.ProblemWithCode(ApiErrors.ValidationError, "Name is required.");

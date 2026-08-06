@@ -55,4 +55,30 @@ public class SecurityHardeningTests(PuglingWebAppFactory factory) : IClassFixtur
         Assert.Equal(HttpStatusCode.Unauthorized, statuses[0]);     // the first attempts are allowed (only the PIN is wrong)
         Assert.Contains(HttpStatusCode.TooManyRequests, statuses);  // the brute-force throttle bites
     }
+
+    /// <summary>
+    /// B-48: the two anonymous registration endpoints carry the same throttle as the login. Without it a
+    /// script could create accounts without limit, or squat the e-mail addresses of real people - the
+    /// uniqueness check then rejects the person whose address it is.
+    /// </summary>
+    [Theory]
+    [InlineData("/api/v1/supervisor/adults")]
+    [InlineData("/api/v1/creator/teacher-accounts")]
+    public async Task AnonymeRegistrierung_UeberschreitetRateLimit_Liefert429(string url)
+    {
+        using var limited = _factory.WithWebHostBuilder(b => b.UseSetting("RateLimiting:LoginEnabled", "true"));
+        var client = limited.CreateClient();
+
+        var statuses = new List<HttpStatusCode>();
+        for (var i = 0; i < 12; i++)
+        {
+            // Valid payloads on purpose: a rejected request must not be what stops the script - the
+            // throttle has to bite on requests that would otherwise succeed.
+            var res = await client.PostAsJsonAsync(url, new { name = $"Bot {i}", pin = "4711" });
+            statuses.Add(res.StatusCode);
+        }
+
+        Assert.Equal(HttpStatusCode.Created, statuses[0]);          // the first registration goes through
+        Assert.Contains(HttpStatusCode.TooManyRequests, statuses);  // the throttle bites within the same minute
+    }
 }

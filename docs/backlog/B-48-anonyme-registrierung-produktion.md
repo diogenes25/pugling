@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/auth, bereich/qualitaet]
+tags: [typ/story, status/abgenommen, bereich/auth, bereich/qualitaet]
 aliases: [Offene Registrierung]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Frage
 groesse: S
@@ -9,6 +9,7 @@ wo: backend
 migration: nein
 vertragsbruch: nein
 quelle: B-41
+nachgeschaut: ""
 ---
 
 # B-48 · Anonyme Registrierung ist auch in Produktion offen
@@ -80,6 +81,11 @@ dass irgendetwas greift, obwohl das günstige, bereits vorhandene Rate-Limit-Mus
    hinter einem NAT-Gateway), träfe dieselbe Grenze wie beim Login — bewusst in Kauf genommen, weil sie
    dort schon gilt und in der Praxis nicht die 1-2 Registrierungen einer einzelnen Familie/eines einzelnen
    Lehrers betrifft.
+   **Nachgetragen am 2026-08-06 (Reviewer-Befund):** Ein Policy-Name ist **ein** Fenster — Login und
+   Registrierung teilen sich die 10 Anfragen je IP und Minute. Das wirkt **beidseitig**, und diese Richtung
+   fehlte oben: Registrierungs-Spam von einer IP sperrt für den Rest der Minute auch die **Logins** dieser
+   IP. Bewusst so gelassen (getrennte Fenster hießen 20 Anfragen für einen Angreifer, der beide Wege nutzt),
+   aber es ist eine Kostenseite, keine Nebensache.
 3. **Kein CAPTCHA.** Begründung: keine Infrastruktur im Code vorhanden (kein externer Dienst integriert),
    und der Nutzungsrahmen (Familien-App, keine Massenplattform) rechtfertigt den Aufwand einer
    Neuintegration nicht. Kosten: ein entschlossener Bot, der die 10/Minute-Grenze respektiert (langsam
@@ -140,3 +146,36 @@ dass irgendetwas greift, obwohl das günstige, bereits vorhandene Rate-Limit-Mus
   Einladungscode, kein zusätzlicher Umgebungsschalter) (autonom getroffen, Nutzerauftrag 2026-08-04).
 - **2026-08-03** — geschätzt: Größe S, `wo: backend`, keine Migration, kein Vertragsbruch — zwei
   Attribute plus ein Test nach bestehendem Muster (autonom getroffen, Nutzerauftrag 2026-08-04).
+- **2026-08-06** — Ist-Stand vor dem Bau gegen den Code **nachgeprüft**, nicht übernommen: beide
+  Endpunkte weiterhin `[AllowAnonymous]` ohne Bremse, `[EnableRateLimiting("login")]` weiterhin nur an den
+  drei Login-Endpunkten, Testmuster vorhanden. Einzige Drift: die Policy steht jetzt in
+  `Program.cs:253-261` statt `:246-257`.
+- **2026-08-06** — gebaut (`geschaetzt` → `in-arbeit` → `abgenommen`). Umgesetzt: die zwei Attribute
+  (`AdultsController.cs:57`, `TeacherAccountsController.cs:43`) **plus** — über die Akzeptanzkriterien
+  hinaus — `[ProducesResponseType(429)]` an beiden, weil die Login-Endpunkte das deklarieren und ein
+  Vertrag, der eine mögliche Antwort verschweigt, falsch ist. `docs/openapi/v1.json` ist mitgeneriert
+  (zwei neue `429`-Antworten, sonst keine Änderung). Dazu der `[Theory]`-Test über beide Endpunkte in
+  `SecurityHardeningTests`.
+  **Belege:** volle Suite **748/748 grün** (Release, 746 vorher + zwei neue Fälle); **rote Probe** gefahren
+  — ohne die Attribute fallen beide Fälle mit `Not found: TooManyRequests`, der Test misst also wirklich
+  das Attribut und nicht sich selbst. **Rollengang:** `frontend/e2e/vater-von-null.spec.ts` grün (1,5 min)
+  — er fährt genau den anonymen Registrierungsweg, den Entscheidung 1 offen halten will.
+- **2026-08-06** — `pugling-reviewer`: **tragfähig, keine Auflage**, selbst nachgemessen (Build 0
+  Warnungen, 748/748, `git status` danach unverändert). Er belegt drei Dinge, die die Story offen ließ: die
+  Middleware-Reihenfolge trägt (`UseRateLimiter` in `Program.cs:537` vor `MapControllers`), die leere 429
+  wird über `UseStatusCodePages` zu `ProblemDetails` mit `code: rate_limited` — das neue
+  `ProducesResponseType` sagt also die Wahrheit —, und es gibt im Backend **genau fünf**
+  `[AllowAnonymous]`-Actions, die nach dieser Änderung **alle** die Bremse tragen. Die ~20 Testkonten
+  liegen nur in der Wegwerf-DB dieser Testklasse.
+  Aus seinen Befunden eingearbeitet: der beidseitige Effekt des geteilten Fensters (oben an Entscheidung 2)
+  und ein vorbestehender Konventionsbruch in derselben Datei (`TeacherAccountsController.Create` nahm
+  `CancellationToken ct` ohne `= default`).
+  **Nicht übernommen:** sein Vorschlag, statt `Assert.Contains(TooManyRequests)` die Zahl der `Created`
+  auf 10 festzunageln. Das pinnt zwar `PermitLimit`, koppelt den Test aber an die Uhr: rollt das feste
+  Fenster mitten in der Schleife um, sind es mehr als zehn — aus einer laxen Zusicherung würde eine
+  zeitabhängige. Der Zweck des Tests ist die Bremse, nicht ihre Höhe.
+- **2026-08-06** — zwei Befunde als eigene Stories abgelegt statt mitgeschluckt (B-48s Ziel ist ohne sie
+  erfüllt): [B-119](B-119-ratenbegrenzer-hinter-proxy.md) — hinter einem Reverse Proxy partitioniert
+  `RemoteIpAddress` alle Nutzer in einen Topf, was den Login schon länger trifft als die Registrierung —
+  und [B-120](B-120-waechter-anonym-heisst-gedrosselt.md) — „anonym heißt gedrosselt" hängt an fünf
+  Attributen statt an einem Tor.

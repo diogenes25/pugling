@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Auth;
 using Pugling.Api.Data;
@@ -37,11 +38,15 @@ public class TeacherAccountsController(PuglingDbContext db, AccountService accou
     /// <summary>
     /// Creates a teacher account (registration, reachable without login – like the father registration).
     /// </summary>
+    // Same throttle as the father registration and the login (B-48) - the two anonymous write paths are
+    // one attack surface, and a brake on only one of them would just move the script next door.
     [HttpPost]
     [AllowAnonymous]
+    [EnableRateLimiting("login")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<TeacherAccountResponse>> Create(CreateTeacherDto dto, CancellationToken ct)
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    public async Task<ActionResult<TeacherAccountResponse>> Create(CreateTeacherDto dto, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(dto.Name)) return this.ProblemWithCode(ApiErrors.ValidationError, "Name is required.");
 
