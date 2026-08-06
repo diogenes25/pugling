@@ -44,7 +44,7 @@ public class ObjectiveTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
             rewardPerKeyResult = 5,
             keyResults = new[] { new { subjectId, metric = "MaxWeakItems", targetValue = 0 } },
         }));
-        Assert.Equal("achieved", created.GetProperty("status").GetString());
+        Assert.Equal("Achieved", created.GetProperty("status").GetString());
         Assert.Equal(1, created.GetProperty("achievedCount").GetInt32());
         Assert.Equal(1, created.GetProperty("totalCount").GetInt32());
         Assert.False(created.GetProperty("rewarded").GetBoolean()); // not settled yet on creation
@@ -65,7 +65,7 @@ public class ObjectiveTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var mine = await child.GetFromJsonAsync<List<JsonElement>>("/api/v1/student/me/objectives");
         var o = Assert.Single(mine!);
         Assert.True(o.GetProperty("rewarded").GetBoolean());
-        Assert.Equal("achieved", o.GetProperty("status").GetString());
+        Assert.Equal("Achieved", o.GetProperty("status").GetString());
 
         // A second login → no second payout (unique index + existence check).
         var childAgain = await TestApi.ChildAsync(factory, childId, "7101");
@@ -95,7 +95,7 @@ public class ObjectiveTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         }));
         Assert.Equal(1, created.GetProperty("achievedCount").GetInt32());
         Assert.Equal(2, created.GetProperty("totalCount").GetInt32());
-        Assert.Equal("open", created.GetProperty("status").GetString());
+        Assert.Equal("Open", created.GetProperty("status").GetString());
 
         // The login pays only the milestone bite (3 gems); the completion chunk stays out (not all reached).
         var child = await TestApi.ChildAsync(factory, childId, "7102");
@@ -110,7 +110,7 @@ public class ObjectiveTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var mine = await child.GetFromJsonAsync<List<JsonElement>>("/api/v1/student/me/objectives");
         var o = Assert.Single(mine!);
         Assert.False(o.GetProperty("rewarded").GetBoolean());
-        Assert.Equal("open", o.GetProperty("status").GetString());
+        Assert.Equal("Open", o.GetProperty("status").GetString());
     }
 
     [Fact]
@@ -140,7 +140,7 @@ public class ObjectiveTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
             rewardPerKeyResult = 0,
             keyResults = new[] { new { subjectId, metric = "ClassTestGrade", targetValue = 20 } },
         }));
-        Assert.Equal("achieved", created.GetProperty("status").GetString());
+        Assert.Equal("Achieved", created.GetProperty("status").GetString());
         Assert.Equal(20, created.GetProperty("keyResults")[0].GetProperty("currentValue").GetInt32());
 
         // The login credits the completion chunk (10 coins; no milestone bite configured).
@@ -227,13 +227,13 @@ public class ObjectiveTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var krUrl = $"{Url(childId)}/{objectiveId}/key-results";
         var kr = await JsonAsync(await father.PostAsJsonAsync(krUrl, new { subjectId, metric = "MaxWeakItems", targetValue = 0 }));
         var keyResultId = kr.GetProperty("id").GetInt32();
-        Assert.Equal("achieved", kr.GetProperty("status").GetString());
+        Assert.Equal("Achieved", kr.GetProperty("status").GetString());
 
         // Change the target value/title (the scope stays fixed).
         var patched = await JsonAsync(await father.PatchAsJsonAsync($"{krUrl}/{keyResultId}", new { metric = "MasteredPercent", targetValue = 80, title = "Beherrschen" }));
         Assert.Equal("MasteredPercent", patched.GetProperty("metric").GetString());
         Assert.Equal(80, patched.GetProperty("targetValue").GetInt32());
-        Assert.Equal("open", patched.GetProperty("status").GetString());
+        Assert.Equal("Open", patched.GetProperty("status").GetString());
 
         // Delete.
         Assert.Equal(HttpStatusCode.NoContent, (await father.DeleteAsync($"{krUrl}/{keyResultId}")).StatusCode);

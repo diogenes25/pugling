@@ -409,9 +409,9 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
   expect(krPosts, "Ein Doppelklick darf genau einen Schreibvorgang auslösen").toHaveLength(1);
 
   const krRow = ziel.getByRole("row", { name: /Unit 1 sitzt/ });
-  // Bereich: der Server liefert die *Ebene* („subject"), nicht den Fachnamen – ein Fach ohne Unit und
-  // ohne Übung muss dort landen, sonst hat der Scope-Wähler still eingeengt.
-  await expect(krRow).toContainText("subject");
+  // Bereich: der Server liefert die *Ebene* („Subject", seit B-59 ein Enum-Wert), nicht den Fachnamen –
+  // ein Fach ohne Unit und ohne Übung muss dort landen, sonst hat der Scope-Wähler still eingeengt.
+  await expect(krRow).toContainText("Subject");
   // Richtung **und** der eingetippte Wert – „mindestens 80 %" wäre die durchgereichte Vorbelegung.
   await expect(krRow).toContainText("mindestens 90 %");
   // Ohne jeden Lernstand ist die Etappe offen – der Status wird bei jeder Abfrage neu gerechnet.

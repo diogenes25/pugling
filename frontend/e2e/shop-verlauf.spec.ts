@@ -52,8 +52,14 @@ test("Der eigene Kauf steht im Verlauf, auch wenn der Verlauf vorher schon offen
   const buyCard = sohn.locator("button.skin:not(.locked)").first();
   await expect(buyCard).toBeVisible();
   const titel = (await buyCard.locator(".nm").innerText()).trim();
-  await buyCard.click();
+  // B-49: `useAction`s Ref-Gate muss einen Doppelklick abfangen - genau die Sperre, die vorher fehlte.
+  const purchasePosts: string[] = [];
+  sohn.on("request", (r) => {
+    if (r.method() === "POST" && /\/shop\/listings\/\d+\/purchase$/.test(r.url())) purchasePosts.push(r.url());
+  });
+  await buyCard.dblclick();
   await expect(sohn.locator(".cel-title", { hasText: "GEKAUFT!" })).toBeVisible();
+  expect(purchasePosts, "Ein Doppelklick darf genau einen Kauf auslösen").toHaveLength(1);
 
   // Und jetzt muss der Verlauf ihn zeigen. Vor B-110 stand hier weiter „Noch nichts gekauft".
   await sohn.getByRole("button", { name: "Verlauf" }).click();

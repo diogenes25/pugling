@@ -258,6 +258,12 @@ export type ObjectiveKind = S["ObjectiveKind"];
 /** Metrik einer Etappe; `ClassTestGrade` ist die Note ×10 als Höchstwert (20 = „mindestens 2,0"). */
 export type KeyResultMetric = S["KeyResultMetric"];
 
+/** Wie ein Objective/eine Etappe gerade steht; live berechnet, nie gespeichert (seit B-59 ein Enum). */
+export type GoalStatus = S["GoalStatus"];
+
+/** Katalog-Ebene, auf die eine Etappe zielt (seit B-59 ein Enum). */
+export type KeyResultScope = S["KeyResultScope"];
+
 /** Eine ausgewertete Etappe eines Objectives. */
 export type KeyResult = S["KeyResultResponse"];
 

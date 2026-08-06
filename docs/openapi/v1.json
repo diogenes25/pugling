@@ -21856,7 +21856,7 @@
             "format": "int32"
           },
           "status": {
-            "type": "string"
+            "$ref": "#/components/schemas/BatchItemStatus"
           },
           "id": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -21881,6 +21881,17 @@
           }
         },
         "description": "Result of a single batch element (partial success possible)."
+      },
+      "BatchItemStatus": {
+        "enum": [
+          "Created",
+          "Existing",
+          "Updated",
+          "NotFound",
+          "Error"
+        ],
+        "type": "string",
+        "description": "How a single batch element turned out. Shared by \u0060CreateBatch\u0060 (yields BatchItemStatus.Created/\nBatchItemStatus.Existing/BatchItemStatus.Error) and \u0060UpdateBatch\u0060 (yields BatchItemStatus.Updated/\nBatchItemStatus.NotFound/BatchItemStatus.Error) \u2013 one concept, one type, not every value possible at every\ncaller (see each endpoint\u0027s own \u0060/// \u0026lt;summary\u0026gt;\u0060 for which values it actually returns).\n\nAllowed values: Created, Existing, Updated, NotFound, Error."
       },
       "BatchUpdateItem": {
         "required": [
@@ -29047,6 +29058,15 @@
         "type": "string",
         "description": "Target cadence of a study plan position: at what interval it must be fulfilled.\n\nAllowed values: None, Daily, Weekly."
       },
+      "GoalStatus": {
+        "enum": [
+          "Open",
+          "Achieved",
+          "Overdue"
+        ],
+        "type": "string",
+        "description": "Live-computed status of an \u0060Objective\u0060/\u0060KeyResult\u0060 \u2013 never a stored column\n(\u0060ObjectiveEvaluationService.StatusOf\u0060 computes it on every read).\n\nAllowed values: Open, Achieved, Overdue."
+      },
       "GrammarConfig": {
         "required": [
           "tasks"
@@ -29727,7 +29747,7 @@
             "format": "int32"
           },
           "scope": {
-            "type": "string"
+            "$ref": "#/components/schemas/KeyResultScope"
           },
           "metric": {
             "$ref": "#/components/schemas/KeyResultMetric"
@@ -29757,7 +29777,7 @@
             "format": "int32"
           },
           "status": {
-            "type": "string"
+            "$ref": "#/components/schemas/GoalStatus"
           },
           "title": {
             "type": [
@@ -29767,6 +29787,15 @@
           }
         },
         "description": "Evaluated key result of an objective."
+      },
+      "KeyResultScope": {
+        "enum": [
+          "Exercise",
+          "SeriesUnit",
+          "Subject"
+        ],
+        "type": "string",
+        "description": "Catalog level a \u0060KeyResult\u0060\u0027s target is scoped to \u2013 never a stored column\n(\u0060ObjectiveService.KrScope\u0060 computes it on every read).\n\nAllowed values: Exercise, SeriesUnit, Subject."
       },
       "KlassenarbeitDetail": {
         "required": [
@@ -31038,7 +31067,7 @@
             "format": "int32"
           },
           "status": {
-            "type": "string"
+            "$ref": "#/components/schemas/GoalStatus"
           },
           "rewarded": {
             "type": "boolean"
@@ -31054,7 +31083,7 @@
             "format": "date-time"
           }
         },
-        "description": "Evaluated objective incl. key results and roll-up (status \u0060open\u0060/\u0060achieved\u0060/\u0060overdue\u0060)."
+        "description": "Evaluated objective incl. key results and roll-up."
       },
       "OverviewResponse": {
         "required": [

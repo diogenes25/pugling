@@ -168,9 +168,9 @@ export function VaterVocab() {
     // zu bilden, und ein einzelnes „existiert schon" ist kein Fehlschlag des Ganzen.
     const results = await action.runFor(() => api.createVocabularyBatch(items));
     if (!results) return;
-    const created = results.filter((r) => r.status === "created").length;
-    const existing = results.filter((r) => r.status === "existing").length;
-    const errors = results.filter((r) => r.status === "error");
+    const created = results.filter((r) => r.status === "Created").length;
+    const existing = results.filter((r) => r.status === "Existing").length;
+    const errors = results.filter((r) => r.status === "Error");
     const parts = [
       `${created} angelegt`,
       existing > 0 ? `${existing} existierten bereits` : null,

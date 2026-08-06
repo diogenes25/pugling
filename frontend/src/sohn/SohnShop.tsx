@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { confirmAction } from "../lib/ui";
+import { useAction } from "../lib/useAction";
+import { StatusBanner } from "../components/StatusBanner";
 import { ACTION_EMOJI, priceLabel, unitAmount } from "../lib/shop";
 import type { MyInventoryItem, MyActivation, MyShopPurchase, ShopAvailableListing, ShopView } from "../lib/types";
 import { useSohn } from "./SohnApp";
@@ -29,7 +31,10 @@ export function SohnShop() {
   const [activations, setActivations] = useState<MyActivation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  // `buy`/`requestActivation` teilen sich eine Instanz (B-49): beide sperren dieselbe Oberfläche, und ein
+  // laufender Kauf soll auch das Einlösen sperren, nicht nur sich selbst. Das Nachladen der Kaufhistorie
+  // bleibt außen vor - eine reine Paginierung, keine Mutation, mit eigener Sperre (`loadingHistory`).
+  const action = useAction();
   const [msg, setMsg] = useState<string | null>(null);
   const [history, setHistory] = useState<MyShopPurchase[]>([]);
   const [historyTotal, setHistoryTotal] = useState(0);
@@ -101,10 +106,10 @@ export function SohnShop() {
   }
 
   async function buy(listing: ShopAvailableListing) {
-    if (busy) return;
     if (!confirmAction(`„${listing.title}" für ${priceLabel(listing.coinPrice, listing.gemPrice)} kaufen?`)) return;
-    setBusy(true);
-    try {
+    // Kein `okText`: die Feier (`celebrate`) IST die Erfolgsmeldung - ein Banner daneben wäre doppelt
+    // (frontend/CLAUDE.md, "Erfolg darf stumm bleiben").
+    await action.run(async () => {
       const next = await api.purchaseListing(listing.id);
       setView(next);
       // Den geladenen Verlauf verwerfen, nicht ergänzen (B-110): der neue Kauf sitzt am Kopf der Liste,
@@ -118,34 +123,25 @@ export function SohnShop() {
       setHistoryError(null);
       refreshWallet(); // Münzstand im HUD real aktualisieren (nach Kauf niedriger)
       celebrate("medium", ACTION_EMOJI[listing.actionType], "GEKAUFT!", listing.title);
-    } catch (e) {
-      flash(errorMessage(e));
-    } finally {
-      setBusy(false);
-    }
+    });
   }
 
   async function requestActivation(item: MyInventoryItem, quantity: number) {
-    if (busy) return;
     // Papa hat den Artikel gelöscht: die Einheiten bleiben (bezahlt ist bezahlt), einlösen geht aber
     // nicht mehr, weil die Anfrage über die Artikel-Id läuft. Lieber sagen, warum, als 404 zeigen.
     // `== null` fängt beides: der Vertrag erlaubt bei einem nullable Feld auch das Fehlen des Schlüssels.
     if (item.shopArticleId == null) {
-      flash("Das gibt es bei Papa nicht mehr – frag ihn direkt danach. 🙋");
+      action.fail("Das gibt es bei Papa nicht mehr – frag ihn direkt danach. 🙋");
       return;
     }
+    const shopArticleId = item.shopArticleId;
     if (!confirmAction(`${unitAmount(quantity, item.unitType)} „${item.title}" bei Papa anfragen?`)) return;
-    setBusy(true);
-    try {
-      await api.activateInventory(item.shopArticleId, quantity);
-      flash("Anfrage an Papa geschickt! 📨");
+    // Anders als `buy`: keine eigene Feier vorgesehen, die Rückmeldung läuft also über den Banner-Text.
+    await action.run(async () => {
+      await api.activateInventory(shopArticleId, quantity);
       await load(); // Inventar (Menge sinkt) + Anfragen neu laden
       setTab("requests");
-    } catch (e) {
-      flash(errorMessage(e));
-    } finally {
-      setBusy(false);
-    }
+    }, "Anfrage an Papa geschickt! 📨");
   }
 
   return (
@@ -172,12 +168,13 @@ export function SohnShop() {
       {loading ? <div className="loading">Lade Shop…</div>
         : error ? <div className="banner err">{error}</div>
         : !view ? null
-        : tab === "buy" ? <BuyTab listings={view.available} busy={busy} onBuy={buy} />
-        : tab === "stuff" ? <StuffTab inventory={view.inventory} busy={busy} onActivate={requestActivation} />
+        : tab === "buy" ? <BuyTab listings={view.available} busy={action.busy} onBuy={buy} />
+        : tab === "stuff" ? <StuffTab inventory={view.inventory} busy={action.busy} onActivate={requestActivation} />
         : tab === "requests" ? <RequestsTab activations={activations} />
         : <HistoryTab purchases={history} total={historyTotal} loading={historyLoading}
             error={historyError} onLoadMore={loadMoreHistory} />}
 
+      <StatusBanner message={action.message} />
       {msg && <div className="toast" role="status" aria-live="polite">{msg}</div>}
     </div>
   );

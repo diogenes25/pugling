@@ -7,13 +7,13 @@ namespace Pugling.Contracts.Supervisor;
 
 /// <summary>Evaluated key result of an objective.</summary>
 public record KeyResultResponse(int Id, int ObjectiveId, int SubjectId, int? SeriesUnitId, int? ExerciseId,
-    string Scope, KeyResultMetric Metric, int TargetValue, int CurrentValue, int ProgressPercent,
-    string Status, string? Title);
+    KeyResultScope Scope, KeyResultMetric Metric, int TargetValue, int CurrentValue, int ProgressPercent,
+    GoalStatus Status, string? Title);
 
-/// <summary>Evaluated objective incl. key results and roll-up (status <c>open</c>/<c>achieved</c>/<c>overdue</c>).</summary>
+/// <summary>Evaluated objective incl. key results and roll-up.</summary>
 public record ObjectiveResponse(int Id, int ChildId, string Title, string? Motivation, ObjectiveKind Kind,
     DateOnly? Start, DateOnly? DueDate, bool Active, int RewardOnComplete, int RewardPerKeyResult,
-    int AchievedCount, int TotalCount, int ProgressPercent, string Status, bool Rewarded,
+    int AchievedCount, int TotalCount, int ProgressPercent, GoalStatus Status, bool Rewarded,
     IReadOnlyList<KeyResultResponse> KeyResults, DateTime CreatedAt);
 
 /// <summary>Creation of a key result (scope + metric + target value + optional title).</summary>

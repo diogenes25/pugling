@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/backend, bereich/qualitaet]
+tags: [typ/story, status/abgenommen, bereich/backend, bereich/qualitaet]
 aliases: [Status als String, GoalStatus ohne Werteliste, BatchItemResult ohne Werteliste]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Aufräumen
 groesse: S
@@ -222,3 +222,26 @@ keine Fachlogik, nur den Wire-Typ, und die bestehenden Assertions sind bereits d
   nicht neu offen. (b) Eine echte Ergänzung wäre ein Zähl-Kopf oder Summen-Objekt an den Batch-Antworten,
   damit ein Aufrufer nicht 500 Elemente durchzählt; bewusst **nicht** als eigene Story angelegt, weil kein
   Aufrufer gemessen ist, der das braucht — sie steht hier, damit sie beim Bau von B-59 auf dem Tisch liegt.
+- **2026-08-06** — gebaut (Nachtlauf 2, Sprint 4 „Typsicherheit stärken"). **Backend:** drei neue Enums
+  (`GoalStatus`, `KeyResultScope` in `ObjectiveBaseTypes.cs`; `BatchItemStatus` neben `BatchItemResult` in
+  `VocabularyStoreDtos.cs`), `KeyResultResponse`/`ObjectiveResponse`/`BatchItemResult` darauf umgestellt;
+  `ObjectiveEvaluationService.StatusOf` und `ObjectiveService.KrScope` geben die Enums direkt zurück;
+  `VocabularyStoreController.CreateBatch`/`UpdateBatch` schreiben Enum-Werte statt String-Literale.
+  `ObjectiveService.ListAsync`s Query-Filter `status` bleibt bewusst `string?` (Vertrag ändert sich nur bei
+  den Response-Feldern), Vergleich auf `o.Status.ToString().Equals(...)` umgestellt. **Abweichung vom
+  Ausformulieren:** `KeyResultScope`s zweiter Wert heißt `SeriesUnit`, nicht `Chapter` — näher am alten
+  Wire-String, weniger Überraschung für die Anzeige in `VaterZiele.tsx`. **Rote Probe:** volle Suite nach
+  der Umstellung → 6 Testmethoden rot (`Expected: "achieved"/"open"/"created"/"existing"/"updated",
+  Actual: "Achieved"/"Open"/"Created"/"Existing"/"Updated"`), alle 10 betroffenen Assertion-Zeilen auf
+  PascalCase gehoben (`ObjectiveTests.cs:47,68,98,113,143,230,236`, `VocabAgentApiTests.cs:127,130,147` —
+  **eine Zeile mehr als die ursprünglich geschätzten zwei**, beim tatsächlichen roten Lauf gefunden, nicht
+  aus der Story übernommen). `dotnet test Pugling.sln -c Release` → **746/746 grün**.
+  **Frontend:** `npm run gen:contract` neu erzeugt (Literal-Union-Typen für alle drei Felder), `GoalStatus`
+  aus `uiTypes.ts` entfernt (zehn Hand-Typen statt elf, Kommentar nachgezogen), `GoalStatus`/`KeyResultScope`
+  als Alias in `types.ts` ergänzt. `VaterZiele.tsx` (`GOAL_PILL`, `StatusPill` jetzt exhaustiv über das
+  Enum, kein `as`-Cast mehr nötig), `MyObjectives.tsx` (zwei Vergleiche), `VaterVocab.tsx` (zwei Filter) auf
+  PascalCase gehoben. **Gefundener Nebenschaden:** `e2e/vater-von-null.spec.ts:414` prüfte wortwörtlich
+  `"subject"` (jetzt `"Subject"`) — ohne diese Korrektur wäre die Spec stillschweigend rot geworden.
+  `npm run build` clean, `npm test -- --run` → **153/153 grün**, `npm run test:e2e` → **27/28 grün**
+  (einziger Ausfall: der vorbestehende, dokumentierte B-109-Flake). `pugling-reviewer` und
+  `frontend-reviewer` liefen gegen den vollen Sprint-4-Diff.

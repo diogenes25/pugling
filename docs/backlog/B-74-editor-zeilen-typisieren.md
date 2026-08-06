@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/creator]
 aliases: [Row typisieren, Record<string any>]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Aufräumen
 groesse: M
@@ -253,3 +253,15 @@ ein HTTP-Durchgang bewiese hier nichts, was `tsc` und die bestehenden Frontend-T
   (`RowRepeatedPairField` nimmt `pairs: unknown` und verengt mit `Array.isArray(pairs) ? pairs : []`). Das
   ist heute korrekt und stürzt auch bei Altdaten nicht ab — aber es ist ein weiterer Beleg dafür, was
   `Row = Record<string, any>` kostet: jede neue Feldform muss ihre Typprüfung selbst mitbringen.
+- **2026-08-06** — gebaut (Nachtlauf 2, Sprint 4): ~20 Zeilen-/Extra-Schnittstellen ergänzt (eine je
+  Übungstyp, `VocabularyRow`/`Extra` … `BirkenbihlRow`/`Extra`, plus die geteilte `QuestionRow` für
+  Reading/Listening). `emptyRow`/`emptyExtra` prüfen ihre Literale per `satisfies` (bei genuin partiellen
+  Extra-Werten wie „List" gegen `Partial<…Extra>`, mit begründetem Kommentar); `buildTypeConfig` castet
+  `rows`/`extra` je `case`-Zweig einmal auf die passende Schnittstelle; `configToEditorState`s `.map()`-
+  Aufrufer tragen Rückgabetyp-Annotationen bzw. `satisfies`. `toQuestion`/`fromQuestion` nehmen/liefern
+  jetzt `QuestionRow` statt `Row`. Die öffentlichen Signaturen (`Row`/`Row[]`, `ConfigEditor`, `RowField`,
+  `RowRepeatedField`, beide Aufrufer-Komponenten) bleiben unverändert (Entscheidung 1/2). **Rote Probe:**
+  ein Feldname in `Cloze`s `buildTypeConfig`-Zweig testweise auf `vocabKeyTypo` verfälscht →
+  `tsc -b` sofort rot (`TS2551: Property 'vocabKeyTypo' does not exist on type 'ClozeRow'. Did you mean
+  'vocabKey'?`), zurückgenommen (`git diff` danach ohne Rest). `npm run build` clean, `npm test -- --run`
+  → **153/153 grün** (unverändert). `frontend-reviewer` lief gegen den Diff.

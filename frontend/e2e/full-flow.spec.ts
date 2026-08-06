@@ -67,7 +67,19 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   expect(total).toBeGreaterThanOrEqual(5);
   for (let i = 0; i < total; i++) {
     await sohn.getByRole("button", { name: "Umdrehen 🔄" }).click();
-    await sohn.getByRole("button", { name: "Gewusst!" }).click();
+    if (i === 0) {
+      // B-49: `useAction`s Ref-Gate muss den Doppelklick abfangen - genau die Sperre, die vorher an
+      // diesem Knopf (anders als bei den Multiple-Choice-Knöpfen daneben) noch fehlte.
+      const reviewPosts: string[] = [];
+      sohn.on("request", (r) => {
+        if (r.method() === "POST" && /\/practice-sessions\/\d+\/review$/.test(r.url())) reviewPosts.push(r.url());
+      });
+      await sohn.getByRole("button", { name: "Gewusst!" }).dblclick();
+      await expect(sohn.locator(".pill.cyan", { hasText: /Karte 2 \/ / })).toBeVisible();
+      expect(reviewPosts, "Ein Doppelklick darf genau eine Bewertung auslösen").toHaveLength(1);
+    } else {
+      await sohn.getByRole("button", { name: "Gewusst!" }).click();
+    }
   }
   // Motivations-Feature: ab 5 Treffern in Folge feiert die App den Combo-Meilenstein (Feier-Banner).
   await expect(sohn.locator(".cel-title", { hasText: "COMBO ×5" })).toBeVisible();

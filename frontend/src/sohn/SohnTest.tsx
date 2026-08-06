@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
+import { useAction } from "../lib/useAction";
 import { useSohn } from "./SohnApp";
 import { Mascot } from "../components/Mascot";
 import { LetterBoxes } from "../components/LetterBoxes";
@@ -38,7 +39,9 @@ export function SohnTest() {
   const [revealed, setRevealed] = useState(false);
   const [result, setResult] = useState<TestSubmitResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  // Ref-Gate gegen den Doppelklick (B-49); der Fehlerpfad speist weiter die bestehende `error`-Vollbild-
+  // Anzeige, damit sich an ihrem Verhalten nichts ändert - `action.message` selbst wird hier nicht gerendert.
+  const action = useAction();
 
   async function finish(id: number) {
     if (!planId) return;
@@ -95,19 +98,15 @@ export function SohnTest() {
 
   // Antwort abgeben (server-geführt: der Server adressiert stets die aktuelle Cursor-Frage) und weiterrücken.
   async function answerAndAdvance(dto: AnswerDto) {
-    if (!planId || attemptId === null || busy) return;
-    setBusy(true);
-    try {
+    if (!planId || attemptId === null) return;
+    const ok = await action.run(async () => {
       const ack = await api.answerTest(planId, positionId, attemptId, dto);
       if (ack.done) { await finish(attemptId); return; }
       const nx = await api.nextTest(planId, positionId, attemptId);
       if (nx.done) { await finish(attemptId); return; }
       setItem(nx.item ?? null); setCursor(nx.cursor); setTypedAnswer(""); setRevealed(false);
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setBusy(false);
-    }
+    });
+    if (!ok && action.message) setError(action.message.text);
   }
 
   // Bei einem transienten Fehler den LAUFENDEN Versuch fortsetzen können (nicht verwerfen): resume() holt
@@ -167,14 +166,14 @@ export function SohnTest() {
             <div className="row" style={{ marginTop: 10, gap: 8, flexWrap: "wrap" }}
               role="group" aria-label="Antwortmöglichkeiten">
               {item.choices.map((c, i) => (
-                <button type="button" key={`${i}-${c}`} className="btn ghost small" disabled={busy}
+                <button type="button" key={`${i}-${c}`} className="btn ghost small" disabled={action.busy}
                   onClick={() => answerAndAdvance({ itemIndex: item.itemIndex, givenAnswer: c })}>{c}</button>
               ))}
             </div>
           ) : item.answerLength ? (
             <div style={{ marginTop: 10 }}>
               <LetterBoxes length={item.answerLength} value={typedAnswer} onChange={setTypedAnswer} onSubmit={submitTyped} pattern={item.answerPattern ?? undefined} />
-              <button type="button" className="btn lime" style={{ marginTop: 10 }} disabled={busy || !typedAnswer.trim()} onClick={submitTyped}>Weiter →</button>
+              <button type="button" className="btn lime" style={{ marginTop: 10 }} disabled={action.busy || !typedAnswer.trim()} onClick={submitTyped}>Weiter →</button>
             </div>
           ) : (
             <div>
@@ -192,7 +191,7 @@ export function SohnTest() {
                   onChange={(e) => setTypedAnswer(e.target.value)}
                 />
               </form>
-              <button type="button" className="btn lime" style={{ marginTop: 10 }} disabled={busy || !typedAnswer.trim()} onClick={submitTyped}>Weiter →</button>
+              <button type="button" className="btn lime" style={{ marginTop: 10 }} disabled={action.busy || !typedAnswer.trim()} onClick={submitTyped}>Weiter →</button>
             </div>
           )
         ) : (
@@ -200,7 +199,7 @@ export function SohnTest() {
             reveal={item.reveal}
             alternatives={item.revealAlternatives}
             revealed={revealed}
-            busy={busy}
+            busy={action.busy}
             onReveal={() => setRevealed(true)}
             onJudge={(wasKnown) => answerAndAdvance({ itemIndex: item.itemIndex, wasKnown })}
           />

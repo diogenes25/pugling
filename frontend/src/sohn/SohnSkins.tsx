@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { useAuth } from "../lib/auth";
+import { useAction } from "../lib/useAction";
+import { StatusBanner } from "../components/StatusBanner";
 import { SKINS, skinById } from "../lib/skins";
 import { Mascot } from "../components/Mascot";
 import { confirmAction } from "../lib/ui";
@@ -12,43 +14,34 @@ export function SohnSkins() {
   const [owned, setOwned] = useState<string[]>([]);
   const [selected, setSelected] = useState<string>(skin.id);
   const [ready, setReady] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
+  // Eigener Fehler fürs erste Laden, getrennt von `action` (B-49): `action` gilt für die Mutation
+  // `choose`, nicht für das Lesen des Anfangszustands.
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const action = useAction();
 
   // Besitz & Auswahl sind server-autoritativ – beim Öffnen frisch laden. Bis der Zustand da ist,
   // bleibt `ready` false: Sonst gälten alle Skins kurz als "nicht besessen" und ein früher Tipp auf
   // einen bereits besessenen Skin würde fälschlich einen Kauf auslösen (Server-409).
   useEffect(() => {
     api.skins().then((s) => { setOwned(s.owned); setSelected(s.selected); })
-      .catch((e) => setMsg(errorMessage(e)))
+      .catch((e) => setLoadError(errorMessage(e)))
       .finally(() => setReady(true));
   }, []);
 
-  function flash(text: string) {
-    setMsg(text);
-    setTimeout(() => setMsg(null), 1800);
-  }
-
   async function choose(id: string) {
-    if (busy || !ready) return; // erst handeln, wenn der Server-Besitz geladen ist
+    if (!ready) return; // erst handeln, wenn der Server-Besitz geladen ist
     const s = SKINS.find((x) => x.id === id)!;
     // Nur der Kauf ist unumkehrbar (Gems weg) – bloßes Ausrüsten eines besessenen Skins nicht.
     if (!owned.includes(id) && !confirmAction(`${s.name} für ${s.cost} 💎 freischalten? Die Gems sind dann weg.`)) return;
-    setBusy(true);
-    try {
-      // Bereits freigeschaltet -> nur ausrüsten. Sonst kaufen (Server bucht Gems ab).
+    const bought = !owned.includes(id);
+    // Bereits freigeschaltet -> nur ausrüsten. Sonst kaufen (Server bucht Gems ab).
+    await action.run(async () => {
       const state = owned.includes(id) ? await api.equipSkin(id) : await api.purchaseSkin(id);
-      const bought = !owned.includes(id);
       setOwned(state.owned);
       setSelected(state.selected);
       setSkin(skinById(state.selected));
       refreshWallet(); // Gem-Stand im HUD real aktualisieren (nach Kauf niedriger)
-      flash(bought ? `${s.name} freigeschaltet & ausgerüstet! 🎉` : `${s.name} ausgerüstet!`);
-    } catch (e) {
-      flash(errorMessage(e));
-    } finally {
-      setBusy(false);
-    }
+    }, bought ? `${s.name} freigeschaltet & ausgerüstet! 🎉` : `${s.name} ausgerüstet!`);
   }
 
   return (
@@ -61,7 +54,8 @@ export function SohnSkins() {
 
       <Mascot skin={skin} mood="hyped" size={100} />
 
-      {!ready ? <div className="loading">Lade Charaktere…</div> : (
+      {loadError ? <div className="banner err">{loadError}</div>
+      : !ready ? <div className="loading">Lade Charaktere…</div> : (
       <div className="skin-grid">
         {SKINS.map((s) => {
           const isOwned = owned.includes(s.id);
@@ -72,7 +66,7 @@ export function SohnSkins() {
               key={s.id}
               className={`skin${isSelected ? " on" : ""}${isOwned ? "" : " locked"}`}
               onClick={() => choose(s.id)}
-              disabled={busy}
+              disabled={action.busy}
             >
               <div className="face" style={{ background: s.gradient }}>{s.emoji}</div>
               <div className="nm">{s.name}</div>
@@ -86,7 +80,7 @@ export function SohnSkins() {
       </div>
       )}
 
-      {msg && <div className="toast" role="status" aria-live="polite">{msg}</div>}
+      <StatusBanner message={action.message} />
       <button type="button" className="btn ghost" onClick={signOut} style={{ marginTop: 6 }}>Abmelden</button>
     </div>
   );

@@ -302,11 +302,11 @@ POST /api/v1/supervisor/children/1/objectives
 }
 → {
   "id": 1, "childId": 1, "title": "80% Englisch sicher", "kind": "Committed",
-  "status": "open", "achievedCount": 0, "totalCount": 1, "rewarded": false,
+  "status": "Open", "achievedCount": 0, "totalCount": 1, "rewarded": false,
   "keyResults": [
     { "id": 1, "objectiveId": 1, "subjectId": 1, "chapterId": null, "exerciseId": null,
-      "scope": "subject", "metric": "MasteredPercent", "targetValue": 80,
-      "currentValue": 0, "progressPercent": 0, "status": "open", "title": "80 % im Fach" }
+      "scope": "Subject", "metric": "MasteredPercent", "targetValue": 80,
+      "currentValue": 0, "progressPercent": 0, "status": "Open", "title": "80 % im Fach" }
   ]
 }
 ```

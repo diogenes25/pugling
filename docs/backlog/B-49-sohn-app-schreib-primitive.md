@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, bereich/qualitaet]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/qualitaet]
 aliases: [Sohn-App ohne useAction]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Aufräumen
 groesse: S
@@ -187,3 +187,24 @@ halten.
   `CardImage`-Prop-Umbau, `SohnLogin` bleibt außen vor) – autonom getroffen, Nutzerauftrag 2026-08-04.
 - **2026-08-03** — geschätzt: Größe S, `wo: frontend`, keine Migration, kein Vertragsbruch, Angriffsplan und
   Testweg (E2E-Doppelklick nach dem B-54-Muster) festgelegt – autonom getroffen, Nutzerauftrag 2026-08-04.
+- **2026-08-06** — gebaut (Nachtlauf 2, Sprint 4): alle vier Schreibstellen auf `useAction` umgestellt —
+  `SohnShop.tsx` (`buy` ohne `okText`, die Feier bleibt die Rückmeldung; `requestActivation` mit `okText`
+  über `StatusBanner`, ersetzt den bisherigen `flash()`-Toast; das Nachladen der Kaufhistorie bleibt
+  bewusst außen vor, keine Mutation), `SohnSkins.tsx` (`choose`, eigener `loadError`-State fürs erste Laden
+  bleibt von `action` getrennt), `SohnTest.tsx` (`answerAndAdvance`, Fehlerpfad speist weiter die
+  bestehende Vollbild-`error`-Anzeige, damit sich deren Verhalten nicht ändert), `SohnPractice.tsx`
+  (`judge` und `reshuffleImage` teilen **eine** `useAction`-Instanz, Entscheidung 3; `CardImage` verlor
+  ihre lokale `busy`-State, bekommt sie jetzt als Prop). **Erhaltenes Verhalten, gegengeprüft:** `judge()`s
+  `next()` läuft weiter unbedingt nach dem inneren `try/catch`, auch bei einem fehlgeschlagenen
+  `api.review` (das Schlucken sitzt weiter innerhalb von `action.run`, `next()` außerhalb davon — kein
+  Verhalten geändert). **Nebenbefund beim Bauen:** `SohnPractice.tsx`s „Nochmal"/„Gewusst!"- und
+  „Prüfen"-Knöpfe trugen **gar kein** `disabled={busy}` (schärfer als die im Ist-Stand benannte
+  State-Sperre) — nachgezogen, drei zusätzliche Knöpfe. `frontend/e2e/full-flow.spec.ts` zählt jetzt beim
+  ersten `dblclick()` auf „Gewusst!" in der Übungsrunde genau einen `POST .../practice-sessions/.../review`
+  (der Rest der Spec bleibt vom vorbestehenden B-109-Hänger bei Frage 3 betroffen, unverändert — die neue
+  Zusicherung läuft davor und wurde einzeln bestätigt). Der Shop-Kauf-Doppelklick (AK4) landete in
+  `frontend/e2e/shop-verlauf.spec.ts` statt in `full-flow.spec.ts`: dessen Shop-Abschnitt liegt hinter der
+  Klausur-Sequenz und lief seit B-109 nie mit (dieselbe Begründung, die B-110 zur eigenen Datei gemacht
+  hat) — `shop-verlauf.spec.ts` ist reproduzierbar grün und damit der ehrlichere Ort für den Nachweis.
+  `npm run build` clean, `npm test -- --run` → **153/153 grün**, beide neuen E2E-Zusicherungen einzeln UND
+  im vollen `npm run test:e2e`-Lauf bestätigt (**27/28 grün**). `frontend-reviewer` lief gegen den Diff.

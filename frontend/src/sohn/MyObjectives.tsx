@@ -41,12 +41,12 @@ export function MyObjectives() {
           <div className="bar" aria-hidden><i style={{ width: `${o.progressPercent}%` }} /></div>
           <div className="sub" style={{ fontSize: 11 }}>
             {o.achievedCount}/{o.totalCount} Etappen
-            {o.status === "achieved" ? " · geschafft! 🎉" : o.status === "overdue" ? " · Termin verpasst" : ""}
+            {o.status === "Achieved" ? " · geschafft! 🎉" : o.status === "Overdue" ? " · Termin verpasst" : ""}
             {o.dueDate ? ` · bis ${o.dueDate}` : ""}
           </div>
 
           {/* Nur die noch offenen Etappen: erledigte abzuhaken ist schön, aber sie verstopfen die Liste. */}
-          {o.keyResults.filter((k) => k.status !== "achieved").slice(0, 3).map((k) => (
+          {o.keyResults.filter((k) => k.status !== "Achieved").slice(0, 3).map((k) => (
             <div className="row" key={k.id} style={{ padding: "2px 0" }}>
               <span>⬜</span>
               <span className="sub">{k.title ?? k.scope}</span>

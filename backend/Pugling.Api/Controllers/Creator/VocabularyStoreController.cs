@@ -472,15 +472,15 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
             switch (outcome.Kind)
             {
                 case CreateKind.Created:
-                    results.Add(new(i, "created", outcome.Vocab!.Id, outcome.Vocab.Key, null));
+                    results.Add(new(i, BatchItemStatus.Created, outcome.Vocab!.Id, outcome.Vocab.Key, null));
                     break;
                 case CreateKind.Conflict:
                     // Idempotent: an entry with this key already exists - report it back instead of failing.
                     var existingId = await db.Vocabularies.Where(v => v.Key == outcome.Key).Select(v => (int?)v.Id).FirstOrDefaultAsync(ct);
-                    results.Add(new(i, "existing", existingId, outcome.Key, null));
+                    results.Add(new(i, BatchItemStatus.Existing, existingId, outcome.Key, null));
                     break;
                 default:
-                    results.Add(new(i, "error", null, outcome.Key, outcome.Error));
+                    results.Add(new(i, BatchItemStatus.Error, null, outcome.Key, outcome.Error));
                     break;
             }
         }
@@ -504,9 +504,9 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
                 it.TranslationAlternatives, it.ClearTranslationAlternatives), ct);
             results.Add(status switch
             {
-                UpdateStatus.Ok => new(i, "updated", vocab!.Id, vocab.Key, null),
-                UpdateStatus.NotFound => new(i, "not-found", it.Id, null, $"Vocabulary item {it.Id} not found."),
-                _ => new(i, "error", it.Id, null, error),
+                UpdateStatus.Ok => new(i, BatchItemStatus.Updated, vocab!.Id, vocab.Key, null),
+                UpdateStatus.NotFound => new(i, BatchItemStatus.NotFound, it.Id, null, $"Vocabulary item {it.Id} not found."),
+                _ => new(i, BatchItemStatus.Error, it.Id, null, error),
             });
         }
         return results;

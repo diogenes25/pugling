@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ApiError, api, errorMessage } from "../lib/api";
 import { useOncePerKey } from "../lib/useOncePerKey";
+import { useAction } from "../lib/useAction";
 import { useSohn } from "./SohnApp";
 import { LetterBoxes } from "../components/LetterBoxes";
 import { AudioButton } from "../components/AudioButton";
@@ -68,8 +69,9 @@ export function SohnPractice() {
     });
   }
 
-  const [busy, setBusy] = useState(false);
-  const judging = useRef(false);
+  // Geteilte Instanz für `judge` UND `reshuffleImage` (B-49, Entscheidung 3): eine laufende Bewertung
+  // sperrt harmlos auch den Bildwechsel und umgekehrt - beides ändert dieselbe Karte.
+  const action = useAction();
   const session = useRef<PositionSession | null>(null);
   const startedIso = useRef<number>(Date.now());
 
@@ -118,45 +120,47 @@ export function SohnPractice() {
   }, [planId, positionId]);
 
   /*
-   * Eine Bewertung je Karte, und die Sperre sitzt im `useRef` **vor** dem ersten `await`: `busy` als State
-   * steht erst nach dem Re-Render am Knopf. Seit die Auswahl ausgespielt wird (B-73), stehen hier drei
-   * Knöpfe nebeneinander statt einer – zwei schnelle Tipper schickten sonst zwei `review` auf denselben
-   * `itemIndex` **und** zwei `next()`, der Zähler sprang von 1/5 auf 3/5 und Karte 2 kam nie.
+   * Eine Bewertung je Karte, seit B-49 über `useAction` gesperrt (Ref, nicht State - dieselbe Begründung
+   * wie überall sonst: `busy` als State steht erst nach dem Re-Render am Knopf). Seit die Auswahl
+   * ausgespielt wird (B-73), stehen hier drei Knöpfe nebeneinander statt einer – zwei schnelle Tipper
+   * schickten sonst zwei `review` auf denselben `itemIndex` **und** zwei `next()`, der Zähler sprang von
+   * 1/5 auf 3/5 und Karte 2 kam nie.
    */
   async function judge(card: PracticeCard, payload: { wasKnown?: boolean; givenAnswer?: string }) {
-    if (!planId || !session.current || judging.current) return;
-    judging.current = true;
-    setBusy(true);
-    try {
-      const outcome = await api.review(planId, positionId, session.current.id, { itemIndex: card.itemIndex, ...payload });
-      setLastOutcome(outcome ?? null);
-      setCombo(outcome?.combo ?? 0);
-      const feedback = reviewFeedback(outcome, card.displayOnly ?? false);
-      if (feedback.kind === "correct") {
-        setEarned((e) => e + feedback.awarded + feedback.comboBonus + feedback.speedBonus);
-        if (feedback.comboBonus > 0) {
-          const tier = feedback.combo >= 10 ? "big" : "medium";
-          celebrate(tier, tier === "big" ? "🥷" : "🎉", `COMBO ×${feedback.combo}`, `+${feedback.comboBonus} 🪙 Bonus`);
-        } else {
-          celebrate("small", SMALL_EMOJI[feedback.combo % SMALL_EMOJI.length]);
+    if (!planId || !session.current) return;
+    // `next()` läuft bewusst außerhalb von `action.run` und danach IMMER, auch nach einem Fehlschlag:
+    // die Bewertung ist idempotent genug, das innere `try/catch` schluckt den Fehler schon selbst, und
+    // `action.run` bekommt darum nie eine Ablehnung zu sehen - es liefert hier nur Ref-Gate und `busy`.
+    await action.run(async () => {
+      try {
+        const outcome = await api.review(planId, positionId, session.current!.id, { itemIndex: card.itemIndex, ...payload });
+        setLastOutcome(outcome ?? null);
+        setCombo(outcome?.combo ?? 0);
+        const feedback = reviewFeedback(outcome, card.displayOnly ?? false);
+        if (feedback.kind === "correct") {
+          setEarned((e) => e + feedback.awarded + feedback.comboBonus + feedback.speedBonus);
+          if (feedback.comboBonus > 0) {
+            const tier = feedback.combo >= 10 ? "big" : "medium";
+            celebrate(tier, tier === "big" ? "🥷" : "🎉", `COMBO ×${feedback.combo}`, `+${feedback.comboBonus} 🪙 Bonus`);
+          } else {
+            celebrate("small", SMALL_EMOJI[feedback.combo % SMALL_EMOJI.length]);
+          }
+          if (feedback.awarded > 0) {
+            setToast(`+${feedback.awarded} 🪙${feedback.box ? ` · Box ${feedback.box}` : ""}`);
+            setTimeout(() => setToast(null), 1100);
+          }
+          refreshWallet();
+        } else if (feedback.kind === "wrong") {
+          // Ohne getroffenen Eintrag gibt es keine Lösung zu nennen: bei einer Menge (ungeordnete Liste) wäre
+          // „Lösung: Hessen" willkürlich, solange ein Dutzend Einträge offen ist – und verriete einen, der noch
+          // gefragt wird. Der Server liefert dann `null`, und hier bleibt es bei der schlichten Absage.
+          setToast(feedback.expected ? `Lösung: ${feedback.expected}` : "Leider nicht.");
+          setTimeout(() => setToast(null), 1600);
         }
-        if (feedback.awarded > 0) {
-          setToast(`+${feedback.awarded} 🪙${feedback.box ? ` · Box ${feedback.box}` : ""}`);
-          setTimeout(() => setToast(null), 1100);
-        }
-        refreshWallet();
-      } else if (feedback.kind === "wrong") {
-        // Ohne getroffenen Eintrag gibt es keine Lösung zu nennen: bei einer Menge (ungeordnete Liste) wäre
-        // „Lösung: Hessen" willkürlich, solange ein Dutzend Einträge offen ist – und verriete einen, der noch
-        // gefragt wird. Der Server liefert dann `null`, und hier bleibt es bei der schlichten Absage.
-        setToast(feedback.expected ? `Lösung: ${feedback.expected}` : "Leider nicht.");
-        setTimeout(() => setToast(null), 1600);
-      }
-      // feedback.kind === "none": kein Outcome ODER eine Anzeigenurstufe (ShowBoth) - kein Urteil, kein Toast.
-    } catch { /* Bewertung ist idempotent genug; UI läuft weiter */ }
+        // feedback.kind === "none": kein Outcome ODER eine Anzeigenurstufe (ShowBoth) - kein Urteil, kein Toast.
+      } catch { /* Bewertung ist idempotent genug; UI läuft weiter */ }
+    });
     next();
-    judging.current = false;
-    setBusy(false);
   }
 
   function next() {
@@ -219,16 +223,18 @@ export function SohnPractice() {
   async function reshuffleImage() {
     if (!planId || !session.current) return;
     const at = idx;
-    try {
-      // Nicht `next` nennen – so heißt die Karten-Weiterschaltung oben.
-      const picked = await api.reshuffleCardImage(planId, positionId, session.current.id, cards[at].itemIndex);
-      setCards((prev) => prev.map((c, i) =>
-        i === at ? { ...c, imageUrl: picked.imageUrl, imageAlt: picked.imageAlt } : c));
-    } catch (e) {
-      setToast(e instanceof ApiError && e.code === "media_no_alternative"
-        ? "Mehr Bilder gibt es dafür nicht 🙂"
-        : errorMessage(e));
-    }
+    await action.run(async () => {
+      try {
+        // Nicht `next` nennen – so heißt die Karten-Weiterschaltung oben.
+        const picked = await api.reshuffleCardImage(planId, positionId, session.current!.id, cards[at].itemIndex);
+        setCards((prev) => prev.map((c, i) =>
+          i === at ? { ...c, imageUrl: picked.imageUrl, imageAlt: picked.imageAlt } : c));
+      } catch (e) {
+        setToast(e instanceof ApiError && e.code === "media_no_alternative"
+          ? "Mehr Bilder gibt es dafür nicht 🙂"
+          : errorMessage(e));
+      }
+    });
   }
   return (
     <div className="sohn-body">
@@ -270,6 +276,7 @@ export function SohnPractice() {
               key={card.imageUrl}
               url={card.imageUrl}
               alt={card.imageAlt ?? ""}
+              busy={action.busy}
               onReshuffle={reshuffleImage}
             />
           )}
@@ -308,7 +315,7 @@ export function SohnPractice() {
         {typed && card.choices ? (
           <div className="row" style={{ gap: 8, flexWrap: "wrap" }} role="group" aria-label="Antwortmöglichkeiten">
             {card.choices.map((c, i) => (
-              <button type="button" key={`${i}-${c}`} className="btn ghost" disabled={busy}
+              <button type="button" key={`${i}-${c}`} className="btn ghost" disabled={action.busy}
                 onClick={() => judge(card, { givenAnswer: c })}>{c}</button>
             ))}
           </div>
@@ -332,17 +339,20 @@ export function SohnPractice() {
                 />
               </form>
             )}
-            <button type="button" className="btn lime" style={{ marginTop: 10 }} disabled={!typedAnswer.trim()} onClick={submitTyped}>Prüfen</button>
+            <button type="button" className="btn lime" style={{ marginTop: 10 }} disabled={action.busy || !typedAnswer.trim()} onClick={submitTyped}>Prüfen</button>
           </div>
         ) : card.displayOnly ? (
           // Kennenlernen: no judgment to make, so no "Gewusst?" buttons - just move on.
-          <button type="button" className="btn lime" disabled={busy} onClick={() => judge(card, {})}>Weiter →</button>
+          <button type="button" className="btn lime" disabled={action.busy} onClick={() => judge(card, {})}>Weiter →</button>
         ) : phase === "front" ? (
           <button type="button" className="btn" onClick={() => setPhase("back")}>Umdrehen 🔄</button>
         ) : (
           <div className="judge">
-            <button type="button" className="btn red small" onClick={() => judge(card, { wasKnown: false })}>Nochmal</button>
-            <button type="button" className="btn lime small" onClick={() => judge(card, { wasKnown: true })}>Gewusst!</button>
+            {/* B-49: vorher ohne `disabled` - ein Doppelklick konnte zwei `review` auf denselben `itemIndex`
+                auslösen (dieselbe Lücke, die die Choice-Knöpfe oben schon durch `useAction` geschlossen
+                hatten). */}
+            <button type="button" className="btn red small" disabled={action.busy} onClick={() => judge(card, { wasKnown: false })}>Nochmal</button>
+            <button type="button" className="btn lime small" disabled={action.busy} onClick={() => judge(card, { wasKnown: true })}>Gewusst!</button>
           </div>
         )}
       </div>
@@ -363,8 +373,7 @@ export function SohnPractice() {
  * der Merkeffekt, das Wechseln ist die Ausnahme. Genau deshalb ist es aber wichtig, dass es sie gibt –
  * ein Motiv, das ein Kind nicht mag, arbeitet gegen das Lernen.
  */
-function CardImage({ url, alt, onReshuffle }: { url: string; alt: string; onReshuffle: () => void }) {
-  const [busy, setBusy] = useState(false);
+function CardImage({ url, alt, busy, onReshuffle }: { url: string; alt: string; busy: boolean; onReshuffle: () => void }) {
   return (
     <figure style={{ margin: "0 0 10px", textAlign: "center" }}>
       <img
@@ -378,7 +387,7 @@ function CardImage({ url, alt, onReshuffle }: { url: string; alt: string; onResh
           className="btn ghost small"
           style={{ width: "auto", marginTop: 4 }}
           disabled={busy}
-          onClick={async () => { setBusy(true); try { await onReshuffle(); } finally { setBusy(false); } }}
+          onClick={onReshuffle}
         >
           🔄 anderes Bild
         </button>

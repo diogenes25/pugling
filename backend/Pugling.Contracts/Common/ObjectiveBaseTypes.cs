@@ -34,3 +34,31 @@ public enum KeyResultMetric
     /// <summary>Best class test grade in the subject as grade×10 (e.g. 20 = "at least 2.0"; goal: ≤ target value).</summary>
     ClassTestGrade = 4,
 }
+
+/// <summary>
+/// Live-computed status of an <c>Objective</c>/<c>KeyResult</c> – never a stored column
+/// (<c>ObjectiveEvaluationService.StatusOf</c> computes it on every read).
+/// </summary>
+public enum GoalStatus
+{
+    /// <summary>Neither achieved nor overdue yet.</summary>
+    Open = 0,
+    /// <summary>The target value has been reached.</summary>
+    Achieved = 1,
+    /// <summary>Not reached, and the objective's end date has passed.</summary>
+    Overdue = 2,
+}
+
+/// <summary>
+/// Catalog level a <c>KeyResult</c>'s target is scoped to – never a stored column
+/// (<c>ObjectiveService.KrScope</c> computes it on every read).
+/// </summary>
+public enum KeyResultScope
+{
+    /// <summary>Scoped to a single exercise.</summary>
+    Exercise = 0,
+    /// <summary>Scoped to a series unit (chapter).</summary>
+    SeriesUnit = 1,
+    /// <summary>Scoped to a whole subject.</summary>
+    Subject = 2,
+}

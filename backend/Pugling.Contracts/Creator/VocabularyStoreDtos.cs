@@ -54,8 +54,28 @@ public record LookupResult(string Word, bool Exists, IReadOnlyList<VocabularyRes
 /// <summary>Response of the existence check: one result per word plus the set of existing keys.</summary>
 public record LookupResponse(IReadOnlyList<LookupResult> Words, IReadOnlyList<string> ExistingKeys);
 
+/// <summary>
+/// How a single batch element turned out. Shared by <c>CreateBatch</c> (yields <see cref="Created"/>/
+/// <see cref="Existing"/>/<see cref="Error"/>) and <c>UpdateBatch</c> (yields <see cref="Updated"/>/
+/// <see cref="NotFound"/>/<see cref="Error"/>) – one concept, one type, not every value possible at every
+/// caller (see each endpoint's own `/// &lt;summary&gt;` for which values it actually returns).
+/// </summary>
+public enum BatchItemStatus
+{
+    /// <summary>`CreateBatch` only: a new store entry was created.</summary>
+    Created = 0,
+    /// <summary>`CreateBatch` only: the key already existed, nothing was created.</summary>
+    Existing = 1,
+    /// <summary>`UpdateBatch` only: an existing store entry was updated.</summary>
+    Updated = 2,
+    /// <summary>`UpdateBatch` only: no entry with this key/id existed.</summary>
+    NotFound = 3,
+    /// <summary>Both endpoints: this element failed on its own; the rest of the batch is unaffected.</summary>
+    Error = 4,
+}
+
 /// <summary>Result of a single batch element (partial success possible).</summary>
-public record BatchItemResult(int Index, string Status, int? Id, string? Key, string? Error);
+public record BatchItemResult(int Index, BatchItemStatus Status, int? Id, string? Key, string? Error);
 
 /// <summary>A batch change element: the target id plus the same partial fields as the single PATCH.</summary>
 public record BatchUpdateItem(int Id, string? Version, string? SourceLanguage, string? TargetLanguage,

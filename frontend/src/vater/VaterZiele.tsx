@@ -53,22 +53,18 @@ function directionLabel(metric: KeyResultMetric): string {
 }
 
 /*
- * `status` ist im Vertrag ein `string`, kein Enum (der Server rechnet ihn je Anfrage aus) – die Pille nimmt
- * darum `string` und fällt bei allem Unbekannten auf „offen" zurück.
- *
  * Als **Nachschlagewerk** und nicht als if-Kette, weil `Record<GoalStatus, …>` beides zugleich hält: die
- * Wahrheit über die Antwort *und* die Tippfehler-Wache. Eine `if (status === "acheived")`-Kette gegen einen
- * `string` compiliert stillschweigend durch.
+ * Wahrheit über die Antwort *und* die Tippfehler-Wache. Seit B-59 ist `status` ein echtes Enum im Vertrag
+ * – ein fehlender Fall wäre jetzt schon ein Compilerfehler, nicht nur zur Laufzeit ein leeres Feld.
  */
 const GOAL_PILL: Record<GoalStatus, { cls: string; label: string }> = {
-  achieved: { cls: "pill lime", label: "erreicht" },
-  overdue: { cls: "pill mag", label: "Termin verpasst" },
-  open: { cls: "pill", label: "offen" },
+  Achieved: { cls: "pill lime", label: "erreicht" },
+  Overdue: { cls: "pill mag", label: "Termin verpasst" },
+  Open: { cls: "pill", label: "offen" },
 };
 
-function StatusPill({ status }: { status: string }) {
-  const pill = GOAL_PILL[status as GoalStatus] ?? GOAL_PILL.open;
-  return <span className={pill.cls}>{pill.label}</span>;
+function StatusPill({ status }: { status: GoalStatus }) {
+  return <span className={GOAL_PILL[status].cls}>{GOAL_PILL[status].label}</span>;
 }
 
 /** Fortschrittsbalken; der Server liefert `progressPercent` bereits richtungsgerecht (0–100). */

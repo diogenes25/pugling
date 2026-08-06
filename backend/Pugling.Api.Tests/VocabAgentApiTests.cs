@@ -124,10 +124,10 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         };
 
         var first = await (await father.PostAsJsonAsync("/api/v1/creator/vocabulary/batch", batch)).Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal("created", first[0].GetProperty("status").GetString());
+        Assert.Equal("Created", first[0].GetProperty("status").GetString());
 
         var second = await (await father.PostAsJsonAsync("/api/v1/creator/vocabulary/batch", batch)).Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal("existing", second[0].GetProperty("status").GetString());
+        Assert.Equal("Existing", second[0].GetProperty("status").GetString());
         Assert.Equal(first[0].GetProperty("id").GetInt32(), second[0].GetProperty("id").GetInt32());
     }
 
@@ -144,7 +144,7 @@ public class VocabAgentApiTests(PuglingWebAppFactory factory) : IClassFixture<Pu
             new { id = b.GetProperty("id").GetInt32(), translation = "zwei" },
         };
         var res = await (await father.PatchAsJsonAsync("/api/v1/creator/vocabulary/batch", patch)).Content.ReadFromJsonAsync<JsonElement>();
-        Assert.All(res.EnumerateArray(), r => Assert.Equal("updated", r.GetProperty("status").GetString()));
+        Assert.All(res.EnumerateArray(), r => Assert.Equal("Updated", r.GetProperty("status").GetString()));
 
         var remaining = await KeysAsync(father, "sourceLanguage=bpa&untranslated=true");
         Assert.Empty(remaining);

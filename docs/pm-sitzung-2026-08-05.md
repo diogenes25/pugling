@@ -563,3 +563,73 @@ die grüne Suite und den Reviewer belegt.
 
 Eine Story gebaut und abgenommen, eine bewusst nicht angefasst (wartet extern). Kein Review-Fund —
 Zähler bleibt bei 2 von 5. Weiter mit Sprint 4 (Typsicherheit: B-59, B-74, B-49).
+
+## Nachtlauf-2-Sprint 4 — Ziel & Umfang
+
+**Sprint-Ziel:** *Drei bislang lose Typisierungslücken werden vom Compiler statt von Testabdeckung allein
+gehalten: der Vertrag sagt selbst, welche Status-/Scope-Werte möglich sind, der Übungs-Editor schlägt bei
+einem vertauschten Feld sofort fehl, und die Sohn-Arcade teilt sich mit dem Vater-Web dieselbe
+Wiedereintritts-Sperre.*
+
+**Umfang:** B-59 (Status-Strings → Enums, Vertragsbruch), B-74 (Editor-Zeilen typisieren), B-49
+(Sohn-App auf `useAction`). Backend zuerst (B-59), dann Frontend (B-59-Rest, B-74, B-49).
+
+**Entwickler-Brief:** B-59 ändert das Wire-Format dreier Felder (Kleinschreibung → PascalCase), aber keine
+sichtbare Bedeutung – die deutschen Anzeigetexte bleiben identisch. B-74 und B-49 ändern kein Verhalten,
+nur die interne Absicherung. Testweg: rote Proben für jede der drei Stories einzeln (Backend-Assertions,
+`tsc`-Mutation, unverändertes `next()`-Verhalten), dann die volle Suite.
+
+## Nachtlauf-2-Iteration 4 — umgesetzt
+
+**B-59 (Backend):** drei neue Enums (`GoalStatus`, `KeyResultScope`, `BatchItemStatus`),
+`ObjectiveEvaluationService.StatusOf`/`ObjectiveService.KrScope` geben sie direkt zurück,
+`VocabularyStoreController` schreibt Enum-Werte. Zehn Testassertions auf PascalCase gehoben (eine mehr als
+geschätzt, beim tatsächlichen roten Lauf gefunden). **B-59 (Frontend):** `contract.ts` neu erzeugt,
+`GoalStatus`-Hand-Typ entfernt, `VaterZiele.tsx`/`MyObjectives.tsx`/`VaterVocab.tsx` auf PascalCase
+gehoben; ein bislang verstecktes E2E-Risiko (`vater-von-null.spec.ts` prüfte wörtlich „subject") gefunden
+und behoben, bevor es rot geworden wäre.
+
+**B-74:** ~20 Zeilen-/Extra-Schnittstellen für `exerciseConfig.tsx`, `satisfies`/Rückgabetyp-Annotationen
+in allen vier Kernfunktionen, öffentliche Signaturen unverändert.
+
+**B-49:** alle vier Sohn-Schreibstellen auf `useAction`; `judge`/`reshuffleImage` teilen eine Instanz.
+Nebenbefund: drei Knöpfe ohne jedes `disabled={busy}` gefunden und nachgezogen. Zwei neue
+Doppelklick-Zusicherungen (`shop-verlauf.spec.ts`, `full-flow.spec.ts`).
+
+**Verifikation (gemessen):** `dotnet test Pugling.sln -c Release` → **746/746 grün**. `npm run build`
+clean. `npm test -- --run` → **153/153 grün**. `npm run test:e2e` → **27/28 grün** (einziger Ausfall:
+der vorbestehende B-109-Flake, an derselben Stelle wie vor dieser Nacht).
+
+**Drei rote Proben, alle mit Zahl belegt:** B-59s sechs rot gewordenen Testmethoden (Erwartet/Gemessen je
+Zeile in B-59s `## Verlauf`), B-74s `tsc`-Mutation (`TS2551` auf den erfundenen Feldnamen), B-49s
+gegengeprüftes `next()`-Verhalten (Code gelesen, nicht nur behauptet).
+
+## Runde — Abnahme Nachtlauf-2-Sprint-4 (Rollengang)
+
+- **Sohn: Regression, mit zwei neuen E2E-Nachweisen.** `shop-verlauf.spec.ts` und der erste Durchlauf von
+  `full-flow.spec.ts` (bis zum vorbestehenden B-109-Hänger) fahren echte Doppelklicks gegen den echten
+  Server und zählen die abgeschickten POSTs – das ist der Rollengang für B-49s Kern (die Sperre wirkt
+  tatsächlich, nicht nur im Code gelesen). B-59/B-74 ändern für den Sohn nichts Sichtbares (dieselben
+  deutschen Texte), belegt durch die grüne Gesamtsuite.
+- **Vater: Regression.** `VaterZiele.tsx` zeigt weiterhin dieselben Status-Pillen, `uebungstypen.spec.ts`
+  bleibt grün (deckt alle elf Typen inkl. `exerciseConfig.tsx`).
+- **Creator: Regression.** Kein Katalog-Endpunkt geändert; `BatchItemResult`s neues Enum ändert nur die
+  Wire-Form, nicht die Bedeutung.
+
+## Retrospektive — Nachtlauf 2, Sprint 4
+
+**Nachschau:** Sprint 3 (B-25) nachgesehen — keine Entgleitung über das bereits Dokumentierte hinaus.
+
+**Was dieser Sprint über die eigenen Tore gelernt hat:** Zwei Funde in dieser Nacht (B-59s zusätzliche
+VocabAgentApiTests-Zeile, B-49s drei ungesperrten Knöpfe) kamen nicht aus der Story-Recherche, sondern aus
+dem tatsächlichen Ausführen der roten Probe bzw. dem genauen Lesen des Codes beim Bauen — derselbe Punkt,
+den `docs/backlog/README.md` schon mehrfach macht: „Ausformulieren heißt gegen den Code belegen", nicht
+gegen die Notiz. Beide wurden sofort behoben, nicht als Fund für eine Folge-Story liegen gelassen, weil sie
+im **eigenen** Increment lagen.
+
+**Kein neuer Mechanismus.** Die bestehenden Tore (rote Probe vor jedem Fix, `tsc` als Wächter für B-74,
+volle Suite nach jeder Story) haben gehalten.
+
+## Ende von Nachtlauf-2-Sprint-4
+
+Drei Stories gebaut und abgenommen, zwei kleine Nebenfunde sofort behoben (kein neuer Review-Fund).

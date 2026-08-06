@@ -5,13 +5,14 @@ import type { components } from "./contract";
  * Alles andere lebt als Alias auf `contract.ts` in [types.ts](types.ts); wer hier etwas ergänzt, muss den
  * Grund mitliefern, sonst gehört es dorthin.
  *
- * Es sind **elf**, und die Zahl ist eine Zusicherung: was strukturgleich in `contract.ts` steht, gehört
+ * Es sind **zehn**, und die Zahl ist eine Zusicherung: was strukturgleich in `contract.ts` steht, gehört
  * dorthin. `SchoolType` lag hier einmal mit der Begründung „`[Flags]`-Enum" – falsch, das Schema listet die
  * Einzelnamen und ist zeichengleich mit der Handliste gewesen. Nicht ausdrückbar ist nur die **Kombination**
- * („Realschule, Gymnasium"), und die reist als freier String (B-60).
+ * („Realschule, Gymnasium"), und die reist als freier String (B-60). `GoalStatus` ist seit B-59 keiner mehr:
+ * der Vertrag trägt die Werteliste jetzt selbst (`components["schemas"]["GoalStatus"]`).
  *
  * Sie zerfallen in drei Sorten:
- * 1. **Der Vertrag sagt nur `string`** – die Oberfläche engt ein (`Role`, `GoalStatus`).
+ * 1. **Der Vertrag sagt nur `string`** – die Oberfläche engt ein (`Role`).
  * 2. **Das Schema kann die Form nicht ausdrücken** – Generik (`Paged`), absichtlich kollabierte Generik
  *    (`CreateExercisePayload`).
  * 3. **Es ist gar kein Schema** – Query-Parameter reisen einzeln, nicht als Rumpf (`…SearchParams`,
@@ -26,13 +27,6 @@ import type { components } from "./contract";
  * kein Enum). Generiert wäre der Typ `string` und jede Fallunterscheidung im Routing unbewacht.
  */
 export type Role = "Supervisor" | "Creator" | "Student";
-
-/**
- * Wie eine Etappe gerade steht; live aus dem Lernstand berechnet, nie gespeichert.
- *
- * **Von Hand, weil** der Server das Feld als `string` führt (kein Enum) – dieselbe Lage wie bei `Role`.
- */
-export type GoalStatus = "open" | "achieved" | "overdue";
 
 /**
  * Server-paginierte Liste: eine Seite plus Gesamtzahl (kommt aus dem `X-Total-Count`-Header).

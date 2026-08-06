@@ -14,11 +14,11 @@ namespace Pugling.Api.Services.Shared;
 public class ObjectiveEvaluationService(PuglingDbContext db, ChildLearnProgressService progress)
 {
     /// <summary>Evaluated milestone: current value, achieved?, progress (0..100), and status.</summary>
-    public record KeyResultEval(KeyResult KeyResult, int Current, bool Achieved, int ProgressPercent, string Status);
+    public record KeyResultEval(KeyResult KeyResult, int Current, bool Achieved, int ProgressPercent, GoalStatus Status);
 
     /// <summary>Evaluated objective incl. milestones and roll-up (how many milestones achieved + overall status).</summary>
     public record ObjectiveEval(Objective Objective, IReadOnlyList<KeyResultEval> KeyResults,
-        int AchievedCount, int TotalCount, int ProgressPercent, string Status);
+        int AchievedCount, int TotalCount, int ProgressPercent, GoalStatus Status);
 
     // A graded class test, reduced to what the grade metric needs.
     private record GradeRow(int SubjectId, decimal Grade, DateOnly ScheduledDate);
@@ -51,8 +51,8 @@ public class ObjectiveEvaluationService(PuglingDbContext db, ChildLearnProgressS
         return target <= 0 ? 100 : Math.Clamp((int)Math.Round(100.0 * current / target), 0, 99);
     }
 
-    private static string StatusOf(bool achieved, DateOnly? dueDate, DateOnly today) =>
-        achieved ? "achieved" : dueDate is { } due && due < today ? "overdue" : "open";
+    private static GoalStatus StatusOf(bool achieved, DateOnly? dueDate, DateOnly today) =>
+        achieved ? GoalStatus.Achieved : dueDate is { } due && due < today ? GoalStatus.Overdue : GoalStatus.Open;
 
     /// <summary>
     /// Evaluates all objectives of a child (empty list if none exist). With

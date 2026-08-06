@@ -25,8 +25,10 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
 
     private static DateOnly Today => DateOnly.FromDateTime(DateTime.UtcNow);
 
-    private static string KrScope(KeyResult k) =>
-        k.ExerciseId is not null ? "exercise" : k.SeriesUnitId is not null ? "seriesUnit" : "subject";
+    private static KeyResultScope KrScope(KeyResult k) =>
+        k.ExerciseId is not null ? KeyResultScope.Exercise
+        : k.SeriesUnitId is not null ? KeyResultScope.SeriesUnit
+        : KeyResultScope.Subject;
 
     // Mirrors the three filtered unique indexes on KeyResult exactly (PuglingDbContext.cs): which of the
     // three catalog scopes applies decides the collision, not a flat tuple of all three id columns.
@@ -135,7 +137,7 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
         IEnumerable<ObjectiveResponse> mapped = evals.Select(e => MapObjective(e, rewardedIds.Contains(e.Objective.Id)));
         if (kind is { } k) mapped = mapped.Where(o => o.Kind == k);
         if (!string.IsNullOrWhiteSpace(status))
-            mapped = mapped.Where(o => o.Status.Equals(status.Trim(), StringComparison.OrdinalIgnoreCase));
+            mapped = mapped.Where(o => o.Status.ToString().Equals(status.Trim(), StringComparison.OrdinalIgnoreCase));
         return mapped.ToList();
     }
 

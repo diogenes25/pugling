@@ -22,6 +22,58 @@ import type { ArithmeticOperation, ExerciseTypeKey } from "../lib/types";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Row = Record<string, any>;
 
+/*
+ * B-74: `Row`/`Row[]` stay the public signature of every function below (and of `ConfigEditor`/
+ * `RowField`/`RowRepeatedField`) - a full discriminated union would need `type`/`rows`/`extra` bundled
+ * into one state object in the two callers (`VaterExerciseCreate.tsx`, `ExerciseEditModal.tsx`), which
+ * today hold them as three separate `useState`s. Without that bundling a union is structurally
+ * compatible with `Record<string, any>` and therefore wouldn't catch anything at the caller.
+ *
+ * What IS won here: inside `emptyRow`/`emptyExtra` each literal is checked with `satisfies` against the
+ * real shape, and inside `buildTypeConfig`/`configToEditorState` each `case` casts once to the matching
+ * interface below - from that point on, `tsc` catches a renamed or mistyped field in that branch. Not
+ * every type needs its own `…Extra` interface: several fall through to `default: return {}` and stay
+ * untyped, since there's nothing there to check against.
+ */
+interface VocabularyRow { front: string; back: string; hint: string }
+interface VocabularyExtra { direction: string; sourceLang: string; targetLang: string }
+
+interface ArithmeticRow { prompt: string; answer: string; tolerance: string }
+interface ArithmeticDrillExtra {
+  operations: ArithmeticOperation[]; minOperand: string; maxOperand: string; problemCount: string;
+  allowNegativeResults: boolean; divisionMustBeWhole: boolean; seed: string;
+}
+
+interface ClozeRow { index: number; answer: string; alternatives: string[]; vocabKey: string | null }
+interface ClozeExtra { text: string; wordBank: string[] }
+
+interface MatchingRow { left: string; right: string }
+interface MatchingExtra { instruction: string }
+
+interface ListRow { value: string; alternatives: string[] }
+interface ListExtra { instruction: string; ordered: boolean }
+
+/** Shared by Reading and Listening - both ask a comprehension question the same way. */
+interface QuestionRow { prompt: string; answer: string; choices: string[] }
+interface ReadingExtra { text: string }
+interface ListeningExtra { audioUrl: string; transcript: string }
+
+interface EssayRow { criterion: string; maxScore: string }
+interface EssayExtra { prompt: string; minWords: string; maxWords: string }
+
+interface GrammarRow { prompt: string; answer: string; ruleHint: string }
+interface GrammarExtra { instruction: string }
+
+interface TranslationRow {
+  source: string; target: string; alternatives: string[]; vocabularyId: number | null;
+  /** Only present once loaded back from a saved config - see `configToEditorState`. */
+  origSource?: string; origTarget?: string;
+}
+interface TranslationExtra { sourceLang: string; targetLang: string }
+
+interface BirkenbihlRow { text: string; naturalTranslation: string; decoding: Pair[] }
+interface BirkenbihlExtra { learningLang: string; nativeLang: string }
+
 /** Reihenfolge im Typ-Pulldown: erst die alltäglichen, dann die selteneren. */
 export const AUTHORABLE_TYPES: ExerciseTypeKey[] = [
   "Vocabulary", "Cloze", "Matching", "List", "Grammar", "Translation",
@@ -95,33 +147,34 @@ const numOrNull = (v: unknown): number | null => (v === "" || v == null ? null :
 /** Leere Anfangszeile je Typ (die Felder, die der jeweilige Editor bearbeitet). */
 export function emptyRow(type: ExerciseTypeKey): Row {
   switch (type) {
-    case "Vocabulary": return { front: "", back: "", hint: "" };
-    case "Arithmetic": return { prompt: "", answer: "", tolerance: "0" };
+    case "Vocabulary": return { front: "", back: "", hint: "" } satisfies VocabularyRow;
+    case "Arithmetic": return { prompt: "", answer: "", tolerance: "0" } satisfies ArithmeticRow;
     case "ArithmeticDrill": return {};
-    case "Cloze": return { index: 1, answer: "", alternatives: [], vocabKey: null };
-    case "Matching": return { left: "", right: "" };
-    case "List": return { value: "", alternatives: [] };
-    case "Birkenbihl": return { text: "", decoding: [], naturalTranslation: "" };
+    case "Cloze": return { index: 1, answer: "", alternatives: [], vocabKey: null } satisfies ClozeRow;
+    case "Matching": return { left: "", right: "" } satisfies MatchingRow;
+    case "List": return { value: "", alternatives: [] } satisfies ListRow;
+    case "Birkenbihl": return { text: "", decoding: [], naturalTranslation: "" } satisfies BirkenbihlRow;
     case "Reading":
-    case "Listening": return { prompt: "", choices: [], answer: "" };
-    case "Essay": return { criterion: "", maxScore: "5" };
-    case "Grammar": return { prompt: "", answer: "", ruleHint: "" };
-    case "Translation": return { source: "", target: "", alternatives: [], vocabularyId: null };
+    case "Listening": return { prompt: "", choices: [], answer: "" } satisfies QuestionRow;
+    case "Essay": return { criterion: "", maxScore: "5" } satisfies EssayRow;
+    case "Grammar": return { prompt: "", answer: "", ruleHint: "" } satisfies GrammarRow;
+    case "Translation": return { source: "", target: "", alternatives: [], vocabularyId: null } satisfies TranslationRow;
   }
 }
 
 /** Anfangs-Extrafelder je Typ (Richtung, Trägertext, Regeln …). */
 export function emptyExtra(type: ExerciseTypeKey): Row {
   switch (type) {
-    case "Vocabulary": return { direction: "front-to-back", sourceLang: "en", targetLang: "de" };
-    case "List": return { ordered: false };
-    case "Translation": return { sourceLang: "en", targetLang: "de" };
-    case "Essay": return { prompt: "", minWords: "", maxWords: "" };
-    case "Listening": return { audioUrl: "", transcript: "" };
+    case "Vocabulary": return { direction: "front-to-back", sourceLang: "en", targetLang: "de" } satisfies VocabularyExtra;
+    // Partial on purpose: `instruction` has no meaningful initial value, it arrives once the Vater types it.
+    case "List": return { ordered: false } satisfies Partial<ListExtra>;
+    case "Translation": return { sourceLang: "en", targetLang: "de" } satisfies TranslationExtra;
+    case "Essay": return { prompt: "", minWords: "", maxWords: "" } satisfies EssayExtra;
+    case "Listening": return { audioUrl: "", transcript: "" } satisfies ListeningExtra;
     case "ArithmeticDrill": return {
       operations: ["Addition"], minOperand: "1", maxOperand: "10", problemCount: "10",
       allowNegativeResults: false, divisionMustBeWhole: true, seed: "",
-    };
+    } satisfies ArithmeticDrillExtra;
     default: return {};
   }
 }
@@ -142,67 +195,93 @@ export function buildTypeConfig(
 ): unknown {
   switch (type) {
     case "Vocabulary": {
-      const direction = extra.direction || "front-to-back";
+      const cfg = extra as VocabularyExtra;
+      const direction = cfg.direction || "front-to-back";
       // Das Sprachpaar gehört in die Config, nicht nur in die Auswahl-Oberfläche: der Server braucht es,
       // um später inline ergänzte Wörter im Store anzulegen (und es hält fremdsprachige Treffer heraus).
-      const langs = { sourceLang: extra.sourceLang || null, targetLang: extra.targetLang || null };
+      const langs = { sourceLang: cfg.sourceLang || null, targetLang: cfg.targetLang || null };
       return opts.vocabRefs
         ? { ...langs, direction, refs: opts.vocabRefs.map((r) => ({ vocabularyId: r.vocabularyId })) }
         : { ...(opts.base ?? {}), direction, items: [], refs: null };
     }
-    case "Arithmetic":
-      return { problems: rows.map((r) => ({ prompt: r.prompt, answer: Number(r.answer), tolerance: Number(r.tolerance) || 0 })) };
-    case "ArithmeticDrill":
+    case "Arithmetic": {
+      const items = rows as ArithmeticRow[];
+      return { problems: items.map((r) => ({ prompt: r.prompt, answer: Number(r.answer), tolerance: Number(r.tolerance) || 0 })) };
+    }
+    case "ArithmeticDrill": {
+      const cfg = extra as ArithmeticDrillExtra;
       // Gespeichert werden nur die REGELN; die Aufgaben erzeugt der Server je Durchlauf.
       return {
-        operations: (extra.operations as ArithmeticOperation[] | undefined) ?? ["Addition"],
-        minOperand: numOr(extra.minOperand, 1),
-        maxOperand: numOr(extra.maxOperand, 10),
-        problemCount: numOr(extra.problemCount, 10),
-        allowNegativeResults: !!extra.allowNegativeResults,
-        divisionMustBeWhole: !!extra.divisionMustBeWhole,
+        operations: cfg.operations ?? ["Addition"],
+        minOperand: numOr(cfg.minOperand, 1),
+        maxOperand: numOr(cfg.maxOperand, 10),
+        problemCount: numOr(cfg.problemCount, 10),
+        allowNegativeResults: !!cfg.allowNegativeResults,
+        divisionMustBeWhole: !!cfg.divisionMustBeWhole,
         // Fester Seed = reproduzierbare Aufgaben; leer = echter Zufall je Durchlauf.
-        seed: numOrNull(extra.seed),
+        seed: numOrNull(cfg.seed),
       };
-    case "Cloze":
-      return { text: extra.text ?? "", wordBank: nonEmpty(strList(extra.wordBank)),
+    }
+    case "Cloze": {
+      const items = rows as ClozeRow[];
+      const cfg = extra as ClozeExtra;
+      return { text: cfg.text ?? "", wordBank: nonEmpty(strList(cfg.wordBank)),
         // `vocabKey` unverändert durchreichen: ist er gesetzt, kommt die Lösung aus dem Vokabel-Store und
         // folgt dessen Pflege. Ein Weglassen machte aus der Store-Lücke stillschweigend eine Inline-Lücke.
-        gaps: rows.map((r) => ({ index: Number(r.index), answer: r.answer,
+        gaps: items.map((r) => ({ index: Number(r.index), answer: r.answer,
           alternatives: nonEmpty(strList(r.alternatives)), vocabKey: r.vocabKey ?? null })) };
-    case "Matching":
-      return { instruction: extra.instruction?.trim() || null, pairs: rows.map((r) => ({ left: r.left, right: r.right })) };
-    case "List":
-      return { instruction: extra.instruction?.trim() || null, ordered: !!extra.ordered,
-        items: rows.map((r) => ({ value: r.value, alternatives: nonEmpty(strList(r.alternatives)) })) };
-    case "Reading":
-      return { text: extra.text ?? "", questions: rows.map(toQuestion) };
-    case "Listening":
+    }
+    case "Matching": {
+      const items = rows as MatchingRow[];
+      const cfg = extra as MatchingExtra;
+      return { instruction: cfg.instruction?.trim() || null, pairs: items.map((r) => ({ left: r.left, right: r.right })) };
+    }
+    case "List": {
+      const items = rows as ListRow[];
+      const cfg = extra as ListExtra;
+      return { instruction: cfg.instruction?.trim() || null, ordered: !!cfg.ordered,
+        items: items.map((r) => ({ value: r.value, alternatives: nonEmpty(strList(r.alternatives)) })) };
+    }
+    case "Reading": {
+      const cfg = extra as ReadingExtra;
+      return { text: cfg.text ?? "", questions: (rows as QuestionRow[]).map(toQuestion) };
+    }
+    case "Listening": {
+      const cfg = extra as ListeningExtra;
       return {
-        audioUrl: extra.audioUrl ?? "",
-        transcript: extra.transcript?.trim() || null,
-        questions: rows.map(toQuestion),
+        audioUrl: cfg.audioUrl ?? "",
+        transcript: cfg.transcript?.trim() || null,
+        questions: (rows as QuestionRow[]).map(toQuestion),
       };
-    case "Essay":
+    }
+    case "Essay": {
+      const items = rows as EssayRow[];
+      const cfg = extra as EssayExtra;
       return {
-        prompt: extra.prompt ?? "",
-        minWords: numOrNull(extra.minWords),
-        maxWords: numOrNull(extra.maxWords),
+        prompt: cfg.prompt ?? "",
+        minWords: numOrNull(cfg.minWords),
+        maxWords: numOrNull(cfg.maxWords),
         // Ohne Kriterien lieber `null` als eine leere Liste – so bleibt „keine Rubrik" erkennbar.
-        rubric: rows.some((r) => r.criterion?.trim())
-          ? rows.filter((r) => r.criterion?.trim())
+        rubric: items.some((r) => r.criterion?.trim())
+          ? items.filter((r) => r.criterion?.trim())
             .map((r) => ({ criterion: r.criterion.trim(), maxScore: numOr(r.maxScore, 1) }))
           : null,
       };
-    case "Grammar":
+    }
+    case "Grammar": {
+      const items = rows as GrammarRow[];
+      const cfg = extra as GrammarExtra;
       return {
-        instruction: extra.instruction?.trim() || null,
-        tasks: rows.map((r) => ({ prompt: r.prompt, answer: r.answer, ruleHint: r.ruleHint?.trim() || null })),
+        instruction: cfg.instruction?.trim() || null,
+        tasks: items.map((r) => ({ prompt: r.prompt, answer: r.answer, ruleHint: r.ruleHint?.trim() || null })),
       };
-    case "Translation":
+    }
+    case "Translation": {
+      const items = rows as TranslationRow[];
+      const cfg = extra as TranslationExtra;
       return {
-        sourceLang: extra.sourceLang || "", targetLang: extra.targetLang || "",
-        items: rows.map((r) => ({
+        sourceLang: cfg.sourceLang || "", targetLang: cfg.targetLang || "",
+        items: items.map((r) => ({
           source: r.source, target: r.target, alternatives: nonEmpty(strList(r.alternatives)),
           /*
            * Die Store-Bindung nur behalten, solange der Text unverändert ist. Wurde er bearbeitet, meint
@@ -212,23 +291,27 @@ export function buildTypeConfig(
           vocabularyId: r.source === r.origSource && r.target === r.origTarget ? r.vocabularyId ?? null : null,
         })),
       };
-    case "Birkenbihl":
+    }
+    case "Birkenbihl": {
+      const items = rows as BirkenbihlRow[];
+      const cfg = extra as BirkenbihlExtra;
       // Feldnamen müssen zu BirkenbihlSentence/WordPair passen (learningSentence, decoding[{learningWord, gloss}]);
       // sentenceId/wordId lässt der Server beim Speichern vergeben (NormalizeConfig).
-      return { learningLang: extra.learningLang ?? "", nativeLang: extra.nativeLang ?? "",
-        sentences: rows.map((r) => ({ learningSentence: r.text, naturalTranslation: r.naturalTranslation,
+      return { learningLang: cfg.learningLang ?? "", nativeLang: cfg.nativeLang ?? "",
+        sentences: items.map((r) => ({ learningSentence: r.text, naturalTranslation: r.naturalTranslation,
           // Dekodierung als eigene Paar-Zeilen (Wort, Glosse) eingegeben - kein Trennzeichen-Split mehr,
           // ein Komma oder Doppelpunkt in Wort/Glosse zerriss den Eintrag vorher lautlos (B-72).
           decoding: nonEmptyPairs(r.decoding ?? []) })) };
+    }
   }
 }
 
 /** Verständnisfrage: leere Auswahl heißt Freitext-Antwort, gefüllte heißt Multiple-Choice. */
-const toQuestion = (r: Row) => ({
+const toQuestion = (r: QuestionRow) => ({
   prompt: r.prompt, answer: r.answer, choices: nonEmpty(strList(r.choices)) ?? null,
 });
 
-const fromQuestion = (q: Row): Row => ({
+const fromQuestion = (q: Row): QuestionRow => ({
   prompt: q.prompt ?? "", answer: q.answer ?? "", choices: strList(q.choices),
 });
 
@@ -253,10 +336,10 @@ export function configToEditorState(type: ExerciseTypeKey, config: unknown): { r
       return { rows: [], extra: {
         direction: str(c.direction) || "front-to-back",
         sourceLang: str(c.sourceLang), targetLang: str(c.targetLang),
-      } };
+      } satisfies VocabularyExtra };
     case "Arithmetic":
       return fallback(
-        list(c.problems).map((p) => ({ prompt: p.prompt ?? "", answer: num(p.answer), tolerance: num(p.tolerance ?? 0) })),
+        list(c.problems).map((p): ArithmeticRow => ({ prompt: p.prompt ?? "", answer: num(p.answer), tolerance: num(p.tolerance ?? 0) })),
         {});
     case "ArithmeticDrill":
       return { rows: [], extra: {
@@ -267,51 +350,51 @@ export function configToEditorState(type: ExerciseTypeKey, config: unknown): { r
         allowNegativeResults: !!c.allowNegativeResults,
         divisionMustBeWhole: c.divisionMustBeWhole !== false,
         seed: num(c.seed),
-      } };
+      } satisfies ArithmeticDrillExtra };
     case "Cloze":
       return fallback(
         // `vocabKey` wird nicht bearbeitet, aber mitgeführt (siehe buildTypeConfig).
-        list(c.gaps).map((g) => ({ index: g.index ?? 1, answer: g.answer ?? "",
+        list(c.gaps).map((g): ClozeRow => ({ index: g.index ?? 1, answer: g.answer ?? "",
           alternatives: strList(g.alternatives), vocabKey: g.vocabKey ?? null })),
-        { text: str(c.text), wordBank: strList(c.wordBank) });
+        { text: str(c.text), wordBank: strList(c.wordBank) } satisfies ClozeExtra);
     case "Matching":
       return fallback(
-        list(c.pairs).map((p) => ({ left: p.left ?? "", right: p.right ?? "" })),
-        { instruction: str(c.instruction) });
+        list(c.pairs).map((p): MatchingRow => ({ left: p.left ?? "", right: p.right ?? "" })),
+        { instruction: str(c.instruction) } satisfies MatchingExtra);
     case "List":
       return fallback(
-        list(c.items).map((i) => ({ value: i.value ?? "", alternatives: strList(i.alternatives) })),
-        { instruction: str(c.instruction), ordered: !!c.ordered });
+        list(c.items).map((i): ListRow => ({ value: i.value ?? "", alternatives: strList(i.alternatives) })),
+        { instruction: str(c.instruction), ordered: !!c.ordered } satisfies ListExtra);
     case "Reading":
-      return fallback(list(c.questions).map(fromQuestion), { text: str(c.text) });
+      return fallback(list(c.questions).map(fromQuestion), { text: str(c.text) } satisfies ReadingExtra);
     case "Listening":
       return fallback(list(c.questions).map(fromQuestion),
-        { audioUrl: str(c.audioUrl), transcript: str(c.transcript) });
+        { audioUrl: str(c.audioUrl), transcript: str(c.transcript) } satisfies ListeningExtra);
     case "Essay":
       return fallback(
-        list(c.rubric).map((r) => ({ criterion: r.criterion ?? "", maxScore: num(r.maxScore ?? 5) })),
-        { prompt: str(c.prompt), minWords: num(c.minWords), maxWords: num(c.maxWords) });
+        list(c.rubric).map((r): EssayRow => ({ criterion: r.criterion ?? "", maxScore: num(r.maxScore ?? 5) })),
+        { prompt: str(c.prompt), minWords: num(c.minWords), maxWords: num(c.maxWords) } satisfies EssayExtra);
     case "Grammar":
       return fallback(
-        list(c.tasks).map((t) => ({ prompt: t.prompt ?? "", answer: t.answer ?? "", ruleHint: t.ruleHint ?? "" })),
-        { instruction: str(c.instruction) });
+        list(c.tasks).map((t): GrammarRow => ({ prompt: t.prompt ?? "", answer: t.answer ?? "", ruleHint: t.ruleHint ?? "" })),
+        { instruction: str(c.instruction) } satisfies GrammarExtra);
     case "Translation":
       return fallback(
         // origSource/origTarget merken sich den geladenen Wortlaut: nur solange er steht, darf die
         // Store-Bindung (vocabularyId) mitwandern.
-        list(c.items).map((i) => ({
+        list(c.items).map((i): TranslationRow => ({
           source: i.source ?? "", target: i.target ?? "", alternatives: strList(i.alternatives),
           vocabularyId: i.vocabularyId ?? null, origSource: i.source ?? "", origTarget: i.target ?? "",
         })),
-        { sourceLang: str(c.sourceLang) || "en", targetLang: str(c.targetLang) || "de" });
+        { sourceLang: str(c.sourceLang) || "en", targetLang: str(c.targetLang) || "de" } satisfies TranslationExtra);
     case "Birkenbihl":
       return fallback(
-        list(c.sentences).map((s) => ({
+        list(c.sentences).map((s): BirkenbihlRow => ({
           text: s.learningSentence ?? "",
           naturalTranslation: s.naturalTranslation ?? "",
           decoding: list(s.decoding).map((w) => ({ word: w.learningWord ?? "", gloss: w.gloss ?? "" })),
         })),
-        { learningLang: str(c.learningLang), nativeLang: str(c.nativeLang) });
+        { learningLang: str(c.learningLang), nativeLang: str(c.nativeLang) } satisfies BirkenbihlExtra);
   }
 }
 
