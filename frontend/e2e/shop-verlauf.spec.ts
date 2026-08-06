@@ -43,9 +43,16 @@ test("Der eigene Kauf steht im Verlauf, auch wenn der Verlauf vorher schon offen
   await sohn.goto("/sohn/shop");
   await expect(sohn.locator(".screen-title", { hasText: "Shop" })).toBeVisible();
 
-  // Verlauf ZUERST öffnen: er ist leer – und damit hat der Client ihn als „geladen" vermerkt.
+  // Verlauf ZUERST öffnen – damit hat der Client ihn als „geladen" vermerkt, und das ist die Vorbedingung
+  // von B-110. Gezählt statt auf „leer" geprüft: der Durchstich (`full-flow.spec.ts`) kauft in derselben
+  // Wegwerf-DB für dasselbe Kind, seit B-109 behoben ist und sein Shop-Block wieder mitläuft. „Leer" war
+  // nie eine Eigenschaft dieser Spec, sondern eine Nebenwirkung eines fremden Ausfalls.
   await sohn.getByRole("button", { name: "Verlauf" }).click();
-  await expect(sohn.getByText(/Noch nichts gekauft/)).toBeVisible();
+  const verlaufZeilen = sohn.locator(".list .row");
+  // Auf den geladenen Verlauf warten, leer ODER gefüllt: sonst zählt der nächste Schritt einen Zustand,
+  // den der Client noch gar nicht geholt hat, und der Vergleich am Ende ginge gegen 0 statt gegen den Ist-Stand.
+  await expect(sohn.getByText(/Noch nichts gekauft/).or(verlaufZeilen.first())).toBeVisible();
+  const zeilenVorher = await verlaufZeilen.count();
 
   // Dann kaufen: die erste leistbare Belohnung auf Lager (nicht `.locked`).
   await sohn.getByRole("button", { name: "Kaufen" }).click();
@@ -61,8 +68,11 @@ test("Der eigene Kauf steht im Verlauf, auch wenn der Verlauf vorher schon offen
   await expect(sohn.locator(".cel-title", { hasText: "GEKAUFT!" })).toBeVisible();
   expect(purchasePosts, "Ein Doppelklick darf genau einen Kauf auslösen").toHaveLength(1);
 
-  // Und jetzt muss der Verlauf ihn zeigen. Vor B-110 stand hier weiter „Noch nichts gekauft".
+  // Und jetzt muss der Verlauf ihn zeigen. Vor B-110 stand hier weiter der zuerst geladene Stand.
+  // Die ZEILENZAHL trägt die Aussage, nicht der Titel: beide Specs greifen dieselbe erste Karte, der Titel
+  // kann also schon vom fremden Kauf dastehen und würde einen ausgebliebenen Nachschlag nicht bemerken.
   await sohn.getByRole("button", { name: "Verlauf" }).click();
   await expect(sohn.getByText(/Noch nichts gekauft/)).toHaveCount(0);
+  await expect(verlaufZeilen).toHaveCount(zeilenVorher + 1);
   await expect(sohn.getByText(titel, { exact: false }).first()).toBeVisible();
 });

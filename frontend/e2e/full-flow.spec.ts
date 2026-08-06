@@ -96,7 +96,14 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   await expect(testCounter).toBeVisible();
   const testTotal = Number((await testCounter.textContent())!.match(/\/ (\d+)/)![1]);
 
-  const answerOne = async () => {
+  // Der Wartepunkt ist die Frage-Nummer, nicht der Knopf (B-109): `answerAndAdvance` fährt ZWEI Rundreisen
+  // (Antwort abgeben, nächste Frage holen), und solange die laufen, steht die vorige Karte unverändert da –
+  // „Gewusst" nur `disabled`, „Aufdecken" nirgends. Ohne diese Schranke fragt der nächste Durchgang die ALTE
+  // Karte nach „Aufdecken" (kein Treffer → Aufdecken übersprungen) und wartet danach ewig auf ein „Gewusst",
+  // das die neue Karte erst nach dem Aufdecken zeigt. Die Nummer kommt aus demselben Zustandssprung wie die
+  // Karte selbst (`setCursor`/`setItem`/`setRevealed(false)`), ist also genau dann richtig, wenn die Karte es ist.
+  const answerOne = async (frage: number) => {
+    await expect(testCounter).toHaveText(`Frage ${frage} / ${testTotal}`);
     const revealBtn = sohn.getByRole("button", { name: "Aufdecken 🔄" });
     if (await revealBtn.count()) {
       // Erst denken, dann aufdecken: vor dem Aufdecken darf die Bewertung NICHT stehen, sonst liest das Kind
@@ -110,7 +117,7 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   // Erste Frage beantworten, dann die Klausur VERLASSEN und wieder betreten: der Versuch wird am Cursor
   // fortgesetzt (der Server gibt den laufenden zurück) – er fängt nicht bei Frage 1 neu an und verbraucht
   // keinen zweiten der begrenzten Versuche.
-  await answerOne();
+  await answerOne(1);
   await expect(testCounter).toHaveText(`Frage 2 / ${testTotal}`);
   await sohn.getByRole("button", { name: "Später weiter" }).click();
   await expect(sohn.getByText("Tagesmission")).toBeVisible();
@@ -121,7 +128,7 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   await sohn.locator(".card", { hasText: EXERCISE }).getByRole("link", { name: /TEST/ }).click();
   await expect(testCounter).toHaveText(`Frage 2 / ${testTotal}`);
 
-  for (let i = 1; i < testTotal; i++) await answerOne();
+  for (let frage = 2; frage <= testTotal; frage++) await answerOne(frage);
   await expect(sohn.locator(".vtitle", { hasText: "SIEG!" })).toBeVisible();
 
   // Wallet: Münzen wurden gutgeschrieben (Test bestanden + ggf. Leitner-Übung)
