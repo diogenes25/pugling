@@ -129,6 +129,35 @@ alleiniger Owner-Check) — es muss nur auf zwei weitere Entities kopiert werden
    Regressionsrisiko (das Verhalten war vorher nie anders abgesichert), aber ein UX-Nachtrag bleibt offen
    — als eigene Folge-Idee zu erfassen, falls es beim Testen auffällt.
 
+## Nach B-106
+
+B-106 (abgenommen 2026-08-05) hat `Chapter` als Entität vollständig entfernt (`ChaptersController.cs`
+existiert nicht mehr, `Exercise.ChapterId` ist `Exercise.SeriesUnitId`,
+[LearnEntities.cs:37](../../backend/Pugling.Api/Models/LearnEntities.cs)) — die Hälfte dieser Story
+(„Kapitel-Eigentum") hat ihren Gegenstand verloren, nicht nur ihren Namen.
+
+**Der befürchtete Nachfolge-Schaden ist bereits behoben, nicht neu offen:** B-106 hat beim Bau von
+`SeriesUnitsController` selbst genau das TextbookSeries-Owner-Muster übernommen, das diese Story für
+Chapter vorschlug — nachgeprüft (2026-08-06): `Update`/`Delete` prüfen
+`IsOwnedBy(unit.Series?.OwnerAdultId, User.CreatorId())` und liefern sonst `403 not_owner`
+([SeriesUnitsController.cs:97-98,132-133](../../backend/Pugling.Api/Controllers/Creator/SeriesUnitsController.cs)),
+XML-Doc der Klasse: „Any creator may read, only the owner of the series may write." Der Lücken-Fall
+dieser Story trifft auf `SeriesUnit` also **nicht mehr zu** — er ist über die ohnehin vorhandene
+`TextbookSeries.OwnerAdultId` bereits geschlossen, ohne dass diese Story dafür etwas bauen müsste.
+
+**Was unverändert offen bleibt: nur `Subject`.** Nachgeprüft (2026-08-06,
+[SubjectsController.cs:44-84](../../backend/Pugling.Api/Controllers/Creator/SubjectsController.cs)):
+`Create` setzt weiterhin keinen Ersteller, `Update`/`Delete` prüfen weiterhin nichts außer der Existenz
+— jeder Creator kann jedes Fach umbenennen oder löschen, exakt wie im ursprünglichen Ist-Stand
+beschrieben. `Subject` trägt weiterhin kein Eigentümer-Feld.
+
+**Empfehlung: neu schneiden, nicht verwerfen.** Der Kern der Idee (ein global ungeschütztes
+Katalog-Objekt) trifft heute nur noch auf `Subject` zu — eine Story, die „Subject-Eigentum" statt
+„Fach- und Kapitel-Eigentum" heißt, mit ungefähr einem Drittel des ursprünglichen Angriffsplans (nur
+Schritt 1/3/4/5/6 für `Subject`, nichts für `Chapter`/`SeriesUnit`). Das ist eine Produktentscheidung
+(ist das verbliebene Risiko — ein Creator löscht ein fremdes „Englisch" — groß genug für eine eigene
+Story, oder zu klein, um sie noch zu lohnen?), die diese Nacht nicht autonom trifft.
+
 ## Akzeptanzkriterien
 
 1. `POST /api/v1/creator/subjects` und `POST /api/v1/creator/subjects/{id}/chapters` setzen
@@ -213,3 +242,7 @@ Migrationskette und die G2-FK-Tabelle; `/smoke-test` gegen einen laufenden Serve
 - **2026-08-04** — Querverweis: [B-106](B-106-lehrwerkgetriebener-katalog.md) verschmilzt `Exercise` mit
   `SeriesUnit`; sobald `Chapter` entfällt, verliert diese Story ihren Chapter-Anteil (das Owner-Muster
   wandert sinngemäß auf `SeriesUnit`) — kein Status-Wechsel hier, Neubewertung bei B-106s Bau.
+- **2026-08-06** — Nachtlauf, Prämissen-Nachprüfung nach B-106s Abnahme: `Chapter` existiert nicht mehr,
+  `SeriesUnit` trägt bereits eine eigene Owner-Prüfung (B-106 hat sie beim Bau selbst ergänzt). Nur der
+  `Subject`-Anteil ist unverändert offen. Empfehlung „neu schneiden" ins Dokument aufgenommen, `status`
+  bewusst nicht geändert — das ist eine Produktentscheidung, keine Stufenarbeit.

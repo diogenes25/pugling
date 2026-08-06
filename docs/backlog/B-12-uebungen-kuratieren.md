@@ -135,6 +135,19 @@ tatsächlich nutzen — nicht vom Autor selbst.
    der Detailansicht, nicht nutzbar beim Stöbern — genau das Szenario der User Story („beim Durchsuchen des
    Katalogs erkennen"). Kosten: ein weiterer Sortier-Fall, den der Endpunkt-Abdeckungs-Wächter mit abdeckt.
 
+## Nach B-106
+
+Keine Auswirkung auf diese Story. Das RWX-/`ExecutePublic`-Modell, auf dem B-12 aufbaut, hängt an der
+Übung selbst und ist von B-106 unverändert
+([LearnEntities.cs:68,98-141](../../backend/Pugling.Api/Models/LearnEntities.cs), nachgeprüft
+2026-08-06) — B-106 hat nur den Pflicht-Anker der Übung von `Chapter` auf `SeriesUnit` verschoben, nicht
+ihr Rechte-/Sichtbarkeitsmodell. Der geplante `ExerciseRatingsController` (Muster
+`ExerciseGrantsController`) und die Sortier-Erweiterung `sort=rating` in `ApplySort`
+([ExerciseCatalogController.cs:108-124](../../backend/Pugling.Api/Controllers/Creator/ExerciseCatalogController.cs))
+bleiben unabhängig von der Chapter→SeriesUnit-Verschiebung.
+
+**Empfehlung: bleibt gültig, unverändert.**
+
 ## Akzeptanzkriterien
 
 1. Ein Creator kann eine fremde Übung mit 1–5 Sternen und optionalem Kommentar bewerten
@@ -218,3 +231,5 @@ End-to-End-Rundlauf nach dem Bauen. Kein Playwright-E2E zwingend (kein Vater→S
   Sortierung) (autonom getroffen, Nutzerauftrag 2026-08-04).
 - **2026-08-03** — geschätzt: Größe M, `wo: beides`, `migration: ja`, `vertragsbruch: nein`, Angriffsplan
   und Testweg festgelegt (autonom getroffen, Nutzerauftrag 2026-08-04).
+- **2026-08-06** — Nachtlauf, Prämissen-Nachprüfung nach B-106s Abnahme: keine Auswirkung, das RWX-/
+  `ExecutePublic`-Modell ist von der Chapter→SeriesUnit-Verschiebung unberührt. `status` unverändert.

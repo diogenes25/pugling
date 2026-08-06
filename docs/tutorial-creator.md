@@ -4,9 +4,11 @@ tags: [typ/tutorial, bereich/katalog, rolle/creator, lerntechnik/vokabeln]
 
 # Tutorial · Creator — den Lernkatalog bauen
 
-Dieses Tutorial führt Schritt für Schritt durch die **Creator-Rolle**: das Anlegen des
-gemeinsamen, **kindneutralen** Lernkatalogs — Fächer → Kapitel → typisierte Übungen —
-sowie den zentralen **Vokabelspeicher** und die Tags.
+Dieses Tutorial führt Schritt für Schritt durch die **Creator-Rolle**: das Anlegen einer
+**Lehrwerk-Reihe** mit ihren **Units** — der Ort, an dem seit [B-106](backlog/B-106-lehrwerkgetriebener-katalog.md)
+jede Übung hängt —, den zentralen **Vokabelspeicher** und die Tags. Ein **Fach** (`Subject`) bleibt
+daneben bestehen, ist aber nur noch eine **Metadaten-Verknüpfung der Reihe**, kein Elternobjekt der
+Übung mehr.
 
 > **Rollen-Brücke:** Technisch heißen die drei Ebenen Creator/Supervisor/Student. Die
 > Produkt-/Familienmetapher **Vater/Sohn** bleibt daneben bestehen. Der **Vater hält
@@ -27,13 +29,19 @@ Der **Katalog** ist die globale Übungsbibliothek und die einzige Quelle der Wah
 Lerninhalte. Er ist **kindneutral**: Ein Creator legt Inhalte einmal an, mehrere Supervisor
 weisen sie später ihren Kindern zu. Die Trennung ist wichtig:
 
-- **Creator** (`api/v1/creator/…`) — baut Inhalte: Fächer, Kapitel, Übungen, Vokabelspeicher, Tags.
+- **Creator** (`api/v1/creator/…`) — baut Inhalte: Lehrwerk-Reihen, Units, Übungen, Vokabelspeicher, Tags.
 - **Supervisor** (`api/v1/supervisor/…`) — verweist über `PlanPosition` auf Katalog-Übungen und
   vergibt Ziel/Punkte/Leitner je Position. Das ist der **nächste Schritt**:
   [tutorial-supervisor.md](tutorial-supervisor.md).
 
 Der Katalog selbst kennt **kein Kind**. Er trägt nur **Metadaten** (Klassenstufe, Schulart,
 Quelle, Kategorie) für die spätere Suche und Vorfilterung.
+
+**Seit B-106 (abgenommen 2026-08-05) hängt jede Übung an einer Lehrwerk-`SeriesUnit`, nicht mehr an
+einem `Chapter`.** Die Entität `Chapter` existiert nicht mehr; ein `Subject` trägt keine Kapitel-Kinder
+mehr, sondern wird nur noch optional mit einer Lehrwerk-Reihe (`TextbookSeries.SubjectId`) verknüpft.
+Wer die Struktur einer bestehenden App noch mit `POST creator/subjects/{id}/chapters` kennt: diese
+Route gibt es nicht mehr.
 
 ---
 
@@ -44,19 +52,20 @@ Der Lehrer meldet sich per PIN an. Seed-Konto in diesem Tutorial: `adultId=2`, P
 ```http
 POST /api/v1/auth/adult
 { "adultId": 2, "pin": "9999" }
-→ { "token": "…", "role": "Supervisor", … }
+→ { "token": "…", "role": "Creator", … }
 ```
 
-Der zurückgegebene Token trägt die Rollen `["Creator","Supervisor"]`. Wer hinter dem Token
-steckt, zeigt der Endpunkt `auth/me`:
+Der zurückgegebene Token trägt die Rolle `["Creator"]` — Herr Schmidt ist ein reines
+**Lehrer-Konto** ([docs/lehrer-konto-plan.md](lehrer-konto-plan.md)), keine Supervisor-Rolle. Wer
+hinter dem Token steckt, zeigt der Endpunkt `auth/me`:
 
 ```http
 GET /api/v1/auth/me
 Authorization: Bearer <token>
 → {
   "accountId": 2,
-  "role": "Supervisor",
-  "roles": ["Creator", "Supervisor"],
+  "role": "Creator",
+  "roles": ["Creator"],
   "adultId": 2,
   "childId": null,
   "name": "Herr Schmidt (Englischlehrer)"
@@ -64,14 +73,15 @@ Authorization: Bearer <token>
 ```
 
 `childId: null` ist hier bewusst — Herr Schmidt ist reiner Inhaltebauer und steuert kein
-eigenes Kind. Trotzdem enthält sein Token die `Creator`-Rolle, mit der die gesamten
-`api/v1/creator/…`-Routen offenstehen. Ab hier setzen alle Beispiele diesen Bearer-Token voraus.
+eigenes Kind. Ein **Vater**-Konto hingegen trägt beide Rollen (`["Creator","Supervisor"]`) und
+verhält sich hier identisch. Ab hier setzen alle Beispiele diesen Bearer-Token voraus.
 
 ---
 
-## 2. Fach anlegen
+## 2. Fach anlegen (optionale Metadaten-Verknüpfung)
 
-Jede Übung lebt in einem Kapitel eines Fachs. Also zuerst das Fach:
+Ein Fach ist heute nur noch ein Klassifikations-Objekt für die Reihe — es trägt selbst keine
+Übungen mehr:
 
 ```http
 POST /api/v1/creator/subjects
@@ -80,38 +90,76 @@ POST /api/v1/creator/subjects
   "id": 5,
   "name": "Biologie",
   "createdAt": "…",
-  "chaptersCount": 0
+  "categoriesCount": 0
 }
 ```
 
-Die neue `id: 5` merken — sie steckt in allen folgenden Routen.
+Die neue `id: 5` merken. `categoriesCount` zählt die fachabhängigen **Arten** (kontrolliertes
+Vokabular fürs Vorfiltern, `POST /api/v1/creator/subjects/5/categories { "name": "Vokabeln" }`), nicht
+mehr Kapitel — die gibt es nicht mehr.
 
 ---
 
-## 3. Kapitel anlegen
+## 3. Lehrwerk-Reihe anlegen
+
+Die Reihe (`TextbookSeries`) ist der **geteilte, wiederverwendbare** Katalog-Baustein — sie trägt
+optional das Fach aus Schritt 2:
 
 ```http
-POST /api/v1/creator/subjects/5/chapters
-{ "name": "Zelle", "orderIndex": 1 }
+POST /api/v1/creator/textbook-series
+{ "name": "Bio compact", "subjectId": 5, "publisher": "Cornelsen" }
 → {
-  "id": 7,
+  "id": 5,
+  "name": "Bio compact",
+  "slug": "bio-compact",
+  "publisher": "Cornelsen",
+  "subjectName": null,
   "subjectId": 5,
-  "name": "Zelle",
-  "orderIndex": 1,
-  "exercisesCount": 0
+  "schoolTypes": "None",
+  "sourceLanguage": null,
+  "targetLanguage": null,
+  "ownerAdultId": 2,
+  "isOwn": true,
+  "unitCount": 0,
+  …
 }
 ```
 
-`orderIndex` bestimmt die Reihenfolge der Kapitel im Fach. Ergebnis: Kapitel `id: 7` im
-Fach `id: 5`.
-
-> **Optional:** Pro Fach lassen sich **fachabhängige Arten** als kontrolliertes Vokabular für
-> die Vorfilterung anlegen (`POST /api/v1/creator/subjects/5/categories { "name": "Vokabeln" }`).
-> Die zurückgegebene `categoryId` kann man dann beim Anlegen einer Übung mitgeben.
+`slug` macht die Reihe **idempotent** (derselbe Name führt zu derselbe Zeile). Die neue `id: 5`
+merken — sie steckt in allen folgenden Routen.
 
 ---
 
-## 4. Der Vokabelspeicher — die einzige Quelle der Wahrheit
+## 4. Unit anlegen — der eigentliche Träger des Stoffs
+
+```http
+POST /api/v1/creator/textbook-series/5/units
+{
+  "label": "Kapitel 1 – Die Zelle",
+  "orderIndex": 1,
+  "topics": "Zellorganellen, Mitose",
+  "vocabularyNotes": "cell, membrane, nucleus"
+}
+→ {
+  "id": 7,
+  "seriesId": 5,
+  "grade": null,
+  "orderIndex": 1,
+  "label": "Kapitel 1 – Die Zelle",
+  "topics": "Zellorganellen, Mitose",
+  "grammar": null,
+  "vocabularyNotes": "cell, membrane, nucleus",
+  …
+}
+```
+
+`grade` ist der **Band** der Reihe (z. B. „Access 8"), hier `null` (Reihe ohne Bände). `Topics`/
+`Grammar`/`VocabularyNotes` sind der Stoff, den ein KI-Creator kennen muss, statt ihn zu erraten.
+Ergebnis: Unit `id: 7` in Reihe `id: 5`.
+
+---
+
+## 5. Der Vokabelspeicher — die einzige Quelle der Wahrheit
 
 Vokabeln leben **nicht** in den Übungen, sondern zentral im **Store**. Eine Vokabelübung
 enthält nur **Referenzen** auf Store-Einträge. Front/Back/Audio kommen live aus dem Store —
@@ -148,17 +196,16 @@ Wichtige Punkte:
 - Suchen im Store: `GET /api/v1/creator/vocabulary?word=go` bzw. `?translation=gehen`.
 
 Wer noch keine passende Vokabel findet, muss sie nicht zwingend vorab von Hand anlegen — der Store
-füllt sich beim Inline-Anlegen von Items automatisch (siehe [Schritt 7](#7-items-pflegen--der-wichtige-stolperstein)).
+füllt sich beim Inline-Anlegen von Items automatisch (siehe [Schritt 8](#8-items-pflegen--der-wichtige-stolperstein)).
 
 ---
 
-## 5. Eine Vokabelübung anlegen
+## 6. Eine Vokabelübung IN der Unit anlegen
 
-Jetzt die erste typisierte Übung im Kapitel — eine **Vocabulary**-Übung, die zwei
-Store-Vokabeln referenziert:
+Jetzt die erste typisierte Übung — hängt an der **Unit**, nicht mehr an einem Kapitel:
 
 ```http
-POST /api/v1/creator/subjects/5/chapters/7/vocabulary
+POST /api/v1/creator/textbook-series/5/units/7/vocabulary
 {
   "title": "Zell-Vokabeln",
   "orderIndex": 1,
@@ -170,7 +217,7 @@ POST /api/v1/creator/subjects/5/chapters/7/vocabulary
 }
 → {
   "id": 13,
-  "chapterId": 7,
+  "seriesUnitId": 7,
   "type": "Vocabulary",
   "title": "Zell-Vokabeln",
   "authorAdultId": 2,
@@ -194,10 +241,10 @@ Beachtenswert:
 
 ---
 
-## 6. Items lesen (die materialisierten Vokabelpaare)
+## 7. Items lesen (die materialisierten Vokabelpaare)
 
 ```http
-GET /api/v1/creator/subjects/5/chapters/7/vocabulary/13/items
+GET /api/v1/creator/textbook-series/5/units/7/vocabulary/13/items
 → [
   {
     "id": 15,
@@ -220,16 +267,14 @@ GET /api/v1/creator/subjects/5/chapters/7/vocabulary/13/items
 ```
 
 Jedes Item ist eine **positionierte Referenz** (`orderIndex`) auf eine Store-Vokabel. `front`/
-`back` sind aus dem Store aufgelöst; `vocabulary` verlinkt auf den Store-Eintrag. Der
-Engine-Index beim Spielen ist die Listenposition (`orderIndex`) — er bleibt zum alten
-`ItemIndex` kompatibel.
+`back` sind aus dem Store aufgelöst; `vocabulary` verlinkt auf den Store-Eintrag.
 
-Item-CRUD läuft immer über diese Subressource:
+Item-CRUD läuft immer über diese Subressource (Route folgt der Übung: Reihe → Unit → Übung → Items):
 
 ```http
-POST   …/vocabulary/13/items          # Item anhängen
-PATCH  …/vocabulary/13/items/{itemId} # Item ändern (z. B. lokalen Hinweis)
-DELETE …/vocabulary/13/items/{itemId} # Item entfernen
+POST   …/units/7/vocabulary/13/items          # Item anhängen
+PATCH  …/units/7/vocabulary/13/items/{itemId} # Item ändern (z. B. lokalen Hinweis)
+DELETE …/units/7/vocabulary/13/items/{itemId} # Item entfernen
 ```
 
 > **Achtung, sobald die Übung in einem Study-Plan genutzt wird:** Items dürfen dann nicht mehr
@@ -238,7 +283,7 @@ DELETE …/vocabulary/13/items/{itemId} # Item entfernen
 
 ---
 
-## 7. Items pflegen — der wichtige Stolperstein
+## 8. Items pflegen — der wichtige Stolperstein
 
 Ein Item lässt sich auf **zwei** Wegen anlegen: per bestehender `vocabularyId` oder inline per
 `front`/`back`. Der inline-Weg hat eine Bedingung, die man kennen muss.
@@ -248,7 +293,7 @@ Ein Item lässt sich auf **zwei** Wegen anlegen: per bestehender `vocabularyId` 
 Ein inline-Item **ohne** dass die Übung Sprachen kennt, schlägt fehl:
 
 ```http
-POST /api/v1/creator/subjects/5/chapters/7/vocabulary/13/items
+POST /api/v1/creator/textbook-series/5/units/7/vocabulary/13/items
 { "front": "cell", "back": "Zelle" }
 → 400  validation_error
 "Provide an existing vocabularyId, or front and back (plus the exercise's
@@ -256,7 +301,7 @@ POST /api/v1/creator/subjects/5/chapters/7/vocabulary/13/items
 ```
 
 Grund: Um aus `front`/`back` **automatisch** einen neuen Store-Eintrag zu erzeugen, braucht der
-Server die Ausgangs- und Zielsprache. Die Übung aus Schritt 5 hat keine `sourceLang`/
+Server die Ausgangs- und Zielsprache. Die Übung aus Schritt 6 hat keine `sourceLang`/
 `targetLang` in der Config — also fehlt die Information.
 
 ### Weg (a): bestehende Store-Vokabel referenzieren
@@ -264,7 +309,7 @@ Server die Ausgangs- und Zielsprache. Die Übung aus Schritt 5 hat keine `source
 Immer robust — es wird nichts Neues erzeugt, nur verlinkt:
 
 ```http
-POST /api/v1/creator/subjects/5/chapters/7/vocabulary/13/items
+POST /api/v1/creator/textbook-series/5/units/7/vocabulary/13/items
 { "vocabularyId": 1 }
 → {
   "id": 17,
@@ -281,7 +326,7 @@ Trägt die Übungs-Config `sourceLang`+`targetLang`, funktioniert der inline-Weg
 Bedarf **automatisch** einen Store-Eintrag an:
 
 ```http
-POST /api/v1/creator/subjects/5/chapters/7/vocabulary
+POST /api/v1/creator/textbook-series/5/units/7/vocabulary
 {
   "title": "Zell-Vokabeln (mit Sprachen)",
   "orderIndex": 2,
@@ -293,12 +338,13 @@ POST /api/v1/creator/subjects/5/chapters/7/vocabulary
     "refs": [ { "vocabularyId": 2 } ]
   }
 }
+→ { "id": 14, "seriesUnitId": 7, … }
 
-POST …/vocabulary/{neueId}/items
+POST …/vocabulary/14/items
 { "front": "membrane", "back": "Membran" }
 → {
   "id": 19,
-  "vocabularyId": 26,   // neuer Store-Eintrag automatisch angelegt
+  "vocabularyId": 25,   // neuer Store-Eintrag automatisch angelegt
   "front": "membrane",
   "back": "Membran",
   …
@@ -311,9 +357,9 @@ POST …/vocabulary/{neueId}/items
 
 ---
 
-## 8. Den Katalog durchsuchen (kindneutral, per Metadaten)
+## 9. Den Katalog durchsuchen (kindneutral, per Metadaten)
 
-Alle Übungen aller Kapitel lassen sich fachübergreifend über ihre Metadaten finden — die
+Alle Übungen aller Units lassen sich fachübergreifend über ihre Metadaten finden — die
 Grundlage, damit Supervisor passende Inhalte für ihr Kind auswählen:
 
 ```http
@@ -321,16 +367,36 @@ GET /api/v1/creator/exercises?type=Vocabulary&take=3
 → [ ExerciseSummary, … ]
 ```
 
-Jede Zeile trägt `gradeMin`/`gradeMax` (Klassenstufe), `schoolTypes`, `source`, `categoryName`
-sowie `authorAdultId`/`authorName` und `isOwn`. Alle Filter sind optional und **UND-verknüpft**:
+Jede Zeile trägt `seriesId`/`seriesUnitId`/`subjectId` (der Weg zur Übung), `gradeMin`/`gradeMax`
+(Klassenstufe), `schoolTypes`, `source`, `categoryName` sowie `authorAdultId`/`authorName` und
+`isOwn`. Alle Filter sind optional und **UND-verknüpft**:
 
 ```http
-GET /api/v1/creator/exercises?subjectId=5&grade=9&schoolType=Gymnasium&type=Vocabulary&search=Zell
+GET /api/v1/creator/exercises?subjectId=5&type=Vocabulary&search=Zell
+→ [
+  { "id": 13, "seriesId": 5, "seriesUnitId": 7, "subjectId": 5, "type": "Vocabulary",
+    "title": "Zell-Vokabeln", "authorAdultId": 2, "isOwn": true, … },
+  { "id": 14, "seriesId": 5, "seriesUnitId": 7, "subjectId": 5, "type": "Vocabulary",
+    "title": "Zell-Vokabeln (mit Sprachen)", … }
+]
 ```
 
-Übungen mit `authorAdultId: 2` sind die von Herrn Schmidt (für ihn `isOwn: true`). Standardmäßig darf nur
-der Owner ändern; alle anderen dürfen lesen und in ihre Pläne übernehmen (geteilte Bibliothek). Über
-**RWX-Grants** kann der Owner das gezielt aufweichen (nächster Abschnitt).
+`subjectId` filtert **transitiv** über `SeriesUnit.Series.SubjectId` — das Fach hängt an der
+Reihe, nicht mehr an der Übung selbst. Übungen mit `authorAdultId: 2` sind die von Herrn Schmidt
+(für ihn `isOwn: true`). Standardmäßig darf nur der Owner ändern; alle anderen dürfen lesen und in
+ihre Pläne übernehmen (geteilte Bibliothek). Über **RWX-Grants** kann der Owner das gezielt
+aufweichen (nächster Abschnitt).
+
+Die Detail-Ansicht einer einzelnen Übung trägt zusätzlich den lesbaren Weg dorthin:
+
+```http
+GET /api/v1/creator/exercises/13
+→ {
+  "id": 13, "seriesId": 5, "seriesUnitId": 7, "seriesUnitLabel": "Kapitel 1 – Die Zelle",
+  "subjectId": 5, "subjectName": "Biologie", "type": "Vocabulary", "title": "Zell-Vokabeln",
+  "grantCount": 1, "isOwn": true, "isOwner": true, …
+}
+```
 
 ## Rechte teilen (RWX)
 
@@ -343,9 +409,11 @@ für alle abschalten:
 - Rechte verwalten (nur Owner) unter `api/v1/creator/exercises/{exerciseId}/grants`:
 
 ```http
-GET    /api/v1/creator/exercises/42/grants
-POST   /api/v1/creator/exercises/42/grants     { "creatorId": 3, "permission": "Write" }
-DELETE /api/v1/creator/exercises/42/grants/3/Write
+GET    /api/v1/creator/exercises/13/grants
+→ [ { "creatorId": 2, "creatorName": "Herr Schmidt (Englischlehrer)", "permission": "Owner",
+      "grantedByAdultId": 2, … } ]
+POST   /api/v1/creator/exercises/13/grants     { "creatorId": 3, "permission": "Write" }
+DELETE /api/v1/creator/exercises/13/grants/3/Write
 ```
 
 `permission` ist `Owner` | `Write` | `Execute` (Owner ⊃ Write ⊃ Execute). Der Anleger wird automatisch erster
@@ -356,7 +424,7 @@ Die Detail-Response (`GET /creator/exercises/{id}`) trägt zusätzlich `grantCou
 inkl. Owner) – so ist erkennbar, dass eine Übung geteilt ist, ohne die volle Liste zu ziehen. Die
 **vollständige** Rechteliste gibt es nur owner-only über den `/grants`-Endpunkt.
 
-**Break-Glass-Admin:** Ein als `Father.IsAdmin` markierter Vater erhält beim Login den `Admin`-Claim und
+**Break-Glass-Admin:** Ein als `Adult.IsAdmin` markierter Vater erhält beim Login den `Admin`-Claim und
 umgeht **alle** RWX-Prüfungen – gedacht, um im Notfall **verwaiste** (ownerlose) Übungen zu reparieren
 (z. B. nachdem der einzige Owner-Vater gelöscht wurde). Das Flag ist bewusst **nicht** per API setzbar,
 sondern nur über die DB/Seed (kein Selbst-Rechteausbau).
@@ -368,7 +436,7 @@ Damit Übungen gut gefunden werden, beim Anlegen die Metadaten mitgeben (alle op
 
 ---
 
-## 9. Testmodus — die Übung nebenwirkungsfrei durchspielen
+## 10. Testmodus — die Übung nebenwirkungsfrei durchspielen
 
 Bevor eine Übung zugewiesen wird, kann der Creator sie im **Preview** ansehen. Das erzeugt
 keinerlei Fortschritt oder Punkte:
@@ -380,6 +448,7 @@ GET /api/v1/creator/exercises/13/preview
   "stage": 4,
   "typed": true,
   "stages": [
+    { "value": 1, "label": "Beide zeigen (Kennenlernen)" },
     { "value": 2, "label": "Selbsteinschätzung" },
     { "value": 6, "label": "Multiple-Choice" },
     { "value": 3, "label": "Buchstabenkästchen" },
@@ -390,8 +459,8 @@ GET /api/v1/creator/exercises/13/preview
 }
 ```
 
-`stages` zeigt, in welchen Ausspiel-Stufen die Übung spielbar ist (von reiner
-Selbsteinschätzung bis „Hören → tippen"). `typed: true` heißt: Es gibt eine echte
+`stages` zeigt, in welchen Ausspiel-Stufen die Übung spielbar ist (von der reinen
+Kennenlern-Anzeige bis „Hören → tippen"). `typed: true` heißt: Es gibt eine echte
 Tipp-Prüfung. So sieht der Creator, was das Kind später sehen wird — ohne Seiteneffekt.
 
 Die Vorschau gibt **keine Lösungen** heraus: Antworten erscheinen weder als Feld noch im
@@ -404,11 +473,11 @@ Cloze-/Matching-Übung — die Musterlösungen tauchen im Response-Body nicht au
 
 ---
 
-## 10. Die 12 Übungstypen im Überblick
+## 11. Die 12 Übungstypen im Überblick
 
 Jeder Typ erbt dasselbe CRUD aus `ExerciseControllerBase<TConfig>`; nur die typ-spezifische
 `config` unterscheidet sich. Routenmuster:
-`api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/<typ-pfad>`.
+`api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/<typ-pfad>`.
 
 Das vollständige Typ-Manifest liefert:
 
@@ -435,41 +504,33 @@ wählt):
 | **Birkenbihl** | `/birkenbihl` | Wort-für-Wort-Dekodierung (reine Inhaltsübung, kein Abfragen) |
 
 Bis auf **Birkenbihl** legt man jeden Typ in **einem** POST an: `title`, `orderIndex`,
-`rewardPoints` und die typ-spezifische `config`.
+`rewardPoints` und die typ-spezifische `config`. Der Essay-Typ trägt die Rubrik als
+`{ "criterion": "…", "maxScore": … }`-Zeilen (nicht `points` — ein falscher Feldname liefert
+`400 unknown_field`, siehe „Unbekannte Felder werden abgelehnt" in der Root-`CLAUDE.md`).
 
 ### Sonderfall Birkenbihl: erst anlegen, dann dekodieren
 
 Die Sätze einer Birkenbihl-Übung lassen sich **nicht** vollständig inline mitgeben — jeder Satz
 braucht seine Wort-für-Wort-`decoding`, und die erzeugt der Server. Ein POST mit Sätzen ohne
-`decoding` scheitert:
+`decoding` scheitert. Der vorgesehene Weg ist zweistufig — Übung **leer** anlegen, dann Sätze
+einzeln über die Auto-Dekodierung anhängen:
 
 ```http
-POST …/chapters/7/birkenbihl
-{ "config": { "learningLang": "en", "nativeLang": "de",
-              "sentences": [ { "learningSentence": "I go to school every day.", … } ] } }
-→ 400  validation_error
-"Config.Sentences[0].Decoding": [ "The Decoding field is required." ]
-```
-
-Der vorgesehene Weg ist zweistufig — Übung **leer** anlegen, dann Sätze einzeln über die
-Auto-Dekodierung anhängen:
-
-```http
-POST …/chapters/7/birkenbihl
-{ "title": "…", "orderIndex": 10, "rewardPoints": 15,
+POST …/units/7/birkenbihl
+{ "title": "Zell-Sätze", "orderIndex": 3, "rewardPoints": 15,
   "config": { "learningLang": "en", "nativeLang": "de", "sentences": [] } }
-→ 201  { "id": 22, "config": { "nextSentenceId": 1, "nextWordId": 1, "sentences": [] } }
+→ 201  { "id": 15, "config": { "nextSentenceId": 1, "nextWordId": 1, "sentences": [] } }
 
-POST …/birkenbihl/22/sentences
-{ "learningSentence": "I go to school every day.",
-  "naturalTranslation": "Ich gehe jeden Tag zur Schule." }
+POST …/birkenbihl/15/sentences
+{ "learningSentence": "The cell has a membrane.",
+  "naturalTranslation": "Die Zelle hat eine Membran." }
 → 201 {
   "sentenceId": 1,
   "result": [
-    { "wordId": 1, "learningWord": "I",  "gloss": null,    "vocabularyId": null },
-    { "wordId": 2, "learningWord": "go", "gloss": "gehen", "vocabularyId": 2,
-      "_self": "/api/v1/creator/vocabulary/2" },
-    …
+    { "wordId": 1, "learningWord": "The", "gloss": null,      "vocabularyId": null },
+    { "wordId": 2, "learningWord": "cell", "gloss": null,      "vocabularyId": null },
+    { "wordId": 5, "learningWord": "membrane", "gloss": "Membran", "vocabularyId": 25,
+      "_self": "/api/v1/creator/vocabulary/25" }
   ]
 }
 ```
@@ -480,14 +541,14 @@ sie lassen sich später per `PUT …/birkenbihl/{id}/words/{wordId}` nachziehen)
 Wörtern liefert die Antwort zusätzlich `candidates` zur Auswahl. Die `wordId` ist **übungsweit**
 eindeutig, damit der Austausch-Endpunkt ein Wort ohne Satz-Segment eindeutig trifft.
 
-Die **vollständige Typ-Referenz** mit vollständigen Config-Schemata und Beispiel-Requests für
+Die **vollständige** Typ-Referenz mit vollständigen Config-Schemata und Beispiel-Requests für
 jeden Typ steht in [wiki/03 · Übungstypen](../wiki/03-uebungstypen.md). Willst du einen
 **neuen** Übungstyp bauen, folge dem etablierten Muster (ein Controller je Typ, kein
 Parallel-Stack): [wiki/08 · Erweitern](../wiki/08-erweitern.md).
 
 ---
 
-## 11. Tags (kind-skopiert)
+## 12. Tags (kind-skopiert)
 
 Neben den kindneutralen Metadaten können Creator und Supervisor Übungen **taggen** — etwa für
 gezieltes Wiederholen oder Klassenarbeiten:
@@ -503,15 +564,15 @@ verändern.
 
 > **Achtung, gilt auch für den reinen Creator:** `childId` ist **Pflicht**, und der Aufrufer muss
 > Zugriff auf dieses Kind haben. Herr Schmidt als reiner Lehrer betreut kein Kind — für ihn
-> antwortet sowohl `POST /creator/tags` (ohne bzw. mit fremder `childId`) als auch
-> `GET /creator/tags?childId=…` mit `403 forbidden`. Taggen ist damit faktisch dem **Supervisor**
-> vorbehalten, obwohl der Endpunkt unter der Creator-Taxonomie liegt.
+> antwortet `POST /creator/tags` (ohne bzw. mit fremder `childId`) mit `403 forbidden`
+> (nachgeprüft 2026-08-06). Taggen ist damit faktisch dem **Supervisor** vorbehalten, obwohl der
+> Endpunkt unter der Creator-Taxonomie liegt.
 
 ---
 
 ## Nächster Schritt
 
-Der Katalog steht — Fächer, Kapitel, Übungen, Vokabeln und Tags. Jetzt übernimmt der
+Der Katalog steht — Lehrwerk-Reihe, Unit, Übungen, Vokabeln und Tags. Jetzt übernimmt der
 **Supervisor**: Er baut aus diesen Inhalten einen trainierbaren Study-Plan, indem er Übungen
 als Positionen mit Ziel, Punkten und Leitner-Stufe zuweist. Weiter in
 [tutorial-supervisor.md](tutorial-supervisor.md).
@@ -523,5 +584,6 @@ als Positionen mit Ziel, Punkten und Leitner-Stufe zuweist. Weiter in
 [wiki/03 · Übungstypen](../wiki/03-uebungstypen.md) ·
 [wiki/08 · Erweitern](../wiki/08-erweitern.md) ·
 [rollen-doku.md](rollen-doku.md) ·
+[backlog/B-106](backlog/B-106-lehrwerkgetriebener-katalog.md) ·
 [api-examples/catalog.md](api-examples/catalog.md) ·
 [api-examples/vocabulary.md](api-examples/vocabulary.md)

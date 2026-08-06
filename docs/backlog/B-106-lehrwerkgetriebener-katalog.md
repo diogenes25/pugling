@@ -12,6 +12,7 @@ quelle: Testsitzung 2026-08-04 + PM-Loop-Zyklus (docs/pm-sitzung-2026-08-04.md f
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-08-06
 ---
 
 # B-106 · Übungen hängen künftig am Lehrwerk, nicht am Kapitel
@@ -233,3 +234,8 @@ Sohn-seitigen Klausur-Animation ohne Bezug zu diesem Diff), plus `pugling-review
   offene, aber nicht mehr blockierende Nachprüfung. Commits: `c803986` (Sprint 1: Schema-Slice +
   Frontend-Notfall-Fix), `f1c1282` (Sprint 2: T-02/T-04/T-05 gegrillt, kein Code). Status →
   `abgenommen`.
+- **2026-08-06** — Nachschau (Nachtlauf, `docs/pm-sitzung-2026-08-06.md` Sprint 5): der seit 2026-08-05
+  offene Prüfpunkt „Kaskaden-Picker Fach→Reihe→Unit nie im Browser bedient, nur per HTTP geprüft" ist
+  geschlossen — neue E2E-Spec `e2e/creator-lehrwerk-weg.spec.ts` bedient genau diesen Picker auf
+  `/vater/exercises/neu` real im Browser (Reihe→Unit→Übung anlegen→in der Liste finden→einer
+  Lehrplan-Position zuweisen), grün. Kein weiterer Fund. `nachgeschaut: 2026-08-06`.

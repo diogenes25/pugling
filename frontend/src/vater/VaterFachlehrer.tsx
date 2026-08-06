@@ -167,7 +167,7 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
   function deriveFromSeries(seriesId: string) {
     up("seriesId", seriesId);
     const chosen = series.find((s) => String(s.id) === seriesId);
-    if (!chosen) return;
+    if (!chosen) { setDerived(new Set()); return; }
     // Ein Freitext-`subjectName` ohne Katalog-Fach lässt sich im Pulldown nicht abbilden (Entscheidung 2).
     const fields: Array<[DerivableField, string | null | undefined]> = [
       ["subjectId", chosen.subjectId != null ? String(chosen.subjectId) : null],
@@ -263,7 +263,7 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
             <option value="">– fachneutral –</option>
             {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
-          {derived.has("subjectId") && <span className="muted" style={{ fontSize: 13 }}>aus dem Lehrwerk übernommen</span>}
+          {derived.has("subjectId") && <span className="muted" role="status" aria-live="polite" style={{ fontSize: 13 }}>aus dem Lehrwerk übernommen</span>}
         </div>
         <div className="field">
           <label htmlFor={`fl-school-${id}`}>Schulart</label>
@@ -301,7 +301,7 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
             id={`fl-src-${id}`} value={form.sourceLang} placeholder="en"
             onChange={(e) => { up("sourceLang", e.target.value); touch("sourceLang"); }}
           />
-          {derived.has("sourceLang") && <span className="muted" style={{ fontSize: 13 }}>aus dem Lehrwerk übernommen</span>}
+          {derived.has("sourceLang") && <span className="muted" role="status" aria-live="polite" style={{ fontSize: 13 }}>aus dem Lehrwerk übernommen</span>}
         </div>
         <div className="field">
           <label htmlFor={`fl-tgt-${id}`}>Muttersprache</label>
@@ -309,7 +309,7 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
             id={`fl-tgt-${id}`} value={form.targetLang} placeholder="de"
             onChange={(e) => { up("targetLang", e.target.value); touch("targetLang"); }}
           />
-          {derived.has("targetLang") && <span className="muted" style={{ fontSize: 13 }}>aus dem Lehrwerk übernommen</span>}
+          {derived.has("targetLang") && <span className="muted" role="status" aria-live="polite" style={{ fontSize: 13 }}>aus dem Lehrwerk übernommen</span>}
         </div>
       </div>
 

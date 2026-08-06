@@ -145,6 +145,30 @@ Fachlehrer-Matching zählt „Reihe" mit Gewicht 8, greift aber nur bei gesetzte
    Beleg-Text dieser Story (Entscheidung 3) direkt betrifft — genau das, was B-63 Entscheidung 10 selbst
    vorausgesagt hat. Kosten: keine, reine Bestätigung.
 
+## Nach B-106
+
+B-106 (abgenommen 2026-08-05) hat genau die Prämisse verändert, auf der diese Story ihren Ist-Stand
+aufbaut: „`TextbookSeries → SeriesUnit` trägt den Stoff … und **keine einzige Übung**" (Zeile 30-32)
+stimmt seit B-106 **nicht mehr** — `Exercise.SeriesUnitId` hängt jede Übung direkt an eine Unit
+([LearnEntities.cs:37](../../backend/Pugling.Api/Models/LearnEntities.cs)). Diese eine Aussage im
+Ist-Stand ist veraltet und müsste vor einem Bau korrigiert werden.
+
+**Trotzdem: kein Widerspruch zu Akzeptanzkriterium 3.** B-106 Entscheidung 3 macht Katalogisierung
+für den *Lernbetrieb* verpflichtend — eine neue Übung braucht zwingend eine `SeriesUnitId`. Das betrifft
+den **Creator**, der eine Übung anlegt, nicht den **Supervisor**, der am Kind ein `Textbook` einträgt.
+Nachgeprüft (2026-08-06): `Textbook.SeriesId`/`.CurrentUnitId` sind weiterhin nullable
+([AdminEntities.cs:171,178](../../backend/Pugling.Api/Models/AdminEntities.cs)),
+`TextbooksController.Create` verlangt weiterhin keine Reihe
+([TextbooksController.cs:60-76](../../backend/Pugling.Api/Controllers/Supervisor/TextbooksController.cs))
+— ein unkatalogisiertes Buch bleibt am Kind exakt so eintragbar wie vorher. Das war schon vor B-106 von
+`Chapter` entkoppelt (eine Position referenziert nur `ExerciseId`, nie den Textbook-Datensatz des Kindes),
+B-106 ändert an dieser Entkopplung nichts.
+
+**Empfehlung: bleibt gültig, ein Satz im Ist-Stand korrigieren.** Die reale Lücke dieser Story (Verlag/
+Band doppelt wahr zwischen `Textbook` und `TextbookSeries`/`SeriesUnit`) besteht unverändert; nur die
+eine überholte Zeile zum „keine Übung an der Unit" gehört ausgetauscht, wenn diese Story als Nächstes
+bearbeitet wird. Die Reihenfolge-Abhängigkeit zu B-63 (Entscheidung 4) bleibt ebenfalls unverändert real.
+
 ## Akzeptanzkriterien
 
 1. Beim Hinterlegen des Buchs am Kind ist die katalogisierte Reihe der Vorschlagsweg: sie steht im Formular
@@ -222,3 +246,8 @@ Batch-Pfad im `MediaSelector` (B-03), deutlich mehr als eine lokalisierte Ein-Pu
 - **2026-08-04** — Querverweis: [B-106](B-106-lehrwerkgetriebener-katalog.md) verschmilzt `Exercise` mit
   `SeriesUnit` und macht diese Story nach ihrem Bau voraussichtlich gegenstandslos (verworfen erst nach
   dem Bau von B-106, nicht schon jetzt) — kein Status-Wechsel hier.
+- **2026-08-06** — Nachtlauf, Prämissen-Nachprüfung nach B-106s Abnahme: entgegen der eigenen Vermutung
+  von B-106 **nicht** gegenstandslos — `Textbook.SeriesId`/`.CurrentUnitId` sind weiterhin nullable und
+  unabhängig von der neuen Übungs-Katalogisierungspflicht, die reale Lücke (Verlag/Band doppelt wahr)
+  besteht unverändert. Eine Zeile im Ist-Stand ist veraltet (SeriesUnit trägt seit B-106 Übungen) und
+  gehört vor dem nächsten Bau korrigiert. `status` unverändert, Empfehlung „bleibt gültig" dokumentiert.

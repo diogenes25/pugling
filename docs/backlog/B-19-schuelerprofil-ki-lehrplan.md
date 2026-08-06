@@ -145,6 +145,25 @@ Nicht drei unabhängige Baustellen, sondern **eine** — die anderen zwei sind k
    vorhanden). **Kosten:** ein Zusatzschritt für den Vater; das ist der Preis für „kein KI-Inhalt wird
    ungeprüft Pflicht".
 
+## Nach B-106
+
+Der in Entscheidung/Verlauf vom 2026-08-04 erwartete Parameter-Tausch ist **bereits erledigt** — als
+Nebeneffekt von B-106s eigenem T-06, nicht durch diese Story. Nachgeprüft (2026-08-06):
+`BriefingBuilder.BuildAsync` nimmt bereits `request.SeriesUnitId` entgegen, sucht die Unit darüber und
+befüllt `CreatorBriefing.SeriesUnitId`
+([BriefingBuilder.cs:26,36,50](../../backend/Pugling.Agent.Creator/Briefing/BriefingBuilder.cs)) — keine
+Spur von `ChapterId` mehr im Agenten-Source (nur veraltete `bin/`-Build-Artefakte tragen noch die alte
+Doku-Zeile, kein Quellcode). `ExamPlanner`/`CreatorPipeline` bauen auf demselben, bereits umgestellten
+Weg auf.
+
+**Was diese Story tatsächlich noch baut, ist davon unberührt:** ein neuer `PlanPlanner`
+(`backend/Pugling.Agent.Creator/PlanPlanner.cs` existiert noch nicht) und der CLI-Verb `plan` — beides
+unabhängig vom Parameter-Tausch, der schon feststeht.
+
+**Empfehlung: bleibt gültig, Schätzung unverändert.** Der ursprünglich befürchtete Zusatzaufwand („nur
+ein Parameter-Tausch nötig") ist bereits kostenlos erledigt statt zusätzlich anzufallen — wenn überhaupt,
+sinkt der Aufwand leicht gegenüber der Schätzung vom 2026-08-03, nicht umgekehrt.
+
 ## Akzeptanzkriterien
 
 1. `pugling-creator plan --child <id> --types a,b,c --per-type <n> [--intensity …] [--dry-run] [--strict]`
@@ -208,3 +227,7 @@ bestehendem Muster (`ExamPlanner`), ein neuer CLI-Verb, keine neuen Contracts, k
 - **2026-08-04** — Querverweis: [B-106](B-106-lehrwerkgetriebener-katalog.md) verschmilzt `Exercise` mit
   `SeriesUnit`; diese Story bräuchte danach nur eine Parameter-Anpassung (`SeriesUnitId` statt
   `ChapterId`), keinen strukturellen Umbau — kein Status-Wechsel hier.
+- **2026-08-06** — Nachtlauf, Prämissen-Nachprüfung nach B-106s Abnahme: der erwartete Parameter-Tausch
+  ist bereits vollzogen (`BriefingBuilder` nutzt schon `SeriesUnitId`, als Nebeneffekt von B-106s
+  eigenem T-06). Verbleibender Umfang (`PlanPlanner`, CLI-Verb `plan`) unverändert offen. `status`
+  unverändert, Empfehlung „bleibt gültig" dokumentiert.

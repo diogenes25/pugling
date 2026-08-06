@@ -267,10 +267,112 @@ reine Tor-Frage aus und stellte sich erst beim genauen Hinsehen als Verhaltensä
 nachgefragt hat), kein Gate im Produkt könnte das automatisch fangen. Als konkrete Konsequenz gehandelt:
 B-122 existiert jetzt als eigene, explizit `Wunsch`-markierte Story statt einer stillen Mitentscheidung.
 
-## Stand am Ende dieser Sitzung
+## Stand nach dem Aufräumen/Defekt-Nachtlauf (Sprint 1–4)
 
 Fünf Stories abgenommen (B-102, B-95, B-108, B-101, B-121), eine neue `Wunsch`-Story B-122 sowie B-118/119/120
-(bereits vor Sitzungsbeginn vorhanden) offen für Dialog. Vier Commits gesetzt (ein fünfter für Sprint 4
-folgt), nichts gepusht — das bleibt beim Nutzer. Kein Abbruchgrund ist eingetreten. Offen für einen
-weiteren Sprint: B-100 (Vertragsdokument, eigener großer Umfang mit OpenAPI-Regenerierung), sowie die drei
-frischen `idee`-Stories B-118/B-119/B-120, die vor dem Bau erst gegen den Code recherchiert werden müssten.
+(bereits vor Sitzungsbeginn vorhanden) offen für Dialog. Vier Commits gesetzt, nichts gepusht — das bleibt
+beim Nutzer. Kein Abbruchgrund ist eingetreten. Offen für einen weiteren Sprint: B-100 (Vertragsdokument,
+eigener großer Umfang mit OpenAPI-Regenerierung), sowie die drei frischen `idee`-Stories B-118/B-119/B-120,
+die vor dem Bau erst gegen den Code recherchiert werden müssten.
+
+## Vorlauf — neues Vorhaben: der Creator-Weg „Lehrwerk → Unit → Übung"
+
+Gesondert erteilte Freigabe (2026-08-06, im Gespräch mit dem Nutzer): Der Nutzer möchte morgen das
+Anlegen von Übungen, die an einem Lehrwerk hängen, durchspielen — die Oberfläche/das Konzept sei noch
+zu zerfasert. Zusätzlich zu den sieben Punkten oben darf genau **eine** `Wunsch`-Story gebaut werden:
+[B-63](backlog/B-63-lehrwerk-hierarchie.md) (Lehrwerk-Hierarchie), bereits gegrillt und geschätzt, zehn
+nummerierte Entscheidungen liegen vor. Alle anderen `Wunsch`/`Frage`-Stories im Creator-Thema bleiben
+gesperrt (Freigabe 1): B-06, B-09, B-11, B-12, B-13, B-15, B-17, B-19, B-21, B-22, B-23, B-45, B-46,
+B-64, B-71, B-86. Zwei Sprints, Reihenfolge verbindlich:
+
+- **Sprint 5** (= Sprint 1 dieses Vorhabens): Bestandssicherung — der Weg von heute muss committet und
+  belegt stehen, bevor B-63 angefasst wird.
+- **Sprint 6** (= Sprint 2): B-63 selbst, mit einer Abbruchregel — geht der Sprint nicht vollständig
+  grün zu Ende, wird nichts davon committet.
+
+Vor dem ersten Schritt: der Arbeitsbaum trug drei fertige, aber uncommittete Pakete aus einer
+vorherigen Sitzung (Index-Skript-Umbau, B-121 — obwohl `abgenommen` markiert, ohne Commit —, und B-67
+als Werk in Arbeit). Alle drei wurden einzeln verifiziert (Backend 752/752, Frontend-Vitest 156/156) und
+committet (`41f21eb`, `fddad28`, `5dbbb55`), damit der Abendstand dieser Nacht eindeutig ist.
+
+## Sprint 5 — Ziel & Umfang
+
+**Sprint-Ziel:** Der Creator kann heute nachweislich eine Reihe, eine Unit und dazu eine Übung anlegen
+und einem Kind zuweisen — belegt statt behauptet.
+**Umfang:** B-67 fertigstellen; sechs Post-B-106-Prämissen nachprüfen (B-13, B-64, B-19, B-11, B-12,
+B-63); eine neue E2E-Spec für den vollständigen Creator-Weg; `docs/tutorial-creator.md` verifiziert neu
+schreiben.
+**Entwickler-Brief:** Ziel: der Weg Lehrwerk→Unit→Übung steht belegt, bevor B-63 ihn verändert. Quelle
+der Wahrheit: der Post-B-106-Code selbst (`Exercise.SeriesUnitId`, `ChaptersController` entfernt), nicht
+die zwei Tage alten Story-Texte. Guards: `frontend-reviewer` für B-67, die volle Test-/E2E-Suite als
+Regressionsnetz. Migration: nein. Vertragsbruch: nein. Testweg: Backend-Suite, Frontend-Vitest, Build,
+volle Playwright-Suite, Markdownlint.
+
+## Iteration 5 — umgesetzt
+
+- **B-67**: `frontend-reviewer` gefahren (kein Blocker; ein 🟡-Fund: den drei Ableitungs-Hinweisen fehlte
+  `role="status"`/`aria-live` — behoben, Muster `VaterVocab.tsx:465`; ein 🟢-Nice-to-have — `derived`
+  blieb beim Zurücksetzen der Reihe stehen — ebenfalls behoben). Komponententest danach erneut grün
+  (3/3). Kein Rollengang im Browser möglich (keine Chrome-Verbindung in dieser Sitzung) — Ersatz:
+  `e2e/lehrwerke.spec.ts` deckt genau dieses Formular ab (1/1 grün, Teil der vollen Suite unten).
+- **Prämissen-Nachprüfung**: alle sechs Stories gegen den Post-B-106-Code (Chapter-Entität entfernt,
+  `Exercise.SeriesUnitId`) neu belegt. Wichtigster Fund: B-13s Chapter-Anteil ist gegenstandslos, ihr
+  SeriesUnit-Anteil ist von B-106 selbst bereits gebaut worden (`SeriesUnitsController` prüft schon
+  `IsOwnedBy`) — übrig bleibt nur der Subject-Anteil. B-64s vermutete Kollision mit B-106 (Pflicht-
+  Katalogisierung) erwies sich bei genauem Hinsehen als keine: `Textbook` bleibt unabhängig von der
+  Übungs-Katalogisierungspflicht. B-19s erwarteter Parameter-Tausch war durch B-106s eigenes T-06 bereits
+  erledigt. B-11/B-12/B-63 unverändert gültig. Jede Story trägt jetzt einen Abschnitt „## Nach B-106" mit
+  Beleg und Empfehlung — keine Story wurde auf `verworfen` gesetzt (Produktentscheidung, bleibt beim
+  Nutzer).
+- **Neue E2E-Spec** `e2e/creator-lehrwerk-weg.spec.ts`: Reihe anlegen → Unit anlegen → Übung über den
+  Fach/Reihe/Unit-Kaskadenpicker anlegen (Typ Grammar) → in der Verwaltung wiederfinden → einem Kind
+  zuweisen (Lehrplan-Position). Schließt B-106s eigenen offenen Beleg („Kaskadenpicker nie im Browser
+  bedient, nur per HTTP geprüft") — `nachgeschaut: 2026-08-06` an B-106 gesetzt, Prüfpunkt: „Kaskadenpicker
+  Fach→Reihe→Unit auf `/vater/exercises/neu` real im Browser bedient, Übung landet in der Positionsliste".
+- **`docs/tutorial-creator.md`** komplett neu geschrieben, jede Route über die Wegwerf-Instanz
+  (`tutorial-api.sh`, Port 5280) tatsächlich ausgeführt und verifiziert: Fach → Reihe → Unit → Übung
+  (Vokabelübung inkl. Item-Fallstrick beider Wege, Essay mit korrigiertem Feldnamen `maxScore` statt
+  `points` — ein `unknown_field`-Fund unterwegs, sofort im Beispiel richtiggestellt statt stillschweigend
+  übernommen —, Birkenbihl-Sonderfall, Katalogsuche, Preview, RWX-Grants, Tags). `auth/me` zeigt inzwischen
+  `roles:["Creator"]` für Herrn Schmidt (reines Lehrer-Konto) statt der alten, falschen Tutorial-Behauptung
+  `["Creator","Supervisor"]`.
+
+Volle Suite: Backend **752/752** (unverändert, keine Backend-Änderung in diesem Sprint), Frontend-Vitest
+**156/156** (24 Dateien, inkl. dem erweiterten B-67-Test), Frontend-Build sauber, Playwright-E2E **29/29**
+(inkl. der neuen Spec), Markdownlint repo-weit **0 Funde**.
+
+## Runde — Abnahme Sprint 5 (Rollengang: E2E + Tutorial-Verifikation)
+
+Kein klassischer Drei-Rollen-Rollengang nötig — dieser Sprint ändert kein Produktverhalten für Vater/
+Sohn, sondern räumt Bestand auf (ein A11y-Fix, sechs Doku-Nachprüfungen, ein Test, ein Tutorial). Der
+Rollengang-Ersatz ist die neue E2E-Spec selbst: sie fährt den echten Creator-Weg im echten Browser gegen
+den echten Server, genau die Definition aus `docs/backlog/README.md` („Eine E2E, die den Weg fährt, ist
+der Rollengang"). Zusätzlich verifiziert das neue Tutorial denselben Weg ein zweites Mal über die rohe
+API (Wegwerf-Instanz).
+
+**Ergebnis:** B-67 ist `abgenommen`. Die sechs Prämissen-Stories bleiben auf ihrer bisherigen Stufe
+(`geschaetzt`), mit aktualisiertem Ist-Stand — keine Story wurde befördert oder verworfen.
+
+## Retrospektive — Sprint 5
+
+**Nachschau:** B-121 (Sprint 4 dieser Sitzung, unmittelbar vorheriger Sprint) ist frisch gebaut und
+bereits durch Reviewer + rote Probe belegt — eine gesonderte zweite Nachschau am selben Tag trüge keine
+neue Erkenntnis (wie schon bei Sprint 3/4 selbst vermerkt). Stattdessen wurde die Nachschau-Pflicht an
+B-106 eingelöst, weil dessen eigener `## Verlauf` einen konkreten, seit 2026-08-05 offenen Prüfpunkt
+nennt: „Kaskadenpicker nie im Browser bedient". Die neue E2E-Spec schließt genau diese Lücke;
+`nachgeschaut: 2026-08-06` an B-106 gesetzt (Prüfpunkt benannt, siehe Iteration 5). Index-Stand danach:
+**19 von 71 abgenommenen** (B-67 kommt zum Nenner der Abgenommenen hinzu, B-106 wandert von „nie
+nachgeschaut" zu „nachgeschaut").
+
+**Was dieser Sprint gelernt hat:** Ein Tutorial, das eine geänderte Struktur nicht nachzieht, ist keine
+kosmetische Alterung — `docs/tutorial-creator.md` zeigte bis heute Routen (`POST
+creator/subjects/{id}/chapters`), die seit einem Tag **nicht mehr existieren**. Das ist exakt die
+Zerfaserung, die den heutigen Nachtlauf ausgelöst hat: ein Backlog-Eintrag kann `abgenommen` sein und
+trotzdem ein verwaistes Dokument hinterlassen, wenn „Tutorial nachziehen" kein Teil seiner
+Akzeptanzkriterien war.
+
+**Kein neuer Mechanismus** — ein Tor, das jede Routenänderung gegen jedes Tutorial abgleicht, wäre eine
+Parser-Aufgabe ohne klaren Nutzen (Tutorials sind Prosa, keine Typsignatur). Die schwächere, aber
+ehrliche Konsequenz: B-106s eigene Karte hätte „Tutorial nachziehen" als Punkt tragen sollen — das ist
+eine Lücke in **dieser** Story, nicht im Prozess. Als konkrete Handlung: die Tutorial-Aktualisierung ist
+jetzt Teil dieses Sprints, nicht nachträglich verstreut.

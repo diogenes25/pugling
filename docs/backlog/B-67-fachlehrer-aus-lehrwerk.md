@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/frontend, bereich/katalog, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/katalog, rolle/creator]
 aliases: [Fachlehrer vorbelegen, Profil aus Reihe]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: S
@@ -198,3 +198,11 @@ Interaktionsebene (Batch, Liste, neuer Screen) entsteht wie beim `MediaSelector`
   ohne Katalog-Fach lässt das Fach-Pulldown in Ruhe) — 3 von 3 grün. Gesamte Suite weiter grün
   (`npm test`: 156/156, 24 Dateien), `npm run build` (`tsc -b && vite build`) fehlerfrei. Kein Backend-
   Anteil, kein neuer Endpunkt, kein Contract geändert. `frontend-reviewer` und Rollengang stehen noch aus.
+- **2026-08-06** — Nachtlauf, abgenommen: `frontend-reviewer` gefahren, kein Blocker. Ein 🟡-Fund (den
+  drei Ableitungs-Hinweisen fehlte `role="status"`/`aria-live` — ohne das bemerkt ein Screenreader die
+  automatische Übernahme nicht, Muster `VaterVocab.tsx:465`) sofort behoben; ein 🟢-Nice-to-have (`derived`
+  blieb beim Zurücksetzen der Reihe auf „– werkunabhängig –" stehen) ebenfalls behoben. Komponententest
+  danach erneut **3/3 grün**. Kein Browser-Rollengang möglich (keine Chrome-Verbindung in dieser Sitzung);
+  Ersatz nach `docs/nachtlauf.md`: `e2e/lehrwerke.spec.ts` deckt genau dieses Formular ab (**1/1 grün**,
+  Teil der vollen Suite: Backend 752/752, Frontend-Vitest 156/156, Playwright-E2E 29/29). Commit `5dbbb55`
+  (Bau) + Fix in derselben Nachtlauf-Sitzung. Protokoll: `docs/pm-sitzung-2026-08-06.md`, Sprint 5.

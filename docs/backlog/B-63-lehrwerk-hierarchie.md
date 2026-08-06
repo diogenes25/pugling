@@ -70,6 +70,35 @@ Schreibweisen zu zerfallen.
 - Eine `TextbookSeries → SeriesUnit`-Kette ist genau zweistufig (`CurriculumEntities.cs:41,51`) — weitere
   Bücher derselben Reihe (Lernbuch, Übungsbuch) kennt das Modell nicht.
 
+## Nach B-106
+
+Ist-Stand am 2026-08-06 gegen den Post-B-106-Code nachgeprüft und in den oben genannten Punkten
+**unverändert gültig**: `TextbookSeries.Publisher` bleibt `string?`
+([CurriculumEntities.cs:22](../../backend/Pugling.Api/Models/CurriculumEntities.cs)), `SeriesUnit.Topics`/
+`.Grammar`/`.VocabularyNotes` bleiben `string?`, `TextbookSeriesController.List` filtert weiterhin nur
+`search`/`subjectId`/`mineOnly` — keine der zehn Entscheidungen dieser Story ist durch B-106 überholt.
+
+**Eine neue, in der Schätzung noch nicht berücksichtigte Naht:** `SeriesUnit` ist seit B-106 der
+Pflicht-Anker **jeder** Übung (`Exercise.SeriesUnitId`,
+[LearnEntities.cs:37](../../backend/Pugling.Api/Models/LearnEntities.cs)), und das Löschen einer Unit
+**kaskadiert** auf ihre Übungen (`ApplyExplicitCascades`,
+[PuglingDbContext.cs:883-887](../../backend/Pugling.Api/Data/PuglingDbContext.cs): „Deleting a unit
+drops its exercises"). Für diese Story heißt das konkret:
+
+- Der Typwechsel `SeriesUnit.Topics: string? → List<string>` (Entscheidung 4) und das neue Feld
+  `SeriesUnit.BookType` (Entscheidung 6) ändern **nichts** an dieser Kaskade — beide sind Felder an
+  `SeriesUnit` selbst, keine neue Beziehung zu `Exercise`. Kein zusätzliches Risiko dadurch.
+- Der Ownership-Check in `SeriesUnitsController` (`IsOwnedBy(unit.Series?.OwnerAdultId, …)`) bleibt
+  unverändert, wenn `TextbookSeries.Publisher` durch `PublisherId` ersetzt wird — der Owner sitzt an der
+  Reihe, nicht am Verlag.
+- Beim Bauen/Testen dieser Story (insbesondere Migrationstests, die eine Unit anlegen/löschen) darauf
+  achten, dass ein Test-Löschen einer `SeriesUnit` reale Übungen mitreißt, falls die Seed-Reihe „Green
+  Line 1" (aus B-106s Seed-Migration) betroffen ist — nicht die eigene Testreihe verwenden, sondern wie
+  gehabt eine frisch angelegte.
+
+**Empfehlung: bleibt gültig, Größe/Schätzung unverändert.** Die neue Naht ist ein Hinweis für den
+Angriffsplan, keine Änderung an Umfang, `migration`/`vertragsbruch` oder Größe.
+
 ## Die echte Lücke
 
 Nicht „eine Ebene fehlt", sondern: **der geteilte Katalog ist auf Wiederverwendung ausgelegt, seine Felder
@@ -270,3 +299,7 @@ vergleichbar mit einer eigenständigen DB-Umbau-Etappe, aber (dank Entscheidung 
 - **2026-08-04** — Querverweis: [B-106](B-106-lehrwerkgetriebener-katalog.md) verschmilzt `Exercise` mit
   `SeriesUnit`; diese Story bleibt voraussichtlich unabhängig (innere Reihen-Struktur, nicht die
   Kapitel-Zuordnung), bei `SeriesUnit`-Feldtypwechseln gegenprüfen — kein Status-Wechsel hier.
+- **2026-08-06** — Nachtlauf, Prämissen-Nachprüfung nach B-106s Abnahme: Ist-Stand bleibt gültig, neue
+  Naht ergänzt (`SeriesUnit` ist seit B-106 Pflicht-Anker jeder Übung, Löschen kaskadiert auf Übungen —
+  ohne Auswirkung auf Größe/Migration/Vertragsbruch dieser Story). Vor Sprint 2 dieser Nacht gegen den
+  Code nachgeprüft.

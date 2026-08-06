@@ -127,6 +127,19 @@ vier Schritte für eine Entscheidung, die beim Anlegen genauso gut fällt.
    Idee. Kosten: „privat" heißt weiterhin „nicht neu zuweisbar", nicht „unsichtbar" — das muss der Hilfetext
    klarstellen (siehe Risiken).
 
+## Nach B-106
+
+Keine Auswirkung auf diese Story. `Exercise.ExecutePublic` und `PATCH …/sharing` hängen an der Übung
+selbst, nicht an ihrem Kapitel/ihrer Unit — B-106 hat `Exercise.ChapterId` durch `Exercise.SeriesUnitId`
+ersetzt, aber `ExecutePublic` unverändert gelassen
+([LearnEntities.cs:37,68](../../backend/Pugling.Api/Models/LearnEntities.cs), nachgeprüft 2026-08-06).
+Die einzige Textstelle, die sich geändert hat, ist kosmetisch: die Katalogsuche liest das Fach jetzt
+transitiv über `SeriesUnit.Series.SubjectId` statt über `Chapter.SubjectId`
+([ExerciseCatalogController.cs:60-61](../../backend/Pugling.Api/Controllers/Creator/ExerciseCatalogController.cs)),
+ändert aber nichts an dieser Story — sie berührt weder Suche noch Sortierung, nur das Anlage-Formular.
+
+**Empfehlung: bleibt gültig, unverändert.**
+
 ## Akzeptanzkriterien
 
 1. Das Anlage-Formular (`/vater/exercises/neu`) zeigt ein Feld, mit dem der Creator vor dem Absenden
@@ -189,3 +202,5 @@ Payload-Zeile, ein Hilfetext, ein Test. Kein Backend-Feature fehlt, keine Migrat
 - **2026-08-03** — geschätzt (autonom getroffen, Nutzerauftrag 2026-08-04): **S**, `wo: frontend`,
   `migration: nein`, `vertragsbruch: nein`. Kein XL-Split nötig — im Gegenteil, der Umfang schrumpfte beim
   Recherchieren auf eine einzelne UI-Zeile. Nicht umgesetzt.
+- **2026-08-06** — Nachtlauf, Prämissen-Nachprüfung nach B-106s Abnahme: keine Auswirkung, `ExecutePublic`
+  hängt an der Übung selbst, nicht an ihrem Kapitel/ihrer Unit. `status` unverändert.
