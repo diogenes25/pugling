@@ -250,6 +250,11 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         // position names no stage of its own - the normal case for most types (see StageValidation).
         if (StageValidation.ProblemText(registry.ByKey(TypeKey), body.DefaultStage) is { } createStageErr)
             return this.ProblemWithCode(ApiErrors.ValidationError, createStageErr);
+        // Same failure class, one level up (B-108): PlanPositionsController already rejects an unfulfillable
+        // requireTypedTest at the position, but only when a supervisor later assigns THIS default - the
+        // creator who set it never saw the problem. Check it here too, at the place the default is set.
+        if (RequireTypedTestValidation.ProblemText(registry.ByKey(TypeKey), body.DefaultRequireTypedTest) is { } createTypedErr)
+            return this.ProblemWithCode(ApiErrors.ValidationError, createTypedErr);
         var config = body.Config ?? new TConfig();
         if (await ValidateConfigAsync(seriesId, config, ct) is { } createErr) return this.ProblemWithCode(ApiErrors.ValidationError, createErr);
         NormalizeConfig(config);
@@ -326,6 +331,8 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         // Same check as in Create, and before the first assignment - a rejected PUT must not half-write.
         if (StageValidation.ProblemText(registry.ByKey(TypeKey), body.DefaultStage) is { } updateStageErr)
             return this.ProblemWithCode(ApiErrors.ValidationError, updateStageErr);
+        if (RequireTypedTestValidation.ProblemText(registry.ByKey(TypeKey), body.DefaultRequireTypedTest) is { } updateTypedErr)
+            return this.ProblemWithCode(ApiErrors.ValidationError, updateTypedErr);
         var config = body.Config ?? new TConfig();
         if (await ValidateConfigAsync(seriesId, config, ct) is { } updateErr) return this.ProblemWithCode(ApiErrors.ValidationError, updateErr);
         NormalizeConfig(config);

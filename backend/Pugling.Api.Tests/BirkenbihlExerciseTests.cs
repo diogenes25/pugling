@@ -377,4 +377,48 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
         Assert.Equal("Was", decoding[0].GetProperty("gloss").GetString());
         Assert.Equal("is", decoding[1].GetProperty("learningWord").GetString());
     }
+
+    /*
+     * B-108: the same failure class as B-93, one level up. PlanPositionsController already rejects an
+     * unfulfillable requireTypedTest at the POSITION - but only when a supervisor later assigns this
+     * default, not when the creator sets it here. Birkenbihl's IsTypedStage is constantly false, so
+     * defaultRequireTypedTest: true can never score on this type.
+     */
+    [Fact]
+    public async Task DefaultRequireTypedTest_AufEinemTypOhneGetippteStufe_WirdAbgewiesen()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var route = await CreateSeriesUnitAsync(father);
+
+        var create = await father.PostAsJsonAsync(route, new
+        {
+            title = "Birkenbihl",
+            orderIndex = 1,
+            rewardPoints = 10,
+            defaultRequireTypedTest = true,
+            config = new { learningLang = "en", nativeLang = "de" },
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, create.StatusCode);
+        Assert.Equal("validation_error",
+            (await create.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+
+        // Not on PUT either: otherwise Update would let in exactly what Create rejects. Same route/series -
+        // CreateExerciseAsync would spin up its own series and mismatch the ids used below.
+        var validId = await TestApi.IdAsync(await father.PostAsJsonAsync(route, new
+        {
+            title = "Birkenbihl",
+            orderIndex = 1,
+            rewardPoints = 10,
+            config = new { learningLang = "en", nativeLang = "de" },
+        }));
+        var update = await father.PutAsJsonAsync($"{route}/{validId}", new
+        {
+            title = "Birkenbihl",
+            orderIndex = 1,
+            rewardPoints = 10,
+            defaultRequireTypedTest = true,
+            config = new { learningLang = "en", nativeLang = "de" },
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, update.StatusCode);
+    }
 }

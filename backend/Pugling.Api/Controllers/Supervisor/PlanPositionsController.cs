@@ -109,17 +109,6 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         StageValidation.ProblemText(types.ByKey(exercise.Type),
             [stage, .. schedule?.Select(s => (int?)s.Stage) ?? []]);
 
-    /*
-     * The same failure mode as the threshold/time-slot checks above: a setting that looks valid and does
-     * NOTHING. RequireTypedTest gates PositionPracticeController's `scored` on `typed || !RequireTypedTest` -
-     * for a type whose IsTypedStage is constant false (Birkenbihl, B-93), that AND never becomes true, so the
-     * position never scores at all and the father would only notice after weeks of an unmet goal.
-     */
-    private static string? RequireTypedTestProblem(IExerciseType? type, bool? requireTypedTest) =>
-        requireTypedTest == true && type?.SupportsRequireTypedTest == false
-            ? $"requireTypedTest cannot be set: the exercise type \"{type.Key}\" has no typed stage at all, so this position would never score."
-            : null;
-
     /// <summary>A single position.</summary>
     [HttpGet("{positionId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -156,7 +145,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         // The EFFECTIVE value (position override, otherwise the exercise's own default) - an unfulfillable
         // setting must not slip through just because the position itself left it unset (B-93).
         var effectiveRequireTypedTest = dto.RequireTypedTest ?? exercise.DefaultRequireTypedTest;
-        if (RequireTypedTestProblem(types.ByKey(exercise.Type), effectiveRequireTypedTest) is { } typedProblem)
+        if (RequireTypedTestValidation.ProblemText(types.ByKey(exercise.Type), effectiveRequireTypedTest) is { } typedProblem)
             return this.ProblemWithCode(ApiErrors.ValidationError, typedProblem);
 
         var order = dto.Order ?? ((await db.PlanPositions.Where(p => p.StudyPlanId == planId)
@@ -211,17 +200,18 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
 
         var pos = await FindAsync(planId, positionId, ct);
         if (pos is null) return NotFound();
+        // FindAsync always Include()s Exercise; a position without it is a data state the schema forbids.
+        // Fail loud (404, already declared on this action) instead of letting a dropped Include silently
+        // skip the checks below (B-95) - `pos.Exercise is { }` used to make that skip look intentional.
+        if (pos.Exercise is not { } exercise) return NotFound();
         // Same checks as in Create, and before the first assignment: a rejected PATCH must leave the position
         // untouched, not half-written. The exercise (and its type) never changes on a PATCH, so
         // RequireTypedTest only needs checking against an explicit new `true` - leaving it unset cannot
         // newly break an already-valid position.
-        if (pos.Exercise is { } exercise)
-        {
-            if (StageProblem(exercise, dto.Stage, dto.StageSchedule) is { } stageProblem)
-                return this.ProblemWithCode(ApiErrors.ValidationError, stageProblem);
-            if (RequireTypedTestProblem(types.ByKey(exercise.Type), dto.RequireTypedTest) is { } typedProblem)
-                return this.ProblemWithCode(ApiErrors.ValidationError, typedProblem);
-        }
+        if (StageProblem(exercise, dto.Stage, dto.StageSchedule) is { } stageProblem)
+            return this.ProblemWithCode(ApiErrors.ValidationError, stageProblem);
+        if (RequireTypedTestValidation.ProblemText(types.ByKey(exercise.Type), dto.RequireTypedTest) is { } typedProblem)
+            return this.ProblemWithCode(ApiErrors.ValidationError, typedProblem);
 
         if (dto.Order is not null) pos.Order = dto.Order.Value;
         if (dto.Stage is not null) pos.Stage = dto.Stage;

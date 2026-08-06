@@ -1,16 +1,18 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/lehrplan, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/lehrplan, rolle/supervisor]
 aliases: [Stufenwächter am Include, PATCH-Stufenprüfung bedingt]
-status: ausformuliert
+status: abgenommen
 prio: P3
 art: Aufräumen
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: XS
+wo: backend
+migration: nein
+vertragsbruch: nein
 quelle: Code-Review 2026-08-04 der Commits 3be7409…f8b0c99 (B-70/B-78/B-79)
 grund: ""
 ersetzt_durch: []
+nachgeschaut: ""
+wartet_auf: ""
 ---
 
 # B-95 · Die Stufenprüfung beim PATCH einer Position hängt an einem `Include`, das niemand einfordert
@@ -57,6 +59,23 @@ zurück), sodass ein weggefallenes `Include` nicht in eine übersprungene Prüfu
    soll, ist ihr Ort ein `ConventionGuardTests`-Fall — und der ist eigenständig zu entscheiden, weil ein
    reflexives Tor über „nullable Zugriff in einer Prüfung" schnell mehr Ausnahmen als Regeln trägt.
 
+## Entscheidungen
+
+1. **`NotFound()` früh nach dem Laden, statt eines `!`.** `if (pos.Exercise is not { } exercise) return
+   NotFound();` direkt nach dem Null-Check auf `pos`, vor den beiden Prüfungen. Begründung: eine Position
+   ohne Übung ist ein Datenzustand, den das Schema nicht kennt (`Exercise.SeriesUnitId`/`PlanPosition.ExerciseId`
+   sind beide nicht-nullbare FKs) — ein `!` würde ihn in einen 500 verwandeln, ein früher 404 ist die
+   ehrlichere Antwort und bereits an der Action deklariert (`[ProducesResponseType(StatusCodes.Status404NotFound)]`
+   steht schon). Kosten: eine Guard-Clause mehr, kein Vertragsbruch (404 war schon dokumentiert).
+2. **Andere Stellen nicht mitgezogen.** Der Review nennt nur diesen bedingten Wächter; eine Suche nach
+   weiteren `pos.Exercise is { }`/`?.`-Zugriffen im Supervisor-Bereich ist eine eigene Frage und bleibt
+   außerhalb dieser Story (kein Fund, keine neue Story nötig — offener Punkt 2 war ohnehin nur „zu prüfen",
+   keine Behauptung).
+3. **Kein neuer Wächter-Test.** Ein Test, der `Include` entfernt und rot werden lässt, wäre selbst der
+   Beweis für den Fix, nicht eine zusätzliche Zusicherung — und ein `ConventionGuardTests`-Fall über
+   „nullable Zugriff in einer Prüfung" trägt schnell mehr Ausnahmen als Regeln (offener Punkt 3). Bleibt
+   unentschieden zurückgestellt, nicht gebaut.
+
 ## Akzeptanzkriterien
 
 1. Die Stufenprüfung im PATCH-Pfad ist nicht mehr an eine `null`-Bedingung geknüpft: das Entfernen des
@@ -65,8 +84,27 @@ zurück), sodass ein weggefallenes `Include` nicht in eine übersprungene Prüfu
 2. Die bestehenden Fälle bleiben grün (`PlanPositionCrudTests`, insbesondere der Stufen-Fall aus B-79) — bei
    `art: Aufräumen` ändert sich für niemanden ein Verhalten.
 
+## Schätzung
+
+**Größe XS** (Anker: „`childId` aus dem Test-Pfad ziehen", B-01) — eine Guard-Clause in einer bestehenden
+Action, `wo: backend`, kein neuer Test. `migration: nein`/`vertragsbruch: nein`.
+
+### Testweg
+
+`PlanPositionCrudTests` (bestehend, insbesondere der B-79-Stufen-Fall) bleibt grün — kein neuer Test, da
+Entscheidung 3 keinen Wächter für das Muster selbst baut.
+
 ## Verlauf
 
 - **2026-08-04** — angelegt aus dem Code-Review der B-70/B-78/B-79-Commits; Ist-Stand am Code belegt
   (bedingter Wächter, `FindAsync`, POST-Gegenstück, die formulierte Regel in `ConfigOf`), darum gleich
   `ausformuliert`.
+- **2026-08-06** — gegrillt und geschätzt: autonom, Nachtlauf-Freigabe 1 (`art: Aufräumen`). Alle drei
+  offenen Punkte in Entscheidungen überführt (NotFound() früh, keine weiteren Stellen mitgezogen, kein
+  neuer Wächter).
+- **2026-08-06** — abgenommen: `PlanPositionsController.Update` fordert `pos.Exercise` jetzt hart ein
+  (Sprint 2 von `docs/pm-sitzung-2026-08-06.md`, zusammen mit B-108). Suite 749/749 grün,
+  `pugling-reviewer` bestätigt (keine Verhaltensänderung für heutige Aufrufer, da `Exercise` heute nie
+  null ist — die Guard-Clause ist Verteidigung gegen einen zukünftigen Fehler). Rollengang ausdrücklich
+  ausgefallen: keine neue Fähigkeit, keine sichtbare Oberfläche — Ersatz ist die volle Suite plus der
+  Reviewer-Lauf.
