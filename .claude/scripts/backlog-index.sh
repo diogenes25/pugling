@@ -7,6 +7,11 @@
 #
 # Idempotent: zweimal laufen lassen ändert nichts. Der Wächter dafür ist der leere Diff im zweiten Lauf.
 #
+# Performance: die Feld-/Abschnitts-Extraktion läuft in EINEM awk-Prozess über ALLE Story-Dateien
+# (backlog-index.awk) statt vorher ~15 sed/grep-Pipelines PRO Datei. Auf Git-Bash unter Windows ist
+# Prozess-Start teuer (Fork-Emulation); bei über 100 Storys war das der Unterschied zwischen ~15 Sekunden
+# und mehreren Minuten (gemessen 2026-08-06, ~8.800 Subshells vorher).
+#
 # Ausgabe-Regeln, die nicht verhandelbar sind (docs/ wird von markdownlint-cli2 geprüft, .claude/ nicht):
 #   - MD060 `leading_and_trailing`: jede Tabellenzeile beginnt und endet mit einem gepaddeten Pipe.
 #   - MD055/MD056: gleiche Spaltenzahl in allen Zeilen einer Tabelle.
@@ -15,29 +20,28 @@ set -uo pipefail
 
 root="${CLAUDE_PROJECT_DIR:-$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel 2>/dev/null)}"
 [ -n "$root" ] && [ -d "$root/docs/backlog" ] || { echo "docs/backlog fehlt – nichts zu tun." >&2; exit 0; }
+
+awk_script="$(dirname "${BASH_SOURCE[0]}")/backlog-index.awk"
+[ -f "$awk_script" ] || { echo "$awk_script fehlt." >&2; exit 1; }
+
 cd "$root" || exit 1
 
 readme="docs/backlog/README.md"
 [ -f "$readme" ] || { echo "$readme fehlt." >&2; exit 1; }
 
-# Frontmatter-Wert lesen: nur der YAML-Kopf, Anführungszeichen und Kommentare weg.
-# Der Bereich wird auf den Kopf begrenzt, damit ein "status:" im Prosa-Text nicht gewinnt.
-fm() {
-  sed -n '2,/^---$/p' "$1" \
-    | grep -m1 "^$2:" \
-    | sed -e "s/^$2:[[:space:]]*//" -e 's/[[:space:]]*#.*$//' -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/" \
-    | sed -e 's/[[:space:]]*$//'
-}
-
 # Rang der Stufe: reifere Stufe zuerst, damit bei gleicher Prio das Weiterfortgeschrittene oben steht.
+# Setzt $_rank statt es auszugeben: ein Aufruf über $(...) würde für jede offene Story eine Subshell
+# forken, und genau das war – neben id_of()/belege() – der verbliebene Zeitfresser nach dem awk-Umbau
+# (Kommando-Substitution forkt auch dann, wenn die aufgerufene Funktion selbst keinen externen Befehl
+# startet; unter Git-Bash/Windows ist jeder Fork teuer).
 rank() {
   case "$1" in
-    in-arbeit)     echo 1 ;;
-    geschaetzt)    echo 2 ;;
-    gegrillt)      echo 3 ;;
-    ausformuliert) echo 4 ;;
-    idee)          echo 5 ;;
-    *)             echo 9 ;;
+    in-arbeit)     _rank=1 ;;
+    geschaetzt)    _rank=2 ;;
+    gegrillt)      _rank=3 ;;
+    ausformuliert) _rank=4 ;;
+    idee)          _rank=5 ;;
+    *)             _rank=9 ;;
   esac
 }
 
@@ -46,13 +50,14 @@ sep_row="| --- | --- | --- | --- | --- | --- | --- | --- |"
 
 # Rang der Art bei gleicher Prio. Begründung der Ordnung: ein Defekt wirkt **jetzt**; ein Prüfauftrag ist
 # billig und kann Arbeit *streichen*; ein Wunsch ist das Produkt; Aufräumen ändert für niemanden etwas.
+# Setzt $_artrank statt es auszugeben – aus demselben Grund wie rank() oben.
 artrank() {
   case "$1" in
-    Defekt)    echo 1 ;;
-    Frage)     echo 2 ;;
-    Wunsch)    echo 3 ;;
-    Aufräumen) echo 4 ;;
-    *)         echo 9 ;;
+    Defekt)    _artrank=1 ;;
+    Frage)     _artrank=2 ;;
+    Wunsch)    _artrank=3 ;;
+    Aufräumen) _artrank=4 ;;
+    *)         _artrank=9 ;;
   esac
 }
 
@@ -83,70 +88,77 @@ n_verworfen=0
 n_entgangen=0
 n_geschaut=0
 
-# Trägt die Datei den Abschnitt, den ihre Stufe verlangt? Tolerant gematcht: die dünnen Stories fassen
-# "Ist-Stand am Code · Entscheidungen" in EINER Überschrift zusammen und verlinken ein Protokoll.
-hat() { grep -qE "^#{2,3} .*$2" "$1"; }
-
 # Prüft die Eintrittsbedingung, soweit sie mechanisch prüfbar ist: Abschnitte und Frontmatter-Felder.
-# Was NICHT prüfbar ist (ob ein Ist-Stand wirklich belegt, ob eine Entscheidung Kosten nennt), bleibt
-# Sache des Skills — aber die dumme Hälfte muss keine Disziplin kosten.
+# Nimmt die von backlog-index.awk bereits extrahierten Werte/Flags entgegen, statt sie ein zweites Mal
+# aus der Datei zu holen — das war vorher der teuerste Teil dieser Funktion. Setzt $_luecke statt es
+# auszugeben: über $(...) aufgerufen würde das für JEDE der über hundert Storys forken (siehe rank()).
 belege() {
-  local f="$1" st="$2" fehlt=""
+  local st="$1" groesse="$2" wo="$3" mig="$4" vb="$5" quelle="$6" art="$7" unverifiziert="$8" grund="$9"
+  local has_us="${10}" has_is="${11}" has_ak="${12}" has_en="${13}" has_sc="${14}" has_ve="${15}"
+  local fehlt=""
   case "$st" in
     ausformuliert|gegrillt|geschaetzt|in-arbeit|abgenommen)
-      hat "$f" "User Story"        || fehlt="$fehlt, Abschnitt „User Story\""
-      hat "$f" "Ist-Stand"         || fehlt="$fehlt, Abschnitt „Ist-Stand…\""
-      hat "$f" "Akzeptanzkriterien" || fehlt="$fehlt, Abschnitt „Akzeptanzkriterien\""
+      [ "$has_us" = 1 ] || fehlt="$fehlt, Abschnitt „User Story\""
+      [ "$has_is" = 1 ] || fehlt="$fehlt, Abschnitt „Ist-Stand…\""
+      [ "$has_ak" = 1 ] || fehlt="$fehlt, Abschnitt „Akzeptanzkriterien\""
       ;;
   esac
   case "$st" in
     gegrillt|geschaetzt|in-arbeit|abgenommen)
-      hat "$f" "Entscheidungen"    || fehlt="$fehlt, Abschnitt „Entscheidungen\""
+      [ "$has_en" = 1 ] || fehlt="$fehlt, Abschnitt „Entscheidungen\""
       ;;
   esac
   case "$st" in
     geschaetzt|in-arbeit|abgenommen)
-      hat "$f" "Sch(ä|ae)tzung"    || fehlt="$fehlt, Abschnitt „Schätzung\""
-      for feld in groesse wo migration vertragsbruch; do
-        [ -n "$(fm "$f" "$feld")" ] || fehlt="$fehlt, Feld \`$feld\`"
-      done
+      [ "$has_sc" = 1 ] || fehlt="$fehlt, Abschnitt „Schätzung\""
+      [ -n "$groesse" ] || fehlt="$fehlt, Feld \`groesse\`"
+      [ -n "$wo" ]      || fehlt="$fehlt, Feld \`wo\`"
+      [ -n "$mig" ]     || fehlt="$fehlt, Feld \`migration\`"
+      [ -n "$vb" ]      || fehlt="$fehlt, Feld \`vertragsbruch\`"
       ;;
   esac
   case "$st" in
-    idee) [ "$(fm "$f" unverifiziert)" = "true" ] || fehlt="$fehlt, \`unverifiziert: true\`" ;;
+    idee) [ "$unverifiziert" = "true" ] || fehlt="$fehlt, \`unverifiziert: true\`" ;;
   esac
   case "$st" in
-    verworfen) [ -n "$(fm "$f" grund)" ] || fehlt="$fehlt, Feld \`grund\`" ;;
+    verworfen) [ -n "$grund" ] || fehlt="$fehlt, Feld \`grund\`" ;;
   esac
-  hat "$f" "Verlauf" || fehlt="$fehlt, Abschnitt „Verlauf\""
-  [ -n "$(fm "$f" quelle)" ] || fehlt="$fehlt, Feld \`quelle\`"
+  [ "$has_ve" = 1 ] || fehlt="$fehlt, Abschnitt „Verlauf\""
+  [ -n "$quelle" ] || fehlt="$fehlt, Feld \`quelle\`"
 
   # `art` ist ab der ersten Stufe Pflicht und geschlossen: ein Tippfehler wäre sonst eine fünfte Art, die
   # niemandem auffällt, und an der Art hängt die Reihenfolge (Defekt vor Wunsch) und die Form der Abnahme.
-  case "$(fm "$f" art)" in
+  case "$art" in
     Defekt|Wunsch|Frage|Aufräumen) ;;
     "")  fehlt="$fehlt, Feld \`art\`" ;;
     *)   fehlt="$fehlt, \`art\` ist kein bekannter Wert" ;;
   esac
 
-  printf '%s' "${fehlt#, }"
+  _luecke="${fehlt#, }"
 }
 
-shopt -s nullglob
-for f in docs/backlog/B-*.md; do
-  base="${f##*/}"
-  # Die Id sind die ERSTEN ZWEI Bindestrich-Felder: `${base%%-*}` lieferte nur "B", weil der Slug
-  # denselben Trenner benutzt (B-01-bildwahl-einfrieren.md).
-  id="$(printf '%s' "$base" | cut -d- -f1,2)"
-  status="$(fm "$f" status)";      [ -n "$status" ] || status="?"
-  prio="$(fm "$f" prio)";          [ -n "$prio" ] || prio="—"
-  groesse="$(fm "$f" groesse)";    [ -n "$groesse" ] || groesse="—"
-  wo="$(fm "$f" wo)";              [ -n "$wo" ] || wo="—"
-  mig="$(fm "$f" migration)"
-  vb="$(fm "$f" vertragsbruch)"
+# Ein Backslash zum Pipe-Escapen ohne `sed`: unter Git-Bash/Windows kostet das EXEC eines externen
+# Binaries – nicht das reine Fork einer Subshell – den Großteil der Laufzeit (mutmaßlich Antiviren-
+# Realtime-Scan je neu gestartetem Prozess-Image). `${var//pattern/repl}` bleibt in derselben Bash.
+bs='\'
 
-  # Titel = erste H1, ohne den "B-nn · "-Vorspann (die Id steht schon in der eigenen Spalte).
-  titel="$(grep -m1 '^# ' "$f" | sed -e 's/^# //' -e 's/^B-[0-9]*[[:space:]]*·[[:space:]]*//' -e 's/|/\\|/g')"
+shopt -s nullglob
+files=(docs/backlog/B-*.md)
+shopt -u nullglob
+
+while IFS=$'\x01' read -r fpath status prio groesse wo mig vb quelle art entgangen_bei wartet_auf \
+  nachgeschaut grund ersetzt unverifiziert titel has_us has_is has_ak has_en has_sc has_ve; do
+  [ -n "$fpath" ] || continue
+  base="${fpath##*/}"
+  # Id = die ERSTEN ZWEI Bindestrich-Felder (${base%%-*} lieferte nur "B", weil der Slug denselben
+  # Trenner benutzt, B-01-bildwahl-einfrieren.md) — inline statt als Funktion, um keine Subshell zu forken.
+  rest="${base#*-}"
+  id="B-${rest%%-*}"
+  [ -n "$status" ] || status="?"
+  [ -n "$prio" ] || prio="—"
+  [ -n "$groesse" ] || groesse="—"
+  [ -n "$wo" ] || wo="—"
+  [ -n "$art" ] || art="—"
   [ -n "$titel" ] || titel="(ohne Titel)"
 
   # "offen" ist ein eigener Zustand und darf NICHT wie "nein" aussehen: eine noch nicht gefallene
@@ -162,25 +174,24 @@ for f in docs/backlog/B-*.md; do
   esac
   [ -n "$kostet" ] || kostet="—"
 
-  art="$(fm "$f" art)"; [ -n "$art" ] || art="—"
   row="| [$id]($base) | $titel | $art | \`$status\` | $prio | $groesse | $wo | $kostet |"
 
-  luecke="$(belege "$f" "$status")"
-  [ -n "$luecke" ] && unbelegt="${unbelegt}| [$id]($base) | \`$status\` | $(printf '%s' "$luecke" | sed 's/|/\\|/g') |"$'\n'
+  belege "$status" "$groesse" "$wo" "$mig" "$vb" "$quelle" "$art" "$unverifiziert" "$grund" \
+    "$has_us" "$has_is" "$has_ak" "$has_en" "$has_sc" "$has_ve"
+  [ -n "$_luecke" ] && unbelegt="${unbelegt}| [$id]($base) | \`$status\` | ${_luecke//|/${bs}|} |"$'\n'
 
   # Entgleitung: dieser Defekt steckte in Arbeit, die schon `abgenommen` war. Nur bei `art: Defekt`
   # gezählt – ein Wunsch, der später auffällt, ist kein Qualitätsverlust, sondern ein Wunsch.
-  ez="$(fm "$f" entgangen_bei)"
-  if [ -n "$ez" ] && [ "$ez" != "[]" ] && [ "$art" = "Defekt" ]; then
-    entgangen="${entgangen}| [$id]($base) | $titel | $(printf '%s' "$ez" | sed 's/|/\\|/g') | \`$status\` |"$'\n'
+  if [ -n "$entgangen_bei" ] && [ "$entgangen_bei" != "[]" ] && [ "$art" = "Defekt" ]; then
+    entgangen="${entgangen}| [$id]($base) | $titel | ${entgangen_bei//|/${bs}|} | \`$status\` |"$'\n'
     n_entgangen=$((n_entgangen + 1))
     # Ziel-Ids für die Trefferquote merken: aus "[B-99, B-66]" wird " B-99 B-66 ".
-    ziel_ids="$ziel_ids $(printf '%s' "$ez" | tr -d '[]' | tr ',' ' ')"
+    ziel="${entgangen_bei//[][]/}"
+    ziel_ids="$ziel_ids ${ziel//,/ }"
   fi
 
-  wa="$(fm "$f" wartet_auf)"
-  if [ -n "$wa" ] && [ "$wa" != '""' ] && [ "$status" != "abgenommen" ] && [ "$status" != "verworfen" ]; then
-    wartet="${wartet}| [$id]($base) | $titel | \`$status\` | $(printf '%s' "$wa" | sed 's/|/\\|/g') |"$'\n'
+  if [ -n "$wartet_auf" ] && [ "$wartet_auf" != '""' ] && [ "$status" != "abgenommen" ] && [ "$status" != "verworfen" ]; then
+    wartet="${wartet}| [$id]($base) | $titel | \`$status\` | ${wartet_auf//|/${bs}|} |"$'\n'
     n_wartet=$((n_wartet + 1))
   fi
 
@@ -188,8 +199,7 @@ for f in docs/backlog/B-*.md; do
     abgenommen)
       fertig="${fertig}${row}"$'\n'
       n_fertig=$((n_fertig + 1))
-      ng="$(fm "$f" nachgeschaut)"
-      if [ -n "$ng" ] && [ "$ng" != '""' ]; then
+      if [ -n "$nachgeschaut" ] && [ "$nachgeschaut" != '""' ]; then
         n_geschaut=$((n_geschaut + 1))
         geschaut_ids="$geschaut_ids $id"
       else
@@ -197,19 +207,21 @@ for f in docs/backlog/B-*.md; do
       fi
       ;;
     verworfen)
-      grund="$(fm "$f" grund)"; [ -n "$grund" ] || grund="—"
-      ersetzt="$(fm "$f" ersetzt_durch)"
-      [ -n "$ersetzt" ] && [ "$ersetzt" != "[]" ] && grund="$grund → $ersetzt"
-      verworfen="${verworfen}| [$id]($base) | $titel | $(printf '%s' "$grund" | sed 's/|/\\|/g') |"$'\n'
+      [ -n "$grund" ] || grund="—"
+      if [ -n "$ersetzt" ] && [ "$ersetzt" != "[]" ]; then
+        grund="$grund → $ersetzt"
+      fi
+      verworfen="${verworfen}| [$id]($base) | $titel | ${grund//|/${bs}|} |"$'\n'
       n_verworfen=$((n_verworfen + 1))
       ;;
     *)
-      offen="${offen}$prio$(artrank "$art")$(rank "$status")|$row"$'\n'
+      artrank "$art"
+      rank "$status"
+      offen="${offen}$prio$_artrank$_rank|$row"$'\n'
       n_offen=$((n_offen + 1))
       ;;
   esac
-done
-shopt -u nullglob
+done < <([ "${#files[@]}" -gt 0 ] && awk -f "$awk_script" "${files[@]}")
 
 {
   printf '%s\n' "<!-- backlog-index:start -->"
