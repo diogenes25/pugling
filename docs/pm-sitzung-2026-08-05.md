@@ -633,3 +633,31 @@ volle Suite nach jeder Story) haben gehalten.
 ## Ende von Nachtlauf-2-Sprint-4
 
 Drei Stories gebaut und abgenommen, zwei kleine Nebenfunde sofort behoben (kein neuer Review-Fund).
+
+## Ende des Nachtlaufs 2
+
+Alle vier geplanten Sprints sind durch, kein Abbruchgrund ist eingetreten. Der Fünf-Fehlversuche-Zähler
+lief in keinem Sprint über 2 von 5 – die neue Regel (Review-Fund sofort analysieren, beheben oder als
+`Defekt` im selben Sprint bearbeiten) griff genau zweimal (Sprint 1: B-112-Kommentar, Sprint 2: EBUSY-
+Kommentar + `assistent.spec.ts`-Klick-Bug) und beide Male sofort per Selbstheilung, ohne dass eine
+separate Defekt-Story nötig wurde. Sprint 4 kam mit zwei eigenen Nebenfunden (nicht vom Reviewer, sondern
+beim Bauen selbst entdeckt) ebenfalls sauber durch.
+
+**Bilanz der Nacht (9 Stories abgenommen):**
+
+| Sprint | Thema | Stories | Rollengang |
+|---|---|---|---|
+| 1 | Rollen-/Bezeichner-Konsistenz | B-44, B-32, B-51, B-83, B-112 | Regression (Suite + `frontend-reviewer`) |
+| 2 | Testsuite-Qualität & Determinismus | B-88, B-27, B-55, B-58 | `assistent.spec.ts` (echter Browser) |
+| 3 | CI/Deploy-Tooling | B-25 (B-47 bewusst nicht angefasst, wartet extern) | Regression |
+| 4 | Typsicherheit stärken | B-59, B-74, B-49 | `shop-verlauf.spec.ts` + `full-flow.spec.ts` (echter Browser) |
+
+**Was die Nacht über den eigenen Prozess gelernt hat:** die Fünf-Fehlversuche-Regel hat genau das getan,
+wofür sie gedacht war – ein Review-Fund ist ein normaler Arbeitsschritt innerhalb eines Sprints, kein
+Abbruchgrund, solange er sich nicht zur Endlosschleife häuft. Der ursprüngliche „ein Fund beendet die
+Nacht"-Reflex aus der Erprobungsphase hätte die drei produktiven Sprints 2–4 verhindert.
+
+**Stand danach:** Backlog-Index zeigt 62 abgenommene Stories (59 vor der Nacht + B-59/B-74/B-49; B-25 und
+die fünf Sprint-1-Stories waren zum Zeitpunkt des letzten Index-Laufs vor Sprint 4 bereits gezählt). Alles
+liegt lokal auf `main`, nichts wurde gepusht – das bleibt beim Nutzer. `docs/nachtlauf.md` trägt die
+überarbeitete Freigabe 3 (mehrere Sprints, Fünf-Fehlversuche-Zähler) für den nächsten Lauf.
