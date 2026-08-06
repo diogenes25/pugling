@@ -100,19 +100,42 @@ mehr Kapitel — die gibt es nicht mehr.
 
 ---
 
-## 3. Lehrwerk-Reihe anlegen
+## 3. Verlag anlegen (geteiltes Vokabular)
+
+Seit [B-63](backlog/B-63-lehrwerk-hierarchie.md) ist der Verlag eine **eigene, geteilte** Katalog-Größe
+— wie eine Reihe slug-idempotent, aber ohne Owner (einen Verlagsnamen zu nennen ist keine Autorschaft):
+
+```http
+POST /api/v1/creator/publishers
+{ "name": "Cornelsen" }
+→ {
+  "id": 2,
+  "name": "Cornelsen",
+  "slug": "cornelsen",
+  "seriesCount": 0,
+  "createdAt": "…"
+}
+```
+
+`seriesCount` zeigt, ob der Verlag noch in Gebrauch ist. Ein zweites `POST` mit demselben Namen liefert
+denselben Eintrag zurück (`200` statt `201`) — derselbe Slug-Mechanismus wie bei der Reihe.
+
+---
+
+## 4. Lehrwerk-Reihe anlegen
 
 Die Reihe (`TextbookSeries`) ist der **geteilte, wiederverwendbare** Katalog-Baustein — sie trägt
-optional das Fach aus Schritt 2:
+optional das Fach aus Schritt 2 und den Verlag aus Schritt 3 (`publisherId`, nicht mehr Freitext):
 
 ```http
 POST /api/v1/creator/textbook-series
-{ "name": "Bio compact", "subjectId": 5, "publisher": "Cornelsen" }
+{ "name": "Bio compact", "subjectId": 5, "publisherId": 2 }
 → {
   "id": 5,
   "name": "Bio compact",
   "slug": "bio-compact",
-  "publisher": "Cornelsen",
+  "publisherId": 2,
+  "publisherName": "Cornelsen",
   "subjectName": null,
   "subjectId": 5,
   "schoolTypes": "None",
@@ -121,23 +144,27 @@ POST /api/v1/creator/textbook-series
   "ownerAdultId": 2,
   "isOwn": true,
   "unitCount": 0,
+  "gradeMin": null,
+  "gradeMax": null,
   …
 }
 ```
 
-`slug` macht die Reihe **idempotent** (derselbe Name führt zu derselbe Zeile). Die neue `id: 5`
-merken — sie steckt in allen folgenden Routen.
+`slug` macht die Reihe **idempotent** (derselbe Name führt zu derselbe Zeile). `publisherName` ist
+serverseitig aus dem Verlag aufgelöst (nicht mehr gespeicherter Freitext); `gradeMin`/`gradeMax`
+aggregieren die Bände der vorhandenen Units (siehe Schritt 5) und sind hier noch `null`. Die neue
+`id: 5` merken — sie steckt in allen folgenden Routen.
 
 ---
 
-## 4. Unit anlegen — der eigentliche Träger des Stoffs
+## 5. Unit anlegen — der eigentliche Träger des Stoffs
 
 ```http
 POST /api/v1/creator/textbook-series/5/units
 {
   "label": "Kapitel 1 – Die Zelle",
   "orderIndex": 1,
-  "topics": "Zellorganellen, Mitose",
+  "topics": ["Zellorganellen", "Mitose"],
   "vocabularyNotes": "cell, membrane, nucleus"
 }
 → {
@@ -146,7 +173,8 @@ POST /api/v1/creator/textbook-series/5/units
   "grade": null,
   "orderIndex": 1,
   "label": "Kapitel 1 – Die Zelle",
-  "topics": "Zellorganellen, Mitose",
+  "bookType": "Textbook",
+  "topics": ["Zellorganellen", "Mitose"],
   "grammar": null,
   "vocabularyNotes": "cell, membrane, nucleus",
   …
@@ -155,11 +183,13 @@ POST /api/v1/creator/textbook-series/5/units
 
 `grade` ist der **Band** der Reihe (z. B. „Access 8"), hier `null` (Reihe ohne Bände). `Topics`/
 `Grammar`/`VocabularyNotes` sind der Stoff, den ein KI-Creator kennen muss, statt ihn zu erraten.
-Ergebnis: Unit `id: 7` in Reihe `id: 5`.
+`Topics` ist eine **Liste** (nicht mehr ein Komma-String); `bookType` unterscheidet weitere Bände
+derselben Reihe (Lehrbuch/Arbeitsheft/Lehrerhandreichung, Vorgabe `Textbook`). Ergebnis: Unit `id: 7`
+in Reihe `id: 5`.
 
 ---
 
-## 5. Der Vokabelspeicher — die einzige Quelle der Wahrheit
+## 6. Der Vokabelspeicher — die einzige Quelle der Wahrheit
 
 Vokabeln leben **nicht** in den Übungen, sondern zentral im **Store**. Eine Vokabelübung
 enthält nur **Referenzen** auf Store-Einträge. Front/Back/Audio kommen live aus dem Store —
@@ -196,11 +226,11 @@ Wichtige Punkte:
 - Suchen im Store: `GET /api/v1/creator/vocabulary?word=go` bzw. `?translation=gehen`.
 
 Wer noch keine passende Vokabel findet, muss sie nicht zwingend vorab von Hand anlegen — der Store
-füllt sich beim Inline-Anlegen von Items automatisch (siehe [Schritt 8](#8-items-pflegen--der-wichtige-stolperstein)).
+füllt sich beim Inline-Anlegen von Items automatisch (siehe [Schritt 9](#9-items-pflegen--der-wichtige-stolperstein)).
 
 ---
 
-## 6. Eine Vokabelübung IN der Unit anlegen
+## 7. Eine Vokabelübung IN der Unit anlegen
 
 Jetzt die erste typisierte Übung — hängt an der **Unit**, nicht mehr an einem Kapitel:
 
@@ -241,7 +271,7 @@ Beachtenswert:
 
 ---
 
-## 7. Items lesen (die materialisierten Vokabelpaare)
+## 8. Items lesen (die materialisierten Vokabelpaare)
 
 ```http
 GET /api/v1/creator/textbook-series/5/units/7/vocabulary/13/items
@@ -283,7 +313,7 @@ DELETE …/units/7/vocabulary/13/items/{itemId} # Item entfernen
 
 ---
 
-## 8. Items pflegen — der wichtige Stolperstein
+## 9. Items pflegen — der wichtige Stolperstein
 
 Ein Item lässt sich auf **zwei** Wegen anlegen: per bestehender `vocabularyId` oder inline per
 `front`/`back`. Der inline-Weg hat eine Bedingung, die man kennen muss.
@@ -301,7 +331,7 @@ POST /api/v1/creator/textbook-series/5/units/7/vocabulary/13/items
 ```
 
 Grund: Um aus `front`/`back` **automatisch** einen neuen Store-Eintrag zu erzeugen, braucht der
-Server die Ausgangs- und Zielsprache. Die Übung aus Schritt 6 hat keine `sourceLang`/
+Server die Ausgangs- und Zielsprache. Die Übung aus Schritt 7 hat keine `sourceLang`/
 `targetLang` in der Config — also fehlt die Information.
 
 ### Weg (a): bestehende Store-Vokabel referenzieren
@@ -357,7 +387,7 @@ POST …/vocabulary/14/items
 
 ---
 
-## 9. Den Katalog durchsuchen (kindneutral, per Metadaten)
+## 10. Den Katalog durchsuchen (kindneutral, per Metadaten)
 
 Alle Übungen aller Units lassen sich fachübergreifend über ihre Metadaten finden — die
 Grundlage, damit Supervisor passende Inhalte für ihr Kind auswählen:
@@ -436,7 +466,7 @@ Damit Übungen gut gefunden werden, beim Anlegen die Metadaten mitgeben (alle op
 
 ---
 
-## 10. Testmodus — die Übung nebenwirkungsfrei durchspielen
+## 11. Testmodus — die Übung nebenwirkungsfrei durchspielen
 
 Bevor eine Übung zugewiesen wird, kann der Creator sie im **Preview** ansehen. Das erzeugt
 keinerlei Fortschritt oder Punkte:
@@ -473,7 +503,7 @@ Cloze-/Matching-Übung — die Musterlösungen tauchen im Response-Body nicht au
 
 ---
 
-## 11. Die 12 Übungstypen im Überblick
+## 12. Die 12 Übungstypen im Überblick
 
 Jeder Typ erbt dasselbe CRUD aus `ExerciseControllerBase<TConfig>`; nur die typ-spezifische
 `config` unterscheidet sich. Routenmuster:
@@ -548,7 +578,7 @@ Parallel-Stack): [wiki/08 · Erweitern](../wiki/08-erweitern.md).
 
 ---
 
-## 12. Tags (kind-skopiert)
+## 13. Tags (kind-skopiert)
 
 Neben den kindneutralen Metadaten können Creator und Supervisor Übungen **taggen** — etwa für
 gezieltes Wiederholen oder Klassenarbeiten:

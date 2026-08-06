@@ -20,7 +20,7 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
         var sr = await TestApi.IdAsync(await f.PostAsJsonAsync("/api/v1/creator/textbook-series", new
         {
             name = $"{name} Reihe",
-            publisher = (string?)null,
+            publisherId = (int?)null,
             subjectName = (string?)null,
             subjectId = s,
             schoolTypes = (object?)null,

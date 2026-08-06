@@ -70,7 +70,7 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
         var subject = await creator.CreateSubjectAsync(new CreateSubjectDto("Client-Test Englisch"));
         var series = await creator.CreateSeriesAsync(new CreateTextbookSeriesDto(
             "Client-Test Reihe", null, null, subject.Id, null, null, null, null));
-        var unit = await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto("Unit 1", null, 1, null, null, null));
+        var unit = await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto("Unit 1", null, 1, null, null, null, null));
 
         var payload = new ExercisePayload<VocabularyConfig>("Classroom words", 1, 10, new VocabularyConfig
         {
@@ -122,7 +122,7 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
         var subject = await creator.CreateSubjectAsync(new CreateSubjectDto("Client-Test Steuerung"));
         var series = await creator.CreateSeriesAsync(new CreateTextbookSeriesDto(
             "Client-Test Steuerung Reihe", null, null, subject.Id, null, null, null, null));
-        var unit = await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto("Einheit 1", null, 1, null, null, null));
+        var unit = await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto("Einheit 1", null, 1, null, null, null, null));
         var exercise = await creator.CreateExerciseAsync(series.Id, unit.Id, "matching",
             new ExercisePayload<MatchingConfig>("Verben zuordnen", 1, 8, new MatchingConfig
             {
@@ -219,10 +219,10 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
         var supervisor = Supervisor();
 
         var series = await creator.CreateSeriesAsync(new CreateTextbookSeriesDto(
-            $"Access {Guid.NewGuid():N}", "Cornelsen", "Englisch", null,
+            $"Access {Guid.NewGuid():N}", null, "Englisch", null,
             SchoolTypes.Gymnasium, "en", "de", null));
         var unit = await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto(
-            "Unit 3 – Growing up", 8, 3, "Familie", "Present perfect", "to grow up, responsibility"));
+            "Unit 3 – Growing up", 8, 3, null, ["Familie"], "Present perfect", "to grow up, responsibility"));
 
         // Grade and school type stay open: the seed child 1 should match this profile in any case. The ranking
         // itself is checked by CreatorProfileTests with a child created for the purpose.
@@ -293,7 +293,7 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
         var subject = await creator.CreateSubjectAsync(new CreateSubjectDto("Client-Test Fehler"));
         var series = await creator.CreateSeriesAsync(new CreateTextbookSeriesDto(
             "Client-Test Fehler Reihe", null, null, subject.Id, null, null, null, null));
-        var unit = await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto("Kapitel", null, 1, null, null, null));
+        var unit = await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto("Kapitel", null, 1, null, null, null, null));
         var invalid = await Assert.ThrowsAsync<PuglingApiException>(() =>
             creator.CreateExerciseAsync(series.Id, unit.Id, "birkenbihl",
                 new ExercisePayload<BirkenbihlConfig>("Ohne Dekodierung", 1, 5, new BirkenbihlConfig
@@ -328,7 +328,7 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
         var subject = await creator.CreateSubjectAsync(new CreateSubjectDto("Client-Test Birkenbihl"));
         var series = await creator.CreateSeriesAsync(new CreateTextbookSeriesDto(
             "Client-Test Birkenbihl Reihe", null, null, subject.Id, null, null, null, null));
-        var unit = await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto("Kapitel", null, 1, null, null, null));
+        var unit = await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto("Kapitel", null, 1, null, null, null, null));
         var exercise = await creator.CreateExerciseAsync(series.Id, unit.Id, "birkenbihl",
             new ExercisePayload<BirkenbihlConfig>("At the school gate", 1, 15, new BirkenbihlConfig
             {

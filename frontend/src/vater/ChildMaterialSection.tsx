@@ -214,7 +214,7 @@ function TextbookForm({ childId, book, series, subjects, onDone }: {
           <select id={`${id}-series`} value={form.seriesId} onChange={(e) => chooseSeries(e.target.value)}>
             <option value="">– nicht katalogisiert –</option>
             {series.map((s) => (
-              <option key={s.id} value={s.id}>{s.name}{s.publisher ? ` (${s.publisher})` : ""}</option>
+              <option key={s.id} value={s.id}>{s.name}{s.publisherName ? ` (${s.publisherName})` : ""}</option>
             ))}
           </select>
         </div>

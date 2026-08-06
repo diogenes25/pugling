@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/katalog, bereich/frontend, rolle/creator, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/katalog, bereich/frontend, rolle/creator, rolle/supervisor]
 aliases: [Lehrwerk-Hierarchie, Verlag-Reihe-Band-Unit]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: L
@@ -303,3 +303,27 @@ vergleichbar mit einer eigenständigen DB-Umbau-Etappe, aber (dank Entscheidung 
   Naht ergänzt (`SeriesUnit` ist seit B-106 Pflicht-Anker jeder Übung, Löschen kaskadiert auf Übungen —
   ohne Auswirkung auf Größe/Migration/Vertragsbruch dieser Story). Vor Sprint 2 dieser Nacht gegen den
   Code nachgeprüft.
+- **2026-08-06** — Nachtlauf Sprint 2, gebaut und abgenommen (Zusatz-Freigabe für diese Nacht, siehe
+  `docs/pm-sitzung-2026-08-06.md` Sprint 6): Backend zuerst — neue `Publisher`-Entität (slug-idempotent,
+  kein Owner, Muster `InterestTag`), `TextbookSeries.PublisherId` ersetzt den Freitext, `SeriesUnit.Topics`
+  ist jetzt `List<string>` (JSON-Spalte + `ValueComparer`), `SeriesUnit.BookType` neu (C#-Default
+  `Textbook`, kein zweiter DB-Default), `TextbookSeriesController` filtert zusätzlich nach `publisherId`/
+  `schoolTypes`/`grade` und aggregiert `gradeMin`/`gradeMax` aus den Units. Migrationskette neu gefaltet
+  (`InitialCreate`). Entscheidung 3 (Grammatik-Taxonomie) bewusst nicht gebaut, wie zurückgestellt.
+  Frontend: `VaterLehrwerke.tsx` komplett überarbeitet — Verlags-Auswahl mit Inline-Anlage, Sprachen als
+  `<select>` aus `LANGUAGES`, Themen als lokaler (nicht netzwerkgebundener) Chip-Editor, `BookType`-Auswahl,
+  aggregierte Band-Spalte, erweiterte Filterleiste.
+  **Reviewer:** `pugling-reviewer` und `frontend-reviewer` liefen, beide **kein Blocker**. Vier nicht
+  blockierende Funde sofort behoben: fehlende Integrationstest-Abdeckung der drei neuen Filter +
+  Grade-Aggregation (neuer Test `CreatorProfileTests.Filter_Auf_Verlag_Schulart_Und_Klasse_Und_Der_
+  Aggregierte_Notenbereich`), `SeriesUnit.Topics` in `UnlimitedByDesign` nachgetragen (Doku-Konsistenz),
+  fehlende Tastatur-Gleichwertigkeit (Enter) am Verlags-Inline-Formular (jetzt echtes `<form>`), und eine
+  Erfolgsmeldung, die "angelegt" behauptete, obwohl der Slug das Anlegen idempotent macht (Formulierung an
+  die Reihe angeglichen: „steht im Vokabular").
+  **Rollengang:** kein Browser-Rollengang möglich (keine Chrome-Verbindung in dieser Sitzung). Ersatz nach
+  `docs/nachtlauf.md`: `e2e/lehrwerke.spec.ts` (Verlag inline anlegen, Reihe, Themen-Chips, Fachlehrer-
+  Matching) und `e2e/creator-lehrwerk-weg.spec.ts` (Reihe→Unit→Übung→Zuweisung) fahren die neue
+  Oberfläche im echten Browser gegen den echten Server, beide grün.
+  Suite: Backend **756/756**, Frontend-Vitest **156/156** (24 Dateien), Build sauber, Playwright-E2E
+  **29/29**, Markdownlint **0 Funde**. Alle acht Akzeptanzkriterien erfüllt (AK7, Matching unverändert,
+  über die bestehenden `CreatorProfileTests`-Matching-Fälle bestätigt). Status → `abgenommen`.

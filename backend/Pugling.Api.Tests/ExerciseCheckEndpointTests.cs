@@ -25,7 +25,7 @@ public class ExerciseCheckEndpointTests(PuglingWebAppFactory factory) : IClassFi
             new
             {
                 name = $"Reihe-{fach}-{Guid.NewGuid():N}"[..20],
-                publisher = (string?)null,
+                publisherId = (int?)null,
                 subjectName = (string?)null,
                 subjectId,
                 schoolTypes = (string?)null,

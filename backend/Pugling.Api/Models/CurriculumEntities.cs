@@ -6,6 +6,21 @@ namespace Pugling.Api.Models;
 // a deleted owner only clears the FK (SetNull) so that other people's references do not break.
 
 /// <summary>
+/// A publisher ("Cornelsen", "Klett") as a <b>shared</b>, slug-idempotent vocabulary entry - pattern
+/// <c>InterestTag</c>: no <c>OwnerAdultId</c>, because naming a publisher is not authorship (unlike a
+/// <see cref="TextbookSeries"/>, which a creator actually builds and owns).
+/// </summary>
+public class Publisher
+{
+    public int Id { get; set; }
+    /// <summary>Display name, e.g. "Cornelsen".</summary>
+    public string Name { get; set; } = "";
+    /// <summary>Normalized, globally unique key ("cornelsen"). Immutable.</summary>
+    public string Slug { get; set; } = "";
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>
 /// A textbook series ("Access", "Green Line") as a <b>shared</b> entity. Only that makes the question
 /// "which creator knows this child's material?" answerable by machine: the child's <see cref="Textbook"/>
 /// and the <see cref="CreatorProfile"/> point at the same record instead of comparing free-text titles.
@@ -18,8 +33,9 @@ public class TextbookSeries
     public string Name { get; set; } = "";
     /// <summary>Normalized, globally unique key of the series ("access"). Immutable.</summary>
     public string Slug { get; set; } = "";
-    /// <summary>Publisher, e.g. "Cornelsen".</summary>
-    public string? Publisher { get; set; }
+    /// <summary>Optional catalog link to the <see cref="Publisher"/> that publishes this series.</summary>
+    public int? PublisherId { get; set; }
+    public Publisher? Publisher { get; set; }
     /// <summary>Subject as free text ("Englisch") – the subject need not exist in the catalog.</summary>
     public string? SubjectName { get; set; }
     /// <summary>Optional catalog link to a <see cref="Subject"/> where an exact assignment is possible.</summary>
@@ -59,8 +75,10 @@ public class SeriesUnit
     public int OrderIndex { get; set; }
     /// <summary>Label as printed in the book, e.g. "Unit 3 – Growing up".</summary>
     public string Label { get; set; } = "";
-    /// <summary>Topics/contents of the unit (free text, bullet points welcome).</summary>
-    public string? Topics { get; set; }
+    /// <summary>Which kind of book within the series this unit belongs to; default the main textbook.</summary>
+    public BookType BookType { get; set; } = BookType.Textbook;
+    /// <summary>Topics/contents of the unit, one entry per topic.</summary>
+    public List<string> Topics { get; set; } = [];
     /// <summary>Grammar the unit introduces or practices.</summary>
     public string? Grammar { get; set; }
     /// <summary>Vocabulary note of the unit (word fields or concrete words, comma-separated).</summary>

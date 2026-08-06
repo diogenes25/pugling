@@ -59,7 +59,7 @@ public sealed record ProfileFacts(
         text.AppendLine($"- Unit: {Unit.Label}{(Unit.Grade is { } g ? $" (Band für Klasse {g})" : "")}");
         // The unit's subject matter is the reason this table exists: without it the model invents content
         // that never appears in the child's lessons.
-        if (!string.IsNullOrWhiteSpace(Unit.Topics)) text.AppendLine($"- Themen der Unit: {Unit.Topics}");
+        if (Unit.Topics.Count > 0) text.AppendLine($"- Themen der Unit: {string.Join(", ", Unit.Topics)}");
         if (!string.IsNullOrWhiteSpace(Unit.Grammar)) text.AppendLine($"- Grammatik der Unit: {Unit.Grammar}");
         if (!string.IsNullOrWhiteSpace(Unit.VocabularyNotes))
             text.AppendLine($"- Wortschatz der Unit: {Unit.VocabularyNotes}");

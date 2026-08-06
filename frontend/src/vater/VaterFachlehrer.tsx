@@ -291,7 +291,7 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
           <select id={`fl-series-${id}`} value={form.seriesId} onChange={(e) => deriveFromSeries(e.target.value)}>
             <option value="">– werkunabhängig –</option>
             {series.map((s) => (
-              <option key={s.id} value={s.id}>{s.name}{s.publisher ? ` (${s.publisher})` : ""}</option>
+              <option key={s.id} value={s.id}>{s.name}{s.publisherName ? ` (${s.publisherName})` : ""}</option>
             ))}
           </select>
         </div>

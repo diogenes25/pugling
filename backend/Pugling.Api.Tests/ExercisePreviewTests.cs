@@ -96,7 +96,7 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
             new
             {
                 name = TestApi.UniqueName("Reihe-Vorschau-Liste"),
-                publisher = (string?)null,
+                publisherId = (int?)null,
                 subjectName = (string?)null,
                 subjectId,
                 schoolTypes = (string?)null,

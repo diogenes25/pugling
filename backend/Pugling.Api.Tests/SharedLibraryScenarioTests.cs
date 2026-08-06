@@ -32,7 +32,7 @@ public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFi
         var seriesId = await TestApi.IdAsync(await teacher.PostAsJsonAsync("/api/v1/creator/textbook-series", new
         {
             name = $"Green Line 5 (geteilt {Guid.NewGuid():N})",
-            publisher = (string?)null,
+            publisherId = (int?)null,
             subjectName = (string?)null,
             subjectId,
             schoolTypes = (object?)null,

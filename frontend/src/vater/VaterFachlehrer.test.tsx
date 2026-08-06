@@ -12,9 +12,10 @@ const ENGLISH: SubjectResponse = { id: 1, name: "Englisch", createdAt: "2026-01-
 
 function seriesWith(overrides: Partial<TextbookSeriesResponse>): TextbookSeriesResponse {
   return {
-    id: 1, name: "Access", slug: "access", publisher: null, subjectName: "Englisch", subjectId: 1,
+    id: 1, name: "Access", slug: "access", publisherId: null, publisherName: null, subjectName: "Englisch", subjectId: 1,
     schoolTypes: "Gymnasium", sourceLanguage: "en", targetLanguage: "de", notes: null,
-    ownerAdultId: null, isOwn: true, unitCount: 0, createdAt: "2026-01-01T00:00:00Z", ...overrides,
+    ownerAdultId: null, isOwn: true, unitCount: 0, gradeMin: null, gradeMax: null,
+    createdAt: "2026-01-01T00:00:00Z", ...overrides,
   };
 }
 

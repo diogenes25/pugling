@@ -125,7 +125,7 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
             profile.SourceLang, profile.TargetLang, profile.Persona, profile.Didactics,
             // The series sits on the profile; if unset there it comes from the child's book and is reported
             // anyway - the subject matter counts, not where the value came from.
-            series?.Id ?? profile.SeriesId, series?.Name ?? profile.SeriesName, series?.Publisher, series?.Notes, unit);
+            series?.Id ?? profile.SeriesId, series?.Name ?? profile.SeriesName, series?.PublisherName, series?.Notes, unit);
 
     /// <summary>
     /// The child with everything that drives the tailoring. A pure creator account sees no children; the

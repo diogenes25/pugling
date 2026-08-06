@@ -282,7 +282,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             new
             {
                 name = "Doku-Reihe",
-                publisher = (string?)null,
+                publisherId = (int?)null,
                 subjectName = (string?)null,
                 subjectId,
                 schoolTypes = (string?)null,

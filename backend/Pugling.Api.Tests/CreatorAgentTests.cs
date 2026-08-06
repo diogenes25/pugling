@@ -54,7 +54,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var subject = await creator.CreateSubjectAsync(new CreateSubjectDto($"Agent-Test {name} {Guid.NewGuid():N}"));
         var series = await creator.CreateSeriesAsync(new CreateTextbookSeriesDto(
             $"Agent-Reihe {name} {Guid.NewGuid():N}", null, subject.Name, subject.Id, null, null, null, null));
-        var unit = await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto("Unit 1", null, 1, null, null, null));
+        var unit = await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto("Unit 1", null, 1, null, null, null, null));
         return (subject.Id, series.Id, unit.Id);
     }
 
@@ -382,12 +382,13 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     private static async Task<(TextbookSeriesResponse Series, SeriesUnitResponse Unit, CreatorProfileResponse Profile)>
         FreshProfileAsync(CreatorApi creator, int? subjectId, string name)
     {
+        var publisher = await creator.CreatePublisherAsync(new CreatePublisherDto("Cornelsen"));
         var series = await creator.CreateSeriesAsync(new CreateTextbookSeriesDto(
-            $"Access {name} {Guid.NewGuid():N}", "Cornelsen", "Englisch", subjectId,
+            $"Access {name} {Guid.NewGuid():N}", publisher.Id, "Englisch", subjectId,
             SchoolTypes.Gymnasium, "en", "de", "Kompetenzorientiertes Lehrwerk mit Units je Halbjahr."));
         var unit = await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto(
-            "Unit 3 – Growing up", Grade: 8, OrderIndex: 3,
-            Topics: "Familie, Freundschaft, Erwachsenwerden",
+            "Unit 3 – Growing up", Grade: 8, OrderIndex: 3, BookType: null,
+            Topics: ["Familie", "Freundschaft", "Erwachsenwerden"],
             Grammar: "Present perfect vs. simple past",
             VocabularyNotes: "to grow up, responsibility, to argue"));
         var profile = await creator.CreateProfileAsync(new CreateCreatorProfileDto(

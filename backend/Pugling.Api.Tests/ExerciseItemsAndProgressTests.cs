@@ -23,7 +23,7 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
         var s = await TestApi.IdAsync(await f.PostAsJsonAsync("/api/v1/creator/textbook-series", new
         {
             name = TestApi.UniqueName("Items-Reihe"),
-            publisher = (string?)null,
+            publisherId = (int?)null,
             subjectName = (string?)null,
             subjectId,
             schoolTypes = (string?)null,

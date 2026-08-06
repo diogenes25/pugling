@@ -24,8 +24,9 @@ import type {
   ContentRating, InterestTagResponse, CreateInterestTagDto, UpdateInterestTagDto,
   ChildInterestResponse, ChildInterestInput,
   MediaAssetResponse, CreateMediaAssetDto, MediaLinkResponse, MediaUsage, SelectedMediaResponse,
+  PublisherResponse, CreatePublisherDto, UpdatePublisherDto,
   TextbookSeriesResponse, CreateTextbookSeriesDto, UpdateTextbookSeriesDto,
-  SeriesUnitResponse, CreateSeriesUnitDto, UpdateSeriesUnitDto,
+  SeriesUnitResponse, CreateSeriesUnitDto, UpdateSeriesUnitDto, SchoolType,
   CreatorProfileResponse, CreateCreatorProfileDto, UpdateCreatorProfileDto, CreatorProfileMatch,
   TextbookResponse, CreateTextbookDto, UpdateTextbookDto,
   Remark, CreateRemarkDto, UpdateRemarkDto, RemarkCategory, RemarkStatus,
@@ -718,13 +719,27 @@ export const api = {
   rejectActivation: (childId: number, requestId: number) =>
     http<ActivationRequest>(`${V1}/supervisor/children/${childId}/shop/activations/${requestId}/reject`, "POST", {}),
 
+  // ---- Verlage: geteiltes, slug-idempotentes Vokabular, keine eigene Übungs-Ebene ----
+  publishers: (search?: string) =>
+    http<PublisherResponse[]>(`${V1}/creator/publishers${search ? `?search=${encodeURIComponent(search)}&take=200` : "?take=200"}`),
+  createPublisher: (dto: CreatePublisherDto) =>
+    http<PublisherResponse>(`${V1}/creator/publishers`, "POST", dto),
+  updatePublisher: (id: number, dto: UpdatePublisherDto) =>
+    http<PublisherResponse>(`${V1}/creator/publishers/${id}`, "PATCH", dto),
+
   // ---- Unterrichtsmaterial: Lehrwerk-Reihen und ihre Units ----
   // Der Katalog ist geteilt: lesen darf jeder Creator, ändern nur der Owner (`isOwn` sagt es der UI).
   // Anlegen ist über den Slug idempotent – derselbe Name liefert die bestehende Reihe zurück.
-  textbookSeries: (p: { search?: string; subjectId?: number; mineOnly?: boolean } = {}) => {
+  textbookSeries: (p: {
+    search?: string; subjectId?: number; publisherId?: number; schoolTypes?: SchoolType; grade?: number;
+    mineOnly?: boolean;
+  } = {}) => {
     const q = new URLSearchParams({ take: "200" });
     if (p.search) q.set("search", p.search);
     if (p.subjectId != null) q.set("subjectId", String(p.subjectId));
+    if (p.publisherId != null) q.set("publisherId", String(p.publisherId));
+    if (p.schoolTypes) q.set("schoolTypes", p.schoolTypes);
+    if (p.grade != null) q.set("grade", String(p.grade));
     if (p.mineOnly) q.set("mineOnly", "true");
     return http<TextbookSeriesResponse[]>(`${V1}/creator/textbook-series?${q}`);
   },

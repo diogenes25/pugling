@@ -1677,6 +1677,33 @@ namespace Pugling.Api.Data.Migrations
                     b.ToTable("PracticeSessions");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.Publisher", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.ToTable("Publishers");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.Remark", b =>
                 {
                     b.Property<int>("Id")
@@ -1836,6 +1863,10 @@ namespace Pugling.Api.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("BookType")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -1858,7 +1889,7 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Topics")
-                        .HasMaxLength(200)
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("VocabularyNotes")
@@ -2335,9 +2366,8 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int?>("OwnerAdultId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Publisher")
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                    b.Property<int?>("PublisherId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("SchoolTypes")
                         .HasColumnType("INTEGER");
@@ -2365,6 +2395,8 @@ namespace Pugling.Api.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("OwnerAdultId");
+
+                    b.HasIndex("PublisherId");
 
                     b.HasIndex("Slug")
                         .IsUnique();
@@ -3371,12 +3403,19 @@ namespace Pugling.Api.Data.Migrations
                         .HasForeignKey("OwnerAdultId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("Pugling.Api.Models.Publisher", "Publisher")
+                        .WithMany()
+                        .HasForeignKey("PublisherId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Pugling.Api.Models.Subject", "Subject")
                         .WithMany()
                         .HasForeignKey("SubjectId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Owner");
+
+                    b.Navigation("Publisher");
 
                     b.Navigation("Subject");
                 });

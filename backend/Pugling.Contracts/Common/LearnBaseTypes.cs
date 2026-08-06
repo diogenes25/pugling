@@ -25,6 +25,21 @@ public enum SchoolTypes
 }
 
 /// <summary>
+/// Which kind of book within a textbook series a <c>SeriesUnit</c> belongs to. A series with several
+/// companion volumes (textbook, workbook, teacher's guide) tells them apart by this field instead of a
+/// second hierarchy level - see <c>docs/backlog/B-63-lehrwerk-hierarchie.md</c>, decision 6.
+/// </summary>
+public enum BookType
+{
+    /// <summary>The main textbook (default).</summary>
+    Textbook,
+    /// <summary>Workbook / practice book.</summary>
+    Workbook,
+    /// <summary>Teacher's guide / answer key.</summary>
+    TeacherGuide,
+}
+
+/// <summary>
 /// Bonus system suggested by the exercise author (global on the exercise). Serves only as a template:
 /// when a study plan is created from the exercise, these values are copied ONCE into its bonus fields.
 /// Later changes to the exercise therefore do NOT retroactively affect existing child plans –

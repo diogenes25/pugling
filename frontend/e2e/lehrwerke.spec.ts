@@ -52,8 +52,14 @@ test("Buchreihe, Fachlehrer und Kind treffen zusammen", async ({ page }) => {
 
   // ---- Die Buchreihe (geteilter Katalog) ----
   await page.goto("/vater/lehrwerke");
+  // Verlag fehlt noch im geteilten Vokabular – inline anlegen (idempotent über den Slug, B-63) statt
+  // die Seite zu verlassen. Die Auswahl übernimmt den neuen Verlag automatisch.
+  await page.locator("#ns-new-publisher").fill(SERIES.publisher);
+  await page.getByRole("button", { name: "Verlag anlegen" }).click();
+  await expect(page.getByText(`„${SERIES.publisher}" steht im Vokabular.`)).toBeVisible();
+  await expect(page.locator("#ns-publisher")).toHaveValue(/\d+/);
+
   await page.locator("#ns-name").fill(SERIES.name);
-  await page.locator("#ns-publisher").fill(SERIES.publisher);
   await page.locator("#ns-subject").selectOption({ label: "Englisch" });
   await page.locator("#ns-school").selectOption("Gymnasium");
   await page.getByRole("button", { name: "Reihe anlegen" }).click();
@@ -68,11 +74,17 @@ test("Buchreihe, Fachlehrer und Kind treffen zusammen", async ({ page }) => {
   await seriesRow.getByRole("button", { name: "Units" }).click();
   await page.locator('[id^="unit-label-new"]').fill(UNIT.label);
   await page.locator('[id^="unit-grade-new"]').fill(UNIT.grade);
-  await page.locator('[id^="unit-topics-new"]').fill("Familie, Freundschaft");
+  // Themen sind Chips: je Wort tippen und mit Enter hinzufügen (B-63 Entscheidung 4).
+  const topicsInput = page.locator('[id^="unit-topics-new"]');
+  for (const topic of ["Familie", "Freundschaft"]) {
+    await topicsInput.fill(topic);
+    await topicsInput.press("Enter");
+  }
   await page.locator('[id^="unit-grammar-new"]').fill(UNIT.grammar);
   await page.locator('[id^="unit-vocab-new"]').fill("to grow up, responsibility, to argue");
   await page.getByRole("button", { name: "Unit hinzufügen" }).click();
   await expect(page.getByText(UNIT.grammar)).toBeVisible();
+  await expect(page.getByText("Familie", { exact: true })).toBeVisible();
 
   // ---- Der Fachlehrer auf genau diese Reihe ----
   await page.goto("/vater/fachlehrer");

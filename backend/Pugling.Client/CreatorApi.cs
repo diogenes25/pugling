@@ -55,13 +55,27 @@ public sealed class CreatorApi(HttpClient http)
     public Task<CategoryResponse> CreateCategoryAsync(int subjectId, CreateCategoryDto dto, CancellationToken ct = default) =>
         Http.PostAsync<CategoryResponse>($"{Root}/subjects/{subjectId}/categories", dto, ct);
 
+    // ---------------------------------------------------------------- Publishers
+
+    /// <summary>The publisher vocabulary of the shared catalog (all filters optional).</summary>
+    public Task<IReadOnlyList<PublisherResponse>> ListPublishersAsync(string? search = null,
+        int skip = 0, int take = 50, CancellationToken ct = default) =>
+        Http.GetAsync<IReadOnlyList<PublisherResponse>>($"{Root}/publishers" + PuglingHttp.Query(
+            ("search", search), ("skip", skip), ("take", take)), ct);
+
+    /// <summary>Creates a publisher; a name already taken returns the existing entry (idempotent).</summary>
+    public Task<PublisherResponse> CreatePublisherAsync(CreatePublisherDto dto, CancellationToken ct = default) =>
+        Http.PostAsync<PublisherResponse>($"{Root}/publishers", dto, ct);
+
     // ---------------------------------------------------------------- Textbook series & units
 
     /// <summary>The textbook series of the shared catalog (all filters optional).</summary>
     public Task<IReadOnlyList<TextbookSeriesResponse>> ListSeriesAsync(string? search = null, int? subjectId = null,
+        int? publisherId = null, SchoolTypes? schoolTypes = null, int? grade = null,
         bool? mineOnly = null, int skip = 0, int take = 50, CancellationToken ct = default) =>
         Http.GetAsync<IReadOnlyList<TextbookSeriesResponse>>($"{Root}/textbook-series" + PuglingHttp.Query(
-            ("search", search), ("subjectId", subjectId), ("mineOnly", mineOnly), ("skip", skip), ("take", take)), ct);
+            ("search", search), ("subjectId", subjectId), ("publisherId", publisherId),
+            ("schoolTypes", schoolTypes), ("grade", grade), ("mineOnly", mineOnly), ("skip", skip), ("take", take)), ct);
 
     /// <summary>A series by id.</summary>
     public Task<TextbookSeriesResponse> GetSeriesAsync(int seriesId, CancellationToken ct = default) =>

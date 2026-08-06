@@ -23,7 +23,7 @@ namespace Pugling.Api.Controllers.Creator;
 public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
 {
     static SeriesUnitResponse Map(SeriesUnit u) =>
-        new(u.Id, u.SeriesId, u.Grade, u.OrderIndex, u.Label, u.Topics, u.Grammar, u.VocabularyNotes, u.CreatedAt);
+        new(u.Id, u.SeriesId, u.Grade, u.OrderIndex, u.Label, u.BookType, u.Topics, u.Grammar, u.VocabularyNotes, u.CreatedAt);
 
     /// <summary>All units of the series, by volume and order.</summary>
     /// <param name="seriesId">The series.</param>
@@ -73,7 +73,8 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
             Grade = dto.Grade,
             OrderIndex = dto.OrderIndex ?? await NextOrderIndexAsync(seriesId, dto.Grade, ct),
             Label = dto.Label.Trim(),
-            Topics = Trimmed(dto.Topics),
+            BookType = dto.BookType ?? BookType.Textbook,
+            Topics = CleanTopics(dto.Topics),
             Grammar = Trimmed(dto.Grammar),
             VocabularyNotes = Trimmed(dto.VocabularyNotes),
         };
@@ -105,7 +106,9 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
         }
         if (dto.Grade.HasValue) unit.Grade = dto.Grade;
         if (dto.OrderIndex.HasValue) unit.OrderIndex = dto.OrderIndex.Value;
-        if (dto.Topics is not null) unit.Topics = Trimmed(dto.Topics);
+        if (dto.BookType.HasValue) unit.BookType = dto.BookType.Value;
+        // Assign a new list (no in-place mutation - the JSON column pitfall, cf. CLAUDE.md).
+        if (dto.Topics is not null) unit.Topics = CleanTopics(dto.Topics);
         if (dto.Grammar is not null) unit.Grammar = Trimmed(dto.Grammar);
         if (dto.VocabularyNotes is not null) unit.VocabularyNotes = Trimmed(dto.VocabularyNotes);
 
@@ -155,4 +158,8 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
     }
 
     private static string? Trimmed(string? value) => value?.Trim() is { Length: > 0 } v ? v : null;
+
+    /// <summary>Trims and discards empty entries – topics are a plain list, not a validated taxonomy.</summary>
+    private static List<string> CleanTopics(List<string>? values) =>
+        [.. (values ?? []).Select(t => t.Trim()).Where(t => t.Length > 0)];
 }

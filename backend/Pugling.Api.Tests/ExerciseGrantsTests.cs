@@ -24,7 +24,7 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
             new
             {
                 name = TestApi.UniqueName("Grant-Reihe"),
-                publisher = (string?)null,
+                publisherId = (int?)null,
                 subjectName = (string?)null,
                 subjectId,
                 schoolTypes = (string?)null,
@@ -247,7 +247,7 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
             new
             {
                 name = TestApi.UniqueName("Grant-Zaehlung-Reihe"),
-                publisher = (string?)null,
+                publisherId = (int?)null,
                 subjectName = (string?)null,
                 subjectId,
                 schoolTypes = (string?)null,

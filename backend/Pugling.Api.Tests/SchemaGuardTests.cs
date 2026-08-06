@@ -293,6 +293,7 @@ public class SchemaGuardTests
             ["Textbook.SeriesId"] = DeleteBehavior.SetNull, // -> TextbookSeries
             ["Textbook.SubjectId"] = DeleteBehavior.SetNull, // -> Subject
             ["TextbookSeries.OwnerAdultId"] = DeleteBehavior.SetNull, // -> Adult
+            ["TextbookSeries.PublisherId"] = DeleteBehavior.SetNull, // -> Publisher
             ["TextbookSeries.SubjectId"] = DeleteBehavior.SetNull, // -> Subject
             ["TimetableEntry.ChildId"] = DeleteBehavior.Cascade, // -> Child
             ["TimetableEntry.SubjectId"] = DeleteBehavior.Cascade, // -> Subject

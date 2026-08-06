@@ -60,6 +60,14 @@ export type ChildResponse = S["ChildResponse"];
 
 // ---- Unterrichtsmaterial: Lehrwerk-Reihe → Unit → Lehrbuch des Kindes ----
 
+/** Ein Verlag („Cornelsen") – geteiltes, slug-idempotentes Vokabular ohne eigenen Owner. */
+export type PublisherResponse = S["PublisherResponse"];
+
+export type CreatePublisherDto = S["CreatePublisherDto"];
+
+/** Ändert nur den Namen; der Slug bleibt fest. */
+export type UpdatePublisherDto = S["UpdatePublisherDto"];
+
 /**
  * Eine Lehrwerk-Reihe („Access") – bewusst ein **geteilter** Katalog-Eintrag: das Lehrbuch des Kindes
  * und das Creator-Profil zeigen auf denselben Datensatz. Nur dadurch ist die Frage „welcher Creator
@@ -71,6 +79,9 @@ export type CreateTextbookSeriesDto = S["CreateTextbookSeriesDto"];
 
 /** Partielle Änderung einer Reihe; der Slug bleibt fest. */
 export type UpdateTextbookSeriesDto = S["UpdateTextbookSeriesDto"];
+
+/** Welcher Buchtyp innerhalb der Reihe (Lehrbuch/Arbeitsheft/Lehrerhandreichung); Default Lehrbuch. */
+export type BookType = S["BookType"];
 
 /**
  * Eine Unit der Reihe samt Band (`grade`). `topics`/`grammar`/`vocabularyNotes` sind der eigentliche

@@ -65,7 +65,7 @@ Request:
 ```json
 {
   "name": "Doku-Reihe",
-  "publisher": null,
+  "publisherId": null,
   "subjectName": null,
   "subjectId": 5,
   "schoolTypes": null,
@@ -82,7 +82,8 @@ Response — `HTTP 201`:
   "id": 5,
   "name": "Doku-Reihe",
   "slug": "doku-reihe",
-  "publisher": null,
+  "publisherId": null,
+  "publisherName": null,
   "subjectName": null,
   "subjectId": 5,
   "schoolTypes": "None",
@@ -92,6 +93,8 @@ Response — `HTTP 201`:
   "ownerAdultId": 1,
   "isOwn": true,
   "unitCount": 0,
+  "gradeMin": null,
+  "gradeMax": null,
   "createdAt": "<timestamp>"
 }
 ```
@@ -124,7 +127,8 @@ Response — `HTTP 201`:
   "grade": null,
   "orderIndex": 1,
   "label": "Unit 1",
-  "topics": null,
+  "bookType": "Textbook",
+  "topics": [],
   "grammar": null,
   "vocabularyNotes": null,
   "createdAt": "<timestamp>"

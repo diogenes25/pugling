@@ -45,7 +45,8 @@ test("Reihe, Unit, Übung, Zuweisung – der Creator-Weg in einem Zug", async ({
   // ---- 1. Reihe anlegen (geteilter Katalog) ----
   await page.goto("/vater/lehrwerke");
   await page.locator("#ns-name").fill(SERIES.name);
-  await page.locator("#ns-publisher").fill(SERIES.publisher);
+  // "Klett" ist bereits als Verlag geseedet (Grundlage der Green-Line-Reihe) - direkt auswählbar.
+  await page.locator("#ns-publisher").selectOption({ label: SERIES.publisher });
   await page.locator("#ns-subject").selectOption({ label: "Englisch" });
   await page.getByRole("button", { name: "Reihe anlegen" }).click();
   await expect(page.getByText(/steht im Katalog/)).toBeVisible();

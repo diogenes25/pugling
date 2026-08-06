@@ -29,7 +29,7 @@ public class ExerciseChoicesTests(PuglingWebAppFactory factory) : IClassFixture<
             new
             {
                 name = TestApi.UniqueName($"Reihe-{route}"),
-                publisher = (string?)null,
+                publisherId = (int?)null,
                 subjectName = (string?)null,
                 subjectId,
                 schoolTypes = (string?)null,

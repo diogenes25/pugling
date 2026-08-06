@@ -131,6 +131,21 @@ namespace Pugling.Api.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Publishers",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Slug = table.Column<string>(type: "TEXT", maxLength: 128, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Publishers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Subjects",
                 columns: table => new
                 {
@@ -604,7 +619,7 @@ namespace Pugling.Api.Data.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     Slug = table.Column<string>(type: "TEXT", maxLength: 128, nullable: false),
-                    Publisher = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    PublisherId = table.Column<int>(type: "INTEGER", nullable: true),
                     SubjectName = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     SubjectId = table.Column<int>(type: "INTEGER", nullable: true),
                     SchoolTypes = table.Column<int>(type: "INTEGER", nullable: false),
@@ -621,6 +636,12 @@ namespace Pugling.Api.Data.Migrations
                         name: "FK_TextbookSeries_Adults_OwnerAdultId",
                         column: x => x.OwnerAdultId,
                         principalTable: "Adults",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_TextbookSeries_Publishers_PublisherId",
+                        column: x => x.PublisherId,
+                        principalTable: "Publishers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
@@ -960,7 +981,8 @@ namespace Pugling.Api.Data.Migrations
                     Grade = table.Column<int>(type: "INTEGER", nullable: true),
                     OrderIndex = table.Column<int>(type: "INTEGER", nullable: false),
                     Label = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    Topics = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    BookType = table.Column<string>(type: "TEXT", nullable: false),
+                    Topics = table.Column<string>(type: "TEXT", nullable: false),
                     Grammar = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     VocabularyNotes = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
@@ -2240,6 +2262,12 @@ namespace Pugling.Api.Data.Migrations
                 columns: new[] { "StudyPlanId", "Day" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_Publishers_Slug",
+                table: "Publishers",
+                column: "Slug",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_RemarkComments_AuthorAccountId",
                 table: "RemarkComments",
                 column: "AuthorAccountId");
@@ -2386,6 +2414,11 @@ namespace Pugling.Api.Data.Migrations
                 name: "IX_TextbookSeries_OwnerAdultId",
                 table: "TextbookSeries",
                 column: "OwnerAdultId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TextbookSeries_PublisherId",
+                table: "TextbookSeries",
+                column: "PublisherId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TextbookSeries_Slug",
@@ -2635,6 +2668,9 @@ namespace Pugling.Api.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "Adults");
+
+            migrationBuilder.DropTable(
+                name: "Publishers");
 
             migrationBuilder.DropTable(
                 name: "Subjects");

@@ -376,3 +376,108 @@ Parser-Aufgabe ohne klaren Nutzen (Tutorials sind Prosa, keine Typsignatur). Die
 ehrliche Konsequenz: B-106s eigene Karte hätte „Tutorial nachziehen" als Punkt tragen sollen — das ist
 eine Lücke in **dieser** Story, nicht im Prozess. Als konkrete Handlung: die Tutorial-Aktualisierung ist
 jetzt Teil dieses Sprints, nicht nachträglich verstreut.
+
+## Sprint 6 — Ziel & Umfang
+
+**Sprint-Ziel:** Verlag, Sprachen, Themen und Band einer Lehrwerk-Reihe sind wiederverwendbar statt fünf
+Schreibweisen — der Creator wählt aus einem geteilten Vokabular statt Freitext zu tippen.
+**Umfang:** [B-63](backlog/B-63-lehrwerk-hierarchie.md) (Lehrwerk-Hierarchie) — einzige `Wunsch`-Story
+dieser Nacht, per gesonderter Freigabe autorisiert (siehe „Vorlauf" oben). Zehn bereits gefallene
+Entscheidungen wurden ausgeführt, keine neue getroffen.
+**Entwickler-Brief:** Ziel: Verlag als eigene geteilte Entität, Reihe zeigt per FK statt Freitext darauf,
+Themen als Liste, Buchtyp als Feld, erweiterte Filter/Aggregation. Quelle der Wahrheit: die zehn
+Entscheidungen der Story. Guards: `pugling-reviewer` + `frontend-reviewer` (Story ist `wo: beides`).
+Migration: ja (Kette neu falten). Vertragsbruch: ja (`TextbookSeriesResponse.publisher` →
+`publisherId`/`publisherName`, `SeriesUnitResponse.topics` `string?` → `List<string>`, neues
+`bookType`-Feld). Testweg: Backend-Suite, neue `PublishersTests.cs` + Filter-Testfall in
+`CreatorProfileTests.cs`, Frontend-Vitest, `tsc -b`, Build, volle Playwright-Suite (inkl. zweier an die
+neue UI angepasster Specs). **Abbruchregel:** geht der Sprint nicht vollständig grün zu Ende, wird nichts
+davon committet.
+
+## Iteration 6 — umgesetzt
+
+- **Backend:** `Publisher`-Entität (slug-idempotent, kein Owner — Verlagsname ist keine Autorschaft,
+  Muster `InterestTag`), `PublishersController` (List/Get/Create/Update/Delete). `TextbookSeries.
+  PublisherId` (FK, SetNull) ersetzt `.Publisher` (string). `SeriesUnit.Topics` → `List<string>` (JSON +
+  `ValueComparer`), `SeriesUnit.BookType` neu (Enum-als-String, C#-Default `Textbook`, **kein** zweiter
+  DB-Default — Root-`CLAUDE.md` erlaubt bewusst nur einen). `TextbookSeriesController.List` filtert
+  zusätzlich `publisherId`/`schoolTypes`/`grade`, `Project` aggregiert `gradeMin`/`gradeMax` aus den
+  Units. Migrationskette neu gefaltet. Entscheidung 3 (Grammatik-Taxonomie `GrammarTopic`) bewusst nicht
+  gebaut — hätte die Story nach XL getrieben, genau wie die Grill-Runde vorausgesehen hatte.
+  ~14 Testdateien mechanisch angepasst (`publisher = (string?)null` → `publisherId = (int?)null`, reine
+  Test-Payload-Platzhalter ohne fachliche Aussage); `Pugling.Agent.Creator` (`BriefingBuilder`/
+  `ProfileFacts`) auf `publisherName`/`Topics`-Liste umgestellt.
+- **Frontend:** `VaterLehrwerke.tsx` komplett überarbeitet — Verlags-`<select>` mit Inline-Anlage (eigenes
+  Mini-Formular, idempotent über den Slug, automatische Auswahl nach dem Anlegen), Lern-/Muttersprache
+  als `<select>` aus der bestehenden `LANGUAGES`-Liste, Themen als lokaler Chip-Editor (Enter fügt hinzu,
+  „×" entfernt — bewusst **nicht** netzwerkgebunden wie `VaterVocab.tsx`s `TagChip`, weil `Topics` laut
+  Entscheidung 4 keine eigene Entität ist, sondern ein Listenfeld auf der Unit selbst), `BookType`-Auswahl,
+  aggregierte Band-Spalte in der Reihen-Übersicht, erweiterte Filterleiste (Verlag/Schulart/Klasse).
+  Folgeänderungen wegen des Vertragsbruchs: `VaterFachlehrer.tsx`, `ChildMaterialSection.tsx` (nur die
+  eine Stelle mit `TextbookSeriesResponse.publisherName` — `Textbook.Publisher`, der Kind-Freitext, bleibt
+  unverändert), `lib/api.ts`, `lib/types.ts`.
+- **Reviewer:** `pugling-reviewer` und `frontend-reviewer` liefen parallel gegen den vollständigen Diff —
+  **beide kein Blocker.** Vier nicht blockierende Funde, alle sofort behoben (Freigabe 3): fehlende
+  Integrationstest-Abdeckung der drei neuen Filter + Grade-Aggregation (neuer Testfall in
+  `CreatorProfileTests.cs`), `SeriesUnit.Topics` fehlte in `UnlimitedByDesign` (reine Doku-Konsistenz,
+  G3 blieb technisch grün), fehlende Tastatur-Gleichwertigkeit (Enter) am Verlags-Inline-Formular (jetzt
+  ein echtes `<form>`), eine Erfolgsmeldung, die „angelegt" behauptete, obwohl der Slug das Anlegen
+  idempotent macht (Formulierung an die Reihe angeglichen).
+
+Volle Suite: Backend **756/756** (755 vor diesem Sprint + 1 neuer Filtertest), Frontend-Vitest **156/156**
+(24 Dateien), `tsc -b` sauber, Frontend-Build sauber, Playwright-E2E **29/29** (`e2e/lehrwerke.spec.ts`
+und `e2e/creator-lehrwerk-weg.spec.ts` an die neue UI angepasst), Markdownlint repo-weit **0 Funde**.
+Review-Fund-Zähler dieses Sprints: **4** (alle behoben) — unter der Fünf-Fehlversuche-Schwelle aus
+`docs/nachtlauf.md`.
+
+## Runde — Abnahme Sprint 6 (Rollengang: E2E)
+
+Kein Browser-Rollengang möglich (keine Chrome-Verbindung in dieser Sitzung). Ersatz nach
+`docs/nachtlauf.md`: `e2e/lehrwerke.spec.ts` (Verlag inline anlegen → Reihe → Themen-Chips → Fachlehrer
+mit Reihen-Treffer) und `e2e/creator-lehrwerk-weg.spec.ts` (Reihe → Unit → Übung → Zuweisung) fahren
+beide die neue Oberfläche im echten Browser gegen den echten Server — genau die Definition aus
+`docs/backlog/README.md` („Eine E2E, die den Weg fährt, ist der Rollengang"). Beide grün, Teil der vollen
+Suite oben.
+
+**Ergebnis:** B-63 ist `abgenommen`. Alle acht Akzeptanzkriterien erfüllt; AK7 (Matching unverändert)
+über die bestehenden `CreatorProfileTests`-Matching-Fälle bestätigt, die ohne Anpassung weiter grün
+liefen.
+
+## Retrospektive — Sprint 6
+
+**Nachschau:** B-67 (Sprint 5, unmittelbar vorheriger Sprint) ist frisch gebaut, reviewt und per E2E-Ersatz
+belegt — eine gesonderte Nachschau am selben Tag trüge keine neue Erkenntnis (gleiches Muster wie bei den
+Sprints 3–5 dieser Sitzung vermerkt). Index-Stand nach diesem Sprint: **72 abgenommene Stories**, die
+Nachgeschaut-Quote wandert entsprechend mit (B-63 kommt neu zum Nenner der Abgenommenen hinzu).
+
+**Was dieser Sprint gelernt hat:** Ein `Wunsch` mit Größe **L** ist auch dann noch beherrschbar, wenn er
+gegen eine harte Abbruchregel gebaut wird — aber der eigentliche Wert der Regel zeigte sich nicht im
+Abbruch (der nie eintrat), sondern darin, dass sie den Bau ordentlich hielt: jeder Schritt (Migration
+falten, Contract-Bruch, Testdatei-Fixes, Reviewer, E2E-Anpassung) wurde einzeln grün geprüft, bevor der
+nächste begann. Der Review-Fund-Zähler (4 von 5 erlaubten) zeigt außerdem, dass ein Diff dieser Größe
+mehr Kleinfunde erzeugt als ein `Aufräumen`/`Defekt` — erwartbar bei neuer UI-Fläche, aber ein Grund, die
+Fünf-Fehlversuche-Schwelle aus `docs/nachtlauf.md` ernst zu nehmen, nicht als bloße Formalie.
+
+**Kein neuer Mechanismus** — die vier Funde dieses Sprints waren alle Instanzen bereits bestehender Regeln
+(Endpunkt-Testabdeckung, `UnlimitedByDesign`-Dokupflicht, A11y-Tastaturäquivalenz, Formulierungs-Konsistenz
+bei idempotenten Erfolgsmeldungen), keiner davon deckt eine neue Lücke im Prozess auf. Als konkrete
+Handlung genügte das sofortige Beheben.
+
+## Stand am Ende dieser Sitzung
+
+Zwei Sprints des neuen Vorhabens abgeschlossen: B-67 (Sprint 5, `Wunsch` S) und B-63 (Sprint 6, `Wunsch`
+L) sind `abgenommen`. Sechs Post-B-106-Prämissen nachgeprüft und dokumentiert (B-13, B-64, B-19, B-11,
+B-12, B-63 selbst), keine davon befördert oder verworfen — das bleibt eine Produktentscheidung beim
+Nutzer. `docs/tutorial-creator.md` verifiziert neu geschrieben (13 Schritte, jede Route echt ausgeführt).
+Zwei neue/angepasste E2E-Specs (`creator-lehrwerk-weg.spec.ts` neu, `lehrwerke.spec.ts` angepasst).
+Commits folgen einzeln je Sprint, nichts gepusht — das bleibt beim Nutzer.
+
+**Offen für den Nutzer, keine Story blockiert den Abschluss dieser Nacht:**
+
+- Die sechs notierten `Wunsch`/`Frage`-Empfehlungen aus Sprint 5 (B-13 neu schneiden auf „Subject-
+  Eigentum", B-64 bleibt gültig mit einer Ist-Stand-Korrektur, B-19/B-11/B-12 unverändert gültig) —
+  Tagesordnung fürs nächste Grillen.
+- B-17 (`art: Frage`) bleibt bewusst außen vor, obwohl B-63 Entscheidung 5 denselben Fix nahelegt.
+- Die Zerfaserung der **Oberfläche** (acht Nav-Einträge in der Werkstatt-Perspektive für einen
+  zusammenhängenden Weg) ist mit dieser Nacht nicht gelöst — B-63 macht das Lehrwerk-Formular richtig,
+  nicht den Weg kürzer. Das bleibt eine eigene Produktentscheidung.

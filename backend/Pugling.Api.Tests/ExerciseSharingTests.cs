@@ -33,7 +33,7 @@ public class ExerciseSharingTests(PuglingWebAppFactory factory) : IClassFixture<
             new
             {
                 name = $"Sharing-Reihe {Guid.NewGuid():N}",
-                publisher = (string?)null,
+                publisherId = (int?)null,
                 subjectName = (string?)null,
                 subjectId,
                 schoolTypes = (string?)null,

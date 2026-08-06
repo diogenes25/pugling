@@ -79,7 +79,7 @@ internal static class TestApi
         var seriesId = await IdAsync(await father.PostAsJsonAsync("/api/v1/creator/textbook-series", new
         {
             name = UniqueName("Reihe"),
-            publisher = (string?)null,
+            publisherId = (int?)null,
             subjectName = (string?)null,
             subjectId,
             schoolTypes = (object?)null,

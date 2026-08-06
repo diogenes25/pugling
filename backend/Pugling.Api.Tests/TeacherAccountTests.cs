@@ -87,7 +87,7 @@ public class TeacherAccountTests(PuglingWebAppFactory factory) : IClassFixture<P
         var seriesId = await TestApi.IdAsync(await teacher.PostAsJsonAsync("/api/v1/creator/textbook-series", new
         {
             name = $"Lehrer-Reihe {Guid.NewGuid():N}",
-            publisher = (string?)null,
+            publisherId = (int?)null,
             subjectName = (string?)null,
             subjectId,
             schoolTypes = (object?)null,

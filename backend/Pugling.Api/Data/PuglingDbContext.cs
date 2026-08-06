@@ -20,6 +20,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<ChildPointsEntry> ChildPointsEntries => Set<ChildPointsEntry>();
 
     // The teaching side of the catalog: textbook series -> unit, plus the creator profiles ("subject teachers").
+    public DbSet<Publisher> Publishers => Set<Publisher>();
     public DbSet<TextbookSeries> TextbookSeries => Set<TextbookSeries>();
     public DbSet<SeriesUnit> SeriesUnits => Set<SeriesUnit>();
     public DbSet<CreatorProfile> CreatorProfiles => Set<CreatorProfile>();
@@ -206,11 +207,19 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasIndex(t => t.SeriesId);
         });
 
+        // Publisher: a globally unique slug, pattern InterestTag - no owner, naming a publisher is not authorship.
+        modelBuilder.Entity<Publisher>(e =>
+        {
+            e.HasIndex(p => p.Slug).IsUnique();
+        });
+
         // Textbook series: a globally unique slug (child-neutral like the vocabulary store, pattern InterestTag).
         // The owner is only an edit/delete right - a deleted adult clears the FK, the series stays usable.
         modelBuilder.Entity<TextbookSeries>(e =>
         {
             e.HasIndex(s => s.Slug).IsUnique();
+            e.HasOne(s => s.Publisher).WithMany().HasForeignKey(s => s.PublisherId)
+                .OnDelete(DeleteBehavior.SetNull);
             e.HasOne(s => s.Subject).WithMany().HasForeignKey(s => s.SubjectId)
                 .OnDelete(DeleteBehavior.SetNull);
             e.HasOne(s => s.Owner).WithMany().HasForeignKey(s => s.OwnerAdultId)
@@ -218,12 +227,18 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         });
 
         // Unit: belongs to the series (cascade). The index serves the only ordering units are ever read in -
-        // volume, then order within the volume.
+        // volume, then order within the volume. Topics is a JSON list (ValueComparer as with Child/CreatorProfile
+        // - a missing one silently drops in-place edits on SaveChanges).
         modelBuilder.Entity<SeriesUnit>(e =>
         {
             e.HasIndex(u => new { u.SeriesId, u.Grade, u.OrderIndex });
             e.HasOne(u => u.Series).WithMany(s => s.Units).HasForeignKey(u => u.SeriesId)
                 .OnDelete(DeleteBehavior.Cascade);
+            e.Property(u => u.BookType).HasConversion<string>();
+            e.Property(u => u.Topics).HasConversion(
+                v => JsonSerializer.Serialize(v, JsonOptions),
+                s => JsonSerializer.Deserialize<List<string>>(s, JsonOptions) ?? new())
+                .Metadata.SetValueComparer(JsonValueComparer.For<List<string>>());
         });
 
         // Creator profile: a unique name per owner; subject and series are the two axes the matching filters
@@ -990,6 +1005,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         ["Child.Interests"] = "Free-text interests as a JSON list (the language of the AI creator).",
         ["Child.OwnedSkins"] = "Unlocked skins as a JSON list - grows with the play state.",
         ["CreatorProfile.DefaultTypes"] = "Preferred exercise types as a JSON list.",
+        ["SeriesUnit.Topics"] = "Topics of the unit as a JSON list - grows with the material.",
         ["PlanPosition.BoxIntervalDays"] = "Leitner intervals as a JSON list.",
         ["PlanPosition.StageSchedule"] = "Stage schedule as a JSON list.",
         ["PlanPosition.TimeSlots"] = "Points time slots of this obligation as a JSON list.",

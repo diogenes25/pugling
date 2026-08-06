@@ -25,7 +25,7 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
             new
             {
                 name = TestApi.UniqueName($"Reihe-{name}"),
-                publisher = (string?)null,
+                publisherId = (int?)null,
                 subjectName = (string?)null,
                 subjectId,
                 schoolTypes = (string?)null,

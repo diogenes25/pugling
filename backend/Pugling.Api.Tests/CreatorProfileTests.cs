@@ -16,12 +16,12 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
     private const string ProfileRoot = "/api/v1/creator/profiles";
 
     /// <summary>Creates a series and returns its id (name unique per run - the slug is global).</summary>
-    private static async Task<int> CreateSeriesAsync(HttpClient creator, string name, string? publisher = "Cornelsen",
+    private static async Task<int> CreateSeriesAsync(HttpClient creator, string name, int? publisherId = null,
         int? subjectId = null, string? schoolTypes = "Gymnasium") =>
         await TestApi.IdAsync(await creator.PostAsJsonAsync(SeriesRoot, new
         {
             name = $"{name} {Guid.NewGuid():N}",
-            publisher,
+            publisherId,
             subjectName = "Englisch",
             subjectId,
             schoolTypes,
@@ -39,7 +39,7 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
         {
             label = "Unit 3 – Growing up",
             grade = 8,
-            topics = "Familie, Freundschaft",
+            topics = new[] { "Familie", "Freundschaft" },
             grammar = "Present perfect",
             vocabularyNotes = "to grow up, responsibility",
         }));
@@ -69,7 +69,8 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
         })).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("Present perfect vs. simple past", patched.GetProperty("grammar").GetString());
         // What is not in the payload stays as it is.
-        Assert.Equal("Familie, Freundschaft", patched.GetProperty("topics").GetString());
+        Assert.Equal(new[] { "Familie", "Freundschaft" },
+            patched.GetProperty("topics").EnumerateArray().Select(t => t.GetString()).ToArray());
     }
 
     /// <summary>
@@ -82,12 +83,60 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
         var creator = await TestApi.AdultAsync(factory);
         var name = $"Green Line {Guid.NewGuid():N}";
 
-        var first = await creator.PostAsJsonAsync(SeriesRoot, new { name, publisher = "Klett" });
-        var again = await creator.PostAsJsonAsync(SeriesRoot, new { name, publisher = "Klett" });
+        var first = await creator.PostAsJsonAsync(SeriesRoot, new { name, publisherId = (int?)null });
+        var again = await creator.PostAsJsonAsync(SeriesRoot, new { name, publisherId = (int?)null });
 
         Assert.Equal(HttpStatusCode.Created, first.StatusCode);
         Assert.Equal(HttpStatusCode.OK, again.StatusCode);
         Assert.Equal(await TestApi.IdAsync(first), await TestApi.IdAsync(again));
+    }
+
+    /// <summary>
+    /// B-63: the three new filters (publisher/school type/grade) narrow the list, and the grade range is
+    /// aggregated from the units actually present - not a stored field that could drift from them.
+    /// </summary>
+    [Fact]
+    public async Task Filter_Auf_Verlag_Schulart_Und_Klasse_Und_Der_Aggregierte_Notenbereich()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var publisherId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/publishers",
+            new { name = TestApi.UniqueName("Verlag") }));
+
+        var matchId = await TestApi.IdAsync(await creator.PostAsJsonAsync(SeriesRoot, new
+        {
+            name = TestApi.UniqueName("Access"),
+            publisherId,
+            schoolTypes = "Gymnasium",
+        }));
+        await creator.PostAsJsonAsync($"{SeriesRoot}/{matchId}/units", new { label = "Unit 1", grade = 7 });
+        await creator.PostAsJsonAsync($"{SeriesRoot}/{matchId}/units", new { label = "Unit 2", grade = 13 });
+
+        // Andere Reihe: anderer Verlag, andere Schulart, andere Klasse - darf in keinem der drei Filter auftauchen.
+        var otherId = await TestApi.IdAsync(await creator.PostAsJsonAsync(SeriesRoot, new
+        {
+            name = TestApi.UniqueName("Green Line"),
+            publisherId = (int?)null,
+            schoolTypes = "Realschule",
+        }));
+        await creator.PostAsJsonAsync($"{SeriesRoot}/{otherId}/units", new { label = "Unit 1", grade = 5 });
+
+        var byPublisher = await creator.GetFromJsonAsync<JsonElement>($"{SeriesRoot}?publisherId={publisherId}");
+        Assert.Equal(matchId, byPublisher.EnumerateArray().Single().GetProperty("id").GetInt32());
+
+        var bySchoolType = await creator.GetFromJsonAsync<JsonElement>($"{SeriesRoot}?schoolTypes=Gymnasium");
+        Assert.Contains(bySchoolType.EnumerateArray(), s => s.GetProperty("id").GetInt32() == matchId);
+        Assert.DoesNotContain(bySchoolType.EnumerateArray(), s => s.GetProperty("id").GetInt32() == otherId);
+
+        var byGrade = await creator.GetFromJsonAsync<JsonElement>($"{SeriesRoot}?grade=13");
+        Assert.Equal(matchId, byGrade.EnumerateArray().Single().GetProperty("id").GetInt32());
+
+        // Aggregation: berechnet aus den Units, keine gespeicherte Kopie.
+        var match = await creator.GetFromJsonAsync<JsonElement>($"{SeriesRoot}/{matchId}");
+        Assert.Equal(7, match.GetProperty("gradeMin").GetInt32());
+        Assert.Equal(13, match.GetProperty("gradeMax").GetInt32());
+        var other = await creator.GetFromJsonAsync<JsonElement>($"{SeriesRoot}/{otherId}");
+        Assert.Equal(5, other.GetProperty("gradeMin").GetInt32());
+        Assert.Equal(5, other.GetProperty("gradeMax").GetInt32());
     }
 
     /// <summary>

@@ -61,6 +61,14 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
 
     private static Fall[] Faelle =>
     [
+        new(typeof(UpdatePublisherDto), "name", "Verlag neu", async f =>
+        {
+            var c = await TestApi.AdultAsync(f);
+            var id = await TestApi.IdAsync(await c.PostAsJsonAsync("/api/v1/creator/publishers",
+                new { name = Eindeutig("Verlag") }));
+            return new Ziel(c, $"/api/v1/creator/publishers/{id}");
+        }, []),
+
         new(typeof(UpdateSubjectDto), "name", "Fach neu", async f =>
         {
             var c = await TestApi.AdultAsync(f);

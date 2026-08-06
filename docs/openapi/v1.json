@@ -18135,6 +18135,273 @@
         }
       }
     },
+    "/api/v1/creator/publishers": {
+      "get": {
+        "tags": [
+          "Creator \u2013 Publishers"
+        ],
+        "summary": "All publishers (alphabetically by slug), optionally filtered. The total count before paging is in\nthe header \u0060X-Total-Count\u0060.",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Substring in slug or name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "description": "Number of entries to skip (paging).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "description": "Maximum number of hits (1..500).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PublisherResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Creator \u2013 Publishers"
+        ],
+        "summary": "Creates a publisher. If the slug already exists, the existing entry comes back (idempotent) - so an\nagent can safely repeat the same catalog build instead of creating duplicates.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePublisherDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePublisherDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePublisherDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublisherResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublisherResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/creator/publishers/{id}": {
+      "get": {
+        "tags": [
+          "Creator \u2013 Publishers"
+        ],
+        "summary": "A publisher by id.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublisherResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Creator \u2013 Publishers"
+        ],
+        "summary": "Changes the display name. The slug stays fixed.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePublisherDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePublisherDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePublisherDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublisherResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Creator \u2013 Publishers"
+        ],
+        "summary": "Deletes a publisher. Series pointing at it only lose the assignment (SetNull) - deliberately without\na usage lock: a publisher carries no content, its loss only costs a filter/display value.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/creator/textbook-series/{seriesId}/units": {
       "get": {
         "tags": [
@@ -19573,6 +19840,40 @@
             "name": "subjectId",
             "in": "query",
             "description": "Only series for this catalog subject.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "publisherId",
+            "in": "query",
+            "description": "Only series of this publisher.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "schoolTypes",
+            "in": "query",
+            "description": "Only series meant for (any of) these school types.",
+            "schema": {
+              "$ref": "#/components/schemas/SchoolTypes"
+            }
+          },
+          {
+            "name": "grade",
+            "in": "query",
+            "description": "Only series with at least one unit of this volume.",
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
               "type": [
@@ -22124,6 +22425,15 @@
         },
         "description": "Input for adding a sentence: the sentence in the learning language \u002B its natural, correct translation."
       },
+      "BookType": {
+        "enum": [
+          "Textbook",
+          "Workbook",
+          "TeacherGuide"
+        ],
+        "type": "string",
+        "description": "Which kind of book within a textbook series a \u0060SeriesUnit\u0060 belongs to. A series with several\ncompanion volumes (textbook, workbook, teacher\u0027s guide) tells them apart by this field instead of a\nsecond hierarchy level - see \u0060docs/backlog/B-63-lehrwerk-hierarchie.md\u0060, decision 6.\n\nAllowed values: Textbook, Workbook, TeacherGuide."
+      },
       "CategoryResponse": {
         "required": [
           "createdAt",
@@ -23679,6 +23989,18 @@
         },
         "description": "Creating a position. Empty override fields inherit the exercise\u0027s suggestion (hybrid principle):\nstage/item count then stay \u0060null\u0060 and are resolved from the exercise defaults only when played;\nthe points/bonus fields are prefilled from the exercise\u0027s bonus suggestion."
       },
+      "CreatePublisherDto": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "description": "Input for creating a publisher. If the slug is already taken, the existing entry comes back\n(idempotent) - so an agent can safely repeat the same catalog setup."
+      },
       "CreateRemarkCommentDto": {
         "required": [
           "body"
@@ -23782,11 +24104,24 @@
             ],
             "format": "int32"
           },
+          "bookType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BookType"
+              }
+            ]
+          },
           "topics": {
             "type": [
               "null",
-              "string"
-            ]
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
           },
           "grammar": {
             "type": [
@@ -24065,11 +24400,14 @@
           "name": {
             "type": "string"
           },
-          "publisher": {
+          "publisherId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "null",
+              "integer",
               "string"
-            ]
+            ],
+            "format": "int32"
           },
           "subjectName": {
             "type": [
@@ -32403,6 +32741,45 @@
         },
         "description": "Day-by-day progress over the entire run (completed days, goals reached, points)."
       },
+      "PublisherResponse": {
+        "required": [
+          "createdAt",
+          "id",
+          "name",
+          "seriesCount",
+          "slug"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "seriesCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "A publisher (\u0022Cornelsen\u0022). \u0060SeriesCount\u0060 shows whether it is still in use."
+      },
       "Question": {
         "required": [
           "answer",
@@ -33140,11 +33517,13 @@
       },
       "SeriesUnitResponse": {
         "required": [
+          "bookType",
           "createdAt",
           "id",
           "label",
           "orderIndex",
-          "seriesId"
+          "seriesId",
+          "topics"
         ],
         "type": "object",
         "properties": {
@@ -33184,11 +33563,14 @@
           "label": {
             "type": "string"
           },
+          "bookType": {
+            "$ref": "#/components/schemas/BookType"
+          },
           "topics": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "grammar": {
             "type": [
@@ -34689,7 +35071,16 @@
           "slug": {
             "type": "string"
           },
-          "publisher": {
+          "publisherId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "publisherName": {
             "type": [
               "null",
               "string"
@@ -34751,12 +35142,30 @@
             ],
             "format": "int32"
           },
+          "gradeMin": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "gradeMax": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
           }
         },
-        "description": "A textbook series (\u0022Access\u0022) including its own permission view. \u0060Slug\u0060 is the normalized, globally\nunique and immutable key of the series, \u0060IsOwn\u0060 says whether the calling account may\nchange it, \u0060UnitCount\u0060 counts the stored units across all volumes."
+        "description": "A textbook series (\u0022Access\u0022) including its own permission view. \u0060Slug\u0060 is the normalized, globally\nunique and immutable key of the series, \u0060IsOwn\u0060 says whether the calling account may\nchange it, \u0060UnitCount\u0060 counts the stored units across all volumes. \u0060GradeMin\u0060/\u0060GradeMax\u0060\naggregate the volumes actually present (\u0060SeriesUnit.Grade\u0060) - \u0060null\u0060 when no unit carries one."
       },
       "TranslationConfig": {
         "required": [
@@ -35852,6 +36261,18 @@
         },
         "description": "Partial change to the overrides/goals/points. The referenced exercise is immutable\n(progress indices).\nPATCH semantics:null means \u0022not specified\u0022 for every field \u2013 the previous\nvalue stays. It does not mean \u0022reset to default\u0022; that needs an explicit Clear switch, and\nexactly one field has one: bool UpdatePositionDto.ClearTimeSlots. All the other fields cannot be emptied at all \u2013\nthey are either mandatory or already carry \u0022inherit\u0022 as a value of their own."
       },
+      "UpdatePublisherDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Changes the display name. The slug stays fixed."
+      },
       "UpdateRemarkDto": {
         "type": "object",
         "properties": {
@@ -35958,11 +36379,24 @@
             ],
             "format": "int32"
           },
+          "bookType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BookType"
+              }
+            ]
+          },
           "topics": {
             "type": [
               "null",
-              "string"
-            ]
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
           },
           "grammar": {
             "type": [
@@ -36246,11 +36680,14 @@
               "string"
             ]
           },
-          "publisher": {
+          "publisherId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "null",
+              "integer",
               "string"
-            ]
+            ],
+            "format": "int32"
           },
           "subjectName": {
             "type": [
@@ -37169,6 +37606,9 @@
     },
     {
       "name": "Creator \u2013 Profiles"
+    },
+    {
+      "name": "Creator \u2013 Publishers"
     },
     {
       "name": "Creator \u2013 Reading"
