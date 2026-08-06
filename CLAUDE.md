@@ -136,9 +136,10 @@ Lernstand – positionsgebunden *und* plan-übergreifend je Vokabel-Item.
   stehen in [backend/Pugling.Api/CLAUDE.md](backend/Pugling.Api/CLAUDE.md) → „Schema & Migrationen".
 - **`CancellationToken`** gilt hart, und zwar in drei Teilen – weil CA2016 **kein** Netz ist (in Lambdas
   schweigt der Analyzer, und ein Helfer ohne Token-Parameter verbirgt jeden Aufruf in seinem Rumpf):
-  1. jede async **Action** nimmt `CancellationToken ct = default` als **letzten** Parameter – der
-     Vorgabewert ist nötig, weil C# keinen erforderlichen Parameter nach den optionalen
-     `[FromQuery]`-Werten erlaubt – und reicht ihn in jeden EF-/Service-Aufruf durch;
+  1. jede async **Action** nimmt den Token als **letzten** Parameter und reicht ihn in jeden EF-/
+     Service-Aufruf durch; `= default` ist nur **dort** Pflicht, wo optionale `[FromQuery]`-Werte
+     vorangehen – dort erzwingt ihn ohnehin CS1737, sonst ist er frei (kein Vertragsargument: der
+     `ApiExplorer` unterdrückt `CancellationToken` im OpenAPI-Dokument vollständig, [B-102](docs/backlog/B-102-token-vorgabewert-regel-schaerfen.md));
   2. ein neuer **Helfer** nimmt den Token mit, aber **ohne `= default`**: ein weggelassenes optionales
      Argument rügt CA2016 nicht, ohne Vorgabewert erzwingt der Compiler das Durchreichen;
   3. **kompensierende Schritte nach dem Commit** (aufräumen o. Ä.) nehmen bewusst `CancellationToken.None`
