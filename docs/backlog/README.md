@@ -507,6 +507,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-07](B-07-db-umbau-restetappen.md) | DB-Struktur-Umbau: der offene Betriebsschritt | Aufräumen | `geschaetzt` | P1 | XS | backend | — |
 | [B-119](B-119-ratenbegrenzer-hinter-proxy.md) | Hinter einem Reverse Proxy partitioniert der Ratenbegrenzer alle Nutzer in einen Topf | Defekt | `idee` | P2 | — | — | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
+| [B-67](B-67-fachlehrer-aus-lehrwerk.md) | Der Fachlehrer fragt nach Fach und Sprachen, die im gewählten Lehrwerk längst stehen | Wunsch | `in-arbeit` | P2 | S | frontend | — |
 | [B-11](B-11-uebungen-veroeffentlichen.md) | Übungen ausdrücklich veröffentlichen | Wunsch | `geschaetzt` | P2 | S | frontend | — |
 | [B-13](B-13-fach-kapitel-eigentum.md) | Fach- und Kapitel-Eigentum | Wunsch | `geschaetzt` | P2 | M | backend | Migration |
 | [B-18](B-18-auto-lehrplan-generator.md) | Lehrplan automatisch aus gefilterten Übungen bauen | Wunsch | `geschaetzt` | P2 | S | beides | — |
@@ -516,7 +517,6 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-46](B-46-interessenbasierte-uebungen.md) | Übungen entstehen für ein Interessenprofil, nicht für ein bestimmtes Kind | Wunsch | `geschaetzt` | P2 | L | backend | Migration |
 | [B-50](B-50-kind-beschreibt-sich-selbst.md) | Das Kind beschreibt sich selbst: Interessen in einem geführten Prozess | Wunsch | `geschaetzt` | P2 | L | beides | — |
 | [B-63](B-63-lehrwerk-hierarchie.md) | Das Lehrwerk ist eine Ebene aus Freitext, gebraucht wird eine Hierarchie mit Listen | Wunsch | `geschaetzt` | P2 | L | beides | Migration + Vertrag |
-| [B-67](B-67-fachlehrer-aus-lehrwerk.md) | Der Fachlehrer fragt nach Fach und Sprachen, die im gewählten Lehrwerk längst stehen | Wunsch | `geschaetzt` | P2 | S | frontend | — |
 | [B-17](B-17-birkenbihl-sprachcodes.md) | Sprachcode-Normalisierung bei der Vokabel-Dekodierung | Frage | `geschaetzt` | P3 | XS | frontend | — |
 | [B-03](B-03-lueckensaetze-mit-bild.md) | Lückensätze mit Bild als Vokabel-Vertiefung | Wunsch | `geschaetzt` | P3 | M | backend | — |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `geschaetzt` | P3 | L | backend | Migration |
@@ -535,9 +535,9 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-71](B-71-inline-vokabelliste-ohne-varianten.md) | Die Inline-Vokabelliste im Übungs-Editor kann keine gleichwertigen Übersetzungen anlegen | Wunsch | `geschaetzt` | P3 | M | beides | — |
 | [B-85](B-85-i18n-infrastruktur-sohn-arcade-englisch.md) | i18n-Infrastruktur + Sohn-Arcade auf Englisch (erste Teilstufe der Mehrsprachigkeit) | Wunsch | `geschaetzt` | P3 | L | frontend | — |
 | [B-86](B-86-uebungstyp-manifest-anzeigenamen-schluessel.md) | Das Übungstyp-Manifest liefert Anzeigenamen als Daten, nicht als Schlüssel | Wunsch | `geschaetzt` | P3 | M | beides | Vertrag |
+| [B-122](B-122-top-level-listen-bekommen-paging.md) | Sieben Top-Level-Sammlungen bekommen `skip`/`take` | Wunsch | `idee` | P3 | — | — | — |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `geschaetzt` | P3 | S | backend | — |
 | [B-100](B-100-vertragsdokument-unterdeklariert.md) | Das Vertragsdokument verschweigt 401, `X-Total-Count` und 24 Operationsnamen | Aufräumen | `ausformuliert` | P3 | — | — | — |
-| [B-121](B-121-platzhalter-und-paging-tore.md) | Platzhalter-Rot-Liste und Paging-Tor aus B-101 | Aufräumen | `ausformuliert` | P3 | — | — | — |
 | [B-118](B-118-dailybox-spanne-ohne-zusicherung.md) | Keine Zusicherung sieht die Ziehungsspanne der Tagesbox mehr | Aufräumen | `idee` | P3 | — | — | — |
 | [B-120](B-120-waechter-anonym-heisst-gedrosselt.md) | „Anonym heißt gedrosselt" hängt an Disziplin, nicht an einem Tor | Aufräumen | `idee` | P3 | — | — | — |
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration? |
@@ -548,14 +548,13 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-06](B-06-cloze-preview-bild.md) | Cloze-Vorschau kann kein Bild zeigen | Wunsch | `geschaetzt` | P6 | XS | backend | — |
 
 <details>
-<summary>Abgenommen (69)</summary>
+<summary>Abgenommen (70)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-01](B-01-bildwahl-einfrieren.md) | Abschlusstest friert Bildwahlen ein, die er nie zeigt | Defekt | `abgenommen` | P1 | S | backend | Vertrag |
 | [B-02](B-02-itemcount-hilfetext.md) | Der Hilfetext erklärt `ItemCount` falsch herum | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-08](B-08-xml-docs-englisch.md) | XML-Doc-Kommentare im Backend auf Englisch übersetzen | Aufräumen | `abgenommen` | P3 | S | doku | — |
-| [B-10](B-10-zeitfenster-pro-kind.md) | Zeitfenster (Punkte-Faktor) je Pflicht statt global | Wunsch | `abgenommen` | P2 | M | beides | Migration |
 | [B-101](B-101-fehlercodes-und-drei-waechter.md) | Drei generische Fehlercodes ersetzen — und die drei Wächter, die daraus reif geworden sind | Aufräumen | `abgenommen` | P3 | S | backend | — |
 | [B-102](B-102-token-vorgabewert-regel-schaerfen.md) | Die Token-Regel im Startkontext ist zu weit formuliert — 55 Signaturen „verstoßen" gegen eine Compilerregel | Aufräumen | `abgenommen` | P3 | XS | doku | — |
 | [B-104](B-104-keyresult-dublette-zahlt-doppelt.md) | Derselbe Meilenstein zweimal: drei Schreibpfade laufen ungeprüft in einen Unique-Index, und dort hängt Geld | Defekt | `abgenommen` | P2 | S | backend | — |
@@ -564,6 +563,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-107](B-107-dailybox-zufallswert-in-docs-capture.md) | `DailyBoxService` würfelt ohne Seed – der Doku-Capture-Snapshot ist dadurch nicht byte-stabil | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-108](B-108-requiretypedtest-default-am-uebungstyp.md) | `DefaultRequireTypedTest` am Übungstyp selbst ungeprüft — dieselbe Fehlerklasse eine Ebene höher als B-93 | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-109](B-109-full-flow-spec-flackert-bei-frage-3.md) | `full-flow.spec.ts` hängt reproduzierbar bei „Frage 3/5" der Klausur | Defekt | `abgenommen` | P3 | S | frontend | — |
+| [B-10](B-10-zeitfenster-pro-kind.md) | Zeitfenster (Punkte-Faktor) je Pflicht statt global | Wunsch | `abgenommen` | P2 | M | beides | Migration |
 | [B-110](B-110-kaufverlauf-ueberspringt-zeilen.md) | Der Kaufverlauf überspringt Zeilen und verpasst den eigenen Kauf | Defekt | `abgenommen` | P2 | S | beides | — |
 | [B-111](B-111-verlauf-luegt-im-fehlerfall.md) | Scheitert das Laden des Verlaufs, sagt die App „Noch nichts gekauft" | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-112](B-112-kommentar-begruendet-das-gegenteil.md) | Ein Kommentar begründet das Gegenteil der Bedingung unter ihm | Aufräumen | `abgenommen` | P3 | XS | frontend | — |
@@ -572,6 +572,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-115](B-115-buchstabenkaestchen-index-drift.md) | Übersprang das Kind ein Buchstabenkästchen, rutschten alle folgenden Zeichen | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-116](B-116-blaettern-ohne-rueckmeldung.md) | Beim Blättern gibt es keine Rückmeldung mehr — und der Pager meldet eine Seite, die noch nicht da ist | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-117](B-117-uebungsbildschirm-bietet-test-trotz-anzeigestufe.md) | Nach der Übungsrunde bietet der Bildschirm einen Test an, den es für diese Stufe nicht gibt | Defekt | `abgenommen` | P2 | S | beides | — |
+| [B-121](B-121-platzhalter-und-paging-tore.md) | Platzhalter-Rot-Liste und Paging-Tor aus B-101 | Aufräumen | `abgenommen` | P3 | S | backend | — |
 | [B-25](B-25-vite-pwa-peer-konflikt.md) | Peer-Konflikt `vite-plugin-pwa` ↔ `vite@8` lösen | Aufräumen | `abgenommen` | P3 | XS | frontend | — |
 | [B-26](B-26-e2e-in-ci.md) | Der E2E-Nachtlauf ist rot – und niemand erfährt es | Defekt | `abgenommen` | P1 | S | frontend | — |
 | [B-27](B-27-testsuite-grenzfaelle.md) | Die Grenzen des `ScoringService` als Tabelle statt als Flow | Aufräumen | `abgenommen` | P2 | S | backend | — |
@@ -636,7 +637,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (6)
 
-**Nachgeschaut: 18 von 69 abgenommenen** — und in 5 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 51 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 18 von 70 abgenommenen** — und in 5 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 52 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -648,7 +649,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-117](B-117-uebungsbildschirm-bietet-test-trotz-anzeigestufe.md) | Nach der Übungsrunde bietet der Bildschirm einen Test an, den es für diese Stufe nicht gibt | [B-114] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (51) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (52) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -658,7 +659,6 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-01](B-01-bildwahl-einfrieren.md) | Abschlusstest friert Bildwahlen ein, die er nie zeigt |
 | [B-02](B-02-itemcount-hilfetext.md) | Der Hilfetext erklärt `ItemCount` falsch herum |
 | [B-08](B-08-xml-docs-englisch.md) | XML-Doc-Kommentare im Backend auf Englisch übersetzen |
-| [B-10](B-10-zeitfenster-pro-kind.md) | Zeitfenster (Punkte-Faktor) je Pflicht statt global |
 | [B-101](B-101-fehlercodes-und-drei-waechter.md) | Drei generische Fehlercodes ersetzen — und die drei Wächter, die daraus reif geworden sind |
 | [B-102](B-102-token-vorgabewert-regel-schaerfen.md) | Die Token-Regel im Startkontext ist zu weit formuliert — 55 Signaturen „verstoßen" gegen eine Compilerregel |
 | [B-105](B-105-taegliche-belohnungsbox.md) | Tägliche Belohnungsbox: Loot-Box + Streak als positives Gegenstück zum Stick |
@@ -666,10 +666,12 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-107](B-107-dailybox-zufallswert-in-docs-capture.md) | `DailyBoxService` würfelt ohne Seed – der Doku-Capture-Snapshot ist dadurch nicht byte-stabil |
 | [B-108](B-108-requiretypedtest-default-am-uebungstyp.md) | `DefaultRequireTypedTest` am Übungstyp selbst ungeprüft — dieselbe Fehlerklasse eine Ebene höher als B-93 |
 | [B-109](B-109-full-flow-spec-flackert-bei-frage-3.md) | `full-flow.spec.ts` hängt reproduzierbar bei „Frage 3/5" der Klausur |
+| [B-10](B-10-zeitfenster-pro-kind.md) | Zeitfenster (Punkte-Faktor) je Pflicht statt global |
 | [B-112](B-112-kommentar-begruendet-das-gegenteil.md) | Ein Kommentar begründet das Gegenteil der Bedingung unter ihm |
 | [B-113](B-113-vater-kaufhistorie-endet-still.md) | Drei geblätterte Listen mit veränderlicher Sortierung — der Vater erreicht keine von ihnen vollständig |
 | [B-116](B-116-blaettern-ohne-rueckmeldung.md) | Beim Blättern gibt es keine Rückmeldung mehr — und der Pager meldet eine Seite, die noch nicht da ist |
 | [B-117](B-117-uebungsbildschirm-bietet-test-trotz-anzeigestufe.md) | Nach der Übungsrunde bietet der Bildschirm einen Test an, den es für diese Stufe nicht gibt |
+| [B-121](B-121-platzhalter-und-paging-tore.md) | Platzhalter-Rot-Liste und Paging-Tor aus B-101 |
 | [B-25](B-25-vite-pwa-peer-konflikt.md) | Peer-Konflikt `vite-plugin-pwa` ↔ `vite@8` lösen |
 | [B-26](B-26-e2e-in-ci.md) | Der E2E-Nachtlauf ist rot – und niemand erfährt es |
 | [B-27](B-27-testsuite-grenzfaelle.md) | Die Grenzen des `ScoringService` als Tabelle statt als Flow |
@@ -720,7 +722,6 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-118](B-118-dailybox-spanne-ohne-zusicherung.md) | `idee` | Abschnitt „Verlauf" |
 | [B-119](B-119-ratenbegrenzer-hinter-proxy.md) | `idee` | Abschnitt „Verlauf" |
 | [B-120](B-120-waechter-anonym-heisst-gedrosselt.md) | `idee` | Abschnitt „Verlauf" |
-| [B-121](B-121-platzhalter-und-paging-tore.md) | `ausformuliert` | Abschnitt „User Story", Abschnitt „Akzeptanzkriterien" |
 | [B-93](B-93-birkenbihl-einstellungen-ohne-wirkung.md) | `abgenommen` | Abschnitt „Entscheidungen" |
 | [B-96](B-96-showboth-stufe-ohne-mechanik.md) | `abgenommen` | Abschnitt „Entscheidungen" |
 | [B-98](B-98-idempotenter-link-post-luegt.md) | `abgenommen` | Abschnitt „Entscheidungen" |

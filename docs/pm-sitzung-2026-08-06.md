@@ -213,11 +213,64 @@ sorgfältiges Vorgehen erst beim Hinsehen macht, nicht beim Zusammenfassen einer
 etwas, das ein Gate im Produkt fangen könnte. Stattdessen als konkrete Konsequenz gehandelt: B-121 trägt
 den Fund jetzt explizit, statt dass er in einem Kommentar verloren geht.
 
+## Sprint 4 — Ziel & Umfang
+
+**Sprint-Ziel:** Ein Sammlungs-Segment trägt mechanisch höchstens einen Platzhalternamen (Ausnahmen nur mit
+begründeter Rot-Liste), und die Zahl der unpaginierten Array-`GET`s ist eine gepinnte, bewusste Zeile statt
+einer Vermutung.
+**Umfang:** B-121 — die beiden zuvor abgespaltenen Wächter aus B-101.
+**Entwickler-Brief:** Ziel: zwei reine Test-Tore, kein Produktivcode. Quelle der Wahrheit: die tatsächliche
+Route-Oberfläche (`ApiSurface`-Reflexion), nicht der zwei Tage alte Bericht. Guards: die beiden neuen Tests
+selbst. Migration: nein. Vertragsbruch: nein. Testweg: Selbsttest (Rot-Listen-Eintrag temporär entfernen,
+rot sehen, wiederherstellen).
+
+## Iteration 4 — umgesetzt
+
+- Vor dem Bauen **erschöpfend nachgemessen statt aus dem Bericht übernommen:** fünf Sammlungs-Segmente mit
+  mehr als einem Platzhalternamen (nicht vier — `units` kam dazu, siehe Vorlauf), und **34** unpaginierte
+  Array-GETs (nicht 35).
+- `ConventionGuardTests.Sammlungs_Segment_Traegt_Hoechstens_Einen_Platzhalternamen` — Rot-Liste mit 7 Tupeln
+  `(Segment, Zweitname, Grund)`. **Rote Probe:** Tupel für `units` temporär entfernt →
+  „units: seriesUnitId, unitId (nicht in der Rot-Liste)", danach wiederhergestellt → grün.
+- `ConventionGuardTests.Unpaginierte_Array_GETs_Sind_Gepinnt` — exakte Pin auf 34.
+- **Form (a) des Paging-Tors (sieben Top-Level-Listen tatsächlich paginieren) bewusst NICHT gebaut:**
+  `PagingExtensions.DefaultTake = 100` greift heute schon bei jedem paginierten Endpunkt als echter Default
+  — dieselbe Behandlung auf die 7 Top-Level-Listen übertragen würde für jeden Aufrufer, der sich auf eine
+  vollständige Liste verlässt, stillschweigend Zeilen abschneiden. Das ist eine Kompatibilitäts-/
+  Produktentscheidung, kein `Aufräumen` — als `art: Wunsch`-Story [B-122](../backlog/B-122-top-level-listen-bekommen-paging.md)
+  gefasst statt autonom entschieden (Freigabe 1 deckt das nicht).
+
+Volle Suite: **752/752 grün** (750 vor dieser Story + 2 neue Wächter).
+
+## Runde — Abnahme Sprint 4 (Rollengang: Regression)
+
+Reiner Test-Code, kein Produktivverhalten geändert — kein Rollengang-Kandidat. Ersatz: volle Suite plus
+`pugling-reviewer` (43 Controller händisch gegen die Rot-Liste nachgeprüft, keine Blocker; ein
+Reason-Text-Tippfehler gefunden und sofort korrigiert — kein Zähler-relevanter Fund, da der Mechanismus den
+Text nicht liest).
+
+**Ergebnis:** B-121 ist `abgenommen`. B-122 (Form a, `Wunsch`) ist als `idee` angelegt und wartet auf Dialog.
+
+## Retrospektive — Sprint 4
+
+**Nachschau:** wie bei Sprint 3 bereits erledigt für den vorigen externen Sprint; kein zweiter Bedarf
+innerhalb derselben Sitzung.
+
+**Was dieser Sprint gelernt hat:** Die zweite Nachzählung in derselben Nacht (nach der `units`-Entdeckung in
+Sprint 3) hat wieder eine Abweichung vom Bericht gefunden (35 → 34) — das bestätigt die Regel aus
+Sprint 3s Retro noch einmal, diesmal an einer anderen Zahl: ein zwei Tage alter Bericht ist eine Momentaufnahme,
+kein aktueller Ist-Stand. Zusätzlich: die Grenze zwischen `Aufräumen` und `Wunsch` kann sich **beim Bauen**
+verschieben, nicht nur beim Ausformulieren — B-121s Form (a) sah in der Arbeitsrunde vom 2026-08-04 wie eine
+reine Tor-Frage aus und stellte sich erst beim genauen Hinsehen als Verhaltensänderung heraus.
+
+**Kein neuer Mechanismus** — beide Lehren sind prozedural (wie sorgfältig diese Sitzung nachgezählt und
+nachgefragt hat), kein Gate im Produkt könnte das automatisch fangen. Als konkrete Konsequenz gehandelt:
+B-122 existiert jetzt als eigene, explizit `Wunsch`-markierte Story statt einer stillen Mitentscheidung.
+
 ## Stand am Ende dieser Sitzung
 
-Vier Stories abgenommen (B-102, B-95, B-108, B-101), zwei Commits bisher gesetzt (ein dritter für Sprint 3
-folgt) — nichts gepusht, das bleibt beim Nutzer. Kein Abbruchgrund ist
-eingetreten (kein neues Gate aus einer Retro, kein Defekt im eigenen Increment über 5 Funde). Offen für
-einen weiteren Sprint dieser Nacht: B-121 (Platzhalter-/Paging-Tore), B-100 (Vertragsdokument, eigener
-großer Umfang), sowie die drei frischen `idee`-Stories B-118/B-119/B-120, die vor dem Bau erst gegen den
-Code recherchiert werden müssten.
+Fünf Stories abgenommen (B-102, B-95, B-108, B-101, B-121), eine neue `Wunsch`-Story B-122 sowie B-118/119/120
+(bereits vor Sitzungsbeginn vorhanden) offen für Dialog. Vier Commits gesetzt (ein fünfter für Sprint 4
+folgt), nichts gepusht — das bleibt beim Nutzer. Kein Abbruchgrund ist eingetreten. Offen für einen
+weiteren Sprint: B-100 (Vertragsdokument, eigener großer Umfang mit OpenAPI-Regenerierung), sowie die drei
+frischen `idee`-Stories B-118/B-119/B-120, die vor dem Bau erst gegen den Code recherchiert werden müssten.

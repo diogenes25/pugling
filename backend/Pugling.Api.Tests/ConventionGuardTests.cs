@@ -103,6 +103,106 @@ public class ConventionGuardTests
             + string.Join("\n", offenders));
     }
 
+    // ─────────────────────────────────────────────────────── (f) one placeholder name per collection segment
+
+    /// <summary>
+    /// Pinned red list (B-101/B-121): every entry is a literal path segment that today carries more than one
+    /// placeholder name in different routes. Each tuple is either a real debt (two names for the SAME entity,
+    /// never unified) or a different entity reached through the same literal segment (correct, not debt) -
+    /// the reason column carries that distinction, the pinning mechanism itself does not need to. A new entry
+    /// here is new scope, not decoration: it means either a genuinely new inconsistency was introduced, or an
+    /// existing one was found and not yet fixed - either way it is meant to draw attention when it grows.
+    /// </summary>
+    private static readonly (string Segment, string Name, string Reason)[] PlaceholderRedList =
+    [
+        ("exercises", "exerciseId", "debt: ExerciseGrantsController/ExerciseMediaController vs. `id` in ExerciseCatalogController/ExercisePreviewController - same Exercise entity"),
+        ("media", "assetId", "debt: MediaVariantsController vs. `id` in MediaAssetsController - same MediaAsset entity"),
+        ("media", "linkId", "correct: a MediaLink is a different entity, reached through the same literal 'media' segment"),
+        ("vocabulary", "vocabularyId", "debt: VocabularyMediaController vs. `id` in VocabularyStoreController - same Vocabulary store entry"),
+        ("vocabulary", "exerciseId", "correct: the vocabulary EXERCISE type route (textbook-series/…/units/…/vocabulary/{exerciseId}) is a different entity"),
+        ("tags", "id", "debt: VocabularyTagsController's nested tags/{id} vs. `tagId` in TagsController - same Tag entity"),
+        ("units", "seriesUnitId", "debt: ExerciseRoutes.Base vs. `unitId` in SeriesUnitsController - same SeriesUnit entity"),
+    ];
+
+    private static readonly Regex PlaceholderSegment = new(@"^\{(?<name>[A-Za-z0-9_]+)(?::[^}]*)?\}$", RegexOptions.Compiled);
+
+    [Fact]
+    public void Sammlungs_Segment_Traegt_Hoechstens_Einen_Platzhalternamen()
+    {
+        // Walk every route template pairwise: a literal segment immediately followed by a placeholder segment
+        // is the pair this guard cares about ("exercises/{exerciseId}" -> ("exercises", "exerciseId")).
+        var observed = new List<(string Segment, string Name)>();
+        foreach (var controller in ApiSurface.Controllers())
+            foreach (var action in ApiSurface.ActionsIncludingInherited(controller))
+            {
+                var segments = ApiSurface.RouteOf(controller, action).Split('/');
+                for (var i = 0; i < segments.Length - 1; i++)
+                {
+                    if (PlaceholderSegment.IsMatch(segments[i])) continue;
+                    var next = PlaceholderSegment.Match(segments[i + 1]);
+                    if (next.Success)
+                        observed.Add((segments[i], next.Groups["name"].Value));
+                }
+            }
+
+        var redListBysegment = PlaceholderRedList.ToLookup(r => r.Segment, r => r.Name);
+        var offenders = new List<string>();
+        foreach (var group in observed.GroupBy(o => o.Segment))
+        {
+            var remaining = group.Select(o => o.Name).Distinct()
+                .Where(n => !redListBysegment[group.Key].Contains(n))
+                .ToList();
+            if (remaining.Count > 1)
+                offenders.Add($"{group.Key}: {string.Join(", ", remaining)} (nicht in der Rot-Liste)");
+        }
+
+        Assert.True(observed.Count >= 150, $"Zu wenige Segment/Platzhalter-Paare gefunden ({observed.Count}) - die Reflexion greift nicht.");
+        Assert.True(offenders.Count == 0,
+            "Ein Sammlungs-Segment trägt mehr als einen Platzhalternamen, ohne in der Rot-Liste zu stehen "
+            + "(neuer Fund oder neue Route mit einem zweiten Namen):\n" + string.Join("\n", offenders));
+    }
+
+    // ─────────────────────────────────────────────────────── (g) unpaginated array GETs are pinned
+
+    private static bool ReturnsCollection(MethodInfo action)
+    {
+        var t = action.ReturnType;
+        if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Task<>))
+            t = t.GetGenericArguments()[0];
+        if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(ActionResult<>))
+            t = t.GetGenericArguments()[0];
+        return t != typeof(string) && t.IsGenericType
+            && typeof(System.Collections.IEnumerable).IsAssignableFrom(t);
+    }
+
+    /// <summary>
+    /// Exact pin (B-121), measured 2026-08-06 - deliberately not an upper bound: a shrinking count is just as
+    /// much a deliberate line as a growing one (README, "Der Nenner ist die Falle"). It shrinks when an
+    /// endpoint gains pagination (B-121 form (a), not decided/built here - that changes response shape for
+    /// existing unbounded callers and is a product decision, not an "Aufräumen"); it grows when a new
+    /// unpaginated array `GET` is added.
+    /// </summary>
+    private const int UnpaginatedArrayGetCount = 34;
+
+    [Fact]
+    public void Unpaginierte_Array_GETs_Sind_Gepinnt()
+    {
+        var offenders = new List<string>();
+        foreach (var controller in ApiSurface.Controllers())
+            foreach (var action in ApiSurface.ActionsIncludingInherited(controller))
+            {
+                if (ApiSurface.MethodOf(action) != "GET") continue;
+                if (!ReturnsCollection(action)) continue;
+                if (action.GetParameters().Any(p => p.Name!.Equals("take", StringComparison.OrdinalIgnoreCase))) continue;
+                offenders.Add($"{controller.Name}.{action.Name} [{RouteOf(controller, action)}]");
+            }
+
+        Assert.True(offenders.Count == UnpaginatedArrayGetCount,
+            $"{offenders.Count} unpaginierte Array-GETs gefunden, {UnpaginatedArrayGetCount} gepinnt. "
+            + "Eine neue Zahl ist eine bewusste Zeile (README, \"Der Nenner ist die Falle\"), keine stille "
+            + "Anpassung:\n" + string.Join("\n", offenders.OrderBy(x => x)));
+    }
+
     // ─────────────────────────────────────────────────────── (c) the contract lives in Pugling.Contracts
 
     [Fact]
