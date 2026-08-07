@@ -33,7 +33,23 @@ richtige Antwort ist (ohne diese Einschränkung wird der Header selbst zum Umgeh
 sucht sich seine Partition aus), und ob es ohne laufende Azure-Instanz überhaupt verifizierbar ist oder
 `wartet_auf` gesetzt werden muss.
 
-## Ausformulieren/Grillen — Ergebnis
+## User Story
+
+Als **Betreiber**, der die App hinter einem Azure App Service (Reverse Proxy) veröffentlicht, möchte ich,
+dass der Ratenbegrenzer jeden Client an seiner eigenen Adresse erkennt — damit aus einer Bremse gegen
+Skripte keine Bremse gegen alle Nutzer der Instanz wird.
+
+## Ist-Stand am Code
+
+Die Policy `"login"` partitioniert über `http.Connection.RemoteIpAddress` (`Program.cs:258`). Im Repo
+gibt es nirgends `UseForwardedHeaders`/`KnownProxies` — hinter dem Front-End eines Azure App Service ist
+diese Adresse die des **Proxys**, nicht die des Clients. Dann teilen sich *alle* Nutzer **eine**
+Partition: statt 10 Anfragen pro Minute und Person gäbe es 10 pro Minute für die gesamte Instanz, für
+Login **und** (seit B-48) Registrierung gemeinsam. Heute kein Schaden: das Azure-Deploy ist stillgelegt
+und Azure ist nicht konfiguriert (`.github/workflows/deploy-azure.yml`, dazu
+[B-07](B-07-db-umbau-restetappen.md)).
+
+## Entscheidungen
 
 1. **Azure App Service ist selbst der Proxy, und er sitzt auf demselben Host wie Kestrel.** Im
    Out-of-Process-Hosting-Modell (der hier verwendete) reicht IIS/ANCM die Anfrage über die
@@ -50,6 +66,16 @@ sucht sich seine Partition aus), und ob es ohne laufende Azure-Instanz überhaup
    `Connection.RemoteIpAddress` liest — hier vor `UseRateLimiter` (und vor allem sonst, das die Adresse
    je lesen könnte, z. B. künftiges Logging). Es steht darum ganz am Anfang der Pipeline, noch vor
    `UseExceptionHandler`.
+
+## Schätzung
+
+`groesse: XS`, `wo: backend`, `migration: nein`, `vertragsbruch: nein` (reine Middleware-Registrierung,
+keine neue Route, kein neuer Vertragspunkt). Angriffsplan: `app.UseForwardedHeaders(...)` als erste
+Pipeline-Middleware in `Program.cs`, Default-`ForwardedHeadersOptions` (kein `KnownProxies`-Eintrag
+nötig, siehe Entscheidung 1). Testweg: ein Integrationstest mit zwei verschiedenen
+`X-Forwarded-For`-Werten gegen eine eigene `RateLimitedFactory` (Login-Bremse eingeschaltet), rot gegen
+den Vorzustand per `git stash` verifiziert — siehe „Verlauf" für die tatsächliche Umsetzung und die
+Messzahlen.
 
 ## Akzeptanzkriterien
 

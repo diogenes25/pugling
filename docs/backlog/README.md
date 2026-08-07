@@ -715,23 +715,6 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 
 </details>
 
-### ⚠ Stufe behauptet, Datei belegt nicht
-
-Diese Stories tragen einen `status`, dessen Eintrittsbedingung in der Datei nicht
-vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
-
-| Id | Stufe | Fehlt |
-| --- | --- | --- |
-| [B-100](B-100-vertragsdokument-unterdeklariert.md) | `abgenommen` | Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
-| [B-104](B-104-keyresult-dublette-zahlt-doppelt.md) | `abgenommen` | Abschnitt „Entscheidungen" |
-| [B-118](B-118-dailybox-spanne-ohne-zusicherung.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
-| [B-119](B-119-ratenbegrenzer-hinter-proxy.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
-| [B-120](B-120-waechter-anonym-heisst-gedrosselt.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
-| [B-93](B-93-birkenbihl-einstellungen-ohne-wirkung.md) | `abgenommen` | Abschnitt „Entscheidungen" |
-| [B-96](B-96-showboth-stufe-ohne-mechanik.md) | `abgenommen` | Abschnitt „Entscheidungen" |
-| [B-98](B-98-idempotenter-link-post-luegt.md) | `abgenommen` | Abschnitt „Entscheidungen" |
-| [B-99](B-99-kaufhistorie-endet-lautlos.md) | `abgenommen` | Abschnitt „Entscheidungen" |
-
 <details>
 <summary>Verworfen (11)</summary>
 

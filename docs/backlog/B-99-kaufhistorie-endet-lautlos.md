@@ -49,7 +49,10 @@ Handlungsbedarf überzeichnet: von den 35 wachsen in dieser App real **sieben** 
 durch eine Familie, eine Woche, ein Lehrwerk oder ein Manifest begrenzt. **Eine** Stelle verliert heute Daten
 sichtbar, und das ist diese.
 
-## Ergebnis der Arbeitsrunde vom 2026-08-04 (gegrillt)
+## Entscheidungen
+
+Erarbeitet in der Arbeitsrunde PM/API-Designer/Entwickler am 2026-08-04, dort noch als „Ergebnis der
+Arbeitsrunde" geführt.
 
 1. **Die kleinste Variante bauen, nicht das Programm:** `?purchaseTake=`/`?purchaseSkip=` deklarieren und
    `X-Total-Count` setzen — **statt** einen neuen Student-Endpunkt anzulegen. Vorschätzung **S**,

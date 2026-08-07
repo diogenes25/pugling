@@ -48,7 +48,9 @@ Keine Falschaussage, sondern eine **Auslassung** — und das ist der Grund für 
 (siehe Entscheidung 1). Betroffen ist, wer die API über das Dokument liest: der Mensch im Scalar-UI und der
 KI-Creator. Der *generierte* Vertrag leidet nicht, und das war in der Runde die entscheidende Messung.
 
-## Ergebnis der Arbeitsrunde vom 2026-08-04
+## Entscheidungen
+
+Erarbeitet in der Arbeitsrunde PM/API-Designer/Entwickler am 2026-08-04.
 
 1. **`art: Aufräumen`, nicht `Defekt` — hier hat der API-Designer seine eigene Hochstufung widerlegt.**
    Er hatte angekündigt, B4 werde zum Defekt, falls `frontend/src/lib/contract.ts` am Dokument hängt.
@@ -90,6 +92,17 @@ KI-Creator. Der *generierte* Vertrag leidet nicht, und das war in der Runde die 
    führen.
 5. Vorschätzung für diese Story (B4+B5+`no-store`): **S**, `wo: backend`, keine Migration, kein
    Vertragsbruch.
+
+## Schätzung
+
+`groesse: S`, `wo: backend`, `migration: nein`, `vertragsbruch: nein` (additive Header-/Summary-
+Deklarationen im OpenAPI-Dokument, kein bestehendes Feld ändert Form). Angriffsplan: drei neue
+`AddOperationTransformer`-Registrierungen in `Program.cs` (401/403, `X-Total-Count`, 24 typspezifische
+Summaries aus `ExerciseTypeManifest`) plus `[ResponseCache(NoStore = true, Location =
+ResponseCacheLocation.None)]` an den drei Login-Actions und `GET auth/me`. Testweg: die bestehende
+`ContractDocumentTests.Vertragsdokument_BeschreibtDieLeitungWahrheitsgemaess` um drei Punkte erweitert,
+ein neuer `SecurityHardeningTests`-Fall für den Laufzeit-Header — siehe „Verlauf" 2026-08-07 für die
+tatsächliche Umsetzung und die Messzahlen.
 
 ## Akzeptanzkriterien
 

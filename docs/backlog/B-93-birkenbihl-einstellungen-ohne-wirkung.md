@@ -76,7 +76,7 @@ Die zweite Hälfte teilt dabei ihre Ursache mit
 [B-96](B-96-showboth-stufe-ohne-mechanik.md): eine Stufe bzw. Einstellung, die angeboten und validiert wird,
 aber im Spielpfad keine Entsprechung hat. Wer beide baut, sollte die Prüf-Hilfsfunktion einmal schreiben.
 
-## Offene Punkte (gegrillt)
+## Entscheidungen
 
 1. Punkt 1: Prüfung beim Anlegen/Ändern der Position (`requireTypedTest: true` für einen Typ, der nie
    getippt ist, → `400`)? **Entscheidung: ja**, analog `ThresholdProblem` — dieselbe Begründung, dieselbe

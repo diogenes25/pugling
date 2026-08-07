@@ -64,7 +64,10 @@ und (3) **kein** heutiger Schaden — aber ein `201` ohne Erzeugung ist eine Fal
 unabhängig davon, ob sie gerade jemand liest, und ein Test hält sie fest. Genau darüber ging der Streit in
 der Runde: „niemand liest es" begründet, warum es nicht **drängt**, nicht, warum es richtig ist.
 
-## Ergebnis der Arbeitsrunde vom 2026-08-04 (gegrillt)
+## Entscheidungen
+
+Erarbeitet in der Arbeitsrunde PM/API-Designer/Entwickler am 2026-08-04, dort noch als „Ergebnis der
+Arbeitsrunde" geführt.
 
 1. **Alle drei Stellen, als eine Regel.** Formulierung für `backend/Pugling.Api/CLAUDE.md`: *„Ein
    idempotenter Link-POST antwortet `201` nur bei tatsächlichem Insert, sonst `200` mit der **gelesenen**

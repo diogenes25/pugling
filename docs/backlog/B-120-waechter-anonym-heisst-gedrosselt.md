@@ -33,12 +33,37 @@ Beim Ausformulieren zu klären, ob es eine Ausnahmeliste braucht (ein anonymer *
 denkbar und nicht zwingend drosselungsbedürftig) — und falls ja, ob sie wie die übrigen Ausnahmelisten des
 Repos eine Begründung je Eintrag verlangt.
 
-## Ausformulieren/Grillen — Ergebnis
+## User Story
 
-Eine Ausnahmeliste ist vorgesehen (Muster `OwnershipExceptions` in derselben Datei), aber **leer**: alle
-fünf heutigen `[AllowAnonymous]`-Actions sind Schreibzugriffe (drei Logins, zwei Registrierungen) und
-brauchen die Bremse. Ein anonymer Lese-Endpunkt existiert heute nicht — sollte einer entstehen, trägt er
-seinen Ausnahme-Eintrag mit Begründung, wie es die übrigen Ausnahmelisten des Repos verlangen.
+Als **Entwickler**, der einen neuen anonymen Endpunkt hinzufügt, möchte ich, dass ein Tor mich sofort
+warnt, wenn ich das Rate-Limiting vergesse — damit „anonym heißt gedrosselt" nicht von Disziplin abhängt,
+sondern mechanisch erzwungen wird.
+
+## Ist-Stand am Code
+
+Nach [B-48](B-48-anonyme-registrierung-produktion.md) tragen alle fünf anonym erreichbaren Actions des
+Backends (drei Login-, zwei Registrierungs-Endpunkte) `[EnableRateLimiting("login")]`. Gehalten wird das
+aber von fünf richtig gesetzten Attributen — genau die Sorte Regel, gegen die dieses Repo sonst
+mechanische Tore stellt (`ConventionGuardTests`, `SchemaGuardTests`). Der sechste anonyme Endpunkt
+vergisst sie lautlos, und gemerkt würde es erst an einer öffentlichen Instanz.
+
+## Entscheidungen
+
+1. **Ausnahmeliste vorgesehen, aber leer.** Muster `OwnershipExceptions` in derselben Datei übernommen:
+   alle fünf heutigen `[AllowAnonymous]`-Actions sind Schreibzugriffe (drei Logins, zwei
+   Registrierungen) und brauchen die Bremse — kein Eintrag heute nötig. Kosten: keine, reine
+   Vorsichtsstruktur für morgen. Ein anonymer Lese-Endpunkt existiert heute nicht — sollte einer
+   entstehen, trägt er seinen Ausnahme-Eintrag mit Begründung, wie es die übrigen Ausnahmelisten des
+   Repos verlangen.
+
+## Schätzung
+
+`groesse: XS`, `wo: backend`, `migration: nein`, `vertragsbruch: nein` (reiner Test-Code). Angriffsplan:
+ein neuer reflexiver Test `ConventionGuardTests.Anonyme_Actions_Tragen_EnableRateLimiting`, direkt nach
+dem bestehenden Ownership-Filter-Wächter, mit Selbstschutzschwelle (mindestens 5 Treffer erwartet, sonst
+bricht der Test mit eigener Meldung ab statt leer grün zu laufen). Testweg: rote Probe durch Entfernen
+eines `[EnableRateLimiting]`-Attributs — siehe „Verlauf" für die tatsächliche Umsetzung und die
+Messzahlen.
 
 ## Akzeptanzkriterien
 

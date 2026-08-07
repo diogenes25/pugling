@@ -58,7 +58,7 @@ ein Weg denkbar, auf dem die Dublette doch entsteht (etwa wenn die Filter-Beding
 Geltungsbereichs-Wechsel nicht mehr greifen) — und dann zahlt die Prämie zweimal. Die Prüfung im Dienst ist
 also nicht nur Kosmetik am Statuscode, sie ist die zweite Verteidigungslinie vor der Auszahlung.
 
-## Offene Punkte (gegrillt)
+## Entscheidungen
 
 1. **Ein Code oder drei?** Entscheidung: **einer** — `duplicate_key_result`, additiv in `ApiErrors`. Die drei
    Indizes sind eine Regel in drei Ausprägungen (der Geltungsbereich hat drei Formen); drei Codes wären drei

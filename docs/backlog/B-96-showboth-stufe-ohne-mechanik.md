@@ -60,7 +60,7 @@ Zwei Wege stehen offen, und sie unterscheiden sich in den Kosten deutlich: die S
 beide Seiten, keine Bewertung, kein Leitner-Fortschritt) oder sie **nicht mehr anbieten** (aus dem Manifest
 nehmen; der Enum-Wert bleibt, weil Seed und Bestandsdaten ihn tragen).
 
-## Offene Punkte (gegrillt)
+## Entscheidungen
 
 1. **Bauen oder zurückziehen?** Entscheidung: **bauen** — die Stufe hat einen echten didaktischen Platz
    (erste Begegnung mit neuem Wortschatz, siehe Leitner/Birkenbihl) und der Seed benutzt sie als ersten
