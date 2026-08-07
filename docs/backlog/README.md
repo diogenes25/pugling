@@ -500,7 +500,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (38)
+### Offen (36)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -535,8 +535,6 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-122](B-122-top-level-listen-bekommen-paging.md) | Sieben Top-Level-Sammlungen bekommen `skip`/`take` | Wunsch | `idee` | P3 | — | — | — |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `geschaetzt` | P3 | S | backend | — |
 | [B-100](B-100-vertragsdokument-unterdeklariert.md) | Das Vertragsdokument verschweigt 401, `X-Total-Count` und 24 Operationsnamen | Aufräumen | `ausformuliert` | P3 | — | — | — |
-| [B-118](B-118-dailybox-spanne-ohne-zusicherung.md) | Keine Zusicherung sieht die Ziehungsspanne der Tagesbox mehr | Aufräumen | `idee` | P3 | — | — | — |
-| [B-120](B-120-waechter-anonym-heisst-gedrosselt.md) | „Anonym heißt gedrosselt" hängt an Disziplin, nicht an einem Tor | Aufräumen | `idee` | P3 | — | — | — |
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration? |
 | [B-90](B-90-server-sprachfeld.md) | Server-Sprachfeld an `Adult`/`Child` | Wunsch | `idee` | P4 | — | — | — |
 | [B-91](B-91-vater-web-extraktion-englisch.md) | Vater-Web-Textkorpus auf Übersetzungsschlüssel umstellen (Englisch) | Wunsch | `idee` | P4 | — | — | — |
@@ -544,7 +542,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-05](B-05-buchstaben-tausch.md) | Buchstaben-Tausch-Eingabe (Anagramm) | Wunsch | `geschaetzt` | P5 | M | beides | — |
 
 <details>
-<summary>Abgenommen (73)</summary>
+<summary>Abgenommen (75)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -568,7 +566,9 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-115](B-115-buchstabenkaestchen-index-drift.md) | Übersprang das Kind ein Buchstabenkästchen, rutschten alle folgenden Zeichen | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-116](B-116-blaettern-ohne-rueckmeldung.md) | Beim Blättern gibt es keine Rückmeldung mehr — und der Pager meldet eine Seite, die noch nicht da ist | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-117](B-117-uebungsbildschirm-bietet-test-trotz-anzeigestufe.md) | Nach der Übungsrunde bietet der Bildschirm einen Test an, den es für diese Stufe nicht gibt | Defekt | `abgenommen` | P2 | S | beides | — |
+| [B-118](B-118-dailybox-spanne-ohne-zusicherung.md) | Keine Zusicherung sieht die Ziehungsspanne der Tagesbox mehr | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-119](B-119-ratenbegrenzer-hinter-proxy.md) | Hinter einem Reverse Proxy partitioniert der Ratenbegrenzer alle Nutzer in einen Topf | Defekt | `abgenommen` | P2 | XS | backend | — |
+| [B-120](B-120-waechter-anonym-heisst-gedrosselt.md) | „Anonym heißt gedrosselt" hängt an Disziplin, nicht an einem Tor | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-121](B-121-platzhalter-und-paging-tore.md) | Platzhalter-Rot-Liste und Paging-Tor aus B-101 | Aufräumen | `abgenommen` | P3 | S | backend | — |
 | [B-25](B-25-vite-pwa-peer-konflikt.md) | Peer-Konflikt `vite-plugin-pwa` ↔ `vite@8` lösen | Aufräumen | `abgenommen` | P3 | XS | frontend | — |
 | [B-26](B-26-e2e-in-ci.md) | Der E2E-Nachtlauf ist rot – und niemand erfährt es | Defekt | `abgenommen` | P1 | S | frontend | — |
@@ -636,7 +636,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (6)
 
-**Nachgeschaut: 19 von 73 abgenommenen** — und in 5 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 54 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 19 von 75 abgenommenen** — und in 5 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 56 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -648,7 +648,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-117](B-117-uebungsbildschirm-bietet-test-trotz-anzeigestufe.md) | Nach der Übungsrunde bietet der Bildschirm einen Test an, den es für diese Stufe nicht gibt | [B-114] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (54) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (56) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -669,7 +669,9 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-113](B-113-vater-kaufhistorie-endet-still.md) | Drei geblätterte Listen mit veränderlicher Sortierung — der Vater erreicht keine von ihnen vollständig |
 | [B-116](B-116-blaettern-ohne-rueckmeldung.md) | Beim Blättern gibt es keine Rückmeldung mehr — und der Pager meldet eine Seite, die noch nicht da ist |
 | [B-117](B-117-uebungsbildschirm-bietet-test-trotz-anzeigestufe.md) | Nach der Übungsrunde bietet der Bildschirm einen Test an, den es für diese Stufe nicht gibt |
+| [B-118](B-118-dailybox-spanne-ohne-zusicherung.md) | Keine Zusicherung sieht die Ziehungsspanne der Tagesbox mehr |
 | [B-119](B-119-ratenbegrenzer-hinter-proxy.md) | Hinter einem Reverse Proxy partitioniert der Ratenbegrenzer alle Nutzer in einen Topf |
+| [B-120](B-120-waechter-anonym-heisst-gedrosselt.md) | „Anonym heißt gedrosselt" hängt an Disziplin, nicht an einem Tor |
 | [B-121](B-121-platzhalter-und-paging-tore.md) | Platzhalter-Rot-Liste und Paging-Tor aus B-101 |
 | [B-25](B-25-vite-pwa-peer-konflikt.md) | Peer-Konflikt `vite-plugin-pwa` ↔ `vite@8` lösen |
 | [B-26](B-26-e2e-in-ci.md) | Der E2E-Nachtlauf ist rot – und niemand erfährt es |
@@ -720,9 +722,9 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | Id | Stufe | Fehlt |
 | --- | --- | --- |
 | [B-104](B-104-keyresult-dublette-zahlt-doppelt.md) | `abgenommen` | Abschnitt „Entscheidungen" |
-| [B-118](B-118-dailybox-spanne-ohne-zusicherung.md) | `idee` | Abschnitt „Verlauf" |
+| [B-118](B-118-dailybox-spanne-ohne-zusicherung.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-119](B-119-ratenbegrenzer-hinter-proxy.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
-| [B-120](B-120-waechter-anonym-heisst-gedrosselt.md) | `idee` | Abschnitt „Verlauf" |
+| [B-120](B-120-waechter-anonym-heisst-gedrosselt.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-93](B-93-birkenbihl-einstellungen-ohne-wirkung.md) | `abgenommen` | Abschnitt „Entscheidungen" |
 | [B-96](B-96-showboth-stufe-ohne-mechanik.md) | `abgenommen` | Abschnitt „Entscheidungen" |
 | [B-98](B-98-idempotenter-link-post-luegt.md) | `abgenommen` | Abschnitt „Entscheidungen" |

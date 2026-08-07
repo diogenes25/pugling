@@ -105,5 +105,61 @@ Loopback), was den Integrationstest ohne jede Sonderkonstruktion ermöglicht hat
 **Kein neuer Mechanismus** — die Lehre ist einmalig für diese Story (eine Recherchefrage, die sich beim
 genauen Hinsehen auflöste), kein Gate im Produkt könnte das fangen.
 
-## Vorlauf zu Sprint 2 — Ausformulieren/Schätzen
+## Sprint 2 — Ziel & Umfang
+
+**Sprint-Ziel:** Zwei Lücken, die derselbe Reviewer beim Abnehmen zweier B-48/B-107-Nachbarstories am
+2026-08-06 fand, sind jetzt Tore statt Notizen — eine schwächer werdende Zusicherung (DailyBox-Spanne) und
+eine Regel, die an Disziplin statt an einem Test hing (Anonym-heißt-gedrosselt).
+**Umfang:** B-118 + B-120 — beide `Aufräumen`, beide aus demselben `pugling-reviewer`-Ursprung
+(B-48-/B-107-Abnahme vom 2026-08-06), beide reiner Test-Code ohne Produktivverhalten.
+**Entwickler-Brief:** Ziel: zwei vom Reviewer vorgeschlagene Test-/Guard-Lücken schließen, nach den
+jeweils schon im Review skizzierten Mustern (`TimeSlotsOnFactory` für B-118, der bestehende
+Ownership-Guard für B-120). Quelle der Wahrheit: `DailyBoxService.cs`/`PositionProgressService.cs`
+(B-118), `ConventionGuardTests.cs`/die fünf realen `[AllowAnonymous]`-Fundstellen (B-120). Guards: keine
+neuen Produktiv-Guards für B-118 (reiner Test), B-120 IST der neue Guard. Migration: nein. Vertragsbruch:
+nein. Testweg: beide Stories beweisen ihren Test durch gezielte Fehler-Injektion (rot→grün), nicht nur
+durch grünen Erstlauf.
+
+## Iteration 2 — umgesetzt
+
+- **B-118**: `DailyBoxRangeTests.cs` + `DailyBoxRangeFactory` (Coins 7-9, Gems 2-4 — bewusst verschieden
+  von Produktions-Default UND vom Test-Pin). Zieht 60× direkt über `DailyBoxService.EvaluateAndAwardAsync`
+  (DI-Scope, kein HTTP-Umweg), je ein Wegwerf-Plan ohne Positionen pro Tag — hält den Streak-Multiplikator
+  dadurch bei jedem Versuch auf 1.0. **Rote Probe** (Fehler injiziert: exklusive statt inklusive
+  Obergrenze in `DailyBoxService.cs`): `Assert.Contains() Failure: ... Not found: 9`. Zurückgesetzt: grün.
+- **B-120**: `ConventionGuardTests.Anonyme_Actions_Tragen_EnableRateLimiting`, Muster identisch zum
+  bestehenden Ownership-Filter-Wächter (Selbstschutz `checkedActions >= 5`, leere, begründete
+  Ausnahmeliste). **Rote Probe** (`[EnableRateLimiting("login")]` testweise von `AuthController.LoginAdult`
+  entfernt): Test nennt exakt diese Action. Wiederhergestellt: grün.
+
+Volle Suite: **760/760 grün** (758 vor diesem Sprint + 2 neue Tests).
+
+## Runde — Abnahme Sprint 2 (Rollengang: Regression)
+
+Beide Stories sind reiner Test-Code ohne Produktivverhalten — kein Rollengang-Kandidat. Ersatz: die volle
+Suite, die beiden gezielten Fehler-Injektions-Belege (stärker als ein bloßer grüner Erstlauf: beide Tests
+beweisen, dass sie die Regel wirklich prüfen, nicht nur zufällig grün sind) und `pugling-reviewer` (kein
+Blocker; ein 🟢-Nice-to-have zu einer vorbestehenden Buchstaben-Unschärfe in `ConventionGuardTests.cs`,
+nicht behoben — kosmetisch, nicht Teil dieser Stories).
+
+**Ergebnis:** B-118 und B-120 sind `abgenommen`.
+
+## Retrospektive — Sprint 2
+
+**Nachschau:** Sprint 1 dieser Sitzung (B-119) ist unmittelbar vorheriger Sprint, frisch reviewt und per
+rot→grün-Beleg belegt — kein zweiter Nachhol-Bedarf am selben Tag. Index-Stand nach diesem Sprint: **36
+offen, 75 abgenommen, 11 verworfen.**
+
+**Was dieser Sprint gelernt hat:** Für reinen Test-Code (kein Produktivverhalten geändert) ist "der Test
+läuft grün" ein schwacher Beleg — er beweist nur, dass nichts kaputt ist, nicht dass der Test die Regel
+tatsächlich prüft. Beide Stories dieses Sprints haben das über eine gezielte Fehler-Injektion (den
+Defekt, den der Test fangen soll, kurz einbauen, rot sehen, zurücksetzen) stärker belegt als die übliche
+`git stash`-Probe an Produktivcode — dieselbe Disziplin wie bei B-121s Rot-Listen-Probe
+(2026-08-06), hier zum ersten Mal für zwei reine Test-Additions in einem Sprint angewendet.
+
+**Kein neuer Mechanismus** — die Lehre ist prozedural (wie diese beiden Test-Stories verifiziert wurden),
+kein Gate im Produkt könnte das automatisch erzwingen. Als konkrete Konsequenz: beide `## Verlauf`-Einträge
+benennen die injizierten Fehler wörtlich, nicht nur "getestet".
+
+## Vorlauf zu Sprint 3 — Ausformulieren/Schätzen
 

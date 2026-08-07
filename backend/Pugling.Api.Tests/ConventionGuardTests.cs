@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Pugling.Api.Auth;
 
 namespace Pugling.Api.Tests;
@@ -338,6 +339,49 @@ public class ConventionGuardTests
     /// grows, the reason belongs with it, otherwise it hollows out the gate.
     /// </summary>
     private static readonly HashSet<string> OwnershipExceptions = [];
+
+    // ─────────────────────────────────────────────────────── (f) anonymous means throttled
+
+    [Fact]
+    public void Anonyme_Actions_Tragen_EnableRateLimiting()
+    {
+        // B-120: after B-48, all five anonymously reachable actions carry [EnableRateLimiting("login")] -
+        // but that is five correctly set attributes, not a rule. This gate is the mechanical version: the
+        // next [AllowAnonymous] action that forgets the brake turns this test red instead of staying
+        // unnoticed until a public instance meets it. Empty exception list on purpose (see below).
+        var offenders = new List<string>();
+        var checkedActions = 0;
+
+        foreach (var controller in Controllers())
+        {
+            var classHasAllowAnonymous = controller.GetCustomAttribute<AllowAnonymousAttribute>(inherit: true) is not null;
+            var classHasRateLimiting = controller.GetCustomAttribute<EnableRateLimitingAttribute>(inherit: true) is not null;
+            foreach (var action in Actions(controller))
+            {
+                var isAnonymous = classHasAllowAnonymous || action.GetCustomAttribute<AllowAnonymousAttribute>(inherit: false) is not null;
+                if (!isAnonymous)
+                    continue;
+                if (AnonymousRateLimitExceptions.Contains($"{controller.Name}.{action.Name}"))
+                    continue;
+
+                checkedActions++;
+                var hasRateLimiting = classHasRateLimiting || action.GetCustomAttribute<EnableRateLimitingAttribute>(inherit: false) is not null;
+                if (!hasRateLimiting)
+                    offenders.Add($"{controller.Name}.{action.Name} ([AllowAnonymous] without [EnableRateLimiting])");
+            }
+        }
+
+        Assert.True(checkedActions >= 5, $"Too few anonymous actions found ({checkedActions}) - the reflection does not bite.");
+        Assert.True(offenders.Count == 0,
+            "Anonym erreichbare Actions brauchen eine Ratenbegrenzung:\n" + string.Join("\n", offenders));
+    }
+
+    /// <summary>
+    /// Deliberately empty: every anonymous action today is a write (login/registration) and needs the
+    /// brake. An anonymous **read** endpoint would be a legitimate exception - add it here with a reason
+    /// when one exists, so the list stays a set of decisions instead of a catch-all.
+    /// </summary>
+    private static readonly HashSet<string> AnonymousRateLimitExceptions = [];
 
     // ─────────────────────────────────────────────────────── (e) a solution never travels to a student
 
