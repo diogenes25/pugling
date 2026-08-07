@@ -250,3 +250,110 @@ verworfen** (Start: 39/72/11).
 - Kein baubares `Defekt`/`Aufräumen`-Thema mehr auf `geschaetzt`/`ausformuliert` übrig, das nicht extern
   wartet — der Lauf endet hier regulär (kein weiterer Sprint möglich), nicht wegen einer Abbruchbedingung.
 
+---
+
+## Nachtlauf (Fortsetzung, unbeaufsichtigt): Nachschau statt Bau
+
+**Datum:** 2026-08-07 · **Auftrag:** kein Feature-Bau, ausschließlich zwei Aktivitäten — Nachschau-Sweep
+über nie nachgeschaute abgenommene Stories, und Doku-Nachtrag an Stories, deren Datei ihre eigene
+Eintrittsbedingung nicht mehr vollständig belegt. Beide Listen aus dem frischen Index gelesen
+(`bash .claude/scripts/backlog-index.sh`), nicht aus einer mitgegebenen Zahl.
+
+**Ausgangslage:** 76 abgenommene Stories, davon 19 bereits früher nachgeschaut (5 mit Fund → B-110/111/
+114/115/116-117), **57 nie nachgeschaut**; 9 Stories mit ⚠ „Stufe behauptet, Datei belegt nicht".
+
+## Doku-Nachtrag
+
+Reine Dokumentation, kein Code-Umbau, kein Statuswechsel — an neun Stories fehlte ein Pflicht-Abschnitt
+(`## Entscheidungen`/`## Schätzung`/vollständiges Ausformulieren), obwohl der Inhalt am Bau-Tag bereits
+entstanden war, nur unter falschem Heading oder gar nicht nachgetragen. Rekonstruiert aus dem, was in der
+Datei selbst bereits stand (keine Entscheidung erfunden).
+
+| Story | Fehlte | Ergebnis |
+| --- | --- | --- |
+| B-93 | Abschnitt „Entscheidungen" | „Offene Punkte (gegrillt)" umbenannt — Inhalt war bereits vollständig |
+| B-96 | Abschnitt „Entscheidungen" | „Offene Punkte (gegrillt)" umbenannt — Inhalt war bereits vollständig |
+| B-98 | Abschnitt „Entscheidungen" | „Ergebnis der Arbeitsrunde …" umbenannt, Datumskontext als Einleitung erhalten |
+| B-99 | Abschnitt „Entscheidungen" | „Ergebnis der Arbeitsrunde …" umbenannt, Datumskontext als Einleitung erhalten |
+| B-100 | Abschnitte „Entscheidungen", „Schätzung" | „Ergebnis der Arbeitsrunde …" umbenannt; „Schätzung" neu aus Punkt 5 + Verlauf rekonstruiert |
+| B-104 | Abschnitt „Entscheidungen" | „Offene Punkte (gegrillt)" umbenannt — Inhalt war bereits vollständig |
+| B-118 | User Story, Ist-Stand, Entscheidungen, Schätzung | vollständig aus Intro-Absatz + Verlauf rekonstruiert |
+| B-119 | User Story, Ist-Stand, Entscheidungen, Schätzung | vollständig aus Intro-Absatz + Verlauf rekonstruiert |
+| B-120 | User Story, Ist-Stand, Entscheidungen, Schätzung | vollständig aus Intro-Absatz + Verlauf rekonstruiert |
+
+**Commit:** `c31d20b` (alle neun in einem Commit). Index danach neu gebaut: ⚠-Liste leer.
+
+## Nachschau-Sweep
+
+Alle 57 „nie nachgeschaut"-Stories einzeln gegen den heutigen Code verifiziert — sechs parallele
+Recherche-Agenten, je ein Prüfpunkt mit Datei:Zeile-Beleg, kein Blick ohne benannten Prüfpunkt. Ergebnis:
+**57 von 57 halten unverändert**, keine neue Defekt-Story nötig — der Lauf bleibt weit unter der
+Fünf-Funde-Schwelle aus `docs/nachtlauf.md`.
+
+| Story | Prüfpunkt (verkürzt) | Ergebnis | Commit |
+| --- | --- | --- | --- |
+| B-01 | `TestItem` ohne Bildfelder, kein `childId` im Test-Pfad | hält | `43987d7` |
+| B-02 | `fieldHelp.ts` sagt „dauerhaft begrenzen" | hält | `43987d7` |
+| B-08 | Keine deutschen Signalwörter in `///`-Zeilen unter `Models/`/`Data/` | hält | `43987d7` |
+| B-10 | `PlanPosition.TimeSlots` + `MultiplierAt`-Vereinigung | hält | `43987d7` |
+| B-100 | Drei Operation-Transformer + `Cache-Control: no-store` | hält | `43987d7` |
+| B-101 | `ApiErrors.Conflict` nicht mehr unter `Controllers/**` | hält | `43987d7` |
+| B-102 | `CLAUDE.md`-Wortlaut deckt die geschärfte Regel | hält | `43987d7` |
+| B-105 | `DailyBoxClaim`/`DailyBoxService`/Streak-Trigger bestehen | hält | `43987d7` |
+| B-107 | `Random.Shared` + `PuglingWebAppFactory`-Pin bestehen | hält | `43987d7` |
+| B-108 | `ExerciseControllerBase` nutzt geteilte `RequireTypedTestValidation` | hält | `43987d7` |
+| B-109 | `answerOne()` wartet auf Fragezahl, zwei Rundreisen in `SohnTest.tsx` | hält | `43987d7` |
+| B-112 | Kommentar in `ExerciseEditModal.tsx` nennt beide Gründe korrekt | hält | `43987d7` |
+| B-113 | Drei geblätterte Listen sortieren statusunabhängig mit Id-Tiebreaker | hält | `43987d7` |
+| B-116 | `Pager` sperrt beide Knöpfe während `busy` | hält | `43987d7` |
+| B-117 | `SohnPractice.tsx` gated Test-Knöpfe auf `testable` | hält | `43987d7` |
+| B-118 | `DailyBoxRangeTests` belegt beide Enden der Spanne | hält | `43987d7` |
+| B-119 | `UseForwardedHeaders` als erste Middleware | hält | `43987d7` |
+| B-120 | Reflexiver Wächter, weiterhin exakt 5 Fundstellen | hält | `43987d7` |
+| B-121 | Platzhalter-/Paging-Tor (Pin 34) weiterhin grün | hält | `43987d7` |
+| B-25 | `vite-plugin-pwa` löst ohne `--legacy-peer-deps` | hält | `43987d7` |
+| B-26 | `zustellung`-Job in `e2e.yml`, Playwright raus aus `ci.yml` | hält | `3bfe786` |
+| B-27 | `ScoringServiceBoundaryTests` prüft alle fünf Grenzen | hält | `3bfe786` |
+| B-32 | Keine `Father`-Bezeichner außerhalb der drei dokumentierten Testhelfer | hält | `3bfe786` |
+| B-37 | `PlayedEnough`/`IsGoalMetAsync`, Klausur-Deckel/Idempotenz | hält | `3bfe786` |
+| B-40 | Relative Zusicherung `MinimumCallSites = 130` nach B-106-Umbau | hält | `3bfe786` |
+| B-41 | Drei `IsDevelopment()`-Zweige unverändert (kein vierter) | hält | `3bfe786` |
+| B-42 | `v1.json` + `gen-contract.mjs` bleiben Quelle der TS-Typen | hält | `3bfe786` |
+| B-43 | `useAction.ts` trägt weiterhin `useRef`-Sperre | hält | `3bfe786` |
+| B-44 | `grundprinzip.md` nennt `Supervisor`/`Student` | hält | `3bfe786` |
+| B-48 | Fünf `[AllowAnonymous]`-Actions, alle gebremst, kein sechster Endpunkt | hält | `3bfe786` |
+| B-49 | Sohn-App nutzt `useAction` in allen vier Bildschirmen | hält | `3bfe786` |
+| B-51 | Admin-Abschnitt + Verweis + drei Bypass-Stellen bestehen | hält | `3bfe786` |
+| B-52 | Alle Etappen E0–E6 weiterhin abgenommen, Deckel 263 unverändert | hält | `3bfe786` |
+| B-53 | `runWizardFinish`/`progress.running`-Flag bestehen | hält | `3bfe786` |
+| B-54 | Drei Vater-Bildschirme nutzen eigene `useAction`+`StatusBanner` | hält | `3bfe786` |
+| B-55 | `QueryPlanSmokeTests`-Cleanup + `global-teardown.ts` bestehen | hält | `3bfe786` |
+| B-58 | `assistent.spec.ts` existiert weiterhin | hält | `3bfe786` |
+| B-59 | `GoalStatus`/`KeyResultScope` sind weiterhin echte Enums | hält | `3bfe786` |
+| B-63 | `Publisher`-Entität + `SeriesUnit.Topics`/`.BookType` typisiert | hält | `3bfe786` |
+| B-65 | `TranslationAlternatives` + beidseitige Entdopplung (nach B-106 verschoben, gleiches Verhalten) | hält | `3bfe786` |
+| B-67 | `VaterFachlehrer.tsx` leitet über `touched`-Zustand ab | hält | `4760861` |
+| B-69 | Alle fünf Sammelfelder auf `RepeatedTextFields`, `splitList` gelöscht | hält | `4760861` |
+| B-70 | `CardFacets.RevealAlternatives` in allen drei Aufrufern verdrahtet | hält | `4760861` |
+| B-73 | `Reading`/`ListeningExerciseType` liefern `Choices()` selbst | hält | `4760861` |
+| B-74 | Elf typisierte Zeilen-/Extra-Interfaces + `satisfies` bestehen | hält | `4760861` |
+| B-75 | `Passage` additiv, `AudioReplacesPrompt` nur auf Audio-Stufe | hält | `4760861` |
+| B-76 | `GapIndex` erreicht Karte/Test, Wortbank nur auf `TranslationWordBank` | hält | `4760861` |
+| B-77 | `GradesAsSet` bewertet ungeordnete Liste als Menge | hält | `4760861` |
+| B-78 | `BirkenbihlExerciseType.ItemsOf` reicht `Decoding` unconditional durch | hält | `4760861` |
+| B-79 | `StageValidation` weist unbekannte Stufe an beiden Schreibpfaden ab | hält | `4760861` |
+| B-80 | `ExerciseBrief` ohne `Config`, `TagExercises` begrenzt auf zugewiesen | hält | `4760861` |
+| B-81 | `GET tags/{id}/vocabulary` rollen- und zuweisungsgegated | hält | `4760861` |
+| B-82 | Positions-Report unter `supervisor/…`, Lösungsfeld-Wächter aktiv | hält | `4760861` |
+| B-83 | `CLAUDE.md` nennt die Lösungsfeld-Regel vollständig | hält | `4760861` |
+| B-88 | `ScoreReview` nutzt `time.GetLocalNow()` statt `DateTime.Now` | hält | `4760861` |
+| B-95 | `PlanPositionsController.Update` fordert `pos.Exercise` hart ein | hält | `4760861` |
+| B-97 | Achievement-Vorprüfung hält; Chapter-Hälfte gegenstandslos seit B-106 (`ChaptersController` entfernt) — **kein neuer ungeschützter Unique-Index-Pfad**, keine Defekt-Story nötig | hält (Fund ohne Regression) | `4760861` |
+
+**Ergebnis:** 0 neue Defekt-Stories in dieser Nacht (B-97s Fund ist eine Gegenstandslosigkeit durch einen
+späteren Umbau, keine Regression — dokumentiert im `## Verlauf` der Story selbst, keine eigene Story
+angelegt). Index-Endstand: **35 offen, 76 abgenommen, 11 verworfen; 76 von 76 abgenommenen Stories
+nachgeschaut** (19 vorher + 57 in dieser Nacht).
+
+**Warum der Lauf hier endet:** beide Listen (Nachschau, Doku-Nachtrag) sind vollständig durchgegangen —
+das ist die reguläre Abbruchbedingung, keine erzwungene. Push bleibt beim Nutzer.
