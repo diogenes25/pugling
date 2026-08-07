@@ -143,7 +143,59 @@ public class ContractDocumentTests
         Assert.True(requiredWithoutProperty.Count == 0,
             $"Required fields without a matching property (the document demands something it never describes): "
             + $"{string.Join(", ", requiredWithoutProperty)}");
+
+        // 7. No operation without a summary (B-100 AC3) - a renamed/added exercise-type route that the
+        // manifest-driven transformer cannot match would otherwise fall silently back to "undocumented"
+        // instead of failing loudly.
+        var withoutSummary = doc["paths"]!.AsObject()
+            .SelectMany(path => path.Value!.AsObject()
+                .Where(op => methods.Contains(op.Key))
+                .Where(op => string.IsNullOrEmpty(op.Value!["summary"]?.GetValue<string>()))
+                .Select(op => $"{op.Key.ToUpperInvariant()} {path.Key}"))
+            .ToList();
+        Assert.True(withoutSummary.Count == 0,
+            $"{withoutSummary.Count} operations without a summary: {string.Join(", ", withoutSummary.Take(10))}");
+
+        // 8. Every operation that paginates via skip/take declares the X-Total-Count header on every 2xx
+        // response (B-100 AC2) - httpPaged (frontend/src/lib/api.ts) already reads it unconditionally.
+        var pagedWithoutHeader = doc["paths"]!.AsObject()
+            .SelectMany(path => path.Value!.AsObject()
+                .Where(op => methods.Contains(op.Key))
+                .Where(op => (op.Value!["parameters"]?.AsArray() ?? [])
+                    .Any(p => p!["name"]?.GetValue<string>() is "skip" or "take"))
+                .Where(op => (op.Value!["responses"]?.AsObject() ?? [])
+                    .Any(r => r.Key.StartsWith('2') && r.Value!["headers"]?["X-Total-Count"] is null))
+                .Select(op => $"{op.Key.ToUpperInvariant()} {path.Key}"))
+            .ToList();
+        Assert.True(pagedWithoutHeader.Count == 0,
+            $"{pagedWithoutHeader.Count} paginated operations without X-Total-Count on a 2xx response: "
+            + $"{string.Join(", ", pagedWithoutHeader.Take(10))}");
+
+        // 9. Every operation declares 401 unless it is one of the deliberately anonymous-without-401
+        // exceptions below (B-100 AC1) - registration cannot fail with "unauthorized", only validation/
+        // conflict codes. Empty growth path: a new non-anonymous operation without 401 turns this red;
+        // a new anonymous one needs its own reasoned entry here, same convention as
+        // ConventionGuardTests.AnonymousRateLimitExceptions.
+        var missing401 = doc["paths"]!.AsObject()
+            .SelectMany(path => path.Value!.AsObject()
+                .Where(op => methods.Contains(op.Key))
+                .Where(op => op.Value!["responses"]?["401"] is null)
+                .Select(op => $"{op.Key.ToUpperInvariant()} {path.Key}")
+                .Where(name => !Unauthorized401Exceptions.Contains(name)))
+            .ToList();
+        Assert.True(missing401.Count == 0,
+            $"{missing401.Count} operations without 401: {string.Join(", ", missing401)}");
     }
+
+    /// <summary>
+    /// The only two operations in the whole document that may lack a 401 response: anonymous registration,
+    /// whose failure modes are validation/conflict, never "missing or invalid token".
+    /// </summary>
+    private static readonly HashSet<string> Unauthorized401Exceptions =
+    [
+        "POST /api/v1/supervisor/adults",
+        "POST /api/v1/creator/teacher-accounts",
+    ];
 
     private static async Task<string> GenerateAsync()
     {

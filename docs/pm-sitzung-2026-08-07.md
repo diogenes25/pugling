@@ -161,5 +161,92 @@ Defekt, den der Test fangen soll, kurz einbauen, rot sehen, zurücksetzen) stär
 kein Gate im Produkt könnte das automatisch erzwingen. Als konkrete Konsequenz: beide `## Verlauf`-Einträge
 benennen die injizierten Fehler wörtlich, nicht nur "getestet".
 
-## Vorlauf zu Sprint 3 — Ausformulieren/Schätzen
+## Sprint 3 — Ziel & Umfang
+
+**Sprint-Ziel:** Wer die API nur über ihr Dokument liest (Mensch im Scalar-UI, KI-Creator), sieht 401/403,
+den `X-Total-Count`-Kopf und einen typ-spezifischen Namen je Übungs-Endpunkt — nicht mehr nur bei 5 von
+323 Operationen, 0 Antwort-Köpfen und 24 generischen Zeilen.
+**Umfang:** B-100 allein (Aufräumen, `ausformuliert` → in diesem Sprint gegrillt, geschätzt und gebaut) —
+die Bündel-Auflage mit B-56/B-60 aus der 2026-08-04-Arbeitsrunde ist gegenstandslos, beide sind seit
+2026-08-06 `abgenommen`.
+**Entwickler-Brief:** Ziel: vier Lücken im generierten OpenAPI-Dokument schließen (401/403, `X-Total-
+Count`, 24 Summaries, `Cache-Control: no-store`), über dieselbe Transformer-Infrastruktur wie der
+bestehende Fehlercode-Schema-Transformer. Quelle der Wahrheit: `Program.cs` (Transformer-Kette),
+`ExerciseTypeManifest`/`ExerciseTypeRegistry` (Anzeigenamen), `AuthController.cs` (Login/`me`). Guards:
+drei neue Assertions in `ContractDocumentTests`, ein neuer Integrationstest für den Laufzeit-Header.
+Migration: nein. Vertragsbruch: nein (additiv — kein bestehender Client verzweigt auf die neuen Felder).
+Testweg: gezielte Fehler-Injektion je AC (rot→grün), volle Suite, Frontend-Build gegen das regenerierte
+Dokument.
+
+## Iteration 3 — umgesetzt
+
+Drei neue `AddOperationTransformer`-Registrierungen in `Program.cs`: (1) 401 auf jeder nicht-anonymen
+Operation, zusätzlich 403 bei `[Authorize(Roles=…)]`; (2) `X-Total-Count` auf jeder 2xx-Antwort einer
+`skip`/`take`-paginierten Operation; (3) typ-spezifische Summaries für die 24 Übungs-Create/Update-
+Operationen, gelesen aus `ExerciseTypeManifest.Label` (derselben Quelle, die das Frontend für
+Anzeigenamen nutzt) — Entscheidung 2 der Story („Notausgang" statt Ursachenforschung, warum
+`[EndpointSummary]` bei geerbten generischen Methoden nicht auflöst). Dazu `[ResponseCache(NoStore = true,
+…)]` an den drei Login-Actions und `GET auth/me` (AC4). Drei neue Assertions (7–9) in
+`ContractDocumentTests` plus ein neuer Integrationstest für den Laufzeit-Header.
+
+**Vier gezielte rot→grün-Belege** (Fehler injiziert, Test schlägt exakt benannt fehl, zurückgesetzt):
+Ausnahme aus `Unauthorized401Exceptions` entfernt → `1 operations without 401: POST
+/api/v1/creator/teacher-accounts`; `[ResponseCache]` von `GetMe` entfernt → `GET auth/me must send
+Cache-Control: no-store.`. **Gemessen statt aus dem Bericht übernommen** (dieselbe Lehre wie B-121 am
+2026-08-06): 321/323 Operationen mit 401, 278/323 mit 403, 0/323 ohne Summary, 44 paginierte Operationen
+(nicht die im Ist-Stand genannten 31) alle mit Header. `docs/openapi/v1.json` in einem Hunk gewachsen
+(5825 Einfügungen/149 Löschungen).
+
+**Review-Fund, sofort behoben (Zähler: 1):** `pugling-reviewer` fand ein 🟡 — das Summary-Matching prüfte
+nur „letztes Routensegment == `AuthoringRoute`", nicht ob die Action wirklich von `ExerciseControllerBase<>`
+stammt; ein künftiger fremder Endpunkt mit gleichnamigem Segment hätte eine falsche, plausible Beschriftung
+bekommen. Gehärtet: zusätzliche Prüfung auf `MethodInfo.DeclaringType` gegen die offene generische Basis.
+Erneut verifiziert (weiterhin 0 fehlende Summaries).
+
+Volle Suite: **761/761 grün** (758 vor diesem Sprint + 3 neue Tests). Frontend-Build gegen das
+regenerierte Dokument: grün.
+
+## Runde — Abnahme Sprint 3 (Rollengang: Regression)
+
+Reine Dokument-/Header-Vervollständigung, additiv, kein Vertragsbruch — kein UI-Kandidat. Ersatz: die vier
+rot→grün-Belege, die volle Suite, `pugling-reviewer` (ein 🟡 gefunden und sofort behoben) und
+`npm run build` im Frontend gegen das neu generierte Dokument (der einzige echte Konsument außerhalb der
+Suite).
+
+**Ergebnis:** B-100 ist `abgenommen`.
+
+## Retrospektive — Sprint 3
+
+**Nachschau:** Sprint 2 dieser Sitzung (B-118+B-120) ist unmittelbar vorheriger Sprint, frisch reviewt und
+per rot→grün-Beleg belegt — kein zweiter Nachhol-Bedarf am selben Tag. Index-Stand nach diesem Sprint:
+**35 offen, 76 abgenommen, 11 verworfen.**
+
+**Was dieser Sprint gelernt hat:** Ein zwei Tage alter Ist-Stand-Bericht ist eine Momentaufnahme, kein
+aktueller Zustand — zum wiederholten Mal in dieser Woche (B-121 am 2026-08-06 mit den Platzhalter-/Paging-
+Zahlen, jetzt B-100 mit 401-Abdeckung und paginierten Operationen). Alle vier Zahlen im Ist-Stand von
+2026-08-04 (5/323, 0 Köpfe, 24 ohne Summary, 31 paginiert) waren als *Startzustand* richtig, aber die
+Zielgrößen nach dem Fix (321/323, 278/323 mit 403, 44 paginiert) mussten frisch gemessen werden, nicht aus
+der Story übernommen.
+
+**Kein neuer Mechanismus für diese Lehre** — sie ist bereits als Praxis etabliert (`docs/backlog/README.md`
+„Ausformulieren heißt gegen den Code belegen") und wurde in diesem Sprint einfach wieder angewendet, nicht
+neu erfunden. Stattdessen als konkrete Handlung: die drei neuen `ContractDocumentTests`-Assertionen (Punkte
+7–9) machen genau diese Zahlen jetzt PERMANENT nachprüfbar, statt sie in einer Story einzufrieren, die beim
+nächsten neuen Endpunkt sofort wieder veraltet.
+
+## Stand nach dem Nachtlauf (Sprint 1–3)
+
+Drei Sprints, vier Stories abgenommen (B-119, B-118, B-120, B-100). Kein Abbruchgrund eingetreten
+(Review-Fund-Zähler blieb je Sprint bei höchstens 1, weit unter der Fünf-Fehlversuche-Schwelle). Kein
+`Wunsch`/`Frage` wurde autonom entschieden — keiner der vier bearbeiteten Kandidaten war einer. Drei
+Commits gesetzt, nichts gepusht — das bleibt beim Nutzer. Index-Endstand: **35 offen, 76 abgenommen, 11
+verworfen** (Start: 39/72/11).
+
+**Offen für den Nutzer:**
+
+- **B-07/B-47** bleiben außen vor (warten auf die Azure-Reaktivierung, unverändert seit 2026-08-06).
+- Keine neuen `Wunsch`/`Frage`-Punkte sind in diesem Lauf entstanden — die vier bearbeiteten Kandidaten
+  waren ausnahmslos `Defekt`/`Aufräumen` bereits vor Sitzungsbeginn.
+- Kein baubares `Defekt`/`Aufräumen`-Thema mehr auf `geschaetzt`/`ausformuliert` übrig, das nicht extern
+  wartet — der Lauf endet hier regulär (kein weiterer Sprint möglich), nicht wegen einer Abbruchbedingung.
 

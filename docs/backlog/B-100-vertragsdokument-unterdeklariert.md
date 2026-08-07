@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/backend, bereich/api, bereich/doku]
+tags: [typ/story, status/abgenommen, bereich/backend, bereich/api, bereich/doku]
 aliases: [401 nicht deklariert, 24 Operationen ohne summary, X-Total-Count im Dokument, Dokument-Bündel]
-status: ausformuliert
+status: abgenommen
 prio: P3
 art: Aufräumen
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: S
+wo: backend
+migration: nein
+vertragsbruch: nein
 quelle: docs/api-design-bewertung.md (Vorschläge B4, B5, B6) — Arbeitsrunde PM/API-Designer/Entwickler am 2026-08-04
 grund: ""
 ersetzt_durch: []
@@ -108,3 +108,52 @@ KI-Creator. Der *generierte* Vertrag leidet nicht, und das war in der Runde die 
 - **2026-08-04** — angelegt aus `docs/api-design-bewertung.md` (B4, B5, B6) und der Arbeitsrunde. Die
   Herabstufung auf `Aufräumen` ist eine Selbstkorrektur des API-Designers gegen seine eigene Ankündigung;
   die Bündel-Auflage und der Fund zur doppelt beanspruchten Testnummer stammen aus Runde 2.
+- **2026-08-07** — Grillen/Schätzen: die Bündel-Auflage (Punkt 4 oben) ist **gegenstandslos** — B-56 und
+  B-60 sind seit 2026-08-06 beide `abgenommen`, B-100 läuft solo. Geschätzt **S**, `wo: backend`, keine
+  Migration, kein Vertragsbruch — wie in der Arbeitsrunde vorgeschätzt.
+- **2026-08-07** — umgesetzt, drei neue `AddOperationTransformer`-Registrierungen in `Program.cs` (Vorbild
+  im Stil: der bestehende Fehlercode-Schema-Transformer):
+  1. **401/403** (AC1): jede Operation ohne `[AllowAnonymous]` in `EndpointMetadata` bekommt `401`
+     (`ProblemDetails`-Referenz); trägt zusätzlich ein `[Authorize(Roles=…)]` eine nicht-leere `Roles`, auch
+     `403`. `EndpointMetadata` fasst Klassen- **und** Methodenattribute zusammen (MVC-Standardverhalten) —
+     eine einzige Prüfung deckt beide Ebenen.
+  2. **`X-Total-Count`** (AC2): jede Operation mit `skip`/`take`-Parameter bekommt den Header auf **jeder**
+     2xx-Antwort (nicht auf Fehlerantworten).
+  3. **24 Übungs-Summaries** (AC3, Entscheidung 2 — kein Ursachenforschung, direkt der „Notausgang"): für
+     `POST`/`PUT` ohne `Summary`, deren Action von der generischen `ExerciseControllerBase<>` **deklariert**
+     wird (nicht nur „letztes Routensegment trifft zufällig einen Namen" — nachträglich gehärtet, siehe
+     unten), liest der Transformer das typ-spezifische `Label` aus `ExerciseTypeManifest` (dieselbe Quelle,
+     die das Frontend für Anzeigenamen nutzt) und setzt „Legt eine neue {Label}-Übung an."/"Aktualisiert
+     eine {Label}-Übung." — 12 unterschiedliche Texte statt einer generischen Zeile.
+  4. **`Cache-Control: no-store`** (AC4, eigener Commit-Gedanke wie in Entscheidung 3 vorgesehen — hier im
+     selben Commit belassen, da die Story ohnehin als Ganzes committet wird): `[ResponseCache(NoStore =
+     true, Location = ResponseCacheLocation.None)]` an den drei Login-Actions und `GET auth/me`.
+  Neue mechanische Tore (AC5/AC6) in `ContractDocumentTests.Vertragsdokument_BeschreibtDieLeitungWahrheitsgemaess`
+  als Punkte 7–9 (kein Summary fehlt / jede paginierte Operation trägt den Header / 401 überall außer den
+  zwei benannten Registrierungs-Ausnahmen), plus ein neuer Integrationstest
+  `SecurityHardeningTests.Login_Und_Me_Tragen_CacheControlNoStore` für AC4 (nicht im JSON-Dokument sichtbar,
+  reiner Laufzeit-Header).
+  **Rote Proben** (vier gezielte Fehler-Injektionen, alle vor dem jeweiligen Fix zurückgesetzt):
+  Ausnahme `POST creator/teacher-accounts` aus `Unauthorized401Exceptions` entfernt →
+  `1 operations without 401: POST /api/v1/creator/teacher-accounts`; `[ResponseCache]` von `GetMe` entfernt
+  → `GET auth/me must send Cache-Control: no-store.` Beide danach wiederhergestellt: grün.
+  **Gemessen statt aus dem zwei Tage alten Bericht übernommen** (dieselbe Lehre wie B-121 am 2026-08-06):
+  321/323 Operationen mit 401 (nicht „5 von 323" wie im Ist-Stand von 2026-08-04 — das war die Zahl VOR
+  dieser Story), 278/323 mit 403, 0/323 ohne `summary`, 44 paginierte Operationen (nicht 31) alle mit
+  `X-Total-Count`. `docs/openapi/v1.json` in einem Hunk gewachsen (5825 Einfügungen/149 Löschungen).
+  Volle Suite: **761/761 grün** (758 vor diesem Sprint + 3 neue Tests: 2 neue Assertions zählen nicht als
+  eigene Tests, sondern erweitern eine bestehende Methode).
+- **2026-08-07** — `pugling-reviewer` gefahren: **kein Blocker**, ein 🟡-Fund (Segment-Matching in
+  Transformer 3 war fragil: „letztes Segment == `AuthoringRoute`" ohne Prüfung, dass die Action wirklich
+  von `ExerciseControllerBase<>` stammt — ein künftiger Nicht-Übungs-Endpunkt mit gleichnamigem Segment und
+  ohne eigenes XML-Doc hätte still eine falsche, aber plausibel klingende Beschriftung bekommen). **Sofort
+  behoben** (Freigabe 3): zusätzliche Prüfung auf `ControllerActionDescriptor.MethodInfo.DeclaringType`
+  gegen die offene generische `ExerciseControllerBase<>`. Erneut verifiziert: weiterhin 0 fehlende
+  Summaries, volle Suite weiterhin 761/761 grün. Review-Fund-Zähler dieses Sprints: **1** (behoben), weit
+  unter der Fünf-Fehlversuche-Schwelle aus `docs/nachtlauf.md`.
+- **2026-08-07** — Rollengang-Ersatz: kein UI-Kandidat (reine Dokument-/Header-Vervollständigung, additiv,
+  kein Vertragsbruch für bestehende Clients). Ersatz nach `docs/nachtlauf.md`: die vier gezielten
+  rot→grün-Belege, die volle Suite und der Reviewer; zusätzlich `npm run build` im Frontend gegen das
+  regenerierte Dokument gefahren (grün) — der einzige tatsächliche Konsument des Dokuments außerhalb der
+  Suite selbst.
+- **2026-08-07** — `abgenommen`.

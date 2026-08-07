@@ -48,6 +48,7 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
     [HttpPost("adult")]
     [AllowAnonymous]
     [EnableRateLimiting("login")]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<LoginResponse>> LoginAdult(AdultLoginDto dto, CancellationToken ct = default)
@@ -64,6 +65,7 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
     [HttpPost("child")]
     [AllowAnonymous]
     [EnableRateLimiting("login")]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<LoginResponse>> LoginChild(ChildLoginDto dto, CancellationToken ct = default)
@@ -90,6 +92,7 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
     [HttpPost("login")]
     [AllowAnonymous]
     [EnableRateLimiting("login")]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<LoginResponse>> Login(AccountLoginDto dto, CancellationToken ct = default)
@@ -107,6 +110,7 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
     /// <summary>Returns the current identity from the token (account, all roles, fid/cid).</summary>
     [HttpGet("me")]
     [Authorize]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public ActionResult<MeResponse> Me() => new MeResponse(
         AccountId: int.TryParse(User.FindFirstValue("aid"), out var aid) ? aid : null,

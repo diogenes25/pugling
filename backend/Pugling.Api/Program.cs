@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -416,6 +417,88 @@ builder.Services.AddOpenApi(o =>
                 }
             }
         }
+        return Task.CompletedTask;
+    });
+
+    // B-100 (AC1): every non-anonymous operation names 401 (and, where a role gates it, 403) - today only
+    // 5 of 323 operations declare it via an explicit [ProducesResponseType], so a client reading the
+    // document alone cannot tell "needs auth" from "public". [AllowAnonymous]/[Authorize(Roles=…)] on either
+    // the controller or the action both surface on EndpointMetadata (ASP.NET Core merges them for MVC
+    // actions), so a single check covers both levels.
+    o.AddOperationTransformer((operation, context, _) =>
+    {
+        var metadata = context.Description.ActionDescriptor.EndpointMetadata;
+        if (metadata.OfType<IAllowAnonymous>().Any())
+            return Task.CompletedTask;
+
+        var problemDetails = new OpenApiSchemaReference("ProblemDetails", context.Document);
+        operation.Responses ??= new OpenApiResponses();
+        operation.Responses.TryAdd("401", new OpenApiResponse
+        {
+            Description = "Unauthorized",
+            Content = new Dictionary<string, OpenApiMediaType> { ["application/json"] = new() { Schema = problemDetails } },
+        });
+        if (metadata.OfType<IAuthorizeData>().Any(a => !string.IsNullOrEmpty(a.Roles)))
+            operation.Responses.TryAdd("403", new OpenApiResponse
+            {
+                Description = "Forbidden",
+                Content = new Dictionary<string, OpenApiMediaType> { ["application/json"] = new() { Schema = problemDetails } },
+            });
+        return Task.CompletedTask;
+    });
+
+    // B-100 (AC2): every operation that paginates via skip/take also declares the response header it
+    // actually sends - `httpPaged` (frontend/src/lib/api.ts) reads `X-Total-Count` today, the document
+    // just never said so. Keyed off the query parameters themselves, not a route/controller list, so a
+    // future paginated endpoint is covered without a second place to remember it.
+    o.AddOperationTransformer((operation, _, _) =>
+    {
+        if (operation.Parameters?.Any(p => p.Name is "skip" or "take") != true || operation.Responses is null)
+            return Task.CompletedTask;
+
+        foreach (var (status, response) in operation.Responses)
+        {
+            if (!status.StartsWith("2", StringComparison.Ordinal) || response is not OpenApiResponse r) continue;
+            r.Headers ??= new Dictionary<string, IOpenApiHeader>();
+            r.Headers.TryAdd("X-Total-Count", new OpenApiHeader
+            {
+                Description = "Total row count before paging (skip/take).",
+                Schema = new OpenApiSchema { Type = JsonSchemaType.Integer },
+            });
+        }
+        return Task.CompletedTask;
+    });
+
+    // B-100 (AC3), decision 2: rather than chase why [EndpointSummary] fails to resolve specifically on
+    // ExerciseControllerBase<TConfig>'s shared Create/Update (12 types share one generic method, so a
+    // static attribute there could not be type-specific anyway), read the type-specific label straight
+    // from the manifest - the same source of truth the frontend uses for display names
+    // (frontend/CLAUDE.md, "Übungstypen kommen aus dem Server-Manifest"). The route's last non-parameter
+    // segment IS the type's AuthoringRoute by construction (ExerciseRoutes.Base + "/<segment>").
+    o.AddOperationTransformer((operation, context, _) =>
+    {
+        if (!string.IsNullOrEmpty(operation.Summary) || context.Description.HttpMethod is not ("POST" or "PUT"))
+            return Task.CompletedTask;
+        // Narrowed to methods actually declared on the generic base (not just "route ends in a name that
+        // happens to match some AuthoringRoute") - a future non-exercise POST/PUT sharing a segment name
+        // (e.g. a hypothetical "list"/"grammar" endpoint elsewhere) must not silently inherit a wrong,
+        // plausible-looking exercise-type summary.
+        var declaringType = (context.Description.ActionDescriptor as Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor)?.MethodInfo.DeclaringType;
+        if (declaringType is not { IsGenericType: true } || declaringType.GetGenericTypeDefinition() != typeof(ExerciseControllerBase<>))
+            return Task.CompletedTask;
+
+        var segment = context.Description.RelativePath?.Split('/').LastOrDefault(s => !s.Contains('{', StringComparison.Ordinal));
+        if (segment is null)
+            return Task.CompletedTask;
+
+        var registry = context.ApplicationServices.GetRequiredService<Pugling.Api.Exercises.ExerciseTypeRegistry>();
+        var manifest = registry.Manifests.FirstOrDefault(m => m.AuthoringRoute == segment);
+        if (manifest is null)
+            return Task.CompletedTask;
+
+        operation.Summary = context.Description.HttpMethod == "POST"
+            ? $"Legt eine neue {manifest.Label}-Übung an."
+            : $"Aktualisiert eine {manifest.Label}-Übung.";
         return Task.CompletedTask;
     });
 });
