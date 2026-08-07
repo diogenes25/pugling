@@ -233,3 +233,6 @@ End-to-End-Rundlauf nach dem Bauen. Kein Playwright-E2E zwingend (kein Vater→S
   und Testweg festgelegt (autonom getroffen, Nutzerauftrag 2026-08-04).
 - **2026-08-06** — Nachtlauf, Prämissen-Nachprüfung nach B-106s Abnahme: keine Auswirkung, das RWX-/
   `ExecutePublic`-Modell ist von der Chapter→SeriesUnit-Verschiebung unberührt. `status` unverändert.
+- **2026-08-07** — Autonomer Modus (Opt-in je Vorhaben, README → „Autonomer Modus") vom Nutzer im Dialog
+  ausdrücklich freigegeben: ein Nachtlauf darf diese Story trotz `art: Wunsch` ohne weitere Rückfrage bauen
+  (Rollengang/Reviewer bleiben Pflicht wie bei jeder Abnahme).

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/medien, bereich/katalog, lerntechnik/lueckentext, rolle/creator]
+tags: [typ/story, status/verworfen, bereich/medien, bereich/katalog, lerntechnik/lueckentext, rolle/creator]
 aliases: [Cloze-Vorschau mit Bild, Fund 3]
-status: geschaetzt
+status: verworfen
 prio: P6
 art: Wunsch
 groesse: XS
@@ -9,6 +9,10 @@ wo: backend
 migration: nein
 vertragsbruch: nein
 quelle: docs/backlog-vokabellernen.md#fund-3--kleinigkeit-cloze-vorschau-zeigt-nie-ein-bild
+grund: >
+  Reine Sichtbarmachung von B-03 für den Vater — mit B-03s Verwerfen (dieselbe Anti-Cheat-Prämisse,
+  siehe dort) entfällt der Anlass vollständig. Kein eigenständiger Nutzen ohne B-03.
+ersetzt_durch: []
 ---
 
 # B-06 · Cloze-Vorschau kann kein Bild zeigen
@@ -49,3 +53,4 @@ B-03 ergänzte Bild also nie zu sehen.
   untypisierte Stufe mehr. Die Story hängt damit an derselben Entscheidung wie
   [B-03](B-03-lueckensaetze-mit-bild.md) und wird mit ihr zusammen neu bewertet — sie war ohnehin nur deren
   Sichtbarmachung für den Vater. Gefunden vom `pugling-reviewer` beim Review zu B-76.
+- **2026-08-07** — **verworfen** (Grillen im Dialog, siehe `grund`): mit B-03 entfällt der Anlass.

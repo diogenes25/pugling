@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/medien, bereich/training, lerntechnik/vokabeln, lerntechnik/lueckentext, rolle/student]
+tags: [typ/story, status/verworfen, bereich/medien, bereich/training, lerntechnik/vokabeln, lerntechnik/lueckentext, rolle/student]
 aliases: [Lückensätze mit Bild, Idee 1]
-status: geschaetzt
+status: verworfen
 prio: P3
 art: Wunsch
 groesse: M
@@ -9,6 +9,13 @@ wo: backend
 migration: nein
 vertragsbruch: nein
 quelle: docs/backlog-vokabellernen.md#runde-1--idee-1-lückensätze-mit-bild-als-vokabel-vertiefung
+grund: >
+  Seit B-76 (Commit 1125ee6) ist TranslationWordBank eine getippte Stufe — die einzige ungetippte
+  Cloze-Stufe ist damit weg, und die Anti-Cheat-Regel "Bild nur auf ungetippten Stufen" lässt keine
+  bebilderbare Stufe mehr übrig. Im Grillen vom 2026-08-07 entschieden: nicht durch eine neue eigene
+  Bild-Stufe erzwingen und die Anti-Cheat-Regel nicht lockern (ein Bild neben einer Lückentext-Vokabel
+  zeigt praktisch immer die gesuchte Vokabel selbst — die Regel zu lockern höhlte aus, was sie
+  verhindern soll). Aufwand/Risiko einer neuen Stufe steht bei P3 in keinem Verhältnis zum Nutzen.
 ---
 
 # B-03 · Lückensätze mit Bild als Vokabel-Vertiefung
@@ -65,3 +72,6 @@ Freeze-Verhalten.
   unbaubar. Vor dem Bauen neu zu entscheiden: entweder eine eigene Bild-Stufe für den Lückentext, oder die
   Regel für Lückensätze begründet lockern (das Motiv zeigt dort den *Satz*, nicht die einzelne Lösung) —
   oder verwerfen. Gefunden vom `pugling-reviewer` beim Review zu B-76, nicht vom Nutzer entschieden.
+- **2026-08-07** — **verworfen** (Grillen im Dialog, siehe `grund`): weder neue Bild-Stufe noch gelockerte
+  Anti-Cheat-Regel — der Nutzen bei P3 rechtfertigt beides nicht. [B-06](B-06-cloze-preview-bild.md) hing an
+  derselben Entscheidung und ist im selben Zug verworfen.

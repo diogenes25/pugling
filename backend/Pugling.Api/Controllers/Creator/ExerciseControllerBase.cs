@@ -246,14 +246,15 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         if (subjectId is null)
             return this.ProblemWithCode(ApiErrors.SeriesWithoutSubject, "This textbook series has no subject assigned yet; set one before adding exercises.");
         if (!await CategoryValid(subjectId, body.CategoryId, ct)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Unknown category for this subject.");
+        var exerciseType = registry.ByKey(TypeKey);
         // The default stage reaches the child too: PositionPlayService.StageForDay falls back to it whenever the
         // position names no stage of its own - the normal case for most types (see StageValidation).
-        if (StageValidation.ProblemText(registry.ByKey(TypeKey), body.DefaultStage) is { } createStageErr)
+        if (StageValidation.ProblemText(exerciseType, body.DefaultStage) is { } createStageErr)
             return this.ProblemWithCode(ApiErrors.ValidationError, createStageErr);
         // Same failure class, one level up (B-108): PlanPositionsController already rejects an unfulfillable
         // requireTypedTest at the position, but only when a supervisor later assigns THIS default - the
         // creator who set it never saw the problem. Check it here too, at the place the default is set.
-        if (RequireTypedTestValidation.ProblemText(registry.ByKey(TypeKey), body.DefaultRequireTypedTest) is { } createTypedErr)
+        if (RequireTypedTestValidation.ProblemText(exerciseType, body.DefaultRequireTypedTest) is { } createTypedErr)
             return this.ProblemWithCode(ApiErrors.ValidationError, createTypedErr);
         var config = body.Config ?? new TConfig();
         if (await ValidateConfigAsync(seriesId, config, ct) is { } createErr) return this.ProblemWithCode(ApiErrors.ValidationError, createErr);
@@ -329,9 +330,10 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         // Execute visibility is an owner right (controlled sharing) - a write grantee must not toggle it.
         if (body.ExecutePublic != exercise.ExecutePublic && EnsureCanAdminister(exercise) is { } adminForbidden) return adminForbidden;
         // Same check as in Create, and before the first assignment - a rejected PUT must not half-write.
-        if (StageValidation.ProblemText(registry.ByKey(TypeKey), body.DefaultStage) is { } updateStageErr)
+        var exerciseType = registry.ByKey(TypeKey);
+        if (StageValidation.ProblemText(exerciseType, body.DefaultStage) is { } updateStageErr)
             return this.ProblemWithCode(ApiErrors.ValidationError, updateStageErr);
-        if (RequireTypedTestValidation.ProblemText(registry.ByKey(TypeKey), body.DefaultRequireTypedTest) is { } updateTypedErr)
+        if (RequireTypedTestValidation.ProblemText(exerciseType, body.DefaultRequireTypedTest) is { } updateTypedErr)
             return this.ProblemWithCode(ApiErrors.ValidationError, updateTypedErr);
         var config = body.Config ?? new TConfig();
         if (await ValidateConfigAsync(seriesId, config, ct) is { } updateErr) return this.ProblemWithCode(ApiErrors.ValidationError, updateErr);

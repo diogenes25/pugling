@@ -183,3 +183,6 @@ Frontend betroffen, daher kein E2E-Zusatz; `/smoke-test` bleibt der manuelle Geg
   vermuteten XL auf L geschärft, kein Split nötig — autonom getroffen, Nutzerauftrag 2026-08-03.
 - **2026-08-03** — geschätzt: `groesse: L`, `wo: backend`, `migration: ja`, `vertragsbruch: nein`,
   Risiken, Angriffsplan und Testweg festgelegt — autonom getroffen, Nutzerauftrag 2026-08-03.
+- **2026-08-07** — Autonomer Modus (Opt-in je Vorhaben, README → „Autonomer Modus") vom Nutzer im Dialog
+  ausdrücklich freigegeben: ein Nachtlauf darf diese Story trotz `art: Wunsch` ohne weitere Rückfrage bauen
+  (Rollengang/Reviewer bleiben Pflicht wie bei jeder Abnahme).

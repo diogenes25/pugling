@@ -27,13 +27,22 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
     /// Projection along with unit count and the grade range actually present. Ownership is spelled out
     /// <b>inline</b> here instead of a call to <see cref="ClaimsPrincipalExtensions.IsOwnedBy"/>: EF would
     /// need to translate the method call and would break at runtime. Missing <c>fid</c> ⇒ <c>false</c>
-    /// (fail-closed, same rule as there).
+    /// (fail-closed, same rule as there). Count/Min/Max come from <b>one</b> correlated subquery
+    /// (<c>GroupBy(_ =&gt; 1)</c> collapses the per-series units into a single row) instead of three.
     /// </summary>
     private static IQueryable<TextbookSeriesResponse> Project(IQueryable<TextbookSeries> q, int? fid) =>
-        q.Select(s => new TextbookSeriesResponse(s.Id, s.Name, s.Slug, s.PublisherId, s.Publisher!.Name,
-            s.SubjectName, s.SubjectId, s.SchoolTypes, s.SourceLanguage, s.TargetLanguage, s.Notes, s.OwnerAdultId,
-            fid != null && s.OwnerAdultId == fid, s.Units.Count,
-            s.Units.Min(u => (int?)u.Grade), s.Units.Max(u => (int?)u.Grade), s.CreatedAt));
+        q.Select(s => new
+        {
+            s,
+            stat = s.Units.GroupBy(_ => 1)
+                .Select(g => new { Count = g.Count(), Min = g.Min(u => (int?)u.Grade), Max = g.Max(u => (int?)u.Grade) })
+                .FirstOrDefault(),
+        })
+        .Select(x => new TextbookSeriesResponse(x.s.Id, x.s.Name, x.s.Slug, x.s.PublisherId, x.s.Publisher!.Name,
+            x.s.SubjectName, x.s.SubjectId, x.s.SchoolTypes, x.s.SourceLanguage, x.s.TargetLanguage, x.s.Notes,
+            x.s.OwnerAdultId, fid != null && x.s.OwnerAdultId == fid,
+            x.stat != null ? x.stat.Count : 0, x.stat != null ? x.stat.Min : null, x.stat != null ? x.stat.Max : null,
+            x.s.CreatedAt));
 
     /// <summary>
     /// All series (alphabetically), optionally filtered. The total count before paging is in the header
@@ -89,6 +98,20 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
+    /// Checks that <paramref name="subjectId"/> and <paramref name="publisherId"/>, if given, reference
+    /// existing rows – shared between <see cref="Create"/> and <see cref="Update"/> so the two round trips
+    /// stay in one place instead of being duplicated per action.
+    /// </summary>
+    private async Task<ObjectResult?> ValidateReferencesAsync(int? subjectId, int? publisherId, CancellationToken ct)
+    {
+        if (subjectId is int sid && !await db.Subjects.AnyAsync(s => s.Id == sid, ct))
+            return this.ProblemWithCode(ApiErrors.InvalidReference, "SubjectId does not reference an existing subject.");
+        if (publisherId is int pid && !await db.Publishers.AnyAsync(p => p.Id == pid, ct))
+            return this.ProblemWithCode(ApiErrors.InvalidReference, "PublisherId does not reference an existing publisher.");
+        return null;
+    }
+
+    /// <summary>
     /// Creates a series. The slug is derived from the name; if it is already taken, the existing
     /// series comes back (idempotent, same pattern as <c>interest-tags</c>) – an agent may safely repeat the same
     /// catalog build instead of creating duplicates.
@@ -99,14 +122,9 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<TextbookSeriesResponse>> Create(CreateTextbookSeriesDto dto, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(dto.Name)) return this.ProblemWithCode(ApiErrors.ValidationError, "Name is required.");
-
-        var slug = InterestSlug.From(dto.Name);
-        if (slug.Length == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Name must contain at least one letter or digit.");
-        if (dto.SubjectId is int sid && !await db.Subjects.AnyAsync(s => s.Id == sid, ct))
-            return this.ProblemWithCode(ApiErrors.InvalidReference, "SubjectId does not reference an existing subject.");
-        if (dto.PublisherId is int pid && !await db.Publishers.AnyAsync(p => p.Id == pid, ct))
-            return this.ProblemWithCode(ApiErrors.InvalidReference, "PublisherId does not reference an existing publisher.");
+        var (slug, slugProblem) = this.DeriveRequiredSlug(dto.Name, "Name");
+        if (slugProblem is not null) return slugProblem;
+        if (await ValidateReferencesAsync(dto.SubjectId, dto.PublisherId, ct) is { } refProblem) return refProblem;
 
         var fid = User.CreatorId();
         var existing = await Project(db.TextbookSeries.AsNoTracking().Where(s => s.Slug == slug), fid).FirstOrDefaultAsync(ct);
@@ -115,7 +133,7 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
         var series = new TextbookSeries
         {
             Name = dto.Name.Trim(),
-            Slug = slug,
+            Slug = slug!,
             PublisherId = dto.PublisherId,
             SubjectName = Trimmed(dto.SubjectName),
             SubjectId = dto.SubjectId,
@@ -144,10 +162,7 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
         var fid = User.CreatorId();
         if (!ClaimsPrincipalExtensions.IsOwnedBy(series.OwnerAdultId, fid))
             return this.ProblemWithCode(ApiErrors.NotOwner, "Only the owner may change this textbook series.");
-        if (dto.SubjectId is int sid && !await db.Subjects.AnyAsync(s => s.Id == sid, ct))
-            return this.ProblemWithCode(ApiErrors.InvalidReference, "SubjectId does not reference an existing subject.");
-        if (dto.PublisherId is int pid && !await db.Publishers.AnyAsync(p => p.Id == pid, ct))
-            return this.ProblemWithCode(ApiErrors.InvalidReference, "PublisherId does not reference an existing publisher.");
+        if (await ValidateReferencesAsync(dto.SubjectId, dto.PublisherId, ct) is { } refProblem) return refProblem;
 
         if (dto.Name is not null)
         {
@@ -156,6 +171,7 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
             series.Name = name;
         }
         if (dto.PublisherId.HasValue) series.PublisherId = dto.PublisherId;
+        if (dto.ClearPublisherId) series.PublisherId = null;
         if (dto.SubjectName is not null) series.SubjectName = Trimmed(dto.SubjectName);
         if (dto.SubjectId.HasValue) series.SubjectId = dto.SubjectId;
         if (dto.SchoolTypes.HasValue) series.SchoolTypes = dto.SchoolTypes.Value;

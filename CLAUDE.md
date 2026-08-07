@@ -38,9 +38,11 @@ die Datei lädt automatisch, sobald du unter `frontend/` arbeitest.
 
 ### KI-Creator (Konsolen-Agent)
 
-Der Konsolen-Agent, der die Creator-Rolle übernimmt (Briefing/Entwurf/Klausur gegen die laufende API):
-Aufrufe und Betriebsarten stehen im Skill `ki-creator`, die Architektur unter „Konventionen".
-Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator/README.md).
+Konsolen-App mit **deterministischer Pipeline** (C# besitzt den Ablauf, das Modell liefert nur
+strukturierten Inhalt – kein Tool-Calling), die die Creator-Rolle übernimmt (Briefing/Entwurf/Klausur
+gegen die laufende API). Fachliche Kernregel: **Interessen kleiden den Stoff ein, sie ersetzen ihn nie**.
+Aufrufe und Betriebsarten stehen im Skill `ki-creator`.
+Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator/README.md) (lädt dort automatisch).
 
 ## Architektur (was bei jeder Änderung gilt)
 
@@ -109,31 +111,19 @@ Lernstand – positionsgebunden *und* plan-übergreifend je Vokabel-Item.
 - **Client-Bibliothek** ([backend/Pugling.Client/](backend/Pugling.Client/CLAUDE.md)): die *eine* HTTP-Schicht
   für Nicht-Browser-Konsumenten (die KI-Agenten). Neuer Endpunkt? Erst Backend, dann dort eine einzeilige
   Methode ergänzen – nie HTTP-Plumbing duplizieren.
-- **KI-Creator** ([backend/Pugling.Agent.Creator/](backend/Pugling.Agent.Creator/CLAUDE.md)): Konsolen-App
-  mit **deterministischer Pipeline** (C# besitzt den Ablauf, das Modell liefert nur strukturierten Inhalt –
-  kein Tool-Calling). Fachliche Kernregel: **Interessen kleiden den Stoff ein, sie ersetzen ihn nie**.
 - **Guard Clauses zuerst** (früh `return NotFound()/Forbid()` bzw. `this.ProblemWithCode(…)`),
   Happy Path un-eingerückt.
-- **API-Versionierung**: Alle Routen unter `api/v1/…` – das Versionssegment steckt zentral in
-  `ApiRoutes.V1` ([Controllers/ApiRoutes.cs](backend/Pugling.Api/Controllers/ApiRoutes.cs)), Controller
-  tragen `[ApiVersion("1.0")]`. Bis zur Publikation bleiben wir bei 1.0 und ändern **frei** – ein Bruch
-  danach läuft über eine parallele `v2`, nicht über Abwärtskompatibilität.
-- **Mechanische Tore statt Disziplin** ([Directory.Build.props](Directory.Build.props), [.editorconfig](.editorconfig),
-  `ConventionGuardTests`, `SchemaGuardTests`): Warnungen **sind Fehler** (`TreatWarningsAsErrors`, repo-weit;
-  NuGet-Audit NU1901–1904 bewusst nicht, die ändern sich ohne Codeänderung). Fehlende `/// <summary>`
-  (CS1591) brechen den Build in **allen** Projekten, auch in `Pugling.Api`. Ausgenommen sind dort nur zwei
-  Pfade, die die `.editorconfig` namentlich freistellt: die EF-Entities unter `Models/` und die
-  `DbSet`-Properties in `Data/PuglingDbContext.cs` – sie sind nur wegen EF `public` und fließen nicht in
-  Swagger. Controllers, Auth, Errors, Services und Exercises sind scharf. Reflexive Wächter erzwingen die Regeln
-  dieses Abschnitts mechanisch – jede unten stehende Regel hat einen Test hinter sich, plus den
-  **Endpunkt-Abdeckungs-Wächter** (keine Controller-Action ohne einen Test, der sie mit Status < 400
-  aufruft). Der urteilt im Assembly-Fixture, weil erst dort alle Tests durch sind; die Konsole verschluckt
-  seine Meldung, sie steht in `TestResults/endpoint-coverage.txt`. Inventar und Begründungen:
-  [docs/codequalitaet-gates-plan.md](docs/codequalitaet-gates-plan.md) – neue Regel scharf stellen? Erst messen.
+- **API-Versionierung**: Alle Routen unter `api/v1/…` (`ApiRoutes.V1`), Controller tragen
+  `[ApiVersion("1.0")]`. Bis zur Publikation bleiben wir bei 1.0 und ändern frei; ein Bruch danach
+  läuft über eine parallele `v2`, nicht über Abwärtskompatibilität.
+- **Mechanische Tore statt Disziplin** (`ConventionGuardTests`, `SchemaGuardTests`, `TreatWarningsAsErrors`
+  repo-weit): ein rotes Tor benennt die verletzte Regel und den Fundort selbst – Inventar, Ausnahmelisten und
+  Begründungen erst bei Bedarf nachschlagen in [docs/codequalitaet-gates-plan.md](docs/codequalitaet-gates-plan.md).
+  Neue Regel scharf stellen? Erst messen.
 - **Schema-Änderungen laufen gegen gepinnte Listen** (`SchemaGuardTests`, Tore G1–G9): eine neue Beziehung,
-  eine neue String-Länge und eine neue „genau eines von N"-Invariante erzwingen je eine **bewusste Zeile** –
-  das Tor ist dabei erst rot, und das *ist* der Zweck. Die Regeln im Einzelnen (samt der Reflexions-Fallstricke)
-  stehen in [backend/Pugling.Api/CLAUDE.md](backend/Pugling.Api/CLAUDE.md) → „Schema & Migrationen".
+  eine neue String-Länge und eine neue „genau eines von N"-Invariante erzwingen je eine **bewusste Zeile**.
+  Handwerk und Konventionen im Einzelnen: [backend/Pugling.Api/CLAUDE.md](backend/Pugling.Api/CLAUDE.md) →
+  „Schema & Migrationen" (lädt dort automatisch).
 - **`CancellationToken`** gilt hart, und zwar in drei Teilen – weil CA2016 **kein** Netz ist (in Lambdas
   schweigt der Analyzer, und ein Helfer ohne Token-Parameter verbirgt jeden Aufruf in seinem Rumpf):
   1. jede async **Action** nimmt den Token als **letzten** Parameter und reicht ihn in jeden EF-/
@@ -178,27 +168,19 @@ Lernstand – positionsgebunden *und* plan-übergreifend je Vokabel-Item.
 
 ## Fallstricke
 
-- **EF-Migrationen: die Kette ist genau EINE Migration** ([Program.cs](backend/Pugling.Api/Program.cs) ruft
-  beim Start `db.Database.Migrate()`). Solange die App unveröffentlicht ist und Altdaten verzichtbar sind,
-  wird bei jeder Schemaänderung **neu gefaltet** statt verlängert (`Data/Migrations` löschen +
-  `migrations add InitialCreate`, siehe Befehle) – das macht Spaltenumbenennungen und Typwechsel kostenlos,
-  weil kein SQLite-Tabellen-Neubau generiert wird, den jemand abnehmen müsste. `SchemaGuardTests` erzwingt
-  beides: **kein Modell-Drift** (`HasPendingModelChanges`) und **Kettenlänge 1**. Ein zweiter
-  Migrations-Eintrag ist kein Fortschritt, sondern ein rotes Tor; die Regel endet mit der ersten
-  Veröffentlichung, dann wird sie *ausdrücklich* entfernt. **Nicht** auf `EnsureCreated` zurückfallen.
-  Ablauf, Fallstricke der EF-Tools und die Schema-Konventionen (Enums als String, DB-Defaults,
-  Eindeutigkeit, `NOCASE`) stehen in [backend/Pugling.Api/CLAUDE.md](backend/Pugling.Api/CLAUDE.md);
-  Stand und offene Etappen in [docs/db-struktur-umbau-plan.md](docs/db-struktur-umbau-plan.md).
+- **EF-Migrationen: die Kette ist genau EINE Migration**, bei jeder Schemaänderung **neu gefaltet**
+  statt verlängert (siehe Befehle). **Nicht** auf `EnsureCreated` zurückfallen; `SchemaGuardTests`
+  erzwingt kein Modell-Drift und Kettenlänge 1. Handwerk und Begründung:
+  [backend/Pugling.Api/CLAUDE.md](backend/Pugling.Api/CLAUDE.md) → „Schema & Migrationen"
+  (lädt dort automatisch), Stand/Etappen: [docs/db-struktur-umbau-plan.md](docs/db-struktur-umbau-plan.md).
 - **PINs sind gehasht** (`Auth/PinHasher`): `Adult.Pin`/`Child.Pin` und `Account.PinHash` halten den Hash,
   nie den Klartext. Wer eine PIN setzt, muss durch `PinHasher.Hash` und den Hash **auf das Konto spiegeln**
   (sonst läuft der konto-zentrische `/auth/login` aus dem Takt) – siehe `ChildrenController`/`AdultsController`.
   Der PIN-Login ist zusätzlich per `AddRateLimiter` gebremst (Policy `login`, über `RateLimiting:LoginEnabled`
   abschaltbar – der In-Process-TestServer teilt sonst eine IP-Partition und bekäme 429).
 - **Vom Ursprungs-Template ist nichts mehr übrig** – **kein** `User`/`Topic`/`VocabCard`/`Points…` mehr
-  anlegen. Das letzte Legacy-Entity (`TimeSlotRule`, der Leitner-Multiplikator nach Tageszeit) ist seit dem
-  DB-Struktur-Umbau **Konfiguration** (`Scoring:TimeSlots` in `appsettings.json`), keine Tabelle: es gab
-  keine API, keinen Schreibpfad außer dem Seed und keine Überlappungsprüfung – und die Test-Suite musste
-  seine Zeilen *löschen*, um deterministische Punktzahlen zu bekommen.
+  anlegen. Der Leitner-Multiplikator nach Tageszeit ist **Konfiguration** (`Scoring:TimeSlots` in
+  `appsettings.json`), keine Tabelle. Historie: [docs/db-struktur-umbau-plan.md](docs/db-struktur-umbau-plan.md) (E12).
 - **Zeit/UTC**: Tageslogik nutzt `DateTime.UtcNow`/`DateOnly` – nahe Mitternacht lokal ggf. anderer Kalendertag.
 - **JSON-Spalten** (`Gaps`, `WordBank`, `BoxIntervalDays`, `StageSchedule`, `Noun`/`Verb`, `Interests`,
   `OwnedSkins`, `SuggestedBonus`): tragen alle einen `ValueComparer` aus

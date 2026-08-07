@@ -230,3 +230,6 @@ Abnahme, dazu `pugling-reviewer` und `frontend-reviewer` (`wo: beides`).
 - **2026-08-03** — geschätzt: **Größe M**, `wo: beides`, `migration: nein`, `vertragsbruch: nein`,
   Angriffsplan (Backend zuerst: Service-Schreibpfad → Contracts → Controller → Tests → beide
   Frontend-Stellen → `/smoke-test`) und Testweg festgelegt; autonom getroffen, Nutzerauftrag 2026-08-04.
+- **2026-08-07** — Autonomer Modus (Opt-in je Vorhaben, README → „Autonomer Modus") vom Nutzer im Dialog
+  ausdrücklich freigegeben: ein Nachtlauf darf diese Story trotz `art: Wunsch` ohne weitere Rückfrage bauen
+  (Rollengang/Reviewer bleiben Pflicht wie bei jeder Abnahme).

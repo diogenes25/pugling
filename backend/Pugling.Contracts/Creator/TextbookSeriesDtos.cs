@@ -21,9 +21,15 @@ public record TextbookSeriesResponse(int Id, string Name, string Slug, int? Publ
 public record CreateTextbookSeriesDto(string Name, int? PublisherId, string? SubjectName, int? SubjectId,
     SchoolTypes? SchoolTypes, string? SourceLanguage, string? TargetLanguage, string? Notes);
 
-/// <summary>Partial change to a series; omitted fields remain unchanged. The slug stays fixed.</summary>
+/// <summary>
+/// Partial change to a series; omitted fields remain unchanged. The slug stays fixed.
+/// <c>ClearPublisherId</c> removes the publisher (cf. <c>ClearGrade</c> on the class test) – without it,
+/// <c>null</c> in a PATCH means "not specified", not "remove", so a wrongly-assigned publisher could
+/// never be unassigned again.
+/// </summary>
 public record UpdateTextbookSeriesDto(string? Name, int? PublisherId, string? SubjectName, int? SubjectId,
-    SchoolTypes? SchoolTypes, string? SourceLanguage, string? TargetLanguage, string? Notes);
+    SchoolTypes? SchoolTypes, string? SourceLanguage, string? TargetLanguage, string? Notes,
+    bool ClearPublisherId = false);
 
 /// <summary>
 /// A unit of the series including volume. <c>Topics</c>, <c>Grammar</c> and <c>VocabularyNotes</c> are the

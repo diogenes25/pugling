@@ -187,3 +187,6 @@ Preview-Endpunkts gegen einen echten Aufsatz.
 - **2026-08-03** — geschätzt: Größe S, `wo: beides`, `migration: nein`, `vertragsbruch: nein`,
   Angriffsplan (Backend zuerst) und Testweg festgelegt (autonom getroffen, Nutzerauftrag 2026-08-04). Kein
   XL-Split nötig.
+- **2026-08-07** — Autonomer Modus (Opt-in je Vorhaben, README → „Autonomer Modus") vom Nutzer im Dialog
+  ausdrücklich freigegeben: ein Nachtlauf darf diese Story trotz `art: Wunsch` ohne weitere Rückfrage bauen
+  (Rollengang/Reviewer bleiben Pflicht wie bei jeder Abnahme).

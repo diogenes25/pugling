@@ -56,3 +56,7 @@ Bedienart**, die dieselbe Logik nochmal abbilden muss.
 ## Verlauf
 
 - **2026-07-30** — geerntet aus dem Grill-Protokoll vom selben Tag, Stufe `geschaetzt` übernommen.
+- **2026-08-07** — Autonomer Modus (Opt-in je Vorhaben, README → „Autonomer Modus") vom Nutzer im Dialog
+  ausdrücklich freigegeben: ein Nachtlauf darf diese Story trotz `art: Wunsch` ohne weitere Rückfrage bauen
+  (Rollengang/Reviewer bleiben Pflicht wie bei jeder Abnahme). Bleibt P5 — einzige Story mit neuer
+  Abhängigkeit (Drag & Drop), zuletzt in der Reihe.

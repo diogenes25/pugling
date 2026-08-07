@@ -79,17 +79,15 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<InterestTagResponse>> Create(CreateInterestTagDto dto, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(dto.Label)) return this.ProblemWithCode(ApiErrors.ValidationError, "Label is required.");
-
-        var slug = InterestSlug.From(string.IsNullOrWhiteSpace(dto.Slug) ? dto.Label : dto.Slug);
-        if (slug.Length == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Label must contain at least one letter or digit.");
+        var (slug, problem) = this.DeriveRequiredSlug(dto.Label, "Label", dto.Slug);
+        if (problem is not null) return problem;
 
         var existing = await Project(db.InterestTags.AsNoTracking().Where(t => t.Slug == slug)).FirstOrDefaultAsync(ct);
         if (existing is not null) return Ok(existing);
 
         var tag = new InterestTag
         {
-            Slug = slug,
+            Slug = slug!,
             Label = dto.Label.Trim(),
             Facet = dto.Facet,
             Synonyms = Clean(dto.Synonyms),

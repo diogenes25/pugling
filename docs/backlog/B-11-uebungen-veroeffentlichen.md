@@ -204,3 +204,6 @@ Payload-Zeile, ein Hilfetext, ein Test. Kein Backend-Feature fehlt, keine Migrat
   Recherchieren auf eine einzelne UI-Zeile. Nicht umgesetzt.
 - **2026-08-06** — Nachtlauf, Prämissen-Nachprüfung nach B-106s Abnahme: keine Auswirkung, `ExecutePublic`
   hängt an der Übung selbst, nicht an ihrem Kapitel/ihrer Unit. `status` unverändert.
+- **2026-08-07** — Autonomer Modus (Opt-in je Vorhaben, README → „Autonomer Modus") vom Nutzer im Dialog
+  ausdrücklich freigegeben: ein Nachtlauf darf diese Story trotz `art: Wunsch` ohne weitere Rückfrage bauen
+  (Rollengang/Reviewer bleiben Pflicht wie bei jeder Abnahme).

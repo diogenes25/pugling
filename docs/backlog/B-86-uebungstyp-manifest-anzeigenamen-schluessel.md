@@ -103,3 +103,7 @@ mit dem M-Anker (vokabel-basierter Batch-Pfad).
 - **2026-08-03** — angelegt beim Teilen von [B-38](B-38-mehrsprachige-oberflaeche.md) (Entscheidung 5/8
   dort), direkt als `geschaetzt` übernommen: Ist-Stand und Kernentscheidung waren in B-38 bereits belegt,
   hier eigenständig ausgearbeitet und geschätzt. Autonom getroffen, Nutzerauftrag 2026-08-04.
+- **2026-08-07** — Autonomer Modus (Opt-in je Vorhaben, README → „Autonomer Modus") vom Nutzer im Dialog
+  ausdrücklich freigegeben: ein Nachtlauf darf diese Story trotz `art: Wunsch` ohne weitere Rückfrage bauen
+  (Rollengang/Reviewer bleiben Pflicht wie bei jeder Abnahme). Empfehlung: erst nach B-85 bauen
+  (Entscheidung 3, keine harte Abhängigkeit, aber ohne laufende i18n-Schicht ist der neue `Key` wertlos).

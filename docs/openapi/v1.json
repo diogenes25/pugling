@@ -36731,9 +36731,13 @@
               "null",
               "string"
             ]
+          },
+          "clearPublisherId": {
+            "type": "boolean",
+            "default": false
           }
         },
-        "description": "Partial change to a series; omitted fields remain unchanged. The slug stays fixed."
+        "description": "Partial change to a series; omitted fields remain unchanged. The slug stays fixed.\n\u0060ClearPublisherId\u0060 removes the publisher (cf. \u0060ClearGrade\u0060 on the class test) \u2013 without it,\n\u0060null\u0060 in a PATCH means \u0022not specified\u0022, not \u0022remove\u0022, so a wrongly-assigned publisher could\nnever be unassigned again."
       },
       "UpdateVocabTagDto": {
         "type": "object",

@@ -228,3 +228,7 @@ scheitern. Ergänzend ein manueller `/smoke-test`-Lauf mit echtem Plugin-Verzeic
 - **2026-08-03** — geschätzt: Größe **L** (bewusst nicht XL, Umfang durch Entscheidung 1 begrenzt),
   `wo: backend`, `migration: nein`, `vertragsbruch: nein`, Angriffsplan und Testweg festgelegt, autonom
   getroffen (Nutzerauftrag 2026-08-04).
+- **2026-08-07** — Autonomer Modus (Opt-in je Vorhaben, README → „Autonomer Modus") vom Nutzer im Dialog
+  ausdrücklich freigegeben: ein Nachtlauf darf diese Story trotz `art: Wunsch` ohne weitere Rückfrage bauen
+  (Rollengang/Reviewer bleiben Pflicht wie bei jeder Abnahme). Bleibt trotzdem P3 — Freigabe heißt „baubar,
+  wenn priorisiert", nicht „jetzt bauen" (Entscheidung 7).

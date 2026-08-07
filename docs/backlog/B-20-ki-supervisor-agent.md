@@ -194,3 +194,6 @@ hält die Story bereits auf L, ohne dass etwas Wesentliches fehlt, um sie in ein
   Supervisor-Agent dieser Story wäre der erste. Auflage, falls er ihn braucht: Er trägt das Enum aus
   [B-59](B-59-status-strings-ohne-werteliste.md) (Entscheidung 3), **keinen** neuen nackten Status-String —
   sonst wird B-59 dadurch teurer.
+- **2026-08-07** — Autonomer Modus (Opt-in je Vorhaben, README → „Autonomer Modus") vom Nutzer im Dialog
+  ausdrücklich freigegeben: ein Nachtlauf darf diese Story trotz `art: Wunsch` ohne weitere Rückfrage bauen
+  (Rollengang/Reviewer bleiben Pflicht wie bei jeder Abnahme).

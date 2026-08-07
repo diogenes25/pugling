@@ -143,9 +143,9 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
         new(typeof(UpdateTextbookSeriesDto), "name", "Reihe neu", async f =>
         {
             var c = await TestApi.AdultAsync(f);
-            var id = await NeueReiheAsync(c);
+            var id = await NeueReiheMitVerlagAsync(c);
             return new Ziel(c, $"/api/v1/creator/textbook-series/{id}");
-        }, []),
+        }, [new("clearPublisherId", "publisherId")]),
 
         new(typeof(UpdateSeriesUnitDto), "label", "Unit neu", async f =>
         {
@@ -519,6 +519,16 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
     private static async Task<int> NeueReiheAsync(HttpClient creator) =>
         await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/textbook-series",
             new { name = Eindeutig("Access"), sourceLanguage = "en", targetLanguage = "de" }));
+
+    /// <summary>Like <see cref="NeueReiheAsync"/>, but with a publisher already set - `clearPublisherId`
+    /// proves nothing on a series that had no publisher to begin with.</summary>
+    private static async Task<int> NeueReiheMitVerlagAsync(HttpClient creator)
+    {
+        var publisherId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/publishers",
+            new { name = Eindeutig("Verlag") }));
+        return await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/textbook-series",
+            new { name = Eindeutig("Access"), publisherId, sourceLanguage = "en", targetLanguage = "de" }));
+    }
 
     private static async Task<int> NeuesMotivAsync(HttpClient creator) =>
         await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/media",

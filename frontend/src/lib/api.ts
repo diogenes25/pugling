@@ -726,6 +726,7 @@ export const api = {
     http<PublisherResponse>(`${V1}/creator/publishers`, "POST", dto),
   updatePublisher: (id: number, dto: UpdatePublisherDto) =>
     http<PublisherResponse>(`${V1}/creator/publishers/${id}`, "PATCH", dto),
+  deletePublisher: (id: number) => http<void>(`${V1}/creator/publishers/${id}`, "DELETE"),
 
   // ---- Unterrichtsmaterial: Lehrwerk-Reihen und ihre Units ----
   // Der Katalog ist geteilt: lesen darf jeder Creator, ändern nur der Owner (`isOwn` sagt es der UI).

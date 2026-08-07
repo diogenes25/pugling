@@ -1009,15 +1009,13 @@ public static class Seed
         db.SaveChanges();
 
         var klett = new Publisher { Name = "Klett", Slug = "klett" };
-        db.Publishers.Add(klett);
-        db.SaveChanges();
 
         // The real, catalogued series: units mirror the two chapters the catalog used to carry directly.
         var greenLine = new TextbookSeries
         {
             Name = "Green Line 1",
             Slug = "green-line-1",
-            PublisherId = klett.Id,
+            Publisher = klett,
             SubjectId = englisch.Id,
             SubjectName = "Englisch",
             SourceLanguage = "en",

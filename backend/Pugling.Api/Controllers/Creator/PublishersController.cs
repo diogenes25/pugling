@@ -66,15 +66,13 @@ public class PublishersController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PublisherResponse>> Create(CreatePublisherDto dto, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(dto.Name)) return this.ProblemWithCode(ApiErrors.ValidationError, "Name is required.");
-
-        var slug = InterestSlug.From(dto.Name);
-        if (slug.Length == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Name must contain at least one letter or digit.");
+        var (slug, problem) = this.DeriveRequiredSlug(dto.Name, "Name");
+        if (problem is not null) return problem;
 
         var existing = await Project(db.Publishers.AsNoTracking().Where(p => p.Slug == slug)).FirstOrDefaultAsync(ct);
         if (existing is not null) return Ok(existing);
 
-        var publisher = new Publisher { Name = dto.Name.Trim(), Slug = slug };
+        var publisher = new Publisher { Name = dto.Name.Trim(), Slug = slug! };
         db.Publishers.Add(publisher);
         await db.SaveChangesAsync(ct);
 
@@ -99,7 +97,8 @@ public class PublishersController(PuglingDbContext db) : ControllerBase
         }
 
         await db.SaveChangesAsync(ct);
-        return await Project(db.Publishers.AsNoTracking().Where(p => p.Id == id)).FirstAsync(ct);
+        var seriesCount = await db.TextbookSeries.CountAsync(s => s.PublisherId == id, ct);
+        return new PublisherResponse(publisher.Id, publisher.Name, publisher.Slug, seriesCount, publisher.CreatedAt);
     }
 
     /// <summary>

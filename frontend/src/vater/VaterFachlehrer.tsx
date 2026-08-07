@@ -148,9 +148,8 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
   });
   const [types, setTypes] = useState<string[]>(profile?.defaultTypes ?? []);
   // "berührt" heißt „vom Nutzer selbst geändert" – erst das unterscheidet ein leeres Feld von einem Feld,
-  // das nur die Vorgabe `en`/`de` trägt (B-67, Entscheidung 1). `derived` trägt nur die Anzeige des Hinweises.
+  // das nur die Vorgabe `en`/`de` trägt (B-67, Entscheidung 1).
   const [touched, setTouched] = useState<Set<DerivableField>>(new Set());
-  const [derived, setDerived] = useState<Set<DerivableField>>(new Set());
   const action = useAction();
   const id = profile ? `p${profile.id}` : "new";
 
@@ -160,15 +159,25 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
 
   function touch(field: DerivableField) {
     setTouched((t) => new Set(t).add(field));
-    setDerived((d) => { if (!d.has(field)) return d; const next = new Set(d); next.delete(field); return next; });
   }
+
+  // Ein Freitext-`subjectName` ohne Katalog-Fach lässt sich im Pulldown nicht abbilden (Entscheidung 2).
+  const chosenSeries = series.find((s) => String(s.id) === form.seriesId);
+  const derivableValues: Record<DerivableField, string | null | undefined> = {
+    subjectId: chosenSeries?.subjectId != null ? String(chosenSeries.subjectId) : null,
+    sourceLang: chosenSeries?.sourceLanguage,
+    targetLang: chosenSeries?.targetLanguage,
+  };
+  // Computed instead of tracked in its own state: "derived" is nothing but "untouched, and the currently
+  // chosen series has a value for it" – a second Set kept in sync by hand could desync from the form/series
+  // selection (a lingering hint after switching to a series without this field, or one that never appears).
+  const isDerived = (field: DerivableField) => !touched.has(field) && Boolean(derivableValues[field]);
 
   /** Beim Wählen einer Reihe: nur Felder überschreiben, die der Nutzer noch nicht selbst geändert hat. */
   function deriveFromSeries(seriesId: string) {
     up("seriesId", seriesId);
     const chosen = series.find((s) => String(s.id) === seriesId);
-    if (!chosen) { setDerived(new Set()); return; }
-    // Ein Freitext-`subjectName` ohne Katalog-Fach lässt sich im Pulldown nicht abbilden (Entscheidung 2).
+    if (!chosen) return;
     const fields: Array<[DerivableField, string | null | undefined]> = [
       ["subjectId", chosen.subjectId != null ? String(chosen.subjectId) : null],
       ["sourceLang", chosen.sourceLanguage],
@@ -179,11 +188,6 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
     setForm((f) => {
       const next = { ...f };
       for (const [field, value] of applicable) next[field] = value;
-      return next;
-    });
-    setDerived((d) => {
-      const next = new Set(d);
-      for (const [field] of applicable) next.add(field);
       return next;
     });
   }
@@ -263,7 +267,7 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
             <option value="">– fachneutral –</option>
             {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
-          {derived.has("subjectId") && <span className="muted" role="status" aria-live="polite" style={{ fontSize: 13 }}>aus dem Lehrwerk übernommen</span>}
+          {isDerived("subjectId") && <span className="muted" role="status" aria-live="polite" style={{ fontSize: 13 }}>aus dem Lehrwerk übernommen</span>}
         </div>
         <div className="field">
           <label htmlFor={`fl-school-${id}`}>Schulart</label>
@@ -301,7 +305,7 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
             id={`fl-src-${id}`} value={form.sourceLang} placeholder="en"
             onChange={(e) => { up("sourceLang", e.target.value); touch("sourceLang"); }}
           />
-          {derived.has("sourceLang") && <span className="muted" role="status" aria-live="polite" style={{ fontSize: 13 }}>aus dem Lehrwerk übernommen</span>}
+          {isDerived("sourceLang") && <span className="muted" role="status" aria-live="polite" style={{ fontSize: 13 }}>aus dem Lehrwerk übernommen</span>}
         </div>
         <div className="field">
           <label htmlFor={`fl-tgt-${id}`}>Muttersprache</label>
@@ -309,7 +313,7 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
             id={`fl-tgt-${id}`} value={form.targetLang} placeholder="de"
             onChange={(e) => { up("targetLang", e.target.value); touch("targetLang"); }}
           />
-          {derived.has("targetLang") && <span className="muted" role="status" aria-live="polite" style={{ fontSize: 13 }}>aus dem Lehrwerk übernommen</span>}
+          {isDerived("targetLang") && <span className="muted" role="status" aria-live="polite" style={{ fontSize: 13 }}>aus dem Lehrwerk übernommen</span>}
         </div>
       </div>
 

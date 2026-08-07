@@ -6,6 +6,7 @@ import { SCHOOL_TYPES } from "../lib/labels";
 import { LANGUAGES } from "../lib/languages";
 import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
+import { PublisherAdmin } from "./PublisherAdmin";
 import type {
   BookType, CreateSeriesUnitDto, PublisherResponse, SchoolType, SeriesUnitResponse, SubjectResponse,
   TextbookSeriesResponse,
@@ -104,6 +105,7 @@ export function VaterLehrwerke() {
         subjects={subjects.data ?? []} publishers={publishers.data ?? []}
         onPublisherCreated={publishers.reload} onCreated={list.reload}
       />
+      <PublisherAdmin onChanged={() => { publishers.reload(); list.reload(); }} />
     </>
   );
 }
@@ -261,39 +263,40 @@ function UnitForm({ seriesId, unit, onDone }: {
   unit?: SeriesUnitResponse;
   onDone: () => void;
 }) {
-  const [label, setLabel] = useState(unit?.label ?? "");
-  const [grade, setGrade] = useState(unit?.grade?.toString() ?? "");
-  const [bookType, setBookType] = useState<BookType>(unit?.bookType ?? "Textbook");
-  const [topics, setTopics] = useState<string[]>(unit?.topics ?? []);
-  const [topicInput, setTopicInput] = useState("");
-  const [grammar, setGrammar] = useState(unit?.grammar ?? "");
-  const [vocabularyNotes, setVocabularyNotes] = useState(unit?.vocabularyNotes ?? "");
+  const [form, setForm] = useState({
+    label: unit?.label ?? "", grade: unit?.grade?.toString() ?? "",
+    bookType: unit?.bookType ?? "Textbook" as BookType, topics: unit?.topics ?? [] as string[],
+    topicInput: "", grammar: unit?.grammar ?? "", vocabularyNotes: unit?.vocabularyNotes ?? "",
+  });
   const action = useAction();
   const id = unit ? `u${unit.id}` : `new${seriesId}`;
 
+  function up<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {
+    setForm((f) => ({ ...f, [k]: v }));
+  }
+
   function addTopic() {
-    const t = topicInput.trim();
-    if (t.length === 0 || topics.includes(t)) { setTopicInput(""); return; }
-    setTopics((cur) => [...cur, t]);
-    setTopicInput("");
+    const t = form.topicInput.trim();
+    if (t.length === 0 || form.topics.includes(t)) { up("topicInput", ""); return; }
+    setForm((f) => ({ ...f, topics: [...f.topics, t], topicInput: "" }));
   }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!label.trim()) { action.fail("Die Bezeichnung fehlt."); return; }
+    if (!form.label.trim()) { action.fail("Die Bezeichnung fehlt."); return; }
     const dto: CreateSeriesUnitDto = {
-      label: label.trim(),
-      grade: grade.trim() === "" ? null : Number(grade),
-      bookType,
-      topics,
-      grammar: grammar.trim() || null,
-      vocabularyNotes: vocabularyNotes.trim() || null,
+      label: form.label.trim(),
+      grade: form.grade.trim() === "" ? null : Number(form.grade),
+      bookType: form.bookType,
+      topics: form.topics,
+      grammar: form.grammar.trim() || null,
+      vocabularyNotes: form.vocabularyNotes.trim() || null,
     };
     const ok = await action.run(() => (unit
       ? api.updateSeriesUnit(seriesId, unit.id, dto)
       : api.createSeriesUnit(seriesId, dto)), unit ? "Gespeichert." : "Unit hinzugefügt.");
     if (!ok) return;
-    if (!unit) { setLabel(""); setTopics([]); setGrammar(""); setVocabularyNotes(""); }
+    if (!unit) setForm((f) => ({ ...f, label: "", topics: [], grammar: "", vocabularyNotes: "" }));
     onDone();
   }
 
@@ -309,38 +312,38 @@ function UnitForm({ seriesId, unit, onDone }: {
         <div className="field">
           <label htmlFor={`unit-label-${id}`}>Bezeichnung</label>
           <input
-            id={`unit-label-${id}`} value={label} onChange={(e) => setLabel(e.target.value)}
+            id={`unit-label-${id}`} value={form.label} onChange={(e) => up("label", e.target.value)}
             placeholder="Unit 3 – Growing up"
           />
         </div>
         <div className="field">
           <label htmlFor={`unit-grade-${id}`}>Band <span className="muted">(als Klasse)</span></label>
           <input
-            id={`unit-grade-${id}`} type="number" min={1} max={13} value={grade}
-            onChange={(e) => setGrade(e.target.value)} placeholder="8"
+            id={`unit-grade-${id}`} type="number" min={1} max={13} value={form.grade}
+            onChange={(e) => up("grade", e.target.value)} placeholder="8"
           />
         </div>
         <div className="field">
           <label htmlFor={`unit-booktype-${id}`}>Buchtyp</label>
-          <select id={`unit-booktype-${id}`} value={bookType} onChange={(e) => setBookType(e.target.value as BookType)}>
+          <select id={`unit-booktype-${id}`} value={form.bookType} onChange={(e) => up("bookType", e.target.value as BookType)}>
             {BOOK_TYPES.map((t) => <option key={t} value={t}>{BOOK_TYPE_LABEL[t]}</option>)}
           </select>
         </div>
       </div>
       <div className="field">
         <label htmlFor={`unit-topics-${id}`}>Themen der Unit</label>
-        <div className="row" style={{ gap: 4, flexWrap: "wrap", marginBottom: topics.length > 0 ? 4 : 0 }}>
-          {topics.map((t) => (
+        <div className="row" style={{ gap: 4, flexWrap: "wrap", marginBottom: form.topics.length > 0 ? 4 : 0 }}>
+          {form.topics.map((t) => (
             <span key={t} className="chip" style={{ fontSize: 12 }}>
               {t}
               <button type="button" aria-label={`Thema ${t} entfernen`}
-                onClick={() => setTopics((cur) => cur.filter((x) => x !== t))}
+                onClick={() => up("topics", form.topics.filter((x) => x !== t))}
                 style={{ background: "none", border: "none", color: "inherit", cursor: "pointer", padding: 0, marginLeft: 4, fontSize: 14, lineHeight: 1 }}>×</button>
             </span>
           ))}
         </div>
         <input
-          id={`unit-topics-${id}`} value={topicInput} onChange={(e) => setTopicInput(e.target.value)}
+          id={`unit-topics-${id}`} value={form.topicInput} onChange={(e) => up("topicInput", e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTopic(); } }}
           onBlur={addTopic}
           placeholder="Thema eintippen, Enter fügt hinzu"
@@ -349,15 +352,15 @@ function UnitForm({ seriesId, unit, onDone }: {
       <div className="field">
         <label htmlFor={`unit-grammar-${id}`}>Grammatik der Unit</label>
         <input
-          id={`unit-grammar-${id}`} value={grammar} onChange={(e) => setGrammar(e.target.value)}
+          id={`unit-grammar-${id}`} value={form.grammar} onChange={(e) => up("grammar", e.target.value)}
           placeholder="Present perfect vs. simple past"
         />
       </div>
       <div className="field">
         <label htmlFor={`unit-vocab-${id}`}>Wortschatz der Unit</label>
         <textarea
-          id={`unit-vocab-${id}`} rows={2} value={vocabularyNotes}
-          onChange={(e) => setVocabularyNotes(e.target.value)}
+          id={`unit-vocab-${id}`} rows={2} value={form.vocabularyNotes}
+          onChange={(e) => up("vocabularyNotes", e.target.value)}
           placeholder="to grow up, responsibility, to argue"
         />
         <span className="sub">
