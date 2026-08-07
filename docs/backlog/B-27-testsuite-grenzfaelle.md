@@ -9,6 +9,7 @@ wo: backend
 migration: nein
 vertragsbruch: nein
 quelle: docs/testplan.md
+nachgeschaut: "2026-08-07"
 ---
 
 # B-27 · Die Grenzen des `ScoringService` als Tabelle statt als Flow
@@ -180,3 +181,5 @@ gemessen wird nicht.
   2/Gemessen 1). `ScoringService.cs` danach byte-identisch zu HEAD (`git diff` leer). `dotnet test
   Pugling.sln -c Release` → **746/746 grün**. `pugling-reviewer` hat alle fünf Theorien einzeln gegen die
   echte Logik nachgerechnet, kein Blocker.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `ScoringServiceBoundaryTests.cs` weiterhin alle fünf
+  Grenzen Host-frei prüft — hält (fünf `[Theory]`-Klassen vorhanden, gezielter Lauf grün). Kein Fund.

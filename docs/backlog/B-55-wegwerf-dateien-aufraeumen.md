@@ -9,6 +9,7 @@ wo: beides
 migration: nein
 vertragsbruch: nein
 quelle: docs/backlog/B-41-produktions-startup-smoke.md
+nachgeschaut: "2026-08-07"
 ---
 
 # B-55 · Die Tests räumen ihre Wegwerf-Dateien nicht weg
@@ -175,3 +176,6 @@ liefe er, ist schlimmer als keiner.
   `dotnet test Pugling.sln -c Release` → **746/746 grün**, `npm run build` clean, `npm run test:e2e` →
   **27/28 grün** (der eine Ausfall ist der vorbestehende, dokumentierte B-109-Flake in
   `full-flow.spec.ts`, unverändert).
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `QueryPlanSmokeTests.cs` seine Temp-DB weiterhin im
+  `finally` mit vorherigem `SqliteConnection.ClearPool` löscht und `global-teardown.ts` weiterhin existiert
+  — hält (`QueryPlanSmokeTests.cs:97-103`, `frontend/e2e/global-teardown.ts`). Kein Fund.

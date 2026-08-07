@@ -9,6 +9,7 @@ wo: frontend
 migration: nein
 vertragsbruch: nein
 quelle: docs/testplan.md#nachmessung-2026-07-31-die-drei-unbeobachteten-flächen
+nachgeschaut: "2026-08-07"
 ---
 
 # B-43 · Die Doppelklick-Lücke in `useAction` – und die fehlende Ebene für unsichtbare Zusicherungen
@@ -218,3 +219,5 @@ Ursache: gezählt wurde die *Anwesenheit* von `disabled`, nicht seine Bindung.
   als fehlende Eintrittsbedingung gemeldet: die Story ist als Etappe E5 eines Plandokuments gebaut worden und
   hat die Stufe `geschaetzt` darum übersprungen. Nachgetragen sind **gemessene** Werte, kein Voranschlag – das
   steht am Abschnitt dabei. Kein Code berührt.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `useAction.ts` weiterhin eine `useRef`-Sperre statt
+  reinem `busy`-State trägt — hält (`useAction.ts:67`, `useAction.test.ts` 8/8 grün). Kein Fund.

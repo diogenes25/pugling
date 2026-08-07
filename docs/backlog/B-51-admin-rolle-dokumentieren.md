@@ -9,6 +9,7 @@ wo: doku
 migration: nein
 vertragsbruch: nein
 quelle: Sitzung 2026-08-01 (Rollen-Durchgang)
+nachgeschaut: "2026-08-07"
 ---
 
 # B-51 · Die Admin-Rolle kommt in keinem Rollen-Dokument vor
@@ -185,3 +186,7 @@ aktuellen Code (`AuthAccess.cs:35-38`, `AdminEntities.cs:50-55`, `TokenService.c
   Orientierung" ergänzt. `docs/grundprinzip.md` unangetastet (AK3). `markdownlint-cli2` gegen beide
   Dateien → **0 Issues**. Gegenlesen der Code-Belege gegen den heutigen Stand:
   `ExercisePermissionService.cs:24,34,46` trägt weiterhin genau die drei `user.IsAdmin()`-Stellen.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob der Admin-Abschnitt in `wiki/02-authentifizierung.md`
+  und der Verweis in `docs/rollen-doku.md` noch stehen und die drei Bypass-Stellen noch dieselben sind —
+  hält (`wiki/02-authentifizierung.md:124-136`, `docs/rollen-doku.md:77`,
+  `ExercisePermissionService.cs:24,34,46`). Kein Fund.

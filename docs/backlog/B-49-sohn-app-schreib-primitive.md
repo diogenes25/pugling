@@ -9,6 +9,7 @@ wo: frontend
 migration: nein
 vertragsbruch: nein
 quelle: B-43
+nachgeschaut: "2026-08-07"
 ---
 
 # B-49 · Die Sohn-App benutzt die geteilten Schreib-Primitive nicht
@@ -208,3 +209,7 @@ halten.
   hat) — `shop-verlauf.spec.ts` ist reproduzierbar grün und damit der ehrlichere Ort für den Nachweis.
   `npm run build` clean, `npm test -- --run` → **153/153 grün**, beide neuen E2E-Zusicherungen einzeln UND
   im vollen `npm run test:e2e`-Lauf bestätigt (**27/28 grün**). `frontend-reviewer` lief gegen den Diff.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `SohnShop.tsx`/`SohnSkins.tsx`/`SohnTest.tsx`/
+  `SohnPractice.tsx` weiterhin `useAction` nutzen und `judge`/`reshuffleImage` weiterhin eine geteilte
+  Instanz teilen — hält (alle vier Dateien importieren `useAction`, `SohnPractice.tsx:72` dokumentiert
+  die geteilte Instanz). Kein Fund.

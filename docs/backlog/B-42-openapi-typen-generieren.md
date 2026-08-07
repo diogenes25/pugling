@@ -9,6 +9,7 @@ wo: beides
 migration: nein
 vertragsbruch: nein
 quelle: docs/testplan.md#nachmessung-2026-07-31-die-drei-unbeobachteten-flächen
+nachgeschaut: "2026-08-07"
 ---
 
 # B-42 · TypeScript-Typen aus dem OpenAPI-Dokument erzeugen statt von Hand pflegen
@@ -406,3 +407,6 @@ blind** – die Story hat sich also selbst im Nachhinein korrigiert.
   Schritt 2"); die Gegenprobe zu AK 4 und die vier neuen Vertrags-Zusicherungen sind je rot geprobt. Damit ist
   die Story vollständig – beide Schritte gebaut, das Dokument beschreibt die Leitung, und `tsc -b` ist das
   Vertragstor des Frontends.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `docs/openapi/v1.json` und `gen-contract.mjs`
+  weiterhin die Quelle der TS-Vertragstypen sind — hält (`types.ts` weiterhin auf 686 Zeilen geschrumpft,
+  `ContractDocumentTests` im gemeinsamen Lauf grün). Kein Fund.

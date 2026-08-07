@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: Sitzung 2026-07-31 (Rollen-Abgleich Creator/Supervisor/Student)
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-08-07"
 ---
 
 # B-44 · Grundprinzip auf Supervisor/Student umschreiben — „Vater" ist keine Ebene
@@ -217,3 +218,5 @@ nur ohne die Prüfung, weil hier keine mechanische möglich/sinnvoll ist (Entsch
   ist die einzige geänderte Datei (AK8 — keine Fußnote in `endpunkt-beziehungen.md` nötig, da AK6 keine
   Ergänzung dort über die neue Fußnote in `grundprinzip.md` hinaus verlangte). `markdownlint-cli2` →
   **0 Issues**.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `docs/grundprinzip.md` weiterhin `Supervisor`/
+  `Student` statt `Vater`/`Kind` als Ebenennamen führt — hält (`grundprinzip.md:31,60,87`). Kein Fund.

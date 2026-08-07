@@ -9,7 +9,7 @@ wo: backend
 migration: nein
 vertragsbruch: nein
 quelle: B-41
-nachgeschaut: ""
+nachgeschaut: "2026-08-07"
 ---
 
 # B-48 · Anonyme Registrierung ist auch in Produktion offen
@@ -179,3 +179,7 @@ dass irgendetwas greift, obwohl das günstige, bereits vorhandene Rate-Limit-Mus
   `RemoteIpAddress` alle Nutzer in einen Topf, was den Login schon länger trifft als die Registrierung —
   und [B-120](B-120-waechter-anonym-heisst-gedrosselt.md) — „anonym heißt gedrosselt" hängt an fünf
   Attributen statt an einem Tor.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `AdultsController.Create`/`TeacherAccountsController.Create`
+  weiterhin `[EnableRateLimiting("login")]` tragen und keine neue anonyme Schreib-Fläche ohne Bremse
+  dazugekommen ist — hält (`AdultsController.cs:56-57`, `TeacherAccountsController.cs:44-45`, weiterhin
+  genau 5 `[AllowAnonymous]`-Actions, alle gebremst). Kein Fund.

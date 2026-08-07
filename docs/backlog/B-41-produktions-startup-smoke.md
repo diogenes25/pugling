@@ -9,6 +9,7 @@ wo: backend
 migration: nein
 vertragsbruch: nein
 quelle: docs/testplan.md#nachmessung-2026-07-31-die-drei-unbeobachteten-flächen
+nachgeschaut: "2026-08-07"
 ---
 
 # B-41 · Der Produktionspfad des Starts ist der einzige ohne Test
@@ -271,3 +272,6 @@ Playwright-Konfiguration; sie liegen als [B-55](B-55-wegwerf-dateien-aufraeumen.
 - **2026-08-01** — **abgenommen**: 620/620 grün, Abdeckung 263/263 (0 offen), fünf Gegenproben je einmal
   rot gesehen. `FullRunTouchedActions` bleibt bei 263 – **Naht 1 aus dem
   [Paket-Plan](../testabdeckung-plan.md) ist damit erledigt, E2 muss nichts nachziehen.**
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob die drei `IsDevelopment()`-Zweige in `Program.cs`
+  weiterhin dieselben drei sind (kein vierter dazugekommen) — hält (Zweige nur um wenige Zeilen
+  verschoben, gemeinsamer Lauf 20/20 grün). Kein Fund.

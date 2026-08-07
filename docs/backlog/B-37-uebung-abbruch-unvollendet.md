@@ -9,6 +9,7 @@ wo: beides
 migration: nein
 vertragsbruch: nein
 quelle: Nutzer, Sitzung 2026-07-31
+nachgeschaut: "2026-08-07"
 ---
 
 # B-37 · Abgebrochene Runden: Pflicht härten, Klausur deckeln
@@ -429,3 +430,7 @@ Benannt, nicht behauptet:
   Drei Befunde wurden **nicht** mitgemacht und liegen als [B-62](B-62-reste-aus-dem-b37-review.md): ein
   vorbestehendes fehlendes Ref-Gate, der Retry-Knopf nach verbrauchtem Versuch (braucht die Versuchsnummer
   im Vertrag) und zwei E2E-Lücken.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `PlayedEnough`/`IsGoalMetAsync` (Pflicht = gespielter
+  Anteil) und der Klausur-Deckel/Idempotenz weiterhin unverändert greifen — hält
+  (`PositionProgressService.cs:88-93,108-117`, `PositionTestsController.cs:149-164,195`, gezielte Läufe
+  42/42 grün). Kein Fund.

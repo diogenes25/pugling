@@ -9,6 +9,7 @@ wo: frontend
 migration: nein
 vertragsbruch: nein
 quelle: memory/codequalitaet-gates.md
+nachgeschaut: "2026-08-07"
 ---
 
 # B-26 · Der E2E-Nachtlauf ist rot – und niemand erfährt es
@@ -148,3 +149,6 @@ könnte (der alte Abschnitt konnte noch „Lernziel angelegt." abfragen).
   tautologische Vorbelegung ersetzt, Doku-Drift in `VaterZiele.tsx`/`api.ts`/`frontend/CLAUDE.md` geheilt.
 - **2026-08-01** — **abgenommen**, alle vier Kriterien mit echten Läufen belegt (Tabelle oben).
   Commits `99a3720` (E0) und `31b0707` (Wegwerf-Probe, Zweig danach gelöscht).
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob der `zustellung`-Job in `e2e.yml` weiterhin Issues
+  bei Rot anlegt/bei Grün schließt und Playwright weiterhin aus `ci.yml` ausgeschlossen ist — hält
+  (`e2e.yml:138-179`, `ci.yml` ohne Playwright-Ausführung). Kein Fund.

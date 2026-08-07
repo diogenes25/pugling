@@ -9,6 +9,7 @@ wo: beides
 migration: ja
 vertragsbruch: ja
 quelle: remark #2, #3, #4, #5, #6, #7 (+ #10 zweite Hälfte)
+nachgeschaut: "2026-08-07"
 ---
 
 # B-63 · Das Lehrwerk ist eine Ebene aus Freitext, gebraucht wird eine Hierarchie mit Listen
@@ -327,3 +328,6 @@ vergleichbar mit einer eigenständigen DB-Umbau-Etappe, aber (dank Entscheidung 
   Suite: Backend **756/756**, Frontend-Vitest **156/156** (24 Dateien), Build sauber, Playwright-E2E
   **29/29**, Markdownlint **0 Funde**. Alle acht Akzeptanzkriterien erfüllt (AK7, Matching unverändert,
   über die bestehenden `CreatorProfileTests`-Matching-Fälle bestätigt). Status → `abgenommen`.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `Publisher` weiterhin eine eigene Entität mit
+  `TextbookSeries.PublisherId`-FK ist und `SeriesUnit.Topics`/`.BookType` weiterhin typisiert sind — hält
+  (`CurriculumEntities.cs:13,37,79,81`). Kein Fund.

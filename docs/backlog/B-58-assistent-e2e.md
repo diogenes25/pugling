@@ -9,6 +9,7 @@ wo: frontend
 migration: nein
 vertragsbruch: nein
 quelle: docs/testabdeckung-plan.md#e5-sperre-und-primitive-tests
+nachgeschaut: "2026-08-07"
 ---
 
 # B-58 · Der Lehrplan-Assistent hat keinen Durchstich
@@ -154,3 +155,5 @@ und `tsc` sieht keine verwechselten Zahlenfelder (`pointsGoalMet` gegen `penalty
   `full-flow.spec.ts`, unverändert). `frontend-reviewer` bestätigte Selektoren, Konventionstreue und dass
   die Assertions gegen den echten Render-Code (`PlanPositions.tsx:500,506`) und die echte Sperre
   (`VaterWizard.tsx`) geprüft sind, kein Blocker.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `frontend/e2e/assistent.spec.ts` weiterhin als eigene
+  Spec-Datei existiert — hält. Kein Fund.

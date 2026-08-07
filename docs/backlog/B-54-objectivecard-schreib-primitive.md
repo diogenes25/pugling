@@ -9,6 +9,7 @@ wo: frontend
 migration: nein
 vertragsbruch: nein
 quelle: docs/backlog/B-26-e2e-in-ci.md
+nachgeschaut: "2026-08-07"
 ---
 
 # B-54 · Fünf Knöpfe im Vater-Web gehen an den Schreib-Primitiven vorbei
@@ -306,3 +307,6 @@ sind Prosa in Kommentaren). Und meine eigene Rechnung war um eins daneben: 79 �
   demselben Namen, verlorene Eingabe nach einem Fehlschlag) und vier Reviewer-Befunde, darunter ein
   Wettlauf, den der neue Test jedes Mal geht. Zwei Reste sind als
   [B-61](B-61-reste-der-schreib-primitiven-runde.md) abgelegt. Commit `0d010f2`.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `VaterZiele.tsx`, `VaterVocab.tsx` (`TagEditor`) und
+  `VaterDashboard.tsx` weiterhin über eigene `useAction`-Instanzen und `StatusBanner` laufen — hält
+  (`VaterZiele.tsx:191,251` zwei getrennte Instanzen mit je eigenem `StatusBanner`). Kein Fund.

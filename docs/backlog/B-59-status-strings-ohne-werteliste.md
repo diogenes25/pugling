@@ -9,6 +9,7 @@ wo: beides
 migration: nein
 vertragsbruch: ja
 quelle: docs/testabdeckung-plan.md
+nachgeschaut: "2026-08-07"
 ---
 
 # B-59 · Zwei Antwortfelder tragen einen Status als nackten `string`
@@ -245,3 +246,7 @@ keine Fachlogik, nur den Wire-Typ, und die bestehenden Assertions sind bereits d
   `npm run build` clean, `npm test -- --run` → **153/153 grün**, `npm run test:e2e` → **27/28 grün**
   (einziger Ausfall: der vorbestehende, dokumentierte B-109-Flake). `pugling-reviewer` und
   `frontend-reviewer` liefen gegen den vollen Sprint-4-Diff.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `GoalStatus`/`KeyResultScope` weiterhin echte Enums
+  im Vertrag sind und der Hand-Typ in `uiTypes.ts` entfernt bleibt — hält
+  (`Pugling.Contracts/Common/ObjectiveBaseTypes.cs`, `uiTypes.ts:11-12` Kommentar bestätigt den Wegfall).
+  Kein Fund.

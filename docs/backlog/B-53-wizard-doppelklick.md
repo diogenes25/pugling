@@ -9,6 +9,7 @@ wo: frontend
 migration: nein
 vertragsbruch: nein
 quelle: docs/testabdeckung-plan.md
+nachgeschaut: "2026-08-07"
 ---
 
 # B-53 · Zwei Klicks im Lehrplan-Assistenten legen zwei Kinder und zwei Pläne an
@@ -130,3 +131,7 @@ falsch verdrahten, ohne einen Test rot zu machen – deshalb B-58.
 - **2026-08-01** — **Abschnitte „Entscheidungen" und „Schätzung" sowie die vier Felder nachgetragen**, vom
   Backlog-Wächter angemahnt. Der Inhalt ist nicht neu: die vier Entscheidungen standen im Verlauf und im
   offenen Punkt 1, sie standen nur unter keiner Überschrift, die der Wächter liest. Kein Code berührt.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `runWizardFinish` weiterhin in `wizardFinish.ts` liegt
+  und der `progress`-Ref weiterhin sowohl Wiederaufnahme als auch Wiedereintritt trägt — hält
+  (`frontend/src/vater/wizardFinish.ts:21-32,84-129`, `if (progress.running) return null` vor dem `try`).
+  Kein Fund.

@@ -9,6 +9,7 @@ wo: backend
 migration: nein
 vertragsbruch: nein
 quelle: docs/testplan.md#nachmessung-2026-07-31-die-drei-unbeobachteten-flächen
+nachgeschaut: "2026-08-07"
 ---
 
 # B-40 · Routen aus `Pugling.Client` gegen das OpenAPI-Dokument halten
@@ -252,3 +253,6 @@ mit-entschärfen – zwei Prüfungen an derselben Quelle sind eine.
   (`CreateExerciseAsync` übergibt den Pfad-Helfer nackt, nicht in einem `$"…"`). Der `pugling-reviewer` hat
   danach drei Blindstellen gefunden, von denen zwei still grün waren und eine den Testlauf mit einem
   Stack Overflow abgeschossen hätte – alle drei geschlossen und mit eigener Gegenprobe belegt.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob die relative Zusicherung (`MinimumCallSites = 130`)
+  nach dem B-106-Umbau von `CreateApi.cs` weiterhin hält — hält (aktuelle Aufrufstellenzahl 136, war 138
+  bei Abnahme, weiterhin ≥130). Kein Fund.

@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: docs/lehrer-konto-plan.md
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-08-07"
 ---
 
 # B-32 · `Father` heißt noch `Father`, obwohl die Zeile `Adult` ist
@@ -190,3 +191,6 @@ Testzahl unverändert, ist die Umbenennung vollständig und folgenlos. Ergänzen
   eigene Story angelegt (drei lokale Testmethodennamen, kein produktionsnaher Code, kein
   Domänensprache-Risiko wie beim eigentlichen Fund dieser Story).
   `pugling-reviewer` lief gegen den Diff.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `authorFatherId`/`ListingsForFatherAsync`/
+  `TestApi.FatherAsync` weiterhin nur als die drei bewusst-nicht-mitgezogenen lokalen Testhelfer
+  auftauchen — hält (Grep-Nulltreffer außer den drei dokumentierten Helfern). Kein Fund.

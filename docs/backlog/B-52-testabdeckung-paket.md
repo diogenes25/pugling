@@ -9,6 +9,7 @@ wo: beides
 migration: nein
 vertragsbruch: nein
 quelle: docs/testplan.md
+nachgeschaut: "2026-08-07"
 ---
 
 # B-52 · Sammel-Story: das Testabdeckungs-Paket
@@ -109,3 +110,7 @@ das nicht byte-stabile `openapi/v1.json` (E3) und das gemeinsame Lockfile (E4, e
   der Reparatur ebenso grün war. Das ist der Ertrag des Pakets, nicht sein Nebenschaden.
   Offen und **nie Etappe**: [B-27](B-27-testsuite-grenzfaelle.md) und [B-47](B-47-deploy-artefakt-smoke.md),
   beide mit Grund unter „Nicht im Paket". Erzeugt: B-53 und B-54 (abgenommen), B-55…B-61, entblockt B-24.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob alle Etappen E0–E6 im referenzierten
+  `testabdeckung-plan.md` weiterhin als abgenommen markiert sind und die Deckelkonstante unverändert
+  ist — hält (`docs/testabdeckung-plan.md` Zeilen 117,134,151,156,209,320 alle „abgenommen",
+  `EndpointCoverageGuard.FullRunTouchedActions = 263` unverändert). Kein Fund.

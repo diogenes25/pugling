@@ -9,6 +9,7 @@ wo: beides
 migration: ja
 vertragsbruch: nein
 quelle: remark #11, #12, #13 (Punkt 2)
+nachgeschaut: "2026-08-07"
 ---
 
 # B-65 · Eine Vokabel mit zwei richtigen Übersetzungen wertet eine davon falsch
@@ -296,3 +297,7 @@ und **alle vier** Auswertungsstellen fragen sie schon so ab
   Reinigung läuft jetzt **unbedingt** und gegen die Übersetzung *nach* dem PATCH; der Wert-vor-Schalter-
   Ablauf bleibt. Der Regressionstest dazu ist vorher rot (`["sehr groß"]` statt `null`).
   Suite 637 grün, Vitest 54, `npm run build` und markdownlint sauber.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `Vocabulary.TranslationAlternatives` weiterhin
+  existiert und die Multiple-Choice-Entdopplung weiterhin beide Seiten (eigene und fremde
+  `AcceptedAnswers`) prüft — hält (`VocabEntities.cs:34`, Logik jetzt in `StageMechanics.cs:65-85`, reine
+  Extraktion ohne Verhaltensänderung seit B-106). Kein Fund.
