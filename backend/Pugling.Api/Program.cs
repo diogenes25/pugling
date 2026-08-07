@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
@@ -420,6 +421,14 @@ builder.Services.AddOpenApi(o =>
 });
 
 var app = builder.Build();
+
+// B-119: behind Azure App Service's front-end, the connection Kestrel sees is the loopback hop from
+// IIS/ANCM, not the real client - every user would share one rate-limiter partition (Program.cs below,
+// policy "login"). Default options only honor the header from KnownNetworks (loopback), which is exactly
+// what that hop is; a request from anywhere else keeps its own RemoteIpAddress, so this cannot become a
+// spoofing vector for a client that isn't already local. Must run before anything that reads the
+// connection address - first middleware in the pipeline.
+app.UseForwardedHeaders(new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.XForwardedFor });
 
 // Unhandled exceptions → problem+json (500); empty error responses (e.g. 404/403/401) likewise.
 app.UseExceptionHandler();

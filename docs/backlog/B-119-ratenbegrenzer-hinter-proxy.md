@@ -1,14 +1,18 @@
 ---
-tags: [typ/story, status/idee, bereich/backend, bereich/auth]
+tags: [typ/story, status/abgenommen, bereich/backend, bereich/auth]
 aliases: [RemoteIpAddress hinter Proxy, ForwardedHeaders fehlt]
-status: idee
+status: abgenommen
 prio: P2
 art: Defekt
+groesse: XS
+wo: backend
+migration: nein
+vertragsbruch: nein
 quelle: pugling-reviewer-Befund zur Abnahme von
   [B-48](B-48-anonyme-registrierung-produktion.md) (2026-08-06) — dort nicht mitgenommen, weil B-48s Ziel
   (die fehlende Bremse an der Registrierung) ohne diesen Punkt erfüllt ist und der Befund den Login
   genauso trifft, also älter ist als B-48
-unverifiziert: true
+unverifiziert: false
 ---
 
 # B-119 · Hinter einem Reverse Proxy partitioniert der Ratenbegrenzer alle Nutzer in einen Topf
@@ -28,3 +32,51 @@ Zu klären beim Ausformulieren: ob `UseForwardedHeaders` mit gesetzten `KnownPro
 richtige Antwort ist (ohne diese Einschränkung wird der Header selbst zum Umgehungsweg — wer ihn fälscht,
 sucht sich seine Partition aus), und ob es ohne laufende Azure-Instanz überhaupt verifizierbar ist oder
 `wartet_auf` gesetzt werden muss.
+
+## Ausformulieren/Grillen — Ergebnis
+
+1. **Azure App Service ist selbst der Proxy, und er sitzt auf demselben Host wie Kestrel.** Im
+   Out-of-Process-Hosting-Modell (der hier verwendete) reicht IIS/ANCM die Anfrage über die
+   Loopback-Adresse an Kestrel weiter — `Connection.RemoteIpAddress` ist dort **immer** `127.0.0.1`,
+   unabhängig vom echten Client. Genau das deckt sich mit den **Default**-`ForwardedHeadersOptions`:
+   `KnownNetworks`/`KnownProxies` vertrauen ohne jede Konfiguration bereits dem Loopback-Host — kein
+   `KnownProxies`-Eintrag nötig, und kein Umgehungsweg für einen externen Client, dessen eigene
+   `RemoteIpAddress` eben nicht Loopback ist (der Header wird dann schlicht ignoriert).
+2. **Verifizierbar ohne laufende Azure-Instanz.** `WebApplicationFactory`s In-Process-`TestServer` meldet
+   sich bei jeder Anfrage ebenfalls als Loopback — exakt derselbe Vertrauens-Fall wie App Service. Ein
+   Integrationstest mit zwei verschiedenen `X-Forwarded-For`-Werten prüft die reale Partitionierung, ohne
+   einen echten Proxy zu brauchen. Kein `wartet_auf`.
+3. **Reihenfolge ist die einzige Falle.** `UseForwardedHeaders` muss vor jeder Middleware laufen, die
+   `Connection.RemoteIpAddress` liest — hier vor `UseRateLimiter` (und vor allem sonst, das die Adresse
+   je lesen könnte, z. B. künftiges Logging). Es steht darum ganz am Anfang der Pipeline, noch vor
+   `UseExceptionHandler`.
+
+## Akzeptanzkriterien
+
+1. `Program.cs` registriert `app.UseForwardedHeaders(new ForwardedHeadersOptions { ForwardedHeaders =
+   ForwardedHeaders.XForwardedFor })` als erste Pipeline-Middleware, vor `UseRateLimiter`.
+2. Ein Integrationstest belegt, dass zwei Clients mit unterschiedlichem `X-Forwarded-For` getrennte
+   Rate-Limiter-Partitionen bekommen — nicht nur, dass der Header gelesen wird.
+3. Keine Konfigurationsänderung nötig (`KnownProxies`/`KnownNetworks` bleiben Default) — die Loopback-
+   Vertrauensstellung ist bereits exakt der Azure-App-Service-Fall.
+
+## Verlauf
+
+- **2026-08-07** — ausformuliert, gegrillt und geschätzt (**XS**, `wo: backend`, keine Migration, kein
+  Vertragsbruch) in einem Zug: die Recherche (App-Service-Hosting-Modell, Default-Vertrauen) ließ keine
+  offene Frage für einen zweiten Schritt übrig.
+- **2026-08-07** — umgesetzt: `Program.cs` registriert `UseForwardedHeaders` als erste Middleware (Zeile
+  vor `UseExceptionHandler`). Neuer Test `RateLimiterForwardedHeadersTests` +
+  `RateLimitedFactory` (die einzige Factory der Suite, die die Login-Bremse eingeschaltet lässt).
+  **Rote Probe vor dem Fix** (`git stash` nur auf `Program.cs`, Test unverändert):
+  `Assert.Equal() Failure: Expected Unauthorized, Actual TooManyRequests` — der zweite, per Header
+  unterschiedene Client wurde von der Partition des ersten mitgesperrt. Nach `git stash pop`: grün.
+  Volle Suite: **758/758 grün** (757 vor dieser Story + 1 neuer Test).
+- **2026-08-07** — `pugling-reviewer` gefahren: **kein Blocker.** Middleware-Platzierung, Default-
+  Vertrauensmodell (nur Loopback, kein Spoofing-Weg für einen nicht-lokalen Aufrufer), Testaussage
+  (echte Partitionierung, nicht nur „Header wird gelesen") und `RateLimitedFactory`-Konventionen einzeln
+  bestätigt; Coverage-Guard unverändert korrekt (der Test trifft nur 401/429, nie <400).
+- **2026-08-07** — Rollengang-Ersatz: kein UI-Kandidat (reine Middleware-Registrierung, keine neue Route,
+  kein neuer Vertragspunkt). Ersatz nach `docs/nachtlauf.md`: der gezielte rot→grün-Beleg oben plus die
+  volle Suite als Regressionsnetz plus der Reviewer.
+- **2026-08-07** — `abgenommen`.
