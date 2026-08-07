@@ -9,6 +9,7 @@ wo: frontend
 migration: nein
 vertragsbruch: nein
 quelle: B-69 (Entscheidung 5)
+nachgeschaut: "2026-08-07"
 ---
 
 # B-74 · Die Zeilen des Übungs-Editors sind `Record<string, any>`
@@ -265,3 +266,6 @@ ein HTTP-Durchgang bewiese hier nichts, was `tsc` und die bestehenden Frontend-T
   `tsc -b` sofort rot (`TS2551: Property 'vocabKeyTypo' does not exist on type 'ClozeRow'. Did you mean
   'vocabKey'?`), zurückgenommen (`git diff` danach ohne Rest). `npm run build` clean, `npm test -- --run`
   → **153/153 grün** (unverändert). `frontend-reviewer` lief gegen den Diff.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob für alle elf Übungstypen weiterhin benannte
+  Zeilen-/Extra-Interfaces existieren und `emptyRow`/`emptyExtra` per `satisfies` prüfen — hält
+  (`exerciseConfig.tsx:38-75,150-397`, seit Commit `7884456` unverändert). Kein Fund.

@@ -9,6 +9,7 @@ wo: frontend
 migration: nein
 vertragsbruch: nein
 quelle: B-65 (Entscheidung 7)
+nachgeschaut: "2026-08-07"
 ---
 
 # B-69 · Kommagetrennte Sammelfelder: einer davon nimmt gar keine zweite Alternative an
@@ -349,3 +350,7 @@ Serververhalten — ein HTTP-Durchgang bewiese hier nichts, was der E2E nicht sc
   Belege: **73 Vitest** in 10 Dateien (vorher 54, +19), **25 E2E** grün, `tsc -b` und `npm run build`
   sauber. Kein Backend berührt — `git diff --name-only -- '*.cs'` ist leer, `migration`/`vertragsbruch`
   bleiben bei nein wie geschätzt.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob alle fünf Sammelfelder an beiden Orten weiterhin auf
+  `RepeatedTextFields` laufen und `splitList`/`joinList` gelöscht bleiben — hält
+  (`exerciseConfig.tsx:439,598,608,636,698`, `ClozeTexts.tsx:260,274`, Grep-Nulltreffer auf
+  `splitList|joinList`). Kein Fund.

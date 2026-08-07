@@ -11,6 +11,7 @@ wo: backend
 migration: nein
 vertragsbruch: ja
 quelle: B-75 (Review pugling-reviewer, Befund außerhalb des Diffs)
+nachgeschaut: "2026-08-07"
 ---
 
 # B-80 · Das Kind kann die Lösungen jeder Übung lesen
@@ -470,3 +471,6 @@ nachlesbar bleibt.
   (`student/…/report`). Selbst nachgespielt statt dem Reviewer geglaubt: ein Kind-Token bekommt `answer` für
   eine Karte mit `introduced: false`. Liegt als [B-82](B-82-positions-report-gibt-loesungen-preis.md) auf
   `idee` (Handhabung wie B-76 → B-79 und B-80 → B-81).
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `ExerciseBrief` weiterhin ohne `Config`-Feld ist und
+  `TagsController.TagExercises` weiterhin ein Student-Token auf zugewiesenes Material begrenzt — hält
+  (`ExerciseBrief.cs:14-16`, `TagsController.cs:166-173`). Kein Fund.

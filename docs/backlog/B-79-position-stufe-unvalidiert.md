@@ -9,6 +9,7 @@ wo: backend
 migration: nein
 vertragsbruch: nein
 quelle: B-76 (Review pugling-reviewer, Befund 7)
+nachgeschaut: "2026-08-07"
 ---
 
 # B-79 · Die Stufe einer Position wird gegen nichts geprüft
@@ -241,3 +242,7 @@ verlorengeht.
   Entscheidung 7 eingearbeitet, nicht offengelassen); statt `/smoke-test` die Live-Probe am laufenden Server
   gegen die geseedete Demo-Position (`{"stage":99}` → 400 mit der Liste der erlaubten Stufen, `{"stage":6}` →
   200, Position anschließend nachgeprüft). Commit `3be7409`; die Abnahme-Zeile selbst in `HEAD`.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob eine Stufe außerhalb von `IExerciseType.StageOptions`
+  weiterhin an beiden Schreibpfaden mit `400 validation_error` abgewiesen wird — hält
+  (`StageValidation.cs:29-40`, Aufruf in `PlanPositionsController.cs:108-110` und
+  `ExerciseControllerBase.cs:252,334`). Kein Fund.

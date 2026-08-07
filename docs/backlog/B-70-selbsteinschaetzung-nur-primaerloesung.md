@@ -9,6 +9,7 @@ wo: beides
 migration: nein
 vertragsbruch: nein
 quelle: docs/backlog/B-65-vokabel-mehrere-uebersetzungen.md (Review-Nebenbefund)
+nachgeschaut: "2026-08-07"
 ---
 
 # B-70 · Die Selbsteinschätzung zeigt nur die primäre Übersetzung
@@ -238,3 +239,7 @@ sind additive Trailing-Parameter mit Vorgabewert `null`.
   „Sollte"-Befunde eingearbeitet. Kein `/smoke-test`: der Beleg ist der Integrationstest an der echten
   Card-Antwort (im Demo-Datenstand trägt keine Vokabel erklärte Alternativen, siehe Eintrag oben).
   Commit `88ca9e8`.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `CardFacets` weiterhin ein `RevealAlternatives`-Feld
+  liefert und alle drei Aufrufer (Practice, Test, Preview) es verdrahten — hält
+  (`PositionPlayService.cs:143-144,184`, `PositionPracticeController.cs:116-117`,
+  `PositionTestsController.cs:75-76`, `ExercisePreviewService.cs:114-115`). Kein Fund.

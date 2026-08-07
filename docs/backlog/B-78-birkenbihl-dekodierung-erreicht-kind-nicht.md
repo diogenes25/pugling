@@ -9,6 +9,7 @@ wo: beides
 migration: nein
 vertragsbruch: nein
 quelle: B-76 (Grill-Runde, Entscheidung 1)
+nachgeschaut: "2026-08-07"
 ---
 
 # B-78 · Die Birkenbihl-Dekodierung erreicht das Kind nicht
@@ -325,3 +326,6 @@ Abnahme: `pugling-reviewer` **und** `frontend-reviewer` (`wo: beides`).
   Maschinentest kann sie leisten): wie die Wort-für-Wort-Spalten am Bildschirm sitzen — Umbruch bei langen
   Sätzen, Lesbarkeit der Gloss. Läuft mit [B-31](B-31-geraete-vorbehalt-klang.md) weiter.
   Commit `88ca9e8`; Protokoll [pm-sitzung-2026-08-04.md](../pm-sitzung-2026-08-04.md).
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `BirkenbihlExerciseType.ItemsOf` weiterhin `s.Decoding`
+  unconditional bis zur Karte durchreicht — hält (`BuiltInExerciseTypes.cs:131-132,146`,
+  `BirkenbihlDecoding.tsx` weiterhin in allen drei Oberflächen eingebunden). Kein Fund.

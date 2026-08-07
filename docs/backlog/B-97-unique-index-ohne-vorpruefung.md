@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: docs/api-design-bewertung.md (Vorschlag A1) — Arbeitsrunde PM/API-Designer/Entwickler am 2026-08-04
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-08-07"
 ---
 
 # B-97 · Zwei Schreibpfade laufen ungeprüft in einen Unique-Index und antworten mit 500
@@ -165,3 +166,11 @@ eine laufende Dev-Instanz auf 5200.
   → **200**; `POST achievements` mit vergebener Schwelle → **409 `duplicate_achievement`**, `PATCH` auf eine
   vergebene Schwelle → **409** und die Schwelle danach unverändert. Alle vier Akzeptanzkriterien erfüllt.
   Commit `1b59eb5`; die Abnahme-Zeile selbst in `HEAD`.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob die Achievement-Vorprüfung weiterhin steht. **Fund
+  ohne Regression:** `ChaptersController` existiert nicht mehr — die `Chapter`-Entität wurde seit B-97
+  durch `SeriesUnit` ersetzt (B-106). Die Achievement-Hälfte hält unverändert
+  (`MissionsController.cs:106-168`, geteilter Helfer `ThresholdTakenAsync`); die Chapter-Hälfte ist
+  gegenstandslos, weil ihr Gegenstand entfernt wurde. Geprüft, ob dadurch ein neuer ungeschützter
+  Unique-Index-Schreibpfad entstanden ist: `SeriesUnitsController` trägt auf `(SeriesId, Grade,
+  OrderIndex)` **keinen** Unique-Index, und `TextbookSeriesController` behandelt seinen einzigen
+  Unique-Index (`Slug`) bereits idempotent. Kein neuer Fund, kein Fix nötig.

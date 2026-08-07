@@ -9,6 +9,7 @@ wo: beides
 migration: nein
 vertragsbruch: ja
 quelle: B-73 (Grill-Runde, Entscheidung 1)
+nachgeschaut: "2026-08-07"
 ---
 
 # B-75 · Lese- und Hörverstehen kommen ohne ihren Inhalt beim Kind an
@@ -390,3 +391,6 @@ Backend zuerst. Punkt 0, weil die Runde ihn offen gelassen hat.
   **654 Backend-Tests grün** (10 in `ContentExercisePlayTests`), **86 Frontend-Tests grün**,
   `uebungstypen.spec.ts` und `full-flow.spec.ts` grün, `/smoke-test` grün, live gegen `localhost:5280`
   belegt.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `Passage` weiterhin additiv auf den Content-/
+  Karten-Records steht und `AudioReplacesPrompt` weiterhin nur auf der Audio-Stufe greift — hält
+  (`PracticeDtos.cs:72,74`, `VocabularyExerciseType.cs:81`). Kein Fund.

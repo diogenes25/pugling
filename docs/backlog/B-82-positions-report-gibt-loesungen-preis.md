@@ -10,6 +10,7 @@ wo: beides
 migration: nein
 vertragsbruch: ja
 quelle: B-80 (pugling-reviewer, Befund außerhalb des Diffs)
+nachgeschaut: "2026-08-07"
 ---
 
 # B-82 · Über den Positions-Report kann ein Kind die Lösung jeder Karte lesen
@@ -547,3 +548,7 @@ Backend zuerst; das Frontend hängt an der API und wird eine Zeile.
   benannt: `RemarksController` leert `Answer` **pro Rolle zur Laufzeit** — genau das Muster, das B-80/E1
   abgeschafft hat —, und sein Kommentar behauptet dabei das Gegenteil des Codes; dazu nennt
   `docs/vokabeltraining-prozess.md:60` einen längst entfallenen Endpunkt (vorbestehende Doku-Fäulnis).
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob der Positions-Report-Endpunkt weiterhin unter
+  `supervisor/…` mit `[Authorize(Roles = Roles.Supervisor)]` liegt und der reflexive Lösungsfeld-Wächter
+  weiterhin läuft — hält (`PositionReportController.cs:22-24`,
+  `ConventionGuardTests.cs:389-458`, Untergrenze `inScope.Count >= 38` weiterhin erfüllt). Kein Fund.

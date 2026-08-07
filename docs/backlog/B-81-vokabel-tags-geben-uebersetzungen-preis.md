@@ -10,6 +10,7 @@ wo: backend
 migration: nein
 vertragsbruch: nein
 quelle: B-80 (Schätzung, Befund außerhalb des Schnitts)
+nachgeschaut: "2026-08-07"
 ---
 
 # B-81 · Über die Vokabel-Tags kann ein Kind jede Übersetzung des Stores lesen
@@ -600,3 +601,6 @@ Backend zuerst; es gibt kein Frontend zu ziehen. **Die Reihenfolge ist bindend**
   **prinzipiell** unerreichbar (was zugewiesen ist, existiert — `VocabularyId` ist ein FK), und `already`
   kann nur überspringen, nie einfügen. Dazu fünf Mutationen, von denen jede mindestens eine Assertion
   bricht.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `GET tags/{tagId}/vocabulary` weiterhin
+  `[Authorize(Roles = Roles.AnyAdult)]` trägt und ein Student-Token weiterhin auf zugewiesene Vokabeln
+  begrenzt wird (Zuweisung vor Existenz) — hält (`TagsController.cs:344,296-303,305-307`). Kein Fund.

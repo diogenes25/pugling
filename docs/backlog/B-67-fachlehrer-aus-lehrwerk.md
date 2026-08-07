@@ -9,6 +9,7 @@ wo: frontend
 migration: nein
 vertragsbruch: nein
 quelle: remark #8
+nachgeschaut: "2026-08-07"
 ---
 
 # B-67 · Der Fachlehrer fragt nach Fach und Sprachen, die im gewählten Lehrwerk längst stehen
@@ -206,3 +207,6 @@ Interaktionsebene (Batch, Liste, neuer Screen) entsteht wie beim `MediaSelector`
   Ersatz nach `docs/nachtlauf.md`: `e2e/lehrwerke.spec.ts` deckt genau dieses Formular ab (**1/1 grün**,
   Teil der vollen Suite: Backend 752/752, Frontend-Vitest 156/156, Playwright-E2E 29/29). Commit `5dbbb55`
   (Bau) + Fix in derselben Nachtlauf-Sitzung. Protokoll: `docs/pm-sitzung-2026-08-06.md`, Sprint 5.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `VaterFachlehrer.tsx` weiterhin über einen
+  `touched`-Zustand ableitet und nicht angefasste Felder nicht überschreibt — hält
+  (`VaterFachlehrer.tsx:152,174,177,186,270,295,308,316`). Kein Fund.

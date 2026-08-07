@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: Code-Review 2026-08-04 der Commits 3be7409…f8b0c99 (B-70/B-78/B-79)
 grund: ""
 ersetzt_durch: []
-nachgeschaut: ""
+nachgeschaut: "2026-08-07"
 wartet_auf: ""
 ---
 
@@ -108,3 +108,6 @@ Entscheidung 3 keinen Wächter für das Muster selbst baut.
   null ist — die Guard-Clause ist Verteidigung gegen einen zukünftigen Fehler). Rollengang ausdrücklich
   ausgefallen: keine neue Fähigkeit, keine sichtbare Oberfläche — Ersatz ist die volle Suite plus der
   Reviewer-Lauf.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `PlanPositionsController.Update` `pos.Exercise`
+  weiterhin hart einfordert (`NotFound()`) statt an ein bedingtes `is { }` zu hängen — hält
+  (`PlanPositionsController.cs:202-206`). Kein Fund.

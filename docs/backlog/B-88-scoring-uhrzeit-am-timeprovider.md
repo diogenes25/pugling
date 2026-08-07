@@ -9,6 +9,7 @@ wo: backend
 migration: nein
 vertragsbruch: nein
 quelle: docs/backlog/B-10-zeitfenster-pro-kind.md
+nachgeschaut: "2026-08-07"
 ---
 
 # B-88 · Die Punkte-Uhrzeit kommt von der Wanduhr, nicht vom `TimeProvider`
@@ -183,3 +184,6 @@ dem Test-Pfad ziehen), vergleichbar mit dem XS-Anker B-02 (zwei Sätze plus der 
   (`Expected: 20, Actual: 10`, an der echten Wanduhr ~00:21 außerhalb des Fensters), zurückgenommen.
   `dotnet test Pugling.sln -c Release` → **746/746 grün**, `dotnet format --verify-no-changes` clean.
   `pugling-reviewer` lief gegen den gesamten Sprint-2-Diff, kein Blocker.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `PositionPracticeController` `ScoreReview` weiterhin
+  über `time.GetLocalNow().DateTime` statt `DateTime.Now` speist — hält
+  (`PositionPracticeController.cs:413`). Kein Fund.

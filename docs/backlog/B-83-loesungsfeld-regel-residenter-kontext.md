@@ -9,6 +9,7 @@ wo: doku
 migration: nein
 vertragsbruch: nein
 quelle: B-82 (E3′, Bau-Sitzung 2026-08-03)
+nachgeschaut: "2026-08-07"
 ---
 
 # B-83 · Die Lösungsfeld-Regel steht nur als Kommentar am Wächter
@@ -181,3 +182,5 @@ inhaltliche Abnahme ist das Gegenlesen aus Schritt 2 des Angriffsplans.
   Zeitpunkt dieser Änderung bereits mit 20546 B über dem 19000-B-Budget (`context-budget.sh`), unabhängig
   von dieser Story; die neue Zeile (+685 B) vergrößert die bestehende Überschreitung, kompensiert sie aber
   nicht — das Warn-Tor blockt nicht, die Kompensation ist bewusst nicht Teil dieser XS-Story.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob die Root-`CLAUDE.md` die Lösungsfeld-Regel weiterhin
+  mit Namensliste, Rollenbedingung und Wächtername nennt — hält (`CLAUDE.md:159-163`). Kein Fund.

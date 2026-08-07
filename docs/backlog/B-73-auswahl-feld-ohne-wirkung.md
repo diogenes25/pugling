@@ -9,6 +9,7 @@ wo: beides
 migration: nein
 vertragsbruch: nein
 quelle: B-69 (Entscheidung 4)
+nachgeschaut: "2026-08-07"
 ---
 
 # B-73 · Das Auswahl-Feld verspricht Multiple-Choice, das Kind bekommt Freitext
@@ -416,3 +417,7 @@ Release`) und der Endpunkt-Abdeckungs-Wächter laufen wie immer am Ende mit.
   „Selbstcheck" — der saubere Weg ist der Anzeigename aus dem Manifest und gehört zu
   [B-86](B-86-uebungstyp-manifest-anzeigenamen-schluessel.md). Und `StageOptions` bleibt für Matching leer,
   es gibt also weiter keinen Stufen-Wähler (E6 schließt das aus).
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `ReadingExerciseType`/`ListeningExerciseType`
+  weiterhin `Question.Choices` über eigene `Choices()`-Overrides liefern — hält
+  (`BuiltInExerciseTypes.cs:32-33,61-63,245-246`); der bewusst offen gelassene Reststand (Matching ohne
+  Stufen-Wähler) ist unverändert. Kein Fund.

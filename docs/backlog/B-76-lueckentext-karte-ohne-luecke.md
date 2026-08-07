@@ -9,6 +9,7 @@ wo: beides
 migration: nein
 vertragsbruch: nein
 quelle: B-75 (Grill-Runde, Entscheidung 2)
+nachgeschaut: "2026-08-07"
 ---
 
 # B-76 · Der Lückentext sagt dem Kind nicht, welche Lücke gemeint ist
@@ -376,3 +377,6 @@ Backend zuerst — das Frontend hängt an der API.
   ([B-79](B-79-position-stufe-unvalidiert.md), B-03, B-06). Commits `1125ee6` (Bau) und der Review-Nachlauf.
   Verifikation: 644 Backend- und 81 Frontend-Tests grün, `full-flow.spec.ts` grün, `/smoke-test` grün, der
   geseedete Lückentext live gegen `localhost:5280` gespielt.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `GapIndex` weiterhin `PracticeCard`/`TestItem`
+  erreicht und die Wortbank weiterhin nur auf `TranslationWordBank` erscheint — hält
+  (`BuiltInExerciseTypes.cs:171,196-201,204-209`). Kein Fund.

@@ -10,6 +10,7 @@ wo: beides
 migration: nein
 vertragsbruch: ja
 quelle: B-76 (Grill-Runde, Entscheidung 1)
+nachgeschaut: "2026-08-07"
 ---
 
 # B-77 · Beim Spielen wird eine ungeordnete Liste als Folge bewertet
@@ -563,3 +564,5 @@ Backend zuerst; das Frontend hängt an der API.
   `full-flow.spec.ts` grün, und die geseedete Wochenpflicht „Die 16 Bundesländer" live gegen
   `localhost:5280` gespielt und bestanden (16 rückwärts genannt → 100 %, Gegenprobe 2/16 mit 14
   Fehlnennungen).
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob der Übungs-/Klausurpfad eine ungeordnete Liste
+  weiterhin als Menge bewertet (`GradesAsSet`) — hält (`BuiltInExerciseTypes.cs:355,365-390`). Kein Fund.
