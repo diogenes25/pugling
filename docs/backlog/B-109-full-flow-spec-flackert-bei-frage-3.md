@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: eigener Fund beim Bauen von B-62 (2026-08-05) — `git stash` gegen den unveränderten Stand
   bestätigte, dass derselbe Fehler schon vor B-62 bestand, also nicht durch B-62 verursacht
 entgangen_bei: []
-nachgeschaut: ""
+nachgeschaut: "2026-08-07"
 ---
 
 # B-109 · `full-flow.spec.ts` hängt reproduzierbar bei „Frage 3/5" der Klausur
@@ -185,3 +185,6 @@ zutage gefördert).
   das ist eine bewusste Auslassung, keine vergessene.
 - **2026-08-06** — `entgangen_bei` bleibt leer: der Defekt ist Altbestand ohne zuordenbare abgenommene
   Story — genau der Fall, den `README.md` in seiner Tabelle **an dieser Story** als Beispiel führt.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `answerOne()` weiterhin vor jedem Klick auf die
+  Fragezahl wartet und `SohnTest.tsx` weiterhin zwei Rundreisen in einem `action.run` fährt — hält
+  (`full-flow.spec.ts:105-106`, `SohnTest.tsx:100-110`). Kein Fund.

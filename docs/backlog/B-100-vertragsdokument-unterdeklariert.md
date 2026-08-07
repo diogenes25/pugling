@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: docs/api-design-bewertung.md (Vorschläge B4, B5, B6) — Arbeitsrunde PM/API-Designer/Entwickler am 2026-08-04
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-08-07"
 ---
 
 # B-100 · Das Vertragsdokument verschweigt 401, `X-Total-Count` und 24 Operationsnamen

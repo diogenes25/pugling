@@ -12,6 +12,7 @@ quelle: pugling-reviewer-Empfehlung zur Abnahme von
   [B-48](B-48-anonyme-registrierung-produktion.md) (2026-08-06) — dort nicht mitgenommen, weil B-48s Ziel
   ohne den Wächter erfüllt ist
 unverifiziert: false
+nachgeschaut: "2026-08-07"
 ---
 
 # B-120 · „Anonym heißt gedrosselt" hängt an Disziplin, nicht an einem Tor
@@ -91,3 +92,7 @@ Messzahlen.
 - **2026-08-07** — Rollengang-Ersatz: kein UI-Kandidat (reiner Test-Code). Ersatz: volle Suite plus
   Reviewer plus der gezielte rot→grün-Beleg oben.
 - **2026-08-07** — `abgenommen`.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob der reflexive Wächter weiterhin alle
+  `[AllowAnonymous]`-Actions auf `[EnableRateLimiting]` prüft und kein sechster anonymer Endpunkt
+  dazugekommen ist — hält (`ConventionGuardTests.cs:345-377`, weiterhin exakt 5 Fundstellen, alle
+  korrekt). Kein Fund.

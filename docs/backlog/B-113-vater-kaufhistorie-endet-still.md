@@ -13,7 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 wartet_auf: ""
-nachgeschaut: ""
+nachgeschaut: "2026-08-07"
 ---
 
 # B-113 · Drei geblätterte Listen mit veränderlicher Sortierung — der Vater erreicht keine von ihnen vollständig
@@ -190,3 +190,7 @@ Komponente — `Pager` ist bereits getestet (`ListControls.test.tsx`), die Story
   stornieren. **Eintrittsbedingung erfüllt, Stufe auf `abgenommen`.** Commits: `ff6b1a3` (Backend,
   Sortierung + Tests), `9f475ea` (Frontend, Pager an der Kaufhistorie; baut auf `07eddc6`s `busy`-Prop
   auf).
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob alle drei geblätterten Listen weiterhin
+  statusunabhängig mit `Id`-Tiebreaker sortieren und die Kaufhistorie weiterhin einen echten Client-Pager
+  hat — hält (`ShopController.cs:351,394`, `MeController.cs:376,422`, `VaterShop.tsx:372-374,468`); eine
+  repo-weite Suche nach derselben `? 0 : 1`-Fehlerklasse an neuen Stellen fand keinen Treffer. Kein Fund.

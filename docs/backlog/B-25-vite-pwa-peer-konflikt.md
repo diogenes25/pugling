@@ -9,6 +9,7 @@ wo: frontend
 migration: nein
 vertragsbruch: nein
 quelle: memory/codequalitaet-gates.md
+nachgeschaut: "2026-08-07"
 ---
 
 # B-25 · Peer-Konflikt `vite-plugin-pwa` ↔ `vite@8` lösen
@@ -143,3 +144,7 @@ belegten Fundstellen; kein API-Umbau, keine Schemaänderung, kein Vertragsbruch.
   `docs/deployment-azure.md` (direkt von einem entfernten Workflow-Kommentar verwiesen, daher mitgezogen)
   nennen den Konflikt nicht mehr als aktuellen Zustand. `npm test -- --run` → **153/153 grün**.
   `frontend-reviewer` lief gegen den Diff.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `vite-plugin-pwa` weiterhin ohne
+  `--legacy-peer-deps` gegen `vite@8` auflöst — hält (`package.json:34` auf `^1.3.0`, `npm install
+  --dry-run` läuft ohne `ERESOLVE`-Fehler durch, kein `legacy-peer-deps` mehr in `.github/**/*.yml`).
+  Kein Fund.

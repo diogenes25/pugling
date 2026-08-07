@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: docs/api-design-bewertung.md (Geschmacksfrage C4) — Arbeitsrunde PM/API-Designer/Entwickler am 2026-08-04
 grund: ""
 ersetzt_durch: []
-nachgeschaut: ""
+nachgeschaut: "2026-08-07"
 wartet_auf: ""
 ---
 
@@ -121,3 +121,6 @@ danach, wo der Abschnitt tatsächlich steht — siehe Ist-Stand: Root-`CLAUDE.md
   (reine Prosa-Änderung an einer bereits vom Reviewer nicht abgedeckten Doku-Datei) — Rollengang ausdrücklich
   ausgefallen, Ersatz: keine Rolle liest `CLAUDE.md` zur Laufzeit, die Suite ist der einzig mögliche
   Regressionsbeleg.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob der Wortlaut in `CLAUDE.md` weiterhin exakt der
+  geschärften Regel entspricht — hält (Abschnitt „Konventionen" → `CancellationToken`, Punkt 1, Wortlaut
+  deckungsgleich mit der Story). Kein Fund.

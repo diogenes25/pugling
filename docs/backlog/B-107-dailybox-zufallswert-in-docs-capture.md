@@ -12,7 +12,7 @@ quelle: pugling-reviewer-Befunde zu B-104 und B-60 (2026-08-05) — `docs/api-ex
   `backend/Pugling.Api/OpenApi/openapi-examples.generated.json` ändern bei jedem `dotnet test`-Lauf den
   Wert `dailyBox.coinsAwarded` (beobachtet: 30, 22, 12, 21 in verschiedenen Läufen), obwohl kein
   fachlicher Code sich geändert hat
-nachgeschaut: ""
+nachgeschaut: "2026-08-07"
 ---
 
 # B-107 · `DailyBoxService` würfelt ohne Seed – der Doku-Capture-Snapshot ist dadurch nicht byte-stabil
@@ -121,3 +121,7 @@ den Beispielkatalog, dazu `DailyBoxTests` und die volle Backend-Suite.
 - **2026-08-06** — **Rollengang: ausgefallen.** Die Änderung ist an keiner Stelle für Creator, Vater oder
   Sohn sichtbar — sie betrifft ausschließlich die Test-Factory und ein eingechecktes Doku-Artefakt. Ein
   Gang durch die laufende App hätte hier nichts prüfen können, was die Hash-Gleichheit nicht schon zeigt.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `DailyBoxService` weiterhin über `Random.Shared`
+  würfelt und `PuglingWebAppFactory` die Spanne weiterhin auf feste Werte pinnt — hält
+  (`DailyBoxService.cs:44-45`, `PuglingWebAppFactory.cs:157-160`). Die dritte Notiz (Spanne ungeprüft) ist
+  erwartungsgemäß als B-118 ausgelagert und dort inzwischen abgenommen — kein Widerspruch. Kein Fund.

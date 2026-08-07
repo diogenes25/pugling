@@ -12,6 +12,7 @@ quelle: Gespräch mit dem Nutzer, 2026-08-04 — süchtig machende Mobile-Game-M
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-08-07"
 ---
 
 # B-105 · Tägliche Belohnungsbox: Loot-Box + Streak als positives Gegenstück zum Stick
@@ -193,3 +194,7 @@ Idempotenz-Index, PointKind-Paar, Options-Klasse), kein neues Konzept außer der
   begrenzten Rückblick zu nutzen) wurde behoben: neue `PositionProgressService.StreakBoundedAsync`
   (kurzschließend, 45 Tage Deckel – die Eskalationsstufen enden ohnehin bei 30) ersetzt den
   Vollständig-Scan auf dem Schreibpfad; die Suite bleibt danach grün. Commit `2d7f900`, dazu dieser.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `DailyBoxService`, `DailyBoxClaim` und die
+  plan-weiten Trigger weiterhin existieren und ob die Streak-Eskalation dasselbe Muster nutzt — hält
+  (`Services/Shared/DailyBoxService.cs`, `Models/GamificationEntities.cs`, Trigger in
+  `PositionPracticeController`/`PositionTestsController`). Kein Fund.

@@ -9,6 +9,7 @@ wo: frontend
 migration: nein
 vertragsbruch: nein
 quelle: docs/backlog-vokabellernen.md#fund-2--das-formular-erklärt-itemcount-falsch-herum
+nachgeschaut: "2026-08-07"
 ---
 
 # B-02 · Der Hilfetext erklärt `ItemCount` falsch herum
@@ -92,3 +93,6 @@ einem Wort.
 - **2026-07-30** — `abgenommen`. Dabei aufgefallen: `6471e1d` hatte nur die Textänderung mitgenommen und den
   E2E zurückgelassen — der war damit auf HEAD rot, bis `d3bf81f` ihn nachzog. Ein Beleg dafür, dass „gebaut"
   und „verifiziert" zwei verschiedene Zustände sind.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `fieldHelp.ts` weiterhin „dauerhaft begrenzen" statt
+  „je Durchgang" sagt — hält (`fieldHelp.ts:36-42,115-120`, Titel „Inhalte dauerhaft begrenzen"/„Standard-
+  Begrenzung"). Kein Fund.

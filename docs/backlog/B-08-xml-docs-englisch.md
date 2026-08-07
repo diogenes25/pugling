@@ -9,6 +9,7 @@ wo: doku
 migration: nein
 vertragsbruch: nein
 quelle: docs/translate.md
+nachgeschaut: "2026-08-07"
 ---
 
 # B-08 · XML-Doc-Kommentare im Backend auf Englisch übersetzen
@@ -105,3 +106,6 @@ Sitzung** es pflegt. Nicht hier wiederholen — ein zweites Glossar wäre eine z
   ~2650 `//`-Kommentare mitgenommen und Etappe 9 die Meldungstexte der Wächter — beides war hier
   ausdrücklich **nicht** Teil der Story. Die Konvention in `CLAUDE.md` deckt das inzwischen ab
   („ausnahmslos"), darum entsteht daraus keine Folge-Story.
+- **2026-08-07** — Nachschau (Nachtlauf): Regex-Scan über `Models/*.cs` und `Data/*.cs` auf deutsche
+  Signalwörter in `///`-Zeilen wiederholt — 23 Treffer, alle Fehlalarm (englischer Fließtext mit
+  zufälligen Substring-Treffern). Kein Fund.

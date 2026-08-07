@@ -12,7 +12,7 @@ quelle: B-101 (Entscheidung 4) — abgespalten beim Bauen, weil eine dritte, im 
   (docs/api-design-bewertung.md) nicht erfasste Inkonsistenz auftauchte
 grund: ""
 ersetzt_durch: []
-nachgeschaut: ""
+nachgeschaut: "2026-08-07"
 wartet_auf: ""
 ---
 
@@ -118,3 +118,7 @@ Beide neuen Tests selbst sind der Testweg; beide wurden per Selbsttest verifizie
   [B-122](B-122-top-level-listen-bekommen-paging.md) abgespalten, weil sie Bestandsverhalten für
   unbegrenzte Aufrufer ändern würde — eine Produktentscheidung, die Freigabe 1 nicht deckt. Volle Suite
   752/752 grün (750 vor dieser Story + 2 neue Wächter).
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob beide Tore (Platzhaltername, Paging-Pin 34) trotz
+  B-101/B-63/B-100 danach weiterhin grün laufen — hält (`ConventionGuardTests.cs:186`
+  `UnpaginatedArrayGetCount = 34`, Pin seit der Abnahme laut `git log -p` unverändert und weiterhin
+  zutreffend). Kein Fund.

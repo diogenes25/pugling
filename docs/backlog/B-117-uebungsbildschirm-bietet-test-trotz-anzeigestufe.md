@@ -14,7 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-114]
 wartet_auf: ""
-nachgeschaut: ""
+nachgeschaut: "2026-08-07"
 ---
 
 # B-117 · Nach der Übungsrunde bietet der Bildschirm einen Test an, den es für diese Stufe nicht gibt
@@ -98,3 +98,7 @@ trivial, das Risiko lag im fehlenden Server-Feld).
   wiederverwendet (keine Verhaltensänderung dort, nur Entdopplung); `SessionResponse.Testable` ergänzt;
   `PositionPracticeController.Map` non-static, `GetSession` lädt `PlanPosition.Exercise`/`.StudyPlan` mit,
   `Start` hängt die schon geladene Position direkt an. **734/734** Backend grün.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `SohnPractice.tsx` weiterhin beide Test-Knöpfe auf
+  `session.current?.testable` gated — hält (`SohnPractice.tsx:185,195,208`); Nachbarfläche
+  `SohnHome.tsx:144` (aus B-114) bleibt ebenfalls korrekt gegated, keine dritte ungegatete Stelle
+  gefunden. Kein Fund.

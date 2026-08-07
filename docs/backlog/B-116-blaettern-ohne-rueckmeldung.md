@@ -14,7 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-89]
 wartet_auf: ""
-nachgeschaut: ""
+nachgeschaut: "2026-08-07"
 ---
 
 # B-116 · Beim Blättern gibt es keine Rückmeldung mehr — und der Pager meldet eine Seite, die noch nicht da ist
@@ -148,3 +148,6 @@ gleich und tragen kein eigenes Risiko, das ein Komponententest nicht schon deckt
   Render-Zeitlichkeit ohne Server-Anteil. Ein Mensch sollte einmal im Vater-Web auf einer mehrseitigen
   Liste zügig „Weiter ›" klicken und prüfen, dass die Zahl erst mit den neuen Zeilen wechselt.
   **Eintrittsbedingung erfüllt, Stufe auf `abgenommen`.** Commit: `07eddc6`.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `Pager` weiterhin beide Knöpfe sperrt und die
+  Bereichsangabe während `busy` einfriert, und ob alle sieben Aufrufer `busy` setzen — hält
+  (`ListControls.tsx:22-51`, `ListControls.test.tsx` 7/7 grün). Kein Fund.

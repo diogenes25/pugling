@@ -13,6 +13,7 @@ quelle: pugling-reviewer-Befund zur Abnahme von
   (die fehlende Bremse an der Registrierung) ohne diesen Punkt erfüllt ist und der Befund den Login
   genauso trifft, also älter ist als B-48
 unverifiziert: false
+nachgeschaut: "2026-08-07"
 ---
 
 # B-119 · Hinter einem Reverse Proxy partitioniert der Ratenbegrenzer alle Nutzer in einen Topf
@@ -106,3 +107,6 @@ Messzahlen.
   kein neuer Vertragspunkt). Ersatz nach `docs/nachtlauf.md`: der gezielte rot→grün-Beleg oben plus die
   volle Suite als Regressionsnetz plus der Reviewer.
 - **2026-08-07** — `abgenommen`.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `app.UseForwardedHeaders(...)` weiterhin als
+  allererste Middleware vor `UseExceptionHandler`/`UseRateLimiter` steht — hält (`Program.cs:514,517,629`,
+  Reihenfolge unverändert). Kein Fund.

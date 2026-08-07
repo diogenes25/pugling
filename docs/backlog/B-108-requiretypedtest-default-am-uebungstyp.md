@@ -8,7 +8,7 @@ groesse: S
 wo: backend
 migration: nein
 vertragsbruch: nein
-nachgeschaut: ""
+nachgeschaut: "2026-08-07"
 wartet_auf: ""
 quelle: pugling-reviewer-Befund zu B-93 (2026-08-05) — `ExerciseControllerBase.cs:274` (Create) und `:346`
   (Update) lassen `DefaultRequireTypedTest = true` auf einer Uebung ohne getippte Stufe (z. B. Birkenbihl)
@@ -129,3 +129,6 @@ Create **und** Update — rot vor dem Fix, grün danach, Zahl im `## Verlauf`. B
   ausdrücklich ausgefallen: die neue Ablehnung trifft den Creator beim Anlegen einer Übung ohne getippte
   Stufe — ein seltener, gezielter Fall, kein Playwright-Pfad dafür vorhanden; Ersatz ist der rot→grün-Beleg
   über die echte API (Testweg) plus Reviewer.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `ExerciseControllerBase.Create`/`Update` weiterhin
+  über die geteilte `RequireTypedTestValidation` laufen, symmetrisch zu `PlanPositionsController` — hält
+  (`RequireTypedTestValidation.cs` existiert, gleiche Aufrufstelle an beiden Controllern). Kein Fund.

@@ -12,6 +12,7 @@ quelle: pugling-reviewer-Befund zur Abnahme von
   [B-107](B-107-dailybox-zufallswert-in-docs-capture.md) (2026-08-06) — nicht dort mitgenommen, weil
   B-107s Ziel (byte-stabile Capture-Dateien) ohne diesen Punkt erfüllt ist
 unverifiziert: false
+nachgeschaut: "2026-08-07"
 ---
 
 # B-118 · Keine Zusicherung sieht die Ziehungsspanne der Tagesbox mehr
@@ -94,3 +95,6 @@ Obergrenze) — siehe „Verlauf" für die tatsächliche Umsetzung und die Messz
 - **2026-08-07** — Rollengang-Ersatz: kein UI-Kandidat (reiner Test-Code, kein Produktivverhalten
   geändert). Ersatz: volle Suite plus Reviewer plus der gezielte Fehler-Injektions-Beleg oben.
 - **2026-08-07** — `abgenommen`.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `DailyBoxRangeTests`/`DailyBoxRangeFactory` weiterhin
+  beide Enden `[7,9]`/`[2,4]` der Ziehungsspanne echt belegen — hält (Testklasse existiert, gezielter Lauf
+  grün). Kein Fund.

@@ -9,6 +9,7 @@ wo: backend
 migration: nein
 vertragsbruch: ja
 quelle: docs/backlog-vokabellernen.md#fund-1--defekt-der-abschlusstest-friert-bildwahlen-ein-die-er-nie-zeigt
+nachgeschaut: "2026-08-07"
 ---
 
 # B-01 · Abschlusstest friert Bildwahlen ein, die er nie zeigt
@@ -84,3 +85,6 @@ Kern, belegt: `MediaSelector.SelectForItemsAsync` schreibt die Wahl fest (`Media
 
   Commits: `e8cbe47` (Reparatur samt Regressionstest und neu erzeugtem Vertragsdokument), dazu dieser
   Nachtrag mit der Abnahme.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `TestItem`/`Contracts` weiterhin ohne `imageUrl`/
+  `imageAlt` sind und `PositionTestsController` weiterhin ohne `childId` an `ItemsOfAsync` — beides hält
+  unverändert (`TestDtos.cs:38-41`, vier Aufrufstellen ohne `childId`). Kein Fund.

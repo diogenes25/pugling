@@ -9,6 +9,7 @@ wo: beides
 migration: ja
 vertragsbruch: nein
 quelle: memory/bonus-gamification-system.md
+nachgeschaut: "2026-08-07"
 ---
 
 # B-10 · Zeitfenster (Punkte-Faktor) je Pflicht statt global
@@ -177,3 +178,7 @@ Signatur, drei DTOs und ein Formularblock.
     aber generierte Clients müssen es mitschicken.
   - **Verifikation der Nacharbeit:** 687 Backend-Tests grün, 107 Frontend-Tests grün, `npm run build` grün,
     `npx playwright test feldhilfe.spec.ts` → 3 grün, `dotnet format Pugling.sln` ohne Befund.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `PlanPosition.TimeSlots` weiterhin eine JSON-Liste mit
+  `ValueComparer` ist und `MultiplierAt` weiterhin Positions- und globale Fenster vereint — hält
+  (`PlanPositionEntities.cs:113`, `ScoringService.cs:139-150`, `PuglingDbContext.cs:557-560,1011`). Kein
+  Fund.

@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: docs/api-design-bewertung.md (Vorschläge A3, A5, B3-Tor) — Arbeitsrunde PM/API-Designer/Entwickler am 2026-08-04
 grund: ""
 ersetzt_durch: []
-nachgeschaut: ""
+nachgeschaut: "2026-08-07"
 wartet_auf: ""
 ---
 
@@ -157,3 +157,6 @@ Art anlegen" (beide bereits vorhanden, Erwartung auf den neuen Code umgestellt s
   bestehende Tests (`AccountSelfServiceTests`, `DocsCaptureTests`) mussten auf den spezifischeren Code
   umgestellt werden — das *ist* der belegte Vorher/Nachher-Beweis, kein neuer roter Test nötig. Volle Suite
   grün (Zahl im Sprint-Protokoll `docs/pm-sitzung-2026-08-06.md`). AK3/AK4 nach B-121 abgespalten.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob `ApiErrors.Conflict` weiterhin unter `Controllers/**`
+  fehlt und der Wächter mit leerer Ausnahmeliste noch aktiv ist — hält (0 Treffer auf `ApiErrors\.Conflict\b`
+  unter `Controllers/`, `ConventionGuardTests.cs:73-90`). Kein Fund.

@@ -12,6 +12,7 @@ quelle: Code-Review 2026-08-05 der Commits 4469662…b20600f (Befund 6)
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-08-07"
 ---
 
 # B-112 · Ein Kommentar begründet das Gegenteil der Bedingung unter ihm
@@ -111,3 +112,5 @@ einen Kommentar wäre Unsinn, und die Bedingung selbst ist schon durch das Verha
   Nachgerechnet gegen `useAsync.ts:25-39` — der Befund ist korrekt. Kommentar entsprechend korrigiert,
   `npm run build` erneut clean. **Diese Entgleitung ist der Grund, warum der Nachtlauf nach diesem Sprint
   endet** (Freigabe 3, `docs/nachtlauf.md`): ein Review-Fund im eigenen Increment vor der Abnahme.
+- **2026-08-07** — Nachschau (Nachtlauf): geprüft, ob der Kommentar in `ExerciseEditModal.tsx` weiterhin
+  beide Gründe (Fehlerfall + Reload) korrekt nennt — hält (`ExerciseEditModal.tsx:353-356`). Kein Fund.
