@@ -5,6 +5,10 @@ import { useAction } from "../lib/useAction";
 import { SCHOOL_TYPES } from "../lib/labels";
 import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
+import {
+  applySeriesChange, FIELD_FALLBACKS, isDerived as derived,
+  type DerivableField, type DerivableValues,
+} from "./seriesDerivation";
 import type {
   CreateCreatorProfileDto, CreatorProfileResponse, SchoolType, SubjectResponse, TextbookSeriesResponse,
 } from "../lib/types";
@@ -118,8 +122,8 @@ function gradeRange(p: CreatorProfileResponse): React.ReactNode {
   return p.gradeMin != null ? `ab Klasse ${p.gradeMin}` : `bis Klasse ${p.gradeMax}`;
 }
 
-/** Die drei Felder, die sich beim Wählen eines Lehrwerks aus dessen Reihe ableiten lassen. */
-type DerivableField = "subjectId" | "sourceLang" | "targetLang";
+// Die drei ableitbaren Felder und die Regel dahinter liegen in `seriesDerivation.ts` – dort sind sie
+// mit Vitest abgedeckt (B-126), hier wären sie es nur über einen nachgebauten Bildschirm.
 
 /**
  * Ein Formular für Anlegen und Ändern. Die Klassenstufen sind bewusst optional: ein leeres Feld heißt
@@ -140,8 +144,8 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
     gradeMin: profile?.gradeMin?.toString() ?? "",
     gradeMax: profile?.gradeMax?.toString() ?? "",
     seriesId: profile?.seriesId?.toString() ?? "",
-    sourceLang: profile?.sourceLang ?? "en",
-    targetLang: profile?.targetLang ?? "de",
+    sourceLang: profile?.sourceLang ?? FIELD_FALLBACKS.sourceLang,
+    targetLang: profile?.targetLang ?? FIELD_FALLBACKS.targetLang,
     persona: profile?.persona ?? "",
     didactics: profile?.didactics ?? "",
     active: profile?.active ?? true,
@@ -150,6 +154,14 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
   // "berührt" heißt „vom Nutzer selbst geändert" – erst das unterscheidet ein leeres Feld von einem Feld,
   // das nur die Vorgabe `en`/`de` trägt (B-67, Entscheidung 1).
   const [touched, setTouched] = useState<Set<DerivableField>>(new Set());
+  // Die Werte, mit denen ein BESTEHENDES Profil geöffnet wurde. Sie sind so wenig zu überschreiben wie
+  // ein berührtes Feld – der Creator hat sie in einer früheren Sitzung gesetzt, nur weiß `touched` davon
+  // nichts. Bei einem neuen Profil bewusst `undefined`: dort soll die Vorgabe `en`/`de` gerade weichen.
+  const [loaded] = useState<DerivableValues | undefined>(() => profile && {
+    subjectId: profile.subjectId?.toString() ?? "",
+    sourceLang: profile.sourceLang ?? FIELD_FALLBACKS.sourceLang,
+    targetLang: profile.targetLang ?? FIELD_FALLBACKS.targetLang,
+  });
   const action = useAction();
   const id = profile ? `p${profile.id}` : "new";
 
@@ -163,32 +175,18 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
 
   // Ein Freitext-`subjectName` ohne Katalog-Fach lässt sich im Pulldown nicht abbilden (Entscheidung 2).
   const chosenSeries = series.find((s) => String(s.id) === form.seriesId);
-  const derivableValues: Record<DerivableField, string | null | undefined> = {
-    subjectId: chosenSeries?.subjectId != null ? String(chosenSeries.subjectId) : null,
-    sourceLang: chosenSeries?.sourceLanguage,
-    targetLang: chosenSeries?.targetLanguage,
-  };
-  // Computed instead of tracked in its own state: "derived" is nothing but "untouched, and the currently
-  // chosen series has a value for it" – a second Set kept in sync by hand could desync from the form/series
-  // selection (a lingering hint after switching to a series without this field, or one that never appears).
-  const isDerived = (field: DerivableField) => !touched.has(field) && Boolean(derivableValues[field]);
+  // Computed statt in eigenem State gehalten: ein zweites, von Hand gepflegtes Set könnte von der
+  // Formular-/Reihenwahl abdriften. Die Regel selbst steht in `seriesDerivation.ts`.
+  const isDerived = (field: DerivableField) => derived(field, form, chosenSeries, touched);
 
-  /** Beim Wählen einer Reihe: nur Felder überschreiben, die der Nutzer noch nicht selbst geändert hat. */
+  /** Beim Wählen einer Reihe: abgeleitete Felder folgen ihr, selbst gesetzte nie. */
   function deriveFromSeries(seriesId: string) {
-    up("seriesId", seriesId);
-    const chosen = series.find((s) => String(s.id) === seriesId);
-    if (!chosen) return;
-    const fields: Array<[DerivableField, string | null | undefined]> = [
-      ["subjectId", chosen.subjectId != null ? String(chosen.subjectId) : null],
-      ["sourceLang", chosen.sourceLanguage],
-      ["targetLang", chosen.targetLanguage],
-    ];
-    const applicable = fields.filter(([field, value]) => value && !touched.has(field)) as Array<[DerivableField, string]>;
-    if (applicable.length === 0) return;
+    const next = series.find((s) => String(s.id) === seriesId);
     setForm((f) => {
-      const next = { ...f };
-      for (const [field, value] of applicable) next[field] = value;
-      return next;
+      // Vorige Reihe aus DEMSELBEN Stand lesen wie die Formularwerte, nicht aus dem Render-Closure.
+      const previous = series.find((s) => String(s.id) === f.seriesId);
+      // `seriesId` hinter den Spread: dann ist es gleichgültig, was die Regel je zurückgibt.
+      return { ...f, ...applySeriesChange(f, touched, previous, next, loaded), seriesId };
     });
   }
 
@@ -236,6 +234,9 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
     if (!profile) {
       setForm({ ...form, name: "", persona: "", didactics: "" });
       setTypes([]);
+      // Gehört zum Formularzustand, den das Anlegen verwirft: bliebe es stehen, leitete der nächste
+      // Eintrag genau die Felder nicht mehr ab, die beim vorigen von Hand geändert wurden (B-126).
+      setTouched(new Set());
     }
     onDone();
   }
