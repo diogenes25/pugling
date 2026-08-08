@@ -357,3 +357,45 @@ nachgeschaut** (19 vorher + 57 in dieser Nacht).
 
 **Warum der Lauf hier endet:** beide Listen (Nachschau, Doku-Nachtrag) sind vollständig durchgegangen —
 das ist die reguläre Abbruchbedingung, keine erzwungene. Push bleibt beim Nutzer.
+
+## Nachspiel: der Code-Review widerlegt den Sweep
+
+**Anlass:** unmittelbar nach dem Nachtlauf ein `/code-review` über `origin/main...HEAD`. Ergebnis: **neun
+Funde** in genau dem Zeitraum, den der Sweep wenige Stunden zuvor als „57 von 57 halten, kein Fund"
+abgehakt hatte — zwei davon in Stories, die ich ausdrücklich geprüft hatte (B-119, B-67).
+
+**Das ist kein Widerspruch, sondern eine gemessene Schwäche der Fragestellung.** Der Sweep hat gefragt
+*„steht der Fix noch da?"* — er stand überall noch da. Der Review fragt *„ist der Code richtig?"*. Die
+Zeile „76 von 76 nachgeschaut" im Index suggeriert seither mehr Prüftiefe, als der Durchgang hatte. Wer
+die Zahl liest, sollte diesen Absatz mitlesen.
+
+**Was daraus wurde** (Freigabe des Nutzers: Stories anlegen, die drei harten bauen):
+
+| Story | Art | Ergebnis | Commit |
+| --- | --- | --- | --- |
+| B-124 | Defekt | Umbenennen umging die Slug-Eindeutigkeit an **drei** Schreibpfaden (der dritte beim Bauen gefunden) — gebaut, 9/9 Theory-Tests | `b76c32e` |
+| B-125 | Defekt | `XForwardedProto` fehlte; jeder `Location`-Header trug `http://` — gebaut | `5d3a13f` |
+| B-126 | Defekt | Der Herkunfts-Hinweis behauptete eine Herkunft, die er nicht prüfte — gebaut, Regel als reine Funktion | `57faaaf` |
+| B-127…B-132 | 5 Defekte, 1 Frage, 1 Aufräumen | am Code belegt, **nicht** gebaut | `37c4d12` |
+
+**Die beiden Reviewer haben sich gelohnt, und zwar messbar:**
+
+- `frontend-reviewer` fand einen **Blocker auf meinem eigenen Akzeptanzkriterium**: das von B-126 neu
+  eingeführte Leeren der Sprachfelder ist gar nicht speicherbar (kein `clearSourceLang` im Vertrag,
+  Server überliest `null`, Entität non-null). Die App hätte „Gespeichert." gemeldet und den alten Wert
+  behalten — exakt die Fehlerklasse, gegen die die PATCH-Regel im Startkontext steht. Dazu die
+  Richtigstellung, dass AK6 mehr Abdeckung behauptete, als die rote Probe hergab.
+- `pugling-reviewer` fand, dass B-124 die Lücke **nur halb** schließt: die Regel schützt den Slug, nicht
+  den Namen, also bleibt ein zweistufiger Weg (`PATCH` → `POST`) zur Namensdublette offen. Bewusst
+  dokumentiert statt gebaut. Und den Vorbehalt, dass B-125 auf einem **Linux**-App-Service wirkungslos
+  bliebe (Loopback-Vertrauen) — jetzt Punkt 4 der Deploy-Checkliste.
+
+**Zwei eigene Fehler beim Bauen, beide von Bestandstests gefangen** und darum hier benannt statt
+verschwiegen: ein doppelt gelesener Content-Stream im Test (drei statt zwei rote Fälle) und eine Funktion,
+die drei Felder als Rückgabe deklarierte, aber den ganzen Formularzustand kopierte — wodurch die alte
+`seriesId` die frisch gewählte überschrieb. Der B-67-Regressionstest wurde prompt rot; das ist der Beleg,
+dass er seine Arbeit tut.
+
+**Stand:** 41 offen, 79 abgenommen, 11 verworfen. Backend **772/772**, Frontend **173/173**, Markdownlint
+0 Funde. Die ehrliche Qualitätszahl ist von *5 von 76* auf **8 von 76** gestiegen — nicht, weil die App
+schlechter wurde, sondern weil zum ersten Mal jemand mit der richtigen Frage hingesehen hat.
