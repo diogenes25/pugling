@@ -117,6 +117,18 @@ public static class ApiErrors
     public static readonly ApiError DuplicateProfileName = new("duplicate_profile_name", 409, "A profile with this name already exists.");
     /// <summary>An exercise category with this name already exists in the subject (409).</summary>
     public static readonly ApiError DuplicateCategoryName = new("duplicate_category_name", 409, "A category with this name already exists in this subject.");
+    /// <summary>
+    /// Another publisher already carries the slug this name derives to (409). Creating is slug-idempotent,
+    /// so renaming has to answer to the same rule - otherwise two rows share a display name (B-124).
+    /// The message names the <b>slug</b>, not the name: after a rename the colliding row may well carry a
+    /// different display name, and telling the caller "already uses this name" would send them looking for
+    /// something they cannot find in the list.
+    /// </summary>
+    public static readonly ApiError DuplicatePublisher = new("duplicate_publisher", 409, "Another publisher already uses the slug this name derives to.");
+    /// <summary>Another textbook series already carries the slug this name derives to (409). See <see cref="DuplicatePublisher"/>.</summary>
+    public static readonly ApiError DuplicateTextbookSeries = new("duplicate_textbook_series", 409, "Another textbook series already uses the slug this name derives to.");
+    /// <summary>Another interest tag already carries the slug this label derives to (409). See <see cref="DuplicatePublisher"/>.</summary>
+    public static readonly ApiError DuplicateInterestTag = new("duplicate_interest_tag", 409, "Another interest tag already uses the slug this label derives to.");
     /// <summary>Exercise is used in a study plan/class test and cannot be deleted (409).</summary>
     public static readonly ApiError ExerciseInUse = new("exercise_in_use", 409, "Exercise is in use.");
     /// <summary>Exercise is not publicly executable and may not be assigned without an execute/write/owner permission (403).</summary>

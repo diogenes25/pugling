@@ -102,11 +102,14 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
 
     /// <summary>
     /// Changes label, facet, synonyms, or color. The <c>Slug</c> is deliberately <b>immutable</b> –
-    /// it is the stable reference that images and child profiles hang off.
+    /// it is the stable reference that images and child profiles hang off. It still decides: a new label
+    /// whose slug another tag already carries is rejected, the same rule <c>Create</c> enforces
+    /// (B-124) - otherwise two tags share a label in every picker.
     /// </summary>
     [HttpPatch("{id:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<InterestTagResponse>> Update(int id, UpdateInterestTagDto dto, CancellationToken ct = default)
     {
         var tag = await db.InterestTags.FirstOrDefaultAsync(t => t.Id == id, ct);
@@ -116,6 +119,16 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
         {
             var label = dto.Label.Trim();
             if (label.Length == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Label must not be empty.");
+
+            var (slug, slugProblem) = this.DeriveRequiredSlug(label, "Label");
+            if (slugProblem is not null) return slugProblem;
+            // Excluded by id, not by slug - see PublishersController.Update. As strong as Create's rule and
+            // no stronger: Create accepts an explicit slug, so a label may legitimately differ from it, and
+            // two labels that derive to different slugs stay allowed here too.
+            if (await db.InterestTags.AnyAsync(t => t.Id != id && t.Slug == slug, ct))
+                return this.ProblemWithCode(ApiErrors.DuplicateInterestTag,
+                    "Another interest tag already uses the slug this label derives to.");
+
             tag.Label = label;
         }
         if (dto.Facet.HasValue) tag.Facet = dto.Facet.Value;

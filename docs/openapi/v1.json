@@ -21552,7 +21552,7 @@
         "tags": [
           "Creator \u2013 Interest Tags"
         ],
-        "summary": "Changes label, facet, synonyms, or color. The \u0060Slug\u0060 is deliberately \u003Cb\u003Eimmutable\u003C/b\u003E \u2013\nit is the stable reference that images and child profiles hang off.",
+        "summary": "Changes label, facet, synonyms, or color. The \u0060Slug\u0060 is deliberately \u003Cb\u003Eimmutable\u003C/b\u003E \u2013\nit is the stable reference that images and child profiles hang off. It still decides: a new label\nwhose slug another tag already carries is rejected, the same rule \u0060Create\u0060 enforces\n(B-124) - otherwise two tags share a label in every picker.",
         "parameters": [
           {
             "name": "id",
@@ -21598,6 +21598,16 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -23103,7 +23113,7 @@
         "tags": [
           "Creator \u2013 Publishers"
         ],
-        "summary": "Changes the display name. The slug stays fixed.",
+        "summary": "Changes the display name. The slug stays fixed - agents reference publishers by it, so letting it\ntravel along would break stable references. It is still the yardstick: a new name whose slug is\nalready taken by another publisher is rejected, the same rule \u0060Create\u0060 enforces (B-124).",
         "parameters": [
           {
             "name": "id",
@@ -23149,6 +23159,16 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -25268,7 +25288,7 @@
         "tags": [
           "Creator \u2013 Textbook Series"
         ],
-        "summary": "Changes a series (partial, owner only). The slug remains immutable.",
+        "summary": "Changes a series (partial, owner only). The slug remains immutable, but still decides: a new name\nwhose slug another series already carries is rejected, the same rule \u0060Create\u0060 enforces\n(B-124) - otherwise two series share a display name in every picker.",
         "parameters": [
           {
             "name": "seriesId",
@@ -25324,6 +25344,16 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -38222,10 +38252,13 @@
               "duplicate_achievement",
               "duplicate_category_name",
               "duplicate_email",
+              "duplicate_interest_tag",
               "duplicate_key",
               "duplicate_key_result",
               "duplicate_profile_name",
+              "duplicate_publisher",
               "duplicate_tag_name",
+              "duplicate_textbook_series",
               "duplicate_vocabulary_in_exercise",
               "exercise_empty",
               "exercise_in_use",

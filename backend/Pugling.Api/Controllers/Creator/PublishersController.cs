@@ -80,10 +80,15 @@ public class PublishersController(PuglingDbContext db) : ControllerBase
             new PublisherResponse(publisher.Id, publisher.Name, publisher.Slug, 0, publisher.CreatedAt));
     }
 
-    /// <summary>Changes the display name. The slug stays fixed.</summary>
+    /// <summary>
+    /// Changes the display name. The slug stays fixed - agents reference publishers by it, so letting it
+    /// travel along would break stable references. It is still the yardstick: a new name whose slug is
+    /// already taken by another publisher is rejected, the same rule <c>Create</c> enforces (B-124).
+    /// </summary>
     [HttpPatch("{id:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<PublisherResponse>> Update(int id, UpdatePublisherDto dto, CancellationToken ct = default)
     {
         var publisher = await db.Publishers.FirstOrDefaultAsync(p => p.Id == id, ct);
@@ -93,6 +98,15 @@ public class PublishersController(PuglingDbContext db) : ControllerBase
         {
             var name = dto.Name.Trim();
             if (name.Length == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Name must not be empty.");
+
+            var (slug, problem) = this.DeriveRequiredSlug(name, "Name");
+            if (problem is not null) return problem;
+            // Excluded by id, not by slug: the row would otherwise always collide with itself and no
+            // rename could ever go through (same trap as B-97's PATCH guard).
+            if (await db.Publishers.AnyAsync(p => p.Id != id && p.Slug == slug, ct))
+                return this.ProblemWithCode(ApiErrors.DuplicatePublisher,
+                    "Another publisher already uses the slug this name derives to.");
+
             publisher.Name = name;
         }
 

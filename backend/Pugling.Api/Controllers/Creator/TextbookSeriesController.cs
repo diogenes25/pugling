@@ -150,11 +150,16 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
             await Project(db.TextbookSeries.AsNoTracking().Where(s => s.Id == series.Id), fid).FirstAsync(ct));
     }
 
-    /// <summary>Changes a series (partial, owner only). The slug remains immutable.</summary>
+    /// <summary>
+    /// Changes a series (partial, owner only). The slug remains immutable, but still decides: a new name
+    /// whose slug another series already carries is rejected, the same rule <c>Create</c> enforces
+    /// (B-124) - otherwise two series share a display name in every picker.
+    /// </summary>
     [HttpPatch("{seriesId:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<TextbookSeriesResponse>> Update(int seriesId, UpdateTextbookSeriesDto dto, CancellationToken ct = default)
     {
         var series = await db.TextbookSeries.FirstOrDefaultAsync(s => s.Id == seriesId, ct);
@@ -168,6 +173,15 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
         {
             var name = dto.Name.Trim();
             if (name.Length == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Name must not be empty.");
+
+            var (slug, slugNameProblem) = this.DeriveRequiredSlug(name, "Name");
+            if (slugNameProblem is not null) return slugNameProblem;
+            // Excluded by id, not by slug - see PublishersController.Update. The lookup is global like
+            // Create's: series slugs are unique across creators, not per owner.
+            if (await db.TextbookSeries.AnyAsync(s => s.Id != seriesId && s.Slug == slug, ct))
+                return this.ProblemWithCode(ApiErrors.DuplicateTextbookSeries,
+                    "Another textbook series already uses the slug this name derives to.");
+
             series.Name = name;
         }
         if (dto.PublisherId.HasValue) series.PublisherId = dto.PublisherId;

@@ -19,7 +19,7 @@ Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesa
 
 ## Fehler-Code-Abdeckung
 
-Verifiziert: **34 / 61** Codes aus `ApiErrors`.
+Verifiziert: **34 / 64** Codes aus `ApiErrors`.
 
 | Code | Beispiel |
 | --- | --- |
@@ -65,8 +65,11 @@ Verifiziert: **34 / 61** Codes aus `ApiErrors`.
 - `conflict` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
 - `duplicate_achievement` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
 - `duplicate_email` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
+- `duplicate_interest_tag` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
 - `duplicate_key_result` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
 - `duplicate_profile_name` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
+- `duplicate_publisher` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
+- `duplicate_textbook_series` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
 - `duplicate_vocabulary_in_exercise` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
 - `exercise_not_assigned` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
 - `http_error` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
