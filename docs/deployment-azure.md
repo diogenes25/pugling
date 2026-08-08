@@ -120,8 +120,19 @@ Vorgang gehören, wie der Rollback aussieht) im Plandokument
    App-Service-Namen prüfen (steht dort als `pugling` mit Anpassungs-Hinweis).
 3. **Den `workflow_run`-Block einkommentieren.** Die `if:`-Bedingung am Job ist absichtlich stehen
    geblieben und trägt beide Fälle schon – am Job selbst ist nichts zu ändern.
-4. **Gegenprobe, nicht Annahme:** einmal `workflow_dispatch` fahren und das Ergebnis *lesen*. Der
-   24-Tage-Ausfall bestand nur, weil niemand das tat.
+4. **Betriebssystem des App Service prüfen — sonst sind die Proxy-Kopfzeilen wirkungslos.**
+   `Program.cs` liest `X-Forwarded-For` (Ratenbegrenzer-Partition, [B-119](backlog/B-119-ratenbegrenzer-hinter-proxy.md))
+   und `X-Forwarded-Proto` (Schema in jeder erzeugten URL, [B-125](backlog/B-125-forwarded-proto-fehlt.md)),
+   vertraut den Kopfzeilen aber nur vom **Loopback**-Hop (Default von `ForwardedHeadersOptions`). Das trifft
+   **Windows/In-Process** zu, wo IIS/ANCM über Loopback weiterreicht. Auf **Linux/Container** kommt die
+   Anfrage mit einer anderen Adresse an, und beide Kopfzeilen werden **still verworfen**: alle Nutzer
+   teilen wieder eine Ratenbegrenzer-Partition, und jeder `Location`-Header trägt `http://`. Kein Fehler,
+   keine Meldung — nur wirkungslos. `deploy-azure.yml` legt die Ziel-Plattform nicht fest, also ist es
+   eine Frage an die Instanz. Bei Linux: `ASPNETCORE_FORWARDEDHEADERS_ENABLED=true` setzen **oder**
+   `KnownProxies`/`KnownNetworks` in `Program.cs` um das Netz des Front-Ends erweitern.
+5. **Gegenprobe, nicht Annahme:** einmal `workflow_dispatch` fahren und das Ergebnis *lesen*. Der
+   24-Tage-Ausfall bestand nur, weil niemand das tat. Für Punkt 4 gehört dazu, **eine echte Antwort
+   anzusehen**: trägt der `Location`-Header einer `201` ein `https://`, greifen die Kopfzeilen.
 
 Wird das Deployment stattdessen mit anderer Technik neu gebaut, gelten Zielbild und beide Fallstricke
 unverändert – nur ihre Schreibweise ändert sich.

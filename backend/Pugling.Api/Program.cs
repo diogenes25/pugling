@@ -511,7 +511,15 @@ var app = builder.Build();
 // what that hop is; a request from anywhere else keeps its own RemoteIpAddress, so this cannot become a
 // spoofing vector for a client that isn't already local. Must run before anything that reads the
 // connection address - first middleware in the pipeline.
-app.UseForwardedHeaders(new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.XForwardedFor });
+// B-125: the same hop also hides that the client spoke HTTPS - the front end terminates TLS. Without the
+// scheme, every absolute URL built from Request.Scheme (each CreatedAtAction's Location header, the
+// documented server URL) would say http:// and send a client back down from HTTPS. XForwardedHost is
+// deliberately NOT honored: it is a known poisoning vector and no link here is built from a configured
+// host name.
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+});
 
 // Unhandled exceptions → problem+json (500); empty error responses (e.g. 404/403/401) likewise.
 app.UseExceptionHandler();
