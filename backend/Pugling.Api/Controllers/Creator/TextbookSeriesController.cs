@@ -73,8 +73,15 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
         var query = db.TextbookSeries.AsNoTracking().AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
-            query = query.Where(s => s.Name.Contains(search) || s.Slug.Contains(search)
-                                     || (s.Publisher != null && s.Publisher.Name.Contains(search)));
+        {
+            // LIKE instead of Contains: `instr()` is byte-exact and ignores the column collation (B-128).
+            // The publisher name has no slug to fall back on, so it was the worst hit of the three.
+            var pattern = SearchPattern.Contains(search);
+            query = query.Where(s => EF.Functions.Like(s.Name, pattern, SearchPattern.Escape)
+                                     || EF.Functions.Like(s.Slug, pattern, SearchPattern.Escape)
+                                     || (s.Publisher != null
+                                         && EF.Functions.Like(s.Publisher.Name, pattern, SearchPattern.Escape)));
+        }
         if (subjectId is int sid) query = query.Where(s => s.SubjectId == sid);
         if (publisherId is int pid) query = query.Where(s => s.PublisherId == pid);
         // None (0) matches everything - the same "no restriction" reading the flags carry elsewhere.
@@ -112,14 +119,17 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Creates a series. The slug is derived from the name; if it is already taken, the existing
-    /// series comes back (idempotent, same pattern as <c>interest-tags</c>) – an agent may safely repeat the same
-    /// catalog build instead of creating duplicates.
+    /// Creates a series. The slug is derived from the name; if it is already taken <b>by a series of the
+    /// same display name</b>, that series comes back (idempotent, same pattern as <c>interest-tags</c>) –
+    /// an agent may safely repeat the same catalog build instead of creating duplicates. A taken slug
+    /// whose series meanwhile carries a <em>different</em> name is a conflict (409), not a hit: the slug
+    /// is immutable and stops matching the name after a rename.
     /// </summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<TextbookSeriesResponse>> Create(CreateTextbookSeriesDto dto, CancellationToken ct = default)
     {
         var (slug, slugProblem) = this.DeriveRequiredSlug(dto.Name, "Name");
@@ -127,12 +137,35 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
         if (await ValidateReferencesAsync(dto.SubjectId, dto.PublisherId, ct) is { } refProblem) return refProblem;
 
         var fid = User.CreatorId();
+        var name = dto.Name.Trim();
+
+        // The slug hit is what makes this endpoint idempotent - but only while name and slug still agree.
+        // The slug freezes on rename, so a series named "Green Line" can still carry the slug "access":
+        // posting "Access" would then hit it and hand back a series of a different name, and a catalog
+        // agent would hang its units off the wrong one without ever seeing an error (B-133). Only the same
+        // display name may be answered with the existing row.
+        // Known and accepted asymmetry: this comparison folds full Unicode, the two below fold in SQLite
+        // (`NOCASE`, ASCII only). NOCASE-equal always implies OrdinalIgnoreCase-equal, so this branch can
+        // never hand out a row of a different name - the residue runs the other way: after a rename has
+        // decoupled name and slug, a non-ASCII case pair ("ökotest" next to "Ökotest") passes both checks
+        // and creates a second row. Closing that would need an ICU collation, the same limit
+        // Services/Shared/SearchPattern.cs already documents for the search.
         var existing = await Project(db.TextbookSeries.AsNoTracking().Where(s => s.Slug == slug), fid).FirstOrDefaultAsync(ct);
-        if (existing is not null) return Ok(existing);
+        if (existing is not null)
+            return string.Equals(existing.Name, name, StringComparison.OrdinalIgnoreCase)
+                ? Ok(existing)
+                : this.ProblemWithCode(ApiErrors.DuplicateTextbookSeries,
+                    "Another textbook series already uses the slug this name derives to.");
+
+        // And the mirror image: a free slug does not mean a free display name, for the same reason.
+        // Case-insensitive through the NOCASE collation on TextbookSeries.Name.
+        if (await db.TextbookSeries.AnyAsync(s => s.Name == name, ct))
+            return this.ProblemWithCode(ApiErrors.DuplicateTextbookSeries,
+                "Another textbook series already uses this display name.");
 
         var series = new TextbookSeries
         {
-            Name = dto.Name.Trim(),
+            Name = name,
             Slug = slug!,
             PublisherId = dto.PublisherId,
             SubjectName = Trimmed(dto.SubjectName),
@@ -181,6 +214,12 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
             if (await db.TextbookSeries.AnyAsync(s => s.Id != seriesId && s.Slug == slug, ct))
                 return this.ProblemWithCode(ApiErrors.DuplicateTextbookSeries,
                     "Another textbook series already uses the slug this name derives to.");
+            // The slug check alone is not enough once any series has been renamed: from then on name and
+            // slug diverge, and only this comparison still sees the display name the guard is about
+            // (B-133). Case-insensitive through the NOCASE collation on the column.
+            if (await db.TextbookSeries.AnyAsync(s => s.Id != seriesId && s.Name == name, ct))
+                return this.ProblemWithCode(ApiErrors.DuplicateTextbookSeries,
+                    "Another textbook series already uses this display name.");
 
             series.Name = name;
         }

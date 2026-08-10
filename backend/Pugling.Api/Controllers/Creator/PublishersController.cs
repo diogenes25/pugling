@@ -42,7 +42,12 @@ public class PublishersController(PuglingDbContext db) : ControllerBase
     {
         var query = db.Publishers.AsNoTracking().AsQueryable();
         if (!string.IsNullOrWhiteSpace(search))
-            query = query.Where(p => p.Slug.Contains(search) || p.Name.Contains(search));
+        {
+            // LIKE instead of Contains: `instr()` is byte-exact and ignores the column collation (B-128).
+            var pattern = SearchPattern.Contains(search);
+            query = query.Where(p => EF.Functions.Like(p.Slug, pattern, SearchPattern.Escape)
+                                     || EF.Functions.Like(p.Name, pattern, SearchPattern.Escape));
+        }
 
         return await Project(query.OrderBy(p => p.Slug).ThenBy(p => p.Id)).ToPagedListAsync(Response, skip, take, ct);
     }

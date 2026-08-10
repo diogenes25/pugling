@@ -136,7 +136,7 @@ namespace Pugling.Api.Data.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false, collation: "NOCASE"),
                     Slug = table.Column<string>(type: "TEXT", maxLength: 128, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
@@ -617,7 +617,7 @@ namespace Pugling.Api.Data.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false, collation: "NOCASE"),
                     Slug = table.Column<string>(type: "TEXT", maxLength: 128, nullable: false),
                     PublisherId = table.Column<int>(type: "INTEGER", nullable: true),
                     SubjectName = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),

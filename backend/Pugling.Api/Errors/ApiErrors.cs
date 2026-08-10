@@ -126,7 +126,7 @@ public static class ApiErrors
     /// </summary>
     public static readonly ApiError DuplicatePublisher = new("duplicate_publisher", 409, "Another publisher already uses the slug this name derives to.");
     /// <summary>Another textbook series already carries the slug this name derives to (409). See <see cref="DuplicatePublisher"/>.</summary>
-    public static readonly ApiError DuplicateTextbookSeries = new("duplicate_textbook_series", 409, "Another textbook series already uses the slug this name derives to.");
+    public static readonly ApiError DuplicateTextbookSeries = new("duplicate_textbook_series", 409, "Another textbook series already uses this display name, or the slug it derives to.");
     /// <summary>Another interest tag already carries the slug this label derives to (409). See <see cref="DuplicatePublisher"/>.</summary>
     public static readonly ApiError DuplicateInterestTag = new("duplicate_interest_tag", 409, "Another interest tag already uses the slug this label derives to.");
     /// <summary>Exercise is used in a study plan/class test and cannot be deleted (409).</summary>

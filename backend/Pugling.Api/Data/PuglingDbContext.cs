@@ -211,6 +211,15 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         modelBuilder.Entity<Publisher>(e =>
         {
             e.HasIndex(p => p.Slug).IsUnique();
+
+            // NOCASE acts on EQUALITY, not on the catalog search - `instr()`, which EF maps `Contains` to,
+            // ignores collations entirely (measured in B-128, see Services/Shared/SearchPattern.cs). The
+            // search is handled by LIKE; this collation is here so that a duplicate check on the publisher
+            // name would treat "Klett" and "KLETT" as one, the way it does for TextbookSeries.Name below.
+            // Today nothing compares Publisher.Name for equality, so this is a deliberate reserve rather
+            // than a load-bearing line - it becomes load-bearing with B-136 (renaming a publisher can still
+            // produce two identical display names). Do not read it as a fix for the search.
+            e.Property(p => p.Name).UseCollation("NOCASE");
         });
 
         // Textbook series: a globally unique slug (child-neutral like the vocabulary store, pattern InterestTag).
@@ -218,6 +227,15 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         modelBuilder.Entity<TextbookSeries>(e =>
         {
             e.HasIndex(s => s.Slug).IsUnique();
+
+            // Deliberate and load-bearing: the duplicate check on create and rename compares display names
+            // (B-133), and through this collation "Access" and "ACCESS" count as the same one. It does
+            // NOT make the catalog search case-insensitive - that is LIKE's job, see SearchPattern.cs.
+            // Uniqueness of the name is enforced in the controller only, with no unique index behind it:
+            // two simultaneous POSTs could both pass the pre-check. Accepted for a catalog two adults
+            // edit at a kitchen table; an index would also have to answer what to do with rows that
+            // already collide.
+            e.Property(s => s.Name).UseCollation("NOCASE");
             e.HasOne(s => s.Publisher).WithMany().HasForeignKey(s => s.PublisherId)
                 .OnDelete(DeleteBehavior.SetNull);
             e.HasOne(s => s.Subject).WithMany().HasForeignKey(s => s.SubjectId)
