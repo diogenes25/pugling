@@ -67,6 +67,9 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
             return this.ProblemWithCode(ApiErrors.NotOwner, "Only the owner of the series may add units.");
         if (string.IsNullOrWhiteSpace(dto.Label)) return this.ProblemWithCode(ApiErrors.ValidationError, "Label is required.");
 
+        var topics = CleanTopics(dto.Topics);
+        if (ValidateTopics(topics) is { } topicProblem) return topicProblem;
+
         var unit = new SeriesUnit
         {
             SeriesId = seriesId,
@@ -74,7 +77,7 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
             OrderIndex = dto.OrderIndex ?? await NextOrderIndexAsync(seriesId, dto.Grade, ct),
             Label = dto.Label.Trim(),
             BookType = dto.BookType ?? BookType.Textbook,
-            Topics = CleanTopics(dto.Topics),
+            Topics = topics,
             Grammar = Trimmed(dto.Grammar),
             VocabularyNotes = Trimmed(dto.VocabularyNotes),
         };
@@ -108,7 +111,12 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
         if (dto.OrderIndex.HasValue) unit.OrderIndex = dto.OrderIndex.Value;
         if (dto.BookType.HasValue) unit.BookType = dto.BookType.Value;
         // Assign a new list (no in-place mutation - the JSON column pitfall, cf. CLAUDE.md).
-        if (dto.Topics is not null) unit.Topics = CleanTopics(dto.Topics);
+        if (dto.Topics is not null)
+        {
+            var topics = CleanTopics(dto.Topics);
+            if (ValidateTopics(topics) is { } topicProblem) return topicProblem;
+            unit.Topics = topics;
+        }
         if (dto.Grammar is not null) unit.Grammar = Trimmed(dto.Grammar);
         if (dto.VocabularyNotes is not null) unit.VocabularyNotes = Trimmed(dto.VocabularyNotes);
 
@@ -162,4 +170,31 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
     /// <summary>Trims and discards empty entries – topics are a plain list, not a validated taxonomy.</summary>
     private static List<string> CleanTopics(List<string>? values) =>
         [.. (values ?? []).Select(t => t.Trim()).Where(t => t.Length > 0)];
+
+    /// <summary>Longest single topic - the length this field carried as a column before it became JSON.</summary>
+    private const int MaxTopicLength = 200;
+
+    /// <summary>Most topics per unit. Generous on purpose: a real unit lists a handful, not dozens.</summary>
+    private const int MaxTopics = 50;
+
+    /// <summary>
+    /// Bounds the topic list. <c>SeriesUnit.Topics</c> is an intentionally unlimited JSON column
+    /// (<c>PuglingDbContext.UnlimitedByDesign</c>) - but that exception covers the <b>column</b>, not the
+    /// entries inside it. While a topic was a 200-character column the database held the line; since the
+    /// type changed, nothing did, and an authenticated caller could store arbitrarily much text (B-130).
+    /// <para>
+    /// Rejects instead of truncating: a silently shortened topic is exactly what the AI creator reads as
+    /// the material it may dress up but not replace - a half topic would quietly become a wrong one.
+    /// </para>
+    /// </summary>
+    private ObjectResult? ValidateTopics(List<string> topics)
+    {
+        if (topics.Count > MaxTopics)
+            return this.ProblemWithCode(ApiErrors.ValidationError,
+                $"A unit takes at most {MaxTopics} topics; {topics.Count} were sent.");
+        if (topics.Find(t => t.Length > MaxTopicLength) is { } tooLong)
+            return this.ProblemWithCode(ApiErrors.ValidationError,
+                $"A topic must not exceed {MaxTopicLength} characters; one has {tooLong.Length}.");
+        return null;
+    }
 }
