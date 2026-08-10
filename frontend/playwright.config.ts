@@ -49,6 +49,12 @@ export default defineConfig({
       url: "http://localhost:5200/openapi/v1.json",
       timeout: 120_000,
       reuseExistingServer: false,
+      // Server-Ausgabe durchreichen (B-139). Playwright verwirft sie sonst, sobald der Start geglückt
+      // ist – und genau dann fängt der interessante Teil an: der Nachtlauf war drei Nächte rot, jeder
+      // Aufruf antwortete mit 500, und die Ausnahme dahinter stand in keinem Protokoll. Ohne diese
+      // zwei Zeilen kostet jeder Diagnoseschritt eine ganze Nacht.
+      stdout: "pipe",
+      stderr: "pipe",
       env: {
         ASPNETCORE_ENVIRONMENT: "Development",
         ConnectionStrings__Default: `Data Source=${dbFile}`,
