@@ -12,7 +12,11 @@ public record CreatorProfileResponse(int Id, string Name, int? OwnerAdultId, boo
     int? SeriesId, string? SeriesName, string SourceLang, string TargetLang,
     string? Persona, string? Didactics, IReadOnlyList<string> DefaultTypes, bool Active, DateTime CreatedAt);
 
-/// <summary>Input for creating a profile. Only <c>Name</c> is required – everything else narrows the fit.</summary>
+/// <summary>
+/// Input for creating a profile. Only <c>Name</c> is required – everything else narrows the fit.
+/// <para>With a <c>SubjectId</c> the server derives <c>SubjectName</c> from the catalog; a name sent
+/// alongside an id is ignored (B-142).</para>
+/// </summary>
 public record CreateCreatorProfileDto(string Name, string? SubjectName, int? SubjectId,
     SchoolTypes? SchoolTypes, int? GradeMin, int? GradeMax, int? SeriesId,
     string? SourceLang, string? TargetLang, string? Persona, string? Didactics,
@@ -25,11 +29,16 @@ public record CreateCreatorProfileDto(string Name, string? SubjectName, int? Sub
 /// The <c>Clear…</c> switches (like <c>ClearGrade</c> on the class test) exist for that: only with them
 /// can a profile become subject-neutral, series-independent, or grade-open again.
 /// </para>
-/// </summary>
 /// <para>
 /// <c>ClearSubject</c> makes the profile subject-neutral (subject id and name drop away), <c>ClearSeries</c>
 /// makes it series-independent, <c>ClearGradeMin</c>/<c>ClearGradeMax</c> lift the respective grade-level limit.
 /// </para>
+/// <para>
+/// Sending <c>SubjectId</c> alone is enough: the server derives <c>SubjectName</c> from it, so the two
+/// halves cannot contradict each other (B-142). A <c>SubjectName</c> sent alongside an id is therefore
+/// ignored – the free text only carries meaning while <em>no</em> catalog subject is bound.
+/// </para>
+/// </summary>
 public record UpdateCreatorProfileDto(string? Name, string? SubjectName, int? SubjectId,
     SchoolTypes? SchoolTypes, int? GradeMin, int? GradeMax, int? SeriesId,
     string? SourceLang, string? TargetLang, string? Persona, string? Didactics,

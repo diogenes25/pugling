@@ -1,16 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { seriesFormValues, seriesPatch, type SeriesFormValues } from "./seriesPatch";
-import type { SubjectResponse, TextbookSeriesResponse } from "../lib/types";
+import type { TextbookSeriesResponse } from "../lib/types";
 
 /*
  * B-123. Die Zusicherung, um die es hier geht, ist am Bildschirm nicht sichtbar: ein unverändertes Feld
  * darf gar nicht mitgeschickt werden. Genau daran hängt die Sicherheit von Entscheidung 2 der Story —
  * „leeren" entsteht aus dem Vergleich gegen den Ladezustand, nicht aus einer dritten Select-Option.
  */
-
-const ENGLISCH: SubjectResponse = { id: 1, name: "Englisch", createdAt: "2026-01-01T00:00:00Z", categoriesCount: 0 };
-const FRANZOESISCH: SubjectResponse = { id: 2, name: "Französisch", createdAt: "2026-01-01T00:00:00Z", categoriesCount: 0 };
-const SUBJECTS = [ENGLISCH, FRANZOESISCH];
 
 function reihe(overrides: Partial<TextbookSeriesResponse> = {}): TextbookSeriesResponse {
   return {
@@ -23,7 +19,7 @@ function reihe(overrides: Partial<TextbookSeriesResponse> = {}): TextbookSeriesR
 
 const geladen = (o: Partial<TextbookSeriesResponse> = {}) => seriesFormValues(reihe(o));
 const patch = (form: SeriesFormValues, o: Partial<TextbookSeriesResponse> = {}) =>
-  seriesPatch(geladen(o), form, SUBJECTS);
+  seriesPatch(geladen(o), form);
 
 describe("seriesFormValues", () => {
   it("füllt die Formularfelder als Strings, `null` wird zum leeren String", () => {
@@ -77,8 +73,10 @@ describe("seriesPatch – leeren gegen unverändert", () => {
     expect(patch({ ...geladen(), schoolTypes: "None" })).toEqual({ schoolTypes: "None" });
   });
 
-  it("schickt beim Fachwechsel Id und Namen als Paar", () => {
-    expect(patch({ ...geladen(), subjectId: "2" })).toEqual({ subjectId: 2, subjectName: "Französisch" });
+  it("schickt beim Fachwechsel nur die Id — den Namen leitet der Server ab", () => {
+    // Bis B-142 ging der Anzeigename mit, weil der Server ihn nicht aus der Id ableitete. Diese Stelle
+    // war die einzige, die das kompensierte; der Fall pinnt jetzt, dass sie es NICHT mehr tut.
+    expect(patch({ ...geladen(), subjectId: "2" })).toEqual({ subjectId: 2 });
   });
 
   it("leert eine Sprache über den leeren String, ohne Schalter", () => {

@@ -239,6 +239,145 @@ ganz, statt sie zu messen.
 **Nicht gelandet**, wie Freigabe 3 es vorschreibt: Der Nutzer entscheidet, ob der Satz in die Skill-Datei
 wandert.
 
+## Sprint 2 — Ziel & Umfang
+
+Freigabe vom Nutzer nach dem Halt am Ende von Sprint 1 erteilt. Die zwei dort offenen Fragen
+(Auslegung des Fehlerzählers, vorgeschlagener Mechanismus) hat er **nicht** beantwortet — sie bleiben
+offen, der Mechanismus bleibt ungelandet.
+
+**Sprint-Ziel:** *Der Creator sieht am Lehrwerk nie zwei verschiedene Aussagen über dasselbe Fach.*
+
+In Step 6 widerlegbar: ein Fachwechsel, der nur die Id schickt, hinterlässt keinen alten Fachnamen — und
+eine Reihe ohne Fach-Id behält ihren Freitext.
+
+### Refinement: B-137 geteilt statt gebaut
+
+[B-137](backlog/B-137-freitext-fach-unerreichbar.md) war faktisch **XL** (sechs Akzeptanzkriterien, drei
+Controller, Backend *und* Frontend, dazu eine Flags-Enum-Mehrfachauswahl). Freigabe 3 verlangt dafür
+Teilen. Der Schnitt läuft nicht nach Größe, sondern nach der Frage, **wer die offenen Punkte beantworten
+kann** — und genau darum zerfällt die Story so sauber:
+
+| Neu | Was | Wer entscheidet |
+| --- | --- | --- |
+| [B-142](backlog/B-142-fachname-driftet-gegen-fach-id.md) | Der Fachname folgt der Fach-Id | **der Code** — eine Zeile darf sich nicht selbst widersprechen |
+| [B-143](backlog/B-143-formular-kennt-zustaende-des-modells-nicht.md) | Formular kennt Freitext-Fach und Schulart-Kombination nicht | **Mensch** — Oberflächen-Entwurf |
+| [B-144](backlog/B-144-fach-loeschen-trifft-reihen-lautlos.md) | Fach löschen trifft Reihen lautlos | **Mensch** — warnen oder verweigern |
+
+B-137 steht auf `verworfen` mit `grund: geteilt` und `ersetzt_durch: [B-142, B-143, B-144]`; die drei
+tragen `quelle: B-137`. Die Ist-Stände wurden beim Teilen an den Controllern **nachgezählt**, nicht aus
+B-137 abgeschrieben — und dabei zeigte sich, dass alle drei Ressourcen exakt dieselbe Form tragen.
+
+**Umfang des Sprints: eine Story** — B-142. Das ist die legitime Untergrenze („ein Sprint von einem ist
+zulässig"); B-143 und B-144 dienen dem Ziel nicht ohne eine Entscheidung, die der Lauf nicht treffen darf.
+
+**Entwickler-Brief:** `SubjectName` ist die Rückfallebene für *unkatalogisierte* Werke; sobald eine
+`SubjectId` steht, ist der Katalog die Wahrheit. Ein geteilter Helfer in `Services/Shared` (Muster
+`SearchPattern`), angewandt im `Create` und im `Update` **gegen den Ergebniszustand** statt gegen den
+Payload — nur so ist auch der Fall gedeckt, dass jemand einen Freitext-Namen auf eine Zeile schickt, die
+bereits eine Id trägt. Reihenfolge: rote Probe zuerst mit Zahl, dann Helfer, dann die drei Controller,
+zuletzt der Vertragstext.
+
+## Iteration 2 — umgesetzt
+
+**Rote Probe: 3 von 4 rot.** Der vierte (`Ohne_Fach_Id_Bleibt_Der_Freitext_Stehen`) war **absichtlich
+grün** und ist als solcher beschriftet — er ist die Gegenprobe, die verhindert, dass der Fix die
+Rückfallebene mitlöscht, um die es geht.
+
+Gebaut: `Services/Shared/SubjectNaming.ResolveNameAsync`, angewandt in `TextbookSeriesController`,
+`CreatorProfilesController` und `TextbooksController` (je `Create` und `Update`). Der Vertragssatz aus
+B-123, der die Bringschuld beim Aufrufer ließ, ist durch die Zusicherung ersetzt, die der Server jetzt
+selbst hält.
+
+**Verifikation:** Backend **805/805** grün, `dotnet build Pugling.sln -c Release` sauber.
+
+**Rollengang — und diesmal mit der Lehre aus der Retrospektive von Sprint 1 angewandt:** Der Server wurde
+**nach** der letzten Änderung gestartet, nicht davor. Live-Probe gegen die laufende API:
+
+1. Reihe anlegen, nur `subjectId` geschickt ⇒ `subjectName: "RG-Englisch"` (vorher: leer).
+2. `PATCH {"subjectId": <Französisch>}` ohne Namen ⇒ `subjectName: "RG-Franzoesisch"` (vorher: „RG-Englisch"
+   wäre stehengeblieben).
+3. Gegenprobe: Reihe **ohne** Fach-Id ⇒ `subjectName: "Handgeschriebenes Fach"` bleibt unangetastet.
+
+Kein Browser-Gang für diese Story: die Änderung ist serverseitig, ihre Wirkung an der Oberfläche
+(`seriesPatch.ts` schickt heute ohnehin beide Felder) unverändert. Das ist der dokumentierte Ersatz und
+hier der schärfere Beleg, weil er genau die Aufrufe zeigt, die das Frontend *nicht* macht — die der
+Client-Bibliothek, des KI-Agenten und der `.http`-Flows.
+
+## Runde 3 — Re-Review / Abnahme (Sprint 2)
+
+**`pugling-reviewer`: kein Blocker, sieben Funde, alle behoben.** Die drei, die etwas gekostet hätten:
+
+1. **Der Vertrag nannte die neue Zusicherung nur an einer von drei Ressourcen.** Ein Agent liest das
+   OpenAPI-Dokument — das ist hier *das Produkt* —, schickt beide Felder und bekommt wortlos einen
+   ignorierten Namen zurück. Kein `400`, kein Hinweis.
+2. **`docs/REST/Creator.http` führte die abgeschaffte Bringschuld weiter vor**, und zwar ab jetzt als
+   sichtbaren Widerspruch: im Request steht „Englisch", in der Antwort das tatsächliche Katalogfach.
+   Die `.http`-Dateien sind die verifizierten Rollen-Tutorials.
+3. **`seriesPatch.ts` begründete seine Kompensation mit einer Server-Aussage, die nicht mehr stimmte.**
+   Die eine Stelle, die die Regel kompensierte, war danach die einzige, die sie noch behauptete — samt
+   Test, der sie als Regel festpinnte.
+
+Dazu zwei fehlende Testfälle für genau die zwei Kombinationen, die die Code-Kommentare als ihren
+Daseinsgrund nennen (`{clearSubject + subjectId}` und ein Freitext-Name auf eine Zeile mit Id).
+
+**Beim Beheben von Fund 1 habe ich denselben Fehler wiederholt, den der Reviewer gerade gemeldet hatte:**
+ein `<para>` außerhalb der `<summary>` — dreimal. Der Compiler wirft das aus dem Dokument, die Ergänzung
+wäre also unsichtbar geblieben. Korrigiert, und die zwei Bestands-Vorkommen derselben Art gleich mit; an
+beiden fehlte die `Clear…`-Erklärung schon vorher im ausgelieferten `docs/openapi/v1.json`.
+
+**Zum Fehlerzähler:** fünf der sieben Funde betreffen das Increment dieses Sprints, zwei sind Bestand
+(die zwei kaputten XML-Doku-Blöcke, der `Seed.cs`-Schreibweg). **Fünf überschreitet fünf nicht** — der
+Lauf hätte weiterlaufen dürfen. Dass er es zum zweiten Mal in Folge knapp tut, ist die Beobachtung, die
+hierhin gehört.
+
+**Rollengang:** siehe Iteration 2 — Live-Probe gegen einen Server, der **nach** der letzten Änderung
+gestartet wurde. **Verifikation:** Backend **805/805**, Frontend **189/189**, `tsc -b` und
+`dotnet build Pugling.sln -c Release` sauber.
+
+## Retrospektive Sprint 2
+
+**Nachschau:** Die beiden Stories des vorigen Sprints geprüft — **B-135, B-136** —, und zwar mit
+Prüfpunkten, die weder Test noch Review abdeckten:
+
+- **B-135: beißt der Wächter wirklich?** Seine Ausnahme für `Matches` wurde vorübergehend neutralisiert;
+  er wurde rot und meldete `ChildLearnProgressService.cs:153` samt Quellzeile und Regel im Klartext.
+  Damit ist er **end-to-end** belegt, nicht nur an seinen Selbstschutz-Schwellen. Datei danach unverändert
+  wiederhergestellt.
+- **B-136: trägt die `NOCASE`-Collation im neuen Namenszweig?** Der Zweig ist über die Tests gar nicht
+  erreichbar — eine Schreibweisen-Variante leitet immer denselben Slug ab, also antwortet der Slug-Zweig.
+  Erreichbar wird er erst nach einer entkoppelnden Umbenennung. Live geprüft: anlegen → umbenennen →
+  Großschreibung anlegen ⇒ **409**. Die Collation, die B-128 gelegt hat und die bis B-136 wirkungslos war,
+  trägt damit belegt.
+
+**Kein durchgekommener Defekt.** Index danach: **Nachgeschaut 86 von 90**.
+
+### Was die eigenen Tore durchgelassen haben
+
+Der Fehlgriff dieses Sprints ist derselbe **Muster** wie der von Sprint 1, nur eine Ebene weiter: Ich habe
+einen Reviewer-Fund behoben und **dabei denselben Fehler noch einmal gemacht**, den er zwei Absätze weiter
+oben beschrieb (`<para>` außerhalb der `<summary>`). Der Fund hätte mich gewarnt; er hat es nicht, weil
+ich das Muster als „Bestandsproblem an zwei fremden Dateien" gelesen habe statt als Regel über XML-Doku.
+
+Gefangen hat es niemand automatisch. Es gibt keinen Wächter, der prüft, ob ein `<para>` innerhalb seiner
+`<summary>` steht — und der Effekt ist unsichtbar: der Code kompiliert, die Suite bleibt grün, und der
+Text fehlt still im ausgelieferten Vertragsdokument. Genau die Sorte Fehler, die dieses Repo sonst
+mechanisch hält.
+
+### Vorgeschlagener Mechanismus (nach Freigabe 3 nicht gelandet)
+
+**Ein Wächter über die XML-Doku der Vertrags-Records:** meldet jeden `<para>`-Block in
+`Pugling.Contracts`, der außerhalb eines `<summary>` steht, und jedes Element mit **zwei**
+`<summary>`-Blöcken. Beides ist mechanisch prüfbar, beides ist heute im Bestand vorhanden (zwei Fälle,
+gefunden vom Reviewer), und beides ist unsichtbar, bis jemand das Dokument liest.
+
+**Warum ein Tor und keine Prosa:** die Regel ist nicht strittig und nicht abzuwägen — sie ist einfach
+schwer zu sehen. Genau dafür gibt es hier Tore. **Kosten:** ein weiterer quellentext-lesender Test mit
+den bekannten Grenzen eines halben Parsers (B-40). **Alternative, billiger:** die Compiler-Warnung für
+ungültiges XML-Doc scharf stellen — vor dem Bauen zu messen, ob sie diese zwei Fälle überhaupt meldet.
+
+**Nicht gelandet**, wie Freigabe 3 es vorschreibt. Zusammen mit dem Vorschlag aus Sprint 1 warten damit
+**zwei** Mechanismen auf die Entscheidung des Nutzers.
+
 ## Offene Roadmap
 
 Die dauerhafte Liste ist [docs/backlog/](backlog/README.md); hier steht nur die Begründung der aktuellen

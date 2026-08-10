@@ -84,7 +84,7 @@ Response — `HTTP 201`:
   "slug": "doku-reihe",
   "publisherId": null,
   "publisherName": null,
-  "subjectName": null,
+  "subjectName": "Doku-Fach",
   "subjectId": 5,
   "schoolTypes": "None",
   "sourceLanguage": null,

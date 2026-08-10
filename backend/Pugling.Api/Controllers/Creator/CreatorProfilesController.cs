@@ -96,7 +96,9 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
         {
             Name = dto.Name.Trim(),
             OwnerAdultId = User.CreatorId(),
-            SubjectName = Trimmed(dto.SubjectName),
+            // With an id the catalog names the subject; the free text is only the uncatalogued fallback
+            // (B-142, SubjectNaming).
+            SubjectName = await SubjectNaming.ResolveNameAsync(db, dto.SubjectId, ct) ?? Trimmed(dto.SubjectName),
             SubjectId = dto.SubjectId,
             SchoolTypes = dto.SchoolTypes ?? SchoolTypes.None,
             GradeMin = dto.GradeMin,
@@ -144,6 +146,10 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
         // always sends every field, say) sends both.
         if (dto.SubjectId.HasValue) profile.SubjectId = dto.SubjectId;
         if (dto.ClearSubject) { profile.SubjectId = null; profile.SubjectName = null; }
+        // Last, and against the RESULT rather than the payload (B-142) - see TextbookSeriesController for
+        // the full reasoning; three places, one meaning.
+        if (profile.SubjectId is not null)
+            profile.SubjectName = await SubjectNaming.ResolveNameAsync(db, profile.SubjectId, ct);
         if (dto.SchoolTypes.HasValue) profile.SchoolTypes = dto.SchoolTypes.Value;
         if (dto.GradeMin.HasValue) profile.GradeMin = dto.GradeMin;
         if (dto.ClearGradeMin) profile.GradeMin = null;

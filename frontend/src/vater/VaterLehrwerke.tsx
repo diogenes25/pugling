@@ -248,7 +248,7 @@ function SeriesForm({ series, subjects, publishers, onSaved }: {
     e.preventDefault();
     if (!form.name.trim()) { action.fail("Der Name der Reihe fehlt."); return; }
 
-    const dto = seriesPatch(geladen.current, form, subjects);
+    const dto = seriesPatch(geladen.current, form);
     // Kein leerer PATCH: er wäre erfolgreich und folgenlos, und „Gespeichert." wäre dann eine Lüge.
     if (dto === null) { action.succeed("Nichts geändert."); return; }
 

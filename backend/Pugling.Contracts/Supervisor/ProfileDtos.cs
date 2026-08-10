@@ -21,12 +21,15 @@ public record TextbookResponse(int Id, string Title, string? SubjectName, int? S
     string? Publisher, string? Isbn, string? CurrentChapter, DateTime CreatedAt,
     int? SeriesId = null, string? SeriesName = null, int? CurrentUnitId = null, string? CurrentUnitLabel = null);
 
-/// <summary>Input for creating a textbook.</summary>
+/// <summary>
+/// Input for creating a textbook.
+/// <para>With a <c>SubjectId</c> the server derives <c>SubjectName</c> from the catalog; a name sent
+/// alongside an id is ignored (B-142).</para>
+/// </summary>
 public record CreateTextbookDto(string Title, string? SubjectName, int? SubjectId, int? Grade,
     string? Publisher, string? Isbn, string? CurrentChapter,
     int? SeriesId = null, int? CurrentUnitId = null);
 
-/// <summary>Partial change to a textbook; omitted fields stay unchanged.</summary>
 /// <summary>
 /// Partial change to a textbook; omitted fields stay unchanged.
 /// <para>
@@ -35,6 +38,11 @@ public record CreateTextbookDto(string Title, string? SubjectName, int? SubjectI
 /// detaches the book from the catalog ("not cataloged") and takes the current unit with it, because the
 /// unit means nothing without its series; <c>ClearUnit</c> only resets the unit; <c>ClearSubject</c>
 /// removes the subject id and name; <c>ClearGrade</c> the grade level of the book.
+/// </para>
+/// <para>
+/// Sending <c>SubjectId</c> alone is enough: the server derives <c>SubjectName</c> from it, so the two
+/// halves cannot contradict each other (B-142). A <c>SubjectName</c> sent alongside an id is therefore
+/// ignored – the free text only carries meaning while <em>no</em> catalog subject is bound.
 /// </para>
 /// </summary>
 public record UpdateTextbookDto(string? Title, string? SubjectName, int? SubjectId, int? Grade,

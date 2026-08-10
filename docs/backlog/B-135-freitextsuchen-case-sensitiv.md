@@ -13,7 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-nachgeschaut: ""
+nachgeschaut: 2026-08-10
 wartet_auf: ""
 ---
 
@@ -177,3 +177,9 @@ einer DB-Umbau-Etappe (`L`); vergleichbar mit dem vokabel-basierten Batch-Pfad i
   durch — den wahrscheinlichsten Namen überhaupt —, jetzt geschärft und gegengeprüft.
   **Rollengang im Browser** (Freigabe 6): Vokabelspeicher, Suche nach „GOODBYE" — **(0) Treffer vor dem
   Fix, (1) danach**, gleiche DB, gleiche Oberfläche. Suite **801/801**.
+- **2026-08-10** — nachgeschaut (Nachtlauf, Retro des Sprints 2), und zwar mit einem Prüfpunkt, den weder
+  Test noch Review abdeckten: **beißt der Wächter wirklich?** Seine Ausnahme für `Matches` wurde
+  vorübergehend neutralisiert; er wurde daraufhin rot und meldete `ChildLearnProgressService.cs:153` samt
+  Quellzeile und Regel im Klartext. Damit ist er end-to-end belegt und nicht nur an seinen
+  Selbstschutz-Schwellen. Datei danach unverändert wiederhergestellt (`git diff` leer). Kein
+  durchgekommener Defekt.

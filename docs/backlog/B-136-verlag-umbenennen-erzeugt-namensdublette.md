@@ -13,7 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-nachgeschaut: ""
+nachgeschaut: 2026-08-10
 wartet_auf: ""
 ---
 
@@ -137,3 +137,10 @@ drei Integrationstests. Vergleichbar mit B-01 (`childId` aus dem Testpfad ziehen
   **Live-Probe gegen die laufende API** statt Browser-Gang, weil die Klick-Steuerung auf dieser Seite
   unzuverlässig griff: anlegen → umbenennen → denselben Namen erneut posten ⇒ **409 `duplicate_publisher`**.
   Suite **801/801**.
+- **2026-08-10** — nachgeschaut (Nachtlauf, Retro des Sprints 2). Geprüft wurde der Zweig, den die
+  Integrationstests **nicht** erreichen: die Namensprüfung über die `NOCASE`-Collation. Sie ist nur nach
+  einer entkoppelnden Umbenennung erreichbar — eine Schreibweisen-Variante allein leitet immer denselben
+  Slug ab, also antwortet der Slug-Zweig. Live gegen die laufende API: „Nachschau Diesterweg" anlegen →
+  auf „Nachschau Beltz" umbenennen → „NACHSCHAU BELTZ" anlegen ⇒ **409**. Die Collation, die B-128 gelegt
+  hat und die bis zu dieser Story wirkungslos war, trägt damit belegt und schreibweisen-tolerant. Kein
+  durchgekommener Defekt.

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/beides, bereich/katalog, rolle/creator]
+tags: [typ/story, status/verworfen, bereich/beides, bereich/katalog, rolle/creator]
 aliases: [Freitext-Fach an der Reihe, Fach löschen lässt den Namen stehen, zwei Aussagen auf einem Bildschirm]
-status: ausformuliert
+status: verworfen
 prio: P3
 art: Defekt
 groesse: ""
@@ -10,8 +10,8 @@ migration: ""
 vertragsbruch: ""
 quelle: frontend-reviewer zu B-123 (2026-08-10), Fund 5
 unverifiziert: false
-grund: ""
-ersetzt_durch: []
+grund: "geteilt — faktisch XL (sechs Akzeptanzkriterien, drei Controller, Backend und Frontend, dazu eine Flags-Enum-Mehrfachauswahl); Freigabe 3 des Nachtlaufs verlangt dafür Teilen statt Bauen"
+ersetzt_durch: [B-142, B-143, B-144]
 entgangen_bei: []
 nachgeschaut: ""
 wartet_auf: ""
@@ -117,3 +117,10 @@ Zwei Ursachen, und die zweite ist die eigentliche:
   weil die Nachleitung drei Controller betrifft und bestehendes Verhalten ändert. Dazu Punkt 5 und
   Akzeptanzkriterium 6 vom `frontend-reviewer`: die Schulart-Kombination ist dieselbe Fehlerklasse ein
   Feld weiter, und das neue Formular kann sie zerstören.
+- **2026-08-10** — **geteilt** im Nachtlauf (Sprint 2) statt gebaut. Der Umfang war faktisch XL, und die
+  fünf offenen Punkte zerfallen sauber entlang der Frage, *wer* sie beantworten kann:
+  [B-142](B-142-fachname-driftet-gegen-fach-id.md) (Punkt 4) bestimmt der Code — eine Zeile darf sich
+  nicht selbst widersprechen; [B-143](B-143-formular-kennt-zustaende-des-modells-nicht.md) (Punkte 1 und
+  5) und [B-144](B-144-fach-loeschen-trifft-reihen-lautlos.md) (Punkt 2) sind Produktentscheidungen und
+  fallen nur im Dialog. Punkt 3 (gilt es auch für `CreatorProfile`/`Textbook`?) reist mit B-144, wo er
+  hingehört. Die Ist-Stände wurden beim Teilen an den Controllern **nachgezählt**, nicht abgeschrieben.

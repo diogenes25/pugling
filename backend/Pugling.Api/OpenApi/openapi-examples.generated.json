@@ -203,7 +203,7 @@
     "role": "father",
     "requestBodyJson": "{\n  \u0022name\u0022: \u0022Doku-Reihe\u0022,\n  \u0022publisherId\u0022: null,\n  \u0022subjectName\u0022: null,\n  \u0022subjectId\u0022: 5,\n  \u0022schoolTypes\u0022: null,\n  \u0022sourceLanguage\u0022: null,\n  \u0022targetLanguage\u0022: null,\n  \u0022notes\u0022: null\n}",
     "expectedStatus": 201,
-    "responseBodyJson": "{\n  \u0022id\u0022: 5,\n  \u0022name\u0022: \u0022Doku-Reihe\u0022,\n  \u0022slug\u0022: \u0022doku-reihe\u0022,\n  \u0022publisherId\u0022: null,\n  \u0022publisherName\u0022: null,\n  \u0022subjectName\u0022: null,\n  \u0022subjectId\u0022: 5,\n  \u0022schoolTypes\u0022: \u0022None\u0022,\n  \u0022sourceLanguage\u0022: null,\n  \u0022targetLanguage\u0022: null,\n  \u0022notes\u0022: null,\n  \u0022ownerAdultId\u0022: 1,\n  \u0022isOwn\u0022: true,\n  \u0022unitCount\u0022: 0,\n  \u0022gradeMin\u0022: null,\n  \u0022gradeMax\u0022: null,\n  \u0022createdAt\u0022: \u0022\u003Ctimestamp\u003E\u0022\n}",
+    "responseBodyJson": "{\n  \u0022id\u0022: 5,\n  \u0022name\u0022: \u0022Doku-Reihe\u0022,\n  \u0022slug\u0022: \u0022doku-reihe\u0022,\n  \u0022publisherId\u0022: null,\n  \u0022publisherName\u0022: null,\n  \u0022subjectName\u0022: \u0022Doku-Fach\u0022,\n  \u0022subjectId\u0022: 5,\n  \u0022schoolTypes\u0022: \u0022None\u0022,\n  \u0022sourceLanguage\u0022: null,\n  \u0022targetLanguage\u0022: null,\n  \u0022notes\u0022: null,\n  \u0022ownerAdultId\u0022: 1,\n  \u0022isOwn\u0022: true,\n  \u0022unitCount\u0022: 0,\n  \u0022gradeMin\u0022: null,\n  \u0022gradeMax\u0022: null,\n  \u0022createdAt\u0022: \u0022\u003Ctimestamp\u003E\u0022\n}",
     "isError": false,
     "expectedCode": null
   },

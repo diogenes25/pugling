@@ -66,7 +66,9 @@ public class TextbooksController(PuglingDbContext db) : ControllerBase
         {
             ChildId = childId,
             Title = dto.Title.Trim(),
-            SubjectName = dto.SubjectName?.Trim(),
+            // With an id the catalog names the subject; the free text is only the uncatalogued fallback
+            // (B-142, SubjectNaming).
+            SubjectName = await SubjectNaming.ResolveNameAsync(db, dto.SubjectId, ct) ?? dto.SubjectName?.Trim(),
             SubjectId = dto.SubjectId,
             Grade = dto.Grade,
             Publisher = dto.Publisher?.Trim(),
@@ -109,6 +111,10 @@ public class TextbooksController(PuglingDbContext db) : ControllerBase
         if (dto.SubjectName is not null) book.SubjectName = dto.SubjectName.Trim();
         if (dto.SubjectId.HasValue) book.SubjectId = dto.SubjectId;
         if (dto.ClearSubject) { book.SubjectId = null; book.SubjectName = null; }
+        // Last, and against the RESULT rather than the payload (B-142) - see TextbookSeriesController for
+        // the full reasoning; three places, one meaning.
+        if (book.SubjectId is not null)
+            book.SubjectName = await SubjectNaming.ResolveNameAsync(db, book.SubjectId, ct);
         if (dto.Grade.HasValue) book.Grade = dto.Grade;
         if (dto.ClearGrade) book.Grade = null;
         if (dto.Publisher is not null) book.Publisher = dto.Publisher.Trim();

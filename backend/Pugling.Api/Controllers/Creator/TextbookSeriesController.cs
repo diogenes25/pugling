@@ -168,7 +168,9 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
             Name = name,
             Slug = slug!,
             PublisherId = dto.PublisherId,
-            SubjectName = Trimmed(dto.SubjectName),
+            // With an id the catalog names the subject; the free text is only the uncatalogued fallback
+            // (B-142, SubjectNaming).
+            SubjectName = await SubjectNaming.ResolveNameAsync(db, dto.SubjectId, ct) ?? Trimmed(dto.SubjectName),
             SubjectId = dto.SubjectId,
             SchoolTypes = dto.SchoolTypes ?? SchoolTypes.None,
             SourceLanguage = Trimmed(dto.SourceLanguage),
@@ -232,6 +234,11 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
         // series that kept it would go on claiming a subject it no longer has. Same one-liner as
         // CreatorProfilesController and TextbooksController - three places, one meaning.
         if (dto.ClearSubject) { series.SubjectId = null; series.SubjectName = null; }
+        // Last, and against the RESULT rather than the payload (B-142): whatever the three lines above
+        // left behind, a bound subject names itself. That covers the case a payload check would miss -
+        // a PATCH that sends only a free-text name onto a row which already carries an id.
+        if (series.SubjectId is not null)
+            series.SubjectName = await SubjectNaming.ResolveNameAsync(db, series.SubjectId, ct);
         if (dto.SchoolTypes.HasValue) series.SchoolTypes = dto.SchoolTypes.Value;
         if (dto.SourceLanguage is not null) series.SourceLanguage = Trimmed(dto.SourceLanguage);
         if (dto.TargetLanguage is not null) series.TargetLanguage = Trimmed(dto.TargetLanguage);

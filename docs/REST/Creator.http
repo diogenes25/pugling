@@ -193,7 +193,6 @@ Content-Type: application/json
 {
   "name": "Access REST-Demo",
   "publisher": "Cornelsen",
-  "subjectName": "Englisch",
   "subjectId": {{subjectId}},
   "schoolTypes": "Gymnasium",
   "sourceLanguage": "en",
@@ -235,7 +234,6 @@ Content-Type: application/json
 
 {
   "name": "Englisch 8 Gymnasium - Access REST-Demo",
-  "subjectName": "Englisch",
   "subjectId": {{subjectId}},
   "schoolTypes": "Gymnasium",
   "gradeMin": 7,
@@ -259,7 +257,6 @@ Content-Type: application/json
 
 {
   "title": "Access 8",
-  "subjectName": "Englisch",
   "subjectId": {{subjectId}},
   "grade": 8,
   "publisher": "Cornelsen",

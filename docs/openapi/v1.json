@@ -29107,7 +29107,7 @@
             ]
           }
         },
-        "description": "Input for creating a profile. Only \u0060Name\u0060 is required \u2013 everything else narrows the fit."
+        "description": "Input for creating a profile. Only \u0060Name\u0060 is required \u2013 everything else narrows the fit.\nWith a SubjectId the server derives SubjectName from the catalog; a name sent\nalongside an id is ignored (B-142)."
       },
       "CreateEntryDto": {
         "required": [
@@ -30115,7 +30115,7 @@
             "format": "int32"
           }
         },
-        "description": "Input for creating a textbook."
+        "description": "Input for creating a textbook.\nWith a SubjectId the server derives SubjectName from the catalog; a name sent\nalongside an id is ignored (B-142)."
       },
       "CreateTextbookSeriesDto": {
         "required": [
@@ -30179,7 +30179,7 @@
             ]
           }
         },
-        "description": "Input for creating a series. The slug is derived from the name; an already existing series\nis returned instead of duplicated (idempotent)."
+        "description": "Input for creating a series. The slug is derived from the name; an already existing series\nis returned instead of duplicated (idempotent).\nWith a SubjectId the server derives SubjectName from the catalog; a name sent\nalongside an id is ignored (B-142)."
       },
       "CreateVocabTagDto": {
         "required": [
@@ -41370,7 +41370,7 @@
             "default": false
           }
         },
-        "description": "            Partial change to a profile; omitted fields remain unchanged.\n            A null means \u0022not specified\u0022 in a PATCH \u2013 so it cannot clear a field.\nThe Clear\u2026 switches (like ClearGrade on the class test) exist for that: only with them\ncan a profile become subject-neutral, series-independent, or grade-open again."
+        "description": "            Partial change to a profile; omitted fields remain unchanged.\n            A null means \u0022not specified\u0022 in a PATCH \u2013 so it cannot clear a field.\nThe Clear\u2026 switches (like ClearGrade on the class test) exist for that: only with them\ncan a profile become subject-neutral, series-independent, or grade-open again.ClearSubject makes the profile subject-neutral (subject id and name drop away), ClearSeries\n            makes it series-independent, ClearGradeMin/ClearGradeMax lift the respective grade-level limit.Sending SubjectId alone is enough: the server derives SubjectName from it, so the two\nhalves cannot contradict each other (B-142). A SubjectName sent alongside an id is therefore\nignored \u2013 the free text only carries meaning while no catalog subject is bound."
       },
       "UpdateInterestTagDto": {
         "type": "object",
@@ -42398,7 +42398,7 @@
             "default": false
           }
         },
-        "description": "Partial change to a textbook; omitted fields stay unchanged."
+        "description": "            Partial change to a textbook; omitted fields stay unchanged.\n            In a PATCH, null means \u0022not specified\u0022 and therefore cannot clear anything \u2013 that is\nwhat the Clear\u2026 switches are for (cf. ClearGrade on the class test): ClearSeries\ndetaches the book from the catalog (\u0022not cataloged\u0022) and takes the current unit with it, because the\nunit means nothing without its series; ClearUnit only resets the unit; ClearSubject\nremoves the subject id and name; ClearGrade the grade level of the book.Sending SubjectId alone is enough: the server derives SubjectName from it, so the two\nhalves cannot contradict each other (B-142). A SubjectName sent alongside an id is therefore\nignored \u2013 the free text only carries meaning while no catalog subject is bound."
       },
       "UpdateTextbookSeriesDto": {
         "type": "object",
@@ -42470,7 +42470,7 @@
             "default": false
           }
         },
-        "description": "Partial change to a series; omitted fields remain unchanged. The slug stays fixed.\n\u0060ClearPublisherId\u0060 and \u0060ClearSubject\u0060 remove the reference (cf. \u0060ClearGrade\u0060 on the\nclass test) \u2013 without them, \u0060null\u0060 in a PATCH means \u0022not specified\u0022, not \u0022remove\u0022, so a\nwrongly-assigned publisher or subject could never be unassigned again.\n\n\u0060ClearSubject\u0060 drops both \u0060SubjectId\u0060 and \u0060SubjectName\u0060 together, the same way\n\u0060UpdateCreatorProfileDto\u0060 and \u0060UpdateTextbookDto\u0060 do it: the name is the fallback shown where\nno catalog subject is bound, so a series that kept it would go on claiming a subject it no longer has.\n\nChanging the subject is the caller\u0027s job in both fields: the server does not derive\n\u0060SubjectName\u0060 from \u0060SubjectId\u0060, so a \u0060PATCH\u0060 that sends only the id leaves the old name\nstanding - the series would then claim one subject by id and another by name."
+        "description": "Partial change to a series; omitted fields remain unchanged. The slug stays fixed.\n\u0060ClearPublisherId\u0060 and \u0060ClearSubject\u0060 remove the reference (cf. \u0060ClearGrade\u0060 on the\nclass test) \u2013 without them, \u0060null\u0060 in a PATCH means \u0022not specified\u0022, not \u0022remove\u0022, so a\nwrongly-assigned publisher or subject could never be unassigned again.\n\n\u0060ClearSubject\u0060 drops both \u0060SubjectId\u0060 and \u0060SubjectName\u0060 together, the same way\n\u0060UpdateCreatorProfileDto\u0060 and \u0060UpdateTextbookDto\u0060 do it: the name is the fallback shown where\nno catalog subject is bound, so a series that kept it would go on claiming a subject it no longer has.\n\nSending \u0060SubjectId\u0060 alone is enough: the server derives \u0060SubjectName\u0060 from it, so the two\nhalves cannot contradict each other (B-142). A \u0060SubjectName\u0060 sent alongside an id is therefore\nignored - the free text only carries meaning while \u003Cem\u003Eno\u003C/em\u003E catalog subject is bound, which is the\nuncatalogued case it exists for. This used to be the caller\u0027s duty, honoured by the frontend and by\nnothing else."
       },
       "UpdateVocabTagDto": {
         "type": "object",

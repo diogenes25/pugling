@@ -140,7 +140,9 @@ public class PatchClearFieldTests(PuglingWebAppFactory factory) : IClassFixture<
         var subjectName = $"Fach {Guid.NewGuid():N}";
         var subjectId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/subjects",
             new { name = subjectName }));
-        // Both, the way the UI creates a series - Create stores the name it is given, it does not derive it.
+        // Both are sent, but only the id decides: since B-142 Create derives the name from the catalog and
+        // ignores the one it is given. The assertion below therefore holds because the two agree here, not
+        // because the payload name was stored - which is exactly why it is worth saying out loud.
         var seriesId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/textbook-series",
             new { name = $"Reihe {Guid.NewGuid():N}", subjectId, subjectName }));
 

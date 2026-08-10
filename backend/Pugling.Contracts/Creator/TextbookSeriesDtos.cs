@@ -17,6 +17,8 @@ public record TextbookSeriesResponse(int Id, string Name, string Slug, int? Publ
 /// <summary>
 /// Input for creating a series. The slug is derived from the name; an already existing series
 /// is returned instead of duplicated (idempotent).
+/// <para>With a <c>SubjectId</c> the server derives <c>SubjectName</c> from the catalog; a name sent
+/// alongside an id is ignored (B-142).</para>
 /// </summary>
 public record CreateTextbookSeriesDto(string Name, int? PublisherId, string? SubjectName, int? SubjectId,
     SchoolTypes? SchoolTypes, string? SourceLanguage, string? TargetLanguage, string? Notes);
@@ -31,9 +33,11 @@ public record CreateTextbookSeriesDto(string Name, int? PublisherId, string? Sub
 /// <c>UpdateCreatorProfileDto</c> and <c>UpdateTextbookDto</c> do it: the name is the fallback shown where
 /// no catalog subject is bound, so a series that kept it would go on claiming a subject it no longer has.
 ///
-/// Changing the subject is the caller's job in both fields: the server does not derive
-/// <c>SubjectName</c> from <c>SubjectId</c>, so a <c>PATCH</c> that sends only the id leaves the old name
-/// standing - the series would then claim one subject by id and another by name.
+/// Sending <c>SubjectId</c> alone is enough: the server derives <c>SubjectName</c> from it, so the two
+/// halves cannot contradict each other (B-142). A <c>SubjectName</c> sent alongside an id is therefore
+/// ignored - the free text only carries meaning while <em>no</em> catalog subject is bound, which is the
+/// uncatalogued case it exists for. This used to be the caller's duty, honoured by the frontend and by
+/// nothing else.
 /// </summary>
 public record UpdateTextbookSeriesDto(string? Name, int? PublisherId, string? SubjectName, int? SubjectId,
     SchoolTypes? SchoolTypes, string? SourceLanguage, string? TargetLanguage, string? Notes,

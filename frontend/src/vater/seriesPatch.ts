@@ -1,4 +1,4 @@
-import type { SchoolType, SubjectResponse, TextbookSeriesResponse, UpdateTextbookSeriesDto } from "../lib/types";
+import type { SchoolType, TextbookSeriesResponse, UpdateTextbookSeriesDto } from "../lib/types";
 
 /**
  * Der PATCH-Rumpf beim Bearbeiten einer Lehrwerk-Reihe, als **reine Regel** (B-123).
@@ -48,13 +48,14 @@ export function seriesFormValues(series: TextbookSeriesResponse): SeriesFormValu
  *
  * Das Fach hängt an **zwei** Feldern: `subjectId` zeigt in den Katalog, `subjectName` trägt die Reihe
  * auch ohne Katalog-Fach (und ist eine gespeicherte Spalte, kein Join – anders als `publisherName`).
- * Beim **Leeren** räumt der Server beide über `clearSubject` ab; beim **Wechsel** muss der Name mit,
- * weil der Server ihn nicht aus der Id ableitet.
+ * Beim **Leeren** räumt der Server beide über `clearSubject` ab; beim **Wechsel** genügt die Id, weil
+ * der Server den Namen seit B-142 selbst daraus ableitet. Diese Stelle schickte den Namen früher mit
+ * und war damit die einzige Kompensation einer Regel, die der Server nicht durchsetzte – jetzt tut er
+ * es, und der mitgeschickte Name würde ohnehin ignoriert.
  */
 export function seriesPatch(
   loaded: SeriesFormValues,
   form: SeriesFormValues,
-  subjects: SubjectResponse[],
 ): UpdateTextbookSeriesDto | null {
   const dto: UpdateTextbookSeriesDto = {};
 
@@ -80,12 +81,9 @@ export function seriesPatch(
       // wie in CreatorProfilesController und TextbooksController.
       dto.clearSubject = true;
     } else {
+      // Nur die Id: den Anzeigenamen holt der Server aus dem Katalog (B-142). Ihn hier mitzuschicken
+      // wäre totes Feld — und schlimmer, es sähe aus wie eine Regel, die es nicht mehr gibt.
       dto.subjectId = Number(form.subjectId);
-      // Kein `?? ""`-Rückfall: der wäre unerreichbar (die Optionen kommen aus demselben Array), und
-      // *wenn* er feuerte, schriebe er Id gesetzt + Name geleert — die exakte Umkehrung des
-      // Waisen-Zustands, um den es hier geht. Fehlt der Name, geht das Feld gar nicht mit.
-      const name = subjects.find((s) => String(s.id) === form.subjectId)?.name;
-      if (name !== undefined) dto.subjectName = name;
     }
   }
 
