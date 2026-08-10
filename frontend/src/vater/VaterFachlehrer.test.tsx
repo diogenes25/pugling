@@ -52,4 +52,27 @@ describe("ProfileForm – Ableitung aus dem Lehrwerk", () => {
     expect((screen.getByLabelText("Fach") as HTMLSelectElement).value).toBe("");
     expect((screen.getByLabelText("Lernsprache") as HTMLInputElement).value).toBe("en");
   });
+
+  /*
+   * B-132. Die Zusicherung ist nicht „der Hinweis erscheint" (das prüft der erste Fall), sondern „die
+   * Region war vorher schon da". Viele Screenreader sagen nur an, was in eine BEREITS VORHANDENE
+   * Live-Region hineinwächst; entsteht sie mit ihrem Text zusammen, bleibt die Ansage aus
+   * (WCAG 2.2 SC 4.1.3, dieselbe Begründung wie in StatusBanner.tsx).
+   */
+  it("hält die Hinweis-Regionen dauerhaft im DOM, statt sie mit ihrem Text entstehen zu lassen", () => {
+    const { container } = render(<ProfileForm subjects={[ENGLISH]} series={[seriesWith({})]} onDone={() => {}} />);
+
+    // Vier Regionen: die drei Feld-Hinweise plus der StatusBanner des Formulars – alle noch ohne Text.
+    const vorher = [...container.querySelectorAll('[role="status"]')];
+    expect(vorher).toHaveLength(4);
+    expect(vorher.filter((n) => n.textContent !== "")).toHaveLength(0);
+
+    fireEvent.change(screen.getByLabelText("Lehrwerk"), { target: { value: "1" } });
+
+    // Dieselben Knoten, nur mit Inhalt – nicht drei neue. Identität statt Anzahl ist hier der Kern.
+    const nachher = [...container.querySelectorAll('[role="status"]')];
+    expect(nachher).toHaveLength(4);
+    expect(nachher.filter((n) => n.textContent === "aus dem Lehrwerk übernommen")).toHaveLength(3);
+    expect(vorher.every((n) => nachher.includes(n))).toBe(true);
+  });
 });

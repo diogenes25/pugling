@@ -214,6 +214,13 @@ a { color: var(--cyan); }
 .loading, .error-box { padding: 24px; text-align: center; color: var(--muted); }
 .error-box { color: #ff96aa; }
 .field { display: flex; flex-direction: column; gap: 6px; }
+/* Dauerhafte Live-Region unter einem Feld (B-132): sie muss im DOM bleiben, damit ein Screenreader ihre
+   Änderung ansagt – der `gap` oben gilt aber ZWISCHEN den Items, auch wenn eines leer ist. Ohne die
+   Rücknahme wüchse jedes betroffene Feld dauerhaft um genau diesen `gap`, und bei `align-items: end`
+   verschöbe das die Bedienelemente der Nachbarfelder. Die Zahl steht darum direkt unter dem `gap`, den
+   sie ausgleicht – nicht in einer .tsx, wo sie beim Ändern des `gap` niemand findet. */
+.field > .live-slot { margin-top: -6px; }
+.field > .live-slot.on { margin-top: 0; }
 .field label { font: 700 12px/1 var(--font-body); color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
 .field input, .field select, .field textarea { background: #0c0e2c; border: 1.5px solid var(--stroke); border-radius: 12px; color: var(--ink); padding: 12px; font-size: 15px; font-family: inherit; }
 .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--cyan); border-color: var(--cyan); }

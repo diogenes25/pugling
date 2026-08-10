@@ -126,6 +126,26 @@ function gradeRange(p: CreatorProfileResponse): React.ReactNode {
 // mit Vitest abgedeckt (B-126), hier wären sie es nur über einen nachgebauten Bildschirm.
 
 /**
+ * Der Hinweis „aus dem Lehrwerk übernommen" unter einem abgeleiteten Feld.
+ *
+ * Die Region bleibt im DOM, auch wenn nichts zu melden ist – die Bedingung steht **in** ihr, nie um sie
+ * herum. Viele Screenreader sagen nur an, was in eine *bereits vorhandene* Live-Region hineinwächst; eine
+ * Region, die zusammen mit ihrem Text entsteht, bleibt stumm (WCAG 2.2 SC 4.1.3). Dieselbe Begründung wie
+ * bei `StatusBanner` – und der Grund, warum das eine Komponente ist statt dreier Kopien: die Attribute
+ * sind schnell getippt, die Leer-Regel ist schnell vergessen (B-132).
+ */
+function DerivedHint({ active }: { active: boolean }) {
+  return (
+    // `live-slot` nimmt den `gap` der `.field` zurück, solange nichts zu melden ist – die Begründung und
+    // die Zahl stehen in index.css direkt unter dem `gap`, den sie ausgleichen (B-132).
+    <span className={`muted live-slot${active ? " on" : ""}`} role="status" aria-live="polite"
+      style={{ fontSize: 13 }}>
+      {active ? "aus dem Lehrwerk übernommen" : ""}
+    </span>
+  );
+}
+
+/**
  * Ein Formular für Anlegen und Ändern. Die Klassenstufen sind bewusst optional: ein leeres Feld heißt
  * „unterrichtet jede Stufe" – und genau dann bekommt das Profil beim Matching *keine* Stufen-Punkte,
  * damit der Generalist den Fachlehrer nicht schlägt.
@@ -268,7 +288,7 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
             <option value="">– fachneutral –</option>
             {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
-          {isDerived("subjectId") && <span className="muted" role="status" aria-live="polite" style={{ fontSize: 13 }}>aus dem Lehrwerk übernommen</span>}
+          <DerivedHint active={isDerived("subjectId")} />
         </div>
         <div className="field">
           <label htmlFor={`fl-school-${id}`}>Schulart</label>
@@ -306,7 +326,7 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
             id={`fl-src-${id}`} value={form.sourceLang} placeholder="en"
             onChange={(e) => { up("sourceLang", e.target.value); touch("sourceLang"); }}
           />
-          {isDerived("sourceLang") && <span className="muted" role="status" aria-live="polite" style={{ fontSize: 13 }}>aus dem Lehrwerk übernommen</span>}
+          <DerivedHint active={isDerived("sourceLang")} />
         </div>
         <div className="field">
           <label htmlFor={`fl-tgt-${id}`}>Muttersprache</label>
@@ -314,7 +334,7 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
             id={`fl-tgt-${id}`} value={form.targetLang} placeholder="de"
             onChange={(e) => { up("targetLang", e.target.value); touch("targetLang"); }}
           />
-          {isDerived("targetLang") && <span className="muted" role="status" aria-live="polite" style={{ fontSize: 13 }}>aus dem Lehrwerk übernommen</span>}
+          <DerivedHint active={isDerived("targetLang")} />
         </div>
       </div>
 
