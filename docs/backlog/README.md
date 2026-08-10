@@ -500,10 +500,11 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (41)
+### Offen (42)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| [B-139](B-139-e2e-nachtlauf-login-bricht-ab-test-2.md) | Der E2E-Nachtlauf ist seit drei Nächten rot: ab Test 2 scheitert jeder Login | Defekt | `idee` | P1 | — | — | — |
 | [B-07](B-07-db-umbau-restetappen.md) | DB-Struktur-Umbau: der offene Betriebsschritt | Aufräumen | `geschaetzt` | P1 | XS | backend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-11](B-11-uebungen-veroeffentlichen.md) | Übungen ausdrücklich veröffentlichen | Wunsch | `geschaetzt` | P2 | S | frontend | — |
