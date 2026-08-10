@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, bereich/katalog, rolle/creator]
-aliases: [Reihe bearbeiten, Lehrwerk-Reihe ändern, ClearSubjectId]
-status: geschaetzt
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/katalog, rolle/creator]
+aliases: [Reihe bearbeiten, Lehrwerk-Reihe ändern, ClearSubject]
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: M
@@ -251,3 +251,93 @@ Vor der Abnahme beide Brillen, in dieser Reihenfolge: `pugling-reviewer`, dann `
   `e2e/lehrwerk-bearbeiten.spec.ts`, die zugleich den Rollengang trägt. Beim Schätzen gefunden: das Fach
   hängt an **zwei** Feldern (`subjectId` mit Rückfall auf `subjectName`, `VaterLehrwerke.tsx:129-131`) —
   als Risiko 1 aufgenommen, weil „Fach entfernen" sonst sichtbar folgenlos bliebe.
+- **2026-08-10** — gebaut, alle sieben Schritte des Angriffsplans. Backend zuerst: `ClearSubjectId`
+  additiv im DTO, im Controller **nach** dem Wert angewendet, `PatchSemanticsTests` um den zweiten
+  Schalter erweitert — dabei musste der Fixture-Helfer `NeueReiheMitVerlagAsync` ein Fach mitanlegen, weil
+  der reflexive Test zu Recht verweigert, wenn das zu leerende Feld beim Anlegen leer war
+  (`Clear_Schalter_Leert_Und_Gewinnt`: „a switch on a field that was empty to begin with proves nothing").
+  Frontend: Diff-Bildung als reine Funktion `seriesPatch.ts` (11 Vitest-Fälle), Komponente `SeriesForm`
+  mit lokalem `editing`-Zustand in `SeriesRow`, Slug-Erklärung als `HelpTopic seriesName` plus dem echten
+  Kurznamen als `.sub`-Zeile, Knopf „Reihe bearbeiten".
+  **Der Rollengang hat einen echten Fehler gefunden**, den keine der drei Testebenen sehen konnte: Ich
+  schloss das Formular bei Erfolg — und vernichtete damit den `StatusBanner`, der „Gespeichert." zeigt.
+  Die E2E lief auf eine nie erscheinende Bestätigung. Behoben, indem das Formular offen bleibt und der
+  **Ladezustand aus der Server-Antwort** nachgezogen wird; beides gehört zusammen, weil ein offenes
+  Formular mit veraltetem Bezugspunkt den nächsten Diff falsch rechnet (Risiko 4 der Schätzung, nur
+  andersherum als vermutet). Zweiter Fund derselben Spec: bei offenem Formular trägt auch dessen Zeile
+  den Namen — die Spec klappt darum zu, bevor sie die Liste prüft.
+  Verifikation: Backend **789/789**, Vitest **188/188** (11 neu), E2E **31/31** (2 neu),
+  `tsc -b` sauber. Reviewer stehen noch aus, darum `in-arbeit` und nicht `abgenommen`.
+- **2026-08-10** — beide Reviewer gelaufen, **sieben Funde**, sechs behoben, einer als eigene Story.
+  **Der schwerste kam vom Backend und betraf Entscheidung 1 selbst:** die Paar-Regel für
+  `(SubjectId, SubjectName)` lebte ausschließlich im Frontend. Für genau dasselbe Paar räumen
+  `CreatorProfilesController:146` und `TextbooksController:111` beides in *einer* Zeile — und beide
+  Schalter heißen `ClearSubject`. Jeder andere Aufrufer (`Pugling.Client`, der Creator-Agent,
+  `docs/REST`) hätte mit `clearSubjectId: true` eine Reihe hinterlassen, die weiter „Englisch" anzeigt.
+  Umgesetzt als **serverseitige** Variante samt Umbenennung auf `ClearSubject` — eine **Abweichung von
+  Entscheidung 1**, die dort „`ClearSubjectId`" beim Namen nennt; die Substanz bleibt, und das Feld hatte
+  noch keinen Nutzer. Der tragende Beleg fiel beim Nachsehen: `publisherName` ist im Projektions-Join
+  berechnet, `subjectName` eine **gespeicherte** Spalte — darum braucht das Fach ein Paar und der Verlag
+  keines. Dazu ein Einzelfall in `PatchClearFieldTests` (reflexiv ist die Paar-Aussage nicht
+  ausdrückbar), der doppelte `<summary>` am Helfer entfernt, Helfer umbenannt, und die `<para>`/`<b>`-Tags
+  aus der Vertragsdoku genommen: sie sickerten als rohes Markup ins OpenAPI-Dokument und schluckten
+  Leerzeichen — bei API-First ist das Dokument das Produkt.
+  **Vom Frontend-Reviewer, alles gemessen:** `**Kurzname**` erschien dem Nutzer wörtlich mit Sternchen
+  (`InfoHint` rendert reinen Text, und `seriesName` war der einzige von 48 Hilfetexten mit Markdown); die
+  Slug-Erklärung stand **zweimal** und die E2E prüfte die Kopie neben dem Feld statt das Popover — genau
+  darum war der Sternchen-Fehler durchgerutscht; die Zeilen-Knöpfe hießen in jeder Zeile gleich, während
+  beide Nachbarn (`PublisherAdmin`, `UnitPanel`) ein `aria-label` mit dem Namen tragen. Alles behoben.
+  Dazu unkommentiert gewesen: die Schulart ist der **dritte** Mechanismus (Sentinel `"None"` statt
+  Schalter oder leerem String) und ihr Draht-Wert war nirgends geprüft — jetzt mit Kommentar und Fall.
+  **Die Lehre steht jetzt im Kopf von `seriesPatch.ts`:** die 11 Vitest-Fälle blieben beim
+  Schalter-Umbenennen **grün**. Sie pinnen den Rumpf, den das Frontend *baut*, nicht den, den der Server
+  *annimmt*; gegriffen haben `tsc -b` und die E2E.
+  Als eigene Story abgespalten: [B-137](B-137-freitext-fach-unerreichbar.md) — ein Fachname ohne Fach-Id
+  (entsteht, weil `SubjectsController.Delete` nichts prüft und der FK `SetNull` ist) ist in der Zeile
+  sichtbar, im Formular unsichtbar und über die Oberfläche nicht zu entfernen. B-123s Akzeptanzkriterien
+  deckten den Zustand nicht ab, und die Lösung braucht eine Produktentscheidung. Dreizehnte Fundstelle
+  für [B-134](B-134-bedingte-live-regionen.md) nachgetragen.
+  Verifikation nach den Korrekturen: Backend **790/790**, Vitest **189/189**, E2E **31/31**, `tsc -b`
+  sauber, Vertragsdokument und `contract.ts` neu erzeugt.
+- **2026-08-10** — zweite Reviewer-Runde über die Korrekturen. **Der Backend-Reviewer hat die rote Probe
+  nachgemessen, die ich versäumt hatte**: Wächter im Scratchpad auf `SubjectId = null` verkürzt →
+  `Reihe_ClearSubject_nimmt_den_Fachnamen_mit` **1 von 25 rot** („Expected: Null, Actual: String"). Meine
+  Sorge, die Vorbedingung greife nicht, war unbegründet — `Create` speichert den Namen, `Project` liest
+  die Spalte. Nebenbei belegt: die reflexive Theorie blieb grün, die Paar-Aussage ist also tatsächlich
+  nur im Einzelfall ausdrückbar.
+  Behoben: `subjectName` wird im Testrumpf mitgeschickt, damit „leeren gewinnt" auch gegen den **Namen**
+  gepinnt ist; echter Absatz über eine leere `///`-Zeile statt `<para>` (das der Generator verwirft); ein
+  Satz im Vertrag, dass der Aufrufer beim **Wechsel** beide Felder schickt — der Server leitet den Namen
+  nicht aus der Id ab.
+  **Vom Frontend-Reviewer der lehrreichste Fund der ganzen Story:** mein `aria-label` verletzte
+  **WCAG 2.5.3 „Label in Name"**. Der sichtbare Text „Reihe bearbeiten" kam im barrierefreien Namen
+  („„X" bearbeiten") gar nicht vor — eine Spracheingabe hätte den Knopf nicht ausgelöst. Ich hatte von
+  zwei inkonsistenten Nachbarn die schlechtere Form kopiert. Jetzt „Sichttext zuerst, Kontext hinten"
+  (`Reihe bearbeiten: „X"`), und der Umschalter heißt sichtbar wie im Label „Bearbeiten schließen".
+  Weiter behoben: `duplicate_textbook_series` fehlte in `GERMAN_PROBLEM_TEXT` — der seit dieser Story
+  **wahrscheinlichste** Fehlschlag im Formular kam auf Englisch heraus, obwohl die Feld-Erklärung die
+  Regel bewirbt; die E2E belegt jetzt, dass das Popover per Escape zugeht (`fill()` macht keinen
+  Hit-Test, ein offenes Popover wäre nicht aufgefallen) und greift das Namensfeld über `getByLabel`
+  statt über einen Id-Präfix; der `?? ""`-Rückfall in `seriesPatch` ist weg (er hätte im Feuerfall genau
+  den Waisen-Zustand erzeugt, um den es geht); der `useRef`-Kommentar hält jetzt fest, warum ein
+  veralteter Bezugspunkt keinen Schaden anrichtet (der Diff läuft feldweise) — der Reviewer hat alle
+  In-App-Auslöser durchgesehen und ihn nicht als Blocker gewertet.
+  Abgespalten: [B-138](B-138-markup-sickert-in-openapi.md) (rohes `<b>`/`<i>`/`<em>` in **70**
+  Beschreibungen des Vertragsdokuments — B-123 hat eine davon behoben, ein Einzelfall lässt die Regel
+  wie Zufall aussehen), Punkt 4+5 und AK 5+6 an [B-137](B-137-freitext-fach-unerreichbar.md) (das Paar
+  driftet auch beim **Wechsel**; und die Schulart-**Kombination** kann das neue Formular zerstören,
+  weil `SchoolType` nur die einzelne Schulart kennt).
+  **Ausdrücklich offen gelassen:** der Kurzname wird einem Screenreader beim Tabben ins Namensfeld nicht
+  angesagt — er steht als `.sub`-Text neben dem Feld, und `aria-describedby` kommt im ganzen Frontend
+  bisher nirgends vor. Ein neues Muster gehört nicht in diese Story; der Reviewer nennt als Alternative
+  ein `readOnly`-Feld „Kurzname", das den Zustand selbst trägt.
+  Verifikation nach allen Korrekturen: Backend **790/790**, Vitest **189/189** (27 Dateien),
+  E2E **31/31**, `tsc -b` sauber, Vertragsdokument mit zwei echten Absätzen und ohne Markup.
+- **2026-08-10** — **abgenommen.** Commit `e23f321`. Verifikation: Backend **790/790**, Vitest
+  **189/189** (27 Dateien), E2E **31/31** — darunter die eigene Spec `lehrwerk-bearbeiten.spec.ts`, die
+  zugleich der Rollengang ist. `pugling-reviewer` und `frontend-reviewer` je **zweimal** gelaufen.
+  **Ein benannter Rest, damit die Beleglage nicht schöner aussieht als sie ist:** die letzte
+  Korrekturrunde (WCAG-Reihenfolge der `aria-label`, deutsche Fehlermeldung, Popover-Zusicherung,
+  Testrumpf, Vertragssatz) ist **nicht erneut reviewt**. Sie bestand aus wörtlich vorgeschlagenen Fixes
+  beider Reviewer, und die E2E musste für die geänderten Beschriftungen mitwandern und ist grün — aber
+  ein dritter Blick hat nicht stattgefunden.
