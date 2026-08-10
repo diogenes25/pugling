@@ -12,7 +12,7 @@ quelle: Code-Review 2026-08-07 des Standes gegen `origin/main` (Fund 1)
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-63]
-nachgeschaut: ""
+nachgeschaut: 2026-08-09
 wartet_auf: ""
 ---
 
@@ -203,3 +203,9 @@ Kollision und Selbst-Umbenennung), rot gegen den Vorzustand per `git stash` veri
   auf drei PATCH-Pfaden, kein neuer Weg durch die Oberfläche. Ersatz nach `docs/nachtlauf.md`: die drei
   rot→grün-Belege über die echte HTTP-Schicht (die Tests fahren den Weg, den das Vater-Web fährt), die
   volle Suite und der Reviewer. Die Chrome-Extension ist in dieser Sitzung nicht verbunden.
+- **2026-08-09** — nachgeschaut (Nachtlauf, Retro zu Sprint 1). **Prüfpunkt:** die Behauptung des
+  eigenen XML-Kommentars („otherwise two series share a display name in every picker") gegen den
+  tatsächlichen Vergleich in `TextbookSeriesController.cs:181` gehalten. **Befund:** der Wächter
+  vergleicht Slug gegen Slug, der Slug friert beim Umbenennen aber ein — nach der ersten Umbenennung
+  schützt er den Anzeigenamen nicht mehr. Als [B-133](B-133-zwei-reihen-ein-anzeigename.md) mit
+  `entgangen_bei: [B-124]` erfasst und im selben Sprint behoben.

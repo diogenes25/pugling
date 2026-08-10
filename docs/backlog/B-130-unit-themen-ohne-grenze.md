@@ -1,9 +1,13 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/katalog, bereich/backend, bereich/qualitaet]
+tags: [typ/story, status/abgenommen, bereich/katalog, bereich/backend, bereich/qualitaet]
 aliases: [Topics ohne Längenbegrenzung, JSON-Spalte umgeht die 200-Zeichen-Regel]
-status: ausformuliert
+status: abgenommen
 prio: P3
 art: Aufräumen
+groesse: S
+wo: backend
+migration: nein
+vertragsbruch: nein
 quelle: Code-Review 2026-08-07 des Standes gegen `origin/main` (Fund 8)
 grund: ""
 ersetzt_durch: []
@@ -60,9 +64,38 @@ und nicht `Defekt`: heute verhält sich nichts falsch, aber die Begründungspfli
    `StageSchedule` sind ebenso unbegrenzt. Beim Ausformulieren **nicht** erhoben. Empfehlung: erst
    messen, dann entscheiden, ob daraus eine Regel oder ein Tor wird — nicht ungeprüft mitziehen.
 
-## Akzeptanzkriterien
+## Entscheidungen
 
-> Entwurf, hängt an den Offenen Punkten.
+Autonom gegrillt im Nachtlauf am 2026-08-09 (Freigabe 1: `art: Aufräumen`), Protokoll
+[pm-sitzung-2026-08-09.md](../pm-sitzung-2026-08-09.md).
+
+0. **Die Prämisse dieser Story stimmt so nicht — und der Fund ist dadurch schärfer, nicht schwächer.**
+   Die Story sagt, die JSON-Spalte habe sich der Begründungspflicht „entzogen, ohne dass jemand die
+   Entscheidung getroffen hätte". Nachgesehen: `SeriesUnit.Topics` **steht** in
+   `PuglingDbContext.UnlimitedByDesign` (`:1008`) mit Grund („Topics of the unit as a JSON list - grows
+   with the material"). Die *Spalten*-Ausnahme ist also bewusst und dokumentiert; Tor G-Unbegrenzt hat
+   gehalten. Ausgefallen ist etwas anderes: die Grenze für die **Einträge darin**. Solange ein Thema eine
+   200-Zeichen-Spalte war, hielt die Datenbank die Linie; seit dem Typwechsel hält sie niemand.
+   *Kosten dieser Korrektur*: keine — sie verschiebt nur, wogegen gebaut wird (Anwendungsvalidierung
+   statt Spaltenlänge).
+1. **200 Zeichen je Thema, 50 Themen je Unit.** *Begründung*: 200 ist keine freie Wahl, sondern die
+   `DefaultLength` der Konventionsschleife (`PuglingDbContext.cs:1021`) — genau das Maß, das die Spalte
+   vorher trug. 50 ist großzügig gewählt wie die 24 Fenster je Position aus
+   [B-10](B-10-zeitfenster-pro-kind.md): eine echte Unit listet eine Handvoll. *Kosten*: eine Unit mit
+   mehr als 50 Themen ist künftig nicht anlegbar; wer das braucht, teilt sie — was fachlich ohnehin
+   richtiger ist.
+2. **Ablehnen mit `400 validation_error`, nicht abschneiden.** *Begründung*: Die Themen sind genau das,
+   was der KI-Creator als **gesetzten Stoff** liest (`UnitForm`-Hinweis: „er darf ihn einkleiden, aber
+   nicht austauschen"). Ein still gekürztes Thema wäre kein kürzeres, sondern ein **falsches**. Kein
+   neuer `ApiErrors`-Code nötig — `ValidationError` trägt den Fall. *Kosten*: ein Aufrufer, der bisher
+   201 bekam, bekommt jetzt 400; das ist eine Verhaltensänderung an einem Endpunkt, den außer der
+   eigenen Oberfläche niemand bedient.
+3. **Beide Schreibwege, ein Wächter.** *Begründung*: `POST` und `PATCH` schreiben `Topics` unabhängig
+   (`:77` und `:111`) — die Vorprüfung nur an einen zu hängen wäre dieselbe Fehlerklasse wie
+   [B-124](B-124-umbenennen-umgeht-die-eindeutigkeit.md) (Anlegen geschützt, Ändern nicht). *Kosten*:
+   eine Hilfsmethode mehr im Controller statt einer Zeile.
+
+## Akzeptanzkriterien
 
 1. `POST`/`PATCH` einer Unit mit einem überlangen Thema wird mit `400` und maschinenlesbarem `code`
    abgewiesen, statt es zu speichern.
@@ -71,9 +104,32 @@ und nicht `Defekt`: heute verhält sich nichts falsch, aber die Begründungspfli
    vorher (Abnahmeform `art: Aufräumen`).
 4. Die gewählte Grenze steht als Begründung am Code, nicht nur in dieser Story.
 
+## Schätzung
+
+**S** (`wo: backend`, `migration: nein`, `vertragsbruch: nein`) — zwei Konstanten, eine Prüfmethode, zwei
+Aufrufstellen, eine neue Testklasse. **Keine Schemaänderung**: die Spalte bleibt unbegrenzt (das ist die
+dokumentierte Ausnahme), begrenzt wird der Inhalt in der Anwendung — die Migrationskette wird also nicht
+neu gefaltet. Vergleichbar mit dem S-Anker (B-01).
+
+**Testweg:** neue Klasse `backend/Pugling.Api.Tests/SeriesUnitTopicLimitTests.cs` mit vier Fällen —
+zu langes Thema beim Anlegen, genau 200 Zeichen als Gegenprobe, mehr als 50 Themen, und dasselbe über
+den PATCH-Weg. Kein `/smoke-test`, kein E2E: die Regel sitzt an der API und ist dort direkt prüfbar.
+
 ## Verlauf
 
 - **2026-08-07** — angelegt aus dem Code-Review des Standes gegen `origin/main`, am Code nachgeprüft
   (`SeriesUnitsController.cs:163-164`, Migrationsspalte ohne `maxLength`). Als `Aufräumen` eingestuft:
   kein heutiger Fehlbetrieb, sondern eine beim Typwechsel entfallene Begründungspflicht.
   `entgangen_bei: [B-63]`: der Typwechsel ist in jener Story passiert und war `abgenommen`.
+- **2026-08-09** — Nachtlauf, Sprint 1: autonom gegrillt (vier Entscheidungen, davon eine, die den
+  eigenen Ist-Stand korrigiert — siehe Entscheidung 0), geschätzt (**S**, `backend`) und gebaut
+  (`SeriesUnitsController.cs`: `MaxTopicLength`/`MaxTopics` + `ValidateTopics`, an beiden Schreibwegen).
+  **Rote Probe mit Zahl, und ehrlich nachgeholt:** ich hatte den Wächter *vor* dem Test gebaut, also
+  gegen Auflage 5 des Auftrags verstoßen. Statt die Röte zu behaupten, habe ich den Controller per
+  `git stash` zurückgenommen und gemessen: **3 von 4 rot, 1 grün** — der grüne ist der
+  200-Zeichen-Grenzfall, der bewusst als Gegenprobe drinsteht und auch vorher grün war. Mit Wächter
+  **4/4 grün**.
+- **2026-08-10** — **abgenommen.** Commit `c478582`. Verifikation: Suite **788/788** grün, E2E **29/29**
+  (Rollengang, nach den letzten Änderungen erneut gefahren), `pugling-reviewer` zweimal gelaufen —
+  ohne Fund an dieser Story. Abnahmeform `Aufräumen` erfüllt: kein Verhalten außerhalb der neuen Grenzen
+  geändert, alles so grün wie vorher.

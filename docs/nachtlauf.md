@@ -63,6 +63,17 @@ Neu seit der Erprobung vom 2026-08-05:
 7. Für Frontend-/UI-Stories, die das sichtbare UI verändern, darf zusätzlich zum
    `frontend-reviewer` der Skill `web-design-guidelines` laufen.
 
+Neu seit dem 2026-08-09, Freigabe 1 an genau einer Stelle präzisierend:
+8. Die Sperre für `Wunsch` und `Frage` gilt für das GRILLEN, nicht fürs Bauen. Eine
+   Story auf `geschaetzt` trägt ihre Produktentscheidungen bereits als nummerierte
+   `## Entscheidungen` – getroffen von mir, im Dialog. Es bleibt nur die Ausführung.
+   - `geschaetzt` + `Wunsch`/`Frage`   → BAUBAR.
+   - `ausformuliert` + `Wunsch`/`Frage` → gesperrt wie bisher: anhalten, die gebrauchte
+     Entscheidung ins Protokoll, nächstes Thema.
+   Verlangt eine geschätzte Story doch eine Entscheidung, die ihre `## Entscheidungen`
+   nicht hergeben, ist das der Beweis, dass sie zu früh geschätzt wurde: anhalten und
+   notieren, nicht selbst entscheiden.
+
 Sonst gilt das Verfahren unverändert: Sprint-Ziel aus Rollensicht, rote Probe vor dem Fix,
 Rollengang als E2E, Nachschau als erste Pflichthandlung der Retro, Commits selbst setzen,
 Push bleibt bei mir.
@@ -101,6 +112,26 @@ Jede setzt eine Schutzregel aus, und jede hat ihren Preis:
    **Preis:** die Nacht kann jetzt tatsächlich an einem hartnäckigen Fehler hängen bleiben, bevor sie
    abbricht (bis zu fünf Versuche), statt beim ersten Anzeichen zu enden — das ist gewollt, denn ein
    Reviewer, der tut, wofür er da ist, soll die Nacht nicht länger vorzeitig beenden.
+
+### Und warum Freigabe 8 dazukam
+
+Die erste Fassung sperrte `Wunsch` und `Frage` **als Art**, unabhängig von der Stufe — die Tabelle unten
+zählt sie deshalb pauschal als „gesperrt". Das war zu grob, und der Anlass ist ein konkreter: B-123 wurde
+am 2026-08-09 im Dialog gegrillt (sechs nummerierte Entscheidungen mit Begründung und Kosten) und danach
+geschätzt (M, Angriffsplan in sieben Schritten, benannter Testweg). Danach war an der Story **nichts mehr
+zu entscheiden** — und sie wäre trotzdem gesperrt geblieben, weil sie ein `Wunsch` ist.
+
+Die Sperre schützt vor einem Agenten, der Produktrichtung bestimmt. Bei einer geschätzten Story hat das
+der Mensch längst getan; sie weiter zu sperren schützt nichts und verschenkt genau die Arbeit, in die
+vorher eine Gesprächsrunde geflossen ist. Der Schnitt läuft darum jetzt an der **Stufe**, nicht allein an
+der Art.
+
+**Preis:** der Lauf wird erheblich größer — am 2026-08-09 wuchs die erreichbare Menge von 7 auf rund 35
+Stories, und damit steigt auch die Zahl der Sprints, Rollengänge, Retrospektiven und der am Morgen zu
+entscheidenden Retro-Vorschläge. Und die Freigabe verlagert Gewicht auf die Stufe `geschaetzt`: eine zu
+früh geschätzte Story wird jetzt nachts gebaut, statt an der Grill-Wand stehenzubleiben. Der Rückweg ist
+im Auftrag mitformuliert (anhalten, wenn die `## Entscheidungen` nicht tragen), aber er ist eine
+Selbstauskunft — kein Tor.
 
 ## Wenn der Lauf mit Sonnet fährt
 
@@ -146,6 +177,11 @@ Stand 2026-08-05, 63 offene Stories:
 | `Aufräumen`, `geschaetzt` | 15 | baubar (B-07 fällt aus: wartet auf Azure) |
 | `Defekt`, `in-arbeit` | 4 | fertig, warten auf Reviewer |
 | `Defekt`/`Aufräumen`, noch nicht geschätzt | 9 | erst grillen/schätzen, dann baubar |
+
+**Diese Tabelle ist seit Freigabe 8 überholt und bleibt als Momentaufnahme stehen.** Ihre erste Zeile
+zählt alle `Wunsch`/`Frage` als gesperrt; richtig ist seit dem 2026-08-09, dass davon nur die noch **nicht
+geschätzten** gesperrt sind. Am 2026-08-09 verschob das 28 Stories von „gesperrt" nach „baubar" — aus 7
+erreichbaren wurden rund 35. Die Zeilen darunter stimmen unverändert.
 
 Erwartung also: **etwa vierzehn Stories** sind überhaupt erreichbar, und die Obergrenze von sechs Stories
 je Sprint begrenzt jeden einzelnen Sprint zusätzlich. Seit mehrere Sprints pro Nacht erlaubt sind (siehe

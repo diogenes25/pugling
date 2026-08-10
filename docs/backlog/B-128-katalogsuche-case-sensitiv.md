@@ -1,9 +1,13 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/katalog, bereich/backend, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/katalog, bereich/backend, rolle/creator]
 aliases: [Suche findet nichts bei Großschreibung, Contains ohne NOCASE, Verlags- und Reihensuche]
-status: ausformuliert
+status: abgenommen
 prio: P3
 art: Defekt
+groesse: S
+wo: backend
+migration: ja
+vertragsbruch: nein
 quelle: Code-Review 2026-08-07 des Standes gegen `origin/main` (Fund 4)
 grund: ""
 ersetzt_durch: []
@@ -71,9 +75,41 @@ gar keinen Slug als Auffangnetz.
    einmal alle `Contains(search)` im Backend zählen und entscheiden, ob sie zu dieser Story gehören
    oder als eigene Regel/als Tor behandelt werden.
 
-## Akzeptanzkriterien
+## Entscheidungen
 
-> Entwurf, siehe Offene Punkte.
+Autonom gegrillt im Nachtlauf am 2026-08-09 (Freigabe 1: `art: Defekt`), Protokoll
+[pm-sitzung-2026-08-09.md](../pm-sitzung-2026-08-09.md).
+
+1. **Die Empfehlung von Offenem Punkt 1 ist widerlegt — `LIKE` statt Collation.** *Gemessen, nicht
+   überlegt*: mit `NOCASE` auf `Publisher.Name` und `TextbookSeries.Name` waren **3 von 4** Testfällen
+   **weiterhin rot**. Grund: EF bildet `string.Contains` auf SQLites `instr()` ab, und diese Funktion ist
+   byte-genau — sie zieht die Spalten-Collation gar nicht heran. Eine Collation wirkt auf
+   *Gleichheitsvergleiche* (`==`, Index-Zugriffe), nie auf eine Teilstring-Suche. Der Vokabelspeicher,
+   den die Story als gelöstes Vorbild nennt, ist deshalb **ebenfalls** case-sensitiv in seiner Suche;
+   gelöst hat `NOCASE` dort die Dublettenprüfung beim Anlegen. Gebaut wird darum mit
+   `EF.Functions.Like` über `SearchPattern` (`Services/Shared/SearchPattern.cs`). *Kosten*: SQLites
+   eingebautes `LIKE` faltet **nur ASCII** — „STRASSE" findet weiterhin nicht „Straße". Das steht als
+   benannte Grenze am Code, statt später neu entdeckt zu werden.
+2. **Die Collation bleibt trotzdem — sie zahlt auf [B-133](B-133-zwei-reihen-ein-anzeigename.md) ein.**
+   *Begründung*: Für die Namens-Eindeutigkeit beim Umbenennen ist der Vergleich eine **Gleichheit**, und
+   genau dort wirkt `NOCASE`: „Access" und „ACCESS" zählen dadurch als derselbe Anzeigename. Sie ohne
+   diesen Zweck zu behalten wäre Vorrat; mit ihm ist sie die halbe Miete der Nachbarstory. *Kosten*: die
+   Migrationskette wird neu gefaltet (`migration: ja`) — für eine Änderung, die **nicht** das Problem
+   dieser Story löst. Das ist ein bewusster Vorgriff, kein Versehen.
+3. **Suchbegriffe werden escaped.** `%` und `_` sind in `LIKE` Platzhalter; ein Creator, der „50%" sucht,
+   bekäme sonst alles. `SearchPattern.Contains` neutralisiert sie mit `\`. *Kosten*: eine Hilfsklasse
+   statt einer Inline-Zeile — dafür an einer Stelle statt an acht.
+4. **Nur die beiden Suchen dieser Story; die übrigen sechs werden eine eigene.** Gemessen (`grep` über
+   `Controllers/` und `Services/`): **acht** Freitext-Suchen im Backend, und außer dem Vokabelspeicher
+   (`Word`/`Translation`) trägt keine eine Collation — betroffen sind zusätzlich `ClozeTextsController`,
+   `ExerciseCatalogController`, `InterestTagsController`, `MediaAssetsController`, `ShopController` und
+   `ChildLearnProgressService`. *Begründung*: Jede braucht eine eigene Abwägung (ist ein `Key` oder
+   `Slug` überhaupt schreibweisen-tolerant zu suchen?), und B-128s Ziel ist ohne sie erfüllt. Abgelegt
+   als [B-135](B-135-freitextsuchen-case-sensitiv.md). *Kosten* — und der ist echt: B-135 braucht keine
+   zweite Faltung (es sind reine Query-Änderungen), aber die sechs Suchen bleiben bis dahin
+   buchstabengenau.
+
+## Akzeptanzkriterien
 
 1. `GET creator/publishers?search=KLETT` findet den Verlag „Klett".
 2. `GET creator/textbook-series?search=GREEN` findet die Reihe „Green Line 1", ebenso die Suche über den
@@ -81,9 +117,47 @@ gar keinen Slug als Auffangnetz.
 3. Ein Integrationstest je Fall, der **vor** der Änderung rot war (Abnahmeform `art: Defekt`).
 4. Die Migrationskette bleibt bei Länge 1 (neu gefaltet, nicht verlängert).
 
+## Schätzung
+
+**S** (`wo: backend`, **`migration: ja`**, `vertragsbruch: nein`) — zwei Query-Umstellungen, eine
+Hilfsklasse, zwei Collations, eine neu gefaltete Kette, eine neue Testklasse. Kein Vertragsbruch: weder
+Route noch DTO ändern sich, das OpenAPI-Dokument bleibt gleich.
+
+**Testweg:** neue Klasse `backend/Pugling.Api.Tests/KatalogSucheCaseTests.cs` mit vier Fällen —
+Verlagssuche wie angelegt (Gegenprobe, war vorher grün), durchgehend groß, mitten im Wort mit
+Großbuchstaben, und dieselbe Frage für die Reihensuche. Dazu `SchemaGuardTests` (Kettenlänge 1, kein
+Modell-Drift) als Abnahme der Faltung, und der `git diff` am `PuglingDbContextModelSnapshot.cs`, der
+**genau** die beiden `UseCollation("NOCASE")`-Zeilen zeigen muss.
+
 ## Verlauf
 
 - **2026-08-07** — angelegt aus dem Code-Review des Standes gegen `origin/main`. Am Code nachgeprüft und
   dabei **das Szenario des Reviews korrigiert**: „klett" findet „Klett" sehr wohl, über den Slug — der
   Fund bleibt, seine Begründung war zu weit gefasst. `entgangen_bei: [B-63]`: beide Suchen sind in jener
   Story entstanden und waren `abgenommen`.
+- **2026-08-09** — Nachtlauf, Sprint 1: autonom gegrillt (vier Entscheidungen), geschätzt (**S**,
+  `backend`, `migration: ja`) und gebaut. **Die eigene Empfehlung fiel bei der Messung durch**: mit der
+  Collation allein blieben **3 von 4** Fällen rot (der eine grüne ist die Suche in Anlege-Schreibweise,
+  die der kleingeschriebene Slug ohnehin abfing). Erst der Umbau auf `EF.Functions.Like` über die neue
+  `SearchPattern`-Hilfsklasse macht **4/4 grün**. Die Röte wurde nach dem Umbau noch einmal mit den
+  *finalen* Zusicherungen nachgemessen (`git stash` beider Controller): wieder **3 von 4 rot**.
+  Zwischendurch war ein Fall aus dem falschen Grund rot — meine erste Fassung zählte Treffer (`erwartet 1,
+  gemessen 2`), was über die geteilte Fixture-DB von den Geschwistertests abhängt; die Zusicherung prüft
+  jetzt, dass der eigene Name **enthalten** ist. Kette neu gefaltet, `git diff` am Snapshot zeigt genau
+  die zwei `UseCollation`-Zeilen, Suite **780/780 grün**. Beim Messen gefunden und abgespalten:
+  [B-135](B-135-freitextsuchen-case-sensitiv.md) — sechs weitere Freitextsuchen derselben Bauart.
+- **2026-08-10** — `pugling-reviewer`, Re-Review: keine Korrektheitsfunde am Suchumbau; die
+  Escaping-Reihenfolge und die Übersetzbarkeit von `EF.Functions.Like(..., escape)` hat der Reviewer
+  gegen eine echte SQLite-Instanz **gemessen** und bestätigt. Zwei Test-Lücken geschlossen: der
+  `_`-Zweig von `SearchPattern` war unbeobachtet (die Zeile zu löschen ließ alles grün) — der Fall ist
+  jetzt eine `[Theory]` über `%` **und** `_`; dazu `EnsureSuccessStatusCode()` auf den Vorbereitungs-POSTs
+  und `take=500`, weil bei gebrochenem Escaping die Treffermenge die ganze Tabelle ist und die
+  Vorgabe-Seitengröße das Gegenbeispiel verstecken könnte. Kommentar-Nits behoben: der Querverweis in
+  `SearchPattern.cs` zeigte auf `Publisher.Name` (die Spalte ohne heutigen Vergleich) statt auf
+  `TextbookSeries.Name`, „already" suggerierte Bestand für eine im selben Diff entstandene Collation, und
+  die dritte messbare Wirkung (`ORDER BY` wird case-insensitiv) fehlte in der Abgrenzung.
+- **2026-08-10** — **abgenommen.** Commit `0663aa8` (gemeinsam mit B-133, weil beide
+  `TextbookSeriesController` und `PuglingDbContext` anfassen). Verifikation: **788/788**, E2E **29/29**
+  als Rollengang, `pugling-reviewer` zweimal — der zweite Lauf hat Escaping-Reihenfolge und
+  `LIKE ... ESCAPE`-Übersetzbarkeit gegen eine echte SQLite-Instanz gemessen. Migrationskette bei
+  Länge 1, Snapshot-Diff genau die zwei beabsichtigten Zeilen.

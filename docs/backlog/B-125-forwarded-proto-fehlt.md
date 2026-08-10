@@ -12,7 +12,7 @@ quelle: Code-Review 2026-08-07 des Standes gegen `origin/main` (Fund 3)
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-119]
-nachgeschaut: ""
+nachgeschaut: 2026-08-09
 wartet_auf: ""
 ---
 
@@ -136,3 +136,8 @@ gesetztem `X-Forwarded-Proto`, `Location`-Header prüfen; rot gegen den Vorzusta
   `201`-Antwort, die volle Suite und der Reviewer. Der Wirksamkeits-Vorbehalt aus Befund 5 ist **keine
   offene Arbeit an dieser Story**, sondern eine Betriebsbedingung — sie steht in der Deploy-Checkliste
   und wird dort geprüft, wenn die Instanz wieder scharf gestellt wird (B-07).
+- **2026-08-09** — nachgeschaut (Nachtlauf, Retro zu Sprint 1), **kein Befund**. **Prüfpunkt:** der
+  klassische Fallstrick bei `UseForwardedHeaders` — ob `KnownNetworks`/`KnownProxies` geleert werden
+  müssen, damit die Header hinter Azure überhaupt gelesen werden. Nachgerechnet an
+  `Program.cs:508-522`: der ANCM-Hop **ist** loopback, die Vorgabe ist damit richtig und die Begründung
+  steht am Code. `XForwardedHost` ist ausdrücklich ausgelassen, mit Grund. Nichts zu ändern.

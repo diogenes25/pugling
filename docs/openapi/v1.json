@@ -25148,7 +25148,7 @@
         "tags": [
           "Creator \u2013 Textbook Series"
         ],
-        "summary": "Creates a series. The slug is derived from the name; if it is already taken, the existing\nseries comes back (idempotent, same pattern as \u0060interest-tags\u0060) \u2013 an agent may safely repeat the same\ncatalog build instead of creating duplicates.",
+        "summary": "Creates a series. The slug is derived from the name; if it is already taken \u003Cb\u003Eby a series of the\nsame display name\u003C/b\u003E, that series comes back (idempotent, same pattern as \u0060interest-tags\u0060) \u2013\nan agent may safely repeat the same catalog build instead of creating duplicates. A taken slug\nwhose series meanwhile carries a \u003Cem\u003Edifferent\u003C/em\u003E name is a conflict (409), not a hit: the slug\nis immutable and stops matching the name after a rename.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -25192,6 +25192,16 @@
           },
           "400": {
             "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {

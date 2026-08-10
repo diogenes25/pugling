@@ -13,7 +13,7 @@ quelle: Code-Review 2026-08-07 des Standes gegen `origin/main` (Funde 5 und 6)
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-67]
-nachgeschaut: ""
+nachgeschaut: 2026-08-09
 wartet_auf: ""
 ---
 
@@ -193,3 +193,9 @@ fetch-getrieben, und `e2e/lehrwerke.spec.ts` deckt den Formularweg als solchen s
   einzeln gegengelesen. **Was ein Mensch trotzdem einmal tun sollte** (und was kein Test leisten kann):
   ein gespeichertes Profil öffnen, dessen Sprache von der Reihe abweicht, und prüfen, dass der Hinweis
   wirklich fehlt — die Zusicherung ist eine Aussage über die Oberfläche, nicht über eine Funktion.
+- **2026-08-09** — nachgeschaut (Nachtlauf, Retro zu Sprint 1), **kein Befund**. **Prüfpunkt:** der
+  schärfste Randfall der Story — behauptet `isDerived` den Hinweis „aus dem Lehrwerk übernommen" auch
+  dann, wenn das Feld bloß auf seinem Rückfallwert steht (`FIELD_FALLBACKS`: `en`/`de`) und die Reihe
+  gar nichts gesagt hat? Nachgelesen in `seriesDerivation.ts`: `isDerived` verlangt `value !== ""`,
+  und `derivableValues` liefert `""`, wenn die Reihe schweigt. Der Hinweis bleibt also aus — genau die
+  Zusicherung der Story.

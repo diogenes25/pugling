@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/ausformuliert]
-aliases: []
-status: ausformuliert
+tags: [typ/story, status/geschaetzt, bereich/frontend, bereich/katalog, rolle/creator]
+aliases: [Reihe bearbeiten, Lehrwerk-Reihe ändern, ClearSubjectId]
+status: geschaetzt
 prio: P1
 art: Wunsch
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: M
+wo: beides
+migration: nein
+vertragsbruch: nein
 quelle: B-63 (manueller Chrome-Test, 2026-08-07)
 unverifiziert: false
 grund: ""
@@ -57,45 +57,197 @@ Alle vier Schichten unterhalb der Oberfläche sind bereits vollständig, nur der
 - Kein Test deckt eine Bearbeitung der Reihe **über die UI** ab; `PatchSemanticsTests`/
   `PatchClearFieldTests` prüfen `ClearPublisherId` reflexiv nur gegen den Backend-Endpunkt.
 
+Drei Befunde der Grill-Runde vom 2026-08-09, die diesen Ist-Stand korrigieren bzw. ergänzen:
+
+- **Das Fach ist nicht entfernbar.** Die Textfelder der Reihe sind alle leerbar, weil `Trimmed("")` zu
+  `null` wird (`TextbookSeriesController.cs:229`) – das gilt für `SubjectName`, beide Sprachen und `Notes`.
+  Die beiden `int?`-Felder können das nicht: `PublisherId` hat dafür `ClearPublisherId` bekommen,
+  `SubjectId` nicht (`:190` – `if (dto.SubjectId.HasValue)`, `null` heißt „unverändert"). Ein einmal
+  gesetztes Fach lässt sich über die API nicht mehr ablösen. **Damit ist die Story keine reine
+  Frontend-Lücke** (siehe Entscheidung 1).
+- **Umbenennen ist gegen Dubletten geschützt** (seit [B-124](B-124-umbenennen-umgeht-die-eindeutigkeit.md)):
+  `:181-183` weist einen Namen ab, dessen Slug eine andere Reihe schon trägt (`409`,
+  `DuplicateTextbookSeries`).
+- **Der Slug bleibt beim Umbenennen stehen** (`:154`, `series.Name = name` ohne Neuableitung) und ist in
+  der Zeile sichtbar (`VaterLehrwerke.tsx:144`). Solange niemand über die Oberfläche umbenennen kann, hat
+  das niemand gesehen; diese Story liefert es aus (siehe Entscheidung 5).
+
 ## Die echte Lücke
 
-Kein Backend-, Vertrags- oder API-Client-Problem – diese drei Schichten sind fertig und ungetestet-frei.
-Die Lücke ist ausschließlich das fehlende React-Formular in `VaterLehrwerke.tsx`, das den längst
-vorhandenen `api.updateTextbookSeries` aufruft. Entsprechend: `wo: frontend`, `migration: nein`,
-`vertragsbruch: nein` sind praktisch vorentschieden (Bestätigung folgt in `geschaetzt`).
+Der Kern ist das fehlende React-Formular in `VaterLehrwerke.tsx`, das den längst vorhandenen
+`api.updateTextbookSeries` aufruft – Endpunkt, Vertrag und beide Clients stehen bereits.
+
+**Nicht** ganz frontend-rein, anders als bis zum 2026-08-09 hier behauptet: „bearbeiten" schließt
+„zurücknehmen" ein, und das Fach lässt sich mangels `ClearSubjectId` nicht zurücknehmen. Die Lücke ist
+also das Formular **plus** ein additives Vertragsfeld mit seiner Controller-Zeile. Entsprechend:
+`wo: beides`, `migration: nein`, `vertragsbruch: nein` (additiv) – gesetzt wird das in `geschaetzt`.
 
 ## Offene Punkte
 
-1. **Wo sitzt das Formular?** Inline in `SeriesRow` nach demselben Muster wie `UnitPanel`/`UnitForm`
+Alle drei sind in der Grill-Runde vom 2026-08-09 entschieden (→ Entscheidungen 3, 2, 4); zwei weitere
+Punkte kamen dort dazu (→ Entscheidungen 1 und 5).
+
+1. ~~**Wo sitzt das Formular?** Inline in `SeriesRow` nach demselben Muster wie `UnitPanel`/`UnitForm`
    (Bearbeiten-Toggle, ein gemeinsames Formular für Anlegen und Ändern) oder ein separat ausklappbarer
-   Bereich? *Empfehlung*: dasselbe Muster wie bei den Units – Konsistenz innerhalb derselben Datei, und
-   das Formularfeld-Layout von `NewSeries` (`439-514`) lässt sich dafür wiederverwenden.
-2. **Wie wird „Verlag entfernen“ von „Verlag unverändert lassen“ unterschieden?** Das Verlag-`<select>`
-   in `NewSeries` (`448-452`) kennt nur „– keine Angabe –“ (= beim Anlegen: kein Verlag) und die Liste der
-   Verlage; im Edit-Formular müsste „– keine Angabe –“ mangels PATCH-Semantik **nicht** automatisch
-   `ClearPublisherId` auslösen (sonst löscht ein Formular, das aus Versehen mit leerer Auswahl abgeschickt
-   wird, einen bestehenden Verlag). *Empfehlung*: eine dritte, explizite Option „Verlag entfernen“ im
-   Select, getrennt von „unverändert lassen“ (= aktuellen Verlag vorausgewählt lassen).
-3. **Umfang der Story**: nur die Reihen-Metadaten editierbar machen (Name, Verlag inkl. Entfernen, Fach,
-   Schulart, beide Sprachen, Notiz), oder zusätzlich die Inline-Verlag-Neuanlage aus `NewSeries`
-   (`496-510`) im Edit-Formular duplizieren? *Empfehlung*: nur Metadaten-Edit: bereits vorhandener Verlag
-   fehlt praktisch nie, weil die Auswahlliste beim Anlegen sowieso zeigt, was existiert.
+   Bereich?~~ → Entscheidung 3.
+2. ~~**Wie wird „Verlag entfernen“ von „Verlag unverändert lassen“ unterschieden?** Das Verlag-`<select>`
+   in `NewSeries` (`448-452`) kennt nur „– keine Angabe –“ und die Liste der Verlage; im Edit-Formular
+   müsste „– keine Angabe –“ **nicht** automatisch `ClearPublisherId` auslösen (sonst löscht ein Formular,
+   das aus Versehen mit leerer Auswahl abgeschickt wird, einen bestehenden Verlag).~~ → Entscheidung 2.
+   Die Begründung trug nicht: bei einem **vorausgefüllten** Formular ist „leer“ nie der Ausgangszustand,
+   also auch nicht versehentlich abschickbar.
+3. ~~**Umfang der Story**: nur die Reihen-Metadaten editierbar machen, oder zusätzlich die
+   Inline-Verlag-Neuanlage aus `NewSeries` (`496-510`) im Edit-Formular duplizieren?~~ → Entscheidung 4.
+
+## Entscheidungen
+
+Gegrillt am 2026-08-09 im Dialog (`/backlog B-123 grillen`, Skills `grilling` + `domain-modeling`).
+
+1. **`ClearSubjectId` kommt additiv dazu – das Fach ist entfernbar.** Neues Feld im
+   `UpdateTextbookSeriesDto` plus eine Controller-Zeile nach dem Muster von `ClearPublisherId` (**nach**
+   dem Wert angewendet, damit „leeren“ gewinnt). *Begründung*: „bearbeiten“ heißt auch „zurücknehmen“;
+   ohne den Schalter hätte das Formular ein Feld, in dem „– keine Angabe –“ zu „Gespeichert.“ führt und
+   der alte Wert stehen bleibt – genau der Fall, gegen den die PATCH-Regel der Root-`CLAUDE.md`
+   geschrieben ist. *Kosten*: die Story ist nicht mehr frontend-rein (`wo: beides`); `PatchSemanticsTests`
+   wird rot, bis der neue Schalter einen Fall in seiner Tabelle hat; das OpenAPI-Dokument muss neu erzeugt
+   werden. Kein Vertragsbruch (additiv), keine Migration.
+2. **„Leeren“ entsteht aus dem Dirty-Vergleich, nicht aus einer dritten Select-Option.** Der Select trägt
+   dieselben zwei Optionen wie beim Anlegen und ist mit dem aktuellen Wert vorausgefüllt; beim Speichern
+   wird gegen die **geladenen** Werte verglichen: unverändert → Feld gar nicht senden, Wert → „keine
+   Angabe“ → `Clear…`-Schalter, Wert → anderer Wert → neue Id. Gilt für Verlag **und** Fach. *Begründung*:
+   eine dritte Option gäbe „– keine Angabe –“ beim Anlegen und beim Ändern zwei verschiedene Bedeutungen,
+   und die Sicherheit kommt ohnehin nicht aus der Optionsliste, sondern daraus, dass unveränderte Felder
+   nicht mitgeschickt werden (AK 3). *Kosten*: das Formular führt die Ausgangswerte als zweite Referenz
+   neben dem Formularstand mit – Sorgfalt, die `NewSeries` nicht braucht.
+3. **Eigenes `SeriesForm` nur fürs Ändern, lokal in `SeriesRow` ausgeklappt.** Die Zustandsführung ist die
+   von `UnitPanel` (`:183`, lokales `editing`), **nicht** der seiten-globale Akkordeon-Zustand `open`
+   (`:48`, `:92`) – der gehört den Units und zeigt immer nur eine Zeile. `NewSeries` bleibt unangetastet.
+   *Begründung*: das Vorbild `UnitForm` unterscheidet Anlegen/Ändern in zwei Zeilen, `NewSeries` hätte
+   deutlich mehr Nur-beim-Anlegen-Ballast (Überschrift, Idempotenz-Hinweis `:490-493`, Verlag-Inline-Anlage
+   `:496-510`) und würde zu einem Formular voller `series ? … : …`. *Kosten*: die sieben Feld-Definitionen
+   stehen zweimal in derselben Datei; laufen sie auseinander, fällt es nicht auf.
+4. **Kein Verlag-Anlegen im Edit-Formular.** *Begründung*: der Umweg funktioniert nachweislich – ein im
+   Anlegen-Abschnitt erzeugter Verlag löst `publishers.reload` (`:409`, `:106`) aus, und weil die
+   Verlagsliste auf Seitenebene liegt, erscheint er sofort im geöffneten Edit-Formular, ohne dass
+   `list.reload` läuft und den Formularstand verwirft. *Kosten*: ein Sprung ans Seitenende in einen
+   Abschnitt namens „Lehrwerk hinzufügen“, obwohl gerade nichts hinzugefügt wird. Dass `PublisherAdmin`
+   Verlage nur korrigieren und löschen kann, aber nicht anlegen, bleibt so – das ist eine eigene Fläche.
+5. **Hinweis zum eingefrorenen Slug hier, der Doppelname-Fall als eigene Story.** Das Namensfeld bekommt
+   einen Satz, dass der Kurzname bleibt, wie er beim Anlegen entstand. Der am Code belegte Folgefehler –
+   nach einer Umbenennung können zwei Reihen denselben Anzeigenamen tragen, weil die B-124-Vorprüfung
+   Slug gegen Slug vergleicht (`:181`) und nur `Slug` unique indiziert ist
+   (`PuglingDbContext.cs:220`) – wandert nach **[B-133](B-133-zwei-reihen-ein-anzeigename.md)**.
+   *Begründung*: B-123s Ziel ist ohne ihn erfüllt, und seine Lösung braucht eine Produktentscheidung
+   (Namensgleichheit verbieten oder den Slug mitwandern lassen – letzteres bricht die Idempotenz des
+   Anlegens). *Kosten*: eine zusätzliche Story; der Fehler bleibt bis dahin bestehen – sichtbar notiert
+   statt still.
+6. **Der Knopf heißt „Reihe bearbeiten“.** *Begründung*: er steht direkt neben „Units“, und „Bearbeiten“
+   allein (so heißt es eine Ebene tiefer, `:225`) ließe offen, welcher der beiden Knöpfe den Inhalt
+   ändert. *Kosten*: die Seite benutzt weiterhin drei Wörter für eine Sache (Überschrift „Lehrwerk“
+   `:441`, Feld „Reihe“ `:444`, Einleitung „Buchreihe“ `:55`) – das ist die Frage von
+   [B-64](B-64-textbook-vs-series.md) und wird hier bewusst **nicht** beantwortet, weil eine Antwort auf
+   dieser Ebene B-64 festlegen würde, bevor es gegrillt ist.
 
 ## Akzeptanzkriterien
 
-1. In `VaterLehrwerke.tsx` lässt sich eine eigene Reihe (`series.isOwn`) über einen „Bearbeiten“-Knopf in
-   ein Formular öffnen, das die aktuellen Werte vorausfüllt.
-2. Speichern ruft `api.updateTextbookSeries` mit nur den geänderten Feldern auf; die Reihen-Liste
+1. In `VaterLehrwerke.tsx` lässt sich eine eigene Reihe (`series.isOwn`) über einen Knopf **„Reihe
+   bearbeiten“** in ein Formular öffnen, das die aktuellen Werte vorausfüllt. Der Units-Bereich derselben
+   Zeile bleibt davon unberührt (eigener, lokaler Zustand).
+2. Speichern ruft `api.updateTextbookSeries` mit **nur den geänderten** Feldern auf; die Reihen-Liste
    aktualisiert sich danach (`list.reload`) und `PublisherAdmin`/`publishers.reload` bleiben unberührt.
-3. Der Verlag lässt sich sowohl **ändern** als auch **explizit entfernen** (`ClearPublisherId: true`),
-   ohne dass ein einfaches erneutes Speichern ohne Auswahl den Verlag versehentlich löscht.
-4. Eine fremde Reihe (`!series.isOwn`) zeigt weiterhin keinen Bearbeiten-Knopf (Server antwortet ohnehin
+3. Verlag **und** Fach lassen sich ändern *und* entfernen: wechselt ein gesetzter Wert auf „– keine
+   Angabe –“, geht `ClearPublisherId: true` bzw. `ClearSubjectId: true` mit. Ein Speichern **ohne**
+   Änderung an diesen Feldern schickt weder Wert noch Schalter – der Vergleich läuft gegen den
+   Ladezustand, nicht gegen „leer“.
+4. `UpdateTextbookSeriesDto` trägt `ClearSubjectId`; der Controller wendet es **nach** `SubjectId` an, und
+   `PatchSemanticsTests` hat den zugehörigen Fall (das Tor wird durch den neuen Schalter zunächst rot).
+5. Das Namensfeld erklärt, dass der Kurzname (Slug) beim Umbenennen bestehen bleibt.
+6. Eine fremde Reihe (`!series.isOwn`) zeigt weiterhin keinen Bearbeiten-Knopf (Server antwortet ohnehin
    mit `not_owner`, aber die UI zeigt das gar nicht erst an – bestehendes Muster von `156`).
-5. Ein Komponententest oder E2E-Test fährt den Bearbeiten-Weg mindestens einmal durch (Formular öffnen →
-   Feld ändern → speichern → geänderter Wert erscheint in der Liste).
+7. Ein Komponententest oder E2E-Test fährt den Bearbeiten-Weg mindestens einmal durch (Formular öffnen →
+   Feld ändern → speichern → geänderter Wert erscheint in der Liste) und deckt dabei den Entfernen-Fall
+   mindestens eines der beiden Auswahlfelder ab.
+
+## Schätzung
+
+**M** (`wo: beides`, `migration: nein`, `vertragsbruch: nein`). Nachgesehen, nicht vermutet: Es gibt keine
+Schemaänderung – `ClearSubjectId` ist ein reines DTO-Feld, `TextbookSeries` bleibt unangetastet
+(`Data/PuglingDbContext.cs:218-222`). Und der Vertrag wächst nur **additiv**: ein weiterer
+`bool … = false`-Parameter hinter dem bestehenden `ClearPublisherId = false`
+(`Pugling.Contracts/Creator/TextbookSeriesDtos.cs:30-32`) bricht weder JSON-Aufrufer noch die
+positionellen C#-Aufrufer in `Pugling.Client`.
+
+Gegen die Anker: mehr als **S** („`childId` aus dem Test-Pfad ziehen", B-01), weil eine neue
+Formular-Komponente mit eigener Diff-Logik entsteht und Backend, Vertragsdokument und zwei Testebenen
+mitziehen; vergleichbar mit **M** (vokabel-basierter Batch-Pfad im `MediaSelector`, B-03).
+
+### Risiken
+
+1. **Fach und Fachname sind zwei Felder für eine Sache** – der wahrscheinlichste stille Fehler dieser
+   Story. `SeriesRow` zeigt das Fach über `subjectId` **mit Rückfall auf `subjectName`**
+   (`VaterLehrwerke.tsx:129-131`), und `NewSeries` schickt beim Anlegen beide (`:425-427`). Wer beim
+   Bearbeiten nur `ClearSubjectId` sendet, sieht in der Liste weiterhin „Englisch" – aus dem
+   stehengebliebenen Namen. Das Formular muss das Fach als **Paar** behandeln: Wechsel → `subjectId` +
+   `subjectName`, Entfernen → `clearSubjectId: true` + `subjectName: ""` (leer räumt ab, weil
+   `Trimmed("")` zu `null` wird, `TextbookSeriesController.cs:229`).
+2. **`PatchSemanticsTests` wird rot, sobald das DTO-Feld existiert** – `Jeder_ClearSchalter_Ist_Belegt`
+   (`:426-443`) sammelt reflexiv alle `bool Clear…`-Parameter der Update-DTOs und verlangt für jeden einen
+   Fall. Beabsichtigt; muss in derselben Änderung geschlossen werden, nicht in einem Folgeschritt.
+3. **Das Vertragsdokument gehört in den Commit.** `ContractDocumentTests` schreibt `docs/openapi/v1.json`
+   bei jedem Lauf, und CI wird rot, wenn die Änderung nicht mit eingecheckt ist. Daraus wird
+   `frontend/src/lib/contract.ts` erzeugt (gitignored, läuft bei `predev`/`prebuild`).
+4. **Das Formular muss auf Erfolg schließen** (Muster `UnitForm`/`onDone`, `:234`). Bleibt es nach
+   `list.reload` offen, rechnet der Dirty-Vergleich aus Entscheidung 2 gegen einen veralteten Ladezustand
+   – und das ist genau die Annahme, auf der die Sicherheit dieser Entscheidung ruht.
+5. `disabled={busy}` auf jedem mutierenden Knopf bleibt Pflicht (`frontend/CLAUDE.md`), auch wenn
+   `useAction` den Wiedereintritt selbst sperrt.
+
+### Angriffsplan (Backend zuerst)
+
+1. `UpdateTextbookSeriesDto` um `bool ClearSubjectId = false` ergänzen, `/// <summary>` auf Englisch
+   nachziehen (`TextbookSeriesDtos.cs:24-32`).
+2. `TextbookSeriesController.Update`: `if (dto.ClearSubjectId) series.SubjectId = null;` **nach** der
+   Wertzuweisung `:190` – „leeren" gewinnt, wie bei `ClearPublisherId` (`:188`).
+3. `PatchSemanticsTests` Zeile `:148` auf beide Schalter erweitern:
+   `[new("clearPublisherId", "publisherId"), new("clearSubjectId", "subjectId")]`.
+4. `dotnet test` laufen lassen; das neu geschriebene `docs/openapi/v1.json` mitnehmen.
+5. Frontend: `npm run gen:contract`, dann die Diff-Bildung als **reine Funktion** herausziehen
+   (Ladezustand + Formularstand → `UpdateTextbookSeriesDto`) – nur so ist die Zusicherung „unverändertes
+   Feld wird nicht gesendet" prüfbar, ohne einen Bildschirm mit gefälschtem `fetch` nachzubauen.
+6. `SeriesForm` bauen (sieben Felder, Vorbild-Layout `NewSeries:439-485`), Slug-Hinweis am Namensfeld als
+   `FieldLabel` + `HelpTopic` in `lib/fieldHelp.ts` (nicht als freier Text am Feld – Konvention).
+7. In `SeriesRow` verdrahten: lokaler `editing`-Zustand, Knopf „Reihe bearbeiten" nur bei `series.isOwn`
+   (`:156`), `publishers` als Prop von der Seitenebene durchreichen.
+
+### Testweg
+
+| Ebene | Konkret |
+| --- | --- |
+| Backend, reflexiv | `PatchSemanticsTests.Jeder_ClearSchalter_Ist_Belegt` (rot bis Schritt 3) und `Clear_Schalter_Leert_Und_Gewinnt` mit der neuen Schalter-Zeile |
+| Vertrag | `ContractDocumentTests.Vertragsdokument_WirdGeschrieben_UndIstZwischenZweiHostsByteGleich` |
+| Frontend, Einheit | neuer Vitest neben `VaterLehrwerke.tsx` auf die Diff-Funktion: unverändert → nicht gesendet · Wert → „keine Angabe" → `clear…` · Fach als Paar (Risiko 1) |
+| Frontend, Durchstich **und Rollengang** | neue Spec `frontend/e2e/lehrwerk-bearbeiten.spec.ts`: Reihe anlegen → „Reihe bearbeiten" → Name ändern **und** Verlag entfernen → speichern → beides in der Liste. **Eigene Datei**, nicht an `lehrwerke.spec.ts` angehängt – die trägt den Creator→Kind-Durchstich, und eine Spec bricht beim ersten Rot ab (B-109) |
+
+`/smoke-test` ist hier nicht der richtige Beleg: der Weg ist ein UI-Weg, und die E2E fährt ihn im echten
+Browser gegen einen echten Server – das *ist* der Rollengang (README, „Eine E2E, die den Weg fährt").
+
+Vor der Abnahme beide Brillen, in dieser Reihenfolge: `pugling-reviewer`, dann `frontend-reviewer`.
 
 ## Verlauf
 
 - **2026-08-07** — angelegt (Quelle: manueller Chrome-Test von B-63).
 - **2026-08-07** — ausformuliert: Ist-Stand gegen den Code belegt (Backend/Vertrag/beide Clients
   vollständig, reine Frontend-Lücke), drei offene Punkte für die Grill-Runde formuliert.
+- **2026-08-09** — gegrillt (Dialog, `grilling` + `domain-modeling`): sechs Entscheidungen, die drei
+  notierten Punkte geschlossen. Der tragende Befund widerlegt den Ist-Stand vom 2026-08-07: „reine
+  Frontend-Lücke“ stimmt nicht, weil `SubjectId` mangels `ClearSubjectId` nicht zurücknehmbar ist
+  (`TextbookSeriesController.cs:190` gegen `:229`) — die Story wird dadurch `wo: beides`. Zweiter Befund:
+  der eingefrorene Slug wird durch diese Story erstmals über die Oberfläche erreichbar; der daraus
+  folgende Doppelname-Fall ist als [B-133](B-133-zwei-reihen-ein-anzeigename.md) abgespalten.
+- **2026-08-09** — geschätzt: **M**, `wo: beides`. `migration`/`vertragsbruch` nachgesehen statt vermutet
+  (kein Schema-Bezug in `PuglingDbContext.cs:218-222`; additiver Default-Parameter im DTO). Angriffsplan
+  in sieben Schritten, Backend zuerst. Testweg benannt: `PatchSemanticsTests` (zwei Fälle),
+  `ContractDocumentTests`, ein Vitest auf die herausgezogene Diff-Funktion und die neue Spec
+  `e2e/lehrwerk-bearbeiten.spec.ts`, die zugleich den Rollengang trägt. Beim Schätzen gefunden: das Fach
+  hängt an **zwei** Feldern (`subjectId` mit Rückfall auf `subjectName`, `VaterLehrwerke.tsx:129-131`) —
+  als Risiko 1 aufgenommen, weil „Fach entfernen" sonst sichtbar folgenlos bliebe.
