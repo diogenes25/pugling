@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/katalog, rolle/creator]
+tags: [typ/story, status/in-arbeit, bereich/katalog, rolle/creator]
 aliases: [published-Flag, Sichtbarkeit, Übung veröffentlichen bei Anlage]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: S
@@ -207,3 +207,28 @@ Payload-Zeile, ein Hilfetext, ein Test. Kein Backend-Feature fehlt, keine Migrat
 - **2026-08-07** — Autonomer Modus (Opt-in je Vorhaben, README → „Autonomer Modus") vom Nutzer im Dialog
   ausdrücklich freigegeben: ein Nachtlauf darf diese Story trotz `art: Wunsch` ohne weitere Rückfrage bauen
   (Rollengang/Reviewer bleiben Pflicht wie bei jeder Abnahme).
+- **2026-08-10** — gebaut, genau nach dem Angriffsplan und in drei Dateien: `VaterExerciseCreate.tsx`
+  (State `executePublic`, vorbelegt `true`, Checkbox „Für andere Betreuer zuweisbar" mit `InfoHint`, Feld
+  in der Nutzlast), `fieldHelp.ts` (neues Topic `exerciseExecutePublic`) und `freigabe.spec.ts`. **Kein
+  Backend-Code angefasst** (`git diff -- '*.cs'` = 0 Dateien) — AK5 gilt damit per Konstruktion, ebenso
+  AK4 (`ExerciseEditModal`/`MetaEditor` unverändert). Risiko 2 (Locator-Kollision) hat sich nicht
+  bewahrheitet, wurde aber gemessen statt vermutet: alle vier weiteren Specs, die `/vater/exercises/neu`
+  fahren, laufen unverändert grün.
+  Belege: `freigabe.spec.ts` **2 passed** (der bestehende Rücknahme-Weg als Regressionsschutz + der neue
+  Fall „privat anlegen"), `creator-lehrwerk-weg`/`perspektiven`/`uebungstypen`/`vater-von-null`
+  **9 passed**, Vitest **189 passed (27 Dateien)**, `npm run build` grün.
+  Der neue E2E **ist der Rollengang**: er fährt den Creator-Weg „Fach → Reihe → Unit → Übung privat
+  anlegen → in der Verwaltung als zurückgezogen wiederfinden" in einem echten Browser gegen einen echten
+  Server, also genau den Umweg, den die Story beseitigt — und zwar **ohne** den „Zurückziehen"-Knopf zu
+  benutzen. Nebenbei belegt er die Umkehrung des bestehenden Schalters („Wieder freigeben" wird
+  angeboten), womit AK4 auch beobachtet und nicht nur behauptet ist.
+  Beim Bauen wurde die Katalog-Vorbereitung von `freigabe.spec.ts` in zwei lokale Helfer gezogen, damit der
+  zweite Test nicht fünfzehn Zeilen Aufbau kopiert; beide Tests legen **eigene** Fach-/Reihennamen an (der
+  Katalog ist unter allen Vätern geteilt). Die zwei Fälle stehen bewusst als eigenständige `test()` und
+  nicht als Block am Ende des bestehenden — die Lehre aus [B-109](B-109-full-flow-spec-flackert-bei-frage-3.md):
+  der Default-Fall muss auch dann noch geprüft werden, wenn der neue rot ist.
+  **Nicht** auf `abgenommen`, und der Grund ist benannt statt weggelassen: `frontend-reviewer` ist die
+  Eintrittsbedingung für `wo: frontend`, und diese Sitzung trägt die Regel, keine Agenten unaufgefordert zu
+  starten (README → „Wenn der Reviewer nicht laufen darf, bleibt die Story auf `in-arbeit`"). Der eigene
+  Blick auf den Diff wird hier ausdrücklich **nicht** als Review gezählt. Freigabe dafür ist beim Nutzer
+  erfragt.

@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { ExercisePreviewModal } from "./ExercisePreviewModal";
-import { FieldLabel } from "../components/InfoHint";
+import { FieldLabel, InfoHint } from "../components/InfoHint";
 import { SCHOOL_TYPES } from "../lib/labels";
 import { LANGUAGES } from "../lib/languages";
 import type {
@@ -68,6 +68,9 @@ export function VaterExerciseCreate() {
   // Standard-Abfrageform (nur Vokabeln): "" = Verfahrens-Standard, sonst TestStage-Wert (z. B. 6 = Multiple-Choice).
   const [defaultStage, setDefaultStage] = useState<number | "">("");
   const [defaultItemCount, setDefaultItemCount] = useState<number | "">("");
+  // Startzustand der Freigabe. Vorbelegt mit dem Server-Default (`true`) – das Feld ändert ihn nicht,
+  // es macht ihn nur sichtbar, damit „für alle zuweisbar" eine Entscheidung ist statt einer Nebenwirkung.
+  const [executePublic, setExecutePublic] = useState(true);
 
   // Typ-spezifisch: Zeilen + Extra-Felder (Richtung/Trägertext/Anweisung/Sprachen …).
   const [rows, setRows] = useState<Row[]>([emptyRow("Vocabulary")]);
@@ -136,6 +139,7 @@ export function VaterExerciseCreate() {
         defaultRequireTypedTest,
         defaultStage: type === "Vocabulary" && defaultStage !== "" ? Number(defaultStage) : null,
         defaultItemCount: defaultItemCount === "" ? null : Number(defaultItemCount),
+        executePublic,
       };
       const created = await api.createExercise(Number(seriesId), Number(seriesUnitId), route, payload);
       setOkMsg(`Übung „${payload.title}" angelegt.`);
@@ -256,6 +260,26 @@ export function VaterExerciseCreate() {
             </select>
           </div>
         )}
+        {/*
+          Freigabe-Startzustand (B-11). Der Haken schreibt nur, was der Server ohnehin voreinstellt – der
+          Gewinn ist, dass der Creator die Entscheidung *sieht*: bisher entstand jede Übung stillschweigend
+          öffentlich, und wer sie privat halten wollte, musste sie erst anlegen und dann in der Verwaltung
+          zurückziehen.
+
+          Bewusst KEIN zweiter Dauer-Schalter: nachträglich umentschieden wird ausschließlich über
+          „Zurückziehen"/„Wieder freigeben" in der Verwendungs-Anzeige. Zwei Bedienelemente für dasselbe
+          Merkmal laufen in Text und Verhalten auseinander – darum spricht die Beschriftung hier vom
+          Startzustand, nicht von einer Einstellung.
+        */}
+        <div className="field" style={{ marginTop: 10 }}>
+          <label>Freigabe <span className="muted">(Startzustand – später über „Zurückziehen" in der Verwaltung änderbar)</span></label>
+          <span className="label-row">
+            <label className="checkline">
+              <input type="checkbox" checked={executePublic} onChange={(e) => setExecutePublic(e.target.checked)} /> Für andere Betreuer zuweisbar
+            </label>
+            <InfoHint topic="exerciseExecutePublic" />
+          </span>
+        </div>
       </section>
 
       {/* Typ-spezifischer Inhalts-Editor */}

@@ -134,6 +134,15 @@ export const FIELD_HELP = {
     text: "Woher der Stoff stammt, z. B. „Access 5, Unit 3“. Frei formulierbar – der Filter über den "
       + "Übungen sucht darin.",
   },
+  exerciseExecutePublic: {
+    title: "Für andere Betreuer zuweisbar",
+    text: "Der Startzustand beim Anlegen. Mit Haken darf jeder Betreuer die Übung sofort einem Kind "
+      + "zuweisen – das ist die Vorgabe. Ohne Haken entsteht sie zurückgezogen: zuweisen kann sie dann nur, "
+      + "wer ein ausdrückliches Recht darauf hat. „Zurückgezogen“ heißt aber nicht „unsichtbar“ – der "
+      + "Katalog bleibt für jeden Creator durchsuchbar, gesperrt ist allein das Zuweisen. Später "
+      + "umentscheiden kannst du es nicht hier, sondern in der Übungs-Verwaltung mit "
+      + "„Zurückziehen“/„Wieder freigeben“; es ist dasselbe Merkmal, nur zu einem anderen Zeitpunkt.",
+  },
 
   /*
    * Zwei Texte für ein Wort, und das ist Absicht (B-69, Entscheidung 3): Die Beschriftung heißt überall
