@@ -43,8 +43,8 @@ sie hebelt denselben `StatusBanner` aus, dessen Kopfkommentar die Regel begründ
 
 | Datei:Zeile | Bedingung davor | Was stumm bleibt |
 | --- | --- | --- |
-| `vater/VaterExerciseCreate.tsx:270` | `{error && …}` | Fehlermeldung beim Anlegen einer Übung |
-| `vater/VaterExerciseCreate.tsx:272` | `{okMsg && …}` | Erfolgsmeldung |
+| `vater/VaterExerciseCreate.tsx:297` | `{error && …}` | Fehlermeldung beim Anlegen einer Übung |
+| `vater/VaterExerciseCreate.tsx:298` | `{okMsg && …}` | Erfolgsmeldung |
 | `vater/VaterMedia.tsx:250` | `{msg && …}` | Rückmeldung nach dem Bild-Upload |
 | `vater/VaterPlanCreate.tsx:81` | `{error && …}` | Fehler beim Plan-Anlegen |
 | `vater/VaterWizard.tsx:397` | `{error && …}` | Fehler im Lehrplan-Assistenten |
@@ -111,3 +111,5 @@ Disziplin"). Ein Sweep ohne Wächter stellt denselben Zustand in drei Monaten wi
   Fälle: dort wird ein `StatusBanner` **bedingt** gerendert, also genau die Komponente ausgehebelt,
   deren Kopfkommentar die Regel begründet. Zahlen im Text nachgezogen (zwölf → dreizehn, neun → zehn
   Dateien).
+- **2026-08-10** — Zeilenangaben zu `VaterExerciseCreate.tsx` nachgezogen (270/272 → 297/298): B-11 hat
+  darüber ein Formularfeld eingefügt. Nur die Belege wandern, der Befund und die Stufe bleiben.

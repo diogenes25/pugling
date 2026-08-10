@@ -49,7 +49,12 @@ async function katalogVorbereiten(page: Page, name: string) {
   await seriesRow.getByRole("button", { name: "Units" }).click();
   await page.locator('[id^="unit-label-new"]').fill("Unit 1");
   await page.getByRole("button", { name: "Unit hinzufügen" }).click();
-  await expect(page.getByText("Unit 1")).toBeVisible();
+  // Über den Knopf der Unit statt über ihren Text: der Helfer läuft je Lauf zweimal gegen eine Seite, auf
+  // der dann mehrere Reihen stehen. Ein seitenweites `getByText("Unit 1")` hält heute nur, weil die Seite
+  // Units ausschließlich der aufgeklappten Reihe rendert – zeigte sie je eine Vorschau in der Zeile, bräche
+  // der Strict Mode in BEIDEN Tests zugleich, also genau der gemeinsame Ausfall, den die Aufteilung
+  // vermeiden soll.
+  await expect(page.getByRole("button", { name: "Unit 1 bearbeiten" })).toBeVisible();
 }
 
 /** Wählt Fach/Reihe/Unit im Anlage-Formular und trägt den Titel ein. */
@@ -133,7 +138,15 @@ test("Übung von Anfang an privat anlegen", async ({ page }) => {
 
   await uebungAbsenden(page, `prv${RUN}`, "privat", PRIVAT_EXERCISE);
 
-  // In der Verwaltung sofort gekennzeichnet – ohne dass jemand „Zurückziehen" geklickt hätte.
+  /*
+   * In der Verwaltung sofort gekennzeichnet – ohne dass jemand „Zurückziehen" geklickt hätte.
+   *
+   * Die Prüfungen greifen seitenweit, und das ist tragfähig: Der Link „Übungen verwalten" reicht die
+   * Auswahl als `?seriesUnitId=` weiter, die Liste zeigt also nur die Übungen dieser frisch angelegten
+   * Unit – und darin liegt genau diese eine. Das Kennzeichen entsteht ausschließlich aus dem
+   * `executePublic` der Server-Antwort; fehlte die Checkbox in der Nutzlast, entstünde die Übung mit dem
+   * Server-Default `true` und der Test wäre rot.
+   */
   await page.getByRole("link", { name: /Übungen verwalten/ }).first().click();
   await expect(page.getByText(PRIVAT_EXERCISE, { exact: true })).toBeVisible();
   await expect(page.getByText("zurückgezogen", { exact: true })).toBeVisible();

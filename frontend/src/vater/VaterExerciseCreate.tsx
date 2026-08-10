@@ -272,7 +272,10 @@ export function VaterExerciseCreate() {
           Startzustand, nicht von einer Einstellung.
         */}
         <div className="field" style={{ marginTop: 10 }}>
-          <label>Freigabe <span className="muted">(Startzustand – später über „Zurückziehen" in der Verwaltung änderbar)</span></label>
+          {/* Gruppen-Überschrift, darum `span` statt `label`: sie beschriftet kein Eingabefeld – das tut
+              die Checkbox-Zeile darunter selbst. Wo die Entscheidung später umgestoßen wird, steht nur im
+              Popover: zweimal formuliert wären es irgendwann zwei Aussagen. */}
+          <span className="label-row">Freigabe <span className="muted">(Startzustand)</span></span>
           <span className="label-row">
             <label className="checkline">
               <input type="checkbox" checked={executePublic} onChange={(e) => setExecutePublic(e.target.checked)} /> Für andere Betreuer zuweisbar
