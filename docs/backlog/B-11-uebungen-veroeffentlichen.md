@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/katalog, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/katalog, rolle/creator]
 aliases: [published-Flag, Sichtbarkeit, Übung veröffentlichen bei Anlage]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: S
@@ -232,3 +232,29 @@ Payload-Zeile, ein Hilfetext, ein Test. Kein Backend-Feature fehlt, keine Migrat
   starten (README → „Wenn der Reviewer nicht laufen darf, bleibt die Story auf `in-arbeit`"). Der eigene
   Blick auf den Diff wird hier ausdrücklich **nicht** als Review gezählt. Freigabe dafür ist beim Nutzer
   erfragt.
+- **2026-08-10** — **abgenommen.** `frontend-reviewer` gelaufen (Freigabe im Dialog erteilt): **kein
+  Blocker**, AK1–AK6 bestätigt, dazu vier kleine Funde — alle im selben Zug behoben (Commit `2d42f13`).
+  Behoben: die Caption wiederholte den Hilfetext (`frontend/CLAUDE.md`: „der Text steht nie am Feld" — bei
+  einer Umbenennung des Schalters bliebe der zweite Fundort unentdeckt), die Gruppen-Überschrift war ein
+  `<label>` ohne Steuerelement, der E2E-Helfer prüfte `getByText("Unit 1")` seitenweit (er läuft je Lauf
+  zweimal gegen eine Seite mit mehreren Reihen — ein Strict-Mode-Bruch hätte **beide** Tests zugleich
+  getroffen, also genau den gemeinsamen Ausfall, gegen den die Aufteilung gebaut ist), und die Begründung
+  für die seitenweiten Prüfungen stand nur im Nachbartest.
+  Zwei Antworten des Reviewers sind für später festzuhalten, weil sie beide Male die *fail-safe* Richtung
+  begründen: der `useEffect` beim Typwechsel darf `executePublic` **nicht** zurücksetzen (sonst entstünde
+  eine abgehakte Übung nach einem Typwechsel wieder öffentlich, ohne Klick), und das Feld bleibt nach dem
+  Anlegen bewusst stehen (setzte es zurück, veröffentlichte, wer fünf private Übungen hintereinander
+  anlegt, vier davon unbemerkt — der umgekehrte Irrtum steht sichtbar auf dem Bildschirm und ist ein Klick
+  weit heilbar).
+  Der Reviewer hat außerdem gegengerechnet, dass der neue Test **nicht grün sein kann**, wenn die
+  Verdrahtung fehlt: das Kennzeichen entsteht ausschließlich aus dem `executePublic` der Server-Antwort,
+  ein fehlendes Feld ließe die Übung mit dem Default `true` entstehen, ein vertippter Feldname liefe schon
+  vorher in `unknown_field`/400.
+  **Commits:** `f97e987` (Bau) und `2d42f13` (Review-Funde).
+  **Fund nebenan → eigene Story:** [B-140](B-140-freigabe-kennzeichen-in-der-uebungsauswahl.md) — die
+  Übungsauswahl beim Zuweisen zeigt „zurückgezogen" nicht, der Betreuer erfährt es erst beim Speichern als
+  `exercise_not_executable`. Nicht mitgenommen, weil B-11s Ziel ohne sie erfüllt ist: andere Rolle, andere
+  Fläche. Sie steht überhaupt erst dadurch an, dass diese Story „zurückgezogen" vom seltenen
+  Nachträglich-Zustand zum regulären Anfangszustand macht. Die a11y-Randnotiz des Reviewers (bedingte
+  Live-Region am Fehler-Banner) brauchte **keine** neue Story — [B-134](B-134-bedingte-live-regionen.md)
+  führt sie längst; dort wurden nur die von diesem Commit verschobenen Zeilenbelege nachgezogen.
