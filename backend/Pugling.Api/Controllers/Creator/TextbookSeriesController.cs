@@ -227,6 +227,11 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
         if (dto.ClearPublisherId) series.PublisherId = null;
         if (dto.SubjectName is not null) series.SubjectName = Trimmed(dto.SubjectName);
         if (dto.SubjectId.HasValue) series.SubjectId = dto.SubjectId;
+        // After the value, so "clear" wins when a form sends both - same order as ClearPublisherId above.
+        // Id AND name: the name is what a reader falls back to when no catalog subject is bound, so a
+        // series that kept it would go on claiming a subject it no longer has. Same one-liner as
+        // CreatorProfilesController and TextbooksController - three places, one meaning.
+        if (dto.ClearSubject) { series.SubjectId = null; series.SubjectName = null; }
         if (dto.SchoolTypes.HasValue) series.SchoolTypes = dto.SchoolTypes.Value;
         if (dto.SourceLanguage is not null) series.SourceLanguage = Trimmed(dto.SourceLanguage);
         if (dto.TargetLanguage is not null) series.TargetLanguage = Trimmed(dto.TargetLanguage);

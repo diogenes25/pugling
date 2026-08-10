@@ -23,13 +23,21 @@ public record CreateTextbookSeriesDto(string Name, int? PublisherId, string? Sub
 
 /// <summary>
 /// Partial change to a series; omitted fields remain unchanged. The slug stays fixed.
-/// <c>ClearPublisherId</c> removes the publisher (cf. <c>ClearGrade</c> on the class test) – without it,
-/// <c>null</c> in a PATCH means "not specified", not "remove", so a wrongly-assigned publisher could
-/// never be unassigned again.
+/// <c>ClearPublisherId</c> and <c>ClearSubject</c> remove the reference (cf. <c>ClearGrade</c> on the
+/// class test) – without them, <c>null</c> in a PATCH means "not specified", not "remove", so a
+/// wrongly-assigned publisher or subject could never be unassigned again.
+///
+/// <c>ClearSubject</c> drops both <c>SubjectId</c> and <c>SubjectName</c> together, the same way
+/// <c>UpdateCreatorProfileDto</c> and <c>UpdateTextbookDto</c> do it: the name is the fallback shown where
+/// no catalog subject is bound, so a series that kept it would go on claiming a subject it no longer has.
+///
+/// Changing the subject is the caller's job in both fields: the server does not derive
+/// <c>SubjectName</c> from <c>SubjectId</c>, so a <c>PATCH</c> that sends only the id leaves the old name
+/// standing - the series would then claim one subject by id and another by name.
 /// </summary>
 public record UpdateTextbookSeriesDto(string? Name, int? PublisherId, string? SubjectName, int? SubjectId,
     SchoolTypes? SchoolTypes, string? SourceLanguage, string? TargetLanguage, string? Notes,
-    bool ClearPublisherId = false);
+    bool ClearPublisherId = false, bool ClearSubject = false);
 
 /// <summary>
 /// A unit of the series including volume. <c>Topics</c>, <c>Grammar</c> and <c>VocabularyNotes</c> are the

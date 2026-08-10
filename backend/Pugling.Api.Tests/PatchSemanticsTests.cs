@@ -143,9 +143,9 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
         new(typeof(UpdateTextbookSeriesDto), "name", "Reihe neu", async f =>
         {
             var c = await TestApi.AdultAsync(f);
-            var id = await NeueReiheMitVerlagAsync(c);
+            var id = await NeueReiheMitVerlagUndFachAsync(c);
             return new Ziel(c, $"/api/v1/creator/textbook-series/{id}");
-        }, [new("clearPublisherId", "publisherId")]),
+        }, [new("clearPublisherId", "publisherId"), new("clearSubject", "subjectId")]),
 
         new(typeof(UpdateSeriesUnitDto), "label", "Unit neu", async f =>
         {
@@ -520,14 +520,19 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
         await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/textbook-series",
             new { name = Eindeutig("Access"), sourceLanguage = "en", targetLanguage = "de" }));
 
-    /// <summary>Like <see cref="NeueReiheAsync"/>, but with a publisher already set - `clearPublisherId`
-    /// proves nothing on a series that had no publisher to begin with.</summary>
-    private static async Task<int> NeueReiheMitVerlagAsync(HttpClient creator)
+    /// <summary>
+    /// Like <see cref="NeueReiheAsync"/>, but carrying <b>both</b> clearable references. Publisher and
+    /// subject have to be set at creation time, otherwise <see cref="Clear_Schalter_Leert_Und_Gewinnt"/>
+    /// rightly refuses the case: a switch on a field that was empty to begin with proves nothing (B-123).
+    /// </summary>
+    private static async Task<int> NeueReiheMitVerlagUndFachAsync(HttpClient creator)
     {
         var publisherId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/publishers",
             new { name = Eindeutig("Verlag") }));
+        var subjectId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = Eindeutig("Fach") }));
         return await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/textbook-series",
-            new { name = Eindeutig("Access"), publisherId, sourceLanguage = "en", targetLanguage = "de" }));
+            new { name = Eindeutig("Access"), publisherId, subjectId, sourceLanguage = "en", targetLanguage = "de" }));
     }
 
     private static async Task<int> NeuesMotivAsync(HttpClient creator) =>

@@ -122,6 +122,42 @@ public class PatchClearFieldTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.Equal("None", cleared.GetProperty("schoolTypes").GetString());
     }
 
+    /// <summary>
+    /// B-123. <c>clearSubject</c> on a series drops the id <b>and</b> the name. The reflexive
+    /// <c>PatchSemanticsTests</c> can only see the one field a switch is mapped to, so the <em>pair</em> is
+    /// only pinned here - exactly as it is for the creator profile above.
+    /// <para>
+    /// Why the pair exists at all, while the publisher needs none: <c>publisherName</c> is joined from the
+    /// FK in the projection, <c>subjectName</c> is a <b>stored</b> column and the fallback a reader shows
+    /// when no catalog subject is bound (<c>TextbookSeriesController.Project</c>). A name left behind would
+    /// go on claiming a subject the series no longer has.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task Reihe_ClearSubject_nimmt_den_Fachnamen_mit()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var subjectName = $"Fach {Guid.NewGuid():N}";
+        var subjectId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = subjectName }));
+        // Both, the way the UI creates a series - Create stores the name it is given, it does not derive it.
+        var seriesId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/textbook-series",
+            new { name = $"Reihe {Guid.NewGuid():N}", subjectId, subjectName }));
+
+        var vorher = await JsonAsync(await creator.GetAsync($"/api/v1/creator/textbook-series/{seriesId}"));
+        Assert.Equal(subjectId, IntOrNull(vorher, "subjectId"));
+        Assert.Equal(subjectName, vorher.GetProperty("subjectName").GetString());
+
+        // The name is sent along on purpose: "clear wins" has to hold against the NAME too, not only
+        // against the id (same shape as the cloze case above).
+        var cleared = await JsonAsync(await creator.PatchAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}",
+            new { subjectName = "Mathe", clearSubject = true }));
+
+        Assert.Null(IntOrNull(cleared, "subjectId"));
+        Assert.Equal(JsonValueKind.Null, cleared.GetProperty("subjectName").ValueKind);
+    }
+
     [Fact]
     public async Task Lehrbuch_Reihenwechsel_verwirft_die_Unit_der_alten_Reihe()
     {

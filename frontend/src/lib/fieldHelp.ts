@@ -300,6 +300,16 @@ export const FIELD_HELP = {
     text: "🪙 Münzen gibt das Kind im Familien-Shop für echte Belohnungen aus, 💎 Gems für Skins. Beides "
       + "kannst du verschenken.",
   },
+
+  // ---- Lehrwerk-Reihe (Bearbeiten-Formular) ----
+  seriesName: {
+    title: "Name der Reihe",
+    text: "Der Anzeigename, unter dem die Reihe überall in der App erscheint. Er lässt sich ändern – der "
+      + "Kurzname darunter bleibt aber, wie er beim Anlegen entstanden ist: an ihm hängen die Verweise "
+      + "von Kinder-Lehrbüchern und Fachlehrer-Profilen, und ein wandernder Kurzname würde sie lösen. "
+      + "Nach einer Umbenennung passen Name und Kurzname darum nicht mehr zusammen, und das ist "
+      + "gewollt. Zwei Reihen dürfen nicht denselben Namen tragen.",
+  },
 } as const satisfies Record<string, FieldHelp>;
 
 /** Die zulässigen Schlüssel – ein Tippfehler im `topic` fällt so beim Übersetzen auf, nicht im Betrieb. */

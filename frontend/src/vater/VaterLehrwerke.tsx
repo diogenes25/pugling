@@ -1,5 +1,7 @@
-import { Fragment, useState } from "react";
+import { Fragment, useRef, useState } from "react";
+import { FieldLabel } from "../components/InfoHint";
 import { StatusBanner } from "../components/StatusBanner";
+import { seriesFormValues, seriesPatch, type SeriesFormValues } from "./seriesPatch";
 import { api } from "../lib/api";
 import { useAction } from "../lib/useAction";
 import { SCHOOL_TYPES } from "../lib/labels";
@@ -88,7 +90,7 @@ export function VaterLehrwerke() {
             <tbody>
               {list.data?.map((s) => (
                 <SeriesRow
-                  key={s.id} series={s} subjects={subjects.data ?? []}
+                  key={s.id} series={s} subjects={subjects.data ?? []} publishers={publishers.data ?? []}
                   open={open === s.id} onToggle={() => setOpen(open === s.id ? null : s.id)}
                   onChanged={list.reload}
                 />
@@ -110,14 +112,18 @@ export function VaterLehrwerke() {
   );
 }
 
-function SeriesRow({ series, subjects, open, onToggle, onChanged }: {
+function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged }: {
   series: TextbookSeriesResponse;
   subjects: SubjectResponse[];
+  publishers: PublisherResponse[];
   open: boolean;
   onToggle: () => void;
   onChanged: () => void;
 }) {
   const action = useAction();
+  // Lokal, nicht im seiten-globalen `open`: das ist der Akkordeon-Platz der Units, und beide Bereiche
+  // sollen sich nicht gegenseitig zuklappen (B-123, Entscheidung 3 – Muster `UnitPanel`).
+  const [editing, setEditing] = useState(false);
 
   async function remove() {
     if (!confirmAction(
@@ -152,15 +158,42 @@ function SeriesRow({ series, subjects, open, onToggle, onChanged }: {
             aria-expanded={open}>
             {open ? "Units zu" : "Units"}
           </button>
-          {/* Fremde Reihen bleiben lesbar – der Knopf fehlt, statt später mit 403 zu scheitern. */}
+          {/* Fremde Reihen bleiben lesbar – die Knöpfe fehlen, statt später mit 403 zu scheitern. */}
           {series.isOwn && (
-            <button type="button" className="btn ghost small" style={{ width: "auto" }} disabled={action.busy} onClick={remove}>
-              Löschen
-            </button>
+            <>
+              {/* „Reihe bearbeiten", nicht bloß „Bearbeiten": daneben steht „Units", und welcher der
+                  beiden den Inhalt ändert, wäre sonst nicht zu erraten (B-123, Entscheidung 6). */}
+              {/* `aria-label` mit dem Reihennamen, weil ein Screenreader sonst bei zehn Reihen zehnmal
+                  dasselbe hört. **Sichtbarer Text zuerst, Kontext hinten** – WCAG 2.5.3 „Label in Name"
+                  verlangt, dass der Sichttext im barrierefreien Namen VORKOMMT, sonst löst eine
+                  Spracheingabe („Reihe bearbeiten") den Knopf nicht aus. Die Nachbarn taugen hier nicht
+                  als Vorbild: `PublisherAdmin` macht es einmal so und einmal andersherum. */}
+              <button type="button" className="btn ghost small" style={{ width: "auto" }}
+                aria-label={editing
+                  ? `Bearbeiten schließen: „${series.name}"`
+                  : `Reihe bearbeiten: „${series.name}"`}
+                aria-expanded={editing} onClick={() => setEditing(!editing)}>
+                {editing ? "Bearbeiten schließen" : "Reihe bearbeiten"}
+              </button>
+              <button type="button" className="btn ghost small" style={{ width: "auto" }}
+                aria-label={`Löschen: „${series.name}"`}
+                disabled={action.busy} onClick={remove}>
+                Löschen
+              </button>
+            </>
           )}
         </td>
       </tr>
       {action.message && <tr><td colSpan={6}><StatusBanner message={action.message} style={{ marginTop: 0 }} /></td></tr>}
+      {editing && (
+        <tr>
+          <td colSpan={6}>
+            <SeriesForm
+              series={series} subjects={subjects} publishers={publishers} onSaved={onChanged}
+            />
+          </td>
+        </tr>
+      )}
       {open && (
         <tr>
           <td colSpan={6}>
@@ -174,6 +207,125 @@ function SeriesRow({ series, subjects, open, onToggle, onChanged }: {
         </tr>
       )}
     </>
+  );
+}
+
+/**
+ * Die Metadaten einer Reihe ändern.
+ *
+ * Bewusst **nicht** dasselbe Formular wie `NewSeries` (B-123, Entscheidung 3): dort hängen
+ * Abschnittsüberschrift, Idempotenz-Hinweis und das Verlag-Inline-Anlegen daran, die beim Ändern alle
+ * nichts zu suchen haben – ein gemeinsames Formular wäre voller `series ? … : …`. Wer hier einen fehlenden
+ * Verlag braucht, legt ihn unten im Anlegen-Abschnitt an; er erscheint sofort in dieser Auswahl, weil die
+ * Verlagsliste auf Seitenebene liegt.
+ */
+function SeriesForm({ series, subjects, publishers, onSaved }: {
+  series: TextbookSeriesResponse;
+  subjects: SubjectResponse[];
+  publishers: PublisherResponse[];
+  onSaved: () => void;
+}) {
+  // Der Ladezustand ist der Bezugspunkt des Diffs (B-123, Entscheidung 2) – er darf sich NICHT mit dem
+  // Formular mitbewegen, sonst entscheidet der Vergleich gegen sich selbst. Darum `useRef`.
+  //
+  // Er zieht an genau zwei Stellen nach: beim Speichern (aus der Server-Antwort) und bei jeder
+  // Neumontage (das Formular hängt an `{editing && …}`, Zuklappen wirft es weg). Ändert jemand die
+  // Reihe von außen, während das Formular offen ist, bleibt er stehen — das richtet keinen Schaden an,
+  // weil der Diff FELDWEISE läuft: ein nicht angefasstes Feld geht nie mit, der fremde Wert bleibt also
+  // stehen statt überschrieben zu werden. Geprüft für alle In-App-Auslöser (UnitPanel ändert nur
+  // Zählwerte, ein gelöschter Verlag steht serverseitig schon auf `null`); übrig bleibt ein zweiter Tab,
+  // und dort hilft Zuklappen und neu aufklappen.
+  const geladen = useRef(seriesFormValues(series));
+  const [form, setForm] = useState<SeriesFormValues>(geladen.current);
+  const action = useAction();
+  const id = `se${series.id}`;
+
+  function up<K extends keyof SeriesFormValues>(k: K, v: SeriesFormValues[K]) {
+    setForm((f) => ({ ...f, [k]: v }));
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.name.trim()) { action.fail("Der Name der Reihe fehlt."); return; }
+
+    const dto = seriesPatch(geladen.current, form, subjects);
+    // Kein leerer PATCH: er wäre erfolgreich und folgenlos, und „Gespeichert." wäre dann eine Lüge.
+    if (dto === null) { action.succeed("Nichts geändert."); return; }
+
+    const aktualisiert = await action.runFor(() => api.updateTextbookSeries(series.id, dto));
+    if (!aktualisiert) return;
+    // Das Formular bleibt offen und der Ladezustand wird aus der ANTWORT nachgezogen. Beides gehört
+    // zusammen: schlösse es sich, verschwände der StatusBanner mitsamt der Bestätigung (im Rollengang
+    // aufgefallen – „Gespeichert." war nie zu sehen); bliebe es offen ohne diese Zeile, rechnete der
+    // nächste Diff gegen einen veralteten Bezugspunkt und schickte Felder erneut oder gar nicht.
+    geladen.current = seriesFormValues(aktualisiert);
+    setForm(geladen.current);
+    action.succeed("Gespeichert.");
+    onSaved();
+  }
+
+  return (
+    <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div className="form-grid" style={{ alignItems: "end" }}>
+        <div className="field">
+          <FieldLabel htmlFor={`se-name-${id}`} topic="seriesName">Name der Reihe</FieldLabel>
+          <input id={`se-name-${id}`} value={form.name} onChange={(e) => up("name", e.target.value)} />
+          {/* Nur der WERT – die Erklärung dazu steht im `HelpTopic` und darf nicht zweimal dastehen
+              (`frontend/CLAUDE.md`: der Text steht nie am Feld). Den Wert kann das Popover nicht
+              liefern, es kennt die Reihe nicht. */}
+          <span className="sub">Kurzname <code>{series.slug}</code></span>
+        </div>
+        <div className="field">
+          <label htmlFor={`se-publisher-${id}`}>Verlag</label>
+          <select id={`se-publisher-${id}`} value={form.publisherId} onChange={(e) => up("publisherId", e.target.value)}>
+            <option value="">– keine Angabe –</option>
+            {publishers.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor={`se-subject-${id}`}>Fach</label>
+          <select id={`se-subject-${id}`} value={form.subjectId} onChange={(e) => up("subjectId", e.target.value)}>
+            <option value="">– keine Angabe –</option>
+            {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor={`se-school-${id}`}>Schulart</label>
+          <select id={`se-school-${id}`} value={form.schoolTypes}
+            onChange={(e) => up("schoolTypes", e.target.value as SchoolType)}>
+            <option value="None">– für alle –</option>
+            {SCHOOL_TYPES.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor={`se-src-${id}`}>Lernsprache</label>
+          <select id={`se-src-${id}`} value={form.sourceLanguage} onChange={(e) => up("sourceLanguage", e.target.value)}>
+            <option value="">– keine Angabe –</option>
+            {LANGUAGES.map((l) => <option key={l.code} value={l.code}>{l.flag} {l.label}</option>)}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor={`se-tgt-${id}`}>Muttersprache</label>
+          <select id={`se-tgt-${id}`} value={form.targetLanguage} onChange={(e) => up("targetLanguage", e.target.value)}>
+            <option value="">– keine Angabe –</option>
+            {LANGUAGES.map((l) => <option key={l.code} value={l.code}>{l.flag} {l.label}</option>)}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor={`se-notes-${id}`}>Notiz zum Werk</label>
+          <input id={`se-notes-${id}`} value={form.notes} onChange={(e) => up("notes", e.target.value)} />
+        </div>
+      </div>
+      <div className="row" style={{ gap: 8 }}>
+        {/* Der Name im Label ist der PERSISTIERTE – im Feld steht ggf. schon der neue. Gewollt: er
+            benennt die Zeile, die bearbeitet wird, nicht den Entwurf darin. */}
+        <button type="submit" className="btn inline-btn" style={{ width: "auto" }}
+          aria-label={`Speichern: „${series.name}"`} disabled={action.busy}>
+          {action.busy ? "Speichere…" : "Speichern"}
+        </button>
+      </div>
+      <StatusBanner message={action.message} style={{ marginTop: 0 }} />
+    </form>
   );
 }
 

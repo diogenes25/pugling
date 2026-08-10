@@ -42454,9 +42454,13 @@
           "clearPublisherId": {
             "type": "boolean",
             "default": false
+          },
+          "clearSubject": {
+            "type": "boolean",
+            "default": false
           }
         },
-        "description": "Partial change to a series; omitted fields remain unchanged. The slug stays fixed.\n\u0060ClearPublisherId\u0060 removes the publisher (cf. \u0060ClearGrade\u0060 on the class test) \u2013 without it,\n\u0060null\u0060 in a PATCH means \u0022not specified\u0022, not \u0022remove\u0022, so a wrongly-assigned publisher could\nnever be unassigned again."
+        "description": "Partial change to a series; omitted fields remain unchanged. The slug stays fixed.\n\u0060ClearPublisherId\u0060 and \u0060ClearSubject\u0060 remove the reference (cf. \u0060ClearGrade\u0060 on the\nclass test) \u2013 without them, \u0060null\u0060 in a PATCH means \u0022not specified\u0022, not \u0022remove\u0022, so a\nwrongly-assigned publisher or subject could never be unassigned again.\n\n\u0060ClearSubject\u0060 drops both \u0060SubjectId\u0060 and \u0060SubjectName\u0060 together, the same way\n\u0060UpdateCreatorProfileDto\u0060 and \u0060UpdateTextbookDto\u0060 do it: the name is the fallback shown where\nno catalog subject is bound, so a series that kept it would go on claiming a subject it no longer has.\n\nChanging the subject is the caller\u0027s job in both fields: the server does not derive\n\u0060SubjectName\u0060 from \u0060SubjectId\u0060, so a \u0060PATCH\u0060 that sends only the id leaves the old name\nstanding - the series would then claim one subject by id and another by name."
       },
       "UpdateVocabTagDto": {
         "type": "object",
