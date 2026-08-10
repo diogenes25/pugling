@@ -1,9 +1,14 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/katalog, bereich/backend, rolle/creator]
+tags: [typ/story, status/gegrillt, bereich/katalog, bereich/backend, rolle/creator]
 aliases: [Verlag löschen ohne Eigentum, SetNull auf fremde Reihen, geteilte Zeile ohne Schutz]
-status: ausformuliert
+status: gegrillt
 prio: P3
 art: Frage
+groesse: ""
+wo: ""
+migration: ""
+vertragsbruch: ""
+unverifiziert: false
 quelle: Code-Review 2026-08-07 des Standes gegen `origin/main` (Fund 2)
 grund: ""
 ersetzt_durch: []
@@ -52,31 +57,81 @@ für den Löschenden wahr und für alle anderen unvollständig. Es gibt keinen W
 danach weg, nicht wiederherstellbar) und keine Warnung, dass fremde Daten betroffen sind. Dieselbe
 Freiheit hat der Vokabelspeicher — aber dort **löscht** niemand fremde Verknüpfungen mit einem Aufruf.
 
+## Der Ist-Stand, am 2026-08-10 nachgemessen
+
+Anders als bei der Schwester-Story [B-144](B-144-fach-loeschen-trifft-reihen-lautlos.md) hat die Messung
+den Ist-Stand **bestätigt** statt ihn umzuwerfen — und das ist selbst ein Ergebnis:
+
+- **Genau eine Beziehung** zeigt auf `Publisher`: `TextbookSeries.PublisherId`, nullable, `SetNull`
+  (`PuglingDbContext.cs:239`). **Keine Cascade, es verschwindet keine Zeile.** Der Unterschied zu B-144
+  ist damit grundsätzlich: dort wird zerstört, hier wird nur entkoppelt.
+- **Die Zahl existiert bereits und steht schon im Dialog:** `PublisherAdmin.tsx:60-61` sagt
+  *„Verlag „X" löschen? N Reihe(n) verlieren nur die Zuordnung"*. Sie kommt aus
+  `PublisherResponse.SeriesCount` und wird **ohne Eigentumsfilter** gezählt
+  (`PublishersController.cs:153`).
+
+Damit ist die Lücke exakt die behauptete und keine andere: Die Zahl ist global, der Text sagt aber nicht,
+**wessen** Reihen das sind.
+
+**Zwei Begriffe, die auseinandergehalten gehören.** „Verlag" gibt es zweimal: die katalogisierte
+`Publisher`-Entität und ein freies Textfeld `Textbook.Publisher` am Lehrbuch des Kindes
+(`AdminEntities.cs:161`). Das Löschen berührt das Textfeld nicht. Und der eigentliche Bruch ist eine
+Eigentums-Asymmetrie: **die Reihe hat einen Eigentümer, der Verlag bewusst keinen** — eine eigentümerlose
+Ressource greift beim Löschen in eigentumsgebundene hinein.
+
 ## Offene Punkte
 
-Diese Story ist bewusst eine **`Frage`**: sie kann in `verworfen` enden, und das wäre ein Erfolg. Ein
-Agent darf sie darum nicht selbst entscheiden (README → „Was der Agent selbst grillen darf").
+1. ~~**Gilt die B-63-Entscheidung weiter?**~~ → Entscheidung 1 (ja, unverändert).
+2. ~~**Falls ja — welche Bremse?**~~ → Entscheidung 1: Variante (b), Sperre nur gegen fremde Reihen.
+3. ~~**Sicherheits- oder Bedienfrage?**~~ → Entscheidung 4 (Bedienfrage, `prio` bleibt P3).
 
-1. **Gilt die B-63-Entscheidung weiter?** Empfehlung: ja für `POST`/`PATCH`, nein für `DELETE`. Anlegen
-   und Umbenennen sind additiv bzw. reparierbar; Löschen ist der einzige Aufruf, der fremde Daten
-   irreversibel verändert.
-2. **Falls ja — welche Bremse?** Drei Formen, aufsteigend teuer: (a) nur die Bestätigungsfrage im
-   Frontend ehrlich machen („davon N Reihen anderer Konten"), (b) eine Nutzungssperre wie bei der Reihe
-   (`409`, solange **fremde** Reihen daran hängen), (c) Löschen nur für die Admin-Rolle. Empfehlung: (b)
-   — es folgt dem Muster, das der Nachbar-Controller schon hat, und lässt das Aufräumen ungenutzter
-   Verlage weiterhin zu.
-3. **Ist das eine Sicherheits- oder eine Bedienfrage?** Empfehlung: Bedienfrage. Die Creator-Rolle
-   bekommt nur, wer ein Konto anlegt; das ist kein anonymer Angriffsweg. Bei anderer Einschätzung
-   verschiebt sich die `prio` deutlich nach oben.
+## Entscheidungen
+
+1. **B-63 bleibt, und die Bremse ist Variante (b): Sperre nur gegen *fremde* Reihen.** Ein Verlag bleibt
+   eigentümerlos — einen Namen zu vergeben ist keine Autorschaft, und eine Eigentümerbindung an „Klett"
+   wäre absurd. Gelöscht werden darf er, solange nur **eigene** Reihen daran hängen; sobald eine fremde
+   dabei ist, `409`. Begründung: Der Kopfkommentar von `PublisherAdmin.tsx` sagt selbst, wofür die Seite
+   da ist — einen Tippfehler („Coernelsen") aufräumen. Dieser Fall hat null oder nur eigene Reihen; ein
+   Verlag in echtem geteiltem Gebrauch hat fremde. Die Sperre trifft damit **genau den schädlichen Fall
+   und lässt genau den gemeinten zu**, was eine Bestätigungsfrage nicht leistet — die klickt man weg.
+   **Kosten:** gering, und ausdrücklich **keine Migration**: `TextbookSeries.OwnerAdultId` existiert, die
+   Vorprüfung ist ein `AnyAsync(s => s.PublisherId == id && s.OwnerAdultId != ich)`. Am Löschverhalten im
+   Schema ändert sich nichts — der Unterschied zu B-144, wo `Restrict` nötig wird.
+2. **Die Admin-Rolle überschreibt die Sperre.** Begründung: Entscheidung 1 stellt eine Falle auf — sobald
+   **zwei** Creator je eine Reihe an denselben Verlag hängen, kann ihn niemand mehr löschen, weil jeder
+   die Reihe des anderen als fremd sieht. Ein vertippter Verlag, den zwei Leute erwischt haben, bliebe
+   dann für immer im geteilten Katalog. Das Muster liegt fertig daneben
+   (`Auth/ExercisePermissionService.cs:24,34,46` — dreimal `if (user.IsAdmin()) return true;`).
+   **Kosten:** Der Admin kann weiterhin fremde Verlagszuordnungen entfernen. Das ist der bewusste Rest —
+   aber mit einer Rolle, die es dafür gibt, statt als Nebenwirkung eines gewöhnlichen Creator-Kontos.
+3. **Der `409` ist der ganze Mechanismus — die Oberfläche erfährt nichts vorab.** Kein aufgeteilter
+   Zähler (eigene/fremde) im Vertrag, kein vorab gesperrter Knopf. Begründung: Das Feld müsste jede
+   Verlagsliste bei jedem Aufruf mitschleppen, damit eine seltene Bestätigungsfrage vorab Bescheid weiß —
+   das Verhältnis stimmt nicht, und es ist dieselbe Form wie in B-144 (Entscheidungen 4 und 5). Der Code
+   folgt dem Registry-Muster und ist keine eigene Entscheidung: **`publisher_in_use`**, neben
+   `exercise_in_use`, `vocabulary_in_use`, `subject_in_use`. **Kosten:** ein vergeblicher Klick — der
+   Grund kommt erst nach dem Bestätigen.
+4. **Bedienfrage, nicht Sicherheitsfrage — `prio` bleibt P3.** Begründung: Die Creator-Rolle bekommt nur,
+   wer ein Konto anlegt; das ist kein anonymer Angriffsweg. Mit Entscheidung 1 ist der Schaden zudem auf
+   „Zuordnung weg" begrenzt und für den Löschenden gesperrt. **Kosten:** Die Story bleibt hinter den drei
+   offenen P2-Wünschen — der heutige Zustand hält also noch eine Weile.
+
+**Ein Nebeneffekt, der gratis anfällt:** Sobald die Sperre steht, wird der **bestehende**
+Bestätigungstext („N Reihe(n) verlieren nur die Zuordnung") von selbst wahr — wenn gelöscht werden darf,
+gehören alle gezählten Reihen dem Löschenden. Die Story wollte diesen Text ehrlich machen; Entscheidung 1
+erledigt das, ohne ihn anzufassen.
 
 ## Akzeptanzkriterien
 
-> Entwurf — hängen an Offenem Punkt 2 und werden erst beim Grillen final.
-
-1. Das Löschen eines Verlags, an dem Reihen **fremder** Konten hängen, ist nicht mehr folgenlos möglich
-   bzw. wird dem Löschenden vorher wahrheitsgemäß beziffert.
-2. Das Löschen eines Verlags ohne fremde Reihen bleibt möglich.
-3. Der Klassen- bzw. Methodenkommentar sagt die tatsächliche Reichweite, nicht nur die Kosten pro Reihe.
+1. `DELETE creator/publishers/{id}` antwortet `409 publisher_in_use`, sobald eine Reihe **eines anderen
+   Kontos** auf den Verlag zeigt.
+2. Hängen nur eigene Reihen daran — oder gar keine —, bleibt das Löschen möglich wie heute.
+3. Ein Konto mit der **Admin**-Rolle löscht auch dann, wenn fremde Reihen daran hängen.
+4. Die betroffenen Reihen verlieren weiterhin nur ihre Zuordnung (`SetNull`); es verschwindet keine Zeile.
+5. Der Klassen- und der Methodenkommentar sagen die tatsächliche Reichweite — heute beziffern sie die
+   Kosten *pro Reihe* und verschweigen, dass alle Creator gleichzeitig betroffen sind.
+6. Je ein Integrationstest, vorher rot: gesperrt bei fremder Reihe, erlaubt bei eigener, erlaubt für den
+   Admin.
 
 ## Verlauf
 
@@ -85,3 +140,9 @@ Agent darf sie darum nicht selbst entscheiden (README → „Was der Agent selbs
   Zustand ist eine dokumentierte B-63-Entscheidung, und sie zu revidieren ist eine Wertentscheidung.
   `entgangen_bei` bleibt **leer** — es ist kein durchgekommener Defekt, sondern eine bewusste
   Entscheidung, deren Begründung sich als zu eng erwiesen hat.
+- **2026-08-10** — **gegrillt** im Dialog mit dem Nutzer (vier Entscheidungen). Die Messung hat den
+  Ist-Stand diesmal **bestätigt** statt ihn umzuwerfen: genau eine Beziehung, `SetNull`, keine Cascade —
+  der Unterschied zur Schwester-Story [B-144](B-144-fach-loeschen-trifft-reihen-lautlos.md) ist damit
+  grundsätzlich, und ihre Entscheidungen sind hier **kein** Präzedenzfall. Die Story endet nicht in
+  `verworfen`: der Zustand ist real, aber die Bremse fällt schlanker aus als befürchtet (keine Migration).
+  Voraussichtlich `S`, `wo: beides`, `migration: nein` — zu bestätigen beim Schätzen.
