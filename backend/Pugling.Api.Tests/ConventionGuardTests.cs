@@ -580,6 +580,87 @@ public class ConventionGuardTests
         yield return type;
     }
 
+    // ─────────────────────────────────────────── (x) free-text search folds case (B-135)
+
+    /// <summary>
+    /// Every free-text search goes through <see cref="Pugling.Api.Services.Shared.SearchPattern"/>, never
+    /// through <c>string.Contains</c>.
+    /// <para>
+    /// <b>Why this needs a gate at all.</b> The rule is invisible: <c>x.Title.Contains(search)</c> is the
+    /// obvious thing to write, it compiles, it returns rows - and on SQLite it silently searches
+    /// byte-exact, because EF maps it to <c>instr()</c>, which ignores the column collation. Nothing in
+    /// the type system, the analyzers or a passing test says so. B-128 fixed two call sites, B-135 the
+    /// remaining seven; without this test the eighth arrives unnoticed.
+    /// </para>
+    /// <para>
+    /// <b>What it does not catch, so nobody mistakes it for complete.</b> It is a text scan, not a
+    /// compiler, and it is bounded twice. By <em>identifier</em>: it keys on the names this repo gives a
+    /// search term - anything containing <c>search</c> or <c>term</c> (so <c>searchTerm</c> too), plus
+    /// <c>word</c> and <c>translation</c>. A parameter called <c>needle</c> slips past, and so does a term
+    /// reached through a property. And by <em>directory</em>: only <c>Controllers/</c> and
+    /// <c>Services/</c> are scanned - a query written in <c>Data/</c> is not covered (there is none today;
+    /// measured while writing this). That is the accepted price of a crude parser (the lesson from B-40) -
+    /// it covers the shape that gets written here, and its exception list carries a reason per entry so it
+    /// never grows by reflex.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void Freitextsuchen_Falten_Die_Schreibweise()
+    {
+        var apiDir = Path.Combine(RepoRoot(), "backend", "Pugling.Api");
+        var files = Directory.GetFiles(Path.Combine(apiDir, "Controllers"), "*.cs", SearchOption.AllDirectories)
+            .Concat(Directory.GetFiles(Path.Combine(apiDir, "Services"), "*.cs", SearchOption.AllDirectories))
+            .ToArray();
+
+        // `\w*` around the stems on purpose: `searchTerm` is the likeliest name of all, and an anchored
+        // \b after `search` would let exactly it through - the one variant this rule cannot afford to miss.
+        var forbidden = new Regex(@"\.Contains\s*\(\s*\w*(?i:search|term|word|translation)\w*",
+            RegexOptions.Compiled);
+
+        // The one legitimate `Contains` on a search term: it compares IN MEMORY (no SQL translation), and
+        // it already folds case itself - `SearchPattern` would be wrong there, not missing. Matched on the
+        // full signature rather than the bare method name, so the exemption covers that one line and not
+        // every future line of the file that happens to mention `Matches`.
+        var allowed = new[]
+        {
+            "ChildLearnProgressService.cs:private static bool Matches(",
+        };
+
+        var offenders = new List<string>();
+        var blessedHits = 0;
+        foreach (var file in files)
+        {
+            var lineNo = 0;
+            foreach (var raw in File.ReadLines(file))
+            {
+                lineNo++;
+                var line = raw.TrimStart();
+                if (line.StartsWith("//", StringComparison.Ordinal) || line.StartsWith('*'))
+                    continue; // comments quote the rule, they do not violate it.
+                // Must come first: the blessed call is itself spelled `SearchPattern.Contains(search)`.
+                if (line.Contains("SearchPattern.Contains(", StringComparison.Ordinal))
+                {
+                    blessedHits++;
+                    continue;
+                }
+                if (!forbidden.IsMatch(line))
+                    continue;
+                if (allowed.Any(a => file.EndsWith(a.Split(':')[0], StringComparison.Ordinal)
+                                     && line.Contains(a.Split(':')[1], StringComparison.Ordinal)))
+                    continue;
+                offenders.Add($"{Path.GetFileName(file)}:{lineNo}: {line}");
+            }
+        }
+
+        // Self-protection: without it a wrong path would make this test green by finding nothing at all.
+        Assert.True(files.Length >= 40, $"Too few source files found ({files.Length}) - wrong path?");
+        Assert.True(blessedHits >= 8, $"Too few SearchPattern.Contains calls found ({blessedHits}) - the scan does not bite.");
+        Assert.True(offenders.Count == 0,
+            "A free-text search has to go through SearchPattern + EF.Functions.Like: EF maps string.Contains "
+            + "to SQLite's byte-exact instr(), which ignores the column collation (B-128/B-135).\n"
+            + string.Join("\n", offenders));
+    }
+
     /// <summary>Repo root: upward from <see cref="AppContext.BaseDirectory"/> until <c>backend</c>+<c>docs</c> or <c>.git</c>.</summary>
     private static string RepoRoot()
     {

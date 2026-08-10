@@ -13,7 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-124]
-nachgeschaut: ""
+nachgeschaut: 2026-08-10
 wartet_auf: ""
 ---
 
@@ -167,3 +167,8 @@ vergebenen Namen, andere Schreibweise, und als Gegenprobe die erhaltene Idempote
 - **2026-08-10** — **abgenommen.** Commit `0663aa8` (gemeinsam mit B-128). Verifikation: sechs eigene
   Fälle **6/6**, Suite **788/788**, E2E **29/29** als Rollengang, `pugling-reviewer` zweimal — der zweite
   Lauf hat die zwei Test-Lücken gefunden, die diese Abnahme sonst hohl gemacht hätten.
+- **2026-08-10** — nachgeschaut (Nachtlauf, Retro des Folge-Sprints), und zwar besonders genau, weil
+  [B-136](B-136-verlag-umbenennen-erzeugt-namensdublette.md) die Regel wörtlich übernimmt. Geprüft: beide
+  Richtungen sind da (Slug-Treffer nur bei Namensgleichheit; freier Slug heißt nicht freier Name), der
+  Selbstausschluss `s.Id != id` steht im PATCH, und der Kommentar benennt den verbleibenden
+  nicht-ASCII-Fall selbst statt ihn zu verschweigen. Kein durchgekommener Defekt.

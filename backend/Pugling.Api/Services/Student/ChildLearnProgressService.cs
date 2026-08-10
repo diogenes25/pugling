@@ -293,8 +293,13 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var term = search.Trim();
-            joined = joined.Where(x => x.Word.Contains(term) || x.Translation.Contains(term));
+            // LIKE, not Contains: `joined` is an IQueryable, so this runs as SQL - and EF maps Contains to
+            // SQLite's byte-exact instr() (see SearchPattern, B-135). The sibling `Matches` a few lines up
+            // runs in memory and folds case on its own; that these two look alike and translate differently
+            // is exactly why this line was missed twice.
+            var pattern = SearchPattern.Contains(search.Trim());
+            joined = joined.Where(x => EF.Functions.Like(x.Word, pattern, SearchPattern.Escape)
+                || EF.Functions.Like(x.Translation, pattern, SearchPattern.Escape));
         }
 
         var ordered = (sort.Key?.ToLowerInvariant(), sort.Desc) switch

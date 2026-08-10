@@ -500,7 +500,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (41)
+### Offen (40)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -515,9 +515,8 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-50](B-50-kind-beschreibt-sich-selbst.md) | Das Kind beschreibt sich selbst: Interessen in einem geführten Prozess | Wunsch | `geschaetzt` | P2 | L | beides | — |
 | [B-131](B-131-leere-story-faellt-aus-dem-index.md) | Eine leere Story-Datei verschwindet aus dem Index — auch aus der Mängelliste | Defekt | `ausformuliert` | P3 | — | — | — |
 | [B-134](B-134-bedingte-live-regionen.md) | Dreizehn Live-Regionen entstehen zusammen mit ihrem Text — und schweigen darum | Defekt | `ausformuliert` | P3 | — | — | — |
-| [B-135](B-135-freitextsuchen-case-sensitiv.md) | Sechs weitere Freitextsuchen sind buchstabengenau | Defekt | `ausformuliert` | P3 | — | — | — |
-| [B-136](B-136-verlag-umbenennen-erzeugt-namensdublette.md) | Beim Verlag steht dieselbe Dublettenlücke wie bei der Reihe | Defekt | `ausformuliert` | P3 | — | — | — |
 | [B-137](B-137-freitext-fach-unerreichbar.md) | Ein Freitext-Fach an der Reihe ist sichtbar, aber nicht wegzubekommen | Defekt | `ausformuliert` | P3 | — | — | — |
+| [B-141](B-141-interest-tag-label-dublette.md) | Zwei Interessen-Tags dürfen dasselbe Label tragen | Defekt | `idee` | P3 | — | — | — |
 | [B-17](B-17-birkenbihl-sprachcodes.md) | Sprachcode-Normalisierung bei der Vokabel-Dekodierung | Frage | `geschaetzt` | P3 | XS | frontend | — |
 | [B-127](B-127-verlag-loeschen-trifft-fremde.md) | Jeder Creator darf einen Verlag löschen, den alle benutzen | Frage | `ausformuliert` | P3 | — | — | — |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `geschaetzt` | P3 | L | backend | Migration |
@@ -547,7 +546,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-05](B-05-buchstaben-tausch.md) | Buchstaben-Tausch-Eingabe (Anagramm) | Wunsch | `geschaetzt` | P5 | M | beides | — |
 
 <details>
-<summary>Abgenommen (87)</summary>
+<summary>Abgenommen (89)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -586,6 +585,8 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-130](B-130-unit-themen-ohne-grenze.md) | Aus einem 200-Zeichen-Feld wurde eine unbegrenzte Liste, ohne dass eine Grenze nachrückte | Aufräumen | `abgenommen` | P3 | S | backend | — |
 | [B-132](B-132-hinweis-live-region-haengt-aus.md) | Der Hinweis „aus dem Lehrwerk übernommen" wird angesagt, indem seine Live-Region entsteht | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-133](B-133-zwei-reihen-ein-anzeigename.md) | Nach einer Umbenennung können zwei Reihen denselben Anzeigenamen tragen | Defekt | `abgenommen` | P3 | S | backend | — |
+| [B-135](B-135-freitextsuchen-case-sensitiv.md) | Sieben weitere Freitextsuchen sind buchstabengenau | Defekt | `abgenommen` | P3 | M | backend | — |
+| [B-136](B-136-verlag-umbenennen-erzeugt-namensdublette.md) | Beim Verlag steht dieselbe Dublettenlücke wie bei der Reihe | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-139](B-139-e2e-nachtlauf-login-bricht-ab-test-2.md) | Der Aufräum-Sweep der E2E löschte das Journal seiner eigenen Datenbank | Defekt | `abgenommen` | P1 | XS | frontend | — |
 | [B-25](B-25-vite-pwa-peer-konflikt.md) | Peer-Konflikt `vite-plugin-pwa` ↔ `vite@8` lösen | Aufräumen | `abgenommen` | P3 | XS | frontend | — |
 | [B-26](B-26-e2e-in-ci.md) | Der E2E-Nachtlauf ist rot – und niemand erfährt es | Defekt | `abgenommen` | P1 | S | frontend | — |
@@ -653,7 +654,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (14)
 
-**Nachgeschaut: 79 von 87 abgenommenen** — und in 10 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 8 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 84 von 89 abgenommenen** — und in 10 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 5 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -673,7 +674,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-139](B-139-e2e-nachtlauf-login-bricht-ab-test-2.md) | Der Aufräum-Sweep der E2E löschte das Journal seiner eigenen Datenbank | [B-55] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (8) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (5) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -682,11 +683,8 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | --- | --- |
 | [B-11](B-11-uebungen-veroeffentlichen.md) | Übungen ausdrücklich veröffentlichen |
 | [B-123](B-123-lehrwerk-reihe-bearbeiten.md) | Lehrwerk-Reihe im Vater-Web bearbeiten |
-| [B-128](B-128-katalogsuche-case-sensitiv.md) | Die Katalogsuche findet „KLETT" nicht, obwohl „Klett" da ist |
-| [B-129](B-129-themenfeld-committet-beim-verlassen.md) | Das Themenfeld legt an, was beim Wegklicken gerade dasteht |
-| [B-130](B-130-unit-themen-ohne-grenze.md) | Aus einem 200-Zeichen-Feld wurde eine unbegrenzte Liste, ohne dass eine Grenze nachrückte |
-| [B-132](B-132-hinweis-live-region-haengt-aus.md) | Der Hinweis „aus dem Lehrwerk übernommen" wird angesagt, indem seine Live-Region entsteht |
-| [B-133](B-133-zwei-reihen-ein-anzeigename.md) | Nach einer Umbenennung können zwei Reihen denselben Anzeigenamen tragen |
+| [B-135](B-135-freitextsuchen-case-sensitiv.md) | Sieben weitere Freitextsuchen sind buchstabengenau |
+| [B-136](B-136-verlag-umbenennen-erzeugt-namensdublette.md) | Beim Verlag steht dieselbe Dublettenlücke wie bei der Reihe |
 | [B-139](B-139-e2e-nachtlauf-login-bricht-ab-test-2.md) | Der Aufräum-Sweep der E2E löschte das Journal seiner eigenen Datenbank |
 
 </details>

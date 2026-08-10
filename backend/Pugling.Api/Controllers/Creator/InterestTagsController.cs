@@ -50,7 +50,13 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
         var query = db.InterestTags.AsNoTracking().AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
-            query = query.Where(t => t.Slug.Contains(search) || t.Label.Contains(search));
+        {
+            // LIKE, not Contains: EF maps Contains to SQLite's byte-exact instr() - see SearchPattern (B-135).
+            // The slug is lowercase by derivation, so folding case can only ever add hits here, never remove any.
+            var pattern = SearchPattern.Contains(search);
+            query = query.Where(t => EF.Functions.Like(t.Slug, pattern, SearchPattern.Escape)
+                                     || EF.Functions.Like(t.Label, pattern, SearchPattern.Escape));
+        }
         if (facet is not null)
             query = query.Where(t => t.Facet == facet);
         if (unused is true)

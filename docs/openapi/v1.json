@@ -22973,7 +22973,7 @@
         "tags": [
           "Creator \u2013 Publishers"
         ],
-        "summary": "Creates a publisher. If the slug already exists, the existing entry comes back (idempotent) - so an\nagent can safely repeat the same catalog build instead of creating duplicates.",
+        "summary": "Creates a publisher. If the slug is already taken \u003Cb\u003Eby a publisher of the same display name\u003C/b\u003E,\nthat publisher comes back (idempotent) - so an agent can safely repeat the same catalog build\ninstead of creating duplicates. A taken slug whose publisher meanwhile carries a \u003Cem\u003Edifferent\u003C/em\u003E\nname is a conflict (409), not a hit: the slug is immutable and stops matching the name after a\nrename (B-136, the rule \u0060textbook-series\u0060 already follows since B-133).",
         "requestBody": {
           "content": {
             "application/json": {
@@ -23017,6 +23017,16 @@
           },
           "400": {
             "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {

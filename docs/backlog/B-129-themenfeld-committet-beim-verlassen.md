@@ -13,6 +13,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-63]
 wartet_auf: ""
+nachgeschaut: 2026-08-10
 ---
 
 # B-129 · Das Themenfeld legt an, was beim Wegklicken gerade dasteht
@@ -135,3 +136,8 @@ Fehler liegt im Zustand einer Komponente.
   **177/177**, `tsc -b` sauber, E2E **29/29** als Rollengang (`lehrwerke.spec.ts` und
   `creator-lehrwerk-weg.spec.ts` fahren den Creator-Weg durch dieses Formular), `frontend-reviewer`
   zweimal gelaufen.
+- **2026-08-10** — nachgeschaut (Nachtlauf, Retro des Folge-Sprints). Geprüft wurde die Gegenrichtung, nicht
+  die Existenz des Fixes: `onKeyDown` leert bei Escape das Feld, **bevor** `onBlur={addTopic}` greifen kann
+  (`VaterLehrwerke.tsx:504-509`) — der Abbruch wirkt also wirklich und wird nicht vom Blur überholt. Die
+  beiden Wege stehen als dauerhafte `.sub`-Zeile statt im Platzhalter, der im nicht-leeren Feld unsichtbar
+  wäre. Kein durchgekommener Defekt.

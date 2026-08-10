@@ -33,7 +33,13 @@ public class ClozeTextsController(PuglingDbContext db) : ControllerBase
     {
         var query = db.ClozeTexts.AsNoTracking().AsQueryable();
         if (!string.IsNullOrWhiteSpace(search))
-            query = query.Where(c => c.Title.Contains(search) || c.Text.Contains(search) || c.Key.Contains(search));
+        {
+            // LIKE, not Contains: EF maps Contains to SQLite's byte-exact instr() - see SearchPattern (B-135).
+            var pattern = SearchPattern.Contains(search);
+            query = query.Where(c => EF.Functions.Like(c.Title, pattern, SearchPattern.Escape)
+                                     || EF.Functions.Like(c.Text, pattern, SearchPattern.Escape)
+                                     || EF.Functions.Like(c.Key, pattern, SearchPattern.Escape));
+        }
         var items = await query.OrderBy(c => c.Key).ToPagedListAsync(Response, skip, take, ct);
         return items.Select(Map);
     }

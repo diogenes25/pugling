@@ -76,7 +76,12 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
         var query = db.MediaAssets.AsNoTracking().AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
-            query = query.Where(a => a.Description.Contains(search) || a.Key.Contains(search));
+        {
+            // LIKE, not Contains: EF maps Contains to SQLite's byte-exact instr() - see SearchPattern (B-135).
+            var pattern = SearchPattern.Contains(search);
+            query = query.Where(a => EF.Functions.Like(a.Description, pattern, SearchPattern.Escape)
+                                     || EF.Functions.Like(a.Key, pattern, SearchPattern.Escape));
+        }
         if (kind is not null)
             query = query.Where(a => a.Kind == kind);
         // An ordering comparison - only possible because the rating is persisted as an int (see DbContext).

@@ -66,7 +66,14 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
             .AsNoTracking()
             .Where(a => a.AdultId == supervisorId);
         if (!string.IsNullOrWhiteSpace(search))
-            query = query.Where(a => a.Title.Contains(search) || a.ArticleNumber.Contains(search));
+        {
+            // LIKE, not Contains: EF maps Contains to SQLite's byte-exact instr() - see SearchPattern (B-135).
+            // The article number folds case as well: it is the supervisor's own shorthand for finding the
+            // article again ("TV-001"), not a system key - so "tv-001" has to hit it.
+            var pattern = SearchPattern.Contains(search);
+            query = query.Where(a => EF.Functions.Like(a.Title, pattern, SearchPattern.Escape)
+                                     || EF.Functions.Like(a.ArticleNumber, pattern, SearchPattern.Escape));
+        }
         return (await query
             .OrderBy(a => a.ArticleNumber)
             .ToPagedListAsync(Response, skip, take, ct))

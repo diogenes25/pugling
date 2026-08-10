@@ -13,6 +13,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-63]
 wartet_auf: ""
+nachgeschaut: 2026-08-10
 ---
 
 # B-130 · Aus einem 200-Zeichen-Feld wurde eine unbegrenzte Liste, ohne dass eine Grenze nachrückte
@@ -133,3 +134,6 @@ den PATCH-Weg. Kein `/smoke-test`, kein E2E: die Regel sitzt an der API und ist 
   (Rollengang, nach den letzten Änderungen erneut gefahren), `pugling-reviewer` zweimal gelaufen —
   ohne Fund an dieser Story. Abnahmeform `Aufräumen` erfüllt: kein Verhalten außerhalb der neuen Grenzen
   geändert, alles so grün wie vorher.
+- **2026-08-10** — nachgeschaut (Nachtlauf, Retro des Folge-Sprints). Geprüft wurde, ob die Grenze eine
+  echte Prüfung ist und nicht nur ein Kommentar: `MaxTopics = 50` wird in `SeriesUnitsController.cs:192-194`
+  ausgewertet, und die Fehlermeldung nennt die gesendete Anzahl. Kein durchgekommener Defekt.

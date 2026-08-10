@@ -13,6 +13,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-63]
 wartet_auf: ""
+nachgeschaut: 2026-08-10
 ---
 
 # B-128 · Die Katalogsuche findet „KLETT" nicht, obwohl „Klett" da ist
@@ -161,3 +162,10 @@ Modell-Drift) als Abnahme der Faltung, und der `git diff` am `PuglingDbContextMo
   als Rollengang, `pugling-reviewer` zweimal — der zweite Lauf hat Escaping-Reihenfolge und
   `LIKE ... ESCAPE`-Übersetzbarkeit gegen eine echte SQLite-Instanz gemessen. Migrationskette bei
   Länge 1, Snapshot-Diff genau die zwei beabsichtigten Zeilen.
+- **2026-08-10** — nachgeschaut (Nachtlauf, Retro des Folge-Sprints). Geprüft wurde nicht „ist es noch da",
+  sondern zwei benannte Punkte: (a) beide Aufrufstellen dieser Story übergeben `EF.Functions.Like` das
+  dritte Argument `SearchPattern.Escape` — ohne das wäre ein getipptes `%` ein Treffer auf alles; (b) die
+  an der Klasse dokumentierte ASCII-Grenze stimmt weiter. **Ein Befund, aber kein Defekt:** die von dieser
+  Story ergänzte `NOCASE`-Collation auf `Publisher.Name` war bis heute **wirkungslos** — es gab keinen
+  einzigen Gleichheitsvergleich, auf den sie hätte wirken können. [B-136](B-136-verlag-umbenennen-erzeugt-namensdublette.md)
+  macht sie tragend. Kein durchgekommener Defekt.

@@ -79,9 +79,10 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var term = search.Trim();
-            query = query.Where(e => e.Title.Contains(term)
-                || (e.Description != null && e.Description.Contains(term)));
+            // LIKE, not Contains: EF maps Contains to SQLite's byte-exact instr() - see SearchPattern (B-135).
+            var pattern = SearchPattern.Contains(search.Trim());
+            query = query.Where(e => EF.Functions.Like(e.Title, pattern, SearchPattern.Escape)
+                || (e.Description != null && EF.Functions.Like(e.Description, pattern, SearchPattern.Escape)));
         }
 
         return await ApplySort(query, SortingExtensions.ParseSort(sort, dir))

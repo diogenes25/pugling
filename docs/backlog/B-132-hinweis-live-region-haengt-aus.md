@@ -15,6 +15,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-67]
 wartet_auf: ""
+nachgeschaut: 2026-08-10
 ---
 
 # B-132 · Der Hinweis „aus dem Lehrwerk übernommen" wird angesagt, indem seine Live-Region entsteht
@@ -167,3 +168,7 @@ Lauf wäre teurer und würde dieselbe Zusicherung schwächer treffen.
   **gemessen**. Was kein Automat entscheiden kann und darum offen bleibt (Step 6, dritter Ausgang): ob
   NVDA/VoiceOver die drei Hinweise wirklich vorliest. Der Check für den Menschen: Fachlehrer-Formular
   öffnen, eine Reihe wählen, hinhören.
+- **2026-08-10** — nachgeschaut (Nachtlauf, Retro des Folge-Sprints). Geprüft wurde genau die Eigenschaft,
+  deren Fehlen der Defekt war: die Live-Region steht in `VaterFachlehrer.tsx:141` **dauerhaft** im DOM —
+  `active` schaltet nur eine CSS-Klasse, nicht die Existenz des Elements. Ein bedingtes Rendern wäre der
+  Rückfall gewesen. Kein durchgekommener Defekt.

@@ -88,13 +88,29 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
 
         if (partOfSpeech is not null)
             query = query.Where(v => v.PartOfSpeech == partOfSpeech);
+        // LIKE, not Contains: EF maps Contains to SQLite's byte-exact instr() - see SearchPattern (B-135).
+        // Word and Translation carry the NOCASE collation, and it does NOT help here: a collation acts on
+        // equality, never on a substring match. That is the trap this endpoint looked immune to.
+        // The two narrow filters fold too: the contract documents them as "substring filter" exactly like
+        // `search` (only `partOfSpeech` says "exact"), so one endpoint must not answer two different ways
+        // depending on which parameter the caller reaches for.
         if (!string.IsNullOrWhiteSpace(search))
-            query = query.Where(v => v.Word.Contains(search)
-                || v.Translation.Contains(search) || v.Key.Contains(search));
+        {
+            var pattern = SearchPattern.Contains(search);
+            query = query.Where(v => EF.Functions.Like(v.Word, pattern, SearchPattern.Escape)
+                || EF.Functions.Like(v.Translation, pattern, SearchPattern.Escape)
+                || EF.Functions.Like(v.Key, pattern, SearchPattern.Escape));
+        }
         if (!string.IsNullOrWhiteSpace(word))
-            query = query.Where(v => v.Word.Contains(word));
+        {
+            var wordPattern = SearchPattern.Contains(word);
+            query = query.Where(v => EF.Functions.Like(v.Word, wordPattern, SearchPattern.Escape));
+        }
         if (!string.IsNullOrWhiteSpace(translation))
-            query = query.Where(v => v.Translation.Contains(translation));
+        {
+            var translationPattern = SearchPattern.Contains(translation);
+            query = query.Where(v => EF.Functions.Like(v.Translation, translationPattern, SearchPattern.Escape));
+        }
         if (untranslated is true)
             query = query.Where(v => v.Translation == "");
         if (incomplete is true)

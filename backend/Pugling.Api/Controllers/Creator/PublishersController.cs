@@ -62,22 +62,49 @@ public class PublishersController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Creates a publisher. If the slug already exists, the existing entry comes back (idempotent) - so an
-    /// agent can safely repeat the same catalog build instead of creating duplicates.
+    /// Creates a publisher. If the slug is already taken <b>by a publisher of the same display name</b>,
+    /// that publisher comes back (idempotent) - so an agent can safely repeat the same catalog build
+    /// instead of creating duplicates. A taken slug whose publisher meanwhile carries a <em>different</em>
+    /// name is a conflict (409), not a hit: the slug is immutable and stops matching the name after a
+    /// rename (B-136, the rule <c>textbook-series</c> already follows since B-133).
     /// </summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<PublisherResponse>> Create(CreatePublisherDto dto, CancellationToken ct = default)
     {
         var (slug, problem) = this.DeriveRequiredSlug(dto.Name, "Name");
         if (problem is not null) return problem;
 
-        var existing = await Project(db.Publishers.AsNoTracking().Where(p => p.Slug == slug)).FirstOrDefaultAsync(ct);
-        if (existing is not null) return Ok(existing);
+        var name = dto.Name.Trim();
 
-        var publisher = new Publisher { Name = dto.Name.Trim(), Slug = slug! };
+        // The slug hit is what makes this endpoint idempotent - but only while name and slug still agree.
+        // The slug freezes on rename, so a publisher named "Cornelsen" can still carry the slug "klett":
+        // posting "Klett" would then hit it and hand back a publisher of a different name, and a catalog
+        // agent would hang its series off the wrong one without ever seeing an error.
+        // Known and accepted asymmetry (same as TextbookSeriesController): this comparison folds full
+        // Unicode, the one below folds in SQLite (`NOCASE`, ASCII only). NOCASE-equal always implies
+        // OrdinalIgnoreCase-equal, so this branch can never hand out a row of a different name - the
+        // residue runs the other way: once a rename has decoupled name and slug, a non-ASCII case pair
+        // ("ökotest" next to "Ökotest") passes both checks and creates a second row. Closing that would
+        // need an ICU collation, the same limit Services/Shared/SearchPattern.cs already documents.
+        var existing = await Project(db.Publishers.AsNoTracking().Where(p => p.Slug == slug)).FirstOrDefaultAsync(ct);
+        if (existing is not null)
+            return string.Equals(existing.Name, name, StringComparison.OrdinalIgnoreCase)
+                ? Ok(existing)
+                : this.ProblemWithCode(ApiErrors.DuplicatePublisher,
+                    "Another publisher already uses the slug this name derives to.");
+
+        // And the mirror image: a free slug does not mean a free display name, for the same reason. The
+        // comparison rides on the NOCASE collation on Publisher.Name (B-128) - which had no equality
+        // comparison to act on until this line existed.
+        if (await db.Publishers.AnyAsync(p => p.Name == name, ct))
+            return this.ProblemWithCode(ApiErrors.DuplicatePublisher,
+                "Another publisher already uses this display name.");
+
+        var publisher = new Publisher { Name = name, Slug = slug! };
         db.Publishers.Add(publisher);
         await db.SaveChangesAsync(ct);
 
@@ -111,6 +138,13 @@ public class PublishersController(PuglingDbContext db) : ControllerBase
             if (await db.Publishers.AnyAsync(p => p.Id != id && p.Slug == slug, ct))
                 return this.ProblemWithCode(ApiErrors.DuplicatePublisher,
                     "Another publisher already uses the slug this name derives to.");
+
+            // The display name needs its own check, and only its absence was the defect (B-136): once a
+            // rename has decoupled name and slug elsewhere, "slug is free" and "name is free" stop being
+            // the same question - the target name can sit on a row whose slug derives from its old name.
+            if (await db.Publishers.AnyAsync(p => p.Id != id && p.Name == name, ct))
+                return this.ProblemWithCode(ApiErrors.DuplicatePublisher,
+                    "Another publisher already uses this display name.");
 
             publisher.Name = name;
         }

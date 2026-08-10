@@ -141,6 +141,17 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
         Assert.Equal(2, leaf!.Count);
         Assert.Equal("2", itemsRes.Headers.GetValues("X-Total-Count").First());
         Assert.True(leaf![0].GetProperty("masteryPercent").GetInt32() <= leaf![1].GetProperty("masteryPercent").GetInt32());
+
+        // B-135: the item search runs as SQL (`joined` is an IQueryable), so it needs LIKE - unlike the
+        // exercise-level search a few methods up, which compares in memory and folds case on its own.
+        // The two read alike in the source and translate differently; that is why this one stayed
+        // byte-exact through B-128. Asserted here rather than in a case of its own: the progress rows this
+        // endpoint reads only exist after practising, and that setup is what this test already paid for.
+        // `front` is the store word this endpoint searches on (the response calls it that, not "word").
+        var wort = leaf![0].GetProperty("front").GetString()!;
+        var gesucht = await father.GetFromJsonAsync<List<JsonElement>>(
+            $"{basePath}/subjects/{subjectId}/series-units/{seriesUnitId}/vocabulary/{ex1}/items?search={wort.ToUpperInvariant()}");
+        Assert.Contains(gesucht!, e => e.GetProperty("front").GetString() == wort);
     }
 
     [Fact]

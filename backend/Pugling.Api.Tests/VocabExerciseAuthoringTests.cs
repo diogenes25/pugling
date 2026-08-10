@@ -269,12 +269,15 @@ public class VocabExerciseAuthoringTests(PuglingWebAppFactory factory) : IClassF
         await CreateVocabAsync(father, new { sourceLanguage = "en", targetLanguage = "de", word = "elephant", translation = "Elefant" });
         await CreateVocabAsync(father, new { sourceLanguage = "en", targetLanguage = "de", word = "mouse", translation = "Maus" });
 
+        // OrdinalIgnoreCase, because the filter behind it folds case (B-135): an ordinal assertion over a
+        // case-insensitive filter is only green while no "Elephant" happens to sit in this class's
+        // throw-away database - and it would then fail as if the filter were broken.
         var byWord = await father.GetFromJsonAsync<List<JsonElement>>("/api/v1/creator/vocabulary?word=elephant");
-        Assert.All(byWord!, v => Assert.Contains("elephant", v.GetProperty("word").GetString()!));
+        Assert.All(byWord!, v => Assert.Contains("elephant", v.GetProperty("word").GetString()!, StringComparison.OrdinalIgnoreCase));
         Assert.Contains(byWord!, v => v.GetProperty("translation").GetString() == "Elefant");
 
         var byTranslation = await father.GetFromJsonAsync<List<JsonElement>>("/api/v1/creator/vocabulary?translation=Maus");
-        Assert.All(byTranslation!, v => Assert.Contains("Maus", v.GetProperty("translation").GetString()!));
+        Assert.All(byTranslation!, v => Assert.Contains("Maus", v.GetProperty("translation").GetString()!, StringComparison.OrdinalIgnoreCase));
         Assert.DoesNotContain(byTranslation!, v => v.GetProperty("word").GetString() == "elephant");
     }
 }
