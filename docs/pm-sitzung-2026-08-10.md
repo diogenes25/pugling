@@ -378,6 +378,38 @@ ungültiges XML-Doc scharf stellen — vor dem Bauen zu messen, ob sie diese zwe
 **Nicht gelandet**, wie Freigabe 3 es vorschreibt. Zusammen mit dem Vorschlag aus Sprint 1 warten damit
 **zwei** Mechanismen auf die Entscheidung des Nutzers.
 
+## Runde 4 — die Entscheidungen des Nutzers, umgesetzt
+
+Der Nutzer hat am 2026-08-10 sämtliche Vorschläge übernommen. Gelandet ist damit:
+
+**1. Der Rollengang startet seinen Server selbst** — ein Satz in `pm-loop/SKILL.md`, Step 6.
+
+**2. Ein Wächter über die Vertrags-Doku** — `ConventionGuardTests.Vertrags_Dokumentation_Erreicht_Das_Dokument`.
+Vorher wurde, wie empfohlen, die **billigere Variante gemessen statt vermutet**: Der kaputte Doku-Block
+lag bis Commit `1448922` im Repo, `GenerateDocumentationFile` und `TreatWarningsAsErrors` waren beide an
+— und der Build war grün. Der Compiler fängt es also nicht; das Tor ist die verbleibende Möglichkeit.
+
+Der Wächter fand beim ersten Lauf sofort eine **dritte** Fundstelle, die der Reviewer nicht hatte —
+allerdings einen **Fehlalarm**: der `<para>` in `ExerciseGrantDtos.cs:18` steht in einem `<param>` und
+erreicht das Dokument sehr wohl. Ursache war mein eigener Messfehler: Ich hatte die Tag-Inventur als
+*feste Liste* abgefragt statt als Zählung und so `<param>` (181 Vorkommen) übersehen. Korrigiert; als
+Container gelten jetzt `<summary>`, `<param>` und `<remarks>`, und die Grenzen-Beschreibung des Tests
+sagt ausdrücklich, dass ein vierter Container ihn in die **teure** Richtung lügen ließe — rot auf
+korrektem Code. Gegenprobe gefahren: beide Verstoßformen werden mit Datei und Zeile gemeldet.
+
+**3. Die Zähler-Regel, Variante (c)** — in `nachtlauf.md`, Freigabe 3: *Gezählt wird ein Fund genau dann,
+wenn seine Behebung Code oder Tests ändert.* Damit läuft der Schnitt an etwas Ablesbarem statt an meiner
+Einschätzung, wie schwer ein Fund wiegt. Rückwirkend gerechnet hätte er beide Sprints dieses Laufs
+weiterlaufen lassen — Sprint 1 bei 4, Sprint 2 bei 5.
+
+**Das Budget wurde im selben Durchgang bezahlt**, wie Step 8 es verlangt: Der neue Satz schob
+`pm-loop/SKILL.md` 1070 Byte über die Grenze. Gekürzt wurden zwei *erzählende* Passagen, die dieselbe
+Sache doppelt belegen — die 2026-08-05-Zahlen stehen im Backlog-README, das sie ohnehin besitzt, und die
+Begründung der Retro brauchte nicht zwei Beispiele. Ergebnis: **31993 B**, wieder unter Budget.
+
+**Verifikation:** Backend **806/806**, `markdownlint-cli2` grün, Kontext-Budget-Skript meldet
+`pm-loop/SKILL.md` nicht mehr.
+
 ## Offene Roadmap
 
 Die dauerhafte Liste ist [docs/backlog/](backlog/README.md); hier steht nur die Begründung der aktuellen

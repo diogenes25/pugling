@@ -42,6 +42,10 @@ Freigaben für diesen Lauf:
    selbst betrifft, nicht eine benachbarte Fläche. Ein Zähler **je Sprint** zählt jeden so
    gefundenen Fehler; überschreitet er **5**, ist das keine Korrektur mehr, sondern eine
    Endlosschleife – dann endet der GESAMTE Lauf sofort, nicht nur dieser Sprint.
+   **Gezählt wird ein Fund genau dann, wenn seine Behebung Code oder Tests ändert** – nicht,
+   wenn nur ein Kommentar, eine Story oder eine Doku-Zeile nachgezogen wird, und nicht, wenn
+   er außerhalb des Diffs dieses Sprints liegt. Der Schnitt läuft damit an etwas Ablesbarem
+   (was der Fix anfasst) statt an einer Einschätzung des Agenten, wie schwer ein Fund wiegt.
    Ausgesprochen große Stories (faktisch XL) werden im Nachtlauf nicht gebaut – sie werden
    nach dem bestehenden Teilen-Mechanismus (`docs/backlog/README.md` → „Teilen und
    Zusammenlegen") in kleinere Stories zerlegt, und dieses Teilen selbst ist eine zulässige

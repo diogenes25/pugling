@@ -167,10 +167,9 @@ clock**:
   for two companions it has nothing to do with. Sprint 1 of 2026-08-05 ran two stories and was cut
   correctly: the third candidate on the table (B-112) served the goal not at all and stayed out.
 - **The cap is not tidiness — it is what keeps Step 6 affordable.** Three roles × fourteen stories is
-  a walkthrough nobody runs, and the run of 2026-08-05 proves it: fourteen stories accepted, thirteen
-  with a reviewer, eight with smoke/E2E, **zero with a role walkthrough** — and two real defects
-  surfaced the next day, both in that batch (B-96, B-66). B-106, which did run the walkthrough, caught
-  its regression *inside* the sprint. Same care while building; the difference was this one step.
+  a walkthrough nobody runs; the 2026-08-05 run measured exactly that (numbers in
+  `docs/backlog/README.md` → "Der Rollengang fällt am leichtesten weg"). Same care while building; the
+  difference was this one step.
 - **Write one Sprint Goal, in a sentence, from a role's seat** — "the son can play every position
   assigned to him without hitting a dead end", not "finish B-93/B-96/B-99". A goal phrased from a seat
   is *falsifiable in Step 6*; a list of ids is not, and a list is what the 2026-08-05 run had instead.
@@ -267,6 +266,12 @@ If the walkthrough genuinely cannot run (no server reachable, no browser binding
 **recorded** outcome, not a silent omission: one line in each affected story's `## Verlauf` naming what
 was verified instead (HTTP + code reading) and what a human still has to click. A story that reaches
 `abgenommen` without either the walkthrough or that line is mis-stamped.
+
+**Start the server the walk uses *after* the last edit — ideally let the walk start it.** Reverse the
+order rather than remembering to restart; `/smoke-test` and `playwright.config.ts` already do. A walk
+against a stale server is not weak evidence but **false** evidence, and it is the one thing `abgenommen`
+requires that no gate secures. Both polarities measured in
+[the 2026-08-10 protocol](../../../docs/pm-sitzung-2026-08-10.md).
 
 **A walk can be machine-walked, and where it can, prefer that.** A Playwright spec drives the real UI in a
 real browser against a real server — that *is* the walk, except it repeats forever instead of once, which
@@ -382,11 +387,8 @@ Then land **exactly one change to a mechanism**, in this session, before the spr
 Record it in the session log under `## Retrospektive` — what slipped, what mechanism now covers it, and
 what deliberately stays uncovered.
 
-Two data points from this project on why the event is worth its cost. It has effectively happened once,
-informally: after B-106 the loop's own rules were rewritten, which is what produced the Autonomer Modus
-(`2e954f6`) — a retro outcome without a retro. And the 2026-08-05 batch had no retro at all; its six
-review findings arrived a day later through a separate manual pass, by which time fourteen stories were
-already stamped `abgenommen`.
+Why the event earns its cost: the 2026-08-05 batch had no retro, and its six review findings arrived a
+day later through a separate manual pass — with fourteen stories already stamped `abgenommen`.
 
 ## Session log — the durable artifact
 

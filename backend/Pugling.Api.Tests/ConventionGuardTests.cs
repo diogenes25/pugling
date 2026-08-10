@@ -661,6 +661,85 @@ public class ConventionGuardTests
             + string.Join("\n", offenders));
     }
 
+    // ─────────────────────────────────────────── (y) contract XML docs reach the document (B-142 retro)
+
+    /// <summary>
+    /// Every <c>&lt;para&gt;</c> in <c>Pugling.Contracts</c> sits inside its <c>&lt;summary&gt;</c>, and no
+    /// declaration carries two <c>&lt;summary&gt;</c> blocks.
+    /// <para>
+    /// <b>Why this needs a gate.</b> Both mistakes are invisible: the code compiles, the suite stays green,
+    /// and the text silently never reaches <c>docs/openapi/v1.json</c> - which in this project <em>is</em>
+    /// the product. Measured rather than assumed: two such blocks lived in the repo through commit
+    /// <c>1448922</c> with <c>GenerateDocumentationFile</c> and <c>TreatWarningsAsErrors</c> both on, and
+    /// the build was clean. The compiler will not do this for us.
+    /// </para>
+    /// <para>
+    /// <b>Why a gate rather than care.</b> The rule is not a judgement call, it is just hard to see - and
+    /// it came back within the hour: the same mistake was made again while fixing the two originals.
+    /// </para>
+    /// <para>
+    /// <b>Limits.</b> A line scan over contiguous <c>///</c> blocks, not an XML parser. A
+    /// <c>&lt;para&gt;</c> counts as placed when it sits in any element that reaches the document -
+    /// <c>&lt;summary&gt;</c>, <c>&lt;param&gt;</c> or <c>&lt;remarks&gt;</c>. That list was measured, not
+    /// guessed, and the first version of this test got it wrong: it knew only <c>&lt;summary&gt;</c> and
+    /// reported a perfectly good <c>&lt;para&gt;</c> inside a <c>&lt;param&gt;</c>. A container beyond
+    /// those three has to be taught here, or this test lies in the expensive direction - it goes red on
+    /// correct code.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void Vertrags_Dokumentation_Erreicht_Das_Dokument()
+    {
+        var files = Directory.GetFiles(Path.Combine(RepoRoot(), "backend", "Pugling.Contracts"), "*.cs",
+            SearchOption.AllDirectories);
+
+        var offenders = new List<string>();
+        var summaries = 0;
+
+        foreach (var file in files)
+        {
+            var lines = File.ReadAllLines(file);
+            var blockStart = 0;
+            var open = 0;          // depth of container elements that reach the document
+            var count = 0;         // <summary> blocks seen in the current /// run
+            for (var i = 0; i <= lines.Length; i++)
+            {
+                var doc = i < lines.Length && lines[i].TrimStart().StartsWith("///", StringComparison.Ordinal);
+                if (!doc)
+                {
+                    open = 0; count = 0; // the run ended - the next declaration starts fresh
+                    continue;
+                }
+                if (count == 0 && open == 0) blockStart = i + 1;
+
+                foreach (Match m in Regex.Matches(lines[i], @"</?(summary|param|remarks|para)\b[^>]*>"))
+                {
+                    var tag = m.Groups[1].Value;
+                    var closing = m.Value.StartsWith("</", StringComparison.Ordinal);
+                    if (tag == "para")
+                    {
+                        if (!closing && open == 0)
+                            offenders.Add($"{Path.GetFileName(file)}:{i + 1}: <para> ausserhalb von <summary>/<param>/<remarks> - der Text erscheint nicht im Dokument.");
+                        continue;
+                    }
+                    if (closing) { open = Math.Max(0, open - 1); continue; }
+                    open++;
+                    if (tag != "summary") continue;
+                    summaries++;
+                    if (++count > 1)
+                        offenders.Add($"{Path.GetFileName(file)}:{i + 1}: zweites <summary> im selben Doku-Block (ab Zeile {blockStart}) - der Compiler nimmt nur das erste.");
+                }
+            }
+        }
+
+        // Self-protection: a wrong path would otherwise make this test green by finding nothing at all.
+        Assert.True(files.Length >= 20, $"Too few contract files found ({files.Length}) - wrong path?");
+        Assert.True(summaries >= 300, $"Too few <summary> blocks found ({summaries}) - the scan does not bite.");
+        Assert.True(offenders.Count == 0,
+            "XML doc that does not reach docs/openapi/v1.json - the compiler does not report this:\n"
+            + string.Join("\n", offenders));
+    }
+
     /// <summary>Repo root: upward from <see cref="AppContext.BaseDirectory"/> until <c>backend</c>+<c>docs</c> or <c>.git</c>.</summary>
     private static string RepoRoot()
     {
