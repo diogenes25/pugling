@@ -20,11 +20,22 @@ export default async function globalSetup() {
   // `Promise.all` did exactly that on this machine before this was changed to `allSettled`. Whatever
   // outlasts this sweep too just waits for the run after that.
   const tmp = os.tmpdir();
-  const own = new Set([path.basename(dbFile), path.basename(mediaDir)]);
+  // Ausschluss über das **Präfix**, nicht über zwei exakte Namen (B-139). SQLite legt Beidateien neben
+  // die Datenbank – `…​.db-journal`, bei WAL `-wal`/`-shm` –, und die tragen dasselbe `pugling-e2e-`
+  // Präfix wie das, was hier gefegt werden soll. Eine Ausnahmeliste aus zwei exakten Namen ließ sie
+  // durch, und weil dieser Sweep laut Kommentar oben **nach** dem Start des eigenen Backends läuft,
+  // löschte er das lebende Journal seiner eigenen Datenbank.
+  //
+  // Warum das nur in CI weh tat: unter Linux gelingt `unlink` auf eine offene Datei, SQLite verliert sein
+  // Journal mitten in einer Transaktion und antwortet fortan sporadisch mit `SQLITE_IOERR`
+  // („disk I/O error"). Unter Windows scheitert dasselbe `rm` mit `EBUSY`, und `allSettled` schluckt es –
+  // dieselbe Suite lief hier grün, während der Nachtlauf sechs Nächte rot war.
+  const ownPrefixes = [path.basename(dbFile), path.basename(mediaDir)];
   const entries = await fs.readdir(tmp).catch(() => [] as string[]);
   await Promise.allSettled(
     entries
-      .filter((name) => name.startsWith("pugling-e2e-") && !own.has(name))
+      .filter((name) => name.startsWith("pugling-e2e-")
+        && !ownPrefixes.some((own) => name.startsWith(own)))
       .map((name) => fs.rm(path.join(tmp, name), { recursive: true, force: true })),
   );
 }
