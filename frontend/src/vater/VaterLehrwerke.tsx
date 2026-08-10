@@ -258,7 +258,7 @@ const BOOK_TYPES: BookType[] = ["Textbook", "Workbook", "TeacherGuide"];
  * Ein Formular für Anlegen und Ändern. Bewusst eines: die Felder sind identisch, und beim Ändern zählt
  * genau derselbe fachliche Hinweis – der Stoff der Unit ist der Grund, warum es diese Ebene gibt.
  */
-function UnitForm({ seriesId, unit, onDone }: {
+export function UnitForm({ seriesId, unit, onDone }: {
   seriesId: number;
   unit?: SeriesUnitResponse;
   onDone: () => void;
@@ -342,12 +342,31 @@ function UnitForm({ seriesId, unit, onDone }: {
             </span>
           ))}
         </div>
+        {/*
+          `onBlur` legt an – das rettet die Eingabe dessen, der Enter vergisst. Damit nicht jede
+          versehentliche Fokusbewegung zur Dateneingabe wird, gibt es die Gegenrichtung: Escape leert das
+          Feld und entzieht dem `onBlur` seinen Inhalt. Der Platzhalter nennt beide Wege, sonst ist die
+          Abbruchmöglichkeit unauffindbar (B-129).
+        */}
         <input
           id={`unit-topics-${id}`} value={form.topicInput} onChange={(e) => up("topicInput", e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTopic(); } }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") { e.preventDefault(); addTopic(); }
+            if (e.key === "Escape") { e.preventDefault(); up("topicInput", ""); }
+          }}
           onBlur={addTopic}
-          placeholder="Thema eintippen, Enter fügt hinzu"
+          placeholder="Thema eintippen"
         />
+        {/*
+          Die Wege stehen als `.sub`-Zeile, nicht im Platzhalter: der Platzhalter ist nur im LEEREN Feld
+          sichtbar, und beide angekündigten Verhaltensweisen wirken nur im nicht-leeren – er wäre genau
+          dann weg, wenn er zählt. Dazu schnitt der lange Text auf Telefonbreite ausgerechnet den
+          Esc-Hinweis ab (gemessen im Review, B-129).
+        */}
+        <span className="sub">
+          <strong>Enter</strong> oder das Verlassen des Feldes fügt das Thema hinzu,
+          <strong> Esc</strong> verwirft die Eingabe.
+        </span>
       </div>
       <div className="field">
         <label htmlFor={`unit-grammar-${id}`}>Grammatik der Unit</label>
