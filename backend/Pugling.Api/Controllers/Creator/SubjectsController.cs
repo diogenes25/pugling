@@ -69,17 +69,38 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Deletes a subject along with its exercise categories. Since B-106 a subject no longer cascades to
-    /// any exercise (those hang off a textbook series unit instead) - deleting it only clears the FK on
-    /// textbook series that reference it (SetNull) and on exercises pointing at one of its categories.
+    /// Deletes a subject along with its exercise categories, unless a child's data points at it.
+    /// <para>
+    /// Two groups, split by what the delete would cost (B-144). Catalog-internal references only lose
+    /// their assignment: textbook series, textbooks, creator profiles, study plans and class tests are
+    /// <c>SetNull</c>, exercise categories cascade (but their exercises survive - <c>CategoryId</c> is
+    /// <c>SetNull</c> in turn). Rows that belong to a CHILD block the delete with 409
+    /// <c>subject_in_use</c>: a key result's subject scope is mandatory, so a cascade would delete the
+    /// milestone together with the payout it earned, and a timetable entry was typed by hand.
+    /// </para>
+    /// <para>
+    /// The pre-check is not redundant next to <c>DeleteBehavior.Restrict</c>, and vice versa. Without the
+    /// check the database would raise the conflict as a bare 500 with a half-saved state instead of a
+    /// readable 409. Without <c>Restrict</c> this check would be the only thing between a child's
+    /// milestones and their deletion - and it only guards the one path that runs through here.
+    /// </para>
     /// </summary>
     [HttpDelete("{subjectId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Delete(int subjectId, CancellationToken ct = default)
     {
         var subject = await db.Subjects.FindAsync([subjectId], ct);
         if (subject is null) return NotFound();
+
+        // `AnyAsync` rather than a count on purpose: the message names the kind of use without a number,
+        // because knowing there are three of them does not make the subject deletable.
+        if (await db.KeyResults.AnyAsync(k => k.SubjectId == subjectId, ct)
+            || await db.TimetableEntries.AnyAsync(t => t.SubjectId == subjectId, ct))
+            return this.ProblemWithCode(ApiErrors.SubjectInUse,
+                "This subject is used in a child's objectives or timetable. Remove those entries first.");
+
         db.Subjects.Remove(subject);
         await db.SaveChangesAsync(ct);
         return NoContent();

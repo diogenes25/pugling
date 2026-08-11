@@ -83,9 +83,14 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
             srName={`Fach „${subject.name}"`} value={subject.name}
             onSave={(name) => act(() => api.updateSubject(subject.id, name), "Fach umbenannt.")}
             onDelete={() => {
+              /* Der Text nennt alle fünf Zuordnungen statt nur zwei (B-144). Bewusst ohne Zahl: die
+                 hätte eine eigene Route gekostet und `confirmAction` asynchron gemacht – und sie ändert
+                 die Entscheidung nicht. Was ein Kind besitzt (Meilensteine, Stundenplan), taucht hier
+                 gar nicht auf: das sperrt der Server mit 409, statt zu warnen. */
               if (!confirmAction(
-                `Fach „${subject.name}" wirklich löschen? Lehrwerk-Reihen und Übungen behalten ihren Inhalt, `
-                + "verlieren aber die Zuordnung zu diesem Fach.")) return;
+                `Fach „${subject.name}" wirklich löschen? Lehrwerk-Reihen, Lehrbücher, Fachlehrer-Profile, `
+                + "Lehrpläne und Klassenarbeiten behalten ihren Inhalt, verlieren aber die Zuordnung zu "
+                + "diesem Fach. Seine Übungs-Kategorien werden gelöscht – die Übungen darin bleiben.")) return;
               act(() => api.deleteSubject(subject.id), "Fach gelöscht.", () => setSubjectId(""));
             }} />
 

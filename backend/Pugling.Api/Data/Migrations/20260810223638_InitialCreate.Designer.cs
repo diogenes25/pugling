@@ -11,7 +11,7 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Data.Migrations
 {
     [DbContext(typeof(PuglingDbContext))]
-    [Migration("20260809202026_InitialCreate")]
+    [Migration("20260810223638_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -2928,7 +2928,7 @@ namespace Pugling.Api.Data.Migrations
                     b.HasOne("Pugling.Api.Models.Subject", null)
                         .WithMany()
                         .HasForeignKey("SubjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Objective");
@@ -3436,7 +3436,7 @@ namespace Pugling.Api.Data.Migrations
                     b.HasOne("Pugling.Api.Models.Subject", "Subject")
                         .WithMany()
                         .HasForeignKey("SubjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Child");

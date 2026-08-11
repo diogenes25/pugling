@@ -235,8 +235,11 @@ public class SchemaGuardTests
             ["KeyResult.ExerciseId"] = DeleteBehavior.Restrict, // -> Exercise (ditto)
             ["KeyResult.ObjectiveId"] = DeleteBehavior.Cascade, // -> Objective
             ["KeyResult.SeriesUnitId"] = DeleteBehavior.Restrict, // -> SeriesUnit (remove the goal first, then the series unit)
-            // Cascade: a goal on a deleted subject is meaningless.
-            ["KeyResult.SubjectId"] = DeleteBehavior.Cascade, // -> Subject
+            // Restrict since B-144. It used to be Cascade with the reason "a goal on a deleted subject is
+            // meaningless" - which measured the milestone by its scope instead of by its content: the scope
+            // is mandatory, so the cascade deleted the milestone itself, together with the payout a reached
+            // one had earned. A catalog handle must not destroy a child's learning record.
+            ["KeyResult.SubjectId"] = DeleteBehavior.Restrict, // -> Subject
             ["Klassenarbeit.ChildId"] = DeleteBehavior.Cascade, // -> Child
             ["Klassenarbeit.SubjectId"] = DeleteBehavior.SetNull, // -> Subject
             ["KlassenarbeitExercise.ExerciseId"] = DeleteBehavior.Cascade, // -> Exercise
@@ -296,7 +299,9 @@ public class SchemaGuardTests
             ["TextbookSeries.PublisherId"] = DeleteBehavior.SetNull, // -> Publisher
             ["TextbookSeries.SubjectId"] = DeleteBehavior.SetNull, // -> Subject
             ["TimetableEntry.ChildId"] = DeleteBehavior.Cascade, // -> Child
-            ["TimetableEntry.SubjectId"] = DeleteBehavior.Cascade, // -> Subject
+            // The two sides are deliberately asymmetric (B-144): deleting the child takes its timetable
+            // along, deleting a subject must not - the entry was typed by hand and belongs to the child.
+            ["TimetableEntry.SubjectId"] = DeleteBehavior.Restrict, // -> Subject
             ["VocabTagLink.VocabTagId"] = DeleteBehavior.Cascade, // -> VocabTag
             ["VocabTagLink.VocabularyId"] = DeleteBehavior.Cascade, // -> Vocabulary
             // Restrict: the base form must not disappear while an inflection points at it.

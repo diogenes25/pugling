@@ -650,7 +650,10 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         // as it already does about the study plan positions.
         modelBuilder.Entity<KeyResult>(e =>
         {
-            e.HasOne<Subject>().WithMany().HasForeignKey(k => k.SubjectId).OnDelete(DeleteBehavior.Cascade);
+            // Restrict like its two siblings below, and for a stronger reason (B-144): the subject scope is
+            // mandatory, so a cascade would not orphan the milestone but DELETE it - together with the payout
+            // that a reached one earned. A catalog handle must not silently destroy a child's learning record.
+            e.HasOne<Subject>().WithMany().HasForeignKey(k => k.SubjectId).OnDelete(DeleteBehavior.Restrict);
             e.HasOne<SeriesUnit>().WithMany().HasForeignKey(k => k.SeriesUnitId).OnDelete(DeleteBehavior.Restrict);
             e.HasOne<Exercise>().WithMany().HasForeignKey(k => k.ExerciseId).OnDelete(DeleteBehavior.Restrict);
 
@@ -719,7 +722,10 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         {
             e.HasIndex(t => new { t.ChildId, t.SubjectId, t.DayOfWeek }).IsUnique();
             e.HasOne(t => t.Child).WithMany().HasForeignKey(t => t.ChildId).OnDelete(DeleteBehavior.Cascade);
-            e.HasOne(t => t.Subject).WithMany().HasForeignKey(t => t.SubjectId).OnDelete(DeleteBehavior.Cascade);
+            // The two sides are not symmetric (B-144): deleting the CHILD takes its timetable along, that is
+            // what a timetable is. Deleting a SUBJECT must not - the entry was typed by hand and belongs to
+            // the child, while the subject is shared catalog.
+            e.HasOne(t => t.Subject).WithMany().HasForeignKey(t => t.SubjectId).OnDelete(DeleteBehavior.Restrict);
         });
 
         // A mission belongs to a child (cascade); every mission is rewarded at most once per period.

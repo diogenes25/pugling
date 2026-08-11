@@ -131,6 +131,18 @@ public static class ApiErrors
     public static readonly ApiError DuplicateInterestTag = new("duplicate_interest_tag", 409, "Another interest tag already uses the slug this label derives to.");
     /// <summary>Exercise is used in a study plan/class test and cannot be deleted (409).</summary>
     public static readonly ApiError ExerciseInUse = new("exercise_in_use", 409, "Exercise is in use.");
+    /// <summary>
+    /// Subject is referenced by a child's key result or timetable entry and cannot be deleted (409).
+    /// The line runs along ownership, not along a list of names: catalog-internal references keep losing
+    /// only their assignment, rows that belong to a child block the delete (B-144).
+    /// </summary>
+    public static readonly ApiError SubjectInUse = new("subject_in_use", 409, "Subject is in use.");
+    /// <summary>
+    /// Publisher is referenced by a series of another account and cannot be deleted (409). A publisher has
+    /// no owner on purpose, so this is the only thing standing between a shared catalog row and an
+    /// unrelated creator's assignments (B-127).
+    /// </summary>
+    public static readonly ApiError PublisherInUse = new("publisher_in_use", 409, "Publisher is in use.");
     /// <summary>Exercise is not publicly executable and may not be assigned without an execute/write/owner permission (403).</summary>
     public static readonly ApiError ExerciseNotExecutable = new("exercise_not_executable", 403, "Exercise cannot be assigned.");
     /// <summary>

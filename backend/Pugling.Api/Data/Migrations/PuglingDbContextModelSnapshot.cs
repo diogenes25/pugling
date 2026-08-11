@@ -2925,7 +2925,7 @@ namespace Pugling.Api.Data.Migrations
                     b.HasOne("Pugling.Api.Models.Subject", null)
                         .WithMany()
                         .HasForeignKey("SubjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Objective");
@@ -3433,7 +3433,7 @@ namespace Pugling.Api.Data.Migrations
                     b.HasOne("Pugling.Api.Models.Subject", "Subject")
                         .WithMany()
                         .HasForeignKey("SubjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Child");
