@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/beides, bereich/katalog, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/beides, bereich/katalog, rolle/creator]
 aliases: [Fach löschen loescht Kind-Daten, Cascade auf KeyResult, SubjectInUse]
-status: gegrillt
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: M
+wo: beides
+migration: ja
+vertragsbruch: nein
 quelle: B-137
 unverifiziert: false
 grund: ""
@@ -131,6 +131,60 @@ und ohne dass die Doku der Methode es erwähnt.
 7. Je ein Integrationstest, vorher rot: gesperrt bei `KeyResult`, gesperrt bei `TimetableEntry`,
    löschbar bei einer bloßen `TextbookSeries`-Zuordnung.
 
+## Schätzung
+
+**Größe `M`** — Anker B-03 (vokabel-basierter Batch-Pfad im `MediaSelector`). Der Code allein wäre `S`
+(zwei `Restrict`, eine Vorprüfung, ein Fehlercode, zwei Textstellen); was ihn auf `M` hebt, ist die
+**Migration** — die Kette wird neu gefaltet, und der Snapshot-Diff muss gelesen werden, statt ihm zu
+glauben.
+
+**`migration: ja`** — nachgesehen, nicht vermutet: `PuglingDbContext.cs:653` und `:722` stehen heute auf
+`DeleteBehavior.Cascade`. Sie auf `Restrict` zu ziehen ist eine Schemaänderung. Die Kette hat heute Länge 1
+(`Data/Migrations/20260809202026_InitialCreate.cs`) und behält sie: löschen, neu erzeugen, `SchemaGuardTests`
+hält das Ergebnis fest.
+
+**`vertragsbruch: nein`** — `SubjectInUse` ist ein additiver Eintrag in `Errors/ApiErrors.cs`, nicht in
+`Pugling.Contracts`. Kein DTO ändert sich, Client und `unknown_field`-Guards bleiben unberührt.
+
+### Zwei Messungen, die den Plan verändern
+
+**1. Der Seed legt weder Objectives noch KeyResults noch Stundenpläne an** (`Seed.cs`, gegen alle drei
+Begriffe gesucht: kein Treffer). Zwei Folgen:
+
+- **Kein geseedetes Fach wird durch diese Story unlöschbar.** Die Sorge aus Entscheidung 2 („bei langer
+  Historie faktisch nie") trifft die Demo-Daten nicht — sie beginnt erst mit echter Nutzung.
+- **Die Sperre ist ohne Vorarbeit nicht vorführbar.** Weder Integrationstest noch Rollengang finden einen
+  fertigen Meilenstein vor; beide müssen ihn über den echten Endpunkt anlegen. Das ist derselbe Grund wie
+  in `docs/nachtlauf.md` („nie per rohem SQL-`INSERT`"): eine von Hand eingesetzte Zeile prüft den
+  Löschpfad, nicht den Produktpfad.
+
+**2. Sie kollidiert beinahe mit [B-143](B-143-formular-kennt-zustaende-des-modells-nicht.md).** Dessen
+Akzeptanzkriterium 6 verlangt einen E2E, der Zustand A **durch Löschen eines Fachs** herstellt. Nach dieser
+Story gelingt das nur noch, solange an dem Fach kein Meilenstein und kein Stundenplan hängt. Gemessen
+trägt es: der E2E legt sein Fach selbst an, und der Seed liefert nichts Blockierendes nach. Die Reihenfolge
+im Sprint muss es trotzdem berücksichtigen — **diese Story zuerst**, damit B-143s E2E gegen das endgültige
+Löschverhalten geschrieben wird und nicht gegen das alte.
+
+**Risiko:** Der Snapshot-Diff einer neu gefalteten Kette zeigt alles, was seit der letzten Faltung am
+Modell hing — nicht nur die zwei beabsichtigten Zeilen. Akzeptanzkriterium 4 verlangt deshalb, ihn zu
+**lesen**; ein grünes `SchemaGuardTests` beweist nur Kettenlänge und Drift-Freiheit, nicht Absicht.
+
+**Angriffsplan** (Backend zuerst — API-First, und das Frontend hängt an der Fehlerantwort):
+
+1. `ApiErrors` — `SubjectInUse` additiv (`subject_in_use`, 409).
+2. `PuglingDbContext.cs:653,722` — `Cascade` → `Restrict`. `ExerciseCategory` (`:473`) bleibt `Cascade`
+   (Entscheidung 2).
+3. Migration neu falten (Befehl steht in der Root-`CLAUDE.md`), Snapshot-Diff lesen.
+4. `SubjectsController.Delete` — Vorprüfung als Guard Clause, ein `AnyAsync` je Seite (Entscheidung 5
+   verlangt ausdrücklich kein `CountAsync`), Methodendoku auf die tatsächliche Reichweite.
+5. `CatalogAdmin.tsx:86-88` — der Bestätigungstext nennt alle fünf `SetNull`-Betroffenen (Entscheidung 4).
+6. Tests.
+
+**Testweg:** ein neuer `FachLoeschenSperreTests` in `backend/Pugling.Api.Tests` mit den drei Fällen aus
+Kriterium 7, jeder Ausgangszustand über den **echten Endpunkt** hergestellt (Messung 1). Dazu die
+bestehenden `SchemaGuardTests` für Kriterium 4. Rote Probe vor dem Fix, mit Zahl: die beiden Sperr-Fälle
+müssen vorher `204` liefern statt `409` — dass sie *nur* rot sind, genügt nicht.
+
 ## Verlauf
 
 - **2026-08-10** — abgespalten von [B-137](B-137-freitext-fach-unerreichbar.md) im Nachtlauf (Sprint 2),
@@ -144,3 +198,27 @@ und ohne dass die Doku der Methode es erwähnt.
   `TimetableEntry`. Titel, Aliasse, Ist-Stand und „echte Lücke" sind entsprechend korrigiert; der Begriff
   „verwaister Fachname" beschrieb die harmloseste Wirkung und hatte die Story zu klein gerahmt.
   Aus `S` ohne Migration wird damit voraussichtlich `M` mit `migration: ja` — zu bestätigen beim Schätzen.
+- **2026-08-10** — **geschätzt** (`M`, `beides`, `migration: ja`, `vertragsbruch: nein`). Die Größe hängt
+  an der Migration, nicht am Code. Zwei Messungen haben den Plan verändert: der Seed legt **weder
+  Objectives noch KeyResults noch Stundenpläne** an — kein geseedetes Fach wird also unlöschbar, aber die
+  Sperre ist ohne Vorarbeit auch nicht vorführbar, Test und Rollengang müssen ihren Meilenstein selbst
+  über den echten Endpunkt anlegen. Und die Story muss im Sprint **vor** B-143 laufen, dessen E2E ein Fach
+  löscht: sonst entsteht er gegen das alte Löschverhalten.
+- **2026-08-10** — **gebaut** im Nachtlauf (Sprint 3). Rote Probe vorher: **2 von 3 rot**, beide mit
+  `Expected: Conflict / Actual: NoContent` — das Fach war lautlos löschbar. Der dritte Fall
+  (`Fach_MitNurEinerReihe_BleibtLoeschbar`) ist vorher *und* nachher grün; er ist die Gegenprobe gegen
+  Übersperren, kein Beleg für den Fix. Danach: Backend **813/813**, E2E **33/33**.
+  Der Snapshot-Diff der neu gefalteten Kette zeigt **genau zwei Zeilen**, beide `Cascade` → `Restrict`, an
+  `KeyResult.Subject` und `TimetableEntry.Subject`; die `Child`- und `Objective`-Kaskaden sind unberührt
+  (Kriterium 4, gelesen statt geglaubt). `SchemaGuardTests` wurde dabei rot und hat damit getan, wofür es
+  da ist — die beiden gepinnten Zeilen sind bewusst nachgezogen, samt der alten Begründung, die diese
+  Story widerlegt hat („a goal on a deleted subject is meaningless").
+- **2026-08-10** — **abgenommen** (Commit `e051357`, Rollengang-Nachtrag `d4d3595`).
+  Belegt: Backend **813/813**, Vitest **204/204**, Playwright **33/33**, `pugling-reviewer`
+  und `frontend-reviewer` gelaufen, ihre Funde behoben oder als eigene Story abgelegt.
+  **Rollengang teils im echten Browser** (Anmeldung als Papa, Vater-Web, Katalogseite),
+  teils per dokumentiertem Ersatz: Alle Löschpfade hängen an `confirmAction`, und ein
+  `window.confirm` blockiert die Chrome-Extension — ein injizierter Ersatz greift nicht, weil
+  er in einer isolierten Welt läuft. Dafür stehen die Playwright-Spec (echter Browser, echter
+  Dialog) und eine Live-Probe gegen die laufende API. Protokoll:
+  [pm-sitzung-2026-08-10.md](../pm-sitzung-2026-08-10.md) → Nachtlauf, Sprint 3.

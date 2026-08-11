@@ -428,3 +428,169 @@ Reihenfolge.
 - **2026-08-10** — Refinement: B-135 und B-136 autonom gegrillt und geschätzt, Ist-Stand beider Stories am
   Code nachgemessen und in drei Punkten korrigiert.
 - **2026-08-10** — Sprint 1 gebaut: sieben Fundstellen, zwei Prüfungen, ein Wächter. Suite 800/800.
+
+## Nachtlauf, Sprint 3 — „der Katalog sagt die Wahrheit"
+
+Angestoßen am Abend des 2026-08-10 (UTC; lokal bereits der 11.) auf ausdrückliche Anforderung des
+Nutzers, roter Faden von ihm gewählt. Freigaben 1–8 aus [nachtlauf.md](nachtlauf.md), **Freigabe 6 aktiv**
+— die Chrome-Extension antwortet, ein Browser-Rollengang zählt.
+
+**Sprint-Ziel, aus dem Sitz des Creators:** *„Ich kann ein Fach oder einen Verlag löschen, ohne unbemerkt
+Meilensteine eines Kindes oder fremde Reihen zu zerstören — und das Reihen-Formular zeigt mir jeden
+Zustand, in dem eine Reihe sein darf."*
+
+### Refinement (die größere Hälfte)
+
+Alle vier Stories standen auf `gegrillt` und mussten erst geschätzt werden. Das Messen hat an **drei von
+vier** etwas korrigiert, was die Grill-Runde angenommen hatte:
+
+| Story | Größe | `wo` | Korrektur beim Messen |
+| --- | --- | --- | --- |
+| B-146 | XS | frontend | Das Vertrags-Feld `SubjectName` bleibt stehen — es zu entfernen wäre wegen `UnmappedMemberHandling.Disallow` erst der Bruch |
+| B-143 | S | frontend | — (die Annahme trug) |
+| B-127 | S | **backend**, nicht `beides` | Das wörtlich vorgegebene Prädikat kehrt die Wirkung im Hauptfall um (s. u.) |
+| B-144 | M | beides, `migration: ja` | Der Seed legt **keine** KeyResults/Stundenpläne an — Folge für Test *und* Rollengang |
+
+**Der teuerste Fund: B-127s Prädikat.** Entscheidung 1 gab es wörtlich vor —
+`AnyAsync(s => s.PublisherId == id && s.OwnerAdultId != ich)`. `OwnerAdultId` ist aber nullable und
+bedeutet ausdrücklich *„seeded, owned by nobody"*; in SQL ist `NULL != 1` nicht `true`. Der geteilte
+Katalog — der Paradefall der Story — wäre also **nicht** geschützt gewesen. Aufgelöst über bestehende
+Präzedenz statt über eine neue Produktentscheidung: `AuthAccess.IsOwnedBy` liest eine fehlende Autorschaft
+fail-closed, mit genau dieser Begründung. Damit blieb es beim Schätzen und musste nicht nach Freigabe 8
+angehalten werden.
+
+### Reihenfolge
+
+Backend zuerst (API-First), und innerhalb dessen **B-144 vor B-143**: dessen E2E löscht ein Fach und
+entstünde sonst gegen das alte Löschverhalten.
+
+1. **B-144** (backend + Migration + ein Satz Frontend)
+2. **B-127** (backend)
+3. **B-146** (frontend)
+4. **B-143** (frontend)
+
+### Rollengang (Step 6)
+
+**Teils im echten Browser, teils per dokumentiertem Ersatz — und die Grenze dazwischen ist selbst ein
+Befund.**
+
+Im Browser gelaufen (Chrome, echte Sitzung, gegen den nach der letzten Änderung gestarteten Server):
+Anmeldung als Papa, Navigation durchs Vater-Web, `/vater/katalog` mit der Fächerliste, der
+Lösch-Knopf mit korrektem zugänglichen Namen. Das ist zugleich der Regressionsbeleg für die beiden
+Rollen, deren Ebene nicht geändert wurde — das Vater-Web rendert und navigiert unverändert; der Sohn-Pfad
+ist vom Diff nicht berührt und über seine E2E-Specs grün.
+
+**Wo der Browser strukturell nicht hinkommt:** Alle destruktiven Aktionen hängen an `confirmAction`
+(`window.confirm`). Ein echter Dialog blockiert die Extension vollständig, und ein per `javascript_tool`
+injizierter Ersatz greift nicht — der läuft in einer **isolierten Welt** und erreicht das `window` der
+Seite nicht. Damit ist der Lösch-Pfad für diese Automatisierung unerreichbar, unabhängig von Sorgfalt.
+Playwright kann es (`page.once("dialog", …)`), und die neue Spec tut genau das.
+
+Ersatz, benannt: die Playwright-Spec (fährt denselben Weg im echten Browser, nur wiederholbar) und eine
+**Live-Probe gegen die laufende API**. Letztere hat gezeigt, was der Creator bekommt:
+`204` ohne Kind-Daten, `409 subject_in_use` mit Meilenstein, `detail` nennt die Art der Verwendung
+**ohne Zahl** — wie Entscheidung 5 es verlangt.
+
+**Der Fund, den nur der Rollengang hatte.** `frontend/src/lib/api.ts` hält deutsche Texte zu fachlichen
+Fehler-Codes, ausdrücklich für *„Codes, die einen Nutzer treffen und ihm sagen, was zu tun ist"*. Genau
+das sind die beiden neuen — und sie fehlten. Der Vater hätte an einem Knopf, den er selbst gedrückt hat,
+eine englische Rohzeile gelesen. **Build, 813 Backend-Tests, 200 Frontend-Tests und beide Reviewer haben
+das passieren lassen**; es ist keine Frage der Korrektheit, sondern der Benutzbarkeit, und danach fragt
+nur Step 6.
+
+Behoben, mit roter Probe: `errorMessage.test.ts` neu, **3 von 4 rot** bei neutralisierten Einträgen.
+
+### Fehlerzähler (Freigabe 3)
+
+**4 von 5.** Gezählt wird nach der seit gestern geltenden Regel — ein Fund zählt, wenn seine Behebung
+**Code oder Tests** ändert:
+
+| # | Fund | Quelle | Zählt? |
+| --- | --- | --- | --- |
+| 1 | Option nahm Bedingung aus `form` statt `series` | frontend-reviewer | ja (Code) |
+| 2 | Hilfetext zur Schulart widersprach sich selbst | frontend-reviewer | ja (Produkttext) |
+| 3 | Die Schulart-`<option>` hatte keinen Test | frontend-reviewer | ja (Test) |
+| 4 | Deutsche Texte für die zwei neuen Codes fehlten | **Rollengang** | ja (Code) |
+| — | Falsche SQL-Begründung im Kommentar und im Vertrag | pugling-reviewer | nein (Kommentar/Doku) |
+| — | Testdoku behauptete mehr, als der Test belegt | pugling-reviewer | nein (Kommentar) |
+| — | Vertauschte Begründungshälften | pugling-reviewer | nein (Kommentar) |
+| — | `ChildMaterialSection`, `SCHOOL_TYPES`, `<para>`-Einrückung | beide Reviewer | nein (außerhalb des Diffs → eigene Stories) |
+
+Der Lauf läuft damit weiter, aber mit **einem** Fund Luft. Das ist eng genug, um es zu sagen: Ein
+fünfter hätte die ganze Nacht beendet.
+
+**Der schwerste Fund war keiner der gezählten.** Meine Begründung für das Prädikat in B-127 war schlicht
+falsch — EF Core kompensiert die C#-Null-Semantik, die behauptete SQL-Falle gibt es nicht. Die
+Schlussfolgerung trug trotzdem (aus einem anderen, kleineren Grund), und die Behebung war reiner Text,
+darum zählt sie nach der Regel nicht. Dass die Regel hier an einem Fehler vorbeizählt, der es an sechs
+Stellen bis in den **Vertrag** geschafft hatte, ist der Stoff der Retrospektive.
+
+## Retrospektive Sprint 3
+
+### Nachschau (Pflichthandlung, zuerst)
+
+Zwei abgenommene Stories geprüft, deren Fläche dieser Sprint angefasst hat — je mit benanntem Prüfpunkt:
+
+- **B-142** („Fachname folgt der Fach-Id"): Behauptung war *drei* Controller, im `Update` die Ableitung
+  **nach** `ClearSubject`. Nachgerechnet, Zeile gegen Zeile: `TextbookSeriesController` (236 → 241),
+  `CreatorProfilesController` (148 → 152), `TextbooksController` (113 → 117). Reihenfolge stimmt überall,
+  im `Create` je mit `?? Trimmed(dto.SubjectName)` als Rückfallebene. **Trägt.**
+  *Aber:* Die **Frontend**-Hälfte war unvollständig — das fand schon B-146, und beim Grillen kam heraus,
+  dass die Story ihre eigene Begründung zu weit formuliert hatte („der Server ignoriert `subjectName`" —
+  er tut es nur in Kombination mit einer Id). Beides ist jetzt in B-146 festgehalten.
+- **B-136** („Verlagsname eindeutig"): Behauptung war eine Namensprüfung in **beiden** Wegen, im `Update`
+  mit `p.Id != id`. Nachgesehen: `PublishersController.cs:107` (Create) und `:149` (Update, mit dem
+  Ausschluss). **Trägt.**
+
+### Vorgeschlagener Mechanismus (nach Freigabe 3 nicht gelandet)
+
+**Ein Wächter über die deutschen Fehlertexte, mit gemessener Ausnahmeliste.**
+
+Der Anlass ist der Rollengang-Fund: Zwei neue nutzergerichtete Codes ohne deutschen Text, durchgelassen
+von Build, 813 Backend-Tests, 200 Frontend-Tests und zwei Reviewern. Die Klasse wiederholt sich bei jedem
+neuen Fehlercode.
+
+**Erst gemessen, wie die Regel geschrieben werden muss — und die naheliegende Fassung fällt dabei durch:**
+
+| | |
+| --- | --- |
+| Codes in `ApiErrors` | 65 |
+| davon `409` | 28 |
+| davon mit deutschem Text | **4** |
+| ohne | **24** |
+
+„Jeder 409 braucht einen deutschen Text" wäre also kein Tor, sondern 24 rote Zeilen — eine Story, keine
+Regel. Und die Mehrzahl der 24 ist zu Recht ohne Text: `concurrency_conflict` erreicht laut
+`backend/Pugling.Api/CLAUDE.md` bewusst keinen Client, `media_variant_exists` trifft keinen Nutzer, der
+etwas dagegen tun könnte.
+
+**Darum die Delta-Form, das Hausmuster dieses Repos** (gepinnte Liste + Ausnahmeliste, wie
+`SchemaGuardTests`): Die heutigen 24 wandern als **gemessene Grundlinie** in eine Ausnahmeliste, jeder
+**neue** Code erzwingt eine bewusste Zeile — deutscher Text oder ein Eintrag mit Begründung. Das Tor
+behauptet damit nicht, der Bestand sei in Ordnung; es hält nur fest, dass er sich nicht unbemerkt
+vergrößert.
+
+**Kosten:** ein weiterer quellentext-lesender Test mit den bekannten Grenzen eines halben Parsers (B-40),
+und eine Ausnahmeliste mit 24 Einträgen, die jemand einmal durchsehen muss. **Alternative, billiger:**
+gar kein Tor, sondern eine Zeile in `frontend/CLAUDE.md` — „neuer fachlicher Code? deutscher Text oder
+bewusst nicht" —, die aber genau die Disziplin verlangt, deren Versagen dieser Fund ist.
+
+**Nicht gelandet**, wie Freigabe 3 es vorschreibt.
+
+### Der Fund, für den ich keinen Mechanismus habe
+
+Schwerer als der gezählte war ein anderer: **Ich habe eine technische Behauptung aufgestellt, ohne sie zu
+messen** — „`NULL != id` ist in SQL `NULL`, die naive Form verfehlt den Fall" — und sie trug den
+Kernbefund des Refinements. Sie ist falsch (EF Core kompensiert die C#-Null-Semantik), und sie stand
+bereits an sechs Stellen, darunter im **Vertrag** `docs/openapi/v1.json`. Der `pugling-reviewer` hat sie
+mit einem Wegwerf-Projekt und einem SQL-Vergleich widerlegt — also mit genau der Messung, die ich
+schuldig geblieben war.
+
+Zwei Dinge daran sind bemerkenswert und gehören dem Nutzer vorgelegt, nicht von mir entschieden:
+
+1. **Die Zählregel greift hier nicht.** Der Fund kostet nur Text, zählt also nach der gestern gelandeten
+   Regel nicht — obwohl er inhaltlich der schwerste des Sprints war. Die Regel ist trotzdem richtig
+   (sie läuft an etwas Ablesbarem statt an meiner Einschätzung), aber sie hat hier eine Blindstelle.
+2. **Der Weg in den Vertrag lief über `<summary>`.** Weil die lange Begründung dort steht statt in einem
+   `//`-Kommentar, wurde aus einem falschen Gedanken eine falsche **Produktdokumentation**. Das ist
+   dieselbe Fläche wie B-147.

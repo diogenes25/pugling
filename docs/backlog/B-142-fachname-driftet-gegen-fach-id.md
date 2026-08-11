@@ -13,7 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-nachgeschaut: ""
+nachgeschaut: 2026-08-10
 wartet_auf: ""
 ---
 
@@ -170,3 +170,11 @@ ein Vertragstext. Über B-136 (`S`), unter einer DB-Umbau-Etappe.
   **Fund nebenan → eigene Story:** [B-145](B-145-fach-umbenennen-laesst-namen-stehen.md) (das Umbenennen
   eines Fachs zieht die drei Kopien nicht nach — durch diese Story allerdings **selbstheilend** beim
   nächsten Schreibzugriff, also entschärft statt verschärft).
+- **2026-08-10** — **nachgeschaut** im Nachtlauf (Sprint 3). Geprüft wurde die Behauptung *drei
+  Controller, im `Update` die Ableitung **nach** `ClearSubject`* — Zeile gegen Zeile nachgerechnet:
+  `TextbookSeriesController` (236 → 241), `CreatorProfilesController` (148 → 152), `TextbooksController`
+  (113 → 117). Die Reihenfolge stimmt überall, im `Create` je mit `?? Trimmed(dto.SubjectName)`.
+  **Zwei Einschränkungen**, beide neu: die Frontend-Hälfte war unvollständig (→
+  [B-146](B-146-anlegeformular-schickt-toten-fachnamen.md)), und die Begründung dieser Story war zu weit
+  formuliert — der Server ignoriert `subjectName` nur *in Kombination mit einer Id*, ohne Id ist es die
+  Rückfallebene.

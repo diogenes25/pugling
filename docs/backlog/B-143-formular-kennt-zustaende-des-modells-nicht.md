@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/frontend, bereich/katalog, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/katalog, rolle/creator]
 aliases: [Freitext-Fach nicht wegzubekommen, Schulart-Kombination geht verloren, Formular kennt Zustand nicht]
-status: gegrillt
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: S
+wo: frontend
+migration: nein
+vertragsbruch: nein
 quelle: B-137
 unverifiziert: false
 grund: ""
@@ -131,6 +131,51 @@ Stellen** — die Zeile zeigt zweimal einen Zustand, den das Formular nicht ausd
 6. Ein E2E-Fall, der Zustand A auf dem gewöhnlichen Weg herstellt (Fach löschen) und über die Oberfläche
    auflöst.
 
+## Schätzung
+
+**Größe `S`** — der Anker ist B-01 (`childId` aus dem Test-Pfad ziehen). Die Rechtfertigung liegt darin,
+dass Entscheidung 2 die Mechanik **fast wegdefiniert** hat: Der Schutz vor dem versehentlichen Speichern
+fällt aus dem bestehenden Vergleich ab, weil `form` gleich `loaded` bleibt, solange niemand aktiv wählt.
+`seriesPatch.ts:66` vergleicht die Schulart schon heute so (`form.schoolTypes !== loaded.schoolTypes`) —
+für Zustand B ist **keine Zeile** in der Regel zu ändern, nur eine `<option>` im Formular.
+
+**Was sie auf `M` heben würde:** wenn Akzeptanzkriterium 6 einen eigenen E2E-Aufbau braucht statt eines
+bestehenden. Gemessen: `frontend/e2e/lehrwerk-bearbeiten.spec.ts` fährt den Bearbeiten-Weg bereits, und
+`creator-lehrwerk-weg.spec.ts` legt Fach und Reihe an — der neue Fall hängt sich an, statt eine Kulisse
+neu zu bauen.
+
+**`migration: nein`**, **`vertragsbruch: nein`** — nachgesehen: Der Sentinel lebt ausschließlich im
+Formularmodell (`SeriesFormValues.subjectId`, ein `string`). Er erreicht den Server nie; `UpdateTextbookSeriesDto`
+bleibt unverändert, und damit auch Client und `unknown_field`-Guards.
+
+**Risiken, zwei — beide an derselben Stelle:**
+
+1. **`Number("__freetext__")` ist `NaN`.** Der bestehende `else`-Zweig (`seriesPatch.ts:87`) macht aus
+   jedem Nicht-Leerstring eine Zahl. Er ist heute unerreichbar für den Sentinel (die Option ist
+   `disabled`, der Nutzer kann ihn nicht *wählen*) — aber „unerreichbar, weil das Formular es verhindert"
+   ist genau die Art Zusicherung, die beim nächsten Umbau kippt. Der Sentinel gehört **vor** den Zweig
+   abgefangen, nicht daneben.
+2. **Der Sentinel darf nicht mit einer echten Fach-Id kollidieren.** `"__freetext__"` ist keine Zahl,
+   also sicher — aber das ist eine Eigenschaft der Wahl, nicht des Typs. Ein Vitest hält sie fest.
+
+**Angriffsplan** (rein Frontend, deshalb ohne Backend-Vorlauf):
+
+1. `seriesPatch.ts` — Sentinel als exportierte Konstante, `seriesFormValues` setzt ihn, wenn
+   `subjectId == null && subjectName != null`. Der `subjectId`-Zweig fängt ihn zuerst ab (Risiko 1).
+2. `seriesPatch.test.ts` — die drei Fälle aus den Kriterien 2–4, dazu Risiko 2.
+3. `VaterLehrwerke.tsx` — Fach-`<select>`: die deaktivierte Option, wenn der Sentinel geladen ist.
+   Schulart-`<select>`: dieselbe Form, wenn `loaded.schoolTypes` weder `"None"` noch in `SCHOOL_TYPES`
+   ist (`lib/labels.ts:31`).
+4. Ein Satz Hilfetext in `lib/fieldHelp.ts` zum Fach-Feld — Entscheidung 3 hat ihn ausdrücklich als
+   Ausgleich dafür eingekauft, dass der Entfern-Weg unauffällig ist, und Entscheidung 4 verlangt einen
+   Satz dazu, warum die Schulart sich anders verhält.
+5. Der E2E aus Kriterium 6.
+
+**Testweg:** `frontend/src/vater/seriesPatch.test.ts` (Vitest) für die Regel; ein neuer Fall in
+`frontend/e2e/lehrwerk-bearbeiten.spec.ts` für Zustand A auf dem gewöhnlichen Weg. Zustand B bekommt
+**keinen** E2E — die Oberfläche kann seinen Ausgangszustand nicht herstellen (Entscheidungen 5 und 6),
+er bleibt Vitest-Sache mit einem von Hand gesetzten Ladezustand.
+
 ## Verlauf
 
 - **2026-08-10** — abgespalten von [B-137](B-137-freitext-fach-unerreichbar.md) im Nachtlauf (Sprint 2),
@@ -145,3 +190,37 @@ Stellen** — die Zeile zeigt zweimal einen Zustand, den das Formular nicht ausd
   eigenes Bedienelement. Nebenbei ausgelagert:
   [B-146](B-146-anlegeformular-schickt-toten-fachnamen.md).
   Voraussichtlich `S`, `wo: frontend`, `migration: nein` — zu bestätigen beim Schätzen.
+- **2026-08-10** — **geschätzt** (`S`, `frontend`, `migration: nein`, `vertragsbruch: nein`). Die Größe
+  hängt daran, dass Entscheidung 2 die Mechanik fast wegdefiniert hat: der bestehende Vergleich in
+  `seriesPatch.ts:66` trägt Zustand B ohne eine geänderte Zeile. Zwei Risiken benannt, beide am
+  `subjectId`-Zweig — `Number("__freetext__")` ist `NaN`, und die Kollisionsfreiheit des Sentinels ist
+  eine Eigenschaft der Wahl, nicht des Typs; darum je ein Vitest.
+- **2026-08-10** — **gebaut** im Nachtlauf (Sprint 3). Rote Probe vorher: **1 von 12** Vitests fiel —
+  und zwar ein *bestehender*, der den Freitext-Zustand schon beschrieb (`subjectId: null` bei gesetztem
+  `subjectName`) und dazu das alte Verhalten behauptete (`subjectId: ""`). Er ist nicht angepasst, sondern
+  **aufgeteilt**: sein ursprünglicher Zweck („`null` wird zum leeren String") hat jetzt eine Vorlage ohne
+  Fachnamen, der Freitext-Fall steht als eigener Fall daneben. Danach **18/18** in dieser Datei,
+  **195/195** insgesamt, E2E **33/33** inklusive des neuen Falls, der Zustand A auf dem gewöhnlichen Weg
+  herstellt (Fach anlegen → Reihe daran → Fach löschen → über die Oberfläche auflösen). Beide benannten
+  Risiken sind abgedeckt: der Sentinel erreicht den `Number()`-Zweig nicht mehr, und seine
+  Kollisionsfreiheit hat einen eigenen Fall.
+- **2026-08-10** — **nach dem Frontend-Review nachgebessert**, drei Punkte. (1) Bedingung *und*
+  Beschriftung beider Optionen kommen jetzt aus `series` statt aus `form` — der Angriffsplan hatte
+  `loaded` gesagt, gebaut war `form`. Verhaltensgleich, aber mit `form` verschwindet der Ursprungswert aus
+  dem Pulldown, sobald der Nutzer etwas anderes probiert; ein Zurück kostete dann das Zuklappen des
+  Formulars mitsamt allen anderen Eingaben. (2) Der Hilfetext zur Schulart widersprach sich selbst
+  („kannst du sie hier nicht ändern" … „gilt deine Wahl") — gemeint war „nicht zusammenstellen".
+  (3) **Die Schulart-Option hatte keinen Test**: `seriesPatch` war dort nie kaputt, kaputt war die
+  fehlende `<option>` — und die erreicht kein Vitest zur Regel und kein E2E (der Zustand ist über die
+  Oberfläche nicht herstellbar). Dafür ist `SeriesForm` jetzt exportiert und hat fünf RTL-Fälle;
+  rote Probe durch Neutralisieren beider Optionen: **2 von 5 rot**, die drei Negativfälle bleiben
+  naturgemäß grün.
+- **2026-08-10** — **abgenommen** (Commit `637478f`, Rollengang-Nachtrag `d4d3595`).
+  Belegt: Backend **813/813**, Vitest **204/204**, Playwright **33/33**, `pugling-reviewer`
+  und `frontend-reviewer` gelaufen, ihre Funde behoben oder als eigene Story abgelegt.
+  **Rollengang teils im echten Browser** (Anmeldung als Papa, Vater-Web, Katalogseite),
+  teils per dokumentiertem Ersatz: Alle Löschpfade hängen an `confirmAction`, und ein
+  `window.confirm` blockiert die Chrome-Extension — ein injizierter Ersatz greift nicht, weil
+  er in einer isolierten Welt läuft. Dafür stehen die Playwright-Spec (echter Browser, echter
+  Dialog) und eine Live-Probe gegen die laufende API. Protokoll:
+  [pm-sitzung-2026-08-10.md](../pm-sitzung-2026-08-10.md) → Nachtlauf, Sprint 3.

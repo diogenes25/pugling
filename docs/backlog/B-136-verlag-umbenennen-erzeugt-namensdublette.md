@@ -144,3 +144,8 @@ drei Integrationstests. Vergleichbar mit B-01 (`childId` aus dem Testpfad ziehen
   auf „Nachschau Beltz" umbenennen → „NACHSCHAU BELTZ" anlegen ⇒ **409**. Die Collation, die B-128 gelegt
   hat und die bis zu dieser Story wirkungslos war, trägt damit belegt und schreibweisen-tolerant. Kein
   durchgekommener Defekt.
+- **2026-08-10** — **nachgeschaut** im Nachtlauf (Sprint 3). Geprüft wurde die Behauptung *Namensprüfung
+  in beiden Wegen, im `Update` mit `p.Id != id`* — `PublishersController.cs:107` (Create) und `:149`
+  (Update, mit dem Ausschluss). Trägt unverändert. Derselbe Controller wurde im Sprint um die
+  Löschsperre erweitert ([B-127](B-127-verlag-loeschen-trifft-fremde.md)); die bestehenden
+  `PublishersTests` sind dabei grün geblieben, auch der Fall, der einen Verlag mit eigener Reihe löscht.
