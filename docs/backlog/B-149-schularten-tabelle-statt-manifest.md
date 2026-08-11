@@ -320,7 +320,7 @@ Backend zuerst — das Frontend kann den Typ erst lesen, wenn er im Dokument ste
   intaktem Union, `TS2322 … Property 'enumVerfallen' is missing` beim Verfall). Dritter Fund: `None` steht
   **nicht** an der Übung als eigene Option (Checkbox-Gruppe) — mein Kommentar war zu großzügig,
   richtiggestellt. Vierter: `SCHOOL_TYPES` hatte seine Kurzdoku verloren, wieder da.
-- **2026-08-11** — **abgenommen** (Commits `2c040f4` und `<siehe unten>`).
+- **2026-08-11** — **abgenommen** (Commits `2c040f4` und `8ed9c4b`).
   Belegt: Backend **814/814**, Vitest **243/243**, `tsc -b` sauber, `docs/openapi/v1.json` nach dem
   Testlauf byte-identisch zum Commit. **Playwright: 34/34 im zweiten vollen Lauf** — im ersten fiel
   `bilder.spec.ts` einmal aus (33/34), allein und im Wiederholungslauf grün. Das Flackern hat mit dieser
