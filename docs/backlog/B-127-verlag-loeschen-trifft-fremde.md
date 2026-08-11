@@ -13,6 +13,7 @@ quelle: Code-Review 2026-08-07 des Standes gegen `origin/main` (Fund 2)
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+nachgeschaut: 2026-08-11
 wartet_auf: ""
 ---
 
@@ -262,3 +263,8 @@ dem Fix, mit Zahl.
   angelegte fremde Reihe wäre still per `SetNull` entkoppelt worden — anders als beim Fach fängt das hier
   **kein** `Restrict`, weil `SetNull` gerade die eigenen Reihen retten soll).
   Belegt: Backend **814/814**, Vitest **204/204**, `tsc -b` sauber.
+- **2026-08-11** — **nachgeschaut** (`nachgeschaut: 2026-08-11`). Die drei Funde oben saßen in Arbeit, die
+  seit dem 2026-08-10 `abgenommen` war — sie zählen damit als **durchgekommen** und tragen ihre eigene
+  Story: [B-150](B-150-verlagssperre-unsichtbar-dialog-verspricht-gegenteil.md) mit
+  `entgangen_bei: [B-127]`. Die Verlaufszeile oben allein hätte sie aus der Messung fallen lassen
+  (README → „Warum der Defekt eine eigene Story braucht"); nachgeholt statt stehengelassen.

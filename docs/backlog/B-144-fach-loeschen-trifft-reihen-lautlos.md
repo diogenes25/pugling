@@ -13,7 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-nachgeschaut: ""
+nachgeschaut: 2026-08-11
 wartet_auf: ""
 ---
 
@@ -231,3 +231,7 @@ müssen vorher `204` liefern statt `409` — dass sie *nur* rot sind, genügt ni
   katalog-intern ist). An drei Stellen richtiggestellt — die falsche Fassung las sich als Zusage für die
   nächste kind-eigene Entität und hätte genau die Kaskade wieder eingeladen, die diese Story entfernt hat.
   Kein Verhaltensunterschied, reine Richtigstellung; Backend **814/814**.
+- **2026-08-11** — **nachgeschaut** (`nachgeschaut: 2026-08-11`). Der Fund oben ist bewusst **kein**
+  `entgangen_bei`-Fall und bekommt keine eigene Defekt-Story: Es hat sich kein Verhalten geändert, nur
+  eine falsch aufgeschriebene Regel. Das ist `Aufräumen`. Würde es mitgezählt, wüchse die Zahl „was die
+  Abnahme durchgelassen hat" um etwas, das nie einen Nutzer erreicht hat — und verlöre damit ihre Schärfe.

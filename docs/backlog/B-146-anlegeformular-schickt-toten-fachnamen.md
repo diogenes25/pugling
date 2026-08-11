@@ -13,7 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-nachgeschaut: ""
+nachgeschaut: 2026-08-11
 wartet_auf: ""
 ---
 
@@ -134,3 +134,7 @@ würde den Absender gegen sich selbst prüfen.
   er in einer isolierten Welt läuft. Dafür stehen die Playwright-Spec (echter Browser, echter
   Dialog) und eine Live-Probe gegen die laufende API. Protokoll:
   [pm-sitzung-2026-08-10.md](../pm-sitzung-2026-08-10.md) → Nachtlauf, Sprint 3.
+- **2026-08-11** — **nachgeschaut** (`/code-review` über `1867cfd..HEAD`), **ohne Fund**. Belegt statt
+  geglaubt: Das Weglassen von `subjectName` im Anlege-Rumpf ist gefahrlos, weil
+  `TextbookSeriesController.cs:173` den Namen serverseitig auflöst. Eingetragen, obwohl nichts gefunden
+  wurde — der Blick zählt nur, wenn er verzeichnet ist.

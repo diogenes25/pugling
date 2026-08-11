@@ -13,7 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-nachgeschaut: ""
+nachgeschaut: 2026-08-11
 wartet_auf: ""
 ---
 
@@ -224,3 +224,10 @@ er bleibt Vitest-Sache mit einem von Hand gesetzten Ladezustand.
   er in einer isolierten Welt läuft. Dafür stehen die Playwright-Spec (echter Browser, echter
   Dialog) und eine Live-Probe gegen die laufende API. Protokoll:
   [pm-sitzung-2026-08-10.md](../pm-sitzung-2026-08-10.md) → Nachtlauf, Sprint 3.
+- **2026-08-11** — **nachgeschaut** (`/code-review` über `1867cfd..HEAD`), **ohne Fund** an dieser Story.
+  Geprüft wurde die Sentinel-Mechanik im Einzelnen: `FREETEXT_SUBJECT` läuft in allen sechs
+  Zustandskombinationen sauber durch `seriesFormValues`/`seriesPatch` und kann den PATCH-Rumpf nicht
+  erreichen; die aus `series` gespeisten Options-Bedingungen können in keinem erreichbaren Zustand gegen
+  den aus `form` gespeisten Select-Wert driften; `schoolTypes` ist im Vertrag nicht nullable, die
+  Deaktivierungs-Prüfung kann also keinen `null` rendern. Eingetragen, **weil er nichts gefunden hat** —
+  sonst ist „sauber geprüft" von „nie angesehen" nicht zu unterscheiden.
