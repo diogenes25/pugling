@@ -275,14 +275,22 @@ public sealed class CreatorApi(HttpClient http)
 
     // ---------------------------------------------------------------- Catalog, preview, rights
 
-    /// <summary>Child-neutral catalog search over the metadata (all filters optional, AND-combined).</summary>
+    /// <summary>
+    /// Child-neutral catalog search over the metadata (all filters optional, AND-combined).
+    /// <para>
+    /// <paramref name="source"/> searches the source reference ("Green Line 1, Unit 1") and is what lets a
+    /// creator agent ask "what already exists for this textbook passage?" before it invents anything -
+    /// separate from <paramref name="search"/>, which reads title and description (B-18).
+    /// </para>
+    /// </summary>
     public Task<IReadOnlyList<ExerciseSummary>> SearchExercisesAsync(int? subjectId = null, int? seriesUnitId = null,
         int? grade = null, SchoolTypes? schoolType = null, int? categoryId = null, string? type = null,
-        string? search = null, bool? mineOnly = null, int skip = 0, int take = 50, CancellationToken ct = default) =>
+        string? search = null, string? source = null, bool? mineOnly = null, int skip = 0, int take = 50,
+        CancellationToken ct = default) =>
         Http.GetAsync<IReadOnlyList<ExerciseSummary>>($"{Root}/exercises" + PuglingHttp.Query(
             ("subjectId", subjectId), ("seriesUnitId", seriesUnitId), ("grade", grade), ("schoolType", schoolType),
-            ("categoryId", categoryId), ("type", type), ("search", search), ("mineOnly", mineOnly),
-            ("skip", skip), ("take", take)), ct);
+            ("categoryId", categoryId), ("type", type), ("search", search), ("source", source),
+            ("mineOnly", mineOnly), ("skip", skip), ("take", take)), ct);
 
     /// <summary>Exercise detail including raw config and own permissions (<c>isOwn</c>/<c>isOwner</c>).</summary>
     public Task<ExerciseDetail> GetExerciseDetailAsync(int exerciseId, CancellationToken ct = default) =>

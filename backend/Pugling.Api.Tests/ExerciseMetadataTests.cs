@@ -111,18 +111,31 @@ public class ExerciseMetadataTests(PuglingWebAppFactory factory) : IClassFixture
         var (subjectId, seriesId, seriesUnitId, categoryId) = await SetupAsync(father, $"Meta-Fach-{Guid.NewGuid():N}");
         var basePath = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic";
         await father.PostAsJsonAsync(basePath, ArithmeticBody("Aus-Testbuch", categoryId, 5, 7, "Gymnasium"));
+        // A second exercise WITHOUT a source: it makes the filter separate inside a mixed set rather than
+        // just emptying a set of one - and it is the only way the `Source != null` branch is ever taken.
+        var ohneQuelle = (object)new
+        {
+            title = "Ohne-Quelle",
+            orderIndex = 2,
+            rewardPoints = 10,
+            config = new { problems = new[] { new { prompt = "2 + 2", answer = 4, tolerance = 0 } } },
+            categoryId,
+        };
+        await father.PostAsJsonAsync(basePath, ohneQuelle);
 
-        // Substring of "Testbuch, Kapitel 1" - and lower case, so the LIKE/collation path is covered too
-        // (a byte-exact `instr()` would miss this, B-135).
+        // Substring of "Testbuch, Kapitel 1" - and lower case, so the LIKE path is covered too. The
+        // tolerance comes from the OPERATOR, not from a collation: SQLite's LIKE folds ASCII, the `instr()`
+        // that `Contains` maps to never does (B-135, SearchPattern).
         var hit = await Search(father, subjectId, source: "testbuch");
-        Assert.Contains(hit.EnumerateArray(), e => e.GetProperty("title").GetString() == "Aus-Testbuch");
+        Assert.Single(hit.EnumerateArray());
+        Assert.Equal("Aus-Testbuch", hit[0].GetProperty("title").GetString());
 
         // A source that no exercise carries: the filter has to exclude, not merely pass everything through.
         var miss = await Search(father, subjectId, source: "Green Line");
         Assert.Empty(miss.EnumerateArray());
 
-        // Without the parameter nothing changes - the addition is additive (AK 2).
-        Assert.Single((await Search(father, subjectId)).EnumerateArray());
+        // Without the parameter both come back - the addition is additive (AK 2).
+        Assert.Equal(2, (await Search(father, subjectId)).GetArrayLength());
     }
 
     private static async Task<JsonElement> Search(HttpClient father, int subjectId,

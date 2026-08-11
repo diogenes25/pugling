@@ -132,10 +132,6 @@ export function VaterWizard() {
   // Übungstypen kommen aus dem Server-Manifest, nie aus einer Tabelle im Frontend (frontend/CLAUDE.md).
   const types = useExerciseTypes();
 
-  // Ein Fachwechsel macht die Art des alten Fachs gegenstandslos - stehen gelassen filterte sie auf eine
-  // Kategorie, die es im neuen Fach nicht gibt, und die Trefferliste bliebe ohne sichtbaren Grund leer.
-  useEffect(() => { setCategoryId(""); }, [subjectId]);
-
   /*
    * Erstes Kind vorwählen; wenn schon Kinder existieren, „bestehendes" als Standard.
    *
@@ -178,6 +174,22 @@ export function VaterWizard() {
   const [selectAllBusy, setSelectAllBusy] = useState(false);
 
   /*
+   * Alles, was je geladen wurde — nicht nur die aktuelle Seite.
+   *
+   * `selected` trägt Ids, aber der Abschluss braucht zu jeder gewählten Übung **Titel und Typ**: Der Typ
+   * entscheidet, ob die Test-Stufe mitgeschickt wird (`wizardFinish.ts`, nur `Vocabulary` hat eine), der
+   * Titel benennt im Fehlerfall die schuldige Übung. Beides aus der geladenen Seite zu holen ging gut,
+   * solange nur daraus gewählt werden konnte. Seit „Alle wählen" bis zu 500 Treffer übernimmt, sind die
+   * meisten davon **nicht** auf der Seite: Der Typ käme als `""` zurück, die Stufe fiele für sie still
+   * weg — und der Vater hat sie im Überblick gerade für „alle Positionen" bestätigt.
+   */
+  const gesehen = useRef(new Map<number, ExerciseSummary>());
+  function merken(items: ExerciseSummary[]) {
+    for (const e of items) gesehen.current.set(e.id, e);
+  }
+  useEffect(() => { merken(exercises.data?.items ?? []); }, [exercises.data]);
+
+  /*
    * „Alle wählen" hieß bisher „die ersten 100 wählen" (B-18): Der Server liefert eine Seite, und der Knopf
    * übernahm genau die - bei 250 Treffern entstand ein Plan mit 100 Positionen, und `TruncationHint` war
    * der einzige Hinweis darauf.
@@ -197,11 +209,14 @@ export function VaterWizard() {
         subjectId: Number(subjectId), grade: effectiveGrade, schoolType: effectiveSchoolType,
         search: contentSearch, categoryId, type: typeKey, source: sourceSearch,
       }, 500));
+      merken(alle.items);
       setSelected(alle.items.map((e) => e.id));
-    } catch {
-      // Der Nachschlag ist eine Bequemlichkeit, kein Muss: Schlägt er fehl, bleibt die geladene Seite
-      // wählbar, statt dass der Knopf gar nichts tut.
+    } catch (err) {
+      // Zurückfallen ja, schweigen nein: Sonst stünden 100 statt 400 Positionen im Plan — genau die
+      // Kappung, die dieser Knopf abschaffen soll, nur unbeobachtbar.
       setSelected(filteredExercises.map((e) => e.id));
+      setError(`Konnte nicht alle Treffer laden – es sind nur die ${filteredExercises.length} geladenen `
+        + `gewählt. ${errorMessage(err)}`);
     } finally {
       setSelectAllBusy(false);
     }
@@ -262,8 +277,8 @@ export function VaterWizard() {
           comboThreshold,
           comboBonusPoints,
         },
-        titleOf: (id) => filteredExercises.find((x) => x.id === id)?.title ?? `#${id}`,
-        typeOf: (id) => filteredExercises.find((x) => x.id === id)?.type ?? "",
+        titleOf: (id) => gesehen.current.get(id)?.title ?? `#${id}`,
+        typeOf: (id) => gesehen.current.get(id)?.type ?? "",
       }, api);
       // `null` heißt: es läuft schon ein Durchgang (zweiter Klick). Der erste besitzt das Ergebnis und
       // navigiert – `busy` bleibt absichtlich stehen.
@@ -295,7 +310,13 @@ export function VaterWizard() {
           <h3 style={{ margin: 0 }}>Für welches Kind?</h3>
           <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
             <ChoicePill active={mode === "existing"} disabled={(children.data?.length ?? 0) === 0}
-              onClick={() => { setTouchedMode(true); setMode("existing"); }}>Bestehendes Kind</ChoicePill>
+              onClick={() => {
+                setTouchedMode(true); setMode("existing");
+                // Der Effekt oben schweigt jetzt zu Recht (der Vater hat gewählt) – die Vorbelegung muss
+                // darum hier passieren, sonst steht das Pulldown leer und „Weiter" verlangt eine Auswahl,
+                // die nie angeboten wurde.
+                if (childId === "" && children.data?.length) setChildId(children.data[0].id);
+              }}>Bestehendes Kind</ChoicePill>
             <ChoicePill active={mode === "new"}
               onClick={() => { setTouchedMode(true); setMode("new"); }}>Neues Kind anlegen</ChoicePill>
           </div>
@@ -331,7 +352,16 @@ export function VaterWizard() {
           <h3 style={{ margin: 0 }}>Wo hakt es?</h3>
           <div className="form-grid">
             <div className="field"><label>Fach</label>
-              <select aria-label="Fach" value={subjectId} onChange={(e) => setSubjectId(e.target.value === "" ? "" : Number(e.target.value))}>
+              <select aria-label="Fach" value={subjectId} onChange={(e) => {
+                // Die Art gehört zum alten Fach – stehen gelassen filterte sie auf eine Kategorie, die es
+                // im neuen gar nicht gibt, und die Trefferliste bliebe ohne sichtbaren Grund leer. Hier
+                // statt in einem Effekt, weil hier die Entscheidung fällt: ein Effekt liefe erst NACH der
+                // Suchabfrage und schickte eine überflüssige Runde mit altem Filter los.
+                // Typ und Quelle bleiben: der Typ kommt aus dem globalen Manifest, die Quelle ist Freitext
+                // über Lehrwerke – beides fachunabhängig, ein Reset würde Eingabe wegwerfen.
+                setCategoryId("");
+                setSubjectId(e.target.value === "" ? "" : Number(e.target.value));
+              }}>
                 <option value="">– Fach wählen –</option>
                 {subjects.data?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
@@ -394,7 +424,7 @@ export function VaterWizard() {
             <span className="sub">{filteredExercises.length} passende Übungen</span>
             {filteredExercises.length > 0 && (
               <button type="button" className="btn ghost inline-btn" style={{ marginLeft: "auto" }}
-                disabled={selectAllBusy} onClick={selectAll}>
+                disabled={selectAllBusy || exercises.loading} onClick={selectAll}>
                 {selectAllBusy ? "Lade alle…" : "Alle wählen"}
               </button>
             )}

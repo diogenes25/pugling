@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, bereich/katalog, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/training, bereich/katalog, rolle/supervisor]
 aliases: [Auto-Lehrplan-Generator]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: S
@@ -208,3 +208,41 @@ unabhängigen Teilstellen.
   `tsc -b` sauber.
   Offen bis zur Abnahme: `pugling-reviewer` **und** `frontend-reviewer` (`wo: beides`), dazu der
   `/smoke-test`-Durchlauf mit gesetztem `source`-Filter aus dem Testweg.
+- **2026-08-11** — **`/smoke-test` gelaufen**, dreizehn Standard-Checks grün (Auth, Ownership,
+  Plan→Test→Submit mit 100 %, Anmerkungen samt Kontext) plus sieben Proben zum neuen Filter an der echten
+  HTTP-Schicht: `source=Unit 1` → 2, `source=green line` (klein) → 5, `source=Green Line 5` → 3,
+  `source=Découvertes` → 2, Unsinn → **0**, `source=Green Line&type=Cloze` → 2.
+  Drei davon tragen etwas, das die Unit-Tests nicht zeigen: kleingeschrieben trifft (der `LIKE`-Pfad),
+  `Découvertes` trifft (kein ASCII-Problem), und der Unsinn-Filter schließt wirklich aus.
+  **Die tragende Probe ist die Gegenprobe:** `search=Unit 1` → **0 Treffer**. Damit ist Entscheidung 4
+  belegt statt behauptet — die Quelle ist kein Teil der Titelsuche. Die echte `pugling.db` blieb
+  unangetastet.
+- **2026-08-11** — **beide Reviewer gelaufen** (`wo: beides`), ein roter Fund, sechs weitere behoben.
+  **🔴 Der `frontend-reviewer` hat einen Defekt gefunden, der ausgerechnet AK 4 still entwertet hätte:**
+  `titleOf`/`typeOf` schlugen in der **geladenen Seite** nach. Seit „Alle wählen" bis zu 500 Treffer
+  übernimmt, sind die meisten davon nicht darin — `typeOf` lieferte `""`, und `wizardFinish.ts:110` strich
+  daraufhin die **Test-Stufe** aus dem DTO. Der Vater bestätigt im Überblick „gilt für alle 300
+  Positionen" und bekäme sie für 100; der Rest fiele auf die Server-Vorgabe zurück, ohne Meldung. Behoben,
+  indem die gewählten Übungen behalten werden (`gesehen`-Map, aus **beiden** Ladewegen befüllt) statt nur
+  ihrer Ids. Genau die Lücke, die meine eigene Änderung vom Randfall zum Regelfall gemacht hat.
+  Dazu: der `catch` des Nachschlags **schweigt nicht mehr** (sonst 100 statt 400 Positionen, unbeobachtbar
+  — die Kappung, die AK 4 abschaffen soll); „Alle wählen" ist während einer laufenden Abfrage gesperrt
+  (sonst entscheidet es auf den Zahlen des vorigen Filters, B-116-Konstellation); der Rückwechsel auf
+  „Bestehendes Kind" belegt wieder vor (meine `touchedMode`-Sperre hatte das mit abgeschaltet); der
+  Art-Reset sitzt jetzt im `onChange` statt einen Render später; und die Spec wartet auf die Zahl in der
+  Überschrift, weil „Alle wählen" seit dieser Story asynchron sein kann.
+  **🟡 Der `pugling-reviewer`** fand die Lücke, die die Prämisse der Story trifft: `Pugling.Client` — laut
+  Root-`CLAUDE.md` „die *eine* HTTP-Schicht" für die KI-Agenten — bildete alle sieben bisherigen Filter ab,
+  `source` aber nicht. Eine Story, deren Prämisse „Quelle ist ein behauptetes, aber fehlendes Fundament"
+  lautet, hätte es für den Agenten weiter fehlen lassen. Nachgezogen. Dazu seine 🟢: Der Testfall traf den
+  `Source != null`-Zweig nie (jede Testübung trug eine Quelle) — jetzt mit einer zweiten Übung **ohne**
+  Quelle, die den Filter *innerhalb* einer gemischten Menge trennen lässt statt eine Einermenge zu leeren.
+  Und eine Präzisierung, die ich übernommen habe: Die Groß-/Kleinschreibungs-Toleranz kommt vom
+  **Operator**, nicht von einer Collation — `Exercise.Source` und `.Title` tragen gar keine.
+- **2026-08-11** — **abgenommen** (Commits `44e11f6` und `<siehe unten>`).
+  Belegt: Backend **815/815**, Vitest **249/249**, Playwright **34/34**, `tsc -b` sauber,
+  `/smoke-test` grün.
+  **Rollengang geführt**, als E2E im echten Browser gegen den echten Server
+  ([assistent.spec.ts](../../frontend/e2e/assistent.spec.ts)): Kind anlegen → Problemfeld → Übungen
+  filtern und wählen → Feinschliff eintippen → Plan mit Positionen. Dazu der `/smoke-test`-Gang über die
+  HTTP-Schicht. Alle sechs Akzeptanzkriterien erfüllt.

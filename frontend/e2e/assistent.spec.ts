@@ -46,6 +46,11 @@ test("Der Assistent legt Kind, Plan und Position mit den eingetippten Feinschlif
   await page.getByRole("heading", { name: /Übungen wählen/ }).waitFor();
   await page.getByLabel("Übung suchen").fill("environment");
   await page.getByRole("button", { name: "Alle wählen" }).click();
+  // Seit B-18 kann "Alle waehlen" asynchron nachladen (bei mehr Treffern als geladen, take=500). Auf die
+  // Zahl in der Ueberschrift warten, statt sofort weiterzuklicken: Sonst traefe "Weiter" ein noch leeres
+  // `selected` und die Spec braeche mit "Bitte mindestens eine Uebung waehlen" ab, sobald der Seed-Katalog
+  // ueber eine Seite waechst (B-109: ein Flackern nimmt die ganze Datei mit).
+  await expect(page.getByRole("heading", { name: /\(\d+ gewählt\)/ })).toBeVisible();
   await page.getByRole("button", { name: "Weiter" }).click();
 
   // ---------- Schritt 4: Feinschliff – bewusst von der Intensitäts-Vorbelegung (80/5) abweichend ----------
