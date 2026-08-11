@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/frontend, bereich/katalog, rolle/creator]
+tags: [typ/story, status/geschaetzt, bereich/frontend, bereich/katalog, rolle/creator]
 aliases: [SCHOOL_TYPES handgepflegt, Schularten ohne Manifest, Enum-Kopie im Frontend]
-status: gegrillt
+status: geschaetzt
 prio: P3
 art: Aufräumen
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: S
+wo: beides
+migration: nein
+vertragsbruch: nein
 quelle: frontend-reviewer im Nachtlauf Sprint 3 (2026-08-10)
 unverifiziert: false
 grund: ""
@@ -161,6 +161,79 @@ nicht gedacht war.
 6. Keine der dreizehn Fundstellen ändert ihr Verhalten. Diese Story ist Aufräumen, nicht
    Vereinheitlichung — die geht an die abgespaltene Story.
 
+## Schätzung
+
+**Größe: S**, `wo: beides` (Backend zuerst), `migration: nein`, `vertragsbruch: nein`.
+
+**Die Unbekannte aus Entscheidung 2 ist weg — gemessen, nicht angenommen.** Am Bestand war sie nicht zu
+beobachten (alle 300 Schemas des Dokuments sind referenziert), also lief ein Wegwerf-Versuch: eine Kopie
+von `v1.json` um ein Geschwister-Schema ergänzt, das **keine** Operation referenziert, und durch den
+echten Generator geschickt. Ergebnis:
+
+```text
+SchoolTypesValue: "None" | "Grundschule" | "Hauptschule" | "Realschule" | "Gymnasium" | …
+```
+
+Genau die Form, die Entscheidung 2 braucht. Der Weg ist damit so billig wie veranschlagt.
+
+**Beide Flags sind nachgesehen.** Kein Schema und keine Tabelle ändern sich (`migration: nein`).
+`Pugling.Contracts` wird **gar nicht** angefasst — der Transformer sitzt in `Pugling.Api/Program.cs`, und
+das neue Geschwister-Schema ist rein additiv (`vertragsbruch: nein`; ein additives Feld ist nach den
+Regeln dieses Bereichs kein Bruch).
+
+**AK 3 hält bereits ein bestehender Test**, ohne dass etwas zu tun wäre: Der B-60-Wächter in
+`ContractDocumentTests.cs:124-131` schlägt auf `schemas[t.Name]` an — auf das Schema, das **genauso
+heißt** wie der `[Flags]`-Typ. Ein Geschwister unter anderem Namen kann ihn nicht auslösen. Und der
+Transformer trifft heute genau **einen** Typ: `SchoolTypes` ist das einzige `[Flags]`-Enum im
+Vertragsprojekt.
+
+**Warum S und nicht XS:** Der Anker XS ist „zwei Sätze in `lib/fieldHelp.ts` plus der E2E dazu" (B-02) —
+eine Datei, eine Ebene. Hier sind es zwei Projekte, ein **generiertes** Zwischenartefakt und ein neues
+Bau-Tor. Vom M-Anker (vokabel-basierter Batch-Pfad im `MediaSelector`) ist es weit entfernt: keine neue
+Logik, kein Laufzeitverhalten.
+
+### Risiken
+
+1. **`Object.keys()` gibt `string[]` zurück.** Die erschöpfende Ableitung braucht am Ende eine
+   Typzusicherung, und ein schludriges `as SchoolType[]` an der falschen Stelle setzt genau die Prüfung
+   außer Kraft, für die die ganze Story existiert. Die Zusicherung gehört an den `Record`-Typ, nicht an
+   das Ergebnis von `Object.keys`.
+2. **Das Tor läuft bei `tsc -b`, nicht bei `npm test`.** `npm run build` und CI fahren es, Vitest nicht.
+   Wer nur die Unit-Tests laufen lässt, sieht es nicht — das ist die ehrliche Reichweite dieses Tors und
+   gehört in den Kommentar an `labels.ts`.
+3. **Das Vertragsdokument ist ein eingechecktes Artefakt**, das ein Testlauf neu schreibt. Der Diff wird
+   das neue Schema enthalten — und [B-147](B-147-para-summaries-tragen-einrueckung-ins-dokument.md)
+   (verstümmelte `<para>`-Summaries) steht dort offen. Beim Commit auseinanderhalten, sonst sieht es aus,
+   als hätte diese Story die Summaries angefasst.
+4. **Die Reihenfolge in `labels.ts` ist heute eine Anzeigeentscheidung** (Grundschule → Berufsschule,
+   aufsteigend). Eine Ableitung, die sie an die Deklarationsreihenfolge des Enums bindet, wäre eine stille
+   Verhaltensänderung im Pulldown. AK 5 sagt: Menge prüfen, Reihenfolge lassen.
+
+### Angriffsplan
+
+Backend zuerst — das Frontend kann den Typ erst lesen, wenn er im Dokument steht.
+
+1. **`Program.cs`**: im bestehenden `[Flags]`-Zweig zusätzlich ein Geschwister-Schema mit den Einzelnamen
+   als `enum` registrieren. `SchoolTypes` selbst unverändert lassen.
+2. **Dokument und Vertrag erzeugen**: Backend-Testlauf schreibt `docs/openapi/v1.json`, danach
+   `npm run gen:contract`. Prüfen, dass der Union-Typ in `contract.ts` steht (der Versuch oben sagt: ja).
+3. **`types.ts`**: eine Alias-Zeile für den neuen Union.
+4. **`labels.ts`**: `SCHOOL_TYPES` erschöpfend aus dem Alias ableiten, `None` per `Exclude` ausnehmen, den
+   irreführenden Kommentar aus Entscheidung 3 schärfen.
+5. **Rote Probe**: einen Wert ins Enum aufnehmen, `tsc -b` muss rot werden und `labels.ts` nennen; Wert
+   wieder entfernen. Das Ergebnis in den `## Verlauf`.
+
+### Testweg
+
+| Kriterium | Wer hält es |
+| --- | --- |
+| AK 1, 2 | Die **rote Probe** aus Schritt 5 — der Compiler ist das Tor, es gibt keine Testdatei dafür. Dauerhaft läuft es über `npm run build` und den CI-Job. |
+| AK 3 | `ContractDocumentTests` (bestehend, Punkt 5 des Vertrags-Tests) — muss grün bleiben. |
+| AK 4, 5 | Sichtprüfung am Diff von `labels.ts`; die Reihenfolge zusätzlich über die bestehenden Formular-Tests, die auf Optionen zugreifen. |
+| AK 6 | Vitest und Playwright **unverändert** grün (243/243 bzw. 34/34) — diese Story ändert kein Verhalten. |
+
+**Kein `/smoke-test`**: Es entsteht kein neuer Endpunkt und kein Laufzeitpfad.
+
 ## Verlauf
 
 - **2026-08-10** — angelegt aus dem Frontend-Review des Nachtlauf-Sprints 3. Nicht im Sprint behoben: der
@@ -195,3 +268,16 @@ nicht gedacht war.
   vier Stellen, deren Ursache tiefer liegt als vermutet (ein Enum, zwei Rollen). Zwei Präzisierungen am
   Ist-Stand fielen dabei ab: `ExerciseEditModal` zerlegt zuerst (Kombinationen sind dort in Ordnung), und
   `VaterKind`s Unerreichbarkeit greift **heute schon**, weil ein Kind eine Kombination tragen darf.
+- **2026-08-11** — **geschätzt**: `S`, `beides` (Backend zuerst), `migration: nein`,
+  `vertragsbruch: nein`. **Die Unbekannte aus Entscheidung 2 ist beseitigt, und zwar gemessen:** Am
+  Bestand war sie nicht zu beobachten (alle 300 Schemas des Dokuments sind referenziert), also lief ein
+  Wegwerf-Versuch — eine Kopie von `v1.json` um ein von keiner Operation referenziertes Geschwister-Schema
+  ergänzt und durch den echten Generator geschickt. Es landet als
+  `SchoolTypesValue: "None" | "Grundschule" | …` im Vertrag, also genau in der gebrauchten Form.
+  Zwei Dinge fielen dabei ab, die die Schätzung verkleinern: **AK 3 hält bereits ein bestehender Test** —
+  der B-60-Wächter (`ContractDocumentTests.cs:124-131`) schlägt auf das Schema an, das *genauso heißt* wie
+  der `[Flags]`-Typ, ein Geschwister unter anderem Namen kann ihn nicht auslösen. Und der Transformer
+  trifft heute genau **einen** Typ: `SchoolTypes` ist das einzige `[Flags]`-Enum im Vertragsprojekt.
+  Vier Risiken benannt, zwei davon eigen: `Object.keys()` liefert `string[]` (eine schludrige
+  Typzusicherung setzt genau die Prüfung außer Kraft, um die es geht), und das Tor läuft bei `tsc -b`,
+  **nicht** bei `npm test` — das ist seine ehrliche Reichweite.
