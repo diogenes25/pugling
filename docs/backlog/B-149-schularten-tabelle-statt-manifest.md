@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/frontend, bereich/katalog, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/katalog, rolle/creator]
 aliases: [SCHOOL_TYPES handgepflegt, Schularten ohne Manifest, Enum-Kopie im Frontend]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Aufräumen
 groesse: S
@@ -299,3 +299,34 @@ Backend zuerst — das Frontend kann den Typ erst lesen, wenn er im Dokument ste
   Belegt: Backend **814/814**, Vitest **243/243**, Playwright **34/34**, `tsc -b` sauber — alle Zahlen
   unverändert gegenüber dem Stand davor, wie es AK 6 verlangt.
   Offen bis zur Abnahme: `pugling-reviewer` **und** `frontend-reviewer` (`wo: beides`).
+- **2026-08-11** — **beide Reviewer gelaufen** (`wo: beides`), kein Blocker, vier Funde behoben.
+  **`pugling-reviewer`:** Der Geschwister-Name **überschrieb still**, statt zu kollidieren — die
+  Indexer-Zuweisung ersetzt ein gleichnamiges DTO, das zum Transformer-Zeitpunkt längst im Dokument
+  steht, und **kein** Tor hätte das gemeldet (das Eindeutigkeits-Tor sieht nur C#-Typen, keine
+  synthetischen Namen). Behoben mit `TryAdd` + `throw`: eine Kollision macht jetzt
+  `ContractDocumentTests` rot und nennt den Namen. Dazu sein 🟢: Anker-Typ auf `PointKind` vereinheitlicht,
+  denselben, den das zitierte B-60-Tor benutzt.
+  Seine **Byte-Stabilitäts-Prüfung ist besser als meine**: Ich hatte zwei identische Diffs gesehen; er hat
+  in einer Wegwerf-App gemessen, dass der Generator die Schemas **nach** allen Dokument-Transformern
+  case-insensitiv sortiert — die Einfügeposition ist also strukturell gleichgültig. Gegenprobe am echten
+  Artefakt: `SchoolTypesValue` steht zwischen `SchoolTypes` und `ScoringTimeSlot`, nicht am Ende.
+  **`frontend-reviewer`:** **AK 2 ist jetzt belegt statt behauptet** — er hat den entfernten Wert
+  nachgestellt (`TS2353`, Excess-Property-Check). Wichtiger sein Fund dazu: Diese Richtung hängt daran,
+  dass rechts ein **frisches Objektliteral** steht; über eine Variable oder ein Spread geführt, fiele die
+  Hälfte lautlos aus. Steht jetzt im Kommentar.
+  Sein zweiter Fund ist die Fehlerklasse dieser Story auf der Wache selbst: Verlöre `SchoolTypeValue` je
+  seine Werteliste, kollabierte `Exclude<…>` zu `string`, und `Record<string, true>` nähme jedes Literal
+  an — **das Tor wäre still tot**. Behoben mit einer Schnitt-Bedingung, beidseitig verifiziert (grün bei
+  intaktem Union, `TS2322 … Property 'enumVerfallen' is missing` beim Verfall). Dritter Fund: `None` steht
+  **nicht** an der Übung als eigene Option (Checkbox-Gruppe) — mein Kommentar war zu großzügig,
+  richtiggestellt. Vierter: `SCHOOL_TYPES` hatte seine Kurzdoku verloren, wieder da.
+- **2026-08-11** — **abgenommen** (Commits `2c040f4` und `<siehe unten>`).
+  Belegt: Backend **814/814**, Vitest **243/243**, `tsc -b` sauber, `docs/openapi/v1.json` nach dem
+  Testlauf byte-identisch zum Commit. **Playwright: 34/34 im zweiten vollen Lauf** — im ersten fiel
+  `bilder.spec.ts` einmal aus (33/34), allein und im Wiederholungslauf grün. Das Flackern hat mit dieser
+  Story nichts zu tun (sie fasst weder Medien noch die Arcade an) und liegt als
+  [B-153](B-153-bilder-spec-flackert-im-vollen-lauf.md) — samt dem Eingeständnis, dass der Beleg dazu
+  verlorenging, weil der grüne Einzellauf `test-results/` überschrieb.
+  **Rollengang: bewusst keiner, und das ist hier kein Ausfall.** Diese Story ändert nach AK 6 **kein**
+  Verhalten — es gibt nichts zu begehen. Was an ihre Stelle tritt, ist die rote Probe an der echten
+  Werkzeugkette (Enum → Dokument → Vertrag → Compiler), und die ist oben belegt.

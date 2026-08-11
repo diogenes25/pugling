@@ -362,13 +362,13 @@ builder.Services.AddOpenApi(o =>
         doc.Components.Schemas ??= new Dictionary<string, IOpenApiSchema>();
         // Reflective over the [Flags] TYPES, not over a name like "SchoolTypes" - a second one added later
         // is covered for free. Same rule as the B-60 gate it deliberately does not trip.
-        var flagsEnums = typeof(SchoolTypes).Assembly.GetTypes()
+        var flagsEnums = typeof(PointKind).Assembly.GetTypes()
             .Where(t => t.IsEnum && t.IsDefined(typeof(FlagsAttribute), inherit: false))
             .Where(t => doc.Components.Schemas.ContainsKey(t.Name));
         foreach (var type in flagsEnums)
         {
             var names = EnumSchemaHelp.AllowedValues(type);
-            doc.Components.Schemas[$"{type.Name}Value"] = new OpenApiSchema
+            var sibling = new OpenApiSchema
             {
                 Type = JsonSchemaType.String,
                 Enum = [.. names.Select(n => (JsonNode)JsonValue.Create(n))],
@@ -376,6 +376,15 @@ builder.Services.AddOpenApi(o =>
                     + "a comma-separated combination and therefore carries no value list; this sibling exists "
                     + "so a generated client can reason about the individual names.",
             };
+            // Add, never overwrite. Contract schemas already exist by the time document transformers run, so
+            // a DTO named `SchoolTypesValue` would silently be REPLACED by this string enum - the operations
+            // would keep pointing at a schema that no longer describes what they send, and no gate would
+            // notice (the uniqueness gate only sees C# types, not synthesised names). Failing loud here turns
+            // that into a red ContractDocumentTests run naming the collision.
+            if (!doc.Components.Schemas.TryAdd($"{type.Name}Value", sibling))
+                throw new InvalidOperationException(
+                    $"Schema '{type.Name}Value' already exists - the [Flags] sibling name (B-149) collides "
+                    + "with a contract type. Rename that type; the suffix is reserved.");
         }
         return Task.CompletedTask;
     });

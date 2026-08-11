@@ -40,21 +40,33 @@ export const GEM_LABEL = "💎 Gems";
  * Fehlt einer, ist `tsc -b` rot und nennt diese Datei; steht einer zu viel darin, ebenso. Keine
  * Typzusicherung nötig – `Object.keys` liefert `string[]`, und `SchoolType` *ist* ein String.
  *
+ * Das Literal muss dabei **direkt** hier stehen. Die Richtung „ein Wert wurde entfernt" hängt am
+ * Excess-Property-Check, und den gibt es nur beim frischen Objektliteral: Wer die Zuweisung über eine
+ * Variable oder ein Spread führt, verliert diese Hälfte des Tors lautlos.
+ *
  * **Reichweite, ehrlich:** Das Tor ist der Compiler, also `npm run build` und CI. `npm test` fährt es
  * nicht. Und es meldet nur – nachtragen muss die Zeile unten jemand von Hand.
  *
  * `None` ist ausgenommen, weil es **kein Einzelwert der Auswahl** ist. Nicht, weil es „nicht gesetzt"
- * hieße: Das stimmt nur am Kind (`VaterKind`, „– keine Angabe –"). An Übung, Reihe und Fachlehrer-Profil
- * ist `None` ein echter, gewollter Wert und heißt „für alle" – dort steht es als eigene Option im Feld.
+ * hieße: Das stimmt nur am Kind (`VaterKind`, „– keine Angabe –"). An Reihe und Fachlehrer-Profil ist
+ * `None` ein echter, gewollter Wert und heißt „für alle" – dort steht es als eigene Option im Feld; an
+ * der Übung entsteht derselbe Wert implizit aus einer leeren Checkbox-Gruppe.
  *
  * Die **Reihenfolge** ist eine Anzeigeentscheidung dieser Datei (aufsteigend nach Schulform), keine des
  * Servers: `Object.keys` gibt die Schreibreihenfolge des Literals zurück.
  */
-const SELECTABLE: Record<Exclude<SchoolTypeValue, "None">, true> = {
+const SELECTABLE: Record<Exclude<SchoolTypeValue, "None">, true>
+  // Die Wache über der Wache: Verlöre `SchoolTypeValue` je seine Werteliste und wäre wieder ein nackter
+  // `string` – etwa weil jemand das Geschwister-Schema im Transformer anfasst –, dann kollabierte
+  // `Exclude<…>` zu `string`, und `Record<string, true>` nähme jedes Literal an. Das Tor wäre still tot,
+  // und genau diese Sorte Stille ist der Grund für diese Story. Verschwindet das Schema ganz, meldet es
+  // schon `types.ts`; nur der Zwischenzustand „da, aber wertlos" braucht diese Zeile.
+  & (string extends SchoolTypeValue ? { readonly enumVerfallen: never } : unknown) = {
   Grundschule: true, Hauptschule: true, Realschule: true,
   Gymnasium: true, Gesamtschule: true, Berufsschule: true,
 };
 
+/** Wählbare Schularten (ohne `None`) – abgeleitet aus dem Server-Enum, Begründung und Tor siehe oben. */
 export const SCHOOL_TYPES: SchoolType[] = Object.keys(SELECTABLE);
 
 /**
