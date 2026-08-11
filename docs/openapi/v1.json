@@ -23757,7 +23757,7 @@
         "tags": [
           "Creator \u2013 Subjects"
         ],
-        "summary": "Creates a subject.",
+        "summary": "Creates a subject; the calling creator becomes its owner.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -23887,7 +23887,7 @@
         "tags": [
           "Creator \u2013 Subjects"
         ],
-        "summary": "Changes a subject (partial).",
+        "summary": "Changes a subject (partial, owner only).",
         "parameters": [
           {
             "name": "subjectId",
@@ -23921,6 +23921,16 @@
           "required": true
         },
         "responses": {
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Not Found",
             "content": {
@@ -23950,16 +23960,6 @@
                 }
               }
             }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
           }
         }
       },
@@ -23967,7 +23967,7 @@
         "tags": [
           "Creator \u2013 Subjects"
         ],
-        "summary": "    Deletes a subject along with its exercise categories, unless a row that cannot live without it\n    points at it.\n    The line runs along whether the reference is REQUIRED, not along who owns the row (B-144). Every\noptional SubjectId only loses its assignment - textbook series, textbooks, creator profiles,\nstudy plans and class tests are SetNull, and the last three belong to a child just as much\nas the two below do. Of the three mandatory ones, the cheap one cascades: an exercise category is\ncatalog-internal and meaningless without its subject (its exercises survive - CategoryId is\nSetNull in turn). The other two are Restrict and block the delete with 409\nsubject_in_use, because the cascade would take a child\u0027s work with it: a key result\u0027s\nmilestone together with the payout it earned, and a timetable entry that was typed by hand.\n    Stating the rule as \u0022child data blocks\u0022 would be the trap it was written to close: it reads as a\npromise for the next child-owned entity, and one added with a SetNull subject would quietly\nfall on the other side of the line.\n    The pre-check is not redundant next to DeleteBehavior.Restrict, and vice versa. Without the\ncheck the database would raise the conflict as a bare 500 with a half-saved state instead of a\nreadable 409. Without Restrict this check would be the only thing between a child\u0027s\nmilestones and their deletion - and it only guards the one path that runs through here.",
+        "summary": "    Deletes a subject along with its exercise categories (owner only), unless a row that cannot live\n    without it points at it.\n    The line runs along whether the reference is REQUIRED, not along who owns the row (B-144). Every\noptional SubjectId only loses its assignment - textbook series, textbooks, creator profiles,\nstudy plans and class tests are SetNull, and the last three belong to a child just as much\nas the two below do. Of the three mandatory ones, the cheap one cascades: an exercise category is\ncatalog-internal and meaningless without its subject (its exercises survive - CategoryId is\nSetNull in turn). The other two are Restrict and block the delete with 409\nsubject_in_use, because the cascade would take a child\u0027s work with it: a key result\u0027s\nmilestone together with the payout it earned, and a timetable entry that was typed by hand.\n    Stating the rule as \u0022child data blocks\u0022 would be the trap it was written to close: it reads as a\npromise for the next child-owned entity, and one added with a SetNull subject would quietly\nfall on the other side of the line.\n    The pre-check is not redundant next to DeleteBehavior.Restrict, and vice versa. Without the\ncheck the database would raise the conflict as a bare 500 with a half-saved state instead of a\nreadable 409. Without Restrict this check would be the only thing between a child\u0027s\nmilestones and their deletion - and it only guards the one path that runs through here.",
         "parameters": [
           {
             "name": "subjectId",
@@ -23985,6 +23985,16 @@
             "description": "No Content",
             "content": {
               "application/json": {}
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
             }
           },
           "404": {
@@ -24009,16 +24019,6 @@
           },
           "401": {
             "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {
@@ -40095,6 +40095,7 @@
           "categoriesCount",
           "createdAt",
           "id",
+          "isMine",
           "name"
         ],
         "type": "object",
@@ -40105,13 +40106,16 @@
               "integer",
               "string"
             ],
+            "description": "Subject id.",
             "format": "int32"
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "Display name (e.g. \u0022English\u0022)."
           },
           "createdAt": {
             "type": "string",
+            "description": "When the subject was created (UTC).",
             "format": "date-time"
           },
           "categoriesCount": {
@@ -40120,10 +40124,25 @@
               "integer",
               "string"
             ],
+            "description": "Number of exercise categories below it.",
             "format": "int32"
+          },
+          "ownerAdultId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "The creator who opened the subject; \u0060null\u0060 = seeded, owned by nobody.",
+            "format": "int32"
+          },
+          "isMine": {
+            "type": "boolean",
+            "description": "True if the calling creator is the owner (an ownerless subject is nobody\u0027s)."
           }
         },
-        "description": "A school subject in the shared catalog."
+        "description": "A school subject in the shared catalog. Every creator may read it; IsMine says\nwhether this caller may also rename or delete it, so a client can show the difference instead of\nletting the user find out through a 403."
       },
       "SubmitDto": {
         "type": "object",

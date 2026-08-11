@@ -8,7 +8,11 @@ using Pugling.Api.Models;
 
 namespace Pugling.Api.Controllers.Creator;
 
-/// <summary>School subjects in the shared study plan catalog.</summary>
+/// <summary>
+/// School subjects in the shared study plan catalog. Ownership as with the textbook series: <b>any creator
+/// may read and use</b> every subject, only the owner may rename or delete it (B-13). Creating stays open to
+/// everyone – a creator must be able to open a subject without waiting for a clearance.
+/// </summary>
 [ApiController]
 [ApiVersion("1.0")]
 [Route(ApiRoutes.Creator + "/subjects")]
@@ -17,27 +21,32 @@ namespace Pugling.Api.Controllers.Creator;
 [Authorize(Roles = Roles.Creator)]
 public class SubjectsController(PuglingDbContext db) : ControllerBase
 {
+    /// <summary>
+    /// Projection with the ownership flag. Written out <b>inline</b> instead of calling
+    /// <see cref="ClaimsPrincipalExtensions.IsOwnedBy"/>: EF would have to translate the method call and
+    /// would break at runtime. Missing <c>fid</c> ⇒ <c>false</c> (fail-closed, same rule as there) – and so
+    /// is a subject without an owner, which is why the null check sits on the caller's id, not on the row's.
+    /// </summary>
+    private static IQueryable<SubjectResponse> Project(IQueryable<Subject> q, int? fid) =>
+        q.Select(s => new SubjectResponse(s.Id, s.Name, s.CreatedAt, s.Categories.Count,
+            s.OwnerAdultId, fid != null && s.OwnerAdultId == fid));
+
     /// <summary>List of all subjects.</summary>
     [HttpGet]
     public async Task<IEnumerable<SubjectResponse>> List(CancellationToken ct = default) =>
-        await db.Subjects
-            .OrderBy(s => s.Name)
-            .Select(s => new SubjectResponse(s.Id, s.Name, s.CreatedAt, s.Categories.Count))
-            .ToListAsync(ct);
+        await Project(db.Subjects.AsNoTracking().OrderBy(s => s.Name), User.CreatorId()).ToListAsync(ct);
 
     /// <summary>A single subject.</summary>
     [HttpGet("{subjectId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<SubjectResponse>> Get(int subjectId, CancellationToken ct = default)
     {
-        var subject = await db.Subjects
-            .Where(s => s.Id == subjectId)
-            .Select(s => new SubjectResponse(s.Id, s.Name, s.CreatedAt, s.Categories.Count))
+        var subject = await Project(db.Subjects.AsNoTracking().Where(s => s.Id == subjectId), User.CreatorId())
             .FirstOrDefaultAsync(ct);
         return subject is null ? NotFound() : subject;
     }
 
-    /// <summary>Creates a subject.</summary>
+    /// <summary>Creates a subject; the calling creator becomes its owner.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -45,32 +54,41 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(dto.Name)) return this.ProblemWithCode(ApiErrors.ValidationError, "Name is required.");
 
-        var subject = new Subject { Name = dto.Name.Trim() };
+        var fid = User.CreatorId();
+        // The owner comes from the token, never from the payload - otherwise a creator could hand a subject
+        // to somebody else (or to nobody, which would make it permanently uneditable).
+        var subject = new Subject { Name = dto.Name.Trim(), OwnerAdultId = fid };
         db.Subjects.Add(subject);
         await db.SaveChangesAsync(ct);
 
-        var response = new SubjectResponse(subject.Id, subject.Name, subject.CreatedAt, 0);
+        var response = new SubjectResponse(subject.Id, subject.Name, subject.CreatedAt, 0,
+            subject.OwnerAdultId, ClaimsPrincipalExtensions.IsOwnedBy(subject.OwnerAdultId, fid));
         return CreatedAtAction(nameof(Get), new { subjectId = subject.Id }, response);
     }
 
-    /// <summary>Changes a subject (partial).</summary>
+    /// <summary>Changes a subject (partial, owner only).</summary>
     [HttpPatch("{subjectId:int}")]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<SubjectResponse>> Update(int subjectId, UpdateSubjectDto dto, CancellationToken ct = default)
     {
         var subject = await db.Subjects.FirstOrDefaultAsync(s => s.Id == subjectId, ct);
         if (subject is null) return NotFound();
+        var fid = User.CreatorId();
+        if (!ClaimsPrincipalExtensions.IsOwnedBy(subject.OwnerAdultId, fid))
+            return this.ProblemWithCode(ApiErrors.NotOwner, "Only the owner may change this subject.");
 
         if (dto.Name is not null) subject.Name = dto.Name.Trim();
         await db.SaveChangesAsync(ct);
 
         return new SubjectResponse(subject.Id, subject.Name, subject.CreatedAt,
-            await db.ExerciseCategories.CountAsync(c => c.SubjectId == subjectId, ct));
+            await db.ExerciseCategories.CountAsync(c => c.SubjectId == subjectId, ct),
+            subject.OwnerAdultId, ClaimsPrincipalExtensions.IsOwnedBy(subject.OwnerAdultId, fid));
     }
 
     /// <summary>
-    /// Deletes a subject along with its exercise categories, unless a row that cannot live without it
-    /// points at it.
+    /// Deletes a subject along with its exercise categories (owner only), unless a row that cannot live
+    /// without it points at it.
     /// <para>
     /// The line runs along whether the reference is REQUIRED, not along who owns the row (B-144). Every
     /// optional <c>SubjectId</c> only loses its assignment - textbook series, textbooks, creator profiles,
@@ -95,12 +113,17 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
     /// </summary>
     [HttpDelete("{subjectId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Delete(int subjectId, CancellationToken ct = default)
     {
         var subject = await db.Subjects.FindAsync([subjectId], ct);
         if (subject is null) return NotFound();
+        // Before the usage check, as with the textbook series: who may act is decided ahead of whether the
+        // action is possible - otherwise a stranger learns from the 409 what a child's plans contain.
+        if (!ClaimsPrincipalExtensions.IsOwnedBy(subject.OwnerAdultId, User.CreatorId()))
+            return this.ProblemWithCode(ApiErrors.NotOwner, "Only the owner may delete this subject.");
 
         // `AnyAsync` rather than a count on purpose: the message names the kind of use without a number,
         // because knowing there are three of them does not make the subject deletable.

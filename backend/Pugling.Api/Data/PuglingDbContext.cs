@@ -444,13 +444,19 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
 
         // At least an index on the subject name: `Subjects` had none besides the primary key, although every
         // catalog view searches and sorts by it.
-        modelBuilder.Entity<Subject>().HasIndex(s => s.Name);
-        // DELIBERATELY NOT unique. It would be the obvious thing - "English" twice is ugly. But `Subject`
-        // carries no owner: a global unique would make the catalog's most important namespace
-        // first-come-first-served across all creators, and every further teacher would have to hang their
-        // chapters on a subject they do not own. That is a product decision about catalog ownership (and a
-        // contract break: POST /subjects would then answer 409), not the closing of a structural gap. First
-        // decide who owns a subject - then make it unique.
+        modelBuilder.Entity<Subject>(e =>
+        {
+            e.HasIndex(s => s.Name);
+            // DELIBERATELY NOT unique, and B-13 did not change that. A subject now has an owner, so the old
+            // reason ("nobody owns the namespace") no longer holds - but the two candidates that replace it
+            // are both product decisions, not structural gaps: a GLOBAL unique still hands the catalog's most
+            // important namespace to whoever types "English" first, and a unique PER OWNER accepts "English"
+            // as many times as there are creators, which is the duplication the index was supposed to stop.
+            // Either way POST /subjects starts answering 409, and the rows that already collide need an
+            // answer. Decide that first, then index.
+            e.HasOne(s => s.Owner).WithMany().HasForeignKey(s => s.OwnerAdultId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
 
         // The adult's e-mail is a login attribute and was freely duplicable, while the filtered unique index
         // hung on the account only. Filtered, because the address stays optional (an adult supervising a child

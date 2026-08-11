@@ -15,6 +15,19 @@ public class Subject
     public string Name { get; set; } = "";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    /// <summary>
+    /// The creator who opened this subject. Same rule as <see cref="TextbookSeries.OwnerAdultId"/> and
+    /// <see cref="Exercise.AuthorAdultId"/>: <b>any</b> creator may read and use the subject, only the owner
+    /// may rename or delete it – otherwise a stranger renames the tree a whole household plans against
+    /// (B-13). <c>null</c> = seeded system subject, therefore editable by <b>nobody</b>: the comparison in
+    /// <see cref="Auth.ClaimsPrincipalExtensions.IsOwnedBy"/> is fail-closed, and a second, laxer reading of
+    /// "ownerless" would be a third ownership semantics inside one catalog.
+    /// Survives the deletion of the owner (FK → <c>SetNull</c>) so that everyone else's series and study
+    /// plans keep their subject.
+    /// </summary>
+    public int? OwnerAdultId { get; set; }
+    public Adult? Owner { get; set; }
+
     /// <summary>Subject-dependent exercise categories (e.g. grammar/vocabulary for English).</summary>
     public List<ExerciseCategory> Categories { get; set; } = new();
 }

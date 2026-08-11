@@ -146,20 +146,6 @@ namespace Pugling.Api.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Subjects",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Subjects", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "VocabTags",
                 columns: table => new
                 {
@@ -229,6 +215,27 @@ namespace Pugling.Api.Data.Migrations
                         principalTable: "Adults",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Subjects",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    OwnerAdultId = table.Column<int>(type: "INTEGER", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Subjects", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Subjects_Adults_OwnerAdultId",
+                        column: x => x.OwnerAdultId,
+                        principalTable: "Adults",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -526,6 +533,132 @@ namespace Pugling.Api.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "VocabTagLinks",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    VocabTagId = table.Column<int>(type: "INTEGER", nullable: false),
+                    VocabularyId = table.Column<int>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_VocabTagLinks", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_VocabTagLinks_VocabTags_VocabTagId",
+                        column: x => x.VocabTagId,
+                        principalTable: "VocabTags",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_VocabTagLinks_Vocabularies_VocabularyId",
+                        column: x => x.VocabularyId,
+                        principalTable: "Vocabularies",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ActivationRequests",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    ChildId = table.Column<int>(type: "INTEGER", nullable: false),
+                    ShopArticleId = table.Column<int>(type: "INTEGER", nullable: true),
+                    SupervisorId = table.Column<int>(type: "INTEGER", nullable: false),
+                    RequestedQuantity = table.Column<int>(type: "INTEGER", nullable: false),
+                    Status = table.Column<string>(type: "TEXT", nullable: false),
+                    ArticleTitle = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    UnitType = table.Column<string>(type: "TEXT", nullable: false),
+                    ActionType = table.Column<string>(type: "TEXT", nullable: false),
+                    RequestedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ClosedAt = table.Column<DateTime>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ActivationRequests", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ActivationRequests_Children_ChildId",
+                        column: x => x.ChildId,
+                        principalTable: "Children",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ActivationRequests_ShopArticles_ShopArticleId",
+                        column: x => x.ShopArticleId,
+                        principalTable: "ShopArticles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChildInventories",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    ChildId = table.Column<int>(type: "INTEGER", nullable: false),
+                    ShopArticleId = table.Column<int>(type: "INTEGER", nullable: true),
+                    SupervisorId = table.Column<int>(type: "INTEGER", nullable: false),
+                    ArticleNumber = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    ArticleTitle = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    UnitType = table.Column<string>(type: "TEXT", nullable: false),
+                    ActionType = table.Column<string>(type: "TEXT", nullable: false),
+                    Quantity = table.Column<int>(type: "INTEGER", nullable: false),
+                    ConcurrencyStamp = table.Column<Guid>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChildInventories", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ChildInventories_Children_ChildId",
+                        column: x => x.ChildId,
+                        principalTable: "Children",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ChildInventories_ShopArticles_ShopArticleId",
+                        column: x => x.ShopArticleId,
+                        principalTable: "ShopArticles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ShopListings",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    ShopArticleId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
+                    CoinPrice = table.Column<int>(type: "INTEGER", nullable: false),
+                    GemPrice = table.Column<int>(type: "INTEGER", nullable: false),
+                    UnitsPerPurchase = table.Column<int>(type: "INTEGER", nullable: false),
+                    Active = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CurrentStock = table.Column<int>(type: "INTEGER", nullable: false),
+                    MaxStock = table.Column<int>(type: "INTEGER", nullable: false),
+                    RefillKind = table.Column<string>(type: "TEXT", nullable: false),
+                    RefillAtUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    RefillDayOfWeek = table.Column<string>(type: "TEXT", nullable: true),
+                    LastRefilledAtUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    ConcurrencyStamp = table.Column<Guid>(type: "TEXT", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ShopListings", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ShopListings_ShopArticles_ShopArticleId",
+                        column: x => x.ShopArticleId,
+                        principalTable: "ShopArticles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ExerciseCategories",
                 columns: table => new
                 {
@@ -682,132 +815,6 @@ namespace Pugling.Api.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "VocabTagLinks",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    VocabTagId = table.Column<int>(type: "INTEGER", nullable: false),
-                    VocabularyId = table.Column<int>(type: "INTEGER", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_VocabTagLinks", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_VocabTagLinks_VocabTags_VocabTagId",
-                        column: x => x.VocabTagId,
-                        principalTable: "VocabTags",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_VocabTagLinks_Vocabularies_VocabularyId",
-                        column: x => x.VocabularyId,
-                        principalTable: "Vocabularies",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ActivationRequests",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    ChildId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ShopArticleId = table.Column<int>(type: "INTEGER", nullable: true),
-                    SupervisorId = table.Column<int>(type: "INTEGER", nullable: false),
-                    RequestedQuantity = table.Column<int>(type: "INTEGER", nullable: false),
-                    Status = table.Column<string>(type: "TEXT", nullable: false),
-                    ArticleTitle = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    UnitType = table.Column<string>(type: "TEXT", nullable: false),
-                    ActionType = table.Column<string>(type: "TEXT", nullable: false),
-                    RequestedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    ClosedAt = table.Column<DateTime>(type: "TEXT", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ActivationRequests", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ActivationRequests_Children_ChildId",
-                        column: x => x.ChildId,
-                        principalTable: "Children",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ActivationRequests_ShopArticles_ShopArticleId",
-                        column: x => x.ShopArticleId,
-                        principalTable: "ShopArticles",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ChildInventories",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    ChildId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ShopArticleId = table.Column<int>(type: "INTEGER", nullable: true),
-                    SupervisorId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ArticleNumber = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    ArticleTitle = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    UnitType = table.Column<string>(type: "TEXT", nullable: false),
-                    ActionType = table.Column<string>(type: "TEXT", nullable: false),
-                    Quantity = table.Column<int>(type: "INTEGER", nullable: false),
-                    ConcurrencyStamp = table.Column<Guid>(type: "TEXT", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ChildInventories", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ChildInventories_Children_ChildId",
-                        column: x => x.ChildId,
-                        principalTable: "Children",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ChildInventories_ShopArticles_ShopArticleId",
-                        column: x => x.ShopArticleId,
-                        principalTable: "ShopArticles",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ShopListings",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    ShopArticleId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    Description = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
-                    CoinPrice = table.Column<int>(type: "INTEGER", nullable: false),
-                    GemPrice = table.Column<int>(type: "INTEGER", nullable: false),
-                    UnitsPerPurchase = table.Column<int>(type: "INTEGER", nullable: false),
-                    Active = table.Column<bool>(type: "INTEGER", nullable: false),
-                    CurrentStock = table.Column<int>(type: "INTEGER", nullable: false),
-                    MaxStock = table.Column<int>(type: "INTEGER", nullable: false),
-                    RefillKind = table.Column<string>(type: "TEXT", nullable: false),
-                    RefillAtUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    RefillDayOfWeek = table.Column<string>(type: "TEXT", nullable: true),
-                    LastRefilledAtUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    ConcurrencyStamp = table.Column<Guid>(type: "TEXT", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ShopListings", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ShopListings_ShopArticles_ShopArticleId",
-                        column: x => x.ShopArticleId,
-                        principalTable: "ShopArticles",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "AchievementAwards",
                 columns: table => new
                 {
@@ -898,6 +905,43 @@ namespace Pugling.Api.Data.Migrations
                         principalTable: "Vocabularies",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ShopPurchases",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    ChildId = table.Column<int>(type: "INTEGER", nullable: false),
+                    ShopListingId = table.Column<int>(type: "INTEGER", nullable: true),
+                    SupervisorId = table.Column<int>(type: "INTEGER", nullable: false),
+                    ArticleNumber = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
+                    CoinPrice = table.Column<int>(type: "INTEGER", nullable: false),
+                    GemPrice = table.Column<int>(type: "INTEGER", nullable: false),
+                    UnitsPerPurchase = table.Column<int>(type: "INTEGER", nullable: false),
+                    Status = table.Column<string>(type: "TEXT", nullable: false),
+                    PurchasedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ClosedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    ConcurrencyStamp = table.Column<Guid>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ShopPurchases", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ShopPurchases_Children_ChildId",
+                        column: x => x.ChildId,
+                        principalTable: "Children",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ShopPurchases_ShopListings_ShopListingId",
+                        column: x => x.ShopListingId,
+                        principalTable: "ShopListings",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -996,43 +1040,6 @@ namespace Pugling.Api.Data.Migrations
                         principalTable: "TextbookSeries",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ShopPurchases",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    ChildId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ShopListingId = table.Column<int>(type: "INTEGER", nullable: true),
-                    SupervisorId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ArticleNumber = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    Description = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
-                    CoinPrice = table.Column<int>(type: "INTEGER", nullable: false),
-                    GemPrice = table.Column<int>(type: "INTEGER", nullable: false),
-                    UnitsPerPurchase = table.Column<int>(type: "INTEGER", nullable: false),
-                    Status = table.Column<string>(type: "TEXT", nullable: false),
-                    PurchasedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    ClosedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    ConcurrencyStamp = table.Column<Guid>(type: "TEXT", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ShopPurchases", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ShopPurchases_Children_ChildId",
-                        column: x => x.ChildId,
-                        principalTable: "Children",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ShopPurchases_ShopListings_ShopListingId",
-                        column: x => x.ShopListingId,
-                        principalTable: "ShopListings",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -2359,6 +2366,11 @@ namespace Pugling.Api.Data.Migrations
                 column: "Name");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Subjects_OwnerAdultId",
+                table: "Subjects",
+                column: "OwnerAdultId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_SupervisorLinks_StudentId",
                 table: "SupervisorLinks",
                 column: "StudentId");
@@ -2667,13 +2679,13 @@ namespace Pugling.Api.Data.Migrations
                 name: "TextbookSeries");
 
             migrationBuilder.DropTable(
-                name: "Adults");
-
-            migrationBuilder.DropTable(
                 name: "Publishers");
 
             migrationBuilder.DropTable(
                 name: "Subjects");
+
+            migrationBuilder.DropTable(
+                name: "Adults");
         }
     }
 }

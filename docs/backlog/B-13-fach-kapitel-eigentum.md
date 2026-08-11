@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/katalog, bereich/auth, rolle/creator]
+tags: [typ/story, status/in-arbeit, bereich/katalog, bereich/auth, rolle/creator]
 aliases: [Fach- und Kapitel-Eigentum]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: M
@@ -160,24 +160,27 @@ Story, oder zu klein, um sie noch zu lohnen?), die diese Nacht nicht autonom tri
 
 ## Akzeptanzkriterien
 
-1. `POST /api/v1/creator/subjects` und `POST /api/v1/creator/subjects/{id}/chapters` setzen
-   `OwnerAdultId = User.AdultId()` am neuen Datensatz; das Erstellen selbst bleibt für jeden Creator frei
+Der Kapitel-Anteil jedes Kriteriums ist ~~durchgestrichen~~: `Chapter` existiert seit B-106 nicht mehr, und
+`SeriesUnit` trägt die Owner-Prüfung bereits (siehe „Nach B-106"). Gebaut wurde der `Subject`-Anteil.
+
+1. `POST /api/v1/creator/subjects` ~~und `POST /api/v1/creator/subjects/{id}/chapters`~~ setzt
+   `OwnerAdultId = User.CreatorId()` am neuen Datensatz; das Erstellen selbst bleibt für jeden Creator frei
    (keine 403 auf `Create`).
-2. `PATCH`/`DELETE` auf ein Subject oder Chapter liefert `403` mit Code `not_owner`, wenn der aufrufende
+2. `PATCH`/`DELETE` auf ein Subject ~~oder Chapter~~ liefert `403` mit Code `not_owner`, wenn der aufrufende
    Creator nicht der `OwnerAdultId` ist — inklusive dem Fall `OwnerAdultId == null` (Seed-/Systemstoff:
    niemand darf ändern).
-3. Der Owner selbst kann sein eigenes Subject/Chapter weiterhin ungehindert `PATCH`en und `DELETE`n
+3. Der Owner selbst kann sein eigenes Subject ~~/Chapter~~ weiterhin ungehindert `PATCH`en und `DELETE`n
    (bestehendes Verhalten für den Ersteller bleibt erhalten).
-4. `GET`/`List` auf Subjects und Chapters bleibt für jeden eingeloggten Creator uneingeschränkt lesbar —
+4. `GET`/`List` auf Subjects ~~und Chapters~~ bleibt für jeden eingeloggten Creator uneingeschränkt lesbar —
    kein Verhalten ändert sich für Lesezugriffe.
-5. `SubjectResponse`/`ChapterResponse` tragen zusätzlich `ownerAdultId` (nullable) und `isMine` (bool,
+5. `SubjectResponse` ~~/`ChapterResponse`~~ trägt zusätzlich `ownerAdultId` (nullable) und `isMine` (bool,
    analog `TextbookSeriesResponse`), damit ein Client die Berechtigung ohne Rateversuch anzeigen kann.
 6. Die EF-Migrationskette bleibt bei Länge 1 (neu gefaltet), `SchemaGuardTests` (G1/G1b/G2) sind grün mit
-   den zwei neuen FKs (`Subject.OwnerAdultId → Adult`, `Chapter.OwnerAdultId → Adult`, beide `SetNull`).
-7. Bestehende `CatalogManagementTests` bleiben grün (sie legen Subject/Chapter stets über denselben
-   Client an, der sie danach ändert/löscht — der neue Owner-Check greift nicht ein).
+   der neuen FK (`Subject.OwnerAdultId → Adult`, `SetNull`) ~~und `Chapter.OwnerAdultId → Adult`~~.
+7. Bestehende `CatalogManagementTests` bleiben grün (sie legen das Subject stets über denselben
+   Client an, der es danach ändert/löscht — der neue Owner-Check greift nicht ein).
 8. Neue Tests belegen: fremder Creator bekommt `403 not_owner` auf `PATCH`/`DELETE` eines fremden
-   Subjects/Chapters; ein Seed-Fach (ownerlos) liefert `403 not_owner` für **jeden** Creator.
+   Subjects ~~/Chapters~~; ein Seed-Fach (ownerlos) liefert `403 not_owner` für **jeden** Creator.
 
 ## Schätzung
 
@@ -246,3 +249,22 @@ Migrationskette und die G2-FK-Tabelle; `/smoke-test` gegen einen laufenden Serve
   `SeriesUnit` trägt bereits eine eigene Owner-Prüfung (B-106 hat sie beim Bau selbst ergänzt). Nur der
   `Subject`-Anteil ist unverändert offen. Empfehlung „neu schneiden" ins Dokument aufgenommen, `status`
   bewusst nicht geändert — das ist eine Produktentscheidung, keine Stufenarbeit.
+- **2026-08-11** — gebaut, im Umfang „nur `Subject`" (Nutzerauftrag „build b-13"; der Kapitel-Anteil hat
+  seinen Gegenstand verloren, die Akzeptanzkriterien sind entsprechend durchgestrichen).
+  `Subject.OwnerAdultId`/`Owner` + FK `SetNull`, Migrationskette neu gefaltet (Snapshot-Diff zeigt genau
+  Spalte, Index und FK), `SubjectResponse` additiv um `ownerAdultId`/`isMine`, `SubjectsController`:
+  `Create` setzt den Owner aus dem Token, `Update`/`Delete` gaten über `IsOwnedBy` → `403 not_owner` (im
+  `Delete` **vor** der Verwendungsprüfung), Projektion mit Inline-Ownership statt Methodenaufruf (EF).
+  Neu `FachEigentumTests` (5 Fälle: Owner-Zuweisung, Owner darf weiter, Fremder 403 auf beiden Wegen,
+  Fremder liest weiter, Seed-Fach für jeden gesperrt), G2-Tabelle um eine Zeile ergänzt.
+  Belege: **820/820 grün** (`dotnet test Pugling.sln -c Release`), `/smoke-test` grün (13 Checks),
+  `dotnet format Pugling.sln --verify-no-changes` sauber. Rollengang gegen die laufende Instanz auf :5280
+  gefahren: Anlegen liefert `ownerAdultId:1,isMine:true`, Fremd-`PATCH`/`DELETE` je `403 not_owner`,
+  Fremd-`GET` weiter `200` mit `isMine:false`, Seed-Fach „Englisch" auch für den Seed-Vater `403`,
+  Owner-`DELETE` `204`.
+- **2026-08-11** — Fund beim Rollengang als eigene Story abgelegt: [B-154](B-154-katalogseite-bietet-fremde-faecher-zum-umbenennen.md)
+  (das Vater-Web bietet „Umbenennen"/„Löschen" weiter an jedem Fach an und liest `isMine` nicht — die von
+  Entscheidung 5 benannte Folge). B-13s Ziel ist ohne sie erfüllt.
+- **2026-08-11** — bleibt auf `in-arbeit`: `pugling-reviewer` ist nicht gelaufen, weil diese Sitzung die
+  Regel trägt, keine Agenten unaufgefordert zu starten. Alles andere für `abgenommen` ist belegt; es fehlt
+  nur der Reviewer und der Commit.

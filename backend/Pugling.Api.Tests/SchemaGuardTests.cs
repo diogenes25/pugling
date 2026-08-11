@@ -285,6 +285,8 @@ public class SchemaGuardTests
             ["ShopPurchase.ShopListingId"] = DeleteBehavior.SetNull, // -> ShopListing
             ["StudyPlan.ChildId"] = DeleteBehavior.Cascade, // -> Child
             ["StudyPlan.SubjectId"] = DeleteBehavior.SetNull, // -> Subject
+            // B-13: the owner may go, the subject stays - every other creator's series and plans still name it.
+            ["Subject.OwnerAdultId"] = DeleteBehavior.SetNull, // -> Adult
             ["SupervisorLink.StudentId"] = DeleteBehavior.Cascade, // -> Child
             ["SupervisorLink.SupervisorId"] = DeleteBehavior.Cascade, // -> Adult
             ["Tag.ChildId"] = DeleteBehavior.Cascade, // -> Child

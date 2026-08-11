@@ -4,8 +4,19 @@ namespace Pugling.Contracts.Creator;
 // textbook catalog (TextbookSeries → SeriesUnit, see TextbookSeriesDtos.cs) since B-106.
 // Pure transport shapes without any entity reference; projecting from the entities stays in the API.
 
-/// <summary>A school subject in the shared catalog.</summary>
-public record SubjectResponse(int Id, string Name, DateTime CreatedAt, int CategoriesCount);
+/// <summary>
+/// A school subject in the shared catalog. Every creator may read it; <paramref name="IsMine"/> says
+/// whether this caller may also rename or delete it, so a client can show the difference instead of
+/// letting the user find out through a 403.
+/// </summary>
+/// <param name="Id">Subject id.</param>
+/// <param name="Name">Display name (e.g. "English").</param>
+/// <param name="CreatedAt">When the subject was created (UTC).</param>
+/// <param name="CategoriesCount">Number of exercise categories below it.</param>
+/// <param name="OwnerAdultId">The creator who opened the subject; <c>null</c> = seeded, owned by nobody.</param>
+/// <param name="IsMine">True if the calling creator is the owner (an ownerless subject is nobody's).</param>
+public record SubjectResponse(int Id, string Name, DateTime CreatedAt, int CategoriesCount,
+    int? OwnerAdultId, bool IsMine);
 
 /// <summary>Input for creating a subject.</summary>
 public record CreateSubjectDto(string Name);

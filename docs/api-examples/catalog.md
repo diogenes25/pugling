@@ -23,7 +23,9 @@ Response — `HTTP 201`:
   "id": 5,
   "name": "Doku-Fach",
   "createdAt": "<timestamp>",
-  "categoriesCount": 0
+  "categoriesCount": 0,
+  "ownerAdultId": 1,
+  "isMine": true
 }
 ```
 

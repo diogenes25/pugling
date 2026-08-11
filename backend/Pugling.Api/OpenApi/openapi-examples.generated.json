@@ -177,7 +177,7 @@
     "role": "father",
     "requestBodyJson": "{\n  \u0022name\u0022: \u0022Doku-Fach\u0022\n}",
     "expectedStatus": 201,
-    "responseBodyJson": "{\n  \u0022id\u0022: 5,\n  \u0022name\u0022: \u0022Doku-Fach\u0022,\n  \u0022createdAt\u0022: \u0022\u003Ctimestamp\u003E\u0022,\n  \u0022categoriesCount\u0022: 0\n}",
+    "responseBodyJson": "{\n  \u0022id\u0022: 5,\n  \u0022name\u0022: \u0022Doku-Fach\u0022,\n  \u0022createdAt\u0022: \u0022\u003Ctimestamp\u003E\u0022,\n  \u0022categoriesCount\u0022: 0,\n  \u0022ownerAdultId\u0022: 1,\n  \u0022isMine\u0022: true\n}",
     "isError": false,
     "expectedCode": null
   },
