@@ -350,7 +350,7 @@ ist heute schon verletzt und wird es ebenfalls.
   Ausdrücklich **nicht** geändert: der Re-Export von `FREETEXT_SUBJECT` aus `seriesPatch.ts`. Der Reviewer
   nennt ihn eine bewusste Abweichung vom Angriffsplan und die bessere Wahl — er hält die Zusicherung aus
   Risiko 1 buchstäblich. Preis: „eine Stelle" gilt für die Regel, nicht mehr für den Import.
-- **2026-08-11** — **abgenommen** (Commits `79c8403` und `<siehe unten>`).
+- **2026-08-11** — **abgenommen** (Commits `79c8403` und `0649ac6`).
   Belegt: Vitest **243/243** (vor der Story 204), Playwright **34/34** (vorher 33), `tsc -b` sauber,
   `frontend-reviewer` gelaufen und seine drei Befunde behoben.
   **Rollengang geführt**, und zwar als E2E im echten Browser gegen den echten Server
