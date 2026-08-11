@@ -239,7 +239,7 @@ unabhängigen Teilstellen.
   Quelle, die den Filter *innerhalb* einer gemischten Menge trennen lässt statt eine Einermenge zu leeren.
   Und eine Präzisierung, die ich übernommen habe: Die Groß-/Kleinschreibungs-Toleranz kommt vom
   **Operator**, nicht von einer Collation — `Exercise.Source` und `.Title` tragen gar keine.
-- **2026-08-11** — **abgenommen** (Commits `44e11f6` und `<siehe unten>`).
+- **2026-08-11** — **abgenommen** (Commits `44e11f6` und `0544865`).
   Belegt: Backend **815/815**, Vitest **249/249**, Playwright **34/34**, `tsc -b` sauber,
   `/smoke-test` grün.
   **Rollengang geführt**, als E2E im echten Browser gegen den echten Server
