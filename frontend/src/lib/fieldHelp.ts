@@ -145,6 +145,27 @@ export const FIELD_HELP = {
   },
 
   /*
+   * Zwei Felder, die gleich aussehen und sich verschieden verhalten (B-143, Entscheidungen 3 und 4) —
+   * genau darum steht hier je ein Satz. Beim Fach ist ein Freitext ein Unfall und soll wegräumbar sein;
+   * bei der Schulart ist eine Kombination Absicht und soll überleben. Ohne die Erklärung wäre der
+   * Unterschied eine Falle statt einer Hilfe.
+   */
+  seriesSubject: {
+    title: "Fach",
+    text: "Das Fach aus dem Katalog. Steht hier ein Name mit dem Zusatz „(Freitext)“ und lässt sich nicht "
+      + "auswählen, dann trägt die Reihe den Namen noch, das Fach selbst gibt es aber nicht mehr – meist, "
+      + "weil es jemand gelöscht hat. Du wirst ihn los, indem du „– keine Angabe –“ wählst und speicherst; "
+      + "solange du das Feld nicht anfasst, bleibt er stehen.",
+  },
+  seriesSchoolTypes: {
+    title: "Schulart",
+    text: "Für welche Schulart die Reihe gedacht ist. Steht hier eine Kombination mehrerer Schularten, "
+      + "lässt sie sich in diesem Feld nicht zusammenstellen – aber auch nicht versehentlich verlieren: "
+      + "sie bleibt, solange du das Feld nicht anfasst. Wählst du dagegen etwas aus, gilt deine Wahl und "
+      + "ersetzt die Kombination; auch „– für alle –“ ist eine Angabe und keine Leerung.",
+  },
+
+  /*
    * Zwei Texte für ein Wort, und das ist Absicht (B-69, Entscheidung 3): Die Beschriftung heißt überall
    * „Auch richtig", aber nur an der Vokabel gibt es die zweite Zeile mit demselben Wort — die
    * Homonym-Regel wäre bei Lücke, Liste und Übersetzung sinnloses Rauschen.

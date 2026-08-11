@@ -96,3 +96,58 @@ test("Fach entfernen räumt auch den Fachnamen ab", async ({ page }) => {
   // lesen – die Reihe behauptete ein Fach, das sie nicht mehr hat.
   await expect(page.getByRole("row", { name: new RegExp(name) })).not.toContainText("Englisch");
 });
+
+/*
+ * B-143, Zustand A: Ein Fach wird gelöscht, während eine Reihe darauf zeigt. Die Reihe behält den
+ * Fach*namen* (gespeicherte Spalte, `SetNull` räumt nur die Id) – und genau diesen Zustand konnte das
+ * Formular vorher nicht ausdrücken: es zeigte „– keine Angabe –", ein Speichern meldete „Gespeichert."
+ * und der Name stand weiter da.
+ *
+ * Der Ausgangszustand entsteht hier auf dem GEWÖHNLICHEN Weg (Fach löschen), nicht per API-Kunstgriff –
+ * das ist der Punkt der Akzeptanzbedingung.
+ */
+test("Ein gelöschtes Fach bleibt als Freitext sichtbar und ist über die Oberfläche wegzubekommen", async ({ page }) => {
+  await vaterLogin(page, FATHER);
+
+  // ---- Ein eigenes Fach anlegen: es wird gleich gelöscht, und das darf kein geseedetes treffen ----
+  const fach = `Wegwerf-Fach ${STAMP}`;
+  await page.goto("/vater/katalog");
+  await page.locator("#ca-new-subject").fill(fach);
+  await page.getByRole("button", { name: "Neues Fach anlegen" }).click();
+  await expect(page.locator("#ca-subject")).toContainText(fach);
+
+  // ---- Eine Reihe daran hängen ----
+  const reihe = `Freitext-Reihe ${STAMP}`;
+  await page.goto("/vater/lehrwerke");
+  await page.locator("#ns-name").fill(reihe);
+  await page.locator("#ns-subject").selectOption({ label: fach });
+  await page.getByRole("button", { name: "Reihe anlegen" }).click();
+  await expect(page.getByText(/steht im Katalog/)).toBeVisible();
+  await expect(page.getByRole("row", { name: new RegExp(reihe) })).toContainText(fach);
+
+  // ---- Das Fach löschen. Erlaubt, weil daran nur Katalog-Zeug hängt (B-144 sperrt nur Kind-Daten) ----
+  await page.goto("/vater/katalog");
+  await page.locator("#ca-subject").selectOption({ label: fach });
+  page.once("dialog", (d) => d.accept());
+  await page.getByRole("button", { name: `Fach „${fach}" löschen` }).click();
+  await expect(page.getByText("Fach gelöscht.")).toBeVisible();
+
+  // ---- Die Zeile zeigt den Namen weiter – und das Formular sagt jetzt dasselbe ----
+  await page.goto("/vater/lehrwerke");
+  await expect(page.getByRole("row", { name: new RegExp(reihe) })).toContainText(fach);
+
+  await page.getByRole("button", { name: `Reihe bearbeiten: „${reihe}"` }).click();
+  const fachFeld = page.locator('select[id^="se-subject-"]');
+  // AK 1: vorausgewählt, benannt, nicht wählbar. Vorher stand hier „– keine Angabe –".
+  await expect(fachFeld).toHaveValue("__freetext__");
+  await expect(fachFeld.locator("option[value='__freetext__']")).toHaveText(`${fach} (Freitext)`);
+  await expect(fachFeld.locator("option[value='__freetext__']")).toBeDisabled();
+
+  // AK 2: über die bestehende Leer-Option wegzubekommen – kein eigener Knopf (Entscheidung 3).
+  await fachFeld.selectOption("");
+  await page.getByRole("button", { name: `Speichern: „${reihe}"` }).click();
+  await expect(page.getByText("Gespeichert.")).toBeVisible();
+  await page.getByRole("button", { name: `Bearbeiten schließen: „${reihe}"` }).click();
+
+  await expect(page.getByRole("row", { name: new RegExp(reihe) })).not.toContainText(fach);
+});

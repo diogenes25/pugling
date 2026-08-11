@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { seriesFormValues, seriesPatch, type SeriesFormValues } from "./seriesPatch";
+import { FREETEXT_SUBJECT, seriesFormValues, seriesPatch, type SeriesFormValues } from "./seriesPatch";
 import type { TextbookSeriesResponse } from "../lib/types";
 
 /*
@@ -23,12 +23,28 @@ const patch = (form: SeriesFormValues, o: Partial<TextbookSeriesResponse> = {}) 
 
 describe("seriesFormValues", () => {
   it("füllt die Formularfelder als Strings, `null` wird zum leeren String", () => {
-    const werte = seriesFormValues(reihe({ publisherId: null, subjectId: null, notes: null, sourceLanguage: null }));
+    // `subjectName` muss hier mit auf `null`: eine Reihe ohne Fach-Id, die noch einen Namen trägt, ist
+    // NICHT „nichts", sondern der Freitext-Zustand – der Fall darunter.
+    const werte = seriesFormValues(reihe({
+      publisherId: null, subjectId: null, subjectName: null, notes: null, sourceLanguage: null,
+    }));
 
     expect(werte).toEqual({
       name: "Access", publisherId: "", subjectId: "", schoolTypes: "Gymnasium",
       sourceLanguage: "", targetLanguage: "de", notes: "",
     });
+  });
+
+  it("bildet ein Fach ohne Katalog-Id auf den Freitext-Sentinel ab", () => {
+    // B-143, Zustand A: die Reihe zeigt „Englisch", der Katalog kennt das Fach nicht (mehr). Ohne den
+    // Sentinel hieße `""` hier zweierlei, und das Formular könnte den Zustand nicht anzeigen.
+    expect(seriesFormValues(reihe({ subjectId: null })).subjectId).toBe(FREETEXT_SUBJECT);
+  });
+
+  it("hält den Sentinel von jeder echten Fach-Id fern", () => {
+    // Eine Eigenschaft der Wahl, nicht des Typs: `FREETEXT_SUBJECT` darf nie das Ergebnis von
+    // `String(id)` sein können, sonst verwechselte das Formular einen echten Wert mit dem Platzhalter.
+    expect(Number.isNaN(Number(FREETEXT_SUBJECT))).toBe(true);
   });
 });
 
@@ -87,5 +103,39 @@ describe("seriesPatch – leeren gegen unverändert", () => {
   it("sammelt mehrere Änderungen in einem Rumpf", () => {
     expect(patch({ ...geladen(), name: "Neu", publisherId: "", schoolTypes: "Realschule" }))
       .toEqual({ name: "Neu", clearPublisherId: true, schoolTypes: "Realschule" });
+  });
+
+  // ── B-143: zwei Zustände, die das Modell erlaubt und das Formular bisher nicht ausdrücken konnte ──
+
+  it("lässt ein Freitext-Fach unangetastet, solange niemand es anfasst", () => {
+    // Der Kern des Defekts: vorher war `loaded.subjectId === form.subjectId === ""`, also kein Diff –
+    // aber auch kein Weg, den Freitext loszuwerden. Jetzt sind beide der Sentinel: immer noch kein Diff,
+    // und das ist hier die RICHTIGE Antwort. Ein Speichern mit anderem Feld darf ihn nicht mitnehmen.
+    const ohneKatalogFach = { subjectId: null };
+    expect(patch({ ...geladen(ohneKatalogFach), name: "Access neu" }, ohneKatalogFach))
+      .toEqual({ name: "Access neu" });
+  });
+
+  it("entfernt ein Freitext-Fach über die Leer-Option des Fach-Felds", () => {
+    // Entscheidung 3: kein eigener Knopf. Der Wechsel vom Sentinel auf `""` IST der Unterschied, und
+    // `clearSubject` räumt Id und Namen gemeinsam.
+    const ohneKatalogFach = { subjectId: null };
+    expect(patch({ ...geladen(ohneKatalogFach), subjectId: "" }, ohneKatalogFach))
+      .toEqual({ clearSubject: true });
+  });
+
+  it("lässt eine Schulart-Kombination unangetastet, solange niemand sie anfasst", () => {
+    // Zustand B. Er ist heute nur über die API herstellbar (Entscheidung 5), darum steht der
+    // Ausgangszustand hier von Hand – ein E2E könnte ihn nicht erzeugen.
+    const kombination = { schoolTypes: "Realschule, Gymnasium" as SeriesFormValues["schoolTypes"] };
+    expect(patch({ ...geladen(kombination), notes: "Anders" }, kombination))
+      .toEqual({ notes: "Anders" });
+  });
+
+  it("speichert die Schulart, wenn der Nutzer sie aktiv wählt – auch für alle", () => {
+    // Entscheidung 4: der Schutz gilt dem Versehen, nicht der Absicht. `None` ist ein echter Wert.
+    const kombination = { schoolTypes: "Realschule, Gymnasium" as SeriesFormValues["schoolTypes"] };
+    expect(patch({ ...geladen(kombination), schoolTypes: "None" }, kombination))
+      .toEqual({ schoolTypes: "None" });
   });
 });

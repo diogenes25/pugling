@@ -1,7 +1,7 @@
 import { Fragment, useRef, useState } from "react";
 import { FieldLabel } from "../components/InfoHint";
 import { StatusBanner } from "../components/StatusBanner";
-import { seriesFormValues, seriesPatch, type SeriesFormValues } from "./seriesPatch";
+import { FREETEXT_SUBJECT, seriesFormValues, seriesPatch, type SeriesFormValues } from "./seriesPatch";
 import { api } from "../lib/api";
 import { useAction } from "../lib/useAction";
 import { SCHOOL_TYPES } from "../lib/labels";
@@ -219,7 +219,13 @@ function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged }: 
  * Verlag braucht, legt ihn unten im Anlegen-Abschnitt an; er erscheint sofort in dieser Auswahl, weil die
  * Verlagsliste auf Seitenebene liegt.
  */
-function SeriesForm({ series, subjects, publishers, onSaved }: {
+/*
+ * Exportiert **nur für den Test** (B-143): Die beiden deaktivierten `<option>`s sind der eigentliche
+ * Defekt dieser Story, und `seriesPatch` erreicht sie nicht — dort war nie etwas kaputt. Ohne diesen
+ * Zugang liefe ein späteres „Aufräumen" der Optionen grün durch. Die Komponente braucht dafür kein
+ * gefälschtes `fetch`: alle `api`-Aufrufe hängen am Absenden, das Rendern ist reine Prop-Arbeit.
+ */
+export function SeriesForm({ series, subjects, publishers, onSaved }: {
   series: TextbookSeriesResponse;
   subjects: SubjectResponse[];
   publishers: PublisherResponse[];
@@ -283,17 +289,36 @@ function SeriesForm({ series, subjects, publishers, onSaved }: {
           </select>
         </div>
         <div className="field">
-          <label htmlFor={`se-subject-${id}`}>Fach</label>
+          <FieldLabel htmlFor={`se-subject-${id}`} topic="seriesSubject">Fach</FieldLabel>
           <select id={`se-subject-${id}`} value={form.subjectId} onChange={(e) => up("subjectId", e.target.value)}>
             <option value="">– keine Angabe –</option>
+            {/* Der Freitext-Zustand als eigene, nicht wählbare Option (B-143): so sagt das Feld dasselbe
+                wie die Zeile daneben, statt zu schweigen. Und der Schutz vorm versehentlichen Löschen
+                fällt gratis ab – `form` bleibt gleich `loaded`, also schickt `seriesPatch` nichts.
+
+                Bedingung und Beschriftung kommen BEIDE aus `series`, dem geladenen Stand – nicht aus
+                `form`. Zwei Gründe: die Option soll stehen bleiben, während der Nutzer „– keine Angabe –"
+                probiert (sie zeigt ihm, was er gerade ersetzt, und ein Zurück kostet sonst das Zuklappen
+                des Formulars mitsamt allen anderen Eingaben); und aus einer Quelle können Bedingung und
+                Text nicht auseinanderlaufen. */}
+            {series.subjectId == null && series.subjectName && (
+              <option value={FREETEXT_SUBJECT} disabled>{series.subjectName} (Freitext)</option>
+            )}
             {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </div>
         <div className="field">
-          <label htmlFor={`se-school-${id}`}>Schulart</label>
+          <FieldLabel htmlFor={`se-school-${id}`} topic="seriesSchoolTypes">Schulart</FieldLabel>
           <select id={`se-school-${id}`} value={form.schoolTypes}
             onChange={(e) => up("schoolTypes", e.target.value as SchoolType)}>
             <option value="None">– für alle –</option>
+            {/* Dieselbe Form für eine Kombination („Realschule, Gymnasium"): `SchoolTypes` ist ein
+                [Flags]-Enum, das Feld kennt aber nur Einzelwerte. Ohne diese Option stünde der `<select>`
+                leer, der Nutzer griffe zu „– für alle –" und `None` LÖSCHTE die Kombination.
+                Aus `series` und nicht aus `form`, aus denselben zwei Gründen wie beim Fach. */}
+            {series.schoolTypes !== "None" && !SCHOOL_TYPES.includes(series.schoolTypes) && (
+              <option value={series.schoolTypes} disabled>{series.schoolTypes}</option>
+            )}
             {SCHOOL_TYPES.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
@@ -587,15 +612,12 @@ function NewSeries({ subjects, publishers, onPublisherCreated, onCreated }: {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name.trim()) return;
-    const subject = subjects.find((s) => String(s.id) === form.subjectId);
     // `runFor`, weil die Meldung den Namen **des Servers** nennt: gleicher Name = gleiche Reihe, ein
     // zweites Anlegen liefert die bestehende zurück – und die kann anders geschrieben sein als das Feld.
     const created = await action.runFor(() => api.createTextbookSeries({
       name: form.name.trim(),
       publisherId: form.publisherId ? Number(form.publisherId) : null,
       subjectId: form.subjectId ? Number(form.subjectId) : null,
-      // Den Fachnamen mitschicken: er trägt die Reihe auch dort, wo kein Katalog-Fach gewählt ist.
-      subjectName: subject?.name ?? null,
       schoolTypes: form.schoolTypes === "None" ? null : form.schoolTypes,
       sourceLanguage: form.sourceLanguage || null,
       targetLanguage: form.targetLanguage || null,
