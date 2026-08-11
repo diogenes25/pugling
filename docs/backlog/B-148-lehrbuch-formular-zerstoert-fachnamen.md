@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, bereich/katalog, rolle/supervisor, rolle/creator]
+tags: [typ/story, status/in-arbeit, bereich/frontend, bereich/katalog, rolle/supervisor, rolle/creator]
 aliases: [ChildMaterialSection clearSubject, Lehrbuch verliert Fachnamen, B-143 am Kind, Fachlehrer verliert Fachnamen, Freitext-Fach am Kind]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Defekt
 groesse: M
@@ -302,3 +302,28 @@ ist heute schon verletzt und wird es ebenfalls.
   der erst beim **zweiten** Speichern derselben Sitzung sichtbar wird.
   **Der Rollengang ist hier nicht wegzudiskutieren:** Anders als bei B-127/B-143/B-144 hängt dieser Weg
   an keinem `confirmAction`, die Chrome-Extension blockiert also nicht. Der neue E2E fährt ihn.
+- **2026-08-11** — **gebaut** (Stufe `in-arbeit`), alle fünf Schritte des Angriffsplans.
+  **Rote Probe vorher**, und zwar in der treuen Fassung: den Sentinel aus `subjectFormValue` entfernt,
+  also den Ausgangszustand beider Formulare hergestellt. **14 von 27** Fällen rot, darunter beide
+  Kern-Fälle („lässt ein Freitext-Fach unangetastet, wenn ein ANDERES Feld geändert wird" in
+  `textbookPatch` **und** `profilePatch`) und beide Formular-Fälle („zeigt es als vorausgewählte,
+  gesperrte Option"). Eine erste, schwächere Probe — nur den Diff abschalten — ließ genau diese Fälle
+  **grün**: der Sentinel allein trägt sie. Das ist die Probe wert gewesen, sie belegt die Arbeitsteilung
+  der beiden Hälften aus Entscheidung 1.
+  **Risiko 3 hat sich als gegenstandslos erwiesen, und der Beleg dafür änderte den Code:** Beide
+  Bearbeiten-Formulare **schließen** sich beim Speichern (`onDone` → `setEditing(null)`), der
+  Bezugspunkt kann also gar nicht veralten. Das zuerst gebaute Nachziehen aus der Antwort samt `runFor`
+  ist darum wieder raus — es hätte ausgesehen, als liefe es. Stattdessen steht die **Bedingung** an
+  beiden `useRef`: Wer das Formular je offen stehen lässt (wie `SeriesForm`, aus gutem Grund), muss die
+  Antwort einfließen lassen.
+  **Risiko 2 entschieden:** eigener Schnappschuss für den Patch (`geladen`), `loaded` bleibt bei B-126 —
+  aber `loaded.subjectId` musste auf dieselbe Darstellung nachziehen (`subjectFormValue`), sonst verlöre
+  Fall 3 von `applySeriesChange` für genau dieses Fach seine Wirkung.
+  Belegt: Vitest **238/238** (vorher 204), Playwright **34/34** (vorher 33), `tsc -b` sauber. Die drei
+  Bestands-Dateien der Reihe (`seriesPatch.test.ts`, `SeriesForm.test.tsx`, `VaterLehrwerke.test.tsx`)
+  sind **unverändert** grün — die Zusicherung für Schritt 1.
+  **Fund daneben, als eigene Story abgelegt:**
+  [B-151](B-151-gespeichert-banner-verschwindet-mit-dem-formular.md) — „Gespeichert." ist in beiden
+  Formularen nie zu sehen, weil `onDone` sie mitsamt ihrem `StatusBanner` aushängt. Nicht mitgenommen:
+  das Ziel dieser Story ist ohne den Punkt erfüllt, und er trägt eine eigene Entscheidung.
+  Offen bis zur Abnahme: `frontend-reviewer`.

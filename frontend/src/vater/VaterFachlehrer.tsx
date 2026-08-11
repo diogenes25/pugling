@@ -1,4 +1,5 @@
-import { Fragment, useState } from "react";
+import { Fragment, useRef, useState } from "react";
+import { FieldLabel } from "../components/InfoHint";
 import { StatusBanner } from "../components/StatusBanner";
 import { api } from "../lib/api";
 import { useAction } from "../lib/useAction";
@@ -9,12 +10,24 @@ import {
   applySeriesChange, FIELD_FALLBACKS, isDerived as derived,
   type DerivableField, type DerivableValues,
 } from "./seriesDerivation";
+import { profileFormValues, profilePatch } from "./profilePatch";
+import { FREETEXT_SUBJECT, subjectFormValue } from "./subjectField";
 import type {
   CreateCreatorProfileDto, CreatorProfileResponse, SchoolType, SubjectResponse, TextbookSeriesResponse,
 } from "../lib/types";
 
 /** Die Übungstypen, die der KI-Creator selbst entwerfen kann (Manifest-Schlüssel des Servers). */
 const TYPES = ["Vocabulary", "Cloze", "Translation", "Grammar"] as const;
+
+/**
+ * Die Schulart, wie das Pulldown sie tragen kann. Eine gespeicherte KOMBINATION ("Realschule, Gymnasium")
+ * ist dort nicht darstellbar und wird zu „für alle" (`None`) – dieselbe Normalisierung braucht der
+ * Ladezustand des Diffs, sonst sähe das erste Speichern einen Unterschied, den niemand gemacht hat.
+ */
+function formSchoolTypes(profile: CreatorProfileResponse): SchoolType {
+  return (profile.schoolTypes && SCHOOL_TYPES.includes(profile.schoolTypes as SchoolType)
+    ? profile.schoolTypes : "None") as SchoolType;
+}
 
 /**
  * Die Fachlehrer: <b>Creator-Profile</b>. Ein Profil ist keine Einstellung, sondern eine Rolle – „Englisch,
@@ -158,9 +171,8 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
 }) {
   const [form, setForm] = useState({
     name: profile?.name ?? "",
-    subjectId: profile?.subjectId?.toString() ?? "",
-    schoolTypes: (profile?.schoolTypes && SCHOOL_TYPES.includes(profile.schoolTypes as SchoolType)
-      ? profile.schoolTypes : "None") as SchoolType,
+    subjectId: profile ? subjectFormValue(profile) : "",
+    schoolTypes: profile ? formSchoolTypes(profile) : ("None" as SchoolType),
     gradeMin: profile?.gradeMin?.toString() ?? "",
     gradeMax: profile?.gradeMax?.toString() ?? "",
     seriesId: profile?.seriesId?.toString() ?? "",
@@ -178,10 +190,21 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
   // ein berührtes Feld – der Creator hat sie in einer früheren Sitzung gesetzt, nur weiß `touched` davon
   // nichts. Bei einem neuen Profil bewusst `undefined`: dort soll die Vorgabe `en`/`de` gerade weichen.
   const [loaded] = useState<DerivableValues | undefined>(() => profile && {
-    subjectId: profile.subjectId?.toString() ?? "",
+    // Dieselbe Darstellung wie im Formular, seit ein Freitext-Fach dort den Sentinel trägt (B-148).
+    // Liefen die beiden auseinander, verlöre Fall 3 von `applySeriesChange` („der geladene Wert bleibt")
+    // genau für dieses Fach seine Wirkung – ein Reihenwechsel überschriebe es dann still.
+    subjectId: subjectFormValue(profile),
     sourceLang: profile.sourceLang ?? FIELD_FALLBACKS.sourceLang,
     targetLang: profile.targetLang ?? FIELD_FALLBACKS.targetLang,
   });
+  // Der Bezugspunkt des PATCH-Diffs – bewusst NICHT `loaded`: das trägt die drei ableitbaren Felder für
+  // B-126, und zwei Regeln an einem Wert heißt, dass eine Änderung für die eine die andere verstellt.
+  //
+  // Nicht nachgezogen, aus demselben Grund wie im Lehrbuch-Formular: `onDone` schließt das Formular beim
+  // Speichern, es kann also nicht veralten. Bleibt es je offen, muss die Antwort hier einfließen.
+  const geladen = useRef(profile
+    ? profileFormValues(profile, formSchoolTypes(profile), FIELD_FALLBACKS.sourceLang, FIELD_FALLBACKS.targetLang)
+    : null);
   const action = useAction();
   const id = profile ? `p${profile.id}` : "new";
 
@@ -193,7 +216,10 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
     setTouched((t) => new Set(t).add(field));
   }
 
-  // Ein Freitext-`subjectName` ohne Katalog-Fach lässt sich im Pulldown nicht abbilden (Entscheidung 2).
+  // Die gewählte Reihe speist die Ableitung. Trägt SIE ein Freitext-Fach, steuert sie zum Fach-Feld
+  // nichts bei (`derivableValues` liefert dafür ""), und das Pulldown bleibt in Ruhe (B-67,
+  // Entscheidung 2). Nicht zu verwechseln mit dem Freitext-Fach des Profils selbst: das trägt seit
+  // B-148 den Sentinel und ist als gesperrte Option sichtbar.
   const chosenSeries = series.find((s) => String(s.id) === form.seriesId);
   // Computed statt in eigenem State gehalten: ein zweites, von Hand gepflegtes Set könnte von der
   // Formular-/Reihenwahl abdriften. Die Regel selbst steht in `seriesDerivation.ts`.
@@ -220,6 +246,17 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
       return;
     }
 
+    if (profile && geladen.current) {
+      // Beim Ändern nur das Geänderte, entschieden per Vergleich gegen den Ladezustand statt aus dem
+      // Momentanwert – sonst kostete jedes Speichern den Fachnamen eines gelöschten Fachs (B-148).
+      const patch = profilePatch(geladen.current, { ...form, defaultTypes: types });
+      if (patch === null) { action.succeed("Nichts geändert."); return; }
+
+      if (!await action.run(() => api.updateCreatorProfile(profile.id, patch), "Gespeichert.")) return;
+      onDone();
+      return;
+    }
+
     const subject = subjects.find((s) => String(s.id) === form.subjectId);
     const dto: CreateCreatorProfileDto = {
       name: form.name.trim(),
@@ -239,25 +276,13 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
       active: form.active,
     };
 
-    const ok = await action.run(() => (profile
-      // Beim Ändern muss „leer" ausdrücklich gesagt werden: der Server überliest `null` (= nicht
-      // angegeben), sonst blieben Fach, Reihe und Klassenstufen für immer gesetzt.
-      ? api.updateCreatorProfile(profile.id, {
-          ...dto,
-          clearSubject: dto.subjectId == null,
-          clearSeries: dto.seriesId == null,
-          clearGradeMin: min == null,
-          clearGradeMax: max == null,
-        })
-      : api.createCreatorProfile(dto)), profile ? "Gespeichert." : "Fachlehrer angelegt.");
-    if (!ok) return;
-    if (!profile) {
-      setForm({ ...form, name: "", persona: "", didactics: "" });
-      setTypes([]);
-      // Gehört zum Formularzustand, den das Anlegen verwirft: bliebe es stehen, leitete der nächste
-      // Eintrag genau die Felder nicht mehr ab, die beim vorigen von Hand geändert wurden (B-126).
-      setTouched(new Set());
-    }
+    // Anlegen: kein Bezugspunkt, also auch kein Schalter – ein neues Profil hat nichts zu leeren.
+    if (!await action.run(() => api.createCreatorProfile(dto), "Fachlehrer angelegt.")) return;
+    setForm({ ...form, name: "", persona: "", didactics: "" });
+    setTypes([]);
+    // Gehört zum Formularzustand, den das Anlegen verwirft: bliebe es stehen, leitete der nächste
+    // Eintrag genau die Felder nicht mehr ab, die beim vorigen von Hand geändert wurden (B-126).
+    setTouched(new Set());
     onDone();
   }
 
@@ -280,12 +305,19 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
           />
         </div>
         <div className="field">
-          <label htmlFor={`fl-subject-${id}`}>Fach</label>
+          <FieldLabel htmlFor={`fl-subject-${id}`} topic="profileSubject">Fach</FieldLabel>
           <select
             id={`fl-subject-${id}`} value={form.subjectId}
             onChange={(e) => { up("subjectId", e.target.value); touch("subjectId"); }}
           >
             <option value="">– fachneutral –</option>
+            {/* Der Freitext-Zustand als eigene, nicht wählbare Option (B-148, Muster aus B-143).
+                Bedingung und Beschriftung kommen BEIDE aus `profile`, dem geladenen Stand – aus einer
+                Quelle können sie nicht auseinanderlaufen, und die Option bleibt stehen, während der
+                Nutzer „– fachneutral –" probiert. */}
+            {profile?.subjectId == null && profile?.subjectName && (
+              <option value={FREETEXT_SUBJECT} disabled>{profile.subjectName} (Freitext)</option>
+            )}
             {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
           <DerivedHint active={isDerived("subjectId")} />

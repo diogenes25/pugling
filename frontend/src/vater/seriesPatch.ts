@@ -1,4 +1,9 @@
+import { subjectFormValue, subjectPatch } from "./subjectField";
 import type { SchoolType, TextbookSeriesResponse, UpdateTextbookSeriesDto } from "../lib/types";
+
+// Der Sentinel und die Fach-Regel wohnen seit B-148 in `subjectField.ts` – drei Formulare tragen
+// dasselbe Feld. Hier re-exportiert, damit die bestehenden Importe dieser Datei stehen bleiben.
+export { FREETEXT_SUBJECT } from "./subjectField";
 
 /**
  * Der PATCH-Rumpf beim Bearbeiten einer Lehrwerk-Reihe, als **reine Regel** (B-123).
@@ -19,19 +24,6 @@ import type { SchoolType, TextbookSeriesResponse, UpdateTextbookSeriesDto } from
  * generierte Typ (`tsc -b`) und die E2E. Wer hier einen Feldnamen ändert, muss dort nachsehen.
  */
 
-/**
- * Der Formularwert für „diese Reihe trägt einen Fachnamen, aber kein Katalog-Fach" (B-143).
- *
- * Er ist ein **Anzeigezustand, kein Wert**: er erreicht den Server nie. Das Formular braucht ihn trotzdem,
- * weil `""` sonst zwei verschiedene Dinge hieße – „kein Fach" und „ein Fach, das der Katalog nicht kennt".
- * Genau diese Verwechslung war der Defekt: Zeile und Formular sagten Verschiedenes, und Speichern zerstörte
- * lautlos den Freitext.
- *
- * Kein numerischer Wert kann damit kollidieren – das ist eine Eigenschaft dieser Wahl, nicht des Typs, und
- * darum hält ein Testfall sie fest.
- */
-export const FREETEXT_SUBJECT = "__freetext__";
-
 /** Die sieben Felder des Formulars, alle als Strings – so wie ein `<input>`/`<select>` sie trägt. */
 export type SeriesFormValues = {
   name: string;
@@ -48,9 +40,7 @@ export function seriesFormValues(series: TextbookSeriesResponse): SeriesFormValu
   return {
     name: series.name,
     publisherId: series.publisherId == null ? "" : String(series.publisherId),
-    // Drei Fälle, nicht zwei: Katalog-Fach, Freitext-Fach, nichts.
-    subjectId: series.subjectId != null ? String(series.subjectId)
-      : series.subjectName ? FREETEXT_SUBJECT : "",
+    subjectId: subjectFormValue(series),
     schoolTypes: series.schoolTypes,
     sourceLanguage: series.sourceLanguage ?? "",
     targetLanguage: series.targetLanguage ?? "",
@@ -90,21 +80,8 @@ export function seriesPatch(
     if (form.publisherId === "") dto.clearPublisherId = true;
     else dto.publisherId = Number(form.publisherId);
   }
-  if (form.subjectId !== loaded.subjectId) {
-    if (form.subjectId === "") {
-      // Nur der Schalter: der Controller räumt Id UND Namen: TextbookSeriesController, dieselbe Zeile
-      // wie in CreatorProfilesController und TextbooksController. Das ist auch der Weg, auf dem ein
-      // Freitext-Fach verschwindet – vom Sentinel auf „– keine Angabe –" ist ein Unterschied (B-143).
-      dto.clearSubject = true;
-    } else if (form.subjectId !== FREETEXT_SUBJECT) {
-      // Nur die Id: den Anzeigenamen holt der Server aus dem Katalog (B-142). Ihn hier mitzuschicken
-      // wäre totes Feld — und schlimmer, es sähe aus wie eine Regel, die es nicht mehr gibt.
-      dto.subjectId = Number(form.subjectId);
-    }
-    // Der Sentinel selbst geht NIE mit. Über die Oberfläche kann er hier gar nicht ankommen (die Option
-    // ist `disabled`), aber „unerreichbar, weil das Formular es verhindert" ist die Art Zusicherung, die
-    // beim nächsten Umbau kippt – und `Number("__freetext__")` wäre `NaN` im Rumpf.
-  }
+  // Das Fach trägt seine eigene Regel, geteilt mit Lehrbuch und Fachlehrer-Profil (B-148).
+  Object.assign(dto, subjectPatch(loaded.subjectId, form.subjectId));
 
   return Object.keys(dto).length === 0 ? null : dto;
 }

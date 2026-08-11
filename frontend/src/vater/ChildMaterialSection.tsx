@@ -1,6 +1,9 @@
-import { Fragment, useState } from "react";
+import { Fragment, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { FieldLabel } from "../components/InfoHint";
 import { StatusBanner } from "../components/StatusBanner";
+import { FREETEXT_SUBJECT } from "./subjectField";
+import { EMPTY_TEXTBOOK_FORM, textbookFormValues, textbookPatch, type TextbookFormValues } from "./textbookPatch";
 import { api } from "../lib/api";
 import { useAction } from "../lib/useAction";
 import { matchReasonLabel } from "../lib/labels";
@@ -114,23 +117,35 @@ export function ChildMaterialSection({ childId, childName, subjects }: {
  * Ein Formular für Anlegen und Ändern. Die Unit-Auswahl hängt an der gewählten Reihe – der Server
  * weist eine Unit aus einem fremden Werk ab, und das zu Recht: sonst stünde am Kind der Stoff eines
  * Buchs, das es nicht benutzt.
+ *
+ * Anlegen und Bearbeiten bleiben **ein** Formular (B-148, Entscheidung 3) – anders als bei der Reihe,
+ * wo `NewSeries` und `SeriesForm` getrennt sind. Dort war der Grund die Feldsichtbarkeit: beim Anlegen
+ * einer Reihe gibt es Felder, die es nicht geben soll. Hier ist das Formular in beiden Modi dasselbe,
+ * und eine Trennung verdoppelte nur das Rendern.
  */
-function TextbookForm({ childId, book, series, subjects, onDone }: {
+/*
+ * Exportiert **nur für den Test** (B-148), wie `SeriesForm`: Die gesperrte Freitext-Option ist am
+ * Formular zu sehen, nicht an der Regel – und `textbookPatch` erreicht sie nicht. Die Komponente
+ * braucht dafür kein gefälschtes `fetch`, solange das Buch keine Reihe trägt: nur die Unit-Liste lädt
+ * beim Rendern, alles andere hängt am Absenden.
+ */
+export function TextbookForm({ childId, book, series, subjects, onDone }: {
   childId: number;
   book?: TextbookResponse;
   series: TextbookSeriesResponse[];
   subjects: SubjectResponse[];
   onDone: () => void;
 }) {
-  const [form, setForm] = useState({
-    title: book?.title ?? "",
-    subjectId: book?.subjectId?.toString() ?? "",
-    grade: book?.grade?.toString() ?? "",
-    publisher: book?.publisher ?? "",
-    seriesId: book?.seriesId?.toString() ?? "",
-    currentUnitId: book?.currentUnitId?.toString() ?? "",
-    currentChapter: book?.currentChapter ?? "",
-  });
+  // Der Ladezustand ist der Bezugspunkt des Diffs (B-148) – er darf sich NICHT mit dem Formular
+  // mitbewegen, sonst entscheidet der Vergleich gegen sich selbst und der Schalter entstünde wieder aus
+  // dem Momentanwert. Darum `useRef`. Beim Anlegen gibt es keinen Bezugspunkt: dort ist er `null`.
+  //
+  // Er wird bewusst NICHT nachgezogen, und das ist an eine Bedingung geknüpft: Das Bearbeiten-Formular
+  // hängt an `{editing === b.id && …}` und `onDone` schließt es beim Speichern – es kann also gar nicht
+  // veralten. Wer es (wie `SeriesForm`) offen stehen lässt, muss den Bezugspunkt aus der ANTWORT
+  // nachziehen, sonst rechnet das zweite Speichern derselben Sitzung gegen einen alten Stand.
+  const geladen = useRef(book ? textbookFormValues(book) : null);
+  const [form, setForm] = useState<TextbookFormValues>(geladen.current ?? EMPTY_TEXTBOOK_FORM);
   const action = useAction();
   const id = book ? `tb${book.id}` : "tbnew";
 
@@ -151,6 +166,21 @@ function TextbookForm({ childId, book, series, subjects, onDone }: {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.title.trim()) { action.fail("Der Titel fehlt."); return; }
+
+    if (book && geladen.current) {
+      // Beim Ändern nur das Geänderte, und „leer" ausdrücklich über die Schalter (der Server überliest
+      // `null` als „nicht angegeben"). Welche Felder das sind, entscheidet der Vergleich – nicht der
+      // Momentanwert: sonst kostete jedes Speichern den Fachnamen eines gelöschten Fachs (B-148).
+      const patch = textbookPatch(geladen.current, form);
+      // Kein leerer PATCH: er wäre erfolgreich und folgenlos, und „Gespeichert." wäre dann eine Lüge.
+      if (patch === null) { action.succeed("Nichts geändert."); return; }
+
+      if (!await action.run(() => api.updateChildTextbook(childId, book.id, patch), "Gespeichert.")) return;
+      onDone();
+      return;
+    }
+
+    // Anlegen: kein Bezugspunkt, also auch kein Schalter – ein neues Buch hat nichts zu leeren.
     const subject = subjects.find((s) => String(s.id) === form.subjectId);
     const dto: CreateTextbookDto = {
       title: form.title.trim(),
@@ -162,19 +192,8 @@ function TextbookForm({ childId, book, series, subjects, onDone }: {
       currentUnitId: form.currentUnitId ? Number(form.currentUnitId) : null,
       currentChapter: form.currentChapter.trim() || null,
     };
-    const ok = await action.run(() => (book
-      // Beim Ändern muss „leer" ausdrücklich gesagt werden (der Server überliest `null` als „nicht
-      // angegeben"). Ohne die Schalter wäre „nicht katalogisiert" ein stiller Klick ins Nichts.
-      ? api.updateChildTextbook(childId, book.id, {
-          ...dto,
-          clearSubject: dto.subjectId == null,
-          clearGrade: dto.grade == null,
-          clearSeries: seriesId == null,
-          clearUnit: form.currentUnitId === "",
-        })
-      : api.createChildTextbook(childId, dto)), book ? "Gespeichert." : "Buch hinterlegt.");
-    if (!ok) return;
-    if (!book) setForm({ ...form, title: "", currentChapter: "" });
+    if (!await action.run(() => api.createChildTextbook(childId, dto), "Buch hinterlegt.")) return;
+    setForm({ ...form, title: "", currentChapter: "" });
     onDone();
   }
 
@@ -192,9 +211,19 @@ function TextbookForm({ childId, book, series, subjects, onDone }: {
           <input id={`${id}-title`} value={form.title} onChange={(e) => up("title", e.target.value)} placeholder="Access 8" />
         </div>
         <div className="field">
-          <label htmlFor={`${id}-subject`}>Fach</label>
+          <FieldLabel htmlFor={`${id}-subject`} topic="textbookSubject">Fach</FieldLabel>
           <select id={`${id}-subject`} value={form.subjectId} onChange={(e) => up("subjectId", e.target.value)}>
             <option value="">– keine Angabe –</option>
+            {/* Der Freitext-Zustand als eigene, nicht wählbare Option (B-148, Muster aus B-143): so sagt
+                das Feld dasselbe wie die Fach-Spalte der Tabelle darüber, statt zu schweigen.
+
+                Bedingung und Beschriftung kommen BEIDE aus `book`, dem geladenen Stand – nicht aus
+                `form`. Zwei Gründe: die Option soll stehen bleiben, während der Nutzer
+                „– keine Angabe –" probiert (sie zeigt ihm, was er gerade ersetzt); und aus einer Quelle
+                können Bedingung und Text nicht auseinanderlaufen. */}
+            {book?.subjectId == null && book?.subjectName && (
+              <option value={FREETEXT_SUBJECT} disabled>{book.subjectName} (Freitext)</option>
+            )}
             {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </div>

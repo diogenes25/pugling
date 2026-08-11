@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { ProfileForm } from "./VaterFachlehrer";
-import type { SubjectResponse, TextbookSeriesResponse } from "../lib/types";
+import type { CreatorProfileResponse, SubjectResponse, TextbookSeriesResponse } from "../lib/types";
 
 /*
  * Der Regressionstest zu B-67. `ProfileForm` löst keinen Netzaufruf aus, solange nicht abgesendet wird –
@@ -41,7 +41,9 @@ describe("ProfileForm – Ableitung aus dem Lehrwerk", () => {
     expect((screen.getByLabelText("Fach") as HTMLSelectElement).value).toBe("1");
   });
 
-  it("lässt das Fach-Pulldown in Ruhe, wenn die Reihe kein Katalog-Fach trägt", () => {
+  it("lässt das Fach-Pulldown in Ruhe, wenn die REIHE kein Katalog-Fach trägt", () => {
+    // Nicht zu verwechseln mit dem Freitext-Fach des Profils selbst (B-148, weiter unten): Hier trägt
+    // die gewählte Reihe eines, steuert also zum Fach-Feld nichts bei.
     render(<ProfileForm
       subjects={[ENGLISH]} series={[seriesWith({ subjectId: null, subjectName: "Freitextfach" })]}
       onDone={() => {}}
@@ -49,7 +51,7 @@ describe("ProfileForm – Ableitung aus dem Lehrwerk", () => {
 
     fireEvent.change(screen.getByLabelText("Lehrwerk"), { target: { value: "1" } });
 
-    expect((screen.getByLabelText("Fach") as HTMLSelectElement).value).toBe("");
+    expect((screen.getByLabelText("Fach", { exact: true }) as HTMLSelectElement).value).toBe("");
     expect((screen.getByLabelText("Lernsprache") as HTMLInputElement).value).toBe("en");
   });
 
@@ -74,5 +76,41 @@ describe("ProfileForm – Ableitung aus dem Lehrwerk", () => {
     expect(nachher).toHaveLength(4);
     expect(nachher.filter((n) => n.textContent === "aus dem Lehrwerk übernommen")).toHaveLength(3);
     expect(vorher.every((n) => nachher.includes(n))).toBe(true);
+  });
+});
+
+/*
+ * B-148. Der zweite Zustand, den das Formular nicht darstellen konnte — und anders als bei B-143 kostete
+ * er hier etwas: Der Schalter entstand aus dem Momentanwert, also schickte JEDES Speichern eines
+ * beliebigen anderen Feldes `clearSubject` und zerstörte den Fachnamen.
+ */
+describe("ProfileForm – ein Freitext-Fach am Profil selbst", () => {
+  const profil = (o: Partial<CreatorProfileResponse> = {}): CreatorProfileResponse => ({
+    id: 4, name: "Englisch 8", subjectId: null, subjectName: "Erdkunde", schoolTypes: "Gymnasium",
+    gradeMin: null, gradeMax: null, seriesId: null, sourceLang: "en", targetLang: "de",
+    persona: null, didactics: null, defaultTypes: [], active: true, ...o,
+  } as CreatorProfileResponse);
+
+  it("zeigt es als vorausgewählte, gesperrte Option", () => {
+    render(<ProfileForm profile={profil()} subjects={[ENGLISH]} series={[]} onDone={() => {}} />);
+
+    const feld = screen.getByLabelText("Fach", { exact: true }) as HTMLSelectElement;
+    expect(feld.value).toBe("__freetext__");
+    expect((screen.getByRole("option", { name: "Erdkunde (Freitext)" }) as HTMLOptionElement).disabled)
+      .toBe(true);
+  });
+
+  it("zeigt keine Freitext-Option, wenn das Fach im Katalog steht", () => {
+    render(<ProfileForm profile={profil({ subjectId: 1, subjectName: "Englisch" })} subjects={[ENGLISH]}
+      series={[]} onDone={() => {}} />);
+
+    expect((screen.getByLabelText("Fach", { exact: true }) as HTMLSelectElement).value).toBe("1");
+    expect(screen.queryByRole("option", { name: /Freitext/ })).toBeNull();
+  });
+
+  it("beschriftet das Fach-Feld mit einer Erklärung", () => {
+    render(<ProfileForm profile={profil()} subjects={[ENGLISH]} series={[]} onDone={() => {}} />);
+
+    expect(screen.getByLabelText("Erklärung zu „Fach\"", { exact: true })).toBeTruthy();
   });
 });

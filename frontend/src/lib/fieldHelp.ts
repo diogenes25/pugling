@@ -157,6 +157,26 @@ export const FIELD_HELP = {
       + "weil es jemand gelöscht hat. Du wirst ihn los, indem du „– keine Angabe –“ wählst und speicherst; "
       + "solange du das Feld nicht anfasst, bleibt er stehen.",
   },
+  /*
+   * Dieselbe Sache an zwei weiteren Feldern (B-148, Entscheidung 4) – und darum je ein eigener Text statt
+   * eines geteilten: Was der Nutzer verliert, ist hier ein anderes Ding (sein Buch, sein Fachlehrer), und
+   * eine Formulierung, die für alle drei passt, passt am Ende zu keinem. Die Beschriftung „(Freitext)" ist
+   * dagegen wortgleich – sie ist das Erkennungszeichen, nicht die Erklärung.
+   */
+  textbookSubject: {
+    title: "Fach",
+    text: "Das Fach aus dem Katalog. Steht hier ein Name mit dem Zusatz „(Freitext)“ und lässt sich nicht "
+      + "auswählen, dann trägt das Buch den Namen noch, das Fach selbst gibt es aber nicht mehr – meist, "
+      + "weil es jemand gelöscht hat. Du wirst ihn los, indem du „– keine Angabe –“ wählst und speicherst; "
+      + "solange du das Feld nicht anfasst, bleibt er stehen, auch wenn du andere Felder änderst.",
+  },
+  profileSubject: {
+    title: "Fach",
+    text: "Das Fach, für das dieser Fachlehrer zuständig ist. Steht hier ein Name mit dem Zusatz "
+      + "„(Freitext)“ und lässt sich nicht auswählen, dann gibt es das Fach im Katalog nicht mehr – der "
+      + "Name bleibt, damit du siehst, worum es ging. Er zählt beim Zuordnen zu einem Kind aber nicht mehr "
+      + "mit; wähle ein Katalog-Fach, wenn das Profil wieder treffen soll.",
+  },
   seriesSchoolTypes: {
     title: "Schulart",
     text: "Für welche Schulart die Reihe gedacht ist. Steht hier eine Kombination mehrerer Schularten, "
