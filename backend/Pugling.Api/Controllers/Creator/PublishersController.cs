@@ -25,9 +25,17 @@ namespace Pugling.Api.Controllers.Creator;
 [Authorize(Roles = Roles.Creator)]
 public class PublishersController(PuglingDbContext db) : ControllerBase
 {
-    private IQueryable<PublisherResponse> Project(IQueryable<Publisher> q) =>
+    /// <summary>
+    /// Projection including the two counts. The foreign one carries the delete rule into the response, so
+    /// a caller can see the lock instead of running into it (see <see cref="Delete"/>); ownership is
+    /// spelled out inline rather than via <see cref="ClaimsPrincipalExtensions.IsOwnedBy"/>, which EF
+    /// cannot translate - same fail-closed reading, and the same "ownerless counts as foreign".
+    /// </summary>
+    private IQueryable<PublisherResponse> Project(IQueryable<Publisher> q, int? fid) =>
         q.Select(p => new PublisherResponse(p.Id, p.Name, p.Slug,
-            db.TextbookSeries.Count(s => s.PublisherId == p.Id), p.CreatedAt));
+            db.TextbookSeries.Count(s => s.PublisherId == p.Id),
+            db.TextbookSeries.Count(s => s.PublisherId == p.Id && (s.OwnerAdultId == null || s.OwnerAdultId != fid)),
+            p.CreatedAt));
 
     /// <summary>
     /// All publishers (alphabetically by slug), optionally filtered. The total count before paging is in
@@ -53,7 +61,8 @@ public class PublishersController(PuglingDbContext db) : ControllerBase
                                      || EF.Functions.Like(p.Name, pattern, SearchPattern.Escape));
         }
 
-        return await Project(query.OrderBy(p => p.Slug).ThenBy(p => p.Id)).ToPagedListAsync(Response, skip, take, ct);
+        return await Project(query.OrderBy(p => p.Slug).ThenBy(p => p.Id), User.CreatorId())
+            .ToPagedListAsync(Response, skip, take, ct);
     }
 
     /// <summary>A publisher by id.</summary>
@@ -61,7 +70,8 @@ public class PublishersController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PublisherResponse>> Get(int id, CancellationToken ct = default)
     {
-        var publisher = await Project(db.Publishers.AsNoTracking().Where(p => p.Id == id)).FirstOrDefaultAsync(ct);
+        var publisher = await Project(db.Publishers.AsNoTracking().Where(p => p.Id == id), User.CreatorId())
+            .FirstOrDefaultAsync(ct);
         return publisher is null ? NotFound() : publisher;
     }
 
@@ -94,7 +104,8 @@ public class PublishersController(PuglingDbContext db) : ControllerBase
         // residue runs the other way: once a rename has decoupled name and slug, a non-ASCII case pair
         // ("ökotest" next to "Ökotest") passes both checks and creates a second row. Closing that would
         // need an ICU collation, the same limit Services/Shared/SearchPattern.cs already documents.
-        var existing = await Project(db.Publishers.AsNoTracking().Where(p => p.Slug == slug)).FirstOrDefaultAsync(ct);
+        var existing = await Project(db.Publishers.AsNoTracking().Where(p => p.Slug == slug), User.CreatorId())
+            .FirstOrDefaultAsync(ct);
         if (existing is not null)
             return string.Equals(existing.Name, name, StringComparison.OrdinalIgnoreCase)
                 ? Ok(existing)
@@ -112,8 +123,9 @@ public class PublishersController(PuglingDbContext db) : ControllerBase
         db.Publishers.Add(publisher);
         await db.SaveChangesAsync(ct);
 
+        // A fresh publisher has no series at all yet, so both counts are zero by construction.
         return CreatedAtAction(nameof(Get), new { id = publisher.Id },
-            new PublisherResponse(publisher.Id, publisher.Name, publisher.Slug, 0, publisher.CreatedAt));
+            new PublisherResponse(publisher.Id, publisher.Name, publisher.Slug, 0, 0, publisher.CreatedAt));
     }
 
     /// <summary>
@@ -154,8 +166,9 @@ public class PublishersController(PuglingDbContext db) : ControllerBase
         }
 
         await db.SaveChangesAsync(ct);
-        var seriesCount = await db.TextbookSeries.CountAsync(s => s.PublisherId == id, ct);
-        return new PublisherResponse(publisher.Id, publisher.Name, publisher.Slug, seriesCount, publisher.CreatedAt);
+        // Re-read through the shared projection rather than counting by hand: the response carries two
+        // counts now, and a second hand-written copy of the ownership predicate would drift from it.
+        return await Project(db.Publishers.AsNoTracking().Where(p => p.Id == id), User.CreatorId()).FirstAsync(ct);
     }
 
     /// <summary>
@@ -183,9 +196,17 @@ public class PublishersController(PuglingDbContext db) : ControllerBase
     /// does. (Note for the next reader: "SQL drops NULL rows" is true of hand-written SQL, not of this.)
     /// </para>
     /// <para>
-    /// The <c>Admin</c> role overrides the lock. Without that valve the lock would be a trap: as soon as
-    /// two creators each hang a series on the same publisher, neither could delete it - each sees the
-    /// other's series as foreign, and a typo both of them hit would stay in the shared catalog forever.
+    /// The <c>Admin</c> role overrides the lock - and that valve is the honest limit of this design, not a
+    /// way out for the caller: <see cref="Adult.IsAdmin"/> is a break-glass flag set in the database, no
+    /// endpoint and no DTO writes it. So two creators who each hang a series on the same publisher really
+    /// are both locked out until an operator steps in. The seeded catalog is the everyday case of that:
+    /// "Klett" carries the ownerless "Green Line 1", which makes it undeletable by design - removing it
+    /// would strip the publisher from a row the whole catalog shares.
+    /// </para>
+    /// <para>
+    /// The message therefore has to name the ownerless case too. Naming only "another account" sends the
+    /// caller looking for a foreign series that does not exist, on the one database where the lock is
+    /// certain to fire. <c>PublisherResponse.ForeignSeriesCount</c> lets a UI show the lock beforehand.
     /// </para>
     /// </summary>
     [HttpDelete("{id:int}")]
@@ -197,15 +218,23 @@ public class PublishersController(PuglingDbContext db) : ControllerBase
         var publisher = await db.Publishers.FindAsync([id], ct);
         if (publisher is null) return NotFound();
 
+        // Check and delete belong in one transaction. Without it they are two round-trips on two pooled
+        // connections, and a series created in between would be unassigned by the FK's SetNull - silently,
+        // because there is no `Restrict` backstop here the way the subject delete has one (SetNull is what
+        // lets the caller's OWN series survive). The read holds SQLite's SHARED lock until commit, so no
+        // other connection can commit that insert while the check is being acted on.
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+
         var fid = User.CreatorId();
         if (!User.IsAdmin()
             && await db.TextbookSeries.AnyAsync(
                 s => s.PublisherId == id && (s.OwnerAdultId == null || s.OwnerAdultId != fid), ct))
             return this.ProblemWithCode(ApiErrors.PublisherInUse,
-                "A series of another account points at this publisher.");
+                "A series of another account, or an ownerless series of the shared catalog, points at this publisher.");
 
         db.Publishers.Remove(publisher);
         await db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
         return NoContent();
     }
 }

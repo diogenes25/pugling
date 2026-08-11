@@ -222,3 +222,12 @@ müssen vorher `204` liefern statt `409` — dass sie *nur* rot sind, genügt ni
   er in einer isolierten Welt läuft. Dafür stehen die Playwright-Spec (echter Browser, echter
   Dialog) und eine Live-Probe gegen die laufende API. Protokoll:
   [pm-sitzung-2026-08-10.md](../pm-sitzung-2026-08-10.md) → Nachtlauf, Sprint 3.
+- **2026-08-11** — **Nachtrag aus dem Code-Review** (`/code-review` über `1867cfd..HEAD`): Die Regel, wie
+  sie in `SubjectsController`, `ApiErrors.SubjectInUse` und `FachLoeschenSperreTests` festgeschrieben war
+  („Zeilen, die einem Kind gehören, sperren"), **widersprach dem Code**. `Textbook`, `StudyPlan` und
+  `Klassenarbeit` gehören einem Kind und sind trotzdem bewusst `SetNull`. Das tatsächliche Kriterium ist
+  **Pflicht- gegen Kann-Beziehung**: `KeyResult.SubjectId` und `TimetableEntry.SubjectId` sind `int`, alle
+  anderen `int?` (und die dritte Pflicht-Beziehung, `ExerciseCategory`, kaskadiert, weil sie
+  katalog-intern ist). An drei Stellen richtiggestellt — die falsche Fassung las sich als Zusage für die
+  nächste kind-eigene Entität und hätte genau die Kaskade wieder eingeladen, die diese Story entfernt hat.
+  Kein Verhaltensunterschied, reine Richtigstellung; Backend **814/814**.

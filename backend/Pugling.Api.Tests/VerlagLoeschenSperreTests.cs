@@ -103,6 +103,39 @@ public class VerlagLoeschenSperreTests(PuglingWebAppFactory factory) : IClassFix
         Assert.Equal("publisher_in_use", problem.GetProperty("code").GetString());
     }
 
+    /// <summary>
+    /// The lock has to be visible BEFORE the delete, otherwise the only way to learn about it is to run
+    /// into it - and on a seeded database that state is permanent (the ownerless "Green Line 1" hangs on
+    /// "Klett"), so a caller would keep pressing a button that can never work. <c>SeriesCount</c> alone
+    /// cannot carry that: it counts foreign rows too and says nothing about who owns them.
+    /// </summary>
+    [Fact]
+    public async Task ForeignSeriesCount_ZeigtDieSperre_VorDemLoeschen()
+    {
+        var mine = await TestApi.AdultAsync(factory);
+        var stranger = await FremderCreatorAsync("3144");
+
+        var publisherId = await PublisherAsync(mine);
+        await mine.PostAsJsonAsync("/api/v1/creator/textbook-series",
+            new { name = TestApi.UniqueName("Eigene Reihe"), publisherId });
+
+        var own = await mine.GetFromJsonAsync<JsonElement>($"/api/v1/creator/publishers/{publisherId}");
+        Assert.Equal(1, own.GetProperty("seriesCount").GetInt32());
+        Assert.Equal(0, own.GetProperty("foreignSeriesCount").GetInt32());
+
+        await stranger.PostAsJsonAsync("/api/v1/creator/textbook-series",
+            new { name = TestApi.UniqueName("Fremde Reihe"), publisherId });
+
+        var blocked = await mine.GetFromJsonAsync<JsonElement>($"/api/v1/creator/publishers/{publisherId}");
+        Assert.Equal(2, blocked.GetProperty("seriesCount").GetInt32());
+        Assert.Equal(1, blocked.GetProperty("foreignSeriesCount").GetInt32());
+
+        // The counter is relative to the caller, not a property of the publisher: for the stranger the
+        // ownership runs the other way round. Reading it as absolute would show the wrong seat's lock.
+        var mirrored = await stranger.GetFromJsonAsync<JsonElement>($"/api/v1/creator/publishers/{publisherId}");
+        Assert.Equal(1, mirrored.GetProperty("foreignSeriesCount").GetInt32());
+    }
+
     [Fact]
     public async Task Admin_LoeschtAuchMitFremderReihe()
     {

@@ -23223,7 +23223,7 @@
         "tags": [
           "Creator \u2013 Publishers"
         ],
-        "summary": "    Deletes a publisher, as long as only the caller\u0027s own series point at it. Those lose the assignment\n    (SetNull) - a publisher carries no content, and for its own author that loss only costs a\n    filter/display value.\n    That sentence used to be the whole justification, and it was only true for the deleter (B-127): the\nsame call clears the assignment on every OTHER account\u0027s series too, with no way back. So a series\nof a foreign account turns this into 409 publisher_in_use. The lock is narrower than a\nconfirmation prompt and hits better: it allows exactly the case this page exists for (cleaning up a\ntypo one has made oneself) and blocks exactly the harmful one.\n    A series without an owner counts as foreign, not as free. OwnerAdultId is nullable and means\n\u0022seeded, owned by nobody\u0022; reading that fail-closed is the same rule IsOwnedBy follows, and\nit is what protects the shared catalog.\n    The null branch is spelled out rather than left to !=, for one reason that survives\nmeasurement: it keeps blocking when the fid claim is missing. EF Core compensates C# null\nsemantics by default, so for a present claim the short form produces the same SQL - the two differ\nonly for a null fid, where the short form would turn the lock off entirely. That claim\ncannot go missing behind Roles.Creator today; the point is that it stays harmless if it ever\ndoes. (Note for the next reader: \u0022SQL drops NULL rows\u0022 is true of hand-written SQL, not of this.)\n    The Admin role overrides the lock. Without that valve the lock would be a trap: as soon as\ntwo creators each hang a series on the same publisher, neither could delete it - each sees the\nother\u0027s series as foreign, and a typo both of them hit would stay in the shared catalog forever.",
+        "summary": "    Deletes a publisher, as long as only the caller\u0027s own series point at it. Those lose the assignment\n    (SetNull) - a publisher carries no content, and for its own author that loss only costs a\n    filter/display value.\n    That sentence used to be the whole justification, and it was only true for the deleter (B-127): the\nsame call clears the assignment on every OTHER account\u0027s series too, with no way back. So a series\nof a foreign account turns this into 409 publisher_in_use. The lock is narrower than a\nconfirmation prompt and hits better: it allows exactly the case this page exists for (cleaning up a\ntypo one has made oneself) and blocks exactly the harmful one.\n    A series without an owner counts as foreign, not as free. OwnerAdultId is nullable and means\n\u0022seeded, owned by nobody\u0022; reading that fail-closed is the same rule IsOwnedBy follows, and\nit is what protects the shared catalog.\n    The null branch is spelled out rather than left to !=, for one reason that survives\nmeasurement: it keeps blocking when the fid claim is missing. EF Core compensates C# null\nsemantics by default, so for a present claim the short form produces the same SQL - the two differ\nonly for a null fid, where the short form would turn the lock off entirely. That claim\ncannot go missing behind Roles.Creator today; the point is that it stays harmless if it ever\ndoes. (Note for the next reader: \u0022SQL drops NULL rows\u0022 is true of hand-written SQL, not of this.)\n    The Admin role overrides the lock - and that valve is the honest limit of this design, not a\nway out for the caller: bool Adult.IsAdmin is a break-glass flag set in the database, no\nendpoint and no DTO writes it. So two creators who each hang a series on the same publisher really\nare both locked out until an operator steps in. The seeded catalog is the everyday case of that:\n\u0022Klett\u0022 carries the ownerless \u0022Green Line 1\u0022, which makes it undeletable by design - removing it\nwould strip the publisher from a row the whole catalog shares.\n    The message therefore has to name the ownerless case too. Naming only \u0022another account\u0022 sends the\ncaller looking for a foreign series that does not exist, on the one database where the lock is\ncertain to fire. PublisherResponse.ForeignSeriesCount lets a UI show the lock beforehand.",
         "parameters": [
           {
             "name": "id",
@@ -23959,7 +23959,7 @@
         "tags": [
           "Creator \u2013 Subjects"
         ],
-        "summary": "    Deletes a subject along with its exercise categories, unless a child\u0027s data points at it.\n    Two groups, split by what the delete would cost (B-144). Catalog-internal references only lose\ntheir assignment: textbook series, textbooks, creator profiles, study plans and class tests are\nSetNull, exercise categories cascade (but their exercises survive - CategoryId is\nSetNull in turn). Rows that belong to a CHILD block the delete with 409\nsubject_in_use: a key result\u0027s subject scope is mandatory, so a cascade would delete the\nmilestone together with the payout it earned, and a timetable entry was typed by hand.\n    The pre-check is not redundant next to DeleteBehavior.Restrict, and vice versa. Without the\ncheck the database would raise the conflict as a bare 500 with a half-saved state instead of a\nreadable 409. Without Restrict this check would be the only thing between a child\u0027s\nmilestones and their deletion - and it only guards the one path that runs through here.",
+        "summary": "    Deletes a subject along with its exercise categories, unless a row that cannot live without it\n    points at it.\n    The line runs along whether the reference is REQUIRED, not along who owns the row (B-144). Every\noptional SubjectId only loses its assignment - textbook series, textbooks, creator profiles,\nstudy plans and class tests are SetNull, and the last three belong to a child just as much\nas the two below do. Of the three mandatory ones, the cheap one cascades: an exercise category is\ncatalog-internal and meaningless without its subject (its exercises survive - CategoryId is\nSetNull in turn). The other two are Restrict and block the delete with 409\nsubject_in_use, because the cascade would take a child\u0027s work with it: a key result\u0027s\nmilestone together with the payout it earned, and a timetable entry that was typed by hand.\n    Stating the rule as \u0022child data blocks\u0022 would be the trap it was written to close: it reads as a\npromise for the next child-owned entity, and one added with a SetNull subject would quietly\nfall on the other side of the line.\n    The pre-check is not redundant next to DeleteBehavior.Restrict, and vice versa. Without the\ncheck the database would raise the conflict as a bare 500 with a half-saved state instead of a\nreadable 409. Without Restrict this check would be the only thing between a child\u0027s\nmilestones and their deletion - and it only guards the one path that runs through here.",
         "parameters": [
           {
             "name": "subjectId",
@@ -38495,6 +38495,7 @@
       "PublisherResponse": {
         "required": [
           "createdAt",
+          "foreignSeriesCount",
           "id",
           "name",
           "seriesCount",
@@ -38524,12 +38525,20 @@
             ],
             "format": "int32"
           },
+          "foreignSeriesCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
           }
         },
-        "description": "A publisher (\u0022Cornelsen\u0022). \u0060SeriesCount\u0060 shows whether it is still in use."
+        "description": "A publisher (\u0022Cornelsen\u0022). \u0060SeriesCount\u0060 shows whether it is still in use.\nForeignSeriesCount is the subset of those series that do not belong to the caller - a\nforeign account\u0027s, or an ownerless one from the shared catalog, which counts as foreign rather than as\nfree. It is what decides the delete: greater than zero means DELETE answers 409\npublisher_in_use. Without it a UI can only offer the delete and let the caller run into the\nlock, because SeriesCount counts foreign rows too and says nothing about who owns them."
       },
       "Question": {
         "required": [

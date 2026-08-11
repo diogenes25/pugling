@@ -239,3 +239,26 @@ dem Fix, mit Zahl.
   er in einer isolierten Welt läuft. Dafür stehen die Playwright-Spec (echter Browser, echter
   Dialog) und eine Live-Probe gegen die laufende API. Protokoll:
   [pm-sitzung-2026-08-10.md](../pm-sitzung-2026-08-10.md) → Nachtlauf, Sprint 3.
+- **2026-08-11** — **Nachtrag aus dem Code-Review** (`/code-review` über `1867cfd..HEAD`), vier Funde an
+  dieser Story, alle behoben:
+  1. Die Sperre war für den Vater ein **stummer Dauerzustand**: Der Seed hängt die eigentümerlose
+     „Green Line 1" an „Klett", das Ventil `Adult.IsAdmin` setzt aber weder ein Endpunkt noch ein DTO.
+     Der Verlag ist damit **absichtlich** unlöschbar (Löschen zöge ihn dem geteilten Katalog weg) — das
+     stand nur nirgends, und die Doku behauptete mit dem Admin-Ventil einen Ausweg, den es über das
+     Produkt nicht gibt. Jetzt benannt statt behauptet.
+  2. `PublisherResponse.ForeignSeriesCount` **neu**: die Teilmenge der Reihen, die dem Aufrufer *nicht*
+     gehören (fremd **oder** herrenlos) — also genau das, was die Sperre entscheidet. `SeriesCount` konnte
+     das nie tragen, es zählt fremde Zeilen mit und sagt nichts über Eigentum. Damit zeigt die Oberfläche
+     die Sperre **vorher**, statt den Vater hineinlaufen zu lassen.
+  3. Der Bestätigungsdialog in `PublisherAdmin.tsx` versprach weiter den Zustand *vor* dieser Story
+     („N Reihe(n) verlieren nur die Zuordnung, keine Sperre nötig") — der Vater bestätigte und bekam
+     einen 409. Er nennt jetzt nur die **eigenen** Reihen; der Knopf ist bei `foreignSeriesCount > 0`
+     gesperrt und sagt im `title`, warum. Das Gegenstück in `CatalogAdmin.tsx` war im selben Nachtlauf
+     nachgezogen worden, dieses hier war übersehen.
+  4. Meldungstext (englisch **und** deutsch) nannte „Reihe eines anderen Kontos" — auf einer geseedeten
+     Datenbank der **einzige Fall, der nicht zutrifft**. Beide Fälle stehen jetzt drin; `errorMessage.test.ts`
+     hält den zweiten fest.
+  Dazu eine Transaktion um Prüfung und Löschen (vorher zwei Runden über zwei Verbindungen; eine dazwischen
+  angelegte fremde Reihe wäre still per `SetNull` entkoppelt worden — anders als beim Fach fängt das hier
+  **kein** `Restrict`, weil `SetNull` gerade die eigenen Reihen retten soll).
+  Belegt: Backend **814/814**, Vitest **204/204**, `tsc -b` sauber.

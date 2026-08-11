@@ -56,9 +56,13 @@ export function PublisherAdmin({ onChanged }: { onChanged: () => void }) {
                   onSave={(name) => action.run(() => api.updatePublisher(p.id, { name }), "Gespeichert.")
                     .then((ok) => { if (ok) { publishers.reload(); onChanged(); } })}
                   onDelete={() => {
-                    // Die Zahl ist der Punkt: Serien verlieren nur die Zuordnung (SetNull), keine Sperre nötig.
+                    // Nur noch die EIGENEN Reihen nennen: seit B-127 sperrt der Server, sobald eine fremde
+                    // oder herrenlose daran hängt, und der Knopf ist dann gar nicht erst anklickbar. Der
+                    // alte Satz („N Reihe(n) verlieren nur die Zuordnung") versprach das Gegenteil und
+                    // führte in einen 409, den der Vater erst nach dem Bestätigen sah.
+                    const own = p.seriesCount - p.foreignSeriesCount;
                     if (!confirmAction(
-                      `Verlag „${p.name}" löschen? ${p.seriesCount} Reihe(n) verlieren nur die Zuordnung `
+                      `Verlag „${p.name}" löschen? ${own} eigene Reihe(n) verlieren nur die Zuordnung `
                       + "und bleiben nutzbar.")) return;
                     action.run(() => api.deletePublisher(p.id), "Verlag gelöscht.")
                       .then((ok) => { if (ok) { publishers.reload(); onChanged(); } });
@@ -87,6 +91,7 @@ function PublisherRow({ publisher, busy, onSave, onDelete }: {
 }) {
   const [name, setName] = useState(publisher.name);
   const dirty = name.trim() !== publisher.name;
+  const locked = publisher.foreignSeriesCount > 0;
 
   return (
     <tr>
@@ -96,13 +101,23 @@ function PublisherRow({ publisher, busy, onSave, onDelete }: {
         {/* Der Slug ist unveränderlich – er wird gezeigt, damit klar ist, worauf Reihen zeigen. */}
         <div className="muted" style={{ fontSize: 11 }}><code>{publisher.slug}</code></div>
       </td>
-      <td className="num">{publisher.seriesCount}</td>
+      <td className="num">
+        {publisher.seriesCount}
+        {locked && <div className="muted" style={{ fontSize: 11 }}>davon {publisher.foreignSeriesCount} fremd</div>}
+      </td>
       <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
         {dirty && (
           <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={busy || !name.trim()}
             aria-label={`„${publisher.name}" speichern`} onClick={() => onSave(name.trim())}>OK</button>
         )}
-        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy}
+        {/* Gesperrt statt anklickbar: Der Server antwortet hier mit 409, und im geseedeten Katalog ist das
+            ein Dauerzustand (die herrenlose „Green Line 1" an „Klett"). Ein Knopf, der nie funktionieren
+            kann, gehört nicht angeboten – der `title` sagt, warum, statt es dem Fehlversuch zu überlassen. */}
+        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy || locked}
+          title={locked
+            ? "Gesperrt: An diesem Verlag hängen Reihen, die dir nicht gehören – fremde oder herrenlose "
+              + "aus dem geteilten Katalog. Löschen würde auch deren Zuordnung entfernen."
+            : undefined}
           aria-label={`Löschen: ${publisher.name}`} onClick={onDelete}>Löschen</button>
       </td>
     </tr>

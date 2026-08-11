@@ -25,10 +25,14 @@ describe("errorMessage – deutsche Fassung fachlicher Codes", () => {
     expect(text).not.toContain("Some English sentence.");
   });
 
-  it("übersetzt die Löschsperre am Verlag und benennt das fremde Konto", () => {
+  it("übersetzt die Löschsperre am Verlag und nennt BEIDE Fälle", () => {
     const text = problem("publisher_in_use");
 
     expect(text).toContain("anderen Kontos");
+    // Der zweite Fall ist der wichtigere: Auf einer geseedeten Datenbank greift die Sperre ausschließlich
+    // wegen einer herrenlosen Reihe. Ohne ihn schickt der Satz den Vater eine fremde Reihe suchen, die es
+    // nicht gibt.
+    expect(text).toContain("herrenlose");
     expect(text).not.toContain("Some English sentence.");
   });
 

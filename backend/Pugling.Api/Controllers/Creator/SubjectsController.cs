@@ -69,14 +69,22 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Deletes a subject along with its exercise categories, unless a child's data points at it.
+    /// Deletes a subject along with its exercise categories, unless a row that cannot live without it
+    /// points at it.
     /// <para>
-    /// Two groups, split by what the delete would cost (B-144). Catalog-internal references only lose
-    /// their assignment: textbook series, textbooks, creator profiles, study plans and class tests are
-    /// <c>SetNull</c>, exercise categories cascade (but their exercises survive - <c>CategoryId</c> is
-    /// <c>SetNull</c> in turn). Rows that belong to a CHILD block the delete with 409
-    /// <c>subject_in_use</c>: a key result's subject scope is mandatory, so a cascade would delete the
-    /// milestone together with the payout it earned, and a timetable entry was typed by hand.
+    /// The line runs along whether the reference is REQUIRED, not along who owns the row (B-144). Every
+    /// optional <c>SubjectId</c> only loses its assignment - textbook series, textbooks, creator profiles,
+    /// study plans and class tests are <c>SetNull</c>, and the last three belong to a child just as much
+    /// as the two below do. Of the three mandatory ones, the cheap one cascades: an exercise category is
+    /// catalog-internal and meaningless without its subject (its exercises survive - <c>CategoryId</c> is
+    /// <c>SetNull</c> in turn). The other two are <c>Restrict</c> and block the delete with 409
+    /// <c>subject_in_use</c>, because the cascade would take a child's work with it: a key result's
+    /// milestone together with the payout it earned, and a timetable entry that was typed by hand.
+    /// </para>
+    /// <para>
+    /// Stating the rule as "child data blocks" would be the trap it was written to close: it reads as a
+    /// promise for the next child-owned entity, and one added with a <c>SetNull</c> subject would quietly
+    /// fall on the other side of the line.
     /// </para>
     /// <para>
     /// The pre-check is not redundant next to <c>DeleteBehavior.Restrict</c>, and vice versa. Without the

@@ -6,9 +6,10 @@ namespace Pugling.Api.Tests;
 
 /// <summary>
 /// B-144: deleting a subject used to cascade into rows that belong to a child - key results (with a
-/// payout attached to a reached milestone) and timetable entries. The line runs along "does this row
-/// belong to a child?", not along a list of names: catalog-internal references keep losing only their
-/// assignment, child data blocks the delete with 409 <c>subject_in_use</c>.
+/// payout attached to a reached milestone) and timetable entries. The line runs along "can this row exist
+/// without a subject?", not along a list of names and not along ownership: every optional
+/// <c>SubjectId</c> keeps losing only its assignment - including the child-owned ones (textbook, study
+/// plan, class test) - while the two mandatory ones block the delete with 409 <c>subject_in_use</c>.
 /// </summary>
 public class FachLoeschenSperreTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {

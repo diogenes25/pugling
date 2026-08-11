@@ -96,9 +96,13 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
   subject_in_use:
     "Dieses Fach wird in den Zielen oder im Stundenplan eines Kindes verwendet. Entferne erst diese "
     + "Einträge – Lehrwerk-Reihen und Übungen hindern das Löschen dagegen nicht.",
+  // Der zweite Halbsatz nennt bewusst auch die eigentümerlose Reihe: Auf einer geseedeten Datenbank ist
+  // das der EINZIGE Fall, in dem die Sperre greift (die herrenlose „Green Line 1" hängt an „Klett"). Wer
+  // dann nur „anderes Konto" liest, sucht eine fremde Reihe, die es nicht gibt – und findet keinen Ausweg.
   publisher_in_use:
-    "An diesem Verlag hängt mindestens eine Reihe eines anderen Kontos. Löschen würde auch deren "
-    + "Zuordnung entfernen – das geht nur, solange nur eigene Reihen daran hängen.",
+    "An diesem Verlag hängt mindestens eine Reihe, die dir nicht gehört – die eines anderen Kontos oder "
+    + "eine herrenlose aus dem geteilten Katalog. Löschen würde auch deren Zuordnung entfernen; es geht "
+    + "nur, solange ausschließlich eigene Reihen daran hängen.",
 };
 
 export function errorMessage(e: unknown): string {
