@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/frontend, bereich/katalog, rolle/supervisor, rolle/creator]
-aliases: [ChildMaterialSection clearSubject, Lehrbuch verliert Fachnamen, B-143 am Kind, Fachlehrer verliert Fachnamen]
-status: ausformuliert
+tags: [typ/story, status/gegrillt, bereich/frontend, bereich/katalog, rolle/supervisor, rolle/creator]
+aliases: [ChildMaterialSection clearSubject, Lehrbuch verliert Fachnamen, B-143 am Kind, Fachlehrer verliert Fachnamen, Freitext-Fach am Kind]
+status: gegrillt
 prio: P2
 art: Defekt
 groesse: ""
@@ -42,7 +42,12 @@ Stand `d36a11a`, alles am Code nachgesehen statt aus dem Review-Befund übernomm
   trägt es, und zwar identisch.
 
 Beide Fach-`<select>` kennen nur Katalog-Fächer plus „– keine Angabe –"
-(`ChildMaterialSection.tsx:196-199`) — sie können den verwaisten Zustand nicht darstellen.
+(`ChildMaterialSection.tsx:196-199`) — sie können das **Freitext-Fach** nicht darstellen.
+
+> **Begriff:** Ein *Freitext-Fach* ist der Zustand `subjectId == null && subjectName != null`. Das Wort
+> und der Sentinel dafür stammen aus [B-143](B-143-formular-kennt-zustaende-des-modells-nicht.md)
+> (`seriesPatch.ts:33`, `FREETEXT_SUBJECT`); diese Story übernimmt es unverändert für Lehrbuch und
+> Fachlehrer-Profil, statt daneben von einem „verwaisten Fach" zu sprechen.
 
 **Die Kette** (für beide gleich):
 
@@ -60,12 +65,18 @@ erst den Wert, dann den Schalter an und leitet den Namen anschließend gegen den
 absichtlich zusammen (`ProfileDtos.cs:52`, `CreatorProfileDtos.cs:46`) — das ist die richtige Semantik
 für „Fach entfernen". Falsch ist allein, dass der Client sie ungefragt schickt.
 
-**Warum nur beim Fach.** Die übrigen Schalter derselben Rümpfe (`clearGrade`, `clearUnit`,
-`clearGradeMin/Max`) tragen dieselbe Konstruktion, richten aber heute keinen Schaden an: Ihre Werte sind
-im Formular vollständig darstellbar, `dto.X == null` heißt dort also tatsächlich „der Nutzer hat geleert".
-Das Fach ist der einzige Fall mit einem Zustand, den die Auswahl nicht zeigen kann. `clearSeries` ist
-**nicht nachgemessen** — ob eine Reihe fehlen kann, die das Buch referenziert, hängt daran, ob die
-Reihenliste je gefiltert ankommt; das gehört in die Umsetzung, nicht in eine Vermutung hier.
+**Warum nur beim Fach — und die Fehlerbedingung ist schärfer als „Momentanwert statt Vergleich".**
+`clear…`-Schalter baut das Frontend an **sieben** Stellen: den beiden oben, `seriesPatch.ts:89-107`
+(als Einziges per Vergleich), dazu `ClozeTexts.tsx:41,176`, `PlanPositions.tsx:247`,
+`VaterClassTests.tsx:81` und `VaterVocab.tsx:414`. Sechs leiten aus dem Momentanwert ab und sind trotzdem
+heil, weil ihre Werte im Formular **vollständig darstellbar** sind — `dto.X == null` heißt dort wirklich
+„der Nutzer hat geleert". Die Bedingung lautet also nicht „Momentanwert", sondern *Momentanwert über ein
+Feld, dessen Ladezustand das Formular nicht darstellen kann*. Das ist heute genau `subjectId`.
+
+`clearSeries` ist **nachgemessen und ungefährlich**: `form.seriesId` wird aus `book?.seriesId`
+initialisiert, nicht gegen die Reihenliste gefiltert. Fehlt die Reihe im Pulldown (`api.textbookSeries()`
+deckelt bei `take=200`), bleibt die Id im State, `dto.seriesId` ist eine Zahl, der Schalter bleibt
+`false`. Er feuert nur, wenn der Nutzer die Auswahl anfasst.
 
 ## Die echte Lücke
 
@@ -78,6 +89,14 @@ Und die Lücke ist eine Ebene tiefer, als der Befund sie beschrieb: Es fehlt nic
 Fach, sondern die **Regel**, dass ein `Clear…`-Schalter aus einem *Vergleich* entsteht. B-143 hat sie in
 `seriesPatch.ts` für die Reihe schon gebaut und mit Tests belegt — sie steht dort als lokale Lösung einer
 Datei, obwohl inzwischen drei Formulare dieselbe Semantik bedienen.
+
+**Der Vergleich allein reicht aber nicht, und das kippt die Empfehlung des Ausformulierens.** Dort stand,
+die zwei Hälften (Vergleich, Sentinel) seien trennbar und der Vergleich sei die dringende. Gegengerechnet:
+Mit reinem Diff gilt für ein Buch mit Freitext-Fach `loaded.subjectId === ""` **und**
+`form.subjectId === ""` — unverändert, kein Schalter, der Name bleibt. Wählt der Nutzer jetzt aber
+ausdrücklich „– keine Angabe –", ändert sich nichts, es wird nichts gesendet, und der Freitext-Name ist
+**nicht wegzubekommen**. Das ist wörtlich der Defekt von B-143 („man kommt nicht heran"). Der Diff tauscht
+die Zerstörung gegen die Unerreichbarkeit; erst der Sentinel macht die beiden Zustände unterscheidbar.
 
 ## Warum das niemandem aufgefallen ist
 
@@ -94,28 +113,86 @@ durchgelassen — er wurde in einer Notiz verfolgt und dort vergessen.
 1. ~~**Trägt `CreatorProfile` dasselbe?** B-137 nannte beide in einem Atemzug; gemessen ist bisher nur
    `Textbook`.~~ **Beantwortet am 2026-08-11:** ja, `VaterFachlehrer.tsx:245-251`, identische Zeile.
    Die Story deckt beide Formulare ab — sie einzeln zu fahren hieße, dieselbe Regel zweimal zu bauen.
-2. **Übernimmt diese Story den Sentinel aus B-143 oder reicht der Diff-Vergleich?** Empfehlung: erst den
-   Vergleich (er behebt die Zerstörung), den Sentinel nur, wenn der Zustand am Kind auch *angezeigt*
-   werden soll. Die zwei Hälften sind trennbar, und die erste ist die dringende.
-3. **Neu: Wird die Regel geteilt oder je Formular wiederholt?** `seriesPatch.ts` löst dasselbe Problem
-   seit B-143 für die Reihe, mit eigener Testdatei. **Empfehlung: ein geteilter Helfer**
-   („Schalter aus dem Vergleich `loaded` ↔ `form`"), den alle drei Formulare benutzen — drei Kopien
-   derselben Semantik sind genau die Konstellation, in der dieses Repo schon zweimal die veraltete Fassung
-   hat gewinnen sehen. **Kosten:** eine Umstellung von `seriesPatch.ts` auf den Helfer, also Anfassen von
-   Code, der gerade erst abgenommen wurde und grüne Tests hat.
-4. **Neu: Soll das verwaiste Fach am Kind sichtbar werden?** Heute zeigt die Auswahl „– keine Angabe –",
-   obwohl daneben ein Fachname steht — der Nutzer sieht den Widerspruch, kann ihn aber nicht deuten.
-   **Empfehlung: zurückstellen.** Es ist ein eigener Wunsch (Anzeige), nicht Teil der Zerstörung, und
-   B-143 hat gezeigt, dass die Sentinel-Hälfte für sich schon eine Story füllt.
+2. ~~**Übernimmt diese Story den Sentinel aus B-143 oder reicht der Diff-Vergleich?** Empfehlung: erst den
+   Vergleich, den Sentinel nur bei Bedarf — die zwei Hälften sind trennbar.~~ **Die Empfehlung war
+   falsch** und ist beim Grillen gegen den Code gefallen: Der Diff allein tauscht die Zerstörung gegen die
+   Unerreichbarkeit (siehe „Die echte Lücke"). → Entscheidung 1.
+3. ~~**Wird die Regel geteilt oder je Formular wiederholt?**~~ → Entscheidung 2. Die Frage nach dem
+   *allgemeinen* Helfer hat sich dabei erledigt: Die Fehlerbedingung ist fach-spezifisch, nicht
+   schalter-allgemein.
+4. ~~**Soll der Zustand am Kind sichtbar werden?**~~ → folgt aus Entscheidung 1 (der Sentinel *ist* die
+   Anzeige) und wird von Entscheidung 4 beschriftet.
 
-## Akzeptanzkriterien (Entwurf, final erst nach dem Grillen)
+## Entscheidungen
 
-1. Ein Lehrbuch mit `subjectId: null` und gesetztem `subjectName` behält den Namen, wenn ein **anderes**
-   Feld geändert und gespeichert wird.
-2. Dasselbe für ein Fachlehrer-Profil im selben Zustand.
-3. Wählt der Nutzer ausdrücklich „– keine Angabe –", wird das Fach weiterhin geleert (Id **und** Name) —
-   die Behebung darf den Weg nicht zumauern.
-4. Ein Regressionstest je Formular, der vor der Behebung rot ist.
+1. **Das vollständige B-143-Muster, beide Formulare, in einem Zug** — Sentinel `FREETEXT_SUBJECT` **und**
+   Diff gegen den Ladezustand, nicht nur der Diff. **Begründung:** Der Zwischenstand „nur Diff" ist kein
+   neutraler Teilfortschritt, sondern ein Defekt mit eigener Id: Er macht das Freitext-Fach unzerstörbar
+   *und* unentfernbar, also genau B-143. Ihn absichtlich einzubauen hieße, eine schon bezahlte Story an
+   zwei neuen Stellen zu wiederholen, und verletzte Akzeptanzkriterium 3 von vornherein.
+   **Kosten:** Die Story ist größer als der Befund klang. Beide Formulare bauen ihren PATCH-Rumpf heute
+   inline im `submit`; das Muster verlangt je eine `…FormValues`-Fassung des Ladezustands und eine reine
+   Vergleichsfunktion — dieselbe Struktur, die `seriesFormValues`/`seriesPatch` für die Reihe haben,
+   zweimal. Dazu die `disabled`-Option je Feld samt der Zusicherung, dass der Sentinel nie in den Rumpf
+   gerät (`Number("__freetext__")` wäre `NaN`).
+2. **Geteilt wird genau das Fach, nicht mehr.** Ein Modul (etwa `src/vater/subjectField.ts`) trägt
+   `FREETEXT_SUBJECT`, die Ableitung `{subjectId, subjectName} → Formularwert` und den Patch-Zweig
+   („leer → `clearSubject`", „Id → `subjectId`", „Sentinel → gar nichts"). Jedes Formular behält daneben
+   seine **eigene** Patch-Funktion mit eigener Testdatei nach dem Muster `seriesPatch.ts`.
+   **Begründung:** Ein allgemeiner „Schalter-aus-Vergleich"-Helfer wäre die Antwort auf eine
+   Fehlerbedingung, die wir gerade widerlegt haben — die anderen sechs Schalter sind nicht kaputt, und
+   sie für die Symmetrie anzufassen hieße, funktionierenden Code zu bewegen. Umgekehrt ist „der Sentinel
+   darf nie in den Rumpf" keine Regel, die man dreimal unabhängig richtig hält.
+   **Kosten:** `FREETEXT_SUBJECT` zieht aus `seriesPatch.ts` um; damit fallen `seriesPatch.ts`,
+   `seriesPatch.test.ts` und `VaterLehrwerke.tsx` in den Diff — Code, der seit dem 2026-08-10 abgenommen
+   ist und grüne Tests hat. Reine Import-Umstellung, aber sie muss im Review als solche erkennbar sein.
+   Und `seriesPatch.ts` gibt ein Stück seiner heutigen Selbsterklärung an das neue Modul ab.
+3. **Anlegen und Bearbeiten bleiben ein Formular.** Der Ladezustand wird eingefroren
+   (`useRef`/`useState`-Initializer) und ist beim Anlegen `null`; `submit` verzweigt wie heute nach
+   `book ?` bzw. `profile ?`.
+   **Begründung:** Die Trennung bei der Reihe (`VaterLehrwerke.tsx:218`, `NewSeries` neben `SeriesForm`)
+   ist mit *Feldsichtbarkeit* begründet — beim Anlegen einer Reihe gibt es Felder, die es nicht geben
+   soll. Beim Lehrbuch und beim Profil ist das Formular in beiden Modi dasselbe; die Trennung verdoppelte
+   also nur das Rendern. Der Bezugspunkt ist beim Fachlehrer ohnehin schon da
+   (`VaterFachlehrer.tsx:180`), er muss nur erweitert werden.
+   **Kosten:** Beide Formulare behalten ihre `book ? … : …`-Verzweigungen und bekommen eine dazu — genau
+   die Unübersichtlichkeit, gegen die B-143 sich bei der Reihe entschieden hat; wir entscheiden hier
+   bewusst anders. Die Patch-Funktion läuft nur auf dem Bearbeiten-Pfad, der Anlege-Pfad braucht seine
+   eigene Zusicherung, sonst verschiebt sich die Lücke nur. Und der Einfrier-Grund aus
+   `VaterLehrwerke.tsx:234-243` muss an beiden Stellen mitgeschrieben werden — ein mitlaufendes `useState`
+   wäre der stille Rückfall in den Ausgangsdefekt. Die zwei Schreibweisen des Einfrierens (`useRef` bei
+   der Reihe, `useState`-Initializer beim Fachlehrer) werden dabei vereinheitlicht oder begründet.
+4. **Die Sentinel-Option heißt wortgleich „`<Fachname>` (Freitext)", in allen drei Feldern.**
+   **Begründung:** Die Formulierung steht bereits als Nutzertext in `fieldHelp.ts:155`, als Zusicherung in
+   `SeriesForm.test.tsx:42` und als E2E-Erwartung in `e2e/lehrwerk-bearbeiten.spec.ts:143`. „(Fach
+   gelöscht)" wäre außerdem nicht immer wahr: Der Server nimmt einen `subjectName` ohne `subjectId`
+   weiterhin an (`TextbooksController.cs:111`, gleiche Zeile im Profil-Controller) — nur die Oberfläche
+   schickt keinen mehr. Ein gelöschtes Fach ist der häufigste Weg in den Zustand, nicht der einzige.
+   **Kosten:** Das Etikett sagt *was*, nicht *warum*. Die Erklärung trägt die Feldhilfe, und die ist heute
+   nur fürs Reihen-Feld geschrieben — Lehrbuch und Fachlehrer brauchen je einen eigenen `HelpTopic` mit
+   demselben Gedanken in ihren Worten (`frontend/CLAUDE.md`: der Text steht nie am Feld, und zwei
+   Formulierungen desselben Begriffs werden zwei Bedeutungen). Also zwei Einträge in `fieldHelp.ts` plus
+   die `FieldLabel`-Umstellung der beiden Fach-Felder — Arbeit, die im Befund nicht vorkam.
+5. **Der Satz in `VaterFachlehrer.tsx:196` wird mitgezogen.** Er sagt heute, ein Freitext-`subjectName`
+   lasse sich im Pulldown nicht abbilden; nach Entscheidung 1 stimmt das nicht mehr.
+   **Begründung:** Er beschreibt zwar einen anderen Fall (das Fach der gewählten *Reihe*, nicht das des
+   Profils) und die Ableitungsregel bleibt unverändert — aber ein Kommentar, der eine widerlegte
+   Unmöglichkeit behauptet, ist genau die Sorte, die beim nächsten Umbau falsch gelesen wird.
+   **Kosten:** Eine Zeile Kommentar und der zugehörige Testname in `VaterFachlehrer.test.tsx:44`.
+
+## Akzeptanzkriterien
+
+1. Ein Lehrbuch mit Freitext-Fach behält Id-losen Namen und Anzeige, wenn ein **anderes** Feld geändert
+   und gespeichert wird.
+2. Dasselbe für ein Fachlehrer-Profil mit Freitext-Fach.
+3. Das Fach-Feld zeigt den Zustand als vorausgewählte, gesperrte Option „`<Fachname>` (Freitext)" — in
+   beiden Formularen, wortgleich zur Reihe.
+4. Wählt der Nutzer ausdrücklich „– keine Angabe –", wird das Fach weiterhin geleert (Id **und** Name).
+   Die Behebung darf den Weg nicht zumauern.
+5. Der Sentinel erreicht den PATCH-Rumpf nie — auch nicht, wenn die `disabled`-Option umgangen wird.
+6. Ein unverändertes Feld wird gar nicht gesendet (die Zusicherung des Diffs, wie bei der Reihe).
+7. Das Anlegen funktioniert unverändert und schickt keinen `clear…`-Schalter.
+8. Je Formular ein Regressionsfall, der vor der Behebung rot ist.
 
 ## Verlauf
 
@@ -131,3 +208,14 @@ durchgelassen — er wurde in einer Notiz verfolgt und dort vergessen.
   ist nur, dass der Client sie ungefragt schickt. Zwei neue offene Punkte kamen dazu (geteilter Helfer statt
   dritter Kopie; Sichtbarkeit des verwaisten Zustands), einer fiel weg. **Nicht** nachgemessen und als
   solches benannt: ob `clearSeries` denselben nicht darstellbaren Zustand kennt.
+- **2026-08-11** — **gegrillt** (Dialog, fünf Entscheidungen). Zwei Ergebnisse, die die Story vorher nicht
+  hatte: Erstens ist die **Empfehlung des Ausformulierens gefallen** — „erst der Diff, der Sentinel
+  später" hätte an zwei neuen Stellen den Defekt von B-143 erzeugt; die beiden Hälften sind nicht
+  trennbar. Zweitens ist die **Fehlerbedingung geschärft**: nicht „Momentanwert statt Vergleich" (das tun
+  sechs von sieben `clear…`-Stellen, alle heil), sondern „Momentanwert über ein Feld, dessen Ladezustand
+  das Formular nicht darstellen kann" — heute genau `subjectId`. Daraus folgte Entscheidung 2 gegen den
+  allgemeinen Helfer, den das Ausformulieren noch empfohlen hatte.
+  Begrifflich übernommen statt neu erfunden: **Freitext-Fach** aus B-143 (`FREETEXT_SUBJECT`), das Wort
+  „verwaist" ist raus. Zwei Kostenposten kamen dazu, die im Befund nicht vorkamen: zwei neue
+  `HelpTopic`-Einträge samt `FieldLabel`-Umstellung, und das Anfassen von `seriesPatch.ts` /
+  `VaterLehrwerke.tsx` beim Umzug des Sentinels (Code, der seit dem 2026-08-10 abgenommen ist).
