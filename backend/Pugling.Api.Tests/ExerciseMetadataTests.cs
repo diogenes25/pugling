@@ -100,13 +100,39 @@ public class ExerciseMetadataTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
 
+    /// <summary>
+    /// B-18: the source is a filter of its own, not part of the free-text search. A hit and a miss - the
+    /// miss is the load-bearing half, because a filter that never excludes anything looks green forever.
+    /// </summary>
+    [Fact]
+    public async Task Quelle_Filtert_AlsTeilstring_UndSchliesstFremdeAus()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var (subjectId, seriesId, seriesUnitId, categoryId) = await SetupAsync(father, $"Meta-Fach-{Guid.NewGuid():N}");
+        var basePath = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic";
+        await father.PostAsJsonAsync(basePath, ArithmeticBody("Aus-Testbuch", categoryId, 5, 7, "Gymnasium"));
+
+        // Substring of "Testbuch, Kapitel 1" - and lower case, so the LIKE/collation path is covered too
+        // (a byte-exact `instr()` would miss this, B-135).
+        var hit = await Search(father, subjectId, source: "testbuch");
+        Assert.Contains(hit.EnumerateArray(), e => e.GetProperty("title").GetString() == "Aus-Testbuch");
+
+        // A source that no exercise carries: the filter has to exclude, not merely pass everything through.
+        var miss = await Search(father, subjectId, source: "Green Line");
+        Assert.Empty(miss.EnumerateArray());
+
+        // Without the parameter nothing changes - the addition is additive (AK 2).
+        Assert.Single((await Search(father, subjectId)).EnumerateArray());
+    }
+
     private static async Task<JsonElement> Search(HttpClient father, int subjectId,
-        int? grade = null, string? schoolType = null, int? categoryId = null)
+        int? grade = null, string? schoolType = null, int? categoryId = null, string? source = null)
     {
         var query = $"?subjectId={subjectId}";
         if (grade is int g) query += $"&grade={g}";
         if (schoolType is not null) query += $"&schoolType={schoolType}";
         if (categoryId is int c) query += $"&categoryId={c}";
+        if (source is not null) query += $"&source={Uri.EscapeDataString(source)}";
         var res = await father.GetAsync($"/api/v1/creator/exercises{query}");
         res.EnsureSuccessStatusCode();
         return await res.Content.ReadFromJsonAsync<JsonElement>();

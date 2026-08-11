@@ -6,11 +6,13 @@ import { useAuth } from "../lib/auth";
 import { SCHOOL_TYPES } from "../lib/labels";
 import { TruncationHint } from "../components/ListControls";
 import { FieldLabel, InfoHint } from "../components/InfoHint";
+import { useExerciseTypes } from "../lib/exerciseTypes";
 import { authorText } from "./ExerciseAttribution";
+import { wizardSearchParams } from "./wizardSearch";
 import { newWizardProgress, runWizardFinish } from "./wizardFinish";
 import type { WizardProgress } from "./wizardFinish";
 import type {
-  ChildResponse, ExerciseSummary, Paged, SchoolType, SubjectResponse,
+  CategoryResponse, ChildResponse, ExerciseSummary, Paged, SchoolType, SubjectResponse,
 } from "../lib/types";
 
 /*
@@ -70,6 +72,11 @@ export function VaterWizard() {
 
   // --- Schritt 3: Übungen (Katalog) ---
   const [contentSearch, setContentSearch] = useState("");
+  // Drei weitere Filter, die der Server längst kann und der Assistent bisher nicht anbot (B-18). Alle
+  // optional und AND-verknüpft wie serverseitig; leer heißt „alle".
+  const [categoryId, setCategoryId] = useState<number | "">("");
+  const [typeKey, setTypeKey] = useState("");
+  const [sourceSearch, setSourceSearch] = useState("");
   const [selected, setSelected] = useState<number[]>([]);
 
   // --- Schritt 4: Feinschliff (Positions-Defaults) ---
@@ -85,6 +92,9 @@ export function VaterWizard() {
   const [comboThreshold, setComboThreshold] = useState(5);
   const [comboBonusPoints, setComboBonusPoints] = useState(5);
   const [touchedFineTune, setTouchedFineTune] = useState(false);
+  // „Der Vater hat die Kind-Art selbst gewählt" – dieselbe Idee wie `touchedFineTune`: eine Vorbelegung
+  // darf nur greifen, solange niemand entschieden hat.
+  const [touchedMode, setTouchedMode] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -105,17 +115,40 @@ export function VaterWizard() {
   // Passende Katalog-Übungen (die Bausteine des Plans – jede wird zu einer Position). Die Gesamtzahl wird
   // mitgeführt, weil der Server nur eine Seite liefert: ohne sie wäre eine gekappte Liste nicht erkennbar.
   const exercises = useAsync<Paged<ExerciseSummary>>(
-    () => (subjectId === "" ? Promise.resolve({ items: [], total: 0 }) : api.searchExercises({
-      subjectId: Number(subjectId), grade: effectiveGrade, schoolType: effectiveSchoolType,
-      // Der Suchbegriff geht an den Server, nicht in einen Filter über der geladenen Seite: sonst
-      // durchsucht das Feld nur die erste Seite und meldet „nichts gefunden", obwohl es Treffer gibt.
-      search: contentSearch.trim() || undefined,
-    })),
-    [subjectId, effectiveGrade, effectiveSchoolType, contentSearch],
+    // Gefiltert wird SERVERSEITIG, nicht über der geladenen Seite: sonst durchsuchten die Felder nur die
+    // erste Seite und meldeten „nichts gefunden", obwohl es Treffer gibt. Die Abbildung steht in
+    // `wizardSearch.ts`, weil „Alle wählen" dieselbe braucht.
+    () => (subjectId === "" ? Promise.resolve({ items: [], total: 0 })
+      : api.searchExercises(wizardSearchParams({
+        subjectId: Number(subjectId), grade: effectiveGrade, schoolType: effectiveSchoolType,
+        search: contentSearch, categoryId, type: typeKey, source: sourceSearch,
+      }))),
+    [subjectId, effectiveGrade, effectiveSchoolType, contentSearch, categoryId, typeKey, sourceSearch],
   );
 
-  // Erstes Kind vorwählen; wenn schon Kinder existieren, „bestehendes" als Standard.
+  // Arten des gewählten Fachs; die Liste hängt am Fach, nicht am Katalog insgesamt.
+  const categories = useAsync<CategoryResponse[]>(
+    () => (subjectId === "" ? Promise.resolve([]) : api.categories(Number(subjectId))), [subjectId]);
+  // Übungstypen kommen aus dem Server-Manifest, nie aus einer Tabelle im Frontend (frontend/CLAUDE.md).
+  const types = useExerciseTypes();
+
+  // Ein Fachwechsel macht die Art des alten Fachs gegenstandslos - stehen gelassen filterte sie auf eine
+  // Kategorie, die es im neuen Fach nicht gibt, und die Trefferliste bliebe ohne sichtbaren Grund leer.
+  useEffect(() => { setCategoryId(""); }, [subjectId]);
+
+  /*
+   * Erstes Kind vorwählen; wenn schon Kinder existieren, „bestehendes" als Standard.
+   *
+   * `touchedMode` ist die tragende Bedingung, nicht Kosmetik: Der Effekt feuert, sobald die Kinderliste
+   * ankommt — und das kann NACH dem ersten Klick des Vaters sein. Ohne die Sperre nähme er ihm dann
+   * „Neues Kind anlegen" wieder weg, während er schon tippt. Der bisherige Wächter (`childId === ""`)
+   * konnte das nicht verhindern: Genau so sieht der Zustand nach dem bewussten Klick aus.
+   *
+   * Aufgefallen ist es beim Bauen von B-18, weil zwei weitere Ladevorgänge auf derselben Seite das Rennen
+   * verschoben haben — der Defekt ist älter, `e2e/assistent.spec.ts:30-31` beschreibt ihn als Eigenart.
+   */
   useEffect(() => {
+    if (touchedMode) return;
     if (children.data && children.data.length > 0) {
       if (mode === "new" && childId === "") { setMode("existing"); setChildId(children.data[0].id); }
     }
@@ -142,7 +175,37 @@ export function VaterWizard() {
   function toggle(id: number) {
     setSelected((sel) => (sel.includes(id) ? sel.filter((k) => k !== id) : [...sel, id]));
   }
-  function selectAll() { setSelected(filteredExercises.map((e) => e.id)); }
+  const [selectAllBusy, setSelectAllBusy] = useState(false);
+
+  /*
+   * „Alle wählen" hieß bisher „die ersten 100 wählen" (B-18): Der Server liefert eine Seite, und der Knopf
+   * übernahm genau die - bei 250 Treffern entstand ein Plan mit 100 Positionen, und `TruncationHint` war
+   * der einzige Hinweis darauf.
+   *
+   * Bei mehr Treffern als geladen wird darum einmal mit `take=500` nachgefragt (die Obergrenze des
+   * Servers, `PagingExtensions.MaxTake`). Darüber hinaus bleibt es bei einer Kappung - bewusst: ein
+   * vollständiges Cursor-Paging im Assistenten wäre eine eigene Story, und `TruncationHint` zeigt den
+   * Rest weiterhin an.
+   */
+  async function selectAll() {
+    const total = exercises.data?.total ?? 0;
+    if (total <= filteredExercises.length) { setSelected(filteredExercises.map((e) => e.id)); return; }
+
+    setSelectAllBusy(true);
+    try {
+      const alle = await api.searchExercises(wizardSearchParams({
+        subjectId: Number(subjectId), grade: effectiveGrade, schoolType: effectiveSchoolType,
+        search: contentSearch, categoryId, type: typeKey, source: sourceSearch,
+      }, 500));
+      setSelected(alle.items.map((e) => e.id));
+    } catch {
+      // Der Nachschlag ist eine Bequemlichkeit, kein Muss: Schlägt er fehl, bleibt die geladene Seite
+      // wählbar, statt dass der Knopf gar nichts tut.
+      setSelected(filteredExercises.map((e) => e.id));
+    } finally {
+      setSelectAllBusy(false);
+    }
+  }
 
   function canAdvance(): string | null {
     if (step === 0) {
@@ -232,8 +295,9 @@ export function VaterWizard() {
           <h3 style={{ margin: 0 }}>Für welches Kind?</h3>
           <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
             <ChoicePill active={mode === "existing"} disabled={(children.data?.length ?? 0) === 0}
-              onClick={() => setMode("existing")}>Bestehendes Kind</ChoicePill>
-            <ChoicePill active={mode === "new"} onClick={() => setMode("new")}>Neues Kind anlegen</ChoicePill>
+              onClick={() => { setTouchedMode(true); setMode("existing"); }}>Bestehendes Kind</ChoicePill>
+            <ChoicePill active={mode === "new"}
+              onClick={() => { setTouchedMode(true); setMode("new"); }}>Neues Kind anlegen</ChoicePill>
           </div>
 
           {mode === "existing" ? (
@@ -309,9 +373,31 @@ export function VaterWizard() {
             Übungen aus der geteilten Bibliothek für {subject?.name ?? "das Fach"}{effectiveGrade ? `, ${effectiveGrade}. Klasse` : ""} – jede wird zu einer Tagesziel-Position im Plan.
           </p>
 
+          {/* Drei optionale Filter, die der Server schon konnte (B-18). Alle mit „alle" als Vorgabe: Ein
+              Fach ohne Arten zeigt sonst ein leeres Pulldown und wirkt kaputt. */}
+          <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+            <select aria-label="Art" value={categoryId} style={{ maxWidth: 180 }}
+              onChange={(e) => setCategoryId(e.target.value === "" ? "" : Number(e.target.value))}>
+              <option value="">– alle Arten –</option>
+              {categories.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            <select aria-label="Übungstyp" value={typeKey} style={{ maxWidth: 180 }}
+              onChange={(e) => setTypeKey(e.target.value)}>
+              <option value="">– alle Typen –</option>
+              {types?.all.map((t) => <option key={t.type} value={t.type}>{t.label}</option>)}
+            </select>
+            <input aria-label="Quelle" placeholder="Quelle, z. B. Green Line 1…" style={{ maxWidth: 220 }}
+              value={sourceSearch} onChange={(e) => setSourceSearch(e.target.value)} />
+          </div>
+
           <div className="row">
             <span className="sub">{filteredExercises.length} passende Übungen</span>
-            {filteredExercises.length > 0 && <button type="button" className="btn ghost inline-btn" style={{ marginLeft: "auto" }} onClick={selectAll}>Alle wählen</button>}
+            {filteredExercises.length > 0 && (
+              <button type="button" className="btn ghost inline-btn" style={{ marginLeft: "auto" }}
+                disabled={selectAllBusy} onClick={selectAll}>
+                {selectAllBusy ? "Lade alle…" : "Alle wählen"}
+              </button>
+            )}
           </div>
           <TruncationHint shown={exercises.data?.items.length ?? 0} total={exercises.data?.total ?? 0} />
 

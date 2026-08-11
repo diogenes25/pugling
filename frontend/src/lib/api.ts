@@ -402,6 +402,7 @@ export const api = {
     if (p.categoryId != null) q.set("categoryId", String(p.categoryId));
     if (p.type) q.set("type", p.type);
     if (p.search) q.set("search", p.search);
+    if (p.source) q.set("source", p.source);
     if (p.mineOnly) q.set("mineOnly", "true");
     appendPaging(q, p);
     const qs = q.toString();

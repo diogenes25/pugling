@@ -33,6 +33,10 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     /// <param name="categoryId">Subject-dependent category.</param>
     /// <param name="type">Exercise type.</param>
     /// <param name="search">Free text in title or description (substring).</param>
+    /// <param name="source">Free text in the source reference, e.g. "Green Line 1, Unit 1" (substring).
+    /// Its own parameter rather than part of <paramref name="search"/>: the source names a textbook
+    /// passage, and folding it into the title search would make "Unit 1" match every exercise whose
+    /// title happens to mention a unit (B-18).</param>
     /// <param name="mineOnly">Only own exercises of the requesting adult (management rather than discovery).</param>
     /// <param name="sort">Sort column: <c>title</c>, <c>type</c>, <c>grade</c>, <c>source</c>, <c>created</c>.
     /// Short form <c>-title</c> = descending. Without a value: subject → series unit → order.</param>
@@ -44,7 +48,8 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     public async Task<IEnumerable<ExerciseSummary>> Search(
         [FromQuery] int? subjectId, [FromQuery] int? seriesUnitId, [FromQuery] int? grade, [FromQuery] SchoolTypes? schoolType,
         [FromQuery] int? categoryId, [FromQuery] string? type, [FromQuery] string? search,
-        [FromQuery] bool? mineOnly, [FromQuery] string? sort = null, [FromQuery] string? dir = null,
+        [FromQuery] string? source, [FromQuery] bool? mineOnly,
+        [FromQuery] string? sort = null, [FromQuery] string? dir = null,
         [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake, CancellationToken ct = default)
     {
         var fid = User.AdultId();
@@ -83,6 +88,15 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
             var pattern = SearchPattern.Contains(search.Trim());
             query = query.Where(e => EF.Functions.Like(e.Title, pattern, SearchPattern.Escape)
                 || (e.Description != null && EF.Functions.Like(e.Description, pattern, SearchPattern.Escape)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(source))
+        {
+            // Same LIKE reasoning as above (B-135): `Contains` would map to SQLite's byte-exact instr(),
+            // so "green line" would not find "Green Line 1".
+            var pattern = SearchPattern.Contains(source.Trim());
+            query = query.Where(e => e.Source != null
+                && EF.Functions.Like(e.Source, pattern, SearchPattern.Escape));
         }
 
         return await ApplySort(query, SortingExtensions.ParseSort(sort, dir))

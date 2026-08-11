@@ -11884,6 +11884,14 @@
             }
           },
           {
+            "name": "source",
+            "in": "query",
+            "description": "Free text in the source reference, e.g. \u0022Green Line 1, Unit 1\u0022 (substring).\n    Its own parameter rather than part of search: the source names a textbook\n    passage, and folding it into the title search would make \u0022Unit 1\u0022 match every exercise whose\n    title happens to mention a unit (B-18).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "mineOnly",
             "in": "query",
             "description": "Only own exercises of the requesting adult (management rather than discovery).",

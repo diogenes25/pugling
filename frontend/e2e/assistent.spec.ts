@@ -27,8 +27,10 @@ test("Der Assistent legt Kind, Plan und Position mit den eingetippten Feinschlif
   await page.goto("/vater/wizard");
 
   // ---------- Schritt 1: Kind (neu, damit ein wiederholter Lauf nicht kollidiert) ----------
-  // Sobald die Kinderliste geladen ist, springt der Assistent selbst auf "existing" und wählt das erste
-  // Kind vor (VaterWizard.tsx:119-121) - die Pille muss darum explizit zurückgeklickt werden.
+  // Solange niemand gewaehlt hat, springt der Assistent selbst auf "existing" und waehlt das erste Kind
+  // vor - die Pille muss darum explizit zurueckgeklickt werden. Seit B-18 ist dieser Klick auch dann
+  // bindend, wenn die Kinderliste ERST DANACH ankommt; vorher nahm der Effekt ihn wieder zurueck, und der
+  // Test haengte an einem `#wiz-name`, das nicht mehr da war.
   await page.getByRole("button", { name: "Neues Kind anlegen" }).click();
   await page.locator("#wiz-name").fill(CHILD_NAME);
   await page.locator("#wiz-pin").fill("1357");

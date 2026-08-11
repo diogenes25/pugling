@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, bereich/katalog, rolle/supervisor]
+tags: [typ/story, status/in-arbeit, bereich/training, bereich/katalog, rolle/supervisor]
 aliases: [Auto-Lehrplan-Generator]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: S
@@ -183,3 +183,28 @@ unabhängigen Teilstellen.
 - **2026-08-07** — Autonomer Modus (Opt-in je Vorhaben, README → „Autonomer Modus") vom Nutzer im Dialog
   ausdrücklich freigegeben: ein Nachtlauf darf diese Story trotz `art: Wunsch` ohne weitere Rückfrage bauen
   (Rollengang/Reviewer bleiben Pflicht wie bei jeder Abnahme).
+- **2026-08-11** — **gebaut** (Stufe `in-arbeit`), Backend zuerst, dann die drei Wizard-Lücken.
+  Backend: `source` als optionaler Substring-Filter am bestehenden Such-Endpunkt
+  (`ExerciseCatalogController.Search`), nach dem `search`-Muster mit `LIKE` statt `Contains` (B-135 — sonst
+  fände „green line" das „Green Line 1" nicht). Neuer Fall in `ExerciseMetadataTests` mit Treffer **und**
+  Nichttreffer; der Nichttreffer ist die tragende Hälfte, ein Filter, der nie ausschließt, sieht ewig grün
+  aus. Dazu die Gegenprobe, dass sich ohne den Parameter nichts ändert (AK 2).
+  Frontend: Art-, Typ- und Quelle-Filter im Schritt „Übungen" (Typen aus dem **Server-Manifest**, nicht aus
+  einer Tabelle); „Alle wählen" fragt bei `total > geladen` einmal mit `take=500` nach.
+  **Eine Abweichung vom Angriffsplan, aus einem eigenen Fehler:** Ich hatte die Suchparameter an *zwei*
+  Stellen ausgeschrieben — für die Liste und für den Nachschlag. Genau die Konstellation, in der später ein
+  Filter an einer der beiden vergessen wird und der Knopf andere Übungen übernimmt, als der Vater sieht.
+  Herausgezogen als `wizardSearch.ts` (reine Regel, Muster `seriesPatch.ts`), mit sechs Fällen — darunter
+  der, dass `take` **nur** die Seitengröße ändert und keinen Filter. Das ist zugleich der Komponententest,
+  den der Testweg verlangte: Welche Query beim Server ankommt, ist am Bildschirm nicht zu sehen.
+  **Ein älterer Defekt, den diese Story freigelegt hat — und der den E2E rot machte:** Der Assistent
+  überschrieb die Kind-Art des Vaters, wenn die Kinderliste **nach** seinem Klick ankam. Der Wächter
+  (`childId === ""`) traf genau den Zustand nach dem bewussten Klick. Meine zwei zusätzlichen
+  Ladevorgänge auf derselben Seite haben das Rennen verschoben und es sichtbar gemacht; `assistent.spec.ts`
+  beschrieb es vorher als Eigenart. Behoben mit `touchedMode`, derselben Idee wie `touchedFineTune`.
+  **Eine Korrektur am Ist-Stand dieser Story:** Sie nennt `chapterId` als Filterparameter — den gibt es
+  seit B-106 nicht mehr, er heißt `seriesUnitId`.
+  Belegt: Backend **815/815** (vorher 814), Vitest **249/249** (vorher 243), Playwright **34/34**,
+  `tsc -b` sauber.
+  Offen bis zur Abnahme: `pugling-reviewer` **und** `frontend-reviewer` (`wo: beides`), dazu der
+  `/smoke-test`-Durchlauf mit gesetztem `source`-Filter aus dem Testweg.

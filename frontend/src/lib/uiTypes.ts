@@ -66,6 +66,12 @@ export interface ExerciseSearchParams {
   categoryId?: number;
   type?: string;
   search?: string;
+  /**
+   * Freitext in der Quellenangabe („Green Line 1, Unit 1"). Eigener Parameter statt Teil von `search`:
+   * Die Quelle benennt eine Lehrwerk-Stelle, und in die Titelsuche gefaltet träfe „Unit 1" jede Übung,
+   * deren Titel zufällig eine Unit erwähnt (B-18).
+   */
+  source?: string;
   /** Nur eigene Übungen des Vaters (Verwaltung statt Entdeckung der geteilten Bibliothek). */
   mineOnly?: boolean;
   /** Sortierschlüssel + Richtung (Server-Whitelist); Paginierung per skip/take. */
