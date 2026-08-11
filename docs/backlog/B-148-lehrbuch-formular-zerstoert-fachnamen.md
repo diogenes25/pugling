@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/frontend, bereich/katalog, rolle/supervisor, rolle/creator]
+tags: [typ/story, status/geschaetzt, bereich/frontend, bereich/katalog, rolle/supervisor, rolle/creator]
 aliases: [ChildMaterialSection clearSubject, Lehrbuch verliert Fachnamen, B-143 am Kind, Fachlehrer verliert Fachnamen, Freitext-Fach am Kind]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: M
+wo: frontend
+migration: nein
+vertragsbruch: nein
 quelle: frontend-reviewer im Nachtlauf Sprint 3 (2026-08-10), Fund neben dem Diff von B-143
 unverifiziert: false
 grund: ""
@@ -194,6 +194,79 @@ durchgelassen — er wurde in einer Notiz verfolgt und dort vergessen.
 7. Das Anlegen funktioniert unverändert und schickt keinen `clear…`-Schalter.
 8. Je Formular ein Regressionsfall, der vor der Behebung rot ist.
 
+## Schätzung
+
+**Größe: M**, `wo: frontend`, `migration: nein`, `vertragsbruch: nein`.
+
+**Warum M und nicht S** — der naheliegende Vergleich ist B-143 (`S`), und er trägt nicht: B-143 war klein,
+**weil B-123 die Struktur schon gebaut hatte**. `seriesPatch.ts` und die Trennung `NewSeries`/`SeriesForm`
+existierten; B-143 musste nur den Sentinel einhängen. Hier fehlt die Struktur an **beiden** Formularen
+komplett — je eine `…FormValues`-Ableitung, je eine Patch-Funktion, je ein eingefrorener Bezugspunkt. Das
+ist mehr als zweimal B-143 und liegt damit beim Anker M (vokabel-basierter Batch-Pfad im `MediaSelector`,
+B-03): eine überschaubare Zahl von Dateien, aber neue Struktur statt eines eingehängten Sonderfalls.
+
+**Die beiden Flags sind nachgesehen, nicht vermutet.** Kein Schema wird angefasst — die Behebung ist
+vollständig clientseitig (Entscheidungen 1–4 lassen den Server unverändert, siehe „Ist-Stand"). Und
+`Pugling.Contracts` bleibt unberührt: `UpdateTextbookDto` (`ProfileDtos.cs:48-52`) und
+`UpdateCreatorProfileDto` (`CreatorProfileDtos.cs:42-46`) tragen `ClearSubject` bereits; wir schicken den
+Schalter künftig nur seltener, nicht anders.
+
+### Risiken
+
+1. **Frisch abgenommener Code im Diff.** Der Umzug von `FREETEXT_SUBJECT` fasst `seriesPatch.ts`,
+   `seriesPatch.test.ts` und `VaterLehrwerke.tsx` an — B-123/B-143, abgenommen am 2026-08-10. Gegenmittel:
+   Schritt 1 des Angriffsplans ist eine **reine** Umstellung, und ihre Zusicherung ist, dass
+   `seriesPatch.test.ts`, `SeriesForm.test.tsx` und `VaterLehrwerke.test.tsx` **unverändert** grün bleiben.
+2. **Zwei Regeln an einem Bezugspunkt.** `VaterFachlehrer.tsx:180` hält `loaded` heute für die
+   Ableitungsregel aus B-126 (`applySeriesChange(f, touched, previous, next, loaded)`). Wird dasselbe
+   Objekt für den Patch erweitert, hängen zwei Regeln an einem Wert, und eine Änderung für die eine kann
+   die andere verstellen. Sauberer wäre ein zweiter, eigener Schnappschuss — das kostet eine Zeile und ist
+   beim Bauen zu entscheiden.
+3. **Der eingefrorene Bezugspunkt muss nach dem Speichern nachziehen.** `SeriesForm` tut das aus der
+   **Antwort** (`VaterLehrwerke.tsx:267`) und benutzt dafür `action.runFor`. Beide Formulare hier benutzen
+   heute `action.run`, das nur `boolean` liefert. Wird das übersehen, rechnet der **zweite** Speichervorgang
+   derselben Sitzung gegen einen veralteten Bezugspunkt — ein Fehler, der im ersten Durchgang unsichtbar
+   ist und darum einen eigenen Testfall braucht.
+4. **`ChildMaterialSection` hat heute keinen einzigen Komponententest.** Die Lehre aus B-143 ist, dass der
+   Defekt *nicht* in der Regel saß, sondern im Formular (`SeriesForm.test.tsx:7-8`). Für das Lehrbuch gibt
+   es diese Prüfebene noch gar nicht; sie entsteht mit dieser Story.
+
+### Angriffsplan
+
+„Backend zuerst" entfällt — die Story ist reines Frontend. Die Reihenfolge folgt stattdessen dem Risiko:
+zuerst das, was bestehenden Code berührt, damit ein Rotwerden dort nicht in späteren Änderungen untergeht.
+
+1. **`src/vater/subjectField.ts` anlegen**, `FREETEXT_SUBJECT` dorthin ziehen, `seriesPatch.ts` und
+   `VaterLehrwerke.tsx` auf den neuen Import umstellen. Kein Verhalten ändert sich; die bestehende Suite
+   ist der Beweis.
+2. **Lehrbuch:** `textbookFormValues`/`textbookPatch` samt Testdatei schreiben (rot), dann
+   `ChildMaterialSection.tsx` umstellen — Bezugspunkt einfrieren, `runFor` statt `run`, gesperrte Option
+   im Fach-Feld.
+3. **Fachlehrer:** dasselbe für `VaterFachlehrer.tsx`; dabei Risiko 2 entscheiden und den widerlegten
+   Kommentar in Zeile 196 samt Testnamen mitziehen (Entscheidung 5).
+4. **Feldhilfe:** zwei `HelpTopic`-Einträge neben `seriesSubject` (`fieldHelp.ts:153`), die beiden
+   Fach-Felder auf `FieldLabel` umstellen.
+5. **E2E** als Letztes, wenn die Oberfläche steht.
+
+### Testweg
+
+| Ebene | Datei | Was sie hält |
+| --- | --- | --- |
+| Regel (neu) | `src/vater/subjectField.test.ts` | Ableitung `{subjectId, subjectName} → Wert`, die drei Patch-Zweige, „Sentinel nie im Rumpf" und `Number(FREETEXT_SUBJECT)` ist `NaN` (zieht aus `seriesPatch.test.ts:45-47` um) |
+| Regel (neu) | `src/vater/textbookPatch.test.ts`, `src/vater/profilePatch.test.ts` | Je „nur das Geänderte" und „leeren gegen unverändert", Vorbild `seriesPatch.test.ts` |
+| Formular (neu) | `src/vater/ChildMaterialSection.test.tsx` | Die gesperrte Option und AK 1 — die Ebene, auf der B-143 seinen Defekt hatte |
+| Formular (Bestand) | `src/vater/VaterFachlehrer.test.tsx` | Um AK 2/3 erweitert; der Fall bei Zeile 44 wird umbenannt |
+| Regression (Bestand) | `seriesPatch.test.ts`, `SeriesForm.test.tsx`, `VaterLehrwerke.test.tsx` | Müssen **unverändert** grün bleiben (Zusicherung für Schritt 1) |
+| Durchstich (neu) | `frontend/e2e/kind-lehrbuch-fach.spec.ts` | Fach löschen → Buch bearbeiten → anderes Feld speichern → Name steht noch; dann „– keine Angabe –" → Name weg. Vorbild `e2e/lehrwerk-bearbeiten.spec.ts:109` |
+
+**Der E2E ist hier zugleich der Rollengang** — und das ist der Unterschied zu B-127/B-143/B-144, die ihn
+alle drei nicht führen konnten: Deren Löschpfade hängen an `confirmAction`, und ein `window.confirm`
+blockiert die Chrome-Extension. Das Bearbeiten eines Lehrbuchs hängt an keinem Dialog. Es gibt hier also
+**keine Entschuldigung** für einen ausgefallenen Rollengang.
+
+**Rote Probe:** AK 1 und 2 müssen vor der Behebung rot sein. AK 6 (unverändertes Feld wird nicht gesendet)
+ist heute schon verletzt und wird es ebenfalls.
+
 ## Verlauf
 
 - **2026-08-10** — angelegt aus dem Frontend-Review des Nachtlauf-Sprints 3. **Bewusst nicht im Sprint
@@ -219,3 +292,13 @@ durchgelassen — er wurde in einer Notiz verfolgt und dort vergessen.
   „verwaist" ist raus. Zwei Kostenposten kamen dazu, die im Befund nicht vorkamen: zwei neue
   `HelpTopic`-Einträge samt `FieldLabel`-Umstellung, und das Anfassen von `seriesPatch.ts` /
   `VaterLehrwerke.tsx` beim Umzug des Sentinels (Code, der seit dem 2026-08-10 abgenommen ist).
+- **2026-08-11** — **geschätzt**: `M`, `frontend`, `migration: nein`, `vertragsbruch: nein` (beide Flags
+  nachgesehen: kein Schema, und `ClearSubject` steht in beiden DTOs längst — wir schicken den Schalter
+  künftig nur seltener). Der naheliegende Vergleich mit B-143 (`S`) trägt nicht: B-143 war klein, **weil
+  B-123 die Struktur schon gebaut hatte**; hier fehlt sie an beiden Formularen komplett. Vier Risiken
+  benannt, drei davon aus dem Bestand: frisch abgenommener Code im Diff, zwei Regeln an einem
+  Bezugspunkt (`VaterFachlehrer.tsx:180` trägt `loaded` schon für B-126), und das Nachziehen des
+  Bezugspunkts nach dem Speichern (`run` liefert nur `boolean`, gebraucht wird `runFor`) — ein Fehler,
+  der erst beim **zweiten** Speichern derselben Sitzung sichtbar wird.
+  **Der Rollengang ist hier nicht wegzudiskutieren:** Anders als bei B-127/B-143/B-144 hängt dieser Weg
+  an keinem `confirmAction`, die Chrome-Extension blockiert also nicht. Der neue E2E fährt ihn.
