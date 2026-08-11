@@ -20,16 +20,6 @@ import type {
 const TYPES = ["Vocabulary", "Cloze", "Translation", "Grammar"] as const;
 
 /**
- * Die Schulart, wie das Pulldown sie tragen kann. Eine gespeicherte KOMBINATION ("Realschule, Gymnasium")
- * ist dort nicht darstellbar und wird zu „für alle" (`None`) – dieselbe Normalisierung braucht der
- * Ladezustand des Diffs, sonst sähe das erste Speichern einen Unterschied, den niemand gemacht hat.
- */
-function formSchoolTypes(profile: CreatorProfileResponse): SchoolType {
-  return (profile.schoolTypes && SCHOOL_TYPES.includes(profile.schoolTypes as SchoolType)
-    ? profile.schoolTypes : "None") as SchoolType;
-}
-
-/**
  * Die Fachlehrer: <b>Creator-Profile</b>. Ein Profil ist keine Einstellung, sondern eine Rolle – „Englisch,
  * Klasse 7–8, Gymnasium, Lehrwerk Access". Der KI-Creator übernimmt sie, wenn er Übungen entwirft:
  *
@@ -172,7 +162,10 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
   const [form, setForm] = useState({
     name: profile?.name ?? "",
     subjectId: profile ? subjectFormValue(profile) : "",
-    schoolTypes: profile ? formSchoolTypes(profile) : ("None" as SchoolType),
+    // Roh, wie `seriesFormValues` bei der Reihe: Eine Kombination bleibt der Wert des Feldes und wird
+    // über die gesperrte Option unten sichtbar. Normalisiert man sie hier auf `None`, ist „– für alle –"
+    // nicht mehr herstellbar (Zerstörung gegen Unerreichbarkeit getauscht – siehe `profilePatch.ts`).
+    schoolTypes: (profile?.schoolTypes ?? "None") as SchoolType,
     gradeMin: profile?.gradeMin?.toString() ?? "",
     gradeMax: profile?.gradeMax?.toString() ?? "",
     seriesId: profile?.seriesId?.toString() ?? "",
@@ -201,10 +194,10 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
   // B-126, und zwei Regeln an einem Wert heißt, dass eine Änderung für die eine die andere verstellt.
   //
   // Nicht nachgezogen, aus demselben Grund wie im Lehrbuch-Formular: `onDone` schließt das Formular beim
-  // Speichern, es kann also nicht veralten. Bleibt es je offen, muss die Antwort hier einfließen.
-  const geladen = useRef(profile
-    ? profileFormValues(profile, formSchoolTypes(profile), FIELD_FALLBACKS.sourceLang, FIELD_FALLBACKS.targetLang)
-    : null);
+  // Speichern, es kann also nicht veralten. Bleibt es je offen, müssen **beide** Schnappschüsse aus der
+  // Antwort nachziehen – nur `geladen` zu erneuern ließe `loaded` auf dem Montage-Stand zurück, und Fall 3
+  // von `applySeriesChange` verlöre für ein in derselben Sitzung gewechseltes Fach seine Wirkung.
+  const geladen = useRef(profile ? profileFormValues(profile) : null);
   const action = useAction();
   const id = profile ? `p${profile.id}` : "new";
 
@@ -326,6 +319,14 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
           <label htmlFor={`fl-school-${id}`}>Schulart</label>
           <select id={`fl-school-${id}`} value={form.schoolTypes} onChange={(e) => up("schoolTypes", e.target.value as SchoolType)}>
             <option value="None">– für alle –</option>
+            {/* Dieselbe Form für eine Kombination („Realschule, Gymnasium"), gespiegelt von der Reihe:
+                `SchoolTypes` ist ein [Flags]-Enum, das Feld kennt aber nur Einzelwerte. Ohne diese Option
+                stünde der `<select>` leer – und mit einem auf `None` normalisierten Ladezustand wäre
+                „– für alle –" gar nicht mehr auszulösen. Aus `profile`, nicht aus `form`. */}
+            {profile && profile.schoolTypes !== "None"
+              && !SCHOOL_TYPES.includes(profile.schoolTypes as SchoolType) && (
+              <option value={profile.schoolTypes} disabled>{profile.schoolTypes}</option>
+            )}
             {SCHOOL_TYPES.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>

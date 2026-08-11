@@ -25,7 +25,7 @@ describe("ProfileForm – Ableitung aus dem Lehrwerk", () => {
 
     fireEvent.change(screen.getByLabelText("Lehrwerk"), { target: { value: "1" } });
 
-    expect((screen.getByLabelText("Fach") as HTMLSelectElement).value).toBe("1");
+    expect((screen.getByLabelText("Fach", { exact: true }) as HTMLSelectElement).value).toBe("1");
     expect((screen.getByLabelText("Lernsprache") as HTMLInputElement).value).toBe("en");
     expect((screen.getByLabelText("Muttersprache") as HTMLInputElement).value).toBe("de");
     expect(screen.getAllByText("aus dem Lehrwerk übernommen")).toHaveLength(3);
@@ -38,7 +38,7 @@ describe("ProfileForm – Ableitung aus dem Lehrwerk", () => {
     fireEvent.change(screen.getByLabelText("Lehrwerk"), { target: { value: "1" } });
 
     expect((screen.getByLabelText("Lernsprache") as HTMLInputElement).value).toBe("fr");
-    expect((screen.getByLabelText("Fach") as HTMLSelectElement).value).toBe("1");
+    expect((screen.getByLabelText("Fach", { exact: true }) as HTMLSelectElement).value).toBe("1");
   });
 
   it("lässt das Fach-Pulldown in Ruhe, wenn die REIHE kein Katalog-Fach trägt", () => {
@@ -106,6 +106,26 @@ describe("ProfileForm – ein Freitext-Fach am Profil selbst", () => {
 
     expect((screen.getByLabelText("Fach", { exact: true }) as HTMLSelectElement).value).toBe("1");
     expect(screen.queryByRole("option", { name: /Freitext/ })).toBeNull();
+  });
+
+  it("zeigt eine Schulart-Kombination als vorausgewählte, gesperrte Option", () => {
+    // Der Fall, den die Oberfläche nicht erzeugen kann: `SchoolTypes` ist ein [Flags]-Enum, eine
+    // Kombination reist als freier String (B-60). Ohne die Option stünde das Feld leer — und mit einem
+    // auf `None` normalisierten Ladezustand wäre „– für alle –" nicht mehr auszulösen.
+    render(<ProfileForm profile={profil({ schoolTypes: "Realschule, Gymnasium" })} subjects={[ENGLISH]}
+      series={[]} onDone={() => {}} />);
+
+    const feld = screen.getByLabelText("Schulart", { exact: true }) as HTMLSelectElement;
+    expect(feld.value).toBe("Realschule, Gymnasium");
+    expect((screen.getByRole("option", { name: "Realschule, Gymnasium" }) as HTMLOptionElement).disabled)
+      .toBe(true);
+  });
+
+  it("zeigt für einen gewöhnlichen Einzelwert keine Zusatz-Option", () => {
+    render(<ProfileForm profile={profil({ schoolTypes: "Gymnasium" })} subjects={[ENGLISH]}
+      series={[]} onDone={() => {}} />);
+
+    expect(screen.getAllByRole("option", { name: "Gymnasium" })).toHaveLength(1);
   });
 
   it("beschriftet das Fach-Feld mit einer Erklärung", () => {

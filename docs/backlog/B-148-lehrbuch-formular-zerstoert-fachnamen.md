@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/frontend, bereich/katalog, rolle/supervisor, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/katalog, rolle/supervisor, rolle/creator]
 aliases: [ChildMaterialSection clearSubject, Lehrbuch verliert Fachnamen, B-143 am Kind, Fachlehrer verliert Fachnamen, Freitext-Fach am Kind]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: M
@@ -327,3 +327,36 @@ ist heute schon verletzt und wird es ebenfalls.
   Formularen nie zu sehen, weil `onDone` sie mitsamt ihrem `StatusBanner` aushängt. Nicht mitgenommen:
   das Ziel dieser Story ist ohne den Punkt erfüllt, und er trägt eine eigene Entscheidung.
   Offen bis zur Abnahme: `frontend-reviewer`.
+- **2026-08-11** — **`frontend-reviewer` gelaufen** über `e140856..79c8403`. Kein Blocker, aber ein Fund,
+  der eine **Regression aus diesem Commit** war und den ich selbst am Code nachgeprüft habe:
+  **Die Schulart war das Nachbarfeld mit derselben Fehlerklasse — und ich hatte sie neu erzeugt.**
+  `formSchoolTypes` normalisierte eine gespeicherte Kombination („Realschule, Gymnasium") auf `None`, und
+  zwar auf **beiden** Seiten des Vergleichs. Die Kombination überlebte damit zwar (vorher zerstörte jedes
+  Speichern sie), aber „– für alle –" war nicht mehr herstellbar: Der Nutzer wählte die Option, die schon
+  dastand, und nichts geschah. Das ist wörtlich der Tausch — Zerstörung gegen Unerreichbarkeit —, mit dem
+  Entscheidung 1 „nur Diff" fürs Fach abgelehnt hat. Behoben, indem die Reihe gespiegelt wurde
+  (`seriesFormValues:44` nimmt den Rohwert, `VaterLehrwerke.tsx:315-321` zeigt die gesperrte Option):
+  `formSchoolTypes` ist weg, der Ladezustand roh, die Option da. Zwei neue Testfälle halten beide Hälften.
+  Zweiter Fund, dieselbe Wurzel: Die Schulart als **Parameter** von `profileFormValues` war eine Falle —
+  ein Aufrufer mit dem Rohwert erzeugte den umgekehrten Phantom-Diff. Meine Begründung dafür („liegt in
+  der Komponente") war nachweislich falsch, `SCHOOL_TYPES` steht in `lib/labels.ts:31`. Der Parameter ist
+  weg, ebenso die beiden Sprach-Vorgaben (`FIELD_FALLBACKS` kommt jetzt direkt aus `seriesDerivation.ts`);
+  die Testdatei baut die Normalisierung nicht mehr nach.
+  Dritter Fund: Die Nachzieh-Anleitung am `useRef` nannte nur einen Schnappschuss — wer ihr folgte, ließe
+  `loaded` (B-126) zurück. Sagt jetzt **beide**.
+  Dazu zwei Kleinigkeiten: `defaultTypes` vergleicht als **Menge** (sichtbar ist die feste Pillen-
+  Reihenfolge, gespeichert die Klick-Reihenfolge — der alte Kommentar behauptete das Gegenteil), und
+  `EMPTY_TEXTBOOK_FORM` ist eingefroren.
+  Ausdrücklich **nicht** geändert: der Re-Export von `FREETEXT_SUBJECT` aus `seriesPatch.ts`. Der Reviewer
+  nennt ihn eine bewusste Abweichung vom Angriffsplan und die bessere Wahl — er hält die Zusicherung aus
+  Risiko 1 buchstäblich. Preis: „eine Stelle" gilt für die Regel, nicht mehr für den Import.
+- **2026-08-11** — **abgenommen** (Commits `79c8403` und `<siehe unten>`).
+  Belegt: Vitest **243/243** (vor der Story 204), Playwright **34/34** (vorher 33), `tsc -b` sauber,
+  `frontend-reviewer` gelaufen und seine drei Befunde behoben.
+  **Rollengang geführt**, und zwar als E2E im echten Browser gegen den echten Server
+  ([kind-lehrbuch-fach.spec.ts](../../frontend/e2e/kind-lehrbuch-fach.spec.ts)): Fach anlegen → Buch am
+  Kind daran hängen → Fach löschen → ein anderes Feld speichern → der Fachname steht noch → über
+  „– keine Angabe –" ist er wegzubekommen. Keine Ausrede nötig: Dieser Weg hängt an keinem
+  `confirmAction`, das die Chrome-Extension blockiert hätte — anders als bei B-127/B-143/B-144.
+  Alle acht Akzeptanzkriterien erfüllt; die einzige Abweichung (AK 6 bei umsortierter Typenliste) hat der
+  Reviewer gefunden und ist mitbehoben.

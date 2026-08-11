@@ -24,10 +24,13 @@ export type TextbookFormValues = {
   currentChapter: string;
 };
 
-/** Der leere Bogen: der Zustand des Anlege-Formulars, das keinen Ladezustand hat. */
-export const EMPTY_TEXTBOOK_FORM: TextbookFormValues = {
+/**
+ * Der leere Bogen: der Zustand des Anlege-Formulars, das keinen Ladezustand hat. Eingefroren, weil er
+ * geteilt ist – eine In-Place-Mutation träfe sonst jede Formular-Instanz.
+ */
+export const EMPTY_TEXTBOOK_FORM: Readonly<TextbookFormValues> = Object.freeze({
   title: "", subjectId: "", grade: "", publisher: "", seriesId: "", currentUnitId: "", currentChapter: "",
-};
+});
 
 /** Der Ladezustand: dieselbe Form, gefüllt aus der Antwort des Servers. */
 export function textbookFormValues(book: TextbookResponse): TextbookFormValues {

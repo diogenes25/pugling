@@ -500,12 +500,11 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (43)
+### Offen (42)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-07](B-07-db-umbau-restetappen.md) | DB-Struktur-Umbau: der offene Betriebsschritt | Aufräumen | `geschaetzt` | P1 | XS | backend | — |
-| [B-148](B-148-lehrbuch-formular-zerstoert-fachnamen.md) | Das Lehrbuch-Formular am Kind zerstört den Fachnamen bei jedem Speichern | Defekt | `in-arbeit` | P2 | M | frontend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-13](B-13-fach-kapitel-eigentum.md) | Fach- und Kapitel-Eigentum | Wunsch | `geschaetzt` | P2 | M | backend | Migration |
 | [B-18](B-18-auto-lehrplan-generator.md) | Lehrplan automatisch aus gefilterten Übungen bauen | Wunsch | `geschaetzt` | P2 | S | beides | — |
@@ -549,7 +548,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-05](B-05-buchstaben-tausch.md) | Buchstaben-Tausch-Eingabe (Anagramm) | Wunsch | `geschaetzt` | P5 | M | beides | — |
 
 <details>
-<summary>Abgenommen (95)</summary>
+<summary>Abgenommen (96)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -596,6 +595,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-143](B-143-formular-kennt-zustaende-des-modells-nicht.md) | Das Reihen-Formular kennt zwei Zustände nicht, die das Modell erlaubt | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-144](B-144-fach-loeschen-trifft-reihen-lautlos.md) | Ein Fach zu löschen löscht Meilensteine und Stundenpläne des Kindes | Defekt | `abgenommen` | P3 | M | beides | Migration |
 | [B-146](B-146-anlegeformular-schickt-toten-fachnamen.md) | Das Anlege-Formular schickt einen Fachnamen, den der Server ignoriert | Aufräumen | `abgenommen` | P3 | XS | frontend | — |
+| [B-148](B-148-lehrbuch-formular-zerstoert-fachnamen.md) | Das Lehrbuch-Formular am Kind zerstört den Fachnamen bei jedem Speichern | Defekt | `abgenommen` | P2 | M | frontend | — |
 | [B-150](B-150-verlagssperre-unsichtbar-dialog-verspricht-gegenteil.md) | Die Verlags-Löschsperre war für den Vater unsichtbar — der Dialog versprach das Gegenteil | Defekt | `abgenommen` | P2 | S | beides | — |
 | [B-25](B-25-vite-pwa-peer-konflikt.md) | Peer-Konflikt `vite-plugin-pwa` ↔ `vite@8` lösen | Aufräumen | `abgenommen` | P3 | XS | frontend | — |
 | [B-26](B-26-e2e-in-ci.md) | Der E2E-Nachtlauf ist rot – und niemand erfährt es | Defekt | `abgenommen` | P1 | S | frontend | — |
@@ -663,7 +663,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (15)
 
-**Nachgeschaut: 91 von 95 abgenommenen** — und in 11 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 4 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 91 von 96 abgenommenen** — und in 11 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 5 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -684,7 +684,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-150](B-150-verlagssperre-unsichtbar-dialog-verspricht-gegenteil.md) | Die Verlags-Löschsperre war für den Vater unsichtbar — der Dialog versprach das Gegenteil | [B-127] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (4) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (5) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -694,6 +694,7 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-11](B-11-uebungen-veroeffentlichen.md) | Übungen ausdrücklich veröffentlichen |
 | [B-123](B-123-lehrwerk-reihe-bearbeiten.md) | Lehrwerk-Reihe im Vater-Web bearbeiten |
 | [B-139](B-139-e2e-nachtlauf-login-bricht-ab-test-2.md) | Der Aufräum-Sweep der E2E löschte das Journal seiner eigenen Datenbank |
+| [B-148](B-148-lehrbuch-formular-zerstoert-fachnamen.md) | Das Lehrbuch-Formular am Kind zerstört den Fachnamen bei jedem Speichern |
 | [B-150](B-150-verlagssperre-unsichtbar-dialog-verspricht-gegenteil.md) | Die Verlags-Löschsperre war für den Vater unsichtbar — der Dialog versprach das Gegenteil |
 
 </details>

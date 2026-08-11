@@ -1,3 +1,4 @@
+import { FIELD_FALLBACKS } from "./seriesDerivation";
 import { subjectFormValue, subjectPatch } from "./subjectField";
 import type { CreatorProfileResponse, SchoolType, UpdateCreatorProfileDto } from "../lib/types";
 
@@ -28,24 +29,24 @@ export type ProfileFormValues = {
 };
 
 /** Der Ladezustand: dieselbe Form, gefüllt aus der Antwort des Servers. */
-export function profileFormValues(
-  profile: CreatorProfileResponse,
-  schoolTypes: SchoolType,
-  sourceFallback: string,
-  targetFallback: string,
-): ProfileFormValues {
+export function profileFormValues(profile: CreatorProfileResponse): ProfileFormValues {
   return {
     name: profile.name,
     subjectId: subjectFormValue(profile),
-    // Die Schulart geht durch dieselbe Normalisierung wie das Formular: eine gespeicherte KOMBINATION
-    // ("Realschule, Gymnasium") ist im Pulldown nicht darstellbar und wird dort zu "None". Wer sie hier
-    // roh übernähme, sähe beim ersten Speichern einen Unterschied, den der Nutzer nie gemacht hat.
-    schoolTypes,
+    // Die Schulart **roh**, wie bei der Reihe (`seriesFormValues`). Eine gespeicherte Kombination
+    // („Realschule, Gymnasium") ist im Pulldown nicht auszuwählen, aber sie muss der Bezugspunkt sein:
+    // Normalisierte man sie hier auf `None`, stünden beide Seiten des Vergleichs auf `None` – die
+    // Kombination überlebte zwar, aber „– für alle –" wäre nicht mehr herstellbar. Das ist derselbe
+    // Tausch (Zerstörung gegen Unerreichbarkeit), den Entscheidung 1 fürs Fach verworfen hat. Sichtbar
+    // wird der Zustand über die gesperrte Option im `<select>`.
+    schoolTypes: profile.schoolTypes as SchoolType,
     gradeMin: profile.gradeMin == null ? "" : String(profile.gradeMin),
     gradeMax: profile.gradeMax == null ? "" : String(profile.gradeMax),
     seriesId: profile.seriesId == null ? "" : String(profile.seriesId),
-    sourceLang: profile.sourceLang ?? sourceFallback,
-    targetLang: profile.targetLang ?? targetFallback,
+    // Die Vorgaben liegen bei der Ableitungsregel, die sie begründet – nicht als Parameter, den ein
+    // Aufrufer auch anders belegen könnte.
+    sourceLang: profile.sourceLang ?? FIELD_FALLBACKS.sourceLang,
+    targetLang: profile.targetLang ?? FIELD_FALLBACKS.targetLang,
     persona: profile.persona ?? "",
     didactics: profile.didactics ?? "",
     active: profile.active,
@@ -87,10 +88,11 @@ export function profilePatch(
     else dto.gradeMax = Number(form.gradeMax);
   }
 
-  // Die Typenliste wird als Ganzes ersetzt, nicht in place verändert – Reihenfolge zählt dabei mit,
-  // weil sie im Formular sichtbar ist.
+  // Die Typenliste wird als Ganzes ersetzt, nicht in place verändert. Verglichen wird als **Menge**:
+  // Sichtbar ist die feste Reihenfolge der Pillen, gespeichert die Klick-Reihenfolge – wer einen Typ
+  // ab- und wieder anwählt, schickte sonst eine „Änderung", die niemand sehen kann.
   if (form.defaultTypes.length !== loaded.defaultTypes.length
-    || form.defaultTypes.some((t, i) => t !== loaded.defaultTypes[i])) {
+    || form.defaultTypes.some((t) => !loaded.defaultTypes.includes(t))) {
     dto.defaultTypes = form.defaultTypes;
   }
 
