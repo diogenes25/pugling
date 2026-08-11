@@ -23223,7 +23223,7 @@
         "tags": [
           "Creator \u2013 Publishers"
         ],
-        "summary": "Deletes a publisher. Series pointing at it only lose the assignment (SetNull) - deliberately without\na usage lock: a publisher carries no content, its loss only costs a filter/display value.",
+        "summary": "    Deletes a publisher, as long as only the caller\u0027s own series point at it. Those lose the assignment\n    (SetNull) - a publisher carries no content, and for its own author that loss only costs a\n    filter/display value.\n    That sentence used to be the whole justification, and it was only true for the deleter (B-127): the\nsame call clears the assignment on every OTHER account\u0027s series too, with no way back. So a series\nof a foreign account turns this into 409 publisher_in_use. The lock is narrower than a\nconfirmation prompt and hits better: it allows exactly the case this page exists for (cleaning up a\ntypo one has made oneself) and blocks exactly the harmful one.\n    A series without an owner counts as foreign, not as free. OwnerAdultId is nullable and means\n\u0022seeded, owned by nobody\u0022; reading that fail-closed is the same rule IsOwnedBy follows, and\nit is what protects the shared catalog.\n    The null branch is spelled out rather than left to !=, for one reason that survives\nmeasurement: it keeps blocking when the fid claim is missing. EF Core compensates C# null\nsemantics by default, so for a present claim the short form produces the same SQL - the two differ\nonly for a null fid, where the short form would turn the lock off entirely. That claim\ncannot go missing behind Roles.Creator today; the point is that it stays harmless if it ever\ndoes. (Note for the next reader: \u0022SQL drops NULL rows\u0022 is true of hand-written SQL, not of this.)\n    The Admin role overrides the lock. Without that valve the lock would be a trap: as soon as\ntwo creators each hang a series on the same publisher, neither could delete it - each sees the\nother\u0027s series as foreign, and a typo both of them hit would stay in the shared catalog forever.",
         "parameters": [
           {
             "name": "id",
@@ -23245,6 +23245,16 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -23949,7 +23959,7 @@
         "tags": [
           "Creator \u2013 Subjects"
         ],
-        "summary": "Deletes a subject along with its exercise categories. Since B-106 a subject no longer cascades to\nany exercise (those hang off a textbook series unit instead) - deleting it only clears the FK on\ntextbook series that reference it (SetNull) and on exercises pointing at one of its categories.",
+        "summary": "    Deletes a subject along with its exercise categories, unless a child\u0027s data points at it.\n    Two groups, split by what the delete would cost (B-144). Catalog-internal references only lose\ntheir assignment: textbook series, textbooks, creator profiles, study plans and class tests are\nSetNull, exercise categories cascade (but their exercises survive - CategoryId is\nSetNull in turn). Rows that belong to a CHILD block the delete with 409\nsubject_in_use: a key result\u0027s subject scope is mandatory, so a cascade would delete the\nmilestone together with the payout it earned, and a timetable entry was typed by hand.\n    The pre-check is not redundant next to DeleteBehavior.Restrict, and vice versa. Without the\ncheck the database would raise the conflict as a bare 500 with a half-saved state instead of a\nreadable 409. Without Restrict this check would be the only thing between a child\u0027s\nmilestones and their deletion - and it only guards the one path that runs through here.",
         "parameters": [
           {
             "name": "subjectId",
@@ -23971,6 +23981,16 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -38309,6 +38329,7 @@
               "not_owner",
               "plan_inactive",
               "position_has_data",
+              "publisher_in_use",
               "purchase_not_open",
               "rate_limited",
               "remark_comment_not_found",
@@ -38320,6 +38341,7 @@
               "skin_already_unlocked",
               "skin_not_unlocked",
               "stage_not_testable",
+              "subject_in_use",
               "test_already_submitted",
               "test_attempts_exhausted",
               "timetable_slot_taken",

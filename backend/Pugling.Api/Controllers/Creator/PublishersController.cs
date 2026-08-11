@@ -12,6 +12,10 @@ namespace Pugling.Api.Controllers.Creator;
 /// The shared publisher vocabulary ("Cornelsen", "Klett") a <see cref="TextbookSeries"/> may point at.
 /// Global and child-neutral like the vocabulary store: naming a publisher is not authorship, so - unlike
 /// the series itself - there is no owner and no write restriction.
+/// <para>
+/// Deleting is the one exception, and it is not an owner check on the publisher but on what hangs off it
+/// (B-127): an ownerless row must not reach into owned ones. See <see cref="Delete"/>.
+/// </para>
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -155,16 +159,51 @@ public class PublishersController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Deletes a publisher. Series pointing at it only lose the assignment (SetNull) - deliberately without
-    /// a usage lock: a publisher carries no content, its loss only costs a filter/display value.
+    /// Deletes a publisher, as long as only the caller's own series point at it. Those lose the assignment
+    /// (SetNull) - a publisher carries no content, and for its own author that loss only costs a
+    /// filter/display value.
+    /// <para>
+    /// That sentence used to be the whole justification, and it was only true for the deleter (B-127): the
+    /// same call clears the assignment on every OTHER account's series too, with no way back. So a series
+    /// of a foreign account turns this into 409 <c>publisher_in_use</c>. The lock is narrower than a
+    /// confirmation prompt and hits better: it allows exactly the case this page exists for (cleaning up a
+    /// typo one has made oneself) and blocks exactly the harmful one.
+    /// </para>
+    /// <para>
+    /// A series without an owner counts as foreign, not as free. <c>OwnerAdultId</c> is nullable and means
+    /// "seeded, owned by nobody"; reading that fail-closed is the same rule <c>IsOwnedBy</c> follows, and
+    /// it is what protects the shared catalog.
+    /// </para>
+    /// <para>
+    /// The null branch is spelled out rather than left to <c>!=</c>, for one reason that survives
+    /// measurement: it keeps blocking when the <c>fid</c> claim is missing. EF Core compensates C# null
+    /// semantics by default, so for a present claim the short form produces the same SQL - the two differ
+    /// only for a null <c>fid</c>, where the short form would turn the lock off entirely. That claim
+    /// cannot go missing behind <c>Roles.Creator</c> today; the point is that it stays harmless if it ever
+    /// does. (Note for the next reader: "SQL drops NULL rows" is true of hand-written SQL, not of this.)
+    /// </para>
+    /// <para>
+    /// The <c>Admin</c> role overrides the lock. Without that valve the lock would be a trap: as soon as
+    /// two creators each hang a series on the same publisher, neither could delete it - each sees the
+    /// other's series as foreign, and a typo both of them hit would stay in the shared catalog forever.
+    /// </para>
     /// </summary>
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Delete(int id, CancellationToken ct = default)
     {
         var publisher = await db.Publishers.FindAsync([id], ct);
         if (publisher is null) return NotFound();
+
+        var fid = User.CreatorId();
+        if (!User.IsAdmin()
+            && await db.TextbookSeries.AnyAsync(
+                s => s.PublisherId == id && (s.OwnerAdultId == null || s.OwnerAdultId != fid), ct))
+            return this.ProblemWithCode(ApiErrors.PublisherInUse,
+                "A series of another account points at this publisher.");
+
         db.Publishers.Remove(publisher);
         await db.SaveChangesAsync(ct);
         return NoContent();
