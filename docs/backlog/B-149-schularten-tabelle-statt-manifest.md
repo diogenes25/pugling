@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, bereich/katalog, rolle/creator]
+tags: [typ/story, status/in-arbeit, bereich/frontend, bereich/katalog, rolle/creator]
 aliases: [SCHOOL_TYPES handgepflegt, Schularten ohne Manifest, Enum-Kopie im Frontend]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Aufräumen
 groesse: S
@@ -281,3 +281,21 @@ Backend zuerst — das Frontend kann den Typ erst lesen, wenn er im Dokument ste
   Vier Risiken benannt, zwei davon eigen: `Object.keys()` liefert `string[]` (eine schludrige
   Typzusicherung setzt genau die Prüfung außer Kraft, um die es geht), und das Tor läuft bei `tsc -b`,
   **nicht** bei `npm test` — das ist seine ehrliche Reichweite.
+- **2026-08-11** — **gebaut** (Stufe `in-arbeit`), alle fünf Schritte des Angriffsplans.
+  **Rote Probe:** `Waldorfschule` ins Server-Enum aufgenommen, Dokument und Vertrag erzeugt — `tsc -b`
+  wird rot und nennt die Stelle beim Namen:
+  `src/lib/labels.ts(53,7): Property 'Waldorfschule' is missing … in type Record<…>`. Wert wieder
+  entfernt, Build wieder grün. AK 1 damit belegt, nicht behauptet.
+  **Risiko 1 hat sich aufgelöst statt bestätigt.** Die befürchtete Typzusicherung an `Object.keys` ist
+  gar nicht nötig: `Object.keys` liefert `string[]`, und `SchoolType` *ist* ein String — die
+  Erschöpfungsprüfung sitzt am `Record`, nicht am Ergebnis. Damit gibt es in dieser Story kein einziges
+  `as`, das die Prüfung aushebeln könnte.
+  **Ein Fund am Rand, sofort mitbehoben:** Der Kommentar am bestehenden Alias `SchoolType`
+  (`types.ts:37-41`) behauptete, „das Schema listet die Einzelnamen" — genau das Gegenteil des Ist-Stands.
+  Der Alias sah wie ein Union aus und war ein `string`. Richtiggestellt, und der neue `SchoolTypeValue`
+  daneben gesetzt; wer einen **einzelnen** Wert meint, nimmt jetzt den.
+  **Risiko 3 ist nicht eingetreten:** Der Diff am Vertragsdokument umfasst genau **13 Zeilen** — nur das
+  Geschwister-Schema. Nichts von B-147 hat sich mit eingemischt.
+  Belegt: Backend **814/814**, Vitest **243/243**, Playwright **34/34**, `tsc -b` sauber — alle Zahlen
+  unverändert gegenüber dem Stand davor, wie es AK 6 verlangt.
+  Offen bis zur Abnahme: `pugling-reviewer` **und** `frontend-reviewer` (`wo: beides`).

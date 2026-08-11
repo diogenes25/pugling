@@ -1,5 +1,6 @@
 import type {
-  Gender, GrantPermission, InterestFacet, PointKind, SchoolType, SupervisorRelation, Weekday,
+  Gender, GrantPermission, InterestFacet, PointKind, SchoolType, SchoolTypeValue, SupervisorRelation,
+  Weekday,
 } from "./types";
 
 /** Deutsche Klartext-Labels für die Buchungs-Kategorien im Konto-/Wallet-Verlauf. */
@@ -27,10 +28,34 @@ export const pointKindLabel = (k: PointKind): string => POINT_KIND_LABELS[k] ?? 
 export const COIN_LABEL = "🪙 Münzen";
 export const GEM_LABEL = "💎 Gems";
 
-/** Wählbare Schularten (ohne `None` – das ist „nicht gesetzt", kein Auswahlwert). */
-export const SCHOOL_TYPES: SchoolType[] = [
-  "Grundschule", "Hauptschule", "Realschule", "Gymnasium", "Gesamtschule", "Berufsschule",
-];
+/*
+ * Die **wählbaren** Schularten – abgeleitet statt abgeschrieben (B-149).
+ *
+ * Die Liste war eine handgepflegte Kopie eines Server-Enums, und seit B-143/B-148 ist sie nicht mehr nur
+ * beschriftend: Vier Stellen fragen sie, ob ein Wert überhaupt auswählbar ist. Ergänzte der Server eine
+ * Schulart, zeigte das UI sie als „Kombination" (unwählbar), verwarf sie still oder machte „für alle"
+ * unerreichbar – je nach Stelle etwas anderes.
+ *
+ * `SELECTABLE` ist der Tausch, der das beendet: Der `Record` **muss** jeden Wert des Server-Enums tragen.
+ * Fehlt einer, ist `tsc -b` rot und nennt diese Datei; steht einer zu viel darin, ebenso. Keine
+ * Typzusicherung nötig – `Object.keys` liefert `string[]`, und `SchoolType` *ist* ein String.
+ *
+ * **Reichweite, ehrlich:** Das Tor ist der Compiler, also `npm run build` und CI. `npm test` fährt es
+ * nicht. Und es meldet nur – nachtragen muss die Zeile unten jemand von Hand.
+ *
+ * `None` ist ausgenommen, weil es **kein Einzelwert der Auswahl** ist. Nicht, weil es „nicht gesetzt"
+ * hieße: Das stimmt nur am Kind (`VaterKind`, „– keine Angabe –"). An Übung, Reihe und Fachlehrer-Profil
+ * ist `None` ein echter, gewollter Wert und heißt „für alle" – dort steht es als eigene Option im Feld.
+ *
+ * Die **Reihenfolge** ist eine Anzeigeentscheidung dieser Datei (aufsteigend nach Schulform), keine des
+ * Servers: `Object.keys` gibt die Schreibreihenfolge des Literals zurück.
+ */
+const SELECTABLE: Record<Exclude<SchoolTypeValue, "None">, true> = {
+  Grundschule: true, Hauptschule: true, Realschule: true,
+  Gymnasium: true, Gesamtschule: true, Berufsschule: true,
+};
+
+export const SCHOOL_TYPES: SchoolType[] = Object.keys(SELECTABLE);
 
 /**
  * Klartext für die Begründungs-Codes der Fachlehrer-Suche. Der Server liefert bewusst **Codes** statt

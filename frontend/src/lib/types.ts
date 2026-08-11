@@ -35,11 +35,22 @@ export type VerbInfo = S["VerbInfo"];
 export type Gender = S["Gender"];
 
 /**
- * Eine **einzelne** Schulart. Serverseitig ist `SchoolTypes` ein `[Flags]`-Enum, das Schema listet aber die
- * Einzelnamen – für Auswahl und Filter ist genau das richtig. Die **Kombination** („Realschule, Gymnasium")
- * reist als freier String und ist im Dokument nicht ausdrückbar (B-60).
+ * Eine Schulart, **so wie sie reist**: `SchoolTypes` ist serverseitig ein `[Flags]`-Enum, eine Kombination
+ * („Realschule, Gymnasium") ist also ein gültiger Wert. Genau deshalb trägt das Schema keine Werteliste
+ * (B-60), und dieser Alias ist ein `string` – er prüft nichts.
+ *
+ * Der vorige Kommentar behauptete hier das Gegenteil („das Schema listet die Einzelnamen"). Er war falsch,
+ * und die Lücke dahinter ist B-149: Wer einen **einzelnen** Wert meint, nimmt `SchoolTypeValue`.
  */
 export type SchoolType = S["SchoolTypes"];
+
+/**
+ * Ein **einzelner** Wert des Enums, als echter Union – aus dem Geschwister-Schema, das der Server seit
+ * B-149 zusätzlich herausgibt. Das ist die Quelle für Auswahllisten: Ergänzt jemand serverseitig eine
+ * Schulart, wächst dieser Typ, und eine Liste, die ihn erschöpfend abdeckt, wird rot (siehe
+ * `SCHOOL_TYPES` in [labels.ts](labels.ts)).
+ */
+export type SchoolTypeValue = S["SchoolTypesValue"];
 
 export type LoginResponse = S["LoginResponse"];
 

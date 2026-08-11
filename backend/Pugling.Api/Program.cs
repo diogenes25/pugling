@@ -350,6 +350,36 @@ builder.Services.AddOpenApi(o =>
         return Task.CompletedTask;
     });
 
+    // The single values of a [Flags] enum, as a SIBLING schema (B-149). Its own schema deliberately carries
+    // no `enum` list (see above, B-60) - which leaves the individual names unreachable for a generated
+    // client, so the frontend kept them as a hand-written copy that nothing checked. The sibling is purely
+    // additive: no operation references it (the generator emits it regardless), the [Flags] schema itself
+    // stays untouched, and the frontend can derive its selection list from the generated union type - a
+    // missing value then fails the build instead of showing up as a disabled option nobody can pick.
+    o.AddDocumentTransformer((doc, _, _) =>
+    {
+        doc.Components ??= new OpenApiComponents();
+        doc.Components.Schemas ??= new Dictionary<string, IOpenApiSchema>();
+        // Reflective over the [Flags] TYPES, not over a name like "SchoolTypes" - a second one added later
+        // is covered for free. Same rule as the B-60 gate it deliberately does not trip.
+        var flagsEnums = typeof(SchoolTypes).Assembly.GetTypes()
+            .Where(t => t.IsEnum && t.IsDefined(typeof(FlagsAttribute), inherit: false))
+            .Where(t => doc.Components.Schemas.ContainsKey(t.Name));
+        foreach (var type in flagsEnums)
+        {
+            var names = EnumSchemaHelp.AllowedValues(type);
+            doc.Components.Schemas[$"{type.Name}Value"] = new OpenApiSchema
+            {
+                Type = JsonSchemaType.String,
+                Enum = [.. names.Select(n => (JsonNode)JsonValue.Create(n))],
+                Description = $"A SINGLE value of the [Flags] enum `{type.Name}`. That type itself travels as "
+                    + "a comma-separated combination and therefore carries no value list; this sibling exists "
+                    + "so a generated client can reason about the individual names.",
+            };
+        }
+        return Task.CompletedTask;
+    });
+
     o.AddDocumentTransformer((doc, _, _) =>
     {
         doc.Components ??= new OpenApiComponents();
