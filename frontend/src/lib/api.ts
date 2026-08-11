@@ -89,6 +89,16 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
   // Der Deckel aus B-37 trifft ausschließlich das Kind in der Arcade – der einzige Ort, an dem eine rohe
   // englische Zeile einen Elfjährigen erreicht. Der Satz sagt darum auch, wann es weitergeht.
   test_attempts_exhausted: "Für heute sind deine Versuche aufgebraucht. Morgen kannst du es noch mal probieren.",
+  // Die beiden Löschsperren aus B-144/B-127. Sie gehören hierher, weil sie beide Hälften der Regel oben
+  // erfüllen: der Creator sieht sie an einem Knopf, den er selbst gedrückt hat, und er kann etwas dagegen
+  // tun. Ohne Eintrag stünde dort die englische Rohzeile – an genau der Stelle, an der er eine Anleitung
+  // braucht. Gefunden hat das der Rollengang, nicht die Tests; seither hält es `errorMessage.test.ts`.
+  subject_in_use:
+    "Dieses Fach wird in den Zielen oder im Stundenplan eines Kindes verwendet. Entferne erst diese "
+    + "Einträge – Lehrwerk-Reihen und Übungen hindern das Löschen dagegen nicht.",
+  publisher_in_use:
+    "An diesem Verlag hängt mindestens eine Reihe eines anderen Kontos. Löschen würde auch deren "
+    + "Zuordnung entfernen – das geht nur, solange nur eigene Reihen daran hängen.",
 };
 
 export function errorMessage(e: unknown): string {
