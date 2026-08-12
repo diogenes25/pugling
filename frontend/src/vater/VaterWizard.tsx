@@ -8,7 +8,7 @@ import { TruncationHint } from "../components/ListControls";
 import { FieldLabel, InfoHint } from "../components/InfoHint";
 import { useExerciseTypes } from "../lib/exerciseTypes";
 import { authorText } from "./ExerciseAttribution";
-import { wizardSearchParams } from "./wizardSearch";
+import { auswahlNachFilterwechsel, unsichtbareAuswahl, wizardFilterKey, wizardSearchParams } from "./wizardSearch";
 import { newWizardProgress, runWizardFinish } from "./wizardFinish";
 import type { WizardProgress } from "./wizardFinish";
 import type {
@@ -78,6 +78,8 @@ export function VaterWizard() {
   const [typeKey, setTypeKey] = useState("");
   const [sourceSearch, setSourceSearch] = useState("");
   const [selected, setSelected] = useState<number[]>([]);
+  /** Sagt, dass ein Filterwechsel die Auswahl verworfen hat – nur wenn wirklich etwas wegfiel (B-161). */
+  const [auswahlHinweis, setAuswahlHinweis] = useState<string | null>(null);
 
   // --- Schritt 4: Feinschliff (Positions-Defaults) ---
   const [title, setTitle] = useState("");
@@ -153,6 +155,53 @@ export function VaterWizard() {
   // Gefiltert wird serverseitig (siehe `search` oben) – hier steht nur noch, was angekommen ist.
   const filteredExercises = exercises.data?.items ?? [];
 
+  /*
+   * B-161: Die Auswahl fällt, sobald sich ein Suchkriterium ändert.
+   *
+   * Vorher überlebte sie jeden Filterwechsel, und weil „Alle wählen" bis zu 500 Ids schreibt, während nur
+   * die geladene Seite gerendert wird, konnte der Plan Positionen tragen, die der gezeigte Filter
+   * ausschließt – mit Pflichtziel, also mit Münz-Malus fürs Kind. `selected` bedeutete „aus dieser
+   * Trefferliste gewählt" UND „irgendwann früher gewählt".
+   *
+   * Der Hinweis erscheint NUR, wenn wirklich etwas verloren ging: sonst begrüßte der Assistent den Vater
+   * mit „Auswahl zurückgesetzt", bevor er etwas getan hat. Stumm zu leeren wäre die andere Falle (B-116) –
+   * eine Änderung ohne Rückmeldung liest sich als Fehler.
+   *
+   * Der Schlüssel kommt aus `wizardFilterKey`, nicht aus der Abhängigkeitsliste oben: ein Objektvergleich
+   * per Referenz feuerte bei jedem Rendern, und getrimmte Eingaben („abc " → "abc") sind dieselbe Suche.
+   */
+  const filterKey = subjectId === "" ? "" : wizardFilterKey({
+    subjectId: Number(subjectId), grade: effectiveGrade, schoolType: effectiveSchoolType,
+    search: contentSearch, categoryId, type: typeKey, source: sourceSearch,
+  });
+  /*
+   * Der Schlüssel, für den die aktuelle Auswahl gilt. Nach dem Effekt trägt die Ref immer den *aktuellen*
+   * Schlüssel – „vorig" ist sie nur innerhalb des Effektrumpfs. Sie ist damit auch das Generationen-Gate
+   * für `selectAll`: dessen Nachschlag darf nur zurückschreiben, wenn seither niemand die Suche geändert
+   * hat.
+   */
+  const geltenderFilterKey = useRef(filterKey);
+  useEffect(() => {
+    // `selected` bewusst nicht in der Abhängigkeitsliste: der Effekt soll auf den Kriterien-Wechsel
+    // reagieren, nicht auf jedes Anklicken. Gelesen wird der Stand zum Zeitpunkt des Wechsels.
+    const folge = auswahlNachFilterwechsel(selected, geltenderFilterKey.current, filterKey);
+    if (!folge) return;
+    geltenderFilterKey.current = filterKey;
+    setSelected(folge.selected);
+    // Nur überschreiben, wenn es etwas zu melden gibt: ein zweiter Tastendruck im Suchfeld hat nichts mehr
+    // zu verlieren und darf die Meldung des ersten nicht wegwischen.
+    if (folge.hinweis) setAuswahlHinweis(folge.hinweis);
+  }, [filterKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** Wie viele Gewählte stehen nicht in der Liste – nach „Alle wählen" bis zu 400 (B-161). */
+  const unsichtbar = unsichtbareAuswahl(selected, filteredExercises.map((e) => e.id));
+
+  /** Der einzige Weg zurück, wenn die Auswahl über die geladene Seite hinausreicht: `toggle` gibt es nur an einer gerenderten Zeile. */
+  function auswahlLeeren() {
+    setSelected([]);
+    setAuswahlHinweis(null);
+  }
+
   // Voreinstellungen aus dem Fragenkatalog ableiten, solange der Vater den Feinschliff nicht angefasst hat.
   function applyDefaults() {
     if (touchedFineTune) return;
@@ -169,6 +218,8 @@ export function VaterWizard() {
   }
 
   function toggle(id: number) {
+    // Der Hinweis über die verworfene Auswahl gilt bis zur nächsten Wahl – danach ist er Vergangenheit.
+    setAuswahlHinweis(null);
     setSelected((sel) => (sel.includes(id) ? sel.filter((k) => k !== id) : [...sel, id]));
   }
   const [selectAllBusy, setSelectAllBusy] = useState(false);
@@ -198,20 +249,32 @@ export function VaterWizard() {
    * Servers, `PagingExtensions.MaxTake`). Darüber hinaus bleibt es bei einer Kappung - bewusst: ein
    * vollständiges Cursor-Paging im Assistenten wäre eine eigene Story, und `TruncationHint` zeigt den
    * Rest weiterhin an.
+   *
+   * **Generationen-Gate** (B-161): Dieser Nachschlag ist der einzige Ladeweg neben `useAsync`, und der hat
+   * sein eigenes `cancelled`-Flag. Ohne Gate schreibt eine spät eintreffende Antwort die Ids einer längst
+   * verworfenen Suche zurück - der Effekt oben hatte die Auswahl korrekt geleert, und danach steht sie
+   * wieder da, ohne dass irgendetwas sie noch einmal leert. Dasselbe machte "Auswahl leeren" während des
+   * Ladens stumm rückgängig. Der Schaden wäre genau der, um den es in dieser Story geht: Positionen mit
+   * Pflichtziel, die niemand gewählt hat.
    */
   async function selectAll() {
+    setAuswahlHinweis(null);
     const total = exercises.data?.total ?? 0;
     if (total <= filteredExercises.length) { setSelected(filteredExercises.map((e) => e.id)); return; }
 
+    const keyBeimStart = filterKey;
     setSelectAllBusy(true);
     try {
       const alle = await api.searchExercises(wizardSearchParams({
         subjectId: Number(subjectId), grade: effectiveGrade, schoolType: effectiveSchoolType,
         search: contentSearch, categoryId, type: typeKey, source: sourceSearch,
       }, 500));
+      // `merken` darf auch bei veralteter Antwort laufen - ein Metadaten-Vorrat schadet nie.
       merken(alle.items);
+      if (geltenderFilterKey.current !== keyBeimStart) return;
       setSelected(alle.items.map((e) => e.id));
     } catch (err) {
+      if (geltenderFilterKey.current !== keyBeimStart) return;
       // Zurückfallen ja, schweigen nein: Sonst stünden 100 statt 400 Positionen im Plan — genau die
       // Kappung, die dieser Knopf abschaffen soll, nur unbeobachtbar.
       setSelected(filteredExercises.map((e) => e.id));
@@ -396,12 +459,32 @@ export function VaterWizard() {
       {step === 2 && (
         <section className="card" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div className="row">
-            <h3 style={{ margin: 0 }}>Übungen wählen <span className="muted">({selected.length} gewählt)</span></h3>
+            {/* Die Zahl nennt die Unsichtbaren mit (B-161): „(500 gewählt)" neben „5 passende Übungen" war
+                ein Widerspruch, den nur der Vater ausbaden konnte. */}
+            <h3 style={{ margin: 0 }}>Übungen wählen <span className="muted">
+              ({selected.length} gewählt{unsichtbar > 0 ? `, davon ${unsichtbar} unten nicht sichtbar` : ""})
+            </span></h3>
+            {/* Bleibt montiert und wird nur gesperrt: hängt man ihn aus, verschwindet er nach dem Klick
+                unter dem Finger, der Fokus fällt auf `<body>` und ein Tastaturnutzer verliert seine
+                Position. Während des „Alle wählen"-Nachschlags ist Leeren ohnehin wirkungslos. */}
+            <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+              disabled={selected.length === 0 || selectAllBusy}
+              aria-label={`Auswahl leeren (${selected.length} gewählt)`} onClick={auswahlLeeren}>
+              Auswahl leeren
+            </button>
             <input style={{ marginLeft: "auto", maxWidth: 220 }} placeholder="Übung suchen…" value={contentSearch} onChange={(e) => setContentSearch(e.target.value)} aria-label="Übung suchen" />
           </div>
           <p className="sub">
             Übungen aus der geteilten Bibliothek für {subject?.name ?? "das Fach"}{effectiveGrade ? `, ${effectiveGrade}. Klasse` : ""} – jede wird zu einer Tagesziel-Position im Plan.
           </p>
+          {/* Die Region steht **immer** im DOM, sichtbar wird nur der Kasten darin – dasselbe Muster wie
+              `StatusBanner`/`DerivedHint`: viele Screenreader sagen nur an, was in eine *bereits vorhandene*
+              Region hineinwächst. Entstünden Region und Text gleichzeitig, bliebe die Ansage aus (B-132).
+              `info` statt `ok`/`err`, weil hier nichts gelang und nichts fehlschlug – die App hat von sich
+              aus etwas getan. */}
+          <div role="status" aria-live="polite">
+            {auswahlHinweis && <div className="banner info">{auswahlHinweis}</div>}
+          </div>
 
           {/* Drei optionale Filter, die der Server schon konnte (B-18). Alle mit „alle" als Vorgabe: Ein
               Fach ohne Arten zeigt sonst ein leeres Pulldown und wirkt kaputt. */}

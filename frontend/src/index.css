@@ -319,6 +319,10 @@ th.sortable[aria-sort="ascending"] .th-sort, th.sortable[aria-sort="descending"]
 .banner { padding: 10px 14px; border-radius: 12px; font-size: 14px; }
 .banner.ok { background: rgba(60, 232, 92, .12); color: #a6ff5e; border: 1px solid rgba(60,232,92,.35); }
 .banner.err { background: rgba(255, 77, 109, .12); color: #ff96aa; border: 1px solid rgba(255,77,109,.35); }
+/* Weder Erfolg noch Fehler: eine Mitteilung über etwas, das die App von sich aus getan hat (B-161 – die
+   Auswahl fiel wegen eines Filterwechsels). Ohne eigene Variante trüge `.banner` allein keinen Hintergrund
+   und läse sich als Fließtext, und genau dann wirkt die Änderung wieder stumm. */
+.banner.info { background: rgba(90, 200, 255, .12); color: #9bdcff; border: 1px solid rgba(90,200,255,.35); }
 
 /* =========================================================================
    Motivations-Animationen (Duolingo-artig): Konfetti, Combo-Banner, Fighter-Flyby.

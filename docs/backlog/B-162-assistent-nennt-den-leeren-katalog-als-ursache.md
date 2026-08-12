@@ -36,11 +36,22 @@ Als *Vater* möchte ich bei einer gescheiterten Suche erfahren, dass sie geschei
 - Der Satz ist nicht bloß unpräzise, sondern **handlungsleitend falsch**: er schickt den Vater ins
   Anlege-Formular, während der Katalog voll ist und nur die Abfrage scheiterte.
 
+**Eine zweite Stelle derselben Familie im selben Bildschirm** (gefunden vom `frontend-reviewer` zu B-161,
+außerhalb dessen Diffs): Nach einem Filterwechsel bleibt die **alte** Trefferliste stehen, solange die neue
+lädt — der Platzhalter greift korrekt nur bei `data === null` (`VaterWizard.tsx:489`), aber „N passende
+Übungen" (`:479`) nennt in diesem Moment weiter die **alte** Zahl. Seit B-161 steht daneben der Hinweis
+„Auswahl zurückgesetzt", der also einen Reset über einer Liste behauptet, die noch die vorige ist. Von
+B-161s Diff nicht verschlechtert (die leer werdenden Kästchen sind sogar ein Signal), aber dieselbe Wurzel:
+ein Zustand, der „aktuell" und „von vorhin" nicht trennt.
+
 ## Die echte Lücke
 
 `filteredExercises.length === 0` trägt zwei Bedeutungen: „die Suche lief und fand nichts" und „die Suche lief
 nicht". Genau die Fehlerfamilie, die dieses Repo mehrfach bezahlt hat (B-111, B-116). Der Unterschied zu
 B-111: dort log die App über einen Verlauf, hier über den **Katalog** — und gibt eine Anweisung dazu.
+
+Die zweite Stelle oben ist dieselbe Lücke in ihrer *Ladezustands*-Ausprägung: nicht „leer heißt zweierlei",
+sondern „die Zahl gehört zu einer anderen Abfrage als die Meldung daneben".
 
 ## Offene Punkte
 
@@ -57,7 +68,8 @@ B-111: dort log die App über einen Verlauf, hier über den **Katalog** — und 
 
 1. Scheitert die Suche, sieht der Vater den Fehler und **nicht** „Keine passenden Übungen im Katalog".
 2. Findet die Suche wirklich nichts, bleibt der bisherige Satz mit seiner Anweisung.
-3. Ein Test deckt beide Fälle; die rote Probe belegt, dass er den heutigen Stand fängt.
+3. Während eine neue Suche lädt, behauptet die Trefferzahl nicht die Zahl der vorigen.
+4. Ein Test deckt die Fälle; die rote Probe belegt, dass er den heutigen Stand fängt.
 
 ## Verlauf
 
@@ -68,3 +80,8 @@ B-111: dort log die App über einen Verlauf, hier über den **Katalog** — und 
   Abnahme entgangen, sondern älter. **Bewusst nicht mit B-161 zusammengelegt**, obwohl beide in derselben
   Datei liegen: B-161 trägt ein `entgangen_bei`, dieses hier nicht, und ein gemeinsamer Eintrag würde die
   Wirkungszahl des Bereichs verfälschen.
+- **2026-08-12** — zweite Fundstelle derselben Familie ergänzt (Ladezustand: alte Trefferzahl neben neuer
+  Meldung), aus dem `frontend-reviewer`-Befund zu B-161. Sie liegt ebenfalls **außerhalb** jedes Diffs dieses
+  Laufs, darum bleibt `entgangen_bei` leer. Bewusst hier statt als eigene Story: dieselbe Datei, dieselbe
+  Wurzel und in einem Schnitt zu beheben — anders als bei B-161, wo die Trennung nötig war, weil dort ein
+  `entgangen_bei` daranhängt.
