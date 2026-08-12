@@ -13,7 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-nachgeschaut: ""
+nachgeschaut: 2026-08-12
 wartet_auf: ""
 ---
 
@@ -330,3 +330,16 @@ Backend zuerst — das Frontend kann den Typ erst lesen, wenn er im Dokument ste
   **Rollengang: bewusst keiner, und das ist hier kein Ausfall.** Diese Story ändert nach AK 6 **kein**
   Verhalten — es gibt nichts zu begehen. Was an ihre Stelle tritt, ist die rote Probe an der echten
   Werkzeugkette (Enum → Dokument → Vertrag → Compiler), und die ist oben belegt.
+- **2026-08-12** — **nachgeschaut** (Nachschau der Retrospektive, Nachtlauf Sprint A): **kein
+  durchgekommener Defekt.** Prüfpunkte: das Tor am **echten Artefakt** statt am Kommentar geprüft
+  (`frontend/src/lib/contract.ts:25000` trägt den 7-gliedrigen Union, `:24995` hält `SchoolTypes: string` —
+  AK 3 und die Voraussetzung von AK 1/2 damit strukturell belegt); die „Wache über der Wache"
+  (`labels.ts:58-63`) durchgerechnet — kollabiert der Union zu `string`, verlangt der Typ ein Feld, das das
+  Literal nicht hat, also rot; AK 5 gegen den Diff verglichen (Reihenfolge unverändert); die Reflexion auf
+  Vollständigkeit geprüft (`Program.cs:365` scannt `typeof(PointKind).Assembly` — `PointKind` und
+  `SchoolTypes` liegen nachgesehen in derselben Assembly, und `grep "[Flags]"` findet genau eines); ein
+  Grenzfall ausgeschlossen, der das Tor lügen ließe (zusammengesetzte Enum-Mitglieder — `LearnBaseTypes.cs`
+  hat nur `None = 0` plus reine Zweierpotenzen); und `TryAdd` + `throw` gegen die Ausgangsfassung gehalten.
+  **Eine Reichweiten-Grenze, die die Story nicht nennt:** das Tor deckt nur `[Flags]`-Enums aus
+  `Pugling.Contracts` ab; eines in `Pugling.Api` bekäme still kein Geschwister. Widerspricht keiner
+  Konvention (Vertragstypen leben in `Contracts`), darum Notiz und kein Befund.

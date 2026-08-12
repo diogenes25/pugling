@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: memory/uebungs-metadaten.md
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-08-12
 ---
 
 # B-18 · Lehrplan automatisch aus gefilterten Übungen bauen

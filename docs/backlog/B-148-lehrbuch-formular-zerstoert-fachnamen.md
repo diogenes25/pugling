@@ -13,7 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-nachgeschaut: ""
+nachgeschaut: 2026-08-12
 wartet_auf: ""
 ---
 
@@ -360,3 +360,16 @@ ist heute schon verletzt und wird es ebenfalls.
   `confirmAction`, das die Chrome-Extension blockiert hätte — anders als bei B-127/B-143/B-144.
   Alle acht Akzeptanzkriterien erfüllt; die einzige Abweichung (AK 6 bei umsortierter Typenliste) hat der
   Reviewer gefunden und ist mitbehoben.
+- **2026-08-12** — **nachgeschaut** (Nachschau der Retrospektive, Nachtlauf Sprint A): **kein
+  durchgekommener Defekt.** Geprüft wurde nicht auf Plausibilität, sondern an diesen Punkten: AK 1
+  durchgerechnet (`subjectField.ts:37-40` gegen `:52-64` gegen die Option-Bedingung
+  `ChildMaterialSection.tsx:224`/`VaterFachlehrer.tsx:311` — alle drei benutzen *dieselbe* Bedingung, können
+  also nicht auseinanderlaufen; Grenzfall `subjectName === ""` durchgespielt); AK 4/5 am Sentinel
+  durchgespielt (`Object.assign(dto, null)` ist ein No-op, der Sentinel erreicht den Rumpf nicht); die
+  tragende **Server**-Behauptung „`clearSeries` nimmt die Unit ohnehin mit" gegen
+  `TextbooksController.cs:104-106` gehalten (stimmt); die zwei parallelen Konstruktionen desselben
+  Ladezustands feldweise verglichen (`VaterFachlehrer.tsx:162-177` gegen `profilePatch.ts:32-55`, 12 Felder,
+  inklusive `gradeMin === 0`); Risiko 2 und 3 der Story nachgespielt; und der behauptete Rollengang gegen
+  `e2e/kind-lehrbuch-fach.spec.ts:37-98` verifiziert.
+  **Eine Genauigkeitsnotiz, kein Defekt:** AK 2 (Fachlehrer-Profil) ist nur durch Unit-Tests gedeckt, nicht
+  durch den E2E — die Abnahme schreibt „alle acht erfüllt", ohne diesen Unterschied zu benennen.

@@ -500,14 +500,15 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (44)
+### Offen (49)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| [B-161](B-161-alle-waehlen-macht-die-auswahl-unsichtbar.md) | „Alle wählen" wählt bis zu 400 Übungen, die der Vater nie sieht und nicht abwählen kann | Defekt | `ausformuliert` | P1 | — | — | — |
 | [B-07](B-07-db-umbau-restetappen.md) | DB-Struktur-Umbau: der offene Betriebsschritt | Aufräumen | `geschaetzt` | P1 | XS | backend | — |
-| [B-154](B-154-katalogseite-bietet-fremde-faecher-zum-umbenennen.md) | Die Katalogseite bietet „Umbenennen" und „Löschen" an jedem Fach an — auch an fremden | Defekt | `idee` | P2 | — | — | — |
+| [B-157](B-157-kategorien-unter-fremdem-fach-ungeschuetzt.md) | Das Fach ist geschützt, seine „Arten" sind es nicht | Defekt | `ausformuliert` | P2 | — | — | — |
+| [B-160](B-160-gesperrter-knopf-nennt-den-grund-nie.md) | Der gesperrte Löschen-Knopf nennt seinen Grund nie — der `title` erscheint nicht | Defekt | `ausformuliert` | P2 | — | — | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
-| [B-13](B-13-fach-kapitel-eigentum.md) | Fach- und Kapitel-Eigentum | Wunsch | `in-arbeit` | P2 | M | backend | Migration |
 | [B-19](B-19-schuelerprofil-ki-lehrplan.md) | Schülerprofil-getriebener KI-Lehrplan | Wunsch | `geschaetzt` | P2 | M | backend | — |
 | [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder | Wunsch | `geschaetzt` | P2 | L | beides | — |
 | [B-45](B-45-creator-punkte-empfehlung.md) | Die Punkte-Empfehlung des Creators soll der Supervisor übernehmen können | Wunsch | `geschaetzt` | P2 | S | beides | — |
@@ -515,6 +516,8 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-50](B-50-kind-beschreibt-sich-selbst.md) | Das Kind beschreibt sich selbst: Interessen in einem geführten Prozess | Wunsch | `geschaetzt` | P2 | L | beides | — |
 | [B-131](B-131-leere-story-faellt-aus-dem-index.md) | Eine leere Story-Datei verschwindet aus dem Index — auch aus der Mängelliste | Defekt | `ausformuliert` | P3 | — | — | — |
 | [B-134](B-134-bedingte-live-regionen.md) | Dreizehn Live-Regionen entstehen zusammen mit ihrem Text — und schweigen darum | Defekt | `ausformuliert` | P3 | — | — | — |
+| [B-159](B-159-reihe-ohne-owner-behauptet-fremden-ersteller.md) | Eine Reihe ohne Eigentümer behauptet, jemand anderes habe sie angelegt | Defekt | `ausformuliert` | P3 | — | — | — |
+| [B-162](B-162-assistent-nennt-den-leeren-katalog-als-ursache.md) | Scheitert die Übungssuche im Assistenten, behauptet er einen leeren Katalog | Defekt | `ausformuliert` | P3 | — | — | — |
 | [B-141](B-141-interest-tag-label-dublette.md) | Zwei Interessen-Tags dürfen dasselbe Label tragen | Defekt | `idee` | P3 | — | — | — |
 | [B-145](B-145-fach-umbenennen-laesst-namen-stehen.md) | Ein umbenanntes Fach lässt seinen Namen in drei Tabellen stehen | Defekt | `idee` | P3 | — | — | — |
 | [B-147](B-147-para-summaries-tragen-einrueckung-ins-dokument.md) | Ein `<para>` im `<summary>` trägt seine Quelltext-Einrückung ins OpenAPI-Dokument | Defekt | `idee` | P3 | — | — | — |
@@ -543,6 +546,8 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-140](B-140-freigabe-kennzeichen-in-der-uebungsauswahl.md) | Die Übungsauswahl verschweigt, dass eine Übung zurückgezogen ist | Wunsch | `idee` | P3 | — | — | — |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `geschaetzt` | P3 | S | backend | — |
 | [B-138](B-138-markup-sickert-in-openapi.md) | Rohe HTML-Tags stehen in 70 Beschreibungen des Vertragsdokuments | Aufräumen | `ausformuliert` | P3 | — | — | — |
+| [B-156](B-156-ismine-heisst-anderswo-isown.md) | Dasselbe Eigentums-Flag heißt im Vertrag einmal `isMine` und siebenmal `isOwn` | Aufräumen | `ausformuliert` | P3 | — | — | — |
+| [B-158](B-158-subjectscontroller-drei-kleine-reste.md) | Drei kleine Reste im `SubjectsController` | Aufräumen | `ausformuliert` | P3 | — | — | — |
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration? |
 | [B-90](B-90-server-sprachfeld.md) | Server-Sprachfeld an `Adult`/`Child` | Wunsch | `idee` | P4 | — | — | — |
 | [B-91](B-91-vater-web-extraktion-englisch.md) | Vater-Web-Textkorpus auf Übersetzungsschlüssel umstellen (Englisch) | Wunsch | `idee` | P4 | — | — | — |
@@ -550,7 +555,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-05](B-05-buchstaben-tausch.md) | Buchstaben-Tausch-Eingabe (Anagramm) | Wunsch | `geschaetzt` | P5 | M | beides | — |
 
 <details>
-<summary>Abgenommen (98)</summary>
+<summary>Abgenommen (100)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -587,6 +592,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-127](B-127-verlag-loeschen-trifft-fremde.md) | Jeder Creator darf einen Verlag löschen, den alle benutzen | Frage | `abgenommen` | P3 | S | backend | — |
 | [B-128](B-128-katalogsuche-case-sensitiv.md) | Die Katalogsuche findet „KLETT" nicht, obwohl „Klett" da ist | Defekt | `abgenommen` | P3 | S | backend | Migration |
 | [B-129](B-129-themenfeld-committet-beim-verlassen.md) | Das Themenfeld legt an, was beim Wegklicken gerade dasteht | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-13](B-13-fach-kapitel-eigentum.md) | Fach- und Kapitel-Eigentum | Wunsch | `abgenommen` | P2 | M | backend | Migration |
 | [B-130](B-130-unit-themen-ohne-grenze.md) | Aus einem 200-Zeichen-Feld wurde eine unbegrenzte Liste, ohne dass eine Grenze nachrückte | Aufräumen | `abgenommen` | P3 | S | backend | — |
 | [B-132](B-132-hinweis-live-region-haengt-aus.md) | Der Hinweis „aus dem Lehrwerk übernommen" wird angesagt, indem seine Live-Region entsteht | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-133](B-133-zwei-reihen-ein-anzeigename.md) | Nach einer Umbenennung können zwei Reihen denselben Anzeigenamen tragen | Defekt | `abgenommen` | P3 | S | backend | — |
@@ -600,6 +606,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-148](B-148-lehrbuch-formular-zerstoert-fachnamen.md) | Das Lehrbuch-Formular am Kind zerstört den Fachnamen bei jedem Speichern | Defekt | `abgenommen` | P2 | M | frontend | — |
 | [B-149](B-149-schularten-tabelle-statt-manifest.md) | Die Schularten-Liste ist eine handgepflegte Kopie eines Server-Enums | Aufräumen | `abgenommen` | P3 | S | beides | — |
 | [B-150](B-150-verlagssperre-unsichtbar-dialog-verspricht-gegenteil.md) | Die Verlags-Löschsperre war für den Vater unsichtbar — der Dialog versprach das Gegenteil | Defekt | `abgenommen` | P2 | S | beides | — |
+| [B-154](B-154-katalogseite-bietet-fremde-faecher-zum-umbenennen.md) | Die Katalogseite bietet „Umbenennen" und „Löschen" an jedem Fach an — auch an fremden | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-18](B-18-auto-lehrplan-generator.md) | Lehrplan automatisch aus gefilterten Übungen bauen | Wunsch | `abgenommen` | P2 | S | beides | — |
 | [B-25](B-25-vite-pwa-peer-konflikt.md) | Peer-Konflikt `vite-plugin-pwa` ↔ `vite@8` lösen | Aufräumen | `abgenommen` | P3 | XS | frontend | — |
 | [B-26](B-26-e2e-in-ci.md) | Der E2E-Nachtlauf ist rot – und niemand erfährt es | Defekt | `abgenommen` | P1 | S | frontend | — |
@@ -665,9 +672,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-07](B-07-db-umbau-restetappen.md) | DB-Struktur-Umbau: der offene Betriebsschritt | `geschaetzt` | einen Handgriff des Betreibers an der Azure-Instanz |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 
-### Nach der Abnahme entgangen (15)
+### Nach der Abnahme entgangen (17)
 
-**Nachgeschaut: 91 von 98 abgenommenen** — und in 11 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 7 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 95 von 100 abgenommenen** — und in 13 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 5 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -686,9 +693,11 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-133](B-133-zwei-reihen-ein-anzeigename.md) | Nach einer Umbenennung können zwei Reihen denselben Anzeigenamen tragen | [B-124] | `abgenommen` |
 | [B-139](B-139-e2e-nachtlauf-login-bricht-ab-test-2.md) | Der Aufräum-Sweep der E2E löschte das Journal seiner eigenen Datenbank | [B-55] | `abgenommen` |
 | [B-150](B-150-verlagssperre-unsichtbar-dialog-verspricht-gegenteil.md) | Die Verlags-Löschsperre war für den Vater unsichtbar — der Dialog versprach das Gegenteil | [B-127] | `abgenommen` |
+| [B-160](B-160-gesperrter-knopf-nennt-den-grund-nie.md) | Der gesperrte Löschen-Knopf nennt seinen Grund nie — der `title` erscheint nicht | [B-150] | `ausformuliert` |
+| [B-161](B-161-alle-waehlen-macht-die-auswahl-unsichtbar.md) | „Alle wählen" wählt bis zu 400 Übungen, die der Vater nie sieht und nicht abwählen kann | [B-18] | `ausformuliert` |
 
 <details>
-<summary>Nie nachgeschaut (7) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (5) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -697,11 +706,9 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | --- | --- |
 | [B-11](B-11-uebungen-veroeffentlichen.md) | Übungen ausdrücklich veröffentlichen |
 | [B-123](B-123-lehrwerk-reihe-bearbeiten.md) | Lehrwerk-Reihe im Vater-Web bearbeiten |
+| [B-13](B-13-fach-kapitel-eigentum.md) | Fach- und Kapitel-Eigentum |
 | [B-139](B-139-e2e-nachtlauf-login-bricht-ab-test-2.md) | Der Aufräum-Sweep der E2E löschte das Journal seiner eigenen Datenbank |
-| [B-148](B-148-lehrbuch-formular-zerstoert-fachnamen.md) | Das Lehrbuch-Formular am Kind zerstört den Fachnamen bei jedem Speichern |
-| [B-149](B-149-schularten-tabelle-statt-manifest.md) | Die Schularten-Liste ist eine handgepflegte Kopie eines Server-Enums |
-| [B-150](B-150-verlagssperre-unsichtbar-dialog-verspricht-gegenteil.md) | Die Verlags-Löschsperre war für den Vater unsichtbar — der Dialog versprach das Gegenteil |
-| [B-18](B-18-auto-lehrplan-generator.md) | Lehrplan automatisch aus gefilterten Übungen bauen |
+| [B-154](B-154-katalogseite-bietet-fremde-faecher-zum-umbenennen.md) | Die Katalogseite bietet „Umbenennen" und „Löschen" an jedem Fach an — auch an fremden |
 
 </details>
 

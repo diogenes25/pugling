@@ -14,7 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-127]
 wartet_auf: ""
-nachgeschaut: ""
+nachgeschaut: 2026-08-12
 ---
 
 # B-150 · Die Verlags-Löschsperre war für den Vater unsichtbar — der Dialog versprach das Gegenteil
