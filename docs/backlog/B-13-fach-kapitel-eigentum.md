@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/katalog, bereich/auth, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/katalog, bereich/auth, rolle/creator]
 aliases: [Fach- und Kapitel-Eigentum]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: M
@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: memory/geteilte-uebungs-bibliothek.md
 grund: ""
 ersetzt_durch: []
+nachgeschaut: ""
 ---
 
 # B-13 · Fach- und Kapitel-Eigentum
@@ -268,3 +269,30 @@ Migrationskette und die G2-FK-Tabelle; `/smoke-test` gegen einen laufenden Serve
 - **2026-08-11** — bleibt auf `in-arbeit`: `pugling-reviewer` ist nicht gelaufen, weil diese Sitzung die
   Regel trägt, keine Agenten unaufgefordert zu starten. Alles andere für `abgenommen` ist belegt; es fehlt
   nur der Reviewer und der Commit.
+- **2026-08-12** — Korrektur an der Zeile darüber: **der Commit fehlte nicht.** Der Bau liegt als
+  `bd2dcdb` („B-13 gebaut: nur der Eigentümer benennt ein Fach um oder löscht es") im Verlauf, plus
+  `12e559e` für den Frontend-Typecheck (`isMine` in drei Fach-Fixtures). Offen war allein der Reviewer.
+  Am Code nachgesehen, nicht der Notiz geglaubt.
+- **2026-08-12** — `in-arbeit → abgenommen` (Nachtlauf, Sprint A). **`pugling-reviewer`: kein
+  abnahmeblockierender Fund.** Er hat alle fünf gestellten Prüffragen einzeln belegt: `IsOwnedBy`
+  fail-closed an allen vier Stellen (auch die Inline-Projektion — das `fid != null` verhindert genau den
+  EF-Null-Rewrite, der `isMine` für Seed-Fächer `true` machen würde), Projektion EF-übersetzbar mit
+  `AsNoTracking()` auf beiden Lesepfaden, AK 1–4 und 8 wirklich getroffen (nicht daneben), 403-vor-409
+  richtig, `ct`/`ProblemWithCode`/englische Doku sauber, Migrationskette bei 1 und der Snapshot-Diff zeigt
+  genau Spalte + Index + FK.
+  **Ein Fund wurde sofort behoben** (Freigabe 3): die bewusste 403-vor-409-Reihenfolge hing an einem
+  Kommentar und an keinem Test — wer die zwei Blöcke tauscht, blieb bei 820/820 grün. Neuer Fall
+  `FachEigentumTests.FremderCreator_BekommtNotOwner_AuchWennDasFachBenutztIst`; **rote Probe mit
+  getauschten Blöcken: erwartet `Forbidden`, gemessen `Conflict`, 1 von 6 rot** (die anderen fünf bleiben
+  grün, sie hängen nicht an der Reihenfolge). Der Kommentar im Controller nennt jetzt den Test, der ihn
+  hält.
+  **Belege:** `dotnet test Pugling.sln -c Release` **821/821 grün** (820 + der neue Fall),
+  `dotnet format Pugling.sln --verify-no-changes` sauber, Build 0 Warnungen.
+  **Rollengang:** am 2026-08-11 gegen die laufende Instanz gefahren (siehe Eintrag oben); heute zusätzlich
+  live gegen `:5200` mit Wegwerf-DB gegengeprüft — Vater `PATCH` auf fremdes Fach `403 not_owner`, auf
+  Seed-Fach „Englisch" `403 not_owner`, auf eigenes Fach `200`.
+  **Drei Aufräum-Funde als eigene Stories abgelegt**, keiner blockierend:
+  [B-157](B-157-kategorien-unter-fremdem-fach-ungeschuetzt.md) (die Arten unter einem fremden Fach sind
+  ungeschützt — P2, eigene Fehlerklasse), [B-158](B-158-subjectscontroller-drei-kleine-reste.md) (drei
+  kleine Reste im Controller) und [B-156](B-156-ismine-heisst-anderswo-isown.md) (`isMine` gegen siebenmal
+  `isOwn`).

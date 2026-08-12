@@ -122,6 +122,8 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
         if (subject is null) return NotFound();
         // Before the usage check, as with the textbook series: who may act is decided ahead of whether the
         // action is possible - otherwise a stranger learns from the 409 what a child's plans contain.
+        // Held by FachEigentumTests.FremderCreator_BekommtNotOwner_AuchWennDasFachBenutztIst - swapping
+        // these two blocks kept every other test green, which is why that case exists.
         if (!ClaimsPrincipalExtensions.IsOwnedBy(subject.OwnerAdultId, User.CreatorId()))
             return this.ProblemWithCode(ApiErrors.NotOwner, "Only the owner may delete this subject.");
 
