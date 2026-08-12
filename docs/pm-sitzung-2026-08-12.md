@@ -288,13 +288,143 @@ Danach B-157 (P2, Server-Hälfte dessen, was Sprint A im UI sichtbar gemacht hat
 Entscheidung zu seinem offenen Punkt 2, siehe „Angehalten" —, dann B-160. B-145 und B-141 als der
 Namensgleichheits-Faden rücken damit nach hinten: sie sind der ältere Plan, nicht der dringendere.
 
+## Sprint B — Ziel & Umfang
+
+**Sprint-Ziel:** *Der Vater legt keinen Lehrplan mehr an, der Übungen enthält, die er nie gesehen hat.*
+
+**Umfang:** B-161 allein. Ein Sprint von einer Story ist zulässig (`pm-loop`, „The Sprint": die Obergrenze
+hat einen Grund, eine Untergrenze hätte keinen) — und hier ist er richtig: es ist das einzige **P1** des
+Bereichs, und kein anderer offener Punkt dient diesem Ziel.
+
+**Refinement:** B-161 von `ausformuliert` auf `geschaetzt` (autonom gegrillt, `art: Defekt`). Fünf
+Entscheidungen; die tragende ist eine **Nicht**-Änderung — siehe unten.
+
+**Entwickler-Brief:** Kein Backend-Anteil. Die Regel („was gilt noch, wenn sich die Suche ändert") wandert
+als **reine Funktion** nach `wizardSearch.ts`, weil `VaterWizard` an vier Ladevorgängen hängt und als Ganzes
+nicht ohne Netz zu rendern ist — nur als Funktion ist die Regel rot zu bekommen. Guards: keine neuen.
+Testweg: `wizardSearch.test.ts` plus Browser-Rollengang.
+
+## Iteration B — umgesetzt
+
+Drei reine Funktionen (`wizardFilterKey`, `unsichtbareAuswahl`, `auswahlNachFilterwechsel`), ein Effekt auf
+den Kriterien-Schlüssel, ein „Auswahl leeren"-Knopf, und die Zahl nennt die Unsichtbaren mit.
+
+**Die wichtigste Entscheidung war, etwas *nicht* zu tun.** „Alle wählen" behält seine 500. Die Grenze auf die
+geladene Seite zurückzudrehen wäre die einfachere Reparatur gewesen — und hätte den abgenommenen Nutzen von
+B-18 abgebaut. Das ist eine Produktentscheidung, die ein autonomer Lauf nicht trifft (Freigabe 1).
+Stattdessen sagt die Zahl die Wahrheit.
+
+**Verifikation:** `npx vitest run` **269/269 grün**, `npm run build` grün,
+`npx playwright test assistent.spec.ts` **1 passed** (27,3 s) — sie fährt den `selectAll`-Pfad und damit den
+Ort des Korrektheitsfunds. Backend unberührt.
+
+**Rote Probe (Auflage 5):** `auswahlNachFilterwechsel` auf „immer `null`" — dem Altverhalten — lässt **3 von
+18** Fällen fallen.
+
+## Runde 3 — Re-Review / Abnahme (Sprint B)
+
+### Rollengang (Freigabe 6) — im echten Browser
+
+Server nach der letzten Änderung gestartet, Wegwerf-DB, Assistent bis Schritt 3. Sechs Übungen gewählt →
+„(6 gewählt)" plus erschienener Leeren-Knopf; Typ-Filter auf „Lückentext" → **„(0 gewählt)"** und
+**„Auswahl zurückgesetzt (6 Übungen), weil sich die Suche geändert hat."** über zwei ungehakten Treffern.
+Vor dem Fix hätte dort „(6 gewählt)" neben „2 passende Übungen" gestanden.
+
+**Ehrliche Grenze:** AK 4 (die „davon M nicht sichtbar"-Zahl) ist im Browser **nicht** gesehen — der Seed hat
+sechs Übungen im Fach, nicht die >100, die den Fall auslösen. Die Arithmetik deckt der Unit-Test
+(500/100 → 400), das Rendern ist eine einzeilige Bedingung.
+
+### `frontend-reviewer`: ein abnahmerelevanter Fund, und er war der Ertrag des Sprints
+
+**`selectAll` hatte kein Generationen-Gate.** Der `take:500`-Nachschlag ist der einzige Ladeweg neben
+`useAsync` (das sein eigenes `cancelled`-Flag hat), und die Filterfelder sind währenddessen nicht gesperrt.
+Wer während des Ladens den Filter verengte, bekam die Ids der **verworfenen** Suche zurückgeschrieben — der
+Effekt hatte korrekt geleert, danach stand die Auswahl wieder da, und nichts leerte sie je wieder. **Meine
+eigene Invariante hielt nur für den synchronen Pfad**, und derselbe Weg machte „Auswahl leeren" während des
+Ladens stumm rückgängig. Sofort behoben (Freigabe 3) mit dem Schlüssel, der ohnehin dasteht.
+
+Vier weitere Funde mitgenommen, alle nicht blockierend: die Hinweis-Region war für Screenreader stumm **und**
+optisch fast unsichtbar (`.banner` allein trägt keinen Hintergrund) — jetzt dauerhaft montierte
+`role="status"`-Region nach dem Vorbild von `StatusBanner`, plus eine `.banner.info`-Variante, weil hier
+nichts gelang und nichts fehlschlug; „Auswahl leeren" verschwand nach dem Klick unter dem Finger und nahm den
+Fokus mit; die E2E-Zusicherung auf die Überschrift wäre **genau in dem Fall gefallen, für den ihr Kommentar
+geschrieben wurde**; und „1 Übungen" war ungebeugt. Dazu ein Testfall von mir, der **nie** rot werden konnte —
+jetzt ehrlich als Absichtserklärung beschriftet statt als Beleg gezählt, dieselbe Klasse wie der B-154-Fund.
+
+### Sign-off je Rolle
+
+- **Vater (Supervisor, die geänderte Ebene):** zufrieden. Ausdrücklich zurückgestellt: einzelne Übungen
+  jenseits der geladenen Seite bleiben unerreichbar; abwählen geht nur ganz. Ein echtes Paging über die
+  Auswahl ist kein Teil dieser Story (Entscheidung 3).
+- **Creator / Sohn:** Regressionszeugen. Kein Pfad ihrer Ebenen im Diff; Suite, Typecheck und die
+  Assistenten-E2E grün, Backend unberührt (821/821 unverändert).
+
+### Fehlerzähler (Freigabe 3): 5 von 5 — die Obergrenze ist erreicht
+
+| # | Fund | Was der Fix anfasste |
+| --- | --- | --- |
+| 1 | `selectAll` ohne Generationen-Gate (Korrektheit) | Code |
+| 2 | Hinweis-Region stumm und optisch unsichtbar | Code + CSS |
+| 3 | Leeren-Knopf nimmt beim Verschwinden den Fokus mit | Code |
+| 4 | E2E-Zusicherung bricht, sobald die Überschrift die Unsichtbaren nennt | Test |
+| 5 | „1 Übungen" ungebeugt + ein unfalsifizierbarer Testfall | Code + Test |
+
+**Nicht gezählt:** die korrigierte Begründung am Hinweis-Guard und die Umbenennung
+`vorigerFilterKey → geltenderFilterKey` (Kommentar und Name), sowie ein Fund **außerhalb** des Diffs, der
+nach [B-162](backlog/B-162-assistent-nennt-den-leeren-katalog-als-ursache.md) wanderte.
+
+**Damit endet der Lauf hier — und zwar an einem Ergebnis, nicht an einer leeren Liste.** Fünf ist die
+Obergrenze, nicht ihre Überschreitung; ein weiterer Fund in diesem Sprint hätte die Nacht sofort beendet. Der
+Zähler so knapp am Anschlag ist genau das Signal, für das er gebaut ist: fünf Funde an einer `S`-Story sind
+kein normales Finden-und-Beheben mehr. **Ein Sprint C wird nicht begonnen.**
+
+## Retrospektive Sprint B
+
+**Nachschau:** Der vorige Sprint ist Sprint A **dieses** Protokolls. Seine beiden Abnahmen (B-13, B-154)
+tragen `nachgeschaut: ""` — sie sind **nicht** nachgeschaut, und das ist die ehrliche Angabe: eine Nachschau
+auf Arbeit von vor zwei Stunden, im selben Kontext, von derselben Instanz, wäre der flüchtige Blick, den
+[nachtlauf.md](nachtlauf.md) ausdrücklich für schlimmer als keinen hält („sie vergiftet den Nenner"). Sie
+gehört in den nächsten Lauf; der Index führt sie im Arbeitsvorrat.
+
+### Was die eigenen Tore durchgelassen haben
+
+**Zweimal in einer Nacht habe ich eine Zusicherung geschrieben, die nicht fehlschlagen kann** — in B-154
+(eine Prüfung auf das Fehlen eines Knopfes, der beim Mount ohnehin nie existiert) und in B-161 (eine Prüfung,
+dass ein Feld nicht im Schlüssel steht, das `JSON.stringify` ohnehin wegwirft). Beide fand der Reviewer,
+keines der Tore. Das ist keine Unachtsamkeit an zwei Stellen, sondern ein Muster: eine Zusicherung, die den
+**Ausgangszustand** prüft statt den Übergang, ist grün, bevor irgendetwas gebaut ist.
+
+Und die rote Probe fängt das **nicht** zuverlässig — sie prüft, ob *irgendein* Fall fällt, nicht ob *jeder*
+Fall etwas trägt. In B-154 fielen 3 von 5, in B-161 3 von 18; die leeren Zusicherungen lagen jeweils unter
+den grün gebliebenen und waren damit unsichtbar.
+
+### Vorgeschlagener Mechanismus (nach Freigabe 3 nicht gelandet)
+
+**Die rote Probe je Fall statt je Datei:** Wer einen Regressionstest schreibt, geht dessen Fälle einzeln durch
+und benennt für jeden, *welche* Änderung ihn rot machen würde — und wenn die Antwort „keine" ist, wird der
+Fall umgeschrieben oder als Absichtserklärung beschriftet (so steht er jetzt in `wizardSearch.test.ts`).
+
+**Kosten:** Das ist Prosa, kein Tor, und genau die Sorte Regel, die dieses Repo misstrauisch betrachtet
+(„mechanische Tore statt Disziplin"). **Warum trotzdem kein Tor:** Mutationstesting wäre der mechanische Weg
+— das ist ein Werkzeug, keine Zeile, und es einzuführen ist eine eigene Story, keine Retro-Handlung. **Wo die
+Prosa hingehört, falls du sie landen lässt:** in `frontend/CLAUDE.md` neben die bestehende Testebenen-Regel —
+und dann muss dieselbe Runde das Budget bezahlen, das die Datei schon reißt.
+
+**Die zweite Lehre gehört ebenfalls dir, nicht mir:** Der Reviewer hat in beiden Sprints Funde geliefert, die
+kein Test und kein Rollengang gefunden hätte — der Generationen-Renner in `selectAll` ist der klarste Fall.
+Zwei Sprints, zwei Reviewer-Läufe, zwei Korrektheitsfunde: das Tor **wirkt**, und der Zähler von Freigabe 3
+bestraft es dafür. Ob fünf die richtige Grenze ist, wenn ein *funktionierender* Prüfschritt sie füllt, ist die
+Frage, die dieser Lauf aufwirft.
+
 ## Konkreter Änderungsstand (für Review)
 
 | Commit | Inhalt |
 | --- | --- |
 | `003332d` | B-13 abgenommen: neuer Testfall für die 403-vor-409-Reihenfolge, Kommentar nennt den Test; drei Stories neu (B-156/157/158) |
 | `22ac8f4` | B-154 abgenommen: `SubjectRow`, `CatalogAdmin.test.tsx` (5 Fälle), zwei Textkorrekturen, `VaterKatalog`-Vorspann; B-159 neu |
-| (folgend) | Nachschau: `nachgeschaut: 2026-08-12` auf B-148/149/150/18, drei neue Stories B-160/161/162, dieses Protokoll, Index |
+| `0674dfb` | Nachschau: `nachgeschaut: 2026-08-12` auf B-148/149/150/18, drei neue Stories B-160/161/162 |
+| `e997393` | B-161 abgenommen (Sprint B): drei reine Funktionen, Generationen-Gate in `selectAll`, `.banner.info`, E2E-Zusicherung entschärft |
+| (folgend) | dieses Protokoll und der neu erzeugte Index |
 
 **Kein Produktcode in der Nachschau angefasst.** Die zwei gefundenen Defekte sind als Stories abgelegt, nicht
 behoben: Freigabe 3 verlangt das sofortige Beheben für Funde **im Increment dieses Sprints**, und diese
