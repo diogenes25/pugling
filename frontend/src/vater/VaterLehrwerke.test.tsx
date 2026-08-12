@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { UnitForm } from "./VaterLehrwerke";
+import { createExerciseHref, UnitForm } from "./VaterLehrwerke";
+import type { TextbookSeriesResponse } from "../lib/types";
 
 /*
  * Der Regressionstest zu B-129. `UnitForm` löst keinen Netzaufruf aus, solange nicht abgesendet wird –
@@ -42,5 +43,28 @@ describe("UnitForm – Themen-Eingabe", () => {
 
     expect(chip("Mit Enter")).not.toBeNull();
     expect((feld() as HTMLInputElement).value).toBe("");
+  });
+});
+
+/*
+ * Der Weg Unit → Übung. Geprüft wird die **Adresse**, weil genau sie die Arbeit spart: kommt die Auswahl
+ * nicht als Query mit, steht im Anlege-Formular wieder die erste Reihe (frontend/CLAUDE.md).
+ */
+describe("createExerciseHref", () => {
+  const series = (over: Partial<TextbookSeriesResponse> = {}): TextbookSeriesResponse => ({
+    id: 7, name: "Access", slug: "access", schoolTypes: "None", isOwn: true, unitCount: 2,
+    createdAt: "2026-08-12T00:00:00Z", subjectId: 3, ...over,
+  });
+
+  it("reicht Fach, Reihe und Unit ans Anlege-Formular durch", () => {
+    expect(createExerciseHref(series(), 42))
+      .toBe("/vater/exercises/neu?subjectId=3&seriesId=7&seriesUnitId=42");
+  });
+
+  it("lässt ein fehlendes Fach weg, statt subjectId=null zu schicken", () => {
+    // Kann nur über einen Aufrufer ohne die `canHostExercises`-Schranke passieren – dann trägt die
+    // Adresse lieber kein Fach als eines, das `Number(null) || ""` im Formular zu „irgendwas" macht.
+    expect(createExerciseHref(series({ subjectId: null }), 42))
+      .toBe("/vater/exercises/neu?seriesId=7&seriesUnitId=42");
   });
 });

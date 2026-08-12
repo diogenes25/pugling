@@ -1,4 +1,5 @@
 import { Fragment, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { FieldLabel } from "../components/InfoHint";
 import { StatusBanner } from "../components/StatusBanner";
 import { FREETEXT_SUBJECT, seriesFormValues, seriesPatch, type SeriesFormValues } from "./seriesPatch";
@@ -18,6 +19,26 @@ import type {
 const BOOK_TYPE_LABEL: Record<BookType, string> = {
   Textbook: "Lehrbuch", Workbook: "Arbeitsheft", TeacherGuide: "Lehrerhandreichung",
 };
+
+/*
+ * Exportiert für den Test: der Weg von der Unit ins Anlege-Formular ist reine Adressen-Arbeit und darum
+ * ohne gefälschtes `fetch` prüfbar – die Kaskade dahinter deckt `e2e/creator-lehrwerk-weg.spec.ts` ab.
+ */
+/**
+ * Der Link von einer Unit zum Anlegen einer Übung. Die Auswahl **reist als Query mit** (Frontend-Regel),
+ * sonst stünde im Zielformular wieder die erste Reihe.
+ *
+ * `subjectId` geht mit, obwohl das Formular das Fach nur als Filter der Reihenliste braucht: ohne den Wert
+ * stünde dort eine gewählte Reihe über einem leeren Fach – und der erste Griff ins Fach-Feld setzt Reihe
+ * und Unit zurück. Der Aufrufer stellt sicher, dass die Reihe ein Fach hat (siehe `UnitPanel`).
+ */
+export function createExerciseHref(series: TextbookSeriesResponse, seriesUnitId: number): string {
+  const q = new URLSearchParams();
+  if (series.subjectId != null) q.set("subjectId", String(series.subjectId));
+  q.set("seriesId", String(series.id));
+  q.set("seriesUnitId", String(seriesUnitId));
+  return `/vater/exercises/neu?${q}`;
+}
 
 /**
  * Die Lehrwerke: welcher Stoff im Unterricht überhaupt dran ist.
@@ -354,14 +375,36 @@ export function SeriesForm({ series, subjects, publishers, onSaved }: {
   );
 }
 
-/** Die Units einer Reihe: Band, Buchtyp, Bezeichnung und – der Kern – der Stoff. */
+/**
+ * Die Units einer Reihe: Band, Buchtyp, Bezeichnung und – der Kern – der Stoff.
+ *
+ * Von hier führt auch der Weg zur **Übung**: seit B-106 hängt jede Übung zwingend an einer Unit, und die
+ * Unit ist damit die natürliche Stelle, an der man eine anlegt („+ Übung" reicht Fach/Reihe/Unit als Query
+ * durch). Ohne diesen Weg musste man sich die Auswahl im Anlege-Formular ein zweites Mal zusammenklicken.
+ */
 function UnitPanel({ series, onChanged }: { series: TextbookSeriesResponse; onChanged: () => void }) {
   const units = useAsync<SeriesUnitResponse[]>(() => api.seriesUnits(series.id), [series.id]);
   const [editing, setEditing] = useState<number | null>(null);
+  /*
+   * Übungen darf man auch in einer **fremden** Reihe anlegen – anders als Unit-Bearbeiten prüft
+   * `POST …/units/{id}/<typ>` nur, dass die Unit existiert. Der Knopf hängt darum NICHT an `isOwn`.
+   *
+   * Woran er hängt, ist das **Fach**: eine Reihe ohne gesetztes `subjectId` darf keine Übung tragen
+   * (B-106 T-01, `series_without_subject`). Ein Freitext-Fach zählt dabei als „keins" – es steht in
+   * `subjectName`, nicht als Katalog-Bezug. Ohne diese Schranke führte der Knopf in ein Formular, das
+   * erst beim Absenden mit einem 400 abbricht.
+   */
+  const canHostExercises = series.subjectId != null;
 
   return (
     <>
       <h4 className="h-section" style={{ fontSize: "1rem" }}>Units in „{series.name}"</h4>
+      {!canHostExercises && (
+        <p className="muted">
+          Diese Reihe hat <strong>kein Fach</strong> aus dem Katalog – so kann sie keine Übungen tragen.
+          Setze es unter „Reihe bearbeiten", dann steht an jeder Unit der Weg zur Übung.
+        </p>
+      )}
       {units.error && <div className="banner err">{units.error}</div>}
       {units.data === null ? <div className="loading">Lade…</div> : units.data.length === 0 ? (
         <p className="muted">Noch keine Unit. Ohne Unit kennt der Creator nur den Reihennamen, nicht den Stoff.</p>
@@ -393,7 +436,18 @@ function UnitPanel({ series, onChanged }: { series: TextbookSeriesResponse; onCh
                         </div>
                       )}
                   </td>
-                  <td style={{ textAlign: "right" }}>
+                  <td className="row" style={{ gap: 6, justifyContent: "flex-end" }}>
+                    {canHostExercises && (
+                      // Sichtbarer Text zuerst im `aria-label`, Kontext hinten (WCAG 2.5.3 „Label in Name",
+                      // wie in der Reihen-Zeile): sonst löst eine Spracheingabe („Übung") den Link nicht aus.
+                      // Der Unit-Name gehört trotzdem hinein – bei zehn Units hört ein Screenreader sonst
+                      // zehnmal dasselbe.
+                      <Link
+                        to={createExerciseHref(series, u.id)} className="btn ghost small"
+                        style={{ width: "auto", textDecoration: "none", textAlign: "center" }}
+                        aria-label={`+ Übung zu „${u.label}"`}
+                      >+ Übung</Link>
+                    )}
                     {series.isOwn && (
                       <button
                         type="button" className="btn ghost small" style={{ width: "auto" }}

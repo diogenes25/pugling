@@ -14,6 +14,12 @@ import type { Paged, ExerciseSummary, SubjectResponse } from "../lib/types";
  *
  * Bewusst **ohne Kind-Bezug**: wer hier arbeitet, baut Stoff auf Vorrat. Das Zuweisen ist eine eigene
  * Perspektive – sonst schleicht sich das Betreuen in die Autorenarbeit zurück.
+ *
+ * **Kein kontextfreier Weg zum Anlegen.** Seit B-106 hängt jede Übung zwingend an einer Lehrwerk-Unit, und
+ * ein „+ Neue Übung" von hier führte in ein Formular, dessen erstes Pflichtfeld leer war – die Auswahl traf
+ * man dann im Formular statt dort, wo man den Stoff ohnehin sieht. Der Einstieg führt darum über die Unit
+ * (📕 Lehrwerke → „+ Übung"); die Bestandsliste behält ihren eigenen Knopf, weil sie den Fach/Reihe/Unit-
+ * Filter schon mitreicht.
  */
 export function VaterInhalte() {
   // Ein Lehrer-Konto hat keine Zuweisen-Perspektive – ein Link dorthin würde ihn zurückwerfen.
@@ -26,13 +32,7 @@ export function VaterInhalte() {
 
   return (
     <>
-      <div className="row" style={{ alignItems: "center", gap: 8 }}>
-        <h2 className="h-section">Werkstatt</h2>
-        <Link to="/vater/exercises/neu" className="btn inline-btn"
-          style={{ width: "auto", marginLeft: "auto", textDecoration: "none", textAlign: "center" }}>
-          + Neue Übung
-        </Link>
-      </div>
+      <h2 className="h-section">Werkstatt</h2>
       <p className="sub">
         {isTeacher
           ? "Hier entsteht der Stoff – unabhängig von einem Kind. Zuweisen tun die Eltern in ihren eigenen Lehrplänen; du gibst dein Material nur frei."
@@ -52,10 +52,12 @@ export function VaterInhalte() {
           dann das Beiwerk. */}
       <h3 className="h-section" style={{ fontSize: 16 }}>Das Werkstück</h3>
       <div className="vater-grid">
+        {/* Die Lehrwerke stehen hier und nicht mehr unter „Materialkunde": eine Unit ist keine Zutat, die
+            man auch weglassen kann – sie ist der Ort, an dem eine Übung entsteht. */}
+        <HubCard to="/vater/lehrwerke" icon="📕" title="Neue Übung: erst die Unit"
+          text="Reihe aufklappen, Unit wählen, Übung anlegen – so startet das Formular schon im richtigen Stoff." />
         <HubCard to="/vater/exercises" icon="📚" title="Übungen"
-          text="Der Bestand: suchen, ausprobieren, bearbeiten, löschen – und von hier führt der Weg ins Anlege-Formular." />
-        <HubCard to="/vater/exercises/neu" icon="✨" title="Neue Übung"
-          text="Typ wählen, Inhalt eingeben, anlegen – und gleich nebenwirkungsfrei durchspielen." />
+          text="Der Bestand: suchen, ausprobieren, bearbeiten, löschen – und mit gesetztem Filter auch anlegen." />
       </div>
 
       <h3 className="h-section" style={{ fontSize: 16 }}>Die Bausteine</h3>
@@ -76,11 +78,10 @@ export function VaterInhalte() {
 
       <h3 className="h-section" style={{ fontSize: 16 }}>Materialkunde</h3>
       <p className="muted" style={{ marginTop: 0, fontSize: 13 }}>
-        Optional, aber der Unterschied zwischen „irgendeine Übung" und „passt zu Unit 3".
+        Optional, aber der Unterschied zwischen „irgendeine Übung" und „passt zu Unit 3": Themen, Grammatik
+        und Wortschatz stehen an der Unit, dein Unterrichtsstil im Profil.
       </p>
       <div className="vater-grid">
-        <HubCard to="/vater/lehrwerke" icon="📕" title="Lehrwerke"
-          text="Buchreihen und ihre Units mit Themen, Grammatik und Wortschatz – der Stoff, den eine Unit wirklich behandelt." />
         <HubCard to="/vater/fachlehrer" icon="🎓" title="Fachlehrer"
           text="Dein Profil als Fachlehrer: Fach, Schulart, Klassenstufen – und wie du unterrichtest." />
       </div>

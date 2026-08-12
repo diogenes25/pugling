@@ -83,6 +83,12 @@ Drei Regeln beim Ergänzen: **eine Aktion bekommt keinen Nav-Eintrag** (deshalb 
 (darum liegen Katalog und Lückentexte neben dem Anlegen); und **eine Auswahl reist als Query mit**
 (`?childId=`, `?subjectId=&chapterId=`) – sonst steht im Zielformular wieder das erste Kind bzw. Fach.
 Anlegen und Verwalten sind getrennt: `/vater/exercises` verwaltet, `/vater/exercises/neu` legt an.
+**Der Einstieg zum Anlegen ist „Unit zuerst"**: `/vater/lehrwerke` trägt je Unit ein „+ Übung"
+(`createExerciseHref` reicht `subjectId`/`seriesId`/`seriesUnitId` als Query durch), die Bestandsliste ihr
+„+ Neue Übung" mit dem gesetzten Filter. Die Werkstatt hat **bewusst keinen kontextfreien Knopf** mehr –
+seit B-106 ist die Unit Pflichtfeld, ein Einstieg mit leerem Kaskadenpicker verlegte die Auswahl nur ins
+Formular. Der Knopf hängt **nicht** an `series.isOwn` (fremde Reihen dürfen Übungen tragen), sondern am
+Fach: eine Reihe ohne `subjectId` kann keine tragen (`series_without_subject`).
 Ein Vater entsteht **im UI**: `/vater` hat neben „Anmelden" den Modus „Neu registrieren" (anonymes
 `POST supervisor/adults`; die neue Id ist der Login-Name); das eigene Konto liegt unter
 `/vater/profil`. `/vater/kind/:id` ist der **Kind-Hub** (Stammdaten, PIN, Bild, Interessen) und verlinkt alles Kindbezogene per `?childId=`, darunter `…/lernstand` (schwache Wörter +

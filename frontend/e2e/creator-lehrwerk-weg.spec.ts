@@ -59,11 +59,16 @@ test("Reihe, Unit, Übung, Zuweisung – der Creator-Weg in einem Zug", async ({
   await page.getByRole("button", { name: "Unit hinzufügen" }).click();
   await expect(page.getByText(UNIT_LABEL)).toBeVisible();
 
-  // ---- 3. Übung über den Fach/Reihe/Unit-Kaskadenpicker anlegen ----
-  await page.goto("/vater/exercises/neu");
-  await page.locator('select[aria-label="Fach"]').selectOption({ label: "Englisch" });
-  await page.locator('select[aria-label="Reihe"]').selectOption({ label: SERIES.name });
-  await page.locator('select[aria-label="Unit"]').selectOption({ label: UNIT_LABEL });
+  // ---- 3. Übung anlegen – über den Knopf AN DER UNIT, nicht über die Adresse ----
+  // Der Weg selbst ist hier der Prüfgegenstand: `+ Übung` reicht Fach/Reihe/Unit als Query durch, das
+  // Formular startet also bereits in dieser Unit. Ein `goto("/vater/exercises/neu")` prüfte das nicht –
+  // es käme mit leerem Kaskadenpicker an und verdeckte einen kaputten Link.
+  await page.getByRole("link", { name: `+ Übung zu „${UNIT_LABEL}"` }).click();
+  await expect(page).toHaveURL(/\/vater\/exercises\/neu\?.*seriesUnitId=\d+/);
+  // Vorbelegt statt gewählt: die drei Pulldowns tragen den Kontext der Unit schon.
+  await expect(page.locator('select[aria-label="Fach"]')).not.toHaveValue("");
+  await expect(page.locator('select[aria-label="Reihe"]')).not.toHaveValue("");
+  await expect(page.locator('select[aria-label="Unit"]')).not.toHaveValue("");
   await page.locator('select[aria-label="Übungstyp"]').selectOption("Grammar");
   await page.locator("#ex-title").fill(EXERCISE_TITLE);
   await page.getByLabel("Anweisung").fill("Setze die richtige Form ein.");
