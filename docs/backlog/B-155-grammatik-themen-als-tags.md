@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/katalog, rolle/creator, rolle/supervisor]
+tags: [typ/story, status/gegrillt, bereich/katalog, rolle/creator, rolle/supervisor]
 aliases: [Grammatik-Themen als Tags, Grammatik-Taxonomie, Grammatik übungsübergreifend suchen]
-status: ausformuliert
+status: gegrillt
 prio: P3
 art: Wunsch
 groesse: ""
@@ -39,7 +39,8 @@ Reihenfolge und Klassenstufe meines Materials mit anderen Werken vergleichen kan
   (Anlegen, Eigentumsprüfung :66).
 - Gelesen wird `Grammar` außerhalb von CRUD **an einer einzigen Stelle**: dem Briefing des KI-Creators,
   [ProfileFacts.cs:63](../../backend/Pugling.Agent.Creator/Briefing/ProfileFacts.cs)
-  (`- Grammatik der Unit: {Unit.Grammar}`). Kein Suchpfad, kein Filter, keine Auswertung.
+  (`- Grammatik der Unit: {Unit.Grammar}`; die Zeile darüber tut dasselbe für `Topics`). Kein Suchpfad,
+  kein Filter, keine Auswertung.
 - Im Vater-Web ist es ein `<input>` im Unit-Formular,
   [VaterLehrwerke.tsx:603](../../frontend/src/vater/VaterLehrwerke.tsx) („Grammatik der Unit"), angezeigt
   als Zeile „Grammatik: …" in der Unit-Tabelle (:434).
@@ -52,7 +53,7 @@ Reihenfolge und Klassenstufe meines Materials mit anderen Werken vergleichen kan
   (:89-90), `source` über `Exercise.Source` (:98). `SeriesUnit.Grammar` ist in **keiner** dieser Bedingungen.
 - Dasselbe im Frontend als Facetten-Leiste:
   [ExerciseFilterBar.tsx:59-112](../../frontend/src/vater/ExerciseFilterBar.tsx) (Fach, Reihe, Unit, Klasse,
-  Schulart, Typ, Art, Freitext).
+  Schulart, Typ, Art, Freitext) — alle Facetten sind **einwertig**.
 
 **Übungen *sind* taggbar — aber die Tags sind kind-gebunden.**
 
@@ -68,17 +69,29 @@ Reihenfolge und Klassenstufe meines Materials mit anderen Werken vergleichen kan
 
 - `VocabTag` (global eindeutiger Name) + `VocabTagLink` — [VocabEntities.cs:67-87](../../backend/Pugling.Api/Models/VocabEntities.cs).
   Der Link zeigt auf `Vocabulary`, nicht auf `Exercise` oder `SeriesUnit`.
-- `InterestTag` ([InterestEntities.cs:16](../../backend/Pugling.Api/Models/InterestEntities.cs)) ist das
-  Vorbild für „slug-idempotent, geteilt, jeder darf verwenden".
+- `InterestTag` ([InterestEntities.cs:16-38](../../backend/Pugling.Api/Models/InterestEntities.cs)) ist das
+  reifere Vorbild: `Slug` (stabil, global eindeutig) + `Label` + **`Synonyms`** als JSON-Liste, ausdrücklich
+  damit „dasselbe Interesse nicht als mehrere Tags endet". Gepflegt wird es von **jedem** Creator ohne
+  Eigentümer-Prüfung ([InterestTagsController.cs:23](../../backend/Pugling.Api/Controllers/Creator/InterestTagsController.cs)),
+  POST ist idempotent über den Slug (:88-91), der Slug selbst ist unveränderlich (:110).
+- Die Normalisierung liegt in `InterestSlug.From` (`SlugExtensions.cs:26`): Groß-/Kleinschreibung und
+  Diakritika fallen zusammen — Schreibweisen-Drift ist damit gefangen, echte Synonymie nicht.
 
 **Eine grobe Grammatik-Achse gibt es bereits — eine Ebene zu grob.**
 
-- `ExerciseCategory` („Art") hängt am **Fach** ([LearnEntities.cs:40-46](../../backend/Pugling.Api/Models/LearnEntities.cs))
-  und trägt im Seed genau die Werte `Vokabeln` / `Grammatik` / `Leseverstehen`
+- `ExerciseCategory` („Art") hängt am **Fach**, `SubjectId` ist **nicht** nullable
+  ([LearnEntities.cs:40-46](../../backend/Pugling.Api/Models/LearnEntities.cs)) und trägt im Seed genau die
+  Werte `Vokabeln` / `Grammatik` / `Leseverstehen`
   ([Seed.cs:997-999](../../backend/Pugling.Api/Data/Seed.cs)). Filterbar ist sie schon (`categoryId`,
   UI „Art-Filter", `ExerciseFilterBar.tsx:104`).
+- Geseedete Fächer: Französisch, Englisch, Mathe, Erdkunde (`Seed.cs:607/1000/1004/1006`).
+- Eine Übung kann ohnehin nur in einer Reihe **mit** Fach entstehen (`ExerciseControllerBase.cs:245-247`,
+  `series_without_subject`) — am Ort der Benutzung gibt es also immer ein Fach.
 - Auf Aufgaben-Ebene trägt außerdem jede Grammatik-Aufgabe einen optionalen Regelhinweis als Freitext:
   `GrammarTask(Prompt, Answer, RuleHint)` — [ExerciseConfigs.cs:124](../../backend/Pugling.Contracts/Exercise/ExerciseConfigs.cs).
+- Angelegt wird über `ExercisePayload<TConfig>`
+  ([ExerciseAuthoringDtos.cs:12](../../backend/Pugling.Contracts/Creator/ExerciseAuthoringDtos.cs)) — derselbe
+  Vertrag für POST **und** PUT, und PUT ist Vollersatz.
 
 ## Die echte Lücke
 
@@ -102,54 +115,98 @@ Verbraucher (`ProfileFacts.cs:63`) und bleibt.
 
 ## Offene Punkte
 
-1. **Woran hängt das Thema — Unit, Übung oder beides?**
-   *Empfehlung: beides, aber asymmetrisch.* Die Übung trägt es (dort landet die Suche), die Unit trägt es
-   zusätzlich für den Vergleich (b) — siehe Lücke 4. Beim Anlegen einer Übung werden die Themen ihrer Unit
-   **vorbelegt, nicht abgeleitet**: eine Ableitung machte jede Übung einer gemischten Unit fälschlich zu
-   „present perfect". *Kosten:* zwei Join-Tabellen statt einer und eine Vorbelegungsregel im Anlege-Formular.
-2. **Skopierung: global geteilt oder je Creator?**
-   *Empfehlung: global geteilt und slug-idempotent, Muster `InterestTag`.* Eine Liste je Creator macht den
-   Vergleich zwischen Lehrwerken unmöglich — das ist der halbe Zweck der Story. *Kosten:* Wildwuchs und
-   Dubletten („Present Perfect" / „present perfect") werden zur echten Gefahr; der Slug fängt die
-   Schreibweise, nicht die Synonymie. Wer umbenennen darf, braucht das Owner-Muster von `Subject` (B-13).
-3. **Trägt ein Thema ein Fach?**
-   *Empfehlung: ja, optional* (Muster `ExerciseCategory`, aber `SubjectId` nullable). „present perfect" ist
-   englisch; ohne Fachbezug zeigt die Auswahlliste am Englisch-Werk auch die Deutsch-Themen. *Kosten:* ein
-   Thema, das in zwei Fächern gilt („Konjunktiv"), braucht zwei Einträge oder ein leeres Fach — beides
-   erklärbar, aber nicht schön.
-4. **`VocabTag` erweitern oder eine eigene Tabelle?**
-   *Empfehlung: eigene Tabelle.* `VocabTag` heißt und bedeutet „Vokabel-Schlagwort"; ihm eine dritte
-   Bedeutung zu geben ist genau die Begriffs-Drift, die dieses Repo schon zweimal teuer bezahlt hat
-   (`Father`→`Adult`, Lernziel→`KeyResult`). *Kosten:* eine vierte Tag-Tabelle im Repo — die Alternative
-   wäre ein generischer `CatalogTag` mit `Kind`-Spalte, der aber die drei bestehenden Tabellen erst dann
-   aufräumt, wenn man sie migriert, und das ist eine eigene Story.
-5. **Gehört die Vergleichs-Sicht (b) in diese Story?**
-   *Empfehlung: nein — Datenmodell ja, Bildschirm nein.* Der Filter (a) ist der Nutzen, der sofort trägt;
-   die Vergleichs-Sicht wird eine Folge-Story, sobald Themen an Units hängen. *Kosten:* (b) bleibt liegen,
-   und das Datenmodell wird für einen Nutzen gebaut, der noch keine Oberfläche hat.
-6. **Sieht der Student das Thema?**
-   *Empfehlung: zurückstellen.* Es ist kein Lösungsfeld, also unschädlich — aber es ist auch kein
-   erkennbarer Gewinn für das Kind, und jede zusätzliche Nutzlast an der Positions-Ansicht will begründet
-   sein.
+Alle in der Grill-Runde vom 2026-08-12 geschlossen (Nummern zeigen auf die Entscheidungen).
+
+1. ~~Woran hängt das Thema — Unit, Übung oder beides?~~ → Entscheidung 2.
+2. ~~Skopierung: global geteilt oder je Creator?~~ → Entscheidungen 3 und 4.
+3. ~~Trägt ein Thema ein Fach?~~ → Entscheidung 4. Die Empfehlung der Ausformulierung („optional") wurde
+   dabei **revidiert**: Pflicht.
+4. ~~`VocabTag` erweitern oder eine eigene Tabelle?~~ → Entscheidung 1 (eigene Tabelle, nur Grammatik).
+5. ~~Gehört die Vergleichs-Sicht (b) in diese Story?~~ → Entscheidung 5 (nein, Datenmodell ja).
+6. ~~Sieht der Student das Thema?~~ → Entscheidung 9 (zurückgestellt).
+
+In der Runde **neu aufgetaucht** und mitentschieden: der KI-Creator (Entscheidung 7) und die Wertigkeit des
+Filters (Entscheidung 8).
+
+## Entscheidungen
+
+1. **Die neue Achse gilt nur für Grammatik und ist ein eigenes Objekt** (`GrammarTopic`, UI
+   „Grammatik-Thema"). Grammatik ist die eine Achse, bei der ein geteiltes Vokabular konvergiert: die Menge
+   ist endlich und lehrbuchunabhängig. Freie Themen („Growing up") sind werksspezifisch und treffen sich
+   nie — sie zu kuratieren kostet Pflege ohne Treffer. `SeriesUnit.Topics` und `SeriesUnit.Grammar` bleiben
+   **unverändert** Freitext. *Kosten:* zwei Dinge heißen „Thema", unterschieden nur durch das Beiwort; der
+   distinkte Klassenname muss das tragen. Und ein generischer `CatalogTag` mit `Kind`-Spalte, der die drei
+   bestehenden Tag-Tabellen aufräumen würde, ist damit ausgeschlossen (wäre eine eigene Story).
+2. **Träger sind Übung *und* Unit, asymmetrisch.** Die Übung trägt das Thema, weil dort die Suche landet;
+   die Unit trägt es zusätzlich, weil sonst „wann bringt Werk X das Passiv?" für eine Unit ohne Übungen
+   unbeantwortbar bliebe (Lücke 4). Beim Anlegen einer Übung werden die Themen ihrer Unit **vorbelegt, nicht
+   vererbt** — eine Vererbung machte jede Übung einer gemischten Unit fälschlich zu „present perfect".
+   *Kosten:* zwei Join-Tabellen statt einer, und die Vorbelegung ist eine Regel mit eigenem Test.
+3. **Pflege nach dem Owner-Muster von `Subject`** (B-13): anlegen darf jeder Creator, ändern und löschen nur
+   der Anleger; ein geseedetes Thema ist für **niemanden** änderbar (fail-closed). Der Slug ist
+   unveränderlich (Muster `InterestTag`), `Label`/`Synonyms`/`Color` sind pflegbar; gelöscht wird nur, was
+   niemand benutzt. Begründung: das Thema trägt Suchsemantik in *fremden* Lehrplänen — wer es umbenennt,
+   verschiebt die Bedeutung für andere. *Kosten:* ein Tippfehler in einem fremden Thema ist nicht
+   reparierbar, man kann nur ein zweites anlegen; das offene Modell von `InterestTag` wird damit **nicht**
+   fortgeschrieben, es gibt künftig zwei Pflege-Lesarten im Katalog.
+4. **Das Fach ist Pflicht**, der Slug fachqualifiziert (`en-present-perfect`). Ein Grammatik-Phänomen ist
+   sprachgebunden, und am Ort der Benutzung liegt immer ein Fach vor (`series_without_subject`). Ein
+   nullables Fach fügte einen dritten Zustand hinzu („noch nicht gesetzt" vs. „gilt für alle"), den der
+   Filter interpretieren müsste. *Kosten:* ein sprachübergreifendes Konzept („Konjunktiv" in Deutsch und
+   Latein) braucht zwei Einträge, und ein Vergleich über Fachgrenzen ist nicht ausdrückbar.
+5. **In dieser Story steckt nur der Filter (a).** Gebaut werden Datenmodell (beide Träger), Zuweisung im UI
+   und der Filter an der Übungssuche; die Vergleichs-Sicht (b) bekommt **keinen** Bildschirm und wird eine
+   Folge-Story mit `quelle: B-155`. Begründung: der Filter trägt den Nutzen sofort, die Story bleibt
+   schätzbar, und eine Vergleichs-Ansicht lässt sich erst entwerfen, wenn echte Themen an echten Units
+   hängen. *Kosten:* (b) bleibt liegen, und das Unit-Träger-Modell wird für einen Nutzen gebaut, der noch
+   keine Oberfläche hat.
+6. **Ein kleiner Grundbestand kommt in den Seed**, je Sprachfach und owner-los (Englisch: present perfect,
+   simple past, Passiv, Relativsätze, if-clauses …; Französisch: passé composé, imparfait, subjonctif …;
+   Mathe/Erdkunde nichts). Sonst erfindet der erste Nutzer die kanonischen Namen — genau der
+   Konvergenzgewinn, um den es geht. Die Unveränderlichkeit aus Entscheidung 3 ist hier billig, weil dieses
+   Projekt Datenbanken wegwirft (die Kette wird neu gefaltet). *Kosten:* eine inhaltliche Meinung im Seed,
+   und in einer *bestehenden* DB ist ein Seed-Tippfehler weder umbenennbar noch löschbar.
+7. **Der KI-Creator übernimmt die Themen seiner Unit** — dieselbe Vorbelegungsregel wie im Formular, nur
+   ohne Mensch, der abwählt. Er ist der produktivste Autor im System; erzeugte er ungetaggtes Material, wäre
+   die Suche gerade dort blind, wo der Bestand wächst, und niemand taggt hunderte Übungen nachträglich.
+   *Kosten:* in einer gemischten Unit taggt der Agent breiter als nötig (die Passiv-Übung trägt auch
+   „present perfect") — dieselbe Ungenauigkeit, die das Formular durch Abwählen vermeidet, hier ohne
+   Korrektiv. Das Modell selbst entscheidet **nicht** mit; die deterministische Pipeline bekommt keine
+   zusätzliche Modell-Entscheidung.
+8. **Der Filter ist einwertig** (`?grammarTopicId=`), wie alle sieben bestehenden Facetten
+   (`ExerciseFilterBar.tsx:59-112`). *Kosten:* „present perfect ODER simple past" braucht zwei Suchen; eine
+   Mehrfachauswahl wäre ein eigener Wunsch — dann aber für alle Facetten, nicht nur für diese.
+9. **Zurückgestellt: der Student sieht das Thema nicht.** Es ist kein Lösungsfeld, also unschädlich, aber es
+   gibt keinen belegten Gewinn für das Kind. Nachträglich ist es ein additives Feld, also kein Bruch.
+   *Kosten:* die Frage kommt wieder, sobald jemand „was lerne ich hier eigentlich?" in der Arcade
+   beantworten will — dann als eigene kleine Story.
 
 ## Akzeptanzkriterien
 
-Entwurf — 6 hängt an Entscheidung 1, die Formulierung von 2 an Entscheidung 3.
-
-1. Ein Grammatik-Thema lässt sich anlegen und ist **idempotent über den Slug**: ein zweites Anlegen mit
-   demselben Namen liefert das bestehende Thema zurück, statt eine Dublette in den geteilten Katalog zu
-   schreiben.
-2. Eine Übung trägt 0..n Themen. `GET api/v1/creator/exercises?grammarTopicId=` liefert genau die Übungen
-   mit diesem Thema — **über Fächer, Reihen und Klassenstufen hinweg** —, mit unverändertem
-   `X-Total-Count`, Paging und Sortierung.
-3. Der Filter ist im Vater-Web als weitere Facette in `ExerciseFilterBar` bedienbar und **reist als Query
-   mit** (Frontend-Konvention „eine Auswahl reist als Query").
-4. Das Freitextfeld „Grammatik der Unit" existiert unverändert und geht unverändert in das Briefing des
-   KI-Creators (`ProfileFacts.cs:63`) — belegt durch einen Test, der das Briefing prüft.
-5. Ein E2E fährt den Nutzen: Thema anlegen → zwei Übungen in **verschiedenen Reihen und Klassenstufen**
-   damit versehen → über den Filter beide finden, und eine dritte ohne das Thema nicht.
-6. Eine Unit trägt 0..n Themen, und für ein Thema ist je Reihe die Klassenstufe abfragbar, in der es
-   vorkommt (Grundlage der Vergleichs-Sicht; ohne eigenen Bildschirm).
+1. **Anlegen ist idempotent:** `POST` eines Themas mit gleichem Label und Fach liefert das bestehende
+   zurück (gleicher Slug), statt eine Dublette oder einen 409 zu erzeugen.
+2. **Pflege ist owner-gegated:** `PATCH`/`DELETE` eines fremden Themas → `403 not_owner`; ein geseedetes
+   Thema → `403` auch für den Seed-Vater; `DELETE` eines *benutzten* Themas wird mit eigenem Fehlercode
+   abgewiesen, statt Verknüpfungen zu entfernen. Der Slug ist über `PATCH` nicht änderbar.
+3. **Fachgrenze hält:** einer Übung ein Thema eines *anderen* Fachs zuzuweisen endet als
+   `validation_error` (Muster „Unit muss zur Reihe gehören"), nicht als stiller Treffer.
+4. **Der Filter findet über Werke hinweg:** `GET api/v1/creator/exercises?grammarTopicId=` liefert genau die
+   Übungen mit diesem Thema — über Reihen und Klassenstufen hinweg —, mit unverändertem `X-Total-Count`,
+   Paging und Sortierung.
+5. **Vorbelegung statt Vererbung:** eine Übung in einer Unit mit zwei Themen erscheint mit beiden als
+   Vorschlag; wird einer abgewählt, hängt am Ende **nur** der gewählte an der Übung (und die Unit behält
+   beide).
+6. **Der KI-Creator taggt:** eine vom Agenten in einer Unit mit Themen angelegte Übung trägt diese Themen
+   (Test in den Agent-Tests, nicht nur im Backend).
+7. **UI beidseitig** (Frontend-Konvention „Hin- und Rückweg"): Zuweisen im Anlege-Formular **und** im
+   Bearbeiten-Dialog, wobei der PUT die Themen mitschickt (sonst löscht der Vollersatz sie); Themen-Chips im
+   Unit-Formular; Facette in der `ExerciseFilterBar`, die als Query mitreist.
+8. **Der Freitext bleibt unberührt:** „Grammatik der Unit" existiert unverändert und geht unverändert ins
+   Briefing (`ProfileFacts.cs:63`) — belegt durch einen Test auf das Briefing.
+9. **Der Seed trägt den Grundbestand:** eine frische DB zeigt je Sprachfach die Themen in der Auswahl, und
+   sie sind für niemanden änderbar.
+10. **E2E fährt den Nutzen:** Thema anlegen → zwei Übungen in **verschiedenen Reihen und Klassenstufen**
+    damit versehen → über den Filter beide finden, eine dritte ohne das Thema nicht.
 
 ## Verlauf
 
@@ -160,3 +217,8 @@ Entwurf — 6 hängt an Entscheidung 1, die Formulierung von 2 an Entscheidung 3
   fehlendes Feld. Dazu gefunden: die grobe Achse „Art = Grammatik" existiert schon (`ExerciseCategory`,
   Seed), ein kindneutrales geteiltes Tag-Vokabular auch (`VocabTag`) — nur zeigt es auf `Vocabulary`.
   Sechs offene Punkte je mit Empfehlung; Prio bleibt P3.
+- **2026-08-12** — `ausformuliert → gegrillt`. Neun Entscheidungen im Dialog; alle sechs offenen Punkte
+  geschlossen, zwei Fragen kamen in der Runde neu hinzu (KI-Creator, Wertigkeit des Filters). Eine
+  Empfehlung der Ausformulierung wurde dabei am Code widerlegt: „Fach optional" → **Pflicht**, weil
+  `ExerciseCategory.SubjectId` nicht nullable ist und eine Übung ohnehin ein Fach voraussetzt. Prio bleibt
+  P3, weiter unbestätigt.
