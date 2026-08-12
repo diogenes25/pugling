@@ -8,7 +8,9 @@ import type { CreatorProfileResponse, SubjectResponse, TextbookSeriesResponse } 
  * darum ist das hier ein Baustein-Test und kein nachgebauter Bildschirm (siehe frontend/CLAUDE.md).
  */
 
-const ENGLISH: SubjectResponse = { id: 1, name: "Englisch", createdAt: "2026-01-01T00:00:00Z", categoriesCount: 0 };
+const ENGLISH: SubjectResponse = {
+  id: 1, name: "Englisch", createdAt: "2026-01-01T00:00:00Z", categoriesCount: 0, isMine: false,
+};
 
 function seriesWith(overrides: Partial<TextbookSeriesResponse>): TextbookSeriesResponse {
   return {

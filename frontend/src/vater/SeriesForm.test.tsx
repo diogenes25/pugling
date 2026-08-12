@@ -14,8 +14,8 @@ import type { PublisherResponse, SubjectResponse, TextbookSeriesResponse } from 
  */
 
 const SUBJECTS: SubjectResponse[] = [
-  { id: 1, name: "Englisch", createdAt: "2026-01-01T00:00:00Z", categoriesCount: 0 },
-  { id: 2, name: "Mathe", createdAt: "2026-01-01T00:00:00Z", categoriesCount: 0 },
+  { id: 1, name: "Englisch", createdAt: "2026-01-01T00:00:00Z", categoriesCount: 0, isMine: false },
+  { id: 2, name: "Mathe", createdAt: "2026-01-01T00:00:00Z", categoriesCount: 0, isMine: false },
 ];
 const PUBLISHERS: PublisherResponse[] = [
   { id: 3, name: "Klett", slug: "klett", seriesCount: 1, foreignSeriesCount: 0, createdAt: "2026-01-01T00:00:00Z" },
