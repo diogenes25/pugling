@@ -9,8 +9,10 @@ import type { CategoryResponse, SubjectResponse } from "../lib/types";
 /*
  * Katalog-Verwaltung: Fach und „Art" anlegen, umbenennen und löschen.
  *
- * Korrigieren ging lange nicht – ein Tippfehler im Fachnamen blieb für alle sichtbar, denn der Katalog ist
- * **global**: Fächer teilen sich alle Väter. Genau deshalb warnt das Löschen hier deutlich.
+ * Lesen und verwenden darf jeder Creator jedes Fach; **umbenennen und löschen nur, wer es angelegt hat**
+ * (B-13). Ein Fach aus dem Grundbestand hat keinen Eigentümer und ist damit für *niemanden* änderbar.
+ * Das Löschen warnt trotzdem deutlich – nicht wegen der Sichtbarkeit, sondern wegen der Reichweite: fünf
+ * Zuordnungen verlieren ihren Bezug (B-144).
  *
  * Die „Art" (Kategorie) ist fachabhängig und dient der Vorfilterung im Katalog – sie ist der einzige
  * Ordnungsbegriff, den der Vater selbst erfinden darf.
@@ -59,7 +61,8 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
     <section className="card">
       <h3 style={{ marginTop: 0 }}>Fächer</h3>
       <p className="muted" style={{ fontSize: 13 }}>
-        Fächer und Kapitel sind <strong>gemeinsamer Katalog</strong> – deine Änderungen sehen alle Väter.
+        Die Fächer sind <strong>gemeinsamer Katalog</strong> – verwenden darf sie jeder,
+        umbenennen und löschen nur, wer ein Fach angelegt hat.
       </p>
 
       <div className="field" style={{ maxWidth: 280, marginTop: 8 }}>
@@ -75,12 +78,12 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
 
       {subject && (
         <>
-          {/* `key` ist Pflicht, nicht Kosmetik: `NameRow` hält den Namen in eigenem `useState` (Startwert
-              einmalig). Ohne Schlüssel gilt die Zeile beim Fachwechsel als *dieselbe*, behält den alten
-              Namen im Feld – und „OK" schriebe den Namen des vorigen Fachs in den geteilten Katalog. */}
-          <NameRow key={subject.id} busy={action.busy}
-            fieldId={`ca-subject-${subject.id}`} label="Fach umbenennen"
-            srName={`Fach „${subject.name}"`} value={subject.name}
+          {/* `key` ist Pflicht, nicht Kosmetik: die `NameRow` unter `SubjectRow` hält den Namen in eigenem
+              `useState` (Startwert einmalig). Ohne Schlüssel gilt die Zeile beim Fachwechsel als
+              *dieselbe*, behält den alten Namen im Feld – und „OK" schriebe den Namen des vorigen Fachs
+              in den geteilten Katalog. Er sitzt hier, weil ein Schlüssel an dem Element hängen muss, das
+              der Aufrufer rendert; der zustandshaltende Baustein liegt seit B-154 eine Ebene tiefer. */}
+          <SubjectRow key={subject.id} subject={subject} busy={action.busy}
             onSave={(name) => act(() => api.updateSubject(subject.id, name), "Fach umbenannt.")}
             onDelete={() => {
               /* Der Text nennt alle fünf Zuordnungen statt nur zwei (B-144). Bewusst ohne Zahl: die
@@ -126,6 +129,40 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
 }
 
 /**
+ * Die Fach-Zeile – bearbeitbar nur für den Eigentümer, sonst ein Satz, der den Grund nennt.
+ *
+ * An einem fremden oder ownerlosen Fach **fehlen** Feld und Knöpfe, statt später mit `403 not_owner` zu
+ * scheitern – dieselbe Wahl wie bei der Lehrwerk-Reihe (`VaterLehrwerke.tsx`). Ein `disabled`-Knopf wäre
+ * schlechter: er bleibt im Fokusbaum und nennt keinen Grund. Stumm zu bleiben wäre es auch – eine Seite
+ * ohne Knöpfe und ohne Erklärung liest sich als Fehler (B-150).
+ *
+ * Eigener exportierter Baustein, damit der Test die **Bindung** an `isMine` prüfen kann: `CatalogAdmin`
+ * selbst lädt beim Fachwechsel die Arten nach und hängt damit am Netz (siehe `frontend/CLAUDE.md` –
+ * Bausteine hier, Wege durch die App bei Playwright).
+ */
+export function SubjectRow({ subject, busy, onSave, onDelete }: {
+  subject: SubjectResponse;
+  busy: boolean;
+  onSave: (name: string) => void; onDelete: () => void;
+}) {
+  if (subject.isMine) {
+    return <NameRow busy={busy} fieldId={`ca-subject-${subject.id}`} label="Fach umbenennen"
+      srName={`Fach „${subject.name}"`} value={subject.name} onSave={onSave} onDelete={onDelete} />;
+  }
+  /* Die zwei Fälle werden unterschieden, weil „gehört jemand anderem" bei einem Fach aus dem Grundbestand
+     einfach falsch wäre – es gehört niemandem, und niemand kann es ändern. `== null` deckt `null` und ein
+     fehlendes Feld gleichermaßen (der Vertrag gibt `ownerAdultId` optional heraus). */
+  return (
+    <p className="muted" style={{ fontSize: 13, marginTop: 8 }}>
+      {subject.ownerAdultId == null
+        ? `„${subject.name}" gehört zum Grundbestand – du kannst es verwenden, `
+          + "aber niemand kann es umbenennen oder löschen."
+        : `„${subject.name}" hat jemand anderes angelegt – du kannst es verwenden, aber nicht ändern.`}
+    </p>
+  );
+}
+
+/**
  * Eine Zeile „Name ändern / löschen". Der OK-Knopf erscheint erst bei echter Änderung.
  *
  * `fieldId` kommt von außen und ist aus der **Datensatz-Id** gebaut, nicht aus dem Namen: ein Name enthält
@@ -133,7 +170,7 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
  * sonst dieselbe `id`, und das `label` zeigte auf das falsche Feld. `srName` benennt für Screenreader und
  * Sprachsteuerung, *welche* Zeile ein Knopf betrifft; „OK" allein sagt bei zehn Zeilen nichts.
  */
-function NameRow({ fieldId, label, srName, value, busy, onSave, onDelete }: {
+export function NameRow({ fieldId, label, srName, value, busy, onSave, onDelete }: {
   fieldId: string; label: string; srName: string; value: string;
   /** Läuft schon eine Mutation? Dann sperren – ein zweiter Klick auf „Löschen" landete als 404. */
   busy: boolean;

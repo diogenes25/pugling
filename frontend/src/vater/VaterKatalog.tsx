@@ -19,9 +19,12 @@ export function VaterKatalog() {
   return (
     <>
       <h2 className="h-section">Katalog</h2>
+      {/* „Anlegen" gilt uneingeschränkt, „umbenennen und löschen" nicht mehr: seit B-13 darf das nur der
+          Eigentümer, und ein Fach aus dem Grundbestand niemand. Der Satz sagt das, weil er sonst genau
+          das verspricht, was die Karte darunter dann verweigert (gefunden im Rollengang zu B-154). */}
       <p className="sub">
         Fächer und Arten sind der <strong>gemeinsame</strong> Rahmen aller Übungen – auch der von anderen
-        Vätern. Hier legst du sie an, benennst sie um und löschst sie.
+        Vätern. Hier legst du neue an; umbenennen und löschen kannst du, was du selbst angelegt hast.
       </p>
       {subjects.error && <div className="banner err">{subjects.error}</div>}
       {/*
