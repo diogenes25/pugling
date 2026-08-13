@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
+using Pugling.Api.Data;
 using Pugling.Api.Exercises;
 using Pugling.Api.Models;
 
@@ -101,6 +102,53 @@ public class ExerciseTypeManifestTests(PuglingWebAppFactory factory) : IClassFix
 
         // The child-neutral manifest may be read by the child too.
         Assert.Equal(HttpStatusCode.OK, (await son.GetAsync("/api/v1/creator/exercise-types")).StatusCode);
+    }
+
+    /// <summary>
+    /// B-163: the two axes of the exercise search must not share vocabulary. The <b>type</b> names the method
+    /// or form, the <b>category</b> ("Art") names the subject matter - so a type named after subject matter
+    /// necessarily collides, and two of them did ("Vokabeln", "Grammatik").
+    /// <para>
+    /// This holds <b>identity</b> under <see cref="InterestSlug.From"/> (the taxonomy's own folding: case,
+    /// ß, diacritics, separators), and that is deliberately where it stops: a stem or prefix rule would first
+    /// flag our own chosen name "Vokabelkarten" against the category "Vokabeln". Merely similar names
+    /// therefore stay a human judgement - promising a gate that cannot be drawn sharply would be worse than
+    /// naming the limit. Reusing the slug rather than folding case here keeps one normalisation, not two.
+    /// </para>
+    /// The seeded category names are read from the <b>running instance</b>, not from a copy of the seed file:
+    /// a second list would be the thing that drifts.
+    /// </summary>
+    [Fact]
+    public async Task KeinTypLabel_HeisstWieEineGeseedeteArt()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var registry = factory.Services.GetRequiredService<ExerciseTypeRegistry>();
+
+        var subjects = await father.GetFromJsonAsync<JsonElement>("/api/v1/creator/subjects");
+        var artNamen = new List<string>();
+        foreach (var subject in subjects.EnumerateArray())
+        {
+            var id = subject.GetProperty("id").GetInt32();
+            var arten = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/subjects/{id}/categories");
+            artNamen.AddRange(arten.EnumerateArray().Select(a => a.GetProperty("name").GetString()!));
+        }
+
+        // Name the two categories this check is actually about, not just "some category exists". The input
+        // arrives over two HTTP hops; should either stop yielding the seeded categories (a paging default on
+        // the subject list, an ownership filter on the category read), a mere NotEmpty would still be green
+        // with unrelated names in hand and would silently stop holding the rule it was written for.
+        Assert.Contains("Vokabeln", artNamen);
+        Assert.Contains("Grammatik", artNamen);
+
+        var normalisierteArten = artNamen.Select(InterestSlug.From).ToHashSet();
+        var kollisionen = registry.All
+            .Select(t => t.Manifest.Label)
+            .Where(label => normalisierteArten.Contains(InterestSlug.From(label)))
+            .ToList();
+
+        Assert.True(kollisionen.Count == 0,
+            $"These type labels are named like a seeded category: {string.Join(", ", kollisionen)}. "
+            + "The type axis names the method or form, the category axis names the subject matter (B-163).");
     }
 
     [Fact]

@@ -996,8 +996,11 @@ public static class Seed
         // Subject-dependent categories (a controlled vocabulary) as the basis of the study plan pre-filtering.
         var enVokabeln = new ExerciseCategory { Name = "Vokabeln" };
         var enGrammatik = new ExerciseCategory { Name = "Grammatik" };
-        var enLeseverstehen = new ExerciseCategory { Name = "Leseverstehen" };
-        var englisch = new Subject { Name = "Englisch", Categories = { enVokabeln, enGrammatik, enLeseverstehen } };
+        // "Lesetexte", not "Leseverstehen" (B-163): the exercise type "Leseverständnis" is a legitimate
+        // competence name, so the near-collision yields on the category side. A seed change only reaches
+        // fresh databases - which is no shortcoming here, because the seed IS their content.
+        var enLesetexte = new ExerciseCategory { Name = "Lesetexte" };
+        var englisch = new Subject { Name = "Englisch", Categories = { enVokabeln, enGrammatik, enLesetexte } };
 
         var maGrundrechenarten = new ExerciseCategory { Name = "Grundrechenarten" };
         var maAlgebra = new ExerciseCategory { Name = "Algebra" };
@@ -1098,7 +1101,7 @@ public static class Seed
                 RewardPoints = 10,
                 GradeMin = 5, GradeMax = 8,
                 SchoolTypes = SchoolTypes.Gymnasium,
-                Category = enLeseverstehen,
+                Category = enLesetexte,
                 ConfigJson = Json(new BirkenbihlConfig
                 {
                     LearningLang = "en",

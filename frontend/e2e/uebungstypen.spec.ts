@@ -136,7 +136,8 @@ test("Jeder Übungstyp des Manifests lässt sich im UI anlegen", async ({ page }
   // gleich dieselbe Unit zeigt – genau das tut auch der Knopf „Übungen verwalten".
   await page.getByRole("link", { name: /Übungen verwalten/ }).click();
   await expect(page).toHaveURL(/\/vater\/exercises\?subjectId=\d+&seriesId=\d+&seriesUnitId=\d+/);
-  for (const label of ["Leseverständnis", "Hörverständnis", "Aufsatz", "Grammatik", "Übersetzung", "Rechen-Drill"]) {
+  // „Regelaufgaben" statt „Grammatik" seit B-163: die Typ-Achse benennt die Form, die Art-Achse den Stoff.
+  for (const label of ["Leseverständnis", "Hörverständnis", "Aufsatz", "Regelaufgaben", "Übersetzung", "Rechen-Drill"]) {
     await expect(page.getByText(`· ${label}`, { exact: false }).first()).toBeVisible();
   }
 

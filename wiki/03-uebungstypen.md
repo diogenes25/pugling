@@ -187,7 +187,7 @@ erlaubt.
 }
 ```
 
-### 3.6 Grammar — Grammatik
+### 3.6 Grammar — Regelaufgaben
 
 ```jsonc
 "config": {
@@ -313,7 +313,7 @@ Durcharbeiten.
 
 ---
 
-## 4. Vollständiges Beispiel: Grammatik-Übung anlegen
+## 4. Vollständiges Beispiel: Regelaufgaben-Übung anlegen
 
 ```http
 POST /api/v1/creator/subjects/1/chapters/1/grammar

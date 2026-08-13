@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/katalog, rolle/creator, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/katalog, rolle/creator, rolle/supervisor]
 aliases: [Art gegen Typ, Vokabeln heißt zweimal etwas anderes]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: S
@@ -173,6 +173,11 @@ Fast-Kollision „Leseverstehen"/„Leseverständnis", die Entscheidung 1 nicht 
    Beide Listen liegen im Backend, der Vergleich ist also mechanisierbar.
 7. `frontend/e2e/uebungstypen.spec.ts` bleibt grün — seine Label-Liste (`:139`) ist nachgezogen.
 8. Die zwei Auflagen aus Entscheidung 7 stehen als Zeile in [B-155](B-155-grammatik-themen-als-tags.md).
+9. **Nachgetragen beim Bauen:** Die Trefferliste des Assistenten zeigt den **Anzeigenamen**, nicht den
+   Manifest-Schlüssel. Ohne das entstünde durch Entscheidung 5 ein Widerspruch in *einem* Bildschirm — das
+   nun sichtbar mit „Typ" beschriftete Pulldown bietet „Vokabelkarten" an, die Zeilen darunter sagten
+   „· Vocabulary". Der Assistent war der dritte der drei Leser, die die Risikoliste dieser Story selbst
+   aufführt; die zwei anderen waren nachgezogen, dieser nicht.
 
 ## Schätzung
 
@@ -238,8 +243,16 @@ Frontend-Datei); deutlich kleiner als jede Story mit Schema- oder Vertragsanteil
   geseedete Art heißt. Rote Probe: ein Label testweise auf „Vokabeln" zurückdrehen.
 - **`frontend/e2e/uebungstypen.spec.ts`** — bleibt grün mit nachgezogener Liste; sie ist ohnehin der
   Wächter „jeder Server-Typ hat ein UI".
-- **`frontend/e2e/vater-von-null.spec.ts`** trägt das „Art:"-Etikett und die reparierte Typ-Zusicherung.
-  **Kein Komponententest** für das Etikett: `PlanPositions.test.ts` ist reine Logik (acht Fälle, kein
+- **`frontend/e2e/vater-von-null.spec.ts`** trägt die reparierte Typ-Zusicherung. **Korrigiert beim Bauen:**
+  das „Art:"-Etikett kann diese Spec **nicht** tragen — `VaterExerciseCreate` hat gar kein Kategorie-Feld,
+  die dort angelegte Übung hat also nie ein `categoryName`, und die Zeile rendert nichts. Vom
+  `frontend-reviewer` gefunden; ohne ihn wäre AK 4 eine Behauptung ohne Netz geblieben (genau die
+  Fehlerfamilie, die diese Woche vier Mal gemessen wurde).
+- **`frontend/e2e/full-flow.spec.ts`** trägt das „Art:"-Etikett stattdessen: die geseedete Übung
+  „Vokabeln: En ville" hat die Art „Vokabeln", und die Spec lokalisiert dieses Radio ohnehin über seinen
+  zugänglichen Namen — die Zusicherung vergrößert dort also keinen Schadensradius.
+- **`frontend/e2e/assistent.spec.ts`** hält den Anzeigenamen in der Trefferliste des Assistenten (AK 9).
+- **Kein Komponententest** für das Etikett: `PlanPositions.test.ts` ist reine Logik (acht Fälle, kein
   `render`), und für ein einzeiliges JSX-Präfix eine Funktion zu extrahieren wäre mehr Bauwerk als Nutzen —
   die Kosten dieser Wahl sind damit benannt, nicht verschwiegen.
 - **`/smoke-test`** als Abschluss-Check.
@@ -279,3 +292,34 @@ Frontend-Datei); deutlich kleiner als jede Story mit Schema- oder Vertragsanteil
   `categoryName` wird an **genau einer** Stelle gerendert. Ehrlich abgeschwächt: Akzeptanzkriterium 6 ist nur
   zur Hälfte mechanisierbar — „identisch" ja, „verwechselbar nah" nein, weil eine Stammregel als Erstes unsere
   eigene Wahl „Vokabelkarten" gegen die Art „Vokabeln" rot meldete.
+- **2026-08-13** — `geschaetzt → abgenommen`. Belegt: **828/828** Backend (`-c Release`), **280/280**
+  Komponententests, **34/34** E2E, `dotnet format --verify-no-changes` sauber, `markdownlint` sauber,
+  `pugling-reviewer` **und** `frontend-reviewer` gelaufen (`wo: beides`), Rollengang im Browser gegen einen
+  **nach** der letzten Änderung gestarteten Server mit frischer DB.
+  **Rollengang-Beleg:** Assistent Schritt 3 zeigt die Filter mit sichtbaren Beschriftungen und nebeneinander
+  „Grammatik" (Art) gegen „Regelaufgaben" (Typ), „Vokabeln" gegen „Vokabelkarten", „Lesetexte" gegen
+  „Leseverständnis"; die Planbau-Zeile lautet „BEGRÜSSUNGEN · VOKABELKARTEN · KL. 5–6 · ART: VOKABELN ·
+  GREEN LINE 1, UNIT 1", wo vorher „Vokabeln · Vokabeln" stand.
+  **Rote Proben, je mit der Meldung:** der Backend-Wächter meldet „These type labels are named like a seeded
+  category: Vokabeln"; `full-flow` meldet die Art ohne Etikett als
+  `"Vokabeln: En ville · Vokabelkarten · Kl. 7–9 · Vokabeln · Découvertes 1, Unité 2"`; `assistent` meldet den
+  rohen Schlüssel als `"Vocabulary: The environment · Vocabulary – von Herr Schmidt …"`.
+  **Vier Korrekturen aus den Reviews, alle angenommen:** **(1)** Der Assistent zeigte den Manifest-*Schlüssel*
+  statt des Anzeigenamens — der dritte der drei Leser, die diese Story selbst auflistet, und **ungeschützt**:
+  weder die 280 Komponententests noch die 34 E2E bemerkten ihn. Daraus wurde AK 9 mit eigener Zusicherung.
+  Der Beleg stand in meinem eigenen Rollengang-Auszug („· Vocabulary"), ich habe daran vorbeigelesen.
+  **(2)** AK 4 hatte keinen Test, und der benannte Testweg konnte ihn nicht tragen (`VaterExerciseCreate` hat
+  kein Kategoriefeld) — jetzt in `full-flow.spec.ts` an einem Radio, dessen zugänglichen Namen die Spec ohnehin
+  tragend nutzt. **(3)** `Assert.NotEmpty(artNamen)` im neuen Wächter zog zwei Situationen zusammen: er hätte
+  bei verrottender Eingabe grün mit fremden Namen in der Hand gestanden — ersetzt durch `Assert.Contains` auf
+  „Vokabeln" und „Grammatik". **(4)** Der Wächter trug eine **zweite** Normalisierung neben `InterestSlug.From`
+  und einen Kommentar, der das Gegenteil behauptete — jetzt ruft er den Slug auf.
+  **Prosa nachgezogen:** `README.md` (die Typ-Aufzählung nannte zwei entfallene Namen — und „Kapitel", eine
+  Ebene, die es seit B-106 nicht mehr gibt) und `wiki/03-uebungstypen.md` (Überschriften 3.6 und 4).
+  **Nicht mitgenommen und darum abgelegt:** [B-166](B-166-wiki-nennt-die-entfernte-kapitel-route.md) (dieselbe
+  Wiki-Datei trägt eine Route auf die entfernte `Chapter`-Ebene, drei Dateien betroffen) und
+  [B-167](B-167-katalogliste-zeigt-beim-filterwechsel-alte-treffer.md) (Umfeld-Fund des Reviewers, von ihm
+  selbst als nicht vermessen gekennzeichnet).
+  **Eine Erwartung der Schätzung war falsch:** `docs/openapi/v1.json` bewegt sich um vier Zeilen, weil die
+  generierten Endpunkt-Summaries das Label interpolieren („Legt eine neue Vokabelkarten-Übung an."). Bleibt
+  `vertragsbruch: nein` — eine Summary ist Prosa, kein Feld.

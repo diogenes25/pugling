@@ -431,7 +431,11 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
                   <span>{ex.title} <span className="muted">· {typeLabel(ex.type)}</span>
                     {(ex.gradeMin != null || ex.gradeMax != null) &&
                       <span className="muted"> · Kl. {ex.gradeMin ?? "?"}–{ex.gradeMax ?? "?"}</span>}
-                    {ex.categoryName && <span className="muted"> · {ex.categoryName}</span>}
+                    {/* Nur die Art trägt ein Etikett, Typ/Klasse/Quelle nicht — und das ist Absicht (B-163):
+                        der Typ kommt aus zwölf festen Werten, die man lernt, die Art erfindet jeder Creator
+                        je Fach frei. Nur bei ihr kann der Leser die Achse grundsätzlich nicht kennen. Wer die
+                        Fragmente hier glattzieht, nimmt genau diese Unterscheidung wieder weg. */}
+                    {ex.categoryName && <span className="muted"> · Art: {ex.categoryName}</span>}
                     {ex.source && <span className="muted"> · {ex.source}</span>}
                   </span>
                   {ex.description && <span className="muted" style={{ fontSize: 12 }}>{ex.description}</span>}

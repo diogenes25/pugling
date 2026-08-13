@@ -15,7 +15,10 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
 
     /// <inheritdoc/>
     public override ExerciseTypeManifest Manifest { get; } = new(
-        ExerciseTypeKeys.Vocabulary, "Vokabeln", "flashcards", 1, "vocabulary",
+        // "Vokabelkarten", not "Vokabeln" (B-163): the type axis names the method or form, the category axis
+        // ("Art") names the subject matter. A type named after subject matter must collide with a category -
+        // and the seeded categories are exactly "Vokabeln"/"Grammatik". The label follows the renderer below.
+        ExerciseTypeKeys.Vocabulary, "Vokabelkarten", "flashcards", 1, "vocabulary",
         ExerciseCheckMode.StudyPlanTest, "tests", LearningMethod.Vocabulary,
         ["letterHints", "audio", "selfAssess", "multipleChoice"]);
 

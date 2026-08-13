@@ -87,9 +87,10 @@ eigenständige, dateibasierte Welt.
 
 ## 🧩 Auf einen Blick: Was kann die App?
 
-- **Lern-Katalog** pflegen: Fächer, Kapitel und **12 Übungstypen** (Vokabeln, Grammatik, Lückentext,
-  Leseverstehen, Hörverstehen, Aufsatz, Zuordnung, Übersetzung, Rechnen fest/zufällig, Listen,
-  Birkenbihl) — mit Metadaten (Klassenstufe, Schulart, Quelle, Art) für die Vorfilterung.
+- **Lern-Katalog** pflegen: Fächer, Lehrwerk-Reihen mit ihren Units und **12 Übungstypen**
+  (Vokabelkarten, Regelaufgaben, Lückentext, Leseverständnis, Hörverständnis, Aufsatz, Zuordnung,
+  Übersetzung, Rechenaufgaben, Rechen-Drill, Liste, Birkenbihl) — mit Metadaten (Klassenstufe,
+  Schulart, Quelle, Art) für die Vorfilterung.
 - **Study-Pläne** je Kind: gemischte Positionen auf Katalog-Übungen mit
   - Leitner-Karteikasten (Boxen 1–5, Fälligkeit),
   - Stufen-Fahrplan (Schwierigkeit steigt über die Tage),

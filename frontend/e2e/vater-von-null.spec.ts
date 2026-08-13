@@ -237,8 +237,10 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
   await unitSelect.selectOption("");
   await unitSelect.selectOption(seriesUnitId);
   const grammarRow = vater.locator("div", { hasText: `Grammatik ${RUN}` }).last();
-  // Der Name kommt aus dem Manifest, nicht aus einer Tabelle im Frontend.
-  await expect(grammarRow).toContainText("Grammatik");
+  // Der Name kommt aus dem Manifest, nicht aus einer Tabelle im Frontend – und geprüft wird jetzt
+  // „Regelaufgaben", ein Wort, das der TITEL nicht enthält. Vorher stand hier `toContainText("Grammatik")`,
+  // und der Titel „Grammatik <RUN>" erfüllte die Zusicherung schon: sie konnte nicht fehlschlagen (B-163).
+  await expect(grammarRow).toContainText("Regelaufgaben");
   await expect(grammarRow.getByRole("button", { name: /Bearbeiten/ })).toBeVisible();
   // Und die zuvor im UI angelegte Vokabelübung steht weiter daneben – die Liste lebt.
   // `exact`, weil der Titel auch in der Erfolgsmeldung darüber steht.

@@ -83,7 +83,10 @@ public sealed class GrammarExerciseType : ExerciseTypeBase
     public override string Key => ExerciseTypeKeys.Grammar;
     /// <inheritdoc/>
     public override ExerciseTypeManifest Manifest { get; } = new(
-        ExerciseTypeKeys.Grammar, "Grammatik", "prompts", 1, "grammar",
+        // "Regelaufgaben", not "Grammatik" (B-163): same reason as the vocabulary type - the label names the
+        // form (a prompt with an answer and an optional rule hint), not the subject matter, because the
+        // category axis owns subject matter and "Grammatik" is a seeded category.
+        ExerciseTypeKeys.Grammar, "Regelaufgaben", "prompts", 1, "grammar",
         ExerciseCheckMode.None, null, null, ["ruleHints"]);
     /// <inheritdoc/>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson)

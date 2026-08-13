@@ -41,6 +41,10 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   // Die Übung wird im Radiogroup-Katalog per Radio ausgewählt (ohne Filter listet er alle Übungen).
   const exRadio = vater.getByRole("radio", { name: new RegExp(EXERCISE) });
   await expect(exRadio).toBeVisible();
+  // B-163: die Art trägt ein Etikett, der Typ nicht. Die Zusicherung fällt, sobald das „Art: " wegfällt –
+  // der Titel „Vokabeln: En ville" allein erfüllt sie nicht, obwohl er dasselbe Wort enthält. Sie hängt an
+  // demselben zugänglichen Namen, den der Locator eine Zeile höher schon tragend benutzt.
+  await expect(exRadio).toHaveAccessibleName(/Art: Vokabeln/);
   await exRadio.check();
   await vater.locator('select[aria-label="Ziel-Rhythmus"]').selectOption("Daily");
   await vater.getByRole("checkbox", { name: /Leitner/ }).check();

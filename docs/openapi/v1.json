@@ -13345,7 +13345,7 @@
         "tags": [
           "Creator \u2013 Vocabulary"
         ],
-        "summary": "Legt eine neue Vokabeln-\u00DCbung an.",
+        "summary": "Legt eine neue Vokabelkarten-\u00DCbung an.",
         "parameters": [
           {
             "name": "seriesId",
@@ -13527,7 +13527,7 @@
         "tags": [
           "Creator \u2013 Vocabulary"
         ],
-        "summary": "Aktualisiert eine Vokabeln-\u00DCbung.",
+        "summary": "Aktualisiert eine Vokabelkarten-\u00DCbung.",
         "parameters": [
           {
             "name": "seriesId",
@@ -15880,7 +15880,7 @@
         "tags": [
           "Creator \u2013 Grammar"
         ],
-        "summary": "Legt eine neue Grammatik-\u00DCbung an.",
+        "summary": "Legt eine neue Regelaufgaben-\u00DCbung an.",
         "parameters": [
           {
             "name": "seriesId",
@@ -16062,7 +16062,7 @@
         "tags": [
           "Creator \u2013 Grammar"
         ],
-        "summary": "Aktualisiert eine Grammatik-\u00DCbung.",
+        "summary": "Aktualisiert eine Regelaufgaben-\u00DCbung.",
         "parameters": [
           {
             "name": "seriesId",

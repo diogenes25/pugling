@@ -487,18 +487,33 @@ export function VaterWizard() {
           </div>
 
           {/* Drei optionale Filter, die der Server schon konnte (B-18). Alle mit „alle" als Vorgabe: Ein
-              Fach ohne Arten zeigt sonst ein leeres Pulldown und wirkt kaputt. */}
-          <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
-            <select aria-label="Art" value={categoryId} style={{ maxWidth: 180 }}
-              onChange={(e) => setCategoryId(e.target.value === "" ? "" : Number(e.target.value))}>
-              <option value="">– alle Arten –</option>
-              {categories.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-            <select aria-label="Übungstyp" value={typeKey} style={{ maxWidth: 180 }}
-              onChange={(e) => setTypeKey(e.target.value)}>
-              <option value="">– alle Typen –</option>
-              {types?.all.map((t) => <option key={t.type} value={t.type}>{t.label}</option>)}
-            </select>
+              Fach ohne Arten zeigt sonst ein leeres Pulldown und wirkt kaputt.
+
+              Die Beschriftungen sind **sichtbar**, nicht nur `aria-label` (B-163): „Art" und „Typ" sind zwei
+              verschiedene Achsen mit ähnlichem Wortmaterial, und der Platzhalter verschwindet, sobald man
+              etwas auswählt — danach wäre die Achse für Sehende gar nicht mehr benannt, während ein
+              Screenreader sie weiter vorliest. Muster: `ExerciseFilterBar` — dort sind die Beschriftungen
+              allerdings nur optisch, der Name kommt aus `aria-label`; hier sind sie per `htmlFor` verknüpft.
+              Ein „Vereinheitlichen" darf die Verknüpfung also nicht wieder herausnehmen.
+              Das Quelle-Feld daneben bleibt bewusst unbeschriftet: Entscheidung 5 gilt für die zwei Achsen
+              mit ähnlichem Wortmaterial. Sein Platzhalter verschwindet zwar genauso beim Tippen — das ist
+              derselbe Mangel, aber eine eigene Entscheidung. */}
+          <div className="row" style={{ gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
+            <div className="field" style={{ maxWidth: 180 }}>
+              <label htmlFor="wiz-category">Art</label>
+              <select id="wiz-category" value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value === "" ? "" : Number(e.target.value))}>
+                <option value="">– alle Arten –</option>
+                {categories.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+            <div className="field" style={{ maxWidth: 180 }}>
+              <label htmlFor="wiz-type">Typ</label>
+              <select id="wiz-type" value={typeKey} onChange={(e) => setTypeKey(e.target.value)}>
+                <option value="">– alle Typen –</option>
+                {types?.all.map((t) => <option key={t.type} value={t.type}>{t.label}</option>)}
+              </select>
+            </div>
             <input aria-label="Quelle" placeholder="Quelle, z. B. Green Line 1…" style={{ maxWidth: 220 }}
               value={sourceSearch} onChange={(e) => setSourceSearch(e.target.value)} />
           </div>
@@ -525,7 +540,10 @@ export function VaterWizard() {
                 return (
                   <label key={e.id} className="checkline" style={{ padding: 8, border: "1px solid var(--stroke)", borderRadius: 8 }}>
                     <input type="checkbox" checked={selected.includes(e.id)} onChange={() => toggle(e.id)} />
-                    <span>{e.title} <span className="muted">· {e.type}{by ? ` – ${by}` : ""}{e.source ? ` [${e.source}]` : ""}</span></span>
+                    {/* Anzeigename aus dem Manifest, nicht der Schlüssel: sonst bietet das Pulldown darüber
+                        „Vokabelkarten" an, während die Zeile darunter „Vocabulary" sagt — ein Widerspruch in
+                        einem Bildschirm. Der Rückfall auf den Schlüssel greift nur, solange das Manifest lädt. */}
+                    <span>{e.title} <span className="muted">· {types?.label(e.type) ?? e.type}{by ? ` – ${by}` : ""}{e.source ? ` [${e.source}]` : ""}</span></span>
                   </label>
                 );
               })}

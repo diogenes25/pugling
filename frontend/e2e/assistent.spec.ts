@@ -45,6 +45,11 @@ test("Der Assistent legt Kind, Plan und Position mit den eingetippten Feinschlif
   // ---------- Schritt 3: Übungen (auf eine einzelne, seed-stabile Übung gefiltert) ----------
   await page.getByRole("heading", { name: /Übungen wählen/ }).waitFor();
   await page.getByLabel("Übung suchen").fill("environment");
+  // B-163: die Zeile nennt den Anzeigenamen aus dem Manifest, nicht den Schlüssel. Der Titel dieser Übung
+  // heißt „Vocabulary: The environment" und enthält den Schlüssel selbst – „Vokabelkarten" kann darum nur
+  // aus dem Manifest kommen. Ein Rückfall auf `e.type` macht das rot, und genau der war hier ungeschützt.
+  await expect(page.getByRole("checkbox", { name: /The environment/ }))
+    .toHaveAccessibleName(/· Vokabelkarten/);
   await page.getByRole("button", { name: "Alle wählen" }).click();
   // Seit B-18 kann "Alle waehlen" asynchron nachladen (bei mehr Treffern als geladen, take=500). Auf die
   // Zahl in der Ueberschrift warten, statt sofort weiterzuklicken: Sonst traefe "Weiter" ein noch leeres
