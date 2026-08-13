@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/katalog, bereich/auth, rolle/creator]
+tags: [typ/story, status/gegrillt, bereich/katalog, bereich/auth, rolle/creator]
 aliases: [Arten im fremden Fach umbenennbar, ExerciseCategory ohne Eigentum]
-status: ausformuliert
+status: gegrillt
 prio: P2
 art: Defekt
 groesse: ""
@@ -58,33 +58,80 @@ der die Idee formuliert war, und die darunterliegende offen ließ — dieselbe F
 
 ## Offene Punkte
 
-1. **Gilt das Eigentum des Fachs für seine Arten, oder sind Arten bewusst gemeinsam?** Empfehlung: es gilt.
-   Eine Art ist ohne ihr Fach bedeutungslos (`SubjectId` ist Pflicht, Cascade), und `CatalogAdmin`
-   beschreibt sie als „der einzige Ordnungsbegriff, den der Vater selbst erfinden darf" — an *seinem* Fach.
-2. **Auch `POST`, oder nur `PATCH`/`DELETE`?** Empfehlung: alle drei. Beim Fach durfte `Create` frei
-   bleiben, weil ein neues Fach niemandem gehört; eine neue Art landet dagegen **in** einem fremden Baum.
-   Das ist der Unterschied, der die Abweichung von B-13s Entscheidung 2 rechtfertigt — er gehört benannt,
-   nicht stillschweigend übernommen.
-3. **Bekommt `CategoryResponse` ein `isOwn`?** Empfehlung: ja, additiv — sonst kann die Oberfläche die
-   Sperre wieder nur erraten, und wir hätten B-154 eine Ebene tiefer erneut. Abhängigkeit:
-   [B-156](B-156-ismine-heisst-anderswo-isown.md) entscheidet den Feldnamen; diese Story sollte danach
-   kommen oder den dort beschlossenen Namen übernehmen.
-4. **Zieht das Frontend im selben Schnitt mit?** Empfehlung: ja — anders als bei B-13 ist der UI-Nachtrag
-   hier nicht hypothetisch, sondern durch B-154 schon sichtbar halb fertig.
-5. **Trägt der Sonderfall „ownerloses Seed-Fach" seine Arten mit?** Zu prüfen: Die Seed-Fächer haben keinen
-   Owner, ihre Arten wären damit fail-closed für **jeden** unveränderbar. Das ist konsequent, aber es
-   trifft mehr Zeilen als bei B-13 (dort vier Fächer, hier deren gesamte Art-Listen).
+Alle in der Grill-Runde vom 2026-08-13 geschlossen (Nummern zeigen auf die Entscheidungen).
 
-## Akzeptanzkriterien (Entwurf)
+1. ~~Gilt das Eigentum des Fachs für seine Arten, oder sind Arten bewusst gemeinsam?~~ → Entscheidung 1.
+2. ~~Auch `POST`, oder nur `PATCH`/`DELETE`?~~ → Entscheidung 2. Die Empfehlung der Ausformulierung („alle
+   drei") wurde dabei **revidiert**: `POST` bleibt frei.
+3. ~~Bekommt `CategoryResponse` ein `isOwn`?~~ → Entscheidung 3. Ebenfalls **revidiert**: kein neues Feld,
+   und damit auch keine Abhängigkeit von [B-156](B-156-ismine-heisst-anderswo-isown.md).
+4. ~~Zieht das Frontend im selben Schnitt mit?~~ → Entscheidung 4.
+5. ~~Trägt der Sonderfall „ownerloses Seed-Fach" seine Arten mit?~~ → Entscheidung 1 (ja, fail-closed); die
+   Reichweite ist am Seed nachgezählt.
 
-1. `POST`/`PATCH`/`DELETE` auf `…/subjects/{subjectId}/categories…` liefert `403 not_owner`, wenn der
-   aufrufende Creator nicht Eigentümer des **Fachs** ist — inklusive `OwnerAdultId == null`.
-2. Der Eigentümer des Fachs kann seine Arten unverändert anlegen, umbenennen und löschen.
-3. `GET`/`List` der Arten bleibt für jeden Creator offen (Lesen ist global, wie beim Fach).
-4. Ein Integrationstest belegt den Fremd-Zugriff auf allen drei schreibenden Wegen; ein Fall deckt das
-   ownerlose Seed-Fach.
-5. Falls offener Punkt 3 mit „ja" entschieden wird: `CategoryResponse` trägt das Flag, und
-   `CatalogAdmin.tsx` liest es (die `NameRow` der Art bekommt dieselbe Behandlung wie die des Fachs).
+In der Runde **neu aufgetaucht** und ausgelagert: die Begriffskollision „Art" gegen „Typ" (Entscheidung 5).
+
+## Entscheidungen
+
+1. **Das Eigentum des Fachs gilt für seine Arten, fail-closed.** Eine Art ist ohne ihr Fach bedeutungslos
+   (`SubjectId` ist Pflicht), und `CatalogAdmin` beschreibt sie als „der einzige Ordnungsbegriff, den der
+   Vater selbst erfinden darf" — an *seinem* Fach. Ein ownerloses Fach macht seine Arten damit für
+   **niemanden** änderbar, dieselbe Semantik wie B-13s Entscheidung 3. *Kosten:* Am Seed nachgezählt sind
+   das **sieben** Arten an vier ownerlosen Fächern (`Seed.cs:605-606, 997-999, 1002-1003`: Vokabeln,
+   Grammatik ×2, Leseverstehen, Grundrechenarten, Algebra) — und das sind genau die Vorfilter-Listen, an
+   denen der Planbau hängt. Sie sind ab dieser Story für alle eingefroren. Die Reichweite ist deutlich
+   größer als B-13s vier Fächer; für dieses Projekt tragbar, weil Datenbanken weggeworfen werden, für eine
+   Produktionsinstanz nicht.
+2. **Anlegen bleibt frei — keine Abweichung von B-13s Entscheidung 2.** Die Ausformulierung hatte „alle
+   drei Wege sperren" empfohlen; das ist **am Code widerlegt**: `IsOwnedBy(null, …)` ist `false`
+   (`AuthAccess.cs:90`), ein gegatetes `POST` hätte mit Entscheidung 1 dazu geführt, dass **niemand** mehr
+   eine Art unter „Englisch", „Mathe", „Erdkunde" oder „Französisch" anlegen kann — also unter den einzigen
+   Fächern, die ein normaler Nutzer hat. Die Art-Achse des Seed-Katalogs wäre eingefroren, nicht geschützt.
+   *Kosten:* Ein fremder Creator darf weiter Einträge in die Vorfilter-Liste meines eigenen Fachs legen; er
+   kann sie nur nicht mehr umbenennen oder löschen. Das ist die bewusst in Kauf genommene Hälfte.
+3. **Kein Eigentums-Flag an `CategoryResponse`.** Das Eigentum der Art *ist* das des Fachs (Entscheidung 1)
+   — ein eigenes Feld wäre eine zweite Kopie derselben Wahrheit, und zwei Kopien laufen in diesem Repo
+   auseinander. Nachgezählt: **alle vier** Leser holen die Arten über die Fach-Id
+   (`CatalogAdmin.tsx:37`, `ExerciseFilterBar.tsx:44`, `VaterWizard.tsx:133`, `CreatorApi.cs:52`), und der
+   **einzige**, der etwas ändert, ist `CatalogAdmin` — der hält `subject.isMine` seit B-154 schon.
+   *Kosten:* Ein künftiger Client, der Arten **ohne** ihr Fach listet, müsste das Flag nachtragen; additiv,
+   also kein Bruch. Folge dieser Entscheidung: `vertragsbruch: nein` und keine Abhängigkeit von B-156.
+4. **Das Frontend zieht im selben Schnitt mit** (`wo: beides`). B-13 hat genau das aufgeschoben
+   (`wo: backend`, Entscheidung 5) — und das Ergebnis war [B-154](B-154-katalogseite-bietet-fremde-faecher-zum-umbenennen.md):
+   Knöpfe, die ein `403` versprechen. Ohne den UI-Teil erzeugt diese Story denselben Defekt eine Ebene
+   tiefer, wissentlich, und B-154s Akzeptanzkriterium 4 („die Art-Zeilen bleiben bedingungslos") würde von
+   einer richtigen Aussage zu einer falschen. *Kosten:* beide Reviewer und ein größerer Diff — der
+   Frontend-Anteil ist allerdings **eine** Datei und dasselbe Muster wie `SubjectRow`, eine Ebene tiefer.
+5. **Die Begriffskollision „Art" gegen „Typ" wird eine eigene Story.** Beim Nachsehen gefunden: beide Achsen
+   der Übungssuche tragen **dieselben Wörter** — `VocabularyExerciseType.cs:18` heißt „Vokabeln" und
+   `Seed.cs:997` heißt „Vokabeln"; `BuiltInExerciseTypes.cs:22` heißt „Leseverständnis" und `Seed.cs:999`
+   heißt „Leseverstehen" — und im UI stehen sie als „– alle Arten –" und „– alle Typen –" nebeneinander in
+   derselben Filterleiste. Das Ziel dieser Story ist ohne die Entzerrung erfüllt, also greift die Regel des
+   Bereichs (eigene Story). *Kosten:* Nach Entscheidung 1 sind die Seed-Arten anschließend für niemanden
+   mehr umbenennbar — eine Entzerrung der Namen muss also **im Seed** passieren, und je später sie kommt,
+   desto mehr bestehende Datenbanken tragen die kollidierenden Namen. → **[B-163](B-163-art-und-typ-tragen-dieselben-woerter.md)**
+
+## Akzeptanzkriterien
+
+1. `PATCH`/`DELETE` einer Art liefert `403 not_owner`, wenn der aufrufende Creator nicht Eigentümer des
+   **Fachs** ist — inklusive `OwnerAdultId == null` (Seed-Fach: für niemanden, auch nicht für den
+   Seed-Vater).
+2. `POST` einer neuen Art bleibt für **jeden** Creator frei — auch unter einem fremden und unter einem
+   Seed-Fach (Entscheidung 2).
+3. Der Eigentümer des Fachs kann seine Arten unverändert anlegen, umbenennen und löschen.
+4. `GET`/`List` der Arten bleibt für jeden Creator offen — kein Verhalten ändert sich für Lesezugriffe.
+5. **Kein neues Vertragsfeld.** `CatalogAdmin` gatet die Art-Zeilen über `subject.isMine` und nennt bei
+   fremdem bzw. ownerlosem Fach den Grund, statt stumm zu bleiben (Muster `SubjectRow` aus B-154).
+6. Ein Integrationstest belegt: fremder Creator → `403` auf **beiden** schreibenden Wegen; Seed-Fach →
+   `403` auch für den Seed-Vater; **und in beiden Fällen gelingt das Anlegen weiterhin**.
+7. Ein Komponententest belegt: Art-Zeilen ohne Bedien-Knöpfe bei fremdem und ownerlosem Fach, mit Knöpfen
+   beim eigenen — und das „Neue Art"-Formular bleibt in **allen** Fällen bedienbar.
+8. Das Löschverhalten ändert sich **nicht**: eine gelöschte Art nimmt ihren Übungen nur die Zuordnung
+   (`Exercise.CategoryId` ist optional) — kein `409`, wie bisher.
+
+Kriterium 6 und 7 tragen je die zweite Hälfte von Entscheidung 2 („Anlegen gelingt weiterhin"). Das ist
+Absicht: genau diese Zusicherung würde ein späterer Umbau zu „symmetrisch sperren" brechen, und ohne sie
+wäre die Entscheidung nur ein Kommentar.
 
 ## Verlauf
 
@@ -99,3 +146,11 @@ der die Idee formuliert war, und die darunterliegende offen ließ — dieselbe F
   **fachliche** Frage aus Punkt 1/2, und die entscheidet der Nachtlauf nicht selbst — `art: Defekt` erlaubt
   autonomes Grillen, aber Punkt 2 weicht bewusst von einer bestehenden Entscheidung ab (B-13, Entscheidung 2)
   und gehört darum vorgelegt.
+- **2026-08-13** — `ausformuliert → gegrillt`. Fünf Entscheidungen im Dialog. **Zwei Empfehlungen der
+  Ausformulierung wurden dabei widerlegt**, beide am Code: „alle drei Schreibwege sperren" hätte die
+  Art-Achse aller vier Seed-Fächer eingefroren statt geschützt (`IsOwnedBy(null, …)` ist `false`), und ein
+  Eigentums-Flag an `CategoryResponse` ist unnötig, weil alle vier Leser die Arten über die Fach-Id holen und
+  der einzige Schreiber `subject.isMine` seit B-154 schon hält. Damit fällt die Abhängigkeit von B-156 weg
+  und `vertragsbruch` ist `nein`. Die Reichweite von Entscheidung 1 ist am Seed nachgezählt: sieben Arten an
+  vier ownerlosen Fächern. Neu aufgetaucht und ausgelagert: die Begriffskollision „Art" gegen „Typ"
+  ([B-163](B-163-art-und-typ-tragen-dieselben-woerter.md)). Prio bleibt P2.
