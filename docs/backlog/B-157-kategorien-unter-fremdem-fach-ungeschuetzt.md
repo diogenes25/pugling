@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/katalog, bereich/auth, rolle/creator]
+tags: [typ/story, status/geschaetzt, bereich/katalog, bereich/auth, rolle/creator]
 aliases: [Arten im fremden Fach umbenennbar, ExerciseCategory ohne Eigentum]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: S
+wo: beides
+migration: nein
+vertragsbruch: nein
 quelle: pugling-reviewer zu B-13 (Nachtlauf 2026-08-12, Fund 2)
 unverifiziert: false
 grund: ""
@@ -133,6 +133,79 @@ Kriterium 6 und 7 tragen je die zweite Hälfte von Entscheidung 2 („Anlegen ge
 Absicht: genau diese Zusicherung würde ein späterer Umbau zu „symmetrisch sperren" brechen, und ohne sie
 wäre die Entscheidung nur ein Kommentar.
 
+## Schätzung
+
+**Größe: S** — an der oberen Kante. Kein Schema, kein Vertrag: zwei Controller-Actions bekommen einen
+Wächter, eine Frontend-Datei bekommt dieselbe Bedingung eine Ebene tiefer, zwei **bestehende** Testdateien
+werden erweitert. Der nächste Anker ist [B-154](B-154-katalogseite-bietet-fremde-faecher-zum-umbenennen.md)
+(`S`, dieselbe Klasse eine Ebene höher); deutlich kleiner als [B-13](B-13-fach-kapitel-eigentum.md) (`M`),
+weil dort die Spalte, die Migration und die Vertragsfelder dazukamen — hier fällt all das weg.
+
+- **`migration: nein`** — nachgesehen: `ExerciseCategory` bekommt **kein** Feld. Das Eigentum wird aus
+  `Subject.OwnerAdultId` gelesen (Entscheidung 1), die Entity bleibt wie sie ist
+  (`Models/LearnEntities.cs:40-46`). Keine neue Beziehung, keine neue Spalte, keine Faltung der Kette.
+- **`vertragsbruch: nein`** — Entscheidung 3: `CategoryResponse` bleibt unangetastet
+  (`Contracts/Creator/CatalogDtos.cs:28`). Kein DTO, kein Endpunkt, keine `Pugling.Client`-Methode ändert
+  sich; die Story braucht auch keine neue Zeile im Client.
+
+**Risiken:**
+
+- **Der wahrscheinlichste Fehlgriff sitzt im Frontend, und er würde Akzeptanzkriterium 2 brechen.** Die Arten
+  liegen in `CatalogAdmin` als ein Block: die `NameRow`-Liste **und** das „Neue Art"-Formular
+  (`NewName`, `CatalogAdmin.tsx` am Ende des `subject &&`-Zweigs). Wer den Block als Ganzes in
+  `{subject.isMine && …}` fasst, versteckt das Anlege-Formular mit — und genau das darf nicht passieren
+  (Entscheidung 2: Anlegen bleibt frei). Akzeptanzkriterium 7 pinnt es deshalb ausdrücklich.
+- **Ein Helfer, der zwei Situationen zusammenzieht.** Die naheliegende Bauform ist
+  `db.Subjects.Where(s => s.Id == subjectId).Select(s => s.OwnerAdultId).FirstOrDefaultAsync(ct)` — die
+  liefert `null` sowohl für „Fach existiert nicht" als **auch** für „Fach hat keinen Eigentümer". Das ist
+  wörtlich die Fehlerfamilie, die dieses Repo mehrfach bezahlt hat (B-111, B-114, B-161). Der Helfer muss
+  die zwei Fälle trennen — etwa über einen Rückgabewert, der „nicht gefunden" von „ownerlos" unterscheidet,
+  oder über eine getrennte Existenzprüfung. Andernfalls antwortet ein `PATCH` auf ein **nicht existierendes**
+  Fach mit `403` statt `404`.
+- **Die Reihenfolge 404-vor-403 ist hier richtig und soll nicht „repariert" werden.** `Update` (`:83`) und
+  `Delete` (`:106`) melden zuerst `NotFound`, wenn die Art nicht zu diesem Fach gehört; der Eigentums-Check
+  kommt danach. Anders als bei B-13 (403 vor 409, weil das 409 Kind-Daten verriet) gibt es hier nichts zu
+  verbergen: die Existenz der Arten ist per Design öffentlich (Akzeptanzkriterium 4). Der Kommentar sollte
+  das sagen, sonst zieht jemand die Analogie zu B-13 und dreht die Reihenfolge.
+- **Der Frontend-Test braucht eine Extraktion.** `CatalogAdmin` lädt die Arten beim Fachwechsel nach und
+  hängt damit am Netz — genau der Grund, aus dem B-154 `SubjectRow` exportiert hat. Für die Art-Zeilen ist
+  derselbe Schritt nötig, sonst prüft der Test die Bindung nicht. Das ist der einzige Teil, der die Story
+  über ein reines `XS` hebt.
+
+**Angriffsplan** (Backend zuerst):
+
+1. `ExerciseCategoriesController`: einen Helfer neben `SubjectExists` (`:23`), der Existenz **und**
+   Eigentümer getrennt liefert (siehe Risiko). `Update` (`:81`) und `Delete` (`:104`) prüfen nach der
+   `NotFound`-Klausel `ClaimsPrincipalExtensions.IsOwnedBy(ownerAdultId, User.CreatorId())` und liefern
+   sonst `this.ProblemWithCode(ApiErrors.NotOwner, …)` — Muster `SubjectsController.cs:78-79`.
+   `Create` (`:59`) bleibt **unverändert**.
+2. `[ProducesResponseType(StatusCodes.Status403Forbidden)]` an beiden Actions ergänzen, damit das
+   Vertragsdokument die 403 kennt (das hat B-100 als eigene Story eingefordert).
+3. Backend-Tests (siehe Testweg), dann `dotnet test`.
+4. `CatalogAdmin.tsx`: die Art-`NameRow`s in `subject.isMine` fassen — **nur die Zeilen, nicht den Block**
+   —, bei fremdem bzw. ownerlosem Fach denselben erklärenden Satz wie `SubjectRow` (Muster aus B-154), und
+   das „Neue Art"-Formular unberührt lassen. Dafür die Art-Zeile als exportierten Baustein herausziehen.
+5. `CatalogAdmin.test.tsx` erweitern; rote Probe je neuem Fall.
+6. Rollengang im Browser, `frontend-reviewer` **und** `pugling-reviewer` (`wo: beides`).
+
+**Testweg**:
+
+- **`backend/Pugling.Api.Tests/FachEigentumTests.cs` erweitern** (nicht eine neue Datei): dort liegt der
+  `ZweiterCreatorAsync`-Helfer schon, und das Thema ist dasselbe — Eigentum im Katalog. Neue Fälle: fremder
+  Creator → `403 not_owner` auf `PATCH` **und** `DELETE` einer Art in fremdem Fach; Seed-Fach → `403` auch
+  für den Seed-Vater; **und `POST` gelingt in beiden Fällen** (Akzeptanzkriterium 6, die zweite Hälfte von
+  Entscheidung 2). Bewusst **nicht** mitgemacht: den Helfer nach `TestApi` zu ziehen — der
+  `pugling-reviewer` hat neun Kopien dieses Gerüsts als *etablierte* Duplikation eingeordnet, das Aufräumen
+  ist eine eigene Aufgabe und nicht diese.
+- **`frontend/src/vater/CatalogAdmin.test.tsx` erweitern** (existiert seit B-154): Art-Zeilen ohne Knöpfe
+  bei fremdem und ownerlosem Fach, mit Knöpfen beim eigenen, und das „Neue Art"-Formular in **allen** drei
+  Fällen vorhanden.
+- **Rollengang**: `/vater/katalog` gegen eine laufende Instanz, Server **nach** der letzten Änderung
+  gestartet; die drei Fach-Zustände über die echte API herstellen (zweiter Creator per
+  `POST supervisor/adults`), wie im Nachtlauf vom 2026-08-12. Zu sehen ist der Unterschied zu heute direkt:
+  unter einem fremden Fach verschwinden die Art-Knöpfe, das Anlege-Feld bleibt.
+- **`/smoke-test`** als Abschluss-Check.
+
 ## Verlauf
 
 - **2026-08-12** — angelegt aus dem `pugling-reviewer`-Befund zum B-13-Review (Fund 2, Nachtlauf Sprint A).
@@ -154,3 +227,13 @@ wäre die Entscheidung nur ein Kommentar.
   und `vertragsbruch` ist `nein`. Die Reichweite von Entscheidung 1 ist am Seed nachgezählt: sieben Arten an
   vier ownerlosen Fächern. Neu aufgetaucht und ausgelagert: die Begriffskollision „Art" gegen „Typ"
   ([B-163](B-163-art-und-typ-tragen-dieselben-woerter.md)). Prio bleibt P2.
+- **2026-08-13** — `gegrillt → geschaetzt`. `S` an der oberen Kante, `wo: beides`, **`migration: nein`** und
+  **`vertragsbruch: nein`** — beide fallen weg, weil Entscheidung 1 das Eigentum aus `Subject.OwnerAdultId`
+  *liest* statt ein Feld anzulegen und Entscheidung 3 den Vertrag unangetastet lässt. Am Controller
+  nachgesehen: `Update` (`:81`) und `Delete` (`:104`) laden das Fach heute **nicht**, der Wächter ist je
+  Action eine Zeile plus ein Helfer. Zwei Risiken benannt, die beide aus der Fehlerfamilie dieses Repos
+  kommen: ein Helfer über `FirstOrDefaultAsync` auf `OwnerAdultId` zieht „Fach fehlt" und „Fach ownerlos"
+  zusammen (dann antwortet ein `PATCH` auf ein nicht existierendes Fach mit `403` statt `404`), und im
+  Frontend würde ein zu weit gefasstes `{subject.isMine && …}` das „Neue Art"-Formular mitverstecken und
+  damit Entscheidung 2 brechen. Testweg: die **bestehenden** `FachEigentumTests` und `CatalogAdmin.test.tsx`
+  erweitern statt neue Dateien anlegen.
