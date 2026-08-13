@@ -416,6 +416,22 @@ Zwei Sprints, zwei Reviewer-Läufe, zwei Korrektheitsfunde: das Tor **wirkt**, u
 bestraft es dafür. Ob fünf die richtige Grenze ist, wenn ein *funktionierender* Prüfschritt sie füllt, ist die
 Frage, die dieser Lauf aufwirft.
 
+## Nachtrag 2026-08-13 — was der Nutzer aus den Vorschlägen gemacht hat
+
+Freigabe 3 hat die Retrospektiven auf **Vorschlagen** beschränkt; hier der Ausgang, damit die offene Schleife
+im Protokoll geschlossen ist und nicht im Nichts endet.
+
+| Vorschlag | Ausgang |
+| --- | --- |
+| **Rote Probe je Fall statt je Datei** (Retro Sprint B) | **Gelandet** — als Konventions-Zeile im Startkontext ([CLAUDE.md](../CLAUDE.md)), nicht in `frontend/CLAUDE.md` wie vorgeschlagen. Die Verlagerung ist eine Korrektur am Vorschlag selbst: von den vier gemessenen Fällen sind **zwei Backend** (B-157s Akzeptanzkriterien 4 und 8), die Regel gilt also, wo Tests geschrieben werden — und das sind beide Seiten. Bezahlt ist sie aus dem Platz, den die `backend/CLAUDE.md`-Verlagerung geschaffen hat: Root steht bei 15.359 von 19.000 B |
+| **Skill-Wächter** (Retro Sprint A) | **Nicht ins Repo**, wie empfohlen. Ein Test, der `~/.claude` liest, wäre in CI sinnlos und lokal umgebungsabhängig; die Regel liegt stattdessen als Gedächtnis-Notiz beim `doctor`-Ablauf, wo der Fehler entstand |
+| **Fehlerzähler: ist 5 die richtige Grenze?** | **Offen** — bewusst. Zwei Sprints, zwei Reviewer-Läufe, zwei echte Korrektheitsfunde, und der Zähler stand am Anschlag: er bestraft gerade den Prüfschritt, der wirkt. Die Frage braucht mehr als zwei Datenpunkte |
+
+**Der vierte Fall kam am Tag danach dazu** und stützt die gelandete Regel: [B-157](backlog/B-157-kategorien-unter-fremdem-fach-ungeschuetzt.md)
+hatte zwei Akzeptanzkriterien, die nur als Kommentar existierten — AK 4 (nie las ein *fremder* Creator die
+Arten) und AK 7 (kein Test sah je das Anlege-Formular, weil `CategoryRows` per Konstruktion keines enthält).
+Beide fand ein Reviewer, keines ein Tor.
+
 ## Konkreter Änderungsstand (für Review)
 
 | Commit | Inhalt |

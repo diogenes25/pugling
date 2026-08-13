@@ -180,6 +180,23 @@ Filters (Entscheidung 8).
    gibt keinen belegten Gewinn für das Kind. Nachträglich ist es ein additives Feld, also kein Bruch.
    *Kosten:* die Frage kommt wieder, sobald jemand „was lerne ich hier eigentlich?" in der Arcade
    beantworten will — dann als eigene kleine Story.
+10. **`GrammarTopic.SubjectId` löscht per `Cascade`** — ein Thema stirbt mit seinem Fach, es wandert **nicht**
+    in die 409-Sperrliste von [B-144](B-144-fach-loeschen-trifft-reihen-lautlos.md). Begründung: B-144s Linie
+    läuft an „kann diese Zeile ohne Fach existieren?", und ein fachloses Grammatik-Thema kann es nicht
+    (das Fach ist Pflicht, Entscheidung 4); anders als `KeyResult` und `TimetableEntry`, die B-144 mit 409
+    schützt, ist ein Thema außerdem **keine Kind-Habe**, deren Verlust jemandem wehtut. *Kosten:* Wer ein
+    Fach löscht, löscht dessen Themen samt aller Zuordnungen an Übungen und Units mit — und die Zuordnung ist
+    genau der Wert dieser Story. Ein Fach zu löschen ist damit teurer als heute, ohne dass eine Warnung das
+    sagt: der Löschdialog von `CatalogAdmin` zählt fünf Folgen auf (B-144) und müsste eine sechste nennen.
+    Das gehört in die Akzeptanzkriterien beim Bauen, nicht in eine Folge-Story. Nachgetragen am 2026-08-13
+    auf Entscheid des Nutzers; die Schätzung hatte die Frage als Risiko benannt, weil `SchemaGuardTests`
+    dafür eine bewusste Zeile verlangt.
+11. **Die Story wird nicht geteilt** — gebaut wird der Umfang, wie er in den Entscheidungen 1–10 steht.
+    Begründung: Die benannte Naht (Filter+Facette gegen Vokabular+Zuweisung+Agent) ließe das erste Stück ohne
+    sichtbaren Nutzen zurück, und Teilen müsste die neun Grill-Entscheidungen neu schneiden. *Kosten:* `L` an
+    der oberen Kante bleibt `L` an der oberen Kante — zeigt der Bau, dass es zu groß ist, greift der
+    Teilen-Mechanismus des Bereichs (alte Id auf `verworfen` mit `ersetzt_durch`), und dann ist die Arbeit an
+    den Entscheidungen zweimal zu leisten. Bestätigt am 2026-08-13.
 
 ## Akzeptanzkriterien
 

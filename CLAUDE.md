@@ -105,6 +105,13 @@ Lernstand – positionsgebunden *und* plan-übergreifend je Vokabel-Item.
   repo-weit): ein rotes Tor benennt die verletzte Regel und den Fundort selbst – Inventar, Ausnahmelisten und
   Begründungen erst bei Bedarf nachschlagen in [docs/codequalitaet-gates-plan.md](docs/codequalitaet-gates-plan.md).
   Neue Regel scharf stellen? Erst messen.
+- **Eine Zusicherung, die den Ausgangszustand prüft, kann nie fehlschlagen.** Beim Schreiben eines
+  Regressionstests je Fall benennen, *welche* Änderung ihn rot macht; lautet die Antwort „keine", wird er
+  umgeschrieben oder ausdrücklich als Absichtserklärung beschriftet (Vorbild `wizardSearch.test.ts`). **Die
+  rote Probe je Datei fängt das nicht** – sie fragt, ob *irgendein* Fall fällt, nicht ob *jeder* etwas trägt.
+  Viermal gemessen (B-154, B-161, B-157 zweimal), jedes Mal von einem Reviewer gefunden und von keinem Tor:
+  zwei leere Zusicherungen auf einen Knopf bzw. ein Feld, das es im Ausgangszustand nie gibt, und zwei
+  Akzeptanzkriterien, die nur als Kommentar existierten.
 - **Unbekannte Felder werden abgelehnt** (`UnmappedMemberHandling.Disallow`): ein Feld, das der Vertrag
   nicht kennt, liefert `400` mit `code: unknown_field` – nicht `201` mit stillem Datenverlust. Wer einen
   Payload schreibt (Test, Client, Frontend), muss die Feldnamen des DTOs **treffen**.

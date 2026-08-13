@@ -2,7 +2,7 @@
 tags: [typ/story, status/idee, bereich/katalog, rolle/creator, rolle/supervisor]
 aliases: [Art gegen Typ, Vokabeln heißt zweimal etwas anderes]
 status: idee
-prio: P3
+prio: P2
 art: Defekt
 groesse: ""
 wo: ""
@@ -48,3 +48,12 @@ Kollisionen als die zwei gefundenen gibt (Grammatik? die Mathe-Arten?).
   `unverifiziert: true`, obwohl die vier Fundstellen am Code belegt sind: die **fachliche** Frage (welche
   Achse weicht aus, oder reichen die Beschriftungen?) ist nicht erhoben, und ob es weitere Kollisionen gibt,
   ist nicht ausgezählt.
+- **2026-08-13** — Prio **P3 → P2** und damit vorgezogen, auf Entscheid des Nutzers. Der Grund ist nicht
+  gestiegene Wichtigkeit, sondern ein **geschlossenes Fenster**: Mit der Abnahme von
+  [B-157](B-157-kategorien-unter-fremdem-fach-ungeschuetzt.md) am selben Tag sind die sieben Seed-Arten
+  fail-closed — `PATCH` liefert für **jeden** `403 not_owner`. Eine Entzerrung der Namen ist damit nur noch
+  über `Data/Seed.cs` möglich und wirkt ausschließlich auf **frische** Datenbanken; jede bestehende trägt die
+  kollidierenden Namen dauerhaft. Je später die Story kommt, desto mehr Datenbanken sind das.
+  `unverifiziert: true` bleibt: die vier Fundstellen sind am Code belegt, aber die **fachliche** Frage
+  (welche Achse weicht aus — oder reichen die Beschriftungen der Filter?) ist nicht erhoben, und ob es
+  weitere Kollisionen als die zwei gefundenen gibt, ist nicht ausgezählt.
