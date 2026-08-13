@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/katalog, rolle/creator, rolle/supervisor]
+tags: [typ/story, status/geschaetzt, bereich/katalog, rolle/creator, rolle/supervisor]
 aliases: [Art gegen Typ, Vokabeln heißt zweimal etwas anderes]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: S
+wo: beides
+migration: nein
+vertragsbruch: nein
 quelle: B-157 (Grill-Runde 2026-08-13, Entscheidung 5)
 unverifiziert: false
 grund: ""
@@ -82,9 +82,9 @@ unterscheiden; er tut es beim Rendern nur nicht.
 **Wie viele Stellen behaupten ein Typ-Label als Literal?** Nachgezählt: **eine** —
 `frontend/e2e/uebungstypen.spec.ts:139` führt die Liste
 `["Leseverständnis", "Hörverständnis", "Aufsatz", "Grammatik", "Übersetzung", "Rechen-Drill"]`. Eine zweite
-Stelle ist beim Bauen zu prüfen (`vater-von-null.spec.ts:241`, „Grammatik" — Art oder Typ ist dort nicht
-eindeutig). Alle übrigen Treffer auf „Vokabeln"/„Grammatik" in Tests und Frontend sind **Art**-Namen in
-Fixtures und bleiben unberührt.
+Stelle (`vater-von-null.spec.ts:239-241`) *will* das Typ-Label prüfen, **kann aber heute nicht fehlschlagen**
+— beim Schätzen nachgesehen, Einzelheiten in den Risiken. Alle übrigen Treffer auf „Vokabeln"/„Grammatik" in
+Tests und Frontend sind **Art**-Namen in Fixtures und bleiben unberührt.
 
 ## Die echte Lücke
 
@@ -174,6 +174,76 @@ Fast-Kollision „Leseverstehen"/„Leseverständnis", die Entscheidung 1 nicht 
 7. `frontend/e2e/uebungstypen.spec.ts` bleibt grün — seine Label-Liste (`:139`) ist nachgezogen.
 8. Die zwei Auflagen aus Entscheidung 7 stehen als Zeile in [B-155](B-155-grammatik-themen-als-tags.md).
 
+## Schätzung
+
+**Größe: S** — acht kleine Eingriffe über drei Flächen, keiner davon tief: zwei Label-Konstanten, ein
+Seed-Name, ein Wächter-Test, ein JSX-Etikett, zwei Beschriftungen und zwei E2E-Nachzüge. Vergleichbar mit
+[B-157](B-157-kategorien-unter-fremdem-fach-ungeschuetzt.md) (`S`, ebenfalls `beides`, zwei Actions plus eine
+Frontend-Datei); deutlich kleiner als jede Story mit Schema- oder Vertragsanteil.
+
+- **`migration: nein`** — nachgesehen: keine Spalte, keine Beziehung, keine Faltung. Der Seed-Name ist
+  **Daten**, nicht Schema. Folge, die zur Entscheidung 3 gehört: der idempotente Seed benennt in einer
+  **bestehenden** DB nichts um — die Änderung wirkt nur auf frische, und genau so ist sie gemeint.
+- **`vertragsbruch: nein`** — das Typ-Label ist ein **Wert** in der Antwort, kein Feldname;
+  `ExerciseTypeManifest.Label` bleibt unverändert (`Contracts/Common/ExerciseTypeManifest.cs:44`). Kein DTO,
+  kein Endpunkt, keine `Pugling.Client`-Methode ändert sich. **Nachgesehen:** `docs/api-examples/catalog.md`
+  nennt „Vokabeln" ausschließlich als *Kategorie*-Namen (`:257`, `:267`, `:282`), das Doku-Capture wandert
+  durch die Umbenennung also nicht. Ein Client, der das Label hart verdrahtet hätte, bräche — genau das
+  verbietet `frontend/CLAUDE.md`, und die einzige Stelle, die es tut, ist ein Test (siehe Risiken).
+
+**Risiken:**
+
+- **Akzeptanzkriterium 6 lässt sich nur zur Hälfte mechanisieren, und das gehört gesagt.** „Identisch" ist
+  nach Normalisierung (Groß-/Kleinschreibung, Diakritika — `InterestSlug.From`, `SlugExtensions.cs:26`) ein
+  scharfer Vergleich. „**Verwechselbar nah**" ist es nicht: eine Präfix- oder Stammregel würde als Erstes
+  unsere **eigene** Wahl aus Entscheidung 2 rot melden („Vokabelkarten" gegen die Art „Vokabeln"). Der
+  Wächter hält darum die **Identität**, und die Fast-Kollision aus Entscheidung 3 bleibt eine einmalige
+  Korrektur mit benanntem Restrisiko. Eine Regel zu versprechen, die nicht trennscharf formulierbar ist,
+  wäre die Sorte Zusicherung, die dieses Repo gerade als Muster erkannt hat.
+- **Die E2E-Zusicherung in `vater-von-null.spec.ts:239-241` kann heute nicht fehlschlagen** — und wäre nach
+  dem Umbenennen weiter grün. Sie *will* das Manifest-Label prüfen (der Kommentar sagt es), aber die Zeile
+  wird über `hasText: "Grammatik ${RUN}"` gefunden — den **Titel** — und `toContainText("Grammatik")` ist
+  damit schon durch den Titel erfüllt. Beim Bauen muss sie **tragend** gemacht werden: auf „Regelaufgaben"
+  prüfen, ein Wort, das der Titel nicht enthält. Das ist der fünfte Fall dieser Klasse in zwei Tagen (B-154,
+  B-161, B-157 zweimal) und der erste, den die neue Konventions-Zeile in `CLAUDE.md` vorab gefangen hat.
+- **Zwei eingeführte Namen ändern sich für alle Nutzer** (Entscheidung 1). Kein technisches Risiko, aber
+  beim Rollengang gezielt gegenprüfen, dass die Übungsliste, die Filter und der Assistent überall den neuen
+  Namen zeigen — es gibt nur eine Quelle, aber drei Leser.
+
+**Angriffsplan** (Backend zuerst):
+
+1. `Exercises/VocabularyExerciseType.cs:18` → „Vokabelkarten";
+   `Exercises/BuiltInExerciseTypes.cs:86` → „Regelaufgaben".
+2. `Data/Seed.cs:999`: die Art „Leseverstehen" → „Lesetexte".
+3. `ExerciseTypeManifestTests` um den Wächter erweitern (siehe Testweg) — die Klasse liest die
+   `ExerciseTypeRegistry` schon direkt und fährt daneben den Endpunkt, ist also der richtige Ort.
+4. `dotnet test`, dann prüfen, ob `docs/openapi/v1.json` oder `docs/api-examples` wandern (erwartet: nein).
+5. `PlanPositions.tsx:434`: der Art ein Etikett voranstellen, mit einem Kommentar, warum **nur** sie eines
+   bekommt (Entscheidung 4) — sonst zieht ein späterer Umbau die Fragmente glatt. Genau **eine** Stelle
+   rendert `categoryName` (nachgezählt); das Typ-Label kommt aus `types?.label(t)` (`:380`) und zieht
+   automatisch nach.
+6. `VaterWizard.tsx:492-499`: sichtbare Beschriftungen „Art" und „Typ" nach dem Muster von
+   `ExerciseFilterBar.tsx:96-108`.
+7. `e2e/uebungstypen.spec.ts:139`: Label-Liste nachziehen.
+8. `e2e/vater-von-null.spec.ts:239-241`: die leere Zusicherung tragend machen und dabei das „Art:"-Etikett
+   mitprüfen.
+9. Rollengang, `pugling-reviewer` **und** `frontend-reviewer` (`wo: beides`).
+
+**Testweg**:
+
+- **`backend/Pugling.Api.Tests/ExerciseTypeManifestTests.cs` erweitern** (nicht eine neue Datei): ein Fall,
+  der **alle** Typ-Labels aus der `ExerciseTypeRegistry` gegen **alle** geseedeten Art-Namen hält — die
+  liest er über `GET creator/subjects` + `…/categories` aus der geseedeten Instanz, also aus der Wahrheit
+  statt aus einer Kopie der Seed-Datei. Vergleich normalisiert; rot, sobald ein neuer Typ wie eine
+  geseedete Art heißt. Rote Probe: ein Label testweise auf „Vokabeln" zurückdrehen.
+- **`frontend/e2e/uebungstypen.spec.ts`** — bleibt grün mit nachgezogener Liste; sie ist ohnehin der
+  Wächter „jeder Server-Typ hat ein UI".
+- **`frontend/e2e/vater-von-null.spec.ts`** trägt das „Art:"-Etikett und die reparierte Typ-Zusicherung.
+  **Kein Komponententest** für das Etikett: `PlanPositions.test.ts` ist reine Logik (acht Fälle, kein
+  `render`), und für ein einzeiliges JSX-Präfix eine Funktion zu extrahieren wäre mehr Bauwerk als Nutzen —
+  die Kosten dieser Wahl sind damit benannt, nicht verschwiegen.
+- **`/smoke-test`** als Abschluss-Check.
+
 ## Verlauf
 
 - **2026-08-13** — angelegt beim Grillen von
@@ -200,3 +270,12 @@ Fast-Kollision „Leseverstehen"/„Leseverständnis", die Entscheidung 1 nicht 
   Neu aufgetaucht und mitentschieden: die konkreten Namen und die Fast-Kollision, die Entscheidung 1 nicht
   abdeckt. Zur Größe nachgesehen: nur **eine** E2E-Label-Liste behauptet Typ-Labels als Literal
   (`uebungstypen.spec.ts:139`), alle anderen Treffer auf „Vokabeln"/„Grammatik" sind Art-Namen in Fixtures.
+- **2026-08-13** — `gegrillt → geschaetzt`. `S` / `beides` / `migration: nein` / `vertragsbruch: nein`, beide
+  Flags nachgesehen: der Seed-Name ist Daten statt Schema, und das Typ-Label ist ein **Wert** in der Antwort,
+  kein Feldname — `docs/api-examples/catalog.md` nennt „Vokabeln" nur als *Kategorie*, das Doku-Capture wandert
+  also nicht. Zwei Dinge hat die Schätzung dabei geklärt, die das Grillen offengelassen hatte: die zweite
+  E2E-Stelle ist **eine Typ-Zusicherung, die heute nicht fehlschlagen kann** (sie findet die Zeile über den
+  Titel „Grammatik ${RUN}" und prüft dann auf „Grammatik" — der Titel erfüllt sie schon), und
+  `categoryName` wird an **genau einer** Stelle gerendert. Ehrlich abgeschwächt: Akzeptanzkriterium 6 ist nur
+  zur Hälfte mechanisierbar — „identisch" ja, „verwechselbar nah" nein, weil eine Stammregel als Erstes unsere
+  eigene Wahl „Vokabelkarten" gegen die Art „Vokabeln" rot meldete.
