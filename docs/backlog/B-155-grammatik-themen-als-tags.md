@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/katalog, rolle/creator, rolle/supervisor]
+tags: [typ/story, status/geschaetzt, bereich/katalog, rolle/creator, rolle/supervisor]
 aliases: [Grammatik-Themen als Tags, Grammatik-Taxonomie, Grammatik übungsübergreifend suchen]
-status: gegrillt
+status: geschaetzt
 prio: P3
 art: Wunsch
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: L
+wo: beides
+migration: ja
+vertragsbruch: nein
 quelle: Nutzer-Dialog 2026-08-12 (Sitzung zum Lehrwerk-Weg, Commit 4876e5a)
 unverifiziert: false
 grund: ""
@@ -208,6 +208,119 @@ Filters (Entscheidung 8).
 10. **E2E fährt den Nutzen:** Thema anlegen → zwei Übungen in **verschiedenen Reihen und Klassenstufen**
     damit versehen → über den Filter beide finden, eine dritte ohne das Thema nicht.
 
+## Schätzung
+
+**Größe: L** — und zwar an der **oberen Kante**. Die nächste Vergleichsgröße ist
+[B-63](B-63-lehrwerk-hierarchie.md) (`L`, Migration + Vertrag): dort wie hier eine neue Katalog-Ebene, eine
+Migrationsfaltung, Vertragserweiterungen und beide Oberflächen. Der Unterschied zu B-63 ist, dass hier eine
+**dritte** Fläche mitspielt, für die `wo` kein Wort hat: der KI-Creator (Entscheidung 7).
+
+Was die Recherche an der Schätzung geändert hat: Der Agent-Anteil ist **eine** Stelle, nicht fünf — alle fünf
+Strategien bauen ihre Nutzlast über den geteilten Helfer
+[ExerciseStrategy.Payload](../../backend/Pugling.Agent.Creator/Drafting/ExerciseStrategy.cs) (`:68`). Und
+Akzeptanzkriterium 8 braucht **keinen neuen** Test: `CreatorAgentTests.Der_Stoff_der_Unit_steht_im_Prompt()`
+(`:461`) ist bereits der Wächter über den Unit-Freitext im Prompt und wird nur erweitert.
+
+- **`migration: ja`** — nachgesehen, nicht vermutet: eine neue Entity plus **zwei** Join-Tabellen
+  (Entscheidung 2). Die Kette wird neu gefaltet; `SchemaGuardTests` verlangt danach je eine **bewusste
+  Zeile** in `Jeder_Fremdschluessel_Hat_Ein_Abgenommenes_Loeschverhalten` (`:192`) für **sechs** neue
+  Fremdschlüssel und einen Eintrag in `Jede_Json_Spalte_Hat_Einen_ValueComparer` (`:403`) für `Synonyms`.
+- **`vertragsbruch: nein`** — ebenfalls nachgesehen: `ExercisePayload<TConfig>`
+  ([ExerciseAuthoringDtos.cs:12](../../backend/Pugling.Contracts/Creator/ExerciseAuthoringDtos.cs)) endet in
+  lauter **optionalen** Parametern, ein angehängtes `GrammarTopicIds` ist damit rein additiv; `ExerciseResponse`
+  und die Suchparameter gewinnen nur Felder. Kein bestehendes Feld ändert Namen oder Typ, kein Client muss
+  angepasst werden, damit er weiter kompiliert.
+
+**Risiken:**
+
+- **Das Löschverhalten von `GrammarTopic.SubjectId` ist die eine Entscheidung, die diese Schätzung nicht
+  allein treffen kann.** Das Fach ist Pflicht (Entscheidung 4), also gibt es genau zwei Wege, und G2 verlangt
+  die bewusste Zeile: **Cascade** (das Thema stirbt mit dem Fach) oder **Aufnahme in die 409-Sperrliste** von
+  [B-144](B-144-fach-loeschen-trifft-reihen-lautlos.md). Empfehlung: **Cascade** — B-144s Linie läuft an
+  „kann diese Zeile ohne Fach existieren?", und ein fachloses Grammatik-Thema kann es nicht; anders als
+  `KeyResult`/`TimetableEntry` ist es außerdem **keine Kind-Habe**, deren Verlust jemandem wehtut. Wer anders
+  entscheidet, muss B-144s Meldungstext mitziehen.
+- **Sechs neue Fremdschlüssel sind die größte G2-Erweiterung seit B-63.** Das Tor ist nach dem Falten bewusst
+  kurz rot, bis jede Zeile eine *entschiedene* Löschregel trägt — nicht eine abgeschriebene.
+- **`Synonyms` ist eine JSON-Spalte** (Muster
+  [InterestTag](../../backend/Pugling.Api/Data/PuglingDbContext.cs) `:338-341`, mit
+  `JsonValueComparer.For<List<string>>()`). Ohne Comparer gehen In-Place-Änderungen **still** verloren — Tor
+  G7 fängt es, aber nur wenn man es nicht per Hand umgeht.
+- **`Label` trägt kein `NOCASE`** — anders als `Publisher.Name` (`:222`) und `TextbookSeries.Name`. Die
+  Idempotenz aus Akzeptanzkriterium 1 hängt darum am **Slug**, und `InterestSlug.From`
+  (`SlugExtensions.cs:26`) faltet Groß-/Kleinschreibung und Diakritika ohnehin zusammen. Damit trägt der
+  Slug die Dublettenabwehr, und das ist ausreichend — aber es ist genau die Lücke, die
+  [B-141](B-141-interest-tag-label-dublette.md) für `InterestTag` offen führt. Wird B-141 anders entschieden,
+  zieht diese Story nach.
+- **Der PUT ist Vollersatz, und das ist der wahrscheinlichste Regressionsweg** (Akzeptanzkriterium 7):
+  derselbe `ExercisePayload` dient POST *und* PUT. Ein Bearbeiten-Dialog, der die Themen nicht mitschickt,
+  **löscht** sie — wörtlich die Klasse von [B-148](B-148-lehrbuch-formular-zerstoert-fachnamen.md) („das
+  Lehrbuch-Formular zerstört den Fachnamen bei jedem Speichern") und der Grund, warum `frontend/CLAUDE.md`
+  den Rückweg zur Pflicht macht.
+- **Die Vorbelegungs-Regel lebt in zwei Clients und wird serverseitig nicht erzwungen** (Entscheidung 2:
+  vorbelegen, nicht vererben). Formular und Agent müssen sie beide tragen; ein dritter Client könnte
+  fälschlich vererben, ohne dass etwas widerspricht. Bewusste Lücke der Entscheidung, hier benannt.
+- **Der Seed-Grundbestand ist eine inhaltliche Meinung** (Entscheidung 6) und in einer *bestehenden* DB
+  danach weder umbenennbar noch löschbar (Entscheidung 3, fail-closed). Für dieses Projekt billig, weil
+  Datenbanken weggeworfen werden — für eine Produktionsinstanz nicht.
+
+**Angriffsplan** (Backend zuerst, dann Agent, dann Frontend):
+
+1. `Models/CurriculumEntities.cs`: `GrammarTopic` (`Slug`, `Label`, `Synonyms`, `Color?`, `SubjectId`,
+   `OwnerAdultId?`) plus die zwei Join-Entities. Dort, weil diese Datei den **geteilten, slug-idempotenten
+   Katalog** trägt (`Publisher` `:13`, `TextbookSeries` `:29`, `SeriesUnit` `:67`) — nicht in
+   `LearnEntities.cs`, die die übungsnahen Strukturen hält.
+2. `PuglingDbContext.OnModelCreating`: Unique-Index auf `Slug` (fachqualifiziert, Entscheidung 4), String-Längen
+   aus der Konventionsschleife, `Synonyms` mit `ValueComparer`, die sechs FKs mit entschiedenem Verhalten;
+   Join-Tabellen nach dem `ChildInterest`-Muster (`:345-350`, beide Cascade, kein SQLite-Diamant).
+   Migrationskette neu falten, Snapshot-Diff als Abnahme.
+3. `Pugling.Contracts/Creator`: `GrammarTopicResponse`/`CreateGrammarTopicDto`/`UpdateGrammarTopicDto`
+   (Namen global eindeutig halten), `GrammarTopicIds` additiv an `ExercisePayload`, Themen additiv an
+   `ExerciseResponse`/`ExerciseSummary` und `SeriesUnitResponse`, `grammarTopicId` an den Suchparametern.
+4. `GrammarTopicsController` unter `api/v1/creator/grammar-topics`: POST idempotent über den Slug (Muster
+   `InterestTagsController` `:88-91`), Slug unveränderlich (`:110`), `PATCH`/`DELETE` owner-gegated nach dem
+   **B-13-Muster** — inklusive der Reihenfolge *Eigentum vor Verwendung*, die
+   `FachEigentumTests.FremderCreator_BekommtNotOwner_AuchWennDasFachBenutztIst` seit dem 2026-08-12 hält.
+   Neuer `ApiErrors`-Code für „Thema in Benutzung".
+5. Zuweisung an Übung und Unit inklusive **Fachgrenze** → `validation_error` (Muster „Unit muss zur Reihe
+   gehören", `TextbooksController`).
+6. `ExerciseCatalogController`: `grammarTopicId` als achte Facette (`:48-53` Parameter, Bedingung neben
+   `:89-98`); `X-Total-Count`, Paging und Sortierung unverändert.
+7. `Data/Seed.cs`: Grundbestand je Sprachfach, ohne Owner.
+8. Agent: `ExerciseStrategy.Payload` (`:68`) übernimmt die Themen der Unit — **eine** Stelle für alle fünf
+   Strategien.
+9. `SchemaGuardTests`: die sechs G2-Zeilen und der G7-Eintrag.
+10. Backend-Tests (siehe Testweg), dann `dotnet build Pugling.sln` wegen der Vertragsänderung.
+11. Frontend: Themen-Chips im Unit-Formular (`VaterLehrwerke.tsx:603`-Umgebung), Zuweisung im
+    Anlege-Formular **und** im Bearbeiten-Dialog mit mitgeschickten Themen (Risiko oben), Facette in
+    `ExerciseFilterBar.tsx` (`:59-112`), die als Query mitreist; `lib/api.ts`-Methoden.
+12. `Pugling.Client`: je eine einzeilige Methode für die neuen Endpunkte (kein HTTP-Plumbing duplizieren).
+
+**Testweg**:
+
+- **Neu `backend/Pugling.Api.Tests/GrammatikThemenTests.cs`**: Idempotenz des POST (AK 1); Owner-Gate mit
+  fremdem Creator, Seed-Thema und *benutztem* Thema (AK 2); Slug-Unveränderlichkeit; Fachgrenze (AK 3);
+  Filter über **zwei Reihen und zwei Klassenstufen** (AK 4). Zweiter Creator-Client nach dem Muster von
+  `FachEigentumTests.ZweiterCreatorAsync`.
+- **`SchemaGuardTests`**: Kettenlänge 1, die sechs FK-Zeilen, der `Synonyms`-Comparer, String-Längen.
+- **`CreatorAgentTests`**: `Der_Stoff_der_Unit_steht_im_Prompt()` (`:461`) erweitern für AK 8 (der Freitext
+  bleibt im Briefing), dazu ein neuer Fall für AK 6 (der Agent taggt aus der Unit) — mit `FakeChatClient`,
+  ohne Ollama.
+- **Frontend**: die Vorbelegungs-Regel als **reine Funktion** mit Test (Vorbild `seriesDerivation.ts`), damit
+  AK 5 nicht nur im Bildschirm hängt; dazu ein Komponententest auf den Rückweg des Bearbeiten-Dialogs
+  (Vorbild `textbookPatch.test.ts`, das genau die B-148-Falle hält).
+- **Neu `frontend/e2e/grammatik-themen.spec.ts`** für AK 10 — eigene Datei, weil eine Spec beim ersten Rot
+  alles Nachfolgende mitnimmt (`frontend/CLAUDE.md`, B-109).
+- **`/smoke-test`** als Abschluss-Check gegen eine laufende Instanz.
+
+**Zur Größe, ausdrücklich:** Die Story ist an der oberen Kante von `L`, und der Bereich kennt kein `XL`
+(dann wird geteilt). Eine Naht liegt bereit — Entscheidung 5 hat sie halb gezogen, als sie die
+Vergleichs-Sicht (b) ausgelagert hat: man könnte zusätzlich **den Filter samt Facette** (AK 4, 7-Teil,
+10) von **Vokabular, Zuweisung und Agent** (AK 1–3, 5, 6, 8, 9) trennen. Ich habe **nicht** geteilt, weil
+das erste Stück dann ohne sichtbaren Nutzen wäre und weil das Teilen die neun Entscheidungen der Grill-Runde
+neu schneiden müsste — das ist eine Entscheidung des Menschen, nicht der Schätzung. Wenn der Bau zeigt, dass
+es zu groß ist, ist der Weg im README beschrieben (alte Id auf `verworfen` mit `ersetzt_durch`).
+
 ## Verlauf
 
 - **2026-08-12** — angelegt (Quelle: Nutzer-Dialog beim Anlegen einer Übung über den neuen
@@ -222,3 +335,12 @@ Filters (Entscheidung 8).
   Empfehlung der Ausformulierung wurde dabei am Code widerlegt: „Fach optional" → **Pflicht**, weil
   `ExerciseCategory.SubjectId` nicht nullable ist und eine Übung ohnehin ein Fach voraussetzt. Prio bleibt
   P3, weiter unbestätigt.
+- **2026-08-13** — `gegrillt → geschaetzt`. `L` / `beides` / `migration: ja` / `vertragsbruch: nein`, beide
+  Flags **nachgesehen** statt vermutet: `ExercisePayload<TConfig>` endet in lauter optionalen Parametern
+  (additiv, kein Bruch), und die Migration bringt sechs Fremdschlüssel plus eine JSON-Spalte, also je eine
+  bewusste Zeile in G2 und G7. Zwei Annahmen hat die Recherche dabei korrigiert: der Agent-Anteil ist **eine**
+  Stelle (`ExerciseStrategy.Payload:68`, geteilt von allen fünf Strategien), und AK 8 braucht **keinen** neuen
+  Test — `CreatorAgentTests.Der_Stoff_der_Unit_steht_im_Prompt():461` ist schon der Wächter. Die eine
+  Entscheidung, die die Schätzung nicht selbst treffen kann, ist als Risiko benannt: das Löschverhalten von
+  `GrammarTopic.SubjectId` (Cascade oder Aufnahme in B-144s 409-Sperrliste). Größe an der oberen Kante von
+  `L`, mit einer benannten Naht und der Begründung, warum **nicht** geteilt wurde.
