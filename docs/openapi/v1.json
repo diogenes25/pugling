@@ -12435,7 +12435,7 @@
         "tags": [
           "Creator \u2013 Exercise Categories"
         ],
-        "summary": "Changes a category (partial).",
+        "summary": "Changes a category (partial). Only the owner of the subject may do so.",
         "parameters": [
           {
             "name": "subjectId",
@@ -12489,6 +12489,16 @@
               }
             }
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Not Found",
             "content": {
@@ -12528,16 +12538,6 @@
                 }
               }
             }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
           }
         }
       },
@@ -12545,7 +12545,7 @@
         "tags": [
           "Creator \u2013 Exercise Categories"
         ],
-        "summary": "Deletes a category; assigned exercises remain (FK is set to null).",
+        "summary": "Deletes a category; assigned exercises remain (FK is set to null). Only the owner of the subject may\ndo so. There is deliberately no in-use conflict: \u0060Exercise.CategoryId\u0060 is optional, so the\nexercises only lose their assignment - the behaviour is unchanged by B-157.",
         "parameters": [
           {
             "name": "subjectId",
@@ -12575,6 +12575,16 @@
               "application/json": {}
             }
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Not Found",
             "content": {
@@ -12587,16 +12597,6 @@
           },
           "401": {
             "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {

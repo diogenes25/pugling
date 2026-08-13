@@ -102,29 +102,103 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
             jede Übung hängt seit Kurzem an einer Unit statt an einem Kapitel.
           </p>
 
-          <h4 className="h-section" style={{ fontSize: 15, marginTop: 14 }}>
-            Arten {categories.data ? `(${categories.data.length})` : ""}
-          </h4>
-          <p className="muted" style={{ marginTop: 0, fontSize: 13 }}>
-            Freie Ordnungsbegriffe innerhalb des Fachs (z. B. „Grammatik", „Vokabeln") – sie filtern die
-            Übungssuche beim Planbau.
-          </p>
-          {categories.data?.map((c) => (
-            <NameRow key={c.id} busy={action.busy} fieldId={`ca-category-${c.id}`} label="Art"
-              srName={`Art „${c.name}"`} value={c.name}
-              onSave={(name) => act(() => api.updateCategory(subject.id, c.id, name), "Art umbenannt.", categories.reload)}
-              onDelete={() => {
-                if (!confirmAction(`Art „${c.name}" löschen? Übungen behalten ihren Inhalt, verlieren aber die Zuordnung.`)) return;
-                act(() => api.deleteCategory(subject.id, c.id), "Art gelöscht.", categories.reload);
-              }} />
-          ))}
-          <NewName fieldId="ca-new-category" label="Neue Art" placeholder="z. B. Grammatik"
-            busy={action.busy} onCreate={(name) => act(() => api.createCategory(subject.id, name), "Art angelegt.", categories.reload)} />
+          <CategorySection subject={subject} categories={categories.data} busy={action.busy}
+            onSave={(c, name) => act(() => api.updateCategory(subject.id, c.id, name), "Art umbenannt.", categories.reload)}
+            onDelete={(c) => {
+              if (!confirmAction(`Art „${c.name}" löschen? Übungen behalten ihren Inhalt, verlieren aber die Zuordnung.`)) return;
+              act(() => api.deleteCategory(subject.id, c.id), "Art gelöscht.", categories.reload);
+            }}
+            onCreate={(name) => act(() => api.createCategory(subject.id, name), "Art angelegt.", categories.reload)} />
         </>
       )}
 
       <StatusBanner message={action.message} style={{ marginTop: 10 }} />
     </section>
+  );
+}
+
+/**
+ * Der Arten-Abschnitt des gewählten Fachs: Überschrift, Erklärung, die Zeilen – und das Anlege-Formular.
+ *
+ * **Das Formular liegt hier und ausdrücklich NICHT in `CategoryRows`.** Anlegen bleibt für jeden Creator
+ * frei (B-157, Entscheidung 2), auch an einem fremden und an einem Fach aus dem Grundbestand: Wer es mit in
+ * die Eigentums-Bedingung zieht, friert die Art-Achse aller Seed-Fächer ein — und das sind die einzigen, die
+ * ein normaler Nutzer hat. Dass es in allen drei Fach-Zuständen dasteht, hält `CatalogAdmin.test.tsx`; als
+ * bloßer Kommentar wäre die Entscheidung nicht abgesichert.
+ *
+ * Eigener exportierter Baustein aus demselben Grund wie `SubjectRow`: `CatalogAdmin` lädt beim Fachwechsel
+ * nach und hängt am Netz, dieser Abschnitt nicht.
+ */
+export function CategorySection({ subject, categories, busy, onSave, onDelete, onCreate }: {
+  subject: SubjectResponse;
+  categories: CategoryResponse[] | null | undefined;
+  busy: boolean;
+  onSave: (category: CategoryResponse, name: string) => void;
+  onDelete: (category: CategoryResponse) => void;
+  onCreate: (name: string) => Promise<boolean>;
+}) {
+  return (
+    <>
+      <h4 className="h-section" style={{ fontSize: 15, marginTop: 14 }}>
+        Arten {categories ? `(${categories.length})` : ""}
+      </h4>
+      <p className="muted" style={{ marginTop: 0, fontSize: 13 }}>
+        Freie Ordnungsbegriffe innerhalb des Fachs (z. B. „Grammatik", „Vokabeln") – sie filtern die
+        Übungssuche beim Planbau.
+      </p>
+      <CategoryRows subject={subject} categories={categories} busy={busy} onSave={onSave} onDelete={onDelete} />
+      <NewName fieldId="ca-new-category" label="Neue Art" placeholder="z. B. Grammatik"
+        busy={busy} onCreate={onCreate} />
+    </>
+  );
+}
+
+/**
+ * Die Art-Zeilen des gewählten Fachs – bearbeitbar nur für den Eigentümer des **Fachs** (B-157).
+ *
+ * Die Art hat keinen eigenen Eigentümer: sie gehört dem, dem ihr Fach gehört. Darum entscheidet
+ * `subject.isMine` — dasselbe Feld, das schon die Fach-Zeile gatet, eine Ebene tiefer. Ein eigenes Flag am
+ * `CategoryResponse` wäre eine zweite Kopie derselben Wahrheit.
+ *
+ * Der Satz spricht über das **Fach**, nicht über die Arten: die Art hat keinen Eigentümer, über den man
+ * etwas behaupten könnte. „Die Arten hat jemand anderes angelegt" wäre außerdem in *einem Klick* falsch —
+ * Anlegen ist ja frei, und danach stünde der Satz über einer Art, die man selbst gerade erfunden hat.
+ *
+ * Die Namen bleiben **lesbar**, nur ohne Bedienelemente: die Überschrift zählt sie, und eine Seite, die
+ * „du kannst sie zum Filtern verwenden" sagt und dann keine zeigt, hält ihr eigenes Versprechen nicht.
+ */
+export function CategoryRows({ subject, categories, busy, onSave, onDelete }: {
+  subject: SubjectResponse;
+  categories: CategoryResponse[] | null | undefined;
+  busy: boolean;
+  onSave: (category: CategoryResponse, name: string) => void;
+  onDelete: (category: CategoryResponse) => void;
+}) {
+  if (!categories?.length) return null;
+  if (!subject.isMine) {
+    return (
+      <>
+        <p className="muted" style={{ fontSize: 13, marginTop: 8 }}>
+          {subject.ownerAdultId == null
+            ? `Diese Arten gehören zum Fach „${subject.name}" aus dem Grundbestand – ergänzen darfst du sie, `
+              + "umbenennen und löschen kann sie niemand."
+            : `Diese Arten gehören zum Fach „${subject.name}", das jemand anderes angelegt hat – ergänzen `
+              + "darfst du sie, umbenennen und löschen nur er."}
+        </p>
+        <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>
+          {categories.map((c) => c.name).join(" · ")}
+        </p>
+      </>
+    );
+  }
+  return (
+    <>
+      {categories.map((c) => (
+        <NameRow key={c.id} busy={busy} fieldId={`ca-category-${c.id}`} label="Art"
+          srName={`Art „${c.name}"`} value={c.name}
+          onSave={(name) => onSave(c, name)} onDelete={() => onDelete(c)} />
+      ))}
+    </>
   );
 }
 

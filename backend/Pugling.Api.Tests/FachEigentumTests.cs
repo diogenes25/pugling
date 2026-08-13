@@ -137,6 +137,173 @@ public class FachEigentumTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         await AssertCodeAsync(strangerDelete, "not_owner");
     }
 
+    /// <summary>Creates a category under a subject and returns its id.</summary>
+    private static async Task<int> ArtAsync(HttpClient creator, int subjectId) =>
+        await TestApi.IdAsync(await creator.PostAsJsonAsync($"/api/v1/creator/subjects/{subjectId}/categories",
+            new { name = TestApi.UniqueName("Art") }));
+
+    /// <summary>
+    /// B-157: a category has no owner of its own, it belongs to whoever owns its subject. B-13 closed the
+    /// subject and left the level below it open - a stranger could rename the pre-filter list inside my
+    /// subject.
+    /// </summary>
+    [Fact]
+    public async Task FremderCreator_DarfDieArten_EinesFremdenFachs_NichtAendern()
+    {
+        var adult = await TestApi.AdultAsync(factory);
+        var subjectId = await FachAsync(adult);
+        var categoryId = await ArtAsync(adult, subjectId);
+        var fremder = await ZweiterCreatorAsync("2117");
+
+        var patch = await fremder.PatchAsJsonAsync(
+            $"/api/v1/creator/subjects/{subjectId}/categories/{categoryId}", new { name = "Gekapert" });
+        Assert.Equal(HttpStatusCode.Forbidden, patch.StatusCode);
+        await AssertCodeAsync(patch, "not_owner");
+
+        var delete = await fremder.DeleteAsync($"/api/v1/creator/subjects/{subjectId}/categories/{categoryId}");
+        Assert.Equal(HttpStatusCode.Forbidden, delete.StatusCode);
+        await AssertCodeAsync(delete, "not_owner");
+
+        // Nothing happened on the way: the name is the one the owner gave it.
+        var after = await adult.GetFromJsonAsync<JsonElement>(
+            $"/api/v1/creator/subjects/{subjectId}/categories/{categoryId}");
+        Assert.NotEqual("Gekapert", after.GetProperty("name").GetString());
+
+        // Reading stays open - the counterpart to FremderCreator_DarfDasFachWeiterhinLesen. Without this,
+        // pulling `List`/`Get` onto the owner later ("make it symmetric") would keep the suite green and
+        // leave the study-plan pre-filter empty for every other creator.
+        var single = await fremder.GetAsync($"/api/v1/creator/subjects/{subjectId}/categories/{categoryId}");
+        Assert.Equal(HttpStatusCode.OK, single.StatusCode);
+        var list = await fremder.GetFromJsonAsync<JsonElement>($"/api/v1/creator/subjects/{subjectId}/categories");
+        Assert.Contains(list.EnumerateArray(), c => c.GetProperty("id").GetInt32() == categoryId);
+
+        // And the missing category under a foreign subject stays a 404: hoisting the owner check above the
+        // category lookup ("pattern B-13") would silently turn this into a 403, and nothing else would fail.
+        var fehlt = await fremder.PatchAsJsonAsync(
+            $"/api/v1/creator/subjects/{subjectId}/categories/999999", new { name = "X" });
+        Assert.Equal(HttpStatusCode.NotFound, fehlt.StatusCode);
+    }
+
+    /// <summary>
+    /// The other half of decision 2, and the one a later "let us make it symmetric" refactor would break:
+    /// <b>creating</b> a category stays open to everyone. Gating it would leave the seeded subjects - the
+    /// only ones an ordinary user has - with a category axis nobody can extend, because their owner is null
+    /// and <c>IsOwnedBy</c> is fail-closed.
+    /// </summary>
+    [Fact]
+    public async Task JederCreator_DarfEineArt_AuchImFremdenUndImSeedFach_Anlegen()
+    {
+        var adult = await TestApi.AdultAsync(factory);
+        var fremdesFach = await FachAsync(adult);
+        var seedFach = await SeedFachIdAsync(adult);
+        var fremder = await ZweiterCreatorAsync("2118");
+
+        foreach (var subjectId in new[] { fremdesFach, seedFach })
+        {
+            var res = await fremder.PostAsJsonAsync($"/api/v1/creator/subjects/{subjectId}/categories",
+                new { name = TestApi.UniqueName("Fremd-Art") });
+            Assert.Equal(HttpStatusCode.Created, res.StatusCode);
+        }
+    }
+
+    /// <summary>
+    /// The seeded subject has no owner, so its categories are editable by <b>nobody</b> - the same
+    /// fail-closed rule as for the subject itself, one level down. This is the deliberate tightening of
+    /// B-157 and it reaches further than B-13's four subjects: it covers every seeded category.
+    /// </summary>
+    [Fact]
+    public async Task Arten_EinesSeedFachs_SindFuerJedenGesperrt()
+    {
+        var adult = await TestApi.AdultAsync(factory);
+        var seedId = await SeedFachIdAsync(adult);
+        var artId = (await adult.GetFromJsonAsync<JsonElement>($"/api/v1/creator/subjects/{seedId}/categories"))
+            .EnumerateArray().First().GetProperty("id").GetInt32();
+        var fremder = await ZweiterCreatorAsync("2119");
+
+        foreach (var client in new[] { adult, fremder })
+        {
+            var patch = await client.PatchAsJsonAsync(
+                $"/api/v1/creator/subjects/{seedId}/categories/{artId}", new { name = "Umbenannt" });
+            Assert.Equal(HttpStatusCode.Forbidden, patch.StatusCode);
+            await AssertCodeAsync(patch, "not_owner");
+
+            var delete = await client.DeleteAsync($"/api/v1/creator/subjects/{seedId}/categories/{artId}");
+            Assert.Equal(HttpStatusCode.Forbidden, delete.StatusCode);
+            await AssertCodeAsync(delete, "not_owner");
+        }
+    }
+
+    /// <summary>
+    /// The owner keeps working unchanged - without this case the story would read as "categories are
+    /// read-only now".
+    /// </summary>
+    [Fact]
+    public async Task Eigentuemer_DarfSeineArten_WeiterhinAendernUndLoeschen()
+    {
+        var adult = await TestApi.AdultAsync(factory);
+        var subjectId = await FachAsync(adult);
+        var categoryId = await ArtAsync(adult, subjectId);
+
+        var patch = await adult.PatchAsJsonAsync(
+            $"/api/v1/creator/subjects/{subjectId}/categories/{categoryId}", new { name = TestApi.UniqueName("Neu") });
+        Assert.Equal(HttpStatusCode.OK, patch.StatusCode);
+
+        var delete = await adult.DeleteAsync($"/api/v1/creator/subjects/{subjectId}/categories/{categoryId}");
+        Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
+    }
+
+    /// <summary>
+    /// Acceptance criterion 8: deleting a category does <b>not</b> conflict, it only takes the assignment
+    /// away - <c>Exercise.CategoryId</c> is optional. The class doc promises this since B-157 and the
+    /// contract document carries the sentence, so it needs a test rather than a claim.
+    /// </summary>
+    [Fact]
+    public async Task Eine_Benutzte_Art_Zu_Loeschen_Nimmt_Der_Uebung_Nur_Die_Zuordnung()
+    {
+        var adult = await TestApi.AdultAsync(factory);
+        var subjectId = await FachAsync(adult);
+        var categoryId = await ArtAsync(adult, subjectId);
+
+        var seriesId = await TestApi.IdAsync(await adult.PostAsJsonAsync("/api/v1/creator/textbook-series",
+            new { name = TestApi.UniqueName("Reihe"), subjectId }));
+        var unitId = await TestApi.IdAsync(await adult.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units", new { label = TestApi.UniqueName("Unit") }));
+        // `arithmetic` with the config shape ExerciseMetadataTests already proves - the point here is the
+        // category assignment, not the exercise type.
+        var basePath = $"/api/v1/creator/textbook-series/{seriesId}/units/{unitId}/arithmetic";
+        var exerciseId = await TestApi.IdAsync(await adult.PostAsJsonAsync(basePath, new
+        {
+            title = TestApi.UniqueName("Uebung"),
+            orderIndex = 1,
+            rewardPoints = 10,
+            categoryId,
+            config = new { problems = new[] { new { prompt = "1 + 1", answer = 2, tolerance = 0 } } },
+        }));
+
+        var delete = await adult.DeleteAsync($"/api/v1/creator/subjects/{subjectId}/categories/{categoryId}");
+        Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
+
+        var exercise = await adult.GetFromJsonAsync<JsonElement>($"{basePath}/{exerciseId}");
+        Assert.Equal(JsonValueKind.Null, exercise.GetProperty("categoryId").ValueKind);
+    }
+
+    /// <summary>
+    /// The trap the estimate named: a helper that reads only <c>OwnerAdultId</c> answers the same for "no
+    /// such subject" and "nobody owns it". A write against a missing subject must stay a 404, not become a
+    /// 403 - otherwise the API tells a stranger that a subject id is merely forbidden rather than absent.
+    /// </summary>
+    [Fact]
+    public async Task Ein_Nicht_Existierendes_Fach_Bleibt_404_Und_Wird_Nicht_Zu_403()
+    {
+        var adult = await TestApi.AdultAsync(factory);
+
+        var patch = await adult.PatchAsJsonAsync("/api/v1/creator/subjects/999999/categories/1", new { name = "X" });
+        Assert.Equal(HttpStatusCode.NotFound, patch.StatusCode);
+
+        var delete = await adult.DeleteAsync("/api/v1/creator/subjects/999999/categories/1");
+        Assert.Equal(HttpStatusCode.NotFound, delete.StatusCode);
+    }
+
     /// <summary>
     /// The seeded subject belongs to nobody, so nobody may change it - not even the seeded father, who is
     /// the creator closest to it. Without this case the fail-closed rule would only be a comment.

@@ -1,7 +1,8 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/katalog, bereich/auth, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/katalog, bereich/auth, rolle/creator]
 aliases: [Arten im fremden Fach umbenennbar, ExerciseCategory ohne Eigentum]
-status: geschaetzt
+status: abgenommen
+nachgeschaut: ""
 prio: P2
 art: Defekt
 groesse: S
@@ -237,3 +238,41 @@ weil dort die Spalte, die Migration und die Vertragsfelder dazukamen — hier f�
   Frontend würde ein zu weit gefasstes `{subject.isMine && …}` das „Neue Art"-Formular mitverstecken und
   damit Entscheidung 2 brechen. Testweg: die **bestehenden** `FachEigentumTests` und `CatalogAdmin.test.tsx`
   erweitern statt neue Dateien anlegen.
+- **2026-08-13** — gebaut und `geschaetzt → abgenommen` (Nutzerauftrag „mache gem. empfehlung weiter").
+  **Beide Risiken der Schätzung sind eingetreten und wurden abgefangen**, das ist der Ertrag der Vorarbeit:
+  der Helfer über `OwnerAdultId` hätte „Fach fehlt" und „ownerlos" zusammengezogen (eigener Testfall hält
+  jetzt, dass ein `PATCH` auf ein nicht existierendes Fach `404` bleibt), und das Anlege-Formular liegt
+  ausdrücklich außerhalb der Eigentums-Bedingung.
+  **Belege:** `dotnet test Pugling.sln -c Release` **827/827 grün**, `npx vitest run` **280/280 grün**,
+  `npm run build` grün, `dotnet format --verify-no-changes` sauber, `markdownlint-cli2` 0 Issues.
+  **Rote Proben:** Backend mit entschärften Wächtern → *erwartet `Forbidden`, gemessen `OK`*, **2 von 11**
+  rot; Frontend ohne die Bedingung → **2 von 10** rot; und das Formular in die Bedingung gezogen (der
+  Fehlgriff, den die Schätzung vorhergesagt hat) → **3 von 16** rot.
+  **Rollengang im echten Browser** (Server nach der letzten Änderung gestartet, Wegwerf-DB): am fremden Fach
+  keine Art-Knöpfe, dafür der Satz mit dem **Fachnamen** und die Namen weiter lesbar
+  („Grammatik · Papas-Ergaenzung · Vokabeln") — „Papas-Ergaenzung" ist die Art, die Papa in das *fremde*
+  Fach gelegt hat, „ergänzen darfst du sie" ist damit im Bild bewiesen statt behauptet; am Seed-Fach
+  „Englisch" dasselbe mit „aus dem Grundbestand"; am eigenen Fach unverändert Feld und „Löschen" je Art.
+  Server-Gegenproben im selben Lauf: `PATCH`/`DELETE` am fremden Fach `403 not_owner`, `POST` `201`,
+  `GET` `200`, eigene Art `PATCH` `200`.
+- **2026-08-13** — **beide Reviewer, ein Blocker, fünf Funde eingearbeitet.** `pugling-reviewer`: kein
+  Korrektheitsfund, aber **AK 4 war behauptet und von keinem Test getragen** — in der ganzen Suite las nie
+  ein *fremder* Creator die Arten; wer `List`/`Get` später „symmetrisch" mitsperrte, wäre grün geblieben und
+  hätte den Planbau-Vorfilter für jeden fremden Creator geleert. Dazu: die 404-vor-403-Reihenfolge war nur
+  zur Hälfte gepinnt (fehlende **Art** unter fremdem Fach), AK 8 stand seit diesem Diff als Versprechen im
+  Vertragsdokument und war ungeprüft, und der Zwei-Abfragen-Weg ließ sich auf **eine** reduzieren — nach dem
+  Muster des Schwester-Controllers `SeriesUnitsController` (`Include(c => c.Subject)`). Alles vier behoben;
+  damit trägt `SubjectExists` wieder nur die Existenzfrage, und der Kommentar dort begründet jetzt, was der
+  Code tut.
+  `frontend-reviewer`: **ein Blocker** — die zweite Hälfte von AK 7 war unbelegt. `CategoryRows` enthält per
+  Konstruktion kein Formular, also wäre der gefürchtete Fehlgriff durch **alle** Fälle grün gelaufen, und
+  mein eigener Test-Kommentar behauptete das Gegenteil. Behoben durch einen zweiten Baustein
+  `CategorySection` (Überschrift + Erklärung + Zeilen + Formular) und vier Fälle, die das Formular in allen
+  drei Fach-Zuständen sehen. Dazu zwei Wortlaut-Funde: der Satz behauptete Autorschaft über die **Arten**,
+  die das Modell nicht kennt — und wäre in *einem Klick* falsch geworden (Anlegen ist frei, danach stand er
+  über einer selbst erfundenen Art); und die Überschrift zählte drei Arten, während keine mehr zu sehen war.
+  Beides behoben: der Satz spricht über das **Fach** samt Namen, die Namen bleiben lesbar.
+- **2026-08-13** — Anmerkung zum Muster, das sich in drei Stories wiederholt: In B-154, B-161 und hier
+  **zweimal** fand ein Reviewer eine Zusicherung, die nur als Kommentar existierte oder nie rot werden
+  konnte. Die rote Probe je Datei fängt das nicht — sie fragt, ob *irgendein* Fall fällt, nicht ob *jeder*
+  etwas trägt. Der Retro-Vorschlag dazu steht in `docs/pm-sitzung-2026-08-12.md` und ist noch nicht gelandet.
