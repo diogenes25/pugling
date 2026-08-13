@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+nachgeschaut: 2026-08-13
 ---
 
 # B-163 · „Art" und „Typ" tragen dieselben Wörter — in einer Zeile sogar zweimal hintereinander
@@ -323,3 +324,4 @@ Frontend-Datei); deutlich kleiner als jede Story mit Schema- oder Vertragsanteil
   **Eine Erwartung der Schätzung war falsch:** `docs/openapi/v1.json` bewegt sich um vier Zeilen, weil die
   generierten Endpunkt-Summaries das Label interpolieren („Legt eine neue Vokabelkarten-Übung an."). Bleibt
   `vertragsbruch: nein` — eine Summary ist Prosa, kein Feld.
+- 2026-08-13 · **Nachschau: kein Fund** (von mir selbst gelesen; ein dritter Reviewer-Durchgang eine Stunde nach zwei gründlichen wäre ein wertloser Datenpunkt). Gezielt geprüft: Der neue Wächter deckt die **geseedeten** Arten ab, nicht selbst angelegte — `POST …/categories` ist seit B-157 bewusst ungegated, ein Creator kann die Kollision also von der anderen Seite zurückholen. Das ist kein Defekt, sondern die Grenze eines Tors über Nutzerinhalten, **und die andere Hälfte dieser Story fängt es auf**: an der einzigen Stelle, an der Typ und Art in einer Zeile stehen, trägt die Art ein Etikett — auch ein identisches Paar liest noch als „· Regelaufgaben · Art: Regelaufgaben". Der Rückfall `types?.label(x) ?? x` trennt „Manifest lädt" und „Typ unbekannt" korrekt.

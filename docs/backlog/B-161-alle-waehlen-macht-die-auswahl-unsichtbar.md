@@ -2,7 +2,7 @@
 tags: [typ/story, status/abgenommen, bereich/frontend, bereich/lehrplan, rolle/supervisor]
 aliases: [Alle wählen wählt Unsichtbares, Auswahl überlebt den Filterwechsel]
 status: abgenommen
-nachgeschaut: ""
+nachgeschaut: 2026-08-13
 prio: P1
 art: Defekt
 groesse: S
@@ -218,3 +218,4 @@ alle wählen, Filter verengen, Zahl und Hinweis ansehen, „Auswahl leeren" drü
   `selectAll`-Pfad und damit den Ort des Korrektheitsfunds. Backend unberührt.
   **Ein Fund außerhalb des Diffs** wanderte nach [B-162](B-162-assistent-nennt-den-leeren-katalog-als-ursache.md):
   während eine neue Suche lädt, nennt die Trefferzahl weiter die alte — dieselbe Wurzel, aber vorbestehend.
+- 2026-08-13 · **Nachschau: zwei Funde.** Der schwere: im **Ladefenster** nach einem Filterwechsel stehen die alten Zeilen noch und sind anklickbar — das Kästchen trägt kein `disabled`, während „Alle wählen" daneben eines hat —, und die so entstandene Auswahl wird nie wieder geleert; damit ist der P1-Schaden dieser Story über eine zweite Tür erreichbar → [B-169](B-169-ladefenster-macht-die-alten-zeilen-anklickbar.md). Der zweite: die in diesem Diff **umgeschriebene** E2E-Zusicherung trifft „(0 gewählt)" und wartet damit auf nichts → [B-171](B-171-zwei-zusicherungen-pruefen-den-ausgangszustand.md). Sauber befunden: der Filter-Schlüssel deckt die Abfrage vollständig ab (sieben Werte, deckungsgleich mit der Abhängigkeitsliste), zwei überlappende `selectAll`-Läufe sind unmöglich, und das Generationen-Gate deckt den Wechsel mitten im Nachladen in beiden Zweigen.

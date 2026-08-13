@@ -2,7 +2,7 @@
 tags: [typ/story, status/abgenommen, bereich/katalog, bereich/frontend, rolle/creator]
 aliases: [Fach-Eigentum im Vater-Web sichtbar machen]
 status: abgenommen
-nachgeschaut: ""
+nachgeschaut: 2026-08-13
 prio: P2
 art: Defekt
 groesse: S
@@ -251,3 +251,4 @@ steht; sonst der benannte Ersatz. Keine E2E-Spec (Entscheidung 6, mit Kosten ben
   **Ein Folgefund als eigene Story:** [B-159](B-159-reihe-ohne-owner-behauptet-fremden-ersteller.md) — bei
   der Lehrwerk-Reihe fehlt dieselbe Unterscheidung eine Ebene höher (ownerlose Reihe behauptet einen
   fremden Ersteller). Selbst am Code nachgesehen, nicht aus dem Review übernommen.
+- 2026-08-13 · **Nachschau: ein Fund**, und er ist erst *nach* dieser Story falsch geworden: der Vorspann-Satz „umbenennen und löschen kannst du, was du selbst angelegt hast" gilt seit B-157 fuer Arten nicht mehr und widerspricht der Karte zwei Absätze darunter → [B-170](B-170-selbst-angelegte-art-im-grundbestand-ist-unlöschbar.md). Ein zweiter Fund (`categories.error` wird nirgends gezeigt) ging als [B-174](B-174-arten-liste-verschweigt-ihren-fehler.md) heraus; seine Alt-Daten-Hälfte liegt schon als [B-164](B-164-useasync-paart-frischen-zustand-mit-alten-daten.md) vor und wurde **nicht** doppelt angelegt. Sauber befunden: die Richtung des Gates ist fail-closed, `isMine: true` bei `ownerAdultId == null` kann serverseitig nicht entstehen, und keiner der fuenf Fälle prueft den Ausgangszustand.

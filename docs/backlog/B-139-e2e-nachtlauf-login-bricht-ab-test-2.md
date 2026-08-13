@@ -13,7 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-55]
-nachgeschaut: ""
+nachgeschaut: 2026-08-13
 wartet_auf: ""
 ---
 
@@ -98,3 +98,4 @@ war. Das ist die reinste Form des Fallstricks „Hooks/Umgebung messen etwas and
   nicht zwingend den ersten — die Läufe vom 05. und 06.08. brachen nach ~4 min ab, die späteren nach
   ~6,5 min, also mit anderer Gestalt. Wer das nachprüfen will, hat bis zum **19.08.** Zeit, dann
   verfallen die Artefakte jener Läufe. Ein grüner Nachtlauf am 11.08. wäre das billigere Gegenargument.
+- 2026-08-13 · **Nachschau: ein Fund** — der Zwilling, nach dem ich gesucht habe, existiert **nicht** (alle Löschpfade im Repo abgeklopft; die Löschmenge des Sweeps ist nach dem Fix leer, die Ursache also geschlossen und nicht verschoben). Durchgekommen ist dafuer eine **Zahl**: `playwright.config.ts:53` sagt weiter „drei Nächte", während die Schwesterdatei desselben Fixes und diese Story „sechs" sagen → [B-175](B-175-zwei-gerottete-zahlen-in-kommentaren.md).

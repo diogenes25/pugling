@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: memory/geteilte-uebungs-bibliothek.md
 grund: ""
 ersetzt_durch: []
-nachgeschaut: ""
+nachgeschaut: 2026-08-13
 ---
 
 # B-13 · Fach- und Kapitel-Eigentum
@@ -296,3 +296,4 @@ Migrationskette und die G2-FK-Tabelle; `/smoke-test` gegen einen laufenden Serve
   ungeschützt — P2, eigene Fehlerklasse), [B-158](B-158-subjectscontroller-drei-kleine-reste.md) (drei
   kleine Reste im Controller) und [B-156](B-156-ismine-heisst-anderswo-isown.md) (`isMine` gegen siebenmal
   `isOwn`).
+- 2026-08-13 · **Nachschau: ein Fund**, im Netz statt im Produktionscode — die Zusicherung „Anlegen macht den Aufrufer zum Eigentümer" vergleicht gegen die Zahl `1`, und das ist im Seed dieselbe Zahl; kein Test laesst einen anderen Creator sein eigenes Fach umbenennen. Als [B-168](B-168-eigentuemer-zusicherung-prueft-eine-konstante.md) abgelegt. Sauber befunden: die 403-vor-409-Reihenfolge an *jeder* Stelle, `null`-Owner fail-closed an allen vier, kein zweiter Schreibweg auf `Subject`.

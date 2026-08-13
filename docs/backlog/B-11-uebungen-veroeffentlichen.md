@@ -9,6 +9,7 @@ wo: frontend
 migration: nein
 vertragsbruch: nein
 quelle: memory/geteilte-uebungs-bibliothek.md
+nachgeschaut: 2026-08-13
 ---
 
 # B-11 · Übungen ausdrücklich veröffentlichen
@@ -258,3 +259,4 @@ Payload-Zeile, ein Hilfetext, ein Test. Kein Backend-Feature fehlt, keine Migrat
   Nachträglich-Zustand zum regulären Anfangszustand macht. Die a11y-Randnotiz des Reviewers (bedingte
   Live-Region am Fehler-Banner) brauchte **keine** neue Story — [B-134](B-134-bedingte-live-regionen.md)
   führt sie längst; dort wurden nur die von diesem Commit verschobenen Zeilenbelege nachgezogen.
+- 2026-08-13 · **Nachschau: kein Fund.** Gezielt geprüft: alle Entstehungswege einer Uebung (`api.createExercise` hat genau **eine** Aufrufstelle, `updateExercise` zwei, beide schicken `executePublic` mit — der PUT-Vollersatz löscht die Freigabe nicht); `executePublic` ist in jedem gelesenen Schema **required**, „Feld fehlt" und „nicht freigegeben" koennen also nicht zusammenfallen; der neue E2E ist tragend (das Kennzeichen entsteht allein aus der Server-Antwort). Ein kosmetischer Fund aus dem Review-Fix ging als [B-176](B-176-gruppen-ueberschrift-verliert-die-feld-optik.md) heraus.

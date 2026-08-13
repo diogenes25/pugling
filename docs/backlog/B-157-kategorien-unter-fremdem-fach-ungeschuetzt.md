@@ -2,7 +2,7 @@
 tags: [typ/story, status/abgenommen, bereich/katalog, bereich/auth, rolle/creator]
 aliases: [Arten im fremden Fach umbenennbar, ExerciseCategory ohne Eigentum]
 status: abgenommen
-nachgeschaut: ""
+nachgeschaut: 2026-08-13
 prio: P2
 art: Defekt
 groesse: S
@@ -276,3 +276,4 @@ weil dort die Spalte, die Migration und die Vertragsfelder dazukamen — hier f�
   **zweimal** fand ein Reviewer eine Zusicherung, die nur als Kommentar existierte oder nie rot werden
   konnte. Die rote Probe je Datei fängt das nicht — sie fragt, ob *irgendein* Fall fällt, nicht ob *jeder*
   etwas trägt. Der Retro-Vorschlag dazu steht in `docs/pm-sitzung-2026-08-12.md` und ist noch nicht gelandet.
+- 2026-08-13 · **Nachschau: zwei Funde.** Der schwere: die Schnittmenge aus „Anlegen bleibt frei" (Entscheidung 2) und „Ändern folgt dem Fach" macht eine selbst angelegte Art im Grundbestands-Fach **unlöschbar** — vor dieser Story war das `DELETE` ein `204`, es gibt kein Admin-Ventil, und ein Tippfehler steht damit dauerhaft in der Planbau-Vorfilterung → [B-170](B-170-selbst-angelegte-art-im-grundbestand-ist-unlöschbar.md). Der zweite: der AK-8-Test belegt die Zuordnung nicht, die er verlieren sieht → [B-171](B-171-zwei-zusicherungen-pruefen-den-ausgangszustand.md). Sauber befunden: die Status-Matrix der einen Query in allen vier Fällen, `IsOwnedBy` fail-closed, `SubjectExists` unveränderte Semantik, kein Rechte-Umweg über `Create`. Nebenbei hat dieser Blick den Namen des flackernden Tests aus [B-165](B-165-backend-suite-flackert.md) eingefangen.

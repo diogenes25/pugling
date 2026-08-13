@@ -12,6 +12,7 @@ quelle: B-63 (manueller Chrome-Test, 2026-08-07)
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-08-13
 ---
 
 # B-123 · Lehrwerk-Reihe im Vater-Web bearbeiten
@@ -341,3 +342,4 @@ Vor der Abnahme beide Brillen, in dieser Reihenfolge: `pugling-reviewer`, dann `
   Testrumpf, Vertragssatz) ist **nicht erneut reviewt**. Sie bestand aus wörtlich vorgeschlagenen Fixes
   beider Reviewer, und die E2E musste für die geänderten Beschriftungen mitwandern und ist grün — aber
   ein dritter Blick hat nicht stattgefunden.
+- 2026-08-13 · **Nachschau: zwei Funde**, beide in der Familie „eine Bedingung, die zwei Situationen zusammenzieht" — [B-172](B-172-fachauswahl-löscht-wenn-ihre-optionen-fehlen.md) (das Fach-Feld löscht, wenn seine Optionen nicht geladen sind; B-123 hat aus einem Anlege-Feld ein löschendes gemacht) und [B-173](B-173-speichern-vernichtet-seine-eigene-bestaetigung.md) (die Bestätigung lebt in der Zeile, die der Filter gerade verliert). Sauber befunden: PATCH-Semantik und beide `Clear…`-Schalter, kein Vollersatz-Verlust, `isOwn` gegen `null` gesichert, und **jeder** der zwölf neuen Vitest-Fälle wird von einer benennbaren Änderung rot.
