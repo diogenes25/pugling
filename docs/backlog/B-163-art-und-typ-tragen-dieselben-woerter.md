@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/katalog, rolle/creator, rolle/supervisor]
+tags: [typ/story, status/gegrillt, bereich/katalog, rolle/creator, rolle/supervisor]
 aliases: [Art gegen Typ, Vokabeln heißt zweimal etwas anderes]
-status: ausformuliert
+status: gegrillt
 prio: P2
 art: Defekt
 groesse: ""
@@ -32,9 +32,8 @@ den Ordnungsbegriff, damit ich beim Planbau nicht rate, was ich gerade auswähle
 
 - Der **Typ** ist das Lernverfahren; sein Anzeigename ist eine **Konstante im Code** und kommt über
   `GET creator/exercise-types` aus dem Manifest (`frontend/CLAUDE.md`: „Anzeigename und Routen-Segment kommen
-  aus dem Typ-Manifest"). Zwölf Typen, je eine Zeile in
-  `backend/Pugling.Api/Exercises/` (z. B. `VocabularyExerciseType.cs:18` → „Vokabeln",
-  `BuiltInExerciseTypes.cs:22` → „Leseverständnis").
+  aus dem Typ-Manifest"). Zwölf Typen, je eine Zeile in `backend/Pugling.Api/Exercises/` (z. B.
+  `VocabularyExerciseType.cs:18` → „Vokabeln", `BuiltInExerciseTypes.cs:22` → „Leseverständnis").
 - Die **Art** (`ExerciseCategory`) ist ein freier Ordnungsbegriff je Fach; ihr Name ist eine
   **Datenbankspalte** (`Models/LearnEntities.cs:40-46`), im Seed gesetzt und seit
   [B-157](B-157-kategorien-unter-fremdem-fach-ungeschuetzt.md) an den geseedeten Fächern für **niemanden**
@@ -80,10 +79,12 @@ ist die folgenreichste, weil sie auf beiden Achsen der *natürliche* Name ist.
 `CategoryId`/`CategoryName` (`Contracts/Creator/ExerciseCatalogDtos.cs:14,26`). Ein Client kann sie also
 unterscheiden; er tut es beim Rendern nur nicht.
 
-**Eine dritte Achse ist unterwegs, mit demselben Wort.** [B-155](B-155-grammatik-themen-als-tags.md)
-(`geschaetzt`) führt `GrammarTopic` als UI-„Grammatik-Thema" ein und hat in seiner Entscheidung 1 schon
-notiert, dass dann „zwei Dinge ‚Thema' heißen". Kommt sie vor dieser Story, tragen **drei** Achsen der
-Übungssuche das Wort „Grammatik": der Typ, die Art und das Thema.
+**Wie viele Stellen behaupten ein Typ-Label als Literal?** Nachgezählt: **eine** —
+`frontend/e2e/uebungstypen.spec.ts:139` führt die Liste
+`["Leseverständnis", "Hörverständnis", "Aufsatz", "Grammatik", "Übersetzung", "Rechen-Drill"]`. Eine zweite
+Stelle ist beim Bauen zu prüfen (`vater-von-null.spec.ts:241`, „Grammatik" — Art oder Typ ist dort nicht
+eindeutig). Alle übrigen Treffer auf „Vokabeln"/„Grammatik" in Tests und Frontend sind **Art**-Namen in
+Fixtures und bleiben unberührt.
 
 ## Die echte Lücke
 
@@ -92,43 +93,86 @@ gemeint ist. Die Lücke ist, dass die **eine Stelle, an der es zählt** (die Aus
 Werte als namenlose, punktgetrennte Fragmente zeigt. Und dass die Reparatur eine Asymmetrie hat, die die Idee
 falsch vermutet hatte: **das Typ-Label ist billig zu ändern, der Art-Name teuer.** Das Label ist eine
 Code-Konstante und wirkt beim nächsten Request in *jeder* bestehenden Datenbank; der Art-Name liegt in der DB
-und ist seit B-157 an geseedeten Fächern gar nicht mehr änderbar — eine Seed-Änderung erreicht nur **frische**
-Datenbanken.
+und ist seit B-157 an geseedeten Fächern gar nicht mehr änderbar.
 
 ## Offene Punkte
 
-1. **Welche Achse weicht aus?** Empfehlung: **das Typ-Label**, nicht der Art-Name — das kehrt die Vermutung
-   der Idee um, und zwar aus drei Gründen. (a) Es ist eine Konstante je Typ, also eine Zeile, und sie wirkt
-   sofort in jeder bestehenden DB, während eine Seed-Änderung nur frische erreicht. (b) Der Typ benennt ein
-   *Verfahren* und kann darum präziser heißen („Vokabelkarten", „Grammatik-Aufgaben"), während die Art der
-   freie Ordnungsbegriff des Nutzers ist — dem sollte man sein natürliches Wort nicht wegnehmen. (c) Die
-   Typen sind schon heute uneinheitlich benannt: „Rechen-Drill" und „Birkenbihl" nennen das Verfahren,
-   „Vokabeln" und „Grammatik" nennen den Stoff.
-2. **Reicht es, die Werte zu entzerren?** Empfehlung: **nein.** Selbst mit eindeutigen Werten bliebe
-   `PlanPositions.tsx:431-434` eine Kette namenloser Fragmente. Die Art gehört dort gekennzeichnet (etwa
-   „Art: Grammatik") oder optisch abgesetzt. Das ist die Hälfte, die den gemeldeten Schaden wirklich behebt.
-3. **Zieht `VaterWizard` mit?** Empfehlung: ja, sichtbare Beschriftungen wie in `ExerciseFilterBar` — zwei
-   nebeneinanderliegende Pulldowns, deren Achse nur im `aria-label` steht, sind für Sehende schlechter
-   beschriftet als für Screenreader-Nutzer.
-4. **Ist „Art" überhaupt der richtige Begriff?** Der Code heißt `ExerciseCategory`, das UI „Art", die
-   Entity-Doku nennt es „controlled vocabulary per subject as the basis for pre-filtering". „Art" ist das
-   allgemeinste Wort, das die Sprache hergibt, und kollidiert damit fast zwangsläufig. Empfehlung: in der
-   Grill-Runde mitentscheiden, aber **nicht** zur Bedingung dieser Story machen — eine Umbenennung der
-   Achse ist teurer als die Entzerrung der Werte.
-5. **Vor oder nach B-155?** Empfehlung: **vorher entscheiden**, spätestens gemeinsam. Wenn B-155 sein
-   „Grammatik-Thema" baut, während ein Typ und eine Art „Grammatik" heißen, entsteht die dritte Kollision
-   sehenden Auges — und B-155 ist `L` und wird das nicht nebenbei mitziehen.
+Alle in der Grill-Runde vom 2026-08-13 geschlossen (Nummern zeigen auf die Entscheidungen).
 
-## Akzeptanzkriterien (Entwurf)
+1. ~~Welche Achse weicht aus?~~ → Entscheidungen 1 und 2.
+2. ~~Reicht es, die Werte zu entzerren?~~ → Entscheidung 4. Die Antwort hat sich dabei **verschoben**: nach
+   den Entscheidungen 1–3 gibt es keine identischen Wörter mehr, die Kennzeichnung behebt also keinen Defekt
+   mehr, sondern nur noch Unklarheit — und darum nur an *einer* Stelle.
+3. ~~Zieht `VaterWizard` mit?~~ → Entscheidung 5.
+4. ~~Ist „Art" überhaupt der richtige Begriff?~~ → Entscheidung 6 (zurückgestellt).
+5. ~~Vor oder nach B-155?~~ → Entscheidung 7. Die Empfehlung der Ausformulierung wurde **abgeschwächt**: sie
+   behauptete drei Achsen mit dem Wort „Grammatik", aber Entscheidung 1 nimmt den Typ aus dem Spiel.
 
-1. Kein Übungstyp-Anzeigename ist identisch mit einem geseedeten Art-Namen; „Leseverstehen" und
-   „Leseverständnis" sind nicht mehr verwechselbar.
-2. In der Auswahlliste des Planbaus ist erkennbar, welches Fragment die Art benennt.
-3. Im Assistenten tragen der Art- und der Typ-Filter eine sichtbare Beschriftung.
-4. Der Typ-Anzeigename kommt weiter **ausschließlich** aus dem Manifest — keine Tabelle im Frontend
-   (`frontend/CLAUDE.md`), und `e2e/uebungstypen.spec.ts` bleibt grün.
-5. Ein Test hält die Nicht-Kollision, statt sie einmalig herzustellen — sonst heißt der nächste neue Typ
-   wieder wie eine Art.
+In der Runde **neu aufgetaucht** und mitentschieden: die konkreten Namen (Entscheidung 2) und die
+Fast-Kollision „Leseverstehen"/„Leseverständnis", die Entscheidung 1 nicht abdeckt (Entscheidung 3).
+
+## Entscheidungen
+
+1. **Die Typ-Achse benennt Verfahren oder Form, die Art-Achse den Stoff** — und die zwei Typ-Namen, die
+   dagegen verstoßen, weichen. Begründung: Die zwölf Typ-Namen benennen heute vier verschiedene Dinge —
+   Verfahren (Birkenbihl, Lückentext, Zuordnung, Rechen-Drill, Übersetzung), Kompetenz (Lese-/Hörverständnis),
+   Aufgabenform (Aufsatz, Rechenaufgaben, Liste) und **Stoff** (Vokabeln, Grammatik). Die Art-Achse ist die
+   Achse *für* Stoff; jeder stoff-benannte Typ **muss** darum mit ihr kollidieren, und es kollidieren genau
+   die zwei. Der Typ ist außerdem die billigere Seite: sein Label ist eine Code-Konstante und wirkt beim
+   nächsten Request in *jeder* bestehenden Datenbank. *Kosten:* Zwei eingeführte Namen ändern sich für alle
+   Nutzer, und die Achse bleibt **in sich uneinheitlich** — Kompetenz- und Formnamen bleiben stehen. Wir
+   beheben die Kollision, nicht die Unordnung.
+2. **„Vokabeln" → „Vokabelkarten", „Grammatik" → „Regelaufgaben".** Begründung: Beide benennen die Form, wie
+   der Code sie selbst schon nennt — das Manifest trägt `Renderer: "flashcards"` bzw. `"prompts"`, und die
+   Grammatik-Fähigkeit heißt `ruleHints`. „Vokabelkarten" behält den erkennbaren Wortstamm, niemand muss den
+   Typ neu lernen. *Kosten:* „Vokabelkarten" und die Art „Vokabeln" teilen weiter den Stamm — in der
+   Auswahlliste steht „Begrüßungen · Vokabelkarten · Vokabeln": unterscheidbar, aber ähnlich. Die reineren
+   Namen („Karteikarten", „Frage & Antwort") sind verworfen, weil der erste den Vokabel-Bezug verliert und der
+   zweite so allgemein ist, dass sich ein künftiger Typ daran vorbeibenennen müsste.
+3. **Die Seed-Art „Leseverstehen" weicht, nicht der Typ „Leseverständnis"** (→ „Lesetexte" o. Ä.).
+   Begründung: „Leseverständnis" ist ein **Kompetenz**-Name und nach Entscheidung 1 legitim; die
+   Fast-Kollision liegt also auf der Art-Seite. Dass eine Seed-Änderung nur **frische** Datenbanken erreicht,
+   ist hier ausdrücklich **kein** Mangel — der Seed *ist* der Inhalt frischer Datenbanken; die B-157-Sperre
+   beißt nur, wenn man bestehende reparieren will. *Kosten:* Eine inhaltliche Meinung mehr im Seed, und
+   bestehende Datenbanken behalten „Leseverstehen" — dort ist es allerdings längst die Wahl des Nutzers.
+4. **In `PlanPositions` wird nur die Art gekennzeichnet** („Art: …"), Typ, Klassenstufe und Quelle bleiben
+   nackt. Begründung: Der Typ kommt aus zwölf festen Werten, die ein Supervisor lernt; die Art erfindet jeder
+   Creator je Fach **frei**, ihr Wortschatz ist unbegrenzt — nur bei ihr kann der Leser die Achse
+   grundsätzlich nicht kennen. *Kosten:* Die Zeile wird ein Wort länger, und die **Ungleichbehandlung** der
+   Fragmente braucht einen Kommentar, sonst zieht sie ein späterer Umbau glatt.
+5. **Der Assistent bekommt sichtbare Beschriftungen** für Art- und Typ-Filter, wie sie
+   `ExerciseFilterBar.tsx:96-108` schon hat. Begründung: In `VaterWizard.tsx:492-499` steht die Achse nur im
+   Platzhalter — der verschwindet, sobald etwas ausgewählt ist. Danach ist die Oberfläche für Screenreader
+   besser beschriftet (`aria-label`) als für Sehende, und zwar genau dort, wo zwei ähnliche Wortlisten
+   nebeneinanderstehen. *Kosten:* zwei Beschriftungen mehr in einer schon dichten Filterzeile.
+6. **Der Begriff „Art" bleibt — zurückgestellt, nicht entschieden.** Begründung: Die Umbenennung der Achse
+   wäre teurer als die Entzerrung der Werte (UI an fünf Stellen, `ExerciseCategory` im Code, die Entity-Doku,
+   `CatalogAdmin`, zwei Filterleisten) und hätte diese Story von klein auf `M` gehoben. *Kosten:* „Art" bleibt
+   das allgemeinste Wort, das die Sprache hergibt, und kollidiert darum grundsätzlich weiter leicht mit
+   allem — die Frage kommt wieder, dann aber nicht als Defekt.
+7. **B-155 hängt nicht von dieser Story ab, erbt aber zwei Auflagen.** Begründung: Nach Entscheidung 1 ist der
+   Typ „Grammatik" weg; übrig bleiben die Art „Grammatik" und B-155s „Grammatik-Thema" — ein Kompositum auf
+   einer anderen Ebene, unterscheidbar. Die Ausformulierung hatte hier drei kollidierende Achsen behauptet;
+   das trifft nach Entscheidung 1 nicht mehr zu. B-155 darf also unabhängig gebaut werden, muss aber (a) seine
+   **achte** Facette sichtbar beschriften (Entscheidung 5) und (b) keinen neu stoff-benannten Typ einführen
+   (Entscheidung 1). *Kosten:* Zwei Auflagen an einer fremden Story — sie müssen **dort** als Zeile stehen,
+   sonst wirken sie nicht; nachgetragen am 2026-08-13.
+
+## Akzeptanzkriterien
+
+1. Kein Übungstyp-Anzeigename ist mit einem geseedeten Art-Namen identisch **oder** verwechselbar nah.
+2. Das Manifest trägt „Vokabelkarten" und „Regelaufgaben"; der Anzeigename kommt weiter **ausschließlich**
+   von dort — keine Tabelle im Frontend (`frontend/CLAUDE.md`).
+3. Die geseedete Art „Leseverstehen" trägt einen Namen, der nicht mit dem Typ „Leseverständnis" verwechselbar
+   ist.
+4. In der Auswahlliste des Planbaus (`PlanPositions`) trägt **die Art** ein Etikett; Typ, Klassenstufe und
+   Quelle bleiben unbeschriftet, und ein Kommentar sagt, warum das kein Versehen ist.
+5. Im Assistenten tragen der Art- und der Typ-Filter eine sichtbare Beschriftung.
+6. **Ein Test hält die Nicht-Kollision**, statt sie einmalig herzustellen: er vergleicht **alle**
+   Typ-Anzeigenamen gegen **alle** geseedeten Art-Namen und wird rot, sobald ein neuer Typ wie eine Art heißt.
+   Beide Listen liegen im Backend, der Vergleich ist also mechanisierbar.
+7. `frontend/e2e/uebungstypen.spec.ts` bleibt grün — seine Label-Liste (`:139`) ist nachgezogen.
+8. Die zwei Auflagen aus Entscheidung 7 stehen als Zeile in [B-155](B-155-grammatik-themen-als-tags.md).
 
 ## Verlauf
 
@@ -137,14 +181,22 @@ Datenbanken.
   mitgenommen:** B-157 ist eine Eigentums-Story, ihr Ziel ist ohne die Entzerrung erfüllt, und eine
   Umbenennung von Produktinhalt daran zu hängen hätte ihre Akzeptanzkriterien unscharf gemacht.
 - **2026-08-13** — Prio **P3 → P2** und damit vorgezogen, auf Entscheid des Nutzers. Der Grund ist nicht
-  gestiegene Wichtigkeit, sondern ein **geschlossenes Fenster**: Mit der Abnahme von B-157 am selben Tag
-  sind die sieben Seed-Arten fail-closed — `PATCH` liefert für **jeden** `403 not_owner`.
-- **2026-08-13** — `idee → ausformuliert`. Die Recherche hat drei Dinge verschoben: **(1)** Es sind nicht
-  zwei Kollisionen, sondern **fünf von sieben** geseedeten Arten — „Grammatik" war übersehen und ist die
-  folgenreichste. **(2)** Der Schaden sitzt nicht im Filter, sondern in `PlanPositions.tsx:431-434`, wo Typ
-  und Art punktgetrennt in *einer* Zeile stehen; der Seed erzeugt damit heute „Begrüßungen · Vokabeln ·
-  Vokabeln" und sogar „Vokabeln: En ville · Vokabeln · Vokabeln". **(3)** Die Empfehlung dieser Story wird
-  damit **umgekehrt**: nicht der Art-Name weicht aus, sondern das **Typ-Label** — es ist eine Code-Konstante
-  und wirkt sofort in jeder bestehenden DB, während der Art-Name in der Datenbank liegt und seit B-157 an
-  geseedeten Fächern unveränderbar ist. Dazu gefunden: eine **dritte** Achse mit demselben Wort ist mit
-  B-155 unterwegs. `unverifiziert` entfernt.
+  gestiegene Wichtigkeit, sondern ein **geschlossenes Fenster**: Mit der Abnahme von B-157 am selben Tag sind
+  die sieben Seed-Arten fail-closed — `PATCH` liefert für **jeden** `403 not_owner`.
+- **2026-08-13** — `idee → ausformuliert`. Die Recherche hat drei Dinge verschoben: **(1)** Es sind nicht zwei
+  Kollisionen, sondern **fünf von sieben** geseedeten Arten — „Grammatik" war übersehen und ist die
+  folgenreichste. **(2)** Der Schaden sitzt nicht im Filter, sondern in `PlanPositions.tsx:431-434`, wo Typ und
+  Art punktgetrennt in *einer* Zeile stehen; der Seed erzeugt damit heute „Begrüßungen · Vokabeln · Vokabeln"
+  und sogar „Vokabeln: En ville · Vokabeln · Vokabeln". **(3)** Die Empfehlung dieser Story wird damit
+  **umgekehrt**: nicht der Art-Name weicht aus, sondern das **Typ-Label**. Dazu gefunden: eine **dritte** Achse
+  mit demselben Wort ist mit B-155 unterwegs. `unverifiziert` entfernt.
+- **2026-08-13** — `ausformuliert → gegrillt`. Sieben Entscheidungen im Dialog. Die tragende ist eine
+  **Begriffsschärfung**: die zwölf Typ-Namen benennen vier verschiedene Dinge, und die Art-Achse ist die Achse
+  *für Stoff* — jeder stoff-benannte Typ muss darum kollidieren, und es kollidieren genau die zwei. Damit war
+  die Frage nicht mehr „welche Achse gibt nach", sondern ob die Typ-Achse ihre eigene Regel einhält.
+  **Zwei Empfehlungen der Ausformulierung wurden dabei korrigiert:** die Kennzeichnung behebt nach den
+  Entscheidungen 1–3 keinen Defekt mehr (darum nur an einer Stelle statt überall), und die behauptete
+  Dreifach-Kollision mit B-155 löst sich auf, sobald der Typ „Grammatik" weicht — B-155 wartet also nicht.
+  Neu aufgetaucht und mitentschieden: die konkreten Namen und die Fast-Kollision, die Entscheidung 1 nicht
+  abdeckt. Zur Größe nachgesehen: nur **eine** E2E-Label-Liste behauptet Typ-Labels als Literal
+  (`uebungstypen.spec.ts:139`), alle anderen Treffer auf „Vokabeln"/„Grammatik" sind Art-Namen in Fixtures.

@@ -224,6 +224,14 @@ Filters (Entscheidung 8).
    sie sind für niemanden änderbar.
 10. **E2E fährt den Nutzen:** Thema anlegen → zwei Übungen in **verschiedenen Reihen und Klassenstufen**
     damit versehen → über den Filter beide finden, eine dritte ohne das Thema nicht.
+11. **Die neue, achte Facette trägt eine sichtbare Beschriftung** — nicht nur einen Platzhalter und ein
+    `aria-label`. Geerbt aus [B-163](B-163-art-und-typ-tragen-dieselben-woerter.md), Entscheidung 5: die
+    Filterzeile des Assistenten benennt ihre Achsen für Sehende heute schlechter als für
+    Screenreader-Nutzer, und diese Story stellt eine weitere Wortliste daneben.
+12. **Kein neuer Übungstyp trägt einen Namen, der Stoff benennt.** Geerbt aus B-163, Entscheidung 1: die
+    Typ-Achse benennt Verfahren oder Form, die Art-Achse den Stoff — ein stoff-benannter Typ kollidiert
+    zwangsläufig. Diese Story führt zwar keinen Typ ein, aber ihr Wortfeld („Grammatik-Thema") liegt in
+    derselben Nachbarschaft; sollte beim Bauen ein Typ dazukommen, gilt die Regel.
 
 ## Schätzung
 
@@ -361,3 +369,10 @@ es zu groß ist, ist der Weg im README beschrieben (alte Id auf `verworfen` mit 
   Entscheidung, die die Schätzung nicht selbst treffen kann, ist als Risiko benannt: das Löschverhalten von
   `GrammarTopic.SubjectId` (Cascade oder Aufnahme in B-144s 409-Sperrliste). Größe an der oberen Kante von
   `L`, mit einer benannten Naht und der Begründung, warum **nicht** geteilt wurde.
+- **2026-08-13** — zwei Akzeptanzkriterien (11, 12) aus der Grill-Runde von
+  [B-163](B-163-art-und-typ-tragen-dieselben-woerter.md) nachgetragen, dessen Entscheidung 7 sie hierher
+  auflegt: die achte Facette braucht eine sichtbare Beschriftung, und kein neuer Übungstyp darf Stoff
+  benennen. **Keine Abhängigkeit in der Reihenfolge** — die dort zunächst befürchtete Dreifach-Kollision um
+  das Wort „Grammatik" löst sich auf, sobald B-163 den *Typ* „Grammatik" in „Regelaufgaben" umbenennt; übrig
+  bleiben die Art „Grammatik" und das „Grammatik-Thema" dieser Story, ein Kompositum auf anderer Ebene. Die
+  Kriterien stehen hier, weil eine Auflage in einer fremden Story nicht wirkt.
