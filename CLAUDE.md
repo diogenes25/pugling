@@ -38,11 +38,9 @@ die Datei lädt automatisch, sobald du unter `frontend/` arbeitest.
 
 ### KI-Creator (Konsolen-Agent)
 
-Konsolen-App mit **deterministischer Pipeline** (C# besitzt den Ablauf, das Modell liefert nur
-strukturierten Inhalt – kein Tool-Calling), die die Creator-Rolle übernimmt (Briefing/Entwurf/Klausur
-gegen die laufende API). Fachliche Kernregel: **Interessen kleiden den Stoff ein, sie ersetzen ihn nie**.
-Aufrufe und Betriebsarten stehen im Skill `ki-creator`.
-Details: [backend/Pugling.Agent.Creator/README.md](backend/Pugling.Agent.Creator/README.md) (lädt dort automatisch).
+Eine Konsolen-App übernimmt die Creator-Rolle gegen die laufende API; Aufrufe und Betriebsarten stehen im
+Skill `ki-creator`, Pipeline und Regeln in
+[backend/Pugling.Agent.Creator/CLAUDE.md](backend/Pugling.Agent.Creator/CLAUDE.md) (lädt dort automatisch).
 
 ## Architektur (was bei jeder Änderung gilt)
 
@@ -87,6 +85,7 @@ Lernstand – positionsgebunden *und* plan-übergreifend je Vokabel-Item.
 
 | Thema | Ort |
 |---|---|
+| Handwerk am C#-Code: Controller/DTOs, Vertrag, Client, Guard Clauses, Versionierung, `CancellationToken`, `ProblemDetails`, PATCH-Semantik, Ownership-Filter, EF | [backend/CLAUDE.md](backend/CLAUDE.md) (lädt dort automatisch) |
 | Fachmodell im Detail: Katalog, Lehrplan/Positionen, Services, Reward-Ökonomie, Medien-Anti-Cheat, Creator-Profile, `remarks` | [backend/Pugling.Api/CLAUDE.md](backend/Pugling.Api/CLAUDE.md) (lädt dort automatisch) |
 | Zusammenhänge Übung→Lehrplan→Kind→Auswertung | [docs/endpunkt-beziehungen.md](docs/endpunkt-beziehungen.md) |
 | Alles Weitere, thematisch erschlossen | [docs/obsidian.md](docs/obsidian.md) (MOC) |
@@ -102,67 +101,18 @@ Lernstand – positionsgebunden *und* plan-übergreifend je Vokabel-Item.
   Produktinhalt (Seed-/Ledger-Texte, `Capture(…)`-Titel der `DocsCaptureTests`, Enum-Werte wie `Gymnasium`,
   deutsche Beispielwörter und Testdaten) und die Laufzeit-Diagnose (Exception-/Log-Meldungen). Glossar und
   Fallstricke: [docs/translate.md](docs/translate.md).
-- **Controller dünn**, Logik in Services. DTOs als `record` projizieren – nie EF-Entities zurückgeben.
-- **Vertrag im eigenen Projekt** ([backend/Pugling.Contracts/](backend/Pugling.Contracts/CLAUDE.md)): *alle*
-  Request-/Response-`record`s und die geteilten Basistypen liegen dort – **nicht** als verschachtelte Typen
-  im Controller. Neues DTO? Ins Vertrags-Projekt, mit `/// <summary>`. Namen sind **global eindeutig** zu
-  halten: der OpenAPI-Generator schlüsselt Schemas über den einfachen Typnamen, gleichnamige Records
-  verschmelzen sonst still zu einem Schema.
-- **Client-Bibliothek** ([backend/Pugling.Client/](backend/Pugling.Client/CLAUDE.md)): die *eine* HTTP-Schicht
-  für Nicht-Browser-Konsumenten (die KI-Agenten). Neuer Endpunkt? Erst Backend, dann dort eine einzeilige
-  Methode ergänzen – nie HTTP-Plumbing duplizieren.
-- **Guard Clauses zuerst** (früh `return NotFound()/Forbid()` bzw. `this.ProblemWithCode(…)`),
-  Happy Path un-eingerückt.
-- **API-Versionierung**: Alle Routen unter `api/v1/…` (`ApiRoutes.V1`), Controller tragen
-  `[ApiVersion("1.0")]`. Bis zur Publikation bleiben wir bei 1.0 und ändern frei; ein Bruch danach
-  läuft über eine parallele `v2`, nicht über Abwärtskompatibilität.
 - **Mechanische Tore statt Disziplin** (`ConventionGuardTests`, `SchemaGuardTests`, `TreatWarningsAsErrors`
   repo-weit): ein rotes Tor benennt die verletzte Regel und den Fundort selbst – Inventar, Ausnahmelisten und
   Begründungen erst bei Bedarf nachschlagen in [docs/codequalitaet-gates-plan.md](docs/codequalitaet-gates-plan.md).
   Neue Regel scharf stellen? Erst messen.
-- **Schema-Änderungen laufen gegen gepinnte Listen** (`SchemaGuardTests`, Tore G1–G9): eine neue Beziehung,
-  eine neue String-Länge und eine neue „genau eines von N"-Invariante erzwingen je eine **bewusste Zeile**.
-  Handwerk und Konventionen im Einzelnen: [backend/Pugling.Api/CLAUDE.md](backend/Pugling.Api/CLAUDE.md) →
-  „Schema & Migrationen" (lädt dort automatisch).
-- **`CancellationToken`** gilt hart, und zwar in drei Teilen – weil CA2016 **kein** Netz ist (in Lambdas
-  schweigt der Analyzer, und ein Helfer ohne Token-Parameter verbirgt jeden Aufruf in seinem Rumpf):
-  1. jede async **Action** nimmt den Token als **letzten** Parameter und reicht ihn in jeden EF-/
-     Service-Aufruf durch; `= default` ist nur **dort** Pflicht, wo optionale `[FromQuery]`-Werte
-     vorangehen – dort erzwingt ihn ohnehin CS1737, sonst ist er frei (kein Vertragsargument: der
-     `ApiExplorer` unterdrückt `CancellationToken` im OpenAPI-Dokument vollständig, [B-102](docs/backlog/B-102-token-vorgabewert-regel-schaerfen.md));
-  2. ein neuer **Helfer** nimmt den Token mit, aber **ohne `= default`**: ein weggelassenes optionales
-     Argument rügt CA2016 nicht, ohne Vorgabewert erzwingt der Compiler das Durchreichen;
-  3. **kompensierende Schritte nach dem Commit** (aufräumen o. Ä.) nehmen bewusst `CancellationToken.None`
-     – ein Client-Abbruch darf nicht entscheiden, ob aufgeräumt wird. Der Abbruch selbst endet über den
-     `ClientAbortExceptionHandler` als 499 ohne Fehler-Log, nicht als 500.
 - **Unbekannte Felder werden abgelehnt** (`UnmappedMemberHandling.Disallow`): ein Feld, das der Vertrag
   nicht kennt, liefert `400` mit `code: unknown_field` – nicht `201` mit stillem Datenverlust. Wer einen
   Payload schreibt (Test, Client, Frontend), muss die Feldnamen des DTOs **treffen**.
-- **Fehler** einheitlich als `ProblemDetails` (RFC 7807) mit **maschinenlesbarem `code`**: statt
-  `Problem(statusCode:, detail:)` immer `return this.ProblemWithCode(ApiErrors.<Code>, "…")` nutzen
-  (Registry: [Errors/ApiErrors.cs](backend/Pugling.Api/Errors/ApiErrors.cs); Status/Titel/`type`-URI kommen
-  aus dem `ApiError`). Neuen fachlichen Fehler? Erst einen Code **additiv** in `ApiErrors` ergänzen; leere
-  Fehler und unbehandelte 500 stempelt die `CodeStampingProblemDetailsFactory` mit einem Default-Code.
-  Meldungstexte (`detail`) sind **englisch** (i18n); der `code` ist stabiler Vertragsbestandteil.
-  Beispiele: [docs/api-examples/](docs/api-examples/index.md) (verifiziert von `DocsCaptureTests`).
-- **PATCH-Semantik**: `null` heißt „nicht angegeben" (der Wert bleibt), **nicht** „leeren". Ein Feld
-  löschbar zu machen braucht darum einen ausdrücklichen `bool Clear<Feld>`-Schalter im Update-DTO (Muster:
-  `UpdateChildDto.ClearBirthYear`). Im Controller **erst den Wert, dann den Schalter** anwenden, damit
-  „leeren" gewinnt, wenn ein Formular beides schickt. Ohne den Schalter meldet eine Oberfläche mit
-  „– keine Angabe –" fröhlich „Gespeichert." und der alte Wert steht weiter da. `PatchSemanticsTests`
-  prüft reflexiv über *alle* `Update…Dto`/`Update…Request`, dass **jeder** Schalter einen Fall in seiner
-  Tabelle hat – ein neuer macht das Tor also erst rot (Einzelfälle: `PatchClearFieldTests`).
-- **Eigentum**: Für Endpunkte unter `{planId}` den `[ServiceFilter(typeof(PlanOwnershipFilter))]`,
-  für Endpunkte unter `{childId}` den `[ServiceFilter(typeof(ChildOwnershipFilter))]` nutzen
-  (nicht inline wiederholen). Sonst `AuthAccess` explizit. Kindbezogene Ressourcen leben unter
-  `api/v1/supervisor/children/{childId}/…`; top-level Aggregate, die nur nach Kind filtern, nehmen `?childId=`.
 - **Lösungsfeld-Regel**: Gibt eine Action in ihrem Nutzlast-Graphen ein Feld namens
   `Answer`/`Solution`/`CorrectAnswer`/`Translation` heraus, muss sie auf eine Rollenmenge **ohne**
   `Student` gegated sein (`Creator` oder `Supervisor` genügt je einzeln) – nicht zu verwechseln mit
   `Expected` (Reveal nach der Antwort, erlaubt). Mechanisch gehalten von
   `ConventionGuardTests.Actions_Mit_Loesungsfeld_Sind_Vor_Dem_Studenten_Gegated`.
-- **EF**: `AsNoTracking()` für Lesequeries, in DB filtern (`Where` vor `ToListAsync`), N+1 via `Include`/
-  Projektion vermeiden, `async`/`Async`-Suffix, `CancellationToken` durchreichen.
 - **Rolle & Selbstbetrug**: Für den Sohn serverseitig erzwingen (Stufe aus dem Fahrplan, Heartbeat clampen,
   fremde Tage nur der Vater). Neue Endpunkte immer role-/ownership-sauber.
 
@@ -222,6 +172,7 @@ Lernstand – positionsgebunden *und* plan-übergreifend je Vokabel-Item.
   „Wayfinding operations", **nicht** im mitgelieferten `.scratch/`.
 - **Diese Datei ist der Startkontext** – sie wird bei *jeder* Sitzung mitgeladen. Neues Wissen gehört
   darum standardmäßig nach `docs/` oder in die verschachtelte `CLAUDE.md` des Bereichs
-  ([backend/Pugling.Api/](backend/Pugling.Api/CLAUDE.md), [frontend/](frontend/CLAUDE.md), `Contracts`,
-  `Client`, `Agent.Creator`). Resident wird nur, was bei einer **beliebigen** Änderung eine Entscheidung
-  ändert – und dann als Regel, nicht als Umbau-Erzählung.
+  ([backend/](backend/CLAUDE.md) für das C#-Handwerk aller fünf Projekte, [backend/Pugling.Api/](backend/Pugling.Api/CLAUDE.md),
+  [frontend/](frontend/CLAUDE.md), `Contracts`, `Client`, `Api.Tests`, `Agent.Creator`). Resident wird nur,
+  was bei einer **beliebigen** Änderung eine Entscheidung ändert – und dann als Regel, nicht als
+  Umbau-Erzählung.
