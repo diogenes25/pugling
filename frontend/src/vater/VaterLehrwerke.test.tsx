@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { createExerciseHref, seriesFilterQuery, UnitForm, type SeriesFilterValues } from "./VaterLehrwerke";
-import type { TextbookSeriesResponse } from "../lib/types";
+import {
+  createExerciseHref, newUnitDefaults, seriesFilterQuery, UnitForm, type SeriesFilterValues,
+} from "./VaterLehrwerke";
+import type { SeriesUnitResponse, TextbookSeriesResponse } from "../lib/types";
 
 /*
  * Der Regressionstest zu B-129. `UnitForm` löst keinen Netzaufruf aus, solange nicht abgesendet wird –
@@ -43,6 +45,57 @@ describe("UnitForm – Themen-Eingabe", () => {
 
     expect(chip("Mit Enter")).not.toBeNull();
     expect((feld() as HTMLInputElement).value).toBe("");
+  });
+});
+
+/*
+ * Die Vorbelegung einer neuen Unit (remark #2 vom 2026-08-14). Der zweite Fall ist der, der leicht falsch
+ * wird: die Vorbelegung darf nur beim ANLEGEN greifen. Hängt sie am Wert statt am Vorhandensein von `unit`,
+ * erbt eine bestehende Unit ohne Band beim blossen Öffnen den Band der Nachbarin – ein stiller Datenwechsel,
+ * den erst das Speichern sichtbar machen würde.
+ */
+describe("Vorbelegung einer neuen Unit", () => {
+  const unit = (over: Partial<SeriesUnitResponse> = {}): SeriesUnitResponse => ({
+    id: 1, seriesId: 7, label: "Unit 1", orderIndex: 0, grade: 8, bookType: "Workbook",
+    topics: [], createdAt: "2026-08-12T00:00:00Z", ...over,
+  });
+
+  it("übernimmt Band und Buchtyp der letzten Unit der Reihe", () => {
+    // Rot, sobald nicht mehr die LETZTE Unit die Vorlage ist – der Server sortiert nach Band, wer anlegt
+    // arbeitet nach hinten.
+    expect(newUnitDefaults([unit({ id: 1, grade: 7 }), unit({ id: 2, grade: 8, bookType: "TeacherGuide" })]))
+      .toEqual({ grade: "8", bookType: "TeacherGuide" });
+  });
+
+  it("startet ohne Units leer und beim Regelfall Lehrbuch", () => {
+    expect(newUnitDefaults([])).toEqual({ grade: "", bookType: "Textbook" });
+  });
+
+  // Der Zugriff per Regex, weil das Band-Feld seine Einheit im Label trägt („Band (als Klasse)") und
+  // `getByLabelText` einen String exakt vergleicht.
+  const band = () => screen.getByLabelText(/^Band/) as HTMLInputElement;
+  const buchtyp = () => screen.getByLabelText("Buchtyp") as HTMLSelectElement;
+
+  it("lässt eine bestehende Unit bei ihren eigenen Werten, statt sie erben zu lassen", () => {
+    // Rot, sobald die Fallunterscheidung am Wert statt am Vorhandensein von `unit` hängt: mit
+    // `unit?.grade?.toString() ?? defaults.grade` stünde hier 8 statt "" – und ein Speichern schriebe einen
+    // Band, den niemand eingetragen hat.
+    render(
+      <UnitForm
+        seriesId={7} unit={unit({ grade: null, bookType: "Textbook" })}
+        defaults={{ grade: "8", bookType: "TeacherGuide" }} onDone={() => {}}
+      />,
+    );
+
+    expect(band().value).toBe("");
+    expect(buchtyp().value).toBe("Textbook");
+  });
+
+  it("belegt ein Anlege-Formular mit Band und Buchtyp vor", () => {
+    render(<UnitForm seriesId={7} defaults={{ grade: "8", bookType: "Workbook" }} onDone={() => {}} />);
+
+    expect(band().value).toBe("8");
+    expect(buchtyp().value).toBe("Workbook");
   });
 });
 

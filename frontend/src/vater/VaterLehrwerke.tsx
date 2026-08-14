@@ -20,6 +20,28 @@ const BOOK_TYPE_LABEL: Record<BookType, string> = {
   Textbook: "Lehrbuch", Workbook: "Arbeitsheft", TeacherGuide: "Lehrerhandreichung",
 };
 
+/** Band und Buchtyp, mit denen das Formular für eine **neue** Unit startet – Band als Formular-String. */
+export type NewUnitDefaults = { grade: string; bookType: BookType };
+
+/*
+ * Exportiert für den Test: reine Wertearbeit, ohne gefälschtes `fetch` prüfbar.
+ */
+/**
+ * Vorbelegung für eine neue Unit aus der **letzten** Unit derselben Reihe (remark #2 vom 2026-08-14).
+ * Band und Buchtyp identifizieren das Buch, aus dem die Unit stammt, und mussten am Anfang jeder Sitzung
+ * neu gesetzt werden: `submit` trägt sie nach dem Anlegen bereits weiter (siehe dort), aber das **erste**
+ * Formular nach dem Aufklappen startete leer – obwohl die Reihe ihre Bände längst kennt. Die letzte Unit
+ * ist die richtige Vorlage, weil der Server nach Band sortiert (`SeriesUnitsController.cs:42`): wer eine
+ * Unit anlegt, arbeitet das Buch von vorn nach hinten durch.
+ * <p>
+ * Das ersetzt **keine** Band-Ebene im Modell – Band und Unit liegen bewusst auf einer Ebene (B-63).
+ * </p>
+ */
+export function newUnitDefaults(units: SeriesUnitResponse[]): NewUnitDefaults {
+  const last = units.length > 0 ? units[units.length - 1] : undefined;
+  return { grade: last?.grade?.toString() ?? "", bookType: last?.bookType ?? "Textbook" };
+}
+
 /** Die Filterzeile über der Reihenliste, so wie die Formularfelder sie halten: durchweg Strings. */
 export type SeriesFilterValues = {
   search: string; subjectId: string; publisherId: string; schoolTypes: SchoolType | ""; grade: string;
@@ -501,10 +523,16 @@ function UnitPanel({ series, onChanged }: { series: TextbookSeriesResponse; onCh
         </table>
       )}
 
-      {series.isOwn && (
+      {/* Erst wenn die Units geladen sind: `UnitForm` liest seine Vorbelegung im `useState`-Anfangswert,
+          also genau einmal beim Einhängen. Stünde das Formular schon während des Ladens da, startete es
+          leer und die nachgelieferte Vorbelegung käme nie an – sichtbar wäre nur, dass sie nicht wirkt. */}
+      {series.isOwn && units.data !== null && (
         <div style={{ marginTop: 10 }}>
           <h4 className="h-section" style={{ fontSize: "1rem" }}>Unit hinzufügen</h4>
-          <UnitForm seriesId={series.id} onDone={() => { units.reload(); onChanged(); }} />
+          <UnitForm
+            seriesId={series.id} defaults={newUnitDefaults(units.data)}
+            onDone={() => { units.reload(); onChanged(); }}
+          />
         </div>
       )}
     </>
@@ -517,14 +545,21 @@ const BOOK_TYPES: BookType[] = ["Textbook", "Workbook", "TeacherGuide"];
  * Ein Formular für Anlegen und Ändern. Bewusst eines: die Felder sind identisch, und beim Ändern zählt
  * genau derselbe fachliche Hinweis – der Stoff der Unit ist der Grund, warum es diese Ebene gibt.
  */
-export function UnitForm({ seriesId, unit, onDone }: {
+export function UnitForm({ seriesId, unit, defaults, onDone }: {
   seriesId: number;
   unit?: SeriesUnitResponse;
+  defaults?: NewUnitDefaults;
   onDone: () => void;
 }) {
+  // Die Vorbelegung gilt nur beim ANLEGEN, und die Fallunterscheidung hängt am Vorhandensein von `unit`,
+  // nicht an seinen Werten: eine bestehende Unit ohne Band soll leer bleiben. Über `unit?.grade ?? defaults`
+  // erbte sie beim Bearbeiten den Band der Nachbar-Unit – ein stiller Datenwechsel beim blossen Öffnen.
+  const initial = unit
+    ? { grade: unit.grade?.toString() ?? "", bookType: unit.bookType }
+    : { grade: defaults?.grade ?? "", bookType: defaults?.bookType ?? ("Textbook" as BookType) };
   const [form, setForm] = useState({
-    label: unit?.label ?? "", grade: unit?.grade?.toString() ?? "",
-    bookType: unit?.bookType ?? "Textbook" as BookType, topics: unit?.topics ?? [] as string[],
+    label: unit?.label ?? "", grade: initial.grade,
+    bookType: initial.bookType, topics: unit?.topics ?? [] as string[],
     topicInput: "", grammar: unit?.grammar ?? "", vocabularyNotes: unit?.vocabularyNotes ?? "",
   });
   const action = useAction();
