@@ -61,6 +61,7 @@ Behebung **Code oder Tests** ändert. Über 5 endet der **gesamte** Lauf.
 |---|---|---|
 | 1 | **2 / 5** | abgeschlossen |
 | 2 | **2 / 5** | abgeschlossen |
+| 3 | **2 / 5** | abgeschlossen |
 
 ## Sprint 1 — Ziel erreicht
 
@@ -189,6 +190,69 @@ den Wortlaut gehalten, statt die Regel im Lauf zu biegen. **Zur Entscheidung des
 eingecheckt generiertes Artefakt" mitzählen? Der Schnitt bliebe damit ablesbar, würde aber Vertragstexte
 erfassen.
 
+## Sprint 3 — Ziel erreicht, und die Prämisse der Klasse fiel dabei
+
+**Ziel war:** „Ein rotes Test-Tor sagt mir, *was* schiefging — ein gesperrtes Dateihandle und ein zerrissener
+Inhalt sind nicht dieselbe Meldung."
+
+**Erreicht.** [B-165](backlog/B-165-backend-suite-flackert.md) `abgenommen`. Der Zähler ist getrennt, die
+Meldungen nennen alle drei Zahlen, und das Flackern ist weg — der atomare Fall fällt nicht mehr an einer
+Sperre, die der Schreiber nachweislich nicht verursacht haben kann.
+
+**Der Bau hat mehr aufgedeckt als das Ziel verlangte, und zwar gegen mich.**
+
+**(1) Der Nachbar-Fall hat nie zerrissenen Inhalt gesehen.** Nach dem Trennen der Zähler:
+**`Torn reads: 0, locked reads: 1867`**. Seine gesamte Beweiskraft kam aus Sperren. Eine eigenständige Probe
+erklärte es (2351 identische Ausnahmen): `File.OpenRead` fordert `FileShare.Read`, ein offenes
+Schreib-Handle widerspricht dem, Windows verweigert das Öffnen — der Leser kommt nie bis zu den Bytes. Damit
+ist die **Prämisse des Klassen-Kommentars falsch** („the bug is torn/incomplete JSON content"), und weil dort
+eine Verhaltensfrage dranhängt (braucht `OpenApiExampleCatalog.Load` einen Wiederholungsversuch, wenn der
+reale Fehlermodus eine Sperre ist?), wurde sie **nicht** umgedeutet, sondern als
+[B-181](backlog/B-181-praemisse-der-rennen-klasse-stimmt-nicht.md) abgelegt.
+
+**(2) Meine Entscheidung 2 hat den atomaren Fall zahnlos gemacht — zweimal widerlegt, beide Male von einer
+Probe.** Mit nur `zerrissen == 0` blieb er **grün, obwohl er unsicher schrieb**. Vor dieser Story fing er den
+Tausch; danach nicht mehr — eine **Verschlechterung**, eingeführt von mir. Der erste Reparaturversuch
+(`ok > 0`) fiel ebenfalls durch, weil `OpenForWriteWithRetry` erst um sein Handle kämpft und die Lesevorgänge
+davor immer gelingen. Was trägt, ist das **Verhältnis** `ok > gesperrt`.
+
+| Rote Probe | Ergebnis |
+|---|---|
+| atomarer Fall schreibt unsicher | rot: „2954 reads were denied and only 450 succeeded" |
+| unsicherer Fall schreibt atomar | rot: „Locked reads: 0, torn reads: 0" |
+
+Der beobachtete Virenscanner-Blip war genau **1** — zwei Größenordnungen Abstand zu 2954. Der Schwellwert ist
+damit gemessen begründet, nicht geraten.
+
+### Retrospektive Sprint 3
+
+**Nachschau (Pflichthandlung, zuerst):** Index vor der Abnahme **105 von 107** — die Arbeit von **Sprint 2**
+(B-168, B-178) war nicht unter den geprüften, also wurde sie jetzt angesehen. Ergebnis: **ein Defekt und ein
+stiller Rest.**
+
+- **B-178:** Die Reichweite des Ventils war nur am **PATCH** festgenagelt; eine Verengung von `Delete` allein
+  wäre bei 831/831 grün geblieben → [B-182](backlog/B-182-reichweite-nur-am-patch-festgenagelt.md), behoben
+  und mit **gefahrener** roter Probe belegt (14 grün, 1 rot). Der Reviewer hatte sie nicht gefahren; ich habe
+  sie nachgeholt, weil eine Story, die behauptet ein Test fange etwas, das zeigen muss.
+- **B-168:** Der Angriffsplan nannte *zwei* Konstanten-Vergleiche, umgesetzt wurde einer. Der zweite bleibt
+  zu Recht — dort meint die `1` den *anderen* Erwachsenen, nicht den Aufrufer — aber die Story hatte sich
+  geirrt, und das steht jetzt am Code, statt als erledigt auszusehen. **Kein Defekt, ein Rest, der wie
+  Erfüllung aussah.**
+
+**Das Muster dieser Nacht, in einem Satz.** Alle fünf Selbstkorrekturen sind derselbe Fehler: **ich habe eine
+Begründung aufgeschrieben, ohne sie zu prüfen.** „`exercises.loading` deckt dasselbe Fenster" (falsch),
+„`GetInt32()` würde werfen statt zu vergleichen" (irrelevant), „der Seed-Fall wird identitätsbasiert"
+(unmöglich), „das Ventil betrifft ownerlose Fächer" (zu eng), „nur zerrissener Inhalt muss zählen"
+(macht den Fall zahnlos). Vier davon fand ein Reviewer oder eine Nachschau, eine fand meine eigene Probe.
+**Was in jedem einzelnen Fall gereicht hätte, war die rote Probe *vor* dem Aufschreiben der Begründung** —
+nicht mehr Sorgfalt, sondern dieselbe Sorgfalt in anderer Reihenfolge.
+
+**Vorschlag für einen Mechanismus** — nach Freigabe 3 nur vorgeschlagen, **nicht gelandet**:
+Ein Kommentar, der eine Bedingung *begründet* („weil X schon abgedeckt ist", „weil Y werfen würde", „weil das
+nur Z betrifft"), ist eine prüfbare Aussage und gehört in dieselbe rote Probe wie die Bedingung. Das ist die
+gemeinsame Wurzel aller fünf Fälle und wäre eine Zeile in der Root-`CLAUDE.md` — **erst messen**, wie oft ein
+solcher Satz vorkommt, dann entscheiden.
+
 ## Verlauf des Laufs
 
 - **2026-08-14** — Lauf gestartet. Freigaben erteilt, Umfang entschieden, Sprint-Plan steht.
@@ -205,3 +269,9 @@ erfassen.
   [B-180](backlog/B-180-zusicherung-haengt-an-scheduling-statt-am-gate.md) (aufgenommen **und** gebaut),
   dazu [B-162](backlog/B-162-assistent-nennt-den-leeren-katalog-als-ursache.md) präzisiert.
   Index: **105 von 108** nachgeschaut.
+- **2026-08-14** — **Sprint 3 durch, Lauf beendet.** B-165 `abgenommen`, Fehlerzähler **2 von 5**. Abgelegt:
+  [B-181](backlog/B-181-praemisse-der-rennen-klasse-stimmt-nicht.md) (die Prämisse der Rennen-Klasse stimmt
+  nicht — mit Verhaltensfrage im Produktionspfad, darum nicht nachts entschieden),
+  [B-182](backlog/B-182-reichweite-nur-am-patch-festgenagelt.md) (aufgenommen **und** gebaut).
+  Index: **107 von 110** nachgeschaut. Der Lauf endet nicht am Fehlerzähler, sondern weil der Sprint-Plan
+  durch ist.

@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/backend, bereich/tests]
+tags: [typ/story, status/abgenommen, bereich/backend, bereich/tests]
 aliases: [Suite flackert, AtomaresSchreiben_KeineLeseFehler, Dateirennen unter Volllast]
-status: ausformuliert
+status: abgenommen
 prio: P1
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: XS
+wo: backend
+migration: nein
+vertragsbruch: nein
 quelle: beim Bauen von B-163 beobachtet (docs/backlog/B-163-art-und-typ-tragen-dieselben-woerter.md)
 unverifiziert: false
 grund: ""
@@ -78,26 +78,85 @@ gehört gemessen, nicht behauptet.
 
 ## Offene Punkte
 
-1. **Was genau schlägt fehl?** Empfehlung: den Zähler durch die *Ausnahme* ersetzen, die `TryRead`
-   verschluckt, und sie in die Meldung nehmen. Ein `IOException` (Sharing Violation) und ein
-   `JsonException` (zerrissener Inhalt) sind zwei völlig verschiedene Befunde — der erste ist ein
-   Umgebungsartefakt, der zweite wäre die Rückkehr des Fehlers, den B-57 behoben hat. Heute zieht
-   `failures` beide zusammen: **genau die Fehlerfamilie dieses Repos, hier im Messinstrument selbst.**
-2. **Zehn Wiederholungen — sind sie das wert?** Empfehlung: erst Punkt 1, dann entscheiden. Zehn
-   Versuche multiplizieren die Wahrscheinlichkeit eines Umgebungs-Blips mit zehn; wenn der Fehler ein
-   `IOException` ist, ist die Wiederholungszahl die Ursache des Flackerns und nicht der Beweis der Güte.
-3. **Ein `[Collection]` für diese Klasse?** Empfehlung: **nicht als Erstes.** Es würde die Suite
-   verlangsamen und die Ursache verdecken; nach Punkt 1 ist vielleicht klar, dass es gar nicht die
-   Parallelität ist.
-4. **Kein automatischer Wiederholungslauf im Test-Tor.** Empfehlung: **nein**, wie schon zuvor notiert —
-   das macht aus einem sichtbaren Flackern ein unsichtbares.
+Alle in der Grill-Runde vom 2026-08-14 geschlossen (autonom, `art: Defekt`, Freigabe 1). Der Ist-Stand ist
+dabei am Code bestätigt worden: `TryRead` fängt `catch (Exception ex) when (ex is IOException or
+JsonException) { return false; }` — **eine** Zahl für zwei Befunde.
+
+1. ~~Was genau schlägt fehl?~~ → Entscheidungen 1 und 2.
+2. ~~Sind zehn Wiederholungen das wert?~~ → Entscheidung 3. Die Antwort hat sich **umgedreht**.
+3. ~~Ein `[Collection]` für die Klasse?~~ → Entscheidung 4 (zurückgestellt).
+4. ~~Wiederholungslauf im Test-Tor?~~ → Entscheidung 5 (nein, unverändert).
+
+## Entscheidungen
+
+1. **Die zwei Befunde werden getrennt gezählt: gesperrte Datei und zerrissener Inhalt.** Begründung: Sie
+   bedeuten Verschiedenes. Ein `JsonException` ist **der Fehler, den B-57 behoben hat** — ein Leser sieht
+   halb geschriebenen Inhalt. Ein `IOException` ist ein **Umgebungsartefakt**, das der Klassen-Kommentar
+   selbst beschreibt (Windows-Echtzeit-Virenscanner hält kurz eine Sperre auf jede frisch geschriebene oder
+   umbenannte Datei). *Kosten:* Zwei Zähler statt einem, und die Meldung wird länger — dafür sagt sie beim
+   nächsten Rot, welcher der beiden Fälle eintrat.
+2. **Nur der zerrissene Inhalt lässt den Fall fallen; die Sperre wird gemeldet, nicht bestraft.**
+   Begründung: Die Eigenschaft unter Prüfung ist „ein Leser sieht **nie** einen halb geschriebenen Stand" —
+   die hält exakt, `0` ist die richtige Grenze. Die Sperre hängt an der Maschine und ist genau der Grund,
+   warum dieser Fall das Test-Tor gelegentlich rot färbte.
+   *Kosten, und sie sind der wunde Punkt dieser Story:* Ein Regress, der **ausschließlich** Sperren erzeugt
+   (etwa ein Schreiber, der die Zieldatei exklusiv öffnet, statt atomar umzubenennen), käme damit durch. Das
+   ist ein benannter blinder Fleck, kein vergessener — und er wiegt weniger als ein Tor, dem man nicht mehr
+   glaubt. `OpenApiExampleCatalog.Load` hat ohnehin keinen eigenen Wiederholungsversuch, ein solcher Regress
+   würde also in `OpenApiExampleTests` ungefiltert auffallen, nicht hier.
+3. **Die zehn Wiederholungen bleiben — und werden dadurch erst sinnvoll.** *Die Empfehlung dieser Story hat
+   sich umgedreht:* Sie vermutete, die Wiederholungszahl sei die **Ursache** des Flackerns (zehn Versuche
+   multiplizieren die Wahrscheinlichkeit eines Blips mit zehn). Das stimmte, **solange** die Sperre den Fall
+   fallen ließ. Nach Entscheidung 2 multipliziert sie nur noch die Aussagekraft über den *zerrissenen Inhalt*.
+   *Kosten:* Der Fall bleibt der langsamste der Klasse (zehn Durchgänge à 30 ms Pause).
+4. **Kein `[Collection]` für die Klasse — zurückgestellt.** Begründung: Es würde die Suite verlangsamen und
+   die Ursache verdecken; nach Entscheidung 2 ist die Parallelität gar nicht mehr der Auslöser. *Kosten:*
+   Sollte sich zeigen, dass Sperren auch ohne Volllast auftreten, ist die Frage neu zu stellen.
+5. **Kein automatischer Wiederholungslauf im Test-Tor.** Begründung unverändert: Das macht aus einem
+   sichtbaren Flackern ein unsichtbares. *Kosten:* keine — nach dieser Story flackert der Fall nicht mehr.
+
+## Akzeptanzkriterien
+
+1. `TryRead` unterscheidet „gesperrt" von „zerrissen"; kein Aufrufer sieht mehr eine Sammel-Zahl.
+2. `AtomaresSchreiben_KeineLeseFehler` fällt bei **einem einzigen** zerrissenen Lesevorgang und **nicht**
+   bei einer Sperre. Seine Meldung nennt beide Zahlen.
+3. Der Nachbar-Fall `UnsicheresSchreiben_ErzeugtLeseFehler` fordert weiterhin einen Fehler — aber
+   ausdrücklich einen **zerrissenen**, nicht „irgendeinen". Das ist die schärfere Aussage und heute nicht
+   gestellt.
+4. Der blinde Fleck aus Entscheidung 2 steht als Kommentar am Fall, nicht nur in dieser Story.
+5. Rote Probe **mit Zahl** für beide Fälle.
+
+## Schätzung
+
+**Größe: XS** — ein Rückgabetyp statt `bool`, zwei Zähler, zwei Meldungen, zwei Kommentare. Kein
+Produktivcode.
+
+- **`wo: backend`** — ausschließlich `Pugling.Api.Tests`.
+- **`migration: nein`**, **`vertragsbruch: nein`** — es wandert nichts außerhalb einer Testdatei.
+
+**Risiken:**
+
+1. **Die rote Probe für „zerrissen" ist die leichte, die für „gesperrt" die schwere.** Zerrissenen Inhalt
+   erzeugt der Nachbar-Schreiber (`WriteUnsafePaused`) frei Haus. Eine Sperre absichtlich herzustellen heißt,
+   die Datei parallel exklusiv zu öffnen — machbar, aber es ist ein eigenes Stück Testmechanik. Wenn das zu
+   teuer wird, ist die ehrliche Antwort, AK 2 zur Hälfte per Konstruktion zu belegen (der `IOException`-Pfad
+   ist im Code sichtbar getrennt) und das zu benennen.
+2. **`OpenApiExampleEntry` ist ein interner Typ** — der neue Rückgabetyp muss in derselben Datei liegen,
+   sonst wächst die Änderung über die Testklasse hinaus.
+
+**Angriffsplan:**
+
+1. `TryRead` gibt statt `bool` ein Ergebnis mit zwei unterscheidbaren Fehlerarten zurück.
+2. `CountFailedReadsDuring` zählt beide getrennt.
+3. Beide Fälle auf die neue Form ziehen, Meldungen mit beiden Zahlen, Kommentar zum blinden Fleck.
+4. Rote Proben: für „zerrissen" den atomaren Schreiber testweise auf den unsicheren umstellen; für
+   „gesperrt" eine exklusive Öffnung einschieben — je mit Zahl, je zurücknehmen.
 
 ## Testweg
 
-Kein neuer Test, sondern eine **schärfere Meldung** im bestehenden. Die Probe dafür ist ungewöhnlich, aber
-machbar: eine Datei mit halb geschriebenem Inhalt und eine mit exklusiver Sperre erzeugen und belegen, dass
-die Meldung die beiden Fälle **verschieden** benennt. `UnsicheresSchreiben_ErzeugtLeseFehler` (der
-Nachbar-Fall, `:206`) liefert den ersten davon schon frei Haus.
+Kein neuer Test, sondern **schärfere Meldungen und Zusicherungen** in den zwei bestehenden Fällen. Die Probe
+läuft über das Vertauschen der Schreibarten: der atomare Fall muss fallen, wenn er unsicher schreibt, der
+unsichere, wenn er atomar schreibt.
 
 ## Verlauf
 
@@ -111,3 +170,42 @@ Nachbar-Fall, `:206`) liefert den ersten davon schon frei Haus.
   Parallelität, sondern dass das Messinstrument selbst „Sperre" und „zerrissener Inhalt" in einem Zähler
   zusammenzieht — und damit nicht sagen kann, ob hier ein Umgebungsartefakt flackert oder der von B-57
   behobene Fehler zurück ist.
+- 2026-08-14 · `ausformuliert` auf `gegrillt` auf `geschaetzt`, autonom (`art: Defekt`, Freigabe 1). Fünf
+  Entscheidungen. Der Ist-Stand wurde dabei am Code bestätigt: `TryRead` fing `IOException or JsonException`
+  in **einem** `catch` und gab `false` zurück.
+- 2026-08-14 · Gebaut und `abgenommen`. **Der Bau hat die Prämisse der Klasse korrigiert und meine eigene
+  Entscheidung 2 zweimal widerlegt** — beides durch Messung, nicht durch Nachdenken.
+
+  **(1) Der Nachbar-Fall hat nie zerrissenen Inhalt gesehen.** Nach dem Trennen der Zähler meldete
+  `UnsicheresSchreiben_ErzeugtLeseFehler`: **`Torn reads: 0, locked reads: 1867`**. Seine gesamte Beweiskraft
+  kam also aus **Sperren**. Ursache, mit einer eigenständigen Probe nachgemessen (2351 Ausnahmen, alle
+  identisch): `File.OpenRead` fordert `FileShare.Read` — „andere dürfen lesen, nicht schreiben" —, und ein
+  bereits offenes **Schreib**-Handle widerspricht dem. Windows verweigert das Öffnen, der Leser kommt gar
+  nicht bis zu den Bytes. Zerrissenen Inhalt könnte er nur sehen, wenn der Schreiber Schreibzugriff teilte,
+  und das tut weder die Vor-B-57-Form (`File.WriteAllText`) noch der Fix.
+  **Folge:** Die Aussage des Falls heißt jetzt „während eines unsicheren Schreibens ist die Zieldatei
+  **unlesbar**" — das ist, was er messen kann, und es ist genau das, was B-57 behoben hat.
+
+  **(2) Entscheidung 2 machte den atomaren Fall zahnlos, und die Probe hat es gezeigt.** Mit nur
+  `zerrissen == 0` blieb er **grün**, obwohl er unsicher schrieb — denn unsicheres Schreiben erzeugt Sperren,
+  keinen zerrissenen Inhalt. Vor dieser Story fing er den Tausch (er zählte beides zusammen); danach nicht
+  mehr. Das war eine **Verschlechterung**, eingeführt von mir, gefunden von meiner eigenen Probe.
+  Erster Reparaturversuch `ok > 0` fiel ebenfalls durch: `OpenForWriteWithRetry` kämpft erst um sein Handle,
+  die Lesevorgänge **davor** gelingen also immer.
+  **Was trägt, ist das Verhältnis:** `ok > gesperrt`. Unsicher gemessen **2954 abgewiesen zu 450 erfolgreich**,
+  atomar ~2000 erfolgreich zu 0–1 abgewiesen. Der beobachtete Virenscanner-Blip war genau **1** — zwei
+  Größenordnungen Abstand.
+
+  **Rote Proben, beide Richtungen, je mit Zahl:**
+
+  | Probe | Ergebnis |
+  |---|---|
+  | atomarer Fall schreibt unsicher | rot: „2954 reads were denied and only 450 succeeded" |
+  | unsicherer Fall schreibt atomar | rot: „Locked reads: 0, torn reads: 0" |
+
+  **Verifikation:** **831/831** Backend, `dotnet format` sauber.
+  **Kein Rollengang nötig und keiner ausgefallen:** `wo: backend`, ausschließlich Testcode, keine Fläche am
+  Produkt. Der Beleg sind die zwei Proben.
+  **Nicht mitgenommen und darum abgelegt:**
+  [B-181](B-181-praemisse-der-rennen-klasse-stimmt-nicht.md) — die Klasse behauptet in ihrem Kommentar,
+  der Fehler sei „torn/incomplete JSON content", und das trifft auf keinen Leser dieses Repos zu.

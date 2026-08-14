@@ -14,7 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-157]
 wartet_auf: ""
-nachgeschaut: ""
+nachgeschaut: 2026-08-14
 ---
 
 # B-178 · Der Katalogtext verspricht mehr als der Server erlaubt
@@ -144,3 +144,12 @@ warum sie zwei Stories lang falsch stehen konnte; der Beleg ist der Rollengang.
   **Was diese Story ausdruecklich NICHT behebt:** den Fall des Vaters. Kein geseedeter Erwachsener traegt das
   Admin-Flag (nachgesehen), sein Tippfehler bleibt stehen, bis
   [B-170](B-170-selbst-angelegte-art-im-grundbestand-ist-unloeschbar.md) entschieden ist.
+- 2026-08-14 · **Nachschau: ein Defekt.** Die Reichweite des Ventils (Entscheidung 3) war nur am **PATCH**
+  festgenagelt — eine Verengung von `Delete` allein wäre bei 831/831 grün geblieben, während der Kommentar
+  dort „Same break-glass as in Update" behauptet. Eigene Story
+  [B-182](B-182-reichweite-nur-am-patch-festgenagelt.md), sofort behoben und mit gefahrener roter Probe
+  belegt (14 grün, 1 rot). Gezielt geprüft und sauber: beide im Kommentar genannten Präzedenzien
+  (`ExercisePermissionService.CanWrite`, `PublishersController.Delete`) sind tatsächlich Blankovollmachten
+  und keine ownerlos-Verengungen; die vier Texte auf `/vater/katalog` widersprechen sich nicht mehr; die
+  zwei `summary`-Zeilen in `docs/openapi/v1.json` sind die vollständige Vertragswirkung (der
+  Klassen-Kommentar erreicht das Dokument nicht).

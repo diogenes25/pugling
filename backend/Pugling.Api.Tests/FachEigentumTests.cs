@@ -160,6 +160,9 @@ public class FachEigentumTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var single = await fremder.GetAsync($"/api/v1/creator/subjects/{subjectId}");
         Assert.Equal(HttpStatusCode.OK, single.StatusCode);
         var body = await single.Content.ReadFromJsonAsync<JsonElement>();
+        // The `1` stays, and B-168's attack plan asking for it to be made identity-based was wrong here: it
+        // does not stand for the caller (that is `fremder`) but for the OTHER adult who created the subject.
+        // A projection reading `fid` instead of `OwnerAdultId` makes this line red, so it carries its weight.
         Assert.Equal(1, body.GetProperty("ownerAdultId").GetInt32());
         Assert.False(body.GetProperty("isMine").GetBoolean());
 
@@ -376,6 +379,13 @@ public class FachEigentumTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var patch = await admin.PatchAsJsonAsync($"/api/v1/creator/subjects/{fachId}/categories/{artId}",
             new { name = TestApi.UniqueName("Vom-Admin") });
         Assert.Equal(HttpStatusCode.OK, patch.StatusCode);
+
+        // BOTH halves of the valve, not just Update (B-182). Delete carries only "same break-glass as in
+        // Update - see the reasoning there", so without this line a narrowing of Delete alone to
+        // `OwnerAdultId is null` would keep the whole suite green - and the two actions would then open to
+        // different extents while the comment claims they are the same.
+        var delete = await admin.DeleteAsync($"/api/v1/creator/subjects/{fachId}/categories/{artId}");
+        Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
     }
 
     /// <summary>

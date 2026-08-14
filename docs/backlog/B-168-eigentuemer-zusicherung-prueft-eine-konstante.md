@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-13]
+nachgeschaut: 2026-08-14
 ---
 
 # B-168 · „Anlegen macht den Aufrufer zum Eigentümer" prüft eine Konstante, keine Identität
@@ -141,3 +142,13 @@ Vertrag.
   **Verifikation:** 831/831 Backend, 280/280 Komponententests, 36/36 E2E, `dotnet format` sauber,
   `pugling-reviewer` ohne Korrektheitsfund am Fall selbst. Rollengang: `wo: backend`, reine Testarbeit - der
   Beleg ist die Probe, und der Sprint-Rollengang lief an B-178s Flaeche.
+- 2026-08-14 · **Nachschau: kein Defekt am Fall selbst**, aber ein **stiller Rest**: Der Angriffsplan nannte
+  *zwei* Konstanten-Vergleiche (`:52` und `:102`); umgesetzt wurde nur der erste. Der zweite steht in
+  `FremderCreator_DarfDasFachWeiterhinLesen` und **bleibt** — dort meint die `1` nicht den Aufrufer, sondern
+  den *anderen* Erwachsenen, der das Fach angelegt hat, und eine Projektion, die `fid` statt `OwnerAdultId`
+  liest, macht die Zeile rot. Die Story hatte sich an dieser Stelle geirrt; das steht jetzt als Kommentar am
+  Code, statt als erledigt auszusehen. Gezielt geprüft und sauber: die Rollenwand ist **keine** Attrappe
+  (jedes Erwachsenen-Konto trägt zwingend ein Creator-Profil, `AccountService.EnsureAsync`, ein Admin ohne
+  Creator-Rolle ist im Modell nicht konstruierbar); `IsAdmin` kommt in **keinem** DTO vor, es gibt also
+  keinen Eskalationspfad über `POST supervisor/adults`; das Löschen am Ende des neuen Falls nimmt keinem
+  Nachbarn etwas weg.

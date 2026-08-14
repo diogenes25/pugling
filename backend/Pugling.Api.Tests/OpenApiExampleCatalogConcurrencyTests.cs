@@ -123,19 +123,31 @@ public class OpenApiExampleCatalogConcurrencyTests
         }
     }
 
-    // Mirrors OpenApiExampleCatalog.Load's exact read shape - a lock (IOException) or a torn/incomplete
-    // body (JsonException, a subclass a caller might catch separately) both count as a race hit.
-    private static bool TryRead(string path)
+    // Mirrors OpenApiExampleCatalog.Load's exact read shape: File.OpenRead + Deserialize.
+    /// <summary>
+    /// What a single read attempt ran into. The distinction is the whole point (B-165): a <b>torn</b> read is
+    /// the bug B-57 fixed - a reader seeing half-written content. A <b>locked</b> file is an artifact of this
+    /// machine, described in the class summary, and says nothing about content at all. Counting both into one
+    /// number made the gate report "1 read failure" for either, so a green run and a red run could not be
+    /// told apart by their cause.
+    /// </summary>
+    private enum LeseErgebnis { Ok, Gesperrt, Zerrissen }
+
+    private static LeseErgebnis TryRead(string path)
     {
         try
         {
             using var stream = File.OpenRead(path);
             JsonSerializer.Deserialize<List<OpenApiExampleEntry>>(stream, SerializerOptions);
-            return true;
+            return LeseErgebnis.Ok;
         }
-        catch (Exception ex) when (ex is IOException or JsonException)
+        catch (IOException)
         {
-            return false;
+            return LeseErgebnis.Gesperrt;
+        }
+        catch (JsonException)
+        {
+            return LeseErgebnis.Zerrissen;
         }
     }
 
@@ -161,15 +173,18 @@ public class OpenApiExampleCatalogConcurrencyTests
 
     /// <summary>
     /// Runs <paramref name="writer"/> against <paramref name="path"/> while a reader polls continuously in
-    /// the background, and returns the number of failed reads observed strictly during the writer's
-    /// mid-write pause. The reader is stopped the instant the pause ends (before the writer resumes, and
+    /// the background, and returns <b>separately</b> how many reads hit a locked file and how many saw torn
+    /// content, observed strictly during the writer's mid-write pause (B-165: one number for both could not
+    /// say which happened). The reader is stopped the instant the pause ends (before the writer resumes, and
     /// - for the atomic writer - before its closing <c>File.Move</c>), so a separate, orthogonal artifact of
     /// this machine (a real-time-antivirus-driven exclusive-access blip on <b>any</b> fresh write or rename,
     /// unrelated to content-tearing - see the class summary) cannot leak into this measurement.
     /// </summary>
-    private static int CountFailedReadsDuring(string path, Action<Action> writer)
+    private static (int Ok, int Gesperrt, int Zerrissen) CountFailedReadsDuring(string path, Action<Action> writer)
     {
-        var failures = 0;
+        var ok = 0;
+        var gesperrt = 0;
+        var zerrissen = 0;
         var reading = true;
         // A dedicated Thread, not Task.Run: when the full suite runs hundreds of test classes in parallel
         // (xunit.v3 parallelizes collections by default, and this project has no [Collection] grouping -
@@ -179,7 +194,12 @@ public class OpenApiExampleCatalogConcurrencyTests
         var readerThread = new Thread(() =>
         {
             while (Volatile.Read(ref reading))
-                if (!TryRead(path)) Interlocked.Increment(ref failures);
+                switch (TryRead(path))
+                {
+                    case LeseErgebnis.Ok: Interlocked.Increment(ref ok); break;
+                    case LeseErgebnis.Gesperrt: Interlocked.Increment(ref gesperrt); break;
+                    case LeseErgebnis.Zerrissen: Interlocked.Increment(ref zerrissen); break;
+                }
         })
         { IsBackground = true };
         readerThread.Start();
@@ -199,7 +219,7 @@ public class OpenApiExampleCatalogConcurrencyTests
             Volatile.Write(ref reading, false);
         }
         readerThread.Join();
-        return failures;
+        return (ok, gesperrt, zerrissen);
     }
 
     [Fact]
@@ -209,10 +229,23 @@ public class OpenApiExampleCatalogConcurrencyTests
         File.WriteAllText(path, PayloadOf(1));
         try
         {
-            var failures = CountFailedReadsDuring(path, pause => WriteUnsafePaused(path, PayloadOf(40), pause));
-            Assert.True(failures > 0,
-                "Expected a reader landing mid-write to see an empty or half-written file - the exact race "
-                + "this story fixes.");
+            var (ok, gesperrt, zerrissen) = CountFailedReadsDuring(path, pause => WriteUnsafePaused(path, PayloadOf(40), pause));
+
+            // What a reader ACTUALLY observes here is a locked file, not torn content - measured, and it is
+            // the correction B-165 brought (2351 locked reads, 0 torn, in a standalone probe). The reason is
+            // the read shape this class mirrors: `File.OpenRead` requests FileShare.Read, i.e. "others may
+            // read but not write". An already-open WRITE handle contradicts that, so Windows denies the open
+            // outright - the reader never gets far enough to see half-written bytes. Torn content would
+            // require the writer to share write access, which neither the pre-fix `File.WriteAllText` nor the
+            // fix does.
+            //
+            // The claim is therefore "during an unsafe write the final path is UNREADABLE", and that is
+            // exactly what B-57 fixed: the atomic writer leaves the final path readable and complete
+            // throughout. Whether the class summary's premise ("the bug is torn content") holds at all is a
+            // separate question - it is B-181, not silently reinterpreted here.
+            Assert.True(gesperrt > 0,
+                "Expected a reader landing mid-write to be denied the final path - the exact race this story "
+                + $"fixes. Locked reads: {gesperrt}, torn reads: {zerrissen}.");
         }
         finally { DeleteTolerantly(path); }
     }
@@ -224,12 +257,41 @@ public class OpenApiExampleCatalogConcurrencyTests
         File.WriteAllText(path, PayloadOf(1));
         try
         {
-            // Several independent repetitions, not one lucky pass: the fix must hold up every time.
+            // Several independent repetitions, not one lucky pass: the fix must hold up every time. Since
+            // B-165 the repetitions only multiply the evidence about TORN content - while a lock still failed
+            // the case, they multiplied the chance of catching this machine's antivirus blip by ten, which is
+            // what made the case flake in the full suite (one run in three).
+            var gesperrtGesamt = 0;
             for (var i = 0; i < 10; i++)
             {
-                var failures = CountFailedReadsDuring(path, pause => WriteAtomicPaused(path, PayloadOf(40), pause));
-                Assert.Equal(0, failures);
+                var (ok, gesperrt, zerrissen) = CountFailedReadsDuring(path, pause => WriteAtomicPaused(path, PayloadOf(40), pause));
+                gesperrtGesamt += gesperrt;
+
+                // Only torn content fails this case, and it fails on a single one - that is the property the
+                // atomic write guarantees exactly. A locked file is reported, not punished: it is an artifact
+                // of this machine (class summary) and says nothing about content.
+                //
+                // TWO assertions, and the second one is why the first is not enough. Measured while building
+                // B-165: asserting only `zerrissen == 0` left this case TOOTHLESS - swapping the atomic writer
+                // for the unsafe one kept it green, because an unsafe write produces LOCKS on this platform,
+                // never torn content (`File.OpenRead` asks for FileShare.Read, which an open write handle
+                // contradicts, so the reader is denied before it can see bytes).
+                //
+                // What separates the two writers is therefore whether any read SUCCEEDS during the pause:
+                //   atomic  - the final path is never opened for writing, so reads succeed (~2000 per window)
+                //   unsafe  - the final path is held open, so EVERY read is denied (measured 1867 of 1867)
+                // A single denied read is this machine's antivirus blip and stays tolerated - that is the
+                // flake B-165 removes. Zero successful reads means the write is not atomic any more.
+                Assert.True(zerrissen == 0,
+                    $"Run {i + 1}/10: {zerrissen} reader(s) saw torn content - the atomic write must never "
+                    + $"expose an intermediate state. Locked: {gesperrt}, ok: {ok}.");
+                Assert.True(ok > gesperrt,
+                    $"Run {i + 1}/10: {gesperrt} reads were denied and only {ok} succeeded - the final path "
+                    + "was held open for most of the window, so the write is no longer atomic. A single "
+                    + "denied read is this machine's antivirus and stays tolerated; a majority is not.");
             }
+            // Not an assertion - a trace, so a future flake can be told apart from a content regression.
+            Assert.True(gesperrtGesamt >= 0, $"Locked reads across all 10 runs: {gesperrtGesamt}.");
         }
         finally { DeleteTolerantly(path); }
     }
