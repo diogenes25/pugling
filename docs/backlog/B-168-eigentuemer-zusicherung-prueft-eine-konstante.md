@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/backend, bereich/tests, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/backend, bereich/tests, rolle/creator]
 aliases: [Eigentuemer ist Adult 1, Anlegen macht den Aufrufer zum Eigentuemer prueft eine Zahl]
-status: ausformuliert
+status: abgenommen
 prio: P1
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: XS
+wo: backend
+migration: nein
+vertragsbruch: nein
 quelle: Nachschau 2026-08-13 zu B-13
 unverifiziert: false
 grund: ""
@@ -65,6 +65,40 @@ tückischsten Form — sie prüft nicht den Ausgangszustand, sondern eine Zahl, 
 **zufällig** stimmt. Ein Testname („…MachtDenAufrufer…") behauptet dabei mehr als der Rumpf hält, was die
 Verwechslung beim Lesen zudeckt.
 
+## Offene Punkte
+
+Beim Aufnehmen sah der Fix wie fünf determinierte Schritte aus. Beim Grillen kamen **zwei** echte Fragen
+heraus.
+
+1. ~~Bleibt der Seed-Fall bestehen, wenn es einen Fremd-Fall gibt?~~ → Entscheidung 1.
+2. ~~Tupel oder `record` für die Id des Fremden?~~ → Entscheidung 2.
+
+## Entscheidungen
+
+1. **Der Seed-Fall bleibt, aber er kann die Identität nicht tragen — und sagt das künftig selbst.**
+   *Beim Bauen korrigiert:* Der erste Entwurf dieser Entscheidung wollte ihn „zusätzlich identitätsbasiert"
+   machen. Das ist **nicht möglich**: Die Id seines Aufrufers *ist* konstruktionsbedingt die `1`
+   (`TestApi.AdultAsync` hat `id = 1` als Vorgabe), also stimmt jeder Vergleich — auch ein „identitätsbasiert"
+   geschriebener — bei einem hartkodierten `OwnerAdultId = 1` weiterhin. Ein benannte Konstante hätte die
+   Absicht dokumentiert und **null** Erkennungskraft hinzugefügt: Kosmetik.
+   Er bleibt trotzdem, denn er hält etwas anderes, das gebraucht wird: dass Anlegen **überhaupt** einen
+   Eigentümer setzt und `isMine` wahr wird — auf dem Pfad, den die ganze übrige Suite benutzt. Was fehlt,
+   liefert allein der Fremd-Fall. *Kosten:* Zwei Fälle mit verschiedenen Aufgaben, und ein Kommentar, der
+   sagt welcher was hält — sonst liest der nächste den Seed-Fall wieder als Identitätsbeleg.
+2. **Ein Tupel, kein `record`.** Begründung: Die Id wird an genau zwei Stellen gebraucht und verlässt die
+   Testklasse nie; ein benannter Typ für `(HttpClient, int)` wäre Bauwerk ohne Leser. *Kosten:* Kommt eine
+   dritte Angabe hinzu, wird das Tupel unleserlich und muss dann doch ein `record` werden — dann aber mit
+   einem Grund.
+
+## Akzeptanzkriterien
+
+1. Ein Fall vergleicht gegen die Id eines Aufrufers, die **nicht** `1` ist — das ist der einzige, der ein
+   hartkodiertes `OwnerAdultId = 1` fangen kann. Der Seed-Fall trägt einen Kommentar, der benennt, was er
+   hält (Eigentümer wird gesetzt, `isMine` stimmt) und was nicht (die Identität).
+2. Ein fremder Creator darf sein **eigenes** Fach umbenennen (`200`) — der heute vollständig fehlende Fall.
+3. Der geseedete Vater bekommt auf dem Fach des Fremden `403 not_owner`.
+4. Rote Probe **mit Zahl**: `OwnerAdultId = 1` hartkodiert, und es fallen genau die neuen Fälle.
+
 ## Angriffsplan
 
 Das Material liegt schon da: `ZweiterCreatorAsync` (`FachEigentumTests.cs:16-24`) liest die Adult-Id des
@@ -86,3 +120,24 @@ Vertrag.
 - 2026-08-13 · Aufgenommen aus der **Nachschau** zu B-13, dort belegt und von mir gegengeprüft
   (`TestApi.cs:32`, die vier `PATCH`-Fundstellen, `ZweiterCreatorAsync`). `ausformuliert` direkt, weil der
   Ist-Stand aus dem Code belegt ist und der offene Punkt keiner ist: der fehlende Fall steht fest.
+- 2026-08-14 · `ausformuliert` auf `gegrillt`, autonom (`art: Defekt`, Freigabe 1). Zwei Entscheidungen. Die
+  tragende: Der Seed-Fall wird **nicht** durch den Fremd-Fall ersetzt, sondern zusätzlich
+  identitätsbasiert — der Seed-Pfad ist der, den die ganze übrige Suite benutzt, und ein Regress, der nur
+  fuer Adult 1 bricht, fiele sonst nirgends auf.
+- 2026-08-14 · `gegrillt` auf `geschaetzt`. **XS** / `backend` / `migration: nein` / `vertragsbruch: nein` —
+  es aendert sich ausschliesslich Testcode.
+- 2026-08-14 · Gebaut und `abgenommen`. **Rote Probe mit Zahl, und sie ist der Kern dieser Story:**
+  `OwnerAdultId = 1` in `SubjectsController.cs:60` hartkodiert -> **829 gruen, 1 rot**, und der Rote ist genau
+  `FremderCreator_BesitztSeinEigenesFach_UndDarfEsAendern`. Alle alten B-13-Faelle blieben gruen. Der
+  `pugling-reviewer` hat die Probe in einer eigenen Kopie nachgestellt und dieselben Zahlen gemessen.
+  Zuruecknahme, danach 831/831.
+  **Eine eigene Entscheidung wurde beim Bauen widerlegt:** Entscheidung 1 wollte den Seed-Fall „zusaetzlich
+  identitaetsbasiert" machen. Das ist unmoeglich - die Id seines Aufrufers *ist* konstruktionsbedingt die `1`,
+  jeder Vergleich stimmt also auch bei hartkodierter Konstante. Das waere Kosmetik gewesen. Er bleibt mit
+  einem Kommentar, der sagt was er haelt (ein Eigentuemer wird gesetzt, `isMine` stimmt) und was nicht.
+  **Zwei Luecken aus dem Review nachgezogen:** der Loeschpfad war noch **nie** von einem Eigentuemer != 1
+  gelaufen, und die PATCH-Antwort wurde nur auf den Status geprueft, obwohl die Update-Projektion `isMine`
+  neu baut. Beides jetzt im Fall.
+  **Verifikation:** 831/831 Backend, 280/280 Komponententests, 36/36 E2E, `dotnet format` sauber,
+  `pugling-reviewer` ohne Korrektheitsfund am Fall selbst. Rollengang: `wo: backend`, reine Testarbeit - der
+  Beleg ist die Probe, und der Sprint-Rollengang lief an B-178s Flaeche.

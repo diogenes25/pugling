@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-157]
+wartet_auf: "eine Schema-Entscheidung am Tag: CreatedByAdultId oder nicht (die Kette wird dabei neu gefaltet)"
 ---
 
 # B-170 · Eine selbst angelegte Art im Grundbestands-Fach ist unlöschbar — und der Seitentext verspricht das Gegenteil
@@ -74,18 +75,37 @@ Kein Test deckt Vorspann-Prosa, und ein Rollengang liest sie als „stimmt ja".
 
 ## Offene Punkte
 
-1. **Wie darf man aufräumen?** Empfehlung: `ExerciseCategory.CreatedByAdultId` (nullable, `SetNull`).
-   Seed-Zeilen tragen `null` und bleiben eingefroren — B-157s Absicht unberührt; eine selbst angelegte Zeile
-   in einem ownerlosen Fach darf ihr Anleger umbenennen und löschen. Das ist **keine** zweite Kopie der
-   Fach-Wahrheit (B-157 Entscheidung 3 verbietet die zu Recht), sondern die Antwort auf die *andere* Frage,
-   die die heutige Bedingung mitverschluckt. Kosten: eine Faltung der Migrationskette (`migration: ja`).
-2. **Oder erst nur ein Ventil?** `IsOwnedBy(…) || User.IsAdmin()` in beiden Actions macht den Zustand ohne
-   Schema reparierbar. Empfehlung: **als Sofortmaßnahme ja, als Lösung nein** — ein Haushalt hat keinen
-   Admin, der Zustand bliebe für den Vater unreparierbar.
-3. **Was gilt für eine benutzte Art?** Empfehlung: unverändert lassen — Löschen nimmt der Übung nur die
-   Zuordnung (`ExerciseCategoriesController.cs:128-131`), das ist bereits entschieden und getestet.
-4. Wird der Vorspann-Satz mitrepariert oder in einer eigenen Story? Empfehlung: **hier mit**, denn nach
-   Punkt 1 ändert sich, was wahr ist — zwei Stories würden zwei Wahrheiten schreiben.
+1. ~~Wie darf man aufräumen?~~ → **bleibt offen, und das ist der Kern dieser Story.** Siehe Entscheidung 1.
+2. ~~Oder erst nur ein Ventil?~~ → Entscheidung 2 (in eine eigene Story ausgelagert).
+3. ~~Was gilt für eine benutzte Art?~~ → Entscheidung 3.
+4. ~~Wird der Vorspann-Satz mitrepariert?~~ → Entscheidung 2. Die Empfehlung „hier mit" ist **entfallen**;
+   ihre Begründung hing an Punkt 1.
+
+## Entscheidungen
+
+1. **Der eigentliche Fix bleibt `ExerciseCategory.CreatedByAdultId` — und wird am Tag entschieden, nicht
+   nachts.** Vom Nutzer so entschieden (Nachtlauf 2026-08-14): Die Migrationskette wird bei jeder
+   Schemaänderung **neu gefaltet**, `SchemaGuardTests` erzwingt Länge 1, und der Snapshot-Diff *ist* die
+   Abnahme — die kann unbeaufsichtigt niemand beurteilen. *Kosten:* Der Vater kann seinen Tippfehler bis
+   dahin nicht wegräumen. Das ist der Preis, und er ist ausgesprochen statt weggelassen.
+2. **Diese Story wird geteilt.** Was heute Nacht baubar ist, liegt in
+   [B-178](B-178-katalogtext-verspricht-mehr-als-der-server-erlaubt.md): das Admin-Ventil (vom Nutzer
+   freigegeben) **und** der Vorspann-Satz, der die *heutige* Wahrheit sagen muss.
+   **Begründung, und sie widerspricht der ursprünglichen Empfehlung dieser Story:** Punkt 4 empfahl, den Satz
+   hier mitzunehmen, „denn nach Punkt 1 ändert sich, was wahr ist". Punkt 1 kommt aber nicht — also ändert
+   sich für den Vater **nichts**, und der Satz muss etwas anderes sagen als nach dem Schema-Fix. Ihn hier zu
+   lassen hieße, ihn zweimal zu schreiben. *Kosten:* Zwei Stories über einen Zustand; der Zusammenhang hängt
+   an den Querverweisen. Dafür schreibt keine der beiden eine Wahrheit hin, die gerade nicht gilt.
+3. **Eine benutzte Art bleibt unverändert.** Löschen nimmt der Übung nur die Zuordnung
+   (`ExerciseCategoriesController.cs:128-131`), das ist entschieden und seit B-171 auch tragend getestet.
+   *Kosten:* keine — die Regel wird von diesem Vorhaben nicht berührt.
+
+## Was diese Story nach der Teilung noch ist
+
+Genau eine Frage: **Darf eine selbst angelegte Art in einem Fach ohne Eigentümer von ihrem Anleger entfernt
+werden, und trägt die DB dafür eine Spalte?** Alles andere ist in B-178 abgeflossen. Der Ist-Stand oben
+bleibt gültig und ist der Beleg dafür, dass die Frage nicht akademisch ist: ein Tippfehler steht heute
+dauerhaft in der Planbau-Vorfilterung.
 
 ## Verlauf
 
@@ -93,3 +113,11 @@ Kein Test deckt Vorspann-Prosa, und ein Rollengang liest sie als „stimmt ja".
   Hälften haben eine Wurzel und darum eine Story. Von mir gegengeprüft: `Create` ist ungegated, `Update` und
   `Delete` liefern `403`, es gibt kein `IsAdmin` in beiden Controllern, und die zwei Sätze widersprechen
   sich wörtlich.
+- 2026-08-14 · `ausformuliert` bleibt, **Story geteilt** (Nachtlauf, Freigabe 3 erlaubt das Teilen
+  ausdrücklich). Der Nutzer hat die Schemaänderung für diesen Lauf **ausgeschlossen**; damit fällt der Kern
+  dieser Story auf den Tag, und `wartet_auf` benennt das. Was heute Nacht baubar ist, steht in
+  [B-178](B-178-katalogtext-verspricht-mehr-als-der-server-erlaubt.md).
+  **Die eigene Empfehlung dieser Story wurde dabei widerlegt:** Punkt 4 wollte den Vorspann-Satz hier
+  mitnehmen, weil „sich nach Punkt 1 ändert, was wahr ist". Ohne Punkt 1 ändert sich für den Vater nichts —
+  der Satz muss also die heutige Wahrheit sagen, und die ist eine andere. Ihn hier zu lassen hätte bedeutet,
+  ihn zweimal zu schreiben.

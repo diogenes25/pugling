@@ -17,6 +17,11 @@ namespace Pugling.Api.Controllers.Creator;
 /// with the subject's rule being fail-closed, a gated create would have frozen the category axis of all
 /// seeded subjects, which are the only ones an ordinary user has.
 /// </para>
+/// <para>
+/// A <b>platform admin</b> passes the owner check as well (break-glass, B-178) - for every subject, not only
+/// ownerless ones, exactly as at the exercise. Without it a category created under a seeded subject would be
+/// editable by nobody at all.
+/// </para>
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -90,7 +95,7 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
         return CreatedAtAction(nameof(Get), new { subjectId, categoryId = category.Id }, response);
     }
 
-    /// <summary>Changes a category (partial). Only the owner of the subject may do so.</summary>
+    /// <summary>Changes a category (partial). Only the owner of the subject, or a platform admin, may do so.</summary>
     [HttpPatch("{categoryId:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -108,7 +113,15 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
         // 404 before 403, and that order is right here - unlike the subject's delete (B-13), where the 409
         // would have leaked a child's plans. A category's existence is public by design: `List` and `Get`
         // hand every category to every creator, so there is nothing to hide behind the 404.
-        if (!ClaimsPrincipalExtensions.IsOwnedBy(category.Subject?.OwnerAdultId, User.CreatorId()))
+        // The admin break-glass (B-178). Its REASON is the ownerless subject: a category created there would
+        // otherwise be editable by NOBODY - creating is open (B-157 decision 2), changing follows the subject,
+        // and a seeded subject has no owner. Its REACH is wider: a platform admin passes here for any
+        // subject, including one another creator owns. That is deliberate and matches the exercise
+        // (`ExercisePermissionService.CanWrite` takes `IsAdmin` the same way, for the same kind of emergency);
+        // narrowing it to `OwnerAdultId is null` would be a second, differently-shaped rule for the same idea.
+        // It does not free a household - no seeded adult carries the flag (checked), so the father still
+        // cannot clean up his own typo until B-170 decides the schema.
+        if (!ClaimsPrincipalExtensions.IsOwnedBy(category.Subject?.OwnerAdultId, User.CreatorId()) && !User.IsAdmin())
             return this.ProblemWithCode(ApiErrors.NotOwner, "Only the owner of the subject may change its categories.");
 
         if (dto.Name is not null)
@@ -126,8 +139,8 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Deletes a category; assigned exercises remain (FK is set to null). Only the owner of the subject may
-    /// do so. There is deliberately no in-use conflict: <c>Exercise.CategoryId</c> is optional, so the
+    /// Deletes a category; assigned exercises remain (FK is set to null). Only the owner of the subject, or a
+    /// platform admin, may do so. There is deliberately no in-use conflict: <c>Exercise.CategoryId</c> is optional, so the
     /// exercises only lose their assignment - the behaviour is unchanged by B-157.
     /// </summary>
     [HttpDelete("{categoryId:int}")]
@@ -140,7 +153,8 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
             .FirstOrDefaultAsync(c => c.Id == categoryId && c.SubjectId == subjectId, ct);
         if (category is null) return NotFound();
 
-        if (!ClaimsPrincipalExtensions.IsOwnedBy(category.Subject?.OwnerAdultId, User.CreatorId()))
+        // Same break-glass as in Update (B-178) - see the reasoning there.
+        if (!ClaimsPrincipalExtensions.IsOwnedBy(category.Subject?.OwnerAdultId, User.CreatorId()) && !User.IsAdmin())
             return this.ProblemWithCode(ApiErrors.NotOwner, "Only the owner of the subject may delete its categories.");
 
         db.ExerciseCategories.Remove(category);

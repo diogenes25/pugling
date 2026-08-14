@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
+using Pugling.Api.Data;
 
 namespace Pugling.Api.Tests;
 
@@ -12,15 +14,22 @@ namespace Pugling.Api.Tests;
 /// </summary>
 public class FachEigentumTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
-    /// <summary>Registers a second creator and logs them in – the stranger every check below needs.</summary>
-    private async Task<HttpClient> ZweiterCreatorAsync(string pin)
+    /// <summary>
+    /// Registers a second creator and logs them in – the stranger every check below needs. Returns the adult
+    /// id alongside the client: it is the only id in this class that is <b>not</b> 1, and therefore the only
+    /// one an ownership check can be measured against (B-168). A tuple rather than a named type - two call
+    /// sites, never leaves this class.
+    /// </summary>
+    private async Task<(HttpClient Client, int Id)> ZweiterCreatorMitIdAsync(string pin)
     {
         var res = await factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/adults",
             new { name = TestApi.UniqueName("Fremder"), pin });
         res.EnsureSuccessStatusCode();
         var id = (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
-        return await TestApi.AdultAsync(factory, id, pin);
+        return (await TestApi.AdultAsync(factory, id, pin), id);
     }
+
+    private async Task<HttpClient> ZweiterCreatorAsync(string pin) => (await ZweiterCreatorMitIdAsync(pin)).Client;
 
     private static async Task<int> FachAsync(HttpClient creator) =>
         await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/subjects",
@@ -41,6 +50,14 @@ public class FachEigentumTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         return seed.GetProperty("id").GetInt32();
     }
 
+    /// <summary>
+    /// What this case holds: creating sets an owner <b>at all</b> and <c>isMine</c> follows - on the path the
+    /// rest of the suite uses. What it can <b>not</b> hold, despite its name (B-168): the identity. Its
+    /// caller's id is 1 by construction (<c>TestApi.AdultAsync</c> defaults to the seeded father), so a
+    /// hardcoded <c>OwnerAdultId = 1</c> in the controller would keep it green no matter how the comparison
+    /// is written. That job belongs to
+    /// <see cref="FremderCreator_BesitztSeinEigenesFach_UndDarfEsAendern"/>, whose caller is not 1.
+    /// </summary>
     [Fact]
     public async Task Anlegen_MachtDenAufrufer_ZumEigentuemer()
     {
@@ -51,6 +68,50 @@ public class FachEigentumTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
         Assert.Equal(1, created.GetProperty("ownerAdultId").GetInt32());
         Assert.True(created.GetProperty("isMine").GetBoolean());
+    }
+
+    /// <summary>
+    /// B-168: the load-bearing half of "creating makes the caller the owner". No test in the whole suite let a
+    /// creator other than the seeded father own and then change a subject - so <c>OwnerAdultId = 1</c> could
+    /// have been hardcoded and 828 tests would have stayed green, while every other creator was locked out of
+    /// their own subjects for good.
+    /// </summary>
+    [Fact]
+    public async Task FremderCreator_BesitztSeinEigenesFach_UndDarfEsAendern()
+    {
+        var (fremder, fremdeId) = await ZweiterCreatorMitIdAsync("2121");
+        Assert.NotEqual(1, fremdeId); // the whole point: an id the constant cannot coincide with
+
+        var res = await fremder.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = TestApi.UniqueName("Fremd-Eigen-Fach") });
+        res.EnsureSuccessStatusCode(); // otherwise the reads below throw on a ProblemDetails body
+        var created = await res.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(fremdeId, created.GetProperty("ownerAdultId").GetInt32());
+        Assert.True(created.GetProperty("isMine").GetBoolean());
+        var subjectId = created.GetProperty("id").GetInt32();
+
+        // He may change what he owns - the case that was missing entirely. The response body is checked too,
+        // because the update rebuilds `isMine` in its own projection: a status alone would not notice that
+        // projection turning the owner into a stranger.
+        var neuerName = TestApi.UniqueName("Fremd-Umbenannt");
+        var patch = await fremder.PatchAsJsonAsync($"/api/v1/creator/subjects/{subjectId}", new { name = neuerName });
+        Assert.Equal(HttpStatusCode.OK, patch.StatusCode);
+        var nachher = await patch.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(neuerName, nachher.GetProperty("name").GetString());
+        Assert.Equal(fremdeId, nachher.GetProperty("ownerAdultId").GetInt32());
+        Assert.True(nachher.GetProperty("isMine").GetBoolean());
+
+        // And the seeded father does not, although he is the one every other test speaks as.
+        var adult = await TestApi.AdultAsync(factory);
+        var fremdzugriff = await adult.PatchAsJsonAsync($"/api/v1/creator/subjects/{subjectId}",
+            new { name = "Gekapert" });
+        Assert.Equal(HttpStatusCode.Forbidden, fremdzugriff.StatusCode);
+        await AssertCodeAsync(fremdzugriff, "not_owner");
+
+        // Deleting closes the second half: until now NO owner other than adult 1 had ever deleted a subject,
+        // so the delete path carried the same blind spot the create path did.
+        var delete = await fremder.DeleteAsync($"/api/v1/creator/subjects/{subjectId}");
+        Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
     }
 
     [Fact]
@@ -231,6 +292,90 @@ public class FachEigentumTests(PuglingWebAppFactory factory) : IClassFixture<Pug
             Assert.Equal(HttpStatusCode.Forbidden, delete.StatusCode);
             await AssertCodeAsync(delete, "not_owner");
         }
+    }
+
+    /// <summary>
+    /// Registers a fresh creator, flags them as platform admin and logs them in. The flag has to be set
+    /// <b>before</b> the login - the role claim is issued there, not read per request.
+    /// <para>
+    /// Deliberately a fresh adult rather than the seeded father: the class shares one SQLite file, and the
+    /// flag would persist. Flagging adult 1 makes
+    /// <see cref="Arten_EinesSeedFachs_SindFuerJedenGesperrt"/> fail - measured, not feared.
+    /// </para>
+    /// </summary>
+    private async Task<HttpClient> AdminCreatorAsync(string pin)
+    {
+        var res = await factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/adults",
+            new { name = TestApi.UniqueName("Admin"), pin });
+        res.EnsureSuccessStatusCode();
+        var id = (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            db.Adults.First(a => a.Id == id).IsAdmin = true;
+            db.SaveChanges();
+        }
+
+        return await TestApi.AdultAsync(factory, id, pin);
+    }
+
+    /// <summary>
+    /// B-178: a category created under an ownerless (seeded) subject was editable by <b>nobody</b> - a typo
+    /// stayed in the pre-filter list forever, and deleting the subject is barred too. The admin break-glass
+    /// makes the state repairable at all; the precedent is
+    /// <c>ExerciseControllerBase</c> ("edit orphaned exercises in an emergency").
+    /// <para>
+    /// This does <b>not</b> free the household: no seeded adult carries the flag (checked, not assumed), so
+    /// the father still cannot clean up until B-170 decides the schema. The case exists to pin that the valve
+    /// is real, not that the problem is solved.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task Admin_DarfDieArten_EinesFachsOhneEigentuemer_Aufraeumen()
+    {
+        var adult = await TestApi.AdultAsync(factory);
+        var seedId = await SeedFachIdAsync(adult);
+        var artId = await ArtAsync(adult, seedId);
+
+        // Precondition: without the flag it is barred - otherwise the case below could pass for the wrong
+        // reason (a subject that turns out to have an owner after all).
+        var ohneVentil = await adult.PatchAsJsonAsync(
+            $"/api/v1/creator/subjects/{seedId}/categories/{artId}", new { name = "Vorher" });
+        Assert.Equal(HttpStatusCode.Forbidden, ohneVentil.StatusCode);
+        await AssertCodeAsync(ohneVentil, "not_owner");
+
+        var admin = await AdminCreatorAsync("2120");
+
+        var patch = await admin.PatchAsJsonAsync(
+            $"/api/v1/creator/subjects/{seedId}/categories/{artId}", new { name = TestApi.UniqueName("Berichtigt") });
+        Assert.Equal(HttpStatusCode.OK, patch.StatusCode);
+
+        var delete = await admin.DeleteAsync($"/api/v1/creator/subjects/{seedId}/categories/{artId}");
+        Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
+    }
+
+    /// <summary>
+    /// The valve's REACH, nailed down rather than merely commented (B-178, decision 3): an admin passes for
+    /// <b>every</b> subject, including one another creator owns - not only for ownerless ones. That is the
+    /// same blanket a platform admin already has at the exercise
+    /// (<c>ExercisePermissionService.CanWrite</c>) and at the publisher, and it is deliberate.
+    /// <para>
+    /// Without this case the reach would live in a comment only, and the next reader could narrow the
+    /// condition to <c>OwnerAdultId is null</c> believing they fix a bug.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task Admin_DarfAuchDieArten_EinesFremden_Fachs_Aendern()
+    {
+        var (eigentuemer, _) = await ZweiterCreatorMitIdAsync("2122");
+        var fachId = await FachAsync(eigentuemer);
+        var artId = await ArtAsync(eigentuemer, fachId);
+
+        var admin = await AdminCreatorAsync("2123");
+        var patch = await admin.PatchAsJsonAsync($"/api/v1/creator/subjects/{fachId}/categories/{artId}",
+            new { name = TestApi.UniqueName("Vom-Admin") });
+        Assert.Equal(HttpStatusCode.OK, patch.StatusCode);
     }
 
     /// <summary>

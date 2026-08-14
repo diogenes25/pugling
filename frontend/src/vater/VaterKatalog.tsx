@@ -22,9 +22,15 @@ export function VaterKatalog() {
       {/* „Anlegen" gilt uneingeschränkt, „umbenennen und löschen" nicht mehr: seit B-13 darf das nur der
           Eigentümer, und ein Fach aus dem Grundbestand niemand. Der Satz sagt das, weil er sonst genau
           das verspricht, was die Karte darunter dann verweigert (gefunden im Rollengang zu B-154). */}
+      {/* B-178: Der Satz stand hier zwei Stories lang falsch – er versprach für Arten „was du selbst
+          angelegt hast", während der Server seit B-157 für jeden `403 not_owner` liefert, sobald das Fach
+          keinen Eigentümer hat (und das sind die vier geseedeten). Das Recht hängt am **Fach**, nicht daran,
+          wer die Art angelegt hat. Sobald B-170 entschieden ist, ändert sich das – dann gehört der Satz
+          erneut angefasst, und lieber das als heute eine Zusage, die der Server bricht. */}
       <p className="sub">
         Fächer und Arten sind der <strong>gemeinsame</strong> Rahmen aller Übungen – auch der von anderen
-        Vätern. Hier legst du neue an; umbenennen und löschen kannst du, was du selbst angelegt hast.
+        Vätern. Neue anlegen darf jeder; umbenennen und löschen nur, wer das <strong>Fach</strong> angelegt
+        hat – bei den mitgelieferten Fächern also niemand.
       </p>
       {subjects.error && <div className="banner err">{subjects.error}</div>}
       {/*

@@ -12435,7 +12435,7 @@
         "tags": [
           "Creator \u2013 Exercise Categories"
         ],
-        "summary": "Changes a category (partial). Only the owner of the subject may do so.",
+        "summary": "Changes a category (partial). Only the owner of the subject, or a platform admin, may do so.",
         "parameters": [
           {
             "name": "subjectId",
@@ -12545,7 +12545,7 @@
         "tags": [
           "Creator \u2013 Exercise Categories"
         ],
-        "summary": "Deletes a category; assigned exercises remain (FK is set to null). Only the owner of the subject may\ndo so. There is deliberately no in-use conflict: \u0060Exercise.CategoryId\u0060 is optional, so the\nexercises only lose their assignment - the behaviour is unchanged by B-157.",
+        "summary": "Deletes a category; assigned exercises remain (FK is set to null). Only the owner of the subject, or a\nplatform admin, may do so. There is deliberately no in-use conflict: \u0060Exercise.CategoryId\u0060 is optional, so the\nexercises only lose their assignment - the behaviour is unchanged by B-157.",
         "parameters": [
           {
             "name": "subjectId",
