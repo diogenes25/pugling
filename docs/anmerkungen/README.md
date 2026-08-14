@@ -32,6 +32,22 @@ curl -sf "$TUTORIAL_API_BASE/api/v1/remarks/export" -H "Authorization: Bearer $T
 einem 401/403 die ProblemDetails-JSON **in der Exportdatei**, und die Rollen-Skills läsen einen
 Fehlerkörper als Anmerkungsliste.
 
+## Vor dem Überschreiben: `aktuell.md` ist nicht immer regenerierbar
+
+Der Export ist als Schnappschuss der Datenbank gedacht – **beginnt die Datenbank aber neu, ist die alte
+Datei der einzige Rest der alten Anmerkungen**, und ein Überschreiben löscht sie lautlos. Gemessen am
+2026-08-14: `aktuell.md` trug 13 Einträge vom 2026-08-02, die laufende Instanz nur noch zwei. Darum
+**vor jedem Export in den Diff sehen**; schrumpft die Datei stark, den alten Stand als
+`export-JJJJ-MM-TT.md` daneben sichern (so entstand [export-2026-08-02.md](export-2026-08-02.md)).
+
+Ein solches Archiv braucht anschließend eine Nacharbeit: `aktuell.md` ist von `markdownlint` ausgenommen,
+eine `export-*.md` **nicht**. Der wörtliche Nutzertext reißt dort Regeln (Listen ohne Leerzeile,
+Leerraum am Zeilenende) – nur Leerraum anfassen, nie den Inhalt.
+
+**Die Ids werden neu vergeben.** `remark #1` von heute ist nicht `remark #1` von damals, und sechs Stories
+(B-63 bis B-68) zitieren ihre Quelle als bloße Nummer. Ein solcher Verweis ist ohne Datum nicht auflösbar –
+wer eine Story an eine Anmerkung bindet, nennt darum **Nummer und Datum**.
+
 ## Für die Rollen-Skills: der Startschritt
 
 `creator`, `supervisor` und `student` lesen diese Exporte, **bevor** sie ihren Durchlauf beginnen. Damit

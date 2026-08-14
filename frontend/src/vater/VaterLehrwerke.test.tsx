@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { createExerciseHref, UnitForm } from "./VaterLehrwerke";
+import { createExerciseHref, seriesFilterQuery, UnitForm, type SeriesFilterValues } from "./VaterLehrwerke";
 import type { TextbookSeriesResponse } from "../lib/types";
 
 /*
@@ -66,5 +66,31 @@ describe("createExerciseHref", () => {
     // Adresse lieber kein Fach als eines, das `Number(null) || ""` im Formular zu „irgendwas" macht.
     expect(createExerciseHref(series({ subjectId: null }), 42))
       .toBe("/vater/exercises/neu?seriesId=7&seriesUnitId=42");
+  });
+});
+
+/*
+ * Die Filterzeile über der Reihenliste (remark #1: „die Suche soll auch nach Fach selektiert werden").
+ * Geprüft wird die Abbildung Formular → Abfrage, weil dort der stille Fehler sitzt: `Number("")` ist `0`,
+ * und ein `subjectId=0` filterte auf ein Fach, das es nicht gibt – die Liste bliebe grundlos leer.
+ */
+describe("seriesFilterQuery", () => {
+  const leer: SeriesFilterValues = { search: "", subjectId: "", publisherId: "", schoolTypes: "", grade: "" };
+
+  it("reicht das gewählte Fach als Zahl an die Abfrage durch", () => {
+    // Rot, sobald `subjectId` nicht mehr in die Abfrage wandert – der Fall, den remark #1 gemeldet hat.
+    expect(seriesFilterQuery({ ...leer, subjectId: "3" }).subjectId).toBe(3);
+  });
+
+  it("lässt jede leere Auswahl ganz weg, statt 0 oder einen leeren String zu filtern", () => {
+    // Rot bei `Number(v.subjectId)` ohne die Leer-Prüfung: dann stünde hier 0 statt undefined.
+    expect(seriesFilterQuery(leer)).toEqual({
+      search: undefined, subjectId: undefined, publisherId: undefined, schoolTypes: undefined, grade: undefined,
+    });
+  });
+
+  it("trägt die übrigen Filter unverändert mit", () => {
+    expect(seriesFilterQuery({ search: "Access", subjectId: "3", publisherId: "7", schoolTypes: "Gymnasium", grade: "6" }))
+      .toEqual({ search: "Access", subjectId: 3, publisherId: 7, schoolTypes: "Gymnasium", grade: 6 });
   });
 });

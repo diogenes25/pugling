@@ -20,6 +20,30 @@ const BOOK_TYPE_LABEL: Record<BookType, string> = {
   Textbook: "Lehrbuch", Workbook: "Arbeitsheft", TeacherGuide: "Lehrerhandreichung",
 };
 
+/** Die Filterzeile über der Reihenliste, so wie die Formularfelder sie halten: durchweg Strings. */
+export type SeriesFilterValues = {
+  search: string; subjectId: string; publisherId: string; schoolTypes: SchoolType | ""; grade: string;
+};
+
+/*
+ * Exportiert für den Test: die Abbildung ist reine Wertearbeit und darum ohne gefälschtes `fetch` prüfbar.
+ */
+/**
+ * Übersetzt die Filterzeile in die Abfrage für `api.textbookSeries`. Der Punkt, an dem es schiefgehen kann,
+ * ist die **leere** Auswahl: ein `<select>` ohne Wahl liefert `""`, und `Number("")` ist `0` – als
+ * `subjectId=0` ginge daraus ein Filter auf ein Fach hervor, das es nicht gibt, und die Liste bliebe ohne
+ * ersichtlichen Grund leer. Leer muss darum `undefined` werden, damit der Parameter ganz wegfällt.
+ */
+export function seriesFilterQuery(v: SeriesFilterValues) {
+  return {
+    search: v.search || undefined,
+    subjectId: v.subjectId ? Number(v.subjectId) : undefined,
+    publisherId: v.publisherId ? Number(v.publisherId) : undefined,
+    schoolTypes: v.schoolTypes || undefined,
+    grade: v.grade ? Number(v.grade) : undefined,
+  };
+}
+
 /*
  * Exportiert für den Test: der Weg von der Unit ins Anlege-Formular ist reine Adressen-Arbeit und darum
  * ohne gefälschtes `fetch` prüfbar – die Kaskade dahinter deckt `e2e/creator-lehrwerk-weg.spec.ts` ab.
@@ -57,15 +81,13 @@ export function createExerciseHref(series: TextbookSeriesResponse, seriesUnitId:
 export function VaterLehrwerke() {
   const [search, setSearch] = useState("");
   const [applied, setApplied] = useState("");
+  const [subjectId, setSubjectId] = useState("");
   const [publisherId, setPublisherId] = useState("");
   const [schoolTypes, setSchoolTypes] = useState<SchoolType | "">("");
   const [grade, setGrade] = useState("");
-  const list = useAsync<TextbookSeriesResponse[]>(() => api.textbookSeries({
-    search: applied || undefined,
-    publisherId: publisherId ? Number(publisherId) : undefined,
-    schoolTypes: schoolTypes || undefined,
-    grade: grade ? Number(grade) : undefined,
-  }), [applied, publisherId, schoolTypes, grade]);
+  const list = useAsync<TextbookSeriesResponse[]>(
+    () => api.textbookSeries(seriesFilterQuery({ search: applied, subjectId, publisherId, schoolTypes, grade })),
+    [applied, subjectId, publisherId, schoolTypes, grade]);
   const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
   const publishers = useAsync<PublisherResponse[]>(() => api.publishers(), []);
   const [open, setOpen] = useState<number | null>(null);
@@ -88,6 +110,12 @@ export function VaterLehrwerke() {
             aria-label="Lehrwerke durchsuchen" value={search} onChange={(e) => setSearch(e.target.value)}
             placeholder="Suche in Name oder Verlag" style={{ maxWidth: 260 }}
           />
+          {/* Das Fach steht vor dem Verlag: es ist die Facette, nach der ein Vater sucht („was gibt es für
+              Englisch"), und der Freitext deckt es bewusst nicht ab – der sucht nur Name, Slug und Verlag. */}
+          <select aria-label="Fach-Filter" value={subjectId} onChange={(e) => setSubjectId(e.target.value)}>
+            <option value="">– alle Fächer –</option>
+            {subjects.data?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
           <select aria-label="Verlag-Filter" value={publisherId} onChange={(e) => setPublisherId(e.target.value)}>
             <option value="">– alle Verlage –</option>
             {publishers.data?.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
