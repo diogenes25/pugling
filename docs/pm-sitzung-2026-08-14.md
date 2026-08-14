@@ -60,6 +60,7 @@ Behebung **Code oder Tests** ändert. Über 5 endet der **gesamte** Lauf.
 | Sprint | Zähler | Stand |
 |---|---|---|
 | 1 | **2 / 5** | abgeschlossen |
+| 2 | **2 / 5** | abgeschlossen |
 
 ## Sprint 1 — Ziel erreicht
 
@@ -122,6 +123,72 @@ zwei Elemente). Der Grund, dass es diesmal gelang: Ich habe den Einzellauf **nac
 gefahren, nicht davor — genau der Fehler, den B-153 sich selbst am 2026-08-11 vorwarf. Der Lauf hat also eine
 fremde Story mit einem Beleg bezahlt, ohne sie zu bauen.
 
+## Sprint 2 — Ziel erreicht, aber eine Story musste geteilt werden
+
+**Ziel war:** „Ein Tippfehler in einer Art ist wieder wegräumbar, und dass ein Fach seinem Anleger gehört,
+hält ein Test, der beim Gegenteil rot wird."
+
+**Die zweite Hälfte ist erreicht und ist die stärkste Messung des Laufs.** `OwnerAdultId = 1` hartkodiert →
+**829 grün, 1 rot**, und der Rote ist genau der neue Fall. Jeder Creator außer Adult 1 wäre dauerhaft aus
+seinen eigenen Fächern gesperrt worden, ohne dass ein Test es merkt.
+
+**Die erste Hälfte ist nur zur Hälfte erreicht, und das steht so in der Story.** Der Nutzer hatte die
+Schemaänderung für diesen Lauf ausgeschlossen; das freigegebene Admin-Ventil macht den Zustand *reparierbar*,
+löst aber den Fall des Vaters **nicht** — kein geseedeter Erwachsener trägt das Flag. Statt das zu übergehen,
+wurde [B-170](backlog/B-170-selbst-angelegte-art-im-grundbestand-ist-unloeschbar.md) **geteilt**:
+[B-178](backlog/B-178-katalogtext-verspricht-mehr-als-der-server-erlaubt.md) trägt, was ohne Schema richtig
+wird (Ventil + der Katalogtext), B-170 behält die Schemafrage mit `wartet_auf`.
+
+**Der Grund für die Teilung war eine widerlegte eigene Empfehlung:** B-170s offener Punkt 4 wollte den
+Vorspann-Satz „hier mitnehmen, denn nach Punkt 1 ändert sich, was wahr ist". Punkt 1 kommt nicht — also
+ändert sich für den Vater nichts, und der Satz muss eine andere Wahrheit sagen als nach dem Schema-Fix. Ihn
+in B-170 zu lassen hätte bedeutet, ihn zweimal zu schreiben.
+
+### Retrospektive Sprint 2
+
+**Nachschau (Pflichthandlung, zuerst):** Index vor der Abnahme **103 von 105** — die Arbeit von **Sprint 1**
+(B-169, B-171) war *nicht* unter den geprüften, also wurde sie jetzt angesehen. Ergebnis: **kein
+Produktdefekt.** Benannte Prüfpunkte, damit „sauber" nachvollziehbar ist: `geltenderFilterKey` läuft bei
+leerer Auswahl nicht aus dem Takt; das Gate lässt sich ohne Batching nicht zu weit öffnen (`filterKey` kann
+sich nicht ohne die `useAsync`-Deps ändern, und die Gegenrichtung ist harmlos, weil die Server-Sortierung
+total ist); kein Fokusverlust durch das neue `disabled`; der `selectAll`-Fehlerzweig bleibt am
+Generationen-Gate. Damit hält auch B-169s Entscheidung 4.
+
+**Die Nachschau hat trotzdem zwei Dinge gefunden, und beide gehören mir:**
+
+1. **Meine Zusicherung hing an 20 ms Scheduling statt am Gate** →
+   [B-180](backlog/B-180-zusicherung-haengt-an-scheduling-statt-am-gate.md), sofort behoben. Das `disabled`
+   des Knopfes hat drei Ursachen, und mein Fall trennte sie nicht — er wäre schon im Ladefenster wahr
+   gewesen, durch genau das `exercises.loading`, von dem mein eigener Kommentar zwei Zeilen darüber sagt, dass
+   es den Fehlerzweig nicht deckt. Der Reviewer hat den Puffer über acht Läufe vermessen: 15–36 ms.
+   **Dieselbe Fehlerfamilie wie der Defekt, den der Fall bewachen soll** — nur im Messinstrument.
+2. **Meine B-162-Korrektur war zu stark.** Ich schrieb „Dauerzustand ohne Ausweg"; es gibt drei. Der Befund
+   wird dadurch nicht kleiner, sondern **schärfer**: Ausgerechnet die Bewegung, die ein Nutzer versucht
+   (über den Stepper zurück und wieder vor), ist die wirkungslose — die `useAsync`-Deps ändern sich nicht,
+   es fliegt keine neue Abfrage. Damit steht fest, was B-162 braucht: nicht nur ein Banner, sondern ein
+   „Erneut suchen".
+
+**Ein Beleg für eine Entscheidung, den erst die Nachschau geliefert hat.** B-169s Entscheidung 2 verwarf die
+billigere Bedingung `loading && data !== null`, obwohl sie *heute* gleichwertig war — mit der Begründung, sie
+ziehe zwei Situationen zusammen. Genau daran hängt jetzt B-162s Lösbarkeit: mit der verworfenen Variante
+hätte ein `reload()` das Gate fälschlich geschlossen, der „Erneut suchen"-Knopf wäre also nicht baubar. Eine
+Entscheidung, die zum Zeitpunkt des Treffens nur *prinzipiell* richtig war, hat sich zwei Sprints später
+praktisch bezahlt.
+
+**Vorschlag für einen Mechanismus** — nach Freigabe 3 nur vorgeschlagen, **nicht gelandet**:
+Eine Zusicherung auf ein Attribut mit **mehreren** Ursachen (`disabled`, `aria-*`, `hidden`) braucht einen
+Wartepunkt, der die anderen Ursachen ausschließt — sonst prüft sie nicht, was ihr Name sagt. Das ist die
+Test-Variante der schon residenten Regel und in einem Halbsatz prüfbar („welche der Ursachen kann diese
+Zusicherung erfüllen?"). Ob es in `frontend/CLAUDE.md` gehört, entscheidet der Nutzer.
+
+**Eine Beobachtung an der Grenze des Fehlerzählers, ehrlich benannt.** Der Fund „die XML-Doku sagt das
+Gegenteil des Verhaltens" ist ein **Vertrags**defekt mit konkretem Szenario (ein Client-Autor hält `200` für
+einen Nicht-Eigentümer für unmöglich), aber sein Fix berührt nur Kommentare — nach dem Wortlaut von
+Freigabe 3 zählt er also nicht, obwohl er zwei Zeilen in `docs/openapi/v1.json` bewegt hat. Ich habe mich an
+den Wortlaut gehalten, statt die Regel im Lauf zu biegen. **Zur Entscheidung des Nutzers:** Soll „ändert ein
+eingecheckt generiertes Artefakt" mitzählen? Der Schnitt bliebe damit ablesbar, würde aber Vertragstexte
+erfassen.
+
 ## Verlauf des Laufs
 
 - **2026-08-14** — Lauf gestartet. Freigaben erteilt, Umfang entschieden, Sprint-Plan steht.
@@ -132,3 +199,9 @@ fremde Story mit einem Beleg bezahlt, ohne sie zu bauen.
   [B-162](backlog/B-162-assistent-nennt-den-leeren-katalog-als-ursache.md) mit korrigiertem Ist-Stand und
   P3 → P2, [B-153](backlog/B-153-bilder-spec-flackert-im-vollen-lauf.md) mit belegter Ursache und
   `idee → ausformuliert`, P3 → P2.
+- **2026-08-14** — **Sprint 2 durch.** B-168 und B-178 `abgenommen`, Fehlerzähler **2 von 5**. B-170 geteilt
+  und mit `wartet_auf` auf die Schemaentscheidung am Tag gesetzt. Aus Reviews und Nachschau abgelegt:
+  [B-179](backlog/B-179-drei-fassungen-des-admin-testhelfers.md) (drei Fassungen des Admin-Testhelfers),
+  [B-180](backlog/B-180-zusicherung-haengt-an-scheduling-statt-am-gate.md) (aufgenommen **und** gebaut),
+  dazu [B-162](backlog/B-162-assistent-nennt-den-leeren-katalog-als-ursache.md) präzisiert.
+  Index: **105 von 108** nachgeschaut.

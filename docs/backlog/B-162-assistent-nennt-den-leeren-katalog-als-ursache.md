@@ -38,11 +38,24 @@ Als *Vater* möchte ich bei einer gescheiterten Suche erfahren, dass sie geschei
     zweiten Abfrage bleibt die **alte Seite** stehen, und dann greift der Leer-Zweig gar nicht — der Vater
     sieht stattdessen die Treffer des vorigen Filters. Damit hat diese Story zwei verschiedene Bildschirme zu
     behandeln, nicht einen.
-- **Der zweite ist der schwerere, und er ist seit B-169 ein Dauerzustand:** Scheitert die Abfrage, sind die
-  gezeigten Zeilen veraltet, also zu Recht gesperrt — der Effekt auf `[exercises.data]` läuft aber nie
-  (`data` ändert seine Referenz nicht), das Gate bleibt darum **offen für immer**. Der Vater sieht die alte
-  Liste, alle Kästchen tot, keine Meldung, kein Wiederholen, und „Weiter" antwortet „Bitte mindestens eine
-  Übung wählen." Das Gate ist richtig; was fehlt, ist die Meldung — und die ist **diese** Story.
+- **Der zweite ist der schwerere:** Scheitert die Abfrage, sind die gezeigten Zeilen veraltet, also zu Recht
+  gesperrt — der Effekt auf `[exercises.data]` läuft aber nie (`data` ändert seine Referenz nicht), die Sperre
+  bleibt für die **eingestellten** Kriterien also endgültig. Der Vater sieht die alte Liste, alle Kästchen
+  tot, keine Meldung, und „Weiter" antwortet „Bitte mindestens eine Übung wählen."
+  - **Präzisiert am 2026-08-14** (Nachschau zu B-169; meine erste Fassung hier sagte „kein Wiederholen" und
+    war **zu stark**): Es gibt drei Auswege — die getippte Suche wieder **leeren** (dann ist `filterKey`
+    wieder gleich dem Seitenschlüssel und beides sofort bedienbar), **irgendeine weitere** Kriterienänderung,
+    die gelingt (neues `data` → Effekt → frische Zeilen), und **F5** (heilt, kostet aber den ganzen
+    Assistenten, es persistiert kein Zustand).
+  - **Wirkungslos ist ausgerechnet die intuitive Bewegung:** über den Stepper zurück auf Schritt 1/2 und
+    wieder „Weiter" — die Abhängigkeiten von `useAsync` ändern sich dabei nicht, es fliegt **keine** neue
+    Abfrage, die Sperre bleibt. **Folge für diese Story: ein Banner allein genügt nicht.** Es braucht ein
+    „Erneut suchen" (`exercises.reload()`) — sonst steht die Meldung da und der einzige Weg heraus ist einer,
+    den der Nutzer nicht als solchen erkennt.
+  - Nebenbei ein Beleg für B-169s Entscheidung 2: Mit der dort **verworfenen** Variante
+    (`loading && data !== null`) hätte ein `reload()` das Gate fälschlich geschlossen — mit dem
+    Schlüsselvergleich nicht. Der „Erneut suchen"-Knopf ist also nur deshalb baubar, weil dort nicht die
+    billigere Bedingung genommen wurde.
 - Der Satz ist nicht bloß unpräzise, sondern **handlungsleitend falsch**: er schickt den Vater ins
   Anlege-Formular, während der Katalog voll ist und nur die Abfrage scheiterte.
 
@@ -100,3 +113,8 @@ sondern „die Zahl gehört zu einer anderen Abfrage als die Meldung daneben".
   ist der Befund dieser Story nicht „ein unwahrer Satz", sondern ein **bedienungsloser Bildschirm**: seit
   B-169 sind die veralteten Zeilen gesperrt (richtig), und ohne Fehlermeldung gibt es aus dem Zustand keinen
   Ausweg. Das Gate darf dafür **nicht** aufgeweicht werden — die Zeilen *sind* veraltet.
+- 2026-08-14 · Ist-Stand **präzisiert** aus der Nachschau zu B-169: Meine Formulierung „Dauerzustand, kein
+  Wiederholen" war zu stark — es gibt drei Auswege. Der Befund ist damit nicht kleiner, sondern **schärfer**:
+  Ausgerechnet die Bewegung, die ein Nutzer versucht (über den Stepper zurück und wieder vor), ist die
+  wirkungslose. Damit steht auch fest, was diese Story braucht: nicht nur ein Banner, sondern ein „Erneut
+  suchen". `prio` bleibt P2.

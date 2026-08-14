@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-161]
+nachgeschaut: 2026-08-14
 ---
 
 # B-169 · Im Ladefenster sind die alten Zeilen anklickbar — und die Auswahl überlebt
@@ -219,3 +220,15 @@ genau dieser Fall fällt.
   `bilder.spec.ts`, allein grün, Ursache jetzt in [B-153](B-153-bilder-spec-flackert-im-vollen-lauf.md)
   belegt — **außerhalb** dieses Diffs), `dotnet format` und `markdownlint` sauber, `frontend-reviewer` und
   `pugling-reviewer` gelaufen.
+- 2026-08-14 · **Nachschau: kein Produktdefekt.** Gezielt geprueft und in Ordnung befunden: `geltenderFilterKey`
+  laeuft nicht aus dem Takt, wenn die Auswahl leer ist (`auswahlNachFilterwechsel` gibt `null` nur bei
+  gleichem Schluessel); das Gate ist ohne Batching nicht zu weit zu oeffnen — `filterKey` kann sich nicht ohne
+  die `useAsync`-Deps aendern, und die Gegenrichtung (`"abc"` -> `"abc "`) ist harmlos, weil die
+  Server-Sortierung total ist (jede Variante mit `ThenBy(Id)`), zwei identische Abfragen also dieselbe Seite
+  liefern; kein Fokusverlust durch das neue `disabled`; der `selectAll`-Fehlerzweig bleibt am
+  Generationen-Gate. Damit haelt auch Entscheidung 4 (der irrefuehrende Hinweistext ist unerreichbar).
+  **Gefunden wurde etwas anderes:** die Zusicherung von Fall 3 hing an ~20 ms Scheduling statt am Gate —
+  eigene Story [B-180](B-180-zusicherung-haengt-an-scheduling-statt-am-gate.md), sofort behoben.
+  Dazu praezisiert: [B-162](B-162-assistent-nennt-den-leeren-katalog-als-ursache.md) — meine Aussage
+  „Dauerzustand ohne Ausweg" war zu stark, es gibt drei Auswege, und der **intuitive** (Stepper zurueck und
+  vor) ist der wirkungslose.

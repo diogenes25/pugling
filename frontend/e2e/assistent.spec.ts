@@ -176,9 +176,17 @@ test("Scheitert die Suche, ist auch der Knopf »Alle wählen« gesperrt", async 
     route.fulfill({ status: 500, contentType: "application/problem+json",
       body: JSON.stringify({ status: 500, title: "Server error", detail: "B-169 Probe" }) }));
 
+  // Auf die gescheiterte Antwort WARTEN, bevor der Knopf geprüft wird (B-180). Sein `disabled` hat drei
+  // Ursachen (`selectAllBusy || exercises.loading || zeilenVeraltet`), und die Zusicherung trennt sie nicht:
+  // im Ladefenster wäre sie schon durch `exercises.loading` wahr – also durch genau das, von dem der Fall
+  // beweisen soll, dass es hier NICHT trägt. Ohne diesen Wartepunkt hing er an ~20 ms Scheduling-Reserve.
+  const gescheitert = page.waitForResponse(
+    (r) => r.url().includes("/creator/exercises") && r.status() === 500);
   await page.getByLabel("Übung suchen", { exact: true }).fill("environment");
+  await gescheitert;
 
-  // Die alten Zeilen stehen noch (das ist die B-116-Regel, gewollt) – und beides ist gesperrt.
+  // Die alten Zeilen stehen noch (das ist die B-116-Regel, gewollt) – und beides ist gesperrt. Das Kästchen
+  // trägt nur `zeilenVeraltet`, ist also von sich aus eindeutig; der Knopf braucht den Wartepunkt oben.
   await expect(page.getByRole("checkbox", { name: /Begrüßungen/ })).toBeDisabled();
   await expect(alleWaehlen).toBeDisabled();
 });

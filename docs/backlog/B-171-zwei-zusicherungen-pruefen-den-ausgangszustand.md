@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-161, B-157]
+nachgeschaut: 2026-08-14
 ---
 
 # B-171 · Zwei Zusicherungen prüfen den Ausgangszustand mit — und können darum nicht fallen
@@ -186,3 +187,9 @@ Begründung der Regel, nicht als neue Regel daneben.
   `bilder.spec.ts`, allein gruen, ausserhalb dieses Diffs), `dotnet format` und `markdownlint` sauber, beide
   Reviewer gelaufen. Der `pugling-reviewer` hat den Backend-Anteil ohne Korrektheitsfund passiert und die
   Zahlen unabhaengig nachgefahren.
+- 2026-08-14 · **Nachschau: kein Fund.** Benannter Pruefpunkt: Die Vorpruefung im AK-8-Test traegt wirklich —
+  `Assert.Equal(JsonValueKind.Number, …)` faellt, wenn der Anlegepfad `categoryId` verliert, und macht die
+  Schluss-Zusicherung auf `Null` damit erst zu einer Aussage ueber den *Verlust* statt ueber den
+  Ausgangszustand. Die Regex `[1-9]\d*` kann „(0 gewaehlt)" nicht mehr treffen und trifft weiter die
+  B-161-Form „(500 gewaehlt, davon 400 …)"; der `heading`-Rollenfilter haelt den Knopf „Auswahl leeren
+  (N gewaehlt)" mit demselben Wortmaterial draussen.
