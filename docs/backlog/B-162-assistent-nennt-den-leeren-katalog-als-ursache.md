@@ -2,7 +2,7 @@
 tags: [typ/story, status/ausformuliert, bereich/frontend, bereich/lehrplan, rolle/supervisor]
 aliases: [Gescheiterte Katalogsuche liest sich als leerer Katalog]
 status: ausformuliert
-prio: P3
+prio: P2
 art: Defekt
 groesse: ""
 wo: ""
@@ -31,8 +31,18 @@ Als *Vater* möchte ich bei einer gescheiterten Suche erfahren, dass sie geschei
   passenden Übungen im Katalog. Lege welche unter ‚Übungen' an**".
 - `exercises.error` wird in der ganzen Datei **nirgends** gerendert (nachgezählt über `VaterWizard.tsx`) —
   anders als `setError`/`error` für die Assistenten-eigenen Fehler, die es gibt.
-- `useAsync` (`frontend/src/lib/useAsync.ts:29-36`) lässt `data` bei einem Fehler auf `null` und setzt
-  `loading` auf `false`. Eine gescheiterte Suche landet damit zwangsläufig im Leer-Zweig.
+- `useAsync` (`frontend/src/lib/useAsync.ts:29-36`) setzt bei einem Fehler nur `error` und `loading = false`;
+  `data` bleibt **unangetastet**.
+  - **Korrigiert am 2026-08-14** (gefunden beim Review von [B-169](B-169-ladefenster-macht-die-alten-zeilen-anklickbar.md)):
+    Der frühere Satz hier lautete „lässt `data` auf `null`" und stimmt **nur für die erste Ladung**. Ab der
+    zweiten Abfrage bleibt die **alte Seite** stehen, und dann greift der Leer-Zweig gar nicht — der Vater
+    sieht stattdessen die Treffer des vorigen Filters. Damit hat diese Story zwei verschiedene Bildschirme zu
+    behandeln, nicht einen.
+- **Der zweite ist der schwerere, und er ist seit B-169 ein Dauerzustand:** Scheitert die Abfrage, sind die
+  gezeigten Zeilen veraltet, also zu Recht gesperrt — der Effekt auf `[exercises.data]` läuft aber nie
+  (`data` ändert seine Referenz nicht), das Gate bleibt darum **offen für immer**. Der Vater sieht die alte
+  Liste, alle Kästchen tot, keine Meldung, kein Wiederholen, und „Weiter" antwortet „Bitte mindestens eine
+  Übung wählen." Das Gate ist richtig; was fehlt, ist die Meldung — und die ist **diese** Story.
 - Der Satz ist nicht bloß unpräzise, sondern **handlungsleitend falsch**: er schickt den Vater ins
   Anlege-Formular, während der Katalog voll ist und nur die Abfrage scheiterte.
 
@@ -85,3 +95,8 @@ sondern „die Zahl gehört zu einer anderen Abfrage als die Meldung daneben".
   Laufs, darum bleibt `entgangen_bei` leer. Bewusst hier statt als eigene Story: dieselbe Datei, dieselbe
   Wurzel und in einem Schnitt zu beheben — anders als bei B-161, wo die Trennung nötig war, weil dort ein
   `entgangen_bei` daranhängt.
+- 2026-08-14 · **Ist-Stand korrigiert und `prio` P3 → P2**, beides aus dem Review von B-169. Die Analyse
+  behauptete, `useAsync` setze `data` bei einem Fehler auf `null` — das gilt nur für die erste Ladung. Damit
+  ist der Befund dieser Story nicht „ein unwahrer Satz", sondern ein **bedienungsloser Bildschirm**: seit
+  B-169 sind die veralteten Zeilen gesperrt (richtig), und ohne Fehlermeldung gibt es aus dem Zustand keinen
+  Ausweg. Das Gate darf dafür **nicht** aufgeweicht werden — die Zeilen *sind* veraltet.

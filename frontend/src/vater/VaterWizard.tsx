@@ -181,6 +181,23 @@ export function VaterWizard() {
    * hat.
    */
   const geltenderFilterKey = useRef(filterKey);
+  /*
+   * Der Schlüssel, zu dem die **gerenderten Zeilen** gehören — nicht der, den die Kriterien gerade tragen.
+   * Die zwei laufen für die Dauer einer Abfrage auseinander: `useAsync` behält `data` über den Wechsel
+   * (B-116, gewollt), also stehen die Zeilen des vorigen Filters noch da. Ein Haken darin gehörte zu einem
+   * Filter, der nicht mehr gilt, und der Effekt oben leert ihn nie wieder — sein Schlüssel hat sich schon
+   * geändert (B-169).
+   *
+   * `useState`, nicht `useRef`: Eine Ref nimmt am Rendern nicht teil. Der Render, der die frischen Zeilen
+   * erstmals zeigt, berechnete die Sperre, **bevor** ein Effekt die Ref nachziehen kann — die neuen Zeilen
+   * blieben gesperrt, bis irgendetwas anderes ein Rendern auslöst.
+   *
+   * Und verglichen werden **Schlüssel**, nicht Ladezustände: `exercises.loading && data !== null` wäre heute
+   * gleichwertig (die Abfrage ruft nirgends `reload()`), zöge aber „Kriterien geändert" und „dieselben
+   * Kriterien neu geladen" zusammen — genau die Fehlerfamilie, die diese Sperre behebt.
+   */
+  const [seitenSchluessel, setSeitenSchluessel] = useState(filterKey);
+  const zeilenVeraltet = seitenSchluessel !== filterKey;
   useEffect(() => {
     // `selected` bewusst nicht in der Abhängigkeitsliste: der Effekt soll auf den Kriterien-Wechsel
     // reagieren, nicht auf jedes Anklicken. Gelesen wird der Stand zum Zeitpunkt des Wechsels.
@@ -238,7 +255,14 @@ export function VaterWizard() {
   function merken(items: ExerciseSummary[]) {
     for (const e of items) gesehen.current.set(e.id, e);
   }
-  useEffect(() => { merken(exercises.data?.items ?? []); }, [exercises.data]);
+  useEffect(() => {
+    merken(exercises.data?.items ?? []);
+    // Die Antwort ist da – ab jetzt gehören die Zeilen zum eingestellten Filter (B-169). `useAsync` bricht
+    // die vorige Anfrage ab, `data` trägt also immer die Antwort der neuesten Generation; der hier gelesene
+    // Schlüssel gehört damit wirklich zu den gezeigten Zeilen.
+    setSeitenSchluessel(filterKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exercises.data]);
 
   /*
    * „Alle wählen" hieß bisher „die ersten 100 wählen" (B-18): Der Server liefert eine Seite, und der Knopf
@@ -520,9 +544,14 @@ export function VaterWizard() {
 
           <div className="row">
             <span className="sub">{filteredExercises.length} passende Übungen</span>
+            {/* `zeilenVeraltet` muss am Knopf mit, nicht nur am Kästchen (B-169): `exercises.loading` deckt
+                das Ladefenster, aber NICHT den Fehlerzweig. Scheitert die Abfrage, bleibt `data` die alte
+                Seite, `loading` fällt auf `false`, und der Effekt auf `[exercises.data]` läuft nie — der Knopf
+                wäre wieder bedienbar und wählte die Ids der veralteten Liste. Es ist derselbe
+                Schlüsselvergleich, kein zweites Gate: eine Wahrheit, an zwei Steuerelementen. */}
             {filteredExercises.length > 0 && (
               <button type="button" className="btn ghost inline-btn" style={{ marginLeft: "auto" }}
-                disabled={selectAllBusy || exercises.loading} onClick={selectAll}>
+                disabled={selectAllBusy || exercises.loading || zeilenVeraltet} onClick={selectAll}>
                 {selectAllBusy ? "Lade alle…" : "Alle wählen"}
               </button>
             )}
@@ -539,7 +568,11 @@ export function VaterWizard() {
                 const by = authorText(e);
                 return (
                   <label key={e.id} className="checkline" style={{ padding: 8, border: "1px solid var(--stroke)", borderRadius: 8 }}>
-                    <input type="checkbox" checked={selected.includes(e.id)} onChange={() => toggle(e.id)} />
+                    {/* Gesperrt, solange die Zeilen zum vorigen Filter gehören (B-169). Dieselbe Bedingung
+                        trägt „Alle wählen" oben – dort ergänzend zu `exercises.loading`, weil das den
+                        Fehlerzweig nicht abdeckt. */}
+                    <input type="checkbox" disabled={zeilenVeraltet}
+                      checked={selected.includes(e.id)} onChange={() => toggle(e.id)} />
                     {/* Anzeigename aus dem Manifest, nicht der Schlüssel: sonst bietet das Pulldown darüber
                         „Vokabelkarten" an, während die Zeile darunter „Vocabulary" sagt — ein Widerspruch in
                         einem Bildschirm. Der Rückfall auf den Schlüssel greift nur, solange das Manifest lädt. */}

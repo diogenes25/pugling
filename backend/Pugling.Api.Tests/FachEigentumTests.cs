@@ -280,6 +280,15 @@ public class FachEigentumTests(PuglingWebAppFactory factory) : IClassFixture<Pug
             config = new { problems = new[] { new { prompt = "1 + 1", answer = 2, tolerance = 0 } } },
         }));
 
+        // The assignment has to EXIST before its loss means anything (B-171). Drop `CategoryId` in the
+        // creation path and the check below stays green on its own - it would then be a statement about the
+        // starting state. Reading the element rather than calling GetInt32() only buys the message: a typed
+        // accessor on null is red too, but as an exception instead of an expected/actual pair.
+        var vorher = await adult.GetFromJsonAsync<JsonElement>($"{basePath}/{exerciseId}");
+        var zuordnung = vorher.GetProperty("categoryId");
+        Assert.Equal(JsonValueKind.Number, zuordnung.ValueKind);
+        Assert.Equal(categoryId, zuordnung.GetInt32());
+
         var delete = await adult.DeleteAsync($"/api/v1/creator/subjects/{subjectId}/categories/{categoryId}");
         Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
 
