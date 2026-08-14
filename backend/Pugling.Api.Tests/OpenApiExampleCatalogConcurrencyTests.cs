@@ -125,11 +125,13 @@ public class OpenApiExampleCatalogConcurrencyTests
 
     // Mirrors OpenApiExampleCatalog.Load's exact read shape: File.OpenRead + Deserialize.
     /// <summary>
-    /// What a single read attempt ran into. The distinction is the whole point (B-165): a <b>torn</b> read is
-    /// the bug B-57 fixed - a reader seeing half-written content. A <b>locked</b> file is an artifact of this
-    /// machine, described in the class summary, and says nothing about content at all. Counting both into one
-    /// number made the gate report "1 read failure" for either, so a green run and a red run could not be
-    /// told apart by their cause.
+    /// What a single read attempt ran into. Keeping the two apart is the whole point (B-165): counting both
+    /// into one number made the gate report "1 read failure" for either, so a green run and a red run could
+    /// not be told apart by their cause. Which of the two a failing read hits is <b>platform-dependent</b>
+    /// (measured, see <see cref="UnsicheresSchreiben_ErzeugtLeseFehler"/>): Windows denies the open
+    /// (<b>locked</b>), Linux lets the reader in on half-written content (<b>torn</b>). Both mean the same
+    /// defect - except in <see cref="AtomaresSchreiben_KeineLeseFehler"/>, where the final path is never held
+    /// open at all and a lone <b>locked</b> read is instead this machine's antivirus blip (class summary).
     /// </summary>
     private enum LeseErgebnis { Ok, Gesperrt, Zerrissen }
 
@@ -231,21 +233,24 @@ public class OpenApiExampleCatalogConcurrencyTests
         {
             var (ok, gesperrt, zerrissen) = CountFailedReadsDuring(path, pause => WriteUnsafePaused(path, PayloadOf(40), pause));
 
-            // What a reader ACTUALLY observes here is a locked file, not torn content - measured, and it is
-            // the correction B-165 brought (2351 locked reads, 0 torn, in a standalone probe). The reason is
-            // the read shape this class mirrors: `File.OpenRead` requests FileShare.Read, i.e. "others may
-            // read but not write". An already-open WRITE handle contradicts that, so Windows denies the open
-            // outright - the reader never gets far enough to see half-written bytes. Torn content would
-            // require the writer to share write access, which neither the pre-fix `File.WriteAllText` nor the
-            // fix does.
+            // The claim under test is "during an unsafe write the final path is not reliably readable" - that
+            // is what B-57 fixed, since the atomic writer leaves the final path readable AND complete
+            // throughout. WHICH way the read fails is platform-dependent, measured on both:
+            //   Windows - 1867 locked, 0 torn. `File.OpenRead` requests FileShare.Read ("others may read but
+            //             not write"); an already-open WRITE handle contradicts that, so the open is denied
+            //             outright and the reader never gets far enough to see half-written bytes.
+            //   Linux   - 0 locked, 126 torn (CI run 31810420330). The share mode is not enforced the same
+            //             way, so the reader gets in and deserializes a half-written file.
+            // Both are the same defect from the caller's side, so both satisfy this case; asserting only one
+            // of them pinned the test to one platform and made it red on the other. The split stays in the
+            // message, which is B-165's actual gain: a failure says WHICH mode was observed.
             //
-            // The claim is therefore "during an unsafe write the final path is UNREADABLE", and that is
-            // exactly what B-57 fixed: the atomic writer leaves the final path readable and complete
-            // throughout. Whether the class summary's premise ("the bug is torn content") holds at all is a
-            // separate question - it is B-181, not silently reinterpreted here.
-            Assert.True(gesperrt > 0,
-                "Expected a reader landing mid-write to be denied the final path - the exact race this story "
-                + $"fixes. Locked reads: {gesperrt}, torn reads: {zerrissen}.");
+            // What turns this case red: swapping WriteUnsafePaused for WriteAtomicPaused - then every read
+            // during the pause succeeds on both platforms and the sum is zero.
+            Assert.True(gesperrt + zerrissen > 0,
+                "Expected a reader landing mid-write to fail on the final path - either denied (locked) or "
+                + $"seeing half-written content (torn) - the exact race this story fixes. Locked: {gesperrt}, "
+                + $"torn: {zerrissen}, successful: {ok}.");
         }
         finally { DeleteTolerantly(path); }
     }
@@ -271,15 +276,15 @@ public class OpenApiExampleCatalogConcurrencyTests
                 // atomic write guarantees exactly. A locked file is reported, not punished: it is an artifact
                 // of this machine (class summary) and says nothing about content.
                 //
-                // TWO assertions, and the second one is why the first is not enough. Measured while building
-                // B-165: asserting only `zerrissen == 0` left this case TOOTHLESS - swapping the atomic writer
-                // for the unsafe one kept it green, because an unsafe write produces LOCKS on this platform,
-                // never torn content (`File.OpenRead` asks for FileShare.Read, which an open write handle
-                // contradicts, so the reader is denied before it can see bytes).
+                // TWO assertions, because on Windows the first one alone is TOOTHLESS - measured while
+                // building B-165: swapping the atomic writer for the unsafe one kept `zerrissen == 0` green,
+                // since an unsafe write is denied to the reader there rather than showing it torn bytes. (On
+                // Linux the unsafe writer does produce torn content, so there the first assertion bites on
+                // its own - see UnsicheresSchreiben_ErzeugtLeseFehler for both measurements.)
                 //
-                // What separates the two writers is therefore whether any read SUCCEEDS during the pause:
+                // What separates the two writers on EVERY platform is whether reads SUCCEED during the pause:
                 //   atomic  - the final path is never opened for writing, so reads succeed (~2000 per window)
-                //   unsafe  - the final path is held open, so EVERY read is denied (measured 1867 of 1867)
+                //   unsafe  - the final path is held open, so reads fail (measured 1867 of 1867 on Windows)
                 // A single denied read is this machine's antivirus blip and stays tolerated - that is the
                 // flake B-165 removes. Zero successful reads means the write is not atomic any more.
                 Assert.True(zerrissen == 0,
