@@ -505,12 +505,12 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-170](B-170-selbst-angelegte-art-im-grundbestand-ist-unloeschbar.md) | Eine selbst angelegte Art im Grundbestands-Fach ist unlöschbar — und der Seitentext verspricht das Gegenteil | Defekt | `ausformuliert` | P1 | — | — | — |
-| [B-172](B-172-fachauswahl-loescht-wenn-ihre-optionen-fehlen.md) | Die Fachauswahl löscht das Fach, wenn ihre eigenen Optionen nicht geladen sind | Defekt | `idee` | P1 | — | — | — |
+| [B-172](B-172-fachauswahl-loescht-wenn-ihre-optionen-fehlen.md) | Die Fachauswahl löscht das Fach, wenn ihre eigenen Optionen nicht geladen sind | Defekt | `ausformuliert` | P1 | — | — | — |
 | [B-07](B-07-db-umbau-restetappen.md) | DB-Struktur-Umbau: der offene Betriebsschritt | Aufräumen | `geschaetzt` | P1 | XS | backend | — |
 | [B-153](B-153-bilder-spec-flackert-im-vollen-lauf.md) | `bilder.spec.ts` fällt im vollen Lauf gelegentlich aus, allein ist sie grün | Defekt | `ausformuliert` | P2 | — | — | — |
 | [B-160](B-160-gesperrter-knopf-nennt-den-grund-nie.md) | Der gesperrte Löschen-Knopf nennt seinen Grund nie — der `title` erscheint nicht | Defekt | `ausformuliert` | P2 | — | — | — |
 | [B-162](B-162-assistent-nennt-den-leeren-katalog-als-ursache.md) | Scheitert die Übungssuche im Assistenten, behauptet er einen leeren Katalog | Defekt | `ausformuliert` | P2 | — | — | — |
-| [B-181](B-181-praemisse-der-rennen-klasse-stimmt-nicht.md) | Die Rennen-Klasse behauptet einen Fehler, den kein Leser dieses Repos sehen kann | Defekt | `ausformuliert` | P2 | — | — | — |
+| [B-181](B-181-praemisse-der-rennen-klasse-stimmt-nicht.md) | Die Rennen-Klasse nennt nur einen von zwei Fehlermodi — welcher auftritt, entscheidet die Plattform | Defekt | `ausformuliert` | P2 | — | — | — |
 | [B-166](B-166-wiki-nennt-die-entfernte-kapitel-route.md) | Wiki und Endpunkt-Karte nennen die entfernte Kapitel-Route | Defekt | `idee` | P2 | — | — | — |
 | [B-173](B-173-speichern-vernichtet-seine-eigene-bestaetigung.md) | Ein erfolgreiches Speichern vernichtet seine eigene Bestätigung | Defekt | `idee` | P2 | — | — | — |
 | [B-174](B-174-arten-liste-verschweigt-ihren-fehler.md) | Die Arten-Liste verschweigt, dass ihr Laden gescheitert ist | Defekt | `idee` | P2 | — | — | — |
@@ -695,7 +695,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (29)
 
-**Nachgeschaut: 107 von 110 abgenommenen** — und in 22 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 3 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 107 von 110 abgenommenen** — und in 23 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 3 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -720,7 +720,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-169](B-169-ladefenster-macht-die-alten-zeilen-anklickbar.md) | Im Ladefenster sind die alten Zeilen anklickbar — und die Auswahl überlebt | [B-161] | `abgenommen` |
 | [B-170](B-170-selbst-angelegte-art-im-grundbestand-ist-unloeschbar.md) | Eine selbst angelegte Art im Grundbestands-Fach ist unlöschbar — und der Seitentext verspricht das Gegenteil | [B-157] | `ausformuliert` |
 | [B-171](B-171-zwei-zusicherungen-pruefen-den-ausgangszustand.md) | Zwei Zusicherungen prüfen den Ausgangszustand mit — und können darum nicht fallen | [B-161, B-157] | `abgenommen` |
-| [B-172](B-172-fachauswahl-loescht-wenn-ihre-optionen-fehlen.md) | Die Fachauswahl löscht das Fach, wenn ihre eigenen Optionen nicht geladen sind | [B-123] | `idee` |
+| [B-172](B-172-fachauswahl-loescht-wenn-ihre-optionen-fehlen.md) | Die Fachauswahl löscht das Fach, wenn ihre eigenen Optionen nicht geladen sind | [B-123, B-148] | `ausformuliert` |
 | [B-173](B-173-speichern-vernichtet-seine-eigene-bestaetigung.md) | Ein erfolgreiches Speichern vernichtet seine eigene Bestätigung | [B-123] | `idee` |
 | [B-174](B-174-arten-liste-verschweigt-ihren-fehler.md) | Die Arten-Liste verschweigt, dass ihr Laden gescheitert ist | [B-154] | `idee` |
 | [B-175](B-175-zwei-gerottete-zahlen-in-kommentaren.md) | Zwei Zahlen in Kommentaren widersprechen dem, was gemessen wurde | [B-139] | `ausformuliert` |
