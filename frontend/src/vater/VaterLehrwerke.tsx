@@ -390,10 +390,15 @@ export function SeriesForm({ series, subjects, publishers, onSaved, onMessage }:
 
     const aktualisiert = await action.runFor(() => api.updateTextbookSeries(series.id, dto));
     if (!aktualisiert) return;
-    // Das Formular bleibt offen und der Ladezustand wird aus der ANTWORT nachgezogen. Beides gehört
-    // zusammen: schlösse es sich, verschwände der StatusBanner mitsamt der Bestätigung (im Rollengang
-    // aufgefallen – „Gespeichert." war nie zu sehen); bliebe es offen ohne diese Zeile, rechnete der
-    // nächste Diff gegen einen veralteten Bezugspunkt und schickte Felder erneut oder gar nicht.
+    // Das Formular bleibt offen, und darum MUSS der Ladezustand aus der ANTWORT nachgezogen werden:
+    // sonst rechnete der nächste Diff derselben Sitzung gegen einen veralteten Bezugspunkt und schickte
+    // Felder erneut oder gar nicht.
+    //
+    // Die zweite Hälfte der alten Begründung ist seit B-173 überholt und darum entfernt: Sie sagte, ein
+    // Schließen ließe „den StatusBanner mitsamt der Bestätigung verschwinden". Das trägt der Banner hier
+    // nicht mehr – die Bestätigung geht an den Meldungsplatz der Seite, weil die Zeile auch bei OFFENEM
+    // Formular verschwinden kann (aus der Filterung fallen). Stehen bleibt die Begründung oben, und die
+    // genügt.
     geladen.current = seriesFormValues(aktualisiert);
     setForm(geladen.current);
     /*
