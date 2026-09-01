@@ -115,12 +115,13 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
                 // Same story one field over (B-45): the points recommendation was written by creators and read
                 // by nobody. The position form now prefills its target reward from it.
                 e.RewardPoints,
-                // What a position would ACTUALLY inherit (B-192). Spelled out instead of calling
-                // GoalPointsPolicy.Effective because EF cannot translate a method call inside a
-                // projection - the rule's shape is duplicated here, its numbers are not.
-                e.RewardPoints > 0 && e.RewardPoints <= GoalPointsPolicy.MaxInherited
-                    ? e.RewardPoints
-                    : GoalPointsPolicy.Fallback))
+                // What a position would ACTUALLY inherit (B-192) - the same call the create path makes,
+                // so the rule exists exactly once. EF evaluates it on the client because it sits in the
+                // FINAL projection; the DTO is built in memory anyway, so that costs nothing. The
+                // consequence to know: `SuggestedGoalPoints` is therefore not sortable or filterable in
+                // SQL. Nothing needs that today, and an earlier draft that spelled the ternary out for
+                // SQL bought exactly that ability at the price of writing the rule twice.
+                GoalPointsPolicy.Effective(e.RewardPoints)))
             .ToPagedListAsync(Response, skip, take, ct);
     }
 

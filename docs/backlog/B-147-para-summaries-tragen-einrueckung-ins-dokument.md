@@ -88,3 +88,19 @@ bestimmten Abnahme an; er entstand mit dem ersten `<para>` in einem `<summary>`.
   **Bewusst nicht dort behoben:** B-45s Ziel ist ohne die Formatfrage erfüllt, und die Antwort auf „womit
   formatiert man das richtig" ist genau diese Story. Zahl im Text nicht nachgezogen — sie war schon beim
   Anlegen eine Momentaufnahme; wer den Sweep fährt, zählt neu.
+- 2026-09-02 · **Gemessen im zweiten Nachtlauf — und der Befund ist größer als gedacht: Einrückung und
+  Absatztrennung sind DASSELBE.** Beim Schreiben eines neuen `<para>` in `ExerciseCatalogDtos.cs` sind
+  beide Formen gefahren worden:
+  - **mehrzeilig** → der Absatz wird getrennt, trägt aber 12 führende Leerzeichen in jede Folgezeile.
+    In Swagger UI ist das ein **Codeblock** (Markdown: vier Leerzeichen genügen) — der Ausgang ist also
+    nicht offen, sondern absehbar hässlich.
+  - **einzeilig** → keine Einrückung, aber auch **keine Trennung**: der Text klebt am Vorsatz
+    (`…per keystroke in the list.The SuggestedGoalPoints figure is…`).
+
+  Eine eingeschobene leere `///`-Zeile hilft **nicht** (probiert, kein Effekt im erzeugten Dokument).
+  Der `\n` im Dokument stammt also nicht von `<para>`, sondern **ist** der Zeilenumbruch der Quelle —
+  darum kommt er nur zusammen mit der Einrückung. Wer das behebt, bekommt beides auf einmal; wer
+  einzeilig ausweicht (der bisherige Workaround), bezahlt mit der Satzgrenze. **Für eine `<param>`-Zeile
+  ist das der bessere Handel und gemessen sauber** — für einen `<para>` im `<summary>` nicht.
+  Der neue Absatz in `ExerciseCatalogDtos.cs` steht darum einzeilig und **ohne** Satzgrenze; das ist eine
+  bewusste Wahl zwischen zwei Fehlern, keine übersehene Stelle.

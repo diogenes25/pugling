@@ -2,6 +2,7 @@
 tags: [typ/story, status/abgenommen, bereich/frontend, rolle/creator]
 aliases: [Gespeichert fuer einen Frame, Zeile faellt aus dem Filter, Speichern sieht wie Loeschen aus]
 status: abgenommen
+nachgeschaut: 2026-09-02
 prio: P2
 art: Defekt
 groesse: M

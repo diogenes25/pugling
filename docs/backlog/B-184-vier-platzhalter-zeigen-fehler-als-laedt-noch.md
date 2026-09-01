@@ -2,6 +2,7 @@
 tags: [typ/story, status/abgenommen, bereich/frontend]
 aliases: [Lade… bleibt nach Fehler stehen, data === null ohne loading, Platzhalter widerspricht Banner]
 status: abgenommen
+nachgeschaut: 2026-09-02
 prio: P3
 art: Defekt
 groesse: S

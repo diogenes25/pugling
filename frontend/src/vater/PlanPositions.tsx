@@ -173,24 +173,22 @@ export function timeSlotProblem(s: PositionSettings): string | null {
 }
 
 /**
- * Die Zielpunkte beim Wählen einer Übung (B-45): ihre Empfehlung, sonst der bisherige Wert.
+ * Womit das Punkte-Feld vorbelegt wird, wenn der Vater eine Übung anklickt (B-45).
  *
- * `current` statt eines festen Vorgabewerts, damit „die Übung schweigt" nicht dasselbe tut wie „die Übung
- * empfiehlt etwas": eine selbst getippte 50 bleibt stehen, wenn die gewählte Übung keine brauchbare
- * Empfehlung trägt. Brauchbar heißt **größer als 0** – das Feld hat serverseitig keine Untergrenze, eine
- * stehengebliebene Null ist keine Aussage, und ein negativer Wert erst recht nicht. Dieselbe Regel hält
- * `PlanPositionsController.Create`, dort zusätzlich mit einer Obergrenze gegen fremde Katalog-Übungen.
+ * Gelesen wird `suggestedGoalPoints` – was eine Position **tatsächlich** erben würde. Der rohe
+ * `rewardPoints` steht daneben und wird hier bewusst nicht angefasst: Die Grenze `(0, 200]` und der
+ * Rückfall auf 20 sind eine Server-Regel (`GoalPointsPolicy`), und sie hier nachzurechnen hieße, dieselbe
+ * Regel zweimal zu führen (B-192). Vorher las das Feld den rohen Wert – der Vater sah 100000 im Feld und
+ * bekam beim Anlegen 20.
+ *
+ * `getippt` ist der Zustand, der vorher fehlte (B-191): Ohne ihn stand `current` für zweierlei zugleich –
+ * „der Vater hat das getippt" und „die vorher angeklickte Übung hat das empfohlen" – und die zweite
+ * Bedeutung trug den Wert von Übung A in Übung B, wo ihn niemand gesetzt hatte. Eine selbst getippte Zahl
+ * bleibt jetzt **immer** stehen, nicht mehr nur bei einer schweigenden Übung.
  */
 export function pointsFrom(
   ex: ExerciseSummary | undefined, current: number, getippt: boolean,
 ): number {
-  // `getippt` ist der Zustand, der vorher fehlte (B-191): Ohne ihn stand `current` fuer zweierlei -
-  // "der Vater hat das getippt" UND "die vorher angeklickte Uebung hat das empfohlen". Die zweite
-  // Bedeutung trug den Wert von Uebung A in Uebung B, wo ihn niemand gesetzt hatte.
-  //
-  // Gelesen wird `suggestedGoalPoints`, nicht `rewardPoints`: Der Server nennt darin, was die Position
-  // TATSAECHLICH erbte (B-192). Am rohen Wert vorbelegen hiesse, eine Zahl anzuzeigen, die beim Anlegen
-  // eine andere wird - und die Grenze dahinter waere im Frontend ein zweites Mal hinzuschreiben.
   if (getippt || !ex) return current;
   return ex.suggestedGoalPoints;
 }
@@ -417,12 +415,12 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
   /*
    * Hat der Vater die Zielpunkte SELBST gesagt? (B-191)
    *
-   * Ohne diesen Zustand steht die Zahl im Feld fuer zweierlei - seine Eingabe und die Empfehlung der
-   * zuletzt angeklickten Uebung - und beim naechsten Uebungswechsel gewinnt die falsche Lesart: Uebung A
-   * (100) gefolgt von Uebung B (ohne Empfehlung) ergab eine Position mit 100 Muenzen Zielbelohnung, die
-   * weder B vorschlaegt noch jemand getippt hat.
+   * Ohne diesen Zustand steht die Zahl im Feld für zweierlei – seine Eingabe und die Empfehlung der
+   * zuletzt angeklickten Übung – und beim nächsten Übungswechsel gewinnt die falsche Lesart: Übung A
+   * (100) gefolgt von Übung B (ohne Empfehlung) ergab eine Position mit 100 Münzen Zielbelohnung, die
+   * weder B vorschlägt noch jemand getippt hat.
    *
-   * Er liegt hier und nicht in `PositionSettings`: Das ist Bedien-, kein Positionszustand - er darf
+   * Er liegt hier und nicht in `PositionSettings`: Das ist Bedien-, kein Positionszustand – er darf
    * `settingsToDto` nicht erreichen, und die Zeile im Bearbeiten-Modus braucht ihn gar nicht (dort ist
    * jeder Wert bereits eine gespeicherte Aussage).
    */
@@ -436,6 +434,14 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
     const dto: CreatePositionDto = { exerciseId: Number(exerciseId), ...settingsToDto(settings) };
     if (!await action.run(() => api.addPosition(planId, dto), "Übung als Position hinzugefügt.")) return;
     setExerciseId("");
+    /*
+     * Mit der Position endet auch die Aussage, die zu ihr gehoerte (Reviewer-Fund). Ohne dieses
+     * Zuruecksetzen belegte KEINE weitere Uebung mehr vor: Position 2..n truegen die Zahl, die der Vater
+     * fuer Position 1 getippt hat. Das widerspricht B-45s Akzeptanzkriterium 4 und der ausgelieferten
+     * Feldhilfe ("Beim Hinzufuegen einer Uebung steht hier deren Empfehlung") - und es waere ein
+     * Rueckschritt gegenueber dem Stand vor B-191, wo die Empfehlung der neuen Uebung gewann.
+     */
+    setPunkteGetippt(false);
     onAdded();
   }
 
@@ -460,10 +466,10 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
                   // Nur die Werte übernehmen, die AUS der Übung kommen – das Pflichtziel und der Malus
                   // bleiben stehen (ein Übungswechsel ist keine Rücknahme).
                   //
-                  // Die Zielpunkte gehören seit B-45 zur ersten Gruppe, aber nur so weit die Übung wirklich
-                  // etwas beiträgt: `pointsFrom` lässt eine selbst getippte Zahl stehen, wenn die neue Übung
-                  // keine brauchbare Empfehlung trägt. Der Malus bleibt ganz außen vor – für ihn gibt es
-                  // keine Empfehlung, er ist eine Aussage des Vaters.
+                  // Die Zielpunkte gehören seit B-45 zur ersten Gruppe – aber nur, solange der Vater
+                  // nichts gesagt hat: Eine selbst getippte Zahl bleibt seit B-191 IMMER stehen, nicht
+                  // mehr nur dann, wenn die neue Übung keine brauchbare Empfehlung trägt. Der Malus bleibt
+                  // ganz außen vor – für ihn gibt es keine Empfehlung, er ist eine Aussage des Vaters.
                   onChange={() => {
                     setExerciseId(ex.id);
                     setSettings((cur) => ({
@@ -496,9 +502,9 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
         <TruncationHint shown={results.length} total={exercises.data?.total ?? 0} />
       </div>
 
-      {/* Jede Aenderung, die durch das Formular kommt, ist eine Aussage des Vaters - der Uebungswechsel
-          oben setzt `settings` dagegen direkt und laeuft hier nicht durch. Damit braucht `PositionFields`
-          keinen zusaetzlichen Prop, und die Unterscheidung haengt an dem, was ohnehin verschieden ist:
+      {/* Jede Änderung, die durch das Formular kommt, ist eine Aussage des Vaters – der Übungswechsel
+          oben setzt `settings` dagegen direkt und läuft hier nicht durch. Damit braucht `PositionFields`
+          keinen zusätzlichen Prop, und die Unterscheidung hängt an dem, was ohnehin verschieden ist:
           dem Weg, auf dem der Wert entsteht. */}
       <PositionFields value={settings} onChange={(next) => {
         if (next.pointsGoalMet !== settings.pointsGoalMet) setPunkteGetippt(true);

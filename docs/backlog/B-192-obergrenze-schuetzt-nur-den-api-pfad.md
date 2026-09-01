@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, bereich/backend, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/backend, rolle/supervisor]
 aliases: [pointsGoalMet ohne Obergrenze im UI, Vererbungszweig wird nie genommen]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: M
@@ -125,3 +125,23 @@ Genau dieser Satz gilt für die Zielpunkte — nur wurde er dort nicht angewandt
 - 2026-09-01 · **`ausformuliert` → `gegrillt` → `geschaetzt`** (zweiter Nachtlauf, Freigabe 1). Beide
   offenen Punkte **beim Nachlesen aufgelöst statt beim Menschen abgeholt**: einer war im Code längst
   entschieden, der andere kollidierte mit einem Akzeptanzkriterium von B-45. M, `vertragsbruch: ja`.
+- 2026-09-02 · **`in-arbeit` → `abgenommen`** (zweiter Nachtlauf, Sprint 2). Belege:
+  - **Reviewer:** `pugling-reviewer` (Backend) **und** `frontend-reviewer` — `wo` verlangt bei diesem
+    Sprint beide. Der Backend-Reviewer meldete **keinen Blocker**, der Frontend-Reviewer **einen**
+    (siehe unten). Alle Funde sind eingearbeitet.
+  - **Rollengang:** maschinell — voller Playwright-Lauf **44/44 grün**, echter Chromium gegen echten
+    Server mit Wegwerf-DB.
+  - **Zahlen:** `dotnet build` grün · `dotnet test -c Release` **838/838** · `npx tsc -b` sauber ·
+    `npm run test` **327/327**.
+  - **Commits:** `c3cdec3` (Bau) und der Abnahme-Commit dieses Sprints.
+  - **Entscheidung 3 ist durch eine Messung des Reviewers widerlegt und zurückgenommen.** Sie behauptete,
+    ein Methodenaufruf sei in einer EF-Projektion nicht übersetzbar, und nahm dafür eine Duplikation der
+    Regel-*Form* in Kauf. Der `pugling-reviewer` hat auf einer Kopie des Baums gemessen: EF Core 10
+    erlaubt den Aufruf in der **finalen** Projektion. Der Code ruft jetzt `GoalPointsPolicy.Effective`
+    direkt — die Regel existiert damit **wirklich nur einmal**, was Entscheidung 1 verlangt hatte. Der
+    Preis steht am Code: der abgeleitete Wert ist nicht mehr in SQL sortier- oder filterbar (heute
+    braucht das niemand).
+  - **Die Test-Blindstelle ist geschlossen.** Der Abgleich-Test fuhr nur den Rückfall-Zweig, in dem beide
+    Seiten 20 sind — und 20 ist zugleich der Entity-Vorgabewert. Eine Fassung, die die Vererbung im
+    Create-Pfad *ganz* entfernt, blieb damit grün (vom Reviewer per Defekt-Injektion gemessen). Mit dem
+    ergänzten plausiblen Paar (35 → 35) fällt sie: selbst nachgeprüft, `Expected 35, Actual 20`.

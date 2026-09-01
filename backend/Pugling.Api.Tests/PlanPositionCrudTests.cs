@@ -365,10 +365,7 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         var brauchbar = await TestApi.CreateVocabRefExerciseAsync(father, 30, key);
         var unsinnig = await TestApi.CreateVocabRefExerciseAsync(father, 100_000, key);
 
-        // Die Suche liefert ein blankes Array; die Gesamtzahl reist im X-Total-Count-Kopf (httpPaged).
-        var treffer = await (await father.GetAsync("/api/v1/creator/exercises?take=200"))
-            .Content.ReadFromJsonAsync<JsonElement>();
-        var zeilen = treffer.EnumerateArray().ToList();
+        var zeilen = await KatalogZeilenAsync(father);
 
         var a = zeilen.Single(z => z.GetProperty("id").GetInt32() == brauchbar);
         Assert.Equal(30, a.GetProperty("rewardPoints").GetInt32());
@@ -385,9 +382,7 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         // Fall waere die Abdeckung beim Umzug der Regel verloren gegangen. `0` ist in JS ohnehin falsy,
         // `-5` nicht: das ist der einzige Fall, fuer den die untere Grenze ueberhaupt traegt.
         var negativ = await TestApi.CreateVocabRefExerciseAsync(father, -5, key);
-        var nachNegativ = await (await father.GetAsync("/api/v1/creator/exercises?take=200"))
-            .Content.ReadFromJsonAsync<JsonElement>();
-        var c = nachNegativ.EnumerateArray()
+        var c = (await KatalogZeilenAsync(father))
             .Single(z => z.GetProperty("id").GetInt32() == negativ);
         Assert.Equal(-5, c.GetProperty("rewardPoints").GetInt32());
         Assert.Equal(20, c.GetProperty("suggestedGoalPoints").GetInt32());
@@ -406,9 +401,8 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, 100_000, key);
         var planId = await EmptyPlanAsync(father);
 
-        var treffer = await (await father.GetAsync("/api/v1/creator/exercises?take=200"))
-            .Content.ReadFromJsonAsync<JsonElement>();
-        var vorschlag = treffer.EnumerateArray()
+
+        var vorschlag = (await KatalogZeilenAsync(father))
             .Single(z => z.GetProperty("id").GetInt32() == exerciseId)
             .GetProperty("suggestedGoalPoints").GetInt32();
 
@@ -417,6 +411,41 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
             .Content.ReadFromJsonAsync<JsonElement>();
 
         Assert.Equal(vorschlag, position.GetProperty("pointsGoalMet").GetInt32());
+
+        // Und derselbe Abgleich mit einer PLAUSIBLEN Empfehlung. Ohne dieses Paar faehrt der Test nur den
+        // Rueckfall-Zweig - dort sind beide Seiten 20, und 20 ist zugleich der Entity-Vorgabewert. Eine
+        // Fassung, die die Vererbung im Create-Pfad GANZ entfernt (`?? 20`), bliebe damit gruen; genau das
+        // hat der `pugling-reviewer` per Defekt-Injektion gemessen. Erst hier loest der Test seine eigene
+        // Doku ein: "beide Seiten je fuer sich richtig und trotzdem auseinander".
+        var (_, key2) = await TestApi.CreateStoreVocabAsync(father, "anchor", "Anker");
+        var plausibel = await TestApi.CreateVocabRefExerciseAsync(father, 35, key2);
+        var vorschlag2 = (await KatalogZeilenAsync(father))
+            .Single(z => z.GetProperty("id").GetInt32() == plausibel)
+            .GetProperty("suggestedGoalPoints").GetInt32();
+        Assert.Equal(35, vorschlag2);
+
+        var position2 = await (await father.PostAsJsonAsync(
+            $"/api/v1/supervisor/study-plans/{planId}/positions",
+            new { exerciseId = plausibel, stage = 2 })).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(vorschlag2, position2.GetProperty("pointsGoalMet").GetInt32());
+    }
+
+    /// <summary>
+    /// The catalog rows of one page - and proof that the page really holds everything.
+    /// </summary>
+    /// <remarks>
+    /// The bare <c>.Single(...)</c> the callers use silently bets that no exercise fell off the page; the
+    /// class shares one database and grows with every test. Without the count assertion a grown class
+    /// fails as "sequence contains no matching element", which says nothing about the cause.
+    /// </remarks>
+    private static async Task<List<JsonElement>> KatalogZeilenAsync(HttpClient father)
+    {
+        const int take = 200;
+        var antwort = await father.GetAsync($"/api/v1/creator/exercises?take={take}");
+        var gesamt = int.Parse(antwort.Headers.GetValues("X-Total-Count").Single());
+        Assert.True(gesamt <= take,
+            $"The catalog holds {gesamt} exercises, the page takes {take} - raise it or filter.");
+        return (await antwort.Content.ReadFromJsonAsync<JsonElement>()).EnumerateArray().ToList();
     }
 
     /// <summary>

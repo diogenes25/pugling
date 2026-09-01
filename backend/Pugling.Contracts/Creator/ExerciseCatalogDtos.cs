@@ -16,10 +16,7 @@ namespace Pugling.Contracts.Creator;
 /// detail just to read one number would be a round trip per keystroke in the list.
 /// </para>
 /// <para>
-/// <c>SuggestedGoalPoints</c> is what a position would actually inherit from <c>RewardPoints</c> - the raw figure
-/// only when it is plausible, otherwise the model default (B-192). Both travel, and that is the point: the form
-/// shows the effective one, while the raw one stays readable for anyone editing the exercise. Deriving the
-/// effective figure client-side would copy a server rule, and the copy is what drifts.
+/// The <c>SuggestedGoalPoints</c> figure is what a position would actually inherit from <c>RewardPoints</c> - the raw value only when it is plausible, otherwise the model default (B-192). Both travel, and that is the point: the form shows the effective one, while the raw one stays readable for anyone editing the exercise. Deriving the effective figure client-side would copy a server rule, and the copy is what drifts.
 /// </para>
 /// </summary>
 public record ExerciseSummary(int Id, int SeriesId, int SeriesUnitId, int? SubjectId, string Type, string Title,

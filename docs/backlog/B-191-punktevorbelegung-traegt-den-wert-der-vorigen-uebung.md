@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/supervisor]
 aliases: [pointsFrom current heisst zweierlei, Punkte der vorigen Uebung wandern mit]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: S
@@ -110,3 +110,20 @@ bleiben soll. Das ist richtig und soll bleiben — es fehlt allein die Untersche
 - 2026-09-01 · **`ausformuliert` → `gegrillt` → `geschaetzt`** (zweiter Nachtlauf, Freigabe 1 — `art:
   Defekt`). Ist-Stand **selbst** am Code nachgelesen statt aus dem Agentenbericht übernommen; dabei kam
   der eigentliche Befund erst heraus: Es ist B-45s AK 4, wörtlich verfehlt. S, Testweg benannt.
+- 2026-09-02 · **`in-arbeit` → `abgenommen`** (zweiter Nachtlauf, Sprint 2). Belege:
+  - **Reviewer:** `pugling-reviewer` (Backend) **und** `frontend-reviewer` — `wo` verlangt bei diesem
+    Sprint beide. Der Backend-Reviewer meldete **keinen Blocker**, der Frontend-Reviewer **einen**
+    (siehe unten). Alle Funde sind eingearbeitet.
+  - **Rollengang:** maschinell — voller Playwright-Lauf **44/44 grün**, echter Chromium gegen echten
+    Server mit Wegwerf-DB.
+  - **Zahlen:** `dotnet build` grün · `dotnet test -c Release` **838/838** · `npx tsc -b` sauber ·
+    `npm run test` **327/327**.
+  - **Commits:** `c3cdec3` (Bau) und der Abnahme-Commit dieses Sprints.
+  - **Der Blocker betraf genau diese Story, und er wiegt:** Der `frontend-reviewer` hat nachgewiesen, dass
+    `punkteGetippt` in **keinem** Testlauf jemals `true` war — man konnte das Flag durch das Literal
+    `false` ersetzen, und alles blieb grün. Der Kern der Reparatur lag außerhalb jeder Zusicherung. Die
+    rote Probe dazu ist nachgeholt und gemessen: `Expected "77", Received "60"`.
+  - **Zweiter Fund derselben Runde:** Das Flag überlebte das Hinzufügen einer Position — Position 2..n
+    trugen die Zahl, die der Vater für Position 1 getippt hatte, und **keine** weitere Übung belegte mehr
+    vor. Das war ein Rückschritt gegenüber dem Stand *vor* dieser Story und widersprach der
+    ausgelieferten Feldhilfe. Behoben (`setPunkteGetippt(false)` beim Anlegen) und im E2E belegt.

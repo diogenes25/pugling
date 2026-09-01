@@ -137,9 +137,13 @@ describe("Zeitfenster einer Position", () => {
  * Empfehlung den aktuellen Wert ersetzt. Rot machen diese Fälle das Entfernen der `> 0`-Prüfung (Fälle 2
  * und 3) bzw. das Ignorieren der Empfehlung (Fall 1).
  *
- * Der zweite Parameter ist der Kern: „die Übung schweigt" darf nicht dasselbe tun wie „die Übung empfiehlt
- * etwas". Eine frühere Fassung fiel auf ein hartcodiertes 20 zurück und hätte eine selbst getippte 50 durch
- * einen Wert ersetzt, den niemand vorgeschlagen hat (Fund des `frontend-reviewer`).
+ * Der DRITTE Parameter ist der Kern (B-191): „der Vater hat das gesagt" darf nicht dasselbe sein wie
+ * „die vorher angeklickte Übung hat das empfohlen". Ohne ihn stand der zweite Parameter für beides, und
+ * der Wert von Übung A landete in Übung B.
+ *
+ * Der zweite Parameter allein trug diese Unterscheidung nie: Eine noch frühere Fassung fiel auf ein
+ * hartcodiertes 20 zurück und hätte eine selbst getippte 50 überschrieben (Fund des `frontend-reviewer`) –
+ * die Korrektur damals war richtig, sie brauchte nur den Zustand, den sie nicht hatte.
  */
 describe("Punkte-Empfehlung der Übung", () => {
   // `suggestedGoalPoints` ist das, was der Server als wirksam nennt (B-192) - `rewardPoints` bleibt roh

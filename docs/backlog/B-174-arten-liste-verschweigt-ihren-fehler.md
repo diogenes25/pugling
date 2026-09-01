@@ -2,6 +2,7 @@
 tags: [typ/story, status/abgenommen, bereich/frontend, rolle/creator]
 aliases: [categories.error wird nie gezeigt, Fach hat keine Arten oder Laden gescheitert]
 status: abgenommen
+nachgeschaut: 2026-09-02
 prio: P2
 art: Defekt
 groesse: S

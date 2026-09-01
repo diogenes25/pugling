@@ -468,3 +468,185 @@ können nicht numerisch driften.
 
 **Verifikation:** `dotnet build Pugling.sln` grün · `dotnet test -c Release` **838/838** ·
 `npx tsc -b` sauber · `npm run test` **327/327** · voller Playwright-Lauf **43/43**.
+
+### Review (Step 5, Sprint 2) — beide Reviewer, ein Blocker
+
+**Backend (`pugling-reviewer`): kein Blocker** — und ein Fund, der meine Begründung **gemessen widerlegt
+hat.** Ich hatte die Regel als Ternär in die EF-Projektion geschrieben und das damit begründet, dass ein
+Methodenaufruf dort nicht übersetzbar sei. Der Reviewer hat das auf einer Kopie des Baums nachgemessen:
+EF Core 10 erlaubt den Aufruf in der **finalen** Projektion. Damit war die Duplikation, die B-192 gerade
+abschaffen wollte, von der Reparatur selbst wieder eingeführt worden — mit einer falschen Begründung
+daneben, die sich festgesetzt hätte. Behoben: der Code ruft `GoalPointsPolicy.Effective` jetzt direkt.
+
+Dazu eine **Test-Blindstelle, per Defekt-Injektion belegt**: Der Abgleich-Test fuhr nur den Rückfall-Zweig
+(beide Seiten 20 — zugleich der Entity-Vorgabewert), eine Fassung ohne jede Vererbung blieb also grün.
+Mit dem ergänzten plausiblen Paar fällt sie; selbst nachgeprüft (`Expected 35, Actual 20`).
+
+**Frontend (`frontend-reviewer`): ein Blocker, und er trifft den Kern.** `punkteGetippt` war in **keinem**
+Testlauf jemals `true` — kein Test tippte je in das Punkte-Feld. Man konnte das Flag durch das Literal
+`false` ersetzen, und 327/327 plus beide E2E blieben grün. Der Zustand, um den die ganze Story geht, lag
+außerhalb jeder Zusicherung. Die rote Probe ist nachgeholt: `Expected "77", Received "60"`.
+
+Derselbe Reviewer fand den zweiten: Das Flag überlebte das **Hinzufügen** einer Position — ab da belegte
+keine weitere Übung mehr vor, Position 2..n trugen die Zahl von Position 1. Das war ein Rückschritt
+gegenüber dem Stand *vor* dieser Story und widersprach der ausgelieferten Feldhilfe.
+
+### Runde 2 — Rollengang / Abnahme (Step 6)
+
+Maschinell geführt, voller Playwright-Lauf: **44/44 grün.**
+
+**Vater/Supervisor** (`/vater/plan/…`) — abgenommen:
+
+> „Die Zahl im Feld ist jetzt die Zahl, die mein Kind bekommt. Vorher stand da 100000 und angelegt wurden
+> 20 — ich hätte das nie gemerkt, weil beides plausibel aussieht. Und wenn ich selbst etwas eintippe,
+> überlebt es den Übungswechsel; sobald die Position steht, fängt die nächste wieder bei der Empfehlung
+> an."
+> Belegt durch `punkte-empfehlung.spec.ts` (drei Fälle) und `PlanPositionCrudTests` (zwei neue).
+
+**Creator** — **Regressionszeuge, kein zweites Urteil.** Seine Fläche ändert sich in einem Punkt: Die
+Katalog-Trefferzeile trägt ein Feld mehr. Kein Creator-Weg im Diff, seine Specs
+(`creator-lehrwerk-weg`, `uebungstypen`, `freigabe`, `lehrwerke`) im selben Lauf grün.
+
+**Sohn/Student** — **Regressionszeuge.** Kein Pfad der Arcade liegt im Diff; `full-flow`,
+`uebung-abbruch`, `shop-verlauf` grün. Mehr wird nicht behauptet.
+
+**Was ein Mensch noch ansehen muss:** nichts Sinnlich-Visuelles in diesem Sprint. Die einzige offene
+Frage ist eine **Produktentscheidung**, keine Wahrnehmung: ob eine ausdrücklich getippte Zahl über 200
+weiter unbegrenzt bleiben soll (der Code entscheidet das heute mit Begründung; dieser Lauf hat es nicht
+angetastet).
+
+## Retrospektive (Sprint 2)
+
+**Nachschau:** die fünf Stories aus Sprint 1 (B-162, B-173, B-174, B-184, B-151) — gegen den **Code** und
+Akzeptanzkriterium für Akzeptanzkriterium nachgerechnet, nicht gegen die Testfarbe. `nachgeschaut:
+2026-09-02` an allen fünf. Index danach: **114 von 121.**
+
+**Sechs Defekte gefunden, alle in Arbeit, die zwölf Stunden vorher abgenommen wurde:**
+
+| Neu | Was | Gewicht |
+|---|---|---|
+| [B-196](backlog/B-196-loeschen-meldet-nichts-und-raeumt-nichts.md) | **B-173s Akzeptanzkriterium 2 ist nicht gebaut.** Das Löschen einer Reihe meldet nichts — und lässt die Bestätigung der vorigen Handlung stehen, wo sie als Löschbestätigung gelesen wird | **schwer** |
+| [B-197](backlog/B-197-meldungsplatz-wird-beim-absenden-nicht-geraeumt.md) | Der Meldungsplatz wird beim **Absenden** nicht geräumt: grünes „Gespeichert." steht über rotem Fehler — **die Reparatur hat eine neue Instanz genau des Defekts erzeugt, gegen den sie gebaut wurde** | **schwer** |
+| [B-198](backlog/B-198-teilstring-falle-im-selben-commit-neu-gebaut.md) | Die Teilstring-Falle aus B-189 wurde **im selben Commit** drei Dateien weiter neu gebaut — und die Nachbesserung zog zwei Zeilen nach und übersah die dritte | mittel |
+| [B-199](backlog/B-199-drei-behauptungen-die-ihr-eigener-sprint-aufgehoben-hat.md) | Drei Behauptungen, deren Prämisse derselbe Sprint aufgehoben hat — darunter ein Kommentar, der eine **Freigabe** ausspricht, die B-162 zurückgenommen hat | mittel |
+| (in B-147 nachgetragen) | Einrückung und Absatztrennung im Vertragsdokument sind **dasselbe** — man kann nur eines von beiden haben, gemessen | klein |
+
+**Die Zahl steigt auf 27 von 114, und die ehrliche Lesart ist unangenehm:** Zwei der sechs Funde sind
+keine übersehenen Randfälle, sondern **Selbstwidersprüche des Sprints** — ein nicht gebautes
+Akzeptanzkriterium und eine Reparatur, die ihren eigenen Fehler neu erzeugt. Beide sind durch Review,
+838/838, 327/327 und einen 43/43-Rollengang gekommen.
+
+### Was die Tore durchgelassen haben
+
+**Der Rollengang hat B-196 nicht gefangen, weil keine Spec eine Reihe löscht.** Das ist kein Zufall: Ein
+maschineller Rollengang fährt die Wege, die jemand geschrieben hat — und geschrieben wird, was man im
+Blick hatte. Er ist damit stark gegen Regression und **blind gegen ein Akzeptanzkriterium, an das beim
+Schreiben der Spec niemand dachte**. Genau das unterscheidet ihn von einem Menschen, der die Seite ansieht.
+
+**Und der zweite Befund ist schärfer:** B-173s AK 2 stand in der Story, wurde beim Bauen nicht umgesetzt,
+und die Abnahme hat es nicht bemerkt — obwohl `abgenommen` eine belegte Verifikation verlangt. Belegt
+wurde, dass *die Suite* grün ist, nicht dass *jedes Kriterium* erfüllt ist. Dieselbe Lücke hat B-174s
+Entscheidung 3 stillschweigend fallen lassen.
+
+### Der vorgeschlagene Mechanismus — nur Vorschlag, nicht gelandet
+
+Freigabe 3 verbietet diesem Lauf das Landen. Der Vorschlag:
+
+> **Jedes Akzeptanzkriterium bekommt vor `abgenommen` einen benannten Beleg** — den Namen des Tests, der
+> Spec oder des Rollengang-Schritts, der es prüft. Wo keiner existiert, steht *„nicht geprüft, weil …"*.
+> Eine Liste von Kriterien und daneben eine Testzahl ist **kein** Beleg: Sie sagt, dass die Suite grün
+> ist, nicht dass sie dieses Kriterium anfasst. Genau daran sind heute B-173 AK 2 und B-174 Entscheidung 3
+> vorbeigekommen.
+>
+> **Ort:** `docs/backlog/README.md`, Eintrittsbedingung von `abgenommen`. **Nicht als Tor** — ein
+> Akzeptanzkriterium ist Freitext, und es maschinell einem Test zuzuordnen hieße, es zu erraten. Was
+> mechanisch prüfbar wäre, ist nur die *Anwesenheit* der Zuordnung, und das ist ein Formular, das man
+> ausfüllt statt es zu meinen.
+> **Kosten:** Die Abnahme wird länger, und der Verfahrenstext des Backlog-README wächst — er steht bereits
+> 114 Bytes über Budget. Zu bezahlen im selben Durchgang; der erste Kandidat wäre die Erzählung der
+> 14er-Runde vom 2026-08-05, deren Begründung schon im Protokoll steht.
+
+**Ein zweiter Kandidat, ausdrücklich verworfen:** ein Wächter über „boolescher Zustand, den kein Test je
+auf `true` bringt" — er hätte den Blocker dieses Sprints gefangen. Verworfen, weil er nicht trennscharf
+ist: Ein Flag, das nur in einem seltenen Produktpfad wahr wird, ist legitim, und der Wächter bräuchte
+sofort eine Ausnahmeliste. Der Bereich hat mit „feste Untergrenzen verrotten" schon bezahlt, was dabei
+herauskommt.
+
+### Was bewusst ungedeckt bleibt
+
+Dass ein maschineller Rollengang nur die Wege fährt, die jemand geschrieben hat. Dagegen hilft kein
+Mechanismus — nur ein Mensch, der die Seite ansieht, oder ein Kriterium, das seinen Beleg benennen muss
+(siehe Vorschlag).
+
+## Der zweite Lauf endet hier — aus zwei Gründen, und der zweite wiegt schwerer
+
+**Grund 1, der Fund-Zähler.** Freigabe 3 setzt die Grenze bei fünf Funden im eigenen Increment, deren
+Behebung Code oder Tests ändert. Gezählt für Sprint 2:
+
+| # | Fund | Quelle | Behebung fasste an |
+|---|---|---|---|
+| 1 | `punkteGetippt` war in keinem Lauf je `true` — das Flag durch `false` zu ersetzen ließ alles grün | Reviewer FE | Test |
+| 2 | Das Flag überlebte das Hinzufügen; Position 2..n verloren ihre Vorbelegung | Reviewer FE | Code |
+| 3 | Die EF-Begründung war falsch (gemessen) — die Regel stand unnötig zweimal da | Reviewer BE | Code |
+| 4 | Der neue `<para>` trägt Einrückung bzw. verliert die Satzgrenze im Vertragsdokument | Reviewer BE | Doku am Vertrag |
+| 5 | Test-Blindstelle: eine Fassung ohne jede Vererbung blieb grün | Reviewer BE | Test |
+| (6) | `take=200` + `.Single` verwettet eine unausgesprochene Obergrenze | Reviewer BE | Test — **Härtung, kein Defekt** |
+
+Fünf Defekte, dazu eine Härtung. Bei strenger Zählung sechs. Ich gebe beide Lesarten an, statt mir die
+günstigere auszusuchen — aber sie entscheidet hier ohnehin nichts, denn:
+
+**Grund 2, und er ist der eigentliche: Sprint 1s Increment hat sich als defekthaltig erwiesen.** Genau
+das ist die zweite Grenze aus [docs/backlog/README.md](backlog/README.md) („Der Backlog-Lauf", Limit 2) —
+und sie hängt an keiner Zählung. Die Nachschau hat gefunden:
+
+- **B-196** — ein Akzeptanzkriterium, das in der Story steht, nicht gebaut wurde und trotzdem
+  `abgenommen` bekam.
+- **B-197** — eine Reparatur, die eine **neue Instanz genau des Defekts** erzeugt, gegen den sie gebaut
+  wurde: grünes „Gespeichert." über rotem Fehler.
+
+Beides ist durch zwei Reviewer, 838/838, 327/327 und einen 43/43-Rollengang gekommen. Weiterzulaufen wäre
+die falsche Reaktion — die Qualitätsschwelle ist gerutscht, und das Verfahren sagt genau dafür: anhalten,
+damit ein Mensch es sieht.
+
+**Nicht angefangen** ist darum der geplante dritte Sprint (B-188, B-187, B-190). Er bleibt zugeschnitten.
+
+## Offene Punkte für den Morgen
+
+**Zwei Retro-Vorschläge warten jetzt auf dich** — der von letzter Nacht ist noch unentschieden, und dieser
+Lauf hat ihn absprachegemäß nicht gelandet:
+
+1. **Aus Nacht 1:** Eine E2E-Zusicherung über einen Zustand, der verschwinden kann, nennt die Reihenfolge
+   (erst auf das Verschwinden warten, dann die Überlebende fordern). Ort: `frontend/CLAUDE.md`.
+2. **Aus Nacht 2:** Jedes Akzeptanzkriterium bekommt vor `abgenommen` einen **benannten Beleg**. Ort:
+   `docs/backlog/README.md`. Dieser hätte B-196 und B-174s stillschweigend entfallene Entscheidung 3
+   gefangen — beide Male ist eine Testzahl als Beleg für ein Kriterium durchgegangen, das sie nicht anfasst.
+
+**Gesperrt geblieben (`Wunsch`/`Frage` unterhalb `geschaetzt`)** — unverändert die Liste aus Nacht 1,
+dazu neu:
+
+- **B-186** hat durch diesen Lauf eine belegte Antwort bekommen: Der Assistent (`VaterWizard`) schickt
+  immer seine Intensitäts-Zahl und erbt darum **nie** — B-45 und B-192 wirken dort nicht. Die Frage ist
+  jetzt nicht mehr „setzen beide Wege gleich?", sondern „soll der Assistent überhaupt erben?". Das ist
+  Produktrichtung.
+- **B-199 Punkt 3** (B-174s Entscheidung 3 nachbauen oder zurücknehmen) ist eine Entscheidung über einen
+  sichtbaren Zustand — sie gehört in den Dialog.
+
+## Offene Roadmap (Stand nach Nacht 2)
+
+Die dauerhafte Liste ist [docs/backlog/](backlog/README.md); hier steht nur die Begründung der Reihenfolge.
+
+**Das Dringlichste sind jetzt B-196 und B-197** — nicht wegen ihrer Größe, sondern weil sie in Arbeit
+sitzen, die als fertig gilt, und weil B-197 die Fläche betrifft, auf der gerade zwei Meldungen
+gleichzeitig etwas Widersprüchliches sagen können. Danach der zugeschnittene dritte Sprint
+(B-188, B-187, B-190).
+
+## Konkreter Änderungsstand (beide Nächte)
+
+| Commit | Inhalt |
+|---|---|
+| `91785c5` · `e479d83` · `6688ff5` · `58cca00` | Nacht 1: Refinement, Sprint-1-Increment, Reviewer-Nachprüfung, ein Kommentar |
+| `26c387c` | Nacht 1: Abnahme + Nachschau zu B-45/B-172 |
+| `c3cdec3` | Nacht 2: Sprint-2-Increment |
+| (dieser) | Nacht 2: Reviewer-Funde, Abnahme, Nachschau zu Sprint 1 |
+
+**Nichts ist gepusht** — das bleibt bei dir.

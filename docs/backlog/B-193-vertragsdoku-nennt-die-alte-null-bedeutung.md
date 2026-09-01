@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/backend, bereich/doku, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/backend, bereich/doku, rolle/supervisor]
 aliases: [PointsGoalMet null = 20, Swagger sagt die alte Regel]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: XS
@@ -85,3 +85,21 @@ auch keines mechanisch bauen. Der Fund gehört darum in die Nachschau, wo er ent
 - 2026-09-01 · **`ausformuliert` → `gegrillt` → `geschaetzt`** (zweiter Nachtlauf, Freigabe 1). Fundort
   selbst nachgelesen: Die `PointsGoalMet`-Zeile sagt „`null` = 20", die vier Zeilen darunter tragen die
   richtige Formel — der Kontrast steht wörtlich nebeneinander. XS.
+- 2026-09-02 · **`in-arbeit` → `abgenommen`** (zweiter Nachtlauf, Sprint 2). Belege:
+  - **Reviewer:** `pugling-reviewer` (Backend) **und** `frontend-reviewer` — `wo` verlangt bei diesem
+    Sprint beide. Der Backend-Reviewer meldete **keinen Blocker**, der Frontend-Reviewer **einen**
+    (siehe unten). Alle Funde sind eingearbeitet.
+  - **Rollengang:** maschinell — voller Playwright-Lauf **44/44 grün**, echter Chromium gegen echten
+    Server mit Wegwerf-DB.
+  - **Zahlen:** `dotnet build` grün · `dotnet test -c Release` **838/838** · `npx tsc -b` sauber ·
+    `npm run test` **327/327**.
+  - **Commits:** `c3cdec3` (Bau) und der Abnahme-Commit dieses Sprints.
+  - **Akzeptanzkriterium 3 ist gezählt, nicht vermutet:** **24** Vorgabewert-Aussagen in
+    `StudyPlanDtos.cs`; die **acht mit einer konkreten Zahl** einzeln gegen den Code geprüft
+    (`MaxBox ?? 5`, `PenaltyCoins ?? 0`, `NewContentPoints ?? sb ?? 10`, `ComboThreshold ?? sb ?? 5`,
+    `ComboBonusPoints ?? sb ?? 5`, `SpeedThresholdSeconds ?? sb ?? 0`, `SpeedBonusPoints ?? sb ?? 0`,
+    `GoalThreshold ?? DefaultPassPercent = 80` in `PositionProgressService.cs:17`). **Nur
+    `PointsGoalMet` war falsch.** Die übrigen 16 tragen keine Zahl und können nicht numerisch driften.
+  - **Der einzeilige Workaround ist belegt** — die neue Zeile steht im Vertragsdokument bündig und ohne
+    Einrückung. Für einen `<para>` im `<summary>` trägt er allerdings **nicht**; die Messung dazu steht
+    seit heute in [B-147](B-147-para-summaries-tragen-einrueckung-ins-dokument.md).

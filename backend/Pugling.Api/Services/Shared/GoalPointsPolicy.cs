@@ -3,9 +3,9 @@ namespace Pugling.Api.Services.Shared;
 /// <summary>
 /// What a study-plan position inherits as its target reward when the supervisor states nothing (B-45).
 /// <para>
-/// It lives here, and not privately in the controller that applies it, because a **second** caller reads
+/// It lives here, and not privately in the controller that applies it, because a <b>second</b> caller reads
 /// the same rule: the catalog search publishes the effective figure so the supervisor's form can pre-fill
-/// with the number that will actually apply (B-192). While the rule sat in one controller, the form
+/// with the number that will actually apply (B-192). While the rule sat in <b>one</b> controller, the form
 /// pre-filled from the raw recommendation instead - and an exercise carrying 100000 showed 100000 while
 /// the server would have given 20. Two places deriving one rule is exactly the silent drift this repo has
 /// paid for before.
@@ -41,9 +41,10 @@ public static class GoalPointsPolicy
     /// The recommendation, or <see cref="Fallback"/> when it is unusable.
     /// </summary>
     /// <remarks>
-    /// Callers inside an EF projection cannot use this method - EF cannot translate it - and spell the
-    /// same ternary out against the two constants above. That duplicates the rule's *shape*, never its
-    /// *numbers*, which is the part that would drift.
+    /// Safe to call inside a <b>final</b> EF projection: it is evaluated on the client while the DTO is
+    /// built, which costs nothing extra. The one consequence is that a value derived this way lives only
+    /// in memory - it cannot be sorted or filtered in SQL. Should a caller ever need that, spell the
+    /// ternary out against the two constants above rather than changing the numbers here.
     /// </remarks>
     public static int Effective(int rewardPoints) =>
         rewardPoints is > 0 and <= MaxInherited ? rewardPoints : Fallback;

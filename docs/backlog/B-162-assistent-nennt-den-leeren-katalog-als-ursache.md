@@ -2,6 +2,7 @@
 tags: [typ/story, status/abgenommen, bereich/frontend, bereich/lehrplan, rolle/supervisor]
 aliases: [Gescheiterte Katalogsuche liest sich als leerer Katalog]
 status: abgenommen
+nachgeschaut: 2026-09-02
 prio: P2
 art: Defekt
 groesse: M
