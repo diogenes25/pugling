@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/frontend, rolle/creator]
+tags: [typ/story, status/gegrillt, bereich/frontend, rolle/creator]
 aliases: [leeres Fach-Select loescht, subjects.data ?? [], Anzeige und Formularzustand driften]
-status: ausformuliert
+status: gegrillt
 prio: P1
 art: Defekt
 groesse: ""
@@ -42,7 +42,8 @@ Wirklichkeit ist an einer Stelle harmloser und an zwei Stellen schlimmer als die
   `subjects.error` und `publishers.error` **nirgends**. Dasselbe in den beiden Schwesterseiten:
   `VaterKind.tsx` zeigt `child.error` (`:44`) und `interests.error` (`:83`), nicht `subjects.error`
   (`:35`); `VaterFachlehrer.tsx` zeigt nur `list.error` (`:60`), nicht `subjects.error`/`series.error`
-  (`:38`/`:39`).
+  (`:38`/`:39`); `ChildMaterialSection.tsx` zeigt `books.error` (`:48`) und `matches.error` (`:340`),
+  nicht `series.error` (`:36`) und nicht `units.error` (`:154`). **Fünf ungerenderte Fehlerzustände.**
 - Der Server räumt beim Schalter beide Spalten: `TextbookSeriesController.cs:236`,
   `TextbooksController.cs:113`, `CreatorProfilesController.cs:148`.
 
@@ -75,7 +76,7 @@ Drei Folgen, jede gemessen:
 3. **Probe E schließt das Ladefenster aus.** Trifft die Liste später ein, springt die Anzeige von selbst
    auf den richtigen Wert. Der Schaden braucht eine Liste, die **leer bleibt** — also den Fehlerfall.
 
-### Die Fläche ist sechs Felder, nicht eins
+### Die Fläche ist sieben Felder, nicht eins
 
 `subjectField.ts:6-9` begründet, warum nur das Fach eine geteilte Regel bekam: von sieben Schaltern seien
 sechs heil, denn „kaputt wird es erst bei einem Feld, dessen **Ladezustand das Formular nicht abbilden
@@ -86,13 +87,15 @@ Zustand:
 | Formular | Felder | Optionen aus | Schalter |
 |---|---|---|---|
 | `SeriesForm` (`VaterLehrwerke.tsx:355-380`) | Verlag, Fach | `:113`/`:114` → `:164` | `clearPublisherId` (`seriesPatch.ts:79-82`), `clearSubject` (`:84`) |
-| Lehrbuch am Kind (`ChildMaterialSection.tsx:225-246`) | Fach, Reihe | `VaterKind.tsx:69`, `ChildMaterialSection.tsx:86` | `clearSubject`, `clearSeries` (`textbookPatch.ts:65`, `:71-74`) |
+| Lehrbuch am Kind (`ChildMaterialSection.tsx:225-262`) | Fach, Reihe, Unit | `VaterKind.tsx:69`, `ChildMaterialSection.tsx:86`, `:154` | `clearSubject`, `clearSeries`, `clearUnit` (`textbookPatch.ts:65`, `:71-74`, `:77-80`) |
 | Fachlehrer-Profil (`VaterFachlehrer.tsx:305-315`) | Fach, Reihe | `:93`/`:114` | `clearSubject`, `clearSeries` (`profilePatch.ts:76`, `:78-81`) |
 
-Beim Lehrbuch hängt ein Folgeschaden dran: die Reihe zu wechseln räumt zusätzlich die aktuelle Unit
-(`ChildMaterialSection.tsx:163`), und `clearSeries` tut serverseitig dasselbe.
+Die Unit ist der siebte Fall und beim Grillen dazugekommen: `units.data?.map` (`:257`) liefert bei einem
+gescheiterten Abruf gar keine Optionen, und der Hinweis daneben (`:263`) prüft `units.data?.length === 0`
+— bei `null` schweigt also auch er. Beim Lehrbuch hängt zusätzlich ein Folgeschaden dran: die Reihe zu
+wechseln räumt die aktuelle Unit (`:163`), und `clearSeries` tut serverseitig dasselbe.
 
-Gemessen ist `SeriesForm` (Proben A–E). Die beiden anderen sind **strukturell** belegt — gleiche
+Gemessen ist `SeriesForm` (Proben A–E). Die beiden anderen Formulare sind **strukturell** belegt — gleiche
 Feldform, gleicher `subjectPatch`, gleiches `?? []`, kein gerenderter Fehler — aber nicht gefahren.
 
 ### Warum kein Fach-Löschen den Zustand erzeugt
@@ -128,43 +131,137 @@ prüfen die Regel — und die Regel ist richtig. Falsch ist die Eingabe, die das
 
 1. ~~Trifft die Kette wirklich zu?~~ **Gemessen** (Proben A–E, siehe Ist-Stand): ja im Kern, nein im
    Auslöser. Der Schaden braucht einen Umweg über eine andere Option, nicht einen einzelnen Griff.
-2. ~~Gilt dasselbe an weiteren Stellen?~~ **Gemessen**: drei Formulare, sechs Referenzfelder, und in
-   keiner der drei Seiten wird der Fehler der Options-Liste gerendert.
-3. **Sperren oder Fehler zeigen?** Empfehlung: **beides, aber die Sperre ist die tragende Hälfte** — ein
-   Fehlerbanner allein lässt das löschende Feld bedienbar, und Probe C zeigt, dass der Nutzer es genau
-   dann anfasst. Also: `subjects.error`/`publishers.error`/`series.error` als `banner err` rendern (Muster
-   `VaterKatalog.tsx:29`) **und** das Feld sperren, solange die Liste nicht geladen ist. Kosten: der
-   Ladezustand muss bis ins Formular durchgereicht werden — heute geht nur `data ?? []` hinein, also eine
-   neue Prop je Formular.
-4. **Wie unterscheidet das Formular „lädt noch" von „ist fehlgeschlagen"?** Beides kommt heute als `[]`
-   an. Empfehlung: **`data` unverfälscht durchreichen** (`SubjectResponse[] | null`) statt `?? []` — dann
-   trägt der Typ die Unterscheidung, und das `?? []` verschwindet dort, wo es schadet. Kosten:
-   Signaturwechsel an sechs Übergabestellen. Alternative (billiger, schwächer): eine
-   `subjectsLoading`-Prop, die den Unterschied nur behauptet.
-5. **Reicht die Sperre, oder braucht das Feld einen Rückfall wie bei B-143?** Empfehlung: **Sperre
-   genügt** — eine gesperrte Option „Englisch (nicht geladen)" wäre eine vierte Bedeutung im selben Feld,
-   und im Unterschied zum Freitext ist dieser Zustand *vorübergehend*. Zu klären ist das trotzdem, weil
-   das Feld dann während des ganzen Ausfalls unbedienbar ist.
-6. **Eine Story oder drei?** Empfehlung: **eine** — es ist eine Fehlerklasse, ein Muster und dieselbe
-   Behebung, und die drei Formulare teilen sich `subjectField.ts` schon. Die Alternative erzeugt drei
-   Stories, die alle dieselbe Entscheidung 3 bräuchten.
-7. **Zieht die Begründung in `subjectField.ts:6-9` nach?** Sie ist durch Probe D widerlegt und begründet
-   heute das Gegenteil dessen, was gilt. Empfehlung: **mitkorrigieren, im selben Diff** — das ist genau
-   die Fehlerklasse „ein Kommentar begründet eine Bedingung, ohne sie zu prüfen", die die Retrospektive
-   vom 2026-08-14 als gemeinsame Wurzel benannt hat.
+2. ~~Gilt dasselbe an weiteren Stellen?~~ **Gemessen**: drei Formulare, sieben Referenzfelder, fünf
+   ungerenderte Fehlerzustände.
+3. ~~Sperren oder Fehler zeigen?~~ → Entscheidung 1. Keine Sperre.
+4. ~~Wie unterscheidet das Formular „lädt noch" von „ist fehlgeschlagen"?~~ **Gegenstandslos** durch
+   Entscheidungen 1 und 3: die Rückfall-Option ist in beiden Fällen richtig, das Formular braucht die
+   Unterscheidung also nicht. Nur die Seite braucht `error` fürs Banner — und das hat sie schon. `?? []`
+   bleibt, der Signaturwechsel an sieben Übergabestellen entfällt.
+5. ~~Reicht die Sperre, oder braucht das Feld einen Rückfall wie bei B-143?~~ → Entscheidungen 1, 3, 4.
+   Der Rückfall ist der ganze Kern; die Sperre entfällt. Die Empfehlung der Ausformulierung („Sperre
+   genügt") war **falsch** und ist beim Grillen gekippt.
+6. ~~Eine Story oder drei?~~ → Entscheidung 6. Eine.
+7. ~~Zieht die Begründung in `subjectField.ts:6-9` nach?~~ → Entscheidung 2, zwingend: die Regel wandert
+   ins Bauteil, also muss der Kommentar sie dort begründen statt an der alten Stelle das Gegenteil.
 
-## Akzeptanzkriterien (Entwurf, bis `gegrillt` nicht verbindlich)
+## Entscheidungen
 
-1. Scheitert `GET creator/subjects`, steht auf der Lehrwerk-Seite ein sichtbarer Fehler — und das
-   Fach-Feld im Bearbeiten-Formular ist **nicht bedienbar**.
-2. Dasselbe für Verlag, für das Lehrbuch am Kind (Fach + Reihe) und für das Fachlehrer-Profil
-   (Fach + Reihe).
-3. Ein Formular, dessen Options-Liste den geladenen Wert nicht enthält, zeigt **nie** „– keine Angabe –",
-   ohne dass der Nutzer das gewählt hat.
-4. Ein Regressionstest, der **vorher rot** ist: Probe C in Testform — leere/unvollständige Liste, Umweg
-   über eine andere Option, Erwartung „kein `clearSubject` im Rumpf" bzw. „das Feld ist gesperrt".
-5. Die Begründung in `subjectField.ts` sagt, was gilt.
-6. Alles bisher Grüne bleibt grün (831 Backend, Vitest, E2E).
+Gegrillt am 2026-09-01. Zwei Fakten wurden während der Runde nachgesehen und haben zwei Empfehlungen
+gekippt — sie stehen bei den betroffenen Entscheidungen.
+
+### 1 · Die Behebung zielt auf die Lüge, nicht auf die Zerstörung
+
+Das Feld zeigt den bekannten Namen als **gewählte Option** und die Seite meldet den gescheiterten Abruf.
+**Keine Sperre.**
+
+*Begründung:* Die Drift verschwindet an der Wurzel — `form.subjectId` findet wieder eine passende Option,
+der DOM-Rückfall auf Index 0 entfällt, und Leeren wird wieder eine bewusste Handlung. Eine Sperre nimmt
+nur die Folge weg: der `<select>` zeigte weiter „– keine Angabe –", also einen Wert, den niemand gewählt
+hat, und das Feld wäre für die Dauer des Ausfalls unbenutzbar.
+
+*Kosten:* Eine Bedingung je Feld (sieben) plus der Name, wo er noch nicht im Formular liegt — **nachgesehen:
+er liegt überall**, siehe Entscheidung 3.
+
+### 2 · Die Regel bekommt ein geteiltes Bauteil, kein Tor
+
+Ein `ReferenceSelect` nimmt Id, Name und Optionsliste und erzeugt die Rückfall-Option selbst. Dazu ein
+Vitest **über das Bauteil**, nicht über die Quellen.
+
+*Begründung:* Dasselbe Argument, mit dem `subjectField.ts:11-12` heute schon den PATCH-Rumpf an einer
+Stelle hält („die hält man nicht dreimal unabhängig richtig"), eine Ebene höher für die Anzeige. Der achte
+Fall erbt die Regel, statt bei null anzufangen — und siebenmal von sieben hat die Disziplin hier verloren,
+das Messargument für eine Vereinheitlichung ist also erbracht.
+
+*Warum kein quelltextlesendes Tor:* **Nachgesehen** — im Frontend liest heute **kein** Test Quelltext; die
+Wächter dieses Repos (`ConventionGuardTests`, `ClientRouteGuardTests`) sitzen alle im Backend und greifen
+nie ins Frontend. Ein Tor wäre eine Neuerfindung, und ein Regex über TSX ist der halbe Parser, der laut
+Erfahrung dieses Repos eine Rot-Liste braucht, um mehr zu beweisen als „es hat sich nichts geändert".
+
+*Kosten:* Sieben Aufrufstellen umbauen, drei davon in Formularen, die B-143/B-148 gerade angefasst haben.
+Wer am Bauteil vorbei einen rohen `<select>` schreibt, bleibt ungefangen — das ist der bewusst gezahlte
+Preis dafür, kein halbes Parser-Tor zu bauen.
+
+### 3 · Das Bauteil trägt beide Sonderzustände
+
+„Freitext-Fach" (B-143: Id ist `null`, Name steht) und „nicht geladen" (Id steht, Liste kennt sie nicht)
+leitet das Bauteil **selbst** aus `id`, `name` und `options` ab. `FREETEXT_SUBJECT` bleibt in
+`subjectField.ts`, weil der Sentinel zum PATCH-Rumpf gehört, nicht zur Anzeige.
+
+*Begründung:* Es sind zwei Fälle einer Frage — „der Wert ist da, aber nicht in der Liste". Zwei Quellen
+für Sonderoptionen im selben `<select>` sind die Ausgangslage dieses Defekts, eine Windung weiter.
+
+*Nachgesehen, was das Risiko deckelt:* **Alle sieben Felder tragen den Namen neben der Id in der Antwort**
+(`PublisherName`, `SubjectName`, `SeriesName`, `CurrentUnitLabel`) — die Rückfall-Option ist überall
+beschriftbar, **ohne Vertragsänderung**. Und die B-143-Zusicherungen in `SeriesForm.test.tsx:37-52` prüfen
+durch das Formular hindurch (`getByLabelText`, `option.disabled`), nicht das Innere: sie werden beim Umbau
+zum **Netz**, nicht zum Hindernis.
+
+*Kosten:* Das Bauteil kennt zwei Sonderfälle statt einen und muss beide begründen.
+
+### 4 · Nur die Freitext-Option ist gesperrt — „nicht geladen" ist wählbar
+
+*Begründung:* Die beiden Zustände sehen gleich aus, sind es aber nicht. „Freitext" darf der Nutzer nicht
+**herstellen** (darum sperrt B-143 ihn); „nicht geladen" ist ein völlig reguläres Katalog-Fach, das nur
+gerade fehlt. Gesperrt würde Probe C zur **Einbahnstraße**: wer „Mathe" probiert und den Fehler merkt,
+käme nie zu „Englisch" zurück — nur übers Zuklappen des Formulars, und das wirft laut
+`VaterLehrwerke.tsx:309` alle anderen Eingaben mit weg. Der Defekt wäre dann entschärft, aber nicht
+behoben: die Zerstörung bräuchte einen Griff statt zweier.
+
+*Kosten:* Das Bauteil trägt zwei Formen (gesperrt/wählbar) und muss den Unterschied im Kommentar tragen.
+
+### 5 · Das Banner bekommt keinen „Erneut versuchen" — das wird eine eigene Story
+
+*Begründung:* **Nachgesehen** — von 68 `banner err` im Frontend bietet **keines** einen erneuten Versuch;
+`reload` wird 75-mal genutzt, aber nie zur Erholung von einem gescheiterten Lesen. Ein Retry hier wäre ein
+neues Muster an fünf Stellen und fehlte an 68 — genau die Zufalls-Inkonsistenz, die B-178 und B-126
+erzeugt haben. Das Ziel von B-172 ist ohne ihn erfüllt, also gilt die Backlog-Regel „ein Fund beim Bauen
+wird eine eigene Story".
+
+*Kosten:* Bis zu jener Story hilft sich der Nutzer mit F5 — was er heute auch tut, nur ohne zu wissen,
+warum. Abgelegt als [B-183](B-183-gescheitertes-lesen-ohne-erneuten-versuch.md).
+
+*Anmerkung zur Redlichkeit:* Mein Mockup zu Entscheidung 1 zeichnete diesen Knopf, bevor ich nachgesehen
+hatte, ob es ihn gibt. Er war kein Teil dessen, was zur Wahl stand.
+
+### 6 · Eine Story, nicht geteilt
+
+*Begründung:* Der Wert des Bauteils liegt darin, dass die Regel nur noch an **einer** Stelle steht.
+Solange vier Felder ihren rohen `<select>` behalten, ist die Regel weiter siebenfach und der achte Fall
+erbt nichts — ein halb übernommenes Bauteil ist schlechter als keins, weil es behauptet, die Frage sei
+geklärt. Die Naht „Lüge / Schweigen" wäre echt, aber die zweite Hälfte sind fünf Zeilen und bräuchte die
+volle Kette aus Grillen, Schätzen, Reviewer und Rollengang.
+
+*Kosten:* Ein Diff über drei Formular-Dateien, drei Seiten und ein neues Bauteil. Größe geschätzt M–L,
+also innerhalb dessen, was der Bereich zulässt.
+
+## Akzeptanzkriterien
+
+1. Es gibt ein Bauteil, das aus `id`, `name` und `options` die Sonderoption selbst ableitet. Die drei
+   Formulare (`SeriesForm`, Lehrbuch am Kind, Fachlehrer-Profil) nutzen es für **alle sieben** Felder:
+   Verlag, Fach, Reihe, Unit.
+2. Enthält die Optionsliste den geladenen Wert nicht, zeigt das Feld ihn als **gewählte, nicht gesperrte**
+   Option mit dem bekannten Namen. Es zeigt **nie** „– keine Angabe –", ohne dass der Nutzer das gewählt
+   hat.
+3. Der Freitext-Zustand aus B-143 bleibt eine **gesperrte** Option und bleibt für den Nutzer nicht
+   herstellbar. `SeriesForm.test.tsx:37-52` bleibt unverändert grün.
+4. Der Umweg aus Probe C ist wieder ein Rückweg: eine andere Option wählen und zur ursprünglichen
+   zurückkehren ist möglich, ohne das Formular zuzuklappen.
+5. Die fünf ungerenderten Fehlerzustände werden sichtbar: `subjects.error` und `publishers.error` in
+   `VaterLehrwerke`, `subjects.error` in `VaterKind`, `series.error` und `units.error` in
+   `ChildMaterialSection`, `subjects.error` und `series.error` in `VaterFachlehrer` — als `banner err`,
+   **ohne** Retry-Knopf.
+6. Ein Regressionstest, der **vorher rot** ist: Probe C in Testform (unvollständige Liste, Umweg über eine
+   andere Option, Erwartung „kein `clearSubject` im Rumpf"). Beim Schreiben je Zusicherung benennen, welche
+   Änderung sie rot macht.
+7. Die Begründung in `subjectField.ts` sagt, was gilt: die Anzeige-Regel steht im Bauteil, der Satz „das
+   ist heute nur `subjectId`" ist weg.
+8. Alles bisher Grüne bleibt grün (831 Backend, Vitest, E2E).
+
+**Zum Rollengang:** Dieser Defekt braucht einen künstlich kaputten Server — laut
+[README](README.md#der-rollengang-fällt-am-leichtesten-weg--und-kostet-am-meisten) genau der argumentierte
+Fall, in dem der Komponententest an die Stelle der E2E tritt. Der Gang an der laufenden App prüft dafür die
+Gegenprobe: dass die Felder mit **funktionierender** Liste unverändert bedienbar sind.
 
 ## Verlauf
 
@@ -175,6 +272,13 @@ prüfen die Regel — und die Regel ist richtig. Falsch ist die Eingabe, die das
   Fälle, danach gelöscht). **Die Prämisse fiel**: der `<select>` steht nicht leer, er zeigt
   „– keine Angabe –" an und driftet damit vom Formularzustand ab; der behauptete Auslöser feuert kein
   `change`, der echte ist ein Umweg; ein Speichern ohne Griff ins Feld ist harmlos. Dafür ist die Fläche
-  **sechsmal so groß** wie behauptet (drei Formulare, sechs Referenzfelder), und die Begründung in
-  `subjectField.ts:6-9` ist widerlegt. `prio` bleibt **P1**: der engere Auslöser wird durch die breitere
-  Fläche und den unwiederbringlichen Schaden an einer geteilten Reihe aufgewogen.
+  **sechsmal so groß** wie behauptet, und die Begründung in `subjectField.ts:6-9` ist widerlegt.
+  `prio` bleibt **P1**.
+- 2026-09-01 · `ausformuliert → gegrillt`, sechs Entscheidungen. **Zwei meiner Empfehlungen sind
+  gekippt**, beide an einem Fakt, den ich in der Runde nachgesehen habe: „Sperre genügt" fiel, weil alle
+  sieben Felder ihren Namen in der Antwort tragen — die Rückfall-Option kostet keine Vertragsänderung und
+  behebt die Lüge statt nur ihre Folge; und der „Erneut versuchen"-Knopf aus meinem eigenen Mockup fiel,
+  weil keines der 68 vorhandenen Fehlerbanner einen hat. Dazu ein **siebter** betroffener Fall gefunden
+  (die Unit im Lehrbuch) und ein Sonderfall, den die Ausformulierung nicht sah: eine gesperrte
+  Rückfall-Option hätte den Umweg zur Einbahnstraße gemacht. Punkt 4 der offenen Punkte ist
+  gegenstandslos geworden, `?? []` bleibt.
