@@ -107,10 +107,16 @@ export const FIELD_HELP = {
   },
 
   // ---- Übung im Katalog ----
+  /*
+   * Der Text sagte bis B-45 „Grundwert einer richtigen Antwort" – das ist die Bedeutung von
+   * `newContentPoints` an der Position, und dieses Feld hat sie nie gehabt: kein Bewertungspfad las es.
+   * Seit B-45 ist es die Empfehlung für die Zielbelohnung, und der Text sagt das.
+   */
   exercisePoints: {
     title: "Punkte der Übung",
-    text: "Grundwert einer richtigen Antwort in dieser Übung. Was am Ende gutgeschrieben wird, hängt "
-      + "zusätzlich am Zeitfenster und an Boni (Combo, schnelle Antwort).",
+    text: "Deine Empfehlung, wie viele 🪙 Münzen das Erreichen des Ziels wert ist. Wer die Übung in einen "
+      + "Lehrplan aufnimmt, bekommt sie als Vorschlag vorbelegt und kann sie überschreiben. Den Grundwert "
+      + "je richtiger Antwort stellt dagegen die Position im Lehrplan ein.",
   },
   defaultItemCount: {
     title: "Standard-Begrenzung",

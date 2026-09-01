@@ -9,11 +9,17 @@ namespace Pugling.Contracts.Creator;
 /// Lean hit row of the exercise search (child-neutral catalog). <c>AuthorAdultId</c>/<c>AuthorName</c> carry the
 /// attribution of the shared library (<c>null</c> = seeded system exercise); <c>IsOwn</c> = the requesting supervisor
 /// may change/delete the exercise.
+/// <para>
+/// The four <c>Default…</c>/<c>RewardPoints</c> values are the creator's <b>recommendations</b>, not settings: the
+/// supervisor's form pre-fills from them and stays free to override (B-45). They belong on the lean row rather than
+/// only on <see cref="ExerciseDetail"/> because the form pre-fills straight from the search hit - fetching the
+/// detail just to read one number would be a round trip per keystroke in the list.
+/// </para>
 /// </summary>
 public record ExerciseSummary(int Id, int SeriesId, int SeriesUnitId, int? SubjectId, string Type, string Title,
     int? GradeMin, int? GradeMax, SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName,
     int? AuthorAdultId, string? AuthorName, bool IsOwn, bool IsOwner, bool ExecutePublic, string? Description,
-    bool DefaultUseLeitner, bool DefaultRequireTypedTest, int? DefaultItemCount);
+    bool DefaultUseLeitner, bool DefaultRequireTypedTest, int? DefaultItemCount, int RewardPoints);
 
 /// <summary>
 /// Complete, type-spanning view of an exercise including raw config and all metadata –

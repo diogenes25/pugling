@@ -173,10 +173,24 @@ export function timeSlotProblem(s: PositionSettings): string | null {
 }
 
 /** Startwerte einer neuen Position; die Übung bringt ihre Lern-Standards als Vorschlag mit. */
+/**
+ * Die Zielpunkte, die eine neue Position von der Übung erbt (B-45) – exportiert, weil die Regel an zwei
+ * Stellen gilt: beim Aufbau des Formulars und beim Wechsel der Übung in der Trefferliste.
+ *
+ * Ohne Übung und bei einer Empfehlung von `0` bleibt es beim Modell-Vorgabewert `20`; die Begründung für
+ * die Null steht bei `defaultSettings`.
+ */
+export function pointsFrom(ex?: ExerciseSummary): number {
+  return ex?.rewardPoints && ex.rewardPoints > 0 ? ex.rewardPoints : 20;
+}
+
 function defaultSettings(ex?: ExerciseSummary): PositionSettings {
   return {
     cadence: "Daily", goalThreshold: "", itemCount: ex?.defaultItemCount?.toString() ?? "",
-    orderStrategy: "WeakestFirst", pointsGoalMet: 20, penaltyCoins: 0,
+    // Die Punkte-Empfehlung des Creators als Vorbelegung (B-45). `0` gewinnt NICHT: `rewardPoints` hat
+    // serverseitig keine Untergrenze, und eine alte Übung, in der die Null nur stehen geblieben ist, darf
+    // keine neue Position auf null Zielpunkte ziehen. Dieselbe Regel hält `PlanPositionsController.Create`.
+    orderStrategy: "WeakestFirst", pointsGoalMet: pointsFrom(ex), penaltyCoins: 0,
     // Leer = Vorschlag der Übung übernehmen (siehe PositionSettings).
     newContentPoints: "", comboThreshold: "", comboBonusPoints: "",
     useLeitner: ex?.defaultUseLeitner ?? false, requireTypedTest: ex?.defaultRequireTypedTest ?? false,
@@ -415,8 +429,12 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
                   background: exerciseId === ex.id ? "rgba(140,220,120,.10)" : undefined,
                   borderBottom: "1px solid var(--stroke)" }}>
                 <input type="radio" name="add-position-exercise" checked={exerciseId === ex.id}
-                  // Nur die Werte übernehmen, die AUS der Übung kommen – schon eingestellte Ziele,
-                  // Punkte und Malus bleiben stehen (ein Übungswechsel ist keine Rücknahme).
+                  // Nur die Werte übernehmen, die AUS der Übung kommen – das Pflichtziel und der Malus
+                  // bleiben stehen (ein Übungswechsel ist keine Rücknahme).
+                  //
+                  // Die Zielpunkte gehören seit B-45 zur ersten Gruppe: die Übung trägt dafür eine
+                  // Empfehlung des Creators, also folgt das Feld ihr wie `itemCount` schon immer. Der Malus
+                  // bleibt außen vor – für ihn gibt es keine Empfehlung, er ist eine Aussage des Vaters.
                   onChange={() => {
                     setExerciseId(ex.id);
                     setSettings((cur) => ({
@@ -424,6 +442,7 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
                       useLeitner: ex.defaultUseLeitner,
                       requireTypedTest: ex.defaultRequireTypedTest,
                       itemCount: ex.defaultItemCount?.toString() ?? "",
+                      pointsGoalMet: pointsFrom(ex),
                     }));
                   }}
                   style={{ marginTop: 3 }} />

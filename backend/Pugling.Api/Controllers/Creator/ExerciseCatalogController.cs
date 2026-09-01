@@ -111,7 +111,10 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
                 e.DefaultUseLeitner, e.DefaultRequireTypedTest,
                 // The position form prefills its item count from this (PlanPositions.tsx); while it was
                 // missing from the summary, that prefill silently stayed empty.
-                e.DefaultItemCount))
+                e.DefaultItemCount,
+                // Same story one field over (B-45): the points recommendation was written by creators and read
+                // by nobody. The position form now prefills its target reward from it.
+                e.RewardPoints))
             .ToPagedListAsync(Response, skip, take, ct);
     }
 

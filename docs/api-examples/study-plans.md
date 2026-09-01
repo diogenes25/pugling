@@ -73,7 +73,7 @@ Response — `HTTP 201`:
   "maxBox": 5,
   "boxIntervalDays": null,
   "stageSchedule": null,
-  "pointsGoalMet": 20,
+  "pointsGoalMet": 10,
   "penaltyCoins": 0,
   "newContentPoints": 10,
   "comboThreshold": 5,
@@ -523,7 +523,7 @@ Response — `HTTP 200`:
     "dutyDone": true,
     "goalsTotal": 1,
     "goalsMet": 1,
-    "pointsAwarded": 20,
+    "pointsAwarded": 10,
     "outstanding": [],
     "positions": [
       {
@@ -540,7 +540,7 @@ Response — `HTTP 200`:
         "goalMet": true,
         "dueCount": 1,
         "poolSize": 2,
-        "pointsGoalMet": 20
+        "pointsGoalMet": 10
       }
     ]
   },
@@ -568,7 +568,7 @@ Response — `HTTP 200`:
   "endDate": "<date>",
   "daysComplete": 1,
   "totalDays": 10,
-  "totalPoints": 20,
+  "totalPoints": 10,
   "currentStreak": 1,
   "days": [
     {
@@ -611,7 +611,7 @@ Response — `HTTP 200`:
   "endDate": "<date>",
   "daysComplete": 1,
   "totalDays": 10,
-  "totalPoints": 20,
+  "totalPoints": 10,
   "currentStreak": 1,
   "days": [
     {
@@ -619,7 +619,7 @@ Response — `HTTP 200`:
       "dutyDone": true,
       "goalsTotal": 1,
       "goalsMet": 1,
-      "pointsAwarded": 20
+      "pointsAwarded": 10
     }
   ]
 }

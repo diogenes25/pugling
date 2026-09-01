@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { settingsFrom, settingsToDto, settingsToUpdateDto, timeSlotProblem, type PositionSettings } from "./PlanPositions";
-import type { PositionResponse, ScoringTimeSlot } from "../lib/types";
+import {
+  pointsFrom, settingsFrom, settingsToDto, settingsToUpdateDto, timeSlotProblem, type PositionSettings,
+} from "./PlanPositions";
+import type { ExerciseSummary, PositionResponse, ScoringTimeSlot } from "../lib/types";
 
 /*
  * Das Zeitfenster einer Position (Punkte-Faktor je Pflicht) – geprüft wird die **Bindung** zwischen Formular
@@ -124,5 +126,31 @@ describe("Zeitfenster einer Position", () => {
     ["vollständig", MIT_FENSTER, null],
   ])("meldet %s richtig", (_fall, settings, erwartet) => {
     expect(timeSlotProblem(settings as PositionSettings)).toBe(erwartet);
+  });
+});
+
+/*
+ * B-45: die Punkte-Empfehlung des Creators. `Exercise.rewardPoints` war ein Pflichtfeld, das kein
+ * Bewertungspfad las – ein Creator, der dort 15 eintrug, bewirkte nichts.
+ *
+ * Geprüft wird die REGEL, nicht das Formular: `pointsFrom` ist die Stelle, an der beide Aufrufer
+ * (Formularaufbau und Übungswechsel in der Trefferliste) hängen. Rot macht diese Fälle das Entfernen der
+ * `> 0`-Prüfung bzw. das Zurückfallen auf das hartcodierte `20`.
+ */
+describe("Punkte-Empfehlung der Übung", () => {
+  const uebung = (rewardPoints: number) => ({ rewardPoints }) as ExerciseSummary;
+
+  it("übernimmt die Empfehlung als Zielpunkte", () => {
+    expect(pointsFrom(uebung(15))).toBe(15);
+  });
+
+  it("lässt den Vorgabewert stehen, wenn die Empfehlung 0 ist", () => {
+    // Dieselbe Regel wie serverseitig: `rewardPoints` hat keine Untergrenze, und eine alte Übung mit einer
+    // stehengebliebenen Null darf keine neue Position auf null Zielpunkte ziehen.
+    expect(pointsFrom(uebung(0))).toBe(20);
+  });
+
+  it("lässt den Vorgabewert stehen, solange keine Übung gewählt ist", () => {
+    expect(pointsFrom(undefined)).toBe(20);
   });
 });

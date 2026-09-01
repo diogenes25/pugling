@@ -34819,6 +34819,7 @@
           "id",
           "isOwn",
           "isOwner",
+          "rewardPoints",
           "schoolTypes",
           "seriesId",
           "seriesUnitId",
@@ -34952,9 +34953,17 @@
               "string"
             ],
             "format": "int32"
+          },
+          "rewardPoints": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Lean hit row of the exercise search (child-neutral catalog). \u0060AuthorAdultId\u0060/\u0060AuthorName\u0060 carry the\nattribution of the shared library (\u0060null\u0060 = seeded system exercise); \u0060IsOwn\u0060 = the requesting supervisor\nmay change/delete the exercise."
+        "description": "            Lean hit row of the exercise search (child-neutral catalog). \u0060AuthorAdultId\u0060/\u0060AuthorName\u0060 carry the\n            attribution of the shared library (\u0060null\u0060 = seeded system exercise); \u0060IsOwn\u0060 = the requesting supervisor\n            may change/delete the exercise.\n            The four Default\u2026/RewardPoints values are the creator\u0027s recommendations, not settings: the\nsupervisor\u0027s form pre-fills from them and stays free to override (B-45). They belong on the lean row rather than\nonly on ExerciseDetail because the form pre-fills straight from the search hit - fetching the\ndetail just to read one number would be a round trip per keystroke in the list."
       },
       "ExerciseTypeManifest": {
         "required": [

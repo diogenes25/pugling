@@ -274,4 +274,81 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal(HttpStatusCode.NotFound,
             (await father.GetAsync($"/api/v1/supervisor/study-plans/{andererPlan}/positions/{posId}")).StatusCode);
     }
+
+    /// <summary>
+    /// B-45: the creator's points recommendation reaches the position. Before this, <c>RewardPoints</c> was a
+    /// mandatory field no scoring path ever read - a creator entering 15 changed nothing.
+    /// </summary>
+    [Fact]
+    public async Task Position_Erbt_Punkteempfehlung_Der_Uebung()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var (_, key) = await TestApi.CreateStoreVocabAsync(father, "meadow", "Wiese");
+        var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, 15, key);
+        var planId = await EmptyPlanAsync(father);
+        var url = $"/api/v1/supervisor/study-plans/{planId}/positions";
+
+        // No pointsGoalMet in the request: the recommendation has to fill the gap.
+        var geerbt = await (await father.PostAsJsonAsync(url, new { exerciseId, stage = 2 }))
+            .Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(15, geerbt.GetProperty("pointsGoalMet").GetInt32());
+
+        // An explicit value still wins - the "position override first" order must not shift (AC 2).
+        var eigen = await (await father.PostAsJsonAsync(url, new { exerciseId, stage = 2, pointsGoalMet = 7 }))
+            .Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(7, eigen.GetProperty("pointsGoalMet").GetInt32());
+    }
+
+    /// <summary>
+    /// B-45, decision 4: a recommendation of 0 must not silently drag every new position down to zero target
+    /// points. <c>RewardPoints</c> carries no server-side lower bound, so an old exercise left at 0 would
+    /// otherwise be a regression against the previous hard default of 20.
+    /// </summary>
+    [Fact]
+    public async Task Punkteempfehlung_Null_Laesst_Den_Vorgabewert_Stehen()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var (_, key) = await TestApi.CreateStoreVocabAsync(father, "harvest", "Ernte");
+        var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, 0, key);
+        var planId = await EmptyPlanAsync(father);
+
+        var position = await (await father.PostAsJsonAsync(
+            $"/api/v1/supervisor/study-plans/{planId}/positions", new { exerciseId, stage = 2 }))
+            .Content.ReadFromJsonAsync<JsonElement>();
+
+        Assert.Equal(20, position.GetProperty("pointsGoalMet").GetInt32());
+    }
+
+    /// <summary>
+    /// B-45, decision 5: the recommendation is copied ONCE, like <c>SuggestedBonus</c>. A creator raising the
+    /// recommendation afterwards must not move study plans that are already running.
+    /// </summary>
+    [Fact]
+    public async Task Spaetere_Aenderung_Der_Empfehlung_Verschiebt_Bestehende_Positionen_Nicht()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var (vocabId, key) = await TestApi.CreateStoreVocabAsync(father, "orchard", "Obstgarten");
+        var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, 15, key);
+        var planId = await EmptyPlanAsync(father);
+        var url = $"/api/v1/supervisor/study-plans/{planId}/positions";
+        var posId = await TestApi.IdAsync(await father.PostAsJsonAsync(url, new { exerciseId, stage = 2 }));
+
+        // The creator raises the recommendation. The full replacement (PUT) has to carry the config along,
+        // otherwise it clears it - the exercise would then be unplayable and unrelated to this assertion.
+        var detail = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}");
+        var seriesId = detail.GetProperty("seriesId").GetInt32();
+        var unitId = detail.GetProperty("seriesUnitId").GetInt32();
+        var geaendert = await father.PutAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{unitId}/vocabulary/{exerciseId}", new
+            {
+                title = "Vokabeln (Store)",
+                orderIndex = 1,
+                rewardPoints = 99,
+                config = new { direction = "front-to-back", refs = new[] { new { vocabularyId = vocabId } } },
+            });
+        Assert.True(geaendert.IsSuccessStatusCode, await geaendert.Content.ReadAsStringAsync());
+
+        var position = await father.GetFromJsonAsync<JsonElement>($"{url}/{posId}");
+        Assert.Equal(15, position.GetProperty("pointsGoalMet").GetInt32());
+    }
 }

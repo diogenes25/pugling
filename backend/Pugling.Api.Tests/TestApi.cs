@@ -176,7 +176,15 @@ internal static class TestApi
     }
 
     /// <summary>Creates (as the supervisor) a vocabulary exercise that references store entries by id; returns its id.</summary>
-    public static async Task<int> CreateVocabRefExerciseAsync(HttpClient father, params string[] keys)
+    public static Task<int> CreateVocabRefExerciseAsync(HttpClient father, params string[] keys) =>
+        CreateVocabRefExerciseAsync(father, 10, keys);
+
+    /// <summary>
+    /// As above, but with an explicit points recommendation. An overload rather than a second helper: the
+    /// recommendation is the only thing B-45 varies, and a copy of the series/unit setup would be a third
+    /// version of the same fixture.
+    /// </summary>
+    public static async Task<int> CreateVocabRefExerciseAsync(HttpClient father, int rewardPoints, params string[] keys)
     {
         var ids = new List<int>();
         foreach (var key in keys) ids.Add(await ResolveVocabIdAsync(father, key));
@@ -188,7 +196,7 @@ internal static class TestApi
             {
                 title = "Vokabeln (Store)",
                 orderIndex = 1,
-                rewardPoints = 10,
+                rewardPoints,
                 config = new { direction = "front-to-back", refs = ids.Select(id => new { vocabularyId = id }) },
             }));
     }

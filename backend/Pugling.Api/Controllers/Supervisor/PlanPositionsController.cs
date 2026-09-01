@@ -170,7 +170,13 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             BoxIntervalDays = dto.BoxIntervalDays,
             StageSchedule = dto.StageSchedule,
             // Points/bonus: position override → exercise suggestion → model default.
-            PointsGoalMet = dto.PointsGoalMet ?? 20,
+            //
+            // The target reward takes the creator's recommendation (B-45). `RewardPoints` carries no
+            // server-side lower bound, so a 0 must NOT win: an old exercise left at 0 would otherwise drag
+            // every newly created position down to zero target points - a silent regression against the
+            // previous hard 20. Like `SuggestedBonus` below this is copied ONCE; a creator raising the
+            // recommendation later does not move study plans that are already running.
+            PointsGoalMet = dto.PointsGoalMet ?? (exercise.RewardPoints > 0 ? exercise.RewardPoints : 20),
             // The penalty is opt-in per position (default 0 = reward only, the previous behavior).
             PenaltyCoins = dto.PenaltyCoins ?? 0,
             NewContentPoints = dto.NewContentPoints ?? sb?.NewContentPoints ?? 10,

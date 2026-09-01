@@ -1,13 +1,14 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/katalog, bereich/training, rolle/creator, rolle/supervisor]
+tags: [typ/story, status/in-arbeit, bereich/katalog, bereich/training, rolle/creator, rolle/supervisor]
 aliases: [Punkte-Empfehlung, RewardPoints]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: S
 wo: beides
 migration: nein
 vertragsbruch: nein
+wartet_auf: pugling-reviewer + frontend-reviewer
 quelle: Sitzung 2026-07-31 (Rollen-Abgleich Creator/Supervisor/Student)
 ---
 
@@ -172,3 +173,49 @@ Fallback-Zeile im Frontend-Default, ein Integrationstest. Kein neues DTO, kein n
 - **2026-08-03** — geschätzt: Größe S, `wo: beides` (Backend zuerst), `migration: nein`,
   `vertragsbruch: nein`, Testweg über einen Integrationstest an `PlanPositionsController.Create`
   benannt — autonom getroffen, Nutzerauftrag 2026-08-04.
+- **2026-09-01** — `geschaetzt → in-arbeit`, **gebaut**. Rote Probe zuerst: die zwei Vererbungs-Fälle in
+  `PlanPositionCrudTests` waren rot (`Expected 15, Actual 20`), danach grün. Der 0-Fall war vorher grün und
+  ist darum per Mutation belegt: ohne den `> 0`-Wächter fällt er (`Expected 20, Actual 0`) — dasselbe
+  gefahren für die Frontend-Hälfte.
+
+  **Vier Funde, die die Story korrigieren:**
+
+  1. **Die Schätzung war an einem Punkt falsch.** Sie behauptete, das Frontend hänge „an der bereits
+     vorhandenen `rewardPoints`-Angabe im `ExerciseSummary`" — das Feld stand dort **nicht**
+     (`ExerciseCatalogDtos.cs:13-16`, nur `ExerciseDetail` trug es). Additiv ergänzt, `vertragsbruch: nein`
+     gilt also weiter; aber `Pugling.Contracts` änderte sich, also liefen `dotnet build Pugling.sln`, die
+     Neu-Erzeugung von `docs/openapi/v1.json` durch den Testlauf und `npm run gen:contract` mit. Damit
+     liegt die Größe faktisch an der **oberen Kante von S**; das Feld bleibt bei `S`, weil die Schätzung
+     in gutem Glauben entstand und ihre Korrektur hier steht.
+  2. **AK 4 hing nicht dort, wo die Story es vermutete.** `defaultSettings()` wird **ohne** Argument
+     aufgerufen (`PlanPositions.tsx:387`) — die Übung ist erst nach dem Radio-Klick bekannt. Die
+     Vorbelegung musste also in den `onChange` der Trefferliste, und dessen Kommentar verlangte
+     ausdrücklich, Punkte beim Übungswechsel **stehen zu lassen**. Entscheidung 2 nennt aber `itemCount`
+     als Vorbild, und das wird dort überschrieben — also der neueren, ausdrücklichen Entscheidung gefolgt
+     und der Kommentar nachgezogen. Der Malus bleibt außen vor: für ihn gibt es keine Empfehlung. Das ist
+     eine **Verhaltensänderung**, die die Story nicht ausbuchstabiert hatte.
+  3. **Der Hilfetext des Feldes war falsch — und zwar schon vorher.** `fieldHelp.ts:110-114` sagte
+     „Grundwert einer richtigen Antwort in dieser Übung … Boni (Combo, schnelle Antwort)". Das ist die
+     Semantik von `newContentPoints`, die aus `SuggestedBonus` kommt; dieses Feld hat es nie getan. Neu
+     formuliert als das, was es jetzt ist.
+  4. **Der Testhelfer bekam eine Überladung, keine vierte Fassung.** `CreateVocabRefExerciseAsync` nagelte
+     `rewardPoints = 10` fest; `params string[]` verbietet einen optionalen Parameter dahinter. Statt einer
+     Kopie der Reihen/Unit-Vorbereitung (die Lehre aus B-179) delegiert die alte Signatur an eine neue mit
+     explizitem Wert.
+
+  **Eine Abweichung vom Testweg, nach oben:** Die Schätzung sah frontendseitig eine
+  `/smoke-test`-Sichtprüfung vor. Stattdessen `e2e/punkte-empfehlung.spec.ts` — wie bei B-172 wird der
+  Rollengang damit dauerhaft statt einmalig. Sie ist belegt **diskriminierend**: entfernt man die
+  Vorbelegung im `onChange`, bleiben die 18 Vitest-Fälle grün und **nur** die E2E fällt (`Received: "20"`).
+  Beim Schreiben fiel dabei ein Strict-Mode-Verstoß auf (der Kindname steht auch in der „Heute"-Tabelle) —
+  gelöst über die Kinder-Sektion, nicht über einen Index.
+
+  **Sichtbarer Nebeneffekt:** `docs/api-examples/study-plans.md` zeigt jetzt `pointsGoalMet: 10` statt
+  `20` — die Übung der Test-Fixture trägt 10, die Position erbt es. Die Wirkung steht damit im
+  mitgeschriebenen Beispiel.
+
+  **Belegt:** Backend **834/834** (`-c Release`, +3), Vitest **307/307** (+3), Playwright **38/38** (+1),
+  `npm run build` grün, `dotnet format Pugling.sln --verify-no-changes` sauber.
+
+  **Bleibt auf `in-arbeit`:** `wo: beides` verlangt **beide** Reviewer, und diese Sitzung startet keine
+  Agenten unaufgefordert. Mein eigener Blick auf den Diff ist kein Review.
