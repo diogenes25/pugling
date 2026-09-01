@@ -1,7 +1,9 @@
 import { Fragment, useRef, useState } from "react";
 import { FieldLabel } from "../components/InfoHint";
+import { ReferenceSelect } from "../components/ReferenceSelect";
 import { StatusBanner } from "../components/StatusBanner";
 import { api } from "../lib/api";
+import { seriesOptions, subjectOptions } from "../lib/referenceOptions";
 import { useAction } from "../lib/useAction";
 import { SCHOOL_TYPES } from "../lib/labels";
 import { confirmAction } from "../lib/ui";
@@ -58,6 +60,10 @@ export function VaterFachlehrer() {
         </label>
 
         {list.error && <div className="banner err">{list.error}</div>}
+        {/* Fächer und Reihen speisen die Auswahlfelder der Formulare (B-172) – scheitert einer dieser
+            Abrufe, fehlt dort die Auswahl. Neben der Liste, nicht an ihrer Stelle. */}
+        {subjects.error && <div className="banner err">Fächer: {subjects.error}</div>}
+        {series.error && <div className="banner err">Reihen: {series.error}</div>}
         {list.loading && list.data === null ? <div className="loading">Lade…</div> : (
           <table className="table">
             <thead><tr><th>Profil</th><th>Fach</th><th>Klassen</th><th>Lehrwerk</th><th /></tr></thead>
@@ -299,20 +305,16 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
         </div>
         <div className="field">
           <FieldLabel htmlFor={`fl-subject-${id}`} topic="profileSubject">Fach</FieldLabel>
-          <select
+          {/* Fach und Lehrwerk über `ReferenceSelect` (B-172). Der geladene Stand ist `profile` – beim
+              Anlegen ist es `undefined`, dann gibt es keine Sonderoption, und das ist richtig: ein neues
+              Profil hat keinen Wert, der fehlen könnte. */}
+          <ReferenceSelect
             id={`fl-subject-${id}`} value={form.subjectId}
-            onChange={(e) => { up("subjectId", e.target.value); touch("subjectId"); }}
-          >
-            <option value="">– fachneutral –</option>
-            {/* Der Freitext-Zustand als eigene, nicht wählbare Option (B-148, Muster aus B-143).
-                Bedingung und Beschriftung kommen BEIDE aus `profile`, dem geladenen Stand – aus einer
-                Quelle können sie nicht auseinanderlaufen, und die Option bleibt stehen, während der
-                Nutzer „– fachneutral –" probiert. */}
-            {profile?.subjectId == null && profile?.subjectName && (
-              <option value={FREETEXT_SUBJECT} disabled>{profile.subjectName} (Freitext)</option>
-            )}
-            {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
+            onChange={(v) => { up("subjectId", v); touch("subjectId"); }}
+            loadedId={profile?.subjectId} loadedName={profile?.subjectName}
+            options={subjectOptions(subjects)} emptyLabel="– fachneutral –"
+            freetextValue={FREETEXT_SUBJECT}
+          />
           <DerivedHint active={isDerived("subjectId")} />
         </div>
         <div className="field">
@@ -346,12 +348,11 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
         </div>
         <div className="field">
           <label htmlFor={`fl-series-${id}`}>Lehrwerk</label>
-          <select id={`fl-series-${id}`} value={form.seriesId} onChange={(e) => deriveFromSeries(e.target.value)}>
-            <option value="">– werkunabhängig –</option>
-            {series.map((s) => (
-              <option key={s.id} value={s.id}>{s.name}{s.publisherName ? ` (${s.publisherName})` : ""}</option>
-            ))}
-          </select>
+          <ReferenceSelect
+            id={`fl-series-${id}`} value={form.seriesId} onChange={deriveFromSeries}
+            loadedId={profile?.seriesId} loadedName={profile?.seriesName}
+            options={seriesOptions(series)} emptyLabel="– werkunabhängig –"
+          />
         </div>
         <div className="field">
           <label htmlFor={`fl-src-${id}`}>Lernsprache</label>

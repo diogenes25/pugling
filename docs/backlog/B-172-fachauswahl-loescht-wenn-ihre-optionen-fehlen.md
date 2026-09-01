@@ -1,7 +1,8 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/creator]
+tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/creator]
 aliases: [leeres Fach-Select loescht, subjects.data ?? [], Anzeige und Formularzustand driften]
-status: geschaetzt
+status: in-arbeit
+wartet_auf: frontend-reviewer
 prio: P1
 art: Defekt
 groesse: M
@@ -410,3 +411,39 @@ wenn die Prämisse falsch ist.
   Probe, die **vor** jeder Zeile Produktionscode fällt. Der Testweg weicht bewusst von AK 6s Wortlaut ab:
   kein Spy auf den API-Aufruf (das verbietet `frontend/CLAUDE.md`), sondern zwei reine Render-Fälle plus
   die vorhandenen Regel-Tests.
+- 2026-09-01 · `geschaetzt → in-arbeit`, **gebaut**. Der Angriffsplan ist in seiner Reihenfolge
+  durchgelaufen:
+
+  **Schritt 1, rote Probe vor jeder Zeile Produktionscode:** drei neue Fälle in `SeriesForm.test.tsx`,
+  alle drei **rot** (`expected '' to be '1'`), die fünf B-143-Fälle unverändert grün.
+
+  **Schritt 2, Browser-Gegenprobe (Risiko 1):** im echten Chromium über eine Wegwerf-Spec mit
+  `page.route("**/creator/subjects").abort()` gemessen — `value: ""`, `selectedIndex: 0`, angezeigt
+  **„– keine Angabe –"**, eine einzige Option, `banner err`-Liste **leer**. Die Zeile daneben zeigte
+  gleichzeitig „Englisch". Risiko 1 ist damit ausgeräumt: das unter happy-dom gemessene Verhalten gilt im
+  Browser.
+
+  **Gebaut:** `components/ReferenceSelect.tsx` (+ 9 eigene Fälle), die sieben Aufrufstellen, die sieben
+  Fehlerzustände an fünf Stellen, die korrigierte Begründung in `subjectField.ts`.
+
+  **Drei Abweichungen vom Plan, alle nach oben:**
+
+  1. **Eine neue E2E gibt es doch** (`e2e/optionsliste-faellt-aus.spec.ts`). Die Schätzung hatte „keine
+     neue E2E" damit begründet, der Fall bräuchte einen künstlich kaputten Server. Die Prämisse stimmt,
+     die Folgerung nicht: bei Playwright ist das **eine Zeile**. Damit ist der teuerste Beleg der
+     billigste geworden, und der Rollengang steht als dauerhafte Zusicherung statt als einmaliger Blick.
+  2. **`lib/referenceOptions.ts` stand nicht im Plan**, war aber nötig: die Beschriftungen müssen irgendwo
+     entstehen, und die der Reihe stand vorher **wörtlich gleich** an zwei Stellen
+     (`ChildMaterialSection`, `VaterFachlehrer`).
+  3. **Fund beim Bauen, nicht in der Story:** die Unit darf ihre gespeicherte Rückfall-Option nur
+     anbieten, **solange die Reihe unverändert ist**. Sonst hätte der Nutzer nach einem Reihenwechsel eine
+     Unit der *alten* Reihe abschicken können — die Bedingung hängt jetzt an
+     `geladen.current?.seriesId === form.seriesId`.
+
+  **Belegt:** Vitest **299/299** (36 Dateien), `npm run build` (tsc + vite) grün, Playwright **37/37** —
+  darunter der bekannte Flackerer `bilder.spec.ts` (B-153) und die drei Gegenproben aus
+  `lehrwerk-bearbeiten.spec.ts`, die B-143s Freitext-Verhalten im Browser halten.
+
+  **Bleibt auf `in-arbeit`:** der `frontend-reviewer` ist nicht gelaufen — diese Sitzung startet keine
+  Agenten unaufgefordert. Nach `docs/backlog/README.md` ist das der ehrliche Ausgang; mein eigener Blick
+  auf den Diff ist **kein** Review. `wartet_auf: frontend-reviewer`.

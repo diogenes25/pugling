@@ -60,6 +60,10 @@ export function VaterKind() {
 
       <ChildNav child={me} />
 
+      {/* Die Fächer speisen die Auswahlfelder in Unterrichtsmaterial und Stundenplan (B-172) – scheitert
+          der Abruf, fehlt dort die Auswahl. Ganz oben, weil er zwei Abschnitte weiter unten betrifft. */}
+      {subjects.error && <div className="banner err">Fächer: {subjects.error}</div>}
+
       <CoreDataSection child={me} onSaved={child.reload} />
 
       {/*

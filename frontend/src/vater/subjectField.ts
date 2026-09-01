@@ -2,14 +2,17 @@
  * Das Fach-Feld, für alle drei Formulare, die es tragen: Lehrwerk-Reihe, Lehrbuch am Kind und
  * Fachlehrer-Profil (B-148).
  *
- * Geteilt wird **genau das Fach**, nicht der `clear…`-Schalter allgemein. Der Grund steht in der
- * Fehlerbedingung: Von den sieben Stellen, an denen das Frontend einen Schalter baut, sind sechs heil,
- * obwohl sie ihn aus dem Momentanwert ableiten – ihre Werte sind im Formular vollständig darstellbar,
- * `null` heißt dort also wirklich „der Nutzer hat geleert". Kaputt wird es erst bei einem Feld, dessen
- * **Ladezustand das Formular nicht abbilden kann**, und das ist heute nur `subjectId`.
+ * Hier steht der **PATCH-Rumpf**: was vom Fach in die Anfrage gehört, und die Zusicherung, dass der
+ * Sentinel sie nie erreicht. Die hält man nicht dreimal unabhängig richtig – darum eine Stelle.
  *
- * Die Regel selbst ist klein; teuer ist die Zusicherung darin, dass der Sentinel den PATCH-Rumpf nie
- * erreicht. Die hält man nicht dreimal unabhängig richtig – darum eine Stelle.
+ * **Die Anzeige steht nicht hier**, sondern in `components/ReferenceSelect.tsx`. Das war einmal anders
+ * begründet: „von den sieben Schaltern sind sechs heil … kaputt wird es erst bei einem Feld, dessen
+ * Ladezustand das Formular nicht abbilden kann, und das ist heute nur `subjectId`". Der letzte Halbsatz
+ * war falsch (B-172). Ein `<select>` mit Anzeigegröße 1 wählt ohne passende Option die erste selbst –
+ * fehlt die Optionsliste, zeigt das Feld also „– keine Angabe –", während der Formularzustand noch den
+ * echten Wert hält. Das trifft **jede** Referenz, deren Optionen aus einem eigenen Abruf kommen: Fach,
+ * Verlag, Reihe und Unit, sieben Felder. Nicht der Schalter war das Problem, sondern die Eingabe, die
+ * das Formular ihm lieferte.
  */
 
 /**

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { SeriesForm } from "./VaterLehrwerke";
 import type { PublisherResponse, SubjectResponse, TextbookSeriesResponse } from "../lib/types";
@@ -78,5 +78,52 @@ describe("SeriesForm – Zustände, die das Modell erlaubt", () => {
 
     expect((screen.getByLabelText("Schulart", { exact: true }) as HTMLSelectElement).value).toBe("None");
     expect(screen.queryByRole("option", { name: "None" })).toBeNull();
+  });
+});
+
+/*
+ * B-172. Der Fall, den `SeriesForm.test.tsx` bisher nicht herstellen konnte, weil `zeige` immer ein
+ * gefülltes `SUBJECTS` übergab: die Optionsliste kennt den geladenen Wert NICHT (gescheitertes
+ * `GET creator/subjects`, `?? []` macht daraus eine leere Liste).
+ *
+ * Ein `<select>` mit Anzeigegröße 1 wählt dann die erste nicht gesperrte Option selbst – das Feld ZEIGT
+ * „– keine Angabe –", während `form.subjectId` noch „1" hält. Anzeige und Formularzustand driften, und
+ * der Nutzer entscheidet auf falscher Information.
+ *
+ * Rot macht diese Fälle das Entfernen der Rückfall-Option; sie prüfen NICHT den Ausgangszustand – vor
+ * B-172 fielen beide (gemessen: `value` war `""`).
+ */
+describe("SeriesForm – wenn die Optionsliste den geladenen Wert nicht kennt", () => {
+  const MATHE_ALLEIN: SubjectResponse[] = [SUBJECTS[1]];
+  const fach = () => screen.getByLabelText("Fach", { exact: true }) as HTMLSelectElement;
+  const verlag = () => screen.getByLabelText("Verlag", { exact: true }) as HTMLSelectElement;
+
+  it("zeigt das geladene Fach statt „– keine Angabe –“, wenn die Liste leer ist", () => {
+    render(<SeriesForm series={reihe()} subjects={[]} publishers={PUBLISHERS} onSaved={() => {}} />);
+
+    expect(fach().value).toBe("1");
+    expect(screen.getByRole("option", { name: "Englisch (nicht geladen)" })).toBeTruthy();
+  });
+
+  it("lässt den Weg zurück offen: die Rückfall-Option ist wählbar, nicht gesperrt", () => {
+    // Der Unterschied zum Freitext-Zustand (B-143): ein Katalog-Fach ist ein völlig reguläres Ziel.
+    // Gesperrt wäre der Umweg eine Einbahnstraße – wer „Mathe" probiert, käme nie zu „Englisch" zurück,
+    // und das Formular zuzuklappen verwirft alle anderen Eingaben mit.
+    render(<SeriesForm series={reihe()} subjects={MATHE_ALLEIN} publishers={PUBLISHERS} onSaved={() => {}} />);
+
+    fireEvent.change(fach(), { target: { value: "2" } });
+    expect(fach().value).toBe("2");
+
+    fireEvent.change(fach(), { target: { value: "1" } });
+    expect(fach().value).toBe("1");
+  });
+
+  it("hält dieselbe Zusicherung für den Verlag", () => {
+    // Die Begründung in `subjectField.ts` behauptete, kaputt sei „heute nur `subjectId`". Der Verlag
+    // trägt über `clearPublisherId` genau dieselbe Kette.
+    render(<SeriesForm series={reihe()} subjects={SUBJECTS} publishers={[]} onSaved={() => {}} />);
+
+    expect(verlag().value).toBe("3");
+    expect(screen.getByRole("option", { name: "Klett (nicht geladen)" })).toBeTruthy();
   });
 });

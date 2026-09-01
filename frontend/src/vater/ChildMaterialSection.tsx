@@ -1,10 +1,12 @@
 import { Fragment, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { FieldLabel } from "../components/InfoHint";
+import { ReferenceSelect } from "../components/ReferenceSelect";
 import { StatusBanner } from "../components/StatusBanner";
 import { FREETEXT_SUBJECT } from "./subjectField";
 import { EMPTY_TEXTBOOK_FORM, textbookFormValues, textbookPatch, type TextbookFormValues } from "./textbookPatch";
 import { api } from "../lib/api";
+import { seriesOptions, subjectOptions, unitOptions } from "../lib/referenceOptions";
 import { useAction } from "../lib/useAction";
 import { matchReasonLabel } from "../lib/labels";
 import { confirmAction } from "../lib/ui";
@@ -46,6 +48,9 @@ export function ChildMaterialSection({ childId, childName, subjects }: {
       </p>
 
       {books.error && <div className="banner err">{books.error}</div>}
+      {/* Die Reihen speisen das Auswahlfeld der Formulare (B-172) – scheitert der Abruf, fehlt dort die
+          Auswahl, und ohne diese Zeile war das nicht zu sehen. */}
+      {series.error && <div className="banner err">Reihen: {series.error}</div>}
       {books.data === null ? <div className="loading">Lade…</div> : books.data.length === 0 ? (
         <p className="muted">Noch kein Buch hinterlegt.</p>
       ) : (
@@ -212,20 +217,16 @@ export function TextbookForm({ childId, book, series, subjects, onDone }: {
         </div>
         <div className="field">
           <FieldLabel htmlFor={`${id}-subject`} topic="textbookSubject">Fach</FieldLabel>
-          <select id={`${id}-subject`} value={form.subjectId} onChange={(e) => up("subjectId", e.target.value)}>
-            <option value="">– keine Angabe –</option>
-            {/* Der Freitext-Zustand als eigene, nicht wählbare Option (B-148, Muster aus B-143): so sagt
-                das Feld dasselbe wie die Fach-Spalte der Tabelle darüber, statt zu schweigen.
-
-                Bedingung und Beschriftung kommen BEIDE aus `book`, dem geladenen Stand – nicht aus
-                `form`. Zwei Gründe: die Option soll stehen bleiben, während der Nutzer
-                „– keine Angabe –" probiert (sie zeigt ihm, was er gerade ersetzt); und aus einer Quelle
-                können Bedingung und Text nicht auseinanderlaufen. */}
-            {book?.subjectId == null && book?.subjectName && (
-              <option value={FREETEXT_SUBJECT} disabled>{book.subjectName} (Freitext)</option>
-            )}
-            {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
+          {/* Fach, Reihe und Unit über `ReferenceSelect` (B-172): drei Referenzen, drei eigene Abrufe, drei
+              `clear…`-Schalter. Die Sonderoptionen (Freitext bzw. „nicht geladen") leitet das Bauteil aus
+              `book` ab, dem geladenen Stand – nicht aus `form`, damit sie stehen bleiben, während der
+              Nutzer etwas anderes probiert. */}
+          <ReferenceSelect
+            id={`${id}-subject`} value={form.subjectId} onChange={(v) => up("subjectId", v)}
+            loadedId={book?.subjectId} loadedName={book?.subjectName}
+            options={subjectOptions(subjects)} emptyLabel="– keine Angabe –"
+            freetextValue={FREETEXT_SUBJECT}
+          />
         </div>
         <div className="field">
           <label htmlFor={`${id}-grade`}>Für Klasse</label>
@@ -240,29 +241,31 @@ export function TextbookForm({ childId, book, series, subjects, onDone }: {
         </div>
         <div className="field">
           <label htmlFor={`${id}-series`}>Reihe im Katalog</label>
-          <select id={`${id}-series`} value={form.seriesId} onChange={(e) => chooseSeries(e.target.value)}>
-            <option value="">– nicht katalogisiert –</option>
-            {series.map((s) => (
-              <option key={s.id} value={s.id}>{s.name}{s.publisherName ? ` (${s.publisherName})` : ""}</option>
-            ))}
-          </select>
+          <ReferenceSelect
+            id={`${id}-series`} value={form.seriesId} onChange={chooseSeries}
+            loadedId={book?.seriesId} loadedName={book?.seriesName}
+            options={seriesOptions(series)} emptyLabel="– nicht katalogisiert –"
+          />
         </div>
         <div className="field">
           <label htmlFor={`${id}-unit`}>Aktuelle Unit</label>
-          <select
-            id={`${id}-unit`} value={form.currentUnitId} disabled={seriesId == null}
-            onChange={(e) => up("currentUnitId", e.target.value)}
-          >
-            <option value="">{seriesId == null ? "– erst Reihe wählen –" : "– keine –"}</option>
-            {units.data?.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.grade != null ? `Kl. ${u.grade}: ` : ""}{u.label}
-              </option>
-            ))}
-          </select>
+          {/* Die gespeicherte Unit nur anbieten, solange die Reihe noch ihre eigene ist: nach einem
+              Reihenwechsel gehörte sie zur alten und wäre als Auswahl falsch – `chooseSeries` räumt sie
+              aus demselben Grund. Ohne diese Bedingung könnte der Nutzer eine fremde Unit-Id abschicken. */}
+          <ReferenceSelect
+            id={`${id}-unit`} value={form.currentUnitId} onChange={(v) => up("currentUnitId", v)}
+            loadedId={geladen.current?.seriesId === form.seriesId ? book?.currentUnitId : null}
+            loadedName={book?.currentUnitLabel}
+            options={unitOptions(units.data ?? [])}
+            emptyLabel={seriesId == null ? "– erst Reihe wählen –" : "– keine –"}
+            disabled={seriesId == null}
+          />
           {seriesId != null && units.data?.length === 0 && (
             <span className="sub">Diese Reihe hat noch keine Units – unter „Lehrwerke" anlegen.</span>
           )}
+          {/* Der Hinweis oben prüft `length === 0` und schweigt darum bei `null`, also genau im
+              Fehlerfall (B-172). Ohne diese Zeile sah ein gescheiterter Abruf aus wie „lädt noch". */}
+          {units.error && <div className="banner err">Units: {units.error}</div>}
         </div>
         <div className="field">
           <label htmlFor={`${id}-chapter`}>Kapitel als Freitext <span className="muted">(Rückfallebene)</span></label>

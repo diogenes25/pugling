@@ -1,9 +1,11 @@
 import { Fragment, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { FieldLabel } from "../components/InfoHint";
+import { ReferenceSelect } from "../components/ReferenceSelect";
 import { StatusBanner } from "../components/StatusBanner";
 import { FREETEXT_SUBJECT, seriesFormValues, seriesPatch, type SeriesFormValues } from "./seriesPatch";
 import { api } from "../lib/api";
+import { publisherOptions, subjectOptions } from "../lib/referenceOptions";
 import { useAction } from "../lib/useAction";
 import { SCHOOL_TYPES } from "../lib/labels";
 import { LANGUAGES } from "../lib/languages";
@@ -155,6 +157,11 @@ export function VaterLehrwerke() {
         </form>
 
         {list.error && <div className="banner err">{list.error}</div>}
+        {/* Die Optionslisten der Formulare (B-172): scheitert einer dieser Abrufe, fehlt im
+            Bearbeiten-Formular die Auswahl – ohne diese Zeilen war das nirgends zu sehen. Neben der
+            Liste, nicht an ihrer Stelle: die Reihen sind ja da. */}
+        {subjects.error && <div className="banner err">Fächer: {subjects.error}</div>}
+        {publishers.error && <div className="banner err">Verlage: {publishers.error}</div>}
         {list.loading && list.data === null ? <div className="loading">Lade…</div> : (
           <table className="table">
             <thead><tr><th>Reihe</th><th>Fach</th><th>Schulart</th><th>Band</th><th>Units</th><th /></tr></thead>
@@ -352,31 +359,26 @@ export function SeriesForm({ series, subjects, publishers, onSaved }: {
               liefern, es kennt die Reihe nicht. */}
           <span className="sub">Kurzname <code>{series.slug}</code></span>
         </div>
+        {/* Verlag und Fach über `ReferenceSelect` (B-172): beide Optionslisten kommen aus einem eigenen,
+            unabhängig scheiternden Abruf, und beide Felder speisen einen `clear…`-Schalter. Die
+            Sonderoptionen (Freitext bzw. „nicht geladen") leitet das Bauteil aus dem GELADENEN Stand ab –
+            nicht aus `form`, damit sie stehen bleiben, während der Nutzer etwas anderes probiert. */}
         <div className="field">
           <label htmlFor={`se-publisher-${id}`}>Verlag</label>
-          <select id={`se-publisher-${id}`} value={form.publisherId} onChange={(e) => up("publisherId", e.target.value)}>
-            <option value="">– keine Angabe –</option>
-            {publishers.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
+          <ReferenceSelect
+            id={`se-publisher-${id}`} value={form.publisherId} onChange={(v) => up("publisherId", v)}
+            loadedId={series.publisherId} loadedName={series.publisherName}
+            options={publisherOptions(publishers)} emptyLabel="– keine Angabe –"
+          />
         </div>
         <div className="field">
           <FieldLabel htmlFor={`se-subject-${id}`} topic="seriesSubject">Fach</FieldLabel>
-          <select id={`se-subject-${id}`} value={form.subjectId} onChange={(e) => up("subjectId", e.target.value)}>
-            <option value="">– keine Angabe –</option>
-            {/* Der Freitext-Zustand als eigene, nicht wählbare Option (B-143): so sagt das Feld dasselbe
-                wie die Zeile daneben, statt zu schweigen. Und der Schutz vorm versehentlichen Löschen
-                fällt gratis ab – `form` bleibt gleich `loaded`, also schickt `seriesPatch` nichts.
-
-                Bedingung und Beschriftung kommen BEIDE aus `series`, dem geladenen Stand – nicht aus
-                `form`. Zwei Gründe: die Option soll stehen bleiben, während der Nutzer „– keine Angabe –"
-                probiert (sie zeigt ihm, was er gerade ersetzt, und ein Zurück kostet sonst das Zuklappen
-                des Formulars mitsamt allen anderen Eingaben); und aus einer Quelle können Bedingung und
-                Text nicht auseinanderlaufen. */}
-            {series.subjectId == null && series.subjectName && (
-              <option value={FREETEXT_SUBJECT} disabled>{series.subjectName} (Freitext)</option>
-            )}
-            {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
+          <ReferenceSelect
+            id={`se-subject-${id}`} value={form.subjectId} onChange={(v) => up("subjectId", v)}
+            loadedId={series.subjectId} loadedName={series.subjectName}
+            options={subjectOptions(subjects)} emptyLabel="– keine Angabe –"
+            freetextValue={FREETEXT_SUBJECT}
+          />
         </div>
         <div className="field">
           <FieldLabel htmlFor={`se-school-${id}`} topic="seriesSchoolTypes">Schulart</FieldLabel>
