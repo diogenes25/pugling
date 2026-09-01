@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/supervisor, rolle/creator]
+tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/supervisor, rolle/creator]
 aliases: [Gespeichert-Banner unsichtbar, onDone schließt das Formular, StatusBanner im geschlossenen Formular]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Defekt
 groesse: S
@@ -122,3 +122,11 @@ sondern die ganze Zeile aus einer gefilterten Liste.
   die beiden Stories teilen ihre Wurzel und sollen nicht zwei Muster hinterlassen.
 - 2026-09-01 · **`gegrillt` → `geschaetzt`** (Nachtlauf). S, Testweg E2E mit ausdrücklicher Begründung,
   warum ein Komponententest hier nicht trägt.
+- 2026-09-01 · **`geschaetzt` → `in-arbeit`** (Nachtlauf, Sprint 1, Commit `e479d83`). Beide Formulare
+  reichen die Bestätigung über `onDone(message)` an einen Meldungsplatz der Seite; das Formular schließt
+  weiter, der `useRef`-Bezugspunkt bleibt damit gültig (Akzeptanzkriterium 4). Der Platz wird beim Öffnen
+  eines Formulars geleert, damit keine alte Bestätigung über einer neuen Bearbeitung steht.
+  **Rote Probe: erwartet rot, gemessen rot — aber erst nach einer Korrektur an der Zusicherung selbst.**
+  Die erste Fassung prüfte „Gespeichert." *vor* dem Verschwinden des Formulars; `toBeVisible()` pollt und
+  traf das Banner im Frame, in dem es noch stand — sie hätte **vor wie nach** der Reparatur gehalten.
+  Erst mit umgedrehter Reihenfolge (erst auf `toHaveCount(0)` warten, dann die Meldung fordern) fiel sie.

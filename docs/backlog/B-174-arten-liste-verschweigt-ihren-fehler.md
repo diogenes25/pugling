@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/creator]
+tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/creator]
 aliases: [categories.error wird nie gezeigt, Fach hat keine Arten oder Laden gescheitert]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Defekt
 groesse: S
@@ -124,3 +124,11 @@ gelesen.
   Fälligkeit gebunden.
 - 2026-09-01 · **`gegrillt` → `geschaetzt`** (Nachtlauf). S, Testweg benannt (Komponententest, kein E2E,
   mit Begründung).
+- 2026-09-01 · **`geschaetzt` → `in-arbeit`** (Nachtlauf, Sprint 1, Commit `e479d83`). `CategorySection`
+  trägt `error` und rendert es mit `role="alert"`. **Rote Probe: erwartet 2 der 3 neuen Fälle rot,
+  gemessen `2 failed | 17 passed`** von 19 (der dritte prüft Abwesenheit und ist heute korrekt grün).
+  **Abweichung von Entscheidung 1, ausgesprochen statt verschwiegen:** Nur `CategorySection` bekommt das
+  Prop, nicht zusätzlich `CategoryRows` — der Abschnitt rendert in allen drei Fach-Zuständen, das genügt.
+  **Und der Testweg dieser Story war zu eng geschätzt:** „kein E2E, das bräuchte einen abgeschalteten
+  Server" ist falsch — `page.route(…).abort()` kostet eine Zeile (`optionsliste-faellt-aus.spec.ts` sagt
+  das im eigenen Kopfkommentar). Die Story hat darum zusätzlich `e2e/ausfall-wird-genannt.spec.ts`.

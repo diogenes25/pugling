@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend]
+tags: [typ/story, status/in-arbeit, bereich/frontend]
 aliases: [Lade… bleibt nach Fehler stehen, data === null ohne loading, Platzhalter widerspricht Banner]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Defekt
 groesse: S
@@ -116,3 +116,10 @@ nicht getan. Das ist eine Regel, die an Disziplin hängt, und ihr Bruch ist unsi
   statt einen Wächter zu behaupten, der raten müsste.
 - 2026-09-01 · **`gegrillt` → `geschaetzt`** (Nachtlauf). S, Testweg als benannte neue Datei mit drei
   Fällen und dem `AuthProvider`-Fallstrick vorab benannt.
+- 2026-09-01 · **`geschaetzt` → `in-arbeit`** (Nachtlauf, Sprint 1, Commit `e479d83`). `useAsync` liefert
+  `showPlaceholder`; die vier Aufrufstellen lesen es. **Rote Probe: erwartet 1 von 3 rot, gemessen
+  `1 failed | 2 passed`** — das Feld wurde dafür zuerst mit der *heutigen*, falschen Bedingung
+  (`data === null`) gebaut, damit die Zusicherung an einer Verhaltensaussage fällt und nicht an einem
+  fehlenden Symbol. `frontend/CLAUDE.md` nennt jetzt beide zulässigen Formen; das Kontextbudget ist im
+  selben Durchgang gegengerechnet (die Datei ist netto **16 Bytes kleiner** als vorher — zwei
+  Erzähl-Passagen zu B-25 und B-106 sind auf ihre Aussage gekürzt, ihre Begründung steht in `docs/`).

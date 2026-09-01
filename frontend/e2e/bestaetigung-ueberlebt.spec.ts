@@ -2,6 +2,11 @@ import { expect, test } from "@playwright/test";
 import { vaterLogin } from "./helpers";
 
 /*
+ * `{ exact: true }` an beiden „Gespeichert."-Zusicherungen ist nicht Stil: `getByText` vergleicht als
+ * Teilstring, und auf der Kind-Seite steht „Gespeichert. Die neue PIN gilt ab dem nächsten Login des
+ * Kindes." (VaterKind.tsx). Heute grün, weil diese Spec die PIN nicht anfasst — aber es ist dieselbe
+ * Falle, die `kind-lehrbuch-fach.spec.ts:51` im vollen Lauf rot gemacht hat (B-189).
+ *
  * B-173 und B-151: Eine Bestätigung, die IN dem Element sitzt, dessen Verschwinden sie bestätigt, ist nie
  * zu lesen. Zwei belegte Wege dorthin – hier beide, weil sie eine Wurzel und einen Meldungsplatz teilen.
  *
@@ -46,7 +51,7 @@ test("B-173: Speichern, das die Zeile aus dem Filter wirft, zeigt trotzdem seine
   // `toBeVisible()` pollt und trifft das Banner in dem Frame, in dem es noch steht – die Zusicherung
   // hielt damit VOR wie NACH der Reparatur und konnte gar nicht fallen.
   await expect(page.getByRole("row", { name: new RegExp(REIHE) })).toHaveCount(0);
-  await expect(page.getByText("Gespeichert.")).toBeVisible();
+  await expect(page.getByText("Gespeichert.", { exact: true })).toBeVisible();
 
   // ---- Und die leere Liste sagt jetzt, WARUM sie leer ist ----
   await expect(page.getByText(/Keine Reihe passt zu dieser Filterung/)).toBeVisible();
@@ -92,5 +97,5 @@ test("B-151: Das Lehrbuch-Formular schließt beim Speichern – die Bestätigung
   // Wieder die Reihenfolge: erst warten, bis das Formular WEG ist – danach muss die Meldung noch da
   // sein. Andersherum träfe die Zusicherung den Frame, in dem beides noch steht.
   await expect(bearbeiten).toHaveCount(0);
-  await expect(page.getByText("Gespeichert.")).toBeVisible();
+  await expect(page.getByText("Gespeichert.", { exact: true })).toBeVisible();
 });

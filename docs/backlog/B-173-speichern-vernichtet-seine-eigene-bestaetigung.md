@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/creator]
+tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/creator]
 aliases: [Gespeichert fuer einen Frame, Zeile faellt aus dem Filter, Speichern sieht wie Loeschen aus]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Defekt
 groesse: M
@@ -128,3 +128,15 @@ daneben, der sie trennen würde — und beide Male existiert er schon (die Meldu
   mit Begründung und Kosten, alle vier offenen Punkte durchgestrichen statt gelöscht.
 - 2026-09-01 · **`gegrillt` → `geschaetzt`** (Nachtlauf). M, Testweg zweigeteilt (reine Funktion als Unit,
   Klickfolge als E2E in einer bestehenden Spec-Datei).
+- 2026-09-01 · **`geschaetzt` → `in-arbeit`** (Nachtlauf, Sprint 1, Commit `e479d83`). Meldungsplatz auf
+  Seitenebene, `istGefiltert` als exportierte reine Funktion, filterbewusster Leer-Text.
+  **Rote Probe: erwartet rot, gemessen rot** — mit derselben Korrektur an der Reihenfolge wie bei B-151
+  (die erste Fassung konnte nicht fallen).
+  **Entscheidung 1 hat beim Bauen einen Umweg gebraucht, und der gehört ins Protokoll:** Der erste Entwurf
+  spiegelte *jede* Meldung des Formulars nach oben (`useReportedMessage`). Der `frontend-reviewer` hat
+  daran zu Recht einen Blocker gesetzt — damit wanderten auch „Der Name der Reihe fehlt." und „Nichts
+  geändert." ans Seitenende, obwohl sie die Zeile nie verlassen. Der zweite Entwurf zeigte sie lokal
+  **und** oben; daran brachen **vier bestehende E2E** (`strict mode violation: getByText('Gespeichert.')
+  resolved to 2 elements`). Die tragende Fassung ist die dritte und einfachste: **der Erfolg reist nach
+  oben statt lokal, Fehler und Eingabeprüfungen bleiben am Formular.** `useReportedMessage` ist damit
+  wieder entfallen — es gibt nur **einen** Mechanismus, wie Entscheidung 1 es wollte.

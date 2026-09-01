@@ -248,7 +248,6 @@ describe("CategorySection – ein gescheitertes Laden sieht nicht aus wie ein le
 
   it("schweigt, wenn wirklich nur nichts da ist", () => {
     render(<CategorySection subject={subject()} categories={[]} error={null} {...props} />);
-    expect(screen.queryByText(/Netz weg/)).toBeNull();
     // Auf das PRÄFIX des Banners prüfen, nicht auf den Fehlertext: „Netz weg" allein wäre schon dadurch
     // abwesend, dass hier kein Fehler übergeben wurde – die Zusicherung fiele also nie. Diese hier fällt,
     // sobald der Banner unbedingt rendert. (Eine frühere Fassung prüfte `role="alert"`, das es zu dem

@@ -193,6 +193,7 @@ export function VaterLehrwerke() {
                 <SeriesRow
                   key={s.id} series={s} subjects={subjects.data ?? []} publishers={publishers.data ?? []}
                   open={open === s.id} onToggle={() => setOpen(open === s.id ? null : s.id)}
+                  onOeffnen={() => setMeldung(null)}
                   onChanged={list.reload} onMessage={setMeldung}
                 />
               ))}
@@ -218,7 +219,7 @@ export function VaterLehrwerke() {
   );
 }
 
-function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, onMessage }: {
+function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, onMessage, onOeffnen }: {
   series: TextbookSeriesResponse;
   subjects: SubjectResponse[];
   publishers: PublisherResponse[];
@@ -230,11 +231,22 @@ function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, on
    * überlebt ihre eigene Bestätigung nicht (B-173).
    */
   onMessage: (m: ActionMessage) => void;
+  /**
+   * Räumt den Meldungsplatz der Seite, bevor hier bearbeitet wird. Ohne das stünde die Bestätigung von
+   * Reihe A über einer frischen, ungespeicherten Bearbeitung von Reihe B — und hier wiegt das schwerer
+   * als auf den Schwesterseiten, weil das Formular offen bleibt und sonst nichts den Platz je räumt.
+   */
+  onOeffnen: () => void;
 }) {
   const action = useAction();
   // Lokal, nicht im seiten-globalen `open`: das ist der Akkordeon-Platz der Units, und beide Bereiche
   // sollen sich nicht gegenseitig zuklappen (B-123, Entscheidung 3 – Muster `UnitPanel`).
   const [editing, setEditing] = useState(false);
+
+  function bearbeitenUmschalten() {
+    onOeffnen();
+    setEditing(!editing);
+  }
 
   async function remove() {
     if (!confirmAction(
@@ -283,7 +295,7 @@ function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, on
                 aria-label={editing
                   ? `Bearbeiten schließen: „${series.name}"`
                   : `Reihe bearbeiten: „${series.name}"`}
-                aria-expanded={editing} onClick={() => setEditing(!editing)}>
+                aria-expanded={editing} onClick={bearbeitenUmschalten}>
                 {editing ? "Bearbeiten schließen" : "Reihe bearbeiten"}
               </button>
               <button type="button" className="btn ghost small" style={{ width: "auto" }}

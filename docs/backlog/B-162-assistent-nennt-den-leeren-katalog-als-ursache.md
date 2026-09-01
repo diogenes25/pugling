@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, bereich/lehrplan, rolle/supervisor]
+tags: [typ/story, status/in-arbeit, bereich/frontend, bereich/lehrplan, rolle/supervisor]
 aliases: [Gescheiterte Katalogsuche liest sich als leerer Katalog]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Defekt
 groesse: M
@@ -174,3 +174,13 @@ sondern „die Zahl gehört zu einer anderen Abfrage als die Meldung daneben".
   Entwurf der Ausformulierung hätte eine Meldung ohne Ausweg zugelassen und damit die Lage verschlechtert.
 - 2026-09-01 · **`gegrillt` → `geschaetzt`** (Nachtlauf). M, Testweg als benannte Datei mit vier Fällen;
   das Fehlen eines E2E ist argumentiert, nicht ausgelassen.
+- 2026-09-01 · **`geschaetzt` → `in-arbeit`** (Nachtlauf, Sprint 1, Commit `e479d83`).
+  `WizardTrefferbereich` herausgezogen; Fehlerbanner mit `role="alert"`, „Erneut suchen", geschärfter
+  Leer-Zweig, und die Trefferzahl hängt am selben `zeilenVeraltet` wie Kästchen und Knopf.
+  **Rote Probe (Baustein): erwartet 3 von 5 rot, gemessen `3 failed | 2 passed`** — der Baustein wurde
+  dafür vorübergehend auf sein Vorher-Verhalten zurückgedreht; zwei der fünf Fälle sind Gegenproben, die
+  auch vorher grün sein mussten. **Rote Probe (E2E): erwartet 1 von 2 rot, gemessen
+  `1 failed | 1 passed`** — und das erst im **zweiten** Anlauf: das Routen-Muster des ersten
+  (`creator/exercises/search`) traf den Endpunkt nicht, der Fall fiel also aus dem *falschen* Grund
+  (`creator/exercises?…` ist richtig). Ein rot gelaufener Test ist kein Beleg, solange nicht feststeht,
+  woran er fiel.
