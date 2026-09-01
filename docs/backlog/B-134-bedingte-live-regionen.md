@@ -113,3 +113,11 @@ Disziplin"). Ein Sweep ohne Wächter stellt denselben Zustand in drei Monaten wi
   Dateien).
 - **2026-08-10** — Zeilenangaben zu `VaterExerciseCreate.tsx` nachgezogen (270/272 → 297/298): B-11 hat
   darüber ein Formularfeld eingefügt. Nur die Belege wandern, der Befund und die Stufe bleiben.
+- **2026-09-01** — **Sieben Kandidaten für denselben Sweep** dazugekommen, aus B-172: die neuen
+  Fehlerbanner zu den Optionslisten (`VaterLehrwerke.tsx` 2×, `VaterKind.tsx`, `ChildMaterialSection.tsx`
+  2×, `VaterFachlehrer.tsx` 2×). Sie tragen **gar keine** Rolle, gehören also streng genommen nicht in die
+  Tabelle oben — aber sie sind das *einzige* Signal eines gescheiterten Abrufs und damit Status-Messages
+  im Sinne von SC 4.1.3. Der `frontend-reviewer` hatte für B-172 ein `role="alert"` angeregt; das wurde
+  dort **abgelehnt**, weil ein `role` auf einem `{x.error && …}` der vierzehnte Fall genau dieses Defekts
+  wäre. Die Behebung ist dieselbe wie hier — eine Region, die schon im DOM steht — und darum dieselbe
+  Arbeit. Der Befund und die Stufe bleiben.

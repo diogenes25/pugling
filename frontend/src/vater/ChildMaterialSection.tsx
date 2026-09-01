@@ -168,6 +168,10 @@ export function TextbookForm({ childId, book, series, subjects, onDone }: {
     setForm((f) => ({ ...f, seriesId: value, currentUnitId: "" }));
   }
 
+  // Gehört die gespeicherte Unit noch zur gewählten Reihe? Entscheidet, ob sie als Rückfall-Option
+  // angeboten werden darf (B-172). Beim Anlegen ist `geladen.current` null, der Vergleich also falsch.
+  const eigeneUnit = geladen.current?.seriesId === form.seriesId;
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.title.trim()) { action.fail("Der Titel fehlt."); return; }
@@ -251,12 +255,21 @@ export function TextbookForm({ childId, book, series, subjects, onDone }: {
           <label htmlFor={`${id}-unit`}>Aktuelle Unit</label>
           {/* Die gespeicherte Unit nur anbieten, solange die Reihe noch ihre eigene ist: nach einem
               Reihenwechsel gehörte sie zur alten und wäre als Auswahl falsch – `chooseSeries` räumt sie
-              aus demselben Grund. Ohne diese Bedingung könnte der Nutzer eine fremde Unit-Id abschicken. */}
+              aus demselben Grund. Ohne diese Bedingung könnte der Nutzer eine fremde Unit-Id abschicken.
+
+              Id UND Name hängen an derselben Bedingung, nicht nur die Id: `loadedId == null` bei
+              gesetztem Namen ist die Signatur, an der das Bauteil den FREITEXT-Zustand erkennt. Heute
+              fiele das nicht auf (die Unit übergibt keinen Sentinel), aber es wäre eine Falle für den,
+              der ihr je einen gibt.
+
+              Und die Optionsliste bei einem Fehler leeren: `useAsync` lässt `data` über den Dep-Wechsel
+              stehen, sonst bötte das Feld nach einem gescheiterten Wechsel weiter die Units der ALTEN
+              Reihe an – während das Banner darunter den Ausfall meldet. */}
           <ReferenceSelect
             id={`${id}-unit`} value={form.currentUnitId} onChange={(v) => up("currentUnitId", v)}
-            loadedId={geladen.current?.seriesId === form.seriesId ? book?.currentUnitId : null}
-            loadedName={book?.currentUnitLabel}
-            options={unitOptions(units.data ?? [])}
+            loadedId={eigeneUnit ? book?.currentUnitId : null}
+            loadedName={eigeneUnit ? book?.currentUnitLabel : null}
+            options={unitOptions(units.error ? [] : units.data ?? [])}
             emptyLabel={seriesId == null ? "– erst Reihe wählen –" : "– keine –"}
             disabled={seriesId == null}
           />

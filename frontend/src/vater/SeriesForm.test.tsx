@@ -111,6 +111,11 @@ describe("SeriesForm – wenn die Optionsliste den geladenen Wert nicht kennt", 
     // und das Formular zuzuklappen verwirft alle anderen Eingaben mit.
     render(<SeriesForm series={reihe()} subjects={MATHE_ALLEIN} publishers={PUBLISHERS} onSaved={() => {}} />);
 
+    // Beide Hälften des Namens prüfen: `select.value = x` greift im DOM AUCH auf eine gesperrte Option,
+    // der Weg-zurück-Fall allein bliebe beim Sperren also grün (Fund des `frontend-reviewer`).
+    const option = screen.getByRole("option", { name: "Englisch (nicht geladen)" }) as HTMLOptionElement;
+    expect(option.disabled).toBe(false);
+
     fireEvent.change(fach(), { target: { value: "2" } });
     expect(fach().value).toBe("2");
 

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { TextbookForm } from "./ChildMaterialSection";
 import { AuthProvider } from "../lib/auth";
@@ -70,5 +70,56 @@ describe("TextbookForm – Zustände, die das Modell erlaubt", () => {
     zeige({ subjectId: null, subjectName: "Erdkunde" });
 
     expect(screen.getByLabelText("Erklärung zu „Fach\"", { exact: true })).toBeTruthy();
+  });
+});
+
+/*
+ * B-172, nachgetragen nach dem Review: die drei Referenzfelder dieses Formulars waren vom neuen
+ * Verhalten völlig unabgedeckt. Gemessen hat der `frontend-reviewer` das, indem er die Unit-Bedingung
+ * entfernte – 299/299 blieben grün.
+ *
+ * Ein gefälschtes `fetch` braucht es dafür nicht: mit gesetzter `seriesId` scheitert der echte
+ * `seriesUnits`-Abruf in happy-dom von selbst. Das IST der zu prüfende Fehlerfall.
+ *
+ * **Der `ECONNREFUSED`-Block in der Ausgabe gehört dazu** – er ist dieser scheiternde Abruf, nicht ein
+ * Mangel am Test. Wer ihn wegräumt, räumt den Fehlerfall weg; die Fälle oben halten deshalb weiter an
+ * `seriesId: null` fest, wo sie ihn nicht brauchen.
+ *
+ * Rot macht diese Fälle das Entfernen der Rückfall-Option bzw. der Bedingung `eigeneUnit`.
+ */
+describe("TextbookForm – wenn eine Optionsliste den geladenen Wert nicht kennt", () => {
+  const feld = (name: string) => screen.getByLabelText(name, { exact: true }) as HTMLSelectElement;
+
+  it("zeigt das geladene Fach, wenn die Fächerliste es nicht kennt", () => {
+    render(
+      <AuthProvider>
+        <TextbookForm childId={1} book={buch()} series={[]} subjects={[]} onDone={() => {}} />
+      </AuthProvider>,
+    );
+
+    expect(feld("Fach").value).toBe("1");
+    expect((screen.getByRole("option", { name: "Englisch (nicht geladen)" }) as HTMLOptionElement)
+      .disabled).toBe(false);
+  });
+
+  it("zeigt die geladene Reihe und die geladene Unit, wenn ihre Listen fehlen", () => {
+    zeige({ seriesId: 9, seriesName: "Access", currentUnitId: 7, currentUnitLabel: "Unit 7" });
+
+    expect(feld("Reihe im Katalog").value).toBe("9");
+    expect(screen.getByRole("option", { name: "Access (nicht geladen)" })).toBeTruthy();
+
+    expect(feld("Aktuelle Unit").value).toBe("7");
+    expect(screen.getByRole("option", { name: "Unit 7 (nicht geladen)" })).toBeTruthy();
+  });
+
+  it("nimmt die Unit-Option zurück, sobald die Reihe gewechselt ist", () => {
+    // Sonst könnte der Nutzer eine Unit der ALTEN Reihe abschicken. `chooseSeries` räumt den Wert,
+    // die Option muss mitgehen – Id UND Name hängen darum an derselben Bedingung.
+    zeige({ seriesId: 9, seriesName: "Access", currentUnitId: 7, currentUnitLabel: "Unit 7" });
+
+    fireEvent.change(feld("Reihe im Katalog"), { target: { value: "" } });
+
+    expect(feld("Aktuelle Unit").value).toBe("");
+    expect(screen.queryByRole("option", { name: /Unit 7/ })).toBeNull();
   });
 });

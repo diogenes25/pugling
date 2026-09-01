@@ -102,6 +102,28 @@ describe("ProfileForm – ein Freitext-Fach am Profil selbst", () => {
       .toBe(true);
   });
 
+  /*
+   * B-172, nachgetragen nach dem Review: Fach und Lehrwerk dieses Formulars waren vom neuen Verhalten
+   * unabgedeckt – der `frontend-reviewer` hat den Rückfall hier abgeschaltet und 299/299 blieben grün.
+   * Rot macht diese Fälle das Entfernen der Rückfall-Option.
+   */
+  it("zeigt das geladene Fach, wenn die Fächerliste es nicht kennt", () => {
+    render(<ProfileForm profile={profil({ subjectId: 1, subjectName: "Englisch" })} subjects={[]}
+      series={[]} onDone={() => {}} />);
+
+    expect((screen.getByLabelText("Fach", { exact: true }) as HTMLSelectElement).value).toBe("1");
+    expect((screen.getByRole("option", { name: "Englisch (nicht geladen)" }) as HTMLOptionElement)
+      .disabled).toBe(false);
+  });
+
+  it("zeigt das geladene Lehrwerk, wenn die Reihenliste es nicht kennt", () => {
+    render(<ProfileForm profile={profil({ seriesId: 9, seriesName: "Access" })} subjects={[ENGLISH]}
+      series={[]} onDone={() => {}} />);
+
+    expect((screen.getByLabelText("Lehrwerk", { exact: true }) as HTMLSelectElement).value).toBe("9");
+    expect(screen.getByRole("option", { name: "Access (nicht geladen)" })).toBeTruthy();
+  });
+
   it("zeigt keine Freitext-Option, wenn das Fach im Katalog steht", () => {
     render(<ProfileForm profile={profil({ subjectId: 1, subjectName: "Englisch" })} subjects={[ENGLISH]}
       series={[]} onDone={() => {}} />);

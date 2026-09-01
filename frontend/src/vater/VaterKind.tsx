@@ -31,7 +31,7 @@ export function VaterKind() {
   const child = useAsync<ChildResponse>(() => api.child(childId), [childId]);
   const interests = useAsync<ChildInterestResponse[]>(() => api.childInterests(childId), [childId]);
   const tags = useAsync<InterestTagResponse[]>(() => api.interestTags(), []);
-  // Für den Stundenplan: die Fächer des Katalogs.
+  // Für Unterrichtsmaterial und Stundenplan: die Fächer des Katalogs.
   const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
 
   const me = child.data;
@@ -60,16 +60,17 @@ export function VaterKind() {
 
       <ChildNav child={me} />
 
-      {/* Die Fächer speisen die Auswahlfelder in Unterrichtsmaterial und Stundenplan (B-172) – scheitert
-          der Abruf, fehlt dort die Auswahl. Ganz oben, weil er zwei Abschnitte weiter unten betrifft. */}
-      {subjects.error && <div className="banner err">Fächer: {subjects.error}</div>}
-
       <CoreDataSection child={me} onSaved={child.reload} />
 
       {/*
         Direkt hinter den Stammdaten: Klasse und Schulart von oben entscheiden mit, welcher Fachlehrer
         zu diesem Kind passt – die Wirkung soll auf demselben Blick sichtbar sein.
       */}
+      {/* Die Fächer speisen die Fach-Auswahl in Unterrichtsmaterial UND Stundenplan (B-172) – scheitert
+          der Abruf, fehlt dort die Auswahl. Hier und nicht am Seitenkopf: auf einem 393-px-Viewport wäre
+          der Kopf weit außerhalb des Blicks, in dem das leere Pulldown steht. Der Stundenplan liegt
+          zwei Abschnitte tiefer und teilt sich diese Meldung – das ist die kleinere Ungenauigkeit. */}
+      {subjects.error && <div className="banner err">Fächer: {subjects.error}</div>}
       <ChildMaterialSection childId={childId} childName={me.name} subjects={subjects.data ?? []} />
 
       {/* Wer betreut das Kind (gemeinsames Wallet) und wann welches Fach ansteht – beides Profilwissen. */}

@@ -1,8 +1,8 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/creator]
 aliases: [leeres Fach-Select loescht, subjects.data ?? [], Anzeige und Formularzustand driften]
-status: in-arbeit
-wartet_auf: frontend-reviewer
+status: abgenommen
+wartet_auf: ""
 prio: P1
 art: Defekt
 groesse: M
@@ -447,3 +447,46 @@ wenn die Prämisse falsch ist.
   **Bleibt auf `in-arbeit`:** der `frontend-reviewer` ist nicht gelaufen — diese Sitzung startet keine
   Agenten unaufgefordert. Nach `docs/backlog/README.md` ist das der ehrliche Ausgang; mein eigener Blick
   auf den Diff ist **kein** Review. `wartet_auf: frontend-reviewer`.
+- 2026-09-01 · **`frontend-reviewer` gelaufen** (auf Freigabe), kein Blocker, aber **sechs Funde — vier
+  davon echt und behoben:**
+
+  1. **Fünf der sieben Aufrufstellen waren ungetestet**, und das stand als einziger Punkt in meinem
+     eigenen Testweg („`TextbookForm.test.tsx` (3+4+5), `VaterFachlehrer.test.tsx` (6+7)"). Ich hatte es
+     übersprungen, ohne es bei den Abweichungen zu nennen — der Reviewer hat es *gemessen*, indem er die
+     Unit-Bedingung entfernte und den Rückfall im Profil abschaltete: **299/299 blieben grün.** Damit
+     hatte die intrikateste Zeile des Diffs null Abdeckung. Fünf Fälle nachgetragen; gegengemessen: die
+     Mutation „Rückfall-Option entfernen" lässt jetzt **10 Fälle in 4 Dateien** fallen statt 6 in 2, und
+     die Mutation „`eigeneUnit`-Bedingung entfernen" macht genau den neuen Unit-Fall rot (gefahren, dann
+     zurückgenommen).
+  2. **`loadedName` hing nicht an derselben Bedingung wie `loadedId`.** Nach einem Reihenwechsel entstand
+     die Signatur `loadedId == null && loadedName != null` — genau die, an der das Bauteil den
+     **Freitext**-Fall erkennt. Heute folgenlos (die Unit übergibt keinen Sentinel), aber eine Falle für
+     den, der ihr je einen gibt. Beide Props hängen jetzt an `eigeneUnit`.
+  3. **Das neue „Units:"-Banner widersprach der Liste daneben.** `useAsync` lässt `data` über den
+     Dep-Wechsel stehen: scheiterte `seriesUnits` nach einem Reihenwechsel, bot das Feld weiter die Units
+     der **alten** Reihe an, während darunter der Ausfall gemeldet wurde. Behoben mit
+     `units.error ? [] : units.data ?? []`. Vorbestehend, aber erst durch mein Banner sichtbar
+     widersprüchlich — und die Behebung gehört daher hierher.
+  4. **Eine Zusicherung prüfte die Hälfte ihres Namens nicht.** „die Rückfall-Option ist wählbar, nicht
+     gesperrt" blieb grün, wenn man sie sperrt: `select.value = x` greift im DOM auch auf eine gesperrte
+     Option. `expect(option.disabled).toBe(false)` ergänzt.
+  5. **Die Banner-Platzierung in `VaterKind`** saß am Seitenkopf, zwei Abschnitte über den Feldern, die
+     sie erklärt — auf 393 px außerhalb des Blicks. Nach unten vor `ChildMaterialSection` gezogen, der
+     veraltete Kommentar an der Abfrage mit.
+
+  **Zwei Funde bewusst nicht hier behoben**, beide als eigene Story abgelegt (Backlog-Regel „ein Fund beim
+  Bauen wird eine eigene Story"): [B-184](B-184-vier-platzhalter-zeigen-fehler-als-laedt-noch.md) (vier
+  Platzhalter zeigen einen Fehler dauerhaft als „Lade…" — nachgemessen: **37 von 41** Stellen machen es
+  richtig, vier nicht) und [B-185](B-185-anlegemodus-behauptet-uebernommenes-fach.md) (im Anlege-Modus
+  behauptet `DerivedHint` ein übernommenes Fach, das das Feld nicht zeigt).
+
+  **Ein Fund abgelehnt, mit Begründung:** `role="alert"` auf den sieben neuen Bannern. Das Argument des
+  Reviewers (einziges Signal des Ausfalls, SC 4.1.3) ist richtig, die Umsetzung wäre falsch — ein `role`
+  auf einem `{x.error && …}` ist der **vierzehnte** Fall des Defekts, den
+  [B-134](B-134-bedingte-live-regionen.md) besitzt: eine Live-Region, die mit ihrem Text entsteht,
+  schweigt (`StatusBanner.tsx:9-12` begründet die Regel). Die sieben sind dort als Kandidaten für denselben
+  Sweep eingetragen.
+
+  **Belegt nach den Korrekturen:** Vitest **304/304** (36 Dateien), `npm run build` grün, Playwright
+  **37/37**, Backend **831/831** (`-c Release`; keine `.cs` angefasst). Rollengang: die neue E2E fährt den
+  Weg im echten Chromium; dazu die Browser-Messung von Schritt 2, die den Ausgangszustand belegt.
