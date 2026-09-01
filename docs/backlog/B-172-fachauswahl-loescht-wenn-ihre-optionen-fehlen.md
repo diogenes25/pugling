@@ -2,6 +2,7 @@
 tags: [typ/story, status/abgenommen, bereich/frontend, rolle/creator]
 aliases: [leeres Fach-Select loescht, subjects.data ?? [], Anzeige und Formularzustand driften]
 status: abgenommen
+nachgeschaut: 2026-09-01
 wartet_auf: ""
 prio: P1
 art: Defekt

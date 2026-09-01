@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/supervisor, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/supervisor, rolle/creator]
 aliases: [Gespeichert-Banner unsichtbar, onDone schließt das Formular, StatusBanner im geschlossenen Formular]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: S
@@ -130,3 +130,16 @@ sondern die ganze Zeile aus einer gefilterten Liste.
   Die erste Fassung prüfte „Gespeichert." *vor* dem Verschwinden des Formulars; `toBeVisible()` pollt und
   traf das Banner im Frame, in dem es noch stand — sie hätte **vor wie nach** der Reparatur gehalten.
   Erst mit umgedrehter Reihenfolge (erst auf `toHaveCount(0)` warten, dann die Meldung fordern) fiel sie.
+- 2026-09-01 · **`in-arbeit` → `abgenommen`** (Nachtlauf, Sprint 1). Belege:
+  - **Reviewer:** `frontend-reviewer` in **zwei** Runden. Runde 1 setzte einen berechtigten Blocker
+    (Meldungsführung), Runde 2 meldete **keinen Blocker mehr**; ihre drei kleineren Funde sind in
+    `6688ff5` eingearbeitet.
+  - **Rollengang:** maschinell geführt — voller Playwright-Lauf **42/42 grün**, echter Chromium gegen
+    echten Server mit Wegwerf-DB. Freigabe 6 greift nicht (keine Browser-Verbindung in dieser Sitzung);
+    der E2E-Weg ist der dokumentierte **stärkere** Beleg, kein Ersatz.
+  - **Zahlen:** `npx tsc -b` sauber · `npm run test` **326/326** in 38 Dateien.
+  - **Commits:** `e479d83` (Bau) und `6688ff5` (Nachprüfung des Reviewers).
+  - **Was ein Mensch noch ansehen muss:** nur bei B-151/B-173 — siehe dort.
+  - **Offen für ein menschliches Auge** (dritter Ausgang, `pm-loop` Step 6): Ob der Meldungsplatz der
+    Seite dort liegt, wo der Nutzer hinsieht, kann kein Test beurteilen. Benannter Check:
+    `/vater/kind/:id` mit mehreren Büchern öffnen, ein mittleres bearbeiten und speichern.

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/frontend]
+tags: [typ/story, status/abgenommen, bereich/frontend]
 aliases: [Lade… bleibt nach Fehler stehen, data === null ohne loading, Platzhalter widerspricht Banner]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: S
@@ -123,3 +123,13 @@ nicht getan. Das ist eine Regel, die an Disziplin hängt, und ihr Bruch ist unsi
   fehlenden Symbol. `frontend/CLAUDE.md` nennt jetzt beide zulässigen Formen; das Kontextbudget ist im
   selben Durchgang gegengerechnet (die Datei ist netto **16 Bytes kleiner** als vorher — zwei
   Erzähl-Passagen zu B-25 und B-106 sind auf ihre Aussage gekürzt, ihre Begründung steht in `docs/`).
+- 2026-09-01 · **`in-arbeit` → `abgenommen`** (Nachtlauf, Sprint 1). Belege:
+  - **Reviewer:** `frontend-reviewer` in **zwei** Runden. Runde 1 setzte einen berechtigten Blocker
+    (Meldungsführung), Runde 2 meldete **keinen Blocker mehr**; ihre drei kleineren Funde sind in
+    `6688ff5` eingearbeitet.
+  - **Rollengang:** maschinell geführt — voller Playwright-Lauf **42/42 grün**, echter Chromium gegen
+    echten Server mit Wegwerf-DB. Freigabe 6 greift nicht (keine Browser-Verbindung in dieser Sitzung);
+    der E2E-Weg ist der dokumentierte **stärkere** Beleg, kein Ersatz.
+  - **Zahlen:** `npx tsc -b` sauber · `npm run test` **326/326** in 38 Dateien.
+  - **Commits:** `e479d83` (Bau) und `6688ff5` (Nachprüfung des Reviewers).
+  - **Was ein Mensch noch ansehen muss:** nur bei B-151/B-173 — siehe dort.

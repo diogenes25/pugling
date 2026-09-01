@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/creator]
 aliases: [categories.error wird nie gezeigt, Fach hat keine Arten oder Laden gescheitert]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: S
@@ -132,3 +132,13 @@ gelesen.
   **Und der Testweg dieser Story war zu eng geschätzt:** „kein E2E, das bräuchte einen abgeschalteten
   Server" ist falsch — `page.route(…).abort()` kostet eine Zeile (`optionsliste-faellt-aus.spec.ts` sagt
   das im eigenen Kopfkommentar). Die Story hat darum zusätzlich `e2e/ausfall-wird-genannt.spec.ts`.
+- 2026-09-01 · **`in-arbeit` → `abgenommen`** (Nachtlauf, Sprint 1). Belege:
+  - **Reviewer:** `frontend-reviewer` in **zwei** Runden. Runde 1 setzte einen berechtigten Blocker
+    (Meldungsführung), Runde 2 meldete **keinen Blocker mehr**; ihre drei kleineren Funde sind in
+    `6688ff5` eingearbeitet.
+  - **Rollengang:** maschinell geführt — voller Playwright-Lauf **42/42 grün**, echter Chromium gegen
+    echten Server mit Wegwerf-DB. Freigabe 6 greift nicht (keine Browser-Verbindung in dieser Sitzung);
+    der E2E-Weg ist der dokumentierte **stärkere** Beleg, kein Ersatz.
+  - **Zahlen:** `npx tsc -b` sauber · `npm run test` **326/326** in 38 Dateien.
+  - **Commits:** `e479d83` (Bau) und `6688ff5` (Nachprüfung des Reviewers).
+  - **Was ein Mensch noch ansehen muss:** nur bei B-151/B-173 — siehe dort.

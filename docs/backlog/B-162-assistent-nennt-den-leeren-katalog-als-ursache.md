@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/frontend, bereich/lehrplan, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/lehrplan, rolle/supervisor]
 aliases: [Gescheiterte Katalogsuche liest sich als leerer Katalog]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: M
@@ -184,3 +184,13 @@ sondern „die Zahl gehört zu einer anderen Abfrage als die Meldung daneben".
   (`creator/exercises/search`) traf den Endpunkt nicht, der Fall fiel also aus dem *falschen* Grund
   (`creator/exercises?…` ist richtig). Ein rot gelaufener Test ist kein Beleg, solange nicht feststeht,
   woran er fiel.
+- 2026-09-01 · **`in-arbeit` → `abgenommen`** (Nachtlauf, Sprint 1). Belege:
+  - **Reviewer:** `frontend-reviewer` in **zwei** Runden. Runde 1 setzte einen berechtigten Blocker
+    (Meldungsführung), Runde 2 meldete **keinen Blocker mehr**; ihre drei kleineren Funde sind in
+    `6688ff5` eingearbeitet.
+  - **Rollengang:** maschinell geführt — voller Playwright-Lauf **42/42 grün**, echter Chromium gegen
+    echten Server mit Wegwerf-DB. Freigabe 6 greift nicht (keine Browser-Verbindung in dieser Sitzung);
+    der E2E-Weg ist der dokumentierte **stärkere** Beleg, kein Ersatz.
+  - **Zahlen:** `npx tsc -b` sauber · `npm run test` **326/326** in 38 Dateien.
+  - **Commits:** `e479d83` (Bau) und `6688ff5` (Nachprüfung des Reviewers).
+  - **Was ein Mensch noch ansehen muss:** nur bei B-151/B-173 — siehe dort.

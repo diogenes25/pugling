@@ -2,6 +2,7 @@
 tags: [typ/story, status/abgenommen, bereich/katalog, bereich/training, rolle/creator, rolle/supervisor]
 aliases: [Punkte-Empfehlung, RewardPoints]
 status: abgenommen
+nachgeschaut: 2026-09-01
 prio: P2
 art: Wunsch
 groesse: S

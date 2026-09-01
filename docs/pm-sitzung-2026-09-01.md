@@ -134,3 +134,212 @@ die Meldung fordern — fiel sie.
 
 **Verifikation:** `npx tsc -b` sauber · `npm run test` **326/326** in 38 Dateien · voller Playwright-Lauf
 **42/42**.
+
+## Review (Step 5) — zwei Runden `frontend-reviewer`
+
+**Runde 1 — ein Blocker, und er war berechtigt.** Mein erster Entwurf spiegelte *jede* Meldung des
+Formulars an den Seitenplatz. Damit wanderten auch „Der Name der Reihe fehlt." und „Nichts geändert."
+ans Seitenende — Meldungen, die die Zeile nie verlassen. Ein Speichern mit leerem Namen sah am Formular
+aus wie „nichts passiert". Der Reviewer hat das benannt, ich habe es nicht gesehen.
+
+**Der vorgeschlagene Fix war ebenfalls falsch, und das hat eine Messung gezeigt, keine Überlegung.**
+„Die Meldung lokal *und* oben zeigen" ließ „Gespeichert." doppelt auf einem Bildschirm stehen; daran
+brachen **vier bestehende E2E** (`strict mode violation … resolved to 2 elements`, dreimal in
+`lehrwerk-bearbeiten.spec.ts`, einmal in `optionsliste-faellt-aus.spec.ts`).
+
+**Die tragende Fassung ist die dritte**, und der Reviewer hat sie in der Nachprüfung schärfer formuliert
+als ich beim Bauen: **Die Meldung wandert genau dann, wenn ihr Träger sterben kann** — und nur der
+Erfolgspfad ruft `onSaved()`/`onDone()`. Damit ist `useReportedMessage` wieder entfallen; es gibt **einen**
+Mechanismus, wie Entscheidung 1 beider Stories es verlangt hatte.
+
+**Runde 2 — kein Blocker mehr**, drei kleinere Funde, alle eingearbeitet (Commit `6688ff5`): eine übrig
+gebliebene Zusicherung, die den Ausgangszustand prüft; ein nicht geräumter Meldungsplatz beim Aufklappen
+einer Reihe; `{ exact: true }` an beiden „Gespeichert."-Zusicherungen.
+
+## Runde 1 — Rollengang / Abnahme (Step 6)
+
+Geführt als **maschineller Rollengang**: der volle Playwright-Lauf fährt echten Chromium gegen echten
+Server mit Wegwerf-DB. Das *ist* der Rollengang, nur wiederholbar statt einmalig — und ausdrücklich kein
+Ersatzbeleg. Freigabe 6 greift nicht (keine Browser-Verbindung in dieser Sitzung), der dokumentierte
+E2E-Weg ist der stärkere.
+
+**Ergebnis: 42/42 grün**, darunter vier neue Fälle, die vor der Reparatur nachweislich rot waren.
+
+**Creator** (`/vater/katalog`, `/vater/lehrwerke`) — abgenommen:
+
+> „Wenn die Arten nicht laden, sehe ich das jetzt. Vorher habe ich auf eine stumme Liste geschaut und
+> hätte eine Art zum zweiten Mal angelegt — im geteilten Katalog, wo ich sie in einem Grundbestands-Fach
+> nie wieder losgeworden wäre. Und wenn ich einer Reihe den Verlag wegnehme, während ich nach genau dem
+> Verlag filtere, verschwindet sie zwar — aber ich sehe, dass es geklappt hat, statt zu glauben, ich
+> hätte sie gelöscht."
+> Belegt durch `ausfall-wird-genannt.spec.ts` (B-174) und `bestaetigung-ueberlebt.spec.ts` (B-173).
+
+**Vater/Supervisor** (`/vater/wizard`, `/vater/kind/:id`) — abgenommen:
+
+> „Der Assistent behauptet nicht mehr, mein Katalog sei leer, wenn in Wahrheit die Suche gescheitert ist —
+> und, wichtiger: ich komme aus dem Zustand wieder raus. Vorher half nur F5, und das kostet den ganzen
+> Assistenten. Beim Lehrbuch am Kind sehe ich endlich, dass gespeichert wurde."
+> Belegt durch `ausfall-wird-genannt.spec.ts` (B-162, inkl. dem Knopf, der wirklich neu sucht) und
+> `bestaetigung-ueberlebt.spec.ts` (B-151).
+
+**Sohn/Student** — **Regressionszeuge, kein zweites Urteil.** Kein Pfad der Sohn-Arcade liegt im Diff
+(die fünf Stories fassen ausschließlich `src/vater/` und `src/lib/` an); seine Specs (`full-flow`,
+`uebung-abbruch`, `uebungstypen`, `shop-verlauf`, `perspektiven`) sind im selben Lauf grün. Mehr wird hier
+nicht behauptet — O-Ton für eine Rolle zu erfinden, die die Änderung nie berührt hat, ist genau der
+hohle Stempel, den Step 6 verhindern soll.
+
+### Was ein Mensch noch ansehen muss (dritter Ausgang, nicht verschwiegen)
+
+**Die Platzierung des Meldungsplatzes ist nicht maschinell beurteilbar.** Der Reviewer hat es benannt und
+ausdrücklich *nicht* blockiert: Bleibt die Zeile stehen (der Normalfall in einer ungefilterten Liste),
+liegt „Gespeichert." jetzt unter der ganzen Tabelle statt unter dem Knopf — bei zehn Reihen mit
+aufgeklapptem Formular plausibel außerhalb des Sichtfelds. Ein E2E kann belegen, dass die Meldung **im
+DOM** ist; ob sie **gesehen** wird, kann es nicht.
+
+**Benannter Check für dich:** `/vater/lehrwerke` mit mehreren Reihen öffnen, eine mittlere bearbeiten und
+speichern — ist die Bestätigung dort, wo du hinsiehst? Wenn nein, ist der billigste Weg der Vorschlag des
+Reviewers: die reisende Meldung **benennen** (`Gespeichert: „Access 6"`). Das beantwortet zugleich die
+Frage „welche der zehn Reihen?", wenn die Zeile verschwunden ist.
+
+## Retrospektive (Sprint 1)
+
+**Nachschau:** B-45 und B-172 (die Arbeit des vorigen Sprints, beide am 2026-09-01 abgenommen und danach
+nie wieder angesehen). Beide gegen den **Code** nachgerechnet, nicht gegen die Testfarbe — Akzeptanzkriterium
+für Akzeptanzkriterium, dazu gezielt die Fehlerfamilie „eine Bedingung, die zwei Situationen zusammenzieht".
+`nachgeschaut: 2026-09-01` an beiden gesetzt. Index danach: **Nachgeschaut 109 von 113.**
+
+**Fünf Defekte gefunden, vier davon in abgenommener Arbeit:**
+
+| Neu | Was | `entgangen_bei` |
+|---|---|---|
+| [B-191](backlog/B-191-punktevorbelegung-traegt-den-wert-der-vorigen-uebung.md) | `pointsFrom(ex, current)` — `current` heißt „selbst getippt" **und** „von der vorher angeklickten Übung geerbt". Übung A (100) → Übung B (0) → Position B trägt 100 Münzen, die niemand gesetzt hat | B-45 |
+| [B-192](backlog/B-192-obergrenze-schuetzt-nur-den-api-pfad.md) | Die Obergrenze (0, 200] greift nur bei `pointsGoalMet = null`; das Vater-Web schickt **immer** eine Zahl — der Vererbungszweig wird über die Oberfläche nie genommen | B-45 |
+| [B-193](backlog/B-193-vertragsdoku-nennt-die-alte-null-bedeutung.md) | `StudyPlanDtos.cs:99` sagt in Swagger weiter „`null` = 20"; die sechs Geschwister darunter sagen es richtig | B-45 |
+| [B-195](backlog/B-195-unit-liste-bleibt-waehrend-des-reihenwechsels-waehlbar.md) | `units.error ? [] : …` deckt den Fehlerfall, nicht das Ladefenster — während des Reihenwechsels bleiben die Units der alten Reihe **wählbar** | B-172 |
+| [B-194](backlog/B-194-plandetail-kinderauswahl-ohne-rueckfall.md) | Der achte `<select>`-Fall hat die Regel von B-172 nicht geerbt | — (außerhalb des damaligen Umfangs) |
+
+**Die Zahl steigt, und das ist die ehrliche Lesart:** Drei Entgleitungen aus **einer** abgenommenen Story
+(B-45) sind viel. Bemerkenswert ist dabei nicht die Menge, sondern dass B-191 **exakt** das Fehlerprofil
+trägt, das der Bereich seit dem 2026-08-05 dokumentiert — *eine Bedingung, die zwei Situationen
+zusammenzieht*. Das Profil ist benannt, in einer `CLAUDE.md`-Regel verankert, von zwei Reviewern gesucht
+worden — und ist trotzdem wieder durchgekommen.
+
+### Was die Tore dieses Sprints durchgelassen haben
+
+Ein Fund kam **von außerhalb der Schleife** und ist damit per Definition ein Retro-Eingang: Der
+`frontend-reviewer` musste mir sagen, dass mein Meldungs-Umbau funktionierende Pfade zerstört. Kein Tor
+hätte das gefangen — bis der **rote Test** kam: Erst die vier gebrochenen E2E haben entschieden, dass auch
+der *vorgeschlagene* Fix falsch war. Die Messung hat zwei Meinungen geschlagen.
+
+Der wertvollste Selbstfund ist unangenehmer: **Meine eigene rote Probe war zuerst zahnlos.** Die beiden
+Bestätigungs-E2E prüften „Gespeichert." *vor* dem Verschwinden ihres Trägers; `toBeVisible()` pollt und
+traf das Banner im letzten Frame. Sie hätten **vor wie nach** der Reparatur gehalten — also genau das, was
+`CLAUDE.md` seit vier Messungen verbietet. Die rote Probe je Datei fängt das nicht: sie fragt, ob
+*irgendein* Fall fällt, und drei andere fielen ja.
+
+### Der vorgeschlagene Mechanismus — nur Vorschlag, nicht gelandet
+
+Freigabe 3 verbietet diesem Lauf das Landen. Der Vorschlag steht darum hier und wartet auf deine
+Entscheidung:
+
+> **Eine E2E-Zusicherung über einen Zustand, der verschwinden kann, nennt die Reihenfolge.** Wo ein Test
+> belegt, dass etwas ein Verschwinden **überlebt**, muss zuerst auf das Verschwinden gewartet werden
+> (`toHaveCount(0)`) und **danach** die Überlebende gefordert. Andersherum pollt Playwright den Frame, in
+> dem beide noch stehen, und die Zusicherung kann nicht fallen.
+>
+> **Ort:** `frontend/CLAUDE.md`, direkt bei „Eine Fläche je E2E-Spec". **Nicht** als Tor — die Regel ist
+> syntaktisch nicht trennscharf von einer legitimen Reihenfolge, und ein Wächter, der raten muss,
+> produziert Ausnahmelisten statt Sicherheit.
+> **Kosten:** ~330 Bytes in einer Datei mit Kontextbudget. Zu bezahlen im selben Durchgang — dieser Lauf
+> hat dort bereits 315 Bytes freigeräumt und die Datei netto **16 Bytes kleiner** hinterlassen als vorher,
+> es gibt also Luft, aber sie ist nicht geschenkt.
+
+**Ein zweiter Kandidat, ausdrücklich nicht empfohlen:** ein Wächter über `getByText` ohne `{ exact: true }`.
+Er hätte B-189 gefangen — aber Teilstring ist meistens gewollt, und die Regel wäre nicht trennscharf. Der
+Bereich hat mit „feste Untergrenzen verrotten" schon einmal bezahlt, was dabei herauskommt.
+
+### Was bewusst ungedeckt bleibt
+
+Dass eine Meldung **gesehen** wird, kann keine Maschine prüfen — nur, dass sie im DOM steht. Der dritte
+Ausgang von Step 6 ist dafür da, und er ist mit einem benannten Check besetzt (siehe oben).
+
+## Der Lauf endet hier — und zwar an einer Regel, nicht an einem Urteil
+
+Freigabe 3 zieht eine Grenze: *„Ein Zähler je Sprint zählt jeden so gefundenen Fehler, dessen Behebung
+Code oder Tests ändert; überschreitet er **5**, ist das keine Korrektur mehr, sondern eine Endlosschleife —
+dann endet der GESAMTE Lauf sofort."*
+
+**Gezählt, ehrlich statt günstig: neun.** Alle im Increment dieses Sprints, alle mit einer Änderung an Code
+oder Tests:
+
+| # | Fund | Quelle | Behebung fasste an |
+|---|---|---|---|
+| 1 | Meldung wanderte auch dort nach oben, wo die Zeile bleibt — Eingabefehler landeten am Seitenende | Reviewer R1 | Code |
+| 2 | Der Übergang nach `null` wurde nicht gemeldet, der Seitenplatz veraltete | Reviewer R1 | Code |
+| 3 | `CatalogAdmin.test.tsx` prüfte `role="alert"`, das es nirgends gab | Reviewer R1 | Test |
+| 4 | Die E2E-Retry-Zusicherung war schon erfüllt, wenn eine Abfrage nur *startete* | Reviewer R1 | Test |
+| 5 | Beide neuen Fehler-Banner waren für Screenreader stumm (SC 4.1.3) | Reviewer R1 | Code |
+| 6 | Der Fix zu #1 zeigte die Meldung doppelt und brach **vier bestehende E2E** | roter Test | Code |
+| 7 | Eine übrig gebliebene Zusicherung prüfte den Ausgangszustand | Reviewer R2 | Test |
+| 8 | Der Seitenplatz wurde beim Aufklappen einer Reihe nicht geräumt | Reviewer R2 | Code |
+| 9 | `getByText("Gespeichert.")` ohne `exact` — dieselbe Falle wie B-189 | Reviewer R2 | Test |
+
+**Nicht gezählt, mit Grund:** die vier Funde außerhalb des Sprint-Diffs (B-187, B-188, B-189, B-190) und
+die fünf der Nachschau (B-191…B-195) — Freigabe 3 nimmt „außerhalb des Diffs dieses Sprints" ausdrücklich
+aus. Ebenso die Dokumentation der Identitäts-Anforderung an `useReportedMessage`: reiner Kommentar.
+
+**Man könnte das kleiner rechnen** — #6 ist die Folge von #1, #2 fiel mit der Vereinheitlichung ohnehin
+weg, und #3/#7/#9 sind Schwächen in *neuen* Tests statt Produktdefekte. Selbst bei der günstigsten Zählung
+bleiben es sechs. Die Grenze ist mechanisch, und ich lege sie nicht zu meinen Gunsten aus: **die Nacht
+endet nach Sprint 1.** Sprint 2 (B-187, B-188, B-190 — die direkten Nachkommen dieses Fadens) ist geplant,
+zugeschnitten und **nicht** begonnen.
+
+Zur Einordnung, ohne die Grenze wegzureden: Die Schwere fiel deutlich (R1 ein Blocker, R2 keiner), der
+Sprint ist grün abgeschlossen, alles ist committet. Ob neun Funde „nicht konvergiert" heißen oder
+„ein gründlicher Reviewer an einer heiklen Umstellung", ist deine Entscheidung am Morgen — die Regel sagt
+nur, dass ich sie nicht allein treffe.
+
+## Offene Punkte für den Morgen — die Entscheidungen, die ich gebraucht hätte
+
+Freigabe 1/8 sperrt `Wunsch` und `Frage` unterhalb von `geschaetzt`. Notiert, **nicht** entschieden:
+
+| Story | Die Entscheidung, die fehlt |
+|---|---|
+| [B-183](backlog/B-183-gescheitertes-lesen-ohne-erneuten-versuch.md) (`Wunsch`) | Der thematisch nächste Nachbar dieses Sprints. B-162 hat **einen** „Erneut suchen"-Knopf an **einer** Stelle gebaut, weil dort der Ausweg nachweislich versperrt war. Soll daraus eine Infrastruktur über alle Lesewege werden — und wenn ja, an `useAsync` oder je Fläche? Das ist Produktrichtung, nicht Reparatur. |
+| [B-186](backlog/B-186-assistent-und-planseite-setzen-zielpunkte-verschieden.md) (`Frage`) | **Hängt jetzt an B-191/B-192.** Die Nachschau hat gezeigt, dass die Plan-Seite die serverseitige Vererbung nie auslöst — die Frage „setzen beide Wege die Zielpunkte gleich?" hat damit eine belegte Antwort: nein. Lohnt der Prüfauftrag noch, oder geht er in B-192 auf? |
+| [B-152](backlog/B-152-schoolTypes-filter-und-attribut.md) (`Frage`) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab. Ein Prüfauftrag, der in `verworfen` enden kann; das ist eine Wertentscheidung. |
+| [B-122](backlog/B-122-top-level-listen-bekommen-paging.md) (`Wunsch`) | Sieben Top-Level-Sammlungen ohne `skip`/`take`. Neue Fähigkeit. |
+| [B-140](backlog/B-140-freigabe-kennzeichen-in-der-uebungsauswahl.md) (`Wunsch`) | Kennzeichen für zurückgezogene Übungen in der Auswahl. |
+| [B-90](backlog/B-90-server-sprachfeld.md) · [B-91](backlog/B-91-vater-web-extraktion-englisch.md) · [B-92](backlog/B-92-franzoesisch-zweite-zielsprache.md) (`Wunsch`) | Das Mehrsprachigkeits-Programm. Reihenfolge und Umfang sind Produktrichtung. |
+
+**Dazu der eine P1, den keine Nacht anfassen darf:**
+[B-170](backlog/B-170-selbst-angelegte-art-im-grundbestand-ist-unloeschbar.md) — der verbliebene Kern ist
+die Schema-Entscheidung `ExerciseCategory.CreatedByAdultId` ja/nein. Du hast sie am 2026-08-14
+ausdrücklich auf den Tag gelegt (die Kette wird dabei neu gefaltet, und der Snapshot-Diff *ist* die
+Abnahme). Der nachts baubare Teil ist als B-178 abgeflossen und abgenommen.
+
+## Offene Roadmap
+
+Die dauerhafte Liste ist [docs/backlog/](backlog/README.md) — hier steht nur die **Begründung** der
+aktuellen Reihenfolge, nicht die Reihenfolge selbst.
+
+**Der nächste Sprint liegt fertig zugeschnitten da** und heißt *„ein Fehlschlag gibt sich nicht mehr als
+Erfolg aus"* — er führt den Faden dieser Nacht von der Oberfläche ins Werkzeug:
+[B-188](backlog/B-188-wizard-verschweigt-drei-weitere-ausfaelle.md) (P2, der `children`-Fall kostet ein
+doppelt angelegtes Kind), [B-187](backlog/B-187-unitform-verliert-seine-bestaetigung.md) (der dritte Fall
+von B-151) und [B-190](backlog/B-190-backlog-index-schreibt-leeren-index.md) (P2 — der Index-Generator
+meldet „geschrieben", nachdem `awk` `fatal` gesagt hat, und löscht dabei die Übersicht über 64 offene
+Stories; in dieser Nacht selbst ausgelöst).
+
+**Danach** drängen sich die drei Nachschau-Funde zu B-45 auf — B-191 vor allem, weil er das Fehlerprofil
+trägt, das der Bereich seit einem Monat namentlich sucht und trotzdem wieder durchgelassen hat.
+
+## Konkreter Änderungsstand (für Review)
+
+| Commit | Inhalt |
+|---|---|
+| `91785c5` | Fünf Stories durch `ausformuliert`/`gegrillt`/`geschaetzt`, Ist-Stände am Code belegt |
+| `e479d83` | Sprint-Increment: B-162, B-173, B-174, B-184, B-151, B-189 |
+| `6688ff5` | Nachprüfung des Reviewers eingearbeitet |
+
+**Nichts ist gepusht** — das bleibt bei dir.
