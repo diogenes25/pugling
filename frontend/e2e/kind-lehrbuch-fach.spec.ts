@@ -48,7 +48,11 @@ test("Ein gelöschtes Fach am Lehrbuch überlebt das Speichern anderer Felder", 
   await page.locator("#tbnew-subject").selectOption({ label: fach });
   await page.locator("#tbnew-chapter").fill("Unit 1");
   await page.getByRole("button", { name: "Buch hinterlegen" }).click();
-  await expect(page.getByText("Buch hinterlegt.")).toBeVisible();
+  // `exact` ist hier tragend, nicht Stil: `getByText` vergleicht als Teilstring, und der Leer-Text
+  // „Noch kein Buch hinterlegt." enthält diese Meldung. Solange das Neuladen läuft, steht er noch da –
+  // im vollen Suite-Lauf lange genug, dass die Zusicherung als „strict mode violation" abbricht
+  // (gemessen am 2026-09-01: allein grün, im Lauf über 42 Fälle rot).
+  await expect(page.getByText("Buch hinterlegt.", { exact: true })).toBeVisible();
   await expect(page.getByRole("row", { name: new RegExp(buch) })).toContainText(fach);
 
   // ---- Das Fach löschen. Erlaubt: daran hängt nur ein Lehrbuch, und dessen Bezug ist optional (B-144) ----

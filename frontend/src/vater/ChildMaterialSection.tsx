@@ -8,6 +8,7 @@ import { EMPTY_TEXTBOOK_FORM, textbookFormValues, textbookPatch, type TextbookFo
 import { api } from "../lib/api";
 import { seriesOptions, subjectOptions, unitOptions } from "../lib/referenceOptions";
 import { useAction } from "../lib/useAction";
+import type { ActionMessage } from "../lib/useAction";
 import { matchReasonLabel } from "../lib/labels";
 import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
@@ -37,6 +38,15 @@ export function ChildMaterialSection({ childId, childName, subjects }: {
   const books = useAsync<TextbookResponse[]>(() => api.childTextbooks(childId), [childId]);
   const series = useAsync<TextbookSeriesResponse[]>(() => api.textbookSeries(), []);
   const [editing, setEditing] = useState<number | null>(null);
+  /*
+   * Der Meldungsplatz der Seite (B-151). Das Bearbeiten-Formular trägt seinen eigenen `StatusBanner` –
+   * und schließt sich beim Speichern, nimmt ihn also mitsamt der Bestätigung aus dem DOM. Die Meldung
+   * reist darum beim Schließen mit `onDone` hier herauf.
+   *
+   * Offen bleiben lassen wäre der Reflex und ist hier VERBOTEN: der `useRef`-Bezugspunkt des PATCH-Diffs
+   * zieht nicht aus der Antwort nach, gerade WEIL das Formular schließt (siehe `TextbookForm`).
+   */
+  const [meldung, setMeldung] = useState<ActionMessage | null>(null);
 
   return (
     <section>
@@ -51,7 +61,7 @@ export function ChildMaterialSection({ childId, childName, subjects }: {
       {/* Die Reihen speisen das Auswahlfeld der Formulare (B-172) – scheitert der Abruf, fehlt dort die
           Auswahl, und ohne diese Zeile war das nicht zu sehen. */}
       {series.error && <div className="banner err">Reihen: {series.error}</div>}
-      {books.data === null ? <div className="loading">Lade…</div> : books.data.length === 0 ? (
+      {books.showPlaceholder ? <div className="loading">Lade…</div> : books.data === null ? null : books.data.length === 0 ? (
         <p className="muted">Noch kein Buch hinterlegt.</p>
       ) : (
         <table className="table">
@@ -80,7 +90,7 @@ export function ChildMaterialSection({ childId, childName, subjects }: {
                     <button
                       type="button" className="btn ghost small" style={{ width: "auto" }}
                       aria-label={`${b.title} bearbeiten`}
-                      onClick={() => setEditing(editing === b.id ? null : b.id)}
+                      onClick={() => { setMeldung(null); setEditing(editing === b.id ? null : b.id); }}
                     >{editing === b.id ? "Schließen" : "Bearbeiten"}</button>
                   </td>
                 </tr>
@@ -89,7 +99,7 @@ export function ChildMaterialSection({ childId, childName, subjects }: {
                     <td colSpan={5}>
                       <TextbookForm
                         childId={childId} book={b} series={series.data ?? []} subjects={subjects}
-                        onDone={() => { setEditing(null); books.reload(); }}
+                        onDone={(m) => { setEditing(null); books.reload(); if (m) setMeldung(m); }}
                       />
                     </td>
                   </tr>
@@ -108,12 +118,14 @@ export function ChildMaterialSection({ childId, childName, subjects }: {
         />
       </div>
 
+      <StatusBanner message={meldung} />
+
       {/* Erst mit geladenen Büchern: Das Panel leitet sein Fach AUS ihnen ab. Vorher (`?? []`) fragte es
           erst ohne Fach und gleich darauf noch einmal mit – eine überflüssige Runde und dazwischen eine
           Trefferliste, die schon wieder falsch war. */}
       {books.data
         ? <MatchPanel childId={childId} childName={childName} books={books.data} />
-        : <div className="loading">Lade…</div>}
+        : books.showPlaceholder ? <div className="loading">Lade…</div> : null}
     </section>
   );
 }
@@ -139,7 +151,11 @@ export function TextbookForm({ childId, book, series, subjects, onDone }: {
   book?: TextbookResponse;
   series: TextbookSeriesResponse[];
   subjects: SubjectResponse[];
-  onDone: () => void;
+  /**
+   * Schließt bzw. lädt neu. Das optionale Argument ist die Bestätigung, die MITREISEN muss: Der eigene
+   * `StatusBanner` unten hängt am Formular, und das Formular ist nach diesem Aufruf weg (B-151).
+   */
+  onDone: (message?: ActionMessage) => void;
 }) {
   // Der Ladezustand ist der Bezugspunkt des Diffs (B-148) – er darf sich NICHT mit dem Formular
   // mitbewegen, sonst entscheidet der Vergleich gegen sich selbst und der Schalter entstünde wieder aus
@@ -184,8 +200,11 @@ export function TextbookForm({ childId, book, series, subjects, onDone }: {
       // Kein leerer PATCH: er wäre erfolgreich und folgenlos, und „Gespeichert." wäre dann eine Lüge.
       if (patch === null) { action.succeed("Nichts geändert."); return; }
 
-      if (!await action.run(() => api.updateChildTextbook(childId, book.id, patch), "Gespeichert.")) return;
-      onDone();
+      // Ein Text, zwei Anzeigeorte: der Banner im Formular (das gleich zugeht) und der Platz auf
+      // Seitenebene. Zwei Literale nebeneinander divergieren beim ersten Textpflege-Durchgang lautlos.
+      const bestaetigung = "Gespeichert.";
+      if (!await action.run(() => api.updateChildTextbook(childId, book.id, patch), bestaetigung)) return;
+      onDone({ ok: true, text: bestaetigung });
       return;
     }
 

@@ -102,7 +102,8 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
             jede Übung hängt seit Kurzem an einer Unit statt an einem Kapitel.
           </p>
 
-          <CategorySection subject={subject} categories={categories.data} busy={action.busy}
+          <CategorySection subject={subject} categories={categories.data} error={categories.error}
+            busy={action.busy}
             onSave={(c, name) => act(() => api.updateCategory(subject.id, c.id, name), "Art umbenannt.", categories.reload)}
             onDelete={(c) => {
               if (!confirmAction(`Art „${c.name}" löschen? Übungen behalten ihren Inhalt, verlieren aber die Zuordnung.`)) return;
@@ -129,9 +130,16 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
  * Eigener exportierter Baustein aus demselben Grund wie `SubjectRow`: `CatalogAdmin` lädt beim Fachwechsel
  * nach und hängt am Netz, dieser Abschnitt nicht.
  */
-export function CategorySection({ subject, categories, busy, onSave, onDelete, onCreate }: {
+export function CategorySection({ subject, categories, error, busy, onSave, onDelete, onCreate }: {
   subject: SubjectResponse;
   categories: CategoryResponse[] | null | undefined;
+  /**
+   * Als Prop und nicht im Baustein aus `useAsync` gelesen: Ein gescheitertes Laden und ein leeres Fach
+   * sahen identisch aus, weil `CategoryRows` ohne Daten gar nichts rendert (B-174). Der Abschnitt ist
+   * der richtige Ort, weil er in allen drei Fach-Zuständen erscheint — unter einem fremden Fach hängt
+   * seit B-157 auch der Erklärsatz an den Arten, dort wurde die Fläche also vollständig stumm.
+   */
+  error: string | null;
   busy: boolean;
   onSave: (category: CategoryResponse, name: string) => void;
   onDelete: (category: CategoryResponse) => void;
@@ -146,6 +154,10 @@ export function CategorySection({ subject, categories, busy, onSave, onDelete, o
         Freie Ordnungsbegriffe innerhalb des Fachs (z. B. „Grammatik", „Vokabeln") – sie filtern die
         Übungssuche beim Planbau.
       </p>
+      {/* `role="alert"` wie in `SohnShop.tsx:329`: Der Banner entsteht erst beim Fachwechsel, während
+          der Nutzer schon auf der Seite steht – ohne Rolle bemerkt ein Screenreader ihn nicht, und die
+          Einfärbung allein ist keine Rückmeldung. */}
+      {error && <div className="banner err" role="alert">Arten: {error}</div>}
       <CategoryRows subject={subject} categories={categories} busy={busy} onSave={onSave} onDelete={onDelete} />
       <NewName fieldId="ca-new-category" label="Neue Art" placeholder="z. B. Grammatik"
         busy={busy} onCreate={onCreate} />

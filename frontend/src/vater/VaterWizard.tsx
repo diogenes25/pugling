@@ -542,46 +542,13 @@ export function VaterWizard() {
               value={sourceSearch} onChange={(e) => setSourceSearch(e.target.value)} />
           </div>
 
-          <div className="row">
-            <span className="sub">{filteredExercises.length} passende Übungen</span>
-            {/* `zeilenVeraltet` muss am Knopf mit, nicht nur am Kästchen (B-169): `exercises.loading` deckt
-                das Ladefenster, aber NICHT den Fehlerzweig. Scheitert die Abfrage, bleibt `data` die alte
-                Seite, `loading` fällt auf `false`, und der Effekt auf `[exercises.data]` läuft nie — der Knopf
-                wäre wieder bedienbar und wählte die Ids der veralteten Liste. Es ist derselbe
-                Schlüsselvergleich, kein zweites Gate: eine Wahrheit, an zwei Steuerelementen. */}
-            {filteredExercises.length > 0 && (
-              <button type="button" className="btn ghost inline-btn" style={{ marginLeft: "auto" }}
-                disabled={selectAllBusy || exercises.loading || zeilenVeraltet} onClick={selectAll}>
-                {selectAllBusy ? "Lade alle…" : "Alle wählen"}
-              </button>
-            )}
-          </div>
-          <TruncationHint shown={exercises.data?.items.length ?? 0} total={exercises.data?.total ?? 0} />
-
-          {exercises.loading && exercises.data === null ? <div className="loading">Lade Übungen…</div> : filteredExercises.length === 0 ? (
-            <div className="banner err">
-              Keine passenden Übungen im Katalog. Lege welche unter „Übungen" an (Fach {subject?.name ?? "?"}).
-            </div>
-          ) : (
-            <div style={{ maxHeight: 340, overflowY: "auto", display: "grid", gap: 6 }}>
-              {filteredExercises.map((e) => {
-                const by = authorText(e);
-                return (
-                  <label key={e.id} className="checkline" style={{ padding: 8, border: "1px solid var(--stroke)", borderRadius: 8 }}>
-                    {/* Gesperrt, solange die Zeilen zum vorigen Filter gehören (B-169). Dieselbe Bedingung
-                        trägt „Alle wählen" oben – dort ergänzend zu `exercises.loading`, weil das den
-                        Fehlerzweig nicht abdeckt. */}
-                    <input type="checkbox" disabled={zeilenVeraltet}
-                      checked={selected.includes(e.id)} onChange={() => toggle(e.id)} />
-                    {/* Anzeigename aus dem Manifest, nicht der Schlüssel: sonst bietet das Pulldown darüber
-                        „Vokabelkarten" an, während die Zeile darunter „Vocabulary" sagt — ein Widerspruch in
-                        einem Bildschirm. Der Rückfall auf den Schlüssel greift nur, solange das Manifest lädt. */}
-                    <span>{e.title} <span className="muted">· {types?.label(e.type) ?? e.type}{by ? ` – ${by}` : ""}{e.source ? ` [${e.source}]` : ""}</span></span>
-                  </label>
-                );
-              })}
-            </div>
-          )}
+          <WizardTrefferbereich
+            treffer={filteredExercises} geladen={exercises.data?.items.length ?? 0}
+            gesamt={exercises.data?.total ?? 0} platzhalter={exercises.showPlaceholder}
+            fehler={exercises.error} laedt={exercises.loading} zeilenVeraltet={zeilenVeraltet}
+            fachName={subject?.name} selected={selected} selectAllBusy={selectAllBusy}
+            onToggle={toggle} onSelectAll={selectAll} onRetry={exercises.reload}
+            typLabel={(t) => types?.label(t) ?? t} />
         </section>
       )}
 
@@ -654,6 +621,103 @@ export function VaterWizard() {
           : <button type="button" className="btn lime" style={{ width: "auto" }} disabled={busy} onClick={finish}>{busy ? "…" : "✅ Lehrplan erstellen"}</button>}
       </div>
     </div>
+  );
+}
+
+/**
+ * Der Trefferbereich von Schritt 3 – Zählzeile, „Alle wählen", und darunter genau EINER von vier
+ * Zuständen: Platzhalter, Fehler, echte Leermenge, Liste.
+ *
+ * Exportiert **nur für den Test** (B-162): Der Fehlerfall verlangt einen scheiternden Abruf, und
+ * `VaterWizard` ist eine ganze Seite am Netz. Derselbe Schnitt wie bei `CategoryRows` (B-154) und
+ * `SeriesForm` (B-143) – der Baustein braucht kein gefälschtes `fetch`, er ist reine Prop-Arbeit.
+ *
+ * Der Fehler war, dass `treffer.length === 0` zwei Bedeutungen trug: „die Suche lief und fand nichts"
+ * und „die Suche lief nicht". Der Satz war dabei handlungsleitend FALSCH – er schickte den Vater ins
+ * Anlege-Formular, während der Katalog voll war.
+ */
+export function WizardTrefferbereich({
+  treffer, geladen, gesamt, platzhalter, fehler, laedt, zeilenVeraltet, fachName,
+  selected, selectAllBusy, onToggle, onSelectAll, onRetry, typLabel,
+}: {
+  treffer: ExerciseSummary[];
+  geladen: number;
+  gesamt: number;
+  /** `useAsync.showPlaceholder` – wahr nur, solange nichts da ist UND kein Grund dafür (B-184). */
+  platzhalter: boolean;
+  fehler: string | null;
+  laedt: boolean;
+  zeilenVeraltet: boolean;
+  fachName: string | undefined;
+  selected: number[];
+  selectAllBusy: boolean;
+  onToggle: (id: number) => void;
+  onSelectAll: () => void;
+  onRetry: () => void;
+  typLabel: (type: string) => string;
+}) {
+  return (
+    <>
+      <div className="row">
+        {/* Die Zahl gehört zu einer Abfrage, nicht zu einem Bildschirm: Solange die Zeilen zum vorigen
+            Filter gehören, wäre „N passende Übungen" die Zahl von vorhin – neben einer Meldung, die vom
+            Jetzt spricht. Dieselbe Wahrheit (`zeilenVeraltet`) trägt schon Kästchen und Knopf. */}
+        <span className="sub">
+          {fehler ? "Suche gescheitert" : zeilenVeraltet ? "Suche läuft…" : `${treffer.length} passende Übungen`}
+        </span>
+        {/* `zeilenVeraltet` muss am Knopf mit, nicht nur am Kästchen (B-169): `laedt` deckt das
+            Ladefenster, aber NICHT den Fehlerzweig. Scheitert die Abfrage, bleibt `data` die alte Seite,
+            `loading` fällt auf `false`, und der Effekt auf `[exercises.data]` läuft nie — der Knopf wäre
+            wieder bedienbar und wählte die Ids der veralteten Liste. Es ist derselbe Schlüsselvergleich,
+            kein zweites Gate: eine Wahrheit, an drei Steuerelementen. */}
+        {treffer.length > 0 && (
+          <button type="button" className="btn ghost inline-btn" style={{ marginLeft: "auto" }}
+            disabled={selectAllBusy || laedt || zeilenVeraltet} onClick={onSelectAll}>
+            {selectAllBusy ? "Lade alle…" : "Alle wählen"}
+          </button>
+        )}
+      </div>
+      <TruncationHint shown={geladen} total={gesamt} />
+
+      {/* Ohne den Knopf wäre die neue Meldung eine Verschlechterung: Über den Stepper zurück und wieder
+          vor ändert KEINE Abhängigkeit von `useAsync`, es fliegt also keine neue Abfrage — ausgerechnet
+          die Bewegung, die ein Nutzer versucht, ist die wirkungslose. Der einzige verbleibende Ausweg
+          wäre F5, und der kostet den ganzen Assistenten (es persistiert kein Zustand). */}
+      {fehler && (
+        <div className="banner err" role="alert">
+          Die Übungssuche ist gescheitert: {fehler}
+          <button type="button" className="btn ghost inline-btn" style={{ width: "auto", marginLeft: 8 }}
+            disabled={laedt} onClick={onRetry}>Erneut suchen</button>
+        </div>
+      )}
+
+      {platzhalter ? <div className="loading">Lade Übungen…</div> : treffer.length === 0 ? (
+        // Der Satz gilt NUR, wenn die Suche wirklich gelaufen ist. Im Fehlerfall steht oben schon das
+        // Banner; ihn zusätzlich zu zeigen hieße, im selben Bildschirm zwei Ursachen zu behaupten.
+        fehler ? null : (
+          <div className="banner err">
+            Keine passenden Übungen im Katalog. Lege welche unter „Übungen" an (Fach {fachName ?? "?"}).
+          </div>
+        )
+      ) : (
+        <div style={{ maxHeight: 340, overflowY: "auto", display: "grid", gap: 6 }}>
+          {treffer.map((e) => {
+            const by = authorText(e);
+            return (
+              <label key={e.id} className="checkline" style={{ padding: 8, border: "1px solid var(--stroke)", borderRadius: 8 }}>
+                {/* Gesperrt, solange die Zeilen zum vorigen Filter gehören (B-169). */}
+                <input type="checkbox" disabled={zeilenVeraltet}
+                  checked={selected.includes(e.id)} onChange={() => onToggle(e.id)} />
+                {/* Anzeigename aus dem Manifest, nicht der Schlüssel: sonst bietet das Pulldown darüber
+                    „Vokabelkarten" an, während die Zeile darunter „Vocabulary" sagt — ein Widerspruch in
+                    einem Bildschirm. Der Rückfall auf den Schlüssel greift nur, solange das Manifest lädt. */}
+                <span>{e.title} <span className="muted">· {typLabel(e.type)}{by ? ` – ${by}` : ""}{e.source ? ` [${e.source}]` : ""}</span></span>
+              </label>
+            );
+          })}
+        </div>
+      )}
+    </>
   );
 }
 

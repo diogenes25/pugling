@@ -5,6 +5,7 @@ import { StatusBanner } from "../components/StatusBanner";
 import { api } from "../lib/api";
 import { seriesOptions, subjectOptions } from "../lib/referenceOptions";
 import { useAction } from "../lib/useAction";
+import type { ActionMessage } from "../lib/useAction";
 import { SCHOOL_TYPES } from "../lib/labels";
 import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
@@ -40,6 +41,8 @@ export function VaterFachlehrer() {
   const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
   const series = useAsync<TextbookSeriesResponse[]>(() => api.textbookSeries(), []);
   const [editing, setEditing] = useState<number | null>(null);
+  /* Der Meldungsplatz der Seite – dieselbe Ursache wie im Lehrbuch-Formular (B-151). */
+  const [meldung, setMeldung] = useState<ActionMessage | null>(null);
 
   return (
     <>
@@ -87,7 +90,7 @@ export function VaterFachlehrer() {
                         <button
                           type="button" className="btn ghost small" style={{ width: "auto" }}
                           aria-label={`${p.name} bearbeiten`}
-                          onClick={() => setEditing(editing === p.id ? null : p.id)}
+                          onClick={() => { setMeldung(null); setEditing(editing === p.id ? null : p.id); }}
                         >{editing === p.id ? "Schließen" : "Bearbeiten"}</button>
                       ) : <span className="muted">fremd</span>}
                     </td>
@@ -97,7 +100,7 @@ export function VaterFachlehrer() {
                       <td colSpan={5}>
                         <ProfileForm
                           profile={p} subjects={subjects.data ?? []} series={series.data ?? []}
-                          onDone={() => { setEditing(null); list.reload(); }}
+                          onDone={(m) => { setEditing(null); list.reload(); if (m) setMeldung(m); }}
                         />
                       </td>
                     </tr>
@@ -113,6 +116,7 @@ export function VaterFachlehrer() {
             </tbody>
           </table>
         )}
+        <StatusBanner message={meldung} />
       </section>
 
       <section>
@@ -163,7 +167,11 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
   profile?: CreatorProfileResponse;
   subjects: SubjectResponse[];
   series: TextbookSeriesResponse[];
-  onDone: () => void;
+  /**
+   * Schließt bzw. lädt neu. Das optionale Argument ist die Bestätigung, die MITREISEN muss: Der eigene
+   * `StatusBanner` unten hängt am Formular, und das Formular ist nach diesem Aufruf weg (B-151).
+   */
+  onDone: (message?: ActionMessage) => void;
 }) {
   const [form, setForm] = useState({
     name: profile?.name ?? "",
@@ -251,8 +259,10 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
       const patch = profilePatch(geladen.current, { ...form, defaultTypes: types });
       if (patch === null) { action.succeed("Nichts geändert."); return; }
 
-      if (!await action.run(() => api.updateCreatorProfile(profile.id, patch), "Gespeichert.")) return;
-      onDone();
+      // Ein Text, zwei Anzeigeorte – siehe `TextbookForm`.
+      const bestaetigung = "Gespeichert.";
+      if (!await action.run(() => api.updateCreatorProfile(profile.id, patch), bestaetigung)) return;
+      onDone({ ok: true, text: bestaetigung });
       return;
     }
 

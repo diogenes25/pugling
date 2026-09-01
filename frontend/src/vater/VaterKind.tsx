@@ -91,7 +91,7 @@ export function VaterKind() {
           Platzhalter würde den Editor kurz aus dem DOM nehmen. Er verlöre dabei seinen Zustand –
           samt der Bestätigung, die der Nutzer gerade lesen soll.
         */}
-        {interests.data === null ? <div className="loading">Lade…</div> : (
+        {interests.showPlaceholder ? <div className="loading">Lade…</div> : interests.data === null ? null : (
           <InterestEditor
             childId={childId}
             current={interests.data}

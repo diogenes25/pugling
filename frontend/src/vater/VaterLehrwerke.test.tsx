@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import {
-  createExerciseHref, newUnitDefaults, seriesFilterQuery, UnitForm, type SeriesFilterValues,
+  createExerciseHref, istGefiltert, newUnitDefaults, seriesFilterQuery, UnitForm,
+  type SeriesFilterValues,
 } from "./VaterLehrwerke";
 import type { SeriesUnitResponse, TextbookSeriesResponse } from "../lib/types";
 
@@ -145,5 +146,32 @@ describe("seriesFilterQuery", () => {
   it("trägt die übrigen Filter unverändert mit", () => {
     expect(seriesFilterQuery({ search: "Access", subjectId: "3", publisherId: "7", schoolTypes: "Gymnasium", grade: "6" }))
       .toEqual({ search: "Access", subjectId: 3, publisherId: 7, schoolTypes: "Gymnasium", grade: 6 });
+  });
+});
+
+/*
+ * B-173, zweite Hälfte. „Noch kein Lehrwerk. **Lege unten eines an.**" stand auch dann da, wenn die Reihe
+ * längst existierte und nur ausgefiltert war – eine falsche Handlungsanweisung, deren Befolgung eine
+ * Dublette im GETEILTEN Katalog erzeugt.
+ *
+ * Der Ausdruck steht als exportierte Funktion da und nicht im JSX, damit jeder der fünf Filter einzeln
+ * belegbar ist: Ein `||`-Ausdruck mit fünf Gliedern, von dem der Test nur eines fährt, sieht grün aus,
+ * während vier Glieder fehlen könnten.
+ */
+describe("istGefiltert – was eine leere Liste bedeutet", () => {
+  const KEIN_FILTER = { search: "", subjectId: "", publisherId: "", schoolTypes: "" as const, grade: "" };
+
+  it("sagt Nein, wenn die ganze Zeile leer ist", () => {
+    expect(istGefiltert(KEIN_FILTER)).toBe(false);
+  });
+
+  it.each([
+    ["Suchtext", { search: "Access" }],
+    ["Fach", { subjectId: "3" }],
+    ["Verlag", { publisherId: "7" }],
+    ["Schulart", { schoolTypes: "Gymnasium" as const }],
+    ["Klassenstufe", { grade: "8" }],
+  ])("sagt Ja bei gesetztem Filter: %s", (_name, teil) => {
+    expect(istGefiltert({ ...KEIN_FILTER, ...teil })).toBe(true);
   });
 });

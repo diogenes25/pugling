@@ -7,6 +7,7 @@ import { FREETEXT_SUBJECT, seriesFormValues, seriesPatch, type SeriesFormValues 
 import { api } from "../lib/api";
 import { publisherOptions, subjectOptions } from "../lib/referenceOptions";
 import { useAction } from "../lib/useAction";
+import type { ActionMessage } from "../lib/useAction";
 import { SCHOOL_TYPES } from "../lib/labels";
 import { LANGUAGES } from "../lib/languages";
 import { confirmAction } from "../lib/ui";
@@ -69,6 +70,21 @@ export function seriesFilterQuery(v: SeriesFilterValues) {
 }
 
 /*
+ * Exportiert für den Test: reine Wertearbeit, und die Aussage ist zu wichtig, um in einem JSX-Ausdruck zu
+ * verschwinden.
+ */
+/**
+ * Steht irgendein Filter der Zeile? Entscheidet, was eine leere Liste bedeutet (B-173).
+ *
+ * Ohne diese Unterscheidung sagte die Seite "Noch kein Lehrwerk. **Lege unten eines an.**", auch wenn die
+ * Reihe längst existierte und nur ausgefiltert war - eine falsche Handlungsanweisung, die eine Dublette im
+ * geteilten Katalog erzeugt.
+ */
+export function istGefiltert(v: SeriesFilterValues): boolean {
+  return Boolean(v.search || v.subjectId || v.publisherId || v.schoolTypes || v.grade);
+}
+
+/*
  * Exportiert für den Test: der Weg von der Unit ins Anlege-Formular ist reine Adressen-Arbeit und darum
  * ohne gefälschtes `fetch` prüfbar – die Kaskade dahinter deckt `e2e/creator-lehrwerk-weg.spec.ts` ab.
  */
@@ -115,6 +131,13 @@ export function VaterLehrwerke() {
   const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
   const publishers = useAsync<PublisherResponse[]>(() => api.publishers(), []);
   const [open, setOpen] = useState<number | null>(null);
+  /*
+   * Der Meldungsplatz der Seite (B-173). Er MUSS hier liegen und nicht in der Zeile: Ändert ein Speichern
+   * einen Wert, nach dem gefiltert oder sortiert wird, verlässt die Zeile das Ergebnis und nimmt ihre
+   * eigene Bestätigung mit - ein geglücktes Speichern sah dann aus wie ein Löschen.
+   */
+  const [meldung, setMeldung] = useState<ActionMessage | null>(null);
+  const gefiltert = istGefiltert({ search: applied, subjectId, publisherId, schoolTypes, grade });
 
   return (
     <>
@@ -170,15 +193,20 @@ export function VaterLehrwerke() {
                 <SeriesRow
                   key={s.id} series={s} subjects={subjects.data ?? []} publishers={publishers.data ?? []}
                   open={open === s.id} onToggle={() => setOpen(open === s.id ? null : s.id)}
-                  onChanged={list.reload}
+                  onChanged={list.reload} onMessage={setMeldung}
                 />
               ))}
               {list.data?.length === 0 && (
-                <tr><td colSpan={6} className="muted">Noch kein Lehrwerk. Lege unten eines an.</td></tr>
+                <tr><td colSpan={6} className="muted">
+                  {gefiltert
+                    ? "Keine Reihe passt zu dieser Filterung. Setze die Filter zurück, um alle zu sehen."
+                    : "Noch kein Lehrwerk. Lege unten eines an."}
+                </td></tr>
               )}
             </tbody>
           </table>
         )}
+        <StatusBanner message={meldung} />
       </section>
 
       <NewSeries
@@ -190,13 +218,18 @@ export function VaterLehrwerke() {
   );
 }
 
-function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged }: {
+function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, onMessage }: {
   series: TextbookSeriesResponse;
   subjects: SubjectResponse[];
   publishers: PublisherResponse[];
   open: boolean;
   onToggle: () => void;
   onChanged: () => void;
+  /**
+   * Nimmt die Bestätigung eines Speicherns entgegen und reicht sie an die Seite weiter: Die Zeile
+   * überlebt ihre eigene Bestätigung nicht (B-173).
+   */
+  onMessage: (m: ActionMessage) => void;
 }) {
   const action = useAction();
   // Lokal, nicht im seiten-globalen `open`: das ist der Akkordeon-Platz der Units, und beide Bereiche
@@ -268,6 +301,7 @@ function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged }: 
           <td colSpan={6}>
             <SeriesForm
               series={series} subjects={subjects} publishers={publishers} onSaved={onChanged}
+              onMessage={onMessage}
             />
           </td>
         </tr>
@@ -303,11 +337,17 @@ function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged }: 
  * Zugang liefe ein späteres „Aufräumen" der Optionen grün durch. Die Komponente braucht dafür kein
  * gefälschtes `fetch`: alle `api`-Aufrufe hängen am Absenden, das Rendern ist reine Prop-Arbeit.
  */
-export function SeriesForm({ series, subjects, publishers, onSaved }: {
+export function SeriesForm({ series, subjects, publishers, onSaved, onMessage }: {
   series: TextbookSeriesResponse;
   subjects: SubjectResponse[];
   publishers: PublisherResponse[];
   onSaved: () => void;
+  /**
+   * Optional. Ohne Empfänger zeigt das Formular die Bestätigung selbst (so im Test); mit Empfänger geht
+   * sie STATT DESSEN nach oben, weil die Zeile aus der gefilterten Abfrage fallen kann (B-173).
+   * Fehler und Eingabeprüfungen bleiben in beiden Fällen hier – sie verlassen die Zeile nie.
+   */
+  onMessage?: (m: ActionMessage) => void;
 }) {
   // Der Ladezustand ist der Bezugspunkt des Diffs (B-123, Entscheidung 2) – er darf sich NICHT mit dem
   // Formular mitbewegen, sonst entscheidet der Vergleich gegen sich selbst. Darum `useRef`.
@@ -344,7 +384,19 @@ export function SeriesForm({ series, subjects, publishers, onSaved }: {
     // nächste Diff gegen einen veralteten Bezugspunkt und schickte Felder erneut oder gar nicht.
     geladen.current = seriesFormValues(aktualisiert);
     setForm(geladen.current);
-    action.succeed("Gespeichert.");
+    /*
+     * Die Bestätigung geht NACH OBEN, wenn es dort einen Platz gibt (B-173) – und dann NICHT zusätzlich
+     * hierher: Ändert das Speichern einen Wert, nach dem gefiltert oder sortiert wird, verlässt die Zeile
+     * das Ergebnis und nimmt ihren eigenen Banner mit. Beides gleichzeitig zu zeigen wäre kein
+     * „doppelt hält besser", sondern derselbe Satz zweimal auf einem Bildschirm (vier E2E sind daran
+     * gebrochen, gemessen am 2026-09-01).
+     *
+     * Nur der Erfolg reist: „Der Name der Reihe fehlt." und „Nichts geändert." verlassen die Zeile nie
+     * und gehören darum ans Formular, wo der Nutzer gerade hinsieht.
+     */
+    const bestaetigung = "Gespeichert.";
+    if (onMessage) onMessage({ ok: true, text: bestaetigung });
+    else action.succeed(bestaetigung);
     onSaved();
   }
 
@@ -458,7 +510,7 @@ function UnitPanel({ series, onChanged }: { series: TextbookSeriesResponse; onCh
         </p>
       )}
       {units.error && <div className="banner err">{units.error}</div>}
-      {units.data === null ? <div className="loading">Lade…</div> : units.data.length === 0 ? (
+      {units.showPlaceholder ? <div className="loading">Lade…</div> : units.data === null ? null : units.data.length === 0 ? (
         <p className="muted">Noch keine Unit. Ohne Unit kennt der Creator nur den Reihennamen, nicht den Stoff.</p>
       ) : (
         <table className="table">

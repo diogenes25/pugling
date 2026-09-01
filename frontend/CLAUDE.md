@@ -52,10 +52,8 @@ sichtbare Grund, warum eine verworfene zweite Aktion nicht wie „nichts passier
 die Sohn-Arcade (B-49) folgt ihr noch nicht. **Erfolg darf stumm bleiben** (`run` ohne `okText`), wo die
 Änderung selbst die Rückmeldung ist – so der Tag-Editor im Vokabel-Store; ein Banner je Chip wäre Lärm.
 
-**Normales `npm install`/`npm ci` genügt** (seit [B-25](../docs/backlog/B-25-vite-pwa-peer-konflikt.md),
-`vite-plugin-pwa@^1.3.0`) – der frühere Peer-Konflikt mit `vite@8` ist gelöst, `--legacy-peer-deps` ist
-nirgends mehr nötig, auch nicht in CI/Deploy. Der historische Schaden (24 Tage unbemerkt scheiternder
-Deploy) steht in [docs/codequalitaet-gates-plan.md](../docs/codequalitaet-gates-plan.md) (D1).
+**Normales `npm install`/`npm ci` genügt** – `--legacy-peer-deps` ist nirgends mehr nötig, auch nicht in
+CI/Deploy ([B-25](../docs/backlog/B-25-vite-pwa-peer-konflikt.md)).
 
 Rollen im SPA: `/` Produktseite, `/vater` Web-Admin, `/sohn` Arcade-PWA.
 API-Client unter [src/lib/](src/lib/), kein HTTP daneben.
@@ -85,9 +83,8 @@ Drei Regeln beim Ergänzen: **eine Aktion bekommt keinen Nav-Eintrag** (deshalb 
 Anlegen und Verwalten sind getrennt: `/vater/exercises` verwaltet, `/vater/exercises/neu` legt an.
 **Der Einstieg zum Anlegen ist „Unit zuerst"**: `/vater/lehrwerke` trägt je Unit ein „+ Übung"
 (`createExerciseHref` reicht `subjectId`/`seriesId`/`seriesUnitId` als Query durch), die Bestandsliste ihr
-„+ Neue Übung" mit dem gesetzten Filter. Die Werkstatt hat **bewusst keinen kontextfreien Knopf** mehr –
-seit B-106 ist die Unit Pflichtfeld, ein Einstieg mit leerem Kaskadenpicker verlegte die Auswahl nur ins
-Formular. Der Knopf hängt **nicht** an `series.isOwn` (fremde Reihen dürfen Übungen tragen), sondern am
+„+ Neue Übung" mit dem gesetzten Filter. Die Werkstatt hat **bewusst keinen kontextfreien Knopf** mehr
+(seit B-106 ist die Unit Pflichtfeld). Der Knopf hängt **nicht** an `series.isOwn` (fremde Reihen dürfen Übungen tragen), sondern am
 Fach: eine Reihe ohne `subjectId` kann keine tragen (`series_without_subject`).
 Ein Vater entsteht **im UI**: `/vater` hat neben „Anmelden" den Modus „Neu registrieren" (anonymes
 `POST supervisor/adults`; die neue Id ist der Login-Name); das eigene Konto liegt unter
@@ -104,10 +101,11 @@ Server-Typ kein UI hat.
 dem Verkehr zu nehmen – Löschen verweigert eine benutzte Übung zu Recht (laufende Pflichten dürfen nicht unter
 dem Kind wegbrechen). Es stoppt nur **neue** Zuweisungen; der Schalter sitzt neben der Verwendungs-Anzeige.
 
-**Wiederkehrende Falle bei Listen mit aufklappbaren Zeilen:** `useAsync` behält `data` über ein `reload`,
-setzt aber `loading` erneut. Wer `{loading ? "Lade…" : rows}` schreibt, hängt bei **jeder** Änderung alle
-Zeilen aus – aufgeklappte Bereiche sind weg. Der Platzhalter greift nur ohne Daten
-(`loading && data === null`).
+**Wiederkehrende Falle beim Platzhalter:** `useAsync` behält `data` über ein `reload`, setzt aber
+`loading` erneut. Wer `{loading ? "Lade…" : rows}` schreibt, hängt bei **jeder** Änderung alles aus –
+aufgeklappte Bereiche und offene Formulare sind weg. Zwei Formen sind richtig: `loading && data === null`
+für Listen, `showPlaceholder` für Flächen, die ein `reload` überstehen müssen. Ein blankes
+`data === null` ist **nie** richtig – es zeigt eine gescheiterte Ladung dauerhaft als „Lade…" (B-184).
 
 Übungen sind über `/vater/exercises` **bearbeitbar**: Metadaten per PUT — den geladenen
 `config`/`suggestedBonus`/`executePublic` **mitschicken**, sonst löscht der Vollersatz sie; Vokabelpaare

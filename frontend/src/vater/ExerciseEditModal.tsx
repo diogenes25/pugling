@@ -350,7 +350,7 @@ function ItemEditor({ detail }: { detail: ExerciseDetail }) {
       </p>
 
       {items.error && <div className="banner err">{items.error}</div>}
-      {/* frontend/CLAUDE.md, "Wiederkehrende Falle bei Listen mit aufklappbaren Zeilen": both parts of
+      {/* frontend/CLAUDE.md, "Wiederkehrende Falle beim Platzhalter": both parts of
           `loading && data === null` are required. `loading` alone would hide the already visible table
           during a `reload`, since `useAsync` keeps `data` but resets `loading`; `data === null` alone
           would show the spinner forever next to an error, since `data` stays null after a failed load. */}

@@ -188,7 +188,7 @@ describe("CategorySection – das Anlege-Formular bleibt in jedem Zustand bedien
 
   for (const [name, over] of zustaende) {
     it(`bietet „Neue Art" am ${name} an`, () => {
-      render(<CategorySection subject={subject(over)} categories={[art()]} busy={false}
+      render(<CategorySection error={null} subject={subject(over)} categories={[art()]} busy={false}
         onSave={() => {}} onDelete={() => {}} onCreate={async () => true} />);
 
       expect(screen.getByLabelText("Neue Art")).toBeTruthy();
@@ -198,7 +198,7 @@ describe("CategorySection – das Anlege-Formular bleibt in jedem Zustand bedien
 
   it("legt wirklich an und leert danach das Feld", () => {
     const onCreate = vi.fn(async () => true);
-    render(<CategorySection subject={subject({ isMine: false, ownerAdultId: 7 })} categories={[art()]}
+    render(<CategorySection error={null} subject={subject({ isMine: false, ownerAdultId: 7 })} categories={[art()]}
       busy={false} onSave={() => {}} onDelete={() => {}} onCreate={onCreate} />);
 
     fireEvent.change(screen.getByLabelText("Neue Art"), { target: { value: "Hörverstehen" } });
@@ -210,11 +210,49 @@ describe("CategorySection – das Anlege-Formular bleibt in jedem Zustand bedien
   it("zeigt am fremden Fach die Namen weiter lesbar, nur ohne Knöpfe", () => {
     // Die Überschrift zählt die Arten – eine Seite, die „du kannst sie zum Filtern verwenden" sagt und dann
     // keine zeigt, hält ihr eigenes Versprechen nicht.
-    render(<CategorySection subject={subject({ isMine: false, ownerAdultId: 7 })}
+    render(<CategorySection error={null} subject={subject({ isMine: false, ownerAdultId: 7 })}
       categories={[art(), art({ id: 10, name: "Vokabeln" })]} busy={false}
       onSave={() => {}} onDelete={() => {}} onCreate={async () => true} />);
 
     expect(screen.getByText(/Grammatik · Vokabeln/)).toBeTruthy();
     expect(screen.queryByRole("button", { name: /löschen$/ })).toBeNull();
+  });
+});
+
+/*
+ * B-174. „Dieses Fach hat keine Arten" und „das Laden ist gescheitert" sahen identisch aus:
+ * `categories.error` wurde in der ganzen Datei nirgends gerendert, und `CategoryRows` liefert bei
+ * fehlenden Daten `null` – also einen leeren Bildschirm. Der Schaden ist nicht kosmetisch: Wer auf einer
+ * stumm gebliebenen Liste eine Art neu anlegt, erzeugt eine Dublette im GETEILTEN Katalog, und die ist in
+ * einem Grundbestands-Fach nach B-157 von niemandem mehr löschbar.
+ *
+ * Geprüft wird `CategorySection`, weil der Abschnitt in allen drei Fach-Zuständen rendert – der stumme
+ * Fall ist unter einem fremden Fach am schlimmsten, dort hängt seit B-157 auch der Erklärsatz an den
+ * Arten.
+ */
+describe("CategorySection – ein gescheitertes Laden sieht nicht aus wie ein leeres Fach", () => {
+  const props = {
+    busy: false, onSave: () => {}, onDelete: () => {}, onCreate: async () => true,
+  };
+
+  it("zeigt den Fehler am eigenen Fach", () => {
+    render(<CategorySection subject={subject()} categories={null} error="Netz weg" {...props} />);
+    expect(screen.getByText(/Netz weg/)).toBeTruthy();
+  });
+
+  it("zeigt ihn auch unter einem fremden Fach, wo sonst gar nichts stünde", () => {
+    render(<CategorySection subject={subject({ isMine: false, ownerAdultId: 7 })}
+      categories={null} error="Netz weg" {...props} />);
+    expect(screen.getByText(/Netz weg/)).toBeTruthy();
+  });
+
+  it("schweigt, wenn wirklich nur nichts da ist", () => {
+    render(<CategorySection subject={subject()} categories={[]} error={null} {...props} />);
+    expect(screen.queryByText(/Netz weg/)).toBeNull();
+    // Auf das PRÄFIX des Banners prüfen, nicht auf den Fehlertext: „Netz weg" allein wäre schon dadurch
+    // abwesend, dass hier kein Fehler übergeben wurde – die Zusicherung fiele also nie. Diese hier fällt,
+    // sobald der Banner unbedingt rendert. (Eine frühere Fassung prüfte `role="alert"`, das es zu dem
+    // Zeitpunkt nirgends gab: sie prüfte den Ausgangszustand und konnte nicht fallschlagen.)
+    expect(screen.queryByText(/^Arten:/)).toBeNull();
   });
 });
