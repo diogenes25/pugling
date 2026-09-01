@@ -74,6 +74,31 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
     private const double MaxMultiplier = 10.0;
 
     /// <summary>
+    /// Upper bound for a points recommendation the position <b>inherits silently</b> (B-45).
+    /// <para>
+    /// It guards a hole that inheriting opened: <c>PointsGoalMet</c> is paid out as coins, the catalog is
+    /// shared, and <c>Exercise.RewardPoints</c> has no server-side bound - so a foreign exercise carrying
+    /// 100000 would push that into the family economy for every caller that omits the field. Before
+    /// inheriting existed, the ceiling was the hard 20.
+    /// </para>
+    /// <para>
+    /// The bound applies <b>only</b> to inheritance, never to a value the supervisor states explicitly -
+    /// that is their own decision and stays unbounded, as it was. That asymmetry is what makes a tight
+    /// bound safe: the highest figure anything in the product intends is 30 (the wizard's most intense
+    /// setting), so 200 cannot be reached by a plausible recommendation.
+    /// </para>
+    /// </summary>
+    private const int MaxInheritedGoalPoints = 200;
+
+    /// <summary>
+    /// The recommendation, or the model default when it is unusable. Falling back rather than clamping to
+    /// the bound is deliberate: 200 would be a number nobody chose, while 20 is the documented default the
+    /// position had before recommendations existed.
+    /// </summary>
+    private static int InheritedGoalPoints(int rewardPoints) =>
+        rewardPoints is > 0 and <= MaxInheritedGoalPoints ? rewardPoints : 20;
+
+    /// <summary>
     /// Upper bound on the number of windows per position: a day has 24 hours, and the column is deliberately
     /// unbounded (JSON) - without a limit a client could store an arbitrarily long list there.
     /// </summary>
@@ -171,12 +196,13 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             StageSchedule = dto.StageSchedule,
             // Points/bonus: position override → exercise suggestion → model default.
             //
-            // The target reward takes the creator's recommendation (B-45). `RewardPoints` carries no
-            // server-side lower bound, so a 0 must NOT win: an old exercise left at 0 would otherwise drag
-            // every newly created position down to zero target points - a silent regression against the
-            // previous hard 20. Like `SuggestedBonus` below this is copied ONCE; a creator raising the
-            // recommendation later does not move study plans that are already running.
-            PointsGoalMet = dto.PointsGoalMet ?? (exercise.RewardPoints > 0 ? exercise.RewardPoints : 20),
+            // The target reward takes the creator's recommendation (B-45), but only within bounds on BOTH
+            // sides. A 0 must not win: an old exercise left at 0 would drag every newly created position
+            // down to zero target points - a silent regression against the previous hard 20. And a figure
+            // above `MaxInheritedGoalPoints` is a typo or an abuse, not a setting (see there). Like
+            // `SuggestedBonus` below this is copied ONCE; a creator raising the recommendation later does
+            // not move study plans that are already running.
+            PointsGoalMet = dto.PointsGoalMet ?? InheritedGoalPoints(exercise.RewardPoints),
             // The penalty is opt-in per position (default 0 = reward only, the previous behavior).
             PenaltyCoins = dto.PenaltyCoins ?? 0,
             NewContentPoints = dto.NewContentPoints ?? sb?.NewContentPoints ?? 10,

@@ -50,7 +50,9 @@ export const FIELD_HELP = {
   pointsGoalMet: {
     title: "Punkte, wenn das Ziel erreicht ist",
     text: "🪙 Münzen, die einmal je Periode gutgeschrieben werden, sobald die Pflicht erfüllt ist. Münzen "
-      + "gibt das Kind im Familien-Shop für echte Belohnungen aus. Bei „frei“ gibt es sie nicht.",
+      + "gibt das Kind im Familien-Shop für echte Belohnungen aus. Bei „frei“ gibt es sie nicht. "
+      + "Beim Hinzufügen einer Übung steht hier deren Empfehlung – änderst du sie, bleibt die Änderung; "
+      + "bereits angelegte Positionen berührt eine spätere Empfehlung nie.",
   },
   penaltyCoins: {
     title: "Münz-Malus bei versäumter Pflicht",
@@ -114,9 +116,10 @@ export const FIELD_HELP = {
    */
   exercisePoints: {
     title: "Punkte der Übung",
-    text: "Deine Empfehlung, wie viele 🪙 Münzen das Erreichen des Ziels wert ist. Wer die Übung in einen "
-      + "Lehrplan aufnimmt, bekommt sie als Vorschlag vorbelegt und kann sie überschreiben. Den Grundwert "
-      + "je richtiger Antwort stellt dagegen die Position im Lehrplan ein.",
+    text: "Deine Empfehlung, wie viele 🪙 Münzen das Erreichen des Ziels wert ist. Wer die Übung auf der "
+      + "Plan-Seite hinzufügt, bekommt sie als Vorschlag vorbelegt und kann sie überschreiben; der "
+      + "Assistent setzt die Punkte stattdessen aus der gewählten Intensität. Punkte für einen zum ersten "
+      + "Mal richtig beantworteten Inhalt stellt dagegen die Position ein.",
   },
   defaultItemCount: {
     title: "Standard-Begrenzung",

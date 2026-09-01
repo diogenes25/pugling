@@ -8,6 +8,12 @@ namespace Pugling.Contracts.Creator;
 /// <summary>
 /// Exercise for creating/changing: shared fields + type-specific config + optional bonus suggestion.
 /// The metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.
+/// <para>
+/// <paramref name="RewardPoints"/> is a <b>recommendation</b>, not a setting: a new study-plan position
+/// inherits it as its target reward when the supervisor states nothing, and stays free to override. It is
+/// read at that moment only - raising it later does not move plans already running. Unusable figures (0,
+/// negative, implausibly large) fall back to the position's default of 20.
+/// </para>
 /// </summary>
 public record ExercisePayload<TConfig>(string Title, int OrderIndex, int RewardPoints, TConfig Config,
     SuggestedBonus? SuggestedBonus = null,

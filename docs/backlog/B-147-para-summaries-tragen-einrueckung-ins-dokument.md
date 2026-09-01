@@ -80,3 +80,11 @@ bestimmten Abnahme an; er entstand mit dem ersten `<para>` in einem `<summary>`.
   Zwei Fälle, die der Sprint selbst erzeugt hatte, tragen die Einrückung weiter; behoben wurde dort nur,
   was er **allein** verursacht hatte (zwei `<see cref>`, die als volle Methodensignatur im Fließtext
   landeten).
+- **2026-09-01** — **Drei weitere Fälle**, aus B-45: die neuen `<para>`-Blöcke an `ExerciseSummary`
+  (`ExerciseCatalogDtos.cs`), `ExercisePayload` (`ExerciseAuthoringDtos.cs`) und
+  `Exercise.RewardPoints` (`LearnEntities.cs`) tragen ihre Quelltext-Einrückung ins Dokument, ebenso die
+  Konstanten-Doku in `PlanPositionsController.cs`. Der `frontend-reviewer` hat es beim Lesen des
+  OpenAPI-Diffs gemeldet — sichtbar als 12 Leerzeichen am Zeilenanfang und fehlender Absatzumbruch.
+  **Bewusst nicht dort behoben:** B-45s Ziel ist ohne die Formatfrage erfüllt, und die Antwort auf „womit
+  formatiert man das richtig" ist genau diese Story. Zahl im Text nicht nachgezogen — sie war schon beim
+  Anlegen eine Momentaufnahme; wer den Sweep fährt, zählt neu.

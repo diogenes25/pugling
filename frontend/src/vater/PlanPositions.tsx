@@ -172,28 +172,33 @@ export function timeSlotProblem(s: PositionSettings): string | null {
   return null;
 }
 
-/** Startwerte einer neuen Position; die Übung bringt ihre Lern-Standards als Vorschlag mit. */
 /**
- * Die Zielpunkte, die eine neue Position von der Übung erbt (B-45) – exportiert, weil die Regel an zwei
- * Stellen gilt: beim Aufbau des Formulars und beim Wechsel der Übung in der Trefferliste.
+ * Die Zielpunkte beim Wählen einer Übung (B-45): ihre Empfehlung, sonst der bisherige Wert.
  *
- * Ohne Übung und bei einer Empfehlung von `0` bleibt es beim Modell-Vorgabewert `20`; die Begründung für
- * die Null steht bei `defaultSettings`.
+ * `current` statt eines festen Vorgabewerts, damit „die Übung schweigt" nicht dasselbe tut wie „die Übung
+ * empfiehlt etwas": eine selbst getippte 50 bleibt stehen, wenn die gewählte Übung keine brauchbare
+ * Empfehlung trägt. Brauchbar heißt **größer als 0** – das Feld hat serverseitig keine Untergrenze, eine
+ * stehengebliebene Null ist keine Aussage, und ein negativer Wert erst recht nicht. Dieselbe Regel hält
+ * `PlanPositionsController.Create`, dort zusätzlich mit einer Obergrenze gegen fremde Katalog-Übungen.
  */
-export function pointsFrom(ex?: ExerciseSummary): number {
-  return ex?.rewardPoints && ex.rewardPoints > 0 ? ex.rewardPoints : 20;
+export function pointsFrom(ex: ExerciseSummary | undefined, current: number): number {
+  return ex && ex.rewardPoints > 0 ? ex.rewardPoints : current;
 }
 
-function defaultSettings(ex?: ExerciseSummary): PositionSettings {
+/**
+ * Startwerte einer neuen Position.
+ *
+ * **Ohne Übung**, und das ist keine Nachlässigkeit: beim Aufbau des Formulars ist noch keine gewählt. Was
+ * die Übung beiträgt, trägt der `onChange` der Trefferliste nach – vorher stand hier ein `ex`-Parameter,
+ * den nie ein Aufrufer belegte, und ein Kommentar, der das Gegenteil behauptete.
+ */
+function defaultSettings(): PositionSettings {
   return {
-    cadence: "Daily", goalThreshold: "", itemCount: ex?.defaultItemCount?.toString() ?? "",
-    // Die Punkte-Empfehlung des Creators als Vorbelegung (B-45). `0` gewinnt NICHT: `rewardPoints` hat
-    // serverseitig keine Untergrenze, und eine alte Übung, in der die Null nur stehen geblieben ist, darf
-    // keine neue Position auf null Zielpunkte ziehen. Dieselbe Regel hält `PlanPositionsController.Create`.
-    orderStrategy: "WeakestFirst", pointsGoalMet: pointsFrom(ex), penaltyCoins: 0,
+    cadence: "Daily", goalThreshold: "", itemCount: "",
+    orderStrategy: "WeakestFirst", pointsGoalMet: 20, penaltyCoins: 0,
     // Leer = Vorschlag der Übung übernehmen (siehe PositionSettings).
     newContentPoints: "", comboThreshold: "", comboBonusPoints: "",
-    useLeitner: ex?.defaultUseLeitner ?? false, requireTypedTest: ex?.defaultRequireTypedTest ?? false,
+    useLeitner: false, requireTypedTest: false,
     // Kein Fenster: eine Tageszeit ist eine Aussage über den Familienalltag, kein Vorschlag der Übung.
     timeSlotStart: "", timeSlotEnd: "", timeSlotMultiplier: "", timeSlotName: "", timeSlotStored: null,
   };
@@ -432,9 +437,10 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
                   // Nur die Werte übernehmen, die AUS der Übung kommen – das Pflichtziel und der Malus
                   // bleiben stehen (ein Übungswechsel ist keine Rücknahme).
                   //
-                  // Die Zielpunkte gehören seit B-45 zur ersten Gruppe: die Übung trägt dafür eine
-                  // Empfehlung des Creators, also folgt das Feld ihr wie `itemCount` schon immer. Der Malus
-                  // bleibt außen vor – für ihn gibt es keine Empfehlung, er ist eine Aussage des Vaters.
+                  // Die Zielpunkte gehören seit B-45 zur ersten Gruppe, aber nur so weit die Übung wirklich
+                  // etwas beiträgt: `pointsFrom` lässt eine selbst getippte Zahl stehen, wenn die neue Übung
+                  // keine brauchbare Empfehlung trägt. Der Malus bleibt ganz außen vor – für ihn gibt es
+                  // keine Empfehlung, er ist eine Aussage des Vaters.
                   onChange={() => {
                     setExerciseId(ex.id);
                     setSettings((cur) => ({
@@ -442,7 +448,7 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
                       useLeitner: ex.defaultUseLeitner,
                       requireTypedTest: ex.defaultRequireTypedTest,
                       itemCount: ex.defaultItemCount?.toString() ?? "",
-                      pointsGoalMet: pointsFrom(ex),
+                      pointsGoalMet: pointsFrom(ex, cur.pointsGoalMet),
                     }));
                   }}
                   style={{ marginTop: 3 }} />

@@ -286,17 +286,59 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         var (_, key) = await TestApi.CreateStoreVocabAsync(father, "meadow", "Wiese");
         var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, 15, key);
         var planId = await EmptyPlanAsync(father);
-        var url = $"/api/v1/supervisor/study-plans/{planId}/positions";
 
         // No pointsGoalMet in the request: the recommendation has to fill the gap.
+        var geerbt = await (await father.PostAsJsonAsync(
+            $"/api/v1/supervisor/study-plans/{planId}/positions", new { exerciseId, stage = 2 }))
+            .Content.ReadFromJsonAsync<JsonElement>();
+
+        Assert.Equal(15, geerbt.GetProperty("pointsGoalMet").GetInt32());
+    }
+
+    /// <summary>
+    /// B-45, AC 2: an explicit value keeps winning - the "position override first" order must not shift.
+    /// <para>
+    /// Its own <c>Fact</c>, not an assertion after the inheritance case: a test stops at its first failure, so
+    /// a regression in the ORDER would have been invisible for as long as inheritance itself was broken.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task Eigener_Punktewert_Schlaegt_Die_Empfehlung()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var (_, key) = await TestApi.CreateStoreVocabAsync(father, "pasture", "Weide");
+        var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, 15, key);
+        var planId = await EmptyPlanAsync(father);
+
+        var eigen = await (await father.PostAsJsonAsync(
+            $"/api/v1/supervisor/study-plans/{planId}/positions",
+            new { exerciseId, stage = 2, pointsGoalMet = 7 })).Content.ReadFromJsonAsync<JsonElement>();
+
+        Assert.Equal(7, eigen.GetProperty("pointsGoalMet").GetInt32());
+    }
+
+    /// <summary>
+    /// B-45: an implausibly large recommendation is not inherited. Inheriting opened this hole - the catalog is
+    /// shared, <c>RewardPoints</c> has no bound, and the target reward is paid out as coins; before, the
+    /// ceiling was the hard 20. An explicit value stays unbounded: that is the supervisor's own decision.
+    /// </summary>
+    [Fact]
+    public async Task Unplausibel_Hohe_Empfehlung_Wird_Nicht_Geerbt()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var (_, key) = await TestApi.CreateStoreVocabAsync(father, "windmill", "Windmühle");
+        var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, 100_000, key);
+        var planId = await EmptyPlanAsync(father);
+        var url = $"/api/v1/supervisor/study-plans/{planId}/positions";
+
         var geerbt = await (await father.PostAsJsonAsync(url, new { exerciseId, stage = 2 }))
             .Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal(15, geerbt.GetProperty("pointsGoalMet").GetInt32());
+        Assert.Equal(20, geerbt.GetProperty("pointsGoalMet").GetInt32());
 
-        // An explicit value still wins - the "position override first" order must not shift (AC 2).
-        var eigen = await (await father.PostAsJsonAsync(url, new { exerciseId, stage = 2, pointsGoalMet = 7 }))
-            .Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal(7, eigen.GetProperty("pointsGoalMet").GetInt32());
+        // Deliberately stated, deliberately unbounded - the bound guards silent inheritance, not the father.
+        var gewollt = await (await father.PostAsJsonAsync(url,
+            new { exerciseId, stage = 2, pointsGoalMet = 100_000 })).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(100_000, gewollt.GetProperty("pointsGoalMet").GetInt32());
     }
 
     /// <summary>
@@ -347,6 +389,10 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
                 config = new { direction = "front-to-back", refs = new[] { new { vocabularyId = vocabId } } },
             });
         Assert.True(geaendert.IsSuccessStatusCode, await geaendert.Content.ReadAsStringAsync());
+        // The precondition, asserted rather than staged: without this the test would stay green even if the
+        // creator's change never landed - it would then guard against a change that did not happen.
+        var neuerStand = await geaendert.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(99, neuerStand.GetProperty("rewardPoints").GetInt32());
 
         var position = await father.GetFromJsonAsync<JsonElement>($"{url}/{posId}");
         Assert.Equal(15, position.GetProperty("pointsGoalMet").GetInt32());

@@ -31212,7 +31212,7 @@
             "default": true
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20."
       },
       "ExercisePayloadOfArithmeticDrillConfig": {
         "required": [
@@ -31334,7 +31334,7 @@
             "default": true
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20."
       },
       "ExercisePayloadOfBirkenbihlConfig": {
         "required": [
@@ -31456,7 +31456,7 @@
             "default": true
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20."
       },
       "ExercisePayloadOfClozeConfig": {
         "required": [
@@ -31578,7 +31578,7 @@
             "default": true
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20."
       },
       "ExercisePayloadOfEssayConfig": {
         "required": [
@@ -31700,7 +31700,7 @@
             "default": true
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20."
       },
       "ExercisePayloadOfGrammarConfig": {
         "required": [
@@ -31822,7 +31822,7 @@
             "default": true
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20."
       },
       "ExercisePayloadOfListConfig": {
         "required": [
@@ -31944,7 +31944,7 @@
             "default": true
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20."
       },
       "ExercisePayloadOfListeningConfig": {
         "required": [
@@ -32066,7 +32066,7 @@
             "default": true
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20."
       },
       "ExercisePayloadOfMatchingConfig": {
         "required": [
@@ -32188,7 +32188,7 @@
             "default": true
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20."
       },
       "ExercisePayloadOfReadingConfig": {
         "required": [
@@ -32310,7 +32310,7 @@
             "default": true
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20."
       },
       "ExercisePayloadOfTranslationConfig": {
         "required": [
@@ -32432,7 +32432,7 @@
             "default": true
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20."
       },
       "ExercisePayloadOfVocabularyConfig": {
         "required": [
@@ -32554,7 +32554,7 @@
             "default": true
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20."
       },
       "ExerciseProgressResponse": {
         "required": [

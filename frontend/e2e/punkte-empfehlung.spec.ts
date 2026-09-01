@@ -1,4 +1,5 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
+import { vaterLogin } from "./helpers";
 
 /*
  * B-45: Die Punkte-Empfehlung des Creators erreicht den Supervisor.
@@ -12,9 +13,9 @@ import { test, expect, type Page } from "@playwright/test";
  * (`pointsFrom`), der Integrationstest den Server — aber ob der Wert im Formular des Vaters ANKOMMT,
  * beantwortet nur die Oberfläche.
  *
- * Rot macht sie das Zurückfallen auf das hartcodierte `20` an einer der beiden Stellen (Formularaufbau
- * oder Übungswechsel in der Trefferliste) sowie ein fehlendes `rewardPoints` in `ExerciseSummary` —
- * ohne das Feld im Vertrag kann das Formular es nicht lesen.
+ * Rot macht sie zwei Dinge: eine Trefferliste, die die Empfehlung beim Wählen nicht übernimmt (gemessen),
+ * und ein fehlendes `rewardPoints` in `ExerciseSummary` — ohne das Feld im Vertrag kann das Formular es
+ * nicht lesen. Der Formularaufbau ist bewusst NICHT gemeint: dort ist noch keine Übung gewählt.
  */
 
 const FATHER = { id: "1", pin: "0000" };
@@ -25,28 +26,18 @@ const EXERCISE_TITLE = `Empfohlene Übung ${RUN}`;
 const EMPFEHLUNG = 15;
 const CHILD = { name: `Empfehlungs-Kind ${RUN}`, pin: "4321" };
 
-async function vaterLogin(page: Page) {
-  await page.goto("/vater");
-  await page.locator("#fid").fill(FATHER.id);
-  await page.locator("#pin").fill(FATHER.pin);
-  await page.getByRole("button", { name: "Anmelden" }).click();
-  await expect(page.getByRole("heading", { name: "Kinder" })).toBeVisible();
-}
-
 test("Die Punkte der Übung belegen das Ziel-Feld der neuen Position vor", async ({ page }) => {
-  await vaterLogin(page);
+  await vaterLogin(page, FATHER);
 
   await page.locator("#new-child-name").fill(CHILD.name);
   await page.locator("#new-child-pin").fill(CHILD.pin);
   await page.getByRole("button", { name: "Kind anlegen" }).click();
-  // Auf die Kinder-Sektion einschränken: der Name steht auch in der „Heute"-Tabelle darüber, und ein
-  // bloßer Namensvergleich träfe beide Zeilen (Strict-Mode-Verstoß). Über die Sektion statt über einen
-  // Index — welche der beiden Tabellen zuerst kommt, ist keine Zusicherung dieser Spec.
-  const kinderTabelle = page.locator("section")
-    .filter({ has: page.getByRole("heading", { name: "Kinder" }) }).getByRole("table");
-  const kindZeile = kinderTabelle.getByRole("row", { name: new RegExp(CHILD.name) });
-  await expect(kindZeile).toBeVisible();
-  const childId = (await kindZeile.getByRole("cell").first().textContent())!.trim();
+  // Über den LINK, nicht über Tabelle und Zellindex: der Name steht auch in der „Heute"-Tabelle darüber,
+  // dort aber als reiner Text – nur in der Kinder-Liste ist er ein Link. Das löst den
+  // Strict-Mode-Verstoß ohne jede Annahme über Reihenfolge oder Spalten (Muster `vater-von-null.spec.ts`).
+  const kindLink = page.getByRole("link", { name: CHILD.name });
+  await expect(kindLink).toBeVisible();
+  const childId = (await kindLink.getAttribute("href"))!.split("/").pop()!;
 
   // ---- Reihe und Unit: seit B-106 hängt jede Übung zwingend an einer Unit ----
   await page.goto("/vater/lehrwerke");

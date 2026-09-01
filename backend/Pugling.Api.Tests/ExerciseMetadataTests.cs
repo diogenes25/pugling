@@ -63,7 +63,13 @@ public class ExerciseMetadataTests(PuglingWebAppFactory factory) : IClassFixture
 
         // Pre-filtering: subject + grade 6 + Gymnasium + category → a hit.
         var hit = await Search(father, subjectId, grade: 6, schoolType: "Gymnasium", categoryId: categoryId);
-        Assert.Contains(hit.EnumerateArray(), e => e.GetProperty("title").GetString() == "Grammatik-Drill");
+        var treffer = hit.EnumerateArray().Single(e => e.GetProperty("title").GetString() == "Grammatik-Drill");
+
+        // The search hit carries the points recommendation (B-45). Without this assertion the projection was
+        // unobserved: replacing it with a constant kept the whole suite green, because the OpenAPI schema comes
+        // from the record head and the drift gates therefore see no change. That is the same failure class the
+        // recommendation itself fixes - a field written by creators and read by nobody.
+        Assert.Equal(10, treffer.GetProperty("rewardPoints").GetInt32());
     }
 
     [Fact]

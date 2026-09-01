@@ -57,7 +57,13 @@ export function VaterExerciseCreate() {
   const route = types?.route(type) ?? null;
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [rewardPoints, setRewardPoints] = useState(10);
+  /*
+   * 20, nicht 10: seit B-45 erbt eine neue Position diesen Wert als Zielbelohnung, und der Vorgabewert der
+   * Position ist 20. Eine unberührte Vorbelegung muss ihn reproduzieren – sonst zöge jede Übung, deren
+   * Creator das Feld nie angefasst hat, jede neue Position still von 20 auf 10. Genau die stille
+   * Verschlechterung, die Entscheidung 4 der Story verhindern wollte, nur durch die andere Tür.
+   */
+  const [rewardPoints, setRewardPoints] = useState(20);
   const [gradeMin, setGradeMin] = useState<number | "">("");
   const [gradeMax, setGradeMax] = useState<number | "">("");
   const [source, setSource] = useState("");

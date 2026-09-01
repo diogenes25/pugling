@@ -65,7 +65,15 @@ public class Exercise
     /// </summary>
     public string? Description { get; set; }
     public int OrderIndex { get; set; }
-    /// <summary>Points the child receives for completing it.</summary>
+    /// <summary>
+    /// The author's <b>recommendation</b> for the target reward, not a setting of this exercise (B-45): a new
+    /// <c>PlanPosition</c> inherits it as <c>PointsGoalMet</c> when the supervisor states nothing, and stays
+    /// free to override. Copied once at creation - a later change does not move plans already running.
+    /// <para>
+    /// Unusable values fall back to the position's default of 20: 0 (the field carries no lower bound, so an
+    /// untouched 0 must not mean "no reward"), negatives, and anything above the inheritance bound.
+    /// </para>
+    /// </summary>
     public int RewardPoints { get; set; }
     /// <summary>Type-specific configuration as JSON (see the *Config classes).</summary>
     public string ConfigJson { get; set; } = "{}";

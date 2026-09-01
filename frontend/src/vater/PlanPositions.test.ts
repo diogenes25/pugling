@@ -133,24 +133,35 @@ describe("Zeitfenster einer Position", () => {
  * B-45: die Punkte-Empfehlung des Creators. `Exercise.rewardPoints` war ein Pflichtfeld, das kein
  * Bewertungspfad las – ein Creator, der dort 15 eintrug, bewirkte nichts.
  *
- * Geprüft wird die REGEL, nicht das Formular: `pointsFrom` ist die Stelle, an der beide Aufrufer
- * (Formularaufbau und Übungswechsel in der Trefferliste) hängen. Rot macht diese Fälle das Entfernen der
- * `> 0`-Prüfung bzw. das Zurückfallen auf das hartcodierte `20`.
+ * Geprüft wird die REGEL, nicht das Formular: `pointsFrom` entscheidet beim Wählen einer Übung, ob ihre
+ * Empfehlung den aktuellen Wert ersetzt. Rot machen diese Fälle das Entfernen der `> 0`-Prüfung (Fälle 2
+ * und 3) bzw. das Ignorieren der Empfehlung (Fall 1).
+ *
+ * Der zweite Parameter ist der Kern: „die Übung schweigt" darf nicht dasselbe tun wie „die Übung empfiehlt
+ * etwas". Eine frühere Fassung fiel auf ein hartcodiertes 20 zurück und hätte eine selbst getippte 50 durch
+ * einen Wert ersetzt, den niemand vorgeschlagen hat (Fund des `frontend-reviewer`).
  */
 describe("Punkte-Empfehlung der Übung", () => {
   const uebung = (rewardPoints: number) => ({ rewardPoints }) as ExerciseSummary;
+  const GETIPPT = 50;
 
   it("übernimmt die Empfehlung als Zielpunkte", () => {
-    expect(pointsFrom(uebung(15))).toBe(15);
+    expect(pointsFrom(uebung(15), GETIPPT)).toBe(15);
   });
 
-  it("lässt den Vorgabewert stehen, wenn die Empfehlung 0 ist", () => {
-    // Dieselbe Regel wie serverseitig: `rewardPoints` hat keine Untergrenze, und eine alte Übung mit einer
-    // stehengebliebenen Null darf keine neue Position auf null Zielpunkte ziehen.
-    expect(pointsFrom(uebung(0))).toBe(20);
+  it("lässt den bisherigen Wert stehen, wenn die Empfehlung 0 ist", () => {
+    // `rewardPoints` hat serverseitig keine Untergrenze; eine stehengebliebene Null ist keine Aussage.
+    expect(pointsFrom(uebung(0), GETIPPT)).toBe(GETIPPT);
   });
 
-  it("lässt den Vorgabewert stehen, solange keine Übung gewählt ist", () => {
-    expect(pointsFrom(undefined)).toBe(20);
+  it("lässt ihn auch bei einer negativen Empfehlung stehen", () => {
+    // Der einzige Fall, für den die `> 0`-Prüfung überhaupt trägt: `0` ist in JS ohnehin falsy, `-5` nicht.
+    // Ohne sie stünde eine negative Zielbelohnung im Feld, und `min={0}` greift nur bei Tastatureingabe.
+    expect(pointsFrom(uebung(-5), GETIPPT)).toBe(GETIPPT);
+  });
+
+  it("lässt ihn stehen, solange keine Übung gewählt ist", () => {
+    // Absichtserklärung, keine Messung: unter `strict` kompiliert die realistische Verletzung gar nicht.
+    expect(pointsFrom(undefined, GETIPPT)).toBe(GETIPPT);
   });
 });

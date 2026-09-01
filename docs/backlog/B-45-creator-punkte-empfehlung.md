@@ -1,14 +1,14 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/katalog, bereich/training, rolle/creator, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/katalog, bereich/training, rolle/creator, rolle/supervisor]
 aliases: [Punkte-Empfehlung, RewardPoints]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: S
 wo: beides
 migration: nein
 vertragsbruch: nein
-wartet_auf: pugling-reviewer + frontend-reviewer
+wartet_auf: ""
 quelle: Sitzung 2026-07-31 (Rollen-Abgleich Creator/Supervisor/Student)
 ---
 
@@ -146,9 +146,13 @@ Fallback-Zeile im Frontend-Default, ein Integrationstest. Kein neues DTO, kein n
 - **`migration`: nein** — keine Schema-Änderung, `RewardPoints` existiert bereits genau wie gebraucht.
 - **`vertragsbruch`: nein** — kein DTO ändert Form oder Pflichtstatus; nur interne Vererbungslogik.
 - **Risiken**: der fehlende serverseitige Mindestwert an `RewardPoints` (Entscheidung 4) bleibt bestehen
-  — ein Creator kann weiterhin `0` oder theoretisch negative Werte eintragen. Das wird hier bewusst
-  **nicht** mitgefangen (wäre ein eigener, unabhängiger Defekt/Frage-Kandidat, kein Teil dieser Story);
-  die `> 0`-Prüfung an der Vererbungsstelle reicht, um die stille Verschlechterung zu verhindern.
+  — ein Creator kann weiterhin `0` oder negative Werte eintragen und bekommt kein `400`. Das wird hier
+  bewusst **nicht** mitgefangen; die `> 0`-Prüfung an der Vererbungsstelle reicht, um die stille
+  Verschlechterung zu verhindern.
+  <!-- Korrektur 2026-09-01 (Fund des `pugling-reviewer`): Der Satz suggerierte einen offenen
+       Durchrutscher, den es nicht gibt — `RewardPoints > 0` ist bei `-5` falsch, ein negativer Wert
+       wird also nie geerbt. Offen ist nur der Ursprungsdefekt eine Ebene höher: das Anlegen selbst
+       nimmt den Wert an. -->
 - **Angriffsplan**: (1) `PlanPositionsController.Create` um den `RewardPoints`-Fallback für
   `PointsGoalMet` ergänzen (Backend zuerst, API-First); (2) `PlanPositions.tsx:defaultSettings` denselben
   Fallback fürs Anlegeformular nachziehen; (3) Testweg unten.
@@ -219,3 +223,70 @@ Fallback-Zeile im Frontend-Default, ein Integrationstest. Kein neues DTO, kein n
 
   **Bleibt auf `in-arbeit`:** `wo: beides` verlangt **beide** Reviewer, und diese Sitzung startet keine
   Agenten unaufgefordert. Mein eigener Blick auf den Diff ist kein Review.
+- **2026-09-01** — **Beide Reviewer gelaufen** (auf Freigabe), kein Blocker, aber **fünfzehn Funde**. Der
+  schwerste war keiner, den ich selbst gesehen hatte:
+
+  **Zwei Funde, die den Nutzen der Story fast umgedreht hätten:**
+
+  1. **Der effektive Standard wäre produktweit von 20 auf 10 gefallen** (`frontend-reviewer`).
+     `VaterExerciseCreate.tsx:60` belegte das Punktefeld mit `10` vor. Damit trägt **jede** Übung, deren
+     Creator das Feld nie angefasst hat, eine „Empfehlung" von 10 — und hätte ab dieser Story jede neue
+     Position von 20 auf 10 gezogen. Genau die stille Verschlechterung, die Entscheidung 4 verhindern
+     wollte, nur durch die andere Tür. Vorbelegung auf `20` gesetzt: eine unberührte Empfehlung
+     reproduziert jetzt den Vorgabewert, den sie überschreibt. **Bestandsübungen behalten ihren Wert** —
+     das lässt sich ohne Migration nicht nachziehen, und die Story trägt `migration: nein`.
+  2. **Die Vererbung hatte nach oben kein Maß** (`pugling-reviewer`). `PointsGoalMet` wird als Münzen
+     ausgezahlt, der Katalog ist geteilt, und `RewardPoints` hat serverseitig keine Grenze: eine fremde
+     Übung mit `rewardPoints = 100000` hätte über jeden API-First-Aufruf ohne `pointsGoalMet` 100 000
+     Münzen in die Familien-Ökonomie gebucht. Vor dem Vererben war die Obergrenze das harte `20` — **das
+     Loch hat dieser Commit geöffnet**, es steht nicht auf der Liste der bewusst offenen Punkte.
+     Geschlossen mit `MaxInheritedGoalPoints = 200`, das **nur** die stille Vererbung begrenzt; ein
+     ausdrücklich gesetzter Wert bleibt unbegrenzt, wie zuvor. **Die Zahl 200 ist meine Wahl** (das
+     Höchste, was irgendein Produktteil beabsichtigt, sind 30 — die intensivste Assistenten-Stufe) und
+     darf wandern.
+
+  **Vier Testlücken, alle gemessen statt vermutet:**
+
+  1. Die neue Projektion war **unbeobachtet**: `e.RewardPoints` durch `0` ersetzt → 834/834 blieben grün,
+     und der Vertrag ändert sich dabei nicht (das Schema kommt aus dem Record-Kopf, die Drift-Tore sehen
+     nichts). Zusicherung in `ExerciseMetadataTests` ergänzt. Dieselbe Fehlerklasse, die die Story behebt.
+  2. `Spaetere_Aenderung_…` **inszenierte** seine Vorbedingung, statt sie zu prüfen: kommentiert man das
+     Schreiben von `RewardPoints` im Creator-PUT aus, blieb der Test grün — er hätte nicht gemerkt, dass
+     die Änderung, gegen die er sichert, nie stattfand. Jetzt wird die `99` in der Antwort belegt.
+  3. **Zwei Akzeptanzkriterien in einem `Fact`**: ein Test bricht an der ersten Zusicherung ab, eine
+     Reihenfolge-Regression (AK 2) wäre nur sichtbar geblieben, solange AK 1 grün ist. Getrennt.
+  4. **Meine rote Probe für den 0-Fall im Frontend hielt nicht.** Ich hatte auf `?? 20` mutiert und das als
+     „Wächter entfernt" protokolliert — der Reviewer hat gemessen, dass der echte Wegfall (`? :` auf
+     Truthiness) **18/18 grün** lässt: `0` ist in JS ohnehin falsy. Tragend ist der Wächter nur für einen
+     **negativen** Wert, und dieser Fall fehlte. Ergänzt.
+
+  **Zwei Stellen, an denen der Code das Gegenteil seiner Kommentare tat:**
+
+  1. `pointsFrom` war in `defaultSettings` **verhaltenslos** — die Funktion hat einen Aufrufer, und der
+     übergibt keine Übung. Der Doc-Kommentar behauptete „die Regel gilt an zwei Stellen", der Spec-Kopf
+     „rot an einer der beiden". Der toten `ex`-Parameter ist entfernt (er war für drei weitere Felder
+     schon vorher tot), die Kommentare sagen jetzt, was gilt.
+  2. Die **Doku-Lüge, die die Story anprangert, stand unverändert an der Quelle**: `LearnEntities.cs:68`
+     sagte weiter „Points the child receives for completing it" — der Satz, den die Story wörtlich als
+     „stimmt für keinen heutigen Pfad" zitiert. Neu geschrieben, ebenso das `<summary>` von
+     `ExercisePayload`, das der Creator in Swagger tatsächlich liest.
+
+  **Ein Fund, der die Story besser macht, als ich sie gebaut hatte:** Beim Wechsel auf eine Übung **ohne**
+  brauchbare Empfehlung hätte meine Fassung eine selbst getippte `50` durch `20` ersetzt — überschrieben,
+  ohne dass etwas vererbt wurde. `pointsFrom(ex, current)` lässt den Wert jetzt stehen. Das hält
+  Entscheidung 4 ein *und* den alten Kommentar „ein Übungswechsel ist keine Rücknahme".
+
+  **Zwei Funde bewusst nicht hier behoben:** die drei neuen `<para>`-Blöcke tragen ihre Quelltext-Einrückung
+  ins OpenAPI-Dokument → als weitere Fälle an [B-147](B-147-para-summaries-tragen-einrueckung-ins-dokument.md)
+  vermerkt; und der Assistent setzt die Zielpunkte weiter aus der Intensität statt aus der Empfehlung → als
+  [B-186](B-186-assistent-und-planseite-setzen-zielpunkte-verschieden.md) abgelegt, `art: Frage`, weil das
+  Verhalten dort verteidigbar ist. Der Hilfetext ist trotzdem sofort relativiert worden („auf der
+  Plan-Seite … der Assistent setzt die Punkte stattdessen aus der gewählten Intensität"), damit die
+  Oberfläche nicht in der Zwischenzeit lügt.
+
+  **Eine Story-Korrektur:** Das Risiko der Schätzung behauptete, negative Werte rutschten durch. Sie tun es
+  nicht (`> 0` ist bei `-5` falsch) — der Satz steht korrigiert, mit Begründung als Kommentar daneben.
+
+  **Belegt nach den Korrekturen:** Backend **836/836** (`-c Release`), Vitest **308/308**, Playwright
+  **38/38**, `npm run build` grün, `dotnet format Pugling.sln --verify-no-changes` sauber. Rollengang: die
+  E2E fährt Creator→Vater im echten Chromium.
