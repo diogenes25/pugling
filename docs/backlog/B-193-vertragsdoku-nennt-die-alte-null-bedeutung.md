@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/backend, bereich/doku, rolle/supervisor]
+tags: [typ/story, status/geschaetzt, bereich/backend, bereich/doku, rolle/supervisor]
 aliases: [PointsGoalMet null = 20, Swagger sagt die alte Regel]
-status: ausformuliert
+status: geschaetzt
 prio: P3
 art: Defekt
-groesse: ""
+groesse: XS
 wo: backend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: Nachschau 2026-09-01 zu B-45
 unverifiziert: false
 grund: ""
@@ -43,6 +43,32 @@ also Vertragsoberfläche und nicht bloß Quelltext.
 Kein Tor prüft, ob eine Beschreibung des `null`-Verhaltens mit dem Code übereinstimmt — und es ließe sich
 auch keines mechanisch bauen. Der Fund gehört darum in die Nachschau, wo er entstanden ist.
 
+## Entscheidungen
+
+1. **Die Zeile wird auf die Formel ihrer Geschwister gebracht**, nicht frei umformuliert.
+   *Begründung:* Die vier Zeilen darunter tragen dasselbe Muster und sind richtig; eine sechste
+   Formulierung derselben Aussage wäre eine weitere Fassung, die driften kann. *Kosten:* keine.
+2. **Die Grenze wird mitgenannt.** Nach B-192 lautet die Wahrheit: die Empfehlung der Übung, sofern sie in
+   (0, 200] liegt — sonst 20. *Begründung:* Ohne die Grenze wäre die neue Zeile schon wieder halbwahr, und
+   genau diese Halbwahrheit ist der Anlass dieser Story. *Kosten:* Die Zeile wird länger als ihre
+   Geschwister; das ist der Preis dafür, dass sie stimmt.
+3. **Diese Story kommt NACH B-192.** *Begründung:* Sonst beschriebe sie einen Zustand, den es erst danach
+   gibt. *Kosten:* keine — dieselbe Sitzung.
+
+## Akzeptanzkriterien
+
+1. Die `PointsGoalMet`-Zeile in `StudyPlanDtos.cs` beschreibt das tatsächliche Verhalten inklusive Grenze.
+2. `docs/openapi/v1.json` trägt den neuen Text (der Testlauf erzeugt es).
+3. Keine andere Vorgabewert-Beschreibung derselben Datei widerspricht dem Code — **nachgezählt**, nicht
+   vermutet, und die Zahl steht im `## Verlauf`.
+
+## Schätzung
+
+- **Größe: XS** — eine Zeile plus die erzeugten Artefakte. **Migration/Vertragsbruch: nein.**
+- **Testweg:** kein eigener Test, und das ist argumentiert statt ausgelassen. Das Tor ist der ohnehin
+  laufende `DocsCaptureTests`-Durchgang, der `docs/openapi/v1.json` neu schreibt: Bliebe der alte Text
+  stehen, wäre die Story nicht erledigt. Akzeptanzkriterium 3 ist eine **Zählung**, kein Test.
+
 ## Offene Punkte
 
 1. Nur diese Zeile, oder alle Aussagen über `null`-Vorgabewerte im Vertrag einmal gegenlesen?
@@ -56,3 +82,6 @@ auch keines mechanisch bauen. Der Fund gehört darum in die Nachschau, wo er ent
 
 - 2026-09-01 · Aufgenommen aus der **Nachschau** zu B-45 (Pflichthandlung der Retrospektive, Nachtlauf).
   `entgangen_bei: [B-45]`.
+- 2026-09-01 · **`ausformuliert` → `gegrillt` → `geschaetzt`** (zweiter Nachtlauf, Freigabe 1). Fundort
+  selbst nachgelesen: Die `PointsGoalMet`-Zeile sagt „`null` = 20", die vier Zeilen darunter tragen die
+  richtige Formel — der Kontrast steht wörtlich nebeneinander. XS.

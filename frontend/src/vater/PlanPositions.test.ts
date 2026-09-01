@@ -142,26 +142,64 @@ describe("Zeitfenster einer Position", () => {
  * einen Wert ersetzt, den niemand vorgeschlagen hat (Fund des `frontend-reviewer`).
  */
 describe("Punkte-Empfehlung der Übung", () => {
-  const uebung = (rewardPoints: number) => ({ rewardPoints }) as ExerciseSummary;
+  // `suggestedGoalPoints` ist das, was der Server als wirksam nennt (B-192) - `rewardPoints` bleibt roh
+  // daneben stehen, damit die alten Faelle weiter zeigen, dass das Formular NICHT den rohen Wert liest.
+  const uebung = (suggestedGoalPoints: number, rewardPoints = suggestedGoalPoints) =>
+    ({ rewardPoints, suggestedGoalPoints }) as ExerciseSummary;
   const GETIPPT = 50;
 
+  /*
+   * B-191. Der Defekt saß nicht in einem der Faelle unten, sondern in ihrer VERKETTUNG: `current` stand
+   * fuer zwei Dinge zugleich - "der Vater hat das getippt" und "die vorher angeklickte Uebung hat das
+   * empfohlen". Ein Fall mit EINER Uebung kann das nicht messen, und genau darum kam es durch.
+   *
+   * Zugleich ist es B-45s eigenes Akzeptanzkriterium 4, woertlich: das Feld werde mit `RewardPoints`
+   * vorbelegt, "bzw. 20, wenn die Uebung 0 traegt". Mit `current` stand dort weder das eine noch das
+   * andere.
+   */
+  it("traegt die Empfehlung der vorigen Uebung nicht in die naechste", () => {
+    // Uebung A empfiehlt 100 -> das Feld zeigt 100. So weit richtig.
+    const nachA = pointsFrom(uebung(100), 20, false);
+    expect(nachA).toBe(100);
+
+    // Uebung B traegt ROH eine 0, empfiehlt also nichts; der Server nennt darum 20 als wirksamen
+    // Vorschlag (B-192). Der rohe Nullwert ist hier tragend und kein Detail: mit einer rohen 20 waere
+    // der Fall auch VOR der Reparatur gruen gewesen und haette nichts gemessen (am 2026-09-01 genau so
+    // passiert und erst von der roten Probe entlarvt).
+    // Vorher stand hier 100 - eine Zahl, die weder B empfiehlt noch jemand getippt hat.
+    expect(pointsFrom(uebung(20, 0), nachA, false)).toBe(20);
+  });
+
+  it("laesst eine selbst getippte Zahl ueber den Uebungswechsel stehen", () => {
+    // Die Gegenprobe, und sie ist tragend: Ohne sie waere die Zusicherung oben auch von einem
+    // `pointsFrom` erfuellt, das den Vater einfach immer ueberschreibt.
+    expect(pointsFrom(uebung(20, 0), GETIPPT, true)).toBe(GETIPPT);
+    expect(pointsFrom(uebung(100), GETIPPT, true)).toBe(GETIPPT);
+  });
+
   it("übernimmt die Empfehlung als Zielpunkte", () => {
-    expect(pointsFrom(uebung(15), GETIPPT)).toBe(15);
+    expect(pointsFrom(uebung(15), GETIPPT, false)).toBe(15);
   });
 
-  it("lässt den bisherigen Wert stehen, wenn die Empfehlung 0 ist", () => {
-    // `rewardPoints` hat serverseitig keine Untergrenze; eine stehengebliebene Null ist keine Aussage.
-    expect(pointsFrom(uebung(0), GETIPPT)).toBe(GETIPPT);
-  });
-
-  it("lässt ihn auch bei einer negativen Empfehlung stehen", () => {
-    // Der einzige Fall, für den die `> 0`-Prüfung überhaupt trägt: `0` ist in JS ohnehin falsy, `-5` nicht.
-    // Ohne sie stünde eine negative Zielbelohnung im Feld, und `min={0}` greift nur bei Tastatureingabe.
-    expect(pointsFrom(uebung(-5), GETIPPT)).toBe(GETIPPT);
+  it("liest den wirksamen Vorschlag und rechnet nicht selbst nach", () => {
+    /*
+     * Diese Zusicherung hat mit B-192 ihre Aussage GEWECHSELT, und das gehoert hingeschrieben: Vorher
+     * pruefte sie, dass das Formular eine unbrauchbare Empfehlung (0, negativ) selbst abfaengt. Genau
+     * das tut es jetzt nicht mehr - die Grenze (0, 200] und der Rueckfall auf 20 liegen im Server
+     * (`GoalPointsPolicy`), und dort sind sie gepinnt (`PlanPositionCrudTests`:
+     * `Katalogtreffer_Nennt_Den_Wirksamen_Punktevorschlag`, alle drei Faelle inklusive dem negativen).
+     *
+     * Was sie jetzt haelt, ist die andere Haelfte derselben Entscheidung: dass hier NICHT nachgerechnet
+     * wird. Taete das Formular es doch, stuende dieselbe Regel zweimal da - und die Kopie ist das, was
+     * driftet. Der rohe Wert ist darum in allen drei Faellen absichtlich unbrauchbar und wird ignoriert.
+     */
+    expect(pointsFrom(uebung(20, 0), GETIPPT, false)).toBe(20);
+    expect(pointsFrom(uebung(20, -5), GETIPPT, false)).toBe(20);
+    expect(pointsFrom(uebung(20, 100_000), GETIPPT, false)).toBe(20);
   });
 
   it("lässt ihn stehen, solange keine Übung gewählt ist", () => {
     // Absichtserklärung, keine Messung: unter `strict` kompiliert die realistische Verletzung gar nicht.
-    expect(pointsFrom(undefined, GETIPPT)).toBe(GETIPPT);
+    expect(pointsFrom(undefined, GETIPPT, false)).toBe(GETIPPT);
   });
 });

@@ -343,3 +343,128 @@ trägt, das der Bereich seit einem Monat namentlich sucht und trotzdem wieder du
 | `6688ff5` | Nachprüfung des Reviewers eingearbeitet |
 
 **Nichts ist gepusht** — das bleibt bei dir.
+
+## Runde 2 — Zweiter Nachtlauf
+
+**Auftrag:** derselbe wie oben, plus eine neunte Auflage des Nutzers: Der Retro-Vorschlag der ersten Nacht
+(E2E-Zusicherung über einen verschwindenden Zustand nennt die Reihenfolge) ist **noch nicht entschieden**
+und wird **nicht gelandet** — nur in eigener Arbeit befolgt.
+
+**Sprint-Zuschnitt** vom Nutzer nicht widersprochen: die drei Nachschau-Funde zu B-45 zuerst
+(B-191, B-192, B-193), danach der Faden „ein Fehlschlag gibt sich nicht mehr als Erfolg aus".
+
+### Ist-Stand: was ich selbst nachgeprüft habe, und was das änderte
+
+Die drei Stories entstanden gestern Nacht aus dem Bericht eines Nachschau-Agenten. Ihre Fundorte habe ich
+**jetzt erst selbst am Code gelesen** — und das war nicht überflüssig: Drei Zeilen unter der defekten
+Stelle steht die Lösung bereits, und ein Kernstück der Analyse musste geschärft werden.
+
+| Behauptung | Nachgeprüft an | Ergebnis |
+|---|---|---|
+| `pointsFrom` gibt `current` zurück | `PlanPositions.tsx:184-185` | **hält** — `ex && ex.rewardPoints > 0 ? ex.rewardPoints : current` |
+| Der Wert leckt beim Übungswechsel | `:445-452` (`onChange` des Radios) | **hält** — `pointsGoalMet: pointsFrom(ex, cur.pointsGoalMet)` |
+| Das UI schickt nie `null` | `:84` (`pointsGoalMet: number`), `:248` | **hält** — der Typ lässt „nicht gesagt" gar nicht zu |
+| Die Grenze greift nur bei `null` | `PlanPositionsController.cs:98-99`, `:205` | **hält** |
+| `StudyPlanDtos.cs` sagt „`null` = 20" | die `PointsGoalMet`-Zeile, gegen die vier Zeilen darunter | **hält** — der Kontrast steht direkt daneben |
+
+**Zwei Funde, die aus dem Nachlesen selbst kamen:**
+
+1. **B-191 ist ein verfehltes Akzeptanzkriterium, nicht nur ein Nebeneffekt.** B-45s eigenes AK 4 verlangt
+   wörtlich: *„belegt das Punkte-Feld … mit dem `RewardPoints`-Wert der gewählten Übung vor (bzw. `20`,
+   wenn die Übung `0` trägt)"*. Der Code setzt statt `20` aber `current` — also weder `RewardPoints` noch
+   `20`, sondern was gerade dasteht. Das Kriterium war abgenommen, ohne erfüllt zu sein, und der Test
+   konnte den Unterschied nicht messen.
+2. **Die Antwort auf B-192s offenen Punkt 2 steht bereits im Code.** `PlanPositionsController.cs:85-88`
+   entscheidet ausdrücklich: *„The bound applies **only** to inheritance, never to a value the supervisor
+   states explicitly — that is their own decision and stays unbounded."* Damit ist der Punkt **nicht offen**
+   und muss nicht beim Menschen abgeholt werden. Und er verschiebt die Diagnose: Der Defekt ist nicht die
+   fehlende Grenze, sondern dass **die Oberfläche das Schweigen des Vaters in eine Aussage verwandelt**.
+
+**Damit sind B-191 und B-192 ein Fix, nicht zwei** — beide brauchen denselben fehlenden Zustand:
+„hat der Vater diese Zahl gesagt, oder kommt sie von woanders?"
+
+### Sprint 2 — Ziel & Umfang
+
+**Sprint-Ziel** (aus dem Sitz des Vaters):
+*Die Punktezahl, die im Formular steht, ist die Punktezahl, die mein Kind bekommt — und sie gehört zu der
+Übung, die ich gerade gewählt habe.*
+
+**Umfang:** B-191, B-192, B-193 — drei `Defekt`-Stories, alle aus der Nachschau zu B-45, alle über
+dieselbe Zahl.
+
+**Draußen geblieben, mit Namen:** B-194 und B-195 (die beiden Nachschau-Funde zu **B-172**). Sie liegen
+in derselben Nachschau, aber nicht auf diesem Faden — der eine ist ein `<select>` ohne Rückfall, der
+andere ein Ladefenster. Sie in den Sprint zu ziehen hätte ihn zu einer Sammlung gemacht, die Step 6 nicht
+mehr widerlegen kann.
+
+### Entwickler-Brief (Sprint 2)
+
+**Der rote Faden:** Eine Zahl, die an drei Stellen etwas anderes bedeutete. Der Server kennt eine Regel
+(„was erbt eine Position?"), das Formular kennt eine andere („was zeige ich an?"), und das
+Vertragsdokument beschrieb eine dritte. Gebaut wird kein neues Verhalten — es wird **eine** Wahrheit
+hergestellt und veröffentlicht.
+
+**Reihenfolge (Abhängigkeit, API-First):**
+
+1. **B-192 Backend zuerst.** Die Regel bekommt einen Ort (`Services/Shared/GoalPointsPolicy.cs`), und der
+   Katalog veröffentlicht ihr Ergebnis als `ExerciseSummary.SuggestedGoalPoints`.
+2. **B-193** danach — die Vertragszeile kann erst stimmen, wenn feststeht, was gilt.
+3. **B-191 Frontend** zuletzt: Es liest das neue Feld und bekommt den fehlenden Zustand „hat der Vater
+   das gesagt?".
+
+**Guards:** Keine Schemaänderung, keine Migration. Ownership und Rollen unberührt — `ExerciseSummary`
+kommt aus einer `Roles.Creator`-Action, die Position aus `Roles.Supervisor` mit `PlanOwnershipFilter`.
+**`vertragsbruch: ja`**: Ein positioneller Record wächst; `docs/openapi/v1.json` und `src/lib/contract.ts`
+werden neu erzeugt.
+
+**Testweg:** drei Ebenen, weil der Defekt über drei lief — Integrationstest (der Server nennt den
+wirksamen Wert und legt genau ihn an), Regeltest (das Formular rechnet **nicht** selbst nach) und ein
+E2E über **zwei** Übungen (nur die Verkettung kann das Leck messen).
+
+### Iteration 2 — umgesetzt
+
+**Backend:** `GoalPointsPolicy` als gemeinsamer Ort für Grenze (200) und Rückfall (20);
+`PlanPositionsController` benutzt sie statt einer eigenen Kopie; `ExerciseCatalogController` veröffentlicht
+den wirksamen Wert. Die Projektion rechnet als Ternär **inline** — ein Methodenaufruf wäre im
+EF-`.Select(...)` nicht übersetzbar; dupliziert wird damit die *Form* der Regel, nicht ihre *Zahlen*.
+
+**Vertrag:** `ExerciseSummary` um `SuggestedGoalPoints` erweitert, `PointsGoalMet`-Beschreibung korrigiert.
+Die neue Beschreibung ist bewusst **einzeilig** — mehrzeilig hätte sie ihre Quelltext-Einrückung ins
+OpenAPI-Dokument getragen und damit eine weitere Instanz des bekannten Defekts B-147 erzeugt.
+
+**Frontend:** `pointsFrom(ex, current, getippt)` liest `suggestedGoalPoints`; der Zustand `punkteGetippt`
+liegt im **Anlege**-Formular und nicht in `PositionSettings` — er darf `settingsToDto` nicht erreichen.
+Die Unterscheidung hängt an dem, was ohnehin verschieden ist: Der Übungswechsel setzt `settings` direkt,
+jede Formularänderung läuft durch `PositionFields.onChange`.
+
+#### Rote Probe je Ebene, mit Zahl (Auflage 5)
+
+| Ebene | Erwartet | Gemessen | Was die Zahl sagt |
+|---|---|---|---|
+| Backend | 2 rot | `Failed: 2, Passed: 0` | Test 2 wörtlich: `Expected 100000, Actual 20` — der Katalog nennt 100000, die angelegte Position trägt 20 |
+| Frontend-Regel | 2 rot von 21 | `2 failed \| 19 passed` | `expected 100 to be 20` — der Wert der vorigen Übung, durchgeleckt |
+| E2E | 1 rot von 2 | `1 failed \| 1 passed` | `Expected "20", Received "100000"` — der Vater sieht die Zahl, die beim Anlegen eine andere wird |
+
+**Zwei Dinge liefen dabei schief, und beide gehören ins Protokoll:**
+
+1. **Mein erster Frontend-Testfall war grün, ohne etwas zu messen.** Die Verkettung „Übung A, dann Übung
+   B" fiel nicht — weil mein Fixture Übung B eine *rohe* 20 gab statt einer *rohen 0*. Mit einer rohen 20
+   liefert auch die alte Logik 20, und der Fall wäre vor wie nach der Reparatur grün gewesen. Erst die
+   rote Probe hat das entlarvt; ohne sie stünde jetzt ein Test da, der seinen eigenen Namen nicht hält.
+2. **Zwei bestehende Tests fielen, weil ihre Regel umgezogen ist.** „Empfehlung 0" und „negative
+   Empfehlung" prüften, dass das *Formular* unbrauchbare Werte abfängt — das tut seit B-192 der Server.
+   Die Fälle sind **umgeschrieben statt gestrichen**, und die Abdeckung ist **mitgezogen**: Der negative
+   Fall war bis dahin *nur* im Frontend gepinnt und steht jetzt im Integrationstest. Was der
+   Frontend-Test heute hält, ist die andere Hälfte derselben Entscheidung — dass hier **nicht**
+   nachgerechnet wird.
+
+**Nebenbefund, nicht mitgebaut:** B-193s Akzeptanzkriterium 3 verlangte eine Zählung statt einer
+Vermutung. Gezählt: **24** Vorgabewert-Aussagen in `StudyPlanDtos.cs`. Die **acht mit einer konkreten
+Zahl** habe ich einzeln gegen den Code geprüft (`MaxBox ?? 5`, `PenaltyCoins ?? 0`, `NewContentPoints ??
+sb ?? 10`, `ComboThreshold ?? sb ?? 5`, `ComboBonusPoints ?? sb ?? 5`, `SpeedThresholdSeconds ?? sb ?? 0`,
+`SpeedBonusPoints ?? sb ?? 0`, `GoalThreshold ?? DefaultPassPercent = 80` in
+`PositionProgressService.cs:17`). **Nur `PointsGoalMet` war falsch.** Die übrigen 16 tragen keine Zahl und
+können nicht numerisch driften.
+
+**Verifikation:** `dotnet build Pugling.sln` grün · `dotnet test -c Release` **838/838** ·
+`npx tsc -b` sauber · `npm run test` **327/327** · voller Playwright-Lauf **43/43**.

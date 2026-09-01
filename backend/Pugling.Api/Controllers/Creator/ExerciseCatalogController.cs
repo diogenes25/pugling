@@ -114,7 +114,13 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
                 e.DefaultItemCount,
                 // Same story one field over (B-45): the points recommendation was written by creators and read
                 // by nobody. The position form now prefills its target reward from it.
-                e.RewardPoints))
+                e.RewardPoints,
+                // What a position would ACTUALLY inherit (B-192). Spelled out instead of calling
+                // GoalPointsPolicy.Effective because EF cannot translate a method call inside a
+                // projection - the rule's shape is duplicated here, its numbers are not.
+                e.RewardPoints > 0 && e.RewardPoints <= GoalPointsPolicy.MaxInherited
+                    ? e.RewardPoints
+                    : GoalPointsPolicy.Fallback))
             .ToPagedListAsync(Response, skip, take, ct);
     }
 

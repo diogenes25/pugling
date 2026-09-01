@@ -181,8 +181,18 @@ export function timeSlotProblem(s: PositionSettings): string | null {
  * stehengebliebene Null ist keine Aussage, und ein negativer Wert erst recht nicht. Dieselbe Regel hält
  * `PlanPositionsController.Create`, dort zusätzlich mit einer Obergrenze gegen fremde Katalog-Übungen.
  */
-export function pointsFrom(ex: ExerciseSummary | undefined, current: number): number {
-  return ex && ex.rewardPoints > 0 ? ex.rewardPoints : current;
+export function pointsFrom(
+  ex: ExerciseSummary | undefined, current: number, getippt: boolean,
+): number {
+  // `getippt` ist der Zustand, der vorher fehlte (B-191): Ohne ihn stand `current` fuer zweierlei -
+  // "der Vater hat das getippt" UND "die vorher angeklickte Uebung hat das empfohlen". Die zweite
+  // Bedeutung trug den Wert von Uebung A in Uebung B, wo ihn niemand gesetzt hatte.
+  //
+  // Gelesen wird `suggestedGoalPoints`, nicht `rewardPoints`: Der Server nennt darin, was die Position
+  // TATSAECHLICH erbte (B-192). Am rohen Wert vorbelegen hiesse, eine Zahl anzuzeigen, die beim Anlegen
+  // eine andere wird - und die Grenze dahinter waere im Frontend ein zweites Mal hinzuschreiben.
+  if (getippt || !ex) return current;
+  return ex.suggestedGoalPoints;
 }
 
 /**
@@ -404,6 +414,19 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
     [filter.subjectId, filter.seriesUnitId, filter.grade, filter.schoolType, filter.categoryId, filter.type, filter.search]);
   const [exerciseId, setExerciseId] = useState<number | "">("");
   const [settings, setSettings] = useState<PositionSettings>(defaultSettings());
+  /*
+   * Hat der Vater die Zielpunkte SELBST gesagt? (B-191)
+   *
+   * Ohne diesen Zustand steht die Zahl im Feld fuer zweierlei - seine Eingabe und die Empfehlung der
+   * zuletzt angeklickten Uebung - und beim naechsten Uebungswechsel gewinnt die falsche Lesart: Uebung A
+   * (100) gefolgt von Uebung B (ohne Empfehlung) ergab eine Position mit 100 Muenzen Zielbelohnung, die
+   * weder B vorschlaegt noch jemand getippt hat.
+   *
+   * Er liegt hier und nicht in `PositionSettings`: Das ist Bedien-, kein Positionszustand - er darf
+   * `settingsToDto` nicht erreichen, und die Zeile im Bearbeiten-Modus braucht ihn gar nicht (dort ist
+   * jeder Wert bereits eine gespeicherte Aussage).
+   */
+  const [punkteGetippt, setPunkteGetippt] = useState(false);
 
   async function add(e: React.FormEvent) {
     e.preventDefault();
@@ -448,7 +471,7 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
                       useLeitner: ex.defaultUseLeitner,
                       requireTypedTest: ex.defaultRequireTypedTest,
                       itemCount: ex.defaultItemCount?.toString() ?? "",
-                      pointsGoalMet: pointsFrom(ex, cur.pointsGoalMet),
+                      pointsGoalMet: pointsFrom(ex, cur.pointsGoalMet, punkteGetippt),
                     }));
                   }}
                   style={{ marginTop: 3 }} />
@@ -473,7 +496,14 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
         <TruncationHint shown={results.length} total={exercises.data?.total ?? 0} />
       </div>
 
-      <PositionFields value={settings} onChange={setSettings} />
+      {/* Jede Aenderung, die durch das Formular kommt, ist eine Aussage des Vaters - der Uebungswechsel
+          oben setzt `settings` dagegen direkt und laeuft hier nicht durch. Damit braucht `PositionFields`
+          keinen zusaetzlichen Prop, und die Unterscheidung haengt an dem, was ohnehin verschieden ist:
+          dem Weg, auf dem der Wert entsteht. */}
+      <PositionFields value={settings} onChange={(next) => {
+        if (next.pointsGoalMet !== settings.pointsGoalMet) setPunkteGetippt(true);
+        setSettings(next);
+      }} />
 
       <div className="row">
         <button type="submit" className="btn inline-btn" style={{ width: "auto", marginLeft: "auto" }} disabled={action.busy || exerciseId === ""}>

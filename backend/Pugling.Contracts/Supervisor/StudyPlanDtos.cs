@@ -96,7 +96,7 @@ public record PositionResponse(int Id, int StudyPlanId, int ExerciseId, string E
 /// <param name="MaxBox">Highest Leitner box; <c>null</c> or <c>&lt;= 0</c> = 5.</param>
 /// <param name="BoxIntervalDays">Review intervals per box; <c>null</c> = method default.</param>
 /// <param name="StageSchedule">Stage schedule per box; <c>null</c> = method default.</param>
-/// <param name="PointsGoalMet">Points when the goal is met; <c>null</c> = 20.</param>
+/// <param name="PointsGoalMet">Points when the goal is met; <c>null</c> = the exercise's recommendation when plausible (in (0, 200]), otherwise 20.</param>
 /// <param name="PenaltyCoins">Coin penalty for a missed mandatory goal; <c>null</c> = 0 (pure reward, opt-in).</param>
 /// <param name="NewContentPoints">Points for new content; <c>null</c> = the exercise's bonus suggestion, otherwise 10.</param>
 /// <param name="ComboThreshold">Combo threshold; <c>null</c> = the exercise's bonus suggestion, otherwise 5.</param>

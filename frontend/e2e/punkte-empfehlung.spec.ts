@@ -88,3 +88,90 @@ test("Die Punkte der Übung belegen das Ziel-Feld der neuen Position vor", async
   const position = page.getByRole("row", { name: new RegExp(EXERCISE_TITLE) });
   await expect(position).toContainText(`Ziel ${EMPFEHLUNG}`);
 });
+
+/*
+ * B-191 und B-192, und beide brauchen denselben Weg: ZWEI Uebungen nacheinander.
+ *
+ * B-191: `pointsFrom` gab bei einer Uebung ohne brauchbare Empfehlung den Wert zurueck, der gerade im
+ * Feld stand - und der stammte von der vorher angeklickten Uebung. Ein Fall mit einer Uebung kann das
+ * nicht messen; genau darum kam es durch die Abnahme von B-45.
+ *
+ * B-192: Die Grenze (0, 200] griff nur, wenn `pointsGoalMet` fehlt - und das Formular schickte immer
+ * eine Zahl. Der Vater sah 100000 und bekam 20. Seit dem Katalogfeld `suggestedGoalPoints` ist beides
+ * dasselbe.
+ *
+ * Eigener Test in derselben Datei statt einer neuen Spec: Es ist dieselbe Flaeche und derselbe
+ * Bildschirm wie oben, und die Regel aus `frontend/CLAUDE.md` zielt auf den Abbruch-Schatten langer
+ * Durchstiche - ein zweiter Fall neben einem gleich langen bildet keinen.
+ */
+test("Eine unsinnige Empfehlung wird nicht vorbelegt - und leckt nicht in die naechste Uebung", async ({ page }) => {
+  const LAUF = Date.now().toString().slice(-6);
+  const reiheName = `Grenzfall ${LAUF}`;
+  const unitLabel = `Unit 1 - Grenzfall ${LAUF}`;
+  const brauchbar = `Brauchbare Uebung ${LAUF}`;
+  const unsinnig = `Unsinnige Uebung ${LAUF}`;
+  const kind = { name: `Grenz-Kind ${LAUF}`, pin: "4321" };
+
+  await vaterLogin(page, FATHER);
+  await page.locator("#new-child-name").fill(kind.name);
+  await page.locator("#new-child-pin").fill(kind.pin);
+  await page.getByRole("button", { name: "Kind anlegen" }).click();
+  const kindLink = page.getByRole("link", { name: kind.name });
+  await expect(kindLink).toBeVisible();
+  const childId = (await kindLink.getAttribute("href"))!.split("/").pop()!;
+
+  await page.goto("/vater/lehrwerke");
+  await page.locator("#ns-name").fill(reiheName);
+  await page.locator("#ns-subject").selectOption({ label: "Englisch" });
+  await page.getByRole("button", { name: "Reihe anlegen" }).click();
+  await expect(page.getByText(/steht im Katalog/)).toBeVisible();
+  const reihe = page.getByRole("row", { name: new RegExp(reiheName) });
+  await reihe.getByRole("button", { name: "Units" }).click();
+  await page.locator('[id^="unit-label-new"]').fill(unitLabel);
+  await page.getByRole("button", { name: "Unit hinzufügen" }).click();
+  await expect(page.getByText(unitLabel)).toBeVisible();
+
+  // ---- Zwei Uebungen: eine mit plausibler Empfehlung, eine jenseits jeder Grenze ----
+  async function uebungAnlegen(titel: string, punkte: number) {
+    await page.goto("/vater/lehrwerke");
+    await page.getByRole("row", { name: new RegExp(reiheName) })
+      .getByRole("button", { name: "Units" }).click();
+    await page.getByRole("link", { name: `+ Übung zu „${unitLabel}"` }).click();
+    await page.locator('select[aria-label="Übungstyp"]').selectOption("Grammar");
+    await page.locator("#ex-title").fill(titel);
+    await page.locator("#ex-points").fill(String(punkte));
+    await page.getByLabel("Anweisung").fill("Setze die richtige Form ein.");
+    await page.getByLabel("Aufgabe").fill("She ___ (go) to school.");
+    await page.getByLabel("Lösung").fill("goes");
+    await page.getByRole("button", { name: "Übung anlegen" }).click();
+    await expect(page.getByText(`Übung „${titel}" angelegt.`)).toBeVisible();
+  }
+  await uebungAnlegen(brauchbar, 40);
+  await uebungAnlegen(unsinnig, 100000);
+
+  await page.goto("/vater/plan/new");
+  await page.locator("#plan-title").fill(`Grenzplan ${LAUF}`);
+  await page.getByRole("combobox", { name: "Kind" }).selectOption(childId);
+  await page.getByRole("button", { name: /Plan anlegen/ }).click();
+  await expect(page).toHaveURL(/\/vater\/plan\/\d+$/);
+
+  const punkteFeld = page.getByLabel("Punkte bei erreichtem Ziel", { exact: true });
+  await page.locator('select[aria-label="Fach-Filter"]').selectOption({ label: "Englisch" });
+  await page.locator('select[aria-label="Reihe-Filter"]').selectOption({ label: reiheName });
+  await page.locator('select[aria-label="Unit-Filter"]').selectOption({ label: unitLabel });
+
+  // Erst die brauchbare: sie belegt mit 40 vor, wie B-45 es verspricht.
+  await page.getByRole("radio", { name: new RegExp(brauchbar) }).check();
+  await expect(punkteFeld).toHaveValue("40");
+
+  // Dann die unsinnige. Zwei Dinge auf einmal:
+  //   B-192 - nicht 100000, denn das waere eine Zahl, die beim Anlegen zu 20 wuerde;
+  //   B-191 - und auch nicht 40, denn das ist der Wert der VORIGEN Uebung.
+  await page.getByRole("radio", { name: new RegExp(unsinnig) }).check();
+  await expect(punkteFeld).toHaveValue("20");
+
+  // Und was dasteht, gilt auch: die angelegte Position traegt genau diese Zahl.
+  await page.getByRole("button", { name: /Position hinzufügen/ }).click();
+  const position = page.getByRole("row", { name: new RegExp(unsinnig) });
+  await expect(position).toContainText("Ziel 20");
+});

@@ -342,6 +342,84 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
     }
 
     /// <summary>
+    /// B-192: the catalog search publishes the figure a position would <b>actually</b> inherit, so the
+    /// supervisor form can pre-fill with what will apply instead of with the raw recommendation.
+    /// <para>
+    /// Why this matters and why the earlier test did not catch it: the bound only ever applied when
+    /// <c>PointsGoalMet</c> was omitted, and the father web never omits it - it sends a number every time
+    /// (<c>PositionSettings.pointsGoalMet</c> is typed <c>number</c>). So the guard that
+    /// <c>Unplausibel_Hohe_Empfehlung_Wird_Nicht_Geerbt</c> pins held for the API path and for no one
+    /// else. Publishing the effective figure closes that by making the number the father SEES the number
+    /// that applies.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task Katalogtreffer_Nennt_Den_Wirksamen_Punktevorschlag()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var (_, key) = await TestApi.CreateStoreVocabAsync(father, "harbour", "Hafen");
+
+        // Zwei Uebungen, die sich nur in der Empfehlung unterscheiden - die eine plausibel, die andere
+        // jenseits jeder Grenze. Ohne BEIDE Faelle koennte der Test nicht zwischen "durchgereicht" und
+        // "wirksam gerechnet" unterscheiden.
+        var brauchbar = await TestApi.CreateVocabRefExerciseAsync(father, 30, key);
+        var unsinnig = await TestApi.CreateVocabRefExerciseAsync(father, 100_000, key);
+
+        // Die Suche liefert ein blankes Array; die Gesamtzahl reist im X-Total-Count-Kopf (httpPaged).
+        var treffer = await (await father.GetAsync("/api/v1/creator/exercises?take=200"))
+            .Content.ReadFromJsonAsync<JsonElement>();
+        var zeilen = treffer.EnumerateArray().ToList();
+
+        var a = zeilen.Single(z => z.GetProperty("id").GetInt32() == brauchbar);
+        Assert.Equal(30, a.GetProperty("rewardPoints").GetInt32());
+        Assert.Equal(30, a.GetProperty("suggestedGoalPoints").GetInt32());
+
+        var b = zeilen.Single(z => z.GetProperty("id").GetInt32() == unsinnig);
+        // Der rohe Wert bleibt lesbar - wer die Uebung bearbeitet, soll sehen, was dort steht.
+        Assert.Equal(100_000, b.GetProperty("rewardPoints").GetInt32());
+        // Der wirksame nicht: genau das haette das Formular vorbelegt, und genau das war der Defekt.
+        Assert.Equal(20, b.GetProperty("suggestedGoalPoints").GetInt32());
+
+        // Der negative Fall zog mit B-192 hierher um. Er war bis dahin NUR im Frontend gepinnt
+        // (`PlanPositions.test.ts`), und dort entscheidet das Formular jetzt nichts mehr - ohne diesen
+        // Fall waere die Abdeckung beim Umzug der Regel verloren gegangen. `0` ist in JS ohnehin falsy,
+        // `-5` nicht: das ist der einzige Fall, fuer den die untere Grenze ueberhaupt traegt.
+        var negativ = await TestApi.CreateVocabRefExerciseAsync(father, -5, key);
+        var nachNegativ = await (await father.GetAsync("/api/v1/creator/exercises?take=200"))
+            .Content.ReadFromJsonAsync<JsonElement>();
+        var c = nachNegativ.EnumerateArray()
+            .Single(z => z.GetProperty("id").GetInt32() == negativ);
+        Assert.Equal(-5, c.GetProperty("rewardPoints").GetInt32());
+        Assert.Equal(20, c.GetProperty("suggestedGoalPoints").GetInt32());
+    }
+
+    /// <summary>
+    /// B-192: was der Katalog als wirksamen Vorschlag nennt, ist auch das, was die angelegte Position
+    /// traegt. Ohne diese Zusicherung koennten beide Seiten je fuer sich richtig sein und trotzdem
+    /// auseinanderlaufen - der Katalog rechnet, der Controller rechnet, und niemand vergleicht.
+    /// </summary>
+    [Fact]
+    public async Task Wirksamer_Vorschlag_Und_Angelegte_Position_Stimmen_Ueberein()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var (_, key) = await TestApi.CreateStoreVocabAsync(father, "lighthouse", "Leuchtturm");
+        var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, 100_000, key);
+        var planId = await EmptyPlanAsync(father);
+
+        var treffer = await (await father.GetAsync("/api/v1/creator/exercises?take=200"))
+            .Content.ReadFromJsonAsync<JsonElement>();
+        var vorschlag = treffer.EnumerateArray()
+            .Single(z => z.GetProperty("id").GetInt32() == exerciseId)
+            .GetProperty("suggestedGoalPoints").GetInt32();
+
+        var position = await (await father.PostAsJsonAsync(
+            $"/api/v1/supervisor/study-plans/{planId}/positions", new { exerciseId, stage = 2 }))
+            .Content.ReadFromJsonAsync<JsonElement>();
+
+        Assert.Equal(vorschlag, position.GetProperty("pointsGoalMet").GetInt32());
+    }
+
+    /// <summary>
     /// B-45, decision 4: a recommendation of 0 must not silently drag every new position down to zero target
     /// points. <c>RewardPoints</c> carries no server-side lower bound, so an old exercise left at 0 would
     /// otherwise be a regression against the previous hard default of 20.
