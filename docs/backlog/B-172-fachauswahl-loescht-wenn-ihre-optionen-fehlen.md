@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/frontend, rolle/creator]
+tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/creator]
 aliases: [leeres Fach-Select loescht, subjects.data ?? [], Anzeige und Formularzustand driften]
-status: gegrillt
+status: geschaetzt
 prio: P1
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: M
+wo: frontend
+migration: nein
+vertragsbruch: nein
 quelle: Nachschau 2026-08-13 zu B-123
 grund: ""
 ersetzt_durch: []
@@ -263,6 +263,126 @@ also innerhalb dessen, was der Bereich zulässt.
 Fall, in dem der Komponententest an die Stelle der E2E tritt. Der Gang an der laufenden App prüft dafür die
 Gegenprobe: dass die Felder mit **funktionierender** Liste unverändert bedienbar sind.
 
+## Schätzung
+
+`groesse: M` · `wo: frontend` · `migration: nein` · `vertragsbruch: nein`
+
+**Warum M und nicht L.** Der Anker für M ist der vokabel-basierte Batch-Pfad im `MediaSelector` (B-03) —
+ein neuer Weg in einer Komponente; L ist eine DB-Umbau-Etappe wie E6. Hier entsteht ein Bauteil und wird
+siebenmal übernommen, aber ohne Schema, ohne Vertrag, ohne Server und mit vollständig bekannten Fundorten.
+Das liegt an der **oberen Kante von M**. In der Grill-Runde stand „M–L"; nach dem Auszählen der Fundorte
+(sieben Selects, drei Dateien, fünf Banner-Zeilen) ist L nicht zu halten.
+
+**Warum `migration: nein`:** kein Schema berührt, die Kette bleibt unangetastet.
+**Warum `vertragsbruch: nein`:** nachgesehen — alle vier gebrauchten Namensfelder (`PublisherName`,
+`SubjectName`, `SeriesName`, `CurrentUnitLabel`) stehen **schon** in den Antworten. `Pugling.Contracts`
+ändert sich nicht, also läuft auch kein `gen:contract` und kein `unknown_field`-Guard nach.
+
+### Umfang, ausgezählt
+
+Sieben **bearbeitende** Selects mit Lösch-Schalter:
+
+| # | Ort | Feld | Name für den Rückfall | Nebenwirkung im `onChange` |
+|---|---|---|---|---|
+| 1 | `VaterLehrwerke.tsx:357` | Verlag | `series.publisherName` | — |
+| 2 | `VaterLehrwerke.tsx:364` | Fach | `series.subjectName` | — |
+| 3 | `ChildMaterialSection.tsx:215` | Fach | `book.subjectName` | — |
+| 4 | `ChildMaterialSection.tsx:243` | Reihe | `book.seriesName` | `chooseSeries` räumt `currentUnitId` (`:163`) |
+| 5 | `ChildMaterialSection.tsx:252` | Unit | `book.currentUnitLabel` | — |
+| 6 | `VaterFachlehrer.tsx:302` | Fach | `profile.subjectName` | — |
+| 7 | `VaterFachlehrer.tsx:349` | Reihe | `profile.seriesName` | `deriveFromSeries` leitet Felder ab |
+
+**Bewusst nicht dabei:** die drei Filter-Selects (`VaterLehrwerke.tsx:137/141/145`), der Filter in
+`ChildMaterialSection.tsx:330` und die Anlege-Formulare (`VaterLehrwerke.tsx:759/766`) — sie tragen keinen
+geladenen Wert und keinen Lösch-Schalter, ein fehlender Wert kann dort nichts zerstören. Ebenfalls nicht
+dabei: Schulart und Sprachen; die haben ihren eigenen Sentinel-Mechanismus (`"None"` ist ein echter Wert)
+und sind von einem gescheiterten Abruf nicht betroffen, weil ihre Optionen Konstanten sind.
+
+Der Name reist als **Prop** mit, nicht über die Formularwerte: `textbookFormValues`/`profileFormValues`/
+`seriesFormValues` bleiben unverändert, denn alle drei Formulare halten die Antwort-Zeile ohnehin schon
+(`book`, `profile`, `series`).
+
+**Eine Komponente, zwei Betriebsarten:** `ProfileForm` (`VaterFachlehrer.tsx:156`) bedient Anlegen *und*
+Bearbeiten — beim Anlegen ist `profile` `undefined`. Der Rückfall muss dort an `profile` hängen, nicht am
+Formularwert, sonst behauptet das Anlege-Formular einen geladenen Zustand, den es nicht hat. Das Muster
+steht schon da (`:164`: `profile ? subjectFormValue(profile) : ""`). `TextbookForm` und `SeriesForm` sind
+dagegen reine Bearbeiten-Formulare; das Anlegen liegt bei `NewSeries` bzw. einer eigenen Zeile.
+
+### Risiken
+
+1. **Die tragende Annahme ist DOM-Verhalten, gemessen unter happy-dom.** Dass ein `<select>` mit
+   Anzeigegröße 1 ohne passende Option die erste nicht gesperrte selbst wählt, steht so im HTML-Standard
+   (Selectedness-Algorithmus), und Probe A hat es gemessen — aber unter `happy-dom`, nicht im Browser.
+   Fällt diese Annahme, fällt die ganze Prämissen-Korrektur vom 2026-08-31. **Mitigation:** im Rollengang
+   als Erstes gegenprüfen — Bearbeiten-Formular öffnen, während `creator/subjects` im Netz-Panel blockiert
+   ist, und nachsehen, was das Feld *im Browser* anzeigt. Kostet eine Minute und entscheidet, ob der Rest
+   des Plans trägt.
+2. **B-143/B-148 hängen an denselben Feldern.** Ihre Zusicherungen liegen in `SeriesForm.test.tsx:37-52`,
+   `TextbookForm.test.tsx`, `VaterFachlehrer.test.tsx`, `subjectField.test.ts` und `seriesPatch.test.ts`.
+   Sie prüfen durchs Formular bzw. die reine Regel, überleben einen Umbau des Inneren also — aber sie sind
+   das Netz und müssen **unverändert** grün bleiben. Wird eine von ihnen angepasst, ist das ein Signal,
+   nicht eine Aufräumarbeit.
+3. **Der Sentinel darf nicht in den Rumpf.** `FREETEXT_SUBJECT` bleibt der `value` der Freitext-Option;
+   abgefangen wird er weiter in `subjectField.ts:60`, nicht durch das Bauteil. Das Bauteil darf den
+   Sentinel nicht kennen müssen, um zu funktionieren — sonst wandert eine PATCH-Regel in die Anzeige.
+4. **Zwei Sonderfälle dürfen sich nicht überlagern.** Ist `id == null` und ein Name da, gilt **Freitext**
+   (gesperrt); ist `id != null` und nicht in der Liste, gilt **nicht geladen** (wählbar). Beides zugleich
+   ist unmöglich, aber die Bedingung muss das erzwingen, nicht nur die Reihenfolge der JSX-Zeilen.
+5. **Zwei `onChange` tragen Nebenwirkungen** (Felder 4 und 7). Das Bauteil reicht `onChange` durch und
+   besitzt es nicht — sonst verliert die Reihe im Lehrbuch das Zurücksetzen der Unit, und das Profil seine
+   Ableitung.
+6. **Das Fehlerbanner darf die Liste nicht aushängen.** Die Falle steht in `frontend/CLAUDE.md`: der
+   Platzhalter greift nur bei `loading && data === null`. Das Banner kommt **neben** die Liste, nicht
+   an ihre Stelle.
+
+### Angriffsplan
+
+Kein Backend, also entfällt die Regel „Backend zuerst". Stattdessen: **die rote Probe vor der Begründung** —
+das ist die Lehre der Retrospektive vom 2026-08-14, und dieser Plan ist so gebaut, dass Schritt 1 fällt,
+wenn die Prämisse falsch ist.
+
+1. **Rot zuerst, ohne eine Zeile Produktionscode.** In `SeriesForm.test.tsx` den Fall ergänzen:
+   `subjects` ohne Id 1, Erwartung `getByLabelText("Fach", { exact: true }).value === "1"`. Muss **rot**
+   sein (Probe A: heute `""`). Ist er grün, ist Risiko 1 eingetreten und der Plan wird angehalten.
+2. **Browser-Gegenprobe** (Risiko 1), bevor gebaut wird: Netz-Panel, `creator/subjects` blockieren,
+   Bearbeiten-Formular öffnen.
+3. **Bauteil** `frontend/src/components/ReferenceSelect.tsx` + `ReferenceSelect.test.tsx` daneben (Regel
+   von `frontend/CLAUDE.md`: der Test liegt beim Geprüften). Reine Komponente, kein `fetch`, kein
+   `useAsync` — sie bekommt `value`, `onChange`, `id`, `name`, `options`, `leerText`, `freitextWert?`.
+4. **Die sieben Aufrufstellen** in der Reihenfolge der Tabelle — Felder 1/2 zuerst, weil dort die Probe
+   liegt, dann 3/4/5, dann 6/7. Nach jeder Datei den Vitest-Lauf, damit ein gebrochenes Netz (Risiko 2)
+   sofort auffällt und nicht am Ende in drei Dateien gleichzeitig.
+5. **Die fünf Fehlerbanner** (`VaterLehrwerke`: `subjects`/`publishers`; `VaterKind`: `subjects`;
+   `ChildMaterialSection`: `series`/`units`; `VaterFachlehrer`: `subjects`/`series` — sieben Zustände an
+   fünf Stellen, weil zwei Seiten je zwei Listen führen), **ohne** Retry (Entscheidung 5).
+6. **Die Begründung in `subjectField.ts`** nachziehen: der Satz „das ist heute nur `subjectId`" fällt, die
+   Anzeige-Regel wird ins Bauteil verwiesen. Zuletzt, damit der Kommentar beschreibt, was dann dasteht —
+   und nicht, was geplant war.
+
+### Testweg
+
+- **Neu:** `frontend/src/components/ReferenceSelect.test.tsx` — die vier Fälle des Bauteils (Wert in der
+  Liste → keine Sonderoption; Wert fehlt → wählbare Rückfall-Option; Freitext → gesperrte Option;
+  leerer Wert → nichts).
+- **Erweitert:** `SeriesForm.test.tsx` (Feld 1+2), `TextbookForm.test.tsx` (3+4+5),
+  `VaterFachlehrer.test.tsx` (6+7) — je der rote Anzeige-Fall aus Schritt 1 und der **Rückweg** (AK 4):
+  andere Option wählen, zur ursprünglichen zurück, `value` ist wieder der Ausgangswert.
+- **Wie AK 6 erfüllt wird, ohne einen gefälschten `fetch`:** `frontend/CLAUDE.md` verbietet den
+  nachgebauten Bildschirm mit gefälschtem `fetch`. Der Rumpf wird darum **nicht** über einen Spy auf
+  `api.updateTextbookSeries` geprüft (so lief meine Wegwerf-Probe C), sondern zerlegt: die
+  Anzeige-Zusicherung (`value === "1"`) und der Rückweg sind reine Render-Fälle und heute **rot**; dass aus
+  `form.subjectId === "1"` kein `clearSubject` wird, halten die vorhandenen reinen Regel-Tests
+  (`subjectField.test.ts:41`, `seriesPatch.test.ts`). Zusammen tragen sie AK 6 — die Lücke, die ein
+  Spy-Test zusätzlich geschlossen hätte, wäre „ruft das Formular `seriesPatch` überhaupt auf", und das
+  hält `SeriesForm.test.tsx` schon über andere Fälle.
+- **E2E: keine neue Spec.** Der Fehlerfall bräuchte einen künstlich kaputten Server — die argumentierte
+  Ausnahme aus dem README. Als **Gegenprobe** müssen die beiden vorhandenen Specs unverändert grün bleiben:
+  `e2e/lehrwerk-bearbeiten.spec.ts` (aus B-123) und `e2e/kind-lehrbuch-fach.spec.ts` (aus B-148) — sie
+  fahren genau diese Formulare mit funktionierender Liste.
+- **`/smoke-test`: nicht anwendbar** und bewusst nicht in der Liste — es gibt keine API-Änderung, die er
+  prüfen könnte. Der Backend-Lauf (831) ist reine Regression.
+- **Reviewer:** `frontend-reviewer` (aus `wo: frontend`).
+
 ## Verlauf
 
 - 2026-08-13 · Aufgenommen aus der **Nachschau** zu B-123. Bleibt `unverifiziert`: Die Fundorte sind
@@ -282,3 +402,11 @@ Gegenprobe: dass die Felder mit **funktionierender** Liste unverändert bedienba
   (die Unit im Lehrbuch) und ein Sonderfall, den die Ausformulierung nicht sah: eine gesperrte
   Rückfall-Option hätte den Umweg zur Einbahnstraße gemacht. Punkt 4 der offenen Punkte ist
   gegenstandslos geworden, `?? []` bleibt.
+- 2026-09-01 · `gegrillt → geschaetzt`. **M** (nicht das in der Grill-Runde genannte „M–L" — nach dem
+  Auszählen der Fundorte ist L nicht zu halten), `frontend`, `migration: nein`, `vertragsbruch: nein`
+  (alle vier Namensfelder stehen schon im Vertrag). Sechs Risiken, das erste tragend: die
+  Prämissen-Korrektur ruht auf DOM-Verhalten, das ich unter **happy-dom** gemessen habe, nicht im
+  Browser — darum steht die Browser-Gegenprobe als Schritt 2 im Angriffsplan, direkt hinter einer roten
+  Probe, die **vor** jeder Zeile Produktionscode fällt. Der Testweg weicht bewusst von AK 6s Wortlaut ab:
+  kein Spy auf den API-Aufruf (das verbietet `frontend/CLAUDE.md`), sondern zwei reine Render-Fälle plus
+  die vorhandenen Regel-Tests.

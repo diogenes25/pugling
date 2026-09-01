@@ -504,7 +504,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [B-172](B-172-fachauswahl-loescht-wenn-ihre-optionen-fehlen.md) | Die Fachauswahl löscht das Fach, wenn ihre eigenen Optionen nicht geladen sind | Defekt | `gegrillt` | P1 | — | — | — |
+| [B-172](B-172-fachauswahl-loescht-wenn-ihre-optionen-fehlen.md) | Die Fachauswahl löscht das Fach, wenn ihre eigenen Optionen nicht geladen sind | Defekt | `geschaetzt` | P1 | M | frontend | — |
 | [B-170](B-170-selbst-angelegte-art-im-grundbestand-ist-unloeschbar.md) | Eine selbst angelegte Art im Grundbestands-Fach ist unlöschbar — und der Seitentext verspricht das Gegenteil | Defekt | `ausformuliert` | P1 | — | — | — |
 | [B-07](B-07-db-umbau-restetappen.md) | DB-Struktur-Umbau: der offene Betriebsschritt | Aufräumen | `geschaetzt` | P1 | XS | backend | — |
 | [B-153](B-153-bilder-spec-flackert-im-vollen-lauf.md) | `bilder.spec.ts` fällt im vollen Lauf gelegentlich aus, allein ist sie grün | Defekt | `ausformuliert` | P2 | — | — | — |
@@ -721,7 +721,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-169](B-169-ladefenster-macht-die-alten-zeilen-anklickbar.md) | Im Ladefenster sind die alten Zeilen anklickbar — und die Auswahl überlebt | [B-161] | `abgenommen` |
 | [B-170](B-170-selbst-angelegte-art-im-grundbestand-ist-unloeschbar.md) | Eine selbst angelegte Art im Grundbestands-Fach ist unlöschbar — und der Seitentext verspricht das Gegenteil | [B-157] | `ausformuliert` |
 | [B-171](B-171-zwei-zusicherungen-pruefen-den-ausgangszustand.md) | Zwei Zusicherungen prüfen den Ausgangszustand mit — und können darum nicht fallen | [B-161, B-157] | `abgenommen` |
-| [B-172](B-172-fachauswahl-loescht-wenn-ihre-optionen-fehlen.md) | Die Fachauswahl löscht das Fach, wenn ihre eigenen Optionen nicht geladen sind | [B-123, B-148] | `gegrillt` |
+| [B-172](B-172-fachauswahl-loescht-wenn-ihre-optionen-fehlen.md) | Die Fachauswahl löscht das Fach, wenn ihre eigenen Optionen nicht geladen sind | [B-123, B-148] | `geschaetzt` |
 | [B-173](B-173-speichern-vernichtet-seine-eigene-bestaetigung.md) | Ein erfolgreiches Speichern vernichtet seine eigene Bestätigung | [B-123] | `idee` |
 | [B-174](B-174-arten-liste-verschweigt-ihren-fehler.md) | Die Arten-Liste verschweigt, dass ihr Laden gescheitert ist | [B-154] | `idee` |
 | [B-175](B-175-zwei-gerottete-zahlen-in-kommentaren.md) | Zwei Zahlen in Kommentaren widersprechen dem, was gemessen wurde | [B-139] | `ausformuliert` |
