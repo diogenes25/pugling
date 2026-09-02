@@ -11,18 +11,21 @@ namespace Pugling.Agent.Creator;
 /// </summary>
 public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, ExamPlanner exams)
 {
-    /// <summary>Default values for the request when the command line is silent.</summary>
+    // Default values for the request when the command line is silent.
     private const int DefaultItemCount = 10;
+    private const int DefaultExamPerType = 6;
 
     /// <summary>
     /// Mirrors <c>GoalPointsPolicy.Fallback</c>: since B-45 the figure is not "what the exercise is worth"
     /// but the target reward a new position <b>inherits</b>, and a position that inherits an unusable
     /// recommendation lands on 20. A lower default here would silently halve the coin target of every
     /// agent-generated exercise against the one the product otherwise states everywhere.
+    /// <para>
+    /// It carries its own doc because the group comment above cannot: this one is the only value in the
+    /// block whose correctness depends on a rule living in another project.
+    /// </para>
     /// </summary>
     private const int DefaultRewardPoints = 20;
-
-    private const int DefaultExamPerType = 6;
 
     /// <summary>The types a class test consists of when none are named.</summary>
     private static readonly string[] DefaultExamTypes = ["Vocabulary", "Cloze", "Grammar"];
@@ -384,7 +387,7 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
           --use-weak            schwach beherrschte Wörter des Kindes verwenden
           --source-lang <code>  Lernsprache                     (Standard: Profil, sonst en)
           --target-lang <code>  Muttersprache                   (Standard: Profil, sonst de)
-          --points <n>          empfohlene Zielpunkte der Position               (Standard 20)
+          --points <n>          empfohlene Zielpunkte der Position              (Standard 20, max 200)
           --dry-run             nur planen und drucken, nichts speichern
           --strict              Übung löschen, wenn der Selbsttest nicht 100 % erreicht
 

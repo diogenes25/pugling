@@ -149,7 +149,7 @@ Eines von `--child`/`--profile` ist Pflicht – sonst fehlt sowohl die Zielgrupp
 | `--words a,b,c` | Pflicht-Wortschatz (unveränderlich) | – |
 | `--use-weak` | schwach beherrschte Wörter des Kindes als Wortschatz | aus |
 | `--source-lang`/`--target-lang` | Lern-/Muttersprache | Profil, sonst `en`/`de` |
-| `--points <n>` | Punkte der Übung | 10 |
+| `--points <n>` | empfohlene Zielpunkte, die eine neue Position erbt (max. 200) | 20 |
 | `--dry-run` | nur planen und drucken | aus |
 | `--strict` | Übung löschen, wenn der Selbsttest < 100 % | aus |
 

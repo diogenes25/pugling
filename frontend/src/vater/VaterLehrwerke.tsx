@@ -4,7 +4,7 @@ import { FieldLabel } from "../components/InfoHint";
 import { ReferenceSelect } from "../components/ReferenceSelect";
 import { StatusBanner } from "../components/StatusBanner";
 import { FREETEXT_SUBJECT, seriesFormValues, seriesPatch, type SeriesFormValues } from "./seriesPatch";
-import { api } from "../lib/api";
+import { api, errorMessage } from "../lib/api";
 import { publisherOptions, subjectOptions } from "../lib/referenceOptions";
 import { useAction } from "../lib/useAction";
 import type { ActionMessage } from "../lib/useAction";
@@ -244,20 +244,7 @@ function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, on
 
   function bearbeitenUmschalten() {
     onMeldung(null);
-    // Auch den EIGENEN Platz räumen, nicht nur den der Seite: Diese Zeile hat zwei, und `remove`
-    // schreibt in den lokalen. Ein gescheitertes Löschen (409 `exercise_in_use` ist erreichbar) blieb
-    // sonst rot stehen, während `SeriesForm` sein grünes „Gespeichert." in den Platz der Seite legt –
-    // beide Farben gleichzeitig im Blickfeld, genau der Widerspruch, den B-197 aufgeräumt hat.
-    action.clear();
     setEditing(!editing);
-  }
-
-  // Derselbe Griff für den Nachbarknopf: `UnitPanel` und `UnitForm` melden in den Platz der SEITE, die
-  // Zeile hält ihren eigenen. Ohne das Räumen führt auch dieser Weg rot und grün zusammen. Die Regel
-  // sitzt hier und nicht beim Aufrufer – der kennt den lokalen Platz dieser Zeile nicht.
-  function unitsUmschalten() {
-    action.clear();
-    onToggle();
   }
 
   async function remove() {
@@ -267,7 +254,21 @@ function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, on
     // Räumen VOR dem Löschen: Sonst bliebe die Bestätigung der vorigen Handlung über der gerade
     // verschwundenen Zeile stehen und läse sich als Löschbestätigung (B-196).
     onMeldung(null);
-    if (!await action.run(() => api.deleteTextbookSeries(series.id))) return;
+
+    // Der Fehlertext wird beim Durchfliegen abgegriffen, statt ihn hinterher aus `action.message` zu
+    // lesen: das ist Zustand und im selben Tick noch der alte. `action.run` bleibt trotzdem der Weg –
+    // an ihm hängen die Wiedereintritts-Sperre und `busy`.
+    const fehler: { text?: string } = {};
+    const ok = await action.run(() => api.deleteTextbookSeries(series.id).catch((e: unknown) => {
+      fehler.text = errorMessage(e);
+      throw e;
+    }));
+    if (!ok) {
+      // Nur melden, wenn es wirklich einen Fehler gab. Ein von der Sperre verworfener Aufruf liefert
+      // ebenfalls `false`, hat aber nichts getan – der bleibt stumm, wie `useAction` es zusichert.
+      if (fehler.text) onMeldung({ ok: false, text: fehler.text });
+      return;
+    }
     // Der Name MUSS mit: Die Zeile, auf die sich die Meldung bezieht, ist ja gerade verschwunden.
     onMeldung({ ok: true, text: `Reihe „${series.name}" gelöscht.` });
     onChanged();
@@ -295,7 +296,7 @@ function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, on
         <td>{gradeLabel ?? <span className="muted">–</span>}</td>
         <td>{series.unitCount === 0 ? <span className="pill mag">keine</span> : series.unitCount}</td>
         <td className="row" style={{ gap: 6, justifyContent: "flex-end" }}>
-          <button type="button" className="btn ghost small" style={{ width: "auto" }} onClick={unitsUmschalten}
+          <button type="button" className="btn ghost small" style={{ width: "auto" }} onClick={onToggle}
             aria-expanded={open}>
             {open ? "Units zu" : "Units"}
           </button>
@@ -325,7 +326,14 @@ function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, on
           )}
         </td>
       </tr>
-      {action.message && <tr><td colSpan={6}><StatusBanner message={action.message} style={{ marginTop: 0 }} /></td></tr>}
+      {/* Diese Zeile trug bis B-204 einen ZWEITEN Meldungsplatz, und der war die Ursache: Nur `remove`
+          schrieb hinein, geräumt wurde er von keinem der beiden Umschalter, und ein gescheitertes
+          Löschen stand darum rot unter der Zeile, während jede spätere Handlung ihr grünes
+          „Gespeichert." in den Platz der Seite legte. Fünf Wege führten dort hinein — der fünfte über
+          eine ganz andere Zeile, deren Löschen gelingt. Jetzt meldet auch der Fehlschlag nach oben:
+          **ein** Platz, und B-197s Regel gilt konstruktiv statt über einen Räum-Aufruf je Tür.
+          Nebenwirkung, die den a11y-Fund miterledigt: der Seitenplatz rendert seine Live-Region
+          unbedingt (`StatusBanner`), dieser hier entstand mit seinem Text und blieb darum stumm. */}
       {editing && (
         <tr>
           <td colSpan={6}>

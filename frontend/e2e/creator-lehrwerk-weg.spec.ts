@@ -107,34 +107,59 @@ test("Reihe, Unit, Übung, Zuweisung – der Creator-Weg in einem Zug", async ({
   const positionRow = page.getByRole("row", { name: new RegExp(EXERCISE_TITLE) });
   await expect(positionRow).toBeVisible();
 
-  // ---- 6. Ein GESCHEITERTES Löschen darf nicht neben einem späteren Erfolg stehen bleiben ----
+  // ---- 6. Ein gescheitertes Löschen darf keine spätere Handlung überleben ----
   //
-  // Der Code-Review zum Sprint hat den vierten Weg in B-197 gefunden: Die Reihen-Zeile hält einen
-  // EIGENEN Meldungsplatz (`action.message`), in den nur `remove` schreibt. Beide Umschalter räumten
-  // bloß den Platz der SEITE – ein rotes „… wird noch verwendet" blieb also stehen, während
-  // `SeriesForm` sein grünes „Gespeichert." oben ablegte. Zwei Farben in einem Blickfeld, genau der
-  // Schaden, gegen den dieser Platz gebaut wurde.
+  // Der Code-Review zum Sprint hat den vierten Weg in B-197 gefunden, der Reviewer danach den fünften:
+  // Die Reihen-Zeile hielt einen EIGENEN Meldungsplatz (`action.message`), in den nur `remove` schrieb.
+  // Kein Umschalter räumte ihn, und eine ganz andere Zeile konnte ihn ohnehin nicht erreichen — ein
+  // rotes „… still used in a study plan" stand darum neben jedem späteren grünen „Gespeichert.".
+  // Repariert ist es strukturell: es gibt nur noch EINEN Platz, auch der Fehlschlag meldet nach oben.
+  // Darum sichert dieser Schritt BEIDE Wege zu; der zweite war der offene.
   //
-  // Der Fall hängt hier und nicht in `bestaetigung-ueberlebt.spec.ts`, weil er den Zustand braucht,
-  // in dem diese Spec ohnehin ENDET: eine eigene Reihe, deren Übung in einem Lehrplan steckt – erst
-  // das macht das Löschen zum `409 exercise_in_use`. Ihn dort nachzubauen hieße, die vier Bildschirme
-  // oben ein zweites Mal zu fahren. Er steht als LETZTER Schritt, verdeckt also nichts.
+  // Der Fall hängt hier und nicht in `bestaetigung-ueberlebt.spec.ts`, weil er den Zustand braucht, in
+  // dem diese Spec ohnehin ENDET: eine eigene Reihe, deren Übung in einem Lehrplan steckt – erst das
+  // macht das Löschen zum `409 exercise_in_use`. Er steht als LETZTER Schritt und verdeckt damit nichts;
+  // die andere Richtung der Regel aus `frontend/CLAUDE.md` gilt aber auch: jedes Rot in den Schritten
+  // 1–5 legt ihn still.
   await page.goto("/vater/lehrwerke");
-  const reihenZeile = page.getByRole("row", { name: new RegExp(SERIES.name) });
-  await expect(reihenZeile).toBeVisible();
+  await expect(page.getByRole("row", { name: new RegExp(SERIES.name) })).toBeVisible();
 
+  // Eine ZWEITE, leere Reihe – ihr Löschen gelingt. Zuerst anlegen: ihre eigene Bestätigung würde sonst
+  // die rote Meldung räumen, die der nächste Schritt gerade erzeugt hat.
+  const LEER = `Weg-leer ${RUN}`;
+  await page.locator("#ns-name").fill(LEER);
+  await page.getByRole("button", { name: "Reihe anlegen" }).click();
+  await expect(page.getByText(/steht im Katalog/)).toBeVisible();
+
+  // ---- 6a. Der gemeldete Weg: Fehlschlag, dann ein Speichern DERSELBEN Zeile ----
   page.once("dialog", (d) => d.accept());
   await page.getByRole("button", { name: `Löschen: „${SERIES.name}"` }).click();
   // Englisch, weil `exercise_in_use` keine Zeile in `GERMAN_PROBLEM_TEXT` hat – die Zusicherung nimmt
-  // darum den Servertext, nicht eine erhoffte Übersetzung.
+  // darum den Servertext. Kommt die deutsche Fassung (der Reviewer hält sie für fällig, weil die zwei
+  // Geschwister `subject_in_use`/`publisher_in_use` drinstehen), muss diese Zeile MIT wandern.
   await expect(page.getByText(/still used in a study plan/)).toBeVisible();
 
-  // Jetzt ein ERFOLGREICHES Speichern derselben Zeile. Das rote Banner von gerade muss dabei weichen.
+  const UMBENANNT = `${SERIES.name} b`;
   await page.getByRole("button", { name: `Reihe bearbeiten: „${SERIES.name}"` }).click();
-  await page.getByLabel("Name der Reihe", { exact: true }).fill(`${SERIES.name} b`);
+  await page.getByLabel("Name der Reihe", { exact: true }).fill(UMBENANNT);
   await page.getByRole("button", { name: `Speichern: „${SERIES.name}"` }).click();
   await expect(page.getByText("Gespeichert.", { exact: true })).toBeVisible();
+  await expect(page.getByText(/still used in a study plan/)).toHaveCount(0);
 
-  // Der Kern: die rote Meldung des gescheiterten Löschens steht nicht mehr da.
+  // ---- 6b. Der fünfte Weg: eine ANDERE Zeile, deren Löschen gelingt ----
+  // Den Fehlschlag erneut auslösen (er ist folgenlos und darum wiederholbar).
+  page.once("dialog", (d) => d.accept());
+  await page.getByRole("button", { name: `Löschen: „${UMBENANNT}"` }).click();
+  await expect(page.getByText(/still used in a study plan/)).toBeVisible();
+
+  page.once("dialog", (d) => d.accept());
+  await page.getByRole("button", { name: `Löschen: „${LEER}"` }).click();
+
+  // Erst warten, bis die Zeile wirklich weg ist – sonst träfe die Zusicherung den Frame davor.
+  await expect(page.getByRole("row", { name: new RegExp(LEER) })).toHaveCount(0);
+  await expect(page.getByText(`Reihe „${LEER}" gelöscht.`, { exact: true })).toBeVisible();
+
+  // Der Kern des fünften Wegs: die rote Meldung der ANDEREN Zeile ist weg. Vor der Reparatur war sie
+  // unerreichbar – sie lebte in Zeile A, und Zeile B konnte sie nicht anfassen.
   await expect(page.getByText(/still used in a study plan/)).toHaveCount(0);
 });

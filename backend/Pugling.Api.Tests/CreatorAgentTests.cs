@@ -588,9 +588,15 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
         var exercise = Assert.Single(await creator.SearchExercisesAsync(subjectId: subjectId));
         Assert.Equal(GoalPointsPolicy.Fallback, exercise.RewardPoints);
-        // And the figure a position would actually inherit is the same one - not a value the policy
-        // had to repair on the way out.
-        Assert.Equal(GoalPointsPolicy.Fallback, exercise.SuggestedGoalPoints);
+
+        // The figure a position would inherit is the agent's own, passed through rather than repaired.
+        // Deliberately compared against `RewardPoints` and NOT against `Fallback` a second time: with the
+        // line above holding, `Assert.Equal(Fallback, Effective(Fallback))` is true for every conceivable
+        // value of `Fallback` - both branches of `Effective` return it - and could therefore never fail.
+        // What this line still carries is that `SuggestedGoalPoints` is fed from the policy at all.
+        // The bound itself is pinned where a value actually gets repaired:
+        // `PlanPositionCrudTests.cs:336` and `:372-388`.
+        Assert.Equal(exercise.RewardPoints, exercise.SuggestedGoalPoints);
     }
 
     [Fact]

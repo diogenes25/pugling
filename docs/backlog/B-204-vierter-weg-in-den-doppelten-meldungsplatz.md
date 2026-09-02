@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/frontend, bereich/tests, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/tests, rolle/creator]
 aliases: [rot und gruen nebeneinander, Zeile hat zwei Meldungsplaetze, vierter Weg in B-197]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: XS
@@ -13,7 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-197]
-wartet_auf: frontend-reviewer
+wartet_auf: ""
 ---
 
 # B-204 · Der vierte Weg in denselben Widerspruch: die Reihen-Zeile hat zwei Meldungsplätze
@@ -70,13 +70,13 @@ angemahnt hat.
 
 ## Entscheidungen
 
-1. **Beide Umschalter bekommen `action.clear()`, nicht nur der vom Review genannte.** Begründung: eine
-   Wurzel, zwei Türen; die zweite wegzulassen wäre genau die Auslassung, die B-197s Nachprüfung angemahnt
-   hat. *Kosten:* Eine zusätzliche kleine Funktion (`unitsUmschalten`), weil `onToggle` von außen kommt.
-2. **Das Räumen sitzt in `SeriesRow`, nicht im Aufrufer.** Begründung: Der Aufrufer kennt den lokalen Platz
-   der Zeile nicht, und ihn darüber zu informieren wäre ein zweites Prop für eine Regel, die eine Zeile
-   hoch gehört. *Kosten:* `onToggle` wird lokal umwickelt statt direkt verdrahtet — eine Indirektion, die
-   ein Leser erst beim zweiten Blick sieht; darum steht der Grund als Kommentar daneben.
+1. ~~**Beide Umschalter bekommen `action.clear()`.**~~ **Überholt von Entscheidung 5** — der Ansatz war
+   richtig gegen die vier bekannten Türen und falsch gegen die Frage dahinter. Er bleibt hier stehen, weil
+   die rote Probe zu 6a auf ihm beruht: mit `action.clear()` und Zeilen-Platz ist der *gemeldete* Weg grün
+   und nur der fünfte rot — das ist der Beleg, dass Entscheidung 5 mehr behebt als 1.
+2. ~~**Das Räumen sitzt in `SeriesRow`, nicht im Aufrufer.**~~ **Überholt von Entscheidung 5.** Die
+   Entscheidung beantwortete „wer räumt" und ließ „warum zwei Plätze" ungefragt — so vom
+   `frontend-reviewer` benannt, und er hat recht.
 3. **Der Beleg ist eine E2E, kein Komponententest.** Begründung: Der Widerspruch entsteht erst aus
    *zwei* Server-Antworten in Folge (`409`, dann `200`) und zwei Meldungsplätzen im DOM. Ein
    Komponententest bräuchte ein gefälschtes `fetch`, das dieses Frontend nirgends hat. *Kosten:* Die
@@ -86,7 +86,27 @@ angemahnt hat.
    endet** — eine eigene Reihe, deren Übung in einem Lehrplan steckt; erst das macht das Löschen zum `409`.
    Ihn am fachlich passenderen Ort nachzubauen hieße, vier Bildschirme ein zweites Mal zu fahren.
    *Kosten:* Ein Abstrich an der Regel „eine Fläche je Spec" aus `frontend/CLAUDE.md`. Gemildert dadurch,
-   dass er der **letzte** Schritt ist und darum nichts verdeckt; als Kommentar in der Spec begründet.
+   dass er der **letzte** Schritt ist und darum nichts verdeckt. **Zwei Kosten hat diese Zeile zunächst
+   verschwiegen, beide vom `frontend-reviewer` benannt:** Die Regel hat auch eine andere Richtung — *jedes*
+   Rot in den Schritten 1–5 legt die neue Zusicherung still (B-109); und es gab eine **dritte Option**, die
+   die Story nicht nannte: die Suite baut Zustand längst über HTTP auf (`lehrer-konto.spec.ts:50`,
+   `uebungstypen.spec.ts:125` nutzen `page.request`), eine eigene Spec hätte also nicht „vier Bildschirme
+   ein zweites Mal" bedeutet. Die Entscheidung bleibt (der Zustandsbedarf ist echt, der Schritt kostet
+   ~1 s), aber sie ist jetzt vollständig bezahlt statt günstig gerechnet.
+5. **Es gibt nur noch EINEN Meldungsplatz: auch der Fehlschlag von `remove` meldet nach oben.** Begründung:
+   Solange die Zeile einen eigenen Platz hält, kann kein Aufrufer ihn räumen — und eine **andere** Zeile
+   schon gar nicht. Damit war jede Räum-Regel pro Tür ein Nachlaufen hinter der Zahl der Türen; es waren
+   fünf, nicht vier. Mit einem Platz gilt B-197s Regel **konstruktiv** statt über einen Aufruf je Tür.
+   `action` bleibt für die Wiedereintritts-Sperre und `busy` (Konventionspflicht aus `frontend/CLAUDE.md`);
+   nur seine Meldung wird nicht mehr gerendert. Der Fehlertext wird beim Durchfliegen abgegriffen, weil
+   `action.message` im selben Tick noch der alte Zustand ist. *Kosten:* Sechs Zeilen in `remove` und ein
+   `catch`, das die Ausnahme weiterwirft, damit `useAction` seinen Lauf zu Ende führt. Dafür fallen
+   `unitsUmschalten` **und** beide `action.clear()` wieder weg — der Umbau ist netto kaum größer als
+   Entscheidung 1 und deckt einen Weg mehr.
+6. **Ein von der Sperre verworfener Aufruf bleibt stumm.** `action.run` liefert auch dann `false`, hat aber
+   nichts getan; gemeldet wird nur, wenn wirklich ein Fehlertext anfiel. Begründung: `useAction` sichert
+   „ohne Meldung, ohne Server-Aufruf" ausdrücklich zu. *Kosten:* eine `if`-Bedingung, die aussieht wie
+   Vorsicht und eine Zusicherung des Primitivs ist — darum steht der Grund daneben.
 
 ## Schätzung
 
@@ -116,3 +136,36 @@ angemahnt hat.
   **Der Rollengang ist die E2E** — sie fährt eine echte Oberfläche in einem echten Browser gegen einen
   echten Server, in genau der Reihenfolge, in der der Fehler auftrat (Bereichs-README: „Eine E2E, die den
   Weg fährt, ist der Rollengang").
+- 2026-09-02 · **`frontend-reviewer` gelaufen** (Freigabe des Nutzers). **Kein Blocker**, aber er hat einen
+  **fünften Weg** in denselben Widerspruch gefunden, und der macht Kriterium 2 im allgemeinen Fall unwahr:
+  Der Zeilen-Platz wurde nur von den Knöpfen **derselben** Zeile geräumt. Zwei eigene Reihen, A in
+  Verwendung, B nicht — „Löschen" an A scheitert (rot unter A, und der Text nennt die Zeile nicht),
+  „Löschen" an B gelingt (grün unter der Tabelle), das Rot an A steht weiter. Ein Kriterium, das nur im
+  gemeldeten Sonderfall hält, ist kein Kriterium; es zu verengen, damit es passt, wäre genau der stille
+  Griff, gegen den dieser Bereich gebaut ist.
+  **Darum strukturell repariert statt gepatcht** (Entscheidungen 5 und 6, der Vorschlag des Reviewers): Es
+  gibt nur noch **einen** Meldungsplatz. `unitsUmschalten` und beide `action.clear()` sind damit wieder
+  weg — die Reparatur ist netto kaum größer und deckt einen Weg mehr.
+  **Das erledigt seinen a11y-Fund mit, und zwar echt:** Der Zeilen-Banner entstand samt seinem Text und
+  blieb darum stumm (dieselbe Klasse wie B-132/B-134). Nachgesehen statt gehofft — der Seitenplatz rendert
+  `<StatusBanner message={meldung} />` **unbedingt** (`VaterLehrwerke.tsx:210`), und `StatusBanner` hält
+  seine Live-Region auch im Leerfall im DOM. Der `409`, den die Spec zusichert, ist für einen Screenreader
+  ab jetzt vorhanden.
+  **Rote Probe, neu und schärfer:** Zeilen-Platz wiederhergestellt **inklusive** `action.clear()` am
+  Bearbeiten-Knopf, also genau der Zustand nach Entscheidung 1. Ergebnis: **6a grün, 6b rot** an
+  `creator-lehrwerk-weg.spec.ts:164` (`toHaveCount(0)` gegen `unexpected value "1"`). Das belegt zweierlei
+  in einem Lauf — der fünfte Weg war wirklich offen, und Entscheidung 1 hätte ihn nicht geschlossen.
+  **Verifikation nach dem Umbau:** **8/8** E2E der vier Specs dieser Fläche
+  (`creator-lehrwerk-weg`, `bestaetigung-ueberlebt`, `lehrwerke`, `lehrwerk-bearbeiten`) — die B-197/B-196-Spec
+  läuft also unverändert grün gegen den neuen Aufbau. Dazu **329/329** vitest, `tsc` sauber, `dotnet format`
+  auf allen geänderten Dateien sauber.
+  **Ein Nebenbefund als eigene Story statt als Vermerk:** `exercise_in_use` erfüllt beide Hälften des
+  Aufnahmetests, den `GERMAN_PROBLEM_TEXT` sich selbst gibt, und seine Geschwister `subject_in_use` und
+  `publisher_in_use` stehen genau darum drin — der Nebenbefund ist also „dritter Geschwisterfall, offen"
+  und keine i18n-Entscheidung, wie diese Story vorher schrieb. Er liegt jetzt als
+  [B-205](B-205-exercise-in-use-ohne-deutsche-fassung.md). Die Kopplung steht als Satz in der Spec: kommt
+  die deutsche Zeile, muss die Zusicherung mitwandern.
+- 2026-09-02 · `in-arbeit` → **`abgenommen`**. Kriterium 2 gilt jetzt im **allgemeinen** Fall, beide Wege
+  sind zugesichert (6a der gemeldete, 6b der offene). Reviewer gelaufen und eingearbeitet, Commit `81eb60c`
+  plus der Nachtrag dieser Runde. Der **Rollengang ist die E2E** — echter Browser, echter Server, die
+  Reihenfolge, in der der Fehler auftrat.

@@ -103,3 +103,10 @@ der „aktuell" und „von vorhin" nicht trennt.
   *fehlgeleiteter Aufruf*. Der Ist-Stand ist **selbst am Code nachgesehen** (`useAsync.ts:25-39` gelesen, die
   drei Wege durchgespielt, die Server-Skopierung gegengeprüft) und die Breite **gemessen**: 110
   Aufrufstellen, davon 67 mit Deps.
+- 2026-09-02 · **Kopplung vermerkt** (aus dem `frontend-reviewer`-Lauf zu
+  [B-203](B-203-platzhalter-luegt-auch-ohne-fehler.md)): `useAsync` hält seit B-203 einen Zustand
+  `settled`, der bei einem **Dep-Wechsel nicht zurückgesetzt** wird. Für diese Story ändert das nichts —
+  hier ist `data` *nicht*-`null` und veraltet, und für nicht-`null` lieferten alte wie neue Bedingung
+  `false`. Wer den `stale`-Gedanken dieser Story baut, muss `settled` aber **mitbedenken**: ein
+  Zurücksetzen je Dep-Wechsel bräuchte denselben Dep-Signaturvergleich, den diese Story ohnehin verlangt.
+  Bewusst **nicht** vorab gebaut — zwei halbe Lösungen desselben Vergleichs wären schlimmer als eine.

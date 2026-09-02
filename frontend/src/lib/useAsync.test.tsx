@@ -83,26 +83,54 @@ describe("useAsync – wann ein Platzhalter die Wahrheit sagt", () => {
    * Formular mitsamt seinem Zustand aus dem DOM – die Regel, die dieses Feld überhaupt begründet.
    */
   it("bringt ihn nach einer rechtmäßigen null-Ladung auch beim Neuladen nicht zurück", async () => {
-    const { result } = renderHook(() => useAsync(() => Promise.resolve(null), []), { wrapper });
+    // ZWEI `deferred`, damit die zweite Ladung OFFEN bleibt. Mit einem `Promise.resolve(null)` entleert
+    // `act` die Microtask-Kette, `loading` ist danach schon wieder `false` – das Ladefenster, um das es
+    // hier geht, wäre nie beobachtet worden. Genau daran ist der erste Entwurf dieses Falls gescheitert:
+    // er fiel am `waitFor` der ersten Ladung (Zeile darüber) und belegte damit denselben Satz wie der
+    // Fall vor ihm, nicht seinen eigenen.
+    const first = deferred<number[] | null>();
+    const second = deferred<number[] | null>();
+    let calls = 0;
+    const { result } = renderHook(
+      () => useAsync(() => (++calls === 1 ? first.promise : second.promise), []), { wrapper });
 
-    await waitFor(() => expect(result.current.showPlaceholder).toBe(false));
+    await act(async () => { first.resolve(null); });
+    expect(result.current.showPlaceholder).toBe(false);
 
     await act(async () => { result.current.reload(); });
+
+    // Tragend, nicht Zierrat: ohne diese Zeile könnte die nächste auch dann grün sein, wenn gar keine
+    // zweite Ladung läuft – und dann sagt sie nichts über das Neuladen.
+    expect(result.current.loading).toBe(true);
     expect(result.current.showPlaceholder).toBe(false);
+
+    await act(async () => { second.resolve(null); });
   });
 
   it("bringt ihn beim Neuladen vorhandener Daten nicht zurück", async () => {
-    let n = 0;
+    // Auch hier zwei `deferred` statt eines aufgelösten Promise, und aus demselben Grund wie im Fall
+    // darunter: der Vorgänger prüfte nach einem `act` über einem `Promise.resolve`, in dem das
+    // Ladefenster längst zu war. Diese Fassung stammt aus B-184 und war die Vorlage, von der der neue
+    // Fall den Fehler geerbt hat – darum wandert sie mit, statt als leere Zusicherung daneben zu
+    // bleiben.
+    const first = deferred<number[]>();
+    const second = deferred<number[]>();
+    let calls = 0;
     const { result } = renderHook(
-      () => useAsync(() => Promise.resolve([++n]), []), { wrapper });
+      () => useAsync(() => (++calls === 1 ? first.promise : second.promise), []), { wrapper });
 
-    await waitFor(() => expect(result.current.data).not.toBeNull());
+    await act(async () => { first.resolve([1]); });
     expect(result.current.showPlaceholder).toBe(false);
 
     // Die Begründung der vier Aufrufstellen (VaterKind.tsx:89-93) hängt daran: Ein `reload` nach dem
     // Speichern darf das Formular NICHT aus dem DOM nehmen, sonst verliert es seinen Zustand samt der
     // Bestätigung. Der Fix ist zu dieser Regel additiv – dieser Fall belegt es.
     await act(async () => { result.current.reload(); });
+
+    expect(result.current.loading).toBe(true);
+    expect(result.current.data).not.toBeNull();
     expect(result.current.showPlaceholder).toBe(false);
+
+    await act(async () => { second.resolve([2]); });
   });
 });

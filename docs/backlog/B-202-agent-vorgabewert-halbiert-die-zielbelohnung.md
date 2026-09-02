@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/backend, bereich/ki, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/backend, bereich/ki, rolle/creator]
 aliases: [Agent gibt 10 statt 20, RewardPoints-Bedeutung nachgezogen, halbierte Zielbelohnung]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: XS
@@ -13,7 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-45]
-wartet_auf: pugling-reviewer
+wartet_auf: ""
 ---
 
 # B-202 · Der KI-Creator halbiert die Zielbelohnung jeder erzeugten Übung
@@ -54,6 +54,12 @@ Hilfetext ist die einzige Stelle, an der ein Nutzer die Regel überhaupt erfähr
 
 Der Review hat nur die Konstante und die Vertragsdoku genannt; der Hilfetext trug denselben Fehler und ist
 mitgezogen.
+
+~~und der Hilfetext ist die einzige Stelle, an der ein Nutzer die Regel überhaupt erfährt~~ — **falsch, vom
+`pugling-reviewer` widerlegt:** `backend/Pugling.Agent.Creator/README.md:152` trug die Option in einer
+Tabelle mit derselben alten Bedeutung **und** der alten Zahl, und `backend/Pugling.Agent.Creator/CLAUDE.md`
+verweist für die Bedienung ausdrücklich auf dieses README. Es waren also **vier** Stellen, nicht drei — die
+Behauptung „die einzige" war schon beim Schreiben nicht geprüft.
 
 ## Akzeptanzkriterien
 
@@ -105,3 +111,36 @@ mitgezogen.
   Regel trägt, keine Agenten unaufgefordert zu starten. Alles andere ist belegt. `wartet_auf` benennt es.
   Ein **Rollengang** an der laufenden App fehlt ebenfalls und ist hier auch nicht der passende Beleg: die
   Fläche ist eine Konsolen-Vorgabe, und der Integrationstest fährt sie über die echte Kommandozeile.
+- 2026-09-02 · **`pugling-reviewer` gelaufen** (Freigabe des Nutzers). **Kein Blocker**, aber ein 🟡 und drei
+  🟢, und der 🟡 hielt Akzeptanzkriterium 3 offen. Alles eingearbeitet:
+  1. **`README.md:152`** trug die vierte Textstelle mit alter Bedeutung und alter Zahl. Damit ist die
+     Behauptung „der Hilfetext ist die einzige Stelle" im Abschnitt „Die echte Lücke" widerlegt und dort
+     durchgestrichen statt stillschweigend korrigiert.
+  2. **`CreatorAgentTests.cs:593`** war eine **Zusicherung, die nicht fallen kann** — genau der Bruch der
+     Regel aus der Root-`CLAUDE.md`. `Assert.Equal(Fallback, Effective(Fallback))` ist für *jeden* Wert von
+     `Fallback` wahr, weil beide Zweige von `Effective` ihn zurückgeben. Selbst nachgerechnet und bestätigt
+     (`GoalPointsPolicy.cs:49-50`): auch mit `Fallback = 300` hielte sie. Ersetzt durch
+     `Assert.Equal(exercise.RewardPoints, exercise.SuggestedGoalPoints)` — das prüft, was sie noch tragen
+     kann (das Feld wird überhaupt aus der Policy befüllt), und der Kommentar sagt das ausdrücklich. **Die
+     Schranke wird nicht nachgebaut:** sie ist längst gepinnt, wo ein Wert wirklich repariert wird
+     (`PlanPositionCrudTests.cs:336` und `:372-388`) — nachgesehen, nicht vermutet.
+  3. **Hilfetext** nennt jetzt die Schranke (`Standard 20, max 200`) und sitzt wieder auf Spalte 81 wie
+     `--count`/`--per-type`/`--date`. Kriterium 3 verlangt beides — Bedeutung **und** Schranke.
+  4. **Der Gruppen-Kommentar** über den Konstanten dokumentierte durch meine zwei Leerzeilen nur noch
+     `DefaultItemCount`; `DefaultExamPerType` stand undokumentiert da (still, weil CS1591 bei `private`
+     nicht greift). Gruppe wieder zusammengeführt, `DefaultRewardPoints` mit eigener Doku und der
+     Begründung, warum sie sie braucht.
+  **Bewusst nicht geändert:** `CreatorAgentTests.cs:67` lässt der `Request(…)`-Helfer weiter `RewardPoints: 10`
+  stehen. Der Reviewer nennt es „verteidigbar, aber eine Kopiervorlage". Es bleibt — ein **ausdrücklicher**
+  Wert im Helfer macht die übrigen Tests unabhängig vom Vorgabewert, und 20 würde ihn versehentlich
+  spiegeln: dann wäre nicht mehr erkennbar, ob ein Test die Vorgabe prüft oder nur zufällig trifft.
+  **Vom Reviewer unabhängig nachgefahren:** Build ohne Warnung, **839/839** grün. Zusätzlich von ihm
+  bestätigt: `RewardPoints` wird an genau einer Stelle gesetzt und einer gelesen, und **drei** Verben
+  (`create`, `exam`, `briefing`) bauen über `BuildRequestAsync` — die eine Konstante deckt also mehr Wege
+  als die Story behauptete. Entscheidung 1 (Kommentar statt `using`) hat er an den csproj nachgeprüft: sie
+  trägt.
+- 2026-09-02 · `in-arbeit` → **`abgenommen`**. Reviewer gelaufen und eingearbeitet, Kriterium 3 jetzt
+  vollständig erfüllt, **839/839** Backend grün, `dotnet format` auf allen geänderten Dateien sauber.
+  Commits `81eb60c` (Reparatur) und der Nachtrag dieser Runde. Ein **Rollengang** entfällt begründet: die
+  Fläche ist eine Konsolen-Vorgabe, und der Integrationstest fährt sie über die echte Kommandozeile —
+  dieselbe Ausnahme, die das Bereichs-README für nicht sinnlich beurteilbare Flächen zulässt.

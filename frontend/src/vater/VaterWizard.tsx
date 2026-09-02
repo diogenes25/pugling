@@ -542,6 +542,12 @@ export function VaterWizard() {
               value={sourceSearch} onChange={(e) => setSourceSearch(e.target.value)} />
           </div>
 
+          {/* `platzhalter` ist hier heute wirkungslos: ohne gewähltes Fach liefert die Suche sofort
+              `{items:[],total:0}`, `data` ist danach nie wieder `null`. Sobald der Assistent ein Fach
+              per Query vorbelegt, ändert sich das – dann ergibt „erste Suche gescheitert, danach Filter
+              gewechselt" kurz `platzhalter=false, treffer=[], fehler=null` und damit wieder den falschen
+              Satz „Keine passenden Übungen im Katalog" aus B-162. Unter der Bedingung vor B-203 stand in
+              diesem Fenster der Platzhalter; die Marge ist also dünner geworden (Reviewer-Fund zu B-203). */}
           <WizardTrefferbereich
             treffer={filteredExercises} geladen={exercises.data?.items.length ?? 0}
             gesamt={exercises.data?.total ?? 0} platzhalter={exercises.showPlaceholder}
@@ -643,7 +649,12 @@ export function WizardTrefferbereich({
   treffer: ExerciseSummary[];
   geladen: number;
   gesamt: number;
-  /** `useAsync.showPlaceholder` – wahr nur, solange nichts da ist UND kein Grund dafür (B-184). */
+  /**
+   * `useAsync.showPlaceholder` – die Bedingung steht dort und wird hier absichtlich **nicht**
+   * nachformuliert: die vorige Fassung („nichts da UND kein Grund dafür", B-184) beschrieb seit B-203
+   * eine Bedingung, die es nicht mehr gibt. Zwei Formulierungen desselben Begriffs werden zwei
+   * Bedeutungen (`frontend/CLAUDE.md`).
+   */
   platzhalter: boolean;
   fehler: string | null;
   laedt: boolean;
