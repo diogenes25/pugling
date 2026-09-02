@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/backend, bereich/frontend, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/backend, bereich/frontend, rolle/creator]
 aliases: [unloeschbare Art, Grammtik bleibt fuer immer, B-157 nahm eine Faehigkeit weg]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Defekt
 groesse: M
@@ -13,7 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-157]
-wartet_auf: pugling-reviewer + frontend-reviewer
+wartet_auf: ""
 ---
 
 # B-170 · Eine selbst angelegte Art im Grundbestands-Fach ist unlöschbar — und der Seitentext verspricht das Gegenteil
@@ -375,3 +375,45 @@ müssten oder das Frontend-Tor mehr als diesen einen Verbraucher hätte.
 - 2026-09-02 · Bleibt auf `in-arbeit`: **beide Reviewer sind nicht gelaufen** (`wo: beides`, diese Sitzung
   startet keine Agenten unaufgefordert). Alles andere ist belegt, `wartet_auf` benennt es. Der Rollengang
   ist erbracht — als E2E, die sich wiederholt.
+- 2026-09-02 · **Beide Reviewer gelaufen** (`wo: beides`), zusammen **zwölf** Funde, keiner ein Blocker:
+  `pugling-reviewer` sechs, `frontend-reviewer` sechs. **Elf eingearbeitet, einer abgelehnt.** Damit ist
+  `abgenommen` erreicht — Commits 0af87e9 (Bau) und 65591f1 (Review-Runde).
+
+  **Die drei Funde, die etwas gekostet haben — und die drei roten Proben, die sie beweisen:**
+
+  | Fund | Was er entlarvte | Rote Probe nach der Reparatur |
+  |---|---|---|
+  | Identität des Art-Eigentümers ungemessen | Alle Fälle des Art-Zweigs handelten als geseedeter Vater, und für den ist `aid == fid == 1`. `Create` hätte den **falschen Claim** schreiben können — die Suite wäre grün geblieben und der Defekt für jeden anderen Nutzer zurück. | `OwnerAdultId = 1` hart: **genau ein** Fall fällt, der umgedrehte AK 6 (vorher: keiner) |
+  | Fach-Zweig der **Lese**-Projektion ungehalten | AK 7 prüfte nur den Art-Zweig. Wer `\|\| c.Subject!.OwnerAdultId == fid` als „Vereinfachung" entfernt, lässt 844 Tests grün — und der Bildschirm verspricht **weniger** als der Server erlaubt. | Zweig entfernt: **genau ein** Fall fällt, AK 5, und an der neuen `Assert.True` (vorher: keiner) |
+  | Veraltete Zeilen im Ladefenster (Frontend) | `useAsync` behält `data` über den **Wechsel der Abhängigkeit**, nicht nur über ein `reload`. Beim Fachwechsel standen die Arten des vorigen Fachs bedienbar da, während die Rückrufe schon das neue Fach banden: ein Klick schickte `DELETE {neues Fach}/{Art aus dem alten}`. Bis B-170 fing der frühe Ausstieg `if (!subject.isMine)` das ab — **dieses Fenster hat diese Story aufgemacht.** | Filter entfernt: **genau ein** Fall fällt, der neue (vorher: keiner) |
+
+  Beim dritten habe ich den vorgeschlagenen Weg (`busy={… || categories.loading}`) **nicht** genommen: er
+  sperrt die Folge, lässt aber die falschen Namen unter der neuen Überschrift stehen. Stattdessen bringt die
+  Zeile ihr eigenes Fach mit (`CategoryResponse.subjectId`) und ist bei Nichtpassung **nicht renderbar** —
+  eine strukturelle Prüfung statt eines Zeitfenster-Tricks. `CategorySection` bekommt dafür die Fach-**Id**
+  zurück, nicht das `SubjectResponse`: eine Zahl trägt kein `isMine`, die Zusage „Anlegen bleibt frei"
+  hängt also weiter an der Signatur.
+
+  **Drei Funde waren Behauptungen in meinen eigenen Kommentaren:**
+  1. Die fünf neuen Testfälle trugen **deutsche** `///`- und `//`-Doku — Bruch der Regel „ausnahmslos
+     englisch", von keinem Tor gefangen. Übersetzt; in der Datei steht jetzt kein Umlaut mehr.
+  2. `Arten_EinesSeedFachs_SindFuerJedenGesperrt` behauptete im **Namen** die Regel, die diese Story
+     aufhebt. Heißt jetzt `Geseedete_Arten_Sind_Fuer_Jeden_Gesperrt` — ein Testname ist das, was man bei rot
+     zuerst liest. Die Spur zum alten Namen liegt in B-179.
+  3. `Create` schrieb `isOwn` als **dritte** Fassung der Regel (`OwnerAdultId != null`), gehalten von
+     nichts — und die eingecheckte Beispielantwort stammt genau daraus. Die angelegte Zeile geht jetzt durch
+     dieselbe Projektion wie beide Lesewege; belegt verhaltensgleich, weil `docs/api-examples/catalog.md`
+     **byte-identisch** blieb. Dazu eine Zusicherung auf die POST-Antwort.
+
+  **Abgelehnt, mit Grund:** Die nur lesbaren Namen als `<ul>`/`<li>` zu gruppieren. Die Liste kommt nach
+  Namen sortiert vom Server, eigene und fremde Zeilen stehen darum verschränkt; eine Gruppe erzwänge ein
+  Umsortieren, und die alphabetische Ordnung ist das, was einen Namen überhaupt findbar macht.
+
+  Ebenfalls eingearbeitet: der Vorspann verspricht nicht mehr „die mitgelieferten kann niemand ändern" (das
+  war um das Admin-Ventil aus B-178 zu **streng** — ein Versprechen unter dem Server ist derselbe Bruch wie
+  eines darüber), die E2E prüft nicht mehr ein `disabled`, das `NameRow` nie setzt (sie prüfte den
+  Ausgangszustand), und dass `NewName` sein Feld nach Erfolg leert, trägt jetzt eine Zusicherung.
+
+  **Verifikation nach der Runde:** **844/844** Backend, **326/326** vitest (+1), **46/46** E2E,
+  `dotnet build` 0 Warnungen, `dotnet format --verify-no-changes` sauber, `tsc -b` sauber, `markdownlint`
+  0 Issues in 305 Dateien. **Rollengang:** erbracht als `frontend/e2e/katalog-arten.spec.ts`, wiederholbar.
