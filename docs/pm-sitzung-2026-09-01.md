@@ -5,6 +5,65 @@ aliases: [Nachtlauf 2026-09-01, Die Oberflaeche verschweigt nichts mehr]
 
 # PM-Sitzung 2026-09-01 — Nachtlauf: die Oberfläche verschweigt weder Erfolg noch Fehler
 
+## Stand — hier einsteigen
+
+*(Am 2026-09-02 am Ende des dritten Sprints geschrieben. Wer frisch dazukommt, liest diesen Abschnitt und
+sonst nichts; alles Weitere steht chronologisch darunter.)*
+
+**Drei Sprints in zwei Nächten, alle abgenommen. Nichts ist gepusht.**
+
+| Sprint | Roter Faden | Stories |
+|---|---|---|
+| 1 | Die Oberfläche verschweigt weder Erfolg noch Fehler | B-151, B-162, B-173, B-174, B-184 (+ B-189) |
+| 2 | Eine Zahl, eine Wahrheit | B-191, B-192, B-193 |
+| 3 | Der Meldungsplatz gehört zur letzten Handlung | B-196, B-197, B-198 |
+
+**Verifikation am Schluss:** `dotnet test -c Release` **838/838** · `npm run test` **327/327** ·
+`npx tsc -b` sauber · voller Playwright-Lauf **45/45** (das *ist* der Rollengang).
+
+**Backlog:** 64 offen · 124 abgenommen · Nachgeschaut **117 von 124**, davon 28 mit einem bei der Abnahme
+durchgekommenen Defekt.
+
+### Was als Erstes zu tun ist
+
+1. **Zwei Retro-Vorschläge warten auf deine Entscheidung.** Freigabe 3 verbietet einem unbeaufsichtigten
+   Lauf das Landen, darum stehen sie da und wirken nicht:
+   - *Aus Nacht 1:* Eine E2E-Zusicherung über einen Zustand, der verschwinden kann, nennt die Reihenfolge
+     (erst auf das Verschwinden warten, dann die Überlebende fordern). Ort: `frontend/CLAUDE.md`.
+   - *Aus Nacht 2, mit einem **zweiten** Beleg aus Nacht 3:* Jedes Akzeptanzkriterium bekommt vor
+     `abgenommen` einen **benannten Beleg** (Testname, Spec-Fall, Rollengang-Schritt) — oder ein
+     ausdrückliches „nicht geprüft, weil …". Ort: `docs/backlog/README.md`, Eintrittsbedingung von
+     `abgenommen`. Kosten: Der Verfahrenstext steht schon über Budget, das wäre mitzuzahlen.
+2. **`git log --oneline` gegen `5590ef3`** — neun Commits aus diesen Nächten. Insgesamt liegen **18**
+   unveröffentlichte Commits vor; neun davon stammen aus der Zeit davor. Push bleibt bei dir.
+3. **Die dringendsten offenen Stories:** [B-188](backlog/B-188-wizard-verschweigt-drei-weitere-ausfaelle.md)
+   (P2 — der `children`-Fall kostet ein doppelt angelegtes Kind), dazu der schon zugeschnittene, aber
+   **nicht begonnene** Sprint mit [B-187](backlog/B-187-unitform-verliert-seine-bestaetigung.md) und
+   [B-190](backlog/B-190-backlog-index-schreibt-leeren-index.md).
+4. **Neu aus den Nachschauen dieser Nächte:** B-194, B-195, B-199, B-200, B-201 — alle `ausformuliert`,
+   keine begonnen.
+
+### Der eine Befund, der über die drei Sprints hinausweist
+
+**Die Abnahme belegt, dass die Suite grün ist — nicht, dass sie das Akzeptanzkriterium anfasst.** Zweimal
+unabhängig gemessen, in beide Richtungen:
+
+- **B-173, AK 2** stand in der Story und war **nie gebaut** — und bekam trotzdem `abgenommen` (gefunden
+  in der Nachschau von Nacht 2).
+- **B-191, AK 2** war gebaut, aber die Story sagte etwas anderes; der Reviewer-Fix hatte das Kriterium
+  unwahr gemacht, ohne dass jemand es nachzog (Nachschau von Nacht 3).
+
+Der maschinelle Rollengang fängt das nicht: Er fährt die Wege, die jemand geschrieben hat — und
+geschrieben wird, was man im Blick hatte. **B-196 existiert, weil keine Spec je eine Reihe gelöscht hat.**
+
+### Wo die Läufe von selbst angehalten haben
+
+- **Nacht 1** am Fund-Zähler (neun Funde im eigenen Increment, Grenze fünf).
+- **Nacht 2** an Limit 2 — Sprint 1s Increment erwies sich in der Nachschau als defekthaltig (B-196,
+  B-197). Du hast danach ausdrücklich fortgesetzt; Sprint 3 hat genau diese zwei geschlossen.
+- **Nacht 3** endet ohne Halt-Bedingung: Die Nachschau auf Sprint 2 fand **erstmals keinen funktionalen
+  Defekt**.
+
 ## Auftrag und Freigaben
 
 Unbeaufsichtigter Backlog-Lauf nach `pm-loop` und [docs/backlog/README.md](backlog/README.md).
