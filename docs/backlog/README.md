@@ -504,7 +504,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [B-170](B-170-selbst-angelegte-art-im-grundbestand-ist-unloeschbar.md) | Eine selbst angelegte Art im Grundbestands-Fach ist unlöschbar — und der Seitentext verspricht das Gegenteil | Defekt | `gegrillt` | P1 | — | — | — |
+| [B-170](B-170-selbst-angelegte-art-im-grundbestand-ist-unloeschbar.md) | Eine selbst angelegte Art im Grundbestands-Fach ist unlöschbar — und der Seitentext verspricht das Gegenteil | Defekt | `geschaetzt` | P1 | M | beides | Migration |
 | [B-07](B-07-db-umbau-restetappen.md) | DB-Struktur-Umbau: der offene Betriebsschritt | Aufräumen | `geschaetzt` | P1 | XS | backend | — |
 | [B-153](B-153-bilder-spec-flackert-im-vollen-lauf.md) | `bilder.spec.ts` fällt im vollen Lauf gelegentlich aus, allein ist sie grün | Defekt | `ausformuliert` | P2 | — | — | — |
 | [B-160](B-160-gesperrter-knopf-nennt-den-grund-nie.md) | Der gesperrte Löschen-Knopf nennt seinen Grund nie — der `title` erscheint nicht | Defekt | `ausformuliert` | P2 | — | — | — |
@@ -740,7 +740,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-161](B-161-alle-waehlen-macht-die-auswahl-unsichtbar.md) | „Alle wählen" wählt bis zu 400 Übungen, die der Vater nie sieht und nicht abwählen kann | [B-18] | `abgenommen` |
 | [B-168](B-168-eigentuemer-zusicherung-prueft-eine-konstante.md) | „Anlegen macht den Aufrufer zum Eigentümer" prüft eine Konstante, keine Identität | [B-13] | `abgenommen` |
 | [B-169](B-169-ladefenster-macht-die-alten-zeilen-anklickbar.md) | Im Ladefenster sind die alten Zeilen anklickbar — und die Auswahl überlebt | [B-161] | `abgenommen` |
-| [B-170](B-170-selbst-angelegte-art-im-grundbestand-ist-unloeschbar.md) | Eine selbst angelegte Art im Grundbestands-Fach ist unlöschbar — und der Seitentext verspricht das Gegenteil | [B-157] | `gegrillt` |
+| [B-170](B-170-selbst-angelegte-art-im-grundbestand-ist-unloeschbar.md) | Eine selbst angelegte Art im Grundbestands-Fach ist unlöschbar — und der Seitentext verspricht das Gegenteil | [B-157] | `geschaetzt` |
 | [B-171](B-171-zwei-zusicherungen-pruefen-den-ausgangszustand.md) | Zwei Zusicherungen prüfen den Ausgangszustand mit — und können darum nicht fallen | [B-161, B-157] | `abgenommen` |
 | [B-172](B-172-fachauswahl-loescht-wenn-ihre-optionen-fehlen.md) | Die Fachauswahl löscht das Fach, wenn ihre eigenen Optionen nicht geladen sind | [B-123, B-148] | `abgenommen` |
 | [B-173](B-173-speichern-vernichtet-seine-eigene-bestaetigung.md) | Ein erfolgreiches Speichern vernichtet seine eigene Bestätigung | [B-123] | `abgenommen` |
