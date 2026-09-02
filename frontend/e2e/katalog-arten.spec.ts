@@ -40,13 +40,18 @@ test("B-170: eine selbst angelegte Art im Grundbestands-Fach ist umbenennbar und
   // Eine geseedete Art trägt KEINE Bedienelemente (AK 4 + AK 8, zweite Hälfte) …
   await expect(page.getByText("Vokabeln", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: 'Art „Vokabeln" löschen' })).toHaveCount(0);
-  // … und auch keinen gesperrten Knopf, dessen Grund niemand liest (B-160).
-  await expect(page.locator('input[id^="ca-category-"][disabled]')).toHaveCount(0);
+  // Kein gesperrter Knopf mit unsichtbarem Grund (B-160) steht bewusst NICHT hier, sondern in
+  // `CatalogAdmin.test.tsx` als Zähler über `button` und `[title]`. Eine Fassung hier prüfte ein
+  // `disabled` am Eingabefeld — das `NameRow` nie setzt, weshalb keine Änderung an B-170s Bedienlogik sie
+  // rot machen konnte (Review-Fund: sie prüfte den Ausgangszustand).
 
   // ---- Der Tippfehler, um den es geht ----
   await page.getByLabel("Neue Art", { exact: true }).fill(TIPPFEHLER);
   await page.getByRole("button", { name: "Neue Art anlegen" }).click();
   await expect(page.getByText("Art angelegt.", { exact: true })).toBeVisible();
+  // Das Feld ist danach leer. `NewName` leert es nur im Erfolgsfall, und diese Hälfte hielt bis zum
+  // Review von B-170 keine Zusicherung — gepinnt war nur der Fehlerfall (`vater-von-null.spec.ts`).
+  await expect(page.getByLabel("Neue Art", { exact: true })).toHaveValue("");
 
   // Die eigene Art trägt beide Bedienelemente — im SELBEN Fach, in dem „Vokabeln" keine hat. Das ist der
   // Kern von AK 8: entschieden wird pro Zeile, nicht pro Fach.

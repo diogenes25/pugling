@@ -20,18 +20,13 @@ public class Subject
     /// <see cref="Exercise.AuthorAdultId"/>: <b>any</b> creator may read and use the subject, only the owner
     /// may rename or delete it – otherwise a stranger renames the tree a whole household plans against
     /// (B-13). <c>null</c> = seeded system subject, therefore editable by <b>nobody</b>: the comparison in
-    /// <see cref="Auth.ClaimsPrincipalExtensions.IsOwnedBy"/> is fail-closed.
+    /// <see cref="Auth.ClaimsPrincipalExtensions.IsOwnedBy"/> is fail-closed. Survives the deletion of the
+    /// owner (FK → <c>SetNull</c>) so that everyone else's series and study plans keep their subject.
     /// <para>
-    /// This spot used to argue that a category must never carry an owner of its own, because "a second,
-    /// laxer reading of ownerless would be a third ownership semantics inside one catalog". B-170 disproved
-    /// it, and the argument was the reason a real capability went missing for two stories: creating a
-    /// category is open to everyone, so in a seeded subject - the only ones a new user has - a typo became
-    /// unremovable by anybody. The reading of <c>null</c> did not get laxer; the right simply gained a
-    /// <b>second bearer</b> (see <see cref="ExerciseCategory.OwnerAdultId"/>). Fail-closed still holds for
-    /// every row that has neither bearer.
+    /// One level down the write right has a <b>second bearer</b>
+    /// (<see cref="ExerciseCategory.OwnerAdultId"/>, B-170) - this column alone does not decide who may
+    /// change a category.
     /// </para>
-    /// Survives the deletion of the owner (FK → <c>SetNull</c>) so that everyone else's series and study
-    /// plans keep their subject.
     /// </summary>
     public int? OwnerAdultId { get; set; }
     public Adult? Owner { get; set; }

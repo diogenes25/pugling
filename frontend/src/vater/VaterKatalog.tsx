@@ -28,11 +28,14 @@ export function VaterKatalog() {
           Wahrheit von damals („nur wer das Fach angelegt hat"), und B-170 gibt der Art einen eigenen
           Eigentümer. Jetzt nennt er BEIDE Träger — und ist damit erstmals so genau wie der Server.
           Fach und Art getrennt zu nennen ist nicht Pedanterie: für einen neuen Nutzer sind alle Fächer
-          mitgeliefert, „nur wer das Fach angelegt hat" hieße für ihn also weiterhin „niemand". */}
+          mitgeliefert, „nur wer das Fach angelegt hat" hieße für ihn also weiterhin „niemand".
+          „Die mitgelieferten kannst du nur ergänzen" statt „kann niemand ändern": Letzteres war um genau
+          das Admin-Ventil zu streng (B-178), und ein Versprechen, das weniger zusagt als der Server tut,
+          ist derselbe Bruch wie eines, das mehr zusagt. */}
       <p className="sub">
         Fächer und Arten sind der <strong>gemeinsame</strong> Rahmen aller Übungen – auch der von anderen
         Vätern. Neue anlegen darf jeder; umbenennen und löschen nur, wer das <strong>Fach</strong> oder
-        die <strong>Art</strong> selbst angelegt hat – die mitgelieferten kann niemand ändern.
+        die <strong>Art</strong> selbst angelegt hat – die mitgelieferten kannst du nur ergänzen.
       </p>
       {subjects.error && <div className="banner err">{subjects.error}</div>}
       {/*

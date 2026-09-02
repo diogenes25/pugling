@@ -60,8 +60,11 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
     /// write form is pinned by <c>Anleger_DarfSeineArt_ImSeedFach_Loeschen</c> and
     /// <c>Fach_Eigentuemer_DarfEineFremdeArt_InSeinemFach_Loeschen</c> (one case per branch, each measured
     /// to fall when its branch is removed), the read form by
-    /// <c>IsOwn_TrenntDieEigeneArt_VonDerGeseedeten_InListeUndEinzelabruf</c> over both read paths. Whoever
-    /// changes the rule has to touch two places, and each has a case that fails if they touch only one.
+    /// <c>IsOwn_TrenntDieEigeneArt_VonDerGeseedeten_InListeUndEinzelabruf</c> and
+    /// <c>Fach_Eigentuemer_DarfEineFremdeArt_InSeinemFach_Loeschen</c> - one case per branch again, over
+    /// both read paths and the created row, which shares the projection rather than repeating the rule.
+    /// Whoever changes the rule has to touch two places, and each has a case that fails if they touch
+    /// only one.
     /// </para>
     /// </summary>
     private static bool MayWrite(int? categoryOwner, int? subjectOwner, int? fid, bool isAdmin) =>
@@ -130,11 +133,13 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
         db.ExerciseCategories.Add(category);
         await db.SaveChangesAsync(ct);
 
-        // `true` without asking the DB: the caller has just become the owner. A creator without an adult
-        // profile (`fid == null`) is the one exception - then nobody owns the row, and saying "you may
-        // write" would be a promise the write actions break.
-        var response = new CategoryResponse(category.Id, subjectId, category.Name, category.CreatedAt,
-            category.OwnerAdultId != null);
+        // The created row goes out through the SAME projection as both read paths instead of spelling
+        // `isOwn` a third time. "The caller has just become the owner" is true today, but it is a copy of
+        // the rule that nothing keeps in step: it was the only place `isOwn` was computed without a test,
+        // and the checked-in example answer is captured from here. One extra SELECT buys that the created
+        // row and the next `Get` cannot disagree. Non-null right after `SaveChangesAsync` - the row exists
+        // in this very context.
+        var response = (await ProjectOne(subjectId, category.Id, ct))!;
         return CreatedAtAction(nameof(Get), new { subjectId, categoryId = category.Id }, response);
     }
 

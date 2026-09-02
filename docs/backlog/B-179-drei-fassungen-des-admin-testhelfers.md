@@ -39,7 +39,9 @@ Datei.
 
 Dazu ein zweiter, im Nachtlauf **gemessener** Fallstrick, der bisher nur in einer der drei Fassungen
 dokumentiert ist: Wird der **geseedete** Erwachsene geflaggt, überlebt das Flag in der geteilten
-Klassen-DB — im Bauen von B-178 hat genau das `Arten_EinesSeedFachs_SindFuerJedenGesperrt` rot gemacht. Ein
+Klassen-DB — im Bauen von B-178 hat genau das `Arten_EinesSeedFachs_SindFuerJedenGesperrt` rot gemacht
+(der Fall heißt seit B-170 `Geseedete_Arten_Sind_Fuer_Jeden_Gesperrt`; der alte Name behauptete eine Regel,
+die B-170 aufgehoben hat). Ein
 gemeinsamer Helfer, der immer einen **frischen** Erwachsenen nimmt, macht den Fallstrick unbetretbar statt
 ihn zu beschreiben.
 

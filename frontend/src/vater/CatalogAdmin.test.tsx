@@ -199,7 +199,7 @@ const anlegenKnopf = () => screen.queryByRole("button", { name: "Neue Art anlege
 describe("CategorySection – das Anlege-Formular", () => {
   it('bietet „Neue Art" an und reicht die Eingabe durch', () => {
     const onCreate = vi.fn(async () => true);
-    render(<CategorySection error={null} categories={[art()]} busy={false}
+    render(<CategorySection subjectId={3} error={null} categories={[art()]} busy={false}
       onSave={() => {}} onDelete={() => {}} onCreate={onCreate} />);
 
     expect(screen.getByLabelText("Neue Art")).toBeTruthy();
@@ -214,7 +214,7 @@ describe("CategorySection – das Anlege-Formular", () => {
   it("zeigt fremde Arten weiter lesbar, nur ohne Knöpfe", () => {
     // Die Überschrift zählt die Arten – eine Seite, die „du kannst sie zum Filtern verwenden" sagt und
     // dann keine zeigt, hält ihr eigenes Versprechen nicht.
-    render(<CategorySection error={null}
+    render(<CategorySection subjectId={3} error={null}
       categories={[art({ isOwn: false }), art({ id: 10, name: "Vokabeln", isOwn: false })]} busy={false}
       onSave={() => {}} onDelete={() => {}} onCreate={async () => true} />);
 
@@ -224,8 +224,32 @@ describe("CategorySection – das Anlege-Formular", () => {
     // Das Anlegen bleibt daneben bedienbar - der Kern von Entscheidung 2.
     expect(anlegenKnopf()).not.toBeNull();
   });
-});
 
+  /*
+   * Aus dem Review zu B-170. `useAsync` behält seine `data` nicht nur über ein `reload`, sondern über
+   * jeden Wechsel der Abhängigkeit — beim Sprung auf ein anderes Fach stehen also im Ladefenster noch die
+   * Arten des vorigen da, während die Rückrufe in `CatalogAdmin` schon das NEUE Fach binden. Ein Klick
+   * schickte `DELETE {neues Fach}/{Art aus dem alten}` und der Vater bekäme einen 404 auf eine Zeile, die
+   * er vor sich sieht.
+   *
+   * Bis B-170 fing der frühe Ausstieg `if (!subject.isMine)` das ab; seit die Entscheidung pro Zeile
+   * fällt, entscheidet veraltetes `isOwn`. Die Zeile bringt ihr eigenes Fach mit, also ist die Prüfung
+   * struktureller Art und kein Zeitfenster-Trick: eine fremde Zeile ist **nicht renderbar**, nicht bloß
+   * gesperrt. Rote Probe: den `filter` entfernen — dann fällt dieser Fall und nur er.
+   */
+  it("rendert keine Art, die zu einem anderen Fach gehört", () => {
+    render(<CategorySection subjectId={3} error={null}
+      categories={[art({ id: 9, name: "Grammatik" }), art({ id: 10, name: "Aus-Fach-4", subjectId: 4 })]}
+      busy={false} onSave={() => {}} onDelete={() => {}} onCreate={async () => true} />);
+
+    // Beide Zeilen sind `isOwn`, rendern also als Feld – gezählt wird darum über die Felder und nicht
+    // über den Text: ohne den Filter stünden hier zwei, und das eine trüge den Namen aus Fach 4.
+    expect(screen.getAllByLabelText("Art")).toHaveLength(1);
+    expect((screen.getByLabelText("Art") as HTMLInputElement).value).toBe("Grammatik");
+    // Auch die Zählung in der Überschrift, sonst nennt sie im Ladefenster die Anzahl des vorigen Fachs.
+    expect(screen.getByRole("heading", { name: "Arten (1)" })).toBeTruthy();
+  });
+});
 
 /*
  * B-174. „Dieses Fach hat keine Arten" und „das Laden ist gescheitert" sahen identisch aus:
@@ -245,7 +269,7 @@ describe("CategorySection – das Anlege-Formular", () => {
  */
 describe("CategorySection – ein gescheitertes Laden sieht nicht aus wie ein leeres Fach", () => {
   const props = {
-    busy: false, onSave: () => {}, onDelete: () => {}, onCreate: async () => true,
+    subjectId: 3, busy: false, onSave: () => {}, onDelete: () => {}, onCreate: async () => true,
   };
 
   it("zeigt den Fehler, statt wie ein leeres Fach auszusehen", () => {

@@ -102,7 +102,7 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
             jede Übung hängt seit Kurzem an einer Unit statt an einem Kapitel.
           </p>
 
-          <CategorySection categories={categories.data} error={categories.error}
+          <CategorySection subjectId={subject.id} categories={categories.data} error={categories.error}
             busy={action.busy}
             onSave={(c, name) => act(() => api.updateCategory(subject.id, c.id, name), "Art umbenannt.", categories.reload)}
             onDelete={(c) => {
@@ -127,15 +127,25 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
  * ein normaler Nutzer hat.
  *
  * **Seit B-170 ist das strukturell gesichert, nicht mehr nur getestet:** Dieser Abschnitt bekommt das Fach
- * gar nicht mehr, weil niemand darunter es noch braucht — er *kann* nicht danach gaten. Vorher hielten drei
- * Fälle in `CatalogAdmin.test.tsx` die Zusage, einer je Fach-Zustand; ohne das Prop wären sie drei
- * identische Renderings und damit drei Kopien einer Zusicherung, von denen keine anders fallen kann. Einer
- * ist geblieben (das Formular ist überhaupt da), die Zusage selbst hängt jetzt an der Signatur.
+ * nicht mehr, sondern nur noch dessen **Id** — er *kann* also nicht nach Eigentum gaten, weil eine Zahl
+ * kein `isMine` trägt. Vorher hielten drei Fälle in `CatalogAdmin.test.tsx` die Zusage, einer je
+ * Fach-Zustand; ohne das `SubjectResponse` wären sie drei identische Renderings und damit drei Kopien einer
+ * Zusicherung, von denen keine anders fallen kann. Einer ist geblieben (das Formular ist überhaupt da), die
+ * Zusage selbst hängt jetzt an der Signatur.
  *
  * Eigener exportierter Baustein aus demselben Grund wie `SubjectRow`: `CatalogAdmin` lädt beim Fachwechsel
  * nach und hängt am Netz, dieser Abschnitt nicht.
  */
-export function CategorySection({ categories, error, busy, onSave, onDelete, onCreate }: {
+export function CategorySection({ subjectId, categories, error, busy, onSave, onDelete, onCreate }: {
+  /**
+   * Das Fach, zu dem dieser Abschnitt gehört – als **Id**, nicht als `SubjectResponse` (siehe oben: eine
+   * Zahl kann nicht als Eigentums-Bedingung missbraucht werden). Sie ist nötig, weil `useAsync` seine
+   * `data` über einen **Wechsel der Abhängigkeit** behält, nicht nur über ein `reload`: Beim Sprung von
+   * Fach A auf Fach B stehen im Ladefenster noch A's Arten da, während die Rückrufe oben schon B's Id
+   * binden – ein Klick schickte `DELETE {B}/{Art aus A}`. Ein `disabled` würde nur die Folge sperren; hier
+   * ist die Zeile schon **nicht renderbar**, weil sie ihr eigenes Fach mitbringt und es nicht passt.
+   */
+  subjectId: number;
   categories: CategoryResponse[] | null | undefined;
   /**
    * Als Prop und nicht im Baustein aus `useAsync` gelesen: Ein gescheitertes Laden und ein leeres Fach
@@ -149,10 +159,13 @@ export function CategorySection({ categories, error, busy, onSave, onDelete, onC
   onDelete: (category: CategoryResponse) => void;
   onCreate: (name: string) => Promise<boolean>;
 }) {
+  // Nur die Zeilen dieses Fachs – die Zählung in der Überschrift eingeschlossen, sonst nennt sie im
+  // Ladefenster die Anzahl des vorigen Fachs.
+  const arten = categories?.filter((c) => c.subjectId === subjectId);
   return (
     <>
       <h4 className="h-section" style={{ fontSize: 15, marginTop: 14 }}>
-        Arten {categories ? `(${categories.length})` : ""}
+        Arten {arten ? `(${arten.length})` : ""}
       </h4>
       <p className="muted" style={{ marginTop: 0, fontSize: 13 }}>
         Freie Ordnungsbegriffe innerhalb des Fachs (z. B. „Grammatik", „Vokabeln") – sie filtern die
@@ -162,7 +175,7 @@ export function CategorySection({ categories, error, busy, onSave, onDelete, onC
           der Nutzer schon auf der Seite steht – ohne Rolle bemerkt ein Screenreader ihn nicht, und die
           Einfärbung allein ist keine Rückmeldung. */}
       {error && <div className="banner err" role="alert">Arten: {error}</div>}
-      <CategoryRows categories={categories} busy={busy} onSave={onSave} onDelete={onDelete} />
+      <CategoryRows categories={arten} busy={busy} onSave={onSave} onDelete={onDelete} />
       <NewName fieldId="ca-new-category" label="Neue Art" placeholder="z. B. Grammatik"
         busy={busy} onCreate={onCreate} />
     </>
