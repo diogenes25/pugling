@@ -107,6 +107,13 @@ aufgeklappte Bereiche und offene Formulare sind weg. Zwei Formen sind richtig: `
 für Listen, `showPlaceholder` für Flächen, die ein `reload` überstehen müssen. Ein blankes
 `data === null` ist **nie** richtig – es zeigt eine gescheiterte Ladung dauerhaft als „Lade…" (B-184).
 
+**Die andere Hälfte derselben Falle:** `data` überlebt auch einen **Wechsel der Abhängigkeit** – im
+Ladefenster stehen noch die Zeilen des vorigen Elternteils, während die Rückrufe schon das neue binden
+(`DELETE {neu}/{Zeile aus alt}`). Die Zeile muss ihr Elternteil **mitbringen** und bei Nichtpassung nicht
+rendern (`c.subjectId === subjectId`, B-170); ein `disabled` sperrt nur die Folge. Ein früher Ausstieg wie
+`if (!subject.isMine)` deckte das Fenster zu – wer ihn durch eine Entscheidung **pro Zeile** ersetzt,
+macht es auf.
+
 Übungen sind über `/vater/exercises` **bearbeitbar**: Metadaten per PUT — den geladenen
 `config`/`suggestedBonus`/`executePublic` **mitschicken**, sonst löscht der Vollersatz sie; Vokabelpaare
 einzeln über `…/vocabulary/{id}/items`, sonst brechen Item-Ids und Lernstand des Kindes weg. Wer einen neuen
