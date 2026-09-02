@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/creator]
 aliases: [B-173 AK 2 nicht gebaut, Loeschen ohne Meldung]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: S
@@ -57,12 +57,18 @@ zustandsfrei formuliert. Wo eine Handlung gar keine Meldung erzeugt, bleibt die 
 2. **Gebaut wird zusammen mit [B-197](B-197-meldungsplatz-wird-beim-absenden-nicht-geraeumt.md)**
    (Empfehlung des offenen Punkts bestätigt). *Begründung:* Beide brauchen dasselbe Prop; getrennt
    entstünden zwei Muster für einen Platz. *Kosten:* keine — derselbe Sprint.
-3. **`ChildMaterialSection` („Buch entfernen") bleibt draußen.** *Begründung:* Der offene Punkt verlangte
-   eine Zählung; sie ist gemacht — es sind **zwei** stumme Erfolgspfade (`VaterLehrwerke.tsx:255`,
-   `ChildMaterialSection.tsx:231`). Nur der erste ist von einem Akzeptanzkriterium **beansprucht**; der
-   zweite war vor wie nach Sprint 1 stumm und gehört keiner Story. Ihn mitzunehmen hieße, eine geschätzte
-   Story während des Bauens wachsen zu lassen. *Kosten:* Eine bekannte stumme Stelle bleibt stehen —
-   ausgesprochen, nicht kaschiert, und sie ist damit ein Kandidat für den Backlog.
+3. **Die übrigen stummen Erfolgspfade bleiben draußen.** *Begründung:* Nur der Reihen-Löschpfad ist von
+   einem Akzeptanzkriterium **beansprucht** (B-173, AK 2); die anderen waren vor wie nach Sprint 1 stumm
+   und gehören keiner Story. Sie mitzunehmen hieße, eine geschätzte Story während des Bauens wachsen zu
+   lassen. *Kosten:* Bekannte stumme Stellen bleiben stehen — ausgesprochen, nicht kaschiert, und als
+   [B-200](B-200-drei-stumme-erfolgspfade.md) abgelegt.
+
+   **Korrektur an der eigenen Zählung (2026-09-02, Fund des `frontend-reviewer`):** Diese Entscheidung
+   nannte ursprünglich **zwei** stumme Pfade und wies das als gemessen aus. Es sind **vier**:
+   `VaterLehrwerke.tsx` (Reihe löschen — hier behoben), `ChildMaterialSection.tsx` (Buch entfernen),
+   `VaterFachlehrer.tsx` (Fachlehrer löschen) und `VaterLehrwerke.tsx` (Unit löschen). Die *Entscheidung*
+   trägt unverändert — die als Beleg ausgewiesene **Zahl** trug nicht, und eine falsche Zahl in einer
+   Begründung ist schlimmer als gar keine.
 
 ## Akzeptanzkriterien
 
@@ -94,3 +100,17 @@ zustandsfrei formuliert. Wo eine Handlung gar keine Meldung erzeugt, bleibt die 
   Punkt 1 ist **gezählt statt vermutet**: zwei stumme Erfolgspfade, nur einer von einem
   Akzeptanzkriterium beansprucht. Akzeptanzkriterium 3 trägt ausdrücklich ein „nicht geprüft, weil …"
   statt eines behaupteten Belegs.
+- 2026-09-02 · **`geschaetzt` → `in-arbeit` → `abgenommen`** (Sprint 3). Belege:
+  - **Reviewer:** `frontend-reviewer`, zwei Runden. Runde 1 setzte **einen Blocker** (siehe unten),
+    Runde 2 steht aus bzw. ist in den Verlauf eingearbeitet.
+  - **Rollengang:** maschinell — voller Playwright-Lauf, echter Chromium gegen echten Server.
+  - **Zahlen:** `npx tsc -b` sauber · `npm run test` **327/327**.
+  - **Commits:** `6843d42` (Bau) und der Abnahme-Commit dieses Sprints.
+  - **Rote Probe, gezielt:** `Locator: getByText('Reihe „…" gelöscht.')` — element not found. Eine eigene
+    Gegenprobe war **nötig**, weil der gemeinsame E2E-Fall schon an B-197s Zusicherung abbricht; „der
+    Lauf war rot" wäre für diese Story kein Beleg gewesen.
+  - **Akzeptanzkriterium 3 (Dialog-Abbruch) trägt am Code**, vom Reviewer gegengelesen: `confirmAction`
+    steht **vor** `onMeldung(null)`, ein Abbruch lässt den Platz unberührt. Die Reihenfolge ist gewählt,
+    nicht zufällig.
+  - **Die eigene Zählung war falsch** — Korrektur samt Begründung steht oben in Entscheidung 3, die drei
+    übrigen Pfade als [B-200](B-200-drei-stumme-erfolgspfade.md).

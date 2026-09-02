@@ -2,6 +2,7 @@
 tags: [typ/story, status/abgenommen, bereich/frontend, bereich/backend, rolle/supervisor]
 aliases: [pointsGoalMet ohne Obergrenze im UI, Vererbungszweig wird nie genommen]
 status: abgenommen
+nachgeschaut: 2026-09-02
 prio: P3
 art: Defekt
 groesse: M

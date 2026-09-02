@@ -34,7 +34,7 @@ function buch(overrides: Partial<TextbookResponse> = {}): TextbookResponse {
 const zeige = (o: Partial<TextbookResponse> = {}) =>
   render(
     <AuthProvider>
-      <TextbookForm childId={1} book={buch(o)} series={[]} subjects={SUBJECTS} onDone={() => {}} />
+      <TextbookForm onMeldung={() => {}} childId={1} book={buch(o)} series={[]} subjects={SUBJECTS} onDone={() => {}} />
     </AuthProvider>,
   );
 
@@ -93,7 +93,7 @@ describe("TextbookForm – wenn eine Optionsliste den geladenen Wert nicht kennt
   it("zeigt das geladene Fach, wenn die Fächerliste es nicht kennt", () => {
     render(
       <AuthProvider>
-        <TextbookForm childId={1} book={buch()} series={[]} subjects={[]} onDone={() => {}} />
+        <TextbookForm onMeldung={() => {}} childId={1} book={buch()} series={[]} subjects={[]} onDone={() => {}} />
       </AuthProvider>,
     );
 

@@ -55,7 +55,7 @@ test("Reihe anlegen, dann Namen ändern und Verlag entfernen", async ({ page }) 
   await page.locator('select[id^="se-publisher-"]').selectOption("");
   // Der Knopf nennt den PERSISTIERTEN Namen, im Feld steht schon der neue – darum hier `ALT`.
   await page.getByRole("button", { name: `Speichern: „${ALT}"` }).click();
-  await expect(page.getByText("Gespeichert.")).toBeVisible();
+  await expect(page.getByText("Gespeichert.", { exact: true })).toBeVisible();
 
   // Zuklappen, bevor die Liste geprüft wird: das offene Formular trägt denselben Namen in seinem
   // Eingabefeld, und eine Zeilen-Auswahl wäre sonst doppeldeutig. Der Knopf trägt jetzt den NEUEN
@@ -88,7 +88,7 @@ test("Fach entfernen räumt auch den Fachnamen ab", async ({ page }) => {
   await page.getByRole("button", { name: `Reihe bearbeiten: „${name}"` }).click();
   await page.locator('select[id^="se-subject-"]').selectOption("");
   await page.getByRole("button", { name: `Speichern: „${name}"` }).click();
-  await expect(page.getByText("Gespeichert.")).toBeVisible();
+  await expect(page.getByText("Gespeichert.", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: `Bearbeiten schließen: „${name}"` }).click();
 
   // Der eigentliche Fallstrick der Story: der Fach*name* ist eine gespeicherte Spalte und die Zeile
@@ -146,7 +146,7 @@ test("Ein gelöschtes Fach bleibt als Freitext sichtbar und ist über die Oberfl
   // AK 2: über die bestehende Leer-Option wegzubekommen – kein eigener Knopf (Entscheidung 3).
   await fachFeld.selectOption("");
   await page.getByRole("button", { name: `Speichern: „${reihe}"` }).click();
-  await expect(page.getByText("Gespeichert.")).toBeVisible();
+  await expect(page.getByText("Gespeichert.", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: `Bearbeiten schließen: „${reihe}"` }).click();
 
   await expect(page.getByRole("row", { name: new RegExp(reihe) })).not.toContainText(fach);

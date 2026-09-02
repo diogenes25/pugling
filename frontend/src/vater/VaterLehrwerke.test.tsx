@@ -19,7 +19,7 @@ describe("UnitForm – Themen-Eingabe", () => {
   const chip = (thema: string) => screen.queryByRole("button", { name: `Thema ${thema} entfernen` });
 
   it("verwirft eine angefangene Eingabe bei Escape, statt sie beim Wegklicken anzulegen", () => {
-    render(<UnitForm seriesId={1} onDone={() => {}} />);
+    render(<UnitForm onMeldung={() => {}} seriesId={1} onDone={() => {}} />);
 
     fireEvent.change(feld(), { target: { value: "Halbfertig" } });
     fireEvent.keyDown(feld(), { key: "Escape" });
@@ -30,7 +30,7 @@ describe("UnitForm – Themen-Eingabe", () => {
   });
 
   it("rettet weiterhin eine Eingabe, die ohne Enter verlassen wird", () => {
-    render(<UnitForm seriesId={1} onDone={() => {}} />);
+    render(<UnitForm onMeldung={() => {}} seriesId={1} onDone={() => {}} />);
 
     fireEvent.change(feld(), { target: { value: "Gerettet" } });
     fireEvent.blur(feld());
@@ -39,7 +39,7 @@ describe("UnitForm – Themen-Eingabe", () => {
   });
 
   it("fügt bei Enter hinzu, ohne das Formular abzuschicken", () => {
-    render(<UnitForm seriesId={1} onDone={() => {}} />);
+    render(<UnitForm onMeldung={() => {}} seriesId={1} onDone={() => {}} />);
 
     fireEvent.change(feld(), { target: { value: "Mit Enter" } });
     fireEvent.keyDown(feld(), { key: "Enter" });
@@ -82,7 +82,7 @@ describe("Vorbelegung einer neuen Unit", () => {
     // `unit?.grade?.toString() ?? defaults.grade` stünde hier 8 statt "" – und ein Speichern schriebe einen
     // Band, den niemand eingetragen hat.
     render(
-      <UnitForm
+      <UnitForm onMeldung={() => {}}
         seriesId={7} unit={unit({ grade: null, bookType: "Textbook" })}
         defaults={{ grade: "8", bookType: "TeacherGuide" }} onDone={() => {}}
       />,
@@ -93,7 +93,7 @@ describe("Vorbelegung einer neuen Unit", () => {
   });
 
   it("belegt ein Anlege-Formular mit Band und Buchtyp vor", () => {
-    render(<UnitForm seriesId={7} defaults={{ grade: "8", bookType: "Workbook" }} onDone={() => {}} />);
+    render(<UnitForm onMeldung={() => {}} seriesId={7} defaults={{ grade: "8", bookType: "Workbook" }} onDone={() => {}} />);
 
     expect(band().value).toBe("8");
     expect(buchtyp().value).toBe("Workbook");

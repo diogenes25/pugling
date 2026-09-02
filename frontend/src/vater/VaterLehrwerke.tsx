@@ -192,7 +192,8 @@ export function VaterLehrwerke() {
               {list.data?.map((s) => (
                 <SeriesRow
                   key={s.id} series={s} subjects={subjects.data ?? []} publishers={publishers.data ?? []}
-                  open={open === s.id} onToggle={() => setOpen(open === s.id ? null : s.id)}
+                  open={open === s.id}
+                  onToggle={() => { setMeldung(null); setOpen(open === s.id ? null : s.id); }}
                   onChanged={list.reload} onMeldung={setMeldung}
                 />
               ))}
@@ -330,7 +331,7 @@ function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, on
                 Diese Reihe hat jemand anderes angelegt – du kannst sie verwenden, aber nicht ändern.
               </p>
             )}
-            <UnitPanel series={series} onChanged={onChanged} />
+            <UnitPanel series={series} onChanged={onChanged} onMeldung={onMeldung} />
           </td>
         </tr>
       )}
@@ -390,7 +391,7 @@ export function SeriesForm({ series, subjects, publishers, onSaved, onMeldung }:
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    // Der Platz gilt ab jetzt nicht mehr - egal wie dieser Versuch ausgeht (B-197).
+    // Der Platz gilt ab jetzt nicht mehr – egal wie dieser Versuch ausgeht (B-197).
     onMeldung?.(null);
     if (!form.name.trim()) { action.fail("Der Name der Reihe fehlt."); return; }
 
@@ -513,7 +514,16 @@ export function SeriesForm({ series, subjects, publishers, onSaved, onMeldung }:
  * Unit ist damit die natürliche Stelle, an der man eine anlegt („+ Übung" reicht Fach/Reihe/Unit als Query
  * durch). Ohne diesen Weg musste man sich die Auswahl im Anlege-Formular ein zweites Mal zusammenklicken.
  */
-function UnitPanel({ series, onChanged }: { series: TextbookSeriesResponse; onChanged: () => void }) {
+function UnitPanel({ series, onChanged, onMeldung }: {
+  series: TextbookSeriesResponse;
+  onChanged: () => void;
+  /**
+   * Räumt bzw. setzt den Meldungsplatz der Seite (B-197). Das Unit-Formular sitzt als aufgeklappte Zeile
+   * **in** der Tabelle, der Platz steht direkt darunter — ein roter Fehler hier und ein grünes
+   * „Gespeichert." dort sind benachbart, nicht seitenweit getrennt.
+   */
+  onMeldung: (m: ActionMessage | null) => void;
+}) {
   const units = useAsync<SeriesUnitResponse[]>(() => api.seriesUnits(series.id), [series.id]);
   const [editing, setEditing] = useState<number | null>(null);
   /*
@@ -591,7 +601,7 @@ function UnitPanel({ series, onChanged }: { series: TextbookSeriesResponse; onCh
                 {editing === u.id && (
                   <tr>
                     <td colSpan={4}>
-                      <UnitForm
+                      <UnitForm onMeldung={onMeldung}
                         seriesId={series.id} unit={u}
                         onDone={() => { setEditing(null); units.reload(); onChanged(); }}
                       />
@@ -610,7 +620,7 @@ function UnitPanel({ series, onChanged }: { series: TextbookSeriesResponse; onCh
       {series.isOwn && units.data !== null && (
         <div style={{ marginTop: 10 }}>
           <h4 className="h-section" style={{ fontSize: "1rem" }}>Unit hinzufügen</h4>
-          <UnitForm
+          <UnitForm onMeldung={onMeldung}
             seriesId={series.id} defaults={newUnitDefaults(units.data)}
             onDone={() => { units.reload(); onChanged(); }}
           />
@@ -626,11 +636,16 @@ const BOOK_TYPES: BookType[] = ["Textbook", "Workbook", "TeacherGuide"];
  * Ein Formular für Anlegen und Ändern. Bewusst eines: die Felder sind identisch, und beim Ändern zählt
  * genau derselbe fachliche Hinweis – der Stoff der Unit ist der Grund, warum es diese Ebene gibt.
  */
-export function UnitForm({ seriesId, unit, defaults, onDone }: {
+export function UnitForm({ seriesId, unit, defaults, onDone, onMeldung }: {
   seriesId: number;
   unit?: SeriesUnitResponse;
   defaults?: NewUnitDefaults;
   onDone: () => void;
+  /**
+   * Räumt den Meldungsplatz der Seite zu Beginn jeder Handlung (B-197). **Pflicht** — ein `?`-Prop kann
+   * man weglassen, und genau daran ist diese Stelle beim ersten Anlauf durchgerutscht.
+   */
+  onMeldung: (m: ActionMessage | null) => void;
 }) {
   // Die Vorbelegung gilt nur beim ANLEGEN, und die Fallunterscheidung hängt am Vorhandensein von `unit`,
   // nicht an seinen Werten: eine bestehende Unit ohne Band soll leer bleiben. Über `unit?.grade ?? defaults`
@@ -658,6 +673,8 @@ export function UnitForm({ seriesId, unit, defaults, onDone }: {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    // Der Meldungsplatz der Seite gilt ab jetzt nicht mehr — egal wie dieser Versuch ausgeht (B-197).
+    onMeldung(null);
     if (!form.label.trim()) { action.fail("Die Bezeichnung fehlt."); return; }
     const dto: CreateSeriesUnitDto = {
       label: form.label.trim(),
@@ -678,6 +695,9 @@ export function UnitForm({ seriesId, unit, defaults, onDone }: {
   async function remove() {
     if (!unit) return;
     if (!confirmAction(`Unit „${unit.label}" löschen? Lehrbücher, die darauf zeigen, verlieren nur die Angabe.`)) return;
+    // Nach dem Dialog, nicht davor: Ein Abbruch darf den Platz nicht anrühren (dieselbe Reihenfolge
+    // wie beim Löschen einer Reihe).
+    onMeldung(null);
     if (await action.run(() => api.deleteSeriesUnit(seriesId, unit.id))) onDone();
   }
 

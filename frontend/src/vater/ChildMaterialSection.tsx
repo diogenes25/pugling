@@ -113,8 +113,8 @@ export function ChildMaterialSection({ childId, childName, subjects }: {
 
       <div style={{ marginTop: 12 }}>
         <h4 className="h-section" style={{ fontSize: "1rem" }}>Buch hinzufügen</h4>
-        {/* Auch das Anlege-Formular raeumt (B-197): Es schliesst sich NICHT, kann eine alte Meldung
-            also ueberleben lassen - „Gespeichert." von einer Bearbeitung stuende dann neben dem roten
+        {/* Auch das Anlege-Formular räumt (B-197): Es schließt sich NICHT, kann eine alte Meldung
+            also überleben lassen – „Gespeichert." von einer Bearbeitung stünde dann neben dem roten
             Fehler eines gescheiterten Anlegens. */}
         <TextbookForm
           childId={childId} series={series.data ?? []} subjects={subjects}
@@ -164,10 +164,15 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
    * Räumt bzw. setzt den Meldungsplatz der Seite. Gerufen zu **Beginn** jedes Absendens mit `null`
    * (B-197): Der Platz gilt ab dann nicht mehr, egal wie der Versuch ausgeht.
    *
-   * Zwei Rückkanäle neben `onDone` sind nicht schön und hier ausgesprochen: `onDone` gehört zum
+   * **Pflicht, nicht optional** — und das ist der Punkt: Ein `?`-Prop kann man ganz weglassen, und genau
+   * so entsteht die nächste Aufrufstelle ohne Räumen. Hier verzweigt nichts auf seine Abwesenheit, also
+   * gibt es keinen Grund für die Lücke. (Bei `SeriesForm` ist optional richtig: dort entscheidet die
+   * Anwesenheit, ob die Bestätigung nach oben geht oder lokal bleibt.)
+   *
+   * Zwei Rückkanäle neben `onDone` sind trotzdem nicht schön und hier ausgesprochen: `onDone` gehört zum
    * Schließen, `onMeldung` zum Platz — und der Anlege-Zwilling schließt nie.
    */
-  onMeldung?: (m: ActionMessage | null) => void;
+  onMeldung: (m: ActionMessage | null) => void;
 }) {
   // Der Ladezustand ist der Bezugspunkt des Diffs (B-148) – er darf sich NICHT mit dem Formular
   // mitbewegen, sonst entscheidet der Vergleich gegen sich selbst und der Schalter entstünde wieder aus
@@ -202,8 +207,8 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    // Der Meldungsplatz der Seite gilt ab jetzt nicht mehr - egal wie dieser Versuch ausgeht (B-197).
-    onMeldung?.(null);
+    // Der Meldungsplatz der Seite gilt ab jetzt nicht mehr – egal wie dieser Versuch ausgeht (B-197).
+    onMeldung(null);
     if (!form.title.trim()) { action.fail("Der Titel fehlt."); return; }
 
     if (book && geladen.current) {

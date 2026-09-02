@@ -650,3 +650,141 @@ gleichzeitig etwas Widersprüchliches sagen können. Danach der zugeschnittene d
 | (dieser) | Nacht 2: Reviewer-Funde, Abnahme, Nachschau zu Sprint 1 |
 
 **Nichts ist gepusht** — das bleibt bei dir.
+
+## Runde 3 — Dritter Sprint (nach ausdrücklicher Fortsetzung durch den Nutzer)
+
+Der zweite Lauf endete an Limit 2 („Sprint 1s Increment hat sich als defekthaltig erwiesen"). Genau dafür
+ist die Grenze da: Ein Mensch sieht es und entscheidet. Der Nutzer hat fortgesetzt — dieser Sprint schließt
+darum zuerst die Selbstwidersprüche, statt Neues zu bauen.
+
+### Sprint 3 — Ziel & Umfang
+
+**Sprint-Ziel** (aus dem Sitz des Creators/Vaters):
+*Was am Meldungsplatz steht, gehört zu der Handlung, die ich gerade getan habe — und wenn eine Handlung
+nichts meldet, steht dort auch nichts Altes.*
+
+**Umfang:** B-197, B-196, B-198.
+
+**Draußen geblieben, mit Namen:** **B-199** (drei Behauptungen, deren Prämisse ihr eigener Sprint
+aufgehoben hat). Sie ist Sprint-1-Schuld wie die drei anderen, dient dem Ziel aber nicht — sie handelt von
+veralteten Begründungen, nicht vom Meldungsplatz. Mitzunehmen hätte den Sprint zu einer Sammlung gemacht,
+die Step 6 nicht widerlegen kann.
+
+### Iteration 3 — umgesetzt
+
+`onOeffnen` und `onMessage` sind **ein** Prop `onMeldung(m | null)`; geräumt wird beim Öffnen, **zu Beginn
+jeder Handlung** und beim Erfolg. Das Löschen einer Reihe meldet und nennt den Namen — die Zeile, auf die
+sich die Meldung bezieht, ist ja gerade verschwunden.
+
+| Rote Probe | Erwartet | Gemessen |
+|---|---|---|
+| B-197 (E2E) | rot | `Expected: 0, Received: 1` — das grüne „Gespeichert." stand nachweislich neben der roten Fehlermeldung |
+| B-196 (E2E, **gezielt**) | rot | `getByText('Reihe „…" gelöscht.')` — element not found |
+
+**Warum B-196 eine eigene Gegenprobe brauchte:** Im gemeinsamen Fall bricht der Lauf schon an B-197s
+Zusicherung ab. „Der Lauf war rot" wäre für diese Story kein Beleg gewesen — nur dafür, dass *irgendetwas*
+fiel. Das ist dieselbe Unterscheidung, die `CLAUDE.md` für die rote Probe je Datei macht.
+
+**Ein Testfehler von mir gehört ins Protokoll:** Schritt 3 des neuen E2E füllte den bereits gespeicherten
+Namen zurück — es gab nichts zu speichern, und das Formular meldete „Nichts geändert.". Kein Codefehler,
+ein Denkfehler im Testaufbau; Schritt 1 und 2 waren durchgelaufen.
+
+### Review (Step 5) — ein Blocker, und er ist der lehrreichste der drei Nächte
+
+**Der Ist-Stand von B-197 nennt drei kleinere Ausprägungen der Lücke. Ich habe zwei gebaut und die dritte
+kommentarlos weggelassen.** Die Unit-Ziehharmonika — und das Unit-Formular sitzt als aufgeklappte Zeile
+*in* derselben Tabelle, der Meldungsplatz direkt darunter: rot und grün wären benachbart gewesen, nicht
+seitenweit getrennt.
+
+Im selben Sprint macht **B-196 es richtig vor**: Dort steht der Ausschluss von `ChildMaterialSection` als
+Entscheidung 3, mit Begründung und Kosten. Der Unterschied zwischen *entschieden* und *vergessen* ist
+genau das, was dieser Sprint reparieren sollte — und er ist mir in derselben Stunde unterlaufen.
+
+**Zwei weitere Funde widerlegen Behauptungen, die ich selbst aufgeschrieben hatte:**
+
+| Meine Behauptung | Was der Reviewer belegt hat |
+|---|---|
+| „Ein Prop mit `null` als Wert kann man nicht halb verdrahten" (B-197, Entscheidung 2) | Ein `?`-Prop kann man **ganz weglassen** — und genau so wäre die nächste Stelle entstanden. `onMeldung` ist jetzt **Pflicht**, wo nichts auf seine Abwesenheit verzweigt; Preis **gezahlt statt aufgeschrieben**: 18 Aufrufstellen in Komponententests |
+| „es sind **zwei** stumme Erfolgspfade" (B-196, Entscheidung 3, als gemessen ausgewiesen) | Es sind **vier**. Die Entscheidung trägt weiter, die Zahl trug nicht — korrigiert, die drei übrigen als [B-200](backlog/B-200-drei-stumme-erfolgspfade.md) |
+| B-198s Beleg-Tabelle versprach eine Zählung im `## Verlauf` | Die stand dort nicht. Jetzt: **118** `getByText`-Aufrufe, davon **29** ohne `exact`; sieben echte Fälle behoben |
+
+**Und ein Gewinn, den niemand gesucht hat** (Fund des Reviewers, SC 4.1.3): Vor der Änderung setzte ein
+zweites erfolgreiches Speichern denselben String „Gespeichert." — keine DOM-Änderung in der
+`aria-live`-Region, also **keine Ansage**. Das Räumen beim Absenden leert die Region zwischendurch, und
+die Wiederholung wird angesagt.
+
+### Runde 3 — Rollengang / Abnahme (Step 6)
+
+Maschinell, voller Playwright-Lauf: **45/45 grün.**
+
+**Creator** (`/vater/lehrwerke`) — abgenommen:
+
+> „Wenn ich eine Reihe lösche, sagt mir das jetzt jemand — und zwar mit Namen, was wichtig ist, weil die
+> Zeile ja weg ist. Vorher stand da noch die Bestätigung von vorhin, und ich habe sie für die
+> Löschbestätigung gehalten. Und wenn mein zweiter Speicherversuch scheitert, steht oben nicht mehr
+> gleichzeitig, dass alles geklappt hat."
+> Belegt durch `bestaetigung-ueberlebt.spec.ts`, Fall „der Meldungsplatz gehoert zur letzten Handlung".
+
+**Vater/Supervisor** und **Sohn/Student** — **Regressionszeugen.** Kein Pfad im Diff berührt ihre Flächen
+(die Änderung liegt in `src/vater/` an drei Lehrwerks-/Material-Seiten); ihre Specs sind im selben Lauf
+grün. Mehr wird nicht behauptet.
+
+**Was ein Mensch noch ansehen muss:** nichts Sinnlich-Visuelles. Der einzige offene Punkt ist eine
+**Entscheidung**, keine Wahrnehmung — wie viele Meldungsorte eine Seite haben darf (`NewSeries` und
+`PublisherAdmin` tragen eigene Banner neben dem Seitenplatz; nach „Reihe löschen → Reihe anlegen" stehen
+beide Meldungen nebeneinander). Das ist im `## Verlauf` von B-197 als bewusst offen benannt.
+
+## Retrospektive (Sprint 3)
+
+**Nachschau:** die drei Stories aus Sprint 2 (B-191, B-192, B-193) — Akzeptanzkriterium für
+Akzeptanzkriterium gegen den Code, dazu die vier riskantesten Flächen einzeln durchgerechnet (der
+`punkteGetippt`-Wächter auf Falsch-Positiv *und* Falsch-Negativ, die Fehlerpfade des Resets, die
+Client-Evaluation in der EF-Projektion gegen Sortierung/Paging/`X-Total-Count`, und ob `ExerciseDetail`
+den Wert braucht). `nachgeschaut: 2026-09-02` an allen dreien. Index: **117 von 124.**
+
+**Zum ersten Mal in drei Nächten: kein funktionaler Defekt in der abgenommenen Arbeit.** Die Vererbung,
+der Zustand und die Vertragszeile halten, was ihre Kriterien verlangen — inklusive der beiden
+Reviewer-Nachbesserungen.
+
+**Zwei Textwidersprüche sind trotzdem durchgekommen, und einer davon ist bekannt:**
+
+| Fund | Was |
+|---|---|
+| B-191, AK 2 | „Eine selbst getippte Zahl überlebt einen Übungswechsel unverändert." Seit dem Reset gilt das nur noch **innerhalb** einer Position. Der Code ist richtig, der E2E-Titel trug die Korrektur sogar — nur das Kriterium wurde nie nachgezogen. **Korrigiert**, kein `entgangen_bei` (kein Produktdefekt, eine falsche Zeile) |
+| [B-201](backlog/B-201-feldhilfe-argumentiert-in-beide-richtungen.md) | Die Feldhilfe sagt „änderst du sie, bleibt die Änderung" — die Hälfte, die der Reset unwahr gemacht hat. Dazu wird derselbe Text im Assistenten gerendert, wo seine erste Hälfte **nie** zutraf |
+
+### Was die Tore durchgelassen haben
+
+**Dieselbe Klasse wie in Nacht 2, nur in die andere Richtung.** Dort stand ein Akzeptanzkriterium in der
+Story und war nicht gebaut (B-173, AK 2). Hier war es gebaut und die Story sagte etwas anderes (B-191,
+AK 2). Beide Male hat die Abnahme **Story und Code nicht abgeglichen** — belegt wurde, dass die Suite grün
+ist, nicht dass sie dieses Kriterium anfasst.
+
+Das ist die zweite unabhängige Bestätigung für den Retro-Vorschlag aus Nacht 2. Er hätte **beide** Fälle
+gefangen: Wer den Beleg für AK 2 benennen muss, liest den E2E-Titel („bis die Position steht") und merkt,
+dass er etwas Engeres beweist als das Kriterium behauptet.
+
+### Der vorgeschlagene Mechanismus — **derselbe wie in Nacht 2, nicht ein dritter**
+
+Freigabe 3 verbietet das Landen. Statt einen neuen Mechanismus zu erfinden, ist die ehrliche Auskunft
+dieser Retro: **Der Vorschlag aus Nacht 2 ist der richtige, und er hat jetzt zwei unabhängige Belege.**
+
+> Jedes Akzeptanzkriterium bekommt vor `abgenommen` einen **benannten Beleg** — Testname, Spec-Fall oder
+> Rollengang-Schritt. Wo keiner existiert, steht *„nicht geprüft, weil …"*.
+>
+> **Belege:** B-173 AK 2 (in der Story, nie gebaut, trotzdem abgenommen) und B-191 AK 2 (gebaut, aber die
+> Story sagte etwas anderes). Zwei Sprints, zwei Richtungen, dieselbe Lücke.
+> **Ort:** `docs/backlog/README.md`, Eintrittsbedingung von `abgenommen`. **Kein Tor** — ein
+> Akzeptanzkriterium ist Freitext.
+> **Kosten:** Die Abnahme wird länger; der Verfahrenstext wächst und steht schon über Budget.
+
+**In der Praxis habe ich ihn in diesem Sprint befolgt**, ohne ihn zu landen: B-196, B-197 und B-198 tragen
+je eine Beleg-Tabelle, und B-196s AK 3 steht ausdrücklich als *„nicht geprüft, weil …"* da statt als
+behaupteter Beleg. Das ist der Testlauf des Vorschlags gegen sich selbst — und er hat sofort etwas
+geleistet: Die fehlende Zählung in B-198 fiel dem Reviewer nur auf, **weil** die Beleg-Tabelle sie
+versprach.
+
+### Was bewusst ungedeckt bleibt
+
+Dass ein maschineller Rollengang nur die Wege fährt, die jemand geschrieben hat. Dieser Sprint ist selbst
+der Beweis: B-196 existiert, weil keine Spec je eine Reihe gelöscht hat.

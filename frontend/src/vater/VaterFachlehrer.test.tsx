@@ -23,7 +23,7 @@ function seriesWith(overrides: Partial<TextbookSeriesResponse>): TextbookSeriesR
 
 describe("ProfileForm – Ableitung aus dem Lehrwerk", () => {
   it("füllt Fach, Lern- und Muttersprache beim Wählen der Reihe", () => {
-    render(<ProfileForm subjects={[ENGLISH]} series={[seriesWith({})]} onDone={() => {}} />);
+    render(<ProfileForm onMeldung={() => {}} subjects={[ENGLISH]} series={[seriesWith({})]} onDone={() => {}} />);
 
     fireEvent.change(screen.getByLabelText("Lehrwerk"), { target: { value: "1" } });
 
@@ -34,7 +34,7 @@ describe("ProfileForm – Ableitung aus dem Lehrwerk", () => {
   });
 
   it("lässt ein vom Nutzer geändertes Feld beim Wählen der Reihe unverändert", () => {
-    render(<ProfileForm subjects={[ENGLISH]} series={[seriesWith({ sourceLanguage: "en" })]} onDone={() => {}} />);
+    render(<ProfileForm onMeldung={() => {}} subjects={[ENGLISH]} series={[seriesWith({ sourceLanguage: "en" })]} onDone={() => {}} />);
 
     fireEvent.change(screen.getByLabelText("Lernsprache"), { target: { value: "fr" } });
     fireEvent.change(screen.getByLabelText("Lehrwerk"), { target: { value: "1" } });
@@ -46,7 +46,7 @@ describe("ProfileForm – Ableitung aus dem Lehrwerk", () => {
   it("lässt das Fach-Pulldown in Ruhe, wenn die REIHE kein Katalog-Fach trägt", () => {
     // Nicht zu verwechseln mit dem Freitext-Fach des Profils selbst (B-148, weiter unten): Hier trägt
     // die gewählte Reihe eines, steuert also zum Fach-Feld nichts bei.
-    render(<ProfileForm
+    render(<ProfileForm onMeldung={() => {}}
       subjects={[ENGLISH]} series={[seriesWith({ subjectId: null, subjectName: "Freitextfach" })]}
       onDone={() => {}}
     />);
@@ -64,7 +64,7 @@ describe("ProfileForm – Ableitung aus dem Lehrwerk", () => {
    * (WCAG 2.2 SC 4.1.3, dieselbe Begründung wie in StatusBanner.tsx).
    */
   it("hält die Hinweis-Regionen dauerhaft im DOM, statt sie mit ihrem Text entstehen zu lassen", () => {
-    const { container } = render(<ProfileForm subjects={[ENGLISH]} series={[seriesWith({})]} onDone={() => {}} />);
+    const { container } = render(<ProfileForm onMeldung={() => {}} subjects={[ENGLISH]} series={[seriesWith({})]} onDone={() => {}} />);
 
     // Vier Regionen: die drei Feld-Hinweise plus der StatusBanner des Formulars – alle noch ohne Text.
     const vorher = [...container.querySelectorAll('[role="status"]')];
@@ -94,7 +94,7 @@ describe("ProfileForm – ein Freitext-Fach am Profil selbst", () => {
   } as CreatorProfileResponse);
 
   it("zeigt es als vorausgewählte, gesperrte Option", () => {
-    render(<ProfileForm profile={profil()} subjects={[ENGLISH]} series={[]} onDone={() => {}} />);
+    render(<ProfileForm onMeldung={() => {}} profile={profil()} subjects={[ENGLISH]} series={[]} onDone={() => {}} />);
 
     const feld = screen.getByLabelText("Fach", { exact: true }) as HTMLSelectElement;
     expect(feld.value).toBe("__freetext__");
@@ -108,7 +108,7 @@ describe("ProfileForm – ein Freitext-Fach am Profil selbst", () => {
    * Rot macht diese Fälle das Entfernen der Rückfall-Option.
    */
   it("zeigt das geladene Fach, wenn die Fächerliste es nicht kennt", () => {
-    render(<ProfileForm profile={profil({ subjectId: 1, subjectName: "Englisch" })} subjects={[]}
+    render(<ProfileForm onMeldung={() => {}} profile={profil({ subjectId: 1, subjectName: "Englisch" })} subjects={[]}
       series={[]} onDone={() => {}} />);
 
     expect((screen.getByLabelText("Fach", { exact: true }) as HTMLSelectElement).value).toBe("1");
@@ -117,7 +117,7 @@ describe("ProfileForm – ein Freitext-Fach am Profil selbst", () => {
   });
 
   it("zeigt das geladene Lehrwerk, wenn die Reihenliste es nicht kennt", () => {
-    render(<ProfileForm profile={profil({ seriesId: 9, seriesName: "Access" })} subjects={[ENGLISH]}
+    render(<ProfileForm onMeldung={() => {}} profile={profil({ seriesId: 9, seriesName: "Access" })} subjects={[ENGLISH]}
       series={[]} onDone={() => {}} />);
 
     expect((screen.getByLabelText("Lehrwerk", { exact: true }) as HTMLSelectElement).value).toBe("9");
@@ -125,7 +125,7 @@ describe("ProfileForm – ein Freitext-Fach am Profil selbst", () => {
   });
 
   it("zeigt keine Freitext-Option, wenn das Fach im Katalog steht", () => {
-    render(<ProfileForm profile={profil({ subjectId: 1, subjectName: "Englisch" })} subjects={[ENGLISH]}
+    render(<ProfileForm onMeldung={() => {}} profile={profil({ subjectId: 1, subjectName: "Englisch" })} subjects={[ENGLISH]}
       series={[]} onDone={() => {}} />);
 
     expect((screen.getByLabelText("Fach", { exact: true }) as HTMLSelectElement).value).toBe("1");
@@ -136,7 +136,7 @@ describe("ProfileForm – ein Freitext-Fach am Profil selbst", () => {
     // Der Fall, den die Oberfläche nicht erzeugen kann: `SchoolTypes` ist ein [Flags]-Enum, eine
     // Kombination reist als freier String (B-60). Ohne die Option stünde das Feld leer — und mit einem
     // auf `None` normalisierten Ladezustand wäre „– für alle –" nicht mehr auszulösen.
-    render(<ProfileForm profile={profil({ schoolTypes: "Realschule, Gymnasium" })} subjects={[ENGLISH]}
+    render(<ProfileForm onMeldung={() => {}} profile={profil({ schoolTypes: "Realschule, Gymnasium" })} subjects={[ENGLISH]}
       series={[]} onDone={() => {}} />);
 
     const feld = screen.getByLabelText("Schulart", { exact: true }) as HTMLSelectElement;
@@ -146,14 +146,14 @@ describe("ProfileForm – ein Freitext-Fach am Profil selbst", () => {
   });
 
   it("zeigt für einen gewöhnlichen Einzelwert keine Zusatz-Option", () => {
-    render(<ProfileForm profile={profil({ schoolTypes: "Gymnasium" })} subjects={[ENGLISH]}
+    render(<ProfileForm onMeldung={() => {}} profile={profil({ schoolTypes: "Gymnasium" })} subjects={[ENGLISH]}
       series={[]} onDone={() => {}} />);
 
     expect(screen.getAllByRole("option", { name: "Gymnasium" })).toHaveLength(1);
   });
 
   it("beschriftet das Fach-Feld mit einer Erklärung", () => {
-    render(<ProfileForm profile={profil()} subjects={[ENGLISH]} series={[]} onDone={() => {}} />);
+    render(<ProfileForm onMeldung={() => {}} profile={profil()} subjects={[ENGLISH]} series={[]} onDone={() => {}} />);
 
     expect(screen.getByLabelText("Erklärung zu „Fach\"", { exact: true })).toBeTruthy();
   });

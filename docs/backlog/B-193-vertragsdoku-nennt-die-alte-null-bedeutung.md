@@ -2,6 +2,7 @@
 tags: [typ/story, status/abgenommen, bereich/backend, bereich/doku, rolle/supervisor]
 aliases: [PointsGoalMet null = 20, Swagger sagt die alte Regel]
 status: abgenommen
+nachgeschaut: 2026-09-02
 prio: P3
 art: Defekt
 groesse: XS

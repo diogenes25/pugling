@@ -500,15 +500,12 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (65)
+### Offen (64)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-170](B-170-selbst-angelegte-art-im-grundbestand-ist-unloeschbar.md) | Eine selbst angelegte Art im Grundbestands-Fach ist unlöschbar — und der Seitentext verspricht das Gegenteil | Defekt | `ausformuliert` | P1 | — | — | — |
 | [B-07](B-07-db-umbau-restetappen.md) | DB-Struktur-Umbau: der offene Betriebsschritt | Aufräumen | `geschaetzt` | P1 | XS | backend | — |
-| [B-196](B-196-loeschen-meldet-nichts-und-raeumt-nichts.md) | Das Löschen einer Reihe meldet nichts — und lässt die Bestätigung von vorhin stehen | Defekt | `geschaetzt` | P2 | S | frontend | — |
-| [B-197](B-197-meldungsplatz-wird-beim-absenden-nicht-geraeumt.md) | Der Meldungsplatz wird beim Absenden nicht geräumt — und zeigt dann zwei Wahrheiten | Defekt | `geschaetzt` | P2 | M | frontend | — |
-| [B-198](B-198-teilstring-falle-im-selben-commit-neu-gebaut.md) | Die Teilstring-Falle aus B-189 wurde im selben Commit neu gebaut | Defekt | `geschaetzt` | P2 | XS | frontend | — |
 | [B-153](B-153-bilder-spec-flackert-im-vollen-lauf.md) | `bilder.spec.ts` fällt im vollen Lauf gelegentlich aus, allein ist sie grün | Defekt | `ausformuliert` | P2 | — | — | — |
 | [B-160](B-160-gesperrter-knopf-nennt-den-grund-nie.md) | Der gesperrte Löschen-Knopf nennt seinen Grund nie — der `title` erscheint nicht | Defekt | `ausformuliert` | P2 | — | — | — |
 | [B-181](B-181-praemisse-der-rennen-klasse-stimmt-nicht.md) | Die Rennen-Klasse nennt nur einen von zwei Fehlermodi — welcher auftritt, entscheidet die Plattform | Defekt | `ausformuliert` | P2 | — | — | — |
@@ -529,6 +526,8 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-187](B-187-unitform-verliert-seine-bestaetigung.md) | Auch das Unit-Formular schließt sich mit seiner eigenen Bestätigung | Defekt | `ausformuliert` | P3 | — | frontend | — |
 | [B-194](B-194-plandetail-kinderauswahl-ohne-rueckfall.md) | Die Kind-Auswahl im Plan-Detail hat die Regel von B-172 nicht geerbt | Defekt | `ausformuliert` | P3 | — | frontend | — |
 | [B-195](B-195-unit-liste-bleibt-waehrend-des-reihenwechsels-waehlbar.md) | Beim Reihenwechsel bleiben die Units der alten Reihe wählbar | Defekt | `ausformuliert` | P3 | — | frontend | — |
+| [B-200](B-200-drei-stumme-erfolgspfade.md) | Drei Löschwege melden gar nichts | Defekt | `ausformuliert` | P3 | — | frontend | — |
+| [B-201](B-201-feldhilfe-argumentiert-in-beide-richtungen.md) | Die Feldhilfe zu den Zielpunkten argumentiert seit Sprint 2 in beide Richtungen | Defekt | `ausformuliert` | P3 | XS | frontend | — |
 | [B-141](B-141-interest-tag-label-dublette.md) | Zwei Interessen-Tags dürfen dasselbe Label tragen | Defekt | `idee` | P3 | — | — | — |
 | [B-145](B-145-fach-umbenennen-laesst-namen-stehen.md) | Ein umbenanntes Fach lässt seinen Namen in drei Tabellen stehen | Defekt | `idee` | P3 | — | — | — |
 | [B-147](B-147-para-summaries-tragen-einrueckung-ins-dokument.md) | Ein `<para>` im `<summary>` trägt seine Quelltext-Einrückung ins OpenAPI-Dokument | Defekt | `idee` | P3 | — | — | — |
@@ -571,7 +570,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-05](B-05-buchstaben-tausch.md) | Buchstaben-Tausch-Eingabe (Anagramm) | Wunsch | `geschaetzt` | P5 | M | beides | — |
 
 <details>
-<summary>Abgenommen (121)</summary>
+<summary>Abgenommen (124)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -644,6 +643,9 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-191](B-191-punktevorbelegung-traegt-den-wert-der-vorigen-uebung.md) | Die Punkte-Vorbelegung trägt den Wert der zuvor angeklickten Übung mit | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-192](B-192-obergrenze-schuetzt-nur-den-api-pfad.md) | Die Obergrenze der Punkte-Empfehlung schützt den Weg nicht, den der Vater geht | Defekt | `abgenommen` | P3 | M | beides | Vertrag |
 | [B-193](B-193-vertragsdoku-nennt-die-alte-null-bedeutung.md) | Das Vertragsdokument nennt für `PointsGoalMet` noch die alte `null`-Bedeutung | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-196](B-196-loeschen-meldet-nichts-und-raeumt-nichts.md) | Das Löschen einer Reihe meldet nichts — und lässt die Bestätigung von vorhin stehen | Defekt | `abgenommen` | P2 | S | frontend | — |
+| [B-197](B-197-meldungsplatz-wird-beim-absenden-nicht-geraeumt.md) | Der Meldungsplatz wird beim Absenden nicht geräumt — und zeigt dann zwei Wahrheiten | Defekt | `abgenommen` | P2 | M | frontend | — |
+| [B-198](B-198-teilstring-falle-im-selben-commit-neu-gebaut.md) | Die Teilstring-Falle aus B-189 wurde im selben Commit neu gebaut | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-25](B-25-vite-pwa-peer-konflikt.md) | Peer-Konflikt `vite-plugin-pwa` ↔ `vite@8` lösen | Aufräumen | `abgenommen` | P3 | XS | frontend | — |
 | [B-26](B-26-e2e-in-ci.md) | Der E2E-Nachtlauf ist rot – und niemand erfährt es | Defekt | `abgenommen` | P1 | S | frontend | — |
 | [B-27](B-27-testsuite-grenzfaelle.md) | Die Grenzen des `ScoringService` als Tabelle statt als Flow | Aufräumen | `abgenommen` | P2 | S | backend | — |
@@ -710,9 +712,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-170](B-170-selbst-angelegte-art-im-grundbestand-ist-unloeschbar.md) | Eine selbst angelegte Art im Grundbestands-Fach ist unlöschbar — und der Seitentext verspricht das Gegenteil | `ausformuliert` | eine Schema-Entscheidung am Tag: CreatedByAdultId oder nicht (die Kette wird dabei neu gefaltet) |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 
-### Nach der Abnahme entgangen (37)
+### Nach der Abnahme entgangen (38)
 
-**Nachgeschaut: 114 von 121 abgenommenen** — und in 27 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 7 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 117 von 124 abgenommenen** — und in 28 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 7 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -750,9 +752,10 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-192](B-192-obergrenze-schuetzt-nur-den-api-pfad.md) | Die Obergrenze der Punkte-Empfehlung schützt den Weg nicht, den der Vater geht | [B-45] | `abgenommen` |
 | [B-193](B-193-vertragsdoku-nennt-die-alte-null-bedeutung.md) | Das Vertragsdokument nennt für `PointsGoalMet` noch die alte `null`-Bedeutung | [B-45] | `abgenommen` |
 | [B-195](B-195-unit-liste-bleibt-waehrend-des-reihenwechsels-waehlbar.md) | Beim Reihenwechsel bleiben die Units der alten Reihe wählbar | [B-172] | `ausformuliert` |
-| [B-196](B-196-loeschen-meldet-nichts-und-raeumt-nichts.md) | Das Löschen einer Reihe meldet nichts — und lässt die Bestätigung von vorhin stehen | [B-173] | `geschaetzt` |
-| [B-197](B-197-meldungsplatz-wird-beim-absenden-nicht-geraeumt.md) | Der Meldungsplatz wird beim Absenden nicht geräumt — und zeigt dann zwei Wahrheiten | [B-173, B-151] | `geschaetzt` |
-| [B-198](B-198-teilstring-falle-im-selben-commit-neu-gebaut.md) | Die Teilstring-Falle aus B-189 wurde im selben Commit neu gebaut | [B-151] | `geschaetzt` |
+| [B-196](B-196-loeschen-meldet-nichts-und-raeumt-nichts.md) | Das Löschen einer Reihe meldet nichts — und lässt die Bestätigung von vorhin stehen | [B-173] | `abgenommen` |
+| [B-197](B-197-meldungsplatz-wird-beim-absenden-nicht-geraeumt.md) | Der Meldungsplatz wird beim Absenden nicht geräumt — und zeigt dann zwei Wahrheiten | [B-173, B-151] | `abgenommen` |
+| [B-198](B-198-teilstring-falle-im-selben-commit-neu-gebaut.md) | Die Teilstring-Falle aus B-189 wurde im selben Commit neu gebaut | [B-151] | `abgenommen` |
+| [B-201](B-201-feldhilfe-argumentiert-in-beide-richtungen.md) | Die Feldhilfe zu den Zielpunkten argumentiert seit Sprint 2 in beide Richtungen | [B-191] | `ausformuliert` |
 
 <details>
 <summary>Nie nachgeschaut (7) — Arbeitsvorrat der Nachschau</summary>
@@ -766,9 +769,9 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-180](B-180-zusicherung-haengt-an-scheduling-statt-am-gate.md) | Eine Zusicherung hing an 20 ms Scheduling statt am Gate |
 | [B-182](B-182-reichweite-nur-am-patch-festgenagelt.md) | Die Reichweite des Ventils war nur am PATCH festgenagelt |
 | [B-189](B-189-teilstring-zusicherung-bricht-im-vollen-lauf.md) | Eine Teilstring-Zusicherung bricht, sobald der Leer-Text daneben stehen bleibt |
-| [B-191](B-191-punktevorbelegung-traegt-den-wert-der-vorigen-uebung.md) | Die Punkte-Vorbelegung trägt den Wert der zuvor angeklickten Übung mit |
-| [B-192](B-192-obergrenze-schuetzt-nur-den-api-pfad.md) | Die Obergrenze der Punkte-Empfehlung schützt den Weg nicht, den der Vater geht |
-| [B-193](B-193-vertragsdoku-nennt-die-alte-null-bedeutung.md) | Das Vertragsdokument nennt für `PointsGoalMet` noch die alte `null`-Bedeutung |
+| [B-196](B-196-loeschen-meldet-nichts-und-raeumt-nichts.md) | Das Löschen einer Reihe meldet nichts — und lässt die Bestätigung von vorhin stehen |
+| [B-197](B-197-meldungsplatz-wird-beim-absenden-nicht-geraeumt.md) | Der Meldungsplatz wird beim Absenden nicht geräumt — und zeigt dann zwei Wahrheiten |
+| [B-198](B-198-teilstring-falle-im-selben-commit-neu-gebaut.md) | Die Teilstring-Falle aus B-189 wurde im selben Commit neu gebaut |
 
 </details>
 
@@ -801,6 +804,8 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-194](B-194-plandetail-kinderauswahl-ohne-rueckfall.md) | `ausformuliert` | Abschnitt „Akzeptanzkriterien" |
 | [B-195](B-195-unit-liste-bleibt-waehrend-des-reihenwechsels-waehlbar.md) | `ausformuliert` | Abschnitt „Akzeptanzkriterien" |
 | [B-199](B-199-drei-behauptungen-die-ihr-eigener-sprint-aufgehoben-hat.md) | `ausformuliert` | Abschnitt „Akzeptanzkriterien" |
+| [B-200](B-200-drei-stumme-erfolgspfade.md) | `ausformuliert` | Abschnitt „Akzeptanzkriterien" |
+| [B-201](B-201-feldhilfe-argumentiert-in-beide-richtungen.md) | `ausformuliert` | Abschnitt „Akzeptanzkriterien" |
 
 <details>
 <summary>Verworfen (12)</summary>

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/creator, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/creator, rolle/supervisor]
 aliases: [gruenes Gespeichert ueber rotem Fehler, vierter setMeldung(null) fehlt]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: M
@@ -99,3 +99,34 @@ aber **zustandsbehaftet**. Solange nichts ihn räumt, überlebt eine Meldung die
   Defekt`). Beide offenen Punkte entschieden; Punkt 2 ist von „billigster Schnitt" zu einer Entscheidung
   **mit Kosten** geworden. Belege je Akzeptanzkriterium benannt — das ist der Retro-Vorschlag aus Nacht 2,
   hier in der Praxis befolgt, ohne ihn als Regel zu landen.
+- 2026-09-02 · **`geschaetzt` → `in-arbeit` → `abgenommen`** (Sprint 3). Belege:
+  - **Reviewer:** `frontend-reviewer`, zwei Runden. Runde 1 setzte **einen Blocker** (siehe unten),
+    Runde 2 steht aus bzw. ist in den Verlauf eingearbeitet.
+  - **Rollengang:** maschinell — voller Playwright-Lauf, echter Chromium gegen echten Server.
+  - **Zahlen:** `npx tsc -b` sauber · `npm run test` **327/327**.
+  - **Commits:** `6843d42` (Bau) und der Abnahme-Commit dieses Sprints.
+  - **Der Blocker war die schmerzhafteste mögliche Sorte:** Der Ist-Stand dieser Story nennt **drei**
+    kleinere Ausprägungen der Lücke, darunter die Unit-Ziehharmonika. Gebaut wurden zwei; die dritte fiel
+    **kommentarlos** weg — genau die stille Auslassung, gegen die dieser Sprint antritt. B-196 macht es
+    im selben Sprint richtig vor: Dort steht der Ausschluss als Entscheidung 3 mit Begründung und Kosten.
+    Nachgebaut: `onMeldung` reicht jetzt durch `SeriesRow → UnitPanel → UnitForm`, und `UnitForm` räumt
+    zu Beginn von `submit` und `remove`.
+  - **Entscheidung 2 war zu stark formuliert, und der Reviewer hat es belegt:** „Ein Prop mit `null` als
+    Wert kann man nicht halb verdrahten" — ein `?`-Prop kann man aber ganz **weglassen**, und genau so
+    wäre die nächste Stelle entstanden. `onMeldung` ist darum jetzt **Pflicht**, wo nichts auf seine
+    Abwesenheit verzweigt (`TextbookForm`, `ProfileForm`, `UnitForm`); optional bleibt es nur bei
+    `SeriesForm`, wo die Anwesenheit entscheidet, ob die Bestätigung nach oben geht oder lokal bleibt.
+    *Preis, gezahlt statt aufgeschrieben:* **18** Aufrufstellen in den Komponententests tragen jetzt
+    `onMeldung={() => {}}`.
+  - **Ein unbeanspruchter A11y-Gewinn, den die Story nicht kannte** (Fund des Reviewers, SC 4.1.3): Vor
+    der Änderung setzte ein zweites erfolgreiches Speichern denselben String „Gespeichert." — keine
+    DOM-Änderung in der `aria-live`-Region, also **keine Ansage**. Durch das Räumen beim Absenden leert
+    sich die Region zwischendurch, und die Wiederholung wird angesagt. Das ist ein zweiter Grund für
+    Entscheidung 1.
+  - **Bewusst NICHT geräumt** (damit die nächste Nachschau es nicht als Lücke liest): ein Filterwechsel
+    tauscht die Tabelle unter einer stehenden Meldung aus — hier spricht B-173 sogar *für* das
+    Stehenbleiben, denn die Meldung gehört zu einer Zeile, die gerade wegen der Filterung verschwindet.
+    `NewSeries` und `PublisherAdmin` tragen eigene Banner und rühren den Platz nicht an; nach „Reihe
+    löschen → Reihe anlegen" stehen beide Meldungen nebeneinander. Das ist ein sichtbarer, aber nicht
+    widersprüchlicher Zustand und bleibt bis zu einer Entscheidung darüber, wie viele Meldungsorte eine
+    Seite haben darf.

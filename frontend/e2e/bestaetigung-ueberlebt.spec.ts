@@ -112,7 +112,7 @@ test("B-151: Das Lehrbuch-Formular schließt beim Speichern – die Bestätigung
  *           zweiter, scheiternder Versuch zeigte seinen Fehler am Formular, waehrend oben weiter das
  *           gruene "Gespeichert." des ersten stand. Zwei widersprechende Meldungen in einem Blickfeld -
  *           genau der Schaden, gegen den der Platz gebaut wurde.
- *   B-196 - das Loeschen meldete gar nichts. B-173s Akzeptanzkriterium 2 nennt es ausdrueclich; gebaut
+ *   B-196 - das Loeschen meldete gar nichts. B-173s Akzeptanzkriterium 2 nennt es ausdrücklich; gebaut
  *           war es nie, und der 43/43-Rollengang hat es nicht gefangen, weil keine Spec eine Reihe
  *           loescht. Ohne Meldung blieb die Bestaetigung von vorhin ueber der verschwundenen Zeile
  *           stehen und las sich als Loeschbestaetigung.
@@ -162,7 +162,12 @@ test("B-197/B-196: der Meldungsplatz gehoert zur letzten Handlung", async ({ pag
 
   // Erst warten, bis die Zeile wirklich weg ist - sonst traefe die Zusicherung den Frame davor.
   await expect(page.getByRole("row", { name: new RegExp(reiheB) })).toHaveCount(0);
-  await expect(page.getByText(`Reihe „${reiheB}" gelöscht.`)).toBeVisible();
+  await expect(page.getByText(`Reihe „${reiheB}" gelöscht.`, { exact: true })).toBeVisible();
   // Und die Bestaetigung von vorhin ist ersetzt, nicht geerbt.
+  //
+  // Was diese Zusicherung rot macht: eine Fassung, die die Loeschmeldung ueber
+  // `action.run(…, 'Reihe „…" geloescht.')` in den ZEILEN-Banner legte statt an den Seitenplatz. Dann
+  // bliebe der Platz unangetastet, das alte "Gespeichert." staende weiter da - und die Zeile mitsamt
+  // ihrem Banner verschwaende ohnehin. Ohne diesen Fall waere genau das eine gruene Alternative.
   await expect(page.getByText("Gespeichert.", { exact: true })).toHaveCount(0);
 });

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend]
+tags: [typ/story, status/abgenommen, bereich/frontend]
 aliases: [Buch hinterlegt ohne exact, B-189 wiederholt]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: XS
@@ -83,3 +83,20 @@ kein Gegenbeweis, sondern derselbe Zufall, der B-189 wochenlang verborgen hat.
 
 - 2026-09-02 · Aufgenommen aus der **Nachschau** zu Sprint 1 (zweiter Nachtlauf).
 - 2026-09-02 · **`ausformuliert` → `gegrillt` → `geschaetzt`** (dritter Sprint, Freigabe 1). XS.
+- 2026-09-02 · **`geschaetzt` → `in-arbeit` → `abgenommen`** (Sprint 3). Belege:
+  - **Reviewer:** `frontend-reviewer`, zwei Runden. Runde 1 setzte **einen Blocker** (siehe unten),
+    Runde 2 steht aus bzw. ist in den Verlauf eingearbeitet.
+  - **Rollengang:** maschinell — voller Playwright-Lauf, echter Chromium gegen echten Server.
+  - **Zahlen:** `npx tsc -b` sauber · `npm run test` **327/327**.
+  - **Commits:** `6843d42` (Bau) und der Abnahme-Commit dieses Sprints.
+  - **Die Zählung, die Entscheidung 2 verlangt** (am 2026-09-02 erhoben): **118** `getByText`-Aufrufe in
+    17 Spec-Dateien; davon **29** mit einem Literal und ohne `{ exact: true }`. Behoben wurden die, deren
+    Text nachweislich in einem längeren gerenderten Text steckt: die drei „Buch hinterlegt."-Fälle
+    (`bestaetigung-ueberlebt`, `lehrwerke`, plus der bereits in B-189 behobene) und vier
+    „Gespeichert."-Fälle in `lehrwerk-bearbeiten` und `lehrwerke`.
+  - **Die Messmethode selbst musste zweimal geschärft werden, und das gehört dazu:** Der erste Anlauf
+    zählte **Quelltextzeilen** als gerenderten Text und meldete 24 Mehrdeutigkeiten — eine Zahl, die
+    nichts bedeutete. Erst die Beschränkung auf echte String-Literale brachte die belastbare Klasse
+    heraus, und mit ihr `lehrwerke.spec.ts` als **dritten** Fall, den die Story nicht kannte.
+  - **Entscheidung 3 bleibt: kein Wächter.** Bei 29 Kandidaten und einer Handvoll echter Fälle bliebe ein
+    Tor eine Ausnahmeliste. Die Zahl ist jetzt da; wer sie später anders bewertet, hat eine Grundlage.

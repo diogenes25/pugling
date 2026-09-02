@@ -45,7 +45,7 @@ test("Buchreihe, Fachlehrer und Kind treffen zusammen", async ({ page }) => {
   await page.locator("#kd-grade").fill("8");
   await page.locator("#kd-school").selectOption("Gymnasium");
   await page.getByRole("button", { name: "Speichern" }).first().click();
-  await expect(page.getByText("Gespeichert.").first()).toBeVisible();
+  await expect(page.getByText("Gespeichert.", { exact: true }).first()).toBeVisible();
 
   // Noch ohne Buch und ohne Profil: die Suche muss ehrlich leer bleiben.
   await expect(page.getByText(/Kein Profil passt zu/)).toBeVisible();

@@ -2,6 +2,7 @@
 tags: [typ/story, status/abgenommen, bereich/frontend, rolle/supervisor]
 aliases: [pointsFrom current heisst zweierlei, Punkte der vorigen Uebung wandern mit]
 status: abgenommen
+nachgeschaut: 2026-09-02
 prio: P2
 art: Defekt
 groesse: S
@@ -83,7 +84,10 @@ bleiben soll. Das ist richtig und soll bleiben — es fehlt allein die Untersche
 
 1. Übung A (Empfehlung 100) anklicken, dann Übung B (Empfehlung 0) → das Feld zeigt **20**, nicht 100.
    (Das ist B-45s AK 4, wörtlich.)
-2. Eine selbst getippte Zahl überlebt einen Übungswechsel unverändert.
+2. Eine selbst getippte Zahl überlebt einen Übungswechsel unverändert — **solange die Position noch
+   nicht angelegt ist**. Mit dem Hinzufügen endet die Aussage, und die nächste Übung belegt wieder vor.
+   (Der Nachsatz kam am 2026-09-02 aus der Nachschau; das Kriterium war seit dem zweiten Reviewer-Fund
+   falsch, obwohl der E2E-Titel die Korrektur bereits trug.)
 3. Die übrigen aus der Übung übernommenen Werte verhalten sich unverändert.
 4. Ein Test klickt **zwei** Übungen nacheinander; die rote Probe nennt erwartete und gemessene Zahl.
 
@@ -127,3 +131,14 @@ bleiben soll. Das ist richtig und soll bleiben — es fehlt allein die Untersche
     trugen die Zahl, die der Vater für Position 1 getippt hatte, und **keine** weitere Übung belegte mehr
     vor. Das war ein Rückschritt gegenüber dem Stand *vor* dieser Story und widersprach der
     ausgelieferten Feldhilfe. Behoben (`setPunkteGetippt(false)` beim Anlegen) und im E2E belegt.
+- 2026-09-02 · **Akzeptanzkriterium 2 korrigiert** (Nachschau zu Sprint 2). Es lautete „überlebt einen
+  Übungswechsel unverändert" — nach dem zweiten Reviewer-Fund (`setPunkteGetippt(false)` beim Anlegen)
+  gilt das nur noch **innerhalb** einer Position. Der Code ist richtig, der E2E-Fall trug die Korrektur
+  sogar im Titel („bis die Position steht"), und der Verlauf beschrieb den Fix — nur das Kriterium
+  selbst wurde nie nachgezogen.
+  **Das ist dieselbe Klasse wie B-173s AK 2 aus der vorigen Nachschau**, nur in die andere Richtung: Dort
+  stand ein Kriterium in der Story und war nicht gebaut; hier war es gebaut und die Story sagte etwas
+  anderes. Beide Male hat die Abnahme Story und Code nicht abgeglichen — das ist der Beleg für den
+  Retro-Vorschlag „jedes Akzeptanzkriterium bekommt einen benannten Beleg".
+  **Kein `entgangen_bei`:** Es ist kein Produktdefekt durchgekommen, sondern eine falsche Zeile im
+  Dokument. Die Wirkungszahl misst durchgelassene Defekte, nicht verrottete Sätze.
