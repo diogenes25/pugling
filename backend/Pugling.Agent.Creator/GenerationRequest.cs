@@ -35,7 +35,12 @@ namespace Pugling.Agent.Creator;
 /// <param name="UseWeakWords">Use the child's weakly mastered words as vocabulary.</param>
 /// <param name="SourceLang">Language code of the language being learned; <c>null</c> = adopt the profile's.</param>
 /// <param name="TargetLang">Language code of the native language; <c>null</c> = adopt the profile's.</param>
-/// <param name="RewardPoints">Points the exercise is worth.</param>
+/// <param name="RewardPoints">
+/// The author's <b>recommendation</b> for the target reward, not a property of the exercise (B-45): a new
+/// study-plan position inherits it when the supervisor states nothing. Outside <c>(0, 200]</c> the server
+/// discards it and the position falls back to 20, so a figure above the bound is not "more coins" but
+/// none of the author's doing at all.
+/// </param>
 /// <param name="DryRun">Only plan and print - write nothing.</param>
 /// <param name="Strict">Delete the exercise again if the self-test does not reach 100 %.</param>
 public sealed record GenerationRequest(

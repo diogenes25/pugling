@@ -106,4 +106,35 @@ test("Reihe, Unit, Übung, Zuweisung – der Creator-Weg in einem Zug", async ({
   await page.getByRole("button", { name: /Position hinzufügen/ }).click();
   const positionRow = page.getByRole("row", { name: new RegExp(EXERCISE_TITLE) });
   await expect(positionRow).toBeVisible();
+
+  // ---- 6. Ein GESCHEITERTES Löschen darf nicht neben einem späteren Erfolg stehen bleiben ----
+  //
+  // Der Code-Review zum Sprint hat den vierten Weg in B-197 gefunden: Die Reihen-Zeile hält einen
+  // EIGENEN Meldungsplatz (`action.message`), in den nur `remove` schreibt. Beide Umschalter räumten
+  // bloß den Platz der SEITE – ein rotes „… wird noch verwendet" blieb also stehen, während
+  // `SeriesForm` sein grünes „Gespeichert." oben ablegte. Zwei Farben in einem Blickfeld, genau der
+  // Schaden, gegen den dieser Platz gebaut wurde.
+  //
+  // Der Fall hängt hier und nicht in `bestaetigung-ueberlebt.spec.ts`, weil er den Zustand braucht,
+  // in dem diese Spec ohnehin ENDET: eine eigene Reihe, deren Übung in einem Lehrplan steckt – erst
+  // das macht das Löschen zum `409 exercise_in_use`. Ihn dort nachzubauen hieße, die vier Bildschirme
+  // oben ein zweites Mal zu fahren. Er steht als LETZTER Schritt, verdeckt also nichts.
+  await page.goto("/vater/lehrwerke");
+  const reihenZeile = page.getByRole("row", { name: new RegExp(SERIES.name) });
+  await expect(reihenZeile).toBeVisible();
+
+  page.once("dialog", (d) => d.accept());
+  await page.getByRole("button", { name: `Löschen: „${SERIES.name}"` }).click();
+  // Englisch, weil `exercise_in_use` keine Zeile in `GERMAN_PROBLEM_TEXT` hat – die Zusicherung nimmt
+  // darum den Servertext, nicht eine erhoffte Übersetzung.
+  await expect(page.getByText(/still used in a study plan/)).toBeVisible();
+
+  // Jetzt ein ERFOLGREICHES Speichern derselben Zeile. Das rote Banner von gerade muss dabei weichen.
+  await page.getByRole("button", { name: `Reihe bearbeiten: „${SERIES.name}"` }).click();
+  await page.getByLabel("Name der Reihe", { exact: true }).fill(`${SERIES.name} b`);
+  await page.getByRole("button", { name: `Speichern: „${SERIES.name}"` }).click();
+  await expect(page.getByText("Gespeichert.", { exact: true })).toBeVisible();
+
+  // Der Kern: die rote Meldung des gescheiterten Löschens steht nicht mehr da.
+  await expect(page.getByText(/still used in a study plan/)).toHaveCount(0);
 });

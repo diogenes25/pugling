@@ -244,7 +244,20 @@ function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, on
 
   function bearbeitenUmschalten() {
     onMeldung(null);
+    // Auch den EIGENEN Platz räumen, nicht nur den der Seite: Diese Zeile hat zwei, und `remove`
+    // schreibt in den lokalen. Ein gescheitertes Löschen (409 `exercise_in_use` ist erreichbar) blieb
+    // sonst rot stehen, während `SeriesForm` sein grünes „Gespeichert." in den Platz der Seite legt –
+    // beide Farben gleichzeitig im Blickfeld, genau der Widerspruch, den B-197 aufgeräumt hat.
+    action.clear();
     setEditing(!editing);
+  }
+
+  // Derselbe Griff für den Nachbarknopf: `UnitPanel` und `UnitForm` melden in den Platz der SEITE, die
+  // Zeile hält ihren eigenen. Ohne das Räumen führt auch dieser Weg rot und grün zusammen. Die Regel
+  // sitzt hier und nicht beim Aufrufer – der kennt den lokalen Platz dieser Zeile nicht.
+  function unitsUmschalten() {
+    action.clear();
+    onToggle();
   }
 
   async function remove() {
@@ -282,7 +295,7 @@ function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, on
         <td>{gradeLabel ?? <span className="muted">–</span>}</td>
         <td>{series.unitCount === 0 ? <span className="pill mag">keine</span> : series.unitCount}</td>
         <td className="row" style={{ gap: 6, justifyContent: "flex-end" }}>
-          <button type="button" className="btn ghost small" style={{ width: "auto" }} onClick={onToggle}
+          <button type="button" className="btn ghost small" style={{ width: "auto" }} onClick={unitsUmschalten}
             aria-expanded={open}>
             {open ? "Units zu" : "Units"}
           </button>
@@ -614,14 +627,19 @@ function UnitPanel({ series, onChanged, onMeldung }: {
         </table>
       )}
 
-      {/* Erst wenn die Units geladen sind: `UnitForm` liest seine Vorbelegung im `useState`-Anfangswert,
+      {/* Erst wenn der Ladeversuch durch ist: `UnitForm` liest seine Vorbelegung im `useState`-Anfangswert,
           also genau einmal beim Einhängen. Stünde das Formular schon während des Ladens da, startete es
-          leer und die nachgelieferte Vorbelegung käme nie an – sichtbar wäre nur, dass sie nicht wirkt. */}
-      {series.isOwn && units.data !== null && (
+          leer und die nachgelieferte Vorbelegung käme nie an – sichtbar wäre nur, dass sie nicht wirkt.
+          Das Tor ist darum `showPlaceholder` und NICHT `data !== null`: Scheitert das Lesen der Units,
+          bleibt `data` für immer `null`, und mit ihm verschwand das Anlegen-Formular mitsamt jedem Weg
+          zurück – ein misslungenes Lesen nahm dem Vater eine Fähigkeit, die davon nicht abhängt.
+          Die Vorbelegung ist bloß Bequemlichkeit (Klasse und Buchart der letzten Unit); `[]` liefert die
+          neutrale Fassung, mit der das Formular auch für eine Reihe ohne Units startet. */}
+      {series.isOwn && !units.showPlaceholder && (
         <div style={{ marginTop: 10 }}>
           <h4 className="h-section" style={{ fontSize: "1rem" }}>Unit hinzufügen</h4>
           <UnitForm onMeldung={onMeldung}
-            seriesId={series.id} defaults={newUnitDefaults(units.data)}
+            seriesId={series.id} defaults={newUnitDefaults(units.data ?? [])}
             onDone={() => { units.reload(); onChanged(); }}
           />
         </div>

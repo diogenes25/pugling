@@ -7,7 +7,7 @@ interface AsyncState<T> {
   loading: boolean;
   error: string | null;
   /**
-   * Wahr, solange es nichts zu zeigen gibt UND keinen Grund dafür – der einzige Zustand, in dem ein
+   * Wahr, solange der **erste** Versuch noch nicht abgeschlossen ist – der einzige Zustand, in dem ein
    * „Lade…" die Wahrheit sagt.
    *
    * Zwei Platzhalter-Bedingungen sind richtig, und welche passt, entscheidet, was darunter sitzt (B-184):
@@ -16,6 +16,11 @@ interface AsyncState<T> {
    * aus dem DOM nimmt. Nie richtig ist ein blankes `data === null`: Nach einer gescheiterten ersten
    * Ladung behauptet es dauerhaft „lädt noch" – neben einem Fehlerbanner, das im selben Blickfeld das
    * Gegenteil sagt.
+   *
+   * Es hängt darum am **abgeschlossenen Versuch**, nicht an `data === null && error === null`: ein `fn`,
+   * das rechtmäßig `null` liefert (ein optionales Profil, ein Kind ohne Lehrbuch), setzt keins von
+   * beidem und bekäme sonst dauerhaft denselben „Lade…" – dieselbe Lüge wie nach einem Fehler, nur ohne
+   * Banner daneben, das sie verrät.
    */
   showPlaceholder: boolean;
   reload: () => void;
@@ -31,6 +36,9 @@ export function useAsync<T>(fn: () => Promise<T>, deps: unknown[] = []): AsyncSt
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [nonce, setNonce] = useState(0);
+  // Ob überhaupt schon ein Versuch durch ist – die einzige Frage, die `showPlaceholder` beantwortet.
+  // Bleibt danach `true`, damit ein `reload` das Formular darunter nicht aushängt.
+  const [settled, setSettled] = useState(false);
 
   const reload = useCallback(() => setNonce((n) => n + 1), []);
 
@@ -45,10 +53,10 @@ export function useAsync<T>(fn: () => Promise<T>, deps: unknown[] = []): AsyncSt
         if (e instanceof ApiError && e.status === 401) { signOut(); return; }
         setError(errorMessage(e));
       })
-      .finally(() => { if (!cancelled) setLoading(false); });
+      .finally(() => { if (!cancelled) { setLoading(false); setSettled(true); } });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...deps, nonce]);
 
-  return { data, loading, error, showPlaceholder: data === null && error === null, reload };
+  return { data, loading, error, showPlaceholder: !settled, reload };
 }

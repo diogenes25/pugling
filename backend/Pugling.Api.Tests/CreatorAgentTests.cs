@@ -559,6 +559,40 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.Single(classTest.AssignedExercises);
     }
 
+    /// <summary>
+    /// The command line's <c>--points</c> default must equal <see cref="GoalPointsPolicy.Fallback"/>.
+    /// <para>
+    /// Since B-45 the figure is the target reward a new position <b>inherits</b>, and the product states 20
+    /// everywhere (wizard pre-fill, manual creation form, the server's own fallback). The agent kept the 10
+    /// from the time the field meant "what the exercise is worth" - so every agent-generated exercise
+    /// silently halved the coin target of any position created from it. The test drives the real command
+    /// line, because that is where the default lives; the request helper above passes the figure
+    /// explicitly and would never have noticed.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task Ohne_points_erbt_die_Position_die_Vorgabe_des_Produkts_und_nicht_die_Haelfte()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Punkte-Vorgabe");
+        var commands = Commands(creator, pipeline);
+
+        // Deliberately no `--points`: the default under test is the one the command line falls back to.
+        // `--count 3` must be given, though - the fake model answers with three items, and the request's
+        // own default of 10 would have the draft rejected by the rules before the figure ever mattered.
+        var command = CommandLine.Parse([
+            "create", "--child", "1", "--type", "Vocabulary", "--count", "3",
+            "--series", seriesId.ToString(), "--series-unit", seriesUnitId.ToString(),
+        ]);
+        Assert.Equal(0, await commands.RunAsync(command, default));
+
+        var exercise = Assert.Single(await creator.SearchExercisesAsync(subjectId: subjectId));
+        Assert.Equal(GoalPointsPolicy.Fallback, exercise.RewardPoints);
+        // And the figure a position would actually inherit is the same one - not a value the policy
+        // had to repair on the way out.
+        Assert.Equal(GoalPointsPolicy.Fallback, exercise.SuggestedGoalPoints);
+    }
+
     [Fact]
     public async Task Ein_unbekannter_Uebungstyp_scheitert_mit_klarer_Ansage()
     {

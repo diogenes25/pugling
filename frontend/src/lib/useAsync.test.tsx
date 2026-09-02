@@ -57,6 +57,40 @@ describe("useAsync – wann ein Platzhalter die Wahrheit sagt", () => {
     expect(result.current.showPlaceholder).toBe(false);
   });
 
+  /*
+   * Der zweite Weg in dieselbe Lüge, gefunden im Code-Review zum Sprint: nicht ein FEHLER, sondern ein
+   * `fn`, das rechtmäßig `null` liefert (ein optionales Profil, ein Kind ohne Lehrbuch). Dann ist `data`
+   * `null` und `error` `null` – die alte Bedingung `data === null && error === null` blieb also für immer
+   * wahr, und diesmal stand nicht einmal ein Fehlerbanner daneben, das den „Lade…" verraten hätte.
+   */
+  it("nimmt ihn zurück, wenn die Ladung rechtmäßig null liefert", async () => {
+    const d = deferred<number[] | null>();
+    const { result } = renderHook(() => useAsync(() => d.promise, []), { wrapper });
+
+    expect(result.current.showPlaceholder).toBe(true);
+
+    await act(async () => { d.resolve(null); });
+
+    // Weder Daten noch Fehler – und trotzdem ist der Versuch durch, es kommt nichts mehr.
+    expect(result.current.data).toBeNull();
+    expect(result.current.error).toBeNull();
+    expect(result.current.showPlaceholder).toBe(false);
+  });
+
+  /*
+   * Und er darf danach auch nicht wiederkommen: Genau darauf steht das Anlege-Formular der Units
+   * (`VaterLehrwerke.tsx`, „Unit hinzufügen"). Käme der Platzhalter beim `reload` zurück, nähme er das
+   * Formular mitsamt seinem Zustand aus dem DOM – die Regel, die dieses Feld überhaupt begründet.
+   */
+  it("bringt ihn nach einer rechtmäßigen null-Ladung auch beim Neuladen nicht zurück", async () => {
+    const { result } = renderHook(() => useAsync(() => Promise.resolve(null), []), { wrapper });
+
+    await waitFor(() => expect(result.current.showPlaceholder).toBe(false));
+
+    await act(async () => { result.current.reload(); });
+    expect(result.current.showPlaceholder).toBe(false);
+  });
+
   it("bringt ihn beim Neuladen vorhandener Daten nicht zurück", async () => {
     let n = 0;
     const { result } = renderHook(
