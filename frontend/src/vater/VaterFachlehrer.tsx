@@ -101,6 +101,7 @@ export function VaterFachlehrer() {
                         <ProfileForm
                           profile={p} subjects={subjects.data ?? []} series={series.data ?? []}
                           onDone={(m) => { setEditing(null); list.reload(); if (m) setMeldung(m); }}
+                          onMeldung={setMeldung}
                         />
                       </td>
                     </tr>
@@ -121,7 +122,9 @@ export function VaterFachlehrer() {
 
       <section>
         <h3 className="h-section">Fachlehrer anlegen</h3>
-        <ProfileForm subjects={subjects.data ?? []} series={series.data ?? []} onDone={list.reload} />
+        {/* Auch hier raeumt das Anlege-Formular - es schliesst nie (B-197). */}
+        <ProfileForm subjects={subjects.data ?? []} series={series.data ?? []}
+          onDone={list.reload} onMeldung={setMeldung} />
       </section>
     </>
   );
@@ -163,7 +166,7 @@ function DerivedHint({ active }: { active: boolean }) {
  * „unterrichtet jede Stufe" – und genau dann bekommt das Profil beim Matching *keine* Stufen-Punkte,
  * damit der Generalist den Fachlehrer nicht schlägt.
  */
-export function ProfileForm({ profile, subjects, series, onDone }: {
+export function ProfileForm({ profile, subjects, series, onDone, onMeldung }: {
   profile?: CreatorProfileResponse;
   subjects: SubjectResponse[];
   series: TextbookSeriesResponse[];
@@ -172,6 +175,8 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
    * `StatusBanner` unten hängt am Formular, und das Formular ist nach diesem Aufruf weg (B-151).
    */
   onDone: (message?: ActionMessage) => void;
+  /** Räumt bzw. setzt den Meldungsplatz der Seite — siehe `TextbookForm` (B-197). */
+  onMeldung?: (m: ActionMessage | null) => void;
 }) {
   const [form, setForm] = useState({
     name: profile?.name ?? "",
@@ -245,6 +250,8 @@ export function ProfileForm({ profile, subjects, series, onDone }: {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    // Der Meldungsplatz der Seite gilt ab jetzt nicht mehr - egal wie dieser Versuch ausgeht (B-197).
+    onMeldung?.(null);
     if (!form.name.trim()) { action.fail("Der Name fehlt."); return; }
     const min = form.gradeMin.trim() === "" ? null : Number(form.gradeMin);
     const max = form.gradeMax.trim() === "" ? null : Number(form.gradeMax);

@@ -506,14 +506,14 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-170](B-170-selbst-angelegte-art-im-grundbestand-ist-unloeschbar.md) | Eine selbst angelegte Art im Grundbestands-Fach ist unlöschbar — und der Seitentext verspricht das Gegenteil | Defekt | `ausformuliert` | P1 | — | — | — |
 | [B-07](B-07-db-umbau-restetappen.md) | DB-Struktur-Umbau: der offene Betriebsschritt | Aufräumen | `geschaetzt` | P1 | XS | backend | — |
+| [B-196](B-196-loeschen-meldet-nichts-und-raeumt-nichts.md) | Das Löschen einer Reihe meldet nichts — und lässt die Bestätigung von vorhin stehen | Defekt | `geschaetzt` | P2 | S | frontend | — |
+| [B-197](B-197-meldungsplatz-wird-beim-absenden-nicht-geraeumt.md) | Der Meldungsplatz wird beim Absenden nicht geräumt — und zeigt dann zwei Wahrheiten | Defekt | `geschaetzt` | P2 | M | frontend | — |
+| [B-198](B-198-teilstring-falle-im-selben-commit-neu-gebaut.md) | Die Teilstring-Falle aus B-189 wurde im selben Commit neu gebaut | Defekt | `geschaetzt` | P2 | XS | frontend | — |
 | [B-153](B-153-bilder-spec-flackert-im-vollen-lauf.md) | `bilder.spec.ts` fällt im vollen Lauf gelegentlich aus, allein ist sie grün | Defekt | `ausformuliert` | P2 | — | — | — |
 | [B-160](B-160-gesperrter-knopf-nennt-den-grund-nie.md) | Der gesperrte Löschen-Knopf nennt seinen Grund nie — der `title` erscheint nicht | Defekt | `ausformuliert` | P2 | — | — | — |
 | [B-181](B-181-praemisse-der-rennen-klasse-stimmt-nicht.md) | Die Rennen-Klasse nennt nur einen von zwei Fehlermodi — welcher auftritt, entscheidet die Plattform | Defekt | `ausformuliert` | P2 | — | — | — |
 | [B-188](B-188-wizard-verschweigt-drei-weitere-ausfaelle.md) | Der Assistent verschweigt drei weitere Ausfälle — einer schickt den Vater ins Kind-Anlegen | Defekt | `ausformuliert` | P2 | — | frontend | — |
 | [B-190](B-190-backlog-index-schreibt-leeren-index.md) | Aus einem Unterverzeichnis aufgerufen, schreibt der Index-Generator einen leeren Index | Defekt | `ausformuliert` | P2 | — | doku | — |
-| [B-196](B-196-loeschen-meldet-nichts-und-raeumt-nichts.md) | Das Löschen einer Reihe meldet nichts — und lässt die Bestätigung von vorhin stehen | Defekt | `ausformuliert` | P2 | — | frontend | — |
-| [B-197](B-197-meldungsplatz-wird-beim-absenden-nicht-geraeumt.md) | Der Meldungsplatz wird beim Absenden nicht geräumt — und zeigt dann zwei Wahrheiten | Defekt | `ausformuliert` | P2 | — | frontend | — |
-| [B-198](B-198-teilstring-falle-im-selben-commit-neu-gebaut.md) | Die Teilstring-Falle aus B-189 wurde im selben Commit neu gebaut | Defekt | `ausformuliert` | P2 | XS | frontend | — |
 | [B-166](B-166-wiki-nennt-die-entfernte-kapitel-route.md) | Wiki und Endpunkt-Karte nennen die entfernte Kapitel-Route | Defekt | `idee` | P2 | — | — | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-19](B-19-schuelerprofil-ki-lehrplan.md) | Schülerprofil-getriebener KI-Lehrplan | Wunsch | `geschaetzt` | P2 | M | backend | — |
@@ -750,9 +750,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-192](B-192-obergrenze-schuetzt-nur-den-api-pfad.md) | Die Obergrenze der Punkte-Empfehlung schützt den Weg nicht, den der Vater geht | [B-45] | `abgenommen` |
 | [B-193](B-193-vertragsdoku-nennt-die-alte-null-bedeutung.md) | Das Vertragsdokument nennt für `PointsGoalMet` noch die alte `null`-Bedeutung | [B-45] | `abgenommen` |
 | [B-195](B-195-unit-liste-bleibt-waehrend-des-reihenwechsels-waehlbar.md) | Beim Reihenwechsel bleiben die Units der alten Reihe wählbar | [B-172] | `ausformuliert` |
-| [B-196](B-196-loeschen-meldet-nichts-und-raeumt-nichts.md) | Das Löschen einer Reihe meldet nichts — und lässt die Bestätigung von vorhin stehen | [B-173] | `ausformuliert` |
-| [B-197](B-197-meldungsplatz-wird-beim-absenden-nicht-geraeumt.md) | Der Meldungsplatz wird beim Absenden nicht geräumt — und zeigt dann zwei Wahrheiten | [B-173, B-151] | `ausformuliert` |
-| [B-198](B-198-teilstring-falle-im-selben-commit-neu-gebaut.md) | Die Teilstring-Falle aus B-189 wurde im selben Commit neu gebaut | [B-151] | `ausformuliert` |
+| [B-196](B-196-loeschen-meldet-nichts-und-raeumt-nichts.md) | Das Löschen einer Reihe meldet nichts — und lässt die Bestätigung von vorhin stehen | [B-173] | `geschaetzt` |
+| [B-197](B-197-meldungsplatz-wird-beim-absenden-nicht-geraeumt.md) | Der Meldungsplatz wird beim Absenden nicht geräumt — und zeigt dann zwei Wahrheiten | [B-173, B-151] | `geschaetzt` |
+| [B-198](B-198-teilstring-falle-im-selben-commit-neu-gebaut.md) | Die Teilstring-Falle aus B-189 wurde im selben Commit neu gebaut | [B-151] | `geschaetzt` |
 
 <details>
 <summary>Nie nachgeschaut (7) — Arbeitsvorrat der Nachschau</summary>
@@ -800,9 +800,6 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-190](B-190-backlog-index-schreibt-leeren-index.md) | `ausformuliert` | Abschnitt „Akzeptanzkriterien" |
 | [B-194](B-194-plandetail-kinderauswahl-ohne-rueckfall.md) | `ausformuliert` | Abschnitt „Akzeptanzkriterien" |
 | [B-195](B-195-unit-liste-bleibt-waehrend-des-reihenwechsels-waehlbar.md) | `ausformuliert` | Abschnitt „Akzeptanzkriterien" |
-| [B-196](B-196-loeschen-meldet-nichts-und-raeumt-nichts.md) | `ausformuliert` | Abschnitt „Akzeptanzkriterien" |
-| [B-197](B-197-meldungsplatz-wird-beim-absenden-nicht-geraeumt.md) | `ausformuliert` | Abschnitt „Akzeptanzkriterien" |
-| [B-198](B-198-teilstring-falle-im-selben-commit-neu-gebaut.md) | `ausformuliert` | Abschnitt „Akzeptanzkriterien" |
 | [B-199](B-199-drei-behauptungen-die-ihr-eigener-sprint-aufgehoben-hat.md) | `ausformuliert` | Abschnitt „Akzeptanzkriterien" |
 
 <details>

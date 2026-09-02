@@ -100,6 +100,7 @@ export function ChildMaterialSection({ childId, childName, subjects }: {
                       <TextbookForm
                         childId={childId} book={b} series={series.data ?? []} subjects={subjects}
                         onDone={(m) => { setEditing(null); books.reload(); if (m) setMeldung(m); }}
+                        onMeldung={setMeldung}
                       />
                     </td>
                   </tr>
@@ -112,9 +113,12 @@ export function ChildMaterialSection({ childId, childName, subjects }: {
 
       <div style={{ marginTop: 12 }}>
         <h4 className="h-section" style={{ fontSize: "1rem" }}>Buch hinzufügen</h4>
+        {/* Auch das Anlege-Formular raeumt (B-197): Es schliesst sich NICHT, kann eine alte Meldung
+            also ueberleben lassen - „Gespeichert." von einer Bearbeitung stuende dann neben dem roten
+            Fehler eines gescheiterten Anlegens. */}
         <TextbookForm
           childId={childId} series={series.data ?? []} subjects={subjects}
-          onDone={books.reload}
+          onDone={books.reload} onMeldung={setMeldung}
         />
       </div>
 
@@ -146,7 +150,7 @@ export function ChildMaterialSection({ childId, childName, subjects }: {
  * braucht dafür kein gefälschtes `fetch`, solange das Buch keine Reihe trägt: nur die Unit-Liste lädt
  * beim Rendern, alles andere hängt am Absenden.
  */
-export function TextbookForm({ childId, book, series, subjects, onDone }: {
+export function TextbookForm({ childId, book, series, subjects, onDone, onMeldung }: {
   childId: number;
   book?: TextbookResponse;
   series: TextbookSeriesResponse[];
@@ -156,6 +160,14 @@ export function TextbookForm({ childId, book, series, subjects, onDone }: {
    * `StatusBanner` unten hängt am Formular, und das Formular ist nach diesem Aufruf weg (B-151).
    */
   onDone: (message?: ActionMessage) => void;
+  /**
+   * Räumt bzw. setzt den Meldungsplatz der Seite. Gerufen zu **Beginn** jedes Absendens mit `null`
+   * (B-197): Der Platz gilt ab dann nicht mehr, egal wie der Versuch ausgeht.
+   *
+   * Zwei Rückkanäle neben `onDone` sind nicht schön und hier ausgesprochen: `onDone` gehört zum
+   * Schließen, `onMeldung` zum Platz — und der Anlege-Zwilling schließt nie.
+   */
+  onMeldung?: (m: ActionMessage | null) => void;
 }) {
   // Der Ladezustand ist der Bezugspunkt des Diffs (B-148) – er darf sich NICHT mit dem Formular
   // mitbewegen, sonst entscheidet der Vergleich gegen sich selbst und der Schalter entstünde wieder aus
@@ -190,6 +202,8 @@ export function TextbookForm({ childId, book, series, subjects, onDone }: {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    // Der Meldungsplatz der Seite gilt ab jetzt nicht mehr - egal wie dieser Versuch ausgeht (B-197).
+    onMeldung?.(null);
     if (!form.title.trim()) { action.fail("Der Titel fehlt."); return; }
 
     if (book && geladen.current) {

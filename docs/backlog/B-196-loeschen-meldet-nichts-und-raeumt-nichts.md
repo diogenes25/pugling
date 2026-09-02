@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/frontend, rolle/creator]
+tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/creator]
 aliases: [B-173 AK 2 nicht gebaut, Loeschen ohne Meldung]
-status: ausformuliert
+status: geschaetzt
 prio: P2
 art: Defekt
-groesse: ""
+groesse: S
 wo: frontend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: Nachschau 2026-09-02 zu Sprint 1 des Nachtlaufs
 unverifiziert: false
 grund: ""
@@ -48,15 +48,49 @@ andere Richtung: **eine Meldung, die zu einer anderen Handlung gehört als der, 
 Der Seitenplatz ist zustandsbehaftet, die Regel „der Erfolg reist, Fehler bleiben lokal" ist
 zustandsfrei formuliert. Wo eine Handlung gar keine Meldung erzeugt, bleibt die vorige stehen.
 
-## Offene Punkte
+## Entscheidungen
 
-1. Nur das Löschen der Reihe, oder alle stummen Erfolgspfade derselben Fläche? Empfehlung: **erst zählen**
-   — `ChildMaterialSection.tsx:231` (Buch entfernen) ist derselbe Fall und war schon vor dem Sprint stumm.
-2. Zusammen mit [B-197](B-197-meldungsplatz-wird-beim-absenden-nicht-geraeumt.md) bauen? Empfehlung: **ja**
-   — beide brauchen dieselbe Verallgemeinerung des Meldungsplatzes, und getrennt entstünden zwei Muster.
+1. **Das Löschen meldet, und es nennt die Reihe.** *Begründung:* Der Seitenplatz überlebt die Zeile — er
+   ist der einzige Ort, an dem eine Löschbestätigung überhaupt stehen kann. Und er muss den **Namen**
+   tragen: Die Zeile, auf die sich die Meldung bezieht, ist ja gerade verschwunden; „Gelöscht." allein
+   ließe offen, was. *Kosten:* Der Text ist länger als die übrigen Meldungen dieser Fläche.
+2. **Gebaut wird zusammen mit [B-197](B-197-meldungsplatz-wird-beim-absenden-nicht-geraeumt.md)**
+   (Empfehlung des offenen Punkts bestätigt). *Begründung:* Beide brauchen dasselbe Prop; getrennt
+   entstünden zwei Muster für einen Platz. *Kosten:* keine — derselbe Sprint.
+3. **`ChildMaterialSection` („Buch entfernen") bleibt draußen.** *Begründung:* Der offene Punkt verlangte
+   eine Zählung; sie ist gemacht — es sind **zwei** stumme Erfolgspfade (`VaterLehrwerke.tsx:255`,
+   `ChildMaterialSection.tsx:231`). Nur der erste ist von einem Akzeptanzkriterium **beansprucht**; der
+   zweite war vor wie nach Sprint 1 stumm und gehört keiner Story. Ihn mitzunehmen hieße, eine geschätzte
+   Story während des Bauens wachsen zu lassen. *Kosten:* Eine bekannte stumme Stelle bleibt stehen —
+   ausgesprochen, nicht kaschiert, und sie ist damit ein Kandidat für den Backlog.
+
+## Akzeptanzkriterien
+
+1. Eine Reihe löschen → am Seitenplatz steht eine Bestätigung, die den Namen der Reihe nennt.
+2. Vor dem Löschen wird der Platz geräumt: eine Bestätigung von vorhin kann nicht als Löschbestätigung
+   stehenbleiben.
+3. Bricht der Nutzer den Bestätigungsdialog ab, ändert sich am Platz nichts.
+
+## Belege je Kriterium
+
+| AK | Beleg |
+|---|---|
+| 1 | neuer E2E-Fall in `e2e/bestaetigung-ueberlebt.spec.ts` — **die rote Probe dieser Story** |
+| 2 | derselbe Fall: er speichert **zuerst** eine andere Reihe, damit eine alte Meldung dasteht |
+| 3 | **nicht geprüft** — `confirmAction` ist `window.confirm`; ein Abbruch verlässt `remove()` vor jedem `action`-Aufruf (`VaterLehrwerke.tsx:252-254`, am Code gelesen). Ein E2E dafür bräuchte einen abgelehnten Dialog und beliefe die Spec um einen Fall, der nichts messen kann, was der frühe `return` nicht schon garantiert |
+
+## Schätzung
+
+- **Größe: S.** Anker: zwei Zeilen in `remove()` plus ein E2E-Fall; das tragende Prop entsteht in B-197.
+- **Migration/Vertragsbruch: nein.**
+- **Testweg:** `frontend/e2e/bestaetigung-ueberlebt.spec.ts` (dieselbe Fläche, dieselbe Datei).
 
 ## Verlauf
 
 - 2026-09-02 · Aufgenommen aus der **Nachschau** zu Sprint 1 (zweiter Nachtlauf). Der Fund ist ernster als
   ein gewöhnlicher Defekt: Er belegt, dass die Abnahme von B-173 ein eigenes Akzeptanzkriterium nicht
   geprüft hat. Der Rollengang (43/43 E2E) hat es nicht gefangen, weil keine Spec eine Reihe löscht.
+- 2026-09-02 · **`ausformuliert` → `gegrillt` → `geschaetzt`** (dritter Sprint, Freigabe 1). Der offene
+  Punkt 1 ist **gezählt statt vermutet**: zwei stumme Erfolgspfade, nur einer von einem
+  Akzeptanzkriterium beansprucht. Akzeptanzkriterium 3 trägt ausdrücklich ein „nicht geprüft, weil …"
+  statt eines behaupteten Belegs.

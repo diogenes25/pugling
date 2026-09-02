@@ -108,7 +108,9 @@ test("Buchreihe, Fachlehrer und Kind treffen zusammen", async ({ page }) => {
   // Die Unit-Auswahl hängt an der Reihe – vorher ist sie gesperrt, jetzt gefüllt.
   await page.locator("#tbnew-unit").selectOption({ label: `Kl. ${UNIT.grade}: ${UNIT.label}` });
   await page.getByRole("button", { name: "Buch hinterlegen" }).click();
-  await expect(page.getByText("Buch hinterlegt.")).toBeVisible();
+  // Dieselbe Teilstring-Falle wie in `kind-lehrbuch-fach.spec.ts` (B-189): „Noch kein Buch
+  // hinterlegt." enthaelt diese Meldung.
+  await expect(page.getByText("Buch hinterlegt.", { exact: true })).toBeVisible();
 
   const bookRow = page.getByRole("row", { name: /Access 8/ });
   await expect(bookRow).toContainText(SERIES.name);

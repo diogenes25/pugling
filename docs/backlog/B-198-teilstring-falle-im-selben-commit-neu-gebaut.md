@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/frontend]
+tags: [typ/story, status/geschaetzt, bereich/frontend]
 aliases: [Buch hinterlegt ohne exact, B-189 wiederholt]
-status: ausformuliert
+status: geschaetzt
 prio: P2
 art: Defekt
 groesse: XS
@@ -49,13 +49,37 @@ eingebaut. `6688ff5` hat danach gezielt beide „Gespeichert."-Zusicherungen die
 Konstrukt **allein grün** ist und erst unter der Last des vollen Laufs rot wird. Der grüne Lauf ist also
 kein Gegenbeweis, sondern derselbe Zufall, der B-189 wochenlang verborgen hat.
 
-## Offene Punkte
+## Entscheidungen
 
-1. Nur diese Zeile, oder alle `getByText` ohne `exact` in `e2e/` zählen? Empfehlung: **zählen** — die Menge
-   ist auszählbar, und die Zahl entscheidet, ob daraus ein Wächter wird. B-189s Entscheidung 2 hat einen
-   Wächter verworfen, weil Teilstring meistens gewollt ist; drei Wiederholungen wären ein Grund, das noch
-   einmal anzusehen.
+1. **`{ exact: true }` an der einen Zeile**, wie in B-189. *Begründung:* Der Produkttext ist richtig,
+   falsch war die Zusicherung. *Kosten:* keine.
+2. **Gezählt wird, und die Zahl steht im `## Verlauf`** (Empfehlung des offenen Punkts bestätigt).
+   *Begründung:* Ob daraus ein Wächter wird, ist eine Frage der Häufigkeit — und B-189s Entscheidung 2 hat
+   einen Wächter mit Begründung verworfen. Diese Entscheidung ohne neue Zahl zu wiederholen wäre eine
+   Meinung. *Kosten:* ein Zählschritt.
+3. **Kein Wächter in dieser Story, egal wie die Zahl ausfällt.** *Begründung:* Ein Tor über `getByText`
+   ohne `exact` bräuchte sofort eine Ausnahmeliste, denn Teilstring ist der Normalfall. Was die Zahl
+   entscheidet, ist nur, ob es eine **eigene** Story wert ist. *Kosten:* Eine vierte Wiederholung ist
+   möglich — ausgesprochen.
+
+## Akzeptanzkriterien
+
+1. `bestaetigung-ueberlebt.spec.ts:83` trifft nur den Banner, nicht den Leer-Text.
+2. Der **volle** Suite-Lauf ist grün (allein grün beweist bei dieser Falle nichts, siehe B-189).
+
+## Belege je Kriterium
+
+| AK | Beleg |
+|---|---|
+| 1 | die Zeile selbst — und eine Zählung der übrigen `getByText`-Aufrufe ohne `exact` im `## Verlauf` |
+| 2 | voller Playwright-Lauf am Ende des Sprints |
+
+## Schätzung
+
+- **Größe: XS** — eine Zeile plus die Zählung. **Migration/Vertragsbruch: nein.**
+- **Testweg:** der volle Playwright-Lauf. Ein eigener Test wäre sinnlos: Die Falle *ist* ein Test.
 
 ## Verlauf
 
 - 2026-09-02 · Aufgenommen aus der **Nachschau** zu Sprint 1 (zweiter Nachtlauf).
+- 2026-09-02 · **`ausformuliert` → `gegrillt` → `geschaetzt`** (dritter Sprint, Freigabe 1). XS.

@@ -193,8 +193,7 @@ export function VaterLehrwerke() {
                 <SeriesRow
                   key={s.id} series={s} subjects={subjects.data ?? []} publishers={publishers.data ?? []}
                   open={open === s.id} onToggle={() => setOpen(open === s.id ? null : s.id)}
-                  onOeffnen={() => setMeldung(null)}
-                  onChanged={list.reload} onMessage={setMeldung}
+                  onChanged={list.reload} onMeldung={setMeldung}
                 />
               ))}
               {list.data?.length === 0 && (
@@ -219,7 +218,7 @@ export function VaterLehrwerke() {
   );
 }
 
-function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, onMessage, onOeffnen }: {
+function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, onMeldung }: {
   series: TextbookSeriesResponse;
   subjects: SubjectResponse[];
   publishers: PublisherResponse[];
@@ -227,16 +226,15 @@ function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, on
   onToggle: () => void;
   onChanged: () => void;
   /**
-   * Nimmt die Bestätigung eines Speicherns entgegen und reicht sie an die Seite weiter: Die Zeile
-   * überlebt ihre eigene Bestätigung nicht (B-173).
+   * Setzt den Meldungsplatz der Seite – oder räumt ihn mit `null`.
+   *
+   * **Ein** Prop für alle drei Anlässe (B-197): Formular öffnen, Handlung beginnen, Erfolg melden. Der
+   * Vorgänger hatte zwei (`onMessage` fürs Setzen, `onOeffnen` fürs Räumen), und genau daran ist die
+   * vierte Räum-Stelle entstanden: Alle drei existierenden hingen am *Öffnen*, keine am *Absenden* – so
+   * stand ein grünes „Gespeichert." über einer roten Fehlermeldung. Ein Prop mit `null` als Wert kann
+   * man nicht halb verdrahten.
    */
-  onMessage: (m: ActionMessage) => void;
-  /**
-   * Räumt den Meldungsplatz der Seite, bevor hier bearbeitet wird. Ohne das stünde die Bestätigung von
-   * Reihe A über einer frischen, ungespeicherten Bearbeitung von Reihe B — und hier wiegt das schwerer
-   * als auf den Schwesterseiten, weil das Formular offen bleibt und sonst nichts den Platz je räumt.
-   */
-  onOeffnen: () => void;
+  onMeldung: (m: ActionMessage | null) => void;
 }) {
   const action = useAction();
   // Lokal, nicht im seiten-globalen `open`: das ist der Akkordeon-Platz der Units, und beide Bereiche
@@ -244,7 +242,7 @@ function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, on
   const [editing, setEditing] = useState(false);
 
   function bearbeitenUmschalten() {
-    onOeffnen();
+    onMeldung(null);
     setEditing(!editing);
   }
 
@@ -252,7 +250,13 @@ function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, on
     if (!confirmAction(
       `Reihe „${series.name}" wirklich löschen? Die ${series.unitCount} Unit(s) gehen mit. `
       + "Lehrbücher der Kinder und Profile verlieren nur die Zuordnung und bleiben nutzbar.")) return;
-    if (await action.run(() => api.deleteTextbookSeries(series.id))) onChanged();
+    // Räumen VOR dem Löschen: Sonst bliebe die Bestätigung der vorigen Handlung über der gerade
+    // verschwundenen Zeile stehen und läse sich als Löschbestätigung (B-196).
+    onMeldung(null);
+    if (!await action.run(() => api.deleteTextbookSeries(series.id))) return;
+    // Der Name MUSS mit: Die Zeile, auf die sich die Meldung bezieht, ist ja gerade verschwunden.
+    onMeldung({ ok: true, text: `Reihe „${series.name}" gelöscht.` });
+    onChanged();
   }
 
   const subjectLabel = series.subjectId != null
@@ -313,7 +317,7 @@ function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, on
           <td colSpan={6}>
             <SeriesForm
               series={series} subjects={subjects} publishers={publishers} onSaved={onChanged}
-              onMessage={onMessage}
+              onMeldung={onMeldung}
             />
           </td>
         </tr>
@@ -349,7 +353,7 @@ function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, on
  * Zugang liefe ein späteres „Aufräumen" der Optionen grün durch. Die Komponente braucht dafür kein
  * gefälschtes `fetch`: alle `api`-Aufrufe hängen am Absenden, das Rendern ist reine Prop-Arbeit.
  */
-export function SeriesForm({ series, subjects, publishers, onSaved, onMessage }: {
+export function SeriesForm({ series, subjects, publishers, onSaved, onMeldung }: {
   series: TextbookSeriesResponse;
   subjects: SubjectResponse[];
   publishers: PublisherResponse[];
@@ -358,8 +362,12 @@ export function SeriesForm({ series, subjects, publishers, onSaved, onMessage }:
    * Optional. Ohne Empfänger zeigt das Formular die Bestätigung selbst (so im Test); mit Empfänger geht
    * sie STATT DESSEN nach oben, weil die Zeile aus der gefilterten Abfrage fallen kann (B-173).
    * Fehler und Eingabeprüfungen bleiben in beiden Fällen hier – sie verlassen die Zeile nie.
+   *
+   * `null` räumt den Platz. Das Formular ruft es zu Beginn jedes Absendens (B-197): Ein zweiter,
+   * scheiternder Versuch zeigt seinen Fehler hier unten, und ohne das Räumen stünde das „Gespeichert."
+   * des ersten Versuchs oben weiter da – zwei widersprechende Meldungen in einem Blickfeld.
    */
-  onMessage?: (m: ActionMessage) => void;
+  onMeldung?: (m: ActionMessage | null) => void;
 }) {
   // Der Ladezustand ist der Bezugspunkt des Diffs (B-123, Entscheidung 2) – er darf sich NICHT mit dem
   // Formular mitbewegen, sonst entscheidet der Vergleich gegen sich selbst. Darum `useRef`.
@@ -382,6 +390,8 @@ export function SeriesForm({ series, subjects, publishers, onSaved, onMessage }:
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    // Der Platz gilt ab jetzt nicht mehr - egal wie dieser Versuch ausgeht (B-197).
+    onMeldung?.(null);
     if (!form.name.trim()) { action.fail("Der Name der Reihe fehlt."); return; }
 
     const dto = seriesPatch(geladen.current, form);
@@ -412,7 +422,7 @@ export function SeriesForm({ series, subjects, publishers, onSaved, onMessage }:
      * und gehören darum ans Formular, wo der Nutzer gerade hinsieht.
      */
     const bestaetigung = "Gespeichert.";
-    if (onMessage) onMessage({ ok: true, text: bestaetigung });
+    if (onMeldung) onMeldung({ ok: true, text: bestaetigung });
     else action.succeed(bestaetigung);
     onSaved();
   }

@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/frontend, rolle/creator, rolle/supervisor]
+tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/creator, rolle/supervisor]
 aliases: [gruenes Gespeichert ueber rotem Fehler, vierter setMeldung(null) fehlt]
-status: ausformuliert
+status: geschaetzt
 prio: P2
 art: Defekt
-groesse: ""
+groesse: M
 wo: frontend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: Nachschau 2026-09-02 zu Sprint 1 des Nachtlaufs
 unverifiziert: false
 grund: ""
@@ -46,14 +46,56 @@ offen bleibt:
 „Der Erfolg reist nach oben, Fehler bleiben lokal" ist **zustandsfrei** formuliert, der Seitenplatz ist
 aber **zustandsbehaftet**. Solange nichts ihn räumt, überlebt eine Meldung die Handlung, die sie meinte.
 
-## Offene Punkte
+## Entscheidungen
 
-1. Beim Absenden räumen, oder den Platz nach einer Weile verfallen lassen? Empfehlung: **beim Absenden**
-   — B-151s Entscheidung 2 hat einen Timer bereits verworfen, mit Kosten und Begründung; das gilt weiter.
-2. Der billigste Schnitt: `onOeffnen`/`onMessage` zu **einem** `onMeldung(m: ActionMessage | null)`
-   verallgemeinern und am Anfang von `submit()` mit `null` rufen. Zu bestätigen beim Bauen.
+1. **Der Platz wird bei jedem Beginn einer Handlung geräumt, nicht nach einer Frist.** *Begründung:*
+   B-151s Entscheidung 2 hat einen Timer schon einmal verworfen — `StatusBanner` kennt keinen, und einen
+   einzuführen zwänge zwanzig andere Aufrufstellen, ihn mitzutragen. „Beginn einer Handlung" ist zudem
+   der Zeitpunkt, an dem die alte Meldung *nachweislich* nicht mehr gilt, während eine Frist es rät.
+   *Kosten:* Wer zwei Sekunden nach dem Speichern etwas anderes anfasst, verliert seine Bestätigung.
+2. **Drei Anlässe, ein Prop.** `onOeffnen` und `onMessage` werden zu **einem** `onMeldung(m:
+   ActionMessage | null)`; `null` heißt „ab jetzt gilt hier nichts mehr". Gerufen wird es beim Öffnen
+   eines Formulars, **beim Beginn** jeder Handlung und beim Erfolg. *Begründung:* Zwei Props, die
+   denselben Platz beschreiben, laufen auseinander — genau so ist die vierte Räum-Stelle entstanden
+   (drei existierten, alle am Öffnen). Ein Prop mit `null` als Wert kann man nicht halb verdrahten.
+   *Kosten:* `ActionMessage | null` an einer Prop-Grenze ist unschärfer als zwei benannte Ereignisse;
+   dafür gibt es nur noch eine Stelle, die man vergessen kann.
+3. **Auch die Formulare, die sich schließen, räumen beim Beginn.** `TextbookForm` und `ProfileForm`
+   geben ihre Bestätigung heute über `onDone(message)` weiter; sie bekommen zusätzlich `onMeldung`.
+   *Begründung:* Ihr Anlege-Zwilling schließt sich **nicht** und kann darum sehr wohl eine alte Meldung
+   überleben lassen — der Fund nennt beide Stellen. *Kosten:* Diese zwei Bausteine tragen danach zwei
+   Rückkanäle (`onDone` fürs Schließen, `onMeldung` für den Platz). Das ist ausgesprochen, nicht schön.
+
+## Akzeptanzkriterien
+
+1. Speichern (Erfolg) → „Gespeichert." steht am Seitenplatz.
+2. Danach ein **zweites** Absenden, das scheitert → der Fehler steht am Formular, und der Seitenplatz ist
+   **leer**. Kein grünes „Gespeichert." neben einer roten Meldung.
+3. Ein Formular öffnen räumt den Platz weiterhin (heutiges Verhalten, unverändert).
+4. Anlegen und „Nichts geändert." verhalten sich unverändert.
+
+## Belege je Kriterium
+
+| AK | Beleg |
+|---|---|
+| 1 | `e2e/bestaetigung-ueberlebt.spec.ts`, Fall B-173 (bestehend) |
+| 2 | neuer E2E-Fall in derselben Datei — **die rote Probe dieser Story** |
+| 3 | derselbe neue Fall (er öffnet das Formular als ersten Schritt) |
+| 4 | `e2e/bestaetigung-ueberlebt.spec.ts`, Fall B-151 (bestehend, prüft „Buch hinterlegt.") |
+
+## Schätzung
+
+- **Größe: M.** Anker: drei Seiten, ein zusammengelegtes Prop, fünf Aufrufstellen, ein E2E-Fall.
+- **Migration/Vertragsbruch: nein** — reine Oberfläche.
+- **Testweg:** `frontend/e2e/bestaetigung-ueberlebt.spec.ts`. **E2E und kein Komponententest:** Der Fall
+  verlangt ein *erfolgreiches* Speichern gefolgt von einem *scheiternden* — beides gegen den echten
+  Server, und kein Test dieses Frontends mockt `../lib/api`.
 
 ## Verlauf
 
 - 2026-09-02 · Aufgenommen aus der **Nachschau** zu Sprint 1 (zweiter Nachtlauf). `entgangen_bei` nennt
   beide Stories, weil der Platz aus B-173 stammt und B-151 ihn auf zwei weitere Flächen gebracht hat.
+- 2026-09-02 · **`ausformuliert` → `gegrillt` → `geschaetzt`** (dritter Sprint, Freigabe 1 — `art:
+  Defekt`). Beide offenen Punkte entschieden; Punkt 2 ist von „billigster Schnitt" zu einer Entscheidung
+  **mit Kosten** geworden. Belege je Akzeptanzkriterium benannt — das ist der Retro-Vorschlag aus Nacht 2,
+  hier in der Praxis befolgt, ohne ihn als Regel zu landen.

@@ -80,7 +80,9 @@ test("B-151: Das Lehrbuch-Formular schließt beim Speichern – die Bestätigung
   await page.locator("#tbnew-chapter").fill("Unit 1");
   await page.getByRole("button", { name: "Buch hinterlegen" }).click();
   // Der Anlege-Weg funktionierte schon vorher – er steht hier als Gegenprobe, nicht als Beleg.
-  await expect(page.getByText("Buch hinterlegt.")).toBeVisible();
+  // `exact` ist tragend, nicht Stil: „Noch kein Buch hinterlegt." ENTHAELT diese Meldung, und solange
+  // das Neuladen laeuft, steht der Leer-Text noch da (B-189/B-198).
+  await expect(page.getByText("Buch hinterlegt.", { exact: true })).toBeVisible();
 
   // ---- Bearbeiten: `onDone` schließt das Formular und nahm den Banner mit aus dem DOM ----
   await page.getByRole("button", { name: `${BUCH} bearbeiten` }).click();
@@ -98,4 +100,69 @@ test("B-151: Das Lehrbuch-Formular schließt beim Speichern – die Bestätigung
   // sein. Andersherum träfe die Zusicherung den Frame, in dem beides noch steht.
   await expect(bearbeiten).toHaveCount(0);
   await expect(page.getByText("Gespeichert.", { exact: true })).toBeVisible();
+});
+
+/*
+ * B-197 und B-196 - beide Haelften desselben Satzes: **Was am Meldungsplatz steht, gehoert zu der
+ * Handlung, die gerade getan wurde.**
+ *
+ * Die Nachschau zu Sprint 1 hat beide gefunden, und beide sind Selbstwiderspruecke der Reparatur, die
+ * diesen Platz erst eingefuehrt hat:
+ *   B-197 - geraeumt wurde an drei Stellen, alle beim OEFFNEN eines Formulars, keine beim ABSENDEN. Ein
+ *           zweiter, scheiternder Versuch zeigte seinen Fehler am Formular, waehrend oben weiter das
+ *           gruene "Gespeichert." des ersten stand. Zwei widersprechende Meldungen in einem Blickfeld -
+ *           genau der Schaden, gegen den der Platz gebaut wurde.
+ *   B-196 - das Loeschen meldete gar nichts. B-173s Akzeptanzkriterium 2 nennt es ausdrueclich; gebaut
+ *           war es nie, und der 43/43-Rollengang hat es nicht gefangen, weil keine Spec eine Reihe
+ *           loescht. Ohne Meldung blieb die Bestaetigung von vorhin ueber der verschwundenen Zeile
+ *           stehen und las sich als Loeschbestaetigung.
+ */
+test("B-197/B-196: der Meldungsplatz gehoert zur letzten Handlung", async ({ page }) => {
+  const LAUF = Date.now().toString(36).slice(-5);
+  const reiheA = `Platz A ${LAUF}`;
+  const reiheB = `Platz B ${LAUF}`;
+
+  await vaterLogin(page, FATHER);
+  await page.goto("/vater/lehrwerke");
+
+  for (const name of [reiheA, reiheB]) {
+    await page.locator("#ns-name").fill(name);
+    await page.getByRole("button", { name: "Reihe anlegen" }).click();
+    await expect(page.getByText(/steht im Katalog/)).toBeVisible();
+  }
+
+  // ---- Schritt 1: ein erfolgreiches Speichern legt eine Meldung auf den Platz ----
+  await page.getByRole("button", { name: `Reihe bearbeiten: „${reiheA}"` }).click();
+  const nameFeld = page.getByLabel("Name der Reihe", { exact: true });
+  await nameFeld.fill(`${reiheA} neu`);
+  await page.getByRole("button", { name: `Speichern: „${reiheA}"` }).click();
+  await expect(page.getByText("Gespeichert.", { exact: true })).toBeVisible();
+
+  // ---- Schritt 2 (B-197): ein ZWEITER Versuch derselben Sitzung scheitert ----
+  // Das Formular bleibt nach dem Speichern offen - das ist Absicht (B-123). Ein leerer Name wird
+  // clientseitig abgewiesen; die Fehlermeldung gehoert ans Formular.
+  await page.getByLabel("Name der Reihe", { exact: true }).fill("");
+  await page.getByRole("button", { name: `Speichern: „${reiheA} neu"` }).click();
+  await expect(page.getByText("Der Name der Reihe fehlt.")).toBeVisible();
+
+  // Der Kern: das gruene "Gespeichert." von Schritt 1 darf jetzt NICHT mehr dastehen.
+  await expect(page.getByText("Gespeichert.", { exact: true })).toHaveCount(0);
+
+  // ---- Schritt 3 (B-196): Loeschen meldet, und es nennt die Reihe ----
+  // Erst wieder einen gueltigen Stand herstellen und speichern, damit oben eine ALTE Meldung steht -
+  // ohne sie koennte der Fall nicht zeigen, dass das Loeschen sie ersetzt statt sie zu erben.
+  // Ein ANDERER Name, sonst gibt es nichts zu speichern und das Formular meldet "Nichts geaendert."
+  // (am 2026-09-02 genau so gemessen - der erste Entwurf fuellte den bereits gespeicherten Wert zurueck).
+  await page.getByLabel("Name der Reihe", { exact: true }).fill(`${reiheA} dritt`);
+  await page.getByRole("button", { name: `Speichern: „${reiheA} neu"` }).click();
+  await expect(page.getByText("Gespeichert.", { exact: true })).toBeVisible();
+
+  page.once("dialog", (d) => d.accept());
+  await page.getByRole("button", { name: `Löschen: „${reiheB}"` }).click();
+
+  // Erst warten, bis die Zeile wirklich weg ist - sonst traefe die Zusicherung den Frame davor.
+  await expect(page.getByRole("row", { name: new RegExp(reiheB) })).toHaveCount(0);
+  await expect(page.getByText(`Reihe „${reiheB}" gelöscht.`)).toBeVisible();
+  // Und die Bestaetigung von vorhin ist ersetzt, nicht geerbt.
+  await expect(page.getByText("Gespeichert.", { exact: true })).toHaveCount(0);
 });
