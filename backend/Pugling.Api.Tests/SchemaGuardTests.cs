@@ -220,6 +220,9 @@ public class SchemaGuardTests
             ["Exercise.CategoryId"] = DeleteBehavior.SetNull, // -> ExerciseCategory
             ["Exercise.SeriesUnitId"] = DeleteBehavior.Cascade, // -> SeriesUnit
             ["ExerciseCategory.SubjectId"] = DeleteBehavior.Cascade, // -> Subject
+            // B-170: losing the account must not take the category with it - every other household
+            // plans against that pre-filter entry. Same shape as the subject one level up.
+            ["ExerciseCategory.OwnerAdultId"] = DeleteBehavior.SetNull, // -> Adult
             ["ExerciseGrant.CreatorId"] = DeleteBehavior.Cascade, // -> Adult
             ["ExerciseGrant.ExerciseId"] = DeleteBehavior.Cascade, // -> Exercise
             ["ExerciseItem.ExerciseId"] = DeleteBehavior.Cascade, // -> Exercise

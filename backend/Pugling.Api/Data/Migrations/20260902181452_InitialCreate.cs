@@ -666,11 +666,18 @@ namespace Pugling.Api.Data.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     SubjectId = table.Column<int>(type: "INTEGER", nullable: false),
                     Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    OwnerAdultId = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ExerciseCategories", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ExerciseCategories_Adults_OwnerAdultId",
+                        column: x => x.OwnerAdultId,
+                        principalTable: "Adults",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_ExerciseCategories_Subjects_SubjectId",
                         column: x => x.SubjectId,
@@ -1943,6 +1950,11 @@ namespace Pugling.Api.Data.Migrations
                 table: "DailyBoxClaims",
                 columns: new[] { "ChildId", "Day" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ExerciseCategories_OwnerAdultId",
+                table: "ExerciseCategories",
+                column: "OwnerAdultId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ExerciseCategories_SubjectId_Name",

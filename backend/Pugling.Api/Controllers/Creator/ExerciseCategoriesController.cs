@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,15 +13,23 @@ namespace Pugling.Api.Controllers.Creator;
 /// Subject-dependent exercise categories (e.g. grammar/vocabulary for English). Controlled
 /// vocabulary per subject as the basis for pre-filtering during study plan creation.
 /// <para>
-/// A category has no owner of its own: it belongs to whoever owns its <b>subject</b> (B-157). Renaming and
-/// deleting therefore follow <c>Subject.OwnerAdultId</c>, while <b>creating stays open to every creator</b> -
-/// with the subject's rule being fail-closed, a gated create would have frozen the category axis of all
-/// seeded subjects, which are the only ones an ordinary user has.
+/// <b>Creating stays open to every creator</b> (B-157, decision 2): with the subject's rule being
+/// fail-closed, a gated create would have frozen the category axis of all seeded subjects, which are the
+/// only ones an ordinary user has.
 /// </para>
 /// <para>
-/// A <b>platform admin</b> passes the owner check as well (break-glass, B-178) - for every subject, not only
-/// ownerless ones, exactly as at the exercise. Without it a category created under a seeded subject would be
-/// editable by nobody at all.
+/// Renaming and deleting need <b>one of two</b> owner rights (B-170): the category's own
+/// <c>ExerciseCategory.OwnerAdultId</c> <b>or</b> the subject's <c>Subject.OwnerAdultId</c>. Two bearers,
+/// because one alone breaks in each direction: without the category's, whoever adds a category to a seeded
+/// subject can never remove it again - a typo stayed in the study-plan pre-filter forever, which is exactly
+/// what B-157 caused and B-170 undid. Without the subject's, a stranger could plant a category in my
+/// subject that I cannot get rid of. The check is deliberately one condition without a special case for
+/// <c>null</c>: "remove what you added" is the symmetric counterpart of a create that is open everywhere.
+/// </para>
+/// <para>
+/// A <b>platform admin</b> passes as well (break-glass, B-178) - for every subject, not only ownerless
+/// ones, exactly as at the exercise. It remains the only way to clear a <i>seeded</i> category, which has
+/// neither bearer.
 /// </para>
 /// </summary>
 [ApiController]
@@ -41,10 +50,38 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
     /// </summary>
     Task<bool> SubjectExists(int subjectId, CancellationToken ct) => db.Subjects.AnyAsync(s => s.Id == subjectId, ct);
 
+    /// <summary>
+    /// Whether the caller may rename or delete a category: its owner, the subject's owner, or an admin
+    /// (B-170). Used by <c>Update</c> and <c>Delete</c>, which hold a loaded entity.
+    /// <para>
+    /// The read paths cannot call this - a projection has to be translatable to SQL, and a method call over
+    /// four arguments is not. They use <see cref="Projection"/> instead, which spells the <b>same</b> rule
+    /// as an expression. Two forms of one rule is a drift risk and therefore named rather than hidden: the
+    /// write form is pinned by <c>Anleger_DarfSeineArt_ImSeedFach_Loeschen</c> and
+    /// <c>Fach_Eigentuemer_DarfEineFremdeArt_InSeinemFach_Loeschen</c> (one case per branch, each measured
+    /// to fall when its branch is removed), the read form by
+    /// <c>IsOwn_TrenntDieEigeneArt_VonDerGeseedeten_InListeUndEinzelabruf</c> over both read paths. Whoever
+    /// changes the rule has to touch two places, and each has a case that fails if they touch only one.
+    /// </para>
+    /// </summary>
+    private static bool MayWrite(int? categoryOwner, int? subjectOwner, int? fid, bool isAdmin) =>
+        ClaimsPrincipalExtensions.IsOwnedBy(categoryOwner, fid)
+        || ClaimsPrincipalExtensions.IsOwnedBy(subjectOwner, fid)
+        || isAdmin;
+
+    /// <summary>
+    /// The single projection both read paths use, so <c>isOwn</c> cannot mean one thing in the list and
+    /// another in the single fetch. <c>fid</c> and <c>isAdmin</c> come in as captured values because
+    /// <c>User</c> itself is not translatable.
+    /// </summary>
+    private static Expression<Func<ExerciseCategory, CategoryResponse>> Projection(int? fid, bool isAdmin) =>
+        c => new CategoryResponse(c.Id, c.SubjectId, c.Name, c.CreatedAt,
+            isAdmin || (fid != null && (c.OwnerAdultId == fid || c.Subject!.OwnerAdultId == fid)));
+
     Task<CategoryResponse?> ProjectOne(int subjectId, int categoryId, CancellationToken ct) =>
         db.ExerciseCategories
             .Where(c => c.Id == categoryId && c.SubjectId == subjectId)
-            .Select(c => new CategoryResponse(c.Id, c.SubjectId, c.Name, c.CreatedAt))
+            .Select(Projection(User.CreatorId(), User.IsAdmin()))
             .FirstOrDefaultAsync(ct);
 
     /// <summary>List of a subject's categories.</summary>
@@ -53,10 +90,11 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
     public async Task<ActionResult<IEnumerable<CategoryResponse>>> List(int subjectId, CancellationToken ct = default)
     {
         if (!await SubjectExists(subjectId, ct)) return NotFound();
+
         return await db.ExerciseCategories
             .Where(c => c.SubjectId == subjectId)
             .OrderBy(c => c.Name)
-            .Select(c => new CategoryResponse(c.Id, c.SubjectId, c.Name, c.CreatedAt))
+            .Select(Projection(User.CreatorId(), User.IsAdmin()))
             .ToListAsync(ct);
     }
 
@@ -79,7 +117,8 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
     {
         // No owner check on purpose (B-157, decision 2): creating stays open to every creator, exactly as
         // for the subject itself. Gating it would make the seeded subjects' category axis unextendable for
-        // everyone, because their owner is null and `IsOwnedBy` is fail-closed.
+        // everyone, because their owner is null and `IsOwnedBy` is fail-closed. Since B-170 the creator is
+        // recorded, which is what makes the open create survivable: whoever adds may also remove.
         if (!await SubjectExists(subjectId, ct)) return NotFound();
         if (string.IsNullOrWhiteSpace(dto.Name)) return this.ProblemWithCode(ApiErrors.ValidationError, "Name is required.");
 
@@ -87,15 +126,19 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
         if (await db.ExerciseCategories.AnyAsync(c => c.SubjectId == subjectId && c.Name == name, ct))
             return this.ProblemWithCode(ApiErrors.DuplicateCategoryName, "This category already exists in the subject.");
 
-        var category = new ExerciseCategory { SubjectId = subjectId, Name = name };
+        var category = new ExerciseCategory { SubjectId = subjectId, Name = name, OwnerAdultId = User.CreatorId() };
         db.ExerciseCategories.Add(category);
         await db.SaveChangesAsync(ct);
 
-        var response = new CategoryResponse(category.Id, subjectId, category.Name, category.CreatedAt);
+        // `true` without asking the DB: the caller has just become the owner. A creator without an adult
+        // profile (`fid == null`) is the one exception - then nobody owns the row, and saying "you may
+        // write" would be a promise the write actions break.
+        var response = new CategoryResponse(category.Id, subjectId, category.Name, category.CreatedAt,
+            category.OwnerAdultId != null);
         return CreatedAtAction(nameof(Get), new { subjectId, categoryId = category.Id }, response);
     }
 
-    /// <summary>Changes a category (partial). Only the owner of the subject, or a platform admin, may do so.</summary>
+    /// <summary>Changes a category (partial). Only its creator, the owner of its subject, or a platform admin, may do so.</summary>
     [HttpPatch("{categoryId:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -113,16 +156,16 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
         // 404 before 403, and that order is right here - unlike the subject's delete (B-13), where the 409
         // would have leaked a child's plans. A category's existence is public by design: `List` and `Get`
         // hand every category to every creator, so there is nothing to hide behind the 404.
-        // The admin break-glass (B-178). Its REASON is the ownerless subject: a category created there would
-        // otherwise be editable by NOBODY - creating is open (B-157 decision 2), changing follows the subject,
-        // and a seeded subject has no owner. Its REACH is wider: a platform admin passes here for any
-        // subject, including one another creator owns. That is deliberate and matches the exercise
-        // (`ExercisePermissionService.CanWrite` takes `IsAdmin` the same way, for the same kind of emergency);
-        // narrowing it to `OwnerAdultId is null` would be a second, differently-shaped rule for the same idea.
-        // It does not free a household - no seeded adult carries the flag (checked), so the father still
-        // cannot clean up his own typo until B-170 decides the schema.
-        if (!ClaimsPrincipalExtensions.IsOwnedBy(category.Subject?.OwnerAdultId, User.CreatorId()) && !User.IsAdmin())
-            return this.ProblemWithCode(ApiErrors.NotOwner, "Only the owner of the subject may change its categories.");
+        // Two owner rights, either of which suffices (B-170), plus the admin break-glass (B-178). The
+        // admin's REACH is wider than its reason: a platform admin passes here for any subject, including
+        // one another creator owns. That is deliberate and matches the exercise
+        // (`ExercisePermissionService.CanWrite` takes `IsAdmin` the same way, for the same kind of
+        // emergency); narrowing it to `OwnerAdultId is null` would be a second, differently-shaped rule for
+        // the same idea. Since B-170 it is no longer the only way out of a household's own typo - it is the
+        // only way to touch a SEEDED category, which has neither bearer.
+        if (!MayWrite(category.OwnerAdultId, category.Subject?.OwnerAdultId, User.CreatorId(), User.IsAdmin()))
+            return this.ProblemWithCode(ApiErrors.NotOwner,
+                "Only the creator of this category, or the owner of its subject, may change it.");
 
         if (dto.Name is not null)
         {
@@ -139,8 +182,8 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Deletes a category; assigned exercises remain (FK is set to null). Only the owner of the subject, or a
-    /// platform admin, may do so. There is deliberately no in-use conflict: <c>Exercise.CategoryId</c> is optional, so the
+    /// Deletes a category; assigned exercises remain (FK is set to null). Only its creator, the owner of its
+    /// subject, or a platform admin, may do so. There is deliberately no in-use conflict: <c>Exercise.CategoryId</c> is optional, so the
     /// exercises only lose their assignment - the behaviour is unchanged by B-157.
     /// </summary>
     [HttpDelete("{categoryId:int}")]
@@ -153,9 +196,10 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
             .FirstOrDefaultAsync(c => c.Id == categoryId && c.SubjectId == subjectId, ct);
         if (category is null) return NotFound();
 
-        // Same break-glass as in Update (B-178) - see the reasoning there.
-        if (!ClaimsPrincipalExtensions.IsOwnedBy(category.Subject?.OwnerAdultId, User.CreatorId()) && !User.IsAdmin())
-            return this.ProblemWithCode(ApiErrors.NotOwner, "Only the owner of the subject may delete its categories.");
+        // Same rule as in Update (B-170/B-178) - see the reasoning there.
+        if (!MayWrite(category.OwnerAdultId, category.Subject?.OwnerAdultId, User.CreatorId(), User.IsAdmin()))
+            return this.ProblemWithCode(ApiErrors.NotOwner,
+                "Only the creator of this category, or the owner of its subject, may delete it.");
 
         db.ExerciseCategories.Remove(category);
         await db.SaveChangesAsync(ct);

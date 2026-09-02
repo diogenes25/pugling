@@ -726,10 +726,15 @@ namespace Pugling.Api.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("OwnerAdultId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("SubjectId")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("OwnerAdultId");
 
                     b.HasIndex("SubjectId", "Name")
                         .IsUnique();
@@ -2806,11 +2811,18 @@ namespace Pugling.Api.Data.Migrations
 
             modelBuilder.Entity("Pugling.Api.Models.ExerciseCategory", b =>
                 {
+                    b.HasOne("Pugling.Api.Models.Adult", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerAdultId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Pugling.Api.Models.Subject", "Subject")
                         .WithMany("Categories")
                         .HasForeignKey("SubjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Owner");
 
                     b.Navigation("Subject");
                 });

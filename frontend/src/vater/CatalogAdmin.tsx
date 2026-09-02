@@ -102,7 +102,7 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
             jede Übung hängt seit Kurzem an einer Unit statt an einem Kapitel.
           </p>
 
-          <CategorySection subject={subject} categories={categories.data} error={categories.error}
+          <CategorySection categories={categories.data} error={categories.error}
             busy={action.busy}
             onSave={(c, name) => act(() => api.updateCategory(subject.id, c.id, name), "Art umbenannt.", categories.reload)}
             onDelete={(c) => {
@@ -124,20 +124,24 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
  * **Das Formular liegt hier und ausdrücklich NICHT in `CategoryRows`.** Anlegen bleibt für jeden Creator
  * frei (B-157, Entscheidung 2), auch an einem fremden und an einem Fach aus dem Grundbestand: Wer es mit in
  * die Eigentums-Bedingung zieht, friert die Art-Achse aller Seed-Fächer ein — und das sind die einzigen, die
- * ein normaler Nutzer hat. Dass es in allen drei Fach-Zuständen dasteht, hält `CatalogAdmin.test.tsx`; als
- * bloßer Kommentar wäre die Entscheidung nicht abgesichert.
+ * ein normaler Nutzer hat.
+ *
+ * **Seit B-170 ist das strukturell gesichert, nicht mehr nur getestet:** Dieser Abschnitt bekommt das Fach
+ * gar nicht mehr, weil niemand darunter es noch braucht — er *kann* nicht danach gaten. Vorher hielten drei
+ * Fälle in `CatalogAdmin.test.tsx` die Zusage, einer je Fach-Zustand; ohne das Prop wären sie drei
+ * identische Renderings und damit drei Kopien einer Zusicherung, von denen keine anders fallen kann. Einer
+ * ist geblieben (das Formular ist überhaupt da), die Zusage selbst hängt jetzt an der Signatur.
  *
  * Eigener exportierter Baustein aus demselben Grund wie `SubjectRow`: `CatalogAdmin` lädt beim Fachwechsel
  * nach und hängt am Netz, dieser Abschnitt nicht.
  */
-export function CategorySection({ subject, categories, error, busy, onSave, onDelete, onCreate }: {
-  subject: SubjectResponse;
+export function CategorySection({ categories, error, busy, onSave, onDelete, onCreate }: {
   categories: CategoryResponse[] | null | undefined;
   /**
    * Als Prop und nicht im Baustein aus `useAsync` gelesen: Ein gescheitertes Laden und ein leeres Fach
    * sahen identisch aus, weil `CategoryRows` ohne Daten gar nichts rendert (B-174). Der Abschnitt ist
-   * der richtige Ort, weil er in allen drei Fach-Zuständen erscheint — unter einem fremden Fach hängt
-   * seit B-157 auch der Erklärsatz an den Arten, dort wurde die Fläche also vollständig stumm.
+   * der richtige Ort, weil er in allen drei Fach-Zuständen erscheint — vor B-170 hing unter einem fremden
+   * Fach auch der Erklärsatz an den Arten, dort wurde die Fläche also vollständig stumm.
    */
   error: string | null;
   busy: boolean;
@@ -158,7 +162,7 @@ export function CategorySection({ subject, categories, error, busy, onSave, onDe
           der Nutzer schon auf der Seite steht – ohne Rolle bemerkt ein Screenreader ihn nicht, und die
           Einfärbung allein ist keine Rückmeldung. */}
       {error && <div className="banner err" role="alert">Arten: {error}</div>}
-      <CategoryRows subject={subject} categories={categories} busy={busy} onSave={onSave} onDelete={onDelete} />
+      <CategoryRows categories={categories} busy={busy} onSave={onSave} onDelete={onDelete} />
       <NewName fieldId="ca-new-category" label="Neue Art" placeholder="z. B. Grammatik"
         busy={busy} onCreate={onCreate} />
     </>
@@ -166,50 +170,43 @@ export function CategorySection({ subject, categories, error, busy, onSave, onDe
 }
 
 /**
- * Die Art-Zeilen des gewählten Fachs – bearbeitbar nur für den Eigentümer des **Fachs** (B-157).
+ * Die Art-Zeilen des gewählten Fachs – bearbeitbar **pro Zeile** (B-170).
  *
- * Die Art hat keinen eigenen Eigentümer: sie gehört dem, dem ihr Fach gehört. Darum entscheidet
- * `subject.isMine` — dasselbe Feld, das schon die Fach-Zeile gatet, eine Ebene tiefer. Ein eigenes Flag am
- * `CategoryResponse` wäre eine zweite Kopie derselben Wahrheit.
+ * Bis B-170 entschied `subject.isMine` über die ganze Liste, und der Kommentar hier begründete das damit,
+ * die Art habe keinen eigenen Eigentümer; ein Flag am `CategoryResponse` wäre „eine zweite Kopie derselben
+ * Wahrheit". Beides ist überholt: Die Art hat seit B-170 einen eigenen Eigentümer, und `isOwn` ist keine
+ * Kopie, sondern die **Antwort** auf eine Frage mit zwei Trägern (Eigentümer der Art *oder* des Fachs oder
+ * Admin) – die der Client sonst nachrechnen müsste, mit einem Feld, das er nicht hat.
  *
- * Der Satz spricht über das **Fach**, nicht über die Arten: die Art hat keinen Eigentümer, über den man
- * etwas behaupten könnte. „Die Arten hat jemand anderes angelegt" wäre außerdem in *einem Klick* falsch —
- * Anlegen ist ja frei, und danach stünde der Satz über einer Art, die man selbst gerade erfunden hat.
+ * Die Folge für den Bildschirm: In **einem** Fach stehen jetzt beide Sorten Zeilen nebeneinander. In
+ * „Englisch" aus dem Grundbestand trägt „Grammatik" (geseedet) keine Knöpfe, eine selbst angelegte
+ * „Grammtik" beide. Ein Satz über die ganze Liste kann das nicht mehr sagen – er ist darum weg, und der
+ * Vorspann der Seite nennt stattdessen die Regel.
  *
- * Die Namen bleiben **lesbar**, nur ohne Bedienelemente: die Überschrift zählt sie, und eine Seite, die
- * „du kannst sie zum Filtern verwenden" sagt und dann keine zeigt, hält ihr eigenes Versprechen nicht.
+ * **Kein deaktivierter Knopf mit `title`:** Wo man nicht darf, fehlen die Bedienelemente. Ein
+ * `disabled`-Knopf bliebe im Fokusbaum und nennt seinen Grund nicht – der `title` erscheint gar nicht
+ * (B-160). Die Namen bleiben **lesbar**: eine Seite, die „du kannst sie zum Filtern verwenden" sagt und
+ * dann keine zeigt, hält ihr eigenes Versprechen nicht.
  */
-export function CategoryRows({ subject, categories, busy, onSave, onDelete }: {
-  subject: SubjectResponse;
+export function CategoryRows({ categories, busy, onSave, onDelete }: {
   categories: CategoryResponse[] | null | undefined;
   busy: boolean;
   onSave: (category: CategoryResponse, name: string) => void;
   onDelete: (category: CategoryResponse) => void;
 }) {
   if (!categories?.length) return null;
-  if (!subject.isMine) {
-    return (
-      <>
-        <p className="muted" style={{ fontSize: 13, marginTop: 8 }}>
-          {subject.ownerAdultId == null
-            ? `Diese Arten gehören zum Fach „${subject.name}" aus dem Grundbestand – ergänzen darfst du sie, `
-              + "umbenennen und löschen kann sie niemand."
-            : `Diese Arten gehören zum Fach „${subject.name}", das jemand anderes angelegt hat – ergänzen `
-              + "darfst du sie, umbenennen und löschen nur er."}
-        </p>
-        <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>
-          {categories.map((c) => c.name).join(" · ")}
-        </p>
-      </>
-    );
-  }
   return (
     <>
-      {categories.map((c) => (
+      {categories.map((c) => (c.isOwn ? (
         <NameRow key={c.id} busy={busy} fieldId={`ca-category-${c.id}`} label="Art"
           srName={`Art „${c.name}"`} value={c.name}
           onSave={(name) => onSave(c, name)} onDelete={() => onDelete(c)} />
-      ))}
+      ) : (
+        /* Nur lesbar. `aria-hidden` wäre falsch: der Name ist Inhalt, nur nicht bedienbar. */
+        <p key={c.id} className="muted" style={{ fontSize: 13, margin: "6px 0" }}>
+          {c.name}
+        </p>
+      )))}
     </>
   );
 }

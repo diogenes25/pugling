@@ -268,7 +268,7 @@
     "role": "father",
     "requestBodyJson": "{\n  \u0022name\u0022: \u0022Vokabeln\u0022\n}",
     "expectedStatus": 201,
-    "responseBodyJson": "{\n  \u0022id\u0022: 8,\n  \u0022subjectId\u0022: 5,\n  \u0022name\u0022: \u0022Vokabeln\u0022,\n  \u0022createdAt\u0022: \u0022\u003Ctimestamp\u003E\u0022\n}",
+    "responseBodyJson": "{\n  \u0022id\u0022: 8,\n  \u0022subjectId\u0022: 5,\n  \u0022name\u0022: \u0022Vokabeln\u0022,\n  \u0022createdAt\u0022: \u0022\u003Ctimestamp\u003E\u0022,\n  \u0022isOwn\u0022: true\n}",
     "isError": false,
     "expectedCode": null
   },

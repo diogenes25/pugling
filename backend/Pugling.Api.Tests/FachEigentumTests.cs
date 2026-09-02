@@ -41,6 +41,27 @@ public class FachEigentumTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.Equal(code, body.GetProperty("code").GetString());
     }
 
+    /// <summary>
+    /// Reads the id of a <b>seeded</b> category by name. Deliberately not "the first one in the list":
+    /// the list is ordered by name, so any category a test creates with an alphabetically earlier name
+    /// silently became "the seeded one" - and since B-170 such a category has an owner, which turned a
+    /// fail-closed assertion green from the wrong end. Measured, not feared: the moment B-170's own cases
+    /// added an <c>Art-…</c> category to "Englisch", <c>Arten_EinesSeedFachs_SindFuerJedenGesperrt</c>
+    /// picked it and failed.
+    /// <para>
+    /// Coupling the name to the seed is the same coupling <see cref="SeedFachIdAsync"/> already accepts for
+    /// "Englisch", and it is the honest one: what the case needs is a row with <b>neither</b> owner, and
+    /// only the seed produces that.
+    /// </para>
+    /// </summary>
+    private static async Task<int> SeedArtIdAsync(HttpClient creator, int seedFachId)
+    {
+        var list = await creator.GetFromJsonAsync<JsonElement>(
+            $"/api/v1/creator/subjects/{seedFachId}/categories");
+        var art = list.EnumerateArray().First(c => c.GetProperty("name").GetString() == "Vokabeln");
+        return art.GetProperty("id").GetInt32();
+    }
+
     /// <summary>Reads the id of a seeded subject – it carries no owner and is the fail-closed case.</summary>
     private static async Task<int> SeedFachIdAsync(HttpClient creator)
     {
@@ -280,8 +301,7 @@ public class FachEigentumTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     {
         var adult = await TestApi.AdultAsync(factory);
         var seedId = await SeedFachIdAsync(adult);
-        var artId = (await adult.GetFromJsonAsync<JsonElement>($"/api/v1/creator/subjects/{seedId}/categories"))
-            .EnumerateArray().First().GetProperty("id").GetInt32();
+        var artId = await SeedArtIdAsync(adult, seedId);
         var fremder = await ZweiterCreatorAsync("2119");
 
         foreach (var client in new[] { adult, fremder })
@@ -324,14 +344,15 @@ public class FachEigentumTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
-    /// B-178: a category created under an ownerless (seeded) subject was editable by <b>nobody</b> - a typo
-    /// stayed in the pre-filter list forever, and deleting the subject is barred too. The admin break-glass
-    /// makes the state repairable at all; the precedent is
+    /// B-178: the admin break-glass on a subject without an owner. The precedent is
     /// <c>ExerciseControllerBase</c> ("edit orphaned exercises in an emergency").
     /// <para>
-    /// This does <b>not</b> free the household: no seeded adult carries the flag (checked, not assumed), so
-    /// the father still cannot clean up until B-170 decides the schema. The case exists to pin that the valve
-    /// is real, not that the problem is solved.
+    /// <b>Its precondition changed with B-170, and the change is the point.</b> It used to let the very
+    /// adult who created the category prove the lock - which was the defect, pinned as an assurance: a typo
+    /// in a seeded subject stayed in the pre-filter list forever. Since B-170 that adult is the category's
+    /// owner and gets <c>200</c>. The stranger now carries the precondition: they own neither the category
+    /// nor the subject, so their <c>403</c> still proves the valve is needed, without pinning the defect
+    /// along with it.
     /// </para>
     /// </summary>
     [Fact]
@@ -341,9 +362,10 @@ public class FachEigentumTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var seedId = await SeedFachIdAsync(adult);
         var artId = await ArtAsync(adult, seedId);
 
-        // Precondition: without the flag it is barred - otherwise the case below could pass for the wrong
-        // reason (a subject that turns out to have an owner after all).
-        var ohneVentil = await adult.PatchAsJsonAsync(
+        // Precondition: for someone who owns neither bearer it is barred - otherwise the case below could
+        // pass for the wrong reason (a subject that turns out to have an owner after all).
+        var fremder = await ZweiterCreatorAsync("2121");
+        var ohneVentil = await fremder.PatchAsJsonAsync(
             $"/api/v1/creator/subjects/{seedId}/categories/{artId}", new { name = "Vorher" });
         Assert.Equal(HttpStatusCode.Forbidden, ohneVentil.StatusCode);
         await AssertCodeAsync(ohneVentil, "not_owner");
@@ -356,6 +378,127 @@ public class FachEigentumTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
         var delete = await admin.DeleteAsync($"/api/v1/creator/subjects/{seedId}/categories/{artId}");
         Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
+    }
+
+    /// <summary>
+    /// <b>AK 2 von B-170 — der Kern der Story.</b> Wer eine Art in ein Fach ohne Eigentümer legt, darf sie
+    /// auch wieder entfernen. Vor <c>3b65475</c> war genau dieses <c>DELETE</c> ein <c>204</c>; B-157 machte
+    /// daraus ein <c>403</c> für <i>jeden</i>, und für einen neuen Nutzer sind die geseedeten die einzigen
+    /// Fächer, die er hat.
+    /// <para>
+    /// Rote Probe: <c>IsOwnedBy(category.OwnerAdultId, fid)</c> aus <c>MayWrite</c> nehmen — dann fällt
+    /// dieser Fall, und nur er.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task Anleger_DarfSeineArt_ImSeedFach_Loeschen()
+    {
+        var adult = await TestApi.AdultAsync(factory);
+        var seedId = await SeedFachIdAsync(adult);
+        var artId = await ArtAsync(adult, seedId);
+
+        var delete = await adult.DeleteAsync($"/api/v1/creator/subjects/{seedId}/categories/{artId}");
+        Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
+
+        // Und sie ist wirklich weg - sonst behauptete der 204 mehr als er tut.
+        var danach = await adult.GetAsync($"/api/v1/creator/subjects/{seedId}/categories/{artId}");
+        Assert.Equal(HttpStatusCode.NotFound, danach.StatusCode);
+    }
+
+    /// <summary>
+    /// <b>AK 3.</b> Umbenennen folgt dem Löschen. Ohne diesen Fall bliebe eine Art wegwerfbar, aber nicht
+    /// korrigierbar — bei einem Tippfehler die falsche Hälfte.
+    /// </summary>
+    [Fact]
+    public async Task Anleger_DarfSeineArt_ImSeedFach_Umbenennen()
+    {
+        var adult = await TestApi.AdultAsync(factory);
+        var seedId = await SeedFachIdAsync(adult);
+        var artId = await ArtAsync(adult, seedId);
+        var berichtigt = TestApi.UniqueName("Grammatik");
+
+        var patch = await adult.PatchAsJsonAsync(
+            $"/api/v1/creator/subjects/{seedId}/categories/{artId}", new { name = berichtigt });
+        Assert.Equal(HttpStatusCode.OK, patch.StatusCode);
+        var body = await patch.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(berichtigt, body.GetProperty("name").GetString());
+    }
+
+    /// <summary>
+    /// <b>AK 5.</b> Heutiges Verhalten, das die neue Bedingung nicht verlieren darf: In <i>meinem</i> Fach
+    /// darf ich auch eine Art entfernen, die ein Fremder dort angelegt hat. Anlegen ist überall frei, also
+    /// ist das die einzige Handhabe gegen eine fremde Zeile in meiner Vorfilterung.
+    /// <para>
+    /// Rote Probe: den Fach-Zweig aus <c>MayWrite</c> nehmen — dann fällt dieser Fall.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task Fach_Eigentuemer_DarfEineFremdeArt_InSeinemFach_Loeschen()
+    {
+        var adult = await TestApi.AdultAsync(factory);
+        var subjectId = await FachAsync(adult);
+
+        // Die Art legt der FREMDE an - er wird ihr Eigentümer, das Fach bleibt meins.
+        var fremder = await ZweiterCreatorAsync("2122");
+        var artId = await ArtAsync(fremder, subjectId);
+
+        var delete = await adult.DeleteAsync($"/api/v1/creator/subjects/{subjectId}/categories/{artId}");
+        Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
+    }
+
+    /// <summary>
+    /// <b>AK 6.</b> Die Reichweite aus Entscheidung 5: Meine Art darf ich auch aus einem Fach entfernen, das
+    /// einem <i>anderen</i> Creator gehört. Ohne diese Zusicherung wäre nicht unterscheidbar, ob die Regel
+    /// wie gewollt ohne <c>null</c>-Sonderfall gebaut wurde — eine Fassung, die den Art-Eigentümer nur in
+    /// eigentümerlosen Fächern durchlässt, hielte alle anderen Fälle dieser Klasse.
+    /// </summary>
+    [Fact]
+    public async Task Anleger_DarfSeineArt_AuchImFremdenFach_Loeschen()
+    {
+        var adult = await TestApi.AdultAsync(factory);
+        var fremder = await ZweiterCreatorAsync("2123");
+
+        // Das Fach gehört dem Fremden, die Art lege ICH an.
+        var fremdesFach = await FachAsync(fremder);
+        var artId = await ArtAsync(adult, fremdesFach);
+
+        var delete = await adult.DeleteAsync($"/api/v1/creator/subjects/{fremdesFach}/categories/{artId}");
+        Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
+    }
+
+    /// <summary>
+    /// <b>AK 7.</b> <c>isOwn</c> sagt, ob der Aufrufer schreiben darf — und trägt damit die
+    /// Zeilen-Entscheidung der Oberfläche. Der Fall prüft <b>beide</b> Antworten am selben Fach und über
+    /// beide Lesewege (Liste und Einzelabruf), denn ein Feld, das immer <c>true</c> liefert, wäre mit nur
+    /// einer Hälfte nicht zu entlarven.
+    /// </summary>
+    [Fact]
+    public async Task IsOwn_TrenntDieEigeneArt_VonDerGeseedeten_InListeUndEinzelabruf()
+    {
+        var adult = await TestApi.AdultAsync(factory);
+        var seedId = await SeedFachIdAsync(adult);
+        var eigene = await ArtAsync(adult, seedId);
+
+        var liste = await adult.GetFromJsonAsync<JsonElement>($"/api/v1/creator/subjects/{seedId}/categories");
+        var zeilen = liste.EnumerateArray().ToList();
+
+        var meine = zeilen.First(c => c.GetProperty("id").GetInt32() == eigene);
+        Assert.True(meine.GetProperty("isOwn").GetBoolean());
+
+        // Eine geseedete Art im selben Fach: sie hat keinen der beiden Träger. Beim NAMEN genommen, nicht
+        // als „die andere" - eine Art, die ein anderer Fall hier liegen ließ, gehörte womöglich mir und
+        // machte die Zusicherung von der Testreihenfolge abhängig.
+        var geseedetId = await SeedArtIdAsync(adult, seedId);
+        var geseedet = zeilen.First(c => c.GetProperty("id").GetInt32() == geseedetId);
+        Assert.False(geseedet.GetProperty("isOwn").GetBoolean());
+
+        // Derselbe Satz über den Einzelabruf - er projiziert an einer anderen Stelle im Controller.
+        var einzeln = await adult.GetFromJsonAsync<JsonElement>(
+            $"/api/v1/creator/subjects/{seedId}/categories/{eigene}");
+        Assert.True(einzeln.GetProperty("isOwn").GetBoolean());
+        var einzelnFremd = await adult.GetFromJsonAsync<JsonElement>(
+            $"/api/v1/creator/subjects/{seedId}/categories/{geseedetId}");
+        Assert.False(einzelnFremd.GetProperty("isOwn").GetBoolean());
     }
 
     /// <summary>

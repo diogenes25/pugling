@@ -24,8 +24,23 @@ public record CreateSubjectDto(string Name);
 /// <summary>Partial change to a subject; empty fields remain unchanged.</summary>
 public record UpdateSubjectDto(string? Name);
 
-/// <summary>An exercise category within a subject.</summary>
-public record CategoryResponse(int Id, int SubjectId, string Name, DateTime CreatedAt);
+/// <summary>
+/// An exercise category within a subject. Every creator may read it and add new ones; IsOwn says whether
+/// this caller may also rename or delete it, so a client can show the difference per row instead of
+/// letting the user find out through a 403.
+/// </summary>
+/// <param name="Id">Category id.</param>
+/// <param name="SubjectId">The subject it belongs to.</param>
+/// <param name="Name">Display name (e.g. "Grammar").</param>
+/// <param name="CreatedAt">When the category was created (UTC).</param>
+/// <param name="IsOwn">
+/// Whether the caller may rename or delete this category: its creator, the owner of its subject, or a
+/// platform admin (B-170). Not the same question as "did I create it" - the right has two bearers, and a
+/// client that needs to draw a button needs the answer, not one of its halves. Named IsOwn rather than
+/// IsMine because the contract says IsOwn seven times against one (B-156), and there it already carries
+/// exactly this "may write (owner or grant)" meaning.
+/// </param>
+public record CategoryResponse(int Id, int SubjectId, string Name, DateTime CreatedAt, bool IsOwn);
 
 /// <summary>Input for creating a category.</summary>
 public record CreateCategoryDto(string Name);

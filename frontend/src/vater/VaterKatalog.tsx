@@ -22,15 +22,17 @@ export function VaterKatalog() {
       {/* „Anlegen" gilt uneingeschränkt, „umbenennen und löschen" nicht mehr: seit B-13 darf das nur der
           Eigentümer, und ein Fach aus dem Grundbestand niemand. Der Satz sagt das, weil er sonst genau
           das verspricht, was die Karte darunter dann verweigert (gefunden im Rollengang zu B-154). */}
-      {/* B-178: Der Satz stand hier zwei Stories lang falsch – er versprach für Arten „was du selbst
-          angelegt hast", während der Server seit B-157 für jeden `403 not_owner` liefert, sobald das Fach
-          keinen Eigentümer hat (und das sind die vier geseedeten). Das Recht hängt am **Fach**, nicht daran,
-          wer die Art angelegt hat. Sobald B-170 entschieden ist, ändert sich das – dann gehört der Satz
-          erneut angefasst, und lieber das als heute eine Zusage, die der Server bricht. */}
+      {/* Vierte Fassung dieses Satzes, und die Kette ist der Grund, ihn hier zu erklären statt ihn nur zu
+          ändern: B-154 versprach „was du selbst angelegt hast" (damals zu streng, harmlos), B-157 machte
+          ihn dadurch falsch in der GEFÄHRLICHEN Richtung (Versprechen > Server), B-178 setzte ihn auf die
+          Wahrheit von damals („nur wer das Fach angelegt hat"), und B-170 gibt der Art einen eigenen
+          Eigentümer. Jetzt nennt er BEIDE Träger — und ist damit erstmals so genau wie der Server.
+          Fach und Art getrennt zu nennen ist nicht Pedanterie: für einen neuen Nutzer sind alle Fächer
+          mitgeliefert, „nur wer das Fach angelegt hat" hieße für ihn also weiterhin „niemand". */}
       <p className="sub">
         Fächer und Arten sind der <strong>gemeinsame</strong> Rahmen aller Übungen – auch der von anderen
-        Vätern. Neue anlegen darf jeder; umbenennen und löschen nur, wer das <strong>Fach</strong> angelegt
-        hat – bei den mitgelieferten Fächern also niemand.
+        Vätern. Neue anlegen darf jeder; umbenennen und löschen nur, wer das <strong>Fach</strong> oder
+        die <strong>Art</strong> selbst angelegt hat – die mitgelieferten kann niemand ändern.
       </p>
       {subjects.error && <div className="banner err">{subjects.error}</div>}
       {/*

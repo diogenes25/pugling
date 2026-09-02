@@ -95,21 +95,25 @@ describe("NameRow – kennt kein Eigentum", () => {
 });
 
 /*
- * B-157. Die Art hat keinen eigenen Eigentümer - sie gehört dem, dem ihr Fach gehört. Bis dahin bot die
- * Katalogseite "OK" und "Löschen" an jeder Art an, auch unter einem fremden Fach, und der Server nahm sie
- * seit dieser Story mit 403 not_owner nicht mehr an.
+ * B-170. Bis dahin entschied das FACH über alle seine Arten, und dieser Block hieß entsprechend „das Fach
+ * entscheidet". Das war zwei Stories lang die Wahrheit und ist es nicht mehr: Anlegen ist überall frei, also
+ * bekam die Art einen eigenen Eigentümer — sonst blieb eine selbst angelegte Art im Grundbestands-Fach für
+ * immer stehen, weil dort niemand das Fach besitzt.
  *
- * Der wichtigste Fall ist der letzte: das Anlege-Formular bleibt IMMER bedienbar. Es liegt darum bewusst
- * außerhalb von `CategoryRows` - wäre es drin, haette diese Story die Art-Achse aller Seed-Fächer
- * eingefroren.
+ * Was der Block jetzt prüft, ist darum die BINDUNG an `isOwn`, nicht mehr an `subject.isMine`. Der
+ * entscheidende Fall ist der gemischte: In einem Fach stehen beide Sorten Zeilen nebeneinander. Eine
+ * Fassung, die weiter pro Fach entscheidet, kann ihn nicht bestehen — und genau darum trägt er.
+ *
+ * `subject` ist als Prop entfallen: `CategoryRows` braucht das Fach nicht mehr, und es als Prop zu behalten
+ * hieße, die alte Bindung offen zu lassen.
  */
 function art(over: Partial<CategoryResponse> = {}): CategoryResponse {
-  return { id: 9, subjectId: 3, name: "Grammatik", createdAt: "2026-08-13T00:00:00Z", ...over };
+  return { id: 9, subjectId: 3, name: "Grammatik", createdAt: "2026-08-13T00:00:00Z", isOwn: true, ...over };
 }
 
-describe("CategoryRows – das Fach entscheidet, wer die Arten ändern darf", () => {
-  it("zeigt am eigenen Fach je Art ein Feld und einen Löschknopf", () => {
-    render(<CategoryRows subject={subject()} categories={[art(), art({ id: 10, name: "Vokabeln" })]}
+describe("CategoryRows – die Art entscheidet, wer sie ändern darf", () => {
+  it("zeigt an eigenen Arten je ein Feld und einen Löschknopf", () => {
+    render(<CategoryRows categories={[art(), art({ id: 10, name: "Vokabeln" })]}
       busy={false} onSave={() => {}} onDelete={() => {}} />);
 
     expect(screen.getAllByLabelText("Art")).toHaveLength(2);
@@ -119,8 +123,7 @@ describe("CategoryRows – das Fach entscheidet, wer die Arten ändern darf", ()
 
   it("reicht die geänderte Art samt neuem Namen nach oben", () => {
     const onSave = vi.fn();
-    render(<CategoryRows subject={subject()} categories={[art()]}
-      busy={false} onSave={onSave} onDelete={() => {}} />);
+    render(<CategoryRows categories={[art()]} busy={false} onSave={onSave} onDelete={() => {}} />);
 
     fireEvent.change(screen.getByLabelText("Art"), { target: { value: "Grammatik neu" } });
     fireEvent.click(screen.getByRole("button", { name: /speichern$/ }));
@@ -128,43 +131,52 @@ describe("CategoryRows – das Fach entscheidet, wer die Arten ändern darf", ()
     expect(onSave).toHaveBeenCalledWith(art(), "Grammatik neu");
   });
 
-  it("zeigt am fremden Fach keine Knöpfe, sondern den Grund – und nennt das Fach", () => {
-    render(<CategoryRows subject={subject({ isMine: false, ownerAdultId: 7 })} categories={[art()]}
+  /*
+   * Der tragende Fall dieser Story: ZWEI Arten im selben Fach, eine eigene und eine fremde. Eine Fassung,
+   * die pro Fach entscheidet, liefert hier entweder zwei Felder oder keins — beides fällt hier.
+   */
+  it("entscheidet pro Zeile: die eigene Art trägt Knöpfe, die fremde daneben nicht", () => {
+    render(<CategoryRows
+      categories={[art({ id: 9, name: "Grammtik", isOwn: true }),
+        art({ id: 10, name: "Grammatik", isOwn: false })]}
+      busy={false} onSave={() => {}} onDelete={() => {}} />);
+
+    // Genau EIN Feld, und es gehört der eigenen Art.
+    expect(screen.getAllByLabelText("Art")).toHaveLength(1);
+    expect((screen.getByLabelText("Art") as HTMLInputElement).value).toBe("Grammtik");
+    expect(screen.getByRole("button", { name: 'Art „Grammtik" löschen' })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: 'Art „Grammatik" löschen' })).toBeNull();
+
+    // Die fremde bleibt LESBAR - eine Seite, die zum Filtern auffordert und die Namen verschweigt, hält
+    // ihr eigenes Versprechen nicht.
+    expect(screen.getByText("Grammatik")).toBeTruthy();
+  });
+
+  it("zeigt an einer fremden Art keine Bedienelemente, aber ihren Namen", () => {
+    render(<CategoryRows categories={[art({ isOwn: false })]}
       busy={false} onSave={() => {}} onDelete={() => {}} />);
 
     expect(screen.queryByLabelText("Art")).toBeNull();
     expect(screen.queryByRole("button", { name: /löschen$/ })).toBeNull();
-    // Der Satz muss das FACH nennen, nicht über die Arten behaupten, jemand habe sie angelegt: die Art hat
-    // keinen Eigentümer, und anlegen darf sie hier ohnehin jeder – der Satz wäre in einem Klick falsch.
-    expect(screen.getByText(/Fach „Englisch", das jemand anderes angelegt hat/)).toBeTruthy();
-    expect(screen.getByText(/ergänzen darfst du sie/)).toBeTruthy();
+    expect(screen.getByText("Grammatik")).toBeTruthy();
   });
 
-  it("nennt beim Fach aus dem Grundbestand niemanden als Eigentümer", () => {
-    render(<CategoryRows subject={subject({ isMine: false, ownerAdultId: null })} categories={[art()]}
+  /*
+   * Kein `disabled`-Knopf mit `title`: der bliebe im Fokusbaum und nennt seinen Grund nicht — der `title`
+   * erscheint gar nicht (B-160). Der Fall pinnt die Entscheidung, weil sie sonst nur ein Kommentar wäre.
+   */
+  it("baut an einer fremden Art keinen gesperrten Knopf ein", () => {
+    const { container } = render(<CategoryRows categories={[art({ isOwn: false })]}
       busy={false} onSave={() => {}} onDelete={() => {}} />);
 
-    expect(screen.queryByLabelText("Art")).toBeNull();
-    expect(screen.getByText(/aus dem Grundbestand/)).toBeTruthy();
-    expect(screen.queryByText(/jemand anderes angelegt hat/)).toBeNull();
-  });
-
-  it("behandelt ein fehlendes ownerAdultId wie ownerlos, nicht wie fremd", () => {
-    // Dieselbe Sensitivitätslücke, die `SubjectRow` schon abdeckt: der Vertrag gibt `ownerAdultId` optional
-    // heraus, ein strenges `=== null` erzeugte hier den erfundenen fremden Creator.
-    const ohneFeld = subject({ isMine: false });
-    delete (ohneFeld as { ownerAdultId?: number | null }).ownerAdultId;
-
-    render(<CategoryRows subject={ohneFeld} categories={[art()]}
-      busy={false} onSave={() => {}} onDelete={() => {}} />);
-
-    expect(screen.getByText(/aus dem Grundbestand/)).toBeTruthy();
+    expect(container.querySelectorAll("button")).toHaveLength(0);
+    expect(container.querySelectorAll("[title]")).toHaveLength(0);
   });
 
   it("schweigt, wenn das Fach gar keine Arten hat", () => {
-    // Sonst stünde unter einem fremden leeren Fach ein Satz ueber Arten, die es nicht gibt.
-    const { container } = render(<CategoryRows subject={subject({ isMine: false, ownerAdultId: 7 })}
-      categories={[]} busy={false} onSave={() => {}} onDelete={() => {}} />);
+    // Sonst stünde unter einem leeren Fach ein Satz ueber Arten, die es nicht gibt.
+    const { container } = render(<CategoryRows categories={[]}
+      busy={false} onSave={() => {}} onDelete={() => {}} />);
 
     // `jest-dom` ist in diesem Frontend nicht eingerichtet – geprüft wird mit den nackten Matchern.
     expect(container.textContent).toBe("");
@@ -172,34 +184,26 @@ describe("CategoryRows – das Fach entscheidet, wer die Arten ändern darf", ()
 });
 
 /*
- * Die zweite Hälfte von Entscheidung 2, und der Grund, warum es diesen Baustein überhaupt gibt: **Anlegen
- * bleibt frei**, in allen drei Fach-Zuständen. Ohne diese drei Fälle wäre der gefürchtete Fehlgriff — das
- * Formular mit in die Eigentums-Bedingung zu ziehen — grün durchgegangen, und die Entscheidung wäre nur ein
- * Kommentar gewesen (vom `frontend-reviewer` gefunden).
+ * Die zweite Hälfte von Entscheidung 2 (B-157): **Anlegen bleibt frei**, in jedem Fach-Zustand. Der
+ * gefürchtete Fehlgriff wäre, das Formular mit in die Eigentums-Bedingung zu ziehen — dann friert die
+ * Art-Achse aller Seed-Fächer ein, und das sind die einzigen, die ein normaler Nutzer hat.
+ *
+ * **Seit B-170 hält das die Signatur, nicht mehr diese Fälle.** `CategorySection` bekommt das Fach gar
+ * nicht mehr, kann also nicht danach gaten. Vorher standen hier drei Fälle, einer je Fach-Zustand; ohne
+ * das Prop wären sie drei identische Renderings — drei Kopien einer Zusicherung, von denen keine anders
+ * fallen kann. Geblieben ist der eine Fall, der noch etwas trägt: das Formular ist überhaupt da und
+ * reicht durch. Fällt das Prop je zurück, gehören die drei Zustände mit ihm zurück.
  */
 const anlegenKnopf = () => screen.queryByRole("button", { name: "Neue Art anlegen" });
 
-describe("CategorySection – das Anlege-Formular bleibt in jedem Zustand bedienbar", () => {
-  const zustaende: [string, Partial<SubjectResponse>][] = [
-    ["eigenes Fach", {}],
-    ["fremdes Fach", { isMine: false, ownerAdultId: 7 }],
-    ["Fach aus dem Grundbestand", { isMine: false, ownerAdultId: null }],
-  ];
-
-  for (const [name, over] of zustaende) {
-    it(`bietet „Neue Art" am ${name} an`, () => {
-      render(<CategorySection error={null} subject={subject(over)} categories={[art()]} busy={false}
-        onSave={() => {}} onDelete={() => {}} onCreate={async () => true} />);
-
-      expect(screen.getByLabelText("Neue Art")).toBeTruthy();
-      expect(anlegenKnopf()).not.toBeNull();
-    });
-  }
-
-  it("legt wirklich an und leert danach das Feld", () => {
+describe("CategorySection – das Anlege-Formular", () => {
+  it('bietet „Neue Art" an und reicht die Eingabe durch', () => {
     const onCreate = vi.fn(async () => true);
-    render(<CategorySection error={null} subject={subject({ isMine: false, ownerAdultId: 7 })} categories={[art()]}
-      busy={false} onSave={() => {}} onDelete={() => {}} onCreate={onCreate} />);
+    render(<CategorySection error={null} categories={[art()]} busy={false}
+      onSave={() => {}} onDelete={() => {}} onCreate={onCreate} />);
+
+    expect(screen.getByLabelText("Neue Art")).toBeTruthy();
+    expect(anlegenKnopf()).not.toBeNull();
 
     fireEvent.change(screen.getByLabelText("Neue Art"), { target: { value: "Hörverstehen" } });
     fireEvent.submit(screen.getByLabelText("Neue Art").closest("form")!);
@@ -207,17 +211,21 @@ describe("CategorySection – das Anlege-Formular bleibt in jedem Zustand bedien
     expect(onCreate).toHaveBeenCalledWith("Hörverstehen");
   });
 
-  it("zeigt am fremden Fach die Namen weiter lesbar, nur ohne Knöpfe", () => {
-    // Die Überschrift zählt die Arten – eine Seite, die „du kannst sie zum Filtern verwenden" sagt und dann
-    // keine zeigt, hält ihr eigenes Versprechen nicht.
-    render(<CategorySection error={null} subject={subject({ isMine: false, ownerAdultId: 7 })}
-      categories={[art(), art({ id: 10, name: "Vokabeln" })]} busy={false}
+  it("zeigt fremde Arten weiter lesbar, nur ohne Knöpfe", () => {
+    // Die Überschrift zählt die Arten – eine Seite, die „du kannst sie zum Filtern verwenden" sagt und
+    // dann keine zeigt, hält ihr eigenes Versprechen nicht.
+    render(<CategorySection error={null}
+      categories={[art({ isOwn: false }), art({ id: 10, name: "Vokabeln", isOwn: false })]} busy={false}
       onSave={() => {}} onDelete={() => {}} onCreate={async () => true} />);
 
-    expect(screen.getByText(/Grammatik · Vokabeln/)).toBeTruthy();
+    expect(screen.getByText("Grammatik")).toBeTruthy();
+    expect(screen.getByText("Vokabeln")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /löschen$/ })).toBeNull();
+    // Das Anlegen bleibt daneben bedienbar - der Kern von Entscheidung 2.
+    expect(anlegenKnopf()).not.toBeNull();
   });
 });
+
 
 /*
  * B-174. „Dieses Fach hat keine Arten" und „das Laden ist gescheitert" sahen identisch aus:
@@ -226,28 +234,27 @@ describe("CategorySection – das Anlege-Formular bleibt in jedem Zustand bedien
  * stumm gebliebenen Liste eine Art neu anlegt, erzeugt eine Dublette im GETEILTEN Katalog, und die ist in
  * einem Grundbestands-Fach nach B-157 von niemandem mehr löschbar.
  *
- * Geprüft wird `CategorySection`, weil der Abschnitt in allen drei Fach-Zuständen rendert – der stumme
- * Fall ist unter einem fremden Fach am schlimmsten, dort hängt seit B-157 auch der Erklärsatz an den
- * Arten.
+ * Geprüft wird `CategorySection`, weil der Abschnitt in jedem Fach-Zustand rendert.
+ *
+ * **B-170 hat hier einen Fall zusammengelegt, und der Grund gehört dazu:** Vorher gab es „am eigenen
+ * Fach" und „unter einem fremden Fach, wo sonst gar nichts stünde". Der zweite lebte davon, dass die
+ * Fläche unter einem fremden Fach vollständig stumm war — diesen Zustand gibt es nicht mehr (entschieden
+ * wird pro Art, und die Namen bleiben immer lesbar), und `CategorySection` bekommt das Fach ohnehin nicht
+ * mehr. Zwei identische Renderings wären zwei Kopien einer Zusicherung, von denen keine anders fallen
+ * kann; einer trägt, was noch zu tragen ist.
  */
 describe("CategorySection – ein gescheitertes Laden sieht nicht aus wie ein leeres Fach", () => {
   const props = {
     busy: false, onSave: () => {}, onDelete: () => {}, onCreate: async () => true,
   };
 
-  it("zeigt den Fehler am eigenen Fach", () => {
-    render(<CategorySection subject={subject()} categories={null} error="Netz weg" {...props} />);
-    expect(screen.getByText(/Netz weg/)).toBeTruthy();
-  });
-
-  it("zeigt ihn auch unter einem fremden Fach, wo sonst gar nichts stünde", () => {
-    render(<CategorySection subject={subject({ isMine: false, ownerAdultId: 7 })}
-      categories={null} error="Netz weg" {...props} />);
+  it("zeigt den Fehler, statt wie ein leeres Fach auszusehen", () => {
+    render(<CategorySection categories={null} error="Netz weg" {...props} />);
     expect(screen.getByText(/Netz weg/)).toBeTruthy();
   });
 
   it("schweigt, wenn wirklich nur nichts da ist", () => {
-    render(<CategorySection subject={subject()} categories={[]} error={null} {...props} />);
+    render(<CategorySection categories={[]} error={null} {...props} />);
     // Auf das PRÄFIX des Banners prüfen, nicht auf den Fehlertext: „Netz weg" allein wäre schon dadurch
     // abwesend, dass hier kein Fehler übergeben wurde – die Zusicherung fiele also nie. Diese hier fällt,
     // sobald der Banner unbedingt rendert. (Eine frühere Fassung prüfte `role="alert"`, das es zu dem

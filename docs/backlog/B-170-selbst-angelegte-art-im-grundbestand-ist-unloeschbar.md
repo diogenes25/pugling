@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/backend, bereich/frontend, rolle/creator]
+tags: [typ/story, status/in-arbeit, bereich/backend, bereich/frontend, rolle/creator]
 aliases: [unloeschbare Art, Grammtik bleibt fuer immer, B-157 nahm eine Faehigkeit weg]
-status: geschaetzt
+status: in-arbeit
 prio: P1
 art: Defekt
 groesse: M
@@ -13,7 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-157]
-wartet_auf: ""
+wartet_auf: pugling-reviewer + frontend-reviewer
 ---
 
 # B-170 · Eine selbst angelegte Art im Grundbestands-Fach ist unlöschbar — und der Seitentext verspricht das Gegenteil
@@ -321,3 +321,57 @@ müssten oder das Frontend-Tor mehr als diesen einen Verbraucher hätte.
   Der größte einzelne Posten liegt nicht im Backend, sondern im Frontend: ein `describe`-Block mit sechs
   Fällen, dessen **Titel** („das Fach entscheidet, wer die Arten ändern darf") durch diese Story falsch
   wird — umschreiben, nicht ergänzen.
+- 2026-09-02 · **Gebaut** (`geschaetzt` → `in-arbeit`), Angriffsplan in der geplanten Reihenfolge.
+  **Alle zehn Akzeptanzkriterien erfüllt**, jedes tragende mit roter Probe an *seiner* Zusicherung:
+
+  | Probe | erwartet / gemessen |
+  |---|---|
+  | Art-Zweig aus `MayWrite` entfernt | rot: **AK 2, 3, 6** — AK 5 blieb grün |
+  | Fach-Zweig aus `MayWrite` entfernt | rot: **AK 5** allein |
+  | Art-Zweig aus der Lese-Projektion entfernt | rot: **AK 7** allein |
+  | `isOwn` pro Zeile ignoriert (Frontend) | rot: 4 Fälle, u. a. der gemischte |
+  | Server auf die Regel vor B-170 zurückgesetzt | rot: die E2E an Zeile 54 (eigene Zeile ohne Knöpfe) |
+
+  **Verifikation:** **844/844** Backend (+5 Fälle), **325/325** vitest, **46/46** E2E (+1 neue Spec),
+  `tsc` sauber, `dotnet format` und `markdownlint` sauber. Snapshot-Diff **genau 12 Zeilen**: Spalte,
+  FK-Index, `SetNull`, Navigation — kein DB-Default nachgewachsen (Risiko 2 erledigt).
+
+  **Die Schätzung lag an drei Stellen daneben, und zwar nach oben wie nach unten:**
+  1. **Ein Tor mehr als geplant.** `SchemaGuardTests.Jeder_Fremdschluessel_Hat_Ein_Abgenommenes_Loeschverhalten`
+     verlangt jeden neuen Fremdschlüssel im abgenommenen Inventar. Der Angriffsplan hatte es nicht genannt —
+     das Tor hat genau seine Arbeit getan.
+  2. **Ein Testfall, den die Schätzung als „überlebt unverändert" führte, fiel doch** — aber aus einem
+     anderen Grund als dem vermuteten: `Arten_EinesSeedFachs_SindFuerJedenGesperrt` greift `.First()` der
+     nach Namen sortierten Liste, und eine von meinen Fällen angelegte `Art-…` sortiert **vor**
+     `Grammatik`. Das war vorbestehende Fragilität, aufgedeckt durch die neuen Fälle. Behoben durch einen
+     Helfer `SeedArtIdAsync`, der die geseedete Art **beim Namen** nimmt, statt „die erste" zu raten.
+  3. **Das Frontend war größer als „ein `describe`-Block".** Weil `CategoryRows` das Fach nicht mehr
+     braucht, braucht `CategorySection` es auch nicht — und damit verloren **vier** Zusicherungen ihren
+     Sinn: drei parametrisierte Fälle „Anlegen bleibt frei je Fach-Zustand" wären ohne das Prop drei
+     identische Renderings, und von B-174s Paar lebte einer davon, dass die Fläche unter einem fremden
+     Fach stumm war. Sie sind **zusammengelegt, nicht gestrichen**: die Zusage „Anlegen bleibt frei" hängt
+     jetzt an der **Signatur** (der Abschnitt bekommt das Fach nicht, *kann* also nicht danach gaten), und
+     das ist stärker als drei Fälle. Darum sinkt die vitest-Zahl 329 → 325; weniger Fälle, mehr
+     Tragfähigkeit. Der Grund steht an beiden Stellen im Code, damit niemand sie als Lücke liest.
+
+  **Die offene Entscheidung der Schätzung ist getroffen: es gibt jetzt eine E2E.**
+  `frontend/e2e/katalog-arten.spec.ts` fährt Vorspann → Seed-Art ohne Knöpfe → Tippfehler anlegen →
+  umbenennen → löschen. Sie ist damit der Rollengang (Bereichs-README), deckt AK 8 und 9, die sonst nichts
+  abdeckt, und ist wiederholbar. Ihr erster Lauf fiel an `getByLabel("Fach")` — Teilstring-Treffer auf drei
+  Elemente, genau die Falle aus `frontend/CLAUDE.md`; `{ exact: true }` steht jetzt mit Begründung dort.
+
+  **Zwei Kommentare habe ich beim Bauen als falsch entlarvt und umgeschrieben, nicht stehen gelassen:**
+  `LearnEntities.cs` argumentierte vorab gegen diesen Fix („a second, laxer reading of ownerless") — das war
+  Entscheidung 4 und ist jetzt dort widerlegt statt nur in der Story. Und mein eigener erster
+  `MayWrite`-Kommentar behauptete, die Lesewege benutzten ihn; sie können es nicht (eine Projektion muss
+  nach SQL übersetzbar sein). Aufgefallen ist es daran, dass Probe 1 die Lese-Zusicherung **nicht** fallen
+  ließ. Die Lesewege haben jetzt **eine** gemeinsame `Projection`, und der Kommentar nennt beide Fassungen
+  samt der Probe, die je an ihr hängt.
+
+  Ein Nebenbefund, der **nicht** eingearbeitet wurde: Meine `<param>`-Beschreibung sollte kein rohes
+  Markup ins Vertragsdokument tragen (B-138). Beim Prüfen lieferte ein `grep` erst ein falsch-negatives
+  „null Treffer"; ein JSON-Durchlauf zeigt **79 `<b>`-Paare / 180 Vorkommen** — B-138s Prämisse hält, und
+  mein Feld trägt keins. Fast hätte ich „Prämisse veraltet" in eine Story geschrieben.
+- 2026-09-02 · Bleibt auf `in-arbeit`: **beide Reviewer sind nicht gelaufen** (`wo: beides`, diese Sitzung
+  startet keine Agenten unaufgefordert). Alles andere ist belegt, `wartet_auf` benennt es. Der Rollengang
+  ist erbracht — als E2E, die sich wiederholt.

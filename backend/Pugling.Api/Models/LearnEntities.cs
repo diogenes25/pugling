@@ -20,8 +20,16 @@ public class Subject
     /// <see cref="Exercise.AuthorAdultId"/>: <b>any</b> creator may read and use the subject, only the owner
     /// may rename or delete it – otherwise a stranger renames the tree a whole household plans against
     /// (B-13). <c>null</c> = seeded system subject, therefore editable by <b>nobody</b>: the comparison in
-    /// <see cref="Auth.ClaimsPrincipalExtensions.IsOwnedBy"/> is fail-closed, and a second, laxer reading of
-    /// "ownerless" would be a third ownership semantics inside one catalog.
+    /// <see cref="Auth.ClaimsPrincipalExtensions.IsOwnedBy"/> is fail-closed.
+    /// <para>
+    /// This spot used to argue that a category must never carry an owner of its own, because "a second,
+    /// laxer reading of ownerless would be a third ownership semantics inside one catalog". B-170 disproved
+    /// it, and the argument was the reason a real capability went missing for two stories: creating a
+    /// category is open to everyone, so in a seeded subject - the only ones a new user has - a typo became
+    /// unremovable by anybody. The reading of <c>null</c> did not get laxer; the right simply gained a
+    /// <b>second bearer</b> (see <see cref="ExerciseCategory.OwnerAdultId"/>). Fail-closed still holds for
+    /// every row that has neither bearer.
+    /// </para>
     /// Survives the deletion of the owner (FK → <c>SetNull</c>) so that everyone else's series and study
     /// plans keep their subject.
     /// </summary>
@@ -44,6 +52,26 @@ public class ExerciseCategory
     public Subject? Subject { get; set; }
     public string Name { get; set; } = "";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// The creator who added this category. Deliberately the <b>same</b> name and the same rule as
+    /// <see cref="Subject.OwnerAdultId"/> and <see cref="TextbookSeries.OwnerAdultId"/>, because it is the
+    /// same rule: any creator may read and use the category, only an owner may rename or delete it.
+    /// <para>
+    /// The right has <b>two</b> bearers (B-170): this column and the subject's. Either suffices, and the
+    /// reason is that creating a category is open to everyone (B-157, decision 2) - without a bearer of its
+    /// own, a category added to a seeded subject was editable by nobody, so a typo stayed in the study-plan
+    /// pre-filter forever. Symmetry is the point: whoever may add may also remove what they added.
+    /// </para>
+    /// <para>
+    /// <c>null</c> = a seeded category, therefore renamable and deletable by nobody but a platform admin -
+    /// the same fail-closed comparison as for the subject. The owner's deletion sets it to <c>null</c>
+    /// (FK → <c>SetNull</c>) rather than removing the row, so the pre-filter list of every other household
+    /// survives the loss of an account.
+    /// </para>
+    /// </summary>
+    public int? OwnerAdultId { get; set; }
+    public Adult? Owner { get; set; }
 }
 
 /// <summary>

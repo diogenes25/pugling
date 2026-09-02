@@ -265,7 +265,8 @@ Response — `HTTP 201`:
   "id": 8,
   "subjectId": 5,
   "name": "Vokabeln",
-  "createdAt": "<timestamp>"
+  "createdAt": "<timestamp>",
+  "isOwn": true
 }
 ```
 

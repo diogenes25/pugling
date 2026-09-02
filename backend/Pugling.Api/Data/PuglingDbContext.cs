@@ -478,6 +478,12 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .WithMany(s => s.Categories)
                 .HasForeignKey(c => c.SubjectId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // The category's own owner (B-170), same shape as the subject's one level up: losing the
+            // account must not take the category with it, or every other household loses a pre-filter
+            // entry it plans against.
+            e.HasOne(c => c.Owner).WithMany().HasForeignKey(c => c.OwnerAdultId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         // Exercise → category (optional): deleting a category only sets the FK to null, it does NOT delete the exercise.
