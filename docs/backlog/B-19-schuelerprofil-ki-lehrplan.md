@@ -294,7 +294,7 @@ bestehendem Muster (`ExamPlanner`), ein neuer CLI-Verb, keine neuen Contracts, k
   (siehe oben), Reviewer `pugling-reviewer` ohne Blocker. **Sechs rote Proben einzeln gemessen**, jede fällt
   genau einen Fall: Plan aktiv statt inaktiv · Controller ignoriert `Active` · `--days`-Wächter entfernt ·
   Selbsttest-Bedingung aus `Complete` entfernt · `FailedPositions`-Bedingung entfernt · `ParseIntensity`
-  fällt auf `Normal` zurück; dazu die `Locker`-Zeile verändert. Commit: siehe unten.
+  fällt auf `Normal` zurück; dazu die `Locker`-Zeile verändert. Commit `adfa05e`.
 
 ## Was diese Story ausdrücklich **nicht** gebaut hat
 
