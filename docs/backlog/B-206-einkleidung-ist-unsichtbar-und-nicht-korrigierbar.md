@@ -1,10 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/frontend, bereich/katalog, rolle/creator]
+tags: [typ/story, status/geschaetzt, bereich/frontend, bereich/katalog, rolle/creator]
 aliases: [Einkleidung unsichtbar, stale Interessen-Tag, Sackgasse beim Speichern]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Defekt
+groesse: M
 wo: beides
+migration: nein
+vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-09-02.md (frontend-reviewer zu B-46)
 unverifiziert: false
 grund: ""
@@ -122,6 +125,81 @@ Punkt 1; seit Entscheidung 1 und 2 steht der Weg dorthin fest, das Kriterium sel
    Schlagwort-Verwaltung zeigt die Übungszahl schon vorher, statt sie erst im Fehlerfall zu nennen
    (Entscheidung 3).
 
+## Schätzung
+
+**Größe: M** — mehr als der S-Anker („`childId` aus dem Test-Pfad ziehen", B-01), weniger als der L-Anker
+(eine DB-Umbau-Etappe wie E6). Vergleichbar mit dem M-Anker, dem vokabel-basierten Batch-Pfad im
+`MediaSelector`: **ein** zusammenhängender Mechanismus über wenige Dateien, ohne neuen Endpunkt und ohne
+neue Ebene. Drei Flächen, jede klein: ein Riegel im `DELETE` (eine Abfrage plus ein Fehlercode), ein
+Chip-Editor im Bearbeiten-Dialog, eine dritte Zahl in der Schlagwort-Verwaltung.
+
+**`wo`: beides** (Backend zuerst) · **`migration`: nein** · **`vertragsbruch`: nein**
+
+Beide Flags sind **nachgesehen, nicht vermutet**:
+
+- *Keine Schemaänderung.* Der Riegel ist eine Abfrage auf die schon bestehende Beziehung
+  `ExerciseInterestLink` ([LearnEntities.cs:172](../../backend/Pugling.Api/Models/LearnEntities.cs#L172),
+  seit B-46). Kein neues Feld, keine neue Tabelle — die Kette bleibt bei Länge 1.
+- *Kein Vertragsbruch.* Beide Felder, die die Oberfläche braucht, liegen **bereits** im Vertrag:
+  `InterestTagResponse.ExerciseCount`
+  ([InterestTagDtos.cs:20](../../backend/Pugling.Contracts/Creator/InterestTagDtos.cs#L20)) und
+  `ExerciseDetail.InterestTagIds`
+  ([ExerciseAuthoringDtos.cs:47](../../backend/Pugling.Contracts/Creator/ExerciseAuthoringDtos.cs#L47)).
+  Neu ist allein ein `ApiErrors`-Code — additiv; er wächst in den `code`-Enum des OpenAPI-Dokuments und
+  verlangt danach ein `npm run gen:contract`, bricht aber nichts.
+
+**Risiken:**
+
+- **Der Riegel ändert das Verhalten eines bestehenden grünen Tests nicht — und genau das ist zu prüfen.**
+  `InterestTaxonomyTests.Interessen_Tag_Laesst_Sich_Aus_Dem_Katalog_Loeschen`
+  löscht ein Stichwort **ohne** jede Verwendung und muss weiter `204` bekommen. Fiele es rot, wäre der
+  Riegel zu breit gefasst (etwa auf Bild- oder Kind-Verknüpfungen statt nur auf Übungen).
+- **Der Riegel darf Bild- und Kind-Verknüpfungen nicht mitsperren.** Nur die Übung ist Autoren-Information
+  (Entscheidung 1); ein Stichwort, an dem nur Bilder hängen, bleibt löschbar — sonst wäre die
+  Aufräum-Sicht praktisch tot.
+- **Das Auswahlfeld im Dialog trifft zwei bekannte Fallen des Vater-Webs.** Die Platzhalter-Falle
+  (`loading && data === null`, nicht blankes `data === null`, B-184) und die Eltern-Falle: eine Zeile muss
+  ihr Elternteil mitbringen (B-170), sonst bindet ein Rückruf im Ladefenster die falsche Übung.
+- **Die Einkleidung reist als Vollersatz.** `payloadFrom` schickt den kompletten Stand; wer das neue Feld
+  im Formular hält, aber im Rückweg vergisst, löscht es beim Speichern still — genau der Fall, den
+  `ExerciseEditModal.test.ts` schon dreimal festhält (`suggestedBonus`, `executePublic`, `interestTagIds`).
+- **Kein neuer Endpunkt, also keine Bewegung am Abdeckungs-Wächter.** `FullRunTouchedActions` bleibt bei
+  267 — wenn die Zahl wandert, ist versehentlich eine Action entstanden.
+
+**Angriffsplan** (Backend zuerst — das Frontend hängt an der API):
+
+1. `Pugling.Api/Errors/ApiErrors.cs`: neuer Code für den Riegel (409), additiv neben `ExerciseInUse`.
+2. `Controllers/Creator/InterestTagsController.Delete`: Vorprüfung auf `ExerciseLinks` → `409`; der lange
+   `<summary>`-Absatz, der die Frage ausdrücklich offenlässt („is a product decision and is deliberately
+   **not** taken here"), wird durch die getroffene Entscheidung ersetzt.
+3. Backend-Test in `InterestTaxonomyTests` (Schritt „Testweg" unten).
+4. `npm run gen:contract` — der neue Fehlercode wächst in den `code`-Enum.
+5. Frontend, Dialog: `MetaForm` um `interestTagIds` erweitern, `initialForm` liest sie aus `detail`,
+   `payloadFrom` schreibt sie zurück; die Chip-Liste als **reine, props-getriebene** Komponente (Muster
+   `TagTiles` aus B-50), damit sie ohne gefälschtes `fetch` prüfbar ist. Auswahl über das vorhandene
+   `api.interestTags(search)`; `aria-pressed` bzw. beschriftete Entfernen-Knöpfe, `disabled={busy}`.
+6. Frontend, Schlagwort-Verwaltung: dritte Spalte „Übungen", die Rückfrage nennt die Zahl, und ein
+   abgewiesenes Löschen zeigt den Grund statt eines nackten Fehlers.
+7. Doku: der Absatz zur Einkleidung in der Creator-Anleitung, falls er das Löschen erwähnt.
+
+**Testweg** (welche Klasse, welcher Lauf — „wird getestet" ist kein Testweg):
+
+- **Backend:** neuer Fall in
+  [InterestTaxonomyTests.cs](../../backend/Pugling.Api.Tests/InterestTaxonomyTests.cs) als Geschwister von
+  `Interessen_Tag_Laesst_Sich_Aus_Dem_Katalog_Loeschen`: ein Stichwort, das eine Übung einkleidet, liefert
+  beim `DELETE` **409** mit dem neuen Code; nach dem Entfernen der Einkleidung liefert dasselbe `DELETE`
+  **204**. *Rote Probe:* die Vorprüfung entfernen ⇒ die erste Zusicherung fällt (204 statt 409).
+- **Frontend, rein:** [ExerciseEditModal.test.ts](../../frontend/src/vater/ExerciseEditModal.test.ts) um
+  den Rundlauf erweitern — `initialForm` liest die Einkleidung, `payloadFrom` schickt sie nach Entfernen
+  **und** nach Hinzufügen richtig zurück. Dazu ein Komponententest der Chip-Liste (Anzeige, Entfernen
+  meldet nach oben, gesperrt bei `busy`, Leerfall sagt „nicht eingekleidet" statt leer zu bleiben — AK 2).
+- **E2E:** neue Datei `frontend/e2e/einkleidung.spec.ts` (eine Fläche je Spec), die den ganzen Weg fährt:
+  Bearbeiten-Dialog öffnen → Stichwort hinzufügen → speichern → neu öffnen, Chip steht da → in der
+  Schlagwort-Verwaltung lässt es sich **nicht** löschen und der Grund steht da → im Dialog entfernen →
+  jetzt lässt es sich löschen. Das ist zugleich der **Rollengang** aus der Creator-Rolle. Sie braucht kein
+  Vorab-Stichwort aus dem Seed: das Hinzufügen aus Entscheidung 2 baut sich seinen Fall selbst.
+- **`/smoke-test`** als manueller Gegencheck des 409-Pfads vor dem Commit.
+
 ## Anhaltspunkte für die Umsetzung
 
 Der Lesepfad steht: `api.interestTags()` und der Editor-Aufbau liegen als Muster in
@@ -151,3 +229,10 @@ Anzeige — `ExerciseDetail.interestTagIds` und `GET creator/interest-tags` gen�
   macht genau diesen Bestätigungsdialog zu einem, der etwas verspricht, was der Server verweigert; daraus
   wurde Entscheidung 3, ohne dass sie als offener Punkt notiert war. Die Akzeptanzkriterien sind final
   (AK 6 kam hinzu).
+- **2026-09-03** — geschätzt: `groesse: M`, `wo: beides`, `migration: nein`, `vertragsbruch: nein`,
+  Risiken, Angriffsplan (Backend zuerst) und ein benannter Testweg. Beide Flags am Code nachgesehen statt
+  vermutet: der Riegel läuft auf der seit B-46 bestehenden Beziehung `ExerciseInterestLink` (keine
+  Schemaänderung), und die zwei Felder, die die Oberfläche braucht, liegen bereits im Vertrag
+  (`InterestTagResponse.ExerciseCount`, `ExerciseDetail.InterestTagIds`) — neu ist nur ein additiver
+  Fehlercode. Der E2E deckt zugleich den Rollengang aus der Creator-Rolle ab. Autonom erarbeitet,
+  Nutzerauftrag.
