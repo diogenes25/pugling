@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
 import { useAction } from "../lib/useAction";
 import { StatusBanner } from "../components/StatusBanner";
 import { interestFacetLabel } from "../lib/labels";
 import { useSohn } from "./SohnApp";
-import type { InterestFacet, InterestTagOption, MyInterestProfile } from "../lib/types";
+import type { InterestTagOption, MyInterestProfile } from "../lib/types";
 
 /**
  * Der geführte Prozess, in dem das Kind sich selbst beschreibt (B-50).
@@ -72,10 +72,11 @@ export function SohnInterests() {
   const action = useAction();
 
   useEffect(() => {
-    // Der Bildschirm ist das Angebot – ab jetzt gilt er als gesehen, auch wenn das Kind nichts wählt.
-    markIntroSeen(childId);
     Promise.all([api.interestOptions(), api.myInterests()])
       .then(([tags, profile]: [InterestTagOption[], MyInterestProfile]) => {
+        // Erst jetzt gilt das Angebot als eingelöst – auch wenn das Kind nichts wählt. Vor dem Laden
+        // wäre es bei einem Fehlschlag (offline) verbraucht, ohne dass je etwas zu sehen war.
+        markIntroSeen(childId);
         setOptions(tags);
         setWishes(profile.wishes);
         // Der gespeicherte Stand ist der Ausgangspunkt – genau das macht den Prozess fortsetzbar.
@@ -83,6 +84,16 @@ export function SohnInterests() {
       })
       .catch((e) => setLoadError(errorMessage(e)));
   }, [childId]);
+
+  // Der Schrittwechsel tauscht Titel, Hinweis und die ganze Kachelmenge aus. Ohne Fokuswechsel hört
+  // niemand, dass jetzt „Was geht gar nicht?" dran ist – bei einem Bildschirm, der Bedienbarkeit ohne
+  // Tippen zusagt, ist das die halbe Zusage. Der übliche Wizard-Griff: die Überschrift fokussieren.
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const firstRender = useRef(true);
+  useEffect(() => {
+    if (firstRender.current) { firstRender.current = false; return; }
+    headingRef.current?.focus();
+  }, [step]);
 
   const byFacet = useMemo(() => {
     const topics = (options ?? []).filter((t) => t.facet !== "Style");
@@ -103,22 +114,30 @@ export function SohnInterests() {
       .filter(([, weight]) => weight !== 0)
       .map(([tagId, weight]) => ({ tagId: Number(tagId), weight }));
 
-    const ok = await action.run(async () => {
-      await api.setMyInterests(interests);
-      const text = wish.trim();
-      if (text) {
-        const profile = await api.addMyInterestWish(text);
-        setWishes(profile.wishes);
-        setWish("");
-      }
-    });
+    const text = wish.trim();
+    // Die beiden Schreibwege sind unabhängig, und der Wunsch ist der freiwillige. Er läuft darum als
+    // eigener Schritt: Scheitert er (etwa weil die Wunschliste voll ist), sind die Interessen trotzdem
+    // gespeichert – und genau das muss die Meldung sagen, statt nur den Wunsch-Fehler zu zeigen.
+    const ok = await action.run(() => api.setMyInterests(interests));
     if (!ok) return; // der Fehler steht im Banner dieses Bildschirms – hier bleiben
 
-    // Die Bestätigung darf nicht in dem Element leben, dessen Verschwinden sie bestätigt (B-151): der
-    // `StatusBanner` ginge mit dem Bildschirm unter. Die Feier liegt in der Shell und überlebt darum den
-    // Sprung zurück – und ist zugleich die Sprache, die die Arcade sonst auch spricht.
+    if (text) {
+      const profile = await action.runFor(() => api.addMyInterestWish(text));
+      if (profile === null) {
+        action.fail(`Deine Auswahl ist gespeichert – nur „${text}" konnte ich nicht aufschreiben. `
+          + "Lösch den Wunsch oder probier es später nochmal.");
+        return;
+      }
+      setWishes(profile.wishes);
+      setWish("");
+    }
+
+    // Die Bestätigung darf nicht in dem Element leben, dessen Verschwinden sie bestätigt (B-151) – der
+    // `StatusBanner` dieses Bildschirms ginge mit ihm unter. Sie reist deshalb mit dem Sprung zur
+    // Meldungsstelle der Shell (`SavedNotice`). Die Feier kommt obendrauf: sie ist `aria-hidden` und bei
+    // „Bewegung reduzieren" gar nicht da, taugt also als Schmuck, nie als einziger Beleg.
     celebrate("medium", "🙂", "GESPEICHERT!", "Deine Übungen passen sich an.");
-    navigate("/sohn");
+    navigate("/sohn", { state: { saved: "Gespeichert – deine Übungen passen sich an." } });
   }
 
   if (loadError) return <div className="sohn-body"><div className="error-box">{loadError}</div></div>;
@@ -138,7 +157,7 @@ export function SohnInterests() {
         Beispielen geht.
       </p>
 
-      <h3 className="screen-title" style={{ fontSize: 18 }}>{current.title}</h3>
+      <h3 className="screen-title" style={{ fontSize: 18 }} tabIndex={-1} ref={headingRef}>{current.title}</h3>
       <p className="sub">{current.hint}</p>
 
       {step === 0 && <TagTiles tags={byFacet.topics} weights={weights} onPick={cycleLike} disabled={action.busy} />}
@@ -215,11 +234,16 @@ export function TagTiles({ tags, weights, onPick, mode = "like", disabled }: {
             disabled={disabled}
           >
             <div className="nm">{t.label}</div>
-            <div className="sub" style={{ fontSize: 11 }}>{interestFacetLabel(t.facet as InterestFacet)}</div>
+            <div className="sub" style={{ fontSize: 11 }}>{interestFacetLabel(t.facet)}</div>
+            {/* Aus dem VORZEICHEN abgeleitet, nicht aus der Gleichheit: Der Vater kann am selben Kind
+                „ganz nett" (1) und „eher nicht" (-1) setzen. Ein `weight === 2`-Vergleich beschriftete eine
+                leuchtende, `aria-pressed`-gedrückte Kachel dann mit „auswählen" – der Text sagte das
+                Gegenteil von Farbe und Zustand. Umgerechnet wird hier bewusst nichts: eine Normalisierung
+                schriebe die feinere Angabe des Vaters still auf die grobe Kind-Skala um. */}
             {mode === "dislike"
-              ? <span className={`pill ${weight < 0 ? "red" : "cyan"}`}>{weight < 0 ? "geht gar nicht" : "ist okay"}</span>
-              : <span className={`pill ${weight === 3 ? "gold" : weight === 2 ? "lime" : "cyan"}`}>
-                  {weight === 3 ? "Lieblingsthema" : weight === 2 ? "mag ich" : "auswählen"}
+              ? <span className={`pill ${weight < 0 ? "red" : "cyan"}`}>{weight < 0 ? "mag ich nicht" : "ist okay"}</span>
+              : <span className={`pill ${weight >= 3 ? "gold" : weight > 0 ? "lime" : "cyan"}`}>
+                  {weight >= 3 ? "Lieblingsthema" : weight > 0 ? "mag ich" : "auswählen"}
                 </span>}
           </button>
         );
@@ -253,7 +277,7 @@ export function InterestIntroCard() {
       <p className="sub">
         Sag uns, was du magst – dann passen die Bilder und Beispiele zu dir. Dauert eine Minute, ohne Tippen.
       </p>
-      <Link to="/sohn/ich" className="btn gold">Los geht's</Link>
+      <Link to="/sohn/ich" className="btn gold" style={{ textDecoration: "none" }}>Los geht's</Link>
     </div>
   );
 }

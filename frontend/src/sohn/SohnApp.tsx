@@ -15,6 +15,7 @@ import { SohnInterests } from "./SohnInterests";
 import { Mascot } from "../components/Mascot";
 import { CelebrationLayer, useCelebration } from "../components/Celebration";
 import { RemarkWidget } from "../components/RemarkWidget";
+import { SavedNotice } from "../components/SavedNotice";
 import { isMuted, setMuted } from "../lib/feedback";
 
 interface SohnContextValue {
@@ -108,6 +109,9 @@ function SohnShell({ childId }: { childId: number }) {
         </div>
 
         <CelebrationLayer celebration={celebration} />
+        {/* Die Bestätigung einer Aktion, die ihren Bildschirm verlässt. Sie liegt hier und nicht in
+            der Feier: die ist `aria-hidden` und fällt bei „Bewegung reduzieren" ganz weg (B-151). */}
+        <SavedNotice />
 
         <Routes>
           <Route index element={<SohnHome />} />

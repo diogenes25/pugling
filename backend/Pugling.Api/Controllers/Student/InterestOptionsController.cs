@@ -24,7 +24,7 @@ namespace Pugling.Api.Controllers.Student;
 public class InterestOptionsController(PuglingDbContext db) : ControllerBase
 {
     /// <summary>
-    /// The selectable keywords, alphabetically. Total count (before paging) in the
+    /// The selectable keywords, alphabetically by slug. Total count (before paging) in the
     /// <c>X-Total-Count</c> header.
     /// </summary>
     /// <param name="facet">Only keywords of this facet – the guided process shows topics and styles apart.</param>
@@ -43,10 +43,13 @@ public class InterestOptionsController(PuglingDbContext db) : ControllerBase
         var query = db.InterestTags.AsNoTracking().AsQueryable();
         if (facet is not null) query = query.Where(t => t.Facet == facet);
 
-        // Slug as the tiebreaker, not just the label: offset paging is only sound over an order that
-        // cannot move, and two tags may legitimately carry the same label spelling.
+        // By slug, not by label - the same order the creator's view uses. The label column carries no
+        // NOCASE collation, so SQLite compares it byte-wise: every capital sorts before every lowercase
+        // letter and umlauts land behind all of ASCII ("Zebra" before "apfel"). The slug is lowercase and
+        // diacritic-free by derivation, so ordering by it is the one that is actually alphabetical.
+        // The id is the tiebreaker: offset paging is only sound over an order that cannot move.
         return await query
-            .OrderBy(t => t.Label).ThenBy(t => t.Slug)
+            .OrderBy(t => t.Slug).ThenBy(t => t.Id)
             .Select(t => new InterestTagOptionResponse(t.Id, t.Slug, t.Label, t.Facet))
             .ToPagedListAsync(Response, skip, take, ct);
     }

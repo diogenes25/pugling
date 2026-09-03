@@ -199,9 +199,6 @@ export type ChildInterestInput = S["ChildInterestInput"];
  */
 export type InterestTagOption = S["InterestTagOptionResponse"];
 
-/** Ein eigenes gewichtetes Interesse des Kindes (schlanker als die Supervisor-Sicht derselben Zeile). */
-export type MyInterest = S["MyInterestResponse"];
-
 /**
  * Das selbst gepflegte Profil des Kindes: gewichtete Schlagworte plus Freitext-Wünsche.
  * `needsIntro` ist die Server-Antwort auf „hat sich dieses Kind je selbst beschrieben?" – aus dem

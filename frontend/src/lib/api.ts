@@ -22,7 +22,7 @@ import type {
   InventoryItem, MyInventoryItem, ShopPurchase, MyShopPurchase, ActivationRequest, ShopPurchaseStatus, ActivationRequestStatus,
   ShopView, MyActivation,
   ContentRating, InterestTagResponse, CreateInterestTagDto, UpdateInterestTagDto,
-  ChildInterestResponse, ChildInterestInput, InterestFacet,
+  ChildInterestResponse, ChildInterestInput,
   InterestTagOption, MyInterestProfile, MyInterestInput,
   MediaAssetResponse, CreateMediaAssetDto, MediaLinkResponse, MediaUsage, SelectedMediaResponse,
   PublisherResponse, CreatePublisherDto, UpdatePublisherDto,
@@ -837,8 +837,7 @@ export const api = {
    * Die Auswahlliste, aus der das Kind sich bedient. Bewusst die Kind-Route und nicht `creator/interest-tags`:
    * die trägt Nutzungszähler und ist für einen Kind-Token gesperrt.
    */
-  interestOptions: (facet?: InterestFacet) =>
-    http<InterestTagOption[]>(`${V1}/student/interest-tags?take=500${facet ? `&facet=${facet}` : ""}`),
+  interestOptions: () => http<InterestTagOption[]>(`${V1}/student/interest-tags?take=500`),
   /** Das eigene Interessen-Profil des angemeldeten Kindes (Schlagworte + Freitext-Wünsche). */
   myInterests: () => http<MyInterestProfile>(`${V1}/student/me/interests`),
   /** Ersetzt die eigenen Interessen vollständig – nur bestehende `tagId`s, das Kind legt nie eine an. */

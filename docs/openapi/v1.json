@@ -8374,7 +8374,7 @@
         "tags": [
           "Student \u2013 Interests"
         ],
-        "summary": "The selectable keywords, alphabetically. Total count (before paging) in the\n\u0060X-Total-Count\u0060 header.",
+        "summary": "The selectable keywords, alphabetically by slug. Total count (before paging) in the\n\u0060X-Total-Count\u0060 header.",
         "parameters": [
           {
             "name": "facet",

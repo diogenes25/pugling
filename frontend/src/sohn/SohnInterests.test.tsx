@@ -43,6 +43,26 @@ describe("Kacheln", () => {
     expect(offen.textContent).toContain("auswählen");
   });
 
+  // Der Vater kann am selben Kind „★ ganz nett" (1) und „✕ eher nicht" (-1) setzen (VaterKind WEIGHTS).
+  // Ein Gleichheits-Vergleich auf 2/3 beschriftete eine leuchtende, gedrueckte Kachel dann mit
+  // „auswählen" - der Text sagte das Gegenteil von aria-pressed und Farbe.
+  it("beschriftet auch die Zwischengewichte des Vaters passend zu aria-pressed", () => {
+    render(<TagTiles tags={TAGS} weights={{ 1: 1 }} onPick={() => {}} disabled={false} />);
+
+    const ganzNett = screen.getByRole("button", { name: /Einhorn/ });
+    expect(ganzNett.getAttribute("aria-pressed")).toBe("true");
+    expect(ganzNett.textContent).toContain("mag ich");
+    expect(ganzNett.textContent).not.toContain("auswählen");
+  });
+
+  it("nennt auch die schwache Abneigung des Vaters eine Abneigung", () => {
+    render(<TagTiles tags={TAGS} weights={{ 1: -1 }} onPick={() => {}} mode="dislike" disabled={false} />);
+
+    const eherNicht = screen.getByRole("button", { name: /Einhorn/ });
+    expect(eherNicht.getAttribute("aria-pressed")).toBe("true");
+    expect(eherNicht.textContent).toContain("mag ich nicht");
+  });
+
   it("meldet den angetippten Tag nach oben", () => {
     const onPick = vi.fn();
     render(<TagTiles tags={TAGS} weights={{}} onPick={onPick} disabled={false} />);
@@ -71,7 +91,7 @@ describe("Kacheln", () => {
 
     const abgelehnt = screen.getByRole("button", { name: /Einhorn/ });
     expect(abgelehnt.getAttribute("aria-pressed")).toBe("true");
-    expect(abgelehnt.textContent).toContain("geht gar nicht");
+    expect(abgelehnt.textContent).toContain("mag ich nicht");
     expect(screen.getByRole("button", { name: /Comic/ }).textContent).toContain("ist okay");
   });
 });

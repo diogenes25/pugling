@@ -83,6 +83,10 @@ public class MyInterestsController(PuglingDbContext db) : ControllerBase
             return this.ProblemWithCode(ApiErrors.InvalidReference,
                 "Every interest must reference an existing interest tag by tagId.");
 
+        // A token can outlive its child (deleted meanwhile). Without this the insert below hits the foreign
+        // key and answers 500, where AddWish two methods down correctly answers 403.
+        if (!await db.Children.AnyAsync(c => c.Id == cid, ct)) return Forbid();
+
         db.ChildInterests.RemoveRange(await db.ChildInterests.Where(i => i.ChildId == cid).ToListAsync(ct));
         // Two entries for the same tag would violate the unique index - the last one wins, as in an assignment.
         foreach (var input in inputs.GroupBy(i => i.TagId).Select(g => g.Last()))
@@ -121,14 +125,38 @@ public class MyInterestsController(PuglingDbContext db) : ControllerBase
         if (!child.Interests.Any(i => string.Equals(i, text, StringComparison.OrdinalIgnoreCase)))
         {
             if (child.Interests.Count >= MaxWishes)
+                // Deliberately not "remove one first": the child's contract offers no way to delete a wish -
+                // only a supervisor can shrink Child.Interests. A message must not ask for a door that
+                // isn't there.
                 return this.ProblemWithCode(ApiErrors.InterestWishLimitReached,
-                    $"There are already {MaxWishes} free-text interests – remove one first.");
+                    $"There are already {MaxWishes} free-text interests – ask a grown-up to remove one.");
 
             child.Interests = [.. child.Interests, text]; // reassign: JSON column, no in-place mutation
-            await db.SaveChangesAsync(ct);
+            // Child.ConcurrencyStamp is an EF concurrency token, and this is a read-modify-write of a
+            // whole JSON list: without bumping it, two parallel wishes both match the unchanged token and
+            // the second silently overwrites the first - a lost update reported as 200.
+            child.ConcurrencyStamp = Guid.NewGuid();
+
+            if (!await TrySaveAsync(ct))
+                return this.ProblemWithCode(ApiErrors.ConcurrencyConflict,
+                    "The wish conflicted with a concurrent change — please try again.");
         }
 
         return await ProfileAsync(cid.Value, ct);
+    }
+
+    /// <summary>Saves and catches a concurrency collision (token): false = collided, nothing committed.</summary>
+    private async Task<bool> TrySaveAsync(CancellationToken ct)
+    {
+        try
+        {
+            await db.SaveChangesAsync(ct);
+            return true;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return false;
+        }
     }
 
     /// <summary>

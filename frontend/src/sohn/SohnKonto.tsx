@@ -23,7 +23,7 @@ export function SohnKonto() {
 
       {/* Der dauerhafte Weg zur Selbstbeschreibung (B-50). Er liegt hier und nicht in der Arcade-Leiste:
           die trägt die fünf Orte, an denen gespielt und ausgegeben wird – dies ist eine Einstellung. */}
-      <Link to="/sohn/ich" className="btn ghost" style={{ marginBottom: 10 }}>🙂 Das bin ich – was ich mag</Link>
+      <Link to="/sohn/ich" className="btn ghost" style={{ display: "block", textDecoration: "none", marginBottom: 10 }}>🙂 Das bin ich – was ich mag</Link>
 
       <h3 className="screen-title" style={{ fontSize: 18 }}>Verlauf</h3>
       {history.loading ? <div className="loading">Lade…</div> : history.error ? <div className="banner err">{history.error}</div> : (

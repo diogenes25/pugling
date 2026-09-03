@@ -72,9 +72,9 @@ public class KindInteressenTests(PuglingWebAppFactory factory) : IClassFixture<P
     /// same taxonomy in parallel, so it could only ever be measured racily.
     /// </para>
     /// <para>
-    /// Rote Probe: <c>MyInterestInput</c> um ein <c>Label</c> erweitern und im <c>Replace</c> über
-    /// <c>InterestTagService.EnsureAsync</c> auflösen (wie beim Supervisor) ⇒ die erste Zusicherung fällt;
-    /// die Referenzprüfung durch dasselbe <c>EnsureAsync</c> ersetzen ⇒ die zweite und dritte fallen.
+    /// Red probe: add a <c>Label</c> to <c>MyInterestInput</c> and resolve it through
+    /// <c>InterestTagService.EnsureAsync</c> as the supervisor does ⇒ the first assertion falls; replace
+    /// the reference check with that same <c>EnsureAsync</c> ⇒ the second and third fall.
     /// </para>
     /// </summary>
     [Fact]
@@ -118,12 +118,45 @@ public class KindInteressenTests(PuglingWebAppFactory factory) : IClassFixture<P
         var (_, child) = await ChildAsync(father, "gewicht-skala");
         var tagId = await TagAsync(father, "Angeln", "Hobby");
 
-        var res = await child.PutAsJsonAsync("/api/v1/student/me/interests", new
+        // Both ends, and both accepted edges: a check shortened to "> Max" would stay green on the upper
+        // bound alone - that is the "rule tested, edge case open" class from docs/testplan.md.
+        foreach (var weight in new[] { 9, -4 })
         {
-            interests = new[] { new { tagId, weight = 9 } },
-        });
-        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
-        Assert.Equal("validation_error", await CodeOf(res));
+            var res = await child.PutAsJsonAsync("/api/v1/student/me/interests", new
+            {
+                interests = new[] { new { tagId, weight } },
+            });
+            Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+            Assert.Equal("validation_error", await CodeOf(res));
+        }
+
+        foreach (var weight in new[] { 3, -3 })
+            (await child.PutAsJsonAsync("/api/v1/student/me/interests", new
+            {
+                interests = new[] { new { tagId, weight } },
+            })).EnsureSuccessStatusCode();
+    }
+
+    /// <summary>
+    /// Two entries for the same tag in one payload would violate the unique index
+    /// <c>(ChildId, InterestTagId)</c> and answer 500. The last one wins, as in an assignment.
+    /// <para>Red probe: drop the <c>GroupBy</c> in <c>Replace</c> ⇒ this test turns 500.</para>
+    /// </summary>
+    [Fact]
+    public async Task DerselbeTagZweimal_GewinntMitDemLetztenEintrag_StattDenIndexZuVerletzen()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var (_, child) = await ChildAsync(father, "doppelter-tag");
+        var tagId = await TagAsync(father, "Segeln", "Hobby");
+
+        (await child.PutAsJsonAsync("/api/v1/student/me/interests", new
+        {
+            interests = new[] { new { tagId, weight = 1 }, new { tagId, weight = -2 } },
+        })).EnsureSuccessStatusCode();
+
+        var profile = await JsonAsync(child, "/api/v1/student/me/interests");
+        Assert.Equal(1, profile.GetProperty("interests").GetArrayLength());
+        Assert.Equal(-2, profile.GetProperty("interests")[0].GetProperty("weight").GetInt32());
     }
 
     [Fact]
@@ -207,6 +240,29 @@ public class KindInteressenTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
+    /// The wish is a read-modify-write of a whole JSON list. <c>Child.ConcurrencyStamp</c> is an EF
+    /// concurrency token, so without bumping it two parallel wishes both match the unchanged token and the
+    /// second silently overwrites the first - a lost update reported as 200.
+    /// <para>
+    /// Red probe: drop the <c>ConcurrencyStamp</c> assignment in <c>AddWish</c> ⇒ this test falls. The 500
+    /// that the missing <c>TrySaveAsync</c> would cause has no deterministic test - real concurrency inside
+    /// one request - and is deliberately not faked here.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task EinWunsch_BumptDasNebenlaeufigkeitsZeichen()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var (childId, child) = await ChildAsync(father, "wunsch-stempel");
+
+        var before = await StampOfAsync(childId);
+        (await child.PostAsJsonAsync("/api/v1/student/me/interests/wishes", new { text = "Kanufahren" }))
+            .EnsureSuccessStatusCode();
+
+        Assert.NotEqual(before, await StampOfAsync(childId));
+    }
+
+    /// <summary>
     /// The self-service way is the child's alone: a supervisor token carries no <c>cid</c>, so
     /// <c>me/interests</c> is not its seat – it edits the child under <c>supervisor/children/{id}</c>.
     /// </summary>
@@ -232,24 +288,33 @@ public class KindInteressenTests(PuglingWebAppFactory factory) : IClassFixture<P
         var (_, child) = await ChildAsync(father, "auswahlliste");
         var styleTag = await TagAsync(father, TestApi.UniqueName("Pixelkunst"), "Style");
 
-        var all = await JsonAsync(child, "/api/v1/student/interest-tags?take=500");
+        // Über die Facette geholt statt über den vollen Bestand: die Taxonomie ist global und wächst mit
+        // jedem Testlauf, ein `take=500` über alles liefe irgendwann in den Deckel und der Fund wäre weg.
+        var all = await JsonAsync(child, "/api/v1/student/interest-tags?facet=Style&take=500");
         var entry = all.EnumerateArray().Single(t => t.GetProperty("id").GetInt32() == styleTag);
         Assert.Equal("Style", entry.GetProperty("facet").GetString());
-        Assert.False(entry.TryGetProperty("childCount", out _), "Die Auswahlliste verrät keine Nutzungszahlen.");
+        Assert.False(entry.TryGetProperty("childCount", out _), "The picking list reveals no usage counts.");
 
         // The facet filter is what lets the process show topics and styles as separate steps.
-        var styles = await JsonAsync(child, "/api/v1/student/interest-tags?facet=Style&take=500");
-        Assert.All(styles.EnumerateArray(), t => Assert.Equal("Style", t.GetProperty("facet").GetString()));
-        Assert.Contains(styles.EnumerateArray(), t => t.GetProperty("id").GetInt32() == styleTag);
+        Assert.All(all.EnumerateArray(), t => Assert.Equal("Style", t.GetProperty("facet").GetString()));
+
+        // Alphabetical by slug, not by label: SQLite compares the label byte-wise, so "Zebra" would sort
+        // before "apfel" and the child's list would look shuffled.
+        var frueh = await TagAsync(father, TestApi.UniqueName("apfelsorte"), "Nature");
+        var spaet = await TagAsync(father, TestApi.UniqueName("Zebrastreifen"), "Nature");
+        var natur = await JsonAsync(child, "/api/v1/student/interest-tags?facet=Nature&take=500");
+        var slugs = natur.EnumerateArray().Select(t => t.GetProperty("slug").GetString()!).ToList();
+        Assert.True(slugs.IndexOf(SlugOf(natur, frueh)) < slugs.IndexOf(SlugOf(natur, spaet)),
+            $"Expected alphabetical order by slug, got: {string.Join(", ", slugs)}");
     }
 
     /// <summary>
-    /// Akzeptanzkriterium 4 der Story: Eine Profiländerung wirkt auf <b>künftige</b> Wahlen, nie rückwirkend.
-    /// Ohne diese Regel lernte ein Kind, das gern am Profil schraubt, jede Woche ein neues Bild zum selben
-    /// Wort – und der Merkeffekt, für den das Einfrieren gebaut wurde, wäre weg.
+    /// Acceptance criterion 4 of the story: a profile change affects <b>future</b> picks, never
+    /// retroactively. Without that rule a child who likes to fiddle with its profile would learn a new
+    /// image for the same word every week - and the memory effect the freeze was built for would be gone.
     /// <para>
-    /// Rote Probe: im <c>MediaSelector</c> die eingefrorene Zeile vor dem Ausliefern neu bewerten lassen
-    /// (statt sie zurückzugeben) ⇒ die Zusicherung auf die unveränderte Asset-Id fällt.
+    /// Red probe: make <c>MediaSelector</c> re-evaluate the frozen row before handing it out (instead of
+    /// returning it) ⇒ the assertion on the unchanged asset id falls.
     /// </para>
     /// </summary>
     [Fact]
@@ -280,7 +345,6 @@ public class KindInteressenTests(PuglingWebAppFactory factory) : IClassFixture<P
         var after = PicksOf(scenario.ChildId).Single();
         Assert.Equal(frozen.MediaAssetId, after.MediaAssetId);
         Assert.Equal(frozen.PickedAt, after.PickedAt);
-        Assert.False(after.Rejected);
     }
 
     // ---- Helpers -----------------------------------------------------------------------------------
@@ -397,6 +461,19 @@ public class KindInteressenTests(PuglingWebAppFactory factory) : IClassFixture<P
         res.EnsureSuccessStatusCode();
         return await res.Content.ReadFromJsonAsync<JsonElement>();
     }
+
+    /// <summary>The child's concurrency token straight from the DB - what a lost update would leave alone.</summary>
+    private async Task<Guid> StampOfAsync(int childId)
+    {
+        using var scope = factory.Services.CreateScope();
+        return await scope.ServiceProvider.GetRequiredService<PuglingDbContext>()
+            .Children.AsNoTracking().Where(c => c.Id == childId)
+            .Select(c => c.ConcurrencyStamp).FirstAsync();
+    }
+
+    /// <summary>The slug the picking list reports for a tag id - the value its ordering is built on.</summary>
+    private static string SlugOf(JsonElement list, int tagId) =>
+        list.EnumerateArray().Single(t => t.GetProperty("id").GetInt32() == tagId).GetProperty("slug").GetString()!;
 
     private static async Task<string?> CodeOf(HttpResponseMessage res) =>
         (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString();

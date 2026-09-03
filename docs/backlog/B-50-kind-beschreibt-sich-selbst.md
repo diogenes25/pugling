@@ -9,7 +9,7 @@ wo: beides
 migration: nein
 vertragsbruch: nein
 quelle: Sitzung 2026-08-01 (Rollen-Durchgang, Nutzer-Entscheidung)
-wartet_auf: "pugling-reviewer, frontend-reviewer"
+wartet_auf: ""
 ---
 
 # B-50 · Das Kind beschreibt sich selbst: Interessen in einem geführten Prozess
@@ -312,9 +312,52 @@ neuer Abschnitt 4.10, Navigationsmodell und Checkliste (AK 8).
 | Referenzprüfung aus `MyInterestsController.Replace` entfernen | `invalid_reference`-Zusicherung | `KindInteressenTests.cs:105` ✓ |
 | „Die eingefrorene Wahl gewinnt" aus `MediaSelector` entfernen | AK-4-Zusicherung auf das unveränderte Bild | `KindInteressenTests.cs:279` ✓ |
 
+### Review-Runde (2026-09-03)
+
+Beide Reviewer gelaufen, **elf Funde angenommen, einer abgelehnt, einer abgetrennt.** Die zwei wichtigsten
+Änderungen daran:
+
+**Die Bestätigung war zweimal am falschen Ort.** Der `frontend-reviewer` hat gezeigt, dass die Feier der
+Shell den `StatusBanner` nicht ersetzen kann: `CelebrationLayer` rendert `aria-hidden="true"`,
+[index.css](../../frontend/src/index.css) blendet `.cel-layer` bei „Bewegung reduzieren" **ganz** aus, und
+sie räumt sich nach 1,5 s selbst ab. Für ein Kind mit reduzierter Bewegung gab es nach „Fertig" also gar
+keine Rückmeldung — [B-151](B-151-gespeichert-banner-verschwindet-mit-dem-formular.md) im neuen Mantel
+statt seiner Vermeidung. Neu: eine **Meldungsstelle in der Shell**
+([SavedNotice.tsx](../../frontend/src/components/SavedNotice.tsx)), die die Meldung über
+`navigate(…, { state: { saved } })` entgegennimmt, sie in eine bereits vorhandene Live-Region wachsen lässt
+und den Verlaufseintrag danach räumt. Die Feier bleibt — als Schmuck, nicht als Beleg. Der E2E fährt
+seither unter `reducedMotion: "reduce"` und sichert zu, dass die Bestätigung **nicht** unter
+`aria-hidden` liegt.
+
+**Ein Fund war echt, seine Reparatur nicht.** Der `pugling-reviewer` hat zu Recht gemeldet, dass die
+Kind-Auswahlliste jedes je getippte Stichwort zeigt — auch Freitext fremder Familien und tote Stichwörter,
+die nichts einkleiden können. Sein Vorschlag (`Where(MediaLinks.Count > 0 || ExerciseLinks.Count > 0)`)
+ist hier aber **nicht anwendbar**: `Data/Seed.cs` legt kein einziges `MediaAsset` an, die Liste wäre im
+Auslieferungszustand leer und das Feature aus. Der Fund läuft darum als eigene Story
+[B-207](B-207-kind-auswahlliste-ist-unkuratiert.md) weiter — B-50s Ziel ist ohne sie erfüllt, und *welche*
+Achse kuratiert, ist eine Produktentscheidung.
+
+Angenommen und behoben, mit je einem Test, der die Änderung rot macht:
+
+| Fund | Behoben durch |
+|---|---|
+| Auswahlliste sortiert nach `Label` — SQLite vergleicht byteweise, „Zebra" vor „apfel" | `OrderBy(Slug).ThenBy(Id)` wie beim Creator; Test mit zwei Stichwörtern |
+| `AddWish` bumpt `Child.ConcurrencyStamp` nicht → verlorenes Update als 200, Kollision als 500 | Stamp-Bump + `TrySaveAsync` → `concurrency_conflict`; Test auf den Stempel |
+| `GroupBy` gegen den Doppel-Tag war ungetestet | Test mit zweimal demselben `tagId` |
+| Gewichts-Grenzen nur oben geprüft | beide Enden und beide akzeptierten Ränder |
+| `Assert.False(after.Rejected)` prüft den Ausgangszustand, kann nie fallen | gestrichen |
+| `Replace` lädt das Kind nie → FK-Verletzung als 500 statt 403 | Existenzprüfung wie in `AddWish` |
+| 409-Text verlangt vom Kind eine Handlung, die sein Vertrag nicht anbietet | „ask a grown-up to remove one" |
+| Drei deutsche Inseln in der Code-Doku der Testklasse | übersetzt |
+| Kachel widerspricht sich bei den Zwischengewichten `±1`, die der Vater setzen kann | Text aus dem **Vorzeichen** statt aus der Gleichheit — bewusst **ohne** Normalisierung, die schriebe die feinere Angabe des Vaters still um; zwei Tests |
+| AK 7 (Erstbesuch-Angebot) hatte null Abdeckung | E2E fährt jetzt ein **eigenes** Kind: Angebot → Prozess → eingelöst |
+| Schrittwechsel wurde nicht angesagt; `markIntroSeen` vor dem Laden; fehlende `textDecoration`; ungenutzter `facet`-Parameter und `MyInterest`-Alias; redundanter Cast | je behoben |
+| Wunsch-Fehler nach erfolgreichem PUT meldete nur den Wunsch | Teilerfolg wird benannt („Deine Auswahl ist gespeichert – nur … ") |
+
 ### Was offen bleibt
 
-- Die beiden Reviewer (`wartet_auf`).
+- **Nichts für diese Story.** Beide Reviewer sind gelaufen, ihre Funde sind behoben oder als
+  [B-207](B-207-kind-auswahlliste-ist-unkuratiert.md) abgetrennt.
 - `/smoke-test` als manueller Gegencheck ist **nicht** gelaufen; der E2E fährt denselben Weg gegen einen
   echten Server und deckt ihn ab — das ist eine Ersetzung, keine Auslassung, aber sie sei benannt.
 
@@ -340,3 +383,11 @@ neuer Abschnitt 4.10, Navigationsmodell und Checkliste (AK 8).
   `abgenommen` verlangt `pugling-reviewer` und `frontend-reviewer`, und diese Sitzung trägt die Regel,
   keine Agenten unaufgefordert zu starten — Freigabe steht beim Nutzer aus (`wartet_auf`).
   Commit `0f5acb3` (nicht gepusht).
+- **2026-09-03** — `pugling-reviewer` und `frontend-reviewer` gelaufen (Nutzerfreigabe). Elf Funde
+  angenommen und behoben, einer als [B-207](B-207-kind-auswahlliste-ist-unkuratiert.md) abgetrennt (die
+  vorgeschlagene Reparatur hätte die Auswahlliste im Auslieferungszustand geleert), keiner offen. Der
+  schwerste: die Erfolgsmeldung lag in der Feier der Shell, die `aria-hidden` ist und bei „Bewegung
+  reduzieren" ganz verschwindet — für dieses Kind gab es nach „Fertig" **keine** Rückmeldung. Neu belegt:
+  Backend **865/865**, Vitest **341/341**, E2E **47/47** (der eigene Lauf jetzt unter
+  `reducedMotion: "reduce"` und mit eigenem Kind, womit auch AK 7 abgedeckt ist), `dotnet format` sauber.
+  Drei weitere rote Proben gemessen, je an der eigenen Zusicherung (Sortierung, Doppel-Tag, Stempel).
