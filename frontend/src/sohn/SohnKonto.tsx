@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { pointKindLabel } from "../lib/labels";
@@ -19,6 +20,10 @@ export function SohnKonto() {
       </div>
       <p className="sub">Fürs Lernen verdienst du 🪙 Münzen und 💎 Gems. Münzen gibst du im <b>🛒 Shop</b> für
         echte Belohnungen aus, Gems im <b>🎭 Skins</b>-Shop für Charaktere.</p>
+
+      {/* Der dauerhafte Weg zur Selbstbeschreibung (B-50). Er liegt hier und nicht in der Arcade-Leiste:
+          die trägt die fünf Orte, an denen gespielt und ausgegeben wird – dies ist eine Einstellung. */}
+      <Link to="/sohn/ich" className="btn ghost" style={{ marginBottom: 10 }}>🙂 Das bin ich – was ich mag</Link>
 
       <h3 className="screen-title" style={{ fontSize: 18 }}>Verlauf</h3>
       {history.loading ? <div className="loading">Lade…</div> : history.error ? <div className="banner err">{history.error}</div> : (

@@ -129,6 +129,8 @@ public static class ApiErrors
     public static readonly ApiError DuplicateTextbookSeries = new("duplicate_textbook_series", 409, "Another textbook series already uses this display name, or the slug it derives to.");
     /// <summary>Another interest tag already carries the slug this label derives to (409). See <see cref="DuplicatePublisher"/>.</summary>
     public static readonly ApiError DuplicateInterestTag = new("duplicate_interest_tag", 409, "Another interest tag already uses the slug this label derives to.");
+    /// <summary>The child's free-text interest list is full – a new wish needs an existing one removed first (409).</summary>
+    public static readonly ApiError InterestWishLimitReached = new("interest_wish_limit_reached", 409, "The free-text interest list is full.");
     /// <summary>Exercise is used in a study plan/class test and cannot be deleted (409).</summary>
     public static readonly ApiError ExerciseInUse = new("exercise_in_use", 409, "Exercise is in use.");
     /// <summary>

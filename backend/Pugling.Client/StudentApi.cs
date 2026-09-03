@@ -79,4 +79,30 @@ public sealed class StudentApi(HttpClient http)
     public Task<SelectedMediaResponse> ReshuffleMediaAsync(int childId, ReshuffleMediaDto dto,
         CancellationToken ct = default) =>
         Http.PostAsync<SelectedMediaResponse>($"{Root}/children/{childId}/media-picks/reshuffle", dto, ct);
+
+    // ---------------------------------------------------------------- The child describes itself (B-50)
+
+    /// <summary>
+    /// The selectable interest keywords the child may pick from. Unlike the creator's view this list
+    /// carries no usage counts - it is a picking list, not a catalog view.
+    /// </summary>
+    public Task<IReadOnlyList<InterestTagOptionResponse>> ListInterestOptionsAsync(InterestFacet? facet = null,
+        int skip = 0, int take = 50, CancellationToken ct = default) =>
+        Http.GetAsync<IReadOnlyList<InterestTagOptionResponse>>($"{Root}/interest-tags"
+            + PuglingHttp.Query(("facet", facet), ("skip", skip), ("take", take)), ct);
+
+    /// <summary>The logged-in child's own interest profile (weighted keywords plus free-text wishes).</summary>
+    public Task<MyInterestProfileResponse> GetMyInterestsAsync(CancellationToken ct = default) =>
+        Http.GetAsync<MyInterestProfileResponse>($"{Root}/me/interests", ct);
+
+    /// <summary>
+    /// Replaces the child's own interests entirely. Resolves against <b>existing</b> tags only - an unknown
+    /// id yields <c>invalid_reference</c> rather than quietly creating taxonomy.
+    /// </summary>
+    public Task<MyInterestProfileResponse> SetMyInterestsAsync(SetMyInterestsDto dto, CancellationToken ct = default) =>
+        Http.PutAsync<MyInterestProfileResponse>($"{Root}/me/interests", dto, ct);
+
+    /// <summary>Adds a free-text wish outside the taxonomy; it lands in the supervisor-visible interest list.</summary>
+    public Task<MyInterestProfileResponse> AddMyInterestWishAsync(AddInterestWishDto dto, CancellationToken ct = default) =>
+        Http.PostAsync<MyInterestProfileResponse>($"{Root}/me/interests/wishes", dto, ct);
 }

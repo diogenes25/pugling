@@ -6,6 +6,7 @@ import { useAuth } from "../lib/auth";
 import { Mascot } from "../components/Mascot";
 import { useSohn } from "./SohnApp";
 import { MissionsPanel } from "./GamificationPanels";
+import { InterestIntroCard } from "./SohnInterests";
 import type { OverviewResponse, PlanResponse, PositionStatus } from "../lib/types";
 
 const TYPE_ICON: Record<string, string> = {
@@ -35,6 +36,7 @@ export function SohnHome() {
   if (!plans.data || plans.data.length === 0) {
     return (
       <div className="sohn-body">
+        <InterestIntroCard />
         <Mascot skin={skin} mood="sleepy" size={120} />
         <div className="card" style={{ textAlign: "center" }}>
           <div className="screen-title">Noch keine Mission</div>
@@ -72,6 +74,7 @@ function HomeForPlan({
 
   return (
     <div className="sohn-body">
+      <InterestIntroCard />
       {plans.length > 1 && (
         <div className="field">
           <select value={planId} onChange={(e) => onPickPlan(Number(e.target.value))} aria-label="Plan wählen">

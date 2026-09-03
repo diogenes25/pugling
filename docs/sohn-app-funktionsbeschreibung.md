@@ -19,14 +19,20 @@ funktionieren.
 
 ## 1. Wer benutzt die App und wozu
 
-Der **Sohn** (das Kind) lernt. Er legt **keine** Inhalte an und steuert nichts — das macht der Vater
-in einer getrennten App. Der Sohn:
+Der **Sohn** (das Kind) lernt. Er legt **keine** Inhalte an und steuert weder *was* er lernt noch *wie oft*
+oder *ab welcher Schwelle* — das macht der Vater in einer getrennten App. Der Sohn:
 
 1. sieht seine **Tagesmission** (was heute zu tun ist),
 2. **übt** und macht **Tests**,
 3. verdient dabei zwei Währungen (**Münzen** und **Gems**),
 4. gibt sie im **Familien-Shop** (echte Belohnungen) und für **Charaktere/Skins** aus,
-5. verfolgt seinen **Fortschritt**, seine **Missionen** und **Auszeichnungen**.
+5. verfolgt seinen **Fortschritt**, seine **Missionen** und **Auszeichnungen**,
+6. **beschreibt sich selbst** — was er mag und was gar nicht (siehe 4.10).
+
+**Die eine Ausnahme von „steuert nichts"** ist Punkt 6, und sie ist genau deshalb gefahrlos: Interessen
+**kleiden den Stoff ein, sie ersetzen ihn nie.** Sie ändern nur, welche Bilder und Beispiele erscheinen —
+nicht den Inhalt, nicht die Pflicht, nicht die Punkte. Damit ist es die einzige Stelle, an der das Kind
+sich ohne Anti-Cheat-Risiko einbringen kann.
 
 Die App ist bewusst **spielerisch** (Arcade/Duolingo-Anmutung): Streaks, Combos, Konfetti, Sound,
 Vibration, Maskottchen. Motivation ist ein Kernfeature, kein Beiwerk.
@@ -345,6 +351,10 @@ Jeder Screen ist beschrieben durch: **Zweck**, **angezeigte Daten**, **Aktionen*
 
 **Zustände:** Leerzustand, wenn es noch keine Buchungen gibt; Lade-/Fehlerzustand.
 
+**Aktionen (Ausnahme):** ein dauerhafter Einstieg in die Selbstbeschreibung („Das bin ich", siehe 4.10).
+Er liegt hier und nicht in der unteren Navigation: die trägt die fünf Orte, an denen gespielt und
+ausgegeben wird — dies ist eine Einstellung.
+
 ### 4.7 Familien-Shop
 
 **Zweck:** Der **einzige Münz-Ausgabeweg** und ein Kern-Feature der App: Das Kind kauft aus einem vom Vater
@@ -423,6 +433,37 @@ durch den Vater.
 - Raster der Badges: erreichte hervorgehoben, offene gedimmt mit Fortschritt zur Schwelle.
 - Neu erreichte Badges → große Feier (einmalig).
 
+### 4.10 Das bin ich (Selbstbeschreibung)
+
+**Zweck:** Das Kind sagt selbst, was es mag und was gar nicht, damit Bilder und Beispiele zu ihm passen.
+Ein **geführter Prozess in vier Schritten**, ohne Tippen — bis auf den letzten, freiwilligen Schritt.
+
+**Schritte:**
+
+1. **„Was magst du?"** — Kacheln aller Themen-Schlagworte. Einmal antippen = *mag ich*, nochmal =
+   *Lieblingsthema*, nochmal = wieder aus.
+2. **„Wie sollen die Bilder aussehen?"** — dieselbe Mechanik für Stil-Schlagworte (Comic, Foto, Pixel-Art).
+3. **„Was geht gar nicht?"** — Abneigungen. Sie wiegen schwerer als Vorlieben: ein abstoßendes Motiv
+   kehrt den Lerneffekt um, darum schließen sie passende Bilder **hart** aus.
+4. **„Fehlt noch was?"** — ein kurzer, optionaler Freitext-Wunsch (max. 60 Zeichen), falls das eigene Ding
+   nicht in der Liste stand. Er ist **kein geheimer Kanal**: der Vater sieht ihn am Kindprofil.
+
+**Aktionen:** Weiter · Zurück · Abbrechen · Fertig (speichert alles auf einmal).
+
+**Regeln:**
+
+- **Das Kind wählt aus, es erfindet nicht.** Die Schlagwort-Liste pflegt der Creator; ein Kind kann sie
+  nicht erweitern. Ein erfundenes Stichwort träfe nie ein Bild und machte die Auswahl schlechter.
+- **Nichts wird unterwegs geschickt.** Verlassen ohne „Fertig" ändert nichts (abbrechbar); ein erneuter
+  Besuch zeigt den zuletzt gespeicherten Stand (fortsetzbar).
+- **Eine Änderung wirkt auf künftige Bilder, nie rückwirkend.** Ein einmal gewähltes Bild bleibt am Wort
+  stehen, bis das Kind bewusst „anderes Bild" drückt — Bildkonstanz *ist* der Merkeffekt.
+- **Kein Deckel aufs Ändern.** Es gibt nichts zu gewinnen, also nichts zu missbrauchen.
+
+**Zustände:** Erstbesuch (die Basis bietet den Prozess von selbst an, solange noch nichts gewählt wurde;
+danach nur noch über den Menüpunkt im Konto), leere Schlagwort-Liste („dein Vater legt sie an"),
+Lade-/Fehlerzustand. Nach dem Speichern eine Feier und zurück zur Basis.
+
 ---
 
 ## 5. Navigationsmodell (Gesamtüberblick)
@@ -441,6 +482,7 @@ Login  (nicht angemeldet)
 
   Weg    → „Zur Tagesmission" → Basis
   Konto  → Stände + Buchungsverlauf ansehen (kein Kauf)
+         └─ „Das bin ich" → Selbstbeschreibung → (Fertig) → Basis
   Shop   → Artikel kaufen → Inventar → Einlösen beantragen → Anfrage-Status
   Skins  → kaufen / ausrüsten; Abmelden
 ```
@@ -481,6 +523,7 @@ durchgehen (Combos, kleine Feiern) → „Runde fertig!" → „Weiter zum Test"
 - [ ] Konto: Münz-/Gem-Stand + Punkt-Verlauf (reine Übersicht, kein Kauf)
 - [ ] Familien-Shop: Katalog kaufen (Münz-/Gem-Preise, Bestand), Inventar, Einlösung beantragen, Anfrage-Status
 - [ ] Skins: Katalog, ausrüsten, kaufen (mit Bestätigung), Gem-Sperre
+- [ ] Das bin ich: vierschrittige Selbstbeschreibung per Kacheln (mag / Lieblingsthema / geht gar nicht) plus optionaler Freitext-Wunsch; Erstbesuch-Angebot auf der Basis, dauerhafter Einstieg im Konto
 - [ ] Missionen-Panel + Auszeichnungen-Galerie mit einmaligen Feiern
 - [ ] Feiern in 3 Stufen mit Ton + Haptik; Toasts; Stimmungs-Maskottchen
 - [ ] Lade-, Fehler- und Leerzustände auf jedem Screen

@@ -8369,6 +8369,95 @@
         }
       }
     },
+    "/api/v1/student/interest-tags": {
+      "get": {
+        "tags": [
+          "Student \u2013 Interests"
+        ],
+        "summary": "The selectable keywords, alphabetically. Total count (before paging) in the\n\u0060X-Total-Count\u0060 header.",
+        "parameters": [
+          {
+            "name": "facet",
+            "in": "query",
+            "description": "Only keywords of this facet \u2013 the guided process shows topics and styles apart.",
+            "schema": {
+              "$ref": "#/components/schemas/InterestFacet"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "description": "Number of entries to skip (paging).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "description": "Maximum number of entries (1..500).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-Total-Count": {
+                "description": "Total row count before paging (skip/take).",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InterestTagOptionResponse"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/student/me/points": {
       "get": {
         "tags": [
@@ -9426,6 +9515,194 @@
           },
           "403": {
             "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/me/interests": {
+      "get": {
+        "tags": [
+          "Student \u2013 Interests"
+        ],
+        "summary": "The child\u0027s own profile: weighted taxonomy entries plus its free-text wishes, strongest preference\nfirst and dislikes last (the same order the supervisor sees).",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyInterestProfileResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Student \u2013 Interests"
+        ],
+        "summary": "    Replaces the child\u0027s interests completely (empty list = remove all) \u2013 the guided process edits the\n    set as a whole, and a replacement is the only way an entry can be removed again.\n    Unlike the supervisor\u0027s endpoint this resolves only against existing tags: an unknown\ntagId is rejected with invalid_reference instead of quietly creating taxonomy.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetMyInterestsDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetMyInterestsDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SetMyInterestsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyInterestProfileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/me/interests/wishes": {
+      "post": {
+        "tags": [
+          "Student \u2013 Interests"
+        ],
+        "summary": "Adds a free-text wish outside the taxonomy (\u0022Sonstiges: \u2026\u0022). It lands in the child\u0027s free-form\ninterest list, which the supervisor already sees and edits \u2013 no hidden channel; an adult can later\nturn it into a real tag through the existing backfill funnel.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddInterestWishDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddInterestWishDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/AddInterestWishDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyInterestProfileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -27445,6 +27722,18 @@
         },
         "description": "Input for granting a permission."
       },
+      "AddInterestWishDto": {
+        "required": [
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          }
+        },
+        "description": "A free-text wish outside the taxonomy (\u0022Sonstiges: \u2026\u0022). It lands in the child\u0027s free-form\n\u0060Interests\u0060 list, visible to the supervisor \u2013 no hidden channel; an adult can later turn it into\na real tag via the backfill funnel."
+      },
       "AddMediaLinkDto": {
         "type": "object",
         "properties": {
@@ -35711,6 +36000,35 @@
         "type": "string",
         "description": "Facet of an interest tag. It groups the taxonomy by domain without splitting it:\ntopic (InterestFacet.Franchise, InterestFacet.Sport \u2026) and InterestFacet.Style deliberately live in\n\u003Cb\u003Ethe same\u003C/b\u003E table because they behave identically during image selection \u2013 only the weighting\ndiffers. Extensions are purely additive.\n\nAllowed values: Other, Franchise, Sport, Animal, Vehicle, Music, Hobby, Nature, Style."
       },
+      "InterestTagOptionResponse": {
+        "required": [
+          "facet",
+          "id",
+          "label",
+          "slug"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "facet": {
+            "$ref": "#/components/schemas/InterestFacet"
+          }
+        },
+        "description": "A selectable keyword of the shared taxonomy, as the child sees it. Deliberately without the usage\ncounts of \u0060InterestTagResponse\u0060: they would tell one child how many others picked a keyword."
+      },
       "InterestTagResponse": {
         "required": [
           "childCount",
@@ -37197,6 +37515,96 @@
         },
         "description": "The child\u0027s own activation request from their perspective."
       },
+      "MyInterestInput": {
+        "required": [
+          "tagId",
+          "weight"
+        ],
+        "type": "object",
+        "properties": {
+          "tagId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "weight": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "One interest the child sets on itself. Only TagId \u2013 naming a tag by text would\ncreate it (create-if-missing), and creating taxonomy is not a child\u0027s action.\n\u0060Weight\u0060 ranges from -3 (strong dislike) through 0 (neutral) to \u002B3 (favorite topic)."
+      },
+      "MyInterestProfileResponse": {
+        "required": [
+          "interests",
+          "needsIntro",
+          "wishes"
+        ],
+        "type": "object",
+        "properties": {
+          "interests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MyInterestResponse"
+            }
+          },
+          "wishes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "needsIntro": {
+            "type": "boolean"
+          }
+        },
+        "description": "The child\u0027s own interest profile in one read: the weighted taxonomy entries plus the free-text\nwishes. NeedsIntro is the server\u0027s answer to \u0022has this child ever described\nitself?\u0022 \u2013 it is derived from an empty profile, so no extra timestamp column is needed."
+      },
+      "MyInterestResponse": {
+        "required": [
+          "facet",
+          "label",
+          "slug",
+          "tagId",
+          "weight"
+        ],
+        "type": "object",
+        "properties": {
+          "tagId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "facet": {
+            "$ref": "#/components/schemas/InterestFacet"
+          },
+          "weight": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "One of the child\u0027s own weighted interests. Slimmer than the supervisor\u0027s view of the same row: the\nchild has no use for the creation timestamp."
+      },
       "MyInventoryItemResponse": {
         "required": [
           "actionType",
@@ -38677,6 +39085,7 @@
               "insufficient_coins",
               "insufficient_gems",
               "insufficient_inventory",
+              "interest_wish_limit_reached",
               "internal_error",
               "invalid_credentials",
               "invalid_reference",
@@ -39872,6 +40281,21 @@
           }
         },
         "description": "Input for publishing or \u003Cb\u003Ewithdrawing\u003C/b\u003E an exercise \u2013 the counter-move to publishing."
+      },
+      "SetMyInterestsDto": {
+        "required": [
+          "interests"
+        ],
+        "type": "object",
+        "properties": {
+          "interests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MyInterestInput"
+            }
+          }
+        },
+        "description": "Replaces the child\u0027s own interests entirely (empty list = remove all) \u2013 the guided process edits\nthe set as a whole, the same way the supervisor\u0027s editor does."
       },
       "ShopArticleDto": {
         "required": [
@@ -43843,6 +44267,9 @@
     },
     {
       "name": "Student \u2013 Child Progress"
+    },
+    {
+      "name": "Student \u2013 Interests"
     },
     {
       "name": "Student \u2013 Me"

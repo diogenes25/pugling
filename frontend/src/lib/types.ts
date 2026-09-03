@@ -193,6 +193,25 @@ export type ChildInterestResponse = S["ChildInterestResponse"];
 /** Eingabe beim Setzen: entweder eine bestehende `tagId` oder ein Label (wird bei Bedarf angelegt). */
 export type ChildInterestInput = S["ChildInterestInput"];
 
+/**
+ * Ein wählbares Schlagwort, **wie das Kind es sieht** – ohne die Nutzungszähler der Creator-Sicht:
+ * die verrieten, wie viele andere Kinder dasselbe gewählt haben.
+ */
+export type InterestTagOption = S["InterestTagOptionResponse"];
+
+/** Ein eigenes gewichtetes Interesse des Kindes (schlanker als die Supervisor-Sicht derselben Zeile). */
+export type MyInterest = S["MyInterestResponse"];
+
+/**
+ * Das selbst gepflegte Profil des Kindes: gewichtete Schlagworte plus Freitext-Wünsche.
+ * `needsIntro` ist die Server-Antwort auf „hat sich dieses Kind je selbst beschrieben?" – aus dem
+ * leeren Bestand abgeleitet, damit die Story ohne neue Spalte auskommt.
+ */
+export type MyInterestProfile = S["MyInterestProfileResponse"];
+
+/** Eingabe des Kindes: **nur** eine bestehende `tagId` – ein Kind erweitert die Taxonomie nie. */
+export type MyInterestInput = S["MyInterestInput"];
+
 /** Eine technische Ausprägung eines Bildes (dieselbe Darstellung, andere Auflösung/Format). */
 export type MediaVariantResponse = S["MediaVariantResponse"];
 

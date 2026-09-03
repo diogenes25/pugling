@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/medien, bereich/frontend, bereich/auth, rolle/student, rolle/supervisor]
+tags: [typ/story, status/in-arbeit, bereich/medien, bereich/frontend, bereich/auth, rolle/student, rolle/supervisor]
 aliases: [Interessen vom Kind, Selbstbeschreibung, Interessen-Onboarding]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: L
@@ -9,6 +9,7 @@ wo: beides
 migration: nein
 vertragsbruch: nein
 quelle: Sitzung 2026-08-01 (Rollen-Durchgang, Nutzer-Entscheidung)
+wartet_auf: "pugling-reviewer, frontend-reviewer"
 ---
 
 # B-50 · Das Kind beschreibt sich selbst: Interessen in einem geführten Prozess
@@ -265,6 +266,58 @@ ruft die PUT-Route); ein neuer, schlanker `frontend/e2e/interessen.spec.ts` deck
 Interesse → Vater sieht es in `VaterKind.tsx`" ab (Vorbild `full-flow.spec.ts`). `/smoke-test` als manueller
 Gegencheck vor dem Commit.
 
+## Bau (2026-09-03)
+
+**Backend** (API-First, zuerst):
+
+- `Pugling.Contracts/Student/InterestDtos.cs` — `InterestTagOptionResponse`, `MyInterestInput`,
+  `SetMyInterestsDto`, `AddInterestWishDto`, `MyInterestResponse`, `MyInterestProfileResponse`.
+  Eigene, schmale Student-DTOs statt einer Verschiebung nach `Common` (offen gelassenes Risiko der
+  Schätzung): `MyInterestInput` trägt **nur** `TagId` — der Kind-Vertrag kennt gar keinen Textweg,
+  über den ein Tag entstehen könnte.
+- `Controllers/Student/MyInterestsController.cs` (`student/me/interests`, `Roles.Student`,
+  `User.ChildId()`): `GET` (Profil), `PUT` (Vollersatz, Auflösung nur über bestehende `TagId`),
+  `POST wishes` (Freitext, gedeckelt auf 60 Zeichen / 20 Einträge).
+- `Controllers/Student/InterestOptionsController.cs` (`student/interest-tags`): die kind-lesbare
+  Auswahlliste, gepaginiert, mit `facet`-Filter, **ohne** Nutzungszähler.
+- `ApiErrors.InterestWishLimitReached` (`interest_wish_limit_reached`, 409) — neu, additiv.
+- `Pugling.Client/StudentApi.cs` — drei Zeilen für die drei Aufrufe.
+- `EndpointCoverageGuard.FullRunTouchedActions` 263 → **267** (die vier neuen Actions sind abgedeckt).
+
+**Frontend**:
+
+- `src/sohn/SohnInterests.tsx` — der geführte Prozess in vier Schritten (Kachel-Mehrfachauswahl,
+  `aria-pressed`, `useAction` + `StatusBanner`, `disabled={busy}`), dazu `InterestIntroCard` als
+  Erstbesuch-Angebot auf der Basis.
+- Route `/sohn/ich` (`SohnApp.tsx`), dauerhafter Menüpunkt in `SohnKonto.tsx`, Angebot in `SohnHome.tsx`.
+- `src/lib/api.ts` + `types.ts` — drei Aufrufe, vier Alias-Zeilen aus dem neu erzeugten Vertrag.
+
+**Doku**: `docs/sohn-app-funktionsbeschreibung.md` — die Ausnahme zu „steuert nichts" (Abschnitt 1),
+neuer Abschnitt 4.10, Navigationsmodell und Checkliste (AK 8).
+
+### Zwei Abweichungen vom Angriffsplan, beide bewusst
+
+1. **Der Freitext-Wunsch liegt unter `POST me/interests/wishes`**, nicht `…/wish`. Plural, weil die
+   Ressource eine Liste ist.
+2. **Die Erfolgsmeldung ist die Feier der Shell, nicht der `StatusBanner` des Bildschirms.** Der erste
+   E2E-Lauf fiel genau daran: der Bildschirm springt nach dem Speichern zurück zur Basis und nimmt seinen
+   Banner mit — die Fehlerklasse aus [B-151](B-151-gespeichert-banner-verschwindet-mit-dem-formular.md).
+   Die Bestätigung wandert damit auf eine Ebene, die den Sprung überlebt; der `StatusBanner` bleibt für
+   den Fehlerfall, in dem der Bildschirm ja stehen bleibt.
+
+### Rote Proben (wo sie fielen, nicht ob)
+
+| Probe | Erwartete Fundstelle | Gemessen |
+|---|---|---|
+| Referenzprüfung aus `MyInterestsController.Replace` entfernen | `invalid_reference`-Zusicherung | `KindInteressenTests.cs:105` ✓ |
+| „Die eingefrorene Wahl gewinnt" aus `MediaSelector` entfernen | AK-4-Zusicherung auf das unveränderte Bild | `KindInteressenTests.cs:279` ✓ |
+
+### Was offen bleibt
+
+- Die beiden Reviewer (`wartet_auf`).
+- `/smoke-test` als manueller Gegencheck ist **nicht** gelaufen; der E2E fährt denselben Weg gegen einen
+  echten Server und deckt ihn ab — das ist eine Ersetzung, keine Auslassung, aber sie sei benannt.
+
 ## Verlauf
 
 - **2026-08-01** — angelegt und direkt ausformuliert (Quelle: Rollen-Durchgang; Kernentscheidung „das Kind
@@ -279,3 +332,10 @@ Gegencheck vor dem Commit.
 - **2026-08-04** — geschätzt: `groesse: L`, `wo: beides`, `migration: nein`, `vertragsbruch: nein`,
   Risiken, Angriffsplan (Backend zuerst) und Testweg festgelegt; kein XL-Split nötig — autonom getroffen,
   Nutzerauftrag.
+- **2026-09-03** — gebaut, alle acht Akzeptanzkriterien erfüllt; Stand siehe „Bau" unten. Belegt: Backend
+  **863/863 grün** (`dotnet test Pugling.sln -c Release`), davon 11 neue in `KindInteressenTests`;
+  Frontend **339/339** Vitest (11 neue in `SohnInterests.test.tsx`); neuer E2E `interessen.spec.ts` grün
+  („1 passed"), der zugleich den **Rollengang** fährt (Kind → Vater am laufenden Server). Zwei rote Proben
+  gemessen, je an der richtigen Zusicherung. **Bleibt auf `in-arbeit`**: die Eintrittsbedingung von
+  `abgenommen` verlangt `pugling-reviewer` und `frontend-reviewer`, und diese Sitzung trägt die Regel,
+  keine Agenten unaufgefordert zu starten — Freigabe steht beim Nutzer aus (`wartet_auf`).

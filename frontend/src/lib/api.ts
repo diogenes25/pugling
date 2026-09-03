@@ -22,7 +22,8 @@ import type {
   InventoryItem, MyInventoryItem, ShopPurchase, MyShopPurchase, ActivationRequest, ShopPurchaseStatus, ActivationRequestStatus,
   ShopView, MyActivation,
   ContentRating, InterestTagResponse, CreateInterestTagDto, UpdateInterestTagDto,
-  ChildInterestResponse, ChildInterestInput,
+  ChildInterestResponse, ChildInterestInput, InterestFacet,
+  InterestTagOption, MyInterestProfile, MyInterestInput,
   MediaAssetResponse, CreateMediaAssetDto, MediaLinkResponse, MediaUsage, SelectedMediaResponse,
   PublisherResponse, CreatePublisherDto, UpdatePublisherDto,
   TextbookSeriesResponse, CreateTextbookSeriesDto, UpdateTextbookSeriesDto,
@@ -831,6 +832,21 @@ export const api = {
   /** Ersetzt die Menge vollständig – das UI bearbeitet sie als Ganzes. */
   setChildInterests: (childId: number, interests: ChildInterestInput[]) =>
     http<ChildInterestResponse[]>(`${V1}/supervisor/children/${childId}/interests`, "PUT", { interests }),
+
+  /**
+   * Die Auswahlliste, aus der das Kind sich bedient. Bewusst die Kind-Route und nicht `creator/interest-tags`:
+   * die trägt Nutzungszähler und ist für einen Kind-Token gesperrt.
+   */
+  interestOptions: (facet?: InterestFacet) =>
+    http<InterestTagOption[]>(`${V1}/student/interest-tags?take=500${facet ? `&facet=${facet}` : ""}`),
+  /** Das eigene Interessen-Profil des angemeldeten Kindes (Schlagworte + Freitext-Wünsche). */
+  myInterests: () => http<MyInterestProfile>(`${V1}/student/me/interests`),
+  /** Ersetzt die eigenen Interessen vollständig – nur bestehende `tagId`s, das Kind legt nie eine an. */
+  setMyInterests: (interests: MyInterestInput[]) =>
+    http<MyInterestProfile>(`${V1}/student/me/interests`, "PUT", { interests }),
+  /** Ein kurzer Freitext-Wunsch außerhalb der Taxonomie; landet für den Vater sichtbar am Kind-Profil. */
+  addMyInterestWish: (text: string) =>
+    http<MyInterestProfile>(`${V1}/student/me/interests/wishes`, "POST", { text }),
 
   media: (p: { search?: string; tag?: string[]; maxRating?: ContentRating; take?: number } = {}) => {
     const q = new URLSearchParams();
