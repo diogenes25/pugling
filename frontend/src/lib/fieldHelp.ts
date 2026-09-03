@@ -138,6 +138,13 @@ export const FIELD_HELP = {
     text: "Für welche Schularten die Übung gedacht ist. Dient dem Wiederfinden und dem Vorschlag beim "
       + "Zusammenstellen eines Plans; sie sperrt nichts.",
   },
+  exerciseDressing: {
+    title: "Eingekleidet in",
+    text: "Die Interessen, in deren Sprache die Übung erzählt – dieselben Stichworte, aus denen auch die "
+      + "Bildauswahl schöpft. Sie ändern nicht, WAS geübt wird, nur die Beispiele drumherum. Meist trägt "
+      + "der KI-Creator sie ein; hier siehst und korrigierst du sie. Ein Stichwort, das Übungen "
+      + "einkleidet, lässt sich nicht mehr löschen.",
+  },
   exerciseSource: {
     title: "Quelle (Lehrbuch)",
     text: "Woher der Stoff stammt, z. B. „Access 5, Unit 3“. Frei formulierbar – der Filter über den "

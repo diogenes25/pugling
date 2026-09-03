@@ -172,6 +172,14 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
     /// The lock has a way out, and it needs one: the exercise editor shows the dressing and lets it be
     /// removed. Without that door this would be a dead end instead of a guard rail.
     /// </para>
+    /// <para>
+    /// <b>Two limits, so this does not read as more than it is.</b> It guards the tag, not the dressing:
+    /// the exercise <c>PUT</c> is a replacement, so a caller that omits <c>InterestTagIds</c> still clears
+    /// the dressing without a word (deliberate since B-46 - whether an omitted field should mean "keep" is
+    /// a contract question of its own). And it is an application-level check, not a constraint: the foreign
+    /// key stays <c>Cascade</c>, so a request that dresses an exercise between this check and the commit
+    /// slips through.
+    /// </para>
     /// </summary>
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -182,13 +190,19 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
         var tag = await db.InterestTags.FindAsync([id], ct);
         if (tag is null) return NotFound();
 
-        // Only the exercises block. Images and children stay deliberately outside the lock - locking them
-        // too would make the cleanup view (?unused=true) practically unusable.
+        // Only the exercises block. Images and children stay outside the lock because their loss is
+        // recoverable, not because of the cleanup view: `?unused=true` already requires all three counts to
+        // be zero, so a broader lock could never fire there. What a broader lock would do is make the tag
+        // catalog effectively append-only - nearly every tag carries an image or a child.
         var dressed = await db.ExerciseInterestLinks.CountAsync(l => l.InterestTagId == id, ct);
         if (dressed > 0)
+            // "Remove it from them first" only where the caller may: the tag catalog is global, exercises
+            // are grant-protected. Another creator's exercise can therefore block this delete for good, and
+            // a message that hides that would promise a door this caller cannot open (B-150/B-160).
             return this.ProblemWithCode(ApiErrors.InterestTagInUse,
-                $"This interest tag dresses {dressed} exercise(s). Remove it from them first – "
-                + "the dressing is authored information and cannot be restored.");
+                $"This interest tag dresses {dressed} exercise(s) – the dressing is authored information "
+                + "and cannot be restored. Remove it from those exercises first; ones you may not edit "
+                + "have to be cleared by their author.");
 
         db.InterestTags.Remove(tag);
         await db.SaveChangesAsync(ct);

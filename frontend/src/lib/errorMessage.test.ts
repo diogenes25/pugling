@@ -36,6 +36,18 @@ describe("errorMessage – deutsche Fassung fachlicher Codes", () => {
     expect(text).not.toContain("Some English sentence.");
   });
 
+  it("übersetzt die Löschsperre am Schlagwort und nennt den Ausweg", () => {
+    const text = problem("interest_tag_in_use");
+
+    // Der Ausweg ist hier wichtiger als bei den beiden anderen Sperren: Der Vater hat nichts falsch
+    // gemacht — der KI-Creator kleidet Übungen ein, ohne dass er es sieht. Ohne den Satz stünde dort die
+    // englische Rohzeile an genau der Stelle, an der er eine Anleitung braucht.
+    expect(text).toContain("Bearbeiten-Dialog");
+    // Und die Grenze des Auswegs: fremde Übungen kann er nicht ausziehen.
+    expect(text).toContain("nicht gehören");
+    expect(text).not.toContain("Some English sentence.");
+  });
+
   it("hängt an einer übersetzten Meldung KEINE Trace-Id an", () => {
     // Die Referenz hilft beim Melden eines Defekts, nicht beim Beheben einer Löschsperre – sie macht
     // einen sonst verständlichen Satz nur wieder technisch.

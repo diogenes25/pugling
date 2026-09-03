@@ -45,9 +45,19 @@ export function ExerciseEditModal({ exercise, onClose, onSaved }: {
   const route = types?.route(type) ?? null;
   const [detail, setDetail] = useState<ExerciseDetail | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  /*
+   * Das Metadaten-Formular liegt **hier**, nicht im `MetaEditor` — weil der Dialog zwei Speicher-Knöpfe
+   * hat und beide denselben Vollersatz-PUT schicken. Solange der Inhalts-Knopf sich seine Nutzlast aus
+   * `detail` zusammenbaute, drehte er jede Änderung der Metadaten still zurück: sichtbar wurde das erst
+   * mit der Einkleidung (B-206), die man seither ändern *kann* — der Chip war weg, ein „Inhalt speichern"
+   * schickte ihn wieder hin. Ein State, zwei Leser.
+   */
+  const [form, setForm] = useState<MetaForm | null>(null);
 
   useEffect(() => {
-    api.getExercise(exercise.id).then(setDetail).catch((e) => setLoadError(errorMessage(e)));
+    api.getExercise(exercise.id)
+      .then((d) => { setDetail(d); setForm(initialForm(d)); })
+      .catch((e) => setLoadError(errorMessage(e)));
   }, [exercise.id]);
 
   return (
@@ -61,11 +71,11 @@ export function ExerciseEditModal({ exercise, onClose, onSaved }: {
 
       {loadError && <div className="banner err">{loadError}</div>}
       {!detail && !loadError && <div className="loading">Lade…</div>}
-      {detail && (
+      {detail && form && (
         <>
           {type === "Vocabulary" && <ItemEditor detail={detail} />}
           {type !== "Vocabulary" && isContentEditable(type) && (
-            <ContentEditor detail={detail} type={type} route={route!} onSaved={onSaved} />
+            <ContentEditor detail={detail} form={form} type={type} route={route!} onSaved={onSaved} />
           )}
           {type !== "Vocabulary" && !isContentEditable(type) && (
             <div className="banner">
@@ -74,7 +84,7 @@ export function ExerciseEditModal({ exercise, onClose, onSaved }: {
               Beschreibung und Einordnung lassen sich unten ändern.
             </div>
           )}
-          <MetaEditor detail={detail} type={type} route={route!} onSaved={onSaved} />
+          <MetaEditor detail={detail} form={form} setForm={setForm} type={type} route={route!} onSaved={onSaved} />
           {/* Titelbild und Rechte gehören zur Übung, nicht zu ihrem Inhalt – darum unter den Metadaten. */}
           <ExerciseCoverSection exerciseId={detail.id} canWrite={detail.isOwn} />
           <GrantsSection exerciseId={detail.id} isOwner={detail.isOwner} />
@@ -172,13 +182,15 @@ function langsOf(d: ExerciseDetail): { sourceLang: string; targetLang: string } 
   return { sourceLang: c.sourceLang ?? "", targetLang: c.targetLang ?? "" };
 }
 
-function MetaEditor({ detail, type, route, onSaved }: {
-  detail: ExerciseDetail; type: ExerciseTypeKey; route: string; onSaved: () => void;
+function MetaEditor({ detail, form, setForm, type, route, onSaved }: {
+  detail: ExerciseDetail; form: MetaForm; setForm: (f: (prev: MetaForm | null) => MetaForm) => void;
+  type: ExerciseTypeKey; route: string; onSaved: () => void;
 }) {
-  const [form, setForm] = useState<MetaForm>(() => initialForm(detail));
   const action = useAction();
 
-  function up<K extends keyof MetaForm>(k: K, v: MetaForm[K]) { setForm((f) => ({ ...f, [k]: v })); }
+  function up<K extends keyof MetaForm>(k: K, v: MetaForm[K]) {
+    setForm((f) => ({ ...(f ?? form), [k]: v }));
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -292,8 +304,8 @@ function MetaEditor({ detail, type, route, onSaved }: {
  * derselbe wie beim Anlegen; vorbelegt wird über `configToEditorState` – die Gegenrichtung zu
  * `buildTypeConfig`.
  */
-function ContentEditor({ detail, type, route, onSaved }: {
-  detail: ExerciseDetail; type: ExerciseTypeKey; route: string; onSaved: () => void;
+function ContentEditor({ detail, form, type, route, onSaved }: {
+  detail: ExerciseDetail; form: MetaForm; type: ExerciseTypeKey; route: string; onSaved: () => void;
 }) {
   const initial = configToEditorState(type, detail.config);
   const [rows, setRows] = useState<Row[]>(initial.rows);
@@ -310,7 +322,9 @@ function ContentEditor({ detail, type, route, onSaved }: {
     if (problem) { action.fail(problem); return; }
     const ok = await action.run(() => api.updateExercise(
       detail.seriesId, detail.seriesUnitId, route, detail.id,
-      payloadFrom(detail, initialForm(detail), buildTypeConfig(type, rows, extra))), "Inhalt gespeichert.");
+      // Das geteilte Formular, nicht `initialForm(detail)`: sonst schickt dieser Knopf den Stand von vor
+      // dem Öffnen zurück und macht eine gerade gespeicherte Metadaten-Änderung wieder rückgängig.
+      payloadFrom(detail, form, buildTypeConfig(type, rows, extra))), "Inhalt gespeichert.");
     if (ok) onSaved();
   }
 
@@ -545,9 +559,7 @@ function InterestDressing({ tagIds, onChange, disabled }: {
 
   return (
     <div className="field">
-      <label htmlFor="ed-dressing">
-        Eingekleidet in <span className="muted">(Interessen, in deren Sprache die Übung erzählt)</span>
-      </label>
+      <FieldLabel htmlFor="ed-dressing" topic="exerciseDressing">Eingekleidet in</FieldLabel>
       {/* Ein Ausfall der Liste darf die Einkleidung nicht verstecken: die Chips unten stehen auch ohne sie
           (dann mit Id statt Name), und nur das Nachtragen fällt weg. Sonst sähe „Laden gescheitert" aus wie
           „nicht eingekleidet" – die Verwechslung aus B-174. */}
@@ -555,6 +567,7 @@ function InterestDressing({ tagIds, onChange, disabled }: {
       <InterestChips
         tagIds={tagIds}
         known={known.data ?? []}
+        loading={known.data === null && !known.error}
         onChange={onChange}
         disabled={disabled || known.loading}
       />
@@ -566,11 +579,13 @@ function InterestDressing({ tagIds, onChange, disabled }: {
  * Der reine, props-getriebene Teil – **darum** getrennt: so ist er ohne gefälschtes `fetch` prüfbar
  * (`frontend/CLAUDE.md`: kein nachgebauter Bildschirm mit Netz).
  */
-export function InterestChips({ tagIds, known, onChange, disabled }: {
+export function InterestChips({ tagIds, known, onChange, disabled, loading = false }: {
   tagIds: number[];
   known: InterestTagResponse[];
   onChange: (ids: number[]) => void;
   disabled: boolean;
+  /** Die Auswahl ist noch unterwegs – dann ist „Name nicht dabei" noch keine Aussage. */
+  loading?: boolean;
 }) {
   const [pick, setPick] = useState("");
   const available = known.filter((t) => !tagIds.includes(t.id));
@@ -583,14 +598,17 @@ export function InterestChips({ tagIds, known, onChange, disabled }: {
           ? <span className="muted">Nicht eingekleidet – diese Übung erzählt neutral.</span>
           : tagIds.map((id) => {
             // Nach Id auflösen. Fehlt der Name (die Liste ist gedeckelt), steht die Id da statt gar nichts:
-            // ein Chip ohne Beschriftung wäre wieder eine Größe, die man nicht sieht.
+            // ein Chip ohne Beschriftung wäre wieder eine Größe, die man nicht sieht. **Während** die
+            // Liste lädt, ist „nicht dabei" aber noch keine Aussage – dann würde bei jedem Öffnen des
+            // Dialogs für einen Anstrich eine Id aufblitzen, obwohl AK 1 Namen zusagt.
             const tag = known.find((t) => t.id === id);
+            const name = tag ? tag.label : loading ? "…" : `Stichwort #${id}`;
             return (
               <span key={id} className="chip">
-                {tag ? tag.label : `Stichwort #${id}`}
+                {name}
                 <button
                   type="button" className="btn ghost small" style={{ width: "auto", padding: "2px 8px" }}
-                  aria-label={`${tag ? tag.label : `Stichwort #${id}`} entfernen`}
+                  aria-label={`Einkleidung „${name}" entfernen`}
                   disabled={disabled}
                   onClick={() => onChange(tagIds.filter((x) => x !== id))}
                 >×</button>
@@ -603,7 +621,11 @@ export function InterestChips({ tagIds, known, onChange, disabled }: {
           id="ed-dressing" value={pick} disabled={disabled || available.length === 0}
           onChange={(e) => setPick(e.target.value)} style={{ maxWidth: 260 }}
         >
-          <option value="">{available.length === 0 ? "– nichts mehr zur Auswahl –" : "– Interesse wählen –"}</option>
+          <option value="">
+            {loading ? "– Liste lädt –"
+              : available.length === 0 ? "– nichts mehr zur Auswahl –"
+              : "– Interesse wählen –"}
+          </option>
           {available.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
         </select>
         <button

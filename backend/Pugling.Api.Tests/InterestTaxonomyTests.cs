@@ -340,11 +340,11 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal("interest_tag_in_use",
             (await gesperrt.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
 
-        // Und das Stichwort steht danach noch da - ein abgewiesenes Löschen darf nichts halb erledigt haben.
+        // And the tag is still there afterwards - a rejected delete must not have half-finished anything.
         Assert.Equal(HttpStatusCode.OK, (await father.GetAsync($"/api/v1/creator/interest-tags/{tagId}")).StatusCode);
 
-        // Die Tür: Einkleidung abnehmen, dann geht dasselbe DELETE durch.
-        var detail = await GetOneAsync(father,
+        // The door: take the dressing off, and the same DELETE goes through.
+        var detail = await GetAsync(father,
             $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic/{exerciseId}");
         (await father.PutAsJsonAsync(
             $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic/{exerciseId}",
@@ -362,9 +362,10 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
     }
 
     /// <summary>
-    /// Das Gegenstück zum Riegel: Bild- und Kind-Verknüpfungen sperren <b>nicht</b>. Würden sie es, wäre die
-    /// Aufräum-Sicht praktisch tot – fast jedes Stichwort hängt an einem Bild oder einem Kind.
-    /// <para>Rote Probe: den Riegel auf <c>MediaLinks</c> ausweiten ⇒ diese Zusicherung fällt.</para>
+    /// The counterpart to the lock: image and child links do <b>not</b> block. Their loss is recoverable -
+    /// and a broader lock would make the tag catalog effectively append-only, because nearly every tag
+    /// carries an image or a child.
+    /// <para>Red probe: widen the lock to <c>MediaLinks</c> ⇒ this assertion falls.</para>
     /// </summary>
     [Fact]
     public async Task BildUndKindVerknuepfungen_SperrenDasLoeschenNicht()
@@ -398,14 +399,6 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal(HttpStatusCode.NoContent, (await father.DeleteAsync($"/api/v1/creator/interest-tags/{tagId}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await father.GetAsync($"/api/v1/creator/interest-tags/{tagId}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await father.DeleteAsync($"/api/v1/creator/interest-tags/{tagId}")).StatusCode);
-    }
-
-    /// <summary>Ein einzelnes Objekt (kein Array) von einem erfolgreichen GET.</summary>
-    private static async Task<JsonElement> GetOneAsync(HttpClient client, string url)
-    {
-        var res = await client.GetAsync(url);
-        res.EnsureSuccessStatusCode();
-        return await res.Content.ReadFromJsonAsync<JsonElement>();
     }
 
     private static async Task SetInterestsAsync(HttpClient father, object[] interests, int childId = 1)

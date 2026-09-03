@@ -10,6 +10,11 @@ import { vaterLogin } from "./helpers";
  * Komponententest tragen kann, und zwar als **Kreis**: einkleiden → Löschen wird verweigert → ausziehen →
  * Löschen geht. Nur so ist belegt, dass der Riegel eine Tür hat und nicht bloß eine Wand ist.
  *
+ * Der Typ ist **Grammatik** und nicht Vokabel, und das ist tragend: nur ein inhaltsbearbeitbarer Typ hat
+ * den zweiten Speicher-Knopf („Inhalt speichern"). Der baute seine Nutzlast früher aus dem geladenen Stand
+ * und drehte damit jede Metadaten-Änderung still zurück — mit einer Vokabel-Übung wäre die Spec dafür
+ * strukturell blind gewesen.
+ *
  * Das ist zugleich der Rollengang aus der Creator-Rolle.
  */
 
@@ -71,7 +76,9 @@ async function dialogOeffnen(page: Page) {
   await page.locator('select[aria-label="Unit"]').selectOption({ label: "Unit 1" });
   await expect(page.getByText(EXERCISE, { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "✏️ Bearbeiten" }).first().click();
-  await expect(page.getByRole("combobox", { name: "" }).first()).toBeVisible();
+  // Auf den DIALOG warten, nicht auf „irgendeine Combobox": `{ name: "" }` ist ein Teilstring-Vergleich und
+  // trifft jedes Auswahlfeld der Seite – auch die drei Filter dahinter. Die Zusicherung könnte nie fallen.
+  await expect(page.locator("#ed-title")).toBeVisible();
 }
 
 test("Die Einkleidung ist sichtbar, änderbar — und sperrt das Löschen ihres Stichworts", async ({ page }) => {
@@ -84,11 +91,11 @@ test("Die Einkleidung ist sichtbar, änderbar — und sperrt das Löschen ihres 
   await page.locator('select[aria-label="Fach"]').selectOption({ label: SUBJECT });
   await page.locator('select[aria-label="Reihe"]').selectOption({ label: SUBJECT });
   await page.locator('select[aria-label="Unit"]').selectOption({ label: "Unit 1" });
+  await page.locator('select[aria-label="Übungstyp"]').selectOption("Grammar");
   await page.locator("#ex-title").fill(EXERCISE);
-  await page.locator("#vp-word").fill(`box${RUN}`);
-  await page.locator("#vp-translation").fill("Kiste");
-  await page.getByRole("button", { name: /anlegen & wählen/ }).click();
-  await expect(page.locator(".token", { hasText: `box${RUN}→Kiste` })).toBeVisible();
+  await page.getByLabel("Anweisung").fill("Setze die richtige Form ein.");
+  await page.getByLabel("Aufgabe").fill("She ___ (go) to school.");
+  await page.getByLabel("Lösung").fill("goes");
   await page.getByRole("button", { name: "Übung anlegen" }).click();
   await expect(page.getByText(`Übung „${EXERCISE}" angelegt.`)).toBeVisible();
 
@@ -96,18 +103,34 @@ test("Die Einkleidung ist sichtbar, änderbar — und sperrt das Löschen ihres 
   await dialogOeffnen(page);
   await expect(page.getByText(/Nicht eingekleidet/)).toBeVisible();
 
+  // Der Begriff ist erklärungsbedürftig und steht darum in `fieldHelp.ts`, nicht am Feld.
+  const erklaerung = page.getByLabel('Erklärung zu „Eingekleidet in"', { exact: true });
+  await erklaerung.click();
+  await expect(page.getByText(/ändern nicht, WAS geübt wird/)).toBeVisible();
+  // Über denselben Knopf zu, nicht per Escape: das schlösse den ganzen Dialog mit.
+  await erklaerung.click();
+  await expect(page.getByText(/ändern nicht, WAS geübt wird/)).toHaveCount(0);
+
   // ---- Einkleiden und speichern ----
   await page.locator("#ed-dressing").selectOption({ label: TAG });
   await page.getByRole("button", { name: "Einkleidung hinzufügen" }).click();
   await expect(page.getByText(/Nicht eingekleidet/)).toHaveCount(0);
-  await page.getByRole("button", { name: "Speichern" }).first().click();
+  await page.getByRole("button", { name: "Beschreibung speichern" }).click();
   await expect(page.getByText("Gespeichert.")).toBeVisible();
+
+  /*
+   * Und jetzt der zweite Speicher-Knopf desselben Dialogs. Er schickt denselben Vollersatz-PUT; baute er
+   * seine Nutzlast weiter aus dem geladenen Stand, drehte er die gerade gespeicherte Einkleidung still
+   * zurück — eine gespeicherte Änderung, die ein Klick daneben rückgängig macht.
+   */
+  await page.getByRole("button", { name: "Inhalt speichern" }).click();
+  await expect(page.getByText("Inhalt gespeichert.")).toBeVisible();
 
   // ---- AK 1: nach dem Neuöffnen steht der NAME da, nicht die Id ----
   await page.reload();
   await dialogOeffnen(page);
-  await expect(page.getByRole("button", { name: `${TAG} entfernen` })).toBeVisible();
-  await page.getByRole("button", { name: "Schließen" }).first().click();
+  await expect(page.getByRole("button", { name: `Einkleidung „${TAG}" entfernen` })).toBeVisible();
+  await page.getByRole("button", { name: "Schließen", exact: true }).click();
 
   // ---- AK 6: Löschen wird verweigert und nennt den Grund, bevor überhaupt gefragt wird ----
   // Playwright weist Dialoge von sich aus ab. Der Handler ist hier eine Falle mit Absicht: Käme eine
@@ -125,9 +148,9 @@ test("Die Einkleidung ist sichtbar, änderbar — und sperrt das Löschen ihres 
 
   // ---- Die Tür: ausziehen, dann geht das Löschen ----
   await dialogOeffnen(page);
-  await page.getByRole("button", { name: `${TAG} entfernen` }).click();
+  await page.getByRole("button", { name: `Einkleidung „${TAG}" entfernen` }).click();
   await expect(page.getByText(/Nicht eingekleidet/)).toBeVisible();
-  await page.getByRole("button", { name: "Speichern" }).first().click();
+  await page.getByRole("button", { name: "Beschreibung speichern" }).click();
   await expect(page.getByText("Gespeichert.")).toBeVisible();
 
   page.removeAllListeners("dialog");

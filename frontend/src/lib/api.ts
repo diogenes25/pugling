@@ -104,6 +104,13 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
     "An diesem Verlag hängt mindestens eine Reihe, die dir nicht gehört – die eines anderen Kontos oder "
     + "eine herrenlose aus dem geteilten Katalog. Löschen würde auch deren Zuordnung entfernen; es geht "
     + "nur, solange ausschließlich eigene Reihen daran hängen.",
+  // Die dritte Löschsperre (B-206), und die einzige, die einen Vater trifft, der gerade NICHTS falsch
+  // gemacht hat: der KI-Creator kleidet Übungen ein, ohne dass er es sieht, und die Übungszahl in der
+  // Tabelle ist nur so frisch wie die letzte Suche. Der Satz muss darum den Ausweg nennen.
+  interest_tag_in_use:
+    "Dieses Schlagwort kleidet mindestens eine Übung ein – die Einkleidung ist Autoren-Arbeit und nicht "
+    + "wiederherstellbar. Nimm es zuerst im Bearbeiten-Dialog dieser Übungen heraus; bei Übungen, die dir "
+    + "nicht gehören, kann das nur ihr Autor.",
 };
 
 export function errorMessage(e: unknown): string {
@@ -824,7 +831,10 @@ export const api = {
   /** Ändert Label, Facette, Synonyme oder Farbe. Der **Slug** bleibt: an ihm hängen Bilder und Kind-Profile. */
   updateInterestTag: (id: number, dto: UpdateInterestTagDto) =>
     http<InterestTagResponse>(`${V1}/creator/interest-tags/${id}`, "PATCH", dto),
-  /** Löscht ein Schlagwort samt Verknüpfungen – bewusst ohne Sperre: es trägt keine Inhalte. */
+  /**
+   * Löscht ein Schlagwort samt seiner Bild- und Kind-Verknüpfungen. Seit B-206 **gesperrt**, solange es
+   * Übungen einkleidet (`interest_tag_in_use`) – deren Einkleidung ist Autoren-Arbeit und wäre lautlos weg.
+   */
   deleteInterestTag: (id: number) => http<void>(`${V1}/creator/interest-tags/${id}`, "DELETE"),
 
   childInterests: (childId: number) =>

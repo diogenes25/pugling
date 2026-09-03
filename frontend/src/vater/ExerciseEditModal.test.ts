@@ -112,9 +112,10 @@ describe("payloadFrom – der Vollersatz-PUT darf nichts verlieren, was das Form
   });
 
   /*
-   * Der geladene Stand ist der Bezugspunkt, gegen den der Dialog seine Änderung misst. Gäbe `initialForm`
-   * die Liste als Referenz weiter, mutierte ein Entfernen im Formular auch `detail` — und ein „Abbrechen"
-   * ließe den Aufrufer mit einem Stand zurück, den niemand gespeichert hat.
+   * Eine Absichts-Zusicherung, und sie sei als solche beschriftet: **heute** mutiert kein Pfad die Liste in
+   * place (die Chips arbeiten mit `filter` und Spread), der Fall kann also gar nicht eintreten. Sie fällt,
+   * wenn jemand den Spread entfernt — und bewacht damit die Regel, nicht eine gemessene Folge. Der Grund,
+   * warum die Regel gilt: `detail` ist der Bezugspunkt, gegen den der Dialog seine Änderung misst.
    */
   it("nimmt die Einkleidung als Kopie ins Formular, nicht als Referenz", () => {
     const detail = detailWith({ interestTagIds: [3, 7] });

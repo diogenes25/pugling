@@ -50,6 +50,11 @@ export function InterestTagAdmin() {
         <button type="submit" className="btn ghost inline-btn" style={{ width: "auto" }}>Suchen</button>
       </form>
 
+      {/* Die Rückmeldung steht ÜBER der Tabelle: Die Liste wird bis zu 200 Zeilen lang, und ein Grund
+          unterhalb davon liegt für den, der in Zeile 40 auf „Löschen" drückt, außerhalb des Sichtfelds –
+          für ihn passiert dann scheinbar nichts (B-160). */}
+      <StatusBanner message={action.message} style={{ marginTop: 0, marginBottom: 10 }} />
+
       {tags.error && <div className="banner err">{tags.error}</div>}
       {tags.loading && tags.data === null ? <div className="loading">Lade…</div> : (
         <div style={{ overflowX: "auto", marginTop: 8 }}>
@@ -92,7 +97,6 @@ export function InterestTagAdmin() {
           </table>
         </div>
       )}
-      <StatusBanner message={action.message} style={{ marginTop: 10 }} />
     </section>
   );
 }

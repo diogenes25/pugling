@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/frontend, bereich/katalog, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/katalog, rolle/creator]
 aliases: [Einkleidung unsichtbar, stale Interessen-Tag, Sackgasse beim Speichern]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: M
@@ -13,7 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-wartet_auf: "pugling-reviewer, frontend-reviewer"
+wartet_auf: ""
 ---
 
 # B-206 · Die Einkleidung einer Übung ist im Vater-Web unsichtbar — und ein gelöschtes Stichwort macht das Speichern unmöglich
@@ -242,6 +242,55 @@ Beide Flags sind **nachgesehen, nicht vermutet**:
 | Riegel auf `MediaLinks` ausweiten | „Bild und Kind sperren nicht" | `InterestTaxonomyTests.cs:387` ✓ |
 | `payloadFrom` wieder aus `detail` lesen | die zwei neuen Rundlauf-Fälle | beide in `ExerciseEditModal.test.ts` ✓, die drei alten bleiben grün |
 
+### Review-Runde (2026-09-03)
+
+Beide Reviewer gelaufen. **Vierzehn Funde angenommen, einer abgetrennt, keiner offen.** Der Backend-Lauf
+meldete keinen Blocker und hat ausdrücklich geprüft, dass es nur **einen** Löschpfad auf `InterestTag`
+gibt (kein `ExecuteDelete`, keine zweite Kaskade). Zwei Funde haben die Story wirklich verändert:
+
+**Der Dialog hatte zwei Wahrheiten.** `ContentEditor` baute seine Nutzlast aus
+`payloadFrom(detail, initialForm(detail), …)` — also aus dem Stand von vor dem Öffnen. Ein „Inhalt
+speichern" drehte damit jede Metadaten-Änderung still zurück, und für die Einkleidung war der schlimmere
+Fall der zweite: eine **bereits gespeicherte** Änderung wurde rückgängig gemacht, weil `detail` nie neu
+geladen wird. Für `title`/`description` bestand das schon vorher; sichtbar wurde es erst, als mit der
+Einkleidung ein Feld dazukam, das man ändern *kann*. Das `MetaForm` liegt jetzt im `ExerciseEditModal`,
+beide Speicher-Knöpfe lesen denselben State. Der erste E2E war dafür **strukturell blind** — er fuhr eine
+Vokabel-Übung, die gar keinen `ContentEditor` hat; er fährt jetzt Grammatik und drückt beide Knöpfe.
+
+**Der Riegel schlug auf Englisch durch.** `interest_tag_in_use` fehlte in `GERMAN_PROBLEM_TEXT`, obwohl er
+der dritte Löschsperren-Code neben `subject_in_use` und `publisher_in_use` ist. Erreichbar ist er genau
+dann, wenn die Übungszahl in der Tabelle veraltet ist — und die Story existiert, weil der KI-Creator
+Übungen einkleidet, ohne dass der Vater es sieht. Also genau der B-150-Fall, den Entscheidung 3 vermeiden
+wollte, eine Ebene tiefer.
+
+Weiter angenommen und behoben:
+
+| Fund | Behoben durch |
+|---|---|
+| Die Begründung im Kommentar war sachlich falsch: `?unused=true` verlangt ohnehin alle drei Zähler auf null, ein breiterer Riegel könnte dort **nie** feuern | Begründung ersetzt („macht den Katalog effektiv append-only") — an beiden Stellen, Controller und Test |
+| Der `<summary>` las sich, als sei die Einkleidung geschützt | Absatz mit den **zwei Grenzen**: der PUT ersetzt weiter (→ [B-208](B-208-put-ohne-einkleidung-loescht-sie.md)), und der Riegel ist eine Anwendungsprüfung, kein Constraint |
+| Die 409-Meldung verlangte eine Handlung, die nicht jedem offensteht (Stichworte global, Übungen grant-geschützt) | Text nennt die Grenze: fremde Übungen kann nur ihr Autor ausziehen |
+| Ladephase und „Name nicht in der Liste" sahen gleich aus — bei **jedem** Öffnen blitzte eine Id auf | `loading` als Prop; solange geladen wird, bleibt die Stelle frei und die Leer-Option sagt „Liste lädt" |
+| „Eingekleidet in" trug seine Erklärung am Feld statt in `fieldHelp.ts` — und ein zweites Mal in der Schlagwort-Verwaltung | Topic `exerciseDressing`, `FieldLabel`; der Klammertext ist damit auch aus dem zugänglichen Namen des Selects raus |
+| Der Riegel-Grund stand unter einer bis zu 200 Zeilen langen Tabelle | Banner über die Tabelle — wer in Zeile 40 klickt, sah ihn sonst nie (B-160) |
+| Eine E2E-Zusicherung, die nie fallen konnte (`getByRole("combobox", { name: "" })` ist ein Teilstring-Vergleich und trifft alles) | auf `#ed-title` umgestellt |
+| Der Entfernen-Knopf hätte mit dem der Wortpaare kollidieren können | heißt jetzt `Einkleidung „X" entfernen` |
+| `GetOneAsync` war ein byte-identisches Duplikat von `GetAsync`; drei deutsche Inseln in der neuen Test-Doku; `.first()` statt eindeutiger Knopfnamen im E2E; der Client-Kommentar behauptete weiter „bewusst ohne Sperre" | je behoben |
+| Die Begründung des Kopie-Tests beschrieb einen Fall, den kein Pfad erzeugt | als **Absichts**-Zusicherung beschriftet, statt eine gemessene Folge zu behaupten |
+
+**Abgetrennt** als [B-208](B-208-put-ohne-einkleidung-loescht-sie.md): Ein Übungs-`PUT`, der
+`interestTagIds` **weglässt**, löscht die Einkleidung lautlos (`(tagIds ?? [])`). Der Fund ist echt und
+wiegt schwerer als die Löschsperre — aber ob ein ausgelassenes Feld „behalten" heißen soll, ist eine
+Vertragsentscheidung (B-46 hat den Vollersatz ausdrücklich gewählt), und die trifft ein Bau-Schritt nicht
+nebenbei. Als Sofortmaßnahme sagt der `<summary>` jetzt, was **nicht** geschützt ist.
+
+**Bewusst nicht behoben, benannt statt verschwiegen:** Der Riegel ist eine Anwendungsprüfung; der
+Fremdschlüssel bleibt `Cascade`. Zwischen der Zählabfrage und dem Commit kann ein paralleler Request eine
+Übung einkleiden, die dann mitfällt. `DeleteBehavior.Restrict` machte die Invariante strukturell, verlangt
+aber eine neu gefaltete Migrationskette — die Schätzung sagt `migration: nein`, das ist also ein bewusster
+Handel. Das Fenster ist winzig, der Verlust per Definition nicht rekonstruierbar; die Grenze steht im
+`<summary>`, damit der nächste Leser sie nicht für stärker hält, als sie ist.
+
 ## Anhaltspunkte für die Umsetzung
 
 Der Lesepfad steht: `api.interestTags()` und der Editor-Aufbau liegen als Muster in
@@ -284,5 +333,13 @@ Anzeige — `ExerciseDetail.interestTagIds` und `GET creator/interest-tags` gen�
   `einkleidung.spec.ts`, der zugleich den **Rollengang** aus der Creator-Rolle fährt. `dotnet format`
   und `tsc -b` sauber. Drei rote Proben gemessen, je an der eigenen Zusicherung. Die Schätzung hat
   getragen: keine Migration, kein Vertragsbruch, und `FullRunTouchedActions` blieb bei 267 — es ist
-  wie geplant keine neue Action entstanden. **Bleibt auf `in-arbeit`**: `abgenommen` verlangt bei
-  `wo: beides` beide Reviewer, und diese Sitzung startet keine Agenten unaufgefordert.
+  wie geplant keine neue Action entstanden. Commit `5836585`.
+- **2026-09-03** — **abgenommen.** Beide Reviewer gelaufen (Nutzerfreigabe), vierzehn Funde behoben, einer
+  als [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) abgetrennt, keiner offen; Einzelheiten in
+  „Review-Runde" oben. Der schwerste: der Inhalts-Speicher-Knopf baute seine Nutzlast aus dem geladenen
+  Stand und drehte damit eine **gespeicherte** Einkleidungs-Änderung still zurück — der erste E2E war dafür
+  strukturell blind, weil er einen Typ ohne Inhalts-Editor fuhr. Neu belegt: Backend **867/867**, Vitest
+  **353/353**, E2E **48/48**, `dotnet format` und `tsc -b` sauber. Eine vierte rote Probe gemessen: den
+  Inhalts-Knopf wieder aus `detail` lesen lassen ⇒ der E2E fällt an der Chip-Zusicherung nach dem
+  Neuöffnen. **Rollengang:** `einkleidung.spec.ts` fährt den Kreis aus der Creator-Rolle gegen einen echten
+  Server. Commits `5836585` und der Review-Commit dieser Runde.

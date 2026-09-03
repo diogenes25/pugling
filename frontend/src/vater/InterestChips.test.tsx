@@ -51,7 +51,7 @@ describe("Einkleidung im Bearbeiten-Dialog", () => {
     const onChange = vi.fn();
     render(<InterestChips tagIds={[3, 7]} known={KNOWN} onChange={onChange} disabled={false} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Einhorn entfernen" }));
+    fireEvent.click(screen.getByRole("button", { name: 'Einkleidung „Einhorn" entfernen' }));
     expect(onChange).toHaveBeenCalledWith([7]);
   });
 
@@ -74,11 +74,23 @@ describe("Einkleidung im Bearbeiten-Dialog", () => {
     expect(optionen).not.toContain("Einhorn");
   });
 
+  /*
+   * Solange die Auswahl unterwegs ist, ist „Name nicht dabei" noch keine Aussage. Ohne diese Unterscheidung
+   * blitzte bei JEDEM Öffnen des Dialogs für einen Anstrich eine Id auf — `useAsync` startet mit
+   * `data === null`, der erste Anstrich sieht also eine leere Liste. AK 1 sagt Namen zu.
+   */
+  it("zeigt während des Ladens keine Id, sondern hält die Stelle frei", () => {
+    render(<InterestChips tagIds={[3]} known={[]} loading onChange={() => {}} disabled={false} />);
+
+    expect(screen.queryByText(/Stichwort #3/)).toBeNull();
+    expect(screen.getByRole("option", { name: /Liste lädt/ })).toBeTruthy();
+  });
+
   it("sperrt Entfernen und Hinzufügen, solange gespeichert wird", () => {
     const onChange = vi.fn();
     render(<InterestChips tagIds={[3]} known={KNOWN} onChange={onChange} disabled={true} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Einhorn entfernen" }));
+    fireEvent.click(screen.getByRole("button", { name: 'Einkleidung „Einhorn" entfernen' }));
     expect(onChange).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "Einkleidung hinzufügen" }).hasAttribute("disabled")).toBe(true);
   });
