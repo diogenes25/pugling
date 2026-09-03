@@ -88,4 +88,38 @@ describe("payloadFrom – der Vollersatz-PUT darf nichts verlieren, was das Form
 
     expect(payload.interestTagIds).toEqual([]);
   });
+
+  /*
+   * B-206. Die Einkleidung ist seit dieser Story **sichtbar und änderbar** — damit prüft dieselbe Abbildung
+   * eine andere Zusage als vorher: nicht mehr „ein unsichtbares Feld überlebt den Vollersatz", sondern
+   * „was der Vater am Formular ändert, kommt genau so beim Server an".
+   *
+   * Rote Probe für beide Fälle: in `payloadFrom` wieder `detail.interestTagIds` statt `form.interestTagIds`
+   * schreiben — dann behält die Nutzlast den geladenen Stand und ignoriert jede Änderung.
+   */
+  it("schickt eine im Formular entfernte Einkleidung als entfernt", () => {
+    const detail = detailWith({ interestTagIds: [3, 7] });
+    const form = { ...initialForm(detail), interestTagIds: [7] };
+
+    expect(payloadFrom(detail, form, {}).interestTagIds).toEqual([7]);
+  });
+
+  it("schickt eine im Formular ergänzte Einkleidung mit", () => {
+    const detail = detailWith({ interestTagIds: [3] });
+    const form = { ...initialForm(detail), interestTagIds: [3, 9] };
+
+    expect(payloadFrom(detail, form, {}).interestTagIds).toEqual([3, 9]);
+  });
+
+  /*
+   * Der geladene Stand ist der Bezugspunkt, gegen den der Dialog seine Änderung misst. Gäbe `initialForm`
+   * die Liste als Referenz weiter, mutierte ein Entfernen im Formular auch `detail` — und ein „Abbrechen"
+   * ließe den Aufrufer mit einem Stand zurück, den niemand gespeichert hat.
+   */
+  it("nimmt die Einkleidung als Kopie ins Formular, nicht als Referenz", () => {
+    const detail = detailWith({ interestTagIds: [3, 7] });
+
+    expect(initialForm(detail).interestTagIds).not.toBe(detail.interestTagIds);
+    expect(initialForm(detail).interestTagIds).toEqual([3, 7]);
+  });
 });

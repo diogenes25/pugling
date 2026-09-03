@@ -21937,7 +21937,7 @@
         "tags": [
           "Creator \u2013 Interest Tags"
         ],
-        "summary": "    Deletes a tag along with its links to images, children \u003Cb\u003Eand exercises\u003C/b\u003E (cascade). Deliberately\n    without a usage lock: a tag carries no content of its own.\n    Since B-46 that costs more than it used to, and the difference is not yet decided. The old\nreasoning was \u0022its loss only costs selection quality\u0022 - true while only images and children pointed\nat it. An exercise\u0027s dressing, however, is authored information: it disappears silently, cannot be\nreconstructed, and a still-open editor then sends an id the server no longer knows (see the story\nfiled from the B-46 review). Whether an in-use tag may be deleted at all is a product decision and\nis deliberately not taken here.",
+        "summary": "    Deletes a tag along with its links to images and children (cascade). Links to \u003Cb\u003Eexercises\u003C/b\u003E block\n    the delete instead (409) \u2013 the one asymmetry that matters here (B-206).\n    The line runs along what the loss costs. An image link or a child\u0027s preference can be set\nagain from what is still there; a tag that dresses an exercise carries authored information\nthat nothing else records, so a cascade would erase it silently and unrecoverably. Until B-46 only\nthe first kind existed, which is why the old reasoning (\u0022its loss only costs selection quality\u0022)\nwas right at the time and is wrong now.\n    The lock has a way out, and it needs one: the exercise editor shows the dressing and lets it be\nremoved. Without that door this would be a dead end instead of a guard rail.",
         "parameters": [
           {
             "name": "id",
@@ -21959,6 +21959,16 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -39085,6 +39095,7 @@
               "insufficient_coins",
               "insufficient_gems",
               "insufficient_inventory",
+              "interest_tag_in_use",
               "interest_wish_limit_reached",
               "internal_error",
               "invalid_credentials",

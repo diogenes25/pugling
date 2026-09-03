@@ -159,24 +159,37 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Deletes a tag along with its links to images, children <b>and exercises</b> (cascade). Deliberately
-    /// without a usage lock: a tag carries no content of its own.
+    /// Deletes a tag along with its links to images and children (cascade). Links to <b>exercises</b> block
+    /// the delete instead (409) – the one asymmetry that matters here (B-206).
     /// <para>
-    /// <b>Since B-46 that costs more than it used to, and the difference is not yet decided.</b> The old
-    /// reasoning was "its loss only costs selection quality" - true while only images and children pointed
-    /// at it. An exercise's dressing, however, is authored information: it disappears silently, cannot be
-    /// reconstructed, and a still-open editor then sends an id the server no longer knows (see the story
-    /// filed from the B-46 review). Whether an in-use tag may be deleted at all is a product decision and
-    /// is deliberately <b>not</b> taken here.
+    /// The line runs along <b>what the loss costs</b>. An image link or a child's preference can be set
+    /// again from what is still there; a tag that dresses an exercise carries <b>authored information</b>
+    /// that nothing else records, so a cascade would erase it silently and unrecoverably. Until B-46 only
+    /// the first kind existed, which is why the old reasoning ("its loss only costs selection quality")
+    /// was right at the time and is wrong now.
+    /// </para>
+    /// <para>
+    /// The lock has a way out, and it needs one: the exercise editor shows the dressing and lets it be
+    /// removed. Without that door this would be a dead end instead of a guard rail.
     /// </para>
     /// </summary>
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Delete(int id, CancellationToken ct = default)
     {
         var tag = await db.InterestTags.FindAsync([id], ct);
         if (tag is null) return NotFound();
+
+        // Only the exercises block. Images and children stay deliberately outside the lock - locking them
+        // too would make the cleanup view (?unused=true) practically unusable.
+        var dressed = await db.ExerciseInterestLinks.CountAsync(l => l.InterestTagId == id, ct);
+        if (dressed > 0)
+            return this.ProblemWithCode(ApiErrors.InterestTagInUse,
+                $"This interest tag dresses {dressed} exercise(s). Remove it from them first – "
+                + "the dressing is authored information and cannot be restored.");
+
         db.InterestTags.Remove(tag);
         await db.SaveChangesAsync(ct);
         return NoContent();

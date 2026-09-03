@@ -38,8 +38,9 @@ export function InterestTagAdmin() {
           onClick={() => setOpen(false)}>Schließen</button>
       </div>
       <p className="muted" style={{ fontSize: 13 }}>
-        Dieselben Schlagworte beschreiben <strong>Bilder</strong> und <strong>Interessen der Kinder</strong> –
-        nur deshalb ist die Bildauswahl berechenbar. Die Zähler zeigen, woran ein Wort hängt.
+        Dieselben Schlagworte beschreiben <strong>Bilder</strong>, <strong>Interessen der Kinder</strong> und
+        die <strong>Einkleidung von Übungen</strong> – nur deshalb ist die Bildauswahl berechenbar. Die
+        Zähler zeigen, woran ein Wort hängt; eingekleidete Übungen sperren zusätzlich das Löschen.
       </p>
 
       <form className="row" style={{ gap: 8, marginTop: 8 }}
@@ -56,7 +57,7 @@ export function InterestTagAdmin() {
             <thead>
               <tr>
                 <th>Schlagwort</th><th>Facette</th><th>Synonyme</th>
-                <th className="num">Bilder</th><th className="num">Kinder</th><th />
+                <th className="num">Bilder</th><th className="num">Kinder</th><th className="num">Übungen</th><th />
               </tr>
             </thead>
             <tbody>
@@ -64,6 +65,15 @@ export function InterestTagAdmin() {
                 <TagRow key={t.id} tag={t} busy={action.busy}
                   onSave={(dto) => action.run(() => api.updateInterestTag(t.id, dto), "Gespeichert.").then((ok) => { if (ok) tags.reload(); })}
                   onDelete={() => {
+                    // Ein Wort, das Übungen einkleidet, weist der Server ab (B-206) - dann gar nicht erst
+                    // fragen, sondern sagen warum. Ein Bestätigungsdialog, der etwas verspricht, was
+                    // danach verweigert wird, ist schlimmer als keiner (B-150).
+                    if (t.exerciseCount > 0) {
+                      action.fail(`„${t.label}" kleidet ${t.exerciseCount} Übung(en) ein und lässt sich `
+                        + "darum nicht löschen. Nimm es zuerst im Bearbeiten-Dialog dieser Übungen heraus – "
+                        + "die Einkleidung ist Autoren-Arbeit und nicht wiederherstellbar.");
+                      return;
+                    }
                     // Die Zahlen in der Warnung sind der Punkt: ein Wort mit vielen Bildern zu löschen
                     // verkleinert die Auswahl für jedes Kind, das es mag.
                     if (!confirmAction(
@@ -74,7 +84,7 @@ export function InterestTagAdmin() {
                   }} />
               ))}
               {tags.data?.length === 0 && (
-                <tr><td colSpan={6} className="muted">
+                <tr><td colSpan={7} className="muted">
                   Keine Schlagworte{applied ? " für diese Suche" : " – sie entstehen beim Taggen von Bildern und Interessen"}.
                 </td></tr>
               )}
@@ -124,6 +134,9 @@ function TagRow({ tag, busy, onSave, onDelete }: {
       </td>
       <td className="num">{tag.mediaCount}</td>
       <td className="num">{tag.childCount}</td>
+      {/* Die dritte Zahl, seit B-46 im Vertrag und bis B-206 nirgends gezeigt. Sie ist die einzige, die
+          das Löschen sperrt - sie ungenannt zu lassen machte die Sperre unerklärlich. */}
+      <td className="num">{tag.exerciseCount}</td>
       <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
         {dirty && (
           <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={busy || !label.trim()}

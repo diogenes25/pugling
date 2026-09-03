@@ -305,6 +305,89 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal(HttpStatusCode.NotFound, (await father.DeleteAsync($"{url}/{tagId}")).StatusCode);
     }
 
+    /// <summary>
+    /// B-206. A tag that dresses an exercise carries <b>authored information</b> that nothing else records -
+    /// a cascade would erase it silently and unrecoverably. The lock is therefore on the exercises only, and
+    /// it has a door: take the dressing off, then the delete goes through.
+    /// <para>
+    /// Red probe: drop the <c>ExerciseInterestLinks</c> pre-check in <c>Delete</c> ⇒ the first assertion
+    /// falls (204 instead of 409).
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task EinStichwortDasEineUebungEinkleidet_LaesstSichNichtLoeschen()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var tagId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/interest-tags",
+            new { label = TestApi.UniqueName("Rennwagen") }));
+
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = TestApi.UniqueName("Riegel-Fach") }));
+        var (seriesId, seriesUnitId) = await TestApi.CreateSeriesAndUnitAsync(father, subjectId);
+        var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic",
+            new
+            {
+                title = TestApi.UniqueName("Eingekleidet"),
+                orderIndex = 1,
+                rewardPoints = 10,
+                config = new { problems = new[] { new { prompt = "2 + 2", answer = 4, tolerance = 0 } } },
+                interestTagIds = new[] { tagId },
+            }));
+
+        var gesperrt = await father.DeleteAsync($"/api/v1/creator/interest-tags/{tagId}");
+        Assert.Equal(HttpStatusCode.Conflict, gesperrt.StatusCode);
+        Assert.Equal("interest_tag_in_use",
+            (await gesperrt.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+
+        // Und das Stichwort steht danach noch da - ein abgewiesenes Löschen darf nichts halb erledigt haben.
+        Assert.Equal(HttpStatusCode.OK, (await father.GetAsync($"/api/v1/creator/interest-tags/{tagId}")).StatusCode);
+
+        // Die Tür: Einkleidung abnehmen, dann geht dasselbe DELETE durch.
+        var detail = await GetOneAsync(father,
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic/{exerciseId}");
+        (await father.PutAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic/{exerciseId}",
+            new
+            {
+                title = detail.GetProperty("title").GetString(),
+                orderIndex = detail.GetProperty("orderIndex").GetInt32(),
+                rewardPoints = detail.GetProperty("rewardPoints").GetInt32(),
+                config = detail.GetProperty("config"),
+                interestTagIds = Array.Empty<int>(),
+            })).EnsureSuccessStatusCode();
+
+        Assert.Equal(HttpStatusCode.NoContent,
+            (await father.DeleteAsync($"/api/v1/creator/interest-tags/{tagId}")).StatusCode);
+    }
+
+    /// <summary>
+    /// Das Gegenstück zum Riegel: Bild- und Kind-Verknüpfungen sperren <b>nicht</b>. Würden sie es, wäre die
+    /// Aufräum-Sicht praktisch tot – fast jedes Stichwort hängt an einem Bild oder einem Kind.
+    /// <para>Rote Probe: den Riegel auf <c>MediaLinks</c> ausweiten ⇒ diese Zusicherung fällt.</para>
+    /// </summary>
+    [Fact]
+    public async Task BildUndKindVerknuepfungen_SperrenDasLoeschenNicht()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var label = TestApi.UniqueName("Seifenkiste");
+
+        await father.PostAsJsonAsync("/api/v1/creator/media", new
+        {
+            description = $"Eine {label} rollt",
+            tags = new[] { label },
+        });
+        await SetInterestsAsync(father, new object[] { new { label, weight = 2 } });
+
+        var tags = await GetAsync(father, $"/api/v1/creator/interest-tags?search={Uri.EscapeDataString(label)}");
+        var tagId = tags[0].GetProperty("id").GetInt32();
+        Assert.True(tags[0].GetProperty("mediaCount").GetInt32() > 0);
+        Assert.True(tags[0].GetProperty("childCount").GetInt32() > 0);
+
+        Assert.Equal(HttpStatusCode.NoContent,
+            (await father.DeleteAsync($"/api/v1/creator/interest-tags/{tagId}")).StatusCode);
+    }
+
     [Fact]
     public async Task Interessen_Tag_Laesst_Sich_Aus_Dem_Katalog_Loeschen()
     {
@@ -315,6 +398,14 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal(HttpStatusCode.NoContent, (await father.DeleteAsync($"/api/v1/creator/interest-tags/{tagId}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await father.GetAsync($"/api/v1/creator/interest-tags/{tagId}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await father.DeleteAsync($"/api/v1/creator/interest-tags/{tagId}")).StatusCode);
+    }
+
+    /// <summary>Ein einzelnes Objekt (kein Array) von einem erfolgreichen GET.</summary>
+    private static async Task<JsonElement> GetOneAsync(HttpClient client, string url)
+    {
+        var res = await client.GetAsync(url);
+        res.EnsureSuccessStatusCode();
+        return await res.Content.ReadFromJsonAsync<JsonElement>();
     }
 
     private static async Task SetInterestsAsync(HttpClient father, object[] interests, int childId = 1)

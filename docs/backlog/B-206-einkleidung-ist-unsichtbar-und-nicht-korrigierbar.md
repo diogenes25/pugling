@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, bereich/katalog, rolle/creator]
+tags: [typ/story, status/in-arbeit, bereich/frontend, bereich/katalog, rolle/creator]
 aliases: [Einkleidung unsichtbar, stale Interessen-Tag, Sackgasse beim Speichern]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Defekt
 groesse: M
@@ -13,7 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-wartet_auf: ""
+wartet_auf: "pugling-reviewer, frontend-reviewer"
 ---
 
 # B-206 · Die Einkleidung einer Übung ist im Vater-Web unsichtbar — und ein gelöschtes Stichwort macht das Speichern unmöglich
@@ -200,6 +200,48 @@ Beide Flags sind **nachgesehen, nicht vermutet**:
   Vorab-Stichwort aus dem Seed: das Hinzufügen aus Entscheidung 2 baut sich seinen Fall selbst.
 - **`/smoke-test`** als manueller Gegencheck des 409-Pfads vor dem Commit.
 
+## Bau (2026-09-03)
+
+**Backend:**
+
+- `ApiErrors.InterestTagInUse` (`interest_tag_in_use`, 409) — eigener Code neben `ExerciseInUse`, weil die
+  gesperrte Ressource die andere ist: dort hält ein Plan die Übung, hier halten Übungen das Stichwort.
+- `InterestTagsController.Delete`: Vorprüfung auf `ExerciseInterestLinks` → 409 mit der Zahl der
+  betroffenen Übungen. Der lange `<summary>`-Absatz, der die Frage ausdrücklich offenließ, ist durch die
+  getroffene Entscheidung ersetzt — samt der Begründung, **warum** die Linie zwischen Übung einerseits und
+  Bild/Kind andererseits läuft.
+
+**Frontend:**
+
+- `ExerciseEditModal`: `MetaForm` trägt `interestTagIds`, `initialForm` liest sie als **Kopie**,
+  `payloadFrom` schickt sie aus dem **Formular** statt aus dem geladenen Stand. Neu die Komponenten
+  `InterestDressing` (lädt die Auswahl) und `InterestChips` (rein, props-getrieben — darum ohne
+  gefälschtes `fetch` prüfbar).
+- `InterestTagAdmin`: dritte Spalte „Übungen"; ein gesperrtes Löschen nennt seinen Grund, **bevor** es
+  fragt (eine Rückfrage, die etwas verspricht, was der Server verweigert, wäre schlimmer als keine).
+
+### Vier Dinge, die beim Bauen genauer wurden
+
+1. **Der Knopf heißt „Einkleidung hinzufügen", nicht „Hinzufügen".** Der Dialog trägt bereits
+   „+ anlegen & hinzufügen" (Vokabel), die Kind-Seite „Betreuer hinzufügen" — zweimal ist der E2E daran
+   in den Strict Mode gelaufen. Der eigene Name ist die Reparatur, nicht ein `exact` im Test.
+2. **Ein Chip ohne Namen wäre derselbe Defekt noch einmal.** Die Auswahlliste ist auf `take=200`
+   gedeckelt; steht ein eingekleidetes Stichwort nicht darin, zeigt der Chip `Stichwort #<id>` statt
+   nichts. Sonst wäre die Einkleidung wieder eine Größe, die man nicht sieht.
+3. **Ein Ausfall der Auswahlliste versteckt die Einkleidung nicht.** Die Chips stehen auch ohne sie (dann
+   mit Id), nur das Nachtragen fällt weg — sonst sähe „Laden gescheitert" aus wie „nicht eingekleidet",
+   die Verwechslung aus B-174.
+4. **Der E2E fährt einen Kreis, keine Linie:** einkleiden → Löschen wird verweigert → ausziehen → Löschen
+   geht. Nur so ist belegt, dass der Riegel eine **Tür** hat und nicht bloß eine Wand ist.
+
+### Rote Proben (wo sie fielen, nicht ob)
+
+| Probe | Erwartete Fundstelle | Gemessen |
+|---|---|---|
+| Vorprüfung aus `Delete` nehmen | die 409-Zusicherung | `InterestTaxonomyTests.cs:339` ✓ |
+| Riegel auf `MediaLinks` ausweiten | „Bild und Kind sperren nicht" | `InterestTaxonomyTests.cs:387` ✓ |
+| `payloadFrom` wieder aus `detail` lesen | die zwei neuen Rundlauf-Fälle | beide in `ExerciseEditModal.test.ts` ✓, die drei alten bleiben grün |
+
 ## Anhaltspunkte für die Umsetzung
 
 Der Lesepfad steht: `api.interestTags()` und der Editor-Aufbau liegen als Muster in
@@ -236,3 +278,11 @@ Anzeige — `ExerciseDetail.interestTagIds` und `GET creator/interest-tags` gen�
   (`InterestTagResponse.ExerciseCount`, `ExerciseDetail.InterestTagIds`) — neu ist nur ein additiver
   Fehlercode. Der E2E deckt zugleich den Rollengang aus der Creator-Rolle ab. Autonom erarbeitet,
   Nutzerauftrag.
+- **2026-09-03** — gebaut, alle sechs Akzeptanzkriterien erfüllt; Stand siehe „Bau" oben. Belegt: Backend
+  **867/867** (zwei neue Fälle in `InterestTaxonomyTests`), Vitest **351/351** (sieben neue in
+  `InterestChips.test.tsx`, drei in `ExerciseEditModal.test.ts`), E2E **48/48** mit dem neuen
+  `einkleidung.spec.ts`, der zugleich den **Rollengang** aus der Creator-Rolle fährt. `dotnet format`
+  und `tsc -b` sauber. Drei rote Proben gemessen, je an der eigenen Zusicherung. Die Schätzung hat
+  getragen: keine Migration, kein Vertragsbruch, und `FullRunTouchedActions` blieb bei 267 — es ist
+  wie geplant keine neue Action entstanden. **Bleibt auf `in-arbeit`**: `abgenommen` verlangt bei
+  `wo: beides` beide Reviewer, und diese Sitzung startet keine Agenten unaufgefordert.

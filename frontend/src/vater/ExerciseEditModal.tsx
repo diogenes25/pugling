@@ -8,7 +8,7 @@ import { confirmAction } from "../lib/ui";
 import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import type {
-  CreateExercisePayload, ExerciseDetail, ExerciseSummary, ExerciseTypeKey, SchoolType,
+  CreateExercisePayload, ExerciseDetail, ExerciseSummary, ExerciseTypeKey, InterestTagResponse, SchoolType,
   VocabItemResponse, VocabularyResponse,
 } from "../lib/types";
 import { LANGUAGES } from "../lib/languages";
@@ -114,9 +114,10 @@ export function payloadFrom(detail: ExerciseDetail, form: MetaForm, config: unkn
     // bzw. die Sichtbarkeit umschalten (Letzteres verlangt Owner-Rechte → 403 für einen Write-Grantee).
     suggestedBonus: detail.suggestedBonus,
     executePublic: detail.executePublic,
-    // Dasselbe für die Einkleidung (B-46). Kein Formularfeld – gerade DARUM hier: was die Oberfläche nicht
-    // anzeigt, kann sie auch nicht bewusst behalten, und der KI-Creator trägt es ein.
-    interestTagIds: detail.interestTagIds,
+    // Die Einkleidung (B-46) kommt seit B-206 aus dem FORMULAR, nicht mehr aus dem geladenen Stand: sie
+    // ist jetzt sichtbar und änderbar. Die Zusicherung darüber bleibt trotzdem nötig – sie prüft nun, dass
+    // der Rundlauf stimmt, statt dass ein unsichtbares Feld überlebt.
+    interestTagIds: form.interestTagIds,
   };
 }
 
@@ -135,6 +136,8 @@ interface MetaForm {
   /** Nur Vokabeln: Sprachpaar der Übung (steckt in der Config, nicht in den Metadaten-Spalten). */
   sourceLang: string;
   targetLang: string;
+  /** Die Einkleidung: Ids der Interessen-Stichworte, in die diese Übung gekleidet ist (B-46/B-206). */
+  interestTagIds: number[];
 }
 
 export function initialForm(d: ExerciseDetail): MetaForm {
@@ -152,6 +155,9 @@ export function initialForm(d: ExerciseDetail): MetaForm {
     defaultRequireTypedTest: d.defaultRequireTypedTest,
     defaultStage: d.defaultStage ?? "",
     defaultItemCount: d.defaultItemCount ?? "",
+    // Kopie, keine Referenz: die Chips ändern die Liste, und der geladene Stand ist der Bezugspunkt,
+    // gegen den der Dialog seine Änderung misst.
+    interestTagIds: [...d.interestTagIds],
     ...langsOf(d),
   };
 }
@@ -224,6 +230,11 @@ function MetaEditor({ detail, type, route, onSaved }: {
           ))}
         </div>
       </div>
+      <InterestDressing
+        tagIds={form.interestTagIds}
+        onChange={(ids) => up("interestTagIds", ids)}
+        disabled={action.busy}
+      />
       <div className="field">
         <label>Lern-Standards <span className="muted">(Lehrplan-Positionen erben diese, können sie aber übersteuern)</span></label>
         <div className="row" style={{ gap: 14, flexWrap: "wrap" }}>
@@ -510,5 +521,97 @@ function AddItem({ detail, busy, onAdd }: {
         </button>
       </div>
     </div>
+  );
+}
+
+// ─── Einkleidung (B-206) ──────────────────────────────────────────────────────
+
+/**
+ * Zeigt und ändert, in welche Interessen eine Übung **eingekleidet** ist.
+ *
+ * Vorher reiste das Feld unsichtbar durch den Vollersatz-PUT: Der KI-Creator trug es ein, niemand sah es,
+ * und ein anderswo gelöschtes Stichwort machte das Speichern unmöglich – mit einer Fehlermeldung, die eine
+ * Größe nannte, für die es kein Feld gab.
+ *
+ * Lädt die Auswahl selbst, gibt seinen Zustand aber **nach oben**: Die Einkleidung gehört ins `MetaForm`,
+ * weil `payloadFrom` sie mitschicken muss.
+ */
+function InterestDressing({ tagIds, onChange, disabled }: {
+  tagIds: number[];
+  onChange: (ids: number[]) => void;
+  disabled: boolean;
+}) {
+  const known = useAsync<InterestTagResponse[]>(() => api.interestTags(), []);
+
+  return (
+    <div className="field">
+      <label htmlFor="ed-dressing">
+        Eingekleidet in <span className="muted">(Interessen, in deren Sprache die Übung erzählt)</span>
+      </label>
+      {/* Ein Ausfall der Liste darf die Einkleidung nicht verstecken: die Chips unten stehen auch ohne sie
+          (dann mit Id statt Name), und nur das Nachtragen fällt weg. Sonst sähe „Laden gescheitert" aus wie
+          „nicht eingekleidet" – die Verwechslung aus B-174. */}
+      {known.error && <div className="banner err" style={{ marginBottom: 6 }}>{known.error}</div>}
+      <InterestChips
+        tagIds={tagIds}
+        known={known.data ?? []}
+        onChange={onChange}
+        disabled={disabled || known.loading}
+      />
+    </div>
+  );
+}
+
+/**
+ * Der reine, props-getriebene Teil – **darum** getrennt: so ist er ohne gefälschtes `fetch` prüfbar
+ * (`frontend/CLAUDE.md`: kein nachgebauter Bildschirm mit Netz).
+ */
+export function InterestChips({ tagIds, known, onChange, disabled }: {
+  tagIds: number[];
+  known: InterestTagResponse[];
+  onChange: (ids: number[]) => void;
+  disabled: boolean;
+}) {
+  const [pick, setPick] = useState("");
+  const available = known.filter((t) => !tagIds.includes(t.id));
+
+  return (
+    <>
+      <div className="row" style={{ gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+        {tagIds.length === 0
+          // Ausdrücklich, nicht leer: „nicht eingekleidet" darf nicht aussehen wie „Feld gibt es nicht".
+          ? <span className="muted">Nicht eingekleidet – diese Übung erzählt neutral.</span>
+          : tagIds.map((id) => {
+            // Nach Id auflösen. Fehlt der Name (die Liste ist gedeckelt), steht die Id da statt gar nichts:
+            // ein Chip ohne Beschriftung wäre wieder eine Größe, die man nicht sieht.
+            const tag = known.find((t) => t.id === id);
+            return (
+              <span key={id} className="chip">
+                {tag ? tag.label : `Stichwort #${id}`}
+                <button
+                  type="button" className="btn ghost small" style={{ width: "auto", padding: "2px 8px" }}
+                  aria-label={`${tag ? tag.label : `Stichwort #${id}`} entfernen`}
+                  disabled={disabled}
+                  onClick={() => onChange(tagIds.filter((x) => x !== id))}
+                >×</button>
+              </span>
+            );
+          })}
+      </div>
+      <div className="row" style={{ gap: 8 }}>
+        <select
+          id="ed-dressing" value={pick} disabled={disabled || available.length === 0}
+          onChange={(e) => setPick(e.target.value)} style={{ maxWidth: 260 }}
+        >
+          <option value="">{available.length === 0 ? "– nichts mehr zur Auswahl –" : "– Interesse wählen –"}</option>
+          {available.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+        </select>
+        <button
+          type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+          disabled={disabled || pick === ""}
+          onClick={() => { onChange([...tagIds, Number(pick)]); setPick(""); }}
+        >Einkleidung hinzufügen</button>
+      </div>
+    </>
   );
 }

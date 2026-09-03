@@ -134,6 +134,12 @@ public static class ApiErrors
     /// <summary>Exercise is used in a study plan/class test and cannot be deleted (409).</summary>
     public static readonly ApiError ExerciseInUse = new("exercise_in_use", 409, "Exercise is in use.");
     /// <summary>
+    /// The interest tag dresses exercises and cannot be deleted (409). A code of its own next to
+    /// <see cref="ExerciseInUse"/>, because the blocked resource is the other one: there the exercise is
+    /// held by a plan, here the tag is held by exercises.
+    /// </summary>
+    public static readonly ApiError InterestTagInUse = new("interest_tag_in_use", 409, "Interest tag is in use.");
+    /// <summary>
     /// Subject is referenced by a child's key result or timetable entry and cannot be deleted (409).
     /// The line runs along whether the reference is REQUIRED, not along ownership: child-owned rows whose
     /// subject is optional (textbook, study plan, class test) keep losing only their assignment, and only
