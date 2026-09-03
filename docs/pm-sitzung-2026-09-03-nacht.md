@@ -198,3 +198,5 @@ ebenfalls, mit B-210 an der Spitze.
 | `frontend/e2e/planbau-ladefenster.spec.ts` | **neu**, 4 Fälle (zugleich der Rollengang) |
 | `frontend/src/lib/referenceOptions.test.ts` | **neu**, 4 Fälle |
 | `docs/backlog/B-209…B-212` | **neu**, aus der Nachschau |
+
+**Commit:** `a7e3da6` (nicht gepusht — der Push bleibt beim Menschen).

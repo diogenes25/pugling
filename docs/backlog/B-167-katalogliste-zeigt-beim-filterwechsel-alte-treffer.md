@@ -207,4 +207,4 @@ Ausgangszustand statt der Wirkung (er zählt jetzt Anfragen und trägt eine Gege
   `e2e/planbau-ladefenster.spec.ts` fahren die echte Oberfläche im echten Browser gegen einen echten
   Server — das ist der Rollengang, und er wiederholt sich, statt einmal stattzufinden. Kein
   Browser-Handgang möglich (keine Chrome-Anbindung in dieser Sitzung), damit greift der dokumentierte
-  Ersatz. Commit siehe Protokoll `docs/pm-sitzung-2026-09-03-nacht.md`.
+  Ersatz. Commit `a7e3da6`; Protokoll `docs/pm-sitzung-2026-09-03-nacht.md`.
