@@ -308,3 +308,55 @@ der Hausregel eigentlich stärker; sie kosten aber je eine eigene Sitzung:
 **Bewusst ungedeckt bleibt:** dass eine rote Probe am *richtigen Ort* fällt. Das kann kein Tor prüfen —
 es ist eine inhaltliche Frage, und die Antwort heißt „messen, welcher Fall fällt", nicht „prüfen, ob
 einer fällt". Genau das ist diese Nacht einmal schiefgegangen und einmal gutgegangen.
+
+## Der Lauf endet hier — und nicht an einer Halt-Bedingung
+
+Keine der Grenzen aus [docs/nachtlauf.md](nachtlauf.md) hat gegriffen: Der Fund-Zähler stand bei **4 von
+5**, baubare Themen sind reichlich übrig (26 weitere Stories auf `geschaetzt`), und die Retro hat kein Tor
+gelandet, sondern nur vorgeschlagen — Limit 2 greift also nicht.
+
+Er endet, weil zwei Dinge auf einen Menschen warten und beide den nächsten Schritt betreffen:
+
+1. Die **Produktentscheidung** aus B-206 (darf ein benutztes Interessen-Stichwort gelöscht werden?).
+2. Der **Retro-Vorschlag** — Freigabe 3 macht ihn absichtlich zu einem Vorschlag, damit er gesehen wird,
+   bevor er weitere Arbeit formt.
+
+Der nächste Sprint desselben roten Fadens liegt bereit: [B-50](backlog/B-50-kind-beschreibt-sich-selbst.md)
+(„Das Kind beschreibt sich selbst"), `geschaetzt`, `L`, `wo: beides`. Er braucht eine eigene
+Sohn-Oberfläche und damit einen eigenen Rollengang — und für dessen sinnlich-visuelle Hälfte einen
+Browser oder ein Auge.
+
+## Offene Punkte für den Morgen — die Entscheidungen, die ich gebraucht hätte
+
+1. **Darf ein Interessen-Stichwort gelöscht werden, das Übungen einkleidet?**
+   ([B-206](backlog/B-206-einkleidung-ist-unsichtbar-und-nicht-korrigierbar.md), offener Punkt 1). Drei
+   Möglichkeiten mit Kosten stehen dort, Empfehlung: **Riegel wie bei der Übung** (`409`), weil die
+   Einkleidung Autoren-Information ist und nicht rekonstruierbar. Die Begründung am `DELETE` im Code sagt
+   inzwischen ausdrücklich, dass ihr alter Satz seit B-46 nicht mehr stimmt und die Frage offen ist.
+2. **Reicht eine nur lesbare Anzeige der Einkleidung, oder braucht es das Entfernen?** (B-206, Punkt 2).
+   Empfehlung: beides — eine Anzeige ohne Korrekturweg lädt denselben Vorwurf ein.
+3. **Der Retro-Vorschlag** (Änderungszeit bei der Wiederherstellung einer Probe): landen oder verwerfen.
+   Dazu die zwei tor-förmigen Kandidaten, die je eine eigene Sitzung kosten.
+
+## Offene Roadmap
+
+Die dauerhafte Liste ist [docs/backlog/](backlog/README.md) — hier nur die Begründung der aktuellen
+Reihenfolge: Der rote Faden „Interessen" ist zur Hälfte gebaut. **B-50** ist die andere Hälfte und die
+einzige P2-Story, die direkt auf diesem Sprint aufsetzt; **B-206** ist ihr kleiner, defekt-getriebener
+Nachbar und sollte davor oder gleichzeitig laufen, weil beide dieselbe Fläche anfassen. **B-19** und
+**B-39** sind gleich wichtig, aber eigene Fäden — sie gewinnen nichts dadurch, dass sie jetzt kommen.
+
+## Konkreter Änderungsstand (für Review)
+
+| Commit | Inhalt |
+|---|---|
+| `0af87e9` | B-170 gebaut — die Übungsart bekommt einen Eigentümer |
+| `65591f1` | B-170: elf Reviewer-Funde eingearbeitet |
+| `c0b1ad5` | B-170 abgenommen |
+| `7d91ac8` | `frontend/CLAUDE.md`: die zweite Hälfte der `useAsync`-Falle |
+| `644cff7` | B-46 gebaut — Einkleidung am Katalog, `--interests` am Agenten, Reviewer-Funde |
+| `aba1147` | B-46 abgenommen, Index neu |
+
+**Nichts ist gepusht** — das bleibt beim Nutzer. Die Wegwerf-Datenbanken dieses Laufs sind entfernt; die
+echte `pugling.db` wurde **nicht** angetastet und muss nach dem Pull einmal gelöscht werden, weil die
+Migrationskette zweimal neu gefaltet wurde (B-170 und B-46).
