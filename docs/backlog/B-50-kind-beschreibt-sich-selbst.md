@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/medien, bereich/frontend, bereich/auth, rolle/student, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/medien, bereich/frontend, bereich/auth, rolle/student, rolle/supervisor]
 aliases: [Interessen vom Kind, Selbstbeschreibung, Interessen-Onboarding]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: L
@@ -391,3 +391,12 @@ Angenommen und behoben, mit je einem Test, der die Änderung rot macht:
   Backend **865/865**, Vitest **341/341**, E2E **47/47** (der eigene Lauf jetzt unter
   `reducedMotion: "reduce"` und mit eigenem Kind, womit auch AK 7 abgedeckt ist), `dotnet format` sauber.
   Drei weitere rote Proben gemessen, je an der eigenen Zusicherung (Sortierung, Doppel-Tag, Stempel).
+  Commit `827b220`.
+- **2026-09-03** — **abgenommen.** Die Eintrittsbedingung ist vollständig belegt: echte Testzahlen
+  (865 Backend / 341 Vitest / 47 E2E), beide Reviewer gelaufen und ihre Funde behoben bzw. als
+  [B-207](B-207-kind-auswahlliste-ist-unkuratiert.md) abgetrennt, Commits `0f5acb3`, `87ef55e`, `827b220`
+  (nicht gepusht). **Rollengang:** `frontend/e2e/interessen.spec.ts` fährt den Weg Kind → Vater in einem
+  echten Browser gegen einen echten Server — vom Erstbesuch-Angebot über den geführten Prozess bis zur
+  Anzeige beim Vater; nach der README-Regel zählt das als Rollengang und ist ihm hier überlegen, weil es
+  sich wiederholt. Nicht abgedeckt und ausdrücklich benannt: das sinnliche Urteil („fühlt sich die
+  Kachel-Mechanik für ein Kind richtig an") — dafür ist `pm-loop` der Ort, nicht ein Test.

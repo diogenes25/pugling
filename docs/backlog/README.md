@@ -500,7 +500,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (65)
+### Offen (64)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -513,7 +513,6 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-206](B-206-einkleidung-ist-unsichtbar-und-nicht-korrigierbar.md) | Die Einkleidung einer Übung ist im Vater-Web unsichtbar — und ein gelöschtes Stichwort macht das Speichern unmöglich | Defekt | `ausformuliert` | P2 | — | beides | — |
 | [B-166](B-166-wiki-nennt-die-entfernte-kapitel-route.md) | Wiki und Endpunkt-Karte nennen die entfernte Kapitel-Route | Defekt | `idee` | P2 | — | — | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
-| [B-50](B-50-kind-beschreibt-sich-selbst.md) | Das Kind beschreibt sich selbst: Interessen in einem geführten Prozess | Wunsch | `in-arbeit` | P2 | L | beides | — |
 | [B-19](B-19-schuelerprofil-ki-lehrplan.md) | Schülerprofil-getriebener KI-Lehrplan | Wunsch | `geschaetzt` | P2 | M | backend | — |
 | [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder | Wunsch | `geschaetzt` | P2 | L | beides | — |
 | [B-207](B-207-kind-auswahlliste-ist-unkuratiert.md) | Die Auswahlliste des Kindes zeigt jedes Schlagwort, das je irgendwer getippt hat | Wunsch | `ausformuliert` | P2 | — | beides | Migration? |
@@ -571,7 +570,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-05](B-05-buchstaben-tausch.md) | Buchstaben-Tausch-Eingabe (Anagramm) | Wunsch | `geschaetzt` | P5 | M | beides | — |
 
 <details>
-<summary>Abgenommen (129)</summary>
+<summary>Abgenommen (130)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -665,6 +664,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-46](B-46-interessenbasierte-uebungen.md) | Übungen entstehen für ein Interessenprofil, nicht für ein bestimmtes Kind | Wunsch | `abgenommen` | P2 | L | beides | Migration |
 | [B-48](B-48-anonyme-registrierung-produktion.md) | Anonyme Registrierung ist auch in Produktion offen | Frage | `abgenommen` | P2 | S | backend | — |
 | [B-49](B-49-sohn-app-schreib-primitive.md) | Die Sohn-App benutzt die geteilten Schreib-Primitive nicht | Aufräumen | `abgenommen` | P3 | S | frontend | — |
+| [B-50](B-50-kind-beschreibt-sich-selbst.md) | Das Kind beschreibt sich selbst: Interessen in einem geführten Prozess | Wunsch | `abgenommen` | P2 | L | beides | — |
 | [B-51](B-51-admin-rolle-dokumentieren.md) | Die Admin-Rolle kommt in keinem Rollen-Dokument vor | Aufräumen | `abgenommen` | P3 | XS | doku | — |
 | [B-52](B-52-testabdeckung-paket.md) | Sammel-Story: das Testabdeckungs-Paket | Aufräumen | `abgenommen` | P2 | L | beides | — |
 | [B-53](B-53-wizard-doppelklick.md) | Zwei Klicks im Lehrplan-Assistenten legen zwei Kinder und zwei Pläne an | Defekt | `abgenommen` | P2 | S | frontend | — |
@@ -719,7 +719,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (41)
 
-**Nachgeschaut: 120 von 129 abgenommenen** — und in 30 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 9 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 120 von 130 abgenommenen** — und in 30 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 10 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -766,7 +766,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-204](B-204-vierter-weg-in-den-doppelten-meldungsplatz.md) | Der vierte Weg in denselben Widerspruch: die Reihen-Zeile hat zwei Meldungsplätze | [B-197] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (9) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (10) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -782,6 +782,7 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-203](B-203-platzhalter-luegt-auch-ohne-fehler.md) | Der Platzhalter lügt auch ohne Fehler — und ein misslungenes Lesen nahm dem Vater eine Fähigkeit |
 | [B-204](B-204-vierter-weg-in-den-doppelten-meldungsplatz.md) | Der vierte Weg in denselben Widerspruch: die Reihen-Zeile hat zwei Meldungsplätze |
 | [B-46](B-46-interessenbasierte-uebungen.md) | Übungen entstehen für ein Interessenprofil, nicht für ein bestimmtes Kind |
+| [B-50](B-50-kind-beschreibt-sich-selbst.md) | Das Kind beschreibt sich selbst: Interessen in einem geführten Prozess |
 
 </details>
 
