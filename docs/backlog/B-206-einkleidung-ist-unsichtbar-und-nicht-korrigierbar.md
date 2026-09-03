@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/idee, bereich/frontend, bereich/katalog, rolle/creator]
+tags: [typ/story, status/ausformuliert, bereich/frontend, bereich/katalog, rolle/creator]
 aliases: [Einkleidung unsichtbar, stale Interessen-Tag, Sackgasse beim Speichern]
-status: idee
+status: ausformuliert
 prio: P2
 art: Defekt
 wo: beides
@@ -66,6 +66,21 @@ Belegt vom `frontend-reviewer` im Nachtlauf 2026-09-02, alle Teile am Code nachg
 3. Gehört ein Editor auch ins Anlege-Formular (`VaterExerciseCreate.tsx`), oder genügt der
    Bearbeiten-Dialog? Empfehlung: erst der Dialog — beim Anlegen gibt es nichts zu verlieren.
 
+## Akzeptanzkriterien
+
+Bewusst als **Ergebnisse** formuliert, nicht als Mechanismen: welcher Weg AK 3 erfüllt, hängt an offenem
+Punkt 1 — das Kriterium selbst hängt es nicht.
+
+1. Der Bearbeiten-Dialog einer Übung **zeigt** ihre Einkleidung, und zwar mit den **Namen** der
+   Stichworte, nicht mit Ids.
+2. Eine Übung ohne Einkleidung sagt das ausdrücklich, statt an dieser Stelle leer zu bleiben — sonst sieht
+   „nicht eingekleidet" aus wie „Feld gibt es nicht" (dieselbe Verwechslung wie in B-174).
+3. **Ein Speichern scheitert nicht an etwas, das der Vater nicht sehen und nicht ändern kann.** Wird ein
+   Stichwort anderswo entfernt, ist der Zustand ohne Schließen und Neuöffnen des Dialogs auflösbar.
+4. Keine Fehlermeldung im Dialog nennt eine Größe, die das Formular nicht anzeigt.
+5. Regression: die Zusicherung aus B-46, dass `payloadFrom` die Einkleidung **durchreicht**, bleibt grün —
+   die Anzeige ersetzt sie nicht, sie ergänzt sie.
+
 ## Anhaltspunkte für die Umsetzung
 
 Der Lesepfad steht: `api.interestTags()` und der Editor-Aufbau liegen als Muster in
@@ -80,3 +95,9 @@ Anzeige — `ExerciseDetail.interestTagIds` und `GET creator/interest-tags` gen�
   Produktentscheidung, die ein unbeaufsichtigter Lauf nicht treffen darf. Der Ist-Stand ist vollständig am
   Code belegt und stammt nicht aus einer Vermutung — die Stufe `idee` ist damit fast schon
   `ausformuliert`, es fehlen nur die Entscheidungen zu den drei offenen Punkten.
+- **2026-09-03** — auf `ausformuliert` gehoben, und zwar weil der **Index-Wächter** die Datei mit
+  `idee` + `unverifiziert: false` als widersprüchlich gemeldet hat. Die beiden Auswege waren, das Flag auf
+  `true` zu setzen (das wäre falsch: der Ist-Stand steht mit `Datei:Zeile` da und ist vom
+  `frontend-reviewer` am Code gemessen) oder die Stufe zu nehmen, die der Inhalt schon trägt. Also die
+  Stufe. Was noch fehlt, ist ausschließlich die Grill-Runde über die drei offenen Punkte — und deren
+  erster ist eine Produktentscheidung, die ein unbeaufsichtigter Lauf nicht treffen darf.
