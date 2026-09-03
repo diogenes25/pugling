@@ -1,7 +1,8 @@
 import type { ExerciseSearchParams, SchoolType } from "../lib/types";
 
 /**
- * Die Filter des Assistenten-Schritts „Übungen" als **reine Regel** (B-18).
+ * Die Filter der Übungssuche als **reine Regel** (B-18) — anfangs nur für den Assistenten-Schritt
+ * „Übungen", seit B-167 auch für den Planbau (`PlanPositions.tsx`), der dieselbe Frage stellt.
  *
  * Sie liegt hier statt im Bildschirm, weil sie an **zwei** Stellen gebraucht wird — bei jeder Eingabe für
  * die Trefferliste und noch einmal beim „Alle wählen"-Nachschlag mit höherem `take`. Zwei Kopien derselben

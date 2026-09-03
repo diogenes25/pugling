@@ -307,11 +307,21 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
             id={`${id}-unit`} value={form.currentUnitId} onChange={(v) => up("currentUnitId", v)}
             loadedId={eigeneUnit ? book?.currentUnitId : null}
             loadedName={eigeneUnit ? book?.currentUnitLabel : null}
-            options={unitOptions(units.error ? [] : units.data ?? [])}
-            emptyLabel={seriesId == null ? "– erst Reihe wählen –" : "– keine –"}
+            // Zwei Bedingungen, jede für einen eigenen Fall: `units.error` deckt den gescheiterten
+            // Abruf (B-172), der Reihen-Schlüssel das Ladefenster eines Reihenwechsels (B-195).
+            // Die eine ersetzt die andere nicht.
+            options={unitOptions(units.error ? [] : units.data ?? [], seriesId)}
+            emptyLabel={seriesId == null ? "– erst Reihe wählen –"
+              // Ohne dieses Zwischenwort liest sich die (zu Recht) geleerte Liste im Ladefenster als
+              // „diese Reihe hat keine Units" – stumm zu leeren ist die andere Falle (B-116).
+              : units.loading ? "– lädt… –" : "– keine –"}
             disabled={seriesId == null}
           />
-          {seriesId != null && units.data?.length === 0 && (
+          {/* `units.data` ist hier bewusst **roh** gelesen und nicht gefiltert: gefiltert ist die Liste im
+              Ladefenster immer leer, und der Satz erschiene bei JEDEM Reihenwechsel kurz. Stattdessen
+              schweigt er, solange die Antwort nicht da ist — sonst schickt er den Vater zum Anlegen,
+              während die Units der neuen Reihe gerade unterwegs sind. */}
+          {seriesId != null && !units.loading && !units.error && units.data?.length === 0 && (
             <span className="sub">Diese Reihe hat noch keine Units – unter „Lehrwerke" anlegen.</span>
           )}
           {/* Der Hinweis oben prüft `length === 0` und schweigt darum bei `null`, also genau im

@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { StatusBanner } from "../components/StatusBanner";
 import { api } from "../lib/api";
 import { useAction, type ActionState } from "../lib/useAction";
@@ -8,6 +8,7 @@ import { useExerciseTypes } from "../lib/exerciseTypes";
 import { TruncationHint } from "../components/ListControls";
 import { MasteryPill } from "../components/MasteryPill";
 import { FieldLabel, InfoHint } from "../components/InfoHint";
+import { auswahlNachFilterwechsel } from "./wizardSearch";
 import type {
   CreatePositionDto, ExerciseSummary, GoalCadence, PositionReport, PositionResponse, Paged, PracticeOrder,
   ScoringTimeSlot, SubjectResponse, UpdatePositionDto,
@@ -408,9 +409,75 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
   const [filter, setFilter] = useState<ExerciseFilter>({});
   // Die Gesamtzahl wird mitgeführt: der Server liefert nur eine Seite, und eine still gekappte
   // Auswahlliste liest sich wie „mehr gibt es nicht".
-  const exercises = useAsync<Paged<ExerciseSummary>>(() => api.searchExercises(filter),
-    [filter.subjectId, filter.seriesUnitId, filter.grade, filter.schoolType, filter.categoryId, filter.type, filter.search]);
+  /*
+   * Die Suchkriterien **einmal**, für zwei Verwendungen: als Abhängigkeiten der Abfrage und – gebündelt –
+   * als Schlüssel, an dem hängt, ob die gezeigten Zeilen noch zum eingestellten Filter gehören. Zwei
+   * handgepflegte Listen derselben sieben Felder müssten übereinstimmen, und ein achtes Feld würde an
+   * genau einer von beiden vergessen — dann ginge die Sperre nicht mehr auf oder gar nicht mehr an, ohne
+   * dass es jemand sähe. Der Zwilling hat aus demselben Grund eine Quelle (`wizardSearchParams`).
+   *
+   * Normalisiert (`trim`, leer → `undefined`): Der Server trimmt die Freitextsuche selbst, ein Leerschlag
+   * am Ende ist also dieselbe Suche mit derselben Antwort — er darf weder eine Abfrage auslösen noch die
+   * Auswahl verwerfen.
+   */
+  const kriterien = [
+    filter.subjectId, filter.seriesUnitId, filter.grade, filter.schoolType, filter.categoryId,
+    filter.type || undefined, filter.search?.trim() || undefined,
+  ];
+  const exercises = useAsync<Paged<ExerciseSummary>>(() => api.searchExercises(filter), kriterien);
   const [exerciseId, setExerciseId] = useState<number | "">("");
+  const [auswahlHinweis, setAuswahlHinweis] = useState<string | null>(null);
+  // Eigene Id-Wurzel: Der Grund für die gesperrte Liste braucht eine stabile Id, damit die Radiogruppe
+  // ihn per `aria-describedby` dauerhaft benennen kann.
+  const uid = useId();
+  /*
+   * Ab hier dieselbe Regel wie im Assistenten (B-169, `VaterWizard.tsx`) — diese Fläche ist sein Zwilling:
+   * dieselbe Filterleiste, dieselben `ExerciseSummary`-Zeilen, dieselbe geblätterte Suche. Dort steht sie
+   * seit B-169, hier fehlte sie (B-167).
+   *
+   * Verglichen werden **Schlüssel** über die Suchkriterien, nicht Ladezustände. Der Grund gilt hier
+   * unverändert: `loading` zöge „Kriterien geändert" und „dieselben Kriterien neu geladen" zusammen, und
+   * es deckt den **Fehlerzweig** nicht — scheitert die neue Abfrage, fällt `loading` zurück, während die
+   * alten Zeilen stehen bleiben.
+   */
+  const filterKey = JSON.stringify(kriterien);
+  /** Der Schlüssel, für den die aktuelle Auswahl gilt – nach dem Effekt immer der aktuelle. */
+  const geltenderFilterKey = useRef(filterKey);
+  /*
+   * Der Schlüssel, zu dem die **gerenderten Zeilen** gehören — `useState` und nicht `useRef`, weil eine
+   * Ref am Rendern nicht teilnimmt: der Render, der die frischen Zeilen erstmals zeigt, berechnete die
+   * Sperre sonst, bevor ein Effekt die Ref nachziehen kann, und die neuen Zeilen blieben gesperrt.
+   */
+  const [seitenSchluessel, setSeitenSchluessel] = useState(filterKey);
+  const zeilenVeraltet = seitenSchluessel !== filterKey;
+  useEffect(() => {
+    // `useAsync` verwirft die Antwort einer überholten Anfrage (`cancelled`-Flag), setzt `data` also nur
+    // aus der neuesten Generation — der hier gelesene Schlüssel gehört damit wirklich zu den Zeilen.
+    setSeitenSchluessel(filterKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exercises.data]);
+  useEffect(() => {
+    /*
+     * Die Auswahl überlebte den Filterwechsel: Ihre Markierung verschwand mit der Zeile, `exerciseId`
+     * blieb — und der Absende-Knopf blieb damit bedienbar. Der Vater legte so eine Position auf eine
+     * Übung an, die er gar nicht mehr sah (B-167; das einzige Symptom mit Schreibwirkung).
+     *
+     * Dieselbe Funktion wie im Assistenten (B-161). Sie ist auf eine Liste geschnitten; eine
+     * Einzelauswahl ist eine Liste mit höchstens einem Element. Stumm zu leeren wäre die andere Falle
+     * (B-116) — darum der Hinweis.
+     */
+    const folge = auswahlNachFilterwechsel(
+      exerciseId === "" ? [] : [exerciseId], geltenderFilterKey.current, filterKey);
+    if (!folge) return;
+    geltenderFilterKey.current = filterKey;
+    // Die Rückgabe der geteilten Regel auswerten statt hart zu leeren: verfeinert sie ihre Antwort je
+    // („behalte, was noch in der Liste steht"), zieht diese Aufrufstelle mit, statt still zurückzubleiben.
+    setExerciseId(folge.selected[0] ?? "");
+    // Nur überschreiben, wenn es etwas zu melden gibt: ein zweiter Tastendruck im Suchfeld hat nichts
+    // mehr zu verlieren und darf die Meldung des ersten nicht wegwischen.
+    if (folge.hinweis) setAuswahlHinweis(folge.hinweis);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterKey]);
   const [settings, setSettings] = useState<PositionSettings>(defaultSettings());
   /*
    * Hat der Vater die Zielpunkte SELBST gesagt? (B-191)
@@ -453,16 +520,54 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
       <ExerciseFilterBar value={filter} onChange={setFilter} subjects={subjects.data ?? []} />
 
       <div className="field">
-        <label>Übung aus dem Katalog <span className="muted">({results.length} Treffer)</span></label>
+        {/* Die Zahl gehört zu einer Abfrage, nicht zu einem Bildschirm: Solange die Zeilen zum vorigen
+            Filter gehören, wäre „(N Treffer)" die Zahl von vorhin — eine Aussage über einen Filter, der
+            gar nicht mehr eingestellt ist. Dieselbe Wahrheit trägt auch die Sperre der Radios. */}
+        <label>Übung aus dem Katalog{" "}
+          <span className="muted">
+            {exercises.error ? "(Suche gescheitert)" : zeilenVeraltet ? "(Suche läuft…)" : `(${results.length} Treffer)`}
+          </span>
+        </label>
+        {/* Der Fehlerzweig braucht seine eigene Fläche, nicht nur die Sperre: Scheitert die Suche, bleibt
+            `zeilenVeraltet` **dauerhaft** wahr (der Effekt hängt an `exercises.data`, und das ändert sich
+            nicht mehr). Ohne diesen Kasten stünde für immer „Suche läuft…" neben einer Liste, die nie
+            wieder wählbar wird — und der einzige Ausweg wäre, blind am Filter zu drehen. `reload()` ist
+            der Weg zurück: es setzt `data` neu und löst damit die Sperre. Derselbe Aufbau wie im
+            Zwilling (`VaterWizard.tsx`). */}
+        {exercises.error && (
+          <div className="banner err" role="alert">
+            Die Übungssuche ist gescheitert: {exercises.error}
+            <button type="button" className="btn ghost inline-btn" style={{ width: "auto", marginLeft: 8 }}
+              disabled={exercises.loading} onClick={exercises.reload}>Erneut suchen</button>
+          </div>
+        )}
+        {/* Der Grund gehört als Text daneben, nicht als `title` an das gesperrte Element: der erscheint
+            nicht (B-160). Die Live-Region steht **immer** im DOM, auch leer – entstünde sie zusammen mit
+            ihrem Text, sagte kein Screenreader sie an (B-134, dieselbe Bauform wie `StatusBanner`). */}
+        <div role="status" aria-live="polite">
+          {/* Im Fehlerfall schweigt dieser Satz: dort steht der Kasten darüber, und „gleich wählbar" wäre
+              dann eine Zusage, die nichts mehr einlöst. */}
+          {zeilenVeraltet && !exercises.error && (
+            <p id={`${uid}-veraltet`} className="muted" style={{ margin: "4px 0", fontSize: 12 }}>
+              Liste gehört noch zum vorigen Filter.
+            </p>
+          )}
+        </div>
         {exercises.loading && exercises.data === null ? <div className="loading">Lade…</div> : (
+          /* `aria-describedby` verbindet die Gruppe dauerhaft mit dem Grund – die Live-Region sagt ihn
+             nur einmal an, und wer erst danach hierher navigiert, fände ihn sonst nicht mehr. */
           <div role="radiogroup" aria-label="Übung wählen"
+            aria-describedby={zeilenVeraltet && !exercises.error ? `${uid}-veraltet` : undefined}
             style={{ maxHeight: 240, overflowY: "auto", border: "1px solid var(--stroke)", borderRadius: 8, display: "flex", flexDirection: "column" }}>
             {results.map((ex) => (
               <label key={ex.id} className="row"
                 style={{ gap: 8, alignItems: "flex-start", padding: "6px 10px", cursor: "pointer",
                   background: exerciseId === ex.id ? "rgba(140,220,120,.10)" : undefined,
                   borderBottom: "1px solid var(--stroke)" }}>
-                <input type="radio" name="add-position-exercise" checked={exerciseId === ex.id}
+                {/* Gesperrt, solange die Zeilen zum vorigen Filter gehören (B-167): ein Klick markiert
+                    nicht nur, er schreibt die Lern-Standards dieser Übung ins Formular. */}
+                <input type="radio" name="add-position-exercise" disabled={zeilenVeraltet}
+                  checked={exerciseId === ex.id}
                   // Nur die Werte übernehmen, die AUS der Übung kommen – das Pflichtziel und der Malus
                   // bleiben stehen (ein Übungswechsel ist keine Rücknahme).
                   //
@@ -496,10 +601,18 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
                 </span>
               </label>
             ))}
-            {results.length === 0 && <div className="muted" style={{ padding: "8px 10px" }}>Keine Treffer – Filter anpassen.</div>}
+            {/* Nur wenn die Liste auch zum eingestellten Filter gehört: sonst stünde „Keine Treffer" neben
+                „(Suche läuft…)" – zwei Aussagen über zwei verschiedene Abfragen in einem Blickfeld. */}
+            {results.length === 0 && !zeilenVeraltet && !exercises.error && (
+              <div className="muted" style={{ padding: "8px 10px" }}>Keine Treffer – Filter anpassen.</div>
+            )}
           </div>
         )}
-        <TruncationHint shown={results.length} total={exercises.data?.total ?? 0} />
+        {/* Aus demselben Grund wie die Trefferzahl: „Zeigt 20 von 143" gehörte zum vorigen Filter. */}
+        {!zeilenVeraltet && <TruncationHint shown={results.length} total={exercises.data?.total ?? 0} />}
+        <div role="status" aria-live="polite">
+          {auswahlHinweis && <div className="banner info" style={{ marginTop: 6 }}>{auswahlHinweis}</div>}
+        </div>
       </div>
 
       {/* Jede Änderung, die durch das Formular kommt, ist eine Aussage des Vaters – der Übungswechsel
@@ -512,7 +625,12 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
       }} />
 
       <div className="row">
-        <button type="submit" className="btn inline-btn" style={{ width: "auto", marginLeft: "auto" }} disabled={action.busy || exerciseId === ""}>
+        {/* `zeilenVeraltet` gehört an das Element mit **Schreibwirkung**, nicht nur an die Radios: Solange
+            die Liste zum vorigen Filter gehört, kann der Vater nicht sehen, worauf er die Position legt.
+            Die Auswahl-Rücknahme darunter greift erst im Effekt – also einen Tick später als dieser
+            Render, und das ist genau die Lücke, um die es in dieser Story geht. */}
+        <button type="submit" className="btn inline-btn" style={{ width: "auto", marginLeft: "auto" }}
+          disabled={action.busy || exerciseId === "" || zeilenVeraltet}>
           {action.busy ? "Füge hinzu…" : "+ Position hinzufügen"}
         </button>
       </div>

@@ -23,9 +23,26 @@ export const seriesOptions = (series: readonly TextbookSeriesResponse[]): Refere
     label: `${s.name}${s.publisherName ? ` (${s.publisherName})` : ""}`,
   }));
 
-/** Die Klassenstufe vorn, weil eine Reihe dieselbe Unit-Nummer über mehrere Bände trägt. */
-export const unitOptions = (units: readonly SeriesUnitResponse[]): ReferenceOption[] =>
-  units.map((u) => ({
+/**
+ * Die Units **einer** Reihe. Die Klassenstufe steht vorn, weil eine Reihe dieselbe Unit-Nummer über
+ * mehrere Bände trägt.
+ *
+ * `seriesId` ist Pflicht und nicht bequemlichkeitshalber optional (B-195): `useAsync` behält seine `data`
+ * über einen Wechsel der Abhängigkeit, also stehen im Ladefenster nach einem Reihenwechsel noch die Units
+ * der **alten** Reihe da — wählbar, und ihr Abschicken endet am Server mit `400`. Die Option trägt ihre
+ * Reihe selbst (`SeriesUnitResponse.seriesId`), also gilt hier die Hausregel „die Zeile bringt ihr
+ * Elternteil mit und rendert bei Nichtpassung nicht" (`frontend/CLAUDE.md`) — kein Schlüsselvergleich
+ * nötig, anders als bei einer Trefferliste, deren Zeilen ihren Filter nicht kennen (B-167).
+ *
+ * Als **Parameter** und nicht als Filter beim Aufrufer, damit die zweite Aufrufstelle ihn nicht vergessen
+ * kann: genau so verlor B-172 seinen achten Fall (B-194).
+ *
+ * `null` heißt „keine Reihe gewählt" und ergibt darum nichts zur Auswahl.
+ */
+export const unitOptions = (
+  units: readonly SeriesUnitResponse[], seriesId: number | null,
+): ReferenceOption[] =>
+  seriesId == null ? [] : units.filter((u) => u.seriesId === seriesId).map((u) => ({
     value: String(u.id),
     label: `${u.grade != null ? `Kl. ${u.grade}: ` : ""}${u.label}`,
   }));

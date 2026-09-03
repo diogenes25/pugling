@@ -5,9 +5,10 @@ status: ausformuliert
 prio: P3
 art: Defekt
 groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+wo: frontend
+migration: nein
+vertragsbruch: nein
+wartet_auf: eine Entscheidung des Menschen (siehe „Angehalten")
 quelle: frontend-reviewer zu B-157 (2026-08-13, Fund außerhalb des Diffs)
 unverifiziert: false
 grund: ""
@@ -68,30 +69,190 @@ der „aktuell" und „von vorhin" nicht trennt.
 
 ## Offene Punkte
 
-1. **Am Aufrufer heilen oder in `useAsync`?** Empfehlung: **in `useAsync`**, weil 67 Aufrufstellen die
-   Bedingung tragen könnten und eine Regel je Aufrufer nach der Erfahrung dieses Repos an der zweiten Stelle
-   vergessen wird. Denkbar ist ein zusätzliches Feld, das sagt, zu welchen Abhängigkeiten die vorliegenden
-   Daten gehören („`stale`" o. Ä.) — ohne `data` zu leeren, damit die begründete Nicht-Flacker-Eigenschaft
-   erhalten bleibt.
-2. **Wenn `stale`: was tut der Aufrufer damit?** Empfehlung: Bedienelemente sperren statt Inhalte
-   ausblenden — Ausblenden wäre genau das Flackern, das die heutige Bauform vermeidet. Für `CatalogAdmin`
-   heißt das: Zeilen und Namen stehen lassen, „OK"/„Löschen" und die Rechte-Aussage aussetzen.
-3. **Wie viele Aufrufstellen sind wirklich betroffen?** Vor jeder Regel auszählen (`CLAUDE.md`: „Neue Regel
-   scharf stellen? Erst messen."). Die 67 sind die Obergrenze, nicht der Befund.
-4. **Lohnt ein Wächter?** Empfehlung: erst nach Punkt 3. Eine reflexive Regel „`useAsync` mit Deps darf sein
-   `data` nicht neben einem synchron abgeleiteten Wert zeigen" ist wahrscheinlich nicht trennscharf
-   formulierbar; das gehört gemessen, nicht geraten.
+1. ~~**Am Aufrufer heilen oder in `useAsync`?**~~ → Entscheidung 1: in `useAsync`, als neues Feld `stale`.
+2. ~~**Wenn `stale`: was tut der Aufrufer damit?**~~ → Entscheidung 4: sperren, nicht ausblenden.
+3. ~~**Wie viele Aufrufstellen sind wirklich betroffen?**~~ → **gemessen** (siehe unten): 111 Aufrufstellen,
+   75 mit nicht-leerer Abhängigkeitsliste, **73** mit Abhängigkeiten, die im Betrieb wechseln können (die
+   übrigen 2 hängen allein an der Sitzungs-Id). Die Schätzung der Ausformulierung (110/67) ist damit in der
+   Größenordnung bestätigt.
+4. ~~**Lohnt ein Wächter?**~~ → Entscheidung 5: nein, und der Grund steht dort.
 
-## Akzeptanzkriterien (Entwurf)
+## Die Messung zu Punkt 3
 
-1. Nach einem Fachwechsel bietet die Katalogseite keine Bedienelemente an, die sich auf das vorige Fach
-   beziehen.
-2. Die Rechte-Aussage („gehört zum Grundbestand" / „hat jemand anderes angelegt") erscheint nie über einer
-   Liste, die zu einem anderen Fach gehört.
-3. Die Liste **flackert nicht**: die bisherigen Namen bleiben sichtbar, solange die neuen laden.
-4. Ein Test deckt den Übergang ab; die rote Probe belegt, dass er den heutigen Stand fängt.
-5. Falls die Behebung in `useAsync` landet: die Nicht-Flacker-Eigenschaft beim `reload` bleibt erhalten (der
-   Grund steht als Kommentar in `VaterKatalog.tsx`) — ein Test hält beides.
+Gezählt am 2026-09-03 mit einem Klammern-balancierenden Parser über `frontend/src` (ohne Tests und ohne
+`useAsync.ts` selbst) — nicht per `grep` auf Zeilen, weil die Mehrzahl der Aufrufe über mehrere Zeilen
+geht und eine Zeilenzählung 142 ergibt statt 111.
+
+| | Anzahl |
+| --- | --- |
+| `useAsync`-Aufrufstellen | 111 |
+| davon mit nicht-leerer Abhängigkeitsliste | 75 |
+| davon mit Abhängigkeiten, die **im Betrieb** wechseln können | **73** |
+
+**Was die Zahl nicht sagt** — und das ist der Grund für Entscheidung 5: Wie viele dieser 73 daneben
+zusätzlich einen *synchron abgeleiteten* Wert zeigen, ist **nicht** mechanisch entscheidbar. 73 ist die
+Kandidatenmenge, nicht der Befund. Diese Story schließt drei davon namentlich; die übrigen 70 bleiben
+Kandidaten und sind ausdrücklich **nicht** als erledigt zu lesen.
+
+## Angehalten: die Entscheidung, die ich gebraucht hätte
+
+**Der Nachtlauf hat diese Story bewusst zurückgesetzt** (`geschaetzt` → `ausformuliert`), und der Grund ist
+eine falsche Prämisse in ihrer eigenen, in derselben Nacht autonom getroffenen Entscheidung 1.
+
+Der Ablauf, damit er nachprüfbar ist statt geglaubt werden zu müssen:
+
+1. Autonom gegrillt und geschätzt (Freigabe 1, `art: Defekt`). Entscheidung 1 wählte „die Heilung liegt in
+   `useAsync`, als Feld `stale`" — begründet damit, dass eine Regel je Aufrufer an der zweiten Stelle
+   vergessen wird.
+2. Gebaut: `stale` samt Dep-Signatur-Vergleich, dazu drei Fälle in `useAsync.test.tsx`. Alle acht Fälle
+   grün, zwei rote Proben gemessen (`stale = false` → 2 Fälle fallen; `stale = loading` → **2**, erwartet
+   war 1: auch der Fehlerfall trennt, weil `loading` nach dem Fehlschlag zurückfällt).
+3. **Dann der Fund**, beim Suchen des ersten Abnehmers: `VaterWizard.tsx:183-201` und `:673-689` tragen
+   für exakt diese Frage seit [B-169](B-169-ladefenster-macht-die-alten-zeilen-anklickbar.md) ein
+   **entschiedenes, getestetes und begründetes** Muster — `seitenSchluessel`/`zeilenVeraltet` über einen
+   Schlüsselvergleich, mit ausformulierter Begründung, warum Schlüssel und nicht Ladezustände und warum
+   das den Fehlerzweig mit deckt. [B-195](B-195-unit-liste-bleibt-waehrend-des-reihenwechsels-waehlbar.md)
+   hatte in seinem offenen Punkt sogar darauf hingewiesen; beim Grillen war das nicht geprüft worden.
+4. **Der Umbau wurde vollständig zurückgenommen** (`git checkout` auf `useAsync.ts` und seinen Test,
+   danach wieder 5/5 grün). Es steht kein Code aus dieser Story im Baum.
+
+**Die offene Frage, und sie ist keine Defekt-Frage mehr:**
+
+> Soll `useAsync` eine querschnittliche Aussage „die Daten gehören zu anderen Abhängigkeiten" tragen —
+> oder bleibt es beim Muster am Aufrufer (B-169), das an jeder Stelle einzeln stehen muss?
+
+Beides ist vertretbar, und die Wahl formt den Baum:
+
+| | für den Hook (`stale`) | für das Muster am Aufrufer (B-169) |
+| --- | --- | --- |
+| Reichweite | 73 Aufrufstellen mit lebendigen Deps könnten es lesen | jede Stelle einzeln, und die zweite wird vergessen — gemessen an B-172 → B-194 |
+| Genauigkeit | Dep-**Identität**: ein Leerschlag im Suchfeld zählt als Wechsel | **normalisierter** Schlüssel: `"abc "` ist dieselbe Suche |
+| Kosten | ein fünftes Feld an dem Hook, den 111 Stellen benutzen | dieselbe Regel mehrfach ausformuliert |
+| Stand heute | gebaut und zurückgenommen | gebaut, getestet, an drei Flächen im Einsatz |
+
+**Warum der Lauf das nicht selbst entscheidet:** „Richtig herstellen" ist bei einem Defekt keine
+Produktentscheidung — deshalb darf er ihn grillen. *Hier* verengt der Code die Antwort aber **nicht**: es
+gibt zwei gebaute, begründete Wege, und die Wahl ist Architektur. Nach der Regel des Nachtlaufs ist eine
+Schätzung, die eine Entscheidung braucht, die ihre `## Entscheidungen` nicht hergeben, der Beweis, dass sie
+zu früh entstand ([nachtlauf.md](../nachtlauf.md), Freigabe 8) — also anhalten und notieren.
+
+**Was der Lauf trotzdem geliefert hat**, und es steht unten: die Messung zu offenem Punkt 3 (111/75/73),
+den Nachweis, dass der eigene Anlassfall längst zu ist, und mit
+[B-167](B-167-katalogliste-zeigt-beim-filterwechsel-alte-treffer.md)/B-195 zwei geschlossene Defekte
+derselben Familie — beide ohne diese Entscheidung.
+
+## Der eigene Anlass ist inzwischen zu — nachgesehen, nicht angenommen
+
+Beim Bauen gegen den Code geprüft (2026-09-03), und das Ergebnis verschiebt den Umfang dieser Story:
+**Der Katalog-Fall, an dem sie aufgehängt ist, existiert nicht mehr.**
+
+- `CatalogAdmin.tsx:164` filtert die Zeilen inzwischen über `c.subjectId === subjectId`. Im Ladefenster
+  stehen die Arten des vorigen Fachs also gar nicht mehr da — nicht „gesperrt", sondern nicht gerendert.
+  Damit sind **Akzeptanzkriterium 1 und 2 erfüllt**, und zwar durch einen *besseren* Mechanismus als den
+  hier entworfenen: Wo die Zeile ihren Schlüssel selbst trägt, ist der Vergleich an der Zeile schärfer als
+  jede Aussage des Hooks.
+- Die Überschrift zählt mit demselben Filter (`:167-169`), nennt also nicht mehr die alte Zahl.
+- Die Rechte-Aussage über die ganze Liste ist mit B-170 **entfallen** — Rechte hängen seither je Zeile an
+  `isOwn`. Ein Satz, der über einer fremden Liste stehen könnte, existiert nicht mehr.
+- Und es ist **kein Zufallsstand, sondern gedeckt**: `CatalogAdmin.test.tsx:240` („rendert keine Art, die
+  zu einem anderen Fach gehört") fällt, wenn der Filter verschwindet.
+
+**Akzeptanzkriterium 3 ist damit für diese Stelle überholt**, nicht erfüllt: Die Liste flackert dort
+sehr wohl — sie ist im Ladefenster leer. Das ist hier aber **richtig**, und der Unterschied ist der Grund,
+warum diese Story trotzdem etwas liefert: Beim Fachwechsel gehören die alten Zeilen zu einer *anderen
+Sache*; beim `reload` gehören sie zur *selben Sache in einer älteren Fassung*. Nur der zweite Fall
+verlangt Nicht-Flackern, und den betrifft der Filter nicht.
+
+**Was bleibt, ist der Anlass ohne den Anlassfall:** die Lücke „kein Aufrufer erfährt, ob die Daten noch
+zum Zustand gehören" besteht überall dort weiter, wo die Zeile **keinen** Schlüssel trägt, gegen den man
+filtern könnte. Der gemessene Fall dafür ist
+[B-167](B-167-katalogliste-zeigt-beim-filterwechsel-alte-treffer.md): Die Treffer einer Filtersuche sind
+die Antwort auf eine beliebige Kombination und tragen sie nicht bei sich. Diese Story liefert darum das
+**Signal**, B-167 ist sein erster und in diesem Sprint einziger Abnehmer.
+
+**Kein `verworfen`, und das ist eine bewusste Wahl.** Gegenstandslos wäre sie, wenn die Lücke weg wäre;
+weg ist nur ihr Beispiel. Ein Signal ohne Abnehmer wäre allerdings toter Code — deshalb ist B-167 in
+denselben Sprint gebunden, und ohne ihn wäre diese Story `verworfen` statt gebaut.
+
+## Entscheidungen (ZURÜCKGEZOGEN — siehe „Angehalten")
+
+Die folgenden fünf Entscheidungen stammen aus dem autonomen Grillen derselben Nacht und stehen hier
+**unverändert**, damit die nächste Runde sie nicht neu herleiten muss. Sie gelten aber **nicht**: ihre
+erste ruht auf der falschen Prämisse, dass es für diese Frage noch kein entschiedenes Muster gibt.
+
+1. **Die Heilung liegt in `useAsync`, als zusätzliches Feld `stale` — nicht am Aufrufer.**
+   Begründung: 73 gemessene Aufrufstellen könnten die Bedingung tragen, und eine Regel je Aufrufer wird in
+   diesem Repo nachweislich an der zweiten Stelle vergessen — B-172 hat sieben `<select>` umgestellt und
+   den achten übersehen ([B-194](B-194-plandetail-kinderauswahl-ohne-rueckfall.md)).
+   **Kosten:** `useAsync` bekommt ein fünftes Feld, das für sich genommen **nichts repariert** — jede
+   Aufrufstelle muss es selbst lesen. Der Hook wird also breiter, ohne dass die Breite allein wirkt.
+2. **`stale` heißt „die vorliegenden Daten gehören zu anderen Abhängigkeiten", nicht „es lädt".** Verglichen
+   wird die Abhängigkeitsliste, aus der die aktuellen Daten stammen, mit der aktuellen (`Object.is` je
+   Element, gleiche Länge vorausgesetzt).
+   Begründung: `loading` beantwortet „läuft eine Abfrage", `stale` „läuft eine **andere**" — genau die
+   Unterscheidung, an der [B-116](B-116-blaettern-ohne-rueckmeldung.md) schon einmal hing. Ein `reload`
+   (gleiche Deps, nur `nonce`) ist damit ausdrücklich **nicht** `stale`, und die begründete
+   Nicht-Flacker-Eigenschaft bleibt unangetastet.
+   **Kosten:** ein zusätzlicher Zustand je Aufrufstelle (die Dep-Liste der geladenen Daten) und ein
+   Render mehr je abgeschlossener Abfrage.
+3. **`data` wird weiterhin nicht geleert, und `showPlaceholder`/`settled` bleiben unverändert.**
+   Begründung: Akzeptanzkriterium 3 verlangt ausdrücklich Nicht-Flackern, und `settled` beantwortet „war
+   überhaupt schon ein Versuch durch" — für den Dep-Wechsel die falsche Frage. Die im Verlauf vermerkte
+   Kopplung ist damit aufgelöst, ohne `settled` anzufassen: `stale` ist das zweite, getrennte Signal.
+   **Kosten:** Der Aufrufer trägt die Verantwortung, `stale` auch zu lesen; ein Tor dafür gibt es nicht.
+4. **Der Aufrufer sperrt Bedienelemente und Aussagen, statt Inhalte auszublenden.** Für `CatalogAdmin`:
+   Zeilen und Namen bleiben stehen, „OK"/„Löschen" und die Rechte-Aussage setzen aus, und die Überschrift
+   nennt keine Zahl, solange sie zum vorigen Fach gehört.
+   Begründung: Ausblenden wäre genau das Flackern, das die heutige Bauform vermeidet.
+   **Kosten:** ein kurzer Moment, in dem sichtbare Zeilen nicht bedienbar sind — das ist sichtbar gemachte
+   Unsicherheit statt lautlos falscher Bedienbarkeit, aber es ist ein Zustand mehr, den die Oberfläche
+   zeigen muss.
+5. **Kein reflexives Tor in diesem Sprint.**
+   Begründung: Die Regel, die ein Tor prüfen müsste, lautet „`useAsync` mit Deps zeigt sein `data` neben
+   einem synchron abgeleiteten Wert" — das ist über den Syntaxbaum nicht trennscharf zu fassen, und ein Tor
+   darauf wäre entweder blind oder eine Ausnahmeliste, die ihre eigene Regel auffrisst. `CLAUDE.md` verlangt
+   „erst messen": gemessen ist die Kandidatenmenge (73), nicht die Befundmenge.
+   **Kosten:** Die Regel hängt an Disziplin, und das ist in diesem Repo der teurere Weg. Der Preis wird
+   ausdrücklich in Kauf genommen und **benannt**: die 70 nicht angefassten Kandidaten stehen oben, damit
+   die nächste Sichtung nicht bei null anfängt.
+
+## Akzeptanzkriterien
+
+1. ~~Nach einem Fachwechsel bietet die Katalogseite keine Bedienelemente an, die sich auf das vorige Fach
+   beziehen.~~ → **bereits erfüllt** durch `CatalogAdmin.tsx:164`, gedeckt von `CatalogAdmin.test.tsx:240`.
+2. ~~Die Rechte-Aussage erscheint nie über einer Liste, die zu einem anderen Fach gehört.~~ → **entfallen**:
+   die Aussage über die ganze Liste gibt es seit B-170 nicht mehr, Rechte hängen je Zeile an `isOwn`.
+3. ~~Die Liste flackert nicht.~~ → **überholt für diese Stelle** (Begründung oben); als Regel gilt sie
+   weiterhin für das `reload` und steht darum als Kriterium 5.
+4. `useAsync` liefert ein Feld, das „die vorliegenden Daten gehören zu anderen Abhängigkeiten" von „es
+   läuft eine Abfrage" trennt, und ein Test belegt beide Richtungen einzeln.
+5. Die Nicht-Flacker-Eigenschaft beim `reload` bleibt erhalten (der Grund steht als Kommentar in
+   `VaterKatalog.tsx`): `reload` ist **nicht** `stale`, ein Dep-Wechsel schon.
+6. `showPlaceholder` verhält sich unverändert; die bestehenden fünf Fälle in `useAsync.test.tsx` bleiben
+   grün, ohne angefasst zu werden.
+7. Das Signal hat in diesem Sprint einen echten Abnehmer (B-167) — kein Feld, das niemand liest.
+
+## Schätzung
+
+**Größe: M** — ein neues Feld im meistgenutzten Hook des Frontends plus drei Aufrufstellen. Nicht S, weil
+der Hook 111 Aufrufstellen trägt und ein Fehler dort überall wirkt; nicht L, weil der Umfang bewusst auf
+drei gemessene Stellen begrenzt ist (Entscheidung 5).
+
+- **`migration: nein`** · **`vertragsbruch: nein`** — reines Frontend, kein Server, kein DTO.
+- **`wo: frontend`** — Brille beim Bauen `frontend/CLAUDE.md`, vor der Abnahme `frontend-reviewer`.
+- **Risiken:**
+  - Der Dep-Vergleich muss `reload` (gleiche Deps, anderer `nonce`) von einem echten Wechsel trennen —
+    verwechselt er beides, kehrt genau das Flackern zurück, das die heutige Bauform vermeidet. Dagegen
+    steht Akzeptanzkriterium 5 mit einem eigenen Fall.
+  - Ein Aufrufer, der `stale` liest, aber `loading` schon anders auswertet, könnte doppelt sperren. Darum
+    je Aufrufstelle die bestehende Bedingung mitlesen, nicht blind ergänzen.
+- **Angriffsplan:**
+  1. `useAsync`: Dep-Signatur der geladenen Daten mitführen, `stale` daraus ableiten.
+  2. `useAsync.test.tsx` um die zwei tragenden Fälle erweitern (Dep-Wechsel → `stale`, `reload` → nicht).
+  3. ~~`CatalogAdmin` liest `stale`~~ → entfallen, der Fall ist zu (siehe oben). Der Abnehmer ist B-167.
+- **Testweg:** `frontend/src/lib/useAsync.test.tsx` (drei neue Fälle: Dep-Wechsel, `reload`, gescheiterte
+  Nachfolge-Abfrage). Kein Backend-Test, kein `/smoke-test` — es ändert sich keine Server-Antwort. Der
+  Rollengang läuft über die bestehende Playwright-Suite als Regressionsnachweis.
 
 ## Verlauf
 
@@ -110,3 +271,8 @@ der „aktuell" und „von vorhin" nicht trennt.
   `false`. Wer den `stale`-Gedanken dieser Story baut, muss `settled` aber **mitbedenken**: ein
   Zurücksetzen je Dep-Wechsel bräuchte denselben Dep-Signaturvergleich, den diese Story ohnehin verlangt.
   Bewusst **nicht** vorab gebaut — zwei halbe Lösungen desselben Vergleichs wären schlimmer als eine.
+- **2026-09-03** — Nachtlauf: autonom gegrillt, geschätzt, **gebaut und wieder zurückgenommen**; Stufe
+  von `geschaetzt` auf `ausformuliert` **zurückgesetzt**, `wartet_auf` gesetzt. Der vollständige Ablauf
+  und die offene Frage stehen oben unter „Angehalten". Geliefert hat der Lauf trotzdem: die Messung zu
+  offenem Punkt 3 (111 Aufrufstellen / 75 mit Deps / 73 mit lebendigen Deps) und den Nachweis, dass der
+  Anlassfall im Katalog längst geschlossen und durch `CatalogAdmin.test.tsx:240` gedeckt ist.

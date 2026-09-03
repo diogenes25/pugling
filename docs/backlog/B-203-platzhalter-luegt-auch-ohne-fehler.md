@@ -8,6 +8,7 @@ groesse: S
 wo: frontend
 migration: nein
 vertragsbruch: nein
+nachgeschaut: 2026-09-03
 quelle: Code-Review 2026-09-02 zu den 19 Commits vor origin/main
 unverifiziert: false
 grund: ""

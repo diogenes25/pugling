@@ -8,6 +8,7 @@ groesse: L
 wo: beides
 migration: nein
 vertragsbruch: nein
+nachgeschaut: 2026-09-03
 quelle: Sitzung 2026-08-01 (Rollen-Durchgang, Nutzer-Entscheidung)
 wartet_auf: ""
 ---

@@ -8,6 +8,7 @@ groesse: M
 wo: beides
 migration: nein
 vertragsbruch: nein
+nachgeschaut: 2026-09-03
 quelle: docs/pm-sitzung-2026-09-02.md (frontend-reviewer zu B-46)
 unverifiziert: false
 grund: ""
