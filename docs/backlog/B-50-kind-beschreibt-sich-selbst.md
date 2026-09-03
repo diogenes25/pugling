@@ -339,3 +339,4 @@ neuer Abschnitt 4.10, Navigationsmodell und Checkliste (AK 8).
   gemessen, je an der richtigen Zusicherung. **Bleibt auf `in-arbeit`**: die Eintrittsbedingung von
   `abgenommen` verlangt `pugling-reviewer` und `frontend-reviewer`, und diese Sitzung trägt die Regel,
   keine Agenten unaufgefordert zu starten — Freigabe steht beim Nutzer aus (`wartet_auf`).
+  Commit `0f5acb3` (nicht gepusht).
