@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/katalog, bereich/medien, rolle/creator, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/katalog, bereich/medien, rolle/creator, rolle/student]
 aliases: [Interessenbasierte Übungen, Zielgruppe statt Kind]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: L
@@ -9,6 +9,8 @@ wo: beides
 migration: ja
 vertragsbruch: nein
 quelle: Sitzung 2026-07-31 (Rollen-Abgleich Creator/Supervisor/Student)
+nachgeschaut: ""
+wartet_auf: ""
 ---
 
 # B-46 · Übungen entstehen für ein Interessenprofil, nicht für ein bestimmtes Kind
@@ -256,3 +258,10 @@ Frontend betroffen, daher kein E2E-Zusatz; `/smoke-test` bleibt der manuelle Geg
 
   **Verifikation:** **852/852** Backend (+8 Fälle), **328/328** vitest (+2), `dotnet build` 0 Warnungen,
   `dotnet format --verify-no-changes` sauber, `tsc -b` sauber.
+- **2026-09-02** — **abgenommen.** Commit `644cff7`. Belege: 852/852 Backend, 328/328 vitest, 46/46 E2E,
+  `dotnet build` 0 Warnungen, `dotnet format --verify-no-changes` und `markdownlint` sauber, **beide
+  Reviewer** gelaufen (der Sprint hat Backend *und* Frontend angefasst), zehn rote Proben je mit Zahl.
+  **Rollengang:** als Live-Probe gegen die laufende Instanz erbracht und im Protokoll
+  ([docs/pm-sitzung-2026-09-02.md](../pm-sitzung-2026-09-02.md), „Runde 1") Schritt für Schritt
+  aufgeschrieben — kein Browser gebunden, also Freigabe 6 in ihrer Ersatz-Fassung. Vater und Sohn sind
+  ausdrücklich nur **Regressions-Zeugen**: keine ihrer Flächen ist von dieser Story berührt.
