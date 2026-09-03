@@ -1,6 +1,8 @@
 bin/
 obj/
 TestResults/
+# Playwright-Ausgabe, wenn der Runner vom Repo-Wurzelverzeichnis aus startet (frontend/ hat sein eigenes).
+test-results/
 coverage.cobertura.xml
 *.user
 *.db
