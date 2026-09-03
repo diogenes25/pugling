@@ -20,6 +20,39 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         return await TestApi.IdAsync(res);
     }
 
+    /// <summary>
+    /// A plan created <b>inactive</b> leaves the child's running plan alone.
+    /// <para>
+    /// Creating a plan otherwise makes it the child's only playable one and switches every sibling off –
+    /// deliberately, because "exactly one active plan" is an anti-cheat rule. That default is exactly wrong
+    /// for a plan nobody has reviewed yet: the AI creator would replace the plan the child is playing
+    /// tonight, and unchecked content would start booking penalty coins. Hence <c>active: false</c> on
+    /// creation, and hence this case.
+    /// </para>
+    /// <para>
+    /// Red probe: drop <c>Active = dto.Active</c> from <c>StudyPlansController.Create</c> and both the
+    /// second and the third assertion fall – the new plan comes back active and takes the old one down
+    /// with it.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task Plan_InaktivAngelegt_LaesstDenLaufendenPlanInRuhe()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var laufend = await EmptyPlanAsync(father);
+
+        var neu = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/study-plans",
+            new { childId = 1, title = "Ungeprüfter KI-Plan", durationDays = 10, active = false }));
+
+        // Without this line the case would also pass for a server that ignores `active` and simply hands
+        // back what it was sent - the state has to be read back.
+        var angelegt = await father.GetFromJsonAsync<JsonElement>($"/api/v1/supervisor/study-plans/{neu}");
+        JsonAssert.False(angelegt, "active");
+
+        var vorheriger = await father.GetFromJsonAsync<JsonElement>($"/api/v1/supervisor/study-plans/{laufend}");
+        JsonAssert.True(vorheriger, "active");
+    }
+
     [Fact]
     public async Task Position_Anlegen_Abrufen_Spielen()
     {

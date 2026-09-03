@@ -29793,10 +29793,12 @@
               "integer",
               "string"
             ],
+            "description": "The child the plan belongs to; must be one of the caller\u0027s own.",
             "format": "int32"
           },
           "title": {
-            "type": "string"
+            "type": "string",
+            "description": "Name of the plan."
           },
           "subjectId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -29805,6 +29807,7 @@
               "integer",
               "string"
             ],
+            "description": "Subject the plan covers; \u0060null\u0060 = across subjects.",
             "format": "int32"
           },
           "startDate": {
@@ -29812,6 +29815,7 @@
               "null",
               "string"
             ],
+            "description": "First day of the run; \u0060null\u0060 = today.",
             "format": "date"
           },
           "durationDays": {
@@ -29820,13 +29824,20 @@
               "integer",
               "string"
             ],
+            "description": "Length of the run in days; \u0060\u0026lt;= 0\u0060 = 10.",
             "format": "int32"
           },
           "description": {
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "description": "Free note for the supervisor."
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether the plan starts out active. \u0060true\u0060 (the default) keeps the established behaviour: the new\nplan becomes the child\u0027s only playable one and every sibling is switched off. \u0060false\u0060 is for a plan\nthat must be \u003Cb\u003Ereviewed before it becomes an obligation\u003C/b\u003E - a machine-generated one above all: without\nit, an agent run would silently replace the plan the child is currently playing, and unchecked content\nwould start costing penalty coins the same night.",
+            "default": true
           }
         },
         "description": "Input for creating an empty study plan container."

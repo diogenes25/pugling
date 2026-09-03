@@ -44,9 +44,10 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         return (new CreatorPipeline(new BriefingBuilder(creator, supervisor, student), strategies), creator, chat);
     }
 
-    /// <summary>The console verbs with the same underpinning as the real agent (incl. class-test planner).</summary>
+    /// <summary>The console verbs with the same underpinning as the real agent (incl. both planners).</summary>
     private AgentCommands Commands(CreatorApi creator, CreatorPipeline pipeline) =>
-        new(creator, pipeline, new ExamPlanner(pipeline, creator, new SupervisorApi(Authenticated())));
+        new(creator, pipeline, new ExamPlanner(pipeline, creator, new SupervisorApi(Authenticated())),
+            new PlanPlanner(pipeline, new SupervisorApi(Authenticated())));
 
     /// <summary>Creates an empty subject with a catalogued series/unit so that every test stands on its own.</summary>
     private static async Task<(int SubjectId, int SeriesId, int SeriesUnitId)> FreshChapterAsync(CreatorApi creator, string name)
@@ -743,6 +744,264 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         // The bound itself is pinned where a value actually gets repaired:
         // `PlanPositionCrudTests.cs:336` and `:372-388`.
         Assert.Equal(exercise.RewardPoints, exercise.SuggestedGoalPoints);
+    }
+
+    /// <summary>The cloze answer used by the study-plan cases; deliberately independent of any unit material.</summary>
+    private const string PlanClozeJson = """
+        {"title":"Lehrplan-Lückentext","text":"The horse {{1}} in the field, the sheep {{2}} and the goat {{3}}.",
+         "gaps":[{"index":1,"answer":"runs","alternatives":null},
+                 {"index":2,"answer":"sleeps","alternatives":null},
+                 {"index":3,"answer":"eats","alternatives":null}],
+         "wordBank":["runs","sleeps","eats","jumps"]}
+        """;
+
+    /// <summary>
+    /// <b>AK 1–3 of B-19.</b> The generated plan is a container the child could play – one position per
+    /// generated exercise, each a daily obligation carrying the chosen intensity – and it is <b>off</b>.
+    /// <para>
+    /// The inactive state is the story's whole safety net (decision 5): machine-written content must not
+    /// become an obligation before a human has looked at it, and an active plan would additionally switch
+    /// off the plan the child is playing today.
+    /// </para>
+    /// <para>
+    /// Red probes, one per claim: pass <c>Active: true</c> in <c>PlanPlanner</c> and the <c>Active</c>
+    /// assertion falls; swap the <c>Intensiv</c> row of <c>PlanPlanner.Intensities</c> and the three value
+    /// assertions fall; drop <c>Cadence: GoalCadence.Daily</c> and the cadence assertion falls (the server
+    /// then stores <c>None</c>, which is free practice and can never cost a coin).
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task Ein_erzeugter_Lehrplan_ist_inaktiv_und_traegt_die_Werte_der_Intensitaet()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson, PlanClozeJson);
+        var supervisor = new SupervisorApi(Authenticated());
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Lehrplan");
+
+        var planner = new PlanPlanner(pipeline, supervisor);
+        var outcome = await planner.RunAsync(new PlanRequest(
+            Request(subjectId, seriesId, seriesUnitId, "Vocabulary"),
+            Types: ["Vocabulary", "Cloze"], PerType: 1, Intensity: PlanIntensity.Intensiv,
+            StartDate: null, DurationDays: 21, Title: null));
+
+        Assert.True(outcome.Complete, string.Join(" | ", outcome.Parts.Select(p => p.Error ?? p.Outcome?.Title)));
+        Assert.Equal(2, outcome.ExerciseIds.Count);
+        Assert.Equal(2, outcome.PositionIds.Count);
+
+        var plan = await supervisor.GetPlanAsync(outcome.PlanId!.Value);
+        Assert.False(plan.Active, "Ein ungeprüfter KI-Plan darf nicht sofort Pflicht werden.");
+        Assert.Equal(2, plan.PositionCount);
+
+        var positions = await supervisor.ListPositionsAsync(plan.Id);
+        Assert.Equal([.. outcome.ExerciseIds.Order()], [.. positions.Select(p => p.ExerciseId).Order()]);
+        Assert.All(positions, position =>
+        {
+            Assert.Equal(GoalCadence.Daily, position.Cadence);
+            Assert.Equal(90, position.GoalThreshold);
+            Assert.Equal(30, position.PointsGoalMet);
+            Assert.Equal(10, position.PenaltyCoins);
+        });
+    }
+
+    /// <summary>
+    /// <b>AK 4 of B-19.</b> A failed type costs the plan one position, not all of them – and the run says
+    /// so instead of passing off a thinner plan as the one that was asked for. Driven through the real
+    /// command line, because the exit code is part of the claim and lives there.
+    /// </summary>
+    [Fact]
+    public async Task Ein_gescheiterter_Typ_kostet_den_Lehrplan_eine_Position_nicht_alle()
+    {
+        // The single prepared answer only fits the vocabulary part; the cloze part fails the rules.
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var supervisor = new SupervisorApi(Authenticated());
+        var (_, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Lehrplan-kaputt");
+        var titel = TestApi.UniqueName("Lehrplan halb");
+
+        var command = CommandLine.Parse([
+            "plan", "--child", "1", "--types", "Vocabulary,Cloze", "--per-type", "1", "--count", "3",
+            "--title", titel, "--series", seriesId.ToString(), "--series-unit", seriesUnitId.ToString(),
+        ]);
+        Assert.Equal(1, await Commands(creator, pipeline).RunAsync(command, default));
+
+        var plan = Assert.Single(await supervisor.ListPlansAsync(1), p => p.Title == titel);
+        Assert.False(plan.Active);
+        // The vocabulary exercise made it: the broken cloze part did not take it down with it.
+        Assert.Single(await supervisor.ListPositionsAsync(plan.Id));
+    }
+
+    /// <summary>
+    /// <b>AK 6 of B-19.</b> A plan without a child is meaningless – and the refusal comes <b>before</b> the
+    /// first model call, so a mistyped invocation does not first cost minutes of generation and leave the
+    /// generated exercises behind with no plan to hold them.
+    /// <para>
+    /// Red probe: move the <c>ChildId</c> check below the generation loop and the call count rises above 0.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task Ein_Lehrplan_ohne_Kind_wird_abgelehnt_bevor_das_Modell_laeuft()
+    {
+        var (pipeline, creator, chat) = BuildAgent(VocabularyJson);
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Lehrplan-ohne-Kind");
+        var (_, unit, profile) = await FreshProfileAsync(creator, subjectId, "Lehrplan-ohne-Kind");
+
+        var planner = new PlanPlanner(pipeline, new SupervisorApi(Authenticated()));
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => planner.RunAsync(new PlanRequest(
+            Request(subjectId, seriesId, seriesUnitId, "Vocabulary", childId: null, profileId: profile.Id, unitId: unit.Id),
+            Types: ["Vocabulary"], PerType: 1, Intensity: PlanIntensity.Normal,
+            StartDate: null, DurationDays: 14, Title: null)));
+
+        Assert.Contains("--child", error.Message);
+        Assert.Equal(0, chat.Calls);
+    }
+
+    /// <summary>
+    /// „Vollständig" schließt den Selbsttest ein – und nimmt den Trockenlauf ausdrücklich aus.
+    /// <para>
+    /// Ohne <c>--strict</c> bleibt eine Übung, deren eigene Lösungen nur zu 60 % passen, im Katalog
+    /// (<c>RolledBack: false</c>) und würde hier ein <b>Tagesziel mit Münz-Malus</b>. <c>create</c> meldet
+    /// für dieselbe Übung längst Exit 1; der Lehrplan hätte sie als fertigen Plan durchgewinkt.
+    /// </para>
+    /// <para>
+    /// Ausnahmsweise ein Unit-Test statt eines Integrationstests: <c>Complete</c> ist ein reines Prädikat,
+    /// und ein Selbsttest unter 100 % ohne Regelverstoß ist über den <c>FakeChatClient</c> nur mit einem
+    /// Entwurf zu erzwingen, dessen Zustandekommen selbst von Store-Verhalten abhinge – der Fall wäre dann
+    /// an das gebunden, was er nicht prüfen will.
+    /// </para>
+    /// <para>
+    /// Rote Proben: die Selbsttest-Bedingung aus <c>PlanOutcome.Complete</c> entfernen → der erste Fall
+    /// fällt; die Ausnahme <c>ExerciseId is null</c> entfernen → der dritte fällt (der Trockenlauf hat
+    /// weder Id noch Prozentzahl).
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void Ein_Lehrplan_mit_unsauberem_Selbsttest_gilt_nicht_als_vollstaendig()
+    {
+        static PlanOutcome Mit(GenerationOutcome outcome) => new(
+            "Lehrplan: Test", [new GeneratedPart("Vocabulary", outcome, null)], [], null, [], []);
+
+        static GenerationOutcome Lauf(int? exerciseId, int? selfTestPercent) =>
+            new("Vocabulary", "Titel", "{}", [], exerciseId, selfTestPercent, RolledBack: false);
+
+        // Angelegt, regelkonform, aber die Übung widerspricht ihren eigenen Lösungen.
+        Assert.False(Mit(Lauf(exerciseId: 42, selfTestPercent: 60)).Complete);
+        // Sauber durchgelaufen.
+        Assert.True(Mit(Lauf(exerciseId: 42, selfTestPercent: 100)).Complete);
+        // Trockenlauf: keine Übung, kein Selbsttest – und trotzdem ein vollständiger Lauf.
+        Assert.True(Mit(Lauf(exerciseId: null, selfTestPercent: null)).Complete);
+        // Eine nicht angelegte Position macht den Plan unvollständig, auch wenn jede Übung sauber ist.
+        Assert.False(new PlanOutcome("Lehrplan: Test", [new GeneratedPart("Vocabulary", Lauf(42, 100), null)],
+            [42], PlanId: 7, PositionIds: [], FailedPositions: [new FailedPosition(42, "exercise_empty")]).Complete);
+    }
+
+    /// <summary>
+    /// A mistyped intensity is refused, it does not fall back to <c>Normal</c>.
+    /// <para>
+    /// The difference is a real one for the child: whoever types <c>--intensity lokcer</c> means "no coin
+    /// penalty", and <c>Normal</c> would hand out −5 per missed day instead. The exit code is 2 (invoked
+    /// incorrectly), not 1 – <c>Program</c> maps <c>AgentUsageException</c> there, and this goes through
+    /// the real command line so that mapping is part of the case.
+    /// </para>
+    /// <para>
+    /// Red probe: replace the <c>throw</c> in <c>AgentCommands.ParseIntensity</c> with
+    /// <c>PlanIntensity.Normal</c> and the case falls – the run then succeeds instead of being refused.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task Eine_vertippte_Intensitaet_wird_abgelehnt_statt_auf_Normal_zurueckzufallen()
+    {
+        var (pipeline, creator, chat) = BuildAgent(VocabularyJson);
+        var (_, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Intensitaet-Tippfehler");
+
+        var command = CommandLine.Parse([
+            "plan", "--child", "1", "--types", "Vocabulary", "--per-type", "1", "--count", "3",
+            "--intensity", "lokcer",
+            "--series", seriesId.ToString(), "--series-unit", seriesUnitId.ToString(),
+        ]);
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(
+            () => Commands(creator, pipeline).RunAsync(command, default));
+
+        Assert.Contains("lokcer", error.Message);
+        // The three valid spellings belong in the message – otherwise the caller has to go read the help.
+        Assert.Contains("Locker", error.Message);
+        Assert.Equal(0, chat.Calls);
+    }
+
+    /// <summary>
+    /// <c>Locker</c> really means <b>no</b> penalty – the one intensity whose whole point is the gentle
+    /// start, and the branch the report line treats separately ("kein Malus").
+    /// <para>
+    /// Its own case because the <c>Intensiv</c> one above cannot carry it: a table that hands out −10
+    /// everywhere would pass that case and still take coins off a child whose father asked for none.
+    /// Red probe: raise the penalty in the <c>Locker</c> row of <c>PlanPlanner.Intensities</c> above 0.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task Die_Stufe_Locker_vergibt_keinen_Muenz_Malus()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var supervisor = new SupervisorApi(Authenticated());
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Lehrplan-locker");
+
+        var planner = new PlanPlanner(pipeline, supervisor);
+        var outcome = await planner.RunAsync(new PlanRequest(
+            Request(subjectId, seriesId, seriesUnitId, "Vocabulary"),
+            Types: ["Vocabulary"], PerType: 1, Intensity: PlanIntensity.Locker,
+            StartDate: null, DurationDays: 14, Title: null));
+
+        Assert.True(outcome.Complete, string.Join(" | ", outcome.Parts.Select(p => p.Error ?? p.Outcome?.Title)));
+        var position = Assert.Single(await supervisor.ListPositionsAsync(outcome.PlanId!.Value));
+        Assert.Equal(0, position.PenaltyCoins);
+        Assert.Equal(70, position.GoalThreshold);
+        Assert.Equal(10, position.PointsGoalMet);
+    }
+
+    /// <summary>
+    /// A run of zero or fewer days is refused instead of quietly becoming something else.
+    /// <para>
+    /// The server turns a non-positive <c>durationDays</c> into 10 without a word, while help and README
+    /// promise 14 – so <c>--days 0</c> would produce a plan whose length nobody stated. Red probe: drop the
+    /// <c>DurationDays</c> guard from <c>PlanPlanner.RunAsync</c> and the case falls.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task Ein_Lehrplan_ohne_Laufzeit_wird_abgelehnt()
+    {
+        var (pipeline, creator, chat) = BuildAgent(VocabularyJson);
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Lehrplan-ohne-Tage");
+
+        var planner = new PlanPlanner(pipeline, new SupervisorApi(Authenticated()));
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => planner.RunAsync(new PlanRequest(
+            Request(subjectId, seriesId, seriesUnitId, "Vocabulary"),
+            Types: ["Vocabulary"], PerType: 1, Intensity: PlanIntensity.Normal,
+            StartDate: null, DurationDays: 0, Title: null)));
+
+        Assert.Contains("--days", error.Message);
+        Assert.Equal(0, chat.Calls);
+    }
+
+    /// <summary>
+    /// <b>AK 5 of B-19.</b> A dry run plans and prints; it writes nothing – neither exercises nor the plan.
+    /// The subject is fresh, so "no exercise" is a statement about this run and not about the seed.
+    /// </summary>
+    [Fact]
+    public async Task Ein_Lehrplan_Trockenlauf_legt_weder_Uebung_noch_Plan_an()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson, PlanClozeJson);
+        var supervisor = new SupervisorApi(Authenticated());
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Lehrplan-trocken");
+        var planVorher = (await supervisor.ListPlansAsync(1)).Count;
+
+        var planner = new PlanPlanner(pipeline, supervisor);
+        var outcome = await planner.RunAsync(new PlanRequest(
+            Request(subjectId, seriesId, seriesUnitId, "Vocabulary", dryRun: true),
+            Types: ["Vocabulary", "Cloze"], PerType: 1, Intensity: PlanIntensity.Normal,
+            StartDate: null, DurationDays: 14, Title: null));
+
+        Assert.Null(outcome.PlanId);
+        Assert.Empty(outcome.ExerciseIds);
+        Assert.Empty(outcome.PositionIds);
+        Assert.Empty(await creator.SearchExercisesAsync(subjectId: subjectId));
+        Assert.Equal(planVorher, (await supervisor.ListPlansAsync(1)).Count);
     }
 
     [Fact]

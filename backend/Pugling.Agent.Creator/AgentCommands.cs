@@ -6,14 +6,20 @@ namespace Pugling.Agent.Creator;
 
 /// <summary>
 /// The verbs of the console app. Deliberately thin: resolve arguments, call the pipeline, print the
-/// result in an understandable way - the domain logic lives in <see cref="CreatorPipeline"/>, <see cref="ExamPlanner"/>
-/// and the strategies.
+/// result in an understandable way - the domain logic lives in <see cref="CreatorPipeline"/>,
+/// <see cref="ExamPlanner"/>, <see cref="PlanPlanner"/> and the strategies.
 /// </summary>
-public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, ExamPlanner exams)
+public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, ExamPlanner exams, PlanPlanner plans)
 {
     // Default values for the request when the command line is silent.
     private const int DefaultItemCount = 10;
     private const int DefaultExamPerType = 6;
+
+    /// <summary>Exercises per type in a generated plan - not tasks, unlike the class test's option of the same name.</summary>
+    private const int DefaultPlanPerType = 2;
+
+    /// <summary>Run of a generated plan. Two weeks is the wizard's shortest offer and short enough to be reviewed.</summary>
+    private const int DefaultPlanDurationDays = 14;
 
     /// <summary>
     /// Mirrors <c>GoalPointsPolicy.Fallback</c>: since B-45 the figure is not "what the exercise is worth"
@@ -29,6 +35,9 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
 
     /// <summary>The types a class test consists of when none are named.</summary>
     private static readonly string[] DefaultExamTypes = ["Vocabulary", "Cloze", "Grammar"];
+
+    /// <summary>The types a generated study plan consists of when none are named.</summary>
+    private static readonly string[] DefaultPlanTypes = ["Vocabulary", "Cloze"];
 
     /// <summary>Executes the chosen verb and returns the exit code.</summary>
     public async Task<int> RunAsync(CommandLine command, CancellationToken ct)
@@ -48,6 +57,8 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
                 return await CreateAsync(command, ct);
             case "exam":
                 return await ExamAsync(command, ct);
+            case "plan":
+                return await PlanAsync(command, ct);
             case "help":
                 PrintUsage();
                 return 0;
@@ -151,21 +162,7 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
 
         Console.WriteLine($"Klausur: {outcome.Title}");
         Console.WriteLine();
-        foreach (var part in outcome.Parts)
-        {
-            Console.WriteLine(part switch
-            {
-                { Error: { } error } => $"  ✗ {part.TypeKey,-12} gescheitert: {error}",
-                { Outcome: { DraftAccepted: false } bad } =>
-                    $"  ✗ {part.TypeKey,-12} Regelverstöße: {string.Join(" | ", bad.Violations)}",
-                { Outcome: { RolledBack: true } back } =>
-                    $"  ✗ {part.TypeKey,-12} zurückgenommen (Selbsttest {back.SelfTestPercent} %)",
-                { Outcome: { ExerciseId: null } dry } => $"  · {part.TypeKey,-12} Trockenlauf: {dry.Title}",
-                { Outcome: { } ok } =>
-                    $"  ✓ {part.TypeKey,-12} Übung {ok.ExerciseId} „{ok.Title}“ (Selbsttest {ok.SelfTestPercent} %)",
-                _ => $"  ? {part.TypeKey}",
-            });
-        }
+        foreach (var part in outcome.Parts) Console.WriteLine(Describe(part));
         Console.WriteLine();
 
         if (outcome.ClassTestId is int classTestId)
@@ -182,6 +179,86 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
         Console.Error.WriteLine("Die Klausur ist unvollständig – prüfe die gescheiterten Teile oben.");
         return 1;
     }
+
+    /// <summary>
+    /// Generates a whole study plan: several exercises on the same material and one position per
+    /// exercise, in a container the father still has to switch on.
+    /// </summary>
+    private async Task<int> PlanAsync(CommandLine command, CancellationToken ct)
+    {
+        var request = await BuildRequestAsync(command, typeRequired: false, ct);
+        var types = command.List("types") is { Count: > 0 } wanted ? wanted : DefaultPlanTypes;
+        var plan = new PlanRequest(request, types, command.Int("per-type", DefaultPlanPerType),
+            ParseIntensity(command), ParseDate(command, "start"),
+            command.Int("days", DefaultPlanDurationDays), command.Value("title"));
+
+        var outcome = await plans.RunAsync(plan, ct);
+
+        // Not "Lehrplan: {Title}": the derived title already begins with that word, and the first real
+        // run printed "Lehrplan: Lehrplan: Unite 2 - En ville".
+        Console.WriteLine($"Titel:   {outcome.Title}");
+        Console.WriteLine();
+        foreach (var part in outcome.Parts) Console.WriteLine(Describe(part));
+        Console.WriteLine();
+
+        if (outcome.PlanId is int planId)
+        {
+            // The figures come from the planner, not from a second table here - one rule, one place.
+            var settings = PlanPlanner.Intensities[plan.Intensity];
+            Console.WriteLine($"Lehrplan {planId} angelegt, {outcome.PositionIds.Count} Position(en), "
+                              + $"Intensität {plan.Intensity}: bestehen ab {settings.Pass} %, "
+                              + $"{settings.Points} Punkte/Ziel, "
+                              + (settings.Penalty > 0 ? $"−{settings.Penalty} 🪙 bei Versäumnis." : "kein Malus."));
+            // The one thing that does not happen by itself - and the story's whole safety net.
+            Console.WriteLine($"Der Plan ist noch NICHT aktiv. Prüfe ihn im Vater-Web unter /vater/plan/{planId} "
+                              + "und schalte ihn dort scharf.");
+            // Named with the plan, not thrown: the exercise exists and can still be assigned by hand.
+            foreach (var failure in outcome.FailedPositions)
+                Console.Error.WriteLine($"  ! Übung {failure.ExerciseId} kam nicht in den Plan: {failure.Error}");
+        }
+        else if (request.DryRun)
+        {
+            Console.WriteLine("Trockenlauf – es wurde nichts gespeichert.");
+        }
+        else
+        {
+            Console.WriteLine("Keine einzige Übung ist entstanden – ohne Position bleibt auch der Lehrplan aus.");
+        }
+
+        if (outcome.Complete) return 0;
+
+        Console.Error.WriteLine("Der Lehrplan ist unvollständig – prüfe die gescheiterten Teile oben.");
+        return 1;
+    }
+
+    /// <summary>
+    /// One report line per generated exercise - the same five outcomes for the class test and the study
+    /// plan, so they are formatted in one place rather than twice.
+    /// </summary>
+    private static string Describe(GeneratedPart part) => part switch
+    {
+        { Error: { } error } => $"  ✗ {part.TypeKey,-12} gescheitert: {error}",
+        { Outcome: { DraftAccepted: false } bad } =>
+            $"  ✗ {part.TypeKey,-12} Regelverstöße: {string.Join(" | ", bad.Violations)}",
+        { Outcome: { RolledBack: true } back } =>
+            $"  ✗ {part.TypeKey,-12} zurückgenommen (Selbsttest {back.SelfTestPercent} %)",
+        { Outcome: { ExerciseId: null } dry } => $"  · {part.TypeKey,-12} Trockenlauf: {dry.Title}",
+        { Outcome: { } ok } =>
+            $"  ✓ {part.TypeKey,-12} Übung {ok.ExerciseId} „{ok.Title}“ (Selbsttest {ok.SelfTestPercent} %)",
+        _ => $"  ? {part.TypeKey}",
+    };
+
+    /// <summary>
+    /// The intensity option. A typo must not silently fall back to <c>Normal</c> - that would hand the
+    /// child a penalty the caller thought they had switched off with <c>--intensity locker</c>.
+    /// </summary>
+    private static PlanIntensity ParseIntensity(CommandLine command) =>
+        command.Value("intensity") is { Length: > 0 } raw
+            ? Enum.TryParse<PlanIntensity>(raw, ignoreCase: true, out var intensity)
+                ? intensity
+                : throw new AgentUsageException(
+                    $"--intensity erwartet {string.Join(" | ", Enum.GetNames<PlanIntensity>())}, bekam '{raw}'.")
+            : PlanIntensity.Normal;
 
     /// <summary>The shared result output of a single exercise run.</summary>
     private static int Report(GenerationOutcome outcome, bool dryRun)
@@ -358,6 +435,7 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
     /// <summary>Short help text.</summary>
     public static void PrintUsage() => Console.WriteLine("""
         pugling-creator – erzeugt Pugling-Übungen mit einem lokalen Sprachmodell (Ollama).
+        Ein erzeugter Lehrplan entsteht bewusst INAKTIV – der Vater sichtet ihn und schaltet ihn scharf.
 
         Verwendung:
           pugling-creator types
@@ -366,6 +444,8 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
           pugling-creator create   --type <Typ> (--child <id> | --profile <id>) [Optionen]
           pugling-creator exam     (--child <id> | --profile <id>) [--types a,b,c] [--per-type <n>]
                                    [--date JJJJ-MM-TT] [--title "..."] [Optionen]
+          pugling-creator plan     --child <id> [--types a,b,c] [--per-type <n>] [--intensity <Stufe>]
+                                   [--start JJJJ-MM-TT] [--days <n>] [--title "..."] [Optionen]
 
         Wer und in wessen Namen:
           --child <id>          Kind, auf das zugeschnitten wird (individuelle Übung)
@@ -380,10 +460,17 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
                                 allein angegeben bestimmt es auch das Fach)
           --topic "..."         Thema/Lehrbuch-Unit
           --count <n>           Anzahl Aufgaben                                 (Standard 10)
-          --types a,b,c         Übungstypen der Klausur         (Standard Vocabulary,Cloze,Grammar)
-          --per-type <n>        Aufgaben je Typ in der Klausur                  (Standard 6)
+          --types a,b,c         Übungstypen des Bündels    (exam: Vocabulary,Cloze,Grammar;
+                                                            plan: Vocabulary,Cloze)
+          --per-type <n>        exam: AUFGABEN je Typ (Standard 6) –
+                                plan: ÜBUNGEN je Typ, je eine Position (Standard 2);
+                                die Aufgaben je Übung kommen dort aus --count
           --date JJJJ-MM-TT     Termin der Klassenarbeit                        (Standard: in 7 Tagen)
-          --title "..."         Titel der Klausur               (Standard: aus Unit bzw. Thema)
+          --title "..."         Titel der Klausur bzw. des Lehrplans (Standard: aus Unit bzw. Thema)
+          --intensity <Stufe>   Locker | Normal | Intensiv – Bestehensgrenze, Punkte und Münz-Malus
+                                je Position                                     (Standard Normal)
+          --start JJJJ-MM-TT    erster Tag des Lehrplan-Zeitraums               (Standard: heute)
+          --days <n>            Dauer des Lehrplan-Zeitraums in Tagen           (Standard 14)
           --words a,b,c         Pflicht-Wortschatz (unveränderlich)
           --interests a,b       Interessen-Slugs, in die die Übung eingekleidet wird (ohne --child;
                                 mit --child kommen sie aus dem Kind selbst)

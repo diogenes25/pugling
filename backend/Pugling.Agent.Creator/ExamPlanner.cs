@@ -1,4 +1,3 @@
-using Pugling.Agent.Creator.Drafting;
 using Pugling.Client;
 
 namespace Pugling.Agent.Creator;
@@ -19,12 +18,6 @@ public sealed record ExamRequest(
     DateOnly? ScheduledDate,
     string? Title);
 
-/// <summary>One part of the class test: the run of one exercise type with its result.</summary>
-/// <param name="TypeKey">The exercise type.</param>
-/// <param name="Outcome">The result of the run, or <c>null</c> if it failed.</param>
-/// <param name="Error">The error message of the failed run.</param>
-public sealed record ExamPart(string TypeKey, GenerationOutcome? Outcome, string? Error);
-
 /// <summary>The result of a class test planning run.</summary>
 /// <param name="Title">The title used.</param>
 /// <param name="Parts">All parts in request order.</param>
@@ -33,7 +26,7 @@ public sealed record ExamPart(string TypeKey, GenerationOutcome? Outcome, string
 /// <param name="TagName">The tag holding the bundle together (only with a child).</param>
 public sealed record ExamOutcome(
     string Title,
-    IReadOnlyList<ExamPart> Parts,
+    IReadOnlyList<GeneratedPart> Parts,
     IReadOnlyList<int> ExerciseIds,
     int? ClassTestId,
     string? TagName)
@@ -62,7 +55,7 @@ public sealed class ExamPlanner(CreatorPipeline pipeline, CreatorApi creator, Su
             throw new AgentUsageException("Eine Klausur braucht mindestens einen Übungstyp (--types).");
 
         var title = request.Title?.Trim() is { Length: > 0 } given ? given : await DeriveTitleAsync(request, ct);
-        var parts = new List<ExamPart>();
+        var parts = new List<GeneratedPart>();
 
         foreach (var (typeKey, index) in request.Types.Select((t, i) => (t, i)))
         {
@@ -78,12 +71,12 @@ public sealed class ExamPlanner(CreatorPipeline pipeline, CreatorApi creator, Su
             try
             {
                 var (_, outcome) = await pipeline.CreateAsync(part, ct);
-                parts.Add(new ExamPart(typeKey, outcome, null));
+                parts.Add(new GeneratedPart(typeKey, outcome, null));
             }
             catch (Exception ex) when (ex is AgentException or AgentUsageException or PuglingApiException)
             {
                 // A failed type costs the exam one part, not all of them: the others keep running.
-                parts.Add(new ExamPart(typeKey, null, ex.Message));
+                parts.Add(new GeneratedPart(typeKey, null, ex.Message));
             }
         }
 

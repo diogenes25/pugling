@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, bereich/katalog, rolle/creator, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/training, bereich/katalog, rolle/creator, rolle/supervisor]
 aliases: [Schülerprofil-Generator, KI-Lehrplan]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: M
 wo: backend
 migration: nein
-vertragsbruch: nein
+vertragsbruch: ja
 quelle: memory/schueler-profil-ki-lehrplan.md
 ---
 
@@ -164,6 +164,31 @@ unabhängig vom Parameter-Tausch, der schon feststeht.
 ein Parameter-Tausch nötig") ist bereits kostenlos erledigt statt zusätzlich anzufallen — wenn überhaupt,
 sinkt der Aufwand leicht gegenüber der Schätzung vom 2026-08-03, nicht umgekehrt.
 
+## Die Prämisse der Schätzung hielt nicht: `CreatePlanDto` kannte kein `Active`
+
+Die Schätzung begründete `vertragsbruch: nein` mit „`CreatePlanDto`/`CreatePositionDto` existieren bereits
+mit allen benötigten Feldern". Für die Position stimmt das; für den Plan **nicht**:
+
+- `CreatePlanDto` trug kein `Active`
+  ([StudyPlanDtos.cs:19-34](../../backend/Pugling.Contracts/Supervisor/StudyPlanDtos.cs)), nur
+  `UpdatePlanDto` hat es.
+- Ein neu angelegter Plan war **immer** aktiv (`StudyPlan.Active = true`,
+  [StudyPlanEntities.cs:73](../../backend/Pugling.Api/Models/StudyPlanEntities.cs)) und schaltete dabei
+  jeden anderen Plan des Kindes ab
+  ([StudyPlansController.cs:100-102](../../backend/Pugling.Api/Controllers/Supervisor/StudyPlansController.cs)) —
+  bewusst, denn „genau ein aktiver Plan je Kind" ist eine Anti-Cheat-Regel.
+
+Damit war **Entscheidung 5 nicht baubar**. Der einzige vertragsfreie Weg wäre gewesen: anlegen, sofort per
+PATCH auf `Active: false` setzen und den vorher aktiven Plan per zweitem PATCH wieder anschalten. Das tut
+zwischenzeitlich genau den Schaden, den Entscheidung 5 verhindern soll — und bricht der Agent dazwischen ab,
+bleibt das Kind ohne spielbaren Plan zurück.
+
+**Gebaut wurde darum die additive Vertragsergänzung**: `CreatePlanDto` bekommt `bool Active = true`. Die
+Vorgabe hält das bisherige Verhalten unverändert (kein Aufrufer muss nachziehen, kein Payload wird ungültig);
+nur wer ausdrücklich `active: false` schickt, bekommt einen Plan, der den laufenden in Ruhe lässt.
+**Kosten:** `vertragsbruch` wandert von `nein` auf `ja` — additiv und rückwärtskompatibel, aber eine Änderung
+an `Pugling.Contracts` und damit meldepflichtig nach der Regel im Startkontext. Die Größe **M** bleibt.
+
 ## Akzeptanzkriterien
 
 1. `pugling-creator plan --child <id> --types a,b,c --per-type <n> [--intensity …] [--dry-run] [--strict]`
@@ -231,3 +256,55 @@ bestehendem Muster (`ExamPlanner`), ein neuer CLI-Verb, keine neuen Contracts, k
   ist bereits vollzogen (`BriefingBuilder` nutzt schon `SeriesUnitId`, als Nebeneffekt von B-106s
   eigenem T-06). Verbleibender Umfang (`PlanPlanner`, CLI-Verb `plan`) unverändert offen. `status`
   unverändert, Empfehlung „bleibt gültig" dokumentiert.
+- **2026-09-03** — gebaut (`geschaetzt` → `in-arbeit`). Neu: `PlanPlanner`, `PlanRequest`/`PlanOutcome`,
+  `PlanIntensity`/`PlanSettings`, CLI-Verb `plan`, DI-Eintrag. Beim Bauen fiel die gebrochene Prämisse der
+  Schätzung auf (eigener Abschnitt oben): `CreatePlanDto` bekam additiv `bool Active = true`,
+  `vertragsbruch` steht jetzt auf `ja`. Nebenbei zusammengelegt: `ExamPart`/`PlanPart` → ein
+  `GeneratedPart`, und die fünffache Berichtszeile beider Planer steht nur noch einmal in
+  `AgentCommands.Describe`.
+- **2026-09-03** — verifiziert: `dotnet build Pugling.sln` und `dotnet format Pugling.sln
+  --verify-no-changes` grün, `dotnet test Pugling.sln -c Release` **872/872 grün** (davon fünf neue Fälle:
+  vier in `CreatorAgentTests`, einer in `PlanPositionCrudTests`). `/smoke-test` grün (13/13 Checks).
+  **Rote Proben gemessen**, nicht behauptet: `Active: false` → `true` im `PlanPlanner` macht 2 Fälle rot;
+  `Active = dto.Active` aus dem Controller entfernt macht 3 rot.
+- **2026-09-03** — Rollengang an der laufenden App (Wegwerf-DB auf 5280, echtes Ollama-Modell
+  `qwen2.5:14b-instruct`): `plan --child 1 --types Vocabulary --per-type 1 --count 5 --intensity Locker`
+  erzeugte Übung 14 (Selbsttest 100 %) und Lehrplan 3 mit einer Position (Takt `Daily`, bestehen ab 70 %,
+  10 Punkte, kein Malus). Aus **Vatersicht**: Plan 3 `aktiv=false`/`spielbar=false`, der laufende Plan 2
+  blieb `aktiv=true`/`spielbar=true` — genau die Invariante, für die die Vertragsergänzung da ist. Aus
+  **Sohnsicht**: Plan 3 taucht vor der Freigabe nicht in `student/study-plans` auf, Üben scheitert mit
+  `403 plan_inactive`; nach dem Scharfschalten durch den Vater ist er der einzige sichtbare Plan und
+  spielbar (Sitzung 1 gestartet, 5 Items, `mode: Lern`). **Ein Fund aus dem Gang**: die Kopfzeile las sich
+  als „Lehrplan: Lehrplan: Unité 2 – En ville" — behoben, sie heißt jetzt `Titel:` wie bei `create`.
+- **2026-09-03** — Review durch `pugling-reviewer`: **kein Blocker**, vier Funde, **alle vier eingearbeitet**.
+  Zwei davon waren substanziell:
+  1. `Complete` winkte einen Selbsttest unter 100 % durch, solange `--strict` aus war — dieselbe Übung
+     meldet `create` längst als Fehler, und im Lehrplan wäre sie ein **Tagesziel mit Münz-Malus** geworden.
+     `PlanOutcome.Complete` prüft den Selbsttest jetzt mit, nimmt den Trockenlauf aber ausdrücklich aus.
+  2. Die Positions-Schleife hatte keine Fehlerhaltung: ein Wurf bei Position 3 von 6 ließ einen halb
+     gefüllten Plan zurück, **ohne dessen Id je zu nennen** — genau das, was die Klassen-Doku auszuschließen
+     versprach. Jetzt sammelt `PlanOutcome.FailedPositions` den Fehlschlag, der Bericht nennt ihn, und der
+     Lauf gilt als unvollständig (Exit 1). Die Übung bleibt im Katalog und ist von Hand zuweisbar.
+  Dazu zwei kleinere: ein Wächter für `--days <= 0` (der Server machte daraus wortlos 10, während Hilfe und
+  README 14 versprechen) und zwei fehlende Belege — die Begründung von `ParseIntensity` und die
+  `Locker`-Zeile mit `Penalty: 0` trugen keinen Fall.
+- **2026-09-03** — abgenommen. Belege: `dotnet build Pugling.sln` grün, `dotnet format Pugling.sln
+  --verify-no-changes` grün, `markdownlint-cli2` grün (309 Dateien), **`dotnet test Pugling.sln -c Release`
+  876/876 grün** (neun neue Fälle), `/smoke-test` 13/13, Rollengang an der laufenden App mit echtem Modell
+  (siehe oben), Reviewer `pugling-reviewer` ohne Blocker. **Sechs rote Proben einzeln gemessen**, jede fällt
+  genau einen Fall: Plan aktiv statt inaktiv · Controller ignoriert `Active` · `--days`-Wächter entfernt ·
+  Selbsttest-Bedingung aus `Complete` entfernt · `FailedPositions`-Bedingung entfernt · `ParseIntensity`
+  fällt auf `Normal` zurück; dazu die `Locker`-Zeile verändert. Commit: siehe unten.
+
+## Was diese Story ausdrücklich **nicht** gebaut hat
+
+Damit niemand die alten drei Notiz-Punkte wieder aufwärmt (vgl. Kasten oben und Entscheidung 1):
+
+- **Kein Knopf im Vater-Web.** Der Agent bleibt eine lokale Konsolen-App gegen Ollama; „kein LLM im
+  Backend" steht. Der erzeugte Plan taucht ganz gewöhnlich unter `/vater/plaene` auf — mehr UI braucht es
+  nicht, und der Vater muss ihn dort ohnehin scharf schalten.
+- **Kein Server-Endpunkt für den Brief.** Das `briefing`-Verb liefert ihn clientseitig; ein zweiter,
+  nicht-C#-Konsument, der ihn über HTTP bräuchte, existiert nicht.
+- **Mehrere Kapitel in einem Lauf** (Entscheidung 4) und der **Fördermodus** `--use-weak` über Positionen
+  hinweg (Risiko-Notiz der Schätzung: geteilter Wortschatz-Pool → mögliche Wiederholungen). Beides ist
+  weiterhin offen und gehört, falls gewollt, in eigene Stories — nicht als „offener Punkt" hierher.

@@ -121,6 +121,10 @@ dotnet run --project backend/Pugling.Agent.Creator -- create --profile 3 --type 
 # Übungsklausur: mehrere Typen zum selben Stoff + geplante Klassenarbeit
 dotnet run --project backend/Pugling.Agent.Creator -- exam --child 1 \
     --types Vocabulary,Cloze,Grammar --per-type 6 --date 2026-09-15
+
+# Lehrplan: je Typ mehrere Übungen, jede als eigene Position – der Plan entsteht INAKTIV
+dotnet run --project backend/Pugling.Agent.Creator -- plan --child 1 \
+    --types Vocabulary,Cloze --per-type 2 --count 10 --intensity Normal --days 21
 ```
 
 ### Wer und in wessen Namen
@@ -142,10 +146,13 @@ Eines von `--child`/`--profile` ist Pflicht – sonst fehlt sowohl die Zielgrupp
 | `--subject`/`--chapter` | Ort im Katalog | Fach des Profils, sonst erstes Fach mit Kapitel |
 | `--topic "…"` | Thema bzw. Lehrbuch-Unit | – |
 | `--count <n>` | Anzahl Aufgaben (3–30) | 10 |
-| `--types a,b,c` | Übungstypen der Klausur | `Vocabulary,Cloze,Grammar` |
-| `--per-type <n>` | Aufgaben je Typ in der Klausur | 6 |
+| `--types a,b,c` | Übungstypen des Bündels | `exam`: `Vocabulary,Cloze,Grammar` · `plan`: `Vocabulary,Cloze` |
+| `--per-type <n>` | `exam`: **Aufgaben** je Typ · `plan`: **Übungen** je Typ (je eine Position) | 6 bzw. 2 |
 | `--date JJJJ-MM-TT` | Termin der Klassenarbeit | in 7 Tagen |
-| `--title "…"` | Titel der Klausur | aus Unit bzw. Thema |
+| `--title "…"` | Titel der Klausur bzw. des Lehrplans | aus Unit bzw. Thema |
+| `--intensity <Stufe>` | `Locker`/`Normal`/`Intensiv` – Bestehensgrenze, Punkte und Malus je Position | `Normal` |
+| `--start JJJJ-MM-TT` | erster Tag des Lehrplan-Zeitraums | heute |
+| `--days <n>` | Dauer des Lehrplan-Zeitraums in Tagen | 14 |
 | `--words a,b,c` | Pflicht-Wortschatz (unveränderlich) | – |
 | `--interests a,b` | Interessen-Slugs, in die die Übung eingekleidet wird — **nur ohne Kind** | – |
 | `--use-weak` | schwach beherrschte Wörter des Kindes als Wortschatz | aus |
@@ -166,12 +173,36 @@ sichtbar halb gelungen sein, statt als vollständige Arbeit im Kalender des Kind
 Ohne `--child` gibt es keinen Tag (Tags sind kind-skopiert) – dann hält allein die Quellenangabe das
 Bündel zusammen.
 
+### Der Lehrplan (`plan`)
+
+Das Gegenstück zur Klausur mit demselben Ablauf, aber einem anderen Behälter: statt einer
+Klassenarbeit entsteht ein **Lehrplan mit je einer Position** pro erzeugter Übung. `--per-type` zählt
+hier **Übungen** (nicht Aufgaben – die kommen aus `--count`), und `--child` ist **Pflicht**: ein
+Lehrplan gehört immer einem Kind. Die Ablehnung kommt, bevor das Modell läuft, damit ein Vertipper
+nicht erst Minuten Erzeugung kostet.
+
+Ziel, Punkte und Münz-Malus je Position kommen aus `--intensity` – **denselben drei Zeilen, die auch
+der Lehrplan-Assistent im Vater-Web anbietet** (`frontend/src/vater/VaterWizard.tsx`, `INTENSITY`):
+
+| Stufe | Bestehen ab | Punkte je Ziel | Malus bei Versäumnis |
+|---|---|---|---|
+| `Locker` | 70 % | 10 | – (reine Belohnung) |
+| `Normal` | 80 % | 20 | −5 🪙 |
+| `Intensiv` | 90 % | 30 | −10 🪙 |
+
+Die Test-Stufe schickt der Agent bewusst **nicht** mit: die Zahl ist die Vokabel-Skala, und jeder andere
+Typ liest sie anders – weggelassen entscheidet der Server anhand der Übung selbst.
+
+**Der Plan entsteht `active: false`.** Das ist die eine Sicherung, die diese Betriebsart trägt: ein
+ungeprüfter KI-Plan darf nicht über Nacht zur Pflicht werden und Malus-Münzen kosten – und ein aktiv
+angelegter Plan würde zusätzlich den Plan abschalten, den das Kind heute spielt (die Regel „genau ein
+aktiver Plan je Kind"). Der Vater sichtet ihn unter `/vater/plaene` und schaltet ihn dort scharf.
+
 ## Was der Agent bewusst *nicht* tut
 
-- **In einen Lehrplan zuweisen.** Ziele, Punkte und Malus sind Sache des Supervisors – der Agent füllt
-  den Katalog. Die erzeugte Übungs-Id wandert von Hand (oder später vom Supervisor-Agenten) in eine
-  Lehrplan-Position. Die *Klassenarbeit* der Übungsklausur ist die einzige Ausnahme: sie ist nur ein
-  Termin mit Übungsliste, kein Pflichtziel mit Punkten.
+- **Einen Lehrplan aktiv schalten.** Er legt ihn an (`plan`) – scharf stellt ihn ein Mensch. Ziele,
+  Punkte und Malus bleiben Sache des Supervisors; der Agent setzt sie nur als Vorbelegung aus
+  `--intensity`, die im Vater-Web an jeder Position überschreibbar bleibt.
 - **Die Unit-Inhalte erfinden.** `topics`/`grammar`/`vocabularyNotes` einer `SeriesUnit` pflegt ein
   Mensch (oder ein Import) – der Agent liest sie und richtet den Stoff daran aus.
 - **Schreiben, ohne zu prüfen.** Jede Übung wird nach dem Anlegen im nebenwirkungsfreien Testmodus

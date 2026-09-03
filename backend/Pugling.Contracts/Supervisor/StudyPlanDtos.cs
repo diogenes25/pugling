@@ -17,8 +17,21 @@ public record PlanResponse(int Id, int ChildId, string Title, int? SubjectId,
 }
 
 /// <summary>Input for creating an empty study plan container.</summary>
+/// <param name="ChildId">The child the plan belongs to; must be one of the caller's own.</param>
+/// <param name="Title">Name of the plan.</param>
+/// <param name="SubjectId">Subject the plan covers; <c>null</c> = across subjects.</param>
+/// <param name="StartDate">First day of the run; <c>null</c> = today.</param>
+/// <param name="DurationDays">Length of the run in days; <c>&lt;= 0</c> = 10.</param>
+/// <param name="Description">Free note for the supervisor.</param>
+/// <param name="Active">
+/// Whether the plan starts out active. <c>true</c> (the default) keeps the established behaviour: the new
+/// plan becomes the child's only playable one and every sibling is switched off. <c>false</c> is for a plan
+/// that must be <b>reviewed before it becomes an obligation</b> - a machine-generated one above all: without
+/// it, an agent run would silently replace the plan the child is currently playing, and unchecked content
+/// would start costing penalty coins the same night.
+/// </param>
 public record CreatePlanDto(int ChildId, string Title, int? SubjectId, DateOnly? StartDate, int DurationDays,
-    string? Description = null);
+    string? Description = null, bool Active = true);
 
 /// <summary>Partial change to the container. <see cref="ChildId"/> reassigns the plan to another of the caller's own children.</summary>
 public record UpdatePlanDto(string? Title, int? SubjectId, DateOnly? StartDate, DateOnly? EndDate, bool? Active,

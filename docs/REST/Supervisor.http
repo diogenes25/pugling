@@ -38,6 +38,8 @@ Authorization: Bearer {{authToken}}
 @exerciseId = {{pickExercise.response.body.$[0].id}}
 
 ### Lehrplan-Container anlegen (aktiviert automatisch, deaktiviert Geschwister-Pläne)
+### Mit "active": false entsteht er still – der laufende Plan des Kindes bleibt dann unangetastet.
+### Das nutzt der KI-Creator (pugling-creator plan), damit ungeprüfter Inhalt nicht sofort Pflicht wird.
 # @name createPlan
 POST {{baseUrl}}/supervisor/study-plans
 Authorization: Bearer {{authToken}}

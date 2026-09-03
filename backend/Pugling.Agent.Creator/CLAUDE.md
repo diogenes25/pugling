@@ -20,5 +20,12 @@ danach – nur mit Kind – ein kind-skopierter Tag und eine `Klassenarbeit` (St
 diesen Übungen; ein gescheiterter Teil bricht die Klausur nicht ab, macht sie aber sichtbar unvollständig
 (Exit 1).
 
+Der `PlanPlanner` ist sein Zwilling für **Lehrpläne**: gleicher Ablauf, anderer Behälter – ein
+`StudyPlan` mit je einer `PlanPosition` pro erzeugter Übung, Ziel/Punkte/Malus aus `--intensity`
+(dieselben drei Zeilen wie `VaterWizard.INTENSITY`). Zwei Regeln tragen ihn: `--child` ist Pflicht und
+wird **vor** dem ersten Modellaufruf geprüft, und der Plan entsteht **inaktiv** – ungeprüfter KI-Inhalt
+darf nicht über Nacht zur Pflicht werden, und ein aktiv angelegter Plan würde den laufenden Plan des
+Kindes abschalten. Dafür trägt `CreatePlanDto` seit B-19 ein `Active`-Feld (Vorgabe `true`).
+
 Neuer Typ = eine Klasse auf `ExerciseStrategy<TDraft,TConfig>`. Getestet ohne Ollama via `FakeChatClient`
 (`CreatorAgentTests`).

@@ -95,11 +95,13 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
             SubjectId = dto.SubjectId,
             StartDate = start,
             EndDate = start.AddDays(duration - 1),
+            Active = dto.Active,
         };
         db.StudyPlans.Add(plan);
         await db.SaveChangesAsync(ct);
         // Invariant "at most one active plan per child": a new plan (active by default) becomes the only
-        // playable one - the child's existing plans are deactivated.
+        // playable one - the child's existing plans are deactivated. Creating one inactive is the opt-out
+        // for a plan that must be reviewed first, and it deliberately leaves the running plan alone.
         if (plan.Active) await DeactivateSiblingPlansAsync(plan.ChildId, plan.Id, ct);
         return CreatedAtAction(nameof(Get), new { planId = plan.Id }, Map(plan, DateOnly.FromDateTime(DateTime.UtcNow)));
     }

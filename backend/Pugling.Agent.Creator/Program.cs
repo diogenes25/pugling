@@ -108,6 +108,7 @@ public static class Program
         builder.Services.AddSingleton<IExerciseStrategy, GrammarStrategy>();
         builder.Services.AddSingleton<CreatorPipeline>();
         builder.Services.AddSingleton<ExamPlanner>();
+        builder.Services.AddSingleton<PlanPlanner>();
         builder.Services.AddSingleton<AgentCommands>();
 
         return builder.Build();
