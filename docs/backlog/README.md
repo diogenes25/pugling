@@ -505,12 +505,12 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-07](B-07-db-umbau-restetappen.md) | DB-Struktur-Umbau: der offene Betriebsschritt | Aufräumen | `geschaetzt` | P1 | XS | backend | — |
+| [B-206](B-206-einkleidung-ist-unsichtbar-und-nicht-korrigierbar.md) | Die Einkleidung einer Übung ist im Vater-Web unsichtbar — und ein gelöschtes Stichwort macht das Speichern unmöglich | Defekt | `gegrillt` | P2 | — | beides | — |
 | [B-153](B-153-bilder-spec-flackert-im-vollen-lauf.md) | `bilder.spec.ts` fällt im vollen Lauf gelegentlich aus, allein ist sie grün | Defekt | `ausformuliert` | P2 | — | — | — |
 | [B-160](B-160-gesperrter-knopf-nennt-den-grund-nie.md) | Der gesperrte Löschen-Knopf nennt seinen Grund nie — der `title` erscheint nicht | Defekt | `ausformuliert` | P2 | — | — | — |
 | [B-181](B-181-praemisse-der-rennen-klasse-stimmt-nicht.md) | Die Rennen-Klasse nennt nur einen von zwei Fehlermodi — welcher auftritt, entscheidet die Plattform | Defekt | `ausformuliert` | P2 | — | — | — |
 | [B-188](B-188-wizard-verschweigt-drei-weitere-ausfaelle.md) | Der Assistent verschweigt drei weitere Ausfälle — einer schickt den Vater ins Kind-Anlegen | Defekt | `ausformuliert` | P2 | — | frontend | — |
 | [B-190](B-190-backlog-index-schreibt-leeren-index.md) | Aus einem Unterverzeichnis aufgerufen, schreibt der Index-Generator einen leeren Index | Defekt | `ausformuliert` | P2 | — | doku | — |
-| [B-206](B-206-einkleidung-ist-unsichtbar-und-nicht-korrigierbar.md) | Die Einkleidung einer Übung ist im Vater-Web unsichtbar — und ein gelöschtes Stichwort macht das Speichern unmöglich | Defekt | `ausformuliert` | P2 | — | beides | — |
 | [B-166](B-166-wiki-nennt-die-entfernte-kapitel-route.md) | Wiki und Endpunkt-Karte nennen die entfernte Kapitel-Route | Defekt | `idee` | P2 | — | — | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-19](B-19-schuelerprofil-ki-lehrplan.md) | Schülerprofil-getriebener KI-Lehrplan | Wunsch | `geschaetzt` | P2 | M | backend | — |
