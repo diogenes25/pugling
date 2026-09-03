@@ -151,7 +151,33 @@ public class Exercise
     /// <summary>RWX rights granted to individual creators (owner/write/execute) – see <see cref="ExerciseGrant"/>.</summary>
     public List<ExerciseGrant> Grants { get; set; } = [];
 
+    /// <summary>
+    /// The interests this exercise is <b>dressed</b> for (B-46) – the same taxonomy the child's interests
+    /// and the images already hang on. It is a pre-filter axis like <see cref="GradeMin"/> or
+    /// <see cref="SchoolTypes"/>, not a restriction: an exercise dressed in unicorns stays readable and
+    /// usable for everybody, it merely becomes distinguishable from the robot version. Empty = dressed for
+    /// nothing in particular, which is the case for every exercise written before this became recordable.
+    /// </summary>
+    public List<ExerciseInterestLink> InterestLinks { get; set; } = [];
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>
+/// Links an <see cref="Exercise"/> to an <see cref="InterestTag"/> (n:m). Deliberately built exactly like
+/// <see cref="MediaTagLink"/>, including the absence of a weight: dressing is yes/no, and a ranking would
+/// invent a precision the author does not have (the child's side carries the weights, and that is where a
+/// ranking belongs).
+/// </summary>
+public class ExerciseInterestLink
+{
+    public int Id { get; set; }
+
+    public int ExerciseId { get; set; }
+    public Exercise? Exercise { get; set; }
+
+    public int InterestTagId { get; set; }
+    public InterestTag? InterestTag { get; set; }
 }
 
 /// <summary>

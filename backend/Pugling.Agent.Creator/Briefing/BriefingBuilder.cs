@@ -54,7 +54,71 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
             SourceLang: request.SourceLang ?? profile?.SourceLang ?? "en",
             TargetLang: request.TargetLang ?? profile?.TargetLang ?? "de",
             ExistingExerciseTitles: [.. existing.Select(e => e.Title)],
-            RequiredWords: requiredWords);
+            RequiredWords: requiredWords,
+            // The same `--general` reading as one line above: what the briefing carries decides, not what
+            // was typed - so a general exercise built from a child's material is dressed by --interests.
+            InterestTagIds: await ResolveInterestTagIdsAsync(request, request.General ? null : child, ct));
+    }
+
+    /// <summary>
+    /// The interest tags the new exercise is <b>dressed</b> in (B-46). Two paths, and the briefing's child
+    /// decides which one applies - not which switches were typed.
+    /// <para>
+    /// With a child: its <b>positively</b> weighted interests, and only those.
+    /// <see cref="ChildFacts.WeightedInterests"/> is already filtered that way, which is the whole point -
+    /// tagging an exercise with a dislike would label it with the very thing the prompt tells the model to
+    /// avoid. The free-text interests carry no tag id and therefore cannot be tagged; only what came from
+    /// the taxonomy can, and that is the same restriction the image selection lives with.
+    /// </para>
+    /// <para>
+    /// Without a child: the slugs from <c>--interests</c>, resolved against the same taxonomy. Nothing is
+    /// created here, so a typo cannot leave a dead tag behind - it aborts with the list of known slugs,
+    /// because the silent alternative is an exercise that reports success and carries no dressing.
+    /// </para>
+    /// </summary>
+    private async Task<IReadOnlyList<int>> ResolveInterestTagIdsAsync(
+        GenerationRequest request, ChildFacts? child, CancellationToken ct)
+    {
+        if (child is not null)
+        {
+            // Both at once is not a merge but an unanswered question ("whose interests win?"), and B-46
+            // decided two separate paths rather than a precedence. Saying so beats guessing.
+            if (request.Interests.Count > 0)
+                throw new AgentUsageException(
+                    "--interests gilt für den kindlosen Pfad. Mit --child kommen die Interessen aus dem Kind selbst; "
+                    + "nimm --general dazu, wenn du sie stattdessen vorgeben willst - dann entfällt allerdings die "
+                    + "gesamte Zuschneidung auf das Kind (schwache Wörter, Name, Klassenstufe, Anrede), nicht nur "
+                    + "die Einkleidung.");
+            return [.. child.WeightedInterests.Select(i => i.TagId)];
+        }
+
+        if (request.Interests.Count == 0) return [];
+
+        var ids = new List<int>();
+        var unknown = new List<string>();
+        foreach (var wanted in request.Interests)
+        {
+            var slug = wanted.Trim();
+            // Asked for one at a time instead of listing the whole taxonomy: the list endpoint pages at
+            // 100 by default and is ordered by slug, so a full listing would have silently reported every
+            // tag past the hundredth as a typo - and offered a truncated "known slugs" list as proof
+            // (found in the B-46 review).
+            var treffer = await creator.ListInterestTagsAsync(search: slug, ct: ct);
+            // `search` is a substring over slug OR label, so the exact comparison stays necessary.
+            // Case-insensitive, because slugs are lower case by derivation (InterestSlug) - folding case
+            // can only ever match what the caller read off the listing.
+            var tag = treffer.FirstOrDefault(t => string.Equals(t.Slug, slug, StringComparison.OrdinalIgnoreCase));
+            if (tag is not null) ids.Add(tag.Id);
+            else unknown.Add(wanted);
+        }
+
+        if (unknown.Count > 0)
+            throw new AgentUsageException(
+                $"Unbekannte Interessen-Slugs: {string.Join(", ", unknown)}. "
+                + "Die vorhandenen Stichwörter listet `pugling-creator` nicht selbst - sie stehen unter "
+                + "GET api/v1/creator/interest-tags.");
+
+        return ids;
     }
 
     /// <summary>

@@ -21338,7 +21338,7 @@
           {
             "name": "unused",
             "in": "query",
-            "description": "true = only tags with no usage at all (cleanup view).",
+            "description": "true = only tags with no usage at all (cleanup view) \u2013 no image, no child, and since B-46 no\nexercise either.",
             "schema": {
               "type": "boolean"
             }
@@ -21660,7 +21660,7 @@
         "tags": [
           "Creator \u2013 Interest Tags"
         ],
-        "summary": "Deletes a tag along with its links to images and children (cascade). Deliberately without a\nusage lock: a tag carries no content, its loss only costs selection quality.",
+        "summary": "    Deletes a tag along with its links to images, children \u003Cb\u003Eand exercises\u003C/b\u003E (cascade). Deliberately\n    without a usage lock: a tag carries no content of its own.\n    Since B-46 that costs more than it used to, and the difference is not yet decided. The old\nreasoning was \u0022its loss only costs selection quality\u0022 - true while only images and children pointed\nat it. An exercise\u0027s dressing, however, is authored information: it disappears silently, cannot be\nreconstructed, and a still-open editor then sends an id the server no longer knows (see the story\nfiled from the B-46 review). Whether an in-use tag may be deleted at all is a product decision and\nis deliberately not taken here.",
         "parameters": [
           {
             "name": "id",
@@ -30906,6 +30906,7 @@
           "executePublic",
           "grantCount",
           "id",
+          "interestTagIds",
           "isOwn",
           "isOwner",
           "orderIndex",
@@ -31097,9 +31098,20 @@
           },
           "defaultRequireTypedTest": {
             "type": "boolean"
+          },
+          "interestTagIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Complete, type-spanning view of an exercise including raw config and all metadata \u2013\nthe basis for editing (load config into the type-specific editor; saving goes through\nthe per-type PUT \u0060.../textbook-series/{seriesId}/units/{seriesUnitId}/\u0026lt;type\u0026gt;/{id}\u0060,\nwhere int ExerciseDetail.SeriesId supplies the route segment the flat cross-catalog view has no other way to know)."
+        "description": "Complete, type-spanning view of an exercise including raw config and all metadata \u2013\nthe basis for editing (load config into the type-specific editor; saving goes through\nthe per-type PUT \u0060.../textbook-series/{seriesId}/units/{seriesUnitId}/\u0026lt;type\u0026gt;/{id}\u0060,\nwhere int ExerciseDetail.SeriesId supplies the route segment the flat cross-catalog view has no other way to know).\nInterestTagIds is the dressing (B-46) - metadata, and this view promises all of it. It stays off\nExerciseSummary for the reason that row gives about itself: the lean row carries what the\nsupervisor\u0027s form pre-fills from, and a dressing pre-fills nothing. The fit filter B-18 will build\nbelongs in the query anyway, not in a list the client scans."
       },
       "ExercisePayloadOfArithmeticConfig": {
         "required": [
@@ -31219,9 +31231,23 @@
           "executePublic": {
             "type": "boolean",
             "default": true
+          },
+          "interestTagIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.InterestTagIds names the interests the exercise is dressed in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\nvalidation_error, never a silent skip."
       },
       "ExercisePayloadOfArithmeticDrillConfig": {
         "required": [
@@ -31341,9 +31367,23 @@
           "executePublic": {
             "type": "boolean",
             "default": true
+          },
+          "interestTagIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.InterestTagIds names the interests the exercise is dressed in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\nvalidation_error, never a silent skip."
       },
       "ExercisePayloadOfBirkenbihlConfig": {
         "required": [
@@ -31463,9 +31503,23 @@
           "executePublic": {
             "type": "boolean",
             "default": true
+          },
+          "interestTagIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.InterestTagIds names the interests the exercise is dressed in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\nvalidation_error, never a silent skip."
       },
       "ExercisePayloadOfClozeConfig": {
         "required": [
@@ -31585,9 +31639,23 @@
           "executePublic": {
             "type": "boolean",
             "default": true
+          },
+          "interestTagIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.InterestTagIds names the interests the exercise is dressed in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\nvalidation_error, never a silent skip."
       },
       "ExercisePayloadOfEssayConfig": {
         "required": [
@@ -31707,9 +31775,23 @@
           "executePublic": {
             "type": "boolean",
             "default": true
+          },
+          "interestTagIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.InterestTagIds names the interests the exercise is dressed in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\nvalidation_error, never a silent skip."
       },
       "ExercisePayloadOfGrammarConfig": {
         "required": [
@@ -31829,9 +31911,23 @@
           "executePublic": {
             "type": "boolean",
             "default": true
+          },
+          "interestTagIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.InterestTagIds names the interests the exercise is dressed in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\nvalidation_error, never a silent skip."
       },
       "ExercisePayloadOfListConfig": {
         "required": [
@@ -31951,9 +32047,23 @@
           "executePublic": {
             "type": "boolean",
             "default": true
+          },
+          "interestTagIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.InterestTagIds names the interests the exercise is dressed in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\nvalidation_error, never a silent skip."
       },
       "ExercisePayloadOfListeningConfig": {
         "required": [
@@ -32073,9 +32183,23 @@
           "executePublic": {
             "type": "boolean",
             "default": true
+          },
+          "interestTagIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.InterestTagIds names the interests the exercise is dressed in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\nvalidation_error, never a silent skip."
       },
       "ExercisePayloadOfMatchingConfig": {
         "required": [
@@ -32195,9 +32319,23 @@
           "executePublic": {
             "type": "boolean",
             "default": true
+          },
+          "interestTagIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.InterestTagIds names the interests the exercise is dressed in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\nvalidation_error, never a silent skip."
       },
       "ExercisePayloadOfReadingConfig": {
         "required": [
@@ -32317,9 +32455,23 @@
           "executePublic": {
             "type": "boolean",
             "default": true
+          },
+          "interestTagIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.InterestTagIds names the interests the exercise is dressed in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\nvalidation_error, never a silent skip."
       },
       "ExercisePayloadOfTranslationConfig": {
         "required": [
@@ -32439,9 +32591,23 @@
           "executePublic": {
             "type": "boolean",
             "default": true
+          },
+          "interestTagIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.InterestTagIds names the interests the exercise is dressed in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\nvalidation_error, never a silent skip."
       },
       "ExercisePayloadOfVocabularyConfig": {
         "required": [
@@ -32561,9 +32727,23 @@
           "executePublic": {
             "type": "boolean",
             "default": true
+          },
+          "interestTagIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.InterestTagIds names the interests the exercise is dressed in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\nvalidation_error, never a silent skip."
       },
       "ExerciseProgressResponse": {
         "required": [
@@ -32611,6 +32791,7 @@
           "executePublic",
           "grantCount",
           "id",
+          "interestTagIds",
           "isOwn",
           "isOwner",
           "orderIndex",
@@ -32781,9 +32962,20 @@
               "string"
             ],
             "format": "int32"
+          },
+          "interestTagIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone."
+        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\nInterestTagIds is the dressing (B-46), ascending and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
       },
       "ExerciseResponseOfArithmeticDrillConfig": {
         "required": [
@@ -32793,6 +32985,7 @@
           "executePublic",
           "grantCount",
           "id",
+          "interestTagIds",
           "isOwn",
           "isOwner",
           "orderIndex",
@@ -32963,9 +33156,20 @@
               "string"
             ],
             "format": "int32"
+          },
+          "interestTagIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone."
+        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\nInterestTagIds is the dressing (B-46), ascending and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
       },
       "ExerciseResponseOfBirkenbihlConfig": {
         "required": [
@@ -32975,6 +33179,7 @@
           "executePublic",
           "grantCount",
           "id",
+          "interestTagIds",
           "isOwn",
           "isOwner",
           "orderIndex",
@@ -33145,9 +33350,20 @@
               "string"
             ],
             "format": "int32"
+          },
+          "interestTagIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone."
+        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\nInterestTagIds is the dressing (B-46), ascending and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
       },
       "ExerciseResponseOfClozeConfig": {
         "required": [
@@ -33157,6 +33373,7 @@
           "executePublic",
           "grantCount",
           "id",
+          "interestTagIds",
           "isOwn",
           "isOwner",
           "orderIndex",
@@ -33327,9 +33544,20 @@
               "string"
             ],
             "format": "int32"
+          },
+          "interestTagIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone."
+        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\nInterestTagIds is the dressing (B-46), ascending and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
       },
       "ExerciseResponseOfEssayConfig": {
         "required": [
@@ -33339,6 +33567,7 @@
           "executePublic",
           "grantCount",
           "id",
+          "interestTagIds",
           "isOwn",
           "isOwner",
           "orderIndex",
@@ -33509,9 +33738,20 @@
               "string"
             ],
             "format": "int32"
+          },
+          "interestTagIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone."
+        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\nInterestTagIds is the dressing (B-46), ascending and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
       },
       "ExerciseResponseOfGrammarConfig": {
         "required": [
@@ -33521,6 +33761,7 @@
           "executePublic",
           "grantCount",
           "id",
+          "interestTagIds",
           "isOwn",
           "isOwner",
           "orderIndex",
@@ -33691,9 +33932,20 @@
               "string"
             ],
             "format": "int32"
+          },
+          "interestTagIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone."
+        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\nInterestTagIds is the dressing (B-46), ascending and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
       },
       "ExerciseResponseOfListConfig": {
         "required": [
@@ -33703,6 +33955,7 @@
           "executePublic",
           "grantCount",
           "id",
+          "interestTagIds",
           "isOwn",
           "isOwner",
           "orderIndex",
@@ -33873,9 +34126,20 @@
               "string"
             ],
             "format": "int32"
+          },
+          "interestTagIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone."
+        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\nInterestTagIds is the dressing (B-46), ascending and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
       },
       "ExerciseResponseOfListeningConfig": {
         "required": [
@@ -33885,6 +34149,7 @@
           "executePublic",
           "grantCount",
           "id",
+          "interestTagIds",
           "isOwn",
           "isOwner",
           "orderIndex",
@@ -34055,9 +34320,20 @@
               "string"
             ],
             "format": "int32"
+          },
+          "interestTagIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone."
+        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\nInterestTagIds is the dressing (B-46), ascending and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
       },
       "ExerciseResponseOfMatchingConfig": {
         "required": [
@@ -34067,6 +34343,7 @@
           "executePublic",
           "grantCount",
           "id",
+          "interestTagIds",
           "isOwn",
           "isOwner",
           "orderIndex",
@@ -34237,9 +34514,20 @@
               "string"
             ],
             "format": "int32"
+          },
+          "interestTagIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone."
+        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\nInterestTagIds is the dressing (B-46), ascending and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
       },
       "ExerciseResponseOfReadingConfig": {
         "required": [
@@ -34249,6 +34537,7 @@
           "executePublic",
           "grantCount",
           "id",
+          "interestTagIds",
           "isOwn",
           "isOwner",
           "orderIndex",
@@ -34419,9 +34708,20 @@
               "string"
             ],
             "format": "int32"
+          },
+          "interestTagIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone."
+        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\nInterestTagIds is the dressing (B-46), ascending and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
       },
       "ExerciseResponseOfTranslationConfig": {
         "required": [
@@ -34431,6 +34731,7 @@
           "executePublic",
           "grantCount",
           "id",
+          "interestTagIds",
           "isOwn",
           "isOwner",
           "orderIndex",
@@ -34601,9 +34902,20 @@
               "string"
             ],
             "format": "int32"
+          },
+          "interestTagIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone."
+        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\nInterestTagIds is the dressing (B-46), ascending and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
       },
       "ExerciseResponseOfVocabularyConfig": {
         "required": [
@@ -34613,6 +34925,7 @@
           "executePublic",
           "grantCount",
           "id",
+          "interestTagIds",
           "isOwn",
           "isOwner",
           "orderIndex",
@@ -34783,9 +35096,20 @@
               "string"
             ],
             "format": "int32"
+          },
+          "interestTagIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone."
+        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\nInterestTagIds is the dressing (B-46), ascending and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
       },
       "ExerciseSharingResponse": {
         "required": [
@@ -35391,6 +35715,7 @@
         "required": [
           "childCount",
           "createdAt",
+          "exerciseCount",
           "facet",
           "id",
           "label",
@@ -35448,9 +35773,17 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "exerciseCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "A tag of the taxonomy including usage counts on both sides: \u0060MediaCount\u0060 counts the\nassets carrying it, \u0060ChildCount\u0060 the children who list it as a like/dislike. \u0060Slug\u0060\nis the stable reference name (lowercase, no diacritics), \u0060Facet\u0060 distinguishes theme from\npresentation style, \u0060Synonyms\u0060 holds alternative spellings against duplicates from free text."
+        "description": "            A tag of the taxonomy including usage counts on \u003Cb\u003Eall three\u003C/b\u003E sides: \u0060MediaCount\u0060 counts the\n            assets carrying it, \u0060ChildCount\u0060 the children who list it as a like/dislike, and\n            \u0060ExerciseCount\u0060 the exercises dressed in it (B-46). \u0060Slug\u0060\n            is the stable reference name (lowercase, no diacritics), \u0060Facet\u0060 distinguishes theme from\n            presentation style, \u0060Synonyms\u0060 holds alternative spellings against duplicates from free text.\n            The third count is not decoration: the counts are what says whether a tag is dead, and a tag that\ndresses exercises but no image and no child would have looked dead without it."
       },
       "InventoryItemDto": {
         "required": [

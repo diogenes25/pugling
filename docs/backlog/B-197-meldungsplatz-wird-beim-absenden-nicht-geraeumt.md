@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-173, B-151]
+nachgeschaut: 2026-09-02
 wartet_auf: ""
 ---
 
@@ -130,3 +131,11 @@ aber **zustandsbehaftet**. Solange nichts ihn räumt, überlebt eine Meldung die
     löschen → Reihe anlegen" stehen beide Meldungen nebeneinander. Das ist ein sichtbarer, aber nicht
     widersprüchlicher Zustand und bleibt bis zu einer Entscheidung darüber, wie viele Meldungsorte eine
     Seite haben darf.
+- 2026-09-02 · **Nachgeschaut** (Nachtlauf, Retro Sprint 1): kein Befund, aber erst im zweiten Anlauf.
+  Ein `grep` nach `onMeldung(null)` fand den Absende-Weg der Reihen-Zeile **nicht** und ließ ihn wie eine
+  fünfte Instanz dieser Klasse aussehen; er heißt `onMeldung?.(null)` (`VaterLehrwerke.tsx:416`, mit B-197
+  in der Begründung). Geprüft sind jetzt alle vier Wege: Reihe ändern `:416`, Unit ändern `:703`, Unit
+  löschen `:726`, Reihe löschen `:256`; der Anlege-Weg `:856` meldet bewusst am eigenen Platz (AK 4).
+  **Die Lehre gehört zur Nachschau selbst: das Suchmuster war das fehlerhafte Instrument, nicht der
+  Code** — ein optionaler Aufruf entgeht dem naheliegenden `grep`, und dieser Fehlalarm hätte hier fast
+  eine Story erzeugt.

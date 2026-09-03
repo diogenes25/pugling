@@ -192,7 +192,8 @@ Response — `HTTP 201`:
   "defaultUseLeitner": false,
   "defaultRequireTypedTest": false,
   "defaultStage": null,
-  "defaultItemCount": null
+  "defaultItemCount": null,
+  "interestTagIds": []
 }
 ```
 
@@ -417,7 +418,8 @@ Response — `HTTP 201`:
   "defaultUseLeitner": false,
   "defaultRequireTypedTest": false,
   "defaultStage": null,
-  "defaultItemCount": null
+  "defaultItemCount": null,
+  "interestTagIds": []
 }
 ```
 
@@ -506,7 +508,8 @@ Response — `HTTP 201`:
   "defaultUseLeitner": false,
   "defaultRequireTypedTest": false,
   "defaultStage": null,
-  "defaultItemCount": null
+  "defaultItemCount": null,
+  "interestTagIds": []
 }
 ```
 
@@ -583,7 +586,8 @@ Response — `HTTP 201`:
   "defaultUseLeitner": false,
   "defaultRequireTypedTest": false,
   "defaultStage": null,
-  "defaultItemCount": null
+  "defaultItemCount": null,
+  "interestTagIds": []
 }
 ```
 
@@ -660,7 +664,8 @@ Response — `HTTP 201`:
   "defaultUseLeitner": false,
   "defaultRequireTypedTest": false,
   "defaultStage": null,
-  "defaultItemCount": null
+  "defaultItemCount": null,
+  "interestTagIds": []
 }
 ```
 
@@ -737,7 +742,8 @@ Response — `HTTP 201`:
   "defaultUseLeitner": false,
   "defaultRequireTypedTest": false,
   "defaultStage": null,
-  "defaultItemCount": null
+  "defaultItemCount": null,
+  "interestTagIds": []
 }
 ```
 
@@ -810,7 +816,8 @@ Response — `HTTP 201`:
   "defaultUseLeitner": false,
   "defaultRequireTypedTest": false,
   "defaultStage": null,
-  "defaultItemCount": null
+  "defaultItemCount": null,
+  "interestTagIds": []
 }
 ```
 
@@ -901,7 +908,8 @@ Response — `HTTP 201`:
   "defaultUseLeitner": false,
   "defaultRequireTypedTest": false,
   "defaultStage": null,
-  "defaultItemCount": null
+  "defaultItemCount": null,
+  "interestTagIds": []
 }
 ```
 
@@ -976,7 +984,8 @@ Response — `HTTP 201`:
   "defaultUseLeitner": false,
   "defaultRequireTypedTest": false,
   "defaultStage": null,
-  "defaultItemCount": null
+  "defaultItemCount": null,
+  "interestTagIds": []
 }
 ```
 
@@ -1044,7 +1053,8 @@ Response — `HTTP 201`:
   "defaultUseLeitner": false,
   "defaultRequireTypedTest": false,
   "defaultStage": null,
-  "defaultItemCount": null
+  "defaultItemCount": null,
+  "interestTagIds": []
 }
 ```
 
@@ -1127,7 +1137,8 @@ Response — `HTTP 201`:
   "defaultUseLeitner": false,
   "defaultRequireTypedTest": false,
   "defaultStage": null,
-  "defaultItemCount": null
+  "defaultItemCount": null,
+  "interestTagIds": []
 }
 ```
 
@@ -1186,6 +1197,7 @@ Response — `HTTP 201`:
   "defaultUseLeitner": false,
   "defaultRequireTypedTest": false,
   "defaultStage": null,
-  "defaultItemCount": null
+  "defaultItemCount": null,
+  "interestTagIds": []
 }
 ```

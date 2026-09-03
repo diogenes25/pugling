@@ -60,11 +60,13 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
     private static GenerationRequest Request(int subjectId, int seriesId, int seriesUnitId, string type,
         int count = 3, IReadOnlyList<string>? words = null, bool dryRun = false, bool strict = true,
-        int? childId = 1, int? profileId = null, int? unitId = null, bool general = false) =>
+        int? childId = 1, int? profileId = null, int? unitId = null, bool general = false,
+        IReadOnlyList<string>? interests = null) =>
         new(ChildId: childId, ProfileId: profileId, UnitId: unitId, General: general,
             SubjectId: subjectId, SeriesId: seriesId, SeriesUnitId: seriesUnitId, TypeKey: type,
             Topic: "Unit 1: Animals", ItemCount: count, Words: words ?? [], UseWeakWords: false,
-            SourceLang: "en", TargetLang: "de", RewardPoints: 10, DryRun: dryRun, Strict: strict);
+            SourceLang: "en", TargetLang: "de", RewardPoints: 10, Interests: interests ?? [],
+            DryRun: dryRun, Strict: strict);
 
     private const string VocabularyJson = """
         {"title":"Tiere auf dem Bauernhof","items":[
@@ -72,6 +74,150 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
           {"front":"the sheep","back":"das Schaf","hint":null},
           {"front":"the goat","back":"die Ziege","hint":null}]}
         """;
+
+    /// <summary>
+    /// <b>AK 3 of B-46.</b> With a child, the exercise records the child's <b>positively</b> weighted
+    /// interests by itself - no extra decision by the caller. And it records only those: a dislike is
+    /// precisely what the prompt tells the model to avoid, so tagging it would label the exercise with its
+    /// own opposite.
+    /// <para>
+    /// Red probe: swap <c>child.WeightedInterests</c> for the unfiltered list in
+    /// <c>ResolveInterestTagIdsAsync</c> and the last assertion falls; return <c>[]</c> there and the one
+    /// before it falls.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task Kinderpfad_TaggtDiePositivenInteressen_UndNichtDieAbneigung()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Einkleidung-Kind");
+        var supervisor = new SupervisorApi(Authenticated());
+
+        var abneigung = await creator.CreateInterestTagAsync(new CreateInterestTagDto(TestApi.UniqueName("Spinnen")));
+        await supervisor.SetInterestWeightAsync(1, abneigung.Id, new SetChildInterestWeightDto(-3));
+
+        int[] erwartet = [.. (await supervisor.ListInterestsAsync(1)).Where(i => i.Weight > 0)
+            .Select(i => i.TagId).Order()];
+        // Without this the case would also pass for a version that tags nothing at all - the seeded child
+        // is the only reason there is anything to find, and that is worth asserting rather than assuming.
+        Assert.NotEmpty(erwartet);
+
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Vocabulary"));
+        Assert.True(outcome.Published, $"Selbsttest: {outcome.SelfTestPercent} %");
+
+        var detail = await creator.GetExerciseDetailAsync(outcome.ExerciseId!.Value);
+        int[] getaggt = [.. detail.InterestTagIds.Order()];
+        Assert.Equal(erwartet, getaggt);
+        Assert.DoesNotContain(abneigung.Id, detail.InterestTagIds);
+    }
+
+    /// <summary>
+    /// <b>AK 4 of B-46.</b> Without a child, <c>--interests</c> dresses the exercise - that is the whole
+    /// point of the story's second half: a catalog exercise for an interest profile, built for nobody in
+    /// particular. The slug is passed in upper case on purpose: slugs are lower case by definition, so a
+    /// case-sensitive lookup would reject exactly what a user reads off the taxonomy listing.
+    /// </summary>
+    [Fact]
+    public async Task KindloserPfad_TaggtDieAngegebenenSlugs()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Einkleidung-Slug");
+        var einhorn = await creator.CreateInterestTagAsync(new CreateInterestTagDto(TestApi.UniqueName("Einhorn")));
+
+        var (briefing, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Vocabulary",
+            childId: null, interests: [einhorn.Slug.ToUpperInvariant()]));
+
+        // No child anywhere in the briefing - otherwise this would be the child path in disguise.
+        Assert.False(briefing.Individual);
+        Assert.True(outcome.Published, $"Selbsttest: {outcome.SelfTestPercent} %");
+
+        var detail = await creator.GetExerciseDetailAsync(outcome.ExerciseId!.Value);
+        int[] nurEinhorn = [einhorn.Id];
+        Assert.Equal(nurEinhorn, detail.InterestTagIds);
+    }
+
+    /// <summary>
+    /// Aus dem Review zu B-46. Die Auflösung fragt seither <b>je Slug</b> beim Server nach, weil eine
+    /// Vollauflistung bei 100 Einträgen abschneidet und jedes weitere Stichwort als Tippfehler gemeldet
+    /// hätte. <c>search</c> ist aber ein Teilstring über Slug <i>oder</i> Label — der exakte Vergleich
+    /// danach ist deshalb tragend, und dieser Fall ist sein Beleg: zwei Stichworte, von denen eines das
+    /// andere enthält.
+    /// <para>
+    /// Nicht abgedeckt und bewusst so: die 100er-Grenze selbst. Ein Fall dafür bräuchte 101 Stichworte in
+    /// der geteilten Klassen-DB und würde die Nachbarfälle vergiften — der Fix ist stattdessen so gebaut,
+    /// dass die Grenze nicht mehr erreicht wird.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task SlugWirdExaktGetroffen_NichtAlsTeilstring()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Einkleidung-Exakt");
+
+        // Das gesuchte Stichwort sortiert absichtlich SPAET (`zzz-`), der Lockvogel FRUEH (`aaa-`) und
+        // enthält den gesuchten Slug vollständig. Die Serverliste ist nach Slug sortiert, „nimm den ersten
+        // Treffer" greift hier also nachweisbar den Falschen. Eine erste Fassung dieses Falls hatte die
+        // Reihenfolge umgekehrt - und blieb bei genau diesem Defekt gruen (gemessen).
+        var gesucht = await creator.CreateInterestTagAsync(new CreateInterestTagDto(TestApi.UniqueName("zzz-einhorn")));
+        var lockvogel = await creator.CreateInterestTagAsync(new CreateInterestTagDto("Aaa " + gesucht.Slug));
+        Assert.Contains(gesucht.Slug, lockvogel.Slug, StringComparison.Ordinal);
+        Assert.True(string.CompareOrdinal(lockvogel.Slug, gesucht.Slug) < 0,
+            $"Der Lockvogel muss vor dem Ziel sortieren: {lockvogel.Slug} vs. {gesucht.Slug}");
+
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Vocabulary",
+            childId: null, profileId: null, interests: [gesucht.Slug]));
+
+        var detail = await creator.GetExerciseDetailAsync(outcome.ExerciseId!.Value);
+        int[] nurGesucht = [gesucht.Id];
+        Assert.Equal(nurGesucht, detail.InterestTagIds);
+    }
+
+    /// <summary>
+    /// <b>AK 4, second half.</b> A mistyped slug aborts with usage help instead of a raw <c>400</c> - and
+    /// above all instead of an exercise that reports success and carries no dressing at all. The message
+    /// names the offending slug, because "unknown interest" alone would leave the caller guessing which of
+    /// five it was.
+    /// </summary>
+    [Fact]
+    public async Task UnbekannterSlug_BrichtSprechendAb()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Einkleidung-Tippfehler");
+
+        var ex = await Assert.ThrowsAsync<AgentUsageException>(() => pipeline.CreateAsync(
+            Request(subjectId, seriesId, seriesUnitId, "Vocabulary", childId: null, interests: ["gibt-es-nicht"])));
+
+        Assert.Contains("gibt-es-nicht", ex.Message);
+    }
+
+    /// <summary>
+    /// The case B-46's estimate did not cover, decided here rather than guessed: <c>--child</c> together
+    /// with <c>--interests</c> leaves "whose interests win?" unanswered, and the story defined two separate
+    /// paths instead of a precedence. So it is a usage error - and the message names the way out.
+    /// <para>
+    /// The second half is what makes this a real assertion: with <c>--general</c> the same combination
+    /// <b>works</b>, because that switch drops the child and hands the childless path over. The refusal is
+    /// therefore keyed on what the briefing carries, not on which switches were typed.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task KindUndVorgegebeneInteressen_IstEinBedienfehler_MitGeneralAberErlaubt()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson, VocabularyJson);
+        var (subjectId, seriesId, seriesUnitId) = await FreshChapterAsync(creator, "Einkleidung-Beides");
+        var einhorn = await creator.CreateInterestTagAsync(new CreateInterestTagDto(TestApi.UniqueName("Einhorn")));
+
+        var ex = await Assert.ThrowsAsync<AgentUsageException>(() => pipeline.CreateAsync(
+            Request(subjectId, seriesId, seriesUnitId, "Vocabulary", childId: 1, interests: [einhorn.Slug])));
+        Assert.Contains("--general", ex.Message);
+
+        var (briefing, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Vocabulary",
+            childId: 1, general: true, interests: [einhorn.Slug]));
+        Assert.False(briefing.Individual);
+        var detail = await creator.GetExerciseDetailAsync(outcome.ExerciseId!.Value);
+        int[] nurEinhorn = [einhorn.Id];
+        Assert.Equal(nurEinhorn, detail.InterestTagIds);
+    }
 
     [Fact]
     public async Task Vokabeluebung_entsteht_aus_dem_Entwurf_und_besteht_den_Selbsttest()

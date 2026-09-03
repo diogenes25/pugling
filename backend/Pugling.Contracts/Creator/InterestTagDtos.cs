@@ -5,13 +5,19 @@ namespace Pugling.Contracts.Creator;
 // this child" computable at all.
 
 /// <summary>
-/// A tag of the taxonomy including usage counts on both sides: <c>MediaCount</c> counts the
-/// assets carrying it, <c>ChildCount</c> the children who list it as a like/dislike. <c>Slug</c>
+/// A tag of the taxonomy including usage counts on <b>all three</b> sides: <c>MediaCount</c> counts the
+/// assets carrying it, <c>ChildCount</c> the children who list it as a like/dislike, and
+/// <c>ExerciseCount</c> the exercises dressed in it (B-46). <c>Slug</c>
 /// is the stable reference name (lowercase, no diacritics), <c>Facet</c> distinguishes theme from
 /// presentation style, <c>Synonyms</c> holds alternative spellings against duplicates from free text.
+/// <para>
+/// The third count is not decoration: the counts are what says whether a tag is dead, and a tag that
+/// dresses exercises but no image and no child would have looked dead without it.
+/// </para>
 /// </summary>
 public record InterestTagResponse(int Id, string Slug, string Label, InterestFacet Facet,
-    IReadOnlyList<string> Synonyms, string? Color, int MediaCount, int ChildCount, DateTime CreatedAt);
+    IReadOnlyList<string> Synonyms, string? Color, int MediaCount, int ChildCount, DateTime CreatedAt,
+    int ExerciseCount);
 
 /// <summary>
 /// Creating a tag. The <c>Slug</c> may be omitted – it is then derived from the <c>Label</c>.

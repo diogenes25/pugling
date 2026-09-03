@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-151]
+nachgeschaut: 2026-09-02
 wartet_auf: ""
 ---
 
@@ -100,3 +101,7 @@ kein Gegenbeweis, sondern derselbe Zufall, der B-189 wochenlang verborgen hat.
     heraus, und mit ihr `lehrwerke.spec.ts` als **dritten** Fall, den die Story nicht kannte.
   - **Entscheidung 3 bleibt: kein Wächter.** Bei 29 Kandidaten und einer Handvoll echter Fälle bliebe ein
     Tor eine Ausnahmeliste. Die Zahl ist jetzt da; wer sie später anders bewertet, hat eine Grundlage.
+- 2026-09-02 · **Nachgeschaut** (Nachtlauf, Retro Sprint 1): kein Befund.
+  `bestaetigung-ueberlebt.spec.ts:83` trägt `{ exact: true }` samt Begründung, warum es tragend ist (der
+  Leer-Text enthält die Erfolgsmeldung als Teilstring). AK 2 hängt am vollen Suite-Lauf und wird von
+  diesem Sprint mitgetragen.

@@ -253,6 +253,10 @@ public class SchemaGuardTests
             ["MediaLink.ExerciseItemId"] = DeleteBehavior.Cascade, // -> ExerciseItem
             ["MediaLink.MediaAssetId"] = DeleteBehavior.Cascade, // -> MediaAsset
             ["MediaLink.VocabularyId"] = DeleteBehavior.Cascade, // -> Vocabulary
+            // B-46: the exercise's dressing. Both cascade like MediaTagLink's pair - a link without its
+            // exercise or without its tag is not data, it is a dangling row.
+            ["ExerciseInterestLink.ExerciseId"] = DeleteBehavior.Cascade, // -> Exercise
+            ["ExerciseInterestLink.InterestTagId"] = DeleteBehavior.Cascade, // -> InterestTag
             ["MediaTagLink.InterestTagId"] = DeleteBehavior.Cascade, // -> InterestTag
             ["MediaTagLink.MediaAssetId"] = DeleteBehavior.Cascade, // -> MediaAsset
             ["MediaVariant.MediaAssetId"] = DeleteBehavior.Cascade, // -> MediaAsset

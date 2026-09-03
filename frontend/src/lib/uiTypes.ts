@@ -144,6 +144,13 @@ export interface CreateExercisePayload {
    * `true`, und ein Umschalten verlangt Owner-Rechte (sonst 403 für einen Write-Grantee).
    */
   executePublic?: boolean;
+  /**
+   * Interessen, in die die Übung eingekleidet ist (B-46) – Tag-Ids der geteilten Taxonomie. **Dritter Fall
+   * derselben Falle wie `suggestedBonus` und `executePublic`:** Der PUT ersetzt vollständig, ein Weglassen
+   * löscht die Einkleidung. Das Vater-Web pflegt sie (noch) nicht, es muss sie aber **durchreichen** –
+   * sonst räumt ein Klick auf „Speichern" weg, was der KI-Creator gerade eingetragen hat.
+   */
+  interestTagIds?: number[] | null;
 }
 
 /**

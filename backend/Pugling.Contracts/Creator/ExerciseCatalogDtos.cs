@@ -30,6 +30,12 @@ public record ExerciseSummary(int Id, int SeriesId, int SeriesUnitId, int? Subje
 /// the basis for editing (load config into the type-specific editor; saving goes through
 /// the per-type PUT <c>.../textbook-series/{seriesId}/units/{seriesUnitId}/&lt;type&gt;/{id}</c>,
 /// where <see cref="SeriesId"/> supplies the route segment the flat cross-catalog view has no other way to know).
+/// <para>
+/// <c>InterestTagIds</c> is the dressing (B-46) - metadata, and this view promises all of it. It stays off
+/// <see cref="ExerciseSummary"/> for the reason that row gives about itself: the lean row carries what the
+/// supervisor's form pre-fills from, and a dressing pre-fills nothing. The fit filter B-18 will build
+/// belongs in the <i>query</i> anyway, not in a list the client scans.
+/// </para>
 /// </summary>
 public record ExerciseDetail(int Id, int SeriesId, int SeriesUnitId, string SeriesUnitLabel, int? SubjectId, string SubjectName,
     string Type, string Title, int OrderIndex, int RewardPoints, int? GradeMin, int? GradeMax,
@@ -37,7 +43,7 @@ public record ExerciseDetail(int Id, int SeriesId, int SeriesUnitId, string Seri
     SuggestedBonus? SuggestedBonus, int? DefaultStage, int? DefaultItemCount,
     int? AuthorAdultId, string? AuthorName, bool IsOwn, bool IsOwner, bool ExecutePublic, int GrantCount,
     JsonElement Config, string? Description,
-    bool DefaultUseLeitner, bool DefaultRequireTypedTest);
+    bool DefaultUseLeitner, bool DefaultRequireTypedTest, IReadOnlyList<int> InterestTagIds);
 
 /// <summary>A study plan in which an exercise is used as a position.</summary>
 public record PlanUsage(int PlanId, string PlanTitle, int ChildId, string ChildName);

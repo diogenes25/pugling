@@ -54,6 +54,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     // Shared interest/style taxonomy (child ⇢ tag ⇠ image) - the basis of the individualized image selection.
     public DbSet<InterestTag> InterestTags => Set<InterestTag>();
     public DbSet<ChildInterest> ChildInterests => Set<ChildInterest>();
+    // Exercise ⇢ tag (B-46): the same taxonomy, now with a third referrer beside child and image.
+    public DbSet<ExerciseInterestLink> ExerciseInterestLinks => Set<ExerciseInterestLink>();
 
     // Study plan (container) + positions on catalog exercises, progress/goal reward per position
     public DbSet<StudyPlan> StudyPlans => Set<StudyPlan>();
@@ -380,6 +382,18 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasIndex(x => x.InterestTagId);
             e.HasOne(x => x.MediaAsset).WithMany(a => a.TagLinks).HasForeignKey(x => x.MediaAssetId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(x => x.InterestTag).WithMany(t => t.MediaLinks).HasForeignKey(x => x.InterestTagId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Exercise <-> tag: the same shape as MediaTagLink one line above, and for the same two reasons -
+        // an exercise carries a tag at most once, and the hot read direction is "which exercises carry this
+        // interest?" (that is what B-18 will filter on). Both sides cascade: a deleted exercise or a
+        // retired tag must not leave a link pointing at nothing.
+        modelBuilder.Entity<ExerciseInterestLink>(e =>
+        {
+            e.HasIndex(x => new { x.ExerciseId, x.InterestTagId }).IsUnique();
+            e.HasIndex(x => x.InterestTagId);
+            e.HasOne(x => x.Exercise).WithMany(a => a.InterestLinks).HasForeignKey(x => x.ExerciseId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.InterestTag).WithMany(t => t.ExerciseLinks).HasForeignKey(x => x.InterestTagId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // Image ⇢ carrier. Exactly one of the three FKs is set - as a check constraint in the DB, not only in

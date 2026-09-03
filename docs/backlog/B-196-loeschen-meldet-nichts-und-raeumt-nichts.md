@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-173]
+nachgeschaut: 2026-09-02
 wartet_auf: ""
 ---
 
@@ -114,3 +115,7 @@ zustandsfrei formuliert. Wo eine Handlung gar keine Meldung erzeugt, bleibt die 
     nicht zufällig.
   - **Die eigene Zählung war falsch** — Korrektur samt Begründung steht oben in Entscheidung 3, die drei
     übrigen Pfade als [B-200](B-200-drei-stumme-erfolgspfade.md).
+- 2026-09-02 · **Nachgeschaut** (Nachtlauf, Retro Sprint 1): alle drei AK am Code nachgerechnet, kein
+  Befund. AK 1 `VaterLehrwerke.tsx:273` (`onMeldung` nennt den Namen der Reihe), AK 2 `:256` (Räumen
+  **vor** dem `DELETE`), AK 3 ist die Reihenfolge selbst — `confirmAction` steht vor dem Räumen, ein
+  Abbruch rührt den Platz also nicht an.

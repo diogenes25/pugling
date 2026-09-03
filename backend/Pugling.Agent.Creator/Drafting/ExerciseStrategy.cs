@@ -69,7 +69,10 @@ public abstract class ExerciseStrategy<TDraft, TConfig>(
         GenerationRequest request) =>
         new(title.Trim(), briefing.ExistingExerciseTitles.Count + 1, request.RewardPoints, config,
             GradeMin: briefing.GradeMin, GradeMax: briefing.GradeMax, SchoolTypes: briefing.SchoolType,
-            Source: briefing.Source, Description: DescriptionFor(briefing));
+            Source: briefing.Source, Description: DescriptionFor(briefing),
+            // The dressing goes into the catalog, not only into the description text (B-46): the sentence
+            // below is for a human reading the list, these ids are what a machine can compare.
+            InterestTagIds: briefing.InterestTagIds);
 
     /// <summary>Short provenance note on the exercise - makes generated content recognizable in the catalog.</summary>
     private static string DescriptionFor(CreatorBriefing briefing)

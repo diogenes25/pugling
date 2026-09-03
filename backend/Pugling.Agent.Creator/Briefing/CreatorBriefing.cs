@@ -25,7 +25,8 @@ public sealed record CreatorBriefing(
     string SourceLang,
     string TargetLang,
     IReadOnlyList<string> ExistingExerciseTitles,
-    IReadOnlyList<string> RequiredWords)
+    IReadOnlyList<string> RequiredWords,
+    IReadOnlyList<int> InterestTagIds)
 {
     /// <summary>Is this tailored to a child (instead of for the general catalog)?</summary>
     public bool Individual => Child is not null;
@@ -35,6 +36,11 @@ public sealed record CreatorBriefing(
 
     /// <summary>The child's interests; deliberately empty in general mode (nothing to dress up).</summary>
     public IReadOnlyList<string> Interests => Child?.Interests ?? [];
+
+    // Why <see cref="InterestTagIds"/> exists next to <see cref="Interests"/>, which reads like the same
+    // thing: this one is for the PROMPT (free text included, because the nuance the taxonomy lacks is
+    // exactly what dresses a task well), that one is for the CATALOG (ids only, because only a stable key
+    // lets a second child's profile be compared against it - B-46, decision 1).
 
     /// <summary>The child's weakly mastered words; empty in general mode.</summary>
     public IReadOnlyList<WordMasteryResponse> WeakWords => Child?.WeakWords ?? [];

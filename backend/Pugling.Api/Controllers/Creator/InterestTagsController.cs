@@ -23,10 +23,14 @@ namespace Pugling.Api.Controllers.Creator;
 [Authorize(Roles = Roles.Creator)]
 public class InterestTagsController(PuglingDbContext db) : ControllerBase
 {
-    /// <summary>Projects along with usage counts from both sides – they show whether a tag is "dead".</summary>
+    /// <summary>
+    /// Projects along with the usage counts from all <b>three</b> sides – they show whether a tag is
+    /// "dead". Since B-46 the exercises are the third side, and forgetting them here would have made a
+    /// tag that dresses exercises look unused.
+    /// </summary>
     private static IQueryable<InterestTagResponse> Project(IQueryable<InterestTag> q) =>
         q.Select(t => new InterestTagResponse(t.Id, t.Slug, t.Label, t.Facet, t.Synonyms, t.Color,
-            t.MediaLinks.Count, t.ChildInterests.Count, t.CreatedAt));
+            t.MediaLinks.Count, t.ChildInterests.Count, t.CreatedAt, t.ExerciseLinks.Count));
 
     /// <summary>
     /// All tags (alphabetically by slug), optionally filtered. The total count (before paging) is
@@ -34,7 +38,10 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
     /// </summary>
     /// <param name="search">Substring in slug or label.</param>
     /// <param name="facet">Only tags of this facet (e.g. only styles).</param>
-    /// <param name="unused">true = only tags with no usage at all (cleanup view).</param>
+    /// <param name="unused">
+    /// true = only tags with no usage at all (cleanup view) – no image, no child, and since B-46 no
+    /// exercise either.
+    /// </param>
     /// <param name="skip">Number of entries to skip (paging).</param>
     /// <param name="take">Maximum number of hits (1..500).</param>
     /// <param name="ct">Cancellation token.</param>
@@ -60,7 +67,8 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
         if (facet is not null)
             query = query.Where(t => t.Facet == facet);
         if (unused is true)
-            query = query.Where(t => t.MediaLinks.Count == 0 && t.ChildInterests.Count == 0);
+            query = query.Where(t => t.MediaLinks.Count == 0 && t.ChildInterests.Count == 0
+                                     && t.ExerciseLinks.Count == 0);
 
         return await Project(query.OrderBy(t => t.Slug).ThenBy(t => t.Id)).ToPagedListAsync(Response, skip, take, ct);
     }
@@ -102,8 +110,12 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
         db.InterestTags.Add(tag);
         await db.SaveChangesAsync(ct);
 
+        // All three usage counts are zero by construction: the tag exists as of this line and nothing can
+        // point at it yet. Spelled out rather than projected, because a round trip would only re-read what
+        // we just wrote.
         return CreatedAtAction(nameof(Get), new { id = tag.Id },
-            new InterestTagResponse(tag.Id, tag.Slug, tag.Label, tag.Facet, tag.Synonyms, tag.Color, 0, 0, tag.CreatedAt));
+            new InterestTagResponse(tag.Id, tag.Slug, tag.Label, tag.Facet, tag.Synonyms, tag.Color, 0, 0,
+                tag.CreatedAt, 0));
     }
 
     /// <summary>
@@ -147,8 +159,16 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Deletes a tag along with its links to images and children (cascade). Deliberately without a
-    /// usage lock: a tag carries no content, its loss only costs selection quality.
+    /// Deletes a tag along with its links to images, children <b>and exercises</b> (cascade). Deliberately
+    /// without a usage lock: a tag carries no content of its own.
+    /// <para>
+    /// <b>Since B-46 that costs more than it used to, and the difference is not yet decided.</b> The old
+    /// reasoning was "its loss only costs selection quality" - true while only images and children pointed
+    /// at it. An exercise's dressing, however, is authored information: it disappears silently, cannot be
+    /// reconstructed, and a still-open editor then sends an id the server no longer knows (see the story
+    /// filed from the B-46 review). Whether an in-use tag may be deleted at all is a product decision and
+    /// is deliberately <b>not</b> taken here.
+    /// </para>
     /// </summary>
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

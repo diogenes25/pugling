@@ -41,6 +41,12 @@ namespace Pugling.Agent.Creator;
 /// discards it and the position falls back to 20, so a figure above the bound is not "more coins" but
 /// none of the author's doing at all.
 /// </param>
+/// <param name="Interests">
+/// Interest slugs the exercise should be <b>dressed</b> in (B-46), resolved against the shared taxonomy.
+/// This is the childless counterpart to <paramref name="ChildId"/>: with a child the dressing comes from
+/// the child's own positively weighted interests, so naming both is a usage error rather than a merge.
+/// Empty = no dressing recorded.
+/// </param>
 /// <param name="DryRun">Only plan and print - write nothing.</param>
 /// <param name="Strict">Delete the exercise again if the self-test does not reach 100 %.</param>
 public sealed record GenerationRequest(
@@ -59,5 +65,6 @@ public sealed record GenerationRequest(
     string? SourceLang,
     string? TargetLang,
     int RewardPoints,
+    IReadOnlyList<string> Interests,
     bool DryRun,
     bool Strict);

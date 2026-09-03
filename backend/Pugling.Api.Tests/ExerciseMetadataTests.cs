@@ -33,18 +33,143 @@ public class ExerciseMetadataTests(PuglingWebAppFactory factory) : IClassFixture
         return (subjectId, seriesId, seriesUnitId, categoryId);
     }
 
-    private static object ArithmeticBody(string title, int categoryId, int gradeMin, int gradeMax, string schoolTypes) => new
+    private static object ArithmeticBody(string title, int categoryId, int gradeMin, int gradeMax,
+        string schoolTypes, int[]? interestTagIds = null) => new
+        {
+            title,
+            orderIndex = 1,
+            rewardPoints = 10,
+            config = new { problems = new[] { new { prompt = "1 + 1", answer = 2, tolerance = 0 } } },
+            gradeMin,
+            gradeMax,
+            schoolTypes,
+            source = "Testbuch, Kapitel 1",
+            categoryId,
+            // Always sent, `null` included: the payload rejects unknown fields, so a body that leaves the
+            // key out entirely is a different case - and that one has its own assertion below (AK 5).
+            interestTagIds,
+        };
+
+    /// <summary>
+    /// Creates a tag of the shared taxonomy and returns its id. A <b>fresh</b> one per call rather than a
+    /// seeded slug: the assertions below are about the mapping, not about what the seed happens to contain,
+    /// and a seeded tag would make them depend on data another story may edit.
+    /// </summary>
+    private static async Task<int> InterestTagIdAsync(HttpClient father, string label) =>
+        await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/interest-tags",
+            new { label = TestApi.UniqueName(label) }));
+
+    /// <summary>Reads the dressing of an exercise through the single-fetch path.</summary>
+    private static async Task<int[]> DressingAsync(HttpClient father, string basePath, int exerciseId)
     {
-        title,
-        orderIndex = 1,
-        rewardPoints = 10,
-        config = new { problems = new[] { new { prompt = "1 + 1", answer = 2, tolerance = 0 } } },
-        gradeMin,
-        gradeMax,
-        schoolTypes,
-        source = "Testbuch, Kapitel 1",
-        categoryId,
-    };
+        var body = await father.GetFromJsonAsync<JsonElement>($"{basePath}/{exerciseId}");
+        return [.. body.GetProperty("interestTagIds").EnumerateArray().Select(x => x.GetInt32())];
+    }
+
+    /// <summary>
+    /// <b>AK 1, 2 and 6 of B-46.</b> An exercise records which interests it is dressed in, gives them back
+    /// on both read paths, and a PUT <b>replaces</b> the set instead of merging it - the latter is what
+    /// makes a wrong tag removable at all.
+    /// <para>
+    /// Red probe: drop <c>SetInterestLinks</c> from <c>Create</c> and this case falls at the very first
+    /// assertion; drop it from <c>Update</c> and it falls at the replacement.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task Uebung_TraegtIhreEinkleidung_UndPutErsetztSie()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var (subjectId, seriesId, seriesUnitId, categoryId) = await SetupAsync(father, $"Einkleidung-{Guid.NewGuid():N}");
+        var basePath = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic";
+
+        var einhorn = await InterestTagIdAsync(father, "Einhorn");
+        var roboter = await InterestTagIdAsync(father, "Roboter");
+
+        var created = await father.PostAsJsonAsync(basePath,
+            ArithmeticBody("Eingekleidet", categoryId, 5, 7, "Gymnasium", [roboter, einhorn]));
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var createdBody = await created.Content.ReadFromJsonAsync<JsonElement>();
+        var id = createdBody.GetProperty("id").GetInt32();
+
+        // Ascending, whatever order the caller sent - that is what makes two dressings comparable (AK 6).
+        int[] erwartet = [.. new[] { einhorn, roboter }.Order()];
+        int[] ausDemPost = [.. createdBody.GetProperty("interestTagIds").EnumerateArray().Select(x => x.GetInt32())];
+        Assert.Equal(erwartet, ausDemPost);
+        Assert.Equal(erwartet, await DressingAsync(father, basePath, id));
+
+        // And through the list path, which projects at a different place.
+        var liste = await father.GetFromJsonAsync<JsonElement>(basePath);
+        var inListe = liste.EnumerateArray().Single(e => e.GetProperty("id").GetInt32() == id);
+        int[] ausDerListe = [.. inListe.GetProperty("interestTagIds").EnumerateArray().Select(x => x.GetInt32())];
+        Assert.Equal(erwartet, ausDerListe);
+
+        // PUT with only one of the two: the other is GONE, not kept. A merge would leave no way to
+        // un-dress an exercise that was tagged wrongly.
+        var put = await father.PutAsJsonAsync($"{basePath}/{id}",
+            ArithmeticBody("Eingekleidet", categoryId, 5, 7, "Gymnasium", [einhorn]));
+        Assert.Equal(HttpStatusCode.OK, put.StatusCode);
+        int[] nurEinhorn = [einhorn];
+        Assert.Equal(nurEinhorn, await DressingAsync(father, basePath, id));
+
+        // An unknown id on the CHANGE path too, and this is the half the first version left unobserved
+        // (found in the B-46 review): without the check `SetInterestLinks` would append a link with a
+        // dangling FK, `SaveChangesAsync` would throw, and the caller would get a 500 - losing title,
+        // config and metadata of an otherwise valid PUT instead of a clean rejection.
+        var falsch = await father.PutAsJsonAsync($"{basePath}/{id}",
+            ArithmeticBody("Umbenannt", categoryId, 5, 7, "Gymnasium", [einhorn, 999999]));
+        Assert.Equal(HttpStatusCode.BadRequest, falsch.StatusCode);
+        var problem = await falsch.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("validation_error", problem.GetProperty("code").GetString());
+
+        // The rejected PUT wrote NOTHING - neither the dressing nor the title. This is the load-bearing
+        // half: a check that rejects but has already half-written is worse than none.
+        Assert.Equal(nurEinhorn, await DressingAsync(father, basePath, id));
+        var unveraendert = await father.GetFromJsonAsync<JsonElement>($"{basePath}/{id}");
+        Assert.Equal("Eingekleidet", unveraendert.GetProperty("title").GetString());
+
+        // And empty means empty - the same full-representation rule as for every other field here.
+        var leer = await father.PutAsJsonAsync($"{basePath}/{id}",
+            ArithmeticBody("Eingekleidet", categoryId, 5, 7, "Gymnasium", []));
+        Assert.Equal(HttpStatusCode.OK, leer.StatusCode);
+        Assert.Empty(await DressingAsync(father, basePath, id));
+    }
+
+    /// <summary>
+    /// <b>AK 2, second half, and AK 5.</b> An unknown tag id is a <c>validation_error</c>, not a silent
+    /// skip - otherwise a mistyped id answers <c>201</c> and the author believes in a dressing that is not
+    /// there. And an exercise created <i>without</i> the field stays readable with an empty list, which is
+    /// the state every exercise written before this story is in.
+    /// </summary>
+    [Fact]
+    public async Task UnbekannterTag_Wird_Abgelehnt_UndOhneAngabe_BleibtDieEinkleidungLeer()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var (_, seriesId, seriesUnitId, categoryId) = await SetupAsync(father, $"Einkleidung-Fehler-{Guid.NewGuid():N}");
+        var basePath = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic";
+
+        var abgelehnt = await father.PostAsJsonAsync(basePath,
+            ArithmeticBody("Falscher Tag", categoryId, 5, 7, "Gymnasium", [999999]));
+        Assert.Equal(HttpStatusCode.BadRequest, abgelehnt.StatusCode);
+        var problem = await abgelehnt.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("validation_error", problem.GetProperty("code").GetString());
+
+        // Nothing was created on the way - a rejected POST must not leave half an exercise behind.
+        var liste = await father.GetFromJsonAsync<JsonElement>(basePath);
+        Assert.DoesNotContain(liste.EnumerateArray(), e => e.GetProperty("title").GetString() == "Falscher Tag");
+
+        // Without the field at all: created, and the dressing is empty rather than absent (AK 5).
+        var ohne = await father.PostAsJsonAsync(basePath, new
+        {
+            title = "Ohne Einkleidung",
+            orderIndex = 1,
+            rewardPoints = 10,
+            config = new { problems = new[] { new { prompt = "1 + 1", answer = 2, tolerance = 0 } } },
+            categoryId,
+        });
+        Assert.Equal(HttpStatusCode.Created, ohne.StatusCode);
+        var ohneBody = await ohne.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Empty(ohneBody.GetProperty("interestTagIds").EnumerateArray());
+    }
 
     [Fact]
     public async Task Uebung_TraegtMetadaten_UndFilterFindetSie()

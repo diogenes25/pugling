@@ -1,11 +1,11 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/katalog, bereich/medien, rolle/creator, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/katalog, bereich/medien, rolle/creator, rolle/student]
 aliases: [Interessenbasierte Übungen, Zielgruppe statt Kind]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: L
-wo: backend
+wo: beides
 migration: ja
 vertragsbruch: nein
 quelle: Sitzung 2026-07-31 (Rollen-Abgleich Creator/Supervisor/Student)
@@ -186,3 +186,73 @@ Frontend betroffen, daher kein E2E-Zusatz; `/smoke-test` bleibt der manuelle Geg
 - **2026-08-07** — Autonomer Modus (Opt-in je Vorhaben, README → „Autonomer Modus") vom Nutzer im Dialog
   ausdrücklich freigegeben: ein Nachtlauf darf diese Story trotz `art: Wunsch` ohne weitere Rückfrage bauen
   (Rollengang/Reviewer bleiben Pflicht wie bei jeder Abnahme).
+- **2026-09-02** — **gebaut** (Nachtlauf, Sprint 1; `geschaetzt` → `in-arbeit`). Alle sechs
+  Akzeptanzkriterien erfüllt, danach **beide Reviewer** gelaufen und ihre Funde eingearbeitet.
+
+  **Die fünf Schichten, je an genau einer Stelle** — das ist, was den `L`-Umfang getragen hat:
+  `ExerciseInterestLink` (n:m ohne Gewicht, Muster `MediaTagLink`) · `InterestTagIds` am generischen
+  Vertrag, der **alle** Übungstypen deckt · `ExerciseControllerBase` mit zwei Helfern
+  (`InterestTagsProblemAsync`, `SetInterestLinks`) · `Pugling.Client` **unverändert**, weil die Methoden
+  das Payload-`record` durchreichen · `ExerciseStrategy.Payload(…)`, den alle vier Agenten-Strategien
+  benutzen. Kette neu gefaltet, Snapshot-Diff **45 Zeilen rein additiv**.
+
+  **Rote Proben, jede mit Zahl (Auflage 5 des Nachtlaufs):**
+
+  | Probe | erwartet | gemessen |
+  |---|---|---|
+  | `SetInterestLinks` aus `Create` | fällt breit | **4** Fälle (Metadaten + 3 Agenten-Fälle) |
+  | `SetInterestLinks` aus `Update` | genau 1 | **1** (`Uebung_TraegtIhreEinkleidung_UndPutErsetztSie`) |
+  | Sortierung absteigend statt aufsteigend | genau 1 | **1** (derselbe Fall, an der Vergleichbarkeit) |
+  | Tag-Validierung im `Create` aus | genau 1 | **1** (`UnbekannterTag_Wird_Abgelehnt_…`) |
+  | Tag-Validierung im `Update` aus | genau 1 | **1** (`Uebung_TraegtIhreEinkleidung_…`) |
+  | Abneigungen mit-taggen | genau 1 | **1** (`Kinderpfad_TaggtDiePositivenInteressen_…`) |
+  | Slug-Vergleich groß/klein-empfindlich | genau 1 | **1** (`KindloserPfad_TaggtDieAngegebenenSlugs`) |
+  | `unused`-Filter ohne den dritten Referenzierer | genau 1 | **1** (`EineUebungAlsEinzigerNutzer_…`) |
+  | `ExerciseCount` fest auf 0 | genau 1 | **1** (derselbe Fall) |
+  | „erster Suchtreffer" statt exaktem Slug | genau 1 | **erst 0, dann 1** — siehe unten |
+
+  **Drei Dinge, die die Schätzung falsch hatte, und alle drei nach oben:**
+  1. **`wo: backend` war falsch, das Feld ist `wo: beides`.** Der Editor des Vater-Webs speichert per
+     **Vollersatz**-PUT: ohne Durchreichung räumt ein Klick auf „Speichern" die Einkleidung weg, die der
+     Agent gerade eingetragen hat. Die Falle steht in `uiTypes.ts` **zweimal** dokumentiert
+     (`suggestedBonus`, `executePublic`) und hatte trotzdem keine Zusicherung — jetzt hat sie eine
+     (`ExerciseEditModal.test.ts`, `payloadFrom` dafür exportiert). Das Frontmatter ist nachgezogen.
+  2. **`ExerciseDetail` verspricht in seiner eigenen Doku „all metadata".** Die Einkleidung dort
+     weglassen hätte diesen Satz falsch gemacht; also trägt sie auch diese Sicht. `ExerciseSummary`
+     bleibt bewusst die schmale Zeile — mit der Begründung, die diese Zeile über sich selbst gibt.
+  3. **Ein Fall, den die `## Entscheidungen` nicht hergeben:** `--child` *und* `--interests` zugleich.
+     Entscheidung 4 nennt zwei Pfade, keine Vorrangregel. Nicht geraten, sondern zum **Bedienfehler**
+     gemacht, der den Ausweg nennt — und der Test pinnt, dass `--general` dieselbe Kombination erlaubt,
+     weil der Ausschluss an dem hängt, was das Briefing **trägt**, nicht an den getippten Schaltern.
+
+  **Was die Reviewer gefunden haben (4 Funde mit Code-/Test-Wirkung, Zähler der Freigabe 3: 4 von 5):**
+  - **Die Taxonomie hat jetzt drei Referenzierer, die Aufräum-Sicht kannte zwei.** Ein Stichwort, das nur
+    eine Übung einkleidet, sah unter `?unused=true` unbenutzt aus — und das Löschen ist bewusst ohne
+    Riegel. `ExerciseCount` ist additiv am `InterestTagResponse`, der Filter kennt den dritten Zweig, und
+    die Begründung am `DELETE` sagt jetzt, dass ihr alter Satz („kostet nur Auswahlqualität") seit dieser
+    Story nicht mehr stimmt. Die **Entscheidung**, ob ein benutztes Stichwort löschbar bleibt, ist
+    ausdrücklich nicht getroffen → [B-206](B-206-einkleidung-ist-unsichtbar-und-nicht-korrigierbar.md).
+  - **Die Tag-Validierung im Änderungspfad erreichte keine rote Probe.** Gemessen bestätigt: ohne sie
+    liefert ein PUT mit unbekannter Id **500** (Fremdschlüssel-Verstoß) statt `validation_error`, und der
+    ganze PUT ist verloren. Der Fall trägt sie jetzt, inklusive der tragenden zweiten Hälfte — dass der
+    abgelehnte PUT **nichts** geschrieben hat.
+  - **`--interests` löste gegen eine auf 100 Einträge abgeschnittene Liste auf.** Ab dem 101. Stichwort
+    hätte der Agent einen vorhandenen Slug als Tippfehler gemeldet und eine selbst gekürzte Liste als
+    Beweis angeboten. Aufgelöst wird jetzt **je Slug** mit `search`. Die 100er-Grenze selbst hat bewusst
+    keinen Fall (er bräuchte 101 Stichworte in der geteilten Klassen-DB); stattdessen ist der Weg so
+    gebaut, dass die Grenze nicht mehr erreicht wird.
+  - **Mein Kommentar über den `as`-Cast in der Frontend-Attrappe war falsch.** Der Reviewer hat
+    nachgerechnet: das Literal ist vollständig und übersetzt **ohne** Cast. Der Cast hätte genau das
+    Signal unterdrückt, für das die Datei da ist (ein 31. Feld am `ExerciseDetail`). Jetzt ein annotiertes
+    `BASE` plus Spread — und eine Zusicherung über die **ganze** Nutzlast (`toEqual`), die auch ein
+    versehentlich zusätzlich mitgeschicktes Feld fängt.
+
+  **Und ein Fund an mir selbst, der wichtiger ist als die vier:** Die erste Fassung des Falls
+  „Slug wird exakt getroffen" war **wirkungslos** — der Lockvogel sortierte hinter dem Ziel, „nimm den
+  ersten Suchtreffer" traf also zufällig richtig. Gemessen: **47/47 grün unter der Probe.** Umgebaut
+  (Ziel `zzz-…`, Lockvogel `aaa-…`, der den Slug enthält), danach grün in der Grundlinie und rot unter
+  der Probe. Das ist die Regel „rote Probe am richtigen Ort" in ihrer teuren Form: der Fall *sah*
+  tragfähig aus.
+
+  **Verifikation:** **852/852** Backend (+8 Fälle), **328/328** vitest (+2), `dotnet build` 0 Warnungen,
+  `dotnet format --verify-no-changes` sauber, `tsc -b` sauber.

@@ -109,6 +109,43 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
                 : db.ExerciseCategories.AnyAsync(c => c.Id == categoryId && c.SubjectId == subjectId, ct);
 
     /// <summary>
+    /// Validates the dressing tags (B-46) and returns the problem text, or <c>null</c> when there is none.
+    /// An unknown id is rejected rather than skipped: a caller who mistypes one would otherwise be told
+    /// <c>201</c> and believe the exercise carries a dressing it does not have - the same reason
+    /// <c>unknown_field</c> exists at all.
+    /// </summary>
+    private async Task<string?> InterestTagsProblemAsync(IReadOnlyList<int>? tagIds, CancellationToken ct)
+    {
+        if (tagIds is null || tagIds.Count == 0) return null;
+        var wanted = tagIds.Distinct().ToList();
+        var known = await db.InterestTags.Where(t => wanted.Contains(t.Id)).Select(t => t.Id).ToListAsync(ct);
+        var unknown = wanted.Except(known).OrderBy(id => id).ToList();
+        return unknown.Count == 0
+            ? null
+            : $"Unknown interest tag id(s): {string.Join(", ", unknown)}.";
+    }
+
+    /// <summary>
+    /// Sets the dressing tags as the <b>complete</b> set (B-46). Replacement, not merge: everything else in
+    /// <c>Create</c>/<c>Update</c> treats the payload as a full representation, and a merge would leave no
+    /// way at all to take a tag off again.
+    /// <para>
+    /// The stale rows go through <c>RemoveRange</c> instead of just leaving the navigation. Orphan deletion
+    /// would work (required FK, cascade), but only for a loaded, tracked collection - and <c>Create</c>
+    /// builds an untracked entity. One rule that holds on both paths beats two that each hold on one.
+    /// </para>
+    /// </summary>
+    private void SetInterestLinks(Exercise exercise, IReadOnlyList<int>? tagIds)
+    {
+        var wanted = (tagIds ?? []).Distinct().ToHashSet();
+        var stale = exercise.InterestLinks.Where(l => !wanted.Contains(l.InterestTagId)).ToList();
+        db.ExerciseInterestLinks.RemoveRange(stale);
+        foreach (var link in stale) exercise.InterestLinks.Remove(link);
+        foreach (var tagId in wanted.Where(id => exercise.InterestLinks.All(l => l.InterestTagId != id)))
+            exercise.InterestLinks.Add(new ExerciseInterestLink { InterestTagId = tagId });
+    }
+
+    /// <summary>
     /// Checks the <b>write permission</b> (change) on an exercise: the catalog is global (every creator may find
     /// any exercise and adopt it into their study plans), but only whoever holds an owner or write grant may
     /// change it. Requires the exercise's grants to be loaded (<see cref="FindAsync"/> loads them along).
@@ -130,7 +167,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
 
     /// <summary>Loads an exercise of this type incl. its grants (for permission checking/display); basis for derived additional endpoints.</summary>
     protected Task<Exercise?> FindAsync(int seriesId, int seriesUnitId, int exerciseId, CancellationToken ct) =>
-        db.Exercises.Include(e => e.Category).Include(e => e.Grants)
+        db.Exercises.Include(e => e.Category).Include(e => e.Grants).Include(e => e.InterestLinks)
             .FirstOrDefaultAsync(e => e.Id == exerciseId && e.SeriesUnitId == seriesUnitId
                 && e.Type == TypeKey && e.SeriesUnit!.SeriesId == seriesId, ct);
 
@@ -150,7 +187,10 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category?.Name,
             e.AuthorAdultId, ExercisePermissionService.CanWrite(e.Grants, fid, isAdmin), ExercisePermissionService.CanAdminister(e.Grants, fid, isAdmin),
             e.ExecutePublic, e.Grants.Count, e.Description,
-            e.DefaultUseLeitner, e.DefaultRequireTypedTest, e.DefaultStage, e.DefaultItemCount);
+            e.DefaultUseLeitner, e.DefaultRequireTypedTest, e.DefaultStage, e.DefaultItemCount,
+            // Ascending, so two exercises' dressings compare without sorting first. Expects the links
+            // loaded - both read paths and both write paths do that.
+            [.. e.InterestLinks.Select(l => l.InterestTagId).OrderBy(id => id)]);
     }
 
     /// <summary>List of the exercises of this type in the series unit.</summary>
@@ -178,6 +218,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             .AsNoTracking()
             .Include(e => e.Category)
             .Include(e => e.Grants)
+            .Include(e => e.InterestLinks)
             .Where(e => e.SeriesUnitId == seriesUnitId && e.Type == TypeKey);
 
         // isOwn/isOwner mirror the response fields and allow lists of "what may I change/manage".
@@ -257,6 +298,8 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         if (RequireTypedTestValidation.ProblemText(exerciseType, body.DefaultRequireTypedTest) is { } createTypedErr)
             return this.ProblemWithCode(ApiErrors.ValidationError, createTypedErr);
         var config = body.Config ?? new TConfig();
+        if (await InterestTagsProblemAsync(body.InterestTagIds, ct) is { } createTagErr)
+            return this.ProblemWithCode(ApiErrors.ValidationError, createTagErr);
         if (await ValidateConfigAsync(seriesId, config, ct) is { } createErr) return this.ProblemWithCode(ApiErrors.ValidationError, createErr);
         NormalizeConfig(config);
         await NormalizeConfigAsync(seriesId, config, ct);
@@ -285,6 +328,9 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             // created below (RWX model), so ownership can be transferred/shared later.
             AuthorAdultId = User.AdultId(),
         };
+        // Before `Add`, so the links go in with the generated id in the same insert - no second round trip
+        // and no window in which the exercise exists without its dressing.
+        SetInterestLinks(exercise, body.InterestTagIds);
         db.Exercises.Add(exercise);
         await db.SaveChangesAsync(ct);
 
@@ -336,6 +382,8 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         if (RequireTypedTestValidation.ProblemText(exerciseType, body.DefaultRequireTypedTest) is { } updateTypedErr)
             return this.ProblemWithCode(ApiErrors.ValidationError, updateTypedErr);
         var config = body.Config ?? new TConfig();
+        if (await InterestTagsProblemAsync(body.InterestTagIds, ct) is { } updateTagErr)
+            return this.ProblemWithCode(ApiErrors.ValidationError, updateTagErr);
         if (await ValidateConfigAsync(seriesId, config, ct) is { } updateErr) return this.ProblemWithCode(ApiErrors.ValidationError, updateErr);
         NormalizeConfig(config);
 
@@ -355,6 +403,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         exercise.DefaultRequireTypedTest = body.DefaultRequireTypedTest;
         exercise.DefaultStage = body.DefaultStage;
         exercise.DefaultItemCount = body.DefaultItemCount;
+        SetInterestLinks(exercise, body.InterestTagIds);
         await db.SaveChangesAsync(ct);
         await AfterSaveAsync(exercise, config, isCreate: false, ct);
 

@@ -1176,6 +1176,32 @@ namespace Pugling.Api.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ExerciseInterestLinks",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    ExerciseId = table.Column<int>(type: "INTEGER", nullable: false),
+                    InterestTagId = table.Column<int>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ExerciseInterestLinks", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ExerciseInterestLinks_Exercises_ExerciseId",
+                        column: x => x.ExerciseId,
+                        principalTable: "Exercises",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ExerciseInterestLinks_InterestTags_InterestTagId",
+                        column: x => x.InterestTagId,
+                        principalTable: "InterestTags",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ExerciseItems",
                 columns: table => new
                 {
@@ -1974,6 +2000,17 @@ namespace Pugling.Api.Data.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_ExerciseInterestLinks_ExerciseId_InterestTagId",
+                table: "ExerciseInterestLinks",
+                columns: new[] { "ExerciseId", "InterestTagId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ExerciseInterestLinks_InterestTagId",
+                table: "ExerciseInterestLinks",
+                column: "InterestTagId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ExerciseItems_ExerciseId_OrderIndex",
                 table: "ExerciseItems",
                 columns: new[] { "ExerciseId", "OrderIndex" });
@@ -2551,6 +2588,9 @@ namespace Pugling.Api.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "ExerciseGrants");
+
+            migrationBuilder.DropTable(
+                name: "ExerciseInterestLinks");
 
             migrationBuilder.DropTable(
                 name: "ExerciseTags");

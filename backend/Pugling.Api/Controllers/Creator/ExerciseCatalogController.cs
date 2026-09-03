@@ -161,6 +161,7 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
             .Include(x => x.Category)
             .Include(x => x.Author)
             .Include(x => x.Grants)
+            .Include(x => x.InterestLinks)
             .FirstOrDefaultAsync(x => x.Id == id, ct);
         if (e is null) return NotFound();
 
@@ -174,7 +175,10 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
             ExercisePermissionService.CanWrite(e.Grants, fid, isAdmin), ExercisePermissionService.CanAdminister(e.Grants, fid, isAdmin),
             e.ExecutePublic, e.Grants.Count,
             JsonSerializer.Deserialize<JsonElement>(string.IsNullOrWhiteSpace(e.ConfigJson) ? "{}" : e.ConfigJson, JsonOptions),
-            e.Description, e.DefaultUseLeitner, e.DefaultRequireTypedTest);
+            e.Description, e.DefaultUseLeitner, e.DefaultRequireTypedTest,
+            // Ascending, same as the typed response - two dressings must compare the same way whichever
+            // of the two views they were read through.
+            [.. e.InterestLinks.Select(l => l.InterestTagId).OrderBy(x => x)]);
     }
 
     /// <summary>

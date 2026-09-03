@@ -259,6 +259,7 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
             SourceLang: command.Value("source-lang"),
             TargetLang: command.Value("target-lang"),
             RewardPoints: command.Int("points", DefaultRewardPoints),
+            Interests: command.List("interests"),
             DryRun: command.Flag("dry-run"),
             Strict: command.Flag("strict"));
     }
@@ -384,6 +385,8 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
           --date JJJJ-MM-TT     Termin der Klassenarbeit                        (Standard: in 7 Tagen)
           --title "..."         Titel der Klausur               (Standard: aus Unit bzw. Thema)
           --words a,b,c         Pflicht-Wortschatz (unveränderlich)
+          --interests a,b       Interessen-Slugs, in die die Übung eingekleidet wird (ohne --child;
+                                mit --child kommen sie aus dem Kind selbst)
           --use-weak            schwach beherrschte Wörter des Kindes verwenden
           --source-lang <code>  Lernsprache                     (Standard: Profil, sonst en)
           --target-lang <code>  Muttersprache                   (Standard: Profil, sonst de)

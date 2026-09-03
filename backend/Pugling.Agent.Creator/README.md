@@ -147,6 +147,7 @@ Eines von `--child`/`--profile` ist Pflicht – sonst fehlt sowohl die Zielgrupp
 | `--date JJJJ-MM-TT` | Termin der Klassenarbeit | in 7 Tagen |
 | `--title "…"` | Titel der Klausur | aus Unit bzw. Thema |
 | `--words a,b,c` | Pflicht-Wortschatz (unveränderlich) | – |
+| `--interests a,b` | Interessen-Slugs, in die die Übung eingekleidet wird — **nur ohne Kind** | – |
 | `--use-weak` | schwach beherrschte Wörter des Kindes als Wortschatz | aus |
 | `--source-lang`/`--target-lang` | Lern-/Muttersprache | Profil, sonst `en`/`de` |
 | `--points <n>` | empfohlene Zielpunkte, die eine neue Position erbt (max. 200) | 20 |

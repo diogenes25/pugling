@@ -14,25 +14,37 @@ namespace Pugling.Contracts.Creator;
 /// read at that moment only - raising it later does not move plans already running. Unusable figures (0,
 /// negative, implausibly large) fall back to the position's default of 20.
 /// </para>
+/// <para>
+/// <paramref name="InterestTagIds"/> names the interests the exercise is <b>dressed</b> in (B-46) - ids of
+/// the shared taxonomy that the child's interests and the images already use. It is a full representation
+/// like every other field here: what the payload does not list is removed. An unknown id is a
+/// <c>validation_error</c>, never a silent skip.
+/// </para>
 /// </summary>
 public record ExercisePayload<TConfig>(string Title, int OrderIndex, int RewardPoints, TConfig Config,
     SuggestedBonus? SuggestedBonus = null,
     int? GradeMin = null, int? GradeMax = null, SchoolTypes SchoolTypes = SchoolTypes.None,
     string? Source = null, int? CategoryId = null, string? Description = null,
     bool DefaultUseLeitner = false, bool DefaultRequireTypedTest = false, int? DefaultStage = null,
-    int? DefaultItemCount = null, bool ExecutePublic = true);
+    int? DefaultItemCount = null, bool ExecutePublic = true,
+    IReadOnlyList<int>? InterestTagIds = null);
 
 /// <summary>
 /// Exercise in the response. <paramref name="IsOwn"/> = the requesting creator may <b>change</b> it (owner or
 /// write grant); <paramref name="IsOwner"/> = may <b>manage</b> it (owner: delete, grant permissions,
 /// toggle visibility); <paramref name="ExecutePublic"/> = assignable to everyone.
+/// <para>
+/// <paramref name="InterestTagIds"/> is the dressing (B-46), <b>ascending</b> and therefore comparable
+/// between two exercises without sorting first - that comparison is the whole point of the field, and
+/// B-18 will build the child-fit filter on it.
+/// </para>
 /// </summary>
 public record ExerciseResponse<TConfig>(int Id, int SeriesUnitId, string Type, string Title,
     int OrderIndex, int RewardPoints, DateTime CreatedAt, TConfig Config, SuggestedBonus? SuggestedBonus,
     int? GradeMin, int? GradeMax, SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName,
     int? AuthorAdultId, bool IsOwn, bool IsOwner, bool ExecutePublic, int GrantCount, string? Description,
     bool DefaultUseLeitner, bool DefaultRequireTypedTest,
-    int? DefaultStage, int? DefaultItemCount);
+    int? DefaultStage, int? DefaultItemCount, IReadOnlyList<int> InterestTagIds);
 
 /// <summary>
 /// Child's answers for a direct catalog check, position-based (index in the problem/pair list).

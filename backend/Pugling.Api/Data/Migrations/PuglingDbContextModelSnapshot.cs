@@ -774,6 +774,28 @@ namespace Pugling.Api.Data.Migrations
                     b.ToTable("ExerciseGrants");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.ExerciseInterestLink", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ExerciseId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("InterestTagId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InterestTagId");
+
+                    b.HasIndex("ExerciseId", "InterestTagId")
+                        .IsUnique();
+
+                    b.ToTable("ExerciseInterestLinks");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.ExerciseItem", b =>
                 {
                     b.Property<int>("Id")
@@ -2846,6 +2868,25 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("Exercise");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.ExerciseInterestLink", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Exercise", "Exercise")
+                        .WithMany("InterestLinks")
+                        .HasForeignKey("ExerciseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pugling.Api.Models.InterestTag", "InterestTag")
+                        .WithMany("ExerciseLinks")
+                        .HasForeignKey("InterestTagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Exercise");
+
+                    b.Navigation("InterestTag");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.ExerciseItem", b =>
                 {
                     b.HasOne("Pugling.Api.Models.Exercise", "Exercise")
@@ -3540,11 +3581,15 @@ namespace Pugling.Api.Data.Migrations
             modelBuilder.Entity("Pugling.Api.Models.Exercise", b =>
                 {
                     b.Navigation("Grants");
+
+                    b.Navigation("InterestLinks");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.InterestTag", b =>
                 {
                     b.Navigation("ChildInterests");
+
+                    b.Navigation("ExerciseLinks");
 
                     b.Navigation("MediaLinks");
                 });

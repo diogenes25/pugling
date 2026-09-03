@@ -82,6 +82,51 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal(1, tags[0].GetProperty("childCount").GetInt32());
     }
 
+    /// <summary>
+    /// Aus dem Review zu B-46. Die Taxonomie hat seit dieser Story <b>drei</b> Referenzierer, und die
+    /// Aufräum-Sicht kannte zwei. Ein Stichwort, das nur eine Übung einkleidet, sah damit „unbenutzt" aus —
+    /// und das Löschen ist bewusst ohne Riegel, die Einkleidung wäre also lautlos per Cascade weg.
+    /// <para>
+    /// Rote Probe: <c>ExerciseLinks.Count == 0</c> aus dem <c>unused</c>-Filter nehmen ⇒ die zweite
+    /// Zusicherung fällt; <c>ExerciseCount</c> aus der Projektion nehmen ⇒ die erste.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task EineUebungAlsEinzigerNutzer_MachtDasStichwortNichtUnbenutzt()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var slug = TestApi.UniqueName("einhorn").ToLowerInvariant();
+
+        var tag = await father.PostAsJsonAsync("/api/v1/creator/interest-tags", new { label = slug });
+        var tagId = await TestApi.IdAsync(tag);
+
+        // Weder Bild noch Kind zeigen darauf - nur die Übung. Genau der Fall, den die alte Fassung übersah.
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = TestApi.UniqueName("Einkleidung-Fach") }));
+        var (seriesId, seriesUnitId) = await TestApi.CreateSeriesAndUnitAsync(father, subjectId);
+        var angelegt = await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic",
+            new
+            {
+                title = TestApi.UniqueName("Eingekleidet"),
+                orderIndex = 1,
+                rewardPoints = 10,
+                config = new { problems = new[] { new { prompt = "1 + 1", answer = 2, tolerance = 0 } } },
+                interestTagIds = new[] { tagId },
+            });
+        Assert.Equal(HttpStatusCode.Created, angelegt.StatusCode);
+
+        var gefunden = await GetAsync(father, $"/api/v1/creator/interest-tags?search={slug}");
+        Assert.Equal(1, gefunden.GetArrayLength());
+        Assert.Equal(0, gefunden[0].GetProperty("mediaCount").GetInt32());
+        Assert.Equal(0, gefunden[0].GetProperty("childCount").GetInt32());
+        Assert.Equal(1, gefunden[0].GetProperty("exerciseCount").GetInt32());
+
+        // Und die Aufräum-Sicht bietet es nicht mehr zum Wegwerfen an.
+        var unbenutzt = await GetAsync(father, $"/api/v1/creator/interest-tags?unused=true&search={slug}");
+        Assert.Equal(0, unbenutzt.GetArrayLength());
+    }
+
     [Fact]
     public async Task NegativesGewicht_BildetEineAbneigungAb()
     {

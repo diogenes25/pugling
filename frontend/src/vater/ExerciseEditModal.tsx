@@ -89,8 +89,12 @@ export function ExerciseEditModal({ exercise, onClose, onSaved }: {
 /**
  * Baut die PUT-Nutzlast aus dem geladenen Stand plus den geänderten Feldern. Zentral, weil beide Editoren
  * (Metadaten und Inhalt) denselben Vollersatz schicken müssen – nur mit unterschiedlicher `config`.
+ *
+ * **Exportiert für den Test**, und der Grund ist gemessen: Die Durchreichung der Felder, die das Formular
+ * *nicht* anzeigt, hing bis B-46 an zwei Kommentaren und keiner Zusicherung — und ist mit der Einkleidung
+ * zum dritten Fall derselben Falle geworden. Was man nicht sieht, kann man nicht bewusst behalten.
  */
-function payloadFrom(detail: ExerciseDetail, form: MetaForm, config: unknown): CreateExercisePayload {
+export function payloadFrom(detail: ExerciseDetail, form: MetaForm, config: unknown): CreateExercisePayload {
   return {
     title: form.title.trim(),
     description: form.description.trim() || null,
@@ -110,6 +114,9 @@ function payloadFrom(detail: ExerciseDetail, form: MetaForm, config: unknown): C
     // bzw. die Sichtbarkeit umschalten (Letzteres verlangt Owner-Rechte → 403 für einen Write-Grantee).
     suggestedBonus: detail.suggestedBonus,
     executePublic: detail.executePublic,
+    // Dasselbe für die Einkleidung (B-46). Kein Formularfeld – gerade DARUM hier: was die Oberfläche nicht
+    // anzeigt, kann sie auch nicht bewusst behalten, und der KI-Creator trägt es ein.
+    interestTagIds: detail.interestTagIds,
   };
 }
 
@@ -130,7 +137,7 @@ interface MetaForm {
   targetLang: string;
 }
 
-function initialForm(d: ExerciseDetail): MetaForm {
+export function initialForm(d: ExerciseDetail): MetaForm {
   return {
     title: d.title,
     description: d.description ?? "",

@@ -43,6 +43,9 @@ public class InterestTag
 
     /// <summary>Children who like this keyword (or dislike it – see <see cref="ChildInterest.Weight"/>).</summary>
     public List<ChildInterest> ChildInterests { get; set; } = [];
+
+    /// <summary>Exercises dressed in this keyword (B-46) – the third referrer beside child and image.</summary>
+    public List<ExerciseInterestLink> ExerciseLinks { get; set; } = [];
 }
 
 /// <summary>
