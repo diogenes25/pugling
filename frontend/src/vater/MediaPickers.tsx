@@ -28,6 +28,14 @@ export interface ThumbAction {
 /**
  * Eine Bildkachel mit Beschreibung und optionalem Knopf. `width`/`height` stehen als Attribute am `<img>`
  * (nicht nur im Stil), damit der Platz vor dem Laden reserviert ist und die Liste nicht springt.
+ *
+ * **Falle für Tests** (B-153, dreimal bezahlt): Beide Aufrufer — `VocabMediaPanel` und
+ * `ExerciseSharingPanels` — zeigen die verknüpften Kacheln **und** darunter `MediaSearch`. Dasselbe Asset
+ * steht damit zweimal auf der Seite, einmal mit „Entfernen" und einmal mit „schon dabei". Ein Bezug allein
+ * über den Alt-Text trifft beide und ist eine `strict mode violation`; ob sie auftritt, entscheidet, ob die
+ * Verknüpfungsliste beim ersten Poll schon nachgeladen war — also ein Flackern statt eines Fehlers.
+ * Einzuschränken ist über den Knopf der eigenen Kachel (`Entfernen: <Beschreibung>`); ein Beispiel steht in
+ * `e2e/bilder.spec.ts`.
  */
 export function AssetThumb({ asset, size = 96, purpose = "Card", action }: {
   asset: MediaAssetResponse;

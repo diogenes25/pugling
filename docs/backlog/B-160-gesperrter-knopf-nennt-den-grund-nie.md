@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/frontend, bereich/katalog, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/katalog, rolle/creator]
 aliases: [title am disabled-Knopf erscheint nie, Verlagssperre ohne Grund]
-status: ausformuliert
+status: abgenommen
 prio: P2
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: S
+wo: frontend
+migration: nein
+vertragsbruch: nein
 quelle: Nachschau im Nachtlauf 2026-08-12 (zu B-150)
 unverifiziert: false
 grund: ""
@@ -65,7 +65,47 @@ nicht.
 4. **Testebene:** Empfehlung: ein `PublisherAdmin.test.tsx` mit den zwei Zuständen (gesperrt/nicht), Vorbild
    `CatalogAdmin.test.tsx` aus B-154. Ein E2E wäre teurer und deckte den A11y-Teil nicht besser ab.
 
-## Akzeptanzkriterien (Entwurf)
+## Entscheidungen
+
+1. **`aria-disabled` für die fachliche Dauersperre, echtes `disabled` nur noch für „läuft gerade".** Das
+   ist der Kern und keine Stilfrage: Ein `disabled` Form-Control ist **nicht fokussierbar** — AK 3 („ein
+   Screenreader erfährt, dass der Knopf gesperrt ist") war damit nicht knapp verfehlt, sondern
+   konstruktiv unerreichbar. Nebenbei kommen die Pointer-Events zurück, der `title` funktioniert also
+   erstmals. Die Hausregel „jeder mutierende Knopf trägt `disabled={busy}`" bleibt unangetastet: ihr
+   Grund (Playwrights Wartepunkt auf eine **laufende** Aktion) gilt dem Vorgang, nicht einem Dauerzustand.
+   **Kosten:** drei. Der `onClick` muss den Klick selbst verwerfen (sonst der `409`, den B-150 abschaffen
+   wollte). Die Optik ist nicht mehr gratis — `.btn[aria-disabled="true"]` in `index.css`, und weil
+   `aria-disabled` im Gegensatz zu `disabled` auch `:active` matcht, brauchen die vier
+   `:active`-Regeln ein `:not([aria-disabled="true"])`, sonst sinkt der Knopf beim Klick ein und sieht
+   genau im Moment der Ablehnung bedienbar aus (Reviewer-Fund). Und `aria-describedby` muss den Grund
+   adressieren, also braucht die Zeile eine `useId()`.
+2. **Der Grund steht immer sichtbar da**, nicht nur bei Hover: „davon N fremd" wird zu
+   „davon N fremd – darum nicht löschbar". Das ist die billigste Hälfte und passiert unabhängig von
+   Entscheidung 1 — auf dem Handy gibt es kein Hover, ein `title` wäre dort auch am fokussierbaren Knopf
+   unerreichbar. **Kosten:** keine; der Satz stand ohnehin, ihm fehlte nur seine Folge.
+3. **Kein Wächter.** Nachgezählt ist diese Stelle die einzige im Frontend, die `disabled` mit einem
+   erklärenden `title` kombiniert, und `aria-disabled` kam nirgends vor. Ein Tor für einen Einzelfall
+   kostet mehr, als es hält. **Kosten:** das Muster kann unbemerkt zurückkehren — bewusst getragen, erst
+   messen (README: „Neue Regel scharf stellen? Erst messen").
+4. **Testebene: Baustein plus Rollengang.** `PublisherAdmin.test.tsx` ist die **erste** Testebene für
+   diesen Bildschirm überhaupt; dazu `e2e/gesperrter-knopf-nennt-den-grund.spec.ts`, weil genau eine
+   **Browser**-Eigenschaft die Ursache war und der geseedete Katalog die Sperre als Dauerzustand trägt
+   (herrenlose „Green Line 1" an „Klett"). **Kosten:** `PublisherRow` musste exportiert werden.
+
+**Beim Bauen gemessen und in die Aufteilung eingeflossen:** Playwrights Actionability wertet
+`aria-disabled="true"` selbst als „nicht bedienbar" und verweigert den Klick. Die Aussage „ein Klick löst
+nichts aus" ist im E2E deshalb gar nicht prüfbar — sie kommt nie so weit. Diese Hälfte trägt der
+Bausteintest, der E2E sagt stattdessen: jedes Werkzeug, das Actionability respektiert, prallt ab.
+
+## Rote Proben (erwartet / gemessen)
+
+| Probe | erwartet | gemessen |
+| --- | --- | --- |
+| Ausgangsstand, `PublisherAdmin.test.tsx` | 2 | **2** (die zwei grünen bewachen den Preis des Umbaus) |
+| Ausgangsstand, `e2e/gesperrter-knopf-nennt-den-grund.spec.ts` | 1 | **1** |
+| Zurück auf echtes `disabled` ohne `aria-disabled` (E2E) | 1 | **1** |
+
+## Akzeptanzkriterien
 
 1. Bei `foreignSeriesCount > 0` ist der Grund **ohne Hover** lesbar.
 2. Der Knopf löst in diesem Zustand keine Anfrage aus (kein `409`).
@@ -79,3 +119,11 @@ nicht.
   2026-08-11 abgenommenen [B-150](B-150-verlagssperre-unsichtbar-dialog-verspricht-gegenteil.md).
   `entgangen_bei: [B-150]` — der Defekt liegt **innerhalb** ihres Diffs. Selbst am Code nachgeprüft
   (`PublisherAdmin.tsx:116-121`, plus die Gegenzählung, dass `aria-disabled` im Frontend nirgends vorkommt).
+- **2026-09-04** — **ausformuliert → abgenommen** im Nachtlauf, Sprint 1. Autonom gegrillt unter Freigabe 1
+  (`art: Defekt`). **Rollengang:** `e2e/gesperrter-knopf-nennt-den-grund.spec.ts` fährt die Creator-Rolle
+  im echten Browser — und das ist hier nicht Formsache, sondern notwendig: Die Ursache war eine
+  Browser-Eigenschaft, die happy-dom nur nachbildet. Kein Browser-Handgang möglich (keine
+  Chrome-Anbindung), damit greift der dokumentierte Ersatz.
+  Belege: `tsc -b` sauber, `vitest run` **368/368** grün, `playwright test` **59/59** grün.
+  `frontend-reviewer` gelaufen, **kein Blocker**; seine sechs Funde mit Code- oder Testwirkung sind
+  eingearbeitet (Protokoll `docs/pm-sitzung-2026-09-04-nacht.md`). Commit `6f7fc60`.

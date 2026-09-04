@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { StatusBanner } from "../components/StatusBanner";
 import { api } from "../lib/api";
 import { confirmAction } from "../lib/ui";
@@ -83,15 +83,17 @@ export function PublisherAdmin({ onChanged }: { onChanged: () => void }) {
 }
 
 /** Eine Zeile; der Speichern-Knopf erscheint erst, wenn sich der Name wirklich geändert hat. */
-function PublisherRow({ publisher, busy, onSave, onDelete }: {
+export function PublisherRow({ publisher, busy, onSave, onDelete }: {
   publisher: PublisherResponse;
   busy: boolean;
   onSave: (name: string) => void;
   onDelete: () => void;
 }) {
+  const uid = useId();
   const [name, setName] = useState(publisher.name);
   const dirty = name.trim() !== publisher.name;
   const locked = publisher.foreignSeriesCount > 0;
+  const grundId = `${uid}-gesperrt`;
 
   return (
     <tr>
@@ -103,22 +105,44 @@ function PublisherRow({ publisher, busy, onSave, onDelete }: {
       </td>
       <td className="num">
         {publisher.seriesCount}
-        {locked && <div className="muted" style={{ fontSize: 11 }}>davon {publisher.foreignSeriesCount} fremd</div>}
+        {/* Die Zahl stand hier schon; was fehlte, war ihre **Folge**. „davon 2 fremd" ist eine Tatsache,
+            aus der niemand „also nicht löschbar" ableiten muss – und genau das war der Teil, den B-150 in
+            ein `title` gelegt hatte, das nie erscheint. */}
+        {locked && (
+          <div id={grundId} className="muted" style={{ fontSize: 11 }}>
+            davon {publisher.foreignSeriesCount} fremd – darum nicht löschbar
+          </div>
+        )}
       </td>
       <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
         {dirty && (
           <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={busy || !name.trim()}
             aria-label={`„${publisher.name}" speichern`} onClick={() => onSave(name.trim())}>OK</button>
         )}
-        {/* Gesperrt statt anklickbar: Der Server antwortet hier mit 409, und im geseedeten Katalog ist das
-            ein Dauerzustand (die herrenlose „Green Line 1" an „Klett"). Ein Knopf, der nie funktionieren
-            kann, gehört nicht angeboten – der `title` sagt, warum, statt es dem Fehlversuch zu überlassen. */}
-        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy || locked}
+        {/*
+          * Gesperrt statt anklickbar: Der Server antwortet hier mit 409, und im geseedeten Katalog ist das
+          * ein Dauerzustand (die herrenlose „Green Line 1" an „Klett"). Ein Knopf, der nie funktionieren
+          * kann, gehört nicht angeboten.
+          *
+          * **`aria-disabled` für die fachliche Sperre, echtes `disabled` nur für „läuft gerade"** (B-160).
+          * Ein `disabled` Form-Control ist nicht fokussierbar und empfängt in Chromium und WebKit keine
+          * Pointer-Events: Der `title` wurde darum nie zum Tooltip, und wer per Tab durch die Tabelle geht,
+          * traf den Knopf nie und erfuhr nichts von der Sperre. Die Konvention „jeder mutierende Knopf
+          * trägt `disabled={busy}`" (frontend/CLAUDE.md) bleibt unangetastet – ihr Grund (Playwrights
+          * Wartepunkt auf eine laufende Aktion) gilt dem Vorgang, nicht einem Dauerzustand.
+          *
+          * Der Preis steht direkt darunter: Ohne echtes `disabled` hält der Browser den Klick nicht mehr
+          * auf, also muss der Handler es selbst tun – sonst liefe der Creator wieder in den 409.
+          */}
+        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy}
+          aria-disabled={locked}
+          aria-describedby={locked ? grundId : undefined}
           title={locked
             ? "Gesperrt: An diesem Verlag hängen Reihen, die dir nicht gehören – fremde oder herrenlose "
               + "aus dem geteilten Katalog. Löschen würde auch deren Zuordnung entfernen."
             : undefined}
-          aria-label={`Löschen: ${publisher.name}`} onClick={onDelete}>Löschen</button>
+          aria-label={`Löschen: ${publisher.name}`}
+          onClick={() => { if (!locked) onDelete(); }}>Löschen</button>
       </td>
     </tr>
   );

@@ -13,7 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-nachgeschaut: ""
+nachgeschaut: "2026-09-04: Struktur-Gegenzaehlung, siehe Verlauf"
 wartet_auf: ""
 ---
 
@@ -112,6 +112,14 @@ bevor er behoben wurde.
   (`bilder.spec.ts:77`), Einzellauf danach **1 passed**, zweiter voller Lauf **56/56**. Genau das Muster,
   das der Eintrag vom 2026-08-14 vorhersagt — und genau die Sorte Rot, die man beim zweiten grünen Lauf
   vergisst. Die Sichtung kam zuerst als eigene Story herein (B-213) und ist als Dublette verworfen.
+- **2026-09-04** — **nachgeschaut** (Retro des Nachtlaufs, Sprint 1). Prüfpunkt: nicht „sieht sauber aus",
+  sondern die Gegenzählung, **wo `AssetThumb` sonst noch zusammen mit `MediaSearch` steht**. Ergebnis:
+  `<figure>` gibt es im ganzen `src/` nur zweimal (`MediaPickers.tsx`, `SohnPractice.tsx`), und `AssetThumb`
+  hat **zwei** Aufrufer — `VocabMediaPanel` (hier repariert) und `ExerciseSharingPanels` (Titelbild). Die
+  zweite Fläche trägt dieselbe Zweideutigkeit; heute greift dort **kein** Test per Alt-Text, es flackert
+  also nichts, aber die Falle ist scharf für den nächsten, der einen schreibt. Statt einer Story steht die
+  Warnung jetzt an der Quelle (`MediaPickers.tsx`, Doku an `AssetThumb`) — dort findet sie, wer sie braucht.
+  **Kein Defekt in der abgenommenen Arbeit**, `entgangen_bei` bleibt leer.
 - **2026-09-04** — **ausformuliert → abgenommen**. Gegrillt wurde **nicht**, und das ist hier kein
   übersprungener Schritt: Der Eintrag vom 2026-08-14 hat die Ursache mit erhaltener Fehlermeldung belegt,
   die Fix-Richtung benannt und die frühere Verdachtsrichtung (geteilte DB) ausdrücklich zurückgezogen — es

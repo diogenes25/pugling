@@ -99,6 +99,14 @@ Disziplin"). Ein Sweep ohne Wächter stellt denselben Zustand in drei Monaten wi
    einen Grund.
 3. Die Frontend-Suite bleibt grün, die sichtbare Darstellung ändert sich nirgends.
 
+## Nachtrag 2026-09-04 (B-188)
+
+`ListenAusfall` (`VaterWizard.tsx`) trägt sein `role="alert"` **gemeinsam mit dem Text**, an drei
+Einsetzungen. Das ist bewusst und folgt dem direkten Nachbarn in derselben Datei (B-162, Trefferbereich),
+nicht dieser Story: Ein *eingefügtes* `role="alert"` wird deutlich zuverlässiger angesagt als eine
+`role="status"`-Region, die mit ihrem Text entsteht. Die Tabelle unten wächst damit um drei Einträge —
+hier vermerkt, damit sie nicht unbemerkt wachsen.
+
 ## Verlauf
 
 - **2026-08-09** — angelegt und zugleich ausformuliert im Nachtlauf (Sprint 1, beim Bau von B-132). Der

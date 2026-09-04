@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/frontend, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/supervisor]
 aliases: [children.error im Assistenten, Assistent behauptet du hast keine Kinder]
-status: ausformuliert
+status: abgenommen
 prio: P2
 art: Defekt
-groesse: ""
+groesse: S
 wo: frontend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: frontend-reviewer zum Sprint 1 des Nachtlaufs 2026-09-01
 unverifiziert: false
 grund: ""
@@ -53,15 +53,58 @@ sondern eine falsche Handlung auslöst.
 
 ## Offene Punkte
 
-1. Nur die drei hier, oder gleich der ganze Sammel-Durchgang über die 41 Stellen? Empfehlung: **nur die
-   drei** — `children` ist handlungsleitend, die anderen 38 sind es nicht, und ein Sammel-Fix über beide
-   Klassen wäre eine Regel ohne Gefälle (dieselbe Begründung wie B-174, Entscheidung 2).
-2. Reicht ein Banner, oder braucht „Bestehendes Kind" auch hier einen Wiederholweg wie in B-162?
-   Empfehlung: nachsehen, ob der Stepper-Rückweg eine neue Abfrage auslöst — bei der Übungssuche war
-   ausgerechnet das die wirkungslose Bewegung.
+1. ~~Nur die drei hier, oder gleich der ganze Sammel-Durchgang über die 41 Stellen?~~ → Entscheidung 1.
+2. ~~Reicht ein Banner, oder braucht „Bestehendes Kind" auch hier einen Wiederholweg?~~ → Entscheidung 2.
+
+## Entscheidungen
+
+1. **Nur die drei.** `children` ist handlungsleitend, die anderen 38 sind es nicht; ein Sammel-Fix über
+   beide Klassen wäre eine Regel ohne Gefälle (dieselbe Begründung wie B-174, Entscheidung 2).
+   **Kosten:** die Zahl aus B-174 sinkt nur um drei, die Frage bleibt offen.
+2. **Banner *und* Wiederholweg** — und das ist keine Ermessensfrage, sondern **nachgesehen**: `onGo` des
+   Steppers ruft nur `setStep`, und `children` hängt an `[session!.id]`. Über den Stepper zurück und wieder
+   vor ändert also **keine** `useAsync`-Abhängigkeit, es fliegt keine neue Abfrage. Genau das steht als
+   Kommentar schon in derselben Datei (B-162, Trefferbereich). Ohne den Knopf wäre die neue, wahre Meldung
+   eine Verschlechterung: Sie stünde über einem Bildschirm, aus dem nur F5 herausführt — und der kostet den
+   ganzen Assistenten, es persistiert kein Zustand. **Kosten:** ein geteilter Baustein `ListenAusfall`
+   statt dreier Zeilen.
+3. **Der Knopf „Bestehendes Kind" bleibt gesperrt**, auch mit Banner. Es gibt ja keine Liste; ihn zu öffnen
+   führte in ein leeres Pulldown. Was fehlte, war nicht die Bedienbarkeit, sondern der Unterschied zwischen
+   „keine da" und „nicht geladen". **Kosten:** keine.
+4. **Das Banner bleibt während der Wiederholung stehen** (aus der Review-Runde). `useAsync.reload()` setzt
+   `error` auf `null` und `loading` auf `true` im **selben** Schritt — an `fehler` allein hinge das Banner
+   samt Knopf im Moment des Klicks aus: Der gedrückte Knopf verschwände unter dem Finger, der Fokus fiele
+   auf `<body>`, und während der Wiederholung stünde gar nichts da. `ListenAusfall` hält den letzten Fehler
+   darum fest, solange geladen wird. **Kosten:** ein Zustand mehr im Baustein — und erst dadurch ist
+   `disabled={laedt}` überhaupt erreichbar; vorher wäre es toter Code gewesen.
+
+## Bewusst nicht mitgenommen: die vierte Liste
+
+`useExerciseTypes` hat **gar keinen Fehlerkanal** — `exerciseTypes.ts` schluckt den Fehlschlag absichtlich
+(`.catch(() => setAll([]))`, begründet als „lesbar statt kaputt"). Fällt das Manifest aus, zeigt „Typ" nur
+noch „– alle Typen –" und die Beschriftungen fallen auf die rohen Schlüssel zurück: dieselbe Klasse wie
+`categories`, nur eine Ebene tiefer. **Innerhalb dieses Diffs nicht reparierbar** — der Hook ist geteilt,
+ein `error` dort trifft jeden Konsumenten. Läuft als [B-215](B-215-typ-manifest-ohne-fehlerkanal.md)
+weiter, damit der nächste Leser es nicht erneut herleitet.
+
+## Rote Proben (erwartet / gemessen)
+
+| Probe | erwartet | gemessen |
+| --- | --- | --- |
+| Ausgangsstand, `e2e/assistent-listen-fallen-aus.spec.ts` | 1 | **1** |
+| Kinder-Ausfall wird nicht mehr gezeigt (`fehler={null}`) | 1 | **1** |
 
 ## Verlauf
 
 - 2026-09-01 · Aufgenommen aus dem `frontend-reviewer`-Review zu Sprint 1 des Nachtlaufs. Fundorte vom
   Reviewer benannt und von mir gegengelesen. `prio: P2`, weil der `children`-Fall zu einem **doppelt
   angelegten Kind** führt und damit teurer ist als der in B-162 behobene Fall.
+- **2026-09-04** — **ausformuliert → abgenommen** im Nachtlauf, Sprint 1. Autonom gegrillt unter Freigabe 1
+  (`art: Defekt`); der zweite offene Punkt war eine **Frage an den Code**, keine Entscheidung, und ist dort
+  beantwortet (Entscheidung 2). **Rollengang:** `e2e/assistent-listen-fallen-aus.spec.ts` fährt die
+  Supervisor-Rolle im echten Browser gegen einen echten Server, mit künstlich abgeschossener Kinderliste —
+  und einmal wieder zurück, damit belegt ist, dass der Riegel eine Tür hat. Kein Browser-Handgang möglich
+  (keine Chrome-Anbindung), damit greift der dokumentierte Ersatz.
+  Belege: `tsc -b` sauber, `vitest run` **368/368** grün, `playwright test` **59/59** grün.
+  `frontend-reviewer` gelaufen, **kein Blocker**; seine sechs Funde mit Code- oder Testwirkung sind
+  eingearbeitet (Protokoll `docs/pm-sitzung-2026-09-04-nacht.md`). Commit `6f7fc60`.

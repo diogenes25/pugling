@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-09-04: Vokabel-Pfad gegen docs/api-examples geprueft"
 ---
 
 # B-210 · „Beschreibung speichern" dreht den gerade gespeicherten Inhalt lautlos zurück
@@ -130,3 +131,10 @@ Klasse, das der Fix offen gelassen hatte:
   Browser-Handgang möglich (keine Chrome-Anbindung in dieser Sitzung), damit greift der dokumentierte
   Ersatz. Die Regel ist als Satz in `frontend/CLAUDE.md` nachgezogen, weil sie bei jedem Dialog mit zwei
   Speicher-Knöpfen wieder entscheidet. Commit `3828bcf`.
+- **2026-09-04** — **nachgeschaut** (Retro des Nachtlaufs, Sprint 1). Prüfpunkt: die eine Annahme, die beim
+  Bauen nur *hergeleitet* war — dass der `ItemEditor`-Pfad kein Nachladen braucht, weil die Config einer
+  Vokabelübung keine Items trägt. Gegen den **erfassten Vertrag** geprüft statt gegen den Controller:
+  `docs/api-examples/catalog.md:172-178` zeigt die Antwort einer Vokabelübung mit `"refs": null,
+  "items": []`. Ein reiner Einstellungs-PUT schickt damit `hasPayloadItems = false`, und `AfterSaveAsync`
+  lässt die Item-Tabelle unangetastet. Die Annahme trägt. **Kein Defekt gefunden**, `entgangen_bei` bleibt
+  leer.

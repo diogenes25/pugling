@@ -45,20 +45,31 @@ a { color: var(--cyan); }
   box-shadow: 0 6px 0 0 #1550b8, 0 12px 18px -6px rgba(38, 120, 255, .6);
   transition: transform .06s ease, box-shadow .06s ease;
 }
-.btn:active { transform: translateY(4px); box-shadow: 0 2px 0 0 #1550b8; }
-.btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.btn:active:not([aria-disabled="true"]) { transform: translateY(4px); box-shadow: 0 2px 0 0 #1550b8; }
+/* `aria-disabled` sieht aus wie `disabled`, ist aber fokussierbar und behält seine Pointer-Events.
+   Das ist der Unterschied, um den es in B-160 ging: Ein `disabled` Form-Control bekommt in Chromium und
+   WebKit keine Pointer-Events, sein `title` wird also nie zum Tooltip — und aus dem Tab-Lauf ist er auch
+   raus, ein Screenreader erfährt darum nie, dass es die Sperre gibt. Für eine **fachliche** Dauersperre
+   ist das falsch; für „läuft gerade" bleibt echtes `disabled` richtig.
+
+   Der Preis steht in den `:active`-Regeln darüber: Ein echtes `disabled` matcht `:active` nie, ein
+   `aria-disabled` schon — der gesperrte Knopf sänke sonst beim Klick ein und sähe genau in dem Moment
+   bedienbar aus, in dem er ablehnt. `transform: none` hier allein genügt nicht, weil jede Variante im
+   `:active` ihren **eigenen** Schatten setzt; die Ausnahme steht darum an der Quelle. */
+.btn:disabled,
+.btn[aria-disabled="true"] { opacity: .5; cursor: not-allowed; transform: none; }
 /* Wie bei Eingabefeldern und Navigation: der Standard-Ring verschwindet auf der farbigen Fläche. Solange ein
    Knopf je Bildschirm stand, fiel das nicht auf – bei einer Reihe Antwortmöglichkeiten ist „welcher ist
    fokussiert" die ganze Bedienbarkeit per Tastatur. Hier `--ink` statt des sonst üblichen `--cyan`: ein
    cyaner Ring auf dem cyanen Vollknopf wäre genau da unsichtbar, wo er am nötigsten ist. */
 .btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 .btn.gold { color: #3a2400; background: linear-gradient(180deg, var(--gold), var(--gold-2)); box-shadow: 0 6px 0 0 #b56a12, 0 12px 18px -6px rgba(255, 158, 44, .55); }
-.btn.gold:active { box-shadow: 0 2px 0 0 #b56a12; }
+.btn.gold:active:not([aria-disabled="true"]) { box-shadow: 0 2px 0 0 #b56a12; }
 .btn.lime { color: #04220f; background: linear-gradient(180deg, var(--lime), #1f9c3a); box-shadow: 0 6px 0 0 #14722a; }
-.btn.lime:active { box-shadow: 0 2px 0 0 #14722a; }
+.btn.lime:active:not([aria-disabled="true"]) { box-shadow: 0 2px 0 0 #14722a; }
 .btn.red { color: #fff; background: linear-gradient(180deg, #ff6a86, #d1305a); box-shadow: 0 6px 0 0 #8f2140; }
 .btn.ghost { color: var(--ink); background: #171a44; box-shadow: 0 6px 0 0 #0b0d2c, inset 0 0 0 1.5px var(--stroke); }
-.btn.ghost:active { box-shadow: 0 2px 0 0 #0b0d2c, inset 0 0 0 1.5px var(--stroke); }
+.btn.ghost:active:not([aria-disabled="true"]) { box-shadow: 0 2px 0 0 #0b0d2c, inset 0 0 0 1.5px var(--stroke); }
 .btn.small { font-size: 14px; padding: 11px; border-radius: 14px; }
 
 /* ---------- Karten / Pills / Bars ---------- */

@@ -395,6 +395,13 @@ export function VaterWizard() {
       {step === 0 && (
         <section className="card" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <h3 style={{ margin: 0 }}>Für welches Kind?</h3>
+          {/* Der schwerste der drei Ausfälle (B-188): Scheitert `api.children()`, bleibt `data` auf `null`,
+              und „Bestehendes Kind" ist dann gesperrt. Der Assistent behauptet damit stumm „du hast keine
+              Kinder" und lässt nur noch das Anlegen offen — der Vater legt ein Kind ein zweites Mal an,
+              das es längst gibt. Der Knopf bleibt zu Recht gesperrt (es gibt ja keine Liste); was fehlte,
+              war der Unterschied zwischen „keine da" und „nicht geladen". */}
+          <ListenAusfall was="Deine Kinder" fehler={children.error} laedt={children.loading}
+            onRetry={children.reload} />
           <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
             <ChoicePill active={mode === "existing"} disabled={(children.data?.length ?? 0) === 0}
               onClick={() => {
@@ -437,6 +444,8 @@ export function VaterWizard() {
       {step === 1 && (
         <section className="card" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <h3 style={{ margin: 0 }}>Wo hakt es?</h3>
+          <ListenAusfall was="Die Fächer" fehler={subjects.error} laedt={subjects.loading}
+            onRetry={subjects.reload} />
           <div className="form-grid">
             <div className="field"><label>Fach</label>
               <select aria-label="Fach" value={subjectId} onChange={(e) => {
@@ -522,6 +531,13 @@ export function VaterWizard() {
               Das Quelle-Feld daneben bleibt bewusst unbeschriftet: Entscheidung 5 gilt für die zwei Achsen
               mit ähnlichem Wortmaterial. Sein Platzhalter verschwindet zwar genauso beim Tippen — das ist
               derselbe Mangel, aber eine eigene Entscheidung. */}
+          {/* Bei der Filterreihe, nicht oben unter der Überschrift: Der Ausfall betrifft **dieses**
+              Pulldown. Stünde er über Zählzeile und Trefferbereich, läge er bei gleichzeitigem Suchausfall
+              über einem zweiten Banner, das zur oberen Hälfte gehört – zwei Meldungen in umgekehrter
+              Reihenfolge zu ihren Bedienelementen. Fällt die Liste aus, steht das Pulldown auf „alle" und
+              filtert nichts; sichtbar wäre sonst nur, dass mehr Treffer kommen als erwartet. */}
+          <ListenAusfall was="Die Arten dieses Fachs" fehler={categories.error} laedt={categories.loading}
+            onRetry={categories.reload} />
           <div className="row" style={{ gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
             <div className="field" style={{ maxWidth: 180 }}>
               <label htmlFor="wiz-category">Art</label>
@@ -626,6 +642,52 @@ export function VaterWizard() {
           ? <button type="button" className="btn" style={{ width: "auto" }} onClick={next}>Weiter →</button>
           : <button type="button" className="btn lime" style={{ width: "auto" }} disabled={busy} onClick={finish}>{busy ? "…" : "✅ Lehrplan erstellen"}</button>}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Der Ausfall einer Optionsliste: benannt, und mit einem Weg zurück (B-188).
+ *
+ * Der Weg zurück ist hier kein Schmuck. Über den Stepper zurück und wieder vor ändert **keine**
+ * Abhängigkeit von `useAsync`, es fliegt also keine neue Abfrage — ausgerechnet die Bewegung, die ein
+ * Nutzer versucht, ist die wirkungslose. Ohne den Knopf bliebe nur F5, und das kostet den ganzen
+ * Assistenten (es persistiert kein Zustand). Dieselbe Begründung wie im Trefferbereich (B-162); der
+ * Baustein zieht sie aus einer Stelle in drei.
+ *
+ * Bewusst **neben** der Liste, nicht an ihrer Stelle: Der Schritt bleibt bedienbar, und der Vater sieht,
+ * dass eine Auswahl fehlt, statt zu glauben, es gäbe keine.
+ */
+export function ListenAusfall({ was, fehler, laedt, onRetry }: {
+  /** Was nicht geladen werden konnte, als Satzanfang: „Deine Kinder", „Die Fächer". */
+  was: string;
+  fehler: string | null;
+  laedt: boolean;
+  onRetry: () => void;
+}) {
+  /*
+   * Den letzten Fehler festhalten, und zwar zwingend: `useAsync.reload()` setzt `error` auf `null` und
+   * `loading` auf `true` im **selben** Schritt. An `fehler` allein hinge das Banner im Moment des Klicks
+   * aus – der gedrückte Knopf verschwände unter dem Finger, der Fokus fiele auf `<body>`, und während der
+   * Wiederholung stünde gar nichts da. Dieselbe Begründung, aus der zwei Schritte weiter „Auswahl leeren"
+   * montiert bleibt und nur gesperrt wird.
+   *
+   * Nebenwirkung, die es erst ehrlich macht: Erst dadurch gibt es den Zustand „Fehler steht, Abfrage
+   * läuft" überhaupt – vorher war `disabled={laedt}` unerreichbar.
+   */
+  const [letzter, setLetzter] = useState<string | null>(null);
+  useEffect(() => {
+    if (fehler) setLetzter(fehler);
+    else if (!laedt) setLetzter(null);
+  }, [fehler, laedt]);
+
+  const gescheitert = fehler ?? (laedt ? letzter : null);
+  if (!gescheitert) return null;
+  return (
+    <div className="banner err" role="alert">
+      {was} konnten nicht geladen werden: {gescheitert}
+      <button type="button" className="btn ghost inline-btn" style={{ width: "auto", marginLeft: 8 }}
+        disabled={laedt} onClick={onRetry}>{laedt ? "Lädt…" : "Erneut laden"}</button>
     </div>
   );
 }
