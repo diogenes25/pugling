@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { Modal } from "../components/Modal";
 import { StatusBanner } from "../components/StatusBanner";
@@ -32,6 +32,9 @@ import { ExerciseItemMediaPanel } from "./VocabMediaPanel";
  * 2. **Vokabelpaare sind kein Config-Inhalt.** Sie liegen als eigene Item-Ebene mit stabilen Ids, an denen
  *    der Lernstand des Kindes hängt. Sie werden darum einzeln über `/items` gepflegt, und der Metadaten-PUT
  *    schickt bewusst **keine** Items/Refs mit – ein reiner Einstellungs-PUT lässt die Wortmenge unangetastet.
+ * 3. **Der geladene Stand wird nach jedem Teil-Speichern nachgezogen** (B-210). Aus (1) folgt, dass die
+ *    *nächste* Nutzlast auf dem Stand **danach** aufsetzen muss – sonst trägt der zweite Knopf den Inhalt
+ *    vom Öffnen zurück und löscht, was der erste gerade gespeichert hat.
  */
 export function ExerciseEditModal({ exercise, onClose, onSaved }: {
   exercise: ExerciseSummary;
@@ -53,6 +56,30 @@ export function ExerciseEditModal({ exercise, onClose, onSaved }: {
    * schickte ihn wieder hin. Ein State, zwei Leser.
    */
   const [form, setForm] = useState<MetaForm | null>(null);
+  /*
+   * „Der geladene Stand ist nicht mehr der des Servers." Gesetzt, sobald ein Teil-Speichern durch ist, und
+   * erst zurückgenommen, wenn das Nachladen gelandet ist. Solange er steht, sperrt er **beide**
+   * Speicher-Knöpfe: jeder von ihnen schickt einen Vollersatz-PUT, und ein Vollersatz aus einem veralteten
+   * Stand ist genau der stille Datenverlust, um den es hier geht (B-210).
+   */
+  const [veraltet, setVeraltet] = useState(false);
+  const [nachladeFehler, setNachladeFehler] = useState<string | null>(null);
+  const [laedtNach, setLaedtNach] = useState(false);
+  /*
+   * Jeder Fehlversuch zählt hoch, auch wenn der Text derselbe ist. Der Zähler steuert den Fokus-Effekt:
+   * ohne ihn ändert React beim zweiten Scheitern keinen Knoten, `role="alert"` sagt nichts erneut an, und
+   * für einen Screenreader ist „wieder gescheitert" von „der Knopf tut nichts" nicht zu unterscheiden.
+   */
+  const [fehlversuche, setFehlversuche] = useState(0);
+  const erneutLadenRef = useRef<HTMLButtonElement>(null);
+  /*
+   * „Ein Vollersatz-PUT ist unterwegs." Der Dialog hält das selbst, weil die beiden Editoren **zwei**
+   * `useAction`-Instanzen haben und deren Sperre je Instanz gilt (`frontend/CLAUDE.md`). Ohne diesen Riegel
+   * bliebe der eine Knopf klickbar, während der andere speichert – und der zweite PUT ginge mit dem Stand
+   * von **vor** dem ersten raus. Ohne ETag am Server gewinnt der letzte Schreiber, also wäre das derselbe
+   * lautlose Verlust wie in B-210, nur durch zwei ungeduldige Klicks statt durch zwei Schritte.
+   */
+  const [schreibt, setSchreibt] = useState(false);
 
   useEffect(() => {
     api.getExercise(exercise.id)
@@ -60,22 +87,98 @@ export function ExerciseEditModal({ exercise, onClose, onSaved }: {
       .catch((e) => setLoadError(errorMessage(e)));
   }, [exercise.id]);
 
+  /**
+   * Zieht den geladenen Stand nach. **Ohne `setDetail(null)`**: das hängte die Editoren aus, und der
+   * Zeilen-Editor verlöre dabei seinen Zustand – nach einem Metadaten-Speichern wären ungesicherte
+   * Inhaltsänderungen weg. Der Austausch findet an Ort und Stelle statt.
+   *
+   * Das Formular bleibt bewusst unangetastet: Es trägt bereits, was gerade gespeichert wurde, und ein
+   * Zurücksetzen würde eine noch nicht gespeicherte Eingabe daneben verwerfen.
+   */
+  async function nachladen() {
+    setVeraltet(true);
+    setLaedtNach(true);
+    try {
+      setDetail(await api.getExercise(exercise.id));
+      setNachladeFehler(null);
+      setVeraltet(false);
+    } catch (e) {
+      // `veraltet` bleibt stehen: der PUT ist durch, unser Stand ist es nicht.
+      setNachladeFehler(errorMessage(e));
+      setFehlversuche((n) => n + 1);
+    } finally {
+      setLaedtNach(false);
+    }
+  }
+
+  // Der Fokus liegt nach dem Klick auf dem Speichern-Knopf, der gerade `disabled` wurde – er fällt damit
+  // auf `<body>`, und dort greift die Fokus-Falle des Dialogs nicht mehr: Tab liefe in die Seite dahinter.
+  // Im Fehlerfall bleibt das dauerhaft, also holen wir ihn auf den einen Knopf, der jetzt zählt.
+  useEffect(() => {
+    if (nachladeFehler) erneutLadenRef.current?.focus();
+  }, [nachladeFehler, fehlversuche]);
+
+  /**
+   * Der einzige Weg, den Vollersatz-PUT abzuschicken – beide Editoren gehen hier durch. Zusammengelegt,
+   * damit `schreibt` **einen** Ort hat: zwei Knöpfe, die dieselbe Übung vollständig ersetzen, sind
+   * fachlich eine Liste und teilen sich darum die Sperre.
+   *
+   * `detail`/`route` sind hier gesetzt: Der Aufruf kommt nur aus den Editoren, und die rendert der Dialog
+   * erst, wenn beides steht.
+   */
+  async function speichern(payload: CreateExercisePayload) {
+    setSchreibt(true);
+    try {
+      await api.updateExercise(detail!.seriesId, detail!.seriesUnitId, route!, detail!.id, payload);
+    } finally {
+      setSchreibt(false);
+    }
+  }
+
+  /** Nach einem erfolgreichen Teil-Speichern: erst den eigenen Stand, dann die Liste dahinter. */
+  async function gespeichert() {
+    await nachladen();
+    onSaved();
+  }
+
   return (
-    <Modal label={`Übung bearbeiten: ${exercise.title}`} onClose={onClose} maxWidth={720}>
+    // Titel aus dem GELADENEN Stand, nicht aus der Listenzeile: Nach einem Umbenennen stünde oben sonst
+    // weiter der alte Name neben dem neuen im Feld – und der vorgelesene Dialogname wäre falsch.
+    <Modal label={`Übung bearbeiten: ${detail?.title ?? exercise.title}`} onClose={onClose} maxWidth={720}>
       <div className="row" style={{ alignItems: "center", gap: 8 }}>
-        <h3 style={{ margin: 0 }}>✏️ Bearbeiten · {exercise.title}</h3>
+        <h3 style={{ margin: 0 }}>✏️ Bearbeiten · {detail?.title ?? exercise.title}</h3>
         <span className="muted">{typeLabel}</span>
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto", marginLeft: "auto" }}
           onClick={onClose} aria-label="Schließen">×</button>
       </div>
 
       {loadError && <div className="banner err">{loadError}</div>}
+      {/* Der Fehlerzweig des Nachladens braucht seine eigene Fläche: Der PUT war erfolgreich, das
+          Erfolgsbanner steht also zu Recht – aber ab hier ist der Dialog blind, und ein weiterer
+          Vollersatz aus diesem Stand würde das gerade Gespeicherte überschreiben. Darum sagt der Kasten
+          beides und bietet den Weg zurück an. */}
+      {nachladeFehler && (
+        <div className="banner err" role="alert">
+          {/* Die Servermeldung in ein eigenes Element: `errorMessage` liefert einen rohen `Error.message`
+              ohne Satzzeichen („Failed to fetch"), im Fließtext liefe sie mit dem nächsten Satz zusammen. */}
+          <p style={{ margin: 0 }}>Gespeichert – aber der Stand ließ sich nicht neu laden: {nachladeFehler}</p>
+          <p style={{ margin: "4px 0 0" }}>
+            Weiteres Speichern ist gesperrt, damit dieser Dialog nicht mit dem alten Stand über den neuen
+            schreibt.
+            <button type="button" ref={erneutLadenRef} className="btn ghost inline-btn"
+              style={{ width: "auto", marginLeft: 8 }} disabled={laedtNach} onClick={nachladen}>
+              {laedtNach ? "Lade…" : "Erneut laden"}
+            </button>
+          </p>
+        </div>
+      )}
       {!detail && !loadError && <div className="loading">Lade…</div>}
       {detail && form && (
         <>
           {type === "Vocabulary" && <ItemEditor detail={detail} />}
           {type !== "Vocabulary" && isContentEditable(type) && (
-            <ContentEditor detail={detail} form={form} type={type} route={route!} onSaved={onSaved} />
+            <ContentEditor detail={detail} form={form} type={type} speichern={speichern}
+              onSaved={gespeichert} gesperrt={veraltet || schreibt} />
           )}
           {type !== "Vocabulary" && !isContentEditable(type) && (
             <div className="banner">
@@ -84,7 +187,8 @@ export function ExerciseEditModal({ exercise, onClose, onSaved }: {
               Beschreibung und Einordnung lassen sich unten ändern.
             </div>
           )}
-          <MetaEditor detail={detail} form={form} setForm={setForm} type={type} route={route!} onSaved={onSaved} />
+          <MetaEditor detail={detail} form={form} setForm={setForm} type={type} speichern={speichern}
+            onSaved={gespeichert} gesperrt={veraltet || schreibt} />
           {/* Titelbild und Rechte gehören zur Übung, nicht zu ihrem Inhalt – darum unter den Metadaten. */}
           <ExerciseCoverSection exerciseId={detail.id} canWrite={detail.isOwn} />
           <GrantsSection exerciseId={detail.id} isOwner={detail.isOwner} />
@@ -129,6 +233,16 @@ export function payloadFrom(detail: ExerciseDetail, form: MetaForm, config: unkn
     // der Rundlauf stimmt, statt dass ein unsichtbares Feld überlebt.
     interestTagIds: form.interestTagIds,
   };
+}
+
+/**
+ * Was den Vollersatz-PUT sicher scheitern ließe, geprüft **vor** dem Absenden. Beide Knöpfe schicken
+ * dieselbe Nutzlast aus demselben Formular – seit das Formular über beiden liegt (B-206), muss darum auch
+ * beiden dasselbe fehlen dürfen. „Inhalt speichern" prüfte den Titel nicht und holte sich für einen
+ * leergeräumten Titel einen Server-`400`, den der Vater nicht seinem Titelfeld zuordnen konnte.
+ */
+function metaProblem(form: MetaForm): string | null {
+  return form.title.trim() ? null : "Bitte einen Titel angeben.";
 }
 
 interface MetaForm {
@@ -182,9 +296,14 @@ function langsOf(d: ExerciseDetail): { sourceLang: string; targetLang: string } 
   return { sourceLang: c.sourceLang ?? "", targetLang: c.targetLang ?? "" };
 }
 
-function MetaEditor({ detail, form, setForm, type, route, onSaved }: {
+function MetaEditor({ detail, form, setForm, type, speichern, onSaved, gesperrt }: {
   detail: ExerciseDetail; form: MetaForm; setForm: (f: (prev: MetaForm | null) => MetaForm) => void;
-  type: ExerciseTypeKey; route: string; onSaved: () => void;
+  type: ExerciseTypeKey; speichern: (payload: CreateExercisePayload) => Promise<void>; onSaved: () => void;
+  /**
+   * Der Dialog erlaubt gerade kein Schreiben: der geladene Stand wird nachgezogen, das ist gescheitert,
+   * oder der **andere** Knopf speichert bereits.
+   */
+  gesperrt: boolean;
 }) {
   const action = useAction();
 
@@ -194,15 +313,23 @@ function MetaEditor({ detail, form, setForm, type, route, onSaved }: {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.title.trim()) { action.fail("Bitte einen Titel angeben."); return; }
-    // Die Config bleibt inhaltlich, wie sie ist – nur das Sprachpaar der Vokabelübung kommt aus dem
-    // Formular (ohne es kann der Server kein inline ergänztes Wort im Store anlegen).
+    const problem = metaProblem(form);
+    if (problem) { action.fail(problem); return; }
+    /*
+     * Die Config bleibt inhaltlich, wie sie ist – nur das Sprachpaar der Vokabelübung kommt aus dem
+     * Formular (ohne es kann der Server kein inline ergänztes Wort im Store anlegen).
+     *
+     * Dass `detail.config` hier **der Server-Stand von jetzt** ist und nicht der vom Öffnen, hängt am
+     * Nachladen im Dialog (B-210). Die Alternative wäre gewesen, sich zu merken, was der Inhalts-Knopf
+     * zuletzt geschickt hat – aber der Server normalisiert die Config beim Speichern und formt sie für
+     * die Antwort (`NormalizeConfig`, `ConfigForResponse`: vergebene Wort-Ids, `_self`-Links). „Was ich
+     * geschickt habe" wäre damit eine dritte Wahrheit, die von der des Servers abweichen darf.
+     */
     const config = type === "Vocabulary"
       ? { ...(detail.config as Record<string, unknown>),
           sourceLang: form.sourceLang || null, targetLang: form.targetLang || null }
       : detail.config;
-    const ok = await action.run(() => api.updateExercise(
-      detail.seriesId, detail.seriesUnitId, route, detail.id, payloadFrom(detail, form, config)), "Gespeichert.");
+    const ok = await action.run(() => speichern(payloadFrom(detail, form, config)), "Gespeichert.");
     if (ok) onSaved();
   }
 
@@ -289,7 +416,8 @@ function MetaEditor({ detail, form, setForm, type, route, onSaved }: {
           )}
         </>
       )}
-      <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>
+      <button type="submit" className="btn inline-btn" style={{ width: "auto" }}
+        disabled={action.busy || gesperrt}>
         {action.busy ? "Speichere…" : "Beschreibung speichern"}
       </button>
       <StatusBanner message={action.message} style={{ marginTop: 0 }} />
@@ -304,8 +432,11 @@ function MetaEditor({ detail, form, setForm, type, route, onSaved }: {
  * derselbe wie beim Anlegen; vorbelegt wird über `configToEditorState` – die Gegenrichtung zu
  * `buildTypeConfig`.
  */
-function ContentEditor({ detail, form, type, route, onSaved }: {
-  detail: ExerciseDetail; form: MetaForm; type: ExerciseTypeKey; route: string; onSaved: () => void;
+function ContentEditor({ detail, form, type, speichern, onSaved, gesperrt }: {
+  detail: ExerciseDetail; form: MetaForm; type: ExerciseTypeKey;
+  speichern: (payload: CreateExercisePayload) => Promise<void>; onSaved: () => void;
+  /** Siehe `MetaEditor`: derselbe Riegel, weil derselbe Vollersatz-PUT dahinter steht. */
+  gesperrt: boolean;
 }) {
   const initial = configToEditorState(type, detail.config);
   const [rows, setRows] = useState<Row[]>(initial.rows);
@@ -317,11 +448,11 @@ function ContentEditor({ detail, form, type, route, onSaved }: {
   function removeRow(i: number) { setRows((rs) => (rs.length > 1 ? rs.filter((_, idx) => idx !== i) : rs)); }
 
   async function save() {
-    // Erst die fachliche Prüfung des Editors – sie erspart einen Rundlauf mit sicherem 400.
-    const problem = contentProblem(type, rows, extra, 0);
+    // Erst die fachliche Prüfung des Editors – sie erspart einen Rundlauf mit sicherem 400. Der Titel
+    // gehört dazu: dieser Knopf schickt ihn mit, also kann er ihn auch leer mitschicken.
+    const problem = metaProblem(form) ?? contentProblem(type, rows, extra, 0);
     if (problem) { action.fail(problem); return; }
-    const ok = await action.run(() => api.updateExercise(
-      detail.seriesId, detail.seriesUnitId, route, detail.id,
+    const ok = await action.run(() => speichern(
       // Das geteilte Formular, nicht `initialForm(detail)`: sonst schickt dieser Knopf den Stand von vor
       // dem Öffnen zurück und macht eine gerade gespeicherte Metadaten-Änderung wieder rückgängig.
       payloadFrom(detail, form, buildTypeConfig(type, rows, extra))), "Inhalt gespeichert.");
@@ -334,7 +465,7 @@ function ContentEditor({ detail, form, type, route, onSaved }: {
       <ConfigEditor type={type} rows={rows} extra={extra} setExtra={setExtra}
         patchRow={patchRow} addRow={addRow} removeRow={removeRow} />
       <button type="button" className="btn inline-btn" style={{ width: "auto", marginTop: 10 }}
-        disabled={action.busy} onClick={save}>
+        disabled={action.busy || gesperrt} onClick={save}>
         {action.busy ? "Speichere…" : "Inhalt speichern"}
       </button>
       <StatusBanner message={action.message} />

@@ -116,5 +116,9 @@ macht es auf.
 
 Übungen sind über `/vater/exercises` **bearbeitbar**: Metadaten per PUT — den geladenen
 `config`/`suggestedBonus`/`executePublic` **mitschicken**, sonst löscht der Vollersatz sie; Vokabelpaare
-einzeln über `…/vocabulary/{id}/items`, sonst brechen Item-Ids und Lernstand des Kindes weg. Wer einen neuen
+einzeln über `…/vocabulary/{id}/items`, sonst brechen Item-Ids und Lernstand des Kindes weg.
+**Zwei Knöpfe, ein Vollersatz** ([B-210](../docs/backlog/B-210-dialog-haelt-zwei-wahrheiten-fuer-die-config.md)):
+Der Dialog muss den geladenen Stand nach **jedem** Teil-Speichern nachziehen (merken, was man geschickt
+hat, reicht nicht – der Server normalisiert), und der Riegel gehört an **beide** Knöpfe in **einen** Ort:
+`useAction` sperrt je Instanz, zwei Editoren haben zwei davon. Wer einen neuen
 Typ ergänzt, braucht beide Wege: das Formular auf `/vater/exercises/neu`, den Rückweg im Dialog.
