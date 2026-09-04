@@ -126,4 +126,4 @@ Bausteintest, der E2E sagt stattdessen: jedes Werkzeug, das Actionability respek
   Chrome-Anbindung), damit greift der dokumentierte Ersatz.
   Belege: `tsc -b` sauber, `vitest run` **368/368** grün, `playwright test` **59/59** grün.
   `frontend-reviewer` gelaufen, **kein Blocker**; seine sechs Funde mit Code- oder Testwirkung sind
-  eingearbeitet (Protokoll `docs/pm-sitzung-2026-09-04-nacht.md`). Commit `6f7fc60`.
+  eingearbeitet (Protokoll `docs/pm-sitzung-2026-09-04-nacht.md`). Commit `15b00f4`.
