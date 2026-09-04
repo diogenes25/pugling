@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/idee, bereich/frontend]
+tags: [typ/story, status/verworfen, bereich/frontend]
 aliases: [flackernder E2E, bilder.spec instabil]
-status: idee
+status: verworfen
 prio: P3
 art: Defekt
 groesse: ""
@@ -10,8 +10,8 @@ migration: ""
 vertragsbruch: ""
 quelle: Verifikation zu B-210 (2026-09-04)
 unverifiziert: true
-grund: ""
-ersetzt_durch: []
+grund: "Dublette zu B-153, das denselben Fall seit 2026-08-11 fuehrt und die Ursache belegt hat"
+ersetzt_durch: [B-153]
 entgangen_bei: []
 wartet_auf: ""
 ---
@@ -41,5 +41,12 @@ Rot nicht mehr ernst zu nehmen. Genau davon lebt das Tor aber.
 
 ## Verlauf
 
-- **2026-09-04** — aufgenommen aus der Verifikation zu B-210. `unverifiziert: true`, weil genau **eine**
-  Beobachtung vorliegt und die zugehörige Fehlermeldung nicht gesichert wurde.
+- **2026-09-04** — aufgenommen aus der Verifikation zu B-210 und **noch am selben Tag verworfen**:
+  [B-153](B-153-bilder-spec-flackert-im-vollen-lauf.md) führt denselben Fall seit dem 2026-08-11 und hat
+  am 2026-08-14 die Ursache mit erhaltener Fehlermeldung belegt (`strict mode violation`, der Bildbezug
+  trifft zwei Elemente). Die Beobachtung von heute ist dort als dritte Sichtung nachgetragen.
+
+  **Warum die Dublette entstand:** Ich habe den Fund beim Verifizieren aufgeschrieben, ohne den Index nach
+  dem Symptom zu durchsuchen — und dabei sogar eine Ursachen-Vermutung („geteilte DB?") als offenen Punkt
+  formuliert, die B-153 bereits ausdrücklich widerlegt hatte. Ein Fund beim Bauen wird eine eigene Story
+  (README, „Ein Fund beim Bauen…"); *ob es sie schon gibt*, steht dort nicht — es ist die Grep vorher.

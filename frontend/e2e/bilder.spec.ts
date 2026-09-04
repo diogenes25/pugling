@@ -26,6 +26,24 @@ function pixel(color: "red" | "blue"): string {
   return `data:image/png;base64,${png}`;
 }
 
+/**
+ * Das **verknüpfte** Bild einer Vokabel, eingeschränkt über den „Entfernen"-Knopf seiner eigenen Kachel.
+ *
+ * Ohne die Einschränkung trifft der Bezug **zwei** Kacheln: Dasselbe Motiv steht hier als Verknüpfung und
+ * als Treffer der Bibliothekssuche, der „schon dabei" meldet. Ob daraus eine `strict mode violation` wurde,
+ * entschied allein, ob die Verknüpfungsliste beim ersten Poll schon nachgeladen war — darum flackerte der
+ * Fall über drei volle Läufe (B-153). `AssetThumb` gibt dem Knopf den Namen „<Beschriftung>: <Beschreibung>";
+ * der unterscheidet die beiden Kacheln.
+ *
+ * `exact` an beiden Bezügen: `getByRole(…, { name })` vergleicht als **Teilstring**. Eine dritte
+ * Beschreibung, die eine bestehende enthält, machte die Einschränkung sonst lautlos wieder zweideutig —
+ * mit derselben Meldung, und diesmal sähe die Stelle sogar repariert aus.
+ */
+const verknuepftesBild = (vater: Page, description: string) =>
+  vater.locator("figure")
+    .filter({ has: vater.getByRole("button", { name: `Entfernen: ${description}`, exact: true }) })
+    .getByRole("img", { name: description, exact: true });
+
 async function vaterLogin(page: Page) {
   await page.goto("/vater");
   await page.locator("#fid").fill(FATHER.id);
@@ -119,12 +137,33 @@ test("Vater bebildert eine Vokabel, der Sohn sieht sein Bild und kann es wechsel
 
   const panel = vater.getByRole("heading", { name: new RegExp(`Bilder für .${WORD}`) });
   await expect(panel).toBeVisible();
-  for (const description of ["Stadt als Comic-Zeichnung", "Stadt als Foto"]) {
+  // Die Gegenprobe unten zählt die Vorkommen **dieses** Motivs und hängt darum daran, dass zuletzt danach
+  // gesucht wurde – die Treffer der Suche bleiben stehen. Als Konstante, damit die Kopplung sichtbar ist
+  // und ein Umsortieren der Liste nicht ein Rot erzeugt, das wie der bewachte Defekt aussieht.
+  const ZULETZT_SICHTBAR = "Stadt als Foto";
+  for (const description of ["Stadt als Comic-Zeichnung", ZULETZT_SICHTBAR]) {
     await vater.getByRole("textbox", { name: "Bild suchen" }).fill(description);
     await vater.getByRole("button", { name: "Suchen" }).click();
-    await vater.getByRole("button", { name: "+ Zuordnen" }).first().click();
-    await expect(vater.getByRole("img", { name: description })).toBeVisible();
+    // Über den vollen Knopfnamen statt `.first()`: Welcher Treffer der erste ist, sagt niemand zu, und
+    // ein Bezug per Position bleibt auch dann grün, wenn er das Falsche trifft.
+    await vater.getByRole("button", { name: `+ Zuordnen: ${description}`, exact: true }).click();
+    await expect(verknuepftesBild(vater, description)).toBeVisible();
   }
+
+  /*
+   * Die Gegenprobe zu B-153: Sie macht die Zweideutigkeit, die den Fall dreimal hat flackern lassen, zu
+   * einer **festen** Aussage. Ohne sie bliebe die Einschränkung oben eine Behauptung, die nur so lange
+   * hält, wie niemand den Bezug wieder aufweicht.
+   */
+  await expect(vater.getByRole("img", { name: ZULETZT_SICHTBAR, exact: true })).toHaveCount(2);
+  /*
+   * Und die zweite Kachel ist kein Zufall, sondern gewolltes Verhalten: Der Picker kennzeichnet, was schon
+   * verknüpft ist, und sperrt es (`MediaPickers.tsx`) – sonst ordnete ein zweiter Klick dasselbe Bild noch
+   * einmal zu. Bewusst diese Aussage und nicht ein `toHaveCount(1)` auf den eingeschränkten Bezug: Das
+   * könnte nie vor der Zusicherung in der Schleife fallen, weil `toBeVisible` bereits strikt ist.
+   */
+  await expect(vater.getByRole("button", { name: `schon dabei: ${ZULETZT_SICHTBAR}`, exact: true }))
+    .toBeDisabled();
 
   // ---------- Profil des Kindes: das Interesse steuert, welche Darstellung gewinnt ----------
   await vater.goto(`/vater/kind/${childId}`);

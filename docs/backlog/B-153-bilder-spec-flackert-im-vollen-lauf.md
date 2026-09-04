@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/frontend, bereich/medien]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/medien]
 aliases: [bilder.spec flackert, E2E-Flake Bebilderung, Playwright instabil]
-status: ausformuliert
+status: abgenommen
 prio: P2
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: XS
+wo: frontend
+migration: nein
+vertragsbruch: nein
 quelle: Verifikation von B-149 am 2026-08-11 (voller Playwright-Lauf)
 unverifiziert: false
 grund: ""
@@ -57,6 +57,37 @@ greifen. Rote Probe: Der Fall muss im **vollen** Lauf grün werden und im Einzel
 belegt eine Zusicherung, dass es *zwei* Vorkommen gibt, dass der eingeschränkte Locator wirklich das
 verknüpfte trifft und nicht zufällig das erste.
 
+## Was gebaut wurde
+
+Ein Helfer `verknuepftesBild(vater, description)` schränkt über den „Entfernen"-Knopf der eigenen Kachel
+ein (`filter({ has: … })`); die Auswahl des Zuordnen-Knopfs läuft über den vollen `aria-label` statt über
+`.first()`. Beide Bezüge tragen `exact: true` — `getByRole(…, { name })` vergleicht als **Teilstring**, und
+eine dritte Beschreibung, die eine bestehende enthält, machte die Einschränkung sonst lautlos wieder
+zweideutig, mit derselben Meldung und dem Anschein, die Stelle sei repariert.
+
+Dazu zwei Zusicherungen, die die Zweideutigkeit **festhalten** statt sie nur zu umgehen:
+
+- `toHaveCount(2)` auf den rohen Alt-Text-Bezug — die einzige Stelle im Repo, die überhaupt aussagt, dass
+  dasselbe Motiv hier zweimal steht. Sie wird rot, sobald jemand den Bezug wieder aufweicht *oder* der
+  Picker aufhört, Verknüpftes zu zeigen.
+- Der „schon dabei"-Knopf ist **gesperrt**. Das war zuerst ein `toHaveCount(1)` auf den eingeschränkten
+  Bezug — und hätte nie vor der Zusicherung in der Schleife fallen können, weil `toBeVisible` bereits
+  strikt ist (Review-Fund). Die jetzige Fassung sagt stattdessen, *warum* die zweite Kachel richtig ist:
+  Der Picker kennzeichnet Verknüpftes und sperrt es, sonst ordnete ein zweiter Klick dasselbe Bild erneut
+  zu.
+
+## Rote Proben (erwartet / gemessen)
+
+| Probe | erwartet | gemessen |
+| --- | --- | --- |
+| Einschränkung auf die verknüpfte Kachel entfernt | 1 | **1**, mit *exakt* der Meldung aus dem Beleg vom 2026-08-14 |
+| Sperre am „schon dabei"-Treffer entfernt (`MediaPickers.tsx`) | 1 | **1** |
+
+Die erste Probe ist der eigentliche Beleg: Aus einem Flackern, das man nur unter der Last des vollen Laufs
+sieht, ist ein **deterministisch** reproduzierbarer Fall geworden — dieselben zwei Elemente, dieselben
+`hasText`-Marker. Dass ein Flackern *fort* ist, lässt sich durch Laufen nicht beweisen; dass die Ursache
+weg ist, schon.
+
 ## Warum eine eigene Story
 
 Ein flackernder E2E ist die Sorte Rot, die man beim zweiten grünen Lauf gerne vergisst — und dann steht
@@ -77,3 +108,16 @@ bevor er behoben wurde.
   `FachEigentumTests.cs`) und zählt darum nach Freigabe 3 nicht in den Fehlerzähler des Sprints; er wird hier
   aufgeschrieben statt dort mitgebaut. P2, weil ein flackernder Fall das Test-Tor und die CI gelegentlich rot
   färbt und die Ursache jetzt in Minuten behebbar ist.
+- **2026-09-04** — **dritte Sichtung**, beim Verifizieren von B-210: voller Lauf **54 grün, 1 rot**
+  (`bilder.spec.ts:77`), Einzellauf danach **1 passed**, zweiter voller Lauf **56/56**. Genau das Muster,
+  das der Eintrag vom 2026-08-14 vorhersagt — und genau die Sorte Rot, die man beim zweiten grünen Lauf
+  vergisst. Die Sichtung kam zuerst als eigene Story herein (B-213) und ist als Dublette verworfen.
+- **2026-09-04** — **ausformuliert → abgenommen**. Gegrillt wurde **nicht**, und das ist hier kein
+  übersprungener Schritt: Der Eintrag vom 2026-08-14 hat die Ursache mit erhaltener Fehlermeldung belegt,
+  die Fix-Richtung benannt und die frühere Verdachtsrichtung (geteilte DB) ausdrücklich zurückgezogen — es
+  gab keinen offenen Punkt, über den zu entscheiden gewesen wäre. Belege: `tsc -b` sauber, `bilder.spec.ts`
+  allein grün, voller `playwright test` **56/56** grün. `frontend-reviewer` gelaufen, **kein Blocker**;
+  seine sieben Funde sind eingearbeitet, bis auf einen, der als [B-214](B-214-store-zeile-per-teilstring-und-position.md)
+  eigenständig weiterläuft. **Rollengang:** die Spec selbst fährt die Creator- und die Student-Rolle im
+  echten Browser gegen einen echten Server; ein zusätzlicher Handgang wäre hier gegenstandslos, weil der
+  Defekt **im Test** saß und nicht im Produkt. Commit `c5f6dbe`.

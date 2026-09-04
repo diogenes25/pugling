@@ -500,12 +500,11 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (65)
+### Offen (64)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-07](B-07-db-umbau-restetappen.md) | DB-Struktur-Umbau: der offene Betriebsschritt | Aufräumen | `geschaetzt` | P1 | XS | backend | — |
-| [B-153](B-153-bilder-spec-flackert-im-vollen-lauf.md) | `bilder.spec.ts` fällt im vollen Lauf gelegentlich aus, allein ist sie grün | Defekt | `ausformuliert` | P2 | — | — | — |
 | [B-160](B-160-gesperrter-knopf-nennt-den-grund-nie.md) | Der gesperrte Löschen-Knopf nennt seinen Grund nie — der `title` erscheint nicht | Defekt | `ausformuliert` | P2 | — | — | — |
 | [B-181](B-181-praemisse-der-rennen-klasse-stimmt-nicht.md) | Die Rennen-Klasse nennt nur einen von zwei Fehlermodi — welcher auftritt, entscheidet die Plattform | Defekt | `ausformuliert` | P2 | — | — | — |
 | [B-188](B-188-wizard-verschweigt-drei-weitere-ausfaelle.md) | Der Assistent verschweigt drei weitere Ausfälle — einer schickt den Vater ins Kind-Anlegen | Defekt | `ausformuliert` | P2 | — | frontend | — |
@@ -534,7 +533,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-177](B-177-seitenschluessel-haengt-an-einer-batching-annahme.md) | Der Seitenschlüssel hängt an einer Batching-Annahme, die kein Tor hält | Defekt | `idee` | P3 | — | — | — |
 | [B-185](B-185-anlegemodus-behauptet-uebernommenes-fach.md) | Beim Anlegen behauptet der Hinweis ein übernommenes Fach, das das Feld nicht zeigt | Defekt | `idee` | P3 | — | — | — |
 | [B-205](B-205-exercise-in-use-ohne-deutsche-fassung.md) | `exercise_in_use` fehlt in `GERMAN_PROBLEM_TEXT` — die zwei Geschwister stehen drin | Defekt | `idee` | P3 | — | — | — |
-| [B-213](B-213-bilder-spec-flackert-im-vollen-lauf.md) | `bilder.spec.ts` fällt im vollen Lauf gelegentlich, allein nie | Defekt | `idee` | P3 | — | frontend | — |
+| [B-214](B-214-store-zeile-per-teilstring-und-position.md) | Die Store-Zeile wird per Teilstring **und** Position gegriffen — dieselbe Bauart wie B-153 | Defekt | `idee` | P3 | — | frontend | — |
 | [B-17](B-17-birkenbihl-sprachcodes.md) | Sprachcode-Normalisierung bei der Vokabel-Dekodierung | Frage | `geschaetzt` | P3 | XS | frontend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-186](B-186-assistent-und-planseite-setzen-zielpunkte-verschieden.md) | Assistent und Plan-Seite setzen die Zielpunkte nach verschiedenen Regeln | Frage | `idee` | P3 | — | — | — |
@@ -571,7 +570,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-05](B-05-buchstaben-tausch.md) | Buchstaben-Tausch-Eingabe (Anagramm) | Wunsch | `geschaetzt` | P5 | M | beides | — |
 
 <details>
-<summary>Abgenommen (135)</summary>
+<summary>Abgenommen (136)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -623,6 +622,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-149](B-149-schularten-tabelle-statt-manifest.md) | Die Schularten-Liste ist eine handgepflegte Kopie eines Server-Enums | Aufräumen | `abgenommen` | P3 | S | beides | — |
 | [B-150](B-150-verlagssperre-unsichtbar-dialog-verspricht-gegenteil.md) | Die Verlags-Löschsperre war für den Vater unsichtbar — der Dialog versprach das Gegenteil | Defekt | `abgenommen` | P2 | S | beides | — |
 | [B-151](B-151-gespeichert-banner-verschwindet-mit-dem-formular.md) | „Gespeichert." ist im Lehrbuch- und Fachlehrer-Formular nie zu sehen | Defekt | `abgenommen` | P3 | S | frontend | — |
+| [B-153](B-153-bilder-spec-flackert-im-vollen-lauf.md) | `bilder.spec.ts` fällt im vollen Lauf gelegentlich aus, allein ist sie grün | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-154](B-154-katalogseite-bietet-fremde-faecher-zum-umbenennen.md) | Die Katalogseite bietet „Umbenennen" und „Löschen" an jedem Fach an — auch an fremden | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-157](B-157-kategorien-unter-fremdem-fach-ungeschuetzt.md) | Das Fach ist geschützt, seine „Arten" sind es nicht | Defekt | `abgenommen` | P2 | S | beides | — |
 | [B-161](B-161-alle-waehlen-macht-die-auswahl-unsichtbar.md) | „Alle wählen" wählt bis zu 400 Übungen, die der Vater nie sieht und nicht abwählen kann | Defekt | `abgenommen` | P1 | S | frontend | — |
@@ -726,7 +726,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (43)
 
-**Nachgeschaut: 124 von 135 abgenommenen** — und in 32 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 11 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 124 von 136 abgenommenen** — und in 32 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 12 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -775,13 +775,14 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-211](B-211-interestchips-zusicherung-kann-nicht-fallen.md) | Eine Zusicherung prüft den Ausgangszustand und kann darum nie fallen | [B-206] | `ausformuliert` |
 
 <details>
-<summary>Nie nachgeschaut (11) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (12) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
+| [B-153](B-153-bilder-spec-flackert-im-vollen-lauf.md) | `bilder.spec.ts` fällt im vollen Lauf gelegentlich aus, allein ist sie grün |
 | [B-165](B-165-backend-suite-flackert.md) | `AtomaresSchreiben_KeineLeseFehler` fällt unter Volllast — und färbt das Test-Tor rot |
 | [B-167](B-167-katalogliste-zeigt-beim-filterwechsel-alte-treffer.md) | Katalogliste im Planbau zeigt beim Filterwechsel die alten Treffer weiter |
 | [B-170](B-170-selbst-angelegte-art-im-grundbestand-ist-unloeschbar.md) | Eine selbst angelegte Art im Grundbestands-Fach ist unlöschbar — und der Seitentext verspricht das Gegenteil |
@@ -806,7 +807,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-139](B-139-e2e-nachtlauf-login-bricht-ab-test-2.md) | `abgenommen` | Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-146](B-146-anlegeformular-schickt-toten-fachnamen.md) | `abgenommen` | Abschnitt „Entscheidungen" |
 | [B-147](B-147-para-summaries-tragen-einrueckung-ins-dokument.md) | `idee` | `unverifiziert: true` |
-| [B-153](B-153-bilder-spec-flackert-im-vollen-lauf.md) | `ausformuliert` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien" |
+| [B-153](B-153-bilder-spec-flackert-im-vollen-lauf.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-165](B-165-backend-suite-flackert.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…" |
 | [B-168](B-168-eigentuemer-zusicherung-prueft-eine-konstante.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Schätzung" |
 | [B-169](B-169-ladefenster-macht-die-alten-zeilen-anklickbar.md) | `abgenommen` | Abschnitt „User Story" |
@@ -832,7 +833,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-212](B-212-fuenfter-meldungsplatz-in-lehrwerke.md) | `ausformuliert` | Abschnitt „Akzeptanzkriterien" |
 
 <details>
-<summary>Verworfen (12)</summary>
+<summary>Verworfen (13)</summary>
 
 | Id | Story | Grund |
 | --- | --- | --- |
@@ -841,6 +842,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-103](B-103-idempotenzschluessel-und-etag.md) | Prüfauftrag: Brauchen `Idempotency-Key` und ETag/`If-Match` in dieser App einen Platz? | gemessen in der Arbeitsrunde 2026-08-04 — beim Idempotenz-Schlüssel bleibt ein betroffener Endpunkt von vier übrig und der Rückweg (POST children/{}/points) existiert als Produktverhalten; der ETag-Vorschlag ist gegen den Code unausführbar (StudyPlan/PlanPosition tragen keinen ConcurrencyStamp) und mit der Wallet-Invariante unverträglich. Kein Bau, Entscheidung dokumentiert in backend/Pugling.Api/CLAUDE.md. |
 | [B-137](B-137-freitext-fach-unerreichbar.md) | Ein Freitext-Fach an der Reihe ist sichtbar, aber nicht wegzubekommen | geteilt — faktisch XL (sechs Akzeptanzkriterien, drei Controller, Backend und Frontend, dazu eine Flags-Enum-Mehrfachauswahl); Freigabe 3 des Nachtlaufs verlangt dafür Teilen statt Bauen → [B-142, B-143, B-144] |
 | [B-14](B-14-learngoal-belohnung.md) | Idempotente Belohnung, wenn ein Lernziel erreicht ist — **gegenstandslos** | erfüllt durch KeyResult/ObjectiveRewardService (DB-Umbau E13) |
+| [B-213](B-213-bilder-spec-flackert-im-vollen-lauf.md) | `bilder.spec.ts` fällt im vollen Lauf gelegentlich, allein nie | Dublette zu B-153, das denselben Fall seit 2026-08-11 fuehrt und die Ursache belegt hat → [B-153] |
 | [B-24](B-24-frontend-unknown-field.md) | Frontend gegen `unknown_field` durchspielen | "Alle 34 untypisierten Schreib-Rümpfe in api.ts sind Feld für Feld gegen die Contracts-DTOs |
 | [B-29](B-29-altmigration-transaktional.md) | Prüfauftrag: nicht-transaktionale Altmigration | gegenstandslos seit der Neufaltung auf InitialCreate — die Migrationskette besteht (SchemaGuardTests, Tor G1b) aus genau einer Migration (Data/Migrations/20260803223259_InitialCreate.cs), keine Altmigration ist mehr vorhanden, die nicht-transaktional laufen könnte. Program.cs (Zeilen 471–484) behandelt eine DB der alten Kette ohnehin nicht als Migrationsfall, sondern wirft eine handlungsfähige Fehlermeldung — ein Upgrade-Pfad existiert bewusst nicht. |
 | [B-30](B-30-i18n-rest.md) | i18n-Rest: Ledger-Texte, Platzhalter, interne Exceptions | "Der vermutete Rest existiert nicht: kein einziger `///`- oder `//`-Doku-Kommentar im Backend ist |
