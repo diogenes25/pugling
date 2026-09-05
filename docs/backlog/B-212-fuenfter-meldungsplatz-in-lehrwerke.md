@@ -92,4 +92,4 @@ konstruktiv" — nachgemessen gilt das nur für `SeriesRow`; die Datei trägt we
   echten Server. Kein Browser-Handgang möglich (keine Chrome-Anbindung), damit greift der dokumentierte
   Ersatz. Belege: `tsc -b` sauber, `vitest run` **368/368** grün, `playwright test` **63/63** grün.
   `frontend-reviewer` gelaufen, **kein Blocker**; seine acht Funde mit Code- oder Testwirkung sind
-  eingearbeitet (Protokoll `docs/pm-sitzung-2026-09-05.md`). Commit `HASH`.
+  eingearbeitet (Protokoll `docs/pm-sitzung-2026-09-05.md`). Commit `3d763fe`.
