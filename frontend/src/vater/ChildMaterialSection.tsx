@@ -247,7 +247,16 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
   async function remove() {
     if (!book) return;
     if (!confirmAction(`Buch „${book.title}" entfernen?`)) return;
-    if (await action.run(() => api.deleteChildTextbook(childId, book.id))) onDone();
+    // Ein Text, zwei Anzeigeorte – wie beim Speichern daneben. Der Name MUSS mit (B-196): Die Zeile,
+    // auf die sich die Meldung bezieht, ist gleich verschwunden. Vorher war dieser Weg vollkommen stumm,
+    // und der Vater las am Verschwinden der Zeile ab, ob der Server zugestimmt hatte (B-200).
+    // Der Meldungsplatz der Seite gilt ab jetzt nicht mehr – dieselbe Reihenfolge wie beim Absenden, und
+    // nach dem Dialog: Ein Abbruch darf ihn nicht anrühren.
+    onMeldung(null);
+    const bestaetigung = `Buch „${book.title}" entfernt.`;
+    if (await action.run(() => api.deleteChildTextbook(childId, book.id), bestaetigung)) {
+      onDone({ ok: true, text: bestaetigung });
+    }
   }
 
   return (

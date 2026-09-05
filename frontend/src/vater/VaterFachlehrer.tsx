@@ -307,7 +307,15 @@ export function ProfileForm({ profile, subjects, series, onDone, onMeldung }: {
     if (!confirmAction(
       `Fachlehrer „${profile.name}" löschen? Bereits erzeugte Übungen bleiben erhalten – `
       + "das Profil ist die Werkbank, nicht der Besitzer.")) return;
-    if (await action.run(() => api.deleteCreatorProfile(profile.id))) onDone();
+    // Ein Text, zwei Anzeigeorte – siehe `TextbookForm`. Der Name MUSS mit (B-196), und stumm war
+    // dieser Weg bis B-200 vollständig.
+    // Der Meldungsplatz der Seite gilt ab jetzt nicht mehr – dieselbe Reihenfolge wie beim Absenden, und
+    // nach dem Dialog: Ein Abbruch darf ihn nicht anrühren.
+    onMeldung(null);
+    const bestaetigung = `Fachlehrer „${profile.name}" gelöscht.`;
+    if (await action.run(() => api.deleteCreatorProfile(profile.id), bestaetigung)) {
+      onDone({ ok: true, text: bestaetigung });
+    }
   }
 
   return (

@@ -31,7 +31,7 @@ function reihe(overrides: Partial<TextbookSeriesResponse> = {}): TextbookSeriesR
 }
 
 const zeige = (o: Partial<TextbookSeriesResponse> = {}) =>
-  render(<SeriesForm series={reihe(o)} subjects={SUBJECTS} publishers={PUBLISHERS} onSaved={() => {}} />);
+  render(<SeriesForm series={reihe(o)} subjects={SUBJECTS} publishers={PUBLISHERS} onSaved={() => {}} onMeldung={() => {}} />);
 
 describe("SeriesForm – Zustände, die das Modell erlaubt", () => {
   it("zeigt ein Freitext-Fach als vorausgewählte, gesperrte Option", () => {
@@ -99,7 +99,7 @@ describe("SeriesForm – wenn die Optionsliste den geladenen Wert nicht kennt", 
   const verlag = () => screen.getByLabelText("Verlag", { exact: true }) as HTMLSelectElement;
 
   it("zeigt das geladene Fach statt „– keine Angabe –“, wenn die Liste leer ist", () => {
-    render(<SeriesForm series={reihe()} subjects={[]} publishers={PUBLISHERS} onSaved={() => {}} />);
+    render(<SeriesForm series={reihe()} subjects={[]} publishers={PUBLISHERS} onSaved={() => {}} onMeldung={() => {}} />);
 
     expect(fach().value).toBe("1");
     expect(screen.getByRole("option", { name: "Englisch (nicht geladen)" })).toBeTruthy();
@@ -109,7 +109,7 @@ describe("SeriesForm – wenn die Optionsliste den geladenen Wert nicht kennt", 
     // Der Unterschied zum Freitext-Zustand (B-143): ein Katalog-Fach ist ein völlig reguläres Ziel.
     // Gesperrt wäre der Umweg eine Einbahnstraße – wer „Mathe" probiert, käme nie zu „Englisch" zurück,
     // und das Formular zuzuklappen verwirft alle anderen Eingaben mit.
-    render(<SeriesForm series={reihe()} subjects={MATHE_ALLEIN} publishers={PUBLISHERS} onSaved={() => {}} />);
+    render(<SeriesForm series={reihe()} subjects={MATHE_ALLEIN} publishers={PUBLISHERS} onSaved={() => {}} onMeldung={() => {}} />);
 
     // Beide Hälften des Namens prüfen: `select.value = x` greift im DOM AUCH auf eine gesperrte Option,
     // der Weg-zurück-Fall allein bliebe beim Sperren also grün (Fund des `frontend-reviewer`).
@@ -126,7 +126,7 @@ describe("SeriesForm – wenn die Optionsliste den geladenen Wert nicht kennt", 
   it("hält dieselbe Zusicherung für den Verlag", () => {
     // Die Begründung in `subjectField.ts` behauptete, kaputt sei „heute nur `subjectId`". Der Verlag
     // trägt über `clearPublisherId` genau dieselbe Kette.
-    render(<SeriesForm series={reihe()} subjects={SUBJECTS} publishers={[]} onSaved={() => {}} />);
+    render(<SeriesForm series={reihe()} subjects={SUBJECTS} publishers={[]} onSaved={() => {}} onMeldung={() => {}} />);
 
     expect(verlag().value).toBe("3");
     expect(screen.getByRole("option", { name: "Klett (nicht geladen)" })).toBeTruthy();

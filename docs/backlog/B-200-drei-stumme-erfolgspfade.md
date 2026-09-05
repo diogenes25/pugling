@@ -1,10 +1,10 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/frontend, rolle/creator, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/creator, rolle/supervisor]
 aliases: [Loeschen meldet nichts, stumme Erfolgspfade]
-status: ausformuliert
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
+groesse: S
 wo: frontend
 migration: nein
 vertragsbruch: nein
@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: ""
 ---
 
 # B-200 · Drei Löschwege melden gar nichts
@@ -46,14 +47,42 @@ beansprucht.
 
 ## Offene Punkte
 
-1. Alle drei, oder nur die, deren Zeile verschwindet? Empfehlung: **alle drei** — nach B-196s
-   Entscheidung 1 muss eine Löschmeldung ohnehin den Namen nennen, und das ist überall dieselbe Zeile.
-2. Gilt dasselbe für weitere `action.run` ohne `okText`, die **nicht** löschen? Empfehlung: nachsehen,
-   nicht vermuten — `frontend/CLAUDE.md` erlaubt stummen Erfolg ausdrücklich, wo die Änderung selbst die
-   Rückmeldung ist (Tag-Editor). Beim Löschen ist sie das gerade **nicht**.
+1. ~~Alle drei, oder nur die, deren Zeile verschwindet?~~ → Entscheidung 1.
+2. ~~Gilt dasselbe für weitere `action.run` ohne `okText`, die nicht löschen?~~ → Entscheidung 2.
+
+## Entscheidungen
+
+1. **Alle drei, und jede Meldung nennt den Gegenstand.** Nach B-196s Entscheidung 1 muss eine
+   Löschmeldung den Namen tragen — die Zeile, auf die sie sich bezieht, ist ja gerade verschwunden. Ohne
+   ihn wäre „Entfernt." eine Meldung ohne Gegenstand. **Kosten:** drei Literale, je einmal vergeben und an
+   zwei Stellen benutzt („ein Text, zwei Anzeigeorte", das Muster der Nachbarn).
+2. **Nicht ausgeweitet.** `frontend/CLAUDE.md` erlaubt stummen Erfolg ausdrücklich, wo die Änderung selbst
+   die Rückmeldung ist (Tag-Editor: ein Banner je Chip wäre Lärm). Beim Löschen ist sie das gerade nicht —
+   das Verschwinden einer Zeile kann auch heißen, dass sie aus der Filterung gefallen ist. Der Schnitt
+   läuft also am **Löschen**, nicht an „hat kein `okText`". **Kosten:** die übrigen stummen Pfade bleiben
+   stumm; das ist Absicht und keine Restschuld.
+
+## Rote Proben (erwartet / gemessen)
+
+| Probe | erwartet | gemessen |
+| --- | --- | --- |
+| `UnitForm.remove` ohne Namen im Text | 1 | **1**, an Zeile 75 |
+| Buch- und Fachlehrer-Meldung geleert | 2 | **2** |
+
+**Die zweite Zeile gäbe es ohne die Review-Runde nicht.** Sie hat aufgedeckt, dass „rote Probe erwartet 1 /
+gemessen 1" nur den **Unit**-Pfad betraf — die anderen beiden waren unverifiziert, und dass sie
+funktionieren, wäre eine Behauptung geblieben. Dafür ist `e2e/loeschen-meldet-sich.spec.ts` entstanden.
 
 ## Verlauf
 
 - 2026-09-02 · Aufgenommen aus dem `frontend-reviewer`-Review zu Sprint 3. Er hat die Zählung in B-196s
   Entscheidung 3 widerlegt: vier statt zwei. Die Fundorte sind vom Reviewer benannt und von mir
   gegengelesen.
+- **2026-09-05** — **ausformuliert → abgenommen** im Sprint „Eine Rückmeldung gehört an einen Platz, der sie überlebt — und es darf nur einer
+  sein" (B-187/B-200/B-212 gemeinsam). Autonom gegrillt unter Freigabe 1 (`art: Defekt`).
+  **Rollengang:** `e2e/ein-meldungsplatz.spec.ts` (Unit) und `e2e/loeschen-meldet-sich.spec.ts` (Buch am
+  Kind, Fachlehrer) fahren alle drei Pfade im echten Browser gegen einen echten Server. Kein
+  Browser-Handgang möglich (keine Chrome-Anbindung), damit greift der dokumentierte Ersatz.
+  Belege: `tsc -b` sauber, `vitest run` **368/368** grün, `playwright test` **63/63** grün.
+  `frontend-reviewer` gelaufen, **kein Blocker**; seine acht Funde mit Code- oder Testwirkung sind
+  eingearbeitet (Protokoll `docs/pm-sitzung-2026-09-05.md`). Commit `HASH`.

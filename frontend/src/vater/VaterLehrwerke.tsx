@@ -1,4 +1,4 @@
-import { Fragment, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { FieldLabel } from "../components/InfoHint";
 import { ReferenceSelect } from "../components/ReferenceSelect";
@@ -7,7 +7,7 @@ import { FREETEXT_SUBJECT, seriesFormValues, seriesPatch, type SeriesFormValues 
 import { api, errorMessage } from "../lib/api";
 import { publisherOptions, subjectOptions } from "../lib/referenceOptions";
 import { useAction } from "../lib/useAction";
-import type { ActionMessage } from "../lib/useAction";
+import type { ActionMessage, ActionState } from "../lib/useAction";
 import { SCHOOL_TYPES } from "../lib/labels";
 import { LANGUAGES } from "../lib/languages";
 import { confirmAction } from "../lib/ui";
@@ -137,6 +137,19 @@ export function VaterLehrwerke() {
    * eigene Bestätigung mit - ein geglücktes Speichern sah dann aus wie ein Löschen.
    */
   const [meldung, setMeldung] = useState<ActionMessage | null>(null);
+  const meldungsplatz = useRef<HTMLDivElement>(null);
+  /*
+   * Der Preis des einen Platzes, und er ist gemessen: Er steht **unter** der Tabelle, und die Liste hat
+   * kein Paging. Bei dreißig Reihen liegt ein Fehler, der beim Speichern in Zeile 3 entsteht, außerhalb
+   * des Sichtfelds — der Knopf entgraut, sonst passiert sichtbar nichts. Vorher stand er direkt unter dem
+   * Formular, in das der Creator gerade tippt.
+   *
+   * `block: "nearest"` scrollt darum **nur, wenn nötig**, und nur beim Fehler: Eine Bestätigung, die man
+   * nicht sieht, ist verschmerzbar; ein Fehler, den man nicht sieht, ist der stumme Pfad aus B-200.
+   */
+  useEffect(() => {
+    if (meldung && !meldung.ok) meldungsplatz.current?.scrollIntoView({ block: "nearest" });
+  }, [meldung]);
   const gefiltert = istGefiltert({ search: applied, subjectId, publisherId, schoolTypes, grade });
 
   return (
@@ -207,16 +220,80 @@ export function VaterLehrwerke() {
             </tbody>
           </table>
         )}
-        <StatusBanner message={meldung} />
+        <div ref={meldungsplatz}><StatusBanner message={meldung} /></div>
       </section>
 
       <NewSeries
-        subjects={subjects.data ?? []} publishers={publishers.data ?? []}
+        subjects={subjects.data ?? []} publishers={publishers.data ?? []} onMeldung={setMeldung}
         onPublisherCreated={publishers.reload} onCreated={list.reload}
       />
       <PublisherAdmin onChanged={() => { publishers.reload(); list.reload(); }} />
     </>
   );
+}
+
+/**
+ * Eine Server-Handlung ausfuehren und ihr Ergebnis an den Meldungsplatz der **Seite** geben.
+ *
+ * Der Schnitt (B-212): Am Formular bleibt nur, was der Bildschirm **selbst** festgestellt hat - die
+ * Eingabepruefung und "Nichts geaendert.". Alles, was vom Server zurueckkommt, reist nach oben. Der Grund
+ * ist nicht Ordnungsliebe: Ein zweiter Meldungsplatz kann von niemandem geraeumt werden als von dem
+ * Formular, in dem er steckt. Ein rotes "Name schon vergeben" unter Reihe A stand darum neben dem gruenen
+ * "Reihe ... geloescht." der Seite, sobald der Creator an Reihe B weitermachte - zwei Meldungen zu zwei
+ * Handlungen in einem Blickfeld, und keine sagt, zu welcher sie gehoert.
+ *
+ * Drei Dinge daran sind nicht offensichtlich:
+ *
+ * 1. **Der Fehlertext wird beim Durchfliegen abgegriffen**, nicht hinterher aus `action.message` gelesen:
+ *    das ist Zustand und im selben Tick noch der alte.
+ * 2. **`action.clear()` am Ende ist tragend.** `useAction` schreibt seinen Fehler selbst in `message`;
+ *    ohne das Raeumen stuende er zusaetzlich am Formular - genau die zwei Plaetze, die hier verschwinden.
+ * 3. **Ein verworfener Aufruf bekommt keine Meldung.** Die Wiedereintritts-Sperre liefert ebenfalls
+ *    `null`, hat aber nichts getan; nur ein echter Fehler wird gemeldet. (Geräumt wird trotzdem — heute
+ *    folgenlos, weil `runFor` den Banner beim Start des laufenden Aufrufs schon genullt hat.)
+ *
+ * `okText` darf eine Funktion sein: Beim Anlegen nennt die Meldung den Namen, den der **Server**
+ * zurückgibt – gleicher Slug = gleiche Reihe, und die kann anders geschrieben sein als das Feld.
+ *
+ * Eine Annahme, die nicht im Typ steht: Der Erfolgsfall wird an `ergebnis !== null` erkannt. `runFor`
+ * liefert `null` bei Fehler UND bei verworfenem Aufruf, ein leerer Antwortkörper dagegen `undefined` —
+ * das trägt, solange kein Aufruf `null` als Erfolgswert liefert.
+ */
+async function nachObenMelden<T>(
+  action: ActionState,
+  onMeldung: (m: ActionMessage | null) => void,
+  fn: () => Promise<T>,
+  okText: string | ((ergebnis: T) => string),
+): Promise<T | null> {
+  /*
+   * `try/catch` um den **Aufruf**, nicht `fn().catch(...)`: Ein synchroner Wurf aus `fn()` erzeugt gar
+   * kein Promise, das abgelehnt werden könnte — der Fehlertext bliebe leer, `onMeldung` schwiege, und
+   * `action.clear()` räumte darunter noch die Meldung weg, die `useAction` selbst gesetzt hat. Ergebnis
+   * wäre vollständiges Schweigen: genau die Fehlerklasse, gegen die dieser Sprint angetreten ist.
+   */
+  let gefangen = false;
+  let text = "";
+  const ergebnis = await action.runFor(async () => {
+    try {
+      return await fn();
+    } catch (e: unknown) {
+      // Beim Durchfliegen abgreifen, nicht hinterher aus `action.message` lesen: das ist Zustand und im
+      // selben Tick noch der alte.
+      gefangen = true;
+      text = errorMessage(e);
+      throw e;
+    }
+  });
+  if (ergebnis === null) {
+    // `gefangen` und nicht `text`: Eine leere Fehlermeldung ist immer noch ein Fehler, während ein von
+    // der Wiedereintritts-Sperre verworfener Aufruf gar nicht erst in den `catch` gelaufen ist.
+    if (gefangen) onMeldung({ ok: false, text });
+    action.clear();
+    return null;
+  }
+  onMeldung({ ok: true, text: typeof okText === "function" ? okText(ergebnis) : okText });
+  action.clear();
+  return ergebnis;
 }
 
 function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, onMeldung }: {
@@ -255,22 +332,10 @@ function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, on
     // verschwundenen Zeile stehen und läse sich als Löschbestätigung (B-196).
     onMeldung(null);
 
-    // Der Fehlertext wird beim Durchfliegen abgegriffen, statt ihn hinterher aus `action.message` zu
-    // lesen: das ist Zustand und im selben Tick noch der alte. `action.run` bleibt trotzdem der Weg –
-    // an ihm hängen die Wiedereintritts-Sperre und `busy`.
-    const fehler: { text?: string } = {};
-    const ok = await action.run(() => api.deleteTextbookSeries(series.id).catch((e: unknown) => {
-      fehler.text = errorMessage(e);
-      throw e;
-    }));
-    if (!ok) {
-      // Nur melden, wenn es wirklich einen Fehler gab. Ein von der Sperre verworfener Aufruf liefert
-      // ebenfalls `false`, hat aber nichts getan – der bleibt stumm, wie `useAction` es zusichert.
-      if (fehler.text) onMeldung({ ok: false, text: fehler.text });
-      return;
-    }
     // Der Name MUSS mit: Die Zeile, auf die sich die Meldung bezieht, ist ja gerade verschwunden.
-    onMeldung({ ok: true, text: `Reihe „${series.name}" gelöscht.` });
+    const ok = await nachObenMelden(action, onMeldung,
+      () => api.deleteTextbookSeries(series.id), `Reihe „${series.name}" gelöscht.`);
+    if (ok === null) return;
     onChanged();
   }
 
@@ -330,8 +395,14 @@ function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, on
           schrieb hinein, geräumt wurde er von keinem der beiden Umschalter, und ein gescheitertes
           Löschen stand darum rot unter der Zeile, während jede spätere Handlung ihr grünes
           „Gespeichert." in den Platz der Seite legte. Fünf Wege führten dort hinein — der fünfte über
-          eine ganz andere Zeile, deren Löschen gelingt. Jetzt meldet auch der Fehlschlag nach oben:
-          **ein** Platz, und B-197s Regel gilt konstruktiv statt über einen Räum-Aufruf je Tür.
+          eine ganz andere Zeile, deren Löschen gelingt. Jetzt meldet auch der Fehlschlag nach oben.
+          **Für die Zeile** war das die Lösung — die Datei trug danach aber weiter zwei Plätze an den
+          FORMULAREN (`SeriesForm`, `UnitForm`), und über die lief derselbe Widerspruch ein zweites Mal
+          (B-212). Seither gilt der Schnitt für die ganze Datei: Was vom Server kommt, reist nach oben
+          (`nachObenMelden`); am Formular bleibt nur, was der Bildschirm selbst festgestellt hat. Von den
+          vier `action.message`-Plätzen der Datei sind zwei ganz verschwunden (`NewSeries`), und die zwei
+          verbliebenen tragen nur noch Eingabeprüfungen — die verlassen ihr Formular nie, weil bei ihnen
+          nichts passiert ist. Damit gilt B-197s Regel konstruktiv statt über einen Räum-Aufruf je Tür.
           Nebenwirkung, die den a11y-Fund miterledigt: der Seitenplatz rendert seine Live-Region
           unbedingt (`StatusBanner`), dieser hier entstand mit seinem Text und blieb darum stumm. */}
       {editing && (
@@ -381,15 +452,17 @@ export function SeriesForm({ series, subjects, publishers, onSaved, onMeldung }:
   publishers: PublisherResponse[];
   onSaved: () => void;
   /**
-   * Optional. Ohne Empfänger zeigt das Formular die Bestätigung selbst (so im Test); mit Empfänger geht
-   * sie STATT DESSEN nach oben, weil die Zeile aus der gefilterten Abfrage fallen kann (B-173).
-   * Fehler und Eingabeprüfungen bleiben in beiden Fällen hier – sie verlassen die Zeile nie.
+   * Der Meldungsplatz der Seite. **Pflicht** seit B-212, und der frühere `?` war der Grund, warum es
+   * schiefging: Was vom Server kommt — Erfolg **und** Fehler — geht dorthin, weil die Zeile aus der
+   * gefilterten Abfrage fallen kann (B-173) und ein zweiter Platz von niemandem geräumt werden kann als
+   * von dem Formular, in dem er steckt. Hier unten bleibt nur, was der Bildschirm **selbst** festgestellt
+   * hat: „Der Name der Reihe fehlt.", „Nichts geändert." — dabei ist nichts passiert, das die Zeile
+   * überdauern könnte.
    *
-   * `null` räumt den Platz. Das Formular ruft es zu Beginn jedes Absendens (B-197): Ein zweiter,
-   * scheiternder Versuch zeigt seinen Fehler hier unten, und ohne das Räumen stünde das „Gespeichert."
-   * des ersten Versuchs oben weiter da – zwei widersprechende Meldungen in einem Blickfeld.
+   * `null` räumt den Platz. Das Formular ruft es zu Beginn jedes Absendens (B-197): Sonst stünde die
+   * Bestätigung des vorigen Versuchs noch da, während dieser läuft.
    */
-  onMeldung?: (m: ActionMessage | null) => void;
+  onMeldung: (m: ActionMessage | null) => void;
 }) {
   // Der Ladezustand ist der Bezugspunkt des Diffs (B-123, Entscheidung 2) – er darf sich NICHT mit dem
   // Formular mitbewegen, sonst entscheidet der Vergleich gegen sich selbst. Darum `useRef`.
@@ -413,15 +486,30 @@ export function SeriesForm({ series, subjects, publishers, onSaved, onMeldung }:
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     // Der Platz gilt ab jetzt nicht mehr – egal wie dieser Versuch ausgeht (B-197).
-    onMeldung?.(null);
+    onMeldung(null);
     if (!form.name.trim()) { action.fail("Der Name der Reihe fehlt."); return; }
 
     const dto = seriesPatch(geladen.current, form);
     // Kein leerer PATCH: er wäre erfolgreich und folgenlos, und „Gespeichert." wäre dann eine Lüge.
     if (dto === null) { action.succeed("Nichts geändert."); return; }
 
-    const aktualisiert = await action.runFor(() => api.updateTextbookSeries(series.id, dto));
-    if (!aktualisiert) return;
+    /*
+     * Die Bestätigung geht NACH OBEN, wenn es dort einen Platz gibt (B-173) – und dann NICHT zusätzlich
+     * hierher: Ändert das Speichern einen Wert, nach dem gefiltert oder sortiert wird, verlässt die Zeile
+     * das Ergebnis und nimmt ihren eigenen Banner mit. Beides gleichzeitig zu zeigen wäre kein
+     * „doppelt hält besser", sondern derselbe Satz zweimal auf einem Bildschirm (vier E2E sind daran
+     * gebrochen, gemessen am 2026-09-01).
+     *
+     * **Und seit B-212 gilt dasselbe für den Fehler.** „Nur der Erfolg reist" ließ ein rotes
+     * „Name schon vergeben" hier unten stehen, wo es niemand mehr erreichen konnte: Der Creator machte an
+     * einer anderen Reihe weiter, deren Meldung in den Platz der Seite ging, und beides stand
+     * gleichzeitig im Blickfeld. Am Formular bleibt jetzt nur, was der Bildschirm SELBST festgestellt hat
+     * („Der Name der Reihe fehlt.", „Nichts geändert.") – das verlässt die Zeile nie, weil dabei nichts
+     * passiert ist.
+     */
+    const aktualisiert = await nachObenMelden(action, onMeldung,
+      () => api.updateTextbookSeries(series.id, dto), "Gespeichert.");
+    if (aktualisiert === null) return;
     // Das Formular bleibt offen, und darum MUSS der Ladezustand aus der ANTWORT nachgezogen werden:
     // sonst rechnete der nächste Diff derselben Sitzung gegen einen veralteten Bezugspunkt und schickte
     // Felder erneut oder gar nicht.
@@ -433,19 +521,6 @@ export function SeriesForm({ series, subjects, publishers, onSaved, onMeldung }:
     // genügt.
     geladen.current = seriesFormValues(aktualisiert);
     setForm(geladen.current);
-    /*
-     * Die Bestätigung geht NACH OBEN, wenn es dort einen Platz gibt (B-173) – und dann NICHT zusätzlich
-     * hierher: Ändert das Speichern einen Wert, nach dem gefiltert oder sortiert wird, verlässt die Zeile
-     * das Ergebnis und nimmt ihren eigenen Banner mit. Beides gleichzeitig zu zeigen wäre kein
-     * „doppelt hält besser", sondern derselbe Satz zweimal auf einem Bildschirm (vier E2E sind daran
-     * gebrochen, gemessen am 2026-09-01).
-     *
-     * Nur der Erfolg reist: „Der Name der Reihe fehlt." und „Nichts geändert." verlassen die Zeile nie
-     * und gehören darum ans Formular, wo der Nutzer gerade hinsieht.
-     */
-    const bestaetigung = "Gespeichert.";
-    if (onMeldung) onMeldung({ ok: true, text: bestaetigung });
-    else action.succeed(bestaetigung);
     onSaved();
   }
 
@@ -710,10 +785,19 @@ export function UnitForm({ seriesId, unit, defaults, onDone, onMeldung }: {
       grammar: form.grammar.trim() || null,
       vocabularyNotes: form.vocabularyNotes.trim() || null,
     };
-    const ok = await action.run(() => (unit
+    /*
+     * Nach OBEN, und beim Ändern ist das der ganze Punkt (B-187): `onDone()` unten hängt das
+     * Bearbeiten-Formular aus — und mit ihm den Banner, in dem die Bestätigung bis hierher stand. Sie war
+     * nie lange genug da, um gelesen zu werden. Dieselbe Wurzel wie B-151, nur an einem dritten Formular.
+     *
+     * Das Anlege-Formular bleibt zwar montiert und hätte seine Meldung behalten. Es bekommt trotzdem
+     * denselben Weg: Zwei Plätze für dieselbe Sorte Meldung sind der Defekt aus B-212, und eine Ausnahme
+     * „nur beim Anlegen" wäre genau die Sorte Regel, die niemand im Kopf behält.
+     */
+    const ok = await nachObenMelden(action, onMeldung, () => (unit
       ? api.updateSeriesUnit(seriesId, unit.id, dto)
       : api.createSeriesUnit(seriesId, dto)), unit ? "Gespeichert." : "Unit hinzugefügt.");
-    if (!ok) return;
+    if (ok === null) return;
     if (!unit) setForm((f) => ({ ...f, label: "", topics: [], grammar: "", vocabularyNotes: "" }));
     onDone();
   }
@@ -724,7 +808,12 @@ export function UnitForm({ seriesId, unit, defaults, onDone, onMeldung }: {
     // Nach dem Dialog, nicht davor: Ein Abbruch darf den Platz nicht anrühren (dieselbe Reihenfolge
     // wie beim Löschen einer Reihe).
     onMeldung(null);
-    if (await action.run(() => api.deleteSeriesUnit(seriesId, unit.id))) onDone();
+    // Der Name MUSS mit (B-196, Entscheidung 1): Die Zeile, auf die sich die Meldung bezieht, ist gerade
+    // verschwunden. Vorher war dieser Weg vollkommen stumm — der Vater las am Verschwinden der Zeile ab,
+    // ob der Server zugestimmt hatte (B-200).
+    const ok = await nachObenMelden(action, onMeldung,
+      () => api.deleteSeriesUnit(seriesId, unit.id), `Unit „${unit.label}" gelöscht.`);
+    if (ok !== null) onDone();
   }
 
   return (
@@ -823,11 +912,13 @@ export function UnitForm({ seriesId, unit, defaults, onDone, onMeldung }: {
 }
 
 /** Neue Reihe. Der Name trägt den Slug – derselbe Name liefert die bestehende Reihe zurück. */
-function NewSeries({ subjects, publishers, onPublisherCreated, onCreated }: {
+function NewSeries({ subjects, publishers, onPublisherCreated, onCreated, onMeldung }: {
   subjects: SubjectResponse[];
   publishers: PublisherResponse[];
   onPublisherCreated: () => void;
   onCreated: () => void;
+  /** Der Meldungsplatz der Seite — auch dieses Formular hat keinen eigenen mehr (B-212). */
+  onMeldung: (m: ActionMessage | null) => void;
 }) {
   const [form, setForm] = useState({
     name: "", publisherId: "", newPublisher: "", subjectId: "", schoolTypes: "None" as SchoolType,
@@ -844,21 +935,31 @@ function NewSeries({ subjects, publishers, onPublisherCreated, onCreated }: {
   async function addPublisher() {
     const name = form.newPublisher.trim();
     if (!name) return;
-    const created = await publisherAction.runFor(() => api.createPublisher({ name }));
-    if (!created) return;
+    onMeldung(null);
+    // Neutral formuliert wie bei der Reihe: der Slug macht das idempotent, ein zweiter Versuch mit
+    // demselben Namen legt nichts an, sondern liefert den bestehenden Verlag zurück. Der Name kommt
+    // darum aus der ANTWORT und nicht aus dem Feld — deshalb die Funktion statt eines festen Textes.
+    const created = await nachObenMelden(publisherAction, onMeldung,
+      () => api.createPublisher({ name }), (p) => `„${p.name}" steht im Vokabular.`);
+    if (created === null) return;
     onPublisherCreated();
     setForm((f) => ({ ...f, publisherId: String(created.id), newPublisher: "" }));
-    // Neutral formuliert wie bei der Reihe: der Slug macht das idempotent, ein zweiter Versuch
-    // mit demselben Namen legt nichts an, sondern liefert den bestehenden Verlag zurück.
-    publisherAction.succeed(`„${created.name}" steht im Vokabular.`);
   }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name.trim()) return;
-    // `runFor`, weil die Meldung den Namen **des Servers** nennt: gleicher Name = gleiche Reihe, ein
-    // zweites Anlegen liefert die bestehende zurück – und die kann anders geschrieben sein als das Feld.
-    const created = await action.runFor(() => api.createTextbookSeries({
+    onMeldung(null);
+    /*
+     * Auch dieses Formular meldet nach oben (B-212). Es schließt zwar nie, seine Bestätigung ginge also
+     * nicht verloren — aber ein zweiter Platz erzeugt denselben Widerspruch von der anderen Seite: Ein
+     * grünes „… steht im Katalog" stünde hier, während ein gescheitertes Speichern an einer Unit sein Rot
+     * in den Platz der Seite legt. **Ein** Platz, ohne Ausnahme, ist die Regel, die man im Kopf behält.
+     *
+     * Die Meldung nennt den Namen **des Servers**: gleicher Slug = gleiche Reihe, ein zweites Anlegen
+     * liefert die bestehende zurück – und die kann anders geschrieben sein als das Feld.
+     */
+    const created = await nachObenMelden(action, onMeldung, () => api.createTextbookSeries({
       name: form.name.trim(),
       publisherId: form.publisherId ? Number(form.publisherId) : null,
       subjectId: form.subjectId ? Number(form.subjectId) : null,
@@ -866,10 +967,9 @@ function NewSeries({ subjects, publishers, onPublisherCreated, onCreated }: {
       sourceLanguage: form.sourceLanguage || null,
       targetLanguage: form.targetLanguage || null,
       notes: form.notes.trim() || null,
-    }));
-    if (!created) return;
+    }), (s) => `„${s.name}" steht im Katalog. Jetzt die Units mit ihrem Stoff anlegen.`);
+    if (created === null) return;
     setForm({ ...form, name: "", notes: "" });
-    action.succeed(`„${created.name}" steht im Katalog. Jetzt die Units mit ihrem Stoff anlegen.`);
     onCreated();
   }
 
@@ -928,7 +1028,8 @@ function NewSeries({ subjects, publishers, onPublisherCreated, onCreated }: {
         Gleicher Name = gleiche Reihe: ein zweites Anlegen liefert die bestehende zurück, statt eine
         Dublette in den geteilten Katalog zu schreiben.
       </p>
-      <StatusBanner message={action.message} style={{ marginTop: 10 }} />
+      {/* Kein eigener Meldungsplatz mehr (B-212): Was vom Server kommt, steht am Platz der Seite. Hier
+          bleibt nichts übrig — dieses Formular hat keine Eingabeprüfung, es sperrt den Knopf stattdessen. */}
 
       {/* Verlag fehlt in der Liste? Direkt hier anlegen statt die Seite zu verlassen (idempotent über den Slug). */}
       <form
@@ -945,7 +1046,6 @@ function NewSeries({ subjects, publishers, onPublisherCreated, onCreated }: {
           {publisherAction.busy ? "Lege an…" : "Verlag anlegen"}
         </button>
       </form>
-      <StatusBanner message={publisherAction.message} style={{ marginTop: 6 }} />
     </section>
   );
 }
