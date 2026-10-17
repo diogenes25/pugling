@@ -231,3 +231,4 @@ B-03) deutlich — passt aber noch in eine baubare Story ohne Split.
 - **2026-08-03** — geschätzt: Größe L (kein Split nötig), `wo: beides` (Backend zuerst), `migration: nein`,
   `vertragsbruch: nein`, Testweg über eine neue Integrationstestklasse plus Vitest-Komponententest
   benannt — autonom getroffen, Nutzerauftrag 2026-08-04.
+- **2026-10-17** — Prioritäts-Beleg von außen: Khan Academy bietet Eltern drei fertige Reports (Aktivität, Einzelbericht, Zuweisungs-Scores) — Vergleich in `docs/khan-academy-vergleich-plan.md`, Etappe 7. Keine inhaltliche Änderung an Entscheidungen oder Schätzung.
