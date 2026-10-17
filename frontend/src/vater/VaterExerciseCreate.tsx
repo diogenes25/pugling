@@ -18,6 +18,7 @@ import {
   type Row,
 } from "./exerciseConfig";
 import { useExerciseTypes } from "../lib/exerciseTypes";
+import { ListenAusfall } from "../components/ListenAusfall";
 
 /**
  * Eine Übung anlegen – **nur** das.
@@ -49,12 +50,14 @@ export function VaterExerciseCreate() {
 
   // Routen-Segment und Anzeigename der Typen kommen vom Server (Typ-Manifest), nicht aus einer Tabelle hier.
   const types = useExerciseTypes();
-  const typeLabel = (t: string) => types?.label(t) ?? t;
+  const typeLabel = types.label;
 
   const [type, setType] = useState<ExerciseTypeKey>("Vocabulary");
   // Routen-Segment des gewählten Typs. `null`, solange das Manifest lädt oder der Server den Typ nicht
-  // führt – dann bleibt das Anlegen gesperrt, statt gegen eine geratene Route zu posten.
-  const route = types?.route(type) ?? null;
+  // führt – dann bleibt das Anlegen gesperrt, statt gegen eine geratene Route zu posten. WARUM es gesperrt
+  // ist, sagt das `ListenAusfall`-Banner über dem Formular (B-215) – vorher saß der Creator vor einem
+  // grauen Knopf ohne Grund.
+  const route = types.route(type);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   /*
@@ -180,6 +183,9 @@ export function VaterExerciseCreate() {
         ← Übungen verwalten
       </Link>
     </div>
+
+    {/* Ohne Manifest keine Route, ohne Route kein Anlegen – der Grund gehört vor das Formular (B-215). */}
+    <ListenAusfall was="Die Übungstypen" fehler={types.error} laedt={types.loading} onRetry={types.reload} />
 
     <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
       {/* Fach (nur Filter) & Lehrwerk-Reihe/Unit – Auswahl, nicht Anlegen (das gehört in den Katalog). */}

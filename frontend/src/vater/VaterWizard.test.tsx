@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { ListenAusfall, WizardTrefferbereich } from "./VaterWizard";
+import { WizardTrefferbereich } from "./VaterWizard";
 import type { ExerciseSummary } from "../lib/types";
 
 /*
@@ -50,6 +50,30 @@ describe("WizardTrefferbereich – gescheiterte Suche ist nicht leerer Katalog",
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
+  /*
+   * B-216. `useAsync.reload()` setzt `error` auf `null` und `loading` auf `true` im selben Schritt. Hing das
+   * Banner an `fehler` allein, verschwände es samt Knopf im Moment des Klicks — der Fokus fiele auf
+   * `<body>`, und während der Wiederholung stünde nichts da. Rot macht das ein Banner, das nur `fehler`
+   * liest: dann ist nach dem zweiten Render kein Knopf mehr im DOM.
+   */
+  it("hält Banner und Knopf während der Wiederholung fest, statt sie unter dem Finger wegzunehmen", () => {
+    const { rerender } = render(<WizardTrefferbereich {...BASIS} treffer={[]} fehler="Netz weg" />);
+    expect(screen.getByRole("button", { name: "Erneut suchen" })).toBeTruthy();
+
+    rerender(<WizardTrefferbereich {...BASIS} treffer={[]} fehler={null} laedt />);
+
+    expect(screen.getByText(/Die Übungssuche ist gescheitert: Netz weg/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Lädt…" })).toHaveProperty("disabled", true);
+    // Im selben Fenster darf weder der Leer-Satz noch eine Trefferzahl stehen – sonst behauptete der
+    // Bildschirm zwei Ursachen zugleich (Reviewer-Fund: beide hingen noch an `fehler`, nicht am Gedächtnis).
+    expect(screen.queryByText(LEER_SATZ)).toBeNull();
+    expect(screen.getByText("Suche gescheitert")).toBeTruthy();
+
+    // Und es räumt sich ab, sobald die Wiederholung durch ist – sonst stünde der alte Fehler neben Treffern.
+    rerender(<WizardTrefferbereich {...BASIS} treffer={[uebung()]} fehler={null} laedt={false} />);
+    expect(screen.queryByText(/gescheitert/)).toBeNull();
+  });
+
   it("zeigt während der ersten Ladung den Platzhalter und keine der beiden Meldungen", () => {
     // Der vierte der vier Zustände. Ohne diesen Fall behauptete die Beschreibung des Bausteins mehr,
     // als der Test belegt – und „Lade…" könnte klaglos neben dem Leer-Satz stehen.
@@ -82,63 +106,5 @@ describe("WizardTrefferbereich – gescheiterte Suche ist nicht leerer Katalog",
     render(<WizardTrefferbereich {...BASIS} treffer={[uebung(), uebung({ id: 2 })]} fehler={null} />);
 
     expect(screen.getByText("2 passende Übungen")).toBeTruthy();
-  });
-});
-
-/*
- * B-188. Die drei Optionslisten des Assistenten (Kinder, Fächer, Arten) zeigten ihren Fehler nirgends.
- * Der Baustein trägt jetzt die Regel; DASS der Assistent ihn an allen drei Stellen benutzt, kann ein
- * Bausteintest nicht sagen — das prüft `e2e/assistent-listen-fallen-aus.spec.ts` am schwersten Fall.
- */
-describe("ListenAusfall", () => {
-  it("schweigt, solange nichts schiefgegangen ist", () => {
-    const { container } = render(
-      <ListenAusfall was="Deine Kinder" fehler={null} laedt={false} onRetry={() => {}} />);
-
-    // Nicht „kein Banner", sondern **gar nichts**: Eine dauerhaft leere Fehlerfläche über jedem Schritt
-    // wäre ein Kasten, der immer da ist und nie etwas sagt.
-    expect(container.innerHTML).toBe("");
-  });
-
-  it("nennt die Liste beim Namen und bietet den Weg zurück an", () => {
-    const onRetry = vi.fn();
-    render(<ListenAusfall was="Deine Kinder" fehler="Netz weg" laedt={false} onRetry={onRetry} />);
-
-    // Der Name der Liste trägt die Aussage: „konnte nicht geladen werden" allein sagt nicht, WAS fehlt,
-    // und der Assistent lädt drei Listen.
-    expect(screen.getByRole("alert").textContent).toMatch(/Deine Kinder konnten nicht geladen werden: Netz weg/);
-
-    fireEvent.click(screen.getByRole("button", { name: "Erneut laden" }));
-    expect(onRetry).toHaveBeenCalledTimes(1);
-  });
-
-  it("bleibt während der Wiederholung stehen, statt unter dem Finger zu verschwinden", () => {
-    const { rerender } = render(
-      <ListenAusfall was="Die Fächer" fehler="Netz weg" laedt={false} onRetry={() => {}} />);
-
-    /*
-     * Der Zustand, den `useAsync.reload()` erzeugt: `error` wird `null` und `loading` `true` – im selben
-     * Schritt. An `fehler` allein hinge das Banner samt Knopf genau im Moment des Klicks aus: Der gedrückte
-     * Knopf verschwände unter dem Finger, der Fokus fiele auf `<body>`, und während der Wiederholung stünde
-     * gar nichts da. Der Fall bildet diesen Übergang darum als Rerender nach, nicht als Anfangszustand.
-     */
-    rerender(<ListenAusfall was="Die Fächer" fehler={null} laedt onRetry={() => {}} />);
-
-    expect(screen.getByRole("alert").textContent).toMatch(/Die Fächer konnten nicht geladen werden: Netz weg/);
-    const knopf = screen.getByRole("button", { name: "Lädt…" }) as HTMLButtonElement;
-    // `disabled={busy}` an jedem Knopf, dessen Klick etwas auslöst (frontend/CLAUDE.md). Erst durch das
-    // Festhalten oben ist dieser Zustand überhaupt erreichbar – vorher war die Sperre toter Code.
-    expect(knopf.disabled).toBe(true);
-  });
-
-  it("räumt sich ab, wenn die Wiederholung geklappt hat", () => {
-    const { rerender, container } = render(
-      <ListenAusfall was="Die Fächer" fehler="Netz weg" laedt={false} onRetry={() => {}} />);
-    rerender(<ListenAusfall was="Die Fächer" fehler={null} laedt onRetry={() => {}} />);
-
-    // Die Gegenprobe zum Festhalten: Ein Gedächtnis, das nie vergisst, ließe das Banner für immer stehen.
-    rerender(<ListenAusfall was="Die Fächer" fehler={null} laedt={false} onRetry={() => {}} />);
-
-    expect(container.innerHTML).toBe("");
   });
 });

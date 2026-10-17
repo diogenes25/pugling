@@ -44,8 +44,8 @@ export function ExerciseEditModal({ exercise, onClose, onSaved }: {
 }) {
   const type = exercise.type as ExerciseTypeKey;
   const types = useExerciseTypes();
-  const typeLabel = types?.label(type) ?? type;
-  const route = types?.route(type) ?? null;
+  const typeLabel = types.label(type);
+  const route = types.route(type);
   const [detail, setDetail] = useState<ExerciseDetail | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   /*

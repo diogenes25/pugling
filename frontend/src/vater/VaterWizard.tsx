@@ -7,6 +7,8 @@ import { SCHOOL_TYPES } from "../lib/labels";
 import { TruncationHint } from "../components/ListControls";
 import { FieldLabel, InfoHint } from "../components/InfoHint";
 import { useExerciseTypes } from "../lib/exerciseTypes";
+import { useGemerkterFehler } from "../lib/useGemerkterFehler";
+import { ListenAusfall } from "../components/ListenAusfall";
 import { authorText } from "./ExerciseAttribution";
 import { auswahlNachFilterwechsel, unsichtbareAuswahl, wizardFilterKey, wizardSearchParams } from "./wizardSearch";
 import { newWizardProgress, runWizardFinish } from "./wizardFinish";
@@ -551,7 +553,7 @@ export function VaterWizard() {
               <label htmlFor="wiz-type">Typ</label>
               <select id="wiz-type" value={typeKey} onChange={(e) => setTypeKey(e.target.value)}>
                 <option value="">– alle Typen –</option>
-                {types?.all.map((t) => <option key={t.type} value={t.type}>{t.label}</option>)}
+                {types.all.map((t) => <option key={t.type} value={t.type}>{t.label}</option>)}
               </select>
             </div>
             <input aria-label="Quelle" placeholder="Quelle, z. B. Green Line 1…" style={{ maxWidth: 220 }}
@@ -570,7 +572,7 @@ export function VaterWizard() {
             fehler={exercises.error} laedt={exercises.loading} zeilenVeraltet={zeilenVeraltet}
             fachName={subject?.name} selected={selected} selectAllBusy={selectAllBusy}
             onToggle={toggle} onSelectAll={selectAll} onRetry={exercises.reload}
-            typLabel={(t) => types?.label(t) ?? t} />
+            typLabel={types.label} />
         </section>
       )}
 
@@ -647,52 +649,6 @@ export function VaterWizard() {
 }
 
 /**
- * Der Ausfall einer Optionsliste: benannt, und mit einem Weg zurück (B-188).
- *
- * Der Weg zurück ist hier kein Schmuck. Über den Stepper zurück und wieder vor ändert **keine**
- * Abhängigkeit von `useAsync`, es fliegt also keine neue Abfrage — ausgerechnet die Bewegung, die ein
- * Nutzer versucht, ist die wirkungslose. Ohne den Knopf bliebe nur F5, und das kostet den ganzen
- * Assistenten (es persistiert kein Zustand). Dieselbe Begründung wie im Trefferbereich (B-162); der
- * Baustein zieht sie aus einer Stelle in drei.
- *
- * Bewusst **neben** der Liste, nicht an ihrer Stelle: Der Schritt bleibt bedienbar, und der Vater sieht,
- * dass eine Auswahl fehlt, statt zu glauben, es gäbe keine.
- */
-export function ListenAusfall({ was, fehler, laedt, onRetry }: {
-  /** Was nicht geladen werden konnte, als Satzanfang: „Deine Kinder", „Die Fächer". */
-  was: string;
-  fehler: string | null;
-  laedt: boolean;
-  onRetry: () => void;
-}) {
-  /*
-   * Den letzten Fehler festhalten, und zwar zwingend: `useAsync.reload()` setzt `error` auf `null` und
-   * `loading` auf `true` im **selben** Schritt. An `fehler` allein hinge das Banner im Moment des Klicks
-   * aus – der gedrückte Knopf verschwände unter dem Finger, der Fokus fiele auf `<body>`, und während der
-   * Wiederholung stünde gar nichts da. Dieselbe Begründung, aus der zwei Schritte weiter „Auswahl leeren"
-   * montiert bleibt und nur gesperrt wird.
-   *
-   * Nebenwirkung, die es erst ehrlich macht: Erst dadurch gibt es den Zustand „Fehler steht, Abfrage
-   * läuft" überhaupt – vorher war `disabled={laedt}` unerreichbar.
-   */
-  const [letzter, setLetzter] = useState<string | null>(null);
-  useEffect(() => {
-    if (fehler) setLetzter(fehler);
-    else if (!laedt) setLetzter(null);
-  }, [fehler, laedt]);
-
-  const gescheitert = fehler ?? (laedt ? letzter : null);
-  if (!gescheitert) return null;
-  return (
-    <div className="banner err" role="alert">
-      {was} konnten nicht geladen werden: {gescheitert}
-      <button type="button" className="btn ghost inline-btn" style={{ width: "auto", marginLeft: 8 }}
-        disabled={laedt} onClick={onRetry}>{laedt ? "Lädt…" : "Erneut laden"}</button>
-    </div>
-  );
-}
-
-/**
  * Der Trefferbereich von Schritt 3 – Zählzeile, „Alle wählen", und darunter genau EINER von vier
  * Zuständen: Platzhalter, Fehler, echte Leermenge, Liste.
  *
@@ -729,6 +685,13 @@ export function WizardTrefferbereich({
   onRetry: () => void;
   typLabel: (type: string) => string;
 }) {
+  // Der letzte Fehler überlebt den Start der Wiederholung (B-216): `useAsync.reload()` setzt `error` auf
+  // `null` und `loading` auf `true` im selben Schritt – an `fehler` allein hinge das Banner samt Knopf im
+  // Moment des Klicks aus. Dieselbe Regel wie in `ListenAusfall`, aus demselben Hook.
+  const gescheitert = useGemerkterFehler(fehler, laedt);
+  // Ein gesperrter Knopf verliert in Chromium den Fokus – darum wandert er beim Klick auf den Kasten
+  // (Begründung in `ListenAusfall.tsx`).
+  const kasten = useRef<HTMLDivElement>(null);
   return (
     <>
       <div className="row">
@@ -736,7 +699,7 @@ export function WizardTrefferbereich({
             Filter gehören, wäre „N passende Übungen" die Zahl von vorhin – neben einer Meldung, die vom
             Jetzt spricht. Dieselbe Wahrheit (`zeilenVeraltet`) trägt schon Kästchen und Knopf. */}
         <span className="sub">
-          {fehler ? "Suche gescheitert" : zeilenVeraltet ? "Suche läuft…" : `${treffer.length} passende Übungen`}
+          {gescheitert ? "Suche gescheitert" : zeilenVeraltet ? "Suche läuft…" : `${treffer.length} passende Übungen`}
         </span>
         {/* `zeilenVeraltet` muss am Knopf mit, nicht nur am Kästchen (B-169): `laedt` deckt das
             Ladefenster, aber NICHT den Fehlerzweig. Scheitert die Abfrage, bleibt `data` die alte Seite,
@@ -756,18 +719,22 @@ export function WizardTrefferbereich({
           vor ändert KEINE Abhängigkeit von `useAsync`, es fliegt also keine neue Abfrage — ausgerechnet
           die Bewegung, die ein Nutzer versucht, ist die wirkungslose. Der einzige verbleibende Ausweg
           wäre F5, und der kostet den ganzen Assistenten (es persistiert kein Zustand). */}
-      {fehler && (
-        <div className="banner err" role="alert">
-          Die Übungssuche ist gescheitert: {fehler}
+      {gescheitert && (
+        <div className="banner err" role="alert" tabIndex={-1} ref={kasten}>
+          Die Übungssuche ist gescheitert: {gescheitert}
           <button type="button" className="btn ghost inline-btn" style={{ width: "auto", marginLeft: 8 }}
-            disabled={laedt} onClick={onRetry}>Erneut suchen</button>
+            disabled={laedt} onClick={() => { kasten.current?.focus(); onRetry(); }}>
+            {laedt ? "Lädt…" : "Erneut suchen"}
+          </button>
         </div>
       )}
 
       {platzhalter ? <div className="loading">Lade Übungen…</div> : treffer.length === 0 ? (
         // Der Satz gilt NUR, wenn die Suche wirklich gelaufen ist. Im Fehlerfall steht oben schon das
         // Banner; ihn zusätzlich zu zeigen hieße, im selben Bildschirm zwei Ursachen zu behaupten.
-        fehler ? null : (
+        // `gescheitert`, nicht `fehler`: Im Fenster der Wiederholung ist `fehler` schon `null`, das Banner
+        // steht aber noch – an `fehler` stünden hier beide Sätze zugleich (Reviewer-Fund, B-216).
+        gescheitert ? null : (
           <div className="banner err">
             Keine passenden Übungen im Katalog. Lege welche unter „Übungen" an (Fach {fachName ?? "?"}).
           </div>
@@ -783,7 +750,9 @@ export function WizardTrefferbereich({
                   checked={selected.includes(e.id)} onChange={() => onToggle(e.id)} />
                 {/* Anzeigename aus dem Manifest, nicht der Schlüssel: sonst bietet das Pulldown darüber
                     „Vokabelkarten" an, während die Zeile darunter „Vocabulary" sagt — ein Widerspruch in
-                    einem Bildschirm. Der Rückfall auf den Schlüssel greift nur, solange das Manifest lädt. */}
+                    einem Bildschirm. Der Rückfall auf den Schlüssel greift, solange das Manifest lädt – und
+                    wenn sein Abruf scheiterte: Im Assistenten bleibt der Ausfall bewusst stumm (B-215,
+                    Entscheidung 2), die Zeile liest sich dann als Schlüssel. */}
                 <span>{e.title} <span className="muted">· {typLabel(e.type)}{by ? ` – ${by}` : ""}{e.source ? ` [${e.source}]` : ""}</span></span>
               </label>
             );

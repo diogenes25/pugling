@@ -236,6 +236,9 @@ export function ProfileForm({ profile, subjects, series, onDone, onMeldung }: {
   // Computed statt in eigenem State gehalten: ein zweites, von Hand gepflegtes Set könnte von der
   // Formular-/Reihenwahl abdriften. Die Regel selbst steht in `seriesDerivation.ts`.
   const isDerived = (field: DerivableField) => derived(field, form, chosenSeries, touched);
+  // Das Fach stammt aus der Reihe, und die Fächerliste kennt es nicht (B-185) – siehe das Fach-Feld unten.
+  const abgeleitetOhneOption = isDerived("subjectId") && chosenSeries?.subjectId != null
+    && !subjects.some((s) => s.id === chosenSeries.subjectId);
 
   /** Beim Wählen einer Reihe: abgeleitete Felder folgen ihr, selbst gesetzte nie. */
   function deriveFromSeries(seriesId: string) {
@@ -330,13 +333,18 @@ export function ProfileForm({ profile, subjects, series, onDone, onMeldung }: {
         </div>
         <div className="field">
           <FieldLabel htmlFor={`fl-subject-${id}`} topic="profileSubject">Fach</FieldLabel>
-          {/* Fach und Lehrwerk über `ReferenceSelect` (B-172). Der geladene Stand ist `profile` – beim
-              Anlegen ist es `undefined`, dann gibt es keine Sonderoption, und das ist richtig: ein neues
-              Profil hat keinen Wert, der fehlen könnte. */}
+          {/* Fach und Lehrwerk über `ReferenceSelect` (B-172). Der geladene Stand ist `profile` – und beim
+              Anlegen gibt es ihn nicht. Es gibt aber einen zweiten Wert, der außerhalb der Liste liegen kann:
+              das aus der Reihe ABGELEITETE Fach, wenn die Fächerliste nicht geladen ist (B-185). Dann zeigte
+              das Feld „– fachneutral –", der Hinweis daneben sagte „aus dem Lehrwerk übernommen", und der
+              POST trug die Id trotzdem. Darum speist in genau diesem Fall die Reihe die Sonderoption –
+              `loaded*` heißt hier „bekannt, aber nicht in der Liste". Trägt die Liste den abgeleiteten Wert,
+              bleibt es beim Profil, damit dessen eigene Sonderoption (B-172) nicht verdrängt wird. */}
           <ReferenceSelect
             id={`fl-subject-${id}`} value={form.subjectId}
             onChange={(v) => { up("subjectId", v); touch("subjectId"); }}
-            loadedId={profile?.subjectId} loadedName={profile?.subjectName}
+            loadedId={abgeleitetOhneOption ? chosenSeries?.subjectId : profile?.subjectId}
+            loadedName={abgeleitetOhneOption ? chosenSeries?.subjectName : profile?.subjectName}
             options={subjectOptions(subjects)} emptyLabel="– fachneutral –"
             freetextValue={FREETEXT_SUBJECT}
           />

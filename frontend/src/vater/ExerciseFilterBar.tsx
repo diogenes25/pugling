@@ -96,7 +96,7 @@ export function ExerciseFilterBar({ value, onChange, subjects }: {
         <select aria-label="Typ-Filter" value={value.type ?? ""}
           onChange={(e) => set({ type: e.target.value || undefined })}>
           <option value="">– alle –</option>
-          {(types?.all ?? []).map((t) => <option key={t.type} value={t.type}>{t.label}</option>)}
+          {types.all.map((t) => <option key={t.type} value={t.type}>{t.label}</option>)}
         </select>
       </div>
       <div className="field" style={{ minWidth: 140 }}>

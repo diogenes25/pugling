@@ -67,6 +67,39 @@ describe("HistoryTab", () => {
     expect(onLoadMore).toHaveBeenCalledTimes(1);
   });
 
+  /*
+   * B-216. Der Lader setzt `loading` auf `true` und `error` auf `null` im selben Tick. Die Karte fiel damit
+   * nach dem Klick auf „Nochmal versuchen" in den Lade-Zweig und renderte NICHTS: Knopf weg, Fokus auf
+   * `<body>`, und die Beschriftung „Lädt…" war toter Code – im Zustand, den sie beschreibt, gab es den Knopf
+   * nicht. Rot macht das eine Karte, die den letzten Fehler nicht festhält.
+   */
+  it("hält Meldung und Knopf während der Wiederholung fest, statt die Karte zu leeren", () => {
+    const { rerender } = render(<HistoryTab purchases={[]} total={0} loading={false}
+      error="Netzwerk nicht erreichbar" onLoadMore={vi.fn()} />);
+
+    rerender(<HistoryTab purchases={[]} total={0} loading={true} error={null} onLoadMore={vi.fn()} />);
+
+    expect(screen.getByText("Netzwerk nicht erreichbar")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Lädt…" })).toHaveProperty("disabled", true);
+
+    // Geklappt: die Karte sagt wieder, was gilt – und nicht mehr, was war.
+    rerender(<HistoryTab purchases={[]} total={0} loading={false} error={null} onLoadMore={vi.fn()} />);
+    expect(screen.queryByText("Netzwerk nicht erreichbar")).toBeNull();
+    expect(screen.getByText(/Noch nichts gekauft/)).toBeTruthy();
+  });
+
+  // Dieselbe Regel für die gefüllte Karte: Scheitert eine spätere Seite, bleibt die Meldung stehen, während
+  // „Mehr laden" die nächste anstößt – statt beim Klick auszuhängen (Reviewer-Fund zu B-216).
+  it("hält die Meldung einer gescheiterten spaeteren Seite fest, waehrend neu geladen wird", () => {
+    const { rerender } = render(<HistoryTab purchases={[purchase()]} total={5} loading={false}
+      error="Zeitüberschreitung" onLoadMore={vi.fn()} />);
+
+    rerender(<HistoryTab purchases={[purchase()]} total={5} loading={true} error={null} onLoadMore={vi.fn()} />);
+
+    expect(screen.getByText("Zeitüberschreitung")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Lädt…" })).toHaveProperty("disabled", true);
+  });
+
   it("sagt waehrend des ersten Ladens weder 'nichts gekauft' noch etwas ueber einen Fehler", () => {
     render(<HistoryTab purchases={[]} total={0} loading={true} error={null} onLoadMore={vi.fn()} />);
     expect(screen.queryByText(/Noch nichts gekauft/)).toBeNull();

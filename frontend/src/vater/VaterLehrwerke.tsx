@@ -494,7 +494,7 @@ export function SeriesForm({ series, subjects, publishers, onSaved, onMeldung }:
     if (dto === null) { action.succeed("Nichts geändert."); return; }
 
     /*
-     * Die Bestätigung geht NACH OBEN, wenn es dort einen Platz gibt (B-173) – und dann NICHT zusätzlich
+     * Die Bestätigung geht NACH OBEN – der Platz der Seite ist seit B-212 immer da (B-173) – und NICHT zusätzlich
      * hierher: Ändert das Speichern einen Wert, nach dem gefiltert oder sortiert wird, verlässt die Zeile
      * das Ergebnis und nimmt ihren eigenen Banner mit. Beides gleichzeitig zu zeigen wäre kein
      * „doppelt hält besser", sondern derselbe Satz zweimal auf einem Bildschirm (vier E2E sind daran
@@ -1029,7 +1029,9 @@ function NewSeries({ subjects, publishers, onPublisherCreated, onCreated, onMeld
         Dublette in den geteilten Katalog zu schreiben.
       </p>
       {/* Kein eigener Meldungsplatz mehr (B-212): Was vom Server kommt, steht am Platz der Seite. Hier
-          bleibt nichts übrig — dieses Formular hat keine Eingabeprüfung, es sperrt den Knopf stattdessen. */}
+          bleibt nichts übrig — dieses Formular hat keine Eingabeprüfung. Gesperrt ist aber nur der
+          Verlags-Knopf; „Reihe anlegen" ist bei leerem Namen klickbar und `submit` kehrt stumm zurück
+          (Nachschau 2026-10-17, B-225). */}
 
       {/* Verlag fehlt in der Liste? Direkt hier anlegen statt die Seite zu verlassen (idempotent über den Slug). */}
       <form

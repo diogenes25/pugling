@@ -14,7 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
-nachgeschaut: ""
+nachgeschaut: "2026-10-17: sieben Schreibpfade in VaterLehrwerke.tsx je auf ihren Meldungsplatz gezählt (alle → Seite); scrollIntoView-Bedingung :150-152 geprüft; Seitenbezug der User Story NICHT gebaut → B-224, falscher Kommentar :1031 → B-225"
 ---
 
 # B-212 · Auf der Lehrwerke-Seite stehen rot und grün gleichzeitig — der Weg ist nur ein anderer
@@ -79,7 +79,7 @@ konstruktiv" — nachgemessen gilt das nur für `SeriesRow`; die Datei trägt we
 
 | Probe | erwartet | gemessen |
 | --- | --- | --- |
-| `SeriesForm` meldet wieder lokal (Empfänger weg) | 1 | **1**, an Zeile 115 — der Zeile, die den Fall trägt |
+| `SeriesForm` meldet wieder lokal (Empfänger weg) | 1 | **1**, an Zeile 122 — der Zeile, die den Fall trägt (Nachschau 2026-10-17: vorher „115" notiert; `:115` prüft die Abwesenheit der Zeile und fällt bei zurückgenommener Reparatur nicht) |
 
 ## Verlauf
 
@@ -93,3 +93,4 @@ konstruktiv" — nachgemessen gilt das nur für `SeriesRow`; die Datei trägt we
   Ersatz. Belege: `tsc -b` sauber, `vitest run` **368/368** grün, `playwright test` **63/63** grün.
   `frontend-reviewer` gelaufen, **kein Blocker**; seine acht Funde mit Code- oder Testwirkung sind
   eingearbeitet (Protokoll `docs/pm-sitzung-2026-09-05.md`). Commit `3d763fe`.
+- **2026-10-17** — **Nachschau** (Nachtlauf, Protokoll `docs/pm-sitzung-2026-10-17-nacht.md`): Schnitt für alle sieben Schreibpfade der Datei nachgerechnet – hält. **Zwei Funde:** die User Story verspricht die Seite, gebaut ist die Datei – `PublisherAdmin.tsx:80` trägt einen eigenen `StatusBanner` ([B-224](B-224-verlagsbaustein-traegt-zweiten-meldungsplatz.md)); der neue Kommentar `:1031` behauptete eine Knopf-Sperre, die nur der Verlags-Knopf hat, darunter ein stummer Pfad ([B-225](B-225-reihe-anlegen-schweigt-bei-leerem-namen.md)). Zeilenangabe der roten Probe korrigiert (122 statt 115); die Zahl der Banner steht in der Story uneinheitlich („drei"/„vier").

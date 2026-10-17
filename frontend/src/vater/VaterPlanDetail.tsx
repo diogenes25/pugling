@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { ReferenceSelect } from "../components/ReferenceSelect";
 import { StatusBanner } from "../components/StatusBanner";
 import { api } from "../lib/api";
 import { confirmAction } from "../lib/ui";
@@ -67,7 +68,7 @@ export function VaterPlanDetail() {
 
       <StatusBanner message={action.message} style={{ marginTop: 0 }} />
 
-      {editing && <PlanEditForm plan={p} busy={action.busy}
+      {editing && <PlanEditForm plan={p} childName={child.data?.name} busy={action.busy}
         onSave={(dto) => mutate(() => api.updatePlan(id, dto), "Änderungen gespeichert.")} />}
 
       {prog.data && (
@@ -109,7 +110,13 @@ export function VaterPlanDetail() {
 }
 
 /** Formular zum Bearbeiten des Plan-Containers: Titel, Beschreibung, Laufzeit und Kind-Zuweisung. */
-function PlanEditForm({ plan, busy, onSave }: { plan: PlanResponse; busy: boolean; onSave: (dto: UpdatePlanDto) => void }) {
+function PlanEditForm({ plan, childName, busy, onSave }: {
+  plan: PlanResponse;
+  /** Der Name des geladenen Kindes – aus dem Datensatz, den die Seite ohnehin lädt (`PlanResponse` trägt keinen). */
+  childName: string | undefined;
+  busy: boolean;
+  onSave: (dto: UpdatePlanDto) => void;
+}) {
   const children = useAsync<ChildResponse[]>(() => api.children(), []);
   const [form, setForm] = useState({
     title: plan.title, description: plan.description ?? "",
@@ -130,13 +137,22 @@ function PlanEditForm({ plan, busy, onSave }: { plan: PlanResponse; busy: boolea
 
   return (
     <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {/* Der Ausfall der Kinderliste war unsichtbar – das Feld stand leer, für einen Plan, der ein Kind hat
+          (B-194, derselbe Fall wie B-172s Kriterium 5). Ohne Wiederhol-Knopf, wie die 68 anderen
+          Lesefehler-Banner (B-172, Entscheidung 5); der Weg zurück ist B-183. */}
+      {children.error && <div className="banner err" role="alert">Kinder: {children.error}</div>}
       <div className="form-grid" style={{ alignItems: "end" }}>
         <div className="field" style={{ minWidth: 220 }}><label htmlFor="plan-edit-title">Titel</label>
           <input id="plan-edit-title" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} /></div>
         <div className="field"><label htmlFor="plan-edit-child">Kind</label>
-          <select id="plan-edit-child" value={form.childId} onChange={(e) => setForm((f) => ({ ...f, childId: Number(e.target.value) }))}>
-            {children.data?.map((c) => <option key={c.id} value={c.id}>{c.name} (#{c.id})</option>)}
-          </select>
+          {/* Der achte Fall der Regel aus B-172: Fehlt das geladene Kind in der Liste, zeigt das Feld es als
+              „(nicht geladen)" statt still auf die erste Option zu fallen. Kein `emptyLabel`: ein Plan ohne
+              Kind ist kein wählbarer Zustand. */}
+          <ReferenceSelect id="plan-edit-child" value={String(form.childId)}
+            onChange={(v) => setForm((f) => ({ ...f, childId: Number(v) }))}
+            loadedId={plan.childId} loadedName={childName}
+            options={(children.data ?? []).map((c) => ({ value: String(c.id), label: `${c.name} (#${c.id})` }))}
+          />
         </div>
         <div className="field"><label htmlFor="plan-edit-start">Start</label>
           <input id="plan-edit-start" type="date" value={form.startDate} onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))} /></div>

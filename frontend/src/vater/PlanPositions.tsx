@@ -5,6 +5,7 @@ import { useAction, type ActionState } from "../lib/useAction";
 import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
 import { useExerciseTypes } from "../lib/exerciseTypes";
+import { useGemerkterFehler } from "../lib/useGemerkterFehler";
 import { TruncationHint } from "../components/ListControls";
 import { MasteryPill } from "../components/MasteryPill";
 import { FieldLabel, InfoHint } from "../components/InfoHint";
@@ -405,7 +406,7 @@ function PositionFields({ value, onChange }: { value: PositionSettings; onChange
 function AddPosition({ planId, action, onAdded }: { planId: number; action: ActionState; onAdded: () => void }) {
   const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
   const types = useExerciseTypes();
-  const typeLabel = (t: string) => types?.label(t) ?? t;
+  const typeLabel = types.label;
   const [filter, setFilter] = useState<ExerciseFilter>({});
   // Die Gesamtzahl wird mitgeführt: der Server liefert nur eine Seite, und eine still gekappte
   // Auswahlliste liest sich wie „mehr gibt es nicht".
@@ -513,6 +514,11 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
   }
 
   const results = exercises.data?.items ?? [];
+  // Der letzte Fehler überlebt den Start der Wiederholung (B-216) – wie im Zwilling (`VaterWizard.tsx`).
+  const sucheGescheitert = useGemerkterFehler(exercises.error, exercises.loading);
+  // Ein gesperrter Knopf verliert in Chromium den Fokus – darum wandert er beim Klick auf den Kasten
+  // (Begründung in `ListenAusfall.tsx`).
+  const fehlerKasten = useRef<HTMLDivElement>(null);
 
   return (
     <form className="card" onSubmit={add} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -525,7 +531,7 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
             gar nicht mehr eingestellt ist. Dieselbe Wahrheit trägt auch die Sperre der Radios. */}
         <label>Übung aus dem Katalog{" "}
           <span className="muted">
-            {exercises.error ? "(Suche gescheitert)" : zeilenVeraltet ? "(Suche läuft…)" : `(${results.length} Treffer)`}
+            {sucheGescheitert ? "(Suche gescheitert)" : zeilenVeraltet ? "(Suche läuft…)" : `(${results.length} Treffer)`}
           </span>
         </label>
         {/* Der Fehlerzweig braucht seine eigene Fläche, nicht nur die Sperre: Scheitert die Suche, bleibt
@@ -534,11 +540,13 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
             wieder wählbar wird — und der einzige Ausweg wäre, blind am Filter zu drehen. `reload()` ist
             der Weg zurück: es setzt `data` neu und löst damit die Sperre. Derselbe Aufbau wie im
             Zwilling (`VaterWizard.tsx`). */}
-        {exercises.error && (
-          <div className="banner err" role="alert">
-            Die Übungssuche ist gescheitert: {exercises.error}
+        {sucheGescheitert && (
+          <div className="banner err" role="alert" tabIndex={-1} ref={fehlerKasten}>
+            Die Übungssuche ist gescheitert: {sucheGescheitert}
             <button type="button" className="btn ghost inline-btn" style={{ width: "auto", marginLeft: 8 }}
-              disabled={exercises.loading} onClick={exercises.reload}>Erneut suchen</button>
+              disabled={exercises.loading} onClick={() => { fehlerKasten.current?.focus(); exercises.reload(); }}>
+              {exercises.loading ? "Lädt…" : "Erneut suchen"}
+            </button>
           </div>
         )}
         {/* Der Grund gehört als Text daneben, nicht als `title` an das gesperrte Element: der erscheint
@@ -647,7 +655,7 @@ function PositionRow({ planId, pos, onChanged, action }: {
   planId: number; pos: PositionResponse; onChanged: () => void; action: ActionState;
 }) {
   const types = useExerciseTypes();
-  const typeLabel = (t: string) => types?.label(t) ?? t;
+  const typeLabel = types.label;
   const [editing, setEditing] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [settings, setSettings] = useState<PositionSettings>(() => settingsFrom(pos));

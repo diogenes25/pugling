@@ -13,6 +13,7 @@ import type {
 } from "../lib/types";
 import { isKnownType } from "./exerciseConfig";
 import { useExerciseTypes } from "../lib/exerciseTypes";
+import { ListenAusfall } from "../components/ListenAusfall";
 
 /**
  * Übungen **verwalten**: suchen, ausprobieren, bearbeiten, löschen.
@@ -56,7 +57,7 @@ export function VaterExercises() {
 
   // Routen-Segment und Anzeigename der Typen kommen vom Server (Typ-Manifest), nicht aus einer Tabelle hier.
   const types = useExerciseTypes();
-  const typeLabel = (t: string) => types?.label(t) ?? t;
+  const typeLabel = types.label;
 
   // Verwaltung zeigt standardmäßig nur eigene Übungen (mineOnly); optional auch die geteilte Bibliothek.
   const [showShared, setShowShared] = useState(false);
@@ -163,12 +164,15 @@ export function VaterExercises() {
           Falle wie in VaterKatalog – `useAsync` behält `data` über ein `reload`, also darf der Platzhalter
           nur greifen, solange es noch keine gibt.
         */}
+        {/* Ohne Manifest keine Route, ohne Route sind Bearbeiten und Löschen je Zeile gesperrt – der Grund
+            gehört über die Zeilen, nicht als `title` an die grauen Knöpfe (B-160, B-215). */}
+        <ListenAusfall was="Die Übungstypen" fehler={types.error} laedt={types.loading} onRetry={types.reload} />
         {existing.loading && existing.data === null ? <div className="loading">Lade…</div>
           : (existing.data?.items.length ?? 0) === 0 ? <div className="muted">Noch keine Übungen.</div> : (
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {existing.data?.items.map((e) => (
               <ExerciseManageRow key={e.id} exercise={e}
-                route={types?.route(e.type) ?? null} label={typeLabel(e.type)} onChanged={existing.reload}
+                route={types.route(e.type)} label={typeLabel(e.type)} onChanged={existing.reload}
                 onPreview={() => setPreview({ id: e.id, title: e.title })} onEdit={() => setEditing(e)} />
             ))}
           </div>

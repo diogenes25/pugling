@@ -14,7 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
-nachgeschaut: ""
+nachgeschaut: "2026-10-17: alle drei Fundorte (ChildMaterialSection:258-261, VaterFachlehrer:310-318, VaterLehrwerke:814-815) gegen die Kriterien gelesen, Reihenfolge Dialog→onMeldung(null) geprüft; Spec-Zeile korrigiert (77 statt 75)"
 ---
 
 # B-200 · Drei Löschwege melden gar nichts
@@ -66,7 +66,7 @@ beansprucht.
 
 | Probe | erwartet | gemessen |
 | --- | --- | --- |
-| `UnitForm.remove` ohne Namen im Text | 1 | **1**, an Zeile 75 |
+| `UnitForm.remove` ohne Namen im Text | 1 | **1**, an Zeile 77 (Nachschau 2026-10-17: vorher „75" notiert, das ist der Kommentar davor) |
 | Buch- und Fachlehrer-Meldung geleert | 2 | **2** |
 
 **Die zweite Zeile gäbe es ohne die Review-Runde nicht.** Sie hat aufgedeckt, dass „rote Probe erwartet 1 /
@@ -86,3 +86,4 @@ funktionieren, wäre eine Behauptung geblieben. Dafür ist `e2e/loeschen-meldet-
   Belege: `tsc -b` sauber, `vitest run` **368/368** grün, `playwright test` **63/63** grün.
   `frontend-reviewer` gelaufen, **kein Blocker**; seine acht Funde mit Code- oder Testwirkung sind
   eingearbeitet (Protokoll `docs/pm-sitzung-2026-09-05.md`). Commit `3d763fe`.
+- **2026-10-17** — **Nachschau** (Nachtlauf, Protokoll `docs/pm-sitzung-2026-10-17-nacht.md`): alle drei Fundorte gebaut, jede Meldung nennt den Gegenstand, Reihenfolge Dialog → `onMeldung(null)` überall eingehalten. Zeilenangabe der roten Probe korrigiert (77 statt 75). Kein Defekt.

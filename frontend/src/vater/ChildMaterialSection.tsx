@@ -166,8 +166,8 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
    *
    * **Pflicht, nicht optional** — und das ist der Punkt: Ein `?`-Prop kann man ganz weglassen, und genau
    * so entsteht die nächste Aufrufstelle ohne Räumen. Hier verzweigt nichts auf seine Abwesenheit, also
-   * gibt es keinen Grund für die Lücke. (Bei `SeriesForm` ist optional richtig: dort entscheidet die
-   * Anwesenheit, ob die Bestätigung nach oben geht oder lokal bleibt.)
+   * gibt es keinen Grund für die Lücke. (Seit B-212 gilt dasselbe für `SeriesForm`: auch dort ist der
+   * Prop Pflicht, der Zweig „lokal bleiben" existiert nicht mehr.)
    *
    * Zwei Rückkanäle neben `onDone` sind trotzdem nicht schön und hier ausgesprochen: `onDone` gehört zum
    * Schließen, `onMeldung` zum Platz — und der Anlege-Zwilling schließt nie.

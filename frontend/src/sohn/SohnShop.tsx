@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { confirmAction } from "../lib/ui";
 import { useAction } from "../lib/useAction";
+import { useGemerkterFehler } from "../lib/useGemerkterFehler";
 import { StatusBanner } from "../components/StatusBanner";
 import { ACTION_EMOJI, priceLabel, unitAmount } from "../lib/shop";
 import type { MyInventoryItem, MyActivation, MyShopPurchase, ShopAvailableListing, ShopView } from "../lib/types";
@@ -320,14 +321,25 @@ function RequestsTab({ activations }: { activations: MyActivation[] }) {
 export function HistoryTab({ purchases, total, loading, error, onLoadMore }: {
   purchases: MyShopPurchase[]; total: number; loading: boolean; error: string | null; onLoadMore: () => void;
 }) {
+  /*
+   * Der letzte Fehler überlebt den Start der Wiederholung (B-216). Der Lader setzt `loading` und `error`
+   * im selben Tick; ohne das Gedächtnis fiel die leere Karte nach dem Klick auf „Nochmal versuchen" in den
+   * Lade-Zweig und renderte NICHTS – der Knopf verschwand unter dem Finger, und sein „Lädt…" war toter
+   * Code. Vor den frühen `return`s, weil es ein Hook ist.
+   */
+  const gescheitert = useGemerkterFehler(error, loading);
+  // Ein gesperrter Knopf verliert in Chromium den Fokus – darum wandert er beim Klick auf die Meldung
+  // (Begründung in `ListenAusfall.tsx`).
+  const meldung = useRef<HTMLDivElement>(null);
   if (purchases.length === 0) {
-    if (error != null)
+    if (gescheitert != null)
       return (
         <div className="list">
           {/* `role="alert"` wie beim Toast: der dauerhafte Befund war vorher der einzige stumme – ein
               Screenreader bekam die 2-Sekunden-Meldung, aber nicht den Zustand, der bleibt. */}
-          <div className="banner err" role="alert">{error}</div>
-          <button type="button" className="btn ghost small" disabled={loading} onClick={onLoadMore}>
+          <div className="banner err" role="alert" tabIndex={-1} ref={meldung}>{gescheitert}</div>
+          <button type="button" className="btn ghost small" disabled={loading}
+            onClick={() => { meldung.current?.focus(); onLoadMore(); }}>
             {loading ? "Lädt…" : "Nochmal versuchen"}
           </button>
         </div>
@@ -339,7 +351,9 @@ export function HistoryTab({ purchases, total, loading, error, onLoadMore }: {
     <div className="list">
       {/* Scheitert eine SPÄTERE Seite, bleiben die schon geladenen Zeilen stehen - der "Mehr laden"-Knopf
           darunter ist dann selbst der Wiederholen-Knopf. */}
-      {error != null && <div className="banner err" role="alert">{error}</div>}
+      {/* Auch hier `gescheitert`: Sonst verschwände die Meldung, sobald „Mehr laden" die nächste Seite
+          anstößt – derselbe Aushänger wie oben, nur mit stehenbleibendem Knopf (Reviewer-Fund, B-216). */}
+      {gescheitert != null && <div className="banner err" role="alert">{gescheitert}</div>}
       {purchases.map((p) => (
         <div key={p.id} className="row" style={{ justifyContent: "space-between", padding: "8px 0" }}>
           <div>

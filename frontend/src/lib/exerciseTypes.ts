@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { api } from "./api";
+import { useCallback, useEffect, useState } from "react";
+import { api, errorMessage } from "./api";
 import type { ExerciseTypeManifest } from "./types";
 
 /**
@@ -24,33 +24,59 @@ export function loadExerciseTypes(): Promise<ExerciseTypeManifest[]> {
   return pending;
 }
 
-/** Nachschlage-Sicht auf das Manifest; `null`, solange es lädt. */
+/**
+ * Nachschlage-Sicht auf das Manifest.
+ *
+ * Sie ist **immer** da, auch während des Ladens und nach einem Fehlschlag – mit leerer Liste. `label()`
+ * fällt dann auf den Schlüssel zurück, `route()` auf `null` (Anlegen/Bearbeiten gesperrt statt gegen
+ * eine geratene Route zu posten): „lesbar statt kaputt". Neu seit B-215 ist, dass der Ausfall dabei
+ * **aussprechbar** ist (`error`) und einen Weg zurück hat (`reload`). Vorher schluckte der Hook den
+ * Fehlschlag, und „Server kennt null Typen" war von „Abruf gescheitert" nicht zu unterscheiden – der
+ * Creator saß vor gesperrten Knöpfen ohne Grund.
+ */
 export interface ExerciseTypeLookup {
   all: ExerciseTypeManifest[];
   byType: Map<string, ExerciseTypeManifest>;
   /** Anzeigename des Typs; unbekannte Typen behalten ihren Schlüssel (besser als eine Lücke). */
   label: (type: string) => string;
-  /** Routen-Segment der Autoren-CRUD; `null`, wenn der Server den Typ nicht kennt. */
+  /** Routen-Segment der Autoren-CRUD; `null`, wenn der Server den Typ nicht kennt – oder das Manifest noch lädt bzw. sein Abruf scheiterte. */
   route: (type: string) => string | null;
+  /** Wahr, solange ein Abruf läuft – der erste wie jede Wiederholung. */
+  loading: boolean;
+  /** Der Fehlschlag des letzten Abrufs; `null`, solange geladen wird oder er gelang. */
+  error: string | null;
+  /** Lädt das Manifest neu; der Modul-Cache ist nach einem Fehlschlag ohnehin leer. */
+  reload: () => void;
 }
 
-export function useExerciseTypes(): ExerciseTypeLookup | null {
-  const [all, setAll] = useState<ExerciseTypeManifest[] | null>(null);
+export function useExerciseTypes(): ExerciseTypeLookup {
+  const [all, setAll] = useState<ExerciseTypeManifest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [nonce, setNonce] = useState(0);
+  const reload = useCallback(() => setNonce((n) => n + 1), []);
 
   useEffect(() => {
     let cancelled = false;
-    // Ein fehlgeschlagenes Manifest darf die Seite nicht blockieren: dann bleiben Namen die Schlüssel und
-    // die Routen null (Bearbeiten/Löschen deaktiviert) – lesbar statt kaputt.
-    loadExerciseTypes().then((m) => { if (!cancelled) setAll(m); }).catch(() => { if (!cancelled) setAll([]); });
+    // `error` und `loading` im selben Schritt – dieselbe Choreographie wie `useAsync`. Wer ein Banner
+    // daran hängt, nimmt `useGemerkterFehler` (B-216), sonst verschwindet es unter dem Wiederhol-Knopf.
+    setLoading(true);
+    setError(null);
+    loadExerciseTypes()
+      .then((m) => { if (!cancelled) setAll(m); })
+      .catch((e: unknown) => { if (!cancelled) setError(errorMessage(e)); })
+      .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, []);
+  }, [nonce]);
 
-  if (all === null) return null;
   const byType = new Map(all.map((m) => [m.type, m]));
   return {
     all,
     byType,
     label: (type) => byType.get(type)?.label ?? type,
     route: (type) => byType.get(type)?.authoringRoute ?? null,
+    loading,
+    error,
+    reload,
   };
 }

@@ -14,7 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
-nachgeschaut: ""
+nachgeschaut: "2026-10-17: Montagebedingung UnitPanel:721 und Pfad UnitForm.submit:797 gegen Entscheidung 2 nachgerechnet; Spec-Zeile der roten Probe korrigiert (69 statt 68)"
 ---
 
 # B-187 · Auch das Unit-Formular schließt sich mit seiner eigenen Bestätigung
@@ -71,7 +71,7 @@ Dieselbe wie in B-151: Die Bestätigung lebt in dem Element, dessen Verschwinden
 
 | Probe | erwartet | gemessen |
 | --- | --- | --- |
-| `UnitForm.submit` meldet wieder lokal (Empfänger weg) | 1 | **1**, an Zeile 68 — der Zeile, die den Fall trägt |
+| `UnitForm.submit` meldet wieder lokal (Empfänger weg) | 1 | **1**, an Zeile 69 — der Zeile, die den Fall trägt (Nachschau 2026-10-17: vorher „68" notiert, das ist das `*/` davor) |
 
 ## Verlauf
 
@@ -86,3 +86,4 @@ Dieselbe wie in B-151: Die Bestätigung lebt in dem Element, dessen Verschwinden
   Belege: `tsc -b` sauber, `vitest run` **368/368** grün, `playwright test` **63/63** grün.
   `frontend-reviewer` gelaufen, **kein Blocker**; seine acht Funde mit Code- oder Testwirkung sind
   eingearbeitet (Protokoll `docs/pm-sitzung-2026-09-05.md`). Commit `3d763fe`.
+- **2026-10-17** — **Nachschau** (Nachtlauf, Protokoll `docs/pm-sitzung-2026-10-17-nacht.md`): Entscheidung 2 gegen `VaterLehrwerke.tsx:721` und den Pfad `UnitForm.submit` `:797` nachgerechnet – hält. Die Zeilenangabe der roten Probe stimmte nicht (68 statt 69); korrigiert. Kein Defekt.

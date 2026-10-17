@@ -43,6 +43,24 @@ describe("ProfileForm – Ableitung aus dem Lehrwerk", () => {
     expect((screen.getByLabelText("Fach", { exact: true }) as HTMLSelectElement).value).toBe("1");
   });
 
+  /*
+   * B-185. Ist die Fächerliste nicht geladen, hat der abgeleitete Wert keine Option: der `<select>` fiel auf
+   * „– fachneutral –", der Hinweis daneben behauptete „aus dem Lehrwerk übernommen", und der POST trug die
+   * Id trotzdem. Anzeige und Zustand drifteten. Rot macht das ein Feld, das nur den GELADENEN Wert als
+   * Sonderoption kennt – beim Anlegen gibt es keinen, also stand `""` statt der Id.
+   */
+  it("zeigt das abgeleitete Fach auch dann, wenn die Fächerliste es nicht kennt", () => {
+    render(<ProfileForm onMeldung={() => {}} subjects={[]} series={[seriesWith({})]} onDone={() => {}} />);
+
+    fireEvent.change(screen.getByLabelText("Lehrwerk"), { target: { value: "1" } });
+
+    const fach = screen.getByLabelText("Fach", { exact: true }) as HTMLSelectElement;
+    expect(fach.value).toBe("1");
+    expect(fach.options[fach.selectedIndex].textContent).toBe("Englisch (nicht geladen)");
+    // Der Hinweis war nie falsch über den Zustand – jetzt widerspricht ihm das Feld nicht mehr.
+    expect(screen.getAllByText("aus dem Lehrwerk übernommen")).toHaveLength(3);
+  });
+
   it("lässt das Fach-Pulldown in Ruhe, wenn die REIHE kein Katalog-Fach trägt", () => {
     // Nicht zu verwechseln mit dem Freitext-Fach des Profils selbst (B-148, weiter unten): Hier trägt
     // die gewählte Reihe eines, steuert also zum Fach-Feld nichts bei.

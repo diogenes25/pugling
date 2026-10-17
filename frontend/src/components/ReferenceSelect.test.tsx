@@ -96,6 +96,18 @@ describe("ReferenceSelect – die Sonderoption", () => {
     expect(onChange).toHaveBeenCalledWith("2");
   });
 
+  /*
+   * B-194. Ein Pflichtfeld (der Plan hat immer ein Kind) darf keine leere Wahl anbieten – sonst wäre ein
+   * Zustand wählbar, den der Vertrag nicht kennt. Ohne `emptyLabel` fehlt die Leer-Option ganz. Rot macht
+   * das ein Bauteil, das die Leer-Option bedingungslos rendert (dann sind es drei Optionen, nicht zwei).
+   */
+  it("bietet ohne `emptyLabel` keine leere Wahl an", () => {
+    const { feld } = zeige({ emptyLabel: undefined });
+
+    expect(feld.options.length).toBe(2);
+    expect(Array.from(feld.options).some((o) => o.value === "")).toBe(false);
+  });
+
   it("lässt sich sperren", () => {
     // Die Unit im Lehrbuch ist gesperrt, solange keine Reihe gewählt ist.
     expect(zeige({ disabled: true }).feld.disabled).toBe(true);

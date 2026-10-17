@@ -334,6 +334,9 @@ th.sortable[aria-sort="ascending"] .th-sort, th.sortable[aria-sort="descending"]
    Auswahl fiel wegen eines Filterwechsels). Ohne eigene Variante trüge `.banner` allein keinen Hintergrund
    und läse sich als Fließtext, und genau dann wirkt die Änderung wieder stumm. */
 .banner.info { background: rgba(90, 200, 255, .12); color: #9bdcff; border: 1px solid rgba(90,200,255,.35); }
+/* Ein Fehlerkasten mit `tabIndex={-1}` nimmt beim Wiederholen den Fokus auf (B-216, `ListenAusfall.tsx`) –
+   per Tastatur ausgelöst braucht er denselben sichtbaren Ring wie jedes andere fokussierbare Element. */
+.banner[tabindex]:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 
 /* =========================================================================
    Motivations-Animationen (Duolingo-artig): Konfetti, Combo-Banner, Fighter-Flyby.

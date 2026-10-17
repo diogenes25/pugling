@@ -35,8 +35,12 @@ export interface ReferenceSelectProps {
   loadedId: number | null | undefined;
   loadedName: string | null | undefined;
   options: readonly ReferenceOption[];
-  /** Beschriftung der leeren Wahl, z. B. „– keine Angabe –". */
-  emptyLabel: string;
+  /**
+   * Beschriftung der leeren Wahl, z. B. „– keine Angabe –". **Weggelassen** für ein Pflichtfeld (B-194:
+   * ein Plan hat immer ein Kind) – dann gibt es keine Leer-Option, denn sie wäre ein wählbarer Zustand,
+   * den der Vertrag nicht kennt.
+   */
+  emptyLabel?: string;
   /**
    * Der Sentinel für „trägt einen Namen, aber kein Katalog-Objekt" – nur die Fach-Felder haben diesen
    * Zustand (`FREETEXT_SUBJECT`). Ohne ihn wird die Freitext-Option nicht angeboten.
@@ -74,7 +78,7 @@ export function ReferenceSelect({
   const sonder = specialOption(loadedId, loadedName, options, freetextValue);
   return (
     <select id={id} value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)}>
-      <option value="">{emptyLabel}</option>
+      {emptyLabel !== undefined && <option value="">{emptyLabel}</option>}
       {sonder && <option value={sonder.value} disabled={sonder.disabled}>{sonder.label}</option>}
       {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
     </select>
