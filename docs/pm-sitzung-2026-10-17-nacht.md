@@ -291,8 +291,8 @@ aber es ist ein Defekt in Arbeit, die dieselbe Nacht für fertig erklärt hat.
 ## Offene Roadmap · Änderungsstand
 
 Die dauerhafte Liste ist [docs/backlog/](backlog/README.md). Änderungsstand: Sprint 1 `d834a8e` + Nachtrag
-`d436a1b`; Sprint 2 samt Nachschau-Nachträgen (B-227/228/229, Test-Lücke, Doku) als ein Commit, Hash im
-Nachtrag der Stories B-224/B-225; **nichts gepusht**.
+`d436a1b`; Sprint 2 samt Nachschau-Nachträgen (B-227/228/229, Test-Lücke, Doku): `dc2ce84`, dazu der Nachtrag mit
+diesem Hash; **nichts gepusht**.
 
 ## Für den Morgen
 
