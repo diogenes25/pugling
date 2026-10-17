@@ -60,6 +60,9 @@ describe("useExerciseTypes", () => {
 
     act(() => result.current.reload());
 
+    // „hält bis dahin den Ladezustand" – ohne diese Zeile bliebe ein Hook grün, der bei `reload` `loading`
+    // nie setzt (Nachschau 2026-10-17). `error` ist im selben Schritt schon `null`.
+    expect(result.current.loading).toBe(true);
     await waitFor(() => expect(result.current.error).toBeNull());
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.label("Vocabulary")).toBe("Vokabelkarten");

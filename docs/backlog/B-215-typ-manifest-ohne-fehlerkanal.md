@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-10-17: StrictMode-Doppelmontage, Unmount im Abruf, sieben Konsumenten im Erfolgsfall gegen d834a8e^ verglichen; Test-Luecke zu AK 4 (loading nach reload nie zugesichert) geschlossen"
 ---
 
 # B-215 · Das Typ-Manifest schluckt seinen Ausfall — und niemand kann ihn anzeigen
@@ -134,3 +135,4 @@ ruft `useAsync` nicht.
 - **2026-10-17** — **ausformuliert → gegrillt**, autonom unter Freigabe 1: drei Entscheidungen.
 - **2026-10-17** — **gegrillt → geschaetzt**: S, frontend, keine Migration, kein Vertragsbruch.
 - **2026-10-17** — **geschaetzt → abgenommen** im Nachtlauf, Sprint 1. Rollengang: Creator auf `/vater/exercises` (Manifest abgeschossen → Banner „Die Übungstypen konnten nicht geladen werden", Zeilen „· Vocabulary" → „Erneut laden" → „Lädt…" mit Fokusring → Banner weg, „· Vokabelkarten"/„· Lückentext"). Rote Probe: exerciseTypes.test 3/3 (`.loading` undefined, `error` null). E2E `typ-manifest-faellt-aus.spec.ts` 2/2 grün (zweiter Fall brauchte den Schalter „geteilte Übungen", weil die geseedeten Englisch-Übungen dem Lehrer-Konto gehören). Ist-Stand-Korrektur aus dem Review: `reload()` wirkt je Hook-Instanz, nicht geteilt – Risiko-Absatz berichtigt. Belege: tsc -b sauber · vitest run 380/380 (47 Dateien) · playwright test 69/70 im vollen Lauf – der eine rote Fall (`lehrwerke.spec.ts`) war eine Nebenwirkung der neuen `fachlehrer-faecher-fallen-aus.spec.ts` in der geteilten DB (aktives Englisch-Profil ohne Grenzen passt zu jedem Kind), behoben (Profil wird stillgelegt angelegt), danach die betroffenen Specs gemeinsam grün · `frontend-reviewer` gelaufen, **kein Blocker**, ein Fund mit Codewirkung (Leer-Satz und Zählzeile des Trefferbereichs hingen noch an `fehler` statt am Gedächtnis – behoben, Vitest ergänzt) · Skill `web-design-guidelines` (Freigabe 7): ein Fund (fokussierter Kasten ohne projektweiten Fokusring – `.banner[tabindex]:focus-visible` ergänzt) · **Browser-Rollengang in Chrome (Freigabe 6)** gegen Backend mit Wegwerf-DB und `npm run dev`, Abrufe über einen Fetch-Wrapper in der Seite abgeschossen bzw. verzögert, siehe Protokoll `docs/pm-sitzung-2026-10-17-nacht.md`. Commit `d834a8e`.
+- **2026-10-17** — Nachschau (Nachtlauf): Doppelmontage, Unmount während des Abrufs und die sieben Konsumenten im Erfolgsfall nachgerechnet – halten. **Ein Fund:** AK 4 („nach `reload()` erst `loading = true`") war im Hook-Test nie zugesichert – Zeile ergänzt (`exerciseTypes.test.ts`). Kein Defekt.

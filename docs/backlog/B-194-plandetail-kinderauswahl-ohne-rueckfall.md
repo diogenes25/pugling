@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-10-17: Sonderoption, string/number-Konvertierung und dto.childId-Bedingung nachgerechnet; Ladefenster zeigt (nicht geladen) auch im Erfolgsfall → B-229"
 ---
 
 # B-194 · Die Kind-Auswahl im Plan-Detail hat die Regel von B-172 nicht geerbt
@@ -120,3 +121,4 @@ e2e/plan-kinderliste-faellt-aus.spec.ts`, dann die ganze Suite.
   Vertrag) und ist dort beantwortet. Akzeptanzkriterien mit Belegen ergänzt.
 - **2026-10-17** — **gegrillt → geschaetzt**: S, frontend, keine Migration, kein Vertragsbruch.
 - **2026-10-17** — **geschaetzt → abgenommen** im Nachtlauf, Sprint 1. Rollengang: Vater auf `/vater/plan/2` (Kinderliste abgeschossen → „Bearbeiten" → Feld zeigt „Sohn (nicht geladen)" als einzige Option, Banner „Kinder: …" darüber). Rote Probe: ReferenceSelect.test 1/1 (drei statt zwei Optionen). E2E `plan-kinderliste-faellt-aus.spec.ts` grün; ihre PATCH-Zusicherung ist als Absichtserklärung beschriftet (galt auch vorher – Reviewer-Fund). Belege: tsc -b sauber · vitest run 380/380 (47 Dateien) · playwright test 69/70 im vollen Lauf – der eine rote Fall (`lehrwerke.spec.ts`) war eine Nebenwirkung der neuen `fachlehrer-faecher-fallen-aus.spec.ts` in der geteilten DB (aktives Englisch-Profil ohne Grenzen passt zu jedem Kind), behoben (Profil wird stillgelegt angelegt), danach die betroffenen Specs gemeinsam grün · `frontend-reviewer` gelaufen, **kein Blocker**, ein Fund mit Codewirkung (Leer-Satz und Zählzeile des Trefferbereichs hingen noch an `fehler` statt am Gedächtnis – behoben, Vitest ergänzt) · Skill `web-design-guidelines` (Freigabe 7): ein Fund (fokussierter Kasten ohne projektweiten Fokusring – `.banner[tabindex]:focus-visible` ergänzt) · **Browser-Rollengang in Chrome (Freigabe 6)** gegen Backend mit Wegwerf-DB und `npm run dev`, Abrufe über einen Fetch-Wrapper in der Seite abgeschossen bzw. verzögert, siehe Protokoll `docs/pm-sitzung-2026-10-17-nacht.md`. Commit `d834a8e`.
+- **2026-10-17** — Nachschau (Nachtlauf): Sonderoption, Konvertierung und `dto.childId` nur bei Änderung – halten. **Ein Fund:** solange die Kinderliste erst lädt, ist „(nicht geladen)" die einzige Option, auch im Erfolgsfall ([B-229](B-229-nicht-geladen-waehrend-des-ladens.md)).

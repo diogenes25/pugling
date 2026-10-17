@@ -18,6 +18,12 @@ import { useEffect, useState } from "react";
  * Die Rückgabe ist das, was angezeigt gehört: der aktuelle Fehler, sonst der festgehaltene, solange
  * geladen wird, sonst `null`. Erst dadurch ist der Zustand „Fehler steht, Abfrage läuft" erreichbar – und
  * ein `disabled={laedt}` am Knopf kein toter Code mehr.
+ *
+ * **Bekannte Grenze (B-227):** Der Hook weiß nicht, ob dieselbe Abfrage wiederholt wird oder eine andere
+ * startet – `useAsync` setzt bei einem Wechsel der Abhängigkeiten ebenfalls `error = null, loading = true`.
+ * Bei einer Suche mit wechselndem Filter steht darum nach einem Fehler für die Dauer der *neuen* Suche noch
+ * der alte Text. Für Abfragen ohne wechselnde Abhängigkeiten (`ListenAusfall`, Shop-Verlauf) ist das
+ * gegenstandslos.
  */
 export function useGemerkterFehler(fehler: string | null, laedt: boolean): string | null {
   const [letzter, setLetzter] = useState<string | null>(null);

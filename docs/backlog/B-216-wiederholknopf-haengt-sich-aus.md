@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-10-17: Zustandsuebergaenge des Hooks (Fehler→reload→gleicher Fehler, Erfolg, nie-laedt) und Fokus-Reihenfolge nachgerechnet; Grenze bei Dep-Wechsel gefunden → B-227; gefuellte Shop-Karte ohne Fokusregel → B-228; AK 3 berichtigt"
 ---
 
 # B-216 · Zwei Wiederhol-Knöpfe verschwinden im Moment des Klicks unter dem Finger
@@ -116,8 +117,9 @@ Autonom gegrillt am 2026-10-17 unter Freigabe 1 (`art: Defekt`).
    verzögerter Antwort) und `shop-verlauf-wiederholen.spec.ts` (Sohn).
 2. Gelingt die Wiederholung, verschwindet das Banner; scheitert sie erneut, zeigt es den neuen Fehler.
    *Beleg:* Vitest wie oben; die E2E lassen den Abruf nach der Verzögerung gelingen.
-3. `ListenAusfall` verhält sich unverändert (seine vier Tests in `VaterWizard.test.tsx:93-141` bleiben grün,
-   ohne Änderung an den Zusicherungen).
+3. `ListenAusfall` verhält sich in der Sache unverändert – seine vier Tests ziehen unverändert nach
+   `ListenAusfall.test.tsx` um und bleiben grün. Neu ist nur der Fokus-Umzug auf den Kasten (Entscheidung 5),
+   den kein Test misst (Nachschau 2026-10-17: die erste Fassung dieses Kriteriums widersprach Entscheidung 5).
 4. `useAsync.ts` ist im Diff nicht enthalten.
 
 ## Schätzung
@@ -151,3 +153,4 @@ e2e/shop-verlauf-wiederholen.spec.ts`, danach die ganze Suite.
 - **2026-10-17** — **gegrillt → geschaetzt**: S, frontend, keine Migration, kein Vertragsbruch; Testweg
   Vitest + zwei E2E-Specs.
 - **2026-10-17** — **geschaetzt → abgenommen** im Nachtlauf, Sprint 1. Rollengang: Vater im Planbau (Suche abgeschossen → „Erneut suchen" → im Fenster „Lädt…", gesperrt, Fokusring auf dem Kasten, Zählzeile „(Suche gescheitert)", kein Leer-Satz → danach „(12 Treffer)"), Sohn im Shop-Verlauf (Meldung + „Nochmal versuchen" → „Lädt…" mit Fokus auf der Meldung → „Noch nichts gekauft"). Assistent nur per E2E `wiederholknopf-bleibt.spec.ts` (derselbe Baustein wie der Planbau-Zwilling). Rote Proben (erwartet/gemessen): VaterWizard.test 1/1, HistoryTab.test 1/1, useGemerkterFehler.test Importfehler (Hook existierte nicht); E2E vor dem Fokus-Fix 3/3 rot an `toBeFocused` – daraus Entscheidung 5. Belege: tsc -b sauber · vitest run 380/380 (47 Dateien) · playwright test 69/70 im vollen Lauf – der eine rote Fall (`lehrwerke.spec.ts`) war eine Nebenwirkung der neuen `fachlehrer-faecher-fallen-aus.spec.ts` in der geteilten DB (aktives Englisch-Profil ohne Grenzen passt zu jedem Kind), behoben (Profil wird stillgelegt angelegt), danach die betroffenen Specs gemeinsam grün · `frontend-reviewer` gelaufen, **kein Blocker**, ein Fund mit Codewirkung (Leer-Satz und Zählzeile des Trefferbereichs hingen noch an `fehler` statt am Gedächtnis – behoben, Vitest ergänzt) · Skill `web-design-guidelines` (Freigabe 7): ein Fund (fokussierter Kasten ohne projektweiten Fokusring – `.banner[tabindex]:focus-visible` ergänzt) · **Browser-Rollengang in Chrome (Freigabe 6)** gegen Backend mit Wegwerf-DB und `npm run dev`, Abrufe über einen Fetch-Wrapper in der Seite abgeschossen bzw. verzögert, siehe Protokoll `docs/pm-sitzung-2026-10-17-nacht.md`. Commit `d834a8e`.
+- **2026-10-17** — Nachschau (Nachtlauf, Protokoll `docs/pm-sitzung-2026-10-17-nacht.md`): Hook-Übergänge und Fokus-Reihenfolge halten. **Zwei Funde:** das Gedächtnis überlebt auch einen Filterwechsel ([B-227](B-227-fehlergedaechtnis-ueberlebt-den-filterwechsel.md)); die gefüllte Shop-Karte hat die Fokusregel nicht bekommen ([B-228](B-228-mehr-laden-verliert-den-fokus.md)). AK 3 widersprach Entscheidung 5 – berichtigt.

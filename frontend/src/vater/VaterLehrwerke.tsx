@@ -4,10 +4,11 @@ import { FieldLabel } from "../components/InfoHint";
 import { ReferenceSelect } from "../components/ReferenceSelect";
 import { StatusBanner } from "../components/StatusBanner";
 import { FREETEXT_SUBJECT, seriesFormValues, seriesPatch, type SeriesFormValues } from "./seriesPatch";
-import { api, errorMessage } from "../lib/api";
+import { api } from "../lib/api";
 import { publisherOptions, subjectOptions } from "../lib/referenceOptions";
+import { nachObenMelden } from "../lib/nachObenMelden";
 import { useAction } from "../lib/useAction";
-import type { ActionMessage, ActionState } from "../lib/useAction";
+import type { ActionMessage } from "../lib/useAction";
 import { SCHOOL_TYPES } from "../lib/labels";
 import { LANGUAGES } from "../lib/languages";
 import { confirmAction } from "../lib/ui";
@@ -227,73 +228,11 @@ export function VaterLehrwerke() {
         subjects={subjects.data ?? []} publishers={publishers.data ?? []} onMeldung={setMeldung}
         onPublisherCreated={publishers.reload} onCreated={list.reload}
       />
-      <PublisherAdmin onChanged={() => { publishers.reload(); list.reload(); }} />
+      {/* Auch das Vokabular meldet an den Platz der Seite (B-224) – vorher war es der letzte Platz, an dem
+          noch Server-Meldungen standen. */}
+      <PublisherAdmin onChanged={() => { publishers.reload(); list.reload(); }} onMeldung={setMeldung} />
     </>
   );
-}
-
-/**
- * Eine Server-Handlung ausfuehren und ihr Ergebnis an den Meldungsplatz der **Seite** geben.
- *
- * Der Schnitt (B-212): Am Formular bleibt nur, was der Bildschirm **selbst** festgestellt hat - die
- * Eingabepruefung und "Nichts geaendert.". Alles, was vom Server zurueckkommt, reist nach oben. Der Grund
- * ist nicht Ordnungsliebe: Ein zweiter Meldungsplatz kann von niemandem geraeumt werden als von dem
- * Formular, in dem er steckt. Ein rotes "Name schon vergeben" unter Reihe A stand darum neben dem gruenen
- * "Reihe ... geloescht." der Seite, sobald der Creator an Reihe B weitermachte - zwei Meldungen zu zwei
- * Handlungen in einem Blickfeld, und keine sagt, zu welcher sie gehoert.
- *
- * Drei Dinge daran sind nicht offensichtlich:
- *
- * 1. **Der Fehlertext wird beim Durchfliegen abgegriffen**, nicht hinterher aus `action.message` gelesen:
- *    das ist Zustand und im selben Tick noch der alte.
- * 2. **`action.clear()` am Ende ist tragend.** `useAction` schreibt seinen Fehler selbst in `message`;
- *    ohne das Raeumen stuende er zusaetzlich am Formular - genau die zwei Plaetze, die hier verschwinden.
- * 3. **Ein verworfener Aufruf bekommt keine Meldung.** Die Wiedereintritts-Sperre liefert ebenfalls
- *    `null`, hat aber nichts getan; nur ein echter Fehler wird gemeldet. (Geräumt wird trotzdem — heute
- *    folgenlos, weil `runFor` den Banner beim Start des laufenden Aufrufs schon genullt hat.)
- *
- * `okText` darf eine Funktion sein: Beim Anlegen nennt die Meldung den Namen, den der **Server**
- * zurückgibt – gleicher Slug = gleiche Reihe, und die kann anders geschrieben sein als das Feld.
- *
- * Eine Annahme, die nicht im Typ steht: Der Erfolgsfall wird an `ergebnis !== null` erkannt. `runFor`
- * liefert `null` bei Fehler UND bei verworfenem Aufruf, ein leerer Antwortkörper dagegen `undefined` —
- * das trägt, solange kein Aufruf `null` als Erfolgswert liefert.
- */
-async function nachObenMelden<T>(
-  action: ActionState,
-  onMeldung: (m: ActionMessage | null) => void,
-  fn: () => Promise<T>,
-  okText: string | ((ergebnis: T) => string),
-): Promise<T | null> {
-  /*
-   * `try/catch` um den **Aufruf**, nicht `fn().catch(...)`: Ein synchroner Wurf aus `fn()` erzeugt gar
-   * kein Promise, das abgelehnt werden könnte — der Fehlertext bliebe leer, `onMeldung` schwiege, und
-   * `action.clear()` räumte darunter noch die Meldung weg, die `useAction` selbst gesetzt hat. Ergebnis
-   * wäre vollständiges Schweigen: genau die Fehlerklasse, gegen die dieser Sprint angetreten ist.
-   */
-  let gefangen = false;
-  let text = "";
-  const ergebnis = await action.runFor(async () => {
-    try {
-      return await fn();
-    } catch (e: unknown) {
-      // Beim Durchfliegen abgreifen, nicht hinterher aus `action.message` lesen: das ist Zustand und im
-      // selben Tick noch der alte.
-      gefangen = true;
-      text = errorMessage(e);
-      throw e;
-    }
-  });
-  if (ergebnis === null) {
-    // `gefangen` und nicht `text`: Eine leere Fehlermeldung ist immer noch ein Fehler, während ein von
-    // der Wiedereintritts-Sperre verworfener Aufruf gar nicht erst in den `catch` gelaufen ist.
-    if (gefangen) onMeldung({ ok: false, text });
-    action.clear();
-    return null;
-  }
-  onMeldung({ ok: true, text: typeof okText === "function" ? okText(ergebnis) : okText });
-  action.clear();
-  return ergebnis;
 }
 
 function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, onMeldung }: {
@@ -689,7 +628,8 @@ function UnitPanel({ series, onChanged, onMeldung }: {
                       <button
                         type="button" className="btn ghost small" style={{ width: "auto" }}
                         aria-label={`${u.label} bearbeiten`}
-                        onClick={() => setEditing(editing === u.id ? null : u.id)}
+                        // Öffnen räumt den Platz der Seite (B-197) – wie `onToggle` und `bearbeitenUmschalten` (B-224).
+                        onClick={() => { onMeldung(null); setEditing(editing === u.id ? null : u.id); }}
                       >{editing === u.id ? "Schließen" : "Bearbeiten"}</button>
                     )}
                   </td>
@@ -978,7 +918,8 @@ function NewSeries({ subjects, publishers, onPublisherCreated, onCreated, onMeld
       <h3 className="h-section">Lehrwerk hinzufügen</h3>
       <form className="form-grid" style={{ alignItems: "end" }} onSubmit={submit}>
         <div className="field">
-          <label htmlFor="ns-name">Reihe</label>
+          {/* Der Grund für den gesperrten Knopf steht am Feld, nicht in einem `title` am Knopf (B-160, B-225). */}
+          <label htmlFor="ns-name">Reihe <span className="muted">(Pflicht)</span></label>
           <input id="ns-name" value={form.name} onChange={(e) => up("name", e.target.value)} placeholder="Access" />
         </div>
         <div className="field">
@@ -1020,7 +961,9 @@ function NewSeries({ subjects, publishers, onPublisherCreated, onCreated, onMeld
           <label htmlFor="ns-notes">Notiz zum Werk</label>
           <input id="ns-notes" value={form.notes} onChange={(e) => up("notes", e.target.value)} placeholder="Aufbau, Besonderheiten" />
         </div>
-        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>
+        {/* Ohne Namen gesperrt, wie der Verlags-Knopf unten (B-225): vorher war er klickbar und `submit`
+            kehrte stumm zurück – seit B-212 ohne einen Platz, der etwas hätte sagen können. */}
+        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy || !form.name.trim()}>
           {action.busy ? "Lege an…" : "Reihe anlegen"}
         </button>
       </form>
@@ -1029,9 +972,8 @@ function NewSeries({ subjects, publishers, onPublisherCreated, onCreated, onMeld
         Dublette in den geteilten Katalog zu schreiben.
       </p>
       {/* Kein eigener Meldungsplatz mehr (B-212): Was vom Server kommt, steht am Platz der Seite. Hier
-          bleibt nichts übrig — dieses Formular hat keine Eingabeprüfung. Gesperrt ist aber nur der
-          Verlags-Knopf; „Reihe anlegen" ist bei leerem Namen klickbar und `submit` kehrt stumm zurück
-          (Nachschau 2026-10-17, B-225). */}
+          bleibt nichts übrig — dieses Formular meldet keine Eingabeprüfung (die `return`s in `submit` und
+          `addPublisher` sind nur die zweite Verteidigung), beide Knöpfe sind ohne Eingabe gesperrt (B-225). */}
 
       {/* Verlag fehlt in der Liste? Direkt hier anlegen statt die Seite zu verlassen (idempotent über den Slug). */}
       <form

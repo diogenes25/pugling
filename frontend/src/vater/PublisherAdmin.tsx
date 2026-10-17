@@ -1,8 +1,9 @@
 import { useId, useState } from "react";
-import { StatusBanner } from "../components/StatusBanner";
 import { api } from "../lib/api";
+import { nachObenMelden } from "../lib/nachObenMelden";
 import { confirmAction } from "../lib/ui";
 import { useAction } from "../lib/useAction";
+import type { ActionMessage } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import type { PublisherResponse } from "../lib/types";
 
@@ -11,8 +12,18 @@ import type { PublisherResponse } from "../lib/types";
  * sonst nebenbei entsteht (beim Anlegen einer Reihe). Hier lässt sich ein Tippfehler ("Coernelsen")
  * korrigieren oder eine Dublette löschen (B-63: ohne diese Fläche kann eine falsch angelegte Zeile nie
  * wieder zusammengeführt werden).
+ *
+ * Meldungen gehen an den Platz der **Seite** (B-224): Dieser Baustein war nach B-212 der letzte Platz der
+ * Lehrwerke-Seite, an dem noch **Server**-Meldungen standen – ein grünes „Gespeichert." hier unten stand
+ * neben dem grünen „… steht im Katalog" der Seite, und keines konnte das andere räumen. (Die lokalen Banner
+ * von `SeriesForm` und `UnitForm` tragen nur noch Eingabeprüfung und „Nichts geändert.") Nur der Lesefehler
+ * der Liste bleibt lokal, wie bei jedem Lesefehler der Seite.
  */
-export function PublisherAdmin({ onChanged }: { onChanged: () => void }) {
+export function PublisherAdmin({ onChanged, onMeldung }: {
+  onChanged: () => void;
+  /** Setzt bzw. räumt den Meldungsplatz der Seite — Pflicht, aus demselben Grund wie bei `TextbookForm` (B-197). */
+  onMeldung: (m: ActionMessage | null) => void;
+}) {
   const [search, setSearch] = useState("");
   const [applied, setApplied] = useState("");
   const [open, setOpen] = useState(false);
@@ -22,8 +33,30 @@ export function PublisherAdmin({ onChanged }: { onChanged: () => void }) {
   if (!open) {
     return (
       <button type="button" className="btn ghost inline-btn" style={{ width: "auto", alignSelf: "flex-start" }}
-        onClick={() => setOpen(true)}>🏷️ Verlags-Vokabular verwalten</button>
+        // Öffnen räumt den Platz der Seite (B-197) – eine stehengebliebene Bestätigung gehört zu einer
+        // Handlung, die mit dem Aufklappen abgeschlossen ist.
+        onClick={() => { onMeldung(null); setOpen(true); }}>🏷️ Verlags-Vokabular verwalten</button>
     );
+  }
+
+  async function speichern(p: PublisherResponse, name: string) {
+    onMeldung(null);
+    const ok = await nachObenMelden(action, onMeldung, () => api.updatePublisher(p.id, { name }), "Gespeichert.");
+    if (ok !== null) { publishers.reload(); onChanged(); }
+  }
+
+  async function loeschen(p: PublisherResponse) {
+    // Nur noch die EIGENEN Reihen nennen: seit B-127 sperrt der Server, sobald eine fremde oder herrenlose
+    // daran hängt, und der Knopf ist dann gar nicht erst anklickbar. Der alte Satz („N Reihe(n) verlieren
+    // nur die Zuordnung") versprach das Gegenteil und führte in einen 409, den der Vater erst nach dem
+    // Bestätigen sah.
+    const own = p.seriesCount - p.foreignSeriesCount;
+    if (!confirmAction(
+      `Verlag „${p.name}" löschen? ${own} eigene Reihe(n) verlieren nur die Zuordnung `
+      + "und bleiben nutzbar.")) return;
+    onMeldung(null);
+    const ok = await nachObenMelden(action, onMeldung, () => api.deletePublisher(p.id), "Verlag gelöscht.");
+    if (ok !== null) { publishers.reload(); onChanged(); }
   }
 
   return (
@@ -53,20 +86,8 @@ export function PublisherAdmin({ onChanged }: { onChanged: () => void }) {
             <tbody>
               {publishers.data?.map((p) => (
                 <PublisherRow key={p.id} publisher={p} busy={action.busy}
-                  onSave={(name) => action.run(() => api.updatePublisher(p.id, { name }), "Gespeichert.")
-                    .then((ok) => { if (ok) { publishers.reload(); onChanged(); } })}
-                  onDelete={() => {
-                    // Nur noch die EIGENEN Reihen nennen: seit B-127 sperrt der Server, sobald eine fremde
-                    // oder herrenlose daran hängt, und der Knopf ist dann gar nicht erst anklickbar. Der
-                    // alte Satz („N Reihe(n) verlieren nur die Zuordnung") versprach das Gegenteil und
-                    // führte in einen 409, den der Vater erst nach dem Bestätigen sah.
-                    const own = p.seriesCount - p.foreignSeriesCount;
-                    if (!confirmAction(
-                      `Verlag „${p.name}" löschen? ${own} eigene Reihe(n) verlieren nur die Zuordnung `
-                      + "und bleiben nutzbar.")) return;
-                    action.run(() => api.deletePublisher(p.id), "Verlag gelöscht.")
-                      .then((ok) => { if (ok) { publishers.reload(); onChanged(); } });
-                  }} />
+                  onSave={(name) => { void speichern(p, name); }}
+                  onDelete={() => { void loeschen(p); }} />
               ))}
               {publishers.data?.length === 0 && (
                 <tr><td colSpan={3} className="muted">
@@ -77,7 +98,6 @@ export function PublisherAdmin({ onChanged }: { onChanged: () => void }) {
           </table>
         </div>
       )}
-      <StatusBanner message={action.message} style={{ marginTop: 10 }} />
     </section>
   );
 }

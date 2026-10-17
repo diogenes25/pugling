@@ -21,6 +21,10 @@ Wird je Sprint fortgeschrieben; die letzte Zeile ist der Zustand.
   mit Code-/Testwirkung (Grenze fünf). Nachschau des Vorsprints: zwei Defekte (B-224, B-225). Ein neuer
   Prüfauftrag aus dem Rollengang (B-226). Commit: siehe „Änderungsstand". Retro-Mechanismen nur
   **vorgeschlagen** (Freigabe 3) – siehe „Für den Morgen".
+- **Sprint 2 abgenommen** (B-224, B-225, Lehrwerke-Seite): 72/72 Playwright, 381 Vitest, Reviewer ohne
+  Fund mit Codewirkung, Browser-Rollengang als Creator. Nachschau von Sprint 1: ein kleiner Defekt (B-227)
+  und zwei Nuancen (B-228, B-229), eine Test-Lücke geschlossen. **Der Lauf endet nach Sprint 2** (Limit 2:
+  Defekt im Increment eines Sprints dieser Nacht, siehe „Retrospektive Sprint 2").
 
 ## Sprint 1 — Ziel & Umfang
 
@@ -84,8 +88,9 @@ E2E mit `page.route(…).abort()` fahren.
   `inactive`). Darum wandert er beim Klick auf den Kasten (`tabIndex={-1}`), mit Fokusring
   `.banner[tabindex]:focus-visible`.
 - Fünf neue E2E-Specs (`wiederholknopf-bleibt`, `shop-verlauf-wiederholen`, `typ-manifest-faellt-aus`,
-  `plan-kinderliste-faellt-aus`, `fachlehrer-faecher-fallen-aus`), sieben neue Vitest-Fälle plus zwei
-  Hook-Testdateien.
+  `plan-kinderliste-faellt-aus`, `fachlehrer-faecher-fallen-aus`); fünf neue Vitest-Fälle in bestehenden
+  Dateien (ReferenceSelect 1, Fachlehrer 1, Wizard 1, HistoryTab 2) plus zwei neue Hook-Testdateien (3 + 5
+  Fälle). Die „7 rot von 44" der roten Probe zählt die drei `exerciseTypes`-Fälle mit (Nachschau-Korrektur).
 
 **Verifikation:** `tsc -b` sauber · `vitest run` **381/381** (47 Dateien) · `playwright test` **69/70** im
 ersten vollen Lauf; der rote `lehrwerke.spec.ts` war eine Nebenwirkung der neuen Fachlehrer-Spec in der
@@ -178,18 +183,128 @@ räumen sie weg" – zu speziell für eine Dauerregel; der Kommentar in der Spec
 **Bewusst ungedeckt:** Fund 1 (Fokusverlust) ist nur im echten Browser messbar – das ist der Platz der E2E,
 und sie hat ihn gefunden.
 
+## Sprint 2 — Ziel & Umfang
+
+**Sprint-Ziel, aus der Creator-Sicht:**
+
+> Der **Creator** liest auf der Lehrwerke-Seite nach jeder Handlung – auch am Verlag – genau **eine**
+> Rückmeldung, und ein Knopf, der nichts tun kann, ist gesperrt und sagt am Feld, warum.
+
+**Umfang** (beide aus der Nachschau zu Sprint 2026-09-05, `art: Defekt`, in dieser Sitzung von
+`ausformuliert` autonom auf `geschaetzt` gebracht):
+
+| Story | Richtung |
+| --- | --- |
+| [B-224](backlog/B-224-verlagsbaustein-traegt-zweiten-meldungsplatz.md) | Das Verlags-Vokabular trug den letzten zweiten Meldungsplatz der Seite |
+| [B-225](backlog/B-225-reihe-anlegen-schweigt-bei-leerem-namen.md) | „Reihe anlegen" war ohne Namen klickbar und stumm |
+
+**Draußen:** B-226 (`Frage`, gesperrt), B-164 (Nutzer), die übrigen `ausformuliert`-Defekte anderer Flächen
+(B-134, B-176, B-194 ist abgenommen, B-201, B-211, B-181, B-190, B-131, B-159, B-175).
+
+**Entwickler-Brief:** `nachObenMelden` zieht nach `src/lib/`; `PublisherAdmin` bekommt `onMeldung`
+(Pflicht) und meldet seine zwei Server-Pfade nach oben, der eigene `StatusBanner` entfällt; Öffnen des
+Vokabulars und `UnitPanel`-„Bearbeiten" räumen; „Reihe anlegen" `disabled` ohne Namen, Label „(Pflicht)".
+Reihenfolge: rote E2E zuerst, dann Code, dann die neun Specs der Seite, Suite, Reviewer, Rollengang.
+
+## Iteration 2 — umgesetzt
+
+- `src/lib/nachObenMelden.ts` (umgezogen, exportiert, Docblock um die Herkunft ergänzt);
+  `VaterLehrwerke.tsx` importiert; zwei nun unbenutzte Imports entfernt (tsc).
+- `PublisherAdmin.tsx`: `onMeldung` Pflicht, `speichern`/`loeschen` über `nachObenMelden`, kein eigener
+  Banner mehr, Aufklappen räumt. `PublisherRow` unverändert.
+- `VaterLehrwerke.tsx`: `UnitPanel`-„Bearbeiten" räumt; „Reihe anlegen" gesperrt ohne Namen; Label
+  „Reihe (Pflicht)"; Kommentar unter dem Formular sagt jetzt, was der Code tut.
+- Zwei E2E: `verlag-meldet-am-platz-der-seite.spec.ts`, `reihe-anlegen-braucht-namen.spec.ts`.
+
+**Rote Proben (erwartet/gemessen), vor dem Fix:** `reihe-anlegen-braucht-namen` 1/1 an Zeile 22
+(`toBeDisabled` → `enabled`); `verlag-meldet-am-platz-der-seite` 1/1 an Zeile 44 (Meldung im
+Vokabular-Abschnitt: erwartet 0, gemessen 1).
+
+**Verifikation:** `tsc -b` sauber · `vitest run` 381/381 · die neun Specs der Lehrwerke-Seite samt der zwei
+neuen **14/14** · volle Playwright-Suite **72/72** (3,5 min) · Reviewer und Nachschau: siehe unten.
+
+## Runde 2 — Re-Review / Abnahme
+
+Browser-Rollengang in Chrome (Freigabe 6), wie in Runde 1: Backend mit frischer Wegwerf-DB, `npm run dev`,
+Klicks per DOM, Zustand per Skript gelesen.
+
+- **Creator (Lehrwerke-Seite) — signed off.** O-Ton: „Ohne Namen ist „Reihe anlegen" grau, und am Feld steht
+  „(Pflicht)" – ich muss nicht raten. Ich habe einen Verlag angelegt, das Vokabular aufgeklappt (die
+  Bestätigung von eben war weg, richtig so), ihn umbenannt – und „Gespeichert." stand **einmal**, unten am
+  Platz der Seite, nicht im Vokabular. Dann die Reihe angelegt: „Gespeichert." weg, „… steht im Katalog"
+  da. Eine Rückmeldung, ein Platz." Gemessen: Knopf gesperrt bei leerem und bei nur-Leerzeichen-Namen,
+  bedienbar mit Namen; `.banner.ok` nach dem Umbenennen genau `["Gespeichert."]`, im Vokabular-Abschnitt
+  keiner; nach dem Reihe-Anlegen nur noch der Katalog-Satz.
+- **Vater, Sohn — Regressionszeugen:** kein Weg ihrer Flächen im Diff; die volle Suite (72/72) und 381 Vitest
+  stehen für sie.
+
+**Reviewer (`frontend-reviewer`):** kein Blocker, **kein Fund mit Code- oder Testwirkung** – Zähler dieses
+Sprints 0 von 5. Drei Kommentar-Hinweise eingearbeitet: die `toHaveCount(1)`-Zeile der Verlags-Spec war vor
+dem Fix auch wahr (jetzt als Schutz beschriftet, die tragende Zeile benannt), die `toHaveValue("")`-Zeile ist
+eine Vorbedingung (beschriftet), zwei Formulierungen behaupteten „den letzten `StatusBanner`" statt „den
+letzten Platz mit Server-Meldungen" bzw. „keine Eingabeprüfung" statt „keine gemeldete" (berichtigt).
+
+## Retrospektive Sprint 2
+
+**Nachschau:** Sprint 1 dieser Nacht (B-216, B-215, B-194, B-185, Commit `d834a8e`) durch einen frischen
+`frontend-reviewer`-Agenten gegen den Stand `d834a8e` gelesen, mit eigener Laufzeitprobe (tsc, 381 Vitest,
+die fünf neuen Specs 7/7 auf einer isolierten Kopie). **Ein Defekt mit Nutzerwirkung:** das
+Fehler-Gedächtnis überlebt nicht nur die Wiederholung, sondern auch den Start einer *anderen* Suche
+(Filterwechsel nach einem Fehler zeigt den alten Text mit „Lädt…") →
+[B-227](backlog/B-227-fehlergedaechtnis-ueberlebt-den-filterwechsel.md) (`entgangen_bei: B-216`).
+**Zwei Konsistenz-Nuancen:** die gefüllte Verlaufskarte ohne Fokusregel →
+[B-228](backlog/B-228-mehr-laden-verliert-den-fokus.md); „(nicht geladen)" auch während des Ladens →
+[B-229](backlog/B-229-nicht-geladen-waehrend-des-ladens.md) (`entgangen_bei: B-194`). **Eine
+Test-Lücke** (B-215 AK 4 nie zugesichert) sofort geschlossen, **zwei Doku-Fehler** (B-216 AK 3 widersprach
+Entscheidung 5; Zählung der Vitest-Fälle im Protokoll) berichtigt. `nachgeschaut` auf allen vier gesetzt.
+**Index: Nachgeschaut 133 von 148 — 35 mit Defekt** (Abend: 126 von 142 — 32).
+
+**Was die Tore von Sprint 1 durchgelassen haben (B-227):** Der Hook wurde aus *einem* Übergang abgeleitet
+(„`reload()` setzt `error = null, loading = true`") und gegen genau diesen getestet. Dass `useAsync`
+denselben Übergang auch bei einem Wechsel der Abhängigkeiten erzeugt, steht in `useAsync.ts:45-48` und in
+`frontend/CLAUDE.md` („die andere Hälfte derselben Falle") – gelesen, aber beim Ableiten der Regel nicht
+mitgezählt. Reviewer und E2E prüften die Wiederholung, nicht den Filterwechsel; die Nachschau fand es durch
+die Frage „welche anderen Auslöser erzeugen denselben Zustand?".
+
+**Was Sprint 2 selbst durchgelassen hat:** nichts mit Codewirkung (Reviewer 0, Suite grün, Rollengang
+deckungsgleich).
+
+### Vorgeschlagener Mechanismus — nicht gelandet (Freigabe 3)
+
+**Wer eine Regel aus einem Zustandsübergang ableitet, listet vor dem Bauen alle Auslöser dieses Übergangs
+auf und entscheidet je Auslöser.** Das ist die Schärfung des unentschiedenen Retro-Vorschlags 4 vom
+2026-09-03 („beim Übertragen eines Musters alle Stellen des Vorbilds auflisten") um den Fall, dass das
+„Vorbild" ein Hook-Zustand ist: `(error = null, loading = true)` hat in `useAsync` drei Auslöser (Erstlauf,
+`reload`, Dep-Wechsel), B-216 hat einen bedacht. Ort: `frontend/CLAUDE.md` neben der „Wiederkehrenden Falle
+beim Platzhalter", als ein Satz; Kosten: Budget-Skript, eine Zeile kompensieren. Kein Tor möglich – welche
+Auslöser ein Übergang hat, weiß kein Regex.
+
+### Warum der Lauf hier endet
+
+Nicht am Fund-Zähler (Sprint 1: 4 von 5, Sprint 2: 0), sondern an **Limit 2 des Backlog-Laufs**
+(`docs/backlog/README.md`, „Der Backlog-Lauf"): Die Nachschau hat im Increment eines Sprints dieser Nacht
+einen Defekt gefunden (B-227). Die Nachtlauf-Fassung verfeinert dieses Limit für Review-Funde *während* eines
+Sprints (Fünfer-Zähler); für einen Nachschau-Fund im abgenommenen Increment gilt die allgemeine Regel, und
+dieselbe Lage hat am 2026-09-02 die Nacht 2 beendet. Weiterlaufen wäre die falsche Reaktion – B-227 ist klein,
+aber es ist ein Defekt in Arbeit, die dieselbe Nacht für fertig erklärt hat.
+
 ## Offene Roadmap · Änderungsstand
 
-Die dauerhafte Liste ist [docs/backlog/](backlog/README.md). Änderungsstand dieses Sprints: ein Commit mit Code,
-Specs, Stories und Protokoll: `d834a8e`, dazu dieser Nachtrag, **nicht gepusht**.
+Die dauerhafte Liste ist [docs/backlog/](backlog/README.md). Änderungsstand: Sprint 1 `d834a8e` + Nachtrag
+`d436a1b`; Sprint 2 samt Nachschau-Nachträgen (B-227/228/229, Test-Lücke, Doku) als ein Commit, Hash im
+Nachtrag der Stories B-224/B-225; **nichts gepusht**.
 
 ## Für den Morgen
 
-1. **Retro-Vorschlag oben** landen oder verwerfen (dazu die fünf älteren, unverändert offen).
-2. **B-224** (Verlags-Baustein, zweiter Meldungsplatz) und **B-225** (stummer „Reihe anlegen") sind
-   `ausformuliert` und `art: Defekt` – ein Folgelauf darf sie autonom grillen; die Empfehlungen stehen drin.
+1. **Zwei Retro-Vorschläge dieser Nacht** landen oder verwerfen (Sprint 1: „X statt Y" beidseitig
+   zusichern; Sprint 2: Auslöser eines Zustandsübergangs auflisten) – dazu die fünf älteren, unverändert offen.
+2. **B-227** (Fehler-Gedächtnis überlebt den Filterwechsel) ist `ausformuliert`, `art: Defekt`, mit
+   Empfehlung (Schlüssel-Parameter am Hook) – autonom grillbar in einem Folgelauf. **B-228** und **B-229**
+   sind `idee`.
 3. **B-226** ist eine `Frage` (zwei Münzstände im Shop) – gesperrt für den Lauf, Entscheidung beim Nutzer:
    erst klären, ob die Differenz fachlich ist.
 4. **B-164** bleibt beim Nutzer (Architekturfrage `useAsync`); B-216 hat sie bewusst *nicht* beantwortet, der
-   neue Hook `useGemerkterFehler` ist der Kandidat, falls „Feld im Hook" gewinnt.
-5. `git log` gegen `1ad45c2`; **nichts ist gepusht.**
+   neue Hook `useGemerkterFehler` ist der Kandidat, falls „Feld im Hook" gewinnt – und B-227 ist ein Argument
+   dafür, die Frage bald zu entscheiden.
+5. `git log` gegen `1ad45c2`: vier Commits dieser Nacht (Sprint 1 + Nachtrag, Sprint 2 + Nachtrag);
+   **nichts ist gepusht.**
