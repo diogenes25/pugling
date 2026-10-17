@@ -63,8 +63,11 @@ POST /api/v1/supervisor/children      (Bearer: Vater)
 { "name": "Peter", "birthYear": 2015, "pin": "1111" }
 ```
 
-> **PINs liegen im Klartext** (`Father.Pin`/`Child.Pin`) — bewusster offener Punkt bis Prod
-> (siehe Backlog). Vor Produktion hashen + Login-Rate-Limit.
+> **PINs sind gehasht** (`Auth/PinHasher`, seit 2026-07-05) und der Login ist ratenbegrenzt (Policy
+> `login`). Der Hash liegt auf dem Profil (`Adult.Pin`/`Child.Pin`) **und** gespiegelt auf dem Konto
+> (`Account.PinHash`, siehe `AccountService.MirrorAsync`); die Doppelhaltung ist als B-216 im Backlog.
+> Neben `auth/adult`/`auth/child` gibt es den konto-zentrischen `POST /api/v1/auth/login`
+> (`accountId` + `pin`), der ein Token mit **allen** Rollen des Kontos ausstellt.
 
 ---
 
@@ -72,17 +75,18 @@ POST /api/v1/supervisor/children      (Bearer: Vater)
 
 | Bereich | Vater | Sohn |
 | --- | --- | --- |
-| Katalog (Subjects/Chapters/Exercises), Stores (Vocabulary/Cloze), Kategorien | ✅ CRUD | ⛔ 403 |
+| Katalog (Subjects, Lehrwerk-Reihen/Units, Exercises), Stores (Vocabulary/Cloze), Kategorien | ✅ CRUD (Rolle Creator) | ⛔ 403 |
 | Study-Pläne anlegen/ändern (`POST/PATCH …`) | ✅ | ⛔ 403 |
 | Study-Pläne lesen, üben, testen (`GET/practice/tests`) | ✅ (eigene Kinder) | ✅ (nur eigene) |
 | Missionen/Auszeichnungen **definieren** (`children/{}/…`) | ✅ | ⛔ |
 | Eigene Missionen/Auszeichnungen/Punkte lesen (`me/…`) | ⛔ (nutzt `children/{}`) | ✅ |
 | Punkte manuell buchen (`POST children/{}/points`) | ✅ | ⛔ |
 | Stundenplan pflegen (`children/{}/timetable`) | ✅ | ⛔ |
-| Inhalte bewerten (`study-plans/{}/ratings`) | — | ✅ |
 | Einen Tag **nachtragen** (`day` ≠ heute im Practice/Test-Start) | ✅ | ⛔ 403 (Anti-Schummel) |
 
-Technisch: `[Authorize(Roles = Roles.Vater)]` bzw. `[Authorize]` auf den Controllern.
+Technisch: `[Authorize(Roles = Roles.Creator)]` bzw. `Roles.Supervisor` auf den schreibenden Creator-/
+Supervisor-Controllern; die spielenden Student-Endpunkte tragen nur `[Authorize]` und trennen die Rollen
+inline (`IsSupervisor`/`IsStudent`), damit der Supervisor mitlesen darf.
 
 ---
 
@@ -90,8 +94,9 @@ Technisch: `[Authorize(Roles = Roles.Vater)]` bzw. `[Authorize]` auf den Control
 
 Zusätzlich zur Rolle wird geprüft, dass die Ressource **dem angemeldeten Nutzer gehört**:
 
-- **`AuthAccess`** (`OwnsPlanAsync`/`OwnsChildAsync`/`FatherOwnsChildAsync`): Sohn nur eigene Pläne
-  (`plan.ChildId == cid`), Vater nur Pläne seiner Kinder.
+- **`AuthAccess`** (`OwnsPlanAsync`/`OwnsChildAsync`/`SupervisorOwnsChildAsync`): Sohn nur eigene Pläne
+  (`plan.ChildId == cid`), Supervisor nur Pläne der über `SupervisorLink` betreuten Kinder; die Prüfung
+  ist je Rolle OR-verknüpft.
 - **`PlanOwnershipFilter`** (`[ServiceFilter]`): sichert alle Endpunkte unter `{planId}` zentral
   (Existenz + Eigentum) — nicht inline wiederholen.
 - **`ChildOwnershipFilter`**: sichert alle Endpunkte unter `{childId}`.

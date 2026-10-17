@@ -7,6 +7,10 @@ tags: [typ/konzept, bereich/doku, rolle/creator, rolle/supervisor, rolle/student
 Stand: 2026-07-06. Dieses Resümee beschreibt den aktuellen Zustand nach dem Umbau vom plan-weiten
 `StudyPlanItem`/`Method`-Modell auf positionsbasierte Lehrpläne.
 
+> **Überholt seit dem Schreiben** (Stand 2026-10-17): Der Katalog heißt heute
+> `TextbookSeries → SeriesUnit → Exercise` (B-106, `Chapter` entfernt), PINs sind seit 2026-07-05 gehasht
+> und ratenbegrenzt, `Father` heißt `Adult`. Aktuell ist [backend/Pugling.Api/CLAUDE.md](../backend/Pugling.Api/CLAUDE.md).
+
 ## 1. Ist der Code erweiterbar?
 
 **Ja – der Rahmen ist jetzt stärker entkoppelt.** Ein `StudyPlan` ist ein Container für Kind, Titel,

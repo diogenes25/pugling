@@ -9,7 +9,8 @@ aliases: [API-Referenz, Endpunkt-Index]
 
 Kompakter Überblick über alle Routen. **Autoritative Quelle bleibt Swagger** (`/swagger` bzw.
 `/openapi/v1.json`) — dort stehen die vollständigen Request/Response-Schemas. Alle Routen unter
-`api/v1/…`. `V` = Vater-only, `S` = Sohn, `A` = beide (authentifiziert), `∅` = anonym.
+`api/v1/…`. `V` = nur Erwachsene (Rolle Supervisor bzw. Creator), `S` = Sohn (Student), `A` = beide
+(authentifiziert), `∅` = anonym.
 
 > 🔗 **Wie die Endpunkte inhaltlich zusammenhängen** (Übung → Lehrplan → Kind → Auswertung), mit
 > Datenfluss-Diagramm: [docs/endpunkt-beziehungen.md](../docs/endpunkt-beziehungen.md).
@@ -18,7 +19,7 @@ Kompakter Überblick über alle Routen. **Autoritative Quelle bleibt Swagger** (
 
 | Rolle | Route-Präfix | Doku-Einstieg |
 | --- | --- | --- |
-| **Creator** | `api/v1/creator/learn/...` | [docs/rollen-doku.md · Creator](../docs/rollen-doku.md#creator--inhalte-und-katalog) |
+| **Creator** | `api/v1/creator/...` | [docs/rollen-doku.md · Creator](../docs/rollen-doku.md#creator--inhalte-und-katalog) |
 | **Supervisor** | `api/v1/supervisor/...` | [docs/rollen-doku.md · Supervisor](../docs/rollen-doku.md#supervisor--steuerung-kontrolle-belohnung) |
 | **Student** | `api/v1/student/...` | [docs/rollen-doku.md · Student](../docs/rollen-doku.md#student--lernen-fortschritt-einlösen) |
 
@@ -48,34 +49,45 @@ Kompakter Überblick über alle Routen. **Autoritative Quelle bleibt Swagger** (
 | V | `GET /children/{childId}/points` | Punkte-Ledger des Kindes |
 | V | `POST /children/{childId}/points` | manuelle Buchung `{ amount, reason }` |
 | A | `GET /children/{childId}/vocabulary-progress` · `…/{itemId}` · `…/{itemId}/history` · `…/by-word` | Vokabel-Lernstand des Kindes, **flach** (Item + Wort-Rollup + Historie) |
-| A | `GET /children/{childId}/learn/subjects[/{s}]` · `…/{s}/chapters` · `…/{s}/chapters/{c}/vocabulary[/{exerciseId}/items]` | Vokabel-Lernstand **hierarchisch** (Fach→Kapitel→Übung→Item, Aggregate + `active`-Flag; `search`/`sort`/`active`/Paging) |
+| A | `GET student/children/{childId}/learn/subjects[/{s}]` · `…/{s}/series-units` · `…/{s}/series-units/{u}/vocabulary[/{exerciseId}/items]` | Vokabel-Lernstand **hierarchisch** (Fach→Unit→Übung→Item, Aggregate + `active`-Flag; `search`/`sort`/`active`/Paging) |
 | V | `GET/POST /children/{childId}/missions` · `PATCH/DELETE …/{missionId}` | Missionen definieren |
 | V | `GET/POST /children/{childId}/achievements` · `PATCH/DELETE …/{achievementId}` | Auszeichnungen definieren |
 | V | `GET/POST /children/{childId}/timetable` | Stundenplan (Fach × Wochentag) |
 
-## Lern-Katalog (global, Vater-only)
+## Lern-Katalog (global, Rolle Creator; alle Routen unter `api/v1/creator/…`)
 
 | Methode & Route | Zweck |
 | --- | --- |
-| `GET/POST /learn/subjects` · `GET/PATCH/DELETE /learn/subjects/{subjectId}` | Fächer |
-| `GET/POST /learn/subjects/{s}/chapters` · `…/{chapterId}` | Kapitel |
-| `GET/POST /learn/subjects/{s}/categories` · `…/{categoryId}` | fachabhängige Arten |
-| `GET /learn/exercises?subjectId=&grade=&schoolType=&categoryId=&type=&search=` | **Übungssuche** (Vorfilterung) |
-| `GET/POST/PUT/DELETE /learn/subjects/{s}/chapters/{c}/<typ>[/{id}]` | Übungs-CRUD je Typ (12 Typen, siehe [03](03-uebungstypen.md)) |
-| `GET/POST /learn/subjects/{s}/chapters/{c}/vocabulary/{id}/items` · `GET/PATCH/DELETE …/items/{itemId}` | Vokabel-Items einer Übung |
-| `POST /learn/subjects/{s}/chapters/{c}/vocabulary/{id}/refs-from-tags` | Vokabel-Items per Tag-Snapshot setzen |
+| `GET/POST /subjects` · `GET/PATCH/DELETE /subjects/{subjectId}` | Fächer |
+| `GET/POST /subjects/{s}/categories` · `…/{categoryId}` | fachabhängige Arten |
+| `GET/POST /publishers` · `…/{id}` | Verlage |
+| `GET/POST /textbook-series` · `GET/PATCH/DELETE …/{seriesId}` | Lehrwerk-Reihen (slug-idempotent) |
+| `GET/POST /textbook-series/{seriesId}/units` · `…/{unitId}` | Units (Band/Unit, Topics/Grammar/VocabularyNotes) |
+| `GET /exercise-types` · `…/{type}` | **Typ-Manifest** (einzige Quelle für Typ, Anzeigename, Routen-Segment) |
+| `GET /exercises?subjectId=&grade=&schoolType=&categoryId=&type=&search=` · `GET …/{id}` | **Übungssuche** (Vorfilterung) + typübergreifende Sicht |
+| `GET/POST/PUT/DELETE /textbook-series/{s}/units/{u}/<typ>[/{exerciseId}]` | Übungs-CRUD je Typ (12 Typen, siehe [03](03-uebungstypen.md)) |
+| `GET/POST …/vocabulary/{id}/items` · `GET/PATCH/DELETE …/items/{itemId}` | Vokabel-Items einer Übung |
+| `POST …/vocabulary/{id}/refs-from-tags` | Vokabel-Items per Tag-Snapshot setzen |
 | `POST …/matching/{id}/check` · `POST …/arithmetic/{id}/check` · `POST …/list/{id}/check` | Auswertung |
 | `POST …/arithmetic-drill/{id}/generate` · `POST …/arithmetic-drill/{id}/check` | Zufallsaufgaben erzeugen/prüfen |
+| `GET /exercises/{id}/preview` · `POST …/preview/check` | Testmodus ohne Nebenwirkung |
+| `GET/PATCH /exercises/{id}/sharing` · `GET/POST/DELETE /exercises/{id}/grants[/{creatorId}/{permission}]` | RWX-Freigaben |
+| `GET/POST /profiles` · `…/{profileId}` · `GET /profiles/match?childId=` | Creator-Profile („Fachlehrer") und Treffer je Kind |
+| `GET/POST /interest-tags` · `…/{id}` | Interessen-Taxonomie |
+| `POST /teacher-accounts` (anonym) · `GET …/{creatorId}` | Lehrer-Konto (nur Creator) anlegen/lesen |
 
 **Übungstyp-Pfade:** `/vocabulary` `/reading` `/cloze` `/essays` `/listening` `/grammar` `/matching`
 `/translation` `/arithmetic` `/arithmetic-drill` `/list` `/birkenbihl`.
 
-## Stores (global, Vater-only)
+## Stores & Medien (global, Rolle Creator)
 
 | Methode & Route | Zweck |
 | --- | --- |
-| `GET/POST /learn/vocabulary` · `GET …/{id}` · `GET …/by-key/{key}` · `PATCH/DELETE …/{id}` | Vokabel-Store |
-| `GET/POST /learn/cloze-texts` · `GET …/{id}` · `GET …/by-key/{key}` · `PATCH/DELETE …/{id}` | Lückentext-Store |
+| `GET/POST /creator/vocabulary` · `POST …/batch` · `GET …/lookup` · `GET …/{id}` · `GET …/by-key/{key}` · `PATCH/DELETE …/{id}` | Vokabel-Store |
+| `GET/POST /creator/vocabulary/tags` · `…/{vocabularyId}/tags[/{tagId}]` | Vokabel-Tags |
+| `GET/POST /creator/cloze-texts` · `GET …/{id}` · `GET …/by-key/{key}` · `PATCH/DELETE …/{id}` | Lückentext-Store |
+| `GET/POST /creator/media` · `POST …/upload` · `…/{assetId}/variants` · `…/{id}/tags` | Bild-Assets, Varianten, Interessen-Tags |
+| `…/vocabulary/{id}/media` · `…/exercises/{id}/media` · `…/exercises/{id}/items/{itemId}/media` | Bild-Verknüpfungen |
 
 ## Study-Plans (Training)
 

@@ -88,7 +88,7 @@ Letztere bei Bedarf mit `typ/log` bzw. `typ/plan` nachziehbar.
 
 Eine neue Technik ist ein **`ExerciseType`** im bestehenden Katalog, kein Parallel-System:
 
-- Übung erben aus `ExerciseControllerBase<TConfig>`, Route `learn/subjects/{}/chapters/{}/<typ>`.
+- Übung erben aus `ExerciseControllerBase<TConfig>`, Route `creator/textbook-series/{}/units/{}/<typ>`.
 - Ins Training über **`PlanPosition`** (Ziel/Punkte/Leitner), nicht über eine Sonderentität.
 - Punkte **nur** über `ScoringService`, Fortschritt über die **bestehenden** Spuren
   (`PositionItemProgress` + `ItemProgress`) – nicht neu erfinden.

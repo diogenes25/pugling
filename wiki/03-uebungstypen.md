@@ -6,12 +6,15 @@ tags: [typ/referenz, bereich/katalog, rolle/creator, lerntechnik/vokabeln]
 
 ← [Zurück zum Wiki-Index](../README.md)
 
-Der **Katalog** ist die globale Übungs-Bibliothek: `Subject → Chapter → Exercise`. Es gibt **12
-Übungstypen**, jeder mit eigener typisierter Config und eigenem Swagger-Schema. Diese Seite listet
-alle Typen mit Config-Schema und Beispiel-Requests.
+Der **Katalog** ist die globale Übungs-Bibliothek: `TextbookSeries → SeriesUnit → Exercise` (ein `Subject`
+hängt optional an der Reihe; ein `Chapter` gibt es seit B-106 nicht mehr). Es gibt **12 Übungstypen**,
+jeder mit eigener typisierter Config und eigenem Swagger-Schema. Diese Seite listet alle Typen mit
+Config-Schema und Beispiel-Requests. Die autoritative Liste der Typen samt Routen-Segment liefert
+`GET /api/v1/creator/exercise-types` (das Manifest).
 
-> **Rolle:** Katalog-CRUD ist **Vater-only** (`[Authorize(Roles = Vater)]`). Alle Beispiele setzen den
-> Vater-Bearer-Token voraus.
+> **Rolle:** Katalog-CRUD verlangt die Rolle **Creator** (`[Authorize(Roles = Roles.Creator)]`); ein Vater
+> trägt sie neben Supervisor. Lesen darf jeder Creator, ändern nur ein Owner der Übung (RWX-Grants).
+> Alle Beispiele setzen einen Creator-Bearer-Token voraus.
 >
 > **Abgrenzung:** Katalog-Übungen sind **nicht** dasselbe wie das Study-Plan-Training. Sie sind eine
 > kindneutrale Bibliothek mit Metadaten (für Suche/Vorfilterung). Ein Study-Plan verweist über
@@ -20,16 +23,19 @@ alle Typen mit Config-Schema und Beispiel-Requests.
 
 ---
 
-## 1. Fach & Kapitel anlegen (Voraussetzung)
+## 1. Fach, Lehrwerk-Reihe & Unit anlegen (Voraussetzung)
 
-Jede Übung lebt in einem Kapitel eines Fachs.
+Jede Übung lebt in einer **Unit einer Lehrwerk-Reihe**. Das Fach ist optional und hängt an der Reihe.
 
 ```http
 POST /api/v1/creator/subjects                 { "name": "Französisch" }
-→ { "id": 4, "name": "Französisch", "chaptersCount": 0 }
+→ { "id": 4, "name": "Französisch", "categoriesCount": 0, "ownerAdultId": 1, "isMine": true, … }
 
-POST /api/v1/creator/subjects/4/chapters      { "name": "Unité 1 – Salutations", "orderIndex": 1 }
-→ { "id": 12, "subjectId": 4, "name": "…", "orderIndex": 1, "exercisesCount": 0 }
+POST /api/v1/creator/textbook-series          { "name": "Découvertes 1", "subjectId": 4 }
+→ { "id": 3, "slug": "decouvertes-1", "subjectId": 4, "unitCount": 0, … }     (slug-idempotent)
+
+POST /api/v1/creator/textbook-series/3/units  { "label": "Unité 1 – Salutations", "grade": 6 }
+→ { "id": 12, "seriesId": 3, "label": "…", "orderIndex": 1, "topics": [], … }
 ```
 
 Optional pro Fach **fachabhängige Arten** (kontrolliertes Vokabular für die Vorfilterung):
@@ -46,12 +52,12 @@ POST /api/v1/creator/subjects/4/categories    { "name": "Vokabeln" }
 Jeder Typ erbt dasselbe CRUD aus `ExerciseControllerBase<TConfig>`. Route-Präfix:
 
 ```text
-api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/<typ-pfad>
+api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/<typ-pfad>
 ```
 
 | Methode | Route | Zweck |
 | --- | --- | --- |
-| `GET` | `…/<typ>` | Übungen dieses Typs im Kapitel |
+| `GET` | `…/<typ>` | Übungen dieses Typs in der Unit |
 | `GET` | `…/<typ>/{exerciseId}` | Eine Übung |
 | `POST` | `…/<typ>` | Anlegen |
 | `PUT` | `…/<typ>/{exerciseId}` | Vollständig ersetzen (inkl. Config) |
@@ -128,12 +134,12 @@ der Config, weil der Inhalt nun in der Item-Tabelle liegt.
 Nachträgliche Änderungen laufen bevorzugt über die Item-Subressource:
 
 ```http
-GET  /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items
-POST /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items
+GET  /api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}/items
+POST /api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}/items
 { "vocabularyId": 26, "hint": "die" }
 
-PATCH  /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items/{itemId}
-DELETE /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items/{itemId}
+PATCH  /api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}/items/{itemId}
+DELETE /api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}/items/{itemId}
 ```
 
 Wird die Übung bereits in einem Study-Plan verwendet, dürfen Items nicht mehr gelöscht oder umsortiert
@@ -316,8 +322,8 @@ Durcharbeiten.
 ## 4. Vollständiges Beispiel: Regelaufgaben-Übung anlegen
 
 ```http
-POST /api/v1/creator/subjects/1/chapters/1/grammar
-Authorization: Bearer <VATER-TOKEN>
+POST /api/v1/creator/textbook-series/1/units/1/grammar
+Authorization: Bearer <CREATOR-TOKEN>
 Content-Type: application/json
 
 {
@@ -336,7 +342,7 @@ Content-Type: application/json
     ]
   }
 }
-→ 201 ExerciseResponse { id, chapterId, type:"Grammar", title, config, gradeMin, …, categoryName }
+→ 201 ExerciseResponse { id, seriesUnitId, type:"Grammar", title, config, gradeMin, …, categoryName, isOwner }
 ```
 
 ---
@@ -351,8 +357,8 @@ GET /api/v1/creator/exercises?subjectId=1&grade=9&schoolType=Gymnasium&categoryI
 ```
 
 Alle Parameter sind optional und werden **UND-verknüpft**. Nullbare Grenzen und `schoolType=None`
-bedeuten „passt immer". Antwort: schlanke `ExerciseSummary`-Zeilen (`id, chapterId, subjectId, type,
-title, gradeMin, gradeMax, schoolTypes, source, categoryId, categoryName`).
+bedeuten „passt immer". Antwort: schlanke `ExerciseSummary`-Zeilen (`id, seriesId, seriesUnitId, subjectId,
+type, title, gradeMin, gradeMax, schoolTypes, source, categoryId, categoryName, authorName, isOwner, …`).
 
 ---
 

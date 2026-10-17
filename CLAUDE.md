@@ -75,7 +75,8 @@ Skill `ki-creator`, Pipeline und Regeln in
 
 ### Das Fachmodell in einem Absatz
 
-Der **Katalog** (`Subject → Chapter → Exercise`, typisiert) liefert den Stoff. Ein **`StudyPlan`** ist ein
+Der **Katalog** (`TextbookSeries → SeriesUnit → Exercise`, typisiert; ein `Subject` hängt optional an der
+Reihe, ein `Chapter` gibt es seit B-106 nicht mehr) liefert den Stoff. Ein **`StudyPlan`** ist ein
 reiner Container aus **`PlanPosition`s**, die je eine Katalog-Übung mit **eigenem** Pflichtziel, Punkten und
 Leitner-Stufe an ein Kind binden. Gespielt wird **pro Position** (Üben/Leitner + Abschlusstest); daraus
 entstehen Punkte in zwei Währungen (Münzen fürs Lernen → Familien-Shop, Gems aus Boni → Skins) und der

@@ -44,8 +44,8 @@ aktiven Plan sehen soll, ist das auch serverseitig die sauberste Form.
 1. Als Vater einloggen (POST /auth/adult).
 2. Kind bestimmen (GET /children → gemeintes Kind wählen oder anlegen).
 3. Für jedes Fach/Thema:
-   a. Fach/Kapitel im Katalog finden oder anlegen.
-   b. Passende Übungen suchen: GET /learn/exercises?subjectId=&grade=&schoolType=&type=
+   a. Fach, Lehrwerk-Reihe und Unit im Katalog finden oder anlegen.
+   b. Passende Übungen suchen: GET /creator/exercises?subjectId=&grade=&schoolType=&type=
    c. Falls keine gute Übung existiert: neue Katalog-Übung mit typisierter Config anlegen.
 4. Study-Plan-Container anlegen: POST /study-plans.
 5. Jede ausgewählte Übung als Position anhängen: POST /study-plans/{planId}/positions.
@@ -73,7 +73,7 @@ Wenn eine Übung passt, nutze ihre `id` direkt als `exerciseId` in der Position.
 **Weg 2 — Neue Katalog-Übung anlegen:**
 
 ```http
-POST /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary
+POST /api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary
 { "title":"Unit 1 – Begrüßungen", "orderIndex":1, "rewardPoints":10,
   "config": { "direction":"front-to-back", "sourceLang":"en", "targetLang":"de",
     "items":[{"front":"hello","back":"hallo"},{"front":"goodbye","back":"tschüss"}] },
@@ -82,7 +82,7 @@ POST /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary
     "speedBonusPoints":3, "newContentPoints":10 } }
 ```
 
-  Für größere Vokabelmengen ist robuster: Store-Einträge per `POST /learn/vocabulary/batch` anlegen,
+  Für größere Vokabelmengen ist robuster: Store-Einträge per `POST /creator/vocabulary/batch` anlegen,
   taggen und anschließend die Übung mit `POST .../vocabulary/{exerciseId}/refs-from-tags` auf den Tag-Snapshot
   setzen. Dadurch kann dieselbe Store-Vokabel in mehreren Übungen auftauchen und der Lernstand später per
   `/children/{childId}/vocabulary-progress/by-word` zusammengeführt werden.

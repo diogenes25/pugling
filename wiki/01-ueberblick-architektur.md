@@ -19,9 +19,12 @@ Das fachliche Grundmodell ([grundprinzip.md](../docs/grundprinzip.md)) kennt **d
 
 | Ebene / Rolle | Claim | Darf | Ziel |
 | --- | --- | --- | --- |
-| **Creator** (`Roles.Creator`, Alias `Vater`) | `fid` | Übungen/Inhalte im Katalog erstellen | Lernstoff liefern |
-| **Supervisor** (`Roles.Supervisor`, Alias `Vater`) | `fid` | Lehrpläne/Ziele/Punkte, Shop/Angebote, Kind-Verwaltung, alles auswerten | Lernerfolg **erzwingen** |
-| **Student** (`Roles.Student`, Alias `Sohn`) | `cid` | nur die **eigenen** Pläne sehen, üben, testen, bewerten, kaufen/aktivieren | mit Spaß **lernen** |
+| **Creator** (`Roles.Creator`) | `fid` | Übungen/Inhalte im Katalog erstellen | Lernstoff liefern |
+| **Supervisor** (`Roles.Supervisor`) | `fid` | Lehrpläne/Ziele/Punkte, Shop, Kind-Verwaltung, alles auswerten | Lernerfolg **erzwingen** |
+| **Student** (`Roles.Student`) | `cid` | nur die **eigenen** Pläne sehen, üben, testen, kaufen/aktivieren | mit Spaß **lernen** |
+
+Gegated wird direkt auf diese drei Rollen; ein Vater/Sohn-Alias existiert im Code nicht. Die Zeile
+hinter jeder Nicht-Kind-Rolle heißt `Adult` (auch ein Lehrer-Konto ohne Kind), die hinter dem Student `Child`.
 
 Rollenbasierter Einstieg in Doku und Wiki: [docs/rollen-doku.md](../docs/rollen-doku.md).
 
@@ -36,20 +39,24 @@ einem Kind — der Zustand ist pro Kind isoliert. Details: [02 · Authentifizier
 
 Pugling hat **zwei getrennte inhaltliche Welten**, die man sauber auseinanderhalten muss:
 
-### A) Der Lern-Katalog (`learn`) — globale Übungs-Bibliothek
+### A) Der Lern-Katalog (`creator/…`) — globale Übungs-Bibliothek
 
 ```text
-Subject (Fach)  ─┬─ Chapter (Kapitel) ─┬─ Exercise (typisierte Übung, 12 Typen)
-                 │                      └─ …
-                 └─ ExerciseCategory (fachabhängige „Art": Grammatik, Vokabeln, …)
+Publisher ─< TextbookSeries (Lehrwerk-Reihe) ─< SeriesUnit (Band/Unit) ─< Exercise (typisierte Übung, 12 Typen)
+                 │ SubjectId (optional)
+Subject (Fach) ──┴─< ExerciseCategory (fachabhängige „Art": Grammatik, Vokabeln, …)
 ```
 
-- **Global, kindneutral, Vater-gepflegt.** Wird **einmal** aufgebaut, nicht pro Kind.
+- **Seit B-106 (2026-08-05) hängt jede Übung an einer `SeriesUnit`**, nicht mehr an einem `Chapter` – die
+  Entität ist entfernt. Das Fach ergibt sich transitiv über die Reihe (`SeriesUnit.Series.SubjectId`).
+- **Global, kindneutral, Creator-gepflegt.** Wird **einmal** aufgebaut, nicht pro Kind. Lesen darf jeder
+  Creator, ändern nur ein Owner (RWX-Grants je Übung, `OwnerAdultId` an Reihe und Fach).
 - Jede `Exercise` hat einen **Typ** (String-`Key`, aufgelöst über die `ExerciseTypeRegistry`) und eine **typisierte Config** (als JSON gespeichert,
   im API pro Typ ein eigenes Schema). Dazu **Metadaten**: `GradeMin/GradeMax` (Klassenstufe),
   `SchoolTypes` (Schulart, `[Flags]`), `Source` (Quelle), `CategoryId` (Art) — Basis für die spätere
   automatische Lehrplan-Vorfilterung (`GET api/v1/creator/exercises`).
-- Route je Typ: `api/v1/creator/subjects/{s}/chapters/{c}/<typ>`. Siehe [03 · Übungstypen](03-uebungstypen.md).
+- Route je Typ: `api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/<typ>`.
+  Siehe [03 · Übungstypen](03-uebungstypen.md).
 
 ### B) Der Study-Plan (`study-plans`) — das produktive Training pro Kind
 
@@ -66,8 +73,8 @@ StudyPlan (gehört einem Kind, reiner Container)
    Stufe/Fahrplan, Item-Auswahl, Zielrhythmus (`None|Daily|Weekly`), Bestehensschwelle, Punkte und
    Leitner-Einstellungen.
 - **Inhalte kommen aus der Übungs-Config** der referenzierten Katalog-`Exercise`; der Fortschritt pro
-   Inhalts-Atom wird materialisiert in `PositionItemProgress`. Stores wie `learn/vocabulary` und
-   `learn/cloze-texts` existieren weiterhin als globale Inhaltsbibliotheken und für Verknüpfungen, sind
+   Inhalts-Atom wird materialisiert in `PositionItemProgress`. Stores wie `creator/vocabulary` und
+   `creator/cloze-texts` existieren weiterhin als globale Inhaltsbibliotheken und für Verknüpfungen, sind
    aber nicht mehr die direkte Study-Plan-Item-Liste.
 - **Vokabelübungen haben eine eigene Item-Ebene:** Die Config enthält Einstellungen und optional
    Authoring-Payload. Die tatsächlichen Vokabelpaare liegen als stabile `ExerciseItem`-Zeilen unter der
@@ -89,7 +96,8 @@ der Übung (`DefaultStage`, `DefaultUseLeitner`, `SuggestedBonus`). Siehe
 ## 3. Datenmodell-Landkarte
 
 ```text
-Father ──< Child ──< ChildPointsEntry  (Punkte-Ledger, jede Buchung trägt einen PointKind)
+Account ──< AccountProfile ── Adult | Child     (Login/PIN-Hash; ein Konto trägt mehrere Rollen)
+Adult ──< SupervisorLink >── Child ──< ChildPointsEntry  (Punkte-Ledger, jede Buchung trägt einen PointKind)
               │
               ├──< StudyPlan ──< PlanPosition ── Exercise
               │        │
@@ -104,22 +112,25 @@ Father ──< Child ──< ChildPointsEntry  (Punkte-Ledger, jede Buchung trä
               └──< Klassenarbeit                    (geplant/geschrieben + Note)
 
 Katalog (global):
-Subject ──< Chapter ──< Exercise (Type, ConfigJson, Metadaten, SuggestedBonus?)
-                         └──< ExerciseItem (nur Vocabulary: stabile Store-Referenzen)
-   └──< ExerciseCategory
+Publisher ──< TextbookSeries ──< SeriesUnit ──< Exercise (Type, ConfigJson, Metadaten, SuggestedBonus?)
+                   │ SubjectId?                   ├──< ExerciseItem (nur Vocabulary: stabile Store-Referenzen)
+Subject ───────────┴──< ExerciseCategory          └──< ExerciseGrant (RWX je Creator)
 
 Stores (global / optionale Inhaltsbibliotheken):
 Vocabulary (Key, Word, Translation, Noun/Verb-Info, BaseForm)
 ClozeText  (Key, Text mit {{n}}, Gaps, WordBank)
-
-Legacy (nur erhalten):
-TimeSlotRule (Zeitfenster-Multiplikator für Punkte)
+MediaAsset ──< MediaVariant, MediaLink (Bilder an Vokabeln/Übungen; Auswahl je Kind über InterestTag)
 ```
 
+Der Zeitfenster-Multiplikator für Punkte ist **Konfiguration** (`Scoring:TimeSlots` in `appsettings.json`),
+keine Tabelle mehr.
+
 Die Entities liegen in [backend/Pugling.Api/Models/](../backend/Pugling.Api/Models/):
-`AdminEntities.cs` (Father/Child/Points), `LearnEntities.cs` (Katalog), `StudyPlanEntities.cs`,
-`PlanPositionEntities.cs`, `GamificationEntities.cs`, `VocabEntities.cs`, `ClozeEntities.cs`,
-`TimetableEntities.cs`, `KlassenarbeitEntities.cs`, `TimeSlotRule.cs`.
+`IdentityEntities.cs` (Account/AccountProfile), `AdminEntities.cs` (Adult/Child/SupervisorLink/Points),
+`CurriculumEntities.cs` (Publisher/TextbookSeries/SeriesUnit/CreatorProfile), `LearnEntities.cs` (Katalog),
+`ExerciseItemEntities.cs`, `StudyPlanEntities.cs`, `PlanPositionEntities.cs`, `ItemProgressEntities.cs`,
+`GamificationEntities.cs`, `ObjectiveEntities.cs`, `VocabEntities.cs`, `ClozeEntities.cs`, `MediaEntities.cs`,
+`InterestEntities.cs`, `TimetableEntities.cs`, `KlassenarbeitEntities.cs`, `RemarkEntities.cs`.
 
 ---
 
@@ -166,11 +177,13 @@ Datenfluss-Diagramm: [docs/endpunkt-beziehungen.md](../docs/endpunkt-beziehungen
 ## 6. Konventionen & Fallstricke (Kurzform)
 
 - **C# 14 / .NET 10**, `Nullable` an, file-scoped Namespaces, Primary Constructors, `record`-DTOs.
-- **Doku auf Deutsch** (`/// <summary>` fließt in Swagger). Kommentare erklären das *Warum*.
+- **Code-Doku auf Englisch** (`/// <summary>` fließt in Swagger, ebenso jeder `//`-Kommentar); die
+   Markdown-Doku bleibt deutsch. Kommentare erklären das *Warum*.
 - **Fehler** einheitlich als `ProblemDetails` mit maschinenlesbarem `code`
    (`return this.ProblemWithCode(ApiErrors.X, "…")`).
 - **Zeit/UTC:** Tageslogik nutzt `DateTime.UtcNow`/`DateOnly` — nahe Mitternacht lokal ggf. anderer Kalendertag.
-- **EF-Migrationen** bei jeder Schemaänderung (kein `EnsureCreated`). `db.Database.Migrate()` läuft beim Start.
-- **JSON-Spalten** (`Gaps`, `WordBank`, `StageSchedule`, `Noun`/`Verb`) neu **zuweisen**, nicht in-place mutieren.
+- **EF-Migrationen:** die Kette ist genau **eine** Migration und wird bei jeder Schemaänderung neu gefaltet
+   (kein `EnsureCreated`). `db.Database.Migrate()` läuft beim Start.
+- **JSON-Spalten** tragen einen `ValueComparer` (Tor G7); eine neue JSON-Spalte braucht ihn ebenfalls.
 
 Voll ausformuliert in [CLAUDE.md](../CLAUDE.md).

@@ -16,7 +16,7 @@ Lern-Katalog):
 
 ## Datenmodell
 
-Der Lern-Katalog (`Subject → Chapter → Exercise`) bleibt **kindneutral**. Alles Kindbezogene hängt
+Der Lern-Katalog (`TextbookSeries → SeriesUnit → Exercise`) bleibt **kindneutral**. Alles Kindbezogene hängt
 an Verknüpfungstabellen:
 
 ```text

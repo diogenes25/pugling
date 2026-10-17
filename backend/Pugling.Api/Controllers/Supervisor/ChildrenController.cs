@@ -124,7 +124,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         return (await ProjectOne(childId, ct))!;
     }
 
-    /// <summary>Deletes a child together with all subjects, chapters, lessons and point ledger entries.</summary>
+    /// <summary>Deletes a child together with its study plans, progress and point ledger entries (catalog content stays).</summary>
     [HttpDelete("{childId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
