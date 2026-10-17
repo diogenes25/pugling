@@ -181,7 +181,7 @@ und sie hat ihn gefunden.
 ## Offene Roadmap · Änderungsstand
 
 Die dauerhafte Liste ist [docs/backlog/](backlog/README.md). Änderungsstand dieses Sprints: ein Commit mit Code,
-Specs, Stories und Protokoll (Hash im Nachtrag der vier Stories), **nicht gepusht**.
+Specs, Stories und Protokoll: `d834a8e`, dazu dieser Nachtrag, **nicht gepusht**.
 
 ## Für den Morgen
 
