@@ -48,8 +48,8 @@ Kompakter Überblick über alle Routen. **Autoritative Quelle bleibt Swagger** (
 | V | `GET/POST /children` · `GET/PATCH/DELETE /children/{childId}` | Kinder verwalten (inkl. `pointsBalance`) |
 | V | `GET /children/{childId}/points` | Punkte-Ledger des Kindes |
 | V | `POST /children/{childId}/points` | manuelle Buchung `{ amount, reason }` |
-| A | `GET /children/{childId}/vocabulary-progress` · `…/{itemId}` · `…/{itemId}/history` · `…/by-word` | Vokabel-Lernstand des Kindes, **flach** (Item + Wort-Rollup + Historie) |
-| A | `GET student/children/{childId}/learn/subjects[/{s}]` · `…/{s}/series-units` · `…/{s}/series-units/{u}/vocabulary[/{exerciseId}/items]` | Vokabel-Lernstand **hierarchisch** (Fach→Unit→Übung→Item, Aggregate + `active`-Flag; `search`/`sort`/`active`/Paging) |
+| A | `GET /student/children/{childId}/vocabulary-progress` · `…/{itemId}` · `…/{itemId}/history` · `…/by-word` | Vokabel-Lernstand des Kindes, **flach** (Item + Wort-Rollup + Historie); liegt unter `student/`, nicht `supervisor/` |
+| A | `GET /student/children/{childId}/learn/subjects[/{s}]` · `…/{s}/series-units` · `…/{s}/series-units/{u}/vocabulary[/{exerciseId}/items]` | Vokabel-Lernstand **hierarchisch** (Fach→Unit→Übung→Item, Aggregate + `active`-Flag; `search`/`sort`/`active`/Paging); ebenfalls unter `student/` |
 | V | `GET/POST /children/{childId}/missions` · `PATCH/DELETE …/{missionId}` | Missionen definieren |
 | V | `GET/POST /children/{childId}/achievements` · `PATCH/DELETE …/{achievementId}` | Auszeichnungen definieren |
 | V | `GET/POST /children/{childId}/timetable` | Stundenplan (Fach × Wochentag) |
@@ -71,7 +71,7 @@ Kompakter Überblick über alle Routen. **Autoritative Quelle bleibt Swagger** (
 | `POST …/matching/{id}/check` · `POST …/arithmetic/{id}/check` · `POST …/list/{id}/check` | Auswertung |
 | `POST …/arithmetic-drill/{id}/generate` · `POST …/arithmetic-drill/{id}/check` | Zufallsaufgaben erzeugen/prüfen |
 | `GET /exercises/{id}/preview` · `POST …/preview/check` | Testmodus ohne Nebenwirkung |
-| `GET/PATCH /exercises/{id}/sharing` · `GET/POST/DELETE /exercises/{id}/grants[/{creatorId}/{permission}]` | RWX-Freigaben |
+| `PATCH /exercises/{id}/sharing` · `GET/POST/DELETE /exercises/{id}/grants[/{creatorId}/{permission}]` | RWX-Freigaben; den aktuellen Stand (`executePublic`) liest `GET /exercises/{id}`, einen GET auf `…/sharing` gibt es nicht |
 | `GET/POST /profiles` · `…/{profileId}` · `GET /profiles/match?childId=` | Creator-Profile („Fachlehrer") und Treffer je Kind |
 | `GET/POST /interest-tags` · `…/{id}` | Interessen-Taxonomie |
 | `POST /teacher-accounts` (anonym) · `GET …/{creatorId}` | Lehrer-Konto (nur Creator) anlegen/lesen |

@@ -15,7 +15,8 @@ Das Backend ist schnell gewachsen und trug drei parallele Modell-Welten:
    `ReviewLog`, `PointsTransaction`, `RewardOffer`, `TestResult`) mit den Controllern
    `Vocab`, `Sessions`, `Points`, `Settings`.
 2. **Produktives Modell**: `Father`/`Child` + JWT-Auth, `StudyPlan`/`TestAttempt`,
-   Vokabel-/Lückentext-Store, `Subject→Chapter→Exercise`-Katalog, Tags, Klassenarbeiten.
+   Vokabel-/Lückentext-Store, `Subject→Chapter→Exercise`-Katalog (seit B-106 `TextbookSeries→SeriesUnit→Exercise`,
+   ohne `Chapter`), Tags, Klassenarbeiten.
 
 Befund des Reviews: Das **Frontend** sprach ausschließlich das Legacy-Modell an, während der
 gesamte neue Aufwand im produktiven Modell steckt. `TestResult` war komplett tot, sieben weitere

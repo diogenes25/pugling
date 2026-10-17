@@ -1834,7 +1834,7 @@
         "tags": [
           "Supervisor \u2013 Children"
         ],
-        "summary": "Deletes a child together with its study plans, progress and point ledger entries (catalog content stays).",
+        "summary": "Deletes a child together with its study plans, progress, point ledger entries and its login account\n(catalog content stays).",
         "parameters": [
           {
             "name": "childId",

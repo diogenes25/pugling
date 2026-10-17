@@ -3,7 +3,7 @@ namespace Pugling.Api.Models;
 // Admin area: people management.
 //   Supervisor (Adult) >-< Student (Child) through SupervisorLink (a student can have several supervisors)
 //   + points per child (one shared wallet across all supervisors).
-// The learning content (Subject -> Chapter -> Exercise) sits separately in the shared learn catalog
+// The learning content (TextbookSeries -> SeriesUnit -> Exercise, Subject optional on the series) sits separately in the shared learn catalog
 // (see LearnEntities.cs).
 
 // SupervisorRelation/Gender/PointKind live in the contract project (Pugling.Contracts).
@@ -45,7 +45,11 @@ public class Adult
     public int Id { get; set; }
     public string Name { get; set; } = "";
     public string? Email { get; set; }
-    /// <summary>Simple PIN login. To be replaced by real auth later.</summary>
+    /// <summary>
+    /// PIN <b>hash</b> in <see cref="Auth.PinHasher"/> format, never plaintext. Every write goes through
+    /// <c>PinHasher.Hash</c> and is mirrored onto <c>Account.PinHash</c> (<c>AccountService.MirrorAsync</c>),
+    /// otherwise the account-centric <c>auth/login</c> drifts out of sync (B-216).
+    /// </summary>
     public string Pin { get; set; } = "";
     /// <summary>
     /// Platform superuser (break-glass): carries the additional <see cref="Auth.Roles.Admin"/> claim on
@@ -103,7 +107,10 @@ public class Child
     /// Only the supervisor may raise it; the default is the strictest level.
     /// </summary>
     public ContentRating AllowedContentRating { get; set; } = ContentRating.Everyone;
-    /// <summary>The child's simple PIN login. To be replaced by real auth later.</summary>
+    /// <summary>
+    /// The child's PIN <b>hash</b> in <see cref="Auth.PinHasher"/> format, never plaintext. Written only via
+    /// <c>PinHasher.Hash</c> and mirrored onto <c>Account.PinHash</c> (<c>AccountService.MirrorAsync</c>), see B-216.
+    /// </summary>
     public string Pin { get; set; } = "";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

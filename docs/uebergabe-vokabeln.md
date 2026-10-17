@@ -112,7 +112,7 @@ Kind-Plan zuweisen (die Kette „globale Übung → individueller Lehrplan").
 - **Lückentext ↔ Vokabel-Store (P1):** `Gap.VocabKey` (optional) → die Lösung der Lücke kommt aus dem
   Store-Wort (`ResolveClozeRefsAsync`), zentral pflegbar; inline `answer` bleibt Fallback. Bewertung läuft
   unverändert über `AcceptedAnswers`. Beispiel: `config.gaps = [{ index:1, answer:"", vocabKey:"en_opportunity_de_gelegenheit" }]`.
-- **Refs aus Tags:** `POST learn/subjects/{s}/chapters/{c}/vocabulary/{id}/refs-from-tags
+- **Refs aus Tags:** `POST creator/textbook-series/{s}/units/{u}/vocabulary/{id}/refs-from-tags
   { tags:[…], matchAll?, baseFormsOnly? }` schreibt die aktuellen Store-Vokabeln als **Snapshot** in
   `ExerciseItems`. Der Abgleich bewahrt die `ItemId` überlebender Wörter; nur nicht mehr enthaltene Wörter
   werden entfernt. `baseFormsOnly` schließt flektierte Formen aus.
@@ -169,14 +169,14 @@ POST /api/v1/creator/vocabulary   { "sourceLanguage":"en","targetLanguage":"de",
 PATCH /api/v1/creator/vocabulary/{id}  { "partOfSpeech":"Noun","noun":{"article":"die"} }
 
 # Vokabel-Übung anlegen; die Items werden danach in ExerciseItems materialisiert
-POST /api/v1/creator/subjects/{s}/chapters/{c}/vocabulary
+POST /api/v1/creator/textbook-series/{s}/units/{u}/vocabulary
      { "title":"Unit 1","orderIndex":1,"rewardPoints":10,
     "config": { "direction":"front-to-back","sourceLang":"en","targetLang":"de",
       "items":[{"front":"cat","back":"Katze"}] } }
 
 # Items der Übung lesen oder später erweitern
-GET  /api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items
-POST /api/v1/creator/subjects/{s}/chapters/{c}/vocabulary/{exerciseId}/items
+GET  /api/v1/creator/textbook-series/{s}/units/{u}/vocabulary/{exerciseId}/items
+POST /api/v1/creator/textbook-series/{s}/units/{u}/vocabulary/{exerciseId}/items
   { "vocabularyId": 26, "hint": "die" }
 
 # Fortschritt eines Kindes über Vokabel-Items und Wörter
@@ -186,7 +186,7 @@ GET  /api/v1/student/children/{childId}/vocabulary-progress/by-word?onlyWeak=tru
 # Verwaltung
 GET  /api/v1/creator/exercises/{id}          # Detail + Config
 GET  /api/v1/creator/exercises/{id}/usage    # in welchen Lehrplänen/Klassenarbeiten
-PUT/DELETE .../chapters/{c}/vocabulary/{id}
+PUT/DELETE .../units/{u}/vocabulary/{id}
 ```
 
 Integrationstest-Muster: `backend/Pugling.Api.Tests/TestApi.cs` (Helfer für Store-Vokabeln,

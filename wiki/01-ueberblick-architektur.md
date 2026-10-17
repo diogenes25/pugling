@@ -130,7 +130,8 @@ Die Entities liegen in [backend/Pugling.Api/Models/](../backend/Pugling.Api/Mode
 `CurriculumEntities.cs` (Publisher/TextbookSeries/SeriesUnit/CreatorProfile), `LearnEntities.cs` (Katalog),
 `ExerciseItemEntities.cs`, `StudyPlanEntities.cs`, `PlanPositionEntities.cs`, `ItemProgressEntities.cs`,
 `GamificationEntities.cs`, `ObjectiveEntities.cs`, `VocabEntities.cs`, `ClozeEntities.cs`, `MediaEntities.cs`,
-`InterestEntities.cs`, `TimetableEntities.cs`, `KlassenarbeitEntities.cs`, `RemarkEntities.cs`.
+`InterestEntities.cs`, `TimetableEntities.cs`, `KlassenarbeitEntities.cs`, `RemarkEntities.cs`. Die achtzehnte Datei
+dort, `VocabLink.cs`, ist kein Entity, sondern der Helfer für den `_self`-Link auf Vokabelspeicher-Einträge.
 
 ---
 

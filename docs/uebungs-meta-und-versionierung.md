@@ -36,7 +36,7 @@ Teil, **Schema-Versionierung** für den Evolutions-Teil.
 - Auswertung ist **server-autoritativ** über `/check`-Endpunkte (`CheckResult`); nicht jeder Typ
   hat eine Prüfung (Birkenbihl bewusst ohne), und `ArithmeticDrill` erzeugt Aufgaben erst per
   `/generate` und prüft über denselben `Seed` beim `/check`.
-- `ExerciseControllerBase` ist `[Authorize(Roles = Roles.Vater)]` – das ist die **Autoren-Sicht**;
+- `ExerciseControllerBase` ist `[Authorize(Roles = Roles.Creator)]` – das ist die **Autoren-Sicht**;
   sie liefert die **volle Config inkl. Lösungen** (`Gap.Answer`, `Question.Answer`, `MatchPair.Right` …).
 - Die **Sohn-Sicht ist getrennt und bereits antwortfrei**: Gespielt wird über die positionsbezogenen
   Controller unter `study-plans/{planId}/positions/{positionId}/…`. `PositionPracticeController` und
@@ -87,7 +87,7 @@ GET /api/v1/creator/exercise-types
 {
   "type": "Cloze",               // ExerciseType (Katalog)
   "method": "Cloze",             // LearningMethod (Lehrplan) – die explizite Brücke
-  "authoringRoute": "cloze",     // .../chapters/{}/cloze  (Vater-CRUD)
+  "authoringRoute": "cloze",     // .../textbook-series/{}/units/{}/cloze  (Creator-CRUD)
   "playRoute": "tests",          // study-plans/{}/positions/{}/tests (Sohn-Play)
   "renderer": "cloze",           // welche Frontend-Komponente rendert
   "checkMode": "server",         // server | generated | none

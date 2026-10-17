@@ -53,7 +53,7 @@ Beim Erstellen darf der Client inline `items` schicken. Der Server legt fehlende
 materialisiert die Übungsmenge in `ExerciseItems` und speichert in der Config nur noch Einstellungen.
 
 ```http
-POST /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary
+POST /api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary
 {
   "title": "Unit 1 – Tiere",
   "orderIndex": 1,
@@ -82,15 +82,15 @@ liegen jetzt unter der Übung.
 Die Item-Subressource ist der bevorzugte Weg für spätere Änderungen:
 
 ```http
-GET /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items
+GET /api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}/items
 
-POST /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items
+POST /api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}/items
 { "vocabularyId": 26, "hint": "die" }
 
-POST /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items
+POST /api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}/items
 { "front": "bird", "back": "Vogel" }
 
-PATCH /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/items/{itemId}
+PATCH /api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}/items/{itemId}
 { "hint": "der", "orderIndex": 3 }
 ```
 
@@ -104,7 +104,7 @@ Für größere Einheiten ist der Tag-Flow am stabilsten: Store-Einträge taggen 
 Snapshot aus den aktuellen Treffern setzen.
 
 ```http
-POST /api/v1/creator/subjects/{subjectId}/chapters/{chapterId}/vocabulary/{exerciseId}/refs-from-tags
+POST /api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}/refs-from-tags
 { "tags":["Unit 1"], "matchAll":false, "baseFormsOnly":true }
 ```
 

@@ -115,7 +115,7 @@ public class Exercise
     public bool DefaultRequireTypedTest { get; set; }
 
     // Structured metadata for pre-filtering while a study plan is composed.
-    // Subject = Subject (through Chapter), topic = Chapter - only what adds to that lives here.
+    // Subject = the Subject of the series (through SeriesUnit -> TextbookSeries), topic = SeriesUnit - only what adds to that lives here.
 
     /// <summary>Lowest suitable grade (inclusive); null = no lower bound.</summary>
     public int? GradeMin { get; set; }

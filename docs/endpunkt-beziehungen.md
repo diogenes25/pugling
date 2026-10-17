@@ -55,7 +55,7 @@ flowchart TD
     Pos -. "Üben/Testen schreibt (PositionPlayService)" .-> PIP
 
     IP -->|"GET /children/{childId}/vocabulary-progress (flach)"| EvalFlat["Auswertung: flache Wort-/Item-Sicht"]
-    IP -->|"GET /children/{childId}/learn/… (hierarchisch)"| EvalHier["Auswertung: Fach→Kapitel→Übung→Item"]
+    IP -->|"GET /student/children/{childId}/learn/… (hierarchisch)"| EvalHier["Auswertung: Fach→Unit→Übung→Item"]
     PIP -->|"GET /study-plans/{planId}/positions/{positionId}/report"| EvalPos["Auswertung: pro Position (Mastery/Test)"]
 ```
 
@@ -72,8 +72,8 @@ Der Katalog ist **global und kindneutral**; der Lehrplan verweist nur darauf.
 
 | Beziehung | Endpunkt(e) | Wohin |
 | --- | --- | --- |
-| Katalog-Übung anlegen/ändern (je Typ) | `GET/POST/PUT/DELETE /learn/subjects/{s}/chapters/{c}/<typ>[/{id}]` | [ExerciseControllers.cs](../backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs) |
-| Passende Übung finden | `GET /learn/exercises?subjectId=&grade=&schoolType=&categoryId=&type=&search=` | [ExerciseCatalogController.cs](../backend/Pugling.Api/Controllers/Creator/ExerciseCatalogController.cs) |
+| Katalog-Übung anlegen/ändern (je Typ) | `GET/POST/PUT/DELETE /creator/textbook-series/{s}/units/{u}/<typ>[/{id}]` | [ExerciseControllers.cs](../backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs) |
+| Passende Übung finden | `GET /creator/exercises?subjectId=&grade=&schoolType=&categoryId=&type=&search=` | [ExerciseCatalogController.cs](../backend/Pugling.Api/Controllers/Creator/ExerciseCatalogController.cs) |
 | Übung **in den Plan hängen** (Position) | `GET/POST /study-plans/{planId}/positions` · `GET/PATCH/DELETE …/{positionId}` | [PlanPositionsController.cs](../backend/Pugling.Api/Controllers/Supervisor/PlanPositionsController.cs) |
 | Vokabelpaare der Übung | `GET/POST …/vocabulary/{exerciseId}/items` · `…/items/{itemId}` | [ExerciseControllers.cs](../backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs) |
 
@@ -364,7 +364,7 @@ GET /api/v1/student/children/1/learn/subjects
 Authorization: Bearer <father-token>
 ```
 
-Antwort auf: „Wie sieht Sohn 1 nach Fach/Kapitel/Übung aggregiert aus?" Das ist die hierarchische Sicht,
+Antwort auf: „Wie sieht Sohn 1 nach Fach/Unit/Übung aggregiert aus?" Das ist die hierarchische Sicht,
 aus der sich neue Ziel-Etappen ableiten lassen.
 
 ## 3. Übung ↔ Auswertung des Kindes
@@ -408,10 +408,10 @@ schlecht gelernte Wörter). Liest `ItemProgress`/`ItemReviewEvent`.
 
 | Endpunkt | Inhalt |
 | --- | --- |
-| `GET /children/{childId}/learn/subjects` | Fächer + Aggregat |
+| `GET /student/children/{childId}/learn/subjects` | Fächer + Aggregat |
 | `GET …/subjects/{subjectId}` | ein Fach |
-| `GET …/subjects/{subjectId}/chapters` | Kapitel + Aggregat |
-| `GET …/subjects/{subjectId}/chapters/{chapterId}/vocabulary` | Übungen + Fortschritt je Übung |
+| `GET …/subjects/{subjectId}/series-units` | Units der Lehrwerk-Reihen + Aggregat |
+| `GET …/subjects/{subjectId}/series-units/{seriesUnitId}/vocabulary` | Übungen + Fortschritt je Übung |
 | `GET …/vocabulary/{exerciseId}/items` | Item-Lernstand (schwächste zuerst) |
 
 → [ChildLearnProgressController](../backend/Pugling.Api/Controllers/Student/ChildLearnProgressController.cs)
@@ -484,7 +484,7 @@ Content-Type: application/json
   "rewardOnComplete": 50,
   "rewardPerKeyResult": 10,
   "keyResults": [
-    { "subjectId": 3, "chapterId": 8, "exerciseId": 13, "metric": "MasteredPercent", "targetValue": 80 }
+    { "subjectId": 3, "seriesUnitId": 8, "exerciseId": 13, "metric": "MasteredPercent", "targetValue": 80 }
   ]
 }
 ```
@@ -667,19 +667,19 @@ Authorization: Bearer <father-token>
 ```
 
 ```http
-GET /api/v1/student/children/1/learn/subjects/3/chapters/8/vocabulary/13/items
+GET /api/v1/student/children/1/learn/subjects/3/series-units/8/vocabulary/13/items
 Authorization: Bearer <father-token>
 ```
 
 **Zusammenhang:** Diese Views sind keine Spiel-Endpunkte. Sie beantworten, **wo der nächste Plan ansetzen
-soll**. Der Vater findet schwache Wörter (`items` ist standardmäßig schwächste zuerst) oder Kapitel,
+soll**. Der Vater findet schwache Wörter (`items` ist standardmäßig schwächste zuerst) oder Units,
 sucht/erstellt passende Katalog-Übungen und hängt sie wieder als neue `PlanPosition` in einen aktiven Lehrplan.
 
 ---
 
 ## Der Loop als Endpunkt-Sequenz
 
-1. **Vater – Katalog:** `POST /learn/subjects` → `…/chapters` → `…/chapters/{c}/vocabulary` (+ `…/items`).
+1. **Creator – Katalog:** `POST /creator/subjects` → `…/textbook-series` → `…/textbook-series/{s}/units` → `…/units/{u}/vocabulary` (+ `…/items`).
 2. **Vater – Plan fürs Kind:** `POST /study-plans` (`childId`) → `POST /study-plans/{planId}/positions` (`exerciseId`).
 3. **Sohn – üben/testen:** `…/overview` → `…/practice-sessions` → `…/review` → `…/tests` → `…/submit`.
 4. **Auswertung:** pro Position `…/positions/{positionId}/report`; kind-zentrisch

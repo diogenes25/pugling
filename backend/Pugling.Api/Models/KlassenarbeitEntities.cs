@@ -5,7 +5,7 @@ namespace Pugling.Api.Models;
 //   Klassenarbeit (per child) --< KlassenarbeitExercise >-- Exercise
 //   Klassenarbeit --< KlassenarbeitTag >-- Tag  (exercises carrying a tag count as relevant)
 //
-// The learn catalog (Subject -> Chapter -> Exercise) stays child-neutral; assigning "which exercise is
+// The learn catalog (TextbookSeries -> SeriesUnit -> Exercise) stays child-neutral; assigning "which exercise is
 // relevant for this child / this class test" happens exclusively through these join tables. Supervisor AND
 // child may set tags, class tests are maintained by the supervisor only.
 

@@ -124,7 +124,10 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         return (await ProjectOne(childId, ct))!;
     }
 
-    /// <summary>Deletes a child together with its study plans, progress and point ledger entries (catalog content stays).</summary>
+    /// <summary>
+    /// Deletes a child together with its study plans, progress, point ledger entries and its login account
+    /// (catalog content stays).
+    /// </summary>
     [HttpDelete("{childId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -132,6 +135,16 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
     {
         var child = await db.Children.FirstOrDefaultAsync(c => c.Id == childId, ct);
         if (child is null) return NotFound();
+
+        // The login account has no foreign key to the child: the cascade only clears its Student profile and
+        // would leave an empty shell whose PIN hash `auth/login` keeps accepting. Same rule as in
+        // AdultsController.Delete - an account whose profiles all point at this child goes with it.
+        var orphanedAccounts = await db.Accounts
+            .Where(a => a.Profiles.Any(p => p.ChildId == childId))
+            .Where(a => a.Profiles.All(p => p.ChildId == childId))
+            .ToListAsync(ct);
+        db.Accounts.RemoveRange(orphanedAccounts);
+
         db.Children.Remove(child);
         await db.SaveChangesAsync(ct);
         return NoContent();
