@@ -36,7 +36,7 @@ Wird je Sprint fortgeschrieben; die letzte Zeile ist der Zustand.
   Verhalten): tsc, 389 Vitest, zwei Config-Specs, Reviewer ohne Codewirkung (ein falscher Hash berichtigt), Rollen
   als Regressionszeugen. Nachschau Sprint 3: **ein Defekt** (B-235, Unit-Feld im Lehrbuch-Formular, `entgangen_bei:
   B-229`), eine Begründung berichtigt. **Der Lauf endet nach Sprint 4** (Limit 2, siehe „Retrospektive Sprint 4").
-  Commit: siehe „Änderungsstand".
+  Commit `49b1fbc` + Nachtrag.
 
 ## Sprint 1 — Ziel & Umfang
 
@@ -609,7 +609,7 @@ Die dauerhafte Liste ist [docs/backlog/](backlog/README.md). Änderungsstand: Sp
 `d436a1b`; Sprint 2 samt Nachschau-Nachträgen (B-227/228/229, Test-Lücke, Doku): `dc2ce84`, dazu der Nachtrag mit
 diesem Hash; Sprint 3 (zweiter Lauf, B-227/228/229 samt Nachschau-Nachträgen zu B-224/B-225, B-230–B-233):
 `5a91d27`, dazu der Nachtrag `27cf127`; Sprint 4 (B-175/211/199 samt Nachschau-Nachträgen zu B-227/228/229,
-B-234, B-235): siehe Nachtrag-Zeile im Verlauf der Stories; **nichts gepusht**.
+B-234, B-235): `49b1fbc`, dazu der Nachtrag mit diesem Hash; **nichts gepusht**.
 
 ## Für den Morgen
 

@@ -114,5 +114,5 @@ Autonom gegrillt am 2026-10-18 unter Freigabe 1 (`art: Aufräumen`). Vorher gege
   389/389 · `frontend-reviewer`: **ein Should-fix** – der zuerst genannte Hash für Fall 2 (`81eb60c`) war falsch,
   richtig ist `e9bc135` (an drei Stellen berichtigt; Doku, kein Zähler) – und ein Nit zur Wortwahl („könnte …
   fälschlich sperren", übernommen); die Begründung des neuen Kommentars am Code bestätigt (`useAsync.ts:47/50`,
-  `onRetry` `:576`). **Rollengang:** kein sichtbares Verhalten – Regressionszeugen. Commit: siehe Protokoll
-  `docs/pm-sitzung-2026-10-17-nacht.md`, „Sprint 4".
+  `onRetry` `:576`). **Rollengang:** kein sichtbares Verhalten – Regressionszeugen. Commit `49b1fbc` (Protokoll
+  `docs/pm-sitzung-2026-10-17-nacht.md`, „Sprint 4").

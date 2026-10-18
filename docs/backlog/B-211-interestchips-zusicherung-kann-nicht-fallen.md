@@ -80,5 +80,5 @@ mit vorübergehend mutiertem `ExerciseEditModal.tsx` (rot), `git checkout` (grü
   gemessen); nach `git checkout` 8/8. Belege: `vitest run` 389/389 · `frontend-reviewer`: fällt aus dem richtigen
   Grund (Pulldown eindeutig, Zwischenzusicherung hält auch für die Mutante, `pick` überlebt das `rerender`), ein
   Nit zur Zählweise in AK 1 (übernommen) · **Rollengang:** Test-Änderung ohne sichtbares Verhalten – die drei
-  Rollen sind Regressionszeugen; `einkleidung.spec.ts` 1/1 fährt die Fläche im echten Browser. Commit: siehe
-  Protokoll `docs/pm-sitzung-2026-10-17-nacht.md`, „Sprint 4".
+  Rollen sind Regressionszeugen; `einkleidung.spec.ts` 1/1 fährt die Fläche im echten Browser. Commit `49b1fbc`
+  (Protokoll `docs/pm-sitzung-2026-10-17-nacht.md`, „Sprint 4").

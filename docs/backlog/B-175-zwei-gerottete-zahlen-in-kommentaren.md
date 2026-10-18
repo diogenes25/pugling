@@ -108,4 +108,4 @@ der Config, der Workflow ist YAML-Kommentar.
   gegen die geänderte Config, YAML unverändert gültig (Kommentarzeilen) · `frontend-reviewer`: kein Fund mit
   Codewirkung, ein Nit („zweimal verschieden" → „an zwei Orten verschieden", übernommen) · **Rollengang:** kein
   sichtbares Verhalten geändert – die drei Rollen sind Regressionszeugen (Vitest 389/389, Config-Probe), kein
-  Browser-Gang. Commit: siehe Protokoll `docs/pm-sitzung-2026-10-17-nacht.md`, „Sprint 4".
+  Browser-Gang. Commit `49b1fbc` (Protokoll `docs/pm-sitzung-2026-10-17-nacht.md`, „Sprint 4").
