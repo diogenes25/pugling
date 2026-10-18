@@ -117,4 +117,4 @@ Autonom gegrillt am 2026-10-17 unter Freigabe 1 (`art: Defekt`).
   Verlauf zeigt „Mehr laden (20 von 24)"; Fetch-Wrapper lässt Seite 2 scheitern → Meldung „Failed to fetch"
   über den Zeilen; Wrapper auf 2,5 s Verzögerung, „Mehr laden" geklickt → **im Fenster gemessen:
   `document.activeElement` ist das Banner**, Knopf „Lädt…" gesperrt, Meldung steht; danach 24 Zeilen, keine
-  Meldung, kein Knopf. Commit: siehe Protokoll `docs/pm-sitzung-2026-10-17-nacht.md`, „Zweiter Lauf".
+  Meldung, kein Knopf. Commit `5a91d27` (Protokoll `docs/pm-sitzung-2026-10-17-nacht.md`, „Zweiter Lauf").

@@ -480,8 +480,8 @@ ob sie sichtbar sein *soll*, ist eine offene Produktfrage.
 
 Die dauerhafte Liste ist [docs/backlog/](backlog/README.md). Änderungsstand: Sprint 1 `d834a8e` + Nachtrag
 `d436a1b`; Sprint 2 samt Nachschau-Nachträgen (B-227/228/229, Test-Lücke, Doku): `dc2ce84`, dazu der Nachtrag mit
-diesem Hash; Sprint 3 (zweiter Lauf, B-227/228/229 samt Nachschau-Nachträgen zu B-224/B-225, B-230–B-233): siehe
-Nachtrag-Zeile im Verlauf der Stories; **nichts gepusht**.
+diesem Hash; Sprint 3 (zweiter Lauf, B-227/228/229 samt Nachschau-Nachträgen zu B-224/B-225, B-230–B-233):
+`5a91d27`, dazu der Nachtrag mit diesem Hash; **nichts gepusht**.
 
 ## Für den Morgen
 

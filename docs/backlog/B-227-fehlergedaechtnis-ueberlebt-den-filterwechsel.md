@@ -135,5 +135,5 @@ e2e/filterwechsel-raeumt-den-fehler.spec.ts` (erwartet rot 2/2 an der „läuft"
   Fenster-Fristen – zwei davon ändern Tests (Zähler 3 von 5). **Browser-Rollengang in Chrome (Freigabe 6)
   als Vater im Planbau:** Suche per Fetch-Wrapper abgeschossen → Banner + „(Suche gescheitert)"; Wrapper auf
   2,5 s Verzögerung, Fach-Filter auf Englisch → im Fenster gemessen: kein Banner, kein „Lädt…"-Knopf,
-  Zählzeile „(Suche läuft…)"; danach „(6 Treffer)". Assistent per E2E (derselbe Baustein). Commit: siehe
-  Protokoll `docs/pm-sitzung-2026-10-17-nacht.md`, „Zweiter Lauf".
+  Zählzeile „(Suche läuft…)"; danach „(6 Treffer)". Assistent per E2E (derselbe Baustein). Commit `5a91d27`
+  (Protokoll `docs/pm-sitzung-2026-10-17-nacht.md`, „Zweiter Lauf").

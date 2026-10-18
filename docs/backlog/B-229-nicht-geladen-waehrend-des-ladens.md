@@ -119,5 +119,5 @@ statt „(lädt…)"), `playwright test e2e/plan-kinderliste-laedt-noch.spec.ts`
   Standardfrist trug nichts → Frist 1,2 s, Zähler-relevant) · Skill `web-design-guidelines` (Freigabe 7): kein
   Fund – Label vorhanden, „(lädt…)" endet auf „…". **Browser-Rollengang in Chrome (Freigabe 6) als Vater im
   Plan-Detail:** Kinderliste per Fetch-Wrapper um 2,5 s verzögert, „Bearbeiten" → im Fenster gemessen: genau
-  eine Option „Sohn (lädt…)", Feld gesperrt, kein Banner; danach „Sohn (#1)", Feld bedienbar. Commit: siehe
-  Protokoll `docs/pm-sitzung-2026-10-17-nacht.md`, „Zweiter Lauf".
+  eine Option „Sohn (lädt…)", Feld gesperrt, kein Banner; danach „Sohn (#1)", Feld bedienbar. Commit `5a91d27`
+  (Protokoll `docs/pm-sitzung-2026-10-17-nacht.md`, „Zweiter Lauf").
