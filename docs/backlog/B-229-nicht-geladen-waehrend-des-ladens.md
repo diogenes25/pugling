@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-194]
 wartet_auf: ""
+nachgeschaut: "2026-10-18: specialOption-Reihenfolge (options.some vor laedt, Freitext vor laedt) und disabled-Verknuepfung nachgerechnet; showPlaceholder nach Fehlschlag gegen plan-kinderliste-faellt-aus; ALLE acht Aufrufstellen auf Ladeort geprueft -> Unit im TextbookForm laedt im Formular, Praemisse 'sieben laden auf Seitenebene' falsch -> B-235"
 ---
 
 # B-229 · Das Kind-Feld im Plan-Formular sagt „(nicht geladen)“, solange die Liste erst lädt
@@ -121,3 +122,9 @@ statt „(lädt…)"), `playwright test e2e/plan-kinderliste-laedt-noch.spec.ts`
   Plan-Detail:** Kinderliste per Fetch-Wrapper um 2,5 s verzögert, „Bearbeiten" → im Fenster gemessen: genau
   eine Option „Sohn (lädt…)", Feld gesperrt, kein Banner; danach „Sohn (#1)", Feld bedienbar. Commit `5a91d27`
   (Protokoll `docs/pm-sitzung-2026-10-17-nacht.md`, „Zweiter Lauf").
+- **2026-10-18** — Nachschau (zweiter Lauf, „Retrospektive Sprint 4"): das Bauteil hält; **ein Defekt
+  durchgelassen:** die Prämisse „die sieben anderen Stellen laden auf Seitenebene" war gezählt, nicht nachgesehen
+  – die Unit im Lehrbuch-Formular (`ChildMaterialSection.tsx:192`) lädt im Formular und zeigt beim Öffnen „(nicht
+  geladen)" →
+  [B-235](B-235-unit-feld-sagt-nicht-geladen-waehrend-des-ladens.md) (`entgangen_bei: B-229`). Die E2E-Zeile 43
+  (`alert` count 0) ist eine Absichtserklärung und jetzt so beschriftet.

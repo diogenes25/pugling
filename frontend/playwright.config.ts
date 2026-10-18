@@ -50,9 +50,10 @@ export default defineConfig({
       timeout: 120_000,
       reuseExistingServer: false,
       // Server-Ausgabe durchreichen (B-139). Playwright verwirft sie sonst, sobald der Start geglückt
-      // ist – und genau dann fängt der interessante Teil an: der Nachtlauf war drei Nächte rot, jeder
-      // Aufruf antwortete mit 500, und die Ausnahme dahinter stand in keinem Protokoll. Ohne diese
-      // zwei Zeilen kostet jeder Diagnoseschritt eine ganze Nacht.
+      // ist – und genau dann fängt der interessante Teil an: der Nachtlauf war Nächte lang rot (wie
+      // viele, steht in B-139 – die Zahl stand an zwei Orten verschieden, B-175), jeder Aufruf antwortete
+      // mit 500, und die Ausnahme dahinter stand in keinem Protokoll. Ohne diese zwei Zeilen kostet
+      // jeder Diagnoseschritt eine ganze Nacht.
       stdout: "pipe",
       stderr: "pipe",
       env: {

@@ -1,10 +1,10 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/frontend, bereich/doku]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/doku]
 aliases: [Kommentar begruendet mit aufgehobener Praemisse, Testkommentar verspricht Deckung]
-status: ausformuliert
+status: abgenommen
 prio: P3
 art: Aufräumen
-groesse: ""
+groesse: XS
 wo: frontend
 migration: nein
 vertragsbruch: nein
@@ -71,7 +71,48 @@ sie als Begründung daherkommt und nicht als Behauptung.
 2. Fall 3: Entscheidung 3 nachbauen oder sie ausdrücklich zurücknehmen? Das ist eine
    **Produktentscheidung** über einen sichtbaren Zustand — sie gehört in den Dialog, nicht in diesen Lauf.
 
+## Entscheidungen
+
+Autonom gegrillt am 2026-10-18 unter Freigabe 1 (`art: Aufräumen`). Vorher gegen den Code nachgesehen:
+
+- **Fall 2 ist seit `e9bc135` erledigt** („Reviewer eingearbeitet; zwei Behauptungen widerlegt" – der Reviewer
+  dieses Sprints hat den zuerst genannten Hash `81eb60c` als falsch nachgewiesen: dort stand noch die
+  schwache Fassung): `useAsync.test.tsx` misst beim
+  Fall „bringt ihn beim Neuladen vorhandener Daten nicht zurück" inzwischen **zwischen** `reload()` und der
+  Auflösung mit zwei `deferred` (`loading` wahr, `data` nicht `null`, `showPlaceholder` falsch) – genau die
+  Deckung, die dieser Fall verlangte. Der Ist-Stand oben beschreibt den Stand vom 2026-09-02.
+
+1. **Fall 1: der Kommentar in `VaterWizard.tsx` sagt jetzt, dass es die Wiederholung derselben Suche gibt** („Erneut
+   suchen" ruft `exercises.reload()`, B-162) und dass die Ladezustands-Variante genau dort fälschlich sperrte.
+   *Begründung:* Die alte Fassung las sich als Freigabe für die Variante, die B-162 selbst verworfen hat.
+   *Kosten:* keine; Kommentar.
+2. **Fall 2: nichts mehr zu tun** – siehe oben; Verlauf hält es fest.
+3. **Fall 3 wird herausgelöst** → [B-234](B-234-dritter-zustand-der-arten-liste.md) (`Frage`): ob ein dritter
+   sichtbarer Zustand nachgebaut oder B-174s Entscheidung 3 zurückgenommen wird, ist eine Produktentscheidung
+   (Offener Punkt 2) und unter Freigabe 1 nicht Sache des Laufs.
+
+## Akzeptanzkriterien
+
+1. `VaterWizard.tsx` behauptet nicht mehr, die Abfrage rufe nirgends `reload()`. *Beleg:* Lesebeleg (`grep
+   "ruft nirgends"` leer).
+2. Fall 2 ist als erledigt belegt (Commit genannt), Fall 3 als eigene Frage abgelegt.
+3. Keine rote Probe – Kommentar und Doku; ausdrücklich so beschriftet.
+
+## Schätzung
+
+**Größe: XS** – ein Kommentar, eine neue Story. Anker: B-02. **Testweg:** `tsc -b`, `vitest run` unverändert grün.
+
 ## Verlauf
 
 - 2026-09-02 · Aufgenommen aus der **Nachschau** zu Sprint 1 (zweiter Nachtlauf). Punkt 3 ist der einzige
   der drei, der eine Entscheidung des Menschen braucht; die anderen beiden sind Handwerk.
+- **2026-10-18** — **ausformuliert → gegrillt → geschaetzt** im Nachtlauf (zweiter Lauf der Nacht 2026-10-17,
+  Sprint 4), autonom unter Freigabe 1: Fall 2 am Code als erledigt vorgefunden (`e9bc135`), Fall 3 →
+  [B-234](B-234-dritter-zustand-der-arten-liste.md); bleibt Fall 1, XS.
+- **2026-10-18** — **geschaetzt → abgenommen** (Sprint 4). Fall 1: Kommentar in `VaterWizard.tsx` berichtigt
+  (`grep "ruft nirgends"` leer). Keine rote Probe (Kommentar; so beschriftet). Belege: `tsc -b` sauber, `vitest run`
+  389/389 · `frontend-reviewer`: **ein Should-fix** – der zuerst genannte Hash für Fall 2 (`81eb60c`) war falsch,
+  richtig ist `e9bc135` (an drei Stellen berichtigt; Doku, kein Zähler) – und ein Nit zur Wortwahl („könnte …
+  fälschlich sperren", übernommen); die Begründung des neuen Kommentars am Code bestätigt (`useAsync.ts:47/50`,
+  `onRetry` `:576`). **Rollengang:** kein sichtbares Verhalten – Regressionszeugen. Commit: siehe Protokoll
+  `docs/pm-sitzung-2026-10-17-nacht.md`, „Sprint 4".

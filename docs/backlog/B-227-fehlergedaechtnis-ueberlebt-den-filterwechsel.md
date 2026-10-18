@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-216]
 wartet_auf: ""
+nachgeschaut: "2026-10-18: Zustandsmaschine mit Schluessel durchgespielt (A-Fehler -> reload; -> B; -> B scheitert gleichlautend; A->B->A waehrend B laedt; Fehler im selben Render wie Wechsel), alle Konsumenten mit wechselnden useAsync-Deps auf Schluessel geprueft (Trefferbereich, AddPosition; Arten-ListenAusfall durch Schritt-Wechsel demontiert, VaterWizard :463 vs :543), Trim-Asymmetrie contentSearch roh/filterKey getrimmt; Begruendung von Entscheidung 2 durch Fund 1 entkraeftet -> Docblock berichtigt; kein Defekt"
 ---
 
 # B-227 · Das Fehler-Gedächtnis überlebt auch den Start einer *anderen* Abfrage
@@ -137,3 +138,12 @@ e2e/filterwechsel-raeumt-den-fehler.spec.ts` (erwartet rot 2/2 an der „läuft"
   2,5 s Verzögerung, Fach-Filter auf Englisch → im Fenster gemessen: kein Banner, kein „Lädt…"-Knopf,
   Zählzeile „(Suche läuft…)"; danach „(6 Treffer)". Assistent per E2E (derselbe Baustein). Commit `5a91d27`
   (Protokoll `docs/pm-sitzung-2026-10-17-nacht.md`, „Zweiter Lauf").
+- **2026-10-18** — Nachschau (zweiter Lauf, „Retrospektive Sprint 4"): Zustandsmaschine und alle Konsumenten
+  halten, **kein Defekt**. Berichtigt: Entscheidung 2 begründete den Vergleich am Rückgabepunkt damit, ein
+  Reset-Effekt käme einen Render zu spät – Fund 1 der Bau-Runde zeigt, dass der Schlüssel ohnehin einen Render
+  **vor** `error = null` wechselt; die Bauart ist richtig, die Begründung war es nicht (Docblock nachgezogen,
+  zwei bewusste Grenzen des Hooks dort benannt: A→B→A während B lädt zeigt den alten A-Fehler; ein Fehler im
+  selben Render wie ein Schlüsselwechsel würde unter dem neuen gemerkt – in der App durch `cancelled`
+  unerreichbar). Nuancen: Schlüssel-Typ `unknown` mit `===` (Strings reichen heute), `VaterWizard.test.tsx`
+  modelliert den Übergang weiter atomar, Trim-Asymmetrie zwischen `useAsync`-Deps und `filterKey` im
+  Assistenten (konsistent mit „getrimmte Eingaben sind dieselbe Suche").

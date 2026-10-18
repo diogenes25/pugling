@@ -86,9 +86,19 @@ describe("Einkleidung im Bearbeiten-Dialog", () => {
     expect(screen.getByRole("option", { name: /Liste lädt/ })).toBeTruthy();
   });
 
+  /*
+   * B-211. Die erste Fassung prüfte den Hinzufügen-Knopf OHNE Auswahl – und der ist dann ohnehin gesperrt
+   * (`pick === ""`): die Zusicherung blieb grün, als `disabled ||` aus der Bedingung fiel (gemessen). Darum
+   * erst wählen, dann speichern: Nur so trägt `disabled` die Sperre allein. Die Auswahl fällt VOR dem
+   * Sperren, weil das Pulldown während des Speicherns selbst gesperrt ist – so geht auch ein Nutzer vor.
+   */
   it("sperrt Entfernen und Hinzufügen, solange gespeichert wird", () => {
     const onChange = vi.fn();
-    render(<InterestChips tagIds={[3]} known={KNOWN} onChange={onChange} disabled={true} />);
+    const { rerender } = render(<InterestChips tagIds={[3]} known={KNOWN} onChange={onChange} disabled={false} />);
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "7" } });
+    expect(screen.getByRole("button", { name: "Einkleidung hinzufügen" }).hasAttribute("disabled")).toBe(false);
+
+    rerender(<InterestChips tagIds={[3]} known={KNOWN} onChange={onChange} disabled={true} />);
 
     fireEvent.click(screen.getByRole("button", { name: 'Einkleidung „Einhorn" entfernen' }));
     expect(onChange).not.toHaveBeenCalled();

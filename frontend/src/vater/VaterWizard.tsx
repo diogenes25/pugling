@@ -194,9 +194,11 @@ export function VaterWizard() {
    * erstmals zeigt, berechnete die Sperre, **bevor** ein Effekt die Ref nachziehen kann — die neuen Zeilen
    * blieben gesperrt, bis irgendetwas anderes ein Rendern auslöst.
    *
-   * Und verglichen werden **Schlüssel**, nicht Ladezustände: `exercises.loading && data !== null` wäre heute
-   * gleichwertig (die Abfrage ruft nirgends `reload()`), zöge aber „Kriterien geändert" und „dieselben
-   * Kriterien neu geladen" zusammen — genau die Fehlerfamilie, die diese Sperre behebt.
+   * Und verglichen werden **Schlüssel**, nicht Ladezustände: `exercises.loading && data !== null` zöge
+   * „Kriterien geändert" und „dieselben Kriterien neu geladen" zusammen — und das Zweite gibt es hier:
+   * „Erneut suchen" ruft `exercises.reload()` (B-162). Mit der Ladezustands-Variante könnte eine
+   * Wiederholung derselben Suche frische Zeilen fälschlich sperren (B-199 – die vorige Fassung dieses Satzes
+   * behauptete, die Abfrage rufe nirgends `reload()`, und derselbe Sprint hat den Knopf gebaut).
    */
   const [seitenSchluessel, setSeitenSchluessel] = useState(filterKey);
   const zeilenVeraltet = seitenSchluessel !== filterKey;

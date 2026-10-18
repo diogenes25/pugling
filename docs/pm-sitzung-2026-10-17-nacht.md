@@ -30,8 +30,13 @@ Wird je Sprint fortgeschrieben; die letzte Zeile ist der Zustand.
   Playwright, Reviewer im dritten Anlauf ohne Blocker, `web-design-guidelines` ohne Fund, Browser-Rollengang als
   Vater und Sohn. Drei Review-Funde mit Code-/Testwirkung (Grenze fünf), darunter ein echter aus der eigenen
   E2E. Nachschau Sprint 2: kein Defekt, zwei Fragen (B-232, B-233), eine Test-Lücke geschlossen, drei
-  Berichtigungen. Retro-Mechanismen nur **vorgeschlagen** (ein Tor, eine Prosa-Regel). Commit: siehe
-  „Änderungsstand".
+  Berichtigungen. Retro-Mechanismen nur **vorgeschlagen** (ein Tor, eine Prosa-Regel). Commit `5a91d27` +
+  Nachtrag `27cf127`.
+- **Sprint 4 abgenommen** (B-175, B-211, B-199 – Behauptungen, die ihr Code aufgehoben hat; kein sichtbares
+  Verhalten): tsc, 389 Vitest, zwei Config-Specs, Reviewer ohne Codewirkung (ein falscher Hash berichtigt), Rollen
+  als Regressionszeugen. Nachschau Sprint 3: **ein Defekt** (B-235, Unit-Feld im Lehrbuch-Formular, `entgangen_bei:
+  B-229`), eine Begründung berichtigt. **Der Lauf endet nach Sprint 4** (Limit 2, siehe „Retrospektive Sprint 4").
+  Commit: siehe „Änderungsstand".
 
 ## Sprint 1 — Ziel & Umfang
 
@@ -476,24 +481,151 @@ Vorschlag „Auslöser auflisten" um „…und ihre Reihenfolge nachspielen".
 **Bewusst ungedeckt:** die Sichtbarkeit einer Meldung im Viewport (B-232) – `toBeVisible` prüft sie nicht, und
 ob sie sichtbar sein *soll*, ist eine offene Produktfrage.
 
+**Warum der Lauf weitergeht:** kein Limit greift – der Fund-Zähler steht bei 3 von 5, die Retro hat kein Tor
+gelandet (nur vorgeschlagen), und die Nachschau fand im Increment dieser Nacht keinen Defekt, sondern eine
+Frage an eine ältere Entscheidung.
+
+## Sprint 4 — Ziel & Umfang
+
+**Sprint-Ziel, aus der Entwickler-Sicht:**
+
+> Der **Entwickler** liest in Kommentar, Test und Workflow nur Begründungen, die noch gelten – keine Zahl, die
+> ihr Fix widerrufen hat, keine Freigabe, die ihr eigener Sprint aufgehoben hat, und keine Zusicherung, die am
+> Ausgangszustand hängt.
+
+**Umfang** (alle autonom grillbar, in diesem Lauf von `ausformuliert` auf `geschaetzt` gebracht, je XS):
+
+| Story | Art | Richtung |
+| --- | --- | --- |
+| [B-175](backlog/B-175-zwei-gerottete-zahlen-in-kommentaren.md) | Defekt | Zwei verrottete Zahlen (`playwright.config.ts`, `e2e.yml`) werden gestrichen, nicht korrigiert |
+| [B-211](backlog/B-211-interestchips-zusicherung-kann-nicht-fallen.md) | Defekt | Die „sperrt Hinzufügen"-Zusicherung wählt erst, dann sperrt sie – und fällt jetzt |
+| [B-199](backlog/B-199-drei-behauptungen-die-ihr-eigener-sprint-aufgehoben-hat.md) | Aufräumen | Fall 1: der `VaterWizard`-Kommentar nennt die Wiederholung; Fall 2 war seit `e9bc135` erledigt; Fall 3 → B-234 (`Frage`) |
+
+**Draußen, mit Namen:** B-201 (Feldhilfe; hängt an der Frage B-186 – die Story empfiehlt selbst „erst B-186
+klären"), B-234 (neu, `Frage`), die A11y-Familie B-134/B-176 (anderes Thema), B-181/B-190/B-131 (Backlog- und
+Test-Infrastruktur), B-159 (Backend).
+
+**Warum dieses Thema:** Es ist die Fehlerklasse, die diese Nacht zweimal selbst produziert hat (zwei Zeilenangaben
+roter Proben, ein Hook-Doc) – Behauptungen, die ihr Code oder ihr Sprint aufgehoben hat. Drei alte Nachschau-Funde
+derselben Klasse liegen seit August/September; der Sprint räumt sie in einem Gang.
+
+**Entwickler-Brief:** keine Verhaltensänderung, kein Backend, kein Vertrag. B-175: beide Zahlen streichen,
+Verweis auf B-139/B-175. B-211: `fireEvent.change` auf das Pulldown, Zwischenzusicherung „bedienbar", dann
+`rerender` mit `disabled`; rote Probe gegen ein vorübergehend mutiertes `ExerciseEditModal.tsx`
+(`disabled ||` gestrichen), danach `git checkout`. B-199: Kommentar `VaterWizard.tsx` (Fall 1), Fall 2 belegen,
+Fall 3 als B-234. Testweg: `tsc -b`, `vitest run`; keine E2E nötig (kein sichtbares Verhalten), die drei Rollen
+sind Regressionszeugen.
+
+## Iteration 4 — umgesetzt
+
+- `frontend/playwright.config.ts`: „drei Nächte" gestrichen, Verweis auf B-139/B-175; `.github/workflows/e2e.yml`:
+  „25 Tests" gestrichen, das Limit begründet sich ohne Testzahl (B-175).
+- `frontend/src/vater/InterestChips.test.tsx`: der Sperr-Fall wählt erst „Comic", sichert „bedienbar" zu, rendert
+  dann mit `disabled` neu (B-211). **Rote Probe (erwartet/gemessen):** `ExerciseEditModal.tsx:764` vorübergehend
+  ohne `disabled ||` → `InterestChips.test.tsx:105` **1 rot von 8** (`true` erwartet, `false` gemessen); nach
+  `git checkout` 8/8.
+- `frontend/src/vater/VaterWizard.tsx`: der Kommentar zu `seitenSchluessel` behauptet nicht mehr, die Suche rufe
+  nirgends `reload()` – „Erneut suchen" tut es seit B-162, und genau dort sperrte die Ladezustands-Variante
+  fälschlich (B-199, Fall 1). Fall 2 war seit `e9bc135` erledigt (zwei `deferred`, Messung zwischen `reload()`
+  und Auflösung) – der zuerst notierte Hash `81eb60c` war falsch, vom Reviewer nachgewiesen (siehe Review-Funde);
+  Fall 3 → [B-234](backlog/B-234-dritter-zustand-der-arten-liste.md) (`Frage`).
+- Keine roten Proben für B-175 und B-199 – Kommentare, kein Verhalten; so beschriftet (Auflage 5).
+
+**Verifikation:** `tsc -b` sauber · `vitest run` 389/389 · zwei Playwright-Specs (`einkleidung`,
+`reihe-anlegen-braucht-namen`) 2/2 als Beleg, dass die geänderte Config lädt und die Einkleidung unverändert
+läuft · Reviewer und Nachschau: siehe unten.
+
+### Review-Funde (Zähler: 0 von 5)
+
+`frontend-reviewer`: kein Blocker. **Ein Should-fix ohne Codewirkung:** der in B-199 und hier zuerst genannte
+Commit für Fall 2 (`81eb60c`) war falsch – dort stand noch die schwache Fassung; die Zwei-`deferred`-Messung
+kam mit `e9bc135`. An drei Stellen berichtigt. Ironie des Sprints, ausdrücklich notiert: eine verrottete Zahl
+in einem Sprint gegen verrottete Zahlen – gefunden vom Reviewer, nicht von mir. Drei Nits (Wortwahl im
+Kommentar, Zählweise „1 von 8", B-234 ohne `entgangen_bei`; die ersten zwei übernommen, das dritte nicht:
+B-234 ist eine `Frage`, das Feld gilt Defekten).
+
+## Runde 4 — Re-Review / Abnahme
+
+Kein sichtbares Verhalten hat sich geändert – zwei Kommentare, ein Workflow-Kommentar, ein Testfall. Ein
+Browser-Rollengang hätte nichts zu sehen; stattdessen, ausdrücklich als Ersatz benannt:
+
+- **Entwickler (Sprint-Ziel) — signed off.** O-Ton: „Die drei Sätze, die ich beim nächsten roten Lauf gelesen
+  hätte, sagen jetzt, was gilt: keine Nächte-Zahl, keine Testzahl, kein ‚ruft nirgends `reload()`'. Und der
+  Sperr-Test fällt, wenn man die Sperre ausbaut – ich habe es gesehen: 1 von 8 rot." Gemessen: `grep "ruft
+  nirgends"` leer; Mutante → `:105` rot; `tsc -b` sauber.
+- **Creator, Vater, Sohn — Regressionszeugen:** 389/389 Vitest; `einkleidung.spec.ts` (die Fläche des
+  geänderten Tests, aus der Creator-Rolle) und `reihe-anlegen-braucht-namen.spec.ts` 2/2 gegen die geänderte
+  Playwright-Config; die volle Suite stand vor den Kommentar-Änderungen bei 76/76 (Sprint 3), und keine Änderung
+  dieses Sprints berührt Laufzeitcode.
+
+## Retrospektive Sprint 4
+
+**Nachschau:** Sprint 3 dieser Nacht (B-227, B-228, B-229, Commit `5a91d27`) durch einen frischen
+`frontend-reviewer` gegen den Stand gelesen, mit eigener Laufzeitprobe (tsc, 389 Vitest, Zählung der 76
+E2E-Fälle), je mit benanntem Prüfpunkt (Zustandsmaschine des Hooks in fünf Sequenzen, Schlüssel an allen
+Konsumenten mit wechselnden Deps, `ReferenceSelect`-Zweigfolge, Fokus-Reihenfolge, rote Proben gegen den
+Ausgangszustand, Kommentare gegen Code, Zählungen des Protokolls). **Ein Defekt mit Nutzerwirkung:** B-229s
+Prämisse „die sieben anderen `ReferenceSelect`-Stellen laden auf Seitenebene" war **gezählt, nicht
+nachgesehen** – die Unit im Lehrbuch-Formular (`ChildMaterialSection.tsx:192`) lädt im Formular und zeigt beim
+Öffnen „(nicht geladen)", exakt das Bild, das B-229 am Kind-Feld behoben hat →
+[B-235](backlog/B-235-unit-feld-sagt-nicht-geladen-waehrend-des-ladens.md) (`entgangen_bei: B-229`, `ausformuliert`,
+Fix benannt: eine Zeile). Der `frontend-reviewer` der Bau-Runde hatte „sieben andere Aufrufstellen unverändert"
+gemeldet – dieselbe Zählung. **Berichtigt:** B-227 Entscheidung 2 begründete den Vergleich am Rückgabepunkt
+mit einem Render Verzug, den es so nicht gibt (Docblock nachgezogen, zwei bewusste Grenzen des Hooks benannt);
+E2E-Zeile 43 der Kinderliste-Spec als Absichtserklärung beschriftet. Nuancen: Schlüssel-Typ `unknown`,
+`VaterWizard.test.tsx` modelliert den Übergang weiter atomar, Trim-Asymmetrie im Assistenten. `nachgeschaut`
+auf allen drei gesetzt. **Index: Nachgeschaut 138 von 154 — 36 mit Defekt** (nach Sprint 3: 135 von 151 — 35;
+Beginn der Nacht: 126 von 142 — 32).
+
+**Was die Tore von Sprint 3 durchgelassen haben (B-235):** Eine Behauptung über *andere* Stellen („laden auf
+Seitenebene") wurde als Begründung formuliert und darum von niemandem geprüft – Reviewer und Autor zählten die
+Stellen, sahen aber nicht in jede hinein. Es ist dieselbe Klasse wie der gestrige Retro-Satz („alle Auslöser
+auflisten") in einer anderen Dimension: nicht die Übergänge *eines* Zustands, sondern die *Orte* einer Regel.
+
+**Was Sprint 4 selbst durchgelassen hat:** der falsche Commit-Hash (`81eb60c`) – eine verrottete Zahl im Sprint
+gegen verrottete Zahlen, vom Reviewer gefunden. Ohne Codewirkung, aber genau die Fehlerklasse.
+
+### Vorgeschlagener Mechanismus — nicht gelandet (Freigabe 3)
+
+**Wer eine Regel „an Stelle X, weil die anderen Stellen Y erfüllen" baut, listet die anderen Stellen mit
+`Datei:Zeile` und der je geprüften Eigenschaft auf – im Ist-Stand der Story, nicht als Zählung.** Ort:
+`docs/backlog/README.md` → „Ausformulieren heißt gegen den Code belegen", ein Satz. Begründung: B-229 ist der
+dritte gemessene Fall, in dem „die übrigen N Stellen" eine Behauptung war (B-172 fand sieben Stellen, die
+„die Regel schon haben" sollten; B-216 fand eine dritte Stelle beim Ausformulieren). Kosten: eine Zeile Prosa im
+Backlog-README (nicht resident), je Story einige Zeilen Ist-Stand. Kein Tor möglich – welche Stellen „die
+anderen" sind, weiß kein Regex.
+
+### Warum der Lauf hier endet
+
+**Limit 2 des Backlog-Laufs** (`docs/backlog/README.md`, „Der Backlog-Lauf"): Die Nachschau hat im Increment
+eines Sprints dieser Nacht einen Defekt gefunden (B-235, aus Sprint 3). Dieselbe Lage wie am Ende des ersten
+Laufs (B-227 aus Sprint 1) und wie am 2026-09-02. Der Fund ist klein und sein Fix benannt – aber er steht in
+Arbeit, die dieselbe Nacht für fertig erklärt hat, und das ist die Schwelle, an der Weiterlaufen die falsche
+Reaktion ist. Sprint 4 wird regulär abgeschlossen (Reviewer, Belege, Commit); danach legt sich der Lauf hin.
+
 ## Offene Roadmap · Änderungsstand
 
 Die dauerhafte Liste ist [docs/backlog/](backlog/README.md). Änderungsstand: Sprint 1 `d834a8e` + Nachtrag
 `d436a1b`; Sprint 2 samt Nachschau-Nachträgen (B-227/228/229, Test-Lücke, Doku): `dc2ce84`, dazu der Nachtrag mit
 diesem Hash; Sprint 3 (zweiter Lauf, B-227/228/229 samt Nachschau-Nachträgen zu B-224/B-225, B-230–B-233):
-`5a91d27`, dazu der Nachtrag mit diesem Hash; **nichts gepusht**.
+`5a91d27`, dazu der Nachtrag `27cf127`; Sprint 4 (B-175/211/199 samt Nachschau-Nachträgen zu B-227/228/229,
+B-234, B-235): siehe Nachtrag-Zeile im Verlauf der Stories; **nichts gepusht**.
 
 ## Für den Morgen
 
-1. **Vier Retro-Vorschläge dieser Nacht** landen oder verwerfen (Sprint 1: „X statt Y" beidseitig
+1. **Fünf Retro-Vorschläge dieser Nacht** landen oder verwerfen (Sprint 1: „X statt Y" beidseitig
    zusichern; Sprint 2: Auslöser eines Zustandsübergangs auflisten; Sprint 3: Zwischen-Renders eines
-   Effekt-Übergangs nachspielen, und als **Tor** die Id-Eindeutigkeit im Index-Generator) – dazu die fünf
-   älteren, unverändert offen.
-2. **Vier offene Fragen** (gesperrt für den Lauf, Freigabe 1): B-226 (zwei Münzstände im Shop – in Sprint 3
+   Effekt-Übergangs nachspielen, und als **Tor** die Id-Eindeutigkeit im Index-Generator; Sprint 4: „die
+   anderen Stellen" mit `Datei:Zeile` und geprüfter Eigenschaft belegen statt zählen) – dazu die fünf älteren,
+   unverändert offen.
+2. **Fünf offene Fragen** (gesperrt für den Lauf, Freigabe 1): B-226 (zwei Münzstände im Shop – in Sprint 3
    nicht reproduziert, 979/979), B-231 (Fokus ohne Fehlerkasten), B-232 (Bestätigung außerhalb des
-   Sichtfelds – im Browser gemessen), B-233 (zwei Sperrmuster auf der Lehrwerke-Seite).
-3. **B-227, B-228, B-229 sind abgenommen** (Sprint 3, zweiter Lauf). **B-230** ist die umnummerierte
-   PIN-Hash-Story (vorher doppelt als B-216).
+   Sichtfelds – im Browser gemessen), B-233 (zwei Sperrmuster auf der Lehrwerke-Seite), B-234 (dritter Zustand
+   der Arten-Liste, aus B-199).
+3. **B-227, B-228, B-229 (Sprint 3) und B-175, B-211, B-199 (Sprint 4) sind abgenommen.** **B-235** (Unit-Feld
+   im Lehrbuch-Formular sagt „nicht geladen" beim Laden, `ausformuliert`, `art: Defekt`, Fix benannt: eine
+   Zeile) ist der natürliche nächste Sprint – und der Grund, warum der Lauf hier endet. **B-230** ist die
+   umnummerierte PIN-Hash-Story (vorher doppelt als B-216).
 4. **B-164** bleibt beim Nutzer (Architekturfrage `useAsync`); B-216 hat sie bewusst *nicht* beantwortet, der
    Hook `useGemerkterFehler` trägt jetzt auch einen Schlüssel – zwei Nächte Arbeit an einem Gedächtnis neben
    `useAsync` sind ein Argument, die Frage bald zu entscheiden.

@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/frontend, bereich/doku]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/doku]
 aliases: [drei oder sechs Naechte, 25 Tests sind 34, Zahlen verrotten]
-status: ausformuliert
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: XS
+wo: doku
+migration: nein
+vertragsbruch: nein
 quelle: Nachschau 2026-08-13 zu B-139
 unverifiziert: false
 grund: ""
@@ -17,7 +17,16 @@ entgangen_bei: [B-139]
 
 # B-175 · Zwei Zahlen in Kommentaren widersprechen dem, was gemessen wurde
 
-## Fall 1 — „drei Nächte" gegen „sechs Nächte", zwei Dateien desselben Fixes
+## User Story
+
+Als **Entwickler** möchte ich, dass eine Zahl in einem Kommentar entweder stimmt oder nicht dasteht, damit ich
+bei der nächsten Diagnose nicht aus ihr einen falschen Zeitpunkt zurückrechne.
+
+## Ist-Stand am Code
+
+Nachgesehen am 2026-08-13 (Fundstellen) und am 2026-10-18 (beide Zeilen unverändert vorgefunden).
+
+### Fall 1 — „drei Nächte" gegen „sechs Nächte", zwei Dateien desselben Fixes
 
 `frontend/playwright.config.ts:53`:
 
@@ -42,7 +51,7 @@ hat: der erste rote Lauf war am 05.08., die Änderung erklärt den heutigen Fehl
 kann sie nicht wieder verrotten. Empfehlung: **streichen und verweisen.** Eine Zahl, die an zwei Orten steht,
 driftet wieder; der Kommentar braucht sie nicht, um seinen Zweck zu erfüllen (er begründet `stdout: "pipe"`).
 
-## Fall 2 — „25 Tests" sind 34
+### Fall 2 — „25 Tests" sind 34
 
 `.github/workflows/e2e.yml:51`:
 
@@ -67,7 +76,36 @@ Story wären sie aus der Messung verschwunden — darum eine eigene, ausdrückli
 **Testweg**: keiner. Ein Tor über Prosa-Zahlen wäre teurer als der Schaden; der Fix nimmt beiden Zahlen
 stattdessen die Existenz.
 
+## Entscheidungen
+
+Autonom gegrillt am 2026-10-18 unter Freigabe 1 (`art: Defekt`).
+
+1. **Beide Zahlen werden gestrichen, nicht korrigiert** – der Empfehlung der Story folgend. *Begründung:* Eine
+   Zahl, die an zwei Orten steht, driftet wieder; beide Kommentare erfüllen ihren Zweck (Begründung von
+   `stdout: "pipe"` bzw. des 30-Minuten-Limits) ohne sie. *Kosten:* keine. Beide Stellen verweisen auf B-139
+   bzw. B-175, damit die Herkunft der Entscheidung auffindbar bleibt.
+
+## Akzeptanzkriterien
+
+1. `frontend/playwright.config.ts` nennt keine Nächte-Zahl mehr und verweist auf B-139. *Beleg:* Lesebeleg.
+2. `.github/workflows/e2e.yml` begründet das Zeitlimit ohne Testzahl. *Beleg:* Lesebeleg.
+3. Keine rote Probe – es ändert sich kein Verhalten; das ist ausdrücklich so beschriftet (Auflage 5 verlangt die
+   Zahl einer Probe, wo eine existiert).
+
+## Schätzung
+
+**Größe: XS** – zwei Kommentare. Anker: B-02, ohne E2E. **Testweg:** keiner (Prosa); `tsc -b` als Syntaxprobe
+der Config, der Workflow ist YAML-Kommentar.
+
 ## Verlauf
 
 - 2026-08-13 · Aufgenommen aus der **Nachschau** zu B-139. Beide Fundstellen von mir gegengeprüft; die
   34 stammen aus dem E2E-Lauf desselben Tages.
+- **2026-10-18** — **ausformuliert → gegrillt → geschaetzt** im Nachtlauf (zweiter Lauf der Nacht 2026-10-17,
+  Sprint 4), autonom unter Freigabe 1: eine Entscheidung (streichen statt korrigieren), XS, doku.
+- **2026-10-18** — **geschaetzt → abgenommen** (Sprint 4). Beide Zahlen gestrichen, Verweise auf B-139/B-175 gesetzt.
+  Keine rote Probe (Kommentare; so beschriftet). Belege: `tsc -b` sauber (Config lädt), zwei Playwright-Specs 2/2
+  gegen die geänderte Config, YAML unverändert gültig (Kommentarzeilen) · `frontend-reviewer`: kein Fund mit
+  Codewirkung, ein Nit („zweimal verschieden" → „an zwei Orten verschieden", übernommen) · **Rollengang:** kein
+  sichtbares Verhalten geändert – die drei Rollen sind Regressionszeugen (Vitest 389/389, Config-Probe), kein
+  Browser-Gang. Commit: siehe Protokoll `docs/pm-sitzung-2026-10-17-nacht.md`, „Sprint 4".

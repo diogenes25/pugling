@@ -30,8 +30,16 @@ import { useEffect, useState } from "react";
  * Assistenten hängt am Fach, aber ihr `ListenAusfall` lebt in Schritt 3 und das Fach-Feld in Schritt 2 –
  * der Baustein ist abgebaut, bevor sich das Fach ändern kann (Reviewer-Hinweis, Nachtlauf 2026-10-17).
  * Wandert das Fach-Feld je nach Schritt 3, braucht die Stelle den Schlüssel. Verglichen wird am
- * Rückgabepunkt, nicht per Effekt-Reset: ein Effekt liefe erst **nach** dem Render, und ein Render lang
- * stünde der alte Text noch da.
+ * Rückgabepunkt, nicht per Effekt-Reset – das Paar `{fehler, schluessel}` sagt an jeder Stelle, wofür das
+ * Gedächtnis gilt, ohne einen zweiten Zustand nachzuziehen. (Die erste Begründung, ein Reset-Effekt käme
+ * einen Render zu spät, trägt nicht: der Schlüssel wechselt ohnehin einen Render **vor** `error = null`,
+ * siehe unten – Nachschau 2026-10-18.)
+ *
+ * Zwei Grenzen, bewusst: Wer nach einem Fehler unter A zu B wechselt und zu A zurück, während B noch lädt,
+ * sieht den alten A-Fehler mit „Lädt…" – nach der Definition hier ist das eine Wiederholung von A. Und
+ * erschiene ein Fehler im selben Render wie ein Schlüsselwechsel, würde er unter dem neuen Schlüssel
+ * gemerkt; `useAsync` verwirft die Antwort einer überholten Abfrage (`cancelled`), darum tritt das in der
+ * App nicht auf.
  */
 export function useGemerkterFehler(fehler: string | null, laedt: boolean, schluessel?: unknown): string | null {
   const [letzter, setLetzter] = useState<{ fehler: string; schluessel: unknown } | null>(null);

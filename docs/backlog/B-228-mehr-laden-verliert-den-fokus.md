@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-216]
 wartet_auf: ""
+nachgeschaut: "2026-10-18: focus() vor onLoadMore() an beiden Karten (SohnShop :342/:370), geteilte meldung-Ref fuer zwei sich ausschliessende Banner (React nullt beim Unmount, ?.focus() dann No-op), Shop-Reset nach Kauf leert das Gedaechtnis (:120-124); rote Probe HistoryTab.test:117 faellt bei fehlendem focus() ODER fehlendem tabIndex; kein Fund"
 ---
 
 # B-228 · „Mehr laden“ in der gefüllten Verlaufskarte verliert den Fokus
@@ -118,3 +119,6 @@ Autonom gegrillt am 2026-10-17 unter Freigabe 1 (`art: Defekt`).
   über den Zeilen; Wrapper auf 2,5 s Verzögerung, „Mehr laden" geklickt → **im Fenster gemessen:
   `document.activeElement` ist das Banner**, Knopf „Lädt…" gesperrt, Meldung steht; danach 24 Zeilen, keine
   Meldung, kein Knopf. Commit `5a91d27` (Protokoll `docs/pm-sitzung-2026-10-17-nacht.md`, „Zweiter Lauf").
+- **2026-10-18** — Nachschau (zweiter Lauf, „Retrospektive Sprint 4"): Fokus-Reihenfolge, geteilte Ref und
+  Shop-Reset nachgerechnet, rote Probe trägt (fällt bei fehlendem `focus()` oder fehlendem `tabIndex`); **kein
+  Fund**.

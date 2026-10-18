@@ -500,7 +500,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (68)
+### Offen (67)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -519,10 +519,9 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-134](B-134-bedingte-live-regionen.md) | Dreizehn Live-Regionen entstehen zusammen mit ihrem Text — und schweigen darum | Defekt | `ausformuliert` | P3 | — | — | — |
 | [B-159](B-159-reihe-ohne-owner-behauptet-fremden-ersteller.md) | Eine Reihe ohne Eigentümer behauptet, jemand anderes habe sie angelegt | Defekt | `ausformuliert` | P3 | — | — | — |
 | [B-164](B-164-useasync-paart-frischen-zustand-mit-alten-daten.md) | Nach einem Wechsel zeigt der Bildschirm für einen Moment frischen Zustand mit alten Daten | Defekt | `ausformuliert` | P3 | — | frontend | — |
-| [B-175](B-175-zwei-gerottete-zahlen-in-kommentaren.md) | Zwei Zahlen in Kommentaren widersprechen dem, was gemessen wurde | Defekt | `ausformuliert` | P3 | — | — | — |
 | [B-176](B-176-gruppen-ueberschrift-verliert-die-feld-optik.md) | Eine Gruppen-Überschrift verliert ihre Optik, sobald sie kein `<label>` mehr ist | Defekt | `ausformuliert` | P3 | — | — | — |
 | [B-201](B-201-feldhilfe-argumentiert-in-beide-richtungen.md) | Die Feldhilfe zu den Zielpunkten argumentiert seit Sprint 2 in beide Richtungen | Defekt | `ausformuliert` | P3 | XS | frontend | — |
-| [B-211](B-211-interestchips-zusicherung-kann-nicht-fallen.md) | Eine Zusicherung prüft den Ausgangszustand und kann darum nie fallen | Defekt | `ausformuliert` | P3 | — | frontend | — |
+| [B-235](B-235-unit-feld-sagt-nicht-geladen-waehrend-des-ladens.md) | Das Unit-Feld im Lehrbuch-Formular sagt „(nicht geladen)“, solange die Units erst laden | Defekt | `ausformuliert` | P3 | — | frontend | — |
 | [B-141](B-141-interest-tag-label-dublette.md) | Zwei Interessen-Tags dürfen dasselbe Label tragen | Defekt | `idee` | P3 | — | — | — |
 | [B-145](B-145-fach-umbenennen-laesst-namen-stehen.md) | Ein umbenanntes Fach lässt seinen Namen in drei Tabellen stehen | Defekt | `idee` | P3 | — | — | — |
 | [B-147](B-147-para-summaries-tragen-einrueckung-ins-dokument.md) | Ein `<para>` im `<summary>` trägt seine Quelltext-Einrückung ins OpenAPI-Dokument | Defekt | `idee` | P3 | — | — | — |
@@ -537,6 +536,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-231](B-231-fokus-ohne-fehlerkasten.md) | Wohin gehört der Fokus, wenn ein Knopf ohne Fehlerkasten gesperrt wird? | Frage | `idee` | P3 | — | frontend | — |
 | [B-232](B-232-bestaetigung-ausserhalb-des-sichtfelds.md) | Soll eine Bestätigung zum Meldungsplatz scrollen, wenn er weit vom Knopf entfernt liegt? | Frage | `idee` | P3 | — | frontend | — |
 | [B-233](B-233-zwei-sperrmuster-auf-der-lehrwerke-seite.md) | Eine Seite, zwei Sperrmuster: Soll „Pflichtfeld leer" überall gleich aussehen? | Frage | `idee` | P3 | — | frontend | — |
+| [B-234](B-234-dritter-zustand-der-arten-liste.md) | Soll die Arten-Liste einen dritten Zustand bekommen – oder B-174s Entscheidung 3 zurückgenommen werden? | Frage | `idee` | P3 | — | frontend | — |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `geschaetzt` | P3 | L | backend | Migration |
 | [B-12](B-12-uebungen-kuratieren.md) | Geteilte Übungen bewerten und kuratieren | Wunsch | `geschaetzt` | P3 | M | beides | Migration |
 | [B-155](B-155-grammatik-themen-als-tags.md) | Grammatik als Thema, nicht als Freitext | Wunsch | `geschaetzt` | P3 | L | beides | Migration |
@@ -565,7 +565,6 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-156](B-156-ismine-heisst-anderswo-isown.md) | Dasselbe Eigentums-Flag heißt im Vertrag einmal `isMine` und siebenmal `isOwn` | Aufräumen | `ausformuliert` | P3 | — | — | — |
 | [B-158](B-158-subjectscontroller-drei-kleine-reste.md) | Drei kleine Reste im `SubjectsController` | Aufräumen | `ausformuliert` | P3 | — | — | — |
 | [B-179](B-179-drei-fassungen-des-admin-testhelfers.md) | Drei Fassungen desselben Admin-Testhelfers, und die tragende Regel steht in jeder neu | Aufräumen | `ausformuliert` | P3 | — | — | — |
-| [B-199](B-199-drei-behauptungen-die-ihr-eigener-sprint-aufgehoben-hat.md) | Drei Behauptungen, die ihr eigener Sprint aufgehoben hat | Aufräumen | `ausformuliert` | P3 | — | frontend | — |
 | [B-230](B-230-pin-hash-doppelt-gehalten.md) | Der PIN-Hash liegt doppelt: Profil und Konto halten denselben Wert | Aufräumen | `idee` | P3 | — | — | — |
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration? |
 | [B-90](B-90-server-sprachfeld.md) | Server-Sprachfeld an `Adult`/`Child` | Wunsch | `idee` | P4 | — | — | — |
@@ -574,7 +573,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-05](B-05-buchstaben-tausch.md) | Buchstaben-Tausch-Eingabe (Anagramm) | Wunsch | `geschaetzt` | P5 | M | beides | — |
 
 <details>
-<summary>Abgenommen (151)</summary>
+<summary>Abgenommen (154)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -642,6 +641,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-172](B-172-fachauswahl-loescht-wenn-ihre-optionen-fehlen.md) | Die Fachauswahl löscht das Fach, wenn ihre eigenen Optionen nicht geladen sind | Defekt | `abgenommen` | P1 | M | frontend | — |
 | [B-173](B-173-speichern-vernichtet-seine-eigene-bestaetigung.md) | Ein erfolgreiches Speichern vernichtet seine eigene Bestätigung | Defekt | `abgenommen` | P2 | M | frontend | — |
 | [B-174](B-174-arten-liste-verschweigt-ihren-fehler.md) | Die Arten-Liste verschweigt, dass ihr Laden gescheitert ist | Defekt | `abgenommen` | P2 | S | frontend | — |
+| [B-175](B-175-zwei-gerottete-zahlen-in-kommentaren.md) | Zwei Zahlen in Kommentaren widersprechen dem, was gemessen wurde | Defekt | `abgenommen` | P3 | XS | doku | — |
 | [B-178](B-178-katalogtext-verspricht-mehr-als-der-server-erlaubt.md) | Der Katalogtext verspricht mehr als der Server erlaubt | Defekt | `abgenommen` | P1 | XS | beides | — |
 | [B-18](B-18-auto-lehrplan-generator.md) | Lehrplan automatisch aus gefilterten Übungen bauen | Wunsch | `abgenommen` | P2 | S | beides | — |
 | [B-180](B-180-zusicherung-haengt-an-scheduling-statt-am-gate.md) | Eine Zusicherung hing an 20 ms Scheduling statt am Gate | Defekt | `abgenommen` | P2 | XS | frontend | — |
@@ -660,6 +660,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-196](B-196-loeschen-meldet-nichts-und-raeumt-nichts.md) | Das Löschen einer Reihe meldet nichts — und lässt die Bestätigung von vorhin stehen | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-197](B-197-meldungsplatz-wird-beim-absenden-nicht-geraeumt.md) | Der Meldungsplatz wird beim Absenden nicht geräumt — und zeigt dann zwei Wahrheiten | Defekt | `abgenommen` | P2 | M | frontend | — |
 | [B-198](B-198-teilstring-falle-im-selben-commit-neu-gebaut.md) | Die Teilstring-Falle aus B-189 wurde im selben Commit neu gebaut | Defekt | `abgenommen` | P2 | XS | frontend | — |
+| [B-199](B-199-drei-behauptungen-die-ihr-eigener-sprint-aufgehoben-hat.md) | Drei Behauptungen, die ihr eigener Sprint aufgehoben hat | Aufräumen | `abgenommen` | P3 | XS | frontend | — |
 | [B-200](B-200-drei-stumme-erfolgspfade.md) | Drei Löschwege melden gar nichts | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-202](B-202-agent-vorgabewert-halbiert-die-zielbelohnung.md) | Der KI-Creator halbiert die Zielbelohnung jeder erzeugten Übung | Defekt | `abgenommen` | P2 | XS | backend | — |
 | [B-203](B-203-platzhalter-luegt-auch-ohne-fehler.md) | Der Platzhalter lügt auch ohne Fehler — und ein misslungenes Lesen nahm dem Vater eine Fähigkeit | Defekt | `abgenommen` | P2 | S | frontend | — |
@@ -667,6 +668,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-206](B-206-einkleidung-ist-unsichtbar-und-nicht-korrigierbar.md) | Die Einkleidung einer Übung ist im Vater-Web unsichtbar — und ein gelöschtes Stichwort macht das Speichern unmöglich | Defekt | `abgenommen` | P2 | M | beides | — |
 | [B-209](B-209-savednotice-raeumt-nie.md) | „Gespeichert" bleibt über jedem folgenden Bildschirm der Arcade stehen | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-210](B-210-dialog-haelt-zwei-wahrheiten-fuer-die-config.md) | „Beschreibung speichern" dreht den gerade gespeicherten Inhalt lautlos zurück | Defekt | `abgenommen` | P1 | M | frontend | — |
+| [B-211](B-211-interestchips-zusicherung-kann-nicht-fallen.md) | Eine Zusicherung prüft den Ausgangszustand und kann darum nie fallen | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-212](B-212-fuenfter-meldungsplatz-in-lehrwerke.md) | Auf der Lehrwerke-Seite stehen rot und grün gleichzeitig — der Weg ist nur ein anderer | Defekt | `abgenommen` | P3 | M | frontend | — |
 | [B-215](B-215-typ-manifest-ohne-fehlerkanal.md) | Das Typ-Manifest schluckt seinen Ausfall — und niemand kann ihn anzeigen | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-216](B-216-wiederholknopf-haengt-sich-aus.md) | Zwei Wiederhol-Knöpfe verschwinden im Moment des Klicks unter dem Finger | Defekt | `abgenommen` | P3 | S | frontend | — |
@@ -743,9 +745,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-164](B-164-useasync-paart-frischen-zustand-mit-alten-daten.md) | Nach einem Wechsel zeigt der Bildschirm für einen Moment frischen Zustand mit alten Daten | `ausformuliert` | eine Entscheidung des Menschen (siehe „Angehalten") |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 
-### Nach der Abnahme entgangen (48)
+### Nach der Abnahme entgangen (49)
 
-**Nachgeschaut: 135 von 151 abgenommenen** — und in 35 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 16 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 138 von 154 abgenommenen** — und in 36 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 16 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -773,7 +775,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-172](B-172-fachauswahl-loescht-wenn-ihre-optionen-fehlen.md) | Die Fachauswahl löscht das Fach, wenn ihre eigenen Optionen nicht geladen sind | [B-123, B-148] | `abgenommen` |
 | [B-173](B-173-speichern-vernichtet-seine-eigene-bestaetigung.md) | Ein erfolgreiches Speichern vernichtet seine eigene Bestätigung | [B-123] | `abgenommen` |
 | [B-174](B-174-arten-liste-verschweigt-ihren-fehler.md) | Die Arten-Liste verschweigt, dass ihr Laden gescheitert ist | [B-154] | `abgenommen` |
-| [B-175](B-175-zwei-gerottete-zahlen-in-kommentaren.md) | Zwei Zahlen in Kommentaren widersprechen dem, was gemessen wurde | [B-139] | `ausformuliert` |
+| [B-175](B-175-zwei-gerottete-zahlen-in-kommentaren.md) | Zwei Zahlen in Kommentaren widersprechen dem, was gemessen wurde | [B-139] | `abgenommen` |
 | [B-176](B-176-gruppen-ueberschrift-verliert-die-feld-optik.md) | Eine Gruppen-Überschrift verliert ihre Optik, sobald sie kein `<label>` mehr ist | [B-11] | `ausformuliert` |
 | [B-178](B-178-katalogtext-verspricht-mehr-als-der-server-erlaubt.md) | Der Katalogtext verspricht mehr als der Server erlaubt | [B-157] | `abgenommen` |
 | [B-180](B-180-zusicherung-haengt-an-scheduling-statt-am-gate.md) | Eine Zusicherung hing an 20 ms Scheduling statt am Gate | [B-169] | `abgenommen` |
@@ -791,12 +793,13 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-203](B-203-platzhalter-luegt-auch-ohne-fehler.md) | Der Platzhalter lügt auch ohne Fehler — und ein misslungenes Lesen nahm dem Vater eine Fähigkeit | [B-184, B-63] | `abgenommen` |
 | [B-204](B-204-vierter-weg-in-den-doppelten-meldungsplatz.md) | Der vierte Weg in denselben Widerspruch: die Reihen-Zeile hat zwei Meldungsplätze | [B-197] | `abgenommen` |
 | [B-209](B-209-savednotice-raeumt-nie.md) | „Gespeichert" bleibt über jedem folgenden Bildschirm der Arcade stehen | [B-50] | `abgenommen` |
-| [B-211](B-211-interestchips-zusicherung-kann-nicht-fallen.md) | Eine Zusicherung prüft den Ausgangszustand und kann darum nie fallen | [B-206] | `ausformuliert` |
+| [B-211](B-211-interestchips-zusicherung-kann-nicht-fallen.md) | Eine Zusicherung prüft den Ausgangszustand und kann darum nie fallen | [B-206] | `abgenommen` |
 | [B-224](B-224-verlagsbaustein-traegt-zweiten-meldungsplatz.md) | Der Verlags-Baustein trägt auf der Lehrwerke-Seite einen zweiten Meldungsplatz | [B-212] | `abgenommen` |
 | [B-225](B-225-reihe-anlegen-schweigt-bei-leerem-namen.md) | „Reihe anlegen“ ist bei leerem Namen klickbar und schweigt | [B-212] | `abgenommen` |
 | [B-227](B-227-fehlergedaechtnis-ueberlebt-den-filterwechsel.md) | Das Fehler-Gedächtnis überlebt auch den Start einer *anderen* Abfrage | [B-216] | `abgenommen` |
 | [B-228](B-228-mehr-laden-verliert-den-fokus.md) | „Mehr laden“ in der gefüllten Verlaufskarte verliert den Fokus | [B-216] | `abgenommen` |
 | [B-229](B-229-nicht-geladen-waehrend-des-ladens.md) | Das Kind-Feld im Plan-Formular sagt „(nicht geladen)“, solange die Liste erst lädt | [B-194] | `abgenommen` |
+| [B-235](B-235-unit-feld-sagt-nicht-geladen-waehrend-des-ladens.md) | Das Unit-Feld im Lehrbuch-Formular sagt „(nicht geladen)“, solange die Units erst laden | [B-229] | `ausformuliert` |
 
 <details>
 <summary>Nie nachgeschaut (16) — Arbeitsvorrat der Nachschau</summary>
@@ -810,17 +813,17 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-165](B-165-backend-suite-flackert.md) | `AtomaresSchreiben_KeineLeseFehler` fällt unter Volllast — und färbt das Test-Tor rot |
 | [B-167](B-167-katalogliste-zeigt-beim-filterwechsel-alte-treffer.md) | Katalogliste im Planbau zeigt beim Filterwechsel die alten Treffer weiter |
 | [B-170](B-170-selbst-angelegte-art-im-grundbestand-ist-unloeschbar.md) | Eine selbst angelegte Art im Grundbestands-Fach ist unlöschbar — und der Seitentext verspricht das Gegenteil |
+| [B-175](B-175-zwei-gerottete-zahlen-in-kommentaren.md) | Zwei Zahlen in Kommentaren widersprechen dem, was gemessen wurde |
 | [B-180](B-180-zusicherung-haengt-an-scheduling-statt-am-gate.md) | Eine Zusicherung hing an 20 ms Scheduling statt am Gate |
 | [B-182](B-182-reichweite-nur-am-patch-festgenagelt.md) | Die Reichweite des Ventils war nur am PATCH festgenagelt |
 | [B-188](B-188-wizard-verschweigt-drei-weitere-ausfaelle.md) | Der Assistent verschweigt drei weitere Ausfälle — einer schickt den Vater ins Kind-Anlegen |
 | [B-189](B-189-teilstring-zusicherung-bricht-im-vollen-lauf.md) | Eine Teilstring-Zusicherung bricht, sobald der Leer-Text daneben stehen bleibt |
 | [B-19](B-19-schuelerprofil-ki-lehrplan.md) | Schülerprofil-getriebener KI-Lehrplan |
 | [B-195](B-195-unit-liste-bleibt-waehrend-des-reihenwechsels-waehlbar.md) | Beim Reihenwechsel bleiben die Units der alten Reihe wählbar |
+| [B-199](B-199-drei-behauptungen-die-ihr-eigener-sprint-aufgehoben-hat.md) | Drei Behauptungen, die ihr eigener Sprint aufgehoben hat |
 | [B-202](B-202-agent-vorgabewert-halbiert-die-zielbelohnung.md) | Der KI-Creator halbiert die Zielbelohnung jeder erzeugten Übung |
 | [B-209](B-209-savednotice-raeumt-nie.md) | „Gespeichert" bleibt über jedem folgenden Bildschirm der Arcade stehen |
-| [B-227](B-227-fehlergedaechtnis-ueberlebt-den-filterwechsel.md) | Das Fehler-Gedächtnis überlebt auch den Start einer *anderen* Abfrage |
-| [B-228](B-228-mehr-laden-verliert-den-fokus.md) | „Mehr laden“ in der gefüllten Verlaufskarte verliert den Fokus |
-| [B-229](B-229-nicht-geladen-waehrend-des-ladens.md) | Das Kind-Feld im Plan-Formular sagt „(nicht geladen)“, solange die Liste erst lädt |
+| [B-211](B-211-interestchips-zusicherung-kann-nicht-fallen.md) | Eine Zusicherung prüft den Ausgangszustand und kann darum nie fallen |
 | [B-46](B-46-interessenbasierte-uebungen.md) | Übungen entstehen für ein Interessenprofil, nicht für ein bestimmtes Kind |
 
 </details>
@@ -841,7 +844,6 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-168](B-168-eigentuemer-zusicherung-prueft-eine-konstante.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Schätzung" |
 | [B-169](B-169-ladefenster-macht-die-alten-zeilen-anklickbar.md) | `abgenommen` | Abschnitt „User Story" |
 | [B-171](B-171-zwei-zusicherungen-pruefen-den-ausgangszustand.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…" |
-| [B-175](B-175-zwei-gerottete-zahlen-in-kommentaren.md) | `ausformuliert` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien" |
 | [B-176](B-176-gruppen-ueberschrift-verliert-die-feld-optik.md) | `ausformuliert` | Abschnitt „User Story", Abschnitt „Akzeptanzkriterien" |
 | [B-178](B-178-katalogtext-verspricht-mehr-als-der-server-erlaubt.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…" |
 | [B-179](B-179-drei-fassungen-des-admin-testhelfers.md) | `ausformuliert` | Abschnitt „User Story", Abschnitt „Akzeptanzkriterien" |
@@ -851,13 +853,11 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-187](B-187-unitform-verliert-seine-bestaetigung.md) | `abgenommen` | Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung" |
 | [B-188](B-188-wizard-verschweigt-drei-weitere-ausfaelle.md) | `abgenommen` | Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung" |
 | [B-190](B-190-backlog-index-schreibt-leeren-index.md) | `ausformuliert` | Abschnitt „Akzeptanzkriterien" |
-| [B-199](B-199-drei-behauptungen-die-ihr-eigener-sprint-aufgehoben-hat.md) | `ausformuliert` | Abschnitt „Akzeptanzkriterien" |
 | [B-200](B-200-drei-stumme-erfolgspfade.md) | `abgenommen` | Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung" |
 | [B-201](B-201-feldhilfe-argumentiert-in-beide-richtungen.md) | `ausformuliert` | Abschnitt „Akzeptanzkriterien" |
 | [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | `ausformuliert` | Abschnitt „User Story" |
 | [B-209](B-209-savednotice-raeumt-nie.md) | `abgenommen` | Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung" |
 | [B-210](B-210-dialog-haelt-zwei-wahrheiten-fuer-die-config.md) | `abgenommen` | Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung" |
-| [B-211](B-211-interestchips-zusicherung-kann-nicht-fallen.md) | `ausformuliert` | Abschnitt „Akzeptanzkriterien" |
 | [B-212](B-212-fuenfter-meldungsplatz-in-lehrwerke.md) | `abgenommen` | Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung" |
 
 <details>

@@ -39,7 +39,8 @@ test("Solange die Kinderliste lädt, sagt das Kind-Feld „lädt…“ und ist g
   await expect(kind.locator("option:checked")).toHaveText(/\(lädt…\)$/, { timeout: 1200 });
   await expect(kind).toBeDisabled({ timeout: 1200 });
   // Kein Ausfall-Banner im Fenster – mit kurzer Frist, damit die Zeile zum Fenster gehört und nicht zum
-  // Zustand danach (Reviewer-Hinweis: mit Standardfrist trüge sie nichts).
+  // Zustand danach. Absichtserklärung, kein Beleg für B-229: auch vor dem Fix stand hier kein Banner (die
+  // Liste fällt ja nicht aus). Rot wird sie nur, wenn ein künftiger Umbau das Ladefenster als Ausfall meldet.
   await expect(page.getByRole("alert")).toHaveCount(0, { timeout: 1200 });
 
   // Danach: das Kind als reguläre Option, keine Sonderbeschriftung, Feld bedienbar.

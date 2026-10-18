@@ -48,7 +48,8 @@ jobs:
     name: Playwright (Vater→Sohn-Durchstich)
     runs-on: ubuntu-latest
     # Reißleine gegen einen hängenden Server: ohne sie wartet ein blockierter `webServer`-Start bis zum
-    # Runner-Limit. Die Suite braucht 25 Tests bei `workers: 1`; 30 Minuten sind reichlich, aber endlich.
+    # Runner-Limit. Die Suite selbst läuft bei `workers: 1` in wenigen Minuten (die Zahl steht bewusst nicht
+    # hier – sie wuchs mit jeder Spec aus dem Takt, B-175); 30 Minuten sind reichlich, aber endlich.
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
