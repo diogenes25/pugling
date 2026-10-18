@@ -10,7 +10,7 @@ grund: ""
 ersetzt_durch: []
 ---
 
-# B-216 · Der PIN-Hash liegt doppelt: Profil und Konto halten denselben Wert
+# B-230 · Der PIN-Hash liegt doppelt: Profil und Konto halten denselben Wert
 
 Derselbe PIN-Hash steht zweimal in der Datenbank: auf der fachlichen Zeile (`Adult.Pin`, `Child.Pin`) und
 auf dem Login-Konto (`Account.PinHash`). Drei Login-Pfade prüfen gegen zwei Quellen: `auth/adult` und
@@ -33,3 +33,7 @@ ist eine Schemaänderung (Kette neu falten) und berührt den Seed-Nachlauf.
 - **2026-10-17** — angelegt aus der Projektanalyse. Beleg: `AccountService.cs:88-106` (Spiegelung),
   `AuthController.cs:57/74/101` (drei Verify-Stellen), `AdminEntities.cs:48/106` (Profil-Hash samt altem
   Kommentar), `CLAUDE.md` → Fallstricke → „PINs sind gehasht".
+- **2026-10-17** — **umnummeriert von B-216 auf B-230** im Nachtlauf (zweiter Lauf): Die Id B-216 war seit
+  dem 2026-09-04 an „Zwei Wiederhol-Knöpfe verschwinden …" vergeben (abgenommen, mit Commits, Protokoll und
+  `entgangen_bei`-Verweisen); die Projektanalyse hat sie am 2026-10-17 ein zweites Mal vergeben. Die
+  abgenommene Story behält die Id. Der Index zeigte beide Zeilen als B-216, und kein Tor hat es gemeldet.

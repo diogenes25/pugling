@@ -26,7 +26,7 @@ function uebung(over: Partial<ExerciseSummary> = {}): ExerciseSummary {
 }
 
 const BASIS = {
-  geladen: 0, gesamt: 0, platzhalter: false, laedt: false, zeilenVeraltet: false,
+  geladen: 0, gesamt: 0, platzhalter: false, laedt: false, zeilenVeraltet: false, schluessel: "fach=1",
   fachName: "Englisch", selected: [] as number[], selectAllBusy: false,
   onToggle: () => {}, onSelectAll: () => {}, onRetry: () => {},
   typLabel: (t: string) => t,
@@ -72,6 +72,23 @@ describe("WizardTrefferbereich – gescheiterte Suche ist nicht leerer Katalog",
     // Und es räumt sich ab, sobald die Wiederholung durch ist – sonst stünde der alte Fehler neben Treffern.
     rerender(<WizardTrefferbereich {...BASIS} treffer={[uebung()]} fehler={null} laedt={false} />);
     expect(screen.queryByText(/gescheitert/)).toBeNull();
+  });
+
+  /*
+   * B-227, die andere Hälfte: Startet unter einem ANDEREN Schlüssel eine neue Suche, gehört der alte Fehler
+   * zu einer Abfrage, die es nicht mehr gibt. Dann sagt die Fläche „Suche läuft…" – nicht „gescheitert" mit
+   * einem „Lädt…"-Knopf darunter. Rot macht das ein Trefferbereich, der den Schlüssel nicht an das
+   * Gedächtnis reicht: dann stehen Banner und „Suche gescheitert" hier noch.
+   */
+  it("räumt Banner und „gescheitert“ ab, wenn ein Filterwechsel eine neue Suche startet", () => {
+    const { rerender } = render(<WizardTrefferbereich {...BASIS} treffer={[]} fehler="Netz weg" />);
+    expect(screen.getByText(/Die Übungssuche ist gescheitert: Netz weg/)).toBeTruthy();
+
+    rerender(<WizardTrefferbereich {...BASIS} treffer={[]} fehler={null} laedt zeilenVeraltet schluessel="fach=2" />);
+
+    expect(screen.getByText("Suche läuft…")).toBeTruthy();
+    expect(screen.queryByText(/gescheitert/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Lädt…" })).toBeNull();
   });
 
   it("zeigt während der ersten Ladung den Platzhalter und keine der beiden Meldungen", () => {

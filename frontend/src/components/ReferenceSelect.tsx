@@ -47,6 +47,14 @@ export interface ReferenceSelectProps {
    */
   freetextValue?: string;
   disabled?: boolean;
+  /**
+   * Wahr, solange die Liste zum **ersten Mal** lädt (`useAsync.showPlaceholder` der Liste). „Die Liste kennt
+   * den Wert nicht" hat zwei Ursachen – noch nicht da, oder nicht gekommen –, und nur die zweite heißt
+   * „(nicht geladen)" (B-229). Solange sie unterwegs ist, heißt die Sonderoption „(lädt…)" und das Feld ist
+   * gesperrt: eine Wahl aus einer Liste, die noch nicht da ist, ist keine Wahl. Weggelassen, wo die Liste auf
+   * Seitenebene lädt, bevor das Formular aufgeht.
+   */
+  laedt?: boolean;
 }
 
 /**
@@ -58,26 +66,31 @@ function specialOption(
   loadedName: string | null | undefined,
   options: readonly ReferenceOption[],
   freetextValue: string | undefined,
-): (ReferenceOption & { disabled: boolean }) | null {
+  laedt: boolean,
+): (ReferenceOption & { disabled: boolean; sperrtFeld: boolean }) | null {
   if (loadedId == null) {
     // Freitext: ein Zustand, den der Nutzer sehen, aber nicht herstellen darf – darum gesperrt (B-143).
     if (!loadedName || !freetextValue) return null;
-    return { value: freetextValue, label: `${loadedName} (Freitext)`, disabled: true };
+    return { value: freetextValue, label: `${loadedName} (Freitext)`, disabled: true, sperrtFeld: false };
   }
   const wert = String(loadedId);
   if (options.some((o) => o.value === wert)) return null;
+  const name = loadedName ?? `#${wert}`;
+  // Noch unterwegs: die Liste ist nicht ausgefallen, sie ist nur noch nicht da (B-229). Die Option bleibt
+  // wählbar (sie IST der Wert), gesperrt wird das Feld – bis die Liste steht, gibt es nichts zu wählen.
+  if (laedt) return { value: wert, label: `${name} (lädt…)`, disabled: false, sperrtFeld: true };
   // Nicht geladen: ein völlig reguläres Katalog-Objekt, das gerade fehlt. **Nicht** gesperrt – sonst wäre
   // ein Wechsel eine Einbahnstraße, und der Weg zurück führte nur übers Zuklappen des Formulars, das
   // alle anderen Eingaben mitverwirft (B-172, Entscheidung 4).
-  return { value: wert, label: `${loadedName ?? `#${wert}`} (nicht geladen)`, disabled: false };
+  return { value: wert, label: `${name} (nicht geladen)`, disabled: false, sperrtFeld: false };
 }
 
 export function ReferenceSelect({
-  id, value, onChange, loadedId, loadedName, options, emptyLabel, freetextValue, disabled,
+  id, value, onChange, loadedId, loadedName, options, emptyLabel, freetextValue, disabled, laedt = false,
 }: ReferenceSelectProps) {
-  const sonder = specialOption(loadedId, loadedName, options, freetextValue);
+  const sonder = specialOption(loadedId, loadedName, options, freetextValue, laedt);
   return (
-    <select id={id} value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)}>
+    <select id={id} value={value} disabled={disabled || sonder?.sperrtFeld} onChange={(e) => onChange(e.target.value)}>
       {emptyLabel !== undefined && <option value="">{emptyLabel}</option>}
       {sonder && <option value={sonder.value} disabled={sonder.disabled}>{sonder.label}</option>}
       {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}

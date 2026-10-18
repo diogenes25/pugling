@@ -19,18 +19,33 @@ import { useEffect, useState } from "react";
  * geladen wird, sonst `null`. Erst dadurch ist der Zustand „Fehler steht, Abfrage läuft" erreichbar – und
  * ein `disabled={laedt}` am Knopf kein toter Code mehr.
  *
- * **Bekannte Grenze (B-227):** Der Hook weiß nicht, ob dieselbe Abfrage wiederholt wird oder eine andere
- * startet – `useAsync` setzt bei einem Wechsel der Abhängigkeiten ebenfalls `error = null, loading = true`.
- * Bei einer Suche mit wechselndem Filter steht darum nach einem Fehler für die Dauer der *neuen* Suche noch
- * der alte Text. Für Abfragen ohne wechselnde Abhängigkeiten (`ListenAusfall`, Shop-Verlauf) ist das
- * gegenstandslos.
+ * **`schluessel` sagt, wofür das Gedächtnis gilt (B-227).** `useAsync` erzeugt denselben Übergang
+ * `error = null, loading = true` auch bei einem Wechsel der Abhängigkeiten – und eine *andere* Abfrage ist
+ * keine Wiederholung: Nach einer gescheiterten Suche gehört beim Filterwechsel der alte Fehler zu einer
+ * Abfrage, die es nicht mehr gibt, und „Suche läuft…" ist die Wahrheit. Der Aufrufer reicht darum den
+ * Schlüssel der laufenden Abfrage (im Trefferbereich und im Planbau `filterKey`, der dort schon
+ * `zeilenVeraltet` trägt); ein gemerkter Fehler zählt nur unter dem Schlüssel, unter dem er auftrat.
+ * Abfragen ohne wechselnde Abhängigkeiten (Shop-Verlauf, die `ListenAusfall`-Stellen) lassen ihn weg –
+ * `undefined` ist dann immer gleich `undefined`. Eine Ausnahme ist nur scheinbar eine: Die Arten-Liste des
+ * Assistenten hängt am Fach, aber ihr `ListenAusfall` lebt in Schritt 3 und das Fach-Feld in Schritt 2 –
+ * der Baustein ist abgebaut, bevor sich das Fach ändern kann (Reviewer-Hinweis, Nachtlauf 2026-10-17).
+ * Wandert das Fach-Feld je nach Schritt 3, braucht die Stelle den Schlüssel. Verglichen wird am
+ * Rückgabepunkt, nicht per Effekt-Reset: ein Effekt liefe erst **nach** dem Render, und ein Render lang
+ * stünde der alte Text noch da.
  */
-export function useGemerkterFehler(fehler: string | null, laedt: boolean): string | null {
-  const [letzter, setLetzter] = useState<string | null>(null);
+export function useGemerkterFehler(fehler: string | null, laedt: boolean, schluessel?: unknown): string | null {
+  const [letzter, setLetzter] = useState<{ fehler: string; schluessel: unknown } | null>(null);
   useEffect(() => {
-    if (fehler) setLetzter(fehler);
+    if (fehler) setLetzter({ fehler, schluessel });
     else if (!laedt) setLetzter(null);
+    // `schluessel` ist bewusst KEINE Abhängigkeit (im E2E gemessen, Nachtlauf 2026-10-17): Ein Filterwechsel
+    // rendert zuerst mit dem ALTEN Fehler und dem NEUEN Schlüssel – `useAsync` räumt `error` erst in seinem
+    // Effekt. Liefe dieser Effekt in jenem Render, merkte er den alten Fehler unter dem neuen Schlüssel, und
+    // der Vergleich unten hielte ihn für den Fehler der neuen Suche. Gemerkt wird darum nur, wenn `fehler`
+    // selbst erscheint – mit dem Schlüssel, der in diesem Moment gilt.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fehler, laedt]);
 
-  return fehler ?? (laedt ? letzter : null);
+  if (fehler) return fehler;
+  return laedt && letzter !== null && letzter.schluessel === schluessel ? letzter.fehler : null;
 }

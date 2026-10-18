@@ -12,9 +12,12 @@ import { useGemerkterFehler } from "./useGemerkterFehler";
  * sie den Hook benutzt (siehe `VaterWizard.test.tsx`, `HistoryTab.test.tsx`, `ListenAusfall.test.tsx`).
  */
 describe("useGemerkterFehler", () => {
-  function starte(fehler: string | null, laedt: boolean) {
-    return renderHook((p: { fehler: string | null; laedt: boolean }) => useGemerkterFehler(p.fehler, p.laedt),
-      { initialProps: { fehler, laedt } });
+  type Props = { fehler: string | null; laedt: boolean; schluessel?: string };
+  function starte(fehler: string | null, laedt: boolean, schluessel?: string) {
+    return renderHook<string | null, Props>(
+      (p) => useGemerkterFehler(p.fehler, p.laedt, p.schluessel),
+      { initialProps: { fehler, laedt, schluessel } },
+    );
   }
 
   it("gibt nichts zurück, solange nichts schiefgegangen ist", () => {
@@ -47,5 +50,45 @@ describe("useGemerkterFehler", () => {
     rerender({ fehler: null, laedt: true });
     rerender({ fehler: "Immer noch weg", laedt: false });
     expect(result.current).toBe("Immer noch weg");
+  });
+
+  /*
+   * B-227. `useAsync` setzt `error = null, loading = true` nicht nur bei `reload()`, sondern auch bei einem
+   * Wechsel der Abhängigkeiten – und der Hook konnte die beiden nicht auseinanderhalten: Nach einer
+   * gescheiterten Suche stand beim Filterwechsel der alte Fehler neben „Lädt…", für eine Abfrage, die es
+   * nicht mehr gab. Rot macht das ein Hook ohne Schlüssel: dann liefert er hier „Netz weg" statt `null`.
+   */
+  it("lässt ihn fallen, wenn unter einem anderen Schlüssel eine neue Abfrage startet", () => {
+    const { result, rerender } = starte("Netz weg", false, "fach=1");
+    rerender({ fehler: null, laedt: true, schluessel: "fach=2" });
+    expect(result.current).toBeNull();
+  });
+
+  it("hält ihn dagegen fest, wenn dieselbe Abfrage (gleicher Schlüssel) wiederholt wird", () => {
+    const { result, rerender } = starte("Netz weg", false, "fach=1");
+    rerender({ fehler: null, laedt: true, schluessel: "fach=1" });
+    expect(result.current).toBe("Netz weg");
+  });
+
+  /*
+   * Die Sequenz, die der Browser wirklich erzeugt (E2E-Fund im Nachtlauf 2026-10-17, zweiter Lauf): Der
+   * Filterwechsel rendert ZUERST mit dem alten Fehler und dem neuen Schlüssel – `useAsync` räumt `error`
+   * erst in seinem Effekt. Ein Gedächtnis, das in diesem Render den alten Fehler unter dem neuen Schlüssel
+   * neu merkt, zeigt ihn danach als Fehler der neuen Suche. Rot macht das ein Effekt, der am Schlüssel hängt.
+   */
+  it("merkt den alten Fehler nicht unter dem neuen Schlüssel, wenn der Wechsel ihn ein Render lang noch trägt", () => {
+    const { result, rerender } = starte("Netz weg", false, "fach=1");
+    rerender({ fehler: "Netz weg", laedt: false, schluessel: "fach=2" }); // der Zwischen-Render
+    rerender({ fehler: null, laedt: true, schluessel: "fach=2" });
+    expect(result.current).toBeNull();
+  });
+
+  it("merkt einen gleichlautenden Fehler der neuen Suche unter deren Schlüssel", () => {
+    const { result, rerender } = starte("Netz weg", false, "fach=1");
+    rerender({ fehler: "Netz weg", laedt: false, schluessel: "fach=2" });
+    rerender({ fehler: null, laedt: true, schluessel: "fach=2" });
+    rerender({ fehler: "Netz weg", laedt: false, schluessel: "fach=2" }); // auch die neue Suche scheitert so
+    rerender({ fehler: null, laedt: true, schluessel: "fach=2" }); // … und wird wiederholt
+    expect(result.current).toBe("Netz weg");
   });
 });

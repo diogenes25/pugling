@@ -147,10 +147,12 @@ function PlanEditForm({ plan, childName, busy, onSave }: {
         <div className="field"><label htmlFor="plan-edit-child">Kind</label>
           {/* Der achte Fall der Regel aus B-172: Fehlt das geladene Kind in der Liste, zeigt das Feld es als
               „(nicht geladen)" statt still auf die erste Option zu fallen. Kein `emptyLabel`: ein Plan ohne
-              Kind ist kein wählbarer Zustand. */}
+              Kind ist kein wählbarer Zustand. `laedt`, weil die Liste HIER lädt, nicht auf Seitenebene – bei
+              jedem Öffnen stünde sonst für die Dauer des Abrufs die Beschriftung des Ausfalls (B-229);
+              `showPlaceholder`, nicht `loading`: nach einem Fehlschlag soll es „(nicht geladen)" heißen. */}
           <ReferenceSelect id="plan-edit-child" value={String(form.childId)}
             onChange={(v) => setForm((f) => ({ ...f, childId: Number(v) }))}
-            loadedId={plan.childId} loadedName={childName}
+            loadedId={plan.childId} loadedName={childName} laedt={children.showPlaceholder}
             options={(children.data ?? []).map((c) => ({ value: String(c.id), label: `${c.name} (#${c.id})` }))}
           />
         </div>

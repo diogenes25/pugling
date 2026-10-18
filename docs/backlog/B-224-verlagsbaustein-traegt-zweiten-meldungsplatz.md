@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-212]
 wartet_auf: ""
+nachgeschaut: "2026-10-18: acht Server-Schreibpfade der Seite auf nachObenMelden gezaehlt (VaterLehrwerke :275/:449/:737/:754/:882/:902, PublisherAdmin :44/:58), verbleibende lokale StatusBanner nur Eingabepruefung (:540/:849); AK 3 falsche Praemisse (409 beim Umbenennen ausloesbar) -> E2E nachgereicht; Sichtbarkeit der Bestaetigung im Browser gemessen -> B-232 (Frage); Zeilenangabe der roten Probe veraltet (44 -> 46)"
 ---
 
 # B-224 · Der Verlags-Baustein trägt auf der Lehrwerke-Seite einen zweiten Meldungsplatz
@@ -82,9 +83,13 @@ Autonom gegrillt am 2026-10-17 unter Freigabe 1 (`art: Defekt`), Nachtlauf Sprin
    (rot vor dem Fix: die Meldung stand im Abschnitt).
 2. Die nächste Handlung auf der Seite (Reihe anlegen) räumt diese Meldung. *Beleg:* dieselbe E2E (rot vor
    dem Fix: „Gespeichert." blieb stehen).
-3. Ein Fehler einer Verlags-Aktion (409 bei fremd genutztem Verlag) steht ebenfalls am Platz der Seite.
-   *Beleg:* Code-Lesebeleg – derselbe `nachObenMelden`-Pfad wie beim Erfolg; der 409-Fall ist im Seed über
-   die Sperre (`aria-disabled`) gar nicht auslösbar (`gesperrter-knopf-nennt-den-grund.spec.ts`).
+3. Ein Fehler einer Verlags-Aktion steht ebenfalls am Platz der Seite. *Beleg:* E2E
+   `verlag-fehler-am-platz-der-seite.spec.ts` (Umbenennen eines eigenen Verlags auf „Klett" → 409
+   `DuplicatePublisher`, Meldung am Seitenplatz, keine im Vokabular-Abschnitt). *(Berichtigt in der Nachschau
+   2026-10-18: Die erste Fassung behauptete, der 409-Fall sei im Seed „gar nicht auslösbar" – das galt nur fürs
+   **Löschen** (Sperre am Knopf). Beim Umbenennen sperrt der OK-Knopf nur bei leerem Namen, und
+   `PublishersController.cs:154-163` liefert 409 bei vergebenem Namen. Der Lesebeleg ruhte auf einer falschen
+   Prämisse; der rote Pfad des `onMeldung`-Vertrags war bis dahin ungetestet.)*
 4. Aufklappen des Vokabulars und `UnitPanel`-„Bearbeiten" räumen den Platz. *Beleg:* Lesebeleg
    `onMeldung(null)` an beiden Stellen; kein Test (Parität zu `:209`/`:323`).
 5. Die bestehenden Specs der Seite (`gesperrter-knopf-nennt-den-grund`, `bestaetigung-ueberlebt`,
@@ -110,3 +115,13 @@ liegen schon in `src/lib/`, der Umzug zieht keine Abhängigkeit in die falsche R
   aus der Nachschau mit `Datei:Zeile` belegt.
 - **2026-10-17** — **ausformuliert → gegrillt → geschaetzt** im Nachtlauf, Sprint 2, autonom unter Freigabe 1 (`art: Defekt`); Entscheidungen, Kriterien und Schätzung oben.
 - **2026-10-17** — **geschaetzt → abgenommen** im Nachtlauf, Sprint 2. Rollengang: Verlag angelegt (Bestätigung am Platz der Seite), Vokabular aufgeklappt (Platz geräumt), Verlag umbenannt → „Gespeichert." genau einmal, am Platz der Seite, keiner im Vokabular-Abschnitt; Reihe angelegt → „Gespeichert." weg, Katalog-Satz da. Rote Probe: E2E `verlag-meldet-am-platz-der-seite.spec.ts` 1/1 an Zeile 44 (im Vokabular erwartet 0, gemessen 1). Belege: `tsc -b` sauber · `vitest run` 381/381 · die neun Specs der Lehrwerke-Seite samt der zwei neuen 14/14 · volle Playwright-Suite **72/72** · `frontend-reviewer` gelaufen, **kein Blocker, kein Fund mit Code-/Testwirkung**, drei Kommentar-Hinweise eingearbeitet (Testkommentar zur tragenden Zeile, Vorbedingung beschriftet, zwei überzogene Formulierungen) · **Browser-Rollengang in Chrome (Freigabe 6)** als Creator auf `/vater/lehrwerke`, siehe Protokoll `docs/pm-sitzung-2026-10-17-nacht.md` Runde 2. Commit `dc2ce84`.
+- **2026-10-18** — Nachschau (zweiter Lauf der Nacht, Protokoll `docs/pm-sitzung-2026-10-17-nacht.md`,
+  „Retrospektive Sprint 3"): acht Server-Schreibpfade der Seite melden nach oben, keine lokale Server-Meldung
+  mehr. **Drei Berichtigungen:** AK 3 ruhte auf einer falschen Prämisse (409 beim Umbenennen auf „Klett"
+  auslösbar) – der rote Pfad des `onMeldung`-Vertrags war ungetestet, E2E `verlag-fehler-am-platz-der-seite.spec.ts`
+  nachgereicht; die Bestätigung einer Verlags-Aktion liegt bei langer Reihen-Tabelle außerhalb des Sichtfelds
+  (im Browser gemessen: bei vier Reihen sichtbar, 505 px über dem Knopf) →
+  [B-232](B-232-bestaetigung-ausserhalb-des-sichtfelds.md) als `Frage`, weil B-212 „Bestätigung darf unsichtbar
+  sein" entschieden hat; Zeilenangabe der roten Probe 44 → 46 (zwei Reviewer-Kommentare kamen nach der
+  Messung). Nuancen ohne Nutzerwirkung: „Schließen" des Vokabulars räumt nicht (B-197 verlangt nur Öffnen);
+  `nachObenMelden` ohne eigenen Vitest.

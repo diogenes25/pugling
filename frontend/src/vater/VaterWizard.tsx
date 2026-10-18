@@ -569,7 +569,7 @@ export function VaterWizard() {
           <WizardTrefferbereich
             treffer={filteredExercises} geladen={exercises.data?.items.length ?? 0}
             gesamt={exercises.data?.total ?? 0} platzhalter={exercises.showPlaceholder}
-            fehler={exercises.error} laedt={exercises.loading} zeilenVeraltet={zeilenVeraltet}
+            fehler={exercises.error} laedt={exercises.loading} zeilenVeraltet={zeilenVeraltet} schluessel={filterKey}
             fachName={subject?.name} selected={selected} selectAllBusy={selectAllBusy}
             onToggle={toggle} onSelectAll={selectAll} onRetry={exercises.reload}
             typLabel={types.label} />
@@ -661,7 +661,7 @@ export function VaterWizard() {
  * Anlege-Formular, während der Katalog voll war.
  */
 export function WizardTrefferbereich({
-  treffer, geladen, gesamt, platzhalter, fehler, laedt, zeilenVeraltet, fachName,
+  treffer, geladen, gesamt, platzhalter, fehler, laedt, zeilenVeraltet, schluessel, fachName,
   selected, selectAllBusy, onToggle, onSelectAll, onRetry, typLabel,
 }: {
   treffer: ExerciseSummary[];
@@ -677,6 +677,11 @@ export function WizardTrefferbereich({
   fehler: string | null;
   laedt: boolean;
   zeilenVeraltet: boolean;
+  /**
+   * Der Schlüssel der Suche, zu der `fehler`/`laedt` gehören (`filterKey`). Das Fehler-Gedächtnis gilt nur
+   * unter ihm: ein Filterwechsel ist eine andere Abfrage, keine Wiederholung (B-227).
+   */
+  schluessel: string;
   fachName: string | undefined;
   selected: number[];
   selectAllBusy: boolean;
@@ -687,8 +692,9 @@ export function WizardTrefferbereich({
 }) {
   // Der letzte Fehler überlebt den Start der Wiederholung (B-216): `useAsync.reload()` setzt `error` auf
   // `null` und `loading` auf `true` im selben Schritt – an `fehler` allein hinge das Banner samt Knopf im
-  // Moment des Klicks aus. Dieselbe Regel wie in `ListenAusfall`, aus demselben Hook.
-  const gescheitert = useGemerkterFehler(fehler, laedt);
+  // Moment des Klicks aus. Dieselbe Regel wie in `ListenAusfall`, aus demselben Hook – hier mit Schlüssel,
+  // weil die Suche wechselnde Abhängigkeiten hat (B-227).
+  const gescheitert = useGemerkterFehler(fehler, laedt, schluessel);
   // Ein gesperrter Knopf verliert in Chromium den Fokus – darum wandert er beim Klick auf den Kasten
   // (Begründung in `ListenAusfall.tsx`).
   const kasten = useRef<HTMLDivElement>(null);

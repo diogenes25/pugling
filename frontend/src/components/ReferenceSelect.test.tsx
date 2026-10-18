@@ -112,4 +112,23 @@ describe("ReferenceSelect – die Sonderoption", () => {
     // Die Unit im Lehrbuch ist gesperrt, solange keine Reihe gewählt ist.
     expect(zeige({ disabled: true }).feld.disabled).toBe(true);
   });
+
+  /*
+   * B-229. „Die Liste kennt den Wert nicht" hat zwei Ursachen – noch nicht da, oder nicht gekommen – und das
+   * Bauteil beschriftete beide „(nicht geladen)". Im Plan-Formular war das der Normalfall jedes Öffnens, und
+   * er las sich wie ein Ausfall. Rot macht das ein Bauteil ohne `laedt`: dann steht hier „(nicht geladen)".
+   */
+  it("sagt „lädt…“ statt „nicht geladen“, solange die Liste zum ersten Mal lädt – und ist dann gesperrt", () => {
+    const { feld } = zeige({ options: [], laedt: true, emptyLabel: undefined });
+
+    expect(Array.from(feld.options).map((o) => o.text)).toEqual(["Englisch (lädt…)"]);
+    expect(feld.disabled).toBe(true);
+  });
+
+  it("beschriftet nichts um, wenn die Liste den Wert kennt – auch nicht während eines Neuladens", () => {
+    const { feld } = zeige({ laedt: true });
+
+    expect(Array.from(feld.options).map((o) => o.text)).toEqual(["– keine Angabe –", "Englisch", "Mathe"]);
+    expect(feld.disabled).toBe(false);
+  });
 });

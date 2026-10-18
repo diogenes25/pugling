@@ -973,7 +973,8 @@ function NewSeries({ subjects, publishers, onPublisherCreated, onCreated, onMeld
       </p>
       {/* Kein eigener Meldungsplatz mehr (B-212): Was vom Server kommt, steht am Platz der Seite. Hier
           bleibt nichts übrig — dieses Formular meldet keine Eingabeprüfung (die `return`s in `submit` und
-          `addPublisher` sind nur die zweite Verteidigung), beide Knöpfe sind ohne Eingabe gesperrt (B-225). */}
+          `addPublisher` schützen nur vor programmatischen Absendungen: ein gesperrter Default-Submit-Knopf
+          unterbindet auch Enter im Feld), beide Knöpfe sind ohne Eingabe gesperrt (B-225). */}
 
       {/* Verlag fehlt in der Liste? Direkt hier anlegen statt die Seite zu verlassen (idempotent über den Slug). */}
       <form

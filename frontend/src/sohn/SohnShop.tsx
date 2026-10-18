@@ -352,8 +352,10 @@ export function HistoryTab({ purchases, total, loading, error, onLoadMore }: {
       {/* Scheitert eine SPÄTERE Seite, bleiben die schon geladenen Zeilen stehen - der "Mehr laden"-Knopf
           darunter ist dann selbst der Wiederholen-Knopf. */}
       {/* Auch hier `gescheitert`: Sonst verschwände die Meldung, sobald „Mehr laden" die nächste Seite
-          anstößt – derselbe Aushänger wie oben, nur mit stehenbleibendem Knopf (Reviewer-Fund, B-216). */}
-      {gescheitert != null && <div className="banner err" role="alert">{gescheitert}</div>}
+          anstößt – derselbe Aushänger wie oben, nur mit stehenbleibendem Knopf (Reviewer-Fund, B-216).
+          Und dieselbe Fokusregel wie oben (B-228): der gesperrte Knopf verliert den Fokus, die Meldung nimmt
+          ihn. Ohne Meldung fällt er weiter auf `<body>` – wohin er dann gehört, ist B-231. */}
+      {gescheitert != null && <div className="banner err" role="alert" tabIndex={-1} ref={meldung}>{gescheitert}</div>}
       {purchases.map((p) => (
         <div key={p.id} className="row" style={{ justifyContent: "space-between", padding: "8px 0" }}>
           <div>
@@ -364,7 +366,8 @@ export function HistoryTab({ purchases, total, loading, error, onLoadMore }: {
         </div>
       ))}
       {purchases.length < total && (
-        <button type="button" className="btn ghost small" style={{ marginTop: 8 }} disabled={loading} onClick={onLoadMore}>
+        <button type="button" className="btn ghost small" style={{ marginTop: 8 }} disabled={loading}
+          onClick={() => { meldung.current?.focus(); onLoadMore(); }}>
           {loading ? "Lädt…" : `Mehr laden (${purchases.length} von ${total})`}
         </button>
       )}

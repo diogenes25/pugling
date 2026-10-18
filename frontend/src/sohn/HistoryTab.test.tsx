@@ -100,6 +100,23 @@ describe("HistoryTab", () => {
     expect(screen.getByRole("button", { name: "Lädt…" })).toHaveProperty("disabled", true);
   });
 
+  /*
+   * B-228. Ein Knopf, der `disabled` wird, verliert in Chromium den Fokus (B-216, im E2E gemessen). Die vier
+   * anderen Stellen legen ihn darum beim Klick auf die Meldung – die gefüllte Karte tat es nicht, ihr Fokus
+   * fiel auf `<body>`. Gemessen wird der programmatische Umzug, den happy-dom kennt; den Chromium-Verlust
+   * selbst deckt die Bauart. Rot macht das ein „Mehr laden" ohne `focus()`: dann ist `activeElement` der
+   * `<body>`.
+   */
+  it("legt beim Nachladen nach einem Fehler den Fokus auf die Meldung, nicht ins Leere", () => {
+    const onLoadMore = vi.fn();
+    render(<HistoryTab purchases={[purchase()]} total={5} loading={false} error="Zeitüberschreitung" onLoadMore={onLoadMore} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Mehr laden/ }));
+
+    expect(onLoadMore).toHaveBeenCalledTimes(1);
+    expect(document.activeElement).toBe(screen.getByRole("alert"));
+  });
+
   it("sagt waehrend des ersten Ladens weder 'nichts gekauft' noch etwas ueber einen Fehler", () => {
     render(<HistoryTab purchases={[]} total={0} loading={true} error={null} onLoadMore={vi.fn()} />);
     expect(screen.queryByText(/Noch nichts gekauft/)).toBeNull();

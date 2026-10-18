@@ -514,8 +514,9 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
   }
 
   const results = exercises.data?.items ?? [];
-  // Der letzte Fehler überlebt den Start der Wiederholung (B-216) – wie im Zwilling (`VaterWizard.tsx`).
-  const sucheGescheitert = useGemerkterFehler(exercises.error, exercises.loading);
+  // Der letzte Fehler überlebt den Start der Wiederholung (B-216) – wie im Zwilling (`VaterWizard.tsx`), und
+  // nur die: unter einem anderen `filterKey` läuft eine andere Suche, nicht dieselbe noch einmal (B-227).
+  const sucheGescheitert = useGemerkterFehler(exercises.error, exercises.loading, filterKey);
   // Ein gesperrter Knopf verliert in Chromium den Fokus – darum wandert er beim Klick auf den Kasten
   // (Begründung in `ListenAusfall.tsx`).
   const fehlerKasten = useRef<HTMLDivElement>(null);

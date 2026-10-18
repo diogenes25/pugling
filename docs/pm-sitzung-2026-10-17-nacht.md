@@ -23,8 +23,15 @@ Wird je Sprint fortgeschrieben; die letzte Zeile ist der Zustand.
   **vorgeschlagen** (Freigabe 3) – siehe „Für den Morgen".
 - **Sprint 2 abgenommen** (B-224, B-225, Lehrwerke-Seite): 72/72 Playwright, 381 Vitest, Reviewer ohne
   Fund mit Codewirkung, Browser-Rollengang als Creator. Nachschau von Sprint 1: ein kleiner Defekt (B-227)
-  und zwei Nuancen (B-228, B-229), eine Test-Lücke geschlossen. **Der Lauf endet nach Sprint 2** (Limit 2:
+  und zwei Nuancen (B-228, B-229), eine Test-Lücke geschlossen. **Der erste Lauf endet nach Sprint 2** (Limit 2:
   Defekt im Increment eines Sprints dieser Nacht, siehe „Retrospektive Sprint 2").
+- **Zweiter Lauf ab 22:53** („starte den nächsten Nachtlauf"). Vorab: Story-Id B-216 war doppelt → B-230.
+- **Sprint 3 abgenommen** (B-227, B-228, B-229 – die Nachschau-Funde zu Sprint 1): 389/389 Vitest, **76/76**
+  Playwright, Reviewer im dritten Anlauf ohne Blocker, `web-design-guidelines` ohne Fund, Browser-Rollengang als
+  Vater und Sohn. Drei Review-Funde mit Code-/Testwirkung (Grenze fünf), darunter ein echter aus der eigenen
+  E2E. Nachschau Sprint 2: kein Defekt, zwei Fragen (B-232, B-233), eine Test-Lücke geschlossen, drei
+  Berichtigungen. Retro-Mechanismen nur **vorgeschlagen** (ein Tor, eine Prosa-Regel). Commit: siehe
+  „Änderungsstand".
 
 ## Sprint 1 — Ziel & Umfang
 
@@ -216,8 +223,9 @@ Reihenfolge: rote E2E zuerst, dann Code, dann die neun Specs der Seite, Suite, R
   „Reihe (Pflicht)"; Kommentar unter dem Formular sagt jetzt, was der Code tut.
 - Zwei E2E: `verlag-meldet-am-platz-der-seite.spec.ts`, `reihe-anlegen-braucht-namen.spec.ts`.
 
-**Rote Proben (erwartet/gemessen), vor dem Fix:** `reihe-anlegen-braucht-namen` 1/1 an Zeile 22
-(`toBeDisabled` → `enabled`); `verlag-meldet-am-platz-der-seite` 1/1 an Zeile 44 (Meldung im
+**Rote Proben (erwartet/gemessen), vor dem Fix:** `reihe-anlegen-braucht-namen` 1/1 an Zeile 22 – heute
+Zeile 24, zwei Reviewer-Kommentare kamen nach der Messung dazu (Nachschau 2026-10-18)
+(`toBeDisabled` → `enabled`); `verlag-meldet-am-platz-der-seite` 1/1 an Zeile 44 – heute 46 (Meldung im
 Vokabular-Abschnitt: erwartet 0, gemessen 1).
 
 **Verifikation:** `tsc -b` sauber · `vitest run` 381/381 · die neun Specs der Lehrwerke-Seite samt der zwei
@@ -288,23 +296,206 @@ Sprints (Fünfer-Zähler); für einen Nachschau-Fund im abgenommenen Increment g
 dieselbe Lage hat am 2026-09-02 die Nacht 2 beendet. Weiterlaufen wäre die falsche Reaktion – B-227 ist klein,
 aber es ist ein Defekt in Arbeit, die dieselbe Nacht für fertig erklärt hat.
 
+## Zweiter Lauf derselben Nacht (ab 22:53)
+
+Auftrag „starte den nächsten Nachtlauf" nach dem Halt an Limit 2. Ausgangsstand `d93d705` (sieben Commits vor
+`origin/main`, ungepusht); kein Backend lief, ein Vite-Dev-Server stand noch auf :5173 (Playwright nutzt ihn
+wieder, `reuseExistingServer`). Chrome-Extension in dieser Sitzung verfügbar (Freigabe 6). Kein neuer
+`anmerkungen`-Befund (`docs/anmerkungen/aktuell.md` vom 2026-08-14, beide Einträge erledigt).
+
+**Vorab gefunden, nicht gesucht:** Die Story-Id **B-216 war doppelt vergeben** – an „Zwei Wiederhol-Knöpfe
+verschwinden …" (seit 2026-09-04, abgenommen, mit Commits und `entgangen_bei`-Verweisen) und an „Der
+PIN-Hash liegt doppelt" (Projektanalyse vom 2026-10-17 vormittags, `idee`). Der Index zeigte beide Zeilen als
+B-216; der Generator prüft Ids nicht auf Eindeutigkeit (`backlog-index.awk` kennt nur doppelte YAML-Schlüssel
+innerhalb einer Datei). Die jüngere Story ist nach **B-230** umnummeriert (Verlauf dort). Ein Tor dafür ist ein
+Retro-Kandidat, nicht gelandet (Freigabe 3).
+
+## Sprint 3 — Ziel & Umfang
+
+**Sprint-Ziel, aus zwei Rollensichten:**
+
+> Der **Vater** sieht nach einer gescheiterten Übungssuche beim Drehen am Filter, dass eine *neue* Suche läuft –
+> nicht den alten Fehler mit einem Knopf, der zu einer Abfrage gehört, die es nicht mehr gibt; und im
+> Plan-Formular heißt sein Kind nur dann „nicht geladen", wenn die Liste wirklich nicht kam. Der **Sohn** behält
+> nach einem Fehler beim „Mehr laden" den Fokus bei der Meldung.
+
+**Umfang** (die drei Nachschau-Funde zu Sprint 1, alle `art: Defekt`, in diesem Lauf autonom von
+`ausformuliert`/`idee` auf `geschaetzt` gebracht):
+
+| Story | Richtung |
+| --- | --- |
+| [B-227](backlog/B-227-fehlergedaechtnis-ueberlebt-den-filterwechsel.md) | Das Fehler-Gedächtnis bekommt einen Schlüssel: ein Fehler gilt nur für die Abfrage, in der er auftrat |
+| [B-228](backlog/B-228-mehr-laden-verliert-den-fokus.md) | Die gefüllte Verlaufskarte bekommt die Fokusregel der vier anderen Stellen |
+| [B-229](backlog/B-229-nicht-geladen-waehrend-des-ladens.md) | `ReferenceSelect` unterscheidet „lädt noch" von „nicht geladen" |
+
+**Draußen, mit Namen:** B-231 (neu, `Frage`: wohin der Fokus ohne Fehlerkasten gehört – aus B-228 E2, gesperrt
+unter Freigabe 1), B-226 (`Frage`, zwei Münzstände), B-164 (Nutzer), B-230 (`Aufräumen`, `idee`, Backend –
+anderes Thema), die übrigen `ausformuliert`-Defekte anderer Flächen (B-134, B-176, B-201, B-211, B-181, B-190,
+B-131, B-159, B-175).
+
+**Warum dieses Thema:** Es ist genau die Arbeit, an der der erste Lauf angehalten hat – Defekte im Increment
+derselben Nacht. Weiterzulaufen, ohne sie zu schließen, hieße die Qualitätsschwelle liegen zu lassen, an der
+Limit 2 gegriffen hat.
+
+### Entwickler-Brief
+
+- **Ziel:** siehe Sprint-Ziel. Kein Backend berührt, kein Vertrag, keine Migration.
+- **B-227:** `useGemerkterFehler(fehler, laedt, schluessel?)` – der gemerkte Fehler trägt seinen Schlüssel,
+  Vergleich am Rückgabepunkt (kein Effekt-Reset, sonst ein Render Verzug). `WizardTrefferbereich` bekommt eine
+  Pflicht-Prop `schluessel`, gespeist aus `filterKey`; `AddPosition` reicht sein `filterKey`. `useAsync`
+  unberührt (B-164).
+- **B-228:** Banner der gefüllten `HistoryTab`-Karte mit `tabIndex={-1}`/`ref`; „Mehr laden" fokussiert es
+  beim Klick, wenn es steht.
+- **B-229:** `ReferenceSelect` mit `laedt?: boolean` → Sonderoption „(lädt…)" und `disabled`;
+  `PlanEditForm` reicht `children.showPlaceholder`.
+- **Reihenfolge:** rote Vitest-Proben (vier Dateien) → Hook → Trefferbereich/Planbau → Shop-Karte →
+  `ReferenceSelect`/Plan-Formular → zwei neue E2E-Specs (rot vor dem Fix gemessen) → `tsc -b`, `vitest run`,
+  volle Playwright-Suite → `frontend-reviewer` (+ `web-design-guidelines`, Freigabe 7) → Browser-Rollengang →
+  Commit → Nachschau Sprint 2 → Retro.
+- **Testweg:** je Story in `## Schätzung`; Fenster-Messungen mit Frist < Verzögerung
+  (Muster `planbau-ladefenster.spec.ts`).
+
+## Iteration 3 — umgesetzt
+
+**Frontend (kein Backend berührt, kein Vertragsbruch, keine Migration):**
+
+- `useGemerkterFehler(fehler, laedt, schluessel?)`: der gemerkte Fehler trägt seinen Schlüssel, Vergleich am
+  Rückgabepunkt; **die Effekt-Abhängigkeiten bleiben `[fehler, laedt]`** – siehe Fund 1. `WizardTrefferbereich`
+  mit Pflicht-Prop `schluessel` aus `filterKey`; `AddPosition` reicht sein `filterKey` (B-227).
+- `HistoryTab`, gefüllte Karte: Banner `tabIndex={-1}`/`ref`, „Mehr laden" fokussiert es (B-228).
+- `ReferenceSelect` mit `laedt?: boolean` → Sonderoption „(lädt…)" und gesperrtes Feld, solange die Liste zum
+  ersten Mal lädt; `PlanEditForm` reicht `children.showPlaceholder` (B-229).
+- Acht neue Vitest-Fälle (Hook 4, Trefferbereich 1, `HistoryTab` 1, `ReferenceSelect` 2), drei neue E2E-Specs
+  (`filterwechsel-raeumt-den-fehler` mit zwei Fällen, `plan-kinderliste-laedt-noch`, aus der Nachschau
+  `verlag-fehler-am-platz-der-seite`), ein Kommentar in `VaterLehrwerke.tsx` berichtigt (Nachschau).
+
+**Rote Proben (erwartet/gemessen), vor dem Fix in einem Lauf:** Vitest **4 rot von 37** – `useGemerkterFehler.test.ts:64`
+(`null` erwartet, „Netz weg" gemessen), `ReferenceSelect.test.tsx:124` („(lädt…)" erwartet, „(nicht geladen)"
+gemessen), `HistoryTab.test.tsx:117` (Banner erwartet, `<body>` gemessen), `VaterWizard.test.tsx:89` („Suche
+läuft…" nicht im DOM); E2E **3 rot von 3** – `filterwechsel` beide Fälle an Zeile 37 (`läuft` binnen 1,2 s nicht
+sichtbar), `plan-kinderliste-laedt-noch` Zeile 39 („Sohn (nicht geladen)"). Zweite Hook-Probe nach Fund 1:
+`useGemerkterFehler.test.ts:83` **1 rot von 9** („Netz weg" statt `null`).
+
+**Verifikation:** `tsc -b` sauber · `vitest run` **389/389** (47 Dateien; vorher 381) · volle Playwright-Suite
+**76/76** (3,9 min; vorher 72) · `frontend-reviewer` im **dritten** Anlauf (zwei Agenten brachen an `ENOTFOUND`
+ab; Freigabe 2 wäre der Rückfall gewesen, wurde nicht gebraucht): kein Blocker, kein Should-fix, vier Nits ·
+Skill `web-design-guidelines` (Freigabe 7) auf `ReferenceSelect`, `SohnShop`, `VaterPlanDetail`: kein Fund
+(Ladetext endet auf „…", Label vorhanden, Fokusring über `.banner[tabindex]:focus-visible`, Knopf nur während der
+Anfrage gesperrt).
+
+### Review-Funde (Zähler: 3 von 5)
+
+| # | Quelle | Fund | Behebung |
+| --- | --- | --- | --- |
+| 1 | eigene E2E (volle Suite 73/75 nach dem ersten Fix) | Vitest grün, Browser rot: der Filterwechsel rendert zuerst mit dem **alten** Fehler und dem **neuen** Schlüssel – `useAsync` räumt `error` erst im Effekt. Der Hook-Effekt hing am Schlüssel und merkte den alten Fehler unter dem neuen. | `schluessel` aus den Effekt-Abhängigkeiten, gemerkt wird nur, wenn `fehler` erscheint; zwei Vitest-Fälle für die echte Render-Sequenz, einer davon rot gemessen |
+| 2 | `frontend-reviewer` | `#wiz-type` per `selectOption({ index: 1 })` – Hausregel „nie per Index" | per Label „Vokabelkarten" |
+| 3 | `frontend-reviewer` | Banner-Zusicherung in `plan-kinderliste-laedt-noch` mit Standardfrist – gehört nicht zum Fenster, trägt nichts | Frist 1,2 s |
+
+Ohne Zähler (Kommentar/Doku): Hook-Doc behauptete „`ListenAusfall`-Stellen ohne wechselnde Abhängigkeiten" –
+die Arten-Liste des Assistenten hängt am Fach, ist aber durch den Schritt-Wechsel abgebaut, bevor es sich ändern
+kann (so benannt); B-227 schätzte zwei Vitest-Fälle, es wurden vier.
+
+## Runde 3 — Re-Review / Abnahme
+
+Browser-Rollengang in Chrome (Freigabe 6): Backend mit Wegwerf-DB (Seed Papa #1 / Sohn #1), bestehender Vite-Dev-Server;
+Abrufe über einen Fetch-Wrapper **in der Seite** abgeschossen bzw. um 2,5 s verzögert, Zustand per Skript im
+Fenster gelesen. Neu gemessen: Eingaben aus der isolierten Welt der Extension (`el.value = …` +
+`dispatchEvent`) erreichen Reacts Input-Tracker **nicht** – Text wird mit echten Tastatur-Ereignissen getippt
+(`computer.type`), DOM-Klicks und `select`-`change` funktionieren weiter.
+
+- **Vater (Planbau, Plan-Detail) — signed off.** O-Ton: „Die Suche war kaputt, ich stelle das Fach um – und
+  jetzt steht da „(Suche läuft…)" statt dem alten Fehler mit einem Knopf, der „Lädt…" sagt und zu nichts mehr
+  gehört. Danach „(6 Treffer)". Und im Plan: „Bearbeiten" gedrückt, das Kind-Feld sagt „Sohn (lädt…)" und ist
+  kurz grau, dann „Sohn (#1)". Vorher stand da „nicht geladen", und ich habe nach einem Fehler gesucht, den es
+  nicht gab." Gemessen: im Fenster kein Banner, kein „Lädt…"-Knopf, Zählzeile „(Suche läuft…)"; Kind-Feld genau
+  eine Option „Sohn (lädt…)", `disabled`, kein Banner; danach „Sohn (#1)", bedienbar. Assistent per E2E
+  (derselbe Baustein wie im Planbau).
+- **Sohn (Shop-Verlauf, gefüllte Karte) — signed off.** Vorbereitung über die echte API: Papa schreibt 1 100
+  Münzen gut, legt „Sticker" (1 Münze, Bestand 60) an, der Sohn kauft 21-mal (24 Käufe, Seite 20). O-Ton: „Die
+  Liste hat 20 Sachen und unten „Mehr laden (20 von 24)". Das zweite Laden geht schief, da steht „Failed to
+  fetch" über der Liste. Ich drück nochmal – und der Fokus sitzt auf der Meldung, der Knopf sagt „Lädt…". Dann
+  sind alle 24 da." Gemessen: `document.activeElement` ist das Banner, Knopf „Lädt…" gesperrt, Meldung steht;
+  danach 24 Zeilen, kein Banner, kein Knopf. Beobachtung nebenbei: Kopfzeile und Shop-Kopf zeigten hier
+  denselben Stand (🪙 979 / 979) – B-226 trat in diesem Durchlauf nicht auf.
+- **Creator — Regressionszeuge, mit einem eigenen Gang:** kein Weg seiner Flächen im Diff (nur ein Kommentar in
+  `VaterLehrwerke.tsx`); `typ-manifest-faellt-aus`, `uebungstypen` und die neun Lehrwerke-Specs grün. Zusätzlich
+  für die Nachschau auf `/vater/lehrwerke` gelaufen: Verlag angelegt, Vokabular geöffnet (räumt die
+  Bestätigung – nachgemessen, nachdem ein erster Durchlauf das Vokabular schon offen vorfand), Verlag umbenannt
+  → „Gespeichert." am Seitenplatz bei Viewport-y 302, der OK-Knopf bei y 807 (Desktop, 889 px) – beides
+  sichtbar, siehe B-232.
+
+## Retrospektive Sprint 3
+
+**Nachschau:** Sprint 2 dieser Nacht (B-224, B-225, Commit `dc2ce84`) durch einen frischen `frontend-reviewer`
+gegengelesen, je mit benanntem Prüfpunkt (acht Server-Schreibpfade der Seite auf `nachObenMelden` gezählt,
+verbleibende lokale Banner als Eingabeprüfung eingeordnet, `nachObenMelden`-Docblock gegen `useAction`
+nachgerechnet, E2E-Zeilen gegen den Ausgangszustand, drei Sperren auf `trim()`, Importer des Umzugs). **Kein
+Defekt mit Nutzerwirkung im Sinne einer Reparatur** – aber **ein vermuteter**, den ich im Browser nachgemessen
+habe: die Bestätigung einer Verlags-Aktion liegt bei langer Reihen-Tabelle außerhalb des Sichtfelds (bei vier
+Reihen 505 px über dem Knopf, sichtbar; bei dreißig nicht mehr). Das ist B-212s ausdrückliche Entscheidung
+(„Bestätigung darf unsichtbar sein"), die B-224 um einen fernen Sender erweitert hat, ohne sie neu zu wägen –
+darum [B-232](backlog/B-232-bestaetigung-ausserhalb-des-sichtfelds.md) als **`Frage`**, nicht als Defekt mit
+`entgangen_bei`, und darum greift Limit 2 hier nicht. **Drei Berichtigungen:** B-224 AK 3 ruhte auf einer
+falschen Prämisse (409 beim Umbenennen auf „Klett" ist auslösbar; der rote Pfad des `onMeldung`-Vertrags war
+ungetestet → E2E `verlag-fehler-am-platz-der-seite.spec.ts` nachgereicht, 1/1 grün), B-225 Entscheidung 2
+begründete den `return` falsch (Enter feuert bei gesperrtem Submit-Knopf nicht; Kommentar nachgezogen), die
+Zeilenangaben beider roten Proben waren um zwei verschoben (Reviewer-Kommentare kamen nach der Messung).
+**Eine zweite Frage:** zwei Sperr- und zwei Leer-Eingabe-Muster auf einer Seite →
+[B-233](backlog/B-233-zwei-sperrmuster-auf-der-lehrwerke-seite.md). `nachgeschaut` auf beiden gesetzt.
+**Index: Nachgeschaut 135 von 151 — 35 mit Defekt** (Beginn dieses Laufs: 133 von 148 — 35).
+
+**Was die eigenen Tore dieses Sprints durchgelassen haben:**
+
+1. **Der Vitest modellierte den Übergang atomar, der Browser macht ihn in zwei Schritten.** `rerender({ fehler:
+   null, laedt: true, schluessel: "b" })` ändert drei Props in einem Render; in der App ändert der Aufrufer den
+   Schlüssel, und `useAsync` räumt `error` erst in seinem Effekt – ein Render mit altem Fehler und neuem Schlüssel
+   dazwischen. Der erste Fix war darum in Vitest grün und im Browser falsch; die E2E fand es (Fund 1). Es ist die
+   Fortsetzung der gestrigen Lektion („Auslöser eines Zustandsübergangs auflisten") um die Frage, **in welcher
+   Reihenfolge** ein Übergang ankommt.
+2. **Eine Story-Id war doppelt vergeben, und kein Tor hat es gemeldet.** B-216 stand seit dem 2026-09-04 an einer
+   abgenommenen Story und wurde am 2026-10-17 vormittags ein zweites Mal vergeben; der Index zeigte zwei Zeilen
+   mit derselben Id. Der Generator prüft Schlüssel nur innerhalb einer Datei.
+3. **Zwei Reviewer-Agenten brachen am Netz ab** (`ENOTFOUND`), der dritte Anlauf lief durch. Freigabe 2 (Selbst-Check,
+   Story bleibt `in-arbeit`) stand bereit – der Fall zeigt, dass ein Netzfehler keine Aussage über den Code ist
+   und ein Wiederholen vor dem Rückfall richtig war.
+
+### Vorgeschlagene Mechanismen — nicht gelandet (Freigabe 3)
+
+**Tor:** `backlog-index.sh` bricht ab (oder meldet in der Mängelliste), wenn zwei Story-Dateien dieselbe Id
+tragen. Ort: `.claude/scripts/backlog-index.awk`, eine Zählung je Id über alle Dateien. Kosten: ein paar
+Zeilen awk; ein roter Index statt einer stillen Doppelung. Es ist ein **Tor**, also die Sorte Mechanismus, die
+der Lauf nicht selbst landen darf – und die, wäre sie gelandet, den Lauf nach Limit 2 beendet hätte.
+
+**Prosa:** Wer einen Hook gegen einen Übergang testet, den ein Effekt eines **anderen** Hooks erzeugt
+(`useAsync`: `error = null, loading = true` im Effekt), spielt die Zwischen-Renders nach – zuerst die Props, die
+der Aufrufer ändert, dann die, die der Effekt ändert – statt alle in einem `rerender` zu setzen. Ort:
+`frontend/CLAUDE.md`, der Absatz zu Komponenten-/Hook-Tests, ein Satz; Kosten: Budget-Skript, eine Zeile
+kompensieren. Kein Tor möglich – welche Props ein Effekt setzt, weiß kein Regex. Es schärft den gestrigen
+Vorschlag „Auslöser auflisten" um „…und ihre Reihenfolge nachspielen".
+
+**Bewusst ungedeckt:** die Sichtbarkeit einer Meldung im Viewport (B-232) – `toBeVisible` prüft sie nicht, und
+ob sie sichtbar sein *soll*, ist eine offene Produktfrage.
+
 ## Offene Roadmap · Änderungsstand
 
 Die dauerhafte Liste ist [docs/backlog/](backlog/README.md). Änderungsstand: Sprint 1 `d834a8e` + Nachtrag
 `d436a1b`; Sprint 2 samt Nachschau-Nachträgen (B-227/228/229, Test-Lücke, Doku): `dc2ce84`, dazu der Nachtrag mit
-diesem Hash; **nichts gepusht**.
+diesem Hash; Sprint 3 (zweiter Lauf, B-227/228/229 samt Nachschau-Nachträgen zu B-224/B-225, B-230–B-233): siehe
+Nachtrag-Zeile im Verlauf der Stories; **nichts gepusht**.
 
 ## Für den Morgen
 
-1. **Zwei Retro-Vorschläge dieser Nacht** landen oder verwerfen (Sprint 1: „X statt Y" beidseitig
-   zusichern; Sprint 2: Auslöser eines Zustandsübergangs auflisten) – dazu die fünf älteren, unverändert offen.
-2. **B-227** (Fehler-Gedächtnis überlebt den Filterwechsel) ist `ausformuliert`, `art: Defekt`, mit
-   Empfehlung (Schlüssel-Parameter am Hook) – autonom grillbar in einem Folgelauf. **B-228** und **B-229**
-   sind `idee`.
-3. **B-226** ist eine `Frage` (zwei Münzstände im Shop) – gesperrt für den Lauf, Entscheidung beim Nutzer:
-   erst klären, ob die Differenz fachlich ist.
+1. **Vier Retro-Vorschläge dieser Nacht** landen oder verwerfen (Sprint 1: „X statt Y" beidseitig
+   zusichern; Sprint 2: Auslöser eines Zustandsübergangs auflisten; Sprint 3: Zwischen-Renders eines
+   Effekt-Übergangs nachspielen, und als **Tor** die Id-Eindeutigkeit im Index-Generator) – dazu die fünf
+   älteren, unverändert offen.
+2. **Vier offene Fragen** (gesperrt für den Lauf, Freigabe 1): B-226 (zwei Münzstände im Shop – in Sprint 3
+   nicht reproduziert, 979/979), B-231 (Fokus ohne Fehlerkasten), B-232 (Bestätigung außerhalb des
+   Sichtfelds – im Browser gemessen), B-233 (zwei Sperrmuster auf der Lehrwerke-Seite).
+3. **B-227, B-228, B-229 sind abgenommen** (Sprint 3, zweiter Lauf). **B-230** ist die umnummerierte
+   PIN-Hash-Story (vorher doppelt als B-216).
 4. **B-164** bleibt beim Nutzer (Architekturfrage `useAsync`); B-216 hat sie bewusst *nicht* beantwortet, der
-   neue Hook `useGemerkterFehler` ist der Kandidat, falls „Feld im Hook" gewinnt – und B-227 ist ein Argument
-   dafür, die Frage bald zu entscheiden.
-5. `git log` gegen `1ad45c2`: vier Commits dieser Nacht (Sprint 1 + Nachtrag, Sprint 2 + Nachtrag);
-   **nichts ist gepusht.**
+   Hook `useGemerkterFehler` trägt jetzt auch einen Schlüssel – zwei Nächte Arbeit an einem Gedächtnis neben
+   `useAsync` sind ein Argument, die Frage bald zu entscheiden.
+5. `git log` gegen `1ad45c2`: vier Commits des ersten Laufs (Sprint 1 + Nachtrag, Sprint 2 + Nachtrag) plus
+   die Commits des zweiten Laufs (Sprint 3 + Nachtrag, ggf. Sprint 4); **nichts ist gepusht.**
