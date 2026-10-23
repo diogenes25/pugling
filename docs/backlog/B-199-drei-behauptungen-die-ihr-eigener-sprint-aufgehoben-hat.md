@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-162, B-184, B-174]
 wartet_auf: ""
+nachgeschaut: "2026-10-23: VaterWizard.tsx:197-201 Behauptung 'Erneut suchen ruft exercises.reload()' gegen :576 (`onRetry={exercises.reload}`) und :735 (Knopf ruft onRetry) nachgerechnet; useGemerkterFehler-Docblock: 'Schluessel wechselt einen Render vor error=null' gegen useAsync.ts (setError(null) im Effekt, also nach dem Render) und 'cancelled verwirft ueberholte Antwort' gegen useAsync.ts:45-52 geprueft; kein Befund"
 ---
 
 # B-199 · Drei Behauptungen, die ihr eigener Sprint aufgehoben hat

@@ -48,11 +48,17 @@ export interface ReferenceSelectProps {
   freetextValue?: string;
   disabled?: boolean;
   /**
-   * Wahr, solange die Liste zum **ersten Mal** lädt (`useAsync.showPlaceholder` der Liste). „Die Liste kennt
-   * den Wert nicht" hat zwei Ursachen – noch nicht da, oder nicht gekommen –, und nur die zweite heißt
-   * „(nicht geladen)" (B-229). Solange sie unterwegs ist, heißt die Sonderoption „(lädt…)" und das Feld ist
-   * gesperrt: eine Wahl aus einer Liste, die noch nicht da ist, ist keine Wahl. Weggelassen, wo die Liste auf
-   * Seitenebene lädt, bevor das Formular aufgeht.
+   * Wahr, solange die Liste **unterwegs** ist. „Die Liste kennt den Wert nicht" hat zwei Ursachen – noch
+   * nicht da, oder nicht gekommen –, und nur die zweite heißt „(nicht geladen)" (B-229). Solange sie
+   * unterwegs ist, heißt die Sonderoption „(lädt…)" und das Feld ist gesperrt: eine Wahl aus einer Liste,
+   * die noch nicht da ist, ist keine Wahl.
+   *
+   * Welches Feld von `useAsync` hier hineingehört, entscheidet, ob die Liste einen Schlüssel hat: lädt sie
+   * genau einmal (Kinderliste im Plan-Formular), reicht `showPlaceholder`; hängt sie an einem Schlüssel und
+   * lädt bei jedem Wechsel neu (Units der gewählten Reihe), muss es `loading` sein – `showPlaceholder` ist
+   * nach dem ersten Abschluss dauerhaft falsch (B-235). Weggelassen nur, wo die Liste nachweislich auf
+   * Seitenebene lädt, bevor das Formular aufgeht – und „nachweislich" heißt: am `useAsync` nachgesehen,
+   * nicht gezählt; genau daran ist B-229 vorbeigegangen.
    */
   laedt?: boolean;
 }

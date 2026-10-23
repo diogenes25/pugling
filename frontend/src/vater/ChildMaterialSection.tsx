@@ -316,6 +316,13 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
             id={`${id}-unit`} value={form.currentUnitId} onChange={(v) => up("currentUnitId", v)}
             loadedId={eigeneUnit ? book?.currentUnitId : null}
             loadedName={eigeneUnit ? book?.currentUnitLabel : null}
+            // Die Liste lädt HIER, nicht auf Seitenebene – ohne `laedt` stünde beim Öffnen für die Dauer des
+            // Abrufs die Beschriftung des Ausfalls (B-235, dieselbe Lage wie B-229 am Kind-Feld). `loading`
+            // und nicht `showPlaceholder`: die Liste hängt am Reihen-Schlüssel und lädt bei jedem Wechsel neu,
+            // `showPlaceholder` ist aber nach dem ersten Abschluss dauerhaft falsch – zurück zur eigenen
+            // Reihe hieße es sonst wieder „(nicht geladen)". Nach einem Fehlschlag ist `loading` ebenso
+            // falsch, also bleibt dort die Ausfall-Beschriftung mit dem Banner darunter.
+            laedt={units.loading}
             // Zwei Bedingungen, jede für einen eigenen Fall: `units.error` deckt den gescheiterten
             // Abruf (B-172), der Reihen-Schlüssel das Ladefenster eines Reihenwechsels (B-195).
             // Die eine ersetzt die andere nicht.

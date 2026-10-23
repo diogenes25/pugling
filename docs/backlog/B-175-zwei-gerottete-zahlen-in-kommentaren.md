@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-139]
+nachgeschaut: "2026-10-23: playwright.config.ts:53-56 verweist fuer die Zahl auf B-139 -> dort steht 'sechs Naechte' an drei Stellen (Z.22/37/55), eine Quelle; e2e.yml nennt keine Testzahl mehr (nachgelesen im Diff 49b1fbc); kein Befund"
 ---
 
 # B-175 · Zwei Zahlen in Kommentaren widersprechen dem, was gemessen wurde

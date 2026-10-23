@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import {
-  createExerciseHref, istGefiltert, newUnitDefaults, seriesFilterQuery, UnitForm,
+  createExerciseHref, istGefiltert, newUnitDefaults, SeriesEigentumsHinweis, seriesFilterQuery, UnitForm,
   type SeriesFilterValues,
 } from "./VaterLehrwerke";
 import type { SeriesUnitResponse, TextbookSeriesResponse } from "../lib/types";
@@ -173,5 +173,45 @@ describe("istGefiltert – was eine leere Liste bedeutet", () => {
     ["Klassenstufe", { grade: "8" }],
   ])("sagt Ja bei gesetztem Filter: %s", (_name, teil) => {
     expect(istGefiltert({ ...KEIN_FILTER, ...teil })).toBe(true);
+  });
+});
+
+/*
+ * B-159 – der Zwilling von B-154 (`CatalogAdmin.test.tsx`) eine Katalogebene höher. Bei JEDER nicht eigenen
+ * Reihe stand „hat jemand anderes angelegt" – auch bei einer aus dem Grundbestand, die niemandem gehört (im
+ * Seed sind das alle). Die zwei Fälle werden getrennt geprüft, weil der falsche Satz nicht bloß fehlen,
+ * sondern gar nicht entstehen darf.
+ *
+ * Rot macht die ersten beiden Fälle das Zusammenlegen der Zweige; den dritten ein strenges `=== null`.
+ */
+describe("SeriesEigentumsHinweis – wem eine nicht eigene Reihe gehört", () => {
+  const reihe = (over: Partial<TextbookSeriesResponse> = {}): TextbookSeriesResponse => ({
+    id: 7, name: "Access", slug: "access", schoolTypes: "None", isOwn: false, unitCount: 2,
+    createdAt: "2026-08-12T00:00:00Z", subjectId: 3, ...over,
+  });
+
+  it("nennt bei einer fremden Reihe den anderen Creator", () => {
+    render(<SeriesEigentumsHinweis series={reihe({ ownerAdultId: 42 })} />);
+
+    expect(screen.getByText(/hat jemand anderes angelegt/)).toBeTruthy();
+    expect(screen.queryByText(/gehört zum Grundbestand/)).toBeNull();
+  });
+
+  it("nennt bei einer Reihe aus dem Grundbestand niemanden als Eigentümer", () => {
+    render(<SeriesEigentumsHinweis series={reihe({ ownerAdultId: null })} />);
+
+    expect(screen.getByText(/gehört zum Grundbestand/)).toBeTruthy();
+    expect(screen.queryByText(/hat jemand anderes angelegt/)).toBeNull();
+  });
+
+  it("behandelt ein fehlendes ownerAdultId wie ownerlos, nicht wie fremd", () => {
+    // Der Vertrag gibt `ownerAdultId` optional heraus – ohne das Feld darf der fremde Creator nicht erfunden
+    // werden (dieselbe Falle wie in `CatalogAdmin.test.tsx`).
+    const ohneFeld = reihe();
+    delete (ohneFeld as { ownerAdultId?: number | null }).ownerAdultId;
+
+    render(<SeriesEigentumsHinweis series={ohneFeld} />);
+
+    expect(screen.getByText(/gehört zum Grundbestand/)).toBeTruthy();
   });
 });

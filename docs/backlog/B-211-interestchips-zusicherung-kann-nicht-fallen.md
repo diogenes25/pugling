@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-206]
 wartet_auf: ""
+nachgeschaut: "2026-10-23: ExerciseEditModal.tsx:764 `disabled={disabled || pick === ''}` gegen den Test gelesen: Auswahl '7' VOR dem rerender, Zwischenzusicherung 'nicht gesperrt' haelt, danach `disabled` allein -> Mutante ohne `disabled ||` bliebe freigegeben, Test faellt; Entfernen-Knopf :743 `disabled={disabled}`, Klick auf gesperrten Knopf feuert in React kein onClick -> onChange-Zusicherung traegt; kein Befund"
 ---
 
 # B-211 · Eine Zusicherung prüft den Ausgangszustand und kann darum nie fallen

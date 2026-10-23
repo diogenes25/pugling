@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { api } from "../lib/api";
 import { TextbookForm } from "./ChildMaterialSection";
 import { AuthProvider } from "../lib/auth";
 import type { SubjectResponse, TextbookResponse } from "../lib/types";
@@ -102,14 +103,19 @@ describe("TextbookForm – wenn eine Optionsliste den geladenen Wert nicht kennt
       .disabled).toBe(false);
   });
 
-  it("zeigt die geladene Reihe und die geladene Unit, wenn ihre Listen fehlen", () => {
+  it("zeigt die geladene Reihe und die geladene Unit, wenn ihre Listen fehlen", async () => {
     zeige({ seriesId: 9, seriesName: "Access", currentUnitId: 7, currentUnitLabel: "Unit 7" });
 
     expect(feld("Reihe im Katalog").value).toBe("9");
     expect(screen.getByRole("option", { name: "Access (nicht geladen)" })).toBeTruthy();
 
     expect(feld("Aktuelle Unit").value).toBe("7");
-    expect(screen.getByRole("option", { name: "Unit 7 (nicht geladen)" })).toBeTruthy();
+    // `find`, nicht `get`: Seit B-235 heißt die Unit „(lädt…)", solange der Abruf läuft – „(nicht geladen)"
+    // ist erst der Zustand NACH dem gescheiterten Abruf. Vorher las dieser Fall den Ausfall synchron ab.
+    // Der Fehlschlag kommt weiter vom ECHTEN Abruf (siehe Block oben), nicht von einem Spion wie in den
+    // B-235-Fällen unten – bewusst, weil dieser Block genau den echten Fehlerfall halten will. Preis: `find`
+    // wartet auf einen `ECONNREFUSED` gegen localhost (sofort) statt auf ein abgelehntes Promise.
+    expect(await screen.findByRole("option", { name: "Unit 7 (nicht geladen)" })).toBeTruthy();
   });
 
   it("nimmt die Unit-Option zurück, sobald die Reihe gewechselt ist", () => {
@@ -121,5 +127,45 @@ describe("TextbookForm – wenn eine Optionsliste den geladenen Wert nicht kennt
 
     expect(feld("Aktuelle Unit").value).toBe("");
     expect(screen.queryByRole("option", { name: /Unit 7/ })).toBeNull();
+  });
+});
+
+/*
+ * B-235. Die Unit-Liste lädt IM Formular (nicht auf Seitenebene), und solange sie unterwegs ist, beschriftete
+ * das Feld den geladenen Wert mit der Beschriftung des AUSFALLS – „(nicht geladen)" bei jedem Öffnen, auch
+ * wenn alles klappt. B-229 hatte dasselbe am Kind-Feld des Plan-Formulars repariert und diese Stelle für
+ * „lädt auf Seitenebene" gehalten.
+ *
+ * Hier wird der Abruf gefälscht, nicht das `fetch`: `vi.spyOn(api, "seriesUnits")` hält das Fenster offen
+ * (ein nie auflösendes Promise) bzw. schließt es als Fehlschlag – beides deterministisch, ohne auf den
+ * `ECONNREFUSED` des echten Abrufs zu warten.
+ *
+ * Rot macht den ersten Fall das Fehlen von `laedt` am Unit-Feld (gemessen vor dem Fix: „Unit 7 (nicht
+ * geladen)" statt „(lädt…)"). Der zweite ist die Gegenprobe und war schon vor dem Fix grün – er fällt nur,
+ * wenn das Fenster nach dem Fehlschlag offen bliebe (`loading` statt eines Zustands, der den Abschluss kennt).
+ */
+describe("TextbookForm – solange die Units laden (B-235)", () => {
+  afterEach(() => vi.restoreAllMocks());
+  const unit = () => screen.getByLabelText("Aktuelle Unit", { exact: true }) as HTMLSelectElement;
+
+  it("beschriftet die gespeicherte Unit mit „(lädt…)“ und sperrt das Feld, solange die Liste unterwegs ist", () => {
+    vi.spyOn(api, "seriesUnits").mockReturnValue(new Promise(() => {}));
+    zeige({ seriesId: 9, seriesName: "Access", currentUnitId: 7, currentUnitLabel: "Unit 7" });
+
+    expect(unit().value).toBe("7");
+    expect(screen.getByRole("option", { name: "Unit 7 (lädt…)" })).toBeTruthy();
+    expect(unit().disabled).toBe(true);
+    // Im Unit-Feld, nicht auf der Seite: das Reihen-Feld sagt hier zu Recht „(nicht geladen)" – seine Liste
+    // kommt als Prop und ist leer (gemessen: die seitenweite Abfrage traf „Access (nicht geladen)").
+    expect(within(unit()).queryByRole("option", { name: /nicht geladen/ })).toBeNull();
+  });
+
+  it("sagt nach einem gescheiterten Abruf weiter „(nicht geladen)“ und gibt das Feld frei", async () => {
+    vi.spyOn(api, "seriesUnits").mockRejectedValue(new Error("Verbindung weg"));
+    zeige({ seriesId: 9, seriesName: "Access", currentUnitId: 7, currentUnitLabel: "Unit 7" });
+
+    expect(await screen.findByRole("option", { name: "Unit 7 (nicht geladen)" })).toBeTruthy();
+    expect(unit().disabled).toBe(false);
+    expect(within(unit()).queryByRole("option", { name: /lädt…/ })).toBeNull();
   });
 });

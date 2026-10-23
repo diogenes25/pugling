@@ -435,7 +435,7 @@ export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, re
         <>
           <div className="field"><label>Text (Lücken als {"{{1}}"}, {"{{2}}"} …)</label>
             <input value={extra.text ?? ""} onChange={(e) => ex({ text: e.target.value })} placeholder="Je {{1}} du pain à la {{2}}." /></div>
-          <div className="field"><span className="label-row">Wortpool <span className="muted">(optional)</span></span>
+          <div className="field"><span className="label-row group-label">Wortpool <span className="muted">(optional)</span></span>
             <RepeatedTextFields label="Wort" placeholder="achète"
               values={Array.isArray(extra.wordBank) ? extra.wordBank : []}
               onChange={(v) => ex({ wordBank: v })} /></div>
@@ -691,7 +691,7 @@ export function RowRepeatedField({ label, values, onChange, scope, placeholder, 
 }) {
   return (
     <div className="field" style={{ flex: 1, minWidth: 160 }}>
-      <span className="label-row">
+      <span className="label-row group-label">
         {label}{optional && <span className="muted"> (optional)</span>}
         {topic && <InfoHint topic={topic} />}
       </span>
@@ -716,7 +716,7 @@ export function RowRepeatedPairField({ label, wordLabel, glossLabel, pairs, onCh
 }) {
   return (
     <div className="field" style={{ flex: 1, minWidth: 220 }}>
-      <span className="label-row">{label}</span>
+      <span className="label-row group-label">{label}</span>
       <RepeatedPairFields wordLabel={wordLabel} glossLabel={glossLabel} scope={scope}
         pairs={Array.isArray(pairs) ? pairs : []} onChange={onChange} />
     </div>

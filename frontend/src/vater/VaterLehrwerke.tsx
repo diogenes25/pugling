@@ -357,16 +357,31 @@ function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, on
       {open && (
         <tr>
           <td colSpan={6}>
-            {!series.isOwn && (
-              <p className="muted">
-                Diese Reihe hat jemand anderes angelegt – du kannst sie verwenden, aber nicht ändern.
-              </p>
-            )}
+            {!series.isOwn && <SeriesEigentumsHinweis series={series} />}
             <UnitPanel series={series} onChanged={onChanged} onMeldung={onMeldung} />
           </td>
         </tr>
       )}
     </>
+  );
+}
+
+/**
+ * Warum eine nicht eigene Reihe nicht änderbar ist – mit den zwei Fällen unterschieden, die B-154 für das
+ * Fach eingeführt hat (`CatalogAdmin.tsx`): „hat jemand anderes angelegt" wäre bei einer Reihe aus dem
+ * Grundbestand falsch – sie gehört niemandem, und im Seed sind das alle (B-159). `== null` deckt `null` und
+ * ein fehlendes Feld gleichermaßen (der Vertrag gibt `ownerAdultId` optional heraus).
+ *
+ * Exportiert nur für den Test: `SeriesRow` ruft beim Aufklappen die Units ab, dieses Bauteil ist reine
+ * Prop-Arbeit.
+ */
+export function SeriesEigentumsHinweis({ series }: { series: TextbookSeriesResponse }) {
+  return (
+    <p className="muted">
+      {series.ownerAdultId == null
+        ? "Diese Reihe gehört zum Grundbestand – du kannst sie verwenden, aber niemand kann sie ändern."
+        : "Diese Reihe hat jemand anderes angelegt – du kannst sie verwenden, aber nicht ändern."}
+    </p>
   );
 }
 

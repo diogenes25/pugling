@@ -232,7 +232,10 @@ a { color: var(--cyan); }
    sie ausgleicht – nicht in einer .tsx, wo sie beim Ändern des `gap` niemand findet. */
 .field > .live-slot { margin-top: -6px; }
 .field > .live-slot.on { margin-top: 0; }
-.field label { font: 700 12px/1 var(--font-body); color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+/* Die Feld-Typografie hängt an der ROLLE, nicht am Element (B-176): Eine Überschrift über N Feldern ist kein
+   `<label>` (sie beschriftet kein einzelnes Eingabefeld) und trägt darum `.group-label` – sonst rendert sie
+   als Fließtext neben ihren Nachbarn. */
+.field label, .field .group-label { font: 700 12px/1 var(--font-body); color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
 .field input, .field select, .field textarea { background: #0c0e2c; border: 1.5px solid var(--stroke); border-radius: 12px; color: var(--ink); padding: 12px; font-size: 15px; font-family: inherit; }
 .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--cyan); border-color: var(--cyan); }
 
@@ -243,6 +246,9 @@ a { color: var(--cyan); }
   width: 16px; height: 16px; border-radius: 50%; padding: 0; cursor: pointer;
   background: transparent; border: 1.5px solid var(--stroke); color: var(--muted);
   font: 700 11px/1 var(--font-body); font-style: italic;
+  /* Kein `text-transform: none` nötig, obwohl der Knopf in Gruppen-Überschriften INNERHALB des
+     `.group-label`-Spans steht: Formular-Controls erben es nicht, der UA-Stylesheet setzt es selbst
+     zurück (B-176, im Browser gemessen – `gruppenkopf-sieht-aus-wie-ueberschrift.spec.ts` hält es). */
 }
 .info-hint-btn:hover { color: var(--ink); border-color: var(--cyan); }
 .info-hint-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }

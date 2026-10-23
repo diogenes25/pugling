@@ -27,17 +27,18 @@ aus (`anmerkungen.spec.ts` hebt das für sich auf). Plan: [anmerkungen-plan.md](
 
 **Feld-Erklärungen** (`src/components/InfoHint.tsx` + `src/lib/fieldHelp.ts`): Erklärungsbedürftige
 Eingabefelder tragen statt `<label>` ein `<FieldLabel htmlFor=… topic="…">`, das ein „ⓘ" mit Popover anhängt
-(Checkbox-Zeile: `<span className="label-row">` um `<label className="checkline">` + `<InfoHint>`).
+(Checkbox-Zeile: `<span className="label-row">` um `<label className="checkline">` + `<InfoHint>`; Überschrift
+über N Feldern: `<span className="label-row group-label">`, die Typografie hängt an der Klasse, B-176).
 **Der Text steht nie am Feld, sondern in `fieldHelp.ts`** – dieselbe Größe wird mehrfach eingestellt
 (Assistent wie Plan-Seite), und zwei Formulierungen desselben Begriffs werden zwei Bedeutungen; `HelpTopic`
 lässt einen Tippfehler beim Übersetzen auffallen. Der Hinweis-Knopf heißt
 `Erklärung zu „<Feldname>"` – **`getByLabel` in Tests darum mit `{ exact: true }`**, sonst trifft der
-Teilstring-Vergleich den Knopf statt das Eingabefeld. E2E:
-[e2e/feldhilfe.spec.ts](e2e/feldhilfe.spec.ts) prüft Feld → *richtiger* Text, nicht „irgendein Popover".
+Teilstring-Vergleich den Knopf statt das Eingabefeld. `e2e/feldhilfe.spec.ts` prüft Feld → *richtiger* Text,
+nicht „irgendein Popover".
 
 **Komponenten/Hooks testet React Testing Library** (`render`, `renderHook`); der Test liegt beim Geprüften.
 Tragend: `setupFiles: ["src/test-setup.ts"]` räumt das DOM zwischen den Fällen ab – ohne `globals: true` tut
-RTL das **nicht** selbst (Begründung in [src/test-setup.ts](src/test-setup.ts), bewacht von
+RTL das **nicht** selbst (Begründung in `src/test-setup.ts`, bewacht von
 `src/test-setup.test.tsx`). **Grenze: kein nachgebauter Bildschirm mit gefälschtem `fetch`** – Bausteine und
 Regeln hier, Wege durch die App bei Playwright. Klicks per `fireEvent`, nie `node.click()`.
 
@@ -52,11 +53,10 @@ sichtbare Grund, warum eine verworfene zweite Aktion nicht wie „nichts passier
 die Sohn-Arcade (B-49) folgt ihr noch nicht. **Erfolg darf stumm bleiben** (`run` ohne `okText`), wo die
 Änderung selbst die Rückmeldung ist – so der Tag-Editor im Vokabel-Store; ein Banner je Chip wäre Lärm.
 
-**Normales `npm install`/`npm ci` genügt** – `--legacy-peer-deps` ist nirgends mehr nötig, auch nicht in
-CI/Deploy ([B-25](../docs/backlog/B-25-vite-pwa-peer-konflikt.md)).
+**`npm install`/`npm ci` ohne `--legacy-peer-deps`**, auch in CI ([B-25](../docs/backlog/B-25-vite-pwa-peer-konflikt.md)).
 
 Rollen im SPA: `/` Produktseite, `/vater` Web-Admin, `/sohn` Arcade-PWA.
-API-Client unter [src/lib/](src/lib/), kein HTTP daneben.
+API-Client unter `src/lib/`, kein HTTP daneben.
 
 **Zwei Konto-Arten** ([docs/lehrer-konto-plan.md](../docs/lehrer-konto-plan.md)): ein **Vater**-Konto trägt
 die Rollen Creator + Supervisor, ein **Lehrer**-Konto nur Creator. `session.role` (`Supervisor` | `Creator` |
@@ -70,7 +70,7 @@ bleibt beim Server; das Frontend zeigt nur keine Türen, die verschlossen sind.
 (`/vater/inhalte`). Sie folgen den Ebenen des Produkts und sind **keine Rechte**, sondern eine Antwort auf
 „woran arbeite ich gerade".
 
-**Die Architektur liegt als Daten in [src/vater/navigation.ts](src/vater/navigation.ts)** – ein neuer
+**Die Architektur liegt als Daten in `src/vater/navigation.ts`** – ein neuer
 Bereich wird *dort* eingetragen, nicht in die Kopfzeile geschrieben. Die aktive Perspektive kommt aus dem
 **Pfad** (`perspectiveOfPath`), nicht aus einem State: sonst öffnete ein Lesezeichen die richtige Seite in
 der falschen Perspektive. Eine neue Unterseite, die nicht selbst Nav-Eintrag ist, braucht darum einen

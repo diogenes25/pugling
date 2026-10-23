@@ -221,7 +221,7 @@ export function VaterVocab() {
                     {/* Kein `label`: Die Überschrift gehört zu N Feldern, nicht zu einem. Und nur an der
                         ersten Zeile, sonst stünde in jeder Zeile derselbe Hinweis-Knopf. */}
                     {i === 0 && (
-                      <span className="label-row">
+                      <span className="label-row group-label">
                         Auch richtig <span className="muted">(optional)</span>
                         <InfoHint topic="translationAlternatives" />
                       </span>
@@ -597,7 +597,7 @@ function VocabDetailsEditor({ pos, noun, setNoun, verb, setVerb, alternatives, s
         <div className="field" style={{ maxWidth: 320 }}>
           {/* Dieselbe Größe wie oben im Anlege-Formular – darum derselbe Wortlaut und derselbe Hilfetext.
               Zwei Formulierungen desselben Begriffs werden zwei Bedeutungen. */}
-          <span className="label-row">
+          <span className="label-row group-label">
             Auch richtig <InfoHint topic="translationAlternatives" />
           </span>
           {/* `scope`: zwei gleichzeitig aufgeklappte Store-Zeilen trügen sonst beide „Auch richtig 1". */}

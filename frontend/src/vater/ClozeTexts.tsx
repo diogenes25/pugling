@@ -269,7 +269,7 @@ export function ClozeForm({ existing, onDone }: { existing?: ClozeResponse; onDo
       )}
 
       <div className="field">
-        <span className="label-row">Wortpool <span className="muted">(optional, Auswahl auf Stufe 1/2)</span></span>
+        <span className="label-row group-label">Wortpool <span className="muted">(optional, Auswahl auf Stufe 1/2)</span></span>
         {/* Ohne `scope`: Den Wortpool gibt es je Formular genau einmal, „Wort 1" kollidiert mit nichts. */}
         <RepeatedTextFields label="Wort" placeholder="morning" values={wordBank} onChange={setWordBank} />
       </div>
