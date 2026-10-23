@@ -130,6 +130,7 @@ Story-Dateien nicht ohnehin sagen: den Zusammenhang, die Reihenfolge und den Sto
 | **NP-13** Der Vater sieht alle Kinder auf einen Blick | *Der Vater sieht für jedes seiner Kinder in einer Zeile, ob die Pflicht dieser Woche bzw. dieses Monats erfüllt ist, und blättert über die Kinder.* | B-39 (→ teilen) | L → 2 × M, beides | Schritt 0 ist das Teilen (a: Endpunkt mit Integrationstests, b: zwei Einbaustellen im Frontend). Geblättert wird über Kinder, der Zeitraum ist ein Filter (Entscheidung vom 2026-10-23). `ComputeDayAsync` je Kind × Plan × Tag vorher messen. |
 | **NP-14** Eine Rückmeldung, eine Sperre, ein Fokus | *Der Vater sieht nach jedem Speichern die Rückmeldung, ein Pflichtfeld sperrt seinen Knopf sichtbar mit Grund, und der Sohn behält beim Nachladen seinen Platz in der Liste.* | B-233, B-232, B-231, B-234 | je XS–S, frontend | **Sonderfreigabe:** die vier stehen auf `idee`, der Lauf darf sie selbst ausformulieren und schätzen (Entscheidungen vom 2026-10-23 in den Stories). Die Hausregeln landen in `frontend/CLAUDE.md`. |
 | **NP-15** Lesen scheitert nicht still und zeigt nichts Veraltetes | *Scheitert ein Laden, kann der Vater es erneut versuchen, ohne seine Eingaben zu verlieren, und nach einem Wechsel zeigt kein Bildschirm alte Daten im neuen Zustand.* | B-183, B-164 | M + M, frontend | B-183 mit Sonderfreigabe (wie NP-14), B-164 ist `Defekt` und autonom grillbar. B-164 zuerst: ein `stale`-Feld im Hook ändert, wie der Retry-Banner seinen Zustand liest. Teilen, wenn der Rückbau der Aufrufer zu breit wird. |
+| **NP-16** Interessen: das Kind sieht nur Freigegebenes | *Der Sohn sieht in seiner Interessen-Auswahl nur Stichwörter, die ein Creator freigegeben hat, nie den Freitext einer fremden Familie, und keine Liste schneidet still etwas ab.* | B-207, B-208, B-141, B-122 | M + XS + S + S, beides, **eine Migration** (B-207) | B-207/B-208 stehen auf `gegrillt`, B-122 auf `idee`, alle drei mit Sonderfreigabe; B-141 ist `Defekt`. B-207 trägt die einzige Migration des Sprints. |
 
 ### Vorschlag für die Nachtfolge
 
@@ -146,6 +147,7 @@ Reihenfolge stellt **Produktwert vor Hygiene**, und jede Nacht mischt ein größ
 | 6 | NP-10, NP-11 | NP-11 beginnt mit dem Teilen |
 | 7 | NP-13 | nach der Entscheidung zu B-39 baubar; beginnt mit dem Teilen |
 | 8 | NP-14, NP-15 | Frontend-Hausregeln; NP-14 ist klein, NP-15 der größere Umbau |
+| 9 | NP-16 | eine Migration; Interessen-Taxonomie aus G-3 |
 
 Der **Auftragstext** bleibt der aus [nachtlauf.md](nachtlauf.md). Damit ein Lauf ein Paket statt einer
 selbst gewählten Auswahl fährt, genügt ein Satz am Ende, zum Beispiel: *„Fahre die Pakete NP-1, NP-2, NP-3
@@ -238,8 +240,11 @@ Noch offen in G-7: B-249 (Notenschlüssel der Probeklausur) und B-250 (Stundenpl
 ein Nachtlauf ausformulieren, schätzen und bauen, obwohl sie `Frage`/`Wunsch` auf `idee` sind. Die
 Freigabe steht in jeder dieser Stories und gilt **nur für sie**.
 
-### G-3 Interessen-Taxonomie – begonnen
+### G-3 Interessen-Taxonomie und Listengrößen – entschieden, mit Sonderfreigabe
 
 | Story | Entscheidung | Folge |
 | --- | --- | --- |
-| B-207 | Ein **Creator-Kennzeichen „für Kinder sichtbar"** kuratiert die Kind-Sicht (Migration) | bleibt `ausformuliert`; offen sind die Punkte 2–5 sowie B-208, B-141 und B-122 |
+| B-207 | Ein **Creator-Kennzeichen „für Kinder sichtbar"** kuratiert die Kind-Sicht (Migration); dazu ein geseedeter Grundbestand, der Supervisor-Editor bleibt frei, und `X-Total-Count` wird ausgewertet | `gegrillt` → NP-16 |
+| B-208 | **PUT bleibt PUT**, ein Test pinnt das weggelassene Feld | `gegrillt` → NP-16 |
+| B-141 | Label **eindeutig, exakter Vergleich, ohne Migration** | `Defekt`, autonom → NP-16 |
+| B-122 | `take` **optional ohne Default** | Sonderfreigabe → NP-16 |

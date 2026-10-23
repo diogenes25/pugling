@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/backend, bereich/katalog, rolle/creator]
+tags: [typ/story, status/gegrillt, bereich/backend, bereich/katalog, rolle/creator]
 aliases: [PUT löscht die Einkleidung, ausgelassenes Feld heißt leer, Vollersatz vs. Autoren-Information]
-status: ausformuliert
+status: gegrillt
 prio: P2
 art: Frage
 groesse:
@@ -86,6 +86,19 @@ Entscheidung. Genau eine der beiden Fassungen muss gelten:
 3. **Braucht der `Pugling.Client` einen Schutz?** Er nimmt ein beliebiges Payload und ist der Weg der
    KI-Agenten. *Empfehlung:* zurückstellen — erst Punkt 1 entscheiden.
 
+## Entscheidungen
+
+Getroffen vom Nutzer im Dialog am 2026-10-23 (Backlog-Sichtung, G-3).
+
+1. **PUT bleibt ein Vollersatz**: ein ausgelassenes `interestTagIds` heißt „leeren" (offener Punkt 1). Ein
+   PUT, der je nach Feld mal ersetzt und mal behält, wäre die größere Überraschung, und die zwei
+   Vorgänger (`suggestedBonus`, `executePublic`) sind genauso gelöst. *Kosten:* Die Einkleidung bleibt über
+   die API löschbar, ohne dass es jemand merkt. Dagegen helfen nur Aufrufer, die das Feld mitschicken.
+2. **Ein Test pinnt das weggelassene Feld** (Punkt 2). Ersetzen und leere Liste pinnt
+   `ExerciseMetadataTests.cs:79-134` schon. *Kosten:* ein Integrationstest.
+3. **`Pugling.Client` bekommt keinen Schutz** (Punkt 3, nach Entscheidung 1 gegenstandslos). Die
+   Verantwortung trägt der Aufrufer.
+
 ## Akzeptanzkriterien (Entwurf)
 
 1. Es steht als nummerierte Entscheidung fest, ob ein ausgelassenes `interestTagIds` „behalten" oder
@@ -101,3 +114,4 @@ Entscheidung. Genau eine der beiden Fassungen muss gelten:
   ist am Code belegt; als Sofortmaßnahme trägt der `<summary>` am `DELETE` seit B-206 einen Absatz, der die
   Grenze ausdrücklich benennt, statt mehr zu versprechen, als gilt.
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht; „nichts pinnt das Verhalten“ stimmt nur halb – `ExerciseMetadataTests.cs:79-134` pinnt Ersetzen und leere Liste, ungetestet ist nur das **weggelassene** Feld. Die Empfehlung „PUT bleibt PUT“ deckt sich mit der PATCH/PUT-Regel in `backend/CLAUDE.md`; nach der Entscheidung bleiben ein Test und ein Doku-Abgleich (XS).
+- **2026-10-23** — **`gegrillt`** in der Grill-Runde G-3 der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): PUT bleibt PUT (Entscheidung 1). Übrig bleiben ein Test und der Doku-Abgleich. **Freigabe des Nutzers (Autonomer Modus, Opt-in je Vorhaben):** ein Nachtlauf darf diese Story auf Grundlage der Entscheidungen selbst schätzen und bauen (Paket NP-16); trifft er auf eine Produktfrage, die die Entscheidungen nicht hergeben, hält er an.

@@ -506,9 +506,9 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-181](B-181-praemisse-der-rennen-klasse-stimmt-nicht.md) | Die Rennen-Klasse nennt nur einen von zwei Fehlermodi — welcher auftritt, entscheidet die Plattform | Defekt | `ausformuliert` | P2 | — | — | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
-| [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `ausformuliert` | P2 | — | backend | Vertrag? |
+| [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `gegrillt` | P2 | — | backend | Vertrag? |
 | [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder | Wunsch | `geschaetzt` | P2 | L | beides | — |
-| [B-207](B-207-kind-auswahlliste-ist-unkuratiert.md) | Die Auswahlliste des Kindes zeigt jedes Schlagwort, das je irgendwer getippt hat | Wunsch | `ausformuliert` | P2 | — | beides | Migration? |
+| [B-207](B-207-kind-auswahlliste-ist-unkuratiert.md) | Die Auswahlliste des Kindes zeigt jedes Schlagwort, das je irgendwer getippt hat | Wunsch | `gegrillt` | P2 | — | beides | Migration? |
 | [B-217](B-217-khan-academy-vergleich-sammel-story.md) | Khan-Academy-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | Wunsch | `idee` | P2 | — | — | — |
 | [B-218](B-218-mischwiederholung-ueber-alle-positionen.md) | Eine Mischwiederholung über alle Positionen des Kindes | Wunsch | `idee` | P2 | — | — | — |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `idee` | P2 | — | — | — |

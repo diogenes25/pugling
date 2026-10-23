@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/medien, bereich/backend, rolle/student]
+tags: [typ/story, status/gegrillt, bereich/medien, bereich/backend, rolle/student]
 aliases: [Unkuratierte Auswahlliste, Fremde Freitexte als Kachel, Tote Stichwörter im Kind-Bildschirm]
-status: ausformuliert
+status: gegrillt
 prio: P2
 art: Wunsch
 groesse:
@@ -84,6 +84,24 @@ oder eine andere Achse als „hat ein Bild".
    hält, entschärft das; sie ersetzt aber nicht das Auswerten von `X-Total-Count`.
    *Empfehlung:* beides — kuratieren **und** den Deckel nicht raten.
 
+## Entscheidungen
+
+Getroffen vom Nutzer im Dialog am 2026-10-23 (Backlog-Sichtung, G-3); Begründungen aus den Empfehlungen oben.
+
+1. **Ein Creator-Kennzeichen „für Kinder sichtbar" kuratiert die Kind-Sicht** (offener Punkt 1). Es ist die
+   einzige Achse, die eine Aussage trifft statt sie abzuleiten, und sie hängt nicht am Bildbestand.
+   *Kosten:* eine neue Spalte am `InterestTag`, also wird die Migrationskette neu gefaltet, und der Creator
+   braucht einen Schalter in der Tag-Verwaltung.
+2. **Ein kleiner Grundbestand freigegebener Stichwörter wird geseedet** (Punkt 2), damit die Liste im
+   Auslieferungszustand nicht leer ist und die Demo vorführbar bleibt. *Kosten:* Seed-Pflege.
+3. **Der Supervisor-Editor bleibt frei** (Punkt 3): Erwachsene dürfen die Taxonomie weiter erweitern; nur
+   die Kind-Sicht wird eng. *Kosten:* neue Freitext-Stichwörter sieht das Kind erst nach der Freigabe durch
+   einen Creator.
+4. **Fremder Freitext ist nur als Nebenwirkung geschützt** (Punkt 4): ein nicht freigegebenes Stichwort
+   erscheint keinem Kind, ein eigener Mechanismus entfällt. *Kosten:* keine.
+5. **Das Frontend wertet `X-Total-Count` aus, statt den Deckel `take=500` zu raten** (Punkt 5). *Kosten:*
+   Paging oder ein vollständiges Nachladen in `interestOptions`.
+
 ## Akzeptanzkriterien (Entwurf)
 
 1. Ein Kind sieht in `GET student/interest-tags` nur Stichwörter, die eine bewusste Entscheidung als
@@ -100,3 +118,4 @@ oder eine andere Achse als „hat ein Bild".
   ist. Ist-Stand am Code belegt; der entscheidende Zusatzbefund gegenüber dem Review: die vorgeschlagene
   Reparatur hätte die Liste im Auslieferungszustand geleert (der Seed legt keine Bilder an).
 - **2026-10-23** — **Entscheidung des Nutzers** in der Grill-Runde der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)) zu offenem Punkt 1: es kuratiert ein **Creator-Kennzeichen „für Kinder sichtbar“** am Stichwort (Migration). Die Empfehlungen zu den Punkten 2–5 (kleiner geseedeter Grundbestand, Supervisor-Editor bleibt frei, Schutz fremden Freitexts als Nebenwirkung, `X-Total-Count` statt geratenem Deckel) sind noch **nicht** bestätigt – Rest der G-3-Runde.
+- **2026-10-23** — **`gegrillt`** in der Grill-Runde G-3 der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): alle fünf offenen Punkte sind als nummerierte Entscheidungen beantwortet, die Akzeptanzkriterien gelten als final. **Freigabe des Nutzers (Autonomer Modus, Opt-in je Vorhaben):** ein Nachtlauf darf diese Story auf Grundlage der Entscheidungen selbst schätzen und bauen (Paket NP-16); trifft er auf eine Produktfrage, die die Entscheidungen nicht hergeben, hält er an.
