@@ -107,7 +107,7 @@ Gegrillt im Nachtlauf 2026-10-23 (Freigabe 1, `art: Defekt`).
 - **2026-10-23** — **abgenommen** (Nachtlauf, Sprint 2). Reviewer wie B-190: die ⚠-Zeile hat drei Spalten wie
   der Kopf, Zählungen unverändert, keine `.tmp`-Reste; Datei ohne Frontmatter wie in Entscheidung 3.
   **Rollengang:** der PM selbst – Harness P3 mit leerer Datei im Wegwerf-Root; im echten Bereich gibt es
-  keine leere Datei (und soll keine entstehen). Commit: siehe Nachtrag.
+  keine leere Datei (und soll keine entstehen). Commit `95b0624` (Protokoll `docs/pm-sitzung-2026-10-23-nacht.md`, „Sprint 2").
 - **2026-10-23** — **gebaut** (Nachtlauf, Sprint 2, derselbe Diff wie B-190). **Rote Probe (erwartet/
   gemessen), im Wegwerf-Root mit `B-900-leer.md` (0 Byte) und `B-901-ohne-frontmatter.md`:** erwartet eine
   ⚠-Zeile für B-900 – gemessen **keine Zeile** in „Offen" und keine in ⚠ (B-900 fehlte vollständig); B-901

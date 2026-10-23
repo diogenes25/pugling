@@ -150,7 +150,7 @@ nachher 0), Build, Lint. Rollengang: der PM liest die Wissenskarte – kein Brow
   **1 rot von 1**; Original 1/1; Suite danach **877/877**. Grep AK 1: **0** (vorher `wiki/08:135-136`,
   `tutorial-supervisor:307/316`, `vater-informationsarchitektur-plan:120`, `frontend/CLAUDE.md:82`).
   Reviewer-Nit → **B-239** (deutsche `/// <summary>` im Wiki-Beispiel). **Rollengang:** der Leser der
-  Wissenskarte – Grep und Lesen, kein Browser. Commit: siehe Nachtrag.
+  Wissenskarte – Grep und Lesen, kein Browser. Commit `95b0624` (Protokoll `docs/pm-sitzung-2026-10-23-nacht.md`, „Sprint 2").
 - **2026-10-23** — gegrillt, geschätzt und gebaut im Nachtlauf (Sprint 2, Freigabe 1). Ist-Stand berichtigt
   (Entscheidung 1), zwei Folge-Stories B-237/B-238.
 - 2026-08-13 · Aufgenommen. Beim Nachziehen der Typ-Label-Prosa für B-163 gefunden: dieselbe Datei trug

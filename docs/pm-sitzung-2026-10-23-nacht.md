@@ -35,7 +35,7 @@ Wird je Sprint fortgeschrieben; die letzte Zeile ist der Zustand.
   Blocker; **drei Review-Funde mit Code-/Testwirkung** (abgeschnittener Sweep, hohle 400-Probe, literaler
   Zeilenumbruch). Nachschau Sprint 1: **kein Defekt**, eine Test-Lücke geschlossen (Mutante 1 rot von 10), zwei
   Berichtigungen. Drei neue Stories aus Funden: B-237, B-238, B-239. Retro schlägt ein **Tor** vor (400 ohne
-  `code`), nicht gelandet. Commit: siehe „Änderungsstand".
+  `code`), nicht gelandet. Commit `95b0624` + Nachtrag.
 
 ## Runde 1 — Vorstellung & Feedback
 

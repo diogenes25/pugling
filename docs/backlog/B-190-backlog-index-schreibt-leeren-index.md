@@ -116,7 +116,7 @@ bleibt sie liegen (untracked, harmlos).
   der Zeilenumbruch der ⚠-Zeile stand als literaler Umbruch in `$'…'` → `$'\n'` wie die Nachbarn, Proben
   erneut grün. Nits benannt (Guard für leeres `files` nur bash < 4.4; ⚠-Reihenfolge; kein `trap`).
   **Rollengang:** der PM selbst – Aufruf aus Root und Unterverzeichnis, Harness P1/P2; kein Browser nötig.
-  Commit: siehe Nachtrag.
+  Commit `95b0624` (Protokoll `docs/pm-sitzung-2026-10-23-nacht.md`, „Sprint 2").
 - **2026-10-23** — **gebaut** (Nachtlauf, Sprint 2). **Rote Proben (erwartet/gemessen), im Wegwerf-Root:**
   P1 (relativer Aufruf aus `docs/backlog`): erwartet Index mit 2 offen/1 abgenommen – gemessen
   `awk: fatal: cannot open source file`, dann „Index geschrieben: 0 offen, 0 abgenommen", **Exit 0**, README
