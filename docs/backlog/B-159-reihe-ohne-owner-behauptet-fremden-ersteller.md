@@ -111,7 +111,7 @@ Satz wäre teurer als ihr Beleg.
   Spec `reihe-aus-dem-grundbestand.spec.ts` (Vater #1 klappt „Green Line 1" auf → „gehört zum Grundbestand",
   kein „jemand anderes"), **1/1** grün, zusammen mit `lehrwerke.spec.ts` **3/3**. **Das ist zugleich der
   Rollengang aus der Creator-Rolle** – die Zeile aus dem Verlauf darunter („was ein Mensch noch sieht") ist
-  damit maschinell gedeckt. Commit: siehe Nachtrag.
+  damit maschinell gedeckt. Commit `7844894` (Protokoll `docs/pm-sitzung-2026-10-23-nacht.md`, „Sprint 1").
 - **2026-10-23** — **gebaut** (Nachtlauf, Sprint 1): `SeriesEigentumsHinweis` in `VaterLehrwerke.tsx`,
   `SeriesRow` rendert es bei `!isOwn`. **Rote Probe (erwartet/gemessen):** Vitest `VaterLehrwerke.test.tsx`
   **3 rot von 30** – alle drei neuen Fälle mit „Element type is invalid … got: undefined" (das Bauteil

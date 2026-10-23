@@ -135,7 +135,7 @@ am Morgen (Mensch).
   Typografie; ein Nit zur Semantik (Gruppe ohne `fieldset`/`legend`) → **B-236** (`idee`). Volle
   Playwright-Suite **79/79**, Vitest **394/394**, `tsc -b` sauber. **Offen für den Menschen (Step 6, dritter
   Ausgang):** ob die drei gleichen Überschriften auf „Übung anlegen" und die uppercase gewordenen
-  Editor-Köpfe gut aussehen. Commit: siehe Nachtrag.
+  Editor-Köpfe gut aussehen. Commit `7844894` (Protokoll `docs/pm-sitzung-2026-10-23-nacht.md`, „Sprint 1").
 - **2026-10-23** — **gebaut** (Nachtlauf, Sprint 1): `index.css` bindet die Feld-Typografie an
   `.field label, .field .group-label`; sieben Stellen tragen `label-row group-label` (Entscheidung 2);
   `frontend/CLAUDE.md` eine halbe Zeile, Budget im selben Durchgang bezahlt (10 239 B vor dem Sprint →

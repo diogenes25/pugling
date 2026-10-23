@@ -124,7 +124,7 @@ Doc-Kommentar in `ReferenceSelect.tsx` → Suite → Reviewer → Commit.
   `getByRole("alert")` wie das Plan-Vorbild – der Units-Banner trägt keine Rolle, die Abfrage zählte immer 0;
   jetzt per Text (`/^Units: /`). Die fehlende Rolle ist B-134s Sweep, nicht diese Story. Volle Playwright-Suite
   **79/79** (4,0 min) vor dieser Korrektur, danach die drei betroffenen Specs **3/3**; Vitest **394/394**.
-  Rollengang siehe unten (E2E als Ersatz, Browser nicht verbunden). Commit: siehe Nachtrag.
+  Rollengang siehe unten (E2E als Ersatz, Browser nicht verbunden). Commit `7844894` (Protokoll `docs/pm-sitzung-2026-10-23-nacht.md`, „Sprint 1").
 - **2026-10-23** — **gebaut** (Nachtlauf, Sprint 1): `laedt={units.loading}` in `ChildMaterialSection.tsx`,
   Doc-Kommentar am `laedt`-Prop in `ReferenceSelect.tsx` erweitert (Entscheidung 3). **Rote Proben
   (erwartet/gemessen):** Vitest `TextbookForm.test.tsx` **1 rot von 30** – Fall „(lädt…)": Option
