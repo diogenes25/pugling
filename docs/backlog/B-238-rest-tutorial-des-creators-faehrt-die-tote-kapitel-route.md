@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/doku, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/doku, rolle/creator]
 aliases: [Creator.http chapters, REST-Tutorial 404]
-status: ausformuliert
+status: abgenommen
 prio: P2
 art: Defekt
-groesse: ""
+groesse: S
 wo: doku
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: Nachtlauf 2026-10-23, Sprint 2 (Sweep zu B-166)
 unverifiziert: false
 grund: ""
@@ -66,7 +66,78 @@ und beim Ausführen sofort.
    siehe Memory); ein Test dafür existiert nicht. *Empfehlung: einmal von Hand durchfahren und das Datum in
    die Datei schreiben – wie `docs/tutorial-creator.md` es mit „verifiziert am" tut.*
 
+## Entscheidungen
+
+Gegrillt im zweiten Nachtlauf 2026-10-23 (Freigabe 1, `art: Defekt`).
+
+1. **Minimale Felder, aus den DTOs abgeschrieben** (Punkt 1): `CreateTextbookSeriesDto(Name, PublisherId?,
+   SubjectName?, SubjectId?, SchoolTypes?, SourceLanguage?, TargetLanguage?, Notes?)` und
+   `CreateSeriesUnitDto(Label, Grade?, OrderIndex?, BookType?, Topics? als Liste, Grammar?, VocabularyNotes?)`
+   (`TextbookSeriesDtos.cs:23-24, :54-55`). **Damit ist die zweite Hälfte der Datei ebenfalls tot:** der
+   bestehende `createSeries` (`:189-201`) schickt `"publisher": "Cornelsen"` (kein Feld des Vertrags →
+   `400 unknown_field`, `UnmappedMemberHandling.Disallow`), `createUnit` (`:208-219`) schickt `topics` als
+   String statt Liste. Beide werden mit umgeschrieben. **Kosten:** die Story wächst von drei auf fünf
+   Requests, die Größe von XS auf S.
+2. **Eigene Reihe mit Zeitstempel** (Punkt 2): `"name": "REST-Demo {{$timestamp}}"` wie bisher beim Tag –
+   kein Seed-Bezug, und der Slug-Idempotenz-Fall („200 statt 201") bleibt im Kommentar erklärt. Das Fach
+   bekommt denselben Zeitstempel, damit ein zweiter Durchlauf nicht an einem Namens-Duplikat hängt.
+   **Kosten:** jeder Durchlauf hinterlässt ein Fach und eine Reihe in der Dev-DB – das tut die Datei heute
+   auch schon.
+3. **Umbau statt Flicken:** Reihe und Unit wandern **vor** die Übung; der spätere Block „Unterrichtsmaterial &
+   Creator-Profile" legt nur noch Profil und Lehrbuch-Verknüpfung an und benutzt `@seriesId`/`@seriesUnitId` von
+   oben. Der `restrictExecute`-PUT geht auf die Unit-Route. **Kosten:** der Lesefluss der Datei ändert sich;
+   dafür zeigt sie den Weg, den `tutorial-creator.md` seit B-106 erzählt.
+4. **Beleg: `curl`-Durchlauf gegen die Wegwerf-Instanz `:5280`** (Punkt 3, AK 2 zweiter Fall): dieselben
+   Requests in derselben Reihenfolge, mit Statuscode je Schritt im Verlauf, und das Datum als „verifiziert
+   am" im Kopf der Datei. Der REST-Client selbst läuft nur im Editor – der Nutzer fährt ihn einmal (steht
+   schon unter „Für den Morgen"). **Kosten:** der `curl`-Lauf prüft Routen und Nutzlasten, nicht die
+   REST-Client-Variablensyntax (`{{login.response.body.token}}`); die bleibt beim Durchlauf von Hand.
+
+## Schätzung
+
+**Größe S** (Anker: eine Datei, ~270 Zeilen, fünf Requests umgeschrieben und zwei neu geordnet, dazu ein
+Live-Durchlauf). `wo: doku`, keine Migration, kein Vertrag.
+
+**Angriffsplan:** Wegwerf-Instanz starten (`/smoke-test`-Rezept, Port 5280) → heutigen Stand der Datei per
+`curl` fahren (rote Zahl: welcher Schritt 404/400) → Datei umbauen → denselben Lauf erneut (alle 2xx) →
+„verifiziert am" + README-Zeile → Reviewer → Commit.
+
+**Risiko:** `{{$timestamp}}` im Fach-Namen ändert den Slug-Hinweis bei der Reihe („Name schon vergeben ⇒
+200") – der Kommentar muss sagen, dass das nur ohne Zeitstempel eintritt.
+
+**Testweg:** `curl`-Sequenz mit Statuscodes (vorher/nachher) im Verlauf.
+
 ## Verlauf
+
+- **2026-10-23** — **abgenommen** (zweiter Nachtlauf, Sprint 4). Reviewer (allgemeiner Agent): alle 26
+  Requests statisch gegen Route/Methode/DTO geprüft (`CreatePublisherDto`, `CreateTextbookSeriesDto`,
+  `CreateSeriesUnitDto` mit `Topics: List<string>`, `ExercisePayload<VocabularyConfig>`, `AddGrantDto`,
+  `CreateTagDto`, `CreateCreatorProfileDto`, `CreateTextbookDto`), Variablenkette (jede `@variable` aus einem
+  existierenden `# @name`), Slug-Kommentar gegen `PublishersController.cs:106-109` und
+  `TextbookSeriesController.cs:152-155` (gemessen 201 → 200), PUT-Body vollständig (Items danach 2 → 2); und
+  **eigener Live-Lauf** gegen eine frische Wegwerf-Instanz: alle 2xx. **Ohne Blocker;** ein Fund mit
+  Doku-Wirkung (dieser Verlauf nannte den curl-Lauf noch nicht – hier), Nits übernommen (`skip=0` statt
+  `skip=10`, damit auch ein Seed mit weniger als zwölf en→de-Einträgen zwei Treffer liefert; `@seriesUnitId`
+  im Story-Text). **Rollengang Creator:** der curl-Durchlauf *ist* der Flow der Datei, Request für Request in
+  ihrer Reihenfolge – im REST-Client selbst fährt ihn der Nutzer (Datum im Kopf der Datei dafür offen).
+  Commit: siehe Nachtrag.
+- **2026-10-23** — **gebaut** (zweiter Nachtlauf, Sprint 4). **Rote Probe:** die Requests der alten Datei
+  (`6af2c62`) per curl gegen eine Wegwerf-Instanz (`:5280`, frische Seed-DB, Harness
+  `scratchpad/creator-http-alt.sh`) – erwartet 2xx durchgehend, gemessen: login 200 · me 200 · listSubjects 200
+  · createSubject 201 · getSubject 200 · **createChapter 405** · getVocabulary 200 · **createExercise 405 ·
+  getItems 404** · listExercises 200 · **preview 404** · createTag 201 · exerciseTypes 200 · **listGrants 404 ·
+  addGrant 404 · restrictExecute 405 · removeGrant 404 · createSeries 400 `unknown_field` (`publisher`) ·
+  createUnit 400 `validation_error` (`topics` kein String) · listUnits 404** · createProfile 400 (Artefakt der
+  Git-Bash-Kommandozeile: Umlaute nicht als UTF-8 gesendet – mit ASCII 201) · **linkTextbook 400** (keine
+  `seriesId`) · matchProfiles 200 – **13 von 24 Schritten rot**, alles ab Schritt 6. **Nach dem Umbau**
+  (Harness `scratchpad/creator-http-neu.sh`, Umlaute als `\u`-Escapes): login 200 · me 200 · listSubjects 200 ·
+  createSubject 201 · getSubject 200 · createPublisher 201 · createSeries 201 · createUnit 201 · listUnits 200 ·
+  getVocabulary 200 · createExercise 201 · getItems 200 · listExercises 200 · preview 200 · createTag 201 ·
+  exerciseTypes 200 · listGrants 200 · addGrant 201 · restrictExecute 200 · removeGrant 204 · createProfile 201
+  · linkTextbook 201 · matchProfiles 200 (liefert das Profil) – **23 von 23 Schritten 2xx**. „Verifiziert am
+  2026-10-23" steht im Kopf der Datei; `docs/REST/README.md:15` beschreibt den neuen Weg.
+
+- **2026-10-23** — gegrillt und geschätzt im zweiten Nachtlauf desselben Tages (Freigabe 1); beim Grillen gegen die DTOs zwei weitere tote Requests gefunden (Entscheidung 1), Größe S.
 
 - **2026-10-23** — angelegt im Nachtlauf (Sprint 2) beim Grep-Sweep zu B-166, direkt `ausformuliert`: die
   Fundstellen stehen mit Zeile, die lebenden Routen sind gegen `ExerciseControllers.cs` geprüft. **Bewusst

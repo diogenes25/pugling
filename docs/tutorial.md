@@ -17,7 +17,7 @@ Der reine Creator-Archetyp ist der **Lehrer** (Seed: *Herr Schmidt*), der nur Ka
 
 | Ebene | Wer im Produkt | Worum es geht | Tutorial |
 | --- | --- | --- | --- |
-| **Creator** | Vater / Lehrer | Lern-Katalog bauen: Fächer, Kapitel, typisierte Übungen, Vokabel-Store, Tags | [tutorial-creator.md](tutorial-creator.md) |
+| **Creator** | Vater / Lehrer | Lern-Katalog bauen: Fächer, Lehrwerk-Reihen mit Units, typisierte Übungen, Vokabel-Store, Tags | [tutorial-creator.md](tutorial-creator.md) |
 | **Supervisor** | Vater | Steuern & belohnen: Study-Pläne, Positionen, Ziele, Shop, Missionen, Kontrolle | [tutorial-supervisor.md](tutorial-supervisor.md) |
 | **Student** | Sohn | Lernen & einlösen: Tagesmission, Üben, Abschlusstest, Fortschritt, Münzen | [tutorial-student.md](tutorial-student.md) |
 

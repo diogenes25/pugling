@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+nachgeschaut: "2026-10-23 (zweiter Lauf, Sprint 4, frischer Agent, gegengelesen): Create :69-70 und Update :99 ueber Project ohne CountAsync (Nachbar TextbookSeriesController :184-185/:248 gleich); PATCH-Leername 400 validation_error :86-93, Test PatchMitLeeremNamen_WirdAbgelehnt liest den code (AssertCodeAsync) und den Namen per GET zurueck; 400 in Swagger (:75, openapi/v1.json patch); Create-Kommentar gegen AccountService.cs:46-47 und TokenService.cs:38-44 nachgerechnet (Creator-Claim nur mit Profil, fid aus dem Profil); rote Zahlen im Verlauf; kein Defekt. Fund derselben Familie: PublishersController.Create baut die Antwort von Hand (B-244); Inventar fuer den vertagten Leer-Waechter endet beim Wort Name - ohne Guard auch Title-PATCHes in Missions :67/:170, Textbooks :110, Shop :276, ClozeTexts :96, StudyPlans :136 ignoriert leer still; Token mit fid auf geloeschten Adult (B-245). Nit: :88 'Same guard as Create' - gleicher Code, anderer Wortlaut"
 ---
 
 # B-158 · Drei kleine Reste im `SubjectsController`

@@ -14,7 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
-nachgeschaut: ""
+nachgeschaut: "2026-10-23 (zweiter Lauf, Sprint 4, frischer Agent, gegengelesen): TestApi.MakeAdmin :53 und AdminAdultAsync :67 vorhanden, die drei privaten Fassungen weg, fuenf Aufrufe (ExerciseGrants :190/:218, FachEigentum :352/:526, VerlagLoeschenSperre :143); Merksatz Flag-vor-Login einmal (TestApi.cs:49); Verhalten je Verwendung gegen die alte Fassung verglichen (keine anmeldende durch nicht-anmeldende ersetzt). EIN DEFEKT: die Summary von AdminAdultAsync (:63-65) behauptete 'green', gemessen ist 'rot' (403-Faelle sehen Break-Glass 200) - korrigiert im Sprint, B-243; dazu eine vierte Fassung RemarkTests.RegisterAdminFatherAsync :659-668, die der Grep ueber drei Namen nicht traf (B-243)"
 ---
 
 # B-179 · Drei Fassungen desselben Admin-Testhelfers, und die tragende Regel steht in jeder neu

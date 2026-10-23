@@ -28,7 +28,7 @@ bereitsteht. Damit überhaupt etwas zu tun ist, braucht es einen **spielbaren Pl
 Laufzeit (Start ≤ heute ≤ Ende) und mit **mindestens einer Position**. Genau **ein** solcher Plan pro
 Kind ist gleichzeitig spielbar (Anti-Cheat-Sperre).
 
-Der Seed bringt einen **Katalog** mit (Fach → Kapitel → Übung `exerciseId 1`), aber **keinen fertigen
+Der Seed bringt einen **Katalog** mit (Fach → Reihe/Unit → Übung `exerciseId 1`), aber **keinen fertigen
 Plan**. Diesen legt zuerst ein **Supervisor (Vater)** an:
 
 ```http
@@ -317,7 +317,7 @@ GET /api/v1/student/children/1/vocabulary-progress/by-word
 ```
 
 Plan-übergreifend (nur Vokabeln), über alle Pläne hinweg; `/by-word` ist der Rollup für „schlecht gelernte
-Wörter". Hierarchisch (Fach→Kapitel→Übung→Item) liegt derselbe Stand unter
+Wörter". Hierarchisch (Fach→Unit→Übung→Item, Routen `…/series-units/…`) liegt derselbe Stand unter
 `GET /api/v1/student/children/1/learn/subjects`.
 
 ---

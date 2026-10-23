@@ -79,17 +79,15 @@ Eintrag in `EXTRA_ROUTES` – sonst springt die Navigation auf „Betreuen".
 Drei Regeln beim Ergänzen: **eine Aktion bekommt keinen Nav-Eintrag** (deshalb stehen „+ Neue Übung" und
 „+ Neuer Plan" am Bestand, den sie erweitern); **ein Bereich, der mehrere Übungen trägt, ist ein eigener Ort**
 (darum liegen Katalog und Lückentexte neben dem Anlegen); und **eine Auswahl reist als Query mit**
-(`?childId=`, `?seriesId=&seriesUnitId=`) – sonst steht im Zielformular wieder das erste Kind bzw. Fach.
+(`?childId=`, `?subjectId=&seriesId=&seriesUnitId=`) – sonst steht im Zielformular wieder das erste Kind bzw. Fach.
 Anlegen und Verwalten sind getrennt: `/vater/exercises` verwaltet, `/vater/exercises/neu` legt an.
 **Der Einstieg zum Anlegen ist „Unit zuerst"**: `/vater/lehrwerke` trägt je Unit ein „+ Übung"
-(`createExerciseHref` reicht `subjectId`/`seriesId`/`seriesUnitId` als Query durch), die Bestandsliste ihr
+(`createExerciseHref` reicht die Auswahl als Query durch), die Bestandsliste ihr
 „+ Neue Übung" mit dem gesetzten Filter. Die Werkstatt hat **bewusst keinen kontextfreien Knopf** mehr
-(seit B-106 ist die Unit Pflichtfeld). Der Knopf hängt **nicht** an `series.isOwn` (fremde Reihen dürfen Übungen tragen), sondern am
-Fach: eine Reihe ohne `subjectId` kann keine tragen (`series_without_subject`).
+(seit B-106 ist die Unit Pflichtfeld). Der Knopf hängt **nicht** an `series.isOwn` (fremde Reihen dürfen Übungen tragen), sondern am Fach: eine Reihe ohne `subjectId` kann keine tragen (`series_without_subject`).
 Ein Vater entsteht **im UI**: `/vater` hat neben „Anmelden" den Modus „Neu registrieren" (anonymes
 `POST supervisor/adults`; die neue Id ist der Login-Name); das eigene Konto liegt unter
-`/vater/profil`. `/vater/kind/:id` ist der **Kind-Hub** (Stammdaten, PIN, Bild, Interessen) und verlinkt alles Kindbezogene per `?childId=`, darunter `…/lernstand` (schwache Wörter +
-Katalog-Drilldown) und `…/ziele` (Objectives/OKR mit ihren Etappen).
+`/vater/profil`. `/vater/kind/:id` ist der **Kind-Hub** (Stammdaten, PIN, Bild, Interessen) und verlinkt alles Kindbezogene per `?childId=`, darunter `…/lernstand` (schwache Wörter + Katalog-Drilldown) und `…/ziele` (Objectives/OKR mit ihren Etappen).
 **Alle Übungstypen des Servers sind im UI anlegbar** — Anzeigename und Routen-Segment kommen aus dem
 Typ-Manifest (`GET creator/exercise-types`, gelesen über [src/lib/exerciseTypes.ts](src/lib/exerciseTypes.ts)),
 **nicht** aus einer Tabelle im Frontend: der Schlüssel weicht von der Route ab (Aufsatz → `essays`), und drei

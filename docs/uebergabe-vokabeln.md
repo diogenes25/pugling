@@ -56,7 +56,7 @@ typischerweise `"items": []` und `"refs": null`.
 - **Web-UI:** [VaterVocab.tsx](../frontend/src/vater/VaterVocab.tsx) (Einfach/Komplex-Umschalter, Suche,
   Inline-Bearbeiten/Löschen); [VaterExercises.tsx](../frontend/src/vater/VaterExercises.tsx)
   (Vokabel-Editor `VocabRefPicker` wählt Store-Einträge bzw. Items, „+ anlegen & wählen";
-  Kapitel-Liste mit Verwendung + Löschen). API/Types: [lib/api.ts](../frontend/src/lib/api.ts),
+  Unit-Liste mit Verwendung + Löschen). API/Types: [lib/api.ts](../frontend/src/lib/api.ts),
   [lib/types.ts](../frontend/src/lib/types.ts). Tests: `VocabTwoStepTests`, `PositionVocabRefTests`, `CatalogManagementTests`.
 
 ## Agenten-API (neu — Datenarbeit auslagerbar)

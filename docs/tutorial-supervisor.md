@@ -337,8 +337,8 @@ PATCH  /api/v1/supervisor/children/1/objectives/1/key-results/1
 DELETE /api/v1/supervisor/children/1/objectives/1/key-results/1
 ```
 
-**Löschen im Katalog:** eine Etappe auf einem Kapitel oder einer Übung **hindert deren Löschen** (409
-`exercise_in_use`) – erst die Etappe wegnehmen. Bewusst so: ein Kapitel-Ziel stillschweigend zum Fach-Ziel
+**Löschen im Katalog:** eine Etappe auf einer Unit oder einer Übung **hindert deren Löschen** (409
+`exercise_in_use`) – erst die Etappe wegnehmen. Bewusst so: ein Unit-Ziel stillschweigend zum Fach-Ziel
 aufzuweiten würde die Messlatte heimlich verschieben.
 
 Abgrenzung: große Ziele ≠ das plan-gebundene Pflichtziel der Position (`cadence`) ≠ die aktivitätsbasierten
@@ -474,7 +474,7 @@ Wörter finden, passende Übung suchen/anlegen, als neue Position anhängen. Die
 [endpunkt-beziehungen.md §3](endpunkt-beziehungen.md#3-übung--auswertung-des-kindes).
 
 > **Im Web-UI:** `/vater/kind/:childId/lernstand` zeigt beide Sichten — „Schlecht gelernte Wörter" (Rollup je
-> Wort, aufklappbar bis zur Antwort-Historie) und „Nach Katalog" (Fach → Kapitel → Übung → Wort). Die Ziele
+> Wort, aufklappbar bis zur Antwort-Historie) und „Nach Katalog" (Fach → Unit → Übung → Wort). Die Ziele
 > darüber liegen unter `/vater/kind/:childId/ziele`.
 
 ### Manuelle Punkte & Verschenken (🪙 Münzen **oder** 💎 Gems)

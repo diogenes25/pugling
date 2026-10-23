@@ -5,6 +5,10 @@ aliases: [Vater-Navigation, Informationsarchitektur, Nav-Umbau, Übungen-Seite a
 
 # Umbauplan: Informationsarchitektur des Vater-Webs
 
+> **Begriffe nachgezogen (B-241, 2026-10-23):** seit [B-106](backlog/B-106-lehrwerkgetriebener-katalog.md) heißt
+> die Ebene unter dem Fach **Reihe/Unit**, nicht mehr Kapitel. Dieser Plan nennt sie so, wo er die heutige
+> Oberfläche beschreibt; die Etappen-Erzählung von 2026-07/08 ist sonst unverändert.
+
 Status: **Umgesetzt** (Etappen 1–4, 2026-07-28). `npm run build`, `npm test` (9) und alle 14
 Playwright-E2E grün. Quelle sind die Anmerkungen **10, 11, 12**
 (alle aus `/vater/exercises`, alle vom 2026-07-28) – die belegten Analysen stehen an den Anmerkungen
@@ -86,12 +90,13 @@ Umgesetzt am 2026-07-28:
   `ClozeTexts`. Beide in der Nav-Gruppe **Inhalte**.
 - Die Einklapper samt „Schließen" sind in **beiden** Komponenten entfallen – die Route *ist* jetzt der
   Auf-/Zu-Zustand.
-- **Über den Plan hinaus, aber nötig:** Fach und Kapitel lassen sich im Katalog jetzt auch *anlegen*
+- **Über den Plan hinaus, aber nötig:** Fach und Kapitel ließen sich im Katalog jetzt auch *anlegen* (heute:
+  Fach und Art im Katalog, Reihe und Unit unter `/vater/lehrwerke`)
   (`NewName`-Zeilen, ein neues Fach wird gleich ausgewählt). Ohne das wäre der Katalog eine Seite, auf
   der man nur umbenennen und löschen kann – und Etappe 3 könnte die Anlege-Felder nicht wegnehmen, weil
   ihr Verweis ins Leere führte. Dabei bekam `NewName` ein `fieldId` von außen: mit drei Instanzen war die
   feste DOM-`id` dreifach vergeben und jedes `label` zeigte auf dasselbe Feld.
-- Auf der Übungen-Seite stehen zwei Links dorthin – der Weg von „Kapitel fehlt" zum Katalog darf nicht
+- Auf der Übungen-Seite stehen zwei Links dorthin – der Weg von „Unit fehlt" zu den Lehrwerken darf nicht
   über die Navigation führen.
 
 **Ein Fund aus dem Test, der die Umsetzung geändert hat:** Der erste Wurf von `VaterKatalog` rief
@@ -108,8 +113,8 @@ Der Kern. Vorher steckte die Bestandsliste **innerhalb** des Anlege-`<form>`s, u
 
 | Route | Inhalt | Datei |
 |---|---|---|
-| `/vater/exercises` | **Verwalten**: Fach/Kapitel als Filter, Liste mit Ausprobieren / Bearbeiten / Verwendung / Löschen, Sortierung, Paging, geteilte Bibliothek; oben „+ Neue Übung". | `VaterExercises.tsx` (+ `ExerciseManageRow`) |
-| `/vater/exercises/neu` | **Anlegen**: Fach & Kapitel (Auswahl), Typ & Metadaten, Inhalts-Editor, „Übung anlegen" + „🧪 Ausprobieren" auf die frisch angelegte Übung. | `VaterExerciseCreate.tsx` (+ `VocabRefPicker`) |
+| `/vater/exercises` | **Verwalten**: Fach/Reihe/Unit als Filter, Liste mit Ausprobieren / Bearbeiten / Verwendung / Löschen, Sortierung, Paging, geteilte Bibliothek; oben „+ Neue Übung". | `VaterExercises.tsx` (+ `ExerciseManageRow`) |
+| `/vater/exercises/neu` | **Anlegen**: Fach (Filter), Reihe & Unit (Auswahl), Typ & Metadaten, Inhalts-Editor, „Übung anlegen" + „🧪 Ausprobieren" auf die frisch angelegte Übung. | `VaterExerciseCreate.tsx` (+ `VocabRefPicker`) |
 
 `/vater/exercises` bleibt, was es war – der Ort, an den Gewohnheit und vier E2E zeigen; es wird nur zur
 Verwaltung. Die Anlege-Route trägt **keinen** Nav-Eintrag: sie ist eine Aktion, erreichbar über
@@ -118,11 +123,12 @@ Verwaltung. Die Anlege-Route trägt **keinen** Nav-Eintrag: sie ist eine Aktion,
 Drei Dinge, die beim Schneiden dazukamen:
 
 - **Die Auswahl reist mit.** Beide Richtungen reichen `?subjectId=&seriesId=&seriesUnitId=` durch, sonst müsste der
-  Vater Fach und Kapitel nach jedem Wechsel neu einstellen. Die E2E prüfen genau das (`toHaveURL`).
-- **Fach/Kapitel sind in der Verwaltung ein Filter, keine Pflicht.** Die Liste erscheint jetzt, sobald ein
-  Fach gewählt ist (Kapitel = „– alle –"). Vorher blieb die Seite leer, bis auch ein Kapitel stand – das
+  Vater Fach und Unit nach jedem Wechsel neu einstellen. Die E2E prüfen genau das (`toHaveURL`).
+- **Fach/Unit sind in der Verwaltung ein Filter, keine Pflicht.** Die Liste erscheint jetzt, sobald ein
+  Fach gewählt ist (Unit = „– alle –"). Vorher blieb die Seite leer, bis auch eine Unit stand – das
   war die Logik des *Anlegens*, die dem Suchen im Weg stand.
-- **„Neues Fach" / „Neues Kapitel" sind weg**, ersetzt durch einen Satz mit Link auf den Katalog. Sie
+- **„Neues Fach" / „Neues Kapitel" sind weg**, ersetzt durch einen Satz mit Link auf den Katalog (heute: Fach
+  im Katalog, Unit unter `/vater/lehrwerke`). Sie
   waren zwei von vier Feldern der ersten Karte – gleiches Gewicht wie die Pulldowns, die man jedes Mal
   braucht. Möglich wurde das erst dadurch, dass der Katalog seit Etappe 2 selbst anlegen kann.
 
@@ -148,7 +154,7 @@ Erledigt (Etappe 3):
 
 | Datei | Was daraus wurde |
 |---|---|
-| `e2e/uebungstypen.spec.ts` | Fach/Kapitel im Katalog, die sechs Typen auf `/vater/exercises/neu`, Liste und Bearbeiten in der Verwaltung; der Manifest-Vergleich steht jetzt **vor** dem Wechsel, weil das Typ-Pulldown zur Anlege-Seite gehört |
+| `e2e/uebungstypen.spec.ts` | Fach im Katalog, Reihe/Unit unter Lehrwerke, die sechs Typen auf `/vater/exercises/neu`, Liste und Bearbeiten in der Verwaltung; der Manifest-Vergleich steht jetzt **vor** dem Wechsel, weil das Typ-Pulldown zur Anlege-Seite gehört |
 | `e2e/vater-von-null.spec.ts` | derselbe Schnitt im „von Null"-Flow, plus die Gegenprobe, dass „Übungen verwalten" die Auswahl als Query mitnimmt |
 
 Abschluss je Etappe: `npm run build` (Typecheck), `npm test`, `npx playwright test`.

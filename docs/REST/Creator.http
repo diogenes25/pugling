@@ -2,15 +2,25 @@
 # Pugling – CREATOR-Flow (api/v1/creator/*)
 #
 # Rolle: Creator (Inhalte anlegen). Login als Vater 1 – ein Vater hält die
-# Creator- UND Supervisor-Rolle, und besitzt Kind 1 (nötig für den Tag-Schritt).
+# Creator- UND Supervisor-Rolle, und besitzt Kind 1 (nötig für den Tag-Schritt
+# und die Lehrbuch-Verknüpfung am Ende).
 # Ein reiner Lehrer (adultId 2 / PIN 9999) kann alle Katalog-Schritte ebenso,
-# nur die child-skopierten Tags nicht (kein eigenes Kind).
+# nur die child-skopierten Tags und das Lehrbuch des Kindes nicht.
+#
+# Hierarchie seit B-106: Fach → Lehrwerk-Reihe → Unit → Übung. Eine Übung hängt
+# an einer Unit; Kapitel gibt es nicht mehr. Reihe und Unit entstehen darum VOR
+# der ersten Übung, und ihre Ids reisen in alle Übungs-Routen weiter.
 #
 # Von oben nach unten senden: jeder Request zieht Token/IDs aus der vorherigen
 # Antwort. Variablen sind DATEI-LOKAL – diese Datei ist ein durchgehender Flow.
+# {{$timestamp}} in den Namen macht den Durchlauf wiederholbar (kein Duplikat).
 #
 # Umgebung im REST-Client-Statusleisten-Picker wählen (local = :5200, smoke = :5280).
 # baseUrl / Zugänge kommen aus .vscode/settings.json (rest-client.environmentVariables).
+#
+# Verifiziert am 2026-10-23: dieselben Requests in dieser Reihenfolge per curl
+# gegen eine Wegwerf-Instanz (:5280), alle 2xx (B-238). Im REST-Client selbst
+# zuletzt gefahren: (Datum hier eintragen).
 ###############################################################################
 
 ### Login als Vater (hält Creator+Supervisor)
@@ -39,14 +49,14 @@ Authorization: Bearer {{authToken}}
 ### erste Subject-ID greifen – $[0] = Array-Index-Zugriff
 @subjectId = {{listSubjects.response.body.$[0].id}}
 
-### Fach anlegen
+### Fach anlegen (Name mit Zeitstempel: ein zweiter Durchlauf läuft nicht in ein Duplikat)
 # @name createSubject
 POST {{baseUrl}}/creator/subjects
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "name": "REST-Client Demo-Fach"
+  "name": "REST-Demo-Fach {{$timestamp}}"
 }
 
 ### Neue Subject-ID merken
@@ -57,32 +67,83 @@ Content-Type: application/json
 GET {{baseUrl}}/creator/subjects/{{subjectId}}
 Authorization: Bearer {{authToken}}
 
-### Kapitel im Fach anlegen
-# @name createChapter
-POST {{baseUrl}}/creator/subjects/{{subjectId}}/chapters
+###############################################################################
+# Lehrwerk: Verlag → Reihe → Unit. Verlag und Reihe sind geteilt und slug-
+# idempotent (derselbe Name liefert 200 mit der bestehenden Zeile statt 201);
+# die Reihe trägt das Fach, die Unit trägt den Stoff und später die Übungen.
+###############################################################################
+
+### Verlag anlegen (geteiltes Vokabular, ohne Owner; derselbe Name ⇒ 200 mit der bestehenden Zeile)
+# @name createPublisher
+POST {{baseUrl}}/creator/publishers
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "name": "Lektion 1",
-  "orderIndex": 0
+  "name": "Cornelsen"
 }
 
-### Neue Chapter-ID merken
-@chapterId = {{createChapter.response.body.id}}
+### Verlags-ID merken
+@publisherId = {{createPublisher.response.body.id}}
 
-### Zwei Vokabeln aus dem Store lesen (Array-Response!)
+### Lehrwerk-Reihe anlegen (publisherId statt Freitext; ohne Zeitstempel im Namen käme 200 mit der bestehenden Reihe)
+# @name createSeries
+POST {{baseUrl}}/creator/textbook-series
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Access REST-Demo {{$timestamp}}",
+  "publisherId": {{publisherId}},
+  "subjectId": {{subjectId}},
+  "schoolTypes": "Gymnasium",
+  "sourceLanguage": "en",
+  "targetLanguage": "de",
+  "notes": "Kompetenzorientiertes Lehrwerk, ein Band je Jahrgang."
+}
+
+### Neue Series-ID merken
+@seriesId = {{createSeries.response.body.id}}
+
+### Unit anlegen – topics (Liste!)/grammar/vocabularyNotes sind der Stoff, den der KI-Creator liest
+# @name createUnit
+POST {{baseUrl}}/creator/textbook-series/{{seriesId}}/units
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "label": "Unit 3 - Growing up",
+  "grade": 8,
+  "orderIndex": 3,
+  "topics": ["Familie", "Freundschaft", "Erwachsenwerden"],
+  "grammar": "Present perfect vs. simple past",
+  "vocabularyNotes": "to grow up, responsibility, to argue"
+}
+
+### Neue Unit-ID merken
+@seriesUnitId = {{createUnit.response.body.id}}
+
+### Units der Reihe lesen (nach Band und Reihenfolge)
+# @name listUnits
+GET {{baseUrl}}/creator/textbook-series/{{seriesId}}/units?grade=8
+Authorization: Bearer {{authToken}}
+
+###############################################################################
+# Übung in der Unit. Vokabeln leben im Store; die Übung verlinkt sie per Id.
+###############################################################################
+
+### Zwei Vokabeln aus dem Store lesen (Array-Response!; skip=0, damit auch ein kleiner Seed zwei Treffer hat)
 # @name getVocabulary
-GET {{baseUrl}}/creator/vocabulary?sourceLanguage=en&targetLanguage=de&sort=translation&skip=10&take=2
+GET {{baseUrl}}/creator/vocabulary?sourceLanguage=en&targetLanguage=de&sort=translation&skip=0&take=2
 Authorization: Bearer {{authToken}}
 
 ### Erste/zweite Store-Vokabel-ID greifen — $[0] / $[1] = Array-Index-Zugriff
 @vocab1Id = {{getVocabulary.response.body.$[0].id}}
 @vocab2Id = {{getVocabulary.response.body.$[1].id}}
 
-### Vokabelübung im Kapitel anlegen (refs = Store-Verlinkung per vocabularyId)
+### Vokabelübung in der Unit anlegen (refs = Store-Verlinkung per vocabularyId)
 # @name createExercise
-POST {{baseUrl}}/creator/subjects/{{subjectId}}/chapters/{{chapterId}}/vocabulary
+POST {{baseUrl}}/creator/textbook-series/{{seriesId}}/units/{{seriesUnitId}}/vocabulary
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
@@ -106,7 +167,7 @@ Content-Type: application/json
 
 ### Anlegen verifizieren: die materialisierten Items der Übung lesen
 # @name getItems
-GET {{baseUrl}}/creator/subjects/{{subjectId}}/chapters/{{chapterId}}/vocabulary/{{exerciseId}}/items
+GET {{baseUrl}}/creator/textbook-series/{{seriesId}}/units/{{seriesUnitId}}/vocabulary/{{exerciseId}}/items
 Authorization: Bearer {{authToken}}
 
 ### Übungskatalog nach Typ filtern
@@ -162,7 +223,7 @@ Content-Type: application/json
 
 ### Zuweisen für alle abschalten (executePublic=false) – nur Owner/Write/Execute dürfen dann noch zuweisen
 # @name restrictExecute
-PUT {{baseUrl}}/creator/subjects/{{subjectId}}/chapters/{{chapterId}}/vocabulary/{{exerciseId}}
+PUT {{baseUrl}}/creator/textbook-series/{{seriesId}}/units/{{seriesUnitId}}/vocabulary/{{exerciseId}}
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
@@ -178,53 +239,12 @@ Content-Type: application/json
 # @name removeGrant
 DELETE {{baseUrl}}/creator/exercises/{{exerciseId}}/grants/2/Write
 Authorization: Bearer {{authToken}}
+
 ###############################################################################
-# Unterrichtsmaterial & Creator-Profile: welcher Stoff ist dran, und wer kennt ihn?
-# Die Lehrwerk-Reihe ist geteilt (jeder Creator liest, nur der Owner ändert) und
-# verbindet das Lehrbuch des Kindes mit dem darauf optimierten Creator-Profil.
+# Creator-Profile: wer kennt den Stoff? Das Profil ("Fachlehrer") bindet sich an
+# die Reihe von oben; das Lehrbuch des Kindes zeigt auf Reihe + aktuelle Unit,
+# damit das Matching Kind → Profil über die Reihe trifft.
 ###############################################################################
-
-### Lehrwerk-Reihe anlegen (Name schon vergeben ⇒ 200 mit der bestehenden Reihe)
-# @name createSeries
-POST {{baseUrl}}/creator/textbook-series
-Authorization: Bearer {{authToken}}
-Content-Type: application/json
-
-{
-  "name": "Access REST-Demo",
-  "publisher": "Cornelsen",
-  "subjectId": {{subjectId}},
-  "schoolTypes": "Gymnasium",
-  "sourceLanguage": "en",
-  "targetLanguage": "de",
-  "notes": "Kompetenzorientiertes Lehrwerk, ein Band je Jahrgang."
-}
-
-### Neue Series-ID merken
-@seriesId = {{createSeries.response.body.id}}
-
-### Unit anlegen – topics/grammar/vocabularyNotes sind der Stoff, den der KI-Creator liest
-# @name createUnit
-POST {{baseUrl}}/creator/textbook-series/{{seriesId}}/units
-Authorization: Bearer {{authToken}}
-Content-Type: application/json
-
-{
-  "label": "Unit 3 - Growing up",
-  "grade": 8,
-  "orderIndex": 3,
-  "topics": "Familie, Freundschaft, Erwachsenwerden",
-  "grammar": "Present perfect vs. simple past",
-  "vocabularyNotes": "to grow up, responsibility, to argue"
-}
-
-### Neue Unit-ID merken
-@unitId = {{createUnit.response.body.id}}
-
-### Units der Reihe lesen (nach Band und Reihenfolge)
-# @name listUnits
-GET {{baseUrl}}/creator/textbook-series/{{seriesId}}/units?grade=8
-Authorization: Bearer {{authToken}}
 
 ### Creator-Profil anlegen (der "Fachlehrer": persona/didactics prägen den System-Prompt)
 # @name createProfile
@@ -233,7 +253,7 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "name": "Englisch 8 Gymnasium - Access REST-Demo",
+  "name": "Englisch 8 Gymnasium - Access REST-Demo {{$timestamp}}",
   "subjectId": {{subjectId}},
   "schoolTypes": "Gymnasium",
   "gradeMin": 7,
@@ -261,7 +281,7 @@ Content-Type: application/json
   "grade": 8,
   "publisher": "Cornelsen",
   "seriesId": {{seriesId}},
-  "currentUnitId": {{unitId}}
+  "currentUnitId": {{seriesUnitId}}
 }
 
 ### Den passenden Creator zum Kind finden: Reihe (8) > Fach (4) > Klassenstufe (2) > Schulart (1)

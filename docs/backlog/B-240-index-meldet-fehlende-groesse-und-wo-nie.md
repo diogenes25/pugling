@@ -1,10 +1,10 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/pm, bereich/doku]
+tags: [typ/story, status/abgenommen, bereich/pm, bereich/doku]
 aliases: [belege nach den Platzhaltern, Warnzeile bei nur leeren Dateien]
-status: ausformuliert
+status: abgenommen
 prio: P2
 art: Defekt
-groesse: ""
+groesse: XS
 wo: doku
 migration: nein
 vertragsbruch: nein
@@ -62,7 +62,63 @@ weil er es nie gesagt hatte.
 3. Rote Probe im Harness aus B-190 (Kopie einer Story ohne die vier Felder → ⚠ nennt vier; Root mit nur
    leerer Datei → ⚠ erscheint).
 
+## Entscheidungen
+
+Gegrillt im zweiten Nachtlauf 2026-10-23 (Freigabe 1, `art: Defekt`).
+
+1. **`belege` bekommt die Rohwerte** (Punkt 1): der Aufruf wandert **vor** die Platzhalter-Zeilen, die
+   Platzhalter bleiben für die Tabellenzeile. Begründung: die Platzhalter sind Darstellung, die Prüfung ist
+   Inhalt – zwei Zwecke, eine Variable, und die Reihenfolge entschied, welcher gewann. **Kosten:** eine
+   Zeilenverschiebung; `row` entsteht weiter nach den Platzhaltern.
+2. **Ein drittes Feld derselben Familie wird mitgenommen:** `:194` setzt auch `art` auf `—` vor `belege`. Ein
+   fehlendes `art` wird dadurch nie als „Feld `art`" gemeldet, sondern als „`art` ist kein bekannter Wert" –
+   gemessen am Code (`:135-139`: der Fall `""` ist unerreichbar). Dieselbe Umstellung heilt es. Begründung:
+   Freigabe 3 – ein Fund im Diff des Sprints wird behoben, nicht notiert. **Kosten:** keine zusätzliche.
+3. **`:265` prüft `unbelegt` mit** (Punkt 2): ist die ⚠-Liste nicht leer, wird der volle Block geschrieben
+   („Offen (0)" + „*Keine.*" + ⚠-Tabelle) statt „*Noch keine Story angelegt.*". Begründung: B-131s AK 1 gilt
+   sonst nur, solange eine lesbare Story existiert. **Kosten:** im degenerierten Fall eine leere Offen-Tabelle
+   mehr – ehrlicher als ein leerer Bereich.
+4. **Beleg als Wegwerf-Harness, kein Tor im Repo** (wie B-190, Entscheidung 5): der Harness des ersten Laufs
+   (`index-probe.sh`) bekommt drei Proben P4–P6 (Story ohne die vier Felder, Root mit nur leerer Datei, Story
+   ohne `art`), rote Zahl vor dem Fix im Verlauf. Das vorgeschlagene **Tor für den Wächter** (Retro Sprint 3)
+   wird in diesem Lauf nicht gelandet – Freigabe 3. **Kosten:** kein Rückfallschutz; der Vorschlag liegt beim
+   Nutzer.
+
+## Schätzung
+
+**Größe XS** (Anker B-02: eine Datei, wenige Zeilen). `wo: doku` (Werkzeug des Backlog-Bereichs), keine
+Migration, kein Vertrag.
+
+**Angriffsplan:** Harness erweitern (P4–P6) → rote Proben mit Zahl → `belege` vor die Platzhalter, `unbelegt`
+in die Bedingung `:265` → Proben grün → echter Index zweimal (Idempotenz-Diff leer) → Reviewer → Commit.
+
+**Risiko:** die ⚠-Tabelle des echten Index wird länger, weil jetzt auch `groesse`/`wo` gemeldet werden – das ist
+der Zweck, aber die Zeilen gehören nachgezogen oder stehen bewusst als Schuld da.
+
+**Testweg:** Harness-Proben P4–P6 (erwartet/gemessen), Idempotenz des echten Index.
+
 ## Verlauf
+
+- **2026-10-23** — **abgenommen** (zweiter Nachtlauf, Sprint 4). Reviewer (allgemeiner Agent, Brief: Skript +
+  Doku + REST-Datei): Reihenfolge der Rohwerte nachvollzogen (`:195` vor `:200-202`, `grund` erst `:247`),
+  `set -u`-Pfade, Markdown im Nur-⚠-Fall (MD055/56/60), Harness P4–P6 selbst gefahren plus fünf eigene
+  Fälle (E1 `geschaetzt` ohne `wo` → „Feld `wo`", in der HEAD-Fassung **nicht gemeldet**; E2–E5 wie erwartet),
+  Idempotenz; **ohne Blocker, kein Fund mit Codewirkung** am Skript. Ein Fund mit Doku-Wirkung (Index nicht
+  regeneriert, B-242-Zeile fehlte) – behoben durch den Lauf vor dem Commit. **Rollengang:** der PM selbst
+  (Harness + echter Index zweimal, byte-gleich); die ⚠-Tabelle des echten Index ist **nicht** gewachsen – keine
+  abgenommene Story fehlt heute `groesse`/`wo`. Das vorgeschlagene Tor (Retro Sprint 3) bleibt Vorschlag.
+  Commit: siehe Nachtrag.
+- **2026-10-23** — **gebaut** (zweiter Nachtlauf, Sprint 4). **Rote Proben (erwartet/gemessen)** im Harness
+  `scratchpad/index-probe.sh <repo-root>` (Fortschreibung des B-190-Harness): **P4** B-131-Kopie auf
+  `abgenommen` ohne die vier Felder – erwartet vier gemeldete Felder, gemessen **zwei** („Feld `migration`,
+  Feld `vertragsbruch`"); **P6** B-190-Kopie ohne `art` – erwartet „Feld `art`", gemessen „`art` ist kein
+  bekannter Wert"; **P5** Root mit nur einer leeren Datei – erwartet ⚠-Tabelle „Datei ist leer", gemessen
+  „*Noch keine Story angelegt.*", Exit 0. **Nach dem Fix:** P4 „Feld `groesse`, Feld `wo`, Feld `migration`,
+  Feld `vertragsbruch`"; P6 „Feld `art`"; P5 voller Block (Offen (0) · *Keine.* · Entgangen (0) · ⚠ mit
+  B-900 „Datei ist leer"), Exit 0. Echter Index: „65 offen, 162 abgenommen, 13 verworfen", zweiter Lauf
+  byte-gleich (`cmp`), Laufzeit unverändert im Sekundenbereich.
+
+- **2026-10-23** — gegrillt und geschätzt im zweiten Nachtlauf desselben Tages (Freigabe 1); ein drittes Feld derselben Familie (`art`) beim Grillen am Code gefunden (Entscheidung 2).
 
 - **2026-10-23** — angelegt aus der **Nachschau** zu Sprint 2 des Nachtlaufs (Commit `95b0624`),
   `entgangen_bei: B-131` – die Abnahme von B-131 trug den Defekt, den dieser Bug verdeckt hat; B-131s

@@ -12,7 +12,7 @@ verifizierbare** Ergänzung zu den erzählenden Markdown-Tutorials
 
 | Datei | Rolle | Login | Was der Flow zeigt |
 |---|---|---|---|
-| [Creator.http](Creator.http) | Creator | Vater `1` / PIN `0000` | Fach → Kapitel → Vokabelübung → Items → Preview → Tags |
+| [Creator.http](Creator.http) | Creator | Vater `1` / PIN `0000` | Fach → Verlag/Reihe → Unit → Vokabelübung → Items → Preview → Tags → Rechte → Profil |
 | [Supervisor.http](Supervisor.http) | Supervisor | Vater `1` / PIN `0000` | Kind → Plan → Position → Lernziel → Shop → Missionen → Kontrolle |
 | [Student.http](Student.http) | Student | Sohn `1` / PIN `1111` | Tagesmission → Üben (Leitner) → Test → Report → Shop-Kauf |
 

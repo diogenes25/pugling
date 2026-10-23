@@ -43,6 +43,17 @@ Wird je Sprint fortgeschrieben; die letzte Zeile ist der Zustand.
   B-131 war mit ⚠ abgenommen; B-241: falscher Cascade-Kommentar – korrigiert – und sechs Doku-Stellen).
   **Der Lauf endet hier** (Limit 2). Retro schlägt ein Tor für den Wächter selbst vor, nicht gelandet.
   Commit `98c8431` + Nachtrag `03cb16e`.
+- **Zweiter Lauf desselben Tages (ab 13:17, Auftrag „starte einen nachtlauf"):** HEAD `9f45907`, 18 Commits
+  ungepusht. Die Chrome-Extension ist diesmal **verbunden** (Freigabe 6, erster Fall). Sprint 4 angesetzt: B-240,
+  B-241, B-238 – die drei `Defekt`-Stories, die die Nachschau des ersten Laufs hinterlassen hat (alle `wo: doku`).
+  Erste Pflichthandlung der Retro: Nachschau zu Sprint 3 (B-158, B-179, Commit `98c8431`).
+- **Sprint 4 abgenommen** (B-240, B-241, B-238 – Werkzeug und Doku behaupten keine Ebene mehr, die es nicht gibt):
+  Harness P4–P6 rot→grün mit Zahl, curl-Durchlauf der `Creator.http` 13/24 rot → 23/23 2xx, Kapitel-Sweep 16 → 1
+  (gewollt), Backend **879/879**, markdownlint 0, Reviewer (allgemeiner Agent) ohne Blocker, **null Funde mit
+  Code-/Testwirkung** (vier mit Doku-Wirkung, behoben). **Rollengang im Browser** (Vater auf `/vater/exercises`
+  und `/neu`), Creator per curl-Flow, PM am Index. Nachschau Sprint 3 des ersten Laufs: **ein Kommentar-Defekt**
+  (B-243, korrigiert) + zwei Funde derselben Familie (B-244, B-245). Vier neue Stories (B-242–B-245). Retro
+  schlägt ein **Tor** vor (Routen in `.http`-Dateien gegen OpenAPI), nicht gelandet. Commit: siehe Nachtrag.
 
 ## Runde 1 — Vorstellung & Feedback
 
@@ -458,7 +469,7 @@ größere Hälfte.
 
 **Backend (B-158, `SubjectsController.cs`):** `Update` antwortet über `Project` (eine Projektion, keine
 `CountAsync`-Runde); Leer-Guard `validation_error` „Name must not be empty." wie bei der Reihe; der
-`Create`-Kommentar nennt, warum kein `fid`-Guard dasteht (Rolle impliziert Profil, `TokenService.cs:43-44`).
+`Create`-Kommentar nennt, warum kein `fid`-Guard dasteht (Rolle impliziert Profil, `AccountService.cs:46-47` – der Zeiger stand hier bis zur Nachschau im zweiten Lauf auf `TokenService.cs:43-44`).
 **Tests (B-179):** `TestApi.MakeAdmin` + `TestApi.AdminAdultAsync`, drei private Fassungen entfernt, fünf
 Aufrufe umgestellt, zwei `using`s weg. **Neue Fälle:** `FachEigentumTests.PatchMitLeeremNamen_WirdAbgelehnt`,
 `…PatchAntwort_IstDieselbeProjektionWieGet`.
@@ -557,6 +568,188 @@ in Kommentaren – kein Tor liest Prosa.
 **Warum der Lauf hier endet:** Limit 2 des Backlog-Laufs – die Nachschau fand **Defekte im Increment eines
 Sprints dieser Nacht** (B-240, B-241 zu Sprint 2), dieselbe Lage wie B-227 und B-235 in der Vornacht. Der
 Zähler (3 von 5) und das Tor (nur vorgeschlagen) hätten nicht gestoppt.
+
+## Zweiter Lauf desselben Tages (ab 13:17)
+
+Der Nutzer hat um 13:17 einen neuen Lauf beauftragt („starte einen nachtlauf"); die acht Freigaben aus
+[nachtlauf.md](nachtlauf.md) gelten erneut. Der erste Lauf endete an Limit 2, weil seine Nachschau Defekte im
+eigenen Increment fand – ein neuer Auftrag hebt den Halt auf, nicht der Lauf selbst. Diesmal meldet
+`tabs_context` eine Tab-Gruppe: der Rollengang kann im Browser laufen, wo eine Rolle etwas zu klicken hat.
+
+### Rollen-Sicht auf diesen Lauf (Runde 4)
+
+Kein neuer `anmerkungen`-Befund (`docs/anmerkungen/` zuletzt 2026-08-14 geändert). Die Rollen sprechen aus
+dem Stand, den der erste Lauf hinterlassen hat:
+
+- **Creator (O-Ton):** „Ich öffne `docs/REST/Creator.http`, schicke die Requests von oben nach unten – und ab
+  Schritt 4 (`…/chapters`) kommt 404, alles danach auch. Das ausführbare Tutorial ist das einzige Dokument,
+  das beim *Ausführen* sofort auffällt." (B-238) · „Die Einstiegsseite sagt, ich baue ‚Fächer, Kapitel,
+  typisierte Übungen'. Kapitel gibt es seit B-106 nicht." (B-241) · **Top-3:** 1. B-238, 2. B-241, 3. B-237
+  (`idee`, bleibt liegen – Freigabe 8).
+- **Vater (O-Ton):** „Das Supervisor-Tutorial erklärt mir, dass eine Etappe ‚auf einem Kapitel' das Löschen
+  hindert. Ich finde im Vater-Web kein Kapitel – nur Reihen und Units." (B-241) · **Top-3:** 1. B-241,
+  2. B-201 (XS, hängt an der offenen Frage B-186 – nicht in diesem Sprint), 3. B-164 (Entscheidung beim Nutzer).
+- **Sohn (O-Ton):** kein Kontakt mit diesem Sprint – kein Student-Pfad wird angefasst. Er bleibt
+  Regressionszeuge.
+- **PM/Entwickler:** „Der Index-Wächter hat B-131 mit ⚠ durchgelassen und dabei zwei von vier Feldern
+  gemeldet. Ein Wächter, der unvollständig meldet, wirkt vollständig." (B-240)
+
+**Synthese:** alle drei Kandidaten sind `Defekt`, `ausformuliert`, `wo: doku`, Fix benannt – autonom grillbar
+(Freigabe 1). Gemeinsamer Faden: *Werkzeug und Doku behaupten eine Ebene oder einen Zustand, den es nicht
+gibt.* Nicht aufgenommen: B-181 (`Defekt`, aber Punkt 2 ist eine Verhaltensfrage im Produktionspfad, die die
+Story selbst dem Dialog vorbehält), B-201 (wartet auf B-186), B-134/B-164 (Architektur-Entscheidungen beim
+Nutzer). Refinement dieses Sprints: drei Stories von `ausformuliert` nach `geschaetzt` – benannt, nicht in die
+Sprintgröße gefaltet.
+
+## Sprint 4 — Ziel & Umfang
+
+**Sprint-Ziel (aus dem Creator-Sitz):** *Was ich im Repo über den Katalog lese oder ausführe – Tutorial,
+REST-Flow, Index-Wächter – sagt dasselbe wie die laufende App: Fach → Reihe → Unit → Übung, und ein Wächter,
+der etwas vermisst, nennt alles, was fehlt.*
+
+**Umfang:** B-240, B-241, B-238 – alle `art: Defekt`, alle in diesem Lauf von `ausformuliert` nach
+`geschaetzt` gebracht (Refinement: drei Stories, je vier Entscheidungen; beim Grillen von B-238 gegen die DTOs
+wuchs die Story von drei auf fünf tote Requests und von XS auf S, beim Grillen von B-240 kam ein drittes Feld
+derselben Familie dazu – `art`). **Draußen geblieben, mit Namen:** B-181 (Punkt 2 ist eine Verhaltensfrage im
+Produktionspfad – die Story selbst behält sie dem Dialog vor), B-201 (hängt an der offenen Frage B-186),
+B-134/B-164 (Architektur-Entscheidungen beim Nutzer), B-07 (wartet auf Azure).
+
+### Entwickler-Brief
+
+- **Ziel:** drei Stellen, die eine nicht existierende Ebene oder einen nicht existierenden Zustand behaupten,
+  sagen die Wahrheit – mit roter Zahl vorher.
+- **Quelle der Wahrheit:** für B-238 die Controller-Routen (`ExerciseRoutes.Base`) und die DTOs in
+  `Pugling.Contracts/Creator`; für B-241 der Frontend-Code (`VaterExercises.tsx`, `VaterExerciseCreate.tsx`)
+  und die Controller hinter den Tutorial-Aussagen; für B-240 die Funktion `belege` selbst.
+- **Guards:** keine neuen – kein Produktcode wird angefasst. Der eine `.cs`-Eingriff (TestApi-Kommentar) kommt
+  aus der Nachschau, nicht aus dem Sprint.
+- **Migration:** keine. **Testweg:** Harness-Proben (Index), curl-Sequenz (REST), zwei Greps mit
+  Ausschlussliste (Doku), markdownlint, Suite.
+- **Reihenfolge:** erst alle drei roten Proben, dann die drei Fixes, dann Reviewer und Nachschau parallel,
+  dann der Rollengang gegen den **frisch gestarteten** Server.
+
+## Iteration 4 — umgesetzt
+
+**Werkzeug (B-240, `backlog-index.sh`):** `belege` sieht die Rohwerte (vor den Platzhaltern); die
+„Noch keine Story angelegt"-Verzweigung prüft `unbelegt` mit. Zwei englische Kommentare nennen den Grund.
+
+**REST (B-238, `docs/REST/Creator.http`):** Verlag → Reihe → Unit stehen vor der Übung; alle Übungs-Routen auf
+`…/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary`; `createSeries` mit `publisherId` statt
+Freitext, `createUnit` mit `topics` als Liste; `{{$timestamp}}` in Fach, Reihe, Profil; „verifiziert am" im Kopf.
+`docs/REST/README.md:15` nachgezogen.
+
+**Doku (B-241):** sieben Stellen (Student-, Supervisor-, Einstiegs-Tutorial, Übergabe-Notiz, IA-Plan) und zwei
+Nits (`frontend/CLAUDE.md:82`, `endpunkt-beziehungen.md:418`); der IA-Plan trägt eine Kopfnotiz und – nach dem
+Review – an fünf Stellen „(heute: …)"-Zusätze statt einer bloßen Wortersetzung.
+
+**Verifikation:**
+
+| Probe | erwartet | gemessen vorher | gemessen nachher |
+| --- | --- | --- | --- |
+| P4 Index: `abgenommen` ohne vier Felder | vier Felder gemeldet | **zwei** (`migration`, `vertragsbruch`) | vier |
+| P6 Index: `abgenommen` ohne `art` | „Feld `art`" | „`art` ist kein bekannter Wert" | „Feld `art`" |
+| P5 Index: Root mit nur leerer Datei | ⚠-Tabelle „Datei ist leer" | „*Noch keine Story angelegt.*" | ⚠-Tabelle |
+| `Creator.http` per curl (`:5280`) | 2xx durchgehend | **13 von 24 rot** (405/404/400 ab Schritt 6) | **23/23 2xx** |
+| Kapitel-Sweep (Ausschlussliste in B-241) | 0 | 16 | 1 (Kopfnotiz, gewollt) |
+| `frontend/CLAUDE.md` | nicht wachsen | 10.223 B | 10.208 B (Altschuld +1.208 bleibt) |
+| Backend-Suite (nach dem TestApi-Kommentar) | grün | – | **879/879** |
+| markdownlint-cli2 | 0 | – | 0 (352 Dateien) |
+
+Echter Index zweimal: byte-gleich; „66 offen, 165 abgenommen, 13 verworfen". Die ⚠-Tabelle ist nach dem Fix
+**nicht** gewachsen (21 → 21 Zeilen): keine abgenommene Story fehlt heute `groesse`/`wo` – der Wächter
+meldete bisher zu wenig, aber es gab nichts Unentdecktes mehr zu melden.
+
+### Review-Funde (Zähler: 0 von 5)
+
+Reviewer: allgemeiner Agent (Skript, Doku, REST-Datei, Stories), eigener Wegwerf-Root und eigener Live-Lauf.
+**Keine Blocker, kein Fund mit Code-/Testwirkung.** Vier Funde mit Doku-Wirkung, alle behoben:
+
+1. Index nicht regeneriert (B-242-Zeile fehlte) → Lauf vor dem Commit.
+2. **Fehlerklasse B-112 in eigener Sache:** meine Wortersetzung Kapitel→Unit machte im IA-Plan vier Sätze
+   falsch (Anlegen „im Katalog" ist heute Fach+Art, Reihe/Unit liegen unter `/vater/lehrwerke`; der Link
+   bei „Unit fehlt" geht dorthin; die E2E legt die Unit dort an) – an einer Story, die diese Fehlerklasse
+   selbst benennt. Umformuliert mit „(heute: …)".
+3. `/vater/exercises/neu`: nicht „Fach & Unit", sondern Fach (Filter), Reihe & Unit (Auswahl).
+4. B-238s Verlauf nannte den curl-Lauf noch nicht (AK 2, zweiter Fall) → nachgetragen.
+
+Nits übernommen: `DraftRules.cs:51`, Byte-Zahl (−15, nicht +11), `@seriesUnitId`, B-242-Zeile `:93`,
+`skip=0` in `Creator.http`, `docs/anmerkungen/*` in die Ausschlussliste des Routen-Sweeps.
+
+**Ein Werkzeug-Fallstrick, gemessen:** der Reviewer hat am Ende seines Laufs `pugling_smoke.db*` gelöscht –
+während mein Server auf `:5200` genau diese Datei für den Browser-Rollengang benutzte. Folge: `POST auth/adult`
+**500**, im Browser „Id oder PIN falsch". Zwei Agenten, eine Wegwerf-Datei, keine Absprache. Neu gestartet,
+dann grün. Der Brief an einen Reviewer muss sagen, welche Ressourcen gerade in Gebrauch sind.
+
+## Runde 4 — Re-Review / Abnahme
+
+**Browser verbunden (Freigabe 6, erster Fall).** Server und Frontend wurden **nach** dem letzten Edit gestartet
+(Wegwerf-DB, `:5200`/`:5173`).
+
+- **Creator – signed off (per Flow):** „Ich schicke die Requests von oben nach unten: Fach, Verlag, Reihe, Unit,
+  Vokabeln, Übung, Items, Preview, Tag, Rechte, Profil, Lehrbuch, Match – 23 Antworten, alle 2xx. Vorher war ab
+  Schritt 6 Schluss. Die Einstiegsseite sagt jetzt ‚Lehrwerk-Reihen mit Units'." Der Rollengang ist der
+  curl-Durchlauf derselben Requests in derselben Reihenfolge; den REST-Client im Editor fährt der Nutzer
+  (Datum im Kopf der Datei dafür offen). **Ausdrücklich zurückgestellt:** `docs/REST/Creator/
+  VocabularyExecises.http` (B-242) – „die Nebendatei fährt noch die toten Routen, mit eingebranntem Token".
+- **Vater – signed off (im Browser):** Login Vater 1 → `/vater/exercises` zeigt **Fach · Reihe (– alle –) ·
+  Unit (– alle –)**, `/vater/exercises/neu` zeigt **Fach (filtert nur die Reihen) · Reihe · Unit** und
+  „Fehlt eine Reihe oder Unit? … unter 📕 Lehrwerke". „Das Supervisor-Tutorial sagt jetzt ‚Etappe auf einer
+  Unit' – das finde ich auch im Web." Screenshot in der Sitzung gesehen; kein Produktpfad des Vaters wurde
+  geändert, der Walk ist Regressionszeuge **und** Prüfung der neuen Doku-Behauptungen.
+- **Sohn – Regressionszeuge:** kein Student-Pfad im Diff; Suite 879/879. Kein O-Ton erfunden.
+- **PM – Index:** Harness P4–P6 grün, echter Index byte-gleich.
+
+## Retrospektive Sprint 4
+
+**Nachschau:** B-158, B-179 (Sprint 3 des ersten Laufs, Commit `98c8431`) – frischer allgemeiner Agent mit
+elf benannten Prüfpunkten, von mir gegengelesen (`SubjectsController.cs:69-70/:99/:86-93/:75`,
+`TestApi.cs:53/:67`, `RemarkTests.cs:659-668`, `PuglingDbContext.cs:245/471/515`). **Ein Defekt:** die
+Summary von `TestApi.AdminAdultAsync` (`:63-65`) behauptete, ein Admin-Flag am geseedeten Adult mache die
+„foreign creator"-Fälle **grün** – gemessen (Diff von `98c8431`, `FachEigentumTests.cs:305-320`) werden sie
+**rot** (403 erwartet, Break-Glass liefert 200). Fehlerklasse B-112, ein Satz von heute Mittag. Korrigiert
+in diesem Sprint, Story **B-243** (`entgangen_bei: B-179`) trägt ihn und die **vierte** Admin-Helfer-Fassung
+(`RemarkTests.RegisterAdminFatherAsync`), die B-179s Grep über drei Namen nicht traf. **Kein Defekt** an
+B-158: alle vier AK am Code erfüllt, rote Zahlen im Verlauf; zwei Funde derselben Familie außerhalb des Diffs:
+`PublishersController.Create` baut die Antwort von Hand (**B-244**, Aufräumen) und ein Token mit `fid` auf
+eine gelöschte Adult-Zeile liefe in die FK (**B-245**, `idee`, unverifiziert). `nachgeschaut` auf beiden
+Stories gesetzt, je mit Prüfpunkten. **Index: Nachgeschaut 149 von 165.**
+
+**Prämisse geprüft:** `TestApi.cs:63-65` am Diff nachgelesen (die alte Summary in `FachEigentumTests` sagte
+„makes … fail"); `PuglingDbContext.cs:245-246/471-472/515-516` sind `SetNull`; `VaterExerciseCreate.tsx:196/:120/:121`
+(Fach filtert, Reihe und Unit Pflicht) gegen die IA-Plan-Zeile `:121` gelesen.
+
+**Was die eigenen Tore durchgelassen haben – drei Dinge, zwei davon dieselbe Lehre zum vierten Mal:**
+
+- **Wortersetzung ohne Satzlesen, diesmal von mir, in der Story, die die Klasse benennt.** Kapitel→Unit an
+  neun Zeilen des IA-Plans; der Reviewer las fünf davon im Kontext und fand vier falsch. Ein `replace` über
+  neun Zeilen erzeugt neun Sätze, die gelesen werden müssen – ich habe neun Wörter ersetzt.
+- **Der Sweep der Story war selbst abgeschnitten.** B-241 listete sechs Stellen; der erste Grep dieses Sprints
+  fand die siebte (`tutorial-supervisor.md:477`). Und die Ausschlussliste des Routen-Sweeps kannte
+  `docs/anmerkungen/` nicht. Die Vornacht hatte „Ausschlussliste aufschreiben" vorgeschlagen – richtig, aber
+  die Liste muss vor dem ersten Grep stehen, nicht nach dem Fund.
+- **Zwei Agenten, eine Wegwerf-Ressource.** Der Reviewer räumte `pugling_smoke.db` auf, mein Server lief
+  darauf; der Browser-Walk zeigte 500 und sah aus wie ein Produktfehler. Kein Tor dieses Repos kennt
+  „welche Datei gehört gerade wem".
+
+**Warum der Lauf hier nicht endet (Limit 2, argumentiert, nicht entschieden):** Limit 2 greift bei einem
+Defekt „im Increment eines Sprints derselben Nacht". Der eine Nachschau-Defekt (B-243, Punkt 1) liegt im
+Increment von Sprint 3 des **ersten** Laufs – ein eigener Auftrag, bereits an Limit 2 geendet. Er ist ein
+Kommentar ohne Verhalten, korrigiert, mit Story. Der Reviewer dieses Sprints fand **keinen** Fund mit Code-
+oder Testwirkung im Increment (Zähler 0 von 5). Ich lese das als: die Qualitätsschwelle dieses Laufs ist
+nicht gerutscht – und schreibe es hierher, damit der Nutzer am Morgen das Gegenteil entscheiden kann.
+
+### Vorgeschlagener Mechanismus — nicht gelandet (Freigabe 3)
+
+**Ein Tor für ausführbare Doku:** ein Guard-Test in `Pugling.Api.Tests`, der jede Request-Zeile in
+`docs/REST/**/*.http` (`METHOD {{baseUrl}}/pfad`) gegen die Pfade des erzeugten OpenAPI-Dokuments prüft –
+`{{variable}}`-Segmente werden zu `{x}` normalisiert, Query-Strings abgeschnitten. B-238 **und** B-242 wären
+rot gewesen, und zwar seit B-106, nicht erst beim Ausführen. **Kosten:** ein Test, der eine Doku-Datei liest
+(Vorbild: `DocsCaptureTests` liest `docs/`), eine kleine Pfad-Normalisierung mit Sonderfällen (`~/`-Routen,
+Query-Parameter), und die Versuchung, eine tote Datei einfach aus dem Glob zu nehmen. **Nicht vorgeschlagen:**
+ein vierter Satz über Sweeps – drei Läufe haben gezeigt, dass der Satz nicht fehlt, sondern die Reihenfolge
+(Liste vor Grep). **Bewusst ungedeckt:** B-112-Fehler in Prosa – kein Tor liest Sätze; der einzige Schutz
+ist, den Reviewer-Brief auf „±5 Zeilen Kontext je geänderter Zeile" festzulegen, und der stand in diesem
+Brief drin – deshalb wurde es gefunden.
 
 ## Offene Roadmap · Änderungsstand
 

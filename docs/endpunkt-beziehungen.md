@@ -415,7 +415,7 @@ schlecht gelernte Wörter). Liest `ItemProgress`/`ItemReviewEvent`.
 | `GET …/vocabulary/{exerciseId}/items` | Item-Lernstand (schwächste zuerst) |
 
 → [ChildLearnProgressController](../backend/Pugling.Api/Controllers/Student/ChildLearnProgressController.cs)
-/ [ChildLearnProgressService](../backend/Pugling.Api/Services/ChildLearnProgressService.cs). Antwort auf
+/ [ChildLearnProgressService](../backend/Pugling.Api/Services/Student/ChildLearnProgressService.cs). Antwort auf
 „wie steht das Kind **je Fach/Unit/Übung** da?" – die Grundlage, um **Ziele festzulegen**. Alle Listen
 unterstützen `?search=`, `?sort=`+`?dir=`, `?active=` und Paging (`skip`/`take` + Header `X-Total-Count`).
 

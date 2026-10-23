@@ -188,6 +188,14 @@ while IFS=$'\x01' read -r fpath status prio groesse wo mig vb quelle art entgang
   rest="${base#*-}"
   id="B-${rest%%-*}"
   [ -n "$status" ] || status="?"
+
+  # The completeness check sees the RAW values (B-240): the "—" placeholders below are presentation for
+  # the table row. With the placeholders first, `groesse`/`wo`/`art` were never empty, and the ⚠ table named
+  # two of four missing fields – B-131 was accepted with ⚠ exactly that way.
+  belege "$status" "$groesse" "$wo" "$mig" "$vb" "$quelle" "$art" "$unverifiziert" "$grund" \
+    "$has_us" "$has_is" "$has_ak" "$has_en" "$has_sc" "$has_ve"
+  [ -n "$_luecke" ] && unbelegt="${unbelegt}| [$id]($base) | \`$status\` | ${_luecke//|/${bs}|} |"$'\n'
+
   [ -n "$prio" ] || prio="—"
   [ -n "$groesse" ] || groesse="—"
   [ -n "$wo" ] || wo="—"
@@ -208,10 +216,6 @@ while IFS=$'\x01' read -r fpath status prio groesse wo mig vb quelle art entgang
   [ -n "$kostet" ] || kostet="—"
 
   row="| [$id]($base) | $titel | $art | \`$status\` | $prio | $groesse | $wo | $kostet |"
-
-  belege "$status" "$groesse" "$wo" "$mig" "$vb" "$quelle" "$art" "$unverifiziert" "$grund" \
-    "$has_us" "$has_is" "$has_ak" "$has_en" "$has_sc" "$has_ve"
-  [ -n "$_luecke" ] && unbelegt="${unbelegt}| [$id]($base) | \`$status\` | ${_luecke//|/${bs}|} |"$'\n'
 
   # Entgleitung: dieser Defekt steckte in Arbeit, die schon `abgenommen` war. Nur bei `art: Defekt`
   # gezählt – ein Wunsch, der später auffällt, ist kein Qualitätsverlust, sondern ein Wunsch.
@@ -262,7 +266,9 @@ rm -f "$records"
   printf '%s\n' "<!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->"
   printf '\n'
 
-  if [ "$n_offen" -eq 0 ] && [ "$n_fertig" -eq 0 ] && [ "$n_verworfen" -eq 0 ]; then
+  # A defect list without a single readable story is still an index (B-240): "Noch keine Story angelegt"
+  # over an empty file would hide exactly the line B-131 introduced.
+  if [ "$n_offen" -eq 0 ] && [ "$n_fertig" -eq 0 ] && [ "$n_verworfen" -eq 0 ] && [ -z "$unbelegt" ]; then
     printf '%s\n' "*Noch keine Story angelegt.*"
   else
     printf '%s\n\n' "### Offen ($n_offen)"
