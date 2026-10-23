@@ -69,7 +69,7 @@ Wird je Sprint fortgeschrieben; die letzte Zeile ist der Zustand.
 - **Sprint 7 angehalten** (NP-2: B-15, B-17, B-21): gebaut und grün (Backend **885/885**, Vitest **406/406**,
   `uebungstypen` 1 passed, zwölf Mutanten am richtigen Ort), aber **sechs Review-Funde mit Code-/Testwirkung**
   (kein Blocker) – über der Grenze von Freigabe 3. **Der Lauf endet hier**, NP-3 nicht angefangen. Stories auf
-  `in-arbeit` mit `wartet_auf`, kein Rollengang, keine Retro. Stand committet (`HASH_S7`).
+  `in-arbeit` mit `wartet_auf`, kein Rollengang, keine Retro. Stand committet (`93f227a`).
 
 ## Runde 1 — Vorstellung & Feedback
 
