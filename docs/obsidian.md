@@ -128,6 +128,7 @@ Der Graph-Hub: Bereich → maßgebliche Seite(n). Von hier aus ist jede Domäne 
 | **Deployment** (Single-Host, Fallstricke, derzeit stillgelegt) | [docs/deployment-azure.md](deployment-azure.md) |
 | **Offene Ideen & User-Stories** (der Bereich mit Stufen-Kette, `/backlog`) | [docs/backlog/](backlog/README.md) |
 | **Khan-Academy-Vergleich** (Gemeinsamkeiten, Lücken, Übernahmeplan B-217…B-223) | [docs/khan-academy-vergleich-plan.md](khan-academy-vergleich-plan.md) |
+| **Knowunity-Vergleich** (Klausur-Countdown, Notenprognose, Übernahmeplan B-247…B-253) | [docs/knowunity-vergleich-plan.md](knowunity-vergleich-plan.md) |
 | **Nachtlauf** (unbeaufsichtigter Backlog-Lauf: Auftragstext, Freigaben, Grenzen) | [docs/nachtlauf.md](nachtlauf.md) |
 | Grill-Protokoll Vokabellernen (Quelle der Stories B-01…B-06) | [docs/backlog-vokabellernen.md](backlog-vokabellernen.md) |
 | KI-Gedächtnis | `MEMORY.md` + Notizen im Memory-Ordner (eigene Vault) |
