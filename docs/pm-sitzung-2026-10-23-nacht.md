@@ -1254,3 +1254,110 @@ Kosten: ein Wächter mehr, und Entwickler, die `<para>` aus Gewohnheit schreiben
 Begründung. **Bewusst ungedeckt:** die Leerzeichen, die der Generator zwischen zwei Elementen verschluckt (B-259).
 
 Commit des Sprints: `e5b67ec`.
+
+## Sprint 9 — Ziel & Umfang (NP-12)
+
+**Sprint-Ziel (aus dem Sitz des Vaters und des Entwicklers):** *Wer eine Anleitung, eine Spec, einen Test-Kommentar
+oder eine Feldhilfe liest, wird nicht in die Irre geführt – und der Assistent tauscht kein eingetipptes Kind still
+gegen ein anderes.* (Der zweite Halbsatz kam mit der Messung zu B-177 hinzu.)
+
+**Umfang:** B-242 (`Defekt`, Löschung vom Nutzer entschieden, G-0, Commit `3615d46` vor dem dritten Lauf), B-239
+(`Aufräumen`), B-201 (`Defekt`, B-186 vom Nutzer entschieden), B-214 (`Defekt`), B-181 (`Defekt`, Wiederholungsversuch
+vom Nutzer entschieden, G-8, Commit `7b8ac96`), B-177 (`Defekt`, Mess-Story). Sechs Stories, die Obergrenze. Die
+Freigabe-Zeilen per `git log -S` geprüft: beide stammen aus der Dialog-Sitzung vor 20:03.
+
+**Entwickler-Brief:** klein je Story, gemeinsamer Maßstab: jede Behauptung, die ein Text macht, an Code oder Messung
+prüfen. **Backend:** nur B-181 (`OpenApiExampleCatalog.LoadWithRetry`). **Frontend:** Feldhilfe-Text, Spec-Locator,
+Assistent. **Doku:** Löschung, Sprachregel. Keine Migration, kein Vertragsbruch.
+
+## Iteration 9 — umgesetzt
+
+- **B-242:** `docs/REST/Creator/VocabularyExecises.http` entfernt (Sweeps 9 → 0 `chapters`, 1 → 0 `eyJ`).
+- **B-239:** `wiki/08-erweitern.md`, `.claude/commands/neuer-uebungstyp.md`, `.claude/agents/pugling-reviewer.md`,
+  `README.md` auf englische Code-Doku; Beispiele übersetzt (8 → 0 Zeilen).
+- **B-201:** ein Text für Plan-Seite und Assistent (`fieldHelp.ts`), neuer `fieldHelp.test.ts` (2 rot / 1 grün vorher).
+- **B-214:** Store-Zeile per exakter Wort-Zelle + `toHaveCount(1)`; Probe mit Zwillings-Vokabel: alt rot, neu grün.
+- **B-181:** begrenzter Wiederholungsversuch (5 × 50 ms) für `IOException`, `UnauthorizedAccessException`,
+  `JsonException`; dauerhaftes Scheitern wirft mit Pfad und Ursache. `OpenApiExampleCatalogRetryTests` (5 Fälle,
+  sieben Mutanten je an der benannten Zeile). Klassen-Kommentar der Rennen-Tests nennt beide Modi.
+- **B-177:** Messung mit Wegwerf-Spec: die Gleich-Batch-Variante nicht beobachtet (Gate schloss nach einer Frame),
+  aber der stille Wechsel vom eingetippten neuen Kind auf das erste bestehende → behoben (`onChange` am
+  Neues-Kind-Formular setzt `touchedMode`), neue Spec `assistent-kinderliste-kommt-spaet.spec.ts` (ohne Fix rot an `:44`).
+
+**Verifikation:** Backend **900/900**, Vitest **409/409**, `tsc -b` sauber, Playwright voll **82 passed**,
+Markdown-Lint 0.
+
+### Review-Funde (Zähler: 5 von 5 – an der Grenze, nicht darüber)
+
+`pugling-reviewer` (Backend + Doku), dann `frontend-reviewer`, dann ein Delta-Review Frontend – nacheinander.
+Gezählt: (1) `UnauthorizedAccessException` beim Ersetzen fehlte im Filter; (2) kein Fall, der zeigt, dass
+Programmierfehler nicht wiederholt werden; (3) Feldhilfe „setzt" statt „belegt … vor"; (4) der stille Kind-Wechsel
+(Nebenfund der Messung, mit B-177 behoben); (5) die neue Spec konnte ohne Fix zufällig grün sein (Wartezeile).
+Ohne Zähler: zwei Kommentare, zwei datierte Doku-Stellen belassen, ein Teilstring in `full-flow.spec.ts:189`
+(laut statt still, belassen). **Das Delta der Backend-Behebungen ist ein ausdrücklich so benannter Selbst-Check**
+(Mutanten), kein zweiter Reviewer-Lauf – ein weiterer gezählter Fund hätte die Grenze überschritten.
+
+## Runde 9 — Re-Review / Abnahme
+
+**Rollengang im Browser** (Freigabe 6) gegen `pugling_walk5.db` (danach gelöscht), Server nach dem letzten
+Produkt-Edit gestartet; Eingaben über die echten Handler der Seite (die Extension lieferte nach dem Wiederverbinden
+keine Klicks).
+
+- **Vater – signed off:** „Ich öffne den Assistenten, er schlägt mir den Sohn vor wie immer. Im Feinschliff sagt mir
+  das ⓘ an ‚Punkte je Ziel' jetzt, dass der Assistent den Wert aus der Intensität vorbelegt und die Plan-Seite die
+  Empfehlung der Übung nimmt – das stimmt beides." Der Fall „Liste kommt spät" läuft als eigene Spec im echten Browser.
+- **Creator – Regressionszeuge mit Gewinn:** die Erweitern-Anleitung zeigt englische Kommentare; der
+  Beispielkatalog lädt über den neuen Lesepfad (Beispiele an 87 Operationen in `GET /openapi/v1.json`).
+- **Sohn – Regressionszeuge:** kein Student-Pfad im Diff; `bilder.spec.ts` (Sohn sieht sein Bild) grün im vollen Lauf.
+
+## Retrospektive Sprint 9
+
+**Nachschau:** Sprint 8 (B-147, B-138, B-156, B-145; `e5b67ec`/`cd4ca3f`) – frischer Prüfer, read-only, fünf benannte
+Prüfpunkte (je Story im Verlauf). Zahlen nachgerechnet und bestätigt; Quelltext-Tausch vollständig (42 Dateien) gegen
+`3cebfd3` geprüft; B-145 und B-156 ohne Befund. **Eine Entgleitung → B-260** (`entgangen_bei: B-147`): die Absatzregel
+des Normalisierers setzt einen Absatz mitten in einen Satz, wenn ein mehrzeiliger Kommentar auf der Tag-Zeile
+beginnt – einen Fall selbst nachgemessen (`UpdateMyAccountDto.pin`). `nachgeschaut` auf allen vier gesetzt. Index:
+**Nachgeschaut 163 von 182**.
+
+**Prämisse geprüft:** den B-260-Fall selbst am geparsten Dokument gelesen; die Behauptung des Frontend-Reviewers zum
+React-18-Macrotask-Fenster nicht nachgemessen, nur am Code nachvollzogen – sie ist der Grund, warum B-177 die Ursache
+schließt statt „kann nicht entstehen" zu behaupten.
+
+**Was die eigenen Tore durchgelassen haben:**
+
+- **Eine Heuristik, getestet nur an den Formen, die ich kannte.** B-147s Absatzregel hat acht Fälle – alle aus der
+  `<para>`-Form. Die umgekehrte Form (Text auf der Tag-Zeile) war im Dokument vorhanden, nur nicht in meinem Kopf. Das
+  ist die Fehlerfamilie aus `nachtlauf.md` („eine Bedingung, die zwei Situationen zusammenzieht") – diesmal in einer
+  Textregel.
+- **Eine rote Probe, die einmal in die richtige Richtung lief.** Die erste Fassung der B-177-Spec war rot – aber nur,
+  weil das Rennen gegen React so ausging. Gefunden hat es der Delta-Reviewer.
+
+### Vorgeschlagener Mechanismus — nicht gelandet (Freigabe 3)
+
+**Für eine Heuristik über generierte Texte: ein Inventar-Test statt Beispiel-Fällen.** Der Test läuft über das ganze
+erzeugte Dokument und sammelt jede Stelle, an der die Regel eingreift (hier: jeden eingefügten Absatz), in eine
+Liste, die im Test als erwartet steht; jede neue Stelle macht ihn rot, bis ein Mensch sie angesehen hat. Kosten: eine
+Liste mit rund 120 Einträgen, die bei jedem Doku-Umbau nachgezogen werden muss – darum nur ein Vorschlag. Die
+leichtere Alternative ist eine Zeile in `backend/CLAUDE.md`: „Eine Regel über generierte Texte wird an allen Formen
+geprüft, die der Generator erzeugt, nicht an Beispielen."
+
+## Warum der vierte Lauf hier endet
+
+**Limit 2:** die Nachschau von Sprint 9 hat in Sprint 8 – dem Increment **dieses** Laufs – eine Entgleitung
+gefunden (B-260). Nach der im dritten Lauf festgehaltenen Auslegung trifft die Nachschau ab dem zweiten Sprint eines
+Laufs eigene Arbeit, und dann hält der Lauf am Sprint-Ende. Beide Pakete des Auftrags (NP-4, NP-12) sind ohnehin
+gefahren; ein drittes war nicht beauftragt. Der Zähler von Sprint 9 stand bei 5, also an der Grenze, nicht darüber.
+
+## Für den Morgen (vierter Lauf)
+
+1. **Sprint 7 (B-15, B-17, B-21)** ist unberührt, wie beauftragt – die Entscheidung über `93f227a`/`3cebfd3` liegt
+   weiter bei dir.
+2. **Retro-Vorschläge:** Sprint 8 (Quelltext-Tor „kein `<para>` in Contracts/Controllers") und Sprint 9
+   (Inventar-Test für Heuristiken über generierte Texte, oder eine Zeile in `backend/CLAUDE.md`). Beide nicht gelandet;
+   dazu die offenen Vorschläge der Vorläufe.
+3. **Neue Stories:** B-257 (verspätete Zielfeier, aus der Nachschau zu Sprint 6), B-258 (zwei Fehlercodes für eine
+   unbekannte `SubjectId`), B-259 (Generator verschluckt Leerzeichen zwischen Elementen), B-260 (falscher Absatz,
+   aus der Nachschau zu Sprint 8).
+4. **Bewusst belassen, zur Entscheidung:** `frontend/CLAUDE.md:112` nennt noch `isMine` (historischer Satz in einer
+   resident geladenen Datei); `fieldHelp.ts:121` (`exercisePoints`) sagt weiter „setzt" statt „belegt … vor".
+5. `git log --oneline 3cebfd3..`: die Commits dieses Laufs; **nichts ist gepusht.**

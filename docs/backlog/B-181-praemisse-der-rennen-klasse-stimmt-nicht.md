@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/backend, bereich/tests]
+tags: [typ/story, status/abgenommen, bereich/backend, bereich/tests]
 aliases: [Fehlermodus haengt an der Plattform, FileShare.Read sperrt den Leser nur unter Windows aus, Praemisse von B-57]
-status: ausformuliert
+status: abgenommen
 prio: P2
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: S
+wo: backend
+migration: nein
+vertragsbruch: nein
 quelle: beim Bauen von B-165 gemessen (Nachtlauf 2026-08-14, Sprint 3)
 unverifiziert: false
 grund: ""
@@ -89,13 +89,28 @@ Offen bleiben der Klassen-Kommentar und die Erzählung von B-57.
    Zusicherung, dass der Modus **nicht** auftritt. Einen Fehlermodus künstlich herstellen, den das Produkt
    dort nicht hat, nur damit ein Test ihn zeigt, lohnt in beiden Fällen nicht.
 
-## Akzeptanzkriterien (Entwurf)
+## Akzeptanzkriterien
 
 1. Der Klassen-Kommentar von `OpenApiExampleCatalogConcurrencyTests` nennt beide Modi (gesperrt unter
    Windows, zerrissen unter Linux) und dass die Plattform entscheidet.
 2. Ob `OpenApiExampleCatalog.Load` einen Wiederholungsversuch bekommt, steht als nummerierte Entscheidung
    fest – mit Begründung und Kosten (Punkt 2; Verhaltensänderung im Produktionspfad, beim Menschen).
 3. Wird der Wiederholungsversuch gebaut, hält ein Test ihn für **beide** Ausnahmetypen fest.
+
+## Entscheidungen
+
+1. **Wiederholungsversuch für beide Ausnahmetypen** – Entscheidung des Nutzers (G-8, Dialog-Sitzung): wenige Versuche, kurze
+   Pause, bei dauerhaftem Scheitern den letzten Fehler mit Diagnose werfen. Gebaut: `ReadAttempts = 5`, 50 ms Pause,
+   `InvalidOperationException` mit Pfad, Versuchszahl und Ursache.
+2. **Zusätzlich `UnauthorizedAccessException`** (autonom, `art: Defekt`, auf Reviewer-Fund): Windows meldet sie für eine Datei im
+   „delete pending"-Moment des atomaren Ersetzens – genau das Fenster, das der Schreiber in `DocsCaptureTests` auf seiner Seite
+   wiederholt. *Kosten:* ein dritter Typ im Filter; andere Ausnahmen (Programmierfehler) schlagen weiter sofort durch (Test).
+3. **Öffentliche Naht `LoadWithRetry(path, open, attempts, pause)`** statt Zeitrennen im Test – `Pugling.Api` hat kein
+   `InternalsVisibleTo`. *Kosten:* eine öffentliche Methode, die nur Tests anders aufrufen.
+
+## Schätzung
+
+- **groesse:** S · **wo:** backend · **migration:** nein · **vertragsbruch:** nein. **Testweg:** `OpenApiExampleCatalogRetryTests` (5 Fälle) mit Mutanten.
 
 ## Verlauf
 
@@ -114,3 +129,4 @@ Offen bleiben der Klassen-Kommentar und die Erzählung von B-57.
   die Story** — Punkt 1 und 2 sind unbeantwortet, Punkt 2 jetzt schärfer.
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): **Offener Punkt 1 ist durch B-57 selbst beantwortet** – dort wurden auf Windows beide Modi beobachtet („954 `IOException` und 419 `JsonReaderException`“, B-57 `:60,:78`). Die Erzählung von B-57 stimmt also; falsch ist nur, dass der Klassen-Kommentar (`OpenApiExampleCatalogConcurrencyTests.cs:17-20`) einen Modus weglässt. Damit zerfällt die Story: (a) Doku-Korrektur XS, nachtlauffähig; (b) Wiederholungsversuch in `OpenApiExampleCatalog.Load` (`:36-37`) auch bei `JsonException` – Verhaltensänderung im Produktionspfad, beim Menschen.
 - **2026-10-23** — **Entscheidung des Nutzers** in der Grill-Runde der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)) (G-8) zu offenem Punkt 2: `OpenApiExampleCatalog.Load` bekommt einen **begrenzten Wiederholungsversuch für beide Ausnahmetypen** (`IOException` und `JsonException`): wenige Versuche mit kurzer Pause, und bei dauerhaftem Scheitern wird der letzte Fehler mit Diagnose geworfen, nicht verschluckt. Ein Test hält beide Typen fest (AK 3). Damit ist die Story als `Defekt` vollständig autonom grill- und baubar (Paket NP-12).
+- **2026-10-23** — vierter Nachtlauf, Sprint 9 (NP-12, [Protokoll](../pm-sitzung-2026-10-23-nacht.md)): gegrillt (Entscheidung des Nutzers aus G-8), gebaut. AK 1: Klassen-Kommentar von `OpenApiExampleCatalogConcurrencyTests` nennt beide Modi, den Retry und dass er eine Leseversuch-Nachbildung ist. Rote Proben (Auflage 5, Mutanten): nur `IOException` → rot `Zerrissener_Inhalt…` (`:43`) und `Dauerhaft…`; nur `JsonException` → rot `Gesperrte_Datei…` (`:36`); Scheitern verschluckt → `:55`; Ursache fehlt → `:59`; ein Versuch zu viel → `:58`; ohne `UnauthorizedAccessException` → `:69`; jede Ausnahme wiederholt → `:80`. `pugling-reviewer`: zwei gezählte Funde (der dritte Ausnahmetyp, der Fall „Programmierfehler schlägt durch") behoben; ein Kommentar-Nit („unbounded" hängt statt rot) berichtigt. Delta der Behebung: **Selbst-Check**, ausdrücklich so benannt (Mutanten oben), kein zweiter Reviewer-Lauf – der Sprint-Zähler stand bei 5. Backend **900/900**. Rollengang: `GET /openapi/v1.json` trägt Beispiele an 87 Operationen (Ladepfad live). Abgenommen; Commit: siehe Nachtrag.

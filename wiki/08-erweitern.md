@@ -11,7 +11,7 @@ Diese Seite ist für **Entwickler und LLM-Agenten**, die Pugling erweitern. Zum 
 gibt es den Skill `/neuer-uebungstyp`.
 
 > **Konventionen zwingend beachten:** C# 14/.NET 10, dünne Controller, Logik in Services,
-> `record`-DTOs, deutsche `/// <summary>`-Docs, Guard Clauses zuerst, `ProblemDetails` für Fehler,
+> `record`-DTOs, englische `/// <summary>`-Docs, Guard Clauses zuerst, `ProblemDetails` für Fehler,
 > EF-Migration bei Schemaänderung. Am bestehenden Code orientieren! Siehe [CLAUDE.md](../CLAUDE.md).
 
 ---
@@ -38,10 +38,10 @@ spielen den neuen Typ automatisch — sie fragen nur die Facetten der Typklasse 
 ### Schritt 1 — Config-Schema
 
 In [Models/ExerciseConfigs.cs](../backend/Pugling.Api/Models/ExerciseConfigs.cs) eine Config +
-Items ergänzen (mit deutschen `/// <summary>`). Wird als JSON in `Exercise.ConfigJson` gespeichert:
+Items ergänzen (mit englischen `/// <summary>` – die Code-Doku ist ausnahmslos Englisch, siehe CLAUDE.md). Wird als JSON in `Exercise.ConfigJson` gespeichert:
 
 ```csharp
-/// <summary>Wahr/Falsch-Aussagen mit korrekter Antwort.</summary>
+/// <summary>True/false statements with their correct answer.</summary>
 public class TrueFalseConfig
 {
     public string? Instruction { get; set; }
@@ -66,13 +66,13 @@ Store-Auflösung) — **überschreibe nur, was der Typ wirklich braucht**. Pflic
 `ItemsOf`:
 
 ```csharp
-/// <summary>Wahr/Falsch: je Aussage ein Item; Katalog-Direktcheck.</summary>
+/// <summary>True/false: one item per statement; checked directly against the catalog.</summary>
 public sealed class TrueFalseExerciseType : ExerciseTypeBase
 {
     public override string Key => ExerciseTypeKeys.TrueFalse;
 
-    // Manifest = Selbstbeschreibung fürs Frontend-Routing (früher ExerciseManifests, jetzt hier).
-    // Reihenfolge: Type, Label, Renderer, SchemaVersion, AuthoringRoute, CheckMode, PlayRoute, Method, Capabilities.
+    // The manifest is the type's self-description for frontend routing.
+    // Order: Type, Label, Renderer, SchemaVersion, AuthoringRoute, CheckMode, PlayRoute, Method, Capabilities.
     public override ExerciseTypeManifest Manifest { get; } = new(
         ExerciseTypeKeys.TrueFalse, "Wahr/Falsch", "true-false", 1, "true-false",
         ExerciseCheckMode.CatalogCheck, null, null, []);
@@ -84,8 +84,8 @@ public sealed class TrueFalseExerciseType : ExerciseTypeBase
             new ContentItem(i, it.Statement, it.IsTrue ? "wahr" : "falsch", [it.IsTrue ? "wahr" : "falsch"]))];
     }
 
-    // Nur überschreiben, weil der Typ serverseitig geprüft wird (CatalogCheck). Geteilte Prüf-Primitive
-    // liegen in AnswerChecking (BuiltInExerciseTypes.cs), damit sich Textvergleiche wie im Test verhalten.
+    // Overridden only because the type is checked on the server (CatalogCheck). The shared check primitives
+    // live in AnswerChecking (BuiltInExerciseTypes.cs), so text comparison behaves exactly as in the test.
     public override CheckResult Check(string configJson, IReadOnlyList<GivenAnswer> answers, int? seed)
     {
         var c = Deserialize<TrueFalseConfig>(configJson);
@@ -121,7 +121,7 @@ In [Controllers/Creator/ExerciseControllers.cs](../backend/Pugling.Api/Controlle
 einen dünnen Controller ergänzen. `TypeKey` statt Enum; die Registry wird an die Basis durchgereicht:
 
 ```csharp
-/// <summary>Wahr/Falsch-Übungen. <see cref="Check"/> bewertet die Antworten.</summary>
+/// <summary>True/false exercises. <see cref="Check"/> grades the answers.</summary>
 [Route(ExerciseRoutes.Base + "/true-false")]
 [Tags("Creator – TrueFalse")]
 public class TrueFalseController(PuglingDbContext db, ExerciseTypeRegistry registry)
@@ -129,7 +129,7 @@ public class TrueFalseController(PuglingDbContext db, ExerciseTypeRegistry regis
 {
     protected override string TypeKey => ExerciseTypeKeys.TrueFalse;
 
-    // Prüfbar? Dann eine dünne /check-Action, die an IExerciseType.Check delegiert (eine Quelle der Wahrheit).
+    // Checkable? Then a thin /check action that delegates to IExerciseType.Check (one source of truth).
     [HttpPost("{exerciseId:int}/check")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public Task<ActionResult<CheckResult>> Check(int seriesId, int seriesUnitId, int exerciseId, CheckDto body, CancellationToken ct = default) =>
@@ -151,7 +151,7 @@ Nach `.cs`-Edits laufen `dotnet format` + `dotnet build` automatisch (Hook). Dan
 
 ### Checkliste „neuer Übungstyp"
 
-- [ ] Config-Klasse + Item-`record` mit deutschen `/// <summary>` in `ExerciseConfigs.cs`.
+- [ ] Config-Klasse + Item-`record` mit englischen `/// <summary>` in `ExerciseConfigs.cs`.
 - [ ] Schlüssel in `ExerciseTypeKeys` + Typklasse (`IExerciseType`/`ExerciseTypeBase`) mit `Key`,
       `Manifest`, `ItemsOf` und den nötigen Überschreibungen.
 - [ ] **Eine Zeile** in `AddExerciseTypes`.

@@ -7,16 +7,20 @@ namespace Pugling.Api.Tests;
 /// Deterministic proof of the write/read race B-57 fixes, against a throwaway file - not the real generated
 /// catalog, and not a bet on the timing between <see cref="DocsCaptureTests"/> and
 /// <see cref="OpenApiExampleTests"/>/<see cref="ClientRouteGuardTests"/>/<see cref="ErrorCodeTests"/> in the
-/// real suite (that would just be a second flake). The reader mirrors
-/// <see cref="OpenApiExampleCatalog.Load"/> exactly: <c>File.OpenRead</c> + <c>JsonSerializer.Deserialize</c>.
+/// real suite (that would just be a second flake). The reader mirrors one attempt of
+/// <see cref="OpenApiExampleCatalog.Load"/>: <c>File.OpenRead</c> + <c>JsonSerializer.Deserialize</c>, without the retry.
 /// <para>
 /// <b>Why the write is deliberately paused mid-write instead of raced against real disk speed.</b> An
 /// earlier version of this test tried to race a reader against a writer running at full speed on real disk
 /// I/O. That measured a confound specific to this Windows machine: <b>any</b> fresh file write or rename -
 /// unsafe or atomic alike - can trigger a transient, tens-of-milliseconds exclusive-access window, almost
 /// certainly Windows real-time antivirus scanning the touched file. That artifact affects both writers
-/// about equally and has nothing to do with the actual bug (torn/incomplete JSON content mid-write) or the
-/// fix (an atomic rename never exposes an intermediate state at all). Forcing the pause ourselves - instead
+/// about equally and has nothing to do with the actual bug or the fix (an atomic rename never exposes an
+/// intermediate state at all). The bug itself shows up in one of TWO forms, and the platform decides which
+/// (B-181): on Windows the reader's <c>File.OpenRead</c> is refused while the writer holds the file
+/// (<see cref="IOException"/>), on Linux the reader gets in and sees torn, half-written JSON
+/// (<see cref="JsonException"/>). B-57 observed both on Windows; CI on Ubuntu sees only the second. The
+/// tests therefore count both as one defect. Forcing the pause ourselves - instead
 /// of hoping the OS is slow enough to observe by luck - removes that confound entirely and makes the
 /// property under test ("can a reader ever observe a partial write of the final path") 100% deterministic.
 /// </para>
@@ -28,8 +32,9 @@ namespace Pugling.Api.Tests;
 /// reader opening exactly during the rename itself is always safe". That narrower claim rests on the
 /// story's Risiken section ("ein Leser, der exakt während der Rename-Operation öffnet, ist auf NTFS
 /// praktisch nicht beobachtbar") and stays an accepted, unverified-by-this-test assumption, not a proven
-/// fact - <see cref="OpenApiExampleCatalog.Load"/> has no retry of its own, so if that assumption ever
-/// turns out wrong, the failure would surface unfiltered in <c>OpenApiExampleTests</c>, not here.
+/// fact. Since B-181 <see cref="OpenApiExampleCatalog.Load"/> retries both failure modes a bounded number
+/// of times (<see cref="OpenApiExampleCatalogRetryTests"/>), so a reader hitting that window would be
+/// absorbed there - and a catalog that stays broken still fails loudly.
 /// </para>
 /// </summary>
 public class OpenApiExampleCatalogConcurrencyTests
@@ -123,7 +128,7 @@ public class OpenApiExampleCatalogConcurrencyTests
         }
     }
 
-    // Mirrors OpenApiExampleCatalog.Load's exact read shape: File.OpenRead + Deserialize.
+    // Mirrors ONE attempt of OpenApiExampleCatalog.Load (File.OpenRead + Deserialize), without its retry.
     /// <summary>
     /// What a single read attempt ran into. Keeping the two apart is the whole point (B-165): counting both
     /// into one number made the gate report "1 read failure" for either, so a green run and a red run could

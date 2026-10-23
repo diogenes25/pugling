@@ -18,7 +18,7 @@ nur mehr Facetten. Ausführlich: [wiki/08-erweitern.md](wiki/08-erweitern.md).
 ## Prozess
 
 1. **Config-Record** in [Models/ExerciseConfigs.cs](backend/Pugling.Api/Models/ExerciseConfigs.cs) anlegen
-   (`class`/`record` mit sinnvollen Defaults, deutsche `<summary>`). Wird als JSON in `Exercise.ConfigJson`
+   (`class`/`record` mit sinnvollen Defaults, englische `<summary>`). Wird als JSON in `Exercise.ConfigJson`
    gespeichert — kein DB-Schema, keine Migration.
 
 2. **Schlüssel** in `ExerciseTypeKeys` ([Exercises/IExerciseType.cs](backend/Pugling.Api/Exercises/IExerciseType.cs))
@@ -58,7 +58,7 @@ nur mehr Facetten. Ausführlich: [wiki/08-erweitern.md](wiki/08-erweitern.md).
 
 ## Qualitätsschritte (nicht überspringen)
 
-- Konventionen aus [CLAUDE.md](CLAUDE.md) einhalten (deutsche XML-Docs, `record`-DTOs, dünne Controller,
+- Konventionen aus [CLAUDE.md](CLAUDE.md) einhalten (englische XML-Docs und `//`-Kommentare, `record`-DTOs, dünne Controller,
   Guard Clauses, Rollen-/Ownership-Sauberkeit, `AsNoTracking`, kein Selbstbetrug für den Sohn).
 - `dotnet build` grün halten (Hook meldet Fehler automatisch); `dotnet format` läuft automatisch.
 - **Integrationstest** in `backend/Pugling.Api.Tests` ergänzen — mind. ein Happy-Path. Typklassen lassen
@@ -70,7 +70,7 @@ nur mehr Facetten. Ausführlich: [wiki/08-erweitern.md](wiki/08-erweitern.md).
 
 ## Checkliste
 
-- [ ] Config-Klasse + Item-`record` mit deutschen `/// <summary>`.
+- [ ] Config-Klasse + Item-`record` mit englischen `/// <summary>`.
 - [ ] Schlüssel in `ExerciseTypeKeys` + Typklasse (`Key`/`Manifest`/`ItemsOf` + nötige Überschreibungen).
 - [ ] **Eine Zeile** in `AddExerciseTypes`.
 - [ ] Controller mit `Route`/`Tags`/`TypeKey` (erbt CRUD), bei Prüfbarkeit `/check` → `RunCheckAsync`.

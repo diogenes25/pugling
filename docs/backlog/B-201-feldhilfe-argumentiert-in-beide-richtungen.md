@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/frontend, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/supervisor]
 aliases: [aenderst du sie bleibt die Aenderung, Feldhilfe pointsGoalMet]
-status: ausformuliert
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: XS
@@ -55,7 +55,7 @@ Reparatur zur Hälfte aufgehoben hat, ohne ihn anzufassen.
    damit **eine** Formulierung je Begriff existiert — zwei Fassungen wären ein Bruch mit seiner
    Begründung. Nachsehen, nicht vermuten.
 
-## Akzeptanzkriterien (Entwurf)
+## Akzeptanzkriterien
 
 1. Der Hilfetext `pointsGoalMet` beschreibt auf der Plan-Seite nur, was dort gilt: die Empfehlung wird
    beim Hinzufügen vorbelegt, eine Änderung gilt für **diese** Position.
@@ -63,9 +63,24 @@ Reparatur zur Hälfte aufgehoben hat, ohne ihn anzufassen.
    Antwort auf [B-186](B-186-assistent-und-planseite-setzen-zielpunkte-verschieden.md).
 3. `feldhilfe.spec.ts` (oder ein Vitest) sichert den neuen Wortlaut je Ort zu.
 
+## Entscheidungen
+
+Autonom gegrillt (`art: Defekt`, Freigabe 1), auf Grundlage der Nutzer-Entscheidung zu B-186 (im Assistenten gewinnt die Intensität).
+
+1. **Ein Text für beide Orte**, der beide Orte benennt – wie `exercisePoints` in derselben Datei. `fieldHelp.ts` hält eine
+   Formulierung je Begriff (Punkt 2); zwei Fassungen wären der Bruch, den die Datei verhindern soll. *Kosten:* der Text ist
+   einen Satz länger und spricht an jedem Ort auch über den anderen.
+2. **Test als Vitest** über den Text, nicht als E2E je Ort: beide Orte rendern dieselbe Konstante. *Kosten:* ob das ⓘ am
+   Feld hängt, prüft weiter `feldhilfe.spec.ts` (unverändert grün).
+
+## Schätzung
+
+- **groesse:** XS · **wo:** frontend · **migration:** nein · **vertragsbruch:** nein. **Testweg:** `src/lib/fieldHelp.test.ts`, Rollengang Assistent.
+
 ## Verlauf
 
 - 2026-09-02 · Aufgenommen aus der **Nachschau** zu Sprint 2. `entgangen_bei: [B-191]` für die erste
   Hälfte — sie wurde durch jene Story unwahr. Die zweite Hälfte ist älter und gehört zu B-186.
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht (`fieldHelp.ts:54-55`, Reset `PlanPositions.tsx:512,632`, Render im Assistenten `VaterWizard.tsx:590`). Ist das XS-Bauticket der Antwort auf B-186 – beide in einer Sitzung entscheiden, B-201 danach autonom bauen.
 - **2026-10-23** — **Blocker gefallen** in der Grill-Runde der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): B-186 ist entschieden (im Assistenten gewinnt die Intensität). Damit ist die Richtung klar – die Feldhilfe sagt auf der Plan-Seite, dass die Empfehlung vorbelegt wird und eine Änderung für diese Position gilt, und behauptet im Assistenten nichts davon. Autonom grillbar, XS, Paket NP-12.
+- **2026-10-23** — vierter Nachtlauf, Sprint 9 (NP-12, [Protokoll](../pm-sitzung-2026-10-23-nacht.md)): gegrillt, geschätzt, gebaut. Neuer Text: „Auf der Plan-Seite steht hier beim Hinzufügen einer Übung deren Empfehlung; was du änderst, gilt für diese eine Position. Der Assistent belegt den Wert stattdessen aus der gewählten Intensität vor." Rote Probe (Auflage 5): `fieldHelp.test.ts` gegen den alten Text – erwartet 2 rot / 1 grün (der dritte Fall ist ein Wächter gegen Verlust beim Umschreiben) → gemessen **2 rot an `:16` und `:22`, 1 grün**. `frontend-reviewer`: ein Nit („setzt" klang endgültig, es ist eine Vorbelegung) → umformuliert samt Regex (gezählt, Sprint-Zähler). Vitest **409/409**. **Rollengang im Browser** (Freigabe 6, Wegwerf-DB `pugling_walk5.db`, Server nach dem letzten Produkt-Edit gestartet): Assistent ohne Eingabe wählt weiter „Bestehendes Kind / Sohn" vor; Durchlauf bis „Feinschliff", das ⓘ an „Punkte je Ziel" zeigt den neuen Text; `GET /openapi/v1.json` trägt Beispiele an 87 Operationen (der Katalog lädt über den neuen Lesepfad). Eingaben über die echten Handler der Seite (Klicks der Extension kamen nach dem Wiederverbinden nicht an). Playwright voll: **82 passed**. Abgenommen; Commit: siehe Nachtrag.

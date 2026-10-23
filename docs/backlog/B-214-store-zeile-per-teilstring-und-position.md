@@ -1,15 +1,15 @@
 ---
-tags: [typ/story, status/idee, bereich/frontend]
+tags: [typ/story, status/abgenommen, bereich/frontend]
 aliases: [bilder.spec greift die Store-Zeile per first, Teilstring plus Position]
-status: idee
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
+groesse: XS
 wo: frontend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: Review-Runde zu B-153 (2026-09-04)
-unverifiziert: true
+unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
@@ -37,6 +37,21 @@ Bild") — rund hundert Zeilen und zwei Browser-Kontexte von der Ursache entfern
 Im Unterschied zu B-153 flackert hier heute **nichts**: `la ville` ist im Seed eindeutig, und keine andere
 Spec legt eine Vokabel mit diesem Präfix an. Es ist eine Falle, keine Störung.
 
+## User Story
+
+Als **Entwickler, der eine rote E2E liest**, möchte ich, dass `bilder.spec.ts` genau die Vokabel greift, um die es
+geht, damit ein Rot an der Ursache steht und nicht hundert Zeilen später im Sohn-Teil.
+
+## Ist-Stand am Code
+
+`frontend/e2e/bilder.spec.ts:112` (vor dem Bau): `getByRole("row", { name: new RegExp(WORD) }).first()` – Teilstring
+plus Position; der Server-Filter sucht `Contains`, die DB ist zwischen den Specs eines Laufs geteilt.
+
+## Akzeptanzkriterien
+
+1. Die Zeile wird über die exakte Wort-Zelle gegriffen, und eine Mehrdeutigkeit fällt laut an dieser Stelle.
+2. Eine Probe mit einer Zwillings-Vokabel zeigt: alt rot, neu grün.
+
 ## Offene Punkte
 
 1. Wie greift man die Zeile stattdessen? Der zugängliche Name einer Tabellenzeile ist ihr gesamter Text
@@ -47,6 +62,20 @@ Spec legt eine Vokabel mit diesem Präfix an. Es ist eine Falle, keine Störung.
 2. Gilt derselbe Griff noch anderswo? *Empfehlung: beim Ausformulieren einmal über alle Specs greppen —
    `.first()` direkt hinter einem `RegExp`-Namen ist ein Muster, das sich suchen lässt.*
 
+## Entscheidungen
+
+Autonom gegrillt (`art: Defekt`, Freigabe 1).
+
+1. **Über die Wort-Zelle, exakt, plus `toHaveCount(1)`** (Empfehlung aus Punkt 1): `getByRole("row").filter({ has: getByRole("cell",
+   { name: WORD, exact: true }) })`. Die Wort-Zelle ist `<td>{v.word}</td>` (`VaterVocab.tsx:474`). *Kosten:* bricht, wenn die Zelle
+   einmal mehr als das Wort trägt – dann laut an dieser Zeile, nicht hundert Zeilen später.
+2. **Punkt 2:** die Sichtung fand kein weiteres `.first()`-Muster; der Reviewer nennt `full-flow.spec.ts:189` mit demselben
+   Teilstring, dort aber ohne `.first()` – Strict Mode scheitert laut. Bewusst belassen.
+
+## Schätzung
+
+- **groesse:** XS · **wo:** frontend · **migration:** nein · **vertragsbruch:** nein. **Testweg:** Probe mit Zwillings-Vokabel, Playwright voll.
+
 ## Verlauf
 
 - **2026-09-04** — aus der Review-Runde zu [B-153](B-153-bilder-spec-flackert-im-vollen-lauf.md).
@@ -54,3 +83,4 @@ Spec legt eine Vokabel mit diesem Präfix an. Es ist eine Falle, keine Störung.
   dieser Punkt hat beides nicht, und die Reparatur ist keine Zeile (offener Punkt 1). Ein Fund beim Bauen
   wird eine eigene Story (README, „Ein Fund beim Bauen…").
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht (`bilder.spec.ts:112`); ein Durchsuchen aller Specs findet kein weiteres Zeilen-Muster dieser Art. XS, autonom.
+- **2026-10-23** — vierter Nachtlauf, Sprint 9 (NP-12, [Protokoll](../pm-sitzung-2026-10-23-nacht.md)): ausformuliert, gegrillt, gebaut. Rote Probe (Auflage 5, Skript): eine Zwillings-Vokabel „ala ville" (enthält WORD, sortiert davor) per API eingeschleust – **alte Fassung: 1 failed, rot an `:150` der Probe-Fassung** (Bilder-Panel nicht gefunden, weit hinter der Ursache, wie die Story vorhersagte); **neue Fassung: 1 passed**. Ohne Zwilling im vollen Lauf grün. `frontend-reviewer`: korrekt. Playwright voll **82 passed**. Rollengang: Ersatz benannt – die Spec selbst fährt den Weg im echten Browser. Abgenommen; Commit: siehe Nachtrag.

@@ -500,11 +500,10 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (60)
+### Offen (55)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [B-181](B-181-praemisse-der-rennen-klasse-stimmt-nicht.md) | Die Rennen-Klasse nennt nur einen von zwei Fehlermodi — welcher auftritt, entscheidet die Plattform | Defekt | `ausformuliert` | P2 | — | — | — |
 | [B-254](B-254-weg-zeigt-englischen-planfehler.md) | Der Trophäenweg zeigt dem Kind „Study plan not found." statt einer Erklärung | Defekt | `idee` | P2 | — | — | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `gegrillt` | P2 | — | backend | Vertrag? |
@@ -518,18 +517,15 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-249](B-249-probeklausur-mit-notenprognose.md) | Eine Probeklausur über das Bündel einer Klassenarbeit, mit Notenprognose | Wunsch | `idee` | P2 | — | — | — |
 | [B-134](B-134-bedingte-live-regionen.md) | Dreizehn Live-Regionen entstehen zusammen mit ihrem Text — und schweigen darum | Defekt | `ausformuliert` | P3 | — | — | — |
 | [B-164](B-164-useasync-paart-frischen-zustand-mit-alten-daten.md) | Nach einem Wechsel zeigt der Bildschirm für einen Moment frischen Zustand mit alten Daten | Defekt | `ausformuliert` | P3 | — | frontend | — |
-| [B-201](B-201-feldhilfe-argumentiert-in-beide-richtungen.md) | Die Feldhilfe zu den Zielpunkten argumentiert seit Sprint 2 in beide Richtungen | Defekt | `ausformuliert` | P3 | XS | frontend | — |
-| [B-242](B-242-zweite-rest-datei-faehrt-die-tote-kapitel-route.md) | Eine zweite `.http`-Datei unter `docs/REST/Creator/` fährt die tote Kapitel-Route – mit eingebranntem Token | Defekt | `ausformuliert` | P3 | — | doku | — |
 | [B-141](B-141-interest-tag-label-dublette.md) | Zwei Interessen-Tags dürfen dasselbe Label tragen | Defekt | `idee` | P3 | — | — | — |
-| [B-177](B-177-seitenschluessel-haengt-an-einer-batching-annahme.md) | Der Seitenschlüssel hängt an einer Batching-Annahme, die kein Tor hält | Defekt | `idee` | P3 | — | — | — |
 | [B-205](B-205-exercise-in-use-ohne-deutsche-fassung.md) | `exercise_in_use` fehlt in `GERMAN_PROBLEM_TEXT` — die zwei Geschwister stehen drin | Defekt | `idee` | P3 | — | — | — |
-| [B-214](B-214-store-zeile-per-teilstring-und-position.md) | Die Store-Zeile wird per Teilstring **und** Position gegriffen — dieselbe Bauart wie B-153 | Defekt | `idee` | P3 | — | frontend | — |
 | [B-236](B-236-checkbox-gruppe-ohne-zugaenglichen-gruppennamen.md) | Eine Gruppen-Überschrift über Kontrollkästchen ist sichtbar, aber für den Screenreader an nichts gebunden | Defekt | `idee` | P3 | — | frontend | — |
 | [B-245](B-245-token-mit-fid-auf-geloeschten-adult.md) | Ein Token, das vor `DELETE adults/{id}` ausgestellt wurde, trägt ein `fid` auf eine gelöschte Zeile – jeder `OwnerAdultId`-Schreiber liefe in die FK | Defekt | `idee` | P3 | — | backend | — |
 | [B-255](B-255-kinderzeile-per-namen-zweideutig.md) | E2E-Specs suchen die Kinderzeile per Namen, den zwei Tabellen tragen | Defekt | `idee` | P3 | — | — | — |
 | [B-257](B-257-zielfeier-verspaetet-jenseits-der-ersten-fuenf.md) | Ein schon erreichtes Ziel jenseits der ersten fünf wird später verspätet gefeiert | Defekt | `idee` | P3 | — | — | — |
 | [B-258](B-258-unbekannte-fach-id-zwei-fehlercodes.md) | Eine unbekannte `SubjectId` meldet je nach Ressource zwei verschiedene Fehlercodes | Defekt | `idee` | P3 | — | — | — |
 | [B-259](B-259-generator-verschluckt-leerzeichen-neben-xml-elementen.md) | Der XML-Doc-Generator verschluckt Leerzeichen zwischen zwei Elementen | Defekt | `idee` | P3 | — | — | — |
+| [B-260](B-260-normalisierer-setzt-absatz-mitten-im-satz.md) | Der OpenAPI-Normalisierer setzt einen Absatz mitten in einen Satz | Defekt | `idee` | P3 | — | — | — |
 | [B-17](B-17-birkenbihl-sprachcodes.md) | Sprachcode-Normalisierung bei der Vokabel-Dekodierung | Frage | `in-arbeit` | P3 | XS | frontend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-231](B-231-fokus-ohne-fehlerkasten.md) | Wohin gehört der Fokus, wenn ein Knopf ohne Fehlerkasten gesperrt wird? | Frage | `idee` | P3 | — | frontend | — |
@@ -561,12 +557,11 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-252](B-252-vorlesen-und-sprechen-bei-vokabeln.md) | Vokabeln vorlesen lassen und optional per Stimme beantworten | Wunsch | `idee` | P3 | — | — | — |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `geschaetzt` | P3 | S | backend | — |
 | [B-230](B-230-pin-hash-doppelt-gehalten.md) | Der PIN-Hash liegt doppelt: Profil und Konto halten denselben Wert | Aufräumen | `idee` | P3 | — | — | — |
-| [B-239](B-239-wiki-beispiele-tragen-deutsche-xml-docs.md) | Die Erweitern-Anleitung im Wiki zeigt deutsche `/// <summary>` – entgegen der Regel „Code-Doku auf Englisch" | Aufräumen | `idee` | P3 | — | doku | — |
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 | [B-05](B-05-buchstaben-tausch.md) | Buchstaben-Tausch-Eingabe (Anagramm) | Wunsch | `geschaetzt` | P5 | M | beides | — |
 
 <details>
-<summary>Abgenommen (176)</summary>
+<summary>Abgenommen (182)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -644,10 +639,12 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-174](B-174-arten-liste-verschweigt-ihren-fehler.md) | Die Arten-Liste verschweigt, dass ihr Laden gescheitert ist | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-175](B-175-zwei-gerottete-zahlen-in-kommentaren.md) | Zwei Zahlen in Kommentaren widersprechen dem, was gemessen wurde | Defekt | `abgenommen` | P3 | XS | doku | — |
 | [B-176](B-176-gruppen-ueberschrift-verliert-die-feld-optik.md) | Eine Gruppen-Überschrift verliert ihre Optik, sobald sie kein `<label>` mehr ist | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-177](B-177-seitenschluessel-haengt-an-einer-batching-annahme.md) | Der Seitenschlüssel hängt an einer Batching-Annahme, die kein Tor hält | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-178](B-178-katalogtext-verspricht-mehr-als-der-server-erlaubt.md) | Der Katalogtext verspricht mehr als der Server erlaubt | Defekt | `abgenommen` | P1 | XS | beides | — |
 | [B-179](B-179-drei-fassungen-des-admin-testhelfers.md) | Drei Fassungen desselben Admin-Testhelfers, und die tragende Regel steht in jeder neu | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-18](B-18-auto-lehrplan-generator.md) | Lehrplan automatisch aus gefilterten Übungen bauen | Wunsch | `abgenommen` | P2 | S | beides | — |
 | [B-180](B-180-zusicherung-haengt-an-scheduling-statt-am-gate.md) | Eine Zusicherung hing an 20 ms Scheduling statt am Gate | Defekt | `abgenommen` | P2 | XS | frontend | — |
+| [B-181](B-181-praemisse-der-rennen-klasse-stimmt-nicht.md) | Die Rennen-Klasse nennt nur einen von zwei Fehlermodi — welcher auftritt, entscheidet die Plattform | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-182](B-182-reichweite-nur-am-patch-festgenagelt.md) | Die Reichweite des Ventils war nur am PATCH festgenagelt | Defekt | `abgenommen` | P2 | XS | backend | — |
 | [B-184](B-184-vier-platzhalter-zeigen-fehler-als-laedt-noch.md) | Vier Platzhalter zeigen einen Fehler dauerhaft als „Lade…" | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-185](B-185-anlegemodus-behauptet-uebernommenes-fach.md) | Beim Anlegen behauptet der Hinweis ein übernommenes Fach, das das Feld nicht zeigt | Defekt | `abgenommen` | P3 | XS | frontend | — |
@@ -666,6 +663,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-198](B-198-teilstring-falle-im-selben-commit-neu-gebaut.md) | Die Teilstring-Falle aus B-189 wurde im selben Commit neu gebaut | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-199](B-199-drei-behauptungen-die-ihr-eigener-sprint-aufgehoben-hat.md) | Drei Behauptungen, die ihr eigener Sprint aufgehoben hat | Aufräumen | `abgenommen` | P3 | XS | frontend | — |
 | [B-200](B-200-drei-stumme-erfolgspfade.md) | Drei Löschwege melden gar nichts | Defekt | `abgenommen` | P3 | S | frontend | — |
+| [B-201](B-201-feldhilfe-argumentiert-in-beide-richtungen.md) | Die Feldhilfe zu den Zielpunkten argumentiert seit Sprint 2 in beide Richtungen | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-202](B-202-agent-vorgabewert-halbiert-die-zielbelohnung.md) | Der KI-Creator halbiert die Zielbelohnung jeder erzeugten Übung | Defekt | `abgenommen` | P2 | XS | backend | — |
 | [B-203](B-203-platzhalter-luegt-auch-ohne-fehler.md) | Der Platzhalter lügt auch ohne Fehler — und ein misslungenes Lesen nahm dem Vater eine Fähigkeit | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-204](B-204-vierter-weg-in-den-doppelten-meldungsplatz.md) | Der vierte Weg in denselben Widerspruch: die Reihen-Zeile hat zwei Meldungsplätze | Defekt | `abgenommen` | P2 | XS | frontend | — |
@@ -674,6 +672,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-210](B-210-dialog-haelt-zwei-wahrheiten-fuer-die-config.md) | „Beschreibung speichern" dreht den gerade gespeicherten Inhalt lautlos zurück | Defekt | `abgenommen` | P1 | M | frontend | — |
 | [B-211](B-211-interestchips-zusicherung-kann-nicht-fallen.md) | Eine Zusicherung prüft den Ausgangszustand und kann darum nie fallen | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-212](B-212-fuenfter-meldungsplatz-in-lehrwerke.md) | Auf der Lehrwerke-Seite stehen rot und grün gleichzeitig — der Weg ist nur ein anderer | Defekt | `abgenommen` | P3 | M | frontend | — |
+| [B-214](B-214-store-zeile-per-teilstring-und-position.md) | Die Store-Zeile wird per Teilstring **und** Position gegriffen — dieselbe Bauart wie B-153 | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-215](B-215-typ-manifest-ohne-fehlerkanal.md) | Das Typ-Manifest schluckt seinen Ausfall — und niemand kann ihn anzeigen | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-216](B-216-wiederholknopf-haengt-sich-aus.md) | Zwei Wiederhol-Knöpfe verschwinden im Moment des Klicks unter dem Finger | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-224](B-224-verlagsbaustein-traegt-zweiten-meldungsplatz.md) | Der Verlags-Baustein trägt auf der Lehrwerke-Seite einen zweiten Meldungsplatz | Defekt | `abgenommen` | P3 | S | frontend | — |
@@ -684,8 +683,10 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-235](B-235-unit-feld-sagt-nicht-geladen-waehrend-des-ladens.md) | Das Unit-Feld im Lehrbuch-Formular sagt „(nicht geladen)“, solange die Units erst laden | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-237](B-237-ki-creator-hilfe-nennt-ein-kapitel.md) | Die Hilfe des KI-Creators bietet `--chapter <id>` an – ein Kapitel gibt es seit B-106 nicht mehr | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-238](B-238-rest-tutorial-des-creators-faehrt-die-tote-kapitel-route.md) | Das ausführbare REST-Tutorial des Creators fährt die Kapitel-Route, die es seit B-106 nicht gibt | Defekt | `abgenommen` | P2 | S | doku | — |
+| [B-239](B-239-wiki-beispiele-tragen-deutsche-xml-docs.md) | Die Erweitern-Anleitung im Wiki zeigt deutsche `/// <summary>` – entgegen der Regel „Code-Doku auf Englisch" | Aufräumen | `abgenommen` | P3 | XS | doku | — |
 | [B-240](B-240-index-meldet-fehlende-groesse-und-wo-nie.md) | Der Index meldet fehlende `groesse`/`wo` nie – und verschluckt die Warnzeile, wenn nur leere Dateien da sind | Defekt | `abgenommen` | P2 | XS | doku | — |
 | [B-241](B-241-kapitel-ebene-in-tutorials-und-einem-kommentar-uebrig.md) | B-166 hat die Kapitel-Ebene aus der Wissenskarte entfernt – in drei Tutorials und einem Plan steht sie noch, und ein Kommentar wurde dabei falsch | Defekt | `abgenommen` | P3 | XS | doku | — |
+| [B-242](B-242-zweite-rest-datei-faehrt-die-tote-kapitel-route.md) | Eine zweite `.http`-Datei unter `docs/REST/Creator/` fährt die tote Kapitel-Route – mit eingebranntem Token | Defekt | `abgenommen` | P3 | XS | doku | — |
 | [B-243](B-243-testapi-kommentar-und-vierte-admin-helfer-fassung.md) | B-179 hat den Admin-Helfer geteilt – die Summary behauptet die Gegenrichtung des gemessenen Effekts, und eine vierte Fassung blieb stehen | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-244](B-244-publishers-create-baut-die-antwort-von-hand.md) | `PublishersController.Create` baut die Antwort von Hand, `Update` liest über `Project` zurück | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-246](B-246-b-241-zwei-saetze-falsch-und-sweep-zu-frueh.md) | B-241 hat zwei Sätze beim Wortwechsel falsch gemacht und den Sweep vor der letzten Änderung gemessen | Defekt | `abgenommen` | P3 | XS | doku | — |
@@ -762,9 +763,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
-### Nach der Abnahme entgangen (55)
+### Nach der Abnahme entgangen (56)
 
-**Nachgeschaut: 159 von 176 abgenommenen** — und in 44 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 17 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 163 von 182 abgenommenen** — und in 45 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 19 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -805,7 +806,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-196](B-196-loeschen-meldet-nichts-und-raeumt-nichts.md) | Das Löschen einer Reihe meldet nichts — und lässt die Bestätigung von vorhin stehen | [B-173] | `abgenommen` |
 | [B-197](B-197-meldungsplatz-wird-beim-absenden-nicht-geraeumt.md) | Der Meldungsplatz wird beim Absenden nicht geräumt — und zeigt dann zwei Wahrheiten | [B-173, B-151] | `abgenommen` |
 | [B-198](B-198-teilstring-falle-im-selben-commit-neu-gebaut.md) | Die Teilstring-Falle aus B-189 wurde im selben Commit neu gebaut | [B-151] | `abgenommen` |
-| [B-201](B-201-feldhilfe-argumentiert-in-beide-richtungen.md) | Die Feldhilfe zu den Zielpunkten argumentiert seit Sprint 2 in beide Richtungen | [B-191] | `ausformuliert` |
+| [B-201](B-201-feldhilfe-argumentiert-in-beide-richtungen.md) | Die Feldhilfe zu den Zielpunkten argumentiert seit Sprint 2 in beide Richtungen | [B-191] | `abgenommen` |
 | [B-202](B-202-agent-vorgabewert-halbiert-die-zielbelohnung.md) | Der KI-Creator halbiert die Zielbelohnung jeder erzeugten Übung | [B-45] | `abgenommen` |
 | [B-203](B-203-platzhalter-luegt-auch-ohne-fehler.md) | Der Platzhalter lügt auch ohne Fehler — und ein misslungenes Lesen nahm dem Vater eine Fähigkeit | [B-184, B-63] | `abgenommen` |
 | [B-204](B-204-vierter-weg-in-den-doppelten-meldungsplatz.md) | Der vierte Weg in denselben Widerspruch: die Reihen-Zeile hat zwei Meldungsplätze | [B-197] | `abgenommen` |
@@ -823,31 +824,34 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-246](B-246-b-241-zwei-saetze-falsch-und-sweep-zu-frueh.md) | B-241 hat zwei Sätze beim Wortwechsel falsch gemacht und den Sweep vor der letzten Änderung gemessen | [B-241] | `abgenommen` |
 | [B-256](B-256-sprint-5-drei-saetze-nach-der-abnahme.md) | Drei Sätze aus Sprint 5, die nach der Abnahme nicht stimmen | [B-237, B-244, B-246] | `abgenommen` |
 | [B-257](B-257-zielfeier-verspaetet-jenseits-der-ersten-fuenf.md) | Ein schon erreichtes Ziel jenseits der ersten fünf wird später verspätet gefeiert | [B-36] | `idee` |
+| [B-260](B-260-normalisierer-setzt-absatz-mitten-im-satz.md) | Der OpenAPI-Normalisierer setzt einen Absatz mitten in einen Satz | [B-147] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (17) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (19) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-138](B-138-markup-sickert-in-openapi.md) | Rohe HTML-Tags stehen in 70 Beschreibungen des Vertragsdokuments |
-| [B-145](B-145-fach-umbenennen-laesst-namen-stehen.md) | Ein umbenanntes Fach lässt seinen Namen in drei Tabellen stehen |
-| [B-147](B-147-para-summaries-tragen-einrueckung-ins-dokument.md) | Ein `<para>` im `<summary>` trägt seine Quelltext-Einrückung ins OpenAPI-Dokument |
-| [B-156](B-156-ismine-heisst-anderswo-isown.md) | Dasselbe Eigentums-Flag heißt im Vertrag einmal `isMine` und siebenmal `isOwn` |
 | [B-160](B-160-gesperrter-knopf-nennt-den-grund-nie.md) | Der gesperrte Löschen-Knopf nennt seinen Grund nie — der `title` erscheint nicht |
 | [B-165](B-165-backend-suite-flackert.md) | `AtomaresSchreiben_KeineLeseFehler` fällt unter Volllast — und färbt das Test-Tor rot |
 | [B-167](B-167-katalogliste-zeigt-beim-filterwechsel-alte-treffer.md) | Katalogliste im Planbau zeigt beim Filterwechsel die alten Treffer weiter |
 | [B-170](B-170-selbst-angelegte-art-im-grundbestand-ist-unloeschbar.md) | Eine selbst angelegte Art im Grundbestands-Fach ist unlöschbar — und der Seitentext verspricht das Gegenteil |
+| [B-177](B-177-seitenschluessel-haengt-an-einer-batching-annahme.md) | Der Seitenschlüssel hängt an einer Batching-Annahme, die kein Tor hält |
 | [B-180](B-180-zusicherung-haengt-an-scheduling-statt-am-gate.md) | Eine Zusicherung hing an 20 ms Scheduling statt am Gate |
+| [B-181](B-181-praemisse-der-rennen-klasse-stimmt-nicht.md) | Die Rennen-Klasse nennt nur einen von zwei Fehlermodi — welcher auftritt, entscheidet die Plattform |
 | [B-182](B-182-reichweite-nur-am-patch-festgenagelt.md) | Die Reichweite des Ventils war nur am PATCH festgenagelt |
 | [B-188](B-188-wizard-verschweigt-drei-weitere-ausfaelle.md) | Der Assistent verschweigt drei weitere Ausfälle — einer schickt den Vater ins Kind-Anlegen |
 | [B-189](B-189-teilstring-zusicherung-bricht-im-vollen-lauf.md) | Eine Teilstring-Zusicherung bricht, sobald der Leer-Text daneben stehen bleibt |
 | [B-19](B-19-schuelerprofil-ki-lehrplan.md) | Schülerprofil-getriebener KI-Lehrplan |
 | [B-195](B-195-unit-liste-bleibt-waehrend-des-reihenwechsels-waehlbar.md) | Beim Reihenwechsel bleiben die Units der alten Reihe wählbar |
+| [B-201](B-201-feldhilfe-argumentiert-in-beide-richtungen.md) | Die Feldhilfe zu den Zielpunkten argumentiert seit Sprint 2 in beide Richtungen |
 | [B-202](B-202-agent-vorgabewert-halbiert-die-zielbelohnung.md) | Der KI-Creator halbiert die Zielbelohnung jeder erzeugten Übung |
 | [B-209](B-209-savednotice-raeumt-nie.md) | „Gespeichert" bleibt über jedem folgenden Bildschirm der Arcade stehen |
+| [B-214](B-214-store-zeile-per-teilstring-und-position.md) | Die Store-Zeile wird per Teilstring **und** Position gegriffen — dieselbe Bauart wie B-153 |
+| [B-239](B-239-wiki-beispiele-tragen-deutsche-xml-docs.md) | Die Erweitern-Anleitung im Wiki zeigt deutsche `/// <summary>` – entgegen der Regel „Code-Doku auf Englisch" |
+| [B-242](B-242-zweite-rest-datei-faehrt-die-tote-kapitel-route.md) | Eine zweite `.http`-Datei unter `docs/REST/Creator/` fährt die tote Kapitel-Route – mit eingebranntem Token |
 | [B-46](B-46-interessenbasierte-uebungen.md) | Übungen entstehen für ein Interessenprofil, nicht für ein bestimmtes Kind |
 
 </details>
@@ -876,6 +880,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-209](B-209-savednotice-raeumt-nie.md) | `abgenommen` | Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung" |
 | [B-210](B-210-dialog-haelt-zwei-wahrheiten-fuer-die-config.md) | `abgenommen` | Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung" |
 | [B-212](B-212-fuenfter-meldungsplatz-in-lehrwerke.md) | `abgenommen` | Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung" |
+| [B-260](B-260-normalisierer-setzt-absatz-mitten-im-satz.md) | `idee` | `unverifiziert: true` |
 
 <details>
 <summary>Verworfen (22)</summary>

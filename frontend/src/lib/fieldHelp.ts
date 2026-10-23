@@ -51,8 +51,8 @@ export const FIELD_HELP = {
     title: "Punkte, wenn das Ziel erreicht ist",
     text: "🪙 Münzen, die einmal je Periode gutgeschrieben werden, sobald die Pflicht erfüllt ist. Münzen "
       + "gibt das Kind im Familien-Shop für echte Belohnungen aus. Bei „frei“ gibt es sie nicht. "
-      + "Beim Hinzufügen einer Übung steht hier deren Empfehlung – änderst du sie, bleibt die Änderung; "
-      + "bereits angelegte Positionen berührt eine spätere Empfehlung nie.",
+      + "Auf der Plan-Seite steht hier beim Hinzufügen einer Übung deren Empfehlung; was du änderst, gilt "
+      + "für diese eine Position. Der Assistent belegt den Wert stattdessen aus der gewählten Intensität vor.",
   },
   penaltyCoins: {
     title: "Münz-Malus bei versäumter Pflicht",

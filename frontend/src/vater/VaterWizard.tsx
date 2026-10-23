@@ -429,7 +429,11 @@ export function VaterWizard() {
               </select>
             </div>
           ) : (
-            <div className="form-grid">
+            /* Wer hier etwas einträgt, hat sich für ein neues Kind entschieden – genauso bindend wie der Klick
+               auf die Pille. Ohne das schaltete eine spät ankommende Kinderliste den Effekt oben noch nach
+               Schritt 0 auf das erste bestehende Kind um, still, und der Plan ginge an ein anderes Kind
+               (B-177). `onChange` am Container fängt die Ereignisse aller fünf Felder. */
+            <div className="form-grid" onChange={() => setTouchedMode(true)}>
               <div className="field"><label htmlFor="wiz-name">Name</label><input id="wiz-name" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="z.B. Max" /></div>
               <div className="field"><label htmlFor="wiz-birthyear">Geburtsjahr</label><input id="wiz-birthyear" type="number" value={newBirthYear} onChange={(e) => setNewBirthYear(e.target.value)} placeholder="z.B. 2012" />{gradeHint && <span className="sub">{gradeHint}</span>}</div>
               <div className="field"><label htmlFor="wiz-grade">Klasse</label><input id="wiz-grade" type="number" min={1} max={13} value={grade} onChange={(e) => setGrade(e.target.value === "" ? "" : Number(e.target.value))} placeholder="z.B. 8" /></div>

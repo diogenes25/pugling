@@ -1,19 +1,20 @@
 ---
-tags: [typ/story, status/idee, bereich/frontend]
-aliases: [Schluessel der Antwort, Batching-Annahme im Assistenten]
-status: idee
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/supervisor]
+aliases: [Schluessel der Antwort, Batching-Annahme im Assistenten, spaete Kinderliste schaltet auf bestehendes Kind]
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: S
+wo: frontend
+migration: nein
+vertragsbruch: nein
 quelle: frontend-reviewer zu B-169 (Nachtlauf 2026-08-14, Fund ausserhalb des Schadens)
-unverifiziert: true
+unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 nachgeschaut: ""
+wartet_auf: ""
 ---
 
 # B-177 · Der Seitenschlüssel hängt an einer Batching-Annahme, die kein Tor hält
@@ -22,39 +23,62 @@ B-169 sperrt die Zeilen, solange sie zum vorigen Filter gehören. Der Vergleich 
 Annahme, die **im Code nur als Kommentar** steht: dass eine Antwort und ein Kriterienwechsel nie im
 *selben* React-Batch committen.
 
-## Behauptung (ungeprüft, aus dem Review)
+## User Story
 
-`frontend/src/vater/VaterWizard.tsx` — der Effekt hängt an `[exercises.data]`, liest aber `filterKey`. Er
-unterstellt damit, dass beim Eintreffen einer Antwort der Schlüssel noch der ist, mit dem sie abgeschickt
-wurde.
+Als **Vater im Lehrplan-Assistenten** möchte ich, dass die Übungen, die ich anhaken kann, immer zu den Kriterien
+gehören, die gerade gelten – und dass der Assistent mein eingetipptes neues Kind nicht gegen ein anderes tauscht.
 
-Der Gegenfall: `children.data` speist über `effectiveGrade`/`effectiveSchoolType` den `filterKey`. Landen
-`children.data` und eine `exercises`-Antwort im **selben** Batch, setzt der Effekt `seitenSchluessel` auf den
-**neuen** Schlüssel über den Zeilen der **alten** Abfrage → das Gate ist offen, die Zeilen sind veraltet,
-und kein Signal sagt es.
+## Ist-Stand am Code
 
-**Warum das heute praktisch nicht eintritt** (und die Story darum P3 ist): Es braucht `mode === "existing"`,
-ein Kind mit gesetzter Klasse oder Schulart, **und** eine Kinderliste, die später antwortet als die erste
-Katalogabfrage — die aber erst nach der Fachwahl startet, also lange nach dem Laden der Kinder.
+- `frontend/src/vater/VaterWizard.tsx:259-269`: der Effekt auf `[exercises.data]` setzt `seitenSchluessel` auf den
+  **aktuellen** `filterKey` – er unterstellt, dass der Schlüssel noch der ist, mit dem die Antwort abgeschickt wurde.
+- `filterKey` (`:175`) hängt an `effectiveGrade`/`effectiveSchoolType` (`:113-116`), die im Modus „existing" aus
+  `children.data` über `selectedChild` kommen. Im Modus „neu" kommen sie aus eigenem State.
+- `:150-155`: ein Effekt schaltet bei ankommender Kinderliste auf „existing" und das erste Kind, solange
+  `touchedMode` falsch ist. **`touchedMode` setzten nur die zwei Pillen** (`:411-419`), nicht die Felder des
+  Neues-Kind-Formulars.
 
-## Warum es trotzdem eine Story ist
+## Die echte Lücke
 
-Es ist die gemessene Fehlerfamilie dieses Repos in ihrer leisesten Form: eine Bedingung, die zwei Zeitpunkte
-zusammenzieht („der Schlüssel jetzt" und „der Schlüssel beim Abschicken"). Und sie hängt an **nichts**
-Mechanischem: das Projekt hat kein `lint`-Skript (`frontend/package.json`), die `eslint-disable`-Zeile im
-Effekt ist reine Dokumentation. Die Annahme lebt allein im Kommentar.
+Gemessen, nicht vermutet (Mess-Spec, siehe Verlauf): Die Behauptung der Story in ihrer ursprünglichen Form trägt nicht
+– `children.data` allein verschiebt den Schlüssel nie, und im gemessenen Ablauf schloss das Gate eine Frame nach dem
+Wechsel. **Der Wechsel selbst ist aber der Defekt:** kam die Kinderliste erst an, nachdem der Vater ein neues Kind
+eingetippt hatte (ohne die Pille zu klicken), schaltete der Effekt still auf das erste bestehende Kind – auch noch in
+Schritt 2 oder 3, wo der Vater es nicht sieht –, und `finish` hätte den Plan an dieses Kind geschickt
+(`existingChildId`, `:344-351`). Derselbe Wechsel ist der einzige Weg, auf dem sich `filterKey` mitten in einer
+Übungsabfrage durch die Kinderliste verschieben kann; laut `frontend-reviewer` bleibt dort unter React 18 ein
+Macrotask-Fenster, in dem Antwort und Wechsel doch in einem Render landen könnten.
 
 ## Offene Punkte
 
-1. Ist der Fall konstruierbar? Empfehlung: **erst versuchen** — ein Kind mit Klasse anlegen, die Kinderliste
-   per `page.route` verzögern und beobachten. Lässt er sich nicht herstellen, ist das ein gutes Ergebnis und
-   die Story wird mit Grund verworfen, nicht gebaut.
-2. Wie härten? Empfehlung: den Schlüssel **beim Abschicken** in eine Ref schreiben (im `fn`-Closure von
-   `useAsync`) und im Effekt `setSeitenSchluessel(keyDerAntwort.current)`. Kosten: eine Ref mehr, und der
-   Schlüssel steht dann an zwei Stellen — dafür hängt die Zuordnung nicht mehr an einer Reihenfolge.
-3. Gilt dasselbe für `geltenderFilterKey`? Empfehlung: nachsehen, nicht annehmen. Er wird im Effekt auf
-   `[filterKey]` gesetzt, also aus derselben Quelle wie sein Vergleichswert — vermutlich unbetroffen, aber
-   das ist die Art Vermutung, die diese Story gerade behandelt.
+1. ~~Ist der Fall konstruierbar?~~ → gemessen (Verlauf); die Gleich-Batch-Variante nicht beobachtet, der Moduswechsel schon.
+2. ~~Wie härten?~~ → Entscheidung 1 (die Ursache schließen statt den Schlüssel in eine Ref zu legen).
+3. ~~Gilt dasselbe für `geltenderFilterKey`?~~ → nein: er wird im Effekt auf `[filterKey]` aus derselben Quelle gesetzt (Reviewer bestätigt).
+
+## Entscheidungen
+
+Autonom gegrillt im vierten Nachtlauf (`art: Defekt`, Freigabe 1).
+
+1. **Jede Eingabe im Neues-Kind-Formular gilt als Entscheidung** wie der Pillen-Klick: `onChange` am Container
+   (`div.form-grid`) setzt `touchedMode`. Damit kann der Vorwahl-Effekt nach Schritt 0 nicht mehr umschalten –
+   Schritt 0 verlässt man im Modus „neu" nur mit Namen (`canAdvance`) –, und `filterKey` kann sich während einer
+   Übungsabfrage nicht mehr durch die Kinderliste verschieben. Die Ref-Härtung aus Punkt 2 wird damit unnötig.
+   *Kosten:* ein Browser-Autofill im Formular zählt ebenfalls als Entscheidung (plausibel); wer den Assistenten öffnet
+   und nichts tippt, bekommt weiter „bestehend" vorgewählt.
+2. **Keine Ref für den Schlüssel der Antwort.** Sie hätte das Symptom an einer Stelle gedeckt, die Ursache (der stille
+   Moduswechsel) wäre geblieben. *Kosten:* sollte künftig ein anderer Weg `filterKey` mitten in einer Abfrage
+   verschieben, hält wieder nur der Kommentar am Effekt.
+
+## Akzeptanzkriterien
+
+1. Eine spät ankommende Kinderliste schaltet den Assistenten nicht mehr vom eingetippten neuen Kind weg.
+2. Ohne Eingabe bleibt die Vorwahl „bestehendes Kind" erhalten.
+3. Eine E2E-Spec hält 1 mit angehaltener Kinderliste fest.
+
+## Schätzung
+
+- **groesse:** S · **wo:** frontend · **migration:** nein · **vertragsbruch:** nein.
+- **Testweg:** `e2e/assistent-kinderliste-kommt-spaet.spec.ts`, `assistent.spec.ts` unverändert grün, Rollengang Assistent.
 
 ## Verlauf
 
@@ -62,3 +86,4 @@ Effekt ist reine Dokumentation. Die Annahme lebt allein im Kommentar.
   unerreichbar eingeordnet; er steht hier, weil die Annahme an keinem Tor hängt und beim nächsten Umbau des
   Assistenten still brechen kann. Bleibt `unverifiziert`, bis jemand versucht hat, den Fall herzustellen.
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): der beschriebene Zustand besteht (`VaterWizard.tsx:259-269` hängt an `[exercises.data]`, liest `filterKey` `:175`), Herstellbarkeit weiter unversucht. Mess-Story: ein Nachtlauf versucht AK 1; gelingt es nicht, `verworfen` mit Messung.
+- **2026-10-23** — vierter Nachtlauf, Sprint 9 (NP-12, [Protokoll](../pm-sitzung-2026-10-23-nacht.md)): **Messung** mit einer Wegwerf-Spec (nicht eingecheckt): ein Kind mit Klasse 5 sortiert zuerst; `GET /supervisor/children` angehalten, der Vater tippt ein neues Kind (ohne Pille) und kommt bis Schritt 3; dann Kinderliste frei, jede weitere Katalogantwort 2,5 s verzögert, per `requestAnimationFrame` mitgeschnitten: **521 ms** „env:enabled · 6 passende Übungen", **547 ms** „env:disabled · Suche läuft…", **3096 ms** „3 passende Übungen". Kein Frame mit freigegebenen veralteten Zeilen – aber die Trefferzahl 6 → 3 zeigt, dass der Assistent still auf das bestehende Kind (Klasse 5) umgeschaltet hatte. `frontend-reviewer` bestätigt den Moduswechsel als Defekt und nennt das verbleibende Macrotask-Fenster der Gleich-Batch-Variante. Gebaut nach Entscheidung 1. Rote Probe (Auflage 5): neue Spec ohne den Fix – erwartet rot am Namensfeld, gemessen **rot an `:44`** (`Expected: "Spät-Neu"`); mit Fix **1 passed**. Delta-Review (`frontend-reviewer`): die erste Fassung der Spec hätte ohne Fix auch zufällig grün werden können (`waitForResponse` wartet nicht auf React) → Wartezeile auf die freigeschaltete Pille ergänzt (gezählt), Probe danach erneut rot an `:44`. Playwright voll **82 passed**. Rollengang im Browser: ohne Eingabe wählt der Assistent weiter „Bestehendes Kind / Sohn" vor; Durchlauf bis „Feinschliff". Abgenommen; Commit: siehe Nachtrag.

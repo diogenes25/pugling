@@ -109,8 +109,12 @@ test("Vater bebildert eine Vokabel, der Sohn sieht sein Bild und kann es wechsel
   await vater.getByRole("combobox", { name: "Zielsprache" }).selectOption("de");
   await vater.getByRole("textbox", { name: "Vokabel suchen" }).fill(WORD);
 
-  const row = vater.getByRole("row", { name: new RegExp(WORD) }).first();
-  await expect(row).toBeVisible();
+  // Über die Wort-ZELLE, exakt, nicht über den Zeilennamen: der ist der ganze Zeilentext, und der
+  // Server-Filter sucht `Contains` in einer zwischen den Specs geteilten DB. Eine zweite Vokabel wie
+  // „la ville nouvelle" träfe ein Teilstring-Muster mit, und `.first()` griffe still eine davon (B-214).
+  // `toHaveCount(1)` sagt es laut, statt die Bilder an die falsche Vokabel zu hängen.
+  const row = vater.getByRole("row").filter({ has: vater.getByRole("cell", { name: WORD, exact: true }) });
+  await expect(row).toHaveCount(1);
   await row.getByRole("button", { name: /Bilder/ }).click();
 
   /*

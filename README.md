@@ -108,7 +108,7 @@ eigenständige, dateibasierte Welt.
 
 - **Stack:** C# 14 / .NET 10, ASP.NET Core, EF Core 10 + SQLite, JWT-Auth, Asp.Versioning, OpenAPI.
 - **Konventionen:** siehe [CLAUDE.md](CLAUDE.md) — dünne Controller, Logik in Services, `record`-DTOs,
-  deutsche `/// <summary>`-Docs, Guard Clauses zuerst, `ProblemDetails` für Fehler, EF-Migrationen.
+  englische `/// <summary>`-Docs, Guard Clauses zuerst, `ProblemDetails` für Fehler, EF-Migrationen.
 - **Neuen Übungstyp anlegen:** [wiki/08-erweitern.md](wiki/08-erweitern.md) oder Skill `/neuer-uebungstyp`.
 - **Tests:** `dotnet test` (`backend/Pugling.Api.Tests`) · Frontend: `npm test` (Vitest) und
   `npm run test:e2e` (Playwright), beides aus `frontend/`.

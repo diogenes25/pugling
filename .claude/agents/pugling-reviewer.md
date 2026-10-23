@@ -1,6 +1,6 @@
 ---
 name: pugling-reviewer
-description: Reviewt Änderungen am Pugling-Backend auf Korrektheit UND Einhaltung der Projektkonventionen (API-First, Rollen/Ownership, EF, deutsche Docs, Wiederverwendung der geteilten Filter/Services). Proaktiv nach nichttrivialen C#-Änderungen und vor Commits einsetzen.
+description: Reviewt Änderungen am Pugling-Backend auf Korrektheit UND Einhaltung der Projektkonventionen (API-First, Rollen/Ownership, EF, englische Code-Doku, Wiederverwendung der geteilten Filter/Services). Proaktiv nach nichttrivialen C#-Änderungen und vor Commits einsetzen.
 tools: Read, Grep, Glob, Bash
 ---
 

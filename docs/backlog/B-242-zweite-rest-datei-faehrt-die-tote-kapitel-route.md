@@ -1,10 +1,10 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/doku, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/doku, rolle/creator]
 aliases: [VocabularyExecises.http, eingebranntes Token in docs/REST/Creator/]
-status: ausformuliert
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
+groesse: XS
 wo: doku
 migration: nein
 vertragsbruch: nein
@@ -63,6 +63,15 @@ mit Rollen-Claims gehört nicht ins Repo, auch nicht als Beispiel.
 2. Steht das Token noch in der Git-Historie? Ja (`42cd318` und früher) – ein abgelaufenes Dev-Token aus der
    Historie zu tilgen lohnt den Rewrite nicht; die Entscheidung gehört trotzdem benannt.
 
+## Entscheidungen
+
+1. **Löschen** – Entscheidung des Nutzers (G-0, Commit `3615d46`, Dialog-Sitzung vor dem Nachtlauf); die Git-Historie
+   bleibt (Token abgelaufen, kein Rewrite).
+
+## Schätzung
+
+- **groesse:** XS · **wo:** doku · **migration:** nein · **vertragsbruch:** nein. **Testweg:** die zwei Sweeps aus AK 1 und 2.
+
 ## Verlauf
 
 - **2026-10-23** — angelegt im zweiten Nachtlauf (Sprint 4) beim Routen-Sweep zu B-238, direkt
@@ -71,3 +80,4 @@ mit Rollen-Claims gehört nicht ins Repo, auch nicht als Beispiel.
   geschnitten, und Punkt 1 ist eine Streich-Entscheidung.
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht (9× `chapters`, `eyJ` in `:4`); die Datei wird nirgends referenziert. Die Streich-Entscheidung (offener Punkt 1) steht auf der Grill-Tagesordnung als Ja/Nein-Frage; nach einem Ja ist der Rest XS.
 - **2026-10-23** — **Entscheidung des Nutzers** in der Grill-Runde G-0 der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): **löschen** (offener Punkt 1). Die Git-Historie wird **nicht** getilgt – das Token ist abgelaufen, ein History-Rewrite samt Force-Push lohnt nicht (offener Punkt 2). Damit ist die Story autonom schätz- und baubar (XS, Paket NP-12).
+- **2026-10-23** — vierter Nachtlauf, Sprint 9 (NP-12, [Protokoll](../pm-sitzung-2026-10-23-nacht.md)): Freigabe-Zeile geprüft (`git log -S`: Commit `3615d46`, 19:36, vor dem dritten Lauf). Datei per `git rm` entfernt. Sweeps (Auflage 5): `git grep chapters -- docs/REST` erwartet 9 → gemessen **9 vorher / 0 nachher**; `git grep eyJ -- 'docs/**/*.http'` **1 / 0**; `docs/REST/Creator/` ist weg, `docs/REST/README.md` nannte die Datei nie. Reviewer (`pugling-reviewer`): kein Verweis mehr außer Protokollen. Rollengang: kein UI-Pfad, Ersatz benannt – die Sweeps selbst. Abgenommen; Commit: siehe Nachtrag.
