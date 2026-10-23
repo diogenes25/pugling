@@ -57,8 +57,9 @@ export interface ReferenceSelectProps {
    * genau einmal (Kinderliste im Plan-Formular), reicht `showPlaceholder`; hängt sie an einem Schlüssel und
    * lädt bei jedem Wechsel neu (Units der gewählten Reihe), muss es `loading` sein – `showPlaceholder` ist
    * nach dem ersten Abschluss dauerhaft falsch (B-235). Weggelassen nur, wo die Liste nachweislich auf
-   * Seitenebene lädt, bevor das Formular aufgeht – und „nachweislich" heißt: am `useAsync` nachgesehen,
-   * nicht gezählt; genau daran ist B-229 vorbeigegangen.
+   * Seitenebene lädt – gleichzeitig mit der Seite, in der Praxis vor dem Klick auf „Bearbeiten"; ein
+   * Mechanismus, der das Formular bis dahin sperrt, ist das nicht (Nachschau 2026-10-23). „Nachweislich"
+   * heißt: am `useAsync` nachgesehen, nicht gezählt; genau daran ist B-229 vorbeigegangen.
    */
   laedt?: boolean;
 }

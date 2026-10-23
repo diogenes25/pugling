@@ -35652,7 +35652,7 @@
           },
           "authoringRoute": {
             "type": "string",
-            "description": "Route segment of the creator\u0027s CRUD under \u0060.../creator/subjects/{subjectId}/chapters/{chapterId}/{AuthoringRoute}\u0060."
+            "description": "Route segment of the creator\u0027s CRUD under \u0060.../creator/textbook-series/{seriesId}/units/{seriesUnitId}/{AuthoringRoute}\u0060."
           },
           "checkMode": {
             "description": "Primary check/play surface.",

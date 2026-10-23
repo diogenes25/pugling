@@ -208,7 +208,7 @@ builder.Services.AddSingleton<MediaImageProcessor>();
 builder.Services.AddScoped<ExerciseItemService>();
 // Rolls the cross-plan learning state per (child, item) forward and records the answer history.
 builder.Services.AddScoped<ItemProgressService>();
-// Child-centric drill-down view on vocabulary progress along the catalog hierarchy (subject→chapter→exercise→item).
+// Child-centric drill-down view on vocabulary progress along the catalog hierarchy (subject→series unit→exercise→item).
 builder.Services.AddScoped<ChildLearnProgressService>();
 // Outcome/mastery goals per child on a catalog scope; evaluated live against the learning state.
 // "Big goals" (the OKR core): evaluation (learning state + class test grade), supervisor CRUD and idempotent rewards.

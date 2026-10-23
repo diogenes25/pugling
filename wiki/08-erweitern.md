@@ -132,8 +132,8 @@ public class TrueFalseController(PuglingDbContext db, ExerciseTypeRegistry regis
     // Prüfbar? Dann eine dünne /check-Action, die an IExerciseType.Check delegiert (eine Quelle der Wahrheit).
     [HttpPost("{exerciseId:int}/check")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public Task<ActionResult<CheckResult>> Check(int subjectId, int chapterId, int exerciseId, CheckDto body) =>
-        RunCheckAsync(subjectId, chapterId, exerciseId, body);
+    public Task<ActionResult<CheckResult>> Check(int seriesId, int seriesUnitId, int exerciseId, CheckDto body, CancellationToken ct = default) =>
+        RunCheckAsync(seriesId, seriesUnitId, exerciseId, body, ct);
 }
 ```
 
@@ -210,7 +210,7 @@ positionsbezogenen Practice-/Test-Pfad — allein über ihre Typklassen-Facetten
 
 Vieles ist reine **Datenpflege über die API** — kein Code nötig. Ideal für einen LLM-Agenten:
 
-- **Neue Fächer/Kapitel/Übungen** im Katalog anlegen ([03](03-uebungstypen.md)).
+- **Neue Fächer/Units/Übungen** im Katalog anlegen ([03](03-uebungstypen.md)).
 - **Neue Study-Pläne** für Kinder bauen ([04](04-lernplan-bauen.md), [09 · Kochbuch](09-llm-kochbuch.md)).
 - **Missionen & Auszeichnungen** je Kind definieren ([05 §5](05-punkte-und-bonus.md#5-missionen--auszeichnungen)).
 - **Zeitfenster-Multiplikatoren je Pflicht** setzen (`timeSlots` an der Position) — die globalen liegen in

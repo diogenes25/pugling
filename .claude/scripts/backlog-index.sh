@@ -21,7 +21,11 @@ set -uo pipefail
 root="${CLAUDE_PROJECT_DIR:-$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel 2>/dev/null)}"
 [ -n "$root" ] && [ -d "$root/docs/backlog" ] || { echo "docs/backlog fehlt – nichts zu tun." >&2; exit 0; }
 
-awk_script="$(dirname "${BASH_SOURCE[0]}")/backlog-index.awk"
+# ABSOLUT, nicht `$(dirname …)` allein (B-190): Der Pfad wird hier bestimmt, aber erst nach dem `cd "$root"`
+# unten benutzt. Ein relativer Aufruf aus einem Unterverzeichnis (`bash ../../.claude/scripts/…`) bestand die
+# Existenzprüfung und zeigte nach dem cd ins Leere – awk meldete `fatal`, und das Skript schrieb trotzdem einen
+# leeren Index mit Erfolgsmeldung (gemessen 2026-09-01 und 2026-10-23).
+awk_script="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/backlog-index.awk"
 [ -f "$awk_script" ] || { echo "$awk_script fehlt." >&2; exit 1; }
 
 cd "$root" || exit 1
@@ -146,6 +150,35 @@ shopt -s nullglob
 files=(docs/backlog/B-*.md)
 shopt -u nullglob
 
+# Eine LEERE Datei erzeugt in awk keinen Datensatz (`FNR == 1` feuert nie) und fiele damit aus BEIDEN
+# Tabellen – auch aus der ⚠-Liste, die sie melden müsste (B-131). Darum hier, vor awk: melden und aus der
+# Liste nehmen. `-s` statt `-f`: dass die Datei existiert, hat der Glob schon belegt. Eine Datei ohne
+# Frontmatter braucht das nicht – sie hat eine erste Zeile und landet regulär als `?` in beiden Tabellen.
+lesbar=()
+for f in "${files[@]}"; do
+  if [ -s "$f" ]; then
+    lesbar+=("$f")
+  else
+    base="${f##*/}"; rest="${base#*-}"; id="B-${rest%%-*}"
+    unbelegt="${unbelegt}| [$id]($base) | \`?\` | Datei ist leer |"$'\n'
+  fi
+done
+
+# awk in eine Datei statt per Prozess-Substitution direkt in die Schleife (B-190): `done < <(awk …)` verschluckt
+# den Exit-Status, und eine leere Eingabe sieht für die Schleife aus wie ein leerer Backlog. Scheitert awk, oder
+# liest es trotz vorhandener Dateien keinen einzigen Datensatz, wird der Index NICHT geschrieben – ein
+# Fehlschlag darf sich nicht als gültiges Ergebnis ausgeben. Keine feste Untergrenze: Zahlen verrotten.
+records="$readme.records.tmp"
+: > "$records"
+if [ "${#lesbar[@]}" -gt 0 ]; then
+  if ! awk -f "$awk_script" "${lesbar[@]}" > "$records"; then
+    rm -f "$records"; echo "awk ist gescheitert – Index nicht geschrieben." >&2; exit 1
+  fi
+  if [ ! -s "$records" ]; then
+    rm -f "$records"; echo "awk hat keine Story gelesen – Index nicht geschrieben." >&2; exit 1
+  fi
+fi
+
 while IFS=$'\x01' read -r fpath status prio groesse wo mig vb quelle art entgangen_bei wartet_auf \
   nachgeschaut grund ersetzt unverifiziert titel has_us has_is has_ak has_en has_sc has_ve; do
   [ -n "$fpath" ] || continue
@@ -221,7 +254,8 @@ while IFS=$'\x01' read -r fpath status prio groesse wo mig vb quelle art entgang
       n_offen=$((n_offen + 1))
       ;;
   esac
-done < <([ "${#files[@]}" -gt 0 ] && awk -f "$awk_script" "${files[@]}")
+done < "$records"
+rm -f "$records"
 
 {
   printf '%s\n' "<!-- backlog-index:start -->"

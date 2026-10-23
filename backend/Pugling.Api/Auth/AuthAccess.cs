@@ -12,7 +12,7 @@ namespace Pugling.Api.Auth;
 /// </summary>
 public static class Roles
 {
-    /// <summary>Tier role for content: creates/manages the learning catalog (subjects, chapters, exercises).</summary>
+    /// <summary>Tier role for content: creates/manages the learning catalog (subjects, series units, exercises).</summary>
     public const string Creator = "Creator";
     /// <summary>Tier role for control: manages children, study plans, and rewards.</summary>
     public const string Supervisor = "Supervisor";

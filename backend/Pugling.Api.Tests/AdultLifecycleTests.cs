@@ -12,7 +12,7 @@ namespace Pugling.Api.Tests;
 /// <para>
 /// Added while closing the coverage gap (docs/codequalitaet-gates-plan.md, C3). <c>Delete</c> was
 /// listed first there, because the <b>cascade</b> hangs off it: deleting the adult takes their children,
-/// subjects and chapters with it. A delete path that no test exercises is the most expensive blind spot - it
+/// subjects and exercises with it. A delete path that no test exercises is the most expensive blind spot - it
 /// only surfaces once the data is already gone.
 /// </para>
 /// </summary>

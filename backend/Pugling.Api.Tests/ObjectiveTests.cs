@@ -164,13 +164,18 @@ public class ObjectiveTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
             keyResults = new[] { new { subjectId, metric = "MaxWeakItems", targetValue = 0 } },
         })).StatusCode);
 
-        // ClassTestGrade with a chapter scope → 400 (grades hang on the subject).
-        Assert.Equal(HttpStatusCode.BadRequest, (await father.PostAsJsonAsync(Url(childId), new
+        // ClassTestGrade with a series-unit scope → 400 (grades hang on the subject). The unit must be REAL
+        // and the field name must be the contract's: the earlier `chapterId = 1` was rejected as `unknown_field`
+        // before the scope rule ever ran, so the case was green under any rule (B-166 review, 2026-10-23).
+        var (_, seriesUnitId) = await TestApi.CreateSeriesAndUnitAsync(father, subjectId);
+        var unitScoped = await father.PostAsJsonAsync(Url(childId), new
         {
             title = "X",
             kind = "Committed",
-            keyResults = new[] { new { subjectId, chapterId = 1, metric = "ClassTestGrade", targetValue = 20 } },
-        })).StatusCode);
+            keyResults = new[] { new { subjectId, seriesUnitId, metric = "ClassTestGrade", targetValue = 20 } },
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, unitScoped.StatusCode);
+        Assert.Equal("validation_error", (await unitScoped.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
 
         // A ClassTestGrade target outside 10..60 → 400.
         Assert.Equal(HttpStatusCode.BadRequest, (await father.PostAsJsonAsync(Url(childId), new

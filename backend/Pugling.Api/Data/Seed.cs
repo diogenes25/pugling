@@ -427,7 +427,7 @@ public static class Seed
     /// is global, other adults find these exercises through the search (subject English, grade 9, Gymnasium) and
     /// take them into their own study plans as positions; changing/deleting them, however, is only allowed to the
     /// teacher themselves. Additive and idempotent: the teacher account is created on demand, the demo content is
-    /// only added while the demo chapter is still missing (even if the account already exists for other reasons).
+    /// only added while the demo series unit is still missing (even if the account already exists for other reasons).
     /// </summary>
     private static void SeedTeacherLibrary(PuglingDbContext db)
     {
@@ -555,7 +555,7 @@ public static class Seed
 
     /// <summary>
     /// French content for the typical entry point "child (14 y/o) is struggling with French":
-    /// one subject with a chapter + catalog exercises (for browsing/filtering by grade) AND matching entries in
+    /// one subject with a series unit + catalog exercises (for browsing/filtering by grade) AND matching entries in
     /// the vocabulary store (the basis for a vocabulary study plan). Additive and idempotent: it also runs on an
     /// already populated DB (it checks specifically for the subject, and per vocabulary key).
     /// </summary>

@@ -938,7 +938,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     /// </para>
     /// <para>
     /// These are composition relations: the child belongs to the parent record and has no meaning without it
-    /// (a chapter without a subject, a test result without a test attempt). The counter-check is the suite:
+    /// (a series unit without its series, a test result without a test attempt). The counter-check is the suite:
     /// it must stay green <b>unchanged</b> – any deviation means the intent written out was not the one
     /// actually lived.
     /// </para>

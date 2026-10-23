@@ -15,12 +15,12 @@ einer Rolle kommt, findet hier den direkten Einstieg und die angrenzenden Themen
 
 ## Creator — Inhalte und Katalog
 
-Der Creator baut den globalen Lern-Katalog: Fächer, Kapitel, Übungen, Stores und Metadaten. Heute trägt
+Der Creator baut den globalen Lern-Katalog: Fächer, Lehrwerk-Reihen mit Units, Übungen, Stores und Metadaten. Heute trägt
 der Vater technisch meist auch diese Rolle, fachlich bleibt sie aber getrennt vom Supervisor.
 
 | Einstieg | Wofür |
 | --- | --- |
-| **[Creator-Tutorial](tutorial-creator.md)** | Verifizierter Durchlauf: Fach → Kapitel → typisierte Übung → Items → Katalogsuche → Testmodus. |
+| **[Creator-Tutorial](tutorial-creator.md)** | Verifizierter Durchlauf: Fach → Reihe/Unit → typisierte Übung → Items → Katalogsuche → Testmodus. |
 | [wiki/03 · Übungstypen](../wiki/03-uebungstypen.md) | Katalogmodell, alle Übungstypen, Configs, Stores und Checks. |
 | [wiki/08 · Erweitern](../wiki/08-erweitern.md) | Neue Übungstypen oder Lernverfahren im bestehenden Katalogmuster ergänzen. |
 | [docs/uebungs-meta-und-versionierung.md](uebungs-meta-und-versionierung.md) | Metadaten, Versionierung und Vorfilterung von Katalog-Übungen. |

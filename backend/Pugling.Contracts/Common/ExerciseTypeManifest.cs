@@ -34,7 +34,7 @@ public enum ExerciseCheckMode
 /// <param name="Label">German display name.</param>
 /// <param name="Renderer">Id of the frontend component; multiple types may share one renderer (e.g. Arithmetic + ArithmeticDrill → <c>arithmetic</c>).</param>
 /// <param name="SchemaVersion">Version of the type schema. Deliberately ONLY here (not on the entities) – branch point for later incompatible changes.</param>
-/// <param name="AuthoringRoute">Route segment of the creator's CRUD under <c>.../creator/subjects/{subjectId}/chapters/{chapterId}/{AuthoringRoute}</c>.</param>
+/// <param name="AuthoringRoute">Route segment of the creator's CRUD under <c>.../creator/textbook-series/{seriesId}/units/{seriesUnitId}/{AuthoringRoute}</c>.</param>
 /// <param name="CheckMode">Primary check/play surface.</param>
 /// <param name="PlayRoute">Only for <see cref="ExerciseCheckMode.StudyPlanTest"/>: segment under <c>study-plans/{planId}/positions/{positionId}/{PlayRoute}</c>; otherwise <c>null</c>.</param>
 /// <param name="Method">Only for <see cref="ExerciseCheckMode.StudyPlanTest"/>: learning family for renderer/compatibility; otherwise <c>null</c>.</param>

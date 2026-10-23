@@ -44,7 +44,7 @@ public class Objective
 
 /// <summary>
 /// A measurable <b>milestone</b> of an <see cref="Objective"/> on a catalog scope (subject, optionally
-/// chapter/exercise). The mastery metrics are evaluated live through the learning state's
+/// series unit/exercise). The mastery metrics are evaluated live through the learning state's
 /// <c>ScopeEvaluator</c>; <see cref="KeyResultMetric.ClassTestGrade"/> reads the subject's
 /// <see cref="Klassenarbeit.Grade"/> as entered by the supervisor (the scope is then the subject only).
 /// </summary>

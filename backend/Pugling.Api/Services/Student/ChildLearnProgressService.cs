@@ -205,8 +205,8 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
     }
 
     /// <summary>
-    /// Chapters of a subject with progress; <c>null</c> if the subject is not relevant. Filter/sorting as
-    /// for subjects (sort keys additionally <c>order</c> [default, chapter order]).
+    /// Series units of a subject with progress; <c>null</c> if the subject is not relevant. Filter/sorting as
+    /// for subjects (sort keys additionally <c>order</c> [default, unit order]).
     /// </summary>
     public async Task<List<SeriesUnitProgressResponse>?> SeriesUnitsAsync(int childId, int subjectId, string? search,
         (string? Key, bool Desc) sort, bool? active, CancellationToken ct = default)
@@ -238,8 +238,8 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
         };
 
     /// <summary>
-    /// Relevant vocabulary exercises of a chapter with progress per exercise; <c>null</c> if the chapter is not relevant.
-    /// Filter/sorting as for chapters (sort keys additionally <c>title</c>, <c>active</c>; default <c>order</c>).
+    /// Relevant vocabulary exercises of a series unit with progress per exercise; <c>null</c> if the unit is not relevant.
+    /// Filter/sorting as for series units (sort keys additionally <c>title</c>, <c>active</c>; default <c>order</c>).
     /// </summary>
     public async Task<List<ExerciseProgressResponse>?> ExercisesAsync(int childId, int subjectId, int seriesUnitId, string? search,
         (string? Key, bool Desc) sort, bool? active, CancellationToken ct = default)
@@ -272,7 +272,7 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
             _ => rows.OrderBy(r => r.OrderIndex).ThenBy(r => r.ExerciseId),
         };
 
-    /// <summary>Checks whether this vocabulary exercise is relevant for the child under exactly this subject/chapter (leaf guard).</summary>
+    /// <summary>Checks whether this vocabulary exercise is relevant for the child under exactly this subject/series unit (leaf guard).</summary>
     public async Task<bool> IsRelevantExerciseAsync(int childId, int subjectId, int seriesUnitId, int exerciseId, CancellationToken ct = default) =>
         (await LoadRelevantAsync(childId, ct))
             .Any(r => r.SubjectId == subjectId && r.SeriesUnitId == seriesUnitId && r.ExerciseId == exerciseId);
@@ -357,7 +357,7 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
             _prog = prog;
         }
 
-        /// <summary>Roll-up for a scope (subject, optionally chapter/exercise). Empty roll-up if nothing matches.</summary>
+        /// <summary>Roll-up for a scope (subject, optionally series unit/exercise). Empty roll-up if nothing matches.</summary>
         public MasteryRollup For(int subjectId, int? seriesUnitId, int? exerciseId)
         {
             var parts = _relevant

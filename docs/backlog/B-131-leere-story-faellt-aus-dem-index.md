@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/doku, bereich/qualitaet]
+tags: [typ/story, status/abgenommen, bereich/doku, bereich/qualitaet]
 aliases: [Leere Story-Datei unsichtbar, awk FNR==1 öffnet keinen Datensatz]
-status: ausformuliert
+status: abgenommen
 prio: P3
 art: Defekt
 quelle: Code-Review 2026-08-07 des Standes gegen `origin/main` (Fund 9)
@@ -67,16 +67,54 @@ und sich später auf den Index verlässt.
 
 ## Akzeptanzkriterien
 
-> Entwurf, siehe Offene Punkte.
-
 1. Eine leere `B-nnn-*.md` unter `docs/backlog/` erscheint im Index in der ⚠-Tabelle, nicht im Nichts.
 2. Die übrigen Stories werden davon unberührt weiter aufgelistet; die Zählungen stimmen.
 3. Ein nachgestellter Fall belegt Punkt 1 **vor** der Änderung als rot (Abnahmeform `art: Defekt`) —
    nachstellbar mit einer Wegwerf-Datei in einem Temp-Ordner, nicht im echten Bereich.
 4. Die Laufzeit des Index bleibt im Sekundenbereich.
 
+## Entscheidungen
+
+Gegrillt im Nachtlauf 2026-10-23 (Freigabe 1, `art: Defekt`).
+
+1. **In der Shell, vor awk** (Punkt 1): `[ -s "$f" ]` je Datei; leere Dateien werden aus der awk-Liste
+   genommen und als Zeile `| [B-nnn](…) | \`?\` | Datei ist leer |` in die ⚠-Tabelle gestellt. Begründung:
+   awk kann über eine Datei, die es nie sieht, nichts sagen; die Liste steht in der Shell ohnehin bereit, und
+   `-s` ist ein Builtin-Test ohne Fork. **Kosten:** eine Schleife über ~230 Dateien, Builtins – im
+   Millisekundenbereich (gemessen: Laufzeit unverändert ~1,6 s).
+2. **Melden, nicht scheitern** (Punkt 2). Begründung wie in der Story: der Index ist ein Wächter, der warnt; ein
+   Abbruch nähme allen anderen Stories die Auflistung. Das steht nicht im Widerspruch zu B-190s Abbruch – dort
+   ist das Werkzeug kaputt, hier eine Eingabe. **Kosten:** keine.
+3. **Datei ohne Frontmatter** (Punkt 3): **nachgestellt, nicht vermutet** – eine Datei mit Text und ohne
+   `---`-Block landet als `?` in „Offen" **und** in der ⚠-Tabelle („Abschnitt Verlauf, Feld quelle, art ist
+   kein bekannter Wert"). `FNR == 1` feuert, der Fall war schon richtig. **Kosten:** keine.
+4. **Der Beleg teilt sich den Harness mit B-190** (Wegwerf-Root, siehe dort). **Kosten:** kein Dauer-Tor;
+   Begründung in B-190, Entscheidung 5.
+
+## Schätzung
+
+**Größe XS** (Anker B-02). `wo: doku`, keine Migration, kein Vertrag.
+
+**Angriffsplan:** Harness-Probe P3 (leere Datei + Datei ohne Frontmatter) rot → Schleife vor awk → P3 grün
+→ echter Index idempotent → Reviewer → Commit (gemeinsam mit B-190, derselbe Diff).
+
+**Risiko:** keines; die ⚠-Zeile folgt dem Format der bestehenden Zeilen (drei Spalten).
+
+**Testweg:** Harness P3 (Zahl im Verlauf), Idempotenz-Diff des echten Index.
+
 ## Verlauf
 
+- **2026-10-23** — **abgenommen** (Nachtlauf, Sprint 2). Reviewer wie B-190: die ⚠-Zeile hat drei Spalten wie
+  der Kopf, Zählungen unverändert, keine `.tmp`-Reste; Datei ohne Frontmatter wie in Entscheidung 3.
+  **Rollengang:** der PM selbst – Harness P3 mit leerer Datei im Wegwerf-Root; im echten Bereich gibt es
+  keine leere Datei (und soll keine entstehen). Commit: siehe Nachtrag.
+- **2026-10-23** — **gebaut** (Nachtlauf, Sprint 2, derselbe Diff wie B-190). **Rote Probe (erwartet/
+  gemessen), im Wegwerf-Root mit `B-900-leer.md` (0 Byte) und `B-901-ohne-frontmatter.md`:** erwartet eine
+  ⚠-Zeile für B-900 – gemessen **keine Zeile** in „Offen" und keine in ⚠ (B-900 fehlte vollständig); B-901
+  stand als `?` in beiden Tabellen (Punkt 3 damit nachgestellt: der Fall war schon richtig). **Nach dem
+  Fix:** `| [B-900](B-900-leer.md) | \`?\` | Datei ist leer |` in der ⚠-Tabelle, Zählung „2 offen,
+  1 abgenommen" unverändert (AK 2), B-901 unverändert. Echter Index idempotent (siehe B-190).
+- **2026-10-23** — gegrillt und geschätzt im Nachtlauf (Freigabe 1); Punkt 3 nachgestellt (Entscheidung 3).
 - **2026-08-07** — angelegt aus dem Code-Review des Standes gegen `origin/main`, am Skript nachgeprüft
   (`backlog-index.awk:33-38`, `FNR == 1` als einzige öffnende Regel). `entgangen_bei` bleibt **leer**:
   der awk-Umbau lief als direkter Commit (`41f21eb`) ohne eigene Story — es gibt keine abgenommene

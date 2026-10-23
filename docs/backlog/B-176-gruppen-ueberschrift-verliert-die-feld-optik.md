@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-11]
+nachgeschaut: "2026-10-23: frischer frontend-reviewer, gegengelesen - alle sieben group-label-Spans in einem .field (Datei:Zeile), kein group-label ausserhalb, kein label-row-Span mit Direkttext ohne Klasse uebrig; gestapelte Versalzeilen (Gruppenkopf + checkline) nur an VaterExerciseCreate.tsx:290-294 und dort wie die Nachbarn :247/:255 seit jeher; UA-Praemisse (html.css: button text-transform none, letter-spacing normal) bestaetigt; drei gekuerzte CLAUDE.md-Zeilen gegen package.json/.github, vitest.config.ts:19, navigation.ts:106/119 geprueft; kein Defekt"
 ---
 
 # B-176 · Eine Gruppen-Überschrift verliert ihre Optik, sobald sie kein `<label>` mehr ist
@@ -128,6 +129,10 @@ am Morgen (Mensch).
 
 ## Verlauf
 
+- **2026-10-23** — **Nachschau** (Sprint 2 desselben Laufs, frischer `frontend-reviewer`, gegengelesen): kein
+  Defekt; Prüfpunkte im Feld `nachgeschaut`. Benannt für den Blick des Menschen: an `VaterExerciseCreate.tsx:290-294`
+  stehen jetzt zwei Versalzeilen übereinander (Gruppenkopf „Freigabe" und die `checkline` darunter) – genau
+  wie die Nachbarn „Schularten"/„Lern-Standards" seit jeher; kein neuer Zustand, eine Geschmacksfrage.
 - **2026-10-23** — **abgenommen** (Nachtlauf, Sprint 1). `frontend-reviewer`: keine Blocker; alle sieben
   Stellen und die fünf Hüllen einzeln bestätigt, kein weiterer `.field`-Erstkind-`span` ohne Klasse
   (Multiline-Grep); die UA-Stylesheet-Prämisse zu Entscheidung 3 unabhängig bestätigt (Chromium/WebKit/Gecko

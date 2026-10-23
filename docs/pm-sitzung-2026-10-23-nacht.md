@@ -29,7 +29,13 @@ Wird je Sprint fortgeschrieben; die letzte Zeile ist der Zustand.
   Fund an der Typografie. **Drei Review-Funde mit Code-/Testwirkung** (Grenze fünf), einer davon aus der
   eigenen Mutanten-Messung. Rollengang als E2E (Browser nicht verbunden). Nachschau Sprint 4 der Vornacht:
   **kein Defekt**, drei `nachgeschaut`-Zeilen mit Prüfpunkt. Ein neuer Prüfauftrag aus dem Design-Skill
-  (B-236, `idee`). Retro-Mechanismus nur **vorgeschlagen** (Freigabe 3). Commit: siehe „Änderungsstand".
+  (B-236, `idee`). Retro-Mechanismus nur **vorgeschlagen** (Freigabe 3). Commit `7844894` + Nachtrag `738ef99`.
+- **Sprint 2 abgenommen** (B-190, B-131, B-166 – Werkzeug und Doku sagen, was wahr ist): Harness-Proben P1–P3,
+  Index idempotent, Backend **877/877**, Vitest **395/395**, Lint 0, Reviewer (allgemeiner Agent) ohne
+  Blocker; **drei Review-Funde mit Code-/Testwirkung** (abgeschnittener Sweep, hohle 400-Probe, literaler
+  Zeilenumbruch). Nachschau Sprint 1: **kein Defekt**, eine Test-Lücke geschlossen (Mutante 1 rot von 10), zwei
+  Berichtigungen. Drei neue Stories aus Funden: B-237, B-238, B-239. Retro schlägt ein **Tor** vor (400 ohne
+  `code`), nicht gelandet. Commit: siehe „Änderungsstand".
 
 ## Runde 1 — Vorstellung & Feedback
 
@@ -232,3 +238,167 @@ verdoppelt.
 
 **Warum der Lauf weitergeht:** kein neues Tor, Zähler 3 von 5, Nachschau ohne Defekt – keine der drei
 Halt-Bedingungen (`nachtlauf.md`, Freigabe 3) greift.
+
+## Sprint 2 — Ziel & Umfang
+
+**Sprint-Ziel, aus der PM-Sicht (und der des Lesers der Wissenskarte):**
+
+> Der **PM** kann den Backlog-Index aus jedem Verzeichnis anstoßen und bekommt entweder den richtigen Index
+> oder einen Abbruch mit Grund – nie einen leeren Index mit Erfolgsmeldung; eine leere Story-Datei steht in der
+> ⚠-Tabelle statt im Nichts. Wer der Root-`CLAUDE.md` zur Wissenskarte folgt, liest dort keine Route und
+> keine Katalogebene mehr, die B-106 entfernt hat.
+
+Dieselbe Familie wie Sprint 1 – **ein Fehlschlag gibt sich als gültiges Ergebnis aus** –, nur am Werkzeug und
+an der Doku statt an der Oberfläche.
+
+**Umfang** (alle `art: Defekt`, in dieser Sitzung autonom gegrillt und geschätzt, Freigabe 1):
+
+| Story | Richtung derselben Wurzel |
+| --- | --- |
+| [B-190](backlog/B-190-backlog-index-schreibt-leeren-index.md) | Aus einem Unterverzeichnis aufgerufen, schreibt der Index-Generator einen leeren Index – mit „Erfolg" |
+| [B-131](backlog/B-131-leere-story-faellt-aus-dem-index.md) | Eine leere Story-Datei fällt aus beiden Tabellen, auch aus der ⚠-Liste |
+| [B-166](backlog/B-166-wiki-nennt-die-entfernte-kapitel-route.md) | Wiki, Tutorials und Wissenskarte nennen die entfernte Kapitel-Ebene |
+
+**Draußen, mit Namen:** B-181 (Punkt 2 ist eine Verhaltensfrage im Produktionspfad – nicht nachts), B-134
+(Sweep über 20 Stellen mit Einzelentscheidung – zu groß neben drei anderen), B-138/B-156/B-158/B-179
+(`Aufräumen`, andere Familie), sowie die zwei Funde aus dem Sweep zu B-166, die eigene Stories wurden:
+**B-237** (KI-Creator-Hilfe nennt `--chapter`) und **B-238** (`docs/REST/Creator.http` fährt die tote Route
+in ausführbaren Requests).
+
+**Refinement, getrennt benannt:** B-190s Ist-Stand war präziser zu fassen (die Existenzprüfung gab es, sie
+prüfte vor dem `cd`), B-131s Punkt 3 war nachzustellen statt zu vermuten, B-166s Ist-Stand war zu zwei
+Dritteln durch Commits vom 2026-10-17 überholt – das Refinement hat jede der drei Stories am Code neu
+vermessen, und das war die größere Hälfte.
+
+### Entwickler-Brief
+
+- **B-190/B-131 (ein Diff in `.claude/scripts/backlog-index.sh`):** awk-Pfad absolut (`cd … && pwd`) vor dem
+  `cd "$root"`; leere Dateien vor awk aussortieren und als `| B-nnn | \`?\` | Datei ist leer |` melden; awk in
+  eine Datei statt per Prozess-Substitution, Exit ≠ 0 oder null Datensätze bei nicht-leeren Dateien → Exit 1
+  ohne Schreiben. **Beleg:** Harness im Scratchpad (Wegwerf-Root mit Marker-README, zwei echten Stories,
+  leerer Datei, Datei ohne Frontmatter, kaputter awk-Kopie), drei Proben P1–P3 vor und nach dem Fix; echter
+  Index aus Root **und** Unterverzeichnis mit leerem Diff.
+- **B-166:** Grep-Sweep (`chapters/`, `chapterId`, `Kapitel`), Fundstellen einzeln umschreiben (Liste mit
+  `Datei:Zeile` in der Story); fünf englische Code-Kommentare, darunter der Swagger-sichtbare
+  `AuthoringRoute`-Text; `dotnet test` zieht `docs/openapi/v1.json` nach.
+- **Reihenfolge:** Proben rot → Skript-Fix → Proben grün → Idempotenz → Doku/Kommentare → `dotnet test` →
+  Lint → Reviewer (allgemeiner Agent: Skript + Doku; kein C#-Verhalten) → Commit → Nachschau Sprint 1 →
+  Retro (Vorschlag).
+
+## Iteration 2 — umgesetzt
+
+**Werkzeug (`.claude/scripts/backlog-index.sh`, B-190 + B-131, ein Diff):** awk-Pfad absolut vor dem `cd`;
+leere Story-Dateien werden vor awk aussortiert und als ⚠-Zeile „Datei ist leer" gemeldet; awk schreibt in
+eine Temp-Datei, Exit ≠ 0 oder null Datensätze bei nicht-leeren Dateien → Exit 1 ohne Schreiben.
+
+**Doku und Kommentare (B-166):** elf Doku-Stellen in sieben Dateien und sechs englische Code-Kommentare
+(darunter der Swagger-sichtbare `AuthoringRoute`-Text; `docs/openapi/v1.json` aus dem Testlauf nachgezogen,
+eine Zeile), Liste mit `Datei:Zeile` in der Story. Zwei Funde aus demselben Sweep als eigene Stories:
+**B-237** (KI-Creator-Hilfe `--chapter`), **B-238** (`docs/REST/Creator.http` fährt die tote Route in
+ausführbaren Requests – ab Zeile 62 liefert das Tutorial 404).
+
+**Nachschau-Arbeit an Sprint 1 (im selben Diff):** vierter Vitest-Fall zu B-235 (Entscheidung 1 hielt kein
+Test), Docblock in `ReferenceSelect.tsx` umformuliert, zwei Story-Sätze berichtigt – siehe Retrospektive.
+
+**Rote Proben (erwartet/gemessen), im Wegwerf-Root (`scratchpad/index-probe.sh`), vor dem Fix:**
+
+| Probe | Erwartet | Gemessen |
+| --- | --- | --- |
+| P1 relativer Aufruf aus `docs/backlog` | Index 2 offen / 1 abgenommen | `awk: fatal: cannot open source file`, „Index geschrieben: 0 offen, 0 abgenommen", **Exit 0**, README leer überschrieben |
+| P2 awk mit Syntaxfehler | Abbruch ohne Schreiben | awk-Fehler, „Index geschrieben: 0 offen", **Exit 0** |
+| P3 leere Datei `B-900` | ⚠-Zeile | **keine Zeile** – in keiner Tabelle (B-901 ohne Frontmatter: `?` in beiden, Punkt 3 damit beantwortet) |
+| Grep AK 1 (B-166) | 0 Treffer in lebender Doku | `wiki/08-erweitern.md:135-136`, `docs/tutorial-supervisor.md:307,316` |
+| Vitest B-235, vierter Fall (Nachschau) | Option „Unit 7 (lädt…)" | unter dem Mutanten `showPlaceholder` **1 rot von 10**, keine Option |
+
+**Nach dem Fix:** P1 „2 offen, 1 abgenommen", Index vollständig · P2 „awk ist gescheitert – Index nicht
+geschrieben.", **Exit 1**, README unverändert · P3 `| [B-900](B-900-leer.md) | \`?\` | Datei ist leer |` ·
+Grep 0 · Vitest 10/10 in der Datei.
+
+**Verifikation:** echter Index aus Root **und** per `cd docs/backlog && bash ../../…` je „65 offen, 157
+abgenommen, 13 verworfen", `git diff` leer (idempotent), Laufzeit ~1,6 s · `dotnet test Pugling.sln -c
+Release` **877/877** (45 s; `docs/openapi/v1.json` eine Zeile nachgezogen) · `tsc -b` sauber · Vitest
+**395/395** · Markdown-Lint **0 Funde in 345 Dateien**.
+
+### Review-Funde (Zähler: 3 von 5)
+
+Reviewer: ein allgemeiner Agent mit Review-Brief (Skript + Doku + Kommentare; kein C#-Verhalten im Diff) –
+der `pugling-reviewer` ist für Backend-Verhalten gedacht, der `frontend-reviewer` für `frontend/`.
+
+| # | Quelle | Fund | Behebung |
+| --- | --- | --- | --- |
+| 1 | Reviewer | Mein Kommentar-Sweep war **abgeschnitten** (`grep … \| head -8`): elf weitere `chapter`-Kommentare in acht Dateien (`Program.cs:211`, `ChildLearnProgressService.cs` ×6, `KeyResultsController.cs:10`, `ObjectiveEntities.cs:47`, `PuglingDbContext.cs:941`, `AdultLifecycleTests.cs:15`, `Seed.cs:430/558`, `DraftRules.cs:45`) – AK 2 von B-166 war behauptet, nicht erfüllt | alle umgeschrieben; Liste in B-166, Entscheidung 2 |
+| 2 | Reviewer (aus demselben Grep) | **Hohle Probe** `ObjectiveTests.cs:167-173`: „ClassTestGrade mit Kapitel-Scope → 400" schickte `chapterId = 1` – kein Vertragsfeld, also `unknown_field` (400) **vor** der Scope-Regel; grün unter jeder Regel (vorbestehend, nicht aus diesem Diff – aber die einzige Stelle, an der die tote Ebene noch änderte, was ein Test beweist) | echte Unit per `TestApi.CreateSeriesAndUnitAsync`, Feld `seriesUnitId`, Zusicherung auf `code == validation_error`; **Mutante** ohne `seriesUnitId is not null` in `ObjectiveService.cs:79`: **1 rot von 1**, Original 1/1 |
+| 3 | Reviewer (Nit) | Der Zeilenumbruch der neuen ⚠-Zeile stand als literaler Umbruch in `$'…'`, die Nachbarzeilen schreiben `$'\n'` – gleichbedeutend, aber zerbrechlich unter Editoren, die Zeilenenden anfassen | auf `$'\n'` gezogen, Proben P1–P3 erneut grün |
+
+Ohne Zähler: der Index in `docs/backlog/README.md` war gegen den Arbeitsbaum veraltet (B-237/B-238 fehlten,
+drei Stufen alt) – er wird vor dem Commit regeneriert, wie immer; die „git diff leer"-Zeile in B-190 meint
+Root gegen Unterverzeichnis und ist so präzisiert. Nits benannt, nicht behoben: `for f in "${files[@]}"`
+ohne Guard (nur bash < 4.4 betroffen, Git-Bash 5.x und CI sind ≥ 5), ⚠-Zeilen leerer Dateien stehen immer
+oben (kosmetisch), kein `trap` für die Temp-Datei (vorbestehend, in B-190s Schätzung benannt), Laufzeit auf
+dem Reviewer-Rechner 14 s (Prozessstart, kein Regressionssignal). `wiki/08-erweitern.md:41` zeigt deutsche
+`/// <summary>` gegen die Englisch-Regel → **B-239** (`idee`, `Aufräumen`).
+
+## Runde 2 — Re-Review / Abnahme
+
+- **PM (Werkzeug) – signed off:** „Ich rufe den Index aus `docs/backlog` mit relativem Pfad auf und bekomme
+  denselben Index wie aus dem Root; mit kaputtem awk bekomme ich ‚awk ist gescheitert – Index nicht
+  geschrieben.' und Exit 1, die README bleibt; eine leere Story steht in der ⚠-Tabelle." (Harness P1–P3,
+  echter Index idempotent.) „Die Wissenskarte, das Wiki-Beispiel und das Supervisor-Tutorial nennen keine
+  Kapitel-Route und kein `chapterId` mehr" (Grep AK 1: 0; Swagger-Text in `v1.json` nachgezogen).
+- **Creator, Vater, Sohn – Regressionszeugen:** kein Produktverhalten im Diff. Backend **877/877** (die
+  reparierte Probe inklusive), Vitest **395/395**, `tsc -b` sauber. Die Playwright-Suite lief in diesem Sprint
+  nicht erneut – seit dem 79/79-Lauf änderten sich unter `frontend/` nur ein Docblock, ein Spec-Kommentar
+  mit Textabfrage (danach 3/3), eine neue Spec (1/1) und ein Vitest-Fall; kein Pfad einer Rolle berührt.
+  Kein O-Ton erfunden.
+- **Was ein Mensch noch sieht:** nichts Sinnliches in diesem Sprint; B-238 (`Creator.http`) wartet auf einen
+  REST-Client-Durchlauf von Hand.
+
+## Retrospektive Sprint 2
+
+**Nachschau:** B-235, B-159, B-176 (Sprint 1 dieses Laufs, Commit `7844894`) – frischer `frontend-reviewer`,
+von mir gegengelesen; Prüfpunkte je Story im Feld `nachgeschaut` (sechs Zustände des `laedt`-Felds, alle
+sieben anderen `ReferenceSelect`-Stellen am speisenden `useAsync`, Grep über die Eigentümer-Sätze, alle
+`group-label`-Stellen und die gekürzten `CLAUDE.md`-Zeilen gegen Code und Config). **Kein Defekt** – aber
+eine **Test-Lücke**: B-235s Entscheidung 1 (`loading` statt `showPlaceholder`) hielt kein Test, der Mutant
+überlebte 42/42 + E2E; vierter Vitest-Fall ergänzt, **unter dem Mutanten 1 rot von 10**. Dazu zwei
+Berichtigungen: ein Docblock in `ReferenceSelect.tsx` behauptete einen Mechanismus („bevor das Formular
+aufgeht"), den keine Seite hat; und die Story-Zeile „ein Vitest müsste den Zwischen-Render nachspielen" war
+falsch (drei kontrollierte Promises reichen). · Index: **Nachgeschaut 144 von 160**.
+
+**Was die eigenen Tore durchgelassen haben – und was von außen kam:** nichts von außen. Innen drei Funde, alle
+vor dem Commit, zwei vom Reviewer, einer aus der Nachschau:
+
+1. **Ein abgeschnittener Sweep als erfülltes Kriterium.** AK 2 von B-166 („in keinem Code-Kommentar mehr")
+   stand auf einem Grep mit `| head -8` – elf Treffer dahinter hat niemand gesehen. Das ist die Familie
+   „gezählt statt nachgesehen" der Vornacht, in neuer Gestalt: die Liste *war* `Datei:Zeile`, nur nicht
+   vollständig. Der Vorschlag der Vornacht hätte es nicht gefangen.
+2. **Eine 400-Zusicherung, die unter jeder Regel grün ist.** `ObjectiveTests.cs:167-173` schickte ein Feld,
+   das der Vertrag nicht kennt; `UnmappedMemberHandling.Disallow` antwortet darauf mit 400, bevor die geprüfte
+   Regel läuft. Vorbestehend, aber die Fehlerfamilie ist die der Root-`CLAUDE.md` („welche Änderung macht ihn
+   rot? – keine"), und sie hat hier eine **mechanisch fassbare** Form: ein `BadRequest` ohne Blick auf den
+   `code`. **Gemessen:** 97 `HttpStatusCode.BadRequest`-Zusicherungen in `Pugling.Api.Tests`, in der
+   Umgebung von 123 Zeilen ein `code`-Lesen – die Norm ist also, den Code zu lesen; dieser Fall tat es nicht.
+3. **Eine Entscheidung ohne Test, mit einer falschen Begründung, warum er fehlt** (B-235, Entscheidung 1).
+   Gefangen von der Nachschau, nicht vom Reviewer des eigenen Sprints – der hatte „kein unbenannter
+   Fehlermodus" bestätigt, aber nicht gefragt, ob die Entscheidung *gehalten* wird.
+
+**Prämisse geprüft:** `Program.cs:43` setzt `UnmappedMemberHandling.Disallow` global (nachgelesen); der
+`ConventionGuardTests`-Katalog kennt keinen Wächter über Test-Zusicherungen (gegrept: keine Regel mit
+`BadRequest`).
+
+### Vorgeschlagener Mechanismus — nicht gelandet (Freigabe 3)
+
+**Ein Tor, kein Satz:** ein `ConventionGuardTest` über die Quellen von `Pugling.Api.Tests` – jede
+`HttpStatusCode.BadRequest`-Zusicherung liest im selben Testfall den `code` der `ProblemDetails`-Antwort
+(`GetProperty("code")` o. ä.), Ausnahmeliste mit Begründung je Eintrag wie bei den anderen Toren. Beleg: Fund 2
+wäre rot gewesen, und die Messung (97 zu 123) sagt, dass die Regel schon gelebt wird – das Tor friert sie ein,
+statt sie neu zu verlangen. **Kosten:** ein quellentext-lesender Wächter ist ein halber Parser und braucht
+seine Rot-Liste (B-40); und „liest den `code`" ist noch nicht „liest den *richtigen* `code`" – das Tor fängt
+den Tippfehler-400, nicht die falsche Regel. **Nicht vorgeschlagen:** ein Verbot von `head` in Sweeps (Fund 1)
+– das ist eine Handlung, kein Tor; die Lehre steht als Satz in B-166s Verlauf und gehört, wenn überhaupt, als
+halbe Zeile zum Vorschlag der Vornacht („mit `Datei:Zeile` belegen statt zählen – **und die Liste nicht
+abschneiden**"). **Bewusst ungedeckt:** Fund 3 – ob ein Reviewer fragt „wird die Entscheidung gehalten?", ist
+eine Frage an den Brief, nicht an ein Tor; der Nachschau-Brief dieses Laufs hat sie gestellt, der
+Sprint-Brief nicht. Das ist eine Zeile im Brief des nächsten Sprints, kein Mechanismus.
+
+**Warum der Lauf weitergeht:** kein Tor gelandet (nur vorgeschlagen), Zähler 3 von 5, Nachschau ohne Defekt.

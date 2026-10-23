@@ -416,7 +416,7 @@ schlecht gelernte Wörter). Liest `ItemProgress`/`ItemReviewEvent`.
 
 → [ChildLearnProgressController](../backend/Pugling.Api/Controllers/Student/ChildLearnProgressController.cs)
 / [ChildLearnProgressService](../backend/Pugling.Api/Services/ChildLearnProgressService.cs). Antwort auf
-„wie steht das Kind **je Fach/Kapitel/Übung** da?" – die Grundlage, um **Ziele festzulegen**. Alle Listen
+„wie steht das Kind **je Fach/Unit/Übung** da?" – die Grundlage, um **Ziele festzulegen**. Alle Listen
 unterstützen `?search=`, `?sort=`+`?dir=`, `?active=` und Paging (`skip`/`take` + Header `X-Total-Count`).
 
 **Robustheit gegen Änderungen/Löschen (b & c):** Angezeigt wird die **relevante Menge = zugewiesen ∪ hat
@@ -428,7 +428,7 @@ noch im Wort-Rollup der flachen Sicht (`ItemReviewEvent` mit denormalisierter `V
 ## 4. Große Ziele: Ergebnis-Ziele auf der Auswertung
 
 Der Vater setzt je Kind ein **großes Ziel** (`Objective`) mit messbaren **Etappen** (`KeyResult`) auf einem
-Katalog-Scope (Fach/Kapitel/Übung); der Status (`open` / `achieved` / `overdue`) wird **live** aus denselben
+Katalog-Scope (Fach/Unit/Übung); der Status (`open` / `achieved` / `overdue`) wird **live** aus denselben
 Aggregaten wie in §3 berechnet – kein materialisierter Zustand. Plan-übergreifend: das Ziel hängt am Kind,
 die Etappe am Scope (nicht an einer Position) und überlebt das Abhängen einer Übung.
 
@@ -447,9 +447,9 @@ die Etappe am Scope (nicht an einer Position) und überlebt das Abhängen einer 
   `rewardOnComplete`; Währung nach `kind` (🪙 `Committed` / 💎 `Stretch`). Kein Malus, kein Clawback.
 - **Lesen**: Vater **und** Kind (Motivation); **Schreiben**: nur Vater. Filter `?status=`/`?kind=`.
 - **Katalog-Kopplung:** der Scope einer Etappe ist ein echter Fremdschlüssel. Fach = Cascade (ein Ziel auf
-  einem gelöschten Fach ist bedeutungslos), Kapitel/Übung = **Restrict** – deren Löschen antwortet mit
+  einem gelöschten Fach ist bedeutungslos), Unit/Übung = **Restrict** – deren Löschen antwortet mit
   `409 exercise_in_use`, solange eine Etappe darauf zeigt. Bewusst nicht `SetNull`: das würde ein
-  Kapitel-Ziel lautlos zum Fach-Ziel aufweiten, also die Messlatte heimlich verschieben.
+  Unit-Ziel lautlos zum Fach-Ziel aufweiten, also die Messlatte heimlich verschieben.
 - **Abgrenzung:** das plan-gebundene Pflicht-Ziel der Position (`GoalCadence`, Tag/Woche) und die
   aktivitätsbasierten [Missionen](../wiki/05-punkte-und-bonus.md) sind eigene Konzepte – große Ziele messen
   den **Lernstand** (Ergebnis), nicht die Aktivität.

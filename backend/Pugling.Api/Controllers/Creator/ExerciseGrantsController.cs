@@ -9,7 +9,7 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Controllers.Creator;
 
 /// <summary>
-/// Permission management of an exercise (RWX grants). Exercise-global (not chapter-bound), hence top-level under
+/// Permission management of an exercise (RWX grants). Exercise-global (not unit-bound), hence top-level under
 /// <c>api/v1/creator/exercises/{exerciseId}/grants</c>. Only an <see cref="GrantPermission.Owner"/> may view
 /// the permissions and grant/revoke them. The catalog stays readable for everyone – Read is deliberately not a permission.
 /// </summary>

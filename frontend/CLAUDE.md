@@ -79,7 +79,7 @@ Eintrag in `EXTRA_ROUTES` – sonst springt die Navigation auf „Betreuen".
 Drei Regeln beim Ergänzen: **eine Aktion bekommt keinen Nav-Eintrag** (deshalb stehen „+ Neue Übung" und
 „+ Neuer Plan" am Bestand, den sie erweitern); **ein Bereich, der mehrere Übungen trägt, ist ein eigener Ort**
 (darum liegen Katalog und Lückentexte neben dem Anlegen); und **eine Auswahl reist als Query mit**
-(`?childId=`, `?subjectId=&chapterId=`) – sonst steht im Zielformular wieder das erste Kind bzw. Fach.
+(`?childId=`, `?seriesId=&seriesUnitId=`) – sonst steht im Zielformular wieder das erste Kind bzw. Fach.
 Anlegen und Verwalten sind getrennt: `/vater/exercises` verwaltet, `/vater/exercises/neu` legt an.
 **Der Einstieg zum Anlegen ist „Unit zuerst"**: `/vater/lehrwerke` trägt je Unit ein „+ Übung"
 (`createExerciseHref` reicht `subjectId`/`seriesId`/`seriesUnitId` als Query durch), die Bestandsliste ihr

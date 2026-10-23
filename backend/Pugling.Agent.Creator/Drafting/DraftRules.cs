@@ -42,7 +42,7 @@ public static class DraftRules
     /// <inheritdoc cref="MinItems"/>
     public const int MaxItems = 30;
 
-    /// <summary>Title set, plausibly long, and not already used in the chapter.</summary>
+    /// <summary>Title set, plausibly long, and not already used in the series unit.</summary>
     public static void Title(Violations violations, string? title, CreatorBriefing briefing)
     {
         violations.Require(!string.IsNullOrWhiteSpace(title), "Der Titel fehlt.");

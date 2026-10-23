@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "../lib/api";
 import { TextbookForm } from "./ChildMaterialSection";
 import { AuthProvider } from "../lib/auth";
-import type { SubjectResponse, TextbookResponse } from "../lib/types";
+import type { SeriesUnitResponse, SubjectResponse, TextbookResponse, TextbookSeriesResponse } from "../lib/types";
 
 /*
  * B-148. `textbookPatch.test.ts` prüft die REGEL (was in den PATCH-Rumpf gehört) – aber die Lehre aus
@@ -167,5 +167,44 @@ describe("TextbookForm – solange die Units laden (B-235)", () => {
     expect(await screen.findByRole("option", { name: "Unit 7 (nicht geladen)" })).toBeTruthy();
     expect(unit().disabled).toBe(false);
     expect(within(unit()).queryByRole("option", { name: /lädt…/ })).toBeNull();
+  });
+
+  /*
+   * Entscheidung 1 der Story – `loading`, nicht `showPlaceholder` – hielt kein Test (Nachschau 2026-10-23):
+   * beim ersten Laden sind beide wahr, nach dem Fehlschlag beide falsch. Auseinander laufen sie erst beim
+   * ZWEITEN Laden derselben Reihe: Reihe weg (ihre Units kommen an), Reihe zurück (die eigenen Units sind
+   * wieder unterwegs) – `showPlaceholder` ist dann längst dauerhaft falsch und beschriftete die gespeicherte
+   * Unit wieder mit dem Ausfall. Drei kontrollierte Promises reichen, ein Zwischen-Render muss nicht
+   * nachgespielt werden. Rot unter `laedt={units.showPlaceholder}` (gemessen), grün unter `loading`.
+   */
+  it("sagt „(lädt…)“ auch beim zweiten Laden der eigenen Reihe – nach Wechsel weg und zurück", async () => {
+    const reihe = (id: number, name: string): TextbookSeriesResponse => ({
+      id, name, slug: name.toLowerCase(), schoolTypes: "None", isOwn: false, unitCount: 1,
+      createdAt: "2026-01-01T00:00:00Z", subjectId: 1,
+    });
+    const einheit = (id: number, seriesId: number, label: string): SeriesUnitResponse =>
+      ({ id, seriesId, label, orderIndex: 0, grade: null, bookType: null } as unknown as SeriesUnitResponse);
+    // 1. Abruf (Reihe 9) kommt an, 2. Abruf (Reihe 10) kommt an, 3. Abruf (wieder Reihe 9) bleibt offen.
+    vi.spyOn(api, "seriesUnits")
+      .mockResolvedValueOnce([einheit(7, 9, "Unit 7")])
+      .mockResolvedValueOnce([einheit(11, 10, "Unit 11")])
+      .mockReturnValueOnce(new Promise(() => {}));
+    render(
+      <AuthProvider>
+        <TextbookForm onMeldung={() => {}} childId={1} onDone={() => {}} subjects={SUBJECTS}
+          series={[reihe(9, "Access"), reihe(10, "Camden")]}
+          book={buch({ seriesId: 9, seriesName: "Access", currentUnitId: 7, currentUnitLabel: "Unit 7" })} />
+      </AuthProvider>,
+    );
+    const reiheFeld = () => screen.getByLabelText("Reihe im Katalog", { exact: true });
+    expect(await within(unit()).findByRole("option", { name: "Unit 7" })).toBeTruthy();
+
+    fireEvent.change(reiheFeld(), { target: { value: "10" } });
+    expect(await within(unit()).findByRole("option", { name: "Unit 11" })).toBeTruthy();
+
+    fireEvent.change(reiheFeld(), { target: { value: "9" } });
+    expect(await within(unit()).findByRole("option", { name: "Unit 7 (lädt…)" })).toBeTruthy();
+    expect(unit().disabled).toBe(true);
+    expect(within(unit()).queryByRole("option", { name: /nicht geladen/ })).toBeNull();
   });
 });

@@ -7,7 +7,7 @@ namespace Pugling.Api.Controllers.Supervisor;
 
 /// <summary>
 /// The measurable key results (<see cref="Pugling.Api.Models.KeyResult"/>s) of a big goal. Each is attached to a
-/// catalog scope (subject/chapter/exercise) and a cheat-proof metric; the scope is fixed after creation (create a new
+/// catalog scope (subject/series unit/exercise) and a cheat-proof metric; the scope is fixed after creation (create a new
 /// one to re-target). Evaluated live via the learning progress or the class test grade. Ownership via
 /// <see cref="ChildOwnershipFilter"/> (the chain child → objective → key result is checked in the service); writing only by the father.
 /// </summary>

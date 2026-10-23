@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-229]
 wartet_auf: ""
+nachgeschaut: "2026-10-23: frischer frontend-reviewer, gegengelesen - sechs Zustaende von laedt={units.loading} am Code durchgespielt (Montage, Fehlschlag, Wechsel weg, zurueck zur eigenen Reihe, Fehlschlag->Wechsel->zurueck, zurueck waehrend der fremde Abruf laeuft); alle sieben anderen ReferenceSelect-Stellen am speisenden useAsync geprueft (Datei:Zeile im Verlauf), keine haengt an einem Schluessel; kein Defekt - aber Entscheidung 1 hielt kein Test (Mutant showPlaceholder ueberlebte 42/42), vierter Vitest-Fall ergaenzt und gemessen; Docblock 'bevor das Formular aufgeht' war ein ungemessener Mechanismus -> umformuliert"
 ---
 
 # B-235 · Das Unit-Feld im Lehrbuch-Formular sagt „(nicht geladen)“, solange die Units erst laden
@@ -88,6 +89,8 @@ Gegrillt im Nachtlauf 2026-10-23 (Freigabe 1, `art: Defekt`).
    und `data` die alte Liste ist – gefiltert leer, also für einen Frame „(nicht geladen)". Das ist die
    bekannte Zwei-Schritt-Natur von `useAsync` (Memory „Zwischen-Render", B-227) und gehört zu B-164, nicht
    hierher; ein Vitest, der das Fenster messen will, muss den Zwischen-Render nachspielen.
+   *Berichtigt in der Nachschau vom selben Tag (siehe Verlauf): der Zwischen-Commit wird nicht gemalt, und
+   der Fall ist ohne Zwischen-Render testbar – der vierte Fall in `TextbookForm.test.tsx` hält ihn.*
 2. **Die Leer-Option „– lädt… –" (`:326`) bleibt.** Begründung: Sie deckt den Reihenwechsel ohne gespeicherte
    Unit (`eigeneUnit` falsch → keine Sonderoption), den die Sonderoption nicht erreicht. **Kosten:** Im
    Ladefenster des Bearbeiten-Formulars stehen zwei Optionen, die beide „lädt" sagen – redundant, aber
@@ -118,6 +121,21 @@ Doc-Kommentar in `ReferenceSelect.tsx` → Suite → Reviewer → Commit.
 
 ## Verlauf
 
+- **2026-10-23** — **Nachschau** (Sprint 2 desselben Laufs, frischer `frontend-reviewer`, gegengelesen): kein
+  Defekt; Prüfpunkte im Feld `nachgeschaut`. **Zwei Berichtigungen:** (1) Entscheidung 1 hielt **kein Test** –
+  der Mutant `laedt={units.showPlaceholder}` (B-229s Muster) überlebte alle 42 Fälle und die E2E, weil beide
+  Felder beim ersten Laden wahr und nach dem Fehlschlag falsch sind; auseinander laufen sie erst beim zweiten
+  Laden derselben Reihe. Die Story-Behauptung „ein Vitest müsste den Zwischen-Render nachspielen" war falsch:
+  drei kontrollierte Promises (9 kommt an, 10 kommt an, 9 bleibt offen) reichen. Vierter Fall in
+  `TextbookForm.test.tsx` ergänzt – **unter dem Mutanten 1 rot von 10** (erwartet Option „Unit 7 (lädt…)",
+  gemessen keine), unter `loading` 10/10. (2) Die Kosten-Zeile „für einen Frame (nicht geladen)" in
+  Entscheidung 1 ist zu pessimistisch: React ≥ 18 flusht Passiv-Effekte aus einem diskreten Event (`change`)
+  synchron vor dem Paint, der Zwischen-Commit wird nicht gemalt. Dazu der Docblock in `ReferenceSelect.tsx`:
+  „lädt auf Seitenebene, **bevor** das Formular aufgeht" war an keiner der fünf Stellen ein Mechanismus
+  (keine Seite sperrt „Bearbeiten" bis zur Optionsliste) – umformuliert zu „gleichzeitig mit der Seite, in der
+  Praxis vorher". Der Rest der sieben Stellen hängt an keinem Schlüssel (`VaterKind.tsx:35`,
+  `ChildMaterialSection.tsx:39`, `VaterFachlehrer.tsx:41/42`, `VaterLehrwerke.tsx:132/133`,
+  `VaterPlanDetail.tsx:120`) – kein zweites B-235.
 - **2026-10-23** — **abgenommen** (Nachtlauf, Sprint 1). `frontend-reviewer`: keine Blocker; Entscheidung 1
   (`loading` statt `showPlaceholder`) mit sechs Zuständen durchgespielt, kein unbenannter Fehlermodus; **ein
   Fund mit Testwirkung (Zähler 2 des Sprints):** die Zeile „kein Ausfall-Banner im Fenster" fragte nach

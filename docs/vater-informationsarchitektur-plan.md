@@ -117,7 +117,7 @@ Verwaltung. Die Anlege-Route trägt **keinen** Nav-Eintrag: sie ist eine Aktion,
 
 Drei Dinge, die beim Schneiden dazukamen:
 
-- **Die Auswahl reist mit.** Beide Richtungen reichen `?subjectId=&chapterId=` durch, sonst müsste der
+- **Die Auswahl reist mit.** Beide Richtungen reichen `?subjectId=&seriesId=&seriesUnitId=` durch, sonst müsste der
   Vater Fach und Kapitel nach jedem Wechsel neu einstellen. Die E2E prüfen genau das (`toHaveURL`).
 - **Fach/Kapitel sind in der Verwaltung ein Filter, keine Pflicht.** Die Liste erscheint jetzt, sobald ein
   Fach gewählt ist (Kapitel = „– alle –"). Vorher blieb die Seite leer, bis auch ein Kapitel stand – das

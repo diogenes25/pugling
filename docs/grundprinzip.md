@@ -18,7 +18,7 @@ Händen.
 
 | Ebene | Rolle | Analogie | Verantwortet |
 | --- | --- | --- | --- |
-| **1. Creator** | Ersteller von Inhalten | Lehrer / Schulbuchautor | Baut **Übungen** für Fächer und Kapitel. Liefert den reinen Lernstoff. |
+| **1. Creator** | Ersteller von Inhalten | Lehrer / Schulbuchautor | Baut **Übungen** für Fächer und Lehrwerk-Units. Liefert den reinen Lernstoff. |
 | **2. Supervisor** | Steuerung | Lehrer / Erziehungsberechtigter | Baut aus vorhandenen Übungen **Lehrpläne**, setzt **Ziele** (Tag/Woche/Hausaufgabe) und **Punkte**, betreibt den **Shop** mit Artikeln, Preisen und Bestand. |
 | **3. Student** | Lernen | Schüler | Sieht die Lehrpläne, **erreicht die Ziele**, verdient dabei **Münzen/Gems** und gibt sie im **Shop** aus. |
 
@@ -31,7 +31,7 @@ Bildschirmzeit) werden außerhalb der App eingelöst – die App hält nur den V
 ## Ebene 1 · Creator — der Inhalt
 
 Der Creator ist vergleichbar mit einem **Lehrer oder Schulbuchautor**. Er erstellt Übungen für
-unterschiedliche Fächer (`Subject`) und Kapitel (`Chapter`) – zum Beispiel einen Satz von 200 Vokabeln
+unterschiedliche Fächer (`Subject`) und Lehrwerk-Units (`SeriesUnit`) – zum Beispiel einen Satz von 200 Vokabeln
 für „Englisch, Unit 3". Diese Übungen sind **kindneutral**: Der Creator weiß nichts von einzelnen
 Kindern, Zielen oder Punkten.[^1] Er füllt allein die **globale Übungs-Bibliothek** (den Lern-Katalog). Die
 Bibliothek ist für alle Creator **lesbar**; ändern/löschen darf nur ein **Owner** der Übung, und über
@@ -99,7 +99,7 @@ dahinter (das Kind darf 10 Minuten fernsehen) passiert **außerhalb** der App.
 
 ## Der Loop an einem konkreten Beispiel
 
-1. **Creator** stellt eine Übung mit **200 Vokabeln** bereit (Fach + Kapitel).
+1. **Creator** stellt eine Übung mit **200 Vokabeln** bereit (Fach + Unit).
 2. **Vater** nimmt diese Übung in einen Lehrplan auf, setzt das Ziel „lerne diese 200 Vokabeln" und
    verspricht dafür **150 Münzen**. Im Shop legt er den Artikel **„10 Minuten Computerzeit"** für
    **100 Münzen** an.

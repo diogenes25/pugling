@@ -17,7 +17,7 @@ public static class ApiRoutes
     // Dual is *not* an excuse for a tier-gated route on a foreign prefix: once only one tier may call it, the
     // prefix has to follow (B-82).
 
-    /// <summary>Tier 1 – Creator: create content/exercises (subject → chapter → exercise, stores, tags).</summary>
+    /// <summary>Tier 1 – Creator: create content/exercises (series → unit → exercise, stores, tags).</summary>
     public const string Creator = V1 + "/creator";
 
     /// <summary>Tier 2 – Supervisor: study plans, goals/points, shop/offers, child management.</summary>

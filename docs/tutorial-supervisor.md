@@ -304,7 +304,7 @@ POST /api/v1/supervisor/children/1/objectives
   "id": 1, "childId": 1, "title": "80% Englisch sicher", "kind": "Committed",
   "status": "Open", "achievedCount": 0, "totalCount": 1, "rewarded": false,
   "keyResults": [
-    { "id": 1, "objectiveId": 1, "subjectId": 1, "chapterId": null, "exerciseId": null,
+    { "id": 1, "objectiveId": 1, "subjectId": 1, "seriesUnitId": null, "exerciseId": null,
       "scope": "Subject", "metric": "MasteredPercent", "targetValue": 80,
       "currentValue": 0, "progressPercent": 0, "status": "Open", "title": "80 % im Fach" }
   ]
@@ -313,8 +313,8 @@ POST /api/v1/supervisor/children/1/objectives
 
 **Feld-Feinheiten (leicht zu verwechseln):**
 
-- **Scope** der Etappe = `subjectId` (Pflicht) + optional `chapterId`/`exerciseId` — **nicht**
-  `scopeType`/`scopeId`. Der `scope`-String in der Antwort (`subject`/`chapter`/`exercise`) leitet sich aus
+- **Scope** der Etappe = `subjectId` (Pflicht) + optional `seriesUnitId`/`exerciseId` — **nicht**
+  `scopeType`/`scopeId`. Der `scope`-String in der Antwort (`Subject`/`SeriesUnit`/`Exercise`) leitet sich aus
   dem gesetzten Feld ab. Der Scope ist nach dem Anlegen **fix**: zum Umhängen eine neue Etappe anlegen.
 - Der Zielwert heißt **`targetValue`** — **nicht** `target` (das ist das Missions-Feld, Schritt 6).
 - **Metrik-Enum:** `AvgMastery` | `MasteredPercent` (jeweils „≥ Zielwert") | `MaxWeakItems` und

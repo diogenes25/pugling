@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+nachgeschaut: "2026-10-23: frischer frontend-reviewer, gegengelesen - == null gegen contract.ts (ownerAdultId optional), Wortlaut gegen CatalogAdmin.tsx:253-256, Verdrahtung :360, Seed ohne Owner (Seed.cs:1019); Grep ueber 'jemand anderes|Grundbestand|isOwn|isMine|ownerAdultId' in frontend/src: keine weitere Stelle behauptet einen fremden Ersteller (VaterExercises.tsx:352 'kein Schreibrecht', ExerciseAttribution.tsx:12 nur mit authorName); Nit VaterFachlehrer.tsx:95 'fremd' bei nullable Owner, nicht geseedet; kein Defekt"
 ---
 
 # B-159 · Eine Reihe ohne Eigentümer behauptet, jemand anderes habe sie angelegt
@@ -105,6 +106,11 @@ Satz wäre teurer als ihr Beleg.
 
 ## Verlauf
 
+- **2026-10-23** — **Nachschau** (Sprint 2 desselben Laufs, frischer `frontend-reviewer`, gegengelesen): kein
+  Defekt; Prüfpunkte im Feld `nachgeschaut`. Ein Nit, nur benannt: `VaterFachlehrer.tsx:95` schreibt bei
+  `!p.isOwn` „fremd", und `CreatorProfileResponse.ownerAdultId` ist ebenfalls nullable – dieselbe Klasse eine
+  Stufe unschärfer, aber kein `CreatorProfile` im Seed, der Fall ist nur nach dem Löschen eines Adults
+  erreichbar. Keine Story, solange das so bleibt.
 - **2026-10-23** — **abgenommen** (Nachtlauf, Sprint 1). `frontend-reviewer`: keine Blocker, Wortlaut und
   `== null` gegen B-154 geprüft; **ein Fund mit Testwirkung (Zähler 3 des Sprints):** die Verdrahtung in
   `SeriesRow` war unbelegt – die Zeile ließ sich streichen, 394/394 blieben grün. Darum jetzt eine eigene

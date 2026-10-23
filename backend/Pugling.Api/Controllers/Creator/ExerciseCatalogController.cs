@@ -128,7 +128,7 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     /// <summary>
     /// Applies the sorting allowed via whitelist; every variant ends with <c>Id</c> as a tiebreaker,
     /// so the paging window stays deterministic. Unknown/empty keys → business default
-    /// (subject → chapter → order).
+    /// (subject → series unit → order).
     /// </summary>
     private static IOrderedQueryable<Exercise> ApplySort(IQueryable<Exercise> q, (string? Key, bool Desc) sort) =>
         (sort.Key?.ToLowerInvariant(), sort.Desc) switch

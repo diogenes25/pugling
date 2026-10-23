@@ -53,7 +53,7 @@ aktiven Plan sehen soll, ist das auch serverseitig die sauberste Form.
 7. Verifizieren: GET /study-plans/{planId}/positions und GET /study-plans/{planId}/overview.
 ```
 
-**Idempotenz:** Nutze stabile Fach-/Kapitel-/Übungstitel und prüfe vorhandene Übungen zuerst über die
+**Idempotenz:** Nutze stabile Fach-/Unit-/Übungstitel und prüfe vorhandene Übungen zuerst über die
 Katalogsuche. Bei Vokabeln zuerst den Store pflegen (`lookup`, `batch`, `by-key`) und danach die
 Übungsmenge über `ExerciseItem`s bzw. `refs-from-tags` materialisieren. `config.items` beim Übungs-POST
 ist nur Authoring-Payload; die dauerhafte Item-Liste liegt unter `.../vocabulary/{exerciseId}/items`.
