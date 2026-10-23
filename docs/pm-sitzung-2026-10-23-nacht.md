@@ -1360,4 +1360,4 @@ gefahren; ein drittes war nicht beauftragt. Der Zähler von Sprint 9 stand bei 5
    aus der Nachschau zu Sprint 8).
 4. **Bewusst belassen, zur Entscheidung:** `frontend/CLAUDE.md:112` nennt noch `isMine` (historischer Satz in einer
    resident geladenen Datei); `fieldHelp.ts:121` (`exercisePoints`) sagt weiter „setzt" statt „belegt … vor".
-5. `git log --oneline 3cebfd3..`: die Commits dieses Laufs; **nichts ist gepusht.**
+5. `git log --oneline 3cebfd3..`: `e5b67ec`, `cd4ca3f` (Sprint 8), `90387d5` plus Nachtrag (Sprint 9); **nichts ist gepusht.**
