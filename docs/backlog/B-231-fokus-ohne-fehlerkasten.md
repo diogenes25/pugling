@@ -34,3 +34,4 @@ eine `Frage`, nicht im Nachtlauf entschieden (Freigabe 1).
 
 - **2026-10-17** — angelegt aus B-228, Entscheidung 2: der Fehlerfall ist dort behoben, der Fall ohne Meldung
   bewusst ausgespart.
+- **2026-10-23** — **Entscheidung des Nutzers** in der Grill-Runde der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): der Fokus geht auf den **umgebenden Container** (`tabIndex={-1}`, sichtbarer Fokusring); `disabled={busy}` bleibt Hausregel. **Freigabe des Nutzers (Autonomer Modus, Opt-in je Vorhaben, README):** ein Nachtlauf darf diese Story auf Grundlage der getroffenen Entscheidung selbst ausformulieren, schätzen und bauen (Paket NP-14); trifft er dabei auf eine Produktfrage, die die Entscheidung nicht hergibt, hält er an und notiert sie. Rollengang und Reviewer bleiben Pflicht.

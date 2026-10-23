@@ -35,3 +35,4 @@ Fälle Handwerk sind.
 
 - **2026-10-18** — angelegt aus B-199, Fall 3, im zweiten Lauf des Nachtlaufs 2026-10-17: der einzige der drei
   Fälle, der eine Entscheidung des Menschen braucht (Freigabe 1).
+- **2026-10-23** — **Entscheidung des Nutzers** in der Grill-Runde der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): der dritte Zustand wird **nachgebaut**, wie B-174 Entscheidung 3 versprochen hat („wird geladen…“, „Keine Arten“ nur nach erfolgreichem Laden). **Freigabe des Nutzers (Autonomer Modus, Opt-in je Vorhaben, README):** ein Nachtlauf darf diese Story auf Grundlage der getroffenen Entscheidung selbst ausformulieren, schätzen und bauen (Paket NP-14); trifft er dabei auf eine Produktfrage, die die Entscheidung nicht hergibt, hält er an und notiert sie. Rollengang und Reviewer bleiben Pflicht.

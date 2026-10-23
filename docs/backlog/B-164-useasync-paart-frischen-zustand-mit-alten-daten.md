@@ -8,7 +8,7 @@ groesse: ""
 wo: frontend
 migration: nein
 vertragsbruch: nein
-wartet_auf: eine Entscheidung des Menschen (siehe „Angehalten")
+wartet_auf: ""
 quelle: frontend-reviewer zu B-157 (2026-08-13, Fund außerhalb des Diffs)
 unverifiziert: false
 grund: ""
@@ -277,3 +277,4 @@ drei gemessene Stellen begrenzt ist (Entscheidung 5).
   offenem Punkt 3 (111 Aufrufstellen / 75 mit Deps / 73 mit lebendigen Deps) und den Nachweis, dass der
   Anlassfall im Katalog längst geschlossen und durch `CatalogAdmin.test.tsx:240` gedeckt ist.
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht, weiter angehalten. Inzwischen gibt es **drei** Muster statt zwei: Prüfung am Aufrufer (`VaterWizard.tsx:203-204`, `PlanPositions.tsx`), und den Schlüssel-Hook `lib/useGemerkterFehler.ts` (B-227), dessen Kopf ausdrücklich nicht vorgreift. Die Architekturfrage (querschnittliches `stale` im Hook vs. Muster am Aufrufer) wird damit dringlicher – Tagesordnung fürs Grillen.
+- **2026-10-23** — **Entscheidung des Nutzers** in der Grill-Runde G-2 der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): „veraltet“ lebt **im Hook** – `useAsync` bekommt ein querschnittliches `stale`-Feld; die Prüfungen am Aufrufer (`seitenSchluessel`/`zeilenVeraltet` in `VaterWizard.tsx`, `PlanPositions.tsx`) und der Schlüssel-Hook `useGemerkterFehler` werden darauf zurückgeführt, wo es passt. Damit ist die Story nicht mehr angehalten (`wartet_auf` geleert) und als `Defekt` autonom grill- und schätzbar. Wahrscheinlich M – vor dem Bau teilen, wenn der Rückbau der Aufrufer mehr als eine Handvoll Stellen trifft.

@@ -128,6 +128,8 @@ Story-Dateien nicht ohnehin sagen: den Zusammenhang, die Reihenfolge und den Sto
 | **NP-11** Mehrsprachigkeit, Schritt 1 | *Der Sohn kann die Arcade auf Englisch umschalten, mindestens ein Bildschirm ist vollständig übersetzt, und alle Specs laufen weiter auf Deutsch.* | B-85 (→ teilen) | L → 2 × M | Schritt 0 ist das Teilen nach `docs/backlog/README.md`, gebaut wird nur Teil a. Die englischen Texte liest am Ende ein Mensch gegen. |
 | **NP-12** Werkzeug und Doku sagen die Wahrheit | *Wer eine Anleitung, eine Spec, einen Test-Kommentar oder eine Feldhilfe liest, wird nicht in die Irre geführt.* | B-239, B-214, B-177, B-181 (Doku-Teil), B-242, B-201 | XS–S je Story | B-239 betrifft auch aktive Anweisungen (`.claude/commands/neuer-uebungstyp.md`, `pugling-reviewer.md`). B-177 erst herstellen; gelingt das nicht, `verworfen` mit Messung. Bei B-181 nur der Kommentar, **kein** Wiederholungsversuch in `Load`. |
 | **NP-13** Der Vater sieht alle Kinder auf einen Blick | *Der Vater sieht für jedes seiner Kinder in einer Zeile, ob die Pflicht dieser Woche bzw. dieses Monats erfüllt ist, und blättert über die Kinder.* | B-39 (→ teilen) | L → 2 × M, beides | Schritt 0 ist das Teilen (a: Endpunkt mit Integrationstests, b: zwei Einbaustellen im Frontend). Geblättert wird über Kinder, der Zeitraum ist ein Filter (Entscheidung vom 2026-10-23). `ComputeDayAsync` je Kind × Plan × Tag vorher messen. |
+| **NP-14** Eine Rückmeldung, eine Sperre, ein Fokus | *Der Vater sieht nach jedem Speichern die Rückmeldung, ein Pflichtfeld sperrt seinen Knopf sichtbar mit Grund, und der Sohn behält beim Nachladen seinen Platz in der Liste.* | B-233, B-232, B-231, B-234 | je XS–S, frontend | **Sonderfreigabe:** die vier stehen auf `idee`, der Lauf darf sie selbst ausformulieren und schätzen (Entscheidungen vom 2026-10-23 in den Stories). Die Hausregeln landen in `frontend/CLAUDE.md`. |
+| **NP-15** Lesen scheitert nicht still und zeigt nichts Veraltetes | *Scheitert ein Laden, kann der Vater es erneut versuchen, ohne seine Eingaben zu verlieren, und nach einem Wechsel zeigt kein Bildschirm alte Daten im neuen Zustand.* | B-183, B-164 | M + M, frontend | B-183 mit Sonderfreigabe (wie NP-14), B-164 ist `Defekt` und autonom grillbar. B-164 zuerst: ein `stale`-Feld im Hook ändert, wie der Retry-Banner seinen Zustand liest. Teilen, wenn der Rückbau der Aufrufer zu breit wird. |
 
 ### Vorschlag für die Nachtfolge
 
@@ -143,6 +145,7 @@ Reihenfolge stellt **Produktwert vor Hygiene**, und jede Nacht mischt ein größ
 | 5 | NP-9 | L mit Migration, allein |
 | 6 | NP-10, NP-11 | NP-11 beginnt mit dem Teilen |
 | 7 | NP-13 | nach der Entscheidung zu B-39 baubar; beginnt mit dem Teilen |
+| 8 | NP-14, NP-15 | Frontend-Hausregeln; NP-14 ist klein, NP-15 der größere Umbau |
 
 Der **Auftragstext** bleibt der aus [nachtlauf.md](nachtlauf.md). Damit ein Lauf ein Paket statt einer
 selbst gewählten Auswahl fährt, genügt ein Satz am Ende, zum Beispiel: *„Fahre die Pakete NP-1, NP-2, NP-3
@@ -219,3 +222,24 @@ Offen auf der Tagesordnung bleiben damit G-2 bis G-8 (ohne die erledigten Teile 
 | B-09 | Hausaufgabe landet **als Positionen mit Frist im aktiven Plan** | bleibt `ausformuliert`; offen: Auth-Wand für den Lehrer, „erledigt", Kind ohne aktiven Plan, Interessen, Teilung |
 
 Noch offen in G-7: B-249 (Notenschlüssel der Probeklausur) und B-250 (Stundenplan – nur Reihenfolge oder auch Pflicht?).
+
+### G-2 Rückmeldung, Sperre, Fokus – entschieden, mit Sonderfreigabe
+
+| Story | Entscheidung | Folge |
+| --- | --- | --- |
+| B-233 | Pflichtfeld **sperrt** den Knopf, Label trägt „(Pflicht)", lokale Meldung entfällt – Hausregel | NP-14 |
+| B-232 | Auch eine Bestätigung scrollt zum Meldungsplatz, **nur wenn nötig** | NP-14 |
+| B-231 | Fokus auf den **umgebenden Container**, `disabled={busy}` bleibt | NP-14 |
+| B-234 | Dritten Zustand **nachbauen** | NP-14 |
+| B-183 | **`ListenAusfall` ist Hausregel** für jeden Lesefehler | NP-15 |
+| B-164 | „Veraltet" lebt **im Hook** (`stale`-Feld in `useAsync`) | NP-15; nicht mehr angehalten |
+
+**Sonderfreigabe (Autonomer Modus, Opt-in je Vorhaben):** Für B-231, B-232, B-233, B-234 und B-183 darf
+ein Nachtlauf ausformulieren, schätzen und bauen, obwohl sie `Frage`/`Wunsch` auf `idee` sind. Die
+Freigabe steht in jeder dieser Stories und gilt **nur für sie**.
+
+### G-3 Interessen-Taxonomie – begonnen
+
+| Story | Entscheidung | Folge |
+| --- | --- | --- |
+| B-207 | Ein **Creator-Kennzeichen „für Kinder sichtbar"** kuratiert die Kind-Sicht (Migration) | bleibt `ausformuliert`; offen sind die Punkte 2–5 sowie B-208, B-141 und B-122 |

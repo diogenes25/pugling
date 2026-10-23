@@ -99,3 +99,4 @@ oder eine andere Achse als „hat ein Bild".
   Ziel (das Kind kann sich selbst beschreiben) ohne sie erfüllt ist und die Frage eine Produktentscheidung
   ist. Ist-Stand am Code belegt; der entscheidende Zusatzbefund gegenüber dem Review: die vorgeschlagene
   Reparatur hätte die Liste im Auslieferungszustand geleert (der Seed legt keine Bilder an).
+- **2026-10-23** — **Entscheidung des Nutzers** in der Grill-Runde der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)) zu offenem Punkt 1: es kuratiert ein **Creator-Kennzeichen „für Kinder sichtbar“** am Stichwort (Migration). Die Empfehlungen zu den Punkten 2–5 (kleiner geseedeter Grundbestand, Supervisor-Editor bleibt frei, Schutz fremden Freitexts als Nebenwirkung, `X-Total-Count` statt geratenem Deckel) sind noch **nicht** bestätigt – Rest der G-3-Runde.
