@@ -117,7 +117,7 @@ Story-Dateien nicht ohnehin sagen: den Zusammenhang, die Reihenfolge und den Sto
 | --- | --- | --- | --- | --- |
 | **NP-1** Erfolge spürbar machen | *Der Sohn sieht und hört, wenn er ein Teilziel erreicht, und eine Karte dreht sich beim Aufdecken um.* | B-36, B-35 | 2 × S, frontend | B-35 Entscheidung 3 gilt nur noch für SelfAssess; die Klickkette aus B-109 im E2E festhalten. Wie sich die Animation anfühlt, sieht am Ende ein Mensch an (`wartet_auf`). |
 | **NP-2** Creator prüft, was er baut | *Der Creator kann jede Übung vor dem Zuweisen sinnvoll ausprobieren, und der Agent erzeugt Förderübungen nur in der richtigen Sprache.* | B-15, B-17, B-21 | S + XS + S, beides | B-21: Testfall auch für das Verb `plan`. B-17: die Entscheidungen hat ein Agent getroffen; bei Zweifel anhalten. |
-| **NP-3** Login und Konto härten | *Der Vater kann kein Konto mit leerer oder zu kurzer PIN anlegen, und ein gelöschtes Konto bekommt 401 statt 500.* | B-28, B-245 | S + S, backend | B-245 zuerst **messen** (Zu klären 1). Den Leer-Guard aus B-28 zentral in `PinHasher.Verify` setzen, damit er B-230 übersteht. |
+| **NP-3** Login und Konto härten | *Der Vater kann kein Konto mit leerer oder zu kurzer PIN anlegen, und ein gelöschtes Konto bekommt 401 statt 500.* | B-28, B-245, B-230 | S + S + M, backend, **eine Migration** (B-230) | B-245 zuerst **messen** (Zu klären 1). Den Leer-Guard aus B-28 zentral in `PinHasher.Verify` setzen; **B-230 danach** (Profil-Hash entfällt, Entscheidung vom 2026-10-23). |
 | **NP-4** Der Katalog-Vertrag liest sich sauber | *Wer die API liest, findet jede Beschreibung als Fließtext, dasselbe Eigentums-Flag überall unter einem Namen und nach dem Umbenennen eines Fachs überall den neuen Namen.* | B-147, B-138, B-156, B-145 | S + M + S + S, backend | B-147 vor B-138 (der Transformer entscheidet, was B-138 noch von Hand tun muss). B-156 ist ein Vertragsbruch: Client, Frontend (`CatalogAdmin.tsx:244`) und vier Fixtures ziehen mit. |
 | **NP-5** Vater-Web am Tablet und mit Screenreader | *Der Vater bedient jede Seite bei 768 px ohne seitliches Scrollen, und ein Screenreader sagt jede Rückmeldung und jede Kästchen-Gruppe an.* | B-68, B-236, B-134 | M + S + M, frontend | B-68: die neun vorhandenen `overflowX`-Wrapper einbeziehen; der Spec setzt die Breite selbst. B-134 bringt einen Wächter mit Ausnahmeliste. |
 | **NP-6** Lehrwerk und Vokabeln aus einer Hand | *Der Vater wählt das Lehrbuch seines Kindes aus dem Katalog statt es frei zu tippen, und der Creator legt gleichwertige Übersetzungen direkt im Übungs-Editor an.* | B-64, B-71 | M + M, beides | B-64: die Wortfrage „Lehrwerk/Reihe/Buchreihe" aus B-123 **auslassen**, sie ist offen. B-71 AK 6 (liest der Test `TranslationAlternatives`?) vorher prüfen. |
@@ -126,7 +126,7 @@ Story-Dateien nicht ohnehin sagen: den Zusammenhang, die Reihenfolge und den Sto
 | **NP-9** Grammatik als Thema | *Der Creator ordnet Regelaufgaben einem Grammatik-Thema zu, und der Vater findet sie darüber.* | B-155 | L, beides, **Migration** | allein; der Nutzer hat Teilen ausdrücklich abgelehnt (Entscheidung 11). Die Seed-Liste in Entscheidung 6 endet mit „…" – vervollständigen und im Verlauf nennen. |
 | **NP-10** Der Agent füllt die Unit-Notizen | *Der Creator lässt die Stoffnotizen einer Unit vom Agenten vorschlagen, statt sie abzutippen.* | B-22 | S–M, backend, **Migration** | `Topics` ist eine Liste mit 50 × 200 Zeichen; die Migration betrifft nur noch `Grammar`. Nicht im selben Sprint wie NP-9. |
 | **NP-11** Mehrsprachigkeit, Schritt 1 | *Der Sohn kann die Arcade auf Englisch umschalten, mindestens ein Bildschirm ist vollständig übersetzt, und alle Specs laufen weiter auf Deutsch.* | B-85 (→ teilen) | L → 2 × M | Schritt 0 ist das Teilen nach `docs/backlog/README.md`, gebaut wird nur Teil a. Die englischen Texte liest am Ende ein Mensch gegen. |
-| **NP-12** Werkzeug und Doku sagen die Wahrheit | *Wer eine Anleitung, eine Spec, einen Test-Kommentar oder eine Feldhilfe liest, wird nicht in die Irre geführt.* | B-239, B-214, B-177, B-181 (Doku-Teil), B-242, B-201 | XS–S je Story | B-239 betrifft auch aktive Anweisungen (`.claude/commands/neuer-uebungstyp.md`, `pugling-reviewer.md`). B-177 erst herstellen; gelingt das nicht, `verworfen` mit Messung. Bei B-181 nur der Kommentar, **kein** Wiederholungsversuch in `Load`. |
+| **NP-12** Werkzeug und Doku sagen die Wahrheit | *Wer eine Anleitung, eine Spec, einen Test-Kommentar oder eine Feldhilfe liest, wird nicht in die Irre geführt.* | B-239, B-214, B-177, B-181, B-242, B-201 | XS–S je Story | B-239 betrifft auch aktive Anweisungen (`.claude/commands/neuer-uebungstyp.md`, `pugling-reviewer.md`). B-177 erst herstellen; gelingt das nicht, `verworfen` mit Messung. B-181: Kommentar **und** begrenzter Wiederholungsversuch für beide Ausnahmetypen (Entscheidung vom 2026-10-23), mit Test. |
 | **NP-13** Der Vater sieht alle Kinder auf einen Blick | *Der Vater sieht für jedes seiner Kinder in einer Zeile, ob die Pflicht dieser Woche bzw. dieses Monats erfüllt ist, und blättert über die Kinder.* | B-39 (→ teilen) | L → 2 × M, beides | Schritt 0 ist das Teilen (a: Endpunkt mit Integrationstests, b: zwei Einbaustellen im Frontend). Geblättert wird über Kinder, der Zeitraum ist ein Filter (Entscheidung vom 2026-10-23). `ComputeDayAsync` je Kind × Plan × Tag vorher messen. |
 | **NP-14** Eine Rückmeldung, eine Sperre, ein Fokus | *Der Vater sieht nach jedem Speichern die Rückmeldung, ein Pflichtfeld sperrt seinen Knopf sichtbar mit Grund, und der Sohn behält beim Nachladen seinen Platz in der Liste.* | B-233, B-232, B-231, B-234 | je XS–S, frontend | **Sonderfreigabe:** die vier stehen auf `idee`, der Lauf darf sie selbst ausformulieren und schätzen (Entscheidungen vom 2026-10-23 in den Stories). Die Hausregeln landen in `frontend/CLAUDE.md`. |
 | **NP-15** Lesen scheitert nicht still und zeigt nichts Veraltetes | *Scheitert ein Laden, kann der Vater es erneut versuchen, ohne seine Eingaben zu verlieren, und nach einem Wechsel zeigt kein Bildschirm alte Daten im neuen Zustand.* | B-183, B-164 | M + M, frontend | B-183 mit Sonderfreigabe (wie NP-14), B-164 ist `Defekt` und autonom grillbar. B-164 zuerst: ein `stale`-Feld im Hook ändert, wie der Retry-Banner seinen Zustand liest. Teilen, wenn der Rückbau der Aufrufer zu breit wird. |
@@ -134,9 +134,10 @@ Story-Dateien nicht ohnehin sagen: den Zusammenhang, die Reihenfolge und den Sto
 | **NP-17** Plan bauen ohne Überraschung | *Der Vater sieht schon in der Auswahl, welche Übung er zuweisen darf, stellt im Positions-Formular jede Einstellung ein, die der Server kennt, und bekommt jeden Fehler auf Deutsch und passend zur Lage.* | B-140, B-16, B-152, B-205 | S + S + S + S, beides | Alles additiv außer dem Code-Wechsel in B-205. B-16 braucht die Stufen im Manifest – zuerst prüfen, ob das Manifest sie schon trägt. Alle vier haben die Sonderfreigabe bzw. sind `Defekt`. |
 | **NP-18** Üben, das verzeiht und hilft | *Der Sohn kann freiwillig eine Mischrunde über alle fälligen Karten seines Plans spielen und dabei Münzen verdienen, ein einzelner Fehler wirft ihn (wo der Vater es erlaubt) nur eine Box zurück, und Hinweise helfen ihm, kosten aber nachvollziehbar Punkte.* | B-218, B-219, B-223 | je S–M, beides, **eine Migration** (B-219: Option an der Position) | Alle drei `idee` mit Sonderfreigabe; der Lauf formuliert aus und schätzt. B-223 setzt auf `HintsUsed` und den vorhandenen Tipp auf, die Lösungsfeld-Regel gilt. B-219 wirkt **nur** in der Position. |
 | **NP-19** Der Pool wächst mit | *Der Vater kann einstellen, wie viele neue Vokabeln je Tag dazukommen, statt dass die übrigen nie abgefragt werden.* | B-04 | M–L, backend, **Migration** | allein; nicht im selben Sprint wie NP-18. Die Mischrunde zählt nicht auf den Deckel. |
-| **NP-20** Der Sohn sieht, was Nichtstun kostet | *Der Sohn sieht auf einen Blick, was heute fällig ist und was es ihn kostet, wenn er es lässt.* | B-220 | M, beides | erst nach NP-18 (Mischrunde-Zeile); die Countdown-Zeile folgt, wenn B-248 gebaut ist. Neuer Endpunkt, `PenaltyCoins` additiv im Student-Vertrag. |
+| **NP-20** Der Sohn sieht, was Nichtstun kostet | *Der Sohn sieht auf einen Blick, was heute fällig ist, was es ihn kostet, wenn er es lässt, und was er für das Fach von morgen üben sollte.* | B-220, B-250 | M + S, beides | erst nach NP-18 (Mischrunde-Zeile); die Countdown-Zeile folgt, wenn B-248 gebaut ist. Neuer Endpunkt, `PenaltyCoins` additiv im Student-Vertrag. B-250 sortiert **im selben Endpunkt** (Stundenplan → Reihenfolge, keine Pflicht). |
 | **NP-21** Fortschritt, an dem man wachsen kann | *Der Sohn sieht, welche Stufe der Abzeichen-Leiter er als Nächstes erreicht, und wie diese Woche gegen seine eigene Vorwoche steht.* | B-221, B-253 | S–M + S, beides | Beide `idee` mit Sonderfreigabe. Die Leiter gilt für jedes Kind und jede bestehende DB, also kein Seed nur für leere DBs. Der Vergleich läuft nur gegen die eigene Vorwoche. |
 | **NP-22** Die Klassenarbeit treibt die Vorbereitung | *Der Sohn sieht den Countdown zur nächsten Klassenarbeit, muss im Fenster davor über ihr Bündel üben, sonst kostet es Münzen, und kann eine Probeklausur mit Notenprognose schreiben, die der Vater neben der echten Note sieht.* | B-248, B-249 | M + M, beides, **eine Migration** (Fenster und Notenschlüssel an der Klassenarbeit, in einem Faltvorgang) | B-248 zuerst, B-249 hängt an seiner Bündel-Auflösung. Die Bündel-Auflösung teilt B-248 mit B-39 (NP-13), also wiederverwenden statt doppelt bauen. Wenn beide zu groß werden, auf zwei Sprints teilen. |
+| **NP-23** Die Vokabelliste aus dem Buch | *Der Creator fotografiert die Vokabelliste einer Unit, sieht eine Vorschau und übernimmt die Einträge in den Vokabelspeicher, ohne abzutippen.* | B-251 | M, Konsolen-Agent | Lokales Vision-Modell in Ollama; kein LLM im Backend. Ist kein geeignetes Modell installiert, endet der Lauf mit einer klaren Meldung statt mit einem Ersatz. |
 
 ### Vorschlag für die Nachtfolge
 
@@ -158,6 +159,7 @@ Reihenfolge stellt **Produktwert vor Hygiene**, und jede Nacht mischt ein größ
 | 11 | NP-18 | eine Migration; Lernmechanik aus G-5 |
 | 12 | NP-19, NP-20 | NP-19 trägt die Migration, NP-20 hat keine |
 | 13 | NP-22, NP-21 | NP-22 ist das wertvollste Produkt-Paket (Kernidee), NP-21 der kleine Ausgleich |
+| 14 | NP-23 | braucht ein installiertes Vision-Modell auf der Maschine des Laufs |
 
 Der **Auftragstext** bleibt der aus [nachtlauf.md](nachtlauf.md). Damit ein Lauf ein Paket statt einer
 selbst gewählten Auswahl fährt, genügt ein Satz am Ende, zum Beispiel: *„Fahre die Pakete NP-1, NP-2, NP-3
@@ -300,4 +302,25 @@ dazu eine eigene Richtigstellungs-Zeile im Verlauf.
 | B-249 | Notenschlüssel: **fester Default, je Arbeit änderbar** | NP-22, nach B-248 |
 | B-248 | (Entscheidungen siehe oben) | Sonderfreigabe → NP-22 |
 
-Offen bleiben aus G-7 nur B-250 (Stundenplan) und B-09 (Restfragen), aus G-8 B-251, B-230 und B-181 (Teil b).
+### G-7 und G-8 – Rest entschieden
+
+| Story | Entscheidung | Folge |
+| --- | --- | --- |
+| B-250 | Stundenplan bewirkt **nur Reihenfolge**, im Queue-Endpunkt | NP-20 |
+| B-251 | **Lokales Vision-Modell** in Ollama | NP-23 |
+| B-230 | **Profil-Hash entfällt**, nach B-28 | NP-3 (Migration) |
+| B-181 | Begrenzter **Wiederholungsversuch für beide Ausnahmetypen** | NP-12 |
+
+## Stand nach den Grill-Runden
+
+Die Tagesordnung G-0 bis G-9 ist bis auf zwei Restposten abgearbeitet:
+
+- **B-09** (Lehrer-Hausaufgaben): entschieden ist „Positionen mit Frist im aktiven Plan". Offen sind die
+  Auth-Wand für einen Lehrer ohne Betreuungsauftrag, was „erledigt" heißt, der Fall „Kind ohne aktiven
+  Plan", die Interessen-Passung und der Teilungsschnitt. Das ist faktisch XL und gehört in eine eigene
+  Sitzung, eventuell als Karte (`/wayfinder`).
+- **B-20** (`assign`-Verb): drei Detailfragen (doppelte Position, `--tag`, Positions-Vorgaben), alle klein.
+
+Ein Nachtlauf hat damit **23 Pakete** zur Auswahl (NP-1 bis NP-23), die Nachtfolge steht oben.
+Die meisten Wunsch-/Frage-Stories darin tragen die Sonderfreigabe vom 2026-10-23. Ihr Rahmen steht
+jeweils als nummerierte Entscheidung oder als Verlaufszeile in der Story.
