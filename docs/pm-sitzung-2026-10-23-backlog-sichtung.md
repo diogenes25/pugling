@@ -131,6 +131,7 @@ Story-Dateien nicht ohnehin sagen: den Zusammenhang, die Reihenfolge und den Sto
 | **NP-14** Eine Rückmeldung, eine Sperre, ein Fokus | *Der Vater sieht nach jedem Speichern die Rückmeldung, ein Pflichtfeld sperrt seinen Knopf sichtbar mit Grund, und der Sohn behält beim Nachladen seinen Platz in der Liste.* | B-233, B-232, B-231, B-234 | je XS–S, frontend | **Sonderfreigabe:** die vier stehen auf `idee`, der Lauf darf sie selbst ausformulieren und schätzen (Entscheidungen vom 2026-10-23 in den Stories). Die Hausregeln landen in `frontend/CLAUDE.md`. |
 | **NP-15** Lesen scheitert nicht still und zeigt nichts Veraltetes | *Scheitert ein Laden, kann der Vater es erneut versuchen, ohne seine Eingaben zu verlieren, und nach einem Wechsel zeigt kein Bildschirm alte Daten im neuen Zustand.* | B-183, B-164 | M + M, frontend | B-183 mit Sonderfreigabe (wie NP-14), B-164 ist `Defekt` und autonom grillbar. B-164 zuerst: ein `stale`-Feld im Hook ändert, wie der Retry-Banner seinen Zustand liest. Teilen, wenn der Rückbau der Aufrufer zu breit wird. |
 | **NP-16** Interessen: das Kind sieht nur Freigegebenes | *Der Sohn sieht in seiner Interessen-Auswahl nur Stichwörter, die ein Creator freigegeben hat, nie den Freitext einer fremden Familie, und keine Liste schneidet still etwas ab.* | B-207, B-208, B-141, B-122 | M + XS + S + S, beides, **eine Migration** (B-207) | B-207/B-208 stehen auf `gegrillt`, B-122 auf `idee`, alle drei mit Sonderfreigabe; B-141 ist `Defekt`. B-207 trägt die einzige Migration des Sprints. |
+| **NP-17** Plan bauen ohne Überraschung | *Der Vater sieht schon in der Auswahl, welche Übung er zuweisen darf, stellt im Positions-Formular jede Einstellung ein, die der Server kennt, und bekommt jeden Fehler auf Deutsch und passend zur Lage.* | B-140, B-16, B-152, B-205 | S + S + S + S, beides | Alles additiv außer dem Code-Wechsel in B-205. B-16 braucht die Stufen im Manifest – zuerst prüfen, ob das Manifest sie schon trägt. Alle vier haben die Sonderfreigabe bzw. sind `Defekt`. |
 
 ### Vorschlag für die Nachtfolge
 
@@ -148,6 +149,7 @@ Reihenfolge stellt **Produktwert vor Hygiene**, und jede Nacht mischt ein größ
 | 7 | NP-13 | nach der Entscheidung zu B-39 baubar; beginnt mit dem Teilen |
 | 8 | NP-14, NP-15 | Frontend-Hausregeln; NP-14 ist klein, NP-15 der größere Umbau |
 | 9 | NP-16 | eine Migration; Interessen-Taxonomie aus G-3 |
+| 10 | NP-17 | ohne Migration; Vater-Plan-Bau aus G-4 |
 
 Der **Auftragstext** bleibt der aus [nachtlauf.md](nachtlauf.md). Damit ein Lauf ein Paket statt einer
 selbst gewählten Auswahl fährt, genügt ein Satz am Ende, zum Beispiel: *„Fahre die Pakete NP-1, NP-2, NP-3
@@ -248,3 +250,19 @@ Freigabe steht in jeder dieser Stories und gilt **nur für sie**.
 | B-208 | **PUT bleibt PUT**, ein Test pinnt das weggelassene Feld | `gegrillt` → NP-16 |
 | B-141 | Label **eindeutig, exakter Vergleich, ohne Migration** | `Defekt`, autonom → NP-16 |
 | B-122 | `take` **optional ohne Default** | Sonderfreigabe → NP-16 |
+
+### Freigabe erweitert – und eine Richtigstellung
+
+In G-3 habe ich den Vermerk „Freigabe des Nutzers" bei B-207, B-208 und B-122 geschrieben, **bevor** er
+erteilt war; die Freigabe galt da nur für die G-2-Stories. Auf Nachfrage hat der Nutzer sie erweitert:
+**Die Sonderfreigabe gilt für alle am 2026-10-23 im Dialog entschiedenen Stories.** Die drei Stories tragen
+dazu eine eigene Richtigstellungs-Zeile im Verlauf.
+
+### G-4 Katalog und Zuweisen – entschieden
+
+| Story | Entscheidung | Folge |
+| --- | --- | --- |
+| B-140 | Serverseitiges **„für dich zuweisbar"** je Übung, nicht zuweisbare gesperrt mit Grund | NP-17 |
+| B-152 | Ein Kind trägt **genau eine** Schulart oder keine; der **Server validiert** | NP-17 |
+| B-205 | `exercise_in_use` wird **aufgespalten**, jeder Code bekommt eine deutsche Fassung | NP-17 (`Defekt`) |
+| B-16 | Stufen **aus dem Manifest**, „Standard" über einen **Leeren-Schalter** | NP-17 |
