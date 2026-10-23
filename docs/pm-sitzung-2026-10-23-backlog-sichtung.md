@@ -127,6 +127,7 @@ Story-Dateien nicht ohnehin sagen: den Zusammenhang, die Reihenfolge und den Sto
 | **NP-10** Der Agent füllt die Unit-Notizen | *Der Creator lässt die Stoffnotizen einer Unit vom Agenten vorschlagen, statt sie abzutippen.* | B-22 | S–M, backend, **Migration** | `Topics` ist eine Liste mit 50 × 200 Zeichen; die Migration betrifft nur noch `Grammar`. Nicht im selben Sprint wie NP-9. |
 | **NP-11** Mehrsprachigkeit, Schritt 1 | *Der Sohn kann die Arcade auf Englisch umschalten, mindestens ein Bildschirm ist vollständig übersetzt, und alle Specs laufen weiter auf Deutsch.* | B-85 (→ teilen) | L → 2 × M | Schritt 0 ist das Teilen nach `docs/backlog/README.md`, gebaut wird nur Teil a. Die englischen Texte liest am Ende ein Mensch gegen. |
 | **NP-12** Werkzeug und Doku sagen die Wahrheit | *Wer eine Anleitung, eine Spec, einen Test-Kommentar oder eine Feldhilfe liest, wird nicht in die Irre geführt.* | B-239, B-214, B-177, B-181 (Doku-Teil), B-242, B-201 | XS–S je Story | B-239 betrifft auch aktive Anweisungen (`.claude/commands/neuer-uebungstyp.md`, `pugling-reviewer.md`). B-177 erst herstellen; gelingt das nicht, `verworfen` mit Messung. Bei B-181 nur der Kommentar, **kein** Wiederholungsversuch in `Load`. |
+| **NP-13** Der Vater sieht alle Kinder auf einen Blick | *Der Vater sieht für jedes seiner Kinder in einer Zeile, ob die Pflicht dieser Woche bzw. dieses Monats erfüllt ist, und blättert über die Kinder.* | B-39 (→ teilen) | L → 2 × M, beides | Schritt 0 ist das Teilen (a: Endpunkt mit Integrationstests, b: zwei Einbaustellen im Frontend). Geblättert wird über Kinder, der Zeitraum ist ein Filter (Entscheidung vom 2026-10-23). `ComputeDayAsync` je Kind × Plan × Tag vorher messen. |
 
 ### Vorschlag für die Nachtfolge
 
@@ -141,6 +142,7 @@ Reihenfolge stellt **Produktwert vor Hygiene**, und jede Nacht mischt ein größ
 | 4 | NP-8, NP-7 | eine Migration (B-12) plus ein migrationsfreies Paket |
 | 5 | NP-9 | L mit Migration, allein |
 | 6 | NP-10, NP-11 | NP-11 beginnt mit dem Teilen |
+| 7 | NP-13 | nach der Entscheidung zu B-39 baubar; beginnt mit dem Teilen |
 
 Der **Auftragstext** bleibt der aus [nachtlauf.md](nachtlauf.md). Damit ein Lauf ein Paket statt einer
 selbst gewählten Auswahl fährt, genügt ein Satz am Ende, zum Beispiel: *„Fahre die Pakete NP-1, NP-2, NP-3
@@ -207,3 +209,13 @@ nicht ausgeführt.
 | B-20 | Als **`assign`-Verb** im bestehenden Agenten neu schneiden, kein zweites Projekt | bleibt `ausformuliert`; drei Detailfragen stehen in der Story (doppelte Position, `--tag`, Positions-Vorgaben), danach schätzbar |
 
 Offen auf der Tagesordnung bleiben damit G-2 bis G-8 (ohne die erledigten Teile von G-8: B-20, B-23).
+
+### G-7 Klassenarbeit und Schulwoche – teilweise entschieden
+
+| Story | Entscheidung | Folge |
+| --- | --- | --- |
+| B-248 | Vorbereitung ist **Pflicht mit Malus**; das Fenster hat einen **festen Default, der Vater kann es je Arbeit ändern** | bleibt `idee`; als Nächstes ausformulieren (wie entsteht die Zusatzpflicht, Höhe des Malus, Bündel-Auflösung) |
+| B-39 | Geblättert wird **über Kinder**, der Zeitraum ist ein Filter | nachtlauffähig → neues Paket **NP-13** |
+| B-09 | Hausaufgabe landet **als Positionen mit Frist im aktiven Plan** | bleibt `ausformuliert`; offen: Auth-Wand für den Lehrer, „erledigt", Kind ohne aktiven Plan, Interessen, Teilung |
+
+Noch offen in G-7: B-249 (Notenschlüssel der Probeklausur) und B-250 (Stundenplan – nur Reihenfolge oder auch Pflicht?).
