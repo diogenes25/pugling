@@ -64,7 +64,7 @@ Wird je Sprint fortgeschrieben; die letzte Zeile ist der Zustand.
 - **Sprint 6 abgenommen** (NP-1: B-36, B-35 – der Sohn sieht und hört Teilziele, die Karte dreht sich): Vitest
   **402/402**, Playwright **81 passed**, Backend **879/879**, `frontend-reviewer` + Delta ohne Restfund, **fünf
   Funde mit Code-/Testwirkung** (Grenze erreicht, nicht überschritten). Rollengang im Browser. Nachschau Sprint 5:
-  drei Entgleitungen → **B-256**, behoben. Zwei neue `idee`-Stories (B-254, B-255). Beide Stories `wartet_auf`
+  drei Entgleitungen → **B-256**, behoben. Commit `39cf33b` + Nachtrag. Zwei neue `idee`-Stories (B-254, B-255). Beide Stories `wartet_auf`
   einen Menschen-Check (Gefühl der Animation).
 
 ## Runde 1 — Vorstellung & Feedback

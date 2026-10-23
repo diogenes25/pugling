@@ -80,7 +80,7 @@ Halbsatz, Backend-Suite (der Kommentar ändert kein Verhalten).
   `Create` vorübergehend auf die Hand-Zeile von `4954bd2^` zurückgesetzt, `dotnet test --filter
   PublishersTests` → **1 rot / 4 grün**, Meldung an `createdAt`; Datei danach byte-gleich zurück (`git diff`
   leer). Liegt außerhalb des Diffs von Sprint 6, darum **kein Zählerfund** (Freigabe 3). Belege für AK 1:
-  `grep -c "das zum Kind gewählte" AgentCommands.cs README.md` → je 1. Commit: `HASH_S1`.
+  `grep -c "das zum Kind gewählte" AgentCommands.cs README.md` → je 1. Commit: `39cf33b`.
 - **2026-10-23** — Nebenbefund der Messung, bewusst nicht angefasst: eine von Hand gebaute Antwort serialisiert
   `createdAt` mit `Z` (frisches `UtcNow`, `Kind=Utc`), eine Projektion aus SQLite ohne (`Kind=Unspecified`) – derselbe
   Zeitpunkt erscheint im Vertrag in zwei Schreibweisen. Ob das eine eigene Story wird, entscheidet der Nutzer.
