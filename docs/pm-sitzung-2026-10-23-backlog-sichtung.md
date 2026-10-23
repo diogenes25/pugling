@@ -207,4 +207,3 @@ nicht ausgeführt.
 | B-20 | Als **`assign`-Verb** im bestehenden Agenten neu schneiden, kein zweites Projekt | bleibt `ausformuliert`; drei Detailfragen stehen in der Story (doppelte Position, `--tag`, Positions-Vorgaben), danach schätzbar |
 
 Offen auf der Tagesordnung bleiben damit G-2 bis G-8 (ohne die erledigten Teile von G-8: B-20, B-23).
-
