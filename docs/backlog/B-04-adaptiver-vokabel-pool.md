@@ -6,7 +6,7 @@ prio: P4
 art: Wunsch
 groesse: M
 wo: backend
-migration: offen
+migration: ja
 vertragsbruch: nein
 quelle: docs/backlog-vokabellernen.md#runde-1--idee-3-adaptiver-vokabel-pool-je-position
 ---
@@ -65,3 +65,4 @@ additiver Metrik-Wert, eine Fortschrittsanzeige. Die separate Design-Etappe ist 
 - **2026-07-30** — geerntet aus dem Grill-Protokoll vom selben Tag, Stufe `geschaetzt` übernommen. Beim
   Ernten zusätzlich gefunden: die Abhängigkeit von `LearnGoal` kollidiert mit E13 des DB-Umbaus.
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): Kern gilt (`PositionPlayService.cs:67-91`), aber (1) `PoolSize` wird an vier weiteren Stellen gelesen (`PositionTestsController.cs:135`, `PositionPracticeController.cs:305`, `PositionProgressService.cs:147,185-186`) – nicht „beides in dieser einen Methode“. (2) Der Nebeneffekt zu B-02 ist falsch: B-02 hat den Hilfetext auf „dauerhaft begrenzen“ geändert (`fieldHelp.ts:37-38`), B-04 muss ihn samt `feldhilfe.spec.ts` wieder umschreiben. (3) AK 5 braucht eine neue Datenquelle (Metriken laufen über die kind-weite Mastery, `ObjectiveEvaluationService.cs:105-107`). Neue Überschneidungen: B-218 (Tagesdeckel muss die Mischwiederholung mitzählen), B-219 (ändert die Box-Rücksetzung, auf die AK „Durchgefallenes kehrt zurück“ baut). Eher M–L. **Nicht nachtlauffähig**, solange `migration: offen` – zusammen mit B-218/B-219 grillen. Teilungsvorschlag: (a) Pool + Tagesdeckel + Hilfetext, (b) Ausschluss „im Test geschafft“, (c) `KeyResult`-Metrik.
+- **2026-10-23** — **Zwei Entscheidungen des Nutzers** in der Grill-Runde G-5 der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)), sie schließen die zurückgestellte Frage zu `migration: offen`: (1) Der Tagesdeckel bekommt ein **eigenes Feld** an der Position (etwa `NewItemsPerDay`). `ItemCount` behält seine Bedeutung, der Hilfetext aus B-02 bleibt richtig, und deshalb ist `migration: ja`. Der in der Nachprüfung vermutete Umbau von Hilfetext und `feldhilfe.spec.ts` entfällt damit. (2) Die Mischwiederholung (B-218) bringt **nur fällige, bekannte Items** und zählt nicht auf den Tagesdeckel. Die Story ist damit nachtlauffähig (Paket NP-19, allein wegen der Migration); den Teilungsvorschlag (a/b/c) prüft der Lauf beim Schätzen.

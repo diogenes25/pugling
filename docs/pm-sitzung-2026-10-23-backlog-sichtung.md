@@ -132,6 +132,9 @@ Story-Dateien nicht ohnehin sagen: den Zusammenhang, die Reihenfolge und den Sto
 | **NP-15** Lesen scheitert nicht still und zeigt nichts Veraltetes | *Scheitert ein Laden, kann der Vater es erneut versuchen, ohne seine Eingaben zu verlieren, und nach einem Wechsel zeigt kein Bildschirm alte Daten im neuen Zustand.* | B-183, B-164 | M + M, frontend | B-183 mit Sonderfreigabe (wie NP-14), B-164 ist `Defekt` und autonom grillbar. B-164 zuerst: ein `stale`-Feld im Hook ändert, wie der Retry-Banner seinen Zustand liest. Teilen, wenn der Rückbau der Aufrufer zu breit wird. |
 | **NP-16** Interessen: das Kind sieht nur Freigegebenes | *Der Sohn sieht in seiner Interessen-Auswahl nur Stichwörter, die ein Creator freigegeben hat, nie den Freitext einer fremden Familie, und keine Liste schneidet still etwas ab.* | B-207, B-208, B-141, B-122 | M + XS + S + S, beides, **eine Migration** (B-207) | B-207/B-208 stehen auf `gegrillt`, B-122 auf `idee`, alle drei mit Sonderfreigabe; B-141 ist `Defekt`. B-207 trägt die einzige Migration des Sprints. |
 | **NP-17** Plan bauen ohne Überraschung | *Der Vater sieht schon in der Auswahl, welche Übung er zuweisen darf, stellt im Positions-Formular jede Einstellung ein, die der Server kennt, und bekommt jeden Fehler auf Deutsch und passend zur Lage.* | B-140, B-16, B-152, B-205 | S + S + S + S, beides | Alles additiv außer dem Code-Wechsel in B-205. B-16 braucht die Stufen im Manifest – zuerst prüfen, ob das Manifest sie schon trägt. Alle vier haben die Sonderfreigabe bzw. sind `Defekt`. |
+| **NP-18** Üben, das verzeiht und hilft | *Der Sohn kann freiwillig eine Mischrunde über alle fälligen Karten seines Plans spielen und dabei Münzen verdienen, ein einzelner Fehler wirft ihn (wo der Vater es erlaubt) nur eine Box zurück, und Hinweise helfen ihm, kosten aber nachvollziehbar Punkte.* | B-218, B-219, B-223 | je S–M, beides, **eine Migration** (B-219: Option an der Position) | Alle drei `idee` mit Sonderfreigabe; der Lauf formuliert aus und schätzt. B-223 setzt auf `HintsUsed` und den vorhandenen Tipp auf, die Lösungsfeld-Regel gilt. B-219 wirkt **nur** in der Position. |
+| **NP-19** Der Pool wächst mit | *Der Vater kann einstellen, wie viele neue Vokabeln je Tag dazukommen, statt dass die übrigen nie abgefragt werden.* | B-04 | M–L, backend, **Migration** | allein; nicht im selben Sprint wie NP-18. Die Mischrunde zählt nicht auf den Deckel. |
+| **NP-20** Der Sohn sieht, was Nichtstun kostet | *Der Sohn sieht auf einen Blick, was heute fällig ist und was es ihn kostet, wenn er es lässt.* | B-220 | M, beides | erst nach NP-18 (Mischrunde-Zeile); die Countdown-Zeile folgt, wenn B-248 gebaut ist. Neuer Endpunkt, `PenaltyCoins` additiv im Student-Vertrag. |
 
 ### Vorschlag für die Nachtfolge
 
@@ -150,6 +153,8 @@ Reihenfolge stellt **Produktwert vor Hygiene**, und jede Nacht mischt ein größ
 | 8 | NP-14, NP-15 | Frontend-Hausregeln; NP-14 ist klein, NP-15 der größere Umbau |
 | 9 | NP-16 | eine Migration; Interessen-Taxonomie aus G-3 |
 | 10 | NP-17 | ohne Migration; Vater-Plan-Bau aus G-4 |
+| 11 | NP-18 | eine Migration; Lernmechanik aus G-5 |
+| 12 | NP-19, NP-20 | NP-19 trägt die Migration, NP-20 hat keine |
 
 Der **Auftragstext** bleibt der aus [nachtlauf.md](nachtlauf.md). Damit ein Lauf ein Paket statt einer
 selbst gewählten Auswahl fährt, genügt ein Satz am Ende, zum Beispiel: *„Fahre die Pakete NP-1, NP-2, NP-3
@@ -266,3 +271,13 @@ dazu eine eigene Richtigstellungs-Zeile im Verlauf.
 | B-152 | Ein Kind trägt **genau eine** Schulart oder keine; der **Server validiert** | NP-17 |
 | B-205 | `exercise_in_use` wird **aufgespalten**, jeder Code bekommt eine deutsche Fassung | NP-17 (`Defekt`) |
 | B-16 | Stufen **aus dem Manifest**, „Standard" über einen **Leeren-Schalter** | NP-17 |
+
+### G-5 Leitner beim Kind – entschieden
+
+| Story | Entscheidung | Folge |
+| --- | --- | --- |
+| B-218 | Mischwiederholung **plan-weit**, **Angebot mit Münzen**, kein Malus | NP-18 |
+| B-219 | Verzeihende Abstufung **nur in der Position**; der Lernstand je Vokabel bleibt hart | NP-18 |
+| B-223 | Hinweise **kosten Punkte über `HintsUsed`**; der vorhandene Tipp wird die erste Stufe | NP-18 |
+| B-04 | Tagesdeckel als **eigenes Feld** (Migration); die Mischrunde zählt nicht darauf | `migration: ja`, NP-19 |
+| B-220 | Queue **zeigt, was Nichtstun kostet**, als **Server-Endpunkt** | NP-20, nach NP-18 |
