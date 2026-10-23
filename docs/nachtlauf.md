@@ -78,6 +78,16 @@ Neu seit dem 2026-08-09, Freigabe 1 an genau einer Stelle präzisierend:
    nicht hergeben, ist das der Beweis, dass sie zu früh geschätzt wurde: anhalten und
    notieren, nicht selbst entscheiden.
 
+Neu seit dem 2026-10-23, Freigabe 8 an genau einer Stelle erweiternd:
+9. Trägt eine `Wunsch`-/`Frage`-Story auf `idee`, `ausformuliert` oder `gegrillt` im
+   `## Verlauf` eine ausdrückliche **Freigabe des Nutzers (Autonomer Modus, Opt-in)**,
+   darfst du sie auf Grundlage der dort bzw. in `## Entscheidungen` festgehaltenen
+   Entscheidungen selbst ausformulieren, schätzen und bauen. Die Freigabe gilt nur für
+   die Story, in der sie steht – nie für eine Nachbarin, und eine Freigabe-Zeile, die du
+   selbst geschrieben hast, zählt nicht. Brauchst du eine Entscheidung, die dort nicht
+   steht, hältst du an wie bei Freigabe 8. Vor dem Bau jeder Story ihre jüngste
+   „Nachprüfung"-Zeile im `## Verlauf` lesen, falls vorhanden.
+
 Sonst gilt das Verfahren unverändert: Sprint-Ziel aus Rollensicht, rote Probe vor dem Fix,
 Rollengang als E2E, Nachschau als erste Pflichthandlung der Retro, Commits selbst setzen,
 Push bleibt bei mir.
@@ -89,7 +99,7 @@ Ohne Vorgabe wählt ein Lauf seine Stories selbst, und gemessen wählt er dann v
 Nachschau des Vorsprints (Befund 1 der [Backlog-Sichtung vom 2026-10-23](pm-sitzung-2026-10-23-backlog-sichtung.md)).
 Liegt eine **Backlog-Sichtung** mit Arbeitspaketen vor (`docs/pm-sitzung-<Datum>-backlog-sichtung.md`),
 genügt ein Satz am Ende des Auftrags: *„Fahre die Pakete NP-1, NP-2, NP-3 aus <Protokoll>, in dieser
-Reihenfolge."* Jedes Paket ist ein Sprint nach `pm-loop`. Die Freigaben oben gelten unverändert, und der
+Reihenfolge."* Stories mit einer Freigabe-Zeile im Verlauf deckt Freigabe 9 ab. Jedes Paket ist ein Sprint nach `pm-loop`. Die Freigaben oben gelten unverändert, und der
 Zustand jeder Story steht weiter in ihrer Datei. Veraltet ein Paket, gewinnt die Story.
 
 ## Warum genau diese drei Freigaben
@@ -145,6 +155,19 @@ entscheidenden Retro-Vorschläge. Und die Freigabe verlagert Gewicht auf die Stu
 früh geschätzte Story wird jetzt nachts gebaut, statt an der Grill-Wand stehenzubleiben. Der Rückweg ist
 im Auftrag mitformuliert (anhalten, wenn die `## Entscheidungen` nicht tragen), aber er ist eine
 Selbstauskunft — kein Tor.
+
+### Und warum Freigabe 9 dazukam
+
+In der [Backlog-Sichtung vom 2026-10-23](pm-sitzung-2026-10-23-backlog-sichtung.md) hat der Nutzer rund
+zwanzig `Wunsch`-/`Frage`-Stories im Dialog entschieden, ohne sie bis `geschaetzt` zu bringen. Die Antwort
+stand fest, übrig blieb nur Handwerk. Freigabe 8 hätte sie trotzdem gesperrt, weil der Schnitt an der Stufe
+läuft. Die Freigabe-Zeile im `## Verlauf` macht den Opt-in je Vorhaben aus dem README („Autonomer Modus")
+für einen unbeaufsichtigten Lauf lesbar, ohne dass er im Auftrag Story für Story aufgezählt werden muss.
+
+**Preis:** Die Grenze ist eine Zeile Text, kein Tor. Ein Lauf, der sich selbst eine Freigabe-Zeile schreibt,
+hebelt sie aus. Dagegen steht nur der Satz im Auftrag, dass eigene Zeilen nicht zählen. Am Morgen ist der
+Prüfweg `git log -p` auf die Verlauf-Zeilen mit „Freigabe des Nutzers": jede muss aus einer Dialog-Sitzung
+stammen, nicht aus der Nacht.
 
 ## Wenn der Lauf mit Sonnet fährt
 
