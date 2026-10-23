@@ -29,3 +29,4 @@ Auswendiglernen der Reihenfolge die Prognose entwertet.
 ## Verlauf
 
 - **2026-10-23** — angelegt (Quelle: Knowunity-Vergleich, Etappe 2 des Übernahmeplans).
+- **2026-10-23** — **Entscheidung des Nutzers** in der Grill-Runde der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)) (G-7): Der Notenschlüssel hat einen **festen Default** (ein üblicher Prozent-Schlüssel), den der Vater **je Klassenarbeit ändern** kann. Offen beim Ausformulieren: ob die Probe Münzen bringt und wie oft sie wiederholt werden darf, ohne dass das Auswendiglernen der Reihenfolge die Prognose entwertet. Hängt an B-248. **Freigabe des Nutzers (Autonomer Modus, Opt-in, erteilt am 2026-10-23 für alle an diesem Tag im Dialog entschiedenen Stories):** ein Nachtlauf darf diese Story auf Grundlage der Entscheidungen selbst ausformulieren, schätzen und bauen (Paket NP-22); trifft er auf eine Produktfrage, die die Entscheidungen nicht hergeben, hält er an.

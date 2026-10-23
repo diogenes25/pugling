@@ -28,3 +28,4 @@ zulässiges Ergebnis.
 ## Verlauf
 
 - **2026-10-23** — angelegt (Quelle: Knowunity-Vergleich, Etappe 6 des Übernahmeplans).
+- **2026-10-23** — **Entscheidung des Nutzers** in der Grill-Runde der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)) (G-6): das Kind vergleicht sich **nur mit der eigenen Vorwoche** („diese Woche 340 Münzen, letzte Woche 290“). Es gibt keinen Vergleich mit Geschwistern und keine Ränge. **Freigabe des Nutzers (Autonomer Modus, Opt-in, erteilt am 2026-10-23 für alle an diesem Tag im Dialog entschiedenen Stories):** ein Nachtlauf darf diese Story auf Grundlage der Entscheidungen selbst ausformulieren, schätzen und bauen (Paket NP-21); trifft er auf eine Produktfrage, die die Entscheidungen nicht hergeben, hält er an.

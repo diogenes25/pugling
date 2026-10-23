@@ -135,6 +135,8 @@ Story-Dateien nicht ohnehin sagen: den Zusammenhang, die Reihenfolge und den Sto
 | **NP-18** Üben, das verzeiht und hilft | *Der Sohn kann freiwillig eine Mischrunde über alle fälligen Karten seines Plans spielen und dabei Münzen verdienen, ein einzelner Fehler wirft ihn (wo der Vater es erlaubt) nur eine Box zurück, und Hinweise helfen ihm, kosten aber nachvollziehbar Punkte.* | B-218, B-219, B-223 | je S–M, beides, **eine Migration** (B-219: Option an der Position) | Alle drei `idee` mit Sonderfreigabe; der Lauf formuliert aus und schätzt. B-223 setzt auf `HintsUsed` und den vorhandenen Tipp auf, die Lösungsfeld-Regel gilt. B-219 wirkt **nur** in der Position. |
 | **NP-19** Der Pool wächst mit | *Der Vater kann einstellen, wie viele neue Vokabeln je Tag dazukommen, statt dass die übrigen nie abgefragt werden.* | B-04 | M–L, backend, **Migration** | allein; nicht im selben Sprint wie NP-18. Die Mischrunde zählt nicht auf den Deckel. |
 | **NP-20** Der Sohn sieht, was Nichtstun kostet | *Der Sohn sieht auf einen Blick, was heute fällig ist und was es ihn kostet, wenn er es lässt.* | B-220 | M, beides | erst nach NP-18 (Mischrunde-Zeile); die Countdown-Zeile folgt, wenn B-248 gebaut ist. Neuer Endpunkt, `PenaltyCoins` additiv im Student-Vertrag. |
+| **NP-21** Fortschritt, an dem man wachsen kann | *Der Sohn sieht, welche Stufe der Abzeichen-Leiter er als Nächstes erreicht, und wie diese Woche gegen seine eigene Vorwoche steht.* | B-221, B-253 | S–M + S, beides | Beide `idee` mit Sonderfreigabe. Die Leiter gilt für jedes Kind und jede bestehende DB, also kein Seed nur für leere DBs. Der Vergleich läuft nur gegen die eigene Vorwoche. |
+| **NP-22** Die Klassenarbeit treibt die Vorbereitung | *Der Sohn sieht den Countdown zur nächsten Klassenarbeit, muss im Fenster davor über ihr Bündel üben, sonst kostet es Münzen, und kann eine Probeklausur mit Notenprognose schreiben, die der Vater neben der echten Note sieht.* | B-248, B-249 | M + M, beides, **eine Migration** (Fenster und Notenschlüssel an der Klassenarbeit, in einem Faltvorgang) | B-248 zuerst, B-249 hängt an seiner Bündel-Auflösung. Die Bündel-Auflösung teilt B-248 mit B-39 (NP-13), also wiederverwenden statt doppelt bauen. Wenn beide zu groß werden, auf zwei Sprints teilen. |
 
 ### Vorschlag für die Nachtfolge
 
@@ -155,6 +157,7 @@ Reihenfolge stellt **Produktwert vor Hygiene**, und jede Nacht mischt ein größ
 | 10 | NP-17 | ohne Migration; Vater-Plan-Bau aus G-4 |
 | 11 | NP-18 | eine Migration; Lernmechanik aus G-5 |
 | 12 | NP-19, NP-20 | NP-19 trägt die Migration, NP-20 hat keine |
+| 13 | NP-22, NP-21 | NP-22 ist das wertvollste Produkt-Paket (Kernidee), NP-21 der kleine Ausgleich |
 
 Der **Auftragstext** bleibt der aus [nachtlauf.md](nachtlauf.md). Damit ein Lauf ein Paket statt einer
 selbst gewählten Auswahl fährt, genügt ein Satz am Ende, zum Beispiel: *„Fahre die Pakete NP-1, NP-2, NP-3
@@ -281,3 +284,20 @@ dazu eine eigene Richtigstellungs-Zeile im Verlauf.
 | B-223 | Hinweise **kosten Punkte über `HintsUsed`**; der vorhandene Tipp wird die erste Stufe | NP-18 |
 | B-04 | Tagesdeckel als **eigenes Feld** (Migration); die Mischrunde zählt nicht darauf | `migration: ja`, NP-19 |
 | B-220 | Queue **zeigt, was Nichtstun kostet**, als **Server-Endpunkt** | NP-20, nach NP-18 |
+
+### G-6 Druck und Motivation – entschieden
+
+| Story | Entscheidung | Folge |
+| --- | --- | --- |
+| B-222 | **Tages-Streak bleibt** | `verworfen` |
+| B-253 | Vergleich **nur gegen die eigene Vorwoche** | NP-21 |
+| B-221 | **Feste Leiter** für jedes Kind, neben den Abzeichen des Vaters | NP-21 |
+
+### G-7 Rest
+
+| Story | Entscheidung | Folge |
+| --- | --- | --- |
+| B-249 | Notenschlüssel: **fester Default, je Arbeit änderbar** | NP-22, nach B-248 |
+| B-248 | (Entscheidungen siehe oben) | Sonderfreigabe → NP-22 |
+
+Offen bleiben aus G-7 nur B-250 (Stundenplan) und B-09 (Restfragen), aus G-8 B-251, B-230 und B-181 (Teil b).

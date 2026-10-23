@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/idee, bereich/gamification, bereich/punkte, rolle/student, rolle/supervisor]
+tags: [typ/story, status/verworfen, bereich/gamification, bereich/punkte, rolle/student, rolle/supervisor]
 aliases: [Wochen-Streak, Streak-Taktung]
-status: idee
+status: verworfen
 prio: P3
 art: Frage
 groesse: ""
@@ -9,8 +9,8 @@ wo: ""
 migration: ""
 vertragsbruch: ""
 quelle: docs/khan-academy-vergleich-plan.md#wo-khan-weiter-ist
-unverifiziert: true
-grund: ""
+unverifiziert: false
+grund: "bleibt wie es ist – Entscheidung des Nutzers am 2026-10-23 (G-6): der Tages-Streak bleibt. Bei Pugling kommt der Druck aus der Pflicht (PenaltyCoins), der Streak ist reines Zuckerbrot (DailyBoxOptions.cs:25, PositionProgressService.cs:405). Khans Argument gegen Tagesdruck trifft darum nicht"
 ersetzt_durch: []
 ---
 
@@ -28,3 +28,4 @@ ist" ist ein zulässiges Ergebnis.
 
 - **2026-10-17** — angelegt (Quelle: Khan-Academy-Vergleich, Etappe 5 des Übernahmeplans).
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): der Streak ist reiner Belohnungs-Multiplikator (`DailyBoxOptions.cs:25`, `PositionProgressService.cs:405`) – Zuckerbrot, nicht Peitsche (die ist `PenaltyCoins`). Khans Argument gegen Tagesdruck trifft damit nur halb; „bleibt“ mit dieser Begründung ist ein naheliegender Ausgang.
+- **2026-10-23** — **verworfen** in der Grill-Runde der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)) (G-6): der Tages-Streak bleibt der Default.

@@ -500,7 +500,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (62)
+### Offen (61)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -529,7 +529,6 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-245](B-245-token-mit-fid-auf-geloeschten-adult.md) | Ein Token, das vor `DELETE adults/{id}` ausgestellt wurde, trägt ein `fid` auf eine gelöschte Zeile – jeder `OwnerAdultId`-Schreiber liefe in die FK | Defekt | `idee` | P3 | — | backend | — |
 | [B-17](B-17-birkenbihl-sprachcodes.md) | Sprachcode-Normalisierung bei der Vokabel-Dekodierung | Frage | `geschaetzt` | P3 | XS | frontend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
-| [B-222](B-222-wochen-streak-als-default.md) | Prüfauftrag: ist der Tages-Streak der richtige Default? | Frage | `idee` | P3 | — | — | — |
 | [B-231](B-231-fokus-ohne-fehlerkasten.md) | Wohin gehört der Fokus, wenn ein Knopf ohne Fehlerkasten gesperrt wird? | Frage | `idee` | P3 | — | frontend | — |
 | [B-232](B-232-bestaetigung-ausserhalb-des-sichtfelds.md) | Soll eine Bestätigung zum Meldungsplatz scrollen, wenn er weit vom Knopf entfernt liegt? | Frage | `idee` | P3 | — | frontend | — |
 | [B-233](B-233-zwei-sperrmuster-auf-der-lehrwerke-seite.md) | Eine Seite, zwei Sperrmuster: Soll „Pflichtfeld leer" überall gleich aussehen? | Frage | `idee` | P3 | — | frontend | — |
@@ -868,7 +867,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-212](B-212-fuenfter-meldungsplatz-in-lehrwerke.md) | `abgenommen` | Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung" |
 
 <details>
-<summary>Verworfen (21)</summary>
+<summary>Verworfen (22)</summary>
 
 | Id | Story | Grund |
 | --- | --- | --- |
@@ -880,6 +879,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-14](B-14-learngoal-belohnung.md) | Idempotente Belohnung, wenn ein Lernziel erreicht ist — **gegenstandslos** | erfüllt durch KeyResult/ObjectiveRewardService (DB-Umbau E13) |
 | [B-186](B-186-assistent-und-planseite-setzen-zielpunkte-verschieden.md) | Assistent und Plan-Seite setzen die Zielpunkte nach verschiedenen Regeln | bleibt wie es ist – Entscheidung des Nutzers am 2026-10-23 (G-1): im Assistenten gewinnt die gewählte Intensität, weil sie eine ausdrückliche, angezeigte und in der Zusammenfassung bestätigte Aussage des Vaters ist; die Creator-Empfehlung gilt nur auf der Plan-Seite |
 | [B-213](B-213-bilder-spec-flackert-im-vollen-lauf.md) | `bilder.spec.ts` fällt im vollen Lauf gelegentlich, allein nie | Dublette zu B-153, das denselben Fall seit 2026-08-11 fuehrt und die Ursache belegt hat → [B-153] |
+| [B-222](B-222-wochen-streak-als-default.md) | Prüfauftrag: ist der Tages-Streak der richtige Default? | bleibt wie es ist – Entscheidung des Nutzers am 2026-10-23 (G-6): der Tages-Streak bleibt. Bei Pugling kommt der Druck aus der Pflicht (PenaltyCoins), der Streak ist reines Zuckerbrot (DailyBoxOptions.cs:25, PositionProgressService.cs:405). Khans Argument gegen Tagesdruck trifft darum nicht |
 | [B-226](B-226-zwei-muenzstaende-im-shop-bildschirm.md) | Der Shop-Bildschirm zeigt zwei verschiedene Münzstände | gegenstandslos – beide Chips lesen dieselbe Context-Variable `coins` aus `api.wallet()` (SohnApp.tsx:52,64,96; SohnShop.tsx:29,152); zwei verschiedene Werte im selben Render sind unmöglich, abgelesen wurde vermutlich ein anderes Element |
 | [B-23](B-23-uebungstyp-plugins-dll.md) | Übungstyp-Plugins als externe DLLs (Stufe 2) | Entscheidung des Nutzers am 2026-10-23: eine Familien-App hat keine externen Plugin-Autoren; Stufe 1 (IExerciseType + Registry) genügt. Die Entscheidungen 2 und 3 schlossen sich zudem aus. Kommt der Bedarf, ist das eine neue Story |
 | [B-24](B-24-frontend-unknown-field.md) | Frontend gegen `unknown_field` durchspielen | "Alle 34 untypisierten Schreib-Rümpfe in api.ts sind Feld für Feld gegen die Contracts-DTOs |
