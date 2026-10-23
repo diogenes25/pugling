@@ -44,6 +44,35 @@ internal static class TestApi
         return c;
     }
 
+    /// <summary>
+    /// Marks an existing adult as platform admin - deliberately only via the DB, as in real operation (there is
+    /// no API path). <b>Flag before login:</b> the admin role claim is minted at login from <c>Adult.IsAdmin</c>,
+    /// so a client whose token was issued earlier keeps seeing 403 (B-179). Prefer <see cref="AdminAdultAsync"/>
+    /// unless the test needs a <i>particular</i> adult to become admin.
+    /// </summary>
+    public static void MakeAdmin(WebApplicationFactory<Program> f, int adultId)
+    {
+        using var scope = f.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        db.Adults.First(a => a.Id == adultId).IsAdmin = true;
+        db.SaveChanges();
+    }
+
+    /// <summary>
+    /// A <b>fresh</b> adult, flagged as admin, then logged in - in that order (see <see cref="MakeAdmin"/>).
+    /// Fresh on purpose: flagging the seeded adult would leave the flag behind in the class-shared DB and turn
+    /// every later "foreign creator" check of the same class green from the wrong end (measured while
+    /// building B-178).
+    /// </summary>
+    public static async Task<HttpClient> AdminAdultAsync(WebApplicationFactory<Program> f, string pin)
+    {
+        var res = await f.CreateClient().PostAsJsonAsync("/api/v1/supervisor/adults",
+            new { name = UniqueName("Admin"), pin });
+        var id = await IdAsync(res);
+        MakeAdmin(f, id);
+        return await AdultAsync(f, id, pin);
+    }
+
     /// <summary>Reads the <c>id</c> from a successful JSON response.</summary>
     public static Task<int> IdAsync(HttpResponseMessage res) => IdWithKeyAsync(res, "id");
 

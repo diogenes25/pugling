@@ -11,8 +11,9 @@ namespace Pugling.Api.Tests;
 /// Lifecycle of an adult: registering, rejecting a duplicate address, deleting oneself.
 /// <para>
 /// Added while closing the coverage gap (docs/codequalitaet-gates-plan.md, C3). <c>Delete</c> was
-/// listed first there, because the <b>cascade</b> hangs off it: deleting the adult takes their children,
-/// subjects and exercises with it. A delete path that no test exercises is the most expensive blind spot - it
+/// listed first there, because the <b>cascade</b> hangs off it: deleting the adult takes the children they
+/// supervised alone and the login account with it, while catalog rows they own (subjects, series, exercises)
+/// only lose their owner (<c>SetNull</c>). A delete path that no test exercises is the most expensive blind spot - it
 /// only surfaces once the data is already gone.
 /// </para>
 /// </summary>

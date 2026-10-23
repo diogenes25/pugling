@@ -140,7 +140,7 @@ public class VerlagLoeschenSperreTests(PuglingWebAppFactory factory) : IClassFix
     public async Task Admin_LoeschtAuchMitFremderReihe()
     {
         var stranger = await FremderCreatorAsync("3142");
-        var admin = await AdminAsync("3143");
+        var admin = await TestApi.AdminAdultAsync(factory, "3143");
 
         var publisherId = await PublisherAsync(stranger);
         await stranger.PostAsJsonAsync("/api/v1/creator/textbook-series",
@@ -154,24 +154,5 @@ public class VerlagLoeschenSperreTests(PuglingWebAppFactory factory) : IClassFix
         // valve was not forgotten, not that it works in isolation.
         var res = await admin.DeleteAsync($"/api/v1/creator/publishers/{publisherId}");
         Assert.Equal(HttpStatusCode.NoContent, res.StatusCode);
-    }
-
-    private async Task<HttpClient> AdminAsync(string pin)
-    {
-        var res = await factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/adults",
-            new { name = TestApi.UniqueName("Admin"), pin });
-        res.EnsureSuccessStatusCode();
-        var id = (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
-
-        using (var scope = factory.Services.CreateScope())
-        {
-            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-            var adult = await db.Adults.FirstAsync(a => a.Id == id);
-            adult.IsAdmin = true;
-            await db.SaveChangesAsync();
-        }
-
-        // The token has to be issued AFTER the flag, otherwise it carries no admin role claim.
-        return await TestApi.AdultAsync(factory, id, pin);
     }
 }

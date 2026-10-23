@@ -4,11 +4,16 @@ aliases: [Leere Story-Datei unsichtbar, awk FNR==1 öffnet keinen Datensatz]
 status: abgenommen
 prio: P3
 art: Defekt
+groesse: XS
+wo: doku
+migration: nein
+vertragsbruch: nein
 quelle: Code-Review 2026-08-07 des Standes gegen `origin/main` (Fund 9)
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-10-23 (Sprint 3 desselben Laufs, frischer Agent): DEFEKT in der Abnahme - die Story stand im committeten Index selbst unter 'Stufe behauptet, Datei belegt nicht' (README:842, groesse/wo/migration/vertragsbruch fehlten im Frontmatter; Felder nachgetragen, siehe Verlauf); dabei gefunden: backlog-index.sh:192-193 setzt groesse/wo auf '-' BEVOR belege (sh:212) prueft, zwei von vier Luecken werden nie gemeldet, und bei NUR leeren Dateien verschluckt sh:265 die Warnzeile -> B-240; Datei ohne Frontmatter wie Entscheidung 3 bestaetigt"
 ---
 
 # B-131 · Eine leere Story-Datei verschwindet aus dem Index — auch aus der Mängelliste
@@ -104,6 +109,13 @@ Gegrillt im Nachtlauf 2026-10-23 (Freigabe 1, `art: Defekt`).
 
 ## Verlauf
 
+- **2026-10-23** — **Nachschau** (Sprint 3 desselben Laufs, frischer Agent, gegengelesen): **Defekt in der
+  Abnahme** – diese Story stand im committeten Index (`95b0624`, README:842) selbst unter „Stufe behauptet,
+  Datei belegt nicht": `groesse`, `wo`, `migration`, `vertragsbruch` fehlten im Frontmatter (die Schätzung
+  nannte „XS / doku" nur in Prosa; der Sprint-2-Nachzug per `sed` traf eine Zeile, die es nicht gab). Gemeldet
+  waren nur zwei der vier, weil `backlog-index.sh:192-193` die Platzhalter **vor** `belege` setzt – das ist
+  **B-240** (`entgangen_bei: B-131`). Die vier Felder sind jetzt nachgetragen; die Stufe bleibt `abgenommen`,
+  weil Bau und Belege stimmen – falsch war die Datei, nicht der Fix.
 - **2026-10-23** — **abgenommen** (Nachtlauf, Sprint 2). Reviewer wie B-190: die ⚠-Zeile hat drei Spalten wie
   der Kopf, Zählungen unverändert, keine `.tmp`-Reste; Datei ohne Frontmatter wie in Entscheidung 3.
   **Rollengang:** der PM selbst – Harness P3 mit leerer Datei im Wegwerf-Root; im echten Bereich gibt es

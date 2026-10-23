@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-10-23 (Sprint 3 desselben Laufs, frischer Agent, gegengelesen): Harness im eigenen Wegwerf-Root (normal, zweiter Lauf byte-gleich, relativer Aufruf aus docs/backlog, awk-Syntaxfehler -> Exit 1 und README unveraendert, kein .tmp); pipefail/!-Wechselwirkung an sh:174 geprueft (kein Pipe); Markdown der neuen Warnzeile gegen MD055/MD056/MD060 und markdownlint ueber das echte README; kein Defekt; Nits: fester Temp-Dateiname bei Parallellauf, Verzeichnis als Story plattformabhaengig, Link mit Leerzeichen"
 ---
 
 # B-190 · Aus einem Unterverzeichnis aufgerufen, schreibt der Index-Generator einen leeren Index

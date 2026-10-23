@@ -35,7 +35,14 @@ Wird je Sprint fortgeschrieben; die letzte Zeile ist der Zustand.
   Blocker; **drei Review-Funde mit Code-/Testwirkung** (abgeschnittener Sweep, hohle 400-Probe, literaler
   Zeilenumbruch). Nachschau Sprint 1: **kein Defekt**, eine Test-Lücke geschlossen (Mutante 1 rot von 10), zwei
   Berichtigungen. Drei neue Stories aus Funden: B-237, B-238, B-239. Retro schlägt ein **Tor** vor (400 ohne
-  `code`), nicht gelandet. Commit `95b0624` + Nachtrag.
+  `code`), nicht gelandet. Commit `95b0624` + Nachtrag `1372d0e`.
+- **Sprint 3 abgenommen** (B-158, B-179 – eine Stelle folgt wieder dem Muster der Nachbarn): rote Probe
+  PATCH-Leername 200 → 400, Absichtserklärung unter Mutante rot, Backend **879/879**, `pugling-reviewer`
+  ohne Blocker, **drei Funde mit Codewirkung** (verwaister Doc-Block, fehlender 400 in Swagger, `Create` als
+  zweite Projektion). Nachschau Sprint 2: **zwei Defekte** (B-240: der Index meldet `groesse`/`wo` nie und
+  B-131 war mit ⚠ abgenommen; B-241: falscher Cascade-Kommentar – korrigiert – und sechs Doku-Stellen).
+  **Der Lauf endet hier** (Limit 2). Retro schlägt ein Tor für den Wächter selbst vor, nicht gelandet.
+  Commit: siehe „Änderungsstand".
 
 ## Runde 1 — Vorstellung & Feedback
 
@@ -402,3 +409,185 @@ eine Frage an den Brief, nicht an ein Tor; der Nachschau-Brief dieses Laufs hat 
 Sprint-Brief nicht. Das ist eine Zeile im Brief des nächsten Sprints, kein Mechanismus.
 
 **Warum der Lauf weitergeht:** kein Tor gelandet (nur vorgeschlagen), Zähler 3 von 5, Nachschau ohne Defekt.
+
+## Sprint 3 — Ziel & Umfang
+
+**Sprint-Ziel, aus der Entwickler-Sicht (und der des Creators am Katalog):**
+
+> Der **Creator** bekommt auf `PATCH …/subjects/{id}` dieselbe Antwort wie auf `GET` und kann ein Fach nicht
+> mehr auf einen leeren Namen umbenennen; der **Entwickler** findet den Admin-Testhelfer an genau einer
+> Stelle, mit seinem Merksatz, statt in drei Dateien mit je einer Kopie.
+
+Dieselbe Familie wie die zwei Sprints davor, in der Kleinform: **eine Stelle weicht vom Muster ab, das die
+Nachbarn vorgeben** – im Controller (`SubjectsController` gegen `TextbookSeriesController`) und in den Tests
+(drei Fassungen eines Helfers).
+
+**Umfang** (beide `art: Aufräumen`, autonom gegrillt und geschätzt, Freigabe 1):
+
+| Story | Richtung |
+| --- | --- |
+| [B-158](backlog/B-158-subjectscontroller-drei-kleine-reste.md) | `Update` über `Project`, Leer-Guard, Kommentar an den Code angeglichen |
+| [B-179](backlog/B-179-drei-fassungen-des-admin-testhelfers.md) | `TestApi.MakeAdmin` + `TestApi.AdminAdultAsync`, drei Fassungen weg |
+
+**Draußen, mit Namen:** B-156 (`isMine` → `isOwn`: `vertragsbruch: ja` – ein Feldname im Vertrag ist
+sichtbares Verhalten für jeden Client; die Story selbst sagt „Umbenennen oder stehen lassen?" – das
+entscheidet der Nutzer, nicht der Lauf), B-230 (Schema-Entscheidung „eine Quelle für den PIN-Hash", in der
+Story ausdrücklich „noch nicht entschieden"), B-138 (70 Stellen mit Einzelurteil über Betonung plus ein neuer
+Wächter – nachts zu groß), B-134 (wie oben). Die zwei Aufräumen-Stories hier haben keine offene
+Produktentscheidung; B-158s einzige Abweichung von der eigenen Empfehlung (Punkt 3) ist technisch begründet
+und steht in Entscheidung 4.
+
+**Refinement, getrennt benannt:** B-179 brauchte User Story und AK (fehlten), B-158 drei Entscheidungen am
+Code (`TokenService.cs:43-44` nachgelesen, `TextbookSeriesController.cs:211/249` als Muster) – wieder die
+größere Hälfte.
+
+### Entwickler-Brief
+
+- **B-158:** `Update` → `await Project(db.Subjects.AsNoTracking().Where(…), fid).FirstAsync(ct)`; Leer-Guard
+  mit demselben Code/Wortlaut wie die Reihe; `Create`-Kommentar nennt, warum kein `fid`-Guard dasteht. Zwei
+  Tests in `FachEigentumTests` – die rote Probe **vor** dem Umbau messen, die Absichtserklärung unter einer
+  Mutante der alten Hand-Antwort.
+- **B-179:** Helfer in `TestApi`, Merksatz einmal; drei Fassungen entfernen, fünf Aufrufe umstellen; keine
+  rote Probe (Aufräumen), Suite ist der Beleg.
+- **Reihenfolge:** Tests → Proben → Umbau → `dotnet build`/`test` → `dotnet format --verify-no-changes` →
+  `pugling-reviewer` → Commit → Nachschau Sprint 2 (läuft parallel als frischer Agent) → Retro (Vorschlag).
+- **Brief-Zeile aus der Retro von Sprint 2:** der Reviewer soll auch fragen, ob jede `## Entscheidung` von
+  einem Test **gehalten** wird – nicht nur, ob sie richtig ist.
+
+## Iteration 3 — umgesetzt
+
+**Backend (B-158, `SubjectsController.cs`):** `Update` antwortet über `Project` (eine Projektion, keine
+`CountAsync`-Runde); Leer-Guard `validation_error` „Name must not be empty." wie bei der Reihe; der
+`Create`-Kommentar nennt, warum kein `fid`-Guard dasteht (Rolle impliziert Profil, `TokenService.cs:43-44`).
+**Tests (B-179):** `TestApi.MakeAdmin` + `TestApi.AdminAdultAsync`, drei private Fassungen entfernt, fünf
+Aufrufe umgestellt, zwei `using`s weg. **Neue Fälle:** `FachEigentumTests.PatchMitLeeremNamen_WirdAbgelehnt`,
+`…PatchAntwort_IstDieselbeProjektionWieGet`.
+
+**Rote Proben (erwartet/gemessen), auf dem alten Code:**
+
+| Probe | Erwartet | Gemessen |
+| --- | --- | --- |
+| `PatchMitLeeremNamen_WirdAbgelehnt` | 400 `validation_error` | **200** (1 rot von 2) |
+| `PatchAntwort_IstDieselbeProjektionWieGet` | – | grün (Absichtserklärung); unter der Mutante „Hand-Antwort mit `ownerAdultId = null`" **1 rot von 1**, danach `git checkout` |
+| B-179 | – | keine (Aufräumen; Suite vorher 877/877, nachher 879/879) |
+
+**Verifikation:** `dotnet build Pugling.sln` 0 Warnungen · `dotnet test Pugling.sln -c Release` **879/879**
+(53 s) · `dotnet format Pugling.sln --verify-no-changes` meldet drei WHITESPACE-Zeilen in
+`ObjectiveService.cs:57-59` – **außerhalb des Diffs und identisch mit HEAD** (Blob-Hash verglichen,
+`26c61c0d`; Stand seit `7884456`), also das bekannte Plattform-Artefakt (Memory „Lokal Windows, CI Linux"),
+nicht angefasst.
+
+### Review-Funde (Zähler: 3 von 5)
+
+`pugling-reviewer`, mit der Brief-Zeile aus der Retro von Sprint 2 („wird jede Entscheidung von einem Test
+gehalten?"): keine Blocker, 879/879 selbst nachgefahren.
+
+| # | Quelle | Fund | Behebung |
+| --- | --- | --- | --- |
+| 1 | Reviewer | Verwaister XML-Doc-Block in `FachEigentumTests.cs:325-334` – der Rumpf von `AdminCreatorAsync` war entfernt, seine `/// <summary>` stand noch über dem nächsten Test; kein Tor meldet das (Roslyn hängt beides als Trivia an) | Block gelöscht; der Merksatz lebt in `TestApi.MakeAdmin`/`AdminAdultAsync` |
+| 2 | Reviewer | `Update` liefert neu 400, deklariert es nicht – Swagger kennt den `validation_error`-Fall nicht (Geschwister: `TextbookSeriesController.cs:194`) | `[ProducesResponseType(400)]` |
+| 3 | Reviewer | `Create` war nach dem Umbau die **verbliebene** zweite Hand-Antwort (eigene Kopie des Eigentums-Prädikats, `0` als Count) – Kommentar „one projection" und Test-Summary „no second projection left" waren zu stark | `Create` liest wie `TextbookSeriesController.cs:184-185` über `Project` zurück; Kommentar und Summary berichtigt (B-158, Entscheidung 6) |
+
+Ohne Zähler (Kommentar/Story): der Zeiger der Entscheidung 4 zeigte auf `TokenService.cs:43`, das `fid` nur
+durchreicht – die Invariante „Creator-Profil ⇒ `AdultId`" hält `AccountService.cs:46-47` (Entscheidung 8);
+Inventar der `Update`-Actions ohne Leer-Guard (`ChildrenController.cs:105`, `AdultsController.cs:87`) in
+Entscheidung 9 festgehalten. Prüffrage (2) „`Project(…).FirstAsync` nach `SaveChangesAsync`, Stale-Risiko?"
+– verneint, mit Begründung (impliziter Commit, frischer SELECT, Record-Projektion nie getrackt).
+
+## Runde 3 — Re-Review / Abnahme
+
+- **Creator – signed off (über HTTP):** „`PATCH …/subjects/{id}` mit einem Namen aus Leerzeichen bekommt
+  400 `validation_error`, und das Fach heißt danach noch wie vorher; die PATCH-Antwort ist Feld für Feld die
+  GET-Antwort." (`FachEigentumTests`, zwei Fälle, gegen die laufende Test-API.) Kein Browser nötig – die
+  Fläche ist die API; der Katalog-Editor (`CatalogAdmin.tsx`) sendet nie einen leeren Namen (OK-Knopf nur bei
+  echter Änderung), seine Specs bleiben Regressionszeugen.
+- **Entwickler – signed off:** ein Admin-Helfer, ein Merksatz; fünf Aufrufe, drei Dateien; Suite grün.
+- **Vater, Sohn – Regressionszeugen:** kein Pfad berührt; Backend-Suite nach den Review-Korrekturen
+  **879/879** (51 s), `docs/openapi/v1.json` +10 Zeilen (der deklarierte 400), kein O-Ton erfunden.
+
+## Retrospektive Sprint 3
+
+**Nachschau:** B-190, B-131, B-166 (Sprint 2 dieses Laufs, Commit `95b0624`) – frischer allgemeiner Agent
+mit eigenem Harness, von mir gegengelesen und am Code nachgeprüft (SetNull-Konfiguration `PuglingDbContext.cs:245/471`,
+Reihenfolge `backlog-index.sh:192-193` vor `:212`, B-131-Frontmatter, die sechs Doku-Zeilen). **Zwei Defekte:**
+
+1. **B-131 wurde mit vier fehlenden Pflichtfeldern abgenommen** und stand im committeten Index selbst in der
+   ⚠-Tabelle – mit zwei gemeldeten Feldern, weil `backlog-index.sh` `groesse`/`wo` auf `—` setzt, **bevor**
+   `belege` prüft (vorbestehend seit `41f21eb`); dazu verschluckt `:265` die ⚠-Tabelle, wenn nur leere
+   Dateien da sind → **B-240** (`ausformuliert`, `entgangen_bei: B-131`). Das Frontmatter ist in diesem Sprint
+   nachgetragen.
+2. **B-166 hat einen Kommentar falsch gemacht und sechs Doku-Stellen übersehen:** `AdultLifecycleTests.cs:14-15`
+   behauptete nach dem Wortwechsel einen Katalog-Cascade beim Löschen eines Adults – wahr ist `SetNull`
+   (in diesem Sprint korrigiert, ein Satz von mir vom selben Tag); `tutorial-supervisor.md:340-341`,
+   `tutorial-student.md:31/320`, `tutorial.md:20`, `vater-informationsarchitektur-plan.md:121-125`,
+   `uebergabe-vokabeln.md:59` nennen die Ebene weiter → **B-241** (`ausformuliert`, `entgangen_bei: B-166`).
+   ObjectiveTests-Reparatur: kein Defekt (zwei Mutanten am Code nachvollzogen, Kollision ausgeschlossen).
+
+**Was die eigenen Tore durchgelassen haben:** drei Dinge, und zwei davon sind dieselbe Lehre zum dritten Mal:
+
+- **Der zweite abgeschnittene Sweep im selben Sprint.** Nach dem `head -8` des Reviewers lief mein Grep
+  über `chapters/|chapterId` – nicht über das deutsche Wort, obwohl die User Story die Tutorials nennt. AK 2
+  war zweimal behauptet und zweimal nicht erfüllt. Die Vornacht hatte „mit `Datei:Zeile` belegen statt
+  zählen" vorgeschlagen; dieser Lauf zeigt, dass eine **unvollständige** `Datei:Zeile`-Liste dasselbe Loch
+  ist.
+- **Der eigene Wächter hat sein eigenes Loch verdeckt.** B-131 reparierte die ⚠-Tabelle und stand mit ⚠
+  im Index – gemeldet wurden zwei von vier Feldern, und zwei gemeldete Felder sehen aus wie „alle". Die
+  Nachschau fand es, weil der Agent eine Story-Kopie **ohne** die vier Felder in den Harness legte und vier
+  erwartete. Kein Tor dieses Repos prüft, ob der Index-Wächter vollständig meldet.
+- **Ein Wort ersetzt, den Satz nicht gelesen** (Fehlerklasse B-112), in einem Kommentar, den der Build nie
+  liest.
+
+**Prämisse geprüft:** `backlog-index.sh:192-193` steht wirklich vor `:212` (nachgelesen); die
+SetNull-Konfiguration an `:245/:471` ebenso; `tutorial-supervisor.md:340` steht 30 Zeilen unter der von
+B-166 geänderten Zeile `:316`.
+
+### Vorgeschlagener Mechanismus — nicht gelandet (Freigabe 3)
+
+**Ein Tor für den Wächter selbst:** ein fester Probe-Lauf des Index-Generators gegen einen Wegwerf-Root mit
+bekannten Lücken (eine Story ohne `groesse`/`wo`/`migration`/`vertragsbruch`, eine leere Datei, eine ohne
+Frontmatter), der die **vollständige** erwartete ⚠-Tabelle vergleicht – als Skript neben
+`backlog-index.sh`, von CI gefahren wie der Markdown-Lint. Der Harness dieses Laufs (`index-probe.sh`) ist
+der Prototyp; B-240 ist der erste Fall, den er rot gezeigt hätte. **Kosten:** ein weiteres Bash-Artefakt mit
+eigener Pflege; und die Versuchung, bei jeder Index-Änderung die Erwartung mitzuändern, statt zu lesen.
+**Nicht vorgeschlagen:** ein weiterer Satz über Sweeps – die Vornacht hat einen, dieser Lauf hat ihn zweimal
+widerlegt gesehen; was fehlt, ist kein Satz, sondern die Gewohnheit, die **Ausschlussliste** eines Greps
+aufzuschreiben, bevor man „0 Treffer" meldet (B-241 tut das in Punkt 2). **Bewusst ungedeckt:** B-112-Fehler
+in Kommentaren – kein Tor liest Prosa.
+
+**Warum der Lauf hier endet:** Limit 2 des Backlog-Laufs – die Nachschau fand **Defekte im Increment eines
+Sprints dieser Nacht** (B-240, B-241 zu Sprint 2), dieselbe Lage wie B-227 und B-235 in der Vornacht. Der
+Zähler (3 von 5) und das Tor (nur vorgeschlagen) hätten nicht gestoppt.
+
+## Offene Roadmap · Änderungsstand
+
+Die Reihenfolge lebt in [docs/backlog/](backlog/README.md); hier nur die Begründung des Stands nach dieser
+Nacht: **drei Sprints, acht Stories abgenommen** (B-235, B-159, B-176 · B-190, B-131, B-166 · B-158, B-179),
+alle derselben Familie – eine Stelle behauptet etwas, das nicht stimmt (Ladefenster als Ausfall, fremder
+Ersteller, Fließtext statt Überschrift, Erfolg über einem Fehlschlag, tote Route, Hand-Antwort neben der
+Projektion). Der natürliche nächste Sprint sind die zwei Nachschau-Defekte **B-240** und **B-241** (beide
+`ausformuliert`, Fix benannt) – und der Grund, warum der Lauf hier endet.
+
+**Neue Stories dieser Nacht:** B-236 (Gruppe ohne `fieldset`/`legend`, `idee`), B-237 (KI-Creator-Hilfe
+`--chapter`, `idee`), B-238 (`Creator.http` fährt die tote Route, `ausformuliert`, P2), B-239 (deutsche
+`/// <summary>` im Wiki-Beispiel, `idee`), B-240, B-241.
+
+**Commits (nichts gepusht):** Sprint 1 `7844894` + Nachtrag `738ef99` · Sprint 2 `95b0624` + Nachtrag
+`1372d0e` · Sprint 3: siehe Nachtrag.
+
+## Für den Morgen
+
+1. **Drei Retro-Vorschläge dieser Nacht** landen oder verwerfen (Sprint 1: Auflage 5 auf Absichtserklärungen
+   ausdehnen – Mutante benennen **und** fahren; Sprint 2: **Tor** „jede 400-Zusicherung in `Api.Tests` liest
+   den `code`", gemessen 97 Zusicherungen / 123 `code`-Lesungen; Sprint 3: **Tor** für den Index-Wächter
+   selbst – fester Probe-Lauf gegen einen Wegwerf-Root mit bekannten Lücken, Prototyp
+   `scratchpad/index-probe.sh`). Dazu die zehn älteren, unverändert offen.
+2. **Zwei Nachschau-Defekte** als nächster Sprint: B-240 (zwei Zeilen im Index-Skript, rote Probe im Harness)
+   und B-241 (sechs Doku-Stellen, Grep mit Ausschlussliste).
+3. **Vier Entscheidungen, die der Lauf nicht treffen durfte:** B-156 (`isMine` → `isOwn`, Vertragsbruch),
+   B-230 (eine Quelle für den PIN-Hash, Schema), B-141/B-145 (fachliche Fragen zur Eindeutigkeit), B-164
+   (`useAsync`-Architektur – zum dritten Mal im Weg: die Nachschau zu B-235 musste den Zwischen-Render
+   erklären).
+4. **Ein Blick des Menschen:** `/vater/exercises/neu` – drei gleiche Überschriften, und die sieben Gruppenköpfe
+   jetzt in Versalien inklusive „(optional)" (B-176); dazu `docs/REST/Creator.http` einmal im REST-Client
+   fahren, sobald B-238 gebaut ist.
+5. `git log --oneline` gegen `3b99bef`: sechs Commits dieser Nacht; **nichts ist gepusht.**

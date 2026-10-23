@@ -54,15 +54,6 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
         Assert.Equal(code, body.GetProperty("code").GetString());
     }
 
-    /// <summary>Marks an adult as a platform admin (no API path – deliberately only via the DB, as in real operation).</summary>
-    private void MakeAdmin(int supervisorId)
-    {
-        using var scope = factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-        db.Adults.First(f => f.Id == supervisorId).IsAdmin = true;
-        db.SaveChanges();
-    }
-
     /// <summary>Removes all grants of an exercise - simulates an orphaned (ownerless) exercise (e.g. after a father is deleted).</summary>
     private void OrphanExercise(int exerciseId)
     {
@@ -196,7 +187,7 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
         var f1 = await TestApi.AdultAsync(factory);
         var (seriesId, seriesUnitId, exerciseId) = await CreateVocabAsync(f1);
         var adminId = await RegisterFatherAsync("9999");
-        MakeAdmin(adminId);
+        TestApi.MakeAdmin(factory, adminId);
         var admin = await TestApi.AdultAsync(factory, adminId, "9999");
         var url = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}";
 
@@ -224,7 +215,7 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
         Assert.Equal(HttpStatusCode.Forbidden, (await f1.PutAsJsonAsync(url, VocabPayload())).StatusCode);
 
         var adminId = await RegisterFatherAsync("9999");
-        MakeAdmin(adminId);
+        TestApi.MakeAdmin(factory, adminId);
         var admin = await TestApi.AdultAsync(factory, adminId, "9999");
         Assert.Equal(HttpStatusCode.OK,
             (await admin.PutAsJsonAsync(url, VocabPayload(title: "Adoptiert"))).StatusCode);

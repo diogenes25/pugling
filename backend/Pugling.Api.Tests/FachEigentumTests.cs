@@ -1,8 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Microsoft.Extensions.DependencyInjection;
-using Pugling.Api.Data;
 
 namespace Pugling.Api.Tests;
 
@@ -325,32 +323,6 @@ public class FachEigentumTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
-    /// Registers a fresh creator, flags them as platform admin and logs them in. The flag has to be set
-    /// <b>before</b> the login - the role claim is issued there, not read per request.
-    /// <para>
-    /// Deliberately a fresh adult rather than the seeded father: the class shares one SQLite file, and the
-    /// flag would persist. Flagging adult 1 makes
-    /// <see cref="Geseedete_Arten_Sind_Fuer_Jeden_Gesperrt"/> fail - measured, not feared.
-    /// </para>
-    /// </summary>
-    private async Task<HttpClient> AdminCreatorAsync(string pin)
-    {
-        var res = await factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/adults",
-            new { name = TestApi.UniqueName("Admin"), pin });
-        res.EnsureSuccessStatusCode();
-        var id = (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
-
-        using (var scope = factory.Services.CreateScope())
-        {
-            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-            db.Adults.First(a => a.Id == id).IsAdmin = true;
-            db.SaveChanges();
-        }
-
-        return await TestApi.AdultAsync(factory, id, pin);
-    }
-
-    /// <summary>
     /// B-178: the admin break-glass on a subject without an owner. The precedent is
     /// <c>ExerciseControllerBase</c> ("edit orphaned exercises in an emergency").
     /// <para>
@@ -377,7 +349,7 @@ public class FachEigentumTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.Equal(HttpStatusCode.Forbidden, ohneVentil.StatusCode);
         await AssertCodeAsync(ohneVentil, "not_owner");
 
-        var admin = await AdminCreatorAsync("2120");
+        var admin = await TestApi.AdminAdultAsync(factory, "2120");
 
         var patch = await admin.PatchAsJsonAsync(
             $"/api/v1/creator/subjects/{seedId}/categories/{artId}", new { name = TestApi.UniqueName("Berichtigt") });
@@ -551,7 +523,7 @@ public class FachEigentumTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var fachId = await FachAsync(eigentuemer);
         var artId = await ArtAsync(eigentuemer, fachId);
 
-        var admin = await AdminCreatorAsync("2123");
+        var admin = await TestApi.AdminAdultAsync(factory, "2123");
         var patch = await admin.PatchAsJsonAsync($"/api/v1/creator/subjects/{fachId}/categories/{artId}",
             new { name = TestApi.UniqueName("Vom-Admin") });
         Assert.Equal(HttpStatusCode.OK, patch.StatusCode);
@@ -669,5 +641,55 @@ public class FachEigentumTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         // isMine must not become true just because the caller has no owner either (null == null would).
         var seed = await adult.GetFromJsonAsync<JsonElement>($"/api/v1/creator/subjects/{seedId}");
         Assert.False(seed.GetProperty("isMine").GetBoolean());
+    }
+
+    /// <summary>
+    /// B-158, point 2: <c>Update</c> had no empty-name guard - <c>PATCH {"name":"   "}</c> renamed the subject
+    /// to <c>""</c> with 200, while <c>Create</c> and the textbook series reject exactly that. Red before the
+    /// guard (measured: 200), red again whenever the guard disappears.
+    /// </summary>
+    [Fact]
+    public async Task PatchMitLeeremNamen_WirdAbgelehnt()
+    {
+        var adult = await TestApi.AdultAsync(factory);
+        var subjectId = await FachAsync(adult);
+        var vorher = (await adult.GetFromJsonAsync<JsonElement>($"/api/v1/creator/subjects/{subjectId}"))
+            .GetProperty("name").GetString();
+
+        var patch = await adult.PatchAsJsonAsync($"/api/v1/creator/subjects/{subjectId}", new { name = "   " });
+        Assert.Equal(HttpStatusCode.BadRequest, patch.StatusCode);
+        await AssertCodeAsync(patch, "validation_error");
+
+        // The row is untouched - not renamed to "" behind a 400.
+        var nachher = await adult.GetFromJsonAsync<JsonElement>($"/api/v1/creator/subjects/{subjectId}");
+        Assert.Equal(vorher, nachher.GetProperty("name").GetString());
+    }
+
+    /// <summary>
+    /// B-158, point 1: <c>Update</c> used to build its response by hand instead of through the shared
+    /// <c>Project</c> projection, so a field added to the projection would be missing from the PATCH answer
+    /// without any test noticing. This case pins PATCH to GET property by property. Statement of intent
+    /// as long as both agree: it was green before the change too; the mutant that makes it red is a
+    /// hand-built response that drops or alters a field (measured on the old code with
+    /// <c>ownerAdultId = null</c>: red), and after the change Create and Update both read back through
+    /// <c>Project</c>, so no hand-built response is left to drift.
+    /// </summary>
+    [Fact]
+    public async Task PatchAntwort_IstDieselbeProjektionWieGet()
+    {
+        var adult = await TestApi.AdultAsync(factory);
+        var subjectId = await FachAsync(adult);
+        var neuerName = TestApi.UniqueName("Projektion");
+
+        var patch = await adult.PatchAsJsonAsync($"/api/v1/creator/subjects/{subjectId}", new { name = neuerName });
+        Assert.Equal(HttpStatusCode.OK, patch.StatusCode);
+        var patched = await patch.Content.ReadFromJsonAsync<JsonElement>();
+        var got = await adult.GetFromJsonAsync<JsonElement>($"/api/v1/creator/subjects/{subjectId}");
+
+        var patchedProps = patched.EnumerateObject().Select(p => p.Name).OrderBy(n => n).ToList();
+        var gotProps = got.EnumerateObject().Select(p => p.Name).OrderBy(n => n).ToList();
+        Assert.Equal(gotProps, patchedProps);
+        foreach (var name in gotProps)
+            Assert.Equal(got.GetProperty(name).GetRawText(), patched.GetProperty(name).GetRawText());
     }
 }

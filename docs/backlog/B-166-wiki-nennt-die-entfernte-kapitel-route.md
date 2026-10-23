@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+nachgeschaut: "2026-10-23 (Sprint 3 desselben Laufs, frischer Agent): jeden geaenderten Satz gegen Code geprueft (Check-Signatur ExerciseControllers.cs:361, ExerciseRoutes.Base :17, GoalDtos.cs:9, ObjectiveBaseTypes.cs:56-62, JsonStringEnumConverter Program.cs:37, Restrict PuglingDbContext.cs:683-684, createExerciseHref VaterLehrwerke.tsx:100-106 + VaterExerciseCreate.tsx:41-43, Sortierungen ChildLearnProgressService.cs:233/261-271, Seed.cs:446/623); ZWEI DEFEKTE: AdultLifecycleTests.cs:14-15 behauptete nach der Aenderung einen Katalog-Cascade, wahr ist SetNull (PuglingDbContext.cs:245/471/512) - in Sprint 3 korrigiert; AK 2 nicht erfuellt: tutorial-supervisor.md:340-341, tutorial-student.md:31/320, tutorial.md:20, vater-informationsarchitektur-plan.md:121-125, uebergabe-vokabeln.md:59 -> B-241; Nits: frontend/CLAUDE.md:82 ohne subjectId, toter Link endpunkt-beziehungen.md:418, DraftRules.cs:50/CreatorBriefing.cs:133 'Kapitel' (deutsche Laufzeit-Strings, zu B-237)"
 ---
 
 # B-166 · Wiki und Endpunkt-Karte nennen die entfernte Kapitel-Route

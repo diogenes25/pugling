@@ -56,18 +56,23 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
 
         var fid = User.CreatorId();
         // The owner comes from the token, never from the payload - otherwise a creator could hand a subject
-        // to somebody else (or to nobody, which would make it permanently uneditable).
+        // to somebody else. A missing `fid` is not guarded here (B-158, point 3): a Creator profile always
+        // carries an AdultId (AccountService is the only writer of profiles and sets it there), so the
+        // ownerless case cannot be reached through this action, and the textbook series takes the same
+        // stance - a guard for an unreachable state would be untestable code.
         var subject = new Subject { Name = dto.Name.Trim(), OwnerAdultId = fid };
         db.Subjects.Add(subject);
         await db.SaveChangesAsync(ct);
 
-        var response = new SubjectResponse(subject.Id, subject.Name, subject.CreatedAt, 0,
-            subject.OwnerAdultId, ClaimsPrincipalExtensions.IsOwnedBy(subject.OwnerAdultId, fid));
-        return CreatedAtAction(nameof(Get), new { subjectId = subject.Id }, response);
+        // Read back through the shared projection like the textbook series (B-158): a second hand-built
+        // response would be the drift that Update just got rid of.
+        return CreatedAtAction(nameof(Get), new { subjectId = subject.Id },
+            await Project(db.Subjects.AsNoTracking().Where(s => s.Id == subject.Id), fid).FirstAsync(ct));
     }
 
     /// <summary>Changes a subject (partial, owner only).</summary>
     [HttpPatch("{subjectId:int}")]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<SubjectResponse>> Update(int subjectId, UpdateSubjectDto dto, CancellationToken ct = default)
@@ -78,12 +83,20 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
         if (!ClaimsPrincipalExtensions.IsOwnedBy(subject.OwnerAdultId, fid))
             return this.ProblemWithCode(ApiErrors.NotOwner, "Only the owner may change this subject.");
 
-        if (dto.Name is not null) subject.Name = dto.Name.Trim();
+        if (dto.Name is not null)
+        {
+            // Same guard as Create and the textbook series (B-158): without it a PATCH of whitespace renamed
+            // the subject to "" with 200.
+            var name = dto.Name.Trim();
+            if (name.Length == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Name must not be empty.");
+            subject.Name = name;
+        }
         await db.SaveChangesAsync(ct);
 
-        return new SubjectResponse(subject.Id, subject.Name, subject.CreatedAt,
-            await db.ExerciseCategories.CountAsync(c => c.SubjectId == subjectId, ct),
-            subject.OwnerAdultId, ClaimsPrincipalExtensions.IsOwnedBy(subject.OwnerAdultId, fid));
+        // One projection for every response (B-158, Create included): a hand-built response here would
+        // silently miss any field later added to Project - held by
+        // FachEigentumTests.PatchAntwort_IstDieselbeProjektionWieGet.
+        return await Project(db.Subjects.AsNoTracking().Where(s => s.Id == subjectId), fid).FirstAsync(ct);
     }
 
     /// <summary>
