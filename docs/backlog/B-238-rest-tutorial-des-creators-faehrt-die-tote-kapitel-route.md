@@ -120,7 +120,7 @@ Live-Durchlauf). `wo: doku`, keine Migration, kein Vertrag.
   `skip=10`, damit auch ein Seed mit weniger als zwölf en→de-Einträgen zwei Treffer liefert; `@seriesUnitId`
   im Story-Text). **Rollengang Creator:** der curl-Durchlauf *ist* der Flow der Datei, Request für Request in
   ihrer Reihenfolge – im REST-Client selbst fährt ihn der Nutzer (Datum im Kopf der Datei dafür offen).
-  Commit: siehe Nachtrag.
+  Commit `7c33765` (Protokoll `docs/pm-sitzung-2026-10-23-nacht.md`, „Sprint 4").
 - **2026-10-23** — **gebaut** (zweiter Nachtlauf, Sprint 4). **Rote Probe:** die Requests der alten Datei
   (`6af2c62`) per curl gegen eine Wegwerf-Instanz (`:5280`, frische Seed-DB, Harness
   `scratchpad/creator-http-alt.sh`) – erwartet 2xx durchgehend, gemessen: login 200 · me 200 · listSubjects 200

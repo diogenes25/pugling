@@ -107,7 +107,7 @@ der Zweck, aber die Zeilen gehören nachgezogen oder stehen bewusst als Schuld d
   regeneriert, B-242-Zeile fehlte) – behoben durch den Lauf vor dem Commit. **Rollengang:** der PM selbst
   (Harness + echter Index zweimal, byte-gleich); die ⚠-Tabelle des echten Index ist **nicht** gewachsen – keine
   abgenommene Story fehlt heute `groesse`/`wo`. Das vorgeschlagene Tor (Retro Sprint 3) bleibt Vorschlag.
-  Commit: siehe Nachtrag.
+  Commit `7c33765` (Protokoll `docs/pm-sitzung-2026-10-23-nacht.md`, „Sprint 4").
 - **2026-10-23** — **gebaut** (zweiter Nachtlauf, Sprint 4). **Rote Proben (erwartet/gemessen)** im Harness
   `scratchpad/index-probe.sh <repo-root>` (Fortschreibung des B-190-Harness): **P4** B-131-Kopie auf
   `abgenommen` ohne die vier Felder – erwartet vier gemeldete Felder, gemessen **zwei** („Feld `migration`,

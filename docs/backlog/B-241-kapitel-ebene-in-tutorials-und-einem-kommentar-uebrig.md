@@ -128,7 +128,7 @@ steht der Routen-Grep aus B-166 AK 1 daneben (`chapters/|chapterId|CurrentChapte
   **Rollengang im Browser (Vater, Freigabe 6):** Login Vater 1 → `/vater/exercises` zeigt die Filter
   **Fach · Reihe (– alle –) · Unit (– alle –)**, `/vater/exercises/neu` zeigt **Fach (filtert nur die Reihen) ·
   Reihe · Unit** und den Satz „Fehlt eine Reihe oder Unit? … unter 📕 Lehrwerke" – genau das, was der Plan
-  jetzt behauptet. Commit: siehe Nachtrag.
+  jetzt behauptet. Commit `7c33765` (Protokoll `docs/pm-sitzung-2026-10-23-nacht.md`, „Sprint 4").
 - **2026-10-23** — **gebaut** (zweiter Nachtlauf, Sprint 4). **Sweep vorher:** `grep -n "Kapitel"` über
   `docs/*.md wiki/*.md docs/REST/*.md docs/REST/*.http frontend/CLAUDE.md backend/CLAUDE.md
   backend/Pugling.Api/CLAUDE.md backend/Pugling.Agent.Creator/CLAUDE.md CLAUDE.md`, Ausschlussliste

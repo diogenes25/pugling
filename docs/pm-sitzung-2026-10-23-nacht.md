@@ -53,7 +53,7 @@ Wird je Sprint fortgeschrieben; die letzte Zeile ist der Zustand.
   Code-/Testwirkung** (vier mit Doku-Wirkung, behoben). **Rollengang im Browser** (Vater auf `/vater/exercises`
   und `/neu`), Creator per curl-Flow, PM am Index. Nachschau Sprint 3 des ersten Laufs: **ein Kommentar-Defekt**
   (B-243, korrigiert) + zwei Funde derselben Familie (B-244, B-245). Vier neue Stories (B-242–B-245). Retro
-  schlägt ein **Tor** vor (Routen in `.http`-Dateien gegen OpenAPI), nicht gelandet. Commit: siehe Nachtrag.
+  schlägt ein **Tor** vor (Routen in `.http`-Dateien gegen OpenAPI), nicht gelandet. Commit `7c33765` + Nachtrag.
 
 ## Runde 1 — Vorstellung & Feedback
 
