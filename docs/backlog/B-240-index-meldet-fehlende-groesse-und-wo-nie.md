@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-131]
 wartet_auf: ""
+nachgeschaut: "2026-10-23 (zweiter Lauf, Sprint 5, frischer Agent, gegengelesen): belege :195-197 vor den Platzhaltern :199-202, grund erst :247, kein Pfad setzt einen Platzhalter vorher; AK 1-3 im Wegwerf-Root nachgestellt (vier Felder gemeldet, Nur-leere-Datei-Root mit Tabelle, Idempotenz byte-gleich); eigene Faelle verworfen ohne grund, art Tippfehler, groesse leerer String (awk strippt Quotes, backlog-index.awk:54) alle gemeldet; kein Defekt. Nit: Vergleiche gegen '""' in :230/:239 sind seit dem Quote-Strip unerreichbar"
 ---
 
 # B-240 · Der Index meldet fehlende `groesse`/`wo` nie – und verschluckt die Warnzeile, wenn nur leere Dateien da sind
@@ -115,8 +116,8 @@ der Zweck, aber die Zeilen gehören nachgezogen oder stehen bewusst als Schuld d
   bekannter Wert"; **P5** Root mit nur einer leeren Datei – erwartet ⚠-Tabelle „Datei ist leer", gemessen
   „*Noch keine Story angelegt.*", Exit 0. **Nach dem Fix:** P4 „Feld `groesse`, Feld `wo`, Feld `migration`,
   Feld `vertragsbruch`"; P6 „Feld `art`"; P5 voller Block (Offen (0) · *Keine.* · Entgangen (0) · ⚠ mit
-  B-900 „Datei ist leer"), Exit 0. Echter Index: „65 offen, 162 abgenommen, 13 verworfen", zweiter Lauf
-  byte-gleich (`cmp`), Laufzeit unverändert im Sekundenbereich.
+  B-900 „Datei ist leer"), Exit 0. Echter Index: „65 offen, 162 abgenommen, 13 verworfen" (Stand vor den vier neuen Stories; im Commit
+  66/165/13), zweiter Lauf byte-gleich (`cmp`), Laufzeit unverändert im Sekundenbereich.
 
 - **2026-10-23** — gegrillt und geschätzt im zweiten Nachtlauf desselben Tages (Freigabe 1); ein drittes Feld derselben Familie (`art`) beim Grillen am Code gefunden (Entscheidung 2).
 

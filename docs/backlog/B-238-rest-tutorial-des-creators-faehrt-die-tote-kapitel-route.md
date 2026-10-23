@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-10-23 (zweiter Lauf, Sprint 5, frischer Agent, gegengelesen): alle 23 @name-Requests gegen Route/Methode/DTO (publishers :22/:85, textbook-series :128, units :57 mit Topics List, ExerciseRoutes.Base, ExercisePayload inkl. executePublic, items :136, exercises?type, preview, tags, grants GET/POST/DELETE, profiles 12 Felder, textbooks inkl. seriesId/currentUnitId, match); Variablenkette vollstaendig; Seed hat >= 3 en->de fuer skip=0&take=2 (Seed.cs:772-808); Slug-Kommentare gegen :107-110/:153-156; verifiziert-am im Kopf, Statuscodes im Verlauf; kein Defekt. Nit: Verlauf sagte 26 Requests, es sind 23 (berichtigt); Kopf :7-8 nennt matchProfiles nicht als dritte Betreuungs-Bedingung"
 ---
 
 # B-238 · Das ausführbare REST-Tutorial des Creators fährt die Kapitel-Route, die es seit B-106 nicht gibt
@@ -109,7 +110,7 @@ Live-Durchlauf). `wo: doku`, keine Migration, kein Vertrag.
 
 ## Verlauf
 
-- **2026-10-23** — **abgenommen** (zweiter Nachtlauf, Sprint 4). Reviewer (allgemeiner Agent): alle 26
+- **2026-10-23** — **abgenommen** (zweiter Nachtlauf, Sprint 4). Reviewer (allgemeiner Agent): alle 23
   Requests statisch gegen Route/Methode/DTO geprüft (`CreatePublisherDto`, `CreateTextbookSeriesDto`,
   `CreateSeriesUnitDto` mit `Topics: List<string>`, `ExercisePayload<VocabularyConfig>`, `AddGrantDto`,
   `CreateTagDto`, `CreateCreatorProfileDto`, `CreateTextbookDto`), Variablenkette (jede `@variable` aus einem

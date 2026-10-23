@@ -96,8 +96,8 @@ Umgesetzt am 2026-07-28:
   der man nur umbenennen und löschen kann – und Etappe 3 könnte die Anlege-Felder nicht wegnehmen, weil
   ihr Verweis ins Leere führte. Dabei bekam `NewName` ein `fieldId` von außen: mit drei Instanzen war die
   feste DOM-`id` dreifach vergeben und jedes `label` zeigte auf dasselbe Feld.
-- Auf der Übungen-Seite stehen zwei Links dorthin – der Weg von „Unit fehlt" zu den Lehrwerken darf nicht
-  über die Navigation führen.
+- Auf der Übungen-Seite stehen zwei Links in die Bausteine (Katalog, Lückentexte); den Weg von „Reihe oder
+  Unit fehlt" zu den Lehrwerken trägt die Anlege-Seite. Keiner davon darf über die Navigation führen.
 
 **Ein Fund aus dem Test, der die Umsetzung geändert hat:** Der erste Wurf von `VaterKatalog` rief
 `{subjects.loading ? "Lade…" : <CatalogAdmin/>}`. Weil `onCatalogChanged` ein `reload` auslöst und das

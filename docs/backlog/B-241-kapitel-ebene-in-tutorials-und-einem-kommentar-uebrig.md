@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-166]
 wartet_auf: ""
+nachgeschaut: "2026-10-23 (zweiter Lauf, Sprint 5, frischer Agent, gegengelesen): jede Zeile gegen den Code (SeriesUnitsController :146-151 + ExerciseUsageQueries :132-134; ChildLearnProgressController :51/:66/:82; VaterExercises.tsx :116-137; VaterExerciseCreate.tsx :196-212/:221; CatalogAdmin.tsx :76/:179; uebungstypen.spec.ts :43/:48); frontend/CLAUDE.md 10.208 B bestaetigt. DREI DEFEKTE: uebergabe-vokabeln.md:57-59 (keine Unit-Liste, VocabRefPicker liegt in VaterExerciseCreate.tsx), IA-Plan :99 (null Links von /vater/exercises zu den Lehrwerken), Sweep vor der letzten Aenderung gemessen (1 statt 4 Treffer) -> B-246, im Sprint behoben"
 ---
 
 # B-241 · B-166 hat die Kapitel-Ebene aus der Wissenskarte entfernt – in drei Tutorials und einem Plan steht sie noch, und ein Kommentar wurde dabei falsch
@@ -136,12 +137,14 @@ steht der Routen-Grep aus B-166 AK 1 daneben (`chapters/|chapterId|CurrentChapte
   `docs/db-struktur-umbau-plan.md`, `docs/tutorial-creator.md`, `docs/uebergabe-vokabeln.md:87-91` →
   **16 Treffer** (sieben Stellen + neun Zeilen im IA-Plan). **Nachher: 1 Treffer** – die neue Kopfnotiz des
   IA-Plans selbst (`:9`, nennt das Wort, um es abzulösen) und die Kopfzeile von `Creator.http:11` („Kapitel gibt
-  es nicht mehr"), beide gewollt. **Routen-Sweep** `chapters/|chapterId|/chapters` über dieselben Pfade plus
+  es nicht mehr"), beide gewollt. **Berichtigt in der Nachschau (Sprint 5):** nach den „(heute: …)"-Umformulierungen
+  des Reviewers waren es **vier** Treffer – dazu IA-Plan `:93` und `:130`, Historiensätze mit Heute-Klammer; der
+  Sweep war vor der Umformulierung gelaufen und danach nicht wiederholt (B-246). **Routen-Sweep** `chapters/|chapterId|/chapters` über dieselben Pfade plus
   `docs/REST/`: Treffer nur in `docs/tutorial-creator.md:43` (sagt, dass die Route weg ist),
   `docs/anmerkungen/*` (Zeitzeugen, nachträglich in die Ausschlussliste) und **`docs/REST/Creator/
   VocabularyExecises.http` (neun Requests) → B-242**. AK 3: `AdultLifecycleTests.cs:14-15` nachgelesen, sagt
-  `SetNull`. `frontend/CLAUDE.md`: 10.223 → **10.208 Byte** (die +11 Byte des Query-Tripels sind durch eine
-  doppelte Klammer zwei Zeilen tiefer bezahlt, netto −15); die Datei liegt **weiter +1.208 Byte über dem
+  `SetNull`. `frontend/CLAUDE.md`: 10.223 → **10.208 Byte** (die +11 Byte des Query-Tripels sind durch die
+  Kürzung der Klammer zwei Zeilen tiefer bezahlt – „reicht die Auswahl als Query durch" –, netto −15); die Datei liegt **weiter +1.208 Byte über dem
   9.000-Byte-Budget** – das ist Altschuld vor diesem Sprint, hier nur gemeldet, nicht bezahlt.
   markdownlint-cli2 über 348 Dateien: 0 Funde.
 

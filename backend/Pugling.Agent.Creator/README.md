@@ -47,7 +47,7 @@ Nicht das Sprachmodell, sondern C#. Das Modell liefert ausschließlich **struktu
 (JSON nach Schema), der Ablauf ist fest verdrahtet:
 
 ```text
-1  Briefing   Profil + Reihe/Unit (Creator-API), Fach/Kapitel + vorhandene Übungen (Creator-API),
+1  Briefing   Profil + Reihe/Unit (Creator-API), Fach + vorhandene Übungen der Unit (Creator-API),
               optional Kind-Profil + Interessen + Lehrbuch (Supervisor-API) und Lernstand (Student-API)
 2  Entwurf    IChatClient.GetResponseAsync<TDraft>()  →  typisierter Entwurf
 3  Prüfung    deterministische Regeln; bei Verstößen eine Reparatur-Runde mit den konkreten Mängeln
@@ -143,7 +143,8 @@ Eines von `--child`/`--profile` ist Pflicht – sonst fehlt sowohl die Zielgrupp
 | Option | Bedeutung | Standard |
 |---|---|---|
 | `--type <Typ>` | `Vocabulary`, `Cloze`, `Translation`, `Grammar` | Pflicht bei `create` |
-| `--subject`/`--chapter` | Ort im Katalog | Fach des Profils, sonst erstes Fach mit Kapitel |
+| `--series`/`--series-unit` | Reihe und Unit, in der die Übung entsteht (`--series-unit` allein bestimmt die Reihe; mit `--profile` muss sie in dessen Reihe liegen; das Fach kommt aus dem Profil, sonst aus der Reihe) | Reihe des Profils, sonst erste Reihe mit Unit; erste Unit der Reihe |
+| `--subject` | nur `profiles`: Fach, auf das die Treffer gefiltert werden | – |
 | `--topic "…"` | Thema bzw. Lehrbuch-Unit | – |
 | `--count <n>` | Anzahl Aufgaben (3–30) | 10 |
 | `--types a,b,c` | Übungstypen des Bündels | `exam`: `Vocabulary,Cloze,Grammar` · `plan`: `Vocabulary,Cloze` |

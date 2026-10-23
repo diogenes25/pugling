@@ -61,8 +61,8 @@ internal static class TestApi
     /// <summary>
     /// A <b>fresh</b> adult, flagged as admin, then logged in - in that order (see <see cref="MakeAdmin"/>).
     /// Fresh on purpose: flagging the seeded adult would leave the flag behind in the class-shared DB, and every
-    /// later "foreign creator" case of the same class that expects 403 would see the break-glass 200 instead
-    /// and go red (measured while building B-178).
+    /// later case of the same class in which the seeded adult himself is expected to get 403 would see the
+    /// break-glass 200 instead and go red (measured while building B-178).
     /// </summary>
     public static async Task<HttpClient> AdminAdultAsync(WebApplicationFactory<Program> f, string pin)
     {

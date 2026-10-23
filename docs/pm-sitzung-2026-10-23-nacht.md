@@ -54,6 +54,12 @@ Wird je Sprint fortgeschrieben; die letzte Zeile ist der Zustand.
   und `/neu`), Creator per curl-Flow, PM am Index. Nachschau Sprint 3 des ersten Laufs: **ein Kommentar-Defekt**
   (B-243, korrigiert) + zwei Funde derselben Familie (B-244, B-245). Vier neue Stories (B-242–B-245). Retro
   schlägt ein **Tor** vor (Routen in `.http`-Dateien gegen OpenAPI), nicht gelandet. Commit `7c33765` + Nachtrag.
+- **Sprint 5 abgenommen** (B-243, B-244, B-237 – Kopien verschwinden, Hilfe und Nachbar sagen dasselbe wie der
+  Code): Mutante 1 rot von 5, Hilfe-Zählung 1/0 → 0/1, Grep `IsAdmin = true` 2 → 1 Dateien, Backend
+  **879/879**, `pugling-reviewer` ohne Blocker, **zwei Funde mit Codewirkung** (Hilfetext, Zähler 2 von 5).
+  Nachschau Sprint 4: **drei Defekte in B-241** (zwei Sätze beim Wortwechsel falsch, Sweep vor der letzten
+  Änderung gemessen) → **B-246**, im Sprint behoben. **Der Lauf endet hier** (Limit 2). Retro schlägt vor, den
+  Sweep an das Ende des Sprints zu binden, nicht an den Fix – kein Tor, nur Reihenfolge. Commit: siehe Nachtrag.
 
 ## Runde 1 — Vorstellung & Feedback
 
@@ -650,7 +656,7 @@ Review – an fünf Stellen „(heute: …)"-Zusätze statt einer bloßen Worter
 | P6 Index: `abgenommen` ohne `art` | „Feld `art`" | „`art` ist kein bekannter Wert" | „Feld `art`" |
 | P5 Index: Root mit nur leerer Datei | ⚠-Tabelle „Datei ist leer" | „*Noch keine Story angelegt.*" | ⚠-Tabelle |
 | `Creator.http` per curl (`:5280`) | 2xx durchgehend | **13 von 24 rot** (405/404/400 ab Schritt 6) | **23/23 2xx** |
-| Kapitel-Sweep (Ausschlussliste in B-241) | 0 | 16 | 1 (Kopfnotiz, gewollt) |
+| Kapitel-Sweep (Ausschlussliste in B-241) | 0 | 16 | 1 gemessen – **4 im Commit** (Kopfnotiz, zwei Heute-Klammern, `Creator.http:11`; Nachschau Sprint 5, B-246) |
 | `frontend/CLAUDE.md` | nicht wachsen | 10.223 B | 10.208 B (Altschuld +1.208 bleibt) |
 | Backend-Suite (nach dem TestApi-Kommentar) | grün | – | **879/879** |
 | markdownlint-cli2 | 0 | – | 0 (352 Dateien) |
@@ -751,36 +757,160 @@ ein vierter Satz über Sweeps – drei Läufe haben gezeigt, dass der Satz nicht
 ist, den Reviewer-Brief auf „±5 Zeilen Kontext je geänderter Zeile" festzulegen, und der stand in diesem
 Brief drin – deshalb wurde es gefunden.
 
+## Sprint 5 — Ziel & Umfang
+
+**Sprint-Ziel (aus dem Creator-Sitz):** *Wenn ich den KI-Creator um Hilfe bitte, einen Verlag anlege oder
+den vierten Admin-Test schreibe, finde ich keine Kopie und keine Zeile mehr, die etwas anderes sagt als der
+Code daneben.*
+
+**Umfang:** B-243 (`Defekt`, Rest aus der Nachschau zu B-179), B-244 (`Aufräumen`, Nachbar von B-158), B-237
+(`Defekt`, `idee` → in diesem Sprint ausformuliert, gegrillt, geschätzt – `--chapter` wird nicht geparst,
+`--series`/`--series-unit` fehlten in der Hilfe). Alle drei unter Freigabe 1 autonom gegrillt. **Draußen
+geblieben:** B-242 (Streich-Entscheidung – löschen oder nachziehen – gehört dem Nutzer), B-239 (Wiki-Beispiele:
+anderer Grep, anderes Thema), B-245 (unverifiziert, erst messen).
+
+### Entwickler-Brief
+
+- **Ziel:** drei Stellen folgen dem Muster ihres Nachbarn – `TestApi.MakeAdmin` statt vierter Kopie, `Project`
+  statt Hand-Antwort, Hilfe statt Erinnerung an eine Ebene, die es nicht gibt.
+- **Quelle der Wahrheit:** `TestApi.cs:53-59` (Flag vor Login), `SubjectsController.cs:69-70` (Vorbild für
+  Publishers), `ResolveLocationAsync` (`AgentCommands.cs:363-395`) für jeden Satz der Hilfe.
+- **Guards:** keine neuen; `Create` der Verlage behält Slug-/Namensprüfung, nur die Antwort kommt aus der
+  Projektion. **Migration:** keine. **Vertrag:** unverändert (gleiche Antwortform).
+- **Testweg:** Mutante für B-244 fahren (nicht nur benennen), Hilfe-Zählung für B-237 vor/nach, Grep für B-243,
+  Suite; `pugling-reviewer`; Nachschau zu Sprint 4 parallel.
+
+## Iteration 5 — umgesetzt
+
+**Tests (B-243):** `RemarkTests.RegisterAdminFatherAsync` ruft `RegisterFatherAsync` + `TestApi.MakeAdmin`;
+drei tote `using`s weg. **Backend (B-244):** `PublishersController.Create` antwortet über `Project(…)`;
+`PublishersTests` vergleicht `201`-Body mit `GET`-Body. **KI-Creator (B-237):** Hilfe nennt `--series`/
+`--series-unit` mit dem Standard aus `ResolveLocationAsync`, `--subject` als `profiles`-Filter, `--chapter`
+ist weg; README `:50`/`:146`; Strings „in dieser Unit"/„in der Unit"; `FreshChapterAsync` → `FreshUnitAsync`
+(33 Stellen), Test `Eine_unbekannte_Unit_…`, ein Kommentar.
+
+**Nachschau-Reparatur (B-246, Sprint 4):** `uebergabe-vokabeln.md:57-60` (`VocabRefPicker` liegt in
+`VaterExerciseCreate.tsx`; `VaterExercises.tsx` hat eine Übungs-, keine Unit-Liste), IA-Plan `:99` (die zwei
+Links gehen auf Katalog und Lückentexte, der Lehrwerke-Link steht auf der Anlege-Seite); Sweep wiederholt.
+
+**Verifikation:**
+
+| Probe | erwartet | gemessen vorher | gemessen nachher |
+| --- | --- | --- | --- |
+| B-244 Mutante (`Create` von Hand, `ForeignSeriesCount = -1`) | neuer Fall rot | **1 rot / 4 grün** in `PublishersTests` | Mutante zurück, `Project`: grün |
+| B-237 `pugling-creator help` | `--chapter` 0 · `--series-unit` 1 | **1 · 0** | **0 · 1** (auch nach den Reviewer-Korrekturen) |
+| B-243 `rg -c "IsAdmin = true" Api.Tests/*.cs` | 1 Datei | **2** (`TestApi.cs`, `RemarkTests.cs`) | **1** |
+| `rg "new PublisherResponse\("` | nur Projektion | 2 Stellen | **1** (`:35`) |
+| Kapitel-Sweep (Liste B-241 + B-246) nach der letzten Änderung | nur benannte Ausnahmen | – | **4 + 1**: IA-Plan `:9` (Kopfnotiz), `:93`/`:130` (Heute-Klammern), `Creator.http:11`, `uebergabe-vokabeln.md:92` (Tag-Beispiel, Liste war `:87-91` vor dem Zeilenzuwachs) |
+| Backend-Suite (nach dem letzten `.cs`-Edit) | grün | – | **879/879** |
+
+### Review-Funde (Zähler: 2 von 5)
+
+`pugling-reviewer` (Diff + Stories): **keine Blocker.** **Zwei Funde mit Codewirkung**, beide im neuen
+Hilfetext von B-237 und beide Fehlerklasse B-112 – in der Story, die die Klasse benennt:
+
+1. „das Fach kommt aus der Reihe" – der Code nimmt `profile?.SubjectId ?? ResolveSubjectIdAsync(seriesId)`
+   (`AgentCommands.cs:320`); die alte Zeile hatte diese Hälfte sogar richtig. Jetzt: „aus dem Profil, sonst aus
+   der Reihe".
+2. „`--series-unit` allein bestimmt auch die Reihe" – nur ohne Profil-Reihe; mit `--profile` muss die Unit in
+   dessen Reihe liegen (`:366/:372/:389-392`, Test `Eine_Unit_aus_einer_fremden_Reihe_wird_gemeldet`). Jetzt mit
+   Halbsatz, README `:146` mit.
+
+Ohne Zähler: B-237 AK 4 nannte `CurrentChapter` (lebendes Vertragsfeld) nicht als Ausnahme – Story-Text; zwei
+Nits (Mutanten-Kommentar „1 failed / 4 passed in this class", Zeilenzeiger `:172`).
+
+## Runde 5 — Re-Review / Abnahme
+
+Kein Produkt-UI berührt; der Browser blieb geschlossen – ehrlich benannt, nicht ersetzt.
+
+- **Creator – signed off (Konsole + API):** „`pugling-creator help` sagt mir jetzt `--series` und
+  `--series-unit`, und was passiert, wenn ich nur die Unit angebe – und es sagt nicht mehr `--chapter`, das
+  der Agent still ignoriert hat." Verlag anlegen und sofort lesen: identischer Body (Test gegen den
+  In-Process-Server). **Zurückgestellt:** `CommandLine` meldet unbekannte Optionen nicht (`--serie` läuft
+  still in den Standard) – Nebenfund in B-237s Verlauf, keine Story ohne den Nutzer.
+- **Vater / Sohn – Regressionszeugen:** kein Supervisor-/Student-Pfad im Diff; Suite 879/879.
+- **Entwickler:** Grep `IsAdmin = true` eine Datei; Merksatz einmal.
+
+## Retrospektive Sprint 5
+
+**Nachschau:** B-240, B-241, B-238 (Sprint 4 dieses Laufs, Commit `7c33765`) – frischer Agent mit neun
+Prüfpunkten, Harness im Wegwerf-Root (AK 1–3 von B-240 plus `verworfen` ohne `grund`, `art: Tippfehler`,
+`groesse: ""`), alle 23 Requests der `Creator.http` gegen Route/DTO, jede Doku-Zeile gegen den Code. **Kein
+Defekt** an B-240 und B-238. **Drei Defekte an B-241** → **B-246** (`entgangen_bei: B-241`, im Sprint behoben):
+`uebergabe-vokabeln.md:57-59` behauptete eine Unit-Liste und den `VocabRefPicker` in `VaterExercises.tsx`
+(beides falsch: Filter-Select `:133-137`, Picker in `VaterExerciseCreate.tsx`); IA-Plan `:99` behauptete
+zwei Links von der Übungen-Seite zu den Lehrwerken (null; `:106-109` gehen auf Katalog/Lückentexte); und der
+Kapitel-Sweep lief **vor** den Reviewer-Umformulierungen – im Commit standen vier Treffer, der Verlauf sagte
+einer. Nebenbefund des Prüfers: `backlog-index.sh:230/:239` vergleichen gegen `'""'`, was awk seit dem
+Quote-Strip nie liefert (toter Zweig, harmlos). `nachgeschaut` auf B-240/B-241/B-238 gesetzt.
+**Index: Nachgeschaut 152 von 169.**
+
+**Prämisse geprüft:** `grep -c lehrwerke VaterExercises.tsx` = 0 selbst gemessen; `VocabRefPicker` nur in
+`VaterExerciseCreate.tsx` (ein Treffer); Sweep nach der letzten Änderung selbst wiederholt (Tabelle oben).
+Der Prüfer hatte den Git-Index mit `--work-tree`-Checkout berührt und wiederhergestellt – `git status`
+(elf Sprint-5-Dateien) und `git diff --cached` (leer) von mir nachgeprüft.
+
+**Was die eigenen Tore durchgelassen haben – und zwar dieselbe Klasse zum dritten Mal in zwei Sprints:**
+
+- **Wortersetzung ohne Satzlesen, an zwei Sätzen, die der Reviewer nicht las.** Der Reviewer-Brief verlangte
+  ±5 Zeilen Kontext je geänderter Zeile und fand so fünf Sätze; die zwei übrigen lagen in Dateien, die er
+  nur stichprobenweise las. Ein Wortwechsel über sieben Dateien braucht sieben Leser, nicht fünf.
+- **Der Sweep lief vor der letzten Änderung.** Reihenfolge im Sprint: Fix → Sweep → Review → Reviewer ändert
+  Sätze → Commit. Der Sweep hätte **nach** dem Reviewer laufen müssen – dieselbe Lehre wie B-166 („ein Grep zur
+  falschen Zeit gilt als Sweep"), diesmal nicht wegen Reichweite, sondern wegen Zeitpunkt.
+- **Die eigene Hilfe-Umformulierung trug zwei neue Halbwahrheiten** (Fach aus der Reihe; Unit bestimmt die
+  Reihe) – gefunden vom Reviewer, der `ResolveLocationAsync` Zeile für Zeile gegen den Text las. Der Brief
+  hatte genau das verlangt; das Tor hat gehalten.
+
+**Warum der Lauf hier endet (Limit 2):** die Nachschau fand **Defekte im Increment von Sprint 4 dieses
+Laufs** (B-246) – dieselbe Lage wie B-240/B-241 im ersten Lauf. Dass sie Doku sind und behoben, ändert die
+Regel nicht: die Qualitätsschwelle des Laufs ist gerutscht, und das will der Nutzer sehen, bevor weitere
+Sprints auf ihr stehen. Der Zähler (2 von 5) hätte nicht gestoppt.
+
+### Vorgeschlagener Mechanismus — nicht gelandet (Freigabe 3)
+
+**Kein Tor, eine Reihenfolge:** jeder Sweep, der ein Akzeptanzkriterium belegt, läuft als **letzter Schritt vor
+dem Commit** – nach dem Reviewer, nach jedem Nachtrag – und seine Ausgabe (Kommando, Ausschlussliste, Treffer
+mit Zeile) steht im Verlauf **mit Zeitstempel relativ zum letzten Edit** („nach dem letzten Edit um …"). Als
+Satz in `pm-loop` Step 5 („Verify for real"), nicht im Root-`CLAUDE.md`. **Kosten:** ein Satz im Verfahrenstext,
+der heute schon über Budget liegt (`backlog/README.md` +114 B, `pm-loop/SKILL.md` ungemessen) – wer ihn landet,
+streicht einen anderen. **Warum kein Tor:** ein Guard-Test, der „Kapitel" in `docs/` verbietet, bräuchte dieselbe
+Ausschlussliste als Code und würde jede historische Erzählung zum Pflegefall machen; der Fehler ist ein
+Zeitpunkt, kein fehlender Prüfer. **Bewusst ungedeckt:** B-112 in Sätzen, die kein Reviewer liest – drei
+Treffer in zwei Sprints sagen, dass „±5 Zeilen" nicht reicht, wenn die Ersetzung sieben Dateien trifft; die
+ehrliche Alternative ist, bei einem Wortwechsel über mehr als drei Dateien **jeden** Treffer im Brief zu
+listen, nicht nur die Dateien.
+
 ## Offene Roadmap · Änderungsstand
 
-Die Reihenfolge lebt in [docs/backlog/](backlog/README.md); hier nur die Begründung des Stands nach dieser
-Nacht: **drei Sprints, acht Stories abgenommen** (B-235, B-159, B-176 · B-190, B-131, B-166 · B-158, B-179),
-alle derselben Familie – eine Stelle behauptet etwas, das nicht stimmt (Ladefenster als Ausfall, fremder
-Ersteller, Fließtext statt Überschrift, Erfolg über einem Fehlschlag, tote Route, Hand-Antwort neben der
-Projektion). Der natürliche nächste Sprint sind die zwei Nachschau-Defekte **B-240** und **B-241** (beide
-`ausformuliert`, Fix benannt) – und der Grund, warum der Lauf hier endet.
+Die Reihenfolge lebt in [docs/backlog/](backlog/README.md); hier nur die Begründung des Stands nach diesem Tag:
+**zwei Läufe, fünf Sprints, vierzehn Stories abgenommen** (erster Lauf: B-235, B-159, B-176 · B-190, B-131, B-166 ·
+B-158, B-179; zweiter Lauf: B-240, B-241, B-238 · B-243, B-244, B-237 – dazu B-246 als im Sprint behobener
+Nachschau-Defekt), alle derselben Familie: eine Stelle behauptet etwas, das nicht stimmt – ein Ladefenster, ein
+fremder Ersteller, eine Ebene, die es nicht gibt, ein Wächter, der zwei von vier Feldern nennt, eine Hilfe mit
+einer Option, die niemand liest.
 
-**Neue Stories dieser Nacht:** B-236 (Gruppe ohne `fieldset`/`legend`, `idee`), B-237 (KI-Creator-Hilfe
-`--chapter`, `idee`), B-238 (`Creator.http` fährt die tote Route, `ausformuliert`, P2), B-239 (deutsche
-`/// <summary>` im Wiki-Beispiel, `idee`), B-240, B-241.
+**Neue Stories des zweiten Laufs:** B-242 (zweite `.http`-Datei mit toten Routen und eingebranntem Token – Löschen
+ist eine Streich-Entscheidung), B-243 (abgenommen), B-244 (abgenommen), B-245 (`idee`, unverifiziert: Token mit
+`fid` auf gelöschten Adult), B-246 (abgenommen, `entgangen_bei: B-241`).
 
-**Commits (nichts gepusht):** Sprint 1 `7844894` + Nachtrag `738ef99` · Sprint 2 `95b0624` + Nachtrag
-`1372d0e` · Sprint 3 `98c8431` + Nachträge `03cb16e` und der hier.
+**Commits (nichts gepusht):** Sprint 4 `7c33765` + Nachtrag `228e095` · Sprint 5 siehe Nachtrag.
 
 ## Für den Morgen
 
-1. **Drei Retro-Vorschläge dieser Nacht** landen oder verwerfen (Sprint 1: Auflage 5 auf Absichtserklärungen
-   ausdehnen – Mutante benennen **und** fahren; Sprint 2: **Tor** „jede 400-Zusicherung in `Api.Tests` liest
-   den `code`", gemessen 97 Zusicherungen / 123 `code`-Lesungen; Sprint 3: **Tor** für den Index-Wächter
-   selbst – fester Probe-Lauf gegen einen Wegwerf-Root mit bekannten Lücken, Prototyp
-   `scratchpad/index-probe.sh`). Dazu die zehn älteren, unverändert offen.
-2. **Zwei Nachschau-Defekte** als nächster Sprint: B-240 (zwei Zeilen im Index-Skript, rote Probe im Harness)
-   und B-241 (sechs Doku-Stellen, Grep mit Ausschlussliste).
-3. **Vier Entscheidungen, die der Lauf nicht treffen durfte:** B-156 (`isMine` → `isOwn`, Vertragsbruch),
-   B-230 (eine Quelle für den PIN-Hash, Schema), B-141/B-145 (fachliche Fragen zur Eindeutigkeit), B-164
-   (`useAsync`-Architektur – zum dritten Mal im Weg: die Nachschau zu B-235 musste den Zwischen-Render
-   erklären).
-4. **Ein Blick des Menschen:** `/vater/exercises/neu` – drei gleiche Überschriften, und die sieben Gruppenköpfe
-   jetzt in Versalien inklusive „(optional)" (B-176); dazu `docs/REST/Creator.http` einmal im REST-Client
-   fahren, sobald B-238 gebaut ist.
-5. `git log --oneline` gegen `3b99bef`: sechs Commits dieser Nacht; **nichts ist gepusht.**
+1. **Fünf Retro-Vorschläge dieses Tages** landen oder verwerfen – erster Lauf: Auflage 5 auf Absichtserklärungen
+   ausdehnen (Mutante benennen **und** fahren – in Sprint 5 bereits so praktiziert, B-244); **Tor** „jede
+   400-Zusicherung liest den `code`"; **Tor** für den Index-Wächter (Probe-Lauf gegen Wegwerf-Root). Zweiter
+   Lauf: **Tor** „Routen in `docs/REST/**/*.http` gegen OpenAPI" (hätte B-238 und B-242 seit B-106 rot gezeigt);
+   **Reihenfolge** „Sweep als letzter Schritt vor dem Commit, mit Zeitstempel". Dazu die zehn älteren.
+2. **Zwei Entscheidungen, die der Lauf nicht treffen durfte:** B-242 (Datei löschen?), und der Nebenfund aus
+   B-237 (`CommandLine` meldet unbekannte Optionen nicht – Story anlegen?). Weiter offen: B-156, B-230,
+   B-141/B-145, B-164, B-181 Punkt 2.
+3. **Ein Blick des Menschen:** `docs/REST/Creator.http` einmal im REST-Client fahren und das Datum im Kopf
+   eintragen (curl sagt 23/23, die Variablensyntax des Clients hat niemand ausgeführt); `/vater/exercises/neu`
+   (Überschriften/Versalien aus dem ersten Lauf, B-176).
+4. **Ein Werkzeug-Fallstrick für den nächsten Lauf:** ein Reviewer-Agent hat die Wegwerf-DB gelöscht, auf der
+   mein Server lief – der Brief muss sagen, was gerade in Gebrauch ist; und ein Nachschau-Agent hat den Git-Index
+   per `--work-tree`-Checkout berührt (wiederhergestellt, von mir geprüft) – `git archive … | tar -x` ist der
+   richtige Griff.
+5. `git log --oneline` gegen `9f45907`: vier Commits dieses Laufs; **nichts ist gepusht.**

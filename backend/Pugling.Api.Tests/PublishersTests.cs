@@ -20,6 +20,12 @@ public class PublishersTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
         var created = await first.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("westermann", created.GetProperty("slug").GetString());
 
+        // The 201 body comes from the same projection as a later GET (B-244): a field added to the
+        // projection must not go missing from the create response silently. Mutant (Create answering
+        // with a hand-built row, foreignSeriesCount -1): exactly this case goes red (1 failed / 4 passed in this class).
+        var fetched = await creator.GetFromJsonAsync<JsonElement>($"/api/v1/creator/publishers/{created.GetProperty("id").GetInt32()}");
+        Assert.Equal(fetched.GetRawText(), created.GetRawText());
+
         // A second call: 200 instead of 409 - an agent may repeat the same catalog setup.
         var again = await creator.PostAsJsonAsync("/api/v1/creator/publishers", new { name = "Westermann" });
         Assert.Equal(HttpStatusCode.OK, again.StatusCode);

@@ -48,7 +48,7 @@ public static class DraftRules
         violations.Require(!string.IsNullOrWhiteSpace(title), "Der Titel fehlt.");
         violations.Require(title is null || title.Length <= 120, "Der Titel ist länger als 120 Zeichen.");
         violations.Require(title is null || !briefing.ExistingExerciseTitles.Contains(title.Trim(), StringComparer.OrdinalIgnoreCase),
-            $"Der Titel '{title}' existiert im Kapitel bereits – wähle einen anderen.");
+            $"Der Titel '{title}' existiert in der Unit bereits – wähle einen anderen.");
     }
 
     /// <summary>The task count is within bounds and matches the requested value.</summary>

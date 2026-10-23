@@ -54,9 +54,10 @@ typischerweise `"items": []` und `"refs": null`.
   (Lehrpläne via `PlanPosition` + Klassenarbeiten, auf eigene Kinder gefiltert), Lösch-Schutz 409
   ([ExerciseControllerBase.Delete](../backend/Pugling.Api/Controllers/Creator/ExerciseControllerBase.cs)).
 - **Web-UI:** [VaterVocab.tsx](../frontend/src/vater/VaterVocab.tsx) (Einfach/Komplex-Umschalter, Suche,
-  Inline-Bearbeiten/Löschen); [VaterExercises.tsx](../frontend/src/vater/VaterExercises.tsx)
-  (Vokabel-Editor `VocabRefPicker` wählt Store-Einträge bzw. Items, „+ anlegen & wählen";
-  Unit-Liste mit Verwendung + Löschen). API/Types: [lib/api.ts](../frontend/src/lib/api.ts),
+  Inline-Bearbeiten/Löschen); [VaterExerciseCreate.tsx](../frontend/src/vater/VaterExerciseCreate.tsx)
+  (Vokabel-Editor `VocabRefPicker` wählt Store-Einträge bzw. Items, „+ anlegen & wählen");
+  [VaterExercises.tsx](../frontend/src/vater/VaterExercises.tsx) (Übungsliste mit Verwendung + Löschen,
+  Filter Fach/Reihe/Unit). API/Types: [lib/api.ts](../frontend/src/lib/api.ts),
   [lib/types.ts](../frontend/src/lib/types.ts). Tests: `VocabTwoStepTests`, `PositionVocabRefTests`, `CatalogManagementTests`.
 
 ## Agenten-API (neu — Datenarbeit auslagerbar)

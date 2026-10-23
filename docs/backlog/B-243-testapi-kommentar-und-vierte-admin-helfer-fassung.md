@@ -1,10 +1,10 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/tests]
+tags: [typ/story, status/abgenommen, bereich/tests]
 aliases: [AdminAdultAsync-Summary falsche Richtung, RegisterAdminFatherAsync in RemarkTests]
-status: ausformuliert
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
+groesse: XS
 wo: backend
 migration: nein
 vertragsbruch: nein
@@ -61,7 +61,59 @@ die der Autor kannte, statt über das Merkmal (`IsAdmin = true`). Und ein Kommen
 1. Helfer behalten (mit `MakeAdmin` darin) oder ganz auflösen? *Empfehlung: behalten* – die Summary erklärt,
    warum dieser Test einen Admin braucht; das ist lokal richtig.
 
+## Entscheidungen
+
+Gegrillt im zweiten Nachtlauf 2026-10-23 (Freigabe 1, `art: Defekt`).
+
+1. **Helfer behalten, Rumpf auf `TestApi.MakeAdmin` umstellen** (Punkt 1): `RegisterAdminFatherAsync` bleibt als
+   Name und mit seiner Summary (sie erklärt, warum *dieser* Test einen Admin braucht – Break-Glass umgeht RWX,
+   geteilte Factory), ruft aber `RegisterFatherAsync` + `TestApi.MakeAdmin` statt eigenem EF-Zugriff.
+   Begründung: B-179s Lehre war „der Merksatz steht einmal", nicht „jeder Aufrufer ruft TestApi direkt".
+   **Kosten:** eine Indirektion mehr als nötig; dafür bleibt der lokale Grund lesbar.
+2. **Die drei `using`s prüfen, nicht raten:** `Microsoft.EntityFrameworkCore`, `Microsoft.Extensions.DependencyInjection`,
+   `Pugling.Api.Data` werden in `RemarkTests.cs` nur vom Helfer benutzt (`:662-666`, drei Treffer, alle im
+   Helfer). Nach dem Umbau sind sie tot – IDE0005 ist in `.editorconfig:39` eine Warnung und
+   `TreatWarningsAsErrors` gilt repo-weit, der Build würde rot. Sie fliegen mit. **Kosten:** keine.
+3. **Rote Zahl ist ein Grep, kein Test** (Aufräumen-artiger Teil): `rg -c "IsAdmin = true" backend/Pugling.Api.Tests`
+   zählt vorher **zwei** Dateien (`TestApi.cs`, `RemarkTests.cs`), nachher **eine**. Der Beleg, dass das
+   Verhalten gleich bleibt, ist die Suite (`Zeigt_Fremde_Anmerkungen_Nur_Per_Break_Glass`-Fall in RemarkTests
+   grün vorher wie nachher). Begründung: ein Umbau ohne Verhaltensänderung hat keine Zusicherung, die rot werden
+   kann – das ist die Lage aus B-179 Entscheidung 4, hier ausdrücklich so benannt. **Kosten:** kein Tor gegen
+   die fünfte Kopie; das Merkmal (`IsAdmin = true`) ist jetzt aber als Grep benannt, der Nachschau-Prüfer kann es
+   zählen.
+4. **Punkt 1 der Story (Summary-Richtung) ist in `7c33765` erledigt** – AK 1 wird beim Abnehmen nachgelesen,
+   nicht erinnert.
+
+## Schätzung
+
+**Größe XS** (Anker B-179 selbst: ein Helfer, eine Datei). `wo: backend`, keine Migration, kein Vertrag.
+
+**Angriffsplan:** Grep-Zahl vorher → Helfer-Rumpf auf `RegisterFatherAsync` + `TestApi.MakeAdmin` → tote `using`s
+raus → Build (Hook) → Grep-Zahl nachher → Suite → Reviewer → Commit.
+
+**Risiko:** `RegisterFatherAsync` könnte in `RemarkTests` anders registrieren als `TestApi.AdminAdultAsync`
+(Name, PIN) – darum der eigene Helfer bleibt, nur sein Flag-Schritt wird geteilt.
+
+**Testweg:** Suite (879 → 879), Grep 2 → 1.
+
 ## Verlauf
+
+- **2026-10-23** — **abgenommen** (zweiter Nachtlauf, Sprint 5). `pugling-reviewer`: Verhalten identisch
+  (`TestApi.MakeAdmin` synchron, Flag vor dem Login in `FatherWithoutGlobalReadAsync`), die drei entfernten
+  `using`s nirgends sonst gebraucht (Grep auf EF-/DI-Symbole → 0; `.Select` aus `ImplicitUsings`), Summary des
+  Helfers weiter wahr; **kein Fund**. Nachschau-Nit aus Sprint 4 übernommen: die Summary von `AdminAdultAsync`
+  sagt jetzt „every later case … in which the seeded adult himself is expected to get 403" (betroffen sind
+  nur Fälle, in denen Adult 1 selbst 403 erwartet – `FachEigentumTests.cs:305-320/:623-637`). **Rollengang:**
+  Entwickler-Sicht, kein UI; Vater/Sohn Regressionszeugen (Suite). Commit: siehe Nachtrag.
+- **2026-10-23** — **gebaut** (zweiter Nachtlauf, Sprint 5). **Zahl vorher/nachher:** `rg -c "IsAdmin = true"
+  backend/Pugling.Api.Tests/*.cs` → vorher **2 Dateien** (`TestApi.cs`, `RemarkTests.cs`), nachher **1**
+  (`TestApi.cs`). `RegisterAdminFatherAsync` ruft `RegisterFatherAsync` + `TestApi.MakeAdmin`; die drei
+  `using`s (`EntityFrameworkCore`, `DependencyInjection`, `Pugling.Api.Data`) waren danach tot (Grep über die
+  Datei: 0 Restnutzung) und sind weg. AK 1 nachgelesen: `TestApi.cs:63-65` sagt „would see the break-glass 200
+  instead and go red" (seit `7c33765`). Suite **879/879** – ein Umbau ohne Verhaltensänderung, die
+  Suite ist der Beleg (Entscheidung 3).
+
+- **2026-10-23** — gegrillt und geschätzt im zweiten Nachtlauf (Sprint 5, Freigabe 1).
 
 - **2026-10-23** — angelegt aus der **Nachschau** zu Sprint 3 des ersten Laufs (Commit `98c8431`),
   `entgangen_bei: B-179`. Punkt 1 ist im selben Sprint (Sprint 4, zweiter Lauf) korrigiert – ein Satz von

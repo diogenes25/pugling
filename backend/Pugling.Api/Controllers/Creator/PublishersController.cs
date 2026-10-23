@@ -123,9 +123,10 @@ public class PublishersController(PuglingDbContext db) : ControllerBase
         db.Publishers.Add(publisher);
         await db.SaveChangesAsync(ct);
 
-        // A fresh publisher has no series at all yet, so both counts are zero by construction.
+        // Read back through the shared projection rather than hand-building the row (B-244, same move as
+        // SubjectsController): a field added to Project must not go missing from the 201 body silently.
         return CreatedAtAction(nameof(Get), new { id = publisher.Id },
-            new PublisherResponse(publisher.Id, publisher.Name, publisher.Slug, 0, 0, publisher.CreatedAt));
+            await Project(db.Publishers.AsNoTracking().Where(p => p.Id == publisher.Id), User.CreatorId()).FirstAsync(ct));
     }
 
     /// <summary>

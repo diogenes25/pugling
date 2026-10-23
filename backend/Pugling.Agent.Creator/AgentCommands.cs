@@ -455,9 +455,12 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
 
         Weitere Optionen:
           --type <Typ>          Vocabulary | Cloze | Translation | Grammar      (Pflicht bei create)
-          --subject <id>        Zielfach     (Standard: Fach des Profils, sonst erstes Fach mit Kapitel)
-          --chapter <id>        Zielkapitel  (Standard: erstes Kapitel des Fachs;
-                                allein angegeben bestimmt es auch das Fach)
+          --series <id>         Lehrwerk-Reihe der Übung  (Standard: Reihe des Profils, sonst die
+                                erste Reihe mit Unit; das Fach kommt aus dem Profil, sonst aus der Reihe)
+          --series-unit <id>    Unit, in der die Übung entsteht (Standard: erste Unit der Reihe;
+                                allein angegeben bestimmt sie auch die Reihe – mit --profile muss
+                                sie in dessen Reihe liegen)
+          --subject <id>        nur profiles: Fach, auf das die Treffer gefiltert werden
           --topic "..."         Thema/Lehrbuch-Unit
           --count <n>           Anzahl Aufgaben                                 (Standard 10)
           --types a,b,c         Übungstypen des Bündels    (exam: Vocabulary,Cloze,Grammar;

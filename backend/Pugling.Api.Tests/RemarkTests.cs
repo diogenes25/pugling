@@ -1,9 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Pugling.Api.Data;
 
 namespace Pugling.Api.Tests;
 
@@ -659,11 +656,7 @@ public class RemarkTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWe
     private async Task<int> RegisterAdminFatherAsync(string pin)
     {
         var id = await RegisterFatherAsync("Admin-Vater", pin);
-        using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-        var father = await db.Adults.FirstAsync(f => f.Id == id);
-        father.IsAdmin = true;
-        await db.SaveChangesAsync();
+        TestApi.MakeAdmin(_factory, id);
         return id;
     }
 

@@ -130,7 +130,7 @@ public sealed record CreatorBriefing(
         if (ExistingExerciseTitles.Count > 0)
         {
             text.AppendLine();
-            text.AppendLine("## Bereits vorhandene Übungen in diesem Kapitel (Titel nicht wiederholen)");
+            text.AppendLine("## Bereits vorhandene Übungen in dieser Unit (Titel nicht wiederholen)");
             foreach (var title in ExistingExerciseTitles) text.AppendLine($"- {title}");
         }
 
