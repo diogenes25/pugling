@@ -27,3 +27,4 @@ nur das Gefragte sprechen, nie die Lösung – sonst ist es ein Lösungskanal am
 ## Verlauf
 
 - **2026-10-23** — angelegt (Quelle: Knowunity-Vergleich, Etappe 5 des Übernahmeplans).
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): **die Grundannahme stimmt nicht** – Vokabeln haben schon Aussprache-Audio (`PronunciationAudioUrl`, `ExerciseContentResolver.cs:100`; `AudioButton` an der Karte, `SohnPractice.tsx:295`) und eine Hörstufe, in der der Server bewusst keinen Text schickt (`AudioButton.tsx:8-10`). Browser-TTS bräuchte den Text am Client und wäre in der Hörstufe ein Lösungskanal. Übrig bleibt: TTS als Rückfall für Vokabeln **ohne** Aufnahme und nie in der Hörstufe – das ist die Frage beim Ausformulieren.

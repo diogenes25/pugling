@@ -90,3 +90,4 @@ Monaten wieder her.
   hält die Story ausdrücklich fest, weil sie den Fund sonst unsichtbar macht.
   **Bewusst nicht in B-123 mitgenommen:** dort war es eine Datei, hier sind es 70 Stellen
   mit einer Abwägung je Stelle (Punkt 3) und einem Tor als eigentlichem Ziel.
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht und ist gewachsen – `<b>` 82, `<i>` 7, `<em>` 4, zusammen **93** statt 70 (geparstes `docs/openapi/v1.json`). **AK 3 gilt nur für Schemas:** die Annahme „eine leere `///`-Zeile ergibt einen Absatz“ stimmt für Schema-Beschreibungen, für Operation-Summaries hat B-147 am 2026-09-02 das Gegenteil gemessen – vor dem Bau richtigstellen, mit B-147 zusammen bauen.

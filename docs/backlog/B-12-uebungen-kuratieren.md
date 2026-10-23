@@ -236,3 +236,4 @@ End-to-End-Rundlauf nach dem Bauen. Kein Playwright-E2E zwingend (kein Vater→S
 - **2026-08-07** — Autonomer Modus (Opt-in je Vorhaben, README → „Autonomer Modus") vom Nutzer im Dialog
   ausdrücklich freigegeben: ein Nachtlauf darf diese Story trotz `art: Wunsch` ohne weitere Rückfrage bauen
   (Rollengang/Reviewer bleiben Pflicht wie bei jeder Abnahme).
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): gilt, kein Teil geliefert (kein `ExerciseRating`/`AverageRating` im Code). Zeilen verschoben (`ApplySort` → `ExerciseCatalogController.cs:133-150`, `Usage` → `:225`, `Exercise` → `LearnEntities.cs:77`, `ExerciseGrant` → `:189`); der Filter `chapterId` heißt heute `seriesUnitId` (`:49`). Nachtlauffähig (`migration: ja` – nicht im selben Sprint wie eine andere Migration).

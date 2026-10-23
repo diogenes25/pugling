@@ -83,6 +83,15 @@ Rollengang als E2E, Nachschau als erste Pflichthandlung der Retro, Commits selbs
 Push bleibt bei mir.
 ```
 
+### Pakete statt freier Auswahl
+
+Ohne Vorgabe wählt ein Lauf seine Stories selbst, und gemessen wählt er dann vor allem die Defekte aus der
+Nachschau des Vorsprints (Befund 1 der [Backlog-Sichtung vom 2026-10-23](pm-sitzung-2026-10-23-backlog-sichtung.md)).
+Liegt eine **Backlog-Sichtung** mit Arbeitspaketen vor (`docs/pm-sitzung-<Datum>-backlog-sichtung.md`),
+genügt ein Satz am Ende des Auftrags: *„Fahre die Pakete NP-1, NP-2, NP-3 aus <Protokoll>, in dieser
+Reihenfolge."* Jedes Paket ist ein Sprint nach `pm-loop`. Die Freigaben oben gelten unverändert, und der
+Zustand jeder Story steht weiter in ihrer Datei. Veraltet ein Paket, gewinnt die Story.
+
 ## Warum genau diese drei Freigaben
 
 Jede setzt eine Schutzregel aus, und jede hat ihren Preis:

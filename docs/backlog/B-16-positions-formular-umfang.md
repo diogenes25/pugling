@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, bereich/training, rolle/supervisor]
+tags: [typ/story, status/ausformuliert, bereich/frontend, bereich/training, rolle/supervisor]
 aliases: [Positions-Edit-Formular]
-status: geschaetzt
+status: ausformuliert
 prio: P3
 art: Wunsch
 groesse: S
@@ -130,3 +130,4 @@ Route und ohne Änderung am Happy-Path, den `e2e/vater-von-null.spec.ts` schon a
   `Stage` ohne eigene Validierung (bleibt bei B-79) (autonom getroffen, Nutzerauftrag 2026-08-04).
 - **2026-08-03** — geschätzt: Größe S, `wo: frontend`, kein Vertragsbruch, kein Backend-Schritt; Testweg
   neuer Vitest-Test für `PlanPositions` (autonom getroffen, Nutzerauftrag 2026-08-04).
+- **2026-10-23** — **Zurück auf `ausformuliert`** in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): Die Lücke besteht (`stage`, `scope`, `speedThresholdSeconds`, `speedBonusPoints` fehlen in `PositionSettings`/`settingsToDto`, `PlanPositions.tsx`), aber **Entscheidung 4 ist überholt**: seit B-79 prüft der Server `Stage` (`PlanPositionsController.cs:112-114,147,222`), ein rohes Zahlenfeld liefe in `validation_error`. Neu zu entscheiden: Stufe als Auswahl (Optionen aus dem Manifest statt der fest kodierten `VOCAB_FORMS`?) und wie „zurück auf Standard“ geht, wenn PATCH `null` als „bleibt“ liest (`StudyPlanDtos.cs:133-135`). Die Datei hat 773 statt ~382 Zeilen, `PlanPositions.test.ts` existiert bereits; neu ist das Zeitfenster (`timeSlots`, `clearTimeSlots`).

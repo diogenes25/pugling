@@ -190,3 +190,4 @@ Preview-Endpunkts gegen einen echten Aufsatz.
 - **2026-08-07** — Autonomer Modus (Opt-in je Vorhaben, README → „Autonomer Modus") vom Nutzer im Dialog
   ausdrücklich freigegeben: ein Nachtlauf darf diese Story trotz `art: Wunsch` ohne weitere Rückfrage bauen
   (Rollengang/Reviewer bleiben Pflicht wie bei jeder Abnahme).
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): gilt, nur Zeilen verrutscht (`EssayExerciseType.ItemsOf` → `BuiltInExerciseTypes.cs:76`, `ApiErrors.cs:184/191`, E2E `uebungstypen.spec.ts:210-215`). Neu im Controller: `NoContentProblemAsync` (`ExercisePreviewController.cs:35-42`), berührt den Plan nicht. Der in Entscheidung 4 empfohlene eigene Eintrag „Kind sieht den Schreibauftrag nicht“ wurde nie angelegt. Nachtlauffähig.

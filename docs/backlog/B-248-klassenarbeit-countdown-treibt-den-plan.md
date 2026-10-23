@@ -30,3 +30,4 @@ Bonus) sein soll und wer das Fenster festlegt.
 ## Verlauf
 
 - **2026-10-23** — angelegt (Quelle: Knowunity-Vergleich, Etappe 1 des Übernahmeplans).
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht; „wirkt auf nichts“ ist zu stark – Noten fließen in die Objective-Auswertung (`ObjectiveEvaluationService.cs:89-90`), es gibt den `repeat`-Endpunkt (`KlassenarbeitenController.cs:276`). Die Bündel-Auflösung teilt sie mit B-39.

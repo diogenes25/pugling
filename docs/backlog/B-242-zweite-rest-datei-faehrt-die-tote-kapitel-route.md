@@ -69,3 +69,4 @@ mit Rollen-Claims gehört nicht ins Repo, auch nicht als Beispiel.
   `ausformuliert`: Fundstellen mit Zeile, Token-Ablauf aus dem Payload gelesen. **Bewusst nicht in B-238
   mitgenommen** (README: ein Fund beim Bauen wird eine eigene Story): B-238s AK 1 ist auf `Creator.http`
   geschnitten, und Punkt 1 ist eine Streich-Entscheidung.
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht (9× `chapters`, `eyJ` in `:4`); die Datei wird nirgends referenziert. Die Streich-Entscheidung (offener Punkt 1) steht auf der Grill-Tagesordnung als Ja/Nein-Frage; nach einem Ja ist der Rest XS.

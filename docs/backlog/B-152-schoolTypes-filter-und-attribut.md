@@ -60,3 +60,4 @@ Wert tun, den sie nicht kennt: zeigen und sperren, verwerfen, oder durchreichen?
 - **2026-08-11** — angelegt aus der Grill-Runde zu B-149 (Entscheidung 4). Bewusst nicht dort
   mitgenommen: B-149s Ziel ist ohne diese Frage erfüllt, und die Antwort ist eine Produktentscheidung,
   keine Aufräumarbeit.
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht, alle drei Verhaltensweisen sind da (`VaterLehrwerke.tsx:522`, `VaterFachlehrer.tsx:362`, `ExerciseEditModal.tsx:276-277`, `VaterKind.tsx:153-155,186-191`; Modell jetzt `AdminEntities.cs:75`).

@@ -25,3 +25,4 @@ sinnvollsten auf `idee` stehen, bis ein konkreter Bedarf (z. B. lokalisierte Led
 
 - **2026-08-04** — angelegt beim Teilen von [B-87](B-87-vater-web-franzoesisch-server-sprachfeld.md)
   (Entscheidung 2 dort), bewusst auf `idee` belassen: bedarfsgetrieben, kein Vorgriff ohne Konsument.
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): kein Konsument in Sicht; der als Treiber genannte B-30 ist verworfen, Ledger-Texte bleiben laut `CLAUDE.md` bewusst deutsch. Steht auf der Grill-Tagesordnung „Ist Mehrsprachigkeit über B-85 hinaus ein Ziel?“.

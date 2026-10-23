@@ -28,3 +28,4 @@ Story umbenannt — reine Backlog-Pflege, keine inhaltliche Änderung).
 - **2026-08-04** — angelegt beim Teilen von [B-87](B-87-vater-web-franzoesisch-server-sprachfeld.md)
   (Entscheidung 2 dort), bewusst auf `idee` belassen: die Story hängt an B-85 **und** B-91, deren Zuschnitt
   noch nicht feststeht — eine Ausformulierung vor deren Klärung wäre Spekulation statt Recherche.
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): blockiert durch B-85 und B-91; Grill-Tagesordnung wie B-91.

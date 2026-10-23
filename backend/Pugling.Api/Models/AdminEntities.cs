@@ -48,7 +48,7 @@ public class Adult
     /// <summary>
     /// PIN <b>hash</b> in <see cref="Auth.PinHasher"/> format, never plaintext. Every write goes through
     /// <c>PinHasher.Hash</c> and is mirrored onto <c>Account.PinHash</c> (<c>AccountService.MirrorAsync</c>),
-    /// otherwise the account-centric <c>auth/login</c> drifts out of sync (B-216).
+    /// otherwise the account-centric <c>auth/login</c> drifts out of sync (B-230).
     /// </summary>
     public string Pin { get; set; } = "";
     /// <summary>
@@ -109,7 +109,7 @@ public class Child
     public ContentRating AllowedContentRating { get; set; } = ContentRating.Everyone;
     /// <summary>
     /// The child's PIN <b>hash</b> in <see cref="Auth.PinHasher"/> format, never plaintext. Written only via
-    /// <c>PinHasher.Hash</c> and mirrored onto <c>Account.PinHash</c> (<c>AccountService.MirrorAsync</c>), see B-216.
+    /// <c>PinHasher.Hash</c> and mirrored onto <c>Account.PinHash</c> (<c>AccountService.MirrorAsync</c>), see B-230.
     /// </summary>
     public string Pin { get; set; } = "";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

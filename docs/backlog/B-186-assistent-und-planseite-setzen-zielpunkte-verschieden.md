@@ -42,3 +42,4 @@ ein vollwertiges Ergebnis; dann wird diese Story `verworfen` mit Grund.
 
 - 2026-09-01 · Aufgenommen aus dem `frontend-reviewer`-Review zu B-45. Die Fundorte sind vom Reviewer am
   Code belegt, die Wirkung habe ich nicht selbst gefahren — darum `unverifiziert`.
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht, Belege stimmen (Intensität 10/20/30 `VaterWizard.tsx:37-39`, immer mitgeschickt `:366`). Die Antwort entscheidet zugleich B-201 (Feldhilfe).

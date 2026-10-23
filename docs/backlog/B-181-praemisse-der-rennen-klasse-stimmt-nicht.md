@@ -19,6 +19,11 @@ nachgeschaut: ""
 
 # B-181 · Die Rennen-Klasse nennt nur einen von zwei Fehlermodi — welcher auftritt, entscheidet die Plattform
 
+## User Story
+
+Als **Entwickler, der die Rennen-Klasse liest**, möchte ich, dass ihre Begründung beide Fehlermodi nennt,
+die ein Leser je nach Plattform sieht, damit ich einen Leser nicht gegen den falschen wappne.
+
 ## Ist-Stand (gemessen, auf zwei Plattformen — der Fehlermodus hängt an ihr)
 
 `backend/Pugling.Api.Tests/OpenApiExampleCatalogConcurrencyTests.cs` beschreibt in ihrem Klassen-Kommentar
@@ -84,6 +89,14 @@ Offen bleiben der Klassen-Kommentar und die Erzählung von B-57.
    Zusicherung, dass der Modus **nicht** auftritt. Einen Fehlermodus künstlich herstellen, den das Produkt
    dort nicht hat, nur damit ein Test ihn zeigt, lohnt in beiden Fällen nicht.
 
+## Akzeptanzkriterien (Entwurf)
+
+1. Der Klassen-Kommentar von `OpenApiExampleCatalogConcurrencyTests` nennt beide Modi (gesperrt unter
+   Windows, zerrissen unter Linux) und dass die Plattform entscheidet.
+2. Ob `OpenApiExampleCatalog.Load` einen Wiederholungsversuch bekommt, steht als nummerierte Entscheidung
+   fest – mit Begründung und Kosten (Punkt 2; Verhaltensänderung im Produktionspfad, beim Menschen).
+3. Wird der Wiederholungsversuch gebaut, hält ein Test ihn für **beide** Ausnahmetypen fest.
+
 ## Verlauf
 
 - 2026-08-14 · Aufgenommen beim Bauen von B-165 im Nachtlauf, direkt auf `ausformuliert`: Der Ist-Stand ist
@@ -99,3 +112,4 @@ Offen bleiben der Klassen-Kommentar und die Erzählung von B-57.
   eine Plattform fällt. Rote Probe belegt: mit dem atomaren Schreiber wird der Fall rot (`0/0/422`).
   Mitkorrigiert wurden die zwei Kommentare, die die widerlegte Behauptung wörtlich trugen. **Offen bleibt
   die Story** — Punkt 1 und 2 sind unbeantwortet, Punkt 2 jetzt schärfer.
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): **Offener Punkt 1 ist durch B-57 selbst beantwortet** – dort wurden auf Windows beide Modi beobachtet („954 `IOException` und 419 `JsonReaderException`“, B-57 `:60,:78`). Die Erzählung von B-57 stimmt also; falsch ist nur, dass der Klassen-Kommentar (`OpenApiExampleCatalogConcurrencyTests.cs:17-20`) einen Modus weglässt. Damit zerfällt die Story: (a) Doku-Korrektur XS, nachtlauffähig; (b) Wiederholungsversuch in `OpenApiExampleCatalog.Load` (`:36-37`) auch bei `JsonException` – Verhaltensänderung im Produktionspfad, beim Menschen.

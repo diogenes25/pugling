@@ -37,3 +37,4 @@ steht als Kommentar in der Spec.
 - 2026-09-02 · Aufgenommen aus dem `frontend-reviewer`-Lauf zu B-204. `unverifiziert: true` — der Fundort
   ist belegt, aber ob die Abbildung wirklich alle Geschwister aufnehmen *soll* (statt die Familie anders zu
   schneiden), ist beim Ausformulieren gegen den Code zu prüfen.
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht, **aber anders geschnitten** – `exercise_in_use` steht an vier Stellen mit verschiedener Bedeutung: `ExerciseControllerBase.cs:436` (dynamischer Text über unsichtbare Verwendungen), `ExerciseControllers.cs:269-271` (Items verschieben gesperrt – andere Regel), `SeriesUnitsController.cs:149` (Unit löschen), `TextbookSeriesController.cs:271` (Reihe löschen). Ein fester deutscher Text je Code überdeckte den dynamischen Text und sagte bei `:270` das Falsche. Designwahl: Code aufspalten (Vertragsbruch) oder je Kontext übersetzen.

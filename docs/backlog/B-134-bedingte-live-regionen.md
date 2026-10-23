@@ -129,3 +129,4 @@ hier vermerkt, damit sie nicht unbemerkt wachsen.
   dort **abgelehnt**, weil ein `role` auf einem `{x.error && …}` der vierzehnte Fall genau dieses Defekts
   wäre. Die Behebung ist dieselbe wie hier — eine Region, die schon im DOM steht — und darum dieselbe
   Arbeit. Der Befund und die Stufe bleiben.
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht – 12 von 13 Stellen weiter bedingt; behoben ist nur `VaterLehrwerke.tsx` (dauerhafter `StatusBanner`). Neue Zeilen u. a. `VaterExerciseCreate.tsx:309,311`, `VaterWizard.tsx:640`. Die Rollenwahl je Fundstelle verengt `StatusBanner.tsx:9-16`; nur der Tausch der Toast-Optik in der Arcade (Punkt 3) braucht einen Blick. Nachtlauffähig nach autonomem Grillen, M.

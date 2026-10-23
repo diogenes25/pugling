@@ -26,3 +26,4 @@ Studenten) unverletzt bleibt, und die Minderung muss im `ScoringService` nachvol
 ## Verlauf
 
 - **2026-10-17** — angelegt (Quelle: Khan-Academy-Vergleich, Etappe 6 des Übernahmeplans).
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): **teilweise vorhanden** – ein Tipp auf Wunsch (`SohnPractice.tsx:60,305`, kostenlos, clientseitig) und die Wortlänge über `answerLength`/`LetterBoxes` (`:324`). Die Spalte `HintsUsed` existiert, wird aber von keinem Pfad beschrieben (`StudyPlanEntities.cs:188-194`). Beim Ausformulieren: auf diesen Bestand aufsetzen statt einen neuen Mechanismus zu bauen.

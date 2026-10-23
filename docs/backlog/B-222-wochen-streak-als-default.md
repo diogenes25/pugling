@@ -27,3 +27,4 @@ ist" ist ein zulässiges Ergebnis.
 ## Verlauf
 
 - **2026-10-17** — angelegt (Quelle: Khan-Academy-Vergleich, Etappe 5 des Übernahmeplans).
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): der Streak ist reiner Belohnungs-Multiplikator (`DailyBoxOptions.cs:25`, `PositionProgressService.cs:405`) – Zuckerbrot, nicht Peitsche (die ist `PenaltyCoins`). Khans Argument gegen Tagesdruck trifft damit nur halb; „bleibt“ mit dieser Begründung ist ein naheliegender Ausgang.

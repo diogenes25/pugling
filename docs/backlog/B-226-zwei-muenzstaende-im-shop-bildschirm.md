@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/idee, bereich/frontend, bereich/shop, rolle/student]
+tags: [typ/story, status/verworfen, bereich/frontend, bereich/shop, rolle/student]
 aliases: [Zwei Münzstände, Kopfzeile vs. Shop-Chip]
-status: idee
+status: verworfen
 prio: P3
 art: Frage
 groesse: ""
@@ -9,8 +9,8 @@ wo: ""
 migration: ""
 vertragsbruch: ""
 quelle: docs/pm-sitzung-2026-10-17-nacht.md (Browser-Rollengang Sohn)
-unverifiziert: true
-grund: ""
+unverifiziert: false
+grund: "gegenstandslos – beide Chips lesen dieselbe Context-Variable `coins` aus `api.wallet()` (SohnApp.tsx:52,64,96; SohnShop.tsx:29,152); zwei verschiedene Werte im selben Render sind unmöglich, abgelesen wurde vermutlich ein anderes Element"
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
@@ -30,3 +30,4 @@ Bildschirm sah – keine E2E zählt die beiden Chips gegeneinander.
 ## Verlauf
 
 - **2026-10-17** — angelegt aus dem Browser-Rollengang des Nachtlaufs (Sprint 1), außerhalb des Diffs.
+- **2026-10-23** — **verworfen** in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): am Code widerlegt – Kopfleiste (`SohnApp.tsx:96`) und Shop-Chip (`SohnShop.tsx:152`) rendern beide `coins` aus demselben `useSohn()`-Kontext, eine einzige Quelle `api.wallet()` (`SohnApp.tsx:64`). Taucht der Unterschied im Browser wieder auf, ist das eine neue Story mit Screenshot und Element-Pfad.

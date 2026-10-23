@@ -31,3 +31,4 @@ den Teil-Stories.
 ## Verlauf
 
 - **2026-10-23** — angelegt (Quelle: Knowunity-Vergleich im Gespräch mit dem Nutzer, Plan unter `docs/knowunity-vergleich-plan.md`).
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): der Prioritäts-Beleg gilt nur noch für B-12 – B-11 ist abgenommen; `docs/knowunity-vergleich-plan.md` in derselben Sitzung korrigiert.

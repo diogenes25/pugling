@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/backend, bereich/katalog, rolle/creator]
+tags: [typ/story, status/verworfen, bereich/backend, bereich/katalog, rolle/creator]
 aliases: [Übungstyp-Manifest i18n, DisplayName-Schlüssel, Anzeigename Vertragsbruch]
-status: geschaetzt
+status: verworfen
 prio: P3
 art: Wunsch
 groesse: M
@@ -10,6 +10,7 @@ migration: nein
 vertragsbruch: ja
 quelle: B-38 (geteilt)
 ersetzt_durch: []
+grund: "gegenstandslos im Backend – das Manifest trägt mit `type` (= IExerciseType.Key, ExerciseTypeManifest.cs:33,43) bereits einen stabilen, sprachneutralen Schlüssel; `Label` ist der deutsche Anzeigename daneben. Der Rest – eine Frontend-Übersetzungstabelle mit `type` als Schlüssel – gehört in B-85"
 ---
 
 # B-86 · Das Übungstyp-Manifest liefert Anzeigenamen als Daten, nicht als Schlüssel
@@ -107,3 +108,4 @@ mit dem M-Anker (vokabel-basierter Batch-Pfad).
   ausdrücklich freigegeben: ein Nachtlauf darf diese Story trotz `art: Wunsch` ohne weitere Rückfrage bauen
   (Rollengang/Reviewer bleiben Pflicht wie bei jeder Abnahme). Empfehlung: erst nach B-85 bauen
   (Entscheidung 3, keine harte Abhängigkeit, aber ohne laufende i18n-Schicht ist der neue `Key` wertlos).
+- **2026-10-23** — **verworfen** in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): Die Prämisse („nur Daten, kein Schlüssel“) stimmt nicht – `ExerciseTypeManifest(string Type, string Label, …)` liefert den Schlüssel mit, und das Frontend sucht schon über `type` nach (`frontend/src/lib/exerciseTypes.ts:76`). Der Agent nutzt `Label` nur für eine Konsolenliste (`AgentCommands.cs:78`), nicht in Prompts. `vertragsbruch: ja` war zudem falsch (ein additives Feld ist kein Bruch, README). Der verbleibende Frontend-Teil ist in B-85 vermerkt.

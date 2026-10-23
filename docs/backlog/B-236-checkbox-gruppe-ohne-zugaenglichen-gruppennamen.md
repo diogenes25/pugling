@@ -43,3 +43,4 @@ Typografie-Regel aus B-176 müsste `legend` mit abdecken (oder `legend.group-lab
   B-176 mitgenommen:** dessen Ziel (die Überschrift sieht aus wie eine) ist ohne diese Story erfüllt, und
   die Bindung ist eine Markup-Entscheidung, die B-11 ausdrücklich anders getroffen hat. `unverifiziert`:
   wie Screenreader die drei Gruppen heute ansagen, ist nicht gemessen.
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht (`VaterExerciseCreate.tsx:247,255,290`). Vorbild im Repo: `VaterFachlehrer.tsx:427-428` (`<fieldset>` mit zurückgesetzter Optik + `<legend>`). Weitere Kandidaten einzeln prüfen: `exerciseConfig.tsx:438,694,719`, `ClozeTexts.tsx:272`, `VaterVocab.tsx:224,600`. S, autonom.

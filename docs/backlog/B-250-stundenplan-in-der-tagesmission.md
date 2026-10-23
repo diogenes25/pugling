@@ -27,3 +27,4 @@ Sortierlogiken entstehen. Voraussetzung: die Position kennt ihr Fach (über die 
 ## Verlauf
 
 - **2026-10-23** — angelegt (Quelle: Knowunity-Vergleich, Etappe 3 des Übernahmeplans).
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht (`Timetable` außer im eigenen Controller nur im `SubjectsController` referenziert). Haken: das Fach hängt nur optional an der Reihe (`CurriculumEntities.cs:42`) – Positionen ohne Fach fallen aus der Gewichtung.

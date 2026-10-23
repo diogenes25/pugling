@@ -37,3 +37,4 @@ ist eine Schemaänderung (Kette neu falten) und berührt den Seed-Nachlauf.
   dem 2026-09-04 an „Zwei Wiederhol-Knöpfe verschwinden …" vergeben (abgenommen, mit Commits, Protokoll und
   `entgangen_bei`-Verweisen); die Projektanalyse hat sie am 2026-10-17 ein zweites Mal vergeben. Die
   abgenommene Story behält die Id. Der Index zeigte beide Zeilen als B-216, und kein Tor hat es gemeldet.
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): Belege stimmen. Die Kommentare an `Models/AdminEntities.cs` zeigten noch auf die doppelt vergebene Id B-216 – in derselben Sitzung auf B-230 korrigiert. Reihenfolge: **nach B-28** (dessen Leer-PIN-Guard gehört zentral in `PinHasher.Verify`). Beide Varianten brauchen eine Migration, eher M; die Wahl (Profil-Hash entfällt vs. `auth/login` entfällt) ist beim Menschen.

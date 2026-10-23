@@ -55,7 +55,16 @@ Reparatur zur Hälfte aufgehoben hat, ohne ihn anzufassen.
    damit **eine** Formulierung je Begriff existiert — zwei Fassungen wären ein Bruch mit seiner
    Begründung. Nachsehen, nicht vermuten.
 
+## Akzeptanzkriterien (Entwurf)
+
+1. Der Hilfetext `pointsGoalMet` beschreibt auf der Plan-Seite nur, was dort gilt: die Empfehlung wird
+   beim Hinzufügen vorbelegt, eine Änderung gilt für **diese** Position.
+2. Im Assistenten behauptet derselbe oder ein eigener Text nichts, was dort nicht zutrifft – gemäß der
+   Antwort auf [B-186](B-186-assistent-und-planseite-setzen-zielpunkte-verschieden.md).
+3. `feldhilfe.spec.ts` (oder ein Vitest) sichert den neuen Wortlaut je Ort zu.
+
 ## Verlauf
 
 - 2026-09-02 · Aufgenommen aus der **Nachschau** zu Sprint 2. `entgangen_bei: [B-191]` für die erste
   Hälfte — sie wurde durch jene Story unwahr. Die zweite Hälfte ist älter und gehört zu B-186.
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht (`fieldHelp.ts:54-55`, Reset `PlanPositions.tsx:512,632`, Render im Assistenten `VaterWizard.tsx:590`). Ist das XS-Bauticket der Antwort auf B-186 – beide in einer Sitzung entscheiden, B-201 danach autonom bauen.

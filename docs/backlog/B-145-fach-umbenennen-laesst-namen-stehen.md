@@ -45,3 +45,4 @@ Beim Ausformulieren mitzunehmen (zwei Beobachtungen desselben Reviews):
   **Bewusst nicht in B-142 mitgenommen:** dessen Ziel — die Zeile widerspricht sich nicht mehr selbst,
   wenn die Id wandert — ist ohne diese Story erfüllt, und der Fehler liegt außerhalb des Diffs (er ist
   älter). `unverifiziert: true`, weil die Belege aus dem Review stammen und nicht aus eigener Recherche.
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht (`SubjectsController.cs:86-94` setzt nur `Name`), Selbstheilung beim nächsten PATCH bestätigt (`TextbookSeriesController.cs:240-241`). Uneinheitliche Fehlercodes weiter da (`invalid_reference` vs. `validation_error`). Der Code verengt die Antwort (`SubjectNaming`, drei `UPDATE`s) – autonom grillbar, S.

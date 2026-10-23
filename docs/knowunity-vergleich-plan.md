@@ -37,7 +37,7 @@ App selbst wurde nicht mit Konto durchgespielt; Aussagen über Knowunity sind An
 | Stundenplan hinzufügen, Plan baut darum herum | `TimetableEntry` (Wochentag → Fach) | Knowunity **nutzt** ihn; bei uns liest ihn kein Service. |
 | Fortschritt je Thema „von wackelig zu sicher" | Vokabel-Lernstand flach und hierarchisch | Wir sind feiner, Knowunity zeigt es dem Schüler sichtbarer. |
 | Sprach-Wiederholung, Sprachmodus im Chat | Übungstyp Hörverstehen mit hochgeladenem Audio | Knowunity weiter. |
-| Creator-Programm, „verifizierte Inhalte" | Geteilte Bibliothek; [B-11](backlog/B-11-uebungen-veroeffentlichen.md)/[B-12](backlog/B-12-uebungen-kuratieren.md) offen | „Verifiziert" ist bei Knowunity ein Pro-Verkaufsargument – ein Prioritäts-Beleg für B-11/B-12. |
+| Creator-Programm, „verifizierte Inhalte" | Geteilte Bibliothek; [B-11](backlog/B-11-uebungen-veroeffentlichen.md) abgenommen, [B-12](backlog/B-12-uebungen-kuratieren.md) offen | „Verifiziert" ist bei Knowunity ein Pro-Verkaufsargument – ein Prioritäts-Beleg für B-12. |
 
 ## Wo Knowunity weiter ist
 

@@ -41,3 +41,4 @@ erwartet?), keine Arbeit, bei der „alles bleibt so grün wie vorher" gilt.
 
 - **2026-08-06** — angelegt beim Bauen von B-121 (Entscheidung 4 dort): Form (a) der Paging-Empfehlung
   bewusst nicht autonom umgesetzt, weil sie Bestandsverhalten ändert.
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht, grob nachgezählt ~7 (`SubjectsController.cs:35`, `TagsController.cs:49`, `VocabularyTagsController.cs:26`, `AdultsController.cs:37`, `ChildrenController.cs:35`, `StudyPlansController.cs:43`, `StudentPlansController.cs:28`, ggf. `MyInterestsController.cs:45`). Dieselbe Paging-Frage steckt in B-207 Punkt 5 (`take=500` ohne `X-Total-Count`).

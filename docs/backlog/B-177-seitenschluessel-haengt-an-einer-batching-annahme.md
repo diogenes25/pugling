@@ -61,3 +61,4 @@ Effekt ist reine Dokumentation. Die Annahme lebt allein im Kommentar.
 - 2026-08-14 · Aufgenommen aus dem Review von B-169 im Nachtlauf. Der Reviewer hat ihn selbst als praktisch
   unerreichbar eingeordnet; er steht hier, weil die Annahme an keinem Tor hängt und beim nächsten Umbau des
   Assistenten still brechen kann. Bleibt `unverifiziert`, bis jemand versucht hat, den Fall herzustellen.
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): der beschriebene Zustand besteht (`VaterWizard.tsx:259-269` hängt an `[exercises.data]`, liest `filterKey` `:175`), Herstellbarkeit weiter unversucht. Mess-Story: ein Nachtlauf versucht AK 1; gelingt es nicht, `verworfen` mit Messung.

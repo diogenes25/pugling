@@ -27,6 +27,11 @@ entfernt die komplette Einkleidung. Antwort `200`, kein Hinweis, keine Rückfrag
 Die Löschsperre ist damit die kleinere Hälfte: Das seltene, laute Ereignis ist gesperrt, das häufige,
 leise nicht.
 
+## User Story
+
+Als **Creator** möchte ich mich darauf verlassen können, was ein `PUT` mit der Einkleidung meiner Übung
+macht, damit ich sie nicht über einen Client verliere, der das Feld nicht kennt.
+
 ## Prüfauftrag
 
 Soll ein **ausgelassenes** `interestTagIds` „behalten" heißen statt „leeren"? Oder ist der Vollersatz
@@ -95,3 +100,4 @@ Entscheidung. Genau eine der beiden Fassungen muss gelten:
   Semantik eines PUT ist eine Vertragsentscheidung, die ein Bau-Schritt nicht nebenbei trifft. Der Ist-Stand
   ist am Code belegt; als Sofortmaßnahme trägt der `<summary>` am `DELETE` seit B-206 einen Absatz, der die
   Grenze ausdrücklich benennt, statt mehr zu versprechen, als gilt.
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht; „nichts pinnt das Verhalten“ stimmt nur halb – `ExerciseMetadataTests.cs:79-134` pinnt Ersetzen und leere Liste, ungetestet ist nur das **weggelassene** Feld. Die Empfehlung „PUT bleibt PUT“ deckt sich mit der PATCH/PUT-Regel in `backend/CLAUDE.md`; nach der Entscheidung bleiben ein Test und ein Doku-Abgleich (XS).

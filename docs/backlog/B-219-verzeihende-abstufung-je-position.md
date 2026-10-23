@@ -25,3 +25,4 @@ heutige Verhalten; der Supervisor entscheidet je Position, wie hart die Wiederho
 ## Verlauf
 
 - **2026-10-17** — angelegt (Quelle: Khan-Academy-Vergleich, Etappe 2 des Übernahmeplans).
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht; der harte Reset sitzt an **zwei** Stellen (`PositionPlayService.cs:283`, `ItemProgressService.cs:66`) – zu klären, ob die Milde auch für den plan-übergreifenden Lernstand je Item gilt.

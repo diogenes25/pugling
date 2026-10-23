@@ -35,3 +35,4 @@ Ausnahme (239 Dateien umgestellt, `docs/translate.md`). Wer das Beispiel kopiert
 - **2026-10-23** — angelegt aus dem Reviewer-Nit zu B-166 (Nachtlauf, Sprint 2). **Bewusst nicht in B-166
   mitgenommen:** dort ging es um tote Routen; die Sprache der Beispiele ist eine andere Regel und ein
   anderer Grep.
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht und reicht weiter – neben `wiki/08-erweitern.md:14,41,44,69,124,154` tragen **aktive Anweisungen** die alte Regel: `.claude/commands/neuer-uebungstyp.md:61,73`, die Beschreibung von `.claude/agents/pugling-reviewer.md:3` („deutsche Docs“), `README.md:111`. `wiki/09-llm-kochbuch.md` ist sauber. Historische Notizen stehen lassen. XS–S, autonom.

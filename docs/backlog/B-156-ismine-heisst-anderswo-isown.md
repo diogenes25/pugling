@@ -89,3 +89,4 @@ Umbenennung fast kostenlos ist (ein Leser, drei Fixtures), schließt sich mit je
   von B-154 und ist am Code belegt (alle acht Fundstellen einzeln nachgesehen), darum wäre
   `unverifiziert: true` eine Untertreibung. Die **fachliche** Frage (umbenennen ja/nein, Tor ja/nein) ist
   offen und gehört ins Grillen.
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht – `IsOwn` steht jetzt **8-mal** in `Pugling.Contracts` (neu `CategoryResponse`, die sich auf diese Story beruft), `IsMine` einmal (`CatalogDtos.cs:19`). Es gibt einen Leser im Produktionscode (`CatalogAdmin.tsx:244`) und Fixtures in vier Testdateien. `vertragsbruch: ja` (Umbenennung).

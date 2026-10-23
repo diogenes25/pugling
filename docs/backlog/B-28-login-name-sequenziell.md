@@ -156,3 +156,4 @@ Fachlichkeit, kein neues Modell.
 - **2026-08-03** — geschätzt: Größe S, `wo: backend`, keine Migration, kein Vertragsbruch, Testweg über
   `SecurityHardeningTests.cs`/`ChildrenDashboardTests.cs`/`AdultLifecycleTests.cs` — autonom getroffen,
   Nutzerauftrag 2026-08-04.
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): gilt; der Randbefund ist offen (`PinHasher.cs:32-34` gibt bei leerem Hash **und** leerer PIN `true`). Es sind sechs PIN-Schreib-Actions, nicht fünf (`AdultsController.cs:66/89`, `TeacherAccountsController.cs:59`, `AuthController.cs:183`, `ChildrenController.cs:78/117`). **Vor B-230 bauen** und den Leer-Guard zentral in `PinHasher.Verify` setzen (Entscheidung 3 lässt das zu) – dann übersteht er jede B-230-Variante. Nachtlauffähig.

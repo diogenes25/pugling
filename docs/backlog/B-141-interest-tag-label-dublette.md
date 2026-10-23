@@ -46,3 +46,4 @@ geteilten Helfer bzw. Wächter rechtfertigt, den B-136 ausdrücklich zurückgest
   (Entscheidung 3) im Nachtlauf. Der Ist-Stand ist am Code belegt (Controller und Collationen einzeln
   nachgesehen); `unverifiziert: true` bleibt trotzdem stehen, weil die **fachliche** Frage aus Punkt 2
   nicht erhoben ist.
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht und ist herstellbar (Tag „Fußball“ → „Sport“ umbenennen, Slug bleibt `fussball`; danach „Sport“ neu anlegen ergibt zwei Labels „Sport“, `InterestTagsController.cs:99-100,141-148`). Der Kommentar `:122-125` behauptet die Regel, `:143-145` erlaubt das Gegenteil. Die fachliche Frage (ist ein eindeutiges Label gewollt?) bleibt beim Menschen; B-155 hängt weich daran.

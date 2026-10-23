@@ -203,3 +203,4 @@ Konfliktbehandlung + Tests); nicht L, weil kein mehrstufiger DB-Umbau und kein F
   autonom getroffen, Nutzerauftrag 2026-08-04.
 - **2026-08-03** — geschätzt: Größe M, `wo: backend`, `migration: ja`, `vertragsbruch: nein`, Angriffsplan
   und Testweg festgelegt — autonom getroffen, Nutzerauftrag 2026-08-04.
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): **für `Topics` überholt** – durch B-63/B-130 ist `Topics` eine JSON-Liste (`CurriculumEntities.cs:81`), die API deckelt selbst auf 50 × 200 Zeichen (`SeriesUnitsController.cs:175-198`); Entscheidung 5, AK 6 und Risiko 2 entfallen für `Topics`, der Agent muss eine Liste liefern und die Grenze treffen. Offen bleiben `Grammar` (200 Zeichen) und das Agent-Kommando (`units fill` existiert nicht). Eher S–M; `migration: ja` nur noch für `Grammar`. Nicht im selben Sprint wie B-155 (beide falten die Kette).

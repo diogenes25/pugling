@@ -27,3 +27,4 @@ Missionen clientseitig entsteht.
 ## Verlauf
 
 - **2026-10-17** — angelegt (Quelle: Khan-Academy-Vergleich, Etappe 3 des Übernahmeplans).
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): **zum Teil schon da, eine Annahme falsch.** `SohnHome.tsx:61-150` zeigt die Positionen des Tages mit Takt-Pill, „offen“ und „N fällig“, die Missionen gruppieren nach „Heute“/„Diese Woche“ (`GamificationPanels.tsx:7-11`). „Überfällig“ gibt es für Pflichtziele nicht – eine abgelaufene Periode wird als Malus gebucht und ist nicht nachholbar (`PositionProgressService.cs:34-46`); sinnvoll nur für Leitner-Karten (`DueCount`), Objectives (`Overdue`) und Klassenarbeiten. „Was es kostet“ braucht `PenaltyCoins` in `PositionStatus` (heute nur im Supervisor-DTO) – additiv.

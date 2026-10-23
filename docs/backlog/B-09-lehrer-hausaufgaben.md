@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/katalog, bereich/auth, bereich/training, rolle/creator, rolle/supervisor, rolle/student]
+tags: [typ/story, status/ausformuliert, bereich/katalog, bereich/auth, bereich/training, rolle/creator, rolle/supervisor, rolle/student]
 aliases: [Lehrer-Hausaufgaben, Klassen, Beitrittscode, Zuweiser ohne Betreuungsauftrag]
-status: geschaetzt
+status: ausformuliert
 prio: P3
 art: Wunsch
 groesse: L
@@ -329,3 +329,4 @@ gezielter `/smoke-test`-Durchlauf der neuen Endpunkte per REST-Client.
   Testweg (`TeacherHomeworkTests.cs`, `SchemaGuardTests`-Ergänzung, `/smoke-test`) festgelegt; kein
   XL-Split nötig, weil Individualisierung und Frontend bewusst ausgeklammert sind (autonom getroffen,
   Nutzerauftrag).
+- **2026-10-23** — **Zurück auf `ausformuliert`** in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)) – die Entscheidungen tragen nicht mehr: (1) Der Ist-Stand „es gibt **keinen** Server-Guard ‚ein aktiver Plan je Kind‘“ (Zeile 72) ist falsch, und zwar seit `7c8d72b` (2026-07-05): `StudyPlansController.cs:102-116` deaktiviert beim Anlegen eines aktiven Plans alle anderen (Anti-Cheat). Ein eigener Hausaufgaben-Plan je Kind (Angriffsplan 4) schaltet damit den Vaterplan ab oder bricht die Invariante. (2) „Fach/Kapitel“ in User Story, AK 3 und Entscheidung 11 – Kapitel gibt es seit B-106 nicht mehr (Filter heute `subjectId`/`seriesUnitId`, `ExerciseCatalogController.cs:49`). (3) B-46 und B-18 sind abgenommen (`ExerciseInterestLink`, `MyInterestsController`) – Entscheidung 11 (Mischen statt Interessen) fehlt damit die Begründung. (4) `Objective.DueDate` mit Status `Overdue` existiert (`ObjectiveEntities.cs:31`) und ist ein Kandidat für Frist/erledigt, den die Story nicht betrachtet. Faktisch XL. Neu zu grillen: wie verträgt sich die Hausaufgabe mit „ein aktiver Plan“, Interessen-Passung jetzt oder später, was heißt „erledigt“. Teilungsvorschlag: (a) Klasse, Beitrittscode, Mitgliedschaft, Auth-Wand (AK 1, 2, 6, 7); (b) Auftrag mit Frist und Erledigungssicht (AK 3–5); (c) Sichtbarkeit beim Kind.

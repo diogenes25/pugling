@@ -179,3 +179,4 @@ Schema-Anfassen.
 - **2026-08-03** — geschätzt: autonom getroffen, Nutzerauftrag 2026-08-04. Größe S, `wo: backend`,
   `migration: nein`, `vertragsbruch: nein`; Angriffsplan und Testweg (`CreatorAgentTests` +
   `Pugling.Api.Tests`) festgelegt. Kein XL-Split nötig.
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): gilt, beide Lücken bestehen (kein Sprachfilter in `ChildVocabularyProgressController.cs:66-74`/`StudentApi.cs:34-37`; kein Test mit `UseWeakWords: true`, `CreatorAgentTests.cs:68`; kein Guard ohne `--child`, `AgentCommands.cs:334`). Neu: das Verb `plan` aus B-19 nutzt denselben `BuildRequestAsync` (`AgentCommands.cs:189`) – der Guard deckt es mit ab, ein Testfall dafür gehört dazu. Nachtlauffähig.

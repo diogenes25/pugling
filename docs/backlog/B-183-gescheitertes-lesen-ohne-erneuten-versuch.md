@@ -38,3 +38,4 @@ nicht überall aus dem Code abzulesen.
 - 2026-09-01 · Aufgenommen aus der Grill-Runde zu B-172 (Entscheidung 5). Die beiden Zahlen (68 Banner
   ohne Retry, 75 `reload`-Aufrufe) sind an diesem Tag gezählt; welche Stelle *welches* `reload` bräuchte,
   ist nicht geprüft — darum `unverifiziert`.
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht, **der Ist-Text ist überholt** – es gibt inzwischen Retry-Knöpfe: `ListenAusfall` (`components/ListenAusfall.tsx:36`, 5 Einsätze), `ExerciseEditModal.tsx:170`, `PlanPositions.tsx:549`, `VaterWizard.tsx:735`. Die in B-172 befürchtete Inkonsistenz (wenige Banner mit Knopf, die Mehrheit ohne) ist damit real. Neu gezählt: 81× `banner err`, 55× `.reload()`. Frage: wird `ListenAusfall` Hausregel für jeden Lesefehler?

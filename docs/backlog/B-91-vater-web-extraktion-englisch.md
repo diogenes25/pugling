@@ -30,3 +30,4 @@ ausformuliert, sondern nur als Platzhalter mit Kontext angelegt.
   diese Frage zuerst klärt, nicht eine vorgezogene Schätzung auf Verdacht. B-91 ist der stabile Bezeichner
   dieser Story ab jetzt (ursprünglich als B-88 angelegt, aber wegen einer ID-Kollision mit einer parallel
   angelegten, inhaltlich unabhängigen Story umbenannt — reine Backlog-Pflege, keine inhaltliche Änderung).
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): Zahlen veraltet (`fieldHelp.ts` 382 Zeilen, `vater/` 49 `.tsx`). Steht auf der Grill-Tagesordnung „Ist Mehrsprachigkeit über B-85 hinaus ein Ziel?“.

@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/idee, bereich/backend, bereich/doku, rolle/creator]
+tags: [typ/story, status/ausformuliert, bereich/backend, bereich/doku, rolle/creator]
 aliases: [Einrückung im OpenAPI-Summary, para im Summary, Swagger-Codeblock]
-status: idee
+status: ausformuliert
 prio: P3
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: S
+wo: backend
+migration: nein
+vertragsbruch: nein
 quelle: Nachtlauf Sprint 3 (2026-08-10), gefunden beim Prüfen des eigenen OpenAPI-Diffs
 unverifiziert: false
 grund: ""
@@ -72,6 +72,15 @@ bestimmten Abnahme an; er entstand mit dem ersten `<para>` in einem `<summary>`.
    die Prosa nach `<remarks>` ziehen — was aber erst zu klären hätte, ob `<remarks>` das Dokument
    überhaupt erreicht. Empfehlung: der Transformer, wenn Punkt 1 „Defekt" ergibt.
 
+## Akzeptanzkriterien (Entwurf)
+
+1. Kein Endpunkt-`summary` in `docs/openapi/v1.json` beginnt mit Leerzeichen, und keine Folgezeile trägt
+   die Quelltext-Einrückung (Zählung vorher/nachher im Verlauf).
+2. Ein Absatz aus `<para>` bleibt als Absatz erkennbar – der Workaround „einzeilig ohne Satzgrenze" wird
+   unnötig.
+3. Die Normalisierung sitzt an **einer** Stelle (Transformer), nicht in jedem Kommentar, und ein Test hält
+   sie fest.
+
 ## Verlauf
 
 - **2026-08-10** — angelegt im Nachtlauf (Sprint 3) beim Lesen des eigenen OpenAPI-Diffs. **Bewusst nicht
@@ -104,3 +113,4 @@ bestimmten Abnahme an; er entstand mit dem ersten `<para>` in einem `<summary>`.
   ist das der bessere Handel und gemessen sauber** — für einen `<para>` im `<summary>` nicht.
   Der neue Absatz in `ExerciseCatalogDtos.cs` steht darum einzeilig und **ohne** Satzgrenze; das ist eine
   bewusste Wahl zwischen zwei Fehlern, keine übersehene Stelle.
+- **2026-10-23** — Stufe in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)) auf `ausformuliert` gezogen: die Datei trug User Story, Ist-Stand und Offene Punkte längst, nur der `status` stand auf `idee` (Index-Warnung). Neu gezählt: **16 von 327** Endpunkt-Summaries beginnen mit Leerzeichen, 31 Texte tragen `\n` + ≥4 Leerzeichen. Ansatzpunkt: `Program.cs:288-520` hat fünf OpenAPI-Transformer, ein Trimm-Transformer gehört dorthin. **Widerspruch zu B-138** (dessen Annahme „eine leere `///`-Zeile ergibt `\n\n`“): stimmt für Schema-Beschreibungen (39 Schemas tragen `\n\n`), nicht für Operation-Summaries – beide zusammen in einem Sprint bauen.

@@ -53,3 +53,4 @@ Spec legt eine Vokabel mit diesem Präfix an. Es ist eine Falle, keine Störung.
   Bewusst **nicht** dort mitgebaut: B-153 hatte eine belegte Ursache und eine reproduzierbare rote Probe,
   dieser Punkt hat beides nicht, und die Reparatur ist keine Zeile (offener Punkt 1). Ein Fund beim Bauen
   wird eine eigene Story (README, „Ein Fund beim Bauen…").
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht (`bilder.spec.ts:112`); ein Durchsuchen aller Specs findet kein weiteres Zeilen-Muster dieser Art. XS, autonom.

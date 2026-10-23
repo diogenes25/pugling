@@ -91,3 +91,4 @@ Plandokument, das eine Sitzung Etappe für Etappe fortschreibt, ist der einzige 
 - **2026-07-30** — der Umbau wurde in derselben Sitzung fertig (E13 `6471e1d`, E14 `74637b0`, 610 grün).
   Die Story schrumpft damit von „vier Etappen, L" auf **den einen Betriebsschritt, XS** — und wechselt vom
   Entwicklungs- in den Betriebs-Charakter.
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): der Deploy ist weiter stillgelegt (`deploy-azure.yml:28-35` nur `workflow_dispatch`, kein Repo-Secret gesetzt). **Frage an den Betreiber:** existiert die alte Azure-Instanz noch? Wird das Deployment neu gebaut, gibt es keine Alt-DB, und die Story wird `verworfen` (gegenstandslos) statt XS.

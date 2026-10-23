@@ -217,3 +217,4 @@ Rückschritt).
 - **2026-08-03** — geschätzt: autonom getroffen, Nutzerauftrag 2026-08-04. Größe S, `wo: frontend`,
   `migration: nein`, `vertragsbruch: nein`, Angriffsplan und Testweg (neuer RTL-Komponententest,
   `TestResult.test.tsx` als Vorbild) festgelegt.
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): gilt (`MyObjectives.tsx` ohne `celebrate`, Sortierung und Endpunkt-Kommentar „open/overdue first“ weiter falsch, `MyObjectivesController.cs:24,36`). Korrekturen: Status-Werte heißen `"Achieved"`/`"Overdue"`; `MyObjectives` hängt in `SohnProgress.tsx:65`, nicht auf der Startseite; `isFirstLoad`/`readSeen`/`writeSeen` sind dateilokal – exportieren statt duplizieren. Nachtlauffähig.

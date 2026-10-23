@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, rolle/supervisor]
+tags: [typ/story, status/ausformuliert, bereich/training, rolle/supervisor]
 aliases: [KI-Supervisor-Agent]
-status: geschaetzt
+status: ausformuliert
 prio: P3
 art: Wunsch
 groesse: L
@@ -197,3 +197,4 @@ hält die Story bereits auf L, ohne dass etwas Wesentliches fehlt, um sie in ein
 - **2026-08-07** — Autonomer Modus (Opt-in je Vorhaben, README → „Autonomer Modus") vom Nutzer im Dialog
   ausdrücklich freigegeben: ein Nachtlauf darf diese Story trotz `art: Wunsch` ohne weitere Rückfrage bauen
   (Rollengang/Reviewer bleiben Pflicht wie bei jeder Abnahme).
+- **2026-10-23** — **Zurück auf `ausformuliert`** in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): B-19 (abgenommen, `adfa05e`) hat das Verb `plan` in den **Creator**-Agenten gebaut (`PlanPlanner.cs:180,199`) und in seiner Entscheidung 2 ein zweites Konsolenprojekt als „doppelte Infrastruktur“ verworfen – AK 1 dieser Story verlangt genau dieses Projekt. Das zitierte README („später vom Supervisor-Agenten“) gibt es nicht mehr. Für neue Pläne ist die Motivation erledigt; offen bleibt nur das Hinzufügen zu einem bestehenden, aktiven Plan. Neu zu entscheiden: eigenes Projekt oder `assign`-Verb im bestehenden Agenten – und lohnt die Story nach B-19 noch? Als Verb eher M als L. Für `--tag` fehlt der Client-Wrapper zu `GET creator/tags/{tagId}/exercises` (`TagsController.cs:205`).

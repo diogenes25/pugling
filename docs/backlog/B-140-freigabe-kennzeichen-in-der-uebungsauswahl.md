@@ -41,3 +41,4 @@ der geteilten Bibliothek zusammenstellt.
 - **2026-08-10** — angelegt beim Bauen von [B-11](B-11-uebungen-veroeffentlichen.md): Fund des
   `frontend-reviewer` neben dem Diff. Ungeprüft aufgenommen (`unverifiziert: true`) — die Belege sind
   Reviewer-Angaben, nicht eigene Recherche.
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht (Kennzeichen nur in `VaterExercises.tsx:325-327`; `executePublic` kommt in `PlanPositions.tsx`/`VaterWizard.tsx` nicht vor; DTO jetzt `ExerciseCatalogDtos.cs:24`). **Haken:** `executePublic=false` heißt nicht „nicht zuweisbar“ – Eigentümer und Grant-Inhaber dürfen weiter zuweisen (`VaterExercises.tsx:258`). Ein reines „zurückgezogen“-Kennzeichen führte sie in die Irre; zu entscheiden ist, ob die Liste ein serverseitiges „für dich zuweisbar“ braucht.

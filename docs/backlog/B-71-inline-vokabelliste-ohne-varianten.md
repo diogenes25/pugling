@@ -233,3 +233,4 @@ Abnahme, dazu `pugling-reviewer` und `frontend-reviewer` (`wo: beides`).
 - **2026-08-07** — Autonomer Modus (Opt-in je Vorhaben, README → „Autonomer Modus") vom Nutzer im Dialog
   ausdrücklich freigegeben: ein Nachtlauf darf diese Story trotz `art: Wunsch` ohne weitere Rückfrage bauen
   (Rollengang/Reviewer bleiben Pflicht wie bei jeder Abnahme).
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): gilt, Backend-Angaben exakt; Frontend-Zeilen verschoben (`exerciseConfig.tsx:38,150,598`, `ExerciseEditModal.tsx:516-664`). Neu belegt: der Store-Eintrag ist für jeden Creator schreibbar (`VocabularyStoreController.cs:24/290`) – der zusätzliche Schreibpfad öffnet kein Rechte-Loch. Nicht geprüft: ob der Abschlusstest `TranslationAlternatives` wirklich liest (AK 6). Nachtlauffähig.

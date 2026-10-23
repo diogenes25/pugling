@@ -276,3 +276,4 @@ drei gemessene Stellen begrenzt ist (Entscheidung 5).
   und die offene Frage stehen oben unter „Angehalten". Geliefert hat der Lauf trotzdem: die Messung zu
   offenem Punkt 3 (111 Aufrufstellen / 75 mit Deps / 73 mit lebendigen Deps) und den Nachweis, dass der
   Anlassfall im Katalog längst geschlossen und durch `CatalogAdmin.test.tsx:240` gedeckt ist.
+- **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht, weiter angehalten. Inzwischen gibt es **drei** Muster statt zwei: Prüfung am Aufrufer (`VaterWizard.tsx:203-204`, `PlanPositions.tsx`), und den Schlüssel-Hook `lib/useGemerkterFehler.ts` (B-227), dessen Kopf ausdrücklich nicht vorgreift. Die Architekturfrage (querschnittliches `stale` im Hook vs. Muster am Aufrufer) wird damit dringlicher – Tagesordnung fürs Grillen.
