@@ -90,7 +90,7 @@ kein Vertrag (die Antwortform ändert sich nicht, nur ihre Herkunft).
   Record-Projektion, gleicher Serializer, `CreatedAt` in beiden Pfaden aus der DB); **kein Fund**; Nit
   übernommen (Mutanten-Kommentar nennt jetzt „1 failed / 4 passed in this class", Zeilenzeiger `:172`).
   **Rollengang Creator:** Verlag anlegen und sofort lesen – der Test tut genau das gegen den In-Process-Server
-  (POST-Body = GET-Body). Commit: siehe Nachtrag.
+  (POST-Body = GET-Body). Commit `4954bd2` (Protokoll `docs/pm-sitzung-2026-10-23-nacht.md`, „Sprint 5").
 - **2026-10-23** — **gebaut** (zweiter Nachtlauf, Sprint 5). **Mutante gefahren, nicht nur benannt:** Test
   `Anlegen_IstIdempotent_…` vergleicht jetzt den `201`-Body (`GetRawText`) mit dem `GET`-Body desselben
   Verlags; mit der Mutante (`Create` antwortet von Hand mit `ForeignSeriesCount = -1`) **1 rot von 5** im

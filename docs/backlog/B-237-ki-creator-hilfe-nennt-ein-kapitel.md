@@ -115,7 +115,7 @@ die Optik, nicht die Wahrheit.
   umformuliert, README `:146` mit. Ein Fund am Story-Text: AK 4 nannte `CurrentChapter` nicht als Ausnahme
   (jetzt drin). Hilfe nach den Korrekturen erneut gezählt: `--chapter` 0, `--series-unit` 1.
   **Rollengang Creator (Konsole):** `pugling-creator help` gelesen – die Zeilen 22–27 sagen, was
-  `ResolveLocationAsync` tut; Vater/Sohn Regressionszeugen (Suite). Commit: siehe Nachtrag.
+  `ResolveLocationAsync` tut; Vater/Sohn Regressionszeugen (Suite). Commit `4954bd2` (Protokoll `docs/pm-sitzung-2026-10-23-nacht.md`, „Sprint 5").
 - **2026-10-23** — **gebaut** (zweiter Nachtlauf, Sprint 5). **Rote Probe (erwartet/gemessen):** `dotnet run
   --project backend/Pugling.Agent.Creator -- help`, vorher `grep -c -- "--chapter"` = **1** (erwartet 0),
   `grep -c -- "--series-unit"` = **0** (erwartet 1); nachher **0 / 1**, und `--subject` steht als

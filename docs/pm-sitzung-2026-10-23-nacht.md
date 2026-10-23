@@ -59,7 +59,7 @@ Wird je Sprint fortgeschrieben; die letzte Zeile ist der Zustand.
   **879/879**, `pugling-reviewer` ohne Blocker, **zwei Funde mit Codewirkung** (Hilfetext, Zähler 2 von 5).
   Nachschau Sprint 4: **drei Defekte in B-241** (zwei Sätze beim Wortwechsel falsch, Sweep vor der letzten
   Änderung gemessen) → **B-246**, im Sprint behoben. **Der Lauf endet hier** (Limit 2). Retro schlägt vor, den
-  Sweep an das Ende des Sprints zu binden, nicht an den Fix – kein Tor, nur Reihenfolge. Commit: siehe Nachtrag.
+  Sweep an das Ende des Sprints zu binden, nicht an den Fix – kein Tor, nur Reihenfolge. Commit `4954bd2` + Nachtrag.
 
 ## Runde 1 — Vorstellung & Feedback
 
@@ -894,7 +894,7 @@ einer Option, die niemand liest.
 ist eine Streich-Entscheidung), B-243 (abgenommen), B-244 (abgenommen), B-245 (`idee`, unverifiziert: Token mit
 `fid` auf gelöschten Adult), B-246 (abgenommen, `entgangen_bei: B-241`).
 
-**Commits (nichts gepusht):** Sprint 4 `7c33765` + Nachtrag `228e095` · Sprint 5 siehe Nachtrag.
+**Commits (nichts gepusht):** Sprint 4 `7c33765` + Nachtrag `228e095` · Sprint 5 `4954bd2` + Nachtrag.
 
 ## Für den Morgen
 

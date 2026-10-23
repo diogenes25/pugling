@@ -104,7 +104,7 @@ raus → Build (Hook) → Grep-Zahl nachher → Suite → Reviewer → Commit.
   Helfers weiter wahr; **kein Fund**. Nachschau-Nit aus Sprint 4 übernommen: die Summary von `AdminAdultAsync`
   sagt jetzt „every later case … in which the seeded adult himself is expected to get 403" (betroffen sind
   nur Fälle, in denen Adult 1 selbst 403 erwartet – `FachEigentumTests.cs:305-320/:623-637`). **Rollengang:**
-  Entwickler-Sicht, kein UI; Vater/Sohn Regressionszeugen (Suite). Commit: siehe Nachtrag.
+  Entwickler-Sicht, kein UI; Vater/Sohn Regressionszeugen (Suite). Commit `4954bd2` (Protokoll `docs/pm-sitzung-2026-10-23-nacht.md`, „Sprint 5").
 - **2026-10-23** — **gebaut** (zweiter Nachtlauf, Sprint 5). **Zahl vorher/nachher:** `rg -c "IsAdmin = true"
   backend/Pugling.Api.Tests/*.cs` → vorher **2 Dateien** (`TestApi.cs`, `RemarkTests.cs`), nachher **1**
   (`TestApi.cs`). `RegisterAdminFatherAsync` ruft `RegisterFatherAsync` + `TestApi.MakeAdmin`; die drei

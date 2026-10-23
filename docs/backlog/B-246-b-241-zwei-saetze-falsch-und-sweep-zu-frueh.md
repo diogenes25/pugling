@@ -74,4 +74,4 @@ Gegrillt im zweiten Nachtlauf 2026-10-23 (Freigabe 1, `art: Defekt`), Sprint 5.
   **4 Treffer, alle in der Ausschlussliste benannt** (Kommando und Liste im Protokoll, „Iteration 5").
   Rollengang: Lesen gegen den Code (`VaterExercises.tsx:106-109/:133-137/:340-342`, `VaterExerciseCreate.tsx:221`),
   kein UI geändert. **Dieser Fund beendet den Lauf nach Sprint 5** (Limit 2: Defekt im Increment eines Sprints
-  desselben Laufs). Commit: siehe Nachtrag.
+  desselben Laufs). Commit `4954bd2` (Protokoll `docs/pm-sitzung-2026-10-23-nacht.md`, „Sprint 5").
