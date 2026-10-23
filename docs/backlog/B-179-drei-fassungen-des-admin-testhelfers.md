@@ -106,7 +106,7 @@ Gegrillt im Nachtlauf 2026-10-23 (Freigabe 1, `art: Aufräumen`).
   `using`s gebraucht; **ein Fund mit Codewirkung (Zähler 1 des Sprints):** der `/// <summary>`-Block des
   entfernten `AdminCreatorAsync` stand verwaist über dem nächsten Test (`FachEigentumTests.cs:325-334`,
   Roslyn hängt ihn als Trivia an, kein Tor meldet es) – gelöscht. Suite **879/879**. **Rollengang:** Rollen
-  als Regressionszeugen (reine Test-Änderung). Commit: siehe Nachtrag.
+  als Regressionszeugen (reine Test-Änderung). Commit `98c8431` (Protokoll `docs/pm-sitzung-2026-10-23-nacht.md`, „Sprint 3").
 - **2026-10-23** — **gebaut** (Nachtlauf, Sprint 3): `TestApi.MakeAdmin` + `TestApi.AdminAdultAsync`, drei
   private Fassungen entfernt, fünf Aufrufe umgestellt, zwei `using`s in `FachEigentumTests` entfernt.
 - **2026-10-23** — gegrillt und geschätzt im Nachtlauf (Freigabe 1); User Story und AK nachgetragen.

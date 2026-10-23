@@ -149,7 +149,7 @@ Gegrillt im Nachtlauf 2026-10-23 (Freigabe 1, `art: Aufräumen`).
   `AccountService` statt `TokenService` (Entscheidung 8), Inventar für den Wächter (Entscheidung 9). Suite
   danach **879/879**, `dotnet build` 0 Warnungen; `docs/openapi/v1.json` trägt den 400 (+10 Zeilen).
   **Rollengang:** Creator über HTTP – die zwei Testfälle gegen die laufende Test-API; kein Browser nötig,
-  der Katalog-Editor sendet nie einen leeren Namen. Commit: siehe Nachtrag.
+  der Katalog-Editor sendet nie einen leeren Namen. Commit `98c8431` (Protokoll `docs/pm-sitzung-2026-10-23-nacht.md`, „Sprint 3").
 - **2026-10-23** — **gebaut** (Nachtlauf, Sprint 3). **Rote Proben (erwartet/gemessen):**
   `PatchMitLeeremNamen_WirdAbgelehnt` auf dem alten Code: 400 erwartet, **200 gemessen** (1 rot von 2);
   `PatchAntwort_IstDieselbeProjektionWieGet` auf dem alten Code grün, unter der Mutante „`ownerAdultId`
