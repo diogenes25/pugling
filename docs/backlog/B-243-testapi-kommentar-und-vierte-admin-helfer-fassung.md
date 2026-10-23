@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-10-23-nacht.md (Nachschau zu Sprint 3, zweiter Lauf
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-10-23
 entgangen_bei: [B-179]
 wartet_auf: ""
 ---
@@ -119,3 +120,4 @@ raus → Build (Hook) → Grep-Zahl nachher → Suite → Reviewer → Commit.
   `entgangen_bei: B-179`. Punkt 1 ist im selben Sprint (Sprint 4, zweiter Lauf) korrigiert – ein Satz von
   heute; Punkt 2 bleibt offen, weil er ein Test-Umbau mit eigener roter Zahl ist und der Sprint sich nicht
   erweitert (README: ein Fund beim Bauen wird eine eigene Story).
+- **2026-10-23** — Nachschau (dritter Lauf): `IsAdmin = true` steht nur in `TestApi.cs:57`; `MakeAdmin` läuft vor dem Login, der die Rolle als Claim prägt (`AuthController.cs:60`, `AuthAccess.cs:71`) – kein Defekt. Entscheidung 3 nennt einen Testnamen, den es nicht gibt; gemeint ist `OhneGlobalRead_TraegtDieAdminRolle_WeiterhinAlsBreakGlass` (`RemarkTests.cs:752`). `nachgeschaut` gesetzt.

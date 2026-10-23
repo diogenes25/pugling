@@ -264,7 +264,8 @@ export function SohnPractice() {
       {tempo && typed && phase !== "back" && <div className="tempo-bar" key={idx}><i /></div>}
 
       <div className="flash">
-        <div className="fcard">
+        {/* Nur die Selbsteinschätzung kommt auf „back" – ShowBoth ist von Anfang an offen und dreht nichts (B-35). */}
+        <div className={phase === "back" ? "fcard flipped" : "fcard"}>
           <div className="lang">Aufgabe</div>
           {/*
             Das Bild kommt nur auf Stufen, auf denen es die Lösung nicht verraten kann – der Server

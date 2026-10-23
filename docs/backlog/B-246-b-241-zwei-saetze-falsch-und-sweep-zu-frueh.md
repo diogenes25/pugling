@@ -14,7 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-241]
 wartet_auf: ""
-nachgeschaut: ""
+nachgeschaut: 2026-10-23
 ---
 
 # B-246 · B-241 hat zwei Sätze beim Wortwechsel falsch gemacht und den Sweep vor der letzten Änderung gemessen
@@ -75,3 +75,4 @@ Gegrillt im zweiten Nachtlauf 2026-10-23 (Freigabe 1, `art: Defekt`), Sprint 5.
   Rollengang: Lesen gegen den Code (`VaterExercises.tsx:106-109/:133-137/:340-342`, `VaterExerciseCreate.tsx:221`),
   kein UI geändert. **Dieser Fund beendet den Lauf nach Sprint 5** (Limit 2: Defekt im Increment eines Sprints
   desselben Laufs). Commit `4954bd2` (Protokoll `docs/pm-sitzung-2026-10-23-nacht.md`, „Sprint 5").
+- **2026-10-23** — Nachschau (dritter Lauf, [B-256](B-256-sprint-5-drei-saetze-nach-der-abnahme.md)): der Sweep auf HEAD zählt **5** Treffer, nicht 4 – `uebergabe-vokabeln.md:92` rutschte durch die eigene Einfügung aus der Spanne `:87-91`. Die beiden umgeschriebenen Sätze (`:56-60`, IA-Plan `:99-100`) gegen `VaterExerciseCreate.tsx:304/:333/:221` und `VaterExercises.tsx:106/:108` nachgelesen: richtig. `nachgeschaut` gesetzt.

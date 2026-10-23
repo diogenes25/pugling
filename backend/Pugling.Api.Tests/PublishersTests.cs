@@ -21,8 +21,9 @@ public class PublishersTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
         Assert.Equal("westermann", created.GetProperty("slug").GetString());
 
         // The 201 body comes from the same projection as a later GET (B-244): a field added to the
-        // projection must not go missing from the create response silently. Mutant (Create answering
-        // with a hand-built row, foreignSeriesCount -1): exactly this case goes red (1 failed / 4 passed in this class).
+        // projection must not go missing from the create response silently. Any hand-built row already goes
+        // red here on `createdAt` alone (measured B-256: the in-memory UtcNow serializes with "Z", the value read
+        // back from SQLite without), so this case pins "same projection", not one particular field.
         var fetched = await creator.GetFromJsonAsync<JsonElement>($"/api/v1/creator/publishers/{created.GetProperty("id").GetInt32()}");
         Assert.Equal(fetched.GetRawText(), created.GetRawText());
 

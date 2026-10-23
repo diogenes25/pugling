@@ -12,6 +12,7 @@ quelle: Nachtlauf 2026-10-23, Sprint 2 (Sweep zu B-166)
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-10-23
 entgangen_bei: []
 wartet_auf: ""
 ---
@@ -131,3 +132,4 @@ die Optik, nicht die Wahrheit.
 - **2026-10-23** — angelegt im Nachtlauf (Sprint 2) aus dem B-166-Sweep über `chapter` in Backend-Kommentaren.
   **Bewusst nicht in B-166 mitgenommen:** dort geht es um Doku-Routen; hier hängt ein Verhalten des
   Konsolenagenten dran, das erst zu lesen ist.
+- **2026-10-23** — Nachschau (dritter Lauf, [B-256](B-256-sprint-5-drei-saetze-nach-der-abnahme.md)): `--chapter` ist aus Hilfe und README weg, 33 × `FreshUnitAsync` nachgezählt; aber der `--series`-Standard nannte „Reihe des Profils", obwohl nur ein mit `--profile` genanntes Profil sie setzt (`AgentCommands.cs:318`) – in B-256 behoben. `nachgeschaut` gesetzt.

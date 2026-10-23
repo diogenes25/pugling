@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/student]
 aliases: [Motivations-Animationen, Serien-Animation, Streak-Feier]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Wunsch
 groesse: S
@@ -11,6 +11,8 @@ vertragsbruch: nein
 quelle: Nutzer, Sitzung 2026-07-31
 grund: ""
 ersetzt_durch: []
+nachgeschaut: ""
+wartet_auf: "Mensch: die Feier auf der Fortschrittsseite einmal am echten Gerät ansehen und hören"
 ---
 
 # B-36 · Motivations-Animationen bei erreichten Teilzielen
@@ -218,3 +220,6 @@ Rückschritt).
   `migration: nein`, `vertragsbruch: nein`, Angriffsplan und Testweg (neuer RTL-Komponententest,
   `TestResult.test.tsx` als Vorbild) festgelegt.
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): gilt (`MyObjectives.tsx` ohne `celebrate`, Sortierung und Endpunkt-Kommentar „open/overdue first“ weiter falsch, `MyObjectivesController.cs:24,36`). Korrekturen: Status-Werte heißen `"Achieved"`/`"Overdue"`; `MyObjectives` hängt in `SohnProgress.tsx:65`, nicht auf der Startseite; `isFirstLoad`/`readSeen`/`writeSeen` sind dateilokal – exportieren statt duplizieren. Nachtlauffähig.
+- **2026-10-23** — gebaut im Nachtlauf (dritter Lauf, Sprint 1 / NP-1, [Protokoll](../pm-sitzung-2026-10-23-nacht.md)), unter Freigabe 8 (`geschaetzt`). `MyObjectives.tsx` feiert neu erreichte Etappen (`medium` 🎯) und Ziele (`big` 🏆, als letzter Aufruf, Entscheidung 6). Die drei Helfer liegen jetzt in `frontend/src/sohn/seenIds.ts` und werden von `GamificationPanels.tsx` importiert (Nachprüfung: exportieren statt duplizieren). **Abweichung von den Missionen, mit Grund:** `takeFreshAchieved` vergisst nie – der Server rechnet den Status live (eine falsche Antwort zieht ein Ziel zurück), zahlt aber nur einmal (`ObjectiveRewardService`); eine zweite Feier „+50 🪙" wäre ein falsches Versprechen. Ein Ziel ohne Belohnung zeigt kein „+0". Zwei Fälle bleiben bewusst ungefeiert: ein Ziel jenseits der ersten fünf (`take: 5`, Risiko der Schätzung, im Rollengang beobachtet: sechstes Ziel ohne Feier) und ein vom Vater angehobenes Ziel beim zweiten Erreichen (keine zweite Auszahlung).
+- **2026-10-23** — rote Probe (Auflage 5): `MyObjectives.test.tsx` gegen den HEAD-Stand von `MyObjectives.tsx` **4 rot / 2 grün** (erwartet: die drei Feier-Fälle rot; die Ruhe-Fälle grün); nach dem Bau 7/7 grün. Je Fall eine Mutante gefahren (Skript, nicht nur benannt): kein Erst-Seed 3/7 rot, KR-Zweig fehlt 2/7, Reihenfolge vertauscht 2/7, kein `writeSeen` 4/7, überschreiben wie Missionen 2/7, wieder Offenes vergessen 2/7, Belohnung ohne Prüfung 1/7, Stand nicht gelesen 4/7 – jeder der sieben Fälle fällt unter mindestens einer Mutante. Vitest gesamt **402/402**, `tsc -b` sauber.
+- **2026-10-23** — `frontend-reviewer`: ein Blocker (Feier nach Schwanken um die Schwelle verspricht eine zweite Auszahlung – behoben durch „nie vergessen"), ein Soll („+0 🪙" – behoben), Nits (Enum-Wert `scope` im Overlay wie schon in der Liste – belassen). Delta-Review: keine Funde. **Rollengang im Browser** (Freigabe 6, Wegwerf-DB `pugling_walk.db`): Sohn öffnet „Weg" mit einem offenen Ziel → keine Feier, Stand geseedet; Vater legt per API ein sofort erreichtes Ziel an (`MaxWeakItems ≤ 5`, 25 🪙) → beim nächsten Öffnen zeichnet ein DOM-Mitschnitt das Overlay „🏆 ZIEL GESCHAFFT! +25 🪙" auf; erneutes Öffnen ohne neues Ziel → kein Overlay; nach dem nächsten Kinder-Login stehen die Münzen auf 105 statt 50 (die Feier verspricht nichts Falsches). Das Overlay selbst war auf keinem Screenshot zu fassen (Bannerfade 1,5 s, länger als die Screenshot-Latenz) – **wie es aussieht und klingt, sieht ein Mensch an** (`wartet_auf`). Commit: `HASH_S1`.

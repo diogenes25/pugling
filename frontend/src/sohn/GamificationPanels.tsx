@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useSohn } from "./SohnApp";
+import { isFirstLoad, readSeen, writeSeen } from "./seenIds";
 import type { AchievementStatus, MissionPeriod, MissionStatus } from "../lib/types";
 
 const PERIOD_LABEL: Record<MissionPeriod, string> = {
@@ -9,33 +10,6 @@ const PERIOD_LABEL: Record<MissionPeriod, string> = {
   Weekly: "Diese Woche",
   OneOff: "Ziel",
 };
-
-// Erfolgs-Erkennung: die zuletzt gesehenen erreichten IDs pro Kind in localStorage, damit ein neu
-// freigeschalteter Erfolg genau einmal gefeiert wird – auch über Reloads. Beim allerersten Laden
-// (Schlüssel fehlt) wird still geseedet, sonst würden Alt-Erfolge nachgefeiert.
-function isFirstLoad(key: string): boolean {
-  try {
-    return localStorage.getItem(key) === null;
-  } catch {
-    return true;
-  }
-}
-function readSeen(key: string): Set<number> {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? new Set(JSON.parse(raw) as number[]) : new Set();
-  } catch {
-    return new Set();
-  }
-}
-function writeSeen(key: string, ids: number[]): void {
-  try {
-    localStorage.setItem(key, JSON.stringify(ids));
-  } catch {
-    /* localStorage kann fehlen (Privatmodus): dann bleibt der Key leer → es wird still geseedet und
-       nie gefeiert. Lieber eine ausbleibende als eine falsche Feier. */
-  }
-}
 
 /**
  * Missionen des Sohns mit Fortschrittsbalken (Tages-/Wochen-/Zusatzziele). Der Server wertet beim

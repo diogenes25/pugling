@@ -185,6 +185,20 @@ a { color: var(--cyan); }
 .fcard .boxtag { position: absolute; top: 12px; right: 12px; }
 .judge { display: flex; gap: 10px; }
 
+/* Aufdecken als Kartenwende (B-35): die Karte dreht sich bis zur Kante, in der Mitte erscheint die Lösung,
+   dann dreht sie weiter auf die Rückseite. Ein Element, keine zweite Vorderseite im DOM – sonst spielte eine
+   Aufnahme doppelt, und kein Knopf wird neu gemountet (die Klickkette aus B-109 bleibt am selben Element).
+   Kurz wie `pop`; das globale Reduce-Motion-Gate unten schaltet beides ab, dann steht die Lösung sofort da. */
+.fcard.flipped, .card.flipped { animation: card-flip .32s ease-in-out; }
+.flipped .rev, .flipped .reveal-alternatives { animation: flip-reveal .32s linear both; }
+@keyframes card-flip {
+  0% { transform: perspective(900px) rotateY(0deg); }
+  50% { transform: perspective(900px) rotateY(90deg); }
+  50.01% { transform: perspective(900px) rotateY(-90deg); }
+  100% { transform: perspective(900px) rotateY(0deg); }
+}
+@keyframes flip-reveal { 0%, 50% { opacity: 0; } 50.01%, 100% { opacity: 1; } }
+
 /* Sieg */
 .victory { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; }
 .ring { width: 140px; height: 140px; border-radius: 50%; display: grid; place-items: center; position: relative; }

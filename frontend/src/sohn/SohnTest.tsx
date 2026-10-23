@@ -145,7 +145,8 @@ export function SohnTest() {
       </div>
       <p className="sub">{typed ? "Tippe die Lösung – zurück geht nicht." : "Denk nach, dann aufdecken und ehrlich bewerten."}</p>
 
-      <div className="card">
+      {/* Aufdecken dreht die Karte um wie beim Üben (B-35); getippte Stufen decken nichts auf. */}
+      <div className={!typed && revealed ? "card flipped" : "card"}>
         {/* Der Stoff, auf den sich die Frage bezieht – wie beim Üben, sonst wäre die Klausur die härtere
             Aufgabe bei weniger Material. */}
         <Passage text={item.passage} />

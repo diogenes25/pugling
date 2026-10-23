@@ -455,8 +455,10 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
 
         Weitere Optionen:
           --type <Typ>          Vocabulary | Cloze | Translation | Grammar      (Pflicht bei create)
-          --series <id>         Lehrwerk-Reihe der Übung  (Standard: Reihe des Profils, sonst die
-                                erste Reihe mit Unit; das Fach kommt aus dem Profil, sonst aus der Reihe)
+          --series <id>         Lehrwerk-Reihe der Übung  (Standard: Reihe des mit --profile genannten
+                                Profils, sonst die erste Reihe mit Unit – das zum Kind gewählte Profil
+                                verschiebt sie nicht; das Fach kommt aus dem genannten Profil, sonst aus
+                                der Reihe)
           --series-unit <id>    Unit, in der die Übung entsteht (Standard: erste Unit der Reihe;
                                 allein angegeben bestimmt sie auch die Reihe – mit --profile muss
                                 sie in dessen Reihe liegen)

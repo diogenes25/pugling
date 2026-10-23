@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-10-23-nacht.md (Nachschau zu Sprint 3, zweiter Lauf
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-10-23
 entgangen_bei: []
 wartet_auf: ""
 ---
@@ -104,3 +105,4 @@ kein Vertrag (die Antwortform ändert sich nicht, nur ihre Herkunft).
 - **2026-10-23** — angelegt aus der Nachschau zu Sprint 3 (zweiter Lauf) als Fund derselben Familie,
   direkt `ausformuliert` (Zeilen vom Prüfer genannt, von mir nachgelesen). Kein `entgangen_bei`: der
   Controller war nie Gegenstand einer abgenommenen Story.
+- **2026-10-23** — Nachschau (dritter Lauf, [B-256](B-256-sprint-5-drei-saetze-nach-der-abnahme.md)): Entscheidung 2 „im Ausgangszustand grün (0 = 0)" ist **gemessen falsch** – die alte Hand-Zeile fällt schon an `createdAt` (1 rot / 4 grün, `Z`-Suffix des frischen `UtcNow`). Die Zusicherung ist stärker als beschrieben; der Test-Kommentar ist nachgezogen. `nachgeschaut` gesetzt.

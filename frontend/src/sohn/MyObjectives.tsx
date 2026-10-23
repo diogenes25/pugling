@@ -1,6 +1,9 @@
+import { useEffect } from "react";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import type { Objective, Paged } from "../lib/types";
+import { useSohn } from "./SohnApp";
+import { takeFreshAchieved } from "./seenIds";
 
 /**
  * „Meine großen Ziele" – die Sohn-Sicht auf die Objectives, die der Vater gesetzt hat.
@@ -11,9 +14,39 @@ import type { Objective, Paged } from "../lib/types";
  *
  * Die Währung steht dran, weil sie den Unterschied macht: 🪙 verbindlich = echte Belohnung beim Papa,
  * 💎 Dehnungsziel = Skins. Ohne diesen Hinweis sähen beide Ziele gleich aus.
+ *
+ * Neu erreichte Etappen und Ziele werden einmal gefeiert (B-36), nach demselben „gesehene IDs"-Muster
+ * wie Missionen und Abzeichen.
  */
 export function MyObjectives() {
+  const { childId, celebrate } = useSohn();
   const objectives = useAsync<Paged<Objective>>(() => api.myObjectives({ take: 5 }), []);
+
+  useEffect(() => {
+    const items = objectives.data?.items;
+    if (!items) return;
+    const krs = items.flatMap((o) => o.keyResults);
+    const freshKrs = takeFreshAchieved(
+      `pugling.seenKeyResults.${childId}`,
+      krs.filter((k) => k.status === "Achieved").map((k) => k.id),
+    );
+    const freshObjectives = takeFreshAchieved(
+      `pugling.seenObjectives.${childId}`,
+      items.filter((o) => o.status === "Achieved").map((o) => o.id),
+    );
+    // Reihenfolge ist Absicht: es gibt nur ein Overlay, der letzte Aufruf gewinnt – schließt die letzte
+    // Etappe zugleich das Ziel ab, bleibt so die größere Feier stehen.
+    if (freshKrs.length > 0) {
+      const k = krs.find((x) => x.id === freshKrs[0])!;
+      celebrate("medium", "🎯", k.title ?? k.scope, freshKrs.length > 1 ? `${freshKrs.length} Etappen geschafft` : "Etappe geschafft");
+    }
+    if (freshObjectives.length > 0) {
+      const o = items.find((x) => x.id === freshObjectives[0])!;
+      // Ohne Belohnung bucht der Server nichts – dann auch kein „+0".
+      const reward = o.rewardOnComplete > 0 ? `+${o.rewardOnComplete} ${o.kind === "Committed" ? "🪙" : "💎"}` : undefined;
+      celebrate("big", "🏆", "ZIEL GESCHAFFT!", reward);
+    }
+  }, [objectives.data, childId, celebrate]);
 
   if (objectives.loading) return <div className="card"><div className="loading">Lade Ziele…</div></div>;
   // Ein Fehler hier darf den Trophäenweg nicht abwürgen – die Ziele sind Beiwerk, kein Kern der Seite.

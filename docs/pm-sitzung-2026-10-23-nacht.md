@@ -60,6 +60,12 @@ Wird je Sprint fortgeschrieben; die letzte Zeile ist der Zustand.
   Nachschau Sprint 4: **drei Defekte in B-241** (zwei Sätze beim Wortwechsel falsch, Sweep vor der letzten
   Änderung gemessen) → **B-246**, im Sprint behoben. **Der Lauf endet hier** (Limit 2). Retro schlägt vor, den
   Sweep an das Ende des Sprints zu binden, nicht an den Fix – kein Tor, nur Reihenfolge. Commit `4954bd2` + Nachtrag.
+- **Dritter Lauf (ab 20:03, Paket-Auftrag NP-1, NP-2, NP-3):** HEAD `896d1b2`, Browser verbunden.
+- **Sprint 6 abgenommen** (NP-1: B-36, B-35 – der Sohn sieht und hört Teilziele, die Karte dreht sich): Vitest
+  **402/402**, Playwright **81 passed**, Backend **879/879**, `frontend-reviewer` + Delta ohne Restfund, **fünf
+  Funde mit Code-/Testwirkung** (Grenze erreicht, nicht überschritten). Rollengang im Browser. Nachschau Sprint 5:
+  drei Entgleitungen → **B-256**, behoben. Zwei neue `idee`-Stories (B-254, B-255). Beide Stories `wartet_auf`
+  einen Menschen-Check (Gefühl der Animation).
 
 ## Runde 1 — Vorstellung & Feedback
 
@@ -914,3 +920,131 @@ ist eine Streich-Entscheidung), B-243 (abgenommen), B-244 (abgenommen), B-245 (`
    per `--work-tree`-Checkout berührt (wiederhergestellt, von mir geprüft) – `git archive … | tar -x` ist der
    richtige Griff.
 5. `git log --oneline` gegen `9f45907`: vier Commits dieses Laufs; **nichts ist gepusht.**
+
+## Dritter Lauf desselben Tages (ab 20:03)
+
+Auftrag: der Auftragstext aus [nachtlauf.md](nachtlauf.md) mit den Freigaben 1–9 plus der Paket-Satz *„Fahre
+die Pakete NP-1, NP-2, NP-3 aus [der Backlog-Sichtung](pm-sitzung-2026-10-23-backlog-sichtung.md), in dieser
+Reihenfolge."* Ausgangslage: HEAD `896d1b2`, `git status` sauber. Die Chrome-Extension ist **verbunden**
+(`list_connected_browsers`: ein Browser, lokal) – Freigabe 6, erster Fall. Die Pakete sind je ein Sprint;
+die Sprints laufen weiter durchnummeriert (6, 7, 8).
+
+**Auslegung von Limit 2 für diesen Lauf, ausdrücklich:** die Nachschau von Sprint 6 trifft Sprint 5, also
+das Increment des **zweiten** Laufs, das der Nutzer danach gesehen hat (er hat ab 17 Uhr im Dialog gegrillt).
+Ein Fund dort ist eine Entgleitung nach der Abnahme (eigene `Defekt`-Story mit `entgangen_bei`), aber kein
+Defekt im Increment **dieses** Laufs – er beendet ihn nicht. Erst ab Sprint 7 trifft die Nachschau Arbeit
+dieser Nacht, und dann gilt Limit 2 wie in den beiden Vorläufen.
+
+## Sprint 6 — Ziel & Umfang (NP-1)
+
+**Sprint-Ziel (aus dem Sitz des Sohns):** *Erreiche ich ein Teilziel meines großen Ziels, feiert die App es
+einmal mit Konfetti und Ton, und wenn ich eine Karte aufdecke, dreht sie sich um, statt dass die Lösung
+einfach dasteht.*
+
+**Umfang:** B-36, B-35 (beide `Wunsch`, `geschaetzt` → baubar nach Freigabe 8; Nachprüfungs-Zeilen der Sichtung
+gelesen und befolgt: Status-Werte `"Achieved"`, `MyObjectives` hängt in `SohnProgress.tsx`, Helfer exportieren
+statt duplizieren; ShowBoth hat keine Rückseite mehr, der Klausur-Reveal sitzt in `SelfAssessAnswer`,
+`RevealAlternatives` gehört mit auf die Rückseite, B-109-Klickkette). Nichts sonst.
+
+**Entwickler-Brief:** reines Frontend, kein Vertrag, keine Migration. **Quelle der Wahrheit:** `ObjectiveResponse`
+/`KeyResultResponse` (Status live gerechnet, `ObjectiveEvaluationService`), Auszahlung einmalig beim
+Kinder-Login (`ObjectiveRewardService.SettleAsync`, `AuthController.cs:83`). **Guards:** die Feier läuft nur über
+`celebrate(...)` (Reduce-Motion zentral), die Wende nur über CSS (globales Reduce-Motion-Gate). **Testweg:**
+Komponententest mit Mutanten je Fall, eigene E2E-Spec für die Wende, Browser-Rollengang.
+
+## Iteration 6 — umgesetzt
+
+- **B-36:** `frontend/src/sohn/seenIds.ts` (neu: `isFirstLoad`/`readSeen`/`writeSeen` aus `GamificationPanels.tsx`
+  plus `takeFreshAchieved`), `MyObjectives.tsx` feiert Etappe `medium` und Ziel `big` (zuletzt), kein „+0".
+  Test `MyObjectives.test.tsx` (7 Fälle).
+- **B-35:** `index.css` (`.fcard.flipped, .card.flipped` + zwei Keyframes), Klasse in `SohnPractice.tsx` an
+  `phase === "back"`, in `SohnTest.tsx` an `!typed && revealed`. Neue Spec `e2e/karten-umdrehen.spec.ts`.
+- **B-256 (Nachschau-Defekt, Sprint 5):** Hilfe und README des KI-Creators, Kommentar in `PublishersTests.cs`.
+
+**Verifikation:**
+
+| Probe | erwartet | gemessen |
+| --- | --- | --- |
+| `MyObjectives.test.tsx` gegen HEAD-`MyObjectives.tsx` | Feier-Fälle rot | **4 rot / 2 grün** (6 Fälle, vor Fall 7) |
+| acht Mutanten (Skript) | jeder Fall fällt unter ≥ 1 | ja – 1 bis 4 von 7 je Mutante |
+| `karten-umdrehen.spec.ts` × 4 Proben | rot an der zugehörigen Zeile | `:77`, `:63`, `:64`, `:64` (erste Runde zu früh an `:25` → Locator-Rennen behoben, B-255) |
+| `karten-umdrehen.spec.ts` dreimal hintereinander | grün | 3 × 1 passed |
+| Vitest / `tsc -b` | grün | **402/402** / sauber |
+| Playwright voll (nach dem letzten Frontend-Edit) | grün | **81 passed** |
+| Backend-Suite (nach B-256) | grün | **879/879** |
+| B-256: alte Hand-Zeile in `PublishersController.Create` | Behauptung „grün (0 = 0)" prüfen | **1 rot / 4 grün** an `createdAt` – Behauptung falsch |
+
+### Review-Funde (Zähler: 5 von 5)
+
+`frontend-reviewer`, dann Delta-Review (keine Funde). Gezählt wird, was Code oder Tests ändert:
+
+1. **Blocker:** eine Etappe/ein Ziel, das um die Schwelle schwankt, feierte erneut „+50 🪙", obwohl der Server
+   nur einmal zahlt → `takeFreshAchieved` vergisst nie.
+2. „+0 🪙" bei einem Ziel ohne Belohnung → Bedingung + Fall 7.
+3. Die Wende-Zusicherungen standen im Durchstich `full-flow.spec.ts` → eigene Spec (Hausregel „eine Fläche je
+   E2E-Spec").
+4. `.flipped` global → auf `.fcard.flipped, .card.flipped` eingeschränkt.
+5. **Eigener Fund der roten Probe:** die erste Probenrunde fiel an `:25`, nicht an der Wende – zwei Tabellen
+   tragen den Kindnamen → Link-Filter am Locator.
+
+Der Zähler steht damit **an** der Grenze, nicht darüber (Freigabe 3: „überschreitet er 5"). Ohne Zähler:
+ein Kommentar-Satz, B-256 (außerhalb des Diffs).
+
+## Runde 6 — Re-Review / Abnahme
+
+**Rollengang im Browser** (Freigabe 6) gegen `pugling_walk.db` (Wegwerf, danach gelöscht), Server nach dem
+letzten Code-Edit gestartet (danach nur noch ein Kommentar in `seenIds.ts` berichtigt – Vite liefert vom
+Datenträger, das Laufzeitverhalten ist unverändert).
+
+- **Sohn – signed off, mit benanntem Menschen-Check:** „Ich mach ‚Weg' auf, da steht mein Französisch-Ziel – nix
+  passiert, richtig, ist ja noch offen. Papa legt mir eins an, das ich schon geschafft hab, ich geh wieder auf
+  ‚Weg': 🏆 ZIEL GESCHAFFT! +25 🪙. Nochmal drauf: nichts mehr, gut, sonst wär's Fake. Und beim nächsten Login
+  hab ich wirklich 105 statt 50." Der Overlay-Text ist per DOM-Mitschnitt belegt, auf keinem Screenshot (Banner
+  blendet nach 1,5 s aus, die Screenshot-Latenz ist länger). Übung: „la ville" → „Umdrehen": die Karte dreht
+  sich (bei 110 ms angehalten: schräg, Lösung noch verborgen, Knöpfe schon da), danach „→ die Stadt".
+  **Zurückgestellt:** ein sechstes Ziel jenseits der ersten fünf wird nie gefeiert (gesehen, Risiko der
+  Schätzung). **Menschen-Check:** Klang, Gefühl und Tempo von Feier und Wende am echten Gerät (`wartet_auf` an
+  B-36 und B-35).
+- **Vater – Regressionszeuge:** kein Supervisor-Pfad im Diff; Objective-API im Rollengang benutzt, Suite grün.
+- **Creator – Regressionszeuge:** Diff berührt nur die Hilfe des Agenten (B-256); `pugling-creator help` neu
+  gelesen, Zeilen 22–25.
+- **Nebenfund im Rollengang:** der Tab „Weg" zeigte vor dem Anlegen eines Plans die rohe englische Meldung
+  „Study plan not found." → **B-254** (`idee`, `Defekt`, außerhalb des Diffs).
+
+## Retrospektive Sprint 6
+
+**Nachschau:** Sprint 5 des zweiten Laufs (B-243, B-244, B-237, B-246; Commits `4954bd2`, `67ccf42`) – frischer
+Agent, read-only über `git show HEAD:`, fünf benannte Prüfpunkte. **B-243:** kein Defekt (`IsAdmin = true` nur
+`TestApi.cs:57`; `MakeAdmin` vor dem Login, Rolle als Claim `AuthController.cs:60`); ein falscher Testname in
+Entscheidung 3, berichtigt. **Drei Entgleitungen** → **B-256** (`entgangen_bei: B-237, B-244, B-246`), im
+Sprint behoben: die Hilfe versprach die Reihe des *gewählten* Profils (`AgentCommands.cs:318` lädt nur ein
+genanntes); B-244s „im Ausgangszustand grün (0 = 0)" ist gemessen falsch (1 rot / 4 an `createdAt`); B-246s
+Sweep-Zahl 4 statt 5. `nachgeschaut` auf allen vier gesetzt. Index: **Nachgeschaut 156 von 172**.
+
+**Prämisse geprüft:** die Hilfe-Aussage selbst gegen `BuildRequestAsync` (`:312-320`) und
+`BriefingBuilder.ResolveProfileAsync` (`:128-147`) gelesen; die `createdAt`-Aussage selbst gemessen, nicht vom
+Prüfer übernommen.
+
+**Was die eigenen Tore durchgelassen haben:**
+
+- **Eine Begründung, die eine Zahl voraussagt, ohne sie zu messen.** B-244 sagte „grün (0 = 0)" voraus und fuhr
+  dann eine Mutante – die Mutante war rot, aber aus einem anderen Grund als behauptet. Die Mutante bewies „der
+  Test kann fallen", nicht „er fällt *an diesem Feld*". Dieselbe Lehre wie bei B-202 („nicht ob der Test fällt, sondern wo"): in
+  diesem Sprint passierte es mir selbst bei B-35 (rot an `:25`) und wurde nur gefangen, weil die Zeile im
+  Ausgabe-Parser stand.
+- **Eine Hilfe-Zeile, die eine Standard-Kaskade beschreibt, ohne den Fall „nicht angegeben" zu lesen.** Der
+  Reviewer von Sprint 5 las `ResolveLocationAsync` Zeile für Zeile – aber nicht `BuildRequestAsync`, das
+  entscheidet, *ob* ein Profil hineingeht.
+
+### Vorgeschlagener Mechanismus — nicht gelandet (Freigabe 3)
+
+**Kein Tor, ein Satz in der Vorgabe der roten Probe (Auflage 5):** jede rote Probe nennt neben der Zahl auch
+**die Zeile bzw. die Meldung**, an der sie fällt, und der Verlauf vergleicht sie mit der erwarteten. Für
+Playwright die `> NN |`-Zeile, für xUnit die `Expected/Actual`-Zeile. Kosten: ein Halbsatz in `nachtlauf.md`
+Auflage 5 (keine resident geladene Datei); die Mutanten-Skripte dieses Laufs liefern das schon mit. **Warum kein
+Tor:** welche Zeile die richtige ist, weiß nur, wer die Probe entworfen hat – das lässt sich nicht maschinell
+prüfen, nur sichtbar machen.
+
+**Bewusst ungedeckt:** dass Hand-Antworten `createdAt` mit `Z` serialisieren und Projektionen ohne – eine echte
+Uneinheitlichkeit im Vertrag (`Kind=Utc` gegen `Kind=Unspecified`), aber kein Fund dieses Sprints und ohne
+Entscheidung des Nutzers nicht anzufassen. Vermerkt in B-256.
