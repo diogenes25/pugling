@@ -53,6 +53,9 @@ public abstract class ExerciseTypeBase : IExerciseType
     public virtual IReadOnlyList<StageOption> StageOptions => [];
 
     /// <inheritdoc/>
+    public virtual ContentItem? StaticView(string configJson) => null;
+
+    /// <inheritdoc/>
     public virtual bool SupportsItemProgress => false;
 
     /// <inheritdoc/>

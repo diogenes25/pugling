@@ -207,10 +207,15 @@ test("Jeder Übungstyp des Manifests lässt sich im UI anlegen", async ({ page }
   await expect(optionen.getByRole("button")).toHaveCount(3);
   await hoerPreview.getByRole("button", { name: "Schließen" }).click();
 
-  // Ein Aufsatz hat keine – das muss als Eigenschaft des Typs erklärt werden, nicht als Fehler aussehen.
+  // Ein Aufsatz hat keine Antwort zum Prüfen – aber der Vater sieht, was das Kind bekommt (B-15): Auftrag,
+  // Länge und Kriterium so, wie er sie oben eingegeben hat, und nichts zum Auswerten.
   const essayRow = page.locator("div", { hasText: `Aufsatz ${RUN}` }).last();
   await essayRow.getByRole("button", { name: /Ausprobieren/ }).click();
-  await expect(page.getByText(/keine einzeln prüfbaren Aufgaben/)).toBeVisible();
-  await page.getByRole("dialog", { name: new RegExp(`Testmodus: Aufsatz ${RUN}`) })
-    .getByRole("button", { name: "Schließen" }).click();
+  const essayPreview = page.getByRole("dialog", { name: new RegExp(`Testmodus: Aufsatz ${RUN}`) });
+  await expect(essayPreview.getByText("Schreibe einen Brief über deine Hobbys.")).toBeVisible();
+  await expect(essayPreview.getByText("Länge: 80–150 Wörter · Bewertung: Aufbau (5 P.)")).toBeVisible();
+  await expect(essayPreview.getByRole("button", { name: "Auswerten" })).toHaveCount(0);
+  await expect(essayPreview.getByRole("textbox")).toHaveCount(0);
+  await essayPreview.getByRole("button", { name: "Fertig" }).click();
+  await expect(essayPreview).toHaveCount(0);
 });

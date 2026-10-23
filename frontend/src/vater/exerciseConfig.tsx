@@ -169,6 +169,8 @@ export function emptyExtra(type: ExerciseTypeKey): Row {
     // Partial on purpose: `instruction` has no meaningful initial value, it arrives once the Vater types it.
     case "List": return { ordered: false } satisfies Partial<ListExtra>;
     case "Translation": return { sourceLang: "en", targetLang: "de" } satisfies TranslationExtra;
+    // Vorbelegt wie Übersetzung: eine neue Birkenbihl-Übung trägt von Anfang an zwei gültige Codes (B-17).
+    case "Birkenbihl": return { learningLang: "en", nativeLang: "de" } satisfies BirkenbihlExtra;
     case "Essay": return { prompt: "", minWords: "", maxWords: "" } satisfies EssayExtra;
     case "Listening": return { audioUrl: "", transcript: "" } satisfies ListeningExtra;
     case "ArithmeticDrill": return {
@@ -415,6 +417,26 @@ const ROW_LABEL: Partial<Record<ExerciseTypeKey, string>> = {
   Matching: "+ Paar", List: "+ Eintrag", Arithmetic: "+ Aufgabe", Birkenbihl: "+ Satz",
 };
 
+/**
+ * Auswahl aus `LANGUAGES`. Steht ein Code im Bestand, den die Liste nicht kennt (von Hand angelegte Alt-Übung),
+ * zeigt die Auswahl „– bitte wählen –" statt still die erste Sprache: sonst sähe der Vater „Deutsch" und
+ * speicherte den alten Wert.
+ */
+function LanguageSelect({ id, label, value, onChange }: {
+  id: string; label: string; value: string | undefined; onChange: (code: string) => void;
+}) {
+  const known = LANGUAGES.some((l) => l.code === value);
+  return (
+    <div className="field">
+      <label htmlFor={id}>{label}</label>
+      <select id={id} value={known ? value : ""} onChange={(e) => onChange(e.target.value)}>
+        {!known && <option value="" disabled>– bitte wählen –</option>}
+        {LANGUAGES.map((l) => <option key={l.code} value={l.code}>{l.flag} {l.label}</option>)}
+      </select>
+    </div>
+  );
+}
+
 /** Zeilen-Editor für alle Typen außer Vokabeln (die haben ihre eigene Item-Ebene). */
 export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, removeRow }: EditorProps) {
   const ex = (patch: Row) => setExtra((e) => ({ ...e, ...patch }));
@@ -572,10 +594,12 @@ export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, re
           </p>
         </>
       )}
+      {/* Dieselbe geschlossene Sprachliste wie überall sonst (B-17): die Dekodierung vergleicht die Codes exakt
+          mit dem Vokabel-Store, ein frei getipptes „Englisch" fände dort nie ein Wort. */}
       {type === "Birkenbihl" && (
         <div className="form-grid">
-          <div className="field"><label>Lernsprache</label><input value={extra.learningLang ?? ""} onChange={(e) => ex({ learningLang: e.target.value })} placeholder="Englisch" /></div>
-          <div className="field"><label>Muttersprache</label><input value={extra.nativeLang ?? ""} onChange={(e) => ex({ nativeLang: e.target.value })} placeholder="Deutsch" /></div>
+          <LanguageSelect id="cfg-bb-learn" label="Lernsprache" value={extra.learningLang} onChange={(v) => ex({ learningLang: v })} />
+          <LanguageSelect id="cfg-bb-native" label="Muttersprache" value={extra.nativeLang} onChange={(v) => ex({ nativeLang: v })} />
         </div>
       )}
 

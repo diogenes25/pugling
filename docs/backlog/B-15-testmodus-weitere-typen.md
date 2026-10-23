@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/katalog, rolle/creator]
+tags: [typ/story, status/in-arbeit, bereich/katalog, rolle/creator]
 aliases: [Vorschau für nicht-prüfbare Typen]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Wunsch
 groesse: S
@@ -9,6 +9,7 @@ wo: beides
 migration: nein
 vertragsbruch: nein
 quelle: memory/uebungs-testmodus.md
+wartet_auf: "Nutzer: Nachtlauf an Freigabe 3 beendet (6 Review-Funde in Sprint 7) – offene Funde im Verlauf"
 ---
 
 # B-15 · Vorschau für die nicht-prüfbaren Übungstypen
@@ -191,3 +192,6 @@ Preview-Endpunkts gegen einen echten Aufsatz.
   ausdrücklich freigegeben: ein Nachtlauf darf diese Story trotz `art: Wunsch` ohne weitere Rückfrage bauen
   (Rollengang/Reviewer bleiben Pflicht wie bei jeder Abnahme).
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): gilt, nur Zeilen verrutscht (`EssayExerciseType.ItemsOf` → `BuiltInExerciseTypes.cs:76`, `ApiErrors.cs:184/191`, E2E `uebungstypen.spec.ts:210-215`). Neu im Controller: `NoContentProblemAsync` (`ExercisePreviewController.cs:35-42`), berührt den Plan nicht. Der in Entscheidung 4 empfohlene eigene Eintrag „Kind sieht den Schreibauftrag nicht“ wurde nie angelegt. Nachtlauffähig.
+- **2026-10-23** — gebaut im Nachtlauf (dritter Lauf, Sprint 7 / NP-2, [Protokoll](../pm-sitzung-2026-10-23-nacht.md)), unter Freigabe 9 (Freigabe-Zeile vom 2026-08-07) bzw. 8. Angriffsplan wie geschätzt: `IExerciseType.StaticView` (Standard `null`), `EssayExerciseType.StaticView` (Auftrag + „Länge: 80–200 Wörter · Bewertung: Aufbau (5 P.), …"), `ExercisePreviewService.BuildAsync` löst den Typ zuerst auf und liefert bei leeren Atomen die Ansicht mit `gradable: false`; `PreviewData.Gradable = true` additiv; `CheckAsync` unverändert. Frontend: `ExercisePreviewModal` zeigt die Ansicht ohne Eingabe und ohne „Auswerten", nur „Fertig"; `uebungstypen.spec.ts` umgeschrieben (AK 5).
+- **2026-10-23** — rote Proben (Auflage 5), je an der erwarteten Zeile: Essay ohne Ansicht (= Ausgangszustand) → `Aufsatz_Preview_…` rot an `ExercisePreviewTests.cs:249` (Status 400 statt 200), 1 von 9; Standard liefert eine Ansicht für jeden Typ → `Preview_OhneAtome_…` rot an `:291`; Ansicht als bewertbar → rot an `gradable`; Rubrik fehlt → rot an `:255`. Backend **885/885**, Vitest **406/406**, `uebungstypen.spec.ts` **1 passed**.
+- **2026-10-23** — Review (`pugling-reviewer`, `frontend-reviewer`): kein Blocker. **Offen, nicht behoben, weil der Lauf an Freigabe 3 endete:** (a) die Fehlermeldung für `no_checkable_content` sagt weiter „ein Schreibauftrag …", obwohl ein Aufsatz dort nie mehr ankommt (`ExercisePreviewModal.tsx:42-44`); (b) der Satz unter der Ansicht nennt den Typ („Ein Schreibauftrag …"), obwohl die Ansicht typneutral am Feld `gradable` hängt (Entscheidung 3); (c) die Kommentare der zwei neuen Tests nennen nicht, was sie rot macht (`Preview_OhneAtome_…` prüft den Ausgangszustand und fällt nur unter der Standard-Mutante). Kein Rollengang, keine Abnahme.

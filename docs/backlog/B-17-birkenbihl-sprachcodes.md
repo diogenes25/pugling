@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, bereich/katalog, lerntechnik/vokabeln, rolle/creator]
+tags: [typ/story, status/in-arbeit, bereich/frontend, bereich/katalog, lerntechnik/vokabeln, rolle/creator]
 aliases: [Sprachcode-Normalisierung]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Frage
 groesse: XS
@@ -9,6 +9,7 @@ wo: frontend
 migration: nein
 vertragsbruch: nein
 quelle: memory/birkenbihl-vokabel-dekodierung.md
+wartet_auf: "Nutzer: Nachtlauf an Freigabe 3 beendet (6 Review-Funde in Sprint 7) – offene Funde im Verlauf"
 ---
 
 # B-17 · Sprachcode-Normalisierung bei der Vokabel-Dekodierung
@@ -133,3 +134,5 @@ verwendeter Liste ersetzen (Muster liegt zwei Übungstypen weiter oben im selben
   2026-08-04).
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): gilt (Eingabefelder jetzt `exerciseConfig.tsx:577-578`, Seed `Seed.cs:1107`). `exerciseConfig.test.ts:71-80` prüft schon einen Birkenbihl-Rundlauf – der neue Test hängt sich dort an. Nachtlauffähig; Vorbehalt: die Entscheidungen hat am 2026-08-03 ein Agent getroffen, nicht der Nutzer im Dialog.
 - **2026-10-23** — **Vom Nutzer bestätigt** in der Grill-Runde G-0 der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): die am 2026-08-03 autonom getroffenen Entscheidungen gelten als seine. Die Story ist ohne Vorbehalt nachtlauffähig (Paket NP-2).
+- **2026-10-23** — gebaut im Nachtlauf (dritter Lauf, Sprint 7 / NP-2), unter Freigabe 8 (Entscheidungen vom Nutzer bestätigt, G-0). `exerciseConfig.tsx`: `LanguageSelect` aus `LANGUAGES` für Lern- und Muttersprache, mit „– bitte wählen –" nur bei unbekanntem Alt-Code (sonst zeigte die Auswahl „Deutsch" und speicherte den Altwert); `emptyExtra("Birkenbihl")` belegt en/de vor. Neuer Test `BirkenbihlSprachen.test.tsx` (4 Fälle). Rote Proben (Mutanten-Skript): freie Eingabe (= Ausgangszustand) 2/4 rot, falsches Feld 1/4, kein Platzhalter 1/4, keine Vorbelegung 2/4. Vitest **406/406**, `tsc -b` sauber. `BirkenbihlDecodingService` unberührt (AK 4).
+- **2026-10-23** — `frontend-reviewer`: kein Blocker. **Offen, nicht behoben (Lauf an Freigabe 3 beendet):** (a) `contentProblem` (`exerciseConfig.tsx:779`) prüft die Sprachen nicht – eine bearbeitete Alt-Übung mit `""`/„Englisch" lässt sich trotz „bitte wählen" speichern, und eine eigene Glosse legt dann Store-Einträge unter dem falschen Code an; (b) Fall 2 des Tests prüft nur „Muttersprache", ein Fehler „Lernsprache schreibt nach `nativeLang`" bliebe grün. Notiz ohne Story: `Translation`/`ClozeTexts` bauen ihre Auswahl weiter selbst und zeigen einen unbekannten Code als erste Sprache – `LanguageSelect` wäre das Bauteil dafür. Kein Rollengang, keine Abnahme.

@@ -74,6 +74,28 @@ public sealed class EssayExerciseType : ExerciseTypeBase
         ExerciseCheckMode.None, null, null, ["rubric", "wordCount"]);
     /// <inheritdoc/>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson) => [];
+
+    /// <summary>
+    /// The writing task plus its limits and rubric, exactly the fields the author entered (B-15) – shown,
+    /// never graded. Limits and rubric share one readable hint line; a structured rubric would need its own
+    /// fields in the contract.
+    /// </summary>
+    public override ContentItem? StaticView(string configJson)
+    {
+        var c = Deserialize<EssayConfig>(configJson);
+        var parts = new List<string>();
+        var length = (c.MinWords, c.MaxWords) switch
+        {
+            ({ } min, { } max) => $"{min}–{max} Wörter",
+            ({ } min, null) => $"mindestens {min} Wörter",
+            (null, { } max) => $"höchstens {max} Wörter",
+            _ => null,
+        };
+        if (length is not null) parts.Add($"Länge: {length}");
+        if (c.Rubric is { Count: > 0 } rubric)
+            parts.Add("Bewertung: " + string.Join(", ", rubric.Select(r => $"{r.Criterion} ({r.MaxScore} P.)")));
+        return new ContentItem(0, c.Prompt, "", [], Hint: parts.Count > 0 ? string.Join(" · ", parts) : null);
+    }
 }
 
 /// <summary>Grammar: transformation/rule tasks.</summary>

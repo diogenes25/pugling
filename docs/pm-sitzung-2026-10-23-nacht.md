@@ -66,6 +66,10 @@ Wird je Sprint fortgeschrieben; die letzte Zeile ist der Zustand.
   Funde mit Code-/Testwirkung** (Grenze erreicht, nicht überschritten). Rollengang im Browser. Nachschau Sprint 5:
   drei Entgleitungen → **B-256**, behoben. Commit `39cf33b` + Nachtrag. Zwei neue `idee`-Stories (B-254, B-255). Beide Stories `wartet_auf`
   einen Menschen-Check (Gefühl der Animation).
+- **Sprint 7 angehalten** (NP-2: B-15, B-17, B-21): gebaut und grün (Backend **885/885**, Vitest **406/406**,
+  `uebungstypen` 1 passed, zwölf Mutanten am richtigen Ort), aber **sechs Review-Funde mit Code-/Testwirkung**
+  (kein Blocker) – über der Grenze von Freigabe 3. **Der Lauf endet hier**, NP-3 nicht angefangen. Stories auf
+  `in-arbeit` mit `wartet_auf`, kein Rollengang, keine Retro. Stand committet (`HASH_S7`).
 
 ## Runde 1 — Vorstellung & Feedback
 
@@ -1048,3 +1052,82 @@ prüfen, nur sichtbar machen.
 **Bewusst ungedeckt:** dass Hand-Antworten `createdAt` mit `Z` serialisieren und Projektionen ohne – eine echte
 Uneinheitlichkeit im Vertrag (`Kind=Utc` gegen `Kind=Unspecified`), aber kein Fund dieses Sprints und ohne
 Entscheidung des Nutzers nicht anzufassen. Vermerkt in B-256.
+
+## Sprint 7 — Ziel & Umfang (NP-2)
+
+**Sprint-Ziel (aus dem Creator-Sitz):** *Ich kann jede Übung vor dem Zuweisen sinnvoll ausprobieren – auch einen
+Aufsatz –, eine Birkenbihl-Übung bekommt nur Sprachcodes, die der Vokabelspeicher kennt, und der Agent zieht
+im Fördermodus nur Wörter der Sprache meiner Übung heran.*
+
+**Umfang:** B-15 (`Wunsch`, `geschaetzt`), B-17 (`Frage`, `geschaetzt`, Entscheidungen in G-0 vom Nutzer
+bestätigt), B-21 (`Wunsch`, `geschaetzt`). Nachprüfungs-Zeilen gelesen: Zeilen verrutscht (B-15), der neue
+Test hängt neben `exerciseConfig.test.ts` (B-17), der Guard deckt auch `plan` (B-21).
+
+**Entwickler-Brief:** Backend zuerst. **Quelle der Wahrheit:** `IExerciseType` (ein Typ = eine Klasse) für die
+Ansicht, `Vocabulary.SourceLanguage/TargetLanguage` für den Sprachfilter, `LANGUAGES` für die Codes im
+Frontend. **Guards:** `CheckAsync` bleibt bei `no_checkable_content`; der Filter läuft vor dem Gruppieren;
+`--use-weak` ohne Kind bricht ab. **Vertrag:** additiv (`gradable`, zwei Query-Parameter). **Migration:** keine.
+
+## Iteration 7 — umgesetzt, nicht abgenommen
+
+Was gebaut ist und welche Proben gemessen sind, steht je Story im `## Verlauf` (B-15, B-17, B-21). Zusammen:
+Backend **885/885** (879 + 6 neue Fälle), Vitest **406/406**, `tsc -b` sauber, `uebungstypen.spec.ts`
+**1 passed**; zwölf Mutanten, jede an der erwarteten Zeile rot.
+
+### Review-Funde (Zähler: 6 – Grenze überschritten)
+
+`pugling-reviewer` und `frontend-reviewer` liefen parallel und fanden **keinen Blocker**, aber diese Funde,
+deren Behebung Code oder Tests ändert:
+
+1. B-17: `contentProblem` prüft die Sprachen nicht – „bitte wählen" lässt sich speichern (Code + Test).
+2. B-15: die Meldung zu `no_checkable_content` nennt noch den Aufsatz, der dort nie mehr ankommt (Code).
+3. B-15: der Satz unter der Ansicht nennt den Typ, obwohl sie typneutral ist (Code).
+4. B-17: Testfall 2 prüft nur eines der beiden Felder (Test).
+5. B-21: der Profil-Zweig der Sprachkaskade ist ungetestet (Test).
+6. B-21: das Entfernen des `targetLang`-Filters bliebe grün (Test).
+
+Dazu ohne Zähler bzw. als Nit: Whitespace-Prüfung im Filter, Hilfe/README zur Pflicht `--child`, `exam` als
+`InlineData`, zwei Test-Kommentare ohne „was macht ihn rot", der Platzhalter verschweigt den Altwert, und ein
+vorbestehender Fund (`--general --use-weak` zieht die Wörter trotzdem in den Pflicht-Wortschatz).
+
+## Warum der Lauf hier endet
+
+**Freigabe 3:** der Zähler je Sprint steht bei **6**, also über 5 – das beendet den **gesamten** Lauf sofort,
+nicht nur diesen Sprint. Gezählt ist nach der Regel des Auftrags (die Behebung änderte Code oder Tests), nicht
+nach Gewicht. Ehrlich dazu: es war **keine** Endlosschleife im Sinne der Begründung – alle sechs kamen aus
+**einer** Review-Runde zweier paralleler Reviewer, keiner davon ist ein Blocker, und vier sind Testlücken.
+Die Regel unterscheidet das nicht, und der Lauf hält sich an die Regel statt an seine eigene Einschätzung.
+
+Folgen, ausdrücklich:
+
+- **Nichts davon ist behoben.** B-15, B-17, B-21 stehen auf `in-arbeit` mit `wartet_auf`, die offenen Funde
+  stehen je Story im Verlauf.
+- **Sprint 7 ist nicht geschlossen:** kein Rollengang, keine Retrospektive, keine Nachschau zu Sprint 6. Die
+  Nachschau zu Sprint 6 (B-36, B-35, B-256, Commit `39cf33b`) ist die erste Pflichthandlung des nächsten Laufs.
+- **NP-3 (B-28, B-245, B-230) ist nicht angefangen.**
+- **Der Stand ist trotzdem committet**, damit der Baum sauber ist und nichts verloren geht: Suite grün, Vertrag
+  additiv, Commit-Text sagt „angehalten, nicht abgenommen". Wer ihn nicht will, nimmt **einen** Commit zurück.
+
+### Vorschlag zur Regel — nicht gelandet (Freigabe 3)
+
+Der Zähler kann eine **parallele** Review-Runde nicht von einer **Schleife** unterscheiden: zwei Reviewer über
+drei Stories liefern in einem Schritt mehr als fünf Funde, ohne dass irgendetwas nicht konvergiert. Vorschlag:
+gezählt wird je **Behebungsrunde** (ein Fix-Durchgang nach einem Review) statt je Fund, und die Grenze greift,
+wenn die **dritte** Runde desselben Sprints noch Funde mit Codewirkung liefert. Kosten: die Grenze wird weicher
+und braucht eine Definition von „Runde" im Verlauf. Alternative ohne Regeländerung: in einem Sprint mit drei
+Stories in zwei Bereichen die Reviewer **nacheinander** fahren und je Bereich beheben – das ändert die Zählung
+nicht, macht aber sichtbar, wo die Funde liegen. Entscheidung beim Nutzer.
+
+## Für den Morgen (dritter Lauf)
+
+1. **Ein Commit zur Entscheidung:** Sprint 7 ist als angehaltener Stand committet (siehe oben) – behalten und
+   die sechs Funde nacharbeiten lassen, oder zurücknehmen.
+2. **Menschen-Checks:** die Feier auf „Weg" und die Kartenwende einmal am echten Gerät ansehen und hören
+   (`wartet_auf` an B-36/B-35).
+3. **Retro-Vorschläge:** Sprint 6 (rote Probe nennt Zeile/Meldung, nicht nur die Zahl) und die Zähler-Frage aus
+   Sprint 7. Beide nicht gelandet.
+4. **Entscheidungen, die der Lauf nicht treffen durfte:** soll das zum Kind gewählte Profil die Reihe des
+   KI-Creators setzen (B-256)? Eigene Story für `createdAt` mit/ohne `Z` (B-256)? Eigene Story für
+   `--general --use-weak` (B-21)? `Translation`/`ClozeTexts` auf `LanguageSelect` umstellen (B-17)?
+5. **Neue Ideen:** B-254 (Weg zeigt „Study plan not found."), B-255 (Kinderzeile per Namen in E2E-Specs).
+6. `git log --oneline 896d1b2..`: vier Commits dieses Laufs; **nichts ist gepusht.**

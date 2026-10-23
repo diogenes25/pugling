@@ -26,10 +26,18 @@ public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrade
     public async Task<PreviewData?> BuildAsync(Exercise exercise, int? stageOverride = null,
         CancellationToken ct = default)
     {
-        var items = await content.ItemsOfAsync(exercise, ct: ct);
-        if (items.Count == 0) return null;
-
         if (registry.ByKey(exercise.Type) is not { } type) return null;
+        var items = await content.ItemsOfAsync(exercise, ct: ct);
+        if (items.Count == 0)
+        {
+            // A type without atoms may still have something to look at (B-15: the essay's writing task). It is a
+            // view, not a task: not typed, not gradable - CheckAsync keeps answering "nothing to check".
+            return type.StaticView(exercise.ConfigJson) is { } view
+                ? new PreviewData(exercise.Type, type.PreviewStage, false, [],
+                    [new PreviewItem(view.Index, view.Prompt, null, view.Hint, null, null, null, null)], Gradable: false)
+                : null;
+        }
+
         // In preview mode the supervisor may try every question form (stageOverride); without a choice we prefer
         // the exercise's default question form as picked by its author, otherwise the representative stage.
         var stage = stageOverride ?? exercise.DefaultStage ?? type.PreviewStage;

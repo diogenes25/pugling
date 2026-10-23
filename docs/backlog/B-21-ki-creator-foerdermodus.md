@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/katalog, bereich/auswertung, rolle/creator]
+tags: [typ/story, status/in-arbeit, bereich/katalog, bereich/auswertung, rolle/creator]
 aliases: [Fördermodus, weakness, --use-weak]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Wunsch
 groesse: S
@@ -9,6 +9,7 @@ wo: backend
 migration: nein
 vertragsbruch: nein
 quelle: memory/ki-creator-agent.md
+wartet_auf: "Nutzer: Nachtlauf an Freigabe 3 beendet (6 Review-Funde in Sprint 7) – offene Funde im Verlauf"
 ---
 
 # B-21 · KI-Creator: Fördermodus (`--use-weak`) sprachrein und mit Tests absichern
@@ -180,3 +181,5 @@ Schema-Anfassen.
   `migration: nein`, `vertragsbruch: nein`; Angriffsplan und Testweg (`CreatorAgentTests` +
   `Pugling.Api.Tests`) festgelegt. Kein XL-Split nötig.
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): gilt, beide Lücken bestehen (kein Sprachfilter in `ChildVocabularyProgressController.cs:66-74`/`StudentApi.cs:34-37`; kein Test mit `UseWeakWords: true`, `CreatorAgentTests.cs:68`; kein Guard ohne `--child`, `AgentCommands.cs:334`). Neu: das Verb `plan` aus B-19 nutzt denselben `BuildRequestAsync` (`AgentCommands.cs:189`) – der Guard deckt es mit ab, ein Testfall dafür gehört dazu. Nachtlauffähig.
+- **2026-10-23** — gebaut im Nachtlauf (dritter Lauf, Sprint 7 / NP-2), unter Freigabe 8. `by-word` filtert optional auf `sourceLang`/`targetLang` vor dem Gruppieren (EXISTS auf `Vocabularies`), `StudentApi.ListWordMasteryAsync` reicht beides durch, Guard `--use-weak` ohne `--child` in `BuildRequestAsync` (deckt `create`, `exam`, `plan`). **Abweichung von Entscheidung 3, mit Grund:** statt „Profil vor Kind" lädt `BriefingBuilder` erst das Kind, dann das Profil und holt danach die schwachen Wörter mit dem effektiven Sprachpaar (`child with { WeakWords = … }`) – `ResolveProfileAsync` ruft für ein unsichtbares Kind `MatchProfilesAsync` und würfe sonst eine rohe API-Ausnahme statt der lesbaren Sichtbarkeitsmeldung (vom Reviewer bestätigt). Tests: `WortRollup_FiltertAufDasSprachpaar`, `Foerdermodus_nimmt_nur_…`, `Foerdermodus_ohne_Kind_…` (create, plan). Rote Proben, je an der erwarteten Zeile: kein Filter → rot an `ExerciseItemsAndProgressTests.cs:221` (`DoesNotContain`); falsche Spalte → rot an `:220`; Briefing ohne Sprachpaar (= Ausgangszustand) → rot an `CreatorAgentTests.cs:1046`; kein Guard → beide Theorie-Fälle rot an `:1066`. Backend **885/885**.
+- **2026-10-23** — `pugling-reviewer`: kein Blocker. **Offen, nicht behoben (Lauf an Freigabe 3 beendet):** (a) der Test fährt nur den Zweig „Anfrage setzt die Sprache"; ein kaputter Profil-Zweig der Kaskade (AK 3) bliebe grün – Fall mit `SourceLang = null` und fr/de-Profil fehlt; (b) beide Testwörter haben das Ziel `de`, das Entfernen des `targetLang`-Filters bliebe grün; (c) Nit: `is not null` statt `IsNullOrWhiteSpace` wie der Nachbar `VocabularyStoreController.cs:124`; (d) README `:159`/Hilfe `:486` nennen die neue Pflicht `--child` nicht; `exam` fehlt als `InlineData`. **Vorbestehend, eigene Story wert:** `--child X --general --use-weak` zieht die schwachen Wörter weiter in `RequiredWords` (`BriefingBuilder.cs:54`), obwohl `--general` das Kind fallen lässt. Kein Rollengang, keine Abnahme.

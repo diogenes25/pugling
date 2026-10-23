@@ -30,11 +30,13 @@ public sealed class StudentApi(HttpClient http)
     /// <summary>
     /// The learning state per <b>word</b> (aggregated across all exercises using this store word) – the
     /// "poorly learned words" view, because the same word can appear in multiple exercises.
+    /// <paramref name="sourceLang"/>/<paramref name="targetLang"/> narrow it to one language pair (omitted = all).
     /// </summary>
     public Task<IReadOnlyList<WordMasteryResponse>> ListWordMasteryAsync(int childId, bool onlyWeak = false,
-        int skip = 0, int take = 50, CancellationToken ct = default) =>
+        int skip = 0, int take = 50, string? sourceLang = null, string? targetLang = null, CancellationToken ct = default) =>
         Http.GetAsync<IReadOnlyList<WordMasteryResponse>>($"{Root}/children/{childId}/vocabulary-progress/by-word"
-            + PuglingHttp.Query(("onlyWeak", onlyWeak), ("skip", skip), ("take", take)), ct);
+            + PuglingHttp.Query(("onlyWeak", onlyWeak), ("sourceLang", sourceLang), ("targetLang", targetLang),
+                ("skip", skip), ("take", take)), ct);
 
     /// <summary>The answer history of an item (what was answered when and how).</summary>
     public Task<IReadOnlyList<HistoryResponse>> ListItemHistoryAsync(int childId, int itemId,

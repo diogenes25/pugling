@@ -152,7 +152,12 @@ internal static class TestApi
     }
 
     /// <summary>Creates (as the supervisor) a vocabulary exercise in the catalog and returns its id.</summary>
-    public static async Task<int> CreateVocabExerciseAsync(HttpClient father, params (string Front, string Back)[] items)
+    public static Task<int> CreateVocabExerciseAsync(HttpClient father, params (string Front, string Back)[] items) =>
+        CreateVocabExerciseAsync(father, "en", "de", items);
+
+    /// <summary>Like the overload above (en → de), but for an explicit language pair.</summary>
+    public static async Task<int> CreateVocabExerciseAsync(HttpClient father, string sourceLang, string targetLang,
+        params (string Front, string Back)[] items)
     {
         var vocab = items.Length > 0 ? items : [("hello", "hallo"), ("goodbye", "tschüss")];
         var subjectId = await IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = UniqueName("Englisch-Pos") }));
@@ -163,7 +168,7 @@ internal static class TestApi
                 title = "Begrüßungen",
                 orderIndex = 1,
                 rewardPoints = 10,
-                config = new { direction = "front-to-back", sourceLang = "en", targetLang = "de", items = vocab.Select(i => new { front = i.Front, back = i.Back }) },
+                config = new { direction = "front-to-back", sourceLang, targetLang, items = vocab.Select(i => new { front = i.Front, back = i.Back }) },
             }));
     }
 

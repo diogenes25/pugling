@@ -314,6 +314,10 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
         if (childId is null && profileId is null)
             throw new AgentUsageException(
                 "Gib --child <id> für eine individuelle Übung oder --profile <id> für eine allgemeine an.");
+        // Weak words belong to a child; without one the switch would silently do nothing (B-21).
+        if (childId is null && command.Flag("use-weak"))
+            throw new AgentUsageException(
+                "--use-weak braucht --child <id>: die schwach beherrschten Wörter gehören zu einem Kind.");
 
         var profile = profileId is int id ? await LoadProfileAsync(id, ct) : null;
         var (seriesId, seriesUnitId) = await ResolveLocationAsync(command, profile?.SeriesId, ct);

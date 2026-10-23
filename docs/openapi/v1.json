@@ -8116,7 +8116,7 @@
         "tags": [
           "Student \u2013 Vocabulary Progress"
         ],
-        "summary": "Word rollup: aggregates the status per store vocabulary across all exercises of the child (weakest first).\nonlyWeak restricts to words with average mastery \u0026lt; 50 % \u2013 the candidates for targeted review.",
+        "summary": "Word rollup: aggregates the status per store vocabulary across all exercises of the child (weakest first).\nonlyWeak restricts to words with average mastery \u0026lt; 50 % \u2013 the candidates for targeted review.\nsourceLang/targetLang restrict to store words of exactly that language pair\n(B-21): a child learning English and French must not get French words drilled into an English exercise.",
         "parameters": [
           {
             "name": "childId",
@@ -8134,6 +8134,20 @@
             "schema": {
               "type": "boolean",
               "default": false
+            }
+          },
+          {
+            "name": "sourceLang",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "targetLang",
+            "in": "query",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -38871,9 +38885,13 @@
             "items": {
               "$ref": "#/components/schemas/PreviewItem"
             }
+          },
+          "gradable": {
+            "type": "boolean",
+            "default": true
           }
         },
-        "description": "The playable state of an exercise in test mode: type, chosen stage, whether typed, the problems and\n\u2013 for trying out \u2013 the query forms toggleable for this exercise type (IReadOnlyList\u0026lt;StageOption\u0026gt; PreviewData.Stages)."
+        "description": "The playable state of an exercise in test mode: type, chosen stage, whether typed, the problems and\n\u2013 for trying out \u2013 the query forms toggleable for this exercise type (IReadOnlyList\u0026lt;StageOption\u0026gt; PreviewData.Stages).\nbool PreviewData.Gradable is \u0060false\u0060 for a read-only view (an essay\u0027s writing task): there is nothing to\nanswer or check, so a client shows the item and offers no grading."
       },
       "PreviewItem": {
         "required": [

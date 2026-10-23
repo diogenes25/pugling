@@ -1015,4 +1015,54 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
         Assert.Contains("Vocabulary", error.Message);
     }
+
+    /// <summary>
+    /// B-21 AC 3/5: with <c>--use-weak</c> the briefing takes the child's weak words of the exercise's language
+    /// pair only. They become required vocabulary - a weak French word in an English exercise would be forced
+    /// into a draft the rules then reject, or worse, accept. Red if the briefing loads the rollup without the
+    /// pair (the French word appears) or if the switch stopped loading anything (the English word is missing).
+    /// </summary>
+    [Fact]
+    public async Task Foerdermodus_nimmt_nur_schwache_Woerter_des_Sprachpaars_der_Uebung()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var child = await TestApi.ChildAsync(factory);
+        async Task WeakAsync(string src, string front, string back)
+        {
+            var exerciseId = await TestApi.CreateVocabExerciseAsync(father, src, "de", (front, back));
+            var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)Pugling.Api.Models.TestStage.FreeText);
+            var sessionId = await TestApi.StartPositionSessionAsync(child, planId, positionId);
+            await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 0, givenAnswer: "falsch");
+        }
+        await WeakAsync("en", "the hedgehog", "der Igel");
+        await WeakAsync("fr", "le hérisson", "der Igel (fr)");
+
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Foerdermodus");
+        var briefing = await pipeline.BriefAsync(
+            Request(subjectId, seriesId, seriesUnitId, "Vocabulary") with { UseWeakWords = true });
+
+        Assert.Contains("the hedgehog", briefing.RequiredWords);
+        Assert.DoesNotContain("le hérisson", briefing.RequiredWords);
+        Assert.DoesNotContain(briefing.Child!.WeakWords, w => w.Word == "le hérisson");
+    }
+
+    /// <summary>
+    /// B-21 AC 4: <c>--use-weak</c> without a child used to do nothing, silently. Every verb that builds a
+    /// request (here <c>create</c> and <c>plan</c>, B-19) refuses it instead. Red if the guard is removed: then
+    /// the verbs get past it and fail later for an unrelated reason, or not at all.
+    /// </summary>
+    [Theory]
+    [InlineData("create", "--type", "Vocabulary")]
+    [InlineData("plan")]
+    public async Task Foerdermodus_ohne_Kind_bricht_mit_Meldung_ab(string verb, params string[] extra)
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var commands = Commands(creator, pipeline);
+
+        var command = CommandLine.Parse([verb, "--profile", "999999", "--use-weak", .. extra]);
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => commands.RunAsync(command, default));
+
+        Assert.Contains("--use-weak braucht --child", error.Message);
+    }
 }

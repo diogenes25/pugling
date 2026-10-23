@@ -212,4 +212,84 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
         var freeText = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/preview?stage=4");
         Assert.Equal(JsonValueKind.Null, freeText.GetProperty("items").EnumerateArray().First().GetProperty("audioUrl").ValueKind);
     }
+
+    private static async Task<string> UnitBaseAsync(HttpClient father, string label)
+    {
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = $"{label}-{Guid.NewGuid():N}"[..20] }));
+        var (seriesId, seriesUnitId) = await TestApi.CreateSeriesAndUnitAsync(father, subjectId);
+        return $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}";
+    }
+
+    /// <summary>
+    /// B-15: an essay has no gradable atoms, but the author still gets to SEE what the child will read - the
+    /// writing task, the word limits and the rubric he entered. It is a view: not gradable, and the check
+    /// keeps answering "nothing to check".
+    /// </summary>
+    [Fact]
+    public async Task Aufsatz_Preview_ZeigtAuftragGrenzenUndRubrik_OhneBewertung()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var basis = await UnitBaseAsync(father, "Aufsatz-Vorschau");
+        var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync($"{basis}/essays", new
+        {
+            title = "Mein Hobby",
+            orderIndex = 1,
+            rewardPoints = 10,
+            config = new
+            {
+                prompt = "Schreibe über dein Hobby.",
+                minWords = 80,
+                maxWords = 200,
+                rubric = new[] { new { criterion = "Aufbau", maxScore = 5 }, new { criterion = "Wortschatz", maxScore = 3 } },
+            },
+        }));
+
+        var res = await father.GetAsync($"/api/v1/creator/exercises/{exerciseId}/preview");
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+        var data = await res.Content.ReadFromJsonAsync<JsonElement>();
+        JsonAssert.False(data, "gradable");
+        JsonAssert.False(data, "typed");
+        var item = Assert.Single(data.GetProperty("items").EnumerateArray().ToList());
+        Assert.Equal("Schreibe über dein Hobby.", item.GetProperty("prompt").GetString());
+        Assert.Equal("Länge: 80–200 Wörter · Bewertung: Aufbau (5 P.), Wortschatz (3 P.)", item.GetProperty("hint").GetString());
+
+        // AC 2: nothing to grade - the check stays exactly where it was.
+        var check = await father.PostAsJsonAsync($"/api/v1/creator/exercises/{exerciseId}/preview/check",
+            new { answers = Array.Empty<object>() });
+        Assert.Equal(HttpStatusCode.BadRequest, check.StatusCode);
+        Assert.Equal("no_checkable_content", (await check.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+    }
+
+    /// <summary>
+    /// B-15 AC 3: the view hook stays null for every other type. Two atom-less cases that must keep their 400:
+    /// a reading text without questions (same type family, no view) and the arithmetic drill (own generate path).
+    /// </summary>
+    [Fact]
+    public async Task Preview_OhneAtome_BleibtFuerAndereTypenBeiNoCheckableContent()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var basis = await UnitBaseAsync(father, "Ohne-Atome");
+        var reading = await TestApi.IdAsync(await father.PostAsJsonAsync($"{basis}/reading", new
+        {
+            title = "Leseverstehen (leer)",
+            orderIndex = 1,
+            rewardPoints = 5,
+            config = new { text = "A short text without questions.", questions = Array.Empty<object>() },
+        }));
+        var drill = await TestApi.IdAsync(await father.PostAsJsonAsync($"{basis}/arithmetic-drill", new
+        {
+            title = "Kopfrechnen",
+            orderIndex = 2,
+            rewardPoints = 10,
+            config = new { operations = new[] { "Addition" }, minOperand = 2, maxOperand = 9, problemCount = 4 },
+        }));
+
+        foreach (var id in new[] { reading, drill })
+        {
+            var res = await father.GetAsync($"/api/v1/creator/exercises/{id}/preview");
+            Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+            Assert.Equal("no_checkable_content", (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+        }
+    }
 }

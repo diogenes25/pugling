@@ -27,8 +27,21 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
             ?? throw new AgentUsageException(
                 $"Unit {request.SeriesUnitId} gehört nicht zu Reihe {request.SeriesId} ({targetSeries.Name}).");
 
-        var child = request.ChildId is int childId ? await LoadChildAsync(childId, request, ct) : null;
+        var child = request.ChildId is int childId ? await LoadChildAsync(childId, ct) : null;
         var profile = await ResolveProfileAsync(request, ct);
+        // Explicitly set languages beat the profile; without either, the usual defaults apply.
+        var sourceLang = request.SourceLang ?? profile?.SourceLang ?? "en";
+        var targetLang = request.TargetLang ?? profile?.TargetLang ?? "de";
+        // Weak words only of THIS exercise's language pair (B-21): they become required vocabulary, and a child
+        // learning two languages would otherwise get French words forced into an English exercise. Loaded after
+        // the profile because the pair can come from it - and after the child, whose visibility check gives the
+        // readable error.
+        if (child is not null && request.UseWeakWords)
+            child = child with
+            {
+                WeakWords = await student.ListWordMasteryAsync(child.ChildId, onlyWeak: true, take: MaxWeakWords,
+                    sourceLang: sourceLang, targetLang: targetLang, ct: ct),
+            };
         var (series, unit) = await ResolveMaterialAsync(request, profile, child, subject.Id, subject.Name, ct);
 
         // Existing titles go into the prompt as "do not repeat" - that prevents near-duplicates.
@@ -50,9 +63,8 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
             SeriesUnitId: targetUnit.Id,
             SeriesUnitLabel: targetUnit.Label,
             Topic: request.Topic,
-            // Explicitly set languages beat the profile; without either, the usual defaults apply.
-            SourceLang: request.SourceLang ?? profile?.SourceLang ?? "en",
-            TargetLang: request.TargetLang ?? profile?.TargetLang ?? "de",
+            SourceLang: sourceLang,
+            TargetLang: targetLang,
             ExistingExerciseTitles: [.. existing.Select(e => e.Title)],
             RequiredWords: requiredWords,
             // The same `--general` reading as one line above: what the briefing carries decides, not what
@@ -195,7 +207,7 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
     /// The child with everything that drives the tailoring. A pure creator account sees no children; the
     /// exception points this out explicitly instead of passing through a bare 403.
     /// </summary>
-    private async Task<ChildFacts> LoadChildAsync(int childId, GenerationRequest request, CancellationToken ct)
+    private async Task<ChildFacts> LoadChildAsync(int childId, CancellationToken ct)
     {
         ChildResponse child;
         try
@@ -213,9 +225,6 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
 
         var weighted = await LoadInterestsAsync(childId, ct);
         var textbooks = await LoadTextbooksAsync(childId, ct);
-        var weakWords = request.UseWeakWords
-            ? await student.ListWordMasteryAsync(childId, onlyWeak: true, take: MaxWeakWords, ct: ct)
-            : [];
 
         return new ChildFacts(
             ChildId: child.Id,
@@ -231,7 +240,8 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
             Dislikes: [.. weighted.Where(i => i.Weight < 0).OrderBy(i => i.Weight)],
             ProfileNotes: child.ProfileNotes,
             Textbooks: textbooks,
-            WeakWords: weakWords);
+            // Filled in BuildAsync, once the exercise's language pair is known.
+            WeakWords: []);
     }
 
     /// <summary>

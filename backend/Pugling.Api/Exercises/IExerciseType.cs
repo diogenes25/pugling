@@ -101,6 +101,14 @@ public interface IExerciseType
     /// <summary>The query forms switchable in test mode (empty if the type only has one form).</summary>
     IReadOnlyList<StageOption> StageOptions { get; }
 
+    /// <summary>
+    /// A read-only view of an exercise that has no gradable atoms by its nature (an essay is a writing task,
+    /// not question/answer pairs), so the test mode can still show what the child will get. Only consulted when
+    /// <see cref="ItemsOf"/> is empty; <c>null</c> (default) keeps "nothing to show" for every other type, so an
+    /// unfilled exercise of an atom-based type is never dressed up as a view.
+    /// </summary>
+    ContentItem? StaticView(string configJson);
+
     /// <summary>Does the type carry cross-plan item learning progress (today only vocabulary)?</summary>
     bool SupportsItemProgress { get; }
 

@@ -186,6 +186,45 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
         Assert.Equal(2, self!.Count);
     }
 
+    /// <summary>
+    /// B-21: the word rollup narrows to one language pair. A child learning English and French must not get its
+    /// weak French words into the required vocabulary of an English exercise (the AI creator reads exactly this).
+    /// Without the parameters nothing changes. Red if the filter is dropped (the French word shows up in the
+    /// English list) or applied to the wrong column (the pair en→de then finds nothing).
+    /// </summary>
+    [Fact]
+    public async Task WortRollup_FiltertAufDasSprachpaar()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var child = await TestApi.ChildAsync(_factory);
+        async Task<int> WeakWordAsync(string src, string tgt, string front, string back)
+        {
+            var exerciseId = await TestApi.CreateVocabExerciseAsync(father, src, tgt, (front, back));
+            var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+            var sessionId = await TestApi.StartPositionSessionAsync(child, planId, positionId);
+            await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 0, givenAnswer: "falsch");
+            var rows = await father.GetFromJsonAsync<List<JsonElement>>($"/api/v1/student/children/1/vocabulary-progress?exerciseId={exerciseId}");
+            return Assert.Single(rows!).GetProperty("vocabularyId").GetInt32();
+        }
+        var english = await WeakWordAsync("en", "de", "the walrus", "das Walross");
+        var french = await WeakWordAsync("fr", "de", "le morse", "das Walross (fr)");
+
+        List<int> Ids(List<JsonElement>? rows) => [.. rows!.Select(w => w.GetProperty("vocabularyId").GetInt32())];
+        const string byWord = "/api/v1/student/children/1/vocabulary-progress/by-word?onlyWeak=true&take=200";
+
+        var all = Ids(await father.GetFromJsonAsync<List<JsonElement>>(byWord));
+        Assert.Contains(english, all);
+        Assert.Contains(french, all);
+
+        var en = Ids(await father.GetFromJsonAsync<List<JsonElement>>($"{byWord}&sourceLang=en&targetLang=de"));
+        Assert.Contains(english, en);
+        Assert.DoesNotContain(french, en);
+
+        var fr = Ids(await father.GetFromJsonAsync<List<JsonElement>>($"{byWord}&sourceLang=fr&targetLang=de"));
+        Assert.Contains(french, fr);
+        Assert.DoesNotContain(english, fr);
+    }
+
     [Fact]
     public async Task WiederholteAntwort_TreibtBeherrschungNichtHoch_HistorieLoggtTrotzdem()
     {

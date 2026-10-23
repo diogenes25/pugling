@@ -26,8 +26,11 @@ public record PreviewItem(int ItemIndex, string? Prompt, int? GapIndex, string? 
 /// <summary>
 /// The playable state of an exercise in test mode: type, chosen stage, whether typed, the problems and
 /// – for trying out – the query forms toggleable for this exercise type (<see cref="Stages"/>).
+/// <see cref="Gradable"/> is <c>false</c> for a read-only view (an essay's writing task): there is nothing to
+/// answer or check, so a client shows the item and offers no grading.
 /// </summary>
-public record PreviewData(string Type, int Stage, bool Typed, IReadOnlyList<StageOption> Stages, IReadOnlyList<PreviewItem> Items);
+public record PreviewData(string Type, int Stage, bool Typed, IReadOnlyList<StageOption> Stages, IReadOnlyList<PreviewItem> Items,
+    bool Gradable = true);
 
 /// <summary>An answer from the supervisor: typed (<paramref name="GivenAnswer"/>) or self-assessment (<paramref name="WasKnown"/>).</summary>
 public record PreviewAnswer(int ItemIndex, string? GivenAnswer, bool? WasKnown);

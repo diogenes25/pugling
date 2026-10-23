@@ -32,10 +32,10 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
     setData(null); setAnswers({}); setRevealed(new Set()); setResult(null); setError(null);
     api.previewExercise(exerciseId, stage)
       .then(setData)
-      // Manche Typen haben keine einzeln prüfbaren Aufgaben (ein Aufsatz ist ein Schreibauftrag, kein
-      // Frage-Antwort-Paar). Der Server sagt das mit `no_checkable_content`; die technische englische
-      // Meldung würde hier wie ein Defekt aussehen, obwohl es die Natur des Typs ist. Der Satz ist
-      // *hier* länger als die zentrale Fassung, weil er die Folge nennt (zuweisen ja, durchspielen nein).
+      // Manche Übungen haben keine einzeln prüfbaren Aufgaben (ein Lesetext ohne Fragen). Der Server sagt
+      // das mit `no_checkable_content`; die technische englische Meldung würde hier wie ein Defekt aussehen.
+      // Der Satz ist *hier* länger als die zentrale Fassung, weil er die Folge nennt (zuweisen ja,
+      // durchspielen nein). Ein Aufsatz kommt nicht mehr hierher: er liefert eine Ansicht (B-15, unten).
       //
       // Der verwandte Fall „Übung noch nicht gefüllt" (`exercise_empty`) braucht keinen Zweig: er ist
       // nicht vorschau-spezifisch und kommt deutsch aus `errorMessage` (GERMAN_PROBLEM_TEXT in lib/api).
@@ -117,7 +117,24 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
 
         {!data && !error && <div className="loading">Lade…</div>}
 
-        {data && !result && (
+        {/* Nur ansehen, nicht bewerten (B-15): ein Aufsatz hat keine Antwort, die man prüfen könnte – der Vater
+            sieht Schreibauftrag, Länge und Bewertungskriterien so, wie er sie eingegeben hat, und schließt. */}
+        {data && data.gradable === false && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {data.items.map((it) => (
+              <div className="card" key={it.itemIndex}>
+                <div className="test-prompt">{it.prompt}</div>
+                {it.hint && <p className="muted" style={{ margin: "6px 0 0" }}>{it.hint}</p>}
+              </div>
+            ))}
+            <p className="muted" style={{ margin: 0 }}>
+              Ein Schreibauftrag lässt sich nicht automatisch bewerten – du kannst ihn zuweisen, aber nicht durchspielen.
+            </p>
+            <button type="button" className="btn" style={{ width: "auto", alignSelf: "flex-start" }} onClick={onClose}>Fertig</button>
+          </div>
+        )}
+
+        {data && data.gradable !== false && !result && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {/* Lesetext bzw. Anweisung der Übung – dasselbe Material, das die Karte des Kindes trägt.
                 Eine Vorschau, die weniger zeigt, ist eine Beruhigung statt einer Prüfung. Steht oben, wie

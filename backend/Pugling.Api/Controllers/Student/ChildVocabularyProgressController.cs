@@ -62,15 +62,23 @@ public class ChildVocabularyProgressController(PuglingDbContext db) : Controller
     /// <summary>
     /// Word rollup: aggregates the status per store vocabulary across all exercises of the child (weakest first).
     /// <paramref name="onlyWeak"/> restricts to words with average mastery &lt; 50 % – the candidates for targeted review.
+    /// <paramref name="sourceLang"/>/<paramref name="targetLang"/> restrict to store words of exactly that language pair
+    /// (B-21): a child learning English and French must not get French words drilled into an English exercise.
     /// </summary>
     [HttpGet("by-word")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<WordMasteryResponse>>> ByWord(int childId,
-        [FromQuery] bool onlyWeak = false,
+        [FromQuery] bool onlyWeak = false, [FromQuery] string? sourceLang = null, [FromQuery] string? targetLang = null,
         [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake, CancellationToken ct = default)
     {
-        var groups = db.ItemProgress.AsNoTracking()
-            .Where(p => p.ChildId == childId)
+        var progress = db.ItemProgress.AsNoTracking().Where(p => p.ChildId == childId);
+        // Filter before grouping, so the rollup itself (count, average) only sees words of the wanted pair.
+        if (sourceLang is not null)
+            progress = progress.Where(p => db.Vocabularies.Any(v => v.Id == p.VocabularyId && v.SourceLanguage == sourceLang));
+        if (targetLang is not null)
+            progress = progress.Where(p => db.Vocabularies.Any(v => v.Id == p.VocabularyId && v.TargetLanguage == targetLang));
+
+        var groups = progress
             .GroupBy(p => p.VocabularyId)
             .Select(g => new
             {
