@@ -863,8 +863,6 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-209](B-209-savednotice-raeumt-nie.md) | `abgenommen` | Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung" |
 | [B-210](B-210-dialog-haelt-zwei-wahrheiten-fuer-die-config.md) | `abgenommen` | Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung" |
 | [B-212](B-212-fuenfter-meldungsplatz-in-lehrwerke.md) | `abgenommen` | Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung" |
-| [B-240](B-240-index-meldet-fehlende-groesse-und-wo-nie.md) | `ausformuliert` | Abschnitt „Akzeptanzkriterien" |
-| [B-241](B-241-kapitel-ebene-in-tutorials-und-einem-kommentar-uebrig.md) | `ausformuliert` | Abschnitt „User Story", Abschnitt „Akzeptanzkriterien" |
 
 <details>
 <summary>Verworfen (13)</summary>

@@ -46,6 +46,14 @@ zwei gemeldet sind. Genau so ist B-131 mit ⚠ abgenommen worden – der Prüfen
 vertragsbruch", trug zwei Felder nach, und der Index sagte beim nächsten Lauf weiter nichts von `groesse`/`wo`,
 weil er es nie gesagt hatte.
 
+## Akzeptanzkriterien
+
+1. Eine Story auf `abgenommen` ohne `groesse`, `wo`, `migration`, `vertragsbruch` erscheint in der ⚠-Tabelle
+   mit **allen vier** Feldern (Harness aus B-190, Kopie ohne die Felder – vorher zwei gemeldet, nachher vier).
+2. Ein Root, dessen einzige Story-Datei leer ist, schreibt die ⚠-Tabelle mit der Zeile „Datei ist leer" statt
+   „Noch keine Story angelegt".
+3. Der echte Index bleibt idempotent (`git diff` leer nach dem Lauf), Laufzeit im Sekundenbereich.
+
 ## Offene Punkte
 
 1. `belege` vor die Platzhalter ziehen, oder `belege` die Rohwerte geben? *Empfehlung: die Rohwerte – die

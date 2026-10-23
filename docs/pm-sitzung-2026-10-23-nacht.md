@@ -42,7 +42,7 @@ Wird je Sprint fortgeschrieben; die letzte Zeile ist der Zustand.
   zweite Projektion). Nachschau Sprint 2: **zwei Defekte** (B-240: der Index meldet `groesse`/`wo` nie und
   B-131 war mit ⚠ abgenommen; B-241: falscher Cascade-Kommentar – korrigiert – und sechs Doku-Stellen).
   **Der Lauf endet hier** (Limit 2). Retro schlägt ein Tor für den Wächter selbst vor, nicht gelandet.
-  Commit: siehe „Änderungsstand".
+  Commit `98c8431` + Nachtrag `03cb16e`.
 
 ## Runde 1 — Vorstellung & Feedback
 
@@ -572,7 +572,7 @@ Projektion). Der natürliche nächste Sprint sind die zwei Nachschau-Defekte **B
 `/// <summary>` im Wiki-Beispiel, `idee`), B-240, B-241.
 
 **Commits (nichts gepusht):** Sprint 1 `7844894` + Nachtrag `738ef99` · Sprint 2 `95b0624` + Nachtrag
-`1372d0e` · Sprint 3: siehe Nachtrag.
+`1372d0e` · Sprint 3 `98c8431` + Nachträge `03cb16e` und der hier.
 
 ## Für den Morgen
 

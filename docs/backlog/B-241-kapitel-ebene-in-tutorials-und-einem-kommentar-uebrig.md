@@ -22,6 +22,12 @@ B-166s AK 2 („Fach → Kapitel → Übung steht in keiner lebenden Doku mehr")
 Kommentare, `head -8`) ein zweites Mal behauptet und ein zweites Mal nicht erfüllt: der Grep lief über
 `chapters/|chapterId`, nicht über das deutsche Wort in den Tutorials, die die User Story ausdrücklich nennt.
 
+## User Story
+
+Als **Leser der Tutorials** (Supervisor, Student, Einstiegsseite) möchte ich dieselbe Katalog-Hierarchie
+lesen wie in der Wissenskarte, die B-166 gerade berichtigt hat – Fach → Reihe/Unit → Übung –, damit nicht
+drei Dokumente des Repos drei verschiedene Produkte beschreiben.
+
 ## Ist-Stand am Code
 
 **Ein Satz, der durch B-166 falsch wurde** – in Sprint 3 bereits korrigiert, hier als Beleg:
@@ -54,6 +60,14 @@ KI-Creators – gehört zu **B-237**.
 Dieselbe wie in B-166s eigenem Review: ein Grep, der nicht alles fasst, gilt als Sweep. Zweimal im selben
 Sprint (`head -8`, dann nur die englischen Routen-Wörter). Und einmal die Fehlerklasse B-112: ein Wort
 ersetzt, die Behauptung drumherum nicht gelesen.
+
+## Akzeptanzkriterien
+
+1. Die sechs Stellen der Tabelle oben sind umgeschrieben (oder, für den Plan, als Historie gekennzeichnet –
+   Entscheidung in Punkt 1), die beiden Nits (`frontend/CLAUDE.md:82`, `endpunkt-beziehungen.md:418`) mit.
+2. Der Grep aus Punkt 2 (Routen **und** das Wort „Kapitel", mit Ausschlussliste) steht mit seiner Liste im
+   `## Verlauf` und ergibt 0 – nicht „gegrept", sondern das Kommando und die Ausnahmen.
+3. `AdultLifecycleTests.cs:14-15` sagt `SetNull` (bereits in `98c8431` korrigiert) – nachgelesen, nicht erinnert.
 
 ## Offene Punkte
 
