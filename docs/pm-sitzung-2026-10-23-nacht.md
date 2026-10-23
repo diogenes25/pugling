@@ -1252,3 +1252,5 @@ nicht mehr" des Reviewers war eine Vermutung – gemessen trägt sie (7 Texte).
 das Dokument sieht nur die Folgen, und nicht alle. Heute grün (0 Treffer nach diesem Sprint), Ausnahmeliste leer.
 Kosten: ein Wächter mehr, und Entwickler, die `<para>` aus Gewohnheit schreiben, bekommen einen roten Build mit der
 Begründung. **Bewusst ungedeckt:** die Leerzeichen, die der Generator zwischen zwei Elementen verschluckt (B-259).
+
+Commit des Sprints: `e5b67ec`.
