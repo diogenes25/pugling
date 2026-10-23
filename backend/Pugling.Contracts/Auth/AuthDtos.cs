@@ -32,11 +32,9 @@ public record MeResponse(int? AccountId, string Role, IReadOnlyList<string> Role
 /// Self-service management of the caller's own account (<c>PATCH auth/me</c>) – for <b>every</b> adult
 /// role, including a teacher account that has no access to the supervisor endpoints.
 ///
-/// <para>
 /// <b>PATCH semantics:</b> <c>null</c> means "not specified" (the value stays). Email is the only
 /// clearable field and needs <see cref="ClearEmail"/> for that – without the switch, a form with an
 /// empty field would report "saved" while the old address stayed in place.
-/// </para>
 /// </summary>
 /// <param name="Name">New display name; also appears as the author on the account's own exercises.</param>
 /// <param name="Email">New email. Must be unique account-wide.</param>

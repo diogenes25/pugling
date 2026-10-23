@@ -33,21 +33,18 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     /// How many test attempts the child gets per <b>day</b>. A second chance is pedagogically right, the
     /// fifth is grade farming: without a cap the child can restart until the result is good and silently drop
     /// every bad run (an abandoned attempt writes nothing – see <see cref="Answer"/>).
-    /// <para>
+    ///
     /// Per day and deliberately <em>not</em> per goal period: what the cap defends against is the immediate
     /// restart, and a fresh day is fresh learning rather than farming. Tied to the period, a weekly position
     /// would grant two attempts for the entire week – two Monday failures would lock the child out of its own
     /// duty until Sunday and then fine it (<see cref="PlanPosition.PenaltyCoins"/>) for missing it.
-    /// </para>
-    /// <para>
+    ///
     /// It also holds for positions without a duty (<see cref="GoalCadence.None"/>): a test always writes item
     /// progress and feeds the metric missions, so unlimited restarts are farming there too.
-    /// </para>
-    /// <para>
+    ///
     /// Deliberately a constant and not a field on the position: a per-position cap would be a schema change,
     /// and the migration chain is folded rather than extended. If the cap ever needs to be configurable, this
     /// is the one place to replace.
-    /// </para>
     /// </summary>
     private const int MaxAttemptsPerDay = 2;
 
@@ -90,10 +87,9 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     /// result row without an atom (<see cref="TestItemResult.ItemIndex"/> is nullable for exactly this). A
     /// wrong mention must never be attributed to the card that carried it: that row still stands for an entry
     /// the child may yet name.
-    /// <para>
+    ///
     /// Shared by the step-wise <see cref="Answer"/> and the bulk <see cref="Submit"/>, because a second copy of
     /// this rule is how the two paths would drift apart.
-    /// </para>
     /// </summary>
     private static void CreditSetAnswer(TestAttempt attempt, IReadOnlyList<ContentItem> items,
         HashSet<int> credited, string? given, AnswerGrader grader)

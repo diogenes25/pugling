@@ -1131,3 +1131,124 @@ nicht, macht aber sichtbar, wo die Funde liegen. Entscheidung beim Nutzer.
    `--general --use-weak` (B-21)? `Translation`/`ClozeTexts` auf `LanguageSelect` umstellen (B-17)?
 5. **Neue Ideen:** B-254 (Weg zeigt „Study plan not found."), B-255 (Kinderzeile per Namen in E2E-Specs).
 6. `git log --oneline 896d1b2..`: vier Commits dieses Laufs; **nichts ist gepusht.**
+
+## Vierter Lauf desselben Tages (ab 22:02)
+
+Auftrag: der Auftragstext aus [nachtlauf.md](nachtlauf.md) mit den Freigaben 1–9 plus *„Fahre die Pakete NP-4, NP-12
+aus [der Backlog-Sichtung](pm-sitzung-2026-10-23-backlog-sichtung.md), in dieser Reihenfolge."* Ausgangslage: HEAD
+`3cebfd3`, `git status` sauber. Ausdrücklich ausgenommen: B-15, B-17, B-21 (Sprint 7, angehalten) und NP-3. Die
+Chrome-Extension ist verbunden (ein Browser, lokal) – Freigabe 6. Sprints laufen weiter durchnummeriert (8, 9).
+Die Uhr überschreitet im Lauf lokal Mitternacht; die Verlauf-Daten stammen aus `date -u` und bleiben 2026-10-23.
+
+**Nachschau zu Sprint 6 (erste Pflichthandlung, vor dem ersten Bau):** frischer Prüfer, read-only über
+`39cf33b`/`fe94ab0`, fünf benannte Prüfpunkte (je Story im `## Verlauf`). **B-35, B-256:** kein Befund, mit Prüfpunkten
+(Wende-Klasse gegen Entscheidungen und Kartenwechsel, Reduce-Motion-Gate; Hilfe gegen `BuildRequestAsync`,
+Kommentar gegen `CreatedAt`). **B-36:** eine Entgleitung → **B-257** (`entgangen_bei: B-36`): der Erst-Stand der
+gesehenen Ziele entsteht nur aus `take: 5`, ein schon erreichtes sechstes Ziel wird später, wenn es nach vorn
+rutscht, verspätet gefeiert. Dazu eine Testlücke (Währungsweiche Münze/Gem), in B-257 vermerkt. Nach der Auslegung
+von Limit 2 aus dem dritten Lauf beendet ein Fund im Sprint eines früheren Laufs diesen nicht. `nachgeschaut` auf
+allen drei gesetzt.
+
+## Sprint 8 — Ziel & Umfang (NP-4)
+
+**Sprint-Ziel (aus dem Creator-Sitz, als Leser des Vertrags):** *Wer die API liest, findet jede Beschreibung als
+Fließtext – ohne Einrückung, ohne rohe Tags, mit Absätzen –, dasselbe Eigentums-Flag überall unter einem Namen, und
+nach dem Umbenennen eines Fachs überall den neuen Namen.*
+
+**Umfang:** B-147 (`Defekt`, `ausformuliert`), B-138 (`Aufräumen`, `ausformuliert`), B-156 (`Aufräumen`,
+`ausformuliert`), B-145 (`Defekt`, `idee`) – alle vier autonom grillbar (Freigabe 1); Nachprüfungs-Zeilen gelesen und
+am Code bestätigt. Reihenfolge B-147 vor B-138 (der Normalisierer entscheidet, was von Hand bleibt).
+
+**Entwickler-Brief:** Backend zuerst. **Quelle der Wahrheit:** das erzeugte `docs/openapi/v1.json` (gemessen am
+geparsten JSON, nicht per `grep` – `<` steht dort als `<`). **Guards:** der Normalisierer schreibt bei `$ref`
+nur die eigene Beschreibung; das Umbenennen gleicht über die Id ab, nie über den Namen. **Vertrag:** ein Bruch
+(B-156, `isMine` → `isOwn`), Frontend und Fixtures ziehen im selben Commit mit. **Migration:** keine.
+**Testweg:** Dokument-Test, Einheitstests mit Mutanten, Integrationstest, Browser-Rollengang.
+
+## Iteration 8 — umgesetzt
+
+- **B-147/B-138:** `backend/Pugling.Api/OpenApi/OpenApiProseNormalizer.cs` (neu), als letzter Dokument-Transformer
+  in `Program.cs`. Zwei Messungen haben den Plan verändert: Swagger UI zeigt eine Summary als **Klartext** (`<b>all</b>`
+  steht dort wörtlich), und der Generator behandelt `<para>` je nach Deklaration verschieden – in Typen auf oberster
+  Ebene klebt er Absätze ohne Trenner zusammen und verwirft `<b>`/`<c>`. Darum zusätzlich ein mechanischer Tausch:
+  alle eigenständigen `<para>`/`</para>`-Zeilen in `<summary>`-Blöcken gegen eine leere `///`-Zeile (204 Zeilen,
+  Skript; nach dem Review vier Inline-Fälle von Hand). Fundstellen (entfernte Zeilen) unter `Pugling.Api/Controllers/`:
+  AuthController.cs (8), Creator/ExerciseBrief.cs (2), Creator/ExerciseCatalogController.cs (6),
+  Creator/ExerciseCategoriesController.cs (8), Creator/ExerciseControllerBase.cs (2), Creator/ExercisePreviewController.cs (2),
+  Creator/InterestTagsController.cs (6), Creator/MediaAssetsController.cs (4), Creator/MediaUploadForm.cs (2),
+  Creator/PublishersController.cs (12), Creator/SeriesUnitsController.cs (2), Creator/SubjectsController.cs (6),
+  Creator/TagsController.cs (6), Creator/TeacherAccountsController.cs (4), RemarksController.cs (20),
+  Student/ChildMediaPicksController.cs (2), Student/InterestOptionsController.cs (2), Student/MyInterestsController.cs (4),
+  Student/PositionPracticeController.cs (10), Student/PositionTestsController.cs (8), Supervisor/AdultsController.cs (4),
+  Supervisor/ChildInterestsController.cs (2), Supervisor/PositionReportController.cs (2); unter `Pugling.Contracts/`:
+  Auth/AuthDtos.cs (2), Common/MediaBaseTypes.cs (2), Common/PlanPositionBaseTypes.cs (6), Common/RemarkBaseTypes.cs (2),
+  Creator/CreatorProfileDtos.cs (6), Creator/ExerciseAuthoringDtos.cs (6), Creator/ExerciseBrief.cs (2),
+  Creator/ExerciseCatalogDtos.cs (6), Creator/InterestTagDtos.cs (2), Creator/PublisherDtos.cs (2),
+  Shared/ProgressDtos.cs (2), Shared/RemarkDtos.cs (2), Student/PracticeDtos.cs (18), Student/TestDtos.cs (16),
+  Supervisor/ProfileDtos.cs (4), Supervisor/StudyPlanDtos.cs (2). Neue Tests: `OpenApiProseNormalizerTests` (8),
+  `ContractDocumentTests.Vertragsdokument_TraegtKeinQuelltextFormat`.
+- **B-156:** `SubjectResponse.IsOwn`; Leser `CatalogAdmin.tsx:244`, Fixtures in vier Testdateien, Wiki,
+  `docs/api-examples/catalog.md` und der Beispielkatalog von der Suite neu geschrieben.
+- **B-145:** `SubjectNaming.PropagateRenameAsync`, aufgerufen in `SubjectsController.Update` in einer Transaktion.
+  Abgetrennt: **B-258** (uneinheitlicher Fehlercode für eine unbekannte `SubjectId`).
+
+**Verifikation:**
+
+| Probe | erwartet | gemessen |
+| --- | --- | --- |
+| Dokument, Einrückung (Ausgangsstand) | 31 Texte | **31** rot (`ContractDocumentTests`) |
+| Dokument, Tags (Übersetzung aus) | ≥ 71 Texte | **104** rot an `:217` (Mehrung erklärt in B-138) |
+| Dokument, Einrückung (Endstand, Transformer aus) | rot | **7** rot an `:213` – trägt weiter |
+| neun Normalisierer-Mutanten | je der benannte Fall | ja; einer war zuerst **grün** (Test ohne registrierten Workspace – leere Zusicherung), behoben |
+| sieben B-145-Mutanten | je die benannte Zeile | `:120`–`:124`, `:130` |
+| B-156 Draht-Name zurück / Frontend-Leser zurück | 5 bzw. 1 rot | **5** (`:89, :109, :145, :186, :643`) / **1** (`CatalogAdmin.test.tsx:35`) |
+| `v1.json` nachher | 0 eingerückt, 0 Tags | 0 / 0; Absatzumbrüche 41 → **152**; Texte 2487 → 2487 |
+| Backend-Suite | grün | **895/895** |
+| Vitest / `tsc -b` | grün | **406/406** / sauber |
+
+### Review-Funde (Zähler: 3 von 5)
+
+`pugling-reviewer`, danach `frontend-reviewer` – **nacheinander**, nicht parallel (Lehre aus Sprint 7). Gezählt:
+(1) vier Inline-`<para>` verloren weiter Absatz und Backticks; (2) Betonung über einen Absatz; (3) ungetestete Aussage
+„fremde Eigentümer werden mit umgeschrieben". Ohne Zähler: ein Kommentar, eine Messung (die Einrückungs-Zusicherung
+trägt), vorbestehende Generator-Eigenheiten → **B-259**, ein Doku-Nit in `frontend/CLAUDE.md:112` (belassen, Budget).
+
+## Runde 8 — Re-Review / Abnahme
+
+**Rollengang im Browser** (Freigabe 6) gegen `pugling_walk4.db` (danach gelöscht), API und Vite nach dem letzten Edit
+gestartet.
+
+- **Creator – signed off:** „In Swagger steht beim Login jetzt ‚all roles' statt ‚<b>all</b>', und das Löschen eines
+  Fachs liest sich in Absätzen. Ich leg ‚Franz Walk' an, kann es umbenennen und löschen, die mitgelieferten Fächer
+  nicht – wie vorher, nur heißt das Feld jetzt wie überall. Ich benenne es um, und die Reihe auf ‚Lehrwerke' heißt
+  sofort ‚Französisch Walk'." **Einschränkung, benannt:** nach einem Wiederverbinden der Extension kamen Klicks und
+  Tastatur nicht an; die Eingaben liefen über die echten Handler der Seite (Value-Setter + Ereignis, `click()`), nicht
+  über `computer.type`. Wie sich die Markdown-Beschreibungen in Scalar lesen, ist nicht angesehen.
+- **Vater – signed off (Regressionsweg und Gewinn):** das Lehrbuch seines Kindes trägt nach dem Umbenennen den neuen
+  Fachnamen (API-Lesung im Rollengang); Katalog- und Lehrwerk-Seite unverändert bedienbar.
+- **Sohn – Regressionszeuge:** Startseite geladen („Noch keine Mission", Wegwerf-DB); kein Student-Pfad im Diff außer
+  Kommentaren, Suite grün.
+
+## Retrospektive Sprint 8
+
+**Nachschau:** Sprint 6 (B-36, B-35, B-256) – siehe oben unter „Vierter Lauf"; eine Entgleitung → B-257. Index:
+**Nachgeschaut 159 von 176**.
+
+**Prämisse geprüft:** die Aussage „das Tor sieht die Inline-`<para>` nicht" selbst nachgemessen (die vier Texte
+hatten weder Einrückung noch Tag, nur fehlende Backticks); die Aussage „die Einrückungs-Zusicherung trägt am Endstand
+nicht mehr" des Reviewers war eine Vermutung – gemessen trägt sie (7 Texte).
+
+**Was die eigenen Tore durchgelassen haben:**
+
+- **Ein Tor, das Symptome zählt, nicht die Ursache.** Die Dokument-Zusicherung fragt „eingerückt?" und „rohes Tag?" –
+  ein `<para>`, das Absatz und Backticks still verschluckt, erzeugt keins von beiden. Gefunden hat es der Reviewer.
+- **Eine Zusicherung, die nicht fallen konnte** – diesmal selbst gefangen: der Referenz-Fall prüfte ohne registrierten
+  Workspace, die Referenz löste nichts auf. Die Mutante je Fall (Auflage 5) hat es gezeigt, bevor ein Reviewer es sah.
+
+### Vorgeschlagener Mechanismus — nicht gelandet (Freigabe 3)
+
+**Ein Tor in `ConventionGuardTests`:** kein `<para>` in den XML-Docs von `Pugling.Contracts` und
+`Pugling.Api/Controllers` (Absätze per leerer `///`-Zeile). Es ist die einzige Stelle, an der die Ursache sichtbar ist;
+das Dokument sieht nur die Folgen, und nicht alle. Heute grün (0 Treffer nach diesem Sprint), Ausnahmeliste leer.
+Kosten: ein Wächter mehr, und Entwickler, die `<para>` aus Gewohnheit schreiben, bekommen einen roten Build mit der
+Begründung. **Bewusst ungedeckt:** die Leerzeichen, die der Generator zwischen zwei Elementen verschluckt (B-259).

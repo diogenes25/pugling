@@ -15,7 +15,7 @@
         "tags": [
           "Auth"
         ],
-        "summary": "    Login via domain id \u002B PIN. Resolves the account and issues a multi-role token.\n    Named adult and not father because the same endpoint logs in a teacher account:\nits id is likewise an Adult id, and the response then names Creator instead of\nSupervisor. An existing account is not granted an additional role in the process\n(see AccountService), so a teacher does not become a supervisor by logging in.",
+        "summary": "Login via domain id \u002B PIN. Resolves the account and issues a multi-role token.\n\nNamed \u0060adult\u0060 and not \u0060father\u0060 because the same endpoint logs in a teacher account:\nits id is likewise an Adult id, and the response then names \u0060Creator\u0060 instead of\n\u0060Supervisor\u0060. An existing account is not granted an additional role in the process\n(see AccountService), so a teacher does not become a supervisor by logging in.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -135,7 +135,7 @@
         "tags": [
           "Auth"
         ],
-        "summary": "Canonical, account-centric login: a single token that carries \u003Cb\u003Eall\u003C/b\u003E roles of the account\n(e.g. Creator \u002B Supervisor). \u0060role\u0060 in the response is the primary tier (Supervisor or Student) for UI routing.",
+        "summary": "Canonical, account-centric login: a single token that carries all roles of the account\n(e.g. Creator \u002B Supervisor). \u0060role\u0060 in the response is the primary tier (Supervisor or Student) for UI routing.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -223,7 +223,7 @@
         "tags": [
           "Auth"
         ],
-        "summary": "     Self-management of the account itself: display name, email and PIN.\n\n     Lives under auth/\u2026 and not under a tier because it belongs to none \u2013 the same person\noperates it from any role (the documented exception in CLAUDE.md). Previously this only worked via\nsupervisor/adults/{id}, and thus not at all for a teacher account: it lacks the\nSupervisor role, so it couldn\u0027t change its own PIN.\n     Identity hangs off two rows: the Adult row carries the domain name (it appears\nas the author on exercises), the Account the login. Only the domain row is written\nhere; Task AccountService.MirrorAsync(Adult adult, CancellationToken ct) pulls the account along \u2013\nthe same single place that supervisor/adults/{id} and supervisor/children/{id} use.\n     Adults only. A child does not change its own name and PIN: the PIN is the\naccess the father grants, and a child that changed it would have escaped supervision.",
+        "summary": "Self-management of the account itself: display name, email and PIN.\n\nLives under \u0060auth/\u2026\u0060 and not under a tier because it belongs to none \u2013 the same person\noperates it from any role (the documented exception in CLAUDE.md). Previously this only worked via\n\u0060supervisor/adults/{id}\u0060, and thus not at all for a teacher account: it lacks the\nSupervisor role, so it couldn\u0027t change its own PIN.\n\nIdentity hangs off two rows: the Adult row carries the domain name (it appears\nas the author on exercises), the Account the login. Only the domain row is written\nhere; Task AccountService.MirrorAsync(Adult adult, CancellationToken ct) pulls the account along \u2013\nthe same single place that \u0060supervisor/adults/{id}\u0060 and \u0060supervisor/children/{id}\u0060 use.\n\nAdults only. A child does not change its own name and PIN: the PIN is the\naccess the father grants, and a child that changed it would have escaped supervision.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -303,7 +303,7 @@
         "tags": [
           "Remarks"
         ],
-        "summary": "Capture a remark. Only the text is mandatory; author and role come from the token, the\ncontext from the widget. The response carries the \u003Cb\u003Eid\u003C/b\u003E \u2013 it\u0027s the key used to later\nredeem the question in Claude Code.",
+        "summary": "Capture a remark. Only the text is mandatory; author and role come from the token, the\ncontext from the widget. The response carries the id \u2013 it\u0027s the key used to later\nredeem the question in Claude Code.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -361,7 +361,7 @@
         "tags": [
           "Remarks"
         ],
-        "summary": "    List remarks. \u0060mine=true\u0060 restricts to one\u0027s own \u2013 that\u0027s the query behind the\n    list in the widget; without the filter a supervisor would also see the child\u0027s.\n    scope=all lifts the account boundary \u2013 that\u0027s the view of the follow-up skill that\ncollects remarks from all test accounts. Allowed if bool RemarksController.MayReadAllAccounts holds\n(switch Remarks:GlobalRead, on in development), otherwise 403. Deliberately an\nexplicit parameter: the default must stay narrow, otherwise the list in the widget would\nsuddenly show entries from other accounts. mine=true always wins.",
+        "summary": "List remarks. \u0060mine=true\u0060 restricts to one\u0027s own \u2013 that\u0027s the query behind the\nlist in the widget; without the filter a supervisor would also see the child\u0027s.\n\n\u0060scope=all\u0060 lifts the account boundary \u2013 that\u0027s the view of the follow-up skill that\ncollects remarks from all test accounts. Allowed if bool RemarksController.MayReadAllAccounts holds\n(switch \u0060Remarks:GlobalRead\u0060, on in development), otherwise \u0060403\u0060. Deliberately an\nexplicit parameter: the default must stay narrow, otherwise the list in the widget would\nsuddenly show entries from other accounts. \u0060mine=true\u0060 always wins.",
         "parameters": [
           {
             "name": "status",
@@ -502,7 +502,7 @@
         "tags": [
           "Remarks"
         ],
-        "summary": "    A single remark \u2013 the entry point of the skill for \u0022Answer question 123\u0022.\n    An admin accesses this without scope=all: targeting a single id is exactly the\nbreak-glass case, and a parameter you\u0027d always have to send along would just be noise.",
+        "summary": "A single remark \u2013 the entry point of the skill for \u0022Answer question 123\u0022.\n\nAn admin accesses this without \u0060scope=all\u0060: targeting a single id is exactly the\nbreak-glass case, and a parameter you\u0027d always have to send along would just be noise.",
         "parameters": [
           {
             "name": "id",
@@ -622,7 +622,7 @@
         "tags": [
           "Remarks"
         ],
-        "summary": "    Delete a remark.\n    Deliberately narrow, even with GlobalRead switched on: the switch is called \u0022global\nread\u0022 and means exactly that. Answering and commenting across account boundaries is the point of\nthe feature; discarding another account\u0027s observation is not. An admin may still do it\n(break-glass).",
+        "summary": "Delete a remark.\n\nDeliberately narrow, even with \u0060GlobalRead\u0060 switched on: the switch is called \u0022global\nread\u0022 and means exactly that. Answering and commenting across account boundaries is the point of\nthe feature; discarding another account\u0027s observation is not. An admin may still do it\n(break-glass).",
         "parameters": [
           {
             "name": "id",
@@ -670,7 +670,7 @@
         "tags": [
           "Remarks"
         ],
-        "summary": "The history of a remark, \u003Cb\u003Eoldest first\u003C/b\u003E \u2013 a case reads chronologically, unlike\nthe list of remarks (newest first).",
+        "summary": "The history of a remark, oldest first \u2013 a case reads chronologically, unlike\nthe list of remarks (newest first).",
         "parameters": [
           {
             "name": "id",
@@ -733,7 +733,7 @@
         "tags": [
           "Remarks"
         ],
-        "summary": "    Add an entry to the history.\n    Reopening: an entry by the human on a done or rejected remark\nresets it to RemarkStatus.Open \u2013 that\u0027s exactly what turns the history into a\nworkflow, since the follow-up skill re-presents open remarks on its next run.\nAn entry from Claude leaves the status untouched: it reports, it doesn\u0027t follow up. Otherwise every\nimplementation note would reopen its own remark.",
+        "summary": "Add an entry to the history.\n\nReopening: an entry by the human on a done or rejected remark\nresets it to RemarkStatus.Open \u2013 that\u0027s exactly what turns the history into a\nworkflow, since the follow-up skill re-presents open remarks on its next run.\nAn entry from Claude leaves the status untouched: it reports, it doesn\u0027t follow up. Otherwise every\nimplementation note would reopen its own remark.",
         "parameters": [
           {
             "name": "id",
@@ -883,7 +883,7 @@
         "tags": [
           "Remarks"
         ],
-        "summary": "    Markdown snapshot of the visible remarks. The skill saves it under \u0060docs/anmerkungen/\u0060\n    \u2013 that way the state is version-controlled and no server needs to be running during follow-up.\n    At the same time the only bridge to the test skills: creator/supervisor/student\nrun against a throwaway DB and can only reach the real remarks via this file.\n    Supervisor only: the answers carry file and line references, i.e. code internals.",
+        "summary": "Markdown snapshot of the visible remarks. The skill saves it under \u0060docs/anmerkungen/\u0060\n\u2013 that way the state is version-controlled and no server needs to be running during follow-up.\n\nAt the same time the only bridge to the test skills: \u0060creator\u0060/\u0060supervisor\u0060/\u0060student\u0060\nrun against a throwaway DB and can only reach the real remarks via this file.\n\nSupervisor only: the answers carry file and line references, i.e. code internals.",
         "parameters": [
           {
             "name": "status",
@@ -1199,7 +1199,7 @@
         "tags": [
           "Supervisor \u2013 Adults"
         ],
-        "summary": "    Deletes an adult \u2013 together with any children who thereby lose \u003Cb\u003Etheir last supervisor\u003C/b\u003E,\n    and together with its login account.\n    A child supervised by several people (father and mother) continues to exist; it only loses this\none caregiver. Only the child left with no one remaining is removed as well \u2013 because since the\nmulti-supervisor restructuring, a Child is no longer attached to the adult via a\nforeign key, but via SupervisorLink. The database cascade therefore only clears the\nlink and would leave the child behind as an orphan: no longer visible or deletable by any adult,\nbut with a still-functioning PIN login.",
+        "summary": "Deletes an adult \u2013 together with any children who thereby lose their last supervisor,\nand together with its login account.\n\nA child supervised by several people (father and mother) continues to exist; it only loses this\none caregiver. Only the child left with no one remaining is removed as well \u2013 because since the\nmulti-supervisor restructuring, a Child is no longer attached to the adult via a\nforeign key, but via SupervisorLink. The database cascade therefore only clears the\nlink and would leave the child behind as an orphan: no longer visible or deletable by any adult,\nbut with a still-functioning PIN login.",
         "parameters": [
           {
             "name": "adultId",
@@ -7903,7 +7903,7 @@
         "tags": [
           "Student \u2013 Media Picks"
         ],
-        "summary": "Rejects the current image and draws a new one. If there is no eligible alternative, the current\npick stays \u003Cb\u003Eunchanged\u003C/b\u003E (\u0060409 media_no_alternative\u0060) \u2013 better to keep the same image than\nto burn the last candidate and leave the card permanently without an image.",
+        "summary": "Rejects the current image and draws a new one. If there is no eligible alternative, the current\npick stays unchanged (\u0060409 media_no_alternative\u0060) \u2013 better to keep the same image than\nto burn the last candidate and leave the card permanently without an image.",
         "parameters": [
           {
             "name": "childId",
@@ -9593,7 +9593,7 @@
         "tags": [
           "Student \u2013 Interests"
         ],
-        "summary": "    Replaces the child\u0027s interests completely (empty list = remove all) \u2013 the guided process edits the\n    set as a whole, and a replacement is the only way an entry can be removed again.\n    Unlike the supervisor\u0027s endpoint this resolves only against existing tags: an unknown\ntagId is rejected with invalid_reference instead of quietly creating taxonomy.",
+        "summary": "Replaces the child\u0027s interests completely (empty list = remove all) \u2013 the guided process edits the\nset as a whole, and a replacement is the only way an entry can be removed again.\n\nUnlike the supervisor\u0027s endpoint this resolves only against existing tags: an unknown\n\u0060tagId\u0060 is rejected with \u0060invalid_reference\u0060 instead of quietly creating taxonomy.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -9936,7 +9936,7 @@
         "tags": [
           "Student \u2013 Plan Overview"
         ],
-        "summary": "Day-by-day history over the entire run time (completed days, goals reached, points).\nThe metrics (\u0060DaysComplete\u0060/\u0060TotalPoints\u0060/\u0060CurrentStreak\u0060) deliberately refer\nto the \u003Cb\u003Eentire\u003C/b\u003E run time; filter/sort/paging only affect \u0060Days\u0060. The filtered\ntotal number of days is in the \u0060X-Total-Count\u0060 header.",
+        "summary": "Day-by-day history over the entire run time (completed days, goals reached, points).\nThe metrics (\u0060DaysComplete\u0060/\u0060TotalPoints\u0060/\u0060CurrentStreak\u0060) deliberately refer\nto the entire run time; filter/sort/paging only affect \u0060Days\u0060. The filtered\ntotal number of days is in the \u0060X-Total-Count\u0060 header.",
         "parameters": [
           {
             "name": "planId",
@@ -10390,7 +10390,7 @@
         "tags": [
           "Student \u2013 Position Practice"
         ],
-        "summary": "    \u0022Different image\u0022 for a card. Deliberately addressed here and not at the child: which carrier\n    holds the pick \u2013 the exercise-local override or the store vocabulary \u2013 only follows from the\n    specificity cascade that only the server knows. The client only has the card in front of it.\n    The rejected image never comes up again for this carrier. If there is no alternative, everything\nstays unchanged (409 media_no_alternative) instead of leaving the card without an image.\n    The endpoint hands out an image and therefore carries the same guards as the playback\nitself: only the playable plan, only cards of this session, and only where the card actually shows an\nimage. Without the last guard it would be the hole in the anti-cheat rule \u2013 on a typed\nstage it would deliver image and alt text and thereby the meaning of exactly the word that is\nsupposed to be typed ((string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList\u0026lt;string\u0026gt;? Choices, string? AudioUrl, string? ImageUrl, string? ImageAlt, int? GapIndex, string? Prompt, string? Passage, bool AnyOrder, IReadOnlyList\u0026lt;string\u0026gt;? RevealAlternatives, IReadOnlyList\u0026lt;WordPair\u0026gt;? Decoding, string? AnswerPattern) PositionPlayService.CardFacets(string configJson, IReadOnlyList\u0026lt;ContentItem\u0026gt; items, ContentItem item, IExerciseType type, int stage, bool typed) deliberately withholds both there).",
+        "summary": "\u0022Different image\u0022 for a card. Deliberately addressed here and not at the child: which carrier\nholds the pick \u2013 the exercise-local override or the store vocabulary \u2013 only follows from the\nspecificity cascade that only the server knows. The client only has the card in front of it.\n\nThe rejected image never comes up again for this carrier. If there is no alternative, everything\nstays unchanged (\u0060409 media_no_alternative\u0060) instead of leaving the card without an image.\n\nThe endpoint hands out an image and therefore carries the same guards as the playback\nitself: only the playable plan, only cards of this session, and only where the card actually shows an\nimage. Without the last guard it would be the hole in the anti-cheat rule \u2013 on a typed\nstage it would deliver image and alt text and thereby the meaning of exactly the word that is\nsupposed to be typed ((string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList\u0026lt;string\u0026gt;? Choices, string? AudioUrl, string? ImageUrl, string? ImageAlt, int? GapIndex, string? Prompt, string? Passage, bool AnyOrder, IReadOnlyList\u0026lt;string\u0026gt;? RevealAlternatives, IReadOnlyList\u0026lt;WordPair\u0026gt;? Decoding, string? AnswerPattern) PositionPlayService.CardFacets(string configJson, IReadOnlyList\u0026lt;ContentItem\u0026gt; items, ContentItem item, IExerciseType type, int stage, bool typed) deliberately withholds both there).",
         "parameters": [
           {
             "name": "planId",
@@ -11174,7 +11174,7 @@
         "tags": [
           "Student \u2013 Plans"
         ],
-        "summary": "The playable study plans of the logged-in child (practically exactly one): active \u003Cb\u003Eand\u003C/b\u003E today\nwithin its run time. Inactive/expired ones stay deliberately hidden (anti-cheat: no easy\npoints plan to pick). From the result the client takes the \u0060id\u0060 for the next steps.",
+        "summary": "The playable study plans of the logged-in child (practically exactly one): active and today\nwithin its run time. Inactive/expired ones stay deliberately hidden (anti-cheat: no easy\npoints plan to pick). From the result the client takes the \u0060id\u0060 for the next steps.",
         "responses": {
           "200": {
             "description": "OK",
@@ -12015,7 +12015,7 @@
         "tags": [
           "Creator \u2013 Profiles"
         ],
-        "summary": "The profiles matching a child, best first (a series match weighs the heaviest).\nThe endpoint reads child data and is therefore bound to \u003Cb\u003Esupervision\u003C/b\u003E: a creator who\ndoes not supervise this child gets \u0060403\u0060 \u2013 otherwise the profile search would be a side\nchannel onto other people\u0027s child profiles.",
+        "summary": "The profiles matching a child, best first (a series match weighs the heaviest).\nThe endpoint reads child data and is therefore bound to supervision: a creator who\ndoes not supervise this child gets \u0060403\u0060 \u2013 otherwise the profile search would be a side\nchannel onto other people\u0027s child profiles.",
         "parameters": [
           {
             "name": "childId",
@@ -12177,7 +12177,7 @@
           {
             "name": "source",
             "in": "query",
-            "description": "Free text in the source reference, e.g. \u0022Green Line 1, Unit 1\u0022 (substring).\n    Its own parameter rather than part of search: the source names a textbook\n    passage, and folding it into the title search would make \u0022Unit 1\u0022 match every exercise whose\n    title happens to mention a unit (B-18).",
+            "description": "Free text in the source reference, e.g. \u0022Green Line 1, Unit 1\u0022 (substring).\n\nIts own parameter rather than part of search: the source names a textbook\npassage, and folding it into the title search would make \u0022Unit 1\u0022 match every exercise whose\ntitle happens to mention a unit (B-18).",
             "schema": {
               "type": "string"
             }
@@ -12193,7 +12193,7 @@
           {
             "name": "sort",
             "in": "query",
-            "description": "Sort column: \u0060title\u0060, \u0060type\u0060, \u0060grade\u0060, \u0060source\u0060, \u0060created\u0060.\n    Short form \u0060-title\u0060 = descending. Without a value: subject \u2192 series unit \u2192 order.",
+            "description": "Sort column: \u0060title\u0060, \u0060type\u0060, \u0060grade\u0060, \u0060source\u0060, \u0060created\u0060.\n\nShort form \u0060-title\u0060 = descending. Without a value: subject \u2192 series unit \u2192 order.",
             "schema": {
               "type": "string"
             }
@@ -12347,7 +12347,7 @@
         "tags": [
           "Creator \u2013 Exercise Catalog"
         ],
-        "summary": "    Publishes an exercise or \u003Cb\u003Ewithdraws it\u003C/b\u003E \u2013 the counter-move to publishing, and the\n    only way to take material out of circulation: deleting refuses a used exercise (the FK\n    \u0060PlanPosition\u2192Exercise\u0060 is \u0060Restrict\u0060), and rightly so \u2013 ongoing mandatory goals\n    must not break out from under the child.\n    Deliberately its own endpoint instead of the typed full PUT: this flag has nothing to do\nwith the exercise type, and replacing the whole exercise including ConfigJson for a single toggle\nis the short path to silent content loss.\n    Only the owner may toggle it (as with granting permissions) \u2013 a write grantee may\nmaintain content but not decide on its distribution.",
+        "summary": "Publishes an exercise or withdraws it \u2013 the counter-move to publishing, and the\nonly way to take material out of circulation: deleting refuses a used exercise (the FK\n\u0060PlanPosition\u2192Exercise\u0060 is \u0060Restrict\u0060), and rightly so \u2013 ongoing mandatory goals\nmust not break out from under the child.\n\nDeliberately its own endpoint instead of the typed full \u0060PUT\u0060: this flag has nothing to do\nwith the exercise type, and replacing the whole exercise including \u0060ConfigJson\u0060 for a single toggle\nis the short path to silent content loss.\n\nOnly the owner may toggle it (as with granting permissions) \u2013 a write grantee may\nmaintain content but not decide on its distribution.",
         "parameters": [
           {
             "name": "id",
@@ -12429,7 +12429,7 @@
         "tags": [
           "Creator \u2013 Exercise Catalog"
         ],
-        "summary": "    Which study plans and class tests (of which own children) an exercise is embedded in.\n    Study plans via the position model (PlanPosition); class tests either directly\n    assigned OR via a shared tag.\n    In addition int UsageResponse.OtherLearnersCount: the number of children of other\nsupervisors who use the exercise. Without it, this response claimed \u0022nowhere\u0022 while deletion\nfailed with 409 \u2013 the same count now feeds both places (remark 14). For a creator without\nown children (teacher, AI creator app) it is the only meaningful information here.",
+        "summary": "Which study plans and class tests (of which own children) an exercise is embedded in.\nStudy plans via the position model (PlanPosition); class tests either directly\nassigned OR via a shared tag.\n\nIn addition int UsageResponse.OtherLearnersCount: the number of children of other\nsupervisors who use the exercise. Without it, this response claimed \u0022nowhere\u0022 while deletion\nfailed with \u0060409\u0060 \u2013 the same count now feeds both places (remark 14). For a creator without\nown children (teacher, AI creator app) it is the only meaningful information here.",
         "parameters": [
           {
             "name": "id",
@@ -17667,7 +17667,7 @@
         "tags": [
           "Creator \u2013 Birkenbihl"
         ],
-        "summary": "Decodes a sentence automatically via the vocabulary store and \u003Cb\u003Esaves\u003C/b\u003E it in the exercise.\nEvery word gets an exercise-wide unique \u0060wordId\u0060 (\u2192 individually exchangeable later), the sentence\ngets a \u0060sentenceId\u0060. Unknown words come back with an empty gloss; ambiguous ones with candidates.",
+        "summary": "Decodes a sentence automatically via the vocabulary store and saves it in the exercise.\nEvery word gets an exercise-wide unique \u0060wordId\u0060 (\u2192 individually exchangeable later), the sentence\ngets a \u0060sentenceId\u0060. Unknown words come back with an empty gloss; ambiguous ones with candidates.",
         "parameters": [
           {
             "name": "seriesId",
@@ -18084,7 +18084,7 @@
         "tags": [
           "Creator \u2013 Birkenbihl"
         ],
-        "summary": "Stateless preview: decodes a sentence via the vocabulary store and returns the word tuples,\n\u003Cb\u003Ewithout\u003C/b\u003E saving anything (IDs are \u00600\u0060 here). Handy to check before creating which\nwords already exist in the store.",
+        "summary": "Stateless preview: decodes a sentence via the vocabulary store and returns the word tuples,\nwithout saving anything (IDs are \u00600\u0060 here). Handy to check before creating which\nwords already exist in the store.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -20767,7 +20767,7 @@
         "tags": [
           "Creator \u2013 Exercise Grants"
         ],
-        "summary": "Revokes a permission from a creator. Only an owner may revoke. The \u003Cb\u003Elast owner\u003C/b\u003E cannot\nbe removed \u2013 otherwise the exercise would be orphaned (only seeded system exercises are ownerless).",
+        "summary": "Revokes a permission from a creator. Only an owner may revoke. The last owner cannot\nbe removed \u2013 otherwise the exercise would be orphaned (only seeded system exercises are ownerless).",
         "parameters": [
           {
             "name": "exerciseId",
@@ -21851,7 +21851,7 @@
         "tags": [
           "Creator \u2013 Interest Tags"
         ],
-        "summary": "Changes label, facet, synonyms, or color. The \u0060Slug\u0060 is deliberately \u003Cb\u003Eimmutable\u003C/b\u003E \u2013\nit is the stable reference that images and child profiles hang off. It still decides: a new label\nwhose slug another tag already carries is rejected, the same rule \u0060Create\u0060 enforces\n(B-124) - otherwise two tags share a label in every picker.",
+        "summary": "Changes label, facet, synonyms, or color. The \u0060Slug\u0060 is deliberately immutable \u2013\nit is the stable reference that images and child profiles hang off. It still decides: a new label\nwhose slug another tag already carries is rejected, the same rule \u0060Create\u0060 enforces\n(B-124) - otherwise two tags share a label in every picker.",
         "parameters": [
           {
             "name": "id",
@@ -21951,7 +21951,7 @@
         "tags": [
           "Creator \u2013 Interest Tags"
         ],
-        "summary": "    Deletes a tag along with its links to images and children (cascade). Links to \u003Cb\u003Eexercises\u003C/b\u003E block\n    the delete instead (409) \u2013 the one asymmetry that matters here (B-206).\n    The line runs along what the loss costs. An image link or a child\u0027s preference can be set\nagain from what is still there; a tag that dresses an exercise carries authored information\nthat nothing else records, so a cascade would erase it silently and unrecoverably. Until B-46 only\nthe first kind existed, which is why the old reasoning (\u0022its loss only costs selection quality\u0022)\nwas right at the time and is wrong now.\n    The lock has a way out, and it needs one: the exercise editor shows the dressing and lets it be\nremoved. Without that door this would be a dead end instead of a guard rail.\n    Two limits, so this does not read as more than it is. It guards the tag, not the dressing:\nthe exercise PUT is a replacement, so a caller that omits InterestTagIds still clears\nthe dressing without a word (deliberate since B-46 - whether an omitted field should mean \u0022keep\u0022 is\na contract question of its own). And it is an application-level check, not a constraint: the foreign\nkey stays Cascade, so a request that dresses an exercise between this check and the commit\nslips through.",
+        "summary": "Deletes a tag along with its links to images and children (cascade). Links to exercises block\nthe delete instead (409) \u2013 the one asymmetry that matters here (B-206).\n\nThe line runs along what the loss costs. An image link or a child\u0027s preference can be set\nagain from what is still there; a tag that dresses an exercise carries authored information\nthat nothing else records, so a cascade would erase it silently and unrecoverably. Until B-46 only\nthe first kind existed, which is why the old reasoning (\u0022its loss only costs selection quality\u0022)\nwas right at the time and is wrong now.\n\nThe lock has a way out, and it needs one: the exercise editor shows the dressing and lets it be\nremoved. Without that door this would be a dead end instead of a guard rail.\n\nTwo limits, so this does not read as more than it is. It guards the tag, not the dressing:\nthe exercise \u0060PUT\u0060 is a replacement, so a caller that omits \u0060InterestTagIds\u0060 still clears\nthe dressing without a word (deliberate since B-46 - whether an omitted field should mean \u0022keep\u0022 is\na contract question of its own). And it is an application-level check, not a constraint: the foreign\nkey stays \u0060Cascade\u0060, so a request that dresses an exercise between this check and the commit\nslips through.",
         "parameters": [
           {
             "name": "id",
@@ -22322,7 +22322,7 @@
         "tags": [
           "Creator \u2013 Media Store"
         ],
-        "summary": "Changes an asset (partial). Tags are \u003Cb\u003Eadded\u003C/b\u003E, not replaced (removal via DELETE).",
+        "summary": "Changes an asset (partial). Tags are added, not replaced (removal via DELETE).",
         "parameters": [
           {
             "name": "id",
@@ -22530,7 +22530,7 @@
         "tags": [
           "Creator \u2013 Media Store"
         ],
-        "summary": "    Creates an asset from an \u003Cb\u003Euploaded file\u003C/b\u003E: the server decodes it and generates the\n    resolutions itself (thumb/card/full, aspect-ratio-preserving, WebP) plus a placeholder color.\n    This is the convenient path compared to the URL endpoint \u2013 the creator needs neither an image source on\n    the web nor a graphics program to scale it.\n    No MediaPurpose.Hero: the wide header format requires cropping, and where a\nmotif may be cropped, only a human can decide.",
+        "summary": "Creates an asset from an uploaded file: the server decodes it and generates the\nresolutions itself (thumb/card/full, aspect-ratio-preserving, WebP) plus a placeholder color.\nThis is the convenient path compared to the URL endpoint \u2013 the creator needs neither an image source on\nthe web nor a graphics program to scale it.\n\nNo MediaPurpose.Hero: the wide header format requires cropping, and where a\nmotif may be cropped, only a human can decide.",
         "requestBody": {
           "description": "Attribution, if the license requires it.",
           "content": {
@@ -22627,7 +22627,7 @@
         "tags": [
           "Creator \u2013 Media Store"
         ],
-        "summary": "Where this image is assigned (vocabulary entries, exercise items, exercises) \u2013 the reverse direction of the assignment.\nDeliberately its own endpoint rather than a delete lock: unlike a missing vocabulary entry, a\nmissing image leaves no placeholder, it only shrinks the selection. The creator should be able to\n\u003Ci\u003Esee\u003C/i\u003E what they lose before deleting \u2013 they are not held back.",
+        "summary": "Where this image is assigned (vocabulary entries, exercise items, exercises) \u2013 the reverse direction of the assignment.\nDeliberately its own endpoint rather than a delete lock: unlike a missing vocabulary entry, a\nmissing image leaves no placeholder, it only shrinks the selection. The creator should be able to\nsee what they lose before deleting \u2013 they are not held back.",
         "parameters": [
           {
             "name": "id",
@@ -23282,7 +23282,7 @@
         "tags": [
           "Creator \u2013 Publishers"
         ],
-        "summary": "Creates a publisher. If the slug is already taken \u003Cb\u003Eby a publisher of the same display name\u003C/b\u003E,\nthat publisher comes back (idempotent) - so an agent can safely repeat the same catalog build\ninstead of creating duplicates. A taken slug whose publisher meanwhile carries a \u003Cem\u003Edifferent\u003C/em\u003E\nname is a conflict (409), not a hit: the slug is immutable and stops matching the name after a\nrename (B-136, the rule \u0060textbook-series\u0060 already follows since B-133).",
+        "summary": "Creates a publisher. If the slug is already taken by a publisher of the same display name,\nthat publisher comes back (idempotent) - so an agent can safely repeat the same catalog build\ninstead of creating duplicates. A taken slug whose publisher meanwhile carries a different\nname is a conflict (409), not a hit: the slug is immutable and stops matching the name after a\nrename (B-136, the rule \u0060textbook-series\u0060 already follows since B-133).",
         "requestBody": {
           "content": {
             "application/json": {
@@ -23532,7 +23532,7 @@
         "tags": [
           "Creator \u2013 Publishers"
         ],
-        "summary": "    Deletes a publisher, as long as only the caller\u0027s own series point at it. Those lose the assignment\n    (SetNull) - a publisher carries no content, and for its own author that loss only costs a\n    filter/display value.\n    That sentence used to be the whole justification, and it was only true for the deleter (B-127): the\nsame call clears the assignment on every OTHER account\u0027s series too, with no way back. So a series\nof a foreign account turns this into 409 publisher_in_use. The lock is narrower than a\nconfirmation prompt and hits better: it allows exactly the case this page exists for (cleaning up a\ntypo one has made oneself) and blocks exactly the harmful one.\n    A series without an owner counts as foreign, not as free. OwnerAdultId is nullable and means\n\u0022seeded, owned by nobody\u0022; reading that fail-closed is the same rule IsOwnedBy follows, and\nit is what protects the shared catalog.\n    The null branch is spelled out rather than left to !=, for one reason that survives\nmeasurement: it keeps blocking when the fid claim is missing. EF Core compensates C# null\nsemantics by default, so for a present claim the short form produces the same SQL - the two differ\nonly for a null fid, where the short form would turn the lock off entirely. That claim\ncannot go missing behind Roles.Creator today; the point is that it stays harmless if it ever\ndoes. (Note for the next reader: \u0022SQL drops NULL rows\u0022 is true of hand-written SQL, not of this.)\n    The Admin role overrides the lock - and that valve is the honest limit of this design, not a\nway out for the caller: bool Adult.IsAdmin is a break-glass flag set in the database, no\nendpoint and no DTO writes it. So two creators who each hang a series on the same publisher really\nare both locked out until an operator steps in. The seeded catalog is the everyday case of that:\n\u0022Klett\u0022 carries the ownerless \u0022Green Line 1\u0022, which makes it undeletable by design - removing it\nwould strip the publisher from a row the whole catalog shares.\n    The message therefore has to name the ownerless case too. Naming only \u0022another account\u0022 sends the\ncaller looking for a foreign series that does not exist, on the one database where the lock is\ncertain to fire. PublisherResponse.ForeignSeriesCount lets a UI show the lock beforehand.",
+        "summary": "Deletes a publisher, as long as only the caller\u0027s own series point at it. Those lose the assignment\n(SetNull) - a publisher carries no content, and for its own author that loss only costs a\nfilter/display value.\n\nThat sentence used to be the whole justification, and it was only true for the deleter (B-127): the\nsame call clears the assignment on every OTHER account\u0027s series too, with no way back. So a series\nof a foreign account turns this into 409 \u0060publisher_in_use\u0060. The lock is narrower than a\nconfirmation prompt and hits better: it allows exactly the case this page exists for (cleaning up a\ntypo one has made oneself) and blocks exactly the harmful one.\n\nA series without an owner counts as foreign, not as free. \u0060OwnerAdultId\u0060 is nullable and means\n\u0022seeded, owned by nobody\u0022; reading that fail-closed is the same rule \u0060IsOwnedBy\u0060 follows, and\nit is what protects the shared catalog.\n\nThe null branch is spelled out rather than left to \u0060!=\u0060, for one reason that survives\nmeasurement: it keeps blocking when the \u0060fid\u0060 claim is missing. EF Core compensates C# null\nsemantics by default, so for a present claim the short form produces the same SQL - the two differ\nonly for a null \u0060fid\u0060, where the short form would turn the lock off entirely. That claim\ncannot go missing behind \u0060Roles.Creator\u0060 today; the point is that it stays harmless if it ever\ndoes. (Note for the next reader: \u0022SQL drops NULL rows\u0022 is true of hand-written SQL, not of this.)\n\nThe \u0060Admin\u0060 role overrides the lock - and that valve is the honest limit of this design, not a\nway out for the caller: bool Adult.IsAdmin is a break-glass flag set in the database, no\nendpoint and no DTO writes it. So two creators who each hang a series on the same publisher really\nare both locked out until an operator steps in. The seeded catalog is the everyday case of that:\n\u0022Klett\u0022 carries the ownerless \u0022Green Line 1\u0022, which makes it undeletable by design - removing it\nwould strip the publisher from a row the whole catalog shares.\n\nThe message therefore has to name the ownerless case too. Naming only \u0022another account\u0022 sends the\ncaller looking for a foreign series that does not exist, on the one database where the lock is\ncertain to fire. \u0060PublisherResponse.ForeignSeriesCount\u0060 lets a UI show the lock beforehand.",
         "parameters": [
           {
             "name": "id",
@@ -24278,7 +24278,7 @@
         "tags": [
           "Creator \u2013 Subjects"
         ],
-        "summary": "    Deletes a subject along with its exercise categories (owner only), unless a row that cannot live\n    without it points at it.\n    The line runs along whether the reference is REQUIRED, not along who owns the row (B-144). Every\noptional SubjectId only loses its assignment - textbook series, textbooks, creator profiles,\nstudy plans and class tests are SetNull, and the last three belong to a child just as much\nas the two below do. Of the three mandatory ones, the cheap one cascades: an exercise category is\ncatalog-internal and meaningless without its subject (its exercises survive - CategoryId is\nSetNull in turn). The other two are Restrict and block the delete with 409\nsubject_in_use, because the cascade would take a child\u0027s work with it: a key result\u0027s\nmilestone together with the payout it earned, and a timetable entry that was typed by hand.\n    Stating the rule as \u0022child data blocks\u0022 would be the trap it was written to close: it reads as a\npromise for the next child-owned entity, and one added with a SetNull subject would quietly\nfall on the other side of the line.\n    The pre-check is not redundant next to DeleteBehavior.Restrict, and vice versa. Without the\ncheck the database would raise the conflict as a bare 500 with a half-saved state instead of a\nreadable 409. Without Restrict this check would be the only thing between a child\u0027s\nmilestones and their deletion - and it only guards the one path that runs through here.",
+        "summary": "Deletes a subject along with its exercise categories (owner only), unless a row that cannot live\nwithout it points at it.\n\nThe line runs along whether the reference is REQUIRED, not along who owns the row (B-144). Every\noptional \u0060SubjectId\u0060 only loses its assignment - textbook series, textbooks, creator profiles,\nstudy plans and class tests are \u0060SetNull\u0060, and the last three belong to a child just as much\nas the two below do. Of the three mandatory ones, the cheap one cascades: an exercise category is\ncatalog-internal and meaningless without its subject (its exercises survive - \u0060CategoryId\u0060 is\n\u0060SetNull\u0060 in turn). The other two are \u0060Restrict\u0060 and block the delete with 409\n\u0060subject_in_use\u0060, because the cascade would take a child\u0027s work with it: a key result\u0027s\nmilestone together with the payout it earned, and a timetable entry that was typed by hand.\n\nStating the rule as \u0022child data blocks\u0022 would be the trap it was written to close: it reads as a\npromise for the next child-owned entity, and one added with a \u0060SetNull\u0060 subject would quietly\nfall on the other side of the line.\n\nThe pre-check is not redundant next to \u0060DeleteBehavior.Restrict\u0060, and vice versa. Without the\ncheck the database would raise the conflict as a bare 500 with a half-saved state instead of a\nreadable 409. Without \u0060Restrict\u0060 this check would be the only thing between a child\u0027s\nmilestones and their deletion - and it only guards the one path that runs through here.",
         "parameters": [
           {
             "name": "subjectId",
@@ -25497,7 +25497,7 @@
         "tags": [
           "Creator \u2013 Textbook Series"
         ],
-        "summary": "Creates a series. The slug is derived from the name; if it is already taken \u003Cb\u003Eby a series of the\nsame display name\u003C/b\u003E, that series comes back (idempotent, same pattern as \u0060interest-tags\u0060) \u2013\nan agent may safely repeat the same catalog build instead of creating duplicates. A taken slug\nwhose series meanwhile carries a \u003Cem\u003Edifferent\u003C/em\u003E name is a conflict (409), not a hit: the slug\nis immutable and stops matching the name after a rename.",
+        "summary": "Creates a series. The slug is derived from the name; if it is already taken by a series of the\nsame display name, that series comes back (idempotent, same pattern as \u0060interest-tags\u0060) \u2013\nan agent may safely repeat the same catalog build instead of creating duplicates. A taken slug\nwhose series meanwhile carries a different name is a conflict (409), not a hit: the slug\nis immutable and stops matching the name after a rename.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -26243,7 +26243,7 @@
           {
             "name": "sort",
             "in": "query",
-            "description": "Sort column: \u0060key\u0060 (default), \u0060word\u0060, \u0060translation\u0060, \u0060pos\u0060, \u0060created\u0060.\n    Short form \u0060-word\u0060 = descending.",
+            "description": "Sort column: \u0060key\u0060 (default), \u0060word\u0060, \u0060translation\u0060, \u0060pos\u0060, \u0060created\u0060.\n\nShort form \u0060-word\u0060 = descending.",
             "schema": {
               "type": "string"
             }
@@ -28236,7 +28236,7 @@
             "format": "int32"
           }
         },
-        "description": "Response of the test start. Class-test mode is strictly server-driven: \u003Cb\u003Eno\u003C/b\u003E questions are sent\nin bulk, only the metadata. The client fetches the questions one at a time via the \u0060next\u0060 endpoint (no going back)."
+        "description": "Response of the test start. Class-test mode is strictly server-driven: **no** questions are sent\nin bulk, only the metadata. The client fetches the questions one at a time via the \u0060next\u0060 endpoint (no going back)."
       },
       "BatchItemResult": {
         "required": [
@@ -28441,7 +28441,7 @@
               "integer",
               "string"
             ],
-            "description": "Next int WordPair.WordId to be assigned. Deliberately unique \u003Cb\u003Eexercise-wide\u003C/b\u003E (not per sentence),\nso the swap endpoint \u0060.../words/{wordId}\u0060 uniquely addresses a word without a sentence segment.",
+            "description": "Next int WordPair.WordId to be assigned. Deliberately unique **exercise-wide** (not per sentence),\nso the swap endpoint \u0060.../words/{wordId}\u0060 uniquely addresses a word without a sentence segment.",
             "format": "int32"
           },
           "sentences": {
@@ -28550,7 +28550,7 @@
           },
           "isOwn": {
             "type": "boolean",
-            "description": "Whether the caller may rename or delete this category: its creator, the owner of its subject, or a\nplatform admin (B-170). Not the same question as \u0022did I create it\u0022 - the right has two bearers, and a\nclient that needs to draw a button needs the answer, not one of its halves. Named IsOwn rather than\nIsMine because the contract says IsOwn seven times against one (B-156), and there it already carries\nexactly this \u0022may write (owner or grant)\u0022 meaning."
+            "description": "Whether the caller may rename or delete this category: its creator, the owner of its subject, or a\nplatform admin (B-170). Not the same question as \u0022did I create it\u0022 - the right has two bearers, and a\nclient that needs to draw a button needs the answer, not one of its halves. Named IsOwn like every other\nownership flag of the contract (B-156), where it carries exactly this \u0022may write (owner or grant)\u0022 meaning."
           }
         },
         "description": "An exercise category within a subject. Every creator may read it and add new ones; IsOwn says whether\nthis caller may also rename or delete it, so a client can show the difference per row instead of\nletting the user find out through a 403."
@@ -28925,7 +28925,7 @@
             "format": "int32"
           }
         },
-        "description": "A supervised child with profile and balance of both currencies. \u0060Interests\u0060 is the \u003Cb\u003Efree-form\u003C/b\u003E\npart of the profile (language for the AI creator); the weighted, referenced interests used for\nimage selection live under \u0060children/{id}/interests\u0060. \u0060AllowedContentRating\u0060 is the\nupper bound of image suitability \u2013 only the supervisor may raise it."
+        "description": "A supervised child with profile and balance of both currencies. \u0060Interests\u0060 is the **free-form**\npart of the profile (language for the AI creator); the weighted, referenced interests used for\nimage selection live under \u0060children/{id}/interests\u0060. \u0060AllowedContentRating\u0060 is the\nupper bound of image suitability \u2013 only the supervisor may raise it."
       },
       "ClassTestUsage": {
         "required": [
@@ -29063,7 +29063,7 @@
           "Mature"
         ],
         "type": "string",
-        "description": "            Suitability of an asset for an age group \u2013 the load-bearing axis of target-audience differentiation.\n            Only this makes \u003Cb\u003Ea shared store for all target audiences\u003C/b\u003E viable: the selection filters hard\n            against \u0060Child.AllowedContentRating\u0060 before even sorting by interests.\n            The values are ordered ascending and compared numerically (Rating \u0026lt;= Allowed).\nThat\u0027s why they are stored as int in the DB (not as a string like the other enums) and must\nnever be renumbered \u2013 new levels are only appended at the end.\n\nAllowed values: Everyone, Teen, Mature."
+        "description": "Suitability of an asset for an age group \u2013 the load-bearing axis of target-audience differentiation.\nOnly this makes **a shared store for all target audiences** viable: the selection filters hard\nagainst \u0060Child.AllowedContentRating\u0060 before even sorting by interests.\n\nThe values are **ordered ascending** and compared numerically (\u0060Rating \u0026lt;= Allowed\u0060).\nThat\u0027s why they are stored as \u0060int\u0060 in the DB (not as a string like the other enums) and must\n**never be renumbered** \u2013 new levels are only appended at the end.\n\nAllowed values: Everyone, Teen, Mature."
       },
       "CreateAchievementDto": {
         "required": [
@@ -29467,7 +29467,7 @@
             ]
           }
         },
-        "description": "Input for creating a profile. Only \u0060Name\u0060 is required \u2013 everything else narrows the fit.\nWith a SubjectId the server derives SubjectName from the catalog; a name sent\nalongside an id is ignored (B-142)."
+        "description": "Input for creating a profile. Only \u0060Name\u0060 is required \u2013 everything else narrows the fit.\n\nWith a \u0060SubjectId\u0060 the server derives \u0060SubjectName\u0060 from the catalog; a name sent\nalongside an id is ignored (B-142)."
       },
       "CreateEntryDto": {
         "required": [
@@ -29860,7 +29860,7 @@
           },
           "active": {
             "type": "boolean",
-            "description": "Whether the plan starts out active. \u0060true\u0060 (the default) keeps the established behaviour: the new\nplan becomes the child\u0027s only playable one and every sibling is switched off. \u0060false\u0060 is for a plan\nthat must be \u003Cb\u003Ereviewed before it becomes an obligation\u003C/b\u003E - a machine-generated one above all: without\nit, an agent run would silently replace the plan the child is currently playing, and unchecked content\nwould start costing penalty coins the same night.",
+            "description": "Whether the plan starts out active. \u0060true\u0060 (the default) keeps the established behaviour: the new\nplan becomes the child\u0027s only playable one and every sibling is switched off. \u0060false\u0060 is for a plan\nthat must be **reviewed before it becomes an obligation** - a machine-generated one above all: without\nit, an agent run would silently replace the plan the child is currently playing, and unchecked content\nwould start costing penalty coins the same night.",
             "default": true
           }
         },
@@ -29951,7 +29951,7 @@
               "integer",
               "string"
             ],
-            "description": "Passing threshold in \u003Cb\u003Epercent\u003C/b\u003E (see PositionResponse); \u0060null\u0060 = 80%.",
+            "description": "Passing threshold in **percent** (see PositionResponse); \u0060null\u0060 = 80%.",
             "format": "int32"
           },
           "requireTypedTest": {
@@ -30127,7 +30127,7 @@
             "description": "Display name, e.g. \u0060claude-code\u0060."
           }
         },
-        "description": "Add a comment to the thread.\nDeliberate side effect: A RemarkCommentAuthor.Human comment on a resolved or\ndismissed remark pulls it back to RemarkStatus.Open \u2013 so the follow-up skill surfaces it\nagain on its next run. A RemarkCommentAuthor.Assistant comment leaves the state\nuntouched; it reports, it does not ask back."
+        "description": "Add a comment to the thread.\n\n**Deliberate side effect:** A RemarkCommentAuthor.Human comment on a resolved or\ndismissed remark pulls it back to RemarkStatus.Open \u2013 so the follow-up skill surfaces it\nagain on its next run. A RemarkCommentAuthor.Assistant comment leaves the state\nuntouched; it reports, it does not ask back."
       },
       "CreateRemarkDto": {
         "required": [
@@ -30414,7 +30414,7 @@
             "description": "Login PIN. Empty = the account cannot (yet) log in."
           }
         },
-        "description": "Input for \u003Cb\u003Eteacher\u003C/b\u003E registration: an account that exclusively creates content."
+        "description": "Input for **teacher** registration: an account that exclusively creates content."
       },
       "CreateTextbookDto": {
         "required": [
@@ -30486,7 +30486,7 @@
             "format": "int32"
           }
         },
-        "description": "Input for creating a textbook.\nWith a SubjectId the server derives SubjectName from the catalog; a name sent\nalongside an id is ignored (B-142)."
+        "description": "Input for creating a textbook.\n\nWith a \u0060SubjectId\u0060 the server derives \u0060SubjectName\u0060 from the catalog; a name sent\nalongside an id is ignored (B-142)."
       },
       "CreateTextbookSeriesDto": {
         "required": [
@@ -30550,7 +30550,7 @@
             ]
           }
         },
-        "description": "Input for creating a series. The slug is derived from the name; an already existing series\nis returned instead of duplicated (idempotent).\nWith a SubjectId the server derives SubjectName from the catalog; a name sent\nalongside an id is ignored (B-142)."
+        "description": "Input for creating a series. The slug is derived from the name; an already existing series\nis returned instead of duplicated (idempotent).\n\nWith a \u0060SubjectId\u0060 the server derives \u0060SubjectName\u0060 from the catalog; a name sent\nalongside an id is ignored (B-142)."
       },
       "CreateVocabTagDto": {
         "required": [
@@ -30830,7 +30830,7 @@
           "Gems"
         ],
         "type": "string",
-        "description": "The app\u0027s two currencies. Currency.Coins (\u0022coins\u0022) buys \u003Cb\u003Ereal-world\u003C/b\u003E supervisor offers,\nCurrency.Gems buys \u003Cb\u003Ecosmetic/playful\u003C/b\u003E things (skins, future game features).\n\nAllowed values: Coins, Gems.",
+        "description": "The app\u0027s two currencies. Currency.Coins (\u0022coins\u0022) buys **real-world** supervisor offers,\nCurrency.Gems buys **cosmetic/playful** things (skins, future game features).\n\nAllowed values: Coins, Gems.",
         "default": 0
       },
       "DailyBoxStatus": {
@@ -31220,7 +31220,7 @@
             "format": "int32"
           }
         },
-        "description": "            Lean, type-spanning view of a catalog exercise \u2013 for lists in which exercises of\n            different types appear together (tagged exercises, exercises of a class test).\n            Deliberately WITHOUT the type-specific configuration: it carries the solutions, alternatives and\nthe listening transcript. Endpoints listing exercises are reachable for a student token (tags, class\ntests), so a config field here would hand the child the answer to every assigned exercise \u2013 the very\nassurance the play path upholds by withholding reveal. Whoever needs the configuration reads\nthe creator-gated type detail (creator/textbook-series/{}/units/{}/\u0026lt;type\u0026gt;/{id})."
+        "description": "Lean, type-spanning view of a catalog exercise \u2013 for lists in which exercises of\ndifferent types appear together (tagged exercises, exercises of a class test).\n\nDeliberately WITHOUT the type-specific configuration: it carries the solutions, alternatives and\nthe listening transcript. Endpoints listing exercises are reachable for a student token (tags, class\ntests), so a config field here would hand the child the answer to every assigned exercise \u2013 the very\nassurance the play path upholds by withholding \u0060reveal\u0060. Whoever needs the configuration reads\nthe creator-gated type detail (\u0060creator/textbook-series/{}/units/{}/\u0026lt;type\u0026gt;/{id}\u0060)."
       },
       "ExerciseCheckMode": {
         "enum": [
@@ -31445,7 +31445,7 @@
             }
           }
         },
-        "description": "Complete, type-spanning view of an exercise including raw config and all metadata \u2013\nthe basis for editing (load config into the type-specific editor; saving goes through\nthe per-type PUT \u0060.../textbook-series/{seriesId}/units/{seriesUnitId}/\u0026lt;type\u0026gt;/{id}\u0060,\nwhere int ExerciseDetail.SeriesId supplies the route segment the flat cross-catalog view has no other way to know).\nInterestTagIds is the dressing (B-46) - metadata, and this view promises all of it. It stays off\nExerciseSummary for the reason that row gives about itself: the lean row carries what the\nsupervisor\u0027s form pre-fills from, and a dressing pre-fills nothing. The fit filter B-18 will build\nbelongs in the query anyway, not in a list the client scans."
+        "description": "Complete, type-spanning view of an exercise including raw config and all metadata \u2013\nthe basis for editing (load config into the type-specific editor; saving goes through\nthe per-type PUT \u0060.../textbook-series/{seriesId}/units/{seriesUnitId}/\u0026lt;type\u0026gt;/{id}\u0060,\nwhere int ExerciseDetail.SeriesId supplies the route segment the flat cross-catalog view has no other way to know).\n\n\u0060InterestTagIds\u0060 is the dressing (B-46) - metadata, and this view promises all of it. It stays off\nExerciseSummary for the reason that row gives about itself: the lean row carries what the\nsupervisor\u0027s form pre-fills from, and a dressing pre-fills nothing. The fit filter B-18 will build\nbelongs in the *query* anyway, not in a list the client scans."
       },
       "ExercisePayloadOfArithmeticConfig": {
         "required": [
@@ -31581,7 +31581,7 @@
             }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.InterestTagIds names the interests the exercise is dressed in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\nvalidation_error, never a silent skip."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip."
       },
       "ExercisePayloadOfArithmeticDrillConfig": {
         "required": [
@@ -31717,7 +31717,7 @@
             }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.InterestTagIds names the interests the exercise is dressed in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\nvalidation_error, never a silent skip."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip."
       },
       "ExercisePayloadOfBirkenbihlConfig": {
         "required": [
@@ -31853,7 +31853,7 @@
             }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.InterestTagIds names the interests the exercise is dressed in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\nvalidation_error, never a silent skip."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip."
       },
       "ExercisePayloadOfClozeConfig": {
         "required": [
@@ -31989,7 +31989,7 @@
             }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.InterestTagIds names the interests the exercise is dressed in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\nvalidation_error, never a silent skip."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip."
       },
       "ExercisePayloadOfEssayConfig": {
         "required": [
@@ -32125,7 +32125,7 @@
             }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.InterestTagIds names the interests the exercise is dressed in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\nvalidation_error, never a silent skip."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip."
       },
       "ExercisePayloadOfGrammarConfig": {
         "required": [
@@ -32261,7 +32261,7 @@
             }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.InterestTagIds names the interests the exercise is dressed in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\nvalidation_error, never a silent skip."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip."
       },
       "ExercisePayloadOfListConfig": {
         "required": [
@@ -32397,7 +32397,7 @@
             }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.InterestTagIds names the interests the exercise is dressed in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\nvalidation_error, never a silent skip."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip."
       },
       "ExercisePayloadOfListeningConfig": {
         "required": [
@@ -32533,7 +32533,7 @@
             }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.InterestTagIds names the interests the exercise is dressed in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\nvalidation_error, never a silent skip."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip."
       },
       "ExercisePayloadOfMatchingConfig": {
         "required": [
@@ -32669,7 +32669,7 @@
             }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.InterestTagIds names the interests the exercise is dressed in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\nvalidation_error, never a silent skip."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip."
       },
       "ExercisePayloadOfReadingConfig": {
         "required": [
@@ -32805,7 +32805,7 @@
             }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.InterestTagIds names the interests the exercise is dressed in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\nvalidation_error, never a silent skip."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip."
       },
       "ExercisePayloadOfTranslationConfig": {
         "required": [
@@ -32941,7 +32941,7 @@
             }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.InterestTagIds names the interests the exercise is dressed in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\nvalidation_error, never a silent skip."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip."
       },
       "ExercisePayloadOfVocabularyConfig": {
         "required": [
@@ -33077,7 +33077,7 @@
             }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\nRewardPoints is a recommendation, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.InterestTagIds names the interests the exercise is dressed in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\nvalidation_error, never a silent skip."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip."
       },
       "ExerciseProgressResponse": {
         "required": [
@@ -33309,7 +33309,7 @@
             }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\nInterestTagIds is the dressing (B-46), ascending and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
       },
       "ExerciseResponseOfArithmeticDrillConfig": {
         "required": [
@@ -33503,7 +33503,7 @@
             }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\nInterestTagIds is the dressing (B-46), ascending and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
       },
       "ExerciseResponseOfBirkenbihlConfig": {
         "required": [
@@ -33697,7 +33697,7 @@
             }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\nInterestTagIds is the dressing (B-46), ascending and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
       },
       "ExerciseResponseOfClozeConfig": {
         "required": [
@@ -33891,7 +33891,7 @@
             }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\nInterestTagIds is the dressing (B-46), ascending and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
       },
       "ExerciseResponseOfEssayConfig": {
         "required": [
@@ -34085,7 +34085,7 @@
             }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\nInterestTagIds is the dressing (B-46), ascending and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
       },
       "ExerciseResponseOfGrammarConfig": {
         "required": [
@@ -34279,7 +34279,7 @@
             }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\nInterestTagIds is the dressing (B-46), ascending and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
       },
       "ExerciseResponseOfListConfig": {
         "required": [
@@ -34473,7 +34473,7 @@
             }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\nInterestTagIds is the dressing (B-46), ascending and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
       },
       "ExerciseResponseOfListeningConfig": {
         "required": [
@@ -34667,7 +34667,7 @@
             }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\nInterestTagIds is the dressing (B-46), ascending and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
       },
       "ExerciseResponseOfMatchingConfig": {
         "required": [
@@ -34861,7 +34861,7 @@
             }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\nInterestTagIds is the dressing (B-46), ascending and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
       },
       "ExerciseResponseOfReadingConfig": {
         "required": [
@@ -35055,7 +35055,7 @@
             }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\nInterestTagIds is the dressing (B-46), ascending and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
       },
       "ExerciseResponseOfTranslationConfig": {
         "required": [
@@ -35249,7 +35249,7 @@
             }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\nInterestTagIds is the dressing (B-46), ascending and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
       },
       "ExerciseResponseOfVocabularyConfig": {
         "required": [
@@ -35443,7 +35443,7 @@
             }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may \u003Cb\u003Echange\u003C/b\u003E it (owner or\nwrite grant); IsOwner = may \u003Cb\u003Emanage\u003C/b\u003E it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\nInterestTagIds is the dressing (B-46), ascending and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
       },
       "ExerciseSharingResponse": {
         "required": [
@@ -35639,7 +35639,7 @@
             "format": "int32"
           }
         },
-        "description": "            Lean hit row of the exercise search (child-neutral catalog). \u0060AuthorAdultId\u0060/\u0060AuthorName\u0060 carry the\n            attribution of the shared library (\u0060null\u0060 = seeded system exercise); \u0060IsOwn\u0060 = the requesting supervisor\n            may change/delete the exercise.\n            The four Default\u2026/RewardPoints values are the creator\u0027s recommendations, not settings: the\nsupervisor\u0027s form pre-fills from them and stays free to override (B-45). They belong on the lean row rather than\nonly on ExerciseDetail because the form pre-fills straight from the search hit - fetching the\ndetail just to read one number would be a round trip per keystroke in the list.The SuggestedGoalPoints figure is what a position would actually inherit from RewardPoints - the raw value only when it is plausible, otherwise the model default (B-192). Both travel, and that is the point: the form shows the effective one, while the raw one stays readable for anyone editing the exercise. Deriving the effective figure client-side would copy a server rule, and the copy is what drifts."
+        "description": "Lean hit row of the exercise search (child-neutral catalog). \u0060AuthorAdultId\u0060/\u0060AuthorName\u0060 carry the\nattribution of the shared library (\u0060null\u0060 = seeded system exercise); \u0060IsOwn\u0060 = the requesting supervisor\nmay change/delete the exercise.\n\nThe four \u0060Default\u2026\u0060/\u0060RewardPoints\u0060 values are the creator\u0027s **recommendations**, not settings: the\nsupervisor\u0027s form pre-fills from them and stays free to override (B-45). They belong on the lean row rather than\nonly on ExerciseDetail because the form pre-fills straight from the search hit - fetching the\ndetail just to read one number would be a round trip per keystroke in the list.\n\nThe \u0060SuggestedGoalPoints\u0060 figure is what a position would actually inherit from \u0060RewardPoints\u0060 -\nthe raw value only when it is plausible, otherwise the model default (B-192). Both travel, and that is the\npoint: the form shows the effective one, while the raw one stays readable for anyone editing the exercise.\nDeriving the effective figure client-side would copy a server rule, and the copy is what drifts."
       },
       "ExerciseTypeManifest": {
         "required": [
@@ -35754,7 +35754,7 @@
           "Diverse"
         ],
         "type": "string",
-        "description": "Gender of the child (purely descriptive). Part of the exercise-independent profile; a later\n            study plan generator uses it at most for the language of address, never for filtering the material.\n\nAllowed values: None, Male, Female, Diverse."
+        "description": "Gender of the child (purely descriptive). Part of the exercise-independent profile; a later\n\nstudy plan generator uses it at most for the language of address, never for filtering the material.\n\nAllowed values: None, Male, Female, Diverse."
       },
       "GeneratedDrill": {
         "required": [
@@ -36043,7 +36043,7 @@
           "Style"
         ],
         "type": "string",
-        "description": "Facet of an interest tag. It groups the taxonomy by domain without splitting it:\ntopic (InterestFacet.Franchise, InterestFacet.Sport \u2026) and InterestFacet.Style deliberately live in\n\u003Cb\u003Ethe same\u003C/b\u003E table because they behave identically during image selection \u2013 only the weighting\ndiffers. Extensions are purely additive.\n\nAllowed values: Other, Franchise, Sport, Animal, Vehicle, Music, Hobby, Nature, Style."
+        "description": "Facet of an interest tag. It groups the taxonomy by domain without splitting it:\ntopic (InterestFacet.Franchise, InterestFacet.Sport \u2026) and InterestFacet.Style deliberately live in\n**the same** table because they behave identically during image selection \u2013 only the weighting\ndiffers. Extensions are purely additive.\n\nAllowed values: Other, Franchise, Sport, Animal, Vehicle, Music, Hobby, Nature, Style."
       },
       "InterestTagOptionResponse": {
         "required": [
@@ -36146,7 +36146,7 @@
             "format": "int32"
           }
         },
-        "description": "            A tag of the taxonomy including usage counts on \u003Cb\u003Eall three\u003C/b\u003E sides: \u0060MediaCount\u0060 counts the\n            assets carrying it, \u0060ChildCount\u0060 the children who list it as a like/dislike, and\n            \u0060ExerciseCount\u0060 the exercises dressed in it (B-46). \u0060Slug\u0060\n            is the stable reference name (lowercase, no diacritics), \u0060Facet\u0060 distinguishes theme from\n            presentation style, \u0060Synonyms\u0060 holds alternative spellings against duplicates from free text.\n            The third count is not decoration: the counts are what says whether a tag is dead, and a tag that\ndresses exercises but no image and no child would have looked dead without it."
+        "description": "A tag of the taxonomy including usage counts on **all three** sides: \u0060MediaCount\u0060 counts the\nassets carrying it, \u0060ChildCount\u0060 the children who list it as a like/dislike, and\n\u0060ExerciseCount\u0060 the exercises dressed in it (B-46). \u0060Slug\u0060\nis the stable reference name (lowercase, no diacritics), \u0060Facet\u0060 distinguishes theme from\npresentation style, \u0060Synonyms\u0060 holds alternative spellings against duplicates from free text.\n\nThe third count is not decoration: the counts are what says whether a tag is dead, and a tag that\ndresses exercises but no image and no child would have looked dead without it."
       },
       "InventoryItemDto": {
         "required": [
@@ -36523,7 +36523,7 @@
           "ClassTestGrade"
         ],
         "type": "string",
-        "description": "Metric by which a \u0060KeyResult\u0060 is measured. Deliberately only \u003Cb\u003Etrick-proof\u003C/b\u003E quantities:\nthe outcome-/Leitner-based ones (KeyResultMetric.AvgMastery/KeyResultMetric.MasteredPercent/KeyResultMetric.MaxWeakItems,\nfrom \u0060MasteryRollup\u0060) and the class test grade entered by the supervisor\n(KeyResultMetric.ClassTestGrade). Pure activity counters (minutes/repetitions) are deliberately missing \u2013\nthey reward repeating rather than proficiency and would be farmable. The coverage-based \u0022Coverage\u0022 (value 1 of\nthe former \u0060LearnGoalMetric\u0060) is deliberately missing here: it already rises from merely seeing\nvocabulary \u2013 it was the only thing the dropped learning-goal level added, and a farmable one at that.\n\nAllowed values: AvgMastery, MasteredPercent, MaxWeakItems, ClassTestGrade."
+        "description": "Metric by which a \u0060KeyResult\u0060 is measured. Deliberately only **trick-proof** quantities:\nthe outcome-/Leitner-based ones (KeyResultMetric.AvgMastery/KeyResultMetric.MasteredPercent/KeyResultMetric.MaxWeakItems,\nfrom \u0060MasteryRollup\u0060) and the class test grade entered by the supervisor\n(KeyResultMetric.ClassTestGrade). Pure activity counters (minutes/repetitions) are deliberately missing \u2013\nthey reward repeating rather than proficiency and would be farmable. The coverage-based \u0022Coverage\u0022 (value 1 of\nthe former \u0060LearnGoalMetric\u0060) is deliberately missing here: it already rises from merely seeing\nvocabulary \u2013 it was the only thing the dropped learning-goal level added, and a farmable one at that.\n\nAllowed values: AvgMastery, MasteredPercent, MaxWeakItems, ClassTestGrade."
       },
       "KeyResultResponse": {
         "required": [
@@ -36858,7 +36858,7 @@
           },
           "role": {
             "type": "string",
-            "description": "Primary tier for UI routing: \u0060Supervisor\u0060, \u0060Creator\u0060, or \u0060Student\u0060. Ranked in this\norder \u2013 a father holds Creator \u003Ci\u003Eand\u003C/i\u003E Supervisor and belongs in the supervision view, a\n\u003Cb\u003Eteacher\u003C/b\u003E only holds Creator and belongs in the workshop. The token itself carries \u003Ci\u003Eall\u003C/i\u003E\nroles of the account; this field only says where the UI should start."
+            "description": "Primary tier for UI routing: \u0060Supervisor\u0060, \u0060Creator\u0060, or \u0060Student\u0060. Ranked in this\norder \u2013 a father holds Creator *and* Supervisor and belongs in the supervision view, a\n**teacher** only holds Creator and belongs in the workshop. The token itself carries *all*\nroles of the account; this field only says where the UI should start."
           },
           "id": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -37227,7 +37227,7 @@
           "Hero"
         ],
         "type": "string",
-        "description": "Semantic delivery slot of a variant. The client asks for the \u003Ci\u003Epurpose\u003C/i\u003E, not for\npixel dimensions \u2013 this keeps the resolution policy changeable server-side without breaking the contract.\n\nAllowed values: Thumb, Card, Full, Hero."
+        "description": "Semantic delivery slot of a variant. The client asks for the *purpose*, not for\npixel dimensions \u2013 this keeps the resolution policy changeable server-side without breaking the contract.\n\nAllowed values: Thumb, Card, Full, Hero."
       },
       "MediaUsage": {
         "required": [
@@ -37885,7 +37885,7 @@
           "Stretch"
         ],
         "type": "string",
-        "description": "Kind of an \u0060Objective\u0060 \u2013 determines the tone and currency of the reward. ObjectiveKind.Committed is a\nbinding goal (reward in \uD83E\uDE99 coins = real-world privileges); ObjectiveKind.Stretch is a\n\u0022stretch goal\u0022 (reward in \uD83D\uDC8E gems = cosmetic). Deliberately, there is \u003Cb\u003Eno penalty\u003C/b\u003E on objectives \u2013\nthe \u0022stick\u0022 lives solely on the mandatory goal of the \u0060PlanPosition\u0060 (see \u0060PenaltyCoins\u0060).\n\nAllowed values: Committed, Stretch."
+        "description": "Kind of an \u0060Objective\u0060 \u2013 determines the tone and currency of the reward. ObjectiveKind.Committed is a\nbinding goal (reward in \uD83E\uDE99 coins = real-world privileges); ObjectiveKind.Stretch is a\n\u0022stretch goal\u0022 (reward in \uD83D\uDC8E gems = cosmetic). Deliberately, there is **no penalty** on objectives \u2013\nthe \u0022stick\u0022 lives solely on the mandatory goal of the \u0060PlanPosition\u0060 (see \u0060PenaltyCoins\u0060).\n\nAllowed values: Committed, Stretch."
       },
       "ObjectiveResponse": {
         "required": [
@@ -38148,7 +38148,7 @@
           },
           "isPlayable": {
             "type": "boolean",
-            "description": "Server-authoritative affordance: whether this is the one currently playable plan of the child\n(active \u003Cb\u003Eand\u003C/b\u003E within its run today). For the student, only this one is ever visible; for the\nsupervisor, among several plans it shows the one the student can currently play \u2013 without\nreimplementing the rule on the client."
+            "description": "Server-authoritative affordance: whether this is the one currently playable plan of the child\n(active **and** within its run today). For the student, only this one is ever visible; for the\nsupervisor, among several plans it shows the one the student can currently play \u2013 without\nreimplementing the rule on the client."
           }
         },
         "description": "A study plan container of a child."
@@ -38193,7 +38193,7 @@
           "Lern"
         ],
         "type": "string",
-        "description": "Play mode of an exercise session. PlayMode.Info = free practice: content all in a row, the frontend\ndrives the iteration, and \u003Cb\u003Eno\u003C/b\u003E learning feedback flows (no grading/points/Leitner, doesn\u0027t count toward\nthe goal). PlayMode.Lern = server-driven: the server holds the cursor \u002B frozen order and grades.\n\nAllowed values: Info, Lern."
+        "description": "Play mode of an exercise session. PlayMode.Info = free practice: content all in a row, the frontend\ndrives the iteration, and **no** learning feedback flows (no grading/points/Leitner, doesn\u0027t count toward\nthe goal). PlayMode.Lern = server-driven: the server holds the cursor \u002B frozen order and grades.\n\nAllowed values: Info, Lern."
       },
       "PointKind": {
         "enum": [
@@ -38242,7 +38242,7 @@
             "$ref": "#/components/schemas/Currency"
           }
         },
-        "description": "Manual supervisor ledger entry: positive amount = credit/gift, negative = deduct.\nVia the currency, the supervisor can also \u003Cb\u003Egift gems\u003C/b\u003E alongside coins\n(reward outside the app, debt forgiveness)."
+        "description": "Manual supervisor ledger entry: positive amount = credit/gift, negative = deduct.\nVia the currency, the supervisor can also **gift gems** alongside coins\n(reward outside the app, debt forgiveness)."
       },
       "PointsEntryResponse": {
         "required": [
@@ -38340,7 +38340,7 @@
               "integer",
               "string"
             ],
-            "description": "The referenced catalog exercise. \u003Cb\u003EImmutable\u003C/b\u003E: Leitner progress is anchored to it via item\nindices; swapping it would redirect that progress onto unrelated content.",
+            "description": "The referenced catalog exercise. **Immutable**: Leitner progress is anchored to it via item\nindices; swapping it would redirect that progress onto unrelated content.",
             "format": "int32"
           },
           "exerciseTitle": {
@@ -38399,7 +38399,7 @@
               "integer",
               "string"
             ],
-            "description": "Passing threshold of the final test in \u003Cb\u003Epercent\u003C/b\u003E of correct answers; \u0060null\u0060 = 80%. The\nunit applies to \u003Ci\u003Eall\u003C/i\u003E testable exercise types \u2013 including catalog checks, since a position\u0027s\ngoal is always measured by a passed position test. Unused for pure content exercises.",
+            "description": "Passing threshold of the final test in **percent** of correct answers; \u0060null\u0060 = 80%. The\nunit applies to *all* testable exercise types \u2013 including catalog checks, since a position\u0027s\ngoal is always measured by a passed position test. Unused for pure content exercises.",
             "format": "int32"
           },
           "requireTypedTest": {
@@ -38459,7 +38459,7 @@
               "integer",
               "string"
             ],
-            "description": "Coin \u003Cb\u003Epenalty\u003C/b\u003E for a missed mandatory goal (the \u0022stick\u0022); \u00600\u0060 = pure reward. Only booked\nfor completed periods, and may drive the balance negative.",
+            "description": "Coin **penalty** for a missed mandatory goal (the \u0022stick\u0022); \u00600\u0060 = pure reward. Only booked\nfor completed periods, and may drive the balance negative.",
             "format": "int32"
           },
           "newContentPoints": {
@@ -38515,7 +38515,7 @@
             "items": {
               "$ref": "#/components/schemas/ScoringTimeSlot"
             },
-            "description": "Time slots with their own points multiplier for this obligation; \u0060null\u0060 = only the server\u0027s global\nslots apply. They are considered \u003Cb\u003Etogether with\u003C/b\u003E the global ones, the narrowest window winning \u2013 a\nposition slot neither replaces the global ones nor multiplies with them."
+            "description": "Time slots with their own points multiplier for this obligation; \u0060null\u0060 = only the server\u0027s global\nslots apply. They are considered **together with** the global ones, the narrowest window winning \u2013 a\nposition slot neither replaces the global ones nor multiplies with them."
           }
         },
         "description": "A position in the study plan: the referenced exercise together with its own goal, points, stage, and Leitner settings."
@@ -38612,7 +38612,7 @@
             "format": "int32"
           }
         },
-        "description": "Status of a single position for one day \u2013 enough for the student client to render the right action.\nTestable is about this day, not merely about the exercise type: it is false on a free display\nstage (B-96), because the exam refuses that stage. A client therefore offers practice whenever the position\nuses Leitner or is not testable today \u2013 the two together always leave exactly one playable way in."
+        "description": "Status of a single position for one day \u2013 enough for the student client to render the right action.\n\n\u0060Testable\u0060 is about **this day**, not merely about the exercise type: it is false on a free display\nstage (B-96), because the exam refuses that stage. A client therefore offers practice whenever the position\nuses Leitner or is not testable today \u2013 the two together always leave exactly one playable way in."
       },
       "PracticeCard": {
         "required": [
@@ -38743,7 +38743,7 @@
             ]
           }
         },
-        "description": "A practice card \u2013 deliberately WITHOUT the solution, except at display/self-assessment stages that\nreveal the solution by design (the server grades, never the frontend).\n\u0060ImageUrl\u0060/\u0060ImageAlt\u0060 carry the image \u003Cb\u003Eselected for this child\u003C/b\u003E; they are only set at\nstages where a motif cannot give away the solution, and are absent otherwise.\nGapIndex names the placeholder {{n}} of Prompt that is being asked. It is set only\nby types whose atoms share one text (the cloze); without it two gaps of the same text would arrive as\nbyte-identical cards and the child could not tell which one to fill.Passage is what the question is about and belongs to the whole exercise \u2013 the reading text,\nthe instruction covering all grammar tasks. Deliberately its own field rather than folded into\nPrompt: the prompt is the question and is reused as such in every evaluation line.Prompt is nullable because at the vocabulary listening stage the recording is the question \u2013\nshowing the word next to it would turn \u0022listen, then type\u0022 into a reading task. That is an anti-cheat\ndecision, so the server makes it; the frontend renders whatever arrives.AnyOrder says that any answer not yet named counts, because the exercise is a set rather\nthan a sequence (an unordered list). The child has to be told: the Ordered setting lives in the\nexercise config and never reaches it, so an ordered and an unordered list would arrive as identical cards\nwhile the grading works the opposite way.RevealAlternatives carries the equally valid answers beside Reveal and is set exactly\nwhere Reveal is. Its own field rather than a merged comma list, so the interface can separate \u0022the\nanswer\u0022 from \u0022also correct\u0022: whoever thought of an alternative must not grade themselves wrong.Decoding is the word-for-word decoding of the sentence (Birkenbihl) \u2013 the method itself, so it belongs\non the front of the card next to Prompt, not behind the reveal. null for every other type.DisplayOnly (B-96) marks a free display stage (\u0022getting acquainted\u0022): both sides are shown at\nonce, there is no self-assessment and no Leitner movement. Distinct from typed-ness \u2013 the frontend must\nnot infer it from Reveal being set, because self-assessment stages set it too.AnswerPattern (B-66) is the letter-box mask: an underscore per letter/digit to type, every other\ncharacter (space, hyphen, \u2026) kept literally \u2013 already fixed by the solution, so the child never types\nit. null outside the letter-box stage, same as AnswerLength."
+        "description": "A practice card \u2013 deliberately WITHOUT the solution, except at display/self-assessment stages that\nreveal the solution by design (the server grades, never the frontend).\n\u0060ImageUrl\u0060/\u0060ImageAlt\u0060 carry the image **selected for this child**; they are only set at\nstages where a motif cannot give away the solution, and are absent otherwise.\n\n\u0060GapIndex\u0060 names the placeholder \u0060{{n}}\u0060 of \u0060Prompt\u0060 that is being asked. It is set only\nby types whose atoms share one text (the cloze); without it two gaps of the same text would arrive as\nbyte-identical cards and the child could not tell which one to fill.\n\n\u0060Passage\u0060 is what the question is **about** and belongs to the whole exercise \u2013 the reading text,\nthe instruction covering all grammar tasks. Deliberately its own field rather than folded into\n\u0060Prompt\u0060: the prompt is the question and is reused as such in every evaluation line.\n\n\u0060Prompt\u0060 is nullable because at the vocabulary listening stage the recording **is** the question \u2013\nshowing the word next to it would turn \u0022listen, then type\u0022 into a reading task. That is an anti-cheat\ndecision, so the server makes it; the frontend renders whatever arrives.\n\n\u0060AnyOrder\u0060 says that **any** answer not yet named counts, because the exercise is a set rather\nthan a sequence (an unordered list). The child has to be told: the \u0060Ordered\u0060 setting lives in the\nexercise config and never reaches it, so an ordered and an unordered list would arrive as identical cards\nwhile the grading works the opposite way.\n\n\u0060RevealAlternatives\u0060 carries the **equally valid** answers beside \u0060Reveal\u0060 and is set exactly\nwhere \u0060Reveal\u0060 is. Its own field rather than a merged comma list, so the interface can separate \u0022the\nanswer\u0022 from \u0022also correct\u0022: whoever thought of an alternative must not grade themselves wrong.\n\n\u0060Decoding\u0060 is the word-for-word decoding of the sentence (Birkenbihl) \u2013 the method itself, so it belongs\non the **front** of the card next to \u0060Prompt\u0060, not behind the reveal. \u0060null\u0060 for every other type.\n\n\u0060DisplayOnly\u0060 (B-96) marks a free display stage (\u0022getting acquainted\u0022): both sides are shown at\nonce, there is no self-assessment and no Leitner movement. Distinct from typed-ness \u2013 the frontend must\nnot infer it from \u0060Reveal\u0060 being set, because self-assessment stages set it too.\n\n\u0060AnswerPattern\u0060 (B-66) is the letter-box mask: an underscore per letter/digit to type, every other\ncharacter (space, hyphen, \u2026) kept literally \u2013 already fixed by the solution, so the child never types\nit. \u0060null\u0060 outside the letter-box stage, same as \u0060AnswerLength\u0060."
       },
       "PracticeOrder": {
         "enum": [
@@ -38753,7 +38753,7 @@
           "NewestWeighted"
         ],
         "type": "string",
-        "description": "Ordering strategy in which the server plays out a position\u0027s (due) content. The order\nis materialized (frozen) \u003Cb\u003Eonce\u003C/b\u003E at the start of the session/test, so it doesn\u0027t shift mid-run\nwhen boxes change due to answers.\n\nAllowed values: WeakestFirst, Serial, Random, NewestWeighted."
+        "description": "Ordering strategy in which the server plays out a position\u0027s (due) content. The order\nis materialized (frozen) **once** at the start of the session/test, so it doesn\u0027t shift mid-run\nwhen boxes change due to answers.\n\nAllowed values: WeakestFirst, Serial, Random, NewestWeighted."
       },
       "PracticeResponse": {
         "required": [
@@ -38993,7 +38993,7 @@
             ]
           }
         },
-        "description": "A problem presented in test mode. \u0060Reveal\u0060 carries the revealed solution for self-assessment\n(\u0060null\u0060 for typed stages); \u0060AnswerLength\u0060 is only set for vocabulary letter boxes.\n\u0060Passage\u0060 is the exercise-wide material the question is about (reading text, grammar instruction) \u2013\nthe same field the child\u0027s card carries, because a preview that shows less than the child gets is a\nreassurance rather than a check. \u0060Prompt\u0060 is nullable for the same reason in reverse: where the\nchild hears the word instead of reading it, the supervisor must too, or they cannot notice a silent\nrecording. \u0060AnyOrder\u0060 follows from the same principle: the preview grades an unordered list as a set,\nso it must also \u003Ci\u003Esay\u003C/i\u003E so \u2013 otherwise the supervisor sees identical prompts, blames the exercise, and\nthe trial run they assign on contradicts the exam. \u0060RevealAlternatives\u0060 holds the equally valid answers\nbeside \u0060Reveal\u0060, so the author sees what the child will be shown as \u0022also correct\u0022. \u0060Decoding\u0060 is\nthe word-for-word decoding (Birkenbihl) for the same reason: whoever maintains it has to be able to check it\nthe way the child receives it. \u0060AnswerPattern\u0060 (B-66) is the letter-box mask, same as the child\u0027s card -\nthe preview must show the same fixed punctuation/spacing, not a bare length."
+        "description": "A problem presented in test mode. \u0060Reveal\u0060 carries the revealed solution for self-assessment\n(\u0060null\u0060 for typed stages); \u0060AnswerLength\u0060 is only set for vocabulary letter boxes.\n\u0060Passage\u0060 is the exercise-wide material the question is about (reading text, grammar instruction) \u2013\nthe same field the child\u0027s card carries, because a preview that shows less than the child gets is a\nreassurance rather than a check. \u0060Prompt\u0060 is nullable for the same reason in reverse: where the\nchild hears the word instead of reading it, the supervisor must too, or they cannot notice a silent\nrecording. \u0060AnyOrder\u0060 follows from the same principle: the preview grades an unordered list as a set,\nso it must also *say* so \u2013 otherwise the supervisor sees identical prompts, blames the exercise, and\nthe trial run they assign on contradicts the exam. \u0060RevealAlternatives\u0060 holds the equally valid answers\nbeside \u0060Reveal\u0060, so the author sees what the child will be shown as \u0022also correct\u0022. \u0060Decoding\u0060 is\nthe word-for-word decoding (Birkenbihl) for the same reason: whoever maintains it has to be able to check it\nthe way the child receives it. \u0060AnswerPattern\u0060 (B-66) is the letter-box mask, same as the child\u0027s card -\nthe preview must show the same fixed punctuation/spacing, not a bare length."
       },
       "PreviewItemOutcome": {
         "required": [
@@ -39365,7 +39365,7 @@
             "format": "date-time"
           }
         },
-        "description": "A publisher (\u0022Cornelsen\u0022). \u0060SeriesCount\u0060 shows whether it is still in use.\nForeignSeriesCount is the subset of those series that do not belong to the caller - a\nforeign account\u0027s, or an ownerless one from the shared catalog, which counts as foreign rather than as\nfree. It is what decides the delete: greater than zero means DELETE answers 409\npublisher_in_use. Without it a UI can only offer the delete and let the caller run into the\nlock, because SeriesCount counts foreign rows too and says nothing about who owns them."
+        "description": "A publisher (\u0022Cornelsen\u0022). \u0060SeriesCount\u0060 shows whether it is still in use.\n\n\u0060ForeignSeriesCount\u0060 is the subset of those series that do **not** belong to the caller - a\nforeign account\u0027s, or an ownerless one from the shared catalog, which counts as foreign rather than as\nfree. It is what decides the delete: greater than zero means DELETE answers 409\n\u0060publisher_in_use\u0060. Without it a UI can only offer the delete and let the caller run into the\nlock, because \u0060SeriesCount\u0060 counts foreign rows too and says nothing about who owns them."
       },
       "Question": {
         "required": [
@@ -39455,7 +39455,7 @@
           "Assistant"
         ],
         "type": "string",
-        "description": "            Origin of a contribution in a remark\u0027s history.\n            Deliberately a dedicated field and not derived from the author account: Claude writes via the\nskill using the human\u0027s token, so both contributions would carry the same account. A rule hinges on\nthis distinction, though \u2013 a RemarkCommentAuthor.Human contribution reopens a done remark, while an\nRemarkCommentAuthor.Assistant contribution leaves the state untouched.\n\nAllowed values: Human, Assistant."
+        "description": "Origin of a contribution in a remark\u0027s history.\n\nDeliberately a dedicated field and **not** derived from the author account: Claude writes via the\nskill using the human\u0027s token, so both contributions would carry the same account. A rule hinges on\nthis distinction, though \u2013 a RemarkCommentAuthor.Human contribution reopens a done remark, while an\nRemarkCommentAuthor.Assistant contribution leaves the state untouched.\n\nAllowed values: Human, Assistant."
       },
       "RemarkCommentDto": {
         "required": [
@@ -39592,7 +39592,7 @@
               "null",
               "string"
             ],
-            "description": "Ring buffer of the most recent errors as raw JSON. \u003Cb\u003EMetadata only\u003C/b\u003E (method, path, status, error \u0060code\u0060,\ntimestamp) \u2013 no bodies, headers, or tokens: the login request carries the PIN in the body."
+            "description": "Ring buffer of the most recent errors as raw JSON. **Metadata only** (method, path, status, error \u0060code\u0060,\ntimestamp) \u2013 no bodies, headers, or tokens: the login request carries the PIN in the body."
           }
         },
         "description": "The context snapshot at the time of capture \u2013 the real value of a remark.\nThe widget fills it in automatically; the human only types the text."
@@ -39963,7 +39963,7 @@
             "type": "boolean"
           }
         },
-        "description": "Result of a Leitner review (graded server-side) incl. bonuses for feedback. PracticeCard? ReviewOutcome.Next\ncarries the next card directly in learn mode (no separate roundtrip needed); bool ReviewOutcome.Done signals\nthe end of the run. For cards that are not graded (not due / already graded today / not Leitner-based),\nthe points fields are 0, but grading and cursor still advance.\nstring? ReviewOutcome.Expected is nullable for the set-graded types: an answer that matches no open entry hits no\natom at all, and naming one particular entry as \u0022the\u0022 solution would be arbitrary while a dozen are still\nopen \u2013 it would also give away an entry the child is about to be asked for. int ReviewOutcome.Box is 0 and\nDateOnly? ReviewOutcome.DueOn null in that case for the same reason: nothing was reviewed, so nothing moved."
+        "description": "Result of a Leitner review (graded server-side) incl. bonuses for feedback. PracticeCard? ReviewOutcome.Next\ncarries the next card directly in learn mode (no separate roundtrip needed); bool ReviewOutcome.Done signals\nthe end of the run. For cards that are not graded (not due / already graded today / not Leitner-based),\nthe points fields are 0, but grading and cursor still advance.\n\nstring? ReviewOutcome.Expected is nullable for the set-graded types: an answer that matches no open entry hits no\natom at all, and naming one particular entry as \u0022the\u0022 solution would be arbitrary while a dozen are still\nopen \u2013 it would also give away an entry the child is about to be asked for. int ReviewOutcome.Box is 0 and\nDateOnly? ReviewOutcome.DueOn null in that case for the same reason: nothing was reviewed, so nothing moved."
       },
       "RubricCriterion": {
         "required": [
@@ -40038,7 +40038,7 @@
             "format": "double"
           }
         },
-        "description": "            A time slot with a points multiplier: learning in the morning yields more than late in the evening.\n            The same type serves two carriers, deliberately so: the global slots of the configuration\n(section Scoring) and the slots of a single study plan position (\u0022homework counts double between\n13:00 and 15:00\u0022). Both flow into the one ordered list the score is read from, so a second type\nwould only be a second place to get the ordering wrong.Overlapping slots are allowed - the choice is fixed nonetheless: the slot starting latest (i.e. the\nnarrowest) wins, on a tie the one ending earlier. Without that ordering the same correct answer would\nyield a different number of points depending on the order.A mutable class with settable properties, because that is the shape the configuration binder has always\nfilled from appsettings.json - the type moved here unchanged rather than being reshaped on the way."
+        "description": "A time slot with a points multiplier: learning in the morning yields more than late in the evening.\n\nThe same type serves **two** carriers, deliberately so: the global slots of the configuration\n(section \u0060Scoring\u0060) and the slots of a single study plan position (\u0022homework counts double between\n13:00 and 15:00\u0022). Both flow into the *one* ordered list the score is read from, so a second type\nwould only be a second place to get the ordering wrong.\n\nOverlapping slots are **allowed** - the choice is fixed nonetheless: the slot starting latest (i.e. the\nnarrowest) wins, on a tie the one ending earlier. Without that ordering the same correct answer would\nyield a different number of points depending on the order.\n\nA mutable class with settable properties, because that is the shape the configuration binder has always\nfilled from \u0060appsettings.json\u0060 - the type moved here unchanged rather than being reshaped on the way."
       },
       "SelectedMediaResponse": {
         "required": [
@@ -40327,10 +40327,10 @@
         "properties": {
           "executePublic": {
             "type": "boolean",
-            "description": "    \u0060true\u0060 = any creator may assign it to a child. \u0060false\u0060 = \u003Cb\u003Ewithdrawn\u003C/b\u003E: only whoever holds\n            an explicit permission on the exercise (owner/write/execute) can still make new assignments.\n            What withdrawing does not do: touch running study plans. The check applies when assigning, not\nwhen playing \u2013 a child learning the exercise today keeps learning it. That is exactly why this is the way\nto take material out of circulation, and not deletion (which a used exercise refuses anyway)."
+            "description": "\u0060true\u0060 = any creator may assign it to a child. \u0060false\u0060 = **withdrawn**: only whoever holds\n\nan explicit permission on the exercise (owner/write/execute) can still make new assignments.\n\nWhat withdrawing does **not** do: touch running study plans. The check applies when assigning, not\nwhen playing \u2013 a child learning the exercise today keeps learning it. That is exactly why this is the way\nto take material out of circulation, and not deletion (which a used exercise refuses anyway)."
           }
         },
-        "description": "Input for publishing or \u003Cb\u003Ewithdrawing\u003C/b\u003E an exercise \u2013 the counter-move to publishing."
+        "description": "Input for publishing or **withdrawing** an exercise \u2013 the counter-move to publishing."
       },
       "SetMyInterestsDto": {
         "required": [
@@ -40387,7 +40387,7 @@
             "format": "date-time"
           }
         },
-        "description": "A basic catalog article of the supervisor: the \u003Cem\u003Ekind\u003C/em\u003E of article (unit \u002B category)."
+        "description": "A basic catalog article of the supervisor: the *kind* of article (unit \u002B category)."
       },
       "ShopListingDto": {
         "required": [
@@ -40929,7 +40929,7 @@
           "categoriesCount",
           "createdAt",
           "id",
-          "isMine",
+          "isOwn",
           "name"
         ],
         "type": "object",
@@ -40971,12 +40971,12 @@
             "description": "The creator who opened the subject; \u0060null\u0060 = seeded, owned by nobody.",
             "format": "int32"
           },
-          "isMine": {
+          "isOwn": {
             "type": "boolean",
             "description": "True if the calling creator is the owner (an ownerless subject is nobody\u0027s)."
           }
         },
-        "description": "A school subject in the shared catalog. Every creator may read it; IsMine says\nwhether this caller may also rename or delete it, so a client can show the difference instead of\nletting the user find out through a 403."
+        "description": "A school subject in the shared catalog. Every creator may read it; IsOwn says\nwhether this caller may also rename or delete it, so a client can show the difference instead of\nletting the user find out through a 403."
       },
       "SubmitDto": {
         "type": "object",
@@ -41082,7 +41082,7 @@
             }
           }
         },
-        "description": "Overall result of the class test incl. pass threshold.\nIReadOnlyList\u0026lt;string\u0026gt;? SubmitResponse.WrongMentions only fills up for the set-graded types (an unordered list): an answer that\nmatched no open entry belongs to no ItemOutcome, because the outcomes are keyed by entry\nthere. Without this list the review screen would show what the child forgot but silently drop what\nit actually typed.int SubmitResponse.AttemptsRemaining is the daily test attempts left after this one (never negative) - lets\nthe result screen decide on its own whether to offer \u0022try again\u0022 instead of the child hitting a\nrejection after an already-spent click. For a supervisor attempt this is always MaxAttemptsPerDay:\nthe daily cap never applies to them, so the value is filler here, not a statement about attempts\nactually left."
+        "description": "Overall result of the class test incl. pass threshold.\n\nIReadOnlyList\u0026lt;string\u0026gt;? SubmitResponse.WrongMentions only fills up for the set-graded types (an unordered list): an answer that\nmatched no open entry belongs to no ItemOutcome, because the outcomes are keyed by entry\nthere. Without this list the review screen would show what the child *forgot* but silently drop what\nit actually typed.\n\nint SubmitResponse.AttemptsRemaining is the daily test attempts left after this one (never negative) - lets\nthe result screen decide on its own whether to offer \u0022try again\u0022 instead of the child hitting a\nrejection after an already-spent click. For a supervisor attempt this is always \u0060MaxAttemptsPerDay\u0060:\nthe daily cap never applies to them, so the value is filler here, not a statement about attempts\nactually left."
       },
       "SuggestedBonus": {
         "required": [
@@ -41419,10 +41419,10 @@
             "items": {
               "type": "string"
             },
-            "description": "The account\u0027s roles \u2013 for a teacher \u003Cb\u003Eonly\u003C/b\u003E\u0060Creator\u0060. Deliberately in the response: the\ndifference to a father account is exactly this list, and it should be visible without a second call."
+            "description": "The account\u0027s roles \u2013 for a teacher **only**\u0060Creator\u0060. Deliberately in the response: the\ndifference to a father account is exactly this list, and it should be visible without a second call."
           }
         },
-        "description": "The created teacher account. CreatorId is the \u003Cb\u003Elogin name\u003C/b\u003E and at the same time the id\nunder which their authorship and their permissions on exercises hang."
+        "description": "The created teacher account. CreatorId is the **login name** and at the same time the id\nunder which their authorship and their permissions on exercises hang."
       },
       "TestItem": {
         "required": [
@@ -41539,7 +41539,7 @@
             }
           }
         },
-        "description": "An exam question \u2013 without the solution, except at stages that reveal it by design. Deliberately\n\u003Cb\u003Ewithout\u003C/b\u003E an image: the exam shows none, and a field that is always null is the kind of silent lie\nthe API otherwise rejects with \u0060unknown_field\u0060.\nGapIndex is no such lie: it names the asked placeholder {{n}} of Prompt and is null\nonly for types whose atoms already stand on their own. The exam needs it just as much as the practice\ncard \u2013 it is where a child gets stuck for good, because there is no going back.AnyOrder likewise: it says that any entry not yet named counts (a set instead of a sequence). The\nexam is where that matters most \u2013 there is no second try, so a card whose rule the child has to guess is\nlost for good.Type is the exercise type key, as the practice card has carried all along: the renderer needs it to\ntell an ordered list (where \u0022entry 8\u0022 is the address of the card) from a vocabulary card, and both\narrive with the same fields otherwise.RevealAlternatives lists the equally valid answers beside Reveal and is set exactly where\nReveal is \u2013 see PracticeCard.AnswerPattern (B-66) is the letter-box mask, same as on PracticeCard \u2013 the exam\u0027s\nletter boxes fix punctuation/spacing exactly like practice does.Decoding (B-93) is the word-for-word decoding (Birkenbihl), same as PracticeCard \u2013\nthe exam must not show less material than practice, or it would be the harder task with less to go on."
+        "description": "An exam question \u2013 without the solution, except at stages that reveal it by design. Deliberately\n**without** an image: the exam shows none, and a field that is always null is the kind of silent lie\nthe API otherwise rejects with \u0060unknown_field\u0060.\n\n\u0060GapIndex\u0060 is no such lie: it names the asked placeholder \u0060{{n}}\u0060 of \u0060Prompt\u0060 and is null\nonly for types whose atoms already stand on their own. The exam needs it just as much as the practice\ncard \u2013 it is where a child gets stuck for good, because there is no going back.\n\n\u0060AnyOrder\u0060 likewise: it says that any entry not yet named counts (a set instead of a sequence). The\nexam is where that matters most \u2013 there is no second try, so a card whose rule the child has to guess is\nlost for good.\n\n\u0060Type\u0060 is the exercise type key, as the practice card has carried all along: the renderer needs it to\ntell an **ordered** list (where \u0022entry 8\u0022 is the address of the card) from a vocabulary card, and both\narrive with the same fields otherwise.\n\n\u0060RevealAlternatives\u0060 lists the equally valid answers beside \u0060Reveal\u0060 and is set exactly where\n\u0060Reveal\u0060 is \u2013 see PracticeCard.\n\n\u0060AnswerPattern\u0060 (B-66) is the letter-box mask, same as on PracticeCard \u2013 the exam\u0027s\nletter boxes fix punctuation/spacing exactly like practice does.\n\n\u0060Decoding\u0060 (B-93) is the word-for-word decoding (Birkenbihl), same as PracticeCard \u2013\nthe exam must not show less material than practice, or it would be the harder task with less to go on."
       },
       "TestNextResponse": {
         "required": [
@@ -42043,7 +42043,7 @@
             "default": false
           }
         },
-        "description": "Partial change to a child; omitted fields stay unchanged. \u0060null\u0060 means \u0022not specified\u0022\nand therefore cannot \u003Cb\u003Eclear\u003C/b\u003E anything \u2013 that is what the \u0060Clear\u2026\u0060 switches are for (cf.\n\u0060ClearGrade\u0060 on the class test): \u0060ClearBirthYear\u0060 removes the birth year,\n\u0060ClearGrade\u0060 the grade level (the child then drops out of grade filters)."
+        "description": "Partial change to a child; omitted fields stay unchanged. \u0060null\u0060 means \u0022not specified\u0022\nand therefore cannot **clear** anything \u2013 that is what the \u0060Clear\u2026\u0060 switches are for (cf.\n\u0060ClearGrade\u0060 on the class test): \u0060ClearBirthYear\u0060 removes the birth year,\n\u0060ClearGrade\u0060 the grade level (the child then drops out of grade filters)."
       },
       "UpdateClassTestDto": {
         "type": "object",
@@ -42275,7 +42275,7 @@
             "default": false
           }
         },
-        "description": "            Partial change to a profile; omitted fields remain unchanged.\n            A null means \u0022not specified\u0022 in a PATCH \u2013 so it cannot clear a field.\nThe Clear\u2026 switches (like ClearGrade on the class test) exist for that: only with them\ncan a profile become subject-neutral, series-independent, or grade-open again.ClearSubject makes the profile subject-neutral (subject id and name drop away), ClearSeries\n            makes it series-independent, ClearGradeMin/ClearGradeMax lift the respective grade-level limit.Sending SubjectId alone is enough: the server derives SubjectName from it, so the two\nhalves cannot contradict each other (B-142). A SubjectName sent alongside an id is therefore\nignored \u2013 the free text only carries meaning while no catalog subject is bound."
+        "description": "Partial change to a profile; omitted fields remain unchanged.\n\nA \u0060null\u0060 means \u0022not specified\u0022 in a PATCH \u2013 so it cannot **clear** a field.\nThe \u0060Clear\u2026\u0060 switches (like \u0060ClearGrade\u0060 on the class test) exist for that: only with them\ncan a profile become subject-neutral, series-independent, or grade-open again.\n\n\u0060ClearSubject\u0060 makes the profile subject-neutral (subject id and name drop away), \u0060ClearSeries\u0060\nmakes it series-independent, \u0060ClearGradeMin\u0060/\u0060ClearGradeMax\u0060 lift the respective grade-level limit.\n\nSending \u0060SubjectId\u0060 alone is enough: the server derives \u0060SubjectName\u0060 from it, so the two\nhalves cannot contradict each other (B-142). A \u0060SubjectName\u0060 sent alongside an id is therefore\nignored \u2013 the free text only carries meaning while *no* catalog subject is bound."
       },
       "UpdateInterestTagDto": {
         "type": "object",
@@ -42555,10 +42555,10 @@
               "null",
               "string"
             ],
-            "description": "New login PIN (will be hashed). Empty string = remove the PIN, so an account can\n            be deliberately deactivated; \u0060null\u0060 = unchanged."
+            "description": "New login PIN (will be hashed). Empty string = remove the PIN, so an account can\n\nbe deliberately deactivated; \u0060null\u0060 = unchanged."
           }
         },
-        "description": "Self-service management of the caller\u0027s own account (\u0060PATCH auth/me\u0060) \u2013 for \u003Cb\u003Eevery\u003C/b\u003E adult\nrole, including a teacher account that has no access to the supervisor endpoints.\n\nPATCH semantics:null means \u0022not specified\u0022 (the value stays). Email is the only\nclearable field and needs bool UpdateMyAccountDto.ClearEmail for that \u2013 without the switch, a form with an\nempty field would report \u0022saved\u0022 while the old address stayed in place."
+        "description": "Self-service management of the caller\u0027s own account (\u0060PATCH auth/me\u0060) \u2013 for **every** adult\nrole, including a teacher account that has no access to the supervisor endpoints.\n\n**PATCH semantics:**\u0060null\u0060 means \u0022not specified\u0022 (the value stays). Email is the only\nclearable field and needs bool UpdateMyAccountDto.ClearEmail for that \u2013 without the switch, a form with an\nempty field would report \u0022saved\u0022 while the old address stayed in place."
       },
       "UpdateObjectiveRequest": {
         "type": "object",
@@ -42755,7 +42755,7 @@
               "integer",
               "string"
             ],
-            "description": "Passing threshold in \u003Cb\u003Epercent\u003C/b\u003E (see PositionResponse); \u0060null\u0060 = not specified.",
+            "description": "Passing threshold in **percent** (see PositionResponse); \u0060null\u0060 = not specified.",
             "format": "int32"
           },
           "requireTypedTest": {
@@ -42885,7 +42885,7 @@
             "items": {
               "$ref": "#/components/schemas/ScoringTimeSlot"
             },
-            "description": "Own points time slots of this obligation (see PositionResponse). Sending a list\n\u003Cb\u003Ereplaces\u003C/b\u003E the stored one, an \u003Cb\u003Eempty\u003C/b\u003E list removes it (like \u0060clearTimeSlots\u0060);\n\u0060null\u0060 leaves it untouched."
+            "description": "Own points time slots of this obligation (see PositionResponse). Sending a list\n**replaces** the stored one, an **empty** list removes it (like \u0060clearTimeSlots\u0060);\n\u0060null\u0060 leaves it untouched."
           },
           "clearTimeSlots": {
             "type": "boolean",
@@ -42893,7 +42893,7 @@
             "default": false
           }
         },
-        "description": "Partial change to the overrides/goals/points. The referenced exercise is immutable\n(progress indices).\nPATCH semantics:null means \u0022not specified\u0022 for every field \u2013 the previous\nvalue stays. It does not mean \u0022reset to default\u0022; that needs an explicit Clear switch, and\nexactly one field has one: bool UpdatePositionDto.ClearTimeSlots. All the other fields cannot be emptied at all \u2013\nthey are either mandatory or already carry \u0022inherit\u0022 as a value of their own."
+        "description": "Partial change to the overrides/goals/points. The referenced exercise is immutable\n(progress indices).\n\n**PATCH semantics:**\u0060null\u0060 means \u0022not specified\u0022 for *every* field \u2013 the previous\nvalue stays. It does **not** mean \u0022reset to default\u0022; that needs an explicit \u0060Clear\u0060 switch, and\nexactly one field has one: bool UpdatePositionDto.ClearTimeSlots. All the other fields cannot be emptied at all \u2013\nthey are either mandatory or already carry \u0022inherit\u0022 as a value of their own."
       },
       "UpdatePublisherDto": {
         "type": "object",
@@ -42984,7 +42984,7 @@
             "default": false
           }
         },
-        "description": "Change a remark. PATCH semantics: \u0060null\u0060 means \u0022not specified\u0022 (the value stays), \u003Cb\u003Enot\u003C/b\u003E\n\u0022clear\u0022 \u2013 that is what the explicit \u0060Clear\u2026\u0060 switches are for."
+        "description": "Change a remark. PATCH semantics: \u0060null\u0060 means \u0022not specified\u0022 (the value stays), **not**\n\u0022clear\u0022 \u2013 that is what the explicit \u0060Clear\u2026\u0060 switches are for."
       },
       "UpdateSeriesUnitDto": {
         "type": "object",
@@ -43303,7 +43303,7 @@
             "default": false
           }
         },
-        "description": "            Partial change to a textbook; omitted fields stay unchanged.\n            In a PATCH, null means \u0022not specified\u0022 and therefore cannot clear anything \u2013 that is\nwhat the Clear\u2026 switches are for (cf. ClearGrade on the class test): ClearSeries\ndetaches the book from the catalog (\u0022not cataloged\u0022) and takes the current unit with it, because the\nunit means nothing without its series; ClearUnit only resets the unit; ClearSubject\nremoves the subject id and name; ClearGrade the grade level of the book.Sending SubjectId alone is enough: the server derives SubjectName from it, so the two\nhalves cannot contradict each other (B-142). A SubjectName sent alongside an id is therefore\nignored \u2013 the free text only carries meaning while no catalog subject is bound."
+        "description": "Partial change to a textbook; omitted fields stay unchanged.\n\nIn a PATCH, \u0060null\u0060 means \u0022not specified\u0022 and therefore cannot **clear** anything \u2013 that is\nwhat the \u0060Clear\u2026\u0060 switches are for (cf. \u0060ClearGrade\u0060 on the class test): \u0060ClearSeries\u0060\ndetaches the book from the catalog (\u0022not cataloged\u0022) and takes the current unit with it, because the\nunit means nothing without its series; \u0060ClearUnit\u0060 only resets the unit; \u0060ClearSubject\u0060\nremoves the subject id and name; \u0060ClearGrade\u0060 the grade level of the book.\n\nSending \u0060SubjectId\u0060 alone is enough: the server derives \u0060SubjectName\u0060 from it, so the two\nhalves cannot contradict each other (B-142). A \u0060SubjectName\u0060 sent alongside an id is therefore\nignored \u2013 the free text only carries meaning while *no* catalog subject is bound."
       },
       "UpdateTextbookSeriesDto": {
         "type": "object",
@@ -43375,7 +43375,7 @@
             "default": false
           }
         },
-        "description": "Partial change to a series; omitted fields remain unchanged. The slug stays fixed.\n\u0060ClearPublisherId\u0060 and \u0060ClearSubject\u0060 remove the reference (cf. \u0060ClearGrade\u0060 on the\nclass test) \u2013 without them, \u0060null\u0060 in a PATCH means \u0022not specified\u0022, not \u0022remove\u0022, so a\nwrongly-assigned publisher or subject could never be unassigned again.\n\n\u0060ClearSubject\u0060 drops both \u0060SubjectId\u0060 and \u0060SubjectName\u0060 together, the same way\n\u0060UpdateCreatorProfileDto\u0060 and \u0060UpdateTextbookDto\u0060 do it: the name is the fallback shown where\nno catalog subject is bound, so a series that kept it would go on claiming a subject it no longer has.\n\nSending \u0060SubjectId\u0060 alone is enough: the server derives \u0060SubjectName\u0060 from it, so the two\nhalves cannot contradict each other (B-142). A \u0060SubjectName\u0060 sent alongside an id is therefore\nignored - the free text only carries meaning while \u003Cem\u003Eno\u003C/em\u003E catalog subject is bound, which is the\nuncatalogued case it exists for. This used to be the caller\u0027s duty, honoured by the frontend and by\nnothing else."
+        "description": "Partial change to a series; omitted fields remain unchanged. The slug stays fixed.\n\u0060ClearPublisherId\u0060 and \u0060ClearSubject\u0060 remove the reference (cf. \u0060ClearGrade\u0060 on the\nclass test) \u2013 without them, \u0060null\u0060 in a PATCH means \u0022not specified\u0022, not \u0022remove\u0022, so a\nwrongly-assigned publisher or subject could never be unassigned again.\n\n\u0060ClearSubject\u0060 drops both \u0060SubjectId\u0060 and \u0060SubjectName\u0060 together, the same way\n\u0060UpdateCreatorProfileDto\u0060 and \u0060UpdateTextbookDto\u0060 do it: the name is the fallback shown where\nno catalog subject is bound, so a series that kept it would go on claiming a subject it no longer has.\n\nSending \u0060SubjectId\u0060 alone is enough: the server derives \u0060SubjectName\u0060 from it, so the two\nhalves cannot contradict each other (B-142). A \u0060SubjectName\u0060 sent alongside an id is therefore\nignored - the free text only carries meaning while *no* catalog subject is bound, which is the\nuncatalogued case it exists for. This used to be the caller\u0027s duty, honoured by the frontend and by\nnothing else."
       },
       "UpdateVocabTagDto": {
         "type": "object",
@@ -43529,11 +43529,11 @@
               "integer",
               "string"
             ],
-            "description": "            How many \u003Cb\u003Edifferent children\u003C/b\u003E use the exercise whom the caller \u003Cb\u003Edoes not supervise\u003C/b\u003E \u2013 just the\n            number, without names. Two reasons:\n            * Without it the lists report \u0022nowhere\u0022 while deletion fails with 409 exercise_in_use \u2013\n            a contradiction the author cannot resolve (remark 14).\n* For a creator without own children (a teacher, or an AI creator app), both\n            lists are permanently empty. This number is then not the footnote but the only answer to their\n            actual question: is my material being used?\u003Cb\u003EChildren\u003C/b\u003E are counted, not usage sites: three positions in the same child\u0027s plans\n            are one user. The basis is the FK-relevant usages that also block deletion \u2013 a class test only\n            collected via a tag does not prevent it and is therefore not counted.",
+            "description": "How many **different children** use the exercise whom the caller **does not supervise** \u2013 just the\nnumber, without names. Two reasons:\n* Without it the lists report \u0022nowhere\u0022 while deletion fails with 409 exercise_in_use \u2013\na contradiction the author cannot resolve (remark 14).\n* For a creator without own children (a teacher, or an AI creator app), both\n\nlists are permanently empty. This number is then not the footnote but the only answer to their\nactual question: is my material being used?**Children** are counted, not usage sites: three positions in the same child\u0027s plans\nare one user. The basis is the FK-relevant usages that also block deletion \u2013 a class test only\ncollected via a tag does not prevent it and is therefore not counted.",
             "format": "int32"
           }
         },
-        "description": "Where an exercise is used. IReadOnlyList\u0026lt;PlanUsage\u0026gt; UsageResponse.Plans and IReadOnlyList\u0026lt;ClassTestUsage\u0026gt; UsageResponse.ClassTests only name resources of the\ncaller\u0027s \u003Cb\u003Eown\u003C/b\u003E children \u2013 other supervisors\u0027 children must not show up here."
+        "description": "Where an exercise is used. IReadOnlyList\u0026lt;PlanUsage\u0026gt; UsageResponse.Plans and IReadOnlyList\u0026lt;ClassTestUsage\u0026gt; UsageResponse.ClassTests only name resources of the\ncaller\u0027s **own** children \u2013 other supervisors\u0027 children must not show up here."
       },
       "VerbInfo": {
         "required": [
@@ -43651,7 +43651,7 @@
             ]
           }
         },
-        "description": "Inline vocabulary item \u2013 the same input shape as the item endpoint (\u0060VocabItemInput\u0060): word via\nVocabularyId (existing store entry; Front/Back\nthen come from the store) \u003Cb\u003Eor\u003C/b\u003E inline via Front/Back (created/found\nin the store on save). Both are therefore optional; an item needs either the\nVocabularyId or Front \u003Ci\u003Eand\u003C/i\u003E Back. Self is the derived, read-only\npopulated HATEOAS link."
+        "description": "Inline vocabulary item \u2013 the same input shape as the item endpoint (\u0060VocabItemInput\u0060): word via\nVocabularyId (existing store entry; Front/Back\nthen come from the store) **or** inline via Front/Back (created/found\nin the store on save). Both are therefore optional; an item needs either the\nVocabularyId or Front *and* Back. Self is the derived, read-only\npopulated HATEOAS link."
       },
       "VocabItemInput": {
         "type": "object",

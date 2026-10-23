@@ -38,12 +38,11 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
 
     /// <summary>
     /// Login via domain id + PIN. Resolves the account and issues a multi-role token.
-    /// <para>
+    ///
     /// Named <c>adult</c> and not <c>father</c> because the same endpoint logs in a <b>teacher account</b>:
     /// its id is likewise an <see cref="Adult"/> id, and the response then names <c>Creator</c> instead of
     /// <c>Supervisor</c>. An existing account is not granted an additional role in the process
     /// (see <see cref="AccountService"/>), so a teacher does not become a supervisor by logging in.
-    /// </para>
     /// </summary>
     [HttpPost("adult")]
     [AllowAnonymous]
@@ -128,22 +127,18 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
     /// <summary>
     /// Self-management of the account itself: display name, email and PIN.
     ///
-    /// <para>
     /// Lives under <c>auth/…</c> and not under a tier because it belongs to none – <b>the same person</b>
     /// operates it from any role (the documented exception in CLAUDE.md). Previously this only worked via
     /// <c>supervisor/adults/{id}</c>, and thus not at all for a <b>teacher account</b>: it lacks the
     /// Supervisor role, so it couldn't change its own PIN.
-    /// </para>
-    /// <para>
+    ///
     /// Identity hangs off <b>two</b> rows: the <see cref="Adult"/> row carries the domain name (it appears
     /// as the author on exercises), the <see cref="Account"/> the login. Only the domain row is written
     /// here; <see cref="AccountService.MirrorAsync(Adult, CancellationToken)"/> pulls the account along –
     /// the same single place that <c>supervisor/adults/{id}</c> and <c>supervisor/children/{id}</c> use.
-    /// </para>
-    /// <para>
+    ///
     /// <b>Adults only.</b> A child does not change its own name and PIN: the PIN is the
     /// access the father grants, and a child that changed it would have escaped supervision.
-    /// </para>
     /// </summary>
     [HttpPatch("me")]
     [Authorize]

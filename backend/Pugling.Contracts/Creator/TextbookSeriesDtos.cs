@@ -17,8 +17,9 @@ public record TextbookSeriesResponse(int Id, string Name, string Slug, int? Publ
 /// <summary>
 /// Input for creating a series. The slug is derived from the name; an already existing series
 /// is returned instead of duplicated (idempotent).
-/// <para>With a <c>SubjectId</c> the server derives <c>SubjectName</c> from the catalog; a name sent
-/// alongside an id is ignored (B-142).</para>
+///
+/// With a <c>SubjectId</c> the server derives <c>SubjectName</c> from the catalog; a name sent
+/// alongside an id is ignored (B-142).
 /// </summary>
 public record CreateTextbookSeriesDto(string Name, int? PublisherId, string? SubjectName, int? SubjectId,
     SchoolTypes? SchoolTypes, string? SourceLanguage, string? TargetLanguage, string? Notes);

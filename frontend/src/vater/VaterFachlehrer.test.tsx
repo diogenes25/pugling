@@ -9,7 +9,7 @@ import type { CreatorProfileResponse, SubjectResponse, TextbookSeriesResponse } 
  */
 
 const ENGLISH: SubjectResponse = {
-  id: 1, name: "Englisch", createdAt: "2026-01-01T00:00:00Z", categoriesCount: 0, isMine: false,
+  id: 1, name: "Englisch", createdAt: "2026-01-01T00:00:00Z", categoriesCount: 0, isOwn: false,
 };
 
 function seriesWith(overrides: Partial<TextbookSeriesResponse>): TextbookSeriesResponse {

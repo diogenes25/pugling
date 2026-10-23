@@ -129,12 +129,11 @@ public record CreatePositionDto(int ExerciseId, int? Order, int? Stage, int? Ite
 /// <summary>
 /// Partial change to the overrides/goals/points. The referenced exercise is immutable
 /// (progress indices).
-/// <para>
+///
 /// <b>PATCH semantics:</b> <c>null</c> means "not specified" for <i>every</i> field – the previous
 /// value stays. It does <b>not</b> mean "reset to default"; that needs an explicit <c>Clear</c> switch, and
 /// exactly one field has one: <see cref="ClearTimeSlots"/>. All the other fields cannot be emptied at all –
 /// they are either mandatory or already carry "inherit" as a value of their own.
-/// </para>
 /// </summary>
 /// <param name="Order">New position within the plan.</param>
 /// <param name="Stage">Query form of the final test.</param>

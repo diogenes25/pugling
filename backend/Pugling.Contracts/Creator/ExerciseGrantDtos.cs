@@ -15,11 +15,10 @@ public record AddGrantDto(int CreatorId, GrantPermission Permission);
 /// <param name="ExecutePublic">
 /// <c>true</c> = any creator may assign it to a child. <c>false</c> = <b>withdrawn</b>: only whoever holds
 /// an explicit permission on the exercise (owner/write/execute) can still make new assignments.
-/// <para>
+///
 /// What withdrawing does <b>not</b> do: touch running study plans. The check applies when assigning, not
 /// when playing – a child learning the exercise today keeps learning it. That is exactly why this is the way
 /// to take material out of circulation, and not deletion (which a used exercise refuses anyway).
-/// </para>
 /// </param>
 public record SetExerciseSharingDto(bool ExecutePublic);
 

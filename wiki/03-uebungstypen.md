@@ -29,7 +29,7 @@ Jede Übung lebt in einer **Unit einer Lehrwerk-Reihe**. Das Fach ist optional u
 
 ```http
 POST /api/v1/creator/subjects                 { "name": "Französisch" }
-→ { "id": 4, "name": "Französisch", "categoriesCount": 0, "ownerAdultId": 1, "isMine": true, … }
+→ { "id": 4, "name": "Französisch", "categoriesCount": 0, "ownerAdultId": 1, "isOwn": true, … }
 
 POST /api/v1/creator/textbook-series          { "name": "Découvertes 1", "subjectId": 4 }
 → { "id": 3, "slug": "decouvertes-1", "subjectId": 4, "unitCount": 0, … }     (slug-idempotent)

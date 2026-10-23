@@ -12,11 +12,10 @@ namespace Pugling.Api.Controllers.Creator;
 /// Media store: <b>one motif, many images</b>. An asset is not "the image for <i>running</i>", but
 /// a concrete <b>representation</b> – the running unicorn in comic style, cartoon, the jogging person as
 /// a photo. Which of these a child later sees is decided by their profile; here only the stock is maintained.
-/// <para>
+///
 /// Two axes stay strictly separate: the <b>content</b> axis (this asset, with style tags and suitability)
 /// and the <b>technical</b> axis (resolutions of the same asset, see <see cref="MediaVariantsController"/>).
 /// Bytes never live in the DB – only URLs, as with the pronunciation audio source of the vocabulary store.
-/// </para>
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -208,10 +207,9 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
     /// resolutions itself (thumb/card/full, aspect-ratio-preserving, WebP) plus a placeholder color.
     /// This is the convenient path compared to the URL endpoint – the creator needs neither an image source on
     /// the web nor a graphics program to scale it.
-    /// <para>
+    ///
     /// No <see cref="MediaPurpose.Hero"/>: the wide header format requires cropping, and where a
     /// motif may be cropped, only a human can decide.
-    /// </para>
     /// </summary>
     [HttpPost("upload")]
     [ProducesResponseType(StatusCodes.Status201Created)]

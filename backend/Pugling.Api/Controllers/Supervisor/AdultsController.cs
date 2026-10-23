@@ -98,12 +98,11 @@ public class AdultsController(PuglingDbContext db, AccountService accounts) : Co
 
     /// <summary>
     /// Is the email address already taken by <b>another</b> account?
-    /// <para>
+    ///
     /// Checked against <c>Account.Email</c>, not <c>Adult.Email</c>: that's where the (filtered)
     /// unique index sits. Without this pre-check, registration used to run aground halfway: <c>Adult</c> was
     /// already saved, creating the account failed on the index, and the caller got <b>500</b> –
     /// leaving behind an adult with no login.
-    /// </para>
     /// </summary>
     /// <param name="email">The desired address; empty means "none", which never collides (the index is filtered).</param>
     /// <param name="exceptAdultId">The adult's own record when updating – its own address is not a collision.</param>
@@ -117,14 +116,13 @@ public class AdultsController(PuglingDbContext db, AccountService accounts) : Co
     /// <summary>
     /// Deletes an adult – together with any children who thereby lose <b>their last supervisor</b>,
     /// and together with its login account.
-    /// <para>
+    ///
     /// A child supervised by several people (father <i>and</i> mother) continues to exist; it only loses this
     /// one caregiver. Only the child left with no one remaining is removed as well – because since the
     /// multi-supervisor restructuring, a <see cref="Child"/> is <b>no longer</b> attached to the adult via a
     /// foreign key, but via <see cref="SupervisorLink"/>. The database cascade therefore only clears the
     /// link and would leave the child behind as an <b>orphan</b>: no longer visible or deletable by any adult,
     /// but with a still-functioning PIN login.
-    /// </para>
     /// </summary>
     [HttpDelete("{adultId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

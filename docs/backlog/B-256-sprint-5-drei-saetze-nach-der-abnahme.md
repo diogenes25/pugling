@@ -13,7 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-237, B-244, B-246]
-nachgeschaut: ""
+nachgeschaut: 2026-10-23
 wartet_auf: ""
 ---
 
@@ -84,3 +84,4 @@ Halbsatz, Backend-Suite (der Kommentar ändert kein Verhalten).
 - **2026-10-23** — Nebenbefund der Messung, bewusst nicht angefasst: eine von Hand gebaute Antwort serialisiert
   `createdAt` mit `Z` (frisches `UtcNow`, `Kind=Utc`), eine Projektion aus SQLite ohne (`Kind=Unspecified`) – derselbe
   Zeitpunkt erscheint im Vertrag in zwei Schreibweisen. Ob das eine eigene Story wird, entscheidet der Nutzer.
+- **2026-10-23** — Nachschau (vierter Lauf, frischer Prüfer, read-only über `39cf33b`). Geprüft: Hilfetext `AgentCommands.cs:458-461` und README `:146` gegen `BuildRequestAsync` (`AgentCommands.cs:310-323`), `ResolveLocationAsync` (`:362-367`) und `BriefingBuilder.ResolveProfileAsync` (`:141-158`) – die Reihe setzt nur ein genanntes `--profile`, das Kind-Profil wird erst danach am Fach gesucht; Kommentar `PublishersTests.cs:23-26` gegen `CreatedAt = DateTime.UtcNow` (`CurriculumEntities.cs:20`) und das Zurücklesen in `Create`. **Kein Befund.** Randnotiz älter als der Diff: hat die Reihe des genannten Profils keine Unit, bricht der Agent ab, statt auf „erste Reihe mit Unit" auszuweichen – die Hilfe lässt sich so nicht lesen, der Satz „sonst" meint nur den Fall ohne Profil.

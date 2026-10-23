@@ -161,25 +161,22 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
     /// <summary>
     /// Deletes a tag along with its links to images and children (cascade). Links to <b>exercises</b> block
     /// the delete instead (409) – the one asymmetry that matters here (B-206).
-    /// <para>
+    ///
     /// The line runs along <b>what the loss costs</b>. An image link or a child's preference can be set
     /// again from what is still there; a tag that dresses an exercise carries <b>authored information</b>
     /// that nothing else records, so a cascade would erase it silently and unrecoverably. Until B-46 only
     /// the first kind existed, which is why the old reasoning ("its loss only costs selection quality")
     /// was right at the time and is wrong now.
-    /// </para>
-    /// <para>
+    ///
     /// The lock has a way out, and it needs one: the exercise editor shows the dressing and lets it be
     /// removed. Without that door this would be a dead end instead of a guard rail.
-    /// </para>
-    /// <para>
+    ///
     /// <b>Two limits, so this does not read as more than it is.</b> It guards the tag, not the dressing:
     /// the exercise <c>PUT</c> is a replacement, so a caller that omits <c>InterestTagIds</c> still clears
     /// the dressing without a word (deliberate since B-46 - whether an omitted field should mean "keep" is
     /// a contract question of its own). And it is an application-level check, not a constraint: the foreign
     /// key stays <c>Cascade</c>, so a request that dresses an exercise between this check and the commit
     /// slips through.
-    /// </para>
     /// </summary>
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

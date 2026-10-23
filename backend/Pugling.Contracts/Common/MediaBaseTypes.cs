@@ -18,11 +18,10 @@ public enum MediaKind
 /// Suitability of an asset for an age group – the load-bearing axis of target-audience differentiation.
 /// Only this makes <b>a shared store for all target audiences</b> viable: the selection filters hard
 /// against <c>Child.AllowedContentRating</c> before even sorting by interests.
-/// <para>
+///
 /// The values are <b>ordered ascending</b> and compared numerically (<c>Rating &lt;= Allowed</c>).
 /// That's why they are stored as <c>int</c> in the DB (not as a string like the other enums) and must
 /// <b>never be renumbered</b> – new levels are only appended at the end.
-/// </para>
 /// </summary>
 public enum ContentRating
 {

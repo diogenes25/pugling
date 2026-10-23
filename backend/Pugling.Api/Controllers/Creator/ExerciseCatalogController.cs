@@ -186,15 +186,13 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     /// only way to take material out of circulation: deleting refuses a used exercise (the FK
     /// <c>PlanPosition→Exercise</c> is <c>Restrict</c>), and rightly so – ongoing mandatory goals
     /// must not break out from under the child.
-    /// <para>
+    ///
     /// Deliberately its <b>own</b> endpoint instead of the typed full <c>PUT</c>: this flag has nothing to do
     /// with the exercise type, and replacing the whole exercise including <c>ConfigJson</c> for a single toggle
     /// is the short path to silent content loss.
-    /// </para>
-    /// <para>
+    ///
     /// Only the <b>owner</b> may toggle it (as with granting permissions) – a write grantee may
     /// maintain content but not decide on its distribution.
-    /// </para>
     /// </summary>
     [HttpPatch("{id:int}/sharing")]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -215,12 +213,11 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     /// Which study plans and class tests (of which own children) an exercise is embedded in.
     /// Study plans via the position model (<see cref="PlanPosition"/>); class tests either directly
     /// assigned OR via a shared tag.
-    /// <para>
+    ///
     /// In addition <see cref="UsageResponse.OtherLearnersCount"/>: the <b>number of children</b> of other
     /// supervisors who use the exercise. Without it, this response claimed "nowhere" while deletion
     /// failed with <c>409</c> – the same count now feeds both places (remark 14). For a creator without
     /// own children (teacher, AI creator app) it is the <i>only</i> meaningful information here.
-    /// </para>
     /// </summary>
     [HttpGet("{id:int}/usage")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

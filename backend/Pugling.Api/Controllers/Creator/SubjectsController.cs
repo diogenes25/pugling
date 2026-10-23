@@ -91,7 +91,15 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
             if (name.Length == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Name must not be empty.");
             subject.Name = name;
         }
+
+        // One transaction: a rename that reached the subject but not its copies would be exactly the
+        // contradiction B-145 removes, only rarer.
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        var renamed = db.Entry(subject).Property(s => s.Name).IsModified;
         await db.SaveChangesAsync(ct);
+        if (renamed)
+            await SubjectNaming.PropagateRenameAsync(db, subjectId, subject.Name, ct);
+        await tx.CommitAsync(ct);
 
         // One projection for every response (B-158, Create included): a hand-built response here would
         // silently miss any field later added to Project - held by
@@ -102,7 +110,7 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
     /// <summary>
     /// Deletes a subject along with its exercise categories (owner only), unless a row that cannot live
     /// without it points at it.
-    /// <para>
+    ///
     /// The line runs along whether the reference is REQUIRED, not along who owns the row (B-144). Every
     /// optional <c>SubjectId</c> only loses its assignment - textbook series, textbooks, creator profiles,
     /// study plans and class tests are <c>SetNull</c>, and the last three belong to a child just as much
@@ -111,18 +119,15 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
     /// <c>SetNull</c> in turn). The other two are <c>Restrict</c> and block the delete with 409
     /// <c>subject_in_use</c>, because the cascade would take a child's work with it: a key result's
     /// milestone together with the payout it earned, and a timetable entry that was typed by hand.
-    /// </para>
-    /// <para>
+    ///
     /// Stating the rule as "child data blocks" would be the trap it was written to close: it reads as a
     /// promise for the next child-owned entity, and one added with a <c>SetNull</c> subject would quietly
     /// fall on the other side of the line.
-    /// </para>
-    /// <para>
+    ///
     /// The pre-check is not redundant next to <c>DeleteBehavior.Restrict</c>, and vice versa. Without the
     /// check the database would raise the conflict as a bare 500 with a half-saved state instead of a
     /// readable 409. Without <c>Restrict</c> this check would be the only thing between a child's
     /// milestones and their deletion - and it only guards the one path that runs through here.
-    /// </para>
     /// </summary>
     [HttpDelete("{subjectId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

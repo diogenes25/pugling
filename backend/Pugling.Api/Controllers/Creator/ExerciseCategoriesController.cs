@@ -12,12 +12,11 @@ namespace Pugling.Api.Controllers.Creator;
 /// <summary>
 /// Subject-dependent exercise categories (e.g. grammar/vocabulary for English). Controlled
 /// vocabulary per subject as the basis for pre-filtering during study plan creation.
-/// <para>
+///
 /// <b>Creating stays open to every creator</b> (B-157, decision 2): with the subject's rule being
 /// fail-closed, a gated create would have frozen the category axis of all seeded subjects, which are the
 /// only ones an ordinary user has.
-/// </para>
-/// <para>
+///
 /// Renaming and deleting need <b>one of two</b> owner rights (B-170): the category's own
 /// <c>ExerciseCategory.OwnerAdultId</c> <b>or</b> the subject's <c>Subject.OwnerAdultId</c>. Two bearers,
 /// because one alone breaks in each direction: without the category's, whoever adds a category to a seeded
@@ -25,12 +24,10 @@ namespace Pugling.Api.Controllers.Creator;
 /// what B-157 caused and B-170 undid. Without the subject's, a stranger could plant a category in my
 /// subject that I cannot get rid of. The check is deliberately one condition without a special case for
 /// <c>null</c>: "remove what you added" is the symmetric counterpart of a create that is open everywhere.
-/// </para>
-/// <para>
+///
 /// A <b>platform admin</b> passes as well (break-glass, B-178) - for every subject, not only ownerless
 /// ones, exactly as at the exercise. It remains the only way to clear a <i>seeded</i> category, which has
 /// neither bearer.
-/// </para>
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -53,7 +50,7 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
     /// <summary>
     /// Whether the caller may rename or delete a category: its owner, the subject's owner, or an admin
     /// (B-170). Used by <c>Update</c> and <c>Delete</c>, which hold a loaded entity.
-    /// <para>
+    ///
     /// The read paths cannot call this - a projection has to be translatable to SQL, and a method call over
     /// four arguments is not. They use <see cref="Projection"/> instead, which spells the <b>same</b> rule
     /// as an expression. Two forms of one rule is a drift risk and therefore named rather than hidden: the
@@ -65,7 +62,6 @@ public class ExerciseCategoriesController(PuglingDbContext db) : ControllerBase
     /// both read paths and the created row, which shares the projection rather than repeating the rule.
     /// Whoever changes the rule has to touch two places, and each has a case that fails if they touch
     /// only one.
-    /// </para>
     /// </summary>
     private static bool MayWrite(int? categoryOwner, int? subjectOwner, int? fid, bool isAdmin) =>
         ClaimsPrincipalExtensions.IsOwnedBy(categoryOwner, fid)

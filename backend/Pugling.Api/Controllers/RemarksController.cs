@@ -13,12 +13,11 @@ namespace Pugling.Api.Controllers;
 /// Remarks made while testing: questions, observations and findings together with the context in which
 /// they came up. Captured in the UI widget, answered by Claude Code – triggered by the human via the
 /// id assigned here ("Answer question 123").
-/// <para>
+///
 /// <b>Deliberately tier-neutral</b> (no <c>creator</c>/<c>supervisor</c>/<c>student</c> prefix, precedent
 /// <see cref="AuthController"/>): the resource belongs to none of the three tiers – the same person captures
 /// them sometimes from the father web app, sometimes from the child arcade. Gated therefore only with <c>[Authorize]</c>, the
 /// roles are separated inline (the pattern of the student endpoints).
-/// </para>
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -77,13 +76,12 @@ public class RemarksController(
     /// <summary>
     /// The set of remarks the caller may access – the <b>one</b> place where
     /// visibility is decided.
-    /// <para>
+    ///
     /// <paramref name="allAccounts"/> lifts the restriction. The permission for that is
     /// <see cref="MayReadAllAccounts"/>; on <b>lists</b> the explicit <c>scope=all</c> is required
     /// in addition, so the default stays narrow (otherwise the list in the widget would show entries from
     /// other accounts). When accessing a <b>single id</b>, the permission alone is enough – that's exactly what
     /// the skill needs to answer a remark from any test account.
-    /// </para>
     /// </summary>
     private async Task<IQueryable<Remark>> ScopedAsync(bool allAccounts, CancellationToken ct)
     {
@@ -96,30 +94,27 @@ public class RemarksController(
 
     /// <summary>
     /// Whether the caller may read across account boundaries.
-    /// <para>
+    ///
     /// This is <b>tied to the <see cref="RemarkOptions.GlobalRead"/> switch, not a role</b>:
     /// testing constantly produces throwaway accounts (a bug often only shows up in a specific
     /// constellation – a fresh father account with no exercises reveals what never shows up with the seeded
     /// dad), and giving each one a flag individually would be administrative work with no payoff. <c>Admin</c>
     /// remains allowed in addition, but doesn't work as the <i>condition</i>: that role also bypasses the RWX
     /// permissions on exercises, and those have nothing to do with remarks.
-    /// </para>
-    /// <para>
+    ///
     /// A <b>student</b> is always excluded – even with <c>GlobalRead</c> switched on. Answers and
     /// history carry file and line references; on the day the child sees the widget, it must not be able to
     /// read the adults' testing notes.
-    /// </para>
     /// </summary>
     private bool MayReadAllAccounts => !User.IsStudent() && (options.GlobalRead || User.IsAdmin());
 
     /// <summary>
     /// The accounts whose remarks the caller may see: always its own, and for a supervisor
     /// additionally the accounts of the children it supervises.
-    /// <para>
+    ///
     /// The separation is not a formality: answers carry file and line references, i.e. code internals.
     /// On the day the child sees the widget, it must be able to read neither the father's testing notes nor
     /// their answers – which is why a student sees <b>exclusively</b> its own remarks.
-    /// </para>
     /// </summary>
     private async Task<List<int>> VisibleAccountIdsAsync(CancellationToken ct)
     {
@@ -225,13 +220,12 @@ public class RemarksController(
     /// <summary>
     /// List remarks. <c>mine=true</c> restricts to one's own – that's the query behind the
     /// list in the widget; without the filter a supervisor would also see the child's.
-    /// <para>
+    ///
     /// <c>scope=all</c> lifts the account boundary – that's the view of the follow-up skill that
     /// collects remarks from all test accounts. Allowed if <see cref="MayReadAllAccounts"/> holds
     /// (switch <c>Remarks:GlobalRead</c>, on in development), otherwise <c>403</c>. Deliberately an
     /// <b>explicit</b> parameter: the default must stay narrow, otherwise the list in the widget would
     /// suddenly show entries from other accounts. <c>mine=true</c> always wins.
-    /// </para>
     /// </summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -275,10 +269,9 @@ public class RemarksController(
 
     /// <summary>
     /// A single remark – the entry point of the skill for "Answer question 123".
-    /// <para>
+    ///
     /// An admin accesses this <b>without</b> <c>scope=all</c>: targeting a single id is exactly the
     /// break-glass case, and a parameter you'd always have to send along would just be noise.
-    /// </para>
     /// </summary>
     [HttpGet("{id:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -367,13 +360,12 @@ public class RemarksController(
 
     /// <summary>
     /// Add an entry to the history.
-    /// <para>
+    ///
     /// <b>Reopening:</b> an entry by the <b>human</b> on a done or rejected remark
     /// resets it to <see cref="RemarkStatus.Open"/> – that's exactly what turns the history into a
     /// workflow, since the follow-up skill re-presents open remarks on its next run.
     /// An entry from Claude leaves the status untouched: it reports, it doesn't follow up. Otherwise every
     /// implementation note would reopen its own remark.
-    /// </para>
     /// </summary>
     [HttpPost("{id:int}/comments")]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -443,10 +435,10 @@ public class RemarksController(
     /// <summary>
     /// Markdown snapshot of the visible remarks. The skill saves it under <c>docs/anmerkungen/</c>
     /// – that way the state is version-controlled and no server needs to be running during follow-up.
-    /// <para>
+    ///
     /// At the same time the <b>only bridge to the test skills</b>: <c>creator</c>/<c>supervisor</c>/<c>student</c>
     /// run against a throwaway DB and can only reach the real remarks via this file.
-    /// </para>
+    ///
     /// Supervisor only: the answers carry file and line references, i.e. code internals.
     /// </summary>
     [HttpGet("export")]
@@ -487,12 +479,11 @@ public class RemarksController(
 
     /// <summary>
     /// Delete a remark.
-    /// <para>
+    ///
     /// Deliberately <b>narrow</b>, even with <c>GlobalRead</c> switched on: the switch is called "global
     /// <i>read</i>" and means exactly that. Answering and commenting across account boundaries is the point of
     /// the feature; discarding another account's observation is not. An admin may still do it
     /// (break-glass).
-    /// </para>
     /// </summary>
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

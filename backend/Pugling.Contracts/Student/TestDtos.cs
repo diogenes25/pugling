@@ -7,33 +7,27 @@ namespace Pugling.Contracts.Student;
 /// An exam question – without the solution, except at stages that reveal it by design. Deliberately
 /// <b>without</b> an image: the exam shows none, and a field that is always null is the kind of silent lie
 /// the API otherwise rejects with <c>unknown_field</c>.
-/// <para>
+///
 /// <c>GapIndex</c> is no such lie: it names the asked placeholder <c>{{n}}</c> of <c>Prompt</c> and is null
 /// only for types whose atoms already stand on their own. The exam needs it just as much as the practice
 /// card – it is where a child gets stuck for good, because there is no going back.
-/// </para>
-/// <para>
+///
 /// <c>AnyOrder</c> likewise: it says that any entry not yet named counts (a set instead of a sequence). The
 /// exam is where that matters most – there is no second try, so a card whose rule the child has to guess is
 /// lost for good.
-/// </para>
-/// <para>
+///
 /// <c>Type</c> is the exercise type key, as the practice card has carried all along: the renderer needs it to
 /// tell an <b>ordered</b> list (where "entry 8" is the address of the card) from a vocabulary card, and both
 /// arrive with the same fields otherwise.
-/// </para>
-/// <para>
+///
 /// <c>RevealAlternatives</c> lists the equally valid answers beside <c>Reveal</c> and is set exactly where
 /// <c>Reveal</c> is – see <see cref="PracticeCard"/>.
-/// </para>
-/// <para>
+///
 /// <c>AnswerPattern</c> (B-66) is the letter-box mask, same as on <see cref="PracticeCard"/> – the exam's
 /// letter boxes fix punctuation/spacing exactly like practice does.
-/// </para>
-/// <para>
+///
 /// <c>Decoding</c> (B-93) is the word-for-word decoding (Birkenbihl), same as <see cref="PracticeCard"/> –
 /// the exam must not show less material than practice, or it would be the harder task with less to go on.
-/// </para>
 /// </summary>
 public record TestItem(int ItemIndex, string? Prompt, int Stage, string? Reveal, int? AnswerLength, string? Hint,
     IReadOnlyList<string>? Choices, string? AudioUrl, int? GapIndex = null, string? Passage = null,
@@ -79,19 +73,17 @@ public record ItemOutcome(int ItemIndex, string Prompt, string Expected, string?
 
 /// <summary>
 /// Overall result of the class test incl. pass threshold.
-/// <para>
+///
 /// <see cref="WrongMentions"/> only fills up for the set-graded types (an unordered list): an answer that
 /// matched no open entry belongs to no <see cref="ItemOutcome"/>, because the outcomes are keyed by entry
 /// there. Without this list the review screen would show what the child <i>forgot</i> but silently drop what
 /// it actually typed.
-/// </para>
-/// <para>
+///
 /// <see cref="AttemptsRemaining"/> is the daily test attempts left after this one (never negative) - lets
 /// the result screen decide on its own whether to offer "try again" instead of the child hitting a
 /// rejection after an already-spent click. For a supervisor attempt this is always <c>MaxAttemptsPerDay</c>:
 /// the daily cap never applies to them, so the value is filler here, not a statement about attempts
 /// actually left.
-/// </para>
 /// </summary>
 public record SubmitResponse(int AttemptId, int Stage, int TotalItems, int CorrectItems,
     int ScorePercent, bool Passed, int PassPercent, IReadOnlyList<ItemOutcome> Items, int AttemptsRemaining,

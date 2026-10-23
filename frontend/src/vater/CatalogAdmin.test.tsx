@@ -11,7 +11,7 @@ import type { CategoryResponse, SubjectResponse } from "../lib/types";
  * Der Fehler, den er festhält: Seit B-13 verweigert der Server `PATCH`/`DELETE` an einem fremden **und**
  * an einem ownerlosen Fach mit `403 not_owner`. Die Zeile bot „OK" und „Löschen" trotzdem an jedem Fach
  * an, und der Löschdialog zählte vorher noch auf, was alles seine Zuordnung verliert. Die Antwort trug
- * `isMine` von Anfang an – gelesen wurde es nicht.
+ * das Eigentums-Flag von Anfang an (damals `isMine`, seit B-156 `isOwn`) – gelesen wurde es nicht.
  *
  * Warum die zwei Nicht-Eigentümer-Fälle getrennt geprüft werden: „hat jemand anderes angelegt" ist bei
  * einem Fach aus dem Grundbestand nicht bloß unschön, sondern falsch – es gehört niemandem.
@@ -20,7 +20,7 @@ import type { CategoryResponse, SubjectResponse } from "../lib/types";
 function subject(over: Partial<SubjectResponse> = {}): SubjectResponse {
   return {
     id: 3, name: "Englisch", createdAt: "2026-08-12T00:00:00Z", categoriesCount: 2,
-    ownerAdultId: 1, isMine: true, ...over,
+    ownerAdultId: 1, isOwn: true, ...over,
   };
 }
 
@@ -46,7 +46,7 @@ describe("SubjectRow – Eigentum entscheidet, was angeboten wird", () => {
   });
 
   it("zeigt am fremden Fach keine Knöpfe, sondern den Grund", () => {
-    render(<SubjectRow subject={subject({ isMine: false, ownerAdultId: 7 })}
+    render(<SubjectRow subject={subject({ isOwn: false, ownerAdultId: 7 })}
       busy={false} onSave={() => {}} onDelete={() => {}} />);
 
     expect(screen.queryByLabelText("Fach umbenennen")).toBeNull();
@@ -56,7 +56,7 @@ describe("SubjectRow – Eigentum entscheidet, was angeboten wird", () => {
   });
 
   it("nennt beim Fach aus dem Grundbestand niemanden als Eigentümer", () => {
-    render(<SubjectRow subject={subject({ isMine: false, ownerAdultId: null })}
+    render(<SubjectRow subject={subject({ isOwn: false, ownerAdultId: null })}
       busy={false} onSave={() => {}} onDelete={() => {}} />);
 
     expect(loeschKnopf()).toBeNull();
@@ -68,7 +68,7 @@ describe("SubjectRow – Eigentum entscheidet, was angeboten wird", () => {
   it("behandelt ein fehlendes ownerAdultId wie ownerlos, nicht wie fremd", () => {
     // Der Vertrag gibt `ownerAdultId` optional heraus (`ownerAdultId?: number | null`) – ein strenges
     // `=== null` hätte hier den Satz über den fremden Creator erzeugt, und der wäre erfunden.
-    const ohneFeld = subject({ isMine: false });
+    const ohneFeld = subject({ isOwn: false });
     delete (ohneFeld as { ownerAdultId?: number | null }).ownerAdultId;
 
     render(<SubjectRow subject={ohneFeld} busy={false} onSave={() => {}} onDelete={() => {}} />);
@@ -100,7 +100,7 @@ describe("NameRow – kennt kein Eigentum", () => {
  * bekam die Art einen eigenen Eigentümer — sonst blieb eine selbst angelegte Art im Grundbestands-Fach für
  * immer stehen, weil dort niemand das Fach besitzt.
  *
- * Was der Block jetzt prüft, ist darum die BINDUNG an `isOwn`, nicht mehr an `subject.isMine`. Der
+ * Was der Block jetzt prüft, ist darum die BINDUNG an das `isOwn` der Art, nicht mehr an das des Fachs. Der
  * entscheidende Fall ist der gemischte: In einem Fach stehen beide Sorten Zeilen nebeneinander. Eine
  * Fassung, die weiter pro Fach entscheidet, kann ihn nicht bestehen — und genau darum trägt er.
  *

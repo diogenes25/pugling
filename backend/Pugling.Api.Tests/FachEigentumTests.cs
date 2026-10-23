@@ -70,7 +70,7 @@ public class FachEigentumTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
-    /// What this case holds: creating sets an owner <b>at all</b> and <c>isMine</c> follows - on the path the
+    /// What this case holds: creating sets an owner <b>at all</b> and <c>isOwn</c> follows - on the path the
     /// rest of the suite uses. What it can <b>not</b> hold, despite its name (B-168): the identity. Its
     /// caller's id is 1 by construction (<c>TestApi.AdultAsync</c> defaults to the seeded father), so a
     /// hardcoded <c>OwnerAdultId = 1</c> in the controller would keep it green no matter how the comparison
@@ -86,7 +86,7 @@ public class FachEigentumTests(PuglingWebAppFactory factory) : IClassFixture<Pug
             new { name = TestApi.UniqueName("Eigentum-Fach") })).Content.ReadFromJsonAsync<JsonElement>();
 
         Assert.Equal(1, created.GetProperty("ownerAdultId").GetInt32());
-        Assert.True(created.GetProperty("isMine").GetBoolean());
+        Assert.True(created.GetProperty("isOwn").GetBoolean());
     }
 
     /// <summary>
@@ -106,11 +106,11 @@ public class FachEigentumTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         res.EnsureSuccessStatusCode(); // otherwise the reads below throw on a ProblemDetails body
         var created = await res.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(fremdeId, created.GetProperty("ownerAdultId").GetInt32());
-        Assert.True(created.GetProperty("isMine").GetBoolean());
+        Assert.True(created.GetProperty("isOwn").GetBoolean());
         var subjectId = created.GetProperty("id").GetInt32();
 
         // He may change what he owns - the case that was missing entirely. The response body is checked too,
-        // because the update rebuilds `isMine` in its own projection: a status alone would not notice that
+        // because the update rebuilds `isOwn` in its own projection: a status alone would not notice that
         // projection turning the owner into a stranger.
         var neuerName = TestApi.UniqueName("Fremd-Umbenannt");
         var patch = await fremder.PatchAsJsonAsync($"/api/v1/creator/subjects/{subjectId}", new { name = neuerName });
@@ -118,7 +118,7 @@ public class FachEigentumTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var nachher = await patch.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(neuerName, nachher.GetProperty("name").GetString());
         Assert.Equal(fremdeId, nachher.GetProperty("ownerAdultId").GetInt32());
-        Assert.True(nachher.GetProperty("isMine").GetBoolean());
+        Assert.True(nachher.GetProperty("isOwn").GetBoolean());
 
         // And the seeded father does not, although he is the one every other test speaks as.
         var adult = await TestApi.AdultAsync(factory);
@@ -142,7 +142,7 @@ public class FachEigentumTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var patch = await adult.PatchAsJsonAsync($"/api/v1/creator/subjects/{subjectId}",
             new { name = TestApi.UniqueName("Umbenannt") });
         Assert.Equal(HttpStatusCode.OK, patch.StatusCode);
-        Assert.True((await patch.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("isMine").GetBoolean());
+        Assert.True((await patch.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("isOwn").GetBoolean());
 
         var delete = await adult.DeleteAsync($"/api/v1/creator/subjects/{subjectId}");
         Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
@@ -183,7 +183,7 @@ public class FachEigentumTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         // does not stand for the caller (that is `fremder`) but for the OTHER adult who created the subject.
         // A projection reading `fid` instead of `OwnerAdultId` makes this line red, so it carries its weight.
         Assert.Equal(1, body.GetProperty("ownerAdultId").GetInt32());
-        Assert.False(body.GetProperty("isMine").GetBoolean());
+        Assert.False(body.GetProperty("isOwn").GetBoolean());
 
         var list = await fremder.GetFromJsonAsync<JsonElement>("/api/v1/creator/subjects");
         Assert.Contains(list.EnumerateArray(), s => s.GetProperty("id").GetInt32() == subjectId);
@@ -638,9 +638,9 @@ public class FachEigentumTests(PuglingWebAppFactory factory) : IClassFixture<Pug
             await AssertCodeAsync(delete, "not_owner");
         }
 
-        // isMine must not become true just because the caller has no owner either (null == null would).
+        // isOwn must not become true just because the caller has no owner either (null == null would).
         var seed = await adult.GetFromJsonAsync<JsonElement>($"/api/v1/creator/subjects/{seedId}");
-        Assert.False(seed.GetProperty("isMine").GetBoolean());
+        Assert.False(seed.GetProperty("isOwn").GetBoolean());
     }
 
     /// <summary>

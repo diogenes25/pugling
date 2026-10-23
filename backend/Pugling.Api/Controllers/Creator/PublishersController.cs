@@ -12,10 +12,9 @@ namespace Pugling.Api.Controllers.Creator;
 /// The shared publisher vocabulary ("Cornelsen", "Klett") a <see cref="TextbookSeries"/> may point at.
 /// Global and child-neutral like the vocabulary store: naming a publisher is not authorship, so - unlike
 /// the series itself - there is no owner and no write restriction.
-/// <para>
+///
 /// Deleting is the one exception, and it is not an owner check on the publisher but on what hangs off it
 /// (B-127): an ownerless row must not reach into owned ones. See <see cref="Delete"/>.
-/// </para>
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -176,39 +175,34 @@ public class PublishersController(PuglingDbContext db) : ControllerBase
     /// Deletes a publisher, as long as only the caller's own series point at it. Those lose the assignment
     /// (SetNull) - a publisher carries no content, and for its own author that loss only costs a
     /// filter/display value.
-    /// <para>
+    ///
     /// That sentence used to be the whole justification, and it was only true for the deleter (B-127): the
     /// same call clears the assignment on every OTHER account's series too, with no way back. So a series
     /// of a foreign account turns this into 409 <c>publisher_in_use</c>. The lock is narrower than a
     /// confirmation prompt and hits better: it allows exactly the case this page exists for (cleaning up a
     /// typo one has made oneself) and blocks exactly the harmful one.
-    /// </para>
-    /// <para>
+    ///
     /// A series without an owner counts as foreign, not as free. <c>OwnerAdultId</c> is nullable and means
     /// "seeded, owned by nobody"; reading that fail-closed is the same rule <c>IsOwnedBy</c> follows, and
     /// it is what protects the shared catalog.
-    /// </para>
-    /// <para>
+    ///
     /// The null branch is spelled out rather than left to <c>!=</c>, for one reason that survives
     /// measurement: it keeps blocking when the <c>fid</c> claim is missing. EF Core compensates C# null
     /// semantics by default, so for a present claim the short form produces the same SQL - the two differ
     /// only for a null <c>fid</c>, where the short form would turn the lock off entirely. That claim
     /// cannot go missing behind <c>Roles.Creator</c> today; the point is that it stays harmless if it ever
     /// does. (Note for the next reader: "SQL drops NULL rows" is true of hand-written SQL, not of this.)
-    /// </para>
-    /// <para>
+    ///
     /// The <c>Admin</c> role overrides the lock - and that valve is the honest limit of this design, not a
     /// way out for the caller: <see cref="Adult.IsAdmin"/> is a break-glass flag set in the database, no
     /// endpoint and no DTO writes it. So two creators who each hang a series on the same publisher really
     /// are both locked out until an operator steps in. The seeded catalog is the everyday case of that:
     /// "Klett" carries the ownerless "Green Line 1", which makes it undeletable by design - removing it
     /// would strip the publisher from a row the whole catalog shares.
-    /// </para>
-    /// <para>
+    ///
     /// The message therefore has to name the ownerless case too. Naming only "another account" sends the
     /// caller looking for a foreign series that does not exist, on the one database where the lock is
     /// certain to fire. <c>PublisherResponse.ForeignSeriesCount</c> lets a UI show the lock beforehand.
-    /// </para>
     /// </summary>
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

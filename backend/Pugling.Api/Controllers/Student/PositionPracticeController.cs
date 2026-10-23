@@ -122,7 +122,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     /// stamped on that day. There is no session state for this and none is needed: in set mode a review only
     /// ever touches a row on a hit (see <see cref="Review"/>), so a stamp from that day means "this entry was
     /// named".
-    /// <para>
+    ///
     /// Two windows, not one span: the session's day <b>and</b> the current one. Normally they are the same;
     /// they part when a round runs past UTC midnight or when the supervisor backdates one
     /// (<c>StartPracticeDto.Day</c>) – the stamp then carries the wall clock while the round belongs to
@@ -130,12 +130,10 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     /// detail: every remaining card would accept the same answer again. A single span across both days would
     /// be worse than two windows – a round backdated by a week would swallow every entry practised in
     /// between and reject answers that are right.
-    /// </para>
-    /// <para>
+    ///
     /// Compared as UTC ranges rather than by casting the column to a date: the cast does not translate, and
     /// EF rejects the query instead of grading it – correct, but only at runtime.
-    /// </para>
-    /// <para>
+    ///
     /// Consequence, deliberate: a <b>second round on the same day</b> has every entry named already, so each
     /// answer is a wrong mention – on the day, nothing counts twice, and a repeat is a wrong mention no matter
     /// which round it arrives in. Reporting it as "not correct" rather than as its own third state is the price;
@@ -143,7 +141,6 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     /// not hold in the exam. It stays invisible on a Leitner position (a credited entry is no longer due and
     /// never enters the next round's order) and reachable only through the API otherwise, because the child's
     /// app offers no practice button for a testable position without Leitner.
-    /// </para>
     /// </summary>
     private async Task<HashSet<int>> NamedInRoundAsync(int positionId, DateOnly day, CancellationToken ct)
     {
@@ -193,17 +190,15 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     /// "Different image" for a card. Deliberately addressed here and not at the child: which carrier
     /// holds the pick – the exercise-local override or the store vocabulary – only follows from the
     /// specificity cascade that only the server knows. The client only has the card in front of it.
-    /// <para>
+    ///
     /// The rejected image never comes up again for this carrier. If there is no alternative, everything
     /// stays unchanged (<c>409 media_no_alternative</c>) instead of leaving the card without an image.
-    /// </para>
-    /// <para>
+    ///
     /// The endpoint <b>hands out an image</b> and therefore carries the same guards as the playback
     /// itself: only the playable plan, only cards of this session, and only where the card actually shows an
     /// image. Without the last guard it would be the hole in the anti-cheat rule – on a typed
     /// stage it would deliver image <i>and</i> alt text and thereby the meaning of exactly the word that is
     /// supposed to be typed (<see cref="PositionPlayService.CardFacets"/> deliberately withholds both there).
-    /// </para>
     /// </summary>
     [HttpPost("{sessionId:int}/cards/{itemIndex:int}/image/reshuffle")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

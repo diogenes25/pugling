@@ -34,4 +34,25 @@ public static class SubjectNaming
         subjectId is int id
             ? await db.Subjects.AsNoTracking().Where(s => s.Id == id).Select(s => s.Name).FirstOrDefaultAsync(ct)
             : null;
+
+    /// <summary>
+    /// Writes a renamed subject's new name into every row that points at it (B-145) - the other half of the
+    /// invariant: <see cref="ResolveNameAsync"/> keeps the name right when a row's id moves, this keeps it
+    /// right when the subject itself changes. Without it each copy stayed wrong until that row's next
+    /// unrelated PATCH happened to heal it.
+    /// <para>
+    /// Matches on the id, never on the old name: a free-text row that merely spells the same name is an
+    /// uncatalogued work, not a copy, and must not follow. Rows of other owners are rewritten too - the
+    /// name is a cached display value of the catalog, not data that belongs to the row's owner.
+    /// </para>
+    /// </summary>
+    public static async Task PropagateRenameAsync(PuglingDbContext db, int subjectId, string name, CancellationToken ct)
+    {
+        await db.TextbookSeries.Where(s => s.SubjectId == subjectId)
+            .ExecuteUpdateAsync(u => u.SetProperty(s => s.SubjectName, name), ct);
+        await db.CreatorProfiles.Where(p => p.SubjectId == subjectId)
+            .ExecuteUpdateAsync(u => u.SetProperty(p => p.SubjectName, name), ct);
+        await db.Textbooks.Where(t => t.SubjectId == subjectId)
+            .ExecuteUpdateAsync(u => u.SetProperty(t => t.SubjectName, name), ct);
+    }
 }

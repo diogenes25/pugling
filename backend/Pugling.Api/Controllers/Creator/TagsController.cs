@@ -120,11 +120,10 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
     /// <summary>
     /// Which of the given exercises are assigned to this child – as a plan position or as a *directly*
     /// assigned exercise of one of its class tests.
-    /// <para>
+    ///
     /// The tag-linked exercises of a class test are deliberately left out, although
     /// <c>LoadRelevantExercisesAsync</c> counts them as relevant: taking them would make the check
     /// circular, because marking would be what makes an exercise assigned.
-    /// </para>
     /// </summary>
     private async Task<HashSet<int>> AssignedExerciseIdsAsync(int childId, List<int> ids, CancellationToken ct)
     {
@@ -241,16 +240,14 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
     /// <summary>
     /// Which of the given store vocabulary entries are assigned to this child. A word is never assigned
     /// directly – the relation is derived: <c>Vocabulary ← ExerciseItem → Exercise → (plan position | class test)</c>.
-    /// <para>
+    ///
     /// The exercise leg deliberately runs through <see cref="AssignedExerciseIdsAsync"/> instead of repeating
     /// its query: two definitions of "assigned" drift apart, and then the stale one applies.
-    /// </para>
-    /// <para>
+    ///
     /// Known gap: config-level store references have no <c>ExerciseItem</c> row and are therefore not
     /// joinable here, so they count as unassigned – a Birkenbihl decoded word (<c>DecodedWord.VocabularyId</c>)
     /// and a cloze gap (<c>Gap.VocabKey</c>, resolved by key in <c>ExerciseContentResolver</c>). That fails
     /// closed, and it is inert while no student surface marks vocabulary at all.
-    /// </para>
     /// </summary>
     private async Task<HashSet<int>> AssignedVocabularyIdsAsync(int childId, List<int> ids, CancellationToken ct)
     {

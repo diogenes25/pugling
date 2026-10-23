@@ -13,10 +13,9 @@ namespace Pugling.Api.Controllers.Creator;
 /// the child experiences it in the final test – but <b>side-effect-free</b> (no points, no Leitner progress, no
 /// <c>TestAttempt</c>, no gamification, no study plan/child required). This lets them verify a freshly created or
 /// selected exercise and get familiar with it, without waiting for the child's feedback.
-/// <para>
+///
 /// No ownership filter: consistent with the globally readable catalog (<see cref="ExerciseCatalogController"/>) –
 /// the adult should be able to test adopted/foreign exercises too. Both endpoints are free of side effects.
-/// </para>
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]

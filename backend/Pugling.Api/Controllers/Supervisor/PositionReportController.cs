@@ -8,11 +8,10 @@ namespace Pugling.Api.Controllers.Supervisor;
 /// Learning report of a single study plan position: shows the father for each content item of the exercise
 /// how well it "sits" – Leitner box/mastery, introduction/due date and test hit rate. Read-only view; the
 /// aggregation lives in the <see cref="PositionReportService"/>.
-/// <para>
+///
 /// Supervisor-only, and that is the anti-cheat assurance, not a formality: every row carries the item's
 /// solution, also for cards the child has never been shown (<c>introduced: false</c>). The child reads its
 /// own progress through <c>student/children/{childId}/…</c>, which never names an answer.
-/// </para>
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]

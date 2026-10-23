@@ -182,10 +182,9 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
     /// (<c>PuglingDbContext.UnlimitedByDesign</c>) - but that exception covers the <b>column</b>, not the
     /// entries inside it. While a topic was a 200-character column the database held the line; since the
     /// type changed, nothing did, and an authenticated caller could store arbitrarily much text (B-130).
-    /// <para>
+    ///
     /// Rejects instead of truncating: a silently shortened topic is exactly what the AI creator reads as
     /// the material it may dress up but not replace - a half topic would quietly become a wrong one.
-    /// </para>
     /// </summary>
     private ObjectResult? ValidateTopics(List<string> topics)
     {

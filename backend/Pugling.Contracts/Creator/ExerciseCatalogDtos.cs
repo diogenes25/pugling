@@ -9,15 +9,16 @@ namespace Pugling.Contracts.Creator;
 /// Lean hit row of the exercise search (child-neutral catalog). <c>AuthorAdultId</c>/<c>AuthorName</c> carry the
 /// attribution of the shared library (<c>null</c> = seeded system exercise); <c>IsOwn</c> = the requesting supervisor
 /// may change/delete the exercise.
-/// <para>
+///
 /// The four <c>Default…</c>/<c>RewardPoints</c> values are the creator's <b>recommendations</b>, not settings: the
 /// supervisor's form pre-fills from them and stays free to override (B-45). They belong on the lean row rather than
 /// only on <see cref="ExerciseDetail"/> because the form pre-fills straight from the search hit - fetching the
 /// detail just to read one number would be a round trip per keystroke in the list.
-/// </para>
-/// <para>
-/// The <c>SuggestedGoalPoints</c> figure is what a position would actually inherit from <c>RewardPoints</c> - the raw value only when it is plausible, otherwise the model default (B-192). Both travel, and that is the point: the form shows the effective one, while the raw one stays readable for anyone editing the exercise. Deriving the effective figure client-side would copy a server rule, and the copy is what drifts.
-/// </para>
+///
+/// The <c>SuggestedGoalPoints</c> figure is what a position would actually inherit from <c>RewardPoints</c> -
+/// the raw value only when it is plausible, otherwise the model default (B-192). Both travel, and that is the
+/// point: the form shows the effective one, while the raw one stays readable for anyone editing the exercise.
+/// Deriving the effective figure client-side would copy a server rule, and the copy is what drifts.
 /// </summary>
 public record ExerciseSummary(int Id, int SeriesId, int SeriesUnitId, int? SubjectId, string Type, string Title,
     int? GradeMin, int? GradeMax, SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName,
@@ -30,12 +31,11 @@ public record ExerciseSummary(int Id, int SeriesId, int SeriesUnitId, int? Subje
 /// the basis for editing (load config into the type-specific editor; saving goes through
 /// the per-type PUT <c>.../textbook-series/{seriesId}/units/{seriesUnitId}/&lt;type&gt;/{id}</c>,
 /// where <see cref="SeriesId"/> supplies the route segment the flat cross-catalog view has no other way to know).
-/// <para>
+///
 /// <c>InterestTagIds</c> is the dressing (B-46) - metadata, and this view promises all of it. It stays off
 /// <see cref="ExerciseSummary"/> for the reason that row gives about itself: the lean row carries what the
 /// supervisor's form pre-fills from, and a dressing pre-fills nothing. The fit filter B-18 will build
 /// belongs in the <i>query</i> anyway, not in a list the client scans.
-/// </para>
 /// </summary>
 public record ExerciseDetail(int Id, int SeriesId, int SeriesUnitId, string SeriesUnitLabel, int? SubjectId, string SubjectName,
     string Type, string Title, int OrderIndex, int RewardPoints, int? GradeMin, int? GradeMax,

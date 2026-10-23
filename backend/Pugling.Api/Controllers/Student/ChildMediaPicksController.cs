@@ -7,12 +7,12 @@ namespace Pugling.Api.Controllers.Student;
 
 /// <summary>
 /// "Different image" – the only way to change a child's frozen image pick.
-/// <para>
+///
 /// Why frozen at all? Because in vocabulary learning <b>image constancy is the memory effect</b>: the same
 /// motif on every repetition builds the association, a changing image destroys it. That's why the
 /// selection isn't recomputed on every retrieval – and why re-picking requires an explicit
 /// action instead of an automatism.
-/// </para>
+///
 /// The rejection is permanent: the rejected image is never drawn again for this carrier. This makes
 /// this endpoint at the same time the cheapest feedback signal we get about the child's taste.
 /// Like the other student endpoints, only <c>[Authorize]</c> – the supervisor may pick along for their child.

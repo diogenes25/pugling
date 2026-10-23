@@ -128,12 +128,11 @@ public record RemarkCommentDto(
 
 /// <summary>
 /// Add a comment to the thread.
-/// <para>
+///
 /// <b>Deliberate side effect:</b> A <see cref="RemarkCommentAuthor.Human"/> comment on a resolved or
 /// dismissed remark pulls it back to <see cref="RemarkStatus.Open"/> – so the follow-up skill surfaces it
 /// again on its next run. A <see cref="RemarkCommentAuthor.Assistant"/> comment leaves the state
 /// untouched; it reports, it does not ask back.
-/// </para>
 /// </summary>
 /// <param name="Body">The text – required.</param>
 /// <param name="Author">Origin; defaults to <see cref="RemarkCommentAuthor.Human"/> if omitted.</param>

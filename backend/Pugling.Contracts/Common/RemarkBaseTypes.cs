@@ -41,12 +41,11 @@ public enum RemarkStatus
 
 /// <summary>
 /// Origin of a contribution in a remark's history.
-/// <para>
+///
 /// Deliberately a dedicated field and <b>not</b> derived from the author account: Claude writes via the
 /// skill using the human's token, so both contributions would carry the same account. A rule hinges on
 /// this distinction, though – a <see cref="Human"/> contribution reopens a done remark, while an
 /// <see cref="Assistant"/> contribution leaves the state untouched.
-/// </para>
 /// </summary>
 public enum RemarkCommentAuthor
 {

@@ -12,10 +12,9 @@ public static class ExerciseBriefMapping
     /// Maps an exercise. Expects <see cref="Exercise.SeriesUnit"/>, its <see cref="SeriesUnit.Series"/>
     /// and that series' <see cref="TextbookSeries.Subject"/> to be loaded (Include), otherwise the names
     /// stay empty.
-    /// <para>
+    ///
     /// <see cref="Exercise.ConfigJson"/> is deliberately NOT mapped – see <see cref="ExerciseBrief"/>
     /// for why. Do not add it back here; the brief is read by student tokens.
-    /// </para>
     /// </summary>
     public static ExerciseBrief From(Exercise e) => new(
         e.Id,

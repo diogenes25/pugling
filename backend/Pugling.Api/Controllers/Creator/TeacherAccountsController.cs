@@ -13,7 +13,6 @@ namespace Pugling.Api.Controllers.Creator;
 /// Registration of a <b>teacher account</b>: an adult who creates content and <b>supervises no
 /// child</b>.
 ///
-/// <para>
 /// Why this is not a new entity type: the three tiers are <i>roles</i>, decoupled from the login
 /// (docs/grundprinzip.md). An account carries one <see cref="AccountProfile"/> per role; a father gets
 /// Creator <b>and</b> Supervisor, a teacher only Creator. This means their token lacks the supervisor claim, and
@@ -21,12 +20,10 @@ namespace Pugling.Api.Controllers.Creator;
 /// – without a single special-case rule. Authorship (<c>Exercise.AuthorAdultId</c>) and RWX permissions
 /// (<c>ExerciseGrant.CreatorId</c>) still hang off the same <see cref="Adult"/> row, which is why creating,
 /// granting permissions, publishing, and withdrawing continue to work unchanged.
-/// </para>
-/// <para>
+///
 /// Not to be confused with the <c>CreatorProfile</c> ("subject teacher") under
 /// <c>api/v1/creator/profiles</c>: that is the <i>subject-matter</i> description (subject, school type, didactics) for
 /// the AI creator. Here, the <i>identity</i> used to log in is created.
-/// </para>
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]

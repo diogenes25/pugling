@@ -540,6 +540,14 @@ builder.Services.AddOpenApi(o =>
             : $"Aktualisiert eine {manifest.Label}-Übung.";
         return Task.CompletedTask;
     });
+
+    // Last on purpose: it rewrites the prose every transformer above (and the XML doc generator) produced,
+    // so it must see their final text (B-147, B-138). ContractDocumentTests holds the result.
+    o.AddDocumentTransformer((doc, _, _) =>
+    {
+        OpenApiProseNormalizer.Apply(doc);
+        return Task.CompletedTask;
+    });
 });
 
 var app = builder.Build();

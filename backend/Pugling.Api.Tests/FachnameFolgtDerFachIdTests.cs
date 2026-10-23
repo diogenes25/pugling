@@ -90,6 +90,58 @@ public class FachnameFolgtDerFachIdTests(PuglingWebAppFactory factory) : IClassF
     }
 
     /// <summary>
+    /// B-145, the same invariant from the subject's side: renaming the subject has to reach every copy of
+    /// its name, not wait for the next PATCH of each row to heal it. Red if any of the three tables is left
+    /// out (its own assertion names which), if the update runs without the id filter (the bystander on the
+    /// other subject would be renamed too), or if it matches on the old NAME instead of the id (the
+    /// free-text twin would follow).
+    /// </summary>
+    [Fact]
+    public async Task Umbenanntes_Fach_Zieht_Den_Namen_In_Alle_Drei_Kopien_Nach()
+    {
+        var adult = await TestApi.AdultAsync(factory);
+        var (fach, altName, anderes, anderesName) = await ZweiFaecherAsync(adult);
+
+        var reihe = await TestApi.IdAsync(await adult.PostAsJsonAsync("/api/v1/creator/textbook-series",
+            new { name = TestApi.UniqueName("Reihe"), subjectId = fach }));
+        var profil = await TestApi.IdAsync(await adult.PostAsJsonAsync("/api/v1/creator/profiles",
+            new { name = TestApi.UniqueName("Fachlehrer"), subjectId = fach }));
+        var buch = await TestApi.IdAsync(await adult.PostAsJsonAsync("/api/v1/supervisor/children/1/textbooks",
+            new { title = TestApi.UniqueName("Buch"), subjectId = fach }));
+        var unbeteiligt = await TestApi.IdAsync(await adult.PostAsJsonAsync("/api/v1/creator/textbook-series",
+            new { name = TestApi.UniqueName("Reihe"), subjectId = anderes }));
+        var freitextZwilling = await TestApi.IdAsync(await adult.PostAsJsonAsync("/api/v1/creator/textbook-series",
+            new { name = TestApi.UniqueName("Reihe"), subjectName = altName }));
+        // A series of ANOTHER creator on the same subject: the name is a cached catalog value, not the row
+        // owner's data. Red if the update is narrowed to the renaming creator's rows.
+        var fremder = await FremderCreatorAsync();
+        var fremdeReihe = await TestApi.IdAsync(await fremder.PostAsJsonAsync("/api/v1/creator/textbook-series",
+            new { name = TestApi.UniqueName("Reihe"), subjectId = fach }));
+
+        var neuName = TestApi.UniqueName("Französisch (Gymnasium)");
+        (await adult.PatchAsJsonAsync($"/api/v1/creator/subjects/{fach}", new { name = neuName }))
+            .EnsureSuccessStatusCode();
+
+        Assert.Equal(neuName, await FachnameAsync(adult, $"/api/v1/creator/textbook-series/{reihe}"));
+        Assert.Equal(neuName, await FachnameAsync(adult, $"/api/v1/creator/profiles/{profil}"));
+        Assert.Equal(neuName, await FachnameAsync(adult, $"/api/v1/supervisor/children/1/textbooks/{buch}"));
+        Assert.Equal(anderesName, await FachnameAsync(adult, $"/api/v1/creator/textbook-series/{unbeteiligt}"));
+        Assert.Equal(altName, await FachnameAsync(adult, $"/api/v1/creator/textbook-series/{freitextZwilling}"));
+        Assert.Equal(neuName, await FachnameAsync(fremder, $"/api/v1/creator/textbook-series/{fremdeReihe}"));
+    }
+
+    /// <summary>A second, freshly registered creator (same route as FachEigentumTests uses).</summary>
+    private async Task<HttpClient> FremderCreatorAsync()
+    {
+        const string pin = "3131";
+        var res = await factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/adults",
+            new { name = TestApi.UniqueName("Fremder"), pin });
+        res.EnsureSuccessStatusCode();
+        var id = (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+        return await TestApi.AdultAsync(factory, id, pin);
+    }
+
+    /// <summary>
     /// The other direction, and the reason the rule is "follows the id" and not "always comes from the
     /// catalog": a row <b>without</b> an id is exactly the uncatalogued case the free text exists for. It
     /// must survive untouched - otherwise this fix would delete the fallback it is built around.

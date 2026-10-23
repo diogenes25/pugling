@@ -25,7 +25,7 @@ Response — `HTTP 201`:
   "createdAt": "<timestamp>",
   "categoriesCount": 0,
   "ownerAdultId": 1,
-  "isMine": true
+  "isOwn": true
 }
 ```
 

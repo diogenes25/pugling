@@ -17,8 +17,8 @@ import type { SeriesUnitResponse, SubjectResponse, TextbookResponse, TextbookSer
  */
 
 const SUBJECTS: SubjectResponse[] = [
-  { id: 1, name: "Englisch", createdAt: "2026-01-01T00:00:00Z", categoriesCount: 0, isMine: false },
-  { id: 2, name: "Mathe", createdAt: "2026-01-01T00:00:00Z", categoriesCount: 0, isMine: false },
+  { id: 1, name: "Englisch", createdAt: "2026-01-01T00:00:00Z", categoriesCount: 0, isOwn: false },
+  { id: 2, name: "Mathe", createdAt: "2026-01-01T00:00:00Z", categoriesCount: 0, isOwn: false },
 ];
 
 function buch(overrides: Partial<TextbookResponse> = {}): TextbookResponse {

@@ -13,13 +13,12 @@ namespace Pugling.Api.Controllers.Student;
 /// in between. This is the one place where a child may steer something, and it is safe precisely because
 /// interests only <b>dress</b> the material – they never change what is practised, how often, or at which
 /// threshold, so there is nothing here to game.
-/// <para>
+///
 /// Two guarantees separate this from the supervisor's editor. First, the child picks <b>from</b> the shared
 /// taxonomy and can never extend it: an invented tag would match no image at all, and the taxonomy is the
 /// very axis that makes image selection computable. Second, a changed profile does not touch an already
 /// frozen <see cref="ChildMediaPick"/> – the selector only reads interests when it draws a <i>new</i>
 /// choice, so image constancy (which is the memory effect) survives a child that likes to fiddle.
-/// </para>
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -55,10 +54,9 @@ public class MyInterestsController(PuglingDbContext db) : ControllerBase
     /// <summary>
     /// Replaces the child's interests completely (empty list = remove all) – the guided process edits the
     /// set as a whole, and a replacement is the only way an entry can be removed again.
-    /// <para>
+    ///
     /// Unlike the supervisor's endpoint this resolves <b>only</b> against existing tags: an unknown
     /// <c>tagId</c> is rejected with <c>invalid_reference</c> instead of quietly creating taxonomy.
-    /// </para>
     /// </summary>
     [HttpPut]
     [ProducesResponseType(StatusCodes.Status200OK)]

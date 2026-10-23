@@ -10,10 +10,9 @@ namespace Pugling.Api.Controllers.Student;
 /// The shared interest taxonomy as the child may read it: the tiles the guided self-description
 /// (<see cref="MyInterestsController"/>) offers. Maintaining the taxonomy stays with the creator –
 /// this is a pure picking list.
-/// <para>
+///
 /// Deliberately without the usage counts of the creator's view: they would tell one child how many other
 /// children picked a keyword, which is nobody's business and no help in choosing.
-/// </para>
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]

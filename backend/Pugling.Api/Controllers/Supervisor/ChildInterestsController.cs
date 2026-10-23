@@ -12,11 +12,10 @@ namespace Pugling.Api.Controllers.Supervisor;
 /// The weighted interests of a child – <b>referenced</b> against the shared taxonomy and thereby
 /// machine-evaluable, unlike the free-form <c>Child.Interests</c> (that stays: it is the language
 /// of the AI creator, which clothes the material in language).
-/// <para>
+///
 /// The sign carries the main message: <b>negative weights are dislikes</b>. They matter more for a
 /// good result than the preferences do – a repellent image reverses the learning effect –, which is why
 /// they later hard-exclude matching images instead of merely ranking them lower.
-/// </para>
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]

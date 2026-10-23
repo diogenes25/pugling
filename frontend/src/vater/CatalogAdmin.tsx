@@ -128,7 +128,7 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
  *
  * **Seit B-170 ist das strukturell gesichert, nicht mehr nur getestet:** Dieser Abschnitt bekommt das Fach
  * nicht mehr, sondern nur noch dessen **Id** — er *kann* also nicht nach Eigentum gaten, weil eine Zahl
- * kein `isMine` trägt. Vorher hielten drei Fälle in `CatalogAdmin.test.tsx` die Zusage, einer je
+ * kein `isOwn` trägt. Vorher hielten drei Fälle in `CatalogAdmin.test.tsx` die Zusage, einer je
  * Fach-Zustand; ohne das `SubjectResponse` wären sie drei identische Renderings und damit drei Kopien einer
  * Zusicherung, von denen keine anders fallen kann. Einer ist geblieben (das Formular ist überhaupt da), die
  * Zusage selbst hängt jetzt an der Signatur.
@@ -232,7 +232,7 @@ export function CategoryRows({ categories, busy, onSave, onDelete }: {
  * schlechter: er bleibt im Fokusbaum und nennt keinen Grund. Stumm zu bleiben wäre es auch – eine Seite
  * ohne Knöpfe und ohne Erklärung liest sich als Fehler (B-150).
  *
- * Eigener exportierter Baustein, damit der Test die **Bindung** an `isMine` prüfen kann: `CatalogAdmin`
+ * Eigener exportierter Baustein, damit der Test die **Bindung** an `isOwn` prüfen kann: `CatalogAdmin`
  * selbst lädt beim Fachwechsel die Arten nach und hängt damit am Netz (siehe `frontend/CLAUDE.md` –
  * Bausteine hier, Wege durch die App bei Playwright).
  */
@@ -241,7 +241,7 @@ export function SubjectRow({ subject, busy, onSave, onDelete }: {
   busy: boolean;
   onSave: (name: string) => void; onDelete: () => void;
 }) {
-  if (subject.isMine) {
+  if (subject.isOwn) {
     return <NameRow busy={busy} fieldId={`ca-subject-${subject.id}`} label="Fach umbenennen"
       srName={`Fach „${subject.name}"`} value={subject.name} onSave={onSave} onDelete={onDelete} />;
   }

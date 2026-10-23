@@ -18,7 +18,7 @@ namespace Pugling.Api.Tests;
 /// D4, which diffs <c>docs/api-examples</c> and the generated example catalog.
 /// </para>
 /// </summary>
-public class ContractDocumentTests
+public partial class ContractDocumentTests
 {
     /// <summary>Where the checked-in contract lives. Read by the CI gate and, from B-42 step 2, by the frontend.</summary>
     private static readonly string[] OutputPath = ["docs", "openapi", "v1.json"];
@@ -186,6 +186,66 @@ public class ContractDocumentTests
         Assert.True(missing401.Count == 0,
             $"{missing401.Count} operations without 401: {string.Join(", ", missing401)}");
     }
+
+    /// <summary>
+    /// The prose of the document reads as prose (B-147, B-138): no <c>summary</c> or <c>description</c>
+    /// carries the source indentation of an XML doc comment, and none carries a raw XML/HTML tag.
+    /// Indentation matters because four leading spaces turn a line into a code block wherever a viewer
+    /// renders Markdown; a raw tag matters because Swagger UI prints a summary as plain text, so a reader
+    /// literally sees <c>&lt;b&gt;all&lt;/b&gt;</c>. Measured over the generated document rather than the
+    /// source, because the generator is what decides what arrives - and it treats <c>para</c> and
+    /// <c>b</c> differently depending on where they stand.
+    /// </summary>
+    [Fact]
+    public async Task Vertragsdokument_TraegtKeinQuelltextFormat()
+    {
+        var doc = JsonNode.Parse(await GenerateAsync())!;
+        var indented = new List<string>();
+        var tagged = new List<string>();
+        foreach (var (where, text) in ProseOf(doc, "#"))
+        {
+            if (text.Split('\n').Any(line => line.Length > 0 && char.IsWhiteSpace(line[0])))
+                indented.Add(where);
+            if (RawTag().Match(text) is { Success: true } tag)
+                tagged.Add($"{where} ({tag.Value})");
+        }
+
+        Assert.True(indented.Count == 0,
+            $"{indented.Count} texts keep the source indentation of their XML doc comment - in a Markdown "
+            + $"view that is a code block. OpenApiProseNormalizer should have removed it:\n  "
+            + string.Join("\n  ", indented.Take(10)));
+        Assert.True(tagged.Count == 0,
+            $"{tagged.Count} texts carry a raw tag the normalizer does not translate. Swagger UI prints it "
+            + $"verbatim; teach OpenApiProseNormalizer the tag or reword the comment:\n  "
+            + string.Join("\n  ", tagged.Take(10)));
+    }
+
+    /// <summary>Every <c>summary</c>/<c>description</c> string in the document, with a JSON-pointer-ish location.</summary>
+    private static IEnumerable<(string Where, string Text)> ProseOf(JsonNode? node, string where)
+    {
+        switch (node)
+        {
+            case JsonObject obj:
+                foreach (var (key, value) in obj)
+                {
+                    if (key is "summary" or "description" && value is JsonValue leaf && leaf.TryGetValue<string>(out var text))
+                        yield return ($"{where}/{key}", text);
+                    else
+                        foreach (var inner in ProseOf(value, $"{where}/{key}"))
+                            yield return inner;
+                }
+                break;
+            case JsonArray array:
+                for (var i = 0; i < array.Count; i++)
+                    foreach (var inner in ProseOf(array[i], $"{where}[{i}]"))
+                        yield return inner;
+                break;
+        }
+    }
+
+    /// <summary>An XML/HTML element tag such as <c>&lt;b&gt;</c>, <c>&lt;/em&gt;</c> or <c>&lt;see cref="X"/&gt;</c>.</summary>
+    [System.Text.RegularExpressions.GeneratedRegex(@"</?[A-Za-z][A-Za-z0-9]*(\s[^<>]*)?/?>")]
+    private static partial System.Text.RegularExpressions.Regex RawTag();
 
     /// <summary>
     /// The only two operations in the whole document that may lack a 401 response: anonymous registration,

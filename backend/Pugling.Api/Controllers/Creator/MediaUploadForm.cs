@@ -2,11 +2,10 @@ namespace Pugling.Api.Controllers.Creator;
 
 /// <summary>
 /// Form of the image upload (multipart/form-data).
-/// <para>
+///
 /// Deliberately <b>not</b> in the contracts project: <see cref="IFormFile"/> is an ASP.NET Core type, and
 /// <c>Pugling.Contracts</c> is a leaf without framework dependencies – otherwise a client could no longer
 /// use it in isolation. The response is instead the regular <c>MediaAssetResponse</c> from the contract.
-/// </para>
 /// </summary>
 /// <param name="File">The image file; the server generates all resolutions from it itself.</param>
 /// <param name="Description">What is shown – doubles as the alt text. Required.</param>

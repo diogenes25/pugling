@@ -129,11 +129,10 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     /// Sets the dressing tags as the <b>complete</b> set (B-46). Replacement, not merge: everything else in
     /// <c>Create</c>/<c>Update</c> treats the payload as a full representation, and a merge would leave no
     /// way at all to take a tag off again.
-    /// <para>
+    ///
     /// The stale rows go through <c>RemoveRange</c> instead of just leaving the navigation. Orphan deletion
     /// would work (required FK, cascade), but only for a loaded, tracked collection - and <c>Create</c>
     /// builds an untracked entity. One rule that holds on both paths beats two that each hold on one.
-    /// </para>
     /// </summary>
     private void SetInterestLinks(Exercise exercise, IReadOnlyList<int>? tagIds)
     {
