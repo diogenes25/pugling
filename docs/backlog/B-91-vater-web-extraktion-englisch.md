@@ -1,12 +1,13 @@
 ---
-tags: [typ/story, status/idee, bereich/frontend]
+tags: [typ/story, status/verworfen, bereich/frontend]
 aliases: [Vater-Web i18n, Vater-Web Englisch]
-status: idee
+status: verworfen
 prio: P4
 art: Wunsch
 quelle: B-87 (geteilt)
 unverifiziert: true
 ersetzt_durch: []
+grund: "Entscheidung des Nutzers am 2026-10-23 (G-9): Mehrsprachigkeit ist über die Sohn-Arcade auf Englisch (B-85) hinaus kein Ziel; das Vater-Web bleibt deutsch"
 ---
 
 # B-91 · Vater-Web-Textkorpus auf Übersetzungsschlüssel umstellen (Englisch)
@@ -31,3 +32,4 @@ ausformuliert, sondern nur als Platzhalter mit Kontext angelegt.
   dieser Story ab jetzt (ursprünglich als B-88 angelegt, aber wegen einer ID-Kollision mit einer parallel
   angelegten, inhaltlich unabhängigen Story umbenannt — reine Backlog-Pflege, keine inhaltliche Änderung).
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): Zahlen veraltet (`fieldHelp.ts` 382 Zeilen, `vater/` 49 `.tsx`). Steht auf der Grill-Tagesordnung „Ist Mehrsprachigkeit über B-85 hinaus ein Ziel?“.
+- **2026-10-23** — **verworfen** in der Grill-Runde der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)) (G-9).

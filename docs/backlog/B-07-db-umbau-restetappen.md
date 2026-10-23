@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/doku, rolle/creator, rolle/supervisor, rolle/student]
+tags: [typ/story, status/verworfen, bereich/doku, rolle/creator, rolle/supervisor, rolle/student]
 aliases: [DB-Umbau Betriebsschritt, Azure-DB-Umstellung]
-status: geschaetzt
+status: verworfen
 prio: P1
 art: Aufräumen
 groesse: XS
@@ -9,7 +9,8 @@ wo: backend
 migration: nein
 vertragsbruch: nein
 quelle: docs/db-struktur-umbau-plan.md
-wartet_auf: einen Handgriff des Betreibers an der Azure-Instanz
+wartet_auf: ""
+grund: "gegenstandslos – Entscheidung des Nutzers am 2026-10-23: das Azure-Deployment wird später frisch neu gebaut, es gibt keine Alt-Datenbank, an der der Betriebsschritt nachzuholen wäre"
 ---
 
 # B-07 · DB-Struktur-Umbau: der offene Betriebsschritt
@@ -92,3 +93,4 @@ Plandokument, das eine Sitzung Etappe für Etappe fortschreibt, ist der einzige 
   Die Story schrumpft damit von „vier Etappen, L" auf **den einen Betriebsschritt, XS** — und wechselt vom
   Entwicklungs- in den Betriebs-Charakter.
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): der Deploy ist weiter stillgelegt (`deploy-azure.yml:28-35` nur `workflow_dispatch`, kein Repo-Secret gesetzt). **Frage an den Betreiber:** existiert die alte Azure-Instanz noch? Wird das Deployment neu gebaut, gibt es keine Alt-DB, und die Story wird `verworfen` (gegenstandslos) statt XS.
+- **2026-10-23** — **verworfen** in der Grill-Runde G-0 der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): der Nutzer hat bestätigt, dass das Deployment neu gebaut wird und keine Alt-DB existiert. Der Historien-Guard in `Program.cs` bleibt, er schützt jede künftige DB der alten Kette. B-47 hängt weiter am Neubau.

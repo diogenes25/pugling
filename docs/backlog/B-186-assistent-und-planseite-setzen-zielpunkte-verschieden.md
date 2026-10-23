@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/idee, bereich/frontend, rolle/supervisor]
+tags: [typ/story, status/verworfen, bereich/frontend, rolle/supervisor]
 aliases: [Assistent ignoriert die Punkte-Empfehlung, Intensität vs. Empfehlung]
-status: idee
+status: verworfen
 prio: P3
 art: Frage
 groesse: ""
@@ -9,8 +9,8 @@ wo: ""
 migration: ""
 vertragsbruch: ""
 quelle: B-45, Fund des frontend-reviewer
-unverifiziert: true
-grund: ""
+unverifiziert: false
+grund: "bleibt wie es ist – Entscheidung des Nutzers am 2026-10-23 (G-1): im Assistenten gewinnt die gewählte Intensität, weil sie eine ausdrückliche, angezeigte und in der Zusammenfassung bestätigte Aussage des Vaters ist; die Creator-Empfehlung gilt nur auf der Plan-Seite"
 ersetzt_durch: []
 entgangen_bei: []
 ---
@@ -43,3 +43,4 @@ ein vollwertiges Ergebnis; dann wird diese Story `verworfen` mit Grund.
 - 2026-09-01 · Aufgenommen aus dem `frontend-reviewer`-Review zu B-45. Die Fundorte sind vom Reviewer am
   Code belegt, die Wirkung habe ich nicht selbst gefahren — darum `unverifiziert`.
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht, Belege stimmen (Intensität 10/20/30 `VaterWizard.tsx:37-39`, immer mitgeschickt `:366`). Die Antwort entscheidet zugleich B-201 (Feldhilfe).
+- **2026-10-23** — **verworfen** in der Grill-Runde der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): Intensität gewinnt. B-45s AK 4/Entscheidung 2 gelten damit ausdrücklich nur für die Plan-Seite; das Nachziehen des Hilfetexts je Ort trägt B-201.

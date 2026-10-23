@@ -9,7 +9,7 @@ wo: backend
 migration: nein
 vertragsbruch: nein
 quelle: B-41
-wartet_auf: die Reaktivierung bzw. den Neubau des Azure-Deploys (siehe B-07)
+wartet_auf: den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz)
 ---
 
 # B-47 · Startet das veröffentlichte Artefakt überhaupt?
@@ -188,3 +188,4 @@ Angriffsplan-Schritt 5, nicht der grüne Lauf allein – dasselbe Prinzip wie be
   Migration, kein Vertragsbruch; fünf Risiken benannt, Angriffsplan in fünf Schritten, Testweg über
   `workflow_dispatch` plus Gegenprobe.
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): gilt inhaltlich, Zeilen verrutscht (`deploy-azure.yml:74-82`, `Program.cs:226/681/686`). Die User Story nennt als Gate „die Azure-Reaktivierung aus B-33“ – **B-33 ist verworfen**; das Gate ist der Neubau des Deploys (`docs/deployment-azure.md:7-10`). Entscheidung 1 verbietet den Bau davor, darum `wartet_auf`. Wird das Deployment neu gebaut, ist die Bauform (Schritt in genau dieser YAML) eventuell hinfällig.
+- **2026-10-23** — In der Grill-Runde G-0 der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): B-07 ist verworfen (Neubau statt Reaktivierung). Das Gate dieser Story ist damit allein der Neubau; beim Neubau prüfen, ob der Smoke-Schritt in die neue Pipeline gehört statt in `deploy-azure.yml`.

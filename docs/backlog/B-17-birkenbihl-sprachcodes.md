@@ -132,3 +132,4 @@ verwendeter Liste ersetzen (Muster liegt zwei Übungstypen weiter oben im selben
   Wiederverwendung des `LANGUAGES`-Picklist-Musters aus derselben Datei (autonom getroffen, Nutzerauftrag
   2026-08-04).
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): gilt (Eingabefelder jetzt `exerciseConfig.tsx:577-578`, Seed `Seed.cs:1107`). `exerciseConfig.test.ts:71-80` prüft schon einen Birkenbihl-Rundlauf – der neue Test hängt sich dort an. Nachtlauffähig; Vorbehalt: die Entscheidungen hat am 2026-08-03 ein Agent getroffen, nicht der Nutzer im Dialog.
+- **2026-10-23** — **Vom Nutzer bestätigt** in der Grill-Runde G-0 der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): die am 2026-08-03 autonom getroffenen Entscheidungen gelten als seine. Die Story ist ohne Vorbehalt nachtlauffähig (Paket NP-2).

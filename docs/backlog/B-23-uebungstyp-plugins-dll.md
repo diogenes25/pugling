@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/katalog]
+tags: [typ/story, status/verworfen, bereich/katalog]
 aliases: [Externe Übungstyp-Plugins]
-status: ausformuliert
+status: verworfen
 prio: P3
 art: Wunsch
 groesse: L
@@ -9,9 +9,9 @@ wo: backend
 migration: nein
 vertragsbruch: nein
 quelle: memory/uebungstyp-plugin-contract.md
-grund: ""
+grund: "Entscheidung des Nutzers am 2026-10-23: eine Familien-App hat keine externen Plugin-Autoren; Stufe 1 (IExerciseType + Registry) genügt. Die Entscheidungen 2 und 3 schlossen sich zudem aus. Kommt der Bedarf, ist das eine neue Story"
 ersetzt_durch: []
-wartet_auf: einen konkreten zweiten Plugin-Autor (Entscheidung 7)
+wartet_auf: ""
 ---
 
 # B-23 · Übungstyp-Plugins als externe DLLs (Stufe 2)
@@ -234,3 +234,4 @@ scheitern. Ergänzend ein manueller `/smoke-test`-Lauf mit echtem Plugin-Verzeic
   (Rollengang/Reviewer bleiben Pflicht wie bei jeder Abnahme). Bleibt trotzdem P3 — Freigabe heißt „baubar,
   wenn priorisiert", nicht „jetzt bauen" (Entscheidung 7).
 - **2026-10-23** — **Zurück auf `ausformuliert`** in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): Entscheidung 2 (schmales SDK ohne Referenz auf `Pugling.Api`) und Entscheidung 3 (jedes Plugin bringt einen `ExerciseControllerBase<XConfig>`-Ableger mit) widersprechen sich – die Basis hängt an `PuglingDbContext`, `.Auth`, `.Errors`, `.Models` (`ExerciseControllerBase.cs:1-8,24`), ebenso `IExerciseType` an `Pugling.Api.Models`. Das SDK müsste die Controller-Basis samt DbContext enthalten; faktisch L+/XL. Entscheidung 7 stellt den Bau ohnehin bis zu einem zweiten Plugin-Autor zurück – darum `wartet_auf`. Nebenbefund: `.claude/commands/neuer-uebungstyp.md` verweist auf ein nicht mehr existierendes `Models/ExerciseConfigs.cs` und auf „deutsche XML-Docs“ (siehe B-239).
+- **2026-10-23** — **verworfen** in der Grill-Runde der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)).

@@ -126,7 +126,7 @@ Story-Dateien nicht ohnehin sagen: den Zusammenhang, die Reihenfolge und den Sto
 | **NP-9** Grammatik als Thema | *Der Creator ordnet Regelaufgaben einem Grammatik-Thema zu, und der Vater findet sie darüber.* | B-155 | L, beides, **Migration** | allein; der Nutzer hat Teilen ausdrücklich abgelehnt (Entscheidung 11). Die Seed-Liste in Entscheidung 6 endet mit „…" – vervollständigen und im Verlauf nennen. |
 | **NP-10** Der Agent füllt die Unit-Notizen | *Der Creator lässt die Stoffnotizen einer Unit vom Agenten vorschlagen, statt sie abzutippen.* | B-22 | S–M, backend, **Migration** | `Topics` ist eine Liste mit 50 × 200 Zeichen; die Migration betrifft nur noch `Grammar`. Nicht im selben Sprint wie NP-9. |
 | **NP-11** Mehrsprachigkeit, Schritt 1 | *Der Sohn kann die Arcade auf Englisch umschalten, mindestens ein Bildschirm ist vollständig übersetzt, und alle Specs laufen weiter auf Deutsch.* | B-85 (→ teilen) | L → 2 × M | Schritt 0 ist das Teilen nach `docs/backlog/README.md`, gebaut wird nur Teil a. Die englischen Texte liest am Ende ein Mensch gegen. |
-| **NP-12** Werkzeug und Doku sagen die Wahrheit | *Wer eine Anleitung, eine Spec oder einen Test-Kommentar dieses Repos liest, wird nicht in die Irre geführt.* | B-239, B-214, B-177, B-181 (Doku-Teil) | XS–S je Story | B-239 betrifft auch aktive Anweisungen (`.claude/commands/neuer-uebungstyp.md`, `pugling-reviewer.md`). B-177 erst herstellen; gelingt das nicht, `verworfen` mit Messung. Bei B-181 nur der Kommentar, **kein** Wiederholungsversuch in `Load`. |
+| **NP-12** Werkzeug und Doku sagen die Wahrheit | *Wer eine Anleitung, eine Spec, einen Test-Kommentar oder eine Feldhilfe liest, wird nicht in die Irre geführt.* | B-239, B-214, B-177, B-181 (Doku-Teil), B-242, B-201 | XS–S je Story | B-239 betrifft auch aktive Anweisungen (`.claude/commands/neuer-uebungstyp.md`, `pugling-reviewer.md`). B-177 erst herstellen; gelingt das nicht, `verworfen` mit Messung. Bei B-181 nur der Kommentar, **kein** Wiederholungsversuch in `Load`. |
 
 ### Vorschlag für die Nachtfolge
 
@@ -185,3 +185,26 @@ nicht ausgeführt.
   ([2026-10-17](pm-sitzung-2026-10-17-nacht.md), [2026-10-23](pm-sitzung-2026-10-23-nacht.md)). Sie sind
   Prozessentscheidungen und kein Backlog-Inhalt. Sie gehören in eine eigene Runde mit dem Nutzer und sind
   hier weder gezählt noch bewertet.
+
+## Grill-Runden mit dem Nutzer
+
+### G-0 Schnellentscheidungen – entschieden
+
+| Story | Entscheidung | Folge |
+| --- | --- | --- |
+| B-242 | Nebendatei **löschen**, Git-Historie nicht tilgen | in NP-12 aufgenommen |
+| B-07 | Das Deployment wird **neu gebaut**, es gibt keine Alt-DB | `verworfen` (gegenstandslos); B-47 wartet allein auf den Neubau |
+| B-17 | Die Agent-Entscheidungen vom 2026-08-03 gelten als bestätigt | bleibt in NP-2, ohne Vorbehalt |
+| B-252 | TTS **nur als Rückfall** für Vokabeln ohne Aufnahme, **nie** in der Hörstufe | Rahmen fürs Ausformulieren; bleibt `idee` |
+
+### G-1, G-9 und zwei Streichkandidaten – entschieden
+
+| Story | Entscheidung | Folge |
+| --- | --- | --- |
+| B-186 | Im Assistenten **gewinnt die Intensität** | `verworfen` („bleibt wie es ist“); B-201 ist entsperrt und kommt in NP-12 |
+| B-90, B-91, B-92 | Mehrsprachigkeit nur für die Arcade (B-85) | alle drei `verworfen`; B-85 bleibt NP-11 |
+| B-23 | Keine externen Plugin-Autoren | `verworfen` |
+| B-20 | Als **`assign`-Verb** im bestehenden Agenten neu schneiden, kein zweites Projekt | bleibt `ausformuliert`; drei Detailfragen stehen in der Story (doppelte Position, `--tag`, Positions-Vorgaben), danach schätzbar |
+
+Offen auf der Tagesordnung bleiben damit G-2 bis G-8 (ohne die erledigten Teile von G-8: B-20, B-23).
+

@@ -1,12 +1,13 @@
 ---
-tags: [typ/story, status/idee, bereich/backend]
+tags: [typ/story, status/verworfen, bereich/backend]
 aliases: [Server-Sprachfeld, Locale, Adult/Child Sprachfeld]
-status: idee
+status: verworfen
 prio: P4
 art: Wunsch
 quelle: B-87 (geteilt)
 unverifiziert: true
 ersetzt_durch: []
+grund: "Entscheidung des Nutzers am 2026-10-23 (G-9): Mehrsprachigkeit ist über die Sohn-Arcade auf Englisch (B-85) hinaus kein Ziel; ein Server-Sprachfeld hat keinen Konsumenten"
 ---
 
 # B-90 · Server-Sprachfeld an `Adult`/`Child`
@@ -26,3 +27,4 @@ sinnvollsten auf `idee` stehen, bis ein konkreter Bedarf (z. B. lokalisierte Led
 - **2026-08-04** — angelegt beim Teilen von [B-87](B-87-vater-web-franzoesisch-server-sprachfeld.md)
   (Entscheidung 2 dort), bewusst auf `idee` belassen: bedarfsgetrieben, kein Vorgriff ohne Konsument.
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): kein Konsument in Sicht; der als Treiber genannte B-30 ist verworfen, Ledger-Texte bleiben laut `CLAUDE.md` bewusst deutsch. Steht auf der Grill-Tagesordnung „Ist Mehrsprachigkeit über B-85 hinaus ein Ziel?“.
+- **2026-10-23** — **verworfen** in der Grill-Runde der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)) (G-9).

@@ -1,12 +1,13 @@
 ---
-tags: [typ/story, status/idee, bereich/frontend]
+tags: [typ/story, status/verworfen, bereich/frontend]
 aliases: [Französisch, zweite Zielsprache, i18n Französisch]
-status: idee
+status: verworfen
 prio: P4
 art: Wunsch
 quelle: B-87 (geteilt)
 unverifiziert: true
 ersetzt_durch: []
+grund: "Entscheidung des Nutzers am 2026-10-23 (G-9): Mehrsprachigkeit ist über die Sohn-Arcade auf Englisch (B-85) hinaus kein Ziel; keine zweite Zielsprache"
 ---
 
 # B-92 · Französisch als zweite Zielsprache (Sohn-Arcade + Vater-Web)
@@ -29,3 +30,4 @@ Story umbenannt — reine Backlog-Pflege, keine inhaltliche Änderung).
   (Entscheidung 2 dort), bewusst auf `idee` belassen: die Story hängt an B-85 **und** B-91, deren Zuschnitt
   noch nicht feststeht — eine Ausformulierung vor deren Klärung wäre Spekulation statt Recherche.
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): blockiert durch B-85 und B-91; Grill-Tagesordnung wie B-91.
+- **2026-10-23** — **verworfen** in der Grill-Runde der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)) (G-9).
