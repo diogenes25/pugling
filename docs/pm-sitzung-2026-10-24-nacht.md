@@ -115,7 +115,7 @@ schließen (B-134 und B-236 ungebaut, kein Rollengang, keine Retro); **NP-6 (B-6
 **Fertig:**
 
 - Nachschau zu Sprint 9 (siehe oben): sechs Stories mit Prüfpunkten, zwei Entgleitungen → B-261, B-262.
-- B-68 und B-263 gebaut und gemessen (siehe Iteration 10), committet als **`in-arbeit`** mit `wartet_auf`.
+- B-68 und B-263 gebaut und gemessen (siehe Iteration 10), committet in `9c7578c` als **`in-arbeit`** mit `wartet_auf`.
 - B-134 gegrillt und geschätzt (`geschaetzt`), B-236 mit Kandidaten-Prüfung im Verlauf.
 
 **Offen, in dieser Reihenfolge:**
