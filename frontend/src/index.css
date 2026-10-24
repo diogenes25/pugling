@@ -26,6 +26,11 @@
 
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
+/* Netz für das Vater-Web bei Tablet-Breite (B-68): was trotzdem zu breit wird, schneidet der Rand ab, statt
+   die ganze Seite seitlich scrollen zu lassen. Nur am `html` – ist `html` selbst nicht `visible`, gibt der
+   Browser den Wert des `body` nicht mehr ans Fenster weiter, und `body` würde ein eigener Scroll-Container. Der eigentliche
+   Scroll-Container ist `.vater-main`; `responsive-vater.spec.ts` misst trotz Netz, ob etwas übersteht. */
+html { overflow-x: hidden; }
 body {
   font-family: var(--font-body);
   color: var(--ink);
@@ -278,6 +283,8 @@ a { color: var(--cyan); }
   text-transform: none; letter-spacing: normal;
 }
 .info-hint-pop b { font-size: 12px; color: var(--cyan); }
+/* Unten abgeschnitten würde es (Ende von `.vater-main`): `InfoHint` klappt es über den Knopf (B-263). */
+.info-hint-pop.up { top: auto; bottom: calc(100% + 6px); }
 
 /* =========================================================================
    Vater-Web (Admin): heller, sachlicher – gleiche Tokens, andere Dichte.
@@ -308,7 +315,10 @@ a { color: var(--cyan); }
 .nav-group { display: flex; align-items: center; gap: 2px; padding-left: 10px; border-left: 1px solid var(--stroke); }
 .nav-group-label { color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; opacity: .65; padding-right: 2px; }
 .vater-top .spacer { margin-left: auto; }
-.vater-main { flex: 1; max-width: 1000px; width: 100%; margin: 0 auto; padding: 22px; display: flex; flex-direction: column; gap: 18px; }
+/* `overflow-x: auto` + `min-width: 0` (B-68): eine breite Tabelle ohne eigenen `overflowX`-Rahmen scrollt hier,
+   nicht im Fenster. Ohne `min-width: 0` wanderte der Überlauf eine Ebene höher. Absolut positionierte Kinder
+   (das ⓘ-Popover) würden dabei abgeschnitten – `InfoHint` hält sich darum selbst im sichtbaren Streifen. */
+.vater-main { flex: 1; max-width: 1000px; width: 100%; min-width: 0; overflow-x: auto; margin: 0 auto; padding: 22px; display: flex; flex-direction: column; gap: 18px; }
 .vater-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
 /* Kachel der Werkstatt: die ganze Karte ist der Link, darum trägt sie den Fokusring und die Hover-Anhebung. */
 .hub-card { display: flex; flex-direction: column; gap: 6px; color: inherit; transition: border-color .15s ease, transform .15s ease; }

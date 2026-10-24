@@ -1,0 +1,140 @@
+import { test, expect, type Page } from "@playwright/test";
+import { vaterLogin } from "./helpers";
+
+/*
+ * B-68: das Vater-Web bei Tablet-Breite (768 px, hochkant). Die Zusage: keine Seite scrollt seitlich. Eine
+ * breite Tabelle darf in ihrem eigenen Streifen bzw. in `.vater-main` scrollen, das Dokument selbst wird nie
+ * breiter als das Fenster – auch nicht, wenn der Vater ein ⓘ aufklappt (B-263).
+ *
+ * Gemessen je Route als `document.documentElement.scrollWidth <= window.innerWidth`. Das Projekt fährt
+ * `Desktop Chrome` (überschreibt die 393 px aus playwright.config.ts), darum setzt die Spec die Breite selbst.
+ *
+ * Was sie rot macht (gemessen, B-68/B-263 im Verlauf): ohne die Lage-Korrektur in `InfoHint` stehen elf ⓘ bei
+ * 768 px rechts über (Popover-Rechtskante bis 981 px) – mit dem Netz am `html` gemessen an `scrollWidth`, mit
+ * `.vater-main` als Scroll-Container an `overRight`; ein `InfoHint`, der jedes Popover verschiebt, fällt am
+ * Ruhelage-Schritt. Die Seiten selbst liefen mit dem Seed schon vor B-68 nicht über, und unten schneidet heute an
+ * keinem der ⓘ etwas ab – Routen-Messung und `overBottom` sind Wächter, keine Belege eines alten Fehlers.
+ */
+
+const FATHER = { id: "1", pin: "0000" };
+const WIDTH = 768;
+
+/** Die Elemente, die am weitesten überstehen – in der Fehlermeldung, damit der Schuldige zu sehen ist. */
+async function overflow(page: Page) {
+  return page.evaluate((width) => {
+    const culprits = [...document.querySelectorAll("body *")]
+      .map((el) => ({ el, right: el.getBoundingClientRect().right }))
+      .filter(({ right }) => right > width + 1)
+      .sort((a, b) => b.right - a.right)
+      .slice(0, 3)
+      .map(({ el, right }) => `${el.tagName.toLowerCase()}.${String(el.className).split(" ")[0]} (${Math.round(right)})`);
+    return { scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth, culprits };
+  }, WIDTH);
+}
+
+/** Lage des offenen Popovers relativ zum sichtbaren Inneren von `.vater-main`. */
+async function popoverFit(page: Page) {
+  return page.evaluate(() => {
+    const main = document.querySelector(".vater-main") as HTMLElement;
+    const pop = document.querySelector(".info-hint-pop") as HTMLElement;
+    const m = main.getBoundingClientRect();
+    const p = pop.getBoundingClientRect();
+    return {
+      overRight: Math.round(p.right - (m.left + main.clientLeft + main.clientWidth)),
+      overLeft: Math.round(m.left + main.clientLeft - p.left),
+      // `.vater-main` scrollt seit B-68 selbst (auch senkrecht): ein Popover, das unten übersteht, würde dort
+      // abgeschnitten und zöge einen inneren Scrollbalken auf.
+      overBottom: main.scrollHeight - main.clientHeight,
+    };
+  });
+}
+
+async function expectFits(page: Page, route: string) {
+  await page.goto(route);
+  await expect(page.locator(".vater-main h1, .vater-main h2").first()).toBeVisible();
+  // Listen laden nach der Überschrift; gemessen wird erst, wenn keine Anfrage mehr läuft.
+  await page.waitForLoadState("networkidle");
+  const m = await overflow(page);
+  expect.soft(m.scrollWidth, `${route}: ${m.culprits.join(", ")}`).toBeLessThanOrEqual(m.innerWidth);
+
+  const hints = page.locator(".vater-main .info-hint-btn");
+  for (let i = 0; i < await hints.count(); i++) {
+    const hint = hints.nth(i);
+    if (!(await hint.isVisible())) continue;
+    const name = await hint.getAttribute("aria-label");
+    await hint.click();
+    await expect(page.locator(".info-hint-pop")).toBeVisible();
+    const open = await overflow(page);
+    expect.soft(open.scrollWidth, `${route} ${name} offen: ${open.culprits.join(", ")}`).toBeLessThanOrEqual(open.innerWidth);
+    const fit = await popoverFit(page);
+    expect.soft(fit.overRight, `${route} ${name}: Popover rechts abgeschnitten`).toBeLessThanOrEqual(0);
+    expect.soft(fit.overLeft, `${route} ${name}: Popover links abgeschnitten`).toBeLessThanOrEqual(0);
+    expect.soft(fit.overBottom, `${route} ${name}: Popover unten abgeschnitten`).toBeLessThanOrEqual(0);
+    await page.keyboard.press("Escape");
+    await expect(page.locator(".info-hint-pop")).toHaveCount(0);
+  }
+}
+
+test.use({ viewport: { width: WIDTH, height: 1024 } });
+
+test("Vater-Web bei 768 px: keine Seite scrollt seitlich, auch nicht mit offenem ⓘ", async ({ page }) => {
+  await vaterLogin(page, FATHER);
+
+  // Die Detailseite braucht einen Plan des eingeloggten Vaters, nicht eine geratene Id. Hat er keinen, legt
+  // die Spec einen inaktiven an (inaktiv, damit die Sperre „ein aktiver Plan je Kind" nicht greift).
+  const planId = await page.evaluate(async () => {
+    const headers = { Authorization: `Bearer ${localStorage.getItem("pugling.token")}`, "Content-Type": "application/json" };
+    const plans = (await (await fetch("/api/v1/supervisor/study-plans", { headers })).json()) as { id: number }[];
+    if (plans.length > 0) return plans[0].id;
+    const kids = (await (await fetch("/api/v1/supervisor/children", { headers })).json()) as { id: number }[];
+    const res = await fetch("/api/v1/supervisor/study-plans", {
+      method: "POST", headers,
+      body: JSON.stringify({ childId: kids[0].id, title: "Tablet-Probe", durationDays: 7, active: false }),
+    });
+    return ((await res.json()) as { id: number }).id;
+  });
+  expect(planId, "Plan des Vaters gefunden oder angelegt").toBeTruthy();
+
+  const routes = [
+    "/vater",
+    "/vater/plaene",
+    "/vater/inhalte",
+    "/vater/exercises",
+    "/vater/exercises/neu",
+    "/vater/katalog",
+    "/vater/lueckentexte",
+    "/vater/vocab",
+    "/vater/media",
+    "/vater/lehrwerke",
+    "/vater/fachlehrer",
+    "/vater/profil",
+    "/vater/rewards",
+    "/vater/shop",
+    "/vater/konto",
+    "/vater/class-tests",
+    "/vater/plan/new",
+    "/vater/wizard",
+    "/vater/kind/1",
+    "/vater/kind/1/lernstand",
+    "/vater/kind/1/ziele",
+    `/vater/plan/${planId}`,
+  ];
+  for (const route of routes) {
+    await test.step(route, () => expectFits(page, route));
+  }
+
+  // Wo Platz ist, bleibt das Popover, wo es immer war (B-263 AK 2): links am Knopf, darunter. Rot, wenn die
+  // Verschiebung jedes Popover verrückt statt nur die überstehenden.
+  await test.step("Ruhelage bleibt, wo Platz ist", async () => {
+    await page.goto("/vater/plan/new");
+    const hint = page.locator(".vater-main .info-hint").first();
+    await hint.locator(".info-hint-btn").click();
+    const lage = await hint.evaluate((wrap) => {
+      const pop = wrap.querySelector(".info-hint-pop") as HTMLElement;
+      const w = wrap.getBoundingClientRect();
+      const p = pop.getBoundingClientRect();
+      return { dx: Math.round(p.left - w.left), unten: p.top >= w.bottom };
+    });
+    expect(lage).toEqual({ dx: -6, unten: true });
+  });
+});

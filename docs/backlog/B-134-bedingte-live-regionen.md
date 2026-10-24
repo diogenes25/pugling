@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/frontend, bereich/a11y]
+tags: [typ/story, status/geschaetzt, bereich/frontend, bereich/a11y]
 aliases: [Live-Regionen hinter einer Bedingung, aria-live-Sweep, Wächter für Live-Regionen]
-status: ausformuliert
+status: geschaetzt
 prio: P3
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: M
+wo: frontend
+migration: nein
+vertragsbruch: nein
 quelle: B-132 (Nachtlauf 2026-08-09, Entscheidung 2)
 unverifiziert: false
 grund: ""
@@ -74,22 +74,49 @@ Disziplin"). Ein Sweep ohne Wächter stellt denselben Zustand in drei Monaten wi
 
 ## Offene Punkte
 
-1. **Sweep plus Wächter, oder nur der Sweep?** Empfehlung: beides, und der Wächter ist der eigentliche
+1. ~~**Sweep plus Wächter, oder nur der Sweep?**~~ → Entscheidung 1. Empfehlung: beides, und der Wächter ist der eigentliche
    Wert — ein Vitest, der über die `.tsx`-Quellen im Frontend läuft und `role="status"`/`aria-live`
    direkt hinter `&&` oder in einem früh-`return null`-Zweig meldet, mit Ausnahmeliste und Begründung
    je Eintrag (Muster: die Ausnahmelisten der `ConventionGuardTests`). Kosten: ein quellentext-lesender
    Test ist ein grober Parser und wird Fehlalarme haben — das Repo hat damit Erfahrung
    (`B-40`, „halbe Parser brauchen eine Rot-Liste").
-2. **Ist `role="status"` überall überhaupt richtig?** Mindestens zwei Fälle sind zweifelhaft:
+2. ~~**Ist `role="status"` überall überhaupt richtig?**~~ → Entscheidung 2. Mindestens zwei Fälle sind zweifelhaft:
    `ListControls.tsx:61` ist ein statischer Hinweis über den Filterstand, keine Rückmeldung auf eine
    Handlung, und `exerciseConfig.tsx:619` ist eine Validierungsmeldung, für die `role="alert"` die
    passendere Rolle wäre. Empfehlung: beim Sweep je Fundstelle entscheiden statt mechanisch
    umzuformen — sonst wird aus dreizehn richtigen Attributen dreizehn falsche Dauer-Regionen.
-3. **Reicht `StatusBanner` als Ersatz für die meisten?** Acht der dreizehn sind schlichte
+3. ~~**Reicht `StatusBanner` als Ersatz für die meisten?**~~ → Entscheidung 3. Acht der dreizehn sind schlichte
    Banner/Toasts, für die es die Komponente längst gibt. Empfehlung: dort ersetzen statt reparieren —
    das entfernt die Fehlerquelle, statt sie an dreizehn Stellen einzeln zu umgehen. Kosten: die Optik der
    Toasts (`className="toast"` in der Sohn-Arcade) unterscheidet sich vom Banner; das muss angesehen
    werden, bevor es getauscht wird.
+
+## Entscheidungen
+
+Autonom gegrillt im fünften Nachtlauf (`Defekt`, Freigabe 1), gegen HEAD `515022c` gemessen.
+
+1. **Sweep und Wächter.** Der Wächter ist ein Vitest über alle `.tsx` (`import.meta.glob(..., { query: "?raw" })`,
+   kein `node:fs`), der ein öffnendes Tag mit `role="status"`/`aria-live` meldet, wenn es (a) direkt hinter `&&`,
+   `?` oder `:` steht oder (b) in einer Funktion nach einem `return null` liegt. `role="alert"` meldet er nicht
+   (eingefügtes `alert` wird angesagt, B-188). Ausnahmeliste je Eintrag mit Datei, Tag-Ausschnitt (überlebt
+   Zeilenverschiebungen) und Grund. Kosten: ein halber Parser – Fehlalarme gehören in die Ausnahmeliste.
+   Gemessen am Ausgangsstand: **13 Funde** – die zwölf noch offenen der Tabelle plus die Seitenanzeige
+   `ListControls.tsx:46` (Pager, entsteht mit `return null` davor) → einzige Ausnahme, mit Grund: sie soll den
+   Seitenwechsel ansagen, ihr stilles erstes Erscheinen ist gewollt.
+2. **Rolle bleibt je Fundstelle `status`.** Auch `exerciseConfig.tsx:643` (Validierung) und `TruncationHint`
+   bekommen eine dauerhafte, höfliche Region statt eines lauten `alert`: die Meldung entsteht beim Tippen, ein
+   `alert` unterbräche jede Eingabe. Kosten: keine sichtbaren.
+3. **Nicht `StatusBanner` einsetzen, sondern die Region selbst zum Kasten machen.** Die Region steht immer im DOM
+   und trägt ihre sichtbare Klasse nur, solange es etwas zu melden gibt
+   (`<div className={`live-region${error ? " banner err" : ""}`} role="status" aria-live="polite">{error}</div>`),
+   dazu eine Regel `.live-region:empty { position: absolute; }` – eine leere Region nimmt so keinen `gap` und
+   keinen Platz ein. Begründung: AK 3 („die sichtbare Darstellung ändert sich nirgends") – ein Wrapper um den
+   Kasten verschöbe Abstände in Flex-Spalten, `StatusBanner` brächte `marginTop: 8` mit, und die Toasts der
+   Arcade (`position: fixed`) bleiben so, wie sie sind (die Animation `pop` startet beim Setzen der Klasse).
+   Kosten: zwölf kleine Umbauten; die Klassen-Weiche steht an jeder Stelle einmal.
+4. **Die sieben rollenlosen Fehlerbanner aus B-172** (Nachtrag 2026-09-01) gehören **nicht** in diesen Sweep: sie
+   sind Lesefehler, und für Lesefehler hat der Nutzer am 2026-10-23 `ListenAusfall` zur Hausregel gemacht
+   (B-183, Paket NP-15). Zweimal angefasst würden sie dort ohnehin ersetzt.
 
 ## Akzeptanzkriterien
 
@@ -98,6 +125,15 @@ Disziplin"). Ein Sweep ohne Wächter stellt denselben Zustand in drei Monaten wi
 2. Ein Wächter meldet eine neu hinzukommende bedingte Live-Region; seine Ausnahmeliste trägt je Eintrag
    einen Grund.
 3. Die Frontend-Suite bleibt grün, die sichtbare Darstellung ändert sich nirgends.
+
+## Schätzung
+
+**M**, `wo: frontend`, keine Migration, kein Vertragsbruch. Risiken: Komponententests, die heute
+`queryByRole("status")` als „keine Meldung" lesen, sehen künftig eine leere Region (beim Bau die Vitest-Suite
+ganz laufen lassen); `:empty` greift nur, wenn wirklich nichts gerendert wird (`{error}` mit `null`/`""` ist leer).
+**Angriffsplan:** (1) Wächter rot sehen (13 Funde, gemessen), (2) die CSS-Regel, (3) die zwölf Stellen umbauen,
+(4) Wächter grün, Vitest und `tsc -b` voll, (5) `frontend-reviewer`. **Testweg:** der Wächter mit sieben
+Erkennungsfällen (je Form, die ihn rot macht) plus Playwright voll (sichtbar unverändert).
 
 ## Nachtrag 2026-09-04 (B-188)
 
@@ -130,3 +166,4 @@ hier vermerkt, damit sie nicht unbemerkt wachsen.
   wäre. Die Behebung ist dieselbe wie hier — eine Region, die schon im DOM steht — und darum dieselbe
   Arbeit. Der Befund und die Stufe bleiben.
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht – 12 von 13 Stellen weiter bedingt; behoben ist nur `VaterLehrwerke.tsx` (dauerhafter `StatusBanner`). Neue Zeilen u. a. `VaterExerciseCreate.tsx:309,311`, `VaterWizard.tsx:640`. Die Rollenwahl je Fundstelle verengt `StatusBanner.tsx:9-16`; nur der Tausch der Toast-Optik in der Arcade (Punkt 3) braucht einen Blick. Nachtlauffähig nach autonomem Grillen, M.
+- **2026-10-24** — fünfter Nachtlauf, Sprint 10 (NP-5, [Protokoll](../pm-sitzung-2026-10-24-nacht.md)): autonom gegrillt (Entscheidungen 1–4) und geschätzt. Wächter `frontend/src/liveRegions.test.ts` geschrieben; rote Probe am Ausgangsstand (Auflage 5): erwartet 12 offene Stellen der Tabelle → gemessen **13 Funde** (dazu `ListControls.tsx:46`, Pager → Ausnahme mit Grund), danach mit Ausnahme **12**; die sieben Erkennungsfälle grün. **Unterbrochen (Rechner aus), nicht gebaut:** der Wächter liegt im Stash `nachtlauf-2026-10-24 NP-5 wip` (er ist rot, bis die zwölf Stellen umgebaut sind), die Umbauten fehlen.

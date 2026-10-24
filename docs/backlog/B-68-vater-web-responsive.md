@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/supervisor]
+tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/supervisor]
 aliases: [Vater-Web responsive, Responsive Polish]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Wunsch
 groesse: M
@@ -9,6 +9,7 @@ wo: frontend
 migration: nein
 vertragsbruch: nein
 quelle: remark #1
+wartet_auf: "Fortsetzung Sprint 10 (unterbrochen: Rechner aus) – Rollengang, Retro, Commit-Abnahme"
 ---
 
 # B-68 · Das Vater-Web hat keinen einzigen eigenen Breakpoint
@@ -105,6 +106,17 @@ fallen, sonst wird es ein unbegrenztes „Polish".
    `document.documentElement.scrollWidth <= window.innerWidth` gilt (kein horizontaler Überlauf). Kosten:
    ein neuer, laufender E2E-Fall (~6 Routen), der bei jedem künftigen CSS-Umbau grün bleiben muss.
 
+**Nachtrag beim Bau (fünfter Nachtlauf, 2026-10-24) – zwei Abweichungen vom Wortlaut, beide gemessen:**
+
+- *Entscheidung 2 / AK 1, `html, body`:* gebaut ist das Netz **nur am `html`**. Ist `html` selbst nicht
+  `visible`, gibt der Browser den Wert des `body` nicht mehr ans Fenster weiter; `body` (mit `height: 100%`) würde
+  ein eigener Scroll-Container, und `window.scrollY` bliebe 0. Die Absicht der Entscheidung (ein Netz, das
+  abschneidet statt die Seite scrollen zu lassen) bleibt erfüllt; die Wahl ist Handwerk, keine Produktfrage.
+- *AK 5, „vor dem Fix rot, `.table`-Seiten laufen heute über":* **gemessen falsch.** Mit Seed-Daten läuft bei
+  768 px keine der 22 Vater-Routen über – die `overflowX`-Rahmen aus späteren Stories tragen. Rot war allein das
+  aufgeklappte ⓘ (B-263). Die Routen-Messung der Spec ist darum ein Wächter, kein Beleg eines alten Fehlers; die
+  rote Probe hängt am ⓘ.
+
 ## Akzeptanzkriterien
 
 1. Bei 768 px Viewport-Breite scrollt keine Seite des Vater-Webs horizontal im `body` (geprüft: `html`,
@@ -170,3 +182,5 @@ sich in einer Runde entscheiden.
   Risiken und Angriffsplan ergänzt, Testweg auf einen neuen Playwright-Spec
   `responsive-vater.spec.ts` festgelegt; kein XL-Split erforderlich (autonom getroffen, Nutzerauftrag).
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): Kern gilt (eine einzige `max-width`-Query, `index.css:479`, nur Produktseite; `.vater-main` ohne `min-width: 0`). **Zwei Ist-Stand-Behauptungen sind falsch:** (1) es gibt neun Inline-Wrapper mit `overflowX: "auto"` (u. a. `PlanPositions.tsx:56,755`, `ClozeTexts.tsx:90,239`, `VaterClassTests.tsx:117`) – die damalige Suche hat die Inline-Schreibweise übersehen, die Begründung von Entscheidung 2 ist damit teilweise hinfällig; (2) `playwright.config.ts:30` setzt 393 px, das Projekt überschreibt mit `Desktop Chrome` (`:45`) – der neue Spec muss die Breite selbst setzen. `.nav-group` bricht selbst nicht um (`index.css:290-294`). Nachtlauffähig; Sichtprüfung bei 768 px im Browser.
+- **2026-10-24** — fünfter Nachtlauf, Sprint 10 (NP-5, [Protokoll](../pm-sitzung-2026-10-24-nacht.md)): Nachprüfungs-Zeile gelesen, die `overflowX`-Rahmen einbezogen (12 `.table` in 10 Dateien ohne Rahmen). Gebaut: `index.css` (`html { overflow-x: hidden }`, `.vater-main { min-width: 0; overflow-x: auto }`), neue Spec `frontend/e2e/responsive-vater.spec.ts` (768 px, 22 Routen, jedes sichtbare ⓘ aufgeklappt). Dabei gefunden: das ⓘ-Popover steht über bzw. würde von `.vater-main` abgeschnitten → [B-263](B-263-info-popover-steht-am-rechten-rand-ueber.md), im Sprint behoben. Rote Proben (Auflage 5, Skript, je ein Playwright-Lauf): HEAD-Stand → erwartet Dokument-Überlauf am ⓘ, gemessen **11 Fehler an `:64` (Popover-Rechtskante 778–981 px bei 768) + 11 an `:66`**, Routen ohne ⓘ **0**; neues CSS mit HEAD-`InfoHint` → **11 an `:66`** (abgeschnitten), **0 an `:64`**; Fix → **1 passed**. `tsc -b` sauber, Vitest **409/409**. `frontend-reviewer`: kein Blocker; gezählt (Code/Test): senkrechtes Abschneiden in `.vater-main` ungeprüft, AK 2 von B-263 ohne Test, `POP_LEFT` doppelt die CSS, Effekt nicht idempotent – alle vier behoben (Spec misst `scrollHeight`, Ruhelage-Schritt, `marginLeft`, angewandte Lage herausgerechnet, Klappen nach oben). Nicht behoben (Nits, im Protokoll): Laufzeit der Spec, `res.ok` beim Plan-Anlegen, `visibleBounds` in einem `Modal`. **Unterbrochen (Rechner aus):** kein Rollengang außer der Spec, keine Retro; Stufe bleibt `in-arbeit`.
+- **2026-10-24** — Proben nach den Behebungen (Auflage 5): Endfassung **1 passed**; Mutante „jedes Popover verschoben" → **rot an `:137`** (Ruhelage); „Netz allein" (`.vater-main`-Regel weg, `InfoHint` alt) → **11 an `:67` + 11 an `:69`** – die Dokument-Zusicherung trägt auch unter `html { overflow-x: hidden }`; „Klappen nach oben aus" → **1 passed**: an keinem ⓘ der 22 Routen schneidet `.vater-main` unten ab, die senkrechte Zusicherung ist ein Wächter, der Klapp-Zweig nur begründet, nicht ausgelöst.

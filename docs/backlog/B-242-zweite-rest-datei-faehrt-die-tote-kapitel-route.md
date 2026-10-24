@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: 2026-10-23
 ---
 
 # B-242 · Eine zweite `.http`-Datei unter `docs/REST/Creator/` fährt die tote Kapitel-Route – mit eingebranntem Token
@@ -81,3 +82,4 @@ mit Rollen-Claims gehört nicht ins Repo, auch nicht als Beispiel.
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht (9× `chapters`, `eyJ` in `:4`); die Datei wird nirgends referenziert. Die Streich-Entscheidung (offener Punkt 1) steht auf der Grill-Tagesordnung als Ja/Nein-Frage; nach einem Ja ist der Rest XS.
 - **2026-10-23** — **Entscheidung des Nutzers** in der Grill-Runde G-0 der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): **löschen** (offener Punkt 1). Die Git-Historie wird **nicht** getilgt – das Token ist abgelaufen, ein History-Rewrite samt Force-Push lohnt nicht (offener Punkt 2). Damit ist die Story autonom schätz- und baubar (XS, Paket NP-12).
 - **2026-10-23** — vierter Nachtlauf, Sprint 9 (NP-12, [Protokoll](../pm-sitzung-2026-10-23-nacht.md)): Freigabe-Zeile geprüft (`git log -S`: Commit `3615d46`, 19:36, vor dem dritten Lauf). Datei per `git rm` entfernt. Sweeps (Auflage 5): `git grep chapters -- docs/REST` erwartet 9 → gemessen **9 vorher / 0 nachher**; `git grep eyJ -- 'docs/**/*.http'` **1 / 0**; `docs/REST/Creator/` ist weg, `docs/REST/README.md` nannte die Datei nie. Reviewer (`pugling-reviewer`): kein Verweis mehr außer Protokollen. Rollengang: kein UI-Pfad, Ersatz benannt – die Sweeps selbst. Abgenommen; Commit: `90387d5`.
+- **2026-10-23** — Nachschau zu Sprint 9 (fünfter Nachtlauf, [Protokoll](../pm-sitzung-2026-10-24-nacht.md)), frischer Prüfer, read-only über `90387d5`: Sweeps nachgerechnet (`git grep -c chapters 90387d5^ -- docs/REST` = 9, alle in der gelöschten Datei, danach 0; `eyJ` in `docs/**/*.http` 1 → 0); Verweise gesucht in `docs/`, `wiki/`, `.vscode/settings.json`, `docs/REST/README.md:15` (nannte nur `Creator.http`) – nur noch Protokolle. Kein Befund.

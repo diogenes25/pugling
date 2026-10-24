@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: 2026-10-23
 ---
 
 # B-214 · Die Store-Zeile wird per Teilstring **und** Position gegriffen — dieselbe Bauart wie B-153
@@ -84,3 +85,4 @@ Autonom gegrillt (`art: Defekt`, Freigabe 1).
   wird eine eigene Story (README, „Ein Fund beim Bauen…").
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht (`bilder.spec.ts:112`); ein Durchsuchen aller Specs findet kein weiteres Zeilen-Muster dieser Art. XS, autonom.
 - **2026-10-23** — vierter Nachtlauf, Sprint 9 (NP-12, [Protokoll](../pm-sitzung-2026-10-23-nacht.md)): ausformuliert, gegrillt, gebaut. Rote Probe (Auflage 5, Skript): eine Zwillings-Vokabel „ala ville" (enthält WORD, sortiert davor) per API eingeschleust – **alte Fassung: 1 failed, rot an `:150` der Probe-Fassung** (Bilder-Panel nicht gefunden, weit hinter der Ursache, wie die Story vorhersagte); **neue Fassung: 1 passed**. Ohne Zwilling im vollen Lauf grün. `frontend-reviewer`: korrekt. Playwright voll **82 passed**. Rollengang: Ersatz benannt – die Spec selbst fährt den Weg im echten Browser. Abgenommen; Commit: `90387d5`.
+- **2026-10-23** — Nachschau zu Sprint 9 (fünfter Nachtlauf, [Protokoll](../pm-sitzung-2026-10-24-nacht.md)), frischer Prüfer: Locator `bilder.spec.ts:116-117` gegen `VaterVocab.tsx:474` (`<td>{v.word}</td>`) gelesen – exakte Zelle schließt den Teilstring-Zwilling aus, ein exaktes Duplikat fällt laut an `:117`. Alle Specs nach `row` + RegExp + `.first()` gegrept: kein weiteres Zeilen-Muster (die `.first()`-Treffer sind Navigations-Links). Kein Befund.
