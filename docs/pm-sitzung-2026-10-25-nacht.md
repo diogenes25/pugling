@@ -84,3 +84,5 @@ Fund, der den Lauf beendete, war **schon vor der Unterbrechung gemessen** (Probe
 als „der Klapp-Zweig ist begründet, aber von keinem Fall ausgelöst" protokolliert – eine erkannte Testlücke zu einem
 Akzeptanzkriterium, die weder geschlossen noch ausdrücklich zurückgestellt wurde, kehrt im nächsten Review als Fund
 zurück.
+
+**Commit:** `8bc78d8` (Stand dieses Laufs; nicht gepusht).
