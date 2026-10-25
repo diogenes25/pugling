@@ -247,7 +247,7 @@ function NewAsset({ onCreated }: { onCreated: () => void }) {
         Ohne Schlagworte findet die Auswahl das Bild nie.
         {mode === "upload" && " Aus der hochgeladenen Datei erzeugt der Server alle Größen selbst."}
       </p>
-      {msg && <div className="banner ok" style={{ marginTop: 10 }} role="status" aria-live="polite">{msg}</div>}
+      <div className={`live-region${msg ? " banner ok" : ""}`} style={{ marginTop: 10 }} role="status" aria-live="polite">{msg}</div>
     </section>
   );
 }

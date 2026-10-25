@@ -56,10 +56,12 @@ export function Pager({ skip, take, total, onSkip, busy }: {
  * liefert höchstens eine Seite, und eine still gekappte Liste liest sich wie „mehr gibt es nicht".
  */
 export function TruncationHint({ shown, total }: { shown: number; total: number }) {
-  if (total <= shown) return null;
+  // Die Region bleibt auch bei vollständiger Liste stehen: wächst die Trefferzahl später über die Seite, wird
+  // der Hinweis nur angesagt, wenn er in eine schon vorhandene Region hineinkommt (B-134).
+  const truncated = total > shown;
   return (
-    <p className="banner" style={{ margin: "6px 0", fontSize: 13 }} role="status">
-      Zeigt {shown} von {total} Treffern – grenze die Filter weiter ein, um die übrigen zu sehen.
+    <p className={`live-region${truncated ? " banner" : ""}`} style={{ margin: "6px 0", fontSize: 13 }} role="status">
+      {truncated && <>Zeigt {shown} von {total} Treffern – grenze die Filter weiter ein, um die übrigen zu sehen.</>}
     </p>
   );
 }

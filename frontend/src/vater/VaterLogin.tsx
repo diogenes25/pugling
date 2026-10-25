@@ -41,12 +41,12 @@ export function VaterLogin() {
           ))}
         </div>
 
-        {registeredId !== null && (
-          <div className="banner ok" role="status" aria-live="polite">
+        <div className={`live-region${registeredId !== null ? " banner ok" : ""}`} role="status" aria-live="polite">
+          {registeredId !== null && <>
             Konto angelegt. Deine <strong>Id ist {registeredId}</strong> – die brauchst du bei jeder
             Anmeldung. Notiere sie.
-          </div>
-        )}
+          </>}
+        </div>
 
         {mode === "login"
           ? <LoginForm />

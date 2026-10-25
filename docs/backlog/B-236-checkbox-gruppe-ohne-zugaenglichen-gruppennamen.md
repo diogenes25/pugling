@@ -1,19 +1,20 @@
 ---
-tags: [typ/story, status/idee, bereich/frontend, a11y]
+tags: [typ/story, status/in-arbeit, bereich/frontend, a11y]
 aliases: [Gruppenkopf ohne fieldset/legend, Freigabe-Gruppe ohne Gruppennamen]
-status: idee
+status: in-arbeit
 prio: P3
 art: Defekt
-groesse: ""
+groesse: S
 wo: frontend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: Skill `web-design-guidelines` zu B-176 (Nachtlauf 2026-10-23, Sprint 1)
-unverifiziert: true
+unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-wartet_auf: ""
+nachgeschaut: ""
+wartet_auf: "Nutzer: Nachtlauf an Freigabe 3 beendet (Sprint 10) – frontend-reviewer für B-134/B-236 nicht gelaufen"
 ---
 
 # B-236 · Eine Gruppen-Überschrift über Kontrollkästchen ist sichtbar, aber für den Screenreader an nichts gebunden
@@ -31,11 +32,48 @@ Typografie-Regel aus B-176 müsste `legend` mit abdecken (oder `legend.group-lab
 
 ## Offene Punkte
 
-1. Welche Gruppenköpfe sind tatsächlich Köpfe einer **Gruppe von Controls** (fieldset/legend) und welche nur
+1. ~~Welche Gruppenköpfe sind tatsächlich Köpfe einer **Gruppe von Controls** (fieldset/legend) und welche nur
    Überschrift über einem Wiederhol-Feld (`RepeatedTextFields` – dort trägt jedes Feld schon ein `aria-label`
-   mit Scope)? Einzeln ansehen, nicht pauschal umstellen – dieselbe Mahnung wie in B-176.
-2. `fieldset` bringt Browser-Standardoptik (Rahmen, Padding) mit – die muss im `index.css` zurückgesetzt
-   werden, sonst verschiebt sich die Karte.
+   mit Scope)? Einzeln ansehen, nicht pauschal umstellen – dieselbe Mahnung wie in B-176.~~ → Entscheidung 1.
+2. ~~`fieldset` bringt Browser-Standardoptik (Rahmen, Padding) mit – die muss im `index.css` zurückgesetzt
+   werden, sonst verschiebt sich die Karte.~~ → Entscheidung 2.
+
+## Entscheidungen
+
+Autonom gegrillt am 2026-10-25 (`Defekt`, Freigabe 1), gegen den Stand nach `3270a2f` gemessen.
+
+1. **Umfang: sechs Gruppen, nicht elf Kandidaten.** Echte Gruppen von Kontrollkästchen unter einer Überschrift
+   sind „Schularten", „Lern-Standards" und „Freigabe (Startzustand)" in `VaterExerciseCreate.tsx`, dieselben zwei
+   ersten in `ExerciseEditModal.tsx` und „Rechenarten" im geteilten `ConfigEditor` (`exerciseConfig.tsx`). Die
+   Überschriften über `RepeatedTextFields` (`exerciseConfig.tsx` „Lückenwörter"/„Auswahl", `ClozeTexts.tsx`,
+   `VaterVocab.tsx` „Auch richtig") bleiben: dort trägt jedes Feld seinen Namen samt `scope` selbst, eine Gruppe
+   sagte dasselbe zweimal. Kosten: keine – die Ansage dort ist heute schon vollständig.
+2. **`role="group"` + `aria-labelledby` am vorhandenen `.field`-Container, nicht `<fieldset><legend>`.**
+   Begründung: (a) AK 2 dieser Story-Familie (B-176: „die Karte verschiebt sich nicht") – `fieldset` bringt
+   Rahmen, Innenabstand und `min-inline-size: min-content` mit; das Letzte kann eine Zeile mit `flexWrap` am
+   Tablet breiter als die Karte machen, genau die Messung, die B-68 im selben Sprint eingeführt hat. (b) `legend`
+   ist in einem Flex-Container kein Flex-Kind und nimmt den `gap` der Spalte nicht mit – die Überschrift säße
+   anders als ihre Nachbarn. (c) Für Hilfsmittel ist eine benannte `role="group"` dieselbe Gruppe wie ein
+   `fieldset` mit `legend` (beide `group` mit Namen im Barrierefreiheitsbaum), und das Repo nutzt die Form schon
+   (`BirkenbihlDecoding.tsx`, die Vorschau-Gruppen in `uebungstypen.spec.ts`). Der Name zeigt nur auf das
+   Stichwort („Lern-Standards"), nicht auf den Klammerzusatz – das wird vor jedem Kästchen angesagt; dafür
+   sitzt die `id` an einem inneren `span` bzw. am `label` von `FieldLabel` (neue Eigenschaft `id`), nicht an
+   der Zeile mit dem ⓘ-Knopf. Kosten: die Regel „semantisches HTML vor ARIA" wird hier bewusst nicht befolgt;
+   das `fieldset`-Vorbild in `VaterFachlehrer.tsx:427` bleibt daneben stehen, das Repo kennt also beide Formen.
+
+## Akzeptanzkriterien
+
+1. Jede der sechs Gruppen aus Entscheidung 1 erscheint im Barrierefreiheitsbaum als `group` mit dem Namen ihrer
+   Überschrift, und ihre Kontrollkästchen stehen in ihr.
+2. Die sichtbare Darstellung ändert sich nicht (keine neue Optik, kein `fieldset`-Rahmen).
+
+## Schätzung
+
+**S**, `wo: frontend`, keine Migration, kein Vertragsbruch. Risiko: ein Name, der den Klammerzusatz oder den
+ⓘ-Knopf mitliest (darum die `id` am Stichwort). **Angriffsplan:** (1) Spec schreiben, (2) rote Probe gegen
+den Ausgangsstand, (3) `FieldLabel` um `id` erweitern, sechs Container umstellen, (4) grün, Vitest/`tsc -b`,
+(5) `frontend-reviewer`. **Testweg:** E2E `frontend/e2e/gruppenkopf-benennt-die-gruppe.spec.ts` über
+`getByRole("group", { name, exact: true })` im echten Chromium (Anlegen-Seite und Bearbeiten-Dialog).
 
 ## Verlauf
 
@@ -45,3 +83,6 @@ Typografie-Regel aus B-176 müsste `legend` mit abdecken (oder `legend.group-lab
   wie Screenreader die drei Gruppen heute ansagen, ist nicht gemessen.
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht (`VaterExerciseCreate.tsx:247,255,290`). Vorbild im Repo: `VaterFachlehrer.tsx:427-428` (`<fieldset>` mit zurückgesetzter Optik + `<legend>`). Weitere Kandidaten einzeln prüfen: `exerciseConfig.tsx:438,694,719`, `ClozeTexts.tsx:272`, `VaterVocab.tsx:224,600`. S, autonom.
 - **2026-10-24** — fünfter Nachtlauf, Sprint 10 (NP-5, [Protokoll](../pm-sitzung-2026-10-24-nacht.md)): Kandidaten einzeln angesehen (offener Punkt 1). **Echte Gruppen ohne Gruppennamen:** `VaterExerciseCreate.tsx:247` (Schularten), `:255` (Lern-Standards), `:290` (Freigabe), dieselben zwei in `ExerciseEditModal.tsx:361,378`, dazu `exerciseConfig.tsx:547` (Rechenarten, `<label>` ohne Ziel). **Keine Gruppe im Sinn der Story:** `exerciseConfig.tsx:694,719`, `ClozeTexts.tsx:272`, `VaterVocab.tsx:224,600` – Überschrift über `RepeatedTextFields`, dort trägt jedes Feld seinen Namen samt `scope` selbst. Vorschlag für das Grillen (offener Punkt 2): `role="group"` + `aria-labelledby` am vorhandenen `.field`-Container statt `fieldset` – null Optik-Änderung, prüfbar per `getByRole("group", { name })`; das `fieldset`-Vorbild (`VaterFachlehrer.tsx:427`) bliebe daneben bestehen. **Unterbrochen (Rechner aus)**, nicht gebaut; Stufe unverändert.
+- **2026-10-25** — fortgesetzt am 2026-10-25 (Wiederaufnahme des fünften Nachtlaufs, Sprint 10 / NP-5, Zähler weiter bei 5; [Protokoll](../pm-sitzung-2026-10-25-nacht.md)).
+- **2026-10-25** — autonom gegrillt (Entscheidungen 1–2), geschätzt (S) und gebaut: `FieldLabel` mit `id`, sechs `.field`-Container mit `role="group"` + `aria-labelledby` (`VaterExerciseCreate.tsx`, `ExerciseEditModal.tsx`, `exerciseConfig.tsx`), neue Spec `frontend/e2e/gruppenkopf-benennt-die-gruppe.spec.ts` (zwei Tests, acht weiche Zusicherungen). Rote Probe (Auflage 5) – die vier Quelldateien aus `HEAD`, Spec unverändert: erwartet 8 rote Zusicherungen → gemessen **8** (`:22`, `:26`, `:27`, `:30`, `:35`, `:36` im Anlegen-Test, `:77`, `:79` im Dialog-Test, je „element(s) not found" bzw. `count` 0), **2 failed**; mit dem Fix **2 passed**. `tsc -b` sauber, Vitest **418/418**. `unverifiziert` auf `false`: der fehlende Gruppenname ist jetzt im Barrierefreiheitsbaum von Chromium gemessen; wie ein echter Screenreader ansagt, bleibt ein Blick des Menschen.
+- **2026-10-25** — Lauf an Freigabe 3 beendet (Fund 6 im Delta-Review von B-263, nicht in dieser Story), bevor der `frontend-reviewer` für B-134/B-236 lief. Stand gebaut, grün, committet; Stufe bleibt `in-arbeit`.

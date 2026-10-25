@@ -13,7 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-wartet_auf: "Fortsetzung Sprint 10 (unterbrochen: Rechner aus)"
+wartet_auf: "Nutzer: Nachtlauf an Freigabe 3 beendet (Sprint 10, Fund 6 aus dem Delta-Review) – offene Funde im Verlauf"
 ---
 
 # B-263 · Ein aufgeklapptes ⓘ am rechten Rand lässt die Seite seitlich scrollen
@@ -66,3 +66,8 @@ sichtbare ⓘ der 22 Routen auf und misst beides.
 - **2026-10-24** — angelegt beim Bau von B-68 (Sprint 10, NP-5); im selben Sprint behoben nach Freigabe 3 (gezählt:
   Fund 1). Autonom gegrillt und geschätzt.
 - **2026-10-24** — gebaut: `InfoHint.tsx` misst beim Öffnen (`useLayoutEffect`), verschiebt per `marginLeft` und klappt nach oben (`.info-hint-pop.up`), wenn `.vater-main` es unten abschnitte; die angewandte Lage wird beim Messen herausgerechnet (Review-Fund). Rote Proben siehe B-68. `frontend-reviewer` siehe B-68. **Unterbrochen (Rechner aus)**, Stufe `in-arbeit`.
+- **2026-10-25** — fortgesetzt am 2026-10-25 (Wiederaufnahme des fünften Nachtlaufs, Sprint 10 / NP-5, Zähler weiter bei 5; [Protokoll](../pm-sitzung-2026-10-25-nacht.md)).
+- **2026-10-25** — Delta-Review (`frontend-reviewer`) der Behebungen: korrekt, aber **zwei offene Funde** (keiner behoben, der Lauf endete an Freigabe 3 – Fund 6 von Sprint 10):
+  1. *Testlücke zu AK 1* („dort klappt es über den Knopf"): kein Fall der Spec löst `up` aus (schon im Vorlauf gemessen: „Klappen nach oben aus" → 1 passed). Vorschlag des Reviewers: einen Schritt, der die Lage erzwingt (ⓘ ans Ende von `.vater-main` bzw. in einen niedrigen Scroll-Rahmen), dann `.up`, `p.bottom <= Knopf.top`, `overBottom <= 0`; rote Probe: `.info-hint-pop.up` entfernen.
+  2. *ⓘ in einem `overflowX`-Rahmen bleibt unten abgeschnitten* (`ClozeTexts.tsx:239-245`, „Auch richtig" im `<th>`): `overflowX: auto` macht den Rahmen auch senkrecht zum Scroll-Container; bei ein, zwei Lücken ist die Tabelle niedriger als das Popover, nach oben ist kein Platz. Die Spec misst nur gegen `.vater-main` und öffnet dieses ⓘ nie (es erscheint erst mit Lücken). Vorschlag: `position: fixed` mit gemessenen Koordinaten, oder B-263 ausdrücklich auf `.vater-main` beschränken; im Test gegen den nächsten beschneidenden Vorfahren messen.
+  3. *Nit:* Drehen/Resize bei offenem Popover wird nicht nachgeführt (ein `resize`-Listener, der schließt, genügte).

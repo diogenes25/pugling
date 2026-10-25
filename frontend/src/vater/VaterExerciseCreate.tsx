@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
@@ -38,6 +38,8 @@ export function VaterExerciseCreate() {
   // Reihe/Unit kommen aus der Verwaltung mit (`+ Neue Übung` reicht sie als Query durch), damit der
   // Vater seine Auswahl nicht zweimal trifft.
   const [params] = useSearchParams();
+  // Namen der Kästchen-Gruppen (B-236): die Überschrift benennt die Gruppe per `aria-labelledby`.
+  const groupId = useId();
   const [subjectId, setSubjectId] = useState<number | "">(Number(params.get("subjectId")) || "");
   const [seriesId, setSeriesId] = useState<number | "">(Number(params.get("seriesId")) || "");
   const [seriesUnitId, setSeriesUnitId] = useState<number | "">(Number(params.get("seriesUnitId")) || "");
@@ -243,16 +245,16 @@ export function VaterExerciseCreate() {
           <textarea id="ex-description" value={description} onChange={(e) => setDescription(e.target.value)} rows={2}
             placeholder="Worum geht es, worauf achten? Hilft beim Wiederfinden im Lehrplan-Bau." />
         </div>
-        <div className="field" style={{ marginTop: 10 }}>
-          <FieldLabel topic="exerciseSchoolTypes">Schularten</FieldLabel>
+        <div className="field" style={{ marginTop: 10 }} role="group" aria-labelledby={`${groupId}-schools`}>
+          <FieldLabel id={`${groupId}-schools`} topic="exerciseSchoolTypes">Schularten</FieldLabel>
           <div className="row" style={{ gap: 14, flexWrap: "wrap" }}>
             {SCHOOL_TYPES.map((s) => (
               <label key={s} className="checkline"><input type="checkbox" checked={schoolTypes.includes(s)} onChange={() => toggleSchool(s)} /> {s}</label>
             ))}
           </div>
         </div>
-        <div className="field" style={{ marginTop: 10 }}>
-          <label>Lern-Standards <span className="muted">(Lehrplan-Positionen erben diese, können sie aber übersteuern)</span></label>
+        <div className="field" style={{ marginTop: 10 }} role="group" aria-labelledby={`${groupId}-standards`}>
+          <label><span id={`${groupId}-standards`}>Lern-Standards</span> <span className="muted">(Lehrplan-Positionen erben diese, können sie aber übersteuern)</span></label>
           <div className="row" style={{ gap: 14, flexWrap: "wrap" }}>
             <label className="checkline"><input type="checkbox" checked={defaultUseLeitner} onChange={(e) => setDefaultUseLeitner(e.target.checked)} /> Leitner-Kasten</label>
             <label className="checkline"><input type="checkbox" checked={defaultRequireTypedTest} onChange={(e) => setDefaultRequireTypedTest(e.target.checked)} /> nur getippte Tests</label>
@@ -283,11 +285,11 @@ export function VaterExerciseCreate() {
           Merkmal laufen in Text und Verhalten auseinander – darum spricht die Beschriftung hier vom
           Startzustand, nicht von einer Einstellung.
         */}
-        <div className="field" style={{ marginTop: 10 }}>
+        <div className="field" style={{ marginTop: 10 }} role="group" aria-labelledby={`${groupId}-release`}>
           {/* Gruppen-Überschrift, darum `span` statt `label`: sie beschriftet kein Eingabefeld – das tut
-              die Checkbox-Zeile darunter selbst. Wo die Entscheidung später umgestoßen wird, steht nur im
-              Popover: zweimal formuliert wären es irgendwann zwei Aussagen. */}
-          <span className="label-row group-label">Freigabe <span className="muted">(Startzustand)</span></span>
+              die Checkbox-Zeile darunter selbst; die Gruppe trägt sie als Namen (B-236). Wo die Entscheidung
+              später umgestoßen wird, steht nur im Popover: zweimal formuliert wären es irgendwann zwei Aussagen. */}
+          <span className="label-row group-label" id={`${groupId}-release`}>Freigabe <span className="muted">(Startzustand)</span></span>
           <span className="label-row">
             <label className="checkline">
               <input type="checkbox" checked={executePublic} onChange={(e) => setExecutePublic(e.target.checked)} /> Für andere Betreuer zuweisbar
@@ -306,9 +308,10 @@ export function VaterExerciseCreate() {
               patchRow={patchRow} addRow={addRow} removeRow={removeRow} />}
       </section>
 
-      {error && <div className="banner err" role="status" aria-live="polite">{error}</div>}
-      {okMsg && (
-        <div className="banner ok row" role="status" aria-live="polite" style={{ alignItems: "center", gap: 10 }}>
+      <div className={`live-region${error ? " banner err" : ""}`} role="status" aria-live="polite">{error}</div>
+      <div className={`live-region${okMsg ? " banner ok row" : ""}`} role="status" aria-live="polite"
+        style={{ alignItems: "center", gap: 10 }}>
+        {okMsg && <>
           <span>{okMsg}</span>
           {justCreated && (
             <button type="button" className="btn ghost inline-btn" style={{ width: "auto", marginLeft: "auto" }}
@@ -316,8 +319,8 @@ export function VaterExerciseCreate() {
           )}
           <Link to={manageHref} className="btn ghost inline-btn"
             style={{ width: "auto", textDecoration: "none", textAlign: "center" }}>Verwalten</Link>
-        </div>
-      )}
+        </>}
+      </div>
 
       <button type="submit" className="btn" style={{ width: "auto", alignSelf: "flex-start" }} disabled={busy || !route}>
         {busy ? "…" : "Übung anlegen"}

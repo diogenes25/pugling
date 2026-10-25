@@ -78,7 +78,7 @@ export function VaterPlanCreate() {
         </div>
       </section>
 
-      {error && <div className="banner err" role="status" aria-live="polite">{error}</div>}
+      <div className={`live-region${error ? " banner err" : ""}`} role="status" aria-live="polite">{error}</div>
       <button type="submit" className="btn" style={{ width: "auto", alignSelf: "flex-start" }} disabled={busy}>
         {busy ? "…" : "Plan anlegen & Übungen hinzufügen"}
       </button>

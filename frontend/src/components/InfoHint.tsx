@@ -118,15 +118,20 @@ function visibleBounds(el: HTMLElement): { left: number; right: number; top: num
  * Feld-Beschriftung mit angehängtem „ⓘ". Ersetzt ein `<label>` eins zu eins – der Hinweis steht als
  * Geschwister *neben* dem Label und nicht darin, sonst finge der Klick aufs Fragezeichen den Klick auf
  * die Beschriftung ab (die den Fokus ins Eingabefeld setzt).
+ *
+ * `id` braucht, wer mit dem Label eine ganze Gruppe benennt (`role="group"` + `aria-labelledby`, B-236): dann
+ * gibt es kein einzelnes Feld für `htmlFor`. Die `id` sitzt am Label, nicht an der Zeile – sonst hieße die
+ * Gruppe auch „Erklärung zu …".
  */
-export function FieldLabel({ htmlFor, topic, children }: {
+export function FieldLabel({ htmlFor, id, topic, children }: {
   htmlFor?: string;
+  id?: string;
   topic: HelpTopic;
   children: React.ReactNode;
 }) {
   return (
     <span className="label-row">
-      <label htmlFor={htmlFor}>{children}</label>
+      <label htmlFor={htmlFor} id={id}>{children}</label>
       <InfoHint topic={topic} />
     </span>
   );

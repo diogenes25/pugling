@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, bereich/a11y]
+tags: [typ/story, status/in-arbeit, bereich/frontend, bereich/a11y]
 aliases: [Live-Regionen hinter einer Bedingung, aria-live-Sweep, Wächter für Live-Regionen]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Defekt
 groesse: M
@@ -14,7 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 nachgeschaut: ""
-wartet_auf: ""
+wartet_auf: "Nutzer: Nachtlauf an Freigabe 3 beendet (Sprint 10) – frontend-reviewer für B-134/B-236 nicht gelaufen"
 ---
 
 # B-134 · Dreizehn Live-Regionen entstehen zusammen mit ihrem Text — und schweigen darum
@@ -167,3 +167,6 @@ hier vermerkt, damit sie nicht unbemerkt wachsen.
   Arbeit. Der Befund und die Stufe bleiben.
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht – 12 von 13 Stellen weiter bedingt; behoben ist nur `VaterLehrwerke.tsx` (dauerhafter `StatusBanner`). Neue Zeilen u. a. `VaterExerciseCreate.tsx:309,311`, `VaterWizard.tsx:640`. Die Rollenwahl je Fundstelle verengt `StatusBanner.tsx:9-16`; nur der Tausch der Toast-Optik in der Arcade (Punkt 3) braucht einen Blick. Nachtlauffähig nach autonomem Grillen, M.
 - **2026-10-24** — fünfter Nachtlauf, Sprint 10 (NP-5, [Protokoll](../pm-sitzung-2026-10-24-nacht.md)): autonom gegrillt (Entscheidungen 1–4) und geschätzt. Wächter `frontend/src/liveRegions.test.ts` geschrieben; rote Probe am Ausgangsstand (Auflage 5): erwartet 12 offene Stellen der Tabelle → gemessen **13 Funde** (dazu `ListControls.tsx:46`, Pager → Ausnahme mit Grund), danach mit Ausnahme **12**; die sieben Erkennungsfälle grün. **Unterbrochen (Rechner aus), nicht gebaut:** der Wächter liegt im Stash `nachtlauf-2026-10-24 NP-5 wip` (er ist rot, bis die zwölf Stellen umgebaut sind), die Umbauten fehlen.
+- **2026-10-25** — fortgesetzt am 2026-10-25 (Wiederaufnahme des fünften Nachtlaufs, Sprint 10 / NP-5, Zähler weiter bei 5; [Protokoll](../pm-sitzung-2026-10-25-nacht.md)).
+- **2026-10-25** — gebaut nach Entscheidungen 1–3: Wächter aus dem Stash zurückgeholt, Regel `.live-region:empty { position: absolute; }` in `index.css`, die zwölf Stellen auf „Region immer da, sichtbare Klasse nur mit Meldung" umgebaut (`VaterExerciseCreate.tsx` 2×, `VaterMedia.tsx`, `VaterPlanCreate.tsx`, `VaterWizard.tsx`, `SohnPractice.tsx`, `SohnShop.tsx`, `VaterVocab.tsx` 2× über eine gemeinsame `failure`-Variable, `VaterLogin.tsx`, `exerciseConfig.tsx` „Antwort fehlt in der Auswahl", `TruncationHint` ohne `return null`). Rote Probe (Auflage 5), am wiederhergestellten Stand vor dem Umbau: erwartet 12 Funde → gemessen **12** (Liste im Testausgang, 1 failed / 8 passed); nach dem Umbau **9/9**. `tsc -b` sauber, Vitest **418/418** (409 + 9 Wächter-Fälle). AK 3 („sichtbar unverändert") hält Playwright voll im Sprint-Abschluss; strukturelle Selektoren (`:last-child`, `+`, `~`), die eine leere Region verschieben könnte, gibt es in `index.css` nicht (gesucht).
+- **2026-10-25** — Lauf an Freigabe 3 beendet (Fund 6 im Delta-Review von B-263, nicht in dieser Story), bevor der `frontend-reviewer` für B-134/B-236 lief. Stand gebaut, grün, committet; Stufe bleibt `in-arbeit`.

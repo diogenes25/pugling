@@ -133,3 +133,5 @@ schließen (B-134 und B-236 ungebaut, kein Rollengang, keine Retro); **NP-6 (B-6
 5. Playwright voll (nach dem letzten Edit), Rollengang (Vater am Tablet: die Spec; Screenreader-Teil per Wächter und
    Komponententest, ein Mensch prüft die Ansage am echten Screenreader → `wartet_auf`), Retrospektive mit der Nachschau
    zu **Sprint 9** als erster Zeile (schon erledigt, hier oben), dann Abnahme und NP-6.
+
+**Fortsetzung am 2026-10-25:** [pm-sitzung-2026-10-25-nacht.md](pm-sitzung-2026-10-25-nacht.md) – B-134/B-236 gebaut, Lauf an Freigabe 3 beendet (Fund 6 im Delta-Review von B-263).

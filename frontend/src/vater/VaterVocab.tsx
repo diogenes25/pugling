@@ -401,6 +401,8 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
   const [baseFormRelation, setBaseFormRelation] = useState(v.baseFormRelation ?? "");
   const [audioUrl, setAudioUrl] = useState(v.pronunciationAudioUrl ?? "");
   const action = useAction();
+  // Nur ein Fehler wird an der Zeile gemeldet; Erfolg ist die geänderte Zeile selbst.
+  const failure = action.message && !action.message.ok ? action.message.text : null;
   const [showTags, setShowTags] = useState(false);
   const [showMedia, setShowMedia] = useState(false);
 
@@ -461,10 +463,8 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
             {/* Tags bleiben auch im Bearbeiten-Modus sichtbar – geändert werden sie im Tag-Editor, nicht hier. */}
             <TagsCell tags={v.tags} />
             <td className="row" style={actionCell}>
-              {action.message && !action.message.ok && (
-                <span className="muted" role="status" aria-live="polite"
-                  style={{ color: "var(--danger, #c00)", fontSize: 12 }}>{action.message.text}</span>
-              )}
+              <span className={`live-region${failure ? " muted" : ""}`} role="status" aria-live="polite"
+                style={{ color: "var(--danger, #c00)", fontSize: 12 }}>{failure}</span>
               <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy} onClick={save}>OK</button>
               <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={action.busy} onClick={cancel}>Abbrechen</button>
             </td>
@@ -485,10 +485,8 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
             <td>{POS_LABEL[v.partOfSpeech]}{detailSummary(v) && <div className="muted" style={{ fontSize: 11 }}>{detailSummary(v)}</div>}</td>
             <TagsCell tags={v.tags} />
             <td className="row" style={actionCell}>
-              {action.message && !action.message.ok && (
-                <span className="muted" role="status" aria-live="polite"
-                  style={{ color: "var(--danger, #c00)", fontSize: 12 }}>{action.message.text}</span>
-              )}
+              <span className={`live-region${failure ? " muted" : ""}`} role="status" aria-live="polite"
+                style={{ color: "var(--danger, #c00)", fontSize: 12 }}>{failure}</span>
               <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
                 aria-expanded={showTags} onClick={() => setShowTags((s) => !s)}>
                 🏷️ Tags{tagCount > 0 ? ` (${tagCount})` : ""}

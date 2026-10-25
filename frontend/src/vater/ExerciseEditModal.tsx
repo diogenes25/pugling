@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { Modal } from "../components/Modal";
 import { StatusBanner } from "../components/StatusBanner";
@@ -306,6 +306,8 @@ function MetaEditor({ detail, form, setForm, type, speichern, onSaved, gesperrt 
   gesperrt: boolean;
 }) {
   const action = useAction();
+  // Namen der Kästchen-Gruppen (B-236): die Überschrift benennt die Gruppe per `aria-labelledby`.
+  const groupId = useId();
 
   function up<K extends keyof MetaForm>(k: K, v: MetaForm[K]) {
     setForm((f) => ({ ...(f ?? form), [k]: v }));
@@ -357,8 +359,8 @@ function MetaEditor({ detail, form, setForm, type, speichern, onSaved, gesperrt 
         <label htmlFor="ed-description">Beschreibung <span className="muted">(optional)</span></label>
         <textarea id="ed-description" rows={2} value={form.description} onChange={(e) => up("description", e.target.value)} />
       </div>
-      <div className="field">
-        <FieldLabel topic="exerciseSchoolTypes">Schularten</FieldLabel>
+      <div className="field" role="group" aria-labelledby={`${groupId}-schools`}>
+        <FieldLabel id={`${groupId}-schools`} topic="exerciseSchoolTypes">Schularten</FieldLabel>
         <div className="row" style={{ gap: 14, flexWrap: "wrap" }}>
           {SCHOOL_TYPES.map((s) => (
             <label key={s} className="checkline">
@@ -374,8 +376,8 @@ function MetaEditor({ detail, form, setForm, type, speichern, onSaved, gesperrt 
         onChange={(ids) => up("interestTagIds", ids)}
         disabled={action.busy}
       />
-      <div className="field">
-        <label>Lern-Standards <span className="muted">(Lehrplan-Positionen erben diese, können sie aber übersteuern)</span></label>
+      <div className="field" role="group" aria-labelledby={`${groupId}-standards`}>
+        <label><span id={`${groupId}-standards`}>Lern-Standards</span> <span className="muted">(Lehrplan-Positionen erben diese, können sie aber übersteuern)</span></label>
         <div className="row" style={{ gap: 14, flexWrap: "wrap" }}>
           <label className="checkline"><input type="checkbox" checked={form.defaultUseLeitner}
             onChange={(e) => up("defaultUseLeitner", e.target.checked)} /> Leitner-Kasten</label>

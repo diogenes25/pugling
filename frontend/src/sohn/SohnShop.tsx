@@ -176,7 +176,7 @@ export function SohnShop() {
             error={historyError} onLoadMore={loadMoreHistory} />}
 
       <StatusBanner message={action.message} />
-      {msg && <div className="toast" role="status" aria-live="polite">{msg}</div>}
+      <div className={`live-region${msg ? " toast" : ""}`} role="status" aria-live="polite">{msg}</div>
     </div>
   );
 }

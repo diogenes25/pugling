@@ -641,7 +641,7 @@ export function VaterWizard() {
         </section>
       )}
 
-      {error && <div className="banner err" role="status" aria-live="polite">{error}</div>}
+      <div className={`live-region${error ? " banner err" : ""}`} role="status" aria-live="polite">{error}</div>
 
       <div className="row" style={{ gap: 10 }}>
         {step > 0 && <button type="button" className="btn ghost" style={{ width: "auto" }} onClick={back}>← Zurück</button>}

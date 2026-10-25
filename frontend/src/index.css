@@ -367,6 +367,10 @@ th.sortable[aria-sort="ascending"] .th-sort, th.sortable[aria-sort="descending"]
 /* Ein Fehlerkasten mit `tabIndex={-1}` nimmt beim Wiederholen den Fokus auf (B-216, `ListenAusfall.tsx`) –
    per Tastatur ausgelöst braucht er denselben sichtbaren Ring wie jedes andere fokussierbare Element. */
 .banner[tabindex]:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+/* Eine Live-Region steht immer im DOM und trägt ihre sichtbare Klasse (`banner`, `toast`, …) nur, solange sie
+   etwas meldet (B-134, Wächter `liveRegions.test.ts`). Leer nimmt sie so keinen Platz und keinen `gap` einer
+   Flex-Spalte ein – die Darstellung bleibt, als stünde sie nicht da. */
+.live-region:empty { position: absolute; }
 
 /* =========================================================================
    Motivations-Animationen (Duolingo-artig): Konfetti, Combo-Banner, Fighter-Flyby.

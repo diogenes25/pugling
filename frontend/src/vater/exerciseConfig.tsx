@@ -440,6 +440,8 @@ function LanguageSelect({ id, label, value, onChange }: {
 /** Zeilen-Editor für alle Typen außer Vokabeln (die haben ihre eigene Item-Ebene). */
 export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, removeRow }: EditorProps) {
   const ex = (patch: Row) => setExtra((e) => ({ ...e, ...patch }));
+  // Name der Kästchen-Gruppe „Rechenarten" (B-236).
+  const operationsId = useId();
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {/* Extra-Felder je Typ */}
@@ -543,8 +545,8 @@ export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, re
       )}
       {type === "ArithmeticDrill" && (
         <>
-          <div className="field">
-            <label>Rechenarten</label>
+          <div className="field" role="group" aria-labelledby={operationsId}>
+            <label id={operationsId}>Rechenarten</label>
             <div className="row" style={{ gap: 14, flexWrap: "wrap" }}>
               {ARITHMETIC_OPERATIONS.map((o) => {
                 const on = ((extra.operations as ArithmeticOperation[] | undefined) ?? []).includes(o.value);
@@ -639,11 +641,10 @@ export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, re
             <RowRepeatedField label="Auswahl" values={r.choices} scope={`Zeile ${i + 1}`}
               placeholder="eine Antwortmöglichkeit" optional topic={i === 0 ? "questionChoices" : undefined}
               onChange={(v) => patchRow(i, { choices: v })} />
-            {choicesMissAnswer(r) && (
-              <span className="error-box" role="status">
-                Die Antwort steht nicht in der Auswahl – das Kind bekommt nur diese Knöpfe und kann nicht richtig antworten.
-              </span>
-            )}
+            <span className={`live-region${choicesMissAnswer(r) ? " error-box" : ""}`} role="status">
+              {choicesMissAnswer(r)
+                && "Die Antwort steht nicht in der Auswahl – das Kind bekommt nur diese Knöpfe und kann nicht richtig antworten."}
+            </span>
           </>}
           {type === "Essay" && <>
             <RowField label="Kriterium" value={r.criterion} onChange={(v) => patchRow(i, { criterion: v })} placeholder="Aufbau" />

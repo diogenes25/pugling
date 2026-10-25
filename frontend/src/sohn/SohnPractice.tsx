@@ -358,7 +358,7 @@ export function SohnPractice() {
         )}
       </div>
 
-      {toast && <div className="toast" role="status" aria-live="polite">{toast}</div>}
+      <div className={`live-region${toast ? " toast" : ""}`} role="status" aria-live="polite">{toast}</div>
       {lastOutcome?.dueOn && phase === "front" && (
         <p className="sub" style={{ textAlign: "center" }}>Nächste Fälligkeit: {lastOutcome.dueOn}</p>
       )}
