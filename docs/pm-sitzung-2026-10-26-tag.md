@@ -452,4 +452,4 @@ Zurückstell-Stories B-272, B-273, B-275, B-278 und B-282 kommen alle aus Läufe
 **Beobachtung für den Nutzer, kein Vorschlag:** Ob Hinweise (🟢) überhaupt zählen sollen, entscheidet über die Hälfte
 der heutigen Zurückstellungen.
 
-**Commit:** folgt.
+**Commit:** `b644081` (nicht gepusht).
