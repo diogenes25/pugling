@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ratingSummary, starString } from "./ExerciseRatingPanel";
+import { canRate, ratingSummary, starString } from "./ExerciseRatingPanel";
 
 /*
  * Die Zeilenanzeige der Bewertung (B-12). Durchschnitt und Anzahl sind in jedem Fall verschieden gewählt,
@@ -26,5 +26,23 @@ describe("ratingSummary", () => {
 describe("starString", () => {
   it("füllt bis zur Sternzahl und lässt den Rest leer", () => {
     expect(starString(2)).toBe("★★☆☆☆");
+  });
+});
+
+describe("canRate", () => {
+  // Die Abgrenzung aus AK 7 („konsistent mit AK 2"): Der erste Fall belegt `isOwn` und `isOwner` verschieden,
+  // damit eine Verwechslung der beiden Felder auffällt – ein Schreib-Grantee darf bearbeiten UND bewerten.
+  // Über `row` statt als Objekt-Literal: ein Literal mit `isOwn` lehnte der Parametertyp als Überschuss ab.
+  const row = (r: { isOwner: boolean; isOwn: boolean }) => r;
+  it("lässt den Schreib-Grantee bewerten (isOwn, aber nicht isOwner)", () => {
+    expect(canRate(row({ isOwner: false, isOwn: true }))).toBe(true);
+  });
+
+  it("sperrt den Verwaltenden", () => {
+    expect(canRate(row({ isOwner: true, isOwn: true }))).toBe(false);
+  });
+
+  it("lässt den fremden Leser bewerten", () => {
+    expect(canRate(row({ isOwner: false, isOwn: false }))).toBe(true);
   });
 });

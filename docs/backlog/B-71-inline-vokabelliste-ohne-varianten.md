@@ -9,6 +9,7 @@ wo: beides
 migration: nein
 vertragsbruch: nein
 quelle: docs/backlog/B-65-vokabel-mehrere-uebersetzungen.md (Review-Nebenbefund)
+nachgeschaut: "2026-10-26"
 ---
 
 # B-71 · Die Inline-Vokabelliste im Übungs-Editor kann keine gleichwertigen Übersetzungen anlegen
@@ -247,3 +248,4 @@ Abnahme, dazu `pugling-reviewer` und `frontend-reviewer` (`wo: beides`).
   verbunden) als E2E: `e2e/auch-richtig-im-uebungseditor.spec.ts` (Assistent → Store → Dialog, Neuladen).
   Verifikation: `dotnet test` **909/909**, Vitest **423/423**, Playwright voll nach dem letzten Code-Edit **87 passed**.
   **Abgenommen**; Commit: `3094e34`.
+- **2026-10-26** — **Nachschau** (frischer Prüfer, read-only über `3094e34`, ([Protokoll](../pm-sitzung-2026-10-26-tag.md), Lauf B)): kein Code-Entgleiten in der Story selbst. Geprüft: Schreibreihenfolge in `AddItem` (`ExerciseControllers.cs:174-203`) gegen Entscheidung 3, der Wortwechsel in `PatchItem`, `null` gegen `[]` (AK 2, Entscheidung 4), `VocabItemInput`-Signatur, AK 6 (`ExerciseContentResolver.cs:99`), Testzahl 900 + 7 + 2 = 909, Mutanten M1 = 3, M3 = 2, M5 = 1 nachgerechnet, E2E `:90`. **Entgleiten (vorbestehend):** Der Schnellanleger im Assistenten legt für ein schon vorhandenes Wort einen `_2`-Eintrag an. AK 5 („denselben Store-Eintrag“) gilt darum nur für neue Wörter → [B-277](B-277-schnellanlage-legt-doppelten-store-eintrag-an.md).

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/katalog, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/katalog, rolle/creator]
 aliases: [Rating, Kuratierung]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Wunsch
 groesse: M
@@ -272,3 +272,4 @@ End-to-End-Rundlauf nach dem Bauen. Kein Playwright-E2E zwingend (kein Vater→S
   (sieht die Bewertungen, kein Formular). **Keine Abnahme:** der Lauf endete an Freigabe 3 vor Rollengang-Runde und
   Retro; Story bleibt `in-arbeit`, Wiederaufnahme im Protokoll. Commit `2f7ca24` (nicht gepusht).
 - **2026-10-26** — **Entscheidung des Nutzers** (Morgen-Entscheidung 2026-10-26, Dialog, [Protokoll](../pm-sitzung-2026-10-26-nacht.md#morgen-entscheidung-2026-10-26)): (1) Unbewertete Übungen stehen in **beiden** Sortierrichtungen **am Ende** (`sort=rating` und `-rating`); AK 6 ist damit geändert, rote Probe gegen die Spiegel-Sortierung. (2) Gebaut ist die Bewertung in der Verwaltungsliste, so wie die Story es sagt, und damit wird B-12 abgenommen. Anzeige und Sortierung im Positions-Formular kommen als eigene Story [B-270](B-270-bewertung-im-positions-formular.md). (3) Die Nacharbeit (Fund 6, Fund 7, AK 6 neu, dazu [B-269](B-269-bewertungen-reihenfolge-und-updatedat-ungetestet.md)) läuft mit **neuem Zähler (0)**. `wartet_auf` geleert. **Freigabe des Nutzers (Autonomer Modus, Opt-in):** der Nachtlauf darf die geänderte AK 6 ohne weiteres Grillen bauen.
+- **2026-10-26** — Nacharbeit (Lauf B, Zähler 0 → 4, ([Protokoll](../pm-sitzung-2026-10-26-tag.md), Lauf B)): AK 6 neu gebaut (unbewertete in beiden Richtungen hinten), Fund 6 (`canRate`, Vitest mit Grantee-Fall, Probe `isOwn` → 1 failed), Fund 7 (`role="img"`, E2E „5 von 5“ und „2 von 5 Sternen“), dazu [B-269](B-269-bewertungen-reihenfolge-und-updatedat-ungetestet.md). Review-Funde 1–4 behoben (Abdeckungs-Wächter 267 → 270 – **der volle Lauf von `2f7ca24` endete mit `exit=1` trotz „Passed!“**; Listentest; E2E-Reihenfolge; Sternen-Label), Proben je im Protokoll. Zurückgestellt: [B-275](B-275-bewertungsformular-fuer-grantee-ungetestet.md) (Aufrufstelle von `canRate` ohne Grantee-Fahrt). Rollengang ohne Browser (Extension nicht verbunden) als E2E `uebungen-bewerten.spec.ts`: Vater sieht Schnitt/Anzahl, sortiert auf- und absteigend (drei Übungen), bewertet, ändert, liest zurück, löscht; die Autorin liest mit, ohne Formular. Sohn und Creator als Regressionszeugen: volle Suiten grün. Verifikation: `dotnet build Pugling.sln` 0 Warnungen, `dotnet test Pugling.sln -c Release` **918/918 mit `exit=0`**, Vitest **438/438**, Playwright voll nach dem letzten Code-Edit **94 passed**. **Abgenommen**; Commit: folgt im Nachtrag.

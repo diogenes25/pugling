@@ -9,6 +9,7 @@ wo: beides
 migration: nein
 vertragsbruch: nein
 quelle: remark #9
+nachgeschaut: "2026-10-26"
 ---
 
 # B-64 · Das Lehrwerk gibt es zweimal: einmal als Freitext am Kind, einmal katalogisiert
@@ -265,3 +266,4 @@ Batch-Pfad im `MediaSelector` (B-03), deutlich mehr als eine lokalisierte Ein-Pu
   (Extension nicht verbunden) als E2E: `e2e/lehrbuch-katalog-zuerst.spec.ts` fährt AK 1–5 aus der Vater-Rolle.
   Verifikation: `dotnet test` **909/909**, Vitest **423/423**, Playwright voll nach dem letzten Code-Edit **87 passed**.
   **Abgenommen**; Commit: `3094e34`.
+- **2026-10-26** — **Nachschau** (frischer Prüfer, read-only über `3094e34`, ([Protokoll](../pm-sitzung-2026-10-26-tag.md), Lauf B)): kein Code-Entgleiten. Geprüft: die Projektion `TextbooksController.cs:36-41` gegen Entscheidung 3 (Unit-Klasse vor Freitext, Reihen-Verlag vor Freitext, auch die Rückfälle; alle vier Pfade über `Project`); jede Zusicherung von `StudentProfileTests` gegen die Projektion (Buch- und Katalogwerte durchgehend verschieden); das Formular `ChildMaterialSection.tsx:318-467` gegen AK 1–3; „4 rot / 11 grün“ nachgerechnet (10 → 15 Tests, genau 4 der 5 neuen rot); Mutanten M1, M2, M3, M5, M6 nachgerechnet (2/2/1/1/1). **Eine Zählung trägt nicht:** M4 „Verlag ohne Rückfall → 1 rot“ müsste nach den Tests 2 rot ergeben (auch der letzte Assert von `Lehrbuch_MitReiheUndUnit…`). Entweder war M4 eine andere Mutante, oder die Zahl stimmt nicht. Doku-Befund, kein Defekt.

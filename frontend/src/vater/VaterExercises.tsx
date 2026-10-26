@@ -155,7 +155,7 @@ export function VaterExercises() {
             options={[
               { key: "title", label: "Titel" }, { key: "type", label: "Typ" }, { key: "grade", label: "Klasse" },
               { key: "source", label: "Quelle" }, { key: "created", label: "Erstellt" },
-              // B-12: absteigend stehen unbewertete Übungen vorn (Server-Regel, Spiegel von aufsteigend).
+              // B-12: unbewertete Übungen stehen in beiden Richtungen hinten (Server-Regel, entschieden 2026-10-26).
               { key: "rating", label: "Bewertung" },
             ]}
             value={sort} dir={dir} onChange={(k, d) => { setSort(k); setDir(d); }} />

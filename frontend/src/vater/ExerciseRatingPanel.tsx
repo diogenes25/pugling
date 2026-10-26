@@ -25,6 +25,15 @@ export function ratingSummary(average: number | null | undefined, count: number)
   return `★ ${formatAverage(average)} (${count} ${count === 1 ? "Bewertung" : "Bewertungen"})`;
 }
 
+/**
+ * Darf der Betrachter diese Übung bewerten? Maßgeblich ist `isOwner` (verwaltet sie), nicht `isOwn` (darf sie
+ * bearbeiten): ein Schreib-Grantee nutzt fremdes Material und soll es bewerten dürfen – dieselbe Grenze wie der
+ * Server (`cannot_rate_own_exercise` nur für Verwaltende, B-12 AK 2/7).
+ */
+export function canRate(exercise: Pick<ExerciseSummary, "isOwner">): boolean {
+  return !exercise.isOwner;
+}
+
 /** Sterne als Zeichenkette – fünf Plätze, gefüllt bis `stars`. */
 export function starString(stars: number): string {
   return "★".repeat(stars) + "☆".repeat(Math.max(0, 5 - stars));
@@ -56,7 +65,9 @@ export function ExerciseRatingPanel({ exercise, onChanged }: { exercise: Exercis
           <ul aria-label="Bewertungen" style={{ listStyle: "none", padding: 0, margin: "4px 0" }}>
             {ratings.data.map((r) => (
               <li key={r.creatorId} style={{ marginBottom: 4 }}>
-                <span aria-label={`${r.stars} von 5 Sternen`}>{starString(r.stars)}</span>{" "}
+                {/* `role="img"`: ein `aria-label` auf einem blanken `span` sagen Screenreader nicht verlässlich an –
+                    sie läsen sonst „schwarzer Stern, schwarzer Stern, weißer Stern …". */}
+                <span role="img" aria-label={`${r.stars} von 5 Sternen`}>{starString(r.stars)}</span>{" "}
                 <strong>{r.creatorName}</strong>{r.isMine && <span className="muted"> (du)</span>}
                 {r.comment && <> – {r.comment}</>}
               </li>
@@ -64,7 +75,7 @@ export function ExerciseRatingPanel({ exercise, onChanged }: { exercise: Exercis
           </ul>
         ))}
 
-      {exercise.isOwner
+      {!canRate(exercise)
         ? <p className="muted" style={{ margin: "4px 0" }}>Deine eigene Übung kannst du nicht bewerten – das tun die, die sie nutzen.</p>
         : ratings.data && (
           // Neu aufgesetzt, sobald sich die eigene Bewertung ändert: das Formular zeigt dann den gespeicherten Stand.

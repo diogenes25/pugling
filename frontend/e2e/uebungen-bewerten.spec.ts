@@ -13,10 +13,17 @@ import { test, expect, type APIRequestContext } from "@playwright/test";
  */
 
 const RUN = Date.now().toString().slice(-6);
-// Titel und Anlage-Reihenfolge laufen der Bewertungs-Reihenfolge absichtlich entgegen: das Unbewertete heißt
-// alphabetisch früher und entsteht zuerst. So kann keine Sortierung nach Titel oder Anlage den Test bestehen.
-const FRESH = `Anfang ${RUN}`;
-const PROVEN = `Zuverlässig ${RUN}`;
+// Drei Zeilen: bewährt (5 Sterne), schwach (2) und unbewertet. Titel und Anlage ergeben beide [bewährt, neu,
+// schwach]; die Bewertung aufsteigend ist [schwach, bewährt, neu], absteigend [bewährt, schwach, neu] (Unbewertetes
+// in BEIDEN Richtungen hinten, AK 6). Keine Titel-/Anlage-Reihenfolge (auf- oder absteigend) trifft eine der beiden,
+// und auch die Spiegel ([neu, schwach, bewährt] bzw. [neu, bewährt, schwach]) sind eigene Antworten. Innerhalb der
+// bewerteten Zeilen laufen Titel und Anlage dem AUFSTEIGENDEN Durchschnitt entgegen – „bewertet zuerst, dann nach
+// Id/Titel" fällt darum am aufsteigenden Schritt. Ob absteigend wirklich der Durchschnitt entscheidet, kann diese
+// Spec mit zwei bewerteten Zeilen nicht trennen (jede feste Reihenfolge trifft eine der beiden Richtungen); das
+// trägt `ExerciseRatingsTests.SortRating_…_In_Beiden_Richtungen_Am_Ende`.
+const PROVEN = `Bewährt ${RUN}`;
+const FRESH = `Neu ${RUN}`;
+const WEAK = `Wackelig ${RUN}`;
 
 async function teacher(request: APIRequestContext, name: string, pin: string) {
   const created = await request.post("/api/v1/creator/teacher-accounts", { data: { name, email: null, pin } });
@@ -49,11 +56,15 @@ test("Vater bewertet eine geteilte Übung, sortiert danach – der Autor liest m
       title, orderIndex: 1, rewardPoints: 10,
       config: { problems: [{ prompt: "3 + 4", answer: 7, tolerance: 0 }] },
     });
-  await exercise(FRESH);
   const provenId = await exercise(PROVEN);
+  await exercise(FRESH);
+  const weakId = await exercise(WEAK);
   const rated = await request.put(`/api/v1/creator/exercises/${provenId}/rating`,
     { headers: other.headers, data: { stars: 5, comment: "Klar aufgebaut" } });
   expect(rated.ok(), await rated.text()).toBeTruthy();
+  const ratedWeak = await request.put(`/api/v1/creator/exercises/${weakId}/rating`,
+    { headers: other.headers, data: { stars: 2, comment: null } });
+  expect(ratedWeak.ok(), await ratedWeak.text()).toBeTruthy();
 
   // ── Vater: stöbern ────────────────────────────────────────────────────────────────────────────────
   const listUrl = `/vater/exercises?subjectId=${subjectId}&seriesId=${seriesId}&seriesUnitId=${unitId}`;
@@ -70,22 +81,24 @@ test("Vater bewertet eine geteilte Übung, sortiert danach – der Autor liest m
   await expect(proven.getByText("★ 5,0 (1 Bewertung)")).toBeVisible();
   await expect(fresh.getByText("noch unbewertet")).toBeVisible();
 
-  // AK 6 im UI: aufsteigend steht das Unbewertete hinten, absteigend (gespiegelt) vorn.
+  // AK 6 im UI: das Unbewertete steht in beiden Richtungen hinten (geändert 2026-10-26, Morgen-Entscheidung).
   // Nur die Zeilen dieses Laufs: auch das Entwicklungs-Widget trägt eine benannte Gruppe.
   const rowTitles = async () => (await page.locator("[role=group][aria-label]")
     .evaluateAll((els) => els.map((e) => e.getAttribute("aria-label") ?? ""))).filter((t) => t.endsWith(RUN));
   // Ausgangslage (Titel aufsteigend): erst feststellen, damit die Probe danach nicht auf dem Startzustand steht.
-  await expect.poll(rowTitles).toEqual([FRESH, PROVEN]);
+  await expect.poll(rowTitles).toEqual([PROVEN, FRESH, WEAK]);
   await page.getByLabel("Sortieren").selectOption("rating");
-  await expect.poll(rowTitles).toEqual([PROVEN, FRESH]);
+  await expect.poll(rowTitles).toEqual([WEAK, PROVEN, FRESH]);
   await page.getByRole("button", { name: "Aufsteigend – zu absteigend wechseln" }).click();
-  await expect.poll(rowTitles).toEqual([FRESH, PROVEN]);
+  await expect.poll(rowTitles).toEqual([PROVEN, WEAK, FRESH]);
 
   // ── Vater: bewerten, ändern, löschen ──────────────────────────────────────────────────────────────
   await proven.getByRole("button", { name: "★ Bewertungen" }).click();
   const ratings = proven.getByRole("list", { name: "Bewertungen" });
   await expect(ratings).toContainText(`Kollege ${RUN}`);
   await expect(ratings).toContainText("Klar aufgebaut");
+  // Die Sterne als benanntes Bild: ein `aria-label` auf einem blanken `span` sagen Screenreader nicht verlässlich an.
+  await expect(ratings.getByRole("img", { name: "5 von 5 Sternen" })).toBeVisible();
 
   await proven.getByLabel("2 Sterne").check();
   await proven.getByLabel(/Kommentar/).fill("Für Klasse 5 zu schwer");
@@ -93,6 +106,8 @@ test("Vater bewertet eine geteilte Übung, sortiert danach – der Autor liest m
   await expect(proven.getByText("Bewertung gespeichert.")).toBeVisible();
   // (5 + 2) / 2 – der Schnitt aus beiden, nicht der eigene Wert und nicht der fremde.
   await expect(proven.getByText("★ 3,5 (2 Bewertungen)")).toBeVisible();
+  // Der Bild-Name folgt der Sternzahl der Zeile, nicht einem festen Wert.
+  await expect(ratings.getByRole("img", { name: "2 von 5 Sternen" })).toBeVisible();
   await expect(ratings).toContainText("(du)");
   await expect(ratings).toContainText("Für Klasse 5 zu schwer");
 

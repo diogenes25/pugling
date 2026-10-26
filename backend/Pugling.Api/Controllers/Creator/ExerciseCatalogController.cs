@@ -39,7 +39,7 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     /// title happens to mention a unit (B-18).</param>
     /// <param name="mineOnly">Only own exercises of the requesting adult (management rather than discovery).</param>
     /// <param name="sort">Sort column: <c>title</c>, <c>type</c>, <c>grade</c>, <c>source</c>, <c>created</c>,
-    /// <c>rating</c> (average stars; unrated exercises last, with <c>-rating</c> first).
+    /// <c>rating</c> (average stars; unrated exercises last in both directions).
     /// Short form <c>-title</c> = descending. Without a value: subject → series unit → order.</param>
     /// <param name="dir"><c>asc</c> (default) or <c>desc</c>; takes precedence over a <c>-</c> prefix in <paramref name="sort"/>.</param>
     /// <param name="skip">Number of entries to skip (paging).</param>
@@ -146,12 +146,12 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
             ("source", true) => q.OrderByDescending(e => e.Source).ThenBy(e => e.Id),
             ("created", false) => q.OrderBy(e => e.CreatedAt).ThenBy(e => e.Id),
             ("created", true) => q.OrderByDescending(e => e.CreatedAt).ThenBy(e => e.Id),
-            // B-12: unrated exercises have no average. They go to the end ascending and - as the exact mirror -
-            // to the start descending, made explicit through the leading key instead of left to how the
-            // provider happens to order NULL.
+            // B-12: unrated exercises have no average and go to the END in BOTH directions: "-rating" is how a
+            // supervisor looks for the best exercises, and a mirrored order would put everything unrated in
+            // front of them. Made explicit through the leading key instead of left to how the provider orders NULL.
             ("rating", false) => q.OrderBy(e => e.Ratings.Any() ? 0 : 1)
                 .ThenBy(e => e.Ratings.Average(r => (double?)r.Stars)).ThenBy(e => e.Id),
-            ("rating", true) => q.OrderByDescending(e => e.Ratings.Any() ? 0 : 1)
+            ("rating", true) => q.OrderBy(e => e.Ratings.Any() ? 0 : 1)
                 .ThenByDescending(e => e.Ratings.Average(r => (double?)r.Stars)).ThenBy(e => e.Id),
             // The domain default order (no per-column clickable sort key): ascending on purpose - reversing the
             // catalog tree (subject → series unit → order) would make no sense.

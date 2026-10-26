@@ -13,7 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-nachgeschaut: ""
+nachgeschaut: "2026-10-26"
 wartet_auf: ""
 ---
 
@@ -89,3 +89,4 @@ den Ausgangsstand, (3) `FieldLabel` um `id` erweitern, sechs Container umstellen
 - **2026-10-26** — **Entscheidung des Nutzers** (Morgen-Entscheidung 2026-10-26, Dialog, [Protokoll](../pm-sitzung-2026-10-26-nacht.md#morgen-entscheidung-2026-10-26)): Sprint 10 wird fortgesetzt, die Nacharbeit (inkl. des nicht gelaufenen `frontend-reviewer`) läuft mit **neuem Zähler (0)**. `wartet_auf` geleert.
 - **2026-10-26** — `frontend-reviewer` (Lauf A, nachgeholte Runde 2, ([Protokoll](../pm-sitzung-2026-10-26-tag.md))): Die sechs Gruppen sind wie in Entscheidung 1 benannt, alle `aria-labelledby` lösen auf. Zwei Hinweise (🟢): Der Name „Freigabe (Startzustand)“ schließt die Klammer ein (gegen Entscheidung 2), und die Spec bliebe grün, wenn `role="group"` an die umgebende `<section>` rückte. Beide sind ausdrücklich zurückgestellt → [B-272](B-272-live-region-und-gruppen-tests-tragen-nicht-alles.md), weil jede Behebung als Fund zählt.
 - **2026-10-26** — Rollengang (Lauf A, [Protokoll](../pm-sitzung-2026-10-26-tag.md)): Die Chrome-Extension war nicht verbunden, darum nach Freigabe 6 als E2E: `responsive-vater.spec.ts` (Vater am Tablet, 22 Routen, jedes ⓘ), `feldhilfe-lage.spec.ts` (6 Fälle), `gruppenkopf-benennt-die-gruppe.spec.ts`, Wächter `liveRegions.test.ts`. Sohn und Creator als Regressionszeugen: volle Suite grün, keine ihrer Specs rot. Verifikation: `tsc -b` sauber, Vitest **435/435**, Playwright voll nach dem letzten Code-Edit **93 passed**, danach `feldhilfe-lage` mit dem nur testseitigen Zusatz **6 passed**. Offen für einen Menschen: die echte Screenreader-Ansage (B-134/B-236) und das Popover am echten Tablet. **Abgenommen**; Commit: `0ecb31b`.
+- **2026-10-26** — **Nachschau** (frischer Prüfer, read-only über `8bc78d8`, ([Protokoll](../pm-sitzung-2026-10-26-tag.md), Lauf B)): kein Entgleiten. Geprüft: sechs Container mit `role="group"` + `aria-labelledby`; Ids am Stichwort (außer „Freigabe“, schon B-272); genau 8 `expect.soft` an `:22/26/27/30/35/36/77/79` wie behauptet; AK 2 (kein `fieldset`, kein neues Styling).

@@ -163,6 +163,8 @@ public class ExerciseRatingsTests(PuglingWebAppFactory factory) : IClassFixture<
             Assert.Equal(1, db.ExerciseRatings.Count(r => r.ExerciseId == exerciseId && r.CreatorId == raterId));
         }
         Assert.Equal(first.GetProperty("createdAt").GetDateTime(), second.GetProperty("createdAt").GetDateTime());
+        // B-269: overwriting moves UpdatedAt on, or "newest change first" in the list would sort by the first rating.
+        Assert.True(second.GetProperty("updatedAt").GetDateTime() > first.GetProperty("updatedAt").GetDateTime());
         Assert.Equal(JsonValueKind.Null, second.GetProperty("comment").ValueKind);
         var detail = await owner.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}");
         Assert.Equal(4.5, detail.GetProperty("averageRating").GetDouble(), 3);
@@ -202,7 +204,7 @@ public class ExerciseRatingsTests(PuglingWebAppFactory factory) : IClassFixture<
     }
 
     [Fact]
-    public async Task SortRating_Nach_Durchschnitt_Unbewertete_Aufsteigend_Am_Ende_Absteigend_Am_Anfang()
+    public async Task SortRating_Nach_Durchschnitt_Unbewertete_In_Beiden_Richtungen_Am_Ende()
     {
         var (owner, _) = await NewCreatorAsync("Autor");
         var (r1, _) = await NewCreatorAsync("Bewerter1");
@@ -223,6 +225,30 @@ public class ExerciseRatingsTests(PuglingWebAppFactory factory) : IClassFixture<
 
         int[] Ids(JsonElement[] rows) => [.. rows.Select(r => r.GetProperty("id").GetInt32())];
         Assert.Equal([b, c, a, d], Ids(await SearchUnitAsync(owner, unitId, "rating")));
-        Assert.Equal([a, d, c, b], Ids(await SearchUnitAsync(owner, unitId, "-rating")));
+        // Descending is how a supervisor looks for the best exercises: the unrated stay at the end instead of
+        // mirroring to the front (decided 2026-10-26). [a, d, c, b] would be the mirror.
+        Assert.Equal([c, b, a, d], Ids(await SearchUnitAsync(owner, unitId, "-rating")));
+    }
+
+    [Fact]
+    public async Task Liste_Nennt_Die_Juengste_Aenderung_Zuerst()
+    {
+        var (owner, _) = await NewCreatorAsync("Autor");
+        var (r1, r1Id) = await NewCreatorAsync("Bewerter1");
+        var (r2, r2Id) = await NewCreatorAsync("Bewerter2");
+        var (r3, r3Id) = await NewCreatorAsync("Bewerter3");
+        var (seriesId, unitId) = await NewUnitAsync(owner);
+        var exerciseId = await NewExerciseAsync(owner, seriesId, unitId, "Plus");
+        // Rated in the order r1, r2, r3, then r1 changes. Newest change first is [r1, r3, r2]; newest creation
+        // first would be [r3, r2, r1], row id order [r1, r2, r3] - three different answers, so a list that sorts by
+        // anything but UpdatedAt fails (B-269). r1 changes only the COMMENT and keeps all stars equal: a list sorted
+        // by stars has nothing to go on, and an UpdatedAt that only moves with the stars stays behind.
+        foreach (var rater in new[] { r1, r2, r3 })
+            Assert.Equal(HttpStatusCode.OK, (await RateAsync(rater, exerciseId, 3)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await RateAsync(r1, exerciseId, 3, "nachgeschärft")).StatusCode);
+
+        var list = (await owner.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/ratings"))
+            .EnumerateArray().Select(r => r.GetProperty("creatorId").GetInt32()).ToArray();
+        Assert.Equal([r1Id, r3Id, r2Id], list);
     }
 }

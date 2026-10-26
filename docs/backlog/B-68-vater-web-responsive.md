@@ -10,6 +10,7 @@ migration: nein
 vertragsbruch: nein
 quelle: remark #1
 wartet_auf: ""
+nachgeschaut: "2026-10-26"
 ---
 
 # B-68 · Das Vater-Web hat keinen einzigen eigenen Breakpoint
@@ -188,3 +189,4 @@ sich in einer Runde entscheiden.
 - **2026-10-25** — Delta-Review (`frontend-reviewer`, nur die Behebungen aus `9c7578c`): die vier Behebungen tragen (Herausrechnen der Lage idempotent, `marginLeft`, `overBottom` misst nur das Popover, Ruhelage-Schritt rot bei jeder Verschiebung). **Zwei Funde, beide offen, siehe [B-263](B-263-info-popover-steht-am-rechten-rand-ueber.md):** der Klapp-nach-oben-Weg ist ungetestet, und ein ⓘ in einem `overflowX`-Rahmen (`ClozeTexts.tsx:239-245`) bleibt unten abgeschnitten. Der erste ist Fund 6 von Sprint 10 → Freigabe 3 beendet den Lauf; nichts davon behoben. Rollengang/Retro nicht geführt.
 - **2026-10-26** — **Entscheidung des Nutzers** (Morgen-Entscheidung 2026-10-26, Dialog, [Protokoll](../pm-sitzung-2026-10-26-nacht.md#morgen-entscheidung-2026-10-26)): Sprint 10 wird fortgesetzt, die Nacharbeit läuft mit **neuem Zähler (0)**; die Zählregel selbst bleibt unverändert. `wartet_auf` geleert.
 - **2026-10-26** — Rollengang (Lauf A, [Protokoll](../pm-sitzung-2026-10-26-tag.md)): Die Chrome-Extension war nicht verbunden, darum nach Freigabe 6 als E2E: `responsive-vater.spec.ts` (Vater am Tablet, 22 Routen, jedes ⓘ), `feldhilfe-lage.spec.ts` (6 Fälle), `gruppenkopf-benennt-die-gruppe.spec.ts`, Wächter `liveRegions.test.ts`. Sohn und Creator als Regressionszeugen: volle Suite grün, keine ihrer Specs rot. Verifikation: `tsc -b` sauber, Vitest **435/435**, Playwright voll nach dem letzten Code-Edit **93 passed**, danach `feldhilfe-lage` mit dem nur testseitigen Zusatz **6 passed**. Offen für einen Menschen: die echte Screenreader-Ansage (B-134/B-236) und das Popover am echten Tablet. **Abgenommen**; Commit: `0ecb31b`.
+- **2026-10-26** — **Nachschau** (frischer Prüfer, read-only über `9c7578c`/`8bc78d8`/`0ecb31b`, ([Protokoll](../pm-sitzung-2026-10-26-tag.md), Lauf B)): AK 1 und AK 4 halten (Netz nur am `html`, kein Sohn-/Produktseiten-Selektor geändert, 22 Routen, kein `sticky` im Vater-Web). **Entgleiten:** Die Kernregel `.vater-main { min-width: 0; overflow-x: auto }` trägt seit dem festen Popover (B-263, Entscheidung 2) kein Test mehr. Die roten Proben stammten aus der `absolute`-Zeit, und mit dem Seed läuft keine der 22 Routen über. Dazu kommt ein veralteter Kommentar an `.vater-main` → [B-276](B-276-vater-main-ueberlauf-regel-ungetragen.md).
