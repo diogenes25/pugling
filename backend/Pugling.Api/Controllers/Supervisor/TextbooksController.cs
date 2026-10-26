@@ -38,7 +38,7 @@ public class TextbooksController(PuglingDbContext db) : ControllerBase
             t.CurrentUnit != null && t.CurrentUnit.Grade != null ? t.CurrentUnit.Grade : t.Grade,
             t.Series != null && t.Series.Publisher != null ? t.Series.Publisher.Name : t.Publisher,
             t.Isbn, t.CurrentChapter, t.CreatedAt,
-            t.SeriesId, t.Series!.Name, t.CurrentUnitId, t.CurrentUnit!.Label));
+            t.SeriesId, t.Series!.Name, t.CurrentUnitId, t.CurrentUnit!.Label, t.Publisher, t.Grade));
 
     /// <summary>All textbooks of the child.</summary>
     [HttpGet]

@@ -217,7 +217,8 @@ public class ExerciseRatingsTests(PuglingWebAppFactory factory) : IClassFixture<
         var c = await NewExerciseAsync(owner, seriesId, unitId, "C");
         var d = await NewExerciseAsync(owner, seriesId, unitId, "D unbewertet");
         // B: 1 and 5 → average 3, but maximum 5, count 2 and sum 6. C: 4 → average 4, maximum 4, count 1, sum 4.
-        // Only the average puts B before C; max, count and sum all put C first.
+        // Among max, count, sum and average, only the average puts B before C. Id order also puts B before C, so
+        // "rated first, then Id" passes the ASCENDING assertion; it fails descending, and ascending in the E2E spec.
         // Checked: the discrimination above only holds if all three ratings really landed.
         Assert.Equal(HttpStatusCode.OK, (await RateAsync(r1, b, 1)).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await RateAsync(r2, b, 5)).StatusCode);

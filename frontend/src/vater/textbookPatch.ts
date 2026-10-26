@@ -32,13 +32,20 @@ export const EMPTY_TEXTBOOK_FORM: Readonly<TextbookFormValues> = Object.freeze({
   title: "", subjectId: "", grade: "", publisher: "", seriesId: "", currentUnitId: "", currentChapter: "",
 });
 
-/** Der Ladezustand: dieselbe Form, gefüllt aus der Antwort des Servers. */
+/**
+ * Der Ladezustand: dieselbe Form, gefüllt aus der Antwort des Servers.
+ *
+ * Verlag und Klasse kommen aus dem **gespeicherten Freitext** (`publisherFreeText`/`gradeFreeText`), nicht aus
+ * `publisher`/`grade`: die tragen bei einem verknüpften Buch den Katalogwert (B-64). Das Freitextfeld erscheint erst,
+ * wenn der Vater die Verknüpfung löst, und zeigt dann, was wirklich gespeichert ist – mit dem Katalogwert vorbelegt
+ * stünde dort etwas, das gar nicht gespeichert ist, und Leeren löschte einen Wert, den er nie gesehen hat (B-267).
+ */
 export function textbookFormValues(book: TextbookResponse): TextbookFormValues {
   return {
     title: book.title,
     subjectId: subjectFormValue(book),
-    grade: book.grade == null ? "" : String(book.grade),
-    publisher: book.publisher ?? "",
+    grade: book.gradeFreeText == null ? "" : String(book.gradeFreeText),
+    publisher: book.publisherFreeText ?? "",
     seriesId: book.seriesId == null ? "" : String(book.seriesId),
     currentUnitId: book.currentUnitId == null ? "" : String(book.currentUnitId),
     currentChapter: book.currentChapter ?? "",

@@ -139,11 +139,30 @@ public class StudentProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
         })).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(publisherName, linked.GetProperty("publisher").GetString());
         Assert.Equal(7, linked.GetProperty("grade").GetInt32());
+        // B-267: the stored free text travels alongside, untouched by the catalog - catalog and free text differ
+        // here ("Freitext-Verlag" vs. the series' publisher, 9 vs. 7), so a projection of the derived value fails.
+        Assert.Equal("Freitext-Verlag", linked.GetProperty("publisherFreeText").GetString());
+        Assert.Equal(9, linked.GetProperty("gradeFreeText").GetInt32());
 
         // The list projects the same way (one projection for all reads).
         var listed = (await father.GetFromJsonAsync<JsonElement>(url)).EnumerateArray()
             .Single(b => b.GetProperty("id").GetInt32() == linked.GetProperty("id").GetInt32());
         Assert.Equal(publisherName, listed.GetProperty("publisher").GetString());
+
+        // B-267: linked WITHOUT any free text - the free-text fields stay empty instead of falling back to the
+        // catalog, or the field that reappears on unlinking would again show a value nobody stored.
+        var bare = await (await father.PostAsJsonAsync(url, new
+        {
+            title = "Access 7 ohne Freitext",
+            subjectName = (string?)null,
+            grade = (int?)null,
+            publisher = (string?)null,
+            seriesId,
+            currentUnitId = withGrade,
+        })).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(publisherName, bare.GetProperty("publisher").GetString());
+        Assert.Equal(JsonValueKind.Null, bare.GetProperty("publisherFreeText").ValueKind);
+        Assert.Equal(JsonValueKind.Null, bare.GetProperty("gradeFreeText").ValueKind);
 
         // Unit without a grade: the catalog has no value, so the typed one is the only information and stays.
         var noGrade = await (await father.PostAsJsonAsync(url, new
@@ -205,12 +224,16 @@ public class StudentProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
             .Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(publisherName, linked.GetProperty("publisher").GetString());
         Assert.Equal(7, linked.GetProperty("grade").GetInt32());
+        // B-267: stored free text alongside the catalog value, as in the test above.
+        Assert.Equal("Freitext-Verlag", linked.GetProperty("publisherFreeText").GetString());
+        Assert.Equal(9, linked.GetProperty("gradeFreeText").GetInt32());
 
         // Writing the grade while linked changes the stored fallback, not the shown catalog value - and the
         // write must not be dropped: it is what shows once the unit is gone.
         var whileLinked = await (await father.PatchAsJsonAsync($"{url}/{bookId}", new { grade = 8 }))
             .Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(7, whileLinked.GetProperty("grade").GetInt32());
+        Assert.Equal(8, whileLinked.GetProperty("gradeFreeText").GetInt32());
 
         var unitCleared = await (await father.PatchAsJsonAsync($"{url}/{bookId}", new { clearUnit = true }))
             .Content.ReadFromJsonAsync<JsonElement>();

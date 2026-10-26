@@ -159,7 +159,7 @@ sind die Nacharbeit selbst.
 
 | Probe | erwartet | gemessen |
 | --- | --- | --- |
-| Spiegel absteigend (alter Stand) | Sortiertest rot | **1 failed** (`[18,21,20,19]` statt `[20,19,18,21]`); E2E **rot an `:89`** |
+| Spiegel absteigend (alter Stand) | Sortiertest rot | **1 failed** (`[18,21,20,19]` statt `[20,19,18,21]`); E2E rot (gemessen an `:89` eines Zwischenstands; im Commit fällt der Spiegel an `:93`) |
 | Liste nach `Id` / nach `CreatedAt` | Listentest rot | je **1 failed** (`[9,10,11]` bzw. `[11,10,9]` statt `[9,11,10]`) |
 | `UpdatedAt` beim Überschreiben nicht gesetzt | rot | **2 failed** (Liste + `Assert.True` im Überschreib-Test) |
 | `canRate` liest `isOwn` | Grantee-Fall rot | **1 failed** (genau der Grantee-Fall) |
@@ -167,7 +167,7 @@ sind die Nacharbeit selbst.
 | Build / Backend / Vitest / Spec | grün | 0 Warnungen / **918/918** / **438/438** / **1 passed** |
 
 **Abgrenzungen im Testaufbau (Pflichtschritt):** *Unbewertet hinten statt gespiegelt*: Im Sortiertest liegt der Spiegel
-`[a,d,c,b]` neben der Erwartung `[c,b,a,d]`. In der E2E-Spec sind Titel- und Anlage-Reihenfolge `[schwach, neu, bewährt]`,
+`[a,d,c,b]` neben der Erwartung `[c,b,a,d]`. In der E2E-Spec sind Titel- und Anlage-Reihenfolge `[bewährt, neu, schwach]` (nach Fund 3; vorher `[schwach, neu, bewährt]`),
 damit trifft keine der vier Titel-/Anlage-Reihenfolgen eine Bewertungs-Reihenfolge. *Jüngste Änderung statt Anlage
 oder Id*: drei Bewerter, einer ändert, das ergibt drei verschiedene Antworten. *`isOwner` statt `isOwn`*: Der
 Grantee-Fall belegt beide verschieden. *Grenze/Toleranz*: Der Vergleich `updatedAt >` ist strikt, Toleranz 0. Er
@@ -182,8 +182,8 @@ einzige zeitabhängige Zusicherung ist.
 | --- | --- | --- | --- | --- |
 | 1 | `pugling-reviewer` (+ Test-Tor) | Der Abdeckungs-Wächter erwartete 267 Actions, B-12 brachte 270. Jeder volle Lauf seit `2f7ca24` scheiterte im Assembly-Cleanup, die Konsole zeigte trotzdem „Passed!“ | `FullRunTouchedActions = 270`; Probe mit 267 → **`exit=1`** bei „Passed! 918“ | ja |
 | 2 | `pugling-reviewer` | Der Listentest ließ „nach Sternen“ und „`UpdatedAt` nur bei neuen Sternen“ grün (r1 war zugleich jüngste Änderung und bester Wert) | r1 ändert nur den Kommentar; beide Mutanten → **1 failed** | ja |
-| 3 | `frontend-reviewer` | Die E2E-Spec bewies nicht, dass der Durchschnitt sortiert („bewertet zuerst, dann Id“ blieb grün) | Titel/Anlage innerhalb der bewerteten Zeilen gegenläufig; Mutante → **rot an `:89`** | ja |
-| 4 | `frontend-reviewer` | Bild-Name der Sterne nur für 5 geprüft (ein fester Wert blieb grün) | Zusicherung „2 von 5 Sternen“; Mutante → **rot an `:108`** | ja |
+| 3 | `frontend-reviewer` | Die E2E-Spec bewies nicht, dass der Durchschnitt sortiert („bewertet zuerst, dann Id“ blieb grün) | Titel/Anlage innerhalb der bewerteten Zeilen gegenläufig; Mutante → rot an der aufsteigenden Zusicherung (im Commit `:91`) | ja |
+| 4 | `frontend-reviewer` | Bild-Name der Sterne nur für 5 geprüft (ein fester Wert blieb grün) | Zusicherung „2 von 5 Sternen“; Mutante → rot an der neuen Zusicherung (im Commit `:110`) | ja |
 
 Nicht gezählt: Der Test-Tor-Flake `AtomaresSchreiben_KeineLeseFehler` (außerhalb des Diffs) →
 [B-274](backlog/B-274-atomares-schreiben-flackert-wieder.md). Zurückgestellt (🟢): Die Aufrufstelle von `canRate`
@@ -247,3 +247,67 @@ Protokoll von Lauf A (berichtigt) sowie ein veralteter `.vater-main`-Kommentar (
   Spiegelbild zu „E2E nie am Exit-Code messen“.
 
 **Commit:** `ee71a74` (nicht gepusht).
+
+## Lauf B, zweiter Sprint — *Lehrbuch-Formular* (B-267, B-268)
+
+**Sprint-Ziel:** *Der Vater sieht nach dem Lösen des Lehrbuchs vom Katalog, was wirklich gespeichert ist, und eine
+Tastaturnutzerin verliert beim Anlegen einer Reihe nicht ihren Platz.* Umfang:
+[B-267](backlog/B-267-entkoppeltes-lehrbuch-zeigt-katalogwert-im-freitextfeld.md) (Weg a) und
+[B-268](backlog/B-268-fokus-nach-inline-reihe.md). Beide Stories trugen die Freigabe-Zeile des Nutzers vom 2026-10-26
+und wurden autonom ausformuliert und geschätzt (S, XS). **Zähler: 0.**
+
+### Iteration
+
+- **B-267:** `TextbookResponse` trägt zusätzlich `PublisherFreeText`/`GradeFreeText`, die Projektion liest die
+  gespeicherten Spalten, und `textbookFormValues` liest den Freitext. Proben: Projektion mit dem abgeleiteten Wert →
+  2 failed; Formular mit dem Katalogwert → 3 failed.
+- **B-268:** Das Fokusziel nach Öffnen, Anlegen und Abbrechen läuft über einen Effekt. Proben: jeder der drei Sprünge
+  einzeln weg → rot an `:333`/`:336`/`:344`.
+
+### Review
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `pugling-reviewer` | Kein verknüpftes Buch ohne Freitext getestet, ein Rückfall auf den Katalog bliebe grün | Fall `bare`; Mutante → 1 failed | ja |
+| 2 | `frontend-reviewer` | dasselbe im Frontend | Nullfall in `textbookPatch.test.ts`; Mutante → 1 failed | ja |
+| 3 | `frontend-reviewer` | Zurücksetzen des Fokusziels ungetestet (kein echter Fehler, wie zuerst angenommen) | Ref statt Zustand, Schritt „öffnen – zu – öffnen“ | ja |
+| 4 | `frontend-reviewer` | Fehlerweg des Anlegens ungetestet | Fall „Anlegen scheitert“ | ja |
+| 5 | Delta-Review | Im Browser gibt der gesperrte Knopf den Fokus an `body` ab, jsdom nicht. Der Fall aus Fund 4 belegte nur jsdom | Fokus im Fehlerzweig ins Namensfeld; Spec `reihe-anlegen-scheitert-fokus.spec.ts`, **vorher `body`, nachher Namensfeld** | ja |
+
+**Zähler am Ende: 5**, die Grenze ist erreicht, aber nicht überschritten. Darum habe ich bewusst kein weiteres
+Review gestartet: Jeder weitere Fund hätte den gesamten Lauf beendet. Die letzte Behebung ist klein und auf beiden
+Testebenen mit einer roten Probe belegt. Zurückgestellt: [B-278](backlog/B-278-platzhalter-sieht-aus-wie-gespeicherter-wert.md)
+(Platzhalter „Cornelsen“ im leeren Feld).
+
+### Rollengang / Abnahme
+
+E2E, weil die Extension nicht verbunden war. **Vater:** `lehrbuch-katalog-zuerst.spec.ts` und die neue
+Fehlerweg-Spec. **Sohn, Creator:** Regressionszeugen. Verifikation: Solution-Build 0 Warnungen, Backend **918/918
+`exit=0`**, Vitest **443/443**, Playwright voll **95 passed**. **B-267 und B-268 abgenommen.**
+
+### Retrospektive
+
+**Nachschau** über den vorigen Sprint 12 (B-12, B-269; `ee71a74`), frischer Prüfer, read-only: **kein
+Code-Entgleiten.** Die Prüfpunkte stehen in beiden Stories. Drei Doku-Befunde sind berichtigt: Die Titelreihenfolge
+im Protokoll war veraltet, E2E-Zeilenangaben waren um zwei verrutscht (gemessen an einem Zwischenstand), und der
+Kommentar im Backend-Sortiertest behauptete zu viel („nur der Durchschnitt stellt B vor C“, die Id-Ordnung tut es
+aufsteigend auch, das fängt die E2E-Spec). `nachgeschaut` ist gesetzt. Index: **Nachgeschaut 190 von 192**, offen
+sind B-267 und B-268 aus diesem Sprint.
+
+**Was die eigenen Tore durchgelassen haben:** zwei Formen, beide neu in diesem Lauf.
+
+1. **Der Nullfall.** Zweimal (Backend und Frontend) prüfte kein Fall „nichts gespeichert“, nur „etwas anderes
+   gespeichert“. Ein `?? Rückfall` bliebe grün. Das ist dieselbe Familie wie „zwei Eigenschaften fallen zusammen“:
+   Die Testdaten belegen das Feld immer.
+2. **Eine Umgebung, die eine Browser-Regel nicht kennt** (Fund 5): Der Komponententest bestätigte einen Fokus, den es
+   im Browser nicht gibt. Prämisse geprüft: im Browser gemessen, vorher `body`. `frontend/CLAUDE.md` legt Wege durch
+   die App bereits zu Playwright. Fokus nach einem gesperrten Knopf ist aber ein Weg, der wie ein Baustein aussieht.
+
+**Vorschläge (nur vorgeschlagen, Freigabe 3):**
+
+- **(Prosa, `frontend/CLAUDE.md`)** *„Fokus-Zusicherungen, an denen ein `disabled` beteiligt ist, gehören nach
+  Playwright: jsdom gibt den Fokus eines gesperrten Knopfs nicht ab, der Browser schon.“*
+- **(Prosa, Pflichtschritt pm-loop Step 5)** Zur Liste der Abgrenzungen gehört der **Nullfall**: Behauptet ein Test
+  „X statt Y“, braucht es auch den Fall „X leer“.
+
+**Commit:** folgt.

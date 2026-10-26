@@ -42007,9 +42007,24 @@
               "null",
               "string"
             ]
+          },
+          "publisherFreeText": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "gradeFreeText": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "A textbook used by the child, together with its current chapter. \u0060SeriesId\u0060/\u0060CurrentUnitId\u0060\nare the cataloged form of title and chapter: only through them does the profile matching find the\ncreator who knows this work.\nPublisher and Grade come from the catalog once the book is linked: the series\u0027 publisher\nwhile SeriesId is set, the unit\u0027s grade while CurrentUnitId is set. Without a catalog\nvalue (series without publisher, unit without grade) or after the link is cleared, the free text\nstored on the book shows again \u2013 it is kept, never overwritten by the catalog."
+        "description": "A textbook used by the child, together with its current chapter. \u0060SeriesId\u0060/\u0060CurrentUnitId\u0060\nare the cataloged form of title and chapter: only through them does the profile matching find the\ncreator who knows this work.\nPublisher and Grade come from the catalog once the book is linked: the series\u0027 publisher\nwhile SeriesId is set, the unit\u0027s grade while CurrentUnitId is set. Without a catalog\nvalue (series without publisher, unit without grade) or after the link is cleared, the free text\nstored on the book shows again \u2013 it is kept, never overwritten by the catalog.PublisherFreeText/GradeFreeText carry that stored free text as it is, whether or not the catalog\ncurrently overrides it (B-267). A form needs it: when the father unlinks the book, the free-text field\nreappears and must show what is stored \u2013 showing the catalog value instead would display something that is\nnot saved, and clearing the field would delete a value the father never saw."
       },
       "TextbookSeriesResponse": {
         "required": [

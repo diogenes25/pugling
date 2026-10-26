@@ -22,10 +22,17 @@ public record UpdateAdultDto(string? Name, string? Email, string? Pin);
 /// value (series without publisher, unit without grade) or after the link is cleared, the free text
 /// stored on the book shows again – it is kept, never overwritten by the catalog.
 /// </para>
+/// <para>
+/// <c>PublisherFreeText</c>/<c>GradeFreeText</c> carry that stored free text as it is, whether or not the catalog
+/// currently overrides it (B-267). A form needs it: when the father unlinks the book, the free-text field
+/// reappears and must show what is stored – showing the catalog value instead would display something that is
+/// not saved, and clearing the field would delete a value the father never saw.
+/// </para>
 /// </summary>
 public record TextbookResponse(int Id, string Title, string? SubjectName, int? SubjectId, int? Grade,
     string? Publisher, string? Isbn, string? CurrentChapter, DateTime CreatedAt,
-    int? SeriesId = null, string? SeriesName = null, int? CurrentUnitId = null, string? CurrentUnitLabel = null);
+    int? SeriesId = null, string? SeriesName = null, int? CurrentUnitId = null, string? CurrentUnitLabel = null,
+    string? PublisherFreeText = null, int? GradeFreeText = null);
 
 /// <summary>
 /// Input for creating a textbook.

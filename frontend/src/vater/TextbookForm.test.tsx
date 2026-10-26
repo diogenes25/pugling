@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "../lib/api";
 import { TextbookForm } from "./ChildMaterialSection";
@@ -22,12 +22,14 @@ const SUBJECTS: SubjectResponse[] = [
 ];
 
 function buch(overrides: Partial<TextbookResponse> = {}): TextbookResponse {
-  return {
+  const b = {
     id: 4, title: "Access 8", subjectId: 1, subjectName: "Englisch", grade: 8, publisher: "Cornelsen",
     isbn: null, currentChapter: "Unit 4",
     // Ohne Reihe lädt die Unit-Liste nicht – die Komponente kommt so ohne gefälschtes `fetch` aus.
     seriesId: null, currentUnitId: null, ...overrides,
-  } as TextbookResponse;
+  };
+  // Ohne eigene Angabe ist der gespeicherte Freitext gleich dem gezeigten Wert (Buch ohne Katalogwert).
+  return { publisherFreeText: b.publisher, gradeFreeText: b.grade, ...b } as TextbookResponse;
 }
 
 // `AuthProvider` ist Pflicht, obwohl nichts geladen wird: `useAsync` hängt für den 401-Fall an `useAuth`,
@@ -274,15 +276,27 @@ describe("TextbookForm – Katalog zuerst, Verlag und Klasse aus dem Katalog (B-
   it("zeigt die Klasse der Unit als Text – und das Feld wieder, sobald die Unit keinen Band hat", async () => {
     vi.spyOn(api, "seriesUnits").mockResolvedValue([einheit(7, 9, 7), einheit(8, 9, null)]);
     // Gespeichert ist 9, die Unit sagt 7 – verschieden, damit die Anzeige den Katalog belegt, nicht den Freitext.
+    // So antwortet auch der Server: `grade` trägt den Katalogwert, `gradeFreeText` den gespeicherten.
     zeigeMit([reihe(9, "Access", "Cornelsen")],
-      { seriesId: 9, seriesName: "Access", currentUnitId: 7, currentUnitLabel: "Unit 7", grade: 9 });
+      { seriesId: 9, seriesName: "Access", currentUnitId: 7, currentUnitLabel: "Unit 7", grade: 7, gradeFreeText: 9 });
 
     const hinweis = await screen.findByText(/aus der Unit/);
     expect(hinweis.parentElement!.textContent).toBe("7 · aus der Unit");
     expect(screen.queryByLabelText("Für Klasse", { exact: true })).toBeNull();
 
     fireEvent.change(screen.getByLabelText("Aktuelle Unit", { exact: true }), { target: { value: "8" } });
-    expect(screen.getByLabelText("Für Klasse", { exact: true })).toBeTruthy();
+    // B-267: das wieder erscheinende Feld zeigt den gespeicherten Freitext (9), nicht den bisherigen Katalogwert (7).
+    expect((screen.getByLabelText("Für Klasse", { exact: true }) as HTMLInputElement).value).toBe("9");
+  });
+
+  it("zeigt nach dem Entkoppeln den gespeicherten Verlag, nicht den des Katalogs (B-267)", () => {
+    vi.spyOn(api, "seriesUnits").mockResolvedValue([]);
+    // Wie der Server antwortet: `publisher` ist der Katalogwert, `publisherFreeText` der gespeicherte – verschieden.
+    zeigeMit([reihe(9, "Access", "Cornelsen")],
+      { seriesId: 9, seriesName: "Access", publisher: "Cornelsen", publisherFreeText: "Klett" });
+
+    fireEvent.change(screen.getByLabelText("Reihe im Katalog", { exact: true }), { target: { value: "" } });
+    expect((screen.getByLabelText("Verlag", { exact: true }) as HTMLInputElement).value).toBe("Klett");
   });
 
   it("legt eine neue Reihe mit dem Fach des Buchs an und wählt sie", async () => {
@@ -300,5 +314,57 @@ describe("TextbookForm – Katalog zuerst, Verlag und Klasse aus dem Katalog (B-
     expect(anlegen).toHaveBeenCalledWith(expect.objectContaining({ name: "Green Line", subjectId: 1 }));
     expect((screen.getByLabelText("Reihe im Katalog", { exact: true }) as HTMLSelectElement).value).toBe("42");
     expect(neuGeladen).toHaveBeenCalledTimes(1);
+  });
+
+  /*
+   * B-268: Der Fokus folgt dem Streifen. Geprüft wird je Schritt das fokussierte Element selbst; `body` wäre der
+   * Ausgangszustand jedes Falls, in dem niemand den Fokus setzt – darum zuerst festgestellt, dass er nicht schon
+   * dort steht, wo er hin soll.
+   */
+  it("setzt den Fokus ins Namensfeld, nach dem Anlegen auf die Reihen-Auswahl, nach Abbrechen auf den Knopf", async () => {
+    vi.spyOn(api, "seriesUnits").mockResolvedValue([]);
+    vi.spyOn(api, "createTextbookSeries").mockResolvedValue(reihe(42, "Green Line", null));
+    zeigeMit([]);
+    const knopf = screen.getByRole("button", { name: "+ Neue Reihe" });
+    const reiheFeld = screen.getByLabelText("Reihe im Katalog", { exact: true });
+
+    knopf.focus();
+    fireEvent.click(knopf);
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText("Name der neuen Reihe", { exact: true })));
+
+    fireEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+    await waitFor(() => expect(document.activeElement).toBe(knopf));
+
+    // Dasselbe Ziel zweimal hintereinander: öffnen, per Knopf schließen (setzt kein Ziel), wieder öffnen.
+    fireEvent.click(knopf);
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText("Name der neuen Reihe", { exact: true })));
+    fireEvent.click(knopf);
+    knopf.focus();
+    fireEvent.click(knopf);
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText("Name der neuen Reihe", { exact: true })));
+
+    // Der Streifen ist offen: anlegen.
+    fireEvent.change(screen.getByLabelText("Name der neuen Reihe", { exact: true }), { target: { value: "Green Line" } });
+    const anlegen = screen.getByRole("button", { name: /Reihe anlegen/ });
+    anlegen.focus();
+    expect(document.activeElement).not.toBe(reiheFeld);
+    fireEvent.click(anlegen);
+    await waitFor(() => expect(document.activeElement).toBe(reiheFeld));
+  });
+
+  // jsdom setzt die Browser-Regel nicht um, nach der ein gesperrter Knopf den Fokus abgibt – den echten Weg prüft
+  // `e2e/reihe-anlegen-scheitert-fokus.spec.ts`. Hier gilt: Scheitert das Anlegen, steht der Fokus im Namensfeld.
+  it("setzt den Fokus ins Namensfeld, wenn das Anlegen scheitert", async () => {
+    vi.spyOn(api, "seriesUnits").mockResolvedValue([]);
+    vi.spyOn(api, "createTextbookSeries").mockRejectedValue(new Error("Server weg"));
+    zeigeMit([]);
+    fireEvent.click(screen.getByRole("button", { name: "+ Neue Reihe" }));
+    fireEvent.change(screen.getByLabelText("Name der neuen Reihe", { exact: true }), { target: { value: "Green Line" } });
+    const anlegen = screen.getByRole("button", { name: /Reihe anlegen/ });
+    anlegen.focus();
+    fireEvent.click(anlegen);
+    // Erst die Meldung abwarten – sonst prüfte der Fall den Zustand vor dem Scheitern.
+    await screen.findByText(/Server weg/);
+    expect(document.activeElement).toBe(screen.getByLabelText("Name der neuen Reihe", { exact: true }));
   });
 });

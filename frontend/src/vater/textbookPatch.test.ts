@@ -12,11 +12,16 @@ import type { TextbookResponse } from "../lib/types";
  * beliebigen anderen Feldes zerstörte den Fachnamen.
  */
 
-const buch = (o: Partial<TextbookResponse> = {}): TextbookResponse => ({
-  id: 1, title: "Access 8", subjectId: 3, subjectName: "Englisch", grade: 8, publisher: "Cornelsen",
-  isbn: null, seriesId: 5, currentUnitId: 9, currentChapter: "Unit 4", seriesName: null,
-  currentUnitLabel: null, ...o,
-} as TextbookResponse);
+// Ohne eigene Angabe ist der gespeicherte Freitext gleich dem gezeigten Wert – so antwortet der Server für ein
+// Buch ohne Katalogwert. Fälle, in denen der Katalog übersteuert, setzen `…FreeText` ausdrücklich.
+const buch = (o: Partial<TextbookResponse> = {}): TextbookResponse => {
+  const b = {
+    id: 1, title: "Access 8", subjectId: 3, subjectName: "Englisch", grade: 8, publisher: "Cornelsen",
+    isbn: null, seriesId: 5, currentUnitId: 9, currentChapter: "Unit 4", seriesName: null,
+    currentUnitLabel: null, ...o,
+  };
+  return { publisherFreeText: b.publisher, gradeFreeText: b.grade, ...b } as TextbookResponse;
+};
 
 const geladen = (o: Partial<TextbookResponse> = {}) => textbookFormValues(buch(o));
 const patch = (form: TextbookFormValues, o: Partial<TextbookResponse> = {}) => textbookPatch(geladen(o), form);
@@ -25,6 +30,19 @@ describe("textbookFormValues", () => {
   it("trägt jedes Feld als String, leere Werte als leeren String", () => {
     expect(geladen({ grade: null, publisher: null, seriesId: null, currentUnitId: null, currentChapter: null }))
       .toEqual({ title: "Access 8", subjectId: "3", grade: "", publisher: "", seriesId: "", currentUnitId: "", currentChapter: "" });
+  });
+
+  it("füllt Verlag und Klasse aus dem gespeicherten Freitext, nicht aus dem Katalogwert (B-267)", () => {
+    // Katalog und Freitext verschieden belegt: der Katalogwert im Feld fiele sofort auf.
+    const werte = geladen({ publisher: "Cornelsen", publisherFreeText: "Klett", grade: 7, gradeFreeText: 9 });
+    expect([werte.publisher, werte.grade]).toEqual(["Klett", "9"]);
+  });
+
+  it("lässt die Felder leer, wenn nichts gespeichert ist – auch wenn der Katalog Werte zeigt (B-267)", () => {
+    // Der häufigste Fall: über den Katalog verknüpft, nie etwas getippt. Ein Rückfall auf den Katalogwert stellte
+    // hier genau den Fehler wieder her.
+    const werte = geladen({ publisher: "Cornelsen", publisherFreeText: null, grade: 7, gradeFreeText: null });
+    expect([werte.publisher, werte.grade]).toEqual(["", ""]);
   });
 
   it("bildet ein Fach ohne Katalog-Id auf den Freitext-Sentinel ab", () => {

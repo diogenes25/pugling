@@ -1,4 +1,4 @@
-import { Fragment, useId, useRef, useState } from "react";
+import { Fragment, useEffect, useId, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { FieldLabel } from "../components/InfoHint";
 import { ReferenceSelect } from "../components/ReferenceSelect";
@@ -202,6 +202,25 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
   const alleReihen = [...series, ...angelegt.filter((a) => !series.some((s) => s.id === a.id))];
   const [neueReiheOffen, setNeueReiheOffen] = useState(false);
   const [neueReihe, setNeueReihe] = useState("");
+  /*
+   * Wohin der Fokus nach dem Öffnen bzw. Schließen des Anlege-Streifens geht (B-268). Schließt der Streifen,
+   * verschwindet mit ihm der gerade fokussierte Knopf, und der Fokus fiele auf `body` – eine Tastaturnutzerin
+   * verlöre ihren Platz. Gesetzt wird er nach dem Rendern, weil das Ziel (Namensfeld) erst dann existiert.
+   *
+   * Ein Ref, kein Zustand: jeder Handler, der ein Ziel setzt, ändert ohnehin den Streifen und löst damit ein
+   * Rendern aus. Als Zustand wäre dasselbe Ziel zweimal hintereinander („name“ – per Knopf zu – wieder „name“) kein
+   * Wechsel, und der Effekt liefe beim zweiten Öffnen nicht (Review 2026-10-26).
+   */
+  const fokusZiel = useRef<"name" | "reihe" | "knopf" | null>(null);
+  const setFokusZiel = (ziel: "name" | "reihe" | "knopf") => { fokusZiel.current = ziel; };
+  const neueReiheKnopf = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => {
+    const ziel = fokusZiel.current;
+    if (ziel === null) return;
+    fokusZiel.current = null;
+    (ziel === "knopf" ? neueReiheKnopf.current
+      : document.getElementById(ziel === "name" ? `${id}-neue-reihe` : `${id}-series`))?.focus();
+  });
 
   // Die Units der gewählten Reihe. Ohne Reihe gibt es nichts zu wählen – dann bleibt das Freitext-Kapitel.
   const seriesId = form.seriesId ? Number(form.seriesId) : null;
@@ -244,12 +263,20 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
         schoolTypes: null, sourceLanguage: null, targetLanguage: null, notes: null,
       });
     }, `Reihe „${name}“ steht im Katalog und ist gewählt.`);
-    if (!ok || neu === null) return;
+    if (!ok || neu === null) {
+      // Der Knopf war während des Abrufs gesperrt und hat dabei im Browser den Fokus an `body` abgegeben. Zurück ins
+      // Namensfeld, wo der Vater korrigiert oder es noch einmal versucht. Direkt, nicht über `fokusZiel`: gerendert
+      // ist schon, der Streifen bleibt offen, ein Ziel bliebe bis zum nächsten fremden Rendern liegen.
+      document.getElementById(`${id}-neue-reihe`)?.focus();
+      return;
+    }
     const reihe: TextbookSeriesResponse = neu;
     setAngelegt((cur) => [...cur.filter((a) => a.id !== reihe.id), reihe]);
     chooseSeries(String(reihe.id));
     setNeueReihe("");
     setNeueReiheOffen(false);
+    // Auf die Auswahl, die eben gesetzt wurde: dort prüft der Vater, ob die richtige Reihe gewählt ist.
+    setFokusZiel("reihe");
     onSeriesCreated();
   }
 
@@ -329,7 +356,8 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
             />
             <button
               type="button" className="btn ghost inline-btn" style={{ width: "auto", alignSelf: "flex-start" }}
-              aria-expanded={neueReiheOffen} onClick={() => setNeueReiheOffen((o) => !o)}
+              aria-expanded={neueReiheOffen} ref={neueReiheKnopf}
+              onClick={() => { const auf = !neueReiheOffen; setNeueReiheOffen(auf); if (auf) setFokusZiel("name"); }}
             >+ Neue Reihe</button>
           </div>
           <div className="field">
@@ -393,7 +421,7 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
               Reihe anlegen &amp; wählen
             </button>
             <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
-              onClick={() => { setNeueReiheOffen(false); setNeueReihe(""); }}>Abbrechen</button>
+              onClick={() => { setNeueReiheOffen(false); setNeueReihe(""); setFokusZiel("knopf"); }}>Abbrechen</button>
             <span className="sub" style={{ flexBasis: "100%" }}>
               Angelegt wird nur der Name{/^\d+$/.test(form.subjectId) ? " mit dem gewählten Fach" : ""}; Verlag und Units
               pflegst du unter „Lehrwerke“ nach.
