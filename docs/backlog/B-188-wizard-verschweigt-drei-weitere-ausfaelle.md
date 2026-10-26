@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: 2026-10-26
 ---
 
 # B-188 · Der Assistent verschweigt drei weitere Ausfälle — einer schickt den Vater ins Kind-Anlegen
@@ -108,3 +109,4 @@ weiter, damit der nächste Leser es nicht erneut herleitet.
   Belege: `tsc -b` sauber, `vitest run` **368/368** grün, `playwright test` **59/59** grün.
   `frontend-reviewer` gelaufen, **kein Blocker**; seine sechs Funde mit Code- oder Testwirkung sind
   eingearbeitet (Protokoll `docs/pm-sitzung-2026-09-04-nacht.md`). Commit `15b00f4`.
+- **2026-10-26** — Nachschau (sechster Nachtlauf, Sprint 11, [Protokoll](../pm-sitzung-2026-10-26-nacht.md)): Kinder-Fall nachgerechnet: `VaterWizard.tsx:407-417` (`ListenAusfall` für `children` plus gesperrter „Bestehendes Kind“) gegen `e2e/assistent-listen-fallen-aus.spec.ts` – ohne `fehler={children.error}` fällt die `toContainText`-Zusicherung, ohne `onRetry` der Rückweg. Geprüft auch der Grenzfall „Fehler der alten Reihe/des alten Fachs überlebt den Wechsel“ am Arten-`ListenAusfall` (`:547`, gemerkter Fehler ohne Schlüssel): unerreichbar, weil der Baustein in Schritt 3 lebt und das Fach-Feld in Schritt 2 (wie `useGemerkterFehler.ts:29-33`). Hinweis ohne Zählwert: die Bindungen für Fächer (`:455`) und Arten (`:547`) trägt kein Test – `ListenAusfall.test.tsx` prüft den Baustein, nicht die Aufrufstellen. Kein Befund.

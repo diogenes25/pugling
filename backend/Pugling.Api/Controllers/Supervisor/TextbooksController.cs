@@ -26,9 +26,17 @@ public class TextbooksController(PuglingDbContext db) : ControllerBase
     /// <summary>
     /// Projects together with series and unit. The names are included so a caller can display the
     /// assignment without reloading the catalog.
+    /// <para>
+    /// Publisher and grade are <b>derived</b> once the book points into the catalog (B-64): the series'
+    /// publisher and the current unit's grade win over the stored free text, so the same fact is not kept
+    /// twice in two spellings. The free text is not deleted – it shows again when the catalog has no value
+    /// (unit without a grade) or when the link is cleared, so unlinking never loses what was typed.
+    /// </para>
     /// </summary>
     private static IQueryable<TextbookResponse> Project(IQueryable<Textbook> q) =>
-        q.Select(t => new TextbookResponse(t.Id, t.Title, t.SubjectName, t.SubjectId, t.Grade, t.Publisher,
+        q.Select(t => new TextbookResponse(t.Id, t.Title, t.SubjectName, t.SubjectId,
+            t.CurrentUnit != null && t.CurrentUnit.Grade != null ? t.CurrentUnit.Grade : t.Grade,
+            t.Series != null && t.Series.Publisher != null ? t.Series.Publisher.Name : t.Publisher,
             t.Isbn, t.CurrentChapter, t.CreatedAt,
             t.SeriesId, t.Series!.Name, t.CurrentUnitId, t.CurrentUnit!.Label));
 

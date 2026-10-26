@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-45]
 wartet_auf: ""
+nachgeschaut: 2026-10-26
 ---
 
 # B-202 · Der KI-Creator halbiert die Zielbelohnung jeder erzeugten Übung
@@ -144,3 +145,4 @@ Behauptung „die einzige" war schon beim Schreiben nicht geprüft.
   Commits `81eb60c` (Reparatur) und der Nachtrag dieser Runde. Ein **Rollengang** entfällt begründet: die
   Fläche ist eine Konsolen-Vorgabe, und der Integrationstest fährt sie über die echte Kommandozeile —
   dieselbe Ausnahme, die das Bereichs-README für nicht sinnlich beurteilbare Flächen zulässt.
+- **2026-10-26** — Nachschau (sechster Nachtlauf, Sprint 11, [Protokoll](../pm-sitzung-2026-10-26-nacht.md)): AK 1/2 nachgerechnet, `AgentCommands.cs:34` (`DefaultRewardPoints = 20`) und `:342` (einziger Setzer) gegen `CreatorAgentTests.cs:737` und `:746` und `GoalPointsPolicy.cs:38,49-50`. Die zweite Zusicherung (`RewardPoints == SuggestedGoalPoints`) fällt nur, wenn das Feld leer bleibt; dass es **über die Policy** gerechnet wird, wie ihr Kommentar sagt, trägt sie nicht — eine Umgehung (`SuggestedGoalPoints = RewardPoints`) fängt aber `PlanPositionCrudTests.Katalogtreffer_Nennt_Den_Wirksamen_Punktevorschlag` (100 000 → 20), die Lücke ist also anderswo geschlossen. AK 3: `GenerationRequest.cs:38-43`, Hilfetext `:489` und `README.md:161` nennen Bedeutung und Schranke. Kein Befund. Hinweis ohne Zählwert: die Verweise `PlanPositionCrudTests.cs:336` und `:372-388` im Testkommentar sind seither verrutscht.

@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+nachgeschaut: 2026-10-26
 ---
 
 # B-165 · `AtomaresSchreiben_KeineLeseFehler` fällt unter Volllast — und färbt das Test-Tor rot
@@ -209,3 +210,4 @@ unsichere, wenn er atomar schreibt.
   **Nicht mitgenommen und darum abgelegt:**
   [B-181](B-181-praemisse-der-rennen-klasse-stimmt-nicht.md) — die Klasse behauptet in ihrem Kommentar,
   der Fehler sei „torn/incomplete JSON content", und das trifft auf keinen Leser dieses Repos zu.
+- **2026-10-26** — Nachschau (sechster Nachtlauf, Sprint 11, [Protokoll](../pm-sitzung-2026-10-26-nacht.md)): AK 1/2 am HEAD nachgerechnet, `OpenApiExampleCatalogConcurrencyTests.cs:143-159` (drei Ergebnisse statt `bool`) gegen `:295-301` (`zerrissen == 0` fällt bei einem einzigen; `ok > gesperrt` trägt den Schreiber-Tausch, seit B-181 plattformneutral). Dabei `:304` geprüft: `Assert.True(gesperrtGesamt >= 0, …)` kann nie fallen, und weil xUnit die Meldung nur bei Fehlschlag ausgibt, erscheint die als „trace" kommentierte Gesamtzahl der Sperren in **keinem** Lauf — der Kommentar verspricht eine Unterscheidung von Flackern und Inhalts-Regress, die nie sichtbar wird (seit `a84aa2b` unverändert). Grenzfall dazu: ein ausgehungerter Leser (0 ok, 0 gesperrt) macht `ok > gesperrt` rot mit der Meldung „final path was held open". Befund → eigene Defekt-Story [B-265](B-265-sperr-zaehler-zusicherung-kann-nie-fallen.md).

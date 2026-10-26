@@ -16,6 +16,12 @@ public record UpdateAdultDto(string? Name, string? Email, string? Pin);
 /// A textbook used by the child, together with its current chapter. <c>SeriesId</c>/<c>CurrentUnitId</c>
 /// are the cataloged form of title and chapter: only through them does the profile matching find the
 /// creator who knows this work.
+/// <para>
+/// <c>Publisher</c> and <c>Grade</c> come from the catalog once the book is linked: the series' publisher
+/// while <c>SeriesId</c> is set, the unit's grade while <c>CurrentUnitId</c> is set. Without a catalog
+/// value (series without publisher, unit without grade) or after the link is cleared, the free text
+/// stored on the book shows again – it is kept, never overwritten by the catalog.
+/// </para>
 /// </summary>
 public record TextbookResponse(int Id, string Title, string? SubjectName, int? SubjectId, int? Grade,
     string? Publisher, string? Isbn, string? CurrentChapter, DateTime CreatedAt,
@@ -39,6 +45,10 @@ public record CreateTextbookDto(string Title, string? SubjectName, int? SubjectI
 /// detaches the book from the catalog ("not cataloged") and takes the current unit with it, because the
 /// unit means nothing without its series; <c>ClearUnit</c> only resets the unit; <c>ClearSubject</c>
 /// removes the subject id and name; <c>ClearGrade</c> the grade level of the book.
+///
+/// While the book is linked to a unit with a grade (or a series with a publisher), <c>Grade</c>,
+/// <c>ClearGrade</c> and <c>Publisher</c> change only the stored fallback: the response keeps showing the
+/// catalog value until the link is cleared (see <c>TextbookResponse</c>).
 ///
 /// Sending <c>SubjectId</c> alone is enough: the server derives <c>SubjectName</c> from it, so the two
 /// halves cannot contradict each other (B-142). A <c>SubjectName</c> sent alongside an id is therefore

@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-172]
 wartet_auf: ""
+nachgeschaut: 2026-10-26
 ---
 
 # B-195 · Beim Reihenwechsel bleiben die Units der alten Reihe wählbar
@@ -136,3 +137,4 @@ lassen, die dadurch erst falsch wurden:
   Server — das ist der Rollengang, und er wiederholt sich, statt einmal stattzufinden. Kein
   Browser-Handgang möglich (keine Chrome-Anbindung in dieser Sitzung), damit greift der dokumentierte
   Ersatz. Commit `a7e3da6`; Protokoll `docs/pm-sitzung-2026-09-03-nacht.md`.
+- **2026-10-26** — Nachschau (sechster Nachtlauf, Sprint 11, [Protokoll](../pm-sitzung-2026-10-26-nacht.md)): AK 1/2/4 nachgerechnet: `referenceOptions.ts:42-48` (Pflicht-Parameter `seriesId`, Filter `u.seriesId === seriesId`) gegen `referenceOptions.test.ts:37-46` – ohne Filter fällt der Fall „andere Reihe“; der Aufruf `ChildMaterialSection.tsx:329` reicht den Schlüssel. Grenzfall „Satz ‚noch keine Units‘ im ersten Render nach dem Wechsel, bevor `useAsync` `loading` setzt“ (`:340`, liest `units.data` roh): bei einer diskreten Eingabe spült React die passiven Effekte vor dem Zeichnen, darum kein sichtbares Fenster. AK 3 (gespeicherte Unit) hängt an `eigeneUnit` (`:206`) und nicht am Filter. Kein Befund.

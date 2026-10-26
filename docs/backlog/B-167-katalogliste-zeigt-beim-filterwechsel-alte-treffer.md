@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: 2026-10-26
 ---
 
 # B-167 · Katalogliste im Planbau zeigt beim Filterwechsel die alten Treffer weiter
@@ -208,3 +209,4 @@ Ausgangszustand statt der Wirkung (er zählt jetzt Anfragen und trägt eine Gege
   Server — das ist der Rollengang, und er wiederholt sich, statt einmal stattzufinden. Kein
   Browser-Handgang möglich (keine Chrome-Anbindung in dieser Sitzung), damit greift der dokumentierte
   Ersatz. Commit `a7e3da6`; Protokoll `docs/pm-sitzung-2026-09-03-nacht.md`.
+- **2026-10-26** — Nachschau (sechster Nachtlauf, Sprint 11, [Protokoll](../pm-sitzung-2026-10-26-nacht.md)): AK 1–5 am Code nachgerechnet: `PlanPositions.tsx:424-453` (eine Kriterienliste für Abfrage und `filterKey`, `trim` darin), Absende-Knopf `:642` hängt an `zeilenVeraltet`, nicht nur an `exerciseId`; E2E-Fall 4 (`planbau-ladefenster.spec.ts:128-176`) zählt Anfragen und fällt ohne `trim`. Hinweis ohne Zählwert: AK 3 („`reload` derselben Abfrage sperrt nichts“) hat **keinen** Test, obwohl AK 6 jeden Fall verlangt – eine Sperre über `seitenSchluessel !== filterKey || exercises.loading` ließe alle Fälle grün. Er ist aber in dieser Fläche unerreichbar: der einzige `reload` sitzt im Fehlerkasten, und dort ist die Liste entweder veraltet (anderer Schlüssel) oder gar nicht da (`data === null`). Kein Befund.

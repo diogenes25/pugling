@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-157]
 wartet_auf: ""
+nachgeschaut: 2026-10-26
 ---
 
 # B-170 · Eine selbst angelegte Art im Grundbestands-Fach ist unlöschbar — und der Seitentext verspricht das Gegenteil
@@ -417,3 +418,4 @@ müssten oder das Frontend-Tor mehr als diesen einen Verbraucher hätte.
   **Verifikation nach der Runde:** **844/844** Backend, **326/326** vitest (+1), **46/46** E2E,
   `dotnet build` 0 Warnungen, `dotnet format --verify-no-changes` sauber, `tsc -b` sauber, `markdownlint`
   0 Issues in 305 Dateien. **Rollengang:** erbracht als `frontend/e2e/katalog-arten.spec.ts`, wiederholbar.
+- **2026-10-26** — Nachschau (sechster Nachtlauf, Sprint 11, [Protokoll](../pm-sitzung-2026-10-26-nacht.md)): AK 2/3/5/6/7 nachgerechnet: `ExerciseCategoriesController.cs:66-69` (`MayWrite`) und `:76-78` (`Projection`, beide Zweige) gegen `FachEigentumTests.cs:373-516`; AK 6 löscht als Fremder mit `fremdeId != 1` und misst damit die Identität des Eigentümers. Hinweis ohne Zählwert: der Docblock von `Anleger_DarfSeineArt_ImSeedFach_Loeschen` (`:368-369`) behauptet „then this case falls, and only it“ – nach der eigenen Probentabelle der Story fallen ohne den Art-Zweig AK 2, 3 und 6, und das stimmt auch am Code (der Seed-Vater besitzt das Seed-Fach nicht). Kommentar ungenau, Verhalten richtig. Kein Befund.

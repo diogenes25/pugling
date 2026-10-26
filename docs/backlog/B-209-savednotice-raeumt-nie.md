@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-50]
 wartet_auf: ""
+nachgeschaut: 2026-10-26
 ---
 
 # B-209 · „Gespeichert" bleibt über jedem folgenden Bildschirm der Arcade stehen
@@ -84,3 +85,4 @@ ist.
   Belege: `tsc -b` sauber, `vitest run` **368/368** grün, `playwright test` **59/59** grün.
   `frontend-reviewer` gelaufen, **kein Blocker**; seine sechs Funde mit Code- oder Testwirkung sind
   eingearbeitet (Protokoll `docs/pm-sitzung-2026-09-04-nacht.md`). Commit `15b00f4`.
+- **2026-10-26** — Nachschau (sechster Nachtlauf, Sprint 11, [Protokoll](../pm-sitzung-2026-10-26-nacht.md)): Räum-Regel nachgerechnet: `SavedNotice.tsx:49-53` (Vergleich `gezeigtAuf` gegen `pathname`) gegen `SavedNotice.test.tsx` – Fall 2 fällt ohne das Räumen, Fall 1 fällt bei der naiven Fassung „kein `saved` ⇒ räumen“ (der eigene `navigate(state: null)` löst den zweiten Lauf aus), Fall 3 fällt ohne `replace`/`state: null` (echtes `navigate(-1)` statt Link). Einziger Aufrufer `SohnInterests.tsx:140`, kein Arcade-Pfad mit Query, also greift die benannte `search`/`hash`-Grenze heute nicht. Kein Befund.

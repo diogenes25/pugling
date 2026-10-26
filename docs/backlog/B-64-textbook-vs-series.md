@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/katalog, rolle/supervisor, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/katalog, rolle/supervisor, rolle/creator]
 aliases: [Textbook vs. TextbookSeries, Lehrwerk zweimal]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Wunsch
 groesse: M
@@ -29,7 +29,8 @@ Die Anmerkung vermutete eine Dopplung zwischen **Fach** und **Lehrwerk**. Die Pr
   ([LearnEntities.cs:54](../../backend/Pugling.Api/Models/LearnEntities.cs)).
 - `TextbookSeries → SeriesUnit` trägt den **Stoff** (`Topics`/`Grammar`/`VocabularyNotes`,
   [CurriculumEntities.cs:62-67](../../backend/Pugling.Api/Models/CurriculumEntities.cs)) und **keine einzige
-  Übung** — an einer Unit hängt kein Inhalt, nur eine Notiz.
+  Übung** — an einer Unit hängt kein Inhalt, nur eine Notiz. *(Überholt seit B-106: `Exercise.SeriesUnitId` hängt jede Übung an eine
+  Unit, siehe „Nach B-106“ unten; für diese Story ohne Belang.)*
 - Verbunden sind beide über `TextbookSeries.SubjectId` (`CurriculumEntities.cs:26`).
 
 Ein Vater kann über ein Lehrwerk also *keinen* Katalog erstellen — das war die Annahme der Anmerkung.
@@ -252,3 +253,15 @@ Batch-Pfad im `MediaSelector` (B-03), deutlich mehr als eine lokalisierte Ein-Pu
   besteht unverändert. Eine Zeile im Ist-Stand ist veraltet (SeriesUnit trägt seit B-106 Übungen) und
   gehört vor dem nächsten Bau korrigiert. `status` unverändert, Empfehlung „bleibt gültig" dokumentiert.
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): **Blocker entfallen** – B-63 ist abgenommen (`Publisher`, `TextbookSeries.PublisherId`), Entscheidung 4 und Angriffsplan 1 sind erfüllt; die Verlagsableitung lautet jetzt `Series.Publisher.Name`. Veraltet: `Exercise.ChapterId` (heute `SeriesUnitId`, `LearnEntities.cs:80`), `createTextbookSeries` aus `ChildMaterialSection.tsx` (einziger Aufruf jetzt `VaterLehrwerke.tsx:917`), das Risiko „kein E2E“ (es gibt `kind-lehrbuch-fach.spec.ts`, `TextbookForm.test.tsx`). Die Lücke ist live (`TextbooksController.cs:31`, `ChildMaterialSection.tsx:264-298`). **Offene Produktfrage:** B-123 hat die Wortfrage „Lehrwerk/Reihe/Buchreihe“ hierher geschoben, die Story entscheidet sie nicht – ein Nachtlauf lässt sie aus.
+- **2026-10-26** — sechster Nachtlauf, Sprint 11 (NP-6, [Protokoll](../pm-sitzung-2026-10-26-nacht.md)): gebaut nach
+  Entscheidungen 1–3; die Wortfrage aus B-123 ausgelassen (Beschriftungen unverändert). Backend: `TextbooksController.Project`
+  leitet Verlag/Klasse ab, Rückfall auf den Freitext (AK 4/5); Frontend: `TextbookForm` mit Gruppe „Aus dem Katalog“
+  zuerst, „+ Neue Reihe“ inline, Gruppe „Ohne Katalog“ dahinter (AK 1–3). Rote Proben (Auflage 5): sechs Mutanten an der
+  Projektion bzw. am PATCH je **1–2 rot** am benannten Fall; Formular-Tests gegen den `HEAD`-Stand **4 rot / 11 grün**;
+  Anzeige aus dem Freitext statt aus dem Katalog **1/1 rot** (Tabelle im Protokoll). Review: `pugling-reviewer`
+  (Funde 1–2 des Sprints: `PatchSemanticsTests`-Fixture, `grade` bei Verknüpfung) und `frontend-reviewer` (Fund 5:
+  Testwerte), alle behoben, Delta-Review trägt. Abgeleitet und **nicht gebaut**: [B-267](B-267-entkoppeltes-lehrbuch-zeigt-katalogwert-im-freitextfeld.md)
+  (offene Entscheidung, Freigabe 8), [B-268](B-268-fokus-nach-inline-reihe.md) (Fokus, Hinweis). Rollengang ohne Browser
+  (Extension nicht verbunden) als E2E: `e2e/lehrbuch-katalog-zuerst.spec.ts` fährt AK 1–5 aus der Vater-Rolle.
+  Verifikation: `dotnet test` **909/909**, Vitest **423/423**, Playwright voll nach dem letzten Code-Edit **87 passed**.
+  **Abgenommen**; Commit: siehe Nachtrag.

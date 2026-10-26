@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, bereich/katalog, lerntechnik/vokabeln, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/katalog, lerntechnik/vokabeln, rolle/creator]
 aliases: [Inline-Vokabeln ohne Varianten, Übungs-Editor Alternativen]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Wunsch
 groesse: M
@@ -234,3 +234,16 @@ Abnahme, dazu `pugling-reviewer` und `frontend-reviewer` (`wo: beides`).
   ausdrücklich freigegeben: ein Nachtlauf darf diese Story trotz `art: Wunsch` ohne weitere Rückfrage bauen
   (Rollengang/Reviewer bleiben Pflicht wie bei jeder Abnahme).
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): gilt, Backend-Angaben exakt; Frontend-Zeilen verschoben (`exerciseConfig.tsx:38,150,598`, `ExerciseEditModal.tsx:516-664`). Neu belegt: der Store-Eintrag ist für jeden Creator schreibbar (`VocabularyStoreController.cs:24/290`) – der zusätzliche Schreibpfad öffnet kein Rechte-Loch. Nicht geprüft: ob der Abschlusstest `TranslationAlternatives` wirklich liest (AK 6). Nachtlauffähig.
+- **2026-10-26** — sechster Nachtlauf, Sprint 11 (NP-6, [Protokoll](../pm-sitzung-2026-10-26-nacht.md)): gebaut nach
+  Entscheidungen 1–6. **Prämissen-Korrektur zu AK 5:** der Neuanlage-Assistent hat für Vokabeln keine Front/Back-Zeilen
+  mehr (`exerciseConfig.tsx` rendert sie für diesen Typ nirgends); das Inline-Anlegen dort ist das Schnell-Anlegen im
+  `VocabRefPicker` (Store-Endpunkt) – dort sitzt das Feld, gleicher Store-Eintrag, keine neue Entscheidung. AK 6 im Code
+  (`ExerciseContentResolver.cs:99`) und gemessen: `VocabItemAlternativesTests.Test_UeberDasItemHinterlegteAlternative_WirdAlsRichtigGewertet`.
+  Migration: keine (Spalte seit B-65). Rote Proben (Auflage 5): sieben Mutanten an `AddItem`/`PatchItem`/`MapItem`/
+  `ResolveVocabularyIdAsync`, je **1–3 rot** am benannten Fall; E2E ohne Übernahme der PATCH-Antwort **1 failed an `:90`**
+  (Tabelle im Protokoll). AK 7 (`unknown_field`) war vorher schon grün – Absichtserklärung gegen einen Sonderfall.
+  Review: `pugling-reviewer` (Fund 3 des Sprints: Abgelehnt-Fall über den Id-Weg) und `frontend-reviewer` (Fund 4:
+  Feld zog nach Bereinigung nicht nach), beide behoben, Delta-Review trägt. Rollengang ohne Browser (Extension nicht
+  verbunden) als E2E: `e2e/auch-richtig-im-uebungseditor.spec.ts` (Assistent → Store → Dialog, Neuladen).
+  Verifikation: `dotnet test` **909/909**, Vitest **423/423**, Playwright voll nach dem letzten Code-Edit **87 passed**.
+  **Abgenommen**; Commit: siehe Nachtrag.

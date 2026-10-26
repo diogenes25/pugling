@@ -500,7 +500,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (55)
+### Offen (61)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -515,17 +515,24 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-247](B-247-knowunity-vergleich-sammel-story.md) | Knowunity-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | Wunsch | `idee` | P2 | — | — | — |
 | [B-248](B-248-klassenarbeit-countdown-treibt-den-plan.md) | Die Klassenarbeit wird beim Kind sichtbar und verdichtet den Plan vor dem Termin | Wunsch | `idee` | P2 | — | — | — |
 | [B-249](B-249-probeklausur-mit-notenprognose.md) | Eine Probeklausur über das Bündel einer Klassenarbeit, mit Notenprognose | Wunsch | `idee` | P2 | — | — | — |
-| [B-134](B-134-bedingte-live-regionen.md) | Dreizehn Live-Regionen entstehen zusammen mit ihrem Text — und schweigen darum | Defekt | `ausformuliert` | P3 | — | — | — |
+| [B-134](B-134-bedingte-live-regionen.md) | Dreizehn Live-Regionen entstehen zusammen mit ihrem Text — und schweigen darum | Defekt | `in-arbeit` | P3 | M | frontend | — |
+| [B-236](B-236-checkbox-gruppe-ohne-zugaenglichen-gruppennamen.md) | Eine Gruppen-Überschrift über Kontrollkästchen ist sichtbar, aber für den Screenreader an nichts gebunden | Defekt | `in-arbeit` | P3 | S | frontend | — |
+| [B-263](B-263-info-popover-steht-am-rechten-rand-ueber.md) | Ein aufgeklapptes ⓘ am rechten Rand lässt die Seite seitlich scrollen | Defekt | `in-arbeit` | P3 | XS | frontend | — |
 | [B-164](B-164-useasync-paart-frischen-zustand-mit-alten-daten.md) | Nach einem Wechsel zeigt der Bildschirm für einen Moment frischen Zustand mit alten Daten | Defekt | `ausformuliert` | P3 | — | frontend | — |
 | [B-141](B-141-interest-tag-label-dublette.md) | Zwei Interessen-Tags dürfen dasselbe Label tragen | Defekt | `idee` | P3 | — | — | — |
 | [B-205](B-205-exercise-in-use-ohne-deutsche-fassung.md) | `exercise_in_use` fehlt in `GERMAN_PROBLEM_TEXT` — die zwei Geschwister stehen drin | Defekt | `idee` | P3 | — | — | — |
-| [B-236](B-236-checkbox-gruppe-ohne-zugaenglichen-gruppennamen.md) | Eine Gruppen-Überschrift über Kontrollkästchen ist sichtbar, aber für den Screenreader an nichts gebunden | Defekt | `idee` | P3 | — | frontend | — |
 | [B-245](B-245-token-mit-fid-auf-geloeschten-adult.md) | Ein Token, das vor `DELETE adults/{id}` ausgestellt wurde, trägt ein `fid` auf eine gelöschte Zeile – jeder `OwnerAdultId`-Schreiber liefe in die FK | Defekt | `idee` | P3 | — | backend | — |
 | [B-255](B-255-kinderzeile-per-namen-zweideutig.md) | E2E-Specs suchen die Kinderzeile per Namen, den zwei Tabellen tragen | Defekt | `idee` | P3 | — | — | — |
 | [B-257](B-257-zielfeier-verspaetet-jenseits-der-ersten-fuenf.md) | Ein schon erreichtes Ziel jenseits der ersten fünf wird später verspätet gefeiert | Defekt | `idee` | P3 | — | — | — |
 | [B-258](B-258-unbekannte-fach-id-zwei-fehlercodes.md) | Eine unbekannte `SubjectId` meldet je nach Ressource zwei verschiedene Fehlercodes | Defekt | `idee` | P3 | — | — | — |
 | [B-259](B-259-generator-verschluckt-leerzeichen-neben-xml-elementen.md) | Der XML-Doc-Generator verschluckt Leerzeichen zwischen zwei Elementen | Defekt | `idee` | P3 | — | — | — |
 | [B-260](B-260-normalisierer-setzt-absatz-mitten-im-satz.md) | Der OpenAPI-Normalisierer setzt einen Absatz mitten in einen Satz | Defekt | `idee` | P3 | — | — | — |
+| [B-261](B-261-produktionspfad-des-beispielkatalogs-ungetestet.md) | Der Produktionspfad des Beispielkatalogs hängt an keinem Test | Defekt | `idee` | P3 | — | — | — |
+| [B-262](B-262-vorwahl-bestehendes-kind-ohne-eigene-spec.md) | „Ohne Eingabe bleibt die Vorwahl ‚bestehendes Kind‘“ hält keine Spec gezielt | Defekt | `idee` | P3 | — | — | — |
+| [B-264](B-264-interessen-ohne-kind-kleiden-nicht-ein.md) | `--interests` ohne Kind setzt die Tags an die Übung, kleidet ihren Inhalt aber nicht ein | Defekt | `idee` | P3 | — | backend | — |
+| [B-265](B-265-sperr-zaehler-zusicherung-kann-nie-fallen.md) | Die „Spur“ der gesperrten Lesevorgänge ist eine Zusicherung, die nie fallen kann | Defekt | `idee` | P3 | — | backend | — |
+| [B-266](B-266-wartepunkt-netzwerk-statt-app-zustand.md) | Der Wartepunkt aus B-180 wartet aufs Netzwerk, nicht auf die App | Defekt | `idee` | P3 | — | frontend | — |
+| [B-268](B-268-fokus-nach-inline-reihe.md) | Nach „Reihe anlegen & wählen“ fällt der Fokus auf `body` | Defekt | `idee` | P3 | — | frontend | — |
 | [B-17](B-17-birkenbihl-sprachcodes.md) | Sprachcode-Normalisierung bei der Vokabel-Dekodierung | Frage | `in-arbeit` | P3 | XS | frontend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-231](B-231-fokus-ohne-fehlerkasten.md) | Wohin gehört der Fokus, wenn ein Knopf ohne Fehlerkasten gesperrt wird? | Frage | `idee` | P3 | — | frontend | — |
@@ -533,15 +540,14 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-233](B-233-zwei-sperrmuster-auf-der-lehrwerke-seite.md) | Eine Seite, zwei Sperrmuster: Soll „Pflichtfeld leer" überall gleich aussehen? | Frage | `idee` | P3 | — | frontend | — |
 | [B-234](B-234-dritter-zustand-der-arten-liste.md) | Soll die Arten-Liste einen dritten Zustand bekommen – oder B-174s Entscheidung 3 zurückgenommen werden? | Frage | `idee` | P3 | — | frontend | — |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `idee` | P3 | — | — | — |
+| [B-267](B-267-entkoppeltes-lehrbuch-zeigt-katalogwert-im-freitextfeld.md) | Nach dem Entkoppeln zeigt das Freitextfeld den Katalogwert – gespeichert wird er nicht | Frage | `idee` | P3 | — | beides | — |
 | [B-15](B-15-testmodus-weitere-typen.md) | Vorschau für die nicht-prüfbaren Übungstypen | Wunsch | `in-arbeit` | P3 | S | beides | — |
 | [B-21](B-21-ki-creator-foerdermodus.md) | KI-Creator: Fördermodus (`--use-weak`) sprachrein und mit Tests absichern | Wunsch | `in-arbeit` | P3 | S | backend | — |
+| [B-68](B-68-vater-web-responsive.md) | Das Vater-Web hat keinen einzigen eigenen Breakpoint | Wunsch | `in-arbeit` | P3 | M | frontend | — |
 | [B-12](B-12-uebungen-kuratieren.md) | Geteilte Übungen bewerten und kuratieren | Wunsch | `geschaetzt` | P3 | M | beides | Migration |
 | [B-155](B-155-grammatik-themen-als-tags.md) | Grammatik als Thema, nicht als Freitext | Wunsch | `geschaetzt` | P3 | L | beides | Migration |
 | [B-22](B-22-unit-stoffnotizen-llm.md) | Unit-Stoffnotizen LLM-gestützt befüllen | Wunsch | `geschaetzt` | P3 | M | backend | Migration |
 | [B-28](B-28-login-name-sequenziell.md) | Sequenzielle IDs als Login-Name | Wunsch | `geschaetzt` | P3 | S | backend | — |
-| [B-64](B-64-textbook-vs-series.md) | Das Lehrwerk gibt es zweimal: einmal als Freitext am Kind, einmal katalogisiert | Wunsch | `geschaetzt` | P3 | M | beides | — |
-| [B-68](B-68-vater-web-responsive.md) | Das Vater-Web hat keinen einzigen eigenen Breakpoint | Wunsch | `geschaetzt` | P3 | M | frontend | — |
-| [B-71](B-71-inline-vokabelliste-ohne-varianten.md) | Die Inline-Vokabelliste im Übungs-Editor kann keine gleichwertigen Übersetzungen anlegen | Wunsch | `geschaetzt` | P3 | M | beides | — |
 | [B-85](B-85-i18n-infrastruktur-sohn-arcade-englisch.md) | i18n-Infrastruktur + Sohn-Arcade auf Englisch (erste Teilstufe der Mehrsprachigkeit) | Wunsch | `geschaetzt` | P3 | L | frontend | — |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `ausformuliert` | P3 | L | backend | Migration |
 | [B-16](B-16-positions-formular-umfang.md) | Prüfauftrag: deckt das Positions-Edit-Formular alle Felder ab? | Wunsch | `ausformuliert` | P3 | S | frontend | — |
@@ -561,7 +567,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-05](B-05-buchstaben-tausch.md) | Buchstaben-Tausch-Eingabe (Anagramm) | Wunsch | `geschaetzt` | P5 | M | beides | — |
 
 <details>
-<summary>Abgenommen (182)</summary>
+<summary>Abgenommen (184)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -721,11 +727,13 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-61](B-61-reste-der-schreib-primitiven-runde.md) | Zwei Reste aus der Schreib-Primitiven-Runde | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-62](B-62-reste-aus-dem-b37-review.md) | Drei Reste aus dem B-37-Review (Sohn-Arcade) | Defekt | `abgenommen` | P3 | S | beides | — |
 | [B-63](B-63-lehrwerk-hierarchie.md) | Das Lehrwerk ist eine Ebene aus Freitext, gebraucht wird eine Hierarchie mit Listen | Wunsch | `abgenommen` | P2 | L | beides | Migration + Vertrag |
+| [B-64](B-64-textbook-vs-series.md) | Das Lehrwerk gibt es zweimal: einmal als Freitext am Kind, einmal katalogisiert | Wunsch | `abgenommen` | P3 | M | beides | — |
 | [B-65](B-65-vokabel-mehrere-uebersetzungen.md) | Eine Vokabel mit zwei richtigen Übersetzungen wertet eine davon falsch | Defekt | `abgenommen` | P1 | M | beides | Migration |
 | [B-66](B-66-buchstabenkaestchen-trennzeichen.md) | Das Buchstabenkästchen lässt Leer- und Satzzeichen tippen, die schon feststehen | Defekt | `abgenommen` | P2 | M | beides | — |
 | [B-67](B-67-fachlehrer-aus-lehrwerk.md) | Der Fachlehrer fragt nach Fach und Sprachen, die im gewählten Lehrwerk längst stehen | Wunsch | `abgenommen` | P2 | S | frontend | — |
 | [B-69](B-69-wiederhol-felder-alternativen.md) | Kommagetrennte Sammelfelder: einer davon nimmt gar keine zweite Alternative an | Defekt | `abgenommen` | P2 | M | frontend | — |
 | [B-70](B-70-selbsteinschaetzung-nur-primaerloesung.md) | Die Selbsteinschätzung zeigt nur die primäre Übersetzung | Defekt | `abgenommen` | P2 | S | beides | — |
+| [B-71](B-71-inline-vokabelliste-ohne-varianten.md) | Die Inline-Vokabelliste im Übungs-Editor kann keine gleichwertigen Übersetzungen anlegen | Wunsch | `abgenommen` | P3 | M | beides | — |
 | [B-72](B-72-birkenbihl-dekodierung-paarfelder.md) | Die Birkenbihl-Dekodierung trägt zwei Trennzeichen in einem Feld | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-73](B-73-auswahl-feld-ohne-wirkung.md) | Das Auswahl-Feld verspricht Multiple-Choice, das Kind bekommt Freitext | Defekt | `abgenommen` | P2 | S | beides | — |
 | [B-74](B-74-editor-zeilen-typisieren.md) | Die Zeilen des Übungs-Editors sind `Record<string, any>` | Aufräumen | `abgenommen` | P3 | M | frontend | — |
@@ -750,22 +758,27 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 
 </details>
 
-### Wartet auf Zutun von außen (5)
+### Wartet auf Zutun von außen (10)
 
 Diese Stories kommen **im Repo nicht weiter** — es fehlt ein Schritt, den nur ein Mensch
 oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird gerade gebaut".
 
 | Id | Story | Stufe | Wartet auf |
 | --- | --- | --- | --- |
+| [B-134](B-134-bedingte-live-regionen.md) | Dreizehn Live-Regionen entstehen zusammen mit ihrem Text — und schweigen darum | `in-arbeit` | Nutzer: Nachtlauf an Freigabe 3 beendet (Sprint 10) – frontend-reviewer für B-134/B-236 nicht gelaufen |
 | [B-15](B-15-testmodus-weitere-typen.md) | Vorschau für die nicht-prüfbaren Übungstypen | `in-arbeit` | Nutzer: Nachtlauf an Freigabe 3 beendet (6 Review-Funde in Sprint 7) – offene Funde im Verlauf |
 | [B-17](B-17-birkenbihl-sprachcodes.md) | Sprachcode-Normalisierung bei der Vokabel-Dekodierung | `in-arbeit` | Nutzer: Nachtlauf an Freigabe 3 beendet (6 Review-Funde in Sprint 7) – offene Funde im Verlauf |
 | [B-21](B-21-ki-creator-foerdermodus.md) | KI-Creator: Fördermodus (`--use-weak`) sprachrein und mit Tests absichern | `in-arbeit` | Nutzer: Nachtlauf an Freigabe 3 beendet (6 Review-Funde in Sprint 7) – offene Funde im Verlauf |
+| [B-236](B-236-checkbox-gruppe-ohne-zugaenglichen-gruppennamen.md) | Eine Gruppen-Überschrift über Kontrollkästchen ist sichtbar, aber für den Screenreader an nichts gebunden | `in-arbeit` | Nutzer: Nachtlauf an Freigabe 3 beendet (Sprint 10) – frontend-reviewer für B-134/B-236 nicht gelaufen |
+| [B-263](B-263-info-popover-steht-am-rechten-rand-ueber.md) | Ein aufgeklapptes ⓘ am rechten Rand lässt die Seite seitlich scrollen | `in-arbeit` | Nutzer: Nachtlauf an Freigabe 3 beendet (Sprint 10, Fund 6 aus dem Delta-Review) – offene Funde im Verlauf |
+| [B-267](B-267-entkoppeltes-lehrbuch-zeigt-katalogwert-im-freitextfeld.md) | Nach dem Entkoppeln zeigt das Freitextfeld den Katalogwert – gespeichert wird er nicht | `idee` | Nutzer: Entscheidung, ob die Antwort den gespeicherten Freitext getrennt mitliefert |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
+| [B-68](B-68-vater-web-responsive.md) | Das Vater-Web hat keinen einzigen eigenen Breakpoint | `in-arbeit` | Nutzer: Nachtlauf an Freigabe 3 beendet (Sprint 10, Fund 6 aus dem Delta-Review) – offene Funde im Verlauf |
 
-### Nach der Abnahme entgangen (56)
+### Nach der Abnahme entgangen (61)
 
-**Nachgeschaut: 163 von 182 abgenommenen** — und in 45 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 19 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 182 von 184 abgenommenen** — und in 50 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 2 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -825,34 +838,22 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-256](B-256-sprint-5-drei-saetze-nach-der-abnahme.md) | Drei Sätze aus Sprint 5, die nach der Abnahme nicht stimmen | [B-237, B-244, B-246] | `abgenommen` |
 | [B-257](B-257-zielfeier-verspaetet-jenseits-der-ersten-fuenf.md) | Ein schon erreichtes Ziel jenseits der ersten fünf wird später verspätet gefeiert | [B-36] | `idee` |
 | [B-260](B-260-normalisierer-setzt-absatz-mitten-im-satz.md) | Der OpenAPI-Normalisierer setzt einen Absatz mitten in einen Satz | [B-147] | `idee` |
+| [B-261](B-261-produktionspfad-des-beispielkatalogs-ungetestet.md) | Der Produktionspfad des Beispielkatalogs hängt an keinem Test | [B-181] | `idee` |
+| [B-262](B-262-vorwahl-bestehendes-kind-ohne-eigene-spec.md) | „Ohne Eingabe bleibt die Vorwahl ‚bestehendes Kind‘“ hält keine Spec gezielt | [B-177] | `idee` |
+| [B-264](B-264-interessen-ohne-kind-kleiden-nicht-ein.md) | `--interests` ohne Kind setzt die Tags an die Übung, kleidet ihren Inhalt aber nicht ein | [B-46] | `idee` |
+| [B-265](B-265-sperr-zaehler-zusicherung-kann-nie-fallen.md) | Die „Spur“ der gesperrten Lesevorgänge ist eine Zusicherung, die nie fallen kann | [B-165] | `idee` |
+| [B-266](B-266-wartepunkt-netzwerk-statt-app-zustand.md) | Der Wartepunkt aus B-180 wartet aufs Netzwerk, nicht auf die App | [B-180] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (19) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (2) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-160](B-160-gesperrter-knopf-nennt-den-grund-nie.md) | Der gesperrte Löschen-Knopf nennt seinen Grund nie — der `title` erscheint nicht |
-| [B-165](B-165-backend-suite-flackert.md) | `AtomaresSchreiben_KeineLeseFehler` fällt unter Volllast — und färbt das Test-Tor rot |
-| [B-167](B-167-katalogliste-zeigt-beim-filterwechsel-alte-treffer.md) | Katalogliste im Planbau zeigt beim Filterwechsel die alten Treffer weiter |
-| [B-170](B-170-selbst-angelegte-art-im-grundbestand-ist-unloeschbar.md) | Eine selbst angelegte Art im Grundbestands-Fach ist unlöschbar — und der Seitentext verspricht das Gegenteil |
-| [B-177](B-177-seitenschluessel-haengt-an-einer-batching-annahme.md) | Der Seitenschlüssel hängt an einer Batching-Annahme, die kein Tor hält |
-| [B-180](B-180-zusicherung-haengt-an-scheduling-statt-am-gate.md) | Eine Zusicherung hing an 20 ms Scheduling statt am Gate |
-| [B-181](B-181-praemisse-der-rennen-klasse-stimmt-nicht.md) | Die Rennen-Klasse nennt nur einen von zwei Fehlermodi — welcher auftritt, entscheidet die Plattform |
-| [B-182](B-182-reichweite-nur-am-patch-festgenagelt.md) | Die Reichweite des Ventils war nur am PATCH festgenagelt |
-| [B-188](B-188-wizard-verschweigt-drei-weitere-ausfaelle.md) | Der Assistent verschweigt drei weitere Ausfälle — einer schickt den Vater ins Kind-Anlegen |
-| [B-189](B-189-teilstring-zusicherung-bricht-im-vollen-lauf.md) | Eine Teilstring-Zusicherung bricht, sobald der Leer-Text daneben stehen bleibt |
-| [B-19](B-19-schuelerprofil-ki-lehrplan.md) | Schülerprofil-getriebener KI-Lehrplan |
-| [B-195](B-195-unit-liste-bleibt-waehrend-des-reihenwechsels-waehlbar.md) | Beim Reihenwechsel bleiben die Units der alten Reihe wählbar |
-| [B-201](B-201-feldhilfe-argumentiert-in-beide-richtungen.md) | Die Feldhilfe zu den Zielpunkten argumentiert seit Sprint 2 in beide Richtungen |
-| [B-202](B-202-agent-vorgabewert-halbiert-die-zielbelohnung.md) | Der KI-Creator halbiert die Zielbelohnung jeder erzeugten Übung |
-| [B-209](B-209-savednotice-raeumt-nie.md) | „Gespeichert" bleibt über jedem folgenden Bildschirm der Arcade stehen |
-| [B-214](B-214-store-zeile-per-teilstring-und-position.md) | Die Store-Zeile wird per Teilstring **und** Position gegriffen — dieselbe Bauart wie B-153 |
-| [B-239](B-239-wiki-beispiele-tragen-deutsche-xml-docs.md) | Die Erweitern-Anleitung im Wiki zeigt deutsche `/// <summary>` – entgegen der Regel „Code-Doku auf Englisch" |
-| [B-242](B-242-zweite-rest-datei-faehrt-die-tote-kapitel-route.md) | Eine zweite `.http`-Datei unter `docs/REST/Creator/` fährt die tote Kapitel-Route – mit eingebranntem Token |
-| [B-46](B-46-interessenbasierte-uebungen.md) | Übungen entstehen für ein Interessenprofil, nicht für ein bestimmtes Kind |
+| [B-64](B-64-textbook-vs-series.md) | Das Lehrwerk gibt es zweimal: einmal als Freitext am Kind, einmal katalogisiert |
+| [B-71](B-71-inline-vokabelliste-ohne-varianten.md) | Die Inline-Vokabelliste im Übungs-Editor kann keine gleichwertigen Übersetzungen anlegen |
 
 </details>
 
@@ -880,7 +881,14 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-209](B-209-savednotice-raeumt-nie.md) | `abgenommen` | Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung" |
 | [B-210](B-210-dialog-haelt-zwei-wahrheiten-fuer-die-config.md) | `abgenommen` | Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung" |
 | [B-212](B-212-fuenfter-meldungsplatz-in-lehrwerke.md) | `abgenommen` | Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung" |
+| [B-236](B-236-checkbox-gruppe-ohne-zugaenglichen-gruppennamen.md) | `in-arbeit` | Abschnitt „User Story", Abschnitt „Ist-Stand…" |
 | [B-260](B-260-normalisierer-setzt-absatz-mitten-im-satz.md) | `idee` | `unverifiziert: true` |
+| [B-261](B-261-produktionspfad-des-beispielkatalogs-ungetestet.md) | `idee` | `unverifiziert: true` |
+| [B-262](B-262-vorwahl-bestehendes-kind-ohne-eigene-spec.md) | `idee` | `unverifiziert: true` |
+| [B-264](B-264-interessen-ohne-kind-kleiden-nicht-ein.md) | `idee` | `unverifiziert: true` |
+| [B-265](B-265-sperr-zaehler-zusicherung-kann-nie-fallen.md) | `idee` | `unverifiziert: true` |
+| [B-267](B-267-entkoppeltes-lehrbuch-zeigt-katalogwert-im-freitextfeld.md) | `idee` | `unverifiziert: true` |
+| [B-268](B-268-fokus-nach-inline-reihe.md) | `idee` | `unverifiziert: true` |
 
 <details>
 <summary>Verworfen (22)</summary>

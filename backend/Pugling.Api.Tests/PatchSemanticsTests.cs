@@ -222,8 +222,10 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
             var c = await TestApi.AdultAsync(f);
             var childId = await NeuesKindAsync(c);
             var series = await NeueReiheAsync(c);
+            // A unit WITHOUT a grade: with one, the response would show the catalog grade (B-64) and hide the
+            // stored free-text grade that clearGrade empties - the switch would look ineffective.
             var unit = await TestApi.IdAsync(await c.PostAsJsonAsync(
-                $"/api/v1/creator/textbook-series/{series}/units", new { label = "Unit 1", grade = 5 }));
+                $"/api/v1/creator/textbook-series/{series}/units", new { label = "Unit 1" }));
             var subject = await TestApi.IdAsync(await c.PostAsJsonAsync("/api/v1/creator/subjects", new { name = Eindeutig("Fach") }));
             var id = await TestApi.IdAsync(await c.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/textbooks",
                 new { title = "Access 6", subjectId = subject, subjectName = "Englisch", grade = 6, seriesId = series, currentUnitId = unit }));

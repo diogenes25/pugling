@@ -258,7 +258,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
             TargetLanguage = dto.TargetLanguage,
             Word = dto.Word,
             Translation = dto.Translation ?? "",
-            TranslationAlternatives = CleanAlternatives(dto.TranslationAlternatives, dto.Translation ?? ""),
+            TranslationAlternatives = VocabularyStoreService.CleanAlternatives(dto.TranslationAlternatives, dto.Translation ?? ""),
             PartOfSpeech = dto.PartOfSpeech ?? Contracts.PartOfSpeech.Other,
             Noun = dto.Noun,
             Verb = dto.Verb,
@@ -323,7 +323,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         // moves the translation onto a word already listed as an alternative would otherwise leave it there
         // twice ("also: sehr groß" under "sehr groß"). Reassigning an unchanged list costs no UPDATE - the
         // JSON value comparer compares by content.
-        vocab.TranslationAlternatives = CleanAlternatives(vocab.TranslationAlternatives, vocab.Translation);
+        vocab.TranslationAlternatives = VocabularyStoreService.CleanAlternatives(vocab.TranslationAlternatives, vocab.Translation);
         if (dto.PartOfSpeech is not null) vocab.PartOfSpeech = dto.PartOfSpeech.Value;
         if (dto.Noun is not null) vocab.Noun = dto.Noun;
         if (dto.Verb is not null) vocab.Verb = dto.Verb;
@@ -529,23 +529,6 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     }
 
     // ---- Helpers -------------------------------------------------------------------------------------
-
-    /// <summary>
-    /// Trims the equally valid translations and drops blanks, duplicates and the primary
-    /// <paramref name="translation"/> itself – it already counts, listing it again would show up as a
-    /// redundant "also: riesig" in the UI. An empty result becomes <c>null</c>, so "none declared" has
-    /// exactly one representation in the store – otherwise <c>[]</c> and <c>null</c> would be two ways of
-    /// saying the same thing, and only one of them would answer "does this entry have alternatives?" the
-    /// way a reader expects.
-    /// </summary>
-    private static List<string>? CleanAlternatives(List<string>? values, string translation)
-    {
-        if (values is null) return null;
-        var cleaned = values.Select(v => v.Trim())
-            .Where(v => v.Length > 0 && !string.Equals(v, translation.Trim(), StringComparison.OrdinalIgnoreCase))
-            .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        return cleaned.Count > 0 ? cleaned : null;
-    }
 
     /// <summary>Loads base form + tags of a tracked vocabulary entry for the response projection.</summary>
     private async Task LoadGraphAsync(Vocabulary vocab, CancellationToken ct)

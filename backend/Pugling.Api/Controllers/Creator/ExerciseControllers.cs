@@ -130,7 +130,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
 
     private static VocabItemResponse MapItem(int seriesId, int seriesUnitId, int exerciseId, ExerciseItem item) =>
         new(item.Id, item.OrderIndex, item.VocabularyId, item.Vocabulary?.Word ?? "", item.Vocabulary?.Translation ?? "",
-            item.Hint, ItemSelf(seriesId, seriesUnitId, exerciseId, item.Id), VocabLink.Path + item.VocabularyId);
+            item.Vocabulary?.TranslationAlternatives, item.Hint, ItemSelf(seriesId, seriesUnitId, exerciseId, item.Id), VocabLink.Path + item.VocabularyId);
 
     /// <summary>All items of the exercise in order (front/back from the store).</summary>
     [HttpGet("{exerciseId:int}/items")]
@@ -195,9 +195,10 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
             OrderIndex = nextOrder,
         };
         Db.ExerciseItems.Add(item);
-        await Db.SaveChangesAsync(ct);
-
+        // Only after every check above passed: a rejected item must not have changed the shared store entry.
         item.Vocabulary = await Db.Vocabularies.FindAsync([vocabId], ct);
+        if (item.Vocabulary is not null) VocabularyStoreService.ApplyTranslationAlternatives(item.Vocabulary, body.TranslationAlternatives);
+        await Db.SaveChangesAsync(ct);
         return CreatedAtAction(nameof(GetItem), new { seriesId, seriesUnitId, exerciseId, itemId = item.Id },
             MapItem(seriesId, seriesUnitId, exerciseId, item));
     }
@@ -230,9 +231,10 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
             if (await ExerciseInPlanAsync(exerciseId, ct)) return ShiftBlockedProblem();
             item.OrderIndex = order;
         }
-        await Db.SaveChangesAsync(ct);
-
+        // Against the entry the item points to AFTER this PATCH, so a word swap plus alternatives lands on the new word.
         item.Vocabulary = await Db.Vocabularies.FindAsync([item.VocabularyId], ct);
+        if (item.Vocabulary is not null) VocabularyStoreService.ApplyTranslationAlternatives(item.Vocabulary, body.TranslationAlternatives);
+        await Db.SaveChangesAsync(ct);
         return MapItem(seriesId, seriesUnitId, exerciseId, item);
     }
 

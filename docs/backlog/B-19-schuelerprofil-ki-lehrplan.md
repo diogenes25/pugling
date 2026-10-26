@@ -9,6 +9,7 @@ wo: backend
 migration: nein
 vertragsbruch: ja
 quelle: memory/schueler-profil-ki-lehrplan.md
+nachgeschaut: 2026-10-26
 ---
 
 # B-19 · Schülerprofil-getriebener KI-Lehrplan
@@ -295,6 +296,7 @@ bestehendem Muster (`ExamPlanner`), ein neuer CLI-Verb, keine neuen Contracts, k
   genau einen Fall: Plan aktiv statt inaktiv · Controller ignoriert `Active` · `--days`-Wächter entfernt ·
   Selbsttest-Bedingung aus `Complete` entfernt · `FailedPositions`-Bedingung entfernt · `ParseIntensity`
   fällt auf `Normal` zurück; dazu die `Locker`-Zeile verändert. Commit `adfa05e`.
+- **2026-10-26** — Nachschau (sechster Nachtlauf, Sprint 11, [Protokoll](../pm-sitzung-2026-10-26-nacht.md)): AK 4 und AK 2/5 nachgerechnet. AK 4: `PlanOutcome.Complete` (`PlanPlanner.cs:77-80`) plus Fehlerhaltung je Teil (`:156-165`) und je Position (`:226-232`), Exit 1 in `AgentCommands.cs:227-231` – gehalten von `CreatorAgentTests.cs:811-829` (echte Kommandozeile, Exit 1 *und* eine Position) und `:876-893`. Leerfall geprüft: die Ausnahme `ExerciseId is null` in `Complete` zieht keine zweite Situation mit hinein – ein angenommener, nicht zurückgenommener Lauf ohne Id entsteht nur im Trockenlauf (`Drafting/ExerciseStrategy.cs:111-114`); leere `Parts` sind durch die Wächter `PlanPlanner.cs:128-131` ausgeschlossen. AK 2: `Active: false` (`PlanPlanner.cs:190`) → `StudyPlansController.cs:98,105`, gehalten von `CreatorAgentTests.cs:791` und `PlanPositionCrudTests.Plan_InaktivAngelegt_LaesstDenLaufendenPlanInRuhe` (liest beide Pläne zurück). Kein Befund.
 
 ## Was diese Story ausdrücklich **nicht** gebaut hat
 

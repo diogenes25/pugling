@@ -19,6 +19,7 @@ import {
 } from "./exerciseConfig";
 import { useExerciseTypes } from "../lib/exerciseTypes";
 import { ListenAusfall } from "../components/ListenAusfall";
+import { RepeatedTextFields, nonEmpty } from "../components/RepeatedTextFields";
 
 /**
  * Eine Übung anlegen – **nur** das.
@@ -362,6 +363,8 @@ function VocabRefPicker({ selected, setSelected, extra, setExtra }: {
   const tagOptions = useAsync<VocabTagResponse[]>(() => api.vocabTags(), []);
   const [qWord, setQWord] = useState("");
   const [qTrans, setQTrans] = useState("");
+  // Gleichwertige Übersetzungen gleich beim Anlegen (B-71) – sonst müsste der Vater dafür extra in den Store.
+  const [qAlts, setQAlts] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -375,9 +378,12 @@ function VocabRefPicker({ selected, setSelected, extra, setExtra }: {
     if (!qWord.trim() || !qTrans.trim()) return;
     setBusy(true); setErr(null);
     try {
-      const v = await api.createVocabulary({ sourceLanguage: src, targetLanguage: tgt, word: qWord.trim(), translation: qTrans.trim() });
+      const v = await api.createVocabulary({
+        sourceLanguage: src, targetLanguage: tgt, word: qWord.trim(), translation: qTrans.trim(),
+        translationAlternatives: nonEmpty(qAlts) ?? null,
+      });
       setSelected((cur) => (cur.some((s) => s.key === v.key) ? cur : [...cur, { key: v.key, vocabularyId: v.id }]));
-      setQWord(""); setQTrans(""); store.reload();
+      setQWord(""); setQTrans(""); setQAlts([]); store.reload();
     } catch (e) { setErr(errorMessage(e)); } finally { setBusy(false); }
   }
 
@@ -461,6 +467,11 @@ function VocabRefPicker({ selected, setSelected, extra, setExtra }: {
           <input id="vp-word" value={qWord} onChange={(e) => setQWord(e.target.value)} /></div>
         <div className="field" style={{ flex: 1 }}><label htmlFor="vp-translation">Übersetzung</label>
           <input id="vp-translation" value={qTrans} onChange={(e) => setQTrans(e.target.value)} /></div>
+        <div className="field" style={{ flex: 1 }}>
+          <span className="label-row group-label">Auch richtig <span className="muted">(optional)</span></span>
+          <RepeatedTextFields label="Auch richtig" scope="neues Wort" values={qAlts}
+            onChange={setQAlts} placeholder="zählt auch als richtig" addLabel="+ Variante" />
+        </div>
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={quickAdd}>+ anlegen &amp; wählen</button>
       </div>
       {err && <div className="banner err">{err}</div>}

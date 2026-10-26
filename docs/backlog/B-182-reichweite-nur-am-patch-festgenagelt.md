@@ -14,7 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-178]
 wartet_auf: ""
-nachgeschaut: ""
+nachgeschaut: 2026-10-26
 ---
 
 # B-182 · Die Reichweite des Ventils war nur am PATCH festgenagelt
@@ -75,3 +75,4 @@ so wie der Anlass-Fall es für sein ownerloses Fach schon tut.
   **14 grün, 1 rot**, und der Rote ist genau `Admin_DarfAuchDieArten_EinesFremden_Fachs_Aendern`
   (*erwartet `NoContent`, gemessen `Forbidden`*). Vor dem Fix wären es 15 grün gewesen. Mutation
   zurückgenommen.
+- **2026-10-26** — Nachschau (sechster Nachtlauf, Sprint 11, [Protokoll](../pm-sitzung-2026-10-26-nacht.md)): Fix nachgerechnet, `FachEigentumTests.cs:520-537` (PATCH `200` an `:529`, dann DELETE `204` an `:536` durch einen Admin auf Fach **und** Art eines Fremden) gegen `ExerciseCategoriesController.cs:167` und `:201`. Beide Actions gehen heute durch denselben Helfer `MayWrite` (`:66-69`); die Mutation aus der Story (nur Delete auf `OwnerAdultId is null` verengen) müsste den Helfer umgehen und fiele dann genau an `:536`. Weder Kategorie noch Fach gehören dem Admin, die Zusicherung trifft also nur das Ventil. Kein Befund. Hinweis ohne Zählwert: die 403-Meldung in Delete (`:203`) nennt den Admin nicht, der Vertrag schon.

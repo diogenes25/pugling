@@ -58,10 +58,13 @@ public record RefsFromTagsDto(List<string> Tags, bool MatchAll = false, bool Bas
 /// <param name="VocabularyId">Linked vocabulary store entry.</param>
 /// <param name="Front">Word in the learning language (from the store).</param>
 /// <param name="Back">Translation (from the store).</param>
+/// <param name="TranslationAlternatives">Equally valid translations of the store entry (<c>null</c> = none);
+/// read back so an editor shows what is already declared.</param>
 /// <param name="Hint">Exercise-local hint; overrides the derived store hint.</param>
 /// <param name="Self">HATEOAS link to the item itself.</param>
 /// <param name="Vocabulary">HATEOAS link to the store entry.</param>
-public record VocabItemResponse(int Id, int OrderIndex, int VocabularyId, string Front, string Back, string? Hint,
+public record VocabItemResponse(int Id, int OrderIndex, int VocabularyId, string Front, string Back,
+    IReadOnlyList<string>? TranslationAlternatives, string? Hint,
     [property: JsonPropertyName("_self")] string Self,
     [property: JsonPropertyName("vocabulary")] string Vocabulary);
 
@@ -70,8 +73,17 @@ public record VocabItemResponse(int Id, int OrderIndex, int VocabularyId, string
 /// via <paramref name="Front"/>/<paramref name="Back"/> (created/found in the store). <paramref name="Hint"/>
 /// empty = delete, set = overwrite; on PATCH every omitted field remains unchanged.
 /// </summary>
+/// <param name="VocabularyId">Existing store entry the item points to.</param>
+/// <param name="Front">Word in the learning language, for creating/finding the store entry inline.</param>
+/// <param name="Back">Translation, for creating/finding the store entry inline.</param>
+/// <param name="Hint">Exercise-local hint; empty deletes it.</param>
+/// <param name="OrderIndex">Sort key within the exercise.</param>
+/// <param name="TranslationAlternatives">Equally valid translations, written onto the item's store entry –
+/// also when that entry already existed, so they are never dropped silently. <c>null</c> (or omitted) leaves
+/// the entry's alternatives unchanged; an empty list <c>[]</c> deletes them. The store keeps one list per
+/// word, so every exercise using the same entry sees the change.</param>
 public record VocabItemInput(int? VocabularyId = null, string? Front = null, string? Back = null,
-    string? Hint = null, int? OrderIndex = null);
+    string? Hint = null, int? OrderIndex = null, List<string>? TranslationAlternatives = null);
 
 /// <summary>An interchangeable vocabulary candidate for a word (several for homonyms).</summary>
 /// <param name="VocabularyId">Vocabulary id.</param>

@@ -9,7 +9,7 @@ wo: beides
 migration: ja
 vertragsbruch: nein
 quelle: Sitzung 2026-07-31 (Rollen-Abgleich Creator/Supervisor/Student)
-nachgeschaut: ""
+nachgeschaut: 2026-10-26
 wartet_auf: ""
 ---
 
@@ -265,3 +265,4 @@ Frontend betroffen, daher kein E2E-Zusatz; `/smoke-test` bleibt der manuelle Geg
   ([docs/pm-sitzung-2026-09-02.md](../pm-sitzung-2026-09-02.md), „Runde 1") Schritt für Schritt
   aufgeschrieben — kein Browser gebunden, also Freigabe 6 in ihrer Ersatz-Fassung. Vater und Sohn sind
   ausdrücklich nur **Regressions-Zeugen**: keine ihrer Flächen ist von dieser Story berührt.
+- **2026-10-26** — Nachschau (sechster Nachtlauf, Sprint 11, [Protokoll](../pm-sitzung-2026-10-26-nacht.md)): AK 4 (kindloser Pfad `--interests`) gegen den Prompt nachgerechnet, nicht nur gegen die Tag-Ids; AK 2 (`InterestTagsProblemAsync` vor jeder Zuweisung in Create/Update, `ExerciseControllerBase.cs:300,384`) hält. Befund → eigene Defekt-Story [B-264](B-264-interessen-ohne-kind-kleiden-nicht-ein.md): `--interests` taggt die Übung, kleidet sie aber nicht ein. `CreatorBriefing.Interests` ist ohne Kind leer (`Briefing/CreatorBriefing.cs:38`), die aufgelösten Slugs leben nur als Ids in `InterestTagIds` (`BriefingBuilder.cs:72,107-130`) und erreichen den Prompt nie; der Prompt sagt stattdessen „Kein bestimmtes Kind … keine erfundenen Vorlieben“ (`CreatorBriefing.cs:110-112`), `DraftPrompts.cs:61` überspringt die Einkleidungszeile, und die Beschreibung lautet „für den gemeinsamen Katalog erzeugt“ (`Drafting/ExerciseStrategy.cs:85`). Der Katalog behauptet damit eine Einkleidung, die der Inhalt nicht hat – die eine Bedingung `Child is null` zieht „kein Kind“ und „keine Interessen“ zusammen. `CreatorAgentTests.KindloserPfad_TaggtDieAngegebenenSlugs` (`:122-140`) prüft nur `detail.InterestTagIds`, nie `chat.LastMessages`.

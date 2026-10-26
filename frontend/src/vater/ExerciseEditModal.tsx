@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { Modal } from "../components/Modal";
 import { StatusBanner } from "../components/StatusBanner";
+import { RepeatedTextFields, nonEmpty } from "../components/RepeatedTextFields";
 import { FieldLabel } from "../components/InfoHint";
 import { SCHOOL_TYPES } from "../lib/labels";
 import { confirmAction } from "../lib/ui";
@@ -9,7 +10,7 @@ import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import type {
   CreateExercisePayload, ExerciseDetail, ExerciseSummary, ExerciseTypeKey, InterestTagResponse, SchoolType,
-  VocabItemResponse, VocabularyResponse,
+  VocabItemInput, VocabItemResponse, VocabularyResponse,
 } from "../lib/types";
 import { LANGUAGES } from "../lib/languages";
 import {
@@ -511,7 +512,8 @@ function ItemEditor({ detail }: { detail: ExerciseDetail }) {
       </h4>
       <p className="muted" style={{ marginTop: 0, fontSize: 13 }}>
         Wörter kommen aus dem Vokabel-Store und bleiben über Übungen hinweg verknüpft. Der Lernstand deines
-        Kindes hängt am einzelnen Wort – Ergänzen und Entfernen lässt die übrigen unberührt.
+        Kindes hängt am einzelnen Wort – Ergänzen und Entfernen lässt die übrigen unberührt. „Auch richtig"
+        gehört zum Wort im Store und gilt darum in jeder Übung, die es benutzt.
       </p>
 
       {items.error && <div className="banner err">{items.error}</div>}
@@ -522,18 +524,26 @@ function ItemEditor({ detail }: { detail: ExerciseDetail }) {
       {items.loading && items.data === null ? <div className="loading">Lade Wortpaare…</div> : items.data && (
         <div style={{ overflowX: "auto" }}>
           <table className="table">
-            <thead><tr><th>#</th><th>Wort</th><th>Übersetzung</th><th>Hinweis</th><th /></tr></thead>
+            <thead><tr><th>#</th><th>Wort</th><th>Übersetzung</th><th>Auch richtig</th><th>Hinweis</th><th /></tr></thead>
             <tbody>
               {items.data.map((it, i) => (
                 <ItemRow key={it.id} item={it} position={i + 1} busy={action.busy} exerciseId={detail.id}
                   storeHref={storeHref(it.front)}
                   onHint={(hint) => act(() => api.patchExerciseItem(detail.seriesId, detail.seriesUnitId, detail.id, it.id, { hint }), "Hinweis gespeichert.")}
+                  // Eine ausdrücklich leere Liste löscht (B-71); `null` hieße beim Server „unverändert“.
+                  onAlternatives={async (translationAlternatives) => {
+                    // Die Antwort zurückgeben: der Server bereinigt die Liste, und nur sie sagt, was jetzt gilt.
+                    const res = await action.runFor(() => api.patchExerciseItem(detail.seriesId, detail.seriesUnitId, detail.id, it.id,
+                      { translationAlternatives }), "Gleichwertige Übersetzungen gespeichert.");
+                    if (res) items.reload();
+                    return res;
+                  }}
                   onRemove={() => {
                     if (!confirmAction(`„${it.front} → ${it.back}" aus dieser Übung entfernen? Die Vokabel bleibt im Store.`)) return;
                     act(() => api.deleteExerciseItem(detail.seriesId, detail.seriesUnitId, detail.id, it.id), "Wort entfernt.");
                   }} />
               ))}
-              {items.data.length === 0 && <tr><td colSpan={5} className="muted">Noch keine Wörter – unten hinzufügen.</td></tr>}
+              {items.data.length === 0 && <tr><td colSpan={6} className="muted">Noch keine Wörter – unten hinzufügen.</td></tr>}
             </tbody>
           </table>
         </div>
@@ -547,13 +557,27 @@ function ItemEditor({ detail }: { detail: ExerciseDetail }) {
   );
 }
 
-function ItemRow({ item, position, busy, exerciseId, storeHref, onHint, onRemove }: {
+function ItemRow({ item, position, busy, exerciseId, storeHref, onHint, onAlternatives, onRemove }: {
   item: VocabItemResponse; position: number; busy: boolean; exerciseId: number;
   /** Ziel im Vokabel-Store, vorgefiltert auf dieses Wort. */
   storeHref: string;
-  onHint: (hint: string) => void; onRemove: () => void;
+  onHint: (hint: string) => void;
+  /** Die bereinigte Liste; leer heißt löschen. Liefert die Antwort des Servers bzw. `null` beim Fehlschlag. */
+  onAlternatives: (alternatives: string[]) => Promise<VocabItemResponse | null>;
+  onRemove: () => void;
 }) {
   const [hint, setHint] = useState(item.hint ?? "");
+  // Gleichwertige Übersetzungen des Store-Eintrags (B-71). Verglichen wird bereinigt gegen bereinigt: ein
+  // angefangenes, noch leeres Feld ist keine Änderung und soll keinen OK-Knopf zeigen.
+  const geladeneAlternativen = item.translationAlternatives ?? [];
+  const [alternatives, setAlternatives] = useState<string[]>(geladeneAlternativen);
+  const bereinigt = nonEmpty(alternatives) ?? [];
+  const altDirty = JSON.stringify(bereinigt) !== JSON.stringify(geladeneAlternativen);
+
+  // Ändert sich die Liste von außen (Neuladen nach einem anderen Speichern), zieht das Feld nach. Den Fall
+  // „eigenes Speichern, Liste bleibt gleich“ deckt der OK-Knopf selbst ab (siehe dort).
+  const geladenSchluessel = JSON.stringify(geladeneAlternativen);
+  useEffect(() => { setAlternatives(JSON.parse(geladenSchluessel) as string[]); }, [geladenSchluessel]);
   // Das Bild-Panel steht eingeklappt: es lädt eigene Daten, und bei 30 Wörtern wären das 30 Abfragen.
   const [showMedia, setShowMedia] = useState(false);
   const dirty = hint !== (item.hint ?? "");
@@ -573,6 +597,22 @@ function ItemRow({ item, position, busy, exerciseId, storeHref, onHint, onRemove
         </td>
         <td className="muted">{item.back}</td>
         <td>
+          <RepeatedTextFields label="Auch richtig" scope={item.front} values={alternatives}
+            onChange={setAlternatives} placeholder="zählt auch als richtig" addLabel="+ Variante" />
+          {altDirty && <button type="button" className="btn ghost inline-btn" style={{ width: "auto", marginTop: 4 }}
+            aria-label={`Auch richtig für ${item.front} speichern`}
+            disabled={busy} onClick={async () => {
+              /*
+               * Aus der ANTWORT übernehmen, nicht auf das Neuladen warten: bereinigt der Server nur weg, was
+               * ohnehin nicht zählt (die Hauptübersetzung, eine Dublette in anderer Schreibweise), bleibt seine
+               * Liste gleich – der Effekt oben liefe dann nie, und „OK“ stünde neben einer Eingabe, die er so
+               * nie gespeichert hat.
+               */
+              const res = await onAlternatives(bereinigt);
+              if (res) setAlternatives(res.translationAlternatives ?? []);
+            }}>OK</button>}
+        </td>
+        <td>
           <span className="row" style={{ gap: 4 }}>
             <input aria-label={`Hinweis für ${item.front}`} value={hint} onChange={(e) => setHint(e.target.value)}
               placeholder="–" style={{ maxWidth: 160 }} />
@@ -590,7 +630,7 @@ function ItemRow({ item, position, busy, exerciseId, storeHref, onHint, onRemove
       </tr>
       {showMedia && (
         <tr>
-          <td colSpan={5}>
+          <td colSpan={6}>
             <ExerciseItemMediaPanel exerciseId={exerciseId} itemId={item.id} word={item.front} />
           </td>
         </tr>
@@ -604,13 +644,14 @@ function ItemRow({ item, position, busy, exerciseId, storeHref, onHint, onRemove
  * teilt die Übung das Wort (und seine Bilder/Audios) mit allen anderen Übungen, die es benutzen.
  */
 function AddItem({ detail, busy, onAdd }: {
-  detail: ExerciseDetail; busy: boolean; onAdd: (body: { vocabularyId?: number; front?: string; back?: string }) => void;
+  detail: ExerciseDetail; busy: boolean; onAdd: (body: VocabItemInput) => void;
 }) {
   const [search, setSearch] = useState("");
   const [hits, setHits] = useState<VocabularyResponse[]>([]);
   const [searching, setSearching] = useState(false);
   const [front, setFront] = useState("");
   const [back, setBack] = useState("");
+  const [alternatives, setAlternatives] = useState<string[]>([]);
   const [err, setErr] = useState<string | null>(null);
 
   // Sprachpaar der Übung: inline angelegte Wörter brauchen es, und es hält fremdsprachige Treffer heraus.
@@ -658,12 +699,21 @@ function AddItem({ detail, busy, onAdd }: {
           <input id="ai-front" value={front} onChange={(e) => setFront(e.target.value)} /></div>
         <div className="field" style={{ flex: 1 }}><label htmlFor="ai-back">Übersetzung</label>
           <input id="ai-back" value={back} onChange={(e) => setBack(e.target.value)} /></div>
+        <div className="field" style={{ flex: 1 }}>
+          <span className="label-row group-label">Auch richtig <span className="muted">(optional)</span></span>
+          <RepeatedTextFields label="Auch richtig" scope="neues Wort" values={alternatives}
+            onChange={setAlternatives} placeholder="zählt auch als richtig" addLabel="+ Variante" />
+        </div>
         {/* Ohne Sprachpaar in der Config kann der Server das Wort nicht im Store anlegen (400) – dann
             bleibt der Weg über die Suche, und die Beschreibung oben nennt die Abhilfe. */}
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
           disabled={busy || !canCreateInline || !front.trim() || !back.trim()}
           title={canCreateInline ? undefined : "Erst das Sprachpaar der Übung setzen – unten bei „Beschreibung & Einordnung“."}
-          onClick={() => { onAdd({ front: front.trim(), back: back.trim() }); setFront(""); setBack(""); }}>
+          // Ohne Varianten geht `null` mit („nicht angegeben“): ein schon vorhandenes Wort behält dann seine Liste (B-71).
+          onClick={() => {
+            onAdd({ front: front.trim(), back: back.trim(), translationAlternatives: nonEmpty(alternatives) ?? null });
+            setFront(""); setBack(""); setAlternatives([]);
+          }}>
           + anlegen &amp; hinzufügen
         </button>
       </div>

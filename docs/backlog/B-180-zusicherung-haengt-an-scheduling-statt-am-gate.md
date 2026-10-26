@@ -14,7 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-169]
 wartet_auf: ""
-nachgeschaut: ""
+nachgeschaut: 2026-10-26
 ---
 
 # B-180 · Eine Zusicherung hing an 20 ms Scheduling statt am Gate
@@ -79,3 +79,4 @@ Fall 3 hatte dieselbe Sorgfalt nicht bekommen, obwohl sein Attribut mehrdeutig i
   **Verifikation:** `assistent.spec.ts` **3 passed**, der betroffene Fall zusaetzlich `--repeat-each 4`
   **4 passed** — der Wartepunkt haengt nicht mehr an der Reserve, sondern an der Antwort. Die Struktur ist
   damit der Beleg, nicht das Timing.
+- **2026-10-26** — Nachschau (sechster Nachtlauf, Sprint 11, [Protokoll](../pm-sitzung-2026-10-26-nacht.md)): Wartepunkt `frontend/e2e/assistent.spec.ts:183-186` gegen `VaterWizard.tsx:723` (`selectAllBusy || laedt || zeilenVeraltet`) gelegt. `page.waitForResponse` löst auf der **Netzwerkebene** aus, nicht wenn die App die Antwort verarbeitet hat — zwischen Response-Ereignis und `loading = false` liegen Body-Lesen, `setState` und Commit. Die erste Auswertung von `toBeDisabled()` kann also weiter in das Fenster fallen, in dem `laedt` den Knopf allein sperrt; mit entferntem `zeilenVeraltet` bliebe der Fall dann grün. Das Fenster ist kleiner als vorher, aber nicht strukturell geschlossen, und nach dem Fix lief keine rote Probe (nur 3 + 4 grün). Strukturell wäre ein Wartepunkt auf App-Zustand: „Suche gescheitert" (`VaterWizard.tsx:714`) erscheint erst, wenn `fehler` gesetzt ist. Befund → eigene Defekt-Story [B-266](B-266-wartepunkt-netzwerk-statt-app-zustand.md).

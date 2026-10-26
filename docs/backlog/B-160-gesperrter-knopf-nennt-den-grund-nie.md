@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-150]
+nachgeschaut: 2026-10-26
 ---
 
 # B-160 · Der gesperrte Löschen-Knopf nennt seinen Grund nie — der `title` erscheint nicht
@@ -127,3 +128,4 @@ Bausteintest, der E2E sagt stattdessen: jedes Werkzeug, das Actionability respek
   Belege: `tsc -b` sauber, `vitest run` **368/368** grün, `playwright test` **59/59** grün.
   `frontend-reviewer` gelaufen, **kein Blocker**; seine sechs Funde mit Code- oder Testwirkung sind
   eingearbeitet (Protokoll `docs/pm-sitzung-2026-09-04-nacht.md`). Commit `15b00f4`.
+- **2026-10-26** — Nachschau (sechster Nachtlauf, Sprint 11, [Protokoll](../pm-sitzung-2026-10-26-nacht.md)): AK 2 und AK 3 nachgerechnet: `PublisherAdmin.tsx:165` (`if (!locked) onDelete()`) gegen `PublisherAdmin.test.tsx` „löst in diesem Zustand keine Anfrage aus“ – ohne den Wächter ruft `fireEvent.click` am `aria-disabled`-Knopf `onDelete`, der Fall fällt; die Zusicherung `hasAttribute("disabled") === false` fällt beim Rückbau auf echtes `disabled`. Grenzfall `busy && locked` (beide Attribute) und Enter/Leertaste am fokussierten Knopf laufen durch denselben `onClick`-Wächter; die vier `:active`-Ausnahmen in `index.css:53,72,74,77` stehen. Kein Befund.

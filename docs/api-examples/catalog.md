@@ -221,6 +221,7 @@ Response — `HTTP 201`:
   "vocabularyId": 16,
   "front": "hello",
   "back": "hallo",
+  "translationAlternatives": null,
   "hint": null,
   "_self": "/api/v1/creator/textbook-series/5/units/7/vocabulary/13/items/15",
   "vocabulary": "/api/v1/creator/vocabulary/16"

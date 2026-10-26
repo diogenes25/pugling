@@ -13,7 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-148]
-nachgeschaut: ""
+nachgeschaut: 2026-10-26
 wartet_auf: ""
 ---
 
@@ -72,3 +72,4 @@ aus und wird trotzdem als roter Lauf gelesen — dieselbe Familie wie die
   `npm run test` 326/326, `tsc -b` sauber. Rollengang: dieser Fall IST ein Rollengang — er fährt echten
   Browser gegen echten Server. Reviewer: der Fund stammt aus dem Lauf selbst, der `frontend-reviewer` hat
   den Sprint gegengelesen, in dem er behoben wurde.
+- **2026-10-26** — Nachschau (sechster Nachtlauf, Sprint 11, [Protokoll](../pm-sitzung-2026-10-26-nacht.md)): AK 2 nachgerechnet, `kind-lehrbuch-fach.spec.ts:55` (`exact: true`) gegen die zwei Texte `ChildMaterialSection.tsx:65` („Noch kein Buch hinterlegt.") und `:242` („Buch hinterlegt."). `StatusBanner.tsx:18-19` rendert `message.text` ohne Präfix in ein eigenes `div`, der exakte Vergleich trifft also genau den Banner und nie den Leer-Text; keine dritte Stelle im Frontend trägt den Satz. Kein Befund. Die rote Probe bleibt wie in Entscheidung 2 benannt lastabhängig (ohne `exact` rot nur, wenn das Polling das Reload-Fenster trifft).

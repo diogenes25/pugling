@@ -1,4 +1,4 @@
-import { Fragment, useRef, useState } from "react";
+import { Fragment, useId, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { FieldLabel } from "../components/InfoHint";
 import { ReferenceSelect } from "../components/ReferenceSelect";
@@ -100,7 +100,7 @@ export function ChildMaterialSection({ childId, childName, subjects }: {
                       <TextbookForm
                         childId={childId} book={b} series={series.data ?? []} subjects={subjects}
                         onDone={(m) => { setEditing(null); books.reload(); if (m) setMeldung(m); }}
-                        onMeldung={setMeldung}
+                        onMeldung={setMeldung} onSeriesCreated={series.reload}
                       />
                     </td>
                   </tr>
@@ -118,7 +118,7 @@ export function ChildMaterialSection({ childId, childName, subjects }: {
             Fehler eines gescheiterten Anlegens. */}
         <TextbookForm
           childId={childId} series={series.data ?? []} subjects={subjects}
-          onDone={books.reload} onMeldung={setMeldung}
+          onDone={books.reload} onMeldung={setMeldung} onSeriesCreated={series.reload}
         />
       </div>
 
@@ -150,7 +150,7 @@ export function ChildMaterialSection({ childId, childName, subjects }: {
  * braucht dafür kein gefälschtes `fetch`, solange das Buch keine Reihe trägt: nur die Unit-Liste lädt
  * beim Rendern, alles andere hängt am Absenden.
  */
-export function TextbookForm({ childId, book, series, subjects, onDone, onMeldung }: {
+export function TextbookForm({ childId, book, series, subjects, onDone, onMeldung, onSeriesCreated }: {
   childId: number;
   book?: TextbookResponse;
   series: TextbookSeriesResponse[];
@@ -173,6 +173,11 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
    * Schließen, `onMeldung` zum Platz — und der Anlege-Zwilling schließt nie.
    */
   onMeldung: (m: ActionMessage | null) => void;
+  /**
+   * Eine Reihe wurde aus diesem Formular heraus angelegt (B-64): die Liste der Seite lädt neu, damit auch
+   * das zweite Formular sie anbietet. Pflicht aus demselben Grund wie `onMeldung`.
+   */
+  onSeriesCreated: () => void;
 }) {
   // Der Ladezustand ist der Bezugspunkt des Diffs (B-148) – er darf sich NICHT mit dem Formular
   // mitbewegen, sonst entscheidet der Vergleich gegen sich selbst und der Schalter entstünde wieder aus
@@ -186,6 +191,17 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
   const [form, setForm] = useState<TextbookFormValues>(geladen.current ?? EMPTY_TEXTBOOK_FORM);
   const action = useAction();
   const id = book ? `tb${book.id}` : "tbnew";
+  const gruppe = useId();
+
+  /*
+   * Reihen, die dieses Formular selbst angelegt hat (B-64, Entscheidung 2). Sie stehen sofort in der
+   * Auswahl, nicht erst nach dem Neuladen der Seitenliste – sonst zeigte das Feld für die Dauer des Abrufs
+   * eine gewählte Id ohne Namen.
+   */
+  const [angelegt, setAngelegt] = useState<TextbookSeriesResponse[]>([]);
+  const alleReihen = [...series, ...angelegt.filter((a) => !series.some((s) => s.id === a.id))];
+  const [neueReiheOffen, setNeueReiheOffen] = useState(false);
+  const [neueReihe, setNeueReihe] = useState("");
 
   // Die Units der gewählten Reihe. Ohne Reihe gibt es nichts zu wählen – dann bleibt das Freitext-Kapitel.
   const seriesId = form.seriesId ? Number(form.seriesId) : null;
@@ -199,6 +215,42 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
   /** Reihe gewechselt: die Unit-Wahl der alten Reihe wäre danach falsch – also fällt sie weg. */
   function chooseSeries(value: string) {
     setForm((f) => ({ ...f, seriesId: value, currentUnitId: "" }));
+  }
+
+  /*
+   * Verlag und Klasse kommen aus dem Katalog, sobald er sie kennt (B-64, Entscheidung 3) – berechnet aus der
+   * AKTUELLEN Auswahl, nicht aus dem Ladezustand, damit ein Reihenwechsel sofort den neuen Verlag zeigt.
+   * Das Freitextfeld verschwindet dann, sein Wert bleibt aber im Formular und am Server stehen: löst der
+   * Vater die Verknüpfung, taucht er wieder auf. Kennt der Katalog den Wert nicht (Reihe ohne Verlag, Unit
+   * ohne Band), bleibt das Feld zum Tippen da.
+   */
+  const gewaehlteReihe = alleReihen.find((s) => s.id === seriesId);
+  const katalogVerlag = gewaehlteReihe?.publisherName ?? null;
+  const gewaehlteUnit = (units.data ?? []).find((u) => String(u.id) === form.currentUnitId && u.seriesId === seriesId);
+  const katalogKlasse = gewaehlteUnit?.grade ?? null;
+
+  async function reiheAnlegen() {
+    const name = neueReihe.trim();
+    if (!name) { action.fail("Der Name der Reihe fehlt."); return; }
+    onMeldung(null);
+    // Das Fach des Buchs wandert mit, solange es ein Katalog-Fach ist; ein Freitext-Fach hat keine Id.
+    const subjectId = /^\d+$/.test(form.subjectId) ? Number(form.subjectId) : null;
+    let neu: TextbookSeriesResponse | null = null;
+    // Der Server legt über den Slug idempotent an: gibt es die Reihe schon, kommt sie zurück statt einer
+    // Dublette. Darum „steht im Katalog“ und nicht „angelegt“ – beides ist danach wahr.
+    const ok = await action.run(async () => {
+      neu = await api.createTextbookSeries({
+        name, publisherId: null, subjectName: null, subjectId,
+        schoolTypes: null, sourceLanguage: null, targetLanguage: null, notes: null,
+      });
+    }, `Reihe „${name}“ steht im Katalog und ist gewählt.`);
+    if (!ok || neu === null) return;
+    const reihe: TextbookSeriesResponse = neu;
+    setAngelegt((cur) => [...cur.filter((a) => a.id !== reihe.id), reihe]);
+    chooseSeries(String(reihe.id));
+    setNeueReihe("");
+    setNeueReiheOffen(false);
+    onSeriesCreated();
   }
 
   // Gehört die gespeicherte Unit noch zur gewählten Reihe? Entscheidet, ob sie als Rückfall-Option
@@ -261,6 +313,94 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
 
   return (
     <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {/* B-64, Entscheidung 1: der Katalog ist der Vorschlagsweg und steht darum zuerst; der Freitext ist
+          die ausdrücklich benannte Ausweiche dahinter, nicht ein gleichrangiges Feld im selben Raster. */}
+      <div role="group" aria-labelledby={`${gruppe}-katalog`} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <span id={`${gruppe}-katalog`} className="label-row group-label">
+          Aus dem Katalog <span className="muted">(empfohlen – damit kennt der KI-Creator den Stoff)</span>
+        </span>
+        <div className="form-grid" style={{ alignItems: "end" }}>
+          <div className="field">
+            <label htmlFor={`${id}-series`}>Reihe im Katalog</label>
+            <ReferenceSelect
+              id={`${id}-series`} value={form.seriesId} onChange={chooseSeries}
+              loadedId={book?.seriesId} loadedName={book?.seriesName}
+              options={seriesOptions(alleReihen)} emptyLabel="– nicht katalogisiert –"
+            />
+            <button
+              type="button" className="btn ghost inline-btn" style={{ width: "auto", alignSelf: "flex-start" }}
+              aria-expanded={neueReiheOffen} onClick={() => setNeueReiheOffen((o) => !o)}
+            >+ Neue Reihe</button>
+          </div>
+          <div className="field">
+            <label htmlFor={`${id}-unit`}>Aktuelle Unit</label>
+            {/* Die gespeicherte Unit nur anbieten, solange die Reihe noch ihre eigene ist: nach einem
+                Reihenwechsel gehörte sie zur alten und wäre als Auswahl falsch – `chooseSeries` räumt sie
+                aus demselben Grund. Ohne diese Bedingung könnte der Nutzer eine fremde Unit-Id abschicken.
+
+                Id UND Name hängen an derselben Bedingung, nicht nur die Id: `loadedId == null` bei
+                gesetztem Namen ist die Signatur, an der das Bauteil den FREITEXT-Zustand erkennt. Heute
+                fiele das nicht auf (die Unit übergibt keinen Sentinel), aber es wäre eine Falle für den,
+                der ihr je einen gibt.
+
+                Und die Optionsliste bei einem Fehler leeren: `useAsync` lässt `data` über den Dep-Wechsel
+                stehen, sonst bötte das Feld nach einem gescheiterten Wechsel weiter die Units der ALTEN
+                Reihe an – während das Banner darunter den Ausfall meldet. */}
+            <ReferenceSelect
+              id={`${id}-unit`} value={form.currentUnitId} onChange={(v) => up("currentUnitId", v)}
+              loadedId={eigeneUnit ? book?.currentUnitId : null}
+              loadedName={eigeneUnit ? book?.currentUnitLabel : null}
+              // Die Liste lädt HIER, nicht auf Seitenebene – ohne `laedt` stünde beim Öffnen für die Dauer des
+              // Abrufs die Beschriftung des Ausfalls (B-235, dieselbe Lage wie B-229 am Kind-Feld). `loading`
+              // und nicht `showPlaceholder`: die Liste hängt am Reihen-Schlüssel und lädt bei jedem Wechsel neu,
+              // `showPlaceholder` ist aber nach dem ersten Abschluss dauerhaft falsch – zurück zur eigenen
+              // Reihe hieße es sonst wieder „(nicht geladen)". Nach einem Fehlschlag ist `loading` ebenso
+              // falsch, also bleibt dort die Ausfall-Beschriftung mit dem Banner darunter.
+              laedt={units.loading}
+              // Zwei Bedingungen, jede für einen eigenen Fall: `units.error` deckt den gescheiterten
+              // Abruf (B-172), der Reihen-Schlüssel das Ladefenster eines Reihenwechsels (B-195).
+              // Die eine ersetzt die andere nicht.
+              options={unitOptions(units.error ? [] : units.data ?? [], seriesId)}
+              emptyLabel={seriesId == null ? "– erst Reihe wählen –"
+                // Ohne dieses Zwischenwort liest sich die (zu Recht) geleerte Liste im Ladefenster als
+                // „diese Reihe hat keine Units" – stumm zu leeren ist die andere Falle (B-116).
+                : units.loading ? "– lädt… –" : "– keine –"}
+              disabled={seriesId == null}
+            />
+            {/* `units.data` ist hier bewusst **roh** gelesen und nicht gefiltert: gefiltert ist die Liste im
+                Ladefenster immer leer, und der Satz erschiene bei JEDEM Reihenwechsel kurz. Stattdessen
+                schweigt er, solange die Antwort nicht da ist — sonst schickt er den Vater zum Anlegen,
+                während die Units der neuen Reihe gerade unterwegs sind. */}
+            {seriesId != null && !units.loading && !units.error && units.data?.length === 0 && (
+              <span className="sub">Diese Reihe hat noch keine Units – unter „Lehrwerke" anlegen.</span>
+            )}
+            {/* Der Hinweis oben prüft `length === 0` und schweigt darum bei `null`, also genau im
+                Fehlerfall (B-172). Ohne diese Zeile sah ein gescheiterter Abruf aus wie „lädt noch". */}
+            {units.error && <div className="banner err">Units: {units.error}</div>}
+          </div>
+        </div>
+        {neueReiheOffen && (
+          <div className="row" style={{ gap: 6, alignItems: "flex-end", flexWrap: "wrap", marginTop: 6 }}>
+            <div className="field" style={{ flex: 1, minWidth: 200 }}>
+              <label htmlFor={`${id}-neue-reihe`}>Name der neuen Reihe</label>
+              <input
+                id={`${id}-neue-reihe`} value={neueReihe} onChange={(e) => setNeueReihe(e.target.value)} placeholder="Access"
+                // Kein eigenes <form> (Formulare schachteln nicht): Enter legt die Reihe an, statt das Buch abzuschicken.
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void reiheAnlegen(); } }}
+              />
+            </div>
+            <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy} onClick={() => void reiheAnlegen()}>
+              Reihe anlegen &amp; wählen
+            </button>
+            <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+              onClick={() => { setNeueReiheOffen(false); setNeueReihe(""); }}>Abbrechen</button>
+            <span className="sub" style={{ flexBasis: "100%" }}>
+              Angelegt wird nur der Name{/^\d+$/.test(form.subjectId) ? " mit dem gewählten Fach" : ""}; Verlag und Units
+              pflegst du unter „Lehrwerke“ nach.
+            </span>
+          </div>
+        )}
+      </div>
       <div className="form-grid" style={{ alignItems: "end" }}>
         <div className="field">
           <label htmlFor={`${id}-title`}>Titel</label>
@@ -279,77 +419,50 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
             freetextValue={FREETEXT_SUBJECT}
           />
         </div>
-        <div className="field">
-          <label htmlFor={`${id}-grade`}>Für Klasse</label>
-          <input
-            id={`${id}-grade`} type="number" min={1} max={13} value={form.grade}
-            onChange={(e) => up("grade", e.target.value)} placeholder="8"
-          />
-        </div>
-        <div className="field">
-          <label htmlFor={`${id}-publisher`}>Verlag</label>
-          <input id={`${id}-publisher`} value={form.publisher} onChange={(e) => up("publisher", e.target.value)} placeholder="Cornelsen" />
-        </div>
-        <div className="field">
-          <label htmlFor={`${id}-series`}>Reihe im Katalog</label>
-          <ReferenceSelect
-            id={`${id}-series`} value={form.seriesId} onChange={chooseSeries}
-            loadedId={book?.seriesId} loadedName={book?.seriesName}
-            options={seriesOptions(series)} emptyLabel="– nicht katalogisiert –"
-          />
-        </div>
-        <div className="field">
-          <label htmlFor={`${id}-unit`}>Aktuelle Unit</label>
-          {/* Die gespeicherte Unit nur anbieten, solange die Reihe noch ihre eigene ist: nach einem
-              Reihenwechsel gehörte sie zur alten und wäre als Auswahl falsch – `chooseSeries` räumt sie
-              aus demselben Grund. Ohne diese Bedingung könnte der Nutzer eine fremde Unit-Id abschicken.
-
-              Id UND Name hängen an derselben Bedingung, nicht nur die Id: `loadedId == null` bei
-              gesetztem Namen ist die Signatur, an der das Bauteil den FREITEXT-Zustand erkennt. Heute
-              fiele das nicht auf (die Unit übergibt keinen Sentinel), aber es wäre eine Falle für den,
-              der ihr je einen gibt.
-
-              Und die Optionsliste bei einem Fehler leeren: `useAsync` lässt `data` über den Dep-Wechsel
-              stehen, sonst bötte das Feld nach einem gescheiterten Wechsel weiter die Units der ALTEN
-              Reihe an – während das Banner darunter den Ausfall meldet. */}
-          <ReferenceSelect
-            id={`${id}-unit`} value={form.currentUnitId} onChange={(v) => up("currentUnitId", v)}
-            loadedId={eigeneUnit ? book?.currentUnitId : null}
-            loadedName={eigeneUnit ? book?.currentUnitLabel : null}
-            // Die Liste lädt HIER, nicht auf Seitenebene – ohne `laedt` stünde beim Öffnen für die Dauer des
-            // Abrufs die Beschriftung des Ausfalls (B-235, dieselbe Lage wie B-229 am Kind-Feld). `loading`
-            // und nicht `showPlaceholder`: die Liste hängt am Reihen-Schlüssel und lädt bei jedem Wechsel neu,
-            // `showPlaceholder` ist aber nach dem ersten Abschluss dauerhaft falsch – zurück zur eigenen
-            // Reihe hieße es sonst wieder „(nicht geladen)". Nach einem Fehlschlag ist `loading` ebenso
-            // falsch, also bleibt dort die Ausfall-Beschriftung mit dem Banner darunter.
-            laedt={units.loading}
-            // Zwei Bedingungen, jede für einen eigenen Fall: `units.error` deckt den gescheiterten
-            // Abruf (B-172), der Reihen-Schlüssel das Ladefenster eines Reihenwechsels (B-195).
-            // Die eine ersetzt die andere nicht.
-            options={unitOptions(units.error ? [] : units.data ?? [], seriesId)}
-            emptyLabel={seriesId == null ? "– erst Reihe wählen –"
-              // Ohne dieses Zwischenwort liest sich die (zu Recht) geleerte Liste im Ladefenster als
-              // „diese Reihe hat keine Units" – stumm zu leeren ist die andere Falle (B-116).
-              : units.loading ? "– lädt… –" : "– keine –"}
-            disabled={seriesId == null}
-          />
-          {/* `units.data` ist hier bewusst **roh** gelesen und nicht gefiltert: gefiltert ist die Liste im
-              Ladefenster immer leer, und der Satz erschiene bei JEDEM Reihenwechsel kurz. Stattdessen
-              schweigt er, solange die Antwort nicht da ist — sonst schickt er den Vater zum Anlegen,
-              während die Units der neuen Reihe gerade unterwegs sind. */}
-          {seriesId != null && !units.loading && !units.error && units.data?.length === 0 && (
-            <span className="sub">Diese Reihe hat noch keine Units – unter „Lehrwerke" anlegen.</span>
-          )}
-          {/* Der Hinweis oben prüft `length === 0` und schweigt darum bei `null`, also genau im
-              Fehlerfall (B-172). Ohne diese Zeile sah ein gescheiterter Abruf aus wie „lädt noch". */}
-          {units.error && <div className="banner err">Units: {units.error}</div>}
-        </div>
-        <div className="field">
-          <label htmlFor={`${id}-chapter`}>Kapitel als Freitext <span className="muted">(Rückfallebene)</span></label>
-          <input
-            id={`${id}-chapter`} value={form.currentChapter} onChange={(e) => up("currentChapter", e.target.value)}
-            placeholder="Unit 4 – Past Tense"
-          />
+      </div>
+      <div role="group" aria-labelledby={`${gruppe}-freitext`} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <span id={`${gruppe}-freitext`} className="label-row group-label">
+          Ohne Katalog <span className="muted">(Freitext – nur, was der Katalog nicht weiß)</span>
+        </span>
+        <div className="form-grid" style={{ alignItems: "end" }}>
+          <div className="field">
+            {/* Kennt der Katalog den Verlag, gibt es hier nichts zu tippen – ein zweites Feld daneben wäre genau
+                die doppelte Wahrheit, die B-64 schließt. */}
+            {katalogVerlag !== null ? (
+              <>
+                <span className="label-row">Verlag</span>
+                <span>{katalogVerlag} <span className="muted">· aus dem Katalog</span></span>
+              </>
+            ) : (
+              <>
+                <label htmlFor={`${id}-publisher`}>Verlag</label>
+                <input id={`${id}-publisher`} value={form.publisher} onChange={(e) => up("publisher", e.target.value)} placeholder="Cornelsen" />
+              </>
+            )}
+          </div>
+          <div className="field">
+            {katalogKlasse !== null ? (
+              <>
+                <span className="label-row">Für Klasse</span>
+                <span>{katalogKlasse} <span className="muted">· aus der Unit</span></span>
+              </>
+            ) : (
+              <>
+                <label htmlFor={`${id}-grade`}>Für Klasse</label>
+                <input
+                  id={`${id}-grade`} type="number" min={1} max={13} value={form.grade}
+                  onChange={(e) => up("grade", e.target.value)} placeholder="8"
+                />
+              </>
+            )}
+          </div>
+          <div className="field">
+            <label htmlFor={`${id}-chapter`}>Kapitel als Freitext <span className="muted">(Rückfallebene)</span></label>
+            <input
+              id={`${id}-chapter`} value={form.currentChapter} onChange={(e) => up("currentChapter", e.target.value)}
+              placeholder="Unit 4 – Past Tense"
+            />
+          </div>
         </div>
       </div>
       <div className="row" style={{ gap: 8 }}>

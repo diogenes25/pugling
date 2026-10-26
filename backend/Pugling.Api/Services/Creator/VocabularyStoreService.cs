@@ -41,4 +41,34 @@ public class VocabularyStoreService(PuglingDbContext db)
         db.Vocabularies.Add(vocab);
         return vocab;
     }
+
+    /// <summary>
+    /// Writes equally valid translations that an exercise item sent explicitly onto its store entry –
+    /// whether the entry was just created or found by its key. Kept apart from
+    /// <see cref="GetOrCreateAsync"/> on purpose: that method must not change a found entry, otherwise two
+    /// items of the same word in one batch would overwrite each other silently. Here the caller asked for
+    /// the change. <c>null</c> leaves the entry untouched; an empty list clears it.
+    /// </summary>
+    public static void ApplyTranslationAlternatives(Vocabulary vocab, IReadOnlyList<string>? alternatives)
+    {
+        if (alternatives is null) return;
+        vocab.TranslationAlternatives = CleanAlternatives([.. alternatives], vocab.Translation);
+    }
+
+    /// <summary>
+    /// Trims the equally valid translations and drops blanks, duplicates and the primary
+    /// <paramref name="translation"/> itself – it already counts, listing it again would show up as a
+    /// redundant "also: riesig" in the UI. An empty result becomes <c>null</c>, so "none declared" has
+    /// exactly one representation in the store – otherwise <c>[]</c> and <c>null</c> would be two ways of
+    /// saying the same thing, and only one of them would answer "does this entry have alternatives?" the
+    /// way a reader expects.
+    /// </summary>
+    public static List<string>? CleanAlternatives(List<string>? values, string translation)
+    {
+        if (values is null) return null;
+        var cleaned = values.Select(v => v.Trim())
+            .Where(v => v.Length > 0 && !string.Equals(v, translation.Trim(), StringComparison.OrdinalIgnoreCase))
+            .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        return cleaned.Count > 0 ? cleaned : null;
+    }
 }
