@@ -246,4 +246,4 @@ Protokoll von Lauf A (berichtigt) sowie ein veralteter `.vater-main`-Kommentar (
 - **(Prosa)** Eine Backend-Suite gilt nur mit `exit=0` als grün. Die Zeile „Passed!“ ist kein Beleg. Das ist das
   Spiegelbild zu „E2E nie am Exit-Code messen“.
 
-**Commit:** folgt.
+**Commit:** `ee71a74` (nicht gepusht).
