@@ -264,4 +264,4 @@ Batch-Pfad im `MediaSelector` (B-03), deutlich mehr als eine lokalisierte Ein-Pu
   (offene Entscheidung, Freigabe 8), [B-268](B-268-fokus-nach-inline-reihe.md) (Fokus, Hinweis). Rollengang ohne Browser
   (Extension nicht verbunden) als E2E: `e2e/lehrbuch-katalog-zuerst.spec.ts` fährt AK 1–5 aus der Vater-Rolle.
   Verifikation: `dotnet test` **909/909**, Vitest **423/423**, Playwright voll nach dem letzten Code-Edit **87 passed**.
-  **Abgenommen**; Commit: siehe Nachtrag.
+  **Abgenommen**; Commit: `3094e34`.

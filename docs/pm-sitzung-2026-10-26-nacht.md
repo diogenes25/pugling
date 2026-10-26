@@ -194,4 +194,4 @@ Funde aus dem Review). Zähler Sprint 11: **5** (nicht überschritten).
 3. Der Retro-Vorschlag oben (Abgrenzungs-Testdaten müssen sich unterscheiden).
 4. Unverändert offen aus früheren Läufen: Sprint 10 (Zähler überschritten), Sprint 7, NP-3.
 
-**Commit:** COMMIT_HASH (nicht gepusht).
+**Commit:** `3094e34` (nicht gepusht).

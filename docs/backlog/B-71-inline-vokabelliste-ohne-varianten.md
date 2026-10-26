@@ -246,4 +246,4 @@ Abnahme, dazu `pugling-reviewer` und `frontend-reviewer` (`wo: beides`).
   Feld zog nach Bereinigung nicht nach), beide behoben, Delta-Review trägt. Rollengang ohne Browser (Extension nicht
   verbunden) als E2E: `e2e/auch-richtig-im-uebungseditor.spec.ts` (Assistent → Store → Dialog, Neuladen).
   Verifikation: `dotnet test` **909/909**, Vitest **423/423**, Playwright voll nach dem letzten Code-Edit **87 passed**.
-  **Abgenommen**; Commit: siehe Nachtrag.
+  **Abgenommen**; Commit: `3094e34`.
