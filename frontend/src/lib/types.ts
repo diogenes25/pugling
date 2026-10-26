@@ -240,6 +240,9 @@ export type GrantPermission = S["GrantPermission"];
 /** Ein vergebenes Recht an einer Übung. */
 export type ExerciseGrant = S["GrantResponse"];
 
+/** Die Bewertung einer Übung durch einen Creator (B-12): Sterne 1–5, optional ein Kommentar. */
+export type ExerciseRating = S["ExerciseRatingResponse"];
+
 /**
  * Verwandtschaft eines Betreuers zum Kind. Sie ist reine Beschreibung – die Rechte sind für alle
  * Betreuer gleich; nur die **Einlösung** ist ausstellergebunden (wer den Artikel angelegt hat, gibt frei).

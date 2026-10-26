@@ -156,6 +156,11 @@ public static class ApiErrors
     /// <summary>Exercise is not publicly executable and may not be assigned without an execute/write/owner permission (403).</summary>
     public static readonly ApiError ExerciseNotExecutable = new("exercise_not_executable", 403, "Exercise cannot be assigned.");
     /// <summary>
+    /// An owner (or admin) tried to rate the exercise they administer (403, B-12). The rating is meant as the
+    /// signal of the creators who USE someone else's material; the author's own stars would only inflate it.
+    /// </summary>
+    public static readonly ApiError CannotRateOwnExercise = new("cannot_rate_own_exercise", 403, "You cannot rate an exercise you own.");
+    /// <summary>
     /// A student tried to mark an exercise that is not assigned to them (403). Distinct from
     /// <see cref="Forbidden"/> on purpose: the caller does own the tag, only the exercise is out of reach.
     /// </summary>

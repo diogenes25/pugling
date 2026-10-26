@@ -195,3 +195,111 @@ Funde aus dem Review). Zähler Sprint 11: **5** (nicht überschritten).
 4. Unverändert offen aus früheren Läufen: Sprint 10 (Zähler überschritten), Sprint 7, NP-3.
 
 **Commit:** `3094e34` (nicht gepusht).
+
+## Siebter Lauf — Sprint 12 / NP-8 (Gute Übungen finden), an Freigabe 3 beendet
+
+Auftrag: der Auftragstext aus [nachtlauf.md](nachtlauf.md) mit den Freigaben 1–9 plus *„Fahre die Pakete NP-8, NP-7
+aus docs/pm-sitzung-2026-10-23-backlog-sichtung.md, in dieser Reihenfolge.“* Ausgangslage: HEAD `6d9467c`, Baum
+sauber. Nicht angefasst (Abgrenzung im Auftrag): Sprint 10, Sprint 7, NP-3, B-257, B-260 bis B-262, B-264 bis B-268.
+Browser: die Chrome-Extension war **nicht verbunden** → Rollengang nach Freigabe 6 als E2E-Spec.
+
+### Sprint 12 — Ziel & Umfang
+
+**Sprint-Ziel:** *Der Vater sieht beim Stöbern in der geteilten Bibliothek, wie andere Creator eine Übung bewertet
+haben, sortiert danach und bewertet fremde Übungen selbst; der Autor liest die Urteile, bewertet aber nicht sein
+eigenes Material.*
+**Umfang:** [B-12](backlog/B-12-uebungen-kuratieren.md) allein (`geschaetzt`, `Wunsch`, **Migration**; baubar nach
+Freigabe 8, zusätzlich Freigabe-Zeile vom 2026-08-07). Das Paket-Ziel nennt „beim Zusammenstellen“; die Story (AK 7)
+nennt die Übungsliste `VaterExercises.tsx` – **die Story gilt**. Die Anzeige im Positions-Formular (`PlanPositions`)
+bleibt draußen, als Beobachtung notiert, nicht als neue Story.
+
+**Entwickler-Brief:**
+
+- **Quelle der Wahrheit:** neue Tabelle `ExerciseRating` (eine Zeile je Übung und Creator); Schnitt und Anzahl rechnet
+  der Server in der Projektion, das Frontend formatiert nur.
+- **Guards:** Owner-Ausschluss über `CanAdministerAsync` (Entscheidung 2: Schreib-Grantees dürfen bewerten), 404 vor
+  403, Sterne 1–5, Kommentar ≤ 2000 (Länge der Freitext-Spalte).
+- **Migration:** Kette neu gefaltet, weiter genau eine (`20261026071311_InitialCreate`); `SchemaGuardTests` grün,
+  Löschverhalten beider FKs in die Abnahme-Tabelle eingetragen.
+- **Testweg:** `ExerciseRatingsTests` je AK, rote Probe je Zweig per Mutante; Vitest für die Zeilen-Helfer; E2E als
+  Rollengang.
+
+**Prämisse geprüft:** am laufenden Vertrag (`docs/openapi/v1.json`): kein Bewertungs-Endpunkt, „rating“ kommt nur als
+Medien-Altersfreigabe vor. Die Nachprüfung vom 2026-10-23 (kein Teil geliefert) gilt.
+
+### Iteration 12 — umgesetzt
+
+Details und alle Mutanten im `## Verlauf` von [B-12](backlog/B-12-uebungen-kuratieren.md). Kurz:
+
+- **Backend:** `ExerciseRating` + Konfiguration, `ExerciseRatingsController` (`GET …/ratings`, `PUT`/`DELETE …/rating`),
+  `cannot_rate_own_exercise`, `AverageRating`/`RatingCount` additiv, `sort=rating`, drei Client-Methoden.
+- **Frontend:** `ExerciseRatingPanel`, Zeilentext, Sortieroption „Bewertung“, Zeile als benannte Gruppe
+  (`role="group"`, Name = Titel).
+- **Rote Proben:** 13/13 Backend-Mutanten rot; 5/5 UI-Mutanten rot an der erwarteten Zeile; nach den Behebungen
+  weitere 4 Proben rot. Ein Nebenläufigkeitstest zu Fund 2 blieb ohne die Behebung in 3 von 3 Läufen grün und wurde
+  entfernt (er trug nichts).
+
+### Review (nacheinander, je Bereich)
+
+**Zähler Sprint 12 (Freigabe 3): 6 – überschritten.**
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | roter Test (Suite) | `Unpaginierte_Array_GETs_Sind_Gepinnt`: 35 statt 34 | Pin auf 35, Begründung am Pin (eine Zeile je Creator) | ja |
+| 2 | `pugling-reviewer` | erstes `PUT` zweimal gleichzeitig → Unique-Index → 500 | `DbUpdateException` abfangen, als Überschreiben wiederholen | ja |
+| 3 | `pugling-reviewer` | `isMine` der Liste nie als `true` geprüft | Liste aus Sicht des Bewerters; Probe rot | ja |
+| 4 | `pugling-reviewer` | Setup-PUTs und Grants ungeprüft – Sortier- und Grant-Test trugen sonst nichts | Status geprüft; Probe Sternegrenze 4 → 2 rot | ja |
+| 5 | `frontend-reviewer` | Sortier-Zusicherungen bestanden auch mit Titel-/Anlage-Reihenfolge | Titel und Anlage laufen der Bewertung entgegen, Ausgangslage vorher festgestellt; zwei Proben rot an `:80` | ja |
+| 6 | `frontend-reviewer` | `isOwner`/`isOwn`-Abgrenzung (AK 7 „konsistent mit AK 2“) ungetestet | **nicht behoben** – Lauf endet | ja |
+| 7 | `frontend-reviewer` | Sterne als `aria-label` auf blankem `<span>` werden nicht verlässlich angesagt | **nicht behoben** – Lauf endet | ja |
+
+Nicht gezählt: `pugling-reviewer` 🟢 6/7 (Reihenfolge der Liste, `UpdatedAt` beim Überschreiben) →
+[B-269](backlog/B-269-bewertungen-reihenfolge-und-updatedat-ungetestet.md), ausdrücklich zurückgestellt; 🟢 2/3
+(`!` auf `int?`, Extra-Abfrage für den Namen) Stil. `frontend-reviewer` 🟢: Ladefehler ohne `ListenAusfall`,
+Seitenwechsel der Zeile nach dem Speichern unter `sort=rating`, PUT-Rumpf ohne `satisfies`, Sternanzeige je Zeile und
+Formular-Leeren nach dem Löschen ungeprüft – im Verlauf von B-12 aufgeführt.
+
+### Ende an Freigabe 3
+
+Mit Fund 6 überschreitet Sprint 12 die Grenze von fünf – **der gesamte Lauf endet hier.** Fund 6 und 7 sind nicht
+behoben (das wäre Arbeit nach dem Ende). Nicht mehr gelaufen: Delta-Review, `web-design-guidelines`, die
+Rollengang-Runde als Abnahme, die Retrospektive mit der Nachschau zu Sprint 11 (B-64, B-71) und **NP-7 (B-05) –
+nicht begonnen.**
+
+B-12 steht auf **`in-arbeit`** mit `wartet_auf`. Der gebaute Stand ist grün und committet:
+
+- `dotnet build Pugling.sln`: 0 Warnungen, 0 Fehler; `dotnet format Pugling.sln`: keine Änderung.
+- `dotnet test Pugling.sln -c Release`: **917/917** (909 + 8 neue in `ExerciseRatingsTests`).
+- Frontend: `tsc -b` sauber, Vitest **428/428** (52 Dateien).
+- Playwright voll, nach dem letzten Code-Edit: **88 passed** (87 + die neue Spec), 5,7 min.
+- DocsCaptureTests: `docs/api-examples/index.md` zählt einen Code mehr (69), `cannot_rate_own_exercise` unter „Nicht
+  automatisch erfassbar“.
+
+Die E2E-Spec `e2e/uebungen-bewerten.spec.ts` ist der vorbereitete Rollengang (Vater und Autorin) und im vollen Lauf
+grün – als Abnahme zählt er erst nach den offenen Funden.
+
+### Wiederaufnahme / offene Entscheidungen für den Nutzer
+
+1. **Zähler von Sprint 12:** 6 (überschritten). Fortsetzen nur nach deiner Entscheidung, etwa Fund 6/7 als
+   Nacharbeit mit neuem Zähler.
+2. Danach, in dieser Reihenfolge: Fund 6 (reiner Helfer `canRate = !isOwner` mit Vitest-Fall
+   `{isOwn: true, isOwner: false}`, rote Probe `isOwn`-Mutante), Fund 7 (`role="img"` am Sternen-`span`), Delta-Review
+   `frontend-reviewer`, Playwright voll, Rollengang-Runde (die Spec), Retro mit **Nachschau Sprint 11** (B-64, B-71,
+   Commits `3094e34`/`6d9467c`) als erster Pflichthandlung, Abnahme B-12; dann NP-7 (B-05) als Sprint 13.
+3. **AK 6 wörtlich gebaut, Rückfrage zur Wirkung:** `-rating` stellt unbewertete Übungen **an den Anfang** (Spiegel
+   von aufsteigend). Wer „beste zuerst“ sucht, sortiert absteigend und sieht zuerst alles Unbewertete – bei einer
+   großen Bibliothek liegen die Besten dann hinter dem Pager. Das ist die Entscheidung der Story, nicht meine; ob sie
+   so bleiben soll, entscheidest du.
+4. Beobachtung ohne Story: das Paket-Ziel („beim Zusammenstellen“) meint eher das Positions-Formular
+   (`PlanPositions.tsx`), die Story AK 7 die Verwaltungsliste. Gebaut ist die Story.
+
+### Retrospektive (nicht gelaufen)
+
+Ende an Freigabe 3, wie Sprint 10. **Keine Nachschau-Zeile** – Sprint 12 ist nicht geschlossen, die Nachschau zu
+Sprint 11 steht weiter aus.
+
+**Beobachtung für die Morgen-Entscheidung (kein Vorschlag, die Retro lief nicht):** Zum zweiten Mal in Folge
+(Sprint 11: 5, Sprint 12: 6) erreicht ein Paket mit einer M-Story `wo: beides` die Zählergrenze in **einem**
+Review-Durchgang. Vier der sechs gezählten Funde waren Testdaten oder Zusicherungen, die die behauptete Abgrenzung
+nicht trugen (Fund 3 bis 6) – die Klasse aus dem Retro-Vorschlag von Sprint 11, den ich vor dem Bau gelesen und nur
+für die Backend-Werte angewandt habe.

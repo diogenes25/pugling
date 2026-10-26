@@ -183,7 +183,9 @@ public class ConventionGuardTests
     /// existing unbounded callers and is a product decision, not an "Aufräumen"); it grows when a new
     /// unpaginated array `GET` is added.
     /// </summary>
-    private const int UnpaginatedArrayGetCount = 34;
+    // 35 since B-12: ExerciseRatingsController.List holds at most one row per creator, the same bound
+    // as the grants list beside it.
+    private const int UnpaginatedArrayGetCount = 35;
 
     [Fact]
     public void Unpaginierte_Array_GETs_Sind_Gepinnt()

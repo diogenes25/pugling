@@ -31,6 +31,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<ExerciseCategory> ExerciseCategories => Set<ExerciseCategory>();
     // RWX rights of individual creators on an exercise (owner/write/execute).
     public DbSet<ExerciseGrant> ExerciseGrants => Set<ExerciseGrant>();
+    // Creators' star ratings of other people's exercises (B-12).
+    public DbSet<ExerciseRating> ExerciseRatings => Set<ExerciseRating>();
     // Stably identified items of a vocabulary exercise (a positioned reference into the vocabulary store).
     public DbSet<ExerciseItem> ExerciseItems => Set<ExerciseItem>();
 
@@ -542,6 +544,18 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .HasForeignKey(g => g.CreatorId).OnDelete(DeleteBehavior.Cascade);
             e.HasIndex(g => new { g.ExerciseId, g.CreatorId, g.Permission }).IsUnique();
             e.HasIndex(g => g.CreatorId);
+        });
+
+        // One rating per (exercise, creator) - rating again overwrites. Both FKs cascade like the grant's:
+        // a rating without its exercise or without its author is not a signal anybody can read.
+        modelBuilder.Entity<ExerciseRating>(e =>
+        {
+            e.HasOne(r => r.Exercise).WithMany(x => x.Ratings)
+                .HasForeignKey(r => r.ExerciseId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(r => r.Creator).WithMany()
+                .HasForeignKey(r => r.CreatorId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(r => new { r.ExerciseId, r.CreatorId }).IsUnique();
+            e.HasIndex(r => r.CreatorId);
         });
 
         // Vocabulary item: belongs to an exercise (cascade - it disappears with it) and references a store entry.

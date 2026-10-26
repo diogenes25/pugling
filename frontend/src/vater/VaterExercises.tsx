@@ -6,6 +6,7 @@ import { useAsync } from "../lib/useAsync";
 import { ExerciseAttribution } from "./ExerciseAttribution";
 import { ExerciseEditModal } from "./ExerciseEditModal";
 import { ExercisePreviewModal } from "./ExercisePreviewModal";
+import { ExerciseRatingPanel, ratingSummary } from "./ExerciseRatingPanel";
 import { PAGE_SIZE, Pager, SortControl } from "../components/ListControls";
 import type {
   ExerciseSortKey, ExerciseSummary, ExerciseUsage, Paged, SeriesUnitResponse, SortDir, SubjectResponse,
@@ -154,6 +155,8 @@ export function VaterExercises() {
             options={[
               { key: "title", label: "Titel" }, { key: "type", label: "Typ" }, { key: "grade", label: "Klasse" },
               { key: "source", label: "Quelle" }, { key: "created", label: "Erstellt" },
+              // B-12: absteigend stehen unbewertete Übungen vorn (Server-Regel, Spiegel von aufsteigend).
+              { key: "rating", label: "Bewertung" },
             ]}
             value={sort} dir={dir} onChange={(k, d) => { setSort(k); setDir(d); }} />
         </div>
@@ -273,6 +276,7 @@ function ExerciseManageRow({ exercise, route, label, onChanged, onPreview, onEdi
 }) {
   const [usage, setUsage] = useState<ExerciseUsage | null>(null);
   const [open, setOpen] = useState(false);
+  const [ratingsOpen, setRatingsOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   // Bearbeitbar nur, wenn diese UI einen Editor hat UND der Server eine Route dafür nennt.
@@ -310,7 +314,9 @@ function ExerciseManageRow({ exercise, route, label, onChanged, onPreview, onEdi
   }
 
   return (
-    <div style={{ border: "1px solid var(--stroke)", borderRadius: 8, padding: "6px 10px" }}>
+    // Eine benannte Gruppe je Übung: Knöpfe wie „★ Bewertungen" stehen in jeder Zeile gleich da, erst der
+    // Titel der Gruppe sagt dem Screenreader, zu welcher Übung sie gehören.
+    <div role="group" aria-label={exercise.title} style={{ border: "1px solid var(--stroke)", borderRadius: 8, padding: "6px 10px" }}>
       <div className="row" style={{ alignItems: "center", gap: 8 }}>
         <span>{exercise.title}</span>
         <span className="muted">· {label}</span>
@@ -322,6 +328,8 @@ function ExerciseManageRow({ exercise, route, label, onChanged, onPreview, onEdi
           und ein unsichtbarer Sonderzustand wird später als Fehler gemeldet. Für **jeden** sichtbar, nicht
           nur für den Owner – wer sie nicht zuweisen kann, soll den Grund sehen.
         */}
+        {/* B-12: das Urteil der anderen Creator, damit Bewährtes schon beim Stöbern auffällt. */}
+        <span className="muted" style={{ fontSize: 12 }}>{ratingSummary(exercise.averageRating, exercise.ratingCount)}</span>
         {!exercise.executePublic && (
           <span className="pill mag" title="Neue Zuweisungen nur mit ausdrücklichem Recht. Laufende Lehrpläne bleiben unberührt.">
             zurückgezogen
@@ -338,6 +346,8 @@ function ExerciseManageRow({ exercise, route, label, onChanged, onPreview, onEdi
           <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={onEdit}>✏️ Bearbeiten</button>
         )}
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={toggleUsage}>Verwendung</button>
+        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} aria-expanded={ratingsOpen}
+          onClick={() => setRatingsOpen((v) => !v)}>★ Bewertungen</button>
         {exercise.isOwn && known && (
           <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={remove}>Löschen</button>
         )}
@@ -358,6 +368,7 @@ function ExerciseManageRow({ exercise, route, label, onChanged, onPreview, onEdi
       {exercise.description && <div className="muted" style={{ marginTop: 2, fontSize: 13 }}>{exercise.description}</div>}
       {err && <div className="banner err" style={{ marginTop: 6 }}>{err}</div>}
       {open && usage && <UsagePanel usage={usage} exercise={exercise} busy={busy} onToggleSharing={toggleSharing} />}
+      {ratingsOpen && <ExerciseRatingPanel exercise={exercise} onChanged={onChanged} />}
     </div>
   );
 }

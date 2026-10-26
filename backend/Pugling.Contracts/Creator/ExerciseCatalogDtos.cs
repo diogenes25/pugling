@@ -19,12 +19,16 @@ namespace Pugling.Contracts.Creator;
 /// the raw value only when it is plausible, otherwise the model default (B-192). Both travel, and that is the
 /// point: the form shows the effective one, while the raw one stays readable for anyone editing the exercise.
 /// Deriving the effective figure client-side would copy a server rule, and the copy is what drifts.
+///
+/// <c>AverageRating</c>/<c>RatingCount</c> are the other creators' verdict (B-12): <c>null</c>/<c>0</c> while
+/// nobody has rated. They sit on the lean row because the whole point is to tell proven material apart while
+/// browsing - the same reason <c>sort=rating</c> exists.
 /// </summary>
 public record ExerciseSummary(int Id, int SeriesId, int SeriesUnitId, int? SubjectId, string Type, string Title,
     int? GradeMin, int? GradeMax, SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName,
     int? AuthorAdultId, string? AuthorName, bool IsOwn, bool IsOwner, bool ExecutePublic, string? Description,
     bool DefaultUseLeitner, bool DefaultRequireTypedTest, int? DefaultItemCount, int RewardPoints,
-    int SuggestedGoalPoints);
+    int SuggestedGoalPoints, double? AverageRating, int RatingCount);
 
 /// <summary>
 /// Complete, type-spanning view of an exercise including raw config and all metadata –
@@ -36,6 +40,8 @@ public record ExerciseSummary(int Id, int SeriesId, int SeriesUnitId, int? Subje
 /// <see cref="ExerciseSummary"/> for the reason that row gives about itself: the lean row carries what the
 /// supervisor's form pre-fills from, and a dressing pre-fills nothing. The fit filter B-18 will build
 /// belongs in the <i>query</i> anyway, not in a list the client scans.
+///
+/// <c>AverageRating</c>/<c>RatingCount</c>: the same aggregate as on <see cref="ExerciseSummary"/> (B-12).
 /// </summary>
 public record ExerciseDetail(int Id, int SeriesId, int SeriesUnitId, string SeriesUnitLabel, int? SubjectId, string SubjectName,
     string Type, string Title, int OrderIndex, int RewardPoints, int? GradeMin, int? GradeMax,
@@ -43,7 +49,8 @@ public record ExerciseDetail(int Id, int SeriesId, int SeriesUnitId, string Seri
     SuggestedBonus? SuggestedBonus, int? DefaultStage, int? DefaultItemCount,
     int? AuthorAdultId, string? AuthorName, bool IsOwn, bool IsOwner, bool ExecutePublic, int GrantCount,
     JsonElement Config, string? Description,
-    bool DefaultUseLeitner, bool DefaultRequireTypedTest, IReadOnlyList<int> InterestTagIds);
+    bool DefaultUseLeitner, bool DefaultRequireTypedTest, IReadOnlyList<int> InterestTagIds,
+    double? AverageRating, int RatingCount);
 
 /// <summary>A study plan in which an exercise is used as a position.</summary>
 public record PlanUsage(int PlanId, string PlanTitle, int ChildId, string ChildName);

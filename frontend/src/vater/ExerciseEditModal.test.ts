@@ -32,6 +32,8 @@ const BASE: ExerciseDetail = {
   authorAdultId: 1, authorName: "Papa", isOwn: true, isOwner: true, executePublic: true, grantCount: 1,
   config: {}, description: null, defaultUseLeitner: false, defaultRequireTypedTest: false,
   interestTagIds: [],
+  // Lesefelder (B-12): das Urteil anderer Creator, nie Teil des Vollersatzes.
+  averageRating: 4.5, ratingCount: 2,
 };
 
 function detailWith(over: Partial<ExerciseDetail> = {}): ExerciseDetail {

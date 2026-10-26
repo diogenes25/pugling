@@ -11,7 +11,7 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Data.Migrations
 {
     [DbContext(typeof(PuglingDbContext))]
-    [Migration("20260902213043_InitialCreate")]
+    [Migration("20261026071311_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -93,7 +93,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.ToTable("AccountProfiles", t =>
                         {
-                            t.HasCheckConstraint("CK_AccountProfile_SingleProfile", "(CASE WHEN \"AdultId\" IS NULL THEN 0 ELSE 1 END\r\n + CASE WHEN \"ChildId\" IS NULL THEN 0 ELSE 1 END) = 1");
+                            t.HasCheckConstraint("CK_AccountProfile_SingleProfile", "(CASE WHEN \"AdultId\" IS NULL THEN 0 ELSE 1 END\n + CASE WHEN \"ChildId\" IS NULL THEN 0 ELSE 1 END) = 1");
                         });
                 });
 
@@ -431,7 +431,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.ToTable("ChildMediaPicks", t =>
                         {
-                            t.HasCheckConstraint("CK_ChildMediaPick_SingleCarrier", "(CASE WHEN \"VocabularyId\" IS NULL THEN 0 ELSE 1 END\r\n + CASE WHEN \"ExerciseItemId\" IS NULL THEN 0 ELSE 1 END) = 1");
+                            t.HasCheckConstraint("CK_ChildMediaPick_SingleCarrier", "(CASE WHEN \"VocabularyId\" IS NULL THEN 0 ELSE 1 END\n + CASE WHEN \"ExerciseItemId\" IS NULL THEN 0 ELSE 1 END) = 1");
                         });
                 });
 
@@ -831,6 +831,41 @@ namespace Pugling.Api.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("ExerciseItems");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.ExerciseRating", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CreatorId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ExerciseId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Stars")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatorId");
+
+                    b.HasIndex("ExerciseId", "CreatorId")
+                        .IsUnique();
+
+                    b.ToTable("ExerciseRatings");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.ExerciseTag", b =>
@@ -1250,7 +1285,7 @@ namespace Pugling.Api.Data.Migrations
 
                     b.ToTable("MediaLinks", t =>
                         {
-                            t.HasCheckConstraint("CK_MediaLink_SingleCarrier", "(CASE WHEN \"VocabularyId\" IS NULL THEN 0 ELSE 1 END\r\n + CASE WHEN \"ExerciseItemId\" IS NULL THEN 0 ELSE 1 END\r\n + CASE WHEN \"ExerciseId\" IS NULL THEN 0 ELSE 1 END) = 1");
+                            t.HasCheckConstraint("CK_MediaLink_SingleCarrier", "(CASE WHEN \"VocabularyId\" IS NULL THEN 0 ELSE 1 END\n + CASE WHEN \"ExerciseItemId\" IS NULL THEN 0 ELSE 1 END\n + CASE WHEN \"ExerciseId\" IS NULL THEN 0 ELSE 1 END) = 1");
                         });
                 });
 
@@ -2909,6 +2944,25 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("Vocabulary");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.ExerciseRating", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Adult", "Creator")
+                        .WithMany()
+                        .HasForeignKey("CreatorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pugling.Api.Models.Exercise", "Exercise")
+                        .WithMany("Ratings")
+                        .HasForeignKey("ExerciseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Creator");
+
+                    b.Navigation("Exercise");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.ExerciseTag", b =>
                 {
                     b.HasOne("Pugling.Api.Models.Exercise", "Exercise")
@@ -3586,6 +3640,8 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("Grants");
 
                     b.Navigation("InterestLinks");
+
+                    b.Navigation("Ratings");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.InterestTag", b =>

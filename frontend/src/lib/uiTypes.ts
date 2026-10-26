@@ -48,7 +48,7 @@ export interface Paged<T> {
  */
 export type SortDir = "asc" | "desc";
 /** Erlaubte Sortierschlüssel des Übungskatalogs – siehe [SortDir](#). */
-export type ExerciseSortKey = "title" | "type" | "grade" | "source" | "created";
+export type ExerciseSortKey = "title" | "type" | "grade" | "source" | "created" | "rating";
 /** Erlaubte Sortierschlüssel des Vokabel-Stores – siehe [SortDir](#). */
 export type VocabSortKey = "key" | "word" | "translation" | "pos" | "created";
 

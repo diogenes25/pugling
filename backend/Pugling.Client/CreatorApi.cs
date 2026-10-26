@@ -332,6 +332,18 @@ public sealed class CreatorApi(HttpClient http)
     public Task RemoveGrantAsync(int exerciseId, int creatorId, GrantPermission permission, CancellationToken ct = default) =>
         Http.SendAsync(HttpMethod.Delete, $"{Root}/exercises/{exerciseId}/grants/{creatorId}/{permission}", null, ct);
 
+    /// <summary>All creators' ratings of an exercise (readable for every creator).</summary>
+    public Task<IReadOnlyList<ExerciseRatingResponse>> ListRatingsAsync(int exerciseId, CancellationToken ct = default) =>
+        Http.GetAsync<IReadOnlyList<ExerciseRatingResponse>>($"{Root}/exercises/{exerciseId}/ratings", ct);
+
+    /// <summary>Rates somebody else's exercise or changes the own rating; owners get <c>403 cannot_rate_own_exercise</c>.</summary>
+    public Task<ExerciseRatingResponse> RateExerciseAsync(int exerciseId, RateExerciseDto dto, CancellationToken ct = default) =>
+        Http.PutAsync<ExerciseRatingResponse>($"{Root}/exercises/{exerciseId}/rating", dto, ct);
+
+    /// <summary>Removes the own rating of an exercise.</summary>
+    public Task RemoveRatingAsync(int exerciseId, CancellationToken ct = default) =>
+        Http.SendAsync(HttpMethod.Delete, $"{Root}/exercises/{exerciseId}/rating", null, ct);
+
     // ---------------------------------------------------------------- Interest taxonomy
 
     /// <summary>

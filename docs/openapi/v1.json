@@ -12193,7 +12193,7 @@
           {
             "name": "sort",
             "in": "query",
-            "description": "Sort column: \u0060title\u0060, \u0060type\u0060, \u0060grade\u0060, \u0060source\u0060, \u0060created\u0060.\n\nShort form \u0060-title\u0060 = descending. Without a value: subject \u2192 series unit \u2192 order.",
+            "description": "Sort column: \u0060title\u0060, \u0060type\u0060, \u0060grade\u0060, \u0060source\u0060, \u0060created\u0060,\n\n\u0060rating\u0060 (average stars; unrated exercises last, with \u0060-rating\u0060 first).\nShort form \u0060-title\u0060 = descending. Without a value: subject \u2192 series unit \u2192 order.",
             "schema": {
               "type": "string"
             }
@@ -21493,6 +21493,219 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PreviewResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/creator/exercises/{exerciseId}/ratings": {
+      "get": {
+        "tags": [
+          "Creator \u2013 Exercise Ratings"
+        ],
+        "summary": "All ratings of the exercise, newest change first - visible to every creator, not only the owner.",
+        "parameters": [
+          {
+            "name": "exerciseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExerciseRatingResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/creator/exercises/{exerciseId}/rating": {
+      "put": {
+        "tags": [
+          "Creator \u2013 Exercise Ratings"
+        ],
+        "summary": "Rates the exercise or changes the caller\u0027s existing rating (PUT semantics: there is never a second row\nper creator). Refused with \u0060403 cannot_rate_own_exercise\u0060 for anyone who administers the exercise.",
+        "parameters": [
+          {
+            "name": "exerciseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RateExerciseDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RateExerciseDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/RateExerciseDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseRatingResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Creator \u2013 Exercise Ratings"
+        ],
+        "summary": "Removes the caller\u0027s own rating; \u0060404\u0060 if there is none.",
+        "parameters": [
+          {
+            "name": "exerciseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -31244,6 +31457,7 @@
           "isOwn",
           "isOwner",
           "orderIndex",
+          "ratingCount",
           "rewardPoints",
           "schoolTypes",
           "seriesId",
@@ -31443,9 +31657,26 @@
               ],
               "format": "int32"
             }
+          },
+          "averageRating": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?(?:[eE][\u002B-]?\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "ratingCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Complete, type-spanning view of an exercise including raw config and all metadata \u2013\nthe basis for editing (load config into the type-specific editor; saving goes through\nthe per-type PUT \u0060.../textbook-series/{seriesId}/units/{seriesUnitId}/\u0026lt;type\u0026gt;/{id}\u0060,\nwhere int ExerciseDetail.SeriesId supplies the route segment the flat cross-catalog view has no other way to know).\n\n\u0060InterestTagIds\u0060 is the dressing (B-46) - metadata, and this view promises all of it. It stays off\nExerciseSummary for the reason that row gives about itself: the lean row carries what the\nsupervisor\u0027s form pre-fills from, and a dressing pre-fills nothing. The fit filter B-18 will build\nbelongs in the *query* anyway, not in a list the client scans."
+        "description": "Complete, type-spanning view of an exercise including raw config and all metadata \u2013\nthe basis for editing (load config into the type-specific editor; saving goes through\nthe per-type PUT \u0060.../textbook-series/{seriesId}/units/{seriesUnitId}/\u0026lt;type\u0026gt;/{id}\u0060,\nwhere int ExerciseDetail.SeriesId supplies the route segment the flat cross-catalog view has no other way to know).\n\n\u0060InterestTagIds\u0060 is the dressing (B-46) - metadata, and this view promises all of it. It stays off\nExerciseSummary for the reason that row gives about itself: the lean row carries what the\nsupervisor\u0027s form pre-fills from, and a dressing pre-fills nothing. The fit filter B-18 will build\nbelongs in the *query* anyway, not in a list the client scans.\n\n\u0060AverageRating\u0060/\u0060RatingCount\u0060: the same aggregate as on ExerciseSummary (B-12)."
       },
       "ExercisePayloadOfArithmeticConfig": {
         "required": [
@@ -33116,6 +33347,63 @@
           }
         },
         "description": "Progress of a single vocabulary exercise. Active = currently assigned via an active plan."
+      },
+      "ExerciseRatingResponse": {
+        "required": [
+          "createdAt",
+          "creatorId",
+          "creatorName",
+          "isMine",
+          "stars",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "creatorId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The rating creator.",
+            "format": "int32"
+          },
+          "creatorName": {
+            "type": "string",
+            "description": "Display name of the rating creator."
+          },
+          "isMine": {
+            "type": "boolean",
+            "description": "Whether this is the requesting creator\u0027s own rating - the one they may change or delete."
+          },
+          "stars": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "1 to 5.",
+            "format": "int32"
+          },
+          "comment": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional comment."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When the creator first rated.",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "When the creator last changed the rating.",
+            "format": "date-time"
+          }
+        },
+        "description": "One creator\u0027s rating of an exercise. Visible to every creator, including the rater\u0027s name: the catalog\nshows authors by name anyway, and a curation signal nobody can attribute is worth little."
       },
       "ExerciseResponseOfArithmeticConfig": {
         "required": [
@@ -35486,6 +35774,7 @@
           "id",
           "isOwn",
           "isOwner",
+          "ratingCount",
           "rewardPoints",
           "schoolTypes",
           "seriesId",
@@ -35637,9 +35926,26 @@
               "string"
             ],
             "format": "int32"
+          },
+          "averageRating": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?(?:[eE][\u002B-]?\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "ratingCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Lean hit row of the exercise search (child-neutral catalog). \u0060AuthorAdultId\u0060/\u0060AuthorName\u0060 carry the\nattribution of the shared library (\u0060null\u0060 = seeded system exercise); \u0060IsOwn\u0060 = the requesting supervisor\nmay change/delete the exercise.\n\nThe four \u0060Default\u2026\u0060/\u0060RewardPoints\u0060 values are the creator\u0027s **recommendations**, not settings: the\nsupervisor\u0027s form pre-fills from them and stays free to override (B-45). They belong on the lean row rather than\nonly on ExerciseDetail because the form pre-fills straight from the search hit - fetching the\ndetail just to read one number would be a round trip per keystroke in the list.\n\nThe \u0060SuggestedGoalPoints\u0060 figure is what a position would actually inherit from \u0060RewardPoints\u0060 -\nthe raw value only when it is plausible, otherwise the model default (B-192). Both travel, and that is the\npoint: the form shows the effective one, while the raw one stays readable for anyone editing the exercise.\nDeriving the effective figure client-side would copy a server rule, and the copy is what drifts."
+        "description": "Lean hit row of the exercise search (child-neutral catalog). \u0060AuthorAdultId\u0060/\u0060AuthorName\u0060 carry the\nattribution of the shared library (\u0060null\u0060 = seeded system exercise); \u0060IsOwn\u0060 = the requesting supervisor\nmay change/delete the exercise.\n\nThe four \u0060Default\u2026\u0060/\u0060RewardPoints\u0060 values are the creator\u0027s **recommendations**, not settings: the\nsupervisor\u0027s form pre-fills from them and stays free to override (B-45). They belong on the lean row rather than\nonly on ExerciseDetail because the form pre-fills straight from the search hit - fetching the\ndetail just to read one number would be a round trip per keystroke in the list.\n\nThe \u0060SuggestedGoalPoints\u0060 figure is what a position would actually inherit from \u0060RewardPoints\u0060 -\nthe raw value only when it is plausible, otherwise the model default (B-192). Both travel, and that is the\npoint: the form shows the effective one, while the raw one stays readable for anyone editing the exercise.\nDeriving the effective figure client-side would copy a server rule, and the copy is what drifts.\n\n\u0060AverageRating\u0060/\u0060RatingCount\u0060 are the other creators\u0027 verdict (B-12): \u0060null\u0060/\u00600\u0060 while\nnobody has rated. They sit on the lean row because the whole point is to tell proven material apart while\nbrowsing - the same reason \u0060sort=rating\u0060 exists."
       },
       "ExerciseTypeManifest": {
         "required": [
@@ -39112,6 +39418,7 @@
             "enum": [
               "activation_not_pending",
               "bad_request",
+              "cannot_rate_own_exercise",
               "concurrency_conflict",
               "conflict",
               "duplicate_achievement",
@@ -39391,6 +39698,31 @@
           }
         },
         "description": "Question with optional answer choices (empty = free text)."
+      },
+      "RateExerciseDto": {
+        "required": [
+          "stars"
+        ],
+        "type": "object",
+        "properties": {
+          "stars": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "1 to 5.",
+            "format": "int32"
+          },
+          "comment": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional short comment (at most 2000 characters); empty or blank = no comment."
+          }
+        },
+        "description": "Input for rating somebody else\u0027s exercise. Rating again overwrites the caller\u0027s own rating."
       },
       "ReadingConfig": {
         "required": [
@@ -44249,6 +44581,9 @@
     },
     {
       "name": "Creator \u2013 Exercise Preview"
+    },
+    {
+      "name": "Creator \u2013 Exercise Ratings"
     },
     {
       "name": "Creator \u2013 Exercise Types"

@@ -3,7 +3,7 @@ import type {
   CreateChildDto, CreateExercisePayload, CreateKlassenarbeitDto, CreateMissionDto, CreatePlanDto, CreateVocabularyDto,
   UpdateChildDto, SupervisorLink, SupervisorRelation, TimetableEntry, CreateTimetableEntryDto,
   ClozeResponse, CreateClozeDto, UpdateClozeDto,
-  ExerciseGrant, GrantPermission,
+  ExerciseGrant, ExerciseRating, GrantPermission,
   CreateAdultDto, AdultResponse, UpdateAdultDto,
   ExerciseDetail, ExercisePreviewAnswer, ExercisePreviewData, ExercisePreviewResult, ExerciseTypeManifest,
   CreateChildTagDto, ExerciseWriteResult,
@@ -375,6 +375,13 @@ export const api = {
     http<ExerciseGrant>(`${V1}/creator/exercises/${exerciseId}/grants`, "POST", { creatorId, permission }),
   removeExerciseGrant: (exerciseId: number, creatorId: number, permission: GrantPermission) =>
     http<void>(`${V1}/creator/exercises/${exerciseId}/grants/${creatorId}/${permission}`, "DELETE"),
+  // Bewertungen geteilter Übungen (B-12): lesen darf jeder Creator, bewerten nur, wer die Übung nicht verwaltet.
+  exerciseRatings: (exerciseId: number) =>
+    http<ExerciseRating[]>(`${V1}/creator/exercises/${exerciseId}/ratings`),
+  rateExercise: (exerciseId: number, stars: number, comment: string | null) =>
+    http<ExerciseRating>(`${V1}/creator/exercises/${exerciseId}/rating`, "PUT", { stars, comment }),
+  removeExerciseRating: (exerciseId: number) =>
+    http<void>(`${V1}/creator/exercises/${exerciseId}/rating`, "DELETE"),
 
   // Titelbild der Übung (und die übungslokale Übersteuerung am Item). Genauigkeits-Kaskade: das Item
   // schlägt die Vokabel; das Titelbild ist reine Deko der Übungskachel.

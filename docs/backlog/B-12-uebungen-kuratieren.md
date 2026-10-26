@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/katalog, rolle/creator]
+tags: [typ/story, status/in-arbeit, bereich/katalog, rolle/creator]
 aliases: [Rating, Kuratierung]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Wunsch
 groesse: M
@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: memory/geteilte-uebungs-bibliothek.md
 grund: ""
 ersetzt_durch: []
+wartet_auf: "Nutzer: Zähler Sprint 12 überschritten (Freigabe 3), Funde 6 und 7 offen"
 ---
 
 # B-12 · Geteilte Übungen bewerten und kuratieren
@@ -237,3 +238,36 @@ End-to-End-Rundlauf nach dem Bauen. Kein Playwright-E2E zwingend (kein Vater→S
   ausdrücklich freigegeben: ein Nachtlauf darf diese Story trotz `art: Wunsch` ohne weitere Rückfrage bauen
   (Rollengang/Reviewer bleiben Pflicht wie bei jeder Abnahme).
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): gilt, kein Teil geliefert (kein `ExerciseRating`/`AverageRating` im Code). Zeilen verschoben (`ApplySort` → `ExerciseCatalogController.cs:133-150`, `Usage` → `:225`, `Exercise` → `LearnEntities.cs:77`, `ExerciseGrant` → `:189`); der Filter `chapterId` heißt heute `seriesUnitId` (`:49`). Nachtlauffähig (`migration: ja` – nicht im selben Sprint wie eine andere Migration).
+- **2026-10-26** — Nachtlauf (7. Lauf), Sprint 12 / NP-8: gebaut. Prämisse vorher am laufenden Vertrag geprüft
+  (`docs/openapi/v1.json`: kein Bewertungs-Endpunkt, `rating` nur als Medien-Altersfreigabe). Backend: Entity
+  `ExerciseRating` (unique `(ExerciseId, CreatorId)`, beide FKs Cascade), Kette neu gefaltet (eine Migration),
+  `ExerciseRatingsController` (`GET …/ratings`, `PUT`/`DELETE …/rating`), `cannot_rate_own_exercise` (403),
+  `AverageRating`/`RatingCount` an `ExerciseSummary`/`ExerciseDetail`, `sort=rating` (unbewertete aufsteigend am Ende,
+  absteigend am Anfang – AK 6 wörtlich), Client-Methoden. Frontend: `ExerciseRatingPanel` (Liste + eigenes Formular,
+  für Owner ausgeblendet), Zeilentext „★ 3,5 (2 Bewertungen)“, Sortieroption „Bewertung“, Zeile als benannte Gruppe.
+  Tests: `ExerciseRatingsTests` (8), Vitest-Helfer (5), E2E `e2e/uebungen-bewerten.spec.ts`.
+- **2026-10-26** — Rote Proben (Auflage 5): 13 Backend-Mutanten gegen `ExerciseRatingsTests`, erwartet je ≥ 1 rot am
+  benannten Fall, gemessen **13 von 13 rot** (Owner-Ausschluss weg / über Schreibrecht, PUT legt neue Zeile an,
+  Max statt Schnitt, Sortierung ohne Leitschlüssel, nach Anzahl, Liste nur eigene, Delete entfernt alle, keine
+  Sterneprüfung, Detail-Anzahl 0, Kommentar ungetrimmt, absteigend nicht gespiegelt, alter Kommentar bleibt).
+  Nach dem Review: IsMine in der Liste immer `false` → **1 rot** (vorher grün laut Reviewer), Sternegrenze `> 4` →
+  **2 rot**. Fünf UI-Mutanten gegen die Spec, je **1 failed** an der erwarteten Zeile (Formular für Owner, Zeile zieht
+  nicht nach, Anzahl statt Schnitt, Formular liest nicht zurück, Sortieroption fehlt); nach Fund 5 zwei weitere
+  (Bewertung schickt `created` bzw. `title`) → je **1 failed** an `:80`. Ein Nebenläufigkeitstest für Fund 2
+  (8 parallele erste PUTs) blieb gegen den Stand ohne Abfangen **3 von 3 Läufen grün** – er trug nichts und wurde
+  wieder entfernt; das Rennen ist in-process nicht deterministisch auslösbar (wie `concurrency_conflict`).
+- **2026-10-26** — Review (Freigabe 3, Zähler Sprint 12): Fund 1 roter Wächter `Unpaginierte_Array_GETs_Sind_Gepinnt`
+  (Pin 34 → 35, begründet); `pugling-reviewer`: Fund 2 Rennen beim ersten PUT → 500 (behoben, Muster
+  `DailyBoxService`), Fund 3 `isMine` der Liste nie `true` geprüft (behoben), Fund 4 Setup-PUTs/Grants ungeprüft
+  (behoben); Hinweise 6/7 → [B-269](B-269-bewertungen-reihenfolge-und-updatedat-ungetestet.md). `frontend-reviewer`:
+  Fund 5 Sortier-Zusicherungen bestanden auch mit Titel-/Anlage-Reihenfolge (behoben, Titel und Anlage laufen jetzt
+  entgegen). **Fund 6** (`isOwner`/`isOwn`-Abgrenzung ungetestet: der Autor hält Owner *und* Write, die Mutante
+  `exercise.isOwn ? Hinweis : Formular` bliebe grün) überschreitet die Grenze von fünf – **der Lauf endet hier**.
+  Nicht mehr behoben: Fund 6 und **Fund 7** (`aria-label` auf blankem `<span>` mit den Sternen,
+  `ExerciseRatingPanel.tsx`, wird nicht verlässlich angesagt → `role="img"`). 🟢-Hinweise nicht behoben: Ladefehler
+  ohne `ListenAusfall`, Zeile kann nach dem Speichern unter `sort=rating` die Seite wechseln, PUT-Rumpf ohne
+  `satisfies RateExerciseDto`, Sternanzeige je Zeile und Formular-Leeren nach dem Löschen ungeprüft.
+- **2026-10-26** — Rollengang (Freigabe 6, Browser-Extension nicht verbunden → E2E): `e2e/uebungen-bewerten.spec.ts`
+  fährt Vater (sieht Schnitt/Anzahl, sortiert, bewertet, ändert, liest nach Neuladen zurück, löscht) und Autorin
+  (sieht die Bewertungen, kein Formular). **Keine Abnahme:** der Lauf endete an Freigabe 3 vor Rollengang-Runde und
+  Retro; Story bleibt `in-arbeit`, Wiederaufnahme im Protokoll.

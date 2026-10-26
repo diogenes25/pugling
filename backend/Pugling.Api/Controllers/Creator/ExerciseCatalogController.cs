@@ -38,7 +38,8 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     /// passage, and folding it into the title search would make "Unit 1" match every exercise whose
     /// title happens to mention a unit (B-18).</param>
     /// <param name="mineOnly">Only own exercises of the requesting adult (management rather than discovery).</param>
-    /// <param name="sort">Sort column: <c>title</c>, <c>type</c>, <c>grade</c>, <c>source</c>, <c>created</c>.
+    /// <param name="sort">Sort column: <c>title</c>, <c>type</c>, <c>grade</c>, <c>source</c>, <c>created</c>,
+    /// <c>rating</c> (average stars; unrated exercises last, with <c>-rating</c> first).
     /// Short form <c>-title</c> = descending. Without a value: subject → series unit → order.</param>
     /// <param name="dir"><c>asc</c> (default) or <c>desc</c>; takes precedence over a <c>-</c> prefix in <paramref name="sort"/>.</param>
     /// <param name="skip">Number of entries to skip (paging).</param>
@@ -121,7 +122,9 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
                 // consequence to know: `SuggestedGoalPoints` is therefore not sortable or filterable in
                 // SQL. Nothing needs that today, and an earlier draft that spelled the ternary out for
                 // SQL bought exactly that ability at the price of writing the rule twice.
-                GoalPointsPolicy.Effective(e.RewardPoints)))
+                GoalPointsPolicy.Effective(e.RewardPoints),
+                // B-12: the other creators' verdict. AVG over no rows is NULL in SQL - exactly "not rated yet".
+                e.Ratings.Average(r => (double?)r.Stars), e.Ratings.Count))
             .ToPagedListAsync(Response, skip, take, ct);
     }
 
@@ -143,6 +146,13 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
             ("source", true) => q.OrderByDescending(e => e.Source).ThenBy(e => e.Id),
             ("created", false) => q.OrderBy(e => e.CreatedAt).ThenBy(e => e.Id),
             ("created", true) => q.OrderByDescending(e => e.CreatedAt).ThenBy(e => e.Id),
+            // B-12: unrated exercises have no average. They go to the end ascending and - as the exact mirror -
+            // to the start descending, made explicit through the leading key instead of left to how the
+            // provider happens to order NULL.
+            ("rating", false) => q.OrderBy(e => e.Ratings.Any() ? 0 : 1)
+                .ThenBy(e => e.Ratings.Average(r => (double?)r.Stars)).ThenBy(e => e.Id),
+            ("rating", true) => q.OrderByDescending(e => e.Ratings.Any() ? 0 : 1)
+                .ThenByDescending(e => e.Ratings.Average(r => (double?)r.Stars)).ThenBy(e => e.Id),
             // The domain default order (no per-column clickable sort key): ascending on purpose - reversing the
             // catalog tree (subject → series unit → order) would make no sense.
             _ => q.OrderBy(e => e.SeriesUnit!.Series!.SubjectId).ThenBy(e => e.SeriesUnitId).ThenBy(e => e.OrderIndex).ThenBy(e => e.Id),
@@ -167,6 +177,10 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
 
         var fid = User.AdultId();
         var isAdmin = User.IsAdmin();
+        var rating = await db.ExerciseRatings.Where(r => r.ExerciseId == id)
+            .GroupBy(r => r.ExerciseId)
+            .Select(g => new { Average = (double?)g.Average(r => r.Stars), Count = g.Count() })
+            .FirstOrDefaultAsync(ct) ?? new { Average = (double?)null, Count = 0 };
         return new ExerciseDetail(e.Id, e.SeriesUnit!.SeriesId, e.SeriesUnitId, e.SeriesUnit?.Label ?? "", e.SeriesUnit?.Series?.SubjectId,
             e.SeriesUnit?.Series?.Subject?.Name ?? "", e.Type.ToString(), e.Title, e.OrderIndex, e.RewardPoints,
             e.GradeMin, e.GradeMax, e.SchoolTypes, e.Source, e.CategoryId, e.Category?.Name,
@@ -178,7 +192,8 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
             e.Description, e.DefaultUseLeitner, e.DefaultRequireTypedTest,
             // Ascending, same as the typed response - two dressings must compare the same way whichever
             // of the two views they were read through.
-            [.. e.InterestLinks.Select(l => l.InterestTagId).OrderBy(x => x)]);
+            [.. e.InterestLinks.Select(l => l.InterestTagId).OrderBy(x => x)],
+            rating.Average, rating.Count);
     }
 
     /// <summary>

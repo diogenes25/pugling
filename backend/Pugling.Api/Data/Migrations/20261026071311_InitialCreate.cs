@@ -253,7 +253,7 @@ namespace Pugling.Api.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AccountProfiles", x => x.Id);
-                    table.CheckConstraint("CK_AccountProfile_SingleProfile", "(CASE WHEN \"AdultId\" IS NULL THEN 0 ELSE 1 END\r\n + CASE WHEN \"ChildId\" IS NULL THEN 0 ELSE 1 END) = 1");
+                    table.CheckConstraint("CK_AccountProfile_SingleProfile", "(CASE WHEN \"AdultId\" IS NULL THEN 0 ELSE 1 END\n + CASE WHEN \"ChildId\" IS NULL THEN 0 ELSE 1 END) = 1");
                     table.ForeignKey(
                         name: "FK_AccountProfiles_Accounts_AccountId",
                         column: x => x.AccountId,
@@ -1231,6 +1231,36 @@ namespace Pugling.Api.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ExerciseRatings",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    ExerciseId = table.Column<int>(type: "INTEGER", nullable: false),
+                    CreatorId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Stars = table.Column<int>(type: "INTEGER", nullable: false),
+                    Comment = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ExerciseRatings", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ExerciseRatings_Adults_CreatorId",
+                        column: x => x.CreatorId,
+                        principalTable: "Adults",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ExerciseRatings_Exercises_ExerciseId",
+                        column: x => x.ExerciseId,
+                        principalTable: "Exercises",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ExerciseTags",
                 columns: table => new
                 {
@@ -1390,7 +1420,7 @@ namespace Pugling.Api.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ChildMediaPicks", x => x.Id);
-                    table.CheckConstraint("CK_ChildMediaPick_SingleCarrier", "(CASE WHEN \"VocabularyId\" IS NULL THEN 0 ELSE 1 END\r\n + CASE WHEN \"ExerciseItemId\" IS NULL THEN 0 ELSE 1 END) = 1");
+                    table.CheckConstraint("CK_ChildMediaPick_SingleCarrier", "(CASE WHEN \"VocabularyId\" IS NULL THEN 0 ELSE 1 END\n + CASE WHEN \"ExerciseItemId\" IS NULL THEN 0 ELSE 1 END) = 1");
                     table.ForeignKey(
                         name: "FK_ChildMediaPicks_Children_ChildId",
                         column: x => x.ChildId,
@@ -1502,7 +1532,7 @@ namespace Pugling.Api.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_MediaLinks", x => x.Id);
-                    table.CheckConstraint("CK_MediaLink_SingleCarrier", "(CASE WHEN \"VocabularyId\" IS NULL THEN 0 ELSE 1 END\r\n + CASE WHEN \"ExerciseItemId\" IS NULL THEN 0 ELSE 1 END\r\n + CASE WHEN \"ExerciseId\" IS NULL THEN 0 ELSE 1 END) = 1");
+                    table.CheckConstraint("CK_MediaLink_SingleCarrier", "(CASE WHEN \"VocabularyId\" IS NULL THEN 0 ELSE 1 END\n + CASE WHEN \"ExerciseItemId\" IS NULL THEN 0 ELSE 1 END\n + CASE WHEN \"ExerciseId\" IS NULL THEN 0 ELSE 1 END) = 1");
                     table.ForeignKey(
                         name: "FK_MediaLinks_ExerciseItems_ExerciseItemId",
                         column: x => x.ExerciseItemId,
@@ -2025,6 +2055,17 @@ namespace Pugling.Api.Data.Migrations
                 name: "IX_ExerciseItems_VocabularyId",
                 table: "ExerciseItems",
                 column: "VocabularyId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ExerciseRatings_CreatorId",
+                table: "ExerciseRatings",
+                column: "CreatorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ExerciseRatings_ExerciseId_CreatorId",
+                table: "ExerciseRatings",
+                columns: new[] { "ExerciseId", "CreatorId" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Exercises_AuthorAdultId",
@@ -2591,6 +2632,9 @@ namespace Pugling.Api.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "ExerciseInterestLinks");
+
+            migrationBuilder.DropTable(
+                name: "ExerciseRatings");
 
             migrationBuilder.DropTable(
                 name: "ExerciseTags");

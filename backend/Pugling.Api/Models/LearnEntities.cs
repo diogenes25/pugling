@@ -152,6 +152,12 @@ public class Exercise
     public List<ExerciseGrant> Grants { get; set; } = [];
 
     /// <summary>
+    /// What other creators think of this exercise (B-12) - one row per rating creator. The catalog search
+    /// aggregates it into an average and a count so that proven material can be told apart while browsing.
+    /// </summary>
+    public List<ExerciseRating> Ratings { get; set; } = [];
+
+    /// <summary>
     /// The interests this exercise is <b>dressed</b> for (B-46) – the same taxonomy the child's interests
     /// and the images already hang on. It is a pre-filter axis like <see cref="GradeMin"/> or
     /// <see cref="SchoolTypes"/>, not a restriction: an exercise dressed in unicorns stays readable and
@@ -198,4 +204,25 @@ public class ExerciseGrant
     /// <summary>Audit: which adult granted the right (null for the seeded grant).</summary>
     public int? GrantedByAdultId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>
+/// A creator's rating of somebody else's exercise (B-12): 1-5 stars and an optional short comment.
+/// Deliberately subjective - it is not derived from children's results, because a good exercise on an
+/// unmotivated day would look bad. At most one row per (exercise, creator): rating again overwrites it,
+/// and <see cref="UpdatedAt"/> is the only trace of the change - a quality signal, not an audit trail.
+/// </summary>
+public class ExerciseRating
+{
+    public int Id { get; set; }
+    public int ExerciseId { get; set; }
+    public Exercise? Exercise { get; set; }
+    /// <summary>The rating creator (= <see cref="Adult.Id"/>); never an owner of the exercise.</summary>
+    public int CreatorId { get; set; }
+    public Adult? Creator { get; set; }
+    /// <summary>1 to 5.</summary>
+    public int Stars { get; set; }
+    public string? Comment { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }

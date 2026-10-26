@@ -500,7 +500,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (61)
+### Offen (62)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -541,10 +541,10 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-234](B-234-dritter-zustand-der-arten-liste.md) | Soll die Arten-Liste einen dritten Zustand bekommen – oder B-174s Entscheidung 3 zurückgenommen werden? | Frage | `idee` | P3 | — | frontend | — |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `idee` | P3 | — | — | — |
 | [B-267](B-267-entkoppeltes-lehrbuch-zeigt-katalogwert-im-freitextfeld.md) | Nach dem Entkoppeln zeigt das Freitextfeld den Katalogwert – gespeichert wird er nicht | Frage | `idee` | P3 | — | beides | — |
+| [B-12](B-12-uebungen-kuratieren.md) | Geteilte Übungen bewerten und kuratieren | Wunsch | `in-arbeit` | P3 | M | beides | Migration |
 | [B-15](B-15-testmodus-weitere-typen.md) | Vorschau für die nicht-prüfbaren Übungstypen | Wunsch | `in-arbeit` | P3 | S | beides | — |
 | [B-21](B-21-ki-creator-foerdermodus.md) | KI-Creator: Fördermodus (`--use-weak`) sprachrein und mit Tests absichern | Wunsch | `in-arbeit` | P3 | S | backend | — |
 | [B-68](B-68-vater-web-responsive.md) | Das Vater-Web hat keinen einzigen eigenen Breakpoint | Wunsch | `in-arbeit` | P3 | M | frontend | — |
-| [B-12](B-12-uebungen-kuratieren.md) | Geteilte Übungen bewerten und kuratieren | Wunsch | `geschaetzt` | P3 | M | beides | Migration |
 | [B-155](B-155-grammatik-themen-als-tags.md) | Grammatik als Thema, nicht als Freitext | Wunsch | `geschaetzt` | P3 | L | beides | Migration |
 | [B-22](B-22-unit-stoffnotizen-llm.md) | Unit-Stoffnotizen LLM-gestützt befüllen | Wunsch | `geschaetzt` | P3 | M | backend | Migration |
 | [B-28](B-28-login-name-sequenziell.md) | Sequenzielle IDs als Login-Name | Wunsch | `geschaetzt` | P3 | S | backend | — |
@@ -563,6 +563,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-252](B-252-vorlesen-und-sprechen-bei-vokabeln.md) | Vokabeln vorlesen lassen und optional per Stimme beantworten | Wunsch | `idee` | P3 | — | — | — |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `geschaetzt` | P3 | S | backend | — |
 | [B-230](B-230-pin-hash-doppelt-gehalten.md) | Der PIN-Hash liegt doppelt: Profil und Konto halten denselben Wert | Aufräumen | `idee` | P3 | — | — | — |
+| [B-269](B-269-bewertungen-reihenfolge-und-updatedat-ungetestet.md) | Bewertungen: Reihenfolge der Liste und `UpdatedAt` beim Überschreiben sind ungetestet | Aufräumen | `idee` | P3 | — | backend | — |
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 | [B-05](B-05-buchstaben-tausch.md) | Buchstaben-Tausch-Eingabe (Anagramm) | Wunsch | `geschaetzt` | P5 | M | beides | — |
 
@@ -758,13 +759,14 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 
 </details>
 
-### Wartet auf Zutun von außen (10)
+### Wartet auf Zutun von außen (11)
 
 Diese Stories kommen **im Repo nicht weiter** — es fehlt ein Schritt, den nur ein Mensch
 oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird gerade gebaut".
 
 | Id | Story | Stufe | Wartet auf |
 | --- | --- | --- | --- |
+| [B-12](B-12-uebungen-kuratieren.md) | Geteilte Übungen bewerten und kuratieren | `in-arbeit` | Nutzer: Zähler Sprint 12 überschritten (Freigabe 3), Funde 6 und 7 offen |
 | [B-134](B-134-bedingte-live-regionen.md) | Dreizehn Live-Regionen entstehen zusammen mit ihrem Text — und schweigen darum | `in-arbeit` | Nutzer: Nachtlauf an Freigabe 3 beendet (Sprint 10) – frontend-reviewer für B-134/B-236 nicht gelaufen |
 | [B-15](B-15-testmodus-weitere-typen.md) | Vorschau für die nicht-prüfbaren Übungstypen | `in-arbeit` | Nutzer: Nachtlauf an Freigabe 3 beendet (6 Review-Funde in Sprint 7) – offene Funde im Verlauf |
 | [B-17](B-17-birkenbihl-sprachcodes.md) | Sprachcode-Normalisierung bei der Vokabel-Dekodierung | `in-arbeit` | Nutzer: Nachtlauf an Freigabe 3 beendet (6 Review-Funde in Sprint 7) – offene Funde im Verlauf |
@@ -889,6 +891,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-265](B-265-sperr-zaehler-zusicherung-kann-nie-fallen.md) | `idee` | `unverifiziert: true` |
 | [B-267](B-267-entkoppeltes-lehrbuch-zeigt-katalogwert-im-freitextfeld.md) | `idee` | `unverifiziert: true` |
 | [B-268](B-268-fokus-nach-inline-reihe.md) | `idee` | `unverifiziert: true` |
+| [B-269](B-269-bewertungen-reihenfolge-und-updatedat-ungetestet.md) | `idee` | `unverifiziert: true` |
 
 <details>
 <summary>Verworfen (22)</summary>
