@@ -281,7 +281,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         // Create an article/listing owned by someone else
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-        var fremdVater = new Adult { Name = "Fremd-Vater", Pin = "unused" };
+        var fremdVater = new Adult { Name = "Fremd-Vater" };
         var fremdArticle = new ShopArticle { Adult = fremdVater, ArticleNumber = "F-001", Title = "Fremd" };
         var fremdListing = new ShopListing
         {

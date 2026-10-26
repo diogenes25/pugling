@@ -61,13 +61,14 @@ public class AdultsController(PuglingDbContext db, AccountService accounts) : Co
     public async Task<ActionResult<AdultResponse>> Create(CreateAdultDto dto, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(dto.Name)) return this.ProblemWithCode(ApiErrors.ValidationError, "Name is required.");
+        if (dto.Pin is not null && !PinHasher.IsAcceptable(dto.Pin)) return this.ProblemWithCode(ApiErrors.ValidationError, PinHasher.TooShortMessage);
         if (await EmailTakenAsync(dto.Email, ct: ct)) return this.ProblemWithCode(ApiErrors.DuplicateEmail, "Email already in use.");
 
-        var adult = new Adult { Name = dto.Name.Trim(), Email = dto.Email, Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin) };
+        var adult = new Adult { Name = dto.Name.Trim(), Email = dto.Email };
         db.Adults.Add(adult);
         await db.SaveChangesAsync(ct);
         // Create the login account (creator+supervisor) right away so the new adult can log in.
-        await accounts.EnsureForAdultAsync(adult, ct);
+        await accounts.EnsureForAdultAsync(adult, dto.Pin, ct);
 
         var response = new AdultResponse(adult.Id, adult.Name, adult.Email, adult.CreatedAt, 0);
         return CreatedAtAction(nameof(Get), new { adultId = adult.Id }, response);
@@ -81,16 +82,17 @@ public class AdultsController(PuglingDbContext db, AccountService accounts) : Co
         var adult = await db.Adults.FirstOrDefaultAsync(a => a.Id == adultId, ct);
         if (adult is null) return NotFound();
 
+        if (dto.Pin is not null && !PinHasher.IsAcceptable(dto.Pin)) return this.ProblemWithCode(ApiErrors.ValidationError, PinHasher.TooShortMessage);
         if (dto.Email is not null && await EmailTakenAsync(dto.Email, exceptAdultId: adultId, ct: ct))
             return this.ProblemWithCode(ApiErrors.DuplicateEmail, "Email already in use.");
 
         if (dto.Name is not null) adult.Name = dto.Name.Trim();
         if (dto.Email is not null) adult.Email = dto.Email;
-        if (dto.Pin is not null) adult.Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin);
-        // Mirror name, address and PIN hash onto the login account - in the SAME commit. Only the PIN used to
-        // travel along and the address drifted: the collision check above reads the account, but the unique
-        // index also sits on the adult. See AccountService.MirrorAsync.
-        await accounts.MirrorAsync(adult, ct);
+        // Mirror name and address onto the login account - in the SAME commit: the collision check above reads the
+        // account, but the unique index also sits on the adult. See AccountService.MirrorAsync. The PIN lives on the
+        // account only (B-230).
+        var account = await accounts.MirrorAsync(adult, ct);
+        if (dto.Pin is not null) AccountService.SetPin(account, dto.Pin);
         await db.SaveChangesAsync(ct);
 
         return (await Project(db.Adults.Where(a => a.Id == adultId)).FirstAsync(ct));

@@ -15,6 +15,21 @@ public static class PinHasher
     private const int KeySize = 32;
     private const string Prefix = "pbkdf2";
 
+    /// <summary>
+    /// The shortest PIN that may be stored (B-28). The login name is a small, dense id, so the PIN is the only real
+    /// barrier; four matches the seeded family and the four dots of the child's PIN pad.
+    /// </summary>
+    public const int MinLength = 4;
+
+    /// <summary>The validation message for a PIN shorter than <see cref="MinLength"/>.</summary>
+    public const string TooShortMessage = "The PIN must have at least 4 characters; an empty PIN disables the login.";
+
+    /// <summary>
+    /// Whether a PIN may be stored: either empty (documented as "login disabled") or at least
+    /// <see cref="MinLength"/> characters.
+    /// </summary>
+    public static bool IsAcceptable(string pin) => pin.Length == 0 || pin.Length >= MinLength;
+
     /// <summary>Produces the salted PBKDF2 hash of a PIN in the documented string format.</summary>
     public static string Hash(string pin)
     {
@@ -29,6 +44,9 @@ public static class PinHasher
     /// </summary>
     public static bool Verify(string pin, string stored)
     {
+        // An empty stored PIN means "login disabled" - not "log in with an empty input". Without this line the
+        // legacy plaintext branch below compared "" with "" and let exactly that through (B-28).
+        if (stored.Length == 0) return false;
         var parts = stored.Split('.');
         if (parts.Length != 4 || parts[0] != Prefix)
             return stored == pin; // legacy plaintext (from before hashing was introduced)

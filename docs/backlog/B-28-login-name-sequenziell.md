@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/auth]
+tags: [typ/story, status/abgenommen, bereich/auth]
 aliases: [Sequenzielle Login-IDs]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Wunsch
 groesse: S
@@ -157,3 +157,5 @@ Fachlichkeit, kein neues Modell.
   `SecurityHardeningTests.cs`/`ChildrenDashboardTests.cs`/`AdultLifecycleTests.cs` — autonom getroffen,
   Nutzerauftrag 2026-08-04.
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): gilt; der Randbefund ist offen (`PinHasher.cs:32-34` gibt bei leerem Hash **und** leerer PIN `true`). Es sind sechs PIN-Schreib-Actions, nicht fünf (`AdultsController.cs:66/89`, `TeacherAccountsController.cs:59`, `AuthController.cs:183`, `ChildrenController.cs:78/117`). **Vor B-230 bauen** und den Leer-Guard zentral in `PinHasher.Verify` setzen (Entscheidung 3 lässt das zu) – dann übersteht er jede B-230-Variante. Nachtlauffähig.
+- **2026-10-26** — gebaut in Lauf C ([Protokoll](../pm-sitzung-2026-10-26-tag.md), NP-3) unter Freigabe 8. Die Regel liegt einmal in `PinHasher` (`MinLength = 4`, `IsAcceptable`, `TooShortMessage`), dazu eine Guard-Clause an den sechs Schreibpfaden (`AuthController.UpdateMe`, `TeacherAccountsController.Create`, `AdultsController.Create/Update`, `ChildrenController.Create/Update`). `PinHasher.Verify` lehnt eine leere gespeicherte PIN ab, bevor der Klartext-Zweig `"" == ""` vergleicht (Entscheidung 3, zentral). Neue `PinPolicyTests` (3 gegen 4 Zeichen an allen sechs Pfaden, leer = deaktiviert, alle drei Logins mit leerer gespeicherter PIN auch bei leerer Eingabe → 401). Rote Proben: jede der sechs Guard-Clauses einzeln weg → je **1 failed** im passenden Test; Leer-Guard in `Verify` weg → **2 failed**; Grenze 5 → **2 failed**. Backend **925/925 `exit=0`**. Folgestory: [B-281](B-281-pin-felder-pruefen-mindestlaenge-im-ui.md) (die Oberfläche zeigt die englische Meldung).
+- **2026-10-26** — Review ([Protokoll](../pm-sitzung-2026-10-26-tag.md), Lauf C, NP-3): gezählt: Die leere PIN am Erwachsenen-PATCH war nicht geprüft. Ergänzt, Probe „PATCH lehnt leer ab“ → **1 failed**. Zurückgestellt (B-282): Guard nach der Änderung (2 Stellen), Zeitseitenkanal, „leer per PATCH nur angenommen, nicht als deaktiviert geprüft“. Folgestory B-281 (englische Meldung im UI). Rollengang ohne Browser (Extension nicht verbunden): **Vater und Sohn** melden sich in jeder E2E-Spec an (`vaterLogin`/`sohnLogin`), Playwright voll **95 passed** nach dem letzten Produktions-Code-Edit (danach nur Tests und Kommentare). **Creator** (Lehrer-Konto) fährt `lehrer-konto.spec.ts` mit. Backend: Solution-Build 0 Warnungen, **936/936 `exit=0`**. Zähler NP-3 am Ende **5** (Grenze erreicht, nicht überschritten). Zurückgestellt → [B-282](B-282-login-haertung-restpunkte.md). **Abgenommen**; Commit: folgt im Nachtrag.

@@ -133,13 +133,33 @@ public static class Seed
     {
         foreach (var adult in await db.Adults.AsNoTracking().Include(a => a.SupervisedLinks).ToListAsync(ct))
         {
-            if (adult.SupervisedLinks.Count > 0) await accounts.EnsureForAdultAsync(adult, ct);
-            else await accounts.EnsureForTeacherAsync(adult, ct);
+            var pin = adult.Email is not null ? SeededAdultPins.GetValueOrDefault(adult.Email) : null;
+            if (adult.SupervisedLinks.Count > 0) await accounts.EnsureForAdultAsync(adult, pin, ct);
+            else await accounts.EnsureForTeacherAsync(adult, pin, ct);
         }
 
         foreach (var child in await db.Children.AsNoTracking().ToListAsync(ct))
-            await accounts.EnsureForChildAsync(child, ct);
+            await accounts.EnsureForChildAsync(child, SeededChildPins.GetValueOrDefault(child.Name), ct);
     }
+
+    /// <summary>
+    /// The PINs of the seeded people, by e-mail. Since B-230 the PIN lives on the login account only, and the account
+    /// is created here at the end (after the supervision links exist) - so the seed routines that create the people
+    /// cannot set it on the row any more. Only read when an account is actually created; an existing one keeps its PIN.
+    /// </summary>
+    private static readonly Dictionary<string, string> SeededAdultPins = new()
+    {
+        ["papa@example.com"] = "0000",
+        ["demo-vater@example.com"] = "0001",
+        ["englischlehrer@example.com"] = "9999",
+    };
+
+    /// <summary>The PINs of the seeded children, by name (children have no e-mail). See <see cref="SeededAdultPins"/>.</summary>
+    private static readonly Dictionary<string, string> SeededChildPins = new()
+    {
+        ["Sohn"] = "1111",
+        ["Demo-Kind"] = "2222",
+    };
 
     /// <summary>
     /// Transfers the children's <b>free-text</b> interests into the referenced taxonomy
@@ -237,7 +257,7 @@ public static class Seed
         var demoSupervisor = db.Adults.FirstOrDefault(f => f.Email == demoSupervisorEmail);
         if (demoSupervisor is null)
         {
-            demoSupervisor = new Adult { Name = "Demo-Vater", Email = demoSupervisorEmail, Pin = Auth.PinHasher.Hash("0001") };
+            demoSupervisor = new Adult { Name = "Demo-Vater", Email = demoSupervisorEmail };
             db.Adults.Add(demoSupervisor);
             db.SaveChanges();
         }
@@ -252,7 +272,6 @@ public static class Seed
                 Gender = Gender.Male,
                 Interests = ["Minecraft", "Basketball"],
                 ProfileNotes = "Frontend-Testkind: trägt den vollständigen Lernarten-Demoplan.",
-                Pin = Auth.PinHasher.Hash("2222"),
                 // Starting balance, so that shop/skins can be tried out right away.
                 PointsEntries =
                 {
@@ -453,7 +472,7 @@ public static class Seed
         var teacher = db.Adults.FirstOrDefault(f => f.Email == teacherEmail);
         if (teacher is null)
         {
-            teacher = new Adult { Name = "Herr Schmidt (Englischlehrer)", Email = teacherEmail, Pin = Auth.PinHasher.Hash("9999") };
+            teacher = new Adult { Name = "Herr Schmidt (Englischlehrer)", Email = teacherEmail };
             db.Adults.Add(teacher);
             db.SaveChanges();
         }
@@ -953,7 +972,7 @@ public static class Seed
     {
         if (db.Adults.Any()) return;
 
-        var father = new Adult { Name = "Papa", Email = "papa@example.com", Pin = Auth.PinHasher.Hash("0000") };
+        var father = new Adult { Name = "Papa", Email = "papa@example.com" };
         var child = new Child
         {
             Name = "Sohn",
@@ -963,7 +982,6 @@ public static class Seed
             Gender = Gender.Male,
             Interests = ["Brawl Stars", "Pokémon", "Fußball"],
             ProfileNotes = "Motiviert über Spiele-Themen; braucht klare kurze Aufgaben.",
-            Pin = Auth.PinHasher.Hash("1111"),
             // Start: a few coins (Base → coins) for listings and a few gems (Achievement → gems), so that a skin
             // can be tried out right away.
             PointsEntries =

@@ -46,19 +46,19 @@ public class TeacherAccountsController(PuglingDbContext db, AccountService accou
     public async Task<ActionResult<TeacherAccountResponse>> Create(CreateTeacherDto dto, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(dto.Name)) return this.ProblemWithCode(ApiErrors.ValidationError, "Name is required.");
+        if (dto.Pin is not null && !PinHasher.IsAcceptable(dto.Pin)) return this.ProblemWithCode(ApiErrors.ValidationError, PinHasher.TooShortMessage);
 
-        // The PIN is hashed (PinHasher) and mirrored onto the account - otherwise the account-centric login
-        // would run out of sync. Exactly the same rule as for adult and child.
+        // The PIN goes onto the login account only (hashed in AccountService, B-230) - the same rule as for adult
+        // and child.
         var teacher = new Adult
         {
             Name = dto.Name.Trim(),
             Email = dto.Email,
-            Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin),
         };
         db.Adults.Add(teacher);
         await db.SaveChangesAsync(ct);
 
-        var account = await accounts.EnsureForTeacherAsync(teacher, ct);
+        var account = await accounts.EnsureForTeacherAsync(teacher, dto.Pin, ct);
         var roles = account.Profiles.Select(p => p.Role.ToString()).Distinct().ToList();
         return CreatedAtAction(nameof(Get), new { creatorId = teacher.Id },
             new TeacherAccountResponse(teacher.Id, account.Id, teacher.Name, teacher.Email, roles));

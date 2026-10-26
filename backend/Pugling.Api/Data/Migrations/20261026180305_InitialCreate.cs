@@ -35,7 +35,6 @@ namespace Pugling.Api.Data.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     Email = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
-                    Pin = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     IsAdmin = table.Column<bool>(type: "INTEGER", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
@@ -58,7 +57,6 @@ namespace Pugling.Api.Data.Migrations
                     Interests = table.Column<string>(type: "TEXT", nullable: false),
                     ProfileNotes = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
                     AllowedContentRating = table.Column<int>(type: "INTEGER", nullable: false),
-                    Pin = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     SelectedSkin = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     OwnedSkins = table.Column<string>(type: "TEXT", nullable: false),

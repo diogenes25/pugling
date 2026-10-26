@@ -18,7 +18,11 @@ public class Account
     public string DisplayName { get; set; } = "";
     /// <summary>Optional (children have no e-mail today). Unique when set.</summary>
     public string? Email { get; set; }
-    /// <summary>PIN hash in the format of <see cref="Auth.PinHasher"/> (accepts legacy plaintext on verify).</summary>
+    /// <summary>
+    /// PIN hash in the format of <see cref="Auth.PinHasher"/> (accepts legacy plaintext on verify). The ONLY place a
+    /// PIN lives: all three logins check it (B-230). The profile rows (<c>Adult</c>/<c>Child</c>) carry none, so there
+    /// is nothing to keep in sync. Empty = login disabled.
+    /// </summary>
     public string PinHash { get; set; } = "";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

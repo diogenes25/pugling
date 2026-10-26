@@ -116,7 +116,7 @@ public sealed class QueryPlanSmokeTests
     {
         var day = new DateOnly(2026, 7, 12);
 
-        var child = new Child { Name = "P", Pin = "1234" };
+        var child = new Child { Name = "P" };
         var subject = new Subject { Name = "E" };
         var series = new TextbookSeries { Subject = subject, Name = "S", Slug = "query-plan-series" };
         var seriesUnit = new SeriesUnit { Series = series, Label = "C", OrderIndex = 1 };

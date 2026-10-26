@@ -130,8 +130,8 @@ public class IdentityAccountTests(PuglingWebAppFactory factory) : IClassFixture<
 
         // Fresh rows without an account, so that only the XOR rule stands in the way and not the filtered
         // unique indexes on (role, profile).
-        var adult = new Adult { Name = "Zwitter-Adult", Pin = "" };
-        var child = new Child { Name = "Zwitter-Child", Pin = "" };
+        var adult = new Adult { Name = "Zwitter-Adult" };
+        var child = new Child { Name = "Zwitter-Child" };
         var konto = new Account { DisplayName = "Zwitter", PinHash = "" };
         db.AddRange(adult, child, konto);
         await db.SaveChangesAsync();

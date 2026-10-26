@@ -52,10 +52,12 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<LoginResponse>> LoginAdult(AdultLoginDto dto, CancellationToken ct = default)
     {
+        // The PIN lives on the account only (B-230); the adult row is looked up for the admin flag and the name.
         var adult = await db.Adults.FirstOrDefaultAsync(a => a.Id == dto.AdultId, ct);
-        if (adult is null || !PinHasher.Verify(dto.Pin, adult.Pin)) return this.ProblemWithCode(ApiErrors.InvalidCredentials, "Invalid adult ID or PIN.");
+        var account = adult is null ? null : await accounts.FindForAdultAsync(adult.Id, ct);
+        if (adult is null || account is null || !PinHasher.Verify(dto.Pin, account.PinHash))
+            return this.ProblemWithCode(ApiErrors.InvalidCredentials, "Invalid adult ID or PIN.");
 
-        var account = await accounts.EnsureForAdultAsync(adult, ct);
         var (token, expires) = tokens.IssueForAccount(account, account.Profiles, isAdmin: adult.IsAdmin);
         return new LoginResponse(token, PrimaryRoleOf(account.Profiles), adult.Id, adult.Name, expires);
     }
@@ -70,9 +72,10 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
     public async Task<ActionResult<LoginResponse>> LoginChild(ChildLoginDto dto, CancellationToken ct = default)
     {
         var child = await db.Children.FirstOrDefaultAsync(c => c.Id == dto.ChildId, ct);
-        if (child is null || !PinHasher.Verify(dto.Pin, child.Pin)) return this.ProblemWithCode(ApiErrors.InvalidCredentials, "Invalid child ID or PIN.");
+        var account = child is null ? null : await accounts.FindForChildAsync(child.Id, ct);
+        if (child is null || account is null || !PinHasher.Verify(dto.Pin, account.PinHash))
+            return this.ProblemWithCode(ApiErrors.InvalidCredentials, "Invalid child ID or PIN.");
 
-        var account = await accounts.EnsureForChildAsync(child, ct);
         // Settle open mandatory periods on login: a penalty for not learning lands before the child sees its
         // balance or spends anything (there is no scheduler; idempotent).
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -133,9 +136,9 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
     /// Supervisor role, so it couldn't change its own PIN.
     ///
     /// Identity hangs off <b>two</b> rows: the <see cref="Adult"/> row carries the domain name (it appears
-    /// as the author on exercises), the <see cref="Account"/> the login. Only the domain row is written
-    /// here; <see cref="AccountService.MirrorAsync(Adult, CancellationToken)"/> pulls the account along –
-    /// the same single place that <c>supervisor/adults/{id}</c> and <c>supervisor/children/{id}</c> use.
+    /// as the author on exercises), the <see cref="Account"/> the login. Name and address are written on the domain
+    /// row, and <c>AccountService.MirrorAsync</c> pulls the account along – the same single place that
+    /// <c>supervisor/adults/{id}</c> and <c>supervisor/children/{id}</c> use. The PIN lives on the account only (B-230).
     ///
     /// <b>Adults only.</b> A child does not change its own name and PIN: the PIN is the
     /// access the father grants, and a child that changed it would have escaped supervision.
@@ -175,12 +178,13 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
         }
         if (dto.ClearEmail) adult.Email = null;
 
-        if (dto.Pin is not null) adult.Pin = dto.Pin.Length == 0 ? "" : PinHasher.Hash(dto.Pin);
+        if (dto.Pin is not null && !PinHasher.IsAcceptable(dto.Pin)) return this.ProblemWithCode(ApiErrors.ValidationError, PinHasher.TooShortMessage);
 
-        // Only the domain row is written; the account mirrors it (AccountService.MirrorAsync) - the same one
-        // place both supervisor PATCHes use. `account` is the same tracked instance, so the response below
-        // already sees the mirrored state.
+        // Name and address are written on the domain row and mirrored onto the account (AccountService.MirrorAsync) -
+        // the same one place both supervisor PATCHes use. The PIN lives on the account only (B-230). `account` is
+        // the same tracked instance, so the response below already sees the new state.
         await accounts.MirrorAsync(adult, ct);
+        if (dto.Pin is not null) AccountService.SetPin(account, dto.Pin);
         await db.SaveChangesAsync(ct);
 
         // The name in the token is stale now - so the response names the **stored** state, letting the UI show

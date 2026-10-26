@@ -63,6 +63,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
     public async Task<ActionResult<ChildResponse>> Create(CreateChildDto dto, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(dto.Name)) return this.ProblemWithCode(ApiErrors.ValidationError, "Name is required.");
+        if (dto.Pin is not null && !PinHasher.IsAcceptable(dto.Pin)) return this.ProblemWithCode(ApiErrors.ValidationError, PinHasher.TooShortMessage);
 
         var child = new Child
         {
@@ -75,7 +76,6 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
             ProfileNotes = dto.ProfileNotes,
             // With nothing given, the strictest level - releasing images must be a deliberate supervisor choice.
             AllowedContentRating = dto.AllowedContentRating ?? ContentRating.Everyone,
-            Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin),
         };
         db.Children.Add(child);
         // Establish supervision by the creating supervisor (a student can get more later) - in the SAME commit
@@ -86,7 +86,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         child.SupervisorLinks.Add(new SupervisorLink { SupervisorId = User.AdultId()!.Value });
         await db.SaveChangesAsync(ct);
         // Create the login account (student) right away so the new child can log in.
-        await accounts.EnsureForChildAsync(child, ct);
+        await accounts.EnsureForChildAsync(child, dto.Pin, ct);
 
         var response = new ChildResponse(child.Id, child.Name, child.BirthYear, child.Grade,
             child.SchoolType, child.Gender, child.Interests, child.ProfileNotes,
@@ -114,11 +114,12 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         if (dto.Interests is not null) child.Interests = [.. dto.Interests];
         if (dto.ProfileNotes is not null) child.ProfileNotes = dto.ProfileNotes;
         if (dto.AllowedContentRating.HasValue) child.AllowedContentRating = dto.AllowedContentRating.Value;
-        if (dto.Pin is not null) child.Pin = string.IsNullOrEmpty(dto.Pin) ? "" : PinHasher.Hash(dto.Pin);
-        // Mirror name and PIN hash onto the login account - in the SAME commit. Only the PIN used to travel
-        // along, and a renamed child was still greeted with the old name after the next login (the display
-        // name comes from the account). See AccountService.MirrorAsync.
-        await accounts.MirrorAsync(child, ct);
+        if (dto.Pin is not null && !PinHasher.IsAcceptable(dto.Pin)) return this.ProblemWithCode(ApiErrors.ValidationError, PinHasher.TooShortMessage);
+        // Mirror the name onto the login account - in the SAME commit, or a renamed child is still greeted with the
+        // old name after the next login (the display name comes from the account). See AccountService.MirrorAsync.
+        // The PIN lives on the account only (B-230).
+        var account = await accounts.MirrorAsync(child, ct);
+        if (dto.Pin is not null) AccountService.SetPin(account, dto.Pin);
         await db.SaveChangesAsync(ct);
 
         return (await ProjectOne(childId, ct))!;

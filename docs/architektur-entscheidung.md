@@ -67,8 +67,8 @@ Verifiziert: Build 0 Warnungen/0 Fehler; Live-Smoke-Test (401 ohne Token, 404 de
 
 1. ~~**PIN-Hashing** (`Father.Pin`, `Child.Pin`) – vor Produktion zwingend (PBKDF2, konstantzeitiger
    Vergleich, Rate-Limit/Lockout). Aktuell Klartext.~~ – **erledigt (2026-07-05)**: `Auth/PinHasher`
-   plus Login-Rate-Limit (Policy `login`). Offen bleibt nur die Doppelhaltung des Hashs auf Profil
-   **und** Konto (`Adult.Pin`/`Child.Pin` ↔ `Account.PinHash`), siehe Backlog B-216.
+   plus Login-Rate-Limit (Policy `login`). Die Doppelhaltung des Hashs auf Profil **und** Konto ist seit
+   2026-10-26 aufgelöst: Die PIN liegt nur noch am Konto ([B-230](backlog/B-230-pin-hash-doppelt-gehalten.md)).
 2. ~~**EF-Migrationen** statt `EnsureCreated()`~~ – **erledigt (2026-07-04)**: `Program` ruft `Migrate()`,
    Initial-Migration `InitialCreate` liegt unter `backend/Pugling.Api/Data/Migrations`, `dotnet-ef` ist als
    lokales Tool im Manifest. Schemaänderungen ab jetzt per `dotnet ef migrations add …`.

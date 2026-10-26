@@ -500,7 +500,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (62)
+### Offen (61)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -519,7 +519,6 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-164](B-164-useasync-paart-frischen-zustand-mit-alten-daten.md) | Nach einem Wechsel zeigt der Bildschirm für einen Moment frischen Zustand mit alten Daten | Defekt | `ausformuliert` | P3 | — | frontend | — |
 | [B-141](B-141-interest-tag-label-dublette.md) | Zwei Interessen-Tags dürfen dasselbe Label tragen | Defekt | `idee` | P3 | — | — | — |
 | [B-205](B-205-exercise-in-use-ohne-deutsche-fassung.md) | `exercise_in_use` fehlt in `GERMAN_PROBLEM_TEXT` — die zwei Geschwister stehen drin | Defekt | `idee` | P3 | — | — | — |
-| [B-245](B-245-token-mit-fid-auf-geloeschten-adult.md) | Ein Token, das vor `DELETE adults/{id}` ausgestellt wurde, trägt ein `fid` auf eine gelöschte Zeile – jeder `OwnerAdultId`-Schreiber liefe in die FK | Defekt | `idee` | P3 | — | backend | — |
 | [B-255](B-255-kinderzeile-per-namen-zweideutig.md) | E2E-Specs suchen die Kinderzeile per Namen, den zwei Tabellen tragen | Defekt | `idee` | P3 | — | — | — |
 | [B-257](B-257-zielfeier-verspaetet-jenseits-der-ersten-fuenf.md) | Ein schon erreichtes Ziel jenseits der ersten fünf wird später verspätet gefeiert | Defekt | `idee` | P3 | — | — | — |
 | [B-258](B-258-unbekannte-fach-id-zwei-fehlercodes.md) | Eine unbekannte `SubjectId` meldet je nach Ressource zwei verschiedene Fehlercodes | Defekt | `idee` | P3 | — | — | — |
@@ -538,6 +537,8 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-277](B-277-schnellanlage-legt-doppelten-store-eintrag-an.md) | Der Schnellanleger im Assistenten legt für ein bekanntes Wort einen zweiten Store-Eintrag an | Defekt | `idee` | P3 | — | beides | — |
 | [B-278](B-278-platzhalter-sieht-aus-wie-gespeicherter-wert.md) | Im leeren Verlagsfeld sieht der Platzhalter aus wie ein gespeicherter Wert | Defekt | `idee` | P3 | — | frontend | — |
 | [B-279](B-279-general-use-weak-zieht-woerter-trotzdem.md) | `--child X --general --use-weak` zieht die schwachen Wörter weiter in den Pflicht-Wortschatz | Defekt | `idee` | P3 | — | backend | — |
+| [B-281](B-281-pin-felder-pruefen-mindestlaenge-im-ui.md) | Eine zu kurze PIN meldet die Oberfläche auf Englisch | Defekt | `idee` | P3 | — | frontend | — |
+| [B-282](B-282-login-haertung-restpunkte.md) | Restpunkte der Login-Härtung (NP-3) | Defekt | `idee` | P3 | — | backend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-231](B-231-fokus-ohne-fehlerkasten.md) | Wohin gehört der Fokus, wenn ein Knopf ohne Fehlerkasten gesperrt wird? | Frage | `idee` | P3 | — | frontend | — |
 | [B-232](B-232-bestaetigung-ausserhalb-des-sichtfelds.md) | Soll eine Bestätigung zum Meldungsplatz scrollen, wenn er weit vom Knopf entfernt liegt? | Frage | `idee` | P3 | — | frontend | — |
@@ -546,7 +547,6 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `idee` | P3 | — | — | — |
 | [B-155](B-155-grammatik-themen-als-tags.md) | Grammatik als Thema, nicht als Freitext | Wunsch | `geschaetzt` | P3 | L | beides | Migration |
 | [B-22](B-22-unit-stoffnotizen-llm.md) | Unit-Stoffnotizen LLM-gestützt befüllen | Wunsch | `geschaetzt` | P3 | M | backend | Migration |
-| [B-28](B-28-login-name-sequenziell.md) | Sequenzielle IDs als Login-Name | Wunsch | `geschaetzt` | P3 | S | backend | — |
 | [B-85](B-85-i18n-infrastruktur-sohn-arcade-englisch.md) | i18n-Infrastruktur + Sohn-Arcade auf Englisch (erste Teilstufe der Mehrsprachigkeit) | Wunsch | `geschaetzt` | P3 | L | frontend | — |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `ausformuliert` | P3 | L | backend | Migration |
 | [B-16](B-16-positions-formular-umfang.md) | Prüfauftrag: deckt das Positions-Edit-Formular alle Felder ab? | Wunsch | `ausformuliert` | P3 | S | frontend | — |
@@ -563,12 +563,11 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-270](B-270-bewertung-im-positions-formular.md) | Die Bewertung einer Übung beim Zusammenstellen des Plans sehen | Wunsch | `idee` | P3 | — | frontend | — |
 | [B-271](B-271-gewaehltes-profil-setzt-reihe.md) | Das zum Kind gewählte Profil setzt Reihe und Fach des KI-Creators | Wunsch | `idee` | P3 | — | backend | — |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `geschaetzt` | P3 | S | backend | — |
-| [B-230](B-230-pin-hash-doppelt-gehalten.md) | Der PIN-Hash liegt doppelt: Profil und Konto halten denselben Wert | Aufräumen | `idee` | P3 | — | — | — |
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 | [B-05](B-05-buchstaben-tausch.md) | Buchstaben-Tausch-Eingabe (Anagramm) | Wunsch | `geschaetzt` | P5 | M | beides | — |
 
 <details>
-<summary>Abgenommen (195)</summary>
+<summary>Abgenommen (198)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -692,6 +691,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-227](B-227-fehlergedaechtnis-ueberlebt-den-filterwechsel.md) | Das Fehler-Gedächtnis überlebt auch den Start einer *anderen* Abfrage | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-228](B-228-mehr-laden-verliert-den-fokus.md) | „Mehr laden“ in der gefüllten Verlaufskarte verliert den Fokus | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-229](B-229-nicht-geladen-waehrend-des-ladens.md) | Das Kind-Feld im Plan-Formular sagt „(nicht geladen)“, solange die Liste erst lädt | Defekt | `abgenommen` | P3 | S | frontend | — |
+| [B-230](B-230-pin-hash-doppelt-gehalten.md) | Der PIN-Hash liegt doppelt: Profil und Konto halten denselben Wert | Aufräumen | `abgenommen` | P3 | — | — | — |
 | [B-235](B-235-unit-feld-sagt-nicht-geladen-waehrend-des-ladens.md) | Das Unit-Feld im Lehrbuch-Formular sagt „(nicht geladen)“, solange die Units erst laden | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-236](B-236-checkbox-gruppe-ohne-zugaenglichen-gruppennamen.md) | Eine Gruppen-Überschrift über Kontrollkästchen ist sichtbar, aber für den Screenreader an nichts gebunden | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-237](B-237-ki-creator-hilfe-nennt-ein-kapitel.md) | Die Hilfe des KI-Creators bietet `--chapter <id>` an – ein Kapitel gibt es seit B-106 nicht mehr | Defekt | `abgenommen` | P3 | S | backend | — |
@@ -702,6 +702,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-242](B-242-zweite-rest-datei-faehrt-die-tote-kapitel-route.md) | Eine zweite `.http`-Datei unter `docs/REST/Creator/` fährt die tote Kapitel-Route – mit eingebranntem Token | Defekt | `abgenommen` | P3 | XS | doku | — |
 | [B-243](B-243-testapi-kommentar-und-vierte-admin-helfer-fassung.md) | B-179 hat den Admin-Helfer geteilt – die Summary behauptet die Gegenrichtung des gemessenen Effekts, und eine vierte Fassung blieb stehen | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-244](B-244-publishers-create-baut-die-antwort-von-hand.md) | `PublishersController.Create` baut die Antwort von Hand, `Update` liest über `Project` zurück | Aufräumen | `abgenommen` | P3 | XS | backend | — |
+| [B-245](B-245-token-mit-fid-auf-geloeschten-adult.md) | Ein Token, das vor `DELETE adults/{id}` ausgestellt wurde, trägt ein `fid` auf eine gelöschte Zeile – jeder `OwnerAdultId`-Schreiber liefe in die FK | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-246](B-246-b-241-zwei-saetze-falsch-und-sweep-zu-frueh.md) | B-241 hat zwei Sätze beim Wortwechsel falsch gemacht und den Sweep vor der letzten Änderung gemessen | Defekt | `abgenommen` | P3 | XS | doku | — |
 | [B-25](B-25-vite-pwa-peer-konflikt.md) | Peer-Konflikt `vite-plugin-pwa` ↔ `vite@8` lösen | Aufräumen | `abgenommen` | P3 | XS | frontend | — |
 | [B-256](B-256-sprint-5-drei-saetze-nach-der-abnahme.md) | Drei Sätze aus Sprint 5, die nach der Abnahme nicht stimmen | Defekt | `abgenommen` | P3 | XS | beides | — |
@@ -711,6 +712,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-268](B-268-fokus-nach-inline-reihe.md) | Nach „Reihe anlegen & wählen“ fällt der Fokus auf `body` | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-269](B-269-bewertungen-reihenfolge-und-updatedat-ungetestet.md) | Bewertungen: Reihenfolge der Liste und `UpdatedAt` beim Überschreiben sind ungetestet | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-27](B-27-testsuite-grenzfaelle.md) | Die Grenzen des `ScoringService` als Tabelle statt als Flow | Aufräumen | `abgenommen` | P2 | S | backend | — |
+| [B-28](B-28-login-name-sequenziell.md) | Sequenzielle IDs als Login-Name | Wunsch | `abgenommen` | P3 | S | backend | — |
 | [B-32](B-32-father-tabellenname.md) | `Father` heißt noch `Father`, obwohl die Zeile `Adult` ist | Aufräumen | `abgenommen` | P3 | S | backend | — |
 | [B-35](B-35-karten-umdrehen-animation.md) | Karten drehen sich beim Aufdecken um | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-36](B-36-motivations-animationen-teilziele.md) | Motivations-Animationen bei erreichten Teilzielen | Wunsch | `abgenommen` | P3 | S | frontend | — |
@@ -782,7 +784,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (65)
 
-**Nachgeschaut: 192 von 195 abgenommenen** — und in 53 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 3 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 195 von 198 abgenommenen** — und in 53 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 3 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -860,9 +862,9 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 
 | Id | Story |
 | --- | --- |
-| [B-15](B-15-testmodus-weitere-typen.md) | Vorschau für die nicht-prüfbaren Übungstypen |
-| [B-17](B-17-birkenbihl-sprachcodes.md) | Sprachcode-Normalisierung bei der Vokabel-Dekodierung |
-| [B-21](B-21-ki-creator-foerdermodus.md) | KI-Creator: Fördermodus (`--use-weak`) sprachrein und mit Tests absichern |
+| [B-230](B-230-pin-hash-doppelt-gehalten.md) | Der PIN-Hash liegt doppelt: Profil und Konto halten denselben Wert |
+| [B-245](B-245-token-mit-fid-auf-geloeschten-adult.md) | Ein Token, das vor `DELETE adults/{id}` ausgestellt wurde, trägt ein `fid` auf eine gelöschte Zeile – jeder `OwnerAdultId`-Schreiber liefe in die FK |
+| [B-28](B-28-login-name-sequenziell.md) | Sequenzielle IDs als Login-Name |
 
 </details>
 
@@ -890,7 +892,9 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-209](B-209-savednotice-raeumt-nie.md) | `abgenommen` | Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung" |
 | [B-210](B-210-dialog-haelt-zwei-wahrheiten-fuer-die-config.md) | `abgenommen` | Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung" |
 | [B-212](B-212-fuenfter-meldungsplatz-in-lehrwerke.md) | `abgenommen` | Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung" |
+| [B-230](B-230-pin-hash-doppelt-gehalten.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Feld `groesse`, Feld `wo`, Feld `migration`, Feld `vertragsbruch` |
 | [B-236](B-236-checkbox-gruppe-ohne-zugaenglichen-gruppennamen.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…" |
+| [B-245](B-245-token-mit-fid-auf-geloeschten-adult.md) | `abgenommen` | Abschnitt „User Story" |
 | [B-260](B-260-normalisierer-setzt-absatz-mitten-im-satz.md) | `idee` | `unverifiziert: true` |
 | [B-261](B-261-produktionspfad-des-beispielkatalogs-ungetestet.md) | `idee` | `unverifiziert: true` |
 | [B-262](B-262-vorwahl-bestehendes-kind-ohne-eigene-spec.md) | `idee` | `unverifiziert: true` |

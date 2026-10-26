@@ -65,7 +65,7 @@ public class AccountSelfServiceTests(PuglingWebAppFactory factory) : IClassFixtu
         Assert.Equal(HttpStatusCode.Unauthorized,
             (await _factory.CreateClient().PostAsJsonAsync("/api/v1/auth/adult",
                 new { adultId = creatorId, pin = "2323" })).StatusCode);
-        // … the new one does, and on both login paths (the hash is mirrored onto the account).
+        // … the new one does, and on both login paths (the hash lives on the account, B-230).
         var byFid = await _factory.CreateClient().PostAsJsonAsync("/api/v1/auth/adult",
             new { adultId = creatorId, pin = "9090" });
         byFid.EnsureSuccessStatusCode();

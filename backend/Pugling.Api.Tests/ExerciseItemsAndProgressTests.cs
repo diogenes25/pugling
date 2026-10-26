@@ -1,8 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Microsoft.Extensions.DependencyInjection;
-using Pugling.Api.Data;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Tests;
@@ -113,15 +111,9 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
         var (s, c, exerciseId) = await VocabWithItemsAsync(father);
 
         // A second adult (not the author) must not change the exercise's items.
-        int otherId;
-        using (var scope = _factory.Services.CreateScope())
-        {
-            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-            var other = new Adult { Name = "Fremder", Email = $"fremd-{Guid.NewGuid():N}@x.de", Pin = Pugling.Api.Auth.PinHasher.Hash("2222") };
-            db.Adults.Add(other);
-            db.SaveChanges();
-            otherId = other.Id;
-        }
+        // Registered through the API: since B-230 the PIN lives on the login account, which only the API creates.
+        var otherId = await TestApi.IdAsync(await _factory.CreateClient().PostAsJsonAsync("/api/v1/supervisor/adults",
+            new { name = "Fremder", email = $"fremd-{Guid.NewGuid():N}@x.de", pin = "2222" }));
         var stranger = await TestApi.AdultAsync(_factory, otherId, "2222");
 
         var res = await stranger.PostAsJsonAsync(

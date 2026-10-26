@@ -131,10 +131,9 @@ Lernstand – positionsgebunden *und* plan-übergreifend je Vokabel-Item.
   erzwingt kein Modell-Drift und Kettenlänge 1. Handwerk und Begründung:
   [backend/Pugling.Api/CLAUDE.md](backend/Pugling.Api/CLAUDE.md) → „Schema & Migrationen"
   (lädt dort automatisch), Stand/Etappen: [docs/db-struktur-umbau-plan.md](docs/db-struktur-umbau-plan.md).
-- **PINs sind gehasht** (`Auth/PinHasher`): `Adult.Pin`/`Child.Pin` und `Account.PinHash` halten den Hash,
-  nie den Klartext. Wer eine PIN setzt, muss durch `PinHasher.Hash` und den Hash **auf das Konto spiegeln**
-  (sonst läuft der konto-zentrische `/auth/login` aus dem Takt) – siehe `ChildrenController`/`AdultsController`.
-  Der PIN-Login ist zusätzlich per `AddRateLimiter` gebremst (Policy `login`, über `RateLimiting:LoginEnabled`
+- **PINs liegen gehasht und nur am Konto** (`Account.PinHash`, B-230): Gesetzt wird über `AccountService`
+  (Anlegen) bzw. `AccountService.SetPin`, nie auf der Profilzeile. Leer heißt „Login deaktiviert“, sonst
+  mindestens 4 Zeichen (`PinHasher.IsAcceptable`, B-28). Der PIN-Login ist zusätzlich per `AddRateLimiter` gebremst (Policy `login`, über `RateLimiting:LoginEnabled`
   abschaltbar – der In-Process-TestServer teilt sonst eine IP-Partition und bekäme 429).
 - **Vom Ursprungs-Template ist nichts mehr übrig** – **kein** `User`/`Topic`/`VocabCard`/`Points…` mehr
   anlegen. Der Leitner-Multiplikator nach Tageszeit ist **Konfiguration** (`Scoring:TimeSlots` in

@@ -329,7 +329,7 @@ späterer Lauf schon erledigt (Index).
 | B-15 (a)/(b) Texte nennen den Aufsatz | typneutral („Diese Übung …“) | UI-Text, kein Test (benannt) |
 | B-15 (c) Test-Kommentare ohne „was macht ihn rot“ | ergänzt; `Preview_OhneAtome_…` als Wächter beschriftet | – |
 | B-21 (a) Profil-Zweig ungetestet | neuer Fall (la-Profil, Anfrage ohne Sprachen) | Profil ignoriert → 1 failed |
-| B-21 (b) `targetLang`-Filter ungetragen | drittes Wort en→fr im Rollup-Test | Filter weg → 1 failed |
+| B-21 (b) `targetLang`-Filter ungetragen | drittes Wort en→fr im Rollup-Test | Filter weg → 1 failed (nach den Review-Behebungen: 2, Nachschau) |
 | B-21 (c)/(d) Nits | `IsNullOrWhiteSpace`; Hilfe und README nennen „braucht `--child`“; `exam` als `InlineData` | Wächter weg → 3 failed |
 
 Neu angelegt: [B-279](backlog/B-279-general-use-weak-zieht-woerter-trotzdem.md) (`--general --use-weak`, vorbestehend,
@@ -382,3 +382,74 @@ gemessen ist.“* Prosa in pm-loop Step 5, neben dem Pflichtschritt. Ein Tor mü
 das tun sie heute nicht.
 
 **Commit:** `14fa1f7` (nicht gepusht).
+
+## Lauf C, Teil 2 — NP-3 Login und Konto härten (B-245, B-28, B-230)
+
+**Sprint-Ziel (aus dem Paket):** *Der Vater kann kein Konto mit leerer oder zu kurzer PIN anlegen, und ein gelöschtes
+Konto bekommt 401 statt 500.* Umfang: [B-245](backlog/B-245-token-mit-fid-auf-geloeschten-adult.md) (`Defekt`, erst
+gemessen, dann autonom gegrillt), [B-28](backlog/B-28-login-name-sequenziell.md) (`geschaetzt`, Freigabe 8),
+[B-230](backlog/B-230-pin-hash-doppelt-gehalten.md) (Freigabe-Zeile vom 2026-10-23, Migration). Reihenfolge wie im
+Paket: messen → B-28 → B-230. **Zähler: 0.**
+
+### Iteration
+
+- **B-245:** gemessen **500** (Token eines gelöschten Erwachsenen, `POST creator/subjects`). Behoben zentral in
+  `OnTokenValidated` (`Auth/TokenSubjectCheck`): Gibt es das Konto hinter `aid` nicht mehr, folgt 401. Eine eigene
+  Prüfung von `fid`/`cid` habe ich wieder herausgenommen: Beide Löschpfade entfernen das Konto, die Prüfung wäre also
+  unerreichbar und nicht testbar.
+- **B-28:** Mindestlänge 4 an sechs Schreibpfaden (Regel einmal in `PinHasher`), leer = deaktiviert, und `Verify`
+  lehnt eine leere gespeicherte PIN ab. Rote Proben: jede Guard-Clause einzeln → je 1 failed; Leer-Guard → 2 failed;
+  Grenze 5 → 2 failed. Folgestory [B-281](backlog/B-281-pin-felder-pruefen-mindestlaenge-im-ui.md): Die Oberfläche
+  zeigt die englische Meldung, weil `validation_error` keine deutsche Fassung hat und B-28 bewusst keinen eigenen
+  Code wollte.
+- **B-230:** `Adult.Pin`/`Child.Pin` gestrichen, die Kette neu gefaltet (der Snapshot-Diff zeigt genau die zwei Spalten),
+  alle Logins prüfen `Account.PinHash`. **Auslegung, zur Kenntnis:** `MirrorAsync` spiegelt weiter Name und E-Mail,
+  nur der PIN-Teil ist weg (Entscheidung 3 in der Story, der Reviewer hält sie für tragfähig). Der Fallstrick in der
+  Root-`CLAUDE.md` lautet jetzt „PINs liegen gehasht und nur am Konto“.
+- **Budget bezahlt:** `pm-loop/SKILL.md` lag durch den Pflichtschritt von heute Morgen 736 B über Budget. Der Absatz ist
+  verdichtet, die Datei liegt wieder im Budget.
+
+### Review
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `pugling-reviewer` | AK 3 von B-230 trug nur 2 von 5 Seed-PINs | Theorien über alle fünf; Probe → 1 failed | ja |
+| 2 | `pugling-reviewer` | „Ein PATCH ohne PIN behält sie“ ungetestet, ein überschreibendes `Ensure` bliebe grün | eigener Fall; Probe je Ensure-Pfad → 1 failed | ja |
+| 3 | `pugling-reviewer` | Kind-Löschpfad von B-245 ungetestet | eigener Fall; Probe → 1 failed | ja |
+| 4 | `pugling-reviewer` | leere PIN am Erwachsenen-PATCH ungeprüft | ergänzt; Probe → 1 failed | ja |
+| 5 | Delta-Review | Ein `Ensure`, das eine *übergebene* PIN auf ein bestehendes Konto schreibt (jeder Neustart setzte die Seed-PINs zurück), bliebe grün | eigener Fall mit frischen Personen; Probe je Pfad → 1 failed | ja |
+
+**Zähler am Ende: 5**, die Grenze ist erreicht. Danach habe ich kein weiteres Review gestartet. Zurückgestellt →
+[B-282](backlog/B-282-login-haertung-restpunkte.md): Abbruch in `OnTokenValidated` loggt auf Error, Seed-PIN eines
+Kindes nach Namen, Guard nach der Änderung, Zeitseitenkanal, „leer per PATCH“ nur als angenommen geprüft. Ohne
+Zählung: zwei veraltete Kommentare. Ein Testlauf des Reviewers fiel am bekannten Flake
+`AtomaresSchreiben_KeineLeseFehler` (B-274), einzeln wiederholt grün.
+
+### Rollengang / Abnahme
+
+Die Extension war nicht verbunden. **Vater und Sohn** melden sich in jeder E2E-Spec an, Playwright voll **95 passed**
+(abgelesen an der Zusammenfassung; ein erster Lauf ohne diese Zeile zählte nicht und wurde wiederholt). **Creator**
+(Lehrer-Konto) über `lehrer-konto.spec.ts`. Backend: Solution-Build 0 Warnungen, **936/936 `exit=0`**. Die lokale
+`pugling.db` aus der alten Kette weist der Start jetzt ab, wie vorgesehen; ein Upgrade-Pfad existiert bewusst nicht.
+**B-245, B-28, B-230 abgenommen.**
+
+### Retrospektive
+
+**Nachschau** über den vorigen Teil (Sprint-7-Nacharbeit, `14fa1f7`; frischer Prüfer an einem `git archive`,
+Summen 920/444 nachgerechnet): **kein Code-Entgleiten.** Ein Doku-Befund: Die Probenzahlen zu den Sprachfiltern in
+B-21 stammen von vor zwei Review-Behebungen und wurden nicht neu gemessen (3 statt „je 1“ bzw. 2 statt 1). Sie sind
+im Verlauf berichtigt. `nachgeschaut` ist an B-15, B-17 und B-21 gesetzt. Index: **Nachgeschaut: 195 von 198**.
+
+**Was die eigenen Tore durchgelassen haben:** Zum zweiten Mal heute (nach B-280) eine **Probenzahl, die eine spätere
+Behebung überholt hat**. Hier war es harmlos, die Mutanten blieben rot, nur die Zahl stimmte nicht mehr. Dieselbe
+Ursache wie in Teil 1, darum kein neuer Vorschlag: Der Vorschlag aus Teil 1 („nach einer Behebung, die einen Test
+ändert, die protokollierten Proben wiederholen“) deckt beide Fälle. Seine Wirkung ist jetzt zweimal gemessen.
+
+Zweiter Befund aus diesem Teil, **gemessen**: Ein Review-Durchgang über drei Stories brachte wieder genug für die
+Grenze. Ich habe nach Gewicht ausgewählt und den Rest benannt zurückgestellt. Das ist dieselbe Abwägung, die der
+Nutzer heute Morgen bei B-268/B-269 bestätigt hat. Sie ist jetzt die Regel des Tages, nicht die Ausnahme: Die
+Zurückstell-Stories B-272, B-273, B-275, B-278 und B-282 kommen alle aus Läufen, die an oder kurz vor 5 standen.
+**Beobachtung für den Nutzer, kein Vorschlag:** Ob Hinweise (🟢) überhaupt zählen sollen, entscheidet über die Hälfte
+der heutigen Zurückstellungen.
+
+**Commit:** folgt.

@@ -268,14 +268,19 @@ if (!builder.Environment.IsDevelopment() && string.IsNullOrWhiteSpace(builder.Co
     throw new InvalidOperationException("Konfiguration 'Jwt:Key' muss in Nicht-Dev-Umgebungen gesetzt sein.");
 var tokenService = new TokenService(builder.Configuration);
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(o => o.TokenValidationParameters = new TokenValidationParameters
+    .AddJwtBearer(o =>
     {
-        ValidateIssuer = false,
-        ValidateAudience = false,
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = tokenService.SigningKey,
-        ValidateLifetime = true,
-        ClockSkew = TimeSpan.FromMinutes(1),
+        o.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = tokenService.SigningKey,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(1),
+        };
+        // A valid signature is not enough once the account is deleted (B-245).
+        o.Events = new JwtBearerEvents { OnTokenValidated = TokenSubjectCheck.ValidateAsync };
     });
 builder.Services.AddAuthorization();
 

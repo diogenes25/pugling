@@ -136,13 +136,14 @@ public class AdultLifecycleTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     [Fact]
-    public async Task Loeschen_Eines_Unbekannten_Erwachsenen_Ist_404()
+    public async Task Zweites_Loeschen_Mit_Dem_Alten_Token_Ist_401()
     {
-        // The error case of the delete route - and at the same time the counter-check to the ownership rule:
-        // the own id may be deleted, an invented one does not exist. (A *foreign* one is covered by OwnershipTests.)
+        // The error case of the delete route: deleting again with the token of the deleted adult. Since B-245 the
+        // token itself is refused once its account is gone (401), before ownership or existence are looked at -
+        // so the controller's 404 for a missing own row is unreachable now. (A *foreign* id: OwnershipTests.)
         var (papa, adultId) = await RegistriereAsync("5103");
         Assert.Equal(HttpStatusCode.NoContent, (await papa.DeleteAsync($"/api/v1/supervisor/adults/{adultId}")).StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await papa.DeleteAsync($"/api/v1/supervisor/adults/{adultId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await papa.DeleteAsync($"/api/v1/supervisor/adults/{adultId}")).StatusCode);
     }
 
     [Fact]

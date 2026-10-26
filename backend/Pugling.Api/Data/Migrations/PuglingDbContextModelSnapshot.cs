@@ -230,11 +230,6 @@ namespace Pugling.Api.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Pin")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
@@ -281,11 +276,6 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<string>("OwnedSkins")
                         .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Pin")
-                        .IsRequired()
-                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ProfileNotes")

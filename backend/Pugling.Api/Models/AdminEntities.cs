@@ -46,12 +46,6 @@ public class Adult
     public string Name { get; set; } = "";
     public string? Email { get; set; }
     /// <summary>
-    /// PIN <b>hash</b> in <see cref="Auth.PinHasher"/> format, never plaintext. Every write goes through
-    /// <c>PinHasher.Hash</c> and is mirrored onto <c>Account.PinHash</c> (<c>AccountService.MirrorAsync</c>),
-    /// otherwise the account-centric <c>auth/login</c> drifts out of sync (B-230).
-    /// </summary>
-    public string Pin { get; set; } = "";
-    /// <summary>
     /// Platform superuser (break-glass): carries the additional <see cref="Auth.Roles.Admin"/> claim on
     /// login and thereby bypasses the RWX rights check on exercises (e.g. to edit orphaned, ownerless
     /// exercises). Deliberately not settable through the API – only via DB/seed (no self rights escalation).
@@ -107,11 +101,6 @@ public class Child
     /// Only the supervisor may raise it; the default is the strictest level.
     /// </summary>
     public ContentRating AllowedContentRating { get; set; } = ContentRating.Everyone;
-    /// <summary>
-    /// The child's PIN <b>hash</b> in <see cref="Auth.PinHasher"/> format, never plaintext. Written only via
-    /// <c>PinHasher.Hash</c> and mirrored onto <c>Account.PinHash</c> (<c>AccountService.MirrorAsync</c>), see B-230.
-    /// </summary>
-    public string Pin { get; set; } = "";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
