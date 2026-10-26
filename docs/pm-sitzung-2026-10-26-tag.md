@@ -134,3 +134,5 @@ Schritt selbst.
 
 **Beobachtung aus dem fünften Lauf, jetzt eingelöst:** Die erkannte Testlücke zu AK 1 von B-263 (Klappen nach oben)
 ist geschlossen (`feldhilfe-lage:93`).
+
+**Commit:** `0ecb31b` (nicht gepusht).
