@@ -512,4 +512,4 @@ NP-3, **Lauf E (NP-9)**. B-05 steht auf `in-arbeit` mit `wartet_auf`. Der Stand 
    (E) Nullfall als Abgrenzung, (F) Proben nach einer Behebung wiederholen.
 4. **Danach:** Lauf E (NP-9, B-155, L, Migration) ist nicht begonnen.
 
-**Commit:** folgt.
+**Commit:** `cb97af6` (nicht gepusht).
