@@ -381,4 +381,4 @@ protokolliert ist, wird diese Probe nach der Behebung wiederholt. Die Zeile im V
 gemessen ist.“* Prosa in pm-loop Step 5, neben dem Pflichtschritt. Ein Tor müsste Proben maschinenlesbar führen,
 das tun sie heute nicht. Verwandt: [[Rote Probe am richtigen Ort]] in den Notizen.
 
-**Commit:** folgt.
+**Commit:** `14fa1f7` (nicht gepusht).
