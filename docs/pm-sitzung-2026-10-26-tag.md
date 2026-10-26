@@ -310,4 +310,4 @@ sind B-267 und B-268 aus diesem Sprint.
 - **(Prosa, Pflichtschritt pm-loop Step 5)** Zur Liste der Abgrenzungen gehört der **Nullfall**: Behauptet ein Test
   „X statt Y“, braucht es auch den Fall „X leer“.
 
-**Commit:** folgt.
+**Commit:** `4a25d47` (nicht gepusht).
