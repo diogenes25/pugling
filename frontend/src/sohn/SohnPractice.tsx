@@ -5,6 +5,7 @@ import { useOncePerKey } from "../lib/useOncePerKey";
 import { useAction } from "../lib/useAction";
 import { useSohn } from "./SohnApp";
 import { LetterBoxes } from "../components/LetterBoxes";
+import { LetterTiles } from "../components/LetterTiles";
 import { AudioButton } from "../components/AudioButton";
 import { ClozePrompt } from "../components/ClozePrompt";
 import { ListRule } from "../components/ListRule";
@@ -322,7 +323,9 @@ export function SohnPractice() {
           </div>
         ) : typed ? (
           <div>
-            {card.answerLength ? (
+            {card.letterTiles ? (
+              <LetterTiles key={card.itemIndex} tiles={card.letterTiles} value={typedAnswer} onChange={setTypedAnswer} onSubmit={submitTyped} />
+            ) : card.answerLength ? (
               <LetterBoxes length={card.answerLength} value={typedAnswer} onChange={setTypedAnswer} onSubmit={submitTyped} pattern={card.answerPattern ?? undefined} />
             ) : (
               <form onSubmit={(e) => { e.preventDefault(); submitTyped(); }}>

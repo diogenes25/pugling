@@ -28,11 +28,13 @@ namespace Pugling.Contracts.Student;
 ///
 /// <c>Decoding</c> (B-93) is the word-for-word decoding (Birkenbihl), same as <see cref="PracticeCard"/> –
 /// the exam must not show less material than practice, or it would be the harder task with less to go on.
+///
+/// <c>LetterTiles</c> (B-05) are the scrambled letters, same as on <see cref="PracticeCard"/>, shuffled once per attempt.
 /// </summary>
 public record TestItem(int ItemIndex, string? Prompt, int Stage, string? Reveal, int? AnswerLength, string? Hint,
     IReadOnlyList<string>? Choices, string? AudioUrl, int? GapIndex = null, string? Passage = null,
     bool AnyOrder = false, string? Type = null, IReadOnlyList<string>? RevealAlternatives = null,
-    string? AnswerPattern = null, IReadOnlyList<WordPair>? Decoding = null);
+    string? AnswerPattern = null, IReadOnlyList<WordPair>? Decoding = null, IReadOnlyList<string>? LetterTiles = null);
 
 /// <summary>
 /// Response of the test start. Class-test mode is strictly server-driven: <b>no</b> questions are sent

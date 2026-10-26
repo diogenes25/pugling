@@ -133,12 +133,13 @@ für alle diese Modi bereitstellen:
 | **Umdrehen / Selbsteinschätzung** | Lösung wird mitgeliefert (`reveal`) | Aufgabe lesen → **Umdrehen** → selbst bewerten: „Gewusst" / „Nicht gewusst" |
 | **Tippen (Freitext)** | keine Lösung, Antwortlänge unbekannt | Antwort in ein Textfeld eingeben → **Prüfen** |
 | **Buchstabenkästchen** | keine Lösung, Antwortlänge bekannt | pro Buchstabe ein Kästchen ausfüllen → **Prüfen** |
+| **Buchstaben ordnen** | gemischte Buchstaben mitgeliefert (`letterTiles`) | Kacheln in die richtige Reihenfolge tippen oder klicken → **Prüfen**; ein mehrteiliges oder langes Wort kommt als Buchstabenkästchen |
 | **Auswahl (Multiple Choice)** | Auswahlmöglichkeiten mitgeliefert (`choices`) | eine Option antippen → **Prüfen** |
 | **Hören** | Audio mitgeliefert (`audioUrl`) | Audio abspielen (statt/zusätzlich zum Text), dann antworten wie oben |
 
 Jede Karte kann zusätzlich einen **optionalen Tipp/Hinweis** (💡) tragen, der erst auf Wunsch
 aufgedeckt wird. Jede Karte/Frage trägt eine **Stufen-Kennzeichnung** (z. B. „Zeigen", „Selbstcheck",
-„Buchstaben", „Tippen", „Hören", „Auswahl") — als kleines Label anzeigen.
+„Buchstaben", „Tippen", „Hören", „Auswahl", „Ordnen") — als kleines Label anzeigen.
 
 ### 2.9 Feedback- und Motivationssystem (durchgängig)
 

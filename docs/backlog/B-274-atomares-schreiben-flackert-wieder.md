@@ -36,3 +36,4 @@ Hook oder die `.trx` aus `TestResults/`) und erst dann entscheiden.
 
 - **2026-10-26** — angelegt in Lauf B ([Protokoll](../pm-sitzung-2026-10-26-tag.md)). Liegt außerhalb des
   Sprint-Diffs (Freigabe 3: nicht gezählt).
+- **2026-10-26** — zweites Auftreten im Test-Tor (Lauf D, 946/947): Zur selben Zeit lief Playwright voll im Hintergrund (Backend-Build, Dev-Server, Browser). Beide Male war die Maschine also zusätzlich belastet, das stützt die Vermutung „unter Last überwiegen gesperrte Lesezugriffe“. Gemessen ist sie damit noch nicht, denn die Assertion-Meldung fehlt weiter.

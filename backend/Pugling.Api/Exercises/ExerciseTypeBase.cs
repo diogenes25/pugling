@@ -47,6 +47,9 @@ public abstract class ExerciseTypeBase : IExerciseType
     public virtual (int? LetterBoxLength, string? AudioUrl, string? ImageUrl, string? AnswerPattern) StageFacets(ContentItem item, int stage) => (null, null, null, null);
 
     /// <inheritdoc/>
+    public virtual string? LetterTileSource(ContentItem item, int stage) => null;
+
+    /// <inheritdoc/>
     public virtual bool AudioReplacesPrompt(int stage) => false;
 
     /// <inheritdoc/>

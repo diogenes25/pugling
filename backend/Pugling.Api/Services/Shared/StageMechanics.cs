@@ -15,7 +15,8 @@ public static class StageMechanics
     /// checked against the correct option.
     /// </summary>
     public static bool IsTyped(TestStage stage) =>
-        stage is TestStage.LetterBoxes or TestStage.FreeText or TestStage.Audio or TestStage.MultipleChoice;
+        stage is TestStage.LetterBoxes or TestStage.FreeText or TestStage.Audio or TestStage.MultipleChoice
+            or TestStage.LetterScramble;
 
     /// <summary>
     /// Objectively checkable cloze stages – every one of them, including the word bank. Picking from a pool
@@ -39,6 +40,44 @@ public static class StageMechanics
     /// </summary>
     public static string LetterBoxPattern(string answer) =>
         new([.. answer.Select(c => char.IsLetterOrDigit(c) ? '_' : c)]);
+
+    /// <summary>The longest answer still played as letter tiles (B-05); a longer one becomes letter boxes.</summary>
+    public const int MaxScrambleLength = 12;
+
+    /// <summary>
+    /// Whether an answer can be played as scrambled letter tiles (B-05): one word of 2 to
+    /// <see cref="MaxScrambleLength"/> letters/digits. A space, hyphen or apostrophe would be a tile the child
+    /// has to place although the solution fixes it - the same reason letter boxes keep those literal (B-66).
+    /// </summary>
+    public static bool IsScramblable(string answer) =>
+        answer.Length is >= 2 and <= MaxScrambleLength && answer.All(char.IsLetterOrDigit);
+
+    /// <summary>
+    /// The letters of <paramref name="answer"/> in a shuffled order, deterministic for one <paramref name="seed"/>:
+    /// the card shows the same arrangement every time it is fetched within a session or attempt (the seed comes
+    /// from its id), and a new session shuffles anew. A shuffle that happens to give the solution back is rotated
+    /// by one, so the tiles never already spell the answer (unless every letter is the same).
+    /// <para>
+    /// The tiles are lower case: grading ignores case (<see cref="Normalize"/>), and the one capital tile of a German
+    /// noun would give away which letter comes first. The "already the solution" check compares lower case too.
+    /// </para>
+    /// </summary>
+    public static IReadOnlyList<string> ScrambleLetters(string answer, int seed)
+    {
+        var word = answer.ToLowerInvariant();
+        var letters = word.Select(c => c.ToString()).ToArray();
+        // System.Random with a seed is the legacy generator: the same seed gives the same sequence on a given
+        // runtime, which is exactly the "frozen per session" the card needs. A reshuffle after a runtime upgrade
+        // would cost one open session its arrangement, nothing more.
+        var random = new Random(seed);
+        for (var i = letters.Length - 1; i > 0; i--)
+        {
+            var j = random.Next(i + 1);
+            (letters[i], letters[j]) = (letters[j], letters[i]);
+        }
+        if (string.Concat(letters) == word) letters = [.. letters.Skip(1), letters[0]];
+        return letters;
+    }
 
     /// <summary>
     /// Multiple-choice pool built from the exercise itself: the atom's own solution plus up to

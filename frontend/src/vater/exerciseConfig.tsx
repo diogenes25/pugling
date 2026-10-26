@@ -108,6 +108,7 @@ export const VOCAB_FORMS: { value: number | ""; label: string }[] = [
   { value: 1, label: "Nur anzeigen" },
   { value: 2, label: "Selbsteinschätzung" },
   { value: 3, label: "Buchstabenkästchen" },
+  { value: 7, label: "Buchstaben ordnen" },
   { value: 4, label: "Freitext (tippen)" },
   { value: 6, label: "Multiple-Choice (Auswahl)" },
   { value: 5, label: "Hören → tippen" },

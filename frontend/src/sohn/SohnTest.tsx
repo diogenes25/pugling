@@ -5,6 +5,7 @@ import { useAction } from "../lib/useAction";
 import { useSohn } from "./SohnApp";
 import { Mascot } from "../components/Mascot";
 import { LetterBoxes } from "../components/LetterBoxes";
+import { LetterTiles } from "../components/LetterTiles";
 import { AudioButton } from "../components/AudioButton";
 import { ClozePrompt } from "../components/ClozePrompt";
 import { ListRule } from "../components/ListRule";
@@ -13,9 +14,9 @@ import { RevealAlternatives } from "../components/RevealAlternatives";
 import { BirkenbihlDecoding } from "../components/BirkenbihlDecoding";
 import type { AnswerDto, TestItem, TestSubmitResponse } from "../lib/types";
 
-// Vokabel-Teststufen (numerisch, serverseitig erzwungen): 1 Zeigen … 5 Hören.
+// Vokabel-Teststufen (numerisch, serverseitig erzwungen): 1 Zeigen … 7 Ordnen.
 const STAGE_LABEL: Record<number, string> = {
-  1: "Zeigen", 2: "Selbstcheck", 3: "Buchstaben", 4: "Tippen", 5: "Hören", 6: "Auswahl",
+  1: "Zeigen", 2: "Selbstcheck", 3: "Buchstaben", 4: "Tippen", 5: "Hören", 6: "Auswahl", 7: "Ordnen",
 };
 const stageLabel = (s: number) => STAGE_LABEL[s] ?? `Stufe ${s}`;
 
@@ -170,6 +171,11 @@ export function SohnTest() {
                 <button type="button" key={`${i}-${c}`} className="btn ghost small" disabled={action.busy}
                   onClick={() => answerAndAdvance({ itemIndex: item.itemIndex, givenAnswer: c })}>{c}</button>
               ))}
+            </div>
+          ) : item.letterTiles ? (
+            <div style={{ marginTop: 10 }}>
+              <LetterTiles key={item.itemIndex} tiles={item.letterTiles} value={typedAnswer} onChange={setTypedAnswer} onSubmit={submitTyped} />
+              <button type="button" className="btn lime" style={{ marginTop: 10 }} disabled={action.busy || !typedAnswer.trim()} onClick={submitTyped}>Weiter →</button>
             </div>
           ) : item.answerLength ? (
             <div style={{ marginTop: 10 }}>

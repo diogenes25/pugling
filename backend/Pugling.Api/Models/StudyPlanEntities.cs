@@ -48,6 +48,11 @@ public enum TestStage
     Audio = 5,
     /// <summary>Choice from several options (one correct, the rest distractors from the exercise).</summary>
     MultipleChoice = 6,
+    /// <summary>
+    /// Put the scrambled letters of the translation in order (B-05). A single word of 2-12 letters only; any other
+    /// answer is played as <see cref="LetterBoxes"/>, card by card.
+    /// </summary>
+    LetterScramble = 7,
 }
 
 // StageStep lives in the contract project (Pugling.Contracts).

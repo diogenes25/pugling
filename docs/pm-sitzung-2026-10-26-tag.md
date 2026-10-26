@@ -453,3 +453,63 @@ Zurückstell-Stories B-272, B-273, B-275, B-278 und B-282 kommen alle aus Läufe
 der heutigen Zurückstellungen.
 
 **Commit:** `b644081` (nicht gepusht).
+
+## Lauf D — NP-7 Buchstaben tauschen (B-05), an Freigabe 3 beendet
+
+**Sprint-Ziel (aus dem Paket):** *Der Sohn kann ein Wort aus vertauschten Buchstaben zusammensetzen, per Klick oder
+Tastatur.* Umfang: [B-05](backlog/B-05-buchstaben-tausch.md) (`geschaetzt`, Freigabe 8). Rahmen aus der Sichtung:
+keine Drag-&-Drop-Bibliothek, Misch-Seed aus der Sitzungs-Id, keine Migration. **Zähler: 0.**
+
+### Iteration
+
+- **Backend:** Stufe `LetterScramble = 7` (getippt). `LetterTileSource` am Übungstyp, `IsScramblable`/`ScrambleLetters`
+  (seed-stabil, nie schon die Lösung). `CardFacets` mischt mit Sitzungs- bzw. Versuchs-Id und Item-Index. `LetterTiles`
+  kommt additiv an Karte, Prüfungsfrage und Vorschau. Ungeeignete Antworten fallen auf Buchstabenkästchen zurück.
+  Die Stufen liegen als `int`, eine Migration ist also nicht nötig.
+- **Frontend:** `LetterTiles` (Klick/Tipp und Tastatur, Live-Region nach B-134) in Übung, Klausur und Vorschau,
+  „Buchstaben ordnen“ in `VOCAB_FORMS`, neue Spec `e2e/buchstaben-ordnen.spec.ts`.
+- **Von der Spec gefunden, vor dem Review:** Schnell getippt kam von „kaufen“ nur „kauf“ an. Eine gelegte, fokussierte
+  Kachel wurde `disabled`, und der Browser gab den Fokus an `body` ab. Jetzt ist sie `aria-disabled`. Probe:
+  `disabled` → rot. Ein vorsorglicher Ref gegen veralteten Zustand blieb als Mutante grün und ist wieder entfernt.
+
+### Review
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `pugling-reviewer` | Die Großschreibung verrät den ersten Buchstaben | Kacheln klein, Vergleich klein; Probe → 3 failed | ja |
+| 2 | `pugling-reviewer` | Ohne Item-Index im Seed hätten alle gleich langen Wörter einer Sitzung dieselbe Anordnung | eigener Fall; Probe → 1 failed | ja |
+| 3 | `pugling-reviewer` | Beim Rückfall war die Länge ungeprüft | Zusicherung; Probe → 1 failed | ja |
+| 4 | `pugling-reviewer` | Die Klausur zeigte „Stufe 7“ | `STAGE_LABEL` | ja |
+| 5 | `frontend-reviewer` | Enter auf „Neu anfangen“/„⌫ Zurück“ schickte das halbe Wort ab | Enter nur aus dem Kachel-Pool; Vitest-Probe → 1 failed | ja |
+| 6 | `frontend-reviewer` | **Nach jeder Karte geht der Tastaturfokus an `body`** (`key` baut den Block neu) | **nicht behoben** | ja |
+
+Ohne Zählung: Doku (`tutorial-creator.md`, `sohn-app-funktionsbeschreibung.md`), Kommentare (Random-Stabilität,
+„12!/4“). Zurückgestellt vor dem Ende: [B-283](backlog/B-283-buchstaben-ordnen-testluecken.md) (Prüfung je Versuch,
+Vorschau). Neu, vorbestehend: [B-284](backlog/B-284-doppeltes-enter-ueberspringt-karte.md).
+
+### Ende an Freigabe 3
+
+Mit Fund 6 überschreitet NP-7 die Grenze von fünf. **Der gesamte Lauf endet hier.** Fund 6 und die übrigen Punkte
+des Frontend-Reviews sind nicht behoben, sie stehen im Verlauf von B-05. **Abwägung, offen benannt:** Fund 6 hätte
+ich wie die 🟢-Hinweise dieses Tages zurückstellen und den Lauf mit NP-9 fortsetzen können. Ich habe es nicht getan.
+Er ist ein echter 🟡-Tastaturfehler im neuen Feature, und die Retro von Lauf C hat das Zurückstellen gerade als
+Tagesmuster benannt. Den Lauf fortzusetzen hieße, die Regel zu umgehen, die der Nutzer heute Morgen bestätigt hat.
+
+Nicht mehr gelaufen: Behebung von Fund 6, Delta-Review, Rollengang als Abnahme, Retrospektive mit der Nachschau zu
+NP-3, **Lauf E (NP-9)**. B-05 steht auf `in-arbeit` mit `wartet_auf`. Der Stand ist grün und committet: Backend
+**948/948 `exit=0`**, Vitest **450/450**, Playwright voll **96 passed** (vor den Review-Behebungen),
+`buchstaben-ordnen.spec` danach **1 passed**.
+
+### Wiederaufnahme / offene Entscheidungen für den Nutzer
+
+1. **Zähler von Lauf D:** 6. Fortsetzen geht wie heute Morgen nur nach deiner Entscheidung, zum Beispiel Fund 6 und die
+   übrigen Review-Punkte von B-05 als Nacharbeit mit neuem Zähler.
+2. **Ob Hinweise (🟢) zählen:** Heute endeten zwei von fünf Teilen an oder knapp an der Grenze. Mehr als die Hälfte der
+   Zurückstellungen (B-272, B-273, B-275, B-278, B-282, B-283) sind 🟢-Hinweise, die nur wegen des Zählers liegen.
+3. **Retro-Vorschläge des Tages, alle nicht gelandet:** (A) Toleranz-/Grenzfälle im Pflichtschritt, (A2) Tor
+   „`EndpointCoverageGuard` schreibt jedes Urteil in die Berichtsdatei“, (B) zusammenfallende Eigenschaften im
+   Testaufbau, (C) Backend-Suite nur mit `exit=0` als grün, (D) Fokus-Zusicherungen mit `disabled` nach Playwright,
+   (E) Nullfall als Abgrenzung, (F) Proben nach einer Behebung wiederholen.
+4. **Danach:** Lauf E (NP-9, B-155, L, Migration) ist nicht begonnen.
+
+**Commit:** folgt.

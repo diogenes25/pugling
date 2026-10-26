@@ -141,10 +141,13 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     public static (string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices,
         string? AudioUrl, string? ImageUrl, string? ImageAlt, int? GapIndex, string? Prompt, string? Passage,
         bool AnyOrder, IReadOnlyList<string>? RevealAlternatives, IReadOnlyList<WordPair>? Decoding,
-        string? AnswerPattern)
+        string? AnswerPattern, IReadOnlyList<string>? LetterTiles)
         CardFacets(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, IExerciseType type,
-            int stage, bool typed)
+            int stage, bool typed, int seed)
     {
+        // The scramble stage (B-05): the type names the word, the shuffle needs the session's or attempt's id as
+        // seed - frozen per session, new per session - and the item index, so two cards of one round differ.
+        var tileSource = typed ? type.LetterTileSource(item, stage) : null;
         var (letterBoxLength, audioUrl, imageUrl, answerPattern) = type.StageFacets(item, stage);
         return (
             typed ? item.Hint : null,
@@ -186,7 +189,8 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
             // after, not the solution to withhold. Without it a Birkenbihl card is an ordinary translation card.
             item.Decoding,
             // The letter-box mask (B-66) - null outside that stage, same condition as `letterBoxLength`.
-            answerPattern);
+            answerPattern,
+            tileSource is null ? null : StageMechanics.ScrambleLetters(tileSource, unchecked((seed * 397) ^ item.Index)));
     }
 
     /// <summary>

@@ -63,14 +63,14 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             .FirstOrDefaultAsync(t => t.Id == attemptId && t.StudyPlanId == planId && t.PlanPositionId == positionId, ct);
 
     private static TestItem ToItem(Exercise exercise, IReadOnlyList<ContentItem> items, ContentItem item,
-        IExerciseType type, int stage, bool typed)
+        IExerciseType type, int stage, bool typed, int attemptId)
     {
         // Shared anti-cheat projection (reveal/length/hint/choices/audio per stage) - the same rule as the
         // practice card. The image is deliberately left out: the exam renders none, and asking for one would
         // freeze the child's motif choice as a side effect of taking a test (see MediaSelector).
-        var f = PositionPlayService.CardFacets(PositionPlayService.ConfigOf(exercise), items, item, type, stage, typed);
+        var f = PositionPlayService.CardFacets(PositionPlayService.ConfigOf(exercise), items, item, type, stage, typed, attemptId);
         return new TestItem(item.Index, f.Prompt, stage, f.Reveal, f.AnswerLength, f.Hint, f.Choices, f.AudioUrl,
-            f.GapIndex, f.Passage, f.AnyOrder, type.Key, f.RevealAlternatives, f.AnswerPattern, f.Decoding);
+            f.GapIndex, f.Passage, f.AnyOrder, type.Key, f.RevealAlternatives, f.AnswerPattern, f.Decoding, f.LetterTiles);
     }
 
     /// <summary>
@@ -229,7 +229,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         if (cursor != attempt.Cursor) { attempt.Cursor = cursor; await db.SaveChangesAsync(ct); }
         if (cursor >= attempt.Order.Count) return new TestNextResponse(null, true, cursor, attempt.TotalItems);
 
-        var item = ToItem(pos.Exercise, items, items[attempt.Order[cursor]], type, attempt.StageValue, typed);
+        var item = ToItem(pos.Exercise, items, items[attempt.Order[cursor]], type, attempt.StageValue, typed, attempt.Id);
         return new TestNextResponse(item, false, cursor, attempt.TotalItems);
     }
 

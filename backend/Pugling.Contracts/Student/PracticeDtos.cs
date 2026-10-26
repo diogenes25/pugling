@@ -60,12 +60,18 @@ public record HeartbeatDto(int Seconds, bool Active);
 /// <c>AnswerPattern</c> (B-66) is the letter-box mask: an underscore per letter/digit to type, every other
 /// character (space, hyphen, …) kept literally – already fixed by the solution, so the child never types
 /// it. <c>null</c> outside the letter-box stage, same as <c>AnswerLength</c>.
+///
+/// <c>LetterTiles</c> (B-05) are the scrambled letters of the answer on the scramble stage, in the order to show
+/// them; the child sends the word it builds as <c>GivenAnswer</c>. Shuffled once per session/attempt (the same card
+/// shows the same order when fetched again). <c>null</c> on every other stage and for an answer that is not one
+/// short word - that card comes as letter boxes instead.
 /// </summary>
 public record PracticeCard(int ItemIndex, int Stage, string Type, string? Prompt,
     string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices, string? AudioUrl,
     string? ImageUrl = null, string? ImageAlt = null, int? GapIndex = null, string? Passage = null,
     bool AnyOrder = false, IReadOnlyList<string>? RevealAlternatives = null,
-    IReadOnlyList<WordPair>? Decoding = null, bool DisplayOnly = false, string? AnswerPattern = null);
+    IReadOnlyList<WordPair>? Decoding = null, bool DisplayOnly = false, string? AnswerPattern = null,
+    IReadOnlyList<string>? LetterTiles = null);
 
 /// <summary>The next card in learn mode (or <c>Done</c>), server-driven via the session cursor.</summary>
 public record NextResponse(PracticeCard? Card, bool Done, int Cursor, int Total);

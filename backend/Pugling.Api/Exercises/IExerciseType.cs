@@ -90,6 +90,13 @@ public interface IExerciseType
     (int? LetterBoxLength, string? AudioUrl, string? ImageUrl, string? AnswerPattern) StageFacets(ContentItem item, int stage);
 
     /// <summary>
+    /// The word whose letters this stage hands out as scrambled tiles (B-05), or <c>null</c>. Only the source:
+    /// the shuffle needs the session's seed, which the type does not know (see
+    /// <c>PositionPlayService.CardFacets</c>).
+    /// </summary>
+    string? LetterTileSource(ContentItem item, int stage);
+
+    /// <summary>
     /// Does the recording <b>replace</b> the prompt at this stage, instead of accompanying it? Only the type
     /// can answer that, and it cannot be derived from the card: at the vocabulary listening stage showing the
     /// word alongside would turn "listen, then type" into a reading task, while a listening comprehension

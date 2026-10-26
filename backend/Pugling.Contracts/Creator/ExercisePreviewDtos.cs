@@ -16,12 +16,13 @@ namespace Pugling.Contracts.Creator;
 /// beside <c>Reveal</c>, so the author sees what the child will be shown as "also correct". <c>Decoding</c> is
 /// the word-for-word decoding (Birkenbihl) for the same reason: whoever maintains it has to be able to check it
 /// the way the child receives it. <c>AnswerPattern</c> (B-66) is the letter-box mask, same as the child's card -
-/// the preview must show the same fixed punctuation/spacing, not a bare length.
+/// the preview must show the same fixed punctuation/spacing, not a bare length. <c>LetterTiles</c> (B-05) are the
+/// scrambled letters of the scramble stage, same as the child's card.
 /// </summary>
 public record PreviewItem(int ItemIndex, string? Prompt, int? GapIndex, string? Hint, int? AnswerLength, string? Reveal,
     IReadOnlyList<string>? Choices, string? AudioUrl, string? Passage = null, bool AnyOrder = false,
     IReadOnlyList<string>? RevealAlternatives = null, IReadOnlyList<WordPair>? Decoding = null,
-    string? AnswerPattern = null);
+    string? AnswerPattern = null, IReadOnlyList<string>? LetterTiles = null);
 
 /// <summary>
 /// The playable state of an exercise in test mode: type, chosen stage, whether typed, the problems and

@@ -42,7 +42,7 @@ public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrade
         // the exercise's default question form as picked by its author, otherwise the representative stage.
         var stage = stageOverride ?? exercise.DefaultStage ?? type.PreviewStage;
         var typed = type.IsTypedStage(stage);
-        var presented = items.Select(i => Present(exercise.ConfigJson, items, i, type, stage, typed)).ToList();
+        var presented = items.Select(i => Present(exercise.ConfigJson, items, i, type, stage, typed, exercise.Id)).ToList();
         return new PreviewData(exercise.Type, stage, typed, type.StageOptions, presented);
     }
 
@@ -114,12 +114,13 @@ public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrade
     // withhold the prompt: the supervisor then saw the word AND heard the recording on the listening stage,
     // so the one stage where the audio carries the whole task was the one they could not check.
     private static PreviewItem Present(string configJson, IReadOnlyList<ContentItem> items, ContentItem item,
-        IExerciseType type, int stage, bool typed)
+        IExerciseType type, int stage, bool typed, int seed)
     {
-        var f = PositionPlayService.CardFacets(configJson, items, item, type, stage, typed);
+        // The exercise id as shuffle seed (B-05): there is no session, and the same preview should not reshuffle.
+        var f = PositionPlayService.CardFacets(configJson, items, item, type, stage, typed, seed);
         // No image in preview mode: the selection hangs on a child's profile, but here the supervisor tries
         // things out child-neutrally. An arbitrary image would mislead - it would not show what their child sees.
         return new PreviewItem(item.Index, f.Prompt, f.GapIndex, f.Hint, f.AnswerLength, f.Reveal,
-            f.Choices, f.AudioUrl, f.Passage, f.AnyOrder, f.RevealAlternatives, f.Decoding, f.AnswerPattern);
+            f.Choices, f.AudioUrl, f.Passage, f.AnyOrder, f.RevealAlternatives, f.Decoding, f.AnswerPattern, f.LetterTiles);
     }
 }

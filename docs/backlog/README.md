@@ -500,7 +500,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (61)
+### Offen (63)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -539,6 +539,8 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-279](B-279-general-use-weak-zieht-woerter-trotzdem.md) | `--child X --general --use-weak` zieht die schwachen Wörter weiter in den Pflicht-Wortschatz | Defekt | `idee` | P3 | — | backend | — |
 | [B-281](B-281-pin-felder-pruefen-mindestlaenge-im-ui.md) | Eine zu kurze PIN meldet die Oberfläche auf Englisch | Defekt | `idee` | P3 | — | frontend | — |
 | [B-282](B-282-login-haertung-restpunkte.md) | Restpunkte der Login-Härtung (NP-3) | Defekt | `idee` | P3 | — | backend | — |
+| [B-283](B-283-buchstaben-ordnen-testluecken.md) | Buchstaben ordnen: neue Anordnung je Prüfungsversuch und die Vorschau sind ungetestet | Defekt | `idee` | P3 | — | beides | — |
+| [B-284](B-284-doppeltes-enter-ueberspringt-karte.md) | Ein doppeltes Enter während der Prüfung überspringt eine Karte | Defekt | `idee` | P3 | — | frontend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-231](B-231-fokus-ohne-fehlerkasten.md) | Wohin gehört der Fokus, wenn ein Knopf ohne Fehlerkasten gesperrt wird? | Frage | `idee` | P3 | — | frontend | — |
 | [B-232](B-232-bestaetigung-ausserhalb-des-sichtfelds.md) | Soll eine Bestätigung zum Meldungsplatz scrollen, wenn er weit vom Knopf entfernt liegt? | Frage | `idee` | P3 | — | frontend | — |
@@ -564,7 +566,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-271](B-271-gewaehltes-profil-setzt-reihe.md) | Das zum Kind gewählte Profil setzt Reihe und Fach des KI-Creators | Wunsch | `idee` | P3 | — | backend | — |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `geschaetzt` | P3 | S | backend | — |
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
-| [B-05](B-05-buchstaben-tausch.md) | Buchstaben-Tausch-Eingabe (Anagramm) | Wunsch | `geschaetzt` | P5 | M | beides | — |
+| [B-05](B-05-buchstaben-tausch.md) | Buchstaben-Tausch-Eingabe (Anagramm) | Wunsch | `in-arbeit` | P5 | M | beides | — |
 
 <details>
 <summary>Abgenommen (198)</summary>
@@ -772,13 +774,14 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 
 </details>
 
-### Wartet auf Zutun von außen (2)
+### Wartet auf Zutun von außen (3)
 
 Diese Stories kommen **im Repo nicht weiter** — es fehlt ein Schritt, den nur ein Mensch
 oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird gerade gebaut".
 
 | Id | Story | Stufe | Wartet auf |
 | --- | --- | --- | --- |
+| [B-05](B-05-buchstaben-tausch.md) | Buchstaben-Tausch-Eingabe (Anagramm) | `in-arbeit` | Nutzer: Lauf D an Freigabe 3 beendet (Fund 6: Fokus nach jeder Karte auf body) – offene Funde im Verlauf |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
@@ -908,6 +911,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-275](B-275-bewertungsformular-fuer-grantee-ungetestet.md) | `idee` | `unverifiziert: true` |
 | [B-278](B-278-platzhalter-sieht-aus-wie-gespeicherter-wert.md) | `idee` | `unverifiziert: true` |
 | [B-280](B-280-fokusziel-nicht-geleert-ungetestet.md) | `idee` | `unverifiziert: true` |
+| [B-283](B-283-buchstaben-ordnen-testluecken.md) | `idee` | `unverifiziert: true` |
 
 <details>
 <summary>Verworfen (22)</summary>

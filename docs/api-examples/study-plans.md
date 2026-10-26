@@ -191,7 +191,8 @@ Response — `HTTP 200`:
     "revealAlternatives": null,
     "decoding": null,
     "displayOnly": false,
-    "answerPattern": null
+    "answerPattern": null,
+    "letterTiles": null
   },
   "done": false,
   "cursor": 0,
@@ -244,7 +245,8 @@ Response — `HTTP 200`:
     "revealAlternatives": null,
     "decoding": null,
     "displayOnly": false,
-    "answerPattern": null
+    "answerPattern": null,
+    "letterTiles": null
   },
   "done": false
 }
@@ -311,7 +313,8 @@ Response — `HTTP 200`:
     "revealAlternatives": null,
     "decoding": null,
     "displayOnly": false,
-    "answerPattern": null
+    "answerPattern": null,
+    "letterTiles": null
   },
   {
     "itemIndex": 0,
@@ -331,7 +334,8 @@ Response — `HTTP 200`:
     "revealAlternatives": null,
     "decoding": null,
     "displayOnly": false,
-    "answerPattern": null
+    "answerPattern": null,
+    "letterTiles": null
   }
 ]
 ```
@@ -407,7 +411,8 @@ Response — `HTTP 200`:
     "type": "Vocabulary",
     "revealAlternatives": null,
     "answerPattern": null,
-    "decoding": null
+    "decoding": null,
+    "letterTiles": null
   },
   "done": false,
   "cursor": 0,

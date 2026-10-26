@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ApiError, api, errorMessage } from "../lib/api";
 import { LetterBoxes } from "../components/LetterBoxes";
+import { LetterTiles } from "../components/LetterTiles";
 import { AudioButton } from "../components/AudioButton";
 import { ClozePrompt } from "../components/ClozePrompt";
 import { Passage } from "../components/Passage";
@@ -206,6 +207,12 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
                           aria-pressed={a?.givenAnswer === c}
                           onClick={() => setText(it.itemIndex, c)}>{a?.givenAnswer === c ? "✓ " : ""}{c}</button>
                       ))}
+                    </div>
+                  ) : data.typed && it.letterTiles ? (
+                    // Buchstaben ordnen (B-05): dieselbe Komponente wie in der Sohn-App.
+                    <div style={{ marginTop: 8 }}>
+                      <LetterTiles tiles={it.letterTiles} value={a?.givenAnswer ?? ""}
+                        onChange={(v) => setText(it.itemIndex, v)} onSubmit={submit} />
                     </div>
                   ) : data.typed && it.answerLength ? (
                     // Buchstabenkästchen: dieselbe Komponente wie in der Sohn-App.

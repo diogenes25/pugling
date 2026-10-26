@@ -72,10 +72,22 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
     /// </para>
     /// </summary>
     public override (int? LetterBoxLength, string? AudioUrl, string? ImageUrl, string? AnswerPattern) StageFacets(ContentItem item, int stage) =>
-        ((TestStage)stage == TestStage.LetterBoxes ? item.Answer.Length : null,
+        (AsLetterBoxes(item, stage) ? item.Answer.Length : null,
          (TestStage)stage == TestStage.Audio ? item.AudioUrl : null,
          IsTypedStage(stage) ? null : item.ImageUrl,
-         (TestStage)stage == TestStage.LetterBoxes ? StageMechanics.LetterBoxPattern(item.Answer) : null);
+         AsLetterBoxes(item, stage) ? StageMechanics.LetterBoxPattern(item.Answer) : null);
+
+    /// <summary>
+    /// Letter boxes on their own stage - and on the scramble stage for an answer that cannot be scrambled (B-05 AC 3):
+    /// that card falls back on its own, the rest of the round stays tiles.
+    /// </summary>
+    private static bool AsLetterBoxes(ContentItem item, int stage) =>
+        (TestStage)stage == TestStage.LetterBoxes
+        || ((TestStage)stage == TestStage.LetterScramble && !StageMechanics.IsScramblable(item.Answer));
+
+    /// <summary>The answer's letters on the scramble stage, when the answer is one short word (B-05).</summary>
+    public override string? LetterTileSource(ContentItem item, int stage) =>
+        (TestStage)stage == TestStage.LetterScramble && StageMechanics.IsScramblable(item.Answer) ? item.Answer : null;
 
     /// <summary>
     /// At the listening stage the recording <b>is</b> the question: showing the word next to it would make
@@ -96,6 +108,7 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
         new((int)TestStage.SelfAssess, "Selbsteinschätzung"),
         new((int)TestStage.MultipleChoice, "Multiple-Choice"),
         new((int)TestStage.LetterBoxes, "Buchstabenkästchen"),
+        new((int)TestStage.LetterScramble, "Buchstaben ordnen"),
         new((int)TestStage.FreeText, "Freitext (tippen)"),
         new((int)TestStage.Audio, "Hören → tippen"),
     ];

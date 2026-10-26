@@ -482,6 +482,7 @@ GET /api/v1/creator/exercises/13/preview
     { "value": 2, "label": "Selbsteinschätzung" },
     { "value": 6, "label": "Multiple-Choice" },
     { "value": 3, "label": "Buchstabenkästchen" },
+    { "value": 7, "label": "Buchstaben ordnen" },
     { "value": 4, "label": "Freitext (tippen)" },
     { "value": 5, "label": "Hören → tippen" }
   ],
