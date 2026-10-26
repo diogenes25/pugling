@@ -73,9 +73,9 @@ public class ChildVocabularyProgressController(PuglingDbContext db) : Controller
     {
         var progress = db.ItemProgress.AsNoTracking().Where(p => p.ChildId == childId);
         // Filter before grouping, so the rollup itself (count, average) only sees words of the wanted pair.
-        if (sourceLang is not null)
+        if (!string.IsNullOrWhiteSpace(sourceLang))
             progress = progress.Where(p => db.Vocabularies.Any(v => v.Id == p.VocabularyId && v.SourceLanguage == sourceLang));
-        if (targetLang is not null)
+        if (!string.IsNullOrWhiteSpace(targetLang))
             progress = progress.Where(p => db.Vocabularies.Any(v => v.Id == p.VocabularyId && v.TargetLanguage == targetLang));
 
         var groups = progress

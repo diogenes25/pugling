@@ -208,6 +208,8 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
         }
         var english = await WeakWordAsync("en", "de", "the walrus", "das Walross");
         var french = await WeakWordAsync("fr", "de", "le morse", "das Walross (fr)");
+        // Same source, other target: only the targetLang filter keeps it out of en→de.
+        var englishToFrench = await WeakWordAsync("en", "fr", "the walrus (fr)", "le morse");
 
         List<int> Ids(List<JsonElement>? rows) => [.. rows!.Select(w => w.GetProperty("vocabularyId").GetInt32())];
         const string byWord = "/api/v1/student/children/1/vocabulary-progress/by-word?onlyWeak=true&take=200";
@@ -215,10 +217,13 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
         var all = Ids(await father.GetFromJsonAsync<List<JsonElement>>(byWord));
         Assert.Contains(english, all);
         Assert.Contains(french, all);
+        // Precondition for the targetLang check below: without the filter the en→fr word IS a weak word.
+        Assert.Contains(englishToFrench, all);
 
         var en = Ids(await father.GetFromJsonAsync<List<JsonElement>>($"{byWord}&sourceLang=en&targetLang=de"));
         Assert.Contains(english, en);
         Assert.DoesNotContain(french, en);
+        Assert.DoesNotContain(englishToFrench, en);
 
         var fr = Ids(await father.GetFromJsonAsync<List<JsonElement>>($"{byWord}&sourceLang=fr&targetLang=de"));
         Assert.Contains(french, fr);

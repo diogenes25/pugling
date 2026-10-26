@@ -262,7 +262,7 @@ und wurden autonom ausformuliert und geschätzt (S, XS). **Zähler: 0.**
   gespeicherten Spalten, und `textbookFormValues` liest den Freitext. Proben: Projektion mit dem abgeleiteten Wert →
   2 failed; Formular mit dem Katalogwert → 3 failed.
 - **B-268:** Das Fokusziel nach Öffnen, Anlegen und Abbrechen läuft über einen Effekt. Proben: jeder der drei Sprünge
-  einzeln weg → rot an `:333`/`:336`/`:344`.
+  einzeln weg → rot an `:333`/`:336`/`:344` (im Commit liegt der Reihen-Sprung an `:352`, Nachschau).
 
 ### Review
 
@@ -311,3 +311,74 @@ sind B-267 und B-268 aus diesem Sprint.
   „X statt Y“, braucht es auch den Fall „X leer“.
 
 **Commit:** `4a25d47` (nicht gepusht).
+
+## Lauf C, Teil 1 — Nacharbeit Sprint 7 (NP-2: B-15, B-17, B-21)
+
+**Sprint-Ziel (unverändert aus dem dritten Lauf):** *Ich kann jede Übung vor dem Zuweisen sinnvoll ausprobieren –
+auch einen Aufsatz –, eine Birkenbihl-Übung bekommt nur Sprachcodes, die der Vokabelspeicher kennt, und der Agent
+zieht im Fördermodus nur Wörter der Sprache meiner Übung heran.* Sprint 7 bleibt nach der Morgen-Entscheidung stehen
+(`93f227a`). Die sechs offenen Funde sind die Nacharbeit selbst. **Zähler: 0.** Die Nachschau zu Sprint 6 hatte ein
+späterer Lauf schon erledigt (Index).
+
+### Iteration — die sechs Funde
+
+| Fund (2026-10-23) | Behebung | Probe |
+| --- | --- | --- |
+| B-17 (a) `contentProblem` prüft die Sprachen nicht | Birkenbihl: beide Codes müssen in `LANGUAGES` stehen | Prüfung weg → 1 failed |
+| B-17 (b) Fall 2 prüft nur „Muttersprache“ | beide Auswahlen einzeln | Lernsprache schreibt `nativeLang` → 1 failed |
+| B-15 (a)/(b) Texte nennen den Aufsatz | typneutral („Diese Übung …“) | UI-Text, kein Test (benannt) |
+| B-15 (c) Test-Kommentare ohne „was macht ihn rot“ | ergänzt; `Preview_OhneAtome_…` als Wächter beschriftet | – |
+| B-21 (a) Profil-Zweig ungetestet | neuer Fall (la-Profil, Anfrage ohne Sprachen) | Profil ignoriert → 1 failed |
+| B-21 (b) `targetLang`-Filter ungetragen | drittes Wort en→fr im Rollup-Test | Filter weg → 1 failed |
+| B-21 (c)/(d) Nits | `IsNullOrWhiteSpace`; Hilfe und README nennen „braucht `--child`“; `exam` als `InlineData` | Wächter weg → 3 failed |
+
+Neu angelegt: [B-279](backlog/B-279-general-use-weak-zieht-woerter-trotzdem.md) (`--general --use-weak`, vorbestehend,
+im dritten Lauf als „eigene Story wert“ benannt).
+
+### Review
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `pugling-reviewer` | Rollup-Test ohne Positivkontrolle für das en→fr-Wort | `Assert.Contains(englishToFrench, all)` | ja |
+| 2 | `pugling-reviewer` | Kaskade „Anfrage > Profil“ und „Ziel aus dem Profil“ ungetragen (alle Profile en/de) | Profil la→fr, zweite Anfrage mit en/de; beide Mutanten → 1 failed | ja |
+| 3 | `frontend-reviewer` | Reihenfolge „Sprache vor Satz“ behauptet, nicht getestet | vierter Fall; Reihenfolge getauscht → 1 failed | ja |
+| 4 | Delta-Review | Ohne `sourceLang`-Filter blieb der Kaskaden-Test grün (die Geschwister-Tests fingen es) | eine Zusicherung; Probe siehe unten | ja |
+
+Ohne Zählung: Kommentare berichtigt (Hinweis des Frontend-Reviewers: Birkenbihl hat im Bearbeiten-Dialog gar keinen
+Inhalts-Editor, die Sprachprüfung ist heute ein Wächter, kein Schutz eines erreichbaren Wegs). Der Text in der
+Guard-Zusammenfassung nennt `exam`. Benannt, nicht behoben: Die B-15-Texte trägt kein Test, und die Meldung zu
+`no_checkable_content` wiederholt den zentralen Text.
+
+**Beobachtung:** Fund B-17 (a) aus dem dritten Lauf beschrieb einen Weg, den es nicht gibt („eine bearbeitete
+Alt-Übung …“). Gebaut ist er trotzdem, als Wächter. Das war richtig, aber die Begründung stand falsch im Code, bis der
+Reviewer sie las.
+
+### Rollengang / Abnahme
+
+Die Extension war nicht verbunden. **Creator:** `uebungstypen.spec.ts` (jede Übungsart anlegen und im Testmodus
+ausprobieren, der Aufsatz als Ansicht ohne Bewertung) und die Agent-Tests `CreatorAgentTests.Foerdermodus_*`
+(Fördermodus nur mit dem Sprachpaar der Übung). **Vater, Sohn:** Regressionszeugen, volle Suiten grün. Verifikation:
+Solution-Build 0 Warnungen, Backend **920/920 `exit=0`**, Vitest **444/444**, Playwright voll **95 passed**.
+**Zähler am Ende: 4. B-15, B-17, B-21 abgenommen.**
+
+### Retrospektive
+
+**Nachschau** über den vorigen Sprint (*Lehrbuch-Formular*, `4a25d47`; frischer Prüfer, Mutanten an einem
+`git archive` selbst gefahren): **ein Entgleiten** → [B-280](backlog/B-280-fokusziel-nicht-geleert-ungetestet.md)
+(`entgangen_bei: B-268`). Die Mutante „Fokusziel nicht geleert“ ist grün, obwohl ich „rot an `:366`“ protokolliert
+hatte. B-267 ist sauber. Ein Doku-Befund (`:344` statt `:352`) ist berichtigt. `nachgeschaut` ist an beiden
+gesetzt. Index: **Nachgeschaut: 192 von 195**.
+
+**Was die eigenen Tore durchgelassen haben:** Eine **rote Probe, die eine spätere Behebung entwertet hat.** Gemessen
+wurde sie richtig, gegen den Fehlerweg-Fall, der damals `anlegen` erwartete. Fund 5 hat genau diesen Fall
+umgestellt (jetzt Namensfeld, und dorthin setzt der Fehlerzweig ausdrücklich). Damit trug der Fall die Mutante nicht
+mehr, und niemand hat die Probe nach der Umstellung wiederholt. Zum dritten Mal heute hängt ein Befund daran, dass
+eine Messung an einem Zwischenstand gilt: dazu die verrutschten Zeilenangaben in Lauf A und B. Hier wurde aus der
+verrutschten Adresse aber eine falsche Aussage über die Testabdeckung.
+
+**Vorschlag (nur vorgeschlagen, Freigabe 3):** *„Ändert eine Behebung einen Test, gegen den schon eine rote Probe
+protokolliert ist, wird diese Probe nach der Behebung wiederholt. Die Zeile im Verlauf nennt den Stand, an dem sie
+gemessen ist.“* Prosa in pm-loop Step 5, neben dem Pflichtschritt. Ein Tor müsste Proben maschinenlesbar führen,
+das tun sie heute nicht. Verwandt: [[Rote Probe am richtigen Ort]] in den Notizen.
+
+**Commit:** folgt.

@@ -483,7 +483,7 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
           --words a,b,c         Pflicht-Wortschatz (unveränderlich)
           --interests a,b       Interessen-Slugs, in die die Übung eingekleidet wird (ohne --child;
                                 mit --child kommen sie aus dem Kind selbst)
-          --use-weak            schwach beherrschte Wörter des Kindes verwenden
+          --use-weak            schwach beherrschte Wörter des Kindes verwenden (nur mit --child)
           --source-lang <code>  Lernsprache                     (Standard: Profil, sonst en)
           --target-lang <code>  Muttersprache                   (Standard: Profil, sonst de)
           --points <n>          empfohlene Zielpunkte der Position              (Standard 20, max 200)

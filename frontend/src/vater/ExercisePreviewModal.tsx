@@ -40,8 +40,7 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
       // Der verwandte Fall „Übung noch nicht gefüllt" (`exercise_empty`) braucht keinen Zweig: er ist
       // nicht vorschau-spezifisch und kommt deutsch aus `errorMessage` (GERMAN_PROBLEM_TEXT in lib/api).
       .catch((e) => setError(e instanceof ApiError && e.code === "no_checkable_content"
-        ? "Diese Übung hat keine einzeln prüfbaren Aufgaben – ein Schreibauftrag lässt sich nicht "
-          + "automatisch bewerten. Du kannst sie zuweisen, aber nicht durchspielen."
+        ? "Diese Übung hat keine einzeln prüfbaren Aufgaben. Du kannst sie zuweisen, aber nicht durchspielen."
         : errorMessage(e)));
   }, [exerciseId, stage]);
 
@@ -117,8 +116,8 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
 
         {!data && !error && <div className="loading">Lade…</div>}
 
-        {/* Nur ansehen, nicht bewerten (B-15): ein Aufsatz hat keine Antwort, die man prüfen könnte – der Vater
-            sieht Schreibauftrag, Länge und Bewertungskriterien so, wie er sie eingegeben hat, und schließt. */}
+        {/* Nur ansehen, nicht bewerten (B-15): Die Ansicht hängt am Feld `gradable`, nicht am Typ. Heute liefert
+            nur der Aufsatz eine (Schreibauftrag, Länge, Bewertungskriterien), der Text darunter nennt darum keinen. */}
         {data && data.gradable === false && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {data.items.map((it) => (
@@ -128,7 +127,7 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
               </div>
             ))}
             <p className="muted" style={{ margin: 0 }}>
-              Ein Schreibauftrag lässt sich nicht automatisch bewerten – du kannst ihn zuweisen, aber nicht durchspielen.
+              Diese Übung lässt sich nicht automatisch bewerten – du kannst sie zuweisen, aber nicht durchspielen.
             </p>
             <button type="button" className="btn" style={{ width: "auto", alignSelf: "flex-start" }} onClick={onClose}>Fertig</button>
           </div>

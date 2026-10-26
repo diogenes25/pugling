@@ -777,6 +777,13 @@ export function contentProblem(type: ExerciseTypeKey, rows: Row[], extra: Row, v
     case "Translation":
       if (!extra.sourceLang || !extra.targetLang) return "Bitte Ausgangs- und Zielsprache wählen.";
       return !r.source || !r.target ? "Bitte mindestens einen Satz mit Übersetzung angeben." : null;
-    case "Birkenbihl": return !r.text || !r.naturalTranslation ? "Bitte mindestens einen Satz mit Übersetzung angeben." : null;
+    // Die Sprachen zuerst (B-17), als Wächter: heute erreicht kein unbekannter Code den Editor (das Anlegen belegt
+    // en/de vor, und der Bearbeiten-Dialog hat für Birkenbihl keinen Inhalts-Editor, siehe `CONTENT_EDITABLE`). Kommt
+    // er dazu, trägt eine Alt-Übung womöglich „Englisch“ – die Auswahl zeigte „bitte wählen“, gespeichert würde der
+    // alte Wert, und eine eigene Glosse legte Store-Einträge unter dem falschen Code an.
+    case "Birkenbihl":
+      if (![extra.learningLang, extra.nativeLang].every((c) => LANGUAGES.some((l) => l.code === c)))
+        return "Bitte Lern- und Muttersprache aus der Liste wählen.";
+      return !r.text || !r.naturalTranslation ? "Bitte mindestens einen Satz mit Übersetzung angeben." : null;
   }
 }

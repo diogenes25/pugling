@@ -225,6 +225,8 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
     /// B-15: an essay has no gradable atoms, but the author still gets to SEE what the child will read - the
     /// writing task, the word limits and the rubric he entered. It is a view: not gradable, and the check
     /// keeps answering "nothing to check".
+    /// Red without the essay's <c>StaticView</c> (400 instead of 200), with <c>Gradable</c> left at its default
+    /// <c>true</c>, or with the hint dropping limits or rubric.
     /// </summary>
     [Fact]
     public async Task Aufsatz_Preview_ZeigtAuftragGrenzenUndRubrik_OhneBewertung()
@@ -264,6 +266,8 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
     /// <summary>
     /// B-15 AC 3: the view hook stays null for every other type. Two atom-less cases that must keep their 400:
     /// a reading text without questions (same type family, no view) and the arithmetic drill (own generate path).
+    /// This asserts the state before B-15, so on its own it cannot fail; it turns red only under the mutant
+    /// "the base <c>StaticView</c> returns a view for every type" (measured 2026-10-23) - a guard, not proof of B-15.
     /// </summary>
     [Fact]
     public async Task Preview_OhneAtome_BleibtFuerAndereTypenBeiNoCheckableContent()

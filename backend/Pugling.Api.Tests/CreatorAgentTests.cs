@@ -1048,13 +1048,62 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
+    /// B-21 AC 3, the whole cascade "request > profile > default": without languages on the request the PROFILE's
+    /// pair decides which weak words come in; with languages on the request, the request wins. The profile is
+    /// Latin→French - a pair no other test uses (the cap of 15 weak words cannot push the expected word out), and
+    /// with a target other than the default "de", so ignoring the profile's TARGET shows too. Three weak words,
+    /// one per pair, make every wrong pair visible. Red if the briefing ignores the profile (en/de: the English
+    /// word), ignores only its target (la/de: "lupus"), reads the null pair as "no filter" (all three), or lets
+    /// the profile beat an explicit request (second briefing: the French word instead of the English one).
+    /// </summary>
+    [Fact]
+    public async Task Foerdermodus_nimmt_das_Sprachpaar_des_Profils_wenn_die_Anfrage_keins_nennt()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var child = await TestApi.ChildAsync(factory);
+        async Task WeakAsync(string src, string tgt, string front, string back)
+        {
+            var exerciseId = await TestApi.CreateVocabExerciseAsync(father, src, tgt, (front, back));
+            var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)Pugling.Api.Models.TestStage.FreeText);
+            var sessionId = await TestApi.StartPositionSessionAsync(child, planId, positionId);
+            await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 0, givenAnswer: "falsch");
+        }
+        await WeakAsync("en", "de", "the wolf (B-21)", "der Wolf");
+        await WeakAsync("la", "de", "lupus (B-21)", "der Wolf (la)");
+        await WeakAsync("la", "fr", "lupus (B-21, fr)", "le loup");
+
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Foerdermodus-Profil");
+        var profile = await creator.CreateProfileAsync(new CreateCreatorProfileDto(
+            $"Latein – Fördermodus {Guid.NewGuid():N}", null, subjectId, null, null, null, null,
+            SourceLang: "la", TargetLang: "fr", Persona: null, Didactics: null, DefaultTypes: null, Active: true));
+        var fromProfile = await pipeline.BriefAsync(Request(subjectId, seriesId, seriesUnitId, "Vocabulary", profileId: profile.Id)
+            with { UseWeakWords = true, SourceLang = null, TargetLang = null });
+
+        Assert.Equal(("la", "fr"), (fromProfile.SourceLang, fromProfile.TargetLang));
+        Assert.Contains("lupus (B-21, fr)", fromProfile.RequiredWords);
+        Assert.DoesNotContain("lupus (B-21)", fromProfile.RequiredWords);
+        Assert.DoesNotContain("the wolf (B-21)", fromProfile.RequiredWords);
+
+        // The request's own pair beats the profile.
+        var fromRequest = await pipeline.BriefAsync(Request(subjectId, seriesId, seriesUnitId, "Vocabulary", profileId: profile.Id)
+            with { UseWeakWords = true, SourceLang = "en", TargetLang = "de" });
+
+        Assert.Contains("the wolf (B-21)", fromRequest.RequiredWords);
+        Assert.DoesNotContain("lupus (B-21, fr)", fromRequest.RequiredWords);
+        // Same target as the request, other source: only the sourceLang filter keeps it out.
+        Assert.DoesNotContain("lupus (B-21)", fromRequest.RequiredWords);
+    }
+
+    /// <summary>
     /// B-21 AC 4: <c>--use-weak</c> without a child used to do nothing, silently. Every verb that builds a
-    /// request (here <c>create</c> and <c>plan</c>, B-19) refuses it instead. Red if the guard is removed: then
+    /// request (here <c>create</c>, <c>plan</c> and <c>exam</c>, B-19) refuses it instead. Red if the guard is removed: then
     /// the verbs get past it and fail later for an unrelated reason, or not at all.
     /// </summary>
     [Theory]
     [InlineData("create", "--type", "Vocabulary")]
     [InlineData("plan")]
+    [InlineData("exam")]
     public async Task Foerdermodus_ohne_Kind_bricht_mit_Meldung_ab(string verb, params string[] extra)
     {
         var (pipeline, creator, _) = BuildAgent(VocabularyJson);

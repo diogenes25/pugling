@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { ConfigEditor, buildTypeConfig, emptyExtra, emptyRow } from "./exerciseConfig";
+import { ConfigEditor, buildTypeConfig, contentProblem, emptyExtra, emptyRow } from "./exerciseConfig";
 import { LANGUAGES } from "../lib/languages";
 import type { Row } from "./exerciseConfig";
 
@@ -31,12 +31,15 @@ describe("Birkenbihl-Sprachen", () => {
     expect((native as HTMLSelectElement).value).toBe("de");
   });
 
-  // Rot, wenn die Auswahl in das falsche Feld schreibt (z. B. beide auf `learningLang`).
+  // Rot, wenn eine Auswahl in das falsche Feld schreibt – je Feld einzeln, sonst bliebe „Lernsprache schreibt nach
+  // `nativeLang`“ grün, solange die Muttersprache richtig schreibt.
   it("schreibt die gewählte Sprache in das passende Feld", () => {
     const { setExtra } = view(emptyExtra("Birkenbihl"));
     fireEvent.change(screen.getByRole("combobox", { name: "Muttersprache" }), { target: { value: "fr" } });
-    const updater = setExtra.mock.calls[0][0] as (e: Row) => Row;
-    expect(updater({ learningLang: "en", nativeLang: "de" })).toEqual({ learningLang: "en", nativeLang: "fr" });
+    fireEvent.change(screen.getByRole("combobox", { name: "Lernsprache" }), { target: { value: "la" } });
+    const [native, learn] = setExtra.mock.calls.map((c) => c[0] as (e: Row) => Row);
+    expect(native({ learningLang: "en", nativeLang: "de" })).toEqual({ learningLang: "en", nativeLang: "fr" });
+    expect(learn({ learningLang: "en", nativeLang: "de" })).toEqual({ learningLang: "la", nativeLang: "de" });
   });
 
   // Rot ohne den Platzhalter für unbekannte Codes: dann zeigte die Auswahl „Deutsch", gespeichert bliebe „Englisch".
@@ -45,6 +48,20 @@ describe("Birkenbihl-Sprachen", () => {
     const learn = screen.getByRole("combobox", { name: "Lernsprache" }) as HTMLSelectElement;
     expect(learn.value).toBe("");
     expect(learn.selectedOptions[0].textContent).toBe("– bitte wählen –");
+  });
+
+  // Rot ohne die Sprachprüfung in `contentProblem` (ein Wächter: heute erreicht kein unbekannter Code den Editor,
+  // siehe dort). Der Satz ist in den ersten drei Fällen vollständig – es entscheidet nur die Sprache. Der vierte hält
+  // die Reihenfolge: fehlen Satz UND Sprache, nennt die Meldung die Sprache.
+  it("lässt eine Übung mit unbekanntem Sprachcode nicht speichern", () => {
+    const satz = [{ text: "Hello", naturalTranslation: "Hallo" }] as Row[];
+    expect(contentProblem("Birkenbihl", satz, { learningLang: "Englisch", nativeLang: "de" }, 0))
+      .toBe("Bitte Lern- und Muttersprache aus der Liste wählen.");
+    expect(contentProblem("Birkenbihl", satz, { learningLang: "en", nativeLang: "" }, 0))
+      .toBe("Bitte Lern- und Muttersprache aus der Liste wählen.");
+    expect(contentProblem("Birkenbihl", satz, { learningLang: "en", nativeLang: "de" }, 0)).toBeNull();
+    expect(contentProblem("Birkenbihl", [{}] as Row[], { learningLang: "Englisch", nativeLang: "de" }, 0))
+      .toBe("Bitte Lern- und Muttersprache aus der Liste wählen.");
   });
 
   // Rot ohne die Vorbelegung in `emptyExtra`: eine neue Übung, an der niemand die Auswahl anfasst, speicherte "".
