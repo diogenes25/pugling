@@ -270,4 +270,4 @@ End-to-End-Rundlauf nach dem Bauen. Kein Playwright-E2E zwingend (kein Vater→S
 - **2026-10-26** — Rollengang (Freigabe 6, Browser-Extension nicht verbunden → E2E): `e2e/uebungen-bewerten.spec.ts`
   fährt Vater (sieht Schnitt/Anzahl, sortiert, bewertet, ändert, liest nach Neuladen zurück, löscht) und Autorin
   (sieht die Bewertungen, kein Formular). **Keine Abnahme:** der Lauf endete an Freigabe 3 vor Rollengang-Runde und
-  Retro; Story bleibt `in-arbeit`, Wiederaufnahme im Protokoll.
+  Retro; Story bleibt `in-arbeit`, Wiederaufnahme im Protokoll. Commit `2f7ca24` (nicht gepusht).

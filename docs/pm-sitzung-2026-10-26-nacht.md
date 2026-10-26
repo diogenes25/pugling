@@ -266,7 +266,7 @@ behoben (das wäre Arbeit nach dem Ende). Nicht mehr gelaufen: Delta-Review, `we
 Rollengang-Runde als Abnahme, die Retrospektive mit der Nachschau zu Sprint 11 (B-64, B-71) und **NP-7 (B-05) –
 nicht begonnen.**
 
-B-12 steht auf **`in-arbeit`** mit `wartet_auf`. Der gebaute Stand ist grün und committet:
+B-12 steht auf **`in-arbeit`** mit `wartet_auf`. Der gebaute Stand ist grün und committet (`2f7ca24`, nicht gepusht):
 
 - `dotnet build Pugling.sln`: 0 Warnungen, 0 Fehler; `dotnet format Pugling.sln`: keine Änderung.
 - `dotnet test Pugling.sln -c Release`: **917/917** (909 + 8 neue in `ExerciseRatingsTests`).
