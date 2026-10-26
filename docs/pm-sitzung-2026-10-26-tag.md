@@ -379,6 +379,6 @@ verrutschten Adresse aber eine falsche Aussage über die Testabdeckung.
 **Vorschlag (nur vorgeschlagen, Freigabe 3):** *„Ändert eine Behebung einen Test, gegen den schon eine rote Probe
 protokolliert ist, wird diese Probe nach der Behebung wiederholt. Die Zeile im Verlauf nennt den Stand, an dem sie
 gemessen ist.“* Prosa in pm-loop Step 5, neben dem Pflichtschritt. Ein Tor müsste Proben maschinenlesbar führen,
-das tun sie heute nicht. Verwandt: [[Rote Probe am richtigen Ort]] in den Notizen.
+das tun sie heute nicht.
 
 **Commit:** `14fa1f7` (nicht gepusht).
