@@ -14,7 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 nachgeschaut: ""
-wartet_auf: "Nutzer: Nachtlauf an Freigabe 3 beendet (Sprint 10) – frontend-reviewer für B-134/B-236 nicht gelaufen"
+wartet_auf: ""
 ---
 
 # B-134 · Dreizehn Live-Regionen entstehen zusammen mit ihrem Text — und schweigen darum
@@ -170,3 +170,4 @@ hier vermerkt, damit sie nicht unbemerkt wachsen.
 - **2026-10-25** — fortgesetzt am 2026-10-25 (Wiederaufnahme des fünften Nachtlaufs, Sprint 10 / NP-5, Zähler weiter bei 5; [Protokoll](../pm-sitzung-2026-10-25-nacht.md)).
 - **2026-10-25** — gebaut nach Entscheidungen 1–3: Wächter aus dem Stash zurückgeholt, Regel `.live-region:empty { position: absolute; }` in `index.css`, die zwölf Stellen auf „Region immer da, sichtbare Klasse nur mit Meldung" umgebaut (`VaterExerciseCreate.tsx` 2×, `VaterMedia.tsx`, `VaterPlanCreate.tsx`, `VaterWizard.tsx`, `SohnPractice.tsx`, `SohnShop.tsx`, `VaterVocab.tsx` 2× über eine gemeinsame `failure`-Variable, `VaterLogin.tsx`, `exerciseConfig.tsx` „Antwort fehlt in der Auswahl", `TruncationHint` ohne `return null`). Rote Probe (Auflage 5), am wiederhergestellten Stand vor dem Umbau: erwartet 12 Funde → gemessen **12** (Liste im Testausgang, 1 failed / 8 passed); nach dem Umbau **9/9**. `tsc -b` sauber, Vitest **418/418** (409 + 9 Wächter-Fälle). AK 3 („sichtbar unverändert") hält Playwright voll im Sprint-Abschluss; strukturelle Selektoren (`:last-child`, `+`, `~`), die eine leere Region verschieben könnte, gibt es in `index.css` nicht (gesucht).
 - **2026-10-25** — Lauf an Freigabe 3 beendet (Fund 6 im Delta-Review von B-263, nicht in dieser Story), bevor der `frontend-reviewer` für B-134/B-236 lief. Stand gebaut, grün, committet; Stufe bleibt `in-arbeit`.
+- **2026-10-26** — **Entscheidung des Nutzers** (Morgen-Entscheidung 2026-10-26, Dialog, [Protokoll](../pm-sitzung-2026-10-26-nacht.md#morgen-entscheidung-2026-10-26)): Sprint 10 wird fortgesetzt, die Nacharbeit (inkl. des nicht gelaufenen `frontend-reviewer`) läuft mit **neuem Zähler (0)**. `wartet_auf` geleert.

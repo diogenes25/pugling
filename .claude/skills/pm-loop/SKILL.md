@@ -234,6 +234,14 @@ Before you let any role look again:
   `/smoke-test`, and for UI flows `npm run test:e2e`. Report the actual counts ("98/98 grün"), not
   a hopeful "should pass". If something's red, say so and fix it.
 - Add or extend an integration test in `Pugling.Api.Tests` for nontrivial backend changes.
+- **Every test case that claims a distinction must have the two values differ in its setup** ("not X",
+  "from the catalog instead of the free text", "own vs. foreign", "newest first"). Mandatory step
+  *before* the review: for each such case, name the mutant "both values equal" (or "ordering removed"),
+  and write into the session log which setup line keeps the two apart. A case for which no such line
+  exists is rewritten before review, not after. (Decided 2026-10-26 by the user: the dominant finding
+  class of sprints 11 and 12 — four of six counted findings in sprint 12 — even though the rule had
+  already been read as prose. Prose plus a written check, not a gate: a gate would have to read test data
+  semantically.)
 - Run the **`pugling-reviewer`** agent (correctness + project conventions) and fold in its
   correctness findings before sign-off; note cleanup-only findings as non-blocking refactors.
 

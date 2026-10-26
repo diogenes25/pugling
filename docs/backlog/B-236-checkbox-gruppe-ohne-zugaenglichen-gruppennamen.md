@@ -14,7 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 nachgeschaut: ""
-wartet_auf: "Nutzer: Nachtlauf an Freigabe 3 beendet (Sprint 10) – frontend-reviewer für B-134/B-236 nicht gelaufen"
+wartet_auf: ""
 ---
 
 # B-236 · Eine Gruppen-Überschrift über Kontrollkästchen ist sichtbar, aber für den Screenreader an nichts gebunden
@@ -86,3 +86,4 @@ den Ausgangsstand, (3) `FieldLabel` um `id` erweitern, sechs Container umstellen
 - **2026-10-25** — fortgesetzt am 2026-10-25 (Wiederaufnahme des fünften Nachtlaufs, Sprint 10 / NP-5, Zähler weiter bei 5; [Protokoll](../pm-sitzung-2026-10-25-nacht.md)).
 - **2026-10-25** — autonom gegrillt (Entscheidungen 1–2), geschätzt (S) und gebaut: `FieldLabel` mit `id`, sechs `.field`-Container mit `role="group"` + `aria-labelledby` (`VaterExerciseCreate.tsx`, `ExerciseEditModal.tsx`, `exerciseConfig.tsx`), neue Spec `frontend/e2e/gruppenkopf-benennt-die-gruppe.spec.ts` (zwei Tests, acht weiche Zusicherungen). Rote Probe (Auflage 5) – die vier Quelldateien aus `HEAD`, Spec unverändert: erwartet 8 rote Zusicherungen → gemessen **8** (`:22`, `:26`, `:27`, `:30`, `:35`, `:36` im Anlegen-Test, `:77`, `:79` im Dialog-Test, je „element(s) not found" bzw. `count` 0), **2 failed**; mit dem Fix **2 passed**. `tsc -b` sauber, Vitest **418/418**. `unverifiziert` auf `false`: der fehlende Gruppenname ist jetzt im Barrierefreiheitsbaum von Chromium gemessen; wie ein echter Screenreader ansagt, bleibt ein Blick des Menschen.
 - **2026-10-25** — Lauf an Freigabe 3 beendet (Fund 6 im Delta-Review von B-263, nicht in dieser Story), bevor der `frontend-reviewer` für B-134/B-236 lief. Stand gebaut, grün, committet; Stufe bleibt `in-arbeit`.
+- **2026-10-26** — **Entscheidung des Nutzers** (Morgen-Entscheidung 2026-10-26, Dialog, [Protokoll](../pm-sitzung-2026-10-26-nacht.md#morgen-entscheidung-2026-10-26)): Sprint 10 wird fortgesetzt, die Nacharbeit (inkl. des nicht gelaufenen `frontend-reviewer`) läuft mit **neuem Zähler (0)**. `wartet_auf` geleert.

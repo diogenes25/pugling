@@ -33,3 +33,4 @@ beim Nutzer.
 ## Verlauf
 
 - **2026-10-26** — angelegt aus dem `frontend-reviewer` zu B-64 im sechsten Nachtlauf (Fund 4).
+- **2026-10-26** — **Entscheidung des Nutzers** (Morgen-Entscheidung 2026-10-26, Dialog, [Protokoll](../pm-sitzung-2026-10-26-nacht.md#morgen-entscheidung-2026-10-26)): Das Zurückstellen unter dem alten Zähler war richtig. Die Story wird jetzt mit der **Nachschau zu Sprint 11** (zu B-64) mitgenommen, umgesetzt wie vom Reviewer vorgeschlagen (`autoFocus` am Namensfeld, nach Erfolg Fokus auf `#${id}-series`, Komponententest auf `document.activeElement`). **Freigabe des Nutzers (Autonomer Modus, Opt-in):** ein Nachtlauf darf sie selbst ausformulieren, schätzen und bauen.

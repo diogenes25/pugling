@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: memory/geteilte-uebungs-bibliothek.md
 grund: ""
 ersetzt_durch: []
-wartet_auf: "Nutzer: Zähler Sprint 12 überschritten (Freigabe 3), Funde 6 und 7 offen"
+wartet_auf: ""
 ---
 
 # B-12 · Geteilte Übungen bewerten und kuratieren
@@ -163,7 +163,7 @@ bleiben unabhängig von der Chapter→SeriesUnit-Verschiebung.
    je `(ExerciseId, CreatorId)`. `DELETE api/v1/creator/exercises/{id}/rating` entfernt die eigene Bewertung
    wieder.
 6. `GET api/v1/creator/exercises?sort=rating` (und `-rating`) sortiert nach dem Durchschnitt, unbewertete
-   Übungen konsistent ans Ende (bzw. den Anfang bei `-rating`) — Tie-Breaker bleibt `Id` wie bei den anderen
+   Übungen in **beiden** Richtungen am Ende (geändert 2026-10-26, Morgen-Entscheidung) — Tie-Breaker bleibt `Id` wie bei den anderen
    Sortierfällen.
 7. Im Vater-Web zeigt die Übungsliste (`VaterExercises.tsx`) Durchschnitt + Anzahl an; ein
    Bewertungs-Widget (Schreib-Primitiv `useAction`, analog `ExerciseSharingPanels.tsx`) erlaubt das Setzen/
@@ -271,3 +271,4 @@ End-to-End-Rundlauf nach dem Bauen. Kein Playwright-E2E zwingend (kein Vater→S
   fährt Vater (sieht Schnitt/Anzahl, sortiert, bewertet, ändert, liest nach Neuladen zurück, löscht) und Autorin
   (sieht die Bewertungen, kein Formular). **Keine Abnahme:** der Lauf endete an Freigabe 3 vor Rollengang-Runde und
   Retro; Story bleibt `in-arbeit`, Wiederaufnahme im Protokoll. Commit `2f7ca24` (nicht gepusht).
+- **2026-10-26** — **Entscheidung des Nutzers** (Morgen-Entscheidung 2026-10-26, Dialog, [Protokoll](../pm-sitzung-2026-10-26-nacht.md#morgen-entscheidung-2026-10-26)): (1) Unbewertete Übungen stehen in **beiden** Sortierrichtungen **am Ende** (`sort=rating` und `-rating`); AK 6 ist damit geändert, rote Probe gegen die Spiegel-Sortierung. (2) Gebaut ist die Bewertung in der Verwaltungsliste, so wie die Story es sagt, und damit wird B-12 abgenommen. Anzeige und Sortierung im Positions-Formular kommen als eigene Story [B-270](B-270-bewertung-im-positions-formular.md). (3) Die Nacharbeit (Fund 6, Fund 7, AK 6 neu, dazu [B-269](B-269-bewertungen-reihenfolge-und-updatedat-ungetestet.md)) läuft mit **neuem Zähler (0)**. `wartet_auf` geleert. **Freigabe des Nutzers (Autonomer Modus, Opt-in):** der Nachtlauf darf die geänderte AK 6 ohne weiteres Grillen bauen.

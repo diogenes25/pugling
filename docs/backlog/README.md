@@ -500,7 +500,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (62)
+### Offen (64)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -561,6 +561,8 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-250](B-250-stundenplan-in-der-tagesmission.md) | Der Stundenplan gewichtet die Tagesmission | Wunsch | `idee` | P3 | — | — | — |
 | [B-251](B-251-foto-der-vokabelliste-in-den-store.md) | Ein Foto der Vokabelliste aus dem Buch landet im Vokabelspeicher | Wunsch | `idee` | P3 | — | — | — |
 | [B-252](B-252-vorlesen-und-sprechen-bei-vokabeln.md) | Vokabeln vorlesen lassen und optional per Stimme beantworten | Wunsch | `idee` | P3 | — | — | — |
+| [B-270](B-270-bewertung-im-positions-formular.md) | Die Bewertung einer Übung beim Zusammenstellen des Plans sehen | Wunsch | `idee` | P3 | — | frontend | — |
+| [B-271](B-271-gewaehltes-profil-setzt-reihe.md) | Das zum Kind gewählte Profil setzt Reihe und Fach des KI-Creators | Wunsch | `idee` | P3 | — | backend | — |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `geschaetzt` | P3 | S | backend | — |
 | [B-230](B-230-pin-hash-doppelt-gehalten.md) | Der PIN-Hash liegt doppelt: Profil und Konto halten denselben Wert | Aufräumen | `idee` | P3 | — | — | — |
 | [B-269](B-269-bewertungen-reihenfolge-und-updatedat-ungetestet.md) | Bewertungen: Reihenfolge der Liste und `UpdatedAt` beim Überschreiben sind ungetestet | Aufräumen | `idee` | P3 | — | backend | — |
@@ -759,24 +761,15 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 
 </details>
 
-### Wartet auf Zutun von außen (11)
+### Wartet auf Zutun von außen (2)
 
 Diese Stories kommen **im Repo nicht weiter** — es fehlt ein Schritt, den nur ein Mensch
 oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird gerade gebaut".
 
 | Id | Story | Stufe | Wartet auf |
 | --- | --- | --- | --- |
-| [B-12](B-12-uebungen-kuratieren.md) | Geteilte Übungen bewerten und kuratieren | `in-arbeit` | Nutzer: Zähler Sprint 12 überschritten (Freigabe 3), Funde 6 und 7 offen |
-| [B-134](B-134-bedingte-live-regionen.md) | Dreizehn Live-Regionen entstehen zusammen mit ihrem Text — und schweigen darum | `in-arbeit` | Nutzer: Nachtlauf an Freigabe 3 beendet (Sprint 10) – frontend-reviewer für B-134/B-236 nicht gelaufen |
-| [B-15](B-15-testmodus-weitere-typen.md) | Vorschau für die nicht-prüfbaren Übungstypen | `in-arbeit` | Nutzer: Nachtlauf an Freigabe 3 beendet (6 Review-Funde in Sprint 7) – offene Funde im Verlauf |
-| [B-17](B-17-birkenbihl-sprachcodes.md) | Sprachcode-Normalisierung bei der Vokabel-Dekodierung | `in-arbeit` | Nutzer: Nachtlauf an Freigabe 3 beendet (6 Review-Funde in Sprint 7) – offene Funde im Verlauf |
-| [B-21](B-21-ki-creator-foerdermodus.md) | KI-Creator: Fördermodus (`--use-weak`) sprachrein und mit Tests absichern | `in-arbeit` | Nutzer: Nachtlauf an Freigabe 3 beendet (6 Review-Funde in Sprint 7) – offene Funde im Verlauf |
-| [B-236](B-236-checkbox-gruppe-ohne-zugaenglichen-gruppennamen.md) | Eine Gruppen-Überschrift über Kontrollkästchen ist sichtbar, aber für den Screenreader an nichts gebunden | `in-arbeit` | Nutzer: Nachtlauf an Freigabe 3 beendet (Sprint 10) – frontend-reviewer für B-134/B-236 nicht gelaufen |
-| [B-263](B-263-info-popover-steht-am-rechten-rand-ueber.md) | Ein aufgeklapptes ⓘ am rechten Rand lässt die Seite seitlich scrollen | `in-arbeit` | Nutzer: Nachtlauf an Freigabe 3 beendet (Sprint 10, Fund 6 aus dem Delta-Review) – offene Funde im Verlauf |
-| [B-267](B-267-entkoppeltes-lehrbuch-zeigt-katalogwert-im-freitextfeld.md) | Nach dem Entkoppeln zeigt das Freitextfeld den Katalogwert – gespeichert wird er nicht | `idee` | Nutzer: Entscheidung, ob die Antwort den gespeicherten Freitext getrennt mitliefert |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
-| [B-68](B-68-vater-web-responsive.md) | Das Vater-Web hat keinen einzigen eigenen Breakpoint | `in-arbeit` | Nutzer: Nachtlauf an Freigabe 3 beendet (Sprint 10, Fund 6 aus dem Delta-Review) – offene Funde im Verlauf |
 
 ### Nach der Abnahme entgangen (61)
 

@@ -13,7 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-wartet_auf: "Nutzer: Entscheidung, ob die Antwort den gespeicherten Freitext getrennt mitliefert"
+wartet_auf: ""
 ---
 
 # B-267 · Nach dem Entkoppeln zeigt das Freitextfeld den Katalogwert – gespeichert wird er nicht
@@ -45,3 +45,4 @@ Datenverlust ohne Zutun gibt es nicht (AK 5 von B-64 hält: Integrationstest
 
 - **2026-10-26** — angelegt aus dem `pugling-reviewer` (Fund 4) und dem `frontend-reviewer` zu B-64 im sechsten
   Nachtlauf; nicht gebaut, weil jede Behebung eine Entscheidung verlangt, die B-64 nicht hergibt (Freigabe 8).
+- **2026-10-26** — **Entscheidung des Nutzers** (Morgen-Entscheidung 2026-10-26, Dialog, [Protokoll](../pm-sitzung-2026-10-26-nacht.md#morgen-entscheidung-2026-10-26)): **Weg (a):** `TextbookResponse` trägt den gespeicherten Freitext **additiv** mit (etwa `PublisherFreeText`/`GradeFreeText`, kein Vertragsbruch), und das Formular belegt das wieder erscheinende Feld damit vor. Angezeigt ist dann, was gespeichert ist; AK 5 von B-64 hält weiter. Die Kostenangabe von B-64 Entscheidung 3 („kein neues Contract-Feld“) war eine Schätzung, kein Verbot. `wartet_auf` geleert. **Freigabe des Nutzers (Autonomer Modus, Opt-in):** ein Nachtlauf darf diese Story auf dieser Grundlage selbst ausformulieren, schätzen und bauen; trifft er auf eine Produktfrage, die die Entscheidung nicht hergibt, hält er an.

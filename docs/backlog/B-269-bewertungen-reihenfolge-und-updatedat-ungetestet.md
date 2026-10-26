@@ -36,3 +36,4 @@ Ausdrücklich zurückgestellt, nicht übersehen.
 ## Verlauf
 
 - **2026-10-26** — angelegt aus dem `pugling-reviewer` zu B-12 im siebten Nachtlauf (Hinweise 6 und 7).
+- **2026-10-26** — **Entscheidung des Nutzers** (Morgen-Entscheidung 2026-10-26, Dialog, [Protokoll](../pm-sitzung-2026-10-26-nacht.md#morgen-entscheidung-2026-10-26)): Das Zurückstellen unter dem alten Zähler war richtig. Die Story wird jetzt in der **Nacharbeit von Sprint 12** (zu B-12) mitgenommen. **Freigabe des Nutzers (Autonomer Modus, Opt-in):** ein Nachtlauf darf sie selbst ausformulieren, schätzen und bauen.

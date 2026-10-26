@@ -9,7 +9,7 @@ wo: frontend
 migration: nein
 vertragsbruch: nein
 quelle: remark #1
-wartet_auf: "Nutzer: Nachtlauf an Freigabe 3 beendet (Sprint 10, Fund 6 aus dem Delta-Review) – offene Funde im Verlauf"
+wartet_auf: ""
 ---
 
 # B-68 · Das Vater-Web hat keinen einzigen eigenen Breakpoint
@@ -186,3 +186,4 @@ sich in einer Runde entscheiden.
 - **2026-10-24** — Proben nach den Behebungen (Auflage 5): Endfassung **1 passed**; Mutante „jedes Popover verschoben" → **rot an `:137`** (Ruhelage); „Netz allein" (`.vater-main`-Regel weg, `InfoHint` alt) → **11 an `:67` + 11 an `:69`** – die Dokument-Zusicherung trägt auch unter `html { overflow-x: hidden }`; „Klappen nach oben aus" → **1 passed**: an keinem ⓘ der 22 Routen schneidet `.vater-main` unten ab, die senkrechte Zusicherung ist ein Wächter, der Klapp-Zweig nur begründet, nicht ausgelöst.
 - **2026-10-25** — fortgesetzt am 2026-10-25 (Wiederaufnahme des fünften Nachtlaufs, Sprint 10 / NP-5, Zähler weiter bei 5; [Protokoll](../pm-sitzung-2026-10-25-nacht.md)).
 - **2026-10-25** — Delta-Review (`frontend-reviewer`, nur die Behebungen aus `9c7578c`): die vier Behebungen tragen (Herausrechnen der Lage idempotent, `marginLeft`, `overBottom` misst nur das Popover, Ruhelage-Schritt rot bei jeder Verschiebung). **Zwei Funde, beide offen, siehe [B-263](B-263-info-popover-steht-am-rechten-rand-ueber.md):** der Klapp-nach-oben-Weg ist ungetestet, und ein ⓘ in einem `overflowX`-Rahmen (`ClozeTexts.tsx:239-245`) bleibt unten abgeschnitten. Der erste ist Fund 6 von Sprint 10 → Freigabe 3 beendet den Lauf; nichts davon behoben. Rollengang/Retro nicht geführt.
+- **2026-10-26** — **Entscheidung des Nutzers** (Morgen-Entscheidung 2026-10-26, Dialog, [Protokoll](../pm-sitzung-2026-10-26-nacht.md#morgen-entscheidung-2026-10-26)): Sprint 10 wird fortgesetzt, die Nacharbeit läuft mit **neuem Zähler (0)**; die Zählregel selbst bleibt unverändert. `wartet_auf` geleert.

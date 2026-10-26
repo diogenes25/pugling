@@ -303,3 +303,38 @@ Sprint 11 steht weiter aus.
 Review-Durchgang. Vier der sechs gezählten Funde waren Testdaten oder Zusicherungen, die die behauptete Abgrenzung
 nicht trugen (Fund 3 bis 6) – die Klasse aus dem Retro-Vorschlag von Sprint 11, den ich vor dem Bau gelesen und nur
 für die Backend-Werte angewandt habe.
+
+## Morgen-Entscheidung 2026-10-26
+
+Im Dialog mit dem Nutzer entschieden, eine Frage nach der anderen; Grundlage war die gebündelte Liste aus Lauf 3–7.
+
+1. **Zähler (Freigabe 3) bei Fortsetzung:** Die Nacharbeit von Sprint 10 (B-68, B-263, B-134, B-236), Sprint 12
+   (B-12, dazu B-269) und Sprint 7 (B-15, B-17, B-21) läuft je mit **neuem Zähler (0)**. Die Zählregel selbst bleibt
+   unverändert: kumuliert je Sprint, auch die erste Review-Runde zählt.
+2. **Retro-Vorschlag Sprint 11 gelandet, als Prosa plus Pflichtschritt:** `.claude/skills/pm-loop/SKILL.md` Step 5.
+   Jeder Testfall, der eine Abgrenzung behauptet, braucht im Aufbau verschiedene Werte. Vor dem Review wird je Fall
+   die Mutante „beide Werte gleich“ benannt, und die Aufbau-Zeile, die beide trennt, kommt ins Protokoll. Ein Tor
+   ist das nicht.
+3. **B-12:** Unbewertete Übungen stehen in **beiden** Sortierrichtungen am Ende (AK 6 geändert). Die
+   Verwaltungsliste genügt für die Abnahme, das Positions-Formular ist jetzt eine eigene Story,
+   [B-270](backlog/B-270-bewertung-im-positions-formular.md) (nicht in diesen Läufen).
+4. **B-263:** Fund 2 wird über `position: fixed` gelöst. Das Popover schließt beim Scrollen und beim Resize, die Spec
+   misst gegen den nächsten beschneidenden Vorfahren.
+5. **B-267:** Weg (a), der gespeicherte Freitext kommt additiv in die Antwort. **B-268/B-269:** Das Zurückstellen war
+   richtig. B-269 geht jetzt in die Nacharbeit von Sprint 12, B-268 in die Nachschau von Sprint 11.
+6. **Sprint 7 wird behalten** und nachgearbeitet, danach folgt NP-3. **B-256:** Das zum Kind gewählte Profil soll die
+   Reihe künftig setzen, das ist die neue Story [B-271](backlog/B-271-gewaehltes-profil-setzt-reihe.md) (nicht in
+   diesen Läufen).
+
+Jede betroffene Story trägt die Entscheidung als Verlaufszeile vom 2026-10-26, `wartet_auf` ist geleert. Freigabe 9
+gilt nur für B-12 (AK 6 neu), B-267, B-268 und B-269, und dort steht sie ausdrücklich.
+
+**Reihenfolge der Läufe, nacheinander, nie parallel:**
+
+| Lauf | Inhalt | Zähler |
+| --- | --- | --- |
+| A | Fortsetzung **Sprint 10** (B-68, B-263 inkl. `position: fixed`, B-134, B-236): offene Funde, fehlender `frontend-reviewer`, Rollengang, Retro | 0 |
+| B | Fortsetzung **Sprint 12** (B-12 mit AK 6 neu, Fund 6/7, B-269), Retro mit **Nachschau Sprint 11** zuerst; danach ein eigener kleiner Sprint *Lehrbuch-Formular* (B-267, B-268, beide zu B-64) | je 0 |
+| C | Nacharbeit **Sprint 7** (B-15, B-17, B-21), danach **NP-3** (B-28, B-245, B-230, Migration) als eigener Sprint | je 0 |
+| D | **NP-7** (B-05) | 0 |
+| E | **NP-9** (B-155, L, Migration) allein | 0 |

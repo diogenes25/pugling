@@ -13,7 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-wartet_auf: "Nutzer: Nachtlauf an Freigabe 3 beendet (Sprint 10, Fund 6 aus dem Delta-Review) – offene Funde im Verlauf"
+wartet_auf: ""
 ---
 
 # B-263 · Ein aufgeklapptes ⓘ am rechten Rand lässt die Seite seitlich scrollen
@@ -71,3 +71,4 @@ sichtbare ⓘ der 22 Routen auf und misst beides.
   1. *Testlücke zu AK 1* („dort klappt es über den Knopf"): kein Fall der Spec löst `up` aus (schon im Vorlauf gemessen: „Klappen nach oben aus" → 1 passed). Vorschlag des Reviewers: einen Schritt, der die Lage erzwingt (ⓘ ans Ende von `.vater-main` bzw. in einen niedrigen Scroll-Rahmen), dann `.up`, `p.bottom <= Knopf.top`, `overBottom <= 0`; rote Probe: `.info-hint-pop.up` entfernen.
   2. *ⓘ in einem `overflowX`-Rahmen bleibt unten abgeschnitten* (`ClozeTexts.tsx:239-245`, „Auch richtig" im `<th>`): `overflowX: auto` macht den Rahmen auch senkrecht zum Scroll-Container; bei ein, zwei Lücken ist die Tabelle niedriger als das Popover, nach oben ist kein Platz. Die Spec misst nur gegen `.vater-main` und öffnet dieses ⓘ nie (es erscheint erst mit Lücken). Vorschlag: `position: fixed` mit gemessenen Koordinaten, oder B-263 ausdrücklich auf `.vater-main` beschränken; im Test gegen den nächsten beschneidenden Vorfahren messen.
   3. *Nit:* Drehen/Resize bei offenem Popover wird nicht nachgeführt (ein `resize`-Listener, der schließt, genügte).
+- **2026-10-26** — **Entscheidung des Nutzers** (Morgen-Entscheidung 2026-10-26, Dialog, [Protokoll](../pm-sitzung-2026-10-26-nacht.md#morgen-entscheidung-2026-10-26)): Fund 2 des Delta-Reviews wird über **`position: fixed`** gelöst: das Popover misst seine Koordinaten wie bisher, steht aber fest zum Fenster und kommt so aus jedem beschneidenden Rahmen heraus; es **schließt beim Scrollen und beim Resize** (erledigt damit auch Nit 3). Die Spec misst gegen den nächsten beschneidenden Vorfahren und öffnet das ⓘ in `ClozeTexts` mit ein, zwei Lücken. Fund 1 (Klappen nach oben ungetestet) wird mitgenommen. Nacharbeit mit **neuem Zähler (0)**. `wartet_auf` geleert.
