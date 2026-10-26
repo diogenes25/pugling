@@ -9,11 +9,10 @@ import { vaterLogin } from "./helpers";
  * Gemessen je Route als `document.documentElement.scrollWidth <= window.innerWidth`. Das Projekt fährt
  * `Desktop Chrome` (überschreibt die 393 px aus playwright.config.ts), darum setzt die Spec die Breite selbst.
  *
- * Was sie rot macht (gemessen, B-68/B-263 im Verlauf): ohne die Lage-Korrektur in `InfoHint` stehen elf ⓘ bei
- * 768 px rechts über (Popover-Rechtskante bis 981 px) – mit dem Netz am `html` gemessen an `scrollWidth`, mit
- * `.vater-main` als Scroll-Container an `overRight`; ein `InfoHint`, der jedes Popover verschiebt, fällt am
- * Ruhelage-Schritt. Die Seiten selbst liefen mit dem Seed schon vor B-68 nicht über, und unten schneidet heute an
- * keinem der ⓘ etwas ab – Routen-Messung und `overBottom` sind Wächter, keine Belege eines alten Fehlers.
+ * Was sie rot macht (gemessen, B-68/B-263 im Verlauf): ohne die Lage-Korrektur in `InfoHint` melden 22 ⓘ bei
+ * 768 px rechts über (Popover-Rechtskante bis 981 px) – gemessen an `overRight` gegen das Fenster; ein
+ * `InfoHint`, der jedes Popover verschiebt, fällt am Ruhelage-Schritt. Die Seiten selbst liefen mit dem Seed
+ * schon vor B-68 nicht über – die Routen-Messung und `overBottom` sind Wächter, keine Belege eines alten Fehlers.
  */
 
 const FATHER = { id: "1", pin: "0000" };
@@ -32,18 +31,23 @@ async function overflow(page: Page) {
   }, WIDTH);
 }
 
-/** Lage des offenen Popovers relativ zum sichtbaren Inneren von `.vater-main`. */
+/**
+ * Lage des offenen Popovers im Fenster. Seit B-263 steht es fest zum Fenster (`position: fixed`); ob es irgendwo
+ * abgeschnitten wird, zeigt darum nicht eine Koordinate, sondern der Treffertest an seinen Ecken.
+ */
 async function popoverFit(page: Page) {
   return page.evaluate(() => {
     const main = document.querySelector(".vater-main") as HTMLElement;
     const pop = document.querySelector(".info-hint-pop") as HTMLElement;
-    const m = main.getBoundingClientRect();
     const p = pop.getBoundingClientRect();
+    // 16 px nach innen (runde Ecken, Scrollbalken-Trefferzone) – Begründung bei `INSET` in feldhilfe-lage.spec.ts.
+    const corners = [[p.left + 16, p.top + 16], [p.right - 16, p.top + 16], [p.left + 16, p.bottom - 16], [p.right - 16, p.bottom - 16]];
     return {
-      overRight: Math.round(p.right - (m.left + main.clientLeft + main.clientWidth)),
-      overLeft: Math.round(m.left + main.clientLeft - p.left),
-      // `.vater-main` scrollt seit B-68 selbst (auch senkrecht): ein Popover, das unten übersteht, würde dort
-      // abgeschnitten und zöge einen inneren Scrollbalken auf.
+      overRight: Math.round(p.right - document.documentElement.clientWidth),
+      overLeft: Math.round(-p.left),
+      hidden: corners.filter(([x, y]) => !document.elementsFromPoint(x, y).some((h) => pop.contains(h))).length,
+      // Ein fest stehendes Popover zieht keinen Scrollbalken in `.vater-main` auf; tut es das doch, ist es
+      // wieder in den Fluss gerutscht.
       overBottom: main.scrollHeight - main.clientHeight,
     };
   });
@@ -69,7 +73,8 @@ async function expectFits(page: Page, route: string) {
     const fit = await popoverFit(page);
     expect.soft(fit.overRight, `${route} ${name}: Popover rechts abgeschnitten`).toBeLessThanOrEqual(0);
     expect.soft(fit.overLeft, `${route} ${name}: Popover links abgeschnitten`).toBeLessThanOrEqual(0);
-    expect.soft(fit.overBottom, `${route} ${name}: Popover unten abgeschnitten`).toBeLessThanOrEqual(0);
+    expect.soft(fit.overBottom, `${route} ${name}: Popover wieder im Fluss (main scrollt)`).toBeLessThanOrEqual(0);
+    expect.soft(fit.hidden, `${route} ${name}: Ecken des Popovers abgeschnitten`).toBe(0);
     await page.keyboard.press("Escape");
     await expect(page.locator(".info-hint-pop")).toHaveCount(0);
   }

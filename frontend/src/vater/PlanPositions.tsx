@@ -617,8 +617,10 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
             )}
           </div>
         )}
-        {/* Aus demselben Grund wie die Trefferzahl: „Zeigt 20 von 143" gehörte zum vorigen Filter. */}
-        {!zeilenVeraltet && <TruncationHint shown={results.length} total={exercises.data?.total ?? 0} />}
+        {/* Aus demselben Grund wie die Trefferzahl: „Zeigt 20 von 143" gehörte zum vorigen Filter. Die Region
+            bleibt dabei stehen und wird nur geleert – sonst entstünde sie mit dem neuen Hinweis zusammen, und
+            gerade die Änderung, die der Vater mit dem Filter ausgelöst hat, bliebe stumm (B-134). */}
+        <TruncationHint shown={results.length} total={zeilenVeraltet ? 0 : (exercises.data?.total ?? 0)} />
         <div role="status" aria-live="polite">
           {auswahlHinweis && <div className="banner info" style={{ marginTop: 6 }}>{auswahlHinweis}</div>}
         </div>

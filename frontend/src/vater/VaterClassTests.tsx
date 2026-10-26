@@ -228,7 +228,9 @@ function ClassTestDetail({ id, subjectId, onChanged }:
               </ul>
             )
           )}
-          {found.data && <TruncationHint shown={found.data.items.length} total={found.data.total} />}
+          {/* Die Region steht, sobald die Arbeit geladen ist; eine neue Suche ändert danach nur ihren Inhalt
+              (B-134). Das allererste Laden kann stumm bleiben – dieselbe Abwägung wie bei der Seitenanzeige. */}
+          <TruncationHint shown={found.data?.items.length ?? 0} total={found.data?.total ?? 0} />
 
           {practice.data && (
             <>

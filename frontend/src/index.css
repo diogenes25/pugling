@@ -272,10 +272,13 @@ a { color: var(--cyan); }
 .info-hint-btn:hover { color: var(--ink); border-color: var(--cyan); }
 .info-hint-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 .info-hint-btn[aria-expanded="true"] { color: var(--bg); background: var(--cyan); border-color: var(--cyan); }
-/* Über allem, was danach kommt (Tabellenzeilen, Karten) – sonst schiebt sich das nächste Feld davor. */
+/* Über allem, was danach kommt (Tabellenzeilen, Karten) – sonst schiebt sich das nächste Feld davor. Fest zum
+   Fenster, damit kein Rahmen mit beschnittenem Überlauf es abschneidet; `InfoHint` setzt `left`/`top` (B-263). */
 .info-hint-pop {
-  position: absolute; top: calc(100% + 6px); left: -6px; z-index: 30;
+  position: fixed; z-index: 30;
   width: max-content; max-width: min(320px, 78vw);
+  /* Nie höher als das Fenster (Querformat am Handy): fest stehend ließe sich der Rest nicht herscrollen. */
+  max-height: calc(100dvh - 16px); overflow-y: auto;
   display: flex; flex-direction: column; gap: 5px;
   background: var(--card-hi); border: 1.5px solid var(--stroke); border-radius: 12px;
   padding: 10px 12px; box-shadow: 0 14px 28px -12px var(--shadow);
@@ -283,8 +286,6 @@ a { color: var(--cyan); }
   text-transform: none; letter-spacing: normal;
 }
 .info-hint-pop b { font-size: 12px; color: var(--cyan); }
-/* Unten abgeschnitten würde es (Ende von `.vater-main`): `InfoHint` klappt es über den Knopf (B-263). */
-.info-hint-pop.up { top: auto; bottom: calc(100% + 6px); }
 
 /* =========================================================================
    Vater-Web (Admin): heller, sachlicher – gleiche Tokens, andere Dichte.

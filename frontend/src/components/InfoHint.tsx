@@ -18,51 +18,65 @@ export function InfoHint({ topic }: { topic: HelpTopic }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLSpanElement | null>(null);
   const popRef = useRef<HTMLSpanElement | null>(null);
-  // Lage im sichtbaren Bereich (B-263): wie weit nach links verschoben, und ob nach oben geklappt.
-  const [place, setPlace] = useState<Placement>(REST);
-  const placeRef = useRef<Placement>(REST);
+  // Lage im Fenster (B-263): gemessen beim Öffnen, `null` bis dahin.
+  const [place, setPlace] = useState<Placement | null>(null);
+  // Wo der Knopf beim Messen stand – der Bezug, an dem Scrollen erkannt wird.
+  const anchorRef = useRef<{ left: number; top: number } | null>(null);
 
   // Escape schließt, Klick daneben schließt – ein Popover, das offen bleibt, verdeckt das nächste Feld.
+  // Scrollen und Größenänderung schließen ebenfalls: das Popover steht fest zum Fenster und liefe sonst vom
+  // Knopf weg. `capture`, weil `scroll` nicht hochblubbert – so meldet sich auch ein scrollender Rahmen.
+  // Geschlossen wird nur, wenn der Knopf sich tatsächlich bewegt hat: `scroll` kommt erst im nächsten Frame an,
+  // und ein Scrollen von VOR dem Öffnen (der Browser rollt den Knopf ins Bild) schlösse es sonst sofort wieder.
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    const close = () => setOpen(false);
+    const onScroll = () => {
+      const at = anchorRef.current;
+      const now = wrapRef.current?.getBoundingClientRect();
+      if (!at || !now || Math.abs(now.left - at.left) > 1 || Math.abs(now.top - at.top) > 1) close();
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
     const onDown = (e: MouseEvent) => {
-      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+      if (!wrapRef.current?.contains(e.target as Node)) close();
     };
     window.addEventListener("keydown", onKey);
     window.addEventListener("mousedown", onDown);
+    window.addEventListener("scroll", onScroll, { capture: true, passive: true });
+    window.addEventListener("resize", close);
     return () => {
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("mousedown", onDown);
+      window.removeEventListener("scroll", onScroll, { capture: true });
+      window.removeEventListener("resize", close);
     };
   }, [open]);
 
-  // Am Knopf verankert und bis zu 320 px breit, stand das Popover neben einem Feld am rechten Rand über:
-  // am 768-px-Tablet scrollte dadurch die ganze Seite seitlich (B-68), in einem scrollenden Rahmen wurde es
-  // abgeschnitten – unten genauso, seit `.vater-main` den Überlauf selbst aufnimmt. Gemessen einmal je
-  // Öffnen, bevor der Browser zeichnet; die schon angewandte Lage wird herausgerechnet, damit ein zweiter
-  // Lauf dasselbe Ergebnis liefert.
+  // Am Knopf verankert und bis zu 320 px breit, stand das Popover neben einem Feld am rechten Rand über: am
+  // 768-px-Tablet scrollte dadurch die ganze Seite seitlich (B-68), und in jedem Rahmen mit beschnittenem
+  // Überlauf (`.vater-main`, der `overflowX`-Rahmen einer Tabelle) wurde es abgeschnitten – auch unten, wo
+  // der Rahmen niedriger ist als das Popover. `position: fixed` hebt es aus allen diesen Rahmen; die Lage
+  // rechnet es darum selbst aus den Maßen des Knopfs, einmal je Öffnen, bevor der Browser zeichnet.
   useLayoutEffect(() => {
-    const apply = (next: Placement) => { placeRef.current = next; setPlace(next); };
-    if (!open) { apply(REST); return; }
+    if (!open) { setPlace(null); return; }
     const pop = popRef.current;
     const wrap = wrapRef.current;
     if (!pop || !wrap) return;
-    const bounds = visibleBounds(wrap);
-    const rect = pop.getBoundingClientRect();
     const btn = wrap.getBoundingClientRect();
-    // Ruhelage: ohne Verschiebung, unter dem Knopf.
-    const left = rect.left + placeRef.current.shift;
-    const right = rect.right + placeRef.current.shift;
-    const height = rect.height;
-    const over = right - (bounds.right - EDGE);
-    // Nie über den linken Rand hinaus: ist der Platz zu schmal, bleibt wenigstens der Textanfang lesbar.
-    const room = left - (bounds.left + EDGE);
-    const shift = over > 0 ? Math.max(0, Math.min(over, room)) : 0;
+    anchorRef.current = { left: btn.left, top: btn.top };
+    const { width, height } = pop.getBoundingClientRect();
+    const viewW = document.documentElement.clientWidth;
+    const viewH = document.documentElement.clientHeight;
+    // Ruhelage links am Knopf; nach links verschoben, so weit es rechts übersteht – nie über den linken
+    // Rand hinaus: ist das Fenster zu schmal, bleibt wenigstens der Textanfang lesbar.
+    const left = Math.max(EDGE, Math.min(btn.left + REST_DX, viewW - EDGE - width));
     // Nach oben nur, wenn es unten abgeschnitten würde UND oben Platz hat.
-    const below = btn.bottom + GAP + height;
-    const up = below > bounds.bottom - EDGE && btn.top - GAP - height >= bounds.top + EDGE;
-    apply({ shift, up });
+    const below = btn.bottom + GAP;
+    const up = below + height > viewH - EDGE && btn.top - GAP - height >= EDGE;
+    // Passt es weder unten noch oben (Querformat am Handy), ins Fenster schieben, auch über den Knopf: weiter-
+    // scrollen schlösse es ja. Höher als das Fenster wird es nie – `max-height` in index.css, es scrollt dann selbst.
+    const top = Math.max(EDGE, Math.min(up ? btn.top - GAP - height : below, viewH - EDGE - height));
+    setPlace({ left, top, up });
   }, [open]);
 
   return (
@@ -72,8 +86,8 @@ export function InfoHint({ topic }: { topic: HelpTopic }) {
         aria-label={`Erklärung zu „${help.title}"`}
         onClick={() => setOpen((o) => !o)}>i</button>
       {open && (
-        <span className={`info-hint-pop${place.up ? " up" : ""}`} id={id} role="note" ref={popRef}
-          style={place.shift > 0 ? { marginLeft: -place.shift } : undefined}>
+        <span className={`info-hint-pop${place?.up ? " up" : ""}`} id={id} role="note" ref={popRef}
+          style={place ? { left: place.left, top: place.top } : { visibility: "hidden" }}>
           <b>{help.title}</b>
           <span>{help.text}</span>
         </span>
@@ -82,37 +96,14 @@ export function InfoHint({ topic }: { topic: HelpTopic }) {
   );
 }
 
-type Placement = { shift: number; up: boolean };
-const REST: Placement = { shift: 0, up: false };
-/** Abstand, den das Popover zum Rand hält, an den es sonst stieße. */
+/** `up` trägt keine eigene Gestalt mehr (die Lage steckt in `top`); die Klasse `.up` macht das Klappen prüfbar. */
+type Placement = { left: number; top: number; up: boolean };
+/** Abstand, den das Popover zum Fensterrand hält, an den es sonst stieße. */
 const EDGE = 8;
-/** Abstand zwischen Knopf und Popover, wie in `.info-hint-pop` (index.css: `calc(100% + 6px)`). */
+/** Abstand zwischen Knopf und Popover. */
 const GAP = 6;
-
-/**
- * Der Bereich, in dem ein Element tatsächlich zu sehen ist: waagrecht das Fenster, verengt um jeden Vorfahren,
- * der seinen Überlauf beschneidet (der `overflowX`-Rahmen einer Tabelle, `.vater-main`); senkrecht nur diese
- * Vorfahren – über den Fensterrand hinaus scrollt die Seite, das schneidet nichts ab.
- */
-function visibleBounds(el: HTMLElement): { left: number; right: number; top: number; bottom: number } {
-  let left = 0;
-  let right = document.documentElement.clientWidth;
-  let top = -Infinity;
-  let bottom = Infinity;
-  for (let a = el.parentElement; a && a !== document.documentElement; a = a.parentElement) {
-    const style = getComputedStyle(a);
-    const r = a.getBoundingClientRect();
-    if (style.overflowX !== "visible") {
-      left = Math.max(left, r.left + a.clientLeft);
-      right = Math.min(right, r.left + a.clientLeft + a.clientWidth);
-    }
-    if (style.overflowY !== "visible") {
-      top = Math.max(top, r.top + a.clientTop);
-      bottom = Math.min(bottom, r.top + a.clientTop + a.clientHeight);
-    }
-  }
-  return { left, right, top, bottom };
-}
+/** Ruhelage: das Popover beginnt 6 px links vom Knopf, wie vor B-263. */
+const REST_DX = -6;
 
 /**
  * Feld-Beschriftung mit angehängtem „ⓘ". Ersetzt ein `<label>` eins zu eins – der Hinweis steht als

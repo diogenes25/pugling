@@ -500,7 +500,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (64)
+### Offen (62)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -515,9 +515,6 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-247](B-247-knowunity-vergleich-sammel-story.md) | Knowunity-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | Wunsch | `idee` | P2 | — | — | — |
 | [B-248](B-248-klassenarbeit-countdown-treibt-den-plan.md) | Die Klassenarbeit wird beim Kind sichtbar und verdichtet den Plan vor dem Termin | Wunsch | `idee` | P2 | — | — | — |
 | [B-249](B-249-probeklausur-mit-notenprognose.md) | Eine Probeklausur über das Bündel einer Klassenarbeit, mit Notenprognose | Wunsch | `idee` | P2 | — | — | — |
-| [B-134](B-134-bedingte-live-regionen.md) | Dreizehn Live-Regionen entstehen zusammen mit ihrem Text — und schweigen darum | Defekt | `in-arbeit` | P3 | M | frontend | — |
-| [B-236](B-236-checkbox-gruppe-ohne-zugaenglichen-gruppennamen.md) | Eine Gruppen-Überschrift über Kontrollkästchen ist sichtbar, aber für den Screenreader an nichts gebunden | Defekt | `in-arbeit` | P3 | S | frontend | — |
-| [B-263](B-263-info-popover-steht-am-rechten-rand-ueber.md) | Ein aufgeklapptes ⓘ am rechten Rand lässt die Seite seitlich scrollen | Defekt | `in-arbeit` | P3 | XS | frontend | — |
 | [B-164](B-164-useasync-paart-frischen-zustand-mit-alten-daten.md) | Nach einem Wechsel zeigt der Bildschirm für einen Moment frischen Zustand mit alten Daten | Defekt | `ausformuliert` | P3 | — | frontend | — |
 | [B-141](B-141-interest-tag-label-dublette.md) | Zwei Interessen-Tags dürfen dasselbe Label tragen | Defekt | `idee` | P3 | — | — | — |
 | [B-205](B-205-exercise-in-use-ohne-deutsche-fassung.md) | `exercise_in_use` fehlt in `GERMAN_PROBLEM_TEXT` — die zwei Geschwister stehen drin | Defekt | `idee` | P3 | — | — | — |
@@ -533,6 +530,8 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-265](B-265-sperr-zaehler-zusicherung-kann-nie-fallen.md) | Die „Spur“ der gesperrten Lesevorgänge ist eine Zusicherung, die nie fallen kann | Defekt | `idee` | P3 | — | backend | — |
 | [B-266](B-266-wartepunkt-netzwerk-statt-app-zustand.md) | Der Wartepunkt aus B-180 wartet aufs Netzwerk, nicht auf die App | Defekt | `idee` | P3 | — | frontend | — |
 | [B-268](B-268-fokus-nach-inline-reihe.md) | Nach „Reihe anlegen & wählen“ fällt der Fokus auf `body` | Defekt | `idee` | P3 | — | frontend | — |
+| [B-272](B-272-live-region-und-gruppen-tests-tragen-nicht-alles.md) | Tests zu B-134 und B-236 lassen Mutanten grün | Defekt | `idee` | P3 | — | frontend | — |
+| [B-273](B-273-feste-feldhilfe-resize-und-layoutverschiebung.md) | Das feste ⓘ-Popover: Resize ohne Prüfung, Layout-Verschiebung ohne Schließen | Defekt | `idee` | P3 | — | frontend | — |
 | [B-17](B-17-birkenbihl-sprachcodes.md) | Sprachcode-Normalisierung bei der Vokabel-Dekodierung | Frage | `in-arbeit` | P3 | XS | frontend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-231](B-231-fokus-ohne-fehlerkasten.md) | Wohin gehört der Fokus, wenn ein Knopf ohne Fehlerkasten gesperrt wird? | Frage | `idee` | P3 | — | frontend | — |
@@ -544,7 +543,6 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-12](B-12-uebungen-kuratieren.md) | Geteilte Übungen bewerten und kuratieren | Wunsch | `in-arbeit` | P3 | M | beides | Migration |
 | [B-15](B-15-testmodus-weitere-typen.md) | Vorschau für die nicht-prüfbaren Übungstypen | Wunsch | `in-arbeit` | P3 | S | beides | — |
 | [B-21](B-21-ki-creator-foerdermodus.md) | KI-Creator: Fördermodus (`--use-weak`) sprachrein und mit Tests absichern | Wunsch | `in-arbeit` | P3 | S | backend | — |
-| [B-68](B-68-vater-web-responsive.md) | Das Vater-Web hat keinen einzigen eigenen Breakpoint | Wunsch | `in-arbeit` | P3 | M | frontend | — |
 | [B-155](B-155-grammatik-themen-als-tags.md) | Grammatik als Thema, nicht als Freitext | Wunsch | `geschaetzt` | P3 | L | beides | Migration |
 | [B-22](B-22-unit-stoffnotizen-llm.md) | Unit-Stoffnotizen LLM-gestützt befüllen | Wunsch | `geschaetzt` | P3 | M | backend | Migration |
 | [B-28](B-28-login-name-sequenziell.md) | Sequenzielle IDs als Login-Name | Wunsch | `geschaetzt` | P3 | S | backend | — |
@@ -570,7 +568,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-05](B-05-buchstaben-tausch.md) | Buchstaben-Tausch-Eingabe (Anagramm) | Wunsch | `geschaetzt` | P5 | M | beides | — |
 
 <details>
-<summary>Abgenommen (184)</summary>
+<summary>Abgenommen (188)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -612,6 +610,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-131](B-131-leere-story-faellt-aus-dem-index.md) | Eine leere Story-Datei verschwindet aus dem Index — auch aus der Mängelliste | Defekt | `abgenommen` | P3 | XS | doku | — |
 | [B-132](B-132-hinweis-live-region-haengt-aus.md) | Der Hinweis „aus dem Lehrwerk übernommen" wird angesagt, indem seine Live-Region entsteht | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-133](B-133-zwei-reihen-ein-anzeigename.md) | Nach einer Umbenennung können zwei Reihen denselben Anzeigenamen tragen | Defekt | `abgenommen` | P3 | S | backend | — |
+| [B-134](B-134-bedingte-live-regionen.md) | Dreizehn Live-Regionen entstehen zusammen mit ihrem Text — und schweigen darum | Defekt | `abgenommen` | P3 | M | frontend | — |
 | [B-135](B-135-freitextsuchen-case-sensitiv.md) | Sieben weitere Freitextsuchen sind buchstabengenau | Defekt | `abgenommen` | P3 | M | backend | — |
 | [B-136](B-136-verlag-umbenennen-erzeugt-namensdublette.md) | Beim Verlag steht dieselbe Dublettenlücke wie bei der Reihe | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-138](B-138-markup-sickert-in-openapi.md) | Rohe HTML-Tags stehen in 70 Beschreibungen des Vertragsdokuments | Aufräumen | `abgenommen` | P3 | S | backend | — |
@@ -690,6 +689,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-228](B-228-mehr-laden-verliert-den-fokus.md) | „Mehr laden“ in der gefüllten Verlaufskarte verliert den Fokus | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-229](B-229-nicht-geladen-waehrend-des-ladens.md) | Das Kind-Feld im Plan-Formular sagt „(nicht geladen)“, solange die Liste erst lädt | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-235](B-235-unit-feld-sagt-nicht-geladen-waehrend-des-ladens.md) | Das Unit-Feld im Lehrbuch-Formular sagt „(nicht geladen)“, solange die Units erst laden | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-236](B-236-checkbox-gruppe-ohne-zugaenglichen-gruppennamen.md) | Eine Gruppen-Überschrift über Kontrollkästchen ist sichtbar, aber für den Screenreader an nichts gebunden | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-237](B-237-ki-creator-hilfe-nennt-ein-kapitel.md) | Die Hilfe des KI-Creators bietet `--chapter <id>` an – ein Kapitel gibt es seit B-106 nicht mehr | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-238](B-238-rest-tutorial-des-creators-faehrt-die-tote-kapitel-route.md) | Das ausführbare REST-Tutorial des Creators fährt die Kapitel-Route, die es seit B-106 nicht gibt | Defekt | `abgenommen` | P2 | S | doku | — |
 | [B-239](B-239-wiki-beispiele-tragen-deutsche-xml-docs.md) | Die Erweitern-Anleitung im Wiki zeigt deutsche `/// <summary>` – entgegen der Regel „Code-Doku auf Englisch" | Aufräumen | `abgenommen` | P3 | XS | doku | — |
@@ -702,6 +702,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-25](B-25-vite-pwa-peer-konflikt.md) | Peer-Konflikt `vite-plugin-pwa` ↔ `vite@8` lösen | Aufräumen | `abgenommen` | P3 | XS | frontend | — |
 | [B-256](B-256-sprint-5-drei-saetze-nach-der-abnahme.md) | Drei Sätze aus Sprint 5, die nach der Abnahme nicht stimmen | Defekt | `abgenommen` | P3 | XS | beides | — |
 | [B-26](B-26-e2e-in-ci.md) | Der E2E-Nachtlauf ist rot – und niemand erfährt es | Defekt | `abgenommen` | P1 | S | frontend | — |
+| [B-263](B-263-info-popover-steht-am-rechten-rand-ueber.md) | Ein aufgeklapptes ⓘ am rechten Rand lässt die Seite seitlich scrollen | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-27](B-27-testsuite-grenzfaelle.md) | Die Grenzen des `ScoringService` als Tabelle statt als Flow | Aufräumen | `abgenommen` | P2 | S | backend | — |
 | [B-32](B-32-father-tabellenname.md) | `Father` heißt noch `Father`, obwohl die Zeile `Adult` ist | Aufräumen | `abgenommen` | P3 | S | backend | — |
 | [B-35](B-35-karten-umdrehen-animation.md) | Karten drehen sich beim Aufdecken um | Wunsch | `abgenommen` | P3 | S | frontend | — |
@@ -734,6 +735,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-65](B-65-vokabel-mehrere-uebersetzungen.md) | Eine Vokabel mit zwei richtigen Übersetzungen wertet eine davon falsch | Defekt | `abgenommen` | P1 | M | beides | Migration |
 | [B-66](B-66-buchstabenkaestchen-trennzeichen.md) | Das Buchstabenkästchen lässt Leer- und Satzzeichen tippen, die schon feststehen | Defekt | `abgenommen` | P2 | M | beides | — |
 | [B-67](B-67-fachlehrer-aus-lehrwerk.md) | Der Fachlehrer fragt nach Fach und Sprachen, die im gewählten Lehrwerk längst stehen | Wunsch | `abgenommen` | P2 | S | frontend | — |
+| [B-68](B-68-vater-web-responsive.md) | Das Vater-Web hat keinen einzigen eigenen Breakpoint | Wunsch | `abgenommen` | P3 | M | frontend | — |
 | [B-69](B-69-wiederhol-felder-alternativen.md) | Kommagetrennte Sammelfelder: einer davon nimmt gar keine zweite Alternative an | Defekt | `abgenommen` | P2 | M | frontend | — |
 | [B-70](B-70-selbsteinschaetzung-nur-primaerloesung.md) | Die Selbsteinschätzung zeigt nur die primäre Übersetzung | Defekt | `abgenommen` | P2 | S | beides | — |
 | [B-71](B-71-inline-vokabelliste-ohne-varianten.md) | Die Inline-Vokabelliste im Übungs-Editor kann keine gleichwertigen Übersetzungen anlegen | Wunsch | `abgenommen` | P3 | M | beides | — |
@@ -773,7 +775,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (61)
 
-**Nachgeschaut: 182 von 184 abgenommenen** — und in 50 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 2 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 182 von 188 abgenommenen** — und in 50 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 6 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -840,14 +842,18 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-266](B-266-wartepunkt-netzwerk-statt-app-zustand.md) | Der Wartepunkt aus B-180 wartet aufs Netzwerk, nicht auf die App | [B-180] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (2) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (6) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
+| [B-134](B-134-bedingte-live-regionen.md) | Dreizehn Live-Regionen entstehen zusammen mit ihrem Text — und schweigen darum |
+| [B-236](B-236-checkbox-gruppe-ohne-zugaenglichen-gruppennamen.md) | Eine Gruppen-Überschrift über Kontrollkästchen ist sichtbar, aber für den Screenreader an nichts gebunden |
+| [B-263](B-263-info-popover-steht-am-rechten-rand-ueber.md) | Ein aufgeklapptes ⓘ am rechten Rand lässt die Seite seitlich scrollen |
 | [B-64](B-64-textbook-vs-series.md) | Das Lehrwerk gibt es zweimal: einmal als Freitext am Kind, einmal katalogisiert |
+| [B-68](B-68-vater-web-responsive.md) | Das Vater-Web hat keinen einzigen eigenen Breakpoint |
 | [B-71](B-71-inline-vokabelliste-ohne-varianten.md) | Die Inline-Vokabelliste im Übungs-Editor kann keine gleichwertigen Übersetzungen anlegen |
 
 </details>
@@ -876,7 +882,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-209](B-209-savednotice-raeumt-nie.md) | `abgenommen` | Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung" |
 | [B-210](B-210-dialog-haelt-zwei-wahrheiten-fuer-die-config.md) | `abgenommen` | Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung" |
 | [B-212](B-212-fuenfter-meldungsplatz-in-lehrwerke.md) | `abgenommen` | Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung" |
-| [B-236](B-236-checkbox-gruppe-ohne-zugaenglichen-gruppennamen.md) | `in-arbeit` | Abschnitt „User Story", Abschnitt „Ist-Stand…" |
+| [B-236](B-236-checkbox-gruppe-ohne-zugaenglichen-gruppennamen.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…" |
 | [B-260](B-260-normalisierer-setzt-absatz-mitten-im-satz.md) | `idee` | `unverifiziert: true` |
 | [B-261](B-261-produktionspfad-des-beispielkatalogs-ungetestet.md) | `idee` | `unverifiziert: true` |
 | [B-262](B-262-vorwahl-bestehendes-kind-ohne-eigene-spec.md) | `idee` | `unverifiziert: true` |
@@ -885,6 +891,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-267](B-267-entkoppeltes-lehrbuch-zeigt-katalogwert-im-freitextfeld.md) | `idee` | `unverifiziert: true` |
 | [B-268](B-268-fokus-nach-inline-reihe.md) | `idee` | `unverifiziert: true` |
 | [B-269](B-269-bewertungen-reihenfolge-und-updatedat-ungetestet.md) | `idee` | `unverifiziert: true` |
+| [B-272](B-272-live-region-und-gruppen-tests-tragen-nicht-alles.md) | `idee` | `unverifiziert: true` |
 
 <details>
 <summary>Verworfen (22)</summary>

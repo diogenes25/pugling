@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/frontend, a11y]
+tags: [typ/story, status/abgenommen, bereich/frontend, a11y]
 aliases: [Gruppenkopf ohne fieldset/legend, Freigabe-Gruppe ohne Gruppennamen]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: S
@@ -87,3 +87,5 @@ den Ausgangsstand, (3) `FieldLabel` um `id` erweitern, sechs Container umstellen
 - **2026-10-25** — autonom gegrillt (Entscheidungen 1–2), geschätzt (S) und gebaut: `FieldLabel` mit `id`, sechs `.field`-Container mit `role="group"` + `aria-labelledby` (`VaterExerciseCreate.tsx`, `ExerciseEditModal.tsx`, `exerciseConfig.tsx`), neue Spec `frontend/e2e/gruppenkopf-benennt-die-gruppe.spec.ts` (zwei Tests, acht weiche Zusicherungen). Rote Probe (Auflage 5) – die vier Quelldateien aus `HEAD`, Spec unverändert: erwartet 8 rote Zusicherungen → gemessen **8** (`:22`, `:26`, `:27`, `:30`, `:35`, `:36` im Anlegen-Test, `:77`, `:79` im Dialog-Test, je „element(s) not found" bzw. `count` 0), **2 failed**; mit dem Fix **2 passed**. `tsc -b` sauber, Vitest **418/418**. `unverifiziert` auf `false`: der fehlende Gruppenname ist jetzt im Barrierefreiheitsbaum von Chromium gemessen; wie ein echter Screenreader ansagt, bleibt ein Blick des Menschen.
 - **2026-10-25** — Lauf an Freigabe 3 beendet (Fund 6 im Delta-Review von B-263, nicht in dieser Story), bevor der `frontend-reviewer` für B-134/B-236 lief. Stand gebaut, grün, committet; Stufe bleibt `in-arbeit`.
 - **2026-10-26** — **Entscheidung des Nutzers** (Morgen-Entscheidung 2026-10-26, Dialog, [Protokoll](../pm-sitzung-2026-10-26-nacht.md#morgen-entscheidung-2026-10-26)): Sprint 10 wird fortgesetzt, die Nacharbeit (inkl. des nicht gelaufenen `frontend-reviewer`) läuft mit **neuem Zähler (0)**. `wartet_auf` geleert.
+- **2026-10-26** — `frontend-reviewer` (Lauf A, nachgeholte Runde 2, ([Protokoll](../pm-sitzung-2026-10-26-tag.md))): Die sechs Gruppen sind wie in Entscheidung 1 benannt, alle `aria-labelledby` lösen auf. Zwei Hinweise (🟢): Der Name „Freigabe (Startzustand)“ schließt die Klammer ein (gegen Entscheidung 2), und die Spec bliebe grün, wenn `role="group"` an die umgebende `<section>` rückte. Beide sind ausdrücklich zurückgestellt → [B-272](B-272-live-region-und-gruppen-tests-tragen-nicht-alles.md), weil jede Behebung als Fund zählt.
+- **2026-10-26** — Rollengang (Lauf A, [Protokoll](../pm-sitzung-2026-10-26-tag.md)): Die Chrome-Extension war nicht verbunden, darum nach Freigabe 6 als E2E: `responsive-vater.spec.ts` (Vater am Tablet, 22 Routen, jedes ⓘ), `feldhilfe-lage.spec.ts` (6 Fälle), `gruppenkopf-benennt-die-gruppe.spec.ts`, Wächter `liveRegions.test.ts`. Sohn und Creator als Regressionszeugen: volle Suite grün, keine ihrer Specs rot. Verifikation: `tsc -b` sauber, Vitest **435/435**, Playwright voll nach dem letzten Code-Edit **93 passed**, danach `feldhilfe-lage` mit dem nur testseitigen Zusatz **6 passed**. Offen für einen Menschen: die echte Screenreader-Ansage (B-134/B-236) und das Popover am echten Tablet. **Abgenommen**; Commit: folgt im Nachtrag.
