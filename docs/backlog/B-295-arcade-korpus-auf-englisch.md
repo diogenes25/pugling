@@ -62,3 +62,10 @@ und die betroffene Spec; Testweg: Paritäts-Test, Arcade-Specs, erweiterte `spra
   Paritäts-Test nicht – darum der Vorschlag (M) im Protokoll (Literal-Wächter über `src/sohn/**`). Schlüssel sind seit
   B-294 typisiert (`src/i18n/i18next.d.ts`): ein neuer Schlüssel gehört zuerst nach `de.ts`.
 - **2026-10-27** — Commit `1ee9bf0` (Lauf E, Teil 8; nicht gepusht).
+- **2026-10-27** — Korrektur aus der Nachschau zu Teil 8: `SavedNotice` liegt in `src/components/` und trägt selbst
+  kein Literal (der Text kommt per `navigate(…, { state: { saved } })` vom Aufrufer, z. B. `SohnInterests`) – die
+  Literale sitzen bei den Aufrufern. **Dazu in den Umfang:** die Skin-Namen und `blurb`s in `lib/skins.ts` („Fuchs“,
+  „Drache“) sind Frontend-Konstanten, keine Nutzerdaten – Schlüssel `skins.<id>.name`; und der Paritäts-Test
+  belegt „übersetzt wirklich“ nur mit `nav.home` – ein „höchstens N identische Werte“ mit benannter Ausnahmeliste
+  (`shop`, `skins`, `test`, `celebrateOne`) wäre der tragende Fall. Pluralformen: siehe
+  [B-298](B-298-plural-im-hud-ein-coins.md) (`_one`/`_other`), gilt für jeden neuen `count`-Schlüssel hier.

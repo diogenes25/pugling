@@ -125,7 +125,9 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     /// B-292: the agent keeps the API's limits the API's way. A topic over 200 characters is left out and named,
     /// never cut (the controller rejects a cut topic on purpose); free text over 2000 is cut at a word boundary and
     /// the field is named. The two over-long values differ in kind on purpose - one is dropped, the other shortened.
-    /// Red if a topic is truncated instead of dropped, or if the free text is cut mid-word or silently.
+    /// Red if a topic is truncated instead of dropped, or if the free text is cut mid-word or silently. B-296: the
+    /// cut has a lower bound too - the exact lengths are asserted, so a cut at the first space or at 1000 is red as
+    /// well; the second text puts whitespace exactly at the limit, which must keep all 2000 characters.
     /// </summary>
     [Fact]
     public async Task Fill_Laesst_Zu_Lange_Themen_Weg_Und_Kuerzt_Freitext_Am_Wortende()
@@ -135,20 +137,26 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var longTopic = string.Concat(Enumerable.Repeat("Thema ", 40)).Trim(); // 239 characters
         var exact = new string('x', 200);                                         // the limit itself stays
         var longText = string.Join(" ", Enumerable.Repeat("Wortes", 400));    // 2799 characters; 2000 falls mid-word
+        var atBoundary = string.Join(" ", Enumerable.Repeat("ab", 1000));     // 2999 characters; index 2000 is a space
         // 52 topics in all: the limit is 50, so the two beyond it are dropped too - and named, not vanished.
         var many = Enumerable.Range(1, 50).Select(i => $"T{i}").ToList();
-        var json = System.Text.Json.JsonSerializer.Serialize(new { topics = new[] { "Kurz", longTopic, exact }.Concat(many).ToArray(), grammar = longText, vocabularyNotes = "x" });
+        var json = System.Text.Json.JsonSerializer.Serialize(new { topics = new[] { "Kurz", longTopic, exact }.Concat(many).ToArray(), grammar = longText, vocabularyNotes = atBoundary });
 
         var outcome = await Filler(creator, new FakeChatClient(json)).RunAsync(new UnitFillRequest(seriesId, unitId, "Quelle", Force: false, DryRun: false));
 
         Assert.Equal(50, outcome.Draft.Topics!.Count);
         Assert.Equal(["Kurz", exact], outcome.Draft.Topics.Take(2));
         Assert.Equal([longTopic, "T49", "T50"], outcome.Dropped);
-        Assert.Equal(["grammar"], outcome.Shortened);
-        Assert.True(outcome.Draft.Grammar!.Length <= 2000 && outcome.Draft.Grammar.EndsWith("Wortes"), outcome.Draft.Grammar[^12..]);
+        Assert.Equal(["grammar", "vocabularyNotes"], outcome.Shortened);
+        // 285 whole words of six characters plus 284 spaces: the last boundary before 2000, and nothing shorter.
+        Assert.Equal(1994, outcome.Draft.Grammar!.Length);
+        Assert.EndsWith("Wortes", outcome.Draft.Grammar);
+        // Whitespace at the limit itself: the head already ends on a whole word, so no character is given away.
+        Assert.Equal(2000, outcome.Draft.VocabularyNotes!.Length);
         var unit = await creator.GetUnitAsync(seriesId, unitId);
         Assert.Equal(50, unit.Topics.Count);
         Assert.Equal(outcome.Draft.Grammar, unit.Grammar);
+        Assert.Equal(outcome.Draft.VocabularyNotes, unit.VocabularyNotes);
     }
 
     /// <summary>
@@ -183,6 +191,45 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var error = await Assert.ThrowsAsync<AgentUsageException>(() => Filler(creator, chat)
             .RunAsync(new UnitFillRequest(1, 1, "Quelle", Force: false, DryRun: true)));
         Assert.Contains("gehört dir nicht", error.Message);
+        Assert.Equal(0, chat.Calls);
+    }
+
+    /// <summary>
+    /// B-296: whitespace at the limit AND just before it - the kept head must not end on a space, or the unit would
+    /// carry a trailing blank the controller's trim would otherwise have removed. Red if the <c>TrimEnd()</c> of the
+    /// whitespace branch in <c>UnitNotesFiller.Clamp</c> is dropped (the result would be 2000 characters, not 1999).
+    /// </summary>
+    [Fact]
+    public async Task Fill_Kuerzt_Freitext_Mit_Leerraum_Vor_Der_Grenze_Ohne_Nachlaufendes_Leerzeichen()
+    {
+        var (_, creator, _) = BuildAgent();
+        var (_, seriesId, unitId) = await FreshUnitAsync(creator, "Fill-Leerraum");
+        var doubleSpace = new string('x', 1999) + "  " + new string('y', 10); // indices 1999 and 2000 are spaces
+        var json = System.Text.Json.JsonSerializer.Serialize(new { grammar = doubleSpace });
+
+        var outcome = await Filler(creator, new FakeChatClient(json)).RunAsync(new UnitFillRequest(seriesId, unitId, "Quelle", Force: false, DryRun: true));
+
+        Assert.Equal(["grammar"], outcome.Shortened);
+        Assert.Equal(1999, outcome.Draft.Grammar!.Length);
+    }
+
+    /// <summary>
+    /// B-297: a unit that belongs to another series is a usage error (exit 2) naming unit and series, not a raw
+    /// <c>PuglingApiException</c> with a stack trace - and the model is never asked. The two series are both the
+    /// caller's own, so only the series-bound 404 of the controller can refuse. Red if the NotFound catch is removed.
+    /// </summary>
+    [Fact]
+    public async Task Fill_Mit_Unit_Einer_Anderen_Reihe_Ist_Eine_Fehlbedienung()
+    {
+        var (_, creator, _) = BuildAgent();
+        var (_, seriesA, _) = await FreshUnitAsync(creator, "Fill-Reihe-A");
+        var (_, _, unitOfB) = await FreshUnitAsync(creator, "Fill-Reihe-B");
+        var chat = new FakeChatClient(UnitNotesJson);
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Filler(creator, chat)
+            .RunAsync(new UnitFillRequest(seriesA, unitOfB, "Quelle", Force: false, DryRun: true)));
+        Assert.Contains($"Unit {unitOfB}", error.Message);
+        Assert.Contains($"Reihe {seriesA}", error.Message);
         Assert.Equal(0, chat.Calls);
     }
 

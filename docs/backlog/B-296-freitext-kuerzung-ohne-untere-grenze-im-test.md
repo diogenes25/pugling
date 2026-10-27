@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/idee, bereich/test, bereich/agent, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/test, bereich/agent, rolle/creator]
 aliases: [Freitext-Kürzung im Test ohne untere Grenze]
-status: idee
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
+groesse: XS
 wo: backend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: Nachschau zu Lauf E Teil 7 (docs/pm-sitzung-2026-10-27-nacht.md)
 unverifiziert: false
 grund: ""
@@ -32,3 +32,15 @@ Eingabetext mit Leerzeichen genau an Index 2000 für den Leerraum-Zweig.
 - **2026-10-27** — angelegt aus der Nachschau zu Lauf E Teil 7 (`4a3fa61`) ([Protokoll](../pm-sitzung-2026-10-27-nacht.md)),
   Fund 1 des frischen Prüfers; `entgangen_bei: B-292`.
 - **2026-10-27** — Commit `1ee9bf0` (Lauf E, Teil 8; nicht gepusht).
+- **2026-10-27** — in Lauf E, Teil 9 ([Protokoll](../pm-sitzung-2026-10-27-nacht.md)) als `Defekt` unter Freigabe 1
+  ausformuliert, geschätzt (XS, nur Tests) und gebaut: `Assert.Equal(1994, Grammar.Length)` + `EndsWith` statt
+  `<= 2000`; zweiter Text (1000 × „ab“, Index 2000 ist ein Leerzeichen) in `vocabularyNotes` → Länge **2000**,
+  `Shortened == ["grammar", "vocabularyNotes"]`, Rücklese gegen die Unit. Mutanten: `LastIndexOfAny` → `IndexOfAny`
+  (Schnitt am ersten Leerzeichen) → **1 failed**; Leerraum-Zweig gelöscht (Ergebnis 1997 statt 2000) → **1 failed**.
+  `Fill_*` **9/9**, Suite **971/971 `exit=0`**.
+- **2026-10-27** — Review (`pugling-reviewer`, [Protokoll](../pm-sitzung-2026-10-27-nacht.md)): kein 🟡/🔴, Zähler
+  bleibt 0. 🟢 ohne Zählung (Freigabe 10), beide genommen: `EndsWith("ab")` gestrichen (keine Mutante, die nur sie
+  rot macht – die exakte Länge deckt sie); dritter Eingabetext (Leerzeichen an Index 1999 **und** 2000) als eigener
+  Fall `Fill_Kuerzt_Freitext_Mit_Leerraum_Vor_Der_Grenze_Ohne_Nachlaufendes_Leerzeichen` → Länge **1999**, Mutante
+  `TrimEnd()` im Leerraum-Zweig entfernt → **1 failed**. `Fill_*` **10/10**, Suite **972/972 `exit=0`**. Rollengang:
+  der Agent hat keine Oberfläche, die Tests sind der Weg. **`abgenommen`.**

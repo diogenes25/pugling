@@ -540,8 +540,8 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-281](B-281-pin-felder-pruefen-mindestlaenge-im-ui.md) | Eine zu kurze PIN meldet die Oberfläche auf Englisch | Defekt | `idee` | P3 | — | frontend | — |
 | [B-282](B-282-login-haertung-restpunkte.md) | Restpunkte der Login-Härtung (NP-3) | Defekt | `idee` | P3 | — | backend | — |
 | [B-284](B-284-doppeltes-enter-ueberspringt-karte.md) | Ein doppeltes Enter während der Prüfung überspringt eine Karte | Defekt | `idee` | P3 | — | frontend | — |
-| [B-296](B-296-freitext-kuerzung-ohne-untere-grenze-im-test.md) | Der Test zur Freitext-Kürzung hat keine untere Grenze – ein viel zu kurzer Schnitt bliebe grün | Defekt | `idee` | P3 | — | backend | — |
-| [B-297](B-297-404-pfad-des-fill-verbs-ungetestet.md) | Der 404-Pfad des `fill`-Verbs (Unit gehört nicht zur Reihe) ist ungetestet | Defekt | `idee` | P3 | — | backend | — |
+| [B-298](B-298-plural-im-hud-ein-coins.md) | HUD liest „1 coins“ / „1 Münzen“ vor – die Schlüssel kennen keinen Singular | Defekt | `idee` | P3 | — | frontend | — |
+| [B-299](B-299-html-lang-rueckfall-ungetestet.md) | Der Rückfall von `<html lang>` auf Deutsch beim Verlassen der Arcade existiert nur als Code | Defekt | `idee` | P3 | — | frontend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-231](B-231-fokus-ohne-fehlerkasten.md) | Wohin gehört der Fokus, wenn ein Knopf ohne Fehlerkasten gesperrt wird? | Frage | `idee` | P3 | — | frontend | — |
 | [B-232](B-232-bestaetigung-ausserhalb-des-sichtfelds.md) | Soll eine Bestätigung zum Meldungsplatz scrollen, wenn er weit vom Knopf entfernt liegt? | Frage | `idee` | P3 | — | frontend | — |
@@ -569,7 +569,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (210)</summary>
+<summary>Abgenommen (212)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -727,6 +727,8 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-292](B-292-agent-kuerzt-themen-still.md) | Der `fill`-Agent kürzt ein zu langes Thema still auf 200 Zeichen – die API lehnt genau das bewusst ab | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-293](B-293-fill-von-stdin-blockiert-stumm.md) | `fill --source-file -` wartet am Terminal stumm auf ein Dateiende, und Ctrl+C wird verschluckt | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-294](B-294-i18n-infrastruktur-und-startbildschirm.md) | i18n-Infrastruktur, Sprachumschalter, `<html lang>` und der Startbildschirm der Arcade auf Englisch | Wunsch | `abgenommen` | P3 | M | frontend | — |
+| [B-296](B-296-freitext-kuerzung-ohne-untere-grenze-im-test.md) | Der Test zur Freitext-Kürzung hat keine untere Grenze – ein viel zu kurzer Schnitt bliebe grün | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-297](B-297-404-pfad-des-fill-verbs-ungetestet.md) | Der 404-Pfad des `fill`-Verbs (Unit gehört nicht zur Reihe) ist ungetestet | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-32](B-32-father-tabellenname.md) | `Father` heißt noch `Father`, obwohl die Zeile `Adult` ist | Aufräumen | `abgenommen` | P3 | S | backend | — |
 | [B-35](B-35-karten-umdrehen-animation.md) | Karten drehen sich beim Aufdecken um | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-36](B-36-motivations-animationen-teilziele.md) | Motivations-Animationen bei erreichten Teilzielen | Wunsch | `abgenommen` | P3 | S | frontend | — |
@@ -796,9 +798,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
-### Nach der Abnahme entgangen (74)
+### Nach der Abnahme entgangen (76)
 
-**Nachgeschaut: 209 von 210 abgenommenen** — und in 60 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 1 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 210 von 212 abgenommenen** — und in 61 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 2 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -874,18 +876,21 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-290](B-290-themen-schluessel-haengt-am-fachnamen.md) | Der Idempotenz-Schlüssel eines Grammatik-Themas hängt am Fach**namen**, nicht am Fach | [B-155] | `abgenommen` |
 | [B-292](B-292-agent-kuerzt-themen-still.md) | Der `fill`-Agent kürzt ein zu langes Thema still auf 200 Zeichen – die API lehnt genau das bewusst ab | [B-22] | `abgenommen` |
 | [B-293](B-293-fill-von-stdin-blockiert-stumm.md) | `fill --source-file -` wartet am Terminal stumm auf ein Dateiende, und Ctrl+C wird verschluckt | [B-22] | `abgenommen` |
-| [B-296](B-296-freitext-kuerzung-ohne-untere-grenze-im-test.md) | Der Test zur Freitext-Kürzung hat keine untere Grenze – ein viel zu kurzer Schnitt bliebe grün | [B-292] | `idee` |
-| [B-297](B-297-404-pfad-des-fill-verbs-ungetestet.md) | Der 404-Pfad des `fill`-Verbs (Unit gehört nicht zur Reihe) ist ungetestet | [B-292] | `idee` |
+| [B-296](B-296-freitext-kuerzung-ohne-untere-grenze-im-test.md) | Der Test zur Freitext-Kürzung hat keine untere Grenze – ein viel zu kurzer Schnitt bliebe grün | [B-292] | `abgenommen` |
+| [B-297](B-297-404-pfad-des-fill-verbs-ungetestet.md) | Der 404-Pfad des `fill`-Verbs (Unit gehört nicht zur Reihe) ist ungetestet | [B-292] | `abgenommen` |
+| [B-298](B-298-plural-im-hud-ein-coins.md) | HUD liest „1 coins“ / „1 Münzen“ vor – die Schlüssel kennen keinen Singular | [B-294] | `idee` |
+| [B-299](B-299-html-lang-rueckfall-ungetestet.md) | Der Rückfall von `<html lang>` auf Deutsch beim Verlassen der Arcade existiert nur als Code | [B-294] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (1) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (2) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-294](B-294-i18n-infrastruktur-und-startbildschirm.md) | i18n-Infrastruktur, Sprachumschalter, `<html lang>` und der Startbildschirm der Arcade auf Englisch |
+| [B-296](B-296-freitext-kuerzung-ohne-untere-grenze-im-test.md) | Der Test zur Freitext-Kürzung hat keine untere Grenze – ein viel zu kurzer Schnitt bliebe grün |
+| [B-297](B-297-404-pfad-des-fill-verbs-ungetestet.md) | Der 404-Pfad des `fill`-Verbs (Unit gehört nicht zur Reihe) ist ungetestet |
 
 </details>
 
@@ -938,8 +943,10 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-291](B-291-fachwechsel-der-reihe-laesst-themen-stehen.md) | `idee` | `unverifiziert: true` |
 | [B-292](B-292-agent-kuerzt-themen-still.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-293](B-293-fill-von-stdin-blockiert-stumm.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
-| [B-296](B-296-freitext-kuerzung-ohne-untere-grenze-im-test.md) | `idee` | `unverifiziert: true` |
-| [B-297](B-297-404-pfad-des-fill-verbs-ungetestet.md) | `idee` | `unverifiziert: true` |
+| [B-296](B-296-freitext-kuerzung-ohne-untere-grenze-im-test.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
+| [B-297](B-297-404-pfad-des-fill-verbs-ungetestet.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
+| [B-298](B-298-plural-im-hud-ein-coins.md) | `idee` | `unverifiziert: true` |
+| [B-299](B-299-html-lang-rueckfall-ungetestet.md) | `idee` | `unverifiziert: true` |
 
 <details>
 <summary>Verworfen (23)</summary>

@@ -13,7 +13,8 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-wartet_auf: "Mensch: die englischen Texte in src/i18n/en.ts gegenlesen (AK 7)"
+wartet_auf: "Mensch: die englischen Texte in src/i18n/en.ts gegenlesen (AK 7; Stolperer im Verlauf)"
+nachgeschaut: "2026-10-27"
 ---
 
 # B-294 · i18n-Infrastruktur, Sprachumschalter, `<html lang>` und der Startbildschirm der Arcade auf Englisch
@@ -77,3 +78,13 @@ Rest des Korpus (B-295) ist der größere Teil und bewusst nicht hier.
   trägt kein `t()`). Kein Browser verbunden, das Gefühl des Umschalters hat niemand gesehen – und die englischen
   Texte liest ein Mensch gegen (AK 7, `wartet_auf`). **`abgenommen`.**
 - **2026-10-27** — Commit `1ee9bf0` (Lauf E, Teil 8; nicht gepusht).
+- **2026-10-27** — Nachschau in Lauf E, Teil 9 ([Protokoll](../pm-sitzung-2026-10-27-nacht.md)), frischer Prüfer am
+  Commit `1ee9bf0` mit eigenen Messungen (Build, Vitest 18/18 der betroffenen Dateien, `sprache.spec.ts` 1 passed,
+  Typ-Tor per Mutante `t("home.laoding")` → TS2345 bestätigt). **Zwei Entgleiten:** `hud.coins`/`gems`/`streak`
+  kennen keinen Singular („1 coins“, `aria-live`) → [B-298](B-298-plural-im-hud-ein-coins.md); die zweite Hälfte
+  von AK 4 (Rückfall von `<html lang>` auf Deutsch beim Verlassen) hält kein Test → [B-299](B-299-html-lang-rueckfall-ungetestet.md)
+  (je `entgangen_bei: B-294`). 🟢 notiert: der Skin-Name in `home.doneText` ist eine Frontend-Konstante aus
+  `lib/skins.ts`, kein Nutzerdatum – AK 5 gilt für Plan-/Missions-Titel, der Skin-Name geht nach B-295; der
+  Paritäts-Test belegt „übersetzt wirklich“ mit einem Schlüssel. **Für das menschliche Gegenlesen (AK 7):**
+  „Strong.“ (Germanismus), „is adding them right away“ („gleich“ heißt hier „bald“), „Tell us about you!“ →
+  „yourself“, `cadenceNone` „free“ liest sich als „kostenlos“ → „optional“; „PRACTISE“ (BrE) ist konsistent.

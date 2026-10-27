@@ -481,3 +481,84 @@ kleinen deutschen Stoppwortliste als rot meldet – mit Ausnahmeliste wie bei de
 messen (wie viele Treffer heute, B-295 ist der Lauf dafür), dann scharf stellen.
 
 **Commit:** `1ee9bf0` (nicht gepusht).
+
+## Lauf E, Teil 9 — B-296, B-297 aus der Nachschau (zwei Testlücken im `fill`-Verb), Zähler 0
+
+**Sprint-Ziel:** *Die Grenzen des `fill`-Verbs sind nach unten wie nach oben bewiesen – ein zu kurzer Schnitt und
+eine rohe 404 fallen rot.* Umfang: [B-296](backlog/B-296-freitext-kuerzung-ohne-untere-grenze-im-test.md),
+[B-297](backlog/B-297-404-pfad-des-fill-verbs-ungetestet.md) (`Defekt`, Freigabe 1, je XS, nur Tests). **Zähler: 0.**
+
+**Entwickler-Brief:** Exakte Längen statt `<= 2000`; ein zweiter Text, dessen Grenze auf Leerraum fällt; der
+404-Pfad mit zwei eigenen Reihen, damit nur die Reihenbindung ablehnen kann. Je Fall die Mutante benennen.
+
+### Iteration
+
+- B-296: `Assert.Equal(1994, …)` (285 Wörter × 6 + 284 Leerzeichen) + zweiter Text mit Leerzeichen an Index 2000
+  → Länge 2000; Mutanten „erstes Leerzeichen“ und „Leerraum-Zweig weg“ → je **1 failed**. B-297: zwei Reihen,
+  Unit von B gegen Reihe A → `AgentUsageException`, Modell nie gefragt; Mutante „Filter auf `Gone`“ → **1 failed**.
+  `Fill_*` **9/9**, Suite **971/971 `exit=0`**.
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| – | `pugling-reviewer` 🟢 | `EndsWith("ab")` hat keine eigene Mutante (die Länge deckt sie); `TrimEnd()` im Leerraum-Zweig ungedeckt (Leerzeichen an 1999 und 2000); Stories noch `idee` | Zusicherung gestrichen; dritter Fall → Länge 1999, Mutante → **1 failed**; Stories nachgezogen | nein (Freigabe 10) |
+
+**Zähler: 0.** Kein 🟡/🔴; der Prüfer hat die Arithmetik (1994, 2000) unabhängig nachgerechnet und je Zusicherung
+die Mutante benannt – genau der Blick aus Vorschlag (H), diesmal ungefragt. Suite **972/972 `exit=0`** (nach dem
+dritten Fall). Rollengang: der Agent hat keine Oberfläche, die Tests sind der Weg. **B-296, B-297 `abgenommen`.**
+
+### Retrospektive
+
+**Nachschau:** Teil 8 (`1ee9bf0`, B-294) von einem frischen Prüfer am committeten Stand geprüft, mit eigenen
+Messungen (Build, Vitest, `sprache.spec.ts` 1 passed, Typ-Tor per Mutante `t("home.laoding")` → TS2345). **Zwei
+Entgleiten im Increment**, je als `Defekt` mit `entgangen_bei: B-294` angelegt: die HUD-Schlüssel kennen keinen
+Singular („1 coins“, vorgelesen per `aria-live`; i18next hätte `_one`/`_other`) →
+[B-298](backlog/B-298-plural-im-hud-ein-coins.md); die zweite Hälfte von AK 4 (Rückfall von `<html lang>` auf
+Deutsch beim Verlassen) hält kein Test – Aufräumzeile gestrichen, alles bleibt grün →
+[B-299](backlog/B-299-html-lang-rueckfall-ungetestet.md). `nachgeschaut` an B-294 gesetzt. 🟢: der Skin-Name ist
+eine Frontend-Konstante (nach B-295), der Paritäts-Test belegt „übersetzt wirklich“ mit einem Schlüssel, zwei
+Doku-Stellen (B-295 nannte `SavedNotice` als Literalträger; „38 Schlüssel“ ist der Stand vor Fund 1, am Commit 41).
+Vier echte Stolperer in `en.ts` stehen im Verlauf von B-294 für das menschliche Gegenlesen (AK 7).
+
+**Was die eigenen Tore durchgelassen haben:** Beide Entgleiten sind von der Art „Akzeptanzkriterium nur halb
+geprüft“: AK 4 hat zwei Hälften, die Spec hielt eine; `{{count}}` in einem Schlüssel verspricht eine Zahl, und
+weder Review noch Spec haben die Zahl 1 eingesetzt. Der Frontend-Review von Teil 8 hat drei andere Dinge gefunden
+und diese nicht – der Prüfer, der den Code *nicht* in der Runde gesehen hatte, fand sie mit zwei Proben.
+
+**Warum der Lauf hier endet (Limit 2):** die Nachschau fand **Defekte im Increment von Teil 8 dieses Laufs**
+(B-298, B-299) – dieselbe Lage wie B-246 am 2026-10-23. Dass beide XS sind und der Weg zur Behebung in den Stories
+steht, ändert die Regel nicht: die Qualitätsschwelle des Laufs ist gerutscht, und das soll der Nutzer sehen,
+bevor weitere Sprints darauf stehen. Der Zähler (0) hätte nicht gestoppt.
+
+**Vorschlag, nicht gelandet (Freigabe 3):** **(N)** zwei Fragen in den Pflichtschritt von Step 5 (pm-loop),
+Prosa, kein Tor: *„Hat ein Akzeptanzkriterium ein ‚und‘? Dann je Hälfte die Probe benennen.“* und *„Trägt ein
+Text `{{count}}`? Dann 1 und 2 einsetzen.“* Das Erste hätte B-299 gefangen, das Zweite B-298 – beide mit einer
+Zeile, die niemand liest, wenn sie nicht gestellt wird. Kosten: zwei Sätze in einem Verfahrenstext über Budget,
+wer sie landet, streicht andere.
+
+**Commit:** *(folgt im Nachtrag)*.
+
+## Ende
+
+Endgrund: **Limit 2** – die Nachschau von Teil 9 fand zwei Defekte im Increment von Teil 8 (B-298, B-299). NP-11 ist
+zur Hälfte gefahren (B-294 abgenommen, B-295 `geschaetzt` und offen). Alle Zähler blieben unter 5 (höchster: 3 in
+Teil 8). Neun Teile, **vierzehn Stories abgenommen** (B-05-Nacharbeit, B-283, B-285, B-287, B-288, B-289, B-155, B-22,
+B-290, B-292, B-293, B-294, B-296, B-297 – dazu B-85 geteilt/verworfen), alles **ungepusht**.
+
+**Offene Entscheidungen für den Nutzer:**
+
+1. **Nächster Lauf:** B-298 und B-299 (je XS, `Defekt`, Weg steht in den Stories) zuerst, dann B-295 (Rest des
+   Arcade-Korpus, M) – oder NP-12 ff. aus der Sichtung vom 2026-10-23?
+2. **Englische Texte gegenlesen** (B-294 AK 7, `wartet_auf`): vier Stolperer stehen im Verlauf von B-294; das ist
+   Menschenarbeit, kein Sprint.
+3. [B-291](backlog/B-291-fachwechsel-der-reihe-laesst-themen-stehen.md) (`Frage`): soll der Fachwechsel einer
+   Reihe die Themen-Zuordnungen ihrer Units/Übungen lösen, umziehen oder stehen lassen?
+4. **Retro-Vorschläge (H)–(N)**, alle Prosa, keiner gelandet: (H) Review-Agenten fragen je Zusicherung nach der
+   Mutante (und nach der, die grün bliebe) – in Teil 9 hat der Prüfer das ungefragt getan; (I) Vitest-Tor für die
+   Facetten-Schlüsselmenge `ExerciseFilter`/`PlanPositions`/`WizardFilter`; (J) `TestApi`-Helfer mit zwei
+   gleichnamigen Fächern verschiedener Creator; (K) ein Client ersetzt die Server-Validierung nie durch eine mildere
+   (Satz in `backend/Pugling.Client/CLAUDE.md`); (L) „nennt der Diff eine Grenze, jede weitere Grenze derselben Daten
+   prüfen“ + residente `CLAUDE.md` im Nachschau-Scope bei Fachmodell-Änderungen; (M) Literal-Wächter über
+   `src/sohn/**` für B-295; (N) „und“-Kriterien je Hälfte proben, `{{count}}` mit 1 und 2 einsetzen.
+5. Unverändert offen aus früheren Läufen: B-267 (Lehrbuch-Freitext), B-268 (Fokus nach Inline-Reihe).
