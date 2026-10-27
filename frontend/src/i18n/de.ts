@@ -7,9 +7,13 @@ export const de = {
   sohn: {
     nav: { home: "Basis", path: "Weg", account: "Konto", shop: "Shop", skins: "Skins" },
     hud: {
-      coins: "{{count}} Münzen",
-      gems: "{{count}} Gems",
-      streak: "{{count}} Tage Streak",
+      // `_one`/`_other`: i18next wählt die Form nach `count` (B-298) – die Chips werden vorgelesen.
+      coins_one: "{{count}} Münze",
+      coins_other: "{{count}} Münzen",
+      gems_one: "{{count}} Gem",
+      gems_other: "{{count}} Gems",
+      streak_one: "{{count}} Tag Streak",
+      streak_other: "{{count}} Tage Streak",
       soundOn: "Ton einschalten",
       soundOff: "Ton ausschalten",
       language: "EN – auf Englisch umschalten (Sprache ist Deutsch)",

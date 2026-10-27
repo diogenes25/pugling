@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/idee, bereich/frontend, bereich/test, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/test, rolle/student]
 aliases: [html lang Rückfall ungetestet, AK 4 zweite Hälfte]
-status: idee
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
+groesse: XS
 wo: frontend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: Nachschau zu Lauf E Teil 8 (docs/pm-sitzung-2026-10-27-nacht.md)
 unverifiziert: false
 grund: ""
@@ -33,3 +33,11 @@ das Szenario, das Entscheidung 5 aus B-85 verhindern soll.
 - **2026-10-27** — angelegt aus der Nachschau zu Lauf E Teil 8 (`1ee9bf0`) ([Protokoll](../pm-sitzung-2026-10-27-nacht.md)),
   Fund 2 des frischen Prüfers; `entgangen_bei: B-294`.
 - **2026-10-27** — Commit `aab2ef9` (Lauf E, Teil 9; nicht gepusht).
+- **2026-10-27** — in Lauf F, Teil 1 ([Protokoll](../pm-sitzung-2026-10-27-nacht.md)) als `Defekt` unter Freigabe 1
+  ausformuliert, geschätzt (XS, nur Test) und gebaut: `sprache.spec.ts` meldet nach dem Neuladen über **Skins →
+  Abmelden** ab (kein `page.goto` – das lädt `index.html` mit statischem `lang="de"` und verdeckte die Mutante) und
+  sichert `lang="de"`; danach Wieder-Anmelden → Arcade wieder englisch, `lang="en"`. Grün: **1 passed**. Mutante
+  „Aufräumzeile `document.documentElement.lang = "de"` gestrichen“ → **1 failed** an der neuen Zusicherung
+  (erwartet `de`, gemessen `en`, Zeile 42). Review (`frontend-reviewer`): kein Fund an B-299; 🟢 Kommentar, dass
+  „Abmelden“ bis B-295 ein deutsches Literal ist → ergänzt. Volle E2E **98 passed** (`exit=0`). Rollengang: die Spec
+  ist der Sohn-Gang; Vater/Creator Regressionszeugen. **`abgenommen`.**

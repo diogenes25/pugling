@@ -26,10 +26,25 @@ test("Der Sohn stellt die Arcade auf Englisch, sie bleibt es nach dem Neuladen, 
   await expect(page.locator(".screen-title", { hasText: /Daily mission|No mission yet/ })).toBeVisible();
   await expect(page.getByText(/Tagesmission|Noch keine Mission|Diese Woche/)).toHaveCount(0);
   // Auch die Vorlese-Namen des HUD sind umgeschaltet (Screenreader-Pfad).
-  await expect(page.getByLabel(/\d+ coins/)).toBeVisible();
+  // `coins?`: bei genau 1 Münze heißt es „1 coin“ (B-298) – der Saldo von Kind 1 ist mit anderen Specs geteilt.
+  await expect(page.getByLabel(/^\d+ coins?$/)).toBeVisible();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
 
   await page.reload();
+  await expect(nav.getByRole("link", { name: "Home" })).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+
+  // B-299: beim Verlassen der Arcade fällt `<html lang>` auf Deutsch zurück – der Login ist (noch) deutsch. Abmelden
+  // statt `page.goto`: ein Seitenwechsel lädt `index.html` neu und läse dessen statisches `lang="de"`, nicht die
+  // Aufräumzeile in `SohnApp`.
+  await nav.getByRole("link", { name: "Skins" }).click();
+  // „Abmelden“ ist hier noch ein deutsches Literal – mit B-295 wandert der Text, dann diese Zeile mit.
+  await page.getByRole("button", { name: "Abmelden" }).click();
+  await expect(page.getByRole("button", { name: "▶ LOS" })).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("lang", "de");
+
+  // Die Wahl überlebt das Abmelden: wer sich wieder anmeldet, ist wieder in der englischen Arcade.
+  await sohnLogin(page, CHILD);
   await expect(nav.getByRole("link", { name: "Home" })).toBeVisible();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
 

@@ -562,3 +562,63 @@ B-290, B-292, B-293, B-294, B-296, B-297 – dazu B-85 geteilt/verworfen), alles
    prüfen“ + residente `CLAUDE.md` im Nachschau-Scope bei Fachmodell-Änderungen; (M) Literal-Wächter über
    `src/sohn/**` für B-295; (N) „und“-Kriterien je Hälfte proben, `{{count}}` mit 1 und 2 einsetzen.
 5. Unverändert offen aus früheren Läufen: B-267 (Lehrbuch-Freitext), B-268 (Fokus nach Inline-Reihe).
+
+## Lauf F, Teil 1 — B-298, B-299 aus der Nachschau (Plural im HUD, `<html lang>`-Rückfall), Zähler 0
+
+Auftrag: „Mache einen Nachtlauf“ (Nutzer, 2026-10-27 nachmittags) – der Auftragstext aus [nachtlauf.md](nachtlauf.md)
+mit den Freigaben 1–10, Reihenfolge nach dem Abschnitt „Ende“ oben (Punkt 1): erst B-298/B-299, dann B-295.
+Ausgangslage: HEAD `3dd745c`, Baum sauber, nichts gepusht. Die Retro-Vorschläge (H)–(N) bleiben unentschieden.
+
+**Sprint-Ziel:** *Der Sohn hört im HUD „1 Münze“ statt „1 Münzen“, und wer die englische Arcade verlässt, landet
+wieder auf einer Seite mit `lang="de"`.* Umfang: [B-298](backlog/B-298-plural-im-hud-ein-coins.md),
+[B-299](backlog/B-299-html-lang-rueckfall-ungetestet.md) (`Defekt`, Freigabe 1, je XS, Frontend). **Zähler: 0.**
+
+**Entwickler-Brief:** i18next-Pluralformen `_one`/`_other` für die drei HUD-Schlüssel in beiden Sprachen, je Sprache
+`count: 1` gegen `count: 2` im Vitest; in `sprache.spec.ts` über die Oberfläche abmelden (nicht `page.goto`, das lädt
+das statische `lang="de"` aus `index.html` neu) und `lang="de"` zusichern. Je Fall die Mutante benennen.
+
+### Iteration
+
+- B-298: rote Probe **5 failed** (6 Fälle, en `streak` ist vorher wie nachher gleich), Fix → **10/10**, `tsc`
+  sauber; Mutante en `coins_one` gestrichen → **2 failed**.
+- B-299: Spec **1 passed**; Mutante „Aufräumzeile in `SohnApp` gestrichen“ → **1 failed** an der neuen Zusicherung
+  (erwartet `de`, gemessen `en`).
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `frontend-reviewer` 🟡 | `getByLabel(/\d+ coins/)` in `sprache.spec.ts` fällt bei Saldo 1 („1 coin“), der Saldo von Kind 1 ist geteilt | `/^\d+ coins?$/` | ja |
+| – | `frontend-reviewer` 🟢 | Testkommentar nennt den falschen Rückfall; Begründung fürs Weglassen von en `streak` falsch; „Abmelden“ ist bis B-295 ein Literal | Kommentare korrigiert, en-`streak`-Fall ergänzt (Mutante „-days“ → **1 failed**), Kommentar in der Spec | nein (Freigabe 10) |
+| – | `frontend-reviewer` 🟢 | fällt `{ count }` an `SohnApp.tsx:108/109` weg, bleibt alles grün | zurückgestellt: Aufrufstellen-Wächter gehört zu Vorschlag (M) / B-295 | nein |
+
+**Zähler: 1.** Vitest **473/473**, volle E2E **98 passed** (`exit=0`). Rollengang: der Sohn-Gang ist
+`sprache.spec.ts` (englisches HUD-Label, Abmelden, Wieder-Anmelden); Vater und Creator sind Regressionszeugen –
+volle E2E grün, kein Pfad von ihnen im Diff. Browser nicht genutzt; die Spec ist der Gang. **B-298, B-299 `abgenommen`.**
+
+### Retrospektive
+
+**Nachschau:** Lauf E, Teil 9 (`aab2ef9`, B-296/B-297) von einem frischen `pugling-reviewer` am committeten Stand
+geprüft: Arithmetik 1994/2000/1999 aus den Eingabetexten nachgerechnet, sechs Mutanten aus
+`UnitNotesFiller.cs:162-175` bzw. `SeriesUnitsController.cs:52-57` hergeleitet (alle rot wie behauptet), `Fill_*`
+per `--list-tests` gezählt (10). **Zwei Entgleiten**, je als `Defekt` angelegt: der dritte Schnitt (harter Schnitt
+ohne Leerraum) ist ungetestet – ein leerer Kopf ließe das Feld still ungeschrieben →
+[B-300](backlog/B-300-harter-schnitt-ohne-leerraum-ungetestet.md) (`entgangen_bei: B-292, B-296`); eine unbekannte
+Reihe endet als rohe 404 mit Exit 1 – die andere Hälfte des Id-Paars aus B-297, und hier fehlt **Code** →
+[B-301](backlog/B-301-fill-mit-unbekannter-reihe-endet-als-rohe-404.md) (`entgangen_bei: B-22, B-297`).
+`nachgeschaut` an B-296 und B-297 gesetzt. 🟢 zwei falsche Begründungen (Controller-Trim; „Stacktrace“) – korrigiert.
+
+**Was die eigenen Tore durchgelassen haben:** Dieselbe Familie wie bei B-298/B-299: eine Regel geprüft, ihr
+Geschwister nicht. B-296 hat zwei von drei Zweigen derselben Funktion belegt, B-297 eine von zwei Ids desselben
+Paars – und beide Sprint-Ziele klangen vollständig („nach unten wie nach oben bewiesen“, „eine rohe 404 fällt rot“).
+Lauf F, Teil 1 selbst: der 🟡-Fund (Regex hängt am Saldo) ist ein Test, dessen Annahme der eigene Fix verschoben hat
+– der Fix machte „N coins“ zu „N coin(s)“, und die Spec, die das Wort zitierte, lag außerhalb des Blicks.
+
+**Warum der Lauf weiterläuft (Limit 2 nicht berührt):** die Entgleiten liegen im Increment von Lauf E (Teil 7/9),
+nicht in diesem Lauf; Lauf E ist an genau dieser Stelle schon geendet und der Nutzer hat den neuen Lauf danach
+beauftragt. Sie werden als nächster Sprint gefahren. Kein neues Tor gelandet.
+
+**Vorschlag, nicht gelandet (Freigabe 3):** **(O)** „Ändert ein Fix einen Text, nach jedem Zitat dieses Texts in
+Specs/Tests greppen“ – eine Zeile in Step 5 von pm-loop, Prosa. Sie hätte den 🟡-Fund vor dem Review gefunden
+(`grep -rn "coins" frontend/e2e`). Verwandt mit (N); wer beide landet, sollte sie zu einer Frage zusammenziehen:
+*„Welche Geschwister hat, was ich gerade geprüft oder geändert habe?“*

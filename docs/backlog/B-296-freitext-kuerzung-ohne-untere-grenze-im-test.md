@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-292]
 wartet_auf: ""
+nachgeschaut: "2026-10-27"
 ---
 
 # B-296 · Der Test zur Freitext-Kürzung hat keine untere Grenze – ein viel zu kurzer Schnitt bliebe grün
@@ -45,3 +46,8 @@ Eingabetext mit Leerzeichen genau an Index 2000 für den Leerraum-Zweig.
   `TrimEnd()` im Leerraum-Zweig entfernt → **1 failed**. `Fill_*` **10/10**, Suite **972/972 `exit=0`**. Rollengang:
   der Agent hat keine Oberfläche, die Tests sind der Weg. **`abgenommen`.**
 - **2026-10-27** — Commit `aab2ef9` (Lauf E, Teil 9; nicht gepusht).
+- **2026-10-27** — Nachschau (Lauf F, Teil 1, frischer `pugling-reviewer` am Commit `aab2ef9`): Arithmetik 1994 / 2000
+  / 1999 aus den Eingabetexten nachgerechnet (Wortanfang bei 7k, Leerzeichen bei 3k+2, Index 1999/2000); die drei
+  genannten Mutanten aus `UnitNotesFiller.cs:162-175` hergeleitet – je rot wie behauptet; `Fill_*` 10/10 per
+  `--list-tests` gezählt. **Entgangen:** der dritte Zweig (harter Schnitt ohne Leerraum) → [B-300](B-300-harter-schnitt-ohne-leerraum-ungetestet.md);
+  🟢 Testkommentar zum 1999-Fall begründete mit dem Controller-Trim, der den gespeicherten Wert ohnehin kürzt → korrigiert.

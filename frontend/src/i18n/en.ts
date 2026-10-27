@@ -6,9 +6,12 @@ export const en = {
   sohn: {
     nav: { home: "Home", path: "Path", account: "Account", shop: "Shop", skins: "Skins" },
     hud: {
-      coins: "{{count}} coins",
-      gems: "{{count}} gems",
-      streak: "{{count}}-day streak",
+      coins_one: "{{count}} coin",
+      coins_other: "{{count}} coins",
+      gems_one: "{{count}} gem",
+      gems_other: "{{count}} gems",
+      streak_one: "{{count}}-day streak",
+      streak_other: "{{count}}-day streak",
       soundOn: "Turn sound on",
       soundOff: "Turn sound off",
       language: "DE – switch to German (language is English)",

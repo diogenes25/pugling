@@ -51,6 +51,22 @@ describe("Sprachwahl", () => {
     expect(i18n.t("sohn:nav.home")).toBe("Basis");
   });
 
+  // B-298: die HUD-Chips sind `aria-live` – „1 coins“ würde vorgelesen. Je Sprache 1 gegen 2: fehlt `_one`, zeigt
+  // Deutsch den Schlüsselnamen und Englisch fällt auf Deutsch zurück – beides rot, nicht nur eine fehlende Zahl.
+  it.each([
+    ["de", "sohn:hud.coins", "1 Münze", "2 Münzen"],
+    ["de", "sohn:hud.gems", "1 Gem", "2 Gems"],
+    ["de", "sohn:hud.streak", "1 Tag Streak", "2 Tage Streak"],
+    ["en", "sohn:hud.coins", "1 coin", "2 coins"],
+    ["en", "sohn:hud.gems", "1 gem", "2 gems"],
+    // „1-day“/„2-day“: als Adjektiv gleich – der Fall fängt einen Tippfehler oder Rückfall in `streak_one`.
+    ["en", "sohn:hud.streak", "1-day streak", "2-day streak"],
+  ] as const)("%s: %s unterscheidet Singular und Plural", async (lang, key, one, two) => {
+    await setLanguage(lang);
+    expect(i18n.t(key, { count: 1 })).toBe(one);
+    expect(i18n.t(key, { count: 2 })).toBe(two);
+  });
+
   it("setzt Platzhalter aus Nutzerdaten ein, statt sie zu übersetzen", async () => {
     await setLanguage("en");
     expect(i18n.t("sohn:home.doneText", { skin: "Drachi" })).toBe("Strong. Every extra round only makes your Drachi stronger.");

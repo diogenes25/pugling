@@ -14,13 +14,14 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-292]
 wartet_auf: ""
+nachgeschaut: "2026-10-27"
 ---
 
 # B-297 · Der 404-Pfad des `fill`-Verbs (Unit gehört nicht zur Reihe) ist ungetestet
 
 Teil 7 hat die Unit-Suche von `ListUnitsAsync().FirstOrDefault` auf `GetUnitAsync` mit
 `catch (PuglingApiException) when NotFound → AgentUsageException` umgestellt (`UnitNotesFiller.cs`). Kein Test fährt
-den Pfad: ohne den `catch` käme eine rohe `PuglingApiException` (Exit 1 mit Stacktrace statt Exit 2), und die
+den Pfad: ohne den `catch` käme eine rohe `PuglingApiException` (Exit 1 mit der Zeile „Die Pugling-API antwortete mit 404“ statt Exit 2 mit Gebrauchstext; einen Stacktrace gibt es nicht – Korrektur aus der Nachschau vom 2026-10-27, Lauf F), und die
 Suite bliebe grün.
 
 **Behebung:** ein Test mit zwei eigenen Reihen (`FreshUnitAsync`), `UnitFillRequest(reiheA, unitVonB, …)` →
@@ -41,3 +42,8 @@ Suite bliebe grün.
   Controller-Suche ohne `u.SeriesId == seriesId` → Unit gefunden, keine Ausnahme; Suche hinter `DraftAsync` →
   `chat.Calls == 1`). Suite **972/972 `exit=0`**. Rollengang: Tests sind der Weg. **`abgenommen`.**
 - **2026-10-27** — Commit `aab2ef9` (Lauf E, Teil 9; nicht gepusht).
+- **2026-10-27** — Nachschau (Lauf F, Teil 1, frischer `pugling-reviewer` am Commit `aab2ef9`): Mutanten „`NotFound` →
+  `Gone`“, „Controller ohne `u.SeriesId == seriesId`“ (`SeriesUnitsController.cs:55`) und „Abruf hinter dem Entwurf“
+  je aus dem Code hergeleitet – rot; beide Reihen gehören dem Aufrufer, `IsOwn` kann nicht zuerst ablehnen.
+  **Entgangen:** die andere Hälfte des Id-Paars (unbekannte Reihe) → [B-301](B-301-fill-mit-unbekannter-reihe-endet-als-rohe-404.md);
+  🟢 „Stacktrace“ in Story und Testkommentar stimmte nicht (`Program.cs:57-61` druckt eine Zeile) → korrigiert.
