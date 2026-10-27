@@ -109,6 +109,7 @@ public static class Program
         builder.Services.AddSingleton<CreatorPipeline>();
         builder.Services.AddSingleton<ExamPlanner>();
         builder.Services.AddSingleton<PlanPlanner>();
+        builder.Services.AddSingleton<UnitNotesFiller>();
         builder.Services.AddSingleton<AgentCommands>();
 
         return builder.Build();

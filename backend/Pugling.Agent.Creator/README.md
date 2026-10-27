@@ -199,6 +199,20 @@ ungeprüfter KI-Plan darf nicht über Nacht zur Pflicht werden und Malus-Münzen
 angelegter Plan würde zusätzlich den Plan abschalten, den das Kind heute spielt (die Regel „genau ein
 aktiver Plan je Kind"). Der Vater sichtet ihn unter `/vater/plaene` und schaltet ihn dort scharf.
 
+### Die Stoffnotizen einer Unit (`fill`)
+
+```bash
+pugling-creator fill --series 3 --unit 12 --source-file inhaltsverzeichnis.txt --dry-run
+pugling-creator fill --series 3 --unit 12 --source-file - < kapitel.txt      # Quelle von Stdin
+```
+
+Entwirft `Topics`/`Grammar`/`VocabularyNotes` einer Unit aus einer Quelle, die **du** lieferst – ein abgetipptes
+Inhaltsverzeichnis, eine Verlags-Kapitelübersicht (B-22). Die Quelle ist Pflicht und die einzige Grundlage: das
+Modell strukturiert sie, es erfindet nichts dazu (Systemprompt: „nutze ausschließlich die Quelle, füge nichts
+hinzu“). Ohne Quelle bricht der Befehl als Fehlbedienung ab (Exit 2). Befüllt werden **nur leere Felder**; was schon
+von Hand dort steht, bleibt – `--force` überschreibt. `--dry-run` zeigt den Entwurf, ohne zu schreiben. Einen
+Selbsttest gibt es hier nicht: drei Textfelder sind nicht spielbar, die Prüfung ist das Lesen.
+
 ## Was der Agent bewusst *nicht* tut
 
 - **Einen Lehrplan aktiv schalten.** Er legt ihn an (`plan`) – scharf stellt ihn ein Mensch. Ziele,

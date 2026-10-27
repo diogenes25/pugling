@@ -9,7 +9,8 @@ namespace Pugling.Agent.Creator;
 /// result in an understandable way - the domain logic lives in <see cref="CreatorPipeline"/>,
 /// <see cref="ExamPlanner"/>, <see cref="PlanPlanner"/> and the strategies.
 /// </summary>
-public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, ExamPlanner exams, PlanPlanner plans)
+public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, ExamPlanner exams, PlanPlanner plans,
+    UnitNotesFiller unitNotes)
 {
     // Default values for the request when the command line is silent.
     private const int DefaultItemCount = 10;
@@ -39,6 +40,60 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
     /// <summary>The types a generated study plan consists of when none are named.</summary>
     private static readonly string[] DefaultPlanTypes = ["Vocabulary", "Cloze"];
 
+    /// <summary>
+    /// Drafts a unit's notes from a human-supplied source (B-22): <c>--series</c>, <c>--unit</c> and
+    /// <c>--source-file</c> (or <c>-</c> for stdin) are required - without a source there is nothing to structure,
+    /// and the model must not invent the material. Prints what was written and what was kept.
+    /// </summary>
+    private async Task<int> FillAsync(CommandLine command, CancellationToken ct)
+    {
+        var seriesId = command.RequiredInt("series");
+        var unitId = command.RequiredInt("unit");
+        var source = await ReadSourceAsync(command, ct);
+        var outcome = await unitNotes.RunAsync(new UnitFillRequest(seriesId, unitId, source,
+            Force: command.Flag("force"), DryRun: command.Flag("dry-run")), ct);
+
+        Console.WriteLine($"Unit:    {outcome.Before.Label} (Reihe {seriesId})");
+        Console.WriteLine("Entwurf:");
+        Console.WriteLine(UnitNotesFiller.Print(outcome.Draft));
+        if (outcome.Kept.Count > 0)
+            Console.WriteLine($"Behalten (schon befüllt, ohne --force unangetastet): {string.Join(", ", outcome.Kept)}");
+        if (outcome.Written.Count == 0)
+        {
+            Console.WriteLine("Nichts zu schreiben – der Entwurf enthält nichts für ein leeres Feld.");
+            return 0;
+        }
+        if (command.Flag("dry-run"))
+        {
+            Console.WriteLine($"Trockenlauf – es wurde nichts gespeichert. Würde schreiben: {string.Join(", ", outcome.Written)}");
+            return 0;
+        }
+        Console.WriteLine($"Geschrieben: {string.Join(", ", outcome.Written)}");
+        return 0;
+    }
+
+    /// <summary>The source text: a file, or stdin when <c>--source-file -</c>. Missing or empty is a usage error.</summary>
+    private static async Task<string> ReadSourceAsync(CommandLine command, CancellationToken ct)
+    {
+        var path = command.Value("source-file");
+        if (string.IsNullOrWhiteSpace(path))
+            throw new AgentUsageException("--source-file fehlt: die Quelle (Inhaltsverzeichnis, Kapitelübersicht) ist Pflicht – "
+                                          + "das Modell darf den Stoff einer Unit nicht erfinden. '-' liest von Stdin.");
+        string text;
+        try
+        {
+            text = path == "-" ? await Console.In.ReadToEndAsync(ct) : await File.ReadAllTextAsync(path, ct);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // A wrong path is the same class of mistake as no path: a usage error (exit 2), not a stack trace.
+            throw new AgentUsageException($"Die Quelle '{path}' ist nicht lesbar: {ex.Message}");
+        }
+        if (string.IsNullOrWhiteSpace(text))
+            throw new AgentUsageException($"Die Quelle '{path}' ist leer.");
+        return text;
+    }
+
     /// <summary>Executes the chosen verb and returns the exit code.</summary>
     public async Task<int> RunAsync(CommandLine command, CancellationToken ct)
     {
@@ -59,6 +114,8 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
                 return await ExamAsync(command, ct);
             case "plan":
                 return await PlanAsync(command, ct);
+            case "fill":
+                return await FillAsync(command, ct);
             case "help":
                 PrintUsage();
                 return 0;
@@ -450,6 +507,9 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
                                    [--date JJJJ-MM-TT] [--title "..."] [Optionen]
           pugling-creator plan     --child <id> [--types a,b,c] [--per-type <n>] [--intensity <Stufe>]
                                    [--start JJJJ-MM-TT] [--days <n>] [--title "..."] [Optionen]
+          pugling-creator fill     --series <id> --unit <id> --source-file <Datei|-> [--force] [--dry-run]
+                                   (Stoffnotizen einer Unit aus einer Quelle entwerfen; nur leere Felder,
+                                   --force überschreibt; '-' liest die Quelle von Stdin)
 
         Wer und in wessen Namen:
           --child <id>          Kind, auf das zugeschnitten wird (individuelle Übung)

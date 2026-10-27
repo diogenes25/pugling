@@ -45,9 +45,147 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>The console verbs with the same underpinning as the real agent (incl. both planners).</summary>
-    private AgentCommands Commands(CreatorApi creator, CreatorPipeline pipeline) =>
+    private AgentCommands Commands(CreatorApi creator, CreatorPipeline pipeline, FakeChatClient? chat = null) =>
         new(creator, pipeline, new ExamPlanner(pipeline, creator, new SupervisorApi(Authenticated())),
-            new PlanPlanner(pipeline, new SupervisorApi(Authenticated())));
+            new PlanPlanner(pipeline, new SupervisorApi(Authenticated())), Filler(creator, chat ?? new FakeChatClient("{}")));
+
+    private static UnitNotesFiller Filler(CreatorApi creator, FakeChatClient chat) =>
+        new(chat, creator, Options.Create(new AgentOptions()), NullLogger<UnitNotesFiller>.Instance);
+
+    /// <summary>A draft the fake model returns for the `fill` verb (B-22).</summary>
+    private const string UnitNotesJson = """
+        {"topics":["Growing up","Family life"],"grammar":"Present perfect vs. simple past",
+         "vocabularyNotes":"to grow up, responsibility, to argue"}
+        """;
+
+    /// <summary>
+    /// B-22, AC 2/3/5: the draft lands in the empty fields of the unit, a field that already carries a value is
+    /// kept without <c>--force</c>, and the source is the only material in the request. Red if the filler
+    /// overwrites a filled field (drop the "has value and not force" branch), or if the source is not in the prompt.
+    /// </summary>
+    [Fact]
+    public async Task Fill_Befuellt_Nur_Leere_Felder_Aus_Der_Quelle()
+    {
+        var (_, creator, _) = BuildAgent();
+        var (_, seriesId, unitId) = await FreshUnitAsync(creator, "Fill");
+        // The hand-written grammar note must survive: it is the one field that already carries a value.
+        await creator.UpdateUnitAsync(seriesId, unitId, new UpdateSeriesUnitDto(null, null, null, null, null, "Handschrift", null));
+        var chat = new FakeChatClient(UnitNotesJson);
+
+        var outcome = await Filler(creator, chat).RunAsync(new UnitFillRequest(seriesId, unitId,
+            "Unit 3 Growing up: present perfect vs. simple past; Wortschatz: to grow up, responsibility, to argue",
+            Force: false, DryRun: false));
+
+        Assert.Equal(["topics", "vocabularyNotes"], outcome.Written);
+        Assert.Equal(["grammar"], outcome.Kept);
+        var unit = await creator.GetUnitAsync(seriesId, unitId);
+        Assert.Equal(["Growing up", "Family life"], unit.Topics);
+        Assert.Equal("Handschrift", unit.Grammar);
+        Assert.Equal("to grow up, responsibility, to argue", unit.VocabularyNotes);
+        // The anti-invention rule stands in the system prompt, the source in the user message - nothing else.
+        Assert.Contains("AUSSCHLIESSLICH die mitgelieferte Quelle", chat.LastMessages[0].Text);
+        Assert.Contains("to grow up, responsibility, to argue", chat.LastMessages[1].Text);
+    }
+
+    /// <summary>B-22, AC 3: with <c>--force</c> the filled field is overwritten too. Red if the flag is ignored.</summary>
+    [Fact]
+    public async Task Fill_Ueberschreibt_Mit_Force()
+    {
+        var (_, creator, _) = BuildAgent();
+        var (_, seriesId, unitId) = await FreshUnitAsync(creator, "Fill-Force");
+        await creator.UpdateUnitAsync(seriesId, unitId, new UpdateSeriesUnitDto(null, null, null, null, null, "Handschrift", null));
+
+        var outcome = await Filler(creator, new FakeChatClient(UnitNotesJson)).RunAsync(
+            new UnitFillRequest(seriesId, unitId, "Quelle", Force: true, DryRun: false));
+
+        Assert.Equal(["topics", "grammar", "vocabularyNotes"], outcome.Written);
+        Assert.Empty(outcome.Kept);
+        Assert.Equal("Present perfect vs. simple past", (await creator.GetUnitAsync(seriesId, unitId)).Grammar);
+    }
+
+    /// <summary>B-22, AC 4: the dry run shows the draft and changes nothing. Red if the PATCH is sent anyway.</summary>
+    [Fact]
+    public async Task Fill_Trockenlauf_Schreibt_Nichts()
+    {
+        var (_, creator, _) = BuildAgent();
+        var (_, seriesId, unitId) = await FreshUnitAsync(creator, "Fill-Dry");
+
+        var outcome = await Filler(creator, new FakeChatClient(UnitNotesJson)).RunAsync(
+            new UnitFillRequest(seriesId, unitId, "Quelle", Force: false, DryRun: true));
+
+        Assert.Equal(["topics", "grammar", "vocabularyNotes"], outcome.Written);
+        Assert.Null(outcome.After);
+        var unit = await creator.GetUnitAsync(seriesId, unitId);
+        Assert.Empty(unit.Topics);
+        Assert.Null(unit.Grammar);
+        Assert.Null(unit.VocabularyNotes);
+    }
+
+    /// <summary>
+    /// B-22: a draft with nothing in it writes nothing - no PATCH, <c>After</c> stays null. Red if the filler sends
+    /// an all-null PATCH anyway (drop the <c>written.Count == 0</c> short-circuit).
+    /// </summary>
+    [Fact]
+    public async Task Fill_Mit_Leerem_Entwurf_Schreibt_Nichts()
+    {
+        var (_, creator, _) = BuildAgent();
+        var (_, seriesId, unitId) = await FreshUnitAsync(creator, "Fill-Leer");
+        var chat = new FakeChatClient("{}");
+
+        var outcome = await Filler(creator, chat).RunAsync(new UnitFillRequest(seriesId, unitId, "Quelle", Force: true, DryRun: false));
+
+        Assert.Equal(1, chat.Calls);
+        Assert.Empty(outcome.Written);
+        Assert.Null(outcome.After);
+    }
+
+    /// <summary>
+    /// B-22: a series the caller does not own is refused BEFORE the model is asked - the API would answer 403 after
+    /// a minute of model time (measured on the first live walk against the seeded series). Red if the check moves
+    /// behind the draft (<c>chat.Calls</c> would be 1) or is dropped (the PATCH's 403 surfaces instead).
+    /// </summary>
+    [Fact]
+    public async Task Fill_Lehnt_Eine_Fremde_Reihe_Vor_Dem_Modellaufruf_Ab()
+    {
+        var (_, creator, _) = BuildAgent();
+        // Series 1 is seeded and owned by nobody - the one case every fresh database carries.
+        var chat = new FakeChatClient(UnitNotesJson);
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Filler(creator, chat)
+            .RunAsync(new UnitFillRequest(1, 1, "Quelle", Force: false, DryRun: true)));
+        Assert.Contains("gehört dir nicht", error.Message);
+        Assert.Equal(0, chat.Calls);
+    }
+
+    /// <summary>B-22: an unreadable source path is a usage error (exit 2), not an unhandled exception. Red if the catch is removed.</summary>
+    [Fact]
+    public async Task Fill_Mit_Fehlender_Quelldatei_Ist_Eine_Fehlbedienung()
+    {
+        var (pipeline, creator, _) = BuildAgent();
+        var (_, seriesId, unitId) = await FreshUnitAsync(creator, "Fill-Datei");
+        var missing = Path.Combine(Path.GetTempPath(), $"pugling-fehlt-{Guid.NewGuid():N}.txt");
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline)
+            .RunAsync(CommandLine.Parse(["fill", "--series", seriesId.ToString(), "--unit", unitId.ToString(), "--source-file", missing]), CancellationToken.None));
+        Assert.Contains("nicht lesbar", error.Message);
+    }
+
+    /// <summary>
+    /// B-22, AC 1: without a source the verb refuses as a usage error (exit 2 via <c>AgentUsageException</c>) - and
+    /// never asks the model. Red if the command drafts from the unit's title alone. This case covers the command's
+    /// guard; the filler's own guard is defense in depth for direct callers and not reached from here.
+    /// </summary>
+    [Fact]
+    public async Task Fill_Ohne_Quelle_Ist_Eine_Fehlbedienung()
+    {
+        var (pipeline, creator, _) = BuildAgent();
+        var (_, seriesId, unitId) = await FreshUnitAsync(creator, "Fill-Ohne");
+        var chat = new FakeChatClient(UnitNotesJson);
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline, chat)
+            .RunAsync(CommandLine.Parse(["fill", "--series", seriesId.ToString(), "--unit", unitId.ToString()]), CancellationToken.None));
+        Assert.Contains("--source-file", error.Message);
+        Assert.Equal(0, chat.Calls);
+    }
 
     /// <summary>Creates an empty subject with a catalogued series/unit so that every test stands on its own.</summary>
     private static async Task<(int SubjectId, int SeriesId, int SeriesUnitId)> FreshUnitAsync(CreatorApi creator, string name)

@@ -23,7 +23,12 @@ dotnet run --project backend/Pugling.Agent.Creator -- create --child 1 --type Cl
 dotnet run --project backend/Pugling.Agent.Creator -- create --profile 3 --type Cloze --unit 12   # allgemein
 dotnet run --project backend/Pugling.Agent.Creator -- exam --child 1 --types Vocabulary,Cloze --date 2026-09-15
 dotnet run --project backend/Pugling.Agent.Creator -- plan --child 1 --types Vocabulary,Cloze --per-type 2 --intensity Normal
+dotnet run --project backend/Pugling.Agent.Creator -- fill --series 3 --unit 12 --source-file inhalt.txt --dry-run  # Stoffnotizen
 ```
+
+`fill` entwirft die Stoffnotizen einer Unit (`Topics`/`Grammar`/`VocabularyNotes`) aus einer Quelle, die du
+lieferst (`--source-file <Datei>` oder `-` für Stdin) – ohne Quelle Fehlbedienung, das Modell erfindet keinen
+Stoff. Nur leere Felder werden befüllt, `--force` überschreibt, `--dry-run` zeigt nur den Entwurf.
 
 Bei `plan` zählt `--per-type` **Übungen** je Typ (je eine Position), nicht Aufgaben – die kommen wie bei
 `create` aus `--count`. `--child` ist dort Pflicht, und der erzeugte Lehrplan ist **inaktiv**: der Vater

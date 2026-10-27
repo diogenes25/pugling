@@ -1063,7 +1063,7 @@ namespace Pugling.Api.Data.Migrations
                     Label = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     BookType = table.Column<string>(type: "TEXT", nullable: false),
                     Topics = table.Column<string>(type: "TEXT", nullable: false),
-                    Grammar = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    Grammar = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
                     VocabularyNotes = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },

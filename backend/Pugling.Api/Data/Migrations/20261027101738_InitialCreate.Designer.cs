@@ -11,7 +11,7 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Data.Migrations
 {
     [DbContext(typeof(PuglingDbContext))]
-    [Migration("20261027084619_InitialCreate")]
+    [Migration("20261027101738_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -1997,7 +1997,7 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Grammar")
-                        .HasMaxLength(200)
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Label")

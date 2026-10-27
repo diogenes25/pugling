@@ -1126,9 +1126,12 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     /// <summary>Length for slugs/keys – short, because they appear in unique indexes.</summary>
     private const int KeyLength = 128;
 
-    /// <summary>Name suffixes that give away a free-text field (a more generous length).</summary>
+    /// <summary>
+    /// Name suffixes that give away a free-text field (a more generous length). "Grammar" since B-22: a unit's
+    /// grammar note is free text like its vocabulary note - 200 characters barely held half a sentence.
+    /// </summary>
     private static readonly string[] FreeTextSuffixes =
-        ["Description", "Notes", "Text", "Reason", "Persona", "Didactics", "Comment", "Message", "Answer"];
+        ["Description", "Notes", "Text", "Reason", "Persona", "Didactics", "Comment", "Message", "Answer", "Grammar"];
 
     /// <summary>Name suffixes that give away a slug/key (short length, often unique-indexed).</summary>
     private static readonly string[] KeySuffixes = ["Key", "Slug"];

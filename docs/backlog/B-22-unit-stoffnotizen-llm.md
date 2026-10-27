@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/katalog, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/katalog, rolle/creator]
 aliases: [Unit-Stoffnotizen befüllen]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Wunsch
 groesse: M
@@ -152,9 +152,9 @@ nicht).
 4. `--dry-run` zeigt den Entwurf, ohne die Unit zu ändern (kein `PATCH`-Aufruf).
 5. Ohne `--dry-run` und ohne Konflikt schreibt der Befehl über den bestehenden
    `CreatorApi.UpdateUnitAsync`-Aufruf zurück; ein `GET` derselben Unit zeigt die neuen Werte.
-6. `Topics` und `Grammar` akzeptieren in der DB Texte bis 2000 Zeichen (wie `VocabularyNotes` heute schon);
-   ein Integrationstest legt eine Unit mit >200 Zeichen in `Topics`/`Grammar` an und liest sie unverändert
-   zurück.
+6. `Grammar` akzeptiert in der DB Texte bis 2000 Zeichen (wie `VocabularyNotes` heute schon); ein
+   Integrationstest legt eine Unit mit >200 Zeichen in `Grammar` an und liest sie unverändert zurück.
+   (`Topics` ist seit B-63/B-130 eine JSON-Liste mit eigener Grenze – erledigt, siehe Nachprüfung 2026-10-23.)
 7. `SchemaGuardTests` bleibt grün (Kettenlänge weiterhin 1, kein Modell-Drift).
 8. Das README des KI-Creators (`backend/Pugling.Agent.Creator/README.md`) und der Skill `ki-creator`
    nennen den neuen Befehl.
@@ -204,3 +204,6 @@ Konfliktbehandlung + Tests); nicht L, weil kein mehrstufiger DB-Umbau und kein F
 - **2026-08-03** — geschätzt: Größe M, `wo: backend`, `migration: ja`, `vertragsbruch: nein`, Angriffsplan
   und Testweg festgelegt — autonom getroffen, Nutzerauftrag 2026-08-04.
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): **für `Topics` überholt** – durch B-63/B-130 ist `Topics` eine JSON-Liste (`CurriculumEntities.cs:81`), die API deckelt selbst auf 50 × 200 Zeichen (`SeriesUnitsController.cs:175-198`); Entscheidung 5, AK 6 und Risiko 2 entfallen für `Topics`, der Agent muss eine Liste liefern und die Grenze treffen. Offen bleiben `Grammar` (200 Zeichen) und das Agent-Kommando (`units fill` existiert nicht). Eher S–M; `migration: ja` nur noch für `Grammar`. Nicht im selben Sprint wie B-155 (beide falten die Kette).
+- **2026-10-27** — gebaut in Lauf E, Teil 5 ([Protokoll](../pm-sitzung-2026-10-27-nacht.md), NP-10) unter Freigabe 8. **Schema:** „Grammar“ in `FreeTextSuffixes` (`PuglingDbContext.cs`) → `SeriesUnit.Grammar` 2000 Zeichen, einziges Feld mit diesem Suffix (gegrept); Kette neu gefaltet, Snapshot-Diff genau eine Zeile (`HasMaxLength(200)` → `2000`). **Agent:** neuer Baustein `UnitNotesFiller` (Systemprompt mit Anti-Erfindungs-Regel, Quelle als einzige Grundlage, JSON-Schema mit JSON-Modus-Rückfall wie die Strategien, Entwurf auf die API-Grenzen gestutzt: 50 × 200 Themen, 2000 Freitext), Konfliktregel je Feld (leer → schreiben, befüllt → behalten, `--force` → überschreiben), `--dry-run` ohne PATCH; Verb `fill --series --unit --source-file <Datei|->` in `AgentCommands`, ohne Quelle `AgentUsageException` (Exit 2), Usage-Text, README und Skill `ki-creator`. **Tests** (`FakeChatClient`): nur leere Felder + Quelle im Prompt (Mutante „Behalten-Zweig weg“ → **1 failed**), `--force` überschreibt, Trockenlauf schreibt nichts (Mutante „DryRun-Abzweig weg“ → **1 failed**), ohne Quelle Fehlbedienung ohne Modellaufruf; `SeriesUnitNotesTests` pinnt die Modell-Länge 2000 gegen 200 am `Label` und liest >200 Zeichen zurück (Mutante Suffix weg → erwartet 2000, gemessen **200**). Filterlauf **17/17 `exit=0`**.
+- **2026-10-27** — Review (`pugling-reviewer`, [Protokoll](../pm-sitzung-2026-10-27-nacht.md)), Zähler 3 (1 aus dem Rollengang + 2): **Rollengang-Fund (1)** Der erste Live-Lauf gegen die geseedete Reihe endete nach einer Minute Modellzeit in der 403 der API (`not_owner`) → Eigentumsprüfung **vor** dem Modellaufruf (`GetSeriesAsync().IsOwn`), Mutante „Prüfung weg“ → **1 failed**, live danach in 4 s mit Exit 2 abgewiesen. **🟡 (2)** Eine fehlende Quelldatei stürzte mit Stacktrace ab statt Exit 2 → `IOException`/`UnauthorizedAccessException` werden zur Fehlbedienung; Mutante „Catch weg“ → **1 failed**. **🟡 (3)** Der Pfad „Entwurf für kein Feld“ war ungetestet → Fall mit leerem Entwurf (kein PATCH, `After` null); Mutante „Kurzschluss weg“ → **1 failed**. 🟢 ohne Zählung: Kommentar zu den Grenzen präzisiert (50 × 200 prüft der Controller, 2000 ist Spaltenlänge), Suffix-Doku in einen Block, Hinweis, dass der Quellen-Test den Kommando-Wächter deckt, AK 6 um `Topics` bereinigt.
+- **2026-10-27** — **Rollengang live** (Creator-Sitz, Ollama `qwen2.5:14b-instruct`, Wegwerf-API auf `:5200`): `fill --dry-run` auf die geseedete Unit 2 lieferte in 70 s einen Entwurf **nur aus der Quelle** (fünf Themen, Grammatik, Wortschatz – nichts Erfundenes); auf einer eigenen Reihe mit handgeschriebener Grammatik („Handschrift bleibt“) schrieb `fill` Themen und Wortschatz, **behielt** die Grammatik, `GET` zeigt die Werte; geseedete Reihe wird vor dem Modell abgewiesen (Exit 2); ohne Quelle Exit 2 mit Meldung. Vater/Sohn unberührt (Konsolen-Agent, keine Oberfläche), Zeugen über die Suite. Kette eine Migration, `SchemaGuardTests` grün. `abgenommen`; Commit siehe Protokoll.

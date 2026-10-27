@@ -285,3 +285,54 @@ Kriterienliste aus `ExerciseFilter` ableiten, damit es nur noch zwei Quellen gib
 Suchfacette alle ihre Verbraucher erreicht.
 
 **Commit:** `1c1fe62` (nicht gepusht).
+
+## Lauf E, Teil 5 — NP-10 Der Agent füllt die Unit-Notizen (B-22), Zähler 0
+
+**Sprint-Ziel (aus dem Paket):** *Der Creator lässt die Stoffnotizen einer Unit vom Agenten vorschlagen, statt sie
+abzutippen.* Umfang: [B-22](backlog/B-22-unit-stoffnotizen-llm.md) (`geschaetzt`, Freigabe 8, S–M, Migration nur noch
+für `Grammar`; nicht im selben Sprint wie NP-9 – darum nach dessen Commit). **Zähler: 0.**
+
+**Entwickler-Brief:** Schema zuerst (`Grammar` als Freitext, Kette falten), dann ein eigener Baustein im Agenten
+neben den Strategien (kein Selbsttest, drei Textfelder), Verb `fill`, Tests mit dem Fake-Modell, Doku. Die
+Entscheidungen 1–6 tragen; die Nachprüfung vom 2026-10-23 streicht `Topics` aus der Migration.
+
+### Iteration
+
+- Schema: Suffix „Grammar“ → 2000; Snapshot-Diff **eine Zeile**. Agent: `UnitNotesFiller` + Verb `fill`; Tests mit
+  drei Mutanten je **1 failed** (Behalten-Zweig, DryRun-Abzweig, Suffix → 2000 vs. 200). Filterlauf **17/17**.
+
+### Review und Rollengang
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | Rollengang (live) | Erster Lauf gegen die geseedete Reihe: eine Minute Modellzeit, dann 403 `not_owner` | Eigentum vor dem Modellaufruf prüfen; Mutante → **1 failed**; live 4 s, Exit 2 | ja (Code+Test) |
+| 2 | `pugling-reviewer` 🟡 | Fehlende Quelldatei stürzt ab statt Exit 2 | `IOException` → Fehlbedienung; Mutante → **1 failed** | ja (Code+Test) |
+| 3 | `pugling-reviewer` 🟡 | „Entwurf für kein Feld“ ungetestet | Fall mit leerem Entwurf; Mutante → **1 failed** | ja (Test) |
+| – | `pugling-reviewer` 🟢 | Kommentar-Grenzen, Suffix-Doku, Wächter-Hinweis, AK 6 | berichtigt | nein |
+
+**Zähler: 3.** Suite **968/968 `exit=0`**. **Rollengang live** (Creator-Sitz mit Ollama `qwen2.5:14b-instruct` gegen eine Wegwerf-API):
+Trockenlauf aus der Quelle in 70 s, Schreiben auf eigener Reihe mit handgeschriebener Grammatik (behalten, Rest
+geschrieben, per `GET` bestätigt), geseedete Reihe und fehlende Quelle je Exit 2. *Creator:* „Ich gebe das
+Inhaltsverzeichnis, er füllt, was leer ist – und lässt meine Notiz stehen.“ Vater/Sohn Zeugen über die Suite.
+**B-22 `abgenommen`.**
+
+### Retrospektive
+
+**Nachschau:** Teil 4 (`1c1fe62`, B-155) von einem frischen Prüfer an einem `git archive` geprüft. **Ein
+Code-Entgleiten (🔴):** der Idempotenz-Schlüssel der Themen hängt am Fachnamen, Fachnamen sind nicht eindeutig →
+[B-290](backlog/B-290-themen-schluessel-haengt-am-fachnamen.md) (`entgangen_bei: B-155`), als nächster Teil
+behoben. Eine Produktfrage → [B-291](backlog/B-291-fachwechsel-der-reihe-laesst-themen-stehen.md) (`Frage`, nicht
+entschieden). `nachgeschaut` an B-155 gesetzt.
+
+**Was die eigenen Tore durchgelassen haben:** (1) Der Rollengang fand, was kein Test fand: die Reihenfolge
+„Modell vor Eigentum“ kostet eine Minute und endet in der 403 – der Test-Harness hat den Vater immer als Besitzer.
+(2) B-290: die Entscheidung 4 der Story sagt „fachqualifiziert“, die Umsetzung nahm den Fachnamen, und alle Tests
+bauen Fächer mit `UniqueName` – eine Eindeutigkeit, die das Modell ausdrücklich **nicht** garantiert (der
+Kommentar am `Subject`-Index sagt es), kam in keinem Testaufbau vor. Beides dieselbe Klasse: der Testaufbau ist
+bequemer als die Welt (Besitzer immer der Vater, Fachnamen immer eindeutig).
+
+**Vorschlag, nicht gelandet (Freigabe 3):** **(J)** ein `TestApi`-Helfer, der je Testklasse **zwei** gleichnamige
+Fächer verschiedener Creator anlegt, und die Regel im Pflichtschritt von Step 5: *„jede Eindeutigkeit, die ein
+Test voraussetzt, gegen die Index-Kommentare des DbContext prüfen“*. Vorschlag (H)/(I) bleiben stehen.
+
+**Commit:** folgt unten.
