@@ -32,3 +32,4 @@ Ein Vitest je Sprache mit `count: 1` und `count: 2`; Mutante „`_one` gestriche
 
 - **2026-10-27** — angelegt aus der Nachschau zu Lauf E Teil 8 (`1ee9bf0`) ([Protokoll](../pm-sitzung-2026-10-27-nacht.md)),
   Fund 1 des frischen Prüfers; `entgangen_bei: B-294`.
+- **2026-10-27** — Commit `aab2ef9` (Lauf E, Teil 9; nicht gepusht).

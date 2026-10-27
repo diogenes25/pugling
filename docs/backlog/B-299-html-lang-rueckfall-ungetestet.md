@@ -32,3 +32,4 @@ das Szenario, das Entscheidung 5 aus B-85 verhindern soll.
 
 - **2026-10-27** — angelegt aus der Nachschau zu Lauf E Teil 8 (`1ee9bf0`) ([Protokoll](../pm-sitzung-2026-10-27-nacht.md)),
   Fund 2 des frischen Prüfers; `entgangen_bei: B-294`.
+- **2026-10-27** — Commit `aab2ef9` (Lauf E, Teil 9; nicht gepusht).

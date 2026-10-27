@@ -88,3 +88,4 @@ Rest des Korpus (B-295) ist der größere Teil und bewusst nicht hier.
   Paritäts-Test belegt „übersetzt wirklich“ mit einem Schlüssel. **Für das menschliche Gegenlesen (AK 7):**
   „Strong.“ (Germanismus), „is adding them right away“ („gleich“ heißt hier „bald“), „Tell us about you!“ →
   „yourself“, `cadenceNone` „free“ liest sich als „kostenlos“ → „optional“; „PRACTISE“ (BrE) ist konsistent.
+- **2026-10-27** — Commit `aab2ef9` (Lauf E, Teil 9; nicht gepusht).

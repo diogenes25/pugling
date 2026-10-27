@@ -69,3 +69,4 @@ und die betroffene Spec; Testweg: Paritäts-Test, Arcade-Specs, erweiterte `spra
   belegt „übersetzt wirklich“ nur mit `nav.home` – ein „höchstens N identische Werte“ mit benannter Ausnahmeliste
   (`shop`, `skins`, `test`, `celebrateOne`) wäre der tragende Fall. Pluralformen: siehe
   [B-298](B-298-plural-im-hud-ein-coins.md) (`_one`/`_other`), gilt für jeden neuen `count`-Schlüssel hier.
+- **2026-10-27** — Commit `aab2ef9` (Lauf E, Teil 9; nicht gepusht).

@@ -44,3 +44,4 @@ Eingabetext mit Leerzeichen genau an Index 2000 für den Leerraum-Zweig.
   Fall `Fill_Kuerzt_Freitext_Mit_Leerraum_Vor_Der_Grenze_Ohne_Nachlaufendes_Leerzeichen` → Länge **1999**, Mutante
   `TrimEnd()` im Leerraum-Zweig entfernt → **1 failed**. `Fill_*` **10/10**, Suite **972/972 `exit=0`**. Rollengang:
   der Agent hat keine Oberfläche, die Tests sind der Weg. **`abgenommen`.**
+- **2026-10-27** — Commit `aab2ef9` (Lauf E, Teil 9; nicht gepusht).

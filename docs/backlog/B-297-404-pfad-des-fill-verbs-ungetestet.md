@@ -40,3 +40,4 @@ Suite bliebe grün.
   bleibt 0; der Prüfer hat je Zusicherung die Mutante benannt (Filter ≠ NotFound → rohe `PuglingApiException`;
   Controller-Suche ohne `u.SeriesId == seriesId` → Unit gefunden, keine Ausnahme; Suche hinter `DraftAsync` →
   `chat.Calls == 1`). Suite **972/972 `exit=0`**. Rollengang: Tests sind der Weg. **`abgenommen`.**
+- **2026-10-27** — Commit `aab2ef9` (Lauf E, Teil 9; nicht gepusht).
