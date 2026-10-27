@@ -837,3 +837,82 @@ geschlossen; zwei fanden ein Geschwister außerhalb (B-301 → B-307; B-302 → 
    Dazu unverändert (H)–(N) aus Lauf E.
 4. Unverändert offen: englische Texte in `frontend/src/i18n/en.ts` gegenlesen (B-294 AK 7), B-291 (`Frage`), B-267, B-268.
 
+
+## Lauf G, Teil 1 — B-304 Der Rahmen der Arcade auf Englisch, Zähler 0
+
+Auftrag: „Mache einen Nachtlauf“ (Nutzer, 2026-10-27 abends) – der Auftragstext aus [nachtlauf.md](nachtlauf.md) mit
+den Freigaben 1–10, Reihenfolge nach „Ende Lauf F“, Punkt 1: B-304, dann B-305. Ausgangslage: HEAD `034b19c`, Baum
+sauber, nichts gepusht. B-304 ist `Wunsch` auf `geschaetzt` – baubar nach Freigabe 8; die Teilung von B-295 hat der
+Nutzer noch nicht gegengelesen, die Ausführungs-Punkte in B-304 entscheiden aber keine Produktfrage neu.
+
+**Sprint-Ziel:** *Das Kind, das die Arcade auf Englisch stellt, bleibt auch in Login, Konto, Trophäenweg, Skins, Shop
+und „Das bin ich“ im Englischen – und der Vater am selben Gerät bleibt im deutschen Vater-Web.* Umfang:
+[B-304](backlog/B-304-arcade-rahmen-auf-englisch.md) allein (M, Frontend). **Zähler: 0.**
+
+**Entwickler-Brief:** Schlüssel je Bildschirm in `de.ts`/`en.ts` (Deutsch ist die Quelle, die Parität hält
+`i18n.test.ts`), fette Einschübe über `Trans`, jeder Zählschlüssel `_one`/`_other`. Die geteilten Helfer
+(`lib/shop.ts`, `lib/labels.ts`) bleiben unberührt; die Arcade holt Buchungsart, Facette, Menge und den Gratis-Preis
+über eigene Schlüssel. Der `<html lang>`-Effekt wandert an die `SohnApp`-Wurzel. Belege: Vitest je Regel mit benannter
+Mutante, `sprache.spec.ts` um Shop, englischen Login und das deutsche Vater-Web erweitert.
+
+**Befund am Code (gegen die Story):** `lib/skins.ts` liest das Vater-Web **nicht** (nur Arcade und `Mascot`). Die
+Skin-Texte kommen trotzdem über die Ressourcen (`sohn/skinText.ts`), weil `lib/skins.ts` der visuelle Katalog bleibt;
+seine deutschen Texte dienen nur noch als Rückfall für eine unbekannte Id. Der Kommentar wurde entsprechend gefasst.
+
+### Iteration
+
+- Acht Bildschirme + `SohnHome` (Skin-Name in „Stark. …“) + `Mascot` (Vorlesename) auf Schlüssel umgestellt;
+  `tsc -b` sauber, Literal-Suche über die Dateien ohne Rest außer Diagnose-Texten.
+- Neue Datei `arcadeSprache.test.tsx`, **13 Fälle**. Eine rote Probe gegen den Ausgangsstand ist nicht messbar (die
+  Datei importiert die neuen Module); stattdessen je Fall eine Mutante – **15 Mutanten, je 1 failed**, eine
+  (unverändert) **13 passed**. Lücke dabei gefunden: die Mutante „Menge im Shop ohne `count`“ blieb zuerst **12/12
+  grün** – die Fälle prüften nur die Ressource, nicht `amount` im Shop. Fall ergänzt, danach **1 failed**.
+- `sprache.spec.ts`: erste Fassung der Vater-Zusicherung war leer (`row` mit „10 Minuten TV“ enthält „10 Min“ schon
+  im Titel) – vor dem Lauf erkannt, auf die Mengen-Zelle umgestellt. Vier E2E-Mutanten je **1 failed** an der
+  richtigen Zeile (Arcade-Menge Z. 47, Wurzel-Effekt Z. 32, Vater-Helfer Z. 65, Shop-Reiter Z. 41).
+- `e2e/helpers.ts`: `sohnLogin` nimmt „▶ LOS“ oder „▶ GO“ (der Login folgt jetzt der gespeicherten Sprache).
+- Vitest **486/486**, volle E2E **98 passed** (`exit=0`).
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `frontend-reviewer` 🟡 | AK 2 („Nutzerdaten bleiben“) nur als Kommentar: `t("Kinoabend")` gibt „Kinoabend“ zurück, die Zusicherung kann nie fallen | Titel ist ein vorhandener Schlüssel (`shop.cancelled`); Mutante „Titel durch `t`“ → **1 failed** | ja |
+| 2 | `frontend-reviewer` 🟡 | `lang="de"` nach `vaterLogin` immer wahr (`page.goto` lädt das statische `lang` aus `index.html`) | gestrichen; Beleg bleibt der Vitest-Fall beim Entmontieren | ja |
+| – | `frontend-reviewer` 🟢 | Schluss-Anführungszeichen im Deutschen geändert; `components/` hängt an `sohn/`; falscher Testdateiname im Kommentar; Einheiten-Abgleich nur zwei von fünf; `\|Lade Shop` kann nie anschlagen; vier englische Formulierungen | alles genommen | nein (Freigabe 10) |
+| – | `frontend-reviewer` 🟢 | `errorMessage` bleibt in der englischen Arcade deutsch (geteilter Helfer) | [B-314](backlog/B-314-fehlermeldungen-der-arcade-bleiben-deutsch.md) (`idee`) | nein (außerhalb) |
+
+**Zähler: 2.** Vitest **494/494**, volle E2E **98 passed** (`exit=0`). Rollengang: der Sohn-Gang ist `sprache.spec.ts`
+im echten Browser gegen frisch gestartete Server (umschalten, neu laden, Shop, Skins, abmelden, englischer Login,
+Vater-Shop, wieder anmelden). Der Vater hat einen eigenen Beleg im Gang (AK 3: Mengen-Zelle „10 Min“ im Vater-Shop
+bei gespeichertem Englisch); Creator Regressionszeuge – kein Pfad im Diff, volle E2E grün. **B-304 `abgenommen`**,
+`wartet_auf` das menschliche Gegenlesen der neuen englischen Texte (AK 5).
+
+### Retrospektive
+
+**Nachschau:** Lauf F, Teil 5 (`45cbe7b`, B-308/B-309) von einem frischen `pugling-reviewer`: 24/24 der betroffenen
+Tests grün, 991 Fälle per `--list-tests` bestätigt; Mutanten je Zusicherung hergeleitet (alte Titel-Zeile, 404/403-Fang,
+`== ' '`, `char.IsSeparator`, `[2000 ± 1]`), 1990 + 1 + 9 + 1 + 10 = 2011 nachgerechnet, alle übrigen Id-Parameter des
+Agenten als Fehlbedienung gefunden. **Kein Defekt im Diff; drei Geschwister außerhalb:**
+[B-311](backlog/B-311-agent-reihensuche-liest-nur-50-reihen.md) (🟡, eine richtige Reihe jenseits der ersten 50 wird
+als Fehlbedienung abgewiesen, `entgangen_bei: B-308`, `unverifiziert`),
+[B-312](backlog/B-312-agent-profiles-unbekanntes-fach-meldet-kein-profil.md) (🟢),
+[B-313](backlog/B-313-agent-unbekannter-typ-je-teil-statt-fehlbedienung.md) (🟢, `Frage`). Zwei Testkommentare
+richtiggestellt (Herr Schmidt hat nur die Creator-Rolle; das Profil muss das Fach tragen). `nachgeschaut` an B-308,
+B-309. Den Hinweis des Prüfers „dieselbe Paging-Falle wie B-46“ habe ich nicht übernommen – B-46 handelt nicht von
+Paging.
+
+**Was die eigenen Tore durchgelassen haben:** Beide 🟡-Funde sind Zusicherungen, die im Ausgangszustand schon wahr
+sind – genau die Klasse aus CLAUDE.md, und beide lagen in **meinen** neuen Tests. Die Mutanten-Liste vor dem Review
+hatte für „Kinoabend“ keine Mutante, die ich je gemessen hätte; ich hatte die Zeile mit einem Kommentar versehen
+(„rot, wenn …“), statt die Mutante zu fahren. Bei der E2E-Zeile `lang="de"` stand der Grund, warum sie leer ist, zwei
+Zeilen darüber im eigenen Kommentar. Gemeinsamer Nenner: **ein Kommentar „rot, wenn X“, zu dem X nie gemessen wurde.**
+
+**Warum der Lauf weiterläuft (Limit 2 nicht berührt):** die Nachschau fand nichts im Diff von `45cbe7b`; ihre drei
+Geschwister liegen im Increment von Lauf F, nicht dieses Laufs (wie Lauf F, Teil 1). Kein neues Tor gelandet.
+
+**Vorschlag, nicht gelandet (Freigabe 3):** **(S)** Prosa in `frontend/CLAUDE.md` (i18n-Abschnitt): „‚bleibt
+unübersetzt‘ belegt nur ein Wert, der ein vorhandener Schlüssel ist – `t` gibt bei fehlendem Schlüssel den Schlüssel
+zurück.“ Verwandt mit (R): jeder Kommentar „rot, wenn X“ in einem Test braucht eine gefahrene Mutante X – das wäre als
+Tor denkbar (Kommentar-Muster gegen eine Mutanten-Liste im Verlauf), aber teuer und leicht zu umgehen; darum nur
+Prosa vorgeschlagen.

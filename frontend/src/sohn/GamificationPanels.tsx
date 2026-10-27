@@ -72,6 +72,7 @@ export function MissionsPanel() {
  * Ein neu erreichtes Abzeichen wird groß gefeiert (Overlay + Ton + Haptik).
  */
 export function BadgesGallery() {
+  const { t } = useTranslation();
   const { childId, celebrate } = useSohn();
   const achievements = useAsync<AchievementStatus[]>(() => api.achievements(), []);
 
@@ -85,8 +86,8 @@ export function BadgesGallery() {
     writeSeen(key, earned.map((a) => a.id));
     if (first || fresh.length === 0) return;
     const b = fresh[0];
-    celebrate("big", b.icon ?? "🏅", "ABZEICHEN!", fresh.length > 1 ? `${fresh.length} neue` : b.title);
-  }, [achievements.data, childId, celebrate]);
+    celebrate("big", b.icon ?? "🏅", t("badges.celebrate"), fresh.length > 1 ? t("badges.fresh", { count: fresh.length }) : b.title);
+  }, [achievements.data, childId, celebrate, t]);
 
   if (achievements.loading || achievements.error || !achievements.data || achievements.data.length === 0) return null;
 
@@ -94,7 +95,7 @@ export function BadgesGallery() {
   return (
     <div className="card">
       <div className="row" style={{ marginBottom: 12 }}>
-        <b style={{ fontSize: 13 }}>🏅 Auszeichnungen</b>
+        <b style={{ fontSize: 13 }}>{t("badges.title")}</b>
         <span className="sub" style={{ marginLeft: "auto" }}>{earnedCount}/{achievements.data.length}</span>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
@@ -119,7 +120,7 @@ export function BadgesGallery() {
               </div>
               <div style={{ fontSize: 10, fontWeight: 800, lineHeight: 1.2 }}>{a.title}</div>
               <div className="sub" style={{ fontSize: 10 }}>
-                {a.earned ? "erreicht" : `${a.current}/${a.threshold} (${pct}%)`}
+                {a.earned ? t("badges.earned") : `${a.current}/${a.threshold} (${pct}%)`}
               </div>
             </div>
           );

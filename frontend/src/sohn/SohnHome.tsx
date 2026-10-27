@@ -6,6 +6,7 @@ import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
 import { Mascot } from "../components/Mascot";
 import { useSohn } from "./SohnApp";
+import { useSkinText } from "../lib/skinText";
 import { MissionsPanel } from "./GamificationPanels";
 import { InterestIntroCard } from "./SohnInterests";
 import type { OverviewResponse, PlanResponse, PositionStatus } from "../lib/types";
@@ -61,6 +62,7 @@ function HomeForPlan({
 }) {
   const { t } = useTranslation();
   const { skin } = useSohn();
+  const skinText = useSkinText();
   const overview = useAsync<OverviewResponse>(() => api.overview(planId), [planId]);
 
   useEffect(() => {
@@ -97,8 +99,8 @@ function HomeForPlan({
       {today.dutyDone ? (
         <div className="card" style={{ borderColor: "var(--lime)" }}>
           <span className="pill lime">{t("home.doneToday")}</span>
-          {/* Der Skin-Name ist ein Wert, kein Chrome: er reist als Platzhalter und wird nie übersetzt. */}
-          <p className="sub" style={{ marginTop: 6 }}>{t("home.doneText", { skin: skin.name })}</p>
+          {/* Der Skin-Name reist als Platzhalter; übersetzt wird er über die Skin-Id (B-304), wie im Skins-Shop. */}
+          <p className="sub" style={{ marginTop: 6 }}>{t("home.doneText", { skin: skinText.name(skin) })}</p>
         </div>
       ) : (
         <div className="card">

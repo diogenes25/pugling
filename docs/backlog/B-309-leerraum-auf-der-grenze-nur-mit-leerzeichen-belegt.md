@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-302]
 wartet_auf: ""
+nachgeschaut: "2026-10-27"
 ---
 
 # B-309 · „Dieselbe Leerraum-Menge an jeder Stelle“ ist nur in einer Richtung belegt
@@ -39,3 +40,7 @@ werden (1990).
 - **2026-10-27** — Review (`pugling-reviewer`, zusammen mit B-308): Arithmetik nachgerechnet (2011 Zeichen, Trenner
   auf 1990 und 2000; richtig 2000, Mutante 1990); `char.IsSeparator` als Mutante träfe nur den `\r`-Fall, das Streichen
   der Grenzprüfung alle drei. Kein Fund. Rollengang: Agent ohne Oberfläche, Tests sind der Weg. **`abgenommen`.**
+- **2026-10-27** — nachgeschaut (Lauf G, Teil 1, frischer `pugling-reviewer` am Commit `45cbe7b`): 1990 + 1 + 9 + 1
+  + 10 = 2011 nachgerechnet, Trenner auf 1990/2000; Mutanten `== ' '` (rot ×3, 1990), `char.IsSeparator` (rot nur
+  für `\r`), `[2000 ± 1]` (rot, 1990) hergeleitet; Geschwister `vocabularyNotes` (selbe `Text()`-Funktion),
+  `TrimEnd` im Grenzzweig (Test bei 1999) und `Trim()` in `UnitNotesFiller.cs:173` gedeckt. Kein Befund.

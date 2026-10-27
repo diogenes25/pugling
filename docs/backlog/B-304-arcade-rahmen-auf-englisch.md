@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/student]
 aliases: [i18n Teil b1, Rahmen der Arcade auf Englisch, Login Konto Shop Skins Englisch]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Wunsch
 groesse: M
@@ -13,7 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-wartet_auf: ""
+wartet_auf: "Mensch: die neuen englischen Texte in src/i18n/en.ts gegenlesen (AK 5)"
 ---
 
 # B-304 · Der Rahmen der Sohn-Arcade auf Englisch: Login, Konto, Weg, Shop, Skins, Interessen
@@ -68,3 +68,28 @@ Schlüssel nach Bildschirm gruppiert (`login.*`, `account.*`, `progress.*`, `ski
   Flächen (Rahmen-Bildschirme gegen Spielweg mit den Übungskomponenten), zusammen ~2000 Zeilen in 12+ Dateien.
   Entscheidungen aus B-85/B-295 übernommen; die zwei Ausführungs-Punkte oben (geteilte Helfer, Login-`lang`) folgen
   aus Entscheidung 3/5 von B-85 und den Hinweisen in B-295, sie entscheiden keine Produktfrage neu.
+- **2026-10-27** — gebaut in Lauf G, Teil 1 ([Protokoll](../pm-sitzung-2026-10-27-nacht.md)). Acht Bildschirme +
+  `SohnHome` (Skin-Name) + `Mascot` (Vorlesename) auf Schlüssel; `<html lang>`-Effekt an der `SohnApp`-Wurzel;
+  Skin-Texte über `lib/skinText.ts`. **Abweichung vom Ist-Stand der Story:** `lib/skins.ts` liest das Vater-Web gar
+  nicht – die Skin-Texte kommen trotzdem aus den Ressourcen, `lib/skins.ts` bleibt der visuelle Katalog mit deutschem
+  Rückfall. Deutsch ändert sich sichtbar nur in den Pluralformen („1 Ziel“, „1 Tag“ statt „1 Ziele“, „1 Tage“).
+- **2026-10-27** — Belege. `arcadeSprache.test.tsx` (am Ende **21 Fälle**): rote Probe gegen den Ausgangsstand nicht
+  messbar (die Datei importiert neue Module), stattdessen je Fall eine Mutante – **18 Mutanten, je 1 failed** (eine
+  davon, `UNIT_LABEL` Gramm abweichend, **2 failed** = beide Zählformen), die unveränderte Kontrolle **13 passed**.
+  Lücke dabei: „Menge im Shop ohne `count`“ blieb zuerst **12/12 grün**, Fall für `amount` ergänzt → **1 failed**.
+  `sprache.spec.ts` um Shop (englische Reiter, Menge „10 min“ am Seed-Angebot `TV-001`), englischen Login mit
+  `lang="en"` und das deutsche Vater-Web (Mengen-Zelle „10 Min“ aus `unitAmount`, AK 3) erweitert; vier
+  E2E-Mutanten je **1 failed** an der richtigen Zeile. Vitest **494/494**, volle E2E **98 passed** (`exit=0`).
+- **2026-10-27** — Review (`frontend-reviewer`): kein Blocker. 🟡 (zählt) **AK 2 nur als Kommentar** – „Kinoabend“
+  konnte nie rot werden, weil `t` bei fehlendem Schlüssel den Schlüssel zurückgibt → Titel ist jetzt ein vorhandener
+  Schlüssel (`shop.cancelled`), Mutante „Titel durch `t`“ → **1 failed**. 🟡 (zählt) `lang="de"` nach `vaterLogin` ist
+  nach `page.goto` immer wahr → gestrichen (der echte Beleg ist der Vitest-Fall beim Entmontieren). 🟢 ohne Zählung:
+  deutsche Schluss-Anführungszeichen wieder wie vorher (ASCII), `skinText` von `sohn/` nach `lib/` (sonst hinge
+  `components/` an `sohn/`), Kommentar nennt die richtige Testdatei, Einheiten-Abgleich über alle fünf Einheiten × {1, 2}
+  gegen `unitAmount`, `|Lade Shop` aus der Negativ-Regex, vier englische Formulierungen geglättet;
+  `errorMessage` bleibt deutsch → [B-314](B-314-fehlermeldungen-der-arcade-bleiben-deutsch.md). **Zähler: 2.**
+- **2026-10-27** — Rollengang: der Sohn-Gang ist `sprache.spec.ts` im echten Browser gegen frisch gestartete Server
+  (umschalten, neu laden, Shop, Skins, abmelden, englischer Login, Vater-Shop, wieder anmelden); Vater und Creator
+  Regressionszeugen – volle E2E grün, der Vater-Pfad im Diff nur als Leser der unveränderten Helfer (AK 3 belegt).
+  Chrome-Extension nicht genutzt; die Spec ist der Gang. **`abgenommen`**, `wartet_auf` das menschliche Gegenlesen
+  (AK 5). Zum Gegenlesen besonders: `progress.title` „Trophy path“, `pointKind.*`, `interests.*Hint`.

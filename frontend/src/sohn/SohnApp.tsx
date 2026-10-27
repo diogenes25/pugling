@@ -46,6 +46,17 @@ const PLAN_KEY = (childId: number) => `pugling.plan.${childId}`;
 
 export function SohnApp() {
   const { session } = useAuth();
+  const { i18n } = useTranslation();
+  const lang = isLanguage(i18n.language) ? i18n.language : "de";
+
+  // `<html lang>` folgt der Wahl (B-85, Entscheidung 5): ein Screenreader liest englischen Text sonst mit deutscher
+  // Aussprache. An der Wurzel, nicht in der Shell, damit auch der Login sein `lang` trägt (B-304). Beim Verlassen
+  // der Arcade zurück auf Deutsch – das Vater-Web ist (noch) nicht übersetzt.
+  useEffect(() => {
+    document.documentElement.lang = lang;
+    return () => { document.documentElement.lang = "de"; };
+  }, [lang]);
+
   if (!session || session.role !== "Student") return <SohnLogin />;
   return <SohnShell childId={session.id} />;
 }
@@ -63,13 +74,6 @@ function SohnShell({ childId }: { childId: number }) {
   const { celebration, celebrate } = useCelebration();
   const { t, i18n } = useTranslation();
   const lang = isLanguage(i18n.language) ? i18n.language : "de";
-
-  // `<html lang>` folgt der Wahl (B-85, Entscheidung 5): ein Screenreader liest englischen Text sonst mit deutscher
-  // Aussprache. Beim Verlassen der Arcade zurück auf Deutsch – das Vater-Web ist (noch) nicht übersetzt.
-  useEffect(() => {
-    document.documentElement.lang = lang;
-    return () => { document.documentElement.lang = "de"; };
-  }, [lang]);
 
   const refreshWallet = useCallback(() => {
     api.wallet().then((w) => { setCoins(w.coins); setGems(w.gems); }).catch(() => { /* Wallet ist Beiwerk */ });

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { api, errorMessage } from "../lib/api";
 import { confirmAction } from "../lib/ui";
 import { useAction } from "../lib/useAction";
 import { useGemerkterFehler } from "../lib/useGemerkterFehler";
 import { StatusBanner } from "../components/StatusBanner";
-import { ACTION_EMOJI, priceLabel, unitAmount } from "../lib/shop";
-import type { MyInventoryItem, MyActivation, MyShopPurchase, ShopAvailableListing, ShopView } from "../lib/types";
+import { ACTION_EMOJI, priceLabel } from "../lib/shop";
+import type { MyInventoryItem, MyActivation, MyShopPurchase, ShopAvailableListing, ShopView, UnitType } from "../lib/types";
 import { useSohn } from "./SohnApp";
 
 type Tab = "buy" | "stuff" | "requests" | "history";
@@ -14,11 +15,25 @@ type Tab = "buy" | "stuff" | "requests" | "history";
 // stillen Take(50)-Deckel und keinen Weg zu aelteren Zeilen).
 const HISTORY_PAGE = 20;
 
-const STATUS_PILL: Record<MyActivation["status"], { cls: string; label: string }> = {
-  Pending: { cls: "gold", label: "wartet" },
-  Approved: { cls: "lime", label: "freigegeben" },
-  Rejected: { cls: "red", label: "abgelehnt" },
-};
+const STATUS_PILL = {
+  Pending: { cls: "gold", label: "shop.statusPending" },
+  Approved: { cls: "lime", label: "shop.statusApproved" },
+  Rejected: { cls: "red", label: "shop.statusRejected" },
+} as const satisfies Record<MyActivation["status"], { cls: string; label: string }>;
+
+/**
+ * Menge und Preis in der Arcade-Sprache (B-304). `unitAmount`/`priceLabel` aus `lib/shop.ts` bleiben deutsch, weil
+ * das Vater-Web sie auch ruft; von `priceLabel` leiht sich die Arcade nur die sprachfreien Teile (Emoji + Zahl).
+ */
+export function useShopText() {
+  const { t } = useTranslation();
+  return {
+    t,
+    amount: (quantity: number, unit: UnitType): string => t(`shop.unit.${unit}`, { count: quantity }),
+    price: (coinPrice: number, gemPrice: number): string =>
+      coinPrice > 0 || gemPrice > 0 ? priceLabel(coinPrice, gemPrice) : t("shop.free"),
+  };
+}
 
 /**
  * Familien-Shop aus Sohn-Sicht: verdiente 🪙 Münzen in echte Vater-Belohnungen umsetzen.
@@ -27,6 +42,7 @@ const STATUS_PILL: Record<MyActivation["status"], { cls: string; label: string }
  */
 export function SohnShop() {
   const { coins, gems, refreshWallet, celebrate } = useSohn();
+  const { t, amount, price } = useShopText();
   const [tab, setTab] = useState<Tab>("buy");
   const [view, setView] = useState<ShopView | null>(null);
   const [activations, setActivations] = useState<MyActivation[]>([]);
@@ -107,7 +123,7 @@ export function SohnShop() {
   }
 
   async function buy(listing: ShopAvailableListing) {
-    if (!confirmAction(`„${listing.title}" für ${priceLabel(listing.coinPrice, listing.gemPrice)} kaufen?`)) return;
+    if (!confirmAction(t("shop.confirmBuy", { title: listing.title, price: price(listing.coinPrice, listing.gemPrice) }))) return;
     // Kein `okText`: die Feier (`celebrate`) IST die Erfolgsmeldung - ein Banner daneben wäre doppelt
     // (frontend/CLAUDE.md, "Erfolg darf stumm bleiben").
     await action.run(async () => {
@@ -123,7 +139,7 @@ export function SohnShop() {
       setHistoryLoaded(false);
       setHistoryError(null);
       refreshWallet(); // Münzstand im HUD real aktualisieren (nach Kauf niedriger)
-      celebrate("medium", ACTION_EMOJI[listing.actionType], "GEKAUFT!", listing.title);
+      celebrate("medium", ACTION_EMOJI[listing.actionType], t("shop.boughtTitle"), listing.title);
     });
   }
 
@@ -132,41 +148,40 @@ export function SohnShop() {
     // nicht mehr, weil die Anfrage über die Artikel-Id läuft. Lieber sagen, warum, als 404 zeigen.
     // `== null` fängt beides: der Vertrag erlaubt bei einem nullable Feld auch das Fehlen des Schlüssels.
     if (item.shopArticleId == null) {
-      action.fail("Das gibt es bei Papa nicht mehr – frag ihn direkt danach. 🙋");
+      action.fail(t("shop.articleGone"));
       return;
     }
     const shopArticleId = item.shopArticleId;
-    if (!confirmAction(`${unitAmount(quantity, item.unitType)} „${item.title}" bei Papa anfragen?`)) return;
+    if (!confirmAction(t("shop.confirmRequest", { amount: amount(quantity, item.unitType), title: item.title }))) return;
     // Anders als `buy`: keine eigene Feier vorgesehen, die Rückmeldung läuft also über den Banner-Text.
     await action.run(async () => {
       await api.activateInventory(shopArticleId, quantity);
       await load(); // Inventar (Menge sinkt) + Anfragen neu laden
       setTab("requests");
-    }, "Anfrage an Papa geschickt! 📨");
+    }, t("shop.requestSent"));
   }
 
   return (
     <div className="sohn-body">
       <div className="row">
-        <span className="screen-title" style={{ margin: 0 }}>🛒 Shop</span>
+        <span className="screen-title" style={{ margin: 0 }}>{t("shop.title")}</span>
         <span className="chip" style={{ marginLeft: "auto" }}>🪙<b className="tabnum">{coins}</b></span>
         <span className="chip">💎<b className="tabnum">{gems}</b></span>
       </div>
-      <p className="sub">Deine 🪙 Münzen fürs Lernen gibst du hier gegen echte Belohnungen von Papa aus. Erst
-        <b> kaufen</b>, dann bei <b>Sachen</b> das Einlösen beantragen – Papa gibt es frei.</p>
+      <p className="sub"><Trans i18nKey="shop.intro" components={{ b: <b /> }} /></p>
 
-      <div className="row" role="group" aria-label="Shop-Bereiche" style={{ gap: 6 }}>
-        <TabButton active={tab === "buy"} onClick={() => setTab("buy")}>Kaufen</TabButton>
+      <div className="row" role="group" aria-label={t("shop.areas")} style={{ gap: 6 }}>
+        <TabButton active={tab === "buy"} onClick={() => setTab("buy")}>{t("shop.tabBuy")}</TabButton>
         <TabButton active={tab === "stuff"} onClick={() => setTab("stuff")}>
-          Sachen{view && view.inventory.length > 0 ? ` (${view.inventory.length})` : ""}
+          {t("shop.tabStuff")}{view && view.inventory.length > 0 ? ` (${view.inventory.length})` : ""}
         </TabButton>
         <TabButton active={tab === "requests"} onClick={() => setTab("requests")}>
-          Anfragen{activations.some((a) => a.status === "Pending") ? " •" : ""}
+          {t("shop.tabRequests")}{activations.some((a) => a.status === "Pending") ? " •" : ""}
         </TabButton>
-        <TabButton active={tab === "history"} onClick={openHistoryTab}>Verlauf</TabButton>
+        <TabButton active={tab === "history"} onClick={openHistoryTab}>{t("shop.tabHistory")}</TabButton>
       </div>
 
-      {loading ? <div className="loading">Lade Shop…</div>
+      {loading ? <div className="loading">{t("shop.loading")}</div>
         : error ? <div className="banner err">{error}</div>
         : !view ? null
         : tab === "buy" ? <BuyTab listings={view.available} busy={action.busy} onBuy={buy} />
@@ -200,8 +215,9 @@ function BuyTab({ listings, busy, onBuy }: {
   busy: boolean;
   onBuy: (l: ShopAvailableListing) => void;
 }) {
+  const { t, amount, price } = useShopText();
   if (listings.length === 0)
-    return <p className="sub">Papa hat noch keine Belohnungen in den Shop gestellt.</p>;
+    return <p className="sub">{t("shop.noListings")}</p>;
   return (
     <div className="skin-grid">
       {listings.map((l) => {
@@ -220,11 +236,11 @@ function BuyTab({ listings, busy, onBuy }: {
             </div>
             <div className="nm">{l.title || l.articleTitle}</div>
             <div className="sub" style={{ fontSize: 11, minHeight: 26 }}>
-              {unitAmount(l.unitsPerPurchase, l.unitType)}
+              {amount(l.unitsPerPurchase, l.unitType)}
               {l.description ? ` · ${l.description}` : ""}
             </div>
-            {soldOut ? <span className="pill red">ausverkauft</span>
-              : <span className={`pill ${l.affordable ? "gold" : "red"}`}>{priceLabel(l.coinPrice, l.gemPrice)}</span>}
+            {soldOut ? <span className="pill red">{t("shop.soldOut")}</span>
+              : <span className={`pill ${l.affordable ? "gold" : "red"}`}>{price(l.coinPrice, l.gemPrice)}</span>}
           </button>
         );
       })}
@@ -238,7 +254,7 @@ function StuffTab({ inventory, busy, onActivate }: {
   onActivate: (item: MyInventoryItem, quantity: number) => void;
 }) {
   if (inventory.length === 0)
-    return <p className="sub">Noch nichts gekauft. Hol dir im Tab <b>Kaufen</b> etwas Schönes! 🎁</p>;
+    return <p className="sub"><Trans i18nKey="shop.nothingBought" components={{ b: <b /> }} /></p>;
   return (
     <div className="list">
       {inventory.map((item) => (
@@ -255,6 +271,7 @@ function InventoryRow({ item, busy, onActivate }: {
   busy: boolean;
   onActivate: (item: MyInventoryItem, quantity: number) => void;
 }) {
+  const { t, amount } = useShopText();
   const [qty, setQty] = useState(item.quantity);
   const clamped = Math.min(Math.max(1, qty || 1), item.quantity);
   const weg = item.shopArticleId === null;
@@ -265,8 +282,8 @@ function InventoryRow({ item, busy, onActivate }: {
         <div style={{ flex: 1 }}>
           <b>{item.title}</b>
           <div className="sub">
-            Du hast {unitAmount(item.quantity, item.unitType)}
-            {weg && " · gibt's bei Papa nicht mehr"}
+            {t("shop.youHave", { amount: amount(item.quantity, item.unitType) })}
+            {weg && ` · ${t("shop.goneAtDad")}`}
           </div>
         </div>
       </div>
@@ -276,13 +293,13 @@ function InventoryRow({ item, busy, onActivate }: {
           min={1}
           max={item.quantity}
           value={qty}
-          aria-label={`Menge zum Einlösen (max ${item.quantity})`}
+          aria-label={t("shop.redeemAmount", { max: item.quantity })}
           onChange={(e) => setQty(Number(e.target.value))}
           style={{ width: 90, background: "#0c0e2c", border: "1.5px solid var(--stroke)", borderRadius: 12, color: "var(--ink)", padding: 10, fontSize: 15 }}
         />
         <button type="button" className="btn small lime" style={{ width: "auto", flex: 1 }}
           disabled={busy || weg} onClick={() => onActivate(item, clamped)}>
-          Einlösen beantragen
+          {t("shop.redeem")}
         </button>
       </div>
     </div>
@@ -290,8 +307,9 @@ function InventoryRow({ item, busy, onActivate }: {
 }
 
 function RequestsTab({ activations }: { activations: MyActivation[] }) {
+  const { t, amount } = useShopText();
   if (activations.length === 0)
-    return <p className="sub">Noch keine Anfragen gestellt. Löse bei <b>Sachen</b> etwas ein.</p>;
+    return <p className="sub"><Trans i18nKey="shop.noRequests" components={{ b: <b /> }} /></p>;
   return (
     <div className="list">
       {activations.map((a) => {
@@ -300,9 +318,9 @@ function RequestsTab({ activations }: { activations: MyActivation[] }) {
           <div key={a.id} className="row" style={{ justifyContent: "space-between", padding: "8px 0" }}>
             <div>
               <b>{a.articleTitle}</b>
-              <div className="sub">{unitAmount(a.requestedQuantity, a.unitType)} · {new Date(a.requestedAt).toLocaleDateString()}</div>
+              <div className="sub">{amount(a.requestedQuantity, a.unitType)} · {new Date(a.requestedAt).toLocaleDateString()}</div>
             </div>
-            <span className={`pill ${pill.cls}`}>{pill.label}</span>
+            <span className={`pill ${pill.cls}`}>{t(pill.label)}</span>
           </div>
         );
       })}
@@ -327,6 +345,7 @@ export function HistoryTab({ purchases, total, loading, error, onLoadMore }: {
    * Lade-Zweig und renderte NICHTS – der Knopf verschwand unter dem Finger, und sein „Lädt…" war toter
    * Code. Vor den frühen `return`s, weil es ein Hook ist.
    */
+  const { t, price } = useShopText();
   const gescheitert = useGemerkterFehler(error, loading);
   // Ein gesperrter Knopf verliert in Chromium den Fokus – darum wandert er beim Klick auf die Meldung
   // (Begründung in `ListenAusfall.tsx`).
@@ -340,12 +359,12 @@ export function HistoryTab({ purchases, total, loading, error, onLoadMore }: {
           <div className="banner err" role="alert" tabIndex={-1} ref={meldung}>{gescheitert}</div>
           <button type="button" className="btn ghost small" disabled={loading}
             onClick={() => { meldung.current?.focus(); onLoadMore(); }}>
-            {loading ? "Lädt…" : "Nochmal versuchen"}
+            {loading ? t("shop.loadingMore") : t("shop.retry")}
           </button>
         </div>
       );
     if (loading) return null; // Weder "nichts gekauft" noch ein Fehler steht fest, solange geladen wird.
-    return <p className="sub">Noch nichts gekauft. Hol dir im Tab <b>Kaufen</b> etwas Schönes! 🎁</p>;
+    return <p className="sub"><Trans i18nKey="shop.nothingBought" components={{ b: <b /> }} /></p>;
   }
   return (
     <div className="list">
@@ -360,15 +379,15 @@ export function HistoryTab({ purchases, total, loading, error, onLoadMore }: {
         <div key={p.id} className="row" style={{ justifyContent: "space-between", padding: "8px 0" }}>
           <div>
             <b>{p.title}</b>
-            <div className="sub">{priceLabel(p.coinPrice, p.gemPrice)} · {new Date(p.purchasedAt).toLocaleDateString()}</div>
+            <div className="sub">{price(p.coinPrice, p.gemPrice)} · {new Date(p.purchasedAt).toLocaleDateString()}</div>
           </div>
-          {p.status === "Cancelled" && <span className="pill red">storniert</span>}
+          {p.status === "Cancelled" && <span className="pill red">{t("shop.cancelled")}</span>}
         </div>
       ))}
       {purchases.length < total && (
         <button type="button" className="btn ghost small" style={{ marginTop: 8 }} disabled={loading}
           onClick={() => { meldung.current?.focus(); onLoadMore(); }}>
-          {loading ? "Lädt…" : `Mehr laden (${purchases.length} von ${total})`}
+          {loading ? t("shop.loadingMore") : t("shop.loadMore", { shown: purchases.length, total })}
         </button>
       )}
     </div>

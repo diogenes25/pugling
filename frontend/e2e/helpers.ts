@@ -15,12 +15,15 @@ export async function vaterLogin(page: Page, credentials: LoginCredentials) {
   await expect(page.getByRole("heading", { name: "Kinder" })).toBeVisible();
 }
 
-/** Logs a child in via id + on-screen PIN pad and starts the session ("▶ LOS"). */
+/**
+ * Logs a child in via id + on-screen PIN pad and starts the session. The start button follows the stored arcade
+ * language (B-304): "▶ LOS" in German, "▶ GO" in English.
+ */
 export async function sohnLogin(page: Page, credentials: LoginCredentials) {
   await page.goto("/sohn");
   await page.locator("#childId").fill(credentials.id);
   for (const d of credentials.pin.split("")) {
     await page.locator(".keys button", { hasText: new RegExp(`^${d}$`) }).first().click();
   }
-  await page.getByRole("button", { name: "▶ LOS" }).click();
+  await page.getByRole("button", { name: /^▶ (LOS|GO)$/ }).click();
 }

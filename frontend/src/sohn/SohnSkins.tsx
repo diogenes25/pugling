@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { api, errorMessage } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { useAction } from "../lib/useAction";
@@ -7,8 +8,11 @@ import { SKINS, skinById } from "../lib/skins";
 import { Mascot } from "../components/Mascot";
 import { confirmAction } from "../lib/ui";
 import { useSohn } from "./SohnApp";
+import { useSkinText } from "../lib/skinText";
 
 export function SohnSkins() {
+  const { t } = useTranslation();
+  const skinText = useSkinText();
   const { signOut } = useAuth();
   const { gems, refreshWallet, skin, setSkin } = useSohn();
   const [owned, setOwned] = useState<string[]>([]);
@@ -31,8 +35,9 @@ export function SohnSkins() {
   async function choose(id: string) {
     if (!ready) return; // erst handeln, wenn der Server-Besitz geladen ist
     const s = SKINS.find((x) => x.id === id)!;
+    const name = skinText.name(s);
     // Nur der Kauf ist unumkehrbar (Gems weg) – bloßes Ausrüsten eines besessenen Skins nicht.
-    if (!owned.includes(id) && !confirmAction(`${s.name} für ${s.cost} 💎 freischalten? Die Gems sind dann weg.`)) return;
+    if (!owned.includes(id) && !confirmAction(t("skins.confirmBuy", { name, cost: s.cost }))) return;
     const bought = !owned.includes(id);
     // Bereits freigeschaltet -> nur ausrüsten. Sonst kaufen (Server bucht Gems ab).
     await action.run(async () => {
@@ -41,21 +46,21 @@ export function SohnSkins() {
       setSelected(state.selected);
       setSkin(skinById(state.selected));
       refreshWallet(); // Gem-Stand im HUD real aktualisieren (nach Kauf niedriger)
-    }, bought ? `${s.name} freigeschaltet & ausgerüstet! 🎉` : `${s.name} ausgerüstet!`);
+    }, bought ? t("skins.boughtMsg", { name }) : t("skins.equippedMsg", { name }));
   }
 
   return (
     <div className="sohn-body">
       <div className="row">
-        <span className="screen-title" style={{ margin: 0 }}>Charaktere</span>
+        <span className="screen-title" style={{ margin: 0 }}>{t("skins.title")}</span>
         <span className="chip" style={{ marginLeft: "auto" }}>💎<b className="tabnum">{gems}</b></span>
       </div>
-      <p className="sub">Schalte Skins mit 💎 Gems frei, die du durch Boni beim Lernen verdienst (Combos, schnelle Antworten, Missionen). Dein Held erscheint überall in der App – auch auf anderen Geräten.</p>
+      <p className="sub">{t("skins.intro")}</p>
 
       <Mascot skin={skin} mood="hyped" size={100} />
 
       {loadError ? <div className="banner err">{loadError}</div>
-      : !ready ? <div className="loading">Lade Charaktere…</div> : (
+      : !ready ? <div className="loading">{t("skins.loading")}</div> : (
       <div className="skin-grid">
         {SKINS.map((s) => {
           const isOwned = owned.includes(s.id);
@@ -69,10 +74,10 @@ export function SohnSkins() {
               disabled={action.busy}
             >
               <div className="face" style={{ background: s.gradient }}>{s.emoji}</div>
-              <div className="nm">{s.name}</div>
-              <div className="sub" style={{ fontSize: 11, minHeight: 26 }}>{s.blurb}</div>
-              {isSelected ? <span className="pill cyan">ausgerüstet</span>
-                : isOwned ? <span className="pill lime">wählen</span>
+              <div className="nm">{skinText.name(s)}</div>
+              <div className="sub" style={{ fontSize: 11, minHeight: 26 }}>{skinText.blurb(s)}</div>
+              {isSelected ? <span className="pill cyan">{t("skins.equipped")}</span>
+                : isOwned ? <span className="pill lime">{t("skins.choose")}</span>
                 : <span className="pill gold">💎 {s.cost}</span>}
             </button>
           );
@@ -81,7 +86,7 @@ export function SohnSkins() {
       )}
 
       <StatusBanner message={action.message} />
-      <button type="button" className="btn ghost" onClick={signOut} style={{ marginTop: 6 }}>Abmelden</button>
+      <button type="button" className="btn ghost" onClick={signOut} style={{ marginTop: 6 }}>{t("home.signOut")}</button>
     </div>
   );
 }

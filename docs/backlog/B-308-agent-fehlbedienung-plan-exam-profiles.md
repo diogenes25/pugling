@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-19, B-22]
 wartet_auf: ""
+nachgeschaut: "2026-10-27"
 ---
 
 # B-308 · Zwei Rest-Pfade des Agenten bei einer falschen Id: `plan`/`exam` melden sie je Teil, `profiles` evtl. roh
@@ -50,3 +51,13 @@ ist die Story `verworfen`.
   Kommentar begründet. 🟢 genommen: Meldung „es existiert nicht … Prüfe Pugling:AccountId/Pugling:Pin.“, Kommentar als
   Regel statt Umbau-Erzählung. 🟡 außerhalb → [B-310](B-310-profil-match-verraet-kind-ids.md). Suite **991/991
   `exit=0`**. Rollengang: Agent ohne Oberfläche, Tests sind der Weg. **`abgenommen`.**
+- **2026-10-27** — nachgeschaut (Lauf G, Teil 1, frischer `pugling-reviewer` am Commit `45cbe7b`): Mutante „alte
+  Titel-Zeile“ für `Plan_und_Klausur_*` hergeleitet → rot (Fang je Teil in `PlanPlanner.cs:164`/`ExamPlanner.cs:79`,
+  danach kein Wurf); „Reihe 987654“ stammt nur aus `BriefingBuilder.cs:31-33`; `profiles` 404/403 je Mutante rot;
+  alle übrigen Id-Parameter (`--profile`, `--unit`, `--series-unit`, `--interests`, `--child`) als Fehlbedienung
+  gefunden; Suite-Zahl 991 per `--list-tests` bestätigt. **Entgangen** (Geschwister außerhalb des Diffs):
+  [B-311](B-311-agent-reihensuche-liest-nur-50-reihen.md) (🟡, richtige Reihe jenseits Seite 1 als Fehlbedienung),
+  [B-312](B-312-agent-profiles-unbekanntes-fach-meldet-kein-profil.md) (🟢),
+  [B-313](B-313-agent-unbekannter-typ-je-teil-statt-fehlbedienung.md) (🟢, `Frage`). Zwei Testkommentare
+  richtiggestellt (Herr Schmidt hat nur die Creator-Rolle; das Profil muss das Fach tragen, sonst bliebe der Test
+  ohne den Fix grün).

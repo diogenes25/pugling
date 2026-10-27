@@ -1,4 +1,5 @@
 import type { Skin } from "../lib/skins";
+import { useSkinText } from "../lib/skinText";
 
 type Mood = "happy" | "hyped" | "sleepy";
 
@@ -7,6 +8,8 @@ type Mood = "happy" | "hyped" | "sleepy";
  * die Stimmung (mood) spiegelt Streak/Tagesmission wider.
  */
 export function Mascot({ skin, mood = "happy", size = 120 }: { skin: Skin; mood?: Mood; size?: number }) {
+  // Der Vorlesename folgt der Arcade-Sprache (B-304) – der Begleiter lebt nur in der Arcade.
+  const name = useSkinText().name(skin);
   const eyes =
     mood === "sleepy"
       ? `<path d="M40 58 q7 6 14 0" stroke="#2a2140" stroke-width="4" fill="none" stroke-linecap="round"/>
@@ -38,7 +41,7 @@ export function Mascot({ skin, mood = "happy", size = 120 }: { skin: Skin; mood?
   if (skin.id !== "pug") {
     return (
       <div
-        aria-label={skin.name}
+        aria-label={name}
         style={{
           width: size, height: size, borderRadius: size * 0.28, margin: "0 auto",
           display: "grid", placeItems: "center", background: skin.gradient,
@@ -54,7 +57,7 @@ export function Mascot({ skin, mood = "happy", size = 120 }: { skin: Skin; mood?
   return (
     <div
       role="img"
-      aria-label={skin.name}
+      aria-label={name}
       style={{ width: size, height: size, margin: "0 auto" }}
       dangerouslySetInnerHTML={{ __html: svg }}
     />

@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { api, errorMessage } from "../lib/api";
 import { useAction } from "../lib/useAction";
 import { StatusBanner } from "../components/StatusBanner";
-import { interestFacetLabel } from "../lib/labels";
 import { useSohn } from "./SohnApp";
 import type { InterestTagOption, MyInterestProfile } from "../lib/types";
 
@@ -54,13 +53,14 @@ export function toggledDislikeWeight(current: number): number {
 }
 
 const STEPS = [
-  { title: "Was magst du?", hint: "Einmal tippen = mag ich. Nochmal tippen = Lieblingsthema. Und noch einmal nimmt es wieder weg." },
-  { title: "Wie sollen die Bilder aussehen?", hint: "Comic, Foto, Pixel-Art – such dir aus, was dir gefällt." },
-  { title: "Was geht gar nicht?", hint: "Alles, was du hier antippst, kommt dir nie als Bild unter." },
-  { title: "Fehlt noch was?", hint: "Wenn dein Ding nicht dabei war, schreib es hier auf – dein Vater sieht es." },
+  { title: "interests.likeTitle", hint: "interests.likeHint" },
+  { title: "interests.styleTitle", hint: "interests.styleHint" },
+  { title: "interests.dislikeTitle", hint: "interests.dislikeHint" },
+  { title: "interests.wishTitle", hint: "interests.wishHint" },
 ] as const;
 
 export function SohnInterests() {
+  const { t } = useTranslation();
   const { childId, celebrate } = useSohn();
   const navigate = useNavigate();
   const [options, setOptions] = useState<InterestTagOption[] | null>(null);
@@ -125,8 +125,7 @@ export function SohnInterests() {
     if (text) {
       const profile = await action.runFor(() => api.addMyInterestWish(text));
       if (profile === null) {
-        action.fail(`Deine Auswahl ist gespeichert – nur „${text}" konnte ich nicht aufschreiben. `
-          + "Lösch den Wunsch oder probier es später nochmal.");
+        action.fail(t("interests.wishFailed", { text }));
         return;
       }
       setWishes(profile.wishes);
@@ -137,12 +136,12 @@ export function SohnInterests() {
     // `StatusBanner` dieses Bildschirms ginge mit ihm unter. Sie reist deshalb mit dem Sprung zur
     // Meldungsstelle der Shell (`SavedNotice`). Die Feier kommt obendrauf: sie ist `aria-hidden` und bei
     // „Bewegung reduzieren" gar nicht da, taugt also als Schmuck, nie als einziger Beleg.
-    celebrate("medium", "🙂", "GESPEICHERT!", "Deine Übungen passen sich an.");
-    navigate("/sohn", { state: { saved: "Gespeichert – deine Übungen passen sich an." } });
+    celebrate("medium", "🙂", t("interests.savedTitle"), t("interests.savedSub"));
+    navigate("/sohn", { state: { saved: t("interests.savedNotice") } });
   }
 
   if (loadError) return <div className="sohn-body"><div className="error-box">{loadError}</div></div>;
-  if (!options) return <div className="sohn-body"><div className="loading">Lade…</div></div>;
+  if (!options) return <div className="sohn-body"><div className="loading">{t("interests.loading")}</div></div>;
 
   const current = STEPS[step];
   const isLast = step === STEPS.length - 1;
@@ -150,16 +149,15 @@ export function SohnInterests() {
   return (
     <div className="sohn-body">
       <div className="row">
-        <span className="screen-title" style={{ margin: 0 }}>Das bin ich</span>
-        <span className="chip" style={{ marginLeft: "auto" }}>Schritt <b className="tabnum">{step + 1}</b>/{STEPS.length}</span>
+        <span className="screen-title" style={{ margin: 0 }}>{t("interests.title")}</span>
+        <span className="chip" style={{ marginLeft: "auto" }}>
+          <Trans i18nKey="interests.step" values={{ step: step + 1, total: STEPS.length }} components={{ b: <b className="tabnum" /> }} />
+        </span>
       </div>
-      <p className="sub">
-        Was du hier auswählst, ändert <b>nicht</b>, was du lernst – nur, wie es aussieht und worum es in den
-        Beispielen geht.
-      </p>
+      <p className="sub"><Trans i18nKey="interests.note" components={{ b: <b /> }} /></p>
 
-      <h3 className="screen-title" style={{ fontSize: 18 }} tabIndex={-1} ref={headingRef}>{current.title}</h3>
-      <p className="sub">{current.hint}</p>
+      <h3 className="screen-title" style={{ fontSize: 18 }} tabIndex={-1} ref={headingRef}>{t(current.title)}</h3>
+      <p className="sub">{t(current.hint)}</p>
 
       {step === 0 && <TagTiles tags={byFacet.topics} weights={weights} onPick={cycleLike} disabled={action.busy} />}
       {step === 1 && <TagTiles tags={byFacet.styles} weights={weights} onPick={cycleLike} disabled={action.busy} />}
@@ -167,15 +165,15 @@ export function SohnInterests() {
       {step === 3 && (
         <>
           <div className="field">
-            <label htmlFor="wish">Dein Wunsch</label>
+            <label htmlFor="wish">{t("interests.wishLabel")}</label>
             <input
               id="wish" value={wish} maxLength={60} disabled={action.busy}
               onChange={(e) => setWish(e.target.value)}
-              placeholder="z.B. Wellensittiche"
+              placeholder={t("interests.wishPlaceholder")}
             />
           </div>
           {wishes.length > 0 && (
-            <p className="sub" style={{ marginTop: 8 }}>Schon aufgeschrieben: {wishes.join(", ")}</p>
+            <p className="sub" style={{ marginTop: 8 }}>{t("interests.wishesSoFar", { list: wishes.join(", ") })}</p>
           )}
         </>
       )}
@@ -186,15 +184,15 @@ export function SohnInterests() {
           onClick={() => (step === 0 ? navigate("/sohn") : setStep(step - 1))}
           disabled={action.busy}
         >
-          {step === 0 ? "Abbrechen" : "Zurück"}
+          {step === 0 ? t("interests.cancel") : t("interests.back")}
         </button>
         {isLast ? (
           <button type="button" className="btn lime" style={{ flex: 1 }} onClick={save} disabled={action.busy}>
-            Fertig
+            {t("interests.done")}
           </button>
         ) : (
           <button type="button" className="btn" style={{ flex: 1 }} onClick={() => setStep(step + 1)} disabled={action.busy}>
-            Weiter
+            {t("interests.next")}
           </button>
         )}
       </div>
@@ -216,35 +214,36 @@ export function TagTiles({ tags, weights, onPick, mode = "like", disabled }: {
   mode?: "like" | "dislike";
   disabled: boolean;
 }) {
+  const { t } = useTranslation();
   if (tags.length === 0) {
-    return <p className="sub">Hier gibt es noch nichts zur Auswahl – dein Vater legt die Stichwörter an.</p>;
+    return <p className="sub">{t("interests.noTags")}</p>;
   }
 
   return (
     <div className="skin-grid">
-      {tags.map((t) => {
-        const weight = weights[t.id] ?? 0;
+      {tags.map((tag) => {
+        const weight = weights[tag.id] ?? 0;
         const on = mode === "dislike" ? weight < 0 : weight > 0;
         return (
           <button
-            key={t.id}
+            key={tag.id}
             type="button"
             className={`skin${on ? " on" : ""}`}
             aria-pressed={on ? "true" : "false"}
-            onClick={() => onPick(t.id)}
+            onClick={() => onPick(tag.id)}
             disabled={disabled}
           >
-            <div className="nm">{t.label}</div>
-            <div className="sub" style={{ fontSize: 11 }}>{interestFacetLabel(t.facet)}</div>
+            <div className="nm">{tag.label}</div>
+            <div className="sub" style={{ fontSize: 11 }}>{t(`interests.facet.${tag.facet}`, { defaultValue: tag.facet })}</div>
             {/* Aus dem VORZEICHEN abgeleitet, nicht aus der Gleichheit: Der Vater kann am selben Kind
                 „ganz nett" (1) und „eher nicht" (-1) setzen. Ein `weight === 2`-Vergleich beschriftete eine
                 leuchtende, `aria-pressed`-gedrückte Kachel dann mit „auswählen" – der Text sagte das
                 Gegenteil von Farbe und Zustand. Umgerechnet wird hier bewusst nichts: eine Normalisierung
                 schriebe die feinere Angabe des Vaters still auf die grobe Kind-Skala um. */}
             {mode === "dislike"
-              ? <span className={`pill ${weight < 0 ? "red" : "cyan"}`}>{weight < 0 ? "mag ich nicht" : "ist okay"}</span>
+              ? <span className={`pill ${weight < 0 ? "red" : "cyan"}`}>{weight < 0 ? t("interests.pillDislike") : t("interests.pillOkay")}</span>
               : <span className={`pill ${weight >= 3 ? "gold" : weight > 0 ? "lime" : "cyan"}`}>
-                  {weight >= 3 ? "Lieblingsthema" : weight > 0 ? "mag ich" : "auswählen"}
+                  {weight >= 3 ? t("interests.pillFavourite") : weight > 0 ? t("interests.pillLike") : t("interests.pillPick")}
                 </span>}
           </button>
         );

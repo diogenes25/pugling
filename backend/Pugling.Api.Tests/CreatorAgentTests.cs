@@ -1566,6 +1566,8 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     {
         var (pipeline, creator, _) = BuildAgent(VocabularyJson);
         var (subjectId, _, _) = await FreshUnitAsync(creator, $"Reihe-weg-{verb}");
+        // The profile must carry the subject: without it `ResolveSubjectIdAsync` would reject series 987654 before
+        // the planner runs, and the test would stay green without the B-308 fix.
         var profile = await creator.CreateProfileAsync(new CreateCreatorProfileDto(
             $"Profil Reihe weg {Guid.NewGuid():N}", null, subjectId, null, null, null, null,
             SourceLang: "en", TargetLang: "de", Persona: null, Didactics: null, DefaultTypes: null, Active: true));
@@ -1596,8 +1598,8 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
     /// <summary>
     /// B-308, the other half: an existing child the account does not supervise (the server answers 403, the
-    /// realistic case - a teacher asking about a real child). Seed account 2, Herr Schmidt, is creator and
-    /// supervisor but supervises no child. Red if the catch is narrowed to NotFound.
+    /// realistic case - a teacher asking about a real child). Seed account 2, Herr Schmidt, holds only the Creator
+    /// role and supervises no child. Red if the catch is narrowed to NotFound.
     /// </summary>
     [Fact]
     public async Task Profile_fuer_ein_fremdes_Kind_sind_eine_Fehlbedienung()

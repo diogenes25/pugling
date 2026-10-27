@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import type { Objective, Paged } from "../lib/types";
@@ -19,6 +20,7 @@ import { takeFreshAchieved } from "./seenIds";
  * wie Missionen und Abzeichen.
  */
 export function MyObjectives() {
+  const { t } = useTranslation();
   const { childId, celebrate } = useSohn();
   const objectives = useAsync<Paged<Objective>>(() => api.myObjectives({ take: 5 }), []);
 
@@ -38,27 +40,27 @@ export function MyObjectives() {
     // Etappe zugleich das Ziel ab, bleibt so die größere Feier stehen.
     if (freshKrs.length > 0) {
       const k = krs.find((x) => x.id === freshKrs[0])!;
-      celebrate("medium", "🎯", k.title ?? k.scope, freshKrs.length > 1 ? `${freshKrs.length} Etappen geschafft` : "Etappe geschafft");
+      celebrate("medium", "🎯", k.title ?? k.scope, t("objectives.stagesDone", { count: freshKrs.length }));
     }
     if (freshObjectives.length > 0) {
       const o = items.find((x) => x.id === freshObjectives[0])!;
       // Ohne Belohnung bucht der Server nichts – dann auch kein „+0".
       const reward = o.rewardOnComplete > 0 ? `+${o.rewardOnComplete} ${o.kind === "Committed" ? "🪙" : "💎"}` : undefined;
-      celebrate("big", "🏆", "ZIEL GESCHAFFT!", reward);
+      celebrate("big", "🏆", t("objectives.goalDone"), reward);
     }
-  }, [objectives.data, childId, celebrate]);
+  }, [objectives.data, childId, celebrate, t]);
 
-  if (objectives.loading) return <div className="card"><div className="loading">Lade Ziele…</div></div>;
+  if (objectives.loading) return <div className="card"><div className="loading">{t("objectives.loading")}</div></div>;
   // Ein Fehler hier darf den Trophäenweg nicht abwürgen – die Ziele sind Beiwerk, kein Kern der Seite.
   if (objectives.error || !objectives.data || objectives.data.items.length === 0) return null;
 
   return (
     <div className="card">
       <div className="row" style={{ marginBottom: 8 }}>
-        <b style={{ fontSize: 13 }}>🎯 Meine großen Ziele</b>
+        <b style={{ fontSize: 13 }}>{t("objectives.title")}</b>
         {/* „offen" wäre falsch: `total` ist die Zahl aller *aktiven* Ziele – erreichte zählen mit, und
             nachrechnen kann man es hier nicht, weil nur die ersten fünf geladen sind. */}
-        <span className="sub" style={{ marginLeft: "auto" }}>{objectives.data.total} Ziele</span>
+        <span className="sub" style={{ marginLeft: "auto" }}>{t("objectives.count", { count: objectives.data.total })}</span>
       </div>
 
       {objectives.data.items.map((o) => (
@@ -73,9 +75,9 @@ export function MyObjectives() {
           {/* Der Balken ist das Wichtigste: „wie weit bin ich" liest sich schneller als jede Zahl. */}
           <div className="bar" aria-hidden><i style={{ width: `${o.progressPercent}%` }} /></div>
           <div className="sub" style={{ fontSize: 11 }}>
-            {o.achievedCount}/{o.totalCount} Etappen
-            {o.status === "Achieved" ? " · geschafft! 🎉" : o.status === "Overdue" ? " · Termin verpasst" : ""}
-            {o.dueDate ? ` · bis ${o.dueDate}` : ""}
+            {t("objectives.stages", { done: o.achievedCount, total: o.totalCount })}
+            {o.status === "Achieved" ? ` · ${t("objectives.achieved")}` : o.status === "Overdue" ? ` · ${t("objectives.overdue")}` : ""}
+            {o.dueDate ? ` · ${t("objectives.due", { date: o.dueDate })}` : ""}
           </div>
 
           {/* Nur die noch offenen Etappen: erledigte abzuhaken ist schön, aber sie verstopfen die Liste. */}
