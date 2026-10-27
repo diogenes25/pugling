@@ -468,7 +468,15 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
     /// <summary>The subject a series carries (for profile matching); throws if the series has none set.</summary>
     private async Task<int> ResolveSubjectIdAsync(int seriesId, CancellationToken ct)
     {
-        var series = await creator.GetSeriesAsync(seriesId, ct);
+        TextbookSeriesResponse series;
+        try
+        {
+            series = await creator.GetSeriesAsync(seriesId, ct);
+        }
+        catch (PuglingApiException ex) when (ex.StatusCode is System.Net.HttpStatusCode.NotFound)
+        {
+            throw new AgentUsageException($"Reihe {seriesId} gibt es nicht – prüfe die Id im Vater-Web.");
+        }
         return series.SubjectId
             ?? throw new AgentUsageException(
                 $"Reihe {seriesId} ({series.Name}) hat kein Fach zugeordnet – setze eines im Vater-Web, bevor du Übungen anlegst.");

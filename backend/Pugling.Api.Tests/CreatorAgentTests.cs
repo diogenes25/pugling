@@ -658,6 +658,79 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.True(outcome.Published, $"Selbsttest: {outcome.SelfTestPercent} %");
     }
 
+    /// <summary>
+    /// B-306: a model in JSON mode is not held to the item type - a <c>null</c> in the word bank or among a gap's
+    /// alternatives is left out like an empty entry, and the exercise is still created. Red if <c>Clean</c> trims
+    /// before it filters (a <see cref="NullReferenceException"/> after the draft had passed every rule) - one null
+    /// is enough for that; the word-bank null also holds the null-safe read in the word-bank rule.
+    /// </summary>
+    [Fact]
+    public async Task Ein_Lueckentext_mit_Null_Eintraegen_entsteht_ohne_sie()
+    {
+        const string cloze = """
+            {"title":"Auf dem Bauernhof","text":"Every morning Tom feeds the {{1}} and the {{2}}. Then he cleans the {{3}}.",
+             "gaps":[{"index":1,"answer":"horse","alternatives":["pony",null]},
+                     {"index":2,"answer":"sheep","alternatives":null},
+                     {"index":3,"answer":"stable","alternatives":null}],
+             "wordBank":["horse","sheep",null,"stable","tractor"]}
+            """;
+        var (pipeline, creator, _) = BuildAgent(cloze);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Cloze-null");
+
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Cloze"));
+
+        Assert.Empty(outcome.Violations);
+        Assert.True(outcome.Published, $"Selbsttest: {outcome.SelfTestPercent} %");
+    }
+
+    /// <summary>
+    /// B-306: a <c>null</c> gap is a rule violation (the repair round can fix it), not a crash. With three
+    /// requested gaps, two real ones and a <c>null</c> pass the count and the placeholder check, which skip
+    /// <c>null</c> - so only an explicit rule catches it. Red if that rule is missing (the run ends in a
+    /// <see cref="NullReferenceException"/> at the first <c>gap.Answer</c>).
+    /// </summary>
+    [Fact]
+    public async Task Eine_Null_Luecke_ist_eine_Regelverletzung_statt_eines_Absturzes()
+    {
+        const string cloze = """
+            {"title":"Auf dem Bauernhof","text":"Every morning Tom feeds the {{1}} and the {{2}}.",
+             "gaps":[{"index":1,"answer":"horse","alternatives":null},
+                     {"index":2,"answer":"sheep","alternatives":null},
+                     null],
+             "wordBank":["horse","sheep","tractor"]}
+            """;
+        var (pipeline, creator, _) = BuildAgent(cloze);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Cloze-null-Luecke");
+
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Cloze"));
+
+        Assert.False(outcome.DraftAccepted);
+        Assert.Contains(outcome.Violations, v => v.Contains("Position 3") && v.Contains("(null)"));
+        Assert.Empty(await creator.SearchExercisesAsync(subjectId: subjectId));
+    }
+
+    /// <summary>
+    /// B-306: the same <c>null</c> among a translation item's alternatives - left out, the exercise is created.
+    /// Red if the alternatives are trimmed before they are filtered.
+    /// </summary>
+    [Fact]
+    public async Task Eine_Uebersetzung_mit_Null_Alternative_entsteht_ohne_sie()
+    {
+        const string translation = """
+            {"title":"Sätze über Tiere","items":[
+              {"source":"The horse is fast.","target":"Das Pferd ist schnell.","alternatives":[null,"Das Pferd ist flink."]},
+              {"source":"I feed the sheep.","target":"Ich füttere das Schaf.","alternatives":null},
+              {"source":"We clean the stable.","target":"Wir putzen den Stall.","alternatives":null}]}
+            """;
+        var (pipeline, creator, _) = BuildAgent(translation);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Translation-null");
+
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Translation"));
+
+        Assert.Empty(outcome.Violations);
+        Assert.True(outcome.Published, $"Selbsttest: {outcome.SelfTestPercent} %");
+    }
+
     [Fact]
     public async Task Ein_Lueckentext_ohne_passende_Platzhalter_wird_abgelehnt()
     {
@@ -1214,6 +1287,43 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         // Eine nicht angelegte Position macht den Plan unvollständig, auch wenn jede Übung sauber ist.
         Assert.False(new PlanOutcome("Lehrplan: Test", [new GeneratedPart("Vocabulary", Lauf(42, 100), null)],
             [42], PlanId: 7, PositionIds: [], FailedPositions: [new FailedPosition(42, "exercise_empty")]).Complete);
+    }
+
+    /// <summary>
+    /// B-307: <c>create</c> with an unknown <c>--series</c> (and a <c>--series-unit</c>, so the location is taken
+    /// unchecked) is a usage error naming the series - not a raw <c>PuglingApiException</c> (exit 1), the failure
+    /// B-301 fixed for <c>fill</c>. Red if the NotFound catch in <c>AgentCommands.ResolveSubjectIdAsync</c> is removed.
+    /// </summary>
+    [Fact]
+    public async Task Create_mit_unbekannter_Reihe_ist_eine_Fehlbedienung()
+    {
+        var (pipeline, creator, chat) = BuildAgent(VocabularyJson);
+        var command = CommandLine.Parse([
+            "create", "--child", "1", "--type", "Vocabulary", "--count", "3",
+            "--series", "987654", "--series-unit", "1",
+        ]);
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline).RunAsync(command, default));
+
+        Assert.Contains("Reihe 987654", error.Message);
+        Assert.Equal(0, chat.Calls);
+    }
+
+    /// <summary>
+    /// B-307: the same through the pipeline, whose briefing reads the series itself (the path a profile or a plan
+    /// takes). Red if the NotFound catch in <c>BriefingBuilder.BuildAsync</c> is removed.
+    /// </summary>
+    [Fact]
+    public async Task Das_Briefing_mit_unbekannter_Reihe_ist_eine_Fehlbedienung()
+    {
+        var (pipeline, creator, chat) = BuildAgent(VocabularyJson);
+        var (subjectId, _, _) = await FreshUnitAsync(creator, "Briefing-Reihe-weg");
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(
+            () => pipeline.CreateAsync(Request(subjectId, 987654, 1, "Vocabulary")));
+
+        Assert.Contains("Reihe 987654", error.Message);
+        Assert.Equal(0, chat.Calls);
     }
 
     /// <summary>

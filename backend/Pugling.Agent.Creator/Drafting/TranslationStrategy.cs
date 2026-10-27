@@ -67,7 +67,7 @@ public sealed class TranslationStrategy(IChatClient chat, CreatorApi creator,
             Items =
             [
                 .. draft.Items.Select(i => new TranslationItem(i.Source.Trim(), i.Target.Trim(),
-                    i.Alternatives?.Select(a => a.Trim()).Where(a => a.Length > 0).Distinct().ToList() is { Count: > 0 } alts
+                    i.Alternatives?.Select(a => a?.Trim() ?? "").Where(a => a.Length > 0).Distinct().ToList() is { Count: > 0 } alts
                         ? alts
                         : null)),
             ],

@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-22, B-297]
 wartet_auf: ""
+nachgeschaut: "2026-10-27"
 ---
 
 # B-301 · `fill --series 99999` endet als rohe 404 statt als Fehlbedienung
@@ -41,3 +42,8 @@ mit unbekannter Reihe, der den Typ, die Id in der Meldung und `chat.Calls == 0` 
   `IsOwn=false`), der Fang verdeckt also nichts; keine weitere Id von `fill` endet roh. 🟢 Meldung ohne
   Handlungshinweis → wie die Geschwister ergänzt. Suite **975/975 `exit=0`**. Rollengang: Agent ohne Oberfläche,
   die Tests sind der Weg. **`abgenommen`.**
+- **2026-10-27** — Nachschau (Lauf F, Teil 4, frischer `pugling-reviewer` am Commit `26e731a`):
+  `TextbookSeriesController.Get` (Zeilen 98-105) kennt nur 404 – der Fang verdeckt kein 403; `Assert.ThrowsAsync`
+  prüft den exakten Typ, die Mutante „ohne Fang“ ist rot; `chat.Calls == 0` trägt die andere Mutante (Abruf hinter dem
+  Modell); `Program.cs:43-61` gegen die Exit-Code-Angaben der Kommentare gelesen. **Geschwister außerhalb:** dasselbe
+  im Verb `create` → [B-307](B-307-create-mit-unbekannter-reihe-rohe-404.md).

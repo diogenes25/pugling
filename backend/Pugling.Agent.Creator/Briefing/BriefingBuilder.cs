@@ -21,7 +21,17 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
     public async Task<CreatorBriefing> BuildAsync(GenerationRequest request, CancellationToken ct = default)
     {
         var subject = await creator.GetSubjectAsync(request.SubjectId, ct);
-        var targetSeries = await creator.GetSeriesAsync(request.SeriesId, ct);
+        // The series reaches here unchecked when --series and --series-unit are both given: a typo is a usage
+        // error, not a raw 404 (B-307, the sibling of B-301 in `fill`).
+        TextbookSeriesResponse targetSeries;
+        try
+        {
+            targetSeries = await creator.GetSeriesAsync(request.SeriesId, ct);
+        }
+        catch (PuglingApiException ex) when (ex.StatusCode is System.Net.HttpStatusCode.NotFound)
+        {
+            throw new AgentUsageException($"Reihe {request.SeriesId} gibt es nicht – prüfe die Id im Vater-Web.");
+        }
         var targetUnit = (await creator.ListUnitsAsync(request.SeriesId, ct: ct))
             .FirstOrDefault(u => u.Id == request.SeriesUnitId)
             ?? throw new AgentUsageException(

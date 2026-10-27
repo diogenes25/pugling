@@ -40,6 +40,10 @@ public sealed partial class ClozeStrategy(IChatClient chat, CreatorApi creator,
         var violations = new Violations();
         // If 'gaps' is missing from the model JSON this is null - as an empty list it becomes a rule violation.
         var gaps = draft.Gaps ?? [];
+        // A null gap passes the count and is skipped by every check below; it must be a violation of its own, or
+        // the draft is accepted and the answer key crashes on it.
+        for (var i = 0; i < gaps.Count; i++)
+            if (gaps[i] is null) violations.Add($"Die Lücke an Position {i + 1} ist leer (null) – jede Lücke braucht index und answer.");
         DraftRules.Title(violations, draft.Title, briefing);
         DraftRules.NotBlank(violations, draft.Text, "Der Lückentext");
         DraftRules.Count(violations, gaps.Count, request);
@@ -113,7 +117,8 @@ public sealed partial class ClozeStrategy(IChatClient chat, CreatorApi creator,
     private static List<string>? Clean(List<string>? values)
     {
         var cleaned = (values ?? [])
-            .Select(v => v.Trim())
+            // A model in JSON mode is not held to the item type: a null entry is left out like an empty one.
+            .Select(v => v?.Trim() ?? "")
             .Where(v => v.Length > 0)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();

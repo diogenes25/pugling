@@ -1,18 +1,18 @@
 ---
-tags: [typ/story, status/idee, bereich/agent, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/agent, rolle/creator]
 aliases: [null in wordBank, null in Alternatives, null-Lücke Cloze]
-status: idee
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
+groesse: XS
 wo: backend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: Review zu B-302/B-303 in Lauf F, Teil 3 (docs/pm-sitzung-2026-10-27-nacht.md)
-unverifiziert: true
+unverifiziert: false
 grund: ""
 ersetzt_durch: []
-entgangen_bei: []
+entgangen_bei: [B-22]
 wartet_auf: ""
 ---
 
@@ -38,3 +38,13 @@ Einträge weglassen; eine `null`-Lücke als Regelverletzung (dann greift die Rep
 - **2026-10-27** — angelegt aus dem Review zu B-302/B-303 (Lauf F, Teil 3, [Protokoll](../pm-sitzung-2026-10-27-nacht.md)),
   Fund 🟡 außerhalb des Diffs: eigene Story, weil das Sprint-Ziel (der `fill`-Pfad) ohne sie erfüllt ist. Ob es ein
   Entgleiten ist, entscheidet erst die Messung – darum `entgangen_bei` noch leer.
+- **2026-10-27** — in Lauf F, Teil 4 ([Protokoll](../pm-sitzung-2026-10-27-nacht.md)) als `Defekt` unter Freigabe 1
+  ausformuliert, geschätzt (XS) und gebaut. **Gemessen:** drei Tests (Wortbank-/Alternativen-`null` im Lückentext,
+  `null`-Lücke, `null`-Alternative in der Übersetzung) → rote Probe **3 failed**, je `NullReferenceException` nach
+  bestandener Prüfung. Fix: `Clean` und die Übersetzungs-Alternativen `v?.Trim() ?? ""`; eine `null`-Lücke ist eine
+  eigene Regelverletzung mit Listenposition („Die Lücke an Position 3 ist leer (null) …“), damit die Reparaturrunde
+  greift. Mutante „Regel aus“ → **1 failed**. Review (`pugling-reviewer`): Vokabel/Grammatik haben keinen Rest
+  (`NotBlank(item?.…)`), `ExpectedAnswers` läuft erst nach bestandener Prüfung. 🟢 genommen: die Zusicherung prüfte
+  nur „leer“ (steht in jeder `NotBlank`-Meldung) → jetzt „Position 3“ und „(null)“; der Testkommentar sagt, dass eine
+  `null` für `Clean` genügt. `CreatorAgentTests` **62/62**, Suite **984/984 `exit=0`**. Rollengang: Agent ohne
+  Oberfläche, Tests sind der Weg. **`abgenommen`.**

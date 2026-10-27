@@ -693,8 +693,8 @@ Tests sind der Weg; Vater und Sohn Regressionszeugen. **B-302, B-303 `abgenommen
 
 ### Retrospektive
 
-**Nachschau:** Teil 2 (`26e731a`, B-300/B-301) – läuft als erste Handlung von Teil 4 (frischer Prüfer); das Ergebnis
-steht dort und wird hier nachgetragen.
+**Nachschau:** Teil 2 (`26e731a`, B-300/B-301) von einem frischen `pugling-reviewer` – siehe Teil 4, erste Zeile der
+Retrospektive (kein Entgleiten im Increment; ein Geschwister außerhalb → B-307).
 
 **Was die eigenen Tore durchgelassen haben:** Beide Defekte sind seit B-22/B-292 im Code, beide sind von der Art
 „zwei Stellen derselben Funktion sprechen über dieselben Daten verschieden“ (`IsWhiteSpace` gegen eine Drei-Zeichen-
@@ -713,4 +713,53 @@ nach dem README geteilt: [B-304](backlog/B-304-arcade-rahmen-auf-englisch.md) (R
 [B-305](backlog/B-305-arcade-spielweg-auf-englisch.md) (Spielweg, M oben). Die zwei Ausführungs-Punkte in B-304
 (geteilte Helfer bleiben für das Vater-Web deutsch; der `lang`-Effekt wandert an die Wurzel, damit der Login sein
 `lang` trägt) folgen aus B-85 Entscheidung 3 und 5 – keine neue Produktentscheidung.
+
+## Lauf F, Teil 4 — B-306, B-307 (kein Agent-Verb endet roh bei `null` oder falscher Reihe), Zähler 0
+
+**Sprint-Ziel:** *Der Creator, dessen Modell im JSON-Modus ein `null` in eine Liste schreibt oder der sich bei
+`--series` vertippt, bekommt eine Regelverletzung bzw. eine Fehlbedienung mit Hinweis – in `create` wie in `fill`,
+nie einen rohen Absturz.* Umfang: [B-306](backlog/B-306-null-element-in-uebungsstrategien.md) (aus dem Review von
+Teil 3), [B-307](backlog/B-307-create-mit-unbekannter-reihe-rohe-404.md) (aus der Nachschau zu Teil 2, während des
+Sprints aufgenommen – derselbe Faden). Beide `Defekt`, Freigabe 1, je XS. **Zähler: 0.**
+
+**Entwickler-Brief:** Erst messen (B-306 war `unverifiziert`): je ein Test mit `null`-Element bzw. Reihe 987654 und
+`DryRun: false`; dann je Stelle der kleinste Fang, Muster `DraftRules.cs:73` bzw. `UnitNotesFiller`.
+
+### Iteration
+
+- B-306 **gemessen echt**: rote Probe **3 failed** (je `NullReferenceException` nach bestandener Prüfung). Fix in
+  `ClozeStrategy` (Regel für `null`-Lücke, `Clean`) und `TranslationStrategy` (Alternativen).
+- B-307: rote Probe **2 failed** (rohe 404 an `textbook-series/987654`). Fang in `ResolveSubjectIdAsync` und
+  `BriefingBuilder.BuildAsync`; Mutante je Fang `NotFound` → `Gone` → je **1 failed** am eigenen Test.
+- `CreatorAgentTests` **62/62**, Suite **984/984 `exit=0`**.
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| – | `pugling-reviewer` 🟡 | neue Tests zwischen `<summary>` und `[Fact]` des Intensitäts-Tests geschoben – dieser verlor seine Doku | Block zurückverschoben | nein (nur Kommentar, Freigabe 3) |
+| – | `pugling-reviewer` 🟢 | `v.Contains("leer")` trifft jede `NotBlank`-Meldung; Meldung ohne Position; Testkommentar suggeriert zwei Pfade | Zusicherung auf „Position 3“ + „(null)“, Meldung mit Listenposition, Kommentar präzisiert; Mutante „Regel aus“ → **1 failed** | nein (Freigabe 10) |
+| – | `pugling-reviewer` 🟢 | Meldung „Reihe … gibt es nicht“ dreifach (Helfer gegen Drift) | zurückgestellt, im Verlauf von B-307 | nein |
+| – | `pugling-reviewer` 🟢 | außerhalb: `plan`/`exam` wiederholen die Fehlbedienung je Teil; `profiles --child` evtl. roh | [B-308](backlog/B-308-agent-fehlbedienung-plan-exam-profiles.md) (`idee`, `unverifiziert`) | nein |
+
+**Zähler: 0.** Der 🟡 ist echt und war unsichtbar für jedes Tor (CS1591 meldet eine doppelte `<summary>` nicht); seine
+Behebung verschiebt nur Kommentarzeilen und zählt nach Freigabe 3 nicht. Rollengang: der Agent hat keine Oberfläche,
+die Tests sind der Weg; Vater und Sohn Regressionszeugen (Suite grün, kein Pfad im Diff). **B-306, B-307 `abgenommen`.**
+
+### Retrospektive
+
+**Nachschau:** Teil 2 (`26e731a`, B-300/B-301) von einem frischen `pugling-reviewer`: beide `Theory`-Zeilen Index für
+Index nachgerechnet, drei Mutanten des harten Schnitts hergeleitet, die Wirkung des späteren `193f4f6` auf beide
+Zeilen geprüft, `TextbookSeriesController.Get` (nur 404) und `Program.cs:43-61` (Exit-Codes) gegen die Kommentare
+gelesen. **Kein Entgleiten im Increment.** Ein Geschwister außerhalb (dieselbe rohe 404 im Verb `create`) → B-307,
+im laufenden Sprint behoben. `nachgeschaut` an B-300, B-301. Teil 3 (`193f4f6`) folgt in der nächsten Nachschau.
+
+**Was die eigenen Tore durchgelassen haben:** Der 🟡 dieses Sprints ist ein Werkzeug-Fehler, kein Denkfehler: das
+Einfügen per Skript „vor dem `[Fact]` des Nachbartests“ landete zwischen dessen Doku und Attribut. Das Muster ist
+wiederholbar (jede Einfügung per Anker vor einem Test mit `<summary>`).
+
+**Vorschlag, nicht gelandet (Freigabe 3):** **(Q)** ein Tor in `ConventionGuardTests`: „jede Testmethode trägt
+höchstens eine `<summary>`, und jede `<summary>` steht direkt über einem Attribut“ – ein Zeilenscan über
+`Pugling.Api.Tests/**/*.cs`, billig, und er hätte den 🟡 vor dem Review gefangen. Erst messen, wie viele Treffer der
+Bestand heute hat (CLAUDE.md: „Neue Regel scharf stellen? Erst messen.“).
 
