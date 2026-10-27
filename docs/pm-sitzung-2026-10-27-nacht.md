@@ -818,7 +818,7 @@ Prosa; der Fall ist zu selten und zu verschieden für ein Tor.
 ## Ende Lauf F
 
 Endgrund: **Limit 2** – die Nachschau von Teil 5 fand im Increment von Teil 3 ein Testloch (B-309, behoben). Fünf
-Teile, **elf Stories abgenommen** (B-298, B-299, B-300, B-301, B-302, B-303, B-306, B-307, B-308, B-309 – dazu B-295
+Teile, **zehn Stories abgenommen** (B-298, B-299, B-300, B-301, B-302, B-303, B-306, B-307, B-308, B-309 – dazu B-295
 geteilt in B-304/B-305), höchster Zähler 2 (Teil 5). Jede Nachschau dieses Laufs wurde mit benannten Prüfpunkten
 geschlossen; zwei fanden ein Geschwister außerhalb (B-301 → B-307; B-302 → B-309).
 
