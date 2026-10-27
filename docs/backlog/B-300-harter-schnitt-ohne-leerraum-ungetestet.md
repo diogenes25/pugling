@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/test, bereich/agent, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/test, bereich/agent, rolle/creator]
 aliases: [Harter Schnitt ohne Leerraum ungetestet, Clamp dritter Zweig]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: XS
@@ -33,3 +33,10 @@ vor der letzten Grenze ließen den Entwurf auf ein Leerzeichen enden, ohne dass 
   ([Protokoll](../pm-sitzung-2026-10-27-nacht.md)), Fund 1 (🟡) und Fund 5 (🟢) des frischen Prüfers;
   `entgangen_bei: B-292` (der Zweig) und `B-296` (deren Sprint-Ziel versprach die Grenzen „nach unten bewiesen“).
   Als `Defekt` unter Freigabe 1 ausformuliert und geschätzt (XS, nur Test).
+- **2026-10-27** — gebaut in Lauf F, Teil 2: `Theory` `Fill_Kuerzt_Freitext_Ohne_Oder_Mit_Doppeltem_Leerraum_Exakt`
+  mit (2500 × x → **2000**) und (1990 × x + 2 Leerzeichen + 20 × y → **1990**). Vorher wie nachher grün (der Code
+  stimmte, die Lücke war der Test) – getragen über Mutanten: harter Schnitt gibt `""` zurück → **1 failed** (Zeile
+  2500); abschließendes `TrimEnd()` des Wortgrenzen-Zweigs gestrichen → **1 failed** (Zeile 1990, gemessen 1991).
+  Review (`pugling-reviewer`): Arithmetik beider Zeilen nachgerechnet, kein 🟡/🔴; 🟢 Umbruch zweier Kommentarzeilen
+  → genommen; 🟢 außerhalb des Diffs → [B-302](B-302-fill-wortgrenze-kennt-nur-drei-leerzeichen.md). Suite
+  **975/975 `exit=0`**. Rollengang: der Agent hat keine Oberfläche, die Tests sind der Weg. **`abgenommen`.**

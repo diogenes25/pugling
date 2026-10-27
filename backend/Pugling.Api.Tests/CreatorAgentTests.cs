@@ -195,9 +195,9 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
-    /// B-296: whitespace at the limit AND just before it - the kept head must not end on a space, or the unit would
-    /// carry a trailing blank the controller's trim would otherwise have removed. Red if the <c>TrimEnd()</c> of the
-    /// whitespace branch in <c>UnitNotesFiller.Clamp</c> is dropped (the result would be 2000 characters, not 1999).
+    /// B-296: whitespace at the limit AND just before it - the kept head must not end on a space, or the draft
+    /// shown to the human would end on a blank (the stored unit would not: the controller trims). Red if the
+    /// <c>TrimEnd()</c> of the whitespace branch in <c>UnitNotesFiller.Clamp</c> is dropped (2000 characters, not 1999).
     /// </summary>
     [Fact]
     public async Task Fill_Kuerzt_Freitext_Mit_Leerraum_Vor_Der_Grenze_Ohne_Nachlaufendes_Leerzeichen()
@@ -214,9 +214,50 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
-    /// B-297: a unit that belongs to another series is a usage error (exit 2) naming unit and series, not a raw
-    /// <c>PuglingApiException</c> with a stack trace - and the model is never asked. The two series are both the
-    /// caller's own, so only the series-bound 404 of the controller can refuse. Red if the NotFound catch is removed.
+    /// B-300: the two cuts of <c>UnitNotesFiller.Clamp</c> the boundary tests above leave open. A text without any
+    /// whitespace is cut hard at the limit - red if that branch returns an empty head (the field would be named as
+    /// shortened and then silently not written, the loss B-292 is about). Two blanks before the last boundary end
+    /// the draft without a trailing blank - red if the final <c>TrimEnd()</c> of the word-boundary branch is dropped
+    /// (1991, not 1990).
+    /// </summary>
+    [Theory]
+    [InlineData(2500, 0, 0, 2000)]
+    [InlineData(1990, 2, 20, 1990)]
+    public async Task Fill_Kuerzt_Freitext_Ohne_Oder_Mit_Doppeltem_Leerraum_Exakt(int xs, int blanks, int ys, int expected)
+    {
+        var (_, creator, _) = BuildAgent();
+        var (_, seriesId, unitId) = await FreshUnitAsync(creator, $"Fill-Schnitt-{xs}");
+        var text = new string('x', xs) + new string(' ', blanks) + new string('y', ys);
+        var json = System.Text.Json.JsonSerializer.Serialize(new { grammar = text });
+
+        var outcome = await Filler(creator, new FakeChatClient(json)).RunAsync(new UnitFillRequest(seriesId, unitId, "Quelle", Force: false, DryRun: true));
+
+        Assert.Equal(["grammar"], outcome.Shortened);
+        Assert.Equal(expected, outcome.Draft.Grammar!.Length);
+    }
+
+    /// <summary>
+    /// B-301: a series that does not exist is a usage error naming it, like a unit of another series (B-297) - and
+    /// the model is never asked. Red if the NotFound catch around the series lookup is removed (a raw
+    /// <c>PuglingApiException</c>, exit 1 instead of 2).
+    /// </summary>
+    [Fact]
+    public async Task Fill_Mit_Unbekannter_Reihe_Ist_Eine_Fehlbedienung()
+    {
+        var (_, creator, _) = BuildAgent();
+        var chat = new FakeChatClient(UnitNotesJson);
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Filler(creator, chat)
+            .RunAsync(new UnitFillRequest(987654, 1, "Quelle", Force: false, DryRun: true)));
+        Assert.Contains("Reihe 987654", error.Message);
+        Assert.Equal(0, chat.Calls);
+    }
+
+    /// <summary>
+    /// B-297: a unit that belongs to another series is a usage error (exit 2, usage text) naming unit and series,
+    /// not a raw <c>PuglingApiException</c> (exit 1, "the API answered 404") - and the model is never asked. The two
+    /// series are both the caller's own, so only the series-bound 404 of the controller can refuse. Red if the
+    /// NotFound catch is removed.
     /// </summary>
     [Fact]
     public async Task Fill_Mit_Unit_Einer_Anderen_Reihe_Ist_Eine_Fehlbedienung()

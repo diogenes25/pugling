@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/agent, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/agent, rolle/creator]
 aliases: [fill --series unbekannt, rohe 404 bei unbekannter Reihe]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: XS
@@ -33,3 +33,11 @@ mit unbekannter Reihe, der den Typ, die Id in der Meldung und `chat.Calls == 0` 
   ([Protokoll](../pm-sitzung-2026-10-27-nacht.md)), Fund 2 (🟡) des frischen Prüfers; `entgangen_bei: B-22` (dort
   entstand der Reihen-Abruf) und `B-297` (deren Sprint-Ziel war „eine rohe 404 fällt rot“). Als `Defekt` unter
   Freigabe 1 ausformuliert und geschätzt (XS).
+- **2026-10-27** — gebaut in Lauf F, Teil 2. Rote Probe zuerst: `Fill_Mit_Unbekannter_Reihe_Ist_Eine_Fehlbedienung`
+  (Reihe 987654) → **1 failed** (erwartet `AgentUsageException`, gemessen rohe `PuglingApiException`). Fix:
+  `catch (PuglingApiException) when NotFound` um `GetSeriesAsync` → „Reihe {id} gibt es nicht – prüfe die Id im
+  Vater-Web.“ → grün; Mutante „catch wirft weiter“ → **1 failed**. Review (`pugling-reviewer`): `GET
+  textbook-series/{id}` kennt nur 404 für „gibt es nicht“ (kein 403-Zweig, eine fremde Reihe kommt mit
+  `IsOwn=false`), der Fang verdeckt also nichts; keine weitere Id von `fill` endet roh. 🟢 Meldung ohne
+  Handlungshinweis → wie die Geschwister ergänzt. Suite **975/975 `exit=0`**. Rollengang: Agent ohne Oberfläche,
+  die Tests sind der Weg. **`abgenommen`.**

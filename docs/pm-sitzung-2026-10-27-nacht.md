@@ -622,3 +622,43 @@ beauftragt. Sie werden als nächster Sprint gefahren. Kein neues Tor gelandet.
 Specs/Tests greppen“ – eine Zeile in Step 5 von pm-loop, Prosa. Sie hätte den 🟡-Fund vor dem Review gefunden
 (`grep -rn "coins" frontend/e2e`). Verwandt mit (N); wer beide landet, sollte sie zu einer Frage zusammenziehen:
 *„Welche Geschwister hat, was ich gerade geprüft oder geändert habe?“*
+
+## Lauf F, Teil 2 — B-300, B-301 aus der Nachschau (`fill`: harter Schnitt, unbekannte Reihe), Zähler 0
+
+**Sprint-Ziel:** *Der Creator, der `fill` mit einem Text ohne Leerraum oder einer falschen Reihen-Id füttert, bekommt
+einen exakt gekürzten Entwurf bzw. eine Fehlbedienung mit Hinweis – nie ein still leeres Feld, nie eine rohe 404.*
+Umfang: [B-300](backlog/B-300-harter-schnitt-ohne-leerraum-ungetestet.md),
+[B-301](backlog/B-301-fill-mit-unbekannter-reihe-endet-als-rohe-404.md) (`Defekt`, Freigabe 1, je XS). **Zähler: 0.**
+
+**Entwickler-Brief:** B-301 zuerst rot (Test mit unbekannter Reihe), dann der `NotFound`-Fang wie bei der Unit;
+B-300 ist eine reine Testlücke – die Fälle sind vorher grün und tragen nur über benannte Mutanten.
+
+### Iteration
+
+- B-301: rote Probe **1 failed**, Fix → grün, Mutante „catch wirft weiter“ → **1 failed**.
+- B-300: zwei `Theory`-Zeilen (2000, 1990); Mutanten „harter Schnitt → `""`“ und „`TrimEnd()` weg“ → je **1 failed**
+  an der richtigen Zeile. `Fill_*` **13/13**, Suite **975/975 `exit=0`**.
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| – | `pugling-reviewer` 🟢 | Meldung ohne Handlungshinweis (die Geschwister nennen den nächsten Schritt) | „– prüfe die Id im Vater-Web.“ | nein (Freigabe 10) |
+| – | `pugling-reviewer` 🟢 | zwei überlange Kommentarzeilen | umgebrochen | nein |
+| – | `pugling-reviewer` 🟢 | außerhalb des Diffs: Wortgrenze kennt nur drei Leerzeichen; `null`-Thema im JSON-Modus | [B-302](backlog/B-302-fill-wortgrenze-kennt-nur-drei-leerzeichen.md), [B-303](backlog/B-303-fill-null-thema-im-json-modus.md) (`idee`, `unverifiziert`) | nein |
+
+**Zähler: 0.** Der Prüfer hat beide `Theory`-Zeilen Index für Index nachgerechnet und die 403/404-Frage am Controller
+beantwortet (`TextbookSeriesController.cs:98-105`: nur 404, keine Rechteprüfung beim Lesen). Rollengang: der Agent hat
+keine Oberfläche, die Tests sind der Weg; Vater und Sohn sind Regressionszeugen (Suite grün, kein Pfad im Diff).
+**B-300, B-301 `abgenommen`.**
+
+### Retrospektive
+
+**Nachschau:** Teil 1 (`bdb4611`, B-298/B-299) ist die Arbeit, die vor diesem Sprint abgenommen wurde – die Nachschau
+läuft als erste Handlung von Teil 3 (ein frischer Prüfer, der den Diff von Teil 1 nicht gesehen hat); ihr Ergebnis
+steht dort in der ersten Zeile. Bis dahin ist dieser Sprint **nicht geschlossen**.
+
+**Was die eigenen Tore durchgelassen haben:** nichts Neues in diesem Increment. Die beiden 🟢 außerhalb des Diffs
+sind wieder Geschwister einer gerade geprüften Regel (dieselbe Leerraum-Frage an zwei Stellen einer Funktion) – das
+stützt Vorschlag (O) aus Teil 1, ohne einen neuen.
+

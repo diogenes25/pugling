@@ -88,7 +88,15 @@ public sealed class UnitNotesFiller(IChatClient chat, CreatorApi creator, IOptio
 
         // Ownership before the model call: only the series owner may change its units, and a seeded series belongs
         // to nobody. Found on the first live walk - a minute of model time ended in the API's 403.
-        var series = await creator.GetSeriesAsync(request.SeriesId, ct);
+        TextbookSeriesResponse series;
+        try
+        {
+            series = await creator.GetSeriesAsync(request.SeriesId, ct);
+        }
+        catch (PuglingApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            throw new AgentUsageException($"Reihe {request.SeriesId} gibt es nicht – prüfe die Id im Vater-Web.");
+        }
         if (!series.IsOwn)
             throw new AgentUsageException($"Reihe {request.SeriesId} ({series.Name}) gehört dir nicht – nur der Besitzer "
                                           + "einer Reihe darf ihre Units ändern"
