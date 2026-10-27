@@ -76,3 +76,4 @@ Rest des Korpus (B-295) ist der größere Teil und bewusst nicht hier.
   `coins`, `<html lang>`, neu laden, zurückschalten); Vater/Creator als Regression über die volle Suite (Vater-Web
   trägt kein `t()`). Kein Browser verbunden, das Gefühl des Umschalters hat niemand gesehen – und die englischen
   Texte liest ein Mensch gegen (AK 7, `wartet_auf`). **`abgenommen`.**
+- **2026-10-27** — Commit `1ee9bf0` (Lauf E, Teil 8; nicht gepusht).

@@ -30,3 +30,4 @@ Suite bliebe grün.
 
 - **2026-10-27** — angelegt aus der Nachschau zu Lauf E Teil 7 (`4a3fa61`) ([Protokoll](../pm-sitzung-2026-10-27-nacht.md)),
   Fund 2 des frischen Prüfers; `entgangen_bei: B-292`.
+- **2026-10-27** — Commit `1ee9bf0` (Lauf E, Teil 8; nicht gepusht).

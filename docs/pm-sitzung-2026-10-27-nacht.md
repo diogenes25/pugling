@@ -480,4 +480,4 @@ Review-Behebung gelandet, kein Retro-Tor – er schließt die Lücke *Verwendung
 kleinen deutschen Stoppwortliste als rot meldet – mit Ausnahmeliste wie bei den `ConventionGuardTests`. Erst
 messen (wie viele Treffer heute, B-295 ist der Lauf dafür), dann scharf stellen.
 
-**Commit:** *(folgt im Nachtrag)*.
+**Commit:** `1ee9bf0` (nicht gepusht).

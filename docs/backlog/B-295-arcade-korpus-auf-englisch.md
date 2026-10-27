@@ -61,3 +61,4 @@ und die betroffene Spec; Testweg: Paritäts-Test, Arcade-Specs, erweiterte `spra
   deutsche Literale. Eine Tabelle deutscher Literale neben den Ressourcen (wie `PERIOD_LABEL` in B-294) sieht der
   Paritäts-Test nicht – darum der Vorschlag (M) im Protokoll (Literal-Wächter über `src/sohn/**`). Schlüssel sind seit
   B-294 typisiert (`src/i18n/i18next.d.ts`): ein neuer Schlüssel gehört zuerst nach `de.ts`.
+- **2026-10-27** — Commit `1ee9bf0` (Lauf E, Teil 8; nicht gepusht).
