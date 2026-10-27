@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-22]
+nachgeschaut: "2026-10-27"
 wartet_auf: ""
 ---
 
@@ -34,3 +35,4 @@ interaktiv mit Ctrl+Z bzw. Ctrl+D beenden“) und optional ein Hinweis auf `stde
   Fund 1 des frischen Prüfers; `entgangen_bei: B-22`.
 - **2026-10-27** — in Lauf E, Teil 7, autonom gegrillt (Freigabe 1, `Defekt`), geschätzt (XS, Doku + ein Hinweis) und gebaut: Usage, README und Skill sagen „nur mit Umleitung oder Pipe sinnvoll, interaktiv mit Ctrl+Z+Enter bzw. Ctrl+D beenden“; `ReadSourceAsync` schreibt bei `-` ohne umgeleitete Eingabe einen Hinweis nach `stderr`, bevor es liest. Kein Test: `Console.IsInputRedirected` ist im Testlauf immer wahr, das Blockieren selbst ist nicht automatisiert prüfbar – benannt, nicht verschwiegen.
 - **2026-10-27** — Review (`pugling-reviewer`): Hinweis steht vor dem blockierenden Lesen, nur bei `-` ohne Umleitung; Usage/README/Skill decken sich mit dem Verhalten. Ohne Zählung. `abgenommen`; Commit `4a3fa61`.
+- **2026-10-27** — Nachschau in Lauf E, Teil 8 ([Protokoll](../pm-sitzung-2026-10-27-nacht.md)), frischer Prüfer am Commit `4a3fa61`: Hinweis steht vor `ReadToEndAsync`, nur bei `-` ohne Umleitung, Usage/README/Skill sagen dasselbe. **Kein Befund.**

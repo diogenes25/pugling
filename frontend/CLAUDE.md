@@ -20,10 +20,9 @@ Von Hand bleiben elf Typen in [src/lib/uiTypes.ts](src/lib/uiTypes.ts) – **je 
 in den Barrel. Grenze: `http(…, body?: unknown)` prüft **keinen** Objekt-Literal-Rumpf (34 von 86,
 [B-24](../docs/backlog/B-24-frontend-unknown-field.md)).
 
-**Anmerkungs-Widget** (`src/components/RemarkWidget.tsx`, Alt+A, nur `import.meta.env.DEV`): erfasst
-Beobachtungen beim Testen und zeigt die Log-Id fürs Einlösen in Claude Code. In der Sohn-Arcade mit
-`bottomOffset={96}`, sonst verdeckt es die `.sohn-nav`; für E2E per `localStorage["pugling.remarks.off"]="1"`
-aus (`anmerkungen.spec.ts` hebt das für sich auf). Plan: [anmerkungen-plan.md](../docs/anmerkungen-plan.md).
+**Anmerkungs-Widget** (`src/components/RemarkWidget.tsx`, Alt+A, nur `import.meta.env.DEV`): Beobachtungen beim
+Testen mit Log-Id; in der Arcade `bottomOffset={96}` (sonst über der `.sohn-nav`); E2E schaltet es per
+`localStorage["pugling.remarks.off"]="1"` aus. Plan: [anmerkungen-plan.md](../docs/anmerkungen-plan.md).
 
 **Feld-Erklärungen** (`src/components/InfoHint.tsx` + `src/lib/fieldHelp.ts`): Erklärungsbedürftige
 Eingabefelder tragen statt `<label>` ein `<FieldLabel htmlFor=… topic="…">`, das ein „ⓘ" mit Popover anhängt
@@ -56,7 +55,9 @@ die Sohn-Arcade (B-49) folgt ihr noch nicht. **Erfolg darf stumm bleiben** (`run
 **`npm install`/`npm ci` ohne `--legacy-peer-deps`**, auch in CI ([B-25](../docs/backlog/B-25-vite-pwa-peer-konflikt.md)).
 
 Rollen im SPA: `/` Produktseite, `/vater` Web-Admin, `/sohn` Arcade-PWA.
-API-Client unter `src/lib/`, kein HTTP daneben.
+API-Client unter `src/lib/`, kein HTTP daneben. **Arcade-Chrome spricht über `t()`** (`src/lib/i18n.ts`, Ressourcen
+`src/i18n/de.ts`/`en.ts`, Parität per `i18n.test.ts`); Nutzerdaten reisen als Platzhalter, nie durch die Übersetzung;
+Deutsch ist in `playwright.config.ts` gepinnt (B-294).
 
 **Zwei Konto-Arten** ([docs/lehrer-konto-plan.md](../docs/lehrer-konto-plan.md)): ein **Vater**-Konto trägt
 die Rollen Creator + Supervisor, ein **Lehrer**-Konto nur Creator. `session.role` (`Supervisor` | `Creator` |

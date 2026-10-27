@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { api, errorMessage } from "../lib/api";
 import { useAction } from "../lib/useAction";
 import { StatusBanner } from "../components/StatusBanner";
@@ -259,6 +260,7 @@ export function TagTiles({ tags, weights, onPick, mode = "like", disabled }: {
  * Angebot, kein Inhalt, und eine rote Meldung auf der Startseite wäre die falsche Antwort darauf.
  */
 export function InterestIntroCard() {
+  const { t } = useTranslation();
   const { childId } = useSohn();
   const [offer, setOffer] = useState(false);
 
@@ -273,11 +275,9 @@ export function InterestIntroCard() {
   if (!offer) return null;
   return (
     <div className="card" style={{ textAlign: "center" }}>
-      <div className="screen-title" style={{ fontSize: 18 }}>Erzähl mal von dir!</div>
-      <p className="sub">
-        Sag uns, was du magst – dann passen die Bilder und Beispiele zu dir. Dauert eine Minute, ohne Tippen.
-      </p>
-      <Link to="/sohn/ich" className="btn gold" style={{ textDecoration: "none" }}>Los geht's</Link>
+      <div className="screen-title" style={{ fontSize: 18 }}>{t("interests.introTitle")}</div>
+      <p className="sub">{t("interests.introText")}</p>
+      <Link to="/sohn/ich" className="btn gold" style={{ textDecoration: "none" }}>{t("interests.introGo")}</Link>
     </div>
   );
 }

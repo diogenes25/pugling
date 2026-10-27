@@ -1,5 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { NavLink, Navigate, Route, Routes } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { isLanguage, setLanguage } from "../lib/i18n";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { DEFAULT_SKIN, skinById, type Skin } from "../lib/skins";
@@ -59,6 +61,15 @@ function SohnShell({ childId }: { childId: number }) {
   const [streak, setStreak] = useState(0);
   const [muted, setMutedState] = useState(isMuted());
   const { celebration, celebrate } = useCelebration();
+  const { t, i18n } = useTranslation();
+  const lang = isLanguage(i18n.language) ? i18n.language : "de";
+
+  // `<html lang>` folgt der Wahl (B-85, Entscheidung 5): ein Screenreader liest englischen Text sonst mit deutscher
+  // Aussprache. Beim Verlassen der Arcade zurück auf Deutsch – das Vater-Web ist (noch) nicht übersetzt.
+  useEffect(() => {
+    document.documentElement.lang = lang;
+    return () => { document.documentElement.lang = "de"; };
+  }, [lang]);
 
   const refreshWallet = useCallback(() => {
     api.wallet().then((w) => { setCoins(w.coins); setGems(w.gems); }).catch(() => { /* Wallet ist Beiwerk */ });
@@ -93,18 +104,30 @@ function SohnShell({ childId }: { childId: number }) {
       <div className="app-sohn">
         <div className="sohn-hud">
           <div className="avatar-mini" style={{ background: skin.gradient }} aria-hidden="true">{skin.emoji}</div>
-          <div className="chip" aria-live="polite"><span aria-hidden="true">🪙</span><b className="tabnum" aria-label={`${coins} Münzen`}>{coins}</b></div>
-          <div className="chip" aria-live="polite"><span aria-hidden="true">💎</span><b className="tabnum" aria-label={`${gems} Gems`}>{gems}</b></div>
-          <div className="chip flame" aria-live="polite"><span aria-hidden="true">🔥</span><b className="tabnum" aria-label={`${streak} Tage Streak`}>{streak}</b></div>
+          <div className="chip" aria-live="polite"><span aria-hidden="true">🪙</span><b className="tabnum" aria-label={t("hud.coins", { count: coins })}>{coins}</b></div>
+          <div className="chip" aria-live="polite"><span aria-hidden="true">💎</span><b className="tabnum" aria-label={t("hud.gems", { count: gems })}>{gems}</b></div>
+          <div className="chip flame" aria-live="polite"><span aria-hidden="true">🔥</span><b className="tabnum" aria-label={t("hud.streak", { count: streak })}>{streak}</b></div>
           <button
             type="button"
             className="chip mute-toggle"
             onClick={toggleMute}
             aria-pressed={muted ? "true" : "false"}
-            aria-label={muted ? "Ton einschalten" : "Ton ausschalten"}
-            title={muted ? "Ton einschalten" : "Ton ausschalten"}
+            aria-label={muted ? t("hud.soundOn") : t("hud.soundOff")}
+            title={muted ? t("hud.soundOn") : t("hud.soundOff")}
           >
             {muted ? "🔇" : "🔊"}
+          </button>
+          {/* Der Sprachumschalter (B-294): rein client-seitig, die Wahl überlebt im `localStorage`. Der sichtbare
+              Text nennt das ZIEL („EN“ auf Deutsch) und steht am Anfang des Vorlesenamens (WCAG 2.5.3, „Label in
+              Name“ – Sprachsteuerung „Klick EN“ trifft ihn). Kein `aria-pressed`: eine Aktion, kein Zustand. */}
+          <button
+            type="button"
+            className="chip mute-toggle"
+            onClick={() => { void setLanguage(lang === "de" ? "en" : "de"); }}
+            aria-label={t("hud.language")}
+            title={t("hud.language")}
+          >
+            <span aria-hidden="true">🌐 </span>{t("hud.languageShort")}
           </button>
         </div>
 
@@ -126,11 +149,11 @@ function SohnShell({ childId }: { childId: number }) {
         </Routes>
 
         <nav className="sohn-nav">
-          <NavLink to="/sohn" end><span className="ic" aria-hidden="true">🏠</span>Basis</NavLink>
-          <NavLink to="/sohn/progress"><span className="ic" aria-hidden="true">🗺️</span>Weg</NavLink>
-          <NavLink to="/sohn/konto"><span className="ic" aria-hidden="true">💰</span>Konto</NavLink>
-          <NavLink to="/sohn/shop"><span className="ic" aria-hidden="true">🛒</span>Shop</NavLink>
-          <NavLink to="/sohn/skins"><span className="ic" aria-hidden="true">🎭</span>Skins</NavLink>
+          <NavLink to="/sohn" end><span className="ic" aria-hidden="true">🏠</span>{t("nav.home")}</NavLink>
+          <NavLink to="/sohn/progress"><span className="ic" aria-hidden="true">🗺️</span>{t("nav.path")}</NavLink>
+          <NavLink to="/sohn/konto"><span className="ic" aria-hidden="true">💰</span>{t("nav.account")}</NavLink>
+          <NavLink to="/sohn/shop"><span className="ic" aria-hidden="true">🛒</span>{t("nav.shop")}</NavLink>
+          <NavLink to="/sohn/skins"><span className="ic" aria-hidden="true">🎭</span>{t("nav.skins")}</NavLink>
         </nav>
 
         {/* Anmerkungen beim Testen – nur im Dev-Modus, im Prod-Bundle wegoptimiert. Der Abstand hält

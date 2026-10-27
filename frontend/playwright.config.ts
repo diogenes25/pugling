@@ -38,7 +38,12 @@ export default defineConfig({
       cookies: [],
       origins: [{
         origin: "http://localhost:5173",
-        localStorage: [{ name: "pugling.remarks.off", value: "1" }],
+        localStorage: [
+          { name: "pugling.remarks.off", value: "1" },
+          // Deutsch bleibt der E2E-Standard (B-85, Entscheidung 6): ein späterer Sprachwechsel bricht keine Spec
+          // heimlich; nur `sprache.spec.ts` schaltet um und zurück.
+          { name: "pugling.lang", value: "de" },
+        ],
       }],
     },
   },

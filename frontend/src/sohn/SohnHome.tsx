@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
@@ -13,11 +14,12 @@ const TYPE_ICON: Record<string, string> = {
   Vocabulary: "🗣️", Cloze: "📝", Matching: "🔗", Arithmetic: "➗", ArithmeticDrill: "➗",
   List: "📋", Birkenbihl: "🎧", Reading: "📖", Grammar: "🔤", Translation: "🌍", Essay: "✍️", Listening: "🎧",
 };
-const typeIcon = (t: string) => TYPE_ICON[t] ?? "🎯";
-const cadenceLabel = (c: PositionStatus["cadence"]) =>
-  c === "Daily" ? "Tagesziel" : c === "Weekly" ? "Wochenziel" : "frei";
+const typeIcon = (type: string) => TYPE_ICON[type] ?? "🎯";
+const cadenceKey = (c: PositionStatus["cadence"]) =>
+  c === "Daily" ? "home.cadenceDaily" : c === "Weekly" ? "home.cadenceWeekly" : "home.cadenceNone";
 
 export function SohnHome() {
+  const { t } = useTranslation();
   const { signOut } = useAuth();
   const { planId, setPlanId, skin, setStreak } = useSohn();
   const plans = useAsync<PlanResponse[]>(() => api.plans(), []);
@@ -30,7 +32,7 @@ export function SohnHome() {
     if (chosen && chosen.id !== planId) setPlanId(chosen.id);
   }, [plans.data, planId, setPlanId]);
 
-  if (plans.loading) return <div className="sohn-body"><div className="loading">Lade…</div></div>;
+  if (plans.loading) return <div className="sohn-body"><div className="loading">{t("home.loading")}</div></div>;
   if (plans.error) return <div className="sohn-body"><div className="error-box">{plans.error}</div></div>;
 
   if (!plans.data || plans.data.length === 0) {
@@ -39,10 +41,10 @@ export function SohnHome() {
         <InterestIntroCard />
         <Mascot skin={skin} mood="sleepy" size={120} />
         <div className="card" style={{ textAlign: "center" }}>
-          <div className="screen-title">Noch keine Mission</div>
-          <p className="sub">Dein Vater hat noch keinen Lehrplan für dich erstellt. Sobald es losgeht, erscheint hier deine Tagesmission.</p>
+          <div className="screen-title">{t("home.noMissionTitle")}</div>
+          <p className="sub">{t("home.noMissionText")}</p>
         </div>
-        <button type="button" className="btn ghost" onClick={signOut}>Abmelden</button>
+        <button type="button" className="btn ghost" onClick={signOut}>{t("home.signOut")}</button>
       </div>
     );
   }
@@ -57,6 +59,7 @@ function HomeForPlan({
 }: {
   planId: number; plans: PlanResponse[]; onPickPlan: (id: number) => void; onStreak: (n: number) => void;
 }) {
+  const { t } = useTranslation();
   const { skin } = useSohn();
   const overview = useAsync<OverviewResponse>(() => api.overview(planId), [planId]);
 
@@ -64,20 +67,20 @@ function HomeForPlan({
     if (overview.data) onStreak(overview.data.currentStreak);
   }, [overview.data, onStreak]);
 
-  if (overview.loading) return <div className="sohn-body"><div className="loading">Lade Mission…</div></div>;
-  if (overview.error || !overview.data) return <div className="sohn-body"><div className="error-box">{overview.error ?? "Fehler"}</div></div>;
+  if (overview.loading) return <div className="sohn-body"><div className="loading">{t("home.loadingMission")}</div></div>;
+  if (overview.error || !overview.data) return <div className="sohn-body"><div className="error-box">{overview.error ?? t("home.error")}</div></div>;
 
   const o = overview.data;
-  const t = o.today;
-  const mood = t.dutyDone ? "hyped" : t.goalsMet > 0 ? "happy" : "sleepy";
-  const goalPct = t.goalsTotal > 0 ? Math.round((t.goalsMet / t.goalsTotal) * 100) : 0;
+  const today = o.today;
+  const mood = today.dutyDone ? "hyped" : today.goalsMet > 0 ? "happy" : "sleepy";
+  const goalPct = today.goalsTotal > 0 ? Math.round((today.goalsMet / today.goalsTotal) * 100) : 0;
 
   return (
     <div className="sohn-body">
       <InterestIntroCard />
       {plans.length > 1 && (
         <div className="field">
-          <select value={planId} onChange={(e) => onPickPlan(Number(e.target.value))} aria-label="Plan wählen">
+          <select value={planId} onChange={(e) => onPickPlan(Number(e.target.value))} aria-label={t("home.choosePlan")}>
             {plans.map((pl) => <option key={pl.id} value={pl.id}>{pl.title}</option>)}
           </select>
         </div>
@@ -86,33 +89,34 @@ function HomeForPlan({
       <div className="row">
         <Mascot skin={skin} mood={mood} size={84} />
         <div>
-          <div className="screen-title" style={{ margin: 0 }}>Tagesmission</div>
+          <div className="screen-title" style={{ margin: 0 }}>{t("home.dailyMission")}</div>
           <div className="sub">{o.title}</div>
         </div>
       </div>
 
-      {t.dutyDone ? (
+      {today.dutyDone ? (
         <div className="card" style={{ borderColor: "var(--lime)" }}>
-          <span className="pill lime">✓ Heute geschafft!</span>
-          <p className="sub" style={{ marginTop: 6 }}>Stark. Jede weitere Runde macht deinen {skin.name} nur stärker.</p>
+          <span className="pill lime">{t("home.doneToday")}</span>
+          {/* Der Skin-Name ist ein Wert, kein Chrome: er reist als Platzhalter und wird nie übersetzt. */}
+          <p className="sub" style={{ marginTop: 6 }}>{t("home.doneText", { skin: skin.name })}</p>
         </div>
       ) : (
         <div className="card">
           <div className="row" style={{ marginBottom: 8 }}>
-            <b style={{ fontSize: 13 }}>🎯 Ziele heute</b>
-            <span className="sub" style={{ marginLeft: "auto" }}>{t.goalsMet} / {t.goalsTotal}</span>
+            <b style={{ fontSize: 13 }}>{t("home.goalsToday")}</b>
+            <span className="sub" style={{ marginLeft: "auto" }}>{today.goalsMet} / {today.goalsTotal}</span>
           </div>
           <div className="bar lime"><i style={{ width: `${goalPct}%` }} /></div>
         </div>
       )}
 
-      {t.positions.length === 0 && (
+      {today.positions.length === 0 && (
         <div className="card" style={{ textAlign: "center" }}>
-          <p className="sub">Dieser Plan hat noch keine Übungen. Dein Vater fügt sie gleich hinzu.</p>
+          <p className="sub">{t("home.noExercises")}</p>
         </div>
       )}
 
-      {t.positions.map((pos) => <PositionCard key={pos.positionId} pos={pos} />)}
+      {today.positions.map((pos) => <PositionCard key={pos.positionId} pos={pos} />)}
 
       <MissionsPanel />
     </div>
@@ -120,23 +124,24 @@ function HomeForPlan({
 }
 
 function PositionCard({ pos }: { pos: PositionStatus }) {
+  const { t } = useTranslation();
   // Genau ein Weg muss immer offen sein: Üben, wenn Leitner läuft ODER heute nichts zu prüfen ist. `testable`
   // ist eine TAGES-Aussage des Servers (auch falsch auf einer Kennenlern-Stufe, B-96) – nicht `checkMode`
   // abfragen, sonst hat eine Position mit Prüfmodus an einem nicht prüfbaren Tag überhaupt keinen Knopf.
   const canPractice = pos.useLeitner || !pos.testable;
   const practiceLabel = pos.useLeitner
-    ? `▶ ÜBEN${pos.dueCount > 0 ? ` (${pos.dueCount} fällig)` : ""}`
-    : "▶ DURCHSPIELEN";
+    ? (pos.dueCount > 0 ? t("home.practiceDue", { count: pos.dueCount }) : t("home.practice"))
+    : t("home.playThrough");
 
   return (
     <div className="card" style={pos.goalMet ? { borderColor: "var(--lime)" } : undefined}>
       <div className="row" style={{ marginBottom: 8 }}>
         <span style={{ fontSize: 20 }}>{typeIcon(pos.exerciseType)}</span>
         <b style={{ fontSize: 15 }}>{pos.exerciseTitle}</b>
-        <span className="pill" style={{ marginLeft: "auto" }}>{cadenceLabel(pos.cadence)}</span>
+        <span className="pill" style={{ marginLeft: "auto" }}>{t(cadenceKey(pos.cadence))}</span>
         {pos.goalMet
           ? <span className="pill lime">✓</span>
-          : pos.cadence !== "None" && <span className="pill mag">offen</span>}
+          : pos.cadence !== "None" && <span className="pill mag">{t("home.open")}</span>}
       </div>
       <div className="row" style={{ gap: 8 }}>
         {canPractice && (
@@ -146,7 +151,7 @@ function PositionCard({ pos }: { pos: PositionStatus }) {
         )}
         {pos.testable && (
           <Link to={`/sohn/test/${pos.positionId}`} className="btn" style={{ flex: 1, textDecoration: "none" }}>
-            <span aria-hidden="true">🎯</span> TEST
+            <span aria-hidden="true">🎯</span> {t("home.test")}
           </Link>
         )}
       </div>

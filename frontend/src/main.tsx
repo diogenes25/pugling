@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { AuthProvider } from "./lib/auth";
 import { installGlobalErrorCapture } from "./lib/remarks";
+import "./lib/i18n";
 import "./index.css";
 
 // Fehler-Ringpuffer für Test-Anmerkungen scharfschalten: JS-Fehler landen ab jetzt im Puffer, damit

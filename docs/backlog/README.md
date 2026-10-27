@@ -500,7 +500,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (61)
+### Offen (63)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -540,6 +540,8 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-281](B-281-pin-felder-pruefen-mindestlaenge-im-ui.md) | Eine zu kurze PIN meldet die Oberfläche auf Englisch | Defekt | `idee` | P3 | — | frontend | — |
 | [B-282](B-282-login-haertung-restpunkte.md) | Restpunkte der Login-Härtung (NP-3) | Defekt | `idee` | P3 | — | backend | — |
 | [B-284](B-284-doppeltes-enter-ueberspringt-karte.md) | Ein doppeltes Enter während der Prüfung überspringt eine Karte | Defekt | `idee` | P3 | — | frontend | — |
+| [B-296](B-296-freitext-kuerzung-ohne-untere-grenze-im-test.md) | Der Test zur Freitext-Kürzung hat keine untere Grenze – ein viel zu kurzer Schnitt bliebe grün | Defekt | `idee` | P3 | — | backend | — |
+| [B-297](B-297-404-pfad-des-fill-verbs-ungetestet.md) | Der 404-Pfad des `fill`-Verbs (Unit gehört nicht zur Reihe) ist ungetestet | Defekt | `idee` | P3 | — | backend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-231](B-231-fokus-ohne-fehlerkasten.md) | Wohin gehört der Fokus, wenn ein Knopf ohne Fehlerkasten gesperrt wird? | Frage | `idee` | P3 | — | frontend | — |
 | [B-232](B-232-bestaetigung-ausserhalb-des-sichtfelds.md) | Soll eine Bestätigung zum Meldungsplatz scrollen, wenn er weit vom Knopf entfernt liegt? | Frage | `idee` | P3 | — | frontend | — |
@@ -547,7 +549,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-234](B-234-dritter-zustand-der-arten-liste.md) | Soll die Arten-Liste einen dritten Zustand bekommen – oder B-174s Entscheidung 3 zurückgenommen werden? | Frage | `idee` | P3 | — | frontend | — |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `idee` | P3 | — | — | — |
 | [B-291](B-291-fachwechsel-der-reihe-laesst-themen-stehen.md) | Wechselt eine Reihe ihr Fach, bleiben die Grammatik-Themen des alten Fachs an Übungen und Units stehen | Frage | `idee` | P3 | — | backend | — |
-| [B-85](B-85-i18n-infrastruktur-sohn-arcade-englisch.md) | i18n-Infrastruktur + Sohn-Arcade auf Englisch (erste Teilstufe der Mehrsprachigkeit) | Wunsch | `geschaetzt` | P3 | L | frontend | — |
+| [B-295](B-295-arcade-korpus-auf-englisch.md) | Der restliche Chrome-Korpus der Sohn-Arcade auf Englisch | Wunsch | `geschaetzt` | P3 | M | frontend | — |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `ausformuliert` | P3 | L | backend | Migration |
 | [B-16](B-16-positions-formular-umfang.md) | Prüfauftrag: deckt das Positions-Edit-Formular alle Felder ab? | Wunsch | `ausformuliert` | P3 | S | frontend | — |
 | [B-20](B-20-ki-supervisor-agent.md) | KI-Supervisor-Agent (Teil D) — erster Schritt: Übungen einem Plan zuweisen | Wunsch | `ausformuliert` | P3 | L | backend | — |
@@ -567,7 +569,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (209)</summary>
+<summary>Abgenommen (210)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -724,6 +726,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-290](B-290-themen-schluessel-haengt-am-fachnamen.md) | Der Idempotenz-Schlüssel eines Grammatik-Themas hängt am Fach**namen**, nicht am Fach | Defekt | `abgenommen` | P2 | S | backend | Migration |
 | [B-292](B-292-agent-kuerzt-themen-still.md) | Der `fill`-Agent kürzt ein zu langes Thema still auf 200 Zeichen – die API lehnt genau das bewusst ab | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-293](B-293-fill-von-stdin-blockiert-stumm.md) | `fill --source-file -` wartet am Terminal stumm auf ein Dateiende, und Ctrl+C wird verschluckt | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-294](B-294-i18n-infrastruktur-und-startbildschirm.md) | i18n-Infrastruktur, Sprachumschalter, `<html lang>` und der Startbildschirm der Arcade auf Englisch | Wunsch | `abgenommen` | P3 | M | frontend | — |
 | [B-32](B-32-father-tabellenname.md) | `Father` heißt noch `Father`, obwohl die Zeile `Adult` ist | Aufräumen | `abgenommen` | P3 | S | backend | — |
 | [B-35](B-35-karten-umdrehen-animation.md) | Karten drehen sich beim Aufdecken um | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-36](B-36-motivations-animationen-teilziele.md) | Motivations-Animationen bei erreichten Teilzielen | Wunsch | `abgenommen` | P3 | S | frontend | — |
@@ -793,9 +796,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
-### Nach der Abnahme entgangen (72)
+### Nach der Abnahme entgangen (74)
 
-**Nachgeschaut: 207 von 209 abgenommenen** — und in 59 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 2 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 209 von 210 abgenommenen** — und in 60 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 1 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -871,17 +874,18 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-290](B-290-themen-schluessel-haengt-am-fachnamen.md) | Der Idempotenz-Schlüssel eines Grammatik-Themas hängt am Fach**namen**, nicht am Fach | [B-155] | `abgenommen` |
 | [B-292](B-292-agent-kuerzt-themen-still.md) | Der `fill`-Agent kürzt ein zu langes Thema still auf 200 Zeichen – die API lehnt genau das bewusst ab | [B-22] | `abgenommen` |
 | [B-293](B-293-fill-von-stdin-blockiert-stumm.md) | `fill --source-file -` wartet am Terminal stumm auf ein Dateiende, und Ctrl+C wird verschluckt | [B-22] | `abgenommen` |
+| [B-296](B-296-freitext-kuerzung-ohne-untere-grenze-im-test.md) | Der Test zur Freitext-Kürzung hat keine untere Grenze – ein viel zu kurzer Schnitt bliebe grün | [B-292] | `idee` |
+| [B-297](B-297-404-pfad-des-fill-verbs-ungetestet.md) | Der 404-Pfad des `fill`-Verbs (Unit gehört nicht zur Reihe) ist ungetestet | [B-292] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (2) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (1) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-292](B-292-agent-kuerzt-themen-still.md) | Der `fill`-Agent kürzt ein zu langes Thema still auf 200 Zeichen – die API lehnt genau das bewusst ab |
-| [B-293](B-293-fill-von-stdin-blockiert-stumm.md) | `fill --source-file -` wartet am Terminal stumm auf ein Dateiende, und Ctrl+C wird verschluckt |
+| [B-294](B-294-i18n-infrastruktur-und-startbildschirm.md) | i18n-Infrastruktur, Sprachumschalter, `<html lang>` und der Startbildschirm der Arcade auf Englisch |
 
 </details>
 
@@ -934,9 +938,11 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-291](B-291-fachwechsel-der-reihe-laesst-themen-stehen.md) | `idee` | `unverifiziert: true` |
 | [B-292](B-292-agent-kuerzt-themen-still.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-293](B-293-fill-von-stdin-blockiert-stumm.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
+| [B-296](B-296-freitext-kuerzung-ohne-untere-grenze-im-test.md) | `idee` | `unverifiziert: true` |
+| [B-297](B-297-404-pfad-des-fill-verbs-ungetestet.md) | `idee` | `unverifiziert: true` |
 
 <details>
-<summary>Verworfen (22)</summary>
+<summary>Verworfen (23)</summary>
 
 | Id | Story | Grund |
 | --- | --- | --- |
@@ -957,6 +963,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-33](B-33-azure-publish-profile.md) | Azure-Secret `AZURE_WEBAPP_PUBLISH_PROFILE` fehlt | bewusste Nicht-Aufgabe für eine Code-Sitzung (Nutzer-Entscheidung) |
 | [B-34](B-34-sitzungsbonus-dauer.md) | „Dauer durchgehend gelernt" als eskalierender Sitzungs-Bonus | durch MinutesPracticed-Missionen abgelöst |
 | [B-38](B-38-mehrsprachige-oberflaeche.md) | Mehrsprachige Oberfläche (Deutsch, Englisch, Französisch) | "geteilt — ein Programm, keine Story (Entscheidung 8); siehe die recherchierte Grundlage unten und → [B-85, B-86, B-87] |
+| [B-85](B-85-i18n-infrastruktur-sohn-arcade-englisch.md) | i18n-Infrastruktur + Sohn-Arcade auf Englisch (erste Teilstufe der Mehrsprachigkeit) | geteilt (NP-11 Schritt 0, Lauf E Teil 8): Infrastruktur + Startbildschirm → B-294, Rest des Korpus → B-295 → [B-294, B-295] |
 | [B-86](B-86-uebungstyp-manifest-anzeigenamen-schluessel.md) | Das Übungstyp-Manifest liefert Anzeigenamen als Daten, nicht als Schlüssel | gegenstandslos im Backend – das Manifest trägt mit `type` (= IExerciseType.Key, ExerciseTypeManifest.cs:33,43) bereits einen stabilen, sprachneutralen Schlüssel; `Label` ist der deutsche Anzeigename daneben. Der Rest – eine Frontend-Übersetzungstabelle mit `type` als Schlüssel – gehört in B-85 |
 | [B-87](B-87-vater-web-franzoesisch-server-sprachfeld.md) | Rest des Mehrsprachigkeits-Programms: Vater-Web, Französisch, Server-Sprachfeld | "geteilt — selbst noch ein Programm (Entscheidung 1); siehe die recherchierte Grundlage oben und die → [B-91, B-92, B-90] |
 | [B-90](B-90-server-sprachfeld.md) | Server-Sprachfeld an `Adult`/`Child` | Entscheidung des Nutzers am 2026-10-23 (G-9): Mehrsprachigkeit ist über die Sohn-Arcade auf Englisch (B-85) hinaus kein Ziel; ein Server-Sprachfeld hat keinen Konsumenten |

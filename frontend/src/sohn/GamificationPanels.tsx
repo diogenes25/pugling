@@ -1,15 +1,17 @@
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useSohn } from "./SohnApp";
 import { isFirstLoad, readSeen, writeSeen } from "./seenIds";
 import type { AchievementStatus, MissionPeriod, MissionStatus } from "../lib/types";
 
-const PERIOD_LABEL: Record<MissionPeriod, string> = {
-  Daily: "Heute",
-  Weekly: "Diese Woche",
-  OneOff: "Ziel",
-};
+// Chrome, nicht Nutzerdaten: der Zeitraum einer Mission reist als Schlüssel (B-294); der Titel bleibt roh.
+const PERIOD_KEY = {
+  Daily: "missions.periodDaily",
+  Weekly: "missions.periodWeekly",
+  OneOff: "missions.periodOneOff",
+} as const satisfies Record<MissionPeriod, string>;
 
 /**
  * Missionen des Sohns mit Fortschrittsbalken (Tages-/Wochen-/Zusatzziele). Der Server wertet beim
@@ -17,6 +19,7 @@ const PERIOD_LABEL: Record<MissionPeriod, string> = {
  * Neu erfüllte Missionen werden gefeiert (Overlay + Ton + Haptik).
  */
 export function MissionsPanel() {
+  const { t } = useTranslation();
   const { childId, celebrate } = useSohn();
   const missions = useAsync<MissionStatus[]>(() => api.missions(), []);
 
@@ -30,17 +33,17 @@ export function MissionsPanel() {
     writeSeen(key, completedIds); // Tages-/Wochenziele setzen sich zurück – aktuellen Stand merken.
     if (first || fresh.length === 0) return;
     const bonus = fresh.reduce((sum, id) => sum + (missions.data!.find((m) => m.id === id)?.rewardPoints ?? 0), 0);
-    celebrate("medium", "🎯", fresh.length > 1 ? `${fresh.length} MISSIONEN!` : "MISSION!", bonus > 0 ? `+${bonus} 🪙` : undefined);
-  }, [missions.data, childId, celebrate]);
+    celebrate("medium", "🎯", fresh.length > 1 ? t("missions.celebrateMany", { count: fresh.length }) : t("missions.celebrateOne"), bonus > 0 ? `+${bonus} 🪙` : undefined);
+  }, [missions.data, childId, celebrate, t]);
 
   if (missions.loading || missions.error || !missions.data || missions.data.length === 0) return null;
 
   return (
     <div className="card">
       <div className="row" style={{ marginBottom: 10 }}>
-        <b style={{ fontSize: 13 }}>🎯 Missionen</b>
+        <b style={{ fontSize: 13 }}>{t("missions.title")}</b>
         <span className="sub" style={{ marginLeft: "auto" }}>
-          {missions.data.filter((m) => m.completed).length}/{missions.data.length} geschafft
+          {t("missions.done", { done: missions.data.filter((m) => m.completed).length, total: missions.data.length })}
         </span>
       </div>
       {missions.data.map((m) => {
@@ -52,7 +55,7 @@ export function MissionsPanel() {
               <span className="sub" style={{ marginLeft: "auto" }}>
                 {m.completed
                   ? <span className="pill lime">+{m.rewardPoints}</span>
-                  : `${m.current}/${m.target} · ${PERIOD_LABEL[m.period]}`}
+                  : `${m.current}/${m.target} · ${t(PERIOD_KEY[m.period])}`}
               </span>
             </div>
             <div className={`bar ${m.completed ? "" : "cyan"}`}><i style={{ width: `${pct}%` }} /></div>

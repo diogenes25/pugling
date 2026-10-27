@@ -423,3 +423,61 @@ residente Datei: der Nachschau-Prüfer bekommt `backend/Pugling.Api/CLAUDE.md` a
 Commit das Fachmodell ändert (Prosa in der pm-loop-Nachschau, kein Tor).
 
 **Commit:** `4a3fa61` (nicht gepusht).
+
+## Lauf E, Teil 8 — NP-11 Mehrsprachigkeit, Schritt 0 und Teil a (B-85 → B-294, B-295), Zähler 0
+
+**Sprint-Ziel (aus dem Paket):** *Der Sohn kann die Arcade auf Englisch umschalten, mindestens ein Bildschirm ist
+vollständig übersetzt, und alle Specs laufen weiter auf Deutsch.* Schritt 0: [B-85](backlog/B-85-i18n-infrastruktur-sohn-arcade-englisch.md)
+(L) geteilt in [B-294](backlog/B-294-i18n-infrastruktur-und-startbildschirm.md) (Teil a, M, gebaut) und
+[B-295](backlog/B-295-arcade-korpus-auf-englisch.md) (Teil b, M, `geschaetzt`). Umfang dieses Sprints: B-294
+(`Wunsch` auf `geschaetzt` aus B-85, Freigabe 8). **Zähler: 0.**
+
+**Entwickler-Brief:** `react-i18next` + `i18next` (Peer-Konflikt seit B-25 erledigt, `npm install` ohne
+`--legacy-peer-deps`); Init in `src/lib/i18n.ts` mit Wahl im `localStorage`; Umschalter im HUD; `<html lang>` in
+der Arcade-Wurzel; der Startbildschirm vollständig (SohnHome, HUD, Navigation, Missions-Panel, Interessen-Karte);
+Deutsch in `playwright.config.ts` gepinnt; eine neue Spec. Nutzerdaten als Platzhalter.
+
+### Iteration
+
+- Bibliothek eingebunden, Init + Ressourcen (Namespace `sohn`, 38 Schlüssel), Umschalter-Chip, `<html lang>`-Effekt
+  mit Rückfall, Startbildschirm und seine zwei geteilten Karten über `t()`, Deutsch gepinnt. Vitest `i18n.test.ts`
+  (Parität, kein leerer Text, Persistenz, Platzhalter) → **467/467**; `sprache.spec.ts` (die Spec fand zuerst, dass
+  der Seed-Sohn heute keine Mission hat – Überschrift jetzt zustandsunabhängig geprüft) + `karten-umdrehen` +
+  `interessen` **3 passed**; Build grün.
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `frontend-reviewer` 🟡 | Missions-Panel nicht vollständig übersetzt: `PERIOD_LABEL` („Heute/Diese Woche/Ziel“) lag als deutsche Literale neben den Ressourcen (AK 3) | drei Schlüssel `missions.period*`, `t()` im Panel, Spec schließt „Diese Woche“ auf Englisch aus | ja |
+| 2 | `frontend-reviewer` 🟡 | Sprach-Chip: sichtbarer Text „EN“ nicht im Vorlesenamen (WCAG 2.5.3) | Name beginnt mit dem sichtbaren Ziel, Specs nachgezogen | ja |
+| 3 | `frontend-reviewer` 🟡 | Schlüssel untypisiert – ein Tippfehler in `t("…")` fiele erst im Bild auf | `src/i18n/i18next.d.ts` (`CustomTypeOptions` an `typeof de`), der Build ist das Tor | ja |
+| – | `frontend-reviewer` 🟢 | Locator `.first()` hing an der Intro-Karte; Sprache blieb nach rotem Fall auf Englisch; `t` fehlte in Effekt-Deps | `hasText`-Locator, `afterEach`, Deps | nein (Freigabe 10) |
+
+**Zähler: 3.** Build grün, Vitest **467/467**, volle E2E **98 passed** (5,8 min). Rollengang: Sohn maschinell per
+`sprache.spec.ts`, Vater/Creator als Regression über die volle Suite (das Vater-Web trägt kein `t()`). Kein
+Browser verbunden – ob der Chip sich *richtig anfühlt*, hat niemand gesehen; die englischen Texte liest ein
+Mensch gegen (AK 7 → `wartet_auf`). **B-294 `abgenommen`, B-85 `verworfen` (geteilt), B-295 `geschaetzt`.**
+
+### Retrospektive
+
+**Nachschau:** Teil 7 (`4a3fa61`, B-292/B-293) von einem frischen Prüfer am `git archive` geprüft. Code und
+Reihenfolge der Grenzen stimmen; **zwei Test-Entgleiten**, je als `Defekt` mit `entgangen_bei: B-292` angelegt:
+die Freitext-Zusicherung hat keine untere Grenze (ein Schnitt auf 100 Zeichen bliebe grün) →
+[B-296](backlog/B-296-freitext-kuerzung-ohne-untere-grenze-im-test.md); der 404-Pfad der Unit-Suche im `fill`-Verb
+ist ungetestet → [B-297](backlog/B-297-404-pfad-des-fill-verbs-ungetestet.md). `nachgeschaut` an B-292 und B-293
+gesetzt; vier 🟢 dort notiert.
+
+**Was die eigenen Tore durchgelassen haben:** Der Paritäts-Test vergleicht Ressource mit Ressource – eine Tabelle
+deutscher Literale *neben* den Ressourcen (`PERIOD_LABEL`) ist für ihn unsichtbar, und genau die blieb im
+„vollständig übersetzten“ Bildschirm stehen. Das ist dieselbe Klasse wie (L) aus Teil 7: die Regel war an den
+Stellen gelandet, die ich angefasst hatte, nicht als Regel über die Datei. Fund 3 (typisierte Schlüssel) ist als
+Review-Behebung gelandet, kein Retro-Tor – er schließt die Lücke *Verwendung → Ressource*, nicht die Lücke
+*Literal neben der Ressource*.
+
+**Vorschlag, nicht gelandet (Freigabe 3):** **(M)** ein Literal-Wächter für B-295: ein Vitest über
+`src/sohn/**/*.tsx` (ohne `i18n/`), der JSX-Text und `aria-label`/`title`-Literale mit `[äöüßÄÖÜ]` oder aus einer
+kleinen deutschen Stoppwortliste als rot meldet – mit Ausnahmeliste wie bei den `ConventionGuardTests`. Erst
+messen (wie viele Treffer heute, B-295 ist der Lauf dafür), dann scharf stellen.
+
+**Commit:** *(folgt im Nachtrag)*.

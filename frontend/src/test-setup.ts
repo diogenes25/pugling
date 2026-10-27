@@ -1,5 +1,8 @@
 import { cleanup } from "@testing-library/react";
 import { afterEach } from "vitest";
+// Die Übersetzungen einmal laden: Komponenten der Arcade rufen `useTranslation`, und ohne Instanz lieferte
+// react-i18next nur Schlüssel (B-294).
+import "./lib/i18n";
 
 /**
  * Räumt das DOM nach jedem Testfall ab (eingehängt über `setupFiles` in `vitest.config.ts`).
