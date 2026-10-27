@@ -218,4 +218,4 @@ zweite Mutante bleibt grün“. Alle drei Funde kamen von Prüfern, die den Code
 je neuer Zusicherung nach der Mutante, die sie rot macht, **und** nach der naheliegenden Mutante, die grün bliebe
 (die andere Seite derselben Unterscheidung). Kein Tor; kein Mechanismus liest Testdaten.
 
-**Commit:** folgt unten.
+**Commit:** `12eab76` (nicht gepusht).
