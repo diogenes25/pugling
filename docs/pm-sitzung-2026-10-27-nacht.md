@@ -995,7 +995,7 @@ angewendet und vom Reviewer trotzdem an einer Stelle vermisst.
 ## Ende Lauf G
 
 Endgrund: **Limit 2** – die Nachschau von Teil 2 fand im Increment von Teil 1 zwei Testlöcher (B-315, B-316, behoben).
-Zwei Teile, **fünf Stories abgenommen** (B-304, B-305, B-315, B-316; dazu B-308/B-309 nachgeschaut) – B-295 ist damit
+Zwei Teile, **vier Stories abgenommen** (B-304, B-305, B-315, B-316; dazu B-308/B-309 nachgeschaut) – B-295 ist damit
 vollständig, die Sohn-Arcade spricht Englisch bis auf Übungstyp-Namen (die sie nicht zeigt) und Nutzerdaten. B-314
 zusammengelegt. Höchster Zähler 3 (Teil 2). Alles **ungepusht**.
 
