@@ -138,7 +138,10 @@ public sealed class PlanPlanner(CreatorPipeline pipeline, SupervisorApi supervis
                 "Ein Lehrplan gehört immer einem Kind – gib --child <id> an. "
                 + "(--profile allein genügt nur für den gemeinsamen Katalog, also bei 'create' und 'exam'.)");
 
-        var title = request.Title?.Trim() is { Length: > 0 } given ? given : await DeriveTitleAsync(request, ct);
+        // Briefed once before the parts, title given or not: a wrong series, unit, child, profile or interest is a
+        // usage error of the whole request (exit 2), not a failed part (B-308).
+        var derived = await DeriveTitleAsync(request, ct);
+        var title = request.Title?.Trim() is { Length: > 0 } given ? given : derived;
         var parts = new List<GeneratedPart>();
 
         foreach (var typeKey in request.Types)

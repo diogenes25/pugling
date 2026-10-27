@@ -260,9 +260,32 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
+    /// B-309: the other direction of B-302 - such whitespace exactly AT the limit means the head already ends on a
+    /// whole word, so nothing is given away. Separators at 1990 and 2000: the right answer keeps 2000 characters; a
+    /// limit check narrowed to a blank (<c>== ' '</c> or <c>char.IsSeparator</c> for <c>\r</c>) falls through to the
+    /// boundary search and cuts at 1990 - a whole word lost without need.
+    /// </summary>
+    [Theory]
+    [InlineData('\u00A0')]
+    [InlineData('\r')]
+    [InlineData('\u2003')]
+    public async Task Fill_Behaelt_Das_Letzte_Wort_Wenn_Jede_Art_Von_Leerraum_Auf_Der_Grenze_Liegt(char separator)
+    {
+        var (_, creator, _) = BuildAgent();
+        var (_, seriesId, unitId) = await FreshUnitAsync(creator, $"Fill-Grenze-{(int)separator}");
+        var text = new string('x', 1990) + separator + new string('y', 9) + separator + new string('z', 10);
+        var json = System.Text.Json.JsonSerializer.Serialize(new { grammar = text });
+
+        var outcome = await Filler(creator, new FakeChatClient(json)).RunAsync(new UnitFillRequest(seriesId, unitId, "Quelle", Force: false, DryRun: true));
+
+        Assert.Equal(["grammar"], outcome.Shortened);
+        Assert.Equal(2000, outcome.Draft.Grammar!.Length);
+    }
+
+    /// <summary>
     /// B-303: a <c>null</c> among the topics (a model in JSON mode is not held to the item type) is left out like an
-    /// empty one - not a <see cref="NullReferenceException"/> that ends the run raw. Red if <c>Clamp</c> trims
-    /// before it filters; the empty <c>Dropped</c> holds the intent that a missing topic is no loss to name.
+    /// empty one - not a <see cref="NullReferenceException"/> that ends the run raw. Red if the trim dereferences
+    /// a null topic (the old <c>t.Trim()</c>); the empty <c>Dropped</c> holds the intent that a missing topic is no loss to name.
     /// </summary>
     [Fact]
     public async Task Fill_Laesst_Ein_Null_Thema_Weg_Statt_Abzustuerzen()
@@ -1527,6 +1550,70 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.DoesNotContain("lupus (B-21, fr)", fromRequest.RequiredWords);
         // Same target as the request, other source: only the sourceLang filter keeps it out.
         Assert.DoesNotContain("lupus (B-21)", fromRequest.RequiredWords);
+    }
+
+    /// <summary>
+    /// B-308: <c>plan</c>/<c>exam</c> with a profile, a given title and an unknown series. Nothing before the parts
+    /// read the series, so the briefing's usage error came once per part and the run ended with exit 1 ("plan
+    /// incomplete") instead of exit 2. The briefing is now checked once before the first part. Red if that check is
+    /// removed (the error is swallowed per part, no exception reaches the caller). No model-call count here: the
+    /// briefing failed before any model call with or without the fix, so such an assertion could never fail.
+    /// </summary>
+    [Theory]
+    [InlineData("plan", "--child", "1")]
+    [InlineData("exam")]
+    public async Task Plan_und_Klausur_mit_unbekannter_Reihe_brechen_einmal_ab(string verb, params string[] extra)
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var (subjectId, _, _) = await FreshUnitAsync(creator, $"Reihe-weg-{verb}");
+        var profile = await creator.CreateProfileAsync(new CreateCreatorProfileDto(
+            $"Profil Reihe weg {Guid.NewGuid():N}", null, subjectId, null, null, null, null,
+            SourceLang: "en", TargetLang: "de", Persona: null, Didactics: null, DefaultTypes: null, Active: true));
+
+        var command = CommandLine.Parse([
+            verb, "--profile", profile.Id.ToString(), "--types", "Vocabulary,Cloze", "--per-type", "3",
+            "--title", TestApi.UniqueName("Reihe weg"), "--series", "987654", "--series-unit", "1", .. extra,
+        ]);
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline).RunAsync(command, default));
+
+        Assert.Contains("Reihe 987654", error.Message);
+    }
+
+    /// <summary>
+    /// B-308: <c>profiles --child</c> with a child the server does not know is a usage error naming the child, not a
+    /// raw 404 (exit 1). Red if the NotFound catch in <c>AgentCommands.ShowProfilesAsync</c> is removed.
+    /// </summary>
+    [Fact]
+    public async Task Profile_fuer_ein_unbekanntes_Kind_sind_eine_Fehlbedienung()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline)
+            .RunAsync(CommandLine.Parse(["profiles", "--child", "987654"]), default));
+
+        Assert.Contains("Kind 987654", error.Message);
+    }
+
+    /// <summary>
+    /// B-308, the other half: an existing child the account does not supervise (the server answers 403, the
+    /// realistic case - a teacher asking about a real child). Seed account 2, Herr Schmidt, is creator and
+    /// supervisor but supervises no child. Red if the catch is narrowed to NotFound.
+    /// </summary>
+    [Fact]
+    public async Task Profile_fuer_ein_fremdes_Kind_sind_eine_Fehlbedienung()
+    {
+        var (pipeline, _, _) = BuildAgent(VocabularyJson);
+        var teacher = new CreatorApi(factory.CreateDefaultClient(AuthHandler.Standalone(new PuglingClientOptions
+        {
+            BaseUrl = "http://localhost",
+            AccountId = 2,
+            Pin = "9999",
+        })));
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(teacher, pipeline)
+            .RunAsync(CommandLine.Parse(["profiles", "--child", "1"]), default));
+
+        Assert.Contains("Kind 1 ", error.Message);
     }
 
     /// <summary>

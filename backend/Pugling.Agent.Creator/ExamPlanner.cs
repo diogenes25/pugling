@@ -54,7 +54,10 @@ public sealed class ExamPlanner(CreatorPipeline pipeline, CreatorApi creator, Su
         if (request.Types.Count == 0)
             throw new AgentUsageException("Eine Klausur braucht mindestens einen Übungstyp (--types).");
 
-        var title = request.Title?.Trim() is { Length: > 0 } given ? given : await DeriveTitleAsync(request, ct);
+        // Briefed once before the parts, title given or not: a wrong series, unit, child, profile or interest is a
+        // usage error of the whole request (exit 2), not a failed part (B-308).
+        var derived = await DeriveTitleAsync(request, ct);
+        var title = request.Title?.Trim() is { Length: > 0 } given ? given : derived;
         var parts = new List<GeneratedPart>();
 
         foreach (var (typeKey, index) in request.Types.Select((t, i) => (t, i)))

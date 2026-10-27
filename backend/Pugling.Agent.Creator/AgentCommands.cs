@@ -159,7 +159,19 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
         if (command.Value("child") is not null)
         {
             var childId = command.RequiredInt("child");
-            var matches = await creator.MatchProfilesAsync(childId, subjectId, ct);
+            IReadOnlyList<CreatorProfileMatch> matches;
+            try
+            {
+                matches = await creator.MatchProfilesAsync(childId, subjectId, ct);
+            }
+            // Same answer as the briefing's child lookup: unknown and not supervised look alike from here (B-308).
+            catch (PuglingApiException ex) when (ex.StatusCode is System.Net.HttpStatusCode.NotFound
+                                                     or System.Net.HttpStatusCode.Forbidden)
+            {
+                throw new AgentUsageException(
+                    $"Kind {childId} ist für dieses Konto nicht sichtbar – es existiert nicht, oder das Konto betreut es nicht. "
+                    + "Prüfe Pugling:AccountId/Pugling:Pin.");
+            }
             if (matches.Count == 0)
             {
                 Console.WriteLine($"Kein Profil passt zu Kind {childId}. Lege eines an "

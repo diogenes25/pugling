@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-292]
 wartet_auf: ""
+nachgeschaut: "2026-10-27"
 ---
 
 # B-302 · `fill` schneidet Freitext mitten im Wort, wenn die Wörter nur durch `\r`, NBSP o. Ä. getrennt sind
@@ -40,3 +41,8 @@ statt `LastIndexOfAny`; ein Theory-Fall mit NBSP-getrennten Wörtern und exakter
   Mutante `char.IsSeparator`, NBSP die Mutante „`\r` zur alten Menge“ – die drei Fälle sind nicht redundant. Kein
   🟡/🔴 im Diff; 🟢 Wortlaut des Testkommentars → genommen. Suite **979/979 `exit=0`**. Rollengang: Agent ohne
   Oberfläche, Tests sind der Weg. **`abgenommen`.**
+- **2026-10-27** — Nachschau (Lauf F, Teil 5, frischer `pugling-reviewer` am Commit `193f4f6`): 1994 je Trenner
+  nachgerechnet (2799 Zeichen, Trenner bei 7k+6, Index 2000 ist ein „s“); Mutanten `LastIndexOfAny` (alle drei rot),
+  `char.IsSeparator` (nur `\r` rot), „alte Menge + `\r`“ (NBSP/U+2003 rot) hergeleitet – die drei Fälle sind nicht
+  redundant; Äquivalenz zum alten Code für 1..1999 und ohne Leerraum. **Entgangen:** die Grenzprüfung selbst ist nur
+  mit Leerzeichen belegt (`== ' '` bliebe grün) → [B-309](B-309-leerraum-auf-der-grenze-nur-mit-leerzeichen-belegt.md).

@@ -763,3 +763,77 @@ höchstens eine `<summary>`, und jede `<summary>` steht direkt über einem Attri
 `Pugling.Api.Tests/**/*.cs`, billig, und er hätte den 🟡 vor dem Review gefangen. Erst messen, wie viele Treffer der
 Bestand heute hat (CLAUDE.md: „Neue Regel scharf stellen? Erst messen.“).
 
+## Lauf F, Teil 5 — B-308, B-309 (Rest-Pfade bei falscher Id; Leerraum auf der Grenze), Zähler 2
+
+**Sprint-Ziel:** *Der Creator, der sich bei `plan`, `exam` oder `profiles` in einer Id vertippt, bekommt genau eine
+Fehlbedienung mit Exit 2 – und ein Freitext, dessen Grenze auf ein NBSP fällt, verliert kein Wort.* Umfang:
+[B-308](backlog/B-308-agent-fehlbedienung-plan-exam-profiles.md) (aus dem Review von Teil 4, war `unverifiziert`),
+[B-309](backlog/B-309-leerraum-auf-der-grenze-nur-mit-leerzeichen-belegt.md) (aus der Nachschau zu Teil 3, während
+des Sprints aufgenommen). Beide `Defekt`, Freigabe 1, je XS.
+
+**Entwickler-Brief:** Erst messen. Plan/Klausur: das Briefing einmal vor den Teilen (es liest nur), statt den
+request-weiten Fehler je Teil zu verschlucken; `profiles`: 404/403 wie `LoadChildAsync`. B-309: ein `Theory` mit den
+drei Trennern auf der Grenze, getragen über die Mutante `== ' '`.
+
+### Iteration
+
+- B-308 **gemessen echt**: rote Probe **3 failed** (2 × „No exception was thrown“, 1 × rohe 404). Fix → grün.
+- B-309: **3 passed** am echten Code (Testlücke), Mutante `trimmed[2000] == ' '` → **3 failed** (je 1990 statt 2000).
+- Suite **990/990 `exit=0`**.
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `pugling-reviewer` 🟡 | 403-Hälfte des `profiles`-Fangs ungetestet (der realistische Fall: Lehrer fragt nach echtem Kind) | Test mit Seed-Konto 2; Mutante „nur `NotFound`“ → **1 failed** | ja |
+| 2 | `pugling-reviewer` 🟡 | `Assert.Equal(0, chat.Calls)` im Planer-Test kann nie fallen (Briefing scheiterte schon vorher vor jedem Modellaufruf) | gestrichen, im Kommentar begründet | ja |
+| – | `pugling-reviewer` 🟢 | Meldung holprig und ohne Hinweis; Kommentar erzählt Umbau statt Regel | beides genommen | nein (Freigabe 10) |
+| – | `pugling-reviewer` 🟡 | außerhalb: `profiles/match` verrät per 404/403, ob eine Kind-Id existiert | [B-310](backlog/B-310-profil-match-verraet-kind-ids.md) (`idee`, `unverifiziert`) | nein (außerhalb des Diffs) |
+
+**Zähler: 2.** Fund 2 ist genau die Klasse aus CLAUDE.md („eine Zusicherung, die den Ausgangszustand prüft, kann nie
+fehlschlagen“) – vom Prüfer gefunden, nicht von mir; ich hatte die Zeile aus dem B-307-Test übernommen, wo sie trug.
+Suite **991/991 `exit=0`**. Rollengang: der Agent hat keine Oberfläche, die Tests sind der Weg; Vater und Sohn
+Regressionszeugen. **B-308, B-309 `abgenommen`.**
+
+### Retrospektive
+
+**Nachschau:** Teil 3 (`193f4f6`, B-302/B-303) von einem frischen `pugling-reviewer`: 1994 je Trenner nachgerechnet,
+drei Mutanten der Wortgrenze hergeleitet (die Fälle sind nicht redundant), die „kompiliert nicht“-Behauptung zu
+B-303 gegen CS8602 geprüft, alle Listen von `UnitNotesDraft` durchgesehen. **Ein Entgleiten im Increment von Teil 3:**
+die Grenzprüfung selbst war nur mit Leerzeichen belegt → [B-309](backlog/B-309-leerraum-auf-der-grenze-nur-mit-leerzeichen-belegt.md)
+(`entgangen_bei: B-302`), in diesem Sprint behoben. `nachgeschaut` an B-302, B-303.
+
+**Was die eigenen Tore durchgelassen haben:** B-302 versprach „dieselbe Leerraum-Menge an jeder Stelle“ und belegte
+eine von zwei Stellen – wieder ein „und“-Kriterium, je Hälfte nicht geprobt (Vorschlag N). Fund 2 dieses Sprints:
+eine Zeile aus einem Nachbartest übernommen, ohne zu fragen, ob sie hier etwas trägt.
+
+**Warum der Lauf hier endet (Limit 2):** die Nachschau dieses Sprints fand einen Defekt **im Increment dieses Laufs**
+(Teil 3 → B-309). Dass er XS war und im selben Sprint behoben ist, ändert die Regel nicht – genau wie bei Lauf E.
+Der Zähler (2) hätte nicht gestoppt.
+
+**Vorschlag, nicht gelandet (Freigabe 3):** **(R)** im Pflichtschritt von Step 5 (pm-loop) die Mutanten-Frage auch
+auf **übernommene** Zusicherungen anwenden: „Diese Zeile stammt aus Test X – welche Mutante macht sie *hier* rot?“
+Prosa; der Fall ist zu selten und zu verschieden für ein Tor.
+
+## Ende Lauf F
+
+Endgrund: **Limit 2** – die Nachschau von Teil 5 fand im Increment von Teil 3 ein Testloch (B-309, behoben). Fünf
+Teile, **elf Stories abgenommen** (B-298, B-299, B-300, B-301, B-302, B-303, B-306, B-307, B-308, B-309 – dazu B-295
+geteilt in B-304/B-305), höchster Zähler 2 (Teil 5). Jede Nachschau dieses Laufs wurde mit benannten Prüfpunkten
+geschlossen; zwei fanden ein Geschwister außerhalb (B-301 → B-307; B-302 → B-309).
+
+**Offene Entscheidungen für den Nutzer:**
+
+1. **Nächster Lauf:** [B-304](backlog/B-304-arcade-rahmen-auf-englisch.md) (Rahmen der Arcade auf Englisch, M) und
+   [B-305](backlog/B-305-arcade-spielweg-auf-englisch.md) (Spielweg, M) liegen `geschaetzt` bereit – die Teilung von
+   B-295 bitte gegenlesen, insbesondere die zwei Ausführungs-Punkte in B-304 (geteilte Helfer bleiben für das
+   Vater-Web deutsch; der `lang`-Effekt wandert an die `SohnApp`-Wurzel, `sprache.spec.ts` prüft dann einen
+   englischen Login).
+2. [B-310](backlog/B-310-profil-match-verraet-kind-ids.md): soll `profiles/match` „gibt es nicht“ und „nicht deins“
+   gleich (404) beantworten? Statuscode-Änderung am Vertrag.
+3. **Retro-Vorschläge (O)–(R)**, keiner gelandet: (O) „welche Geschwister hat, was ich prüfe/ändere?“ (mit N
+   zusammenziehen); (P) Tor: jede Strategie mit `null` in jeder Liste füttern, „kein roher Absturz“; (Q) Tor: höchstens
+   eine `<summary>` je Testmethode, direkt über dem Attribut; (R) übernommene Zusicherungen auf ihre Mutante prüfen.
+   Dazu unverändert (H)–(N) aus Lauf E.
+4. Unverändert offen: englische Texte in `frontend/src/i18n/en.ts` gegenlesen (B-294 AK 7), B-291 (`Frage`), B-267, B-268.
+

@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-22]
 wartet_auf: ""
+nachgeschaut: "2026-10-27"
 ---
 
 # B-303 · Ein `null` in `topics` aus dem JSON-Modus ließe `fill` roh abstürzen
@@ -38,3 +39,8 @@ weggelassen, ein fehlendes gehört dazu.
   hält die Absicht „ein fehlendes Thema ist kein zu nennender Verlust“ (Mutante: `null` als `"<null>"` melden) →
   im Kommentar benannt. 🟡 außerhalb des Diffs: dieselbe Klasse in den Übungsstrategien →
   [B-306](B-306-null-element-in-uebungsstrategien.md). Suite **979/979 `exit=0`**. **`abgenommen`.**
+- **2026-10-27** — Nachschau (Lauf F, Teil 5, frischer `pugling-reviewer` am Commit `193f4f6`): alte Zeile `t.Trim()`
+  als Mutante → `NullReferenceException`; die Behauptung „ohne `?? ""` kompiliert es nicht“ geprüft (CS8602 unter
+  `TreatWarningsAsErrors`); `UnitNotesDraft` hat nur eine Liste, `Grammar`/`VocabularyNotes` laufen über das
+  null-sichere `Text()`; ein Nicht-String-Element endet über `TryGetResult` in der klaren `AgentException`. Kein
+  Entgleiten. 🟢 Testkommentar „trims before it filters“ träfe auch eine korrekte Alternative → präzisiert.
