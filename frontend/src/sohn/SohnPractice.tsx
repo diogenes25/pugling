@@ -324,7 +324,7 @@ export function SohnPractice() {
         ) : typed ? (
           <div>
             {card.letterTiles ? (
-              <LetterTiles key={card.itemIndex} tiles={card.letterTiles} value={typedAnswer} onChange={setTypedAnswer} onSubmit={submitTyped} />
+              <LetterTiles tiles={card.letterTiles} value={typedAnswer} onChange={setTypedAnswer} onSubmit={submitTyped} />
             ) : card.answerLength ? (
               <LetterBoxes length={card.answerLength} value={typedAnswer} onChange={setTypedAnswer} onSubmit={submitTyped} pattern={card.answerPattern ?? undefined} />
             ) : (

@@ -37639,7 +37639,7 @@
               "integer",
               "string"
             ],
-            "description": "Account id (subject of the token); \u0060null\u0060 for a legacy token without \u0060aid\u0060.",
+            "description": "Account id (subject of the token). Always set: a token without \u0060aid\u0060 is rejected with 401 before any action runs (B-245); the nullable type is a contract leftover.",
             "format": "int32"
           },
           "role": {

@@ -88,6 +88,13 @@ Neu seit dem 2026-10-23, Freigabe 8 an genau einer Stelle erweiternd:
    steht, hältst du an wie bei Freigabe 8. Vor dem Bau jeder Story ihre jüngste
    „Nachprüfung"-Zeile im `## Verlauf` lesen, falls vorhanden.
 
+Neu seit dem 2026-10-27, Freigabe 3 an genau einer Stelle einschränkend:
+10. Auf den Fünfer-Zähler zählt ein Fund nur, wenn der Reviewer ihn als 🟡 oder 🔴 einstuft
+    UND seine Behebung Code oder Tests ändert. 🟢-Hinweise werden behoben, wenn das billig
+    ist, sonst als Story zurückgestellt – beides ohne Zählung und im Protokoll als „ohne
+    Zählung" ausgewiesen. Grund: am 2026-10-26 lagen sechs Stories nur wegen des Zählers
+    zurückgestellt, mehr als die Hälfte davon 🟢-Hinweise.
+
 Sonst gilt das Verfahren unverändert: Sprint-Ziel aus Rollensicht, rote Probe vor dem Fix,
 Rollengang als E2E, Nachschau als erste Pflichthandlung der Retro, Commits selbst setzen,
 Push bleibt bei mir.

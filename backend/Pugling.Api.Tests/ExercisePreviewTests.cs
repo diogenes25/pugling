@@ -189,6 +189,31 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
         JsonAssert.True(result.GetProperty("items").EnumerateArray().First(), "wasCorrect");
     }
 
+    /// <summary>
+    /// B-05/B-283: the scramble stage (7) in the preview hands out the tiles, withholds the solution and the
+    /// letter-box facets, and does not reshuffle between two calls (the exercise id is the seed). Red if the preview
+    /// drops <c>LetterTiles</c> from its projection.
+    /// </summary>
+    [Fact]
+    public async Task Preview_Ordnen_LiefertKacheln_FestJeUebung_OhneLoesung()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("butterfly", "Schmetterlin"));
+
+        var data = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/preview?stage=7");
+        Assert.Equal(7, data.GetProperty("stage").GetInt32());
+        JsonAssert.True(data, "typed");
+        var item = data.GetProperty("items").EnumerateArray().Single();
+        var tiles = item.GetProperty("letterTiles").EnumerateArray().Select(t => t.GetString()).ToList();
+        Assert.Equal("schmetterlin".Order(), string.Concat(tiles).Order());
+        Assert.NotEqual("schmetterlin", string.Concat(tiles));
+        Assert.Equal(JsonValueKind.Null, item.GetProperty("reveal").ValueKind);
+        Assert.Equal(JsonValueKind.Null, item.GetProperty("answerLength").ValueKind);
+
+        var again = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/preview?stage=7");
+        Assert.Equal(tiles, again.GetProperty("items").EnumerateArray().Single().GetProperty("letterTiles").EnumerateArray().Select(t => t.GetString()).ToList());
+    }
+
     [Fact]
     public async Task Preview_Hoerstufe_LiefertAudioquelle_OhneLoesung()
     {

@@ -10,6 +10,7 @@ import { useExerciseTypes } from "../lib/exerciseTypes";
 import { useGemerkterFehler } from "../lib/useGemerkterFehler";
 import { ListenAusfall } from "../components/ListenAusfall";
 import { authorText } from "./ExerciseAttribution";
+import { VOCAB_FORMS } from "./exerciseConfig";
 import { auswahlNachFilterwechsel, unsichtbareAuswahl, wizardFilterKey, wizardSearchParams } from "./wizardSearch";
 import { newWizardProgress, runWizardFinish } from "./wizardFinish";
 import type { WizardProgress } from "./wizardFinish";
@@ -599,12 +600,12 @@ export function VaterWizard() {
             {/* Nur Vokabelübungen kennen diese Skala; für alle anderen Typen wird die Stufe weggelassen
                 (siehe `wizardFinish.typeOf`) – darum sagt es hier auch dran, statt still zu wirken. */}
             <div className="field"><FieldLabel topic="defaultStage">Test-Stufe <span className="muted">(nur Vokabelübungen)</span></FieldLabel>
+              {/* Aus derselben Liste wie Anlegen und Bearbeiten – die dritte Handkopie hatte Stufe 6 und 7
+                  vergessen (Review B-05). Die Nummer bleibt davor, die Zusammenfassung unten nennt sie. */}
               <select aria-label="Test-Stufe" value={defaultStage} onChange={(e) => setDefaultStage(Number(e.target.value))}>
-                <option value={1}>1 · Zeigen</option>
-                <option value={2}>2 · Selbstcheck</option>
-                <option value={3}>3 · Buchstaben</option>
-                <option value={4}>4 · Tippen</option>
-                <option value={5}>5 · Hören</option>
+                {VOCAB_FORMS.filter((f) => f.value !== "").map((f) => (
+                  <option key={f.value} value={f.value}>{f.value} · {f.label}</option>
+                ))}
               </select>
             </div>
           </div>

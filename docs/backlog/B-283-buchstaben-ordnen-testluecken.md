@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/idee, bereich/test, bereich/training, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/test, bereich/training, rolle/student]
 aliases: [Buchstaben ordnen – Prüfung und Vorschau ungetestet]
-status: idee
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
+groesse: XS
 wo: beides
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: pugling-reviewer zu B-05 in Lauf D (docs/pm-sitzung-2026-10-26-tag.md)
 unverifiziert: false
 grund: ""
@@ -36,3 +36,5 @@ Review stand noch aus.
 
 - **2026-10-26** — angelegt aus dem `pugling-reviewer` zu B-05 in Lauf D ([Protokoll](../pm-sitzung-2026-10-26-tag.md)),
   Funde 2b und 2d.
+- **2026-10-27** — in Lauf E ([Protokoll](../pm-sitzung-2026-10-27-nacht.md)) als `Defekt` unter Freigabe 1 ausformuliert, geschätzt (XS, nur Tests, keine Migration) und gebaut. **Prüfung:** `Pruefung_Liefert_Kacheln_Fest_Je_Versuch_Und_Neu_Je_Versuch` startet einen zweiten Versuch auf einer zweiten Position (Abgrenzung: zwei Versuchs-Ids), die Kacheln müssen sich unterscheiden, `reveal`/`answerLength` sind null. Mutante Seed `attemptId` → Konstante 1: **1 failed** (vorher grün). **Vorschau:** `Preview_Ordnen_LiefertKacheln_FestJeUebung_OhneLoesung` ruft `preview?stage=7`, Kacheln gesetzt, Lösung verborgen, zwei Aufrufe gleich. Mutante `f.LetterTiles` → `null` in `ExercisePreviewService.Present`: **1 failed** (vorher grün). Dazu Fund (b) aus dem Frontend-Review: die E2E-Spec wertet jede Antwort über die Review-Antwort des Servers (`wasCorrect`). Filterlauf **13/13 `exit=0`**.
+- **2026-10-27** — `pugling-reviewer` in Lauf E ([Protokoll](../pm-sitzung-2026-10-27-nacht.md)): zwei Kommentar-Funde (Begründung der zweiten Position, Umbau-Erzählung im Summary), berichtigt, ohne Zählung; Abgrenzung je Fall bestätigt. Gesamtsuite **949/949 `exit=0`**. `abgenommen` zusammen mit B-05; Commit siehe Protokoll.

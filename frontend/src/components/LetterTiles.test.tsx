@@ -79,6 +79,60 @@ describe("LetterTiles", () => {
     expect(kacheln("K")[0].getAttribute("aria-disabled")).toBe("false");
   });
 
+  it("überlässt Kürzel mit Strg, Alt oder Cmd dem Browser, statt eine Kachel zu legen", () => {
+    render(<Harness />);
+    const block = kacheln("K")[0];
+    fireEvent.keyDown(block, { key: "k", ctrlKey: true });
+    fireEvent.keyDown(block, { key: "a", altKey: true });
+    fireEvent.keyDown(block, { key: "f", metaKey: true });
+    expect(wert()).toBe("");
+  });
+
+  /*
+   * Fokus bei neuer Karte (Review Lauf D, Fund 6). Die beiden Fälle unterscheiden sich allein darin, WO der Fokus
+   * vor dem Kartenwechsel stand: im Kachel-Block (Enter-Prüfer) oder auf einem lebendigen Bedienelement außerhalb
+   * (das „×“ des Vorschau-Dialogs, wenn die Kacheln erst nach dem Öffnen eintreffen). Eine Komponente, die immer
+   * oder nie fokussiert, fällt in genau einem der beiden. Den dritten Weg – gesperrter „Prüfen“-Knopf gibt den
+   * Fokus an `body` ab – kann nur der Browser zeigen; ihn fährt die E2E-Spec.
+   */
+  it("holt den Fokus auf die erste Kachel der nächsten Karte, wenn er im Block stand", () => {
+    const { rerender } = render(<LetterTiles tiles={["b", "a"]} value="" onChange={() => {}} />);
+    kacheln("a")[0].focus();
+    rerender(<LetterTiles tiles={["d", "c"]} value="" onChange={() => {}} />);
+    expect(document.activeElement).toBe(kacheln("d")[0]);
+    // Und die gelegten Kacheln der alten Karte sind weg, ohne `key` von außen.
+    expect(kacheln("d")[0].getAttribute("aria-disabled")).toBe("false");
+  });
+
+  it("lässt den Fokus in Ruhe, wenn er beim Kartenwechsel außerhalb des Blocks stand", () => {
+    const { rerender } = render(<><button type="button">Prüfen</button><LetterTiles tiles={["b", "a"]} value="" onChange={() => {}} /></>);
+    const pruefen = screen.getByRole("button", { name: "Prüfen" });
+    pruefen.focus();
+    rerender(<><button type="button">Prüfen</button><LetterTiles tiles={["d", "c"]} value="" onChange={() => {}} /></>);
+    expect(document.activeElement).toBe(pruefen);
+  });
+
+  // Der Wert bleibt hier absichtlich stehen: der Neustart muss aus den neuen Kacheln kommen, nicht aus dem Leeren.
+  function Kartenwechsel() {
+    const [tiles, setTiles] = useState<string[]>(["b", "a"]);
+    const [value, setValue] = useState("");
+    return (
+      <>
+        <LetterTiles tiles={tiles} value={value} onChange={setValue} />
+        <button type="button" onClick={() => setTiles(["d", "c"])}>nächste Karte</button>
+      </>
+    );
+  }
+
+  it("verwirft die gelegten Kacheln, sobald neue Kacheln kommen", () => {
+    render(<Kartenwechsel />);
+    fireEvent.click(kacheln("b")[0]);
+    expect(screen.getByRole("status").textContent).toBe("Gelegt: b");
+    fireEvent.click(screen.getByRole("button", { name: "nächste Karte" }));
+    expect(screen.getByRole("status").textContent).toBe("");
+    expect(kacheln("d")[0].getAttribute("aria-disabled")).toBe("false");
+  });
+
   // B-134: die Region steht, bevor etwas hineinkommt – sonst bliebe die erste Ansage stumm.
   it("sagt das gelegte Wort in einer Region an, die schon vorher im DOM steht", () => {
     render(<Harness />);

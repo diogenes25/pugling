@@ -129,8 +129,9 @@ export const FIELD_HELP = {
   },
   defaultStage: {
     title: "Standard-Abfrageform",
-    text: "Wie das Kind antworten soll: nur anschauen, selbst einschätzen, aus Buchstaben bauen, tippen, "
-      + "aus Vorschlägen wählen oder nach Gehör tippen. Getippte Formen sind schwerer, aber "
+    text: "Wie das Kind antworten soll: nur anschauen, selbst einschätzen, in Buchstabenkästchen tippen, "
+      + "gemischte Buchstaben ordnen, frei tippen, aus Vorschlägen wählen oder nach Gehör tippen. "
+      + "Getippte Formen sind schwerer, aber "
       + "fälschungssicher – nur bei ihnen zählt „nur getippte Tests“.",
   },
   exerciseSchoolTypes: {

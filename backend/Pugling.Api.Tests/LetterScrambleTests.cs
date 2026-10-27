@@ -111,22 +111,39 @@ public class LetterScrambleTests(PuglingWebAppFactory factory) : IClassFixture<P
         Assert.NotEqual(cards[0], cards[1]);
     }
 
-    /// <summary>AC 2 in the exam: the test item carries the tiles too, frozen per attempt.</summary>
+    /// <summary>
+    /// AC 2 in the exam: the test item carries the tiles too, frozen per attempt, and a new attempt shuffles anew.
+    /// Red if the seed ignores the attempt id (same tiles on both attempts). The solution and the letter-box
+    /// facets stay withheld, as on the practice card.
+    /// </summary>
     [Fact]
-    public async Task Pruefung_Liefert_Kacheln_Fest_Je_Versuch()
+    public async Task Pruefung_Liefert_Kacheln_Fest_Je_Versuch_Und_Neu_Je_Versuch()
     {
         var father = await TestApi.AdultAsync(factory);
         var child = await TestApi.ChildAsync(factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("moth (B-05)", Word));
+        // A second position: on the first one a second POST hands back the still-open attempt - same id, same seed.
         var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.LetterScramble);
-        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
+        var (otherPlanId, otherPositionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.LetterScramble);
 
-        var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
-        var item = (await child.GetFromJsonAsync<JsonElement>($"{baseUrl}/{attemptId}/next")).GetProperty("item");
+        async Task<(string baseUrl, int attemptId, JsonElement item)> StartAsync(int plan, int position)
+        {
+            var baseUrl = $"/api/v1/student/study-plans/{plan}/positions/{position}/tests";
+            var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
+            return (baseUrl, attemptId, (await child.GetFromJsonAsync<JsonElement>($"{baseUrl}/{attemptId}/next")).GetProperty("item"));
+        }
+        static List<string?> Tiles(JsonElement item) => [.. item.GetProperty("letterTiles").EnumerateArray().Select(t => t.GetString())];
+
+        var (baseUrl, attemptId, item) = await StartAsync(planId, positionId);
         var again = (await child.GetFromJsonAsync<JsonElement>($"{baseUrl}/{attemptId}/next")).GetProperty("item");
-        var tiles = item.GetProperty("letterTiles").EnumerateArray().Select(t => t.GetString()).ToList();
+        var tiles = Tiles(item);
         Assert.Equal(Lower.Order(), string.Concat(tiles).Order());
-        Assert.Equal(tiles, again.GetProperty("letterTiles").EnumerateArray().Select(t => t.GetString()).ToList());
+        Assert.Equal(tiles, Tiles(again));
+        Assert.Equal(JsonValueKind.Null, item.GetProperty("reveal").ValueKind);
+        Assert.Equal(JsonValueKind.Null, item.GetProperty("answerLength").ValueKind);
+
+        var (_, _, other) = await StartAsync(otherPlanId, otherPositionId);
+        Assert.NotEqual(tiles, Tiles(other));
     }
 
     /// <summary>

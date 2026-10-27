@@ -3,20 +3,29 @@ import { sohnLogin } from "./helpers";
 
 /*
  * B-05 – Buchstaben ordnen, aus dem Sohn-Sitz. Der Stoff entsteht über die API (Gegenstand ist das Spielen, nicht das
- * Anlegen): eine Vokabel-Übung mit zwei Ein-Wort-Antworten und einer Mehrwort-Antwort, eine Position auf der Stufe
- * „Buchstaben ordnen“ (7). Der Sohn legt ein Wort per Tastatur, eines per Klick (AK 5: zwei gleichwertige
- * Bedienarten), und die Mehrwort-Antwort kommt als Buchstabenkästchen (AK 3). Die Karten-Reihenfolge friert der
- * Server ein – die Spec erkennt die Karte darum an ihrem Wort, nicht an ihrer Position.
+ * Anlegen): eine Vokabel-Übung mit einer Mehrwort- und drei Ein-Wort-Antworten, eine Position auf der Stufe
+ * „Buchstaben ordnen“ (7) in **serieller** Reihenfolge – so ist jeder Kartenübergang vorhersagbar und prüfbar.
+ * Der Sohn legt zwei Wörter per Tastatur, eines per Klick (AK 5: zwei gleichwertige Bedienarten), und die
+ * Mehrwort-Antwort kommt als Buchstabenkästchen (AK 3).
+ *
+ * Der Fokus muss nach JEDEM Übergang auf der ersten Kachel der neuen Karte stehen (Review Lauf D, Fund 6), sonst
+ * landen getippte Buchstaben auf `body`. Die drei Übergänge, die die App erzeugt, stehen hier in dieser Reihenfolge:
+ * 1. Kästchen → Kacheln (das `<input>` verschwindet, der Fokus fällt auf `body`),
+ * 2. Kacheln per Enter → Kacheln (der Fokus stand im Block),
+ * 3. Kacheln per Klick auf „Prüfen“ → Kacheln (der gesperrte Knopf gibt den Fokus ab, gemessen in Chromium).
+ * Die Tastatur-Karten werden darum OHNE erneutes Fokussieren getippt.
  *
  * Eigenes Kind: je Kind ist genau ein aktiver Plan spielbar, und `full-flow` belegt Kind #1.
  */
 
 const RUN = Date.now().toString(36).slice(-5);
-const CARDS: Record<string, string> = {
-  [`to buy ${RUN}`]: "kaufen",
-  [`to eat ${RUN}`]: "essen",
-  [`the town ${RUN}`]: "die Stadt",
-};
+/** In Katalog-Reihenfolge, so spielt `orderStrategy: "Serial"` sie aus. */
+const CARDS: [prompt: string, answer: string, bedienung: "kaesten" | "tastatur" | "klick"][] = [
+  [`the town ${RUN}`, "die Stadt", "kaesten"],
+  [`to buy ${RUN}`, "kaufen", "tastatur"],
+  [`to eat ${RUN}`, "essen", "klick"],
+  [`to go ${RUN}`, "gehen", "tastatur"],
+];
 
 async function postId(request: APIRequestContext, url: string, headers: Record<string, string>, data: unknown, key = "id") {
   const res = await request.post(url, { headers, data });
@@ -24,7 +33,7 @@ async function postId(request: APIRequestContext, url: string, headers: Record<s
   return (await res.json())[key] as number;
 }
 
-test("Sohn ordnet Buchstaben per Tastatur und per Klick, eine Mehrwort-Antwort kommt als Kästchen", async ({ page, request }) => {
+test("Sohn ordnet Buchstaben per Tastatur und per Klick, der Fokus folgt jeder Karte, eine Mehrwort-Antwort kommt als Kästchen", async ({ page, request }) => {
   const login = await request.post("/api/v1/auth/adult", { data: { adultId: 1, pin: "0000" } });
   expect(login.ok(), await login.text()).toBeTruthy();
   const headers = { Authorization: `Bearer ${(await login.json()).token}` };
@@ -40,55 +49,58 @@ test("Sohn ordnet Buchstaben per Tastatur und per Klick, eine Mehrwort-Antwort k
   const exerciseId = await postId(request, `/api/v1/creator/textbook-series/${seriesId}/units/${unitId}/vocabulary`, headers, {
     title: `Ordnen ${RUN}`, orderIndex: 1, rewardPoints: 10,
     config: { direction: "front-to-back", sourceLang: "en", targetLang: "de",
-      items: Object.entries(CARDS).map(([front, back]) => ({ front, back })) },
+      items: CARDS.map(([front, back]) => ({ front, back })) },
   });
   const planId = await postId(request, "/api/v1/supervisor/study-plans", headers,
     { childId, title: `Ordnen-Plan ${RUN}`, durationDays: 7, active: true });
   await postId(request, `/api/v1/supervisor/study-plans/${planId}/positions`, headers,
-    { exerciseId, stage: 7, cadence: "Daily", useLeitner: true });
+    { exerciseId, stage: 7, cadence: "Daily", useLeitner: true, orderStrategy: "Serial" });
 
   await sohnLogin(page, { id: String(childId), pin: childPin });
   await page.getByRole("link", { name: /ÜBEN/ }).click();
   const counter = page.locator(".pill.cyan", { hasText: /Karte \d+ \/ \d+/ });
-  await expect(counter).toHaveText(/Karte 1 \/ 3/);
 
-  const bedient = { tastatur: false, klick: false, kaesten: false };
-  for (let i = 0; i < 3; i++) {
-    await expect(counter).toHaveText(new RegExp(`Karte ${i + 1} / 3`));
-    const visible = await Promise.all(Object.keys(CARDS).map(async (p) => [p, await page.getByText(p, { exact: true }).isVisible()] as const));
-    const current = visible.find(([, v]) => v)?.[0];
-    expect(current, "die Karte nennt eines der drei Wörter").toBeTruthy();
-    const answer = CARDS[current!];
+  // Jede Antwort muss der Server als richtig werten (B-283, Fund b): durchgeklickt ist nicht gelöst.
+  async function pruefen(ausloesen: () => Promise<void>) {
+    const [res] = await Promise.all([
+      page.waitForResponse((r) => r.url().includes("/review") && r.request().method() === "POST"),
+      ausloesen(),
+    ]);
+    expect((await res.json()).wasCorrect, "der Server wertet die Antwort als richtig").toBe(true);
+  }
+
+  for (const [i, [prompt, answer, bedienung]] of CARDS.entries()) {
+    await expect(counter).toHaveText(new RegExp(`Karte ${i + 1} / 4`));
+    await expect(page.getByText(prompt, { exact: true })).toBeVisible();
     const pool = page.getByRole("group", { name: "Buchstaben zum Ordnen" });
 
-    if (answer.includes(" ")) {
+    if (bedienung === "kaesten") {
       // AK 3: keine Kacheln, sondern Buchstabenkästchen – das Leerzeichen steht schon fest.
       await expect(pool).toHaveCount(0);
       const boxes = page.locator(".letterboxes input");
       await expect(boxes).toHaveCount(answer.replace(" ", "").length);
       await boxes.first().click();
       await page.keyboard.type(answer.replace(" ", ""));
-      bedient.kaesten = true;
-    } else {
-      await expect(pool.getByRole("button")).toHaveCount(answer.length);
-      if (!bedient.tastatur) {
-        // Tastatur: Fokus in den Kachel-Block, dann das Wort tippen.
-        await pool.getByRole("button").first().focus();
-        await page.keyboard.type(answer);
-        bedient.tastatur = true;
-      } else {
-        // Klick: je Buchstabe die erste noch freie Kachel.
-        for (const ch of answer) {
-          await pool.locator(`button[aria-label="Buchstabe ${ch}"][aria-disabled="false"]`).first().click();
-        }
-        bedient.klick = true;
-      }
-      // Gelegt ist genau das Wort – angesagt in der Live-Region, Buchstabe für Buchstabe.
-      await expect(page.getByRole("status").filter({ hasText: /^Gelegt:/ })).toHaveText(`Gelegt: ${answer.split("").join(" ")}`);
+      await pruefen(() => page.keyboard.press("Enter"));
+      continue;
     }
-    await page.getByRole("button", { name: "Prüfen" }).click();
+
+    await expect(pool.getByRole("button")).toHaveCount(answer.length);
+    // Der Fokus ist schon da – niemand hat ihn gesetzt, die Karte hat ihn übernommen.
+    await expect(pool.getByRole("button").first()).toBeFocused();
+    if (bedienung === "tastatur") {
+      await page.keyboard.type(answer);
+    } else {
+      // Klick: je Buchstabe die erste noch freie Kachel.
+      for (const ch of answer) {
+        await pool.locator(`button[aria-label="Buchstabe ${ch}"][aria-disabled="false"]`).first().click();
+      }
+    }
+    // Gelegt ist genau das Wort – angesagt in der Live-Region, Buchstabe für Buchstabe.
+    await expect(page.getByRole("status").filter({ hasText: /^Gelegt:/ })).toHaveText(`Gelegt: ${answer.split("").join(" ")}`);
+    if (bedienung === "tastatur") await pruefen(() => page.keyboard.press("Enter"));
+    else await pruefen(() => page.getByRole("button", { name: "Prüfen" }).click());
   }
 
   await expect(page.getByText("RUNDE FERTIG!")).toBeVisible();
-  expect(bedient).toEqual({ tastatur: true, klick: true, kaesten: true });
 });

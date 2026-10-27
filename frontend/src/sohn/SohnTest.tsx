@@ -174,7 +174,7 @@ export function SohnTest() {
             </div>
           ) : item.letterTiles ? (
             <div style={{ marginTop: 10 }}>
-              <LetterTiles key={item.itemIndex} tiles={item.letterTiles} value={typedAnswer} onChange={setTypedAnswer} onSubmit={submitTyped} />
+              <LetterTiles tiles={item.letterTiles} value={typedAnswer} onChange={setTypedAnswer} onSubmit={submitTyped} />
               <button type="button" className="btn lime" style={{ marginTop: 10 }} disabled={action.busy || !typedAnswer.trim()} onClick={submitTyped}>Weiter →</button>
             </div>
           ) : item.answerLength ? (

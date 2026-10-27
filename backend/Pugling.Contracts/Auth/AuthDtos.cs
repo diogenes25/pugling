@@ -19,7 +19,7 @@ public record LoginResponse(string Token, string Role, int Id, string Name, Date
 /// <summary>
 /// The caller's own identity from the token (<c>GET auth/me</c>) – account, all roles, and the domain ids.
 /// </summary>
-/// <param name="AccountId">Account id (subject of the token); <c>null</c> for a legacy token without <c>aid</c>.</param>
+/// <param name="AccountId">Account id (subject of the token). Always set: a token without <c>aid</c> is rejected with 401 before any action runs (B-245); the nullable type is a contract leftover.</param>
 /// <param name="Role">Primary tier for routing – see <see cref="LoginResponse"/>.</param>
 /// <param name="Roles">All roles of the token. For a teacher account, exactly <c>["Creator"]</c>.</param>
 /// <param name="AdultId">Domain id of the adult (Creator/Supervisor), otherwise <c>null</c>.</param>
