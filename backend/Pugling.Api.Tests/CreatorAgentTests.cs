@@ -624,6 +624,33 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
+    /// AC 6 of B-155: an exercise the agent creates in a unit that carries grammar topics carries those topics - the
+    /// same pre-fill rule as the form, only without a human who deselects. Red if the briefing drops the unit's
+    /// topics or the payload does not pass them on; the free-text grammar of the unit stays in the prompt beside
+    /// them (AC 8, held by <see cref="Der_Stoff_der_Unit_steht_im_Prompt"/>).
+    /// </summary>
+    [Fact]
+    public async Task Der_Agent_Uebernimmt_Die_Grammatik_Themen_Der_Unit()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Grammatik-Thema");
+        var topic = await creator.CreateGrammarTopicAsync(new CreateGrammarTopicDto("Present perfect", subjectId));
+        var other = await creator.CreateGrammarTopicAsync(new CreateGrammarTopicDto("Passive", subjectId));
+        await creator.UpdateUnitAsync(seriesId, seriesUnitId,
+            new UpdateSeriesUnitDto(null, null, null, null, null, null, null, [topic.Id, other.Id]));
+        // A sibling unit with another topic: the agent must take over THIS unit's topics, not the series'.
+        var sibling = await creator.CreateUnitAsync(seriesId, new CreateSeriesUnitDto("Unit 2", null, 2, null, null, null, null, [other.Id]));
+        Assert.NotEqual(seriesUnitId, sibling.Id);
+
+        var (briefing, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Vocabulary", childId: null));
+        Assert.Equal(new[] { topic.Id, other.Id }.Order(), briefing.GrammarTopicIds.Order());
+        Assert.True(outcome.Published, $"Selbsttest: {outcome.SelfTestPercent} %");
+
+        var detail = await creator.GetExerciseDetailAsync(outcome.ExerciseId!.Value);
+        Assert.Equal(new[] { topic.Id, other.Id }.Order(), detail.GrammarTopicIds);
+    }
+
+    /// <summary>
     /// A unit from a foreign series would be worse than none – the model would take its material as
     /// established fact. That is why the request aborts instead of silently dropping the value.
     /// </summary>

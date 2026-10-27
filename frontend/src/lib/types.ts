@@ -165,6 +165,13 @@ export type InterestTagResponse = S["InterestTagResponse"];
 
 export type CreateInterestTagDto = S["CreateInterestTagDto"];
 
+/** Ein Grammatik-Thema des geteilten, fachgebundenen Vokabulars (B-155) – Übungen *und* Units tragen es. */
+export type GrammarTopicResponse = S["GrammarTopicResponse"];
+
+export type CreateGrammarTopicDto = S["CreateGrammarTopicDto"];
+
+export type UpdateGrammarTopicDto = S["UpdateGrammarTopicDto"];
+
 /** Eine Lücke im Trägertext: `index` zeigt auf den Platzhalter `{{index}}` im Text. */
 export type Gap = S["Gap"];
 

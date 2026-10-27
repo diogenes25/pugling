@@ -166,7 +166,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
 
     /// <summary>Loads an exercise of this type incl. its grants (for permission checking/display); basis for derived additional endpoints.</summary>
     protected Task<Exercise?> FindAsync(int seriesId, int seriesUnitId, int exerciseId, CancellationToken ct) =>
-        db.Exercises.Include(e => e.Category).Include(e => e.Grants).Include(e => e.InterestLinks)
+        db.Exercises.Include(e => e.Category).Include(e => e.Grants).Include(e => e.InterestLinks).Include(e => e.GrammarTopicLinks)
             .FirstOrDefaultAsync(e => e.Id == exerciseId && e.SeriesUnitId == seriesUnitId
                 && e.Type == TypeKey && e.SeriesUnit!.SeriesId == seriesId, ct);
 
@@ -189,7 +189,42 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             e.DefaultUseLeitner, e.DefaultRequireTypedTest, e.DefaultStage, e.DefaultItemCount,
             // Ascending, so two exercises' dressings compare without sorting first. Expects the links
             // loaded - both read paths and both write paths do that.
-            [.. e.InterestLinks.Select(l => l.InterestTagId).OrderBy(id => id)]);
+            [.. e.InterestLinks.Select(l => l.InterestTagId).OrderBy(id => id)],
+            [.. e.GrammarTopicLinks.Select(l => l.GrammarTopicId).OrderBy(id => id)]);
+    }
+
+    /// <summary>
+    /// Validates the grammar topics (B-155) and returns the problem text, or <c>null</c>. Two rules: every id must
+    /// exist (an unknown one is rejected, not skipped - the same reason as for the dressing), and every topic must
+    /// belong to the series' subject - a French topic on an English exercise would be a silent hit in the filter.
+    /// </summary>
+    private async Task<string?> GrammarTopicsProblemAsync(int seriesId, IReadOnlyList<int>? topicIds, CancellationToken ct)
+    {
+        if (topicIds is null || topicIds.Count == 0) return null;
+        var wanted = topicIds.Distinct().ToList();
+        var known = await db.GrammarTopics.Where(t => wanted.Contains(t.Id))
+            .Select(t => new { t.Id, t.SubjectId }).ToListAsync(ct);
+        var unknown = wanted.Except(known.Select(k => k.Id)).OrderBy(id => id).ToList();
+        if (unknown.Count > 0) return $"Unknown grammar topic id(s): {string.Join(", ", unknown)}.";
+
+        var subjectId = await db.TextbookSeries.Where(s => s.Id == seriesId).Select(s => s.SubjectId).FirstOrDefaultAsync(ct);
+        // Fail closed, but with the true reason: a series without a subject can carry no topic at all.
+        if (subjectId is null) return "This series has no subject; it cannot carry grammar topics.";
+        var foreign = known.Where(k => k.SubjectId != subjectId).Select(k => k.Id).OrderBy(id => id).ToList();
+        return foreign.Count == 0
+            ? null
+            : $"Grammar topic(s) {string.Join(", ", foreign)} belong to another subject than this series.";
+    }
+
+    /// <summary>Sets the grammar topics as the complete set (B-155) - replacement, not merge, like the dressing.</summary>
+    private void SetGrammarLinks(Exercise exercise, IReadOnlyList<int>? topicIds)
+    {
+        var wanted = (topicIds ?? []).Distinct().ToHashSet();
+        var stale = exercise.GrammarTopicLinks.Where(l => !wanted.Contains(l.GrammarTopicId)).ToList();
+        db.ExerciseGrammarTopics.RemoveRange(stale);
+        foreach (var link in stale) exercise.GrammarTopicLinks.Remove(link);
+        foreach (var topicId in wanted.Where(id => exercise.GrammarTopicLinks.All(l => l.GrammarTopicId != id)))
+            exercise.GrammarTopicLinks.Add(new ExerciseGrammarTopic { GrammarTopicId = topicId });
     }
 
     /// <summary>List of the exercises of this type in the series unit.</summary>
@@ -217,7 +252,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             .AsNoTracking()
             .Include(e => e.Category)
             .Include(e => e.Grants)
-            .Include(e => e.InterestLinks)
+            .Include(e => e.InterestLinks).Include(e => e.GrammarTopicLinks)
             .Where(e => e.SeriesUnitId == seriesUnitId && e.Type == TypeKey);
 
         // isOwn/isOwner mirror the response fields and allow lists of "what may I change/manage".
@@ -299,6 +334,8 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         var config = body.Config ?? new TConfig();
         if (await InterestTagsProblemAsync(body.InterestTagIds, ct) is { } createTagErr)
             return this.ProblemWithCode(ApiErrors.ValidationError, createTagErr);
+        if (await GrammarTopicsProblemAsync(seriesId, body.GrammarTopicIds, ct) is { } createTopicErr)
+            return this.ProblemWithCode(ApiErrors.ValidationError, createTopicErr);
         if (await ValidateConfigAsync(seriesId, config, ct) is { } createErr) return this.ProblemWithCode(ApiErrors.ValidationError, createErr);
         NormalizeConfig(config);
         await NormalizeConfigAsync(seriesId, config, ct);
@@ -330,6 +367,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         // Before `Add`, so the links go in with the generated id in the same insert - no second round trip
         // and no window in which the exercise exists without its dressing.
         SetInterestLinks(exercise, body.InterestTagIds);
+        SetGrammarLinks(exercise, body.GrammarTopicIds);
         db.Exercises.Add(exercise);
         await db.SaveChangesAsync(ct);
 
@@ -383,6 +421,8 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         var config = body.Config ?? new TConfig();
         if (await InterestTagsProblemAsync(body.InterestTagIds, ct) is { } updateTagErr)
             return this.ProblemWithCode(ApiErrors.ValidationError, updateTagErr);
+        if (await GrammarTopicsProblemAsync(seriesId, body.GrammarTopicIds, ct) is { } updateTopicErr)
+            return this.ProblemWithCode(ApiErrors.ValidationError, updateTopicErr);
         if (await ValidateConfigAsync(seriesId, config, ct) is { } updateErr) return this.ProblemWithCode(ApiErrors.ValidationError, updateErr);
         NormalizeConfig(config);
 
@@ -403,6 +443,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         exercise.DefaultStage = body.DefaultStage;
         exercise.DefaultItemCount = body.DefaultItemCount;
         SetInterestLinks(exercise, body.InterestTagIds);
+        SetGrammarLinks(exercise, body.GrammarTopicIds);
         await db.SaveChangesAsync(ct);
         await AfterSaveAsync(exercise, config, isCreate: false, ct);
 

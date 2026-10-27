@@ -219,3 +219,69 @@ je neuer Zusicherung nach der Mutante, die sie rot macht, **und** nach der nahel
 (die andere Seite derselben Unterscheidung). Kein Tor; kein Mechanismus liest Testdaten.
 
 **Commit:** `12eab76` (nicht gepusht).
+
+## Lauf E, Teil 4 — NP-9 Grammatik als Thema (B-155), Zähler 0
+
+**Sprint-Ziel (aus dem Paket):** *Der Creator ordnet Regelaufgaben einem Grammatik-Thema zu, und der Vater findet sie
+darüber – quer über Lehrwerke und Klassenstufen.* Umfang: [B-155](backlog/B-155-grammatik-themen-als-tags.md)
+(`geschaetzt`, Freigabe 8, L mit Migration, allein, nicht geteilt – Entscheidung 11). **Zähler: 0.**
+
+**Entwickler-Brief:** Backend zuerst (Modell, Kette neu falten, Vertrag additiv, Controller nach dem Owner-Muster
+von `Subject`, Fachgrenze an beiden Trägern, achte Facette, Seed), dann der Agent (eine Stelle), dann der Client,
+dann das Frontend beidseitig (Anlegen, Bearbeiten, Unit, Facette). Die eine Schätzungs-Entscheidung, die offen
+war, hat der Nutzer am 2026-08-13 getroffen (Cascade am Fach). Die Seed-Liste aus Entscheidung 6 wird aus den
+Lehrwerken vervollständigt und im Verlauf genannt.
+
+### Iteration
+
+- **Backend:** drei Entitäten, sechs G2-Zeilen, Migration neu gefaltet (Snapshot-Diff nur die Neuheiten), Controller
+  mit idempotentem POST und fail-closed Seed-Themen, Zuweisung mit Fachgrenze an Übung und Unit, Filter, Seed (24 + 22
+  Themen). Agent und Client nachgezogen. `GrammatikThemenTests` + Agent-Fall; der PATCH-Semantik-Wächter verlangte den
+  Rundlauf für `UpdateGrammarTopicDto`, der Abdeckungs-Wächter 275. Suite **960/960 `exit=0`**.
+- **Frontend:** Picker mit Anlegen nebenbei, Vorbelegung als reine Funktion (fünf Fälle), Rundlauf im
+  Bearbeiten-Dialog mit Test, Unit-Formular, Facette mit sichtbarer Beschriftung, Feldhilfe, Fach-Löschdialog.
+- **Von der E2E gefunden, vor dem Review:** die Planbau-Seite kannte die achte Facette in ihrer Kriterienliste nicht
+  und lief nicht neu – `grammatik-themen.spec.ts` fiel am Filter (erwartet 0 Treffer „Ohne Thema“, gemessen 1),
+  nach dem Nachtrag **1 passed**. Vitest **460/460**, Build grün.
+
+### Review (nacheinander je Bereich)
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `pugling-reviewer` 🟡 | Unit-Zweig der 409-Sperre ohne Probe | Fall im Pflege-Test; Mutante „zweiter `\|\|`-Zweig weg“ → **1 failed** | ja (Test) |
+| – | `pugling-reviewer` 🟡 | Summary von `SeedFrench` verrutscht | zurückgeschoben | nein (Kommentar) |
+| – | `pugling-reviewer` 🟢 | Fehltext bei fachloser Reihe; schwache Id-Zusicherung; doppelte Fach-Abfrage | wahre Begründung an beiden Trägern; `detail` begrenzt gelesen; Abfrage bleibt | nein (Freigabe 10) |
+| 2 | `frontend-reviewer` 🟡 | Chip hieß bis zum Nachladen „Thema #id“, auch im Knopfnamen | angelegte Themen lokal zusammengeführt | ja (Code) |
+| 3 | `frontend-reviewer` 🟡 | Listen-Ausfall stumm, ohne Weg zurück | `ListenAusfall` mit Wiederholknopf | ja (Code) |
+| 4 | `frontend-reviewer` 🟡 | Assistent ohne die Facette (AK 7 formal erfüllt, Story-Intention nicht) | Facette in `WizardFilter`/Assistent, Test „acht Kriterien“ | ja (Code+Test) |
+| – | `frontend-reviewer` 🟢 | Unit-Rückweg ungetestet; `.first()` und ungenaue Labels in der Spec; Leisten-Label ohne `htmlFor` | Komponententest; Spec gehärtet; Leiste bleibt | nein (Freigabe 10) |
+
+**Zähler: 4.** Danach Backend **960/960 `exit=0`**, Vitest **462/462**, Build grün, die vier berührten Specs **8 passed**;
+Gesamtsuite nach den Behebungen erneut **97 passed**.
+
+### Rollengang / Abnahme
+
+Kein Browser; `grammatik-themen.spec.ts` ist der Rollengang aus Creator- und Vater-Sitz (Thema anlegen, zweimal
+zuweisen, zurücklesen, über die Facette finden – Reihe A Klasse 5, Reihe B Klasse 7, dritte Übung bleibt draußen,
+„(2 Treffer)“ vom Server). *Creator:* „Ich tippe das Thema einmal ein, danach steht es in der Liste – und der
+Dialog zeigt es mir mit Namen wieder.“ *Vater:* „Ich wähle ‚Present perfect‘ und sehe beide Übungen, egal aus
+welchem Buch.“ *Sohn:* unberührt (Entscheidung 9), Zeuge über die Suiten. **B-155 `abgenommen`.**
+
+### Retrospektive
+
+**Nachschau:** Teil 3 (`12eab76`: B-287, B-288, B-289) von einem frischen Prüfer an einem `git archive` geprüft,
+alle Mutanten im Export nachgefahren (2 failed / 1 failed / 1 failed an den richtigen Zeilen), Begründungen gegen
+die Controller nachgerechnet. **Kein Befund.** `nachgeschaut` an allen drei gesetzt.
+
+**Was die eigenen Tore durchgelassen haben:** (1) Die Planbau-Seite kannte die achte Facette nicht – ihre
+Kriterienliste ist handgepflegt, und ihr eigener Kommentar sagt voraus, dass genau das achte Feld dort vergessen
+wird. Gefunden hat es die E2E-Spec, kein Tor: die Liste und `ExerciseFilter` sind zwei Quellen für dieselben
+Felder. (2) Der Assistent führt eine dritte Filterquelle (`WizardFilter`); AK 7 nannte nur die Leiste, und die
+Schätzung hat den Zwilling nicht gesehen. Beides ist dieselbe Klasse: **eine Facette, drei Orte**.
+
+**Vorschlag, nicht gelandet (Freigabe 3):** **(I)** ein Vitest-Tor, das `ExerciseFilter` (Leiste), die
+Kriterienliste in `PlanPositions` und `WizardFilter` auf dieselbe Schlüsselmenge prüft – oder, besser, die
+Kriterienliste aus `ExerciseFilter` ableiten, damit es nur noch zwei Quellen gibt. Kein Tor liest heute, ob eine
+Suchfacette alle ihre Verbraucher erreicht.
+
+**Commit:** folgt unten.

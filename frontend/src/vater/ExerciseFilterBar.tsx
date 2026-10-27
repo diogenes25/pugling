@@ -3,10 +3,11 @@ import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { SCHOOL_TYPES } from "../lib/labels";
 import { useExerciseTypes } from "../lib/exerciseTypes";
-import type { CategoryResponse, SchoolType, SeriesUnitResponse, SubjectResponse, TextbookSeriesResponse } from "../lib/types";
+import type { CategoryResponse, GrammarTopicResponse, SchoolType, SeriesUnitResponse, SubjectResponse, TextbookSeriesResponse } from "../lib/types";
 
 /**
- * Faceted Filter für die Katalog-Übungssuche (Fach, Lehrwerk-Unit, Klasse, Schulart, Typ, Art, Freitext).
+ * Faceted Filter für die Katalog-Übungssuche (Fach, Lehrwerk-Unit, Klasse, Schulart, Typ, Art, Grammatik-Thema,
+ * Freitext).
  * Ersetzt das unübersichtliche flache Pulldown beim Zusammenstellen eines Lehrplans. Die Komponente
  * ist zustandslos: der Aufrufer hält den {@link ExerciseFilter} und führt die eigentliche Suche aus.
  *
@@ -24,6 +25,8 @@ export interface ExerciseFilter {
   categoryId?: number;
   type?: string;
   search?: string;
+  /** Grammatik-Thema (B-155): die achte Facette, einwertig wie die sieben davor; hängt wie die Art am Fach. */
+  grammarTopicId?: number;
 }
 
 
@@ -42,15 +45,18 @@ export function ExerciseFilterBar({ value, onChange, subjects }: {
     () => (seriesId ? api.seriesUnits(seriesId) : Promise.resolve([])), [seriesId]);
   const categories = useAsync<CategoryResponse[]>(
     () => (value.subjectId ? api.categories(value.subjectId) : Promise.resolve([])), [value.subjectId]);
+  const topics = useAsync<GrammarTopicResponse[]>(
+    () => (value.subjectId ? api.grammarTopics(value.subjectId) : Promise.resolve([])), [value.subjectId]);
 
   const set = (patch: Partial<ExerciseFilter>) => onChange({ ...value, ...patch });
   // Fachwechsel macht die fachabhängigen Facetten (Reihe/Unit, Art) hinfällig → mit zurücksetzen.
   const setSubject = (subjectId?: number) => {
     setSeriesId("");
-    onChange({ ...value, subjectId, seriesUnitId: undefined, categoryId: undefined });
+    onChange({ ...value, subjectId, seriesUnitId: undefined, categoryId: undefined, grammarTopicId: undefined });
   };
   const hasFilter = value.subjectId != null || value.seriesUnitId != null || value.grade != null
-    || value.schoolType != null || value.categoryId != null || value.type != null || (value.search ?? "") !== "";
+    || value.schoolType != null || value.categoryId != null || value.type != null || (value.search ?? "") !== ""
+    || value.grammarTopicId != null;
 
   return (
     <div className="row" style={{ gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
@@ -105,6 +111,15 @@ export function ExerciseFilterBar({ value, onChange, subjects }: {
           onChange={(e) => set({ categoryId: e.target.value ? Number(e.target.value) : undefined })}>
           <option value="">– alle –</option>
           {categories.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+      </div>
+      {/* Sichtbar beschriftet wie die Facetten daneben (B-155, AK 11) – nicht nur ein Platzhalter. */}
+      <div className="field" style={{ minWidth: 170 }}>
+        <label>Grammatik-Thema</label>
+        <select aria-label="Grammatik-Thema-Filter" value={value.grammarTopicId ?? ""} disabled={!value.subjectId}
+          onChange={(e) => set({ grammarTopicId: e.target.value ? Number(e.target.value) : undefined })}>
+          <option value="">– alle –</option>
+          {topics.data?.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
         </select>
       </div>
       <div className="field" style={{ flex: "1 1 160px" }}>

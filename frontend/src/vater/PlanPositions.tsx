@@ -413,7 +413,7 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
   /*
    * Die Suchkriterien **einmal**, für zwei Verwendungen: als Abhängigkeiten der Abfrage und – gebündelt –
    * als Schlüssel, an dem hängt, ob die gezeigten Zeilen noch zum eingestellten Filter gehören. Zwei
-   * handgepflegte Listen derselben sieben Felder müssten übereinstimmen, und ein achtes Feld würde an
+   * handgepflegte Listen derselben acht Felder müssten übereinstimmen, und ein achtes Feld würde an
    * genau einer von beiden vergessen — dann ginge die Sperre nicht mehr auf oder gar nicht mehr an, ohne
    * dass es jemand sähe. Der Zwilling hat aus demselben Grund eine Quelle (`wizardSearchParams`).
    *
@@ -424,6 +424,9 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
   const kriterien = [
     filter.subjectId, filter.seriesUnitId, filter.grade, filter.schoolType, filter.categoryId,
     filter.type || undefined, filter.search?.trim() || undefined,
+    // Die achte Facette (B-155) – genau das Feld, das der Absatz oben als Vergessens-Kandidat benennt: ohne
+    // diese Zeile wechselte der Filter, ohne dass die Abfrage neu liefe (in der E2E-Spec gemessen).
+    filter.grammarTopicId,
   ];
   const exercises = useAsync<Paged<ExerciseSummary>>(() => api.searchExercises(filter), kriterien);
   const [exerciseId, setExerciseId] = useState<number | "">("");

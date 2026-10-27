@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
@@ -18,6 +18,8 @@ import {
   type Row,
 } from "./exerciseConfig";
 import { useExerciseTypes } from "../lib/exerciseTypes";
+import { GrammarTopicPicker } from "../components/GrammarTopicChips";
+import { prefillGrammarTopics } from "./grammarTopicPrefill";
 import { ListenAusfall } from "../components/ListenAusfall";
 import { RepeatedTextFields, nonEmpty } from "../components/RepeatedTextFields";
 
@@ -80,6 +82,21 @@ export function VaterExerciseCreate() {
   // Standard-Abfrageform (nur Vokabeln): "" = Verfahrens-Standard, sonst TestStage-Wert (z. B. 6 = Multiple-Choice).
   const [defaultStage, setDefaultStage] = useState<number | "">("");
   const [defaultItemCount, setDefaultItemCount] = useState<number | "">("");
+  // Grammatik-Themen (B-155): aus der Unit vorbelegt, nicht vererbt – die Regel steht in `grammarTopicPrefill.ts`.
+  const [grammarTopicIds, setGrammarTopicIds] = useState<number[]>([]);
+  const prefilledFor = useRef<number | null>(null);
+  const selectedSubjectId = series.data?.find((s) => s.id === seriesId)?.subjectId ?? null;
+  const unitTopicIds = units.data?.find((u) => u.id === seriesUnitId)?.grammarTopicIds;
+  useEffect(() => {
+    // Erst, wenn die Themen der Unit da sind: sonst belegte ein noch leerer Ladestand die Auswahl mit nichts vor.
+    if (seriesUnitId !== "" && unitTopicIds === undefined) return;
+    const unitId = seriesUnitId === "" ? null : seriesUnitId;
+    if (unitId === prefilledFor.current) return;
+    setGrammarTopicIds((current) => prefillGrammarTopics({
+      unitId, previousUnitId: prefilledFor.current, unitTopicIds: unitTopicIds ?? [], current,
+    }));
+    prefilledFor.current = unitId;
+  }, [seriesUnitId, unitTopicIds]);
   // Startzustand der Freigabe. Vorbelegt mit dem Server-Default (`true`) – das Feld ändert ihn nicht,
   // es macht ihn nur sichtbar, damit „für alle zuweisbar" eine Entscheidung ist statt einer Nebenwirkung.
   const [executePublic, setExecutePublic] = useState(true);
@@ -152,6 +169,7 @@ export function VaterExerciseCreate() {
         defaultStage: type === "Vocabulary" && defaultStage !== "" ? Number(defaultStage) : null,
         defaultItemCount: defaultItemCount === "" ? null : Number(defaultItemCount),
         executePublic,
+        grammarTopicIds,
       };
       const created = await api.createExercise(Number(seriesId), Number(seriesUnitId), route, payload);
       setOkMsg(`Übung „${payload.title}" angelegt.`);
@@ -246,6 +264,7 @@ export function VaterExerciseCreate() {
           <textarea id="ex-description" value={description} onChange={(e) => setDescription(e.target.value)} rows={2}
             placeholder="Worum geht es, worauf achten? Hilft beim Wiederfinden im Lehrplan-Bau." />
         </div>
+        <GrammarTopicPicker subjectId={selectedSubjectId} topicIds={grammarTopicIds} onChange={setGrammarTopicIds} disabled={busy} id="ex-grammar-topics" />
         <div className="field" style={{ marginTop: 10 }} role="group" aria-labelledby={`${groupId}-schools`}>
           <FieldLabel id={`${groupId}-schools`} topic="exerciseSchoolTypes">Schularten</FieldLabel>
           <div className="row" style={{ gap: 14, flexWrap: "wrap" }}>

@@ -38,6 +38,7 @@ public static class Seed
         SeedStudentProfile(db);
         SeedVocabulary(db);
         SeedFrench(db);
+        SeedGrammarTopics(db);
         SeedKlassenarbeiten(db);
         SeedGamification(db);
         SeedTeacherLibrary(db);
@@ -569,6 +570,54 @@ public static class Seed
         };
 
         db.Exercises.AddRange(vocab, conditionals, translation);
+        db.SaveChanges();
+    }
+
+    /// <summary>
+    /// The base stock of grammar topics per language subject (B-155, decision 6) - seeded so the first user does
+    /// not invent the canonical names, which is the whole convergence gain. Owner-less, hence changeable by
+    /// nobody; the lists follow the grammar progression of the seeded series (Green Line 1-5, Découvertes 1-4).
+    /// Idempotent per subject: a subject that already carries topics is left alone, so a restart neither duplicates
+    /// nor revives a deliberately deleted entry. Non-language subjects get nothing.
+    /// </summary>
+    private static void SeedGrammarTopics(PuglingDbContext db)
+    {
+        var stock = new Dictionary<string, string[]>
+        {
+            ["Englisch"] =
+            [
+                "Simple present", "Present progressive", "Simple past", "Past progressive", "Present perfect",
+                "Present perfect progressive", "Past perfect", "Will-future", "Going-to-future", "Passive",
+                "Conditional sentences (if-clauses)", "Relative clauses", "Modal verbs", "Question tags",
+                "Adjectives and adverbs", "Comparison of adjectives", "Reported speech", "Gerund and infinitive",
+                "Quantifiers (some, any, much, many)", "Articles", "Plural of nouns", "Possessive 's",
+                "Questions and short answers", "Prepositions of time and place",
+            ],
+            ["Französisch"] =
+            [
+                "Le présent", "Les articles", "L'article partitif", "Les adjectifs possessifs", "Les adjectifs démonstratifs",
+                "La négation", "Les questions", "Le passé composé", "L'imparfait", "Le plus-que-parfait",
+                "Le futur proche", "Le futur simple", "Le passé récent", "Le conditionnel", "Le subjonctif",
+                "L'impératif", "Les pronoms COD et COI", "Les pronoms relatifs", "L'accord et la place des adjectifs",
+                "Les verbes pronominaux", "Le gérondif", "La comparaison",
+            ],
+        };
+
+        foreach (var (subjectName, labels) in stock)
+        {
+            var subject = db.Subjects.FirstOrDefault(s => s.Name == subjectName);
+            if (subject is null) continue;
+            if (db.GrammarTopics.Any(t => t.SubjectId == subject.Id)) continue;
+
+            var prefix = InterestSlug.From(subject.Name);
+            foreach (var label in labels)
+                db.GrammarTopics.Add(new GrammarTopic
+                {
+                    Slug = $"{prefix}-{InterestSlug.From(label)}",
+                    Label = label,
+                    SubjectId = subject.Id,
+                });
+        }
         db.SaveChanges();
     }
 

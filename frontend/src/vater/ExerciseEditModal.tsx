@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { api, errorMessage } from "../lib/api";
 import { Modal } from "../components/Modal";
+import { GrammarTopicPicker } from "../components/GrammarTopicChips";
 import { StatusBanner } from "../components/StatusBanner";
 import { RepeatedTextFields, nonEmpty } from "../components/RepeatedTextFields";
 import { FieldLabel } from "../components/InfoHint";
@@ -233,6 +234,8 @@ export function payloadFrom(detail: ExerciseDetail, form: MetaForm, config: unkn
     // ist jetzt sichtbar und änderbar. Die Zusicherung darüber bleibt trotzdem nötig – sie prüft nun, dass
     // der Rundlauf stimmt, statt dass ein unsichtbares Feld überlebt.
     interestTagIds: form.interestTagIds,
+    // Dieselbe Falle, viertes Feld (B-155): ohne diese Zeile nähme der Vollersatz der Übung ihre Themen.
+    grammarTopicIds: form.grammarTopicIds,
   };
 }
 
@@ -263,6 +266,8 @@ interface MetaForm {
   targetLang: string;
   /** Die Einkleidung: Ids der Interessen-Stichworte, in die diese Übung gekleidet ist (B-46/B-206). */
   interestTagIds: number[];
+  /** Die Grammatik-Themen der Übung (B-155) – aus dem fachgebundenen Vokabular. */
+  grammarTopicIds: number[];
 }
 
 export function initialForm(d: ExerciseDetail): MetaForm {
@@ -283,6 +288,7 @@ export function initialForm(d: ExerciseDetail): MetaForm {
     // Kopie, keine Referenz: die Chips ändern die Liste, und der geladene Stand ist der Bezugspunkt,
     // gegen den der Dialog seine Änderung misst.
     interestTagIds: [...d.interestTagIds],
+    grammarTopicIds: [...d.grammarTopicIds],
     ...langsOf(d),
   };
 }
@@ -376,6 +382,13 @@ function MetaEditor({ detail, form, setForm, type, speichern, onSaved, gesperrt 
         tagIds={form.interestTagIds}
         onChange={(ids) => up("interestTagIds", ids)}
         disabled={action.busy}
+      />
+      <GrammarTopicPicker
+        subjectId={detail.subjectId ?? null}
+        topicIds={form.grammarTopicIds}
+        onChange={(ids) => up("grammarTopicIds", ids)}
+        disabled={action.busy}
+        id="ed-grammar-topics"
       />
       <div className="field" role="group" aria-labelledby={`${groupId}-standards`}>
         <label><span id={`${groupId}-standards`}>Lern-Standards</span> <span className="muted">(Lehrplan-Positionen erben diese, können sie aber übersteuern)</span></label>

@@ -86,14 +86,16 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
           <SubjectRow key={subject.id} subject={subject} busy={action.busy}
             onSave={(name) => act(() => api.updateSubject(subject.id, name), "Fach umbenannt.")}
             onDelete={() => {
-              /* Der Text nennt alle fünf Zuordnungen statt nur zwei (B-144). Bewusst ohne Zahl: die
+              /* Der Text nennt alle fünf Zuordnungen statt nur zwei (B-144) und seit B-155 die sechste Folge,
+                 die wirklich löscht: die Grammatik-Themen des Fachs samt ihrer Zuordnungen. Bewusst ohne Zahl: die
                  hätte eine eigene Route gekostet und `confirmAction` asynchron gemacht – und sie ändert
                  die Entscheidung nicht. Was ein Kind besitzt (Meilensteine, Stundenplan), taucht hier
                  gar nicht auf: das sperrt der Server mit 409, statt zu warnen. */
               if (!confirmAction(
                 `Fach „${subject.name}" wirklich löschen? Lehrwerk-Reihen, Lehrbücher, Fachlehrer-Profile, `
                 + "Lehrpläne und Klassenarbeiten behalten ihren Inhalt, verlieren aber die Zuordnung zu "
-                + "diesem Fach. Seine Übungs-Kategorien werden gelöscht – die Übungen darin bleiben.")) return;
+                + "diesem Fach. Seine Übungs-Kategorien und seine Grammatik-Themen werden gelöscht – die Übungen "
+                + "bleiben, verlieren aber ihre Themen-Zuordnung.")) return;
               act(() => api.deleteSubject(subject.id), "Fach gelöscht.", () => setSubjectId(""));
             }} />
 

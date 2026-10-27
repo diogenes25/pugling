@@ -22,8 +22,10 @@ namespace Pugling.Api.Controllers.Creator;
 [Authorize(Roles = Roles.Creator)]
 public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
 {
+    // Expects the topic links loaded: every read path includes them, both write paths hold the tracked entity.
     static SeriesUnitResponse Map(SeriesUnit u) =>
-        new(u.Id, u.SeriesId, u.Grade, u.OrderIndex, u.Label, u.BookType, u.Topics, u.Grammar, u.VocabularyNotes, u.CreatedAt);
+        new(u.Id, u.SeriesId, u.Grade, u.OrderIndex, u.Label, u.BookType, u.Topics, u.Grammar, u.VocabularyNotes, u.CreatedAt,
+            [.. u.GrammarTopicLinks.Select(l => l.GrammarTopicId).OrderBy(id => id)]);
 
     /// <summary>All units of the series, by volume and order.</summary>
     /// <param name="seriesId">The series.</param>
@@ -36,11 +38,12 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
     {
         if (!await db.TextbookSeries.AnyAsync(s => s.Id == seriesId, ct)) return NotFound();
 
-        var query = db.SeriesUnits.AsNoTracking().Where(u => u.SeriesId == seriesId);
+        var query = db.SeriesUnits.AsNoTracking().Include(u => u.GrammarTopicLinks).Where(u => u.SeriesId == seriesId);
         if (grade is int g) query = query.Where(u => u.Grade == g);
 
-        return await query.OrderBy(u => u.Grade).ThenBy(u => u.OrderIndex).ThenBy(u => u.Id)
-            .Select(u => Map(u)).ToListAsync(ct);
+        // Materialize first: the projection reads the loaded topic links, which a client-side Select would miss.
+        var units = await query.OrderBy(u => u.Grade).ThenBy(u => u.OrderIndex).ThenBy(u => u.Id).ToListAsync(ct);
+        return units.Select(Map).ToList();
     }
 
     /// <summary>A unit of the series.</summary>
@@ -48,7 +51,7 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<SeriesUnitResponse>> Get(int seriesId, int unitId, CancellationToken ct)
     {
-        var unit = await db.SeriesUnits.AsNoTracking()
+        var unit = await db.SeriesUnits.AsNoTracking().Include(u => u.GrammarTopicLinks)
             .FirstOrDefaultAsync(u => u.Id == unitId && u.SeriesId == seriesId, ct);
         return unit is null ? NotFound() : Map(unit);
     }
@@ -69,6 +72,7 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
 
         var topics = CleanTopics(dto.Topics);
         if (ValidateTopics(topics) is { } topicProblem) return topicProblem;
+        if (await GrammarTopicsProblemAsync(series.SubjectId, dto.GrammarTopicIds, ct) is { } grammarProblem) return grammarProblem;
 
         var unit = new SeriesUnit
         {
@@ -81,6 +85,7 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
             Grammar = Trimmed(dto.Grammar),
             VocabularyNotes = Trimmed(dto.VocabularyNotes),
         };
+        SetGrammarLinks(unit, dto.GrammarTopicIds);
         db.SeriesUnits.Add(unit);
         await db.SaveChangesAsync(ct);
 
@@ -95,11 +100,12 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
     public async Task<ActionResult<SeriesUnitResponse>> Update(int seriesId, int unitId,
         UpdateSeriesUnitDto dto, CancellationToken ct)
     {
-        var unit = await db.SeriesUnits.Include(u => u.Series)
+        var unit = await db.SeriesUnits.Include(u => u.Series).Include(u => u.GrammarTopicLinks)
             .FirstOrDefaultAsync(u => u.Id == unitId && u.SeriesId == seriesId, ct);
         if (unit is null) return NotFound();
         if (!ClaimsPrincipalExtensions.IsOwnedBy(unit.Series?.OwnerAdultId, User.CreatorId()))
             return this.ProblemWithCode(ApiErrors.NotOwner, "Only the owner of the series may change its units.");
+        if (await GrammarTopicsProblemAsync(unit.Series?.SubjectId, dto.GrammarTopicIds, ct) is { } grammarProblem) return grammarProblem;
 
         if (dto.Label is not null)
         {
@@ -119,6 +125,8 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
         }
         if (dto.Grammar is not null) unit.Grammar = Trimmed(dto.Grammar);
         if (dto.VocabularyNotes is not null) unit.VocabularyNotes = Trimmed(dto.VocabularyNotes);
+        // PATCH semantics: null leaves the topics alone, a list replaces them entirely.
+        if (dto.GrammarTopicIds is not null) SetGrammarLinks(unit, dto.GrammarTopicIds);
 
         await db.SaveChangesAsync(ct);
         return Map(unit);
@@ -166,6 +174,41 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
     }
 
     private static string? Trimmed(string? value) => value?.Trim() is { Length: > 0 } v ? v : null;
+
+    /// <summary>
+    /// Validates the unit's grammar topics (B-155): every id must exist and belong to the series' subject - the
+    /// same two rules the exercise applies, so a unit cannot carry a topic its exercises could not. A series
+    /// without a subject can carry no topics at all.
+    /// </summary>
+    private async Task<ObjectResult?> GrammarTopicsProblemAsync(int? subjectId, List<int>? topicIds, CancellationToken ct)
+    {
+        if (topicIds is null || topicIds.Count == 0) return null;
+        var wanted = topicIds.Distinct().ToList();
+        var known = await db.GrammarTopics.Where(t => wanted.Contains(t.Id))
+            .Select(t => new { t.Id, t.SubjectId }).ToListAsync(ct);
+        var unknown = wanted.Except(known.Select(k => k.Id)).OrderBy(id => id).ToList();
+        if (unknown.Count > 0)
+            return this.ProblemWithCode(ApiErrors.ValidationError, $"Unknown grammar topic id(s): {string.Join(", ", unknown)}.");
+        // Fail closed, but with the true reason: a series without a subject can carry no topic at all.
+        if (subjectId is null)
+            return this.ProblemWithCode(ApiErrors.ValidationError, "This series has no subject; it cannot carry grammar topics.");
+        var foreign = known.Where(k => k.SubjectId != subjectId).Select(k => k.Id).OrderBy(id => id).ToList();
+        return foreign.Count == 0
+            ? null
+            : this.ProblemWithCode(ApiErrors.ValidationError,
+                $"Grammar topic(s) {string.Join(", ", foreign)} belong to another subject than this series.");
+    }
+
+    /// <summary>Sets the unit's grammar topics as the complete set - replacement, not merge (the exercise pattern).</summary>
+    private void SetGrammarLinks(SeriesUnit unit, List<int>? topicIds)
+    {
+        var wanted = (topicIds ?? []).Distinct().ToHashSet();
+        var stale = unit.GrammarTopicLinks.Where(l => !wanted.Contains(l.GrammarTopicId)).ToList();
+        db.SeriesUnitGrammarTopics.RemoveRange(stale);
+        foreach (var link in stale) unit.GrammarTopicLinks.Remove(link);
+        foreach (var topicId in wanted.Where(id => unit.GrammarTopicLinks.All(l => l.GrammarTopicId != id)))
+            unit.GrammarTopicLinks.Add(new SeriesUnitGrammarTopic { GrammarTopicId = topicId });
+    }
 
     /// <summary>Trims and discards empty entries – topics are a plain list, not a validated taxonomy.</summary>
     private static List<string> CleanTopics(List<string>? values) =>

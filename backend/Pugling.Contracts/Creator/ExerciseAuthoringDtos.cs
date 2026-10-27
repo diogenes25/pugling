@@ -18,6 +18,9 @@ namespace Pugling.Contracts.Creator;
 /// the shared taxonomy that the child's interests and the images already use. It is a full representation
 /// like every other field here: what the payload does not list is removed. An unknown id is a
 /// <c>validation_error</c>, never a silent skip.
+///
+/// <paramref name="GrammarTopicIds"/> names the grammar topics the exercise practices (B-155), with the same
+/// full-representation semantics. A topic of another subject than the series' is a <c>validation_error</c>.
 /// </summary>
 public record ExercisePayload<TConfig>(string Title, int OrderIndex, int RewardPoints, TConfig Config,
     SuggestedBonus? SuggestedBonus = null,
@@ -25,7 +28,7 @@ public record ExercisePayload<TConfig>(string Title, int OrderIndex, int RewardP
     string? Source = null, int? CategoryId = null, string? Description = null,
     bool DefaultUseLeitner = false, bool DefaultRequireTypedTest = false, int? DefaultStage = null,
     int? DefaultItemCount = null, bool ExecutePublic = true,
-    IReadOnlyList<int>? InterestTagIds = null);
+    IReadOnlyList<int>? InterestTagIds = null, IReadOnlyList<int>? GrammarTopicIds = null);
 
 /// <summary>
 /// Exercise in the response. <paramref name="IsOwn"/> = the requesting creator may <b>change</b> it (owner or
@@ -34,14 +37,15 @@ public record ExercisePayload<TConfig>(string Title, int OrderIndex, int RewardP
 ///
 /// <paramref name="InterestTagIds"/> is the dressing (B-46), <b>ascending</b> and therefore comparable
 /// between two exercises without sorting first - that comparison is the whole point of the field, and
-/// B-18 will build the child-fit filter on it.
+/// B-18 will build the child-fit filter on it. <paramref name="GrammarTopicIds"/> (B-155) follows the same
+/// ordering rule.
 /// </summary>
 public record ExerciseResponse<TConfig>(int Id, int SeriesUnitId, string Type, string Title,
     int OrderIndex, int RewardPoints, DateTime CreatedAt, TConfig Config, SuggestedBonus? SuggestedBonus,
     int? GradeMin, int? GradeMax, SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName,
     int? AuthorAdultId, bool IsOwn, bool IsOwner, bool ExecutePublic, int GrantCount, string? Description,
     bool DefaultUseLeitner, bool DefaultRequireTypedTest,
-    int? DefaultStage, int? DefaultItemCount, IReadOnlyList<int> InterestTagIds);
+    int? DefaultStage, int? DefaultItemCount, IReadOnlyList<int> InterestTagIds, IReadOnlyList<int> GrammarTopicIds);
 
 /// <summary>
 /// Child's answers for a direct catalog check, position-based (index in the problem/pair list).

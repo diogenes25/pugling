@@ -59,6 +59,11 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     // Exercise ⇢ tag (B-46): the same taxonomy, now with a third referrer beside child and image.
     public DbSet<ExerciseInterestLink> ExerciseInterestLinks => Set<ExerciseInterestLink>();
 
+    // Grammar topics (B-155): a shared, subject-bound vocabulary carried by exercises AND units.
+    public DbSet<GrammarTopic> GrammarTopics => Set<GrammarTopic>();
+    public DbSet<ExerciseGrammarTopic> ExerciseGrammarTopics => Set<ExerciseGrammarTopic>();
+    public DbSet<SeriesUnitGrammarTopic> SeriesUnitGrammarTopics => Set<SeriesUnitGrammarTopic>();
+
     // Study plan (container) + positions on catalog exercises, progress/goal reward per position
     public DbSet<StudyPlan> StudyPlans => Set<StudyPlan>();
     public DbSet<PlanPosition> PlanPositions => Set<PlanPosition>();
@@ -396,6 +401,39 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasIndex(x => x.InterestTagId);
             e.HasOne(x => x.Exercise).WithMany(a => a.InterestLinks).HasForeignKey(x => x.ExerciseId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(x => x.InterestTag).WithMany(t => t.ExerciseLinks).HasForeignKey(x => x.InterestTagId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Grammar topic (B-155): a globally unique, subject-qualified slug; synonyms as a JSON list with the
+        // comparer every JSON column carries (G7). The subject is mandatory and the topic dies with it (Cascade,
+        // decision 10 of B-155): a topic without a subject cannot exist, and unlike a child's key result it is
+        // nobody's possession - it is not in B-144's 409 list on purpose. The owner is only an edit right (SetNull).
+        modelBuilder.Entity<GrammarTopic>(e =>
+        {
+            e.HasIndex(t => t.Slug).IsUnique();
+            e.HasIndex(t => t.SubjectId);
+            e.Property(t => t.Synonyms).HasConversion(
+                v => JsonSerializer.Serialize(v, JsonOptions),
+                s => JsonSerializer.Deserialize<List<string>>(s, JsonOptions) ?? new())
+                .Metadata.SetValueComparer(JsonValueComparer.For<List<string>>());
+            e.HasOne(t => t.Subject).WithMany().HasForeignKey(t => t.SubjectId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(t => t.Owner).WithMany().HasForeignKey(t => t.OwnerAdultId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // Exercise ⇢ grammar topic and unit ⇢ grammar topic: at most one link per pair, both sides cascade (the
+        // ExerciseInterestLink pattern); the hot read direction is "which exercises carry this topic?".
+        modelBuilder.Entity<ExerciseGrammarTopic>(e =>
+        {
+            e.HasIndex(x => new { x.ExerciseId, x.GrammarTopicId }).IsUnique();
+            e.HasIndex(x => x.GrammarTopicId);
+            e.HasOne(x => x.Exercise).WithMany(a => a.GrammarTopicLinks).HasForeignKey(x => x.ExerciseId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.GrammarTopic).WithMany(t => t.ExerciseLinks).HasForeignKey(x => x.GrammarTopicId).OnDelete(DeleteBehavior.Cascade);
+        });
+        modelBuilder.Entity<SeriesUnitGrammarTopic>(e =>
+        {
+            e.HasIndex(x => new { x.SeriesUnitId, x.GrammarTopicId }).IsUnique();
+            e.HasIndex(x => x.GrammarTopicId);
+            e.HasOne(x => x.SeriesUnit).WithMany(u => u.GrammarTopicLinks).HasForeignKey(x => x.SeriesUnitId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.GrammarTopic).WithMany(t => t.UnitLinks).HasForeignKey(x => x.GrammarTopicId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // Image ⇢ carrier. Exactly one of the three FKs is set - as a check constraint in the DB, not only in

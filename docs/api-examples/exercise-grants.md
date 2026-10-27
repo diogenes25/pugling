@@ -144,7 +144,8 @@ Response — `HTTP 201`:
   "defaultRequireTypedTest": false,
   "defaultStage": null,
   "defaultItemCount": null,
-  "interestTagIds": []
+  "interestTagIds": [],
+  "grammarTopicIds": []
 }
 ```
 

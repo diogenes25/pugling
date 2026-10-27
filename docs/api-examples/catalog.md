@@ -133,7 +133,8 @@ Response — `HTTP 201`:
   "topics": [],
   "grammar": null,
   "vocabularyNotes": null,
-  "createdAt": "<timestamp>"
+  "createdAt": "<timestamp>",
+  "grammarTopicIds": []
 }
 ```
 
@@ -193,7 +194,8 @@ Response — `HTTP 201`:
   "defaultRequireTypedTest": false,
   "defaultStage": null,
   "defaultItemCount": null,
-  "interestTagIds": []
+  "interestTagIds": [],
+  "grammarTopicIds": []
 }
 ```
 
@@ -420,7 +422,8 @@ Response — `HTTP 201`:
   "defaultRequireTypedTest": false,
   "defaultStage": null,
   "defaultItemCount": null,
-  "interestTagIds": []
+  "interestTagIds": [],
+  "grammarTopicIds": []
 }
 ```
 
@@ -510,7 +513,8 @@ Response — `HTTP 201`:
   "defaultRequireTypedTest": false,
   "defaultStage": null,
   "defaultItemCount": null,
-  "interestTagIds": []
+  "interestTagIds": [],
+  "grammarTopicIds": []
 }
 ```
 
@@ -588,7 +592,8 @@ Response — `HTTP 201`:
   "defaultRequireTypedTest": false,
   "defaultStage": null,
   "defaultItemCount": null,
-  "interestTagIds": []
+  "interestTagIds": [],
+  "grammarTopicIds": []
 }
 ```
 
@@ -666,7 +671,8 @@ Response — `HTTP 201`:
   "defaultRequireTypedTest": false,
   "defaultStage": null,
   "defaultItemCount": null,
-  "interestTagIds": []
+  "interestTagIds": [],
+  "grammarTopicIds": []
 }
 ```
 
@@ -744,7 +750,8 @@ Response — `HTTP 201`:
   "defaultRequireTypedTest": false,
   "defaultStage": null,
   "defaultItemCount": null,
-  "interestTagIds": []
+  "interestTagIds": [],
+  "grammarTopicIds": []
 }
 ```
 
@@ -818,7 +825,8 @@ Response — `HTTP 201`:
   "defaultRequireTypedTest": false,
   "defaultStage": null,
   "defaultItemCount": null,
-  "interestTagIds": []
+  "interestTagIds": [],
+  "grammarTopicIds": []
 }
 ```
 
@@ -910,7 +918,8 @@ Response — `HTTP 201`:
   "defaultRequireTypedTest": false,
   "defaultStage": null,
   "defaultItemCount": null,
-  "interestTagIds": []
+  "interestTagIds": [],
+  "grammarTopicIds": []
 }
 ```
 
@@ -986,7 +995,8 @@ Response — `HTTP 201`:
   "defaultRequireTypedTest": false,
   "defaultStage": null,
   "defaultItemCount": null,
-  "interestTagIds": []
+  "interestTagIds": [],
+  "grammarTopicIds": []
 }
 ```
 
@@ -1055,7 +1065,8 @@ Response — `HTTP 201`:
   "defaultRequireTypedTest": false,
   "defaultStage": null,
   "defaultItemCount": null,
-  "interestTagIds": []
+  "interestTagIds": [],
+  "grammarTopicIds": []
 }
 ```
 
@@ -1139,7 +1150,8 @@ Response — `HTTP 201`:
   "defaultRequireTypedTest": false,
   "defaultStage": null,
   "defaultItemCount": null,
-  "interestTagIds": []
+  "interestTagIds": [],
+  "grammarTopicIds": []
 }
 ```
 
@@ -1199,6 +1211,7 @@ Response — `HTTP 201`:
   "defaultRequireTypedTest": false,
   "defaultStage": null,
   "defaultItemCount": null,
-  "interestTagIds": []
+  "interestTagIds": [],
+  "grammarTopicIds": []
 }
 ```

@@ -26,7 +26,8 @@ public sealed record CreatorBriefing(
     string TargetLang,
     IReadOnlyList<string> ExistingExerciseTitles,
     IReadOnlyList<string> RequiredWords,
-    IReadOnlyList<int> InterestTagIds)
+    IReadOnlyList<int> InterestTagIds,
+    IReadOnlyList<int> GrammarTopicIds)
 {
     /// <summary>Is this tailored to a child (instead of for the general catalog)?</summary>
     public bool Individual => Child is not null;
@@ -36,6 +37,11 @@ public sealed record CreatorBriefing(
 
     /// <summary>The child's interests; deliberately empty in general mode (nothing to dress up).</summary>
     public IReadOnlyList<string> Interests => Child?.Interests ?? [];
+
+    // <see cref="GrammarTopicIds"/> are the target unit's grammar topics (B-155, decision 7): the agent takes them
+    // over as the form would pre-fill them, only without a human who deselects - in a mixed unit it tags broader
+    // than necessary, which is the accepted price for a catalog that does not go blind where it grows fastest.
+    // The model itself has no say in it; the deterministic pipeline gets no extra model decision.
 
     // Why <see cref="InterestTagIds"/> exists next to <see cref="Interests"/>, which reads like the same
     // thing: this one is for the PROMPT (free text included, because the nuance the taxonomy lacks is

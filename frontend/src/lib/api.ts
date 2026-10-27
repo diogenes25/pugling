@@ -22,6 +22,7 @@ import type {
   InventoryItem, MyInventoryItem, ShopPurchase, MyShopPurchase, ActivationRequest, ShopPurchaseStatus, ActivationRequestStatus,
   ShopView, MyActivation,
   ContentRating, InterestTagResponse, CreateInterestTagDto, UpdateInterestTagDto,
+  GrammarTopicResponse, CreateGrammarTopicDto, UpdateGrammarTopicDto,
   ChildInterestResponse, ChildInterestInput,
   InterestTagOption, MyInterestProfile, MyInterestInput,
   MediaAssetResponse, CreateMediaAssetDto, MediaLinkResponse, MediaUsage, SelectedMediaResponse,
@@ -419,6 +420,7 @@ export const api = {
     if (p.search) q.set("search", p.search);
     if (p.source) q.set("source", p.source);
     if (p.mineOnly) q.set("mineOnly", "true");
+    if (p.grammarTopicId != null) q.set("grammarTopicId", String(p.grammarTopicId));
     appendPaging(q, p);
     const qs = q.toString();
     return httpPaged<ExerciseSummary>(`${V1}/creator/exercises${qs ? `?${qs}` : ""}`);
@@ -843,6 +845,20 @@ export const api = {
    * Übungen einkleidet (`interest_tag_in_use`) – deren Einkleidung ist Autoren-Arbeit und wäre lautlos weg.
    */
   deleteInterestTag: (id: number) => http<void>(`${V1}/creator/interest-tags/${id}`, "DELETE"),
+
+  // ---- Creator: Grammatik-Themen (B-155) – fachgebundenes Vokabular, von Übungen und Units getragen ----
+  grammarTopics: (subjectId?: number, search?: string) => {
+    const q = new URLSearchParams();
+    if (subjectId != null) q.set("subjectId", String(subjectId));
+    if (search) q.set("search", search);
+    q.set("take", "500");
+    return http<GrammarTopicResponse[]>(`${V1}/creator/grammar-topics?${q}`);
+  },
+  createGrammarTopic: (dto: CreateGrammarTopicDto) =>
+    http<GrammarTopicResponse>(`${V1}/creator/grammar-topics`, "POST", dto),
+  updateGrammarTopic: (id: number, dto: UpdateGrammarTopicDto) =>
+    http<GrammarTopicResponse>(`${V1}/creator/grammar-topics/${id}`, "PATCH", dto),
+  deleteGrammarTopic: (id: number) => http<void>(`${V1}/creator/grammar-topics/${id}`, "DELETE"),
 
   childInterests: (childId: number) =>
     http<ChildInterestResponse[]>(`${V1}/supervisor/children/${childId}/interests`),

@@ -22,7 +22,7 @@ function unit(over: Partial<SeriesUnitResponse> = {}): SeriesUnitResponse {
   return {
     id: 1, seriesId: 10, grade: null, orderIndex: 1, label: "Unit 1",
     bookType: "Textbook", topics: [], grammar: null, vocabularyNotes: null,
-    createdAt: "2026-09-03T00:00:00Z", ...over,
+    createdAt: "2026-09-03T00:00:00Z", grammarTopicIds: [], ...over,
   };
 }
 

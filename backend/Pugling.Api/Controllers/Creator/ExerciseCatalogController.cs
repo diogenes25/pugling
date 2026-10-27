@@ -38,6 +38,8 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     /// passage, and folding it into the title search would make "Unit 1" match every exercise whose
     /// title happens to mention a unit (B-18).</param>
     /// <param name="mineOnly">Only own exercises of the requesting adult (management rather than discovery).</param>
+    /// <param name="grammarTopicId">Only exercises that practice this grammar topic (B-155) - the eighth facet,
+    /// and the one that reaches across series and grades.</param>
     /// <param name="sort">Sort column: <c>title</c>, <c>type</c>, <c>grade</c>, <c>source</c>, <c>created</c>,
     /// <c>rating</c> (average stars; unrated exercises last in both directions).
     /// Short form <c>-title</c> = descending. Without a value: subject → series unit → order.</param>
@@ -49,7 +51,7 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     public async Task<IEnumerable<ExerciseSummary>> Search(
         [FromQuery] int? subjectId, [FromQuery] int? seriesUnitId, [FromQuery] int? grade, [FromQuery] SchoolTypes? schoolType,
         [FromQuery] int? categoryId, [FromQuery] string? type, [FromQuery] string? search,
-        [FromQuery] string? source, [FromQuery] bool? mineOnly,
+        [FromQuery] string? source, [FromQuery] bool? mineOnly, [FromQuery] int? grammarTopicId,
         [FromQuery] string? sort = null, [FromQuery] string? dir = null,
         [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake, CancellationToken ct = default)
     {
@@ -99,6 +101,11 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
             query = query.Where(e => e.Source != null
                 && EF.Functions.Like(e.Source, pattern, SearchPattern.Escape));
         }
+
+        // Single-valued like the seven facets before it (B-155, decision 8): "present perfect OR simple past"
+        // is two searches.
+        if (grammarTopicId is int gt)
+            query = query.Where(e => e.GrammarTopicLinks.Any(l => l.GrammarTopicId == gt));
 
         return await ApplySort(query, SortingExtensions.ParseSort(sort, dir))
             .Select(e => new ExerciseSummary(e.Id, e.SeriesUnit!.SeriesId, e.SeriesUnitId, e.SeriesUnit!.Series!.SubjectId, e.Type, e.Title,
@@ -172,6 +179,7 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
             .Include(x => x.Author)
             .Include(x => x.Grants)
             .Include(x => x.InterestLinks)
+            .Include(x => x.GrammarTopicLinks)
             .FirstOrDefaultAsync(x => x.Id == id, ct);
         if (e is null) return NotFound();
 
@@ -193,7 +201,8 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
             // Ascending, same as the typed response - two dressings must compare the same way whichever
             // of the two views they were read through.
             [.. e.InterestLinks.Select(l => l.InterestTagId).OrderBy(x => x)],
-            rating.Average, rating.Count);
+            rating.Average, rating.Count,
+            [.. e.GrammarTopicLinks.Select(l => l.GrammarTopicId).OrderBy(x => x)]);
     }
 
     /// <summary>

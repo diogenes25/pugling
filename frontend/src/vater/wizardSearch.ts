@@ -21,6 +21,8 @@ export type WizardFilter = {
   categoryId: number | "";
   type: string;
   source: string;
+  /** Grammatik-Thema (B-155) – die achte Facette, einwertig; hängt wie die Art am Fach. */
+  grammarTopicId: number | "";
 };
 
 /**
@@ -37,6 +39,7 @@ export function wizardSearchParams(f: WizardFilter, take?: number): ExerciseSear
     categoryId: f.categoryId === "" ? undefined : f.categoryId,
     type: f.type || undefined,
     source: f.source.trim() || undefined,
+    grammarTopicId: f.grammarTopicId === "" ? undefined : f.grammarTopicId,
     take,
   };
 }

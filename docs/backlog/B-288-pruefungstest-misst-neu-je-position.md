@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-283]
+nachgeschaut: "2026-10-27"
 wartet_auf: ""
 ---
 
@@ -38,3 +39,4 @@ zurücknehmen.
 - **2026-10-27** — in Lauf E, Teil 3, autonom gegrillt (Freigabe 1, `Defekt`), geschätzt (XS, nur Test) und gebaut: eine Position, erster Versuch per `/answer` + `/submit` abgeschlossen, zweiter `POST …/tests` liefert eine neue Versuchs-Id (zugesichert), die Kacheln unterscheiden sich. **Rote Probe:** Seed aus `positionId` statt `attempt.Id` (`PositionTestsController.cs:232`) → **1 failed** (vorher grün), danach `LetterScrambleTests` **12/12 `exit=0`**.
 - **2026-10-27** — Review (`pugling-reviewer`, [Protokoll](../pm-sitzung-2026-10-27-nacht.md)): 🟡 Kommentar als Umbau-Erzählung → umformuliert (ohne Zählung). 🟢 der ältere Übungs-Test hatte denselben blinden Fleck (zweite Position), und seine Begründung trug nicht: Übungs-Sitzungen werden nicht wieder aufgenommen, eine zweite Sitzung **vor** dem Review trägt die Karte noch. Nachgezogen, weil billig: zweite Sitzung auf derselben Position vor dem Review, neue Sitzungs-Id zugesichert. **Probe:** Seed aus `exercise.Id` statt `sessionId` (`PositionPracticeController.cs:114`) → **1 failed** (vorher grün), danach **12/12**. Ohne Zählung (Freigabe 10).
 - **2026-10-27** — `abgenommen` in Lauf E, Teil 3; Rollengang als Integrationstest (kein Verhalten ändert sich). Suite **952/952 `exit=0`**. Commit `12eab76`.
+- **2026-10-27** — Nachschau in Lauf E, Teil 4 ([Protokoll](../pm-sitzung-2026-10-27-nacht.md)), frischer Prüfer an einem `git archive` von `12eab76`: Resume nur bei `CompletedAt == null` (`PositionTestsController.cs:147-153`), `Submit` setzt `CompletedAt` (`:415`), Übungs-Start ohne Resume (`PositionPracticeController.cs:61-85`), Karte vor dem Review noch fällig (`DueItemIndicesAsync`); beide Positions-Mutanten fallen an der richtigen Zusicherung. **Kein Befund.**

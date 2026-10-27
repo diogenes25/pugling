@@ -260,6 +260,15 @@ public class SchemaGuardTests
             // exercise or without its tag is not data, it is a dangling row.
             ["ExerciseInterestLink.ExerciseId"] = DeleteBehavior.Cascade, // -> Exercise
             ["ExerciseInterestLink.InterestTagId"] = DeleteBehavior.Cascade, // -> InterestTag
+            // B-155: the grammar topics. A topic cannot exist without its subject (mandatory) and is nobody's
+            // possession, so it dies with the subject rather than blocking the delete (decision 10); the owner is
+            // only an edit right. The two link tables are dangling rows without either end, like the dressing.
+            ["ExerciseGrammarTopic.ExerciseId"] = DeleteBehavior.Cascade, // -> Exercise
+            ["ExerciseGrammarTopic.GrammarTopicId"] = DeleteBehavior.Cascade, // -> GrammarTopic
+            ["GrammarTopic.OwnerAdultId"] = DeleteBehavior.SetNull, // -> Adult
+            ["GrammarTopic.SubjectId"] = DeleteBehavior.Cascade, // -> Subject
+            ["SeriesUnitGrammarTopic.GrammarTopicId"] = DeleteBehavior.Cascade, // -> GrammarTopic
+            ["SeriesUnitGrammarTopic.SeriesUnitId"] = DeleteBehavior.Cascade, // -> SeriesUnit
             ["MediaTagLink.InterestTagId"] = DeleteBehavior.Cascade, // -> InterestTag
             ["MediaTagLink.MediaAssetId"] = DeleteBehavior.Cascade, // -> MediaAsset
             ["MediaVariant.MediaAssetId"] = DeleteBehavior.Cascade, // -> MediaAsset

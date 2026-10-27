@@ -72,7 +72,10 @@ public abstract class ExerciseStrategy<TDraft, TConfig>(
             Source: briefing.Source, Description: DescriptionFor(briefing),
             // The dressing goes into the catalog, not only into the description text (B-46): the sentence
             // below is for a human reading the list, these ids are what a machine can compare.
-            InterestTagIds: briefing.InterestTagIds);
+            InterestTagIds: briefing.InterestTagIds,
+            // The unit's grammar topics, taken over as the form pre-fills them (B-155): a catalog the agent fills
+            // without tagging would be blind exactly where it grows.
+            GrammarTopicIds: briefing.GrammarTopicIds);
 
     /// <summary>Short provenance note on the exercise - makes generated content recognizable in the catalog.</summary>
     private static string DescriptionFor(CreatorBriefing briefing)

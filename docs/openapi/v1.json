@@ -12191,6 +12191,19 @@
             }
           },
           {
+            "name": "grammarTopicId",
+            "in": "query",
+            "description": "Only exercises that practice this grammar topic (B-155) - the eighth facet,\n\nand the one that reaches across series and grades.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
             "name": "sort",
             "in": "query",
             "description": "Sort column: \u0060title\u0060, \u0060type\u0060, \u0060grade\u0060, \u0060source\u0060, \u0060created\u0060,\n\n\u0060rating\u0060 (average stars; unrated exercises last in both directions).\nShort form \u0060-title\u0060 = descending. Without a value: subject \u2192 series unit \u2192 order.",
@@ -21816,6 +21829,404 @@
         }
       }
     },
+    "/api/v1/creator/grammar-topics": {
+      "get": {
+        "tags": [
+          "Creator \u2013 Grammar Topics"
+        ],
+        "summary": "The topics, by label, optionally narrowed to a subject or a search term. The total count (before paging)\nis in the \u0060X-Total-Count\u0060 header.",
+        "parameters": [
+          {
+            "name": "subjectId",
+            "in": "query",
+            "description": "Only topics of this subject - the picker in the exercise and unit forms asks like this.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Substring in slug or label.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "description": "Number of entries to skip (paging).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "description": "Maximum number of hits (1..500).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-Total-Count": {
+                "description": "Total row count before paging (skip/take).",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GrammarTopicResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Creator \u2013 Grammar Topics"
+        ],
+        "summary": "Creates a topic. The slug is derived from the subject and the label; if it already exists, the existing\nentry comes back (idempotent, 200) - so the same label typed twice never becomes two topics.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGrammarTopicDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGrammarTopicDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGrammarTopicDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrammarTopicResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrammarTopicResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/creator/grammar-topics/{id}": {
+      "get": {
+        "tags": [
+          "Creator \u2013 Grammar Topics"
+        ],
+        "summary": "A topic by id.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrammarTopicResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Creator \u2013 Grammar Topics"
+        ],
+        "summary": "Changes label, synonyms or color (owner only; a seeded topic is changeable by nobody). The slug and the\nsubject are deliberately immutable: the slug is the stable reference exercises and units hang off,\nand a topic that changed its subject would silently leave the exercises it is on.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGrammarTopicDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGrammarTopicDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGrammarTopicDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrammarTopicResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Creator \u2013 Grammar Topics"
+        ],
+        "summary": "Deletes a topic nobody uses (owner only). A topic carried by an exercise or a unit is refused with 409: the\nassignment is authored information nothing else records, so a cascade would erase it silently. Ownership is\ndecided before usage, as with the subject - a stranger must not learn from the 409 what the catalog holds.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/creator/interest-tags": {
       "get": {
         "tags": [
@@ -29709,6 +30120,46 @@
         },
         "description": "Input for entering a subject on a weekday."
       },
+      "CreateGrammarTopicDto": {
+        "required": [
+          "label",
+          "subjectId"
+        ],
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "description": "Display name, e.g. \u0022Present perfect\u0022."
+          },
+          "subjectId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The subject the topic belongs to.",
+            "format": "int32"
+          },
+          "synonyms": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Alternative spellings."
+          },
+          "color": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional display color (hex)."
+          }
+        },
+        "description": "Creating a topic. The slug is derived from the subject and the label; if it already exists, the endpoint\nreturns the existing entry (idempotent), so a label typed twice never becomes two topics."
+      },
       "CreateInterestTagDto": {
         "required": [
           "label"
@@ -30444,9 +30895,23 @@
               "null",
               "string"
             ]
+          },
+          "grammarTopicIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Input for creating a unit; without \u0060OrderIndex\u0060 it is appended at the end."
+        "description": "Input for creating a unit; without \u0060OrderIndex\u0060 it is appended at the end. \u0060GrammarTopicIds\u0060 (B-155)\nare the shared grammar topics of the unit - of the series\u0027 subject, otherwise \u0060validation_error\u0060; the free\ntext \u0060Grammar\u0060 stays beside them."
       },
       "CreateShopArticleDto": {
         "required": [
@@ -31451,6 +31916,7 @@
           "defaultRequireTypedTest",
           "defaultUseLeitner",
           "executePublic",
+          "grammarTopicIds",
           "grantCount",
           "id",
           "interestTagIds",
@@ -31674,9 +32140,20 @@
               "string"
             ],
             "format": "int32"
+          },
+          "grammarTopicIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Complete, type-spanning view of an exercise including raw config and all metadata \u2013\nthe basis for editing (load config into the type-specific editor; saving goes through\nthe per-type PUT \u0060.../textbook-series/{seriesId}/units/{seriesUnitId}/\u0026lt;type\u0026gt;/{id}\u0060,\nwhere int ExerciseDetail.SeriesId supplies the route segment the flat cross-catalog view has no other way to know).\n\n\u0060InterestTagIds\u0060 is the dressing (B-46) - metadata, and this view promises all of it. It stays off\nExerciseSummary for the reason that row gives about itself: the lean row carries what the\nsupervisor\u0027s form pre-fills from, and a dressing pre-fills nothing. The fit filter B-18 will build\nbelongs in the *query* anyway, not in a list the client scans.\n\n\u0060AverageRating\u0060/\u0060RatingCount\u0060: the same aggregate as on ExerciseSummary (B-12)."
+        "description": "Complete, type-spanning view of an exercise including raw config and all metadata \u2013\nthe basis for editing (load config into the type-specific editor; saving goes through\nthe per-type PUT \u0060.../textbook-series/{seriesId}/units/{seriesUnitId}/\u0026lt;type\u0026gt;/{id}\u0060,\nwhere int ExerciseDetail.SeriesId supplies the route segment the flat cross-catalog view has no other way to know).\n\n\u0060InterestTagIds\u0060 is the dressing (B-46) - metadata, and this view promises all of it. It stays off\nExerciseSummary for the reason that row gives about itself: the lean row carries what the\nsupervisor\u0027s form pre-fills from, and a dressing pre-fills nothing. The fit filter B-18 will build\nbelongs in the *query* anyway, not in a list the client scans.\n\n\u0060AverageRating\u0060/\u0060RatingCount\u0060: the same aggregate as on ExerciseSummary (B-12).\n\u0060GrammarTopicIds\u0060 (B-155): the topics the exercise practices, ascending like the dressing - the editor\nreads them back here and the PUT has to carry them, or the full replacement drops them."
       },
       "ExercisePayloadOfArithmeticConfig": {
         "required": [
@@ -31810,9 +32287,23 @@
               ],
               "format": "int32"
             }
+          },
+          "grammarTopicIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. A topic of another subject than the series\u0027 is a \u0060validation_error\u0060."
       },
       "ExercisePayloadOfArithmeticDrillConfig": {
         "required": [
@@ -31946,9 +32437,23 @@
               ],
               "format": "int32"
             }
+          },
+          "grammarTopicIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. A topic of another subject than the series\u0027 is a \u0060validation_error\u0060."
       },
       "ExercisePayloadOfBirkenbihlConfig": {
         "required": [
@@ -32082,9 +32587,23 @@
               ],
               "format": "int32"
             }
+          },
+          "grammarTopicIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. A topic of another subject than the series\u0027 is a \u0060validation_error\u0060."
       },
       "ExercisePayloadOfClozeConfig": {
         "required": [
@@ -32218,9 +32737,23 @@
               ],
               "format": "int32"
             }
+          },
+          "grammarTopicIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. A topic of another subject than the series\u0027 is a \u0060validation_error\u0060."
       },
       "ExercisePayloadOfEssayConfig": {
         "required": [
@@ -32354,9 +32887,23 @@
               ],
               "format": "int32"
             }
+          },
+          "grammarTopicIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. A topic of another subject than the series\u0027 is a \u0060validation_error\u0060."
       },
       "ExercisePayloadOfGrammarConfig": {
         "required": [
@@ -32490,9 +33037,23 @@
               ],
               "format": "int32"
             }
+          },
+          "grammarTopicIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. A topic of another subject than the series\u0027 is a \u0060validation_error\u0060."
       },
       "ExercisePayloadOfListConfig": {
         "required": [
@@ -32626,9 +33187,23 @@
               ],
               "format": "int32"
             }
+          },
+          "grammarTopicIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. A topic of another subject than the series\u0027 is a \u0060validation_error\u0060."
       },
       "ExercisePayloadOfListeningConfig": {
         "required": [
@@ -32762,9 +33337,23 @@
               ],
               "format": "int32"
             }
+          },
+          "grammarTopicIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. A topic of another subject than the series\u0027 is a \u0060validation_error\u0060."
       },
       "ExercisePayloadOfMatchingConfig": {
         "required": [
@@ -32898,9 +33487,23 @@
               ],
               "format": "int32"
             }
+          },
+          "grammarTopicIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. A topic of another subject than the series\u0027 is a \u0060validation_error\u0060."
       },
       "ExercisePayloadOfReadingConfig": {
         "required": [
@@ -33034,9 +33637,23 @@
               ],
               "format": "int32"
             }
+          },
+          "grammarTopicIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. A topic of another subject than the series\u0027 is a \u0060validation_error\u0060."
       },
       "ExercisePayloadOfTranslationConfig": {
         "required": [
@@ -33170,9 +33787,23 @@
               ],
               "format": "int32"
             }
+          },
+          "grammarTopicIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. A topic of another subject than the series\u0027 is a \u0060validation_error\u0060."
       },
       "ExercisePayloadOfVocabularyConfig": {
         "required": [
@@ -33306,9 +33937,23 @@
               ],
               "format": "int32"
             }
+          },
+          "grammarTopicIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is a\n\u0060validation_error\u0060, never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. A topic of another subject than the series\u0027 is a \u0060validation_error\u0060."
       },
       "ExerciseProgressResponse": {
         "required": [
@@ -33411,6 +34056,7 @@
           "defaultRequireTypedTest",
           "defaultUseLeitner",
           "executePublic",
+          "grammarTopicIds",
           "grantCount",
           "id",
           "interestTagIds",
@@ -33595,9 +34241,20 @@
               ],
               "format": "int32"
             }
+          },
+          "grammarTopicIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule."
       },
       "ExerciseResponseOfArithmeticDrillConfig": {
         "required": [
@@ -33605,6 +34262,7 @@
           "defaultRequireTypedTest",
           "defaultUseLeitner",
           "executePublic",
+          "grammarTopicIds",
           "grantCount",
           "id",
           "interestTagIds",
@@ -33789,9 +34447,20 @@
               ],
               "format": "int32"
             }
+          },
+          "grammarTopicIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule."
       },
       "ExerciseResponseOfBirkenbihlConfig": {
         "required": [
@@ -33799,6 +34468,7 @@
           "defaultRequireTypedTest",
           "defaultUseLeitner",
           "executePublic",
+          "grammarTopicIds",
           "grantCount",
           "id",
           "interestTagIds",
@@ -33983,9 +34653,20 @@
               ],
               "format": "int32"
             }
+          },
+          "grammarTopicIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule."
       },
       "ExerciseResponseOfClozeConfig": {
         "required": [
@@ -33993,6 +34674,7 @@
           "defaultRequireTypedTest",
           "defaultUseLeitner",
           "executePublic",
+          "grammarTopicIds",
           "grantCount",
           "id",
           "interestTagIds",
@@ -34177,9 +34859,20 @@
               ],
               "format": "int32"
             }
+          },
+          "grammarTopicIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule."
       },
       "ExerciseResponseOfEssayConfig": {
         "required": [
@@ -34187,6 +34880,7 @@
           "defaultRequireTypedTest",
           "defaultUseLeitner",
           "executePublic",
+          "grammarTopicIds",
           "grantCount",
           "id",
           "interestTagIds",
@@ -34371,9 +35065,20 @@
               ],
               "format": "int32"
             }
+          },
+          "grammarTopicIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule."
       },
       "ExerciseResponseOfGrammarConfig": {
         "required": [
@@ -34381,6 +35086,7 @@
           "defaultRequireTypedTest",
           "defaultUseLeitner",
           "executePublic",
+          "grammarTopicIds",
           "grantCount",
           "id",
           "interestTagIds",
@@ -34565,9 +35271,20 @@
               ],
               "format": "int32"
             }
+          },
+          "grammarTopicIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule."
       },
       "ExerciseResponseOfListConfig": {
         "required": [
@@ -34575,6 +35292,7 @@
           "defaultRequireTypedTest",
           "defaultUseLeitner",
           "executePublic",
+          "grammarTopicIds",
           "grantCount",
           "id",
           "interestTagIds",
@@ -34759,9 +35477,20 @@
               ],
               "format": "int32"
             }
+          },
+          "grammarTopicIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule."
       },
       "ExerciseResponseOfListeningConfig": {
         "required": [
@@ -34769,6 +35498,7 @@
           "defaultRequireTypedTest",
           "defaultUseLeitner",
           "executePublic",
+          "grammarTopicIds",
           "grantCount",
           "id",
           "interestTagIds",
@@ -34953,9 +35683,20 @@
               ],
               "format": "int32"
             }
+          },
+          "grammarTopicIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule."
       },
       "ExerciseResponseOfMatchingConfig": {
         "required": [
@@ -34963,6 +35704,7 @@
           "defaultRequireTypedTest",
           "defaultUseLeitner",
           "executePublic",
+          "grammarTopicIds",
           "grantCount",
           "id",
           "interestTagIds",
@@ -35147,9 +35889,20 @@
               ],
               "format": "int32"
             }
+          },
+          "grammarTopicIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule."
       },
       "ExerciseResponseOfReadingConfig": {
         "required": [
@@ -35157,6 +35910,7 @@
           "defaultRequireTypedTest",
           "defaultUseLeitner",
           "executePublic",
+          "grammarTopicIds",
           "grantCount",
           "id",
           "interestTagIds",
@@ -35341,9 +36095,20 @@
               ],
               "format": "int32"
             }
+          },
+          "grammarTopicIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule."
       },
       "ExerciseResponseOfTranslationConfig": {
         "required": [
@@ -35351,6 +36116,7 @@
           "defaultRequireTypedTest",
           "defaultUseLeitner",
           "executePublic",
+          "grammarTopicIds",
           "grantCount",
           "id",
           "interestTagIds",
@@ -35535,9 +36301,20 @@
               ],
               "format": "int32"
             }
+          },
+          "grammarTopicIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule."
       },
       "ExerciseResponseOfVocabularyConfig": {
         "required": [
@@ -35545,6 +36322,7 @@
           "defaultRequireTypedTest",
           "defaultUseLeitner",
           "executePublic",
+          "grammarTopicIds",
           "grantCount",
           "id",
           "interestTagIds",
@@ -35729,9 +36507,20 @@
               ],
               "format": "int32"
             }
+          },
+          "grammarTopicIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule."
       },
       "ExerciseSharingResponse": {
         "required": [
@@ -36217,6 +37006,100 @@
           }
         },
         "description": "A grammar task."
+      },
+      "GrammarTopicResponse": {
+        "required": [
+          "createdAt",
+          "exerciseCount",
+          "id",
+          "isOwn",
+          "label",
+          "slug",
+          "subjectId",
+          "synonyms",
+          "unitCount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Topic id.",
+            "format": "int32"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Stable, subject-qualified key (\u0022englisch-present-perfect\u0022). Immutable."
+          },
+          "label": {
+            "type": "string",
+            "description": "Display name."
+          },
+          "synonyms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Alternative spellings, a search aid."
+          },
+          "color": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional display color (hex)."
+          },
+          "subjectId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The subject the topic belongs to (mandatory).",
+            "format": "int32"
+          },
+          "ownerAdultId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "Creator who owns the topic; \u0060null\u0060 = seeded.",
+            "format": "int32"
+          },
+          "isOwn": {
+            "type": "boolean",
+            "description": "Whether the caller may change or delete the topic."
+          },
+          "exerciseCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "How many exercises carry the topic.",
+            "format": "int32"
+          },
+          "unitCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "How many units carry the topic.",
+            "format": "int32"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Creation time (UTC).",
+            "format": "date-time"
+          }
+        },
+        "description": "A grammar topic of the shared vocabulary. IsOwn = the caller may change and delete it;\na seeded topic (OwnerAdultId\u0060null\u0060) is changeable by nobody. The two counts show\nwhether a topic is in use - a used topic cannot be deleted."
       },
       "GrantPermission": {
         "enum": [
@@ -39455,6 +40338,7 @@
               "exercise_not_assigned",
               "exercise_not_executable",
               "forbidden",
+              "grammar_topic_in_use",
               "http_error",
               "insufficient_coins",
               "insufficient_gems",
@@ -40469,6 +41353,7 @@
         "required": [
           "bookType",
           "createdAt",
+          "grammarTopicIds",
           "id",
           "label",
           "orderIndex",
@@ -40537,6 +41422,17 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "grammarTopicIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
         "description": "A unit of the series including volume. \u0060Topics\u0060, \u0060Grammar\u0060 and \u0060VocabularyNotes\u0060 are the\nmaterial an AI creator must know so as not to invent the unit."
@@ -42651,6 +43547,36 @@
         },
         "description": "Partial change to a profile; omitted fields remain unchanged.\n\nA \u0060null\u0060 means \u0022not specified\u0022 in a PATCH \u2013 so it cannot **clear** a field.\nThe \u0060Clear\u2026\u0060 switches (like \u0060ClearGrade\u0060 on the class test) exist for that: only with them\ncan a profile become subject-neutral, series-independent, or grade-open again.\n\n\u0060ClearSubject\u0060 makes the profile subject-neutral (subject id and name drop away), \u0060ClearSeries\u0060\nmakes it series-independent, \u0060ClearGradeMin\u0060/\u0060ClearGradeMax\u0060 lift the respective grade-level limit.\n\nSending \u0060SubjectId\u0060 alone is enough: the server derives \u0060SubjectName\u0060 from it, so the two\nhalves cannot contradict each other (B-142). A \u0060SubjectName\u0060 sent alongside an id is therefore\nignored \u2013 the free text only carries meaning while *no* catalog subject is bound."
       },
+      "UpdateGrammarTopicDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "New display name."
+          },
+          "synonyms": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "New list of alternative spellings."
+          },
+          "color": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "New display color (hex); empty clears it."
+          }
+        },
+        "description": "Only fields that are set are changed; \u0060Synonyms\u0060 replaces the list entirely. The slug and the subject never change."
+      },
       "UpdateInterestTagDto": {
         "type": "object",
         "properties": {
@@ -43417,9 +44343,23 @@
               "null",
               "string"
             ]
+          },
+          "grammarTopicIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Partial change to a unit; omitted fields remain unchanged."
+        "description": "Partial change to a unit; omitted fields remain unchanged. \u0060GrammarTopicIds\u0060 replaces the list entirely."
       },
       "UpdateShopArticleDto": {
         "type": "object",
@@ -44632,6 +45572,9 @@
     },
     {
       "name": "Creator \u2013 Grammar"
+    },
+    {
+      "name": "Creator \u2013 Grammar Topics"
     },
     {
       "name": "Creator \u2013 Interest Tags"

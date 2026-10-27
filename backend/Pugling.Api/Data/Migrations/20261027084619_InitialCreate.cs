@@ -685,6 +685,37 @@ namespace Pugling.Api.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "GrammarTopics",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Slug = table.Column<string>(type: "TEXT", maxLength: 128, nullable: false),
+                    Label = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Synonyms = table.Column<string>(type: "TEXT", nullable: false),
+                    Color = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    SubjectId = table.Column<int>(type: "INTEGER", nullable: false),
+                    OwnerAdultId = table.Column<int>(type: "INTEGER", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GrammarTopics", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_GrammarTopics_Adults_OwnerAdultId",
+                        column: x => x.OwnerAdultId,
+                        principalTable: "Adults",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_GrammarTopics_Subjects_SubjectId",
+                        column: x => x.SubjectId,
+                        principalTable: "Subjects",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Klassenarbeiten",
                 columns: table => new
                 {
@@ -1098,6 +1129,32 @@ namespace Pugling.Api.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "SeriesUnitGrammarTopics",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    SeriesUnitId = table.Column<int>(type: "INTEGER", nullable: false),
+                    GrammarTopicId = table.Column<int>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SeriesUnitGrammarTopics", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SeriesUnitGrammarTopics_GrammarTopics_GrammarTopicId",
+                        column: x => x.GrammarTopicId,
+                        principalTable: "GrammarTopics",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_SeriesUnitGrammarTopics_SeriesUnits_SeriesUnitId",
+                        column: x => x.SeriesUnitId,
+                        principalTable: "SeriesUnits",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Textbooks",
                 columns: table => new
                 {
@@ -1142,6 +1199,32 @@ namespace Pugling.Api.Data.Migrations
                         principalTable: "TextbookSeries",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ExerciseGrammarTopics",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    ExerciseId = table.Column<int>(type: "INTEGER", nullable: false),
+                    GrammarTopicId = table.Column<int>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ExerciseGrammarTopics", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ExerciseGrammarTopics_Exercises_ExerciseId",
+                        column: x => x.ExerciseId,
+                        principalTable: "Exercises",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ExerciseGrammarTopics_GrammarTopics_GrammarTopicId",
+                        column: x => x.GrammarTopicId,
+                        principalTable: "GrammarTopics",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -2017,6 +2100,17 @@ namespace Pugling.Api.Data.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_ExerciseGrammarTopics_ExerciseId_GrammarTopicId",
+                table: "ExerciseGrammarTopics",
+                columns: new[] { "ExerciseId", "GrammarTopicId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ExerciseGrammarTopics_GrammarTopicId",
+                table: "ExerciseGrammarTopics",
+                column: "GrammarTopicId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ExerciseGrants_CreatorId",
                 table: "ExerciseGrants",
                 column: "CreatorId");
@@ -2095,6 +2189,22 @@ namespace Pugling.Api.Data.Migrations
                 table: "ExerciseTags",
                 columns: new[] { "TagId", "ExerciseId" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GrammarTopics_OwnerAdultId",
+                table: "GrammarTopics",
+                column: "OwnerAdultId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GrammarTopics_Slug",
+                table: "GrammarTopics",
+                column: "Slug",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GrammarTopics_SubjectId",
+                table: "GrammarTopics",
+                column: "SubjectId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_InterestTags_Slug",
@@ -2413,6 +2523,17 @@ namespace Pugling.Api.Data.Migrations
                 column: "PracticeSessionId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_SeriesUnitGrammarTopics_GrammarTopicId",
+                table: "SeriesUnitGrammarTopics",
+                column: "GrammarTopicId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SeriesUnitGrammarTopics_SeriesUnitId_GrammarTopicId",
+                table: "SeriesUnitGrammarTopics",
+                columns: new[] { "SeriesUnitId", "GrammarTopicId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_SeriesUnits_SeriesId_Grade_OrderIndex",
                 table: "SeriesUnits",
                 columns: new[] { "SeriesId", "Grade", "OrderIndex" });
@@ -2626,6 +2747,9 @@ namespace Pugling.Api.Data.Migrations
                 name: "DailyBoxClaims");
 
             migrationBuilder.DropTable(
+                name: "ExerciseGrammarTopics");
+
+            migrationBuilder.DropTable(
                 name: "ExerciseGrants");
 
             migrationBuilder.DropTable(
@@ -2683,6 +2807,9 @@ namespace Pugling.Api.Data.Migrations
                 name: "ReviewEvents");
 
             migrationBuilder.DropTable(
+                name: "SeriesUnitGrammarTopics");
+
+            migrationBuilder.DropTable(
                 name: "ShopPurchases");
 
             migrationBuilder.DropTable(
@@ -2729,6 +2856,9 @@ namespace Pugling.Api.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "PracticeSessions");
+
+            migrationBuilder.DropTable(
+                name: "GrammarTopics");
 
             migrationBuilder.DropTable(
                 name: "ShopListings");

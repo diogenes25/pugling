@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { FieldLabel } from "../components/InfoHint";
 import { ReferenceSelect } from "../components/ReferenceSelect";
 import { StatusBanner } from "../components/StatusBanner";
+import { GrammarTopicPicker } from "../components/GrammarTopicChips";
 import { FREETEXT_SUBJECT, seriesFormValues, seriesPatch, type SeriesFormValues } from "./seriesPatch";
 import { api } from "../lib/api";
 import { publisherOptions, subjectOptions } from "../lib/referenceOptions";
@@ -653,7 +654,7 @@ function UnitPanel({ series, onChanged, onMeldung }: {
                   <tr>
                     <td colSpan={4}>
                       <UnitForm onMeldung={onMeldung}
-                        seriesId={series.id} unit={u}
+                        seriesId={series.id} subjectId={series.subjectId ?? null} unit={u}
                         onDone={() => { setEditing(null); units.reload(); onChanged(); }}
                       />
                     </td>
@@ -677,7 +678,7 @@ function UnitPanel({ series, onChanged, onMeldung }: {
         <div style={{ marginTop: 10 }}>
           <h4 className="h-section" style={{ fontSize: "1rem" }}>Unit hinzufügen</h4>
           <UnitForm onMeldung={onMeldung}
-            seriesId={series.id} defaults={newUnitDefaults(units.data ?? [])}
+            seriesId={series.id} subjectId={series.subjectId ?? null} defaults={newUnitDefaults(units.data ?? [])}
             onDone={() => { units.reload(); onChanged(); }}
           />
         </div>
@@ -692,8 +693,10 @@ const BOOK_TYPES: BookType[] = ["Textbook", "Workbook", "TeacherGuide"];
  * Ein Formular für Anlegen und Ändern. Bewusst eines: die Felder sind identisch, und beim Ändern zählt
  * genau derselbe fachliche Hinweis – der Stoff der Unit ist der Grund, warum es diese Ebene gibt.
  */
-export function UnitForm({ seriesId, unit, defaults, onDone, onMeldung }: {
+export function UnitForm({ seriesId, subjectId, unit, defaults, onDone, onMeldung }: {
   seriesId: number;
+  /** Das Fach der Reihe – die Grammatik-Themen (B-155) stehen nur für dieses zur Wahl; ohne Fach keine. */
+  subjectId: number | null;
   unit?: SeriesUnitResponse;
   defaults?: NewUnitDefaults;
   onDone: () => void;
@@ -713,6 +716,7 @@ export function UnitForm({ seriesId, unit, defaults, onDone, onMeldung }: {
     label: unit?.label ?? "", grade: initial.grade,
     bookType: initial.bookType, topics: unit?.topics ?? [] as string[],
     topicInput: "", grammar: unit?.grammar ?? "", vocabularyNotes: unit?.vocabularyNotes ?? "",
+    grammarTopicIds: unit ? [...unit.grammarTopicIds] : [] as number[],
   });
   const action = useAction();
   const id = unit ? `u${unit.id}` : `new${seriesId}`;
@@ -739,6 +743,7 @@ export function UnitForm({ seriesId, unit, defaults, onDone, onMeldung }: {
       topics: form.topics,
       grammar: form.grammar.trim() || null,
       vocabularyNotes: form.vocabularyNotes.trim() || null,
+      grammarTopicIds: form.grammarTopicIds,
     };
     /*
      * Nach OBEN, und beim Ändern ist das der ganze Punkt (B-187): `onDone()` unten hängt das
@@ -753,7 +758,7 @@ export function UnitForm({ seriesId, unit, defaults, onDone, onMeldung }: {
       ? api.updateSeriesUnit(seriesId, unit.id, dto)
       : api.createSeriesUnit(seriesId, dto)), unit ? "Gespeichert." : "Unit hinzugefügt.");
     if (ok === null) return;
-    if (!unit) setForm((f) => ({ ...f, label: "", topics: [], grammar: "", vocabularyNotes: "" }));
+    if (!unit) setForm((f) => ({ ...f, label: "", topics: [], grammar: "", vocabularyNotes: "", grammarTopicIds: [] }));
     onDone();
   }
 
@@ -840,6 +845,10 @@ export function UnitForm({ seriesId, unit, defaults, onDone, onMeldung }: {
           placeholder="Present perfect vs. simple past"
         />
       </div>
+      {/* Das Thema als Vokabular neben dem Freitext (B-155): der Freitext bleibt für den KI-Creator, die Themen
+          sind das, worüber ein Betreuer die Übungen der Unit später quer über Werke findet. */}
+      <GrammarTopicPicker subjectId={subjectId} topicIds={form.grammarTopicIds}
+        onChange={(ids) => up("grammarTopicIds", ids)} disabled={action.busy} id={`unit-grammar-topics-${id}`} />
       <div className="field">
         <label htmlFor={`unit-vocab-${id}`}>Wortschatz der Unit</label>
         <textarea

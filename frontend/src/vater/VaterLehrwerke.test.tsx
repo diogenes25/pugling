@@ -19,7 +19,7 @@ describe("UnitForm – Themen-Eingabe", () => {
   const chip = (thema: string) => screen.queryByRole("button", { name: `Thema ${thema} entfernen` });
 
   it("verwirft eine angefangene Eingabe bei Escape, statt sie beim Wegklicken anzulegen", () => {
-    render(<UnitForm onMeldung={() => {}} seriesId={1} onDone={() => {}} />);
+    render(<UnitForm onMeldung={() => {}} seriesId={1} subjectId={null} onDone={() => {}} />);
 
     fireEvent.change(feld(), { target: { value: "Halbfertig" } });
     fireEvent.keyDown(feld(), { key: "Escape" });
@@ -30,7 +30,7 @@ describe("UnitForm – Themen-Eingabe", () => {
   });
 
   it("rettet weiterhin eine Eingabe, die ohne Enter verlassen wird", () => {
-    render(<UnitForm onMeldung={() => {}} seriesId={1} onDone={() => {}} />);
+    render(<UnitForm onMeldung={() => {}} seriesId={1} subjectId={null} onDone={() => {}} />);
 
     fireEvent.change(feld(), { target: { value: "Gerettet" } });
     fireEvent.blur(feld());
@@ -39,7 +39,7 @@ describe("UnitForm – Themen-Eingabe", () => {
   });
 
   it("fügt bei Enter hinzu, ohne das Formular abzuschicken", () => {
-    render(<UnitForm onMeldung={() => {}} seriesId={1} onDone={() => {}} />);
+    render(<UnitForm onMeldung={() => {}} seriesId={1} subjectId={null} onDone={() => {}} />);
 
     fireEvent.change(feld(), { target: { value: "Mit Enter" } });
     fireEvent.keyDown(feld(), { key: "Enter" });
@@ -55,10 +55,25 @@ describe("UnitForm – Themen-Eingabe", () => {
  * erbt eine bestehende Unit ohne Band beim blossen Öffnen den Band der Nachbarin – ein stiller Datenwechsel,
  * den erst das Speichern sichtbar machen würde.
  */
+describe("Grammatik-Themen der Unit (B-155)", () => {
+  const unit = (over: Partial<SeriesUnitResponse> = {}): SeriesUnitResponse => ({
+    id: 1, seriesId: 7, label: "Unit 1", orderIndex: 0, grade: 8, bookType: "Workbook",
+    topics: [], createdAt: "2026-08-12T00:00:00Z", grammarTopicIds: [], ...over,
+  });
+
+  it("zeigt die Themen einer bestehenden Unit als Chips – ohne Fach mit Id statt Name", () => {
+    // Ohne Fach lädt der Picker keine Liste; der Chip trägt dann die Id. Mutante: Formular liest
+    // `grammarTopicIds` nicht aus der Unit → kein Chip, nur der Hinweis „Kein Grammatik-Thema“.
+    render(<UnitForm onMeldung={() => {}} seriesId={7} subjectId={null} unit={unit({ grammarTopicIds: [5] })} onDone={() => {}} />);
+    expect(screen.getByRole("button", { name: "Thema „Thema #5“ entfernen" })).toBeTruthy();
+    expect(screen.queryByText(/Kein Grammatik-Thema/)).toBeNull();
+  });
+});
+
 describe("Vorbelegung einer neuen Unit", () => {
   const unit = (over: Partial<SeriesUnitResponse> = {}): SeriesUnitResponse => ({
     id: 1, seriesId: 7, label: "Unit 1", orderIndex: 0, grade: 8, bookType: "Workbook",
-    topics: [], createdAt: "2026-08-12T00:00:00Z", ...over,
+    topics: [], createdAt: "2026-08-12T00:00:00Z", grammarTopicIds: [], ...over,
   });
 
   it("übernimmt Band und Buchtyp der letzten Unit der Reihe", () => {
@@ -83,7 +98,7 @@ describe("Vorbelegung einer neuen Unit", () => {
     // Band, den niemand eingetragen hat.
     render(
       <UnitForm onMeldung={() => {}}
-        seriesId={7} unit={unit({ grade: null, bookType: "Textbook" })}
+        seriesId={7} subjectId={null} unit={unit({ grade: null, bookType: "Textbook" })}
         defaults={{ grade: "8", bookType: "TeacherGuide" }} onDone={() => {}}
       />,
     );
@@ -93,7 +108,7 @@ describe("Vorbelegung einer neuen Unit", () => {
   });
 
   it("belegt ein Anlege-Formular mit Band und Buchtyp vor", () => {
-    render(<UnitForm onMeldung={() => {}} seriesId={7} defaults={{ grade: "8", bookType: "Workbook" }} onDone={() => {}} />);
+    render(<UnitForm onMeldung={() => {}} seriesId={7} subjectId={null} defaults={{ grade: "8", bookType: "Workbook" }} onDone={() => {}} />);
 
     expect(band().value).toBe("8");
     expect(buchtyp().value).toBe("Workbook");

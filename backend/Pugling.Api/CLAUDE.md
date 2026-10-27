@@ -74,6 +74,12 @@ bewusst in **einer** Ebene (`Grade` = Band). Der fachliche Wert steckt in `Topic
 Route `api/v1/creator/textbook-series` (+ `…/{id}/units`): lesen darf jeder Creator, ändern nur der Owner
 (`OwnerAdultId`, Muster `Exercise.AuthorAdultId`, FK `SetNull`).
 
+**Grammatik-Themen** (`GrammarTopic`, B-155) sind das geteilte, **fachgebundene** Vokabular neben dem Freitext
+`SeriesUnit.Grammar`: slug-idempotent (`<fach>-<thema>`), getragen von Übung **und** Unit (zwei Join-Tabellen,
+Fachgrenze → `validation_error`), achte Facette `grammarTopicId` der Übungssuche. Pflege im Owner-Muster von
+`Subject`; ein geseedetes Thema ist für niemanden änderbar; benutzt → `grammar_topic_in_use`. Das Thema stirbt mit
+seinem Fach (Cascade), es steht bewusst nicht in der 409-Sperrliste von B-144.
+
 Das **Kind** zeigt über `Textbook.SeriesId`/`CurrentUnitId` darauf (Titel/`CurrentChapter` bleiben
 Rückfallebene für unkatalogisierte Werke). Eine Unit **muss** zur Reihe des Buchs gehören, sonst
 `validation_error` – sonst bekäme der Creator den Stoff eines fremden Werks.
@@ -157,14 +163,10 @@ Gems → `PointKind.ManualGems`) – Belohnung außerhalb der App und Druckventi
 > `child.ConcurrencyStamp` bumpen. Der Stamp ist der geteilte Serialisierungspunkt des Saldos; ohne Bump
 > führen parallele Käufe zu Doppelspend bzw. negativem Saldo.
 >
-> **Der Stamp ist *nur* das – kein ETag.** `ApiErrors.ConcurrencyConflict` (`concurrency_conflict`) ist für
-> Clients darum **bewusst unerreichbar**: es gibt kein `ETag`/`If-Match`, und für zwei Erwachsene am
-> Küchentisch ist „wer zuletzt schreibt, gewinnt" die richtige Semantik. Den Stamp als Ressourcen-Version
-> auszugeben wäre ein Fehler, kein Fortschritt – er ändert sich, sobald das Kind eine Karte richtig
-> beantwortet, und der Vater bekäme beim Patchen des Kindnamens ein 412, weil das Kind *gelernt* hat.
-> Saldo-Serialisierung und Ressourcen-Version sind zwei Bedeutungen für einen Wert.
-> Gemessen und entschieden in [B-103](../../docs/backlog/B-103-idempotenzschluessel-und-etag.md) – der Code
-> ist also kein toter Code, sondern eine dokumentierte Reserve.
+> **Der Stamp ist *nur* das – kein ETag.** `ApiErrors.ConcurrencyConflict` ist für Clients **bewusst
+> unerreichbar** (kein `ETag`/`If-Match`; „wer zuletzt schreibt, gewinnt" ist am Küchentisch richtig). Den Stamp
+> als Ressourcen-Version auszugeben wäre ein Fehler: er ändert sich, sobald das Kind lernt. Entschieden in
+> [B-103](../../docs/backlog/B-103-idempotenzschluessel-und-etag.md) – dokumentierte Reserve, kein toter Code.
 
 ## Medien & Interessen
 

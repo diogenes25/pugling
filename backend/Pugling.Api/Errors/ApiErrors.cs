@@ -140,6 +140,12 @@ public static class ApiErrors
     /// </summary>
     public static readonly ApiError InterestTagInUse = new("interest_tag_in_use", 409, "Interest tag is in use.");
     /// <summary>
+    /// Grammar topic is carried by exercises or units and cannot be deleted (409, B-155). Same line as
+    /// <see cref="InterestTagInUse"/>: the assignment is authored information nothing else records, so a
+    /// cascade would erase it silently.
+    /// </summary>
+    public static readonly ApiError GrammarTopicInUse = new("grammar_topic_in_use", 409, "Grammar topic is in use.");
+    /// <summary>
     /// Subject is referenced by a child's key result or timetable entry and cannot be deleted (409).
     /// The line runs along whether the reference is REQUIRED, not along ownership: child-owned rows whose
     /// subject is optional (textbook, study plan, class test) keep losing only their assignment, and only

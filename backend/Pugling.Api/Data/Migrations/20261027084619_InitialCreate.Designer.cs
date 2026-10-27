@@ -11,7 +11,7 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Data.Migrations
 {
     [DbContext(typeof(PuglingDbContext))]
-    [Migration("20261026180305_InitialCreate")]
+    [Migration("20261027084619_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -735,6 +735,28 @@ namespace Pugling.Api.Data.Migrations
                     b.ToTable("ExerciseCategories");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.ExerciseGrammarTopic", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ExerciseId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("GrammarTopicId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GrammarTopicId");
+
+                    b.HasIndex("ExerciseId", "GrammarTopicId")
+                        .IsUnique();
+
+                    b.ToTable("ExerciseGrammarTopics");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.ExerciseGrant", b =>
                 {
                     b.Property<int>("Id")
@@ -881,6 +903,51 @@ namespace Pugling.Api.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("ExerciseTags");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.GrammarTopic", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Color")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("OwnerAdultId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SubjectId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Synonyms")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerAdultId");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.HasIndex("SubjectId");
+
+                    b.ToTable("GrammarTopics");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.InterestTag", b =>
@@ -1959,6 +2026,28 @@ namespace Pugling.Api.Data.Migrations
                     b.ToTable("SeriesUnits");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.SeriesUnitGrammarTopic", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("GrammarTopicId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SeriesUnitId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GrammarTopicId");
+
+                    b.HasIndex("SeriesUnitId", "GrammarTopicId")
+                        .IsUnique();
+
+                    b.ToTable("SeriesUnitGrammarTopics");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.ShopArticle", b =>
                 {
                     b.Property<int>("Id")
@@ -2877,6 +2966,25 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("Subject");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.ExerciseGrammarTopic", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Exercise", "Exercise")
+                        .WithMany("GrammarTopicLinks")
+                        .HasForeignKey("ExerciseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pugling.Api.Models.GrammarTopic", "GrammarTopic")
+                        .WithMany("ExerciseLinks")
+                        .HasForeignKey("GrammarTopicId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Exercise");
+
+                    b.Navigation("GrammarTopic");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.ExerciseGrant", b =>
                 {
                     b.HasOne("Pugling.Api.Models.Adult", "Creator")
@@ -2970,6 +3078,24 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("Exercise");
 
                     b.Navigation("Tag");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.GrammarTopic", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Adult", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerAdultId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Pugling.Api.Models.Subject", "Subject")
+                        .WithMany()
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Owner");
+
+                    b.Navigation("Subject");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.ItemProgress", b =>
@@ -3354,6 +3480,25 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("Series");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.SeriesUnitGrammarTopic", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.GrammarTopic", "GrammarTopic")
+                        .WithMany("UnitLinks")
+                        .HasForeignKey("GrammarTopicId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pugling.Api.Models.SeriesUnit", "SeriesUnit")
+                        .WithMany("GrammarTopicLinks")
+                        .HasForeignKey("SeriesUnitId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GrammarTopic");
+
+                    b.Navigation("SeriesUnit");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.ShopArticle", b =>
                 {
                     b.HasOne("Pugling.Api.Models.Adult", "Adult")
@@ -3627,11 +3772,20 @@ namespace Pugling.Api.Data.Migrations
 
             modelBuilder.Entity("Pugling.Api.Models.Exercise", b =>
                 {
+                    b.Navigation("GrammarTopicLinks");
+
                     b.Navigation("Grants");
 
                     b.Navigation("InterestLinks");
 
                     b.Navigation("Ratings");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.GrammarTopic", b =>
+                {
+                    b.Navigation("ExerciseLinks");
+
+                    b.Navigation("UnitLinks");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.InterestTag", b =>
@@ -3677,6 +3831,11 @@ namespace Pugling.Api.Data.Migrations
             modelBuilder.Entity("Pugling.Api.Models.Remark", b =>
                 {
                     b.Navigation("Comments");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.SeriesUnit", b =>
+                {
+                    b.Navigation("GrammarTopicLinks");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.ShopArticle", b =>

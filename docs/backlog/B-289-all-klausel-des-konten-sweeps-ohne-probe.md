@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-285]
+nachgeschaut: "2026-10-27"
 wartet_auf: ""
 ---
 
@@ -31,3 +32,4 @@ muss stehen bleiben, sonst nimmt das Löschen das Login eines nicht verwaisten K
   Fund 1 des frischen Prüfers; `entgangen_bei: B-285`. In Teil 3 mitgenommen (`Defekt`, Freigabe 1, XS, nur Test).
 - **2026-10-27** — gebaut in Lauf E, Teil 3: `Gemischtes_Konto_Mit_Ko_Betreutem_Kind_Bleibt_Stehen` sät das gemischte Konto (Vater + Student-Profil eines ko-betreuten Kindes) über den Kontext; nach dem Löschen des Vaters muss das Konto stehen und das Kind sich darüber anmelden können. Abgrenzung zum Einschluss-Fall: die zweite Betreuerin. **Rote Probe:** `All`-Klausel des Sweeps entfernt → **1 failed** (vorher grün), danach `DeletedAccountTokenTests` + `AdultLifecycleTests` **15/15**.
 - **2026-10-27** — Review (`pugling-reviewer`, [Protokoll](../pm-sitzung-2026-10-27-nacht.md)): 🟡 der umformulierte Summary in `TokenSubjectCheck.cs` behauptete die Folgerung ohne ihre Prämisse → Prämisse wiederhergestellt, Token-Vektor als Restpunkt an B-282 (nur Kommentar/Doku, ohne Zählung). 🟢 Sä-Block doppelt → Helfer `MixIntoAdultAccountAsync` mit Form-Zusicherung (nur Test, ohne Zählung). Danach 25/25. `abgenommen`; Rollengang als Integrationstest. Commit `12eab76`.
+- **2026-10-27** — Nachschau in Lauf E, Teil 4 ([Protokoll](../pm-sitzung-2026-10-27-nacht.md)), frischer Prüfer an einem `git archive` von `12eab76`: PIN „4545“ gegen `LoginChild`/`FindForChildAsync` nachgerechnet, Helfer-Zusicherungen gescoped, Mutante „`All` entfernt“ fällt an Zeile 149 und nirgends früher, `AdultLifecycleTests` bleibt dabei grün (eigenes Kind-Konto) – die neue Probe ist die einzige für die Klausel. **Kein Befund.**

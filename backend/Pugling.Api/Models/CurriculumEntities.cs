@@ -83,7 +83,73 @@ public class SeriesUnit
     public string? Grammar { get; set; }
     /// <summary>Vocabulary note of the unit (word fields or concrete words, comma-separated).</summary>
     public string? VocabularyNotes { get; set; }
+    /// <summary>
+    /// The grammar topics this unit introduces or practices (B-155) - the comparable counterpart of the free
+    /// text <see cref="Grammar"/>, which stays for the AI creator. Carried on the unit as well as on the exercise
+    /// so "when does series X bring the passive?" is answerable for a unit nobody has built an exercise for yet.
+    /// </summary>
+    public List<SeriesUnitGrammarTopic> GrammarTopicLinks { get; set; } = [];
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>
+/// A grammar topic ("present perfect", "passé composé") as a <b>shared</b>, slug-idempotent vocabulary entry
+/// (B-155). Grammar is the one axis where a shared vocabulary converges: the set is finite and independent of
+/// the textbook, so a search for a topic can reach across series and grades - unlike a unit's free-text
+/// <see cref="SeriesUnit.Topics"/>, which are series-specific and never meet.
+/// <para>
+/// Bound to a <see cref="Subject"/> (mandatory): a grammar phenomenon belongs to a language, and the slug is
+/// subject-qualified so "Konjunktiv" in German and in Latin are two entries. Maintained in the owner pattern of
+/// <see cref="Subject"/>: anyone may create, only the owner may change or delete, a seeded topic (no owner) is
+/// changeable by nobody - it carries search semantics in other people's plans.
+/// </para>
+/// </summary>
+public class GrammarTopic
+{
+    public int Id { get; set; }
+    /// <summary>Normalized, globally unique key, qualified by the subject ("englisch-present-perfect"). Immutable.</summary>
+    public string Slug { get; set; } = "";
+    /// <summary>Display name, e.g. "Present perfect".</summary>
+    public string Label { get; set; } = "";
+    /// <summary>
+    /// Alternative spellings ("Perfekt", "have + past participle"), a search aid so the same topic does not end
+    /// up as several entries. Stored as a JSON list (reassign in the controller, no in-place mutation).
+    /// </summary>
+    public List<string> Synonyms { get; set; } = [];
+    /// <summary>Optional display color (hex) for the UI - as with <see cref="InterestTag"/>.</summary>
+    public string? Color { get; set; }
+    /// <summary>The subject the topic belongs to. Mandatory; the topic dies with its subject (Cascade).</summary>
+    public int SubjectId { get; set; }
+    public Subject? Subject { get; set; }
+    /// <summary>Who created the topic and may change it; <c>null</c> = seeded, changeable by nobody.</summary>
+    public int? OwnerAdultId { get; set; }
+    public Adult? Owner { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    /// <summary>Exercises that practice this topic - where the catalog search lands.</summary>
+    public List<ExerciseGrammarTopic> ExerciseLinks { get; set; } = [];
+    /// <summary>Units that introduce or practice this topic - the carrier for the cross-series comparison.</summary>
+    public List<SeriesUnitGrammarTopic> UnitLinks { get; set; } = [];
+}
+
+/// <summary>Exercise ⇢ grammar topic (B-155). An exercise carries a topic at most once; both sides cascade.</summary>
+public class ExerciseGrammarTopic
+{
+    public int Id { get; set; }
+    public int ExerciseId { get; set; }
+    public Exercise? Exercise { get; set; }
+    public int GrammarTopicId { get; set; }
+    public GrammarTopic? GrammarTopic { get; set; }
+}
+
+/// <summary>Unit ⇢ grammar topic (B-155). A unit carries a topic at most once; both sides cascade.</summary>
+public class SeriesUnitGrammarTopic
+{
+    public int Id { get; set; }
+    public int SeriesUnitId { get; set; }
+    public SeriesUnit? SeriesUnit { get; set; }
+    public int GrammarTopicId { get; set; }
+    public GrammarTopic? GrammarTopic { get; set; }
 }
 
 /// <summary>

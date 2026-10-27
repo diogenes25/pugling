@@ -34,6 +34,7 @@ const BASE: ExerciseDetail = {
   interestTagIds: [],
   // Lesefelder (B-12): das Urteil anderer Creator, nie Teil des Vollersatzes.
   averageRating: 4.5, ratingCount: 2,
+  grammarTopicIds: [],
 };
 
 function detailWith(over: Partial<ExerciseDetail> = {}): ExerciseDetail {
@@ -75,6 +76,7 @@ describe("payloadFrom – der Vollersatz-PUT darf nichts verlieren, was das Form
       suggestedBonus: bonus,
       executePublic: false,
       interestTagIds: [3, 7],
+      grammarTopicIds: [],
     });
   });
 
@@ -99,6 +101,17 @@ describe("payloadFrom – der Vollersatz-PUT darf nichts verlieren, was das Form
    * Rote Probe für beide Fälle: in `payloadFrom` wieder `detail.interestTagIds` statt `form.interestTagIds`
    * schreiben — dann behält die Nutzlast den geladenen Stand und ignoriert jede Änderung.
    */
+  /*
+   * B-155: die Grammatik-Themen reisen wie die Einkleidung – aus dem FORMULAR, nicht aus dem geladenen Stand.
+   * Abgrenzung: Formular [5] gegen geladen [5, 8]; Mutante `detail.grammarTopicIds` in `payloadFrom` → [5, 8].
+   */
+  it("schickt die Grammatik-Themen aus dem Formular, auch eine Abwahl", () => {
+    const detail = detailWith({ grammarTopicIds: [5, 8] });
+    expect(payloadFrom(detail, initialForm(detail), {}).grammarTopicIds).toEqual([5, 8]);
+    const form = { ...initialForm(detail), grammarTopicIds: [5] };
+    expect(payloadFrom(detail, form, {}).grammarTopicIds).toEqual([5]);
+  });
+
   it("schickt eine im Formular entfernte Einkleidung als entfernt", () => {
     const detail = detailWith({ interestTagIds: [3, 7] });
     const form = { ...initialForm(detail), interestTagIds: [7] };

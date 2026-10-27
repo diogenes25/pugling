@@ -113,6 +113,16 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
             return new Ziel(c, $"/api/v1/creator/interest-tags/{id}");
         }, []),
 
+        new(typeof(UpdateGrammarTopicDto), "label", "Thema neu", async f =>
+        {
+            var c = await TestApi.AdultAsync(f);
+            var subjectId = await TestApi.IdAsync(await c.PostAsJsonAsync("/api/v1/creator/subjects",
+                new { name = Eindeutig("Patch-Fach") }));
+            var id = await TestApi.IdAsync(await c.PostAsJsonAsync("/api/v1/creator/grammar-topics",
+                new { label = Eindeutig("Present perfect"), subjectId }));
+            return new Ziel(c, $"/api/v1/creator/grammar-topics/{id}");
+        }, []),
+
         new(typeof(UpdateTagDto), "name", "Tag neu", async f =>
         {
             var c = await TestApi.AdultAsync(f);

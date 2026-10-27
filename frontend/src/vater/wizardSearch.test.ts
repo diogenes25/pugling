@@ -10,7 +10,7 @@ import { auswahlNachFilterwechsel, unsichtbareAuswahl, wizardFilterKey, wizardSe
 
 const leer: WizardFilter = {
   subjectId: 4, grade: undefined, schoolType: undefined,
-  search: "", categoryId: "", type: "", source: "",
+  search: "", categoryId: "", type: "", source: "", grammarTopicId: "",
 };
 
 describe("wizardSearchParams – leer heißt „alle“, nicht „leerer Wert“", () => {
@@ -29,6 +29,11 @@ describe("wizardSearchParams – leer heißt „alle“, nicht „leerer Wert“
     expect(p.categoryId).toBe(7);
     expect(p.type).toBe("Cloze");
     expect(p.source).toBe("Green Line 1");
+  });
+
+  it("nimmt das Grammatik-Thema mit, sobald es gesetzt ist – und sonst gar nicht (B-155)", () => {
+    expect(wizardSearchParams({ ...leer, grammarTopicId: 12 }).grammarTopicId).toBe(12);
+    expect("grammarTopicId" in wizardSearchParams(leer) && wizardSearchParams(leer).grammarTopicId !== undefined).toBe(false);
   });
 
   it("trimmt die Freitexte und wirft reine Leerzeichen weg", () => {
@@ -82,10 +87,10 @@ describe("wizardFilterKey – was als andere Suche zählt", () => {
     expect(wizardFilterKey(leer)).toBe(wizardFilterKey({ ...leer }));
   });
 
-  it("ändert sich bei jedem der sieben Kriterien", () => {
+  it("ändert sich bei jedem der acht Kriterien", () => {
     const anders: Partial<WizardFilter>[] = [
       { subjectId: 5 }, { grade: 8 }, { schoolType: "Gymnasium" },
-      { search: "Drill" }, { categoryId: 7 }, { type: "Cloze" }, { source: "Green Line 1" },
+      { search: "Drill" }, { categoryId: 7 }, { type: "Cloze" }, { source: "Green Line 1" }, { grammarTopicId: 12 },
     ];
     for (const feld of anders) {
       expect(wizardFilterKey({ ...leer, ...feld })).not.toBe(wizardFilterKey(leer));
@@ -102,7 +107,7 @@ describe("wizardFilterKey – was als andere Suche zählt", () => {
     // Ehrlich beschriftet: `wizardFilterKey` ruft `wizardSearchParams` ohne `take` auf, und
     // `JSON.stringify` wirft `undefined` ohnehin weg – der Fall bleibt also auch gruen, wenn man das
     // Rest-Spread entfernt. Er dokumentiert die Absicht („eine groessere Seite ist dieselbe Suche"),
-    // beweist sie aber nicht. Der Beleg dafuer ist der Fall darueber, der jedes der sieben Kriterien
+    // beweist sie aber nicht. Der Beleg dafuer ist der Fall darueber, der jedes der acht Kriterien
     // einzeln durchgeht.
     expect(wizardFilterKey({ ...leer, categoryId: 7 })).not.toContain("take");
   });

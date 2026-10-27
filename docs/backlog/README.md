@@ -500,7 +500,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (62)
+### Offen (61)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -546,7 +546,6 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-233](B-233-zwei-sperrmuster-auf-der-lehrwerke-seite.md) | Eine Seite, zwei Sperrmuster: Soll „Pflichtfeld leer" überall gleich aussehen? | Frage | `idee` | P3 | — | frontend | — |
 | [B-234](B-234-dritter-zustand-der-arten-liste.md) | Soll die Arten-Liste einen dritten Zustand bekommen – oder B-174s Entscheidung 3 zurückgenommen werden? | Frage | `idee` | P3 | — | frontend | — |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `idee` | P3 | — | — | — |
-| [B-155](B-155-grammatik-themen-als-tags.md) | Grammatik als Thema, nicht als Freitext | Wunsch | `geschaetzt` | P3 | L | beides | Migration |
 | [B-22](B-22-unit-stoffnotizen-llm.md) | Unit-Stoffnotizen LLM-gestützt befüllen | Wunsch | `geschaetzt` | P3 | M | backend | Migration |
 | [B-85](B-85-i18n-infrastruktur-sohn-arcade-englisch.md) | i18n-Infrastruktur + Sohn-Arcade auf Englisch (erste Teilstufe der Mehrsprachigkeit) | Wunsch | `geschaetzt` | P3 | L | frontend | — |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `ausformuliert` | P3 | L | backend | Migration |
@@ -568,7 +567,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (204)</summary>
+<summary>Abgenommen (205)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -630,6 +629,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-151](B-151-gespeichert-banner-verschwindet-mit-dem-formular.md) | „Gespeichert." ist im Lehrbuch- und Fachlehrer-Formular nie zu sehen | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-153](B-153-bilder-spec-flackert-im-vollen-lauf.md) | `bilder.spec.ts` fällt im vollen Lauf gelegentlich aus, allein ist sie grün | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-154](B-154-katalogseite-bietet-fremde-faecher-zum-umbenennen.md) | Die Katalogseite bietet „Umbenennen" und „Löschen" an jedem Fach an — auch an fremden | Defekt | `abgenommen` | P2 | S | frontend | — |
+| [B-155](B-155-grammatik-themen-als-tags.md) | Grammatik als Thema, nicht als Freitext | Wunsch | `abgenommen` | P3 | L | beides | Migration |
 | [B-156](B-156-ismine-heisst-anderswo-isown.md) | Dasselbe Eigentums-Flag heißt im Vertrag einmal `isMine` und siebenmal `isOwn` | Aufräumen | `abgenommen` | P3 | S | beides | Vertrag |
 | [B-157](B-157-kategorien-unter-fremdem-fach-ungeschuetzt.md) | Das Fach ist geschützt, seine „Arten" sind es nicht | Defekt | `abgenommen` | P2 | S | beides | — |
 | [B-158](B-158-subjectscontroller-drei-kleine-reste.md) | Drei kleine Reste im `SubjectsController` | Aufräumen | `abgenommen` | P3 | S | backend | — |
@@ -791,7 +791,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (69)
 
-**Nachgeschaut: 201 von 204 abgenommenen** — und in 57 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 3 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 204 von 205 abgenommenen** — und in 57 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 1 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -866,16 +866,14 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-289](B-289-all-klausel-des-konten-sweeps-ohne-probe.md) | Die `All`-Hälfte des Konten-Sweeps in `AdultsController.Delete` hat keine rote Probe | [B-285] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (3) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (1) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-287](B-287-fokus-test-prueft-den-ausgangszustand.md) | Der Fokus-Test in `LetterTiles.test.tsx` prüft eine Zusicherung, die nie fallen kann |
-| [B-288](B-288-pruefungstest-misst-neu-je-position.md) | Der Prüfungstest zu „Buchstaben ordnen“ verspricht „neu je Versuch“, misst aber „neu je Position“ |
-| [B-289](B-289-all-klausel-des-konten-sweeps-ohne-probe.md) | Die `All`-Hälfte des Konten-Sweeps in `AdultsController.Delete` hat keine rote Probe |
+| [B-155](B-155-grammatik-themen-als-tags.md) | Grammatik als Thema, nicht als Freitext |
 
 </details>
 

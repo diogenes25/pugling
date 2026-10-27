@@ -166,6 +166,13 @@ public class Exercise
     /// </summary>
     public List<ExerciseInterestLink> InterestLinks { get; set; } = [];
 
+    /// <summary>
+    /// The grammar topics this exercise practices (B-155) - the eighth search facet. Pre-filled from the unit's
+    /// topics when the exercise is created, never inherited: in a mixed unit an exercise on the passive must not
+    /// silently count as "present perfect" too.
+    /// </summary>
+    public List<ExerciseGrammarTopic> GrammarTopicLinks { get; set; } = [];
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 

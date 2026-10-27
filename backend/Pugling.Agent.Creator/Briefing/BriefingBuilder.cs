@@ -69,7 +69,8 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
             RequiredWords: requiredWords,
             // The same `--general` reading as one line above: what the briefing carries decides, not what
             // was typed - so a general exercise built from a child's material is dressed by --interests.
-            InterestTagIds: await ResolveInterestTagIdsAsync(request, request.General ? null : child, ct));
+            InterestTagIds: await ResolveInterestTagIdsAsync(request, request.General ? null : child, ct),
+            GrammarTopicIds: targetUnit.GrammarTopicIds);
     }
 
     /// <summary>

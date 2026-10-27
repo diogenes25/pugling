@@ -49,12 +49,17 @@ public record UpdateTextbookSeriesDto(string? Name, int? PublisherId, string? Su
 /// material an AI creator must know so as not to invent the unit.
 /// </summary>
 public record SeriesUnitResponse(int Id, int SeriesId, int? Grade, int OrderIndex, string Label,
-    BookType BookType, List<string> Topics, string? Grammar, string? VocabularyNotes, DateTime CreatedAt);
+    BookType BookType, List<string> Topics, string? Grammar, string? VocabularyNotes, DateTime CreatedAt,
+    IReadOnlyList<int> GrammarTopicIds);
 
-/// <summary>Input for creating a unit; without <c>OrderIndex</c> it is appended at the end.</summary>
+/// <summary>
+/// Input for creating a unit; without <c>OrderIndex</c> it is appended at the end. <c>GrammarTopicIds</c> (B-155)
+/// are the shared grammar topics of the unit - of the series' subject, otherwise <c>validation_error</c>; the free
+/// text <c>Grammar</c> stays beside them.
+/// </summary>
 public record CreateSeriesUnitDto(string Label, int? Grade, int? OrderIndex, BookType? BookType,
-    List<string>? Topics, string? Grammar, string? VocabularyNotes);
+    List<string>? Topics, string? Grammar, string? VocabularyNotes, List<int>? GrammarTopicIds = null);
 
-/// <summary>Partial change to a unit; omitted fields remain unchanged.</summary>
+/// <summary>Partial change to a unit; omitted fields remain unchanged. <c>GrammarTopicIds</c> replaces the list entirely.</summary>
 public record UpdateSeriesUnitDto(string? Label, int? Grade, int? OrderIndex, BookType? BookType,
-    List<string>? Topics, string? Grammar, string? VocabularyNotes);
+    List<string>? Topics, string? Grammar, string? VocabularyNotes, List<int>? GrammarTopicIds = null);

@@ -286,11 +286,11 @@ public sealed class CreatorApi(HttpClient http)
     public Task<IReadOnlyList<ExerciseSummary>> SearchExercisesAsync(int? subjectId = null, int? seriesUnitId = null,
         int? grade = null, SchoolTypes? schoolType = null, int? categoryId = null, string? type = null,
         string? search = null, string? source = null, bool? mineOnly = null, int skip = 0, int take = 50,
-        CancellationToken ct = default) =>
+        int? grammarTopicId = null, CancellationToken ct = default) =>
         Http.GetAsync<IReadOnlyList<ExerciseSummary>>($"{Root}/exercises" + PuglingHttp.Query(
             ("subjectId", subjectId), ("seriesUnitId", seriesUnitId), ("grade", grade), ("schoolType", schoolType),
             ("categoryId", categoryId), ("type", type), ("search", search), ("source", source),
-            ("mineOnly", mineOnly), ("skip", skip), ("take", take)), ct);
+            ("mineOnly", mineOnly), ("grammarTopicId", grammarTopicId), ("skip", skip), ("take", take)), ct);
 
     /// <summary>Exercise detail including raw config and own permissions (<c>isOwn</c>/<c>isOwner</c>).</summary>
     public Task<ExerciseDetail> GetExerciseDetailAsync(int exerciseId, CancellationToken ct = default) =>
@@ -366,6 +366,30 @@ public sealed class CreatorApi(HttpClient http)
     /// <summary>Deletes a tag along with its links to images and children.</summary>
     public Task DeleteInterestTagAsync(int tagId, CancellationToken ct = default) =>
         Http.SendAsync(HttpMethod.Delete, $"{Root}/interest-tags/{tagId}", null, ct);
+
+    // ---------------------------------------------------------------- Grammar topics (B-155)
+
+    /// <summary>The shared grammar topics, optionally of one subject or narrowed by a search term.</summary>
+    public Task<IReadOnlyList<GrammarTopicResponse>> ListGrammarTopicsAsync(int? subjectId = null, string? search = null,
+        int skip = 0, int take = 200, CancellationToken ct = default) =>
+        Http.GetAsync<IReadOnlyList<GrammarTopicResponse>>($"{Root}/grammar-topics" + PuglingHttp.Query(
+            ("subjectId", subjectId), ("search", search), ("skip", skip), ("take", take)), ct);
+
+    /// <summary>A grammar topic by id.</summary>
+    public Task<GrammarTopicResponse> GetGrammarTopicAsync(int topicId, CancellationToken ct = default) =>
+        Http.GetAsync<GrammarTopicResponse>($"{Root}/grammar-topics/{topicId}", ct);
+
+    /// <summary>Creates a grammar topic; a slug already taken returns the existing entry (idempotent).</summary>
+    public Task<GrammarTopicResponse> CreateGrammarTopicAsync(CreateGrammarTopicDto dto, CancellationToken ct = default) =>
+        Http.PostAsync<GrammarTopicResponse>($"{Root}/grammar-topics", dto, ct);
+
+    /// <summary>Updates label, synonyms or color of an own grammar topic. Slug and subject stay immutable.</summary>
+    public Task<GrammarTopicResponse> UpdateGrammarTopicAsync(int topicId, UpdateGrammarTopicDto dto, CancellationToken ct = default) =>
+        Http.PatchAsync<GrammarTopicResponse>($"{Root}/grammar-topics/{topicId}", dto, ct);
+
+    /// <summary>Deletes an own, unused grammar topic.</summary>
+    public Task DeleteGrammarTopicAsync(int topicId, CancellationToken ct = default) =>
+        Http.SendAsync(HttpMethod.Delete, $"{Root}/grammar-topics/{topicId}", null, ct);
 
     // ---------------------------------------------------------------- Media store
 

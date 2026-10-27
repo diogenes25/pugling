@@ -74,6 +74,8 @@ export interface ExerciseSearchParams {
   source?: string;
   /** Nur eigene Übungen des Vaters (Verwaltung statt Entdeckung der geteilten Bibliothek). */
   mineOnly?: boolean;
+  /** Nur Übungen zu diesem Grammatik-Thema (B-155) – die Facette, die über Reihen und Klassen hinweg trifft. */
+  grammarTopicId?: number;
   /** Sortierschlüssel + Richtung (Server-Whitelist); Paginierung per skip/take. */
   sort?: ExerciseSortKey;
   dir?: SortDir;
@@ -151,6 +153,11 @@ export interface CreateExercisePayload {
    * sonst räumt ein Klick auf „Speichern" weg, was der KI-Creator gerade eingetragen hat.
    */
   interestTagIds?: number[] | null;
+  /**
+   * Grammatik-Themen, die die Übung übt (B-155) – Ids des fachgebundenen Vokabulars. Dieselbe Vollersatz-Falle wie
+   * `interestTagIds`: ein Weglassen im PUT nimmt sie der Übung.
+   */
+  grammarTopicIds?: number[] | null;
 }
 
 /**

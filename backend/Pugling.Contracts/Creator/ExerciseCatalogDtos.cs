@@ -42,6 +42,8 @@ public record ExerciseSummary(int Id, int SeriesId, int SeriesUnitId, int? Subje
 /// belongs in the <i>query</i> anyway, not in a list the client scans.
 ///
 /// <c>AverageRating</c>/<c>RatingCount</c>: the same aggregate as on <see cref="ExerciseSummary"/> (B-12).
+/// <c>GrammarTopicIds</c> (B-155): the topics the exercise practices, ascending like the dressing - the editor
+/// reads them back here and the PUT has to carry them, or the full replacement drops them.
 /// </summary>
 public record ExerciseDetail(int Id, int SeriesId, int SeriesUnitId, string SeriesUnitLabel, int? SubjectId, string SubjectName,
     string Type, string Title, int OrderIndex, int RewardPoints, int? GradeMin, int? GradeMax,
@@ -50,7 +52,7 @@ public record ExerciseDetail(int Id, int SeriesId, int SeriesUnitId, string Seri
     int? AuthorAdultId, string? AuthorName, bool IsOwn, bool IsOwner, bool ExecutePublic, int GrantCount,
     JsonElement Config, string? Description,
     bool DefaultUseLeitner, bool DefaultRequireTypedTest, IReadOnlyList<int> InterestTagIds,
-    double? AverageRating, int RatingCount);
+    double? AverageRating, int RatingCount, IReadOnlyList<int> GrammarTopicIds);
 
 /// <summary>A study plan in which an exercise is used as a position.</summary>
 public record PlanUsage(int PlanId, string PlanTitle, int ChildId, string ChildName);

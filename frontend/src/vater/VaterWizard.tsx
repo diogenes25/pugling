@@ -15,7 +15,7 @@ import { auswahlNachFilterwechsel, unsichtbareAuswahl, wizardFilterKey, wizardSe
 import { newWizardProgress, runWizardFinish } from "./wizardFinish";
 import type { WizardProgress } from "./wizardFinish";
 import type {
-  CategoryResponse, ChildResponse, ExerciseSummary, Paged, SchoolType, SubjectResponse,
+  CategoryResponse, ChildResponse, ExerciseSummary, GrammarTopicResponse, Paged, SchoolType, SubjectResponse,
 } from "../lib/types";
 
 /*
@@ -80,6 +80,8 @@ export function VaterWizard() {
   const [categoryId, setCategoryId] = useState<number | "">("");
   const [typeKey, setTypeKey] = useState("");
   const [sourceSearch, setSourceSearch] = useState("");
+  // Die achte Facette (B-155): ein Thema des gewählten Fachs; wie die Art fällt sie mit dem Fachwechsel.
+  const [grammarTopicId, setGrammarTopicId] = useState<number | "">("");
   const [selected, setSelected] = useState<number[]>([]);
   /** Sagt, dass ein Filterwechsel die Auswahl verworfen hat – nur wenn wirklich etwas wegfiel (B-161). */
   const [auswahlHinweis, setAuswahlHinweis] = useState<string | null>(null);
@@ -126,14 +128,17 @@ export function VaterWizard() {
     () => (subjectId === "" ? Promise.resolve({ items: [], total: 0 })
       : api.searchExercises(wizardSearchParams({
         subjectId: Number(subjectId), grade: effectiveGrade, schoolType: effectiveSchoolType,
-        search: contentSearch, categoryId, type: typeKey, source: sourceSearch,
+        search: contentSearch, categoryId, type: typeKey, source: sourceSearch, grammarTopicId,
       }))),
-    [subjectId, effectiveGrade, effectiveSchoolType, contentSearch, categoryId, typeKey, sourceSearch],
+    [subjectId, effectiveGrade, effectiveSchoolType, contentSearch, categoryId, typeKey, sourceSearch, grammarTopicId],
   );
 
   // Arten des gewählten Fachs; die Liste hängt am Fach, nicht am Katalog insgesamt.
   const categories = useAsync<CategoryResponse[]>(
     () => (subjectId === "" ? Promise.resolve([]) : api.categories(Number(subjectId))), [subjectId]);
+  // Grammatik-Themen des gewählten Fachs (B-155); die Liste hängt am Fach wie die Arten.
+  const grammarTopics = useAsync<GrammarTopicResponse[]>(
+    () => (subjectId === "" ? Promise.resolve([]) : api.grammarTopics(Number(subjectId))), [subjectId]);
   // Übungstypen kommen aus dem Server-Manifest, nie aus einer Tabelle im Frontend (frontend/CLAUDE.md).
   const types = useExerciseTypes();
 
@@ -175,7 +180,7 @@ export function VaterWizard() {
    */
   const filterKey = subjectId === "" ? "" : wizardFilterKey({
     subjectId: Number(subjectId), grade: effectiveGrade, schoolType: effectiveSchoolType,
-    search: contentSearch, categoryId, type: typeKey, source: sourceSearch,
+    search: contentSearch, categoryId, type: typeKey, source: sourceSearch, grammarTopicId,
   });
   /*
    * Der Schlüssel, für den die aktuelle Auswahl gilt. Nach dem Effekt trägt die Ref immer den *aktuellen*
@@ -296,7 +301,7 @@ export function VaterWizard() {
     try {
       const alle = await api.searchExercises(wizardSearchParams({
         subjectId: Number(subjectId), grade: effectiveGrade, schoolType: effectiveSchoolType,
-        search: contentSearch, categoryId, type: typeKey, source: sourceSearch,
+        search: contentSearch, categoryId, type: typeKey, source: sourceSearch, grammarTopicId,
       }, 500));
       // `merken` darf auch bei veralteter Antwort laufen - ein Metadaten-Vorrat schadet nie.
       merken(alle.items);
@@ -465,6 +470,7 @@ export function VaterWizard() {
                 // Typ und Quelle bleiben: der Typ kommt aus dem globalen Manifest, die Quelle ist Freitext
                 // über Lehrwerke – beides fachunabhängig, ein Reset würde Eingabe wegwerfen.
                 setCategoryId("");
+                setGrammarTopicId("");
                 setSubjectId(e.target.value === "" ? "" : Number(e.target.value));
               }}>
                 <option value="">– Fach wählen –</option>
@@ -554,6 +560,14 @@ export function VaterWizard() {
                 onChange={(e) => setCategoryId(e.target.value === "" ? "" : Number(e.target.value))}>
                 <option value="">– alle Arten –</option>
                 {categories.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+            <div className="field" style={{ maxWidth: 200 }}>
+              <label htmlFor="wiz-grammar-topic">Grammatik-Thema</label>
+              <select id="wiz-grammar-topic" value={grammarTopicId}
+                onChange={(e) => setGrammarTopicId(e.target.value === "" ? "" : Number(e.target.value))}>
+                <option value="">– alle Themen –</option>
+                {grammarTopics.data?.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
               </select>
             </div>
             <div className="field" style={{ maxWidth: 180 }}>

@@ -146,6 +146,14 @@ export const FIELD_HELP = {
       + "der KI-Creator sie ein; hier siehst und korrigierst du sie. Ein Stichwort, das Übungen "
       + "einkleidet, lässt sich nicht mehr löschen.",
   },
+  grammarTopics: {
+    title: "Grammatik-Themen",
+    text: "Welche Grammatik die Übung übt – aus dem geteilten Vokabular des Fachs („Present perfect“, „Passé "
+      + "composé“), nicht als Freitext. Nur darüber findet ein Betreuer beim Zusammenstellen Übungen zu einem "
+      + "Thema über Lehrwerke und Klassen hinweg. Fehlt ein Thema, lege es hier an; ein zweites Mal mit demselben "
+      + "Namen liefert das bestehende. Eine neue Übung übernimmt die Themen ihrer Unit als Vorschlag – abwählen "
+      + "geht, vererbt wird nichts.",
+  },
   exerciseSource: {
     title: "Quelle (Lehrbuch)",
     text: "Woher der Stoff stammt, z. B. „Access 5, Unit 3“. Frei formulierbar – der Filter über den "
