@@ -66,8 +66,8 @@ public class AdultLifecycleTests(PuglingWebAppFactory factory) : IClassFixture<P
         // And the mother is still a supervisor - she did not lose the child along with them.
         var mutter = await TestApi.AdultAsync(factory, mutterId, "5109");
         Assert.Equal(HttpStatusCode.OK, (await mutter.GetAsync($"/api/v1/supervisor/children/{childId}")).StatusCode);
-        // The child's login survives too (B-285): the account sweep is scoped to orphaned children, not to
-        // every child the leaving adult supervised. Red if that scope widens.
+        // The child's login survives too - a guard added with B-285, not a probe of its defect: the account sweep
+        // is scoped to orphaned children, not to every child the leaving adult supervised. Red if that scope widens.
         var kind = await TestApi.ChildAsync(factory, childId, "5110");
         Assert.Equal(HttpStatusCode.OK, (await kind.GetAsync("/api/v1/auth/me")).StatusCode);
     }

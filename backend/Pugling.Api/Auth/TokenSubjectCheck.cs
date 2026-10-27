@@ -13,9 +13,11 @@ namespace Pugling.Api.Auth;
 /// need the same guard. The price is one primary-key lookup per authenticated request.
 /// </para>
 /// <para>
-/// The account is the right thing to look up: deleting an adult or a child removes every account whose profiles all
-/// point at it (<c>AdultsController.Delete</c>, <c>ChildrenController.Delete</c>), and no account today carries
-/// profiles of two different subjects - so a live account means live <c>fid</c>/<c>cid</c>.
+/// The account is the right thing to look up: deleting a child removes every account whose profiles all point at
+/// it (<c>ChildrenController.Delete</c>), deleting an adult removes every account whose profiles all point at the
+/// adult or at the children orphaned with them (<c>AdultsController.Delete</c>, B-285). Because no creation path
+/// builds an account with profiles of two different subjects, a live account means live <c>fid</c>/<c>cid</c>; a
+/// mixed account that survives a deletion would carry a stale <c>fid</c> in a pre-issued token (see B-282).
 /// </para>
 /// </summary>
 public static class TokenSubjectCheck

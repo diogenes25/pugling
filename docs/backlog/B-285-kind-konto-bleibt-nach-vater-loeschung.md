@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-245]
+nachgeschaut: "2026-10-27"
 wartet_auf: ""
 ---
 
@@ -61,3 +62,4 @@ Muster von `ChildrenController.Delete`, ein Testfall.
   (Muster `ChildrenController.Delete`). Danach `DeletedAccountTokenTests` + `AdultLifecycleTests` +
   `PinSingleSourceTests` **23/23 `exit=0`**.
 - **2026-10-27** — Review (`pugling-reviewer`, [Protokoll](../pm-sitzung-2026-10-27-nacht.md)), Zähler 2: **🟡 (1)** Das Überleben des Kontos eines ko-betreuten Kindes war nicht zugesichert – Zeile in `Loeschen_Laesst_Das_Ko_Betreute_Kind_Stehen`; Mutante „Konten aller betreuten Kinder“ → **3 failed** (darunter dieser Fall). **🟡 (2)** Ein gemischtes Konto (Erwachsenen- und Student-Profil auf einem Login; vom Modell erlaubt, von keinem Anlege-Pfad gebaut) fiel durch beide getrennten Abfragen – jetzt **ein** Prädikat für Erwachsenen und verwaisende Kinder; neuer Fall `Gemischtes_Konto_…` sät das gemischte Konto über den Kontext. Rote Probe gegen die getrennten Abfragen: **1 failed**, danach 14/14. (Ein erster Lauf fiel an einer falschen Aufbau-Zusicherung – 3 statt 2 Profile, der Vater trägt Creator *und* Supervisor – und ist keine Probe.) 🟢 ohne Zählung: Summary nennt jetzt auch die Kinder-Konten; die Leer-Abfrage bleibt der Symmetrie wegen. Außerhalb des Diffs notiert: `ChildrenController.Delete` hat dieselbe latente Lücke für gemischte Konten → als Restpunkt an [B-282](B-282-login-haertung-restpunkte.md). **Rollengang:** kein Browser; die drei Fälle in `DeletedAccountTokenTests` sind der Weg (Vater löscht sich → Kind-Token 401) und das Gegenstück (Ko-Betreuung bleibt). Suite **951/951 `exit=0`**. `abgenommen`; Commit `01631ad`.
+- **2026-10-27** — Nachschau in Lauf E, Teil 3 ([Protokoll](../pm-sitzung-2026-10-27-nacht.md)), frischer Prüfer am Commit `01631ad` mit einem Wegwerf-Programm gegen In-Memory-SQLite: SQL-Übersetzung des Prädikats (leere Liste faltet zu `false`, keine Dreiwertigkeits-Falle), Lehrer/Admin/Doppelrolle „alleiniger Betreuer von A + Ko-Betreuer von B“ nachgerechnet, kein Wiederbelebungs-Pfad für ein gelöschtes Kind-Konto. **Ein Test-Entgleiten:** die `All`-Hälfte des Sweeps hat keine rote Probe → [B-289](B-289-all-klausel-des-konten-sweeps-ohne-probe.md) (`entgangen_bei: B-285`). Drei veraltete Kommentare berichtigt (`TokenSubjectCheck.cs`, `TeacherAccountTests.cs`, `AdultLifecycleTests.cs`); hypothetische Restlücke (gemischtes Konto behält E-Mail und PIN des Gelöschten) an B-282.

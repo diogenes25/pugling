@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/idee, bereich/test, bereich/frontend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/test, bereich/frontend, rolle/student]
 aliases: [Fokus-Test prüft den Ausgangszustand]
-status: idee
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
+groesse: XS
 wo: frontend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: Nachschau zu Lauf E Teil 1 (docs/pm-sitzung-2026-10-27-nacht.md)
 unverifiziert: false
 grund: ""
@@ -35,3 +35,6 @@ beschränken.
 - **2026-10-27** — angelegt aus der Nachschau zu Lauf E Teil 1 (`4e50370`) ([Protokoll](../pm-sitzung-2026-10-27-nacht.md)),
   Fund 1 des frischen Prüfers; `entgangen_bei: B-05`. Dieselbe Fehlerklasse, die CLAUDE.md bereits als viermal gemessen
   führt – jetzt fünfmal, und wieder von einem Reviewer gefunden, von keinem Tor.
+- **2026-10-27** — in Lauf E, Teil 3, autonom gegrillt (Freigabe 1, `Defekt`), geschätzt (XS, nur Test) und gebaut: Der Fall legt vor dem Kartenwechsel Kachel 0 und hält den Wert über einen kleinen Harness (`MitWert`, referenzstabile Karten) – nur der Kartenwechsel darf zurücksetzen. **Rote Probe:** Render-Reset entfernt → **2 failed** (dieser Fall und der Reset-Fall; vorher 1), danach `LetterTiles.test.tsx` **10/10**.
+- **2026-10-27** — Review (`frontend-reviewer`, [Protokoll](../pm-sitzung-2026-10-27-nacht.md)): sauber; Ablauf nachgerechnet (der `value === ""`-Effekt greift nicht, weil der Wert „b“ bleibt – nur der Render-Reset leert). 🟢 Kommentar zur Referenzstabilität begründete die Konstanten falsch → umformuliert, ohne Zählung. Vitest **454/454**.
+- **2026-10-27** — `abgenommen` in Lauf E, Teil 3; Rollengang als Komponententest (kein sichtbarer Weg ändert sich). Commit siehe Protokoll.

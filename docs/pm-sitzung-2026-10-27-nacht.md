@@ -163,3 +163,59 @@ Vorschlag **(G)** aus Teil 1 (Suite-Invariante „kein Konto ohne Profil“) hä
 gezeigt; er bleibt stehen.
 
 **Commit:** `01631ad` (nicht gepusht).
+
+## Lauf E, Teil 3 — Nachschau-Defekte B-287, B-288 (Tests), Zähler 0
+
+**Sprint-Ziel:** *Die beiden Tests zu „Buchstaben ordnen“ beweisen, was ihr Name verspricht: der Fokus-Fall fällt ohne
+Reset, der Prüfungsfall fällt mit einem positionsgebundenen Seed.* Umfang: [B-287](backlog/B-287-fokus-test-prueft-den-ausgangszustand.md),
+[B-288](backlog/B-288-pruefungstest-misst-neu-je-position.md) (`Defekt`, Freigabe 1, je XS, nur Tests). **Zähler: 0.**
+
+**Entwickler-Brief:** Kein Verhalten ändert sich. B-287: vor dem Kartenwechsel eine Kachel legen und den Wert halten,
+damit allein der Kartenwechsel zurücksetzt. B-288: den ersten Versuch abschließen und den zweiten auf **derselben**
+Position starten.
+
+### Iteration
+
+- **B-287:** Harness `MitWert` mit referenzstabilen Karten; Mutante „kein Render-Reset“ → **2 failed** (vorher fiel nur
+  der Reset-Fall), danach **10/10**.
+- **B-288:** `/answer` + `/submit`, zweiter Start auf derselben Position mit zugesicherter neuer Id; Mutante Seed aus
+  `positionId` → **1 failed** (vorher grün), danach **12/12**.
+
+### Review (nacheinander je Bereich)
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| – | `pugling-reviewer` (B-288) 🟡 | Kommentar als Umbau-Erzählung | umformuliert | nein (Kommentar) |
+| – | `pugling-reviewer` (B-288) 🟢 | Der ältere Übungs-Test hat denselben blinden Fleck, seine Begründung trug nicht | nachgezogen: zweite Sitzung auf derselben Position vor dem Review; Mutante Seed aus `exercise.Id` → **1 failed**, danach 12/12 | nein (Freigabe 10) |
+| – | `frontend-reviewer` (B-287) 🟢 | Kommentar begründete die Konstanten falsch | umformuliert | nein |
+| – | `pugling-reviewer` (B-289) 🟡 | Summary in `TokenSubjectCheck.cs` ohne seine Prämisse | Prämisse wiederhergestellt, Token-Vektor an B-282 | nein (Kommentar) |
+| – | `pugling-reviewer` (B-289) 🟢 | Sä-Block doppelt | Helfer mit Form-Zusicherung | nein (Freigabe 10) |
+
+**Zähler: 0.** Dazu aus der Nachschau zu Teil 2 (unten) der dritte Test-Defekt **B-289** in diesen Sprint gezogen:
+Ausschluss-Fall für die `All`-Klausel des Konten-Sweeps, Mutante „`All` entfernt“ → **1 failed**. Stand: Backend
+**952/952 `exit=0`**, Vitest **454/454**.
+
+### Rollengang / Abnahme
+
+Drei Test-Defekte, kein Verhalten ändert sich: der Rollengang ist der jeweilige Test selbst (Komponententest,
+zwei Integrationstests), die Rollen sind Zeugen über die Suiten. B-287, B-288, B-289 `abgenommen`.
+
+### Retrospektive
+
+**Nachschau:** Teil 2 (`01631ad`, B-285) von einem frischen Prüfer mit einem Wegwerf-Programm gegen In-Memory-SQLite
+geprüft (SQL-Übersetzung belegt, Lehrer/Admin/Doppelrolle nachgerechnet, kein Wiederbelebungs-Pfad). **Ein
+Test-Entgleiten:** die `All`-Hälfte des Sweeps ohne rote Probe → [B-289](backlog/B-289-all-klausel-des-konten-sweeps-ohne-probe.md)
+(`entgangen_bei: B-285`), in diesem Teil behoben. Drei veraltete Kommentare berichtigt, zwei hypothetische
+Restlücken an B-282. `nachgeschaut` an B-285 gesetzt. Index nach der Abnahme: siehe README (B-287, B-288, B-289
+stehen für die nächste Nachschau an).
+
+**Was die eigenen Tore durchgelassen haben:** zum dritten Mal in diesem Lauf eine Zusicherung, die auf *einer* Seite
+einer Unterscheidung steht (Einschluss ohne Ausschluss, „neu je Versuch“ auf zwei Positionen, Fokus ohne gelegte
+Kachel). Der Pflichtschritt aus pm-loop Step 5 fragt „welche Mutante macht den Fall rot“ – er fragt nicht „welche
+zweite Mutante bleibt grün“. Alle drei Funde kamen von Prüfern, die den Code nicht geschrieben hatten.
+
+**Vorschlag, nicht gelandet (Freigabe 3):** **(H)** aus Teil 2 bleibt und wird schärfer: die Review-Agenten fragen
+je neuer Zusicherung nach der Mutante, die sie rot macht, **und** nach der naheliegenden Mutante, die grün bliebe
+(die andere Seite derselben Unterscheidung). Kein Tor; kein Mechanismus liest Testdaten.
+
+**Commit:** folgt unten.

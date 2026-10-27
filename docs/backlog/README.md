@@ -500,7 +500,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (64)
+### Offen (62)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -540,8 +540,6 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-281](B-281-pin-felder-pruefen-mindestlaenge-im-ui.md) | Eine zu kurze PIN meldet die Oberfläche auf Englisch | Defekt | `idee` | P3 | — | frontend | — |
 | [B-282](B-282-login-haertung-restpunkte.md) | Restpunkte der Login-Härtung (NP-3) | Defekt | `idee` | P3 | — | backend | — |
 | [B-284](B-284-doppeltes-enter-ueberspringt-karte.md) | Ein doppeltes Enter während der Prüfung überspringt eine Karte | Defekt | `idee` | P3 | — | frontend | — |
-| [B-287](B-287-fokus-test-prueft-den-ausgangszustand.md) | Der Fokus-Test in `LetterTiles.test.tsx` prüft eine Zusicherung, die nie fallen kann | Defekt | `idee` | P3 | — | frontend | — |
-| [B-288](B-288-pruefungstest-misst-neu-je-position.md) | Der Prüfungstest zu „Buchstaben ordnen“ verspricht „neu je Versuch“, misst aber „neu je Position“ | Defekt | `idee` | P3 | — | backend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-231](B-231-fokus-ohne-fehlerkasten.md) | Wohin gehört der Fokus, wenn ein Knopf ohne Fehlerkasten gesperrt wird? | Frage | `idee` | P3 | — | frontend | — |
 | [B-232](B-232-bestaetigung-ausserhalb-des-sichtfelds.md) | Soll eine Bestätigung zum Meldungsplatz scrollen, wenn er weit vom Knopf entfernt liegt? | Frage | `idee` | P3 | — | frontend | — |
@@ -570,7 +568,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (201)</summary>
+<summary>Abgenommen (204)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -719,6 +717,9 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-28](B-28-login-name-sequenziell.md) | Sequenzielle IDs als Login-Name | Wunsch | `abgenommen` | P3 | S | backend | — |
 | [B-283](B-283-buchstaben-ordnen-testluecken.md) | Buchstaben ordnen: neue Anordnung je Prüfungsversuch und die Vorschau sind ungetestet | Defekt | `abgenommen` | P3 | XS | beides | — |
 | [B-285](B-285-kind-konto-bleibt-nach-vater-loeschung.md) | Löscht sich ein Vater, bleibt das Konto seines Kindes als leere Hülle – und der Kind-Token bleibt gültig | Defekt | `abgenommen` | P2 | XS | backend | — |
+| [B-287](B-287-fokus-test-prueft-den-ausgangszustand.md) | Der Fokus-Test in `LetterTiles.test.tsx` prüft eine Zusicherung, die nie fallen kann | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-288](B-288-pruefungstest-misst-neu-je-position.md) | Der Prüfungstest zu „Buchstaben ordnen“ verspricht „neu je Versuch“, misst aber „neu je Position“ | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-289](B-289-all-klausel-des-konten-sweeps-ohne-probe.md) | Die `All`-Hälfte des Konten-Sweeps in `AdultsController.Delete` hat keine rote Probe | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-32](B-32-father-tabellenname.md) | `Father` heißt noch `Father`, obwohl die Zeile `Adult` ist | Aufräumen | `abgenommen` | P3 | S | backend | — |
 | [B-35](B-35-karten-umdrehen-animation.md) | Karten drehen sich beim Aufdecken um | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-36](B-36-motivations-animationen-teilziele.md) | Motivations-Animationen bei erreichten Teilzielen | Wunsch | `abgenommen` | P3 | S | frontend | — |
@@ -788,9 +789,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
-### Nach der Abnahme entgangen (68)
+### Nach der Abnahme entgangen (69)
 
-**Nachgeschaut: 200 von 201 abgenommenen** — und in 56 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 1 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 201 von 204 abgenommenen** — und in 57 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 3 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -860,18 +861,21 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-277](B-277-schnellanlage-legt-doppelten-store-eintrag-an.md) | Der Schnellanleger im Assistenten legt für ein bekanntes Wort einen zweiten Store-Eintrag an | [B-71] | `idee` |
 | [B-280](B-280-fokusziel-nicht-geleert-ungetestet.md) | Dass das Fokusziel nach dem Sprung geleert wird, prüft kein Test | [B-268] | `idee` |
 | [B-285](B-285-kind-konto-bleibt-nach-vater-loeschung.md) | Löscht sich ein Vater, bleibt das Konto seines Kindes als leere Hülle – und der Kind-Token bleibt gültig | [B-245] | `abgenommen` |
-| [B-287](B-287-fokus-test-prueft-den-ausgangszustand.md) | Der Fokus-Test in `LetterTiles.test.tsx` prüft eine Zusicherung, die nie fallen kann | [B-05] | `idee` |
-| [B-288](B-288-pruefungstest-misst-neu-je-position.md) | Der Prüfungstest zu „Buchstaben ordnen“ verspricht „neu je Versuch“, misst aber „neu je Position“ | [B-283] | `idee` |
+| [B-287](B-287-fokus-test-prueft-den-ausgangszustand.md) | Der Fokus-Test in `LetterTiles.test.tsx` prüft eine Zusicherung, die nie fallen kann | [B-05] | `abgenommen` |
+| [B-288](B-288-pruefungstest-misst-neu-je-position.md) | Der Prüfungstest zu „Buchstaben ordnen“ verspricht „neu je Versuch“, misst aber „neu je Position“ | [B-283] | `abgenommen` |
+| [B-289](B-289-all-klausel-des-konten-sweeps-ohne-probe.md) | Die `All`-Hälfte des Konten-Sweeps in `AdultsController.Delete` hat keine rote Probe | [B-285] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (1) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (3) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-285](B-285-kind-konto-bleibt-nach-vater-loeschung.md) | Löscht sich ein Vater, bleibt das Konto seines Kindes als leere Hülle – und der Kind-Token bleibt gültig |
+| [B-287](B-287-fokus-test-prueft-den-ausgangszustand.md) | Der Fokus-Test in `LetterTiles.test.tsx` prüft eine Zusicherung, die nie fallen kann |
+| [B-288](B-288-pruefungstest-misst-neu-je-position.md) | Der Prüfungstest zu „Buchstaben ordnen“ verspricht „neu je Versuch“, misst aber „neu je Position“ |
+| [B-289](B-289-all-klausel-des-konten-sweeps-ohne-probe.md) | Die `All`-Hälfte des Konten-Sweeps in `AdultsController.Delete` hat keine rote Probe |
 
 </details>
 
@@ -917,8 +921,9 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-280](B-280-fokusziel-nicht-geleert-ungetestet.md) | `idee` | `unverifiziert: true` |
 | [B-283](B-283-buchstaben-ordnen-testluecken.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-285](B-285-kind-konto-bleibt-nach-vater-loeschung.md) | `abgenommen` | Abschnitt „Entscheidungen" |
-| [B-287](B-287-fokus-test-prueft-den-ausgangszustand.md) | `idee` | `unverifiziert: true` |
-| [B-288](B-288-pruefungstest-misst-neu-je-position.md) | `idee` | `unverifiziert: true` |
+| [B-287](B-287-fokus-test-prueft-den-ausgangszustand.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
+| [B-288](B-288-pruefungstest-misst-neu-je-position.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
+| [B-289](B-289-all-klausel-des-konten-sweeps-ohne-probe.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 
 <details>
 <summary>Verworfen (22)</summary>

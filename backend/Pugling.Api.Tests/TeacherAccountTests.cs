@@ -175,9 +175,9 @@ public class TeacherAccountTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
-    /// Logging in must not add a role after the fact. <c>auth/adult</c> calls <c>EnsureForAdultAsync</c>,
-    /// and if that were to "complete" an existing account, the teacher would become a silent supervisor
-    /// after the first login – the separation would have undone itself.
+    /// Logging in must not add a role after the fact. <c>auth/adult</c> only looks the account up
+    /// (<c>FindForAdultAsync</c>, since B-230); if a login were to "complete" an existing account, the teacher
+    /// would become a silent supervisor after the first login – the separation would have undone itself.
     /// </summary>
     [Fact]
     public async Task WiederholtesAnmelden_MachtDenLehrerNichtZumBetreuer()

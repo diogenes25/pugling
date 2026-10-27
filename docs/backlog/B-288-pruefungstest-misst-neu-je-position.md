@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/idee, bereich/test, bereich/training, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/test, bereich/training, rolle/student]
 aliases: [Prüfungstest misst „neu je Position“ statt „neu je Versuch“]
-status: idee
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
+groesse: XS
 wo: backend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: Nachschau zu Lauf E Teil 1 (docs/pm-sitzung-2026-10-27-nacht.md)
 unverifiziert: false
 grund: ""
@@ -35,3 +35,6 @@ zurücknehmen.
 
 - **2026-10-27** — angelegt aus der Nachschau zu Lauf E Teil 1 (`4e50370`) ([Protokoll](../pm-sitzung-2026-10-27-nacht.md)),
   Fund 2 des frischen Prüfers; `entgangen_bei: B-283`.
+- **2026-10-27** — in Lauf E, Teil 3, autonom gegrillt (Freigabe 1, `Defekt`), geschätzt (XS, nur Test) und gebaut: eine Position, erster Versuch per `/answer` + `/submit` abgeschlossen, zweiter `POST …/tests` liefert eine neue Versuchs-Id (zugesichert), die Kacheln unterscheiden sich. **Rote Probe:** Seed aus `positionId` statt `attempt.Id` (`PositionTestsController.cs:232`) → **1 failed** (vorher grün), danach `LetterScrambleTests` **12/12 `exit=0`**.
+- **2026-10-27** — Review (`pugling-reviewer`, [Protokoll](../pm-sitzung-2026-10-27-nacht.md)): 🟡 Kommentar als Umbau-Erzählung → umformuliert (ohne Zählung). 🟢 der ältere Übungs-Test hatte denselben blinden Fleck (zweite Position), und seine Begründung trug nicht: Übungs-Sitzungen werden nicht wieder aufgenommen, eine zweite Sitzung **vor** dem Review trägt die Karte noch. Nachgezogen, weil billig: zweite Sitzung auf derselben Position vor dem Review, neue Sitzungs-Id zugesichert. **Probe:** Seed aus `exercise.Id` statt `sessionId` (`PositionPracticeController.cs:114`) → **1 failed** (vorher grün), danach **12/12**. Ohne Zählung (Freigabe 10).
+- **2026-10-27** — `abgenommen` in Lauf E, Teil 3; Rollengang als Integrationstest (kein Verhalten ändert sich). Suite **952/952 `exit=0`**. Commit siehe Protokoll.

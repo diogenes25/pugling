@@ -59,20 +59,17 @@ public class LetterScrambleTests(PuglingWebAppFactory factory) : IClassFixture<P
         var father = await TestApi.AdultAsync(factory);
         var child = await TestApi.ChildAsync(factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("butterfly (B-05)", Word));
-        // A second position on the same exercise for "a new session": on the first one the card is no longer due
-        // after it was answered, so a second session there the same day would carry no card at all.
         var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.LetterScramble);
-        var (otherPlanId, otherPositionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.LetterScramble);
         var basis = TestApi.PracticeBase(planId, positionId);
 
-        async Task<(int sessionId, JsonElement card)> StartAsync(int plan, int position)
+        async Task<(int sessionId, JsonElement card)> StartAsync()
         {
-            var sid = await TestApi.StartPositionSessionAsync(child, plan, position);
-            return (sid, (await child.GetFromJsonAsync<JsonElement>($"{TestApi.PracticeBase(plan, position)}/{sid}/next")).GetProperty("card"));
+            var sid = await TestApi.StartPositionSessionAsync(child, planId, positionId);
+            return (sid, (await child.GetFromJsonAsync<JsonElement>($"{basis}/{sid}/next")).GetProperty("card"));
         }
         static string[] Tiles(JsonElement card) => [.. card.GetProperty("letterTiles").EnumerateArray().Select(t => t.GetString()!)];
 
-        var (first, card) = await StartAsync(planId, positionId);
+        var (first, card) = await StartAsync();
         var tiles = Tiles(card);
         Assert.Equal(Lower.Order(), string.Concat(tiles).Order());
         Assert.NotEqual(Lower, string.Concat(tiles));
@@ -83,12 +80,16 @@ public class LetterScrambleTests(PuglingWebAppFactory factory) : IClassFixture<P
         var again = (await child.GetFromJsonAsync<JsonElement>($"{basis}/{first}/next")).GetProperty("card");
         Assert.Equal(tiles, Tiles(again));
 
+        // The second session on the SAME position, started before the review while the card is still due: across
+        // two positions a seed taken from the position id would pass as well (B-288). Practice sessions do not
+        // resume, so the second start is a new session with its own seed.
+        var (second, other) = await StartAsync();
+        Assert.NotEqual(first, second);
+        Assert.NotEqual(tiles, Tiles(other));
+
         var review = await (await TestApi.PositionReviewAsync(child, planId, positionId, first, card.GetProperty("itemIndex").GetInt32(), givenAnswer: Word))
             .Content.ReadFromJsonAsync<JsonElement>();
         JsonAssert.True(review, "wasCorrect");
-
-        var (_, other) = await StartAsync(otherPlanId, otherPositionId);
-        Assert.NotEqual(tiles, Tiles(other));
     }
 
     /// <summary>
@@ -122,19 +123,17 @@ public class LetterScrambleTests(PuglingWebAppFactory factory) : IClassFixture<P
         var father = await TestApi.AdultAsync(factory);
         var child = await TestApi.ChildAsync(factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("moth (B-05)", Word));
-        // A second position: on the first one a second POST hands back the still-open attempt - same id, same seed.
         var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.LetterScramble);
-        var (otherPlanId, otherPositionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.LetterScramble);
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
 
-        async Task<(string baseUrl, int attemptId, JsonElement item)> StartAsync(int plan, int position)
+        async Task<(int attemptId, JsonElement item)> StartAsync()
         {
-            var baseUrl = $"/api/v1/student/study-plans/{plan}/positions/{position}/tests";
             var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
-            return (baseUrl, attemptId, (await child.GetFromJsonAsync<JsonElement>($"{baseUrl}/{attemptId}/next")).GetProperty("item"));
+            return (attemptId, (await child.GetFromJsonAsync<JsonElement>($"{baseUrl}/{attemptId}/next")).GetProperty("item"));
         }
         static List<string?> Tiles(JsonElement item) => [.. item.GetProperty("letterTiles").EnumerateArray().Select(t => t.GetString())];
 
-        var (baseUrl, attemptId, item) = await StartAsync(planId, positionId);
+        var (attemptId, item) = await StartAsync();
         var again = (await child.GetFromJsonAsync<JsonElement>($"{baseUrl}/{attemptId}/next")).GetProperty("item");
         var tiles = Tiles(item);
         Assert.Equal(Lower.Order(), string.Concat(tiles).Order());
@@ -142,8 +141,16 @@ public class LetterScrambleTests(PuglingWebAppFactory factory) : IClassFixture<P
         Assert.Equal(JsonValueKind.Null, item.GetProperty("reveal").ValueKind);
         Assert.Equal(JsonValueKind.Null, item.GetProperty("answerLength").ValueKind);
 
-        var (_, _, other) = await StartAsync(otherPlanId, otherPositionId);
-        Assert.NotEqual(tiles, Tiles(other));
+        // The second attempt on the SAME position, on purpose: across two positions a seed taken from the position
+        // id would pass as well (B-288). A start while the first attempt is open hands back that open attempt, so
+        // the first one is answered and submitted - only then does the second carry a new id.
+        (await child.PostAsJsonAsync($"{baseUrl}/{attemptId}/answer",
+            new { itemIndex = item.GetProperty("itemIndex").GetInt32(), givenAnswer = Word, wasKnown = (bool?)null })).EnsureSuccessStatusCode();
+        (await child.PostAsJsonAsync($"{baseUrl}/{attemptId}/submit", new { })).EnsureSuccessStatusCode();
+
+        var (secondId, second) = await StartAsync();
+        Assert.NotEqual(attemptId, secondId);
+        Assert.NotEqual(tiles, Tiles(second));
     }
 
     /// <summary>

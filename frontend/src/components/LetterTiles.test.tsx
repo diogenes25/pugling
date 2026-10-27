@@ -95,10 +95,22 @@ describe("LetterTiles", () => {
    * oder nie fokussiert, fällt in genau einem der beiden. Den dritten Weg – gesperrter „Prüfen“-Knopf gibt den
    * Fokus an `body` ab – kann nur der Browser zeigen; ihn fährt die E2E-Spec.
    */
+  // Zwei Karten als Konstanten; der Wert wird bewusst NICHT geleert, damit allein der Kartenwechsel zurücksetzen kann.
+  const KARTE_1 = ["b", "a"];
+  const KARTE_2 = ["d", "c"];
+  function MitWert({ tiles }: { tiles: string[] }) {
+    const [value, setValue] = useState("");
+    return <LetterTiles tiles={tiles} value={value} onChange={setValue} />;
+  }
+
   it("holt den Fokus auf die erste Kachel der nächsten Karte, wenn er im Block stand", () => {
-    const { rerender } = render(<LetterTiles tiles={["b", "a"]} value="" onChange={() => {}} />);
+    const { rerender } = render(<MitWert tiles={KARTE_1} />);
+    // Kachel 0 ist gelegt, der Fokus steht auf Kachel 1: so trägt die Zusicherung unten etwas – ohne Reset
+    // bliebe Index 0 der neuen Karte gesperrt (B-287: vorher war nichts gelegt, die Zeile konnte nie fallen).
+    fireEvent.click(kacheln("b")[0]);
+    expect(kacheln("b")[0].getAttribute("aria-disabled")).toBe("true");
     kacheln("a")[0].focus();
-    rerender(<LetterTiles tiles={["d", "c"]} value="" onChange={() => {}} />);
+    rerender(<MitWert tiles={KARTE_2} />);
     expect(document.activeElement).toBe(kacheln("d")[0]);
     // Und die gelegten Kacheln der alten Karte sind weg, ohne `key` von außen.
     expect(kacheln("d")[0].getAttribute("aria-disabled")).toBe("false");

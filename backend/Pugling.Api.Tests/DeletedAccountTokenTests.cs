@@ -25,6 +25,24 @@ public class DeletedAccountTokenTests(PuglingWebAppFactory factory) : IClassFixt
     }
 
     /// <summary>
+    /// Builds the mixed account no creation path builds: moves the child's Student profile onto the adult's account
+    /// and drops the child's own account, then checks the shape (two adult rows, one Student row) so a wrong seed
+    /// fails here and not as a misleading message in the test that uses it.
+    /// </summary>
+    private async Task MixIntoAdultAccountAsync(int childId, int accountId, int adultId)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        var studentProfile = await db.AccountProfiles.SingleAsync(p => p.ChildId == childId);
+        var childAccountId = studentProfile.AccountId;
+        studentProfile.AccountId = accountId;
+        db.Accounts.Remove(await db.Accounts.SingleAsync(a => a.Id == childAccountId));
+        await db.SaveChangesAsync();
+        Assert.Equal(1, await db.AccountProfiles.CountAsync(p => p.AccountId == accountId && p.ChildId == childId));
+        Assert.Equal(2, await db.AccountProfiles.CountAsync(p => p.AccountId == accountId && p.AdultId == adultId));
+    }
+
+    /// <summary>
     /// Red without the check: the write reaches the FK on <c>Adults</c> and the request fails with 500. The same
     /// token is shown to work before the delete, so the 401 afterwards is about the deletion and nothing else.
     /// </summary>
@@ -96,24 +114,41 @@ public class DeletedAccountTokenTests(PuglingWebAppFactory factory) : IClassFixt
         var me = await adult.GetFromJsonAsync<JsonElement>("/api/v1/auth/me");
         var accountId = me.GetProperty("accountId").GetInt32();
 
-        using (var scope = factory.Services.CreateScope())
-        {
-            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-            // Move the child's Student profile onto the adult's account and drop the child's own account.
-            var studentProfile = await db.AccountProfiles.SingleAsync(p => p.ChildId == childId);
-            var childAccountId = studentProfile.AccountId;
-            studentProfile.AccountId = accountId;
-            db.Accounts.Remove(await db.Accounts.SingleAsync(a => a.Id == childAccountId));
-            await db.SaveChangesAsync();
-            // Creator + Supervisor rows of the adult, plus the moved Student row: the account is mixed now.
-            Assert.Equal(1, await db.AccountProfiles.CountAsync(p => p.AccountId == accountId && p.ChildId == childId));
-            Assert.Equal(2, await db.AccountProfiles.CountAsync(p => p.AccountId == accountId && p.AdultId == adultId));
-        }
+        await MixIntoAdultAccountAsync(childId, accountId, adultId);
 
         Assert.Equal(HttpStatusCode.NoContent, (await adult.DeleteAsync($"/api/v1/supervisor/adults/{adultId}")).StatusCode);
 
         using var check = factory.Services.CreateScope();
         var after = check.ServiceProvider.GetRequiredService<PuglingDbContext>();
         Assert.False(await after.Accounts.AnyAsync(a => a.Id == accountId), "the mixed account survived as an empty shell");
+    }
+
+    /// <summary>
+    /// The exclusion side of the same mixed account (B-289): the Student profile on the adult's login belongs to a
+    /// child that a second supervisor keeps. The account must stay - it is that child's only login - even though
+    /// one of its profiles points at the deleted adult. Red if the sweep drops its <c>All</c> clause and removes
+    /// every account that merely <i>has</i> a matching profile.
+    /// </summary>
+    [Fact]
+    public async Task Gemischtes_Konto_Mit_Ko_Betreutem_Kind_Bleibt_Stehen()
+    {
+        var (adult, adultId) = await FreshAdultAsync();
+        var (_, motherId) = await FreshAdultAsync();
+        var childId = await TestApi.IdAsync(await adult.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = TestApi.UniqueName("Gemischt-Ko-Kind"), pin = "4949" }));
+        (await adult.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/supervisors",
+            new { supervisorId = motherId, relation = "Mother" })).EnsureSuccessStatusCode();
+        var accountId = (await adult.GetFromJsonAsync<JsonElement>("/api/v1/auth/me")).GetProperty("accountId").GetInt32();
+
+        await MixIntoAdultAccountAsync(childId, accountId, adultId);
+
+        Assert.Equal(HttpStatusCode.NoContent, (await adult.DeleteAsync($"/api/v1/supervisor/adults/{adultId}")).StatusCode);
+
+        using var check = factory.Services.CreateScope();
+        var after = check.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        Assert.True(await after.Accounts.AnyAsync(a => a.Id == accountId), "the co-supervised child's login was swept away");
+        // And it still works: the child logs in through that account (its PIN is the account's, i.e. the adult's).
+        var child = await TestApi.ChildAsync(factory, childId, "4545");
+        Assert.Equal(HttpStatusCode.OK, (await child.GetAsync("/api/v1/auth/me")).StatusCode);
     }
 }
