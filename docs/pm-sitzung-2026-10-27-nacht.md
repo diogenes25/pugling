@@ -379,4 +379,4 @@ als Vertrag. Weder Reviewer noch Tests haben den Agenten gegen den Kommentar des
 die API ablehnen und zeigt die Ablehnung – eine Regel, ein Ort. Allgemeiner: *ein Client darf die Validierung des
 Servers nicht durch eine mildere ersetzen* als Satz in `backend/Pugling.Client/CLAUDE.md` (Prosa, kein Tor).
 
-**Commit:** folgt unten.
+**Commit:** `6d20ddd` (nicht gepusht).
