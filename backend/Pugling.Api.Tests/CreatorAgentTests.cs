@@ -122,6 +122,36 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
+    /// B-292: the agent keeps the API's limits the API's way. A topic over 200 characters is left out and named,
+    /// never cut (the controller rejects a cut topic on purpose); free text over 2000 is cut at a word boundary and
+    /// the field is named. The two over-long values differ in kind on purpose - one is dropped, the other shortened.
+    /// Red if a topic is truncated instead of dropped, or if the free text is cut mid-word or silently.
+    /// </summary>
+    [Fact]
+    public async Task Fill_Laesst_Zu_Lange_Themen_Weg_Und_Kuerzt_Freitext_Am_Wortende()
+    {
+        var (_, creator, _) = BuildAgent();
+        var (_, seriesId, unitId) = await FreshUnitAsync(creator, "Fill-Grenzen");
+        var longTopic = string.Concat(Enumerable.Repeat("Thema ", 40)).Trim(); // 239 characters
+        var exact = new string('x', 200);                                         // the limit itself stays
+        var longText = string.Join(" ", Enumerable.Repeat("Wortes", 400));    // 2799 characters; 2000 falls mid-word
+        // 52 topics in all: the limit is 50, so the two beyond it are dropped too - and named, not vanished.
+        var many = Enumerable.Range(1, 50).Select(i => $"T{i}").ToList();
+        var json = System.Text.Json.JsonSerializer.Serialize(new { topics = new[] { "Kurz", longTopic, exact }.Concat(many).ToArray(), grammar = longText, vocabularyNotes = "x" });
+
+        var outcome = await Filler(creator, new FakeChatClient(json)).RunAsync(new UnitFillRequest(seriesId, unitId, "Quelle", Force: false, DryRun: false));
+
+        Assert.Equal(50, outcome.Draft.Topics!.Count);
+        Assert.Equal(["Kurz", exact], outcome.Draft.Topics.Take(2));
+        Assert.Equal([longTopic, "T49", "T50"], outcome.Dropped);
+        Assert.Equal(["grammar"], outcome.Shortened);
+        Assert.True(outcome.Draft.Grammar!.Length <= 2000 && outcome.Draft.Grammar.EndsWith("Wortes"), outcome.Draft.Grammar[^12..]);
+        var unit = await creator.GetUnitAsync(seriesId, unitId);
+        Assert.Equal(50, unit.Topics.Count);
+        Assert.Equal(outcome.Draft.Grammar, unit.Grammar);
+    }
+
+    /// <summary>
     /// B-22: a draft with nothing in it writes nothing - no PATCH, <c>After</c> stays null. Red if the filler sends
     /// an all-null PATCH anyway (drop the <c>written.Count == 0</c> short-circuit).
     /// </summary>

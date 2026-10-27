@@ -380,3 +380,46 @@ die API ablehnen und zeigt die Ablehnung – eine Regel, ein Ort. Allgemeiner: *
 Servers nicht durch eine mildere ersetzen* als Satz in `backend/Pugling.Client/CLAUDE.md` (Prosa, kein Tor).
 
 **Commit:** `6d20ddd` (nicht gepusht).
+
+## Lauf E, Teil 7 — B-292, B-293 aus der Nachschau (Agent hält die Grenzen der API), Zähler 0
+
+**Sprint-Ziel:** *Der Creator sieht, was die Grenzen aus dem Entwurf genommen haben, bevor etwas gespeichert ist –
+und ein Thema wird nie still halbiert.* Umfang: [B-292](backlog/B-292-agent-kuerzt-themen-still.md),
+[B-293](backlog/B-293-fill-von-stdin-blockiert-stumm.md) (`Defekt`, Freigabe 1, je XS, nur Agent). **Zähler: 0.**
+
+**Entwickler-Brief:** Keine mildere Validierung als der Server: zu lange Themen weglassen und nennen, Freitext am
+Wortende kürzen und nennen, beides vor der Schreib-Meldung drucken. Stdin-Verhalten benennen statt schweigen.
+
+### Iteration
+
+- `Clamp` → `(Draft, Dropped, Shortened)`, `FillAsync` druckt beides; Unit per `GetUnitAsync`; Hinweis bei `-` ohne
+  Umleitung; Usage/README/Skill. Mutanten „kein Weglassen“ und „Schnitt im Wort“ → je **1 failed**, `Fill_*` **10/10**.
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `pugling-reviewer` 🟡 | `Take(50)` ließ das 51. Thema ungenannt verschwinden – dieselbe Klasse eine Stufe weiter | Überzahl weglassen **und nennen**; Test auf 52 Themen; Mutante → **1 failed** | ja (Code+Test) |
+| – | `pugling-reviewer` 🟢 | Wortgrenze nur am Leerzeichen; Kommentar versprach Surrogat-Schutz; `global::`; „auf 2000“ | Zeilenumbruch/Tab, Grenze auf Leerraum; Kommentar; `using`; „höchstens“ | nein (Freigabe 10) |
+
+**Zähler: 1.** Suite **970/970 `exit=0`**. Rollengang: der Agent hat keine Oberfläche, die Tests sind der Weg
+(Dropped vs. Shortened, 52 Themen, Stdin-Hinweis nur dokumentiert – `Console.IsInputRedirected` ist im Test immer
+wahr). **B-292, B-293 `abgenommen`.**
+
+### Retrospektive
+
+**Nachschau:** Teil 6 (`6d20ddd`, B-290) von einem frischen Prüfer an einem `git archive` geprüft. **Kein
+Code-Entgleiten**; drei Doku-Entgleiten berichtigt (die residente `backend/Pugling.Api/CLAUDE.md` nannte noch den
+Namenspräfix, Klassen-Summary gegen Property-Doku, ein Testname). `nachgeschaut` an B-290 gesetzt.
+
+**Was die eigenen Tore durchgelassen haben:** B-292 hat sich im Review **wiederholt**: nach dem Weglassen der
+überlangen Themen stand mit `Take(50)` dieselbe stille Kürzung eine Zeile tiefer – die Regel „jeder Verlust wird
+genannt“ war an einer Stelle gelandet, nicht als Regel. Und die residente Anweisungsdatei lief dem Code eine Runde
+hinterher, obwohl der Commit Entity, Vertrag, Client und OpenAPI nachgezogen hatte.
+
+**Vorschlag, nicht gelandet (Freigabe 3):** **(L)** ein Wächter im Kopf des Reviews: *„Nennt der Diff eine
+Grenze (Zahl, Länge, Anzahl)? Dann jede weitere Grenze derselben Daten im selben Pfad prüfen.“* Und für die
+residente Datei: der Nachschau-Prüfer bekommt `backend/Pugling.Api/CLAUDE.md` ausdrücklich in den Scope, wenn der
+Commit das Fachmodell ändert (Prosa in der pm-loop-Nachschau, kein Tor).
+
+**Commit:** folgt unten.

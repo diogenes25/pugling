@@ -27,8 +27,10 @@ dotnet run --project backend/Pugling.Agent.Creator -- fill --series 3 --unit 12 
 ```
 
 `fill` entwirft die Stoffnotizen einer Unit (`Topics`/`Grammar`/`VocabularyNotes`) aus einer Quelle, die du
-lieferst (`--source-file <Datei>` oder `-` für Stdin) – ohne Quelle Fehlbedienung, das Modell erfindet keinen
-Stoff. Nur leere Felder werden befüllt, `--force` überschreibt, `--dry-run` zeigt nur den Entwurf.
+lieferst (`--source-file <Datei>` oder `-` für Stdin, nur mit Umleitung/Pipe) – ohne Quelle Fehlbedienung, das
+Modell erfindet keinen Stoff. Nur leere Felder werden befüllt, `--force` überschreibt, `--dry-run` zeigt nur den
+Entwurf; zu lange Themen werden weggelassen und genannt, nie gekürzt. Die Reihe muss dir gehören (geseedete
+Reihen gehören niemandem).
 
 Bei `plan` zählt `--per-type` **Übungen** je Typ (je eine Position), nicht Aufgaben – die kommen wie bei
 `create` aus `--count`. `--child` ist dort Pflicht, und der erzeugte Lehrplan ist **inaktiv**: der Vater

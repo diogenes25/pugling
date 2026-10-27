@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.AI;
@@ -33,8 +34,11 @@ public sealed record UnitNotesDraft(List<string>? Topics, string? Grammar, strin
 /// <param name="Written">Field names that were (or, on a dry run, would be) written.</param>
 /// <param name="Kept">Field names left untouched because they already carried a value.</param>
 /// <param name="After">The unit after the PATCH; <c>null</c> on a dry run or when nothing was to write.</param>
+/// <param name="Dropped">Topics of the draft that were left out - over the API's 200 characters (never cut) or beyond the 50 the unit takes (B-292).</param>
+/// <param name="Shortened">Free-text fields cut at the column length (2000), at a word boundary - named so the human sees it.</param>
 public sealed record UnitFillOutcome(SeriesUnitResponse Before, UnitNotesDraft Draft,
-    IReadOnlyList<string> Written, IReadOnlyList<string> Kept, SeriesUnitResponse? After);
+    IReadOnlyList<string> Written, IReadOnlyList<string> Kept, SeriesUnitResponse? After,
+    IReadOnlyList<string> Dropped, IReadOnlyList<string> Shortened);
 
 /// <summary>
 /// Drafts a unit's notes (<c>Topics</c>/<c>Grammar</c>/<c>VocabularyNotes</c>) from a source the human supplies and
@@ -90,10 +94,17 @@ public sealed class UnitNotesFiller(IChatClient chat, CreatorApi creator, IOptio
                                           + "einer Reihe darf ihre Units ändern"
                                           + (series.OwnerAdultId is null ? " (geseedete Reihe, niemandem gehörend)." : "."));
 
-        var unit = (await creator.ListUnitsAsync(request.SeriesId, ct: ct)).FirstOrDefault(u => u.Id == request.UnitId)
-                   ?? throw new AgentUsageException($"Unit {request.UnitId} gehört nicht zu Reihe {request.SeriesId}.");
+        SeriesUnitResponse unit;
+        try
+        {
+            unit = await creator.GetUnitAsync(request.SeriesId, request.UnitId, ct);
+        }
+        catch (PuglingApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            throw new AgentUsageException($"Unit {request.UnitId} gehört nicht zu Reihe {request.SeriesId}.");
+        }
 
-        var draft = Clamp(await DraftAsync(unit, request.SourceText, ct));
+        var (draft, dropped, shortened) = Clamp(await DraftAsync(unit, request.SourceText, ct));
 
         // Field by field: a value already there wins over the draft unless --force says otherwise. Kept fields go
         // to the PATCH as null ("not specified"), so the write touches exactly the fields it names.
@@ -104,11 +115,11 @@ public sealed class UnitNotesFiller(IChatClient chat, CreatorApi creator, IOptio
         var vocabulary = Decide("vocabularyNotes", !string.IsNullOrWhiteSpace(unit.VocabularyNotes), !string.IsNullOrWhiteSpace(draft.VocabularyNotes), request.Force, written, kept) ? draft.VocabularyNotes : null;
 
         if (request.DryRun || written.Count == 0)
-            return new UnitFillOutcome(unit, draft, written, kept, null);
+            return new UnitFillOutcome(unit, draft, written, kept, null, dropped, shortened);
 
         var after = await creator.UpdateUnitAsync(request.SeriesId, request.UnitId,
             new UpdateSeriesUnitDto(null, null, null, null, topics, grammar, vocabulary), ct);
-        return new UnitFillOutcome(unit, draft, written, kept, after);
+        return new UnitFillOutcome(unit, draft, written, kept, after, dropped, shortened);
     }
 
     /// <summary>
@@ -124,23 +135,43 @@ public sealed class UnitNotesFiller(IChatClient chat, CreatorApi creator, IOptio
         return true;
     }
 
-    /// <summary>Trims and clamps the draft: topics beyond the controller's bounds would be a rejected PATCH, free text beyond the column length a schema breach.</summary>
-    private static UnitNotesDraft Clamp(UnitNotesDraft draft)
+    /// <summary>
+    /// Trims the draft and keeps it within the unit's limits - the way the API would, not milder (B-292): a topic
+    /// over 200 characters is <b>left out and named</b>, never cut, because the controller rejects a cut topic on
+    /// purpose (a half topic reads as a wrong one to the AI creator). Free text is cut at the column length (2000)
+    /// at a word boundary and the field is named, so the human sees it before trusting the result.
+    /// </summary>
+    private static (UnitNotesDraft Draft, IReadOnlyList<string> Dropped, IReadOnlyList<string> Shortened) Clamp(UnitNotesDraft draft)
     {
-        var topics = (draft.Topics ?? [])
+        var dropped = new List<string>();
+        var shortened = new List<string>();
+        var cleaned = (draft.Topics ?? [])
             .Select(t => t.Trim())
             .Where(t => t.Length > 0)
             .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Select(t => t.Length > MaxTopicLength ? t[..MaxTopicLength] : t)
-            .Take(MaxTopics)
             .ToList();
-        return new UnitNotesDraft(topics, Text(draft.Grammar), Text(draft.VocabularyNotes));
+        // Every loss is named: the over-long ones, and everything beyond the 50 the unit takes - a 51st topic
+        // that vanished unnamed would be the same silent cut as a truncated one.
+        dropped.AddRange(cleaned.Where(t => t.Length > MaxTopicLength));
+        var fitting = cleaned.Where(t => t.Length <= MaxTopicLength).ToList();
+        dropped.AddRange(fitting.Skip(MaxTopics));
+        var topics = fitting.Take(MaxTopics).ToList();
+        return (new UnitNotesDraft(topics, Text(draft.Grammar, "grammar"), Text(draft.VocabularyNotes, "vocabularyNotes")),
+            dropped, shortened);
 
-        static string? Text(string? value)
+        string? Text(string? value, string field)
         {
             var trimmed = value?.Trim();
             if (string.IsNullOrEmpty(trimmed)) return null;
-            return trimmed.Length > MaxFreeTextLength ? trimmed[..MaxFreeTextLength] : trimmed;
+            if (trimmed.Length <= MaxFreeTextLength) return trimmed;
+            shortened.Add(field);
+            // At the last word boundary before the limit: a cut mid-word would read as a wrong word. If the limit
+            // itself falls on whitespace, the text before it already ends on a whole word. A text without any
+            // whitespace is cut hard (a surrogate pair may split there - accepted).
+            var head = trimmed[..MaxFreeTextLength];
+            if (char.IsWhiteSpace(trimmed[MaxFreeTextLength])) return head.TrimEnd();
+            var boundary = head.LastIndexOfAny([' ', '\n', '\t']);
+            return (boundary > 0 ? head[..boundary] : head).TrimEnd();
         }
     }
 

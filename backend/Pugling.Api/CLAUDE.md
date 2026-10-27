@@ -75,7 +75,7 @@ Route `api/v1/creator/textbook-series` (+ `…/{id}/units`): lesen darf jeder Cr
 (`OwnerAdultId`, Muster `Exercise.AuthorAdultId`, FK `SetNull`).
 
 **Grammatik-Themen** (`GrammarTopic`, B-155) sind das geteilte, **fachgebundene** Vokabular neben dem Freitext
-`SeriesUnit.Grammar`: slug-idempotent (`<fach>-<thema>`), getragen von Übung **und** Unit (zwei Join-Tabellen,
+`SeriesUnit.Grammar`: slug-idempotent **je Fach** (`(SubjectId, Slug)`, Slug = Label-Schlüssel, B-290), getragen von Übung **und** Unit (zwei Join-Tabellen,
 Fachgrenze → `validation_error`), achte Facette `grammarTopicId` der Übungssuche. Pflege im Owner-Muster von
 `Subject`; ein geseedetes Thema ist für niemanden änderbar; benutzt → `grammar_topic_in_use`. Das Thema stirbt mit
 seinem Fach (Cascade), es steht bewusst nicht in der 409-Sperrliste von B-144.

@@ -98,8 +98,8 @@ public class SeriesUnit
 /// the textbook, so a search for a topic can reach across series and grades - unlike a unit's free-text
 /// <see cref="SeriesUnit.Topics"/>, which are series-specific and never meet.
 /// <para>
-/// Bound to a <see cref="Subject"/> (mandatory): a grammar phenomenon belongs to a language, and the slug is
-/// subject-qualified so "Konjunktiv" in German and in Latin are two entries. Maintained in the owner pattern of
+/// Bound to a <see cref="Subject"/> (mandatory): a grammar phenomenon belongs to a language, and the topic is
+/// subject-qualified (unique per subject) so "Konjunktiv" in German and in Latin are two entries. Maintained in the owner pattern of
 /// <see cref="Subject"/>: anyone may create, only the owner may change or delete, a seeded topic (no owner) is
 /// changeable by nobody - it carries search semantics in other people's plans.
 /// </para>

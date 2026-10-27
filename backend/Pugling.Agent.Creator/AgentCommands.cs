@@ -7,7 +7,7 @@ namespace Pugling.Agent.Creator;
 /// <summary>
 /// The verbs of the console app. Deliberately thin: resolve arguments, call the pipeline, print the
 /// result in an understandable way - the domain logic lives in <see cref="CreatorPipeline"/>,
-/// <see cref="ExamPlanner"/>, <see cref="PlanPlanner"/> and the strategies.
+/// <see cref="ExamPlanner"/>, <see cref="PlanPlanner"/>, <see cref="UnitNotesFiller"/> and the strategies.
 /// </summary>
 public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, ExamPlanner exams, PlanPlanner plans,
     UnitNotesFiller unitNotes)
@@ -56,6 +56,13 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
         Console.WriteLine($"Unit:    {outcome.Before.Label} (Reihe {seriesId})");
         Console.WriteLine("Entwurf:");
         Console.WriteLine(UnitNotesFiller.Print(outcome.Draft));
+        // What the limits took out, before the write is reported - a human must see the loss, not discover it.
+        foreach (var topic in outcome.Dropped)
+            Console.WriteLine(topic.Length > 200
+                ? $"Weggelassen (Thema länger als 200 Zeichen, die API lehnt das ab): {topic[..60]}…"
+                : $"Weggelassen (mehr als 50 Themen, die Unit nimmt nicht mehr): {topic}");
+        if (outcome.Shortened.Count > 0)
+            Console.WriteLine($"Gekürzt auf höchstens 2000 Zeichen (am Wortende): {string.Join(", ", outcome.Shortened)}");
         if (outcome.Kept.Count > 0)
             Console.WriteLine($"Behalten (schon befüllt, ohne --force unangetastet): {string.Join(", ", outcome.Kept)}");
         if (outcome.Written.Count == 0)
@@ -78,7 +85,11 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
         var path = command.Value("source-file");
         if (string.IsNullOrWhiteSpace(path))
             throw new AgentUsageException("--source-file fehlt: die Quelle (Inhaltsverzeichnis, Kapitelübersicht) ist Pflicht – "
-                                          + "das Modell darf den Stoff einer Unit nicht erfinden. '-' liest von Stdin.");
+                                          + "das Modell darf den Stoff einer Unit nicht erfinden. '-' liest von Stdin (Umleitung oder Pipe).");
+        // Reading stdin to its end blocks on a bare terminal, and Ctrl+C is swallowed by the cancel handler - say so
+        // instead of sitting silently (B-293).
+        if (path == "-" && !Console.IsInputRedirected)
+            Console.Error.WriteLine("Lese die Quelle von Stdin – Eingabe mit Ctrl+Z und Enter (Windows) bzw. Ctrl+D beenden.");
         string text;
         try
         {
@@ -509,7 +520,8 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
                                    [--start JJJJ-MM-TT] [--days <n>] [--title "..."] [Optionen]
           pugling-creator fill     --series <id> --unit <id> --source-file <Datei|-> [--force] [--dry-run]
                                    (Stoffnotizen einer Unit aus einer Quelle entwerfen; nur leere Felder,
-                                   --force überschreibt; '-' liest die Quelle von Stdin)
+                                   --force überschreibt; '-' liest die Quelle von Stdin – nur mit Umleitung
+                                   oder Pipe sinnvoll, interaktiv mit Ctrl+Z+Enter bzw. Ctrl+D beenden)
 
         Wer und in wessen Namen:
           --child <id>          Kind, auf das zugeschnitten wird (individuelle Übung)

@@ -6,7 +6,7 @@ namespace Pugling.Api.Tests;
 
 /// <summary>
 /// B-155: grammar topics as a shared, subject-bound vocabulary that exercises and units carry, so the catalog search
-/// finds "present perfect" across series and grades. Creation is idempotent over the subject-qualified slug,
+/// finds "present perfect" across series and grades. Creation is idempotent over (subject, slug),
 /// maintenance follows the subject's owner pattern (a seeded topic belongs to nobody), the subject boundary holds on
 /// both carriers, and the eighth facet of the exercise search filters by topic.
 /// </summary>
@@ -56,7 +56,7 @@ public class GrammatikThemenTests(PuglingWebAppFactory factory) : IClassFixture<
 
     /// <summary>AC 1: the same label in the same subject is one topic; a second POST returns it (200, same id, same slug).</summary>
     [Fact]
-    public async Task Anlegen_Ist_Idempotent_Ueber_Den_Fachqualifizierten_Slug()
+    public async Task Anlegen_Ist_Idempotent_Ueber_Fach_Und_Slug()
     {
         var creator = await TestApi.AdultAsync(factory);
         var subjectId = await SubjectAsync(creator);

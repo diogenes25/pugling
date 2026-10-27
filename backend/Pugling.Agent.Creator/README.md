@@ -203,7 +203,7 @@ aktiver Plan je Kind"). Der Vater sichtet ihn unter `/vater/plaene` und schaltet
 
 ```bash
 pugling-creator fill --series 3 --unit 12 --source-file inhaltsverzeichnis.txt --dry-run
-pugling-creator fill --series 3 --unit 12 --source-file - < kapitel.txt      # Quelle von Stdin
+pugling-creator fill --series 3 --unit 12 --source-file - < kapitel.txt      # Quelle von Stdin (Umleitung/Pipe)
 ```
 
 Entwirft `Topics`/`Grammar`/`VocabularyNotes` einer Unit aus einer Quelle, die **du** lieferst – ein abgetipptes
@@ -211,7 +211,11 @@ Inhaltsverzeichnis, eine Verlags-Kapitelübersicht (B-22). Die Quelle ist Pflich
 Modell strukturiert sie, es erfindet nichts dazu (Systemprompt: „nutze ausschließlich die Quelle, füge nichts
 hinzu“). Ohne Quelle bricht der Befehl als Fehlbedienung ab (Exit 2). Befüllt werden **nur leere Felder**; was schon
 von Hand dort steht, bleibt – `--force` überschreibt. `--dry-run` zeigt den Entwurf, ohne zu schreiben. Einen
-Selbsttest gibt es hier nicht: drei Textfelder sind nicht spielbar, die Prüfung ist das Lesen.
+Selbsttest gibt es hier nicht: drei Textfelder sind nicht spielbar, die Prüfung ist das Lesen. Die Grenzen der API
+gelten unverändert: ein Thema über 200 Zeichen wird **weggelassen und genannt**, nie gekürzt (die API lehnt gekürzte
+Themen bewusst ab); Freitext über 2000 Zeichen wird am Wortende gekürzt und das Feld genannt. `-` für Stdin ist nur
+mit Umleitung oder Pipe sinnvoll – am nackten Terminal wartet der Befehl auf das Eingabeende (Ctrl+Z+Enter bzw.
+Ctrl+D) und sagt das.
 
 ## Was der Agent bewusst *nicht* tut
 
