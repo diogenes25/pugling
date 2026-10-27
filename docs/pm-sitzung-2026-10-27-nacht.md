@@ -284,4 +284,4 @@ Kriterienliste in `PlanPositions` und `WizardFilter` auf dieselbe Schlüsselmeng
 Kriterienliste aus `ExerciseFilter` ableiten, damit es nur noch zwei Quellen gibt. Kein Tor liest heute, ob eine
 Suchfacette alle ihre Verbraucher erreicht.
 
-**Commit:** folgt unten.
+**Commit:** `1c1fe62` (nicht gepusht).
