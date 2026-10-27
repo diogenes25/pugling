@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { api, errorMessage } from "../lib/api";
+import { api } from "../lib/api";
+import { useErrorMessage } from "../lib/chromeText";
 import { confirmAction } from "../lib/ui";
 import { useAction } from "../lib/useAction";
 import { useGemerkterFehler } from "../lib/useGemerkterFehler";
@@ -51,7 +52,8 @@ export function SohnShop() {
   // `buy`/`requestActivation` teilen sich eine Instanz (B-49): beide sperren dieselbe Oberfläche, und ein
   // laufender Kauf soll auch das Einlösen sperren, nicht nur sich selbst. Das Nachladen der Kaufhistorie
   // bleibt außen vor - eine reine Paginierung, keine Mutation, mit eigener Sperre (`loadingHistory`).
-  const action = useAction();
+  const errorMessage = useErrorMessage();
+  const action = useAction(errorMessage);
   const [msg, setMsg] = useState<string | null>(null);
   const [history, setHistory] = useState<MyShopPurchase[]>([]);
   const [historyTotal, setHistoryTotal] = useState(0);

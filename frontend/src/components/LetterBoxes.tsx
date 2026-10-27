@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { useChromeT } from "../lib/chromeText";
 
 /**
  * Buchstaben-Kästchen für ein Wort bekannter Länge: eine Reihe Einzelfelder, die sich wie ein Feld tippt
@@ -22,6 +23,7 @@ export function LetterBoxes({ length, value, onChange, onSubmit, pattern }: {
   onSubmit?: () => void;
   pattern?: string;
 }) {
+  const t = useChromeT();
   const refs = useRef<(HTMLInputElement | null)[]>([]);
   const isFixed = (i: number) => pattern != null && pattern[i] !== "_";
   // An einer TIPPBAREN Stelle heißt ein Leerzeichen "noch leer", nicht "Leerzeichen getippt": die Maske
@@ -67,13 +69,13 @@ export function LetterBoxes({ length, value, onChange, onSubmit, pattern }: {
   }
 
   return (
-    <div className="letterboxes" role="group" aria-label="Buchstaben-Kästchen">
+    <div className="letterboxes" role="group" aria-label={t("play.letterBoxes")}>
       {chars.map((ch, i) => (
         isFixed(i) ? (
           // Kein `aria-hidden`: das Zeichen ist kein Geheimnis (es steht sowieso sichtbar da), und ein Kind
           // mit Screenreader müsste sonst erraten, WAS zwischen zwei Sprüngen übersprungen wurde. Ein
           // rohes Leerzeichen liest mancher Screenreader stumm, darum ein sprechbares Label.
-          <span key={i} className="lbox lbox-fixed" aria-label={ch === " " ? "Leerzeichen" : ch}>{ch}</span>
+          <span key={i} className="lbox lbox-fixed" aria-label={ch === " " ? t("play.space") : ch}>{ch}</span>
         ) : (
           <input
             key={i}
@@ -86,7 +88,7 @@ export function LetterBoxes({ length, value, onChange, onSubmit, pattern }: {
             autoCorrect="off"
             spellCheck={false}
             value={ch}
-            aria-label={`Buchstabe ${i + 1} von ${length}`}
+            aria-label={t("play.letterOf", { n: i + 1, total: length })}
             onChange={(e) => setChar(i, e.target.value)}
             onKeyDown={(e) => onKeyDown(i, e)}
           />

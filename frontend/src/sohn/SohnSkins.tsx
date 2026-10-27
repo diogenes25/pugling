@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { api, errorMessage } from "../lib/api";
+import { api } from "../lib/api";
+import { useErrorMessage } from "../lib/chromeText";
 import { useAuth } from "../lib/auth";
 import { useAction } from "../lib/useAction";
 import { StatusBanner } from "../components/StatusBanner";
@@ -21,7 +22,8 @@ export function SohnSkins() {
   // Eigener Fehler fürs erste Laden, getrennt von `action` (B-49): `action` gilt für die Mutation
   // `choose`, nicht für das Lesen des Anfangszustands.
   const [loadError, setLoadError] = useState<string | null>(null);
-  const action = useAction();
+  const errorMessage = useErrorMessage();
+  const action = useAction(errorMessage);
 
   // Besitz & Auswahl sind server-autoritativ – beim Öffnen frisch laden. Bis der Zustand da ist,
   // bleibt `ready` false: Sonst gälten alle Skins kurz als "nicht besessen" und ein früher Tipp auf

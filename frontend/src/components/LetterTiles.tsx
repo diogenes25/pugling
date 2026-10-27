@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useChromeT } from "../lib/chromeText";
 
 /**
  * Buchstaben ordnen (B-05): Der Server schickt die Buchstaben der Lösung gemischt (`letterTiles`), das Kind legt
@@ -33,6 +34,7 @@ export function LetterTiles({ tiles, value, onChange, onSubmit }: {
   onChange: (v: string) => void;
   onSubmit?: () => void;
 }) {
+  const t = useChromeT();
   const [picked, setPicked] = useState<number[]>([]);
   const pool = useRef<HTMLDivElement>(null);
 
@@ -87,16 +89,16 @@ export function LetterTiles({ tiles, value, onChange, onSubmit }: {
         {tiles.map((_, i) => <span key={i} className="lettertiles-slot">{word[i] ?? ""}</span>)}
       </div>
       {/* Immer im DOM, nur der Inhalt wechselt (B-134): so wird jede gelegte Kachel angesagt. */}
-      <p className="sr-only" role="status" aria-live="polite">{word ? `Gelegt: ${word.split("").join(" ")}` : ""}</p>
-      <div ref={pool} className="lettertiles-pool" role="group" aria-label="Buchstaben zum Ordnen">
-        {tiles.map((t, i) => (
+      <p className="sr-only" role="status" aria-live="polite">{word ? t("play.placed", { letters: word.split("").join(" ") }) : ""}</p>
+      <div ref={pool} className="lettertiles-pool" role="group" aria-label={t("play.tilesPool")}>
+        {tiles.map((tile, i) => (
           <button type="button" key={i} className="btn ghost lettertiles-tile" aria-disabled={picked.includes(i)}
-            aria-label={`Buchstabe ${t}`} onClick={() => pick(i)}>{t}</button>
+            aria-label={t("play.tile", { letter: tile })} onClick={() => pick(i)}>{tile}</button>
         ))}
       </div>
       <div className="row" style={{ gap: 8, justifyContent: "center" }}>
-        <button type="button" className="btn ghost small" disabled={picked.length === 0} onClick={undo}>⌫ Zurück</button>
-        <button type="button" className="btn ghost small" disabled={picked.length === 0} onClick={() => update([])}>Neu anfangen</button>
+        <button type="button" className="btn ghost small" disabled={picked.length === 0} onClick={undo}>{t("play.undo")}</button>
+        <button type="button" className="btn ghost small" disabled={picked.length === 0} onClick={() => update([])}>{t("play.restart")}</button>
       </div>
     </div>
   );

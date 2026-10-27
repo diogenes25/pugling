@@ -61,13 +61,24 @@ describe("Sprachwahl", () => {
     ["en", "sohn:hud.gems", "1 gem", "2 gems"],
     // „1-day“/„2-day“: als Adjektiv gleich – der Fall fängt einen Tippfehler oder Rückfall in `streak_one`.
     ["en", "sohn:hud.streak", "1-day streak", "2-day streak"],
+    // B-316: die Zählschlüssel aus B-304. „1 Ziel“/„1 Tag“ ist die einzige sichtbare deutsche Änderung dort.
+    ["de", "sohn:progress.days", "1 Tag", "2 Tage"],
+    ["en", "sohn:progress.days", "1 day", "2 days"],
+    ["de", "sohn:objectives.count", "1 Ziel", "2 Ziele"],
+    ["en", "sohn:objectives.count", "1 goal", "2 goals"],
+    ["de", "sohn:objectives.stagesDone", "Etappe geschafft", "2 Etappen geschafft"],
+    ["en", "sohn:objectives.stagesDone", "Stage done", "2 stages done"],
+    ["de", "sohn:practice.cards", "1 Karte", "2 Karten"],
+    ["en", "sohn:practice.cards", "1 card", "2 cards"],
   ] as const)("%s: %s unterscheidet Singular und Plural", async (lang, key, one, two) => {
     await setLanguage(lang);
     expect(i18n.t(key, { count: 1 })).toBe(one);
     expect(i18n.t(key, { count: 2 })).toBe(two);
   });
 
-  it("setzt Platzhalter aus Nutzerdaten ein, statt sie zu übersetzen", async () => {
+  // Der Skin-Name ist seit B-304 selbst übersetzt (über seine Id); hier geht es nur darum, dass ein Platzhalter-Wert
+  // unverändert eingesetzt wird – egal, woher er kommt.
+  it("setzt Platzhalter-Werte unverändert ein, statt sie zu übersetzen", async () => {
     await setLanguage("en");
     expect(i18n.t("sohn:home.doneText", { skin: "Drachi" })).toBe("Strong. Every extra round only makes your Drachi stronger.");
     await setLanguage("de");

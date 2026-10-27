@@ -50,8 +50,11 @@ export interface ActionState {
  * Vorher trug jedes Panel dieselben zwei <c>useState</c>s und dieselbe try/catch/finally-Kaskade – über ein
  * Dutzend Kopien, die auf Fehler jeweils etwas anders reagierten (mal blieb das Formular gefüllt, mal nicht).
  * <c>401</c> muss hier nicht behandelt werden: den fängt der API-Client global ab und beendet die Sitzung.
+ *
+ * `format` macht aus einem Fehler den Meldungstext. Standard ist `errorMessage` (deutsch, wie das Vater-Web);
+ * die Arcade reicht `useErrorMessage` durch, damit ein englisches Kind keinen deutschen Satz bekommt (B-305).
  */
-export function useAction(): ActionState {
+export function useAction(format: (e: unknown) => string = errorMessage): ActionState {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<ActionMessage | null>(null);
   /*
@@ -65,6 +68,9 @@ export function useAction(): ActionState {
    * zöge, stellt Fragen, die niemand gestellt hat) – sichtbar bleibt das über `disabled={busy}`.
    */
   const running = useRef(false);
+  // Im Ref, damit `run`/`runFor` stabil bleiben und trotzdem den Formatierer des letzten Renders benutzen.
+  const formatRef = useRef(format);
+  formatRef.current = format;
 
   const runFor = useCallback(async <T,>(fn: () => Promise<T>, okText?: string): Promise<T | null> => {
     if (running.current) return null;
@@ -76,7 +82,7 @@ export function useAction(): ActionState {
       if (okText) setMessage({ ok: true, text: okText });
       return result;
     } catch (err) {
-      setMessage({ ok: false, text: errorMessage(err) });
+      setMessage({ ok: false, text: formatRef.current(err) });
       return null;
     } finally {
       // Ohne das `finally` bliebe die Maske nach dem ersten Fehler tot.
@@ -97,7 +103,7 @@ export function useAction(): ActionState {
       if (okText) setMessage({ ok: true, text: okText });
       return true;
     } catch (err) {
-      setMessage({ ok: false, text: errorMessage(err) });
+      setMessage({ ok: false, text: formatRef.current(err) });
       return false;
     } finally {
       running.current = false;

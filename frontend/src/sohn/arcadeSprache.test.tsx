@@ -3,7 +3,9 @@ import { render, renderHook, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { setLanguage } from "../lib/i18n";
 import { AuthProvider } from "../lib/auth";
-import { pointKindLabel, interestFacetLabel } from "../lib/labels";
+import { INTEREST_FACETS, pointKindLabel, interestFacetLabel } from "../lib/labels";
+import i18n from "../lib/i18n";
+import type { PointKind } from "../lib/types";
 import { priceLabel, unitAmount } from "../lib/shop";
 import { SKINS } from "../lib/skins";
 import { de } from "../i18n/de";
@@ -55,6 +57,17 @@ describe("Geteilte Helfer bleiben deutsch", () => {
   });
 });
 
+describe("Deutsche Arcade-Texte sprechen wie die Vater-Helfer (B-315)", () => {
+  // Rot, wenn ein deutscher Text in `de.ts` und sein Gegenstück in `lib/labels.ts` auseinanderlaufen – dann hieße
+  // dieselbe Buchung bzw. dieselbe Facette in Arcade und Vater-Web verschieden.
+  it.each(Object.keys(de.sohn.pointKind) as PointKind[])("Buchungsart %s", (kind) => {
+    expect(i18n.t(`sohn:pointKind.${kind}`)).toBe(pointKindLabel(kind));
+  });
+  it.each(INTEREST_FACETS.map((f) => f.value))("Facette %s", (facet) => {
+    expect(i18n.t(`sohn:interests.facet.${facet}`)).toBe(interestFacetLabel(facet));
+  });
+});
+
 describe("Shop-Verlauf auf Englisch", () => {
   // Der Titel ist mit Absicht ein vorhandener Schlüssel: schickte jemand ihn durch `t`, würde aus „shop.cancelled“
   // sichtbar „cancelled“. Ein gewöhnlicher Titel bliebe gleich – `t` liefert bei fehlendem Schlüssel den Schlüssel.
@@ -69,7 +82,9 @@ describe("Shop-Verlauf auf Englisch", () => {
     render(<HistoryTab purchases={[purchase(1, 0)]} total={3} loading={false} error={null} onLoadMore={vi.fn()} />);
     // Rot, wenn der Knopf, die Storno-Pille oder der Gratis-Preis noch am deutschen Literal hängt.
     expect(screen.getByRole("button", { name: "Load more (1 of 3)" })).toBeTruthy();
-    expect(screen.getByText("cancelled")).toBeTruthy();
+    // Die Pille über ihre Klasse: ginge der Titel durch `t`, stünde „cancelled“ zweimal da, und ein `getByText`
+    // fiele hier statt an der AK-2-Zeile unten (Nachschau zu B-304).
+    expect(document.querySelector(".pill.red")?.textContent).toBe("cancelled");
     expect(screen.getByText(/^free · /)).toBeTruthy();
     // Nutzerdatum (AK 2): rot, wenn jemand den Titel durch `t` schickt.
     expect(screen.getByText("shop.cancelled")).toBeTruthy();

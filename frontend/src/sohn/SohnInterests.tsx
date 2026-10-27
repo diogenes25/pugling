@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
-import { api, errorMessage } from "../lib/api";
+import { api } from "../lib/api";
+import { useErrorMessage } from "../lib/chromeText";
 import { useAction } from "../lib/useAction";
 import { StatusBanner } from "../components/StatusBanner";
 import { useSohn } from "./SohnApp";
@@ -70,7 +71,8 @@ export function SohnInterests() {
   const [step, setStep] = useState(0);
   // Eigener Fehler fürs erste Laden, getrennt von `action`: die gilt dem Speichern, nicht dem Lesen.
   const [loadError, setLoadError] = useState<string | null>(null);
-  const action = useAction();
+  const errorMessage = useErrorMessage();
+  const action = useAction(errorMessage);
 
   useEffect(() => {
     Promise.all([api.interestOptions(), api.myInterests()])

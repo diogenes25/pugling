@@ -916,3 +916,97 @@ unübersetzt‘ belegt nur ein Wert, der ein vorhandener Schlüssel ist – `t` 
 zurück.“ Verwandt mit (R): jeder Kommentar „rot, wenn X“ in einem Test braucht eine gefahrene Mutante X – das wäre als
 Tor denkbar (Kommentar-Muster gegen eine Mutanten-Liste im Verlauf), aber teuer und leicht zu umgehen; darum nur
 Prosa vorgeschlagen.
+
+## Lauf G, Teil 2 — B-305 Der Spielweg der Arcade auf Englisch, Zähler 0
+
+**Sprint-Ziel:** *Das Kind, das die Arcade auf Englisch stellt, übt und schreibt seinen Test auf Englisch – samt der
+Fehlermeldungen, die es dabei treffen können –, während die Übungs-Vorschau des Vaters deutsch bleibt.* Umfang:
+[B-305](backlog/B-305-arcade-spielweg-auf-englisch.md) (`Wunsch`, `geschaetzt`, M – baubar nach Freigabe 8).
+[B-314](backlog/B-314-fehlermeldungen-der-arcade-bleiben-deutsch.md) aus dem Review von Teil 1 war ein Doppel
+(B-305 nennt `GERMAN_PROBLEM_TEXT` „soweit die Arcade ihn zeigt“ schon im Umfang) und ist zusammengelegt. **Zähler: 0.**
+
+**Entwickler-Brief:** Die Bildschirme `SohnPractice`/`SohnTest` nehmen Schlüssel wie in Teil 1. Für die acht geteilten
+Bausteine (sieben davon zeigt auch die Vater-Vorschau) entscheidet die Story „Schlüssel oder Prop“ dem Bau: ein Kontext
+`ArcadeScope` an der `SohnApp`-Wurzel, und `useChromeT()` liefert innerhalb die Arcade-Sprache, außerhalb fest Deutsch –
+ein Weg für alle, ohne Prop-Kaskade. Fehler: `useErrorMessage()` (Deutsch exakt `errorMessage`, Englisch eigener Satz je
+Arcade-Code oder der ohnehin englische Server-Text) und ein optionaler Formatierer an `useAction`.
+
+**Befund am Code:** Die Arcade zeigt nirgends Übungstyp-Namen (Suche über `src/sohn/` nach Manifest/Anzeigenamen ohne
+Treffer) – AK 4 hat in diesem Umfang keine Fläche.
+
+### Iteration
+
+- `lib/chromeText.tsx` (`ArcadeScope`, `useChromeT`, `useErrorMessage`); acht Bausteine, zwei Bildschirme;
+  `useAction(format)` mit Standard `errorMessage`; Shop, Skins, Interessen reichen `useErrorMessage` durch. `tsc -b`
+  sauber, Literal-Suche ohne Rest, Vitest unverändert **494/494** (Deutsch gleich).
+- `arcadeSpielweg.test.tsx`, **10 Fälle**. Rote Probe gegen den Ausgangsstand nicht messbar (neue Module); **12
+  Mutanten** – elf je **1 failed** (eine **2 failed**), Kontrolle **10 passed**. Lücke dabei: „Sprachweiche weg“ blieb
+  zuerst **10/10 grün** (für die drei Arcade-Codes ist der deutsche Satz wortgleich) – Fall mit einem Code ergänzt, den
+  nur `errorMessage` kennt, danach **1 failed**. AK 2 von Anfang an mit vorhandenen Schlüsseln als Nutzerdaten belegt
+  (Lehre aus Teil 1).
+- `sprache.spec.ts`: neuer Fall „Übungsrunde in der englischen Arcade“ (Vater legt eine Position an, der Sohn spielt
+  eine Karte). Erste Fassung hatte einen Zweig „Next →“ **oder** „Flip“; Mutante auf „Next →“ blieb **1 passed** – der
+  Zweig lief nie, die erste Karte ist eine Selbsteinschätzung. Zweig gestrichen, Weg fest; Mutante „Knew it!“ zurück
+  aufs Literal → **1 failed** an der richtigen Zeile.
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `frontend-reviewer` 🟡 | die deutschen `problem.*`-Texte wurden nie gelesen; ihr Paritäts-Fall bewachte nichts Sichtbares | der deutsche Weg läuft für Arcade-Codes jetzt über die Ressource | ja |
+| 2 | `frontend-reviewer` 🟡 | die Hälfte der Bausteine ohne Sprach-Fall (innen englisch / außen deutsch) | alle acht im Fall; sieben Mutanten je **1 failed**, „Alternative durch `t`“ **2 failed** | ja |
+| 3 | `frontend-reviewer` 🟡 | AK 2 auf dem Spielweg nur als Kommentar | Schlüssel als Nutzerdatum im Baustein-Fall; Spec-Kommentar ehrlich gefasst | ja |
+| – | `frontend-reviewer` 🟢 | „1 Karte“ ändert Deutsch; falscher Begründungs-Kommentar; „also right“, „Keep trying“ | im Verlauf genannt; Kommentar und zwei Texte korrigiert | nein (Freigabe 10) |
+
+**Zähler: 3.** Vitest **537/537**, volle E2E **99 passed** (`exit=0`; ein erster Lauf hatte **1 failed** – Timeout beim
+Aufbau des Browser-Kontexts in `lehrer-konto.spec.ts` während einer Sitzungsunterbrechung, 14,9 min Laufzeit; die Spec
+einzeln **6 passed** zusammen mit `sprache.spec.ts`, danach die volle Suite neu). Rollengang: der Sohn-Gang ist der neue
+Fall in `sprache.spec.ts` (Vater legt eine Position an, der Sohn spielt auf Englisch eine Karte); Vater mit AK 3 belegt
+(Bausteine außerhalb des Scopes deutsch), Creator Regressionszeuge. **B-305 `abgenommen`**, `wartet_auf` das
+Gegenlesen (AK 6); **B-315, B-316 `abgenommen`** (aus der Nachschau, siehe unten).
+
+### Retrospektive
+
+**Nachschau:** Teil 1 (`95f611b`, B-304) von einem frischen `frontend-reviewer`: Mutante je Zusicherung hergeleitet,
+Render-Bäume aller acht Bildschirme samt `Mascot`, `StatusBanner`, `SavedNotice`, `CelebrationLayer` gescannt, jeder
+deutsche Wert gegen das alte Literal verglichen, 21 Fälle nachgezählt und gemessen. **Zwei Entgleiten im Increment
+dieses Laufs**, je als `Defekt` angelegt und im Sprint behoben:
+[B-315](backlog/B-315-arcade-buchungsart-und-facette-ohne-abgleich.md) (`pointKind`/`facet` nicht an die Vater-Helfer
+gebunden; Mutanten je **1 failed**) und [B-316](backlog/B-316-plural-schluessel-aus-b-304-ohne-fall.md) (neue
+Zählschlüssel ohne 1-gegen-2-Fall; Mutante **2 failed**), beide `entgangen_bei: B-304`. 🟢 behoben (AK-2-Zeile fiel am
+falschen Ort, „Fox“ an der Aufrufstelle, Falltitel); Randbefunde → [B-317](backlog/B-317-ziel-etappe-ohne-titel-zeigt-enum.md).
+`nachgeschaut` an B-304.
+
+**Was die eigenen Tore durchgelassen haben:** Dieselbe Familie wie in Teil 1 und in Lauf F – eine Regel an einer
+Stelle belegt, ihre Geschwister nicht: den Abgleich mit dem Vater-Helfer für Einheiten, nicht für Buchungsarten und
+Facetten; den Pluralfall für das HUD, nicht für die neuen Zählschlüssel; den Sprach-Fall für vier Bausteine, nicht für
+acht. Neu in diesem Sprint: ein **bedingter Zweig in einer E2E-Spec** (`if (await flip.isVisible())`) sah wie ein
+Beleg für zwei Wege aus und lief nur einen – erst die Mutante zeigte es.
+
+**Warum der Lauf hier endet (Limit 2):** die Nachschau fand zwei Defekte **im Increment dieses Laufs** (Teil 1).
+Dass beide XS waren und im Sprint behoben sind, ändert die Regel nicht – wie in Lauf E und F.
+
+**Vorschlag, nicht gelandet (Freigabe 3):** **(T)** Tor über `frontend/e2e/*.ts`: kein `if (await … .isVisible())`
+in einer Spec – ein Zweig, der vom Laufzeitzustand abhängt, belegt nur den gefahrenen Weg. Bestand: genau eine Stelle
+(`responsive-vater.spec.ts:67`, eine Schleife über Hinweise), sie bräuchte eine begründete Ausnahme. Dazu **(S)** aus
+Teil 1 (Prosa: „bleibt unübersetzt“ belegt nur ein Wert, der ein vorhandener Schlüssel ist) – in Teil 2 vorab
+angewendet und vom Reviewer trotzdem an einer Stelle vermisst.
+
+## Ende Lauf G
+
+Endgrund: **Limit 2** – die Nachschau von Teil 2 fand im Increment von Teil 1 zwei Testlöcher (B-315, B-316, behoben).
+Zwei Teile, **fünf Stories abgenommen** (B-304, B-305, B-315, B-316; dazu B-308/B-309 nachgeschaut) – B-295 ist damit
+vollständig, die Sohn-Arcade spricht Englisch bis auf Übungstyp-Namen (die sie nicht zeigt) und Nutzerdaten. B-314
+zusammengelegt. Höchster Zähler 3 (Teil 2). Alles **ungepusht**.
+
+**Offene Entscheidungen für den Nutzer:**
+
+1. **Englische Texte gegenlesen** (B-304 AK 5, B-305 AK 6, dazu B-294 AK 7): alles Neue in `frontend/src/i18n/en.ts`
+   (`login`, `account`, `pointKind`, `progress`, `objectives`, `badges`, `skins`, `shop`, `interests`, `play`,
+   `practice`, `test`, `problem`).
+2. Neu im Backlog: [B-311](backlog/B-311-agent-reihensuche-liest-nur-50-reihen.md) (🟡 `Defekt`, `idee`, `unverifiziert`
+   – nächster Kandidat), [B-312](backlog/B-312-agent-profiles-unbekanntes-fach-meldet-kein-profil.md) (`Defekt`),
+   [B-313](backlog/B-313-agent-unbekannter-typ-je-teil-statt-fehlbedienung.md) (**`Frage`**: Tippfehler in `--types`
+   vorab abweisen oder Teil-Plan anlegen?), [B-317](backlog/B-317-ziel-etappe-ohne-titel-zeigt-enum.md) (`Defekt`).
+3. **Retro-Vorschläge (S), (T)**, keiner gelandet; dazu unverändert (O)–(R) aus Lauf F und (H)–(N) aus Lauf E.
+4. Unverändert offen: B-310 (Vertragsfrage 404/403), B-291 (`Frage`), B-267, B-268.

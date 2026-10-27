@@ -1,3 +1,5 @@
+import { useChromeT } from "../lib/chromeText";
+
 /**
  * Der Stoff, auf den sich eine Frage bezieht: der Lesetext einer Leseverstehen-Übung, die übergreifende
  * Anweisung einer Grammatik-Übung. Er gehört der *Übung*, nicht der einzelnen Karte, und steht darum über
@@ -9,12 +11,13 @@
  * über die sichtbare Höhe hinaus. Und ohne Namen läse ein Screenreader den Text ohne jede Ansage direkt
  * vor der Frage.
  */
-export function Passage({ text, label = "Text zur Aufgabe" }: { text?: string | null; label?: string }) {
+export function Passage({ text, label }: { text?: string | null; label?: string }) {
+  const t = useChromeT();
   if (!text) return null;
 
   return (
     // `tabIndex={0}` macht den Scroll-Bereich per Tastatur erreichbar, die Rolle trägt seinen Namen.
-    <div className="passage" tabIndex={0} role="group" aria-label={label}>
+    <div className="passage" tabIndex={0} role="group" aria-label={label ?? t("play.passage")}>
       {text}
     </div>
   );

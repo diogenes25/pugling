@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { NavLink, Navigate, Route, Routes } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { isLanguage, setLanguage } from "../lib/i18n";
+import { ArcadeScope } from "../lib/chromeText";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { DEFAULT_SKIN, skinById, type Skin } from "../lib/skins";
@@ -57,8 +58,13 @@ export function SohnApp() {
     return () => { document.documentElement.lang = "de"; };
   }, [lang]);
 
-  if (!session || session.role !== "Student") return <SohnLogin />;
-  return <SohnShell childId={session.id} />;
+  // Der Scope lässt die geteilten Spiel-Bausteine der Arcade-Sprache folgen (B-305); die Vater-Vorschau liegt
+  // außerhalb und bleibt deutsch.
+  return (
+    <ArcadeScope>
+      {!session || session.role !== "Student" ? <SohnLogin /> : <SohnShell childId={session.id} />}
+    </ArcadeScope>
+  );
 }
 
 function SohnShell({ childId }: { childId: number }) {

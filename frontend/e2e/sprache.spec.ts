@@ -51,6 +51,8 @@ test("Der Sohn stellt die Arcade auf Englisch, sie bleibt es nach dem Neuladen, 
   // mit `lang="en"`. Den Rückfall auf Deutsch beim Entmontieren der Arcade belegt `arcadeSprache.test.tsx`: ein
   // `page.goto` läse hier nur das statische `lang="de"` aus `index.html`, nicht die Aufräumzeile in `SohnApp`.
   await nav.getByRole("link", { name: "Skins" }).click();
+  // Der Katalog ist statisch: „Fox“ statt „Fuchs“ belegt `useSkinText` an der Aufrufstelle, nicht nur im Hook.
+  await expect(page.locator(".skin .nm", { hasText: /^Fox$/ })).toBeVisible();
   await page.getByRole("button", { name: "Sign out" }).click();
   await expect(page.getByRole("button", { name: "▶ GO" })).toBeVisible();
   await expect(page.getByText("Ready for a round?")).toBeVisible();
@@ -73,4 +75,52 @@ test("Der Sohn stellt die Arcade auf Englisch, sie bleibt es nach dem Neuladen, 
   await page.getByRole("button", { name: "DE – switch to German (language is English)" }).click();
   await expect(nav.getByRole("link", { name: "Basis" })).toBeVisible();
   await expect(page.locator("html")).toHaveAttribute("lang", "de");
+});
+
+/*
+ * B-305 – der Spielweg auf Englisch: eine Übungsrunde in der englischen Arcade. Der Vater legt dafür eine frische
+ * Position an (wie `uebung-abbruch.spec.ts`). Ihre erste Karte ist eine Selbsteinschätzung (gemessen: „Flip 🔄“, dann
+ * „Knew it!“). Ein Zweig für andere Stufen fehlt mit Absicht – er liefe hier nie und sähe trotzdem wie ein Beleg aus.
+ */
+const EXERCISE = "Vokabeln: En ville";
+
+test("Der Sohn spielt eine Übungsrunde in der englischen Arcade", async ({ browser }) => {
+  const vaterCtx = await browser.newContext();
+  const vater = await vaterCtx.newPage();
+  await vaterLogin(vater, FATHER);
+  await vater.getByRole("link", { name: /Zuweisen/ }).first().click();
+  await vater.getByRole("link", { name: /Neuer Plan/ }).click();
+  const kindSelect = vater.getByRole("combobox", { name: "Kind" });
+  await expect(kindSelect.locator("option")).not.toHaveCount(0);
+  await kindSelect.selectOption(CHILD.id);
+  await vater.getByRole("button", { name: /Plan anlegen/ }).click();
+  await expect(vater).toHaveURL(/\/vater\/plan\/\d+$/);
+  const exRadio = vater.getByRole("radio", { name: new RegExp(EXERCISE) });
+  await exRadio.check();
+  await vater.locator('select[aria-label="Ziel-Rhythmus"]').selectOption("Daily");
+  await vater.getByRole("checkbox", { name: /Leitner/ }).check();
+  await vater.getByRole("button", { name: /Position hinzufügen/ }).click();
+  await expect(vater.getByRole("row", { name: new RegExp(EXERCISE) })).toBeVisible();
+  await vaterCtx.close();
+
+  const sohnCtx = await browser.newContext();
+  const page = await sohnCtx.newPage();
+  await sohnLogin(page, CHILD);
+  await page.getByRole("button", { name: "EN – auf Englisch umschalten (Sprache ist Deutsch)" }).click();
+
+  // Der Knopf ist Chrome. (AK 2 – Nutzerdaten bleiben – belegt `arcadeSpielweg.test.tsx` mit Schlüsseln als Daten;
+  // hier wäre es nicht messbar, `t` gäbe „Vokabeln: En ville“ fast unverändert zurück.)
+  await page.locator(".card", { hasText: EXERCISE }).getByRole("link", { name: /PRACTISE/ }).click();
+  await expect(page.locator(".pill.cyan", { hasText: /^Card \d+ \/ \d+$/ })).toBeVisible();
+  await expect(page.locator(".fcard .lang")).toHaveText("Task");
+  await expect(page.getByText(/^(Karte \d|Aufgabe|Runde beenden|Umdrehen)/)).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Flip 🔄" }).click();
+  await page.getByRole("button", { name: "Knew it!" }).click();
+
+  // Nach der ersten Karte: entweder die nächste Karte oder schon das Rundenende – beides englisch.
+  await expect(page.locator(".pill.cyan", { hasText: /^Card 2 \// }).or(page.getByText("ROUND DONE!"))).toBeVisible();
+  await page.goto("/sohn");
+  await expect(page.locator(".sohn-nav").getByRole("link", { name: "Home" })).toBeVisible();
+  await sohnCtx.close();
 });

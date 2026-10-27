@@ -1,4 +1,5 @@
 import type { ExerciseTypeKey } from "../lib/uiTypes";
+import { useChromeT } from "../lib/chromeText";
 
 /**
  * Die Spielregel einer Listen-Karte – eine Zeile unter dem Aufgabentext (B-77).
@@ -27,12 +28,13 @@ export function ListRule({ type, anyOrder, itemIndex }: {
 }) {
   // „den du noch nicht genannt hast", nicht „der noch nicht dran war": bestraft wird nach E4 die eigene
   // Wiederholung, nicht eine Kartenreihenfolge – und genau das muss das Kind lesen.
+  const t = useChromeT();
   if (anyOrder) {
-    return <p className="sub list-rule">Nenne einen Eintrag, den du noch nicht genannt hast.</p>;
+    return <p className="sub list-rule">{t("play.listAnyOrder")}</p>;
   }
   if (type !== LIST_KEY) return null;
   // Die Position ist 1-basiert für das Kind – und sie kommt aus `itemIndex`, nicht aus dem Fragezähler: die
   // Prüfungsreihenfolge ist serverseitig eingefroren („schwächste zuerst"), „Frage 3" ist also nicht „Eintrag 3".
   // Ausgezeichnet wie die gefragte Lücke beim Lückentext, denn hier ist es das einzige Unterscheidungsmerkmal.
-  return <p className="sub list-rule position">Eintrag {itemIndex + 1}</p>;
+  return <p className="sub list-rule position">{t("play.listEntry", { n: itemIndex + 1 })}</p>;
 }

@@ -1,3 +1,5 @@
+import { useChromeT } from "../lib/chromeText";
+
 /**
  * Die gleichwertigen Antworten unter der aufgedeckten Lösung – „auch richtig: …" (B-70).
  *
@@ -10,9 +12,10 @@
  * dreier Kopien, weil dieselbe Zeile in Übung, Klausur und Vater-Vorschau steht (Muster `ListRule`).
  */
 export function RevealAlternatives({ alternatives }: { alternatives?: readonly string[] | null }) {
+  const t = useChromeT();
   if (!alternatives?.length) return null;
   // Mittelpunkt als Trenner, nicht Komma: eine Übersetzung darf selbst ein Komma enthalten.
   // Der Abstand steht in der CSS-Klasse, nicht als Prop: er ist eine Entscheidung, nicht drei (und die
   // UA-Vorgabe eines <p> hätte die Zeile von der Lösung weggedrückt, zu der sie gehört – wie bei `.list-rule`).
-  return <p className="sub reveal-alternatives">auch richtig: {alternatives.join(" · ")}</p>;
+  return <p className="sub reveal-alternatives">{t("play.alsoRight", { list: alternatives.join(" · ") })}</p>;
 }

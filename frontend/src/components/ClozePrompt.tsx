@@ -1,4 +1,5 @@
 import { clozeParts } from "../lib/cloze";
+import { useChromeT } from "../lib/chromeText";
 
 /**
  * Der Aufgabentext eines Lückentexts – mit der **gefragten** Lücke hervorgehoben.
@@ -24,6 +25,7 @@ export function ClozePrompt({ text, gapIndex, className = "word" }: {
   gapIndex?: number | null;
   className?: string;
 }) {
+  const t = useChromeT();
   if (!text) return null;
   const parts = clozeParts(text);
   const gaps = parts.filter((p) => "gap" in p);
@@ -48,7 +50,7 @@ export function ClozePrompt({ text, gapIndex, className = "word" }: {
             key={i}
             role="img"
             className={part.gap === gapIndex ? "cloze-gap asked" : "cloze-gap"}
-            aria-label={part.gap === gapIndex ? "gesuchte Lücke" : `Lücke ${part.gap}`}
+            aria-label={part.gap === gapIndex ? t("play.gapAsked") : t("play.gap", { n: part.gap })}
           >
             {part.gap === gapIndex ? "?" : "…"}
           </span>

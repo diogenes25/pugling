@@ -1,4 +1,5 @@
 import type { WordPair } from "../lib/types";
+import { useChromeT } from "../lib/chromeText";
 
 /**
  * Die Wort-für-Wort-Dekodierung eines Satzes (Birkenbihl): über jedem Wort der Lernsprache steht seine
@@ -16,10 +17,11 @@ import type { WordPair } from "../lib/types";
  * Paar ein Komma (`.sr-only`, dieselbe Sorgfalt wie bei `Passage` und der Antwort-Gruppe in `SohnPractice`).
  */
 export function BirkenbihlDecoding({ decoding }: { decoding?: readonly WordPair[] | null }) {
+  const t = useChromeT();
   if (!decoding?.length) return null;
 
   return (
-    <div className="decoding" role="group" aria-label="Wort-für-Wort-Dekodierung">
+    <div className="decoding" role="group" aria-label={t("play.decoding")}>
       {decoding.map((w) => (
         // Schlüssel ist die übungsweit eindeutige `wordId` – dasselbe Wort darf im Satz zweimal vorkommen.
         <span className="decoding-pair" key={w.wordId}>

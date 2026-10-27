@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ApiError, api, errorMessage } from "../lib/api";
+import { useTranslation } from "react-i18next";
+import { ApiError, api } from "../lib/api";
+import { useErrorMessage } from "../lib/chromeText";
 import { useOncePerKey } from "../lib/useOncePerKey";
 import { useAction } from "../lib/useAction";
 import { useSohn } from "./SohnApp";
@@ -49,6 +51,8 @@ export function SohnPractice() {
   const positionId = Number(positionIdRaw);
   const nav = useNavigate();
 
+  const { t } = useTranslation();
+  const errorMessage = useErrorMessage();
   const [phase, setPhase] = useState<Phase>("loading");
   const [error, setError] = useState<string | null>(null);
   const [cards, setCards] = useState<PracticeCard[]>([]);
@@ -72,7 +76,7 @@ export function SohnPractice() {
 
   // Geteilte Instanz für `judge` UND `reshuffleImage` (B-49, Entscheidung 3): eine laufende Bewertung
   // sperrt harmlos auch den Bildwechsel und umgekehrt - beides ändert dieselbe Karte.
-  const action = useAction();
+  const action = useAction(errorMessage);
   const session = useRef<PositionSession | null>(null);
   const startedIso = useRef<number>(Date.now());
 
@@ -142,12 +146,12 @@ export function SohnPractice() {
           setEarned((e) => e + feedback.awarded + feedback.comboBonus + feedback.speedBonus);
           if (feedback.comboBonus > 0) {
             const tier = feedback.combo >= 10 ? "big" : "medium";
-            celebrate(tier, tier === "big" ? "🥷" : "🎉", `COMBO ×${feedback.combo}`, `+${feedback.comboBonus} 🪙 Bonus`);
+            celebrate(tier, tier === "big" ? "🥷" : "🎉", `COMBO ×${feedback.combo}`, t("practice.comboBonus", { bonus: feedback.comboBonus }));
           } else {
             celebrate("small", SMALL_EMOJI[feedback.combo % SMALL_EMOJI.length]);
           }
           if (feedback.awarded > 0) {
-            setToast(`+${feedback.awarded} 🪙${feedback.box ? ` · Box ${feedback.box}` : ""}`);
+            setToast(`+${feedback.awarded} 🪙${feedback.box ? ` · ${t("practice.box", { box: feedback.box })}` : ""}`);
             setTimeout(() => setToast(null), 1100);
           }
           refreshWallet();
@@ -155,7 +159,7 @@ export function SohnPractice() {
           // Ohne getroffenen Eintrag gibt es keine Lösung zu nennen: bei einer Menge (ungeordnete Liste) wäre
           // „Lösung: Hessen" willkürlich, solange ein Dutzend Einträge offen ist – und verriete einen, der noch
           // gefragt wird. Der Server liefert dann `null`, und hier bleibt es bei der schlichten Absage.
-          setToast(feedback.expected ? `Lösung: ${feedback.expected}` : "Leider nicht.");
+          setToast(feedback.expected ? t("practice.solution", { expected: feedback.expected }) : t("practice.wrong"));
           setTimeout(() => setToast(null), 1600);
         }
         // feedback.kind === "none": kein Outcome ODER eine Anzeigenurstufe (ShowBoth) - kein Urteil, kein Toast.
@@ -176,9 +180,9 @@ export function SohnPractice() {
     }
   }
 
-  if (phase === "loading") return <div className="sohn-body"><div className="loading">Runde wird geladen…</div></div>;
+  if (phase === "loading") return <div className="sohn-body"><div className="loading">{t("practice.loading")}</div></div>;
   if (phase === "error") return <div className="sohn-body"><div className="error-box">{error}</div>
-    <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>Zur Basis</button></div>;
+    <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>{t("progress.toHome")}</button></div>;
 
   // B-117: eine Anzeigestufe (ShowBoth, B-96) kennt keinen Test - die Klausur antwortet dort mit
   // `stage_not_testable`. Ohne dieses Gate bot der Bildschirm den Knopf trotzdem an und schickte in die
@@ -188,26 +192,26 @@ export function SohnPractice() {
   if (phase === "empty") return (
     <div className="sohn-body">
       <div className="card" style={{ textAlign: "center" }}>
-        <div className="screen-title">Nichts fällig 🎉</div>
+        <div className="screen-title">{t("practice.nothingDue")}</div>
         <p className="sub">{testable
-          ? "Alle Karten sind aktuell weit genug im Kasten. Mach den Test oder komm später wieder."
-          : "Alle Karten sind aktuell weit genug im Kasten. Komm später wieder."}</p>
+          ? t("practice.nothingDueTest")
+          : t("practice.nothingDueLater")}</p>
       </div>
-      {testable && <button type="button" className="btn" onClick={() => nav(`/sohn/test/${positionId}`)}>🎯 Zum Test</button>}
-      <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>Zur Basis</button>
+      {testable && <button type="button" className="btn" onClick={() => nav(`/sohn/test/${positionId}`)}>{t("practice.toTest")}</button>}
+      <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>{t("progress.toHome")}</button>
     </div>
   );
 
   if (phase === "done") return (
     <div className="sohn-body">
       <div className="victory">
-        <div className="vtitle win">RUNDE FERTIG!</div>
+        <div className="vtitle win">{t("practice.roundDone")}</div>
         <div className="reward">
           <div className="card">🪙<span style={{ color: "var(--gold)" }}>+{earned}</span></div>
-          <div className="card">🃏<span>{cards.length} Karten</span></div>
+          <div className="card">🃏<span>{t("practice.cards", { count: cards.length })}</span></div>
         </div>
-        {testable && <button type="button" className="btn gold" onClick={() => nav(`/sohn/test/${positionId}`)} style={{ marginTop: 10 }}>🎯 Weiter zum Test</button>}
-        <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>Zur Basis</button>
+        {testable && <button type="button" className="btn gold" onClick={() => nav(`/sohn/test/${positionId}`)} style={{ marginTop: 10 }}>{t("practice.onToTest")}</button>}
+        <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>{t("progress.toHome")}</button>
       </div>
     </div>
   );
@@ -232,7 +236,7 @@ export function SohnPractice() {
           i === at ? { ...c, imageUrl: picked.imageUrl, imageAlt: picked.imageAlt } : c));
       } catch (e) {
         setToast(e instanceof ApiError && e.code === "media_no_alternative"
-          ? "Mehr Bilder gibt es dafür nicht 🙂"
+          ? t("practice.noMoreImages")
           : errorMessage(e));
       }
     });
@@ -240,11 +244,11 @@ export function SohnPractice() {
   return (
     <div className="sohn-body">
       <div className="row">
-        <span className="pill cyan">Karte {idx + 1} / {cards.length}</span>
+        <span className="pill cyan">{t("practice.cardOf", { n: idx + 1, total: cards.length })}</span>
         <span className="row" style={{ marginLeft: "auto", gap: 8 }}>
           {combo >= 2 && <span className="pill mag">⚡ COMBO ×{combo}</span>}
           <button type="button" className={`pill toggle-pill ${tempo ? "lime" : ""}`} onClick={toggleTempo} aria-pressed={tempo}>
-            ⚡ Tempo
+            {t("practice.tempo")}
           </button>
           {/*
             Sichtbarer Ausweg aus der laufenden Runde. Ohne Rückfrage, weil eine Rückfrage über eine
@@ -256,7 +260,7 @@ export function SohnPractice() {
             und die nächste Runde beginnt wieder bei null.
           */}
           <button type="button" className="pill toggle-pill exit-pill" onClick={() => nav("/sohn")}>
-            Runde beenden
+            {t("practice.endRound")}
           </button>
         </span>
       </div>
@@ -267,7 +271,7 @@ export function SohnPractice() {
       <div className="flash">
         {/* Nur die Selbsteinschätzung kommt auf „back" – ShowBoth ist von Anfang an offen und dreht nichts (B-35). */}
         <div className={phase === "back" ? "fcard flipped" : "fcard"}>
-          <div className="lang">Aufgabe</div>
+          <div className="lang">{t("practice.task")}</div>
           {/*
             Das Bild kommt nur auf Stufen, auf denen es die Lösung nicht verraten kann – der Server
             entscheidet das, das Frontend rendert nur, was da ist. Es steht über dem Wort, weil es beim
@@ -304,7 +308,7 @@ export function SohnPractice() {
           {card.hint && typed && (
             hintShown
               ? <div className="sub">💡 {card.hint}</div>
-              : <button type="button" className="btn ghost small" style={{ marginTop: 6 }} onClick={() => setHintShown(true)}>💡 Tipp</button>
+              : <button type="button" className="btn ghost small" style={{ marginTop: 6 }} onClick={() => setHintShown(true)}>{t("practice.hint")}</button>
           )}
           {/* ShowBoth (B-96): a free display stage shows both sides at once, no flip needed - the server
               flags this via `displayOnly`, distinct from self-assessment which reveals only after "Umdrehen". */}
@@ -315,7 +319,7 @@ export function SohnPractice() {
         {/* Gruppe statt loser Knöpfe: ein Screenreader liest sonst „Leeds, Schaltfläche" ohne Bezug zur
             Frage. Der Key trägt den Index mit – der Autor darf dieselbe Option zweimal eintragen. */}
         {typed && card.choices ? (
-          <div className="row" style={{ gap: 8, flexWrap: "wrap" }} role="group" aria-label="Antwortmöglichkeiten">
+          <div className="row" style={{ gap: 8, flexWrap: "wrap" }} role="group" aria-label={t("practice.choices")}>
             {card.choices.map((c, i) => (
               <button type="button" key={`${i}-${c}`} className="btn ghost" disabled={action.busy}
                 onClick={() => judge(card, { givenAnswer: c })}>{c}</button>
@@ -330,40 +334,40 @@ export function SohnPractice() {
             ) : (
               <form onSubmit={(e) => { e.preventDefault(); submitTyped(); }}>
                 <input
-                  aria-label="Deine Antwort"
+                  aria-label={t("practice.yourAnswer")}
                   name="answer"
                   autoComplete="off"
                   autoCapitalize="off"
                   autoCorrect="off"
                   spellCheck={false}
                   style={{ width: "100%", background: "#0c0e2c", border: "1.5px solid var(--stroke)", borderRadius: 12, color: "var(--ink)", padding: 12, fontSize: 15 }}
-                  placeholder="Antwort…"
+                  placeholder={t("practice.answerPlaceholder")}
                   value={typedAnswer}
                   onChange={(e) => setTypedAnswer(e.target.value)}
                 />
               </form>
             )}
-            <button type="button" className="btn lime" style={{ marginTop: 10 }} disabled={action.busy || !typedAnswer.trim()} onClick={submitTyped}>Prüfen</button>
+            <button type="button" className="btn lime" style={{ marginTop: 10 }} disabled={action.busy || !typedAnswer.trim()} onClick={submitTyped}>{t("practice.check")}</button>
           </div>
         ) : card.displayOnly ? (
           // Kennenlernen: no judgment to make, so no "Gewusst?" buttons - just move on.
-          <button type="button" className="btn lime" disabled={action.busy} onClick={() => judge(card, {})}>Weiter →</button>
+          <button type="button" className="btn lime" disabled={action.busy} onClick={() => judge(card, {})}>{t("practice.next")}</button>
         ) : phase === "front" ? (
-          <button type="button" className="btn" onClick={() => setPhase("back")}>Umdrehen 🔄</button>
+          <button type="button" className="btn" onClick={() => setPhase("back")}>{t("practice.flip")}</button>
         ) : (
           <div className="judge">
             {/* B-49: vorher ohne `disabled` - ein Doppelklick konnte zwei `review` auf denselben `itemIndex`
                 auslösen (dieselbe Lücke, die die Choice-Knöpfe oben schon durch `useAction` geschlossen
                 hatten). */}
-            <button type="button" className="btn red small" disabled={action.busy} onClick={() => judge(card, { wasKnown: false })}>Nochmal</button>
-            <button type="button" className="btn lime small" disabled={action.busy} onClick={() => judge(card, { wasKnown: true })}>Gewusst!</button>
+            <button type="button" className="btn red small" disabled={action.busy} onClick={() => judge(card, { wasKnown: false })}>{t("practice.again")}</button>
+            <button type="button" className="btn lime small" disabled={action.busy} onClick={() => judge(card, { wasKnown: true })}>{t("practice.knewIt")}</button>
           </div>
         )}
       </div>
 
       <div className={`live-region${toast ? " toast" : ""}`} role="status" aria-live="polite">{toast}</div>
       {lastOutcome?.dueOn && phase === "front" && (
-        <p className="sub" style={{ textAlign: "center" }}>Nächste Fälligkeit: {lastOutcome.dueOn}</p>
+        <p className="sub" style={{ textAlign: "center" }}>{t("practice.nextDue", { date: lastOutcome.dueOn })}</p>
       )}
     </div>
   );
@@ -378,6 +382,7 @@ export function SohnPractice() {
  * ein Motiv, das ein Kind nicht mag, arbeitet gegen das Lernen.
  */
 function CardImage({ url, alt, busy, onReshuffle }: { url: string; alt: string; busy: boolean; onReshuffle: () => void }) {
+  const { t } = useTranslation();
   return (
     <figure style={{ margin: "0 0 10px", textAlign: "center" }}>
       <img
@@ -393,7 +398,7 @@ function CardImage({ url, alt, busy, onReshuffle }: { url: string; alt: string; 
           disabled={busy}
           onClick={onReshuffle}
         >
-          🔄 anderes Bild
+          {t("practice.otherImage")}
         </button>
       </figcaption>
     </figure>

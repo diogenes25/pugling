@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: "Mensch: die neuen englischen Texte in src/i18n/en.ts gegenlesen (AK 5)"
+nachgeschaut: "2026-10-27"
 ---
 
 # B-304 · Der Rahmen der Sohn-Arcade auf Englisch: Login, Konto, Weg, Shop, Skins, Interessen
@@ -93,3 +94,14 @@ Schlüssel nach Bildschirm gruppiert (`login.*`, `account.*`, `progress.*`, `ski
   Regressionszeugen – volle E2E grün, der Vater-Pfad im Diff nur als Leser der unveränderten Helfer (AK 3 belegt).
   Chrome-Extension nicht genutzt; die Spec ist der Gang. **`abgenommen`**, `wartet_auf` das menschliche Gegenlesen
   (AK 5). Zum Gegenlesen besonders: `progress.title` „Trophy path“, `pointKind.*`, `interests.*Hint`.
+- **2026-10-27** — nachgeschaut (Lauf G, Teil 2, frischer `frontend-reviewer` am Commit `95f611b`): Mutante je
+  Zusicherung in `arcadeSprache.test.tsx` und den B-304-Zeilen von `sprache.spec.ts` hergeleitet; Render-Bäume aller
+  acht Bildschirme samt `Mascot`, `StatusBanner`, `SavedNotice`, `CelebrationLayer` auf Literale gescannt (keins);
+  alle `celebrate`-Texte über Schlüssel; kein Zählschlüssel ohne `count`; jeder deutsche Wert gegen das alte Literal
+  verglichen; Fallzahl **21** nachgezählt und gemessen. **Entgangen:** [B-315](B-315-arcade-buchungsart-und-facette-ohne-abgleich.md)
+  (🟡, `pointKind`/`facet` nicht an die Vater-Helfer gebunden) und [B-316](B-316-plural-schluessel-aus-b-304-ohne-fall.md)
+  (🟡, neue Zählschlüssel ohne 1-gegen-2-Fall) – beide in Teil 2 behoben. 🟢 ohne Zählung behoben: die AK-2-Zeile im
+  Verlaufs-Fall fiel am falschen Ort (Pille jetzt über die Klasse), `sprache.spec.ts` prüft „Fox“ an der Aufrufstelle,
+  veralteter Falltitel in `i18n.test.ts`. Randbefunde → [B-317](B-317-ziel-etappe-ohne-titel-zeigt-enum.md).
+  **Korrektur zum Eintrag „Belege“ oben:** die „Kontrolle 13 passed“ stammt aus einem Zwischenstand der Datei; am
+  Endstand ist die Kontrolle **21 passed**, und die Mutante „Gramm → 2 failed“ setzt die spätere 5×2-Matrix voraus.

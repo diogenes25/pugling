@@ -1,0 +1,44 @@
+import { createContext, useContext, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
+import { ApiError, errorMessage } from "./api";
+
+/**
+ * Sprache geteilter Komponenten (B-305). `LetterBoxes`, `ClozePrompt` & Co. rendert die Arcade **und** die
+ * Übungs-Vorschau des Vater-Webs. Das Vater-Web ist nicht übersetzt (B-85, Entscheidung 3) – folgten die Bausteine
+ * der globalen Sprache, stünde ein Vater am Gerät eines englischen Kindes in einer halb englischen Vorschau.
+ * Darum folgen sie der Wahl nur innerhalb von {@link ArcadeScope} und sprechen außerhalb fest Deutsch.
+ */
+const InArcade = createContext(false);
+
+/** Markiert den Teilbaum der Sohn-Arcade; nur hier folgen geteilte Komponenten der Sprachwahl. */
+export function ArcadeScope({ children }: { children: ReactNode }) {
+  return <InArcade.Provider value={true}>{children}</InArcade.Provider>;
+}
+
+/** `t` für geteilte Komponenten: in der Arcade deren Sprache, sonst Deutsch. */
+export function useChromeT() {
+  const inArcade = useContext(InArcade);
+  const { t, i18n } = useTranslation();
+  return inArcade ? t : (i18n.getFixedT("de") as typeof t);
+}
+
+/**
+ * `errorMessage` in der Sprache der Arcade. Die Codes, die ein Kind erreichen, haben einen eigenen Satz je Sprache
+ * (`problem.*`; Deutsch wortgleich mit `errorMessage`, damit dieselbe Sperre in Arcade und Vater-Web gleich heißt).
+ * Alles Übrige ist auf Deutsch genau `errorMessage` und auf Englisch der `detail`-Text des Servers, der ohnehin
+ * englisch ist – statt eines deutschen Satzes in einer englischen Arcade.
+ */
+export function useErrorMessage(): (e: unknown) => string {
+  // Die Sprache wird beim Aufruf über `i18n.language` gelesen; `i18n.t` folgt ihr ebenso.
+  const { i18n } = useTranslation();
+  return (e) => {
+    if (e instanceof ApiError && e.code && isProblemKey(e.code)) return i18n.t(`problem.${e.code}`);
+    if (i18n.language !== "en") return errorMessage(e);
+    if (e instanceof ApiError) return e.traceId ? `${e.message} (Ref: ${e.traceId})` : e.message;
+    return e instanceof Error ? e.message : String(e);
+  };
+}
+
+const PROBLEM_KEYS = ["test_attempts_exhausted", "exercise_empty", "no_checkable_content"] as const;
+type ProblemKey = (typeof PROBLEM_KEYS)[number];
+const isProblemKey = (code: string): code is ProblemKey => (PROBLEM_KEYS as readonly string[]).includes(code);

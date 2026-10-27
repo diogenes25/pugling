@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { api, errorMessage } from "../lib/api";
+import { useTranslation } from "react-i18next";
+import { api } from "../lib/api";
+import { useErrorMessage } from "../lib/chromeText";
 import { useAction } from "../lib/useAction";
 import { useSohn } from "./SohnApp";
 import { Mascot } from "../components/Mascot";
@@ -15,10 +17,16 @@ import { BirkenbihlDecoding } from "../components/BirkenbihlDecoding";
 import type { AnswerDto, TestItem, TestSubmitResponse } from "../lib/types";
 
 // Vokabel-Teststufen (numerisch, serverseitig erzwungen): 1 Zeigen … 7 Ordnen.
-const STAGE_LABEL: Record<number, string> = {
-  1: "Zeigen", 2: "Selbstcheck", 3: "Buchstaben", 4: "Tippen", 5: "Hören", 6: "Auswahl", 7: "Ordnen",
-};
-const stageLabel = (s: number) => STAGE_LABEL[s] ?? `Stufe ${s}`;
+const STAGE_KEY = {
+  1: "test.stage1", 2: "test.stage2", 3: "test.stage3", 4: "test.stage4", 5: "test.stage5", 6: "test.stage6", 7: "test.stage7",
+} as const;
+const isKnownStage = (s: number): s is keyof typeof STAGE_KEY => s in STAGE_KEY;
+
+/** Name der Leitner-Stufe in der Arcade-Sprache; eine unbekannte Stufe zeigt ihre Nummer. */
+function useStageLabel() {
+  const { t } = useTranslation();
+  return (s: number) => (isKnownStage(s) ? t(STAGE_KEY[s]) : t("test.stageN", { n: s }));
+}
 
 /**
  * Abschlusstest = Klausur: strikt server-getrieben. Der Client holt jede Frage einzeln (nextTest),
@@ -30,6 +38,9 @@ export function SohnTest() {
   const { positionId: positionIdRaw } = useParams();
   const positionId = Number(positionIdRaw);
   const nav = useNavigate();
+  const { t } = useTranslation();
+  const errorMessage = useErrorMessage();
+  const stageLabel = useStageLabel();
 
   const [attemptId, setAttemptId] = useState<number | null>(null);
   const [stage, setStage] = useState(0);
@@ -42,7 +53,7 @@ export function SohnTest() {
   const [error, setError] = useState<string | null>(null);
   // Ref-Gate gegen den Doppelklick (B-49); der Fehlerpfad speist weiter die bestehende `error`-Vollbild-
   // Anzeige, damit sich an ihrem Verhalten nichts ändert - `action.message` selbst wird hier nicht gerendert.
-  const action = useAction();
+  const action = useAction(errorMessage);
 
   async function finish(id: number) {
     if (!planId) return;
@@ -50,7 +61,7 @@ export function SohnTest() {
     setResult(res);
     setItem(null);
     celebrate(res.passed ? "big" : "small", res.passed ? "🎉" : "💪",
-      res.passed ? "SIEG!" : undefined, res.passed ? `${res.scorePercent}%` : undefined);
+      res.passed ? t("test.victory") : undefined, res.passed ? `${res.scorePercent}%` : undefined);
     setStreak((await api.overview(planId)).currentStreak);
     refreshWallet();
   }
@@ -113,14 +124,14 @@ export function SohnTest() {
   // Bei einem transienten Fehler den LAUFENDEN Versuch fortsetzen können (nicht verwerfen): resume() holt
   // die aktuelle Frage des bestehenden Attempts erneut, statt über start() einen neuen Versuch anzulegen.
   if (error) return <div className="sohn-body"><div className="error-box">{error}</div>
-    {attemptId !== null && <button type="button" className="btn lime" onClick={resume}>Weiter versuchen</button>}
-    <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>Zur Basis</button></div>;
+    {attemptId !== null && <button type="button" className="btn lime" onClick={resume}>{t("test.resume")}</button>}
+    <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>{t("progress.toHome")}</button></div>;
 
   if (result) return (
     <TestResult result={result} skin={skin} onHome={() => nav("/sohn")} onRetry={start} />
   );
 
-  if (!item) return <div className="sohn-body"><div className="loading">Test wird vorbereitet…</div></div>;
+  if (!item) return <div className="sohn-body"><div className="loading">{t("test.preparing")}</div></div>;
 
   // Getippte Stufe: Server liefert keine aufgedeckte Lösung (reveal === null) → Eingabefeld.
   const typed = item.reveal === null;
@@ -129,9 +140,9 @@ export function SohnTest() {
   return (
     <div className="sohn-body">
       <div className="row">
-        <span className="screen-title" style={{ margin: 0 }}>Tagestest</span>
+        <span className="screen-title" style={{ margin: 0 }}>{t("test.title")}</span>
         <span className="row" style={{ marginLeft: "auto", gap: 8 }}>
-          <span className="pill cyan">Frage {Math.min(cursor + 1, total)} / {total}</span>
+          <span className="pill cyan">{t("test.questionOf", { n: Math.min(cursor + 1, total), total })}</span>
           <span className="pill mag">{stageLabel(stage)}</span>
           {/*
             „Später weiter" statt „Abbrechen": der Versuch bleibt am Cursor stehen und wird beim nächsten
@@ -140,11 +151,11 @@ export function SohnTest() {
             Verlassen verbraucht keinen der begrenzten Versuche.
           */}
           <button type="button" className="pill toggle-pill exit-pill" onClick={() => nav("/sohn")}>
-            Später weiter
+            {t("test.later")}
           </button>
         </span>
       </div>
-      <p className="sub">{typed ? "Tippe die Lösung – zurück geht nicht." : "Denk nach, dann aufdecken und ehrlich bewerten."}</p>
+      <p className="sub">{typed ? t("test.typedHint") : t("test.selfHint")}</p>
 
       {/* Aufdecken dreht die Karte um wie beim Üben (B-35); getippte Stufen decken nichts auf. */}
       <div className={!typed && revealed ? "card flipped" : "card"}>
@@ -166,7 +177,7 @@ export function SohnTest() {
         {typed ? (
           item.choices ? (
             <div className="row" style={{ marginTop: 10, gap: 8, flexWrap: "wrap" }}
-              role="group" aria-label="Antwortmöglichkeiten">
+              role="group" aria-label={t("practice.choices")}>
               {item.choices.map((c, i) => (
                 <button type="button" key={`${i}-${c}`} className="btn ghost small" disabled={action.busy}
                   onClick={() => answerAndAdvance({ itemIndex: item.itemIndex, givenAnswer: c })}>{c}</button>
@@ -175,30 +186,30 @@ export function SohnTest() {
           ) : item.letterTiles ? (
             <div style={{ marginTop: 10 }}>
               <LetterTiles tiles={item.letterTiles} value={typedAnswer} onChange={setTypedAnswer} onSubmit={submitTyped} />
-              <button type="button" className="btn lime" style={{ marginTop: 10 }} disabled={action.busy || !typedAnswer.trim()} onClick={submitTyped}>Weiter →</button>
+              <button type="button" className="btn lime" style={{ marginTop: 10 }} disabled={action.busy || !typedAnswer.trim()} onClick={submitTyped}>{t("practice.next")}</button>
             </div>
           ) : item.answerLength ? (
             <div style={{ marginTop: 10 }}>
               <LetterBoxes length={item.answerLength} value={typedAnswer} onChange={setTypedAnswer} onSubmit={submitTyped} pattern={item.answerPattern ?? undefined} />
-              <button type="button" className="btn lime" style={{ marginTop: 10 }} disabled={action.busy || !typedAnswer.trim()} onClick={submitTyped}>Weiter →</button>
+              <button type="button" className="btn lime" style={{ marginTop: 10 }} disabled={action.busy || !typedAnswer.trim()} onClick={submitTyped}>{t("practice.next")}</button>
             </div>
           ) : (
             <div>
               <form onSubmit={(e) => { e.preventDefault(); submitTyped(); }}>
                 <input
-                  aria-label="Lösung"
+                  aria-label={t("test.solution")}
                   name={`answer-${item.itemIndex}`}
                   autoComplete="off"
                   autoCapitalize="off"
                   autoCorrect="off"
                   spellCheck={false}
                   style={{ marginTop: 10, width: "100%", background: "#0c0e2c", border: "1.5px solid var(--stroke)", borderRadius: 12, color: "var(--ink)", padding: 12, fontSize: 15 }}
-                  placeholder="Lösung…"
+                  placeholder={t("test.solutionPlaceholder")}
                   value={typedAnswer}
                   onChange={(e) => setTypedAnswer(e.target.value)}
                 />
               </form>
-              <button type="button" className="btn lime" style={{ marginTop: 10 }} disabled={action.busy || !typedAnswer.trim()} onClick={submitTyped}>Weiter →</button>
+              <button type="button" className="btn lime" style={{ marginTop: 10 }} disabled={action.busy || !typedAnswer.trim()} onClick={submitTyped}>{t("practice.next")}</button>
             </div>
           )
         ) : (
@@ -236,18 +247,19 @@ export function SelfAssessAnswer({ reveal, alternatives, revealed, busy, onRevea
   onReveal: () => void;
   onJudge: (wasKnown: boolean) => void;
 }) {
+  const { t } = useTranslation();
   if (!revealed) return (
     <div style={{ marginTop: 10 }}>
-      <button type="button" className="btn ghost small" onClick={onReveal}>Aufdecken 🔄</button>
+      <button type="button" className="btn ghost small" onClick={onReveal}>{t("test.reveal")}</button>
     </div>
   );
   return (
     <div style={{ marginTop: 10 }}>
-      <div className="rev" style={{ color: "var(--cyan)", fontWeight: 800, marginBottom: 8 }}>→ {reveal ?? "(aufgedeckt)"}</div>
+      <div className="rev" style={{ color: "var(--cyan)", fontWeight: 800, marginBottom: 8 }}>→ {reveal ?? t("test.revealedFallback")}</div>
       <RevealAlternatives alternatives={alternatives} />
       <div className="judge" style={{ marginTop: 8 }}>
-        <button type="button" className="btn red small" disabled={busy} onClick={() => onJudge(false)}>Nicht gewusst</button>
-        <button type="button" className="btn lime small" disabled={busy} onClick={() => onJudge(true)}>Gewusst</button>
+        <button type="button" className="btn red small" disabled={busy} onClick={() => onJudge(false)}>{t("test.notKnown")}</button>
+        <button type="button" className="btn lime small" disabled={busy} onClick={() => onJudge(true)}>{t("test.known")}</button>
       </div>
     </div>
   );
@@ -261,6 +273,8 @@ export function SelfAssessAnswer({ reveal, alternatives, revealed, busy, onRevea
 export function TestResult({ result, skin, onHome, onRetry }: {
   result: TestSubmitResponse; skin: import("../lib/skins").Skin; onHome: () => void; onRetry: () => void;
 }) {
+  const { t } = useTranslation();
+  const stageLabel = useStageLabel();
   const pct = result.scorePercent;
   const ring = { background: `conic-gradient(${result.passed ? "var(--lime)" : "var(--red)"} 0 ${pct}%, #0c0e2c ${pct}% 100%)` };
   // Teilen alle Zeilen ihren Aufgabentext (eine Menge – jede Zeile trägt dieselbe Anweisung), steht er EINMAL
@@ -275,12 +289,12 @@ export function TestResult({ result, skin, onHome, onRetry }: {
     <div className="sohn-body">
       <div className="victory">
         <div style={{ fontFamily: "var(--font-display)", letterSpacing: ".2em", color: "var(--muted)", fontSize: 12 }}>
-          TEST · {stageLabel(result.stage).toUpperCase()}
+          {t("test.header", { stage: stageLabel(result.stage).toUpperCase() })}
         </div>
-        <div className={`vtitle ${result.passed ? "win" : "lose"}`}>{result.passed ? "SIEG!" : "FAST!"}</div>
+        <div className={`vtitle ${result.passed ? "win" : "lose"}`}>{result.passed ? t("test.victory") : t("test.almost")}</div>
         <div className="ring" style={ring}><b>{pct}%<small>{result.correctItems} / {result.totalItems}</small></b></div>
         <Mascot skin={skin} mood={result.passed ? "hyped" : "sleepy"} size={84} />
-        <p className="sub">Bestehensgrenze {result.passPercent}%</p>
+        <p className="sub">{t("test.passMark", { pct: result.passPercent })}</p>
 
         <div className="card" style={{ width: "100%", marginTop: 4, textAlign: "left" }}>
           {sharedPrompt && <p className="sub" style={{ marginTop: 0 }}>{sharedPrompt}</p>}
@@ -290,12 +304,12 @@ export function TestResult({ result, skin, onHome, onRetry }: {
                   „Berlin war falsch", während der Server „Berlin hast du nicht genannt" meint – und genau das ist
                   bei einer Menge die Lehre der Übung (B-77/E2). */}
               <span aria-hidden="true">{o.wasCorrect ? "✅" : "❌"}</span>
-              {!sharedPrompt && <span className="sr-only">{o.wasCorrect ? "Richtig" : "Falsch"}</span>}
+              {!sharedPrompt && <span className="sr-only">{o.wasCorrect ? t("test.correct") : t("test.incorrect")}</span>}
               {sharedPrompt
                 // Die Lösung ist hier die Lehre – sie steht groß, wo der Aufgabentext oben schon steht.
                 ? <>
                     <span className="test-prompt">{o.expected}</span>
-                    <span className="sub" style={{ marginLeft: "auto" }}>{o.wasCorrect ? "genannt" : "nicht genannt"}</span>
+                    <span className="sub" style={{ marginLeft: "auto" }}>{o.wasCorrect ? t("test.named") : t("test.notNamed")}</span>
                   </>
                 : <>
                     {/* Auch hier die Lücke ausweisen: sonst stehen beim Lückentext lauter gleiche Zeilen –
@@ -311,7 +325,7 @@ export function TestResult({ result, skin, onHome, onRetry }: {
             verschwände lautlos, was es tatsächlich getippt hat (B-77/E2). */}
         {result.wrongMentions && result.wrongMentions.length > 0 && (
           <div className="card" style={{ width: "100%", marginTop: 4, textAlign: "left" }}>
-            <p className="sub" style={{ marginTop: 0 }}>Das zählte nicht:</p>
+            <p className="sub" style={{ marginTop: 0 }}>{t("test.didNotCount")}</p>
             {result.wrongMentions.map((m, i) => (
               // Bewusst leiser als die Lösung oben: was das Kind fälschlich getippt hat, ist die Nebensache –
               // die Lehre ist der Eintrag, den es vergessen hat.
@@ -326,8 +340,8 @@ export function TestResult({ result, skin, onHome, onRetry }: {
         {/* Ohne attemptsRemaining bot der Knopf einen Versuch an, den der Server längst abgewiesen hätte
             (ApiErrors.TestAttemptsExhausted, B-62) - ein Klick danach landete nur in der Fehlerbox. */}
         {!result.passed && result.attemptsRemaining > 0 &&
-          <button type="button" className="btn gold" onClick={onRetry}>Nochmal versuchen</button>}
-        <button type="button" className="btn ghost" onClick={onHome}>Zur Basis</button>
+          <button type="button" className="btn gold" onClick={onRetry}>{t("test.tryAgain")}</button>}
+        <button type="button" className="btn ghost" onClick={onHome}>{t("progress.toHome")}</button>
       </div>
     </div>
   );

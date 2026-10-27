@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useChromeT } from "../lib/chromeText";
 
 /**
  * Abspielknopf für eine Aufnahme – die Aussprache einer Vokabel oder der Mitschnitt einer
@@ -16,12 +17,14 @@ import { useEffect, useRef, useState } from "react";
  * („Vokabel anhören") wich davon ab, sobald der Aufrufer etwas anderes beschriftete – dann greift
  * Spracheingabe ins Leere (WCAG 2.5.3), und bei einem Hörverstehen stimmte das Wort „Vokabel" ohnehin nicht.
  */
-export function AudioButton({ url, label = "🔊 Anhören", autoPlay = true, withControls = false }: {
+export function AudioButton({ url, label: givenLabel, autoPlay = true, withControls = false }: {
   url: string;
   label?: string;
   autoPlay?: boolean;
   withControls?: boolean;
 }) {
+  const t = useChromeT();
+  const label = givenLabel ?? t("play.listen");
   const audio = useRef<HTMLAudioElement | null>(null);
   const [error, setError] = useState(false);
 
@@ -44,7 +47,7 @@ export function AudioButton({ url, label = "🔊 Anhören", autoPlay = true, wit
       <div className="row" style={{ gap: 8, alignItems: "center", flexWrap: "wrap" }}>
         <audio ref={audio} src={url} preload="auto" controls style={{ width: "100%" }}
           onError={() => setError(true)} aria-label={label.replace(/^\W+\s*/, "")} />
-        {error && <span className="muted" style={{ fontSize: 12 }} role="alert">Audio nicht abspielbar</span>}
+        {error && <span className="muted" style={{ fontSize: 12 }} role="alert">{t("play.audioError")}</span>}
       </div>
     );
   }
@@ -55,7 +58,7 @@ export function AudioButton({ url, label = "🔊 Anhören", autoPlay = true, wit
       <button type="button" className="btn ghost" style={{ width: "auto" }} onClick={play}>
         {label}
       </button>
-      {error && <span className="muted" style={{ fontSize: 12 }} role="alert">Audio nicht abspielbar</span>}
+      {error && <span className="muted" style={{ fontSize: 12 }} role="alert">{t("play.audioError")}</span>}
     </div>
   );
 }
