@@ -101,4 +101,65 @@ den Diff las und der zweite Pfad außerhalb lag.
 einen Vater mit Kind löscht, ohne dass jemand den zweiten Pfad kennen muss. Bewusst ungedeckt bleibt die Frage,
 welche der Review-Kommentare wahr sind: ein Kommentar ist nicht ausführbar.
 
+**Commit:** `4e50370` (nicht gepusht).
+
+## Lauf E, Teil 2 — B-285 aus der Nachschau (Kind-Konto nach Vater-Löschung), Zähler 0
+
+**Sprint-Ziel:** *Der Sohn eines Vaters, der sein Konto gelöscht hat, kommt mit seinem alten Token nirgends mehr
+hinein – genauso wie nach dem Löschen seines eigenen Profils.* Umfang: [B-285](backlog/B-285-kind-konto-bleibt-nach-vater-loeschung.md)
+(`Defekt`, Freigabe 1, XS, keine Migration). Vor NP-9 gezogen, weil ein gültiger Token auf ein gelöschtes Kind
+dieselbe 500-Klasse wieder öffnet, die NP-3 gerade geschlossen hatte. **Zähler: 0.**
+
+**Entwickler-Brief:** Dieselbe Regel wie in `ChildrenController.Delete` an den Vater-Pfad: nach dem Sammeln der
+verwaisenden Kinder die Konten entfernen, deren Profile alle auf diese Kinder zeigen. Kein Vertrag, kein Schema.
+
+### Iteration
+
+- Test zuerst: `Token_Eines_Mit_Dem_Vater_Geloeschten_Kindes_Bekommt_401` – der frische Vater ist alleiniger
+  Betreuer, das Kind loggt sich ein, der Vater löscht sich. **Rote Probe:** erwartet 401, gemessen **200** (1 failed,
+  2 passed). Fix in `AdultsController.Delete`, danach Token-, Lebenszyklus- und PIN-Tests **23/23 `exit=0`**.
+
+### Review
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `pugling-reviewer` 🟡 | Das Überleben des Kontos eines ko-betreuten Kindes war nicht zugesichert | Zeile in `Loeschen_Laesst_Das_Ko_Betreute_Kind_Stehen`; Mutante „alle betreuten Kinder“ → **3 failed** | ja (Test) |
+| 2 | `pugling-reviewer` 🟡 | Gemischtes Konto (Erwachsenen- + Student-Profil) fällt durch beide getrennten Abfragen | **ein** Prädikat; neuer Fall sät das gemischte Konto über den Kontext; Probe gegen die getrennten Abfragen **1 failed**, danach 14/14 | ja (Code+Test) |
+| – | `pugling-reviewer` 🟢 | Summary nennt die Kinder-Konten nicht; Leer-Abfrage ohne Schutz | Summary berichtigt; Abfrage bleibt symmetrisch | nein |
+
+**Zähler: 2.** Ein erster „roter“ Lauf des gemischten Falls fiel an einer falschen Aufbau-Zusicherung (3 statt 2
+Profile – der Vater trägt Creator *und* Supervisor) und zählt nicht als Probe; die Probe wurde danach gegen die
+tatsächlich getrennten Abfragen gefahren. Außerhalb des Diffs: `ChildrenController.Delete` hat dieselbe latente
+Lücke → Restpunkt in B-282. Suite **951/951 `exit=0`**.
+
+### Rollengang / Abnahme
+
+Kein Browser; der Weg ist ein reiner API-Pfad ohne Oberfläche (ein Vater löscht sich im Profil, das Kind ist danach
+draußen). Die drei Fälle in `DeletedAccountTokenTests` fahren ihn: Vater löscht sich → Kind-Token 401; Ko-Betreuung
+bleibt samt Kind-Login; gemischtes Konto verschwindet. Vater und Sohn als Zeugen über die Suite, Creator unberührt.
+B-285 `abgenommen`.
+
+### Retrospektive
+
+**Nachschau:** Teil 1 (`4e50370`: B-05, B-283) von einem frischen Prüfer geprüft, je Behauptung eine Zeile in den
+Stories. **Zwei Test-Entgleiten:** eine Zusicherung im Fokus-Fall, die den Ausgangszustand prüft →
+[B-287](backlog/B-287-fokus-test-prueft-den-ausgangszustand.md) (`entgangen_bei: B-05`); der Prüfungstest misst
+„neu je Position“ statt „neu je Versuch“ → [B-288](backlog/B-288-pruefungstest-misst-neu-je-position.md)
+(`entgangen_bei: B-283`). Ein Doku-Entgleiten (Satz (e) in B-05) berichtigt. `nachgeschaut` an B-05 und B-283 gesetzt.
+Index: **Nachgeschaut: 200 von 201** (B-285 steht an).
+
+**Was die eigenen Tore durchgelassen haben:** B-287 ist die **fünfte** Messung der Klasse „Zusicherung prüft den
+Ausgangszustand“ (CLAUDE.md zählt vier), und B-288 die Klasse „Name verspricht eine Unterscheidung, der Aufbau trägt
+sie nicht“ – beide trotz des Pflichtschritts aus pm-loop Step 5, der vor dem Review je Fall die Mutante verlangt.
+Ich habe die Mutanten gemessen, aber nur die, die ich selbst erwartet habe; die zweite Zusicherung im selben Fall
+und die Positions-Mutante habe ich nicht gefragt. Der Pflichtschritt ist eine Selbstauskunft, und sie hat genau an
+den Zeilen versagt, die neben einer scharfen Zusicherung stehen.
+
+**Vorschlag, nicht gelandet (Freigabe 3):** **(H)** der Pflichtschritt wandert als Frage in die beiden
+Review-Agenten (`pugling-reviewer`, `frontend-reviewer`): *„Nenne je neuer `Assert`/`expect`-Zeile die Mutante, die sie
+rot macht; gibt es keine, ist es ein Fund.“* Das ist derselbe Blick, der heute zweimal erst in der Nachschau kam, nur
+eine Runde früher und von jemandem, der den Code nicht geschrieben hat. Kein Tor – ein Tor müsste Testdaten lesen.
+Vorschlag **(G)** aus Teil 1 (Suite-Invariante „kein Konto ohne Profil“) hätte B-285 *und* das gemischte Konto
+gezeigt; er bleibt stehen.
+
 **Commit:** folgt unten.

@@ -50,3 +50,4 @@ Behebungen bei 4.
 
 - **2026-10-26** — angelegt aus dem `pugling-reviewer` zu NP-3 in Lauf C ([Protokoll](../pm-sitzung-2026-10-26-tag.md)),
   Funde 4, 5, 7, 9; Punkt 5 aus dem Delta-Review.
+- **2026-10-27** — Restpunkt aus dem Review zu [B-285](B-285-kind-konto-bleibt-nach-vater-loeschung.md): `ChildrenController.Delete` (`:143-147`) hat für ein **gemischtes** Konto (Erwachsenen- und Student-Profil auf einem Login) dieselbe latente Lücke, die B-285 am Vater-Pfad geschlossen hat – kein Anlege-Pfad baut ein solches Konto, darum nur notiert.

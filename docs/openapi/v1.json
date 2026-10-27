@@ -1199,7 +1199,7 @@
         "tags": [
           "Supervisor \u2013 Adults"
         ],
-        "summary": "Deletes an adult \u2013 together with any children who thereby lose their last supervisor,\nand together with its login account.\n\nA child supervised by several people (father and mother) continues to exist; it only loses this\none caregiver. Only the child left with no one remaining is removed as well \u2013 because since the\nmulti-supervisor restructuring, a Child is no longer attached to the adult via a\nforeign key, but via SupervisorLink. The database cascade therefore only clears the\nlink and would leave the child behind as an orphan: no longer visible or deletable by any adult,\nbut with a still-functioning PIN login.",
+        "summary": "Deletes an adult \u2013 together with any children who thereby lose their last supervisor,\nand together with the login accounts of the adult and of those children.\n\nA child supervised by several people (father and mother) continues to exist; it only loses this\none caregiver. Only the child left with no one remaining is removed as well \u2013 because since the\nmulti-supervisor restructuring, a Child is no longer attached to the adult via a\nforeign key, but via SupervisorLink. The database cascade therefore only clears the\nlink and would leave the child behind as an orphan: no longer visible or deletable by any adult,\nbut with a still-functioning PIN login.",
         "parameters": [
           {
             "name": "adultId",

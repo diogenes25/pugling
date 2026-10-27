@@ -1,6 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Pugling.Api.Data;
 
 namespace Pugling.Api.Tests;
 
@@ -54,5 +57,63 @@ public class DeletedAccountTokenTests(PuglingWebAppFactory factory) : IClassFixt
         Assert.Equal(HttpStatusCode.NoContent, (await papa.DeleteAsync($"/api/v1/supervisor/children/{childId}")).StatusCode);
 
         Assert.Equal(HttpStatusCode.Unauthorized, (await child.GetAsync("/api/v1/auth/me")).StatusCode);
+    }
+
+    /// <summary>
+    /// B-285: the third deletion path. An adult who deletes themselves takes their orphaned children along, but
+    /// the children's accounts have no foreign key to the child and survived as empty shells - so the child's
+    /// token stayed valid (200 on <c>auth/me</c>). The distinction from the case above is the actor: the adult
+    /// deletes <i>themselves</i>, not the child. Red if <c>AdultsController.Delete</c> only removes the adult's
+    /// own account.
+    /// </summary>
+    [Fact]
+    public async Task Token_Eines_Mit_Dem_Vater_Geloeschten_Kindes_Bekommt_401()
+    {
+        var (adult, adultId) = await FreshAdultAsync();
+        // The fresh adult is the child's only supervisor, so the child orphans with them.
+        var childId = await TestApi.IdAsync(await adult.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = TestApi.UniqueName("Verwaistes-Kind"), pin = "4747" }));
+        var child = await TestApi.ChildAsync(factory, childId, "4747");
+        Assert.Equal(HttpStatusCode.OK, (await child.GetAsync("/api/v1/auth/me")).StatusCode);
+
+        Assert.Equal(HttpStatusCode.NoContent, (await adult.DeleteAsync($"/api/v1/supervisor/adults/{adultId}")).StatusCode);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, (await child.GetAsync("/api/v1/auth/me")).StatusCode);
+    }
+
+    /// <summary>
+    /// A mixed account - one login that carries the adult's profile AND the orphaned child's Student profile. The
+    /// model allows it (one row per role), no creation path builds it today, so it is seeded through the context.
+    /// Two separate sweeps ("all profiles are this adult" / "all profiles are orphaned children") each see the
+    /// other profile and leave the account as a shell. Red if the sweep is split into two predicates again.
+    /// </summary>
+    [Fact]
+    public async Task Gemischtes_Konto_Von_Vater_Und_Verwaistem_Kind_Verschwindet_Mit()
+    {
+        var (adult, adultId) = await FreshAdultAsync();
+        var childId = await TestApi.IdAsync(await adult.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = TestApi.UniqueName("Gemischt-Kind"), pin = "4848" }));
+        var me = await adult.GetFromJsonAsync<JsonElement>("/api/v1/auth/me");
+        var accountId = me.GetProperty("accountId").GetInt32();
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            // Move the child's Student profile onto the adult's account and drop the child's own account.
+            var studentProfile = await db.AccountProfiles.SingleAsync(p => p.ChildId == childId);
+            var childAccountId = studentProfile.AccountId;
+            studentProfile.AccountId = accountId;
+            db.Accounts.Remove(await db.Accounts.SingleAsync(a => a.Id == childAccountId));
+            await db.SaveChangesAsync();
+            // Creator + Supervisor rows of the adult, plus the moved Student row: the account is mixed now.
+            Assert.Equal(1, await db.AccountProfiles.CountAsync(p => p.AccountId == accountId && p.ChildId == childId));
+            Assert.Equal(2, await db.AccountProfiles.CountAsync(p => p.AccountId == accountId && p.AdultId == adultId));
+        }
+
+        Assert.Equal(HttpStatusCode.NoContent, (await adult.DeleteAsync($"/api/v1/supervisor/adults/{adultId}")).StatusCode);
+
+        using var check = factory.Services.CreateScope();
+        var after = check.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        Assert.False(await after.Accounts.AnyAsync(a => a.Id == accountId), "the mixed account survived as an empty shell");
     }
 }

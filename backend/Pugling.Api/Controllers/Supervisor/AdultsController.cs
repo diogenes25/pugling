@@ -117,7 +117,7 @@ public class AdultsController(PuglingDbContext db, AccountService accounts) : Co
 
     /// <summary>
     /// Deletes an adult – together with any children who thereby lose <b>their last supervisor</b>,
-    /// and together with its login account.
+    /// and together with the login accounts of the adult and of those children.
     ///
     /// A child supervised by several people (father <i>and</i> mother) continues to exist; it only loses this
     /// one caregiver. Only the child left with no one remaining is removed as well – because since the
@@ -141,11 +141,17 @@ public class AdultsController(PuglingDbContext db, AccountService accounts) : Co
             .ToListAsync(ct);
         db.Children.RemoveRange(verwaisende);
 
-        // With the adult, the login account loses its last profile and would remain as an empty shell -
-        // together with its e-mail, which would block the (unique) address space forever.
+        // The login accounts go with the people: an account has no foreign key to adult or child, so the
+        // cascade only clears its profiles and would leave an empty shell - whose e-mail blocks the unique address
+        // space forever and whose token TokenSubjectCheck still accepts (B-245, B-285). ONE predicate for the adult
+        // and the orphaned children on purpose: two separate sweeps ("all profiles are this adult" / "all profiles
+        // are orphaned children") each see the other kind of profile on a mixed account and both leave it standing.
+        var verwaisteIds = verwaisende.Select(c => c.Id).ToList();
         var konten = await db.Accounts
-            .Where(a => a.Profiles.All(p => p.AdultId == adultId))
-            .Where(a => a.Profiles.Any(p => p.AdultId == adultId))
+            .Where(a => a.Profiles.Any(p => p.AdultId == adultId
+                || (p.ChildId != null && verwaisteIds.Contains(p.ChildId.Value))))
+            .Where(a => a.Profiles.All(p => p.AdultId == adultId
+                || (p.ChildId != null && verwaisteIds.Contains(p.ChildId.Value))))
             .ToListAsync(ct);
         db.Accounts.RemoveRange(konten);
 
