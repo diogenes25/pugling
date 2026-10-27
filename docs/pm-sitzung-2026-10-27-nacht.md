@@ -422,4 +422,4 @@ Grenze (Zahl, Länge, Anzahl)? Dann jede weitere Grenze derselben Daten im selbe
 residente Datei: der Nachschau-Prüfer bekommt `backend/Pugling.Api/CLAUDE.md` ausdrücklich in den Scope, wenn der
 Commit das Fachmodell ändert (Prosa in der pm-loop-Nachschau, kein Tor).
 
-**Commit:** folgt unten.
+**Commit:** `4a3fa61` (nicht gepusht).
