@@ -2196,15 +2196,10 @@ namespace Pugling.Api.Data.Migrations
                 column: "OwnerAdultId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_GrammarTopics_Slug",
+                name: "IX_GrammarTopics_SubjectId_Slug",
                 table: "GrammarTopics",
-                column: "Slug",
+                columns: new[] { "SubjectId", "Slug" },
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_GrammarTopics_SubjectId",
-                table: "GrammarTopics",
-                column: "SubjectId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_InterestTags_Slug",

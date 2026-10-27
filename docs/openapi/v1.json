@@ -21934,7 +21934,7 @@
         "tags": [
           "Creator \u2013 Grammar Topics"
         ],
-        "summary": "Creates a topic. The slug is derived from the subject and the label; if it already exists, the existing\nentry comes back (idempotent, 200) - so the same label typed twice never becomes two topics.",
+        "summary": "Creates a topic. The slug is the label\u0027s key; if the subject already carries it, the existing entry comes\nback (idempotent, 200) - so the same label typed twice never becomes two topics. The subject qualifies by\nid, so two subjects of the same name keep their topics apart and a renamed subject keeps its own (B-290).",
         "requestBody": {
           "content": {
             "application/json": {
@@ -30158,7 +30158,7 @@
             "description": "Optional display color (hex)."
           }
         },
-        "description": "Creating a topic. The slug is derived from the subject and the label; if it already exists, the endpoint\nreturns the existing entry (idempotent), so a label typed twice never becomes two topics."
+        "description": "Creating a topic. The slug is derived from the label; if the subject already carries it, the endpoint returns\nthe existing entry (idempotent), so a label typed twice never becomes two topics."
       },
       "CreateInterestTagDto": {
         "required": [
@@ -37032,7 +37032,7 @@
           },
           "slug": {
             "type": "string",
-            "description": "Stable, subject-qualified key (\u0022englisch-present-perfect\u0022). Immutable."
+            "description": "Stable key of the label (\u0022present-perfect\u0022), unique within its subject. Immutable."
           },
           "label": {
             "type": "string",

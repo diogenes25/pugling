@@ -939,10 +939,8 @@ namespace Pugling.Api.Data.Migrations
 
                     b.HasIndex("OwnerAdultId");
 
-                    b.HasIndex("Slug")
+                    b.HasIndex("SubjectId", "Slug")
                         .IsUnique();
-
-                    b.HasIndex("SubjectId");
 
                     b.ToTable("GrammarTopics");
                 });

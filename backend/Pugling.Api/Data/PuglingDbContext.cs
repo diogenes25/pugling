@@ -403,14 +403,14 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasOne(x => x.InterestTag).WithMany(t => t.ExerciseLinks).HasForeignKey(x => x.InterestTagId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Grammar topic (B-155): a globally unique, subject-qualified slug; synonyms as a JSON list with the
-        // comparer every JSON column carries (G7). The subject is mandatory and the topic dies with it (Cascade,
+        // Grammar topic (B-155): the slug is unique per subject (B-290 - the subject id is the qualifier, not the
+        // subject's name, which is neither unique nor stable); synonyms as a JSON list with the comparer every JSON
+        // column carries (G7). The subject is mandatory and the topic dies with it (Cascade,
         // decision 10 of B-155): a topic without a subject cannot exist, and unlike a child's key result it is
         // nobody's possession - it is not in B-144's 409 list on purpose. The owner is only an edit right (SetNull).
         modelBuilder.Entity<GrammarTopic>(e =>
         {
-            e.HasIndex(t => t.Slug).IsUnique();
-            e.HasIndex(t => t.SubjectId);
+            e.HasIndex(t => new { t.SubjectId, t.Slug }).IsUnique();
             e.Property(t => t.Synonyms).HasConversion(
                 v => JsonSerializer.Serialize(v, JsonOptions),
                 s => JsonSerializer.Deserialize<List<string>>(s, JsonOptions) ?? new())

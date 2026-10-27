@@ -9,7 +9,7 @@ namespace Pugling.Contracts.Creator;
 /// whether a topic is in use - a used topic cannot be deleted.
 /// </summary>
 /// <param name="Id">Topic id.</param>
-/// <param name="Slug">Stable, subject-qualified key ("englisch-present-perfect"). Immutable.</param>
+/// <param name="Slug">Stable key of the label ("present-perfect"), unique within its subject. Immutable.</param>
 /// <param name="Label">Display name.</param>
 /// <param name="Synonyms">Alternative spellings, a search aid.</param>
 /// <param name="Color">Optional display color (hex).</param>
@@ -23,8 +23,8 @@ public record GrammarTopicResponse(int Id, string Slug, string Label, IReadOnlyL
     int SubjectId, int? OwnerAdultId, bool IsOwn, int ExerciseCount, int UnitCount, DateTime CreatedAt);
 
 /// <summary>
-/// Creating a topic. The slug is derived from the subject and the label; if it already exists, the endpoint
-/// returns the existing entry (idempotent), so a label typed twice never becomes two topics.
+/// Creating a topic. The slug is derived from the label; if the subject already carries it, the endpoint returns
+/// the existing entry (idempotent), so a label typed twice never becomes two topics.
 /// </summary>
 /// <param name="Label">Display name, e.g. "Present perfect".</param>
 /// <param name="SubjectId">The subject the topic belongs to.</param>

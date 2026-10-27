@@ -336,3 +336,47 @@ Fächer verschiedener Creator anlegt, und die Regel im Pflichtschritt von Step 5
 Test voraussetzt, gegen die Index-Kommentare des DbContext prüfen“*. Vorschlag (H)/(I) bleiben stehen.
 
 **Commit:** `f033f70` (nicht gepusht).
+
+## Lauf E, Teil 6 — B-290 aus der Nachschau (Themen-Schlüssel je Fach-Id), Zähler 0
+
+**Sprint-Ziel:** *Ein zweiter Creator mit einem gleichnamigen Fach kann sein eigenes „Present perfect“ anlegen, und
+ein umbenanntes Fach behält seine Themen.* Umfang: [B-290](backlog/B-290-themen-schluessel-haengt-am-fachnamen.md)
+(`Defekt`, Freigabe 1, S, Migration – darum ein eigener Teil nach NP-10). **Zähler: 0.**
+
+**Entwickler-Brief:** Schlüssel `(SubjectId, Slug)` statt Namenspräfix: zusammengesetzter Unique-Index, Suche beim
+Anlegen über Fach-Id und Slug, Seed mit reinem Schlüssel, Kette falten; Test mit zwei gleichnamigen Fächern zweier
+Creator und mit Umbenennen.
+
+### Iteration
+
+- Modell/Index/Controller/Seed umgestellt, Snapshot-Diff zwei Zeilen (Index `Slug` → `(SubjectId, Slug)`,
+  Einzelindex weg). Neuer Fall; Mutante „nur Slug“ → **4 failed** (der neue Fall und drei bestehende, die nun fremde
+  Fächer träfen), danach **17/17**. Ohne Zählung: `key={subjectId}` am Picker, `toBeUndefined()` im Assistenten-Test.
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| – | `pugling-reviewer` 🟡 | `Create`-Summary beschrieb noch den Namenspräfix; `v1.json` trägt den neuen Vertragstext | Summary + Client-Kommentar nachgezogen, Dokument neu erzeugt | nein (Kommentar/Doku) |
+
+**Zähler: 0.** Suite **969/969 `exit=0`**, Specs `grammatik-themen` + `assistent` **4 passed**. Rollengang als
+Integrationstest (zwei Creator mit gleichnamigen Fächern, Umbenennen): *Creator B:* „Mein ‚Present perfect‘ landet in
+meinem Englisch, nicht im fremden.“ **B-290 `abgenommen`.**
+
+### Retrospektive
+
+**Nachschau:** Teil 5 (`f033f70`, B-22) von einem frischen Prüfer geprüft (je Behauptung eine Zeile im Verlauf).
+**Zwei Entgleiten:** der Agent kürzt zu lange Themen still auf 200 Zeichen, während die API das seit B-130 bewusst
+ablehnt → [B-292](backlog/B-292-agent-kuerzt-themen-still.md); `--source-file -` blockiert am Terminal stumm,
+Ctrl+C wird geschluckt, die Doku schweigt → [B-293](backlog/B-293-fill-von-stdin-blockiert-stumm.md) (je
+`entgangen_bei: B-22`). `nachgeschaut` an B-22 gesetzt.
+
+**Was die eigenen Tore durchgelassen haben:** B-292 ist ein Widerspruch zwischen zwei Stellen, die dieselbe Regel
+tragen müssten – der Controller lehnt ab, der Agent kürzt – und die Regel steht als Kommentar am Controller, nicht
+als Vertrag. Weder Reviewer noch Tests haben den Agenten gegen den Kommentar des Controllers gelesen.
+
+**Vorschlag, nicht gelandet (Freigabe 3):** **(K)** der Agent prüft die Themen-Länge nicht selbst, sondern lässt
+die API ablehnen und zeigt die Ablehnung – eine Regel, ein Ort. Allgemeiner: *ein Client darf die Validierung des
+Servers nicht durch eine mildere ersetzen* als Satz in `backend/Pugling.Client/CLAUDE.md` (Prosa, kein Tor).
+
+**Commit:** folgt unten.

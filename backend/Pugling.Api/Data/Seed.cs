@@ -609,11 +609,11 @@ public static class Seed
             if (subject is null) continue;
             if (db.GrammarTopics.Any(t => t.SubjectId == subject.Id)) continue;
 
-            var prefix = InterestSlug.From(subject.Name);
             foreach (var label in labels)
                 db.GrammarTopics.Add(new GrammarTopic
                 {
-                    Slug = $"{prefix}-{InterestSlug.From(label)}",
+                    // The label's key alone: the subject qualifies through SubjectId (B-290).
+                    Slug = InterestSlug.From(label),
                     Label = label,
                     SubjectId = subject.Id,
                 });

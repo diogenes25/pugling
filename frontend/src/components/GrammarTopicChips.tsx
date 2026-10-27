@@ -36,7 +36,9 @@ export function GrammarTopicPicker({ subjectId, topicIds, onChange, disabled, id
       </div>
     );
   }
-  return <LoadedPicker subjectId={subjectId} topicIds={topicIds} onChange={onChange} disabled={disabled} id={id} />;
+  // Ein Fachwechsel baut den Picker neu: so kann ein nebenbei angelegtes Thema von Fach A strukturell nie in der
+  // Auswahl von Fach B auftauchen (Nachschau zu B-155).
+  return <LoadedPicker key={subjectId} subjectId={subjectId} topicIds={topicIds} onChange={onChange} disabled={disabled} id={id} />;
 }
 
 function LoadedPicker({ subjectId, topicIds, onChange, disabled, id }: {

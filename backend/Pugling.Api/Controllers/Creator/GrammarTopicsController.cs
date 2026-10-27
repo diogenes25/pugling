@@ -71,8 +71,9 @@ public class GrammarTopicsController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Creates a topic. The slug is derived from the subject and the label; if it already exists, the existing
-    /// entry comes back (idempotent, 200) - so the same label typed twice never becomes two topics.
+    /// Creates a topic. The slug is the label's key; if the subject already carries it, the existing entry comes
+    /// back (idempotent, 200) - so the same label typed twice never becomes two topics. The subject qualifies by
+    /// id, so two subjects of the same name keep their topics apart and a renamed subject keeps its own (B-290).
     /// </summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -84,16 +85,16 @@ public class GrammarTopicsController(PuglingDbContext db) : ControllerBase
         if (subject is null) return this.ProblemWithCode(ApiErrors.ValidationError, "Unknown subject.");
         var (slug, problem) = this.DeriveRequiredSlug(dto.Label, "Label");
         if (problem is not null) return problem;
-        // Subject-qualified (decision 4): a phenomenon belongs to a language, "Konjunktiv" in German and in Latin
-        // are two entries. The subject name is the qualifier because a subject carries no language code.
-        var qualified = $"{InterestSlug.From(subject.Name)}-{slug}";
-
-        var existing = await Project(db.GrammarTopics.AsNoTracking().Where(t => t.Slug == qualified)).FirstOrDefaultAsync(ct);
+        // Subject-qualified (decision 4), but by the subject's id, not its name (B-290): "Konjunktiv" in German and in
+        // Latin are two entries because they sit in two subjects; two subjects that happen to share a name stay
+        // apart, and a renamed subject keeps its topics. The slug itself is just the label's key.
+        var existing = await Project(db.GrammarTopics.AsNoTracking()
+            .Where(t => t.SubjectId == subject.Id && t.Slug == slug)).FirstOrDefaultAsync(ct);
         if (existing is not null) return Ok(existing);
 
         var topic = new GrammarTopic
         {
-            Slug = qualified,
+            Slug = slug!,
             Label = dto.Label.Trim(),
             Synonyms = Clean(dto.Synonyms),
             Color = dto.Color?.Trim() is { Length: > 0 } c ? c : null,

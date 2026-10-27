@@ -69,7 +69,7 @@ public class GrammatikThemenTests(PuglingWebAppFactory factory) : IClassFixture<
         var again = await creator.PostAsJsonAsync(Topics, new { label = "present  perfect", subjectId });
         Assert.Equal(HttpStatusCode.OK, again.StatusCode);
         Assert.Equal(created.GetProperty("id").GetInt32(), (await again.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32());
-        Assert.EndsWith("-present-perfect", created.GetProperty("slug").GetString());
+        Assert.Equal("present-perfect", created.GetProperty("slug").GetString());
         JsonAssert.True(created, "isOwn");
 
         var otherSubject = await SubjectAsync(creator);
@@ -137,6 +137,37 @@ public class GrammatikThemenTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.Equal(HttpStatusCode.NoContent, (await owner.DeleteAsync($"{Topics}/{spare.GetProperty("id").GetInt32()}")).StatusCode);
     }
 
+    /// <summary>
+    /// B-290: the subject qualifies by id, not by name. Two creators each own a subject called "Englisch": the second
+    /// one must get his OWN "Present perfect" (201, his subject id), not the first one's (200). And renaming a subject
+    /// must not break idempotency: the same label afterwards still returns the same topic. Red if the lookup keys on
+    /// the subject's name (both halves) or on the slug alone (first half).
+    /// </summary>
+    [Fact]
+    public async Task Gleichnamige_Faecher_Und_Umbenennen_Brechen_Die_Idempotenz_Nicht()
+    {
+        var first = await TestApi.AdultAsync(factory);
+        var second = await StrangerAsync("3232");
+        var name = TestApi.UniqueName("Englisch");
+        var firstSubject = await TestApi.IdAsync(await first.PostAsJsonAsync("/api/v1/creator/subjects", new { name }));
+        var secondSubject = await TestApi.IdAsync(await second.PostAsJsonAsync("/api/v1/creator/subjects", new { name }));
+        Assert.NotEqual(firstSubject, secondSubject);
+
+        var mine = await TopicAsync(first, firstSubject, "Present perfect");
+        var his = await second.PostAsJsonAsync(Topics, new { label = "Present perfect", subjectId = secondSubject });
+        Assert.Equal(HttpStatusCode.Created, his.StatusCode);
+        var hisTopic = await his.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(secondSubject, hisTopic.GetProperty("subjectId").GetInt32());
+        Assert.NotEqual(mine.GetProperty("id").GetInt32(), hisTopic.GetProperty("id").GetInt32());
+        // Same key, two subjects - both carry it.
+        Assert.Equal(mine.GetProperty("slug").GetString(), hisTopic.GetProperty("slug").GetString());
+
+        (await first.PatchAsJsonAsync($"/api/v1/creator/subjects/{firstSubject}", new { name = TestApi.UniqueName("English") })).EnsureSuccessStatusCode();
+        var again = await first.PostAsJsonAsync(Topics, new { label = "present  perfect", subjectId = firstSubject });
+        Assert.Equal(HttpStatusCode.OK, again.StatusCode);
+        Assert.Equal(mine.GetProperty("id").GetInt32(), (await again.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32());
+    }
+
     /// <summary>AC 2/9: a seeded topic (no owner) is changeable by nobody - not even by the seed father.</summary>
     [Fact]
     public async Task Geseedetes_Thema_Ist_Fuer_Niemanden_Aenderbar()
@@ -147,7 +178,7 @@ public class GrammatikThemenTests(PuglingWebAppFactory factory) : IClassFixture<
         var seeded = (await father.GetFromJsonAsync<JsonElement>($"{Topics}?subjectId={englisch}&take=100")).EnumerateArray().ToList();
         // The base stock exists and belongs to nobody.
         Assert.True(seeded.Count >= 20, $"seeded topics: {seeded.Count}");
-        var topic = seeded.First(t => t.GetProperty("slug").GetString() == "englisch-present-perfect");
+        var topic = seeded.First(t => t.GetProperty("slug").GetString() == "present-perfect");
         Assert.Equal(JsonValueKind.Null, topic.GetProperty("ownerAdultId").ValueKind);
         JsonAssert.False(topic, "isOwn");
 

@@ -33,7 +33,7 @@ describe("wizardSearchParams – leer heißt „alle“, nicht „leerer Wert“
 
   it("nimmt das Grammatik-Thema mit, sobald es gesetzt ist – und sonst gar nicht (B-155)", () => {
     expect(wizardSearchParams({ ...leer, grammarTopicId: 12 }).grammarTopicId).toBe(12);
-    expect("grammarTopicId" in wizardSearchParams(leer) && wizardSearchParams(leer).grammarTopicId !== undefined).toBe(false);
+    expect(wizardSearchParams(leer).grammarTopicId).toBeUndefined();
   });
 
   it("trimmt die Freitexte und wirft reine Leerzeichen weg", () => {

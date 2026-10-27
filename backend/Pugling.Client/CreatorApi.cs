@@ -379,7 +379,7 @@ public sealed class CreatorApi(HttpClient http)
     public Task<GrammarTopicResponse> GetGrammarTopicAsync(int topicId, CancellationToken ct = default) =>
         Http.GetAsync<GrammarTopicResponse>($"{Root}/grammar-topics/{topicId}", ct);
 
-    /// <summary>Creates a grammar topic; a slug already taken returns the existing entry (idempotent).</summary>
+    /// <summary>Creates a grammar topic; a label already present in that subject returns the existing entry (idempotent).</summary>
     public Task<GrammarTopicResponse> CreateGrammarTopicAsync(CreateGrammarTopicDto dto, CancellationToken ct = default) =>
         Http.PostAsync<GrammarTopicResponse>($"{Root}/grammar-topics", dto, ct);
 

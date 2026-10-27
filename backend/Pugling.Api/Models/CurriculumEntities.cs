@@ -107,7 +107,11 @@ public class SeriesUnit
 public class GrammarTopic
 {
     public int Id { get; set; }
-    /// <summary>Normalized, globally unique key, qualified by the subject ("englisch-present-perfect"). Immutable.</summary>
+    /// <summary>
+    /// Normalized key of the label ("present-perfect"), unique <b>per subject</b> (B-290): the subject qualifies the
+    /// topic structurally, through <see cref="SubjectId"/>, not through its name - subject names are not unique and
+    /// may be renamed, and a name baked into the key broke idempotency on both counts. Immutable.
+    /// </summary>
     public string Slug { get; set; } = "";
     /// <summary>Display name, e.g. "Present perfect".</summary>
     public string Label { get; set; } = "";
