@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-294]
 wartet_auf: ""
+nachgeschaut: "2026-10-27"
 ---
 
 # B-298 · HUD liest „1 coins“ / „1 Münzen“ vor – die Schlüssel kennen keinen Singular
@@ -37,7 +38,7 @@ Ein Vitest je Sprache mit `count: 1` und `count: 2`; Mutante „`_one` gestriche
   ausformuliert, geschätzt (XS, nur Frontend) und gebaut. Rote Probe zuerst: sechs `it.each`-Fälle (je Sprache
   `count: 1` gegen `count: 2`) in `i18n.test.ts` → **5 failed** erwartet und gemessen (en `streak` ist vorher wie
   nachher „1-day streak“). Fix: `coins_one/_other`, `gems_one/_other`, `streak_one/_other` in `de.ts` und `en.ts`
-  → **10/10**, `tsc` sauber. Mutanten: en `coins_one` gestrichen → **2 failed** (Parität + neuer Fall); en
+  → **10/10**, `tsc` sauber (der en-`streak`-Fall war für den Fix gestrichen, weil er vorher wie nachher grün ist; nach dem Review mit Begründung zurück → **11/11**). Mutanten: en `coins_one` gestrichen → **2 failed** (Parität + neuer Fall); en
   `streak_one` → „-days streak“ → **1 failed**.
 - **2026-10-27** — Review (`frontend-reviewer`): 🟡 `sprache.spec.ts` sicherte `/\d+ coins/` – bei Saldo 1 heißt es
   jetzt „1 coin“, Kind 1 teilt den Saldo mit anderen Specs → `/^\d+ coins?$/` (**zählt**, Zähler 1). 🟢 ohne Zählung:
@@ -47,3 +48,8 @@ Ein Vitest je Sprache mit `count: 1` und `count: 2`; Mutante „`_one` gestriche
   der Literal-/Aufrufstellen-Wächter ist Vorschlag (M) bzw. Teil von B-295. Vitest **473/473**, E2E **98 passed**
   (`exit=0`). Rollengang: der Sohn-Pfad läuft als `sprache.spec.ts` (Englisch, HUD-Label), Vater/Creator als
   Regressionszeugen (volle E2E grün, kein Pfad von ihnen im Diff). **`abgenommen`.**
+- **2026-10-27** — Nachschau (Lauf F, Teil 2, frischer `frontend-reviewer` am Commit `bdb4611`): Vitest 11 passed
+  gemessen; Mutante „alle `_one` in **beiden** Sprachen gestrichen“ (Parität bleibt grün) → **6 failed**, je Fall
+  der Schlüsselname statt des Texts; `fallbackLng: "de"` gegen den Testkommentar gelesen; alle `{{count}}`-Schlüssel
+  (`practiceDue`, `celebrateMany` nur bei > 1, `missions.done` kein Plural) und `SUPPORTED_LANGUAGES` gezählt – kein
+  Geschwister mit demselben Fehler. Kein 🟡/🔴. 🟢: die Reihenfolge der Fallzahlen (6 → 5 → 6) war unklar → oben ergänzt.

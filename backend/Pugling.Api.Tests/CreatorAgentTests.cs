@@ -237,6 +237,47 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
+    /// B-302: words separated by whitespace other than a blank, newline or tab still end at a whole word - a non-breaking
+    /// space (PDF copies) or a lone carriage return (old line endings). Same arithmetic as the blank case above: 285
+    /// words of six characters plus 284 separators. Red if the word-boundary search knows fewer separators than the
+    /// limit check (the hard cut would leave 2000 characters ending mid-word).
+    /// </summary>
+    [Theory]
+    [InlineData('\u00A0')]
+    [InlineData('\r')]
+    [InlineData('\u2003')]
+    public async Task Fill_Kuerzt_Freitext_An_Jeder_Art_Von_Leerraum_Am_Wortende(char separator)
+    {
+        var (_, creator, _) = BuildAgent();
+        var (_, seriesId, unitId) = await FreshUnitAsync(creator, $"Fill-Trenner-{(int)separator}");
+        var text = string.Join(separator, Enumerable.Repeat("Wortes", 400));
+        var json = System.Text.Json.JsonSerializer.Serialize(new { grammar = text });
+
+        var outcome = await Filler(creator, new FakeChatClient(json)).RunAsync(new UnitFillRequest(seriesId, unitId, "Quelle", Force: false, DryRun: true));
+
+        Assert.Equal(["grammar"], outcome.Shortened);
+        Assert.Equal(1994, outcome.Draft.Grammar!.Length);
+    }
+
+    /// <summary>
+    /// B-303: a <c>null</c> among the topics (a model in JSON mode is not held to the item type) is left out like an
+    /// empty one - not a <see cref="NullReferenceException"/> that ends the run raw. Red if <c>Clamp</c> trims
+    /// before it filters; the empty <c>Dropped</c> holds the intent that a missing topic is no loss to name.
+    /// </summary>
+    [Fact]
+    public async Task Fill_Laesst_Ein_Null_Thema_Weg_Statt_Abzustuerzen()
+    {
+        var (_, creator, _) = BuildAgent();
+        var (_, seriesId, unitId) = await FreshUnitAsync(creator, "Fill-Null-Thema");
+        var chat = new FakeChatClient("""{"topics":["Growing up",null,"  "]}""");
+
+        var outcome = await Filler(creator, chat).RunAsync(new UnitFillRequest(seriesId, unitId, "Quelle", Force: false, DryRun: true));
+
+        Assert.Equal(["Growing up"], outcome.Draft.Topics);
+        Assert.Empty(outcome.Dropped);
+    }
+
+    /// <summary>
     /// B-301: a series that does not exist is a usage error naming it, like a unit of another series (B-297) - and
     /// the model is never asked. Red if the NotFound catch around the series lookup is removed (a raw
     /// <c>PuglingApiException</c>, exit 1 instead of 2).

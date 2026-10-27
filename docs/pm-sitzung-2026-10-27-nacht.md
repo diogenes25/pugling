@@ -654,11 +654,63 @@ keine Oberfläche, die Tests sind der Weg; Vater und Sohn sind Regressionszeugen
 
 ### Retrospektive
 
-**Nachschau:** Teil 1 (`bdb4611`, B-298/B-299) ist die Arbeit, die vor diesem Sprint abgenommen wurde – die Nachschau
-läuft als erste Handlung von Teil 3 (ein frischer Prüfer, der den Diff von Teil 1 nicht gesehen hat); ihr Ergebnis
-steht dort in der ersten Zeile. Bis dahin ist dieser Sprint **nicht geschlossen**.
+**Nachschau:** Teil 1 (`bdb4611`, B-298/B-299) von einem frischen `frontend-reviewer` am committeten Stand, mit zwei
+eigenen Mutanten: alle `_one` in beiden Sprachen gestrichen → **6 failed** (die Parität bleibt dabei grün, nur die
+neuen Fälle fangen); Aufräumzeile in `SohnApp` geleert → **1 failed** an `sprache.spec.ts:44`. Alle `{{count}}`-Schlüssel
+und alle Wege aus der Arcade (Abmelden, 401, Browser-Zurück) nachgezählt – kein Geschwister offen. **Kein Entgleiten.**
+Zwei 🟢 zur Doku (Reihenfolge der Fallzahlen, Zeilenangabe 42 → 44) – korrigiert. `nachgeschaut` an B-298, B-299.
 
 **Was die eigenen Tore durchgelassen haben:** nichts Neues in diesem Increment. Die beiden 🟢 außerhalb des Diffs
 sind wieder Geschwister einer gerade geprüften Regel (dieselbe Leerraum-Frage an zwei Stellen einer Funktion) – das
 stützt Vorschlag (O) aus Teil 1, ohne einen neuen.
+
+## Lauf F, Teil 3 — B-302, B-303 aus dem Review (`fill`: Leerraum-Arten, `null`-Thema), Zähler 0
+
+**Sprint-Ziel:** *Der Creator, dessen Quelle aus einer PDF-Kopie stammt oder dessen Modell im JSON-Modus ein `null`
+liefert, bekommt trotzdem einen wortgerecht gekürzten Entwurf – keinen Schnitt mitten im Wort, keinen rohen Absturz.*
+Umfang: [B-302](backlog/B-302-fill-wortgrenze-kennt-nur-drei-leerzeichen.md),
+[B-303](backlog/B-303-fill-null-thema-im-json-modus.md) (`Defekt`, Freigabe 1, beide waren `unverifiziert` – erst
+messen, dann bauen). **Zähler: 0.**
+
+**Entwickler-Brief:** Je ein Test, der den Verdacht misst; fällt er nicht, ist die Story `verworfen`. Fällt er: eine
+Leerraum-Menge für alle drei Prüfungen in `Clamp` (`char.IsWhiteSpace`), `null` vor dem `Trim` herausnehmen.
+
+### Iteration
+
+- Beide Verdachte **gemessen echt**: 3 × erwartet 1994 / gemessen 2000; 1 × `NullReferenceException`.
+- Fix → `Fill_*` **17/17**, Suite **979/979 `exit=0`**. Die rote Probe ist je die Mutante (alte Zeile zurück).
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| – | `pugling-reviewer` 🟢 | `Assert.Empty(Dropped)` hält eine Absicht, der Kommentar nennt sie nicht; Wortlaut „another whitespace than“ | beides im Kommentar | nein (Freigabe 10) |
+| – | `pugling-reviewer` 🟡 | außerhalb des Diffs: `null`-Elemente in Cloze/Translation bestehen `Validate` und stürzen in `ToPayloadAsync` ab | [B-306](backlog/B-306-null-element-in-uebungsstrategien.md) (`idee`, `unverifiziert`) | nein (außerhalb des Diffs) |
+
+**Zähler: 0.** Der Prüfer hat die Äquivalenz der neuen Schleife für jede Eingabe des alten Codes hergeleitet und
+gezeigt, dass die drei Trenner-Fälle je eine andere Mutante töten. Rollengang: der Agent hat keine Oberfläche, die
+Tests sind der Weg; Vater und Sohn Regressionszeugen. **B-302, B-303 `abgenommen`.**
+
+### Retrospektive
+
+**Nachschau:** Teil 2 (`26e731a`, B-300/B-301) – läuft als erste Handlung von Teil 4 (frischer Prüfer); das Ergebnis
+steht dort und wird hier nachgetragen.
+
+**Was die eigenen Tore durchgelassen haben:** Beide Defekte sind seit B-22/B-292 im Code, beide sind von der Art
+„zwei Stellen derselben Funktion sprechen über dieselben Daten verschieden“ (`IsWhiteSpace` gegen eine Drei-Zeichen-
+Menge; `Validate` null-sicher, `Clean` nicht). Kein Review der beiden Ursprungs-Stories hat die zwei Stellen
+nebeneinandergelegt. Das ist dieselbe Frage wie Vorschlag (O) – *„welche Geschwister hat, was ich gerade prüfe?“* –
+auf Code statt auf Tests angewandt.
+
+**Vorschlag, nicht gelandet (Freigabe 3):** **(P)** ein Tor statt Prosa für die eine messbare Hälfte: ein Test, der
+jede Strategie (und `UnitNotesFiller`) mit einem JSON füttert, in dem **jede** Liste ein `null`-Element trägt, und
+nur „kein roher Absturz“ zusichert (Regelverletzung oder stilles Weglassen sind beide in Ordnung). Er hätte B-303
+und B-306 zusammen gefangen. Kosten: ein Fake-JSON je Strategie, Pflege bei jeder neuen Strategie – genau dort, wo
+der Fehler entsteht.
+
+**Teilung im Lauf:** [B-295](backlog/B-295-arcade-korpus-auf-englisch.md) erwies sich beim Lesen als Bündel und ist
+nach dem README geteilt: [B-304](backlog/B-304-arcade-rahmen-auf-englisch.md) (Rahmen-Bildschirme, M unten) und
+[B-305](backlog/B-305-arcade-spielweg-auf-englisch.md) (Spielweg, M oben). Die zwei Ausführungs-Punkte in B-304
+(geteilte Helfer bleiben für das Vater-Web deutsch; der `lang`-Effekt wandert an die Wurzel, damit der Login sein
+`lang` trägt) folgen aus B-85 Entscheidung 3 und 5 – keine neue Produktentscheidung.
 

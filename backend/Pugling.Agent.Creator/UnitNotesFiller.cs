@@ -154,7 +154,8 @@ public sealed class UnitNotesFiller(IChatClient chat, CreatorApi creator, IOptio
         var dropped = new List<string>();
         var shortened = new List<string>();
         var cleaned = (draft.Topics ?? [])
-            .Select(t => t.Trim())
+            // A model in JSON mode is not held to the item type: a null topic is left out like an empty one.
+            .Select(t => t?.Trim() ?? "")
             .Where(t => t.Length > 0)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -178,7 +179,10 @@ public sealed class UnitNotesFiller(IChatClient chat, CreatorApi creator, IOptio
             // whitespace is cut hard (a surrogate pair may split there - accepted).
             var head = trimmed[..MaxFreeTextLength];
             if (char.IsWhiteSpace(trimmed[MaxFreeTextLength])) return head.TrimEnd();
-            var boundary = head.LastIndexOfAny([' ', '\n', '\t']);
+            // The same notion of whitespace as the check above: a non-breaking space from a PDF copy is a word
+            // boundary too, not a reason for the hard cut.
+            var boundary = head.Length - 1;
+            while (boundary > 0 && !char.IsWhiteSpace(head[boundary])) boundary--;
             return (boundary > 0 ? head[..boundary] : head).TrimEnd();
         }
     }

@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-294]
 wartet_auf: ""
+nachgeschaut: "2026-10-27"
 ---
 
 # B-299 · Der Rückfall von `<html lang>` auf Deutsch beim Verlassen der Arcade existiert nur als Code
@@ -38,6 +39,12 @@ das Szenario, das Entscheidung 5 aus B-85 verhindern soll.
   Abmelden** ab (kein `page.goto` – das lädt `index.html` mit statischem `lang="de"` und verdeckte die Mutante) und
   sichert `lang="de"`; danach Wieder-Anmelden → Arcade wieder englisch, `lang="en"`. Grün: **1 passed**. Mutante
   „Aufräumzeile `document.documentElement.lang = "de"` gestrichen“ → **1 failed** an der neuen Zusicherung
-  (erwartet `de`, gemessen `en`, Zeile 42). Review (`frontend-reviewer`): kein Fund an B-299; 🟢 Kommentar, dass
+  (erwartet `de`, gemessen `en`, damals Zeile 42 – nach dem Review-Kommentar Zeile 44: die Zusicherung nach dem Abmelden). Review (`frontend-reviewer`): kein Fund an B-299; 🟢 Kommentar, dass
   „Abmelden“ bis B-295 ein deutsches Literal ist → ergänzt. Volle E2E **98 passed** (`exit=0`). Rollengang: die Spec
   ist der Sohn-Gang; Vater/Creator Regressionszeugen. **`abgenommen`.**
+- **2026-10-27** — Nachschau (Lauf F, Teil 2, frischer `frontend-reviewer` am Commit `bdb4611`): Mutante „Aufräumzeile
+  durch leere Funktion ersetzt“ selbst gefahren → **1 failed** an `sprache.spec.ts:44` (`unexpected value "en"`);
+  `index.html:2` (statisches `lang="de"`) gegen die Begründung „kein `page.goto`“ gelesen; alle Wege aus der Arcade
+  gesucht (`signOut`, 401 über `onUnauthorized`, Browser-Zurück) – alle entmontieren die `SohnShell` über denselben
+  Effekt; Zeile 48 („Wahl überlebt das Abmelden“) fällt, wenn `signOut` den Schlüssel löscht. Kein 🟡/🔴; 🟢
+  Zeilenangabe 42 → 44 korrigiert.

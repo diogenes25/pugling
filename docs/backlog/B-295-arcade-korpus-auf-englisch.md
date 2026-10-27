@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/student]
+tags: [typ/story, status/verworfen, bereich/frontend, rolle/student]
 aliases: [i18n Teil b, Rest der Sohn-Arcade auf Englisch]
-status: geschaetzt
+status: verworfen
 prio: P3
 art: Wunsch
 groesse: M
@@ -10,8 +10,8 @@ migration: nein
 vertragsbruch: nein
 quelle: B-85 (geteilt, NP-11 Schritt 0)
 unverifiziert: false
-grund: ""
-ersetzt_durch: []
+grund: "geteilt (Lauf F): Rahmen-Bildschirme → B-304, Spielweg → B-305"
+ersetzt_durch: [B-304, B-305]
 entgangen_bei: []
 wartet_auf: ""
 ---
@@ -70,3 +70,7 @@ und die betroffene Spec; Testweg: Paritäts-Test, Arcade-Specs, erweiterte `spra
   (`shop`, `skins`, `test`, `celebrateOne`) wäre der tragende Fall. Pluralformen: siehe
   [B-298](B-298-plural-im-hud-ein-coins.md) (`_one`/`_other`), gilt für jeden neuen `count`-Schlüssel hier.
 - **2026-10-27** — Commit `aab2ef9` (Lauf E, Teil 9; nicht gepusht).
+- **2026-10-27** — **geteilt** in Lauf F ([Protokoll](../pm-sitzung-2026-10-27-nacht.md)), nach dem Teilen-Mechanismus
+  des README: beim Lesen ein Bündel zweier getrennter Flächen (~2000 Zeilen, 12+ Dateien) –
+  [B-304](B-304-arcade-rahmen-auf-englisch.md) (Login, Konto, Weg, Shop, Skins, Interessen, Ziele, Abzeichen) und
+  [B-305](B-305-arcade-spielweg-auf-englisch.md) (Üben, Test, Übungskomponenten). Diese Id ist `verworfen: geteilt`.

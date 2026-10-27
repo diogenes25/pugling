@@ -1,15 +1,15 @@
 ---
-tags: [typ/story, status/idee, bereich/agent, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/agent, rolle/creator]
 aliases: [Wortgrenze mit CR oder NBSP, Clamp Leerraum-Mengen]
-status: idee
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
+groesse: XS
 wo: backend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: Review zu B-300/B-301 in Lauf F, Teil 2 (docs/pm-sitzung-2026-10-27-nacht.md)
-unverifiziert: true
+unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-292]
@@ -30,3 +30,13 @@ statt `LastIndexOfAny`; ein Theory-Fall mit NBSP-getrennten Wörtern und exakter
 
 - **2026-10-27** — angelegt aus dem Review zu B-300/B-301 (Lauf F, Teil 2, [Protokoll](../pm-sitzung-2026-10-27-nacht.md)),
   Fund 3a (🟢, außerhalb des Diffs): eigene Story, weil das Sprint-Ziel (B-300/B-301) ohne sie erfüllt ist.
+- **2026-10-27** — in Lauf F, Teil 3 ([Protokoll](../pm-sitzung-2026-10-27-nacht.md)) als `Defekt` unter Freigabe 1
+  ausformuliert, geschätzt (XS) und gebaut. **Gemessen** (nicht mehr `unverifiziert`): `Theory`
+  `Fill_Kuerzt_Freitext_An_Jeder_Art_Von_Leerraum_Am_Wortende` mit NBSP, `\r`, U+2003 als Trenner (400 × „Wortes“) →
+  rote Probe **3 failed**, je erwartet 1994, gemessen **2000** (Schnitt mitten im Wort). Fix: die Wortgrenze per
+  Schleife mit `char.IsWhiteSpace` – dieselbe Menge wie die Grenzprüfung und `TrimEnd()` → grün. Die rote Probe ist
+  zugleich die Mutante (alte Zeile zurück). Review (`pugling-reviewer`): Äquivalenz für jede Eingabe des alten Codes
+  nachgewiesen (kein Leerraum, Index 0, 1..1999); die B-296/B-300-Mutanten beißen weiter; `\r` tötet zusätzlich die
+  Mutante `char.IsSeparator`, NBSP die Mutante „`\r` zur alten Menge“ – die drei Fälle sind nicht redundant. Kein
+  🟡/🔴 im Diff; 🟢 Wortlaut des Testkommentars → genommen. Suite **979/979 `exit=0`**. Rollengang: Agent ohne
+  Oberfläche, Tests sind der Weg. **`abgenommen`.**
