@@ -84,3 +84,4 @@ XS, `frontend`, keine Migration, kein Vertragsbruch.
   Vorgeschichte), Browser-Extension nicht genutzt. **`abgenommen`.**
 - **2026-10-28** — Commit `c1a4e3f` (Lauf I, Teil 1).
 - **2026-10-28** — nachgeschaut (Lauf I, Teil 2, frischer `frontend-reviewer` am Commit `c1a4e3f`): Sortierung stabil (DueDate, Id), Nachbarn Missionen/Abzeichen laden unbeblättert, keine Leser der alten Schlüssel. **Entgangen:** [B-327](B-327-ziel-spaeter-jenseits-platz-fuenf-erreicht.md) – spätere Besuche luden wieder nur fünf (Entscheidung 1 nahm an, der Fall zähle nur beim ersten); im selben Sprint behoben. 🟢 ohne Zählung: `||`/`&&` in `firstVisit` ungetestet – mit B-327 entfällt die Bedingung.
+- **2026-10-28** — vom Nutzer nach Lauf I bestätigt: Schlüssel `v2` (einmal still neu seeden, eine seither erreichte Etappe bleibt einmal ungefeiert).

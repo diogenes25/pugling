@@ -20,9 +20,8 @@ Von Hand bleiben elf Typen in [src/lib/uiTypes.ts](src/lib/uiTypes.ts) – **je 
 in den Barrel. Grenze: `http(…, body?: unknown)` prüft **keinen** Objekt-Literal-Rumpf (34 von 86,
 [B-24](../docs/backlog/B-24-frontend-unknown-field.md)).
 
-**Anmerkungs-Widget** (`src/components/RemarkWidget.tsx`, Alt+A, nur `import.meta.env.DEV`): Beobachtungen beim
-Testen mit Log-Id; in der Arcade `bottomOffset={96}` (sonst über der `.sohn-nav`); E2E schaltet es per
-`localStorage["pugling.remarks.off"]="1"` aus. Plan: [anmerkungen-plan.md](../docs/anmerkungen-plan.md).
+**Anmerkungs-Widget** (`src/components/RemarkWidget.tsx`, Alt+A, nur DEV; Arcade `bottomOffset={96}`; E2E aus per
+`localStorage["pugling.remarks.off"]="1"`): [anmerkungen-plan.md](../docs/anmerkungen-plan.md).
 
 **Feld-Erklärungen** (`src/components/InfoHint.tsx` + `src/lib/fieldHelp.ts`): Erklärungsbedürftige
 Eingabefelder tragen statt `<label>` ein `<FieldLabel htmlFor=… topic="…">`, das ein „ⓘ" mit Popover anhängt
@@ -39,11 +38,12 @@ nicht „irgendein Popover".
 Tragend: `setupFiles: ["src/test-setup.ts"]` räumt das DOM zwischen den Fällen ab – ohne `globals: true` tut
 RTL das **nicht** selbst (Begründung in `src/test-setup.ts`, bewacht von
 `src/test-setup.test.tsx`). **Grenze: kein nachgebauter Bildschirm mit gefälschtem `fetch`** – Bausteine und
-Regeln hier, Wege durch die App bei Playwright. Klicks per `fireEvent`, nie `node.click()`.
+Regeln hier, Wege durch die App bei Playwright. Klicks per `fireEvent`, nie `node.click()`. Einen Zwischenstand nach
+einem `async`-Handler erst nach `await act(async () => {})` zusichern, sonst prüft die Zeile davor (B-284); ein
+Doppelklick gegen die Ref-Sperre feuert beide Klicks in **einem** `act`, sonst fängt `disabled` den zweiten (B-325).
 
-**Eine Fläche je E2E-Spec** – Neues als eigene Datei, nicht als Block am Ende einer bestehenden: eine Spec
-bricht beim ersten Rot ab und nimmt alles Nachfolgende mit ([B-109](../docs/backlog/B-109-full-flow-spec-flackert-bei-frage-3.md)
-legte so vier Flächen still). Der Durchstich bleibt **ein** Weg.
+**Eine Fläche je E2E-Spec** – Neues als eigene Datei: eine Spec bricht beim ersten Rot ab und nimmt alles
+Nachfolgende mit ([B-109](../docs/backlog/B-109-full-flow-spec-flackert-bei-frage-3.md)). Der Durchstich bleibt **ein** Weg.
 
 **Jeder Knopf, der eine Mutation auslöst, trägt `disabled={busy}`** – auch wenn `useAction` seinen
 Wiedereintritt selbst sperrt (`useRef`, synchron): es ist der Wartepunkt der Playwright-Actionability und der
@@ -85,7 +85,7 @@ Anlegen und Verwalten sind getrennt: `/vater/exercises` verwaltet, `/vater/exerc
 **Der Einstieg zum Anlegen ist „Unit zuerst"**: `/vater/lehrwerke` trägt je Unit ein „+ Übung"
 (`createExerciseHref` reicht die Auswahl als Query durch), die Bestandsliste ihr
 „+ Neue Übung" mit dem gesetzten Filter. Die Werkstatt hat **bewusst keinen kontextfreien Knopf** mehr
-(seit B-106 ist die Unit Pflichtfeld). Der Knopf hängt **nicht** an `series.isOwn` (fremde Reihen dürfen Übungen tragen), sondern am Fach: eine Reihe ohne `subjectId` kann keine tragen (`series_without_subject`).
+(seit B-106 ist die Unit Pflichtfeld). Der Knopf hängt am Fach, nicht an `series.isOwn`: eine Reihe ohne `subjectId` trägt keine (`series_without_subject`).
 Ein Vater entsteht **im UI**: `/vater` hat neben „Anmelden" den Modus „Neu registrieren" (anonymes
 `POST supervisor/adults`; die neue Id ist der Login-Name); das eigene Konto liegt unter
 `/vater/profil`. `/vater/kind/:id` ist der **Kind-Hub** (Stammdaten, PIN, Bild, Interessen) und verlinkt alles Kindbezogene per `?childId=`, darunter `…/lernstand` (schwache Wörter + Katalog-Drilldown) und `…/ziele` (Objectives/OKR mit ihren Etappen).

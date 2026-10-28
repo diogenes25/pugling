@@ -79,6 +79,12 @@ ohne `Datei:Zeile` ist keine Ausformulierung. Im Protokoll vom 2026-07-30 hat ge
 vermeintlich offene Punkte als längst erledigt entlarvt und eine Vorab-Entscheidung revidiert — das ist
 der Wertbeitrag der Stufe. Notizen und „offen"-Vermerke verrotten; der Code nicht.
 
+Zwei Prüfungen gehören dazu, beide in Lauf I (2026-10-28) gemessen: Eine **Entscheidung, die einen Fall
+ausschließt** („zählt nur beim ersten Besuch“), wird gegen die User Story gerechnet, nicht nur gegen die AKs –
+B-257 bestand seine AKs und verfehlte seine Story (B-327). Und **ändert ein Fix, wie gespeicherter Client-Zustand
+entsteht** (`localStorage`, Cache), sagt die Story, was mit dem schon gespeicherten geschieht – sonst heilt er nur
+neue Geräte.
+
 Weil dieser Schritt teuer ist, trägt **schon `idee` eine `prio`**. Sonst müsste `/backlog` raten, welche
 von zwei Dutzend Ideen es als Nächstes recherchiert.
 

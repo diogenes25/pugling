@@ -28,3 +28,10 @@ Umbenennen folgt; `art: Defekt`, weil ein uneinheitlicher Code den Vertrag für 
 ## Verlauf
 
 - **2026-10-23** — angelegt beim Grillen von B-145 im vierten Nachtlauf; ungeprüft.
+- **2026-10-28** — **Freigabe des Nutzers (Autonomer Modus, Opt-in)**, im Dialog nach Lauf I („Nimm die von dir
+  vorgeschlagenen Entscheidungen“) auf den Vorschlag im [Protokoll](../pm-sitzung-2026-10-28-nacht.md#ende-lauf-i):
+  eine unbekannte Referenz meldet einheitlich `invalid_reference` (der spezifischere Code), an allen Stellen, nicht nur
+  den beiden der Story – Fundstellen dort: `TextbooksController.cs:70,103,146,151`, `GrammarTopicsController.cs:85`,
+  `SeriesUnitsController.cs:191`. Kleiner Vertragsbruch (`vertragsbruch: ja`), bewusst angenommen. Noch zu prüfen beim
+  Ausformulieren: ob das Frontend einen der beiden Codes liest.
+

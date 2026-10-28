@@ -338,3 +338,10 @@ Endgrund: **Limit 2** – die Nachschau von Teil 2 fand im Increment von Teil 1 
 4. **B-257/B-327 Entscheidung (`v2`-Schlüssel):** jedes Gerät seedet einmal still neu – eine seit dem letzten Besuch
    neu erreichte Etappe bleibt dabei einmal ungefeiert. Gegenlesen.
 5. Nächste baubare `Defekt`-Kandidaten: B-323, B-280, B-262/B-266 (Assistent), B-275, B-277.
+
+**Nachtrag, nach Lauf I im Dialog entschieden** („Nimm die von dir vorgeschlagenen Entscheidungen“): (Y) und (AB) als
+ein Satz in `frontend/CLAUDE.md` (Testabsatz; bezahlt durch Kürzen von Widget-, E2E- und Reihen-Absatz, netto +16 Bytes –
+die Datei bleibt mit 10 365 von 9 000 Bytes über Budget, die Altlast ist unverändert offen); (Z) und (AA) in
+`docs/backlog/README.md` → „Ausformulieren heißt gegen den Code belegen“; B-258: einheitlich `invalid_reference`
+(Freigabe im Verlauf der Story); `v2`-Schlüssel bestätigt. Ältere Vorschläge (U)–(X) und davor bleiben offen.
+

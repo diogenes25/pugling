@@ -57,3 +57,4 @@ XS, `frontend`, keine Migration, kein Vertragsbruch.
   rote Probe **1 failed** (2 Feiern), danach `MyObjectives.test.tsx` **15/15**. Mutanten: nur eine Seite → **3 failed**,
   Schlüssel ohne `v2` → **2 failed**. Der Fall „lädt ab dem zweiten Besuch nur die erste Seite“ aus B-257 ist ersetzt.
 - **2026-10-28** — Delta-Review (`frontend-reviewer`, gemessen): `take: PAGE` → **3 failed**, alter Code → nur der B-327-Fall rot (trennt sich vom Erst-Besuch). 🟢 ohne Zählung genommen: Entscheidung 2 bekam eine Zusicherung (Mutante „nur gezeigte feiern“ → **1 failed**), Titel und Kommentare des Blocks berichtigt. Vitest **569/569**, `tsc -b` sauber, volle E2E **99 passed** (alle `exit=0`, E2E nach der letzten Änderung gestartet); Browser-Extension nicht genutzt. **`abgenommen`.**
+- **2026-10-28** — vom Nutzer nach Lauf I bestätigt: Schlüssel `v2` (einmal still neu seeden, eine seither erreichte Etappe bleibt einmal ungefeiert).
