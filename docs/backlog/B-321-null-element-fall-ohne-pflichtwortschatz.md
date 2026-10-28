@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-318, B-306]
 wartet_auf: ""
+nachgeschaut: "2026-10-28"
 ---
 
 # B-321 · Die `null`-Fälle aus B-306/B-318 lesen den Pflicht-Wortschatz nie
@@ -55,3 +56,4 @@ XS, `backend` (Tests), keine Migration, kein Vertragsbruch.
   Prüfer am Code hergeleitet (Ausstieg in `DraftRules.cs:92`), nicht gemessen. Gemessen danach: die vier Mutanten
   (`i!.Front`, `i!.Source`, `t!.Prompt`/`t!.Answer`, `g!.Answer`) → je **1 failed**, Kontrolle **4 passed**. Suite
   **1001/1001 `exit=0`**. Rollengang: Agent ohne Oberfläche, Tests sind der Weg. **`abgenommen`.**
+- **2026-10-28** — nachgeschaut (Lauf I, frischer `pugling-reviewer` am Commit `f6a2347`): `DraftRules.CoversRequiredWords` liest ohne Pflicht-Wortschatz nicht, mit ihm jedes Element – die Bedingung kommt über `Request(words:)` → `BriefingBuilder` wirklich an; je Zeile das Pflichtwort durch ein echtes Element gedeckt; Mutanten `i!.Front`, `i!.Source`, `t!.Prompt`, `g!.Answer` je rot hergeleitet; Filterlauf **6/6 passed**. Kein Befund.

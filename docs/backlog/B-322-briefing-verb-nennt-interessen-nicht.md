@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-264]
 wartet_auf: ""
+nachgeschaut: "2026-10-28"
 ---
 
 # B-322 · Das Verb `briefing` verweist auf vorgegebene Interessen, ohne sie zu nennen
@@ -51,3 +52,4 @@ XS, `backend` (Agent), keine Migration, kein Vertragsbruch.
   Teil 2 ([Protokoll](../pm-sitzung-2026-10-28-nacht.md)); im selben Sprint gebaut.
   `Das_kindlose_Briefing_nennt_die_vorgegebenen_Interessen_selbst` → **1 failed** vor dem Fix, danach grün;
   `CreatorAgentTests` **79/79**, Suite **1001/1001 `exit=0`**. Rollengang: Tests sind der Weg. **`abgenommen`.**
+- **2026-10-28** — nachgeschaut (Lauf I, frischer `pugling-reviewer` am Commit `f6a2347`): Label-Zeile `CreatorBriefing.cs:122-128` nur unter `CatalogInterests.Count > 0`, gefüllt nur ohne eingekleidetes Kind; Geschwisterwege (mit Kind wirft `--interests`, `--general` mit Kind läuft kindlos) nachgelesen; Zusicherung vergleicht das Label, nicht den Slug. Kein Befund.

@@ -1,10 +1,15 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import type { Objective, Paged } from "../lib/types";
 import { useSohn } from "./SohnApp";
-import { takeFreshAchieved } from "./seenIds";
+import { isFirstLoad, takeFreshAchieved } from "./seenIds";
+
+/** Wie viele Ziele die Liste zeigt; `total` daneben nennt alle aktiven. */
+const PAGE = 5;
+
+const achievedIds = (xs: { id: number; status: string }[]) => xs.filter((x) => x.status === "Achieved").map((x) => x.id);
 
 /**
  * „Meine großen Ziele" – die Sohn-Sicht auf die Objectives, die der Vater gesetzt hat.
@@ -22,20 +27,23 @@ import { takeFreshAchieved } from "./seenIds";
 export function MyObjectives() {
   const { t } = useTranslation();
   const { childId, celebrate } = useSohn();
-  const objectives = useAsync<Paged<Objective>>(() => api.myObjectives({ take: 5 }), []);
+  // `v2`: ein Stand aus der Zeit vor B-257 kennt nur die ersten fünf Ziele und ist darum unbrauchbar. Der neue Schlüssel
+  // lässt jedes Gerät einmal still neu seeden – eine seither neu erreichte Etappe bleibt dabei einmal ungefeiert, lieber
+  // das als ein alter Erfolg mit „+N 🪙".
+  const krKey = `pugling.seenKeyResults.v2.${childId}`;
+  const objectiveKey = `pugling.seenObjectives.v2.${childId}`;
+  // Der Erst-Stand muss jedes aktive Ziel kennen, nicht nur die ersten fünf (B-257): ein schon erreichtes Ziel auf
+  // Platz 6 bliebe sonst ungesehen und würde gefeiert, sobald es nach vorn rutscht. Darum lädt nur der allererste
+  // Besuch bis an die Server-Obergrenze (`PagingExtensions.MaxTake`); jeder spätere nur die Seite, die er zeigt.
+  const [firstVisit] = useState(() => isFirstLoad(krKey) || isFirstLoad(objectiveKey));
+  const objectives = useAsync<Paged<Objective>>(() => api.myObjectives({ take: firstVisit ? 500 : PAGE }), []);
 
   useEffect(() => {
     const items = objectives.data?.items;
     if (!items) return;
     const krs = items.flatMap((o) => o.keyResults);
-    const freshKrs = takeFreshAchieved(
-      `pugling.seenKeyResults.${childId}`,
-      krs.filter((k) => k.status === "Achieved").map((k) => k.id),
-    );
-    const freshObjectives = takeFreshAchieved(
-      `pugling.seenObjectives.${childId}`,
-      items.filter((o) => o.status === "Achieved").map((o) => o.id),
-    );
+    const freshKrs = takeFreshAchieved(krKey, achievedIds(krs));
+    const freshObjectives = takeFreshAchieved(objectiveKey, achievedIds(items));
     // Reihenfolge ist Absicht: es gibt nur ein Overlay, der letzte Aufruf gewinnt – schließt die letzte
     // Etappe zugleich das Ziel ab, bleibt so die größere Feier stehen.
     if (freshKrs.length > 0) {
@@ -48,7 +56,7 @@ export function MyObjectives() {
       const reward = o.rewardOnComplete > 0 ? `+${o.rewardOnComplete} ${o.kind === "Committed" ? "🪙" : "💎"}` : undefined;
       celebrate("big", "🏆", t("objectives.goalDone"), reward);
     }
-  }, [objectives.data, childId, celebrate, t]);
+  }, [objectives.data, krKey, objectiveKey, celebrate, t]);
 
   if (objectives.loading) return <div className="card"><div className="loading">{t("objectives.loading")}</div></div>;
   // Ein Fehler hier darf den Trophäenweg nicht abwürgen – die Ziele sind Beiwerk, kein Kern der Seite.
@@ -59,11 +67,11 @@ export function MyObjectives() {
       <div className="row" style={{ marginBottom: 8 }}>
         <b style={{ fontSize: 13 }}>{t("objectives.title")}</b>
         {/* „offen" wäre falsch: `total` ist die Zahl aller *aktiven* Ziele – erreichte zählen mit, und
-            nachrechnen kann man es hier nicht, weil nur die ersten fünf geladen sind. */}
+            nachrechnen kann man es hier nicht, weil nur die ersten fünf gezeigt werden. */}
         <span className="sub" style={{ marginLeft: "auto" }}>{t("objectives.count", { count: objectives.data.total })}</span>
       </div>
 
-      {objectives.data.items.map((o) => (
+      {objectives.data.items.slice(0, PAGE).map((o) => (
         <div key={o.id} style={{ padding: "6px 0" }}>
           <div className="row">
             <b>{o.title}</b>

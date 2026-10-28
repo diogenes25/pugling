@@ -49,7 +49,7 @@ describe("MyObjectives feiert Teilziele", () => {
   it("feiert beim allerersten Besuch nichts nach, sondern merkt sich den Stand", async () => {
     await visit([obj(1, [kr(11, true, "Unit 1"), kr(12, false, "Unit 2")])]);
     expect(celebrate).not.toHaveBeenCalled();
-    expect(localStorage.getItem("pugling.seenKeyResults.7")).toBe("[11]");
+    expect(localStorage.getItem("pugling.seenKeyResults.v2.7")).toBe("[11]");
   });
 
   // Rot, wenn der KeyResult-Zweig fehlt oder statt „medium"/🎯 eine andere Stufe feiert.
@@ -101,12 +101,82 @@ describe("MyObjectives feiert Teilziele", () => {
     expect(celebrate).not.toHaveBeenCalled();
   });
 
+  // Rot, wenn die Feier die Zahl nicht durchreicht (fester Singular): zwei Etappen auf einmal hießen sonst „Etappe".
+  it("nennt zwei auf einmal erreichte Etappen im Plural", async () => {
+    // Etappe 13 ist schon vorher erreicht: so unterscheiden sich „neu erreicht" (2) und „erreicht" (3).
+    await visit([obj(1, [kr(11, false, "Unit 1"), kr(12, false, "Unit 2"), kr(13, true, "Unit 3"), kr(14, false, "Unit 4")])]);
+    await visit([obj(1, [kr(11, true, "Unit 1"), kr(12, true, "Unit 2"), kr(13, true, "Unit 3"), kr(14, false, "Unit 4")])]);
+    expect(celebrate).toHaveBeenCalledWith("medium", "🎯", "Unit 1", "2 Etappen geschafft");
+  });
+
+  // Rot, wenn die Liste die Währung nicht nach `kind` weicht: das Dehnungsziel trüge dann die Münze des verbindlichen.
+  it("zeigt in der Liste die Währung je Zielart", async () => {
+    myObjectives.mockResolvedValueOnce({
+      items: [obj(1, [kr(11, false, "Unit 1")]), { ...obj(2, [kr(21, false, "Unit 2")], "Stretch"), rewardOnComplete: 7 }],
+      total: 2,
+    });
+    render(<MyObjectives />);
+    expect((await screen.findByText("50")).parentElement?.textContent).toBe("🪙50");
+    expect(screen.getByText("7").parentElement?.textContent).toBe("💎7");
+  });
+
   // Rot, wenn die Belohnungszeile ohne Prüfung gebaut wird: dann stünde „+0 🪙" für ein Ziel ohne Belohnung.
   it("verspricht bei einem Ziel ohne Belohnung keine Münzen", async () => {
     const noReward = (achieved: boolean) => ({ ...obj(1, [kr(11, achieved, "Unit 1")]), rewardOnComplete: 0 });
     await visit([noReward(false)]);
     await visit([noReward(true)]);
     expect(celebrate).toHaveBeenLastCalledWith("big", "🏆", "ZIEL GESCHAFFT!", undefined);
+  });
+});
+
+/**
+ * B-257: der Erst-Stand umfasst alle aktiven Ziele, nicht nur die ersten fünf. Der Mock blättert wie der Server
+ * (`skip`/`take` über der ganzen Liste) – ein fester Rückgabewert sähe nicht, wie viel der Bildschirm anfragt.
+ */
+describe("MyObjectives, Erst-Stand jenseits der ersten Seite", () => {
+  async function visitPaged(all: Objective[]) {
+    myObjectives.mockImplementationOnce(({ skip = 0, take = 100 }: { skip?: number; take?: number } = {}) =>
+      Promise.resolve({ items: all.slice(skip, skip + take), total: all.length }));
+    const view = render(<MyObjectives />);
+    await waitFor(() => expect(view.container.textContent).toContain("Meine großen Ziele"));
+    return view;
+  }
+  const open = (id: number) => obj(id, [kr(id * 10, false, `Unit ${id}`)]);
+  const done = (id: number) => obj(id, [kr(id * 10, true, `Unit ${id}`)]);
+
+  // Rot, wenn der erste Besuch wieder nur die ersten fünf lädt (`take: 5`): Ziel 6 war schon erreicht, wurde aber nie als
+  // gesehen gemerkt – rutscht es nach vorn, feiert die App einen alten Erfolg mit „+50 🪙".
+  it("feiert ein beim ersten Besuch schon erreichtes sechstes Ziel später nicht", async () => {
+    (await visitPaged([open(1), open(2), open(3), open(4), open(5), done(6)])).unmount();
+    (await visitPaged([done(6)])).unmount();
+    expect(celebrate).not.toHaveBeenCalled();
+  });
+
+  // Rot, wenn die Schlüssel nicht versioniert sind: ein Gerät mit dem Stand von vor B-257 kennt nur die ersten fünf und
+  // gälte nicht als erster Besuch – Ziel 6 würde gefeiert.
+  it("seedet ein Gerät mit altem Stand einmal neu", async () => {
+    localStorage.setItem("pugling.seenKeyResults.7", "[]");
+    localStorage.setItem("pugling.seenObjectives.7", "[]");
+    (await visitPaged([open(1), open(2), open(3), open(4), open(5), done(6)])).unmount();
+    (await visitPaged([done(6)])).unmount();
+    expect(celebrate).not.toHaveBeenCalled();
+  });
+
+  // Rot, wenn der erste Besuch alle geladenen Ziele zeigt statt der ersten fünf: die Liste ist ein Ausschnitt, die Zahl
+  // daneben nennt alle.
+  it("zeigt beim ersten Besuch trotzdem nur die ersten fünf", async () => {
+    const view = await visitPaged([open(1), open(2), open(3), open(4), open(5), open(6)]);
+    expect(screen.getByText("Ziel 5")).toBeTruthy();
+    expect(screen.queryByText("Ziel 6")).toBeNull();
+    view.unmount();
+  });
+
+  // Rot, wenn jeder Besuch die ganze Liste lädt statt nur der erste: dann trüge der Erst-Stand keine Bedingung mehr, und
+  // der Normalfall zöge bei jedem Öffnen bis zu 500 Ziele.
+  it("lädt ab dem zweiten Besuch wieder nur die erste Seite", async () => {
+    (await visitPaged([open(1)])).unmount();
+    (await visitPaged([open(1)])).unmount();
+    expect(myObjectives).toHaveBeenLastCalledWith({ take: 5 });
   });
 });
 

@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-10-28"
 ---
 
 # B-317 · Eine Ziel-Etappe ohne Titel zeigt dem Kind den rohen Enum-Wert
@@ -60,3 +61,4 @@ XS, `frontend`, keine Migration, kein Vertragsbruch.
   (`Exercise`) im Listenfall, Mutante „fester Schlüssel“ → **1 failed**; das Datum in `RequestsTab` bleibt ohne eigenen
   Fall (derselbe Helfer), ohne Zählung. Vitest **555/555**. Rollengang: die volle E2E-Suite gegen frisch gestartete Server (**99 passed**, `exit=0`, nach der letzten Änderung gestartet); Browser-Extension nicht genutzt. **`abgenommen`.**
 - **2026-10-28** — Commit `f96d358` (Lauf H, Teil 2).
+- **2026-10-28** — nachgeschaut (Lauf I, frische Reviewer am Commit `f96d358`): drei Scope-Schlüssel gegen `KeyResultScope` in `docs/openapi/v1.json` vollständig; en-Gleichstand über `i18n.test.ts:16`; Datumsfälle ohne Zeitzonenkante; kein weiteres `toLocale*String` in `sohn/`. Kein Befund.

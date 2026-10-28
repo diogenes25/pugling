@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-49, B-305]
 wartet_auf: ""
+nachgeschaut: "2026-10-28"
 ---
 
 # B-320 · Scheitert das Beantworten in der Klausur, sieht das Kind keine Meldung
@@ -67,3 +68,4 @@ gemocktem `api`, Vorbild `MyObjectives.test.tsx`).
   Kein weiteres `!ok && action.message`-Muster im Frontend (Suche). Vitest **555/555**, Backend **1000/1000**. Rollengang: die volle E2E-Suite gegen frisch gestartete Server (**99 passed**, `exit=0`, nach der letzten Änderung gestartet); Browser-Extension nicht genutzt.
   Den englischen Fehlerweg im Browser zeigt keine Spec (er braucht einen scheiternden Server). **`abgenommen`.**
 - **2026-10-28** — Commit `f96d358` (Lauf H, Teil 2).
+- **2026-10-28** — nachgeschaut (Lauf I, frische Reviewer am Commit `f96d358`): `SohnTest.tsx:117-128` setzt die Meldung über den Arcade-Formatierer, auch für `finish()`; drei Fälle je mit Mutante nachgerechnet; kein weiteres „`action.message` nach `run` lesen“ im Commit. Entgangen: [B-325](B-325-klausur-doppelklick-sperre-ungetestet.md) (AK 3 ohne Fall, 🟢).

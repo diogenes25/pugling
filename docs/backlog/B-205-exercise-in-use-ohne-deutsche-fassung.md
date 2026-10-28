@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-10-28"
 ---
 
 # B-205 · `exercise_in_use` fehlt in `GERMAN_PROBLEM_TEXT` — die zwei Geschwister stehen drin
@@ -78,3 +79,4 @@ S, `beides`, keine Migration, Vertragsbruch ja (ein Code an einem Pfad). Testweg
   `contract.ts` neu erzeugt. Backend **1000/1000**, Vitest **555/555**. Rollengang: die volle E2E-Suite gegen frisch gestartete Server (**99 passed**, `exit=0`, nach der letzten Änderung gestartet); Browser-Extension nicht genutzt. Die E2E-Spec
   `creator-lehrwerk-weg.spec.ts` fährt den Löschweg mit der deutschen Zeile. **`abgenommen`.**
 - **2026-10-28** — Commit `f96d358` (Lauf H, Teil 2).
+- **2026-10-28** — nachgeschaut (Lauf I, frische Reviewer am Commit `f96d358`): Backend (`pugling-reviewer`): die drei Aufrufer von `ShiftBlockedProblem` und die drei Löschpfade gegen die Codes gelesen, Mutanten des neuen Falls hergeleitet, Filterlauf grün. Frontend (`frontend-reviewer`): kein Code verzweigt auf die Codes, beide `errorMessage`-Mutanten echt, `creator-lehrwerk-weg.spec.ts` an vier Stellen deutsch. Älter, außerhalb von B-205: [B-323](B-323-ganzer-uebungs-put-umgeht-woerter-sperre.md).

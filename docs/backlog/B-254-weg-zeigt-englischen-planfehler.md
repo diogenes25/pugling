@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-10-23-nacht.md (dritter Lauf, Rollengang Sprint 1)
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-10-28"
 entgangen_bei: []
 ---
 
@@ -64,3 +65,4 @@ S, `frontend`, keine Migration, kein Vertragsbruch. Testweg: Komponententest `So
   Bildschirm (der Erfolgsweg wäre beim Rendern abgestürzt, ohne dass der Fall es merkte) → vollständige Antwort,
   positive Zusicherung auf den Titel des gewählten Plans. Vitest **555/555**. Rollengang: die volle E2E-Suite gegen frisch gestartete Server (**99 passed**, `exit=0`, nach der letzten Änderung gestartet); Browser-Extension nicht genutzt. **`abgenommen`.**
 - **2026-10-28** — Commit `f96d358` (Lauf H, Teil 2).
+- **2026-10-28** — nachgeschaut (Lauf I, frische Reviewer am Commit `f96d358`): Reihenfolge `useChosenPlan.ts:16-18`, Fall 2 kommt nur über die Antwort für Plan 5, `SohnHome` äquivalent umgestellt. Entgangen: [B-324](B-324-gemerkter-plan-zweig-ungetestet.md) (Zweig „gemerkt“ ohne Fall, 🟡); außerhalb der AKs [B-326](B-326-ueben-und-klausur-nehmen-ungepruefte-plan-id.md).

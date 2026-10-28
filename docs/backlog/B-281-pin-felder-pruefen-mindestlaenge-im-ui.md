@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-10-28"
 ---
 
 # B-281 · Eine zu kurze PIN meldet die Oberfläche auf Englisch
@@ -69,3 +70,4 @@ fünf Formulare.
   nachgelesen. Fallstrick dabei: eine Mutante an der neuen, ungetrackten `pin.ts` ließ sich nicht per `git checkout`
   zurücknehmen – von Hand wiederhergestellt und nachgeprüft. Vitest **555/555**. Rollengang: die volle E2E-Suite gegen frisch gestartete Server (**99 passed**, `exit=0`, nach der letzten Änderung gestartet); Browser-Extension nicht genutzt. **`abgenommen`.**
 - **2026-10-28** — Commit `f96d358` (Lauf H, Teil 2).
+- **2026-10-28** — nachgeschaut (Lauf I, frische Reviewer am Commit `f96d358`): alle API-Aufrufe mit PIN den fünf Formularen zugeordnet, „geprüft = gesendet“ je Formular (trim gegen trim bzw. roh gegen roh), Wizard ohne Weg an `canAdvance` vorbei, Grenze gleich `PinHasher.IsAcceptable`. Kein Befund.

@@ -133,10 +133,11 @@ export function SohnPractice() {
    */
   async function judge(card: PracticeCard, payload: { wasKnown?: boolean; givenAnswer?: string }) {
     if (!planId || !session.current) return;
-    // `next()` läuft bewusst außerhalb von `action.run` und danach IMMER, auch nach einem Fehlschlag:
-    // die Bewertung ist idempotent genug, das innere `try/catch` schluckt den Fehler schon selbst, und
-    // `action.run` bekommt darum nie eine Ablehnung zu sehen - es liefert hier nur Ref-Gate und `busy`.
-    await action.run(async () => {
+    // `next()` läuft bewusst außerhalb von `action.run` und auch nach einem Fehlschlag: die Bewertung ist
+    // idempotent genug, das innere `try/catch` schluckt den Fehler schon selbst, und `action.run` bekommt
+    // darum nie eine Ablehnung zu sehen. `false` heißt hier also nur noch „von der Sperre verworfen" - dann
+    // gehört das Weiterschalten dem laufenden Aufruf, sonst überspränge ein doppeltes Enter eine Karte (B-284).
+    const ran = await action.run(async () => {
       try {
         const outcome = await api.review(planId, positionId, session.current!.id, { itemIndex: card.itemIndex, ...payload });
         setLastOutcome(outcome ?? null);
@@ -165,7 +166,7 @@ export function SohnPractice() {
         // feedback.kind === "none": kein Outcome ODER eine Anzeigenurstufe (ShowBoth) - kein Urteil, kein Toast.
       } catch { /* Bewertung ist idempotent genug; UI läuft weiter */ }
     });
-    next();
+    if (ran) next();
   }
 
   function next() {

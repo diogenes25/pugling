@@ -187,3 +187,74 @@ B-316). Höchster Zähler 5 (Teil 2). Commits `c195ef2`, `f96d358` und der Absch
 4. Unverändert offen: B-313 (`Frage`), B-310 (Vertragsfrage 404/403), B-291 (`Frage`), B-267, B-268; die englischen
    Texte aus Lauf G (`en.ts`).
 5. Nächste baubare `Defekt`-Kandidaten: B-280 und B-284 (Fokus/Tastatur, P2/P3), B-257, B-258, B-277.
+
+## Lauf I — Start
+
+Auftrag: „Starte Nachtlauf“ – der Auftragstext aus [nachtlauf.md](nachtlauf.md) mit den Freigaben 1–10, keine
+Paket-Vorgabe. Ausgangslage: HEAD `f6a2347`, Baum sauber, 93 Commits ungepusht. Index „Nachgeschaut 231 von 239“ –
+unbeobachtet sind die sechs Stories aus Lauf H, Teil 2 und B-321/B-322; die Nachschau des ersten Sprints nimmt alle
+acht. Auswahl nach Thema aus den Kandidaten am [Ende Lauf H](#ende-lauf-h).
+
+## Lauf I, Teil 1 — Das Kind wird nicht übergangen und nicht falsch gefeiert (B-284, B-257)
+
+**Sprint-Ziel:** *Das Kind sieht beim Üben jede Karte, auch wenn es zweimal Enter drückt, und wird nur für einen Erfolg
+gefeiert, den es gerade geschafft hat.* Umfang: [B-284](backlog/B-284-doppeltes-enter-ueberspringt-karte.md),
+[B-257](backlog/B-257-zielfeier-verspaetet-jenseits-der-ersten-fuenf.md) – beide `Defekt` auf `idee`, unter Freigabe 1
+ausformuliert, gegrillt und geschätzt (XS; Ist-Stand je Story gemessen). Draußen, weil sie dem Ziel nicht dienen:
+B-280 (Fokus im Vater-Formular), B-258/B-277 (Creator/Vertrag) – Kandidaten für Teil 2.
+
+**Entwickler-Brief:** Reines Frontend, kein Server-Code. Die Sperre in `useAction` bleibt die eine Quelle dafür, wer
+weiterschaltet (B-284: `if (ran) next()`). Für B-257 bleibt die Server-Sortierung unangetastet; nur der erste Besuch
+lädt bis `MaxTake` und seedet die Gesehen-Mengen daraus. Testweg: Komponententests mit roter Probe gegen den
+Ausgangsstand, Mutante je Fall; Rollengang über die E2E-Suite.
+
+### Iteration
+
+- Rote Proben gegen den Ausgangsstand: B-284 **1 failed** (gemessen „Karte 3 / 3“), B-257 **1 failed** (2 Feiern statt
+  keiner). Mutanten der neuen Fälle je **1 failed** (Liste ungekürzt, immer 500, Plural fest, Währung fest).
+- Vitest **561/561** (`exit=0`), `tsc -b` sauber.
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `frontend-reviewer` 🟡 | B-284: Mutante `if (!ran) next()` grün, AK 2 („rückt auch nach Fehlschlag weiter“) nur als Text | Zwischen-Zusicherung nach leerem `act`, Fall „Fehlschlag“; Mutante **2 failed** | ja |
+| 2 | `frontend-reviewer` 🟡 | B-257: Geräte mit altem Stand (nur fünf Ziele geseedet) bleiben falsch | Schlüssel `v2`, Fall „altes Gerät“; Mutante **2 failed** | ja |
+| – | `frontend-reviewer` 🟢 | Plural-Fall trennt „neu erreicht“ nicht von „erreicht“ | Setup mit vorher erreichter Etappe; Mutante **2 failed** | nein |
+| – | `frontend-reviewer` 🟢 | Enter während „anderes Bild“ tut jetzt nichts | angenommen (vorher: Karte ohne Bewertung weiter) | nein |
+
+Selbst gefangen beim Beheben von Fund 1: die erste Fassung der Zwischen-Zusicherung prüfte, bevor der verworfene Aufruf
+zu Ende lief – die Mutante blieb **gemessen** grün, erst das leere `act` davor machte sie rot.
+
+**Zähler: 2.** Vitest **563/563**, `tsc -b` sauber, volle E2E **99 passed** (alle `exit=0`, E2E nach der letzten
+Änderung gestartet). Rollengang: Sohn über den Spielweg der Suite (Üben, Klausur, Startseite mit Zielen) – die beiden
+Fehlerbilder selbst (Doppel-Enter im selben Tick, ein Gerät mit Vorgeschichte) tragen die Komponententests; Vater und
+Creator Regressionszeugen (Suite grün, kein Pfad von ihnen im Diff). Browser-Extension nicht genutzt.
+**B-284, B-257 `abgenommen`.**
+
+### Retrospektive
+
+**Nachschau:** die acht bis dahin unbeobachteten Stories aus Lauf H, je von einem frischen Reviewer im Stand des Commits.
+Teil 2 (`f96d358`): `frontend-reviewer` über B-320/B-319/B-254/B-317/B-281 und den Text von B-205, `pugling-reviewer`
+über den Server-Teil von B-205; Abschluss (`f6a2347`): `pugling-reviewer` über B-321/B-322 (Filterlauf **6/6 passed**).
+**Entgangen:** [B-324](backlog/B-324-gemerkter-plan-zweig-ungetestet.md) (🟡, Zweig „gemerkter Plan“ aus B-254 ohne Fall
+– fällt er weg, ist der Plan-Wähler tot) und [B-325](backlog/B-325-klausur-doppelklick-sperre-ungetestet.md) (🟢, AK 3
+von B-320 ohne Fall). Außerhalb der AKs bzw. älter: [B-326](backlog/B-326-ueben-und-klausur-nehmen-ungepruefte-plan-id.md)
+(Reload nach Plan-Löschen) und [B-323](backlog/B-323-ganzer-uebungs-put-umgeht-woerter-sperre.md) (P2: ganzer PUT und
+`refs-from-tags` umgehen die Wörter-Sperre, Lernstand kann ans falsche Wort rutschen). Alle aus dem Increment eines
+**früheren** Laufs – Limit 2 greift nicht. `nachgeschaut` an B-320, B-319, B-254, B-317, B-205, B-281, B-321, B-322,
+je mit dem geprüften Punkt.
+
+**Was die eigenen Tore durchgelassen haben:** zwei Spielarten, beide vom Reviewer gefunden, keine vom Tor. (1) Eine
+Zusicherung über einen **Zwischenstand** direkt nach `fireEvent` prüft vor dem `await` des Handlers – sie sieht wie ein
+Beleg aus und kann nicht fallen (beim Beheben gemessen). (2) Ein Fix an **abgeleitetem, gespeichertem Zustand**
+(`localStorage`) heilt nur neue Geräte; der Bestand braucht eine eigene Entscheidung, und die Story hatte keine.
+
+**Vorschläge, nicht gelandet (Freigabe 3):**
+
+- **(Y)** Prosa in `frontend/CLAUDE.md` (Tests): „Ein Zwischenstand nach `fireEvent` auf einen `async`-Handler wird erst
+  nach `await act(async () => {})` zugesichert“ – ein Satz, gemessen an B-284.
+- **(Z)** Prosa in `docs/backlog/README.md` (Ausformulieren): „Ändert ein Fix, wie gespeicherter Client-Zustand
+  entsteht, sagt die Story, was mit dem schon gespeicherten geschieht“ – eine Entscheidung, kein Tor.
+
+Commit Teil 1: siehe unten.

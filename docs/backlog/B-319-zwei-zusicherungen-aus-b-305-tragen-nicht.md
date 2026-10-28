@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-305]
 wartet_auf: ""
+nachgeschaut: "2026-10-28"
 ---
 
 # B-319 · Zwei Zusicherungen aus B-305 können nicht fallen
@@ -71,3 +72,4 @@ XS, `frontend` (Tests), keine Migration, kein Vertragsbruch.
   `sprache.spec.ts` ohne `.or(…)`; der Seed hat 12 Einträge, „Card 2“ ist sicher (vom Reviewer nachgezählt). Vitest
   **555/555**. Rollengang: die volle E2E-Suite gegen frisch gestartete Server (**99 passed**, `exit=0`, nach der letzten Änderung gestartet); Browser-Extension nicht genutzt. **`abgenommen`.**
 - **2026-10-28** — Commit `f96d358` (Lauf H, Teil 2).
+- **2026-10-28** — nachgeschaut (Lauf I, frische Reviewer am Commit `f96d358`): drei Mutanten gegen `chromeText.tsx:33-39` nachgerechnet (die Zeitpunkt-Mutante fällt nur an `known`, passt zu „1 failed“); `sprache.spec.ts:123` fest „Card 2“. Kein Befund.
