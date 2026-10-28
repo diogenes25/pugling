@@ -62,6 +62,39 @@ public class ExerciseItemService(PuglingDbContext db, VocabularyStoreService sto
         return desired.ToList();
     }
 
+    /// <summary>
+    /// The store ids a config would reconcile to, without creating anything: an inline word that is not in the
+    /// store yet yields <c>null</c> (it would become a new entry). For the lock check before a PUT writes.
+    /// </summary>
+    public async Task<List<int?>> PeekDesiredIdsAsync(VocabularyConfig config, CancellationToken ct)
+    {
+        // Refs first, like DesiredFromConfigAsync. Key-only legacy refs are not resolved here: ValidateConfigAsync
+        // rejects VocabularyId <= 0 before this runs, and if that ever changed the result would be an extra 409, not a bypass.
+        if (config.Refs is { Count: > 0 } refs) return refs.Select(r => (int?)r.VocabularyId).ToList();
+        var peeked = new List<int?>(config.Items.Count);
+        foreach (var item in config.Items)
+        {
+            if (item.VocabularyId is { } id) { peeked.Add(id); continue; }
+            var key = VocabKey.Generate(config.SourceLang, item.Front ?? "", config.TargetLang, item.Back ?? "");
+            peeked.Add(await db.Vocabularies.Where(v => v.Key == key).Select(v => (int?)v.Id).FirstOrDefaultAsync(ct));
+        }
+        return peeked;
+    }
+
+    /// <summary>
+    /// Whether reconciling to <paramref name="desiredVocabularyIds"/> would move a word the exercise already has.
+    /// Plan progress hangs on the item's position (<see cref="PositionItemProgress.ItemIndex"/>), so the current
+    /// items have to stay the leading part of the new list in the same order - only appending is shift-free.
+    /// </summary>
+    public async Task<bool> WouldShiftAsync(int exerciseId, IReadOnlyList<int?> desiredVocabularyIds, CancellationToken ct)
+    {
+        var current = await db.ExerciseItems.Where(i => i.ExerciseId == exerciseId)
+            .OrderBy(i => i.OrderIndex).ThenBy(i => i.Id)
+            .Select(i => (int?)i.VocabularyId)
+            .ToListAsync(ct);
+        return current.Count > desiredVocabularyIds.Count || !current.SequenceEqual(desiredVocabularyIds.Take(current.Count));
+    }
+
     /// <summary>Materializes the items of an exercise from its config (convenience wrapper over <see cref="ReconcileAsync"/>).</summary>
     public async Task SyncFromConfigAsync(int exerciseId, VocabularyConfig config, CancellationToken ct = default) =>
         await ReconcileAsync(exerciseId, await DesiredFromConfigAsync(config, ct), ct);

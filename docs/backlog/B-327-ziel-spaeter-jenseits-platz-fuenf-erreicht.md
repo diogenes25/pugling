@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-257]
 wartet_auf: ""
+nachgeschaut: "2026-10-28"
 ---
 
 # B-327 · Ein Ziel, das nach dem ersten Besuch jenseits von Platz fünf erreicht wird, feiert die App verspätet
@@ -58,3 +59,4 @@ XS, `frontend`, keine Migration, kein Vertragsbruch.
   Schlüssel ohne `v2` → **2 failed**. Der Fall „lädt ab dem zweiten Besuch nur die erste Seite“ aus B-257 ist ersetzt.
 - **2026-10-28** — Delta-Review (`frontend-reviewer`, gemessen): `take: PAGE` → **3 failed**, alter Code → nur der B-327-Fall rot (trennt sich vom Erst-Besuch). 🟢 ohne Zählung genommen: Entscheidung 2 bekam eine Zusicherung (Mutante „nur gezeigte feiern“ → **1 failed**), Titel und Kommentare des Blocks berichtigt. Vitest **569/569**, `tsc -b` sauber, volle E2E **99 passed** (alle `exit=0`, E2E nach der letzten Änderung gestartet); Browser-Extension nicht genutzt. **`abgenommen`.**
 - **2026-10-28** — vom Nutzer nach Lauf I bestätigt: Schlüssel `v2` (einmal still neu seeden, eine seither erreichte Etappe bleibt einmal ungefeiert).
+- **2026-10-28** — Nachschau in Lauf J (frischer `frontend-reviewer`, `git show b64006c`): `MyObjectives.tsx:39` (`take: 500` je Besuch) gegen Fall `:178-187` mit drei Mutanten nachgerechnet; gespeicherte `v2`-Mengen aus `c1a4e3f` nie ausgeliefert (`git branch -r --contains` leer). Kein Befund; 🟢 Kosten von Entscheidung 2 zu optimistisch (Feier ohne Zieltitel).

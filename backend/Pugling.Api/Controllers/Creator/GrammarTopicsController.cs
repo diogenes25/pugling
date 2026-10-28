@@ -82,7 +82,7 @@ public class GrammarTopicsController(PuglingDbContext db) : ControllerBase
     public async Task<ActionResult<GrammarTopicResponse>> Create(CreateGrammarTopicDto dto, CancellationToken ct = default)
     {
         var subject = await db.Subjects.AsNoTracking().FirstOrDefaultAsync(s => s.Id == dto.SubjectId, ct);
-        if (subject is null) return this.ProblemWithCode(ApiErrors.ValidationError, "Unknown subject.");
+        if (subject is null) return this.ProblemWithCode(ApiErrors.InvalidReference, "Unknown subject.");
         var (slug, problem) = this.DeriveRequiredSlug(dto.Label, "Label");
         if (problem is not null) return problem;
         // Subject-qualified (decision 4), but by the subject's id, not its name (B-290): "Konjunktiv" in German and in

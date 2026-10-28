@@ -142,7 +142,18 @@ public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFi
             stock: 2, articleTitle: "Zockzeit", listingTitle: "1 Stunde Zocken", unitType: "Minute", actionType: "Zocken");
         Assert.True(listingId > 0);
 
-        // 7) The teacher themselves may still change their exercise.
+        // 7) The teacher themselves may still change their exercise - but not its words: Tom's plan plays them now,
+        // so replacing them is locked and a PUT without items (settings only) is the change that stays open (B-323).
+        var replaceWords = await teacher.PutAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}",
+            new
+            {
+                title = "Vocabulary: The environment",
+                orderIndex = 1,
+                rewardPoints = 18,
+                config = new { direction = "front-to-back", sourceLang = "en", targetLang = "de", items = new[] { new { front = "waste", back = "Abfall" } } },
+            });
+        Assert.Equal(HttpStatusCode.Conflict, replaceWords.StatusCode);
         var teacherPut = await teacher.PutAsJsonAsync(
             $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}",
             new
@@ -153,7 +164,7 @@ public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFi
                 gradeMin = 9,
                 gradeMax = 10,
                 schoolTypes = "Gymnasium",
-                config = new { direction = "front-to-back", sourceLang = "en", targetLang = "de", items = new[] { new { front = "waste", back = "Abfall" } } },
+                config = new { direction = "back-to-front", sourceLang = "en", targetLang = "de" },
             });
         Assert.Equal(HttpStatusCode.OK, teacherPut.StatusCode);
         _ = teacherId;

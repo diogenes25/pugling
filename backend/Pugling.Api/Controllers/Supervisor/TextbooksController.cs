@@ -67,7 +67,7 @@ public class TextbooksController(PuglingDbContext db) : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(dto.Title)) return this.ProblemWithCode(ApiErrors.ValidationError, "Title is required.");
         if (dto.SubjectId is int sid && !await db.Subjects.AnyAsync(s => s.Id == sid, ct))
-            return this.ProblemWithCode(ApiErrors.ValidationError, "SubjectId does not reference an existing subject.");
+            return this.ProblemWithCode(ApiErrors.InvalidReference, "SubjectId does not reference an existing subject.");
         if (await CatalogProblemAsync(dto.SeriesId, dto.CurrentUnitId, ct) is { } problem) return problem;
 
         var book = new Textbook
@@ -100,7 +100,7 @@ public class TextbooksController(PuglingDbContext db) : ControllerBase
         var book = await db.Textbooks.FirstOrDefaultAsync(t => t.Id == textbookId && t.ChildId == childId, ct);
         if (book is null) return NotFound();
         if (dto.SubjectId is int sid && !await db.Subjects.AnyAsync(s => s.Id == sid, ct))
-            return this.ProblemWithCode(ApiErrors.ValidationError, "SubjectId does not reference an existing subject.");
+            return this.ProblemWithCode(ApiErrors.InvalidReference, "SubjectId does not reference an existing subject.");
         /*
          * Gegen den Zielzustand prüfen, nicht gegen den Payload: wer nur die Unit nachträgt, muss die schon
          * gesetzte Reihe nicht mitschicken – die Unit muss aber zu ihr gehören.
@@ -143,12 +143,12 @@ public class TextbooksController(PuglingDbContext db) : ControllerBase
     private async Task<ObjectResult?> CatalogProblemAsync(int? seriesId, int? unitId, CancellationToken ct)
     {
         if (seriesId is int sid && !await db.TextbookSeries.AnyAsync(s => s.Id == sid, ct))
-            return this.ProblemWithCode(ApiErrors.ValidationError, "SeriesId does not reference an existing textbook series.");
+            return this.ProblemWithCode(ApiErrors.InvalidReference, "SeriesId does not reference an existing textbook series.");
         if (unitId is not int uid) return null;
 
         var unit = await db.SeriesUnits.AsNoTracking().FirstOrDefaultAsync(u => u.Id == uid, ct);
         if (unit is null)
-            return this.ProblemWithCode(ApiErrors.ValidationError, "CurrentUnitId does not reference an existing series unit.");
+            return this.ProblemWithCode(ApiErrors.InvalidReference, "CurrentUnitId does not reference an existing series unit.");
         if (seriesId is null)
             return this.ProblemWithCode(ApiErrors.ValidationError, "CurrentUnitId requires SeriesId to be set.");
         if (unit.SeriesId != seriesId)

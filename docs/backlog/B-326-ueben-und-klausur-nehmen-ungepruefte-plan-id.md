@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-10-28"
 ---
 
 # B-326 · Üben und Klausur nehmen nach einem Reload die ungeprüfte Plan-Id
@@ -33,7 +34,7 @@ ist – sondern auf der Basis, die mir zeigt, was ich jetzt spielen kann.
 ## Ist-Stand am Code
 
 `SohnPractice.tsx` (`useOncePerKey`-Fehlerzweig) und `SohnTest.tsx` (`start`) zeigen jeden Start-Fehler als Meldung.
-Der Server antwortet für einen fremden oder gelöschten Plan `404` mit `code: not_found` und „Study plan not found.“
+Der Server antwortet für einen gelöschten Plan `404` (für einen fremden `403`, `PlanOwnershipFilter.cs:25`) mit `code: not_found` und „Study plan not found.“
 (`PlanOwnershipFilter.cs:24`); der Code ist generisch und hat keinen Satz in `useErrorMessage`. **Gemessen**: neue Fälle
 gegen den Ausgangsstand **2 failed** (je Bildschirm die Serverzeile statt der Basis).
 
@@ -66,3 +67,4 @@ XS, `frontend`, keine Migration, kein Vertragsbruch.
   (`PlanOwnershipFilter`), nicht 404, und zeigt auf Üben/Klausur weiter die Serverzeile – außerhalb von AK 1, die Basis
   korrigiert sie ebenso.
 - **2026-10-28** — Vitest **569/569**, `tsc -b` sauber, volle E2E **99 passed** (alle `exit=0`, E2E nach der letzten Änderung gestartet); Browser-Extension nicht genutzt. **`abgenommen`.**
+- **2026-10-28** — Nachschau in Lauf J (frischer `frontend-reviewer`, `git show b64006c`): Umfang gegen User Story gerechnet: „Deaktivieren“ antwortet `403 plan_inactive`, nicht 404, und hat keine deutsche Fassung → [B-330](B-330-plan-inactive-ohne-deutsche-fassung.md) (🟡). Ist-Stand „fremder Plan 404“ falsch (403, `PlanOwnershipFilter.cs:25`) – korrigiert.

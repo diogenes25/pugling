@@ -145,7 +145,9 @@ DELETE /api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabular
 Wird die Übung bereits in einem Study-Plan verwendet, dürfen Items nicht mehr gelöscht oder umsortiert
 werden, weil dadurch bestehender Fortschritt auf andere Wörter kippen würde. An das Ende anhängen bleibt
 erlaubt. Die Sperre antwortet mit `409 exercise_items_locked` (seit B-205; das Löschen einer benutzten Übung meldet
-`409 exercise_in_use`).
+`409 exercise_in_use`). Sie gilt auf jedem Weg, der die Item-Liste schreibt: den Einzel-Routen oben, dem ganzen
+`PUT` der Übung mit `items`/`refs` und `refs-from-tags` (seit B-323). Ein mit `409` abgewiesener `PUT` schreibt auch die
+übrigen Felder nicht.
 
 ### 3.2 Reading — Leseverständnis
 

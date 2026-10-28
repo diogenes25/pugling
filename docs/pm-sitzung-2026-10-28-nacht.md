@@ -345,3 +345,38 @@ die Datei bleibt mit 10 365 von 9 000 Bytes über Budget, die Altlast ist unver�
 `docs/backlog/README.md` → „Ausformulieren heißt gegen den Code belegen“; B-258: einheitlich `invalid_reference`
 (Freigabe im Verlauf der Story); `v2`-Schlüssel bestätigt. Ältere Vorschläge (U)–(X) und davor bleiben offen.
 
+
+## Lauf J — Auftrag und Ausgangslage
+
+Auftrag: „Starte Nachtlauf" – der Auftragstext aus [nachtlauf.md](nachtlauf.md) mit den Freigaben 1–10. Ausgangslage:
+HEAD `ecc899d`, Baum sauber, 96 Commits ungepusht. Keine Paket-Vorgabe; erste Kandidaten laut
+[Ende Lauf I](#ende-lauf-i): B-323 (P2) und B-258 (freigegeben). Index zu Beginn: „Nachgeschaut 241 von 245" – offen
+sind B-324..B-327 (Lauf I, Teil 2); die Nachschau des ersten Sprints nimmt sie.
+
+## Lauf J, Teil 1 — Der Creator pflegt über die API, ohne dem Kind etwas zu verschieben (B-323, B-258)
+
+**Sprint-Ziel:** *Der Creator, der seinen Katalog über die API pflegt (auch als KI-Creator), kann einer Vokabelübung,
+die ein Kind schon spielt, auf keinem Weg den Lernstand an ein anderes Wort schieben – und eine Id, die auf nichts
+zeigt, meldet ihm überall denselben Code.* Umfang: [B-323](backlog/B-323-ganzer-uebungs-put-umgeht-woerter-sperre.md)
+(P2, `Defekt`, unter Freigabe 1 ausformuliert, gegrillt, geschätzt: S) und
+[B-258](backlog/B-258-unbekannte-fach-id-zwei-fehlercodes.md) (P3, Freigabe 9: XS). Draußen, neu abgelegt:
+[B-328](backlog/B-328-inline-typen-put-verschiebt-lernstand.md) (`Frage`: Inline-Typen und Wort-Tausch – Korrektur
+oder Ersatz?) und [B-329](backlog/B-329-uebung-unbekannte-referenz-validation-error.md) (Übungs-Validierung, außerhalb
+der freigegebenen Fundstellen).
+
+**Entwickler-Brief:** Reines Backend. Quelle der Wahrheit für die Sperre ist die Item-Liste, nicht die Route: die Regel
+„bisherige Items bleiben der Anfang, in derselben Reihenfolge" sitzt jetzt in `ExerciseItemService.WouldShiftAsync`
+und wird an allen drei schreibenden Wegen gefragt; am `PUT` **vor** dem ersten Schreiben (neuer Haken
+`UpdateConflictAsync`), damit ein abgewiesener `PUT` auch den Kopf nicht ändert. B-258 tauscht nur den Code an sechs
+Stellen. Testweg: Integrationstests, rote Probe und Mutante je Fall, volle Suite, Live-Probe als Creator.
+
+### Iteration
+
+- B-323: rote Probe **2 failed** (erwartet 2, beide an `Conflict` erwartet / `OK` gemessen). Mutanten „Obermenge statt
+  Präfix" **1 failed**, „Prüfung nach dem Speichern" **1 failed** (Titel halb geschrieben).
+- B-258: rote Probe **1 failed** (alle sechs Stellen `validation_error`); Mutante „Unit-Stelle zurück" **1 failed**, benannt.
+- Erwartete Anpassung, kein Fund: `SharedLibraryScenarioTests` Schritt 7 ersetzte die Wörter einer Übung, die gerade
+  Toms Plan spielt – genau das, was B-323 sperrt. Schritt 7 prüft jetzt die Änderung ohne Wörter (Absicht des Schritts:
+  die Autorin darf schreiben). Das Frontend schickt beim Bearbeiten nie Items (`exerciseConfig.tsx`, `items: []`).
+- Volle Suite **1004/1004**, `tsc -b` sauber nach Neuerzeugen des Vertrags, `dotnet format` ohne Fund in den
+  geänderten Dateien.

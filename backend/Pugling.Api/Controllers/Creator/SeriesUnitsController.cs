@@ -188,7 +188,7 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
             .Select(t => new { t.Id, t.SubjectId }).ToListAsync(ct);
         var unknown = wanted.Except(known.Select(k => k.Id)).OrderBy(id => id).ToList();
         if (unknown.Count > 0)
-            return this.ProblemWithCode(ApiErrors.ValidationError, $"Unknown grammar topic id(s): {string.Join(", ", unknown)}.");
+            return this.ProblemWithCode(ApiErrors.InvalidReference, $"Unknown grammar topic id(s): {string.Join(", ", unknown)}.");
         // Fail closed, but with the true reason: a series without a subject can carry no topic at all.
         if (subjectId is null)
             return this.ProblemWithCode(ApiErrors.ValidationError, "This series has no subject; it cannot carry grammar topics.");

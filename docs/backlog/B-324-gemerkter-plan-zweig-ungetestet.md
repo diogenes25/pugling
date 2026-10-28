@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-254]
 wartet_auf: ""
+nachgeschaut: "2026-10-28"
 ---
 
 # B-324 · Dass der gemerkte Plan vor dem spielbaren gewinnt, prüft kein Test
@@ -57,3 +58,4 @@ XS, `frontend`, keine Migration, kein Vertragsbruch.
   ([Protokoll](../pm-sitzung-2026-10-28-nacht.md)); aus Code gelesen, Mutante hergeleitet, nicht gemessen.
 - **2026-10-28** — in Lauf I, Teil 2 ([Protokoll](../pm-sitzung-2026-10-28-nacht.md)) unter Freigabe 1 ausformuliert, gegrillt, geschätzt (XS) und gebaut. Kein Code-Fix (Testlücke). Mutante `find((p) => p.id === planId) ??` gestrichen → **1 failed**; Kontrolle **3/3**. Der spielbare Plan steht vorn, damit auch „erster“ und „gemerkt“ auseinanderfallen.
 - **2026-10-28** — Review (`frontend-reviewer`, Mutanten gemessen): Fall rot gegen „Zweig gemerkt gestrichen“ und gegen „`setPlanId` immer“; Setup trennt gemerkt (99, nicht spielbar), spielbar und erster (5). Vitest **569/569**, `tsc -b` sauber, volle E2E **99 passed** (alle `exit=0`, E2E nach der letzten Änderung gestartet); Browser-Extension nicht genutzt. **`abgenommen`.**
+- **2026-10-28** — Nachschau in Lauf J (frischer `frontend-reviewer`, `git show b64006c`): Mutante „Zweig gemerkt gestrichen“ gegen `SohnProgress.test.tsx:77-87` hergeleitet (Z. 84–86 rot); Fall `:63` trennt „spielbar“ von „erster“. Kein Befund.

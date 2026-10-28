@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-320]
 wartet_auf: ""
+nachgeschaut: "2026-10-28"
 ---
 
 # B-325 · Die Doppelklick-Sperre der Klausur trägt keinen Fall
@@ -51,3 +52,4 @@ XS, `frontend`, keine Migration, kein Vertragsbruch.
   ([Protokoll](../pm-sitzung-2026-10-28-nacht.md)); aus Code gelesen, Mutante hergeleitet, nicht gemessen.
 - **2026-10-28** — in Lauf I, Teil 2 ([Protokoll](../pm-sitzung-2026-10-28-nacht.md)) unter Freigabe 1 ausformuliert, gegrillt, geschätzt (XS) und gebaut. Kein Code-Fix (Testlücke). Mutante `action.run(fn)` → `fn()` → **1 failed**; Kontrolle **4/4**.
 - **2026-10-28** — Review (`frontend-reviewer`) 🟡: der Fall erreichte die Ref-Sperre nie – zwischen zwei `fireEvent` rendert React, `disabled` fing den zweiten Klick ab (Mutante „Ref-Prüfung weg“ grün, gemessen). Behoben: beide Klicks in einem `act`; Mutante danach **1 failed**, Kontrolle **6/6**. 🟢 ohne Zählung: `.error-box`-Zusicherung als Nebenwirkung beschriftet. Vitest **569/569**, `tsc -b` sauber, volle E2E **99 passed** (alle `exit=0`, E2E nach der letzten Änderung gestartet); Browser-Extension nicht genutzt. **`abgenommen`.**
+- **2026-10-28** — Nachschau in Lauf J (frischer `frontend-reviewer`, `git show b64006c`): `SohnTest.test.tsx:91-109` gegen `useAction.run`: beide Klicks in einem `act`, zweiter erreicht die Ref-Sperre; Mutante „Sperre weg“ → `toHaveBeenCalledTimes(1)` rot. Kein Befund.

@@ -277,4 +277,115 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
         Assert.Equal(HttpStatusCode.Created, (await father.PostAsJsonAsync(itemsUrl, new { front = "sun", back = "Sonne" })).StatusCode); // appending is ok
         Assert.Equal(HttpStatusCode.OK, (await father.PatchAsJsonAsync($"{itemsUrl}/{firstId}", new { hint = "Gruß" })).StatusCode);      // the hint is ok
     }
+
+    // The whole-exercise PUT rewrites the same item list as the single routes (B-323): the lock must hold there
+    // too, and a rejected PUT must not have saved its header fields either.
+    [Fact]
+    public async Task UebungsPut_BeiInPlanUebung_BlocktVerschiebung_ErlaubtAnhaengen()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var (s, c, exerciseId) = await VocabWithItemsAsync(father, ("hello", "hallo"), ("bye", "tschuess"));
+        var exerciseUrl = $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary/{exerciseId}";
+        var before = (await father.GetFromJsonAsync<List<JsonElement>>($"{exerciseUrl}/items"))!;
+        var hello = before[0].GetProperty("vocabularyId").GetInt32();
+        var bye = before[1].GetProperty("vocabularyId").GetInt32();
+        TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+
+        // The title differs from "Items-Übung", so a half-written PUT shows up below.
+        object Put(params object[] items) => new
+        {
+            title = "Umbenannt",
+            orderIndex = 1,
+            rewardPoints = 10,
+            config = new { direction = "front-to-back", sourceLang = "en", targetLang = "de", items },
+        };
+        foreach (var blocked in new[]
+                 {
+                     await father.PutAsJsonAsync(exerciseUrl, Put(new { vocabularyId = bye })),                                // drops the first word
+                     await father.PutAsJsonAsync(exerciseUrl, Put(new { vocabularyId = bye }, new { vocabularyId = hello })), // swaps the order
+                     await father.PutAsJsonAsync(exerciseUrl, Put(new { vocabularyId = hello }, new { front = "moon", back = "Mond" }, new { vocabularyId = bye })), // inserts in the middle
+                 })
+        {
+            Assert.Equal(HttpStatusCode.Conflict, blocked.StatusCode);
+            Assert.Equal("exercise_items_locked", (await blocked.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+        }
+        var unchanged = (await father.GetFromJsonAsync<List<JsonElement>>($"{exerciseUrl}/items"))!;
+        Assert.Equal([hello, bye], unchanged.Select(i => i.GetProperty("vocabularyId").GetInt32()));
+        Assert.Equal("Items-Übung", (await father.GetFromJsonAsync<JsonElement>(exerciseUrl)).GetProperty("title").GetString());
+
+        // Refs win over items when the server reconciles, so the check must read them first: here the items alone
+        // would look like "unchanged", while the refs drop "hello".
+        var refsWin = await father.PutAsJsonAsync(exerciseUrl, new
+        {
+            title = "Umbenannt",
+            orderIndex = 1,
+            rewardPoints = 10,
+            config = new
+            {
+                direction = "front-to-back",
+                sourceLang = "en",
+                targetLang = "de",
+                items = new[] { new { vocabularyId = hello }, new { vocabularyId = bye } },
+                refs = new[] { new { vocabularyId = bye } },
+            },
+        });
+        Assert.Equal(HttpStatusCode.Conflict, refsWin.StatusCode);
+        Assert.Equal([hello, bye], (await father.GetFromJsonAsync<List<JsonElement>>($"{exerciseUrl}/items"))!
+            .Select(i => i.GetProperty("vocabularyId").GetInt32()));
+
+        // Appending behind the played words shifts nothing - allowed, like POST /items without an orderIndex.
+        var appended = await father.PutAsJsonAsync(exerciseUrl, Put(new { vocabularyId = hello }, new { vocabularyId = bye }, new { front = "sun", back = "Sonne" }));
+        Assert.Equal(HttpStatusCode.OK, appended.StatusCode);
+        var after = (await father.GetFromJsonAsync<List<JsonElement>>($"{exerciseUrl}/items"))!;
+        Assert.Equal(3, after.Count);
+        Assert.Equal(before.Select(i => i.GetProperty("id").GetInt32()), after.Take(2).Select(i => i.GetProperty("id").GetInt32()));
+
+        // The same append expressed as refs: red if the check ignores refs (they would count as "no words" → 409).
+        var sun = after[2].GetProperty("vocabularyId").GetInt32();
+        var moon = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/vocabulary",
+            new { sourceLanguage = "en", targetLanguage = "de", word = $"moon{Guid.NewGuid():N}", translation = "Mond" }));
+        var refsAppend = await father.PutAsJsonAsync(exerciseUrl, new
+        {
+            title = "Umbenannt",
+            orderIndex = 1,
+            rewardPoints = 10,
+            config = new { direction = "front-to-back", refs = new[] { hello, bye, sun, moon }.Select(id => new { vocabularyId = id }) },
+        });
+        Assert.Equal(HttpStatusCode.OK, refsAppend.StatusCode);
+    }
+
+    // refs-from-tags is a snapshot over the same reconciliation (B-323): a snapshot that drops a played word
+    // would move the progress of every later word one place up.
+    [Fact]
+    public async Task RefsFromTags_BeiInPlanUebung_BlocktVerschiebung_ErlaubtAnhaengen()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var tag = $"B323-{Guid.NewGuid():N}";
+        var only = $"{tag}-ohne-erstes";
+        var u = Guid.NewGuid().ToString("N")[..8];
+        // Snapshots sort by store key, so the word prefixes fix the order: aa < bb < zz.
+        async Task StoreAsync(string word, params string[] tags) =>
+            (await father.PostAsJsonAsync("/api/v1/creator/vocabulary",
+                new { sourceLanguage = "en", targetLanguage = "de", word = word + u, translation = word + u, tags })).EnsureSuccessStatusCode();
+        await StoreAsync("aa", tag);
+        await StoreAsync("bb", tag, only);
+
+        var (s, c, _) = await VocabWithItemsAsync(father);
+        var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync($"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary",
+            new { title = "Tag-Übung", orderIndex = 1, rewardPoints = 10, config = new { direction = "front-to-back", refs = Array.Empty<string>() } }));
+        var exerciseUrl = $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary/{exerciseId}";
+        (await father.PostAsJsonAsync($"{exerciseUrl}/refs-from-tags", new { tags = new[] { tag } })).EnsureSuccessStatusCode();
+        TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+
+        var dropped = await father.PostAsJsonAsync($"{exerciseUrl}/refs-from-tags", new { tags = new[] { only } });
+        Assert.Equal(HttpStatusCode.Conflict, dropped.StatusCode);
+        Assert.Equal("exercise_items_locked", (await dropped.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+        Assert.Equal(["aa" + u, "bb" + u], (await father.GetFromJsonAsync<List<JsonElement>>($"{exerciseUrl}/items"))!
+            .Select(i => i.GetProperty("front").GetString()));
+
+        await StoreAsync("zz", tag);
+        Assert.Equal(HttpStatusCode.OK, (await father.PostAsJsonAsync($"{exerciseUrl}/refs-from-tags", new { tags = new[] { tag } })).StatusCode);
+        Assert.Equal(["aa" + u, "bb" + u, "zz" + u], (await father.GetFromJsonAsync<List<JsonElement>>($"{exerciseUrl}/items"))!
+            .Select(i => i.GetProperty("front").GetString()));
+    }
 }

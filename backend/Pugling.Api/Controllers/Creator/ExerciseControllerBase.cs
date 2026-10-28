@@ -81,6 +81,14 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     /// </summary>
     protected virtual Task AfterSaveAsync(Exercise exercise, TConfig config, bool isCreate, CancellationToken ct = default) => Task.CompletedTask;
 
+    /// <summary>
+    /// A conflict that forbids this replacement (default: none). Checked on PUT after validation and before
+    /// anything is written, so a rejected PUT leaves the whole exercise untouched - e.g. vocabulary exercises
+    /// whose new item list would move words a study plan already plays.
+    /// </summary>
+    protected virtual Task<ObjectResult?> UpdateConflictAsync(Exercise exercise, TConfig config, CancellationToken ct) =>
+        Task.FromResult<ObjectResult?>(null);
+
     /// <summary>DbContext for derived controllers with additional endpoints beyond pure CRUD.</summary>
     protected PuglingDbContext Db => db;
 
@@ -402,6 +410,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     [HttpPut("{exerciseId:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ExerciseResponse<TConfig>>> Update(int seriesId, int seriesUnitId, int exerciseId, ExercisePayload<TConfig> body, CancellationToken ct = default)
     {
         var exercise = await FindAsync(seriesId, seriesUnitId, exerciseId, ct);
@@ -425,6 +434,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             return this.ProblemWithCode(ApiErrors.ValidationError, updateTopicErr);
         if (await ValidateConfigAsync(seriesId, config, ct) is { } updateErr) return this.ProblemWithCode(ApiErrors.ValidationError, updateErr);
         NormalizeConfig(config);
+        if (await UpdateConflictAsync(exercise, config, ct) is { } conflict) return conflict;
 
         exercise.ExecutePublic = body.ExecutePublic;
         exercise.Title = body.Title.Trim();

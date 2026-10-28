@@ -81,9 +81,10 @@ Der Katalog ist **global und kindneutral**; der Lehrplan verweist nur darauf.
 Position trägt nur Ziel, Punkte, Stufe, Leitner (leere Overrides erben die Übungs-Defaults).
 → [wiki/04 · Lernplan bauen](../wiki/04-lernplan-bauen.md).
 
-> ⚠️ Eine Übung wird **nicht kopiert**. Ändert man ihre Items, während sie in einem Plan liegt, sind
-> index-verschiebende Mutationen gesperrt (`409 exercise_items_locked`, seit B-205; vorher `exercise_in_use`); Anhängen ist erlaubt. Löschen einer
-> genutzten Übung ist gesperrt. Siehe [Auswertung](#3-übung--auswertung-des-kindes) zur Robustheit.
+> ⚠️ Eine Übung wird **nicht kopiert**. Ändert man die Items einer **Vokabelübung**, während sie in einem Plan liegt, sind
+> index-verschiebende Mutationen gesperrt (`409 exercise_items_locked`, seit B-205; vorher `exercise_in_use`) – über die
+> Item-Routen, den ganzen `PUT` und `refs-from-tags` (B-323); Anhängen ist erlaubt. Die Inhaltslisten der übrigen Typen
+> sperrt nichts (offen: B-328). Löschen einer genutzten Übung ist gesperrt. Siehe [Auswertung](#3-übung--auswertung-des-kindes) zur Robustheit.
 
 ### Woher der Stoff kommt: Buchreihe → Kind → Creator-Profil
 

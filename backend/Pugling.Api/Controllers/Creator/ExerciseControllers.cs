@@ -74,7 +74,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     /// </summary>
     protected override async Task AfterSaveAsync(Exercise exercise, VocabularyConfig config, bool isCreate, CancellationToken ct = default)
     {
-        var hasPayloadItems = config.Items.Count > 0 || config.Refs is { Count: > 0 };
+        var hasPayloadItems = HasPayloadItems(config);
         if (isCreate || hasPayloadItems)
             await items.SyncFromConfigAsync(exercise.Id, config, ct);
         if (hasPayloadItems)
@@ -86,6 +86,15 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         }
     }
 
+    /// <summary>A PUT that carries items rewrites the item list - the same lock as on the single item routes applies.</summary>
+    protected override async Task<ObjectResult?> UpdateConflictAsync(Exercise exercise, VocabularyConfig config, CancellationToken ct)
+    {
+        if (!HasPayloadItems(config) || !await ExerciseInPlanAsync(exercise.Id, ct)) return null;
+        return await items.WouldShiftAsync(exercise.Id, await items.PeekDesiredIdsAsync(config, ct), ct) ? ShiftBlockedProblem() : null;
+    }
+
+    private static bool HasPayloadItems(VocabularyConfig config) => config.Items.Count > 0 || config.Refs is { Count: > 0 };
+
     /// <summary>
     /// Sets the items of the exercise as a snapshot to the current vocabulary of the named tags (optionally only
     /// base forms, optionally all tags via AND). The adult thereby materializes "all words from unit 3" – the
@@ -94,6 +103,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     [HttpPost("{exerciseId:int}/refs-from-tags")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ExerciseResponse<VocabularyConfig>>> RefsFromTags(
         int seriesId, int seriesUnitId, int exerciseId, RefsFromTagsDto dto, CancellationToken ct = default)
     {
@@ -118,6 +128,8 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
             return this.ProblemWithCode(ApiErrors.NoTagMatches,
                 "No vocabulary matched these tags; the exercise was left unchanged.");
 
+        if (await ExerciseInPlanAsync(exercise.Id, ct) && await items.WouldShiftAsync(exercise.Id, hitIds.ConvertAll(id => (int?)id), ct))
+            return ShiftBlockedProblem();
         await items.ReconcileAsync(exercise.Id, hitIds.Select(id => new DesiredItem(id, null)).ToList(), ct);
         return Map(exercise, User.AdultId());
     }
