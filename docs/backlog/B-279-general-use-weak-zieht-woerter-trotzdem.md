@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-10-28"
 ---
 
 # B-279 · `--child X --general --use-weak` zieht die schwachen Wörter weiter in den Pflicht-Wortschatz
@@ -64,3 +65,7 @@ XS, `backend` (Agent), keine Migration, kein Vertragsbruch. Testweg: Integration
   README des Agenten: `--use-weak` „verträgt kein `--general`“. Suite **1000/1000 `exit=0`**. Rollengang: Tests sind
   der Weg. **`abgenommen`.**
 - **2026-10-28** — Commit `c195ef2` (Lauf H, Teil 1).
+- **2026-10-28** — nachgeschaut (Lauf H, Teil 2, frischer `pugling-reviewer` am Commit `c195ef2`, Dateien im Stand des Commits): Wächter vor jedem API-Aufruf (`BriefingBuilder.cs:25-28`), alle
+  Verben laufen über `BuildAsync` (`exam`/`plan` über `DeriveTitleAsync` vor jedem Seiteneffekt); Mutanten „Wächter weg“,
+  „nur ohne Kind“, „still ignorieren“ je rot hergeleitet. Kein Entgleiten; 🟢: ohne passendes Profil fehlt unter
+  `--child X --general` die Lehrbuch-Zeile, obwohl ein Kommentar das Gegenteil sagt (schon vorher).

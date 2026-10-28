@@ -728,7 +728,8 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var (pipeline, creator, _) = BuildAgent(cloze);
         var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Cloze-null-Luecke");
 
-        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Cloze"));
+        // With a required word, so `CoversRequiredWords` reads the null gap too (B-321).
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Cloze", words: ["horse"]));
 
         Assert.False(outcome.DraftAccepted);
         Assert.Contains(outcome.Violations, v => v.Contains("Position 3") && v.Contains("(null)"));
@@ -738,28 +739,31 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     /// <summary>
     /// B-318: a <c>null</c> item in a vocabulary, translation or grammar draft is a rule violation naming its position,
     /// not a crash. B-306 made the three strategies read their items null-safely (<c>item?.Front</c> …) but tested only
-    /// the cloze; red if any of the three <c>?.</c> in the rule loop becomes <c>.</c> (NullReferenceException).
+    /// the cloze; red if any <c>?.</c> that reads the items becomes <c>.</c> (NullReferenceException) - in the rule loop,
+    /// in <c>NoDuplicates</c>, and in <c>CoversRequiredWords</c>. The last one is only read with required words, which
+    /// is why every row names one the real items cover (B-321: without them that mutant stayed green).
     /// </summary>
     [Theory]
     [InlineData("Vocabulary", """
         {"title":"Tiere","items":[{"front":"the horse","back":"das Pferd","hint":null},
           {"front":"the sheep","back":"das Schaf","hint":null},null]}
-        """, "Vokabel 3")]
+        """, "Vokabel 3", "the horse")]
     [InlineData("Translation", """
         {"title":"Sätze","items":[{"source":"The horse is fast.","target":"Das Pferd ist schnell.","alternatives":null},
           {"source":"I feed the sheep.","target":"Ich füttere das Schaf.","alternatives":null},null]}
-        """, "Satz 3")]
+        """, "Satz 3", "horse")]
     [InlineData("Grammar", """
         {"title":"Simple Present","instruction":"Setze das Verb ein.","tasks":[
           {"prompt":"He ___ (to feed) the horse.","answer":"feeds","ruleHint":null},
           {"prompt":"They ___ (to clean) the stable.","answer":"clean","ruleHint":null},null]}
-        """, "Aufgabe 3")]
-    public async Task Ein_Null_Element_ist_eine_Regelverletzung_statt_eines_Absturzes(string type, string draft, string position)
+        """, "Aufgabe 3", "feed")]
+    public async Task Ein_Null_Element_ist_eine_Regelverletzung_statt_eines_Absturzes(string type, string draft, string position,
+        string requiredWord)
     {
         var (pipeline, creator, _) = BuildAgent(draft);
         var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, $"null-Element-{type}");
 
-        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, type));
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, type, words: [requiredWord]));
 
         Assert.False(outcome.DraftAccepted);
         Assert.Contains(outcome.Violations, v => v.StartsWith(position, StringComparison.Ordinal));
@@ -1779,5 +1783,23 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
         await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Vocabulary", childId: null));
         Assert.Contains("neutrale", string.Join("\n", chat.LastMessages.Select(m => m.Text)));
+    }
+
+    /// <summary>
+    /// B-322: the <c>briefing</c> verb prints only the briefing, not the request part that names the dressing - and the
+    /// childless briefing said "from the given interests" without naming them. Red if the labels leave the briefing text
+    /// (the verb would point at interests it does not show).
+    /// </summary>
+    [Fact]
+    public async Task Das_kindlose_Briefing_nennt_die_vorgegebenen_Interessen_selbst()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Einkleidung-Briefing");
+        var einhorn = await creator.CreateInterestTagAsync(new CreateInterestTagDto(TestApi.UniqueName("Einhorn")));
+
+        var briefing = await pipeline.BriefAsync(Request(subjectId, seriesId, seriesUnitId, "Vocabulary",
+            childId: null, interests: [einhorn.Slug]));
+
+        Assert.Contains(einhorn.Label, briefing.ToPromptText());
     }
 }

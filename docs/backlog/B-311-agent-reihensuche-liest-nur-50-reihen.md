@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-307, B-308]
 wartet_auf: ""
+nachgeschaut: "2026-10-28"
 ---
 
 # B-311 · Der Agent sucht Reihe und Unit nur in den ersten 50 Reihen
@@ -80,3 +81,8 @@ XS–S, nur `backend` (Agent), keine Migration, kein Vertragsbruch. Testweg: Int
   Mal, darum `entgangen_bei` auch B-307. Suite **1000/1000 `exit=0`**. Rollengang: Agent ohne Oberfläche, Tests sind der
   Weg; Vater und Sohn Regressionszeugen (Suite grün, kein Pfad berührt). **`abgenommen`.**
 - **2026-10-28** — Commit `c195ef2` (Lauf H, Teil 1).
+- **2026-10-28** — nachgeschaut (Lauf H, Teil 2, frischer `pugling-reviewer` am Commit `c195ef2`, Dateien im Stand des Commits): `skip: all.Count` und Ende bei Teil- oder leerer Seite gegen
+  den Server-Clamp 0..500 und die Sortierung `Name, Id` nachgelesen; Mutanten „alter Aufruf“ (beide Zeilen rot), „eine
+  Seite“ (zweite Zeile rot), „genannte Reihe in der Liste suchen“ (Id-Fall rot) hergeleitet; alle Listenaufrufe des
+  Agenten auf die Paging-Falle durchgesehen. Kein Entgleiten; 🟢: `pageSize ≤ MaxTake` ist eine stille Annahme, „erste
+  Unit“ (AK 1) weiter ohne Zusicherung, `ListInterestTagsAsync(search)` ohne `take` (schon vorher, unwahrscheinlich).

@@ -59,3 +59,4 @@ XS, `frontend`, keine Migration, kein Vertragsbruch.
   je Fall die Mutante „fest in der anderen Sprache“ → je **1 failed**. 🟢 aus dem Review genommen: zweiter Bereich
   (`Exercise`) im Listenfall, Mutante „fester Schlüssel“ → **1 failed**; das Datum in `RequestsTab` bleibt ohne eigenen
   Fall (derselbe Helfer), ohne Zählung. Vitest **555/555**. Rollengang: die volle E2E-Suite gegen frisch gestartete Server (**99 passed**, `exit=0`, nach der letzten Änderung gestartet); Browser-Extension nicht genutzt. **`abgenommen`.**
+- **2026-10-28** — Commit `f96d358` (Lauf H, Teil 2).

@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-306]
 wartet_auf: ""
+nachgeschaut: "2026-10-28"
 ---
 
 # B-318 · Ein `null`-Element in Vokabel-, Übersetzungs- und Grammatik-Entwürfen hält kein Test
@@ -57,3 +58,6 @@ XS, `backend` (Tests), keine Migration, kein Vertragsbruch. Testweg: Mutante je 
   fehlte nur der Fall); stattdessen Mutanten `item!.Front`, `item!.Source`, `task!.Prompt` → je **1 failed**, Kontrolle
   **5 passed**. Suite **1000/1000 `exit=0`**. Rollengang: Agent ohne Oberfläche, Tests sind der Weg. **`abgenommen`.**
 - **2026-10-28** — Commit `c195ef2` (Lauf H, Teil 1).
+- **2026-10-28** — nachgeschaut (Lauf H, Teil 2, frischer `pugling-reviewer` am Commit `c195ef2`, Dateien im Stand des Commits): alle drei Strategien gelesen; die Theorie fängt `NoDuplicates`
+  und die Regelschleife. **Entgangen:** [B-321](B-321-null-element-fall-ohne-pflichtwortschatz.md) (🟡: ohne
+  Pflicht-Wortschatz liest `CoversRequiredWords` die Elemente nie, die Mutanten dort blieben grün), im Sprint behoben.

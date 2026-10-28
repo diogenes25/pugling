@@ -563,7 +563,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (237)</summary>
+<summary>Abgenommen (239)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -749,6 +749,8 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-319](B-319-zwei-zusicherungen-aus-b-305-tragen-nicht.md) | Zwei Zusicherungen aus B-305 können nicht fallen | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-32](B-32-father-tabellenname.md) | `Father` heißt noch `Father`, obwohl die Zeile `Adult` ist | Aufräumen | `abgenommen` | P3 | S | backend | — |
 | [B-320](B-320-klausur-fehler-erreicht-den-bildschirm-nicht.md) | Scheitert das Beantworten in der Klausur, sieht das Kind keine Meldung | Defekt | `abgenommen` | P2 | XS | frontend | — |
+| [B-321](B-321-null-element-fall-ohne-pflichtwortschatz.md) | Die `null`-Fälle aus B-306/B-318 lesen den Pflicht-Wortschatz nie | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-322](B-322-briefing-verb-nennt-interessen-nicht.md) | Das Verb `briefing` verweist auf vorgegebene Interessen, ohne sie zu nennen | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-35](B-35-karten-umdrehen-animation.md) | Karten drehen sich beim Aufdecken um | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-36](B-36-motivations-animationen-teilziele.md) | Motivations-Animationen bei erreichten Teilzielen | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-37](B-37-uebung-abbruch-unvollendet.md) | Abgebrochene Runden: Pflicht härten, Klausur deckeln | Defekt | `abgenommen` | P1 | M | beides | — |
@@ -817,9 +819,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
-### Nach der Abnahme entgangen (91)
+### Nach der Abnahme entgangen (93)
 
-**Nachgeschaut: 226 von 237 abgenommenen** — und in 72 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 11 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 231 von 239 abgenommenen** — und in 74 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 8 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -914,9 +916,11 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-318](B-318-null-element-ohne-fall-in-drei-strategien.md) | Ein `null`-Element in Vokabel-, Übersetzungs- und Grammatik-Entwürfen hält kein Test | [B-306] | `abgenommen` |
 | [B-319](B-319-zwei-zusicherungen-aus-b-305-tragen-nicht.md) | Zwei Zusicherungen aus B-305 können nicht fallen | [B-305] | `abgenommen` |
 | [B-320](B-320-klausur-fehler-erreicht-den-bildschirm-nicht.md) | Scheitert das Beantworten in der Klausur, sieht das Kind keine Meldung | [B-49, B-305] | `abgenommen` |
+| [B-321](B-321-null-element-fall-ohne-pflichtwortschatz.md) | Die `null`-Fälle aus B-306/B-318 lesen den Pflicht-Wortschatz nie | [B-318, B-306] | `abgenommen` |
+| [B-322](B-322-briefing-verb-nennt-interessen-nicht.md) | Das Verb `briefing` verweist auf vorgegebene Interessen, ohne sie zu nennen | [B-264] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (11) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (8) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -925,15 +929,12 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | --- | --- |
 | [B-205](B-205-exercise-in-use-ohne-deutsche-fassung.md) | `exercise_in_use` fehlt in `GERMAN_PROBLEM_TEXT` — die zwei Geschwister stehen drin |
 | [B-254](B-254-weg-zeigt-englischen-planfehler.md) | Der Trophäenweg zeigt dem Kind „Study plan not found." statt einer Erklärung |
-| [B-264](B-264-interessen-ohne-kind-kleiden-nicht-ein.md) | `--interests` ohne Kind setzt die Tags an die Übung, kleidet ihren Inhalt aber nicht ein |
-| [B-279](B-279-general-use-weak-zieht-woerter-trotzdem.md) | `--child X --general --use-weak` zieht die schwachen Wörter weiter in den Pflicht-Wortschatz |
 | [B-281](B-281-pin-felder-pruefen-mindestlaenge-im-ui.md) | Eine zu kurze PIN meldet die Oberfläche auf Englisch |
-| [B-311](B-311-agent-reihensuche-liest-nur-50-reihen.md) | Der Agent sucht Reihe und Unit nur in den ersten 50 Reihen |
-| [B-312](B-312-agent-profiles-unbekanntes-fach-meldet-kein-profil.md) | `profiles --subject <unbekannt>` endet mit Exit 0 und der Behauptung, es gebe kein Profil |
 | [B-317](B-317-ziel-etappe-ohne-titel-zeigt-enum.md) | Eine Ziel-Etappe ohne Titel zeigt dem Kind den rohen Enum-Wert |
-| [B-318](B-318-null-element-ohne-fall-in-drei-strategien.md) | Ein `null`-Element in Vokabel-, Übersetzungs- und Grammatik-Entwürfen hält kein Test |
 | [B-319](B-319-zwei-zusicherungen-aus-b-305-tragen-nicht.md) | Zwei Zusicherungen aus B-305 können nicht fallen |
 | [B-320](B-320-klausur-fehler-erreicht-den-bildschirm-nicht.md) | Scheitert das Beantworten in der Klausur, sieht das Kind keine Meldung |
+| [B-321](B-321-null-element-fall-ohne-pflichtwortschatz.md) | Die `null`-Fälle aus B-306/B-318 lesen den Pflicht-Wortschatz nie |
+| [B-322](B-322-briefing-verb-nennt-interessen-nicht.md) | Das Verb `briefing` verweist auf vorgegebene Interessen, ohne sie zu nennen |
 
 </details>
 

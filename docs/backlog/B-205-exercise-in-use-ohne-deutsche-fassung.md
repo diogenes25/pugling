@@ -77,3 +77,4 @@ S, `beides`, keine Migration, Vertragsbruch ja (ein Code an einem Pfad). Testweg
   (`03-uebungstypen.md`, `07-api-referenz.md`) und in `endpunkt-beziehungen.md`. Vertrag (`docs/openapi/v1.json`) und
   `contract.ts` neu erzeugt. Backend **1000/1000**, Vitest **555/555**. Rollengang: die volle E2E-Suite gegen frisch gestartete Server (**99 passed**, `exit=0`, nach der letzten Änderung gestartet); Browser-Extension nicht genutzt. Die E2E-Spec
   `creator-lehrwerk-weg.spec.ts` fährt den Löschweg mit der deutschen Zeile. **`abgenommen`.**
+- **2026-10-28** — Commit `f96d358` (Lauf H, Teil 2).

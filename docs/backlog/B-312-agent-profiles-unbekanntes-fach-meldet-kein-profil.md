@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-308]
 wartet_auf: ""
+nachgeschaut: "2026-10-28"
 ---
 
 # B-312 · `profiles --subject <unbekannt>` endet mit Exit 0 und der Behauptung, es gebe kein Profil
@@ -66,3 +67,7 @@ AK 2 ist Konsolenausgabe und bleibt ungetestet (benannt).
   meldet jetzt „Kein Creator-Profil für Fach N (Name)“ – reine Wortwahl, ungetestet (Konsolenausgabe), im Review als 🟢
   benannt, ohne Zählung. Suite **1000/1000 `exit=0`**. Rollengang: Tests sind der Weg. **`abgenommen`.**
 - **2026-10-28** — Commit `c195ef2` (Lauf H, Teil 1).
+- **2026-10-28** — nachgeschaut (Lauf H, Teil 2, frischer `pugling-reviewer` am Commit `c195ef2`, Dateien im Stand des Commits): Fach-Prüfung vor dem `--child`-Zweig (`AgentCommands.cs:159`);
+  Mutanten „Prüfung entfernt“ (beide Zeilen rot) und „Prüfung nach dem `--child`-Zweig“ (nur die zweite rot – genau dafür
+  steht sie) hergeleitet; die übrigen Id-Parameter (`--profile`, `--child`, `--unit`, `--series-unit`) als validiert
+  bestätigt. Kein Entgleiten.

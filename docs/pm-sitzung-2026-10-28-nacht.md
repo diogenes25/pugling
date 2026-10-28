@@ -128,3 +128,62 @@ eine Testdatei geändert wurde. Backend **1000/1000**, Vitest **555/555**, `tsc 
 jetzt deutsch) und die übrigen Vater-Specs, Creator Regressionszeuge (Vertrag um einen Code erweitert, keine seiner
 Specs rot). Nicht im Browser belegt: der Klausur-Fehlerweg und der verwaiste Plan (beide brauchen einen scheiternden
 bzw. veränderten Server) – dafür die Komponententests. **B-320, B-319, B-254, B-317, B-205, B-281 `abgenommen`.**
+
+Commit Teil 2: `f96d358`.
+
+### Retrospektive
+
+**Nachschau:** Teil 1 (`c195ef2`, B-311/B-312/B-279/B-264/B-318) von einem frischen `pugling-reviewer`, Dateien im Stand
+des Commits, Mutante je Fall hergeleitet, alle Listenaufrufe und Id-Parameter des Agenten durchgesehen. **Zwei
+Entgleiten im Increment dieses Laufs**, je als `Defekt` angelegt und im Sprint behoben:
+[B-321](backlog/B-321-null-element-fall-ohne-pflichtwortschatz.md) (die `null`-Fälle lesen ohne Pflicht-Wortschatz
+`CoversRequiredWords` nie; vier Mutanten danach je **1 failed**, `entgangen_bei: B-318, B-306`) und
+[B-322](backlog/B-322-briefing-verb-nennt-interessen-nicht.md) (das Verb `briefing` verwies auf Interessen, ohne sie zu
+nennen; **1 failed** vor dem Fix, `entgangen_bei: B-264`). Beide außerhalb des Diffs von Teil 2, darum ohne Zählung.
+`nachgeschaut` an B-311, B-312, B-279, B-264, B-318. Suite danach **1001/1001** (`exit=0`). Index: **Nachgeschaut 231
+von 239** (offen: die sechs Stories von Teil 2 und B-321/B-322).
+
+**Was die eigenen Tore durchgelassen haben:** zum dritten Mal in Folge dieselbe Familie – die Regel an einer Stelle
+belegt, das Geschwister nicht. Neu ist die Form: B-321 ist eine Lesestelle, die **nur unter einer Bedingung läuft**
+(Pflicht-Wortschatz gesetzt), und der Fall setzte sie nicht; die Mutante war dort strukturell grün. Zwei weitere
+Lehren aus Teil 2 selbst, beide im Lauf gefangen: (1) die lokale Vitest-Umgebung formatiert Daten deutsch, die
+Linux-CI vermutlich englisch – eine Datums-Zusicherung „ohne Sprache ist falsch“ fällt darum je Plattform nur in einem
+der beiden Fälle (gemessen: gegen den Ausgangsstand blieb der deutsche Fall grün); (2) eine Mutante an einer **neuen,
+ungetrackten** Datei lässt sich nicht per `git checkout` zurücknehmen – der Befehl tat nichts, die Mutante stand noch
+in `pin.ts`, erst der Nachlauf von `grep` zeigte es.
+
+**Warum der Lauf hier endet (Limit 2):** die Nachschau fand zwei Defekte im Increment von Teil 1 – das ist das
+Increment dieses Laufs. Dass beide XS waren und behoben sind, ändert die Regel nicht (wie in Lauf E, F, G). Der Zähler
+von Teil 2 stand zudem bei 5.
+
+**Vorschläge, nicht gelandet (Freigabe 3):**
+
+- **(V)** Prosa in `pm-loop` Step 5 (Mutanten): eine Mutante wird aus einer Sicherungskopie zurückgespielt, nie per
+  `git checkout` – bei einer neuen Datei ist das ein stilles No-op. Eine Zeile; ergänzt die Erinnerung „Wiederherstellung
+  braucht neue Zeit“.
+- **(W)** Tor: die Vitest-Läufe auf eine Locale festlegen (`LANG`/`LC_ALL` bzw. `Intl`-Vorgabe in `src/test-setup.ts`
+  oder im Testskript), wie CI es mit `TZ: UTC` für die Zeitzone tut. Bestand gemessen: `vitest.config.ts` und
+  `test-setup.ts` setzen keine Locale; CI setzt nur `TZ`. Dann misst eine Datums-Zusicherung lokal und in CI dasselbe.
+- **(X)** Prosa für die Reviewer-Briefings: „Läuft die Lesestelle nur unter einer Bedingung (Pflicht-Wortschatz,
+  Sprache, Plan vorhanden), muss der Fall die Bedingung setzen“ – die dritte Spielart der Geschwister-Familie, nach
+  (T)/(U) für Zweige in Specs.
+
+## Ende Lauf H
+
+Endgrund: **Limit 2** – die Nachschau von Teil 2 fand im Increment von Teil 1 zwei Entgleiten (B-321, B-322, behoben).
+Zwei Teile, **dreizehn Stories abgenommen**: B-311, B-312, B-279, B-264, B-318 (Teil 1), B-320, B-319, B-254, B-317,
+B-205, B-281 (Teil 2), B-321, B-322 (aus der Nachschau); dazu fünf ältere nachgeschaut (B-305, B-306, B-307, B-315,
+B-316). Höchster Zähler 5 (Teil 2). Commits `c195ef2`, `f96d358` und der Abschluss-Commit. Alles **ungepusht**.
+
+**Offene Entscheidungen für den Nutzer:**
+
+1. **Retro-Vorschläge (U)–(X)**, keiner gelandet; dazu unverändert (S), (T) aus Lauf G, (O)–(R) aus Lauf F, (H)–(N)
+   aus Lauf E.
+2. **B-205 Entscheidung 2 gegenlesen:** der feste deutsche Satz für `exercise_in_use` ersetzt beim Löschen einer Übung
+   die Zählung des Servers (eigene gegen unsichtbare Verwendungen) durch „vielleicht auch bei einem Kind, das du nicht
+   betreust“. Reicht das, oder soll der Code für den Fall „nur unsichtbare Verwendungen“ geteilt werden?
+3. **Neue Texte gegenlesen:** `objectives.untitled.*` (de/en), `exercise_in_use`, `exercise_items_locked`, die
+   PIN-Meldung.
+4. Unverändert offen: B-313 (`Frage`), B-310 (Vertragsfrage 404/403), B-291 (`Frage`), B-267, B-268; die englischen
+   Texte aus Lauf G (`en.ts`).
+5. Nächste baubare `Defekt`-Kandidaten: B-280 und B-284 (Fokus/Tastatur, P2/P3), B-257, B-258, B-277.

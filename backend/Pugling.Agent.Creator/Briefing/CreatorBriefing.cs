@@ -118,11 +118,13 @@ public sealed record CreatorBriefing(
             // The general mode needs this statement: otherwise the model fills the gap with invented
             // preferences and the exercise would be useless for the shared catalog.
             text.AppendLine("## Kein bestimmtes Kind");
-            // With --interests the dressing is given (see the request part), so "neutral" would contradict it (B-264).
+            // With --interests the dressing is given, so "neutral" would contradict it (B-264). The labels stand here and
+            // not only in the request part: the `briefing` verb prints this text alone (B-322).
             if (CatalogInterests.Count > 0)
             {
                 text.AppendLine("- Diese Übung geht in den gemeinsamen Katalog: altersgerechte Situationen aus den vorgegebenen");
-                text.AppendLine("  Interessen, keine persönliche Ansprache und keine weiteren erfundenen Vorlieben.");
+                text.AppendLine($"  Interessen ({string.Join(", ", CatalogInterests)}), keine persönliche Ansprache und keine "
+                                + "weiteren erfundenen Vorlieben.");
             }
             else
             {

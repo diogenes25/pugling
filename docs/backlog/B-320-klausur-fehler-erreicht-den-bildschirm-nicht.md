@@ -66,3 +66,4 @@ gemocktem `api`, Vorbild `MyObjectives.test.tsx`).
   `errorMessage` im Fang“ blieb grün → Fall in der englischen Arcade mit `test_attempts_exhausted`, Mutante **1 failed**.
   Kein weiteres `!ok && action.message`-Muster im Frontend (Suche). Vitest **555/555**, Backend **1000/1000**. Rollengang: die volle E2E-Suite gegen frisch gestartete Server (**99 passed**, `exit=0`, nach der letzten Änderung gestartet); Browser-Extension nicht genutzt.
   Den englischen Fehlerweg im Browser zeigt keine Spec (er braucht einen scheiternden Server). **`abgenommen`.**
+- **2026-10-28** — Commit `f96d358` (Lauf H, Teil 2).

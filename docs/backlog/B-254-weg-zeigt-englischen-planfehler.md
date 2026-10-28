@@ -63,3 +63,4 @@ S, `frontend`, keine Migration, kein Vertragsbruch. Testweg: Komponententest `So
   lang und hängt an keinem Test, strukturell kann es nicht mehr entstehen; (b) die Testantwort passte nicht zum
   Bildschirm (der Erfolgsweg wäre beim Rendern abgestürzt, ohne dass der Fall es merkte) → vollständige Antwort,
   positive Zusicherung auf den Titel des gewählten Plans. Vitest **555/555**. Rollengang: die volle E2E-Suite gegen frisch gestartete Server (**99 passed**, `exit=0`, nach der letzten Änderung gestartet); Browser-Extension nicht genutzt. **`abgenommen`.**
+- **2026-10-28** — Commit `f96d358` (Lauf H, Teil 2).

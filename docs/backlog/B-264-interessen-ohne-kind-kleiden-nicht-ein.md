@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-46]
 wartet_auf: ""
+nachgeschaut: "2026-10-28"
 ---
 
 # B-264 · `--interests` ohne Kind setzt die Tags an die Übung, kleidet ihren Inhalt aber nicht ein
@@ -77,3 +78,8 @@ S, `backend` (Agent), keine Migration, kein Vertragsbruch. Testweg: Prompt-Zusic
   ohne eingebettetes `\n`, veralteter Kommentar zu `InterestTagIds`/`Interests`, Ausgabe von `create`, Formatierungsrauschen
   in zwei Fördermodus-Zeilen. Suite **1000/1000 `exit=0`**. Rollengang: Tests sind der Weg. **`abgenommen`.**
 - **2026-10-28** — Commit `c195ef2` (Lauf H, Teil 1).
+- **2026-10-28** — nachgeschaut (Lauf H, Teil 2, frischer `pugling-reviewer` am Commit `c195ef2`, Dateien im Stand des Commits): AK 1–4 je mit Mutante nachgerechnet (Labels weg, neutral immer,
+  nie neutral, alte Beschreibung, `request.ChildId is null`). **Entgangen:**
+  [B-322](B-322-briefing-verb-nennt-interessen-nicht.md) (🟡: das Verb `briefing` verweist auf die vorgegebenen
+  Interessen, ohne sie zu nennen), im Sprint behoben. 🟢: ein Kind mit gewichteten Tags ohne Freitext bekommt Tags, aber
+  keine Einkleidungs-Zeile in der Beschreibung (schon vorher).

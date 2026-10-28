@@ -68,3 +68,4 @@ fünf Formulare.
   Der Reviewer hat alle PIN-sendenden API-Aufrufe den fünf Formularen zugeordnet und „geprüft = gesendet“ je Formular
   nachgelesen. Fallstrick dabei: eine Mutante an der neuen, ungetrackten `pin.ts` ließ sich nicht per `git checkout`
   zurücknehmen – von Hand wiederhergestellt und nachgeprüft. Vitest **555/555**. Rollengang: die volle E2E-Suite gegen frisch gestartete Server (**99 passed**, `exit=0`, nach der letzten Änderung gestartet); Browser-Extension nicht genutzt. **`abgenommen`.**
+- **2026-10-28** — Commit `f96d358` (Lauf H, Teil 2).
