@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ApiError } from "../lib/api";
 import type { PracticeCard, ReviewOutcome } from "../lib/types";
 
 /**
@@ -8,6 +9,7 @@ import type { PracticeCard, ReviewOutcome } from "../lib/types";
  * immer – auch für den verworfenen zweiten Aufruf –, und ein doppeltes Enter übersprang eine Karte.
  */
 const review = vi.fn();
+const startSession = vi.fn();
 
 vi.mock("./SohnApp", () => ({
   useSohn: () => ({ planId: 3, refreshWallet: () => {}, setStreak: () => {}, celebrate: () => {} }),
@@ -17,7 +19,7 @@ vi.mock("../lib/api", async (importOriginal) => {
   return {
     ...original,
     api: {
-      startSession: () => Promise.resolve({ id: 11, testable: true }),
+      startSession: (...a: unknown[]) => startSession(...a),
       cards: () => Promise.resolve(["eins", "zwei", "drei"].map((prompt, i) => card(i, prompt))),
       review: (...a: unknown[]) => review(...a),
       heartbeat: () => Promise.resolve(),
@@ -36,6 +38,7 @@ function card(itemIndex: number, prompt: string): PracticeCard {
 
 beforeEach(() => {
   review.mockReset();
+  startSession.mockReset().mockResolvedValue({ id: 11, testable: true });
 });
 
 describe("SohnPractice, doppeltes Absenden", () => {
@@ -82,5 +85,36 @@ describe("SohnPractice, doppeltes Absenden", () => {
     fireEvent.submit(input.closest("form")!);
 
     expect(await screen.findByText("zwei")).toBeTruthy();
+  });
+});
+
+/** B-326: wie in der Klausur – ein Plan, den es nicht mehr gibt, führt zur Basis. */
+describe("SohnPractice mit einem Plan, den es nicht mehr gibt", () => {
+  function renderWithHome() {
+    return render(
+      <MemoryRouter initialEntries={["/sohn/practice/5"]}>
+        <Routes>
+          <Route path="/sohn/practice/:positionId" element={<SohnPractice />} />
+          <Route path="/sohn" element={<p>BASIS</p>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+  }
+
+  // Rot, wenn der Start-Fehler wieder als Meldung steht.
+  it("führt zur Basis statt die Serverzeile zu zeigen", async () => {
+    startSession.mockRejectedValue(new ApiError(404, "Study plan not found.", "trace-9", "not_found"));
+    renderWithHome();
+
+    expect(await screen.findByText("BASIS")).toBeTruthy();
+    expect(screen.queryByText(/Study plan not found/)).toBeNull();
+  });
+
+  // Rot, wenn jeder Start-Fehler zur Basis führt.
+  it("zeigt einen anderen Start-Fehler weiter an", async () => {
+    startSession.mockRejectedValue(new ApiError(500, "Server kaputt.", "trace-8"));
+    renderWithHome();
+
+    expect(await screen.findByText("Server kaputt. (Ref: trace-8)")).toBeTruthy();
   });
 });

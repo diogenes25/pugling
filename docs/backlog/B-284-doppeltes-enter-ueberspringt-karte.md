@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-10-28"
 ---
 
 # B-284 · Ein doppeltes Enter während der Prüfung überspringt eine Karte
@@ -66,3 +67,5 @@ XS, `frontend`, keine Migration, kein Vertragsbruch.
   weiter). Vitest **563/563**, `tsc -b` sauber, volle E2E **99 passed** (`exit=0`, nach der letzten Änderung
   gestartet) – der Spielweg der Suite als Rollengang; den Doppel-Enter selbst trägt der Komponententest, Browser-Extension
   nicht genutzt. **`abgenommen`.**
+- **2026-10-28** — Commit `c1a4e3f` (Lauf I, Teil 1).
+- **2026-10-28** — nachgeschaut (Lauf I, Teil 2, frischer `frontend-reviewer` am Commit `c1a4e3f`): `next()` hat genau einen Aufrufer, `false` heißt nur „verworfen“; alle Absendewege über `judge`; Scan aller `await *.run(…)` im Frontend ohne weiteren Ort, der nach einem verworfenen Lauf weiterschaltet; beide Fälle je mit Mutante. Kein Befund.

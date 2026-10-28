@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-10-23-nacht.md (vierter Lauf, Nachschau Sprint 6)
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-10-28"
 entgangen_bei: [B-36]
 ---
 
@@ -81,3 +82,5 @@ XS, `frontend`, keine Migration, kein Vertragsbruch.
   trennt jetzt „neu erreicht“ (2) von „erreicht“ (3), Mutante → **2 failed**. Vitest **563/563**, volle E2E
   **99 passed** (`exit=0`); die verspätete Feier selbst ist nur im Komponententest belegt (braucht ein Gerät mit
   Vorgeschichte), Browser-Extension nicht genutzt. **`abgenommen`.**
+- **2026-10-28** — Commit `c1a4e3f` (Lauf I, Teil 1).
+- **2026-10-28** — nachgeschaut (Lauf I, Teil 2, frischer `frontend-reviewer` am Commit `c1a4e3f`): Sortierung stabil (DueDate, Id), Nachbarn Missionen/Abzeichen laden unbeblättert, keine Leser der alten Schlüssel. **Entgangen:** [B-327](B-327-ziel-spaeter-jenseits-platz-fuenf-erreicht.md) – spätere Besuche luden wieder nur fünf (Entscheidung 1 nahm an, der Fall zähle nur beim ersten); im selben Sprint behoben. 🟢 ohne Zählung: `||`/`&&` in `firstVisit` ungetestet – mit B-327 entfällt die Bedingung.

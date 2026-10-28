@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { api } from "../lib/api";
+import { ApiError, api } from "../lib/api";
 import { useErrorMessage } from "../lib/chromeText";
 import { useAction } from "../lib/useAction";
 import { useSohn } from "./SohnApp";
@@ -76,7 +76,12 @@ export function SohnTest() {
       if (first.done) await finish(a.attemptId);
       // `?? null`: ein nullable Feld darf im Vertrag auch fehlen, der Zustand kennt nur „keine Aufgabe".
       else { setItem(first.item ?? null); setCursor(first.cursor); }
-    } catch (e) { setError(errorMessage(e)); }
+    } catch (e) {
+      // 404 beim Start: Plan oder Position gibt es nicht mehr (Reload nach dem Löschen, B-326). Die Basis korrigiert die
+      // Wahl; die Serverzeile („Study plan not found.“) sagte dem Kind nur, dass etwas kaputt ist.
+      if (e instanceof ApiError && e.status === 404) { nav("/sohn", { replace: true }); return; }
+      setError(errorMessage(e));
+    }
   }
 
   /**

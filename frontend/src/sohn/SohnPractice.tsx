@@ -99,7 +99,11 @@ export function SohnPractice() {
       setCards(due);
       setPhase(due.length === 0 ? "empty" : "front");
     },
-    (e) => { setError(errorMessage(e)); setPhase("error"); },
+    // 404: Plan oder Position gibt es nicht mehr (Reload nach dem Löschen, B-326) – die Basis korrigiert die Wahl.
+    (e) => {
+      if (e instanceof ApiError && e.status === 404) { nav("/sohn", { replace: true }); return; }
+      setError(errorMessage(e)); setPhase("error");
+    },
   );
 
   // Heartbeat: alle 12s aktive Zeit melden (Server clamped ohnehin). Session am Ende schließen.

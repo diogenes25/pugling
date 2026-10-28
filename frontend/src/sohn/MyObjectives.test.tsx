@@ -130,10 +130,11 @@ describe("MyObjectives feiert Teilziele", () => {
 });
 
 /**
- * B-257: der Erst-Stand umfasst alle aktiven Ziele, nicht nur die ersten fünf. Der Mock blättert wie der Server
- * (`skip`/`take` über der ganzen Liste) – ein fester Rückgabewert sähe nicht, wie viel der Bildschirm anfragt.
+ * B-257/B-327: die Gesehen-Mengen umfassen alle aktiven Ziele, nicht nur die fünf gezeigten – beim ersten wie bei jedem
+ * späteren Besuch. Der Mock blättert wie der Server (`skip`/`take` über der ganzen Liste) – ein fester Rückgabewert sähe
+ * nicht, wie viel der Bildschirm anfragt.
  */
-describe("MyObjectives, Erst-Stand jenseits der ersten Seite", () => {
+describe("MyObjectives, Ziele jenseits der ersten Seite", () => {
   async function visitPaged(all: Objective[]) {
     myObjectives.mockImplementationOnce(({ skip = 0, take = 100 }: { skip?: number; take?: number } = {}) =>
       Promise.resolve({ items: all.slice(skip, skip + take), total: all.length }));
@@ -171,12 +172,18 @@ describe("MyObjectives, Erst-Stand jenseits der ersten Seite", () => {
     view.unmount();
   });
 
-  // Rot, wenn jeder Besuch die ganze Liste lädt statt nur der erste: dann trüge der Erst-Stand keine Bedingung mehr, und
-  // der Normalfall zöge bei jedem Öffnen bis zu 500 Ziele.
-  it("lädt ab dem zweiten Besuch wieder nur die erste Seite", async () => {
+  // B-327. Rot, wenn ein späterer Besuch wieder nur die erste Seite lädt: Ziel 6, erreicht während es hinten stand, würde
+  // nie als gesehen gemerkt und beim Vorrücken nachgefeiert. Der erste Besuch macht alle folgenden zu späteren – so
+  // trennt sich der Fall vom Erst-Besuch oben.
+  it("feiert ein hinten erreichtes Ziel rechtzeitig und nicht noch einmal, wenn es vorrückt", async () => {
     (await visitPaged([open(1)])).unmount();
-    (await visitPaged([open(1)])).unmount();
-    expect(myObjectives).toHaveBeenLastCalledWith({ take: 5 });
+    (await visitPaged([open(1), open(2), open(3), open(4), open(5), done(6)])).unmount();
+    // Entscheidung 2 von B-327: frisch erreicht wird gefeiert, auch wenn das Ziel nicht in der Liste steht. Rot, wenn nur
+    // die gezeigten fünf gefeiert werden.
+    expect(celebrate).toHaveBeenLastCalledWith("big", "🏆", "ZIEL GESCHAFFT!", "+50 🪙");
+    celebrate.mockReset();
+    (await visitPaged([done(6)])).unmount();
+    expect(celebrate).not.toHaveBeenCalled();
   });
 });
 

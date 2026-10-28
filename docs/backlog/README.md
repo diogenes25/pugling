@@ -500,13 +500,12 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (59)
+### Offen (56)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-280](B-280-fokusziel-nicht-geleert-ungetestet.md) | Dass das Fokusziel nach dem Sprung geleert wird, prüft kein Test | Defekt | `idee` | P2 | — | frontend | — |
 | [B-323](B-323-ganzer-uebungs-put-umgeht-woerter-sperre.md) | Ein ganzer Übungs-PUT und `refs-from-tags` umgehen die Wörter-Sperre einer gespielten Übung | Defekt | `idee` | P2 | — | backend | — |
-| [B-324](B-324-gemerkter-plan-zweig-ungetestet.md) | Dass der gemerkte Plan vor dem spielbaren gewinnt, prüft kein Test | Defekt | `idee` | P2 | — | frontend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `gegrillt` | P2 | — | backend | Vertrag? |
 | [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder | Wunsch | `geschaetzt` | P2 | L | beides | — |
@@ -536,8 +535,6 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-278](B-278-platzhalter-sieht-aus-wie-gespeicherter-wert.md) | Im leeren Verlagsfeld sieht der Platzhalter aus wie ein gespeicherter Wert | Defekt | `idee` | P3 | — | frontend | — |
 | [B-282](B-282-login-haertung-restpunkte.md) | Restpunkte der Login-Härtung (NP-3) | Defekt | `idee` | P3 | — | backend | — |
 | [B-310](B-310-profil-match-verraet-kind-ids.md) | `GET creator/profiles/match` verrät per 404 gegen 403, ob es eine Kind-Id gibt | Defekt | `idee` | P3 | — | backend | — |
-| [B-325](B-325-klausur-doppelklick-sperre-ungetestet.md) | Die Doppelklick-Sperre der Klausur trägt keinen Fall | Defekt | `idee` | P3 | — | frontend | — |
-| [B-326](B-326-ueben-und-klausur-nehmen-ungepruefte-plan-id.md) | Üben und Klausur nehmen nach einem Reload die ungeprüfte Plan-Id | Defekt | `idee` | P3 | — | frontend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-231](B-231-fokus-ohne-fehlerkasten.md) | Wohin gehört der Fokus, wenn ein Knopf ohne Fehlerkasten gesperrt wird? | Frage | `idee` | P3 | — | frontend | — |
 | [B-232](B-232-bestaetigung-ausserhalb-des-sichtfelds.md) | Soll eine Bestätigung zum Meldungsplatz scrollen, wenn er weit vom Knopf entfernt liegt? | Frage | `idee` | P3 | — | frontend | — |
@@ -565,7 +562,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (241)</summary>
+<summary>Abgenommen (245)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -755,6 +752,10 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-320](B-320-klausur-fehler-erreicht-den-bildschirm-nicht.md) | Scheitert das Beantworten in der Klausur, sieht das Kind keine Meldung | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-321](B-321-null-element-fall-ohne-pflichtwortschatz.md) | Die `null`-Fälle aus B-306/B-318 lesen den Pflicht-Wortschatz nie | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-322](B-322-briefing-verb-nennt-interessen-nicht.md) | Das Verb `briefing` verweist auf vorgegebene Interessen, ohne sie zu nennen | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-324](B-324-gemerkter-plan-zweig-ungetestet.md) | Dass der gemerkte Plan vor dem spielbaren gewinnt, prüft kein Test | Defekt | `abgenommen` | P2 | XS | frontend | — |
+| [B-325](B-325-klausur-doppelklick-sperre-ungetestet.md) | Die Doppelklick-Sperre der Klausur trägt keinen Fall | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-326](B-326-ueben-und-klausur-nehmen-ungepruefte-plan-id.md) | Üben und Klausur nehmen nach einem Reload die ungeprüfte Plan-Id | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-327](B-327-ziel-spaeter-jenseits-platz-fuenf-erreicht.md) | Ein Ziel, das nach dem ersten Besuch jenseits von Platz fünf erreicht wird, feiert die App verspätet | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-35](B-35-karten-umdrehen-animation.md) | Karten drehen sich beim Aufdecken um | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-36](B-36-motivations-animationen-teilziele.md) | Motivations-Animationen bei erreichten Teilzielen | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-37](B-37-uebung-abbruch-unvollendet.md) | Abgebrochene Runden: Pflicht härten, Klausur deckeln | Defekt | `abgenommen` | P1 | M | beides | — |
@@ -823,9 +824,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
-### Nach der Abnahme entgangen (95)
+### Nach der Abnahme entgangen (96)
 
-**Nachgeschaut: 239 von 241 abgenommenen** — und in 76 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 2 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 241 von 245 abgenommenen** — und in 77 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 4 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -922,19 +923,22 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-320](B-320-klausur-fehler-erreicht-den-bildschirm-nicht.md) | Scheitert das Beantworten in der Klausur, sieht das Kind keine Meldung | [B-49, B-305] | `abgenommen` |
 | [B-321](B-321-null-element-fall-ohne-pflichtwortschatz.md) | Die `null`-Fälle aus B-306/B-318 lesen den Pflicht-Wortschatz nie | [B-318, B-306] | `abgenommen` |
 | [B-322](B-322-briefing-verb-nennt-interessen-nicht.md) | Das Verb `briefing` verweist auf vorgegebene Interessen, ohne sie zu nennen | [B-264] | `abgenommen` |
-| [B-324](B-324-gemerkter-plan-zweig-ungetestet.md) | Dass der gemerkte Plan vor dem spielbaren gewinnt, prüft kein Test | [B-254] | `idee` |
-| [B-325](B-325-klausur-doppelklick-sperre-ungetestet.md) | Die Doppelklick-Sperre der Klausur trägt keinen Fall | [B-320] | `idee` |
+| [B-324](B-324-gemerkter-plan-zweig-ungetestet.md) | Dass der gemerkte Plan vor dem spielbaren gewinnt, prüft kein Test | [B-254] | `abgenommen` |
+| [B-325](B-325-klausur-doppelklick-sperre-ungetestet.md) | Die Doppelklick-Sperre der Klausur trägt keinen Fall | [B-320] | `abgenommen` |
+| [B-327](B-327-ziel-spaeter-jenseits-platz-fuenf-erreicht.md) | Ein Ziel, das nach dem ersten Besuch jenseits von Platz fünf erreicht wird, feiert die App verspätet | [B-257] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (2) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (4) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-257](B-257-zielfeier-verspaetet-jenseits-der-ersten-fuenf.md) | Ein schon erreichtes Ziel jenseits der ersten fünf wird später verspätet gefeiert |
-| [B-284](B-284-doppeltes-enter-ueberspringt-karte.md) | Ein doppeltes Enter während der Prüfung überspringt eine Karte |
+| [B-324](B-324-gemerkter-plan-zweig-ungetestet.md) | Dass der gemerkte Plan vor dem spielbaren gewinnt, prüft kein Test |
+| [B-325](B-325-klausur-doppelklick-sperre-ungetestet.md) | Die Doppelklick-Sperre der Klausur trägt keinen Fall |
+| [B-326](B-326-ueben-und-klausur-nehmen-ungepruefte-plan-id.md) | Üben und Klausur nehmen nach einem Reload die ungeprüfte Plan-Id |
+| [B-327](B-327-ziel-spaeter-jenseits-platz-fuenf-erreicht.md) | Ein Ziel, das nach dem ersten Besuch jenseits von Platz fünf erreicht wird, feiert die App verspätet |
 
 </details>
 

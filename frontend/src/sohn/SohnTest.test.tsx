@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../lib/api";
@@ -83,5 +83,56 @@ describe("SohnTest, Fehler beim Beantworten", () => {
     fireEvent.click(await screen.findByRole("button", { name: "das Pferd" }));
 
     expect(await screen.findByText("the sheep")).toBeTruthy();
+  });
+
+  // B-325 (AK 3 von B-320). Rot, wenn `answerAndAdvance` die Sperre verliert (`action.run(fn)` → `fn()`) oder die
+  // Ref-Prüfung in `useAction.run` fehlt: dann schickt ein Doppelklick zwei Antworten auf dieselbe Cursor-Frage. Die
+  // Antwort hängt, bis beide Klicks durch sind.
+  it("schickt bei einem Doppelklick eine Antwort und zeigt nichts", async () => {
+    let ack!: (v: { done: boolean }) => void;
+    answerTest.mockReturnValueOnce(new Promise((r) => { ack = r; }));
+    nextTest.mockResolvedValueOnce({ item, done: false, cursor: 0, total: 2 })
+      .mockResolvedValueOnce({ item: { ...item, itemIndex: 1, prompt: "the sheep" }, done: false, cursor: 1, total: 2 });
+    renderTest();
+
+    const button = await screen.findByRole("button", { name: "das Pferd" });
+    // Beide Klicks in EINEM `act`: dazwischen rendert React nicht, `disabled={action.busy}` steht also noch nicht am Knopf –
+    // nur so trifft der zweite Klick die Ref-Sperre selbst (gemessen: mit zwei einzelnen `fireEvent` fing `disabled` ihn ab,
+    // und die Mutante „Ref-Prüfung weg“ blieb grün).
+    act(() => { fireEvent.click(button); fireEvent.click(button); });
+    await act(async () => { ack({ done: false }); });
+
+    expect(await screen.findByText("the sheep")).toBeTruthy();
+    expect(answerTest).toHaveBeenCalledTimes(1);
+    // Fällt nur als Nebenwirkung der Mutante (die zweite, ungemockte Antwort wirft) – kein eigener Beleg für „zeigt nichts“.
+    expect(document.querySelector(".error-box")).toBeNull();
+  });
+});
+
+/** B-326: nach einem Reload mit einer Plan-Id, die es nicht mehr gibt, geht es zur Basis – die korrigiert die Wahl. */
+describe("SohnTest mit einem Plan, den es nicht mehr gibt", () => {
+  // Rot, wenn der Start-Fehler wieder als Meldung steht: dann liest das Kind „Study plan not found. (Ref: …)“.
+  it("führt zur Basis statt die Serverzeile zu zeigen", async () => {
+    startTest.mockReset().mockRejectedValue(new ApiError(404, "Study plan not found.", "trace-9", "not_found"));
+    render(
+      <MemoryRouter initialEntries={["/sohn/test/5"]}>
+        <Routes>
+          <Route path="/sohn/test/:positionId" element={<SohnTest />} />
+          <Route path="/sohn" element={<p>BASIS</p>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText("BASIS")).toBeTruthy();
+    expect(screen.queryByText(/Study plan not found/)).toBeNull();
+  });
+
+  // Rot, wenn jeder Start-Fehler zur Basis führt: ein Serverfehler ist keine verschwundene Klausur, das Kind braucht die
+  // Meldung (B-320) – nur 404 heißt „gibt es nicht mehr“.
+  it("zeigt einen anderen Start-Fehler weiter an", async () => {
+    startTest.mockReset().mockRejectedValue(new ApiError(500, "Server kaputt.", "trace-8"));
+    renderTest();
+
+    expect(await screen.findByText("Server kaputt. (Ref: trace-8)")).toBeTruthy();
   });
 });

@@ -258,3 +258,83 @@ Beleg aus und kann nicht fallen (beim Beheben gemessen). (2) Ein Fix an **abgele
   entsteht, sagt die Story, was mit dem schon gespeicherten geschieht“ – eine Entscheidung, kein Tor.
 
 Commit Teil 1: siehe unten.
+
+Commit Teil 1: `c1a4e3f`.
+
+## Lauf I, Teil 2 — Das Kind spielt den Plan, den es gewählt hat (B-324, B-325, B-326)
+
+**Sprint-Ziel:** *Das Kind bleibt bei dem Plan, den es auf der Basis wählt; ein Doppelklick in der Klausur zählt
+einmal; und wer nach dem Löschen eines Plans neu lädt, landet auf der Basis statt vor einer englischen Serverzeile.*
+Umfang: die drei Stories aus der Nachschau von Teil 1 – [B-324](backlog/B-324-gemerkter-plan-zweig-ungetestet.md) (P2),
+[B-325](backlog/B-325-klausur-doppelklick-sperre-ungetestet.md), [B-326](backlog/B-326-ueben-und-klausur-nehmen-ungepruefte-plan-id.md),
+alle `Defekt`, unter Freigabe 1 ausformuliert und geschätzt (XS). Draußen: [B-323](backlog/B-323-ganzer-uebungs-put-umgeht-woerter-sperre.md)
+(Creator/Backend, eigenes Thema), B-258 (Vertragsfrage, siehe Ende).
+
+**Entwickler-Brief:** Reines Frontend. B-324/B-325 sind Testlücken an richtigem Code – Beleg ist die Mutante. B-326 nutzt
+den Status 404, nicht den generischen Code `not_found`, und nur am Start; die Basis (`useChosenPlan`) bleibt die eine
+Stelle, die eine Wahl korrigiert. Testweg: Komponententests, rote Probe bzw. Mutante je Fall; Rollengang über die E2E-Suite.
+
+### Iteration
+
+- B-324: Mutante „Zweig gemerkt gestrichen“ **1 failed**. B-325: Mutante „Sperre weg“ **1 failed**. B-326: rote Probe
+  **2 failed**, Gegen-Mutante „jeder Fehler zur Basis“ je **1 failed**.
+- Aus der Nachschau von Teil 1 in den Sprint genommen: [B-327](backlog/B-327-ziel-spaeter-jenseits-platz-fuenf-erreicht.md)
+  (rote Probe **1 failed**, Mutanten **3 failed** / **2 failed**), siehe Retrospektive.
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `frontend-reviewer` 🟡 | B-325-Fall erreichte die Ref-Sperre nie (`disabled` fing den zweiten Klick nach einem Render ab) | beide Klicks in einem `act`; Mutante „Ref-Prüfung weg“ **1 failed** | ja |
+| – | `frontend-reviewer` 🟢 | `.error-box`-Zusicherung fällt nur als Nebenwirkung | beschriftet | nein |
+| – | `frontend-reviewer` 🟢 | `replace` ohne Fall; 403 statt 404 für eine fremde Plan-Id | zurückgestellt, in B-326 benannt | nein |
+| – | Delta-Review 🟢 | Entscheidung 2 von B-327 ohne Zusicherung; Titel/Kommentar | genommen; Mutante **1 failed** | nein |
+
+B-327 selbst stammt aus der Nachschau und liegt im Increment von Teil 1, nicht im Diff von Teil 2 – ohne Zählung (wie
+B-321/B-322 in Lauf H). **Zähler: 1.** Vitest **569/569**, `tsc -b` sauber, volle E2E **99 passed** (alle `exit=0`,
+E2E nach der letzten Änderung gestartet). Rollengang: Sohn über den Spielweg der Suite (Basis, Weg, Üben, Klausur); die
+drei Fehlerbilder (bewusste Planwahl, Doppelklick im selben Tick, Reload nach Plan-Löschen) tragen die Komponententests;
+Vater und Creator Regressionszeugen. Browser-Extension nicht genutzt. **B-324, B-325, B-326, B-327 `abgenommen`.**
+
+### Retrospektive
+
+**Nachschau:** Teil 1 (`c1a4e3f`, B-284/B-257) von einem frischen `frontend-reviewer` im Stand des Commits. B-284 ohne
+Befund (einziger Aufrufer von `next()`, Scan aller `await *.run(…)`). **Entgangen bei B-257:**
+[B-327](backlog/B-327-ziel-spaeter-jenseits-platz-fuenf-erreicht.md) (🟡) – spätere Besuche luden wieder nur fünf Ziele;
+Entscheidung 1 von B-257 nahm an, der Fall zähle nur beim ersten Besuch. Im Sprint behoben. `nachgeschaut` an B-284,
+B-257.
+
+**Was die eigenen Tore durchgelassen haben:** dieselbe Familie wie in Teil 1, nun zweimal im selben Lauf: (1) eine
+**Annahme in einer Entscheidung** („zählt nur beim ersten Besuch“) wurde nicht gegen die User Story gerechnet – der
+Review von Teil 1 prüfte die AKs, und AK 1 nannte wörtlich nur den ersten Besuch; (2) ein Doppelklick-Test, dessen
+zwei `fireEvent` dazwischen rendern, prüft `disabled`, nicht die Sperre – das Spiegelbild von (Y): dort prüfte die
+Zusicherung zu früh, hier der zweite Klick zu spät.
+
+**Warum der Lauf hier endet (Limit 2):** die Nachschau fand im Increment von Teil 1 – dem Increment dieses Laufs – einen
+Defekt (B-327). Dass er XS war und behoben ist, ändert die Regel nicht.
+
+**Vorschläge, nicht gelandet (Freigabe 3):**
+
+- **(AA)** Prosa in `docs/backlog/README.md` (Ausformulieren): „Eine Entscheidung, die einen Fall ausschließt (‚zählt
+  nur …‘), wird gegen die User Story gerechnet, nicht nur gegen die AKs.“
+- **(AB)** Ergänzung zu (Y) für `frontend/CLAUDE.md`: „Ein Doppelklick, der die Ref-Sperre prüfen soll, feuert beide
+  Klicks in einem `act` – sonst prüft er `disabled`.“
+
+## Ende Lauf I
+
+Endgrund: **Limit 2** – die Nachschau von Teil 2 fand im Increment von Teil 1 einen Defekt (B-327, behoben). Zwei Teile,
+**sechs Stories abgenommen**: B-284, B-257 (Teil 1), B-324, B-325, B-326, B-327 (Teil 2); dazu acht ältere nachgeschaut
+(Lauf H). Höchster Zähler 2 (Teil 1). Commits `c1a4e3f` und der Abschluss-Commit. Alles **ungepusht**.
+
+**Offene Entscheidungen für den Nutzer:**
+
+1. **Retro-Vorschläge (Y), (Z), (AA), (AB)**, keiner gelandet; dazu unverändert (U)–(X) aus Lauf H und ältere.
+2. **B-258 (Vertragsfrage):** dieselbe unbekannte Referenz meldet `invalid_reference` oder `validation_error` – nicht nur
+   an den zwei Stellen der Story, auch `GrammarTopicsController.cs:85`, `SeriesUnitsController.cs:191` und
+   `TextbooksController.cs:146,151`. Vereinheitlichen auf `invalid_reference` (kleiner Vertragsbruch) – ja/nein?
+3. **B-323 (P2, neu):** ganzer Übungs-PUT und `refs-from-tags` umgehen die Wörter-Sperre einer gespielten Übung;
+   Lernstand kann ans falsche Wort rutschen. `Defekt`, autonom baubar – Kandidat für den nächsten Lauf; zu klären beim
+   Ausformulieren, ob Sperre erweitern oder Doku verengen.
+4. **B-257/B-327 Entscheidung (`v2`-Schlüssel):** jedes Gerät seedet einmal still neu – eine seit dem letzten Besuch
+   neu erreichte Etappe bleibt dabei einmal ungefeiert. Gegenlesen.
+5. Nächste baubare `Defekt`-Kandidaten: B-323, B-280, B-262/B-266 (Assistent), B-275, B-277.

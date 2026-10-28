@@ -70,4 +70,19 @@ describe("SohnProgress mit einer gemerkten Plan-Id, die nicht mehr gilt", () => 
     expect(setPlanId).toHaveBeenCalledWith(5);
     expect(screen.queryByText(/Study plan not found/)).toBeNull();
   });
+
+  // B-324. Rot, wenn der Zweig „gemerkt“ fehlt (`find((p) => p.id === planId) ??` gestrichen): dann gewänne der spielbare
+  // Plan, und eine bewusste Wahl auf der Startseite spränge sofort zurück. Die gemerkte Id ist hier – anders als oben –
+  // ein Plan des Kindes, und er ist ausdrücklich NICHT spielbar, damit sich „gemerkt“ und „spielbar“ unterscheiden.
+  it("bleibt beim gemerkten Plan, auch wenn ein anderer spielbar ist", async () => {
+    overview.mockImplementation((id: number) =>
+      Promise.resolve({ title: `Plan ${id}`, today: { goalsMet: 0, goalsTotal: 0, positions: [] }, currentStreak: 0 }));
+    plans.mockResolvedValue([plan(5, true), plan(STALE, false)]);
+    renderProgress();
+
+    expect(await screen.findByText(new RegExp(`Plan ${STALE}`))).toBeTruthy();
+    expect(overview).toHaveBeenCalledWith(STALE);
+    expect(overview).not.toHaveBeenCalledWith(5);
+    expect(setPlanId).not.toHaveBeenCalled();
+  });
 });

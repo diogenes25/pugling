@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import type { Objective, Paged } from "../lib/types";
 import { useSohn } from "./SohnApp";
-import { isFirstLoad, takeFreshAchieved } from "./seenIds";
+import { takeFreshAchieved } from "./seenIds";
 
 /** Wie viele Ziele die Liste zeigt; `total` daneben nennt alle aktiven. */
 const PAGE = 5;
@@ -32,11 +32,11 @@ export function MyObjectives() {
   // das als ein alter Erfolg mit „+N 🪙".
   const krKey = `pugling.seenKeyResults.v2.${childId}`;
   const objectiveKey = `pugling.seenObjectives.v2.${childId}`;
-  // Der Erst-Stand muss jedes aktive Ziel kennen, nicht nur die ersten fünf (B-257): ein schon erreichtes Ziel auf
-  // Platz 6 bliebe sonst ungesehen und würde gefeiert, sobald es nach vorn rutscht. Darum lädt nur der allererste
-  // Besuch bis an die Server-Obergrenze (`PagingExtensions.MaxTake`); jeder spätere nur die Seite, die er zeigt.
-  const [firstVisit] = useState(() => isFirstLoad(krKey) || isFirstLoad(objectiveKey));
-  const objectives = useAsync<Paged<Objective>>(() => api.myObjectives({ take: firstVisit ? 500 : PAGE }), []);
+  // Die Gesehen-Mengen müssen jedes aktive Ziel kennen, nicht nur die fünf gezeigten: ein Ziel, das auf Platz 6 erreicht
+  // wird, bliebe sonst ungesehen und würde gefeiert, sobald es nach vorn rutscht (B-257 beim ersten Besuch, B-327 bei
+  // jedem späteren). Darum lädt jeder Besuch bis an die Server-Obergrenze (`PagingExtensions.MaxTake`) und die Liste
+  // schneidet auf fünf; die Ziele eines Kindes sind wenige.
+  const objectives = useAsync<Paged<Objective>>(() => api.myObjectives({ take: 500 }), []);
 
   useEffect(() => {
     const items = objectives.data?.items;
