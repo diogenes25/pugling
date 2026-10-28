@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/backend, rolle/creator, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/backend, rolle/creator, rolle/student]
 aliases: [Reconcile ohne Sperre, refs-from-tags verschiebt Lernstand]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: S
@@ -97,3 +97,4 @@ Integrationstests in `ExerciseItemsAndProgressTests`; Live-Probe gegen die laufe
   **2 failed** (erwartet 2), beide an `Assert.Equal(Conflict, …)` (Z. 309, 348; gemessen `OK`). Mutante „Obermenge statt
   Präfix“ **1 failed** (Z. 309, Tausch/Einfügen); Mutante „Prüfung erst nach dem Speichern“ **1 failed** (Z. 314, Titel
   `Umbenannt`). Danach betroffene Klassen **27/27**.
+- **2026-10-28** — Review `pugling-reviewer`: 🟡 Refs-Zweig der Prüfung ohne Fall → zwei Fälle ergänzt (Mutante „Items vor Refs“ **1 failed** Z. 332, „Refs-Zeile gestrichen“ **1 failed** Z. 332, „Refs nur neben Items“ **1 failed** Z. 354), zählt; 🟡 doppeltes Wort → 500 (älter, außerhalb des Diffs) → [B-331](B-331-doppeltes-wort-im-uebungs-payload-500.md), Wiki-Satz auf `409` verengt; 🟢 Kommentar zu Schlüssel-Refs, Szenario-Schritt 7 sichert den `409` zu. Volle Suite **1004/1004**, E2E **99 passed** (nach der letzten Änderung gestartet). Rollengang Creator: Live-Probe gegen frisch gestarteten Server (Wegwerf-DB, Port 5280) – Übung anlegen, über die Supervisor-API in einen Plan nehmen, `PUT` ohne erstes Wort → `409 exercise_items_locked`, Titel unverändert; Anhängen → `200`. Vater und Sohn Regressionszeugen (E2E). **Abgenommen**, Commit `1a3a73f`.

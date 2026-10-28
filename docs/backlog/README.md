@@ -506,12 +506,12 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (56)
+### Offen (58)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-280](B-280-fokusziel-nicht-geleert-ungetestet.md) | Dass das Fokusziel nach dem Sprung geleert wird, prüft kein Test | Defekt | `idee` | P2 | — | frontend | — |
-| [B-323](B-323-ganzer-uebungs-put-umgeht-woerter-sperre.md) | Ein ganzer Übungs-PUT und `refs-from-tags` umgehen die Wörter-Sperre einer gespielten Übung | Defekt | `idee` | P2 | — | backend | — |
+| [B-330](B-330-plan-inactive-ohne-deutsche-fassung.md) | Ein deaktivierter Plan zeigt dem Kind nach einem Reload die englische Serverzeile | Defekt | `idee` | P2 | — | frontend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `gegrillt` | P2 | — | backend | Vertrag? |
 | [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder | Wunsch | `geschaetzt` | P2 | L | beides | — |
@@ -525,7 +525,6 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-164](B-164-useasync-paart-frischen-zustand-mit-alten-daten.md) | Nach einem Wechsel zeigt der Bildschirm für einen Moment frischen Zustand mit alten Daten | Defekt | `ausformuliert` | P3 | — | frontend | — |
 | [B-141](B-141-interest-tag-label-dublette.md) | Zwei Interessen-Tags dürfen dasselbe Label tragen | Defekt | `idee` | P3 | — | — | — |
 | [B-255](B-255-kinderzeile-per-namen-zweideutig.md) | E2E-Specs suchen die Kinderzeile per Namen, den zwei Tabellen tragen | Defekt | `idee` | P3 | — | — | — |
-| [B-258](B-258-unbekannte-fach-id-zwei-fehlercodes.md) | Eine unbekannte `SubjectId` meldet je nach Ressource zwei verschiedene Fehlercodes | Defekt | `idee` | P3 | — | — | — |
 | [B-259](B-259-generator-verschluckt-leerzeichen-neben-xml-elementen.md) | Der XML-Doc-Generator verschluckt Leerzeichen zwischen zwei Elementen | Defekt | `idee` | P3 | — | — | — |
 | [B-260](B-260-normalisierer-setzt-absatz-mitten-im-satz.md) | Der OpenAPI-Normalisierer setzt einen Absatz mitten in einen Satz | Defekt | `idee` | P3 | — | — | — |
 | [B-261](B-261-produktionspfad-des-beispielkatalogs-ungetestet.md) | Der Produktionspfad des Beispielkatalogs hängt an keinem Test | Defekt | `idee` | P3 | — | — | — |
@@ -541,6 +540,8 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-278](B-278-platzhalter-sieht-aus-wie-gespeicherter-wert.md) | Im leeren Verlagsfeld sieht der Platzhalter aus wie ein gespeicherter Wert | Defekt | `idee` | P3 | — | frontend | — |
 | [B-282](B-282-login-haertung-restpunkte.md) | Restpunkte der Login-Härtung (NP-3) | Defekt | `idee` | P3 | — | backend | — |
 | [B-310](B-310-profil-match-verraet-kind-ids.md) | `GET creator/profiles/match` verrät per 404 gegen 403, ob es eine Kind-Id gibt | Defekt | `idee` | P3 | — | backend | — |
+| [B-329](B-329-uebung-unbekannte-referenz-validation-error.md) | Die Übungs-Validierung meldet eine unbekannte Id als `validation_error`, die Kategorie daneben als `invalid_reference` | Defekt | `idee` | P3 | — | backend | — |
+| [B-331](B-331-doppeltes-wort-im-uebungs-payload-500.md) | Ein Wort, das im Übungs-Payload zweimal steht, endet in `500` – nach dem Speichern des Kopfes | Defekt | `idee` | P3 | — | backend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-231](B-231-fokus-ohne-fehlerkasten.md) | Wohin gehört der Fokus, wenn ein Knopf ohne Fehlerkasten gesperrt wird? | Frage | `idee` | P3 | — | frontend | — |
 | [B-232](B-232-bestaetigung-ausserhalb-des-sichtfelds.md) | Soll eine Bestätigung zum Meldungsplatz scrollen, wenn er weit vom Knopf entfernt liegt? | Frage | `idee` | P3 | — | frontend | — |
@@ -549,6 +550,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `idee` | P3 | — | — | — |
 | [B-291](B-291-fachwechsel-der-reihe-laesst-themen-stehen.md) | Wechselt eine Reihe ihr Fach, bleiben die Grammatik-Themen des alten Fachs an Übungen und Units stehen | Frage | `idee` | P3 | — | backend | — |
 | [B-313](B-313-agent-unbekannter-typ-je-teil-statt-fehlbedienung.md) | Soll ein unbekannter Übungstyp in `plan`/`exam` eine Fehlbedienung sein? | Frage | `idee` | P3 | — | backend | — |
+| [B-328](B-328-inline-typen-put-verschiebt-lernstand.md) | Sollen die Inhaltslisten gespielter Übungen anderer Typen (und der Wort-Tausch) gesperrt sein? | Frage | `idee` | P3 | — | backend | — |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `ausformuliert` | P3 | L | backend | Migration |
 | [B-16](B-16-positions-formular-umfang.md) | Prüfauftrag: deckt das Positions-Edit-Formular alle Felder ab? | Wunsch | `ausformuliert` | P3 | S | frontend | — |
 | [B-20](B-20-ki-supervisor-agent.md) | KI-Supervisor-Agent (Teil D) — erster Schritt: Übungen einem Plan zuweisen | Wunsch | `ausformuliert` | P3 | L | backend | — |
@@ -568,7 +570,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (245)</summary>
+<summary>Abgenommen (247)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -713,6 +715,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-254](B-254-weg-zeigt-englischen-planfehler.md) | Der Trophäenweg zeigt dem Kind „Study plan not found." statt einer Erklärung | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-256](B-256-sprint-5-drei-saetze-nach-der-abnahme.md) | Drei Sätze aus Sprint 5, die nach der Abnahme nicht stimmen | Defekt | `abgenommen` | P3 | XS | beides | — |
 | [B-257](B-257-zielfeier-verspaetet-jenseits-der-ersten-fuenf.md) | Ein schon erreichtes Ziel jenseits der ersten fünf wird später verspätet gefeiert | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-258](B-258-unbekannte-fach-id-zwei-fehlercodes.md) | Eine unbekannte `SubjectId` meldet je nach Ressource zwei verschiedene Fehlercodes | Defekt | `abgenommen` | P3 | XS | backend | Vertrag |
 | [B-26](B-26-e2e-in-ci.md) | Der E2E-Nachtlauf ist rot – und niemand erfährt es | Defekt | `abgenommen` | P1 | S | frontend | — |
 | [B-263](B-263-info-popover-steht-am-rechten-rand-ueber.md) | Ein aufgeklapptes ⓘ am rechten Rand lässt die Seite seitlich scrollen | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-264](B-264-interessen-ohne-kind-kleiden-nicht-ein.md) | `--interests` ohne Kind setzt die Tags an die Übung, kleidet ihren Inhalt aber nicht ein | Defekt | `abgenommen` | P3 | S | backend | — |
@@ -758,6 +761,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-320](B-320-klausur-fehler-erreicht-den-bildschirm-nicht.md) | Scheitert das Beantworten in der Klausur, sieht das Kind keine Meldung | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-321](B-321-null-element-fall-ohne-pflichtwortschatz.md) | Die `null`-Fälle aus B-306/B-318 lesen den Pflicht-Wortschatz nie | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-322](B-322-briefing-verb-nennt-interessen-nicht.md) | Das Verb `briefing` verweist auf vorgegebene Interessen, ohne sie zu nennen | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-323](B-323-ganzer-uebungs-put-umgeht-woerter-sperre.md) | Ein ganzer Übungs-PUT und `refs-from-tags` umgehen die Wörter-Sperre einer gespielten Übung | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-324](B-324-gemerkter-plan-zweig-ungetestet.md) | Dass der gemerkte Plan vor dem spielbaren gewinnt, prüft kein Test | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-325](B-325-klausur-doppelklick-sperre-ungetestet.md) | Die Doppelklick-Sperre der Klausur trägt keinen Fall | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-326](B-326-ueben-und-klausur-nehmen-ungepruefte-plan-id.md) | Üben und Klausur nehmen nach einem Reload die ungeprüfte Plan-Id | Defekt | `abgenommen` | P3 | XS | frontend | — |
@@ -830,9 +834,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
-### Nach der Abnahme entgangen (96)
+### Nach der Abnahme entgangen (97)
 
-**Nachgeschaut: 241 von 245 abgenommenen** — und in 77 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 4 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 245 von 247 abgenommenen** — und in 78 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 2 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -932,19 +936,18 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-324](B-324-gemerkter-plan-zweig-ungetestet.md) | Dass der gemerkte Plan vor dem spielbaren gewinnt, prüft kein Test | [B-254] | `abgenommen` |
 | [B-325](B-325-klausur-doppelklick-sperre-ungetestet.md) | Die Doppelklick-Sperre der Klausur trägt keinen Fall | [B-320] | `abgenommen` |
 | [B-327](B-327-ziel-spaeter-jenseits-platz-fuenf-erreicht.md) | Ein Ziel, das nach dem ersten Besuch jenseits von Platz fünf erreicht wird, feiert die App verspätet | [B-257] | `abgenommen` |
+| [B-330](B-330-plan-inactive-ohne-deutsche-fassung.md) | Ein deaktivierter Plan zeigt dem Kind nach einem Reload die englische Serverzeile | [B-326] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (4) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (2) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-324](B-324-gemerkter-plan-zweig-ungetestet.md) | Dass der gemerkte Plan vor dem spielbaren gewinnt, prüft kein Test |
-| [B-325](B-325-klausur-doppelklick-sperre-ungetestet.md) | Die Doppelklick-Sperre der Klausur trägt keinen Fall |
-| [B-326](B-326-ueben-und-klausur-nehmen-ungepruefte-plan-id.md) | Üben und Klausur nehmen nach einem Reload die ungeprüfte Plan-Id |
-| [B-327](B-327-ziel-spaeter-jenseits-platz-fuenf-erreicht.md) | Ein Ziel, das nach dem ersten Besuch jenseits von Platz fünf erreicht wird, feiert die App verspätet |
+| [B-258](B-258-unbekannte-fach-id-zwei-fehlercodes.md) | Eine unbekannte `SubjectId` meldet je nach Ressource zwei verschiedene Fehlercodes |
+| [B-323](B-323-ganzer-uebungs-put-umgeht-woerter-sperre.md) | Ein ganzer Übungs-PUT und `refs-from-tags` umgehen die Wörter-Sperre einer gespielten Übung |
 
 </details>
 

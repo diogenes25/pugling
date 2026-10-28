@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/backend, bereich/vertrag]
+tags: [typ/story, status/abgenommen, bereich/backend, bereich/vertrag]
 aliases: [invalid_reference vs validation_error, SubjectId unbekannt]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: XS
@@ -66,3 +66,4 @@ denselben Code meldet, damit ich nach dem Code verzweigen kann, ohne zu wissen, 
 - **2026-10-28** — Lauf J: ausformuliert, geschätzt, gebaut (Freigabe 9). Rote Probe: `UnbekannteReferenzTests`
   **1 failed** (erwartet 1), Liste nennt alle sechs Stellen mit `validation_error`. Mutante „Unit-Stelle zurück“
   **1 failed**, Liste nennt genau `series unit POST grammarTopicIds`. Volle Suite **1004/1004**.
+- **2026-10-28** — Review `pugling-reviewer`: keine weitere `validation_error`-Stelle mit unbekannter Referenz in `Controllers/` außer dem Übungspfad (B-329). Volle Suite **1004/1004**, E2E **99 passed**. Rollengang: Live-Probe gegen frisch gestarteten Server – Lehrbuch mit unbekanntem Fach und Grammatikthema mit unbekanntem Fach → je `400 invalid_reference`; Frontend liest keinen der Codes (grep). **Abgenommen**, Commit `1a3a73f`.

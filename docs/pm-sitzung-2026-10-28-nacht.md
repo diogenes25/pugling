@@ -380,3 +380,39 @@ Stellen. Testweg: Integrationstests, rote Probe und Mutante je Fall, volle Suite
   die Autorin darf schreiben). Das Frontend schickt beim Bearbeiten nie Items (`exerciseConfig.tsx`, `items: []`).
 - Volle Suite **1004/1004**, `tsc -b` sauber nach Neuerzeugen des Vertrags, `dotnet format` ohne Fund in den
   geänderten Dateien.
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `pugling-reviewer` 🟡 | Refs-Zweig der neuen Prüfung ohne Fall (Vorrang Refs vor Items umkehrbar, ohne dass ein Test fällt) | zwei Fälle; Mutanten **1 failed** (Z. 332), **1 failed** (Z. 332), **1 failed** (Z. 354) | ja |
+| – | `pugling-reviewer` 🟡 | doppeltes Wort im Payload → `500` nach dem Speichern des Kopfes | älter als der Diff → [B-331](backlog/B-331-doppeltes-wort-im-uebungs-payload-500.md); Wiki-Satz auf `409` verengt | nein |
+| – | `pugling-reviewer` 🟢 | Schlüssel-Refs in `PeekDesiredIdsAsync`; Szenario-Schritt 7 | Kommentar; `409` zugesichert | nein |
+| – | `pugling-reviewer` 🟢 | redundante Klausel; Prüfen und Schreiben nicht atomar | belassen (dasselbe Muster wie die Item-Routen) | nein |
+
+**Zähler: 1.** Volle Suite **1004/1004**, E2E **99 passed** (`exit=0`, nach der letzten Änderung gestartet), `tsc -b`
+sauber. Rollengang **Creator**: Live-Probe gegen einen nach der letzten Änderung gestarteten Server (Wegwerf-DB, Port
+5280): Übung anlegen, per Supervisor-API in einen Plan nehmen, `PUT` ohne erstes Wort → `409 exercise_items_locked`,
+Titel unverändert; Anhängen → `200`; Lehrbuch und Grammatikthema mit unbekanntem Fach → `400 invalid_reference`.
+**Vater** und **Sohn** Regressionszeugen: E2E grün, das Frontend schickt beim Bearbeiten keine Items und liest keinen der
+beiden Codes. Browser-Extension nicht genutzt. **B-323, B-258 `abgenommen`** (`1a3a73f`).
+
+### Retrospektive
+
+**Nachschau:** Lauf I, Teil 2 (`b64006c`, B-324..B-327) von einem frischen `frontend-reviewer`. B-324, B-325, B-327 ohne
+Befund (je mit Mutante nachgerechnet, Prüfpunkte in den Stories). **Entgangen bei B-326:**
+[B-330](backlog/B-330-plan-inactive-ohne-deutsche-fassung.md) (🟡) – die Story nennt „Löschen oder Deaktivieren“, der Fix
+behandelt nur `404`; ein deaktivierter Plan antwortet `403 plan_inactive`, und der Code hat im Frontend keine Fassung.
+Ist-Stand von B-326 korrigiert (fremder Plan `403`). `nachgeschaut` an B-324..B-327. Liegt im Increment eines
+**früheren** Laufs – Limit 2 greift nicht.
+
+**Was die eigenen Tore durchgelassen haben:** (1) Eine Prüfung, die eine Config mit **zwei Formen** liest (`refs` oder
+`items`, mit Vorrang), war nur mit einer Form getestet – der Reviewer fand es, kein Tor. Familie „Regel getestet,
+Grenzfall offen“. (2) In der Nachschau wieder die Familie von (AA): ein Fall aus der Problembeschreibung („oder
+Deaktivieren“) fehlte in den AKs – B-326 ist älter als die gelandete Regel (AA), also kein neuer Befund über sie.
+
+**Vorschlag, nicht gelandet (Freigabe 3):**
+
+- **(AC)** Prosa in `backend/CLAUDE.md` (Tests): „Liest eine Prüfung eine Eingabe mit mehreren Formen (`refs`/`items`,
+  Inline/Id), bekommt jede Form einen Fall – und der Vorrang einen eigenen, in dem die Formen sich widersprechen.“
+  Kein Tor: welche Formen eine Eingabe hat, kann kein Wächter aus dem Code lesen.
