@@ -6,6 +6,7 @@ import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
 import { Mascot } from "../components/Mascot";
 import { useSohn } from "./SohnApp";
+import { useChosenPlan } from "./useChosenPlan";
 import { useSkinText } from "../lib/skinText";
 import { MissionsPanel } from "./GamificationPanels";
 import { InterestIntroCard } from "./SohnInterests";
@@ -22,21 +23,13 @@ const cadenceKey = (c: PositionStatus["cadence"]) =>
 export function SohnHome() {
   const { t } = useTranslation();
   const { signOut } = useAuth();
-  const { planId, setPlanId, skin, setStreak } = useSohn();
-  const plans = useAsync<PlanResponse[]>(() => api.plans(), []);
-
-  // Den spielbaren Plan vorwählen, sobald die Liste da ist (server-autoritative Affordance statt eigener Regel).
-  useEffect(() => {
-    if (!plans.data) return;
-    const current = plans.data.find((p) => p.id === planId);
-    const chosen = current ?? plans.data.find((p) => p.isPlayable) ?? plans.data[0];
-    if (chosen && chosen.id !== planId) setPlanId(chosen.id);
-  }, [plans.data, planId, setPlanId]);
+  const { setPlanId, skin, setStreak } = useSohn();
+  const { plans, chosen } = useChosenPlan();
 
   if (plans.loading) return <div className="sohn-body"><div className="loading">{t("home.loading")}</div></div>;
   if (plans.error) return <div className="sohn-body"><div className="error-box">{plans.error}</div></div>;
 
-  if (!plans.data || plans.data.length === 0) {
+  if (!plans.data || !chosen) {
     return (
       <div className="sohn-body">
         <InterestIntroCard />
@@ -50,9 +43,7 @@ export function SohnHome() {
     );
   }
 
-  const activePlan = plans.data.find((p) => p.id === planId) ?? plans.data.find((p) => p.isPlayable) ?? plans.data[0];
-  const activePlanId = activePlan.id;
-  return <HomeForPlan planId={activePlanId} plans={plans.data} onPickPlan={setPlanId} onStreak={setStreak} />;
+  return <HomeForPlan planId={chosen.id} plans={plans.data} onPickPlan={setPlanId} onStreak={setStreak} />;
 }
 
 function HomeForPlan({

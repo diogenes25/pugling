@@ -48,6 +48,27 @@ describe("errorMessage – deutsche Fassung fachlicher Codes", () => {
     expect(text).not.toContain("Some English sentence.");
   });
 
+  // B-205: die Löschsperre an Übung, Unit und Reihe. Rot, wenn der Eintrag fehlt (dann die englische Zeile). Der dritte
+  // Halbsatz ersetzt, was der Server bei der Übung dynamisch sagt: dass Verwendungen außerhalb der eigenen Betreuung
+  // sperren können, die unter „Verwendung“ nicht stehen.
+  it("übersetzt die Löschsperre an Übung, Unit und Reihe und nennt die unsichtbaren Verwendungen", () => {
+    const text = problem("exercise_in_use");
+
+    expect(text).toContain("Lehrplan, einer Klassenarbeit oder als Etappe eines Ziels");
+    expect(text).toContain("nicht betreust");
+    expect(text).not.toContain("Some English sentence.");
+  });
+
+  // B-205: die Sperre beim Verschieben und Entfernen von Wörtern – eine andere Regel mit eigenem Code. Rot, wenn der
+  // Eintrag fehlt oder den Löschtext wiederholt (dann fehlte der Ausweg „ans Ende anhängen geht“).
+  it("übersetzt die Wörter-Sperre einer gespielten Übung und nennt, was erlaubt bleibt", () => {
+    const text = problem("exercise_items_locked");
+
+    expect(text).toContain("Lernstand");
+    expect(text).toContain("ans Ende anhängen");
+    expect(text).not.toContain("Some English sentence.");
+  });
+
   it("hängt an einer übersetzten Meldung KEINE Trace-Id an", () => {
     // Die Referenz hilft beim Melden eines Defekts, nicht beim Beheben einer Löschsperre – sie macht
     // einen sonst verständlichen Satz nur wieder technisch.

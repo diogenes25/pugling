@@ -51,8 +51,8 @@ export function SohnTest() {
   const [revealed, setRevealed] = useState(false);
   const [result, setResult] = useState<TestSubmitResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // Ref-Gate gegen den Doppelklick (B-49); der Fehlerpfad speist weiter die bestehende `error`-Vollbild-
-  // Anzeige, damit sich an ihrem Verhalten nichts ändert - `action.message` selbst wird hier nicht gerendert.
+  // Ref-Gate gegen den Doppelklick (B-49). Der Fehler speist die `error`-Vollbild-Anzeige; `action.message`
+  // wird hier nicht gerendert.
   const action = useAction(errorMessage);
 
   async function finish(id: number) {
@@ -111,14 +111,21 @@ export function SohnTest() {
   // Antwort abgeben (server-geführt: der Server adressiert stets die aktuelle Cursor-Frage) und weiterrücken.
   async function answerAndAdvance(dto: AnswerDto) {
     if (!planId || attemptId === null) return;
-    const ok = await action.run(async () => {
-      const ack = await api.answerTest(planId, positionId, attemptId, dto);
-      if (ack.done) { await finish(attemptId); return; }
-      const nx = await api.nextTest(planId, positionId, attemptId);
-      if (nx.done) { await finish(attemptId); return; }
-      setItem(nx.item ?? null); setCursor(nx.cursor); setTypedAnswer(""); setRevealed(false);
+    // Der Fehler wird im `catch` gesetzt, nicht danach aus `action.message` gelesen: das ist der Zustand des Renders,
+    // in dem der Klick entstand, und war beim ersten Fehlschlag `null` (B-320). Ein von der Sperre verworfener
+    // Doppelklick ruft `fn` gar nicht auf und zeigt darum zu Recht nichts.
+    await action.run(async () => {
+      try {
+        const ack = await api.answerTest(planId, positionId, attemptId, dto);
+        if (ack.done) { await finish(attemptId); return; }
+        const nx = await api.nextTest(planId, positionId, attemptId);
+        if (nx.done) { await finish(attemptId); return; }
+        setItem(nx.item ?? null); setCursor(nx.cursor); setTypedAnswer(""); setRevealed(false);
+      } catch (e) {
+        setError(errorMessage(e));
+        throw e;
+      }
     });
-    if (!ok && action.message) setError(action.message.text);
   }
 
   // Bei einem transienten Fehler den LAUFENDEN Versuch fortsetzen können (nicht verwerfen): resume() holt

@@ -2,20 +2,30 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
-import { useSohn } from "./SohnApp";
+import { useChosenPlan } from "./useChosenPlan";
 import { BadgesGallery } from "./GamificationPanels";
 import { MyObjectives } from "./MyObjectives";
 import type { OverviewResponse, ProgressResponse } from "../lib/types";
 
 export function SohnProgress() {
   const { t } = useTranslation();
-  const { planId } = useSohn();
+  // Dieselbe Auswahl wie die Startseite, nicht die gemerkte Id: die kann zu einem gelöschten Plan gehören (B-254).
+  const { plans, chosen } = useChosenPlan();
 
-  const overview = useAsync<OverviewResponse | null>(() => (planId ? api.overview(planId) : Promise.resolve(null)), [planId]);
-  const prog = useAsync<ProgressResponse | null>(() => (planId ? api.overviewProgress(planId) : Promise.resolve(null)), [planId]);
-
-  if (!planId) return <div className="sohn-body"><div className="loading">{t("progress.noPlan")}</div>
+  if (plans.loading) return <div className="sohn-body"><div className="loading">{t("progress.loading")}</div></div>;
+  if (plans.error) return <div className="sohn-body"><div className="error-box">{plans.error}</div></div>;
+  if (!chosen) return <div className="sohn-body"><div className="loading">{t("progress.noPlan")}</div>
     <Link to="/sohn" className="btn ghost" style={{ textDecoration: "none" }}>{t("progress.toHome")}</Link></div>;
+  // Eine eigene Komponente, erst mit der Wahl gemountet: ihr Laden beginnt mit `loading`, statt einen Render lang die
+  // Antwort für „kein Plan“ als fehlende Daten zu lesen und den Fehlerkasten aufblitzen zu lassen.
+  return <ProgressForPlan planId={chosen.id} />;
+}
+
+function ProgressForPlan({ planId }: { planId: number }) {
+  const { t } = useTranslation();
+  const overview = useAsync<OverviewResponse>(() => api.overview(planId), [planId]);
+  const prog = useAsync<ProgressResponse>(() => api.overviewProgress(planId), [planId]);
+
   if (overview.loading || prog.loading) return <div className="sohn-body"><div className="loading">{t("progress.loading")}</div></div>;
   if (!overview.data || !prog.data) return <div className="sohn-body"><div className="error-box">{overview.error ?? prog.error ?? t("home.error")}</div></div>;
 

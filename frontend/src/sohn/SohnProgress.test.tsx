@@ -1,0 +1,73 @@
+import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ApiError } from "../lib/api";
+import type { PlanResponse } from "../lib/types";
+
+/**
+ * B-254: der Weg-Tab nimmt denselben Plan wie die Startseite. Vorher lud er die im Browser gemerkte Plan-Id ungeprüft
+ * – war der Plan gelöscht oder gehörte die Id zu einer älteren Datenbank, las das Kind „Study plan not found.“.
+ */
+const setPlanId = vi.fn();
+const plans = vi.fn();
+const overview = vi.fn();
+const overviewProgress = vi.fn();
+const STALE = 99;
+
+vi.mock("./SohnApp", () => ({ useSohn: () => ({ planId: STALE, setPlanId, childId: 7, celebrate: () => {} }) }));
+vi.mock("../lib/auth", () => ({ useAuth: () => ({ signOut: () => {} }) }));
+vi.mock("./MyObjectives", () => ({ MyObjectives: () => null }));
+vi.mock("./GamificationPanels", () => ({ BadgesGallery: () => null }));
+vi.mock("../lib/api", async (importOriginal) => {
+  const original = await importOriginal<typeof import("../lib/api")>();
+  return {
+    ...original,
+    api: {
+      plans: (...a: unknown[]) => plans(...a),
+      overview: (...a: unknown[]) => overview(...a),
+      overviewProgress: (...a: unknown[]) => overviewProgress(...a),
+    },
+  };
+});
+
+const { SohnProgress } = await import("./SohnProgress");
+
+const plan = (id: number, isPlayable: boolean): PlanResponse => ({
+  id, childId: 7, title: `Plan ${id}`, startDate: "2026-10-01", endDate: "2026-12-01", active: true, positionCount: 1,
+  isPlayable,
+} as PlanResponse);
+
+beforeEach(() => {
+  setPlanId.mockReset();
+  plans.mockReset();
+  // Was der Server für die gemerkte Id antwortet: es gibt den Plan nicht (mehr).
+  overview.mockReset().mockImplementation((id: number) => id === STALE
+    ? Promise.reject(new ApiError(404, "Study plan not found.", "trace-1"))
+    : Promise.resolve({ title: `Plan ${id}`, today: { goalsMet: 0, goalsTotal: 0, positions: [] }, currentStreak: 0 }));
+  overviewProgress.mockReset().mockResolvedValue({ days: [], totalPoints: 0, daysComplete: 0, totalDays: 7, currentStreak: 0 });
+});
+
+const renderProgress = () => render(<MemoryRouter><SohnProgress /></MemoryRouter>);
+
+describe("SohnProgress mit einer gemerkten Plan-Id, die nicht mehr gilt", () => {
+  // Rot, wenn der Weg wieder die gemerkte Id lädt: dann steht die englische Server-Zeile da.
+  it("zeigt ohne Plan den Hinweis zur Basis statt eines Serverfehlers", async () => {
+    plans.mockResolvedValue([]);
+    renderProgress();
+
+    expect(await screen.findByText("Wähle zuerst eine Mission auf der Basis.")).toBeTruthy();
+    expect(overview).not.toHaveBeenCalled();
+  });
+
+  // Rot, wenn der Weg die Auswahl der Startseite nicht teilt: er lüde die gemerkte Id statt des spielbaren Plans.
+  it("nimmt den spielbaren Plan und merkt ihn sich", async () => {
+    plans.mockResolvedValue([plan(4, false), plan(5, true)]);
+    renderProgress();
+
+    // Positiv: der Weg des gewählten Plans steht da (sein Titel kommt nur aus der Antwort für Plan 5).
+    expect(await screen.findByText(/Plan 5/)).toBeTruthy();
+    expect(overview).not.toHaveBeenCalledWith(STALE);
+    expect(setPlanId).toHaveBeenCalledWith(5);
+    expect(screen.queryByText(/Study plan not found/)).toBeNull();
+  });
+});

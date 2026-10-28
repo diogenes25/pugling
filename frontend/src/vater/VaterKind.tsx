@@ -6,6 +6,7 @@ import { StatusBanner } from "../components/StatusBanner";
 import { FieldLabel } from "../components/InfoHint";
 import { api } from "../lib/api";
 import { useAction } from "../lib/useAction";
+import { pinProblem } from "../lib/pin";
 import { interestSlug } from "../lib/interests";
 import { GENDERS, INTEREST_FACETS, SCHOOL_TYPES, interestFacetLabel } from "../lib/labels";
 import { confirmAction } from "../lib/ui";
@@ -196,6 +197,8 @@ function CoreDataSection({ child, onSaved }: { child: ChildResponse; onSaved: ()
     // Leerer Text als "" senden, nicht als null: `null` ignoriert der Server, "" löscht die Notiz wirklich.
     const notes = form.profileNotes.trim();
     if (notes !== (child.profileNotes ?? "")) dto.profileNotes = notes;
+    const pinError = pinProblem(pin.trim());
+    if (pinError) { action.fail(pinError); return; }
     if (pin.trim()) dto.pin = pin.trim();
     if (Object.keys(dto).length === 0) { action.succeed("Nichts zu speichern."); return; }
 

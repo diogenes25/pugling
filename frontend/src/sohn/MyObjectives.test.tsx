@@ -1,4 +1,4 @@
-import { render, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { KeyResult, Objective } from "../lib/types";
 
@@ -107,5 +107,31 @@ describe("MyObjectives feiert Teilziele", () => {
     await visit([noReward(false)]);
     await visit([noReward(true)]);
     expect(celebrate).toHaveBeenLastCalledWith("big", "🏆", "ZIEL GESCHAFFT!", undefined);
+  });
+});
+
+/** B-317: eine Etappe ohne Titel nennt, was sie misst, statt des rohen Enum-Werts – in der Liste und in der Feier. */
+describe("MyObjectives, Etappe ohne Titel", () => {
+  const untitled = (achieved: boolean, scope: KeyResult["scope"] = "SeriesUnit", id = 21): KeyResult =>
+    ({ ...kr(id, achieved, "x"), title: null, scope });
+
+  // Rot, wenn die Liste wieder `k.scope` zeigt („SeriesUnit“) – oder einen festen Schlüssel statt eines je Bereich
+  // (dann stünde zweimal derselbe Text da).
+  it("zeigt in der Liste eine Beschreibung je Bereich", async () => {
+    myObjectives.mockResolvedValueOnce({
+      items: [obj(2, [untitled(false), untitled(false, "Exercise", 23), kr(22, false, "Unit 2")])], total: 1,
+    });
+    render(<MyObjectives />);
+
+    expect(await screen.findByText("Etappe in einer Unit")).toBeTruthy();
+    expect(screen.getByText("Etappe in einer Übung")).toBeTruthy();
+    expect(screen.queryByText("SeriesUnit")).toBeNull();
+  });
+
+  // Rot, wenn die Feier wieder `k.scope` als Titel nimmt.
+  it("feiert mit derselben Beschreibung", async () => {
+    await visit([obj(2, [untitled(false), kr(22, false, "Unit 2")])]);
+    await visit([obj(2, [untitled(true), kr(22, false, "Unit 2")])]);
+    expect(celebrate).toHaveBeenCalledWith("medium", "🎯", "Etappe in einer Unit", "Etappe geschafft");
   });
 });

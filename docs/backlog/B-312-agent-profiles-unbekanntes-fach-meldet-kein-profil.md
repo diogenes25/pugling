@@ -65,3 +65,4 @@ AK 2 ist Konsolenausgabe und bleibt ungetestet (benannt).
   `--child 1`; Prämisse: ein Profil existiert) → **2 failed** („No exception was thrown“). Ein bekanntes Fach ohne Profil
   meldet jetzt „Kein Creator-Profil für Fach N (Name)“ – reine Wortwahl, ungetestet (Konsolenausgabe), im Review als 🟢
   benannt, ohne Zählung. Suite **1000/1000 `exit=0`**. Rollengang: Tests sind der Weg. **`abgenommen`.**
+- **2026-10-28** — Commit `c195ef2` (Lauf H, Teil 1).

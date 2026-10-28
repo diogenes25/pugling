@@ -176,7 +176,7 @@ dem englischen `detail`-Freitext. Die Codes stammen aus der zentralen Registry
 
 **Fachliche Codes (Auswahl):** `skin_already_unlocked`, `skin_not_unlocked`, `insufficient_gems`,
 `insufficient_coins`, `quota_exhausted`, `offer_inactive`, `purchase_not_open`, `duplicate_key`,
-`duplicate_tag_name`, `exercise_in_use`, `vocabulary_in_use`, `position_has_data`, `plan_inactive`,
+`duplicate_tag_name`, `exercise_in_use`, `exercise_items_locked`, `vocabulary_in_use`, `position_has_data`, `plan_inactive`,
 `test_already_submitted`, `no_checkable_content`, `timetable_slot_taken`.
 
 Verifizierte Beispiel-Requests/-Responses (Erfolg **und** jeder erreichbare Fehler-Code, erzeugt gegen

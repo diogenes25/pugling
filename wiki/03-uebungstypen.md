@@ -144,7 +144,8 @@ DELETE /api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabular
 
 Wird die Übung bereits in einem Study-Plan verwendet, dürfen Items nicht mehr gelöscht oder umsortiert
 werden, weil dadurch bestehender Fortschritt auf andere Wörter kippen würde. An das Ende anhängen bleibt
-erlaubt.
+erlaubt. Die Sperre antwortet mit `409 exercise_items_locked` (seit B-205; das Löschen einer benutzten Übung meldet
+`409 exercise_in_use`).
 
 ### 3.2 Reading — Leseverständnis
 

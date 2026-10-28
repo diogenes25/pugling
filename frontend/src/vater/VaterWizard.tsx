@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
+import { pinProblem } from "../lib/pin";
 import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
 import { SCHOOL_TYPES } from "../lib/labels";
@@ -322,7 +323,7 @@ export function VaterWizard() {
   function canAdvance(): string | null {
     if (step === 0) {
       if (mode === "existing") return childId === "" ? "Bitte ein Kind wählen." : null;
-      return newName.trim() ? null : "Bitte einen Namen eingeben.";
+      return newName.trim() ? pinProblem(newPin) : "Bitte einen Namen eingeben.";
     }
     if (step === 1) return subjectId === "" ? "Bitte ein Fach wählen." : null;
     if (step === 2) return selected.length === 0 ? "Bitte mindestens eine Übung wählen." : null;

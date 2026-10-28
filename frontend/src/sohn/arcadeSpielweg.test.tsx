@@ -124,6 +124,9 @@ describe("Klausur auf Englisch", () => {
 describe("Fehlermeldungen der Arcade", () => {
   const exhausted = new ApiError(429, "No attempts left today.", "trace-1", "test_attempts_exhausted");
   const unknown = new ApiError(400, "Something specific went wrong.", "trace-2", "some_other_code");
+  // Ein Code, den `errorMessage` deutsch kennt, die Arcade aber nicht: nur an ihm unterscheiden sich die beiden Sprachen
+  // außerhalb von `problem.*` (für `unknown` liefert `errorMessage` byte-gleich die englische Server-Zeile).
+  const known = new ApiError(409, "Duplicate series.", "trace-3", "duplicate_textbook_series");
 
   it("sind auf Deutsch genau `errorMessage` – auch die eigenen Schlüssel sind wortgleich", async () => {
     // Rot, wenn ein deutscher `problem.*`-Satz von `errorMessage` abweicht: die Arcade liest ihn, und dieselbe
@@ -134,26 +137,29 @@ describe("Fehlermeldungen der Arcade", () => {
     const { result } = renderHook(() => useErrorMessage());
     expect(result.current(exhausted)).toBe(errorMessage(exhausted));
     expect(result.current(unknown)).toBe(errorMessage(unknown));
-    // Ein Code, den `errorMessage` deutsch kennt, die Arcade aber nicht: rot, wenn die Sprachweiche fehlt (dann
-    // stünde die englische Server-Zeile da, wo ein deutsches Kind bisher den deutschen Satz las).
-    const known = new ApiError(409, "Duplicate series.", "trace-3", "duplicate_textbook_series");
+    // Rot, wenn die Sprachweiche immer Englisch wählt (dann stünde die englische Server-Zeile da, wo ein deutsches Kind
+    // bisher den deutschen Satz las).
     expect(result.current(known)).toBe(errorMessage(known));
   });
 
   it("sind auf Englisch der eigene Satz oder der englische Server-Text – nie der deutsche", async () => {
     await setLanguage("en");
     const { result } = renderHook(() => useErrorMessage());
-    // Rot, wenn die Sprachweiche fehlt (dann der deutsche Satz) oder der Code-Schlüssel nicht greift.
+    // Rot, wenn der Code-Schlüssel nicht greift (erste Zeile) oder die Sprachweiche immer `errorMessage` wählt (letzte
+    // Zeile: dann der deutsche Satz – `unknown` allein sähe das nicht, B-319).
     expect(result.current(exhausted)).toBe("You've used up your tries for today. You can have another go tomorrow.");
     expect(result.current(unknown)).toBe("Something specific went wrong. (Ref: trace-2)");
+    expect(result.current(known)).toBe("Duplicate series. (Ref: trace-3)");
   });
 
   it("folgen der Sprache zum Zeitpunkt des Fehlers, nicht der beim Render", async () => {
-    // Rot, wenn die Funktion die Sprache beim Render festhält (ein früh gebundener Fang spräche dann weiter Deutsch).
+    // Rot, wenn die Funktion die Sprache beim Render festhält (ein früh gebundener Fang spräche dann weiter Deutsch) –
+    // für den Schlüssel (`exhausted`) wie für die Weiche davor (`known`, B-319).
     const { result } = renderHook(() => useErrorMessage());
     const format = result.current;
     await setLanguage("en");
     expect(format(exhausted)).toBe("You've used up your tries for today. You can have another go tomorrow.");
+    expect(format(known)).toBe("Duplicate series. (Ref: trace-3)");
   });
 
   it("erreichen über `useAction` die Meldung der Arcade", async () => {

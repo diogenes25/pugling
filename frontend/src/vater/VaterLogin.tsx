@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api, ApiError, errorMessage } from "../lib/api";
+import { pinProblem } from "../lib/pin";
 import { useAuth } from "../lib/auth";
 
 /**
@@ -126,6 +127,8 @@ function RegisterForm({ onRegistered }: { onRegistered: (id: number) => void }) 
     if (!name.trim()) { setError("Bitte einen Namen eingeben."); return; }
     if (!pin.trim()) { setError("Bitte eine PIN setzen – ohne sie kommst du nicht wieder herein."); return; }
     if (pin !== pin2) { setError("Die beiden PINs stimmen nicht überein."); return; }
+    const pinError = pinProblem(pin);
+    if (pinError) { setError(pinError); return; }
     setBusy(true);
     try {
       const dto = { name: name.trim(), email: email.trim() || null, pin };

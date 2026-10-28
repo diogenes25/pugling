@@ -134,6 +134,12 @@ public static class ApiErrors
     /// <summary>Exercise is used in a study plan/class test and cannot be deleted (409).</summary>
     public static readonly ApiError ExerciseInUse = new("exercise_in_use", 409, "Exercise is in use.");
     /// <summary>
+    /// The exercise is played in a study plan, so its items cannot be removed or reordered (409, B-205). A code of its
+    /// own next to <see cref="ExerciseInUse"/>, because the rule differs: nothing is deleted, appending stays allowed,
+    /// and the progress anchored on the item order is what is protected.
+    /// </summary>
+    public static readonly ApiError ExerciseItemsLocked = new("exercise_items_locked", 409, "Exercise items are locked by a study plan.");
+    /// <summary>
     /// The interest tag dresses exercises and cannot be deleted (409). A code of its own next to
     /// <see cref="ExerciseInUse"/>, because the blocked resource is the other one: there the exercise is
     /// held by a plan, here the tag is held by exercises.

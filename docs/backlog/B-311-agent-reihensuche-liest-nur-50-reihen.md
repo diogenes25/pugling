@@ -79,3 +79,4 @@ XS–S, nur `backend` (Agent), keine Migration, kein Vertragsbruch. Testweg: Int
   nicht mit parallelen Testklassen), ohne Zählung. Die Nachschau zu B-307 (`d8e4a0a`) fand denselben Fehler ein zweites
   Mal, darum `entgangen_bei` auch B-307. Suite **1000/1000 `exit=0`**. Rollengang: Agent ohne Oberfläche, Tests sind der
   Weg; Vater und Sohn Regressionszeugen (Suite grün, kein Pfad berührt). **`abgenommen`.**
+- **2026-10-28** — Commit `c195ef2` (Lauf H, Teil 1).

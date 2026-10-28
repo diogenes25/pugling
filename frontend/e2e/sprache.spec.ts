@@ -118,8 +118,9 @@ test("Der Sohn spielt eine Übungsrunde in der englischen Arcade", async ({ brow
   await page.getByRole("button", { name: "Flip 🔄" }).click();
   await page.getByRole("button", { name: "Knew it!" }).click();
 
-  // Nach der ersten Karte: entweder die nächste Karte oder schon das Rundenende – beides englisch.
-  await expect(page.locator(".pill.cyan", { hasText: /^Card 2 \// }).or(page.getByText("ROUND DONE!"))).toBeVisible();
+  // Nach der ersten Karte die zweite: die Seed-Übung hat mehrere Einträge. Ein Zweig „oder schon ROUND DONE!“ lief hier
+  // nie und sah nur wie ein Beleg für das Rundenende aus (B-319).
+  await expect(page.locator(".pill.cyan", { hasText: /^Card 2 \// })).toBeVisible();
   await page.goto("/sohn");
   await expect(page.locator(".sohn-nav").getByRole("link", { name: "Home" })).toBeVisible();
   await sohnCtx.close();

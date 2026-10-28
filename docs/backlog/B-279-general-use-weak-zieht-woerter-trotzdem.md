@@ -63,3 +63,4 @@ XS, `backend` (Agent), keine Migration, kein Vertragsbruch. Testweg: Integration
   gilt. **Gemessen:** `Foerdermodus_mit_general_bricht_mit_Meldung_ab` → **1 failed** („No exception was thrown“).
   README des Agenten: `--use-weak` „verträgt kein `--general`“. Suite **1000/1000 `exit=0`**. Rollengang: Tests sind
   der Weg. **`abgenommen`.**
+- **2026-10-28** — Commit `c195ef2` (Lauf H, Teil 1).

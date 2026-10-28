@@ -2,6 +2,7 @@ import { useState } from "react";
 import { StatusBanner } from "../components/StatusBanner";
 import { api } from "../lib/api";
 import { useAction } from "../lib/useAction";
+import { pinProblem } from "../lib/pin";
 import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
 import type { AdultResponse, TeacherAccount, UpdateMyAccountDto } from "../lib/types";
@@ -109,6 +110,9 @@ function ProfileForm({ name: initialName, email: initialEmail, onSaved }: {
     e.preventDefault();
     if (!name.trim()) { action.fail("Der Name darf nicht leer sein."); return; }
     if (pin !== pin2) { action.fail("Die beiden PINs stimmen nicht überein."); return; }
+    // Gesendet wird `pin` ungetrimmt, sobald etwas anderes als Leerraum drinsteht – geprüft wird darum dasselbe.
+    const pinError = pin.trim() ? pinProblem(pin) : null;
+    if (pinError) { action.fail(pinError); return; }
 
     // Nur Geändertes schicken – ein leeres PIN-Feld heißt „PIN unverändert", nicht „PIN löschen".
     const dto: UpdateMyAccountDto = {};

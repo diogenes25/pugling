@@ -56,3 +56,4 @@ XS, `backend` (Tests), keine Migration, kein Vertragsbruch. Testweg: Mutante je 
   „Aufgabe 3“, nichts im Katalog). Rote Probe gegen den Ausgangsstand nicht möglich (der Code war schon richtig, es
   fehlte nur der Fall); stattdessen Mutanten `item!.Front`, `item!.Source`, `task!.Prompt` → je **1 failed**, Kontrolle
   **5 passed**. Suite **1000/1000 `exit=0`**. Rollengang: Agent ohne Oberfläche, Tests sind der Weg. **`abgenommen`.**
+- **2026-10-28** — Commit `c195ef2` (Lauf H, Teil 1).

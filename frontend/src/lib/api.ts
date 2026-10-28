@@ -112,6 +112,16 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
     "Dieses Schlagwort kleidet mindestens eine Übung ein – die Einkleidung ist Autoren-Arbeit und nicht "
     + "wiederherstellbar. Nimm es zuerst im Bearbeiten-Dialog dieser Übungen heraus; bei Übungen, die dir "
     + "nicht gehören, kann das nur ihr Autor.",
+  // Die dritte Geschwister-Sperre (B-205): Übung, Unit oder Reihe löschen. Fest übersetzt verliert der Satz, was der
+  // Server beim Löschen einer Übung dynamisch zählt – darum nennt er die Verwendungen, die der Vater nicht sehen kann.
+  exercise_in_use:
+    "Inhalte daraus werden noch benutzt – in einem Lehrplan, einer Klassenarbeit oder als Etappe eines Ziels, "
+    + "vielleicht auch bei einem Kind, das du nicht betreust (das steht dann nicht unter „Verwendung“). "
+    + "Entferne sie dort zuerst.",
+  // Seit B-205 ein eigener Code: nichts wird gelöscht, und Anhängen bleibt erlaubt – das sagte der Löschtext falsch.
+  exercise_items_locked:
+    "Diese Übung wird in einem Lehrplan gespielt. Wörter entfernen oder umsortieren würde den gespeicherten "
+    + "Lernstand verschieben – neue Wörter ans Ende anhängen geht. Für alles andere nimm die Übung erst aus den Plänen.",
 };
 
 export function errorMessage(e: unknown): string {

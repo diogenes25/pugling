@@ -23,13 +23,14 @@ const STATUS_PILL = {
 } as const satisfies Record<MyActivation["status"], { cls: string; label: string }>;
 
 /**
- * Menge und Preis in der Arcade-Sprache (B-304). `unitAmount`/`priceLabel` aus `lib/shop.ts` bleiben deutsch, weil
+ * Menge, Preis und Datum in der Arcade-Sprache (B-304, B-317). `unitAmount`/`priceLabel` aus `lib/shop.ts` bleiben deutsch, weil
  * das Vater-Web sie auch ruft; von `priceLabel` leiht sich die Arcade nur die sprachfreien Teile (Emoji + Zahl).
  */
 export function useShopText() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   return {
     t,
+    date: (iso: string): string => new Date(iso).toLocaleDateString(i18n.language),
     amount: (quantity: number, unit: UnitType): string => t(`shop.unit.${unit}`, { count: quantity }),
     price: (coinPrice: number, gemPrice: number): string =>
       coinPrice > 0 || gemPrice > 0 ? priceLabel(coinPrice, gemPrice) : t("shop.free"),
@@ -309,7 +310,7 @@ function InventoryRow({ item, busy, onActivate }: {
 }
 
 function RequestsTab({ activations }: { activations: MyActivation[] }) {
-  const { t, amount } = useShopText();
+  const { t, amount, date } = useShopText();
   if (activations.length === 0)
     return <p className="sub"><Trans i18nKey="shop.noRequests" components={{ b: <b /> }} /></p>;
   return (
@@ -320,7 +321,7 @@ function RequestsTab({ activations }: { activations: MyActivation[] }) {
           <div key={a.id} className="row" style={{ justifyContent: "space-between", padding: "8px 0" }}>
             <div>
               <b>{a.articleTitle}</b>
-              <div className="sub">{amount(a.requestedQuantity, a.unitType)} · {new Date(a.requestedAt).toLocaleDateString()}</div>
+              <div className="sub">{amount(a.requestedQuantity, a.unitType)} · {date(a.requestedAt)}</div>
             </div>
             <span className={`pill ${pill.cls}`}>{t(pill.label)}</span>
           </div>
@@ -347,7 +348,7 @@ export function HistoryTab({ purchases, total, loading, error, onLoadMore }: {
    * Lade-Zweig und renderte NICHTS – der Knopf verschwand unter dem Finger, und sein „Lädt…" war toter
    * Code. Vor den frühen `return`s, weil es ein Hook ist.
    */
-  const { t, price } = useShopText();
+  const { t, price, date } = useShopText();
   const gescheitert = useGemerkterFehler(error, loading);
   // Ein gesperrter Knopf verliert in Chromium den Fokus – darum wandert er beim Klick auf die Meldung
   // (Begründung in `ListenAusfall.tsx`).
@@ -381,7 +382,7 @@ export function HistoryTab({ purchases, total, loading, error, onLoadMore }: {
         <div key={p.id} className="row" style={{ justifyContent: "space-between", padding: "8px 0" }}>
           <div>
             <b>{p.title}</b>
-            <div className="sub">{price(p.coinPrice, p.gemPrice)} · {new Date(p.purchasedAt).toLocaleDateString()}</div>
+            <div className="sub">{price(p.coinPrice, p.gemPrice)} · {date(p.purchasedAt)}</div>
           </div>
           {p.status === "Cancelled" && <span className="pill red">{t("shop.cancelled")}</span>}
         </div>

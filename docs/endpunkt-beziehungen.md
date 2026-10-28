@@ -82,7 +82,7 @@ Position trägt nur Ziel, Punkte, Stufe, Leitner (leere Overrides erben die Übu
 → [wiki/04 · Lernplan bauen](../wiki/04-lernplan-bauen.md).
 
 > ⚠️ Eine Übung wird **nicht kopiert**. Ändert man ihre Items, während sie in einem Plan liegt, sind
-> index-verschiebende Mutationen gesperrt (`409 exercise_in_use`); Anhängen ist erlaubt. Löschen einer
+> index-verschiebende Mutationen gesperrt (`409 exercise_items_locked`, seit B-205; vorher `exercise_in_use`); Anhängen ist erlaubt. Löschen einer
 > genutzten Übung ist gesperrt. Siehe [Auswertung](#3-übung--auswertung-des-kindes) zur Robustheit.
 
 ### Woher der Stoff kommt: Buchreihe → Kind → Creator-Profil

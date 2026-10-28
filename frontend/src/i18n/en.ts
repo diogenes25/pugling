@@ -153,6 +153,7 @@ export const en = {
       stagesDone_one: "Stage done",
       stagesDone_other: "{{count}} stages done",
       goalDone: "GOAL REACHED!",
+      untitled: { Exercise: "Stage in an exercise", SeriesUnit: "Stage in a unit", Subject: "Stage in the subject" },
     },
     badges: {
       title: "🏅 Badges",

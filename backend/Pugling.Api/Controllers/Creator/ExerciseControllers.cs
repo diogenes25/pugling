@@ -165,6 +165,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<VocabItemResponse>> AddItem(int seriesId, int seriesUnitId, int exerciseId, VocabItemInput body, CancellationToken ct)
     {
         var exercise = await FindAsync(seriesId, seriesUnitId, exerciseId, ct);
@@ -208,6 +209,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<VocabItemResponse>> PatchItem(int seriesId, int seriesUnitId, int exerciseId, int itemId, VocabItemInput body, CancellationToken ct)
     {
         var exercise = await FindAsync(seriesId, seriesUnitId, exerciseId, ct);
@@ -243,6 +245,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> DeleteItem(int seriesId, int seriesUnitId, int exerciseId, int itemId, CancellationToken ct)
     {
         var exercise = await FindAsync(seriesId, seriesUnitId, exerciseId, ct);
@@ -269,7 +272,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         Db.PlanPositions.AnyAsync(p => p.ExerciseId == exerciseId, ct);
 
     private ObjectResult ShiftBlockedProblem() =>
-        this.ProblemWithCode(ApiErrors.ExerciseInUse,
+        this.ProblemWithCode(ApiErrors.ExerciseItemsLocked,
             "The exercise is used in a study plan; items cannot be removed or reordered (it would shift saved progress). Adding to the end is allowed; remove it from plans first for other changes.");
 
     private static string? NormalizeHint(string? hint) =>

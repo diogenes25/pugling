@@ -112,7 +112,7 @@ test("Reihe, Unit, Übung, Zuweisung – der Creator-Weg in einem Zug", async ({
   // Der Code-Review zum Sprint hat den vierten Weg in B-197 gefunden, der Reviewer danach den fünften:
   // Die Reihen-Zeile hielt einen EIGENEN Meldungsplatz (`action.message`), in den nur `remove` schrieb.
   // Kein Umschalter räumte ihn, und eine ganz andere Zeile konnte ihn ohnehin nicht erreichen — ein
-  // rotes „… still used in a study plan" stand darum neben jedem späteren grünen „Gespeichert.".
+  // rotes „Inhalte daraus werden noch benutzt …" stand darum neben jedem späteren grünen „Gespeichert.".
   // Repariert ist es strukturell: es gibt nur noch EINEN Platz, auch der Fehlschlag meldet nach oben.
   // Darum sichert dieser Schritt BEIDE Wege zu; der zweite war der offene.
   //
@@ -134,23 +134,21 @@ test("Reihe, Unit, Übung, Zuweisung – der Creator-Weg in einem Zug", async ({
   // ---- 6a. Der gemeldete Weg: Fehlschlag, dann ein Speichern DERSELBEN Zeile ----
   page.once("dialog", (d) => d.accept());
   await page.getByRole("button", { name: `Löschen: „${SERIES.name}"` }).click();
-  // Englisch, weil `exercise_in_use` keine Zeile in `GERMAN_PROBLEM_TEXT` hat – die Zusicherung nimmt
-  // darum den Servertext. Kommt die deutsche Fassung (der Reviewer hält sie für fällig, weil die zwei
-  // Geschwister `subject_in_use`/`publisher_in_use` drinstehen), muss diese Zeile MIT wandern.
-  await expect(page.getByText(/still used in a study plan/)).toBeVisible();
+  // Die deutsche Fassung von `exercise_in_use` (B-205); vorher stand hier der englische Servertext.
+  await expect(page.getByText(/Inhalte daraus werden noch benutzt/)).toBeVisible();
 
   const UMBENANNT = `${SERIES.name} b`;
   await page.getByRole("button", { name: `Reihe bearbeiten: „${SERIES.name}"` }).click();
   await page.getByLabel("Name der Reihe", { exact: true }).fill(UMBENANNT);
   await page.getByRole("button", { name: `Speichern: „${SERIES.name}"` }).click();
   await expect(page.getByText("Gespeichert.", { exact: true })).toBeVisible();
-  await expect(page.getByText(/still used in a study plan/)).toHaveCount(0);
+  await expect(page.getByText(/Inhalte daraus werden noch benutzt/)).toHaveCount(0);
 
   // ---- 6b. Der fünfte Weg: eine ANDERE Zeile, deren Löschen gelingt ----
   // Den Fehlschlag erneut auslösen (er ist folgenlos und darum wiederholbar).
   page.once("dialog", (d) => d.accept());
   await page.getByRole("button", { name: `Löschen: „${UMBENANNT}"` }).click();
-  await expect(page.getByText(/still used in a study plan/)).toBeVisible();
+  await expect(page.getByText(/Inhalte daraus werden noch benutzt/)).toBeVisible();
 
   page.once("dialog", (d) => d.accept());
   await page.getByRole("button", { name: `Löschen: „${LEER}"` }).click();
@@ -161,5 +159,5 @@ test("Reihe, Unit, Übung, Zuweisung – der Creator-Weg in einem Zug", async ({
 
   // Der Kern des fünften Wegs: die rote Meldung der ANDEREN Zeile ist weg. Vor der Reparatur war sie
   // unerreichbar – sie lebte in Zeile A, und Zeile B konnte sie nicht anfassen.
-  await expect(page.getByText(/still used in a study plan/)).toHaveCount(0);
+  await expect(page.getByText(/Inhalte daraus werden noch benutzt/)).toHaveCount(0);
 });

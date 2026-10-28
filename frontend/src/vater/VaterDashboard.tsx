@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { StatusBanner } from "../components/StatusBanner";
 import { api } from "../lib/api";
 import { useAction } from "../lib/useAction";
+import { pinProblem } from "../lib/pin";
 import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
 import type { ChildResponse, ChildrenDashboard, PlanResponse } from "../lib/types";
@@ -30,6 +31,8 @@ export function VaterDashboard() {
   async function addChild(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) { action.fail("Bitte einen Vornamen angeben."); return; }
+    const pinError = pinProblem(pin.trim());
+    if (pinError) { action.fail(pinError); return; }
     // Ohne PIN legt der Server das Kind mit leerer PIN an – es kann sich dann nicht anmelden, bis der
     // Vater sie auf der Kind-Seite nachträgt. Darauf weist der Hinweis unter dem Formular hin.
     const ok = await action.run(() => api.createChild({

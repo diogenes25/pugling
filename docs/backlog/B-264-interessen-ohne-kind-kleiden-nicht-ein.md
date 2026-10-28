@@ -76,3 +76,4 @@ S, `backend` (Agent), keine Migration, kein Vertragsbruch. Testweg: Prompt-Zusic
   `KindUndVorgegebeneInteressen_IstEinBedienfehler_MitGeneralAberErlaubt`, Mutante → **1 failed**. 🟢 genommen: Prompt
   ohne eingebettetes `\n`, veralteter Kommentar zu `InterestTagIds`/`Interests`, Ausgabe von `create`, Formatierungsrauschen
   in zwei Fördermodus-Zeilen. Suite **1000/1000 `exit=0`**. Rollengang: Tests sind der Weg. **`abgenommen`.**
+- **2026-10-28** — Commit `c195ef2` (Lauf H, Teil 1).

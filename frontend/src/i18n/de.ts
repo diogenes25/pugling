@@ -159,6 +159,8 @@ export const de = {
       stagesDone_one: "Etappe geschafft",
       stagesDone_other: "{{count}} Etappen geschafft",
       goalDone: "ZIEL GESCHAFFT!",
+      // Eine Etappe ohne Titel nennt, was sie misst, statt des rohen Enum-Werts (B-317).
+      untitled: { Exercise: "Etappe in einer Übung", SeriesUnit: "Etappe in einer Unit", Subject: "Etappe im Fach" },
     },
     badges: {
       title: "🏅 Auszeichnungen",

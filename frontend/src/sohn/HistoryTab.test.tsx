@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { HistoryTab } from "./SohnShop";
+import { setLanguage } from "../lib/i18n";
 import type { MyShopPurchase } from "../lib/types";
 
 /**
@@ -132,5 +133,32 @@ describe("HistoryTab", () => {
     expect(screen.getByText("Zeitüberschreitung")).toBeTruthy();
     // Der vorhandene "Mehr laden"-Knopf ist hier selbst der Wiederholen-Weg.
     expect(screen.getByRole("button", { name: /Mehr laden/ })).toBeTruthy();
+  });
+});
+
+/**
+ * B-317: das Kaufdatum folgt der Arcade-Sprache, nicht der Locale des Browsers. Zwei Fälle, weil die Locale der
+ * Testumgebung selbst eine der beiden Antworten gibt (lokal unter Windows gemessen: Deutsch; die Linux-CI vermutlich
+ * en-US) – die alte Fassung ohne Sprache fängt darum je Umgebung nur einer der beiden. Plattformunabhängig fängt jeder
+ * Fall die Mutante „fest in der anderen Sprache“.
+ */
+describe("HistoryTab, Datum", () => {
+  afterEach(async () => { await setLanguage("de"); });
+  const bought = [{
+    id: 1, shopListingId: 1, articleNumber: "A-1", title: "Kinoabend", coinPrice: 50, gemPrice: 0, unitsPerPurchase: 1,
+    status: "Owned", purchasedAt: "2026-08-01T12:00:00Z", closedAt: null,
+  } satisfies MyShopPurchase];
+
+  // Rot, wenn das Datum fest englisch formatiert wird – oder ohne Sprache in einer nicht deutschen Umgebung.
+  it("steht auf Deutsch deutsch", () => {
+    render(<HistoryTab purchases={bought} total={1} loading={false} error={null} onLoadMore={vi.fn()} />);
+    expect(screen.getByText(/1\.8\.2026/)).toBeTruthy();
+  });
+
+  // Rot, wenn das Datum fest deutsch formatiert wird – oder ohne Sprache in einer deutschen Umgebung (lokal gemessen).
+  it("steht auf Englisch englisch", async () => {
+    await setLanguage("en");
+    render(<HistoryTab purchases={bought} total={1} loading={false} error={null} onLoadMore={vi.fn()} />);
+    expect(screen.getByText(/8\/1\/2026/)).toBeTruthy();
   });
 });

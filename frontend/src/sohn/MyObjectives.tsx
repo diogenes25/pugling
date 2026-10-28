@@ -40,7 +40,7 @@ export function MyObjectives() {
     // Etappe zugleich das Ziel ab, bleibt so die größere Feier stehen.
     if (freshKrs.length > 0) {
       const k = krs.find((x) => x.id === freshKrs[0])!;
-      celebrate("medium", "🎯", k.title ?? k.scope, t("objectives.stagesDone", { count: freshKrs.length }));
+      celebrate("medium", "🎯", k.title ?? t(`objectives.untitled.${k.scope}`), t("objectives.stagesDone", { count: freshKrs.length }));
     }
     if (freshObjectives.length > 0) {
       const o = items.find((x) => x.id === freshObjectives[0])!;
@@ -84,7 +84,7 @@ export function MyObjectives() {
           {o.keyResults.filter((k) => k.status !== "Achieved").slice(0, 3).map((k) => (
             <div className="row" key={k.id} style={{ padding: "2px 0" }}>
               <span>⬜</span>
-              <span className="sub">{k.title ?? k.scope}</span>
+              <span className="sub">{k.title ?? t(`objectives.untitled.${k.scope}`)}</span>
               <span className="sub tabnum" style={{ marginLeft: "auto" }}>
                 {k.currentValue}/{k.targetValue}
               </span>

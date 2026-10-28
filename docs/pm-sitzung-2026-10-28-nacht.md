@@ -81,3 +81,50 @@ gefangen.
 `frontend/e2e/*.ts` ausdehnen. Bestand gemessen: drei Stellen; zwei sind ehrliche Wartepunkte auf „leer *oder* erste
 Zeile“ (`shop-verlauf.spec.ts:54`, `shop-verlauf-wiederholen.spec.ts:56`) und bräuchten eine begründete Ausnahme, die
 dritte ist B-319.
+
+Commit Teil 1: `c195ef2`.
+
+## Lauf H, Teil 2 — Meldungen erreichen Kind und Vater verständlich (B-320, B-319, B-254, B-317, B-205, B-281), Zähler 5
+
+**Sprint-Ziel:** *Wo das Kind oder der Vater auf eine Sperre oder einen Fehler trifft, liest er einen Satz in seiner
+Sprache, der zu dem passt, was er getan hat – nie eine englische Serverzeile, einen Enum-Wert oder nichts.* Umfang
+(sechs `Defekt`, unter Freigabe 1 ausformuliert und geschätzt; B-205 mit der Entscheidung des Nutzers vom 2026-10-23):
+[B-320](backlog/B-320-klausur-fehler-erreicht-den-bildschirm-nicht.md) (P2, Klausur zeigt den Fehler nicht),
+[B-254](backlog/B-254-weg-zeigt-englischen-planfehler.md) (P2, Weg zeigt „Study plan not found.“),
+[B-319](backlog/B-319-zwei-zusicherungen-aus-b-305-tragen-nicht.md), [B-317](backlog/B-317-ziel-etappe-ohne-titel-zeigt-enum.md),
+[B-205](backlog/B-205-exercise-in-use-ohne-deutsche-fassung.md), [B-281](backlog/B-281-pin-felder-pruefen-mindestlaenge-im-ui.md).
+Draußen, weil sie dem Ziel nicht dienen: B-280, B-284 (Fokus/Tastatur), B-257 (Feier-Zeitpunkt).
+
+**Entwickler-Brief:** Frontend zuerst prüfen, ob der Server die richtige Antwort schon gibt – nur B-205 braucht ihn
+(eigener Code für die Wörter-Sperre, kleiner Vertragsbruch, Vertrag und `contract.ts` neu erzeugen). Die Arcade nimmt
+ihre Sätze über `useErrorMessage`/`t`, das Vater-Web über `GERMAN_PROBLEM_TEXT` bzw. eine Prüfung vor dem Absenden
+(B-281, Weg 1 – Weg 2 wäre gegen B-28 Entscheidung 2). Testweg: Komponententests je Bildschirm, rote Probe gegen den
+Ausgangsstand, volle E2E-Suite als Rollengang.
+
+### Iteration
+
+- Rote Proben gegen den Ausgangsstand: B-320 **1 failed**, B-254 **2 failed**, B-317 **3 failed** (Datum deutsch blieb
+  grün: die lokale Test-Locale ist Deutsch – gemessen; je Fall darum die Mutante „fest in der anderen Sprache“), B-205
+  **1 failed** (Backend) und **2 failed** (Texte). B-319 und B-281 ohne Ausgangsfall (Testlücke bzw. neues Modul):
+  Mutanten je **1–2 failed**.
+- Selbst gestrichen vor dem Review: ein zweiter B-320-Fall ohne eigene Mutante (fiel aus demselben Grund wie der erste).
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `pugling-reviewer` 🟡 | dritter Sperrpfad (Einfügen mit `orderIndex`) ungetestet | dritte Anfrage im Fall; Mutante **1 failed** | ja |
+| 2 | `frontend-reviewer` 🟡 | Weg blitzte nach dem Laden der Planliste einen Render lang den Fehlerkasten | `ProgressForPlan` erst mit der Wahl gemountet | ja |
+| 3 | `frontend-reviewer` 🟡 | Testantwort passte nicht zum Bildschirm, Erfolgsweg ohne Zusicherung | vollständige Antwort, positive Zusicherung | ja |
+| 4 | `frontend-reviewer` 🟡 | B-320-Fall ohne Code sah den Formatierer nicht | Fall in der englischen Arcade; Mutante **1 failed** | ja |
+| 5 | `frontend-reviewer` 🟡 | `pin.test.ts` behauptete, ein sechstes Formular zu fangen | Behauptung gestrichen, Grenze benannt | ja |
+| – | beide 🟢 | `409` an den Item-Routen, Wiki, zweiter Etappen-Bereich, Doku-Zeile im Shop | genommen | nein |
+| – | `frontend-reviewer` 🟢 | Datum in `RequestsTab` ohne eigenen Fall; Text „Inhalte daraus“ bei einer einzelnen Übung | zurückgestellt bzw. als Kosten in B-205 Entscheidung 2 | nein |
+
+**Zähler: 5** – an der Grenze, nicht darüber (Freigabe 3). Fund 5 ändert nur einen Testkommentar, zählt aber, weil
+eine Testdatei geändert wurde. Backend **1000/1000**, Vitest **555/555**, `tsc -b` sauber, volle E2E **99 passed**
+(alle `exit=0`, die E2E nach der letzten Änderung gestartet). Rollengang: Sohn über `sprache.spec.ts` (englische
+Übungsrunde, jetzt fest „Card 2“) und den Spielweg der Suite, Vater über `creator-lehrwerk-weg.spec.ts` (Löschsperre
+jetzt deutsch) und die übrigen Vater-Specs, Creator Regressionszeuge (Vertrag um einen Code erweitert, keine seiner
+Specs rot). Nicht im Browser belegt: der Klausur-Fehlerweg und der verwaiste Plan (beide brauchen einen scheiternden
+bzw. veränderten Server) – dafür die Komponententests. **B-320, B-319, B-254, B-317, B-205, B-281 `abgenommen`.**

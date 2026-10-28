@@ -259,9 +259,21 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
         // Take it into a study plan → the progress hangs on the position/item order.
         TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
 
-        // Index-shifting mutations are blocked now (409), non-shifting ones stay allowed.
-        Assert.Equal(HttpStatusCode.Conflict, (await father.DeleteAsync($"{itemsUrl}/{firstId}")).StatusCode);
-        Assert.Equal(HttpStatusCode.Conflict, (await father.PatchAsJsonAsync($"{itemsUrl}/{firstId}", new { orderIndex = 9 })).StatusCode);
+        // Index-shifting mutations are blocked now (409), non-shifting ones stay allowed. The code is its own (B-205): the
+        // rule differs from "cannot delete, still used", and a client translating `exercise_in_use` said the wrong thing.
+        foreach (var blocked in new[]
+                 {
+                     await father.DeleteAsync($"{itemsUrl}/{firstId}"),
+                     await father.PatchAsJsonAsync($"{itemsUrl}/{firstId}", new { orderIndex = 9 }),
+                     // Inserting at a fixed position shifts the later items too; a new word, or the duplicate check
+                     // would answer first.
+                     await father.PostAsJsonAsync(itemsUrl, new { front = "moon", back = "Mond", orderIndex = 0 }),
+                 })
+        {
+            Assert.Equal(HttpStatusCode.Conflict, blocked.StatusCode);
+            var problem = await blocked.Content.ReadFromJsonAsync<JsonElement>();
+            Assert.Equal("exercise_items_locked", problem.GetProperty("code").GetString());
+        }
         Assert.Equal(HttpStatusCode.Created, (await father.PostAsJsonAsync(itemsUrl, new { front = "sun", back = "Sonne" })).StatusCode); // appending is ok
         Assert.Equal(HttpStatusCode.OK, (await father.PatchAsJsonAsync($"{itemsUrl}/{firstId}", new { hint = "Gruß" })).StatusCode);      // the hint is ok
     }
