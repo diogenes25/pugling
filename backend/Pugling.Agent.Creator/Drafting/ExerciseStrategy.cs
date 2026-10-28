@@ -85,7 +85,9 @@ public abstract class ExerciseStrategy<TDraft, TConfig>(
             ? briefing.Interests.Count > 0
                 ? $"{origin} für {briefing.Audience} erzeugt (eingekleidet in: {string.Join(", ", briefing.Interests)})."
                 : $"{origin} für {briefing.Audience} erzeugt."
-            : $"{origin} für den gemeinsamen Katalog erzeugt.";
+            : briefing.Interests.Count > 0
+                ? $"{origin} für den gemeinsamen Katalog erzeugt (eingekleidet in: {string.Join(", ", briefing.Interests)})."
+                : $"{origin} für den gemeinsamen Katalog erzeugt.";
     }
 
     /// <inheritdoc/>

@@ -506,6 +506,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-254](B-254-weg-zeigt-englischen-planfehler.md) | Der Trophäenweg zeigt dem Kind „Study plan not found." statt einer Erklärung | Defekt | `idee` | P2 | — | — | — |
 | [B-280](B-280-fokusziel-nicht-geleert-ungetestet.md) | Dass das Fokusziel nach dem Sprung geleert wird, prüft kein Test | Defekt | `idee` | P2 | — | frontend | — |
+| [B-320](B-320-klausur-fehler-erreicht-den-bildschirm-nicht.md) | Scheitert das Beantworten in der Klausur, sieht das Kind keine Meldung | Defekt | `idee` | P2 | — | frontend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `gegrillt` | P2 | — | backend | Vertrag? |
 | [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder | Wunsch | `geschaetzt` | P2 | L | beides | — |
@@ -526,7 +527,6 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-260](B-260-normalisierer-setzt-absatz-mitten-im-satz.md) | Der OpenAPI-Normalisierer setzt einen Absatz mitten in einen Satz | Defekt | `idee` | P3 | — | — | — |
 | [B-261](B-261-produktionspfad-des-beispielkatalogs-ungetestet.md) | Der Produktionspfad des Beispielkatalogs hängt an keinem Test | Defekt | `idee` | P3 | — | — | — |
 | [B-262](B-262-vorwahl-bestehendes-kind-ohne-eigene-spec.md) | „Ohne Eingabe bleibt die Vorwahl ‚bestehendes Kind‘“ hält keine Spec gezielt | Defekt | `idee` | P3 | — | — | — |
-| [B-264](B-264-interessen-ohne-kind-kleiden-nicht-ein.md) | `--interests` ohne Kind setzt die Tags an die Übung, kleidet ihren Inhalt aber nicht ein | Defekt | `idee` | P3 | — | backend | — |
 | [B-265](B-265-sperr-zaehler-zusicherung-kann-nie-fallen.md) | Die „Spur“ der gesperrten Lesevorgänge ist eine Zusicherung, die nie fallen kann | Defekt | `idee` | P3 | — | backend | — |
 | [B-266](B-266-wartepunkt-netzwerk-statt-app-zustand.md) | Der Wartepunkt aus B-180 wartet aufs Netzwerk, nicht auf die App | Defekt | `idee` | P3 | — | frontend | — |
 | [B-272](B-272-live-region-und-gruppen-tests-tragen-nicht-alles.md) | Tests zu B-134 und B-236 lassen Mutanten grün | Defekt | `idee` | P3 | — | frontend | — |
@@ -536,12 +536,12 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-276](B-276-vater-main-ueberlauf-regel-ungetragen.md) | Die Überlauf-Regel von `.vater-main` trägt kein Test mehr | Defekt | `idee` | P3 | — | frontend | — |
 | [B-277](B-277-schnellanlage-legt-doppelten-store-eintrag-an.md) | Der Schnellanleger im Assistenten legt für ein bekanntes Wort einen zweiten Store-Eintrag an | Defekt | `idee` | P3 | — | beides | — |
 | [B-278](B-278-platzhalter-sieht-aus-wie-gespeicherter-wert.md) | Im leeren Verlagsfeld sieht der Platzhalter aus wie ein gespeicherter Wert | Defekt | `idee` | P3 | — | frontend | — |
-| [B-279](B-279-general-use-weak-zieht-woerter-trotzdem.md) | `--child X --general --use-weak` zieht die schwachen Wörter weiter in den Pflicht-Wortschatz | Defekt | `idee` | P3 | — | backend | — |
 | [B-281](B-281-pin-felder-pruefen-mindestlaenge-im-ui.md) | Eine zu kurze PIN meldet die Oberfläche auf Englisch | Defekt | `idee` | P3 | — | frontend | — |
 | [B-282](B-282-login-haertung-restpunkte.md) | Restpunkte der Login-Härtung (NP-3) | Defekt | `idee` | P3 | — | backend | — |
 | [B-284](B-284-doppeltes-enter-ueberspringt-karte.md) | Ein doppeltes Enter während der Prüfung überspringt eine Karte | Defekt | `idee` | P3 | — | frontend | — |
-| [B-298](B-298-plural-im-hud-ein-coins.md) | HUD liest „1 coins“ / „1 Münzen“ vor – die Schlüssel kennen keinen Singular | Defekt | `idee` | P3 | — | frontend | — |
-| [B-299](B-299-html-lang-rueckfall-ungetestet.md) | Der Rückfall von `<html lang>` auf Deutsch beim Verlassen der Arcade existiert nur als Code | Defekt | `idee` | P3 | — | frontend | — |
+| [B-310](B-310-profil-match-verraet-kind-ids.md) | `GET creator/profiles/match` verrät per 404 gegen 403, ob es eine Kind-Id gibt | Defekt | `idee` | P3 | — | backend | — |
+| [B-317](B-317-ziel-etappe-ohne-titel-zeigt-enum.md) | Eine Ziel-Etappe ohne Titel zeigt dem Kind den rohen Enum-Wert | Defekt | `idee` | P3 | — | frontend | — |
+| [B-319](B-319-zwei-zusicherungen-aus-b-305-tragen-nicht.md) | Zwei Zusicherungen aus B-305 können nicht fallen | Defekt | `idee` | P3 | — | frontend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-231](B-231-fokus-ohne-fehlerkasten.md) | Wohin gehört der Fokus, wenn ein Knopf ohne Fehlerkasten gesperrt wird? | Frage | `idee` | P3 | — | frontend | — |
 | [B-232](B-232-bestaetigung-ausserhalb-des-sichtfelds.md) | Soll eine Bestätigung zum Meldungsplatz scrollen, wenn er weit vom Knopf entfernt liegt? | Frage | `idee` | P3 | — | frontend | — |
@@ -549,7 +549,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-234](B-234-dritter-zustand-der-arten-liste.md) | Soll die Arten-Liste einen dritten Zustand bekommen – oder B-174s Entscheidung 3 zurückgenommen werden? | Frage | `idee` | P3 | — | frontend | — |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `idee` | P3 | — | — | — |
 | [B-291](B-291-fachwechsel-der-reihe-laesst-themen-stehen.md) | Wechselt eine Reihe ihr Fach, bleiben die Grammatik-Themen des alten Fachs an Übungen und Units stehen | Frage | `idee` | P3 | — | backend | — |
-| [B-295](B-295-arcade-korpus-auf-englisch.md) | Der restliche Chrome-Korpus der Sohn-Arcade auf Englisch | Wunsch | `geschaetzt` | P3 | M | frontend | — |
+| [B-313](B-313-agent-unbekannter-typ-je-teil-statt-fehlbedienung.md) | Soll ein unbekannter Übungstyp in `plan`/`exam` eine Fehlbedienung sein? | Frage | `idee` | P3 | — | backend | — |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `ausformuliert` | P3 | L | backend | Migration |
 | [B-16](B-16-positions-formular-umfang.md) | Prüfauftrag: deckt das Positions-Edit-Formular alle Felder ab? | Wunsch | `ausformuliert` | P3 | S | frontend | — |
 | [B-20](B-20-ki-supervisor-agent.md) | KI-Supervisor-Agent (Teil D) — erster Schritt: Übungen einem Plan zuweisen | Wunsch | `ausformuliert` | P3 | L | backend | — |
@@ -569,7 +569,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (212)</summary>
+<summary>Abgenommen (231)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -713,10 +713,12 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-256](B-256-sprint-5-drei-saetze-nach-der-abnahme.md) | Drei Sätze aus Sprint 5, die nach der Abnahme nicht stimmen | Defekt | `abgenommen` | P3 | XS | beides | — |
 | [B-26](B-26-e2e-in-ci.md) | Der E2E-Nachtlauf ist rot – und niemand erfährt es | Defekt | `abgenommen` | P1 | S | frontend | — |
 | [B-263](B-263-info-popover-steht-am-rechten-rand-ueber.md) | Ein aufgeklapptes ⓘ am rechten Rand lässt die Seite seitlich scrollen | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-264](B-264-interessen-ohne-kind-kleiden-nicht-ein.md) | `--interests` ohne Kind setzt die Tags an die Übung, kleidet ihren Inhalt aber nicht ein | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-267](B-267-entkoppeltes-lehrbuch-zeigt-katalogwert-im-freitextfeld.md) | Nach dem Entkoppeln zeigt das Freitextfeld den Katalogwert – gespeichert wird er nicht | Frage | `abgenommen` | P3 | S | beides | — |
 | [B-268](B-268-fokus-nach-inline-reihe.md) | Nach „Reihe anlegen & wählen“ fällt der Fokus auf `body` | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-269](B-269-bewertungen-reihenfolge-und-updatedat-ungetestet.md) | Bewertungen: Reihenfolge der Liste und `UpdatedAt` beim Überschreiben sind ungetestet | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-27](B-27-testsuite-grenzfaelle.md) | Die Grenzen des `ScoringService` als Tabelle statt als Flow | Aufräumen | `abgenommen` | P2 | S | backend | — |
+| [B-279](B-279-general-use-weak-zieht-woerter-trotzdem.md) | `--child X --general --use-weak` zieht die schwachen Wörter weiter in den Pflicht-Wortschatz | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-28](B-28-login-name-sequenziell.md) | Sequenzielle IDs als Login-Name | Wunsch | `abgenommen` | P3 | S | backend | — |
 | [B-283](B-283-buchstaben-ordnen-testluecken.md) | Buchstaben ordnen: neue Anordnung je Prüfungsversuch und die Vorschau sind ungetestet | Defekt | `abgenommen` | P3 | XS | beides | — |
 | [B-285](B-285-kind-konto-bleibt-nach-vater-loeschung.md) | Löscht sich ein Vater, bleibt das Konto seines Kindes als leere Hülle – und der Kind-Token bleibt gültig | Defekt | `abgenommen` | P2 | XS | backend | — |
@@ -729,6 +731,23 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-294](B-294-i18n-infrastruktur-und-startbildschirm.md) | i18n-Infrastruktur, Sprachumschalter, `<html lang>` und der Startbildschirm der Arcade auf Englisch | Wunsch | `abgenommen` | P3 | M | frontend | — |
 | [B-296](B-296-freitext-kuerzung-ohne-untere-grenze-im-test.md) | Der Test zur Freitext-Kürzung hat keine untere Grenze – ein viel zu kurzer Schnitt bliebe grün | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-297](B-297-404-pfad-des-fill-verbs-ungetestet.md) | Der 404-Pfad des `fill`-Verbs (Unit gehört nicht zur Reihe) ist ungetestet | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-298](B-298-plural-im-hud-ein-coins.md) | HUD liest „1 coins“ / „1 Münzen“ vor – die Schlüssel kennen keinen Singular | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-299](B-299-html-lang-rueckfall-ungetestet.md) | Der Rückfall von `<html lang>` auf Deutsch beim Verlassen der Arcade existiert nur als Code | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-300](B-300-harter-schnitt-ohne-leerraum-ungetestet.md) | Der harte Schnitt eines Freitexts ohne Leerraum ist ungetestet – ein leerer Kopf bliebe grün | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-301](B-301-fill-mit-unbekannter-reihe-endet-als-rohe-404.md) | `fill --series 99999` endet als rohe 404 statt als Fehlbedienung | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-302](B-302-fill-wortgrenze-kennt-nur-drei-leerzeichen.md) | `fill` schneidet Freitext mitten im Wort, wenn die Wörter nur durch `\r`, NBSP o. Ä. getrennt sind | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-303](B-303-fill-null-thema-im-json-modus.md) | Ein `null` in `topics` aus dem JSON-Modus ließe `fill` roh abstürzen | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-304](B-304-arcade-rahmen-auf-englisch.md) | Der Rahmen der Sohn-Arcade auf Englisch: Login, Konto, Weg, Shop, Skins, Interessen | Wunsch | `abgenommen` | P3 | M | frontend | — |
+| [B-305](B-305-arcade-spielweg-auf-englisch.md) | Der Spielweg der Sohn-Arcade auf Englisch: Üben, Test und die Übungskomponenten | Wunsch | `abgenommen` | P3 | M | frontend | — |
+| [B-306](B-306-null-element-in-uebungsstrategien.md) | Ein `null`-Element aus dem JSON-Modus besteht die Prüfung der Übungsstrategien und stürzt danach roh ab | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-307](B-307-create-mit-unbekannter-reihe-rohe-404.md) | `create --series 99999 --series-unit 1` endet als rohe 404 statt als Fehlbedienung | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-308](B-308-agent-fehlbedienung-plan-exam-profiles.md) | Zwei Rest-Pfade des Agenten bei einer falschen Id: `plan`/`exam` melden sie je Teil, `profiles` evtl. roh | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-309](B-309-leerraum-auf-der-grenze-nur-mit-leerzeichen-belegt.md) | „Dieselbe Leerraum-Menge an jeder Stelle“ ist nur in einer Richtung belegt | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-311](B-311-agent-reihensuche-liest-nur-50-reihen.md) | Der Agent sucht Reihe und Unit nur in den ersten 50 Reihen | Defekt | `abgenommen` | P2 | S | backend | — |
+| [B-312](B-312-agent-profiles-unbekanntes-fach-meldet-kein-profil.md) | `profiles --subject <unbekannt>` endet mit Exit 0 und der Behauptung, es gebe kein Profil | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-315](B-315-arcade-buchungsart-und-facette-ohne-abgleich.md) | Deutsche Buchungsarten und Facetten der Arcade sind nicht an die Vater-Helfer gebunden | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-316](B-316-plural-schluessel-aus-b-304-ohne-fall.md) | Die Zählschlüssel aus B-304 haben keinen Singular-/Plural-Fall | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-318](B-318-null-element-ohne-fall-in-drei-strategien.md) | Ein `null`-Element in Vokabel-, Übersetzungs- und Grammatik-Entwürfen hält kein Test | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-32](B-32-father-tabellenname.md) | `Father` heißt noch `Father`, obwohl die Zeile `Adult` ist | Aufräumen | `abgenommen` | P3 | S | backend | — |
 | [B-35](B-35-karten-umdrehen-animation.md) | Karten drehen sich beim Aufdecken um | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-36](B-36-motivations-animationen-teilziele.md) | Motivations-Animationen bei erreichten Teilzielen | Wunsch | `abgenommen` | P3 | S | frontend | — |
@@ -798,9 +817,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
-### Nach der Abnahme entgangen (76)
+### Nach der Abnahme entgangen (91)
 
-**Nachgeschaut: 210 von 212 abgenommenen** — und in 61 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 2 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 226 von 231 abgenommenen** — und in 72 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 5 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -862,7 +881,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-260](B-260-normalisierer-setzt-absatz-mitten-im-satz.md) | Der OpenAPI-Normalisierer setzt einen Absatz mitten in einen Satz | [B-147] | `idee` |
 | [B-261](B-261-produktionspfad-des-beispielkatalogs-ungetestet.md) | Der Produktionspfad des Beispielkatalogs hängt an keinem Test | [B-181] | `idee` |
 | [B-262](B-262-vorwahl-bestehendes-kind-ohne-eigene-spec.md) | „Ohne Eingabe bleibt die Vorwahl ‚bestehendes Kind‘“ hält keine Spec gezielt | [B-177] | `idee` |
-| [B-264](B-264-interessen-ohne-kind-kleiden-nicht-ein.md) | `--interests` ohne Kind setzt die Tags an die Übung, kleidet ihren Inhalt aber nicht ein | [B-46] | `idee` |
+| [B-264](B-264-interessen-ohne-kind-kleiden-nicht-ein.md) | `--interests` ohne Kind setzt die Tags an die Übung, kleidet ihren Inhalt aber nicht ein | [B-46] | `abgenommen` |
 | [B-265](B-265-sperr-zaehler-zusicherung-kann-nie-fallen.md) | Die „Spur“ der gesperrten Lesevorgänge ist eine Zusicherung, die nie fallen kann | [B-165] | `idee` |
 | [B-266](B-266-wartepunkt-netzwerk-statt-app-zustand.md) | Der Wartepunkt aus B-180 wartet aufs Netzwerk, nicht auf die App | [B-180] | `idee` |
 | [B-274](B-274-atomares-schreiben-flackert-wieder.md) | `AtomaresSchreiben_KeineLeseFehler` flackert wieder | [B-165] | `idee` |
@@ -878,19 +897,37 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-293](B-293-fill-von-stdin-blockiert-stumm.md) | `fill --source-file -` wartet am Terminal stumm auf ein Dateiende, und Ctrl+C wird verschluckt | [B-22] | `abgenommen` |
 | [B-296](B-296-freitext-kuerzung-ohne-untere-grenze-im-test.md) | Der Test zur Freitext-Kürzung hat keine untere Grenze – ein viel zu kurzer Schnitt bliebe grün | [B-292] | `abgenommen` |
 | [B-297](B-297-404-pfad-des-fill-verbs-ungetestet.md) | Der 404-Pfad des `fill`-Verbs (Unit gehört nicht zur Reihe) ist ungetestet | [B-292] | `abgenommen` |
-| [B-298](B-298-plural-im-hud-ein-coins.md) | HUD liest „1 coins“ / „1 Münzen“ vor – die Schlüssel kennen keinen Singular | [B-294] | `idee` |
-| [B-299](B-299-html-lang-rueckfall-ungetestet.md) | Der Rückfall von `<html lang>` auf Deutsch beim Verlassen der Arcade existiert nur als Code | [B-294] | `idee` |
+| [B-298](B-298-plural-im-hud-ein-coins.md) | HUD liest „1 coins“ / „1 Münzen“ vor – die Schlüssel kennen keinen Singular | [B-294] | `abgenommen` |
+| [B-299](B-299-html-lang-rueckfall-ungetestet.md) | Der Rückfall von `<html lang>` auf Deutsch beim Verlassen der Arcade existiert nur als Code | [B-294] | `abgenommen` |
+| [B-300](B-300-harter-schnitt-ohne-leerraum-ungetestet.md) | Der harte Schnitt eines Freitexts ohne Leerraum ist ungetestet – ein leerer Kopf bliebe grün | [B-292, B-296] | `abgenommen` |
+| [B-301](B-301-fill-mit-unbekannter-reihe-endet-als-rohe-404.md) | `fill --series 99999` endet als rohe 404 statt als Fehlbedienung | [B-22, B-297] | `abgenommen` |
+| [B-302](B-302-fill-wortgrenze-kennt-nur-drei-leerzeichen.md) | `fill` schneidet Freitext mitten im Wort, wenn die Wörter nur durch `\r`, NBSP o. Ä. getrennt sind | [B-292] | `abgenommen` |
+| [B-303](B-303-fill-null-thema-im-json-modus.md) | Ein `null` in `topics` aus dem JSON-Modus ließe `fill` roh abstürzen | [B-22] | `abgenommen` |
+| [B-306](B-306-null-element-in-uebungsstrategien.md) | Ein `null`-Element aus dem JSON-Modus besteht die Prüfung der Übungsstrategien und stürzt danach roh ab | [B-22] | `abgenommen` |
+| [B-307](B-307-create-mit-unbekannter-reihe-rohe-404.md) | `create --series 99999 --series-unit 1` endet als rohe 404 statt als Fehlbedienung | [B-22, B-106] | `abgenommen` |
+| [B-308](B-308-agent-fehlbedienung-plan-exam-profiles.md) | Zwei Rest-Pfade des Agenten bei einer falschen Id: `plan`/`exam` melden sie je Teil, `profiles` evtl. roh | [B-19, B-22] | `abgenommen` |
+| [B-309](B-309-leerraum-auf-der-grenze-nur-mit-leerzeichen-belegt.md) | „Dieselbe Leerraum-Menge an jeder Stelle“ ist nur in einer Richtung belegt | [B-302] | `abgenommen` |
+| [B-311](B-311-agent-reihensuche-liest-nur-50-reihen.md) | Der Agent sucht Reihe und Unit nur in den ersten 50 Reihen | [B-307, B-308] | `abgenommen` |
+| [B-312](B-312-agent-profiles-unbekanntes-fach-meldet-kein-profil.md) | `profiles --subject <unbekannt>` endet mit Exit 0 und der Behauptung, es gebe kein Profil | [B-308] | `abgenommen` |
+| [B-315](B-315-arcade-buchungsart-und-facette-ohne-abgleich.md) | Deutsche Buchungsarten und Facetten der Arcade sind nicht an die Vater-Helfer gebunden | [B-304] | `abgenommen` |
+| [B-316](B-316-plural-schluessel-aus-b-304-ohne-fall.md) | Die Zählschlüssel aus B-304 haben keinen Singular-/Plural-Fall | [B-304] | `abgenommen` |
+| [B-318](B-318-null-element-ohne-fall-in-drei-strategien.md) | Ein `null`-Element in Vokabel-, Übersetzungs- und Grammatik-Entwürfen hält kein Test | [B-306] | `abgenommen` |
+| [B-319](B-319-zwei-zusicherungen-aus-b-305-tragen-nicht.md) | Zwei Zusicherungen aus B-305 können nicht fallen | [B-305] | `idee` |
+| [B-320](B-320-klausur-fehler-erreicht-den-bildschirm-nicht.md) | Scheitert das Beantworten in der Klausur, sieht das Kind keine Meldung | [B-49, B-305] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (2) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (5) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-296](B-296-freitext-kuerzung-ohne-untere-grenze-im-test.md) | Der Test zur Freitext-Kürzung hat keine untere Grenze – ein viel zu kurzer Schnitt bliebe grün |
-| [B-297](B-297-404-pfad-des-fill-verbs-ungetestet.md) | Der 404-Pfad des `fill`-Verbs (Unit gehört nicht zur Reihe) ist ungetestet |
+| [B-264](B-264-interessen-ohne-kind-kleiden-nicht-ein.md) | `--interests` ohne Kind setzt die Tags an die Übung, kleidet ihren Inhalt aber nicht ein |
+| [B-279](B-279-general-use-weak-zieht-woerter-trotzdem.md) | `--child X --general --use-weak` zieht die schwachen Wörter weiter in den Pflicht-Wortschatz |
+| [B-311](B-311-agent-reihensuche-liest-nur-50-reihen.md) | Der Agent sucht Reihe und Unit nur in den ersten 50 Reihen |
+| [B-312](B-312-agent-profiles-unbekanntes-fach-meldet-kein-profil.md) | `profiles --subject <unbekannt>` endet mit Exit 0 und der Behauptung, es gebe kein Profil |
+| [B-318](B-318-null-element-ohne-fall-in-drei-strategien.md) | Ein `null`-Element in Vokabel-, Übersetzungs- und Grammatik-Entwürfen hält kein Test |
 
 </details>
 
@@ -924,7 +961,6 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-260](B-260-normalisierer-setzt-absatz-mitten-im-satz.md) | `idee` | `unverifiziert: true` |
 | [B-261](B-261-produktionspfad-des-beispielkatalogs-ungetestet.md) | `idee` | `unverifiziert: true` |
 | [B-262](B-262-vorwahl-bestehendes-kind-ohne-eigene-spec.md) | `idee` | `unverifiziert: true` |
-| [B-264](B-264-interessen-ohne-kind-kleiden-nicht-ein.md) | `idee` | `unverifiziert: true` |
 | [B-265](B-265-sperr-zaehler-zusicherung-kann-nie-fallen.md) | `idee` | `unverifiziert: true` |
 | [B-267](B-267-entkoppeltes-lehrbuch-zeigt-katalogwert-im-freitextfeld.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…" |
 | [B-268](B-268-fokus-nach-inline-reihe.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…" |
@@ -945,11 +981,21 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-293](B-293-fill-von-stdin-blockiert-stumm.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-296](B-296-freitext-kuerzung-ohne-untere-grenze-im-test.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-297](B-297-404-pfad-des-fill-verbs-ungetestet.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
-| [B-298](B-298-plural-im-hud-ein-coins.md) | `idee` | `unverifiziert: true` |
-| [B-299](B-299-html-lang-rueckfall-ungetestet.md) | `idee` | `unverifiziert: true` |
+| [B-298](B-298-plural-im-hud-ein-coins.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
+| [B-299](B-299-html-lang-rueckfall-ungetestet.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
+| [B-300](B-300-harter-schnitt-ohne-leerraum-ungetestet.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
+| [B-301](B-301-fill-mit-unbekannter-reihe-endet-als-rohe-404.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
+| [B-302](B-302-fill-wortgrenze-kennt-nur-drei-leerzeichen.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
+| [B-303](B-303-fill-null-thema-im-json-modus.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
+| [B-306](B-306-null-element-in-uebungsstrategien.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
+| [B-307](B-307-create-mit-unbekannter-reihe-rohe-404.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
+| [B-308](B-308-agent-fehlbedienung-plan-exam-profiles.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
+| [B-309](B-309-leerraum-auf-der-grenze-nur-mit-leerzeichen-belegt.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
+| [B-315](B-315-arcade-buchungsart-und-facette-ohne-abgleich.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
+| [B-316](B-316-plural-schluessel-aus-b-304-ohne-fall.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 
 <details>
-<summary>Verworfen (23)</summary>
+<summary>Verworfen (25)</summary>
 
 | Id | Story | Grund |
 | --- | --- | --- |
@@ -966,7 +1012,9 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-23](B-23-uebungstyp-plugins-dll.md) | Übungstyp-Plugins als externe DLLs (Stufe 2) | Entscheidung des Nutzers am 2026-10-23: eine Familien-App hat keine externen Plugin-Autoren; Stufe 1 (IExerciseType + Registry) genügt. Die Entscheidungen 2 und 3 schlossen sich zudem aus. Kommt der Bedarf, ist das eine neue Story |
 | [B-24](B-24-frontend-unknown-field.md) | Frontend gegen `unknown_field` durchspielen | "Alle 34 untypisierten Schreib-Rümpfe in api.ts sind Feld für Feld gegen die Contracts-DTOs |
 | [B-29](B-29-altmigration-transaktional.md) | Prüfauftrag: nicht-transaktionale Altmigration | gegenstandslos seit der Neufaltung auf InitialCreate — die Migrationskette besteht (SchemaGuardTests, Tor G1b) aus genau einer Migration (Data/Migrations/20260803223259_InitialCreate.cs), keine Altmigration ist mehr vorhanden, die nicht-transaktional laufen könnte. Program.cs (Zeilen 471–484) behandelt eine DB der alten Kette ohnehin nicht als Migrationsfall, sondern wirft eine handlungsfähige Fehlermeldung — ein Upgrade-Pfad existiert bewusst nicht. |
+| [B-295](B-295-arcade-korpus-auf-englisch.md) | Der restliche Chrome-Korpus der Sohn-Arcade auf Englisch | geteilt (Lauf F): Rahmen-Bildschirme → B-304, Spielweg → B-305 → [B-304, B-305] |
 | [B-30](B-30-i18n-rest.md) | i18n-Rest: Ledger-Texte, Platzhalter, interne Exceptions | "Der vermutete Rest existiert nicht: kein einziger `///`- oder `//`-Doku-Kommentar im Backend ist |
+| [B-314](B-314-fehlermeldungen-der-arcade-bleiben-deutsch.md) | Fehlermeldungen in der englischen Arcade bleiben deutsch | zusammengelegt: B-305 nennt GERMAN_PROBLEM_TEXT, soweit die Arcade ihn zeigt, schon in seinem Umfang → [B-305] |
 | [B-33](B-33-azure-publish-profile.md) | Azure-Secret `AZURE_WEBAPP_PUBLISH_PROFILE` fehlt | bewusste Nicht-Aufgabe für eine Code-Sitzung (Nutzer-Entscheidung) |
 | [B-34](B-34-sitzungsbonus-dauer.md) | „Dauer durchgehend gelernt" als eskalierender Sitzungs-Bonus | durch MinutesPracticed-Missionen abgelöst |
 | [B-38](B-38-mehrsprachige-oberflaeche.md) | Mehrsprachige Oberfläche (Deutsch, Englisch, Französisch) | "geteilt — ein Programm, keine Story (Entscheidung 8); siehe die recherchierte Grundlage unten und → [B-85, B-86, B-87] |

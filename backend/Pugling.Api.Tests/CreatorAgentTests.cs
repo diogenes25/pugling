@@ -314,6 +314,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var error = await Assert.ThrowsAsync<AgentUsageException>(() => Filler(creator, chat)
             .RunAsync(new UnitFillRequest(987654, 1, "Quelle", Force: false, DryRun: true)));
         Assert.Contains("Reihe 987654", error.Message);
+        // Statement of intent, not a probe: the run stopped before any model call with or without the B-301 fix (a raw 404 came first too).
         Assert.Equal(0, chat.Calls);
     }
 
@@ -524,7 +525,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Fact]
     public async Task KindUndVorgegebeneInteressen_IstEinBedienfehler_MitGeneralAberErlaubt()
     {
-        var (pipeline, creator, _) = BuildAgent(VocabularyJson, VocabularyJson);
+        var (pipeline, creator, chat) = BuildAgent(VocabularyJson, VocabularyJson);
         var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Einkleidung-Beides");
         var einhorn = await creator.CreateInterestTagAsync(new CreateInterestTagDto(TestApi.UniqueName("Einhorn")));
 
@@ -538,6 +539,8 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var detail = await creator.GetExerciseDetailAsync(outcome.ExerciseId!.Value);
         int[] nurEinhorn = [einhorn.Id];
         Assert.Equal(nurEinhorn, detail.InterestTagIds);
+        // B-264: the dressing reaches the prompt on this path too - the request names a child, the briefing does not.
+        Assert.Contains(chat.LastMessages, m => m.Text.Contains($"Kleide die Aufgaben in die Interessen ein: {einhorn.Label}"));
     }
 
     [Fact]
@@ -729,6 +732,37 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
         Assert.False(outcome.DraftAccepted);
         Assert.Contains(outcome.Violations, v => v.Contains("Position 3") && v.Contains("(null)"));
+        Assert.Empty(await creator.SearchExercisesAsync(subjectId: subjectId));
+    }
+
+    /// <summary>
+    /// B-318: a <c>null</c> item in a vocabulary, translation or grammar draft is a rule violation naming its position,
+    /// not a crash. B-306 made the three strategies read their items null-safely (<c>item?.Front</c> …) but tested only
+    /// the cloze; red if any of the three <c>?.</c> in the rule loop becomes <c>.</c> (NullReferenceException).
+    /// </summary>
+    [Theory]
+    [InlineData("Vocabulary", """
+        {"title":"Tiere","items":[{"front":"the horse","back":"das Pferd","hint":null},
+          {"front":"the sheep","back":"das Schaf","hint":null},null]}
+        """, "Vokabel 3")]
+    [InlineData("Translation", """
+        {"title":"Sätze","items":[{"source":"The horse is fast.","target":"Das Pferd ist schnell.","alternatives":null},
+          {"source":"I feed the sheep.","target":"Ich füttere das Schaf.","alternatives":null},null]}
+        """, "Satz 3")]
+    [InlineData("Grammar", """
+        {"title":"Simple Present","instruction":"Setze das Verb ein.","tasks":[
+          {"prompt":"He ___ (to feed) the horse.","answer":"feeds","ruleHint":null},
+          {"prompt":"They ___ (to clean) the stable.","answer":"clean","ruleHint":null},null]}
+        """, "Aufgabe 3")]
+    public async Task Ein_Null_Element_ist_eine_Regelverletzung_statt_eines_Absturzes(string type, string draft, string position)
+    {
+        var (pipeline, creator, _) = BuildAgent(draft);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, $"null-Element-{type}");
+
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, type));
+
+        Assert.False(outcome.DraftAccepted);
+        Assert.Contains(outcome.Violations, v => v.StartsWith(position, StringComparison.Ordinal));
         Assert.Empty(await creator.SearchExercisesAsync(subjectId: subjectId));
     }
 
@@ -1329,6 +1363,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline).RunAsync(command, default));
 
         Assert.Contains("Reihe 987654", error.Message);
+        // Statement of intent, not a probe: the run stopped before any model call with or without the B-307 fix.
         Assert.Equal(0, chat.Calls);
     }
 
@@ -1346,6 +1381,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
             () => pipeline.CreateAsync(Request(subjectId, 987654, 1, "Vocabulary")));
 
         Assert.Contains("Reihe 987654", error.Message);
+        // Statement of intent, not a probe: the run stopped before any model call with or without the B-307 fix.
         Assert.Equal(0, chat.Calls);
     }
 
@@ -1534,8 +1570,8 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var profile = await creator.CreateProfileAsync(new CreateCreatorProfileDto(
             $"Latein – Fördermodus {Guid.NewGuid():N}", null, subjectId, null, null, null, null,
             SourceLang: "la", TargetLang: "fr", Persona: null, Didactics: null, DefaultTypes: null, Active: true));
-        var fromProfile = await pipeline.BriefAsync(Request(subjectId, seriesId, seriesUnitId, "Vocabulary", profileId: profile.Id)
-            with { UseWeakWords = true, SourceLang = null, TargetLang = null });
+        var fromProfileRequest = Request(subjectId, seriesId, seriesUnitId, "Vocabulary", profileId: profile.Id);
+        var fromProfile = await pipeline.BriefAsync(fromProfileRequest with { UseWeakWords = true, SourceLang = null, TargetLang = null });
 
         Assert.Equal(("la", "fr"), (fromProfile.SourceLang, fromProfile.TargetLang));
         Assert.Contains("lupus (B-21, fr)", fromProfile.RequiredWords);
@@ -1543,8 +1579,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.DoesNotContain("the wolf (B-21)", fromProfile.RequiredWords);
 
         // The request's own pair beats the profile.
-        var fromRequest = await pipeline.BriefAsync(Request(subjectId, seriesId, seriesUnitId, "Vocabulary", profileId: profile.Id)
-            with { UseWeakWords = true, SourceLang = "en", TargetLang = "de" });
+        var fromRequest = await pipeline.BriefAsync(fromProfileRequest with { UseWeakWords = true, SourceLang = "en", TargetLang = "de" });
 
         Assert.Contains("the wolf (B-21)", fromRequest.RequiredWords);
         Assert.DoesNotContain("lupus (B-21, fr)", fromRequest.RequiredWords);
@@ -1636,5 +1671,113 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var error = await Assert.ThrowsAsync<AgentUsageException>(() => commands.RunAsync(command, default));
 
         Assert.Contains("--use-weak braucht --child", error.Message);
+    }
+
+    /// <summary>
+    /// B-311: the location lookup used to read only the first page of series (the client's default of 50), so a
+    /// valid series or unit past it was rejected as a usage error. Fifty series that sort before the target are
+    /// created here, so the target is past the first page no matter what else the shared database holds. Red if
+    /// <c>--series</c> alone goes through the series list again (first call), or if the unit search without
+    /// <c>--series</c> reads only one page (second call).
+    /// </summary>
+    [Fact]
+    public async Task Reihe_und_Unit_jenseits_der_ersten_Seite_werden_gefunden()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var subject = await creator.CreateSubjectAsync(new CreateSubjectDto($"Agent-Test Seite 2 {Guid.NewGuid():N}"));
+        for (var i = 0; i < 50; i++)
+            await creator.CreateSeriesAsync(new CreateTextbookSeriesDto(
+                $"aaa B-311 {i:D2} {Guid.NewGuid():N}", null, subject.Name, subject.Id, null, null, null, null));
+        var target = await creator.CreateSeriesAsync(new CreateTextbookSeriesDto(
+            $"zzz B-311 {Guid.NewGuid():N}", null, subject.Name, subject.Id, null, null, null, null));
+        var unit = await creator.CreateUnitAsync(target.Id, new CreateSeriesUnitDto("Unit 1", null, 1, null, null, null, null));
+        // The premise of the case, asserted rather than assumed: the client's default page does not reach the target.
+        Assert.DoesNotContain(await creator.ListSeriesAsync(), s => s.Id == target.Id);
+        var commands = Commands(creator, pipeline);
+
+        await commands.RunAsync(CommandLine.Parse(["briefing", "--child", "1", "--series", target.Id.ToString()]), default);
+        await commands.RunAsync(CommandLine.Parse(["briefing", "--child", "1", "--series-unit", unit.Id.ToString()]), default);
+    }
+
+    /// <summary>
+    /// B-311, the side finding: an unknown <c>--series</c> without <c>--series-unit</c> used to get the diagnosis for an
+    /// empty catalog ("Es gibt keine Reihe mit Unit") instead of its own id. Red if the series is no longer looked up by id.
+    /// </summary>
+    [Fact]
+    public async Task Eine_unbekannte_Reihe_ohne_Unit_wird_mit_ihrer_Id_gemeldet()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline)
+            .RunAsync(CommandLine.Parse(["briefing", "--child", "1", "--series", "987654"]), default));
+
+        Assert.Contains("Reihe 987654", error.Message);
+    }
+
+    /// <summary>
+    /// B-312: <c>profiles --subject</c> with a subject id the server does not know used to print "there is no creator
+    /// profile yet" and exit 0 - false as soon as profiles exist. It is a usage error naming the id, like every other
+    /// wrong id of the agent (B-301/B-307/B-308). Red if the subject is no longer checked before the listing.
+    /// </summary>
+    [Theory]
+    [InlineData]
+    [InlineData("--child", "1")]
+    public async Task Profile_fuer_ein_unbekanntes_Fach_sind_eine_Fehlbedienung(params string[] extra)
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        // The premise: profiles exist, so "there is none yet" would be a false statement, not a harmless one.
+        await creator.CreateProfileAsync(new CreateCreatorProfileDto(
+            $"Profil B-312 {Guid.NewGuid():N}", null, null, null, null, null, null,
+            SourceLang: "en", TargetLang: "de", Persona: null, Didactics: null, DefaultTypes: null, Active: true));
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline)
+            .RunAsync(CommandLine.Parse(["profiles", "--subject", "987654", .. extra]), default));
+
+        Assert.Contains("Fach 987654", error.Message);
+    }
+
+    /// <summary>
+    /// B-279: <c>--general</c> drops the child as the audience, but <c>--use-weak</c> still pulled that child's weak words
+    /// into the required vocabulary - a "general" exercise carrying one child's remedial words. The combination is a usage
+    /// error, the line B-21 AC 4 drew for <c>--use-weak</c> without a child. Red if the guard is removed: the briefing
+    /// is then built without complaint.
+    /// </summary>
+    [Fact]
+    public async Task Foerdermodus_mit_general_bricht_mit_Meldung_ab()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Foerdermodus-General");
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => pipeline.BriefAsync(
+            Request(subjectId, seriesId, seriesUnitId, "Vocabulary", general: true) with { UseWeakWords = true }));
+
+        Assert.Contains("--general", error.Message);
+    }
+
+    /// <summary>
+    /// B-264: without a child, <c>--interests</c> tagged the exercise but never reached the prompt - the model was told
+    /// "neutral everyday situations" while the catalog claimed a dressing the exercise did not have. Red if the labels
+    /// are dropped from the briefing (the label is missing from the prompt) or if the childless prompt keeps its
+    /// "neutral" instruction next to them (the contradiction comes back). The control case without interests keeps that
+    /// instruction - otherwise the second assertion would also pass for a prompt that lost it everywhere.
+    /// </summary>
+    [Fact]
+    public async Task KindloserPfad_KleidetDieAufgabenInDieAngegebenenInteressenEin()
+    {
+        var (pipeline, creator, chat) = BuildAgent(VocabularyJson, VocabularyJson);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Einkleidung-Prompt");
+        var einhorn = await creator.CreateInterestTagAsync(new CreateInterestTagDto(TestApi.UniqueName("Einhorn")));
+
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Vocabulary",
+            childId: null, interests: [einhorn.Slug]));
+        var prompt = string.Join("\n", chat.LastMessages.Select(m => m.Text));
+
+        Assert.Contains($"Kleide die Aufgaben in die Interessen ein: {einhorn.Label}", prompt);
+        Assert.DoesNotContain("neutrale", prompt);
+        var detail = await creator.GetExerciseDetailAsync(outcome.ExerciseId!.Value);
+        Assert.Contains(einhorn.Label, detail.Description);
+
+        await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Vocabulary", childId: null));
+        Assert.Contains("neutrale", string.Join("\n", chat.LastMessages.Select(m => m.Text)));
     }
 }

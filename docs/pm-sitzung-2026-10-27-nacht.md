@@ -837,7 +837,6 @@ geschlossen; zwei fanden ein Geschwister außerhalb (B-301 → B-307; B-302 → 
    Dazu unverändert (H)–(N) aus Lauf E.
 4. Unverändert offen: englische Texte in `frontend/src/i18n/en.ts` gegenlesen (B-294 AK 7), B-291 (`Frage`), B-267, B-268.
 
-
 ## Lauf G, Teil 1 — B-304 Der Rahmen der Arcade auf Englisch, Zähler 0
 
 Auftrag: „Mache einen Nachtlauf“ (Nutzer, 2026-10-27 abends) – der Auftragstext aus [nachtlauf.md](nachtlauf.md) mit

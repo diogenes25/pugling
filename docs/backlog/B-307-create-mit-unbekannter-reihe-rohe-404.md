@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-22, B-106]
 wartet_auf: ""
+nachgeschaut: "2026-10-28"
 ---
 
 # B-307 · `create --series 99999 --series-unit 1` endet als rohe 404 statt als Fehlbedienung
@@ -45,3 +46,9 @@ Vater-Web.“); je ein Test, der den Typ, die Id und `chat.Calls == 0` zusichert
   zurückgestellt: dieselbe Meldung steht jetzt dreimal (ein Helfer verhindert Drift); `plan`/`exam` wiederholen die
   Fehlbedienung je Teil, `profiles --child` evtl. roh → [B-308](B-308-agent-fehlbedienung-plan-exam-profiles.md).
   Rollengang: Agent ohne Oberfläche, Tests sind der Weg. **`abgenommen`.**
+- **2026-10-28** — nachgeschaut (Lauf H, Teil 1, frischer `pugling-reviewer` am Commit `d8e4a0a`): jedes Verb mit einer
+  getippten unbekannten Reihen-Id durchgespielt (`create`/`briefing` mit und ohne Profil-Fach, `exam`/`plan` mit und ohne
+  `--title`, `fill`, `profiles`); Mutanten beider Fälle hergeleitet (Fang `AgentCommands.cs:476` bzw.
+  `BriefingBuilder.cs:31` entfernt), je rot. **Entgangen:** `--series 987654` ohne `--series-unit` bekam weiter die falsche
+  Diagnose – identisch mit [B-311](B-311-agent-reihensuche-liest-nur-50-reihen.md), dort ergänzt und im Sprint behoben.
+  🟢: `Assert.Equal(0, chat.Calls)` kann nie fallen → als Absichtserklärung beschriftet (Kommentar, ohne Zählung).

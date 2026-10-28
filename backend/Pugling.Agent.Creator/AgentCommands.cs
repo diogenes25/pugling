@@ -155,6 +155,8 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
     private async Task ShowProfilesAsync(CommandLine command, CancellationToken ct)
     {
         var subjectId = command.Value("subject") is not null ? command.RequiredInt("subject") : (int?)null;
+        // The listing does not check the filter: an unknown subject id came back as "no profile yet", exit 0 (B-312).
+        var subject = subjectId is int sid ? await GetSubjectOrUsageErrorAsync(sid, ct) : null;
 
         if (command.Value("child") is not null)
         {
@@ -189,7 +191,9 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
         var profiles = await creator.ListProfilesAsync(subjectId: subjectId, ct: ct);
         if (profiles.Count == 0)
         {
-            Console.WriteLine("Es gibt noch kein Creator-Profil. Ohne Profil arbeitet der Agent als Generalist.");
+            Console.WriteLine(subject is null
+                ? "Es gibt noch kein Creator-Profil. Ohne Profil arbeitet der Agent als Generalist."
+                : $"Kein Creator-Profil für Fach {subject.Id} ({subject.Name}). Ohne Profil arbeitet der Agent als Generalist.");
             return;
         }
 
@@ -217,7 +221,8 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
         Console.WriteLine(briefing.Individual
             ? $"Für:     {briefing.Audience}"
               + (briefing.Interests.Count > 0 ? $" (Interessen: {string.Join(", ", briefing.Interests)})" : "")
-            : "Für:     den gemeinsamen Katalog (allgemeine Übung)");
+            : "Für:     den gemeinsamen Katalog (allgemeine Übung)"
+              + (briefing.Interests.Count > 0 ? $" (eingekleidet in: {string.Join(", ", briefing.Interests)})" : ""));
         Console.WriteLine($"Ort:     {briefing.SubjectName} › {briefing.SeriesUnitLabel}");
         if (briefing.Source is { } source) Console.WriteLine($"Quelle:  {source}");
         Console.WriteLine($"Typ:     {outcome.TypeKey}");
@@ -452,8 +457,12 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
 
         if (wantedSeries is { } seriesId && wantedUnit is { } seriesUnitId) return (seriesId, seriesUnitId);
 
-        var series = await creator.ListSeriesAsync(ct: ct);
-        foreach (var s in series.Where(s => wantedSeries is null || s.Id == wantedSeries))
+        // A named series is looked up by id, not searched for in a listing: the listing is paged, and a valid series
+        // past its first page was rejected as a typo (B-311).
+        IEnumerable<TextbookSeriesResponse> candidates = wantedSeries is { } named
+            ? [await GetSeriesOrUsageErrorAsync(named, ct)]
+            : await ListAllSeriesAsync(ct);
+        foreach (var s in candidates)
         {
             var units = await creator.ListUnitsAsync(s.Id, ct: ct);
             if (units.Count == 0) continue;
@@ -477,18 +486,53 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
             : "Es gibt keine Reihe mit Unit – lege erst Lehrwerk-Struktur an oder gib --series und --series-unit an.");
     }
 
-    /// <summary>The subject a series carries (for profile matching); throws if the series has none set.</summary>
-    private async Task<int> ResolveSubjectIdAsync(int seriesId, CancellationToken ct)
+    /// <summary>
+    /// Every series, page by page. Only the search for a bare <c>--series-unit</c> (or for any unit at all) needs the
+    /// whole catalog; one page would report a unit of the 51st series as non-existent (B-311).
+    /// </summary>
+    private async Task<IReadOnlyList<TextbookSeriesResponse>> ListAllSeriesAsync(CancellationToken ct)
     {
-        TextbookSeriesResponse series;
+        // Small on purpose: the test proves the loop with 51 series, which a larger page would swallow in one call.
+        const int pageSize = 50;
+        var all = new List<TextbookSeriesResponse>();
+        while (true)
+        {
+            var page = await creator.ListSeriesAsync(skip: all.Count, take: pageSize, ct: ct);
+            all.AddRange(page);
+            if (page.Count < pageSize) return all;
+        }
+    }
+
+    /// <summary>A series by id; an unknown id is a usage error naming it, not a raw 404 (B-307, B-311).</summary>
+    private async Task<TextbookSeriesResponse> GetSeriesOrUsageErrorAsync(int seriesId, CancellationToken ct)
+    {
         try
         {
-            series = await creator.GetSeriesAsync(seriesId, ct);
+            return await creator.GetSeriesAsync(seriesId, ct);
         }
         catch (PuglingApiException ex) when (ex.StatusCode is System.Net.HttpStatusCode.NotFound)
         {
             throw new AgentUsageException($"Reihe {seriesId} gibt es nicht – prüfe die Id im Vater-Web.");
         }
+    }
+
+    /// <summary>A subject by id; an unknown id is a usage error naming it (B-312).</summary>
+    private async Task<SubjectResponse> GetSubjectOrUsageErrorAsync(int subjectId, CancellationToken ct)
+    {
+        try
+        {
+            return await creator.GetSubjectAsync(subjectId, ct);
+        }
+        catch (PuglingApiException ex) when (ex.StatusCode is System.Net.HttpStatusCode.NotFound)
+        {
+            throw new AgentUsageException($"Fach {subjectId} gibt es nicht – prüfe die Id im Vater-Web.");
+        }
+    }
+
+    /// <summary>The subject a series carries (for profile matching); throws if the series has none set.</summary>
+    private async Task<int> ResolveSubjectIdAsync(int seriesId, CancellationToken ct)
+    {
+        var series = await GetSeriesOrUsageErrorAsync(seriesId, ct);
         return series.SubjectId
             ?? throw new AgentUsageException(
                 $"Reihe {seriesId} ({series.Name}) hat kein Fach zugeordnet – setze eines im Vater-Web, bevor du Übungen anlegst.");

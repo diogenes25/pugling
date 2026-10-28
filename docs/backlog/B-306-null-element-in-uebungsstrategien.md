@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-22]
 wartet_auf: ""
+nachgeschaut: "2026-10-28"
 ---
 
 # B-306 · Ein `null`-Element aus dem JSON-Modus besteht die Prüfung der Übungsstrategien und stürzt danach roh ab
@@ -48,3 +49,9 @@ Einträge weglassen; eine `null`-Lücke als Regelverletzung (dann greift die Rep
   nur „leer“ (steht in jeder `NotBlank`-Meldung) → jetzt „Position 3“ und „(null)“; der Testkommentar sagt, dass eine
   `null` für `Clean` genügt. `CreatorAgentTests` **62/62**, Suite **984/984 `exit=0`**. Rollengang: Agent ohne
   Oberfläche, Tests sind der Weg. **`abgenommen`.**
+- **2026-10-28** — nachgeschaut (Lauf H, Teil 1, frischer `pugling-reviewer` am Commit `d8e4a0a`, Dateien im Stand des
+  Commits): alle vier Strategien in `Validate`, `ExpectedAnswers` und `ToPayloadAsync` auf Dereferenzierung eines
+  `null`-Elements nach bestandener Prüfung durchgesehen – kein Rest; Mutanten der drei Fälle hergeleitet (`Clean` zurück
+  auf `v.Trim()`, Zeilen 45-46 entfernt, `a.Trim()`), je rot; die Behauptung „trägt auch `w?.Trim()` in Zeile 91“
+  nachgerechnet (die `null` steht in der Bank vor „stable“). **Entgangen:** [B-318](B-318-null-element-ohne-fall-in-drei-strategien.md)
+  (🟢, kein Fall für ein `null`-Element in Vokabel/Übersetzung/Grammatik), im Sprint behoben.

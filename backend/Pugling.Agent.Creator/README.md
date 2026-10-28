@@ -156,7 +156,7 @@ Eines von `--child`/`--profile` ist Pflicht – sonst fehlt sowohl die Zielgrupp
 | `--days <n>` | Dauer des Lehrplan-Zeitraums in Tagen | 14 |
 | `--words a,b,c` | Pflicht-Wortschatz (unveränderlich) | – |
 | `--interests a,b` | Interessen-Slugs, in die die Übung eingekleidet wird — **nur ohne Kind** | – |
-| `--use-weak` | schwach beherrschte Wörter des Kindes als Wortschatz, nur des Sprachpaars der Übung; braucht `--child` | aus |
+| `--use-weak` | schwach beherrschte Wörter des Kindes als Wortschatz, nur des Sprachpaars der Übung; braucht `--child`, verträgt kein `--general` | aus |
 | `--source-lang`/`--target-lang` | Lern-/Muttersprache | Profil, sonst `en`/`de` |
 | `--points <n>` | empfohlene Zielpunkte, die eine neue Position erbt (max. 200) | 20 |
 | `--dry-run` | nur planen und drucken | aus |

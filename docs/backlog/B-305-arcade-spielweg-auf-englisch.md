@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: "Mensch: die neuen englischen Texte (play.*, practice.*, test.*, problem.*) in src/i18n/en.ts gegenlesen (AK 6)"
+nachgeschaut: "2026-10-28"
 ---
 
 # B-305 · Der Spielweg der Sohn-Arcade auf Englisch: Üben, Test und die Übungskomponenten
@@ -80,3 +81,11 @@ Verwendung. Angriffsplan: erst die Bildschirme, dann je Komponente Schlüssel od
   „Flip 🔄“, „Knew it!“, danach „Card 2“ oder „ROUND DONE!“). Der Vater ist mit AK 3 belegt (Bausteine außerhalb des
   Scopes deutsch, Vitest); Creator Regressionszeuge. Chrome-Extension nicht genutzt. **`abgenommen`**, `wartet_auf`
   das menschliche Gegenlesen (AK 6).
+- **2026-10-28** — nachgeschaut (Lauf H, Teil 1, frischer `frontend-reviewer` am Commit `43b5eef`): `SohnPractice.tsx`
+  und `SohnTest.tsx` vollständig auf deutsche Literale gelesen (nur Kommentare, `COMBO ×`, `TEST ·`); `ArcadeScope` nur in
+  `SohnApp.tsx`, alle sieben Bausteine der Vater-Vorschau über `useChromeT` (außerhalb `getFixedT("de")`); AK 4 per grep
+  ohne Typnamen bestätigt; Mutante je Fall in `arcadeSpielweg.test.tsx` hergeleitet. **Entgangen:**
+  [B-319](B-319-zwei-zusicherungen-aus-b-305-tragen-nicht.md) (🟡: der englische Zweig von `useErrorMessage` für
+  Nicht-Arcade-Codes und der Zweig „ROUND DONE!“ in `sprache.spec.ts` tragen nicht) und
+  [B-320](B-320-klausur-fehler-erreicht-den-bildschirm-nicht.md) (🟡, älter als B-305: ein Fehler beim Beantworten in der
+  Klausur erreicht nie den Bildschirm, AK 1 dort nur scheinbar erfüllt).

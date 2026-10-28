@@ -20,6 +20,13 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
     /// <summary>Builds the briefing for a request.</summary>
     public async Task<CreatorBriefing> BuildAsync(GenerationRequest request, CancellationToken ct = default)
     {
+        // Weak words are what tailors an exercise to one child; `--general` is the promise that it is tailored to
+        // nobody. Silently honoring one of the two would break the other (B-279, the line of B-21 AC 4).
+        if (request.General && request.UseWeakWords)
+            throw new AgentUsageException(
+                "--use-weak passt nicht zu --general: die schwach beherrschten Wörter gehören zu einem Kind, "
+                + "eine allgemeine Übung ist für keines zugeschnitten.");
+
         var subject = await creator.GetSubjectAsync(request.SubjectId, ct);
         // The series reaches here unchecked when --series and --series-unit are both given: a typo is a usage
         // error, not a raw 404 (B-307, the sibling of B-301 in `fill`).
@@ -63,11 +70,16 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
             ? request.Words
             : [.. (child?.WeakWords ?? []).Select(w => w.Word)];
 
+        // The same `--general` reading as the Child line below: what the briefing carries decides, not what
+        // was typed - so a general exercise built from a child's material is dressed by --interests.
+        var dressedChild = request.General ? null : child;
+        var dressing = await ResolveInterestTagsAsync(request, dressedChild, ct);
+
         return new CreatorBriefing(
             Profile: profile is null ? null : Facts(profile, series, unit),
             // `--general` keeps the child's series and unit but drops the person: the subject matter is
             // right, the exercise stays usable for the shared catalog.
-            Child: request.General ? null : child,
+            Child: dressedChild,
             SubjectId: subject.Id,
             SubjectName: subject.Name,
             SeriesUnitId: targetUnit.Id,
@@ -77,9 +89,10 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
             TargetLang: targetLang,
             ExistingExerciseTitles: [.. existing.Select(e => e.Title)],
             RequiredWords: requiredWords,
-            // The same `--general` reading as one line above: what the briefing carries decides, not what
-            // was typed - so a general exercise built from a child's material is dressed by --interests.
-            InterestTagIds: await ResolveInterestTagIdsAsync(request, request.General ? null : child, ct),
+            InterestTagIds: [.. dressing.Select(t => t.Id)],
+            // With a child its interests reach the prompt through ChildFacts; without one these labels are the only
+            // way they do - tagging alone left the catalog claiming a dressing the exercise did not have (B-264).
+            CatalogInterests: dressedChild is null ? [.. dressing.Select(t => t.Label)] : [],
             GrammarTopicIds: targetUnit.GrammarTopicIds);
     }
 
@@ -99,7 +112,7 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
     /// because the silent alternative is an exercise that reports success and carries no dressing.
     /// </para>
     /// </summary>
-    private async Task<IReadOnlyList<int>> ResolveInterestTagIdsAsync(
+    private async Task<IReadOnlyList<(int Id, string Label)>> ResolveInterestTagsAsync(
         GenerationRequest request, ChildFacts? child, CancellationToken ct)
     {
         if (child is not null)
@@ -112,12 +125,12 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
                     + "nimm --general dazu, wenn du sie stattdessen vorgeben willst - dann entfällt allerdings die "
                     + "gesamte Zuschneidung auf das Kind (schwache Wörter, Name, Klassenstufe, Anrede), nicht nur "
                     + "die Einkleidung.");
-            return [.. child.WeightedInterests.Select(i => i.TagId)];
+            return [.. child.WeightedInterests.Select(i => (i.TagId, i.Label))];
         }
 
         if (request.Interests.Count == 0) return [];
 
-        var ids = new List<int>();
+        var tags = new List<(int Id, string Label)>();
         var unknown = new List<string>();
         foreach (var wanted in request.Interests)
         {
@@ -131,7 +144,7 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
             // Case-insensitive, because slugs are lower case by derivation (InterestSlug) - folding case
             // can only ever match what the caller read off the listing.
             var tag = treffer.FirstOrDefault(t => string.Equals(t.Slug, slug, StringComparison.OrdinalIgnoreCase));
-            if (tag is not null) ids.Add(tag.Id);
+            if (tag is not null) tags.Add((tag.Id, tag.Label));
             else unknown.Add(wanted);
         }
 
@@ -141,7 +154,7 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
                 + "Die vorhandenen Stichwörter listet `pugling-creator` nicht selbst - sie stehen unter "
                 + "GET api/v1/creator/interest-tags.");
 
-        return ids;
+        return tags;
     }
 
     /// <summary>

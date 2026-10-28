@@ -27,6 +27,7 @@ public sealed record CreatorBriefing(
     IReadOnlyList<string> ExistingExerciseTitles,
     IReadOnlyList<string> RequiredWords,
     IReadOnlyList<int> InterestTagIds,
+    IReadOnlyList<string> CatalogInterests,
     IReadOnlyList<int> GrammarTopicIds)
 {
     /// <summary>Is this tailored to a child (instead of for the general catalog)?</summary>
@@ -35,8 +36,11 @@ public sealed record CreatorBriefing(
     /// <summary>Who this is designed for - child name or profile name (for output only).</summary>
     public string Audience => Child?.Name ?? Profile?.Name ?? "Allgemeiner Katalog";
 
-    /// <summary>The child's interests; deliberately empty in general mode (nothing to dress up).</summary>
-    public IReadOnlyList<string> Interests => Child?.Interests ?? [];
+    /// <summary>
+    /// What the tasks are dressed in: the child's interests, or in general mode the labels of the tags named with
+    /// <c>--interests</c> (<see cref="CatalogInterests"/>, B-264) - empty if neither was given.
+    /// </summary>
+    public IReadOnlyList<string> Interests => Child?.Interests ?? CatalogInterests;
 
     // <see cref="GrammarTopicIds"/> are the target unit's grammar topics (B-155, decision 7): the agent takes them
     // over as the form would pre-fill them, only without a human who deselects - in a mixed unit it tags broader
@@ -44,9 +48,9 @@ public sealed record CreatorBriefing(
     // The model itself has no say in it; the deterministic pipeline gets no extra model decision.
 
     // Why <see cref="InterestTagIds"/> exists next to <see cref="Interests"/>, which reads like the same
-    // thing: this one is for the PROMPT (free text included, because the nuance the taxonomy lacks is
-    // exactly what dresses a task well), that one is for the CATALOG (ids only, because only a stable key
-    // lets a second child's profile be compared against it - B-46, decision 1).
+    // thing: that one is for the PROMPT (a child's free text included, because the nuance the taxonomy lacks
+    // is exactly what dresses a task well; without a child the tag labels), this one is for the CATALOG (ids
+    // only, because only a stable key lets a second child's profile be compared against it - B-46, decision 1).
 
     /// <summary>The child's weakly mastered words; empty in general mode.</summary>
     public IReadOnlyList<WordMasteryResponse> WeakWords => Child?.WeakWords ?? [];
@@ -114,8 +118,17 @@ public sealed record CreatorBriefing(
             // The general mode needs this statement: otherwise the model fills the gap with invented
             // preferences and the exercise would be useless for the shared catalog.
             text.AppendLine("## Kein bestimmtes Kind");
-            text.AppendLine("- Diese Übung geht in den gemeinsamen Katalog: wähle neutrale, altersgerechte");
-            text.AppendLine("  Alltagssituationen, keine persönliche Ansprache und keine erfundenen Vorlieben.");
+            // With --interests the dressing is given (see the request part), so "neutral" would contradict it (B-264).
+            if (CatalogInterests.Count > 0)
+            {
+                text.AppendLine("- Diese Übung geht in den gemeinsamen Katalog: altersgerechte Situationen aus den vorgegebenen");
+                text.AppendLine("  Interessen, keine persönliche Ansprache und keine weiteren erfundenen Vorlieben.");
+            }
+            else
+            {
+                text.AppendLine("- Diese Übung geht in den gemeinsamen Katalog: wähle neutrale, altersgerechte");
+                text.AppendLine("  Alltagssituationen, keine persönliche Ansprache und keine erfundenen Vorlieben.");
+            }
         }
 
         if (RequiredWords.Count > 0)

@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-304]
 wartet_auf: ""
+nachgeschaut: "2026-10-28"
 ---
 
 # B-316 · Die Zählschlüssel aus B-304 haben keinen Singular-/Plural-Fall
@@ -30,3 +31,7 @@ hergeleitet): `days_one`/`count_one` in de **und** en streichen → Parität gr�
   `objectives.stagesDone`, `practice.cards`, je de/en mit 1 und 2) → am echten Code grün (Testlücke). Mutante
   `objectives.count_one` in de und en gestrichen → **2 failed** (je Sprache einer). `badges.fresh_one` bleibt
   bewusst ohne Fall – der Aufrufer übersetzt nur bei mehr als einem. **`abgenommen`** mit Teil 2.
+- **2026-10-28** — nachgeschaut (Lauf H, Teil 1, frischer `frontend-reviewer` am Commit `43b5eef`): die acht neuen Zeilen in
+  `i18n.test.ts` gegen `de.ts:144-160`/`en.ts:138-154` nachgerechnet; alle Aufrufstellen (`SohnProgress.tsx:54`,
+  `MyObjectives.tsx:43/63`, `SohnPractice.tsx:211`) übergeben `count`; Ausnahme `badges.fresh` begründet
+  (`GamificationPanels.tsx:89`). Mutante „`count_one` streichen“ → rot hergeleitet. Kein Entgleiten.
