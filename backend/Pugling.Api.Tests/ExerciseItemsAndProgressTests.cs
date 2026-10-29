@@ -352,6 +352,17 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
             config = new { direction = "front-to-back", refs = new[] { hello, bye, sun, moon }.Select(id => new { vocabularyId = id }) },
         });
         Assert.Equal(HttpStatusCode.OK, refsAppend.StatusCode);
+
+        // Refs alone, dropping a played word - the plain path of an API client (B-332). Red if the check only looks at
+        // `items`: then a refs-only PUT is not checked at all and the reconcile moves the progress with a 200.
+        var refsOnlyDrop = await father.PutAsJsonAsync(exerciseUrl, new
+        {
+            title = "Umbenannt",
+            orderIndex = 1,
+            rewardPoints = 10,
+            config = new { direction = "front-to-back", refs = new[] { bye, sun, moon }.Select(id => new { vocabularyId = id }) },
+        });
+        Assert.Equal(HttpStatusCode.Conflict, refsOnlyDrop.StatusCode);
     }
 
     // refs-from-tags is a snapshot over the same reconciliation (B-323): a snapshot that drops a played word

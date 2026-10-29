@@ -28,6 +28,10 @@ verlassen) und verletzt den Unique-Index `(ExerciseId, VocabularyId)` (`PuglingD
 Unabhängig von der Plan-Sperre und älter als [B-323](B-323-ganzer-uebungs-put-umgeht-woerter-sperre.md) (der
 Präfix-Check lässt den Doppelten durch, weil er im angehängten Ende steht). Darum `entgangen_bei` leer.
 
+Derselben Klasse („halb geschrieben, dann `500`“) gehört ein Inline-Item mit `vocabularyId: 0` oder negativ an: die
+Existenzprüfung filtert `is > 0` (`ExerciseControllers.cs:54-60`), `ReconcileAsync` scheitert dann am Fremdschlüssel
+(Nachschau Lauf J, aus Code gelesen).
+
 Zu klären beim Ausformulieren: Code (`duplicate_vocabulary_in_exercise` wie an der Einzel-Route, oder
 `validation_error`), Prüfung auch für Inline-Wörter per Schlüssel; erst messen (rote Probe), denn aus Code gelesen.
 

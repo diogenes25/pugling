@@ -13,6 +13,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-10-29"
 ---
 
 # B-323 · Ein ganzer Übungs-PUT und `refs-from-tags` umgehen die Wörter-Sperre einer gespielten Übung
@@ -98,3 +99,4 @@ Integrationstests in `ExerciseItemsAndProgressTests`; Live-Probe gegen die laufe
   Präfix“ **1 failed** (Z. 309, Tausch/Einfügen); Mutante „Prüfung erst nach dem Speichern“ **1 failed** (Z. 314, Titel
   `Umbenannt`). Danach betroffene Klassen **27/27**.
 - **2026-10-28** — Review `pugling-reviewer`: 🟡 Refs-Zweig der Prüfung ohne Fall → zwei Fälle ergänzt (Mutante „Items vor Refs“ **1 failed** Z. 332, „Refs-Zeile gestrichen“ **1 failed** Z. 332, „Refs nur neben Items“ **1 failed** Z. 354), zählt; 🟡 doppeltes Wort → 500 (älter, außerhalb des Diffs) → [B-331](B-331-doppeltes-wort-im-uebungs-payload-500.md), Wiki-Satz auf `409` verengt; 🟢 Kommentar zu Schlüssel-Refs, Szenario-Schritt 7 sichert den `409` zu. Volle Suite **1004/1004**, E2E **99 passed** (nach der letzten Änderung gestartet). Rollengang Creator: Live-Probe gegen frisch gestarteten Server (Wegwerf-DB, Port 5280) – Übung anlegen, über die Supervisor-API in einen Plan nehmen, `PUT` ohne erstes Wort → `409 exercise_items_locked`, Titel unverändert; Anhängen → `200`. Vater und Sohn Regressionszeugen (E2E). **Abgenommen**, Commit `1a3a73f`.
+- **2026-10-29** — Nachschau in Lauf J (frischer `pugling-reviewer`, `git show 1a3a73f`): 🟡 PUT **nur mit `refs`**, der ein Wort streicht, von keinem Fall gehalten (Mutante „nur `items` prüfen“ blieb grün) → [B-332](B-332-put-nur-mit-refs-ungetestet.md), im Sprint behoben. 🟢 Doku nannte den `PATCH`-Wort-Tausch und die Schlüssel-Ordnung von `refs-from-tags` nicht – nachgetragen. Vorschau gegen Schreibweg (`VocabKey.Generate` beidseits), Prüfung vor jeder Zuweisung (`Update` Z. 437), alle Schreiber von `ExerciseItems` (grep `ReconcileAsync`/`SyncFromConfigAsync`/`ExerciseItems.Add|Remove`) geprüft.

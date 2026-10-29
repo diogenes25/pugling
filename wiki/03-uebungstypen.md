@@ -147,7 +147,9 @@ werden, weil dadurch bestehender Fortschritt auf andere Wörter kippen würde. A
 erlaubt. Die Sperre antwortet mit `409 exercise_items_locked` (seit B-205; das Löschen einer benutzten Übung meldet
 `409 exercise_in_use`). Sie gilt auf jedem Weg, der die Item-Liste schreibt: den Einzel-Routen oben, dem ganzen
 `PUT` der Übung mit `items`/`refs` und `refs-from-tags` (seit B-323). Ein mit `409` abgewiesener `PUT` schreibt auch die
-übrigen Felder nicht.
+übrigen Felder nicht. `refs-from-tags` ordnet seine Treffer nach Store-Schlüssel – ein neu getaggtes Wort, das alphabetisch
+vor einem gespielten liegt, ist darum kein Anhängen und wird abgewiesen. Offen bleibt der Wort-Tausch an gespielter Stelle
+per `PATCH …/items/{id}` mit neuer `vocabularyId` (B-328).
 
 ### 3.2 Reading — Leseverständnis
 

@@ -84,7 +84,7 @@ Position trägt nur Ziel, Punkte, Stufe, Leitner (leere Overrides erben die Übu
 > ⚠️ Eine Übung wird **nicht kopiert**. Ändert man die Items einer **Vokabelübung**, während sie in einem Plan liegt, sind
 > index-verschiebende Mutationen gesperrt (`409 exercise_items_locked`, seit B-205; vorher `exercise_in_use`) – über die
 > Item-Routen, den ganzen `PUT` und `refs-from-tags` (B-323); Anhängen ist erlaubt. Die Inhaltslisten der übrigen Typen
-> sperrt nichts (offen: B-328). Löschen einer genutzten Übung ist gesperrt. Siehe [Auswertung](#3-übung--auswertung-des-kindes) zur Robustheit.
+> sperrt nichts, und der Wort-Tausch per `PATCH …/items/{id}` bleibt erlaubt (beides offen: B-328). Löschen einer genutzten Übung ist gesperrt. Siehe [Auswertung](#3-übung--auswertung-des-kindes) zur Robustheit.
 
 ### Woher der Stoff kommt: Buchreihe → Kind → Creator-Profil
 

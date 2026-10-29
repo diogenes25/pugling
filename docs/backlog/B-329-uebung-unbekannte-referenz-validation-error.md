@@ -29,6 +29,10 @@ und zwar **innerhalb derselben Anfrage**: eine unbekannte `categoryId` meldet `i
 - `ExerciseControllers.cs:47,64` (unbekannte `vocabularyId` in `refs`/`items`); vermutlich weitere
   `ValidateConfigAsync`-Zweige (Lückentext mit unbekanntem `vocabKey`).
 
+Außerhalb des Übungspfads, gefunden in der Nachschau von Lauf J: `VocabularyStoreController.cs:250` (POST) und `:344`
+(PATCH) melden einen unbekannten `BaseFormKey` als `validation_error` – eine Referenz per Schlüssel statt Id, aber derselbe
+Sinn („Client verzweigt nach Code“).
+
 Diese Prüfungen liefern einen **Text** (`string?`), den der Aufrufer pauschal als `validation_error` meldet – die
 Umstellung braucht also einen Rückgabetyp, der den Code trägt, nicht nur ein Austauschen der Konstante.
 
