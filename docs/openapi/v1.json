@@ -22495,7 +22495,7 @@
         "tags": [
           "Creator \u2013 Interest Tags"
         ],
-        "summary": "Creates a tag. If the slug is missing, it is derived from the label. If the slug already\nexists, the existing entry comes back (idempotent) \u2013 so an agent can safely repeat the same\ncatalog build. A label that another tag already carries (exact comparison) is rejected with 409.",
+        "summary": "Creates a tag. If the slug is missing, it is derived from the label. If the slug already\nexists, the existing entry comes back (idempotent) \u2013 so an agent can safely repeat the same\ncatalog build, as long as it sends the slug (or the label it was created with). A label that another\ntag already carries (exact comparison) or lists as a synonym is rejected with 409 - deliberately unlike\n\u0060InterestTagService.EnsureAsync\u0060, which resolves the same text to that tag: here the caller names a\nnew tag, and quietly handing back a differently named one would hide that it already exists (B-141).",
         "requestBody": {
           "content": {
             "application/json": {
