@@ -506,7 +506,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (56)
+### Offen (54)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -538,7 +538,6 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-282](B-282-login-haertung-restpunkte.md) | Restpunkte der Login-Härtung (NP-3) | Defekt | `idee` | P3 | — | backend | — |
 | [B-310](B-310-profil-match-verraet-kind-ids.md) | `GET creator/profiles/match` verrät per 404 gegen 403, ob es eine Kind-Id gibt | Defekt | `idee` | P3 | — | backend | — |
 | [B-329](B-329-uebung-unbekannte-referenz-validation-error.md) | Die Übungs-Validierung meldet eine unbekannte Id als `validation_error`, die Kategorie daneben als `invalid_reference` | Defekt | `idee` | P3 | — | backend | — |
-| [B-335](B-335-klausurstart-plan-inactive-weiter-versuchen.md) | Scheitert der erste Schritt nach dem Klausurstart an `plan_inactive`, bietet die Arcade „Weiter versuchen" an | Defekt | `idee` | P3 | — | frontend | — |
 | [B-336](B-336-ki-creator-dublettenregel-schwaecher-als-store-schluessel.md) | Die Dubletten-Regel des KI-Creators ist schwächer als der Store-Schlüssel | Defekt | `idee` | P3 | — | backend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-231](B-231-fokus-ohne-fehlerkasten.md) | Wohin gehört der Fokus, wenn ein Knopf ohne Fehlerkasten gesperrt wird? | Frage | `idee` | P3 | — | frontend | — |
@@ -564,11 +563,10 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-270](B-270-bewertung-im-positions-formular.md) | Die Bewertung einer Übung beim Zusammenstellen des Plans sehen | Wunsch | `idee` | P3 | — | frontend | — |
 | [B-271](B-271-gewaehltes-profil-setzt-reihe.md) | Das zum Kind gewählte Profil setzt Reihe und Fach des KI-Creators | Wunsch | `idee` | P3 | — | backend | — |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `geschaetzt` | P3 | S | backend | — |
-| [B-286](B-286-kartenwechsel-sagt-die-aufgabe-nicht-an.md) | Nach dem Kartenwechsel hört ein Screenreader die Eingabe, aber nicht die neue Aufgabe | Aufräumen | `idee` | P3 | — | frontend | — |
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (254)</summary>
+<summary>Abgenommen (258)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -729,6 +727,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-283](B-283-buchstaben-ordnen-testluecken.md) | Buchstaben ordnen: neue Anordnung je Prüfungsversuch und die Vorschau sind ungetestet | Defekt | `abgenommen` | P3 | XS | beides | — |
 | [B-284](B-284-doppeltes-enter-ueberspringt-karte.md) | Ein doppeltes Enter während der Prüfung überspringt eine Karte | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-285](B-285-kind-konto-bleibt-nach-vater-loeschung.md) | Löscht sich ein Vater, bleibt das Konto seines Kindes als leere Hülle – und der Kind-Token bleibt gültig | Defekt | `abgenommen` | P2 | XS | backend | — |
+| [B-286](B-286-kartenwechsel-sagt-die-aufgabe-nicht-an.md) | Nach dem Kartenwechsel hört ein Screenreader die Eingabe, aber nicht die neue Aufgabe | Aufräumen | `abgenommen` | P3 | S | frontend | — |
 | [B-287](B-287-fokus-test-prueft-den-ausgangszustand.md) | Der Fokus-Test in `LetterTiles.test.tsx` prüft eine Zusicherung, die nie fallen kann | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-288](B-288-pruefungstest-misst-neu-je-position.md) | Der Prüfungstest zu „Buchstaben ordnen“ verspricht „neu je Versuch“, misst aber „neu je Position“ | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-289](B-289-all-klausel-des-konten-sweeps-ohne-probe.md) | Die `All`-Hälfte des Konten-Sweeps in `AdultsController.Delete` hat keine rote Probe | Defekt | `abgenommen` | P3 | XS | backend | — |
@@ -771,6 +770,9 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-332](B-332-put-nur-mit-refs-ungetestet.md) | Ein `PUT` nur mit `refs`, der ein gespieltes Wort streicht, ist von keinem Fall gehalten | Defekt | `abgenommen` | P2 | XS | backend | — |
 | [B-333](B-333-uebungsrunde-andere-api-fehler-ungetestet.md) | Dass nur `plan_inactive` die Übungsrunde beendet, hält kein Fall mit einem anderen Server-Fehler | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-334](B-334-patch-item-auf-belegtes-wort-500.md) | Ein Item auf das Wort eines anderen Items umzuhängen endet in `500` | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-335](B-335-klausurstart-plan-inactive-weiter-versuchen.md) | Scheitert der erste Schritt nach dem Klausurstart an `plan_inactive`, bietet die Arcade „Weiter versuchen" an | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-337](B-337-reuse-folgt-veraltetem-schluessel.md) | `reuseExisting` folgt dem Schlüssel, auch wenn der Eintrag inzwischen etwas anderes sagt | Defekt | `abgenommen` | P2 | XS | backend | — |
+| [B-338](B-338-doppeltes-wort-schreibweise-ungetestet.md) | Dass doppelte Wörter nach dem Store-Schlüssel verglichen werden, hält kein Fall mit zwei Schreibweisen | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-35](B-35-karten-umdrehen-animation.md) | Karten drehen sich beim Aufdecken um | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-36](B-36-motivations-animationen-teilziele.md) | Motivations-Animationen bei erreichten Teilzielen | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-37](B-37-uebung-abbruch-unvollendet.md) | Abgebrochene Runden: Pflicht härten, Klausur deckeln | Defekt | `abgenommen` | P1 | M | beides | — |
@@ -839,9 +841,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
-### Nach der Abnahme entgangen (100)
+### Nach der Abnahme entgangen (102)
 
-**Nachgeschaut: 249 von 254 abgenommenen** — und in 80 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 5 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 254 von 258 abgenommenen** — und in 83 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 4 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -944,21 +946,22 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-330](B-330-plan-inactive-ohne-deutsche-fassung.md) | Ein deaktivierter Plan zeigt dem Kind nach einem Reload die englische Serverzeile | [B-326] | `abgenommen` |
 | [B-332](B-332-put-nur-mit-refs-ungetestet.md) | Ein `PUT` nur mit `refs`, der ein gespieltes Wort streicht, ist von keinem Fall gehalten | [B-323] | `abgenommen` |
 | [B-333](B-333-uebungsrunde-andere-api-fehler-ungetestet.md) | Dass nur `plan_inactive` die Übungsrunde beendet, hält kein Fall mit einem anderen Server-Fehler | [B-330] | `abgenommen` |
-| [B-335](B-335-klausurstart-plan-inactive-weiter-versuchen.md) | Scheitert der erste Schritt nach dem Klausurstart an `plan_inactive`, bietet die Arcade „Weiter versuchen" an | [B-330] | `idee` |
+| [B-335](B-335-klausurstart-plan-inactive-weiter-versuchen.md) | Scheitert der erste Schritt nach dem Klausurstart an `plan_inactive`, bietet die Arcade „Weiter versuchen" an | [B-330] | `abgenommen` |
+| [B-337](B-337-reuse-folgt-veraltetem-schluessel.md) | `reuseExisting` folgt dem Schlüssel, auch wenn der Eintrag inzwischen etwas anderes sagt | [B-277] | `abgenommen` |
+| [B-338](B-338-doppeltes-wort-schreibweise-ungetestet.md) | Dass doppelte Wörter nach dem Store-Schlüssel verglichen werden, hält kein Fall mit zwei Schreibweisen | [B-331, B-141] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (5) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (4) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-141](B-141-interest-tag-label-dublette.md) | Zwei Interessen-Tags dürfen dasselbe Label tragen |
-| [B-277](B-277-schnellanlage-legt-doppelten-store-eintrag-an.md) | Der Schnellanleger im Assistenten legt für ein bekanntes Wort einen zweiten Store-Eintrag an |
-| [B-331](B-331-doppeltes-wort-im-uebungs-payload-500.md) | Ein Wort, das im Übungs-Payload zweimal steht, endet in `500` – nach dem Speichern des Kopfes |
-| [B-333](B-333-uebungsrunde-andere-api-fehler-ungetestet.md) | Dass nur `plan_inactive` die Übungsrunde beendet, hält kein Fall mit einem anderen Server-Fehler |
-| [B-334](B-334-patch-item-auf-belegtes-wort-500.md) | Ein Item auf das Wort eines anderen Items umzuhängen endet in `500` |
+| [B-286](B-286-kartenwechsel-sagt-die-aufgabe-nicht-an.md) | Nach dem Kartenwechsel hört ein Screenreader die Eingabe, aber nicht die neue Aufgabe |
+| [B-335](B-335-klausurstart-plan-inactive-weiter-versuchen.md) | Scheitert der erste Schritt nach dem Klausurstart an `plan_inactive`, bietet die Arcade „Weiter versuchen" an |
+| [B-337](B-337-reuse-folgt-veraltetem-schluessel.md) | `reuseExisting` folgt dem Schlüssel, auch wenn der Eintrag inzwischen etwas anderes sagt |
+| [B-338](B-338-doppeltes-wort-schreibweise-ungetestet.md) | Dass doppelte Wörter nach dem Store-Schlüssel verglichen werden, hält kein Fall mit zwei Schreibweisen |
 
 </details>
 
@@ -1024,6 +1027,8 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-309](B-309-leerraum-auf-der-grenze-nur-mit-leerzeichen-belegt.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-315](B-315-arcade-buchungsart-und-facette-ohne-abgleich.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-316](B-316-plural-schluessel-aus-b-304-ohne-fall.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
+| [B-337](B-337-reuse-folgt-veraltetem-schluessel.md) | `abgenommen` | Abschnitt „User Story" |
+| [B-338](B-338-doppeltes-wort-schreibweise-ungetestet.md) | `abgenommen` | Abschnitt „User Story" |
 
 <details>
 <summary>Verworfen (25)</summary>

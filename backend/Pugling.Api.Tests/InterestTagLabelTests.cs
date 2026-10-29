@@ -92,6 +92,25 @@ public class InterestTagLabelTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal([renamedId], interests!.Select(i => i.GetProperty("tagId").GetInt32()));
     }
 
+    /// <summary>
+    /// The exact comparison holds on the interest path too (decision 3 of B-141): another spelling of the renamed label is
+    /// not that tag - it becomes its own, as on the create path.
+    /// </summary>
+    [Fact]
+    public async Task Interesse_In_Anderer_Schreibweise_Trifft_Den_Umbenannten_Tag_Nicht()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var (renamedId, label) = await RenamedTagAsync(father);
+        var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = "Schreibweise", pin = "4711" }));
+
+        (await father.PutAsJsonAsync($"/api/v1/supervisor/children/{childId}/interests",
+            new { interests = new[] { new { label = label.ToUpperInvariant(), weight = 2 } } })).EnsureSuccessStatusCode();
+
+        var interests = await father.GetFromJsonAsync<List<JsonElement>>($"/api/v1/supervisor/children/{childId}/interests");
+        Assert.NotEqual(renamedId, interests!.Single().GetProperty("tagId").GetInt32());
+    }
+
     /// <summary>A tag whose label no longer derives to its slug: created as one name, renamed to another.</summary>
     private static async Task<(int Id, string Label)> RenamedTagAsync(HttpClient creator)
     {

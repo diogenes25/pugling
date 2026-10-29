@@ -73,7 +73,7 @@ Kompakter Überblick über alle Routen. **Autoritative Quelle bleibt Swagger** (
 | `GET /exercises/{id}/preview` · `POST …/preview/check` | Testmodus ohne Nebenwirkung |
 | `PATCH /exercises/{id}/sharing` · `GET/POST/DELETE /exercises/{id}/grants[/{creatorId}/{permission}]` | RWX-Freigaben; den aktuellen Stand (`executePublic`) liest `GET /exercises/{id}`, einen GET auf `…/sharing` gibt es nicht |
 | `GET/POST /profiles` · `…/{profileId}` · `GET /profiles/match?childId=` | Creator-Profile („Fachlehrer") und Treffer je Kind |
-| `GET/POST /interest-tags` · `…/{id}` | Interessen-Taxonomie (slug-idempotent; ein Label trägt höchstens ein Tag, exakter Vergleich) |
+| `GET/POST /interest-tags` · `…/{id}` | Interessen-Taxonomie (slug-idempotent; ein Label, das schon ein anderes Tag trägt, wird beim Anlegen und Umbenennen abgewiesen – exakter Vergleich, Prüfung ohne Index) |
 | `POST /teacher-accounts` (anonym) · `GET …/{creatorId}` | Lehrer-Konto (nur Creator) anlegen/lesen |
 
 **Übungstyp-Pfade:** `/vocabulary` `/reading` `/cloze` `/essays` `/listening` `/grammar` `/matching`

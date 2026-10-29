@@ -98,3 +98,93 @@ nicht, was die Entscheidung trennt (Code vs. Fehlerart).
 
 **Kein neues Tor gelandet; der Lauf hält deshalb nicht an Limit 2.** Der Nachschau-Fund liegt im Increment des Vorlaufs,
 nicht dieses Laufs.
+
+## Lauf K, Teil 2 — Das Kind in Übung und Klausur (B-335, B-286)
+
+Fortsetzung nach Rückfrage („weitermachen").
+
+**Sprint-Ziel:** *Das Kind, das übt oder eine Klausur schreibt, wird nicht an eine Wand geschickt, wenn sein Plan
+pausiert – und hört mit einem Screenreader nach jeder Karte, was jetzt gefragt ist.*
+
+**Umfang:** [B-335](backlog/B-335-klausurstart-plan-inactive-weiter-versuchen.md) (`Defekt`, aus der Nachschau von
+Teil 1) und [B-286](backlog/B-286-kartenwechsel-sagt-die-aufgabe-nicht-an.md) (`Aufräumen`, A11y). Beide autonom
+ausformuliert, gegrillt, geschätzt (XS, S). Draußen: B-280, B-275 (Vater-Seite, anderes Themengebiet), B-336 (Agent).
+
+**Entwickler-Brief:** Reines Frontend, nur die zwei Arcade-Bildschirme. B-335: derselbe Satz wie in `resume()`, im Fang
+von `start()`. B-286: Live-Region statt Fokuswechsel (B-05 hält den Fokus auf der Eingabe); ein Bauteil `TaskAnnouncer`
+neben `ClozePrompt`, immer im DOM, in die Bausteinliste des Live-Region-Wächters. Testweg: Komponententests mit roter
+Probe und Mutante je Fall; Rollengang als E2E-Gesamtlauf.
+
+### Iteration
+
+- **B-335:** rote Probe **1 failed / 10 passed** (erwartet 1); Mutante „jeder Fehler stoppt" **1 failed**.
+- **B-286:** rote Probe **5 failed / 25 passed** (erwartet 5); fünf Mutanten je **1 failed**, eine davon fängt der Wächter.
+  Ein eigener Fall prüfte zuerst nichts (Rückfall ohne Lücken) – vor dem Review umgestellt.
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `frontend-reviewer` 🟡 | nach „Weiter versuchen" entsteht die Region neu mit fertigem Text – fortgesetzte Frage stumm; Kommentar zur ersten Karte falsch | Region über allen Ansichten (frühe Returns in `view()`), in Übung und Klausur | ja |
+| 2 | `frontend-reviewer` 🟡 | kein Fall hält „derselbe Knoten" – `key=` blieb grün | Fälle mit Knoten-Identität ab dem Laden und nach dem Fehler | ja |
+| – | `frontend-reviewer` 🟢 ×3 | Rückfall-Regel doppelt; Testkommentar zum Fokus; kein englischer Fall | Helfer `showsGaps`; Kommentar; Fall unter `ArcadeScope` | nein |
+| – | Nachschau Teil 1 🟡 | `reuseExisting` folgt dem gespeicherten Schlüssel, den ein `PATCH` nicht nachzieht | [B-337](backlog/B-337-reuse-folgt-veraltetem-schluessel.md), im Sprint gebaut | nein (anderer Diff) |
+| – | Nachschau Teil 1 🟡 + 🟢 | B-331-Schlüssel-Zweig nur mit zeichengleichen Strings; `EnsureAsync` exakt ohne Fall | [B-338](backlog/B-338-doppeltes-wort-schreibweise-ungetestet.md), Fälle | nein (anderer Diff) |
+| – | Nachschau Teil 1 🟢 ×2 | Wiki-Label-Satz zu stark; Wiki ohne die neuen `400`/`409` | umformuliert, nachgetragen | nein |
+| – | Delta-Review 🟢 ×3 | B-286-Entscheidungstexte veraltet; englischer Fall trennt weniger als sein Kommentar sagt; Schlüssel-Kandidat von B-337 | berichtigt; eingeengt; nachgemessen – getragen (Z. 85) | nein |
+
+**Zähler: 2.** Das Delta-Review fand kein 🔴/🟡.
+
+Volle Suite **1017/1017**, Vitest **584/584**, `tsc -b` sauber, E2E **100 passed** (`exit=0`, nach der letzten
+Code-Änderung gestartet). Rollengang als E2E-Gesamtlauf: **Sohn** über seine Arcade-Specs (Übung, Klausur, Buchstaben
+ordnen – der Umbau der Bildschirme läuft dort durch) und die Komponentenfälle mit Knoten-Identität; **Creator** über
+`schnellanlage-ohne-dublette` (B-337 berührt den Reuse-Weg); **Vater** Regressionszeuge. Browser-Extension nicht genutzt.
+**Gerätecheck offen (B-286):** was ein echter Screenreader ansagt, beurteilt keine Maschine – einmal mit NVDA oder
+VoiceOver eine Übungsrunde und eine nach „Weiter versuchen" fortgesetzte Klausurfrage anhören.
+**B-335, B-286, B-337, B-338 `abgenommen`.**
+
+### Retrospektive
+
+**Nachschau:** Teil 1 (`0fcff19`, B-331/B-141/B-277/B-333/B-334) von einem frischen `pugling-reviewer`. **Entgangen:**
+[B-337](backlog/B-337-reuse-folgt-veraltetem-schluessel.md) bei B-277 (🟡) und
+[B-338](backlog/B-338-doppeltes-wort-schreibweise-ungetestet.md) bei B-331/B-141 (🟡 + 🟢); beide im Sprint behoben.
+B-333, B-334 sauber. `nachgeschaut` an allen fünf, mit Prüfpunkten im Verlauf.
+
+**Was die eigenen Tore durchgelassen haben:** (1) B-277 Entscheidung 2 setzte „derselbe Schlüssel" gleich „dasselbe Wort" –
+ein „also", das der `PATCH` widerlegt. Das ist (AD) zum **dritten** Mal: eine Entscheidung beruft sich auf eine
+Gleichsetzung, ohne sie am Code nachzuweisen (hier: wer schreibt `Key`, und hält er ihn nach?). (2) B-338: wieder ein Fall,
+dessen zwei Eingaben sich nicht in der Eigenschaft unterscheiden, die die Prüfung behauptet (zeichengleich, wo es um
+Faltung ging) – die Regel aus pm-loop Step 5 („die zwei Werte müssen sich im Setup unterscheiden") hat sie nicht
+erzwungen, weil der Fall „doppelt" hieß und doppelt war. (3) B-286: eine Live-Region in einem Zweig, den frühe Returns
+ersetzen, entsteht neu – der statische Wächter sieht nur `&&`/`?`, nicht Returns und `key`.
+
+**Vorschläge, nicht gelandet (Freigabe 3):**
+
+- **(AG)** Tor-Erweiterung `liveRegions.test.ts`: ein Region-Baustein (`TaskAnnouncer`, `StatusBanner` …) muss im
+  **äußersten** Return seiner Komponente stehen oder in einer Komponente ohne frühen Return; ein `key=` an einem
+  Region-Baustein ist rot. (Würde B-286 Fund 1 und 2 mechanisch fangen.)
+- **(AH)** Prosa in `docs/backlog/README.md` → Ausformulieren, Präzisierung von (AD): „Setzt eine Entscheidung zwei Größen
+  gleich (‚Schlüssel = Inhalt', ‚Code = Fehlerart'), nennt sie den Schreiber jeder Größe mit `Datei:Zeile` – wer die eine
+  ändert, ohne die andere nachzuziehen, widerlegt das ‚also'."
+- **(AI)** Prosa in pm-loop Step 5: „Behauptet ein Fall eine Faltung (Groß/Klein, Akzente, Schlüssel), unterscheiden sich
+  seine zwei Eingaben genau in dem, was gefaltet wird."
+
+**Warum der Lauf hier endet (Limit 2):** die Nachschau von Teil 2 fand im Increment von Teil 1 – dem Increment dieses
+Laufs – zwei 🟡 (B-337, B-338). Dass sie behoben sind, ändert die Regel nicht.
+
+## Ende Lauf K
+
+Endgrund: **Limit 2** – die Nachschau von Teil 2 fand im Increment von Teil 1 zwei Defekte (B-337, B-338, behoben). Zwei
+Teile, **neun Stories abgenommen**: B-331, B-141, B-277, B-333, B-334 (Teil 1, Zähler 5), B-335, B-286, B-337, B-338 (Teil 2,
+Zähler 2); dazu sieben nachgeschaut (B-330, B-332 aus Lauf J; die fünf aus Teil 1). Commits `0fcff19` und der
+Abschluss-Commit. Alles **ungepusht**.
+
+**Offene Entscheidungen für den Nutzer:**
+
+1. **Retro-Vorschläge (AE), (AF)** aus Teil 1 und **(AG)** (Tor), **(AH)**, **(AI)** aus Teil 2; dazu unverändert (AC), (AC′),
+   (AD) aus Lauf J – (AD) ist jetzt dreimal belegt – und ältere.
+2. **Gerätecheck B-286:** Screenreader-Ansage einmal am echten Gerät anhören.
+3. **Vertrag:** `POST creator/vocabulary` hat das additive Feld `reuseExisting` (B-277) – gegenlesen, ob der Name passt.
+4. Unverändert aus Lauf J: B-328 (`Frage`), B-329 (Freigabe für `invalid_reference` im Übungspfad).
+5. Nächste baubare `Defekt`-Kandidaten: B-336 (KI-Creator-Dublettenregel), B-280, B-275, B-262/B-266; zurückgestellt aus
+   B-337: `GetOrCreateAsync` folgt ebenfalls dem gespeicherten Schlüssel.

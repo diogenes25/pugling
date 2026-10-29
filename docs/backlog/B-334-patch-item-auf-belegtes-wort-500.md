@@ -13,6 +13,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-10-29"
 ---
 
 # B-334 · Ein Item auf das Wort eines anderen Items umzuhängen endet in `500`
@@ -53,3 +54,4 @@ Meldung bekommen wie beim Hinzufügen – nicht einen `500`.
   Sprint gebaut. Rote Probe **1 failed** (erwartet 1) an Z. 487 – `InternalServerError` statt `Conflict`. Mutanten: Prüfung
   entfernt **1 failed** (Z. 489); eigenes Item nicht ausgenommen **1 failed** (Z. 495, das eigene Wort gibt `409`).
 - **2026-10-29** — Abnahme Lauf K, Teil 1: volle Suite **1015/1015**, Vitest **576/576**, `tsc -b` sauber, E2E **100 passed** (`exit=0`, nach der letzten Code-Änderung gestartet; danach nur ein Testkommentar berichtigt). Rollengang als E2E-Gesamtlauf (Browser-Extension nicht genutzt): Creator/Vater über `schnellanlage-ohne-dublette` und `auch-richtig-im-uebungseditor`, Sohn als Regressionszeuge über seine Specs. Reviews: `pugling-reviewer`, `frontend-reviewer`, zwei Delta-Reviews (das letzte ohne 🔴/🟡). **Abgenommen**, Commit siehe Protokoll ([Lauf K](../pm-sitzung-2026-10-29-nacht.md)).
+- **2026-10-29** — Nachschau in Lauf K, Teil 2 (frischer `pugling-reviewer`, `git show 0fcff19`): sauber. Geprüft: Prüfung nach der Inline-Auflösung und mit Ausnahme des Items selbst (`:264`), Fälle für Id, Inline und eigenes Wort; das Frontend schickt keinen Wort-Tausch (`ExerciseEditModal.tsx:545-550`). 🟢 im Wiki fehlte der `409` → nachgetragen.

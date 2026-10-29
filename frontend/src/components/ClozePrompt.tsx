@@ -1,4 +1,4 @@
-import { clozeParts } from "../lib/cloze";
+import { clozeParts, showsGaps } from "../lib/cloze";
 import { useChromeT } from "../lib/chromeText";
 
 /**
@@ -28,13 +28,11 @@ export function ClozePrompt({ text, gapIndex, className = "word" }: {
   const t = useChromeT();
   if (!text) return null;
   const parts = clozeParts(text);
-  const gaps = parts.filter((p) => "gap" in p);
 
   // Rückfall auf den unveränderten Text, wenn die gefragte Lücke im Text gar nicht vorkommt. Der Editor
   // verhindert das beim Anlegen (`gapProblem`), umnummerierter Altbestand kann es trotzdem: alle Lücken
   // neutral zu zeichnen wäre schlimmer als die rohe Vorlage – dann rät das Kind ohne jeden Anhalt.
-  const asked = gapIndex != null && gaps.some((p) => "gap" in p && p.gap === gapIndex);
-  if (gaps.length === 0 || (gapIndex != null && !asked)) return <div className={className}>{text}</div>;
+  if (!showsGaps(parts, gapIndex)) return <div className={className}>{text}</div>;
 
   return (
     <div className={`${className} cloze-prompt`}>
@@ -58,4 +56,26 @@ export function ClozePrompt({ text, gapIndex, className = "word" }: {
       )}
     </div>
   );
+}
+
+/**
+ * Sagt die aktuelle Aufgabe in einer Live-Region an (B-286). Beim Kartenwechsel behält die Eingabe den Fokus – ein
+ * Screenreader läse sonst nur das Feld vor und nie, was gefragt ist. Den Fokus auf die Karte zu ziehen hieße, die
+ * Regel aus B-05 (Fokus auf der ersten Kachel) zu brechen; die Region lässt ihn, wo er ist.
+ *
+ * Die Region steht **immer** im DOM (B-134) und wechselt nur ihren Text. Übung und Klausur hängen sie darum über alle
+ * ihre Ansichten (Laden, Fehler, Karte): so wächst auch die erste Aufgabe und die nach einem Fehler fortgesetzte in
+ * einen schon vorhandenen Knoten. Zwei Karten mit gleichem Text werden nur einmal angesagt; die Hörstufe ohne Text sagt
+ * nichts – ihr Ton spielt an.
+ */
+export function TaskAnnouncer({ text, gapIndex }: { text?: string | null; gapIndex?: number | null }) {
+  const t = useChromeT();
+  return <p className="sr-only" role="status" aria-live="polite">{text ? t("play.newTask", { task: spoken(text, gapIndex, t) }) : ""}</p>;
+}
+
+/** Der Text, wie `ClozePrompt` ihn zeigt, mit den Lücken als Wörter – dieselbe Rückfall-Regel. */
+function spoken(text: string, gapIndex: number | null | undefined, t: ReturnType<typeof useChromeT>): string {
+  const parts = clozeParts(text);
+  if (!showsGaps(parts, gapIndex)) return text;
+  return parts.map((p) => ("text" in p ? p.text : p.gap === gapIndex ? t("play.gapAsked") : t("play.gap", { n: p.gap }))).join("");
 }

@@ -223,6 +223,7 @@ export const en = {
       decoding: "Word-by-word decoding",
       gapAsked: "the gap you're asked for",
       gap: "gap {{n}}",
+      newTask: "New task: {{task}}",
       letterBoxes: "Letter boxes",
       space: "space",
       letterOf: "Letter {{n}} of {{total}}",

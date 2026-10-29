@@ -159,3 +159,35 @@ describe("SohnPractice mit einem Plan, den es nicht mehr gibt", () => {
     expect(await screen.findByText("Server kaputt. (Ref: trace-8)")).toBeTruthy();
   });
 });
+
+/** B-286: nach dem Kartenwechsel behält das Textfeld den Fokus; die neue Aufgabe kommt über die Live-Region. */
+describe("SohnPractice, Ansage der neuen Aufgabe", () => {
+  // Ein Screenreader sagt nur an, was in eine SCHON VORHANDENE Region hineinwächst (B-134) – darum zählt, dass es vom Laden
+  // bis zur zweiten Karte derselbe Knoten ist, nicht nur, dass der Text irgendwo steht. Rot, wenn die Region in der Karte
+  // sitzt oder einen `key` trägt (neuer Knoten), wenn sie fehlt, oder wenn sie dem Wechsel nicht folgt („eins").
+  it("sagt jede Aufgabe in derselben Region an, ab der ersten", async () => {
+    review.mockResolvedValueOnce(null);
+    render(
+      <MemoryRouter initialEntries={["/sohn/practice/5"]}>
+        <Routes><Route path="/sohn/practice/:positionId" element={<SohnPractice />} /></Routes>
+      </MemoryRouter>,
+    );
+    const region = taskRegion();
+    expect(region.textContent).toBe("");
+
+    const input = await screen.findByRole("textbox");
+    expect(taskRegion()).toBe(region);
+    expect(region.textContent).toBe("Neue Aufgabe: eins");
+    fireEvent.change(input, { target: { value: "one" } });
+    fireEvent.submit(input.closest("form")!);
+
+    expect(await screen.findByText("Neue Aufgabe: zwei")).toBe(region);
+  });
+});
+
+/** Die Ansage-Region der Aufgabe (das `sr-only`-Absatz-Element), nicht der Toast. */
+function taskRegion(): HTMLElement {
+  const region = screen.getAllByRole("status").find((el) => el.tagName === "P" && el.classList.contains("sr-only"));
+  if (!region) throw new Error("keine Ansage-Region");
+  return region;
+}

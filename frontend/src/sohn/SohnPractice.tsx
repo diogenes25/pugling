@@ -9,7 +9,7 @@ import { useSohn } from "./SohnApp";
 import { LetterBoxes } from "../components/LetterBoxes";
 import { LetterTiles } from "../components/LetterTiles";
 import { AudioButton } from "../components/AudioButton";
-import { ClozePrompt } from "../components/ClozePrompt";
+import { ClozePrompt, TaskAnnouncer } from "../components/ClozePrompt";
 import { ListRule } from "../components/ListRule";
 import { Passage } from "../components/Passage";
 import { RevealAlternatives } from "../components/RevealAlternatives";
@@ -193,6 +193,21 @@ export function SohnPractice() {
     }
   }
 
+  /*
+   * B-286: Die Ansage der Aufgabe steht ÜBER allen Ansichten (Laden, Fehler, Karte) und ist darum über die ganze
+   * Sitzung DERSELBE Knoten. Nur so wächst jede Aufgabe in eine schon vorhandene Region hinein (B-134) – auch die erste
+   * und die nach einem Fehler fortgesetzte; eine Region in der Karte entstünde dort zusammen mit ihrem Text und bliebe
+   * stumm.
+   */
+  const asked = phase === "front" || phase === "back" ? cards[idx] : null;
+  return (
+    <>
+      <TaskAnnouncer text={asked?.prompt} gapIndex={asked?.gapIndex} />
+      {view()}
+    </>
+  );
+
+  function view() {
   if (phase === "loading") return <div className="sohn-body"><div className="loading">{t("practice.loading")}</div></div>;
   if (phase === "error") return <div className="sohn-body"><div className="error-box">{error}</div>
     <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>{t("progress.toHome")}</button></div>;
@@ -384,6 +399,7 @@ export function SohnPractice() {
       )}
     </div>
   );
+  }
 }
 
 /**

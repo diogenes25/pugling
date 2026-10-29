@@ -151,6 +151,11 @@ erlaubt. Die Sperre antwortet mit `409 exercise_items_locked` (seit B-205; das L
 vor einem gespielten liegt, ist darum kein Anhängen und wird abgewiesen. Offen bleibt der Wort-Tausch an gespielter Stelle
 per `PATCH …/items/{id}` mit neuer `vocabularyId` (B-328).
 
+Jedes Wort steht höchstens einmal in einer Übung. Ein Wort, das ein anderes Item schon trägt, weisen das Hinzufügen und
+das Umhängen per `PATCH …/items/{id}` mit `409 duplicate_vocabulary_in_exercise` ab (seit B-334). Steht dasselbe Wort im
+`POST`/`PUT` der Übung zweimal in `items`/`refs` – auch in zwei Schreibweisen, die der Store-Schlüssel zusammenfasst –,
+antwortet die Validierung mit `400 validation_error`, bevor etwas geschrieben wird (seit B-331).
+
 ### 3.2 Reading — Leseverständnis
 
 ```jsonc

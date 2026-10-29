@@ -1,15 +1,14 @@
 ---
-tags: [typ/story, status/idee, bereich/frontend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/student]
 aliases: [SohnTest.start merkt sich plan_inactive nicht]
-status: idee
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
+groesse: XS
 wo: frontend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: Nachschau zu Lauf J, Teil 2 in Lauf K (docs/pm-sitzung-2026-10-29-nacht.md)
-unverifiziert: true
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-330]
@@ -25,7 +24,37 @@ direkt aufeinanderfolgenden Aufrufen, oder die UTC-Tagesgrenze am `EndDate`). Au
 gemessen. Vermutete Behebung: `setPlanStopped(isPlanInactive(e))` auch dort, mit einem Fall, der `nextTest` nach
 erfolgreichem Start scheitern lässt.
 
+## User Story
+
+Als Sohn, dessen Plan gerade pausiert wurde, als ich die Klausur öffne, möchte ich keinen „Weiter versuchen"-Knopf sehen,
+der nur wieder an dieselbe Wand führt.
+
+## Ist-Stand (Lauf K, am Code belegt)
+
+`SohnTest.tsx` `start()`: der Fang setzt nur `error` (`:83-88`, vor dem Fix); `resume()` und `answerAndAdvance` setzen
+zusätzlich `planStopped = isPlanInactive(e)`. Der Knopf steht bei `attemptId !== null && !planStopped`. **Gemessen** (rote
+Probe unten): `startTest` gelingt, die erste `nextTest` antwortet `403 plan_inactive` → „Weiter versuchen" steht da.
+
+## Entscheidungen (autonom, Freigabe 1 – `Defekt`)
+
+1. **Derselbe Satz wie in `resume()`**: `setPlanStopped(isPlanInactive(e))` im Fang von `start()`. Ein vorübergehender Fehler
+   an derselben Stelle bietet „Weiter versuchen" weiter an – der Versuch läuft ja schon. *Kosten:* keine.
+
+## Akzeptanzkriterien
+
+1. Start gelingt, erste Frage → `plan_inactive`: Meldung, kein „Weiter versuchen".
+2. Start gelingt, erste Frage → `500`: „Weiter versuchen" steht und holt die Frage.
+
+## Schätzung
+
+`XS`, Frontend; zwei Fälle in `SohnTest.test.tsx`.
+
 ## Verlauf
 
 - **2026-10-29** — angelegt aus der Nachschau (frischer `pugling-reviewer`, `git show 02ce632`) in Lauf K; 🟢, ohne
   Zählung, zurückgestellt (nicht billig: braucht einen eigenen Fall mit gestaffelter Mock-Antwort).
+- **2026-10-29** — Lauf K, Teil 2: ausformuliert, autonom gegrillt, geschätzt, gebaut. Rote Probe **1 failed / 10 passed**
+  (erwartet 1 – das Gegenstück aus AK 2 ist vorher grün, es hält den Fix nach unten ab). Mutante „jeder Fehler beim Start
+  stoppt" (`setPlanStopped(true)`) **1 failed** (AK-2-Fall). Danach `SohnTest.test.tsx` **11/11**.
+- **2026-10-29** — `frontend-reviewer`: keine Funde an B-335; beide Fälle trennen, was sie behaupten (Mutanten benannt).
+- **2026-10-29** — Abnahme Lauf K, Teil 2: volle Suite **1017/1017**, Vitest **584/584**, `tsc -b` sauber, E2E **100 passed** (`exit=0`, nach der letzten Code-Änderung gestartet). Rollengang als E2E-Gesamtlauf (Browser-Extension nicht genutzt): Sohn über seine Arcade-Specs (Übung, Klausur, Buchstaben ordnen) plus die Komponentenfälle mit Knoten-Identität; Creator über `schnellanlage-ohne-dublette`; Vater Regressionszeuge. Was ein echter Screenreader ansagt, prüft keine Maschine – **Gerätecheck offen**: einmal mit NVDA/VoiceOver eine Übungsrunde und eine fortgesetzte Klausurfrage anhören. Reviews: `frontend-reviewer`, Delta-Review (ohne 🔴/🟡). **Abgenommen**, Commit siehe Protokoll ([Lauf K](../pm-sitzung-2026-10-29-nacht.md)).

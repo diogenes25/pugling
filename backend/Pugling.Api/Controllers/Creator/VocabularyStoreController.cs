@@ -254,8 +254,7 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         {
             // The server key is the only comparison that folds case, diacritics and ß the way the store does - a client
             // cannot rebuild it, so "is this word already there?" is answered here (B-277).
-            if (dto.ReuseExisting == true
-                && await db.Vocabularies.FirstOrDefaultAsync(v => v.Key == generated, ct) is { } existing)
+            if (dto.ReuseExisting == true && await ReuseCandidateAsync(dto, generated, ct) is { } existing)
             {
                 // Additive only, like PATCH: alternatives and tags join the entry's own, nothing else is overwritten.
                 await LoadGraphAsync(existing, ct);
@@ -296,6 +295,22 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
 
         await LoadGraphAsync(vocab, ct);
         return new(CreateKind.Created, vocab, key, null);
+    }
+
+    /// <summary>
+    /// The entry whose <b>current</b> word and translation fold to <paramref name="generated"/>. A PATCH changes word or
+    /// translation without touching the key, so the key alone can name an entry that now says something else - or miss
+    /// one whose typo was fixed (B-337). Candidates are the key match and the entries with the same word (NOCASE, the
+    /// index), judged by their content; the oldest wins.
+    /// </summary>
+    private async Task<Vocabulary?> ReuseCandidateAsync(CreateVocabularyDto dto, string generated, CancellationToken ct)
+    {
+        var candidates = await db.Vocabularies
+            .Where(v => v.Key == generated
+                        || (v.Word == dto.Word && v.SourceLanguage == dto.SourceLanguage && v.TargetLanguage == dto.TargetLanguage))
+            .OrderBy(v => v.Id)
+            .ToListAsync(ct);
+        return candidates.FirstOrDefault(v => VocabKey.Generate(v.SourceLanguage, v.Word, v.TargetLanguage, v.Translation) == generated);
     }
 
     /// <summary>Makes a generated base key unique by appending _2, _3 … on collision.</summary>

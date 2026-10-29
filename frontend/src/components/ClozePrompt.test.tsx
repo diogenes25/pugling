@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { ClozePrompt } from "./ClozePrompt";
+import { ClozePrompt, TaskAnnouncer } from "./ClozePrompt";
 import { clozeParts } from "../lib/cloze";
 
 /**
@@ -82,5 +82,31 @@ describe("ClozePrompt", () => {
     expect(clozeParts("a {{1}} b")).toEqual([{ text: "a " }, { gap: 1 }, { text: " b" }]);
     // Eine Lücke ganz am Anfang erzeugt kein leeres Textstück davor.
     expect(clozeParts("{{3}}!")).toEqual([{ gap: 3 }, { text: "!" }]);
+  });
+});
+
+/**
+ * B-286: Nach dem Kartenwechsel behält die Eingabe den Fokus – ein Screenreader hört die neue Aufgabe nur über diese
+ * Region. Sie spricht die Lücken wie `ClozePrompt` sie benennt, nicht als `{{n}}`.
+ */
+describe("TaskAnnouncer", () => {
+  it("sagt die Aufgabe mit benannten Lücken an", () => {
+    render(<TaskAnnouncer text="A: {{1}}, how are you? B: I'm {{2}}." gapIndex={2} />);
+
+    expect(screen.getByRole("status").textContent).toBe("Neue Aufgabe: A: Lücke 1, how are you? B: I'm gesuchte Lücke.");
+  });
+
+  // Dieselbe Rückfall-Regel wie `ClozePrompt`: fehlt die gefragte Lücke im Text, gilt der unveränderte Text.
+  it("fällt wie die Anzeige auf den rohen Text zurück", () => {
+    render(<TaskAnnouncer text="Le {{1}} est grand." gapIndex={5} />);
+
+    expect(screen.getByRole("status").textContent).toBe("Neue Aufgabe: Le {{1}} est grand.");
+  });
+
+  // B-134: die Region steht auch ohne Aufgabe im DOM (Hörstufe ohne Text), damit die nächste Ansage hineinwachsen kann.
+  it("steht ohne Text leer im DOM", () => {
+    render(<TaskAnnouncer text={null} gapIndex={null} />);
+
+    expect(screen.getByRole("status").textContent).toBe("");
   });
 });

@@ -145,6 +145,34 @@ public class VocabularyStoreTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.Equal(HttpStatusCode.BadRequest, unknownBase.StatusCode);
     }
 
+    /// <summary>
+    /// B-337: a PATCH changes word or translation but not the key, so key and content drift apart. Reuse must go by what
+    /// the entry says now: the entry patched away from "riesig" is not a hit for "riesig" (it would swallow the typed
+    /// translation), and the entry whose typo was fixed is a hit although its key still carries the typo.
+    /// </summary>
+    [Fact]
+    public async Task ReuseExisting_FolgtDemInhaltNichtDemVeraltetenSchluessel()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var u = Guid.NewGuid().ToString("N")[..8];
+        async Task<int> CreateAsync(string word, string translation) => await TestApi.IdAsync(await father.PostAsJsonAsync(
+            "/api/v1/creator/vocabulary", new { sourceLanguage = "en", targetLanguage = "de", word, translation }));
+        async Task<HttpResponseMessage> ReuseAsync(string word, string translation) => await father.PostAsJsonAsync(
+            "/api/v1/creator/vocabulary", new { sourceLanguage = "en", targetLanguage = "de", word, translation, reuseExisting = true });
+
+        var drifted = await CreateAsync($"huge{u}", "riesig");
+        (await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{drifted}", new { translation = "gewaltig" })).EnsureSuccessStatusCode();
+        var notTheDrifted = await ReuseAsync($"huge{u}", "riesig");
+        Assert.Equal(HttpStatusCode.Created, notTheDrifted.StatusCode);
+        Assert.Equal("riesig", (await notTheDrifted.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("translation").GetString());
+
+        var fixedTypo = await CreateAsync($"hgue{u}", "Ungeheuer");
+        (await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{fixedTypo}", new { word = $"hgu{u}e" })).EnsureSuccessStatusCode();
+        var hit = await ReuseAsync($"hgu{u}e", "ungeheuer");
+        Assert.Equal(HttpStatusCode.OK, hit.StatusCode);
+        Assert.Equal(fixedTypo, (await hit.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32());
+    }
+
     /// <summary>The batch reports a reused entry as <c>existing</c> with its id - not as <c>created</c>.</summary>
     [Fact]
     public async Task ReuseExisting_ImBatch_MeldetExisting()

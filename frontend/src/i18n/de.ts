@@ -234,6 +234,7 @@ export const de = {
       decoding: "Wort-für-Wort-Dekodierung",
       gapAsked: "gesuchte Lücke",
       gap: "Lücke {{n}}",
+      newTask: "Neue Aufgabe: {{task}}",
       letterBoxes: "Buchstaben-Kästchen",
       space: "Leerzeichen",
       letterOf: "Buchstabe {{n}} von {{total}}",

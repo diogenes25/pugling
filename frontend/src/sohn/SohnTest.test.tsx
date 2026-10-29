@@ -3,6 +3,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../lib/api";
 import { setLanguage } from "../lib/i18n";
+import { ArcadeScope } from "../lib/chromeText";
 import type { TestItem } from "../lib/types";
 
 /**
@@ -101,6 +102,30 @@ describe("SohnTest, Fehler beim Beantworten", () => {
     expect(screen.queryByRole("button", { name: "Weiter versuchen" })).toBeNull();
   });
 
+  // B-335: der Start gelingt (die Versuchs-Id steht), aber schon die erste Frage trifft auf einen Plan, der nicht mehr dran
+  // ist. Rot, wenn `start()` den Code nicht merkt – dann böte „Weiter versuchen“ den Versuch an und holte nur dieselbe 403.
+  it("bietet kein Weiter an, wenn schon die erste Frage auf einen Plan trifft, der nicht mehr dran ist", async () => {
+    await setLanguage("de");
+    nextTest.mockReset().mockRejectedValueOnce(new ApiError(403, "This study plan is not currently active. Ask your parent.", "trace-9", "plan_inactive"));
+    renderTest();
+
+    expect(await screen.findByText("Dieser Lernplan ist gerade nicht dran. Frag deine Eltern, welcher Plan jetzt gilt.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Weiter versuchen" })).toBeNull();
+  });
+
+  // Gegenstück zu B-335: ein vorübergehender Fehler an derselben Stelle lässt sich fortsetzen – der Versuch läuft ja schon.
+  // Rot, wenn `start()` jeden Fehler als „Plan steht“ wertet.
+  it("bietet Weiter an, wenn die erste Frage vorübergehend scheitert", async () => {
+    await setLanguage("de");
+    nextTest.mockReset().mockRejectedValueOnce(new ApiError(500, "Server kaputt.", "trace-10"))
+      .mockResolvedValueOnce({ item, done: false, cursor: 0, total: 2 });
+    renderTest();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Weiter versuchen" }));
+
+    expect(await screen.findByRole("button", { name: "das Pferd" })).toBeTruthy();
+  });
+
   it("bietet bei einem Plan, der nicht mehr dran ist, kein Weiter an", async () => {
     await setLanguage("de");
     answerTest.mockRejectedValueOnce(new ApiError(403, "This study plan is not currently active. Ask your parent.", "trace-6", "plan_inactive"));
@@ -135,6 +160,41 @@ describe("SohnTest, Fehler beim Beantworten", () => {
     fireEvent.click(await screen.findByRole("button", { name: "das Pferd" }));
 
     expect(await screen.findByText("the sheep")).toBeTruthy();
+  });
+
+  // B-286: die Frage wechselt, der Fokus folgt ihr nicht – die neue Aufgabe kommt über die Live-Region, und zwar über
+  // DIESELBE (B-134), auch nachdem ein Fehler die Karte kurz ersetzt hat. Rot, wenn die Region in der Karte sitzt (dann
+  // entstünde sie nach „Weiter versuchen" neu, zusammen mit ihrem Text, und bliebe stumm), wenn sie fehlt, oder wenn
+  // sie im Fehlerbild die alte Frage stehen lässt.
+  it("sagt die fortgesetzte Frage in derselben Region an", async () => {
+    await setLanguage("de");
+    answerTest.mockRejectedValueOnce(new ApiError(500, "Server kaputt.", "trace-1"));
+    nextTest.mockResolvedValueOnce({ item, done: false, cursor: 0, total: 2 })
+      .mockResolvedValueOnce({ item: { ...item, itemIndex: 1, prompt: "the sheep" }, done: false, cursor: 1, total: 2 });
+    renderTest();
+    fireEvent.click(await screen.findByRole("button", { name: "das Pferd" }));
+    const resume = await screen.findByRole("button", { name: "Weiter versuchen" });
+    const region = taskRegion();
+    expect(region.textContent).toBe("");
+
+    fireEvent.click(resume);
+
+    expect(await screen.findByText("Neue Aufgabe: the sheep")).toBe(region);
+  });
+
+  // Die englische Arcade sagt englisch an. Hält nur „immer Deutsch“ fern; ob `useChromeT` oder die globale Sprache
+  // antwortet, trennt der Fall nicht – in der Arcade ist beides dieselbe.
+  it("sagt die Aufgabe in der englischen Arcade englisch an", async () => {
+    await setLanguage("en");
+    render(
+      <ArcadeScope>
+        <MemoryRouter initialEntries={["/sohn/test/5"]}>
+          <Routes><Route path="/sohn/test/:positionId" element={<SohnTest />} /></Routes>
+        </MemoryRouter>
+      </ArcadeScope>,
+    );
+
+    expect(await screen.findByText("New task: the horse")).toBe(taskRegion());
   });
 
   // B-325 (AK 3 von B-320). Rot, wenn `answerAndAdvance` die Sperre verliert (`action.run(fn)` → `fn()`) oder die
@@ -190,3 +250,10 @@ describe("SohnTest mit einem Plan, den es nicht mehr gibt", () => {
     expect(await screen.findByText("Server kaputt. (Ref: trace-8)")).toBeTruthy();
   });
 });
+
+/** Die Ansage-Region der Aufgabe (das `sr-only`-Absatz-Element). */
+function taskRegion(): HTMLElement {
+  const region = screen.getAllByRole("status").find((el) => el.tagName === "P" && el.classList.contains("sr-only"));
+  if (!region) throw new Error("keine Ansage-Region");
+  return region;
+}

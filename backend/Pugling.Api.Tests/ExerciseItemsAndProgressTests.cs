@@ -427,6 +427,10 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
                 items = new[] { hello, bye, hello }.Select(id => new { vocabularyId = id }) }),
             ("inline word twice", new { direction = "front-to-back", sourceLang = "en", targetLang = "de",
                 items = new[] { new { front = fresh, back = "Mond" }, new { front = fresh, back = "Mond" } } }),
+            // Two spellings the store key folds into one (B-338): a check on the raw strings would let them through, and the
+            // reconcile would map both onto the same new store entry - the old 500.
+            ("inline word twice, folded by the key", new { direction = "front-to-back", sourceLang = "en", targetLang = "de",
+                items = new[] { new { front = "M" + fresh[1..], back = "Mond" }, new { front = fresh, back = "mond" } } }),
             ("id and the same word inline", new { direction = "front-to-back", sourceLang = "en", targetLang = "de",
                 items = new object[] { new { vocabularyId = hello }, new { front = "hello", back = "hallo" } } }),
             ("inline vocabularyId 0", new { direction = "front-to-back", sourceLang = "en", targetLang = "de",

@@ -34,3 +34,14 @@ export function clozeParts(text: string): ClozePart[] {
   if (last < text.length) parts.push({ text: text.slice(last) });
   return parts;
 }
+
+/**
+ * Ob ein Lückentext mit gezeichneten Lücken erscheint – oder als unveränderter Text. Rückfall, wenn es keine Lücke gibt
+ * oder die gefragte im Text nicht vorkommt (umnummerierter Altbestand). Eine Regel für Anzeige (`ClozePrompt`) und
+ * Ansage (`TaskAnnouncer`), damit beide nie verschieden reden (B-286).
+ */
+export function showsGaps(parts: ClozePart[], gapIndex: number | null | undefined): boolean {
+  const gaps = parts.filter((p) => "gap" in p);
+  if (gaps.length === 0) return false;
+  return gapIndex == null || gaps.some((p) => "gap" in p && p.gap === gapIndex);
+}

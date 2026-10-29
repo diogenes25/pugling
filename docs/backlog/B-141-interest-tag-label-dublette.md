@@ -10,6 +10,7 @@ migration: nein
 vertragsbruch: nein
 quelle: B-136 (Nachtlauf 2026-08-10, Entscheidung 3)
 entgangen_bei: []
+nachgeschaut: "2026-10-29"
 ---
 
 # B-141 · Zwei Interessen-Tags dürfen dasselbe Label tragen
@@ -109,3 +110,4 @@ ein. Die Regel muss am Label selbst sitzen – an allen drei Stellen, an denen e
   Code ohne Index (keine Migration, wie entschieden) – zwei gleichzeitige Anlagen können beide durchkommen. Bewusst so
   belassen, hier benannt.
 - **2026-10-29** — Abnahme Lauf K, Teil 1: volle Suite **1015/1015**, Vitest **576/576**, `tsc -b` sauber, E2E **100 passed** (`exit=0`, nach der letzten Code-Änderung gestartet; danach nur ein Testkommentar berichtigt). Rollengang als E2E-Gesamtlauf (Browser-Extension nicht genutzt): Creator/Vater über `schnellanlage-ohne-dublette` und `auch-richtig-im-uebungseditor`, Sohn als Regressionszeuge über seine Specs. Reviews: `pugling-reviewer`, `frontend-reviewer`, zwei Delta-Reviews (das letzte ohne 🔴/🟡). **Abgenommen**, Commit siehe Protokoll ([Lauf K](../pm-sitzung-2026-10-29-nacht.md)).
+- **2026-10-29** — Nachschau in Lauf K, Teil 2 (frischer `pugling-reviewer`, `git show 0fcff19`): 🟢 exakter Vergleich in `EnsureAsync` ohne Fall → [B-338](B-338-doppeltes-wort-schreibweise-ungetestet.md); 🟢 Wiki sagte „ein Label trägt höchstens ein Tag" – stärker als die Prüfung ohne Index, umformuliert. Geprüft: alle Geburtswege (`Create` `:100-106`, `Update` `:153`, `EnsureAsync` aus `ChildInterestsController.cs:131`, `MediaAssetsController.cs:198/266/416`, `Seed.cs:189`), kein weiteres `new InterestTag`; Entscheidung 2 hält `InterestTaxonomyTests.cs:26-28`.

@@ -53,7 +53,7 @@ const LIVE = /\b(role="status"|aria-live=)/;
  * Bausteine, die selbst eine Live-Region rendern. Wer sie bedingt einhängt (`{x && <StatusBanner …/>}`), baut die
  * Region zusammen mit ihrem Text – genau der Fall, an dem B-134 gefunden wurde (`VaterLehrwerke.tsx`).
  */
-const REGION_BAUSTEINE = ["StatusBanner", "TruncationHint", "SavedNotice"];
+const REGION_BAUSTEINE = ["StatusBanner", "TruncationHint", "SavedNotice", "TaskAnnouncer"];
 const BAUSTEIN = new RegExp(`^<(${REGION_BAUSTEINE.join("|")})\\b`);
 const FUNKTIONSKOPF = /^(export\s+)?(default\s+)?function\s|^(export\s+)?const\s+\w+\s*=\s*(\([^)]*\)|\w+)\s*=>/;
 

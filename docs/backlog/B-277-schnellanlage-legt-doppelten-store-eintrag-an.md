@@ -13,6 +13,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-71]
 wartet_auf: ""
+nachgeschaut: "2026-10-29"
 ---
 
 # B-277 · Der Schnellanleger im Assistenten legt für ein bekanntes Wort einen zweiten Store-Eintrag an
@@ -51,8 +52,10 @@ Der Assistent hat keinen Dubletten-Hinweis und keinen Weg zum vorhandenen Eintra
    den Eintrag unter dem Schlüssel, den er selbst erzeugen würde (`200`), statt ein `_2` anzulegen. Additiv, kein
    Vertragsbruch: ohne das Feld bleibt alles wie bisher (B-65, Entscheidung 6). *Kosten:* ein Feld mehr im Vertrag, das
    nur der Assistent setzt.
-2. **Treffer = derselbe Server-Schlüssel**, also gleiches Wort und gleiche Übersetzung nach der Faltung des Stores; eine
-   andere Übersetzung ist ein Homonym und bekommt einen eigenen Eintrag. *Kosten:* keine – eine Regel an einer Stelle.
+2. **Treffer = derselbe Server-Schlüssel** ~~, also gleiches Wort und gleiche Übersetzung~~ – **berichtigt mit
+   [B-337](B-337-reuse-folgt-veraltetem-schluessel.md):** der gespeicherte Schlüssel folgt einem `PATCH` nicht; Treffer ist,
+   wessen **aktueller** Inhalt zum erzeugten Schlüssel faltet. Eine andere Übersetzung ist ein Homonym und bekommt einen
+   eigenen Eintrag. *Kosten:* eine Abfrage über Schlüssel und Wort.
 3. **Neue Varianten ergänzt der Server** zu den vorhandenen (`CleanAlternatives` über beide Listen); die übrigen Felder
    des Treffers bleiben unberührt. Ersetzen würde verwerfen, was im Store gepflegt wurde; die Vereinigung im Server statt
    im Client erspart auch das verlorene Update zwischen Lesen und `PATCH`. *Kosten:* ein Tippfehler in einer Variante ist
@@ -99,3 +102,4 @@ Der Assistent hat keinen Dubletten-Hinweis und keinen Weg zum vorhandenen Eintra
   (Z. 117); `BaseFormKey` im Reuse übersprungen **1 failed** (Z. 125); Batch `Created` statt `Existing` **1 failed**
   (Z. 145); Tags verworfen **1 failed** (Z. 87); B-334-Prüfung nur im Id-Zweig **1 failed** (Z. 496). **Zähler des Sprints: 5.**
 - **2026-10-29** — Abnahme Lauf K, Teil 1: volle Suite **1015/1015**, Vitest **576/576**, `tsc -b` sauber, E2E **100 passed** (`exit=0`, nach der letzten Code-Änderung gestartet; danach nur ein Testkommentar berichtigt). Rollengang als E2E-Gesamtlauf (Browser-Extension nicht genutzt): Creator/Vater über `schnellanlage-ohne-dublette` und `auch-richtig-im-uebungseditor`, Sohn als Regressionszeuge über seine Specs. Reviews: `pugling-reviewer`, `frontend-reviewer`, zwei Delta-Reviews (das letzte ohne 🔴/🟡). **Abgenommen**, Commit siehe Protokoll ([Lauf K](../pm-sitzung-2026-10-29-nacht.md)).
+- **2026-10-29** — Nachschau in Lauf K, Teil 2 (frischer `pugling-reviewer`, `git show 0fcff19`): **entgangen** → [B-337](B-337-reuse-folgt-veraltetem-schluessel.md) (🟡, Treffer per gespeichertem Schlüssel, den ein `PATCH` nicht nachzieht – Entscheidung 2 behauptete „also gleiches Wort und gleiche Übersetzung", ohne es zu prüfen; im Sprint behoben). Geprüft: übrige Aufrufer von `CreateVocabularyDto` (`VaterVocab.tsx:162-169` Batch ohne Feld, gewollt; `CreatorApi.cs:196-202`; KI-Creator ohne Feld), Prüfungen vor dem Abkürzungsweg (`:240-250`), Batch-Abbildung `:518-520`.
