@@ -506,12 +506,11 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (58)
+### Offen (57)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-280](B-280-fokusziel-nicht-geleert-ungetestet.md) | Dass das Fokusziel nach dem Sprung geleert wird, prüft kein Test | Defekt | `idee` | P2 | — | frontend | — |
-| [B-330](B-330-plan-inactive-ohne-deutsche-fassung.md) | Ein deaktivierter Plan zeigt dem Kind nach einem Reload die englische Serverzeile | Defekt | `idee` | P2 | — | frontend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `gegrillt` | P2 | — | backend | Vertrag? |
 | [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder | Wunsch | `geschaetzt` | P2 | L | beides | — |
@@ -570,7 +569,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (247)</summary>
+<summary>Abgenommen (249)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -766,6 +765,8 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-325](B-325-klausur-doppelklick-sperre-ungetestet.md) | Die Doppelklick-Sperre der Klausur trägt keinen Fall | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-326](B-326-ueben-und-klausur-nehmen-ungepruefte-plan-id.md) | Üben und Klausur nehmen nach einem Reload die ungeprüfte Plan-Id | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-327](B-327-ziel-spaeter-jenseits-platz-fuenf-erreicht.md) | Ein Ziel, das nach dem ersten Besuch jenseits von Platz fünf erreicht wird, feiert die App verspätet | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-330](B-330-plan-inactive-ohne-deutsche-fassung.md) | Ein deaktivierter Plan zeigt dem Kind nach einem Reload die englische Serverzeile | Defekt | `abgenommen` | P2 | XS | frontend | — |
+| [B-332](B-332-put-nur-mit-refs-ungetestet.md) | Ein `PUT` nur mit `refs`, der ein gespieltes Wort streicht, ist von keinem Fall gehalten | Defekt | `abgenommen` | P2 | XS | backend | — |
 | [B-35](B-35-karten-umdrehen-animation.md) | Karten drehen sich beim Aufdecken um | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-36](B-36-motivations-animationen-teilziele.md) | Motivations-Animationen bei erreichten Teilzielen | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-37](B-37-uebung-abbruch-unvollendet.md) | Abgebrochene Runden: Pflicht härten, Klausur deckeln | Defekt | `abgenommen` | P1 | M | beides | — |
@@ -834,9 +835,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
-### Nach der Abnahme entgangen (97)
+### Nach der Abnahme entgangen (98)
 
-**Nachgeschaut: 245 von 247 abgenommenen** — und in 78 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 2 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 247 von 249 abgenommenen** — und in 79 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 2 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -936,7 +937,8 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-324](B-324-gemerkter-plan-zweig-ungetestet.md) | Dass der gemerkte Plan vor dem spielbaren gewinnt, prüft kein Test | [B-254] | `abgenommen` |
 | [B-325](B-325-klausur-doppelklick-sperre-ungetestet.md) | Die Doppelklick-Sperre der Klausur trägt keinen Fall | [B-320] | `abgenommen` |
 | [B-327](B-327-ziel-spaeter-jenseits-platz-fuenf-erreicht.md) | Ein Ziel, das nach dem ersten Besuch jenseits von Platz fünf erreicht wird, feiert die App verspätet | [B-257] | `abgenommen` |
-| [B-330](B-330-plan-inactive-ohne-deutsche-fassung.md) | Ein deaktivierter Plan zeigt dem Kind nach einem Reload die englische Serverzeile | [B-326] | `idee` |
+| [B-330](B-330-plan-inactive-ohne-deutsche-fassung.md) | Ein deaktivierter Plan zeigt dem Kind nach einem Reload die englische Serverzeile | [B-326] | `abgenommen` |
+| [B-332](B-332-put-nur-mit-refs-ungetestet.md) | Ein `PUT` nur mit `refs`, der ein gespieltes Wort streicht, ist von keinem Fall gehalten | [B-323] | `abgenommen` |
 
 <details>
 <summary>Nie nachgeschaut (2) — Arbeitsvorrat der Nachschau</summary>
@@ -946,8 +948,8 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 
 | Id | Story |
 | --- | --- |
-| [B-258](B-258-unbekannte-fach-id-zwei-fehlercodes.md) | Eine unbekannte `SubjectId` meldet je nach Ressource zwei verschiedene Fehlercodes |
-| [B-323](B-323-ganzer-uebungs-put-umgeht-woerter-sperre.md) | Ein ganzer Übungs-PUT und `refs-from-tags` umgehen die Wörter-Sperre einer gespielten Übung |
+| [B-330](B-330-plan-inactive-ohne-deutsche-fassung.md) | Ein deaktivierter Plan zeigt dem Kind nach einem Reload die englische Serverzeile |
+| [B-332](B-332-put-nur-mit-refs-ungetestet.md) | Ein `PUT` nur mit `refs`, der ein gespieltes Wort streicht, ist von keinem Fall gehalten |
 
 </details>
 

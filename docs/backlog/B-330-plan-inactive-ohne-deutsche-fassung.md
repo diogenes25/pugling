@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/student]
 aliases: [Deaktivierter Plan zeigt englische Serverzeile]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: XS
@@ -90,3 +90,8 @@ was los ist und wen ich fragen kann – nicht eine englische Serverzeile mit Ref
   Versuch → `start()` setzt ihn zurück; rote Probe **1 failed** (Z. 85, Knopf da); 🟢 `resume()`-Zweig ohne Fall → Fall,
   Mutante **1 failed** (Z. 101). Zurückgestellt (🟢, ohne Zählung): `reshuffleImage` beendet die Runde nicht (Toast, die
   nächste Bewertung beendet sie); doppelte Prüfung `isPlanInactive`/Inline. Vitest **574/574**, `tsc -b` sauber.
+- **2026-10-29** — E2E **99 passed** (`exit=0`, nach der letzten Änderung gestartet). Rollengang **Sohn**: Live-Probe gegen
+  einen frisch gestarteten Server (Wegwerf-DB) – Plan anlegen, Kind startet Üben (`201`), Vater deaktiviert (`PATCH
+  active=false`), Kind startet erneut → `403 plan_inactive`, genau der Code, den die Arcade jetzt übersetzt; die Anzeige
+  (Satz, Rundenende, kein „Weiter versuchen“) tragen die Komponententests. Browser-Extension nicht genutzt – das *Lesen*
+  des Satzes durch ein Kind bleibt ungesehen. Vater und Creator Regressionszeugen (E2E). **Abgenommen**, Commit `02ce632`.

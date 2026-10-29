@@ -363,6 +363,9 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
             config = new { direction = "front-to-back", refs = new[] { bye, sun, moon }.Select(id => new { vocabularyId = id }) },
         });
         Assert.Equal(HttpStatusCode.Conflict, refsOnlyDrop.StatusCode);
+        Assert.Equal("exercise_items_locked", (await refsOnlyDrop.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+        Assert.Equal([hello, bye, sun, moon], (await father.GetFromJsonAsync<List<JsonElement>>($"{exerciseUrl}/items"))!
+            .Select(i => i.GetProperty("vocabularyId").GetInt32()));
     }
 
     // refs-from-tags is a snapshot over the same reconciliation (B-323): a snapshot that drops a played word

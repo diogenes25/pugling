@@ -345,7 +345,6 @@ die Datei bleibt mit 10 365 von 9 000 Bytes über Budget, die Altlast ist unver�
 `docs/backlog/README.md` → „Ausformulieren heißt gegen den Code belegen“; B-258: einheitlich `invalid_reference`
 (Freigabe im Verlauf der Story); `v2`-Schlüssel bestätigt. Ältere Vorschläge (U)–(X) und davor bleiben offen.
 
-
 ## Lauf J — Auftrag und Ausgangslage
 
 Auftrag: „Starte Nachtlauf" – der Auftragstext aus [nachtlauf.md](nachtlauf.md) mit den Freigaben 1–10. Ausgangslage:
@@ -434,3 +433,66 @@ Umleitung (Entscheidung 1). Testweg: Komponententest mit roter Probe und Mutante
 - Rote Probe **1 failed** (deutsche Zeile, gemessen die englische Serverzeile mit Ref). Mutante „Arcade-Schlüssel
   gestrichen" **1 failed** (englische Zeile). Vitest **570/570**, `tsc -b` sauber.
 - Mitgenommene 🟢 aus der Nachschau: zwei Absichtserklärungen beschriftet (`SohnPractice.test.tsx`, `SohnTest.test.tsx`).
+- Aus der Nachschau von Teil 1 in den Sprint genommen: [B-332](backlog/B-332-put-nur-mit-refs-ungetestet.md) (Refs-only-PUT
+  ohne Fall; Fall ergänzt, Mutante **1 failed**), siehe Retrospektive.
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `frontend-reviewer` 🟡 | `SohnPractice.judge` verschluckte `plan_inactive` mitten in der Runde – Entscheidung 1 behauptete das Gegenteil | Runde endet mit dem Satz; rote Probe **1 failed**, Mutante **1 failed** | ja |
+| – | `frontend-reviewer` 🟢 | „Weiter versuchen“ nach `plan_inactive` holt dieselbe 403 | ausgeblendet; rote Probe **1 failed** | nein |
+| – | `frontend-reviewer` 🟢 | englischer Satz steif, Singular/Plural; Testkommentar ungenau | angepasst | nein |
+| 2 | Delta-Review 🟡 | Neustart aus dem Ergebnis trug den alten Versuch → „Weiter versuchen“ wieder da | `start()` setzt Versuch zurück; rote Probe **1 failed** (Z. 85) | ja |
+| – | Delta-Review 🟢 | `resume()`-Zweig ohne Fall | Fall; Mutante **1 failed** (Z. 101) | nein |
+| – | Delta-Review 🟢 | `reshuffleImage` beendet die Runde nicht; doppelte Prüfung | zurückgestellt (nächste Bewertung beendet sie) | nein |
+
+B-332 stammt aus der Nachschau und liegt im Increment von Teil 1, nicht im Diff von Teil 2 – ohne Zählung (wie B-327 in
+Lauf I). **Zähler: 2.** Vitest **574/574**, `tsc -b` sauber, Backend **1004/1004**, E2E **99 passed** (`exit=0`, nach der
+letzten Frontend-Änderung gestartet; B-332 ändert nur einen Backend-Test). Rollengang **Sohn**: Live-Probe gegen einen frisch
+gestarteten Server – Kind startet Üben (`201`), Vater deaktiviert, Kind startet erneut → `403 plan_inactive`; die Anzeige
+tragen die Komponententests. **Vater**/**Creator** Regressionszeugen. Browser-Extension nicht genutzt. **B-330
+`abgenommen`** (`02ce632`). B-332: Delta-Review (`pugling-reviewer`) ohne Blocker, 🟢 Code-Zusicherung übernommen,
+Suite **1004/1004** → **`abgenommen`** (`599e217` + Abschluss-Commit).
+
+### Retrospektive
+
+**Nachschau:** Teil 1 (`1a3a73f`, B-323/B-258) von einem frischen `pugling-reviewer`. **Entgangen bei B-323:**
+[B-332](backlog/B-332-put-nur-mit-refs-ungetestet.md) (🟡) – ein `PUT` nur mit `refs` war von keinem Fall gehalten; die
+Nachbesserung aus dem Review von Teil 1 hatte den Refs-Vorrang getestet, aber jeweils mit `items` daneben. Im Sprint
+behoben. 🟢 Doku nannte den `PATCH`-Tausch und die Schlüssel-Ordnung von `refs-from-tags` nicht (nachgetragen); B-258s
+Verlauf-Behauptung „keine weitere Stelle“ war falsch (`BaseFormKey` → B-329); `vocabularyId: 0` → B-331. `nachgeschaut` an
+B-323, B-258.
+
+**Was die eigenen Tore durchgelassen haben:** zweimal dieselbe Familie, beide Male vom Reviewer gefunden: (1) Eine
+**Entscheidung behauptet einen Fall**, den der Code nicht trägt („der Code kommt auch mitten im Spiel“ – `judge`
+verschluckte ihn). Das ist (AA) in umgekehrter Richtung: dort schloss eine Entscheidung einen Fall aus, hier nahm sie ihn
+in Anspruch, ohne ihn zu prüfen. (2) Bei B-323 deckten die Fälle jede **Form einzeln mit einer anderen zusammen** ab, nie
+die nackte Form – genau der Vorschlag (AC) aus Teil 1, bevor er gelandet ist.
+
+**Warum der Lauf hier endet (Limit 2):** die Nachschau von Teil 2 fand im Increment von Teil 1 – dem Increment dieses
+Laufs – eine Testlücke (B-332). Dass sie XS war und behoben ist, ändert die Regel nicht.
+
+**Vorschläge, nicht gelandet (Freigabe 3):**
+
+- **(AD)** Prosa in `docs/backlog/README.md` (Ausformulieren, neben (AA)): „Beruft sich eine Entscheidung auf einen Fall
+  (‚kommt auch mitten im Spiel‘), wird dieser Fall am Code nachgewiesen – mit `Datei:Zeile` des Pfads, der ihn trägt.“
+- **(AC′)** Schärfung von (AC): „… jede Form **allein** einen Fall – ein Fall, der zwei Formen mischt, belegt keine von
+  beiden.“
+
+## Ende Lauf J
+
+Endgrund: **Limit 2** – die Nachschau von Teil 2 fand im Increment von Teil 1 eine Testlücke (B-332, behoben). Zwei Teile,
+**vier Stories abgenommen**: B-323, B-258 (Teil 1), B-330, B-332 (Teil 2); dazu vier ältere nachgeschaut (B-324..B-327).
+Höchster Zähler 2 (Teil 2). Commits `1a3a73f`, `76a5cfa`, `02ce632`, `599e217` und der Abschluss-Commit. Alles **ungepusht**.
+
+**Offene Entscheidungen für den Nutzer:**
+
+1. **Retro-Vorschläge (AC), (AC′), (AD)**, keiner gelandet; dazu unverändert (U)–(X) aus Lauf H und ältere.
+2. **B-328 (`Frage`):** Wort-Tausch per `PATCH` und Textänderung an Inline-Typen einer gespielten Übung – Korrektur
+   (erlaubt) oder Ersatz (gesperrt)?
+3. **B-329:** dieselbe Vereinheitlichung auf `invalid_reference` für den Übungspfad (Interessen-/Grammatik-/Vokabel-Ids)
+   und `BaseFormKey` – weiterer kleiner Vertragsbruch; braucht einen Rückgabetyp mit Code. Freigabe ja/nein?
+4. **B-330, Entscheidung 1 + 5:** eine Übungsrunde bricht bei `plan_inactive` ab (ehrlich, aber hart) – gegenlesen; der
+   Satz „Frag deine Eltern, welcher Plan jetzt gilt“ ist am echten Kind ungesehen.
+5. Nächste baubare `Defekt`-Kandidaten: B-331 (P3, `500` bei doppeltem Wort), B-280, B-262/B-266, B-275, B-277.

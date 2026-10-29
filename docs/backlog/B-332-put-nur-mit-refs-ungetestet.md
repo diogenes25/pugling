@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/backend, rolle/creator, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/backend, rolle/creator, rolle/student]
 aliases: [Refs-only-PUT ohne Fall]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: XS
@@ -16,6 +16,8 @@ wartet_auf: ""
 ---
 
 # B-332 · Ein `PUT` nur mit `refs`, der ein gespieltes Wort streicht, ist von keinem Fall gehalten
+
+## Ist-Stand (Lauf J, am Code belegt)
 
 [B-323](B-323-ganzer-uebungs-put-umgeht-woerter-sperre.md) sperrt den ganzen `PUT` einer gespielten Vokabelübung. Der
 Code prüft auch einen `PUT`, der nur `refs` trägt (`ExerciseControllers.cs` `UpdateConflictAsync` über
@@ -47,3 +49,8 @@ Wie B-323: Als Creator, der eine gespielte Vokabelübung über die API pflegt, m
 - **2026-10-29** — angelegt aus der Nachschau (frischer `pugling-reviewer`, `git show 1a3a73f`) in Lauf J, im selben
   Sprint behoben: Fall `refsOnlyDrop` ergänzt; gegen den Ausgangscode grün (Verhalten war richtig), Mutante „nur `items`
   prüfen“ **1 failed** an Z. 365 (erwartet `Conflict`, gemessen `OK`).
+- **2026-10-29** — Delta-Review (`pugling-reviewer`, `git show 599e217`): Fall trifft nur den Refs-Zweig von
+  `HasPayloadItems`, kein anderer Weg im `PUT` liefert `409`; Doku-Sätze gegen `ExerciseControllers.cs:123` und `:233-239`
+  bestätigt. 🟢 Code und unveränderte Items zusichern → übernommen. Volle Suite **1004/1004**. Rollengang: reine
+  Testergänzung ohne Laufzeitwirkung – der Weg selbst ist B-323s Live-Probe (Creator, `409` beim `PUT`); E2E aus Teil 2
+  (**99 passed**) unberührt. **Abgenommen**, Commits `599e217` und der Abschluss-Commit von Lauf J.
