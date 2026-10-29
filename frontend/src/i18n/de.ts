@@ -317,6 +317,7 @@ export const de = {
       test_attempts_exhausted: "Für heute sind deine Versuche aufgebraucht. Morgen kannst du es noch mal probieren.",
       exercise_empty: "Diese Übung hat noch keine Inhalte. Füge erst Wörter hinzu – danach lässt sie sich durchspielen und zuweisen.",
       no_checkable_content: "Diese Übung hat keine einzeln prüfbaren Aufgaben.",
+      plan_inactive: "Dieser Lernplan ist gerade nicht dran. Frag deine Eltern, welcher Plan jetzt gilt.",
     },
   },
 } as const;

@@ -51,6 +51,8 @@ export function SohnTest() {
   const [revealed, setRevealed] = useState(false);
   const [result, setResult] = useState<TestSubmitResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Ein Plan, der nicht mehr dran ist (B-330), lässt sich nicht fortsetzen – „Weiter versuchen“ holte dieselbe 403.
+  const [planStopped, setPlanStopped] = useState(false);
   // Ref-Gate gegen den Doppelklick (B-49). Der Fehler speist die `error`-Vollbild-Anzeige; `action.message`
   // wird hier nicht gerendert.
   const action = useAction(errorMessage);
@@ -69,6 +71,8 @@ export function SohnTest() {
   async function start() {
     if (!planId) return;
     setError(null); setResult(null); setItem(null); setTypedAnswer(""); setRevealed(false); setCursor(0);
+    // Ein Neustart aus dem Ergebnis trägt sonst noch den abgegebenen Versuch – scheitert er, böte „Weiter versuchen“ diesen an.
+    setAttemptId(null); setPlanStopped(false);
     try {
       const a = await api.startTest(planId, positionId);
       setAttemptId(a.attemptId); setStage(a.stage); setTotal(a.totalItems);
@@ -110,7 +114,7 @@ export function SohnTest() {
       const nx = await api.nextTest(planId, positionId, attemptId);
       if (nx.done) { await finish(attemptId); return; }
       setItem(nx.item ?? null); setCursor(nx.cursor); setTypedAnswer(""); setRevealed(false);
-    } catch (e) { setError(errorMessage(e)); }
+    } catch (e) { setError(errorMessage(e)); setPlanStopped(isPlanInactive(e)); }
   }
 
   // Antwort abgeben (server-geführt: der Server adressiert stets die aktuelle Cursor-Frage) und weiterrücken.
@@ -128,6 +132,7 @@ export function SohnTest() {
         setItem(nx.item ?? null); setCursor(nx.cursor); setTypedAnswer(""); setRevealed(false);
       } catch (e) {
         setError(errorMessage(e));
+        setPlanStopped(isPlanInactive(e));
         throw e;
       }
     });
@@ -136,7 +141,7 @@ export function SohnTest() {
   // Bei einem transienten Fehler den LAUFENDEN Versuch fortsetzen können (nicht verwerfen): resume() holt
   // die aktuelle Frage des bestehenden Attempts erneut, statt über start() einen neuen Versuch anzulegen.
   if (error) return <div className="sohn-body"><div className="error-box">{error}</div>
-    {attemptId !== null && <button type="button" className="btn lime" onClick={resume}>{t("test.resume")}</button>}
+    {attemptId !== null && !planStopped && <button type="button" className="btn lime" onClick={resume}>{t("test.resume")}</button>}
     <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>{t("progress.toHome")}</button></div>;
 
   if (result) return (
@@ -358,3 +363,5 @@ export function TestResult({ result, skin, onHome, onRetry }: {
     </div>
   );
 }
+
+const isPlanInactive = (e: unknown) => e instanceof ApiError && e.code === "plan_inactive";

@@ -152,6 +152,18 @@ describe("Fehlermeldungen der Arcade", () => {
     expect(result.current(known)).toBe("Duplicate series. (Ref: trace-3)");
   });
 
+  // B-330: den Code bekommt nur das Kind (Plan pausiert, abgelaufen oder nicht der aktive) – auch nach einem Reload auf
+  // Üben/Klausur. Die deutsche Zeile fällt nur, wenn beide Einträge fehlen (`GERMAN_PROBLEM_TEXT` und Arcade-Schlüssel –
+  // dann die englische Server-Zeile samt Ref); fehlt nur einer, hält die Wortgleichheits-Schleife oben. Die englische
+  // Zeile trägt den Arcade-Schlüssel: ohne ihn stünde der technische `detail`-Text da.
+  it("sagen dem Kind in beiden Sprachen, dass sein Plan gerade nicht dran ist", async () => {
+    const inactive = new ApiError(403, "This study plan is not currently active. Ask your parent.", "trace-4", "plan_inactive");
+    const { result } = renderHook(() => useErrorMessage());
+    expect(result.current(inactive)).toBe("Dieser Lernplan ist gerade nicht dran. Frag deine Eltern, welcher Plan jetzt gilt.");
+    await setLanguage("en");
+    expect(result.current(inactive)).toBe("This study plan isn't active right now. Ask your parents which plan to do now.");
+  });
+
   it("folgen der Sprache zum Zeitpunkt des Fehlers, nicht der beim Render", async () => {
     // Rot, wenn die Funktion die Sprache beim Render festhält (ein früh gebundener Fang spräche dann weiter Deutsch) –
     // für den Schlüssel (`exhausted`) wie für die Weiche davor (`known`, B-319).

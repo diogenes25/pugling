@@ -1,7 +1,9 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { de } from "../i18n/de";
 import { ApiError } from "../lib/api";
+import { setLanguage } from "../lib/i18n";
 import type { PracticeCard, ReviewOutcome } from "../lib/types";
 
 /**
@@ -86,6 +88,26 @@ describe("SohnPractice, doppeltes Absenden", () => {
 
     expect(await screen.findByText("zwei")).toBeTruthy();
   });
+
+  // B-330: anders als ein Netzfehler endet ein Plan, der mitten in der Runde nicht mehr dran ist, die Runde – sonst blättert
+  // das Kind weiter, ohne dass etwas zählt. Rot, wenn der Fang den Code wieder verschluckt oder danach doch weiterschaltet
+  // (dann steht „zwei" statt der Meldung da). Welcher Formatierer den Satz liefert, trägt `arcadeSpielweg.test.tsx`.
+  it("beendet die Runde mit dem Satz der Arcade, wenn der Plan nicht mehr dran ist", async () => {
+    await setLanguage("de");
+    review.mockRejectedValueOnce(new ApiError(403, "This study plan is not currently active. Ask your parent.", "trace-5", "plan_inactive"));
+    render(
+      <MemoryRouter initialEntries={["/sohn/practice/5"]}>
+        <Routes><Route path="/sohn/practice/:positionId" element={<SohnPractice />} /></Routes>
+      </MemoryRouter>,
+    );
+
+    const input = await screen.findByRole("textbox");
+    fireEvent.change(input, { target: { value: "one" } });
+    fireEvent.submit(input.closest("form")!);
+
+    expect(await screen.findByText(de.sohn.problem.plan_inactive)).toBeTruthy();
+    expect(screen.queryByText("zwei")).toBeNull();
+  });
 });
 
 /** B-326: wie in der Klausur – ein Plan, den es nicht mehr gibt, führt zur Basis. */
@@ -107,6 +129,8 @@ describe("SohnPractice mit einem Plan, den es nicht mehr gibt", () => {
     renderWithHome();
 
     expect(await screen.findByText("BASIS")).toBeTruthy();
+    // Absichtserklärung, kein eigener Beleg: ist die Basis da, ist der Bildschirm schon weg – rot macht ihn nur, was die
+    // Zeile davor schon rot macht.
     expect(screen.queryByText(/Study plan not found/)).toBeNull();
   });
 

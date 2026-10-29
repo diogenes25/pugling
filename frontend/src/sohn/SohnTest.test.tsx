@@ -12,9 +12,12 @@ import type { TestItem } from "../lib/types";
 const startTest = vi.fn();
 const nextTest = vi.fn();
 const answerTest = vi.fn();
+const submitTest = vi.fn();
 
+// Ein echter Skin: der Ergebnis-Bildschirm zeichnet das Maskottchen (der Neustart-Fall erreicht ihn).
+const { SKINS } = await import("../lib/skins");
 vi.mock("./SohnApp", () => ({
-  useSohn: () => ({ planId: 3, refreshWallet: () => {}, setStreak: () => {}, skin: undefined, celebrate: () => {} }),
+  useSohn: () => ({ planId: 3, refreshWallet: () => {}, setStreak: () => {}, skin: SKINS[0], celebrate: () => {} }),
 }));
 vi.mock("../lib/api", async (importOriginal) => {
   const original = await importOriginal<typeof import("../lib/api")>();
@@ -24,6 +27,8 @@ vi.mock("../lib/api", async (importOriginal) => {
       startTest: (...a: unknown[]) => startTest(...a),
       nextTest: (...a: unknown[]) => nextTest(...a),
       answerTest: (...a: unknown[]) => answerTest(...a),
+      submitTest: (...a: unknown[]) => submitTest(...a),
+      overview: () => Promise.resolve({ currentStreak: 0 }),
     },
   };
 });
@@ -58,6 +63,53 @@ describe("SohnTest, Fehler beim Beantworten", () => {
     fireEvent.click(await screen.findByRole("button", { name: "das Pferd" }));
 
     expect(await screen.findByText("Server kaputt. (Ref: trace-1)")).toBeTruthy();
+    // Gegenstück zum Fall darunter: ein vorübergehender Fehler lässt sich fortsetzen.
+    expect(screen.getByRole("button", { name: "Weiter versuchen" })).toBeTruthy();
+  });
+
+  // B-330: ist der Plan nicht mehr dran, holt „Weiter versuchen“ nur dieselbe 403 – der Knopf wäre eine Falle. Rot, wenn er
+  // auch hier steht.
+  // Derselbe Fall beim Neustart aus dem Ergebnis: dort steht noch die Id des abgegebenen Versuchs. Rot, wenn `start()` sie
+  // stehen lässt – dann böte „Weiter versuchen“ den alten Versuch an und holte nur wieder die 403 (Delta-Review B-330).
+  it("bietet nach einem Neustart, den der Plan nicht mehr erlaubt, kein Weiter an", async () => {
+    await setLanguage("de");
+    nextTest.mockReset().mockResolvedValueOnce({ item: null, done: true, cursor: 0, total: 0 });
+    submitTest.mockResolvedValueOnce({ passed: false, scorePercent: 0, passPercent: 80, correctItems: 0, totalItems: 0, stage: 3, items: [], attemptsRemaining: 1 });
+    renderTest();
+
+    const retry = await screen.findByRole("button", { name: "Nochmal versuchen" });
+    startTest.mockRejectedValueOnce(new ApiError(403, "This study plan is not currently active. Ask your parent.", "trace-7", "plan_inactive"));
+    fireEvent.click(retry);
+
+    expect(await screen.findByText("Dieser Lernplan ist gerade nicht dran. Frag deine Eltern, welcher Plan jetzt gilt.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Weiter versuchen" })).toBeNull();
+  });
+
+  // Und nach einem Fortsetzen: erst ein vorübergehender Fehler, dann ist der Plan nicht mehr dran. Rot, wenn `resume()` den
+  // Code nicht merkt – dann stünde der Knopf weiter da.
+  it("nimmt das Weiter weg, wenn das Fortsetzen auf einen Plan trifft, der nicht mehr dran ist", async () => {
+    await setLanguage("de");
+    answerTest.mockRejectedValueOnce(new ApiError(500, "Server kaputt.", "trace-1"));
+    renderTest();
+    fireEvent.click(await screen.findByRole("button", { name: "das Pferd" }));
+    const resume = await screen.findByRole("button", { name: "Weiter versuchen" });
+
+    nextTest.mockRejectedValueOnce(new ApiError(403, "This study plan is not currently active. Ask your parent.", "trace-8", "plan_inactive"));
+    fireEvent.click(resume);
+
+    expect(await screen.findByText("Dieser Lernplan ist gerade nicht dran. Frag deine Eltern, welcher Plan jetzt gilt.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Weiter versuchen" })).toBeNull();
+  });
+
+  it("bietet bei einem Plan, der nicht mehr dran ist, kein Weiter an", async () => {
+    await setLanguage("de");
+    answerTest.mockRejectedValueOnce(new ApiError(403, "This study plan is not currently active. Ask your parent.", "trace-6", "plan_inactive"));
+    renderTest();
+
+    fireEvent.click(await screen.findByRole("button", { name: "das Pferd" }));
+
+    expect(await screen.findByText("Dieser Lernplan ist gerade nicht dran. Frag deine Eltern, welcher Plan jetzt gilt.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Weiter versuchen" })).toBeNull();
   });
 
   // Rot, wenn der Fang den deutschen `errorMessage` statt des Arcade-Formatierers nimmt: dann stünde der deutsche Satz in
@@ -124,6 +176,8 @@ describe("SohnTest mit einem Plan, den es nicht mehr gibt", () => {
     );
 
     expect(await screen.findByText("BASIS")).toBeTruthy();
+    // Absichtserklärung, kein eigener Beleg: ist die Basis da, ist der Bildschirm schon weg – rot macht ihn nur, was die
+    // Zeile davor schon rot macht.
     expect(screen.queryByText(/Study plan not found/)).toBeNull();
   });
 

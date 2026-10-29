@@ -141,6 +141,8 @@ export function SohnPractice() {
     // idempotent genug, das innere `try/catch` schluckt den Fehler schon selbst, und `action.run` bekommt
     // darum nie eine Ablehnung zu sehen. `false` heißt hier also nur noch „von der Sperre verworfen" - dann
     // gehört das Weiterschalten dem laufenden Aufruf, sonst überspränge ein doppeltes Enter eine Karte (B-284).
+    // Ausnahme `plan_inactive` (B-330): dann zählt keine Karte mehr, und die Runde endet mit dem Satz der Arcade.
+    let planStopped = false;
     const ran = await action.run(async () => {
       try {
         const outcome = await api.review(planId, positionId, session.current!.id, { itemIndex: card.itemIndex, ...payload });
@@ -168,9 +170,15 @@ export function SohnPractice() {
           setTimeout(() => setToast(null), 1600);
         }
         // feedback.kind === "none": kein Outcome ODER eine Anzeigenurstufe (ShowBoth) - kein Urteil, kein Toast.
-      } catch { /* Bewertung ist idempotent genug; UI läuft weiter */ }
+      } catch (e) {
+        // Sonst ist die Bewertung idempotent genug, und die Runde läuft weiter.
+        if (e instanceof ApiError && e.code === "plan_inactive") {
+          planStopped = true;
+          setError(errorMessage(e)); setPhase("error");
+        }
+      }
     });
-    if (ran) next();
+    if (ran && !planStopped) next();
   }
 
   function next() {

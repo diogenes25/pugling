@@ -91,6 +91,10 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
   // Der Deckel aus B-37 trifft ausschließlich das Kind in der Arcade – der einzige Ort, an dem eine rohe
   // englische Zeile einen Elfjährigen erreicht. Der Satz sagt darum auch, wann es weitergeht.
   test_attempts_exhausted: "Für heute sind deine Versuche aufgebraucht. Morgen kannst du es noch mal probieren.",
+  // Ebenfalls nur fürs Kind (B-330): sein Plan ist pausiert, abgelaufen oder nicht der aktive – nach einem Reload auf
+  // Üben/Klausur steht es sonst vor der englischen Server-Zeile. Der Satz nennt keinen der drei Gründe, weil das Kind
+  // keinen davon selbst ändern kann.
+  plan_inactive: "Dieser Lernplan ist gerade nicht dran. Frag deine Eltern, welcher Plan jetzt gilt.",
   // Die beiden Löschsperren aus B-144/B-127. Sie gehören hierher, weil sie beide Hälften der Regel oben
   // erfüllen: der Creator sieht sie an einem Knopf, den er selbst gedrückt hat, und er kann etwas dagegen
   // tun. Ohne Eintrag stünde dort die englische Rohzeile – an genau der Stelle, an der er eine Anleitung

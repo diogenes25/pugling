@@ -304,6 +304,7 @@ export const en = {
       test_attempts_exhausted: "You've used up your tries for today. You can have another go tomorrow.",
       exercise_empty: "This exercise has no content yet.",
       no_checkable_content: "This exercise has no tasks that can be checked one by one.",
+      plan_inactive: "This study plan isn't active right now. Ask your parents which plan to do now.",
     },
   },
 } as const;

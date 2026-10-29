@@ -416,3 +416,21 @@ Deaktivieren“) fehlte in den AKs – B-326 ist älter als die gelandete Regel 
 - **(AC)** Prosa in `backend/CLAUDE.md` (Tests): „Liest eine Prüfung eine Eingabe mit mehreren Formen (`refs`/`items`,
   Inline/Id), bekommt jede Form einen Fall – und der Vorrang einen eigenen, in dem die Formen sich widersprechen.“
   Kein Tor: welche Formen eine Eingabe hat, kann kein Wächter aus dem Code lesen.
+
+## Lauf J, Teil 2 — Das Kind versteht, warum sein Plan gerade nicht geht (B-330)
+
+**Sprint-Ziel:** *Das Kind, dessen Plan pausiert, abgelaufen oder nicht der aktive ist, liest in seiner Sprache, was los
+ist und wen es fragen kann – auch nach einem Reload auf Üben oder Klausur, nie eine englische Serverzeile mit Ref.*
+Umfang: [B-330](backlog/B-330-plan-inactive-ohne-deutsche-fassung.md) (P2, `Defekt`, aus der Nachschau von Teil 1; unter
+Freigabe 1 ausformuliert, gegrillt, geschätzt: XS). Ein Sprint aus einer Story ist zulässig; andere Sohn-Defekte dienen
+diesem Ziel nicht. Draußen: [B-331](backlog/B-331-doppeltes-wort-im-uebungs-payload-500.md) (Creator/Backend).
+
+**Entwickler-Brief:** Reines Frontend, kein Vertrag. Der Code ist die Quelle; der Satz gehört der Oberfläche
+(`GERMAN_PROBLEM_TEXT` fürs Deutsche, `PROBLEM_KEYS` + `sohn.problem.*` für die Arcade, Deutsch wortgleich). Keine
+Umleitung (Entscheidung 1). Testweg: Komponententest mit roter Probe und Mutante, Vitest, E2E-Regression.
+
+### Iteration
+
+- Rote Probe **1 failed** (deutsche Zeile, gemessen die englische Serverzeile mit Ref). Mutante „Arcade-Schlüssel
+  gestrichen" **1 failed** (englische Zeile). Vitest **570/570**, `tsc -b` sauber.
+- Mitgenommene 🟢 aus der Nachschau: zwei Absichtserklärungen beschriftet (`SohnPractice.test.tsx`, `SohnTest.test.tsx`).

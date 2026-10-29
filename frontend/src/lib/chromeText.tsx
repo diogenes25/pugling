@@ -39,6 +39,6 @@ export function useErrorMessage(): (e: unknown) => string {
   };
 }
 
-const PROBLEM_KEYS = ["test_attempts_exhausted", "exercise_empty", "no_checkable_content"] as const;
+const PROBLEM_KEYS = ["test_attempts_exhausted", "exercise_empty", "no_checkable_content", "plan_inactive"] as const;
 type ProblemKey = (typeof PROBLEM_KEYS)[number];
 const isProblemKey = (code: string): code is ProblemKey => (PROBLEM_KEYS as readonly string[]).includes(code);
