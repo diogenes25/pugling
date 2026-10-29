@@ -13,6 +13,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-326]
 wartet_auf: ""
+nachgeschaut: "2026-10-29"
 ---
 
 # B-330 · Ein deaktivierter Plan zeigt dem Kind nach einem Reload die englische Serverzeile
@@ -95,3 +96,10 @@ was los ist und wen ich fragen kann – nicht eine englische Serverzeile mit Ref
   active=false`), Kind startet erneut → `403 plan_inactive`, genau der Code, den die Arcade jetzt übersetzt; die Anzeige
   (Satz, Rundenende, kein „Weiter versuchen“) tragen die Komponententests. Browser-Extension nicht genutzt – das *Lesen*
   des Satzes durch ein Kind bleibt ungesehen. Vater und Creator Regressionszeugen (E2E). **Abgenommen**, Commit `02ce632`.
+- **2026-10-29** — Nachschau in Lauf K (frischer `pugling-reviewer`, `git show 02ce632`): **entgangen** →
+  [B-333](B-333-uebungsrunde-andere-api-fehler-ungetestet.md) (🟡, „nur `plan_inactive` beendet die Runde" ohne Fall mit
+  einem anderen `ApiError`; im Sprint behoben) und [B-335](B-335-klausurstart-plan-inactive-weiter-versuchen.md) (🟢,
+  `start()` merkt sich `plan_inactive` nicht). Geprüft und sauber: jede Quelle von `plan_inactive`
+  (`PositionPracticeController` :70/:173/:214/:253/:291, End :461 bewusst offen; `PositionTestsController`
+  :138/:219/:252/:329) gegen jeden Arcade-Aufrufer; Rückweg zur Basis über `useChosenPlan.ts:16-22` (kein Kreisen in den
+  `403`); AK 1 (exaktes `toBe`, beide Sprachen) und AK 3 (drei Fälle) je mit Mutante nachgerechnet.

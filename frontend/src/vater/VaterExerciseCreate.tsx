@@ -2,6 +2,8 @@ import { useEffect, useId, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
+import { useAction } from "../lib/useAction";
+import { StatusBanner } from "../components/StatusBanner";
 import { ExercisePreviewModal } from "./ExercisePreviewModal";
 import { FieldLabel, InfoHint } from "../components/InfoHint";
 import { SCHOOL_TYPES } from "../lib/labels";
@@ -384,8 +386,7 @@ function VocabRefPicker({ selected, setSelected, extra, setExtra }: {
   const [qTrans, setQTrans] = useState("");
   // Gleichwertige Übersetzungen gleich beim Anlegen (B-71) – sonst müsste der Vater dafür extra in den Store.
   const [qAlts, setQAlts] = useState<string[]>([]);
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
+  const action = useAction();
 
   const toggle = (v: VocabularyResponse) =>
     setSelected((cur) => (cur.some((s) => s.key === v.key)
@@ -393,17 +394,22 @@ function VocabRefPicker({ selected, setSelected, extra, setExtra }: {
       : [...cur, { key: v.key, vocabularyId: v.id }]));
   const removeKey = (key: string) => setSelected((cur) => cur.filter((s) => s.key !== key));
 
+  /*
+   * B-277: Ohne Schlüssel legt das Store-POST für ein schon vorhandenes Paar einen `_2`-Eintrag an, und die Variante
+   * hinge am Duplikat statt an dem Eintrag, den `/vater/vokabeln` zeigt. `reuseExisting` lässt den Server entscheiden,
+   * ob es das Wort schon gibt – nur sein Schlüssel faltet Groß/Klein, Akzente und ß so, wie der Store es tut. Eine andere
+   * Übersetzung ist ein Homonym und bekommt ihren eigenen Eintrag (B-65, Entscheidung 6); neue Varianten ergänzt der
+   * Server zu den vorhandenen.
+   */
   async function quickAdd() {
     if (!qWord.trim() || !qTrans.trim()) return;
-    setBusy(true); setErr(null);
-    try {
-      const v = await api.createVocabulary({
-        sourceLanguage: src, targetLanguage: tgt, word: qWord.trim(), translation: qTrans.trim(),
-        translationAlternatives: nonEmpty(qAlts) ?? null,
-      });
-      setSelected((cur) => (cur.some((s) => s.key === v.key) ? cur : [...cur, { key: v.key, vocabularyId: v.id }]));
-      setQWord(""); setQTrans(""); setQAlts([]); store.reload();
-    } catch (e) { setErr(errorMessage(e)); } finally { setBusy(false); }
+    const v = await action.runFor(() => api.createVocabulary({
+      sourceLanguage: src, targetLanguage: tgt, word: qWord.trim(), translation: qTrans.trim(),
+      translationAlternatives: nonEmpty(qAlts) ?? null, reuseExisting: true,
+    }));
+    if (!v) return;
+    setSelected((cur) => (cur.some((s) => s.key === v.key) ? cur : [...cur, { key: v.key, vocabularyId: v.id }]));
+    setQWord(""); setQTrans(""); setQAlts([]); store.reload();
   }
 
   const byKey = new Map((store.data ?? []).map((v) => [v.key, v]));
@@ -491,9 +497,9 @@ function VocabRefPicker({ selected, setSelected, extra, setExtra }: {
           <RepeatedTextFields label="Auch richtig" scope="neues Wort" values={qAlts}
             onChange={setQAlts} placeholder="zählt auch als richtig" addLabel="+ Variante" />
         </div>
-        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={quickAdd}>+ anlegen &amp; wählen</button>
+        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={action.busy} onClick={quickAdd}>+ anlegen &amp; wählen</button>
       </div>
-      {err && <div className="banner err">{err}</div>}
+      <StatusBanner message={action.message} />
       <p className="muted" style={{ margin: 0 }}>Vokabeln kommen aus dem Store (Komplextyp) und bleiben über Übungen hinweg verknüpft.</p>
     </div>
   );

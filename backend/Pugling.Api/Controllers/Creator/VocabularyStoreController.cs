@@ -201,9 +201,13 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
             .Select(Map).ToList();
     }
 
-    /// <summary>Creates a vocabulary entry. If the key is missing, a unique one is generated; BaseFormKey (if set) must exist.</summary>
+    /// <summary>
+    /// Creates a vocabulary entry. If the key is missing, a unique one is generated; BaseFormKey (if set) must exist.
+    /// With <c>reuseExisting</c> an entry under the generated key comes back with 200 instead (alternatives merged).
+    /// </summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<VocabularyResponse>> Create(CreateVocabularyDto dto, CancellationToken ct = default)
@@ -212,12 +216,13 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         return outcome.Kind switch
         {
             CreateKind.Created => CreatedAtAction(nameof(Get), new { id = outcome.Vocab!.Id }, Map(outcome.Vocab)),
+            CreateKind.Reused => Ok(Map(outcome.Vocab!)),
             CreateKind.Conflict => this.ProblemWithCode(ApiErrors.DuplicateKey, outcome.Error),
             _ => this.ProblemWithCode(ApiErrors.ValidationError, outcome.Error),
         };
     }
 
-    private enum CreateKind { Created, Conflict, Error }
+    private enum CreateKind { Created, Reused, Conflict, Error }
     private record CreateOutcome(CreateKind Kind, Vocabulary? Vocab, string? Key, string? Error);
 
     /// <summary>
@@ -229,25 +234,44 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(dto.Word))
             return new(CreateKind.Error, null, null, "Word is required.");
+        var explicitKey = string.IsNullOrWhiteSpace(dto.Key) ? null : dto.Key.Trim();
+        var generated = VocabKey.Generate(dto.SourceLanguage, dto.Word, dto.TargetLanguage, dto.Translation ?? "");
+        // Silently ignoring the flag would hand back a 409 or a new entry the caller did not ask for.
+        if (dto.ReuseExisting == true && explicitKey is not null)
+            return new(CreateKind.Error, null, explicitKey, "reuseExisting works only without a key; an explicit key is never reused.");
 
-        string key;
-        if (string.IsNullOrWhiteSpace(dto.Key))
-        {
-            key = await UniqueKeyAsync(VocabKey.Generate(dto.SourceLanguage, dto.Word, dto.TargetLanguage, dto.Translation ?? ""), ct);
-        }
-        else
-        {
-            key = dto.Key.Trim();
-            if (await db.Vocabularies.AnyAsync(v => v.Key == key, ct))
-                return new(CreateKind.Conflict, null, key, $"Key '{key}' already exists.");
-        }
-
+        // Before the reuse branch, so the flag never turns an invalid payload into a 200.
         int? baseFormId = null;
         if (!string.IsNullOrWhiteSpace(dto.BaseFormKey))
         {
             baseFormId = await db.Vocabularies.Where(v => v.Key == dto.BaseFormKey)
                 .Select(v => (int?)v.Id).FirstOrDefaultAsync(ct);
-            if (baseFormId is null) return new(CreateKind.Error, null, key, $"BaseFormKey '{dto.BaseFormKey}' not found.");
+            if (baseFormId is null) return new(CreateKind.Error, null, explicitKey ?? generated, $"BaseFormKey '{dto.BaseFormKey}' not found.");
+        }
+
+        string key;
+        if (explicitKey is null)
+        {
+            // The server key is the only comparison that folds case, diacritics and ß the way the store does - a client
+            // cannot rebuild it, so "is this word already there?" is answered here (B-277).
+            if (dto.ReuseExisting == true
+                && await db.Vocabularies.FirstOrDefaultAsync(v => v.Key == generated, ct) is { } existing)
+            {
+                // Additive only, like PATCH: alternatives and tags join the entry's own, nothing else is overwritten.
+                await LoadGraphAsync(existing, ct);
+                existing.TranslationAlternatives = VocabularyStoreService.CleanAlternatives(
+                    [.. existing.TranslationAlternatives ?? [], .. dto.TranslationAlternatives ?? []], existing.Translation);
+                await ApplyTagsAsync(existing, dto.Tags, ct);
+                await db.SaveChangesAsync(ct);
+                return new(CreateKind.Reused, existing, existing.Key, null);
+            }
+            key = await UniqueKeyAsync(generated, ct);
+        }
+        else
+        {
+            key = explicitKey;
+            if (await db.Vocabularies.AnyAsync(v => v.Key == key, ct))
+                return new(CreateKind.Conflict, null, key, $"Key '{key}' already exists.");
         }
 
         var vocab = new Vocabulary
@@ -472,7 +496,8 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
     /// <summary>
     /// Creates many vocabulary entries in one call – idempotent: an already existing, explicitly set
     /// key returns status <c>existing</c> (no error), so the same batch can be safely repeated.
-    /// Without a key, the server generates a unique one (status <c>created</c>). Language logic
+    /// Without a key, the server generates a unique one (status <c>created</c>) – or, with <c>reuseExisting</c>, reports
+    /// the entry under the generated key (status <c>existing</c>, alternatives and tags added). Language logic
     /// (tokenizing/translating) is up to the caller – the API only manages the data.
     /// </summary>
     [HttpPost("batch")]
@@ -489,6 +514,9 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
             {
                 case CreateKind.Created:
                     results.Add(new(i, BatchItemStatus.Created, outcome.Vocab!.Id, outcome.Vocab.Key, null));
+                    break;
+                case CreateKind.Reused:
+                    results.Add(new(i, BatchItemStatus.Existing, outcome.Vocab!.Id, outcome.Vocab.Key, null));
                     break;
                 case CreateKind.Conflict:
                     // Idempotent: an entry with this key already exists - report it back instead of failing.

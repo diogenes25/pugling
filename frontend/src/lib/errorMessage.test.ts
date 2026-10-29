@@ -69,6 +69,15 @@ describe("errorMessage – deutsche Fassung fachlicher Codes", () => {
     expect(text).not.toContain("Some English sentence.");
   });
 
+  // B-141: das Umbenennen auf ein belegtes Schlagwort-Label ist seither in der Schlagwort-Verwaltung erreichbar. Rot,
+  // wenn der Eintrag fehlt (dann die englische Zeile).
+  it("übersetzt den belegten Schlagwort-Namen", () => {
+    const text = problem("duplicate_interest_tag");
+
+    expect(text).toContain("anderes Schlagwort");
+    expect(text).not.toContain("Some English sentence.");
+  });
+
   it("hängt an einer übersetzten Meldung KEINE Trace-Id an", () => {
     // Die Referenz hilft beim Melden eines Defekts, nicht beim Beheben einer Löschsperre – sie macht
     // einen sonst verständlichen Satz nur wieder technisch.

@@ -89,6 +89,23 @@ describe("SohnPractice, doppeltes Absenden", () => {
     expect(await screen.findByText("zwei")).toBeTruthy();
   });
 
+  // B-333 (Nachschau zu B-330): nur `plan_inactive` beendet die Runde, jeder andere Server-Fehler nicht. Ein 403 mit anderem
+  // Code, damit beide naheliegenden Verkürzungen fallen: `e instanceof ApiError` und `e.status === 403` statt des Codes.
+  it("rückt nach einem anderen Server-Fehler weiter, auch bei 403", async () => {
+    review.mockRejectedValueOnce(new ApiError(403, "Forbidden.", "trace-6", "forbidden"));
+    render(
+      <MemoryRouter initialEntries={["/sohn/practice/5"]}>
+        <Routes><Route path="/sohn/practice/:positionId" element={<SohnPractice />} /></Routes>
+      </MemoryRouter>,
+    );
+
+    const input = await screen.findByRole("textbox");
+    fireEvent.change(input, { target: { value: "one" } });
+    fireEvent.submit(input.closest("form")!);
+
+    expect(await screen.findByText("zwei")).toBeTruthy();
+  });
+
   // B-330: anders als ein Netzfehler endet ein Plan, der mitten in der Runde nicht mehr dran ist, die Runde – sonst blättert
   // das Kind weiter, ohne dass etwas zählt. Rot, wenn der Fang den Code wieder verschluckt oder danach doch weiterschaltet
   // (dann steht „zwei" statt der Meldung da). Welcher Formatierer den Satz liefert, trägt `arcadeSpielweg.test.tsx`.

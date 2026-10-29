@@ -38,19 +38,21 @@ public class InterestTagService(PuglingDbContext db)
         var bySlug = await db.InterestTags.FirstOrDefaultAsync(t => t.Slug == slug, ct);
         if (bySlug is not null) return bySlug;
 
-        // The slug is new - before a duplicate arises, check it against the synonyms of the existing tags.
+        // The slug is new - before a duplicate arises, check it against the labels and synonyms of the existing
+        // tags. A renamed tag keeps its old slug, so its label is the only place the new name lives (B-141).
         // Loaded tracked and searched through the local view, so that the not yet saved tags of this call count
         // here as well (synonyms sit in a JSON column and are not queryable).
+        var newLabel = label?.Trim() is { Length: > 0 } l ? l : text.Trim();
         await db.InterestTags.LoadAsync(ct);
-        var bySynonym = db.InterestTags.Local
-            .FirstOrDefault(t => t.Synonyms.Any(s => InterestSlug.From(s) == slug));
-        if (bySynonym is not null) return bySynonym;
+        var byLabelOrSynonym = db.InterestTags.Local.FirstOrDefault(t => t.Label == newLabel)
+            ?? db.InterestTags.Local.FirstOrDefault(t => t.Synonyms.Any(s => InterestSlug.From(s) == slug));
+        if (byLabelOrSynonym is not null) return byLabelOrSynonym;
 
         // Create it. Careful: the tag only hangs in the ChangeTracker here - the caller saves.
         var created = new InterestTag
         {
             Slug = slug,
-            Label = label?.Trim() is { Length: > 0 } l ? l : text.Trim(),
+            Label = newLabel,
             Facet = facet ?? InterestFacet.Other,
         };
         db.InterestTags.Add(created);

@@ -85,12 +85,13 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
     /// <summary>
     /// Creates a tag. If the slug is missing, it is derived from the label. If the slug already
     /// exists, the existing entry comes back (idempotent) – so an agent can safely repeat the same
-    /// catalog build.
+    /// catalog build. A label that another tag already carries (exact comparison) is rejected with 409.
     /// </summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<InterestTagResponse>> Create(CreateInterestTagDto dto, CancellationToken ct = default)
     {
         var (slug, problem) = this.DeriveRequiredSlug(dto.Label, "Label", dto.Slug);
@@ -99,10 +100,15 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
         var existing = await Project(db.InterestTags.AsNoTracking().Where(t => t.Slug == slug)).FirstOrDefaultAsync(ct);
         if (existing is not null) return Ok(existing);
 
+        // The slug cannot keep labels apart on its own: it may be set explicitly and freezes on rename (B-141).
+        var label = dto.Label.Trim();
+        if (await LabelTakenAsync(label, exceptId: null, ct))
+            return this.ProblemWithCode(ApiErrors.DuplicateInterestTag, "Another interest tag already carries this label.");
+
         var tag = new InterestTag
         {
             Slug = slug!,
-            Label = dto.Label.Trim(),
+            Label = label,
             Facet = dto.Facet,
             Synonyms = Clean(dto.Synonyms),
             Color = dto.Color?.Trim() is { Length: > 0 } c ? c : null,
@@ -120,9 +126,9 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
 
     /// <summary>
     /// Changes label, facet, synonyms, or color. The <c>Slug</c> is deliberately <b>immutable</b> –
-    /// it is the stable reference that images and child profiles hang off. It still decides: a new label
-    /// whose slug another tag already carries is rejected, the same rule <c>Create</c> enforces
-    /// (B-124) - otherwise two tags share a label in every picker.
+    /// it is the stable reference that images and child profiles hang off. A new label is rejected when another
+    /// tag already carries it (exact comparison, B-141) or the slug it derives to (B-124) - otherwise two tags
+    /// share a label in every picker.
     /// </summary>
     [HttpPatch("{id:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -140,12 +146,12 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
 
             var (slug, slugProblem) = this.DeriveRequiredSlug(label, "Label");
             if (slugProblem is not null) return slugProblem;
-            // Excluded by id, not by slug - see PublishersController.Update. As strong as Create's rule and
-            // no stronger: Create accepts an explicit slug, so a label may legitimately differ from it, and
-            // two labels that derive to different slugs stay allowed here too.
+            // Excluded by id, not by slug - see PublishersController.Update.
             if (await db.InterestTags.AnyAsync(t => t.Id != id && t.Slug == slug, ct))
                 return this.ProblemWithCode(ApiErrors.DuplicateInterestTag,
                     "Another interest tag already uses the slug this label derives to.");
+            if (await LabelTakenAsync(label, exceptId: id, ct))
+                return this.ProblemWithCode(ApiErrors.DuplicateInterestTag, "Another interest tag already carries this label.");
 
             tag.Label = label;
         }
@@ -205,6 +211,13 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
         await db.SaveChangesAsync(ct);
         return NoContent();
     }
+
+    /// <summary>
+    /// Whether another tag carries exactly this label. Ordinal on purpose (B-141): another spelling is a distinct
+    /// label, and a case-insensitive rule would need a NOCASE column and thus a migration.
+    /// </summary>
+    private Task<bool> LabelTakenAsync(string label, int? exceptId, CancellationToken ct) =>
+        db.InterestTags.AnyAsync(t => t.Id != exceptId && t.Label == label, ct);
 
     /// <summary>Trims, discards empty entries, and deduplicates – synonyms are a pure search aid.</summary>
     private static List<string> Clean(List<string>? values) =>

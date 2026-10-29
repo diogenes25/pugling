@@ -88,6 +88,9 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
   // Oberfläche gar nicht erreichbar, weil Anlegen idempotent ist. Und die Feld-Erklärung bewirbt die
   // Regel ausdrücklich – sie darf dann nicht auf Englisch durchschlagen.
   duplicate_textbook_series: "Eine andere Reihe trägt diesen Namen schon. Wähle einen anderen.",
+  // Seit B-141 auch für ein Label, das ein umbenanntes Schlagwort trägt – der Vater trifft es beim Umbenennen in der
+  // Schlagwort-Verwaltung. Groß-/Kleinschreibung zählt mit, darum kein „ähnlicher Name“.
+  duplicate_interest_tag: "Ein anderes Schlagwort trägt diesen Namen schon. Wähle einen anderen.",
   // Der Deckel aus B-37 trifft ausschließlich das Kind in der Arcade – der einzige Ort, an dem eine rohe
   // englische Zeile einen Elfjährigen erreicht. Der Satz sagt darum auch, wann es weitergeht.
   test_attempts_exhausted: "Für heute sind deine Versuche aufgebraucht. Morgen kannst du es noch mal probieren.",

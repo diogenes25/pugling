@@ -56,12 +56,36 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
             && (string.IsNullOrWhiteSpace(config.SourceLang) || string.IsNullOrWhiteSpace(config.TargetLang)))
             return "sourceLang and targetLang are required to create inline vocabulary items in the store.";
 
+        if (config.Items.Any(i => i.VocabularyId is <= 0))
+            return "An inline item's vocabularyId must be > 0 when set.";
         var itemIds = config.Items.Where(i => i.VocabularyId is > 0).Select(i => i.VocabularyId!.Value).Distinct().ToList();
         if (itemIds.Count > 0)
         {
             var existing = await Db.Vocabularies.Where(v => itemIds.Contains(v.Id)).Select(v => v.Id).ToListAsync(ct);
             var missing = itemIds.Except(existing).ToList();
             if (missing.Count > 0) return $"Unknown vocabulary item IDs: {string.Join(", ", missing)}";
+        }
+        return await RepeatedWordAsync(config, ct);
+    }
+
+    /// <summary>
+    /// The first payload position that names a word an earlier one already names, as a message - or <c>null</c>.
+    /// Checked up front because the unique index (ExerciseId, VocabularyId) would only fire in the reconcile,
+    /// after the exercise head is saved (B-331). Same resolution as the reconcile: an inline word not yet in the
+    /// store is compared by its key, everything else by store id.
+    /// </summary>
+    private async Task<string?> RepeatedWordAsync(VocabularyConfig config, CancellationToken ct)
+    {
+        var peeked = await items.PeekDesiredIdsAsync(config, ct);
+        var seenIds = new HashSet<int>();
+        var seenKeys = new HashSet<string>(StringComparer.Ordinal);
+        for (var i = 0; i < peeked.Count; i++)
+        {
+            var repeated = peeked[i] is { } id
+                ? !seenIds.Add(id)
+                : !seenKeys.Add(VocabKey.Generate(config.SourceLang, config.Items[i].Front ?? "", config.TargetLang, config.Items[i].Back ?? ""));
+            if (repeated)
+                return $"Entry {i} repeats a word that an earlier entry of this exercise already names; each word can be an item only once.";
         }
         return null;
     }
@@ -236,6 +260,10 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
             var resolved = await ResolveVocabularyIdAsync(body, config, ct);
             if (resolved is not { } vocabId) return this.ProblemWithCode(ApiErrors.ValidationError,
                 "Provide an existing vocabularyId, or front and back (plus the exercise's sourceLang/targetLang) to change the word.");
+            // The same rule as AddItem, checked before saving: the unique index would only answer with a 500 (B-334).
+            if (await Db.ExerciseItems.AnyAsync(i => i.ExerciseId == exerciseId && i.Id != itemId && i.VocabularyId == vocabId, ct))
+                return this.ProblemWithCode(ApiErrors.DuplicateVocabularyInExercise,
+                    "Another item of this exercise already uses this vocabulary entry.");
             item.VocabularyId = vocabId;
         }
         if (body.Hint is not null) item.Hint = NormalizeHint(body.Hint);

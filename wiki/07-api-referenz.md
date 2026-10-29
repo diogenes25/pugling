@@ -73,7 +73,7 @@ Kompakter Überblick über alle Routen. **Autoritative Quelle bleibt Swagger** (
 | `GET /exercises/{id}/preview` · `POST …/preview/check` | Testmodus ohne Nebenwirkung |
 | `PATCH /exercises/{id}/sharing` · `GET/POST/DELETE /exercises/{id}/grants[/{creatorId}/{permission}]` | RWX-Freigaben; den aktuellen Stand (`executePublic`) liest `GET /exercises/{id}`, einen GET auf `…/sharing` gibt es nicht |
 | `GET/POST /profiles` · `…/{profileId}` · `GET /profiles/match?childId=` | Creator-Profile („Fachlehrer") und Treffer je Kind |
-| `GET/POST /interest-tags` · `…/{id}` | Interessen-Taxonomie |
+| `GET/POST /interest-tags` · `…/{id}` | Interessen-Taxonomie (slug-idempotent; ein Label trägt höchstens ein Tag, exakter Vergleich) |
 | `POST /teacher-accounts` (anonym) · `GET …/{creatorId}` | Lehrer-Konto (nur Creator) anlegen/lesen |
 
 **Übungstyp-Pfade:** `/vocabulary` `/reading` `/cloze` `/essays` `/listening` `/grammar` `/matching`
@@ -83,7 +83,7 @@ Kompakter Überblick über alle Routen. **Autoritative Quelle bleibt Swagger** (
 
 | Methode & Route | Zweck |
 | --- | --- |
-| `GET/POST /creator/vocabulary` · `POST …/batch` · `GET …/lookup` · `GET …/{id}` · `GET …/by-key/{key}` · `PATCH/DELETE …/{id}` | Vokabel-Store |
+| `GET/POST /creator/vocabulary` · `POST …/batch` · `GET …/lookup` · `GET …/{id}` · `GET …/by-key/{key}` · `PATCH/DELETE …/{id}` | Vokabel-Store (`POST` mit `reuseExisting`: der vorhandene Eintrag unter dem erzeugten Schlüssel statt einer `_2`-Kopie) |
 | `GET/POST /creator/vocabulary/tags` · `…/{vocabularyId}/tags[/{tagId}]` | Vokabel-Tags |
 | `GET/POST /creator/cloze-texts` · `GET …/{id}` · `GET …/by-key/{key}` · `PATCH/DELETE …/{id}` | Lückentext-Store |
 | `GET/POST /creator/media` · `POST …/upload` · `…/{assetId}/variants` · `…/{id}/tags` | Bild-Assets, Varianten, Interessen-Tags |

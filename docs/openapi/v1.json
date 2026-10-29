@@ -22495,7 +22495,7 @@
         "tags": [
           "Creator \u2013 Interest Tags"
         ],
-        "summary": "Creates a tag. If the slug is missing, it is derived from the label. If the slug already\nexists, the existing entry comes back (idempotent) \u2013 so an agent can safely repeat the same\ncatalog build.",
+        "summary": "Creates a tag. If the slug is missing, it is derived from the label. If the slug already\nexists, the existing entry comes back (idempotent) \u2013 so an agent can safely repeat the same\ncatalog build. A label that another tag already carries (exact comparison) is rejected with 409.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -22539,6 +22539,16 @@
           },
           "400": {
             "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -22635,7 +22645,7 @@
         "tags": [
           "Creator \u2013 Interest Tags"
         ],
-        "summary": "Changes label, facet, synonyms, or color. The \u0060Slug\u0060 is deliberately immutable \u2013\nit is the stable reference that images and child profiles hang off. It still decides: a new label\nwhose slug another tag already carries is rejected, the same rule \u0060Create\u0060 enforces\n(B-124) - otherwise two tags share a label in every picker.",
+        "summary": "Changes label, facet, synonyms, or color. The \u0060Slug\u0060 is deliberately immutable \u2013\nit is the stable reference that images and child profiles hang off. A new label is rejected when another\ntag already carries it (exact comparison, B-141) or the slug it derives to (B-124) - otherwise two tags\nshare a label in every picker.",
         "parameters": [
           {
             "name": "id",
@@ -27117,7 +27127,7 @@
         "tags": [
           "Creator \u2013 Vocabulary Store"
         ],
-        "summary": "Creates a vocabulary entry. If the key is missing, a unique one is generated; BaseFormKey (if set) must exist.",
+        "summary": "Creates a vocabulary entry. If the key is missing, a unique one is generated; BaseFormKey (if set) must exist.\nWith \u0060reuseExisting\u0060 an entry under the generated key comes back with 200 instead (alternatives merged).",
         "requestBody": {
           "content": {
             "application/json": {
@@ -27141,6 +27151,16 @@
         "responses": {
           "201": {
             "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VocabularyResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
@@ -27665,7 +27685,7 @@
         "tags": [
           "Creator \u2013 Vocabulary Store"
         ],
-        "summary": "Creates many vocabulary entries in one call \u2013 idempotent: an already existing, explicitly set\nkey returns status \u0060existing\u0060 (no error), so the same batch can be safely repeated.\nWithout a key, the server generates a unique one (status \u0060created\u0060). Language logic\n(tokenizing/translating) is up to the caller \u2013 the API only manages the data.",
+        "summary": "Creates many vocabulary entries in one call \u2013 idempotent: an already existing, explicitly set\nkey returns status \u0060existing\u0060 (no error), so the same batch can be safely repeated.\nWithout a key, the server generates a unique one (status \u0060created\u0060) \u2013 or, with \u0060reuseExisting\u0060, reports\nthe entry under the generated key (status \u0060existing\u0060, alternatives and tags added). Language logic\n(tokenizing/translating) is up to the caller \u2013 the API only manages the data.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -31508,9 +31528,15 @@
             "items": {
               "type": "string"
             }
+          },
+          "reuseExisting": {
+            "type": [
+              "null",
+              "boolean"
+            ]
           }
         },
-        "description": "Creating a vocabulary entry. \u0022Simple\u0022 only needs \u0060Word\u0060 (\u002B languages): \u0060Key\u0060 may stay\nempty (the server generates a unique slug), \u0060Translation\u0060 may be omitted\n(stays empty and is findable via \u0060?untranslated=true\u0060) and \u0060PartOfSpeech\u0060 may be\nomitted (default PartOfSpeech.Other). \u0022Complex\u0022 additionally fills in\nnoun/verb/base form/audio; missing details can be supplied later via PATCH.\n\u0060Tags\u0060 (names) are linked create-if-missing. \u0060TranslationAlternatives\u0060 declares further\nequally valid translations \u2013 equivalence is never derived from two entries sharing a word (those are\nhomonyms)."
+        "description": "Creating a vocabulary entry. \u0022Simple\u0022 only needs \u0060Word\u0060 (\u002B languages): \u0060Key\u0060 may stay\nempty (the server generates a unique slug), \u0060Translation\u0060 may be omitted\n(stays empty and is findable via \u0060?untranslated=true\u0060) and \u0060PartOfSpeech\u0060 may be\nomitted (default PartOfSpeech.Other). \u0022Complex\u0022 additionally fills in\nnoun/verb/base form/audio; missing details can be supplied later via PATCH.\n\u0060Tags\u0060 (names) are linked create-if-missing. \u0060TranslationAlternatives\u0060 declares further\nequally valid translations \u2013 equivalence is never derived from two entries sharing a word (those are\nhomonyms).\nReuseExisting (only without Key, otherwise 400): if the key the server would generate already names an\nentry, that entry comes back (200) instead of a _2 copy; the sent TranslationAlternatives and\nTags are added to its own, its other fields stay as they are. For quick-add paths that mean \u0022this word\u0022, not\n\u0022another entry\u0022."
       },
       "CreatorProfileMatch": {
         "required": [

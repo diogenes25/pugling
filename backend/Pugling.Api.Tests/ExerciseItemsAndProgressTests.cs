@@ -402,4 +402,100 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
         Assert.Equal(["aa" + u, "bb" + u, "zz" + u], (await father.GetFromJsonAsync<List<JsonElement>>($"{exerciseUrl}/items"))!
             .Select(i => i.GetProperty("front").GetString()));
     }
+
+    // A word twice in one payload used to pass validation, save the exercise head and then hit the unique index
+    // (ExerciseId, VocabularyId) in the reconcile: a 500 with a half-written exercise (B-331). Each shape alone,
+    // so every branch of the check carries its own case.
+    [Fact]
+    public async Task UebungsPut_MitDoppeltemWort_Liefert400_UndSchreibtNichts()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var (s, c, exerciseId) = await VocabWithItemsAsync(father, ("hello", "hallo"), ("bye", "tschuess"));
+        var exerciseUrl = $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary/{exerciseId}";
+        var before = (await father.GetFromJsonAsync<List<JsonElement>>($"{exerciseUrl}/items"))!;
+        var hello = before[0].GetProperty("vocabularyId").GetInt32();
+        var bye = before[1].GetProperty("vocabularyId").GetInt32();
+
+        // A word no other test puts in the store, so the inline case really takes the key branch (new word), not the id one.
+        var fresh = $"moon{Guid.NewGuid():N}";
+        // The title differs from "Items-Übung", so a half-written PUT shows up below.
+        object Put(object config) => new { title = "Umbenannt", orderIndex = 1, rewardPoints = 10, config };
+        var shapes = new (string Name, object Config)[]
+        {
+            ("refs twice", new { direction = "front-to-back", refs = new[] { hello, bye, hello }.Select(id => new { vocabularyId = id }) }),
+            ("item id twice", new { direction = "front-to-back", sourceLang = "en", targetLang = "de",
+                items = new[] { hello, bye, hello }.Select(id => new { vocabularyId = id }) }),
+            ("inline word twice", new { direction = "front-to-back", sourceLang = "en", targetLang = "de",
+                items = new[] { new { front = fresh, back = "Mond" }, new { front = fresh, back = "Mond" } } }),
+            ("id and the same word inline", new { direction = "front-to-back", sourceLang = "en", targetLang = "de",
+                items = new object[] { new { vocabularyId = hello }, new { front = "hello", back = "hallo" } } }),
+            ("inline vocabularyId 0", new { direction = "front-to-back", sourceLang = "en", targetLang = "de",
+                items = new[] { new { vocabularyId = 0 } } }),
+        };
+        foreach (var (name, config) in shapes)
+        {
+            var response = await father.PutAsJsonAsync(exerciseUrl, Put(config));
+            Assert.True(response.StatusCode == HttpStatusCode.BadRequest, $"{name}: {(int)response.StatusCode}");
+            Assert.Equal("validation_error", (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+            Assert.Equal([hello, bye], (await father.GetFromJsonAsync<List<JsonElement>>($"{exerciseUrl}/items"))!
+                .Select(i => i.GetProperty("vocabularyId").GetInt32()));
+            Assert.Equal("Items-Übung", (await father.GetFromJsonAsync<JsonElement>(exerciseUrl)).GetProperty("title").GetString());
+        }
+    }
+
+    // The POST runs the same validation; a rejected one must not leave an exercise without words behind.
+    [Fact]
+    public async Task UebungsPost_MitDoppeltemInlineWort_Liefert400_UndLegtNichtsAn()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var (s, c, _) = await VocabWithItemsAsync(father);
+        var listUrl = $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary";
+        var countBefore = (await father.GetFromJsonAsync<List<JsonElement>>(listUrl))!.Count;
+
+        var response = await father.PostAsJsonAsync(listUrl, new
+        {
+            title = "Doppelt",
+            orderIndex = 2,
+            rewardPoints = 10,
+            config = new
+            {
+                direction = "front-to-back",
+                sourceLang = "en",
+                targetLang = "de",
+                items = new[] { new { front = "star", back = "Stern" }, new { front = "star", back = "Stern" } }
+            },
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("validation_error", (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+        Assert.Equal(countBefore, (await father.GetFromJsonAsync<List<JsonElement>>(listUrl))!.Count);
+    }
+
+    // Swapping an item onto a word another item already carries hit the unique index (ExerciseId, VocabularyId): a 500
+    // where AddItem answers 409 (B-334). Naming the item's own word again is no duplicate and must stay allowed - the
+    // two requests differ only in whose word they name.
+    [Fact]
+    public async Task PatchItem_AufDasWortEinesAnderenItems_Liefert409_AufDasEigeneNicht()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var (s, c, exerciseId) = await VocabWithItemsAsync(father, ("hello", "hallo"), ("bye", "tschuess"));
+        var itemsUrl = $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary/{exerciseId}/items";
+        var items = (await father.GetFromJsonAsync<List<JsonElement>>(itemsUrl))!;
+        var hello = items[0].GetProperty("vocabularyId").GetInt32();
+        var bye = items[1].GetProperty("vocabularyId").GetInt32();
+        var byeItem = items[1].GetProperty("id").GetInt32();
+
+        var onto = await father.PatchAsJsonAsync($"{itemsUrl}/{byeItem}", new { vocabularyId = hello });
+        Assert.Equal(HttpStatusCode.Conflict, onto.StatusCode);
+        Assert.Equal("duplicate_vocabulary_in_exercise", (await onto.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+        Assert.Equal([hello, bye], (await father.GetFromJsonAsync<List<JsonElement>>(itemsUrl))!
+            .Select(i => i.GetProperty("vocabularyId").GetInt32()));
+
+        // The same word named inline instead of by id: the check must sit after the resolution, not in the id branch.
+        var ontoInline = await father.PatchAsJsonAsync($"{itemsUrl}/{byeItem}", new { front = "hello", back = "hallo" });
+        Assert.Equal(HttpStatusCode.Conflict, ontoInline.StatusCode);
+
+        var own = await father.PatchAsJsonAsync($"{itemsUrl}/{byeItem}", new { vocabularyId = bye, hint = "Abschied" });
+        Assert.Equal(HttpStatusCode.OK, own.StatusCode);
+    }
 }

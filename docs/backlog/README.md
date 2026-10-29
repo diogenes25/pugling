@@ -506,7 +506,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (57)
+### Offen (56)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -522,7 +522,6 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-248](B-248-klassenarbeit-countdown-treibt-den-plan.md) | Die Klassenarbeit wird beim Kind sichtbar und verdichtet den Plan vor dem Termin | Wunsch | `idee` | P2 | — | — | — |
 | [B-249](B-249-probeklausur-mit-notenprognose.md) | Eine Probeklausur über das Bündel einer Klassenarbeit, mit Notenprognose | Wunsch | `idee` | P2 | — | — | — |
 | [B-164](B-164-useasync-paart-frischen-zustand-mit-alten-daten.md) | Nach einem Wechsel zeigt der Bildschirm für einen Moment frischen Zustand mit alten Daten | Defekt | `ausformuliert` | P3 | — | frontend | — |
-| [B-141](B-141-interest-tag-label-dublette.md) | Zwei Interessen-Tags dürfen dasselbe Label tragen | Defekt | `idee` | P3 | — | — | — |
 | [B-255](B-255-kinderzeile-per-namen-zweideutig.md) | E2E-Specs suchen die Kinderzeile per Namen, den zwei Tabellen tragen | Defekt | `idee` | P3 | — | — | — |
 | [B-259](B-259-generator-verschluckt-leerzeichen-neben-xml-elementen.md) | Der XML-Doc-Generator verschluckt Leerzeichen zwischen zwei Elementen | Defekt | `idee` | P3 | — | — | — |
 | [B-260](B-260-normalisierer-setzt-absatz-mitten-im-satz.md) | Der OpenAPI-Normalisierer setzt einen Absatz mitten in einen Satz | Defekt | `idee` | P3 | — | — | — |
@@ -535,12 +534,12 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-274](B-274-atomares-schreiben-flackert-wieder.md) | `AtomaresSchreiben_KeineLeseFehler` flackert wieder | Defekt | `idee` | P3 | — | backend | — |
 | [B-275](B-275-bewertungsformular-fuer-grantee-ungetestet.md) | Ob ein Schreib-Grantee das Bewertungsformular sieht, prüft kein Test an der Aufrufstelle | Defekt | `idee` | P3 | — | frontend | — |
 | [B-276](B-276-vater-main-ueberlauf-regel-ungetragen.md) | Die Überlauf-Regel von `.vater-main` trägt kein Test mehr | Defekt | `idee` | P3 | — | frontend | — |
-| [B-277](B-277-schnellanlage-legt-doppelten-store-eintrag-an.md) | Der Schnellanleger im Assistenten legt für ein bekanntes Wort einen zweiten Store-Eintrag an | Defekt | `idee` | P3 | — | beides | — |
 | [B-278](B-278-platzhalter-sieht-aus-wie-gespeicherter-wert.md) | Im leeren Verlagsfeld sieht der Platzhalter aus wie ein gespeicherter Wert | Defekt | `idee` | P3 | — | frontend | — |
 | [B-282](B-282-login-haertung-restpunkte.md) | Restpunkte der Login-Härtung (NP-3) | Defekt | `idee` | P3 | — | backend | — |
 | [B-310](B-310-profil-match-verraet-kind-ids.md) | `GET creator/profiles/match` verrät per 404 gegen 403, ob es eine Kind-Id gibt | Defekt | `idee` | P3 | — | backend | — |
 | [B-329](B-329-uebung-unbekannte-referenz-validation-error.md) | Die Übungs-Validierung meldet eine unbekannte Id als `validation_error`, die Kategorie daneben als `invalid_reference` | Defekt | `idee` | P3 | — | backend | — |
-| [B-331](B-331-doppeltes-wort-im-uebungs-payload-500.md) | Ein Wort, das im Übungs-Payload zweimal steht, endet in `500` – nach dem Speichern des Kopfes | Defekt | `idee` | P3 | — | backend | — |
+| [B-335](B-335-klausurstart-plan-inactive-weiter-versuchen.md) | Scheitert der erste Schritt nach dem Klausurstart an `plan_inactive`, bietet die Arcade „Weiter versuchen" an | Defekt | `idee` | P3 | — | frontend | — |
+| [B-336](B-336-ki-creator-dublettenregel-schwaecher-als-store-schluessel.md) | Die Dubletten-Regel des KI-Creators ist schwächer als der Store-Schlüssel | Defekt | `idee` | P3 | — | backend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-231](B-231-fokus-ohne-fehlerkasten.md) | Wohin gehört der Fokus, wenn ein Knopf ohne Fehlerkasten gesperrt wird? | Frage | `idee` | P3 | — | frontend | — |
 | [B-232](B-232-bestaetigung-ausserhalb-des-sichtfelds.md) | Soll eine Bestätigung zum Meldungsplatz scrollen, wenn er weit vom Knopf entfernt liegt? | Frage | `idee` | P3 | — | frontend | — |
@@ -569,7 +568,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (249)</summary>
+<summary>Abgenommen (254)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -618,6 +617,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-136](B-136-verlag-umbenennen-erzeugt-namensdublette.md) | Beim Verlag steht dieselbe Dublettenlücke wie bei der Reihe | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-138](B-138-markup-sickert-in-openapi.md) | Rohe HTML-Tags stehen in 70 Beschreibungen des Vertragsdokuments | Aufräumen | `abgenommen` | P3 | S | backend | — |
 | [B-139](B-139-e2e-nachtlauf-login-bricht-ab-test-2.md) | Der Aufräum-Sweep der E2E löschte das Journal seiner eigenen Datenbank | Defekt | `abgenommen` | P1 | XS | frontend | — |
+| [B-141](B-141-interest-tag-label-dublette.md) | Zwei Interessen-Tags dürfen dasselbe Label tragen | Defekt | `abgenommen` | P3 | S | beides | — |
 | [B-142](B-142-fachname-driftet-gegen-fach-id.md) | Ein Fachwechsel hinterlässt den alten Fachnamen | Defekt | `abgenommen` | P3 | M | beides | — |
 | [B-143](B-143-formular-kennt-zustaende-des-modells-nicht.md) | Das Reihen-Formular kennt zwei Zustände nicht, die das Modell erlaubt | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-144](B-144-fach-loeschen-trifft-reihen-lautlos.md) | Ein Fach zu löschen löscht Meilensteine und Stundenpläne des Kindes | Defekt | `abgenommen` | P3 | M | beides | Migration |
@@ -722,6 +722,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-268](B-268-fokus-nach-inline-reihe.md) | Nach „Reihe anlegen & wählen“ fällt der Fokus auf `body` | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-269](B-269-bewertungen-reihenfolge-und-updatedat-ungetestet.md) | Bewertungen: Reihenfolge der Liste und `UpdatedAt` beim Überschreiben sind ungetestet | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-27](B-27-testsuite-grenzfaelle.md) | Die Grenzen des `ScoringService` als Tabelle statt als Flow | Aufräumen | `abgenommen` | P2 | S | backend | — |
+| [B-277](B-277-schnellanlage-legt-doppelten-store-eintrag-an.md) | Der Schnellanleger im Assistenten legt für ein bekanntes Wort einen zweiten Store-Eintrag an | Defekt | `abgenommen` | P3 | S | beides | — |
 | [B-279](B-279-general-use-weak-zieht-woerter-trotzdem.md) | `--child X --general --use-weak` zieht die schwachen Wörter weiter in den Pflicht-Wortschatz | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-28](B-28-login-name-sequenziell.md) | Sequenzielle IDs als Login-Name | Wunsch | `abgenommen` | P3 | S | backend | — |
 | [B-281](B-281-pin-felder-pruefen-mindestlaenge-im-ui.md) | Eine zu kurze PIN meldet die Oberfläche auf Englisch | Defekt | `abgenommen` | P3 | S | frontend | — |
@@ -766,7 +767,10 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-326](B-326-ueben-und-klausur-nehmen-ungepruefte-plan-id.md) | Üben und Klausur nehmen nach einem Reload die ungeprüfte Plan-Id | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-327](B-327-ziel-spaeter-jenseits-platz-fuenf-erreicht.md) | Ein Ziel, das nach dem ersten Besuch jenseits von Platz fünf erreicht wird, feiert die App verspätet | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-330](B-330-plan-inactive-ohne-deutsche-fassung.md) | Ein deaktivierter Plan zeigt dem Kind nach einem Reload die englische Serverzeile | Defekt | `abgenommen` | P2 | XS | frontend | — |
+| [B-331](B-331-doppeltes-wort-im-uebungs-payload-500.md) | Ein Wort, das im Übungs-Payload zweimal steht, endet in `500` – nach dem Speichern des Kopfes | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-332](B-332-put-nur-mit-refs-ungetestet.md) | Ein `PUT` nur mit `refs`, der ein gespieltes Wort streicht, ist von keinem Fall gehalten | Defekt | `abgenommen` | P2 | XS | backend | — |
+| [B-333](B-333-uebungsrunde-andere-api-fehler-ungetestet.md) | Dass nur `plan_inactive` die Übungsrunde beendet, hält kein Fall mit einem anderen Server-Fehler | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-334](B-334-patch-item-auf-belegtes-wort-500.md) | Ein Item auf das Wort eines anderen Items umzuhängen endet in `500` | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-35](B-35-karten-umdrehen-animation.md) | Karten drehen sich beim Aufdecken um | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-36](B-36-motivations-animationen-teilziele.md) | Motivations-Animationen bei erreichten Teilzielen | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-37](B-37-uebung-abbruch-unvollendet.md) | Abgebrochene Runden: Pflicht härten, Klausur deckeln | Defekt | `abgenommen` | P1 | M | beides | — |
@@ -835,9 +839,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
-### Nach der Abnahme entgangen (98)
+### Nach der Abnahme entgangen (100)
 
-**Nachgeschaut: 247 von 249 abgenommenen** — und in 79 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 2 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 249 von 254 abgenommenen** — und in 80 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 5 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -904,7 +908,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-266](B-266-wartepunkt-netzwerk-statt-app-zustand.md) | Der Wartepunkt aus B-180 wartet aufs Netzwerk, nicht auf die App | [B-180] | `idee` |
 | [B-274](B-274-atomares-schreiben-flackert-wieder.md) | `AtomaresSchreiben_KeineLeseFehler` flackert wieder | [B-165] | `idee` |
 | [B-276](B-276-vater-main-ueberlauf-regel-ungetragen.md) | Die Überlauf-Regel von `.vater-main` trägt kein Test mehr | [B-68] | `idee` |
-| [B-277](B-277-schnellanlage-legt-doppelten-store-eintrag-an.md) | Der Schnellanleger im Assistenten legt für ein bekanntes Wort einen zweiten Store-Eintrag an | [B-71] | `idee` |
+| [B-277](B-277-schnellanlage-legt-doppelten-store-eintrag-an.md) | Der Schnellanleger im Assistenten legt für ein bekanntes Wort einen zweiten Store-Eintrag an | [B-71] | `abgenommen` |
 | [B-280](B-280-fokusziel-nicht-geleert-ungetestet.md) | Dass das Fokusziel nach dem Sprung geleert wird, prüft kein Test | [B-268] | `idee` |
 | [B-285](B-285-kind-konto-bleibt-nach-vater-loeschung.md) | Löscht sich ein Vater, bleibt das Konto seines Kindes als leere Hülle – und der Kind-Token bleibt gültig | [B-245] | `abgenommen` |
 | [B-287](B-287-fokus-test-prueft-den-ausgangszustand.md) | Der Fokus-Test in `LetterTiles.test.tsx` prüft eine Zusicherung, die nie fallen kann | [B-05] | `abgenommen` |
@@ -939,17 +943,22 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-327](B-327-ziel-spaeter-jenseits-platz-fuenf-erreicht.md) | Ein Ziel, das nach dem ersten Besuch jenseits von Platz fünf erreicht wird, feiert die App verspätet | [B-257] | `abgenommen` |
 | [B-330](B-330-plan-inactive-ohne-deutsche-fassung.md) | Ein deaktivierter Plan zeigt dem Kind nach einem Reload die englische Serverzeile | [B-326] | `abgenommen` |
 | [B-332](B-332-put-nur-mit-refs-ungetestet.md) | Ein `PUT` nur mit `refs`, der ein gespieltes Wort streicht, ist von keinem Fall gehalten | [B-323] | `abgenommen` |
+| [B-333](B-333-uebungsrunde-andere-api-fehler-ungetestet.md) | Dass nur `plan_inactive` die Übungsrunde beendet, hält kein Fall mit einem anderen Server-Fehler | [B-330] | `abgenommen` |
+| [B-335](B-335-klausurstart-plan-inactive-weiter-versuchen.md) | Scheitert der erste Schritt nach dem Klausurstart an `plan_inactive`, bietet die Arcade „Weiter versuchen" an | [B-330] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (2) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (5) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-330](B-330-plan-inactive-ohne-deutsche-fassung.md) | Ein deaktivierter Plan zeigt dem Kind nach einem Reload die englische Serverzeile |
-| [B-332](B-332-put-nur-mit-refs-ungetestet.md) | Ein `PUT` nur mit `refs`, der ein gespieltes Wort streicht, ist von keinem Fall gehalten |
+| [B-141](B-141-interest-tag-label-dublette.md) | Zwei Interessen-Tags dürfen dasselbe Label tragen |
+| [B-277](B-277-schnellanlage-legt-doppelten-store-eintrag-an.md) | Der Schnellanleger im Assistenten legt für ein bekanntes Wort einen zweiten Store-Eintrag an |
+| [B-331](B-331-doppeltes-wort-im-uebungs-payload-500.md) | Ein Wort, das im Übungs-Payload zweimal steht, endet in `500` – nach dem Speichern des Kopfes |
+| [B-333](B-333-uebungsrunde-andere-api-fehler-ungetestet.md) | Dass nur `plan_inactive` die Übungsrunde beendet, hält kein Fall mit einem anderen Server-Fehler |
+| [B-334](B-334-patch-item-auf-belegtes-wort-500.md) | Ein Item auf das Wort eines anderen Items umzuhängen endet in `500` |
 
 </details>
 

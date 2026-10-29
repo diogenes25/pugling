@@ -13,6 +13,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-323]
 wartet_auf: ""
+nachgeschaut: "2026-10-29"
 ---
 
 # B-332 · Ein `PUT` nur mit `refs`, der ein gespieltes Wort streicht, ist von keinem Fall gehalten
@@ -54,3 +55,10 @@ Wie B-323: Als Creator, der eine gespielte Vokabelübung über die API pflegt, m
   bestätigt. 🟢 Code und unveränderte Items zusichern → übernommen. Volle Suite **1004/1004**. Rollengang: reine
   Testergänzung ohne Laufzeitwirkung – der Weg selbst ist B-323s Live-Probe (Creator, `409` beim `PUT`); E2E aus Teil 2
   (**99 passed**) unberührt. **Abgenommen**, Commits `599e217` und der Abschluss-Commit von Lauf J.
+- **2026-10-29** — Nachschau in Lauf K (frischer `pugling-reviewer`, `git show 599e217` und die Nachträge in `2a470be`):
+  Mutante „nur `items` prüfen" (`UpdateConflictAsync`) nachgerechnet – Refs-only-`PUT` bliebe ungeprüft, Z. 365 fiele;
+  „Refs beim Ermitteln ignoriert" hält `refsWin` (Z. 318-334); leere `refs` reconcilen nicht (`AfterSaveAsync` nutzt
+  dasselbe `HasPayloadItems`). Doku-Sätze in `wiki/03-uebungstypen.md` und `docs/endpunkt-beziehungen.md:87` gegen
+  `RefsFromTags`/`PatchItem` geprüft: stimmen. 🟢 Titel und AK sagen „gespieltes Wort"; die Sperre greift schon, wenn die
+  Übung in einem Plan steht (`ExerciseInPlanAsync`, der Test legt nur eine Position an) – sachlich richtig, nur zu eng
+  formuliert; hier benannt statt umbenannt.

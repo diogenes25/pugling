@@ -51,6 +51,125 @@ public class VocabularyStoreTests(PuglingWebAppFactory factory) : IClassFixture<
     }
 
     /// <summary>
+    /// B-277: <c>reuseExisting</c> lets a quick-add hit the entry the server key already names instead of creating a
+    /// <c>_2</c> copy. The two spellings differ in an accented capital, which SQLite's NOCASE does not fold - only the
+    /// server key does, so a client-side comparison could not get this case right. Without the flag the old behaviour
+    /// stays (a second entry), which is what keeps the flag from being decoration.
+    /// </summary>
+    [Fact]
+    public async Task ReuseExisting_TrifftDenEintragDesServerSchluessels_UndErgaenztVarianten()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var u = Guid.NewGuid().ToString("N")[..8];
+        var original = await father.PostAsJsonAsync("/api/v1/creator/vocabulary", new
+        {
+            sourceLanguage = "fr",
+            targetLanguage = "de",
+            word = $"École{u}",
+            translation = "Schule",
+            translationAlternatives = new[] { "Lehranstalt" },
+        });
+        var originalId = await TestApi.IdAsync(original);
+
+        var reused = await father.PostAsJsonAsync("/api/v1/creator/vocabulary", new
+        {
+            sourceLanguage = "fr",
+            targetLanguage = "de",
+            word = $"école{u}",
+            translation = "schule",
+            translationAlternatives = new[] { "Bildungsstätte", "lehranstalt" },
+            tags = new[] { $"B277-{u}" },
+            reuseExisting = true,
+        });
+
+        Assert.Equal(HttpStatusCode.OK, reused.StatusCode);
+        var body = await reused.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(originalId, body.GetProperty("id").GetInt32());
+        // Merged, not replaced; the repeated variant in another case is not listed twice.
+        Assert.Equal(["Bildungsstätte", "Lehranstalt"], (await VariantenAsync(father, originalId))!.Order());
+        Assert.Equal($"École{u}", body.GetProperty("word").GetString());
+        // Additive only: the sent spelling of the translation does not overwrite the stored one, tags join in.
+        Assert.Equal("Schule", body.GetProperty("translation").GetString());
+        Assert.Contains($"B277-{u}", body.GetProperty("tags").EnumerateArray().Select(t => t.GetString()));
+
+        var copy = await father.PostAsJsonAsync("/api/v1/creator/vocabulary", new
+        {
+            sourceLanguage = "fr",
+            targetLanguage = "de",
+            word = $"école{u}",
+            translation = "schule",
+        });
+        Assert.Equal(HttpStatusCode.Created, copy.StatusCode);
+        Assert.EndsWith("_2", (await copy.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("key").GetString());
+    }
+
+    /// <summary>
+    /// The flag must not change what is valid. With an explicit key it would be ignored without a word - the caller
+    /// would get a 409 duplicate_key it did not ask about; on a hit it used to skip the base-form check that a create
+    /// runs, and the unknown base form came back as a 200.
+    /// </summary>
+    [Fact]
+    public async Task ReuseExisting_UmgehtKeinePruefung()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var u = Guid.NewGuid().ToString("N")[..8];
+        var key = await (await father.PostAsJsonAsync("/api/v1/creator/vocabulary", new
+        {
+            sourceLanguage = "en",
+            targetLanguage = "de",
+            word = $"tree{u}",
+            translation = "Baum",
+        })).Content.ReadFromJsonAsync<JsonElement>();
+
+        var withKey = await father.PostAsJsonAsync("/api/v1/creator/vocabulary", new
+        {
+            key = key.GetProperty("key").GetString(),
+            sourceLanguage = "en",
+            targetLanguage = "de",
+            word = $"tree{u}",
+            translation = "Baum",
+            reuseExisting = true,
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, withKey.StatusCode);
+        Assert.Equal("validation_error", (await withKey.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+
+        var unknownBase = await father.PostAsJsonAsync("/api/v1/creator/vocabulary", new
+        {
+            sourceLanguage = "en",
+            targetLanguage = "de",
+            word = $"tree{u}",
+            translation = "Baum",
+            baseFormKey = $"gibt-es-nicht-{u}",
+            reuseExisting = true,
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, unknownBase.StatusCode);
+    }
+
+    /// <summary>The batch reports a reused entry as <c>existing</c> with its id - not as <c>created</c>.</summary>
+    [Fact]
+    public async Task ReuseExisting_ImBatch_MeldetExisting()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var u = Guid.NewGuid().ToString("N")[..8];
+        var id = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/vocabulary", new
+        {
+            sourceLanguage = "en",
+            targetLanguage = "de",
+            word = $"river{u}",
+            translation = "Fluss",
+        }));
+
+        var batch = await father.PostAsJsonAsync("/api/v1/creator/vocabulary/batch", new[]
+        {
+            new { sourceLanguage = "en", targetLanguage = "de", word = $"River{u}", translation = "fluss", reuseExisting = true },
+        });
+
+        var result = (await batch.Content.ReadFromJsonAsync<List<JsonElement>>())!.Single();
+        Assert.Equal("Existing", result.GetProperty("status").GetString());
+        Assert.Equal(id, result.GetProperty("id").GetInt32());
+    }
+
+    /// <summary>
     /// B-65: the equally valid translations survive POST, PATCH and both batch routes. The single PATCH is
     /// covered by <c>PatchSemanticsTests</c>; what needs its own test here is the batch pair – it maps the
     /// fields by hand and would silently drop a forgotten one.

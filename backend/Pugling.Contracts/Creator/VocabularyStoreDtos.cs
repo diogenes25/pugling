@@ -23,12 +23,18 @@ public record VocabularyResponse(int Id, string Key, string Version, string Sour
 /// <c>Tags</c> (names) are linked create-if-missing. <c>TranslationAlternatives</c> declares further
 /// equally valid translations – equivalence is never derived from two entries sharing a word (those are
 /// homonyms).
+/// <para>
+/// <c>ReuseExisting</c> (only without <c>Key</c>, otherwise 400): if the key the server would generate already names an
+/// entry, that entry comes back (200) instead of a <c>_2</c> copy; the sent <c>TranslationAlternatives</c> and
+/// <c>Tags</c> are added to its own, its other fields stay as they are. For quick-add paths that mean "this word", not
+/// "another entry".
+/// </para>
 /// </summary>
 public record CreateVocabularyDto(string? Key, string SourceLanguage, string TargetLanguage,
     string Word, string? Translation = null, PartOfSpeech? PartOfSpeech = null, string? Version = null,
     NounInfo? Noun = null, VerbInfo? Verb = null, string? BaseFormKey = null,
     string? BaseFormRelation = null, string? PronunciationAudioUrl = null, List<string>? Tags = null,
-    List<string>? TranslationAlternatives = null);
+    List<string>? TranslationAlternatives = null, bool? ReuseExisting = null);
 
 /// <summary>
 /// Only fields that are set are changed. BaseFormKey = "" removes the link (and its label); tags are
@@ -64,7 +70,7 @@ public enum BatchItemStatus
 {
     /// <summary>`CreateBatch` only: a new store entry was created.</summary>
     Created = 0,
-    /// <summary>`CreateBatch` only: the key already existed, nothing was created.</summary>
+    /// <summary>`CreateBatch` only: the key already existed (explicit, or the generated one with `reuseExisting`); no new entry was created.</summary>
     Existing = 1,
     /// <summary>`UpdateBatch` only: an existing store entry was updated.</summary>
     Updated = 2,
