@@ -22,7 +22,7 @@ namespace Pugling.Api.Controllers.Creator;
 [Tags("Creator – Vocabulary Store")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Creator)]
-public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
+public class VocabularyStoreController(PuglingDbContext db, VocabularyStoreService store) : ControllerBase
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -240,6 +240,10 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         if (dto.ReuseExisting == true && explicitKey is not null)
             return new(CreateKind.Error, null, explicitKey, "reuseExisting works only without a key; an explicit key is never reused.");
 
+        // An explicit key that is taken answers first: a repeated batch stays "existing" even if its base form went away.
+        if (explicitKey is not null && await db.Vocabularies.AnyAsync(v => v.Key == explicitKey, ct))
+            return new(CreateKind.Conflict, null, explicitKey, $"Key '{explicitKey}' already exists.");
+
         // Before the reuse branch, so the flag never turns an invalid payload into a 200.
         int? baseFormId = null;
         if (!string.IsNullOrWhiteSpace(dto.BaseFormKey))
@@ -254,7 +258,8 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
         {
             // The server key is the only comparison that folds case, diacritics and ß the way the store does - a client
             // cannot rebuild it, so "is this word already there?" is answered here (B-277).
-            if (dto.ReuseExisting == true && await ReuseCandidateAsync(dto, generated, ct) is { } existing)
+            if (dto.ReuseExisting == true
+                && await store.FindAsync(dto.SourceLanguage, dto.Word, dto.TargetLanguage, dto.Translation ?? "", ct) is { } existing)
             {
                 // Additive only, like PATCH: alternatives and tags join the entry's own, nothing else is overwritten.
                 await LoadGraphAsync(existing, ct);
@@ -264,14 +269,10 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
                 await db.SaveChangesAsync(ct);
                 return new(CreateKind.Reused, existing, existing.Key, null);
             }
-            key = await UniqueKeyAsync(generated, ct);
+            key = await store.UniqueKeyAsync(generated, ct);
         }
         else
-        {
             key = explicitKey;
-            if (await db.Vocabularies.AnyAsync(v => v.Key == key, ct))
-                return new(CreateKind.Conflict, null, key, $"Key '{key}' already exists.");
-        }
 
         var vocab = new Vocabulary
         {
@@ -295,34 +296,6 @@ public class VocabularyStoreController(PuglingDbContext db) : ControllerBase
 
         await LoadGraphAsync(vocab, ct);
         return new(CreateKind.Created, vocab, key, null);
-    }
-
-    /// <summary>
-    /// The entry whose <b>current</b> word and translation fold to <paramref name="generated"/>. A PATCH changes word or
-    /// translation without touching the key, so the key alone can name an entry that now says something else - or miss
-    /// one whose typo was fixed (B-337). Candidates are the key match and the entries with the same word (NOCASE, the
-    /// index), judged by their content; the oldest wins.
-    /// </summary>
-    private async Task<Vocabulary?> ReuseCandidateAsync(CreateVocabularyDto dto, string generated, CancellationToken ct)
-    {
-        var candidates = await db.Vocabularies
-            .Where(v => v.Key == generated
-                        || (v.Word == dto.Word && v.SourceLanguage == dto.SourceLanguage && v.TargetLanguage == dto.TargetLanguage))
-            .OrderBy(v => v.Id)
-            .ToListAsync(ct);
-        return candidates.FirstOrDefault(v => VocabKey.Generate(v.SourceLanguage, v.Word, v.TargetLanguage, v.Translation) == generated);
-    }
-
-    /// <summary>Makes a generated base key unique by appending _2, _3 … on collision.</summary>
-    private async Task<string> UniqueKeyAsync(string baseKey, CancellationToken ct)
-    {
-        var key = string.IsNullOrWhiteSpace(baseKey) ? "vokabel" : baseKey;
-        if (!await db.Vocabularies.AnyAsync(v => v.Key == key, ct)) return key;
-        for (var n = 2; ; n++)
-        {
-            var candidate = $"{key}_{n}";
-            if (!await db.Vocabularies.AnyAsync(v => v.Key == candidate, ct)) return candidate;
-        }
     }
 
     /// <summary>Changes a vocabulary entry (partial).</summary>

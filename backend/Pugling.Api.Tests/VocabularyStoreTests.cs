@@ -173,6 +173,51 @@ public class VocabularyStoreTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.Equal(fixedTypo, (await hit.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32());
     }
 
+    /// <summary>
+    /// The content comparison folds what the key folds: language case and surrounding whitespace. The entry is stored
+    /// as "EN"/"DE" and its key went stale through a PATCH, so only the content can find it. Red if the lookup compares
+    /// the languages exactly (SQLite's default BINARY collation) or the untrimmed word - either one yields a new 201.
+    /// </summary>
+    [Fact]
+    public async Task ReuseExisting_FaltetSpracheUndLeerraumWieDerSchluessel()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var u = Guid.NewGuid().ToString("N")[..8];
+        var id = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/vocabulary",
+            new { sourceLanguage = "EN", targetLanguage = "DE", word = $"laek{u}", translation = "See" }));
+        (await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{id}", new { word = $"lake{u}" })).EnsureSuccessStatusCode();
+
+        var hit = await father.PostAsJsonAsync("/api/v1/creator/vocabulary",
+            new { sourceLanguage = "en", targetLanguage = "de", word = $" lake{u} ", translation = "See", reuseExisting = true });
+
+        Assert.Equal(HttpStatusCode.OK, hit.StatusCode);
+        Assert.Equal(id, (await hit.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32());
+    }
+
+    /// <summary>
+    /// A replayed batch line whose explicit key exists stays <c>existing</c>, even when its base form no longer
+    /// resolves - the entry is there, the repeat must not read as a failure. Red if the base form is validated before
+    /// the key conflict (status <c>Error</c>).
+    /// </summary>
+    [Fact]
+    public async Task Batch_VorhandenerSchluessel_MitVerschwundenerGrundform_BleibtExisting()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var u = Guid.NewGuid().ToString("N")[..8];
+        var key = $"wiederholt-{u}";
+        var id = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/vocabulary",
+            new { key, sourceLanguage = "en", targetLanguage = "de", word = $"went{u}", translation = "ging" }));
+
+        var batch = await father.PostAsJsonAsync("/api/v1/creator/vocabulary/batch", new[]
+        {
+            new { key, sourceLanguage = "en", targetLanguage = "de", word = $"went{u}", translation = "ging", baseFormKey = $"weg-{u}" },
+        });
+
+        var result = (await batch.Content.ReadFromJsonAsync<List<JsonElement>>())!.Single();
+        Assert.Equal("Existing", result.GetProperty("status").GetString());
+        Assert.Equal(id, result.GetProperty("id").GetInt32());
+    }
+
     /// <summary>The batch reports a reused entry as <c>existing</c> with its id - not as <c>created</c>.</summary>
     [Fact]
     public async Task ReuseExisting_ImBatch_MeldetExisting()

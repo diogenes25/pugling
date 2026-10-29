@@ -111,6 +111,28 @@ public class InterestTagLabelTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.NotEqual(renamedId, interests!.Single().GetProperty("tagId").GetInt32());
     }
 
+    /// <summary>
+    /// The interest path resolves a synonym to its tag, so a second tag carrying that text as its label would never be
+    /// found there - creating or renaming onto it is a duplicate like an equal label. Red if either route skips the
+    /// synonym check (each answers 201/200 then).
+    /// </summary>
+    [Fact]
+    public async Task Label_Das_Ein_Anderer_Tag_Als_Synonym_Fuehrt_Wird_Abgewiesen()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var synonym = TestApi.UniqueName("Soccer");
+        await TestApi.IdAsync(await creator.PostAsJsonAsync(Root, new { label = TestApi.UniqueName("Fussball"), synonyms = new[] { synonym } }));
+
+        var created = await creator.PostAsJsonAsync(Root, new { label = synonym });
+        Assert.Equal(HttpStatusCode.Conflict, created.StatusCode);
+        Assert.Equal("duplicate_interest_tag", await CodeAsync(created));
+
+        var otherId = await TestApi.IdAsync(await creator.PostAsJsonAsync(Root, new { label = TestApi.UniqueName("Golf") }));
+        var renamed = await creator.PatchAsJsonAsync($"{Root}/{otherId}", new { label = synonym });
+        Assert.Equal(HttpStatusCode.Conflict, renamed.StatusCode);
+        Assert.Equal("duplicate_interest_tag", await CodeAsync(renamed));
+    }
+
     /// <summary>A tag whose label no longer derives to its slug: created as one name, renamed to another.</summary>
     private static async Task<(int Id, string Label)> RenamedTagAsync(HttpClient creator)
     {

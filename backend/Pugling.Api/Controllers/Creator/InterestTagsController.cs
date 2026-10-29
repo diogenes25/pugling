@@ -85,7 +85,10 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
     /// <summary>
     /// Creates a tag. If the slug is missing, it is derived from the label. If the slug already
     /// exists, the existing entry comes back (idempotent) – so an agent can safely repeat the same
-    /// catalog build. A label that another tag already carries (exact comparison) is rejected with 409.
+    /// catalog build, as long as it sends the slug (or the label it was created with). A label that another
+    /// tag already carries (exact comparison) or lists as a synonym is rejected with 409 - deliberately unlike
+    /// <c>InterestTagService.EnsureAsync</c>, which resolves the same text to that tag: here the caller names a
+    /// new tag, and quietly handing back a differently named one would hide that it already exists (B-141).
     /// </summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -104,6 +107,8 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
         var label = dto.Label.Trim();
         if (await LabelTakenAsync(label, exceptId: null, ct))
             return this.ProblemWithCode(ApiErrors.DuplicateInterestTag, "Another interest tag already carries this label.");
+        if (await SynonymTakenAsync(label, exceptId: null, ct))
+            return this.ProblemWithCode(ApiErrors.DuplicateInterestTag, "Another interest tag already lists this label as a synonym.");
 
         var tag = new InterestTag
         {
@@ -152,6 +157,8 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
                     "Another interest tag already uses the slug this label derives to.");
             if (await LabelTakenAsync(label, exceptId: id, ct))
                 return this.ProblemWithCode(ApiErrors.DuplicateInterestTag, "Another interest tag already carries this label.");
+            if (await SynonymTakenAsync(label, exceptId: id, ct))
+                return this.ProblemWithCode(ApiErrors.DuplicateInterestTag, "Another interest tag already lists this label as a synonym.");
 
             tag.Label = label;
         }
@@ -218,6 +225,19 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
     /// </summary>
     private Task<bool> LabelTakenAsync(string label, int? exceptId, CancellationToken ct) =>
         db.InterestTags.AnyAsync(t => t.Id != exceptId && t.Label == label, ct);
+
+    /// <summary>
+    /// Whether another tag lists the label as a synonym, compared by slug like <c>InterestTagService.EnsureAsync</c>:
+    /// that path resolves the text to the synonym's tag, so a second tag under this label would never be found by it.
+    /// Synonyms sit in a JSON column and are not queryable, hence the scan.
+    /// </summary>
+    private async Task<bool> SynonymTakenAsync(string label, int? exceptId, CancellationToken ct)
+    {
+        var slug = InterestSlug.From(label);
+        if (slug.Length == 0) return false;
+        var synonyms = await db.InterestTags.AsNoTracking().Where(t => t.Id != exceptId).Select(t => t.Synonyms).ToListAsync(ct);
+        return synonyms.Any(list => list.Any(s => InterestSlug.From(s) == slug));
+    }
 
     /// <summary>Trims, discards empty entries, and deduplicates – synonyms are a pure search aid.</summary>
     private static List<string> Clean(List<string>? values) =>

@@ -502,4 +502,48 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
         var own = await father.PatchAsJsonAsync($"{itemsUrl}/{byeItem}", new { vocabularyId = bye, hint = "Abschied" });
         Assert.Equal(HttpStatusCode.OK, own.StatusCode);
     }
+
+    // An inline word is resolved before the later checks; a rejected request must not leave its new store entry behind.
+    // The plan lock is the check that fires after the resolution on both routes. Red if the resolution saves on its own.
+    [Fact]
+    public async Task AbgewiesenesInlineItem_LegtKeinenStoreEintragAn()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var (s, c, exerciseId) = await VocabWithItemsAsync(father, ("hello", "hallo"), ("bye", "tschuess"));
+        var itemsUrl = $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary/{exerciseId}/items";
+        var firstId = (await father.GetFromJsonAsync<List<JsonElement>>(itemsUrl))![0].GetProperty("id").GetInt32();
+        TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+        var u = Guid.NewGuid().ToString("N")[..8];
+
+        var added = await father.PostAsJsonAsync(itemsUrl, new { front = $"zeppelin{u}", back = "Luftschiff", orderIndex = 0 });
+        var patched = await father.PatchAsJsonAsync($"{itemsUrl}/{firstId}", new { front = $"comet{u}", back = "Komet", orderIndex = 9 });
+
+        Assert.Equal(HttpStatusCode.Conflict, added.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, patched.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await father.GetAsync($"/api/v1/creator/vocabulary/by-key/en_zeppelin{u}_de_luftschiff")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await father.GetAsync($"/api/v1/creator/vocabulary/by-key/en_comet{u}_de_komet")).StatusCode);
+    }
+
+    // B-337 on the exercise side: an inline item links the entry that says this word NOW. One entry drifted away from
+    // its key (it no longer says "hus"), one had its typo fixed (its key still carries the typo). Red if the inline
+    // lookup goes by the stored key: the first item would link the drifted entry, the second would get a new one.
+    [Fact]
+    public async Task InlineItem_FolgtDemInhaltNichtDemVeraltetenSchluessel()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var u = Guid.NewGuid().ToString("N")[..8];
+        async Task<int> StoreAsync(string word, string translation) => await TestApi.IdAsync(await father.PostAsJsonAsync(
+            "/api/v1/creator/vocabulary", new { sourceLanguage = "en", targetLanguage = "de", word, translation }));
+        var drifted = await StoreAsync($"hus{u}", "Haus");
+        (await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{drifted}", new { word = $"house{u}" })).EnsureSuccessStatusCode();
+        var fixedTypo = await StoreAsync($"tre{u}", "Baum");
+        (await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{fixedTypo}", new { word = $"tree{u}" })).EnsureSuccessStatusCode();
+
+        var (s, c, exerciseId) = await VocabWithItemsAsync(father, ($"hus{u}", "Haus"), ($"tree{u}", "Baum"));
+
+        var items = (await father.GetFromJsonAsync<List<JsonElement>>(
+            $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary/{exerciseId}/items"))!;
+        Assert.NotEqual(drifted, items[0].GetProperty("vocabularyId").GetInt32());
+        Assert.Equal(fixedTypo, items[1].GetProperty("vocabularyId").GetInt32());
+    }
 }

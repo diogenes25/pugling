@@ -42,22 +42,19 @@ public class ExerciseItemService(PuglingDbContext db, VocabularyStoreService sto
 
         // Inline items: take an existing store id as is, create the missing ones (the id materializes only after save).
         var desired = new DesiredItem[config.Items.Count];
-        var pending = new List<(int Index, Vocabulary Vocab)>();
+        // Front/back are guaranteed to be set here: ValidateConfigAsync rejects items without a VocabularyId and
+        // without both (front + back) up front; the fallback only silences the nullable warning.
+        var inline = InlineItems(config);
         for (var i = 0; i < config.Items.Count; i++)
+            if (config.Items[i].VocabularyId is { } id)
+                desired[i] = new DesiredItem(id, config.Items[i].Hint);
+        if (inline.Count > 0)
         {
-            var item = config.Items[i];
-            if (item.VocabularyId is { } id)
-                desired[i] = new DesiredItem(id, item.Hint);
-            else
-                // Front/back are guaranteed to be set here: ValidateConfigAsync rejects items without a
-                // VocabularyId and without both (front + back) up front; the fallback only silences the nullable warning.
-                pending.Add((i, await store.GetOrCreateAsync(config.SourceLang, item.Front ?? "", config.TargetLang, item.Back ?? "", ct: ct)));
-        }
-        if (pending.Count > 0)
-        {
+            var vocabs = await store.GetOrCreateManyAsync(config.SourceLang, config.TargetLang,
+                inline.Select(x => x.Pair).ToList(), ct: ct);
             await db.SaveChangesAsync(ct);
-            foreach (var (i, vocab) in pending)
-                desired[i] = new DesiredItem(vocab.Id, config.Items[i].Hint);
+            for (var n = 0; n < inline.Count; n++)
+                desired[inline[n].Index] = new DesiredItem(vocabs[n].Id, config.Items[inline[n].Index].Hint);
         }
         return desired.ToList();
     }
@@ -71,15 +68,18 @@ public class ExerciseItemService(PuglingDbContext db, VocabularyStoreService sto
         // Refs first, like DesiredFromConfigAsync. Key-only legacy refs are not resolved here: ValidateConfigAsync
         // rejects VocabularyId <= 0 before this runs, and if that ever changed the result would be an extra 409, not a bypass.
         if (config.Refs is { Count: > 0 } refs) return refs.Select(r => (int?)r.VocabularyId).ToList();
-        var peeked = new List<int?>(config.Items.Count);
-        foreach (var item in config.Items)
-        {
-            if (item.VocabularyId is { } id) { peeked.Add(id); continue; }
-            var key = VocabKey.Generate(config.SourceLang, item.Front ?? "", config.TargetLang, item.Back ?? "");
-            peeked.Add(await db.Vocabularies.Where(v => v.Key == key).Select(v => (int?)v.Id).FirstOrDefaultAsync(ct));
-        }
-        return peeked;
+        // The same content-based lookup as the reconcile, so the lock and duplicate checks judge the entry it will link.
+        var found = await store.FindManyAsync(config.SourceLang, config.TargetLang, InlineItems(config).Select(x => x.Pair), ct);
+        return config.Items.Select(item => item.VocabularyId is { } id ? id
+            : found.TryGetValue(VocabKey.Generate(config.SourceLang, item.Front ?? "", config.TargetLang, item.Back ?? ""), out var v)
+              && v.Id > 0 ? v.Id : (int?)null).ToList();
     }
+
+    private static List<(int Index, (string Word, string Translation) Pair)> InlineItems(VocabularyConfig config) =>
+        config.Items.Select((item, i) => (Index: i, Item: item))
+            .Where(x => x.Item.VocabularyId is null)
+            .Select(x => (x.Index, (x.Item.Front ?? "", x.Item.Back ?? "")))
+            .ToList();
 
     /// <summary>
     /// Whether reconciling to <paramref name="desiredVocabularyIds"/> would move a word the exercise already has.

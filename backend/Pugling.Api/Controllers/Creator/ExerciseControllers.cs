@@ -209,14 +209,15 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         if (EnsureCanWrite(exercise) is { } forbidden) return forbidden;
 
         var config = ConfigOf(exercise);
-        var resolved = await ResolveVocabularyIdAsync(body, config, ct);
-        if (resolved is not { } vocabId) return this.ProblemWithCode(ApiErrors.ValidationError,
+        var vocab = await ResolveVocabularyAsync(body, config, ct);
+        if (vocab is null) return this.ProblemWithCode(ApiErrors.ValidationError,
             "Provide an existing vocabularyId, or front and back (plus the exercise's sourceLang/targetLang) to create one.");
 
         // A vocabulary entry may have only one item per exercise (unique in the DB): two items on the same word
         // would create two competing ItemProgress rows, and the progress of that same word would drift apart
         // within one exercise. Without this pre-check the index would surface as a 500.
-        if (await Db.ExerciseItems.AnyAsync(i => i.ExerciseId == exerciseId && i.VocabularyId == vocabId, ct))
+        // A store entry that is still unsaved (Id 0) is new and cannot be an item yet.
+        if (vocab.Id > 0 && await Db.ExerciseItems.AnyAsync(i => i.ExerciseId == exerciseId && i.VocabularyId == vocab.Id, ct))
             return this.ProblemWithCode(ApiErrors.DuplicateVocabularyInExercise,
                 "This vocabulary entry is already an item of the exercise.");
 
@@ -227,14 +228,13 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         var item = new ExerciseItem
         {
             ExerciseId = exerciseId,
-            VocabularyId = vocabId,
+            Vocabulary = vocab,
             Hint = NormalizeHint(body.Hint),
             OrderIndex = nextOrder,
         };
         Db.ExerciseItems.Add(item);
         // Only after every check above passed: a rejected item must not have changed the shared store entry.
-        item.Vocabulary = await Db.Vocabularies.FindAsync([vocabId], ct);
-        if (item.Vocabulary is not null) VocabularyStoreService.ApplyTranslationAlternatives(item.Vocabulary, body.TranslationAlternatives);
+        VocabularyStoreService.ApplyTranslationAlternatives(vocab, body.TranslationAlternatives);
         await Db.SaveChangesAsync(ct);
         return CreatedAtAction(nameof(GetItem), new { seriesId, seriesUnitId, exerciseId, itemId = item.Id },
             MapItem(seriesId, seriesUnitId, exerciseId, item));
@@ -257,14 +257,14 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         if (body.VocabularyId is not null || body.Front is not null || body.Back is not null)
         {
             var config = ConfigOf(exercise);
-            var resolved = await ResolveVocabularyIdAsync(body, config, ct);
-            if (resolved is not { } vocabId) return this.ProblemWithCode(ApiErrors.ValidationError,
+            var vocab = await ResolveVocabularyAsync(body, config, ct);
+            if (vocab is null) return this.ProblemWithCode(ApiErrors.ValidationError,
                 "Provide an existing vocabularyId, or front and back (plus the exercise's sourceLang/targetLang) to change the word.");
             // The same rule as AddItem, checked before saving: the unique index would only answer with a 500 (B-334).
-            if (await Db.ExerciseItems.AnyAsync(i => i.ExerciseId == exerciseId && i.Id != itemId && i.VocabularyId == vocabId, ct))
+            if (vocab.Id > 0 && await Db.ExerciseItems.AnyAsync(i => i.ExerciseId == exerciseId && i.Id != itemId && i.VocabularyId == vocab.Id, ct))
                 return this.ProblemWithCode(ApiErrors.DuplicateVocabularyInExercise,
                     "Another item of this exercise already uses this vocabulary entry.");
-            item.VocabularyId = vocabId;
+            item.Vocabulary = vocab;
         }
         if (body.Hint is not null) item.Hint = NormalizeHint(body.Hint);
         if (body.OrderIndex is { } order && order != item.OrderIndex)
@@ -274,7 +274,6 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
             item.OrderIndex = order;
         }
         // Against the entry the item points to AFTER this PATCH, so a word swap plus alternatives lands on the new word.
-        item.Vocabulary = await Db.Vocabularies.FindAsync([item.VocabularyId], ct);
         if (item.Vocabulary is not null) VocabularyStoreService.ApplyTranslationAlternatives(item.Vocabulary, body.TranslationAlternatives);
         await Db.SaveChangesAsync(ct);
         return MapItem(seriesId, seriesUnitId, exerciseId, item);
@@ -320,18 +319,17 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
 
     /// <summary>
     /// Determines the target vocabulary entry of an item input: prefers the given store id (must exist), otherwise
-    /// creates front/back inline in the store (needs the exercise's language codes). Return value <c>null</c> = insufficient input.
+    /// finds or adds front/back inline in the store (needs the exercise's language codes). A new entry is only added,
+    /// not saved, so a request rejected afterwards leaves the store untouched. Return value <c>null</c> = insufficient input.
     /// </summary>
-    private async Task<int?> ResolveVocabularyIdAsync(VocabItemInput body, VocabularyConfig config, CancellationToken ct)
+    private async Task<Vocabulary?> ResolveVocabularyAsync(VocabItemInput body, VocabularyConfig config, CancellationToken ct)
     {
         if (body.VocabularyId is { } id)
-            return await Db.Vocabularies.AnyAsync(v => v.Id == id, ct) ? id : null;
+            return await Db.Vocabularies.FindAsync([id], ct);
         if (string.IsNullOrWhiteSpace(body.Front) || string.IsNullOrWhiteSpace(body.Back)
             || string.IsNullOrWhiteSpace(config.SourceLang) || string.IsNullOrWhiteSpace(config.TargetLang))
             return null;
-        var vocab = await store.GetOrCreateAsync(config.SourceLang, body.Front.Trim(), config.TargetLang, body.Back.Trim(), ct: ct);
-        await Db.SaveChangesAsync(ct);
-        return vocab.Id;
+        return await store.GetOrCreateAsync(config.SourceLang, body.Front.Trim(), config.TargetLang, body.Back.Trim(), ct: ct);
     }
 }
 
@@ -428,17 +426,13 @@ public class TranslationController(PuglingDbContext db, ExerciseTypeRegistry reg
     /// <summary>Creates each not-yet-linked pair in the store (or finds it) and links it by ID.</summary>
     protected override async Task NormalizeConfigAsync(int seriesId, TranslationConfig config, CancellationToken ct = default)
     {
-        var pending = new List<(int Index, Vocabulary Vocab)>();
-        for (var i = 0; i < config.Items.Count; i++)
-        {
-            var item = config.Items[i];
-            if (item.VocabularyId is not null) continue;
-            pending.Add((i, await store.GetOrCreateAsync(config.SourceLang, item.Source, config.TargetLang, item.Target, ct: ct)));
-        }
+        var pending = Enumerable.Range(0, config.Items.Count).Where(i => config.Items[i].VocabularyId is null).ToList();
         if (pending.Count == 0) return;
+        var vocabs = await store.GetOrCreateManyAsync(config.SourceLang, config.TargetLang,
+            pending.Select(i => (config.Items[i].Source, config.Items[i].Target)).ToList(), ct: ct);
         await Db.SaveChangesAsync(ct);
-        foreach (var (index, vocab) in pending)
-            config.Items[index] = config.Items[index] with { VocabularyId = vocab.Id };
+        for (var n = 0; n < pending.Count; n++)
+            config.Items[pending[n]] = config.Items[pending[n]] with { VocabularyId = vocabs[n].Id };
     }
 
     /// <summary>Adds the derived self-link <c>_self</c> per translation pair (not persisted).</summary>
