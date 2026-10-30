@@ -599,7 +599,38 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.Equal(2, chat.Calls);
         Assert.True(outcome.Published);
         // The repair round must have named the concrete violations, not just "again".
-        Assert.Contains(chat.LastMessages, m => m.Text.Contains("doppelt vor"));
+        // The exact sentence: one spelling twice is named once, not "the horse = the horse" (B-336, AC 2).
+        Assert.Contains(chat.LastMessages, m => m.Text.Contains("Vokabeln kommen doppelt vor: the horse."));
+    }
+
+    /// <summary>
+    /// B-336: two fronts that differ only in what the store key folds (accent, apostrophe, doubled space) are the same word
+    /// to the server, which refuses the second with a 400 after the draft rule let it through - the run then ended instead
+    /// of repairing. Each row differs in exactly one folded property; red if the rule groups the fronts by anything weaker
+    /// than <c>VocabKey</c> (the old case-insensitive comparison keeps all three green on the rule and red on the 400).
+    /// </summary>
+    [Theory]
+    [InlineData("the café", "the cafe")]
+    [InlineData("rock'n'roll", "rock n roll")]
+    [InlineData("the  stable", "the stable")]
+    public async Task Eine_Dublette_nach_dem_Store_Schluessel_geht_in_die_Reparatur(string first, string second)
+    {
+        var broken = $$"""
+            {"title":"Tiere","items":[
+              {"front":"{{first}}","back":"das Wort","hint":null},
+              {"front":"{{second}}","back":"das Wort","hint":null},
+              {"front":"the goat","back":"die Ziege","hint":null}]}
+            """;
+        var (pipeline, creator, chat) = BuildAgent(broken, VocabularyJson);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, $"Dublette-{second}");
+
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Vocabulary"));
+
+        Assert.Equal(2, chat.Calls);
+        Assert.True(outcome.Published);
+        var repair = Assert.Single(chat.LastMessages, m => m.Text.Contains("doppelt vor")).Text;
+        Assert.Contains(first, repair);
+        Assert.Contains(second, repair);
     }
 
     [Fact]

@@ -506,11 +506,12 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (54)
+### Offen (59)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-280](B-280-fokusziel-nicht-geleert-ungetestet.md) | Dass das Fokusziel nach dem Sprung geleert wird, prüft kein Test | Defekt | `idee` | P2 | — | frontend | — |
+| [B-341](B-341-tag-patch-mit-eigenem-label-409.md) | Ein Schlagwort lässt sich nicht mehr speichern, sobald ein anderes sein Label als Synonym führt | Defekt | `idee` | P2 | — | backend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `gegrillt` | P2 | — | backend | Vertrag? |
 | [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder | Wunsch | `geschaetzt` | P2 | L | beides | — |
@@ -538,7 +539,11 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-282](B-282-login-haertung-restpunkte.md) | Restpunkte der Login-Härtung (NP-3) | Defekt | `idee` | P3 | — | backend | — |
 | [B-310](B-310-profil-match-verraet-kind-ids.md) | `GET creator/profiles/match` verrät per 404 gegen 403, ob es eine Kind-Id gibt | Defekt | `idee` | P3 | — | backend | — |
 | [B-329](B-329-uebung-unbekannte-referenz-validation-error.md) | Die Übungs-Validierung meldet eine unbekannte Id als `validation_error`, die Kategorie daneben als `invalid_reference` | Defekt | `idee` | P3 | — | backend | — |
-| [B-336](B-336-ki-creator-dublettenregel-schwaecher-als-store-schluessel.md) | Die Dubletten-Regel des KI-Creators ist schwächer als der Store-Schlüssel | Defekt | `idee` | P3 | — | backend | — |
+| [B-339](B-339-fortsetzen-sagt-alte-frage-an.md) | „Weiter versuchen" in der Klausur sagt die schon beantwortete Frage noch einmal als neue an | Defekt | `idee` | P3 | — | frontend | — |
+| [B-340](B-340-store-vertrag-beschreibt-schluessel-statt-inhalt.md) | Der Vertrag beschreibt die Wiederverwendung im Store noch über den Schlüssel, nicht über den Inhalt | Defekt | `idee` | P3 | — | backend | — |
+| [B-342](B-342-doppeltes-wort-faltung-nur-gross-klein-getestet.md) | Der Fall „doppeltes Wort nach dem Schlüssel" unterscheidet seine Eingaben nur in ASCII-Groß/Klein | Defekt | `idee` | P3 | — | backend | — |
+| [B-343](B-343-store-treffer-kanten-ungetestet.md) | Dass `PeekDesiredIdsAsync` nach Inhalt auflöst, prüft kein Test – und zwei Kanten des Store-Treffers sind offen | Defekt | `idee` | P3 | — | backend | — |
+| [B-346](B-346-vocabkey-trenner-mehrdeutig.md) | Zwei verschiedene Wortpaare können denselben Vokabel-Schlüssel ergeben | Defekt | `idee` | P3 | — | backend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-231](B-231-fokus-ohne-fehlerkasten.md) | Wohin gehört der Fokus, wenn ein Knopf ohne Fehlerkasten gesperrt wird? | Frage | `idee` | P3 | — | frontend | — |
 | [B-232](B-232-bestaetigung-ausserhalb-des-sichtfelds.md) | Soll eine Bestätigung zum Meldungsplatz scrollen, wenn er weit vom Knopf entfernt liegt? | Frage | `idee` | P3 | — | frontend | — |
@@ -566,7 +571,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (258)</summary>
+<summary>Abgenommen (261)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -771,8 +776,11 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-333](B-333-uebungsrunde-andere-api-fehler-ungetestet.md) | Dass nur `plan_inactive` die Übungsrunde beendet, hält kein Fall mit einem anderen Server-Fehler | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-334](B-334-patch-item-auf-belegtes-wort-500.md) | Ein Item auf das Wort eines anderen Items umzuhängen endet in `500` | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-335](B-335-klausurstart-plan-inactive-weiter-versuchen.md) | Scheitert der erste Schritt nach dem Klausurstart an `plan_inactive`, bietet die Arcade „Weiter versuchen" an | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-336](B-336-ki-creator-dublettenregel-schwaecher-als-store-schluessel.md) | Die Dubletten-Regel des KI-Creators ist schwächer als der Store-Schlüssel | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-337](B-337-reuse-folgt-veraltetem-schluessel.md) | `reuseExisting` folgt dem Schlüssel, auch wenn der Eintrag inzwischen etwas anderes sagt | Defekt | `abgenommen` | P2 | XS | backend | — |
 | [B-338](B-338-doppeltes-wort-schreibweise-ungetestet.md) | Dass doppelte Wörter nach dem Store-Schlüssel verglichen werden, hält kein Fall mit zwei Schreibweisen | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-344](B-344-reuse-faltete-sprache-und-leerraum-nicht.md) | `reuseExisting` verglich die Sprache exakt und das Wort ungetrimmt | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-345](B-345-batch-prueft-grundform-vor-dem-belegten-schluessel.md) | Der Vokabel-Batch prüfte die Grundform vor dem belegten Schlüssel und war nicht mehr idempotent | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-35](B-35-karten-umdrehen-animation.md) | Karten drehen sich beim Aufdecken um | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-36](B-36-motivations-animationen-teilziele.md) | Motivations-Animationen bei erreichten Teilzielen | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-37](B-37-uebung-abbruch-unvollendet.md) | Abgebrochene Runden: Pflicht härten, Klausur deckeln | Defekt | `abgenommen` | P1 | M | beides | — |
@@ -841,9 +849,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
-### Nach der Abnahme entgangen (102)
+### Nach der Abnahme entgangen (107)
 
-**Nachgeschaut: 254 von 258 abgenommenen** — und in 83 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 4 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 258 von 261 abgenommenen** — und in 86 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 3 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -949,19 +957,23 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-335](B-335-klausurstart-plan-inactive-weiter-versuchen.md) | Scheitert der erste Schritt nach dem Klausurstart an `plan_inactive`, bietet die Arcade „Weiter versuchen" an | [B-330] | `abgenommen` |
 | [B-337](B-337-reuse-folgt-veraltetem-schluessel.md) | `reuseExisting` folgt dem Schlüssel, auch wenn der Eintrag inzwischen etwas anderes sagt | [B-277] | `abgenommen` |
 | [B-338](B-338-doppeltes-wort-schreibweise-ungetestet.md) | Dass doppelte Wörter nach dem Store-Schlüssel verglichen werden, hält kein Fall mit zwei Schreibweisen | [B-331, B-141] | `abgenommen` |
+| [B-339](B-339-fortsetzen-sagt-alte-frage-an.md) | „Weiter versuchen" in der Klausur sagt die schon beantwortete Frage noch einmal als neue an | [B-286] | `idee` |
+| [B-340](B-340-store-vertrag-beschreibt-schluessel-statt-inhalt.md) | Der Vertrag beschreibt die Wiederverwendung im Store noch über den Schlüssel, nicht über den Inhalt | [B-337] | `idee` |
+| [B-342](B-342-doppeltes-wort-faltung-nur-gross-klein-getestet.md) | Der Fall „doppeltes Wort nach dem Schlüssel" unterscheidet seine Eingaben nur in ASCII-Groß/Klein | [B-338] | `idee` |
+| [B-344](B-344-reuse-faltete-sprache-und-leerraum-nicht.md) | `reuseExisting` verglich die Sprache exakt und das Wort ungetrimmt | [B-337] | `abgenommen` |
+| [B-345](B-345-batch-prueft-grundform-vor-dem-belegten-schluessel.md) | Der Vokabel-Batch prüfte die Grundform vor dem belegten Schlüssel und war nicht mehr idempotent | [B-277] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (4) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (3) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-286](B-286-kartenwechsel-sagt-die-aufgabe-nicht-an.md) | Nach dem Kartenwechsel hört ein Screenreader die Eingabe, aber nicht die neue Aufgabe |
-| [B-335](B-335-klausurstart-plan-inactive-weiter-versuchen.md) | Scheitert der erste Schritt nach dem Klausurstart an `plan_inactive`, bietet die Arcade „Weiter versuchen" an |
-| [B-337](B-337-reuse-folgt-veraltetem-schluessel.md) | `reuseExisting` folgt dem Schlüssel, auch wenn der Eintrag inzwischen etwas anderes sagt |
-| [B-338](B-338-doppeltes-wort-schreibweise-ungetestet.md) | Dass doppelte Wörter nach dem Store-Schlüssel verglichen werden, hält kein Fall mit zwei Schreibweisen |
+| [B-336](B-336-ki-creator-dublettenregel-schwaecher-als-store-schluessel.md) | Die Dubletten-Regel des KI-Creators ist schwächer als der Store-Schlüssel |
+| [B-344](B-344-reuse-faltete-sprache-und-leerraum-nicht.md) | `reuseExisting` verglich die Sprache exakt und das Wort ungetrimmt |
+| [B-345](B-345-batch-prueft-grundform-vor-dem-belegten-schluessel.md) | Der Vokabel-Batch prüfte die Grundform vor dem belegten Schlüssel und war nicht mehr idempotent |
 
 </details>
 

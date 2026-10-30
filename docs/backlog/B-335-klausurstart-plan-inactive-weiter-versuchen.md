@@ -13,6 +13,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-330]
 wartet_auf: ""
+nachgeschaut: "2026-10-30"
 ---
 
 # B-335 · Scheitert der erste Schritt nach dem Klausurstart an `plan_inactive`, bietet die Arcade „Weiter versuchen" an
@@ -58,3 +59,4 @@ Probe unten): `startTest` gelingt, die erste `nextTest` antwortet `403 plan_inac
   stoppt" (`setPlanStopped(true)`) **1 failed** (AK-2-Fall). Danach `SohnTest.test.tsx` **11/11**.
 - **2026-10-29** — `frontend-reviewer`: keine Funde an B-335; beide Fälle trennen, was sie behaupten (Mutanten benannt).
 - **2026-10-29** — Abnahme Lauf K, Teil 2: volle Suite **1017/1017**, Vitest **584/584**, `tsc -b` sauber, E2E **100 passed** (`exit=0`, nach der letzten Code-Änderung gestartet). Rollengang als E2E-Gesamtlauf (Browser-Extension nicht genutzt): Sohn über seine Arcade-Specs (Übung, Klausur, Buchstaben ordnen) plus die Komponentenfälle mit Knoten-Identität; Creator über `schnellanlage-ohne-dublette`; Vater Regressionszeuge. Was ein echter Screenreader ansagt, prüft keine Maschine – **Gerätecheck offen**: einmal mit NVDA/VoiceOver eine Übungsrunde und eine fortgesetzte Klausurfrage anhören. Reviews: `frontend-reviewer`, Delta-Review (ohne 🔴/🟡). **Abgenommen**, Commit siehe Protokoll ([Lauf K](../pm-sitzung-2026-10-29-nacht.md)).
+- **2026-10-30** — Nachschau in Lauf L, Teil 1 (frischer `frontend-reviewer`, `git show 448785c -- frontend/`, HEAD unverändert): **sauber**. Geprüft: der `catch` in `start()` (`SohnTest.tsx:83-90`) setzt `planStopped = isPlanInactive(e)` wie `resume()` (`:119`) und `answerAndAdvance` (`:137`), deckt auch ein scheiterndes `finish()`/`submitTest` in `start()`; Rücksetzen bei Neustart (`:75`); Knopfbedingung (`:161`) gegen beide AK; je Test die tötende Mutante benannt (`setPlanStopped` aus `start()` entfernt bzw. fest `true`). Vitest der vier Dateien **48/48**.

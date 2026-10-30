@@ -13,6 +13,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-277]
 wartet_auf: ""
+nachgeschaut: "2026-10-30"
 ---
 
 # B-337 · `reuseExisting` folgt dem Schlüssel, auch wenn der Eintrag inzwischen etwas anderes sagt
@@ -63,3 +64,4 @@ B-277 Entscheidung 2 („Treffer = derselbe Server-Schlüssel, also gleiches Wor
   `_2`-Nachfolger mit dem ursprünglichen Inhalt: eine Schnellanlage in anderer Nicht-ASCII-Schreibweise verfehlt den `_2` und
   legt `_3` an – selten, besser als der frühere falsche Treffer; benannt.
 - **2026-10-29** — Abnahme Lauf K, Teil 2: volle Suite **1017/1017**, Vitest **584/584**, `tsc -b` sauber, E2E **100 passed** (`exit=0`, nach der letzten Code-Änderung gestartet). Rollengang als E2E-Gesamtlauf (Browser-Extension nicht genutzt): Sohn über seine Arcade-Specs (Übung, Klausur, Buchstaben ordnen) plus die Komponentenfälle mit Knoten-Identität; Creator über `schnellanlage-ohne-dublette`; Vater Regressionszeuge. Was ein echter Screenreader ansagt, prüft keine Maschine – **Gerätecheck offen**: einmal mit NVDA/VoiceOver eine Übungsrunde und eine fortgesetzte Klausurfrage anhören. Reviews: `frontend-reviewer`, Delta-Review (ohne 🔴/🟡). **Abgenommen**, Commit siehe Protokoll ([Lauf K](../pm-sitzung-2026-10-29-nacht.md)).
+- **2026-10-30** — Nachschau in Lauf L, Teil 1 (frischer `pugling-reviewer`, `448785c` gegen HEAD inkl. `3190f9e`): **entgangen** → [B-344](B-344-reuse-faltete-sprache-und-leerraum-nicht.md) (Sprache exakt, Wort ungetrimmt; vom Nutzer in `3190f9e` behoben) und [B-340](B-340-store-vertrag-beschreibt-schluessel-statt-inhalt.md) (Vertragstext beschreibt weiter den Schlüssel). Die zurückgestellte Entscheidung 2 (`GetOrCreateAsync` nach Inhalt) ist mit `3190f9e` erledigt. Geprüft: `ReuseCandidateAsync` (448785c) gegen `FindManyAsync`/`GetOrCreateManyAsync`/`FindAsync`/`UniqueKeyAsync`; Ausweichen auf `_2`; ältester Treffer gewinnt, ungespeicherte zählen; alle Aufrufer des Store-Dienstes; Spalten-Kollationen; Vertrags- und Controller-Doku; Mutanten beider Testteile.

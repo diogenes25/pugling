@@ -35,7 +35,7 @@ typischerweise `"items": []` und `"refs": null`.
 ## Was in dieser Session gebaut wurde (vokabel-relevant)
 
 - **Zweistufige Store-Eingabe** ([VocabularyStoreController.cs](../backend/Pugling.Api/Controllers/Creator/VocabularyStoreController.cs)):
-  `Create` nimmt `Key` **optional** (fehlt er → Auto-Slug via [VocabKey.Generate](../backend/Pugling.Api/Data/VocabKey.cs),
+  `Create` nimmt `Key` **optional** (fehlt er → Auto-Slug via [VocabKey.Generate](../backend/Pugling.Contracts/Common/VocabKey.cs),
   Kollision → `_2`, `_3`…) und `PartOfSpeech` optional (Default `Other`). „Einfach" = nur Word/Translation
   (+Sprachen); „komplex" = volle Felder; **später nachliefern = bestehendes `PATCH`** (Merge, `null` = unverändert).
 - **Übung → Store-Referenz:** `ExerciseItemService` ([Services/ExerciseItemService.cs](../backend/Pugling.Api/Services/ExerciseItemService.cs))

@@ -1,12 +1,14 @@
 using System.Globalization;
 using System.Text;
 
-namespace Pugling.Api.Data;
+namespace Pugling.Contracts;
 
 /// <summary>
 /// Generates stable, unique vocabulary keys following the pattern <c>{src}_{word}_{tgt}_{translation}</c>.
 /// Central, so that the seed and the vocabulary store use the same slug (the "simple" input works without a
-/// hand-typed key – the server generates it).
+/// hand-typed key – the server generates it). It lives in the contract because the key is also the server's notion
+/// of "the same word": two items of one exercise whose keys match are refused, and a client that checks a draft
+/// beforehand (the creator agent) must fold exactly the same way (B-336).
 /// </summary>
 public static class VocabKey
 {

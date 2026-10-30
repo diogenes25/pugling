@@ -41,7 +41,10 @@ public sealed class VocabularyStrategy(IChatClient chat, CreatorApi creator,
         var items = draft.Items ?? [];
         DraftRules.Title(violations, draft.Title, briefing);
         DraftRules.Count(violations, items.Count, request);
-        DraftRules.NoDuplicates(violations, items.Select(i => i?.Front), "Vokabeln");
+        // Folded like the store key: the server refuses a second item with the same key, and that 400 would end the
+        // run instead of a repair round (B-336).
+        DraftRules.NoDuplicates(violations, items.Select(i => i?.Front), "Vokabeln",
+            front => VocabKey.Generate(briefing.SourceLang, front, briefing.TargetLang, ""));
         DraftRules.CoversRequiredWords(violations, briefing, items.Select(i => i?.Front), exact: true);
 
         foreach (var (item, index) in items.Select((item, index) => (item, index)))

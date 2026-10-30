@@ -66,15 +66,20 @@ public static class DraftRules
         if (string.IsNullOrWhiteSpace(value)) violations.Add($"{what} ist leer.");
     }
 
-    /// <summary>No keys occurring twice (words, sentences, task prompts).</summary>
-    public static void NoDuplicates(Violations violations, IEnumerable<string?>? keys, string what)
+    /// <summary>
+    /// No keys occurring twice (words, sentences, task prompts), ignoring case. <paramref name="fold"/> widens "the
+    /// same" to what the server treats as the same (the vocabulary store key, B-336); the message then names every
+    /// spelling of the group, because "the café = the cafe" is what the model has to see to repair it.
+    /// </summary>
+    public static void NoDuplicates(Violations violations, IEnumerable<string?>? keys, string what,
+        Func<string, string>? fold = null)
     {
         var duplicates = (keys ?? [])
             .Select(k => k?.Trim() ?? "")
             .Where(k => k.Length > 0)
-            .GroupBy(k => k, StringComparer.OrdinalIgnoreCase)
+            .GroupBy(k => fold is null ? k : fold(k), StringComparer.OrdinalIgnoreCase)
             .Where(g => g.Count() > 1)
-            .Select(g => g.Key)
+            .Select(g => string.Join(" = ", g.Distinct(StringComparer.Ordinal)))
             .ToList();
 
         if (duplicates.Count > 0)

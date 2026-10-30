@@ -13,6 +13,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-331, B-141]
 wartet_auf: ""
+nachgeschaut: "2026-10-30"
 ---
 
 # B-338 · Dass doppelte Wörter nach dem Store-Schlüssel verglichen werden, hält kein Fall mit zwei Schreibweisen
@@ -44,3 +45,4 @@ Vergleich in `InterestTagService.EnsureAsync` (Entscheidung 3) hatte keinen Fall
   im Sprint gebaut. Beide Fälle sind mit dem Ist-Code **grün** (erwartet). Mutante „roher Vergleich" **1 failed** („inline
   word twice, folded by the key: 500", Z. 442); Mutante „`EnsureAsync` case-insensitiv" **1 failed** (Z. 111).
 - **2026-10-29** — Abnahme Lauf K, Teil 2: volle Suite **1017/1017**, Vitest **584/584**, `tsc -b` sauber, E2E **100 passed** (`exit=0`, nach der letzten Code-Änderung gestartet). Rollengang als E2E-Gesamtlauf (Browser-Extension nicht genutzt): Sohn über seine Arcade-Specs (Übung, Klausur, Buchstaben ordnen) plus die Komponentenfälle mit Knoten-Identität; Creator über `schnellanlage-ohne-dublette`; Vater Regressionszeuge. Was ein echter Screenreader ansagt, prüft keine Maschine – **Gerätecheck offen**: einmal mit NVDA/VoiceOver eine Übungsrunde und eine fortgesetzte Klausurfrage anhören. Reviews: `frontend-reviewer`, Delta-Review (ohne 🔴/🟡). **Abgenommen**, Commit siehe Protokoll ([Lauf K](../pm-sitzung-2026-10-29-nacht.md)).
+- **2026-10-30** — Nachschau in Lauf L, Teil 1 (frischer `pugling-reviewer`): **entgangen** → [B-342](B-342-doppeltes-wort-faltung-nur-gross-klein-getestet.md) (🟡: der Fall unterscheidet nur ASCII-Groß/Klein, `OrdinalIgnoreCase` bliebe grün; die Prämisse der Story stimmt nicht). Geprüft: `RepeatedWordAsync` gegen die neue Form und ihre Eingaben; Suchreihenfolge von `EnsureAsync` (Slug, Label, Synonym) und der Großschreib-Fall über `RenamedTagAsync`/`UniqueName`; der Label-Fall von `InterestTagLabelTests` unterscheidet genau in Groß/Klein und trägt.
