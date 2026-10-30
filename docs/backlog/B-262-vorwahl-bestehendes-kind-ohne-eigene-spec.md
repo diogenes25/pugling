@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-177]
 wartet_auf: ""
+nachgeschaut: "2026-10-30"
 ---
 
 # B-262 · „Ohne Eingabe bleibt die Vorwahl ‚bestehendes Kind‘“ hält keine Spec gezielt
@@ -61,3 +62,4 @@ Siehe oben. Gemessen beim Bau: `ChoicePill` trägt kein `aria-pressed` → [B-34
   **1 failed, 1 passed** (erwartet: der neue fällt, der alte nicht).
 - **2026-10-30** — Review `frontend-reviewer`: 🟢 der Titel sagt „wählt vor", geprüft war nur die sichtbare Auswahl → `not.toHaveValue("")` ergänzt, Spec **2 passed** (ohne Zählung).
 - **2026-10-30** — Abnahme Lauf L, Teil 3: `tsc -b` sauber, Vitest **585/585** (danach + 1 Fall in `SohnTest.test.tsx`, **14/14**), volle Backend-Suite siehe Protokoll. E2E-Gesamtlauf **102 passed** (`exit=0`, nach dem letzten Produktcode-Edit gestartet; danach nur Tests). Rollengang als E2E (Browser-Extension nicht genutzt): Vater über `assistent-kinderliste-kommt-spaet`, `assistent` und `uebungen-bewerten` (Kollege mit Schreibrecht), Sohn über die Klausur-Komponententests (Fehler → „Weiter versuchen" → nächste Frage; eine E2E-Spec mit gescheitertem `nextTest` bräuchte einen kaputten Server, das gehört auf Komponentenebene), Creator Regressionszeuge. Review `frontend-reviewer`: kein 🔴/🟡. **Abgenommen**, Commit siehe Protokoll ([Lauf L](../pm-sitzung-2026-10-30-nacht.md)).
+- **2026-10-30** — Nachschau in Lauf L, Teil 4: **sauber**. Geprüft: Ausgangslage im Fenster der angehaltenen Route; Mutanten `touchedMode` = `true`, Effekt entfernt, Wechsel ohne `childId` (letztere fängt `not.toHaveValue("")`); vorausgesetzt ist nur, dass Erwachsener 1 im Seed ein Kind hat.

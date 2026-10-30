@@ -169,8 +169,10 @@ describe("SohnTest, Fehler beim Beantworten", () => {
   it("sagt die fortgesetzte Frage in derselben Region an", async () => {
     await setLanguage("de");
     answerTest.mockRejectedValueOnce(new ApiError(500, "Server kaputt.", "trace-1"));
+    // Wie der Server antwortet: die Antwort kam nicht an, der Cursor steht noch auf „the horse“ – dieselbe Frage kommt
+    // wieder. Sie wird erneut angesagt, weil die Region dazwischen leer war (sie ist ja wieder dran).
     nextTest.mockResolvedValueOnce({ item, done: false, cursor: 0, total: 2 })
-      .mockResolvedValueOnce({ item: { ...item, itemIndex: 1, prompt: "the sheep" }, done: false, cursor: 1, total: 2 });
+      .mockResolvedValueOnce({ item, done: false, cursor: 0, total: 2 });
     renderTest();
     fireEvent.click(await screen.findByRole("button", { name: "das Pferd" }));
     const resume = await screen.findByRole("button", { name: "Weiter versuchen" });
@@ -184,11 +186,13 @@ describe("SohnTest, Fehler beim Beantworten", () => {
     expect(region.textContent).toBe("");
     expect(screen.queryByRole("button", { name: "das Pferd" })).toBeNull();
 
-    expect(await screen.findByText("Neue Aufgabe: the sheep")).toBe(region);
+    expect(await screen.findByText("Neue Aufgabe: the horse")).toBe(region);
   });
 
   // B-339, der Fall, für den „Weiter versuchen" vor allem da ist: die Antwort ist angenommen, nur das Holen der nächsten
-  // Frage scheitert. Das beantwortete „the horse" darf danach nicht noch einmal als neue Aufgabe kommen.
+  // Frage scheitert. Das beantwortete „the horse" darf danach nicht noch einmal als neue Aufgabe kommen. Rot, wenn `resume`
+  // die alte Frage beim Nachladen stehen lässt – dieselbe Mutante wie der Fall darüber, keine eigene; dieser hier fährt den
+  // Weg, für den die Behebung vor allem da ist.
   it("sagt nach angenommener Antwort und gescheiterter nächster Frage die alte nicht erneut an", async () => {
     await setLanguage("de");
     answerTest.mockResolvedValueOnce({ done: false });

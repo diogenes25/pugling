@@ -530,13 +530,13 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-273](B-273-feste-feldhilfe-resize-und-layoutverschiebung.md) | Das feste ⓘ-Popover: Resize ohne Prüfung, Layout-Verschiebung ohne Schließen | Defekt | `idee` | P3 | — | frontend | — |
 | [B-274](B-274-atomares-schreiben-flackert-wieder.md) | `AtomaresSchreiben_KeineLeseFehler` flackert wieder | Defekt | `idee` | P3 | — | backend | — |
 | [B-276](B-276-vater-main-ueberlauf-regel-ungetragen.md) | Die Überlauf-Regel von `.vater-main` trägt kein Test mehr | Defekt | `idee` | P3 | — | frontend | — |
-| [B-278](B-278-platzhalter-sieht-aus-wie-gespeicherter-wert.md) | Im leeren Verlagsfeld sieht der Platzhalter aus wie ein gespeicherter Wert | Defekt | `idee` | P3 | — | frontend | — |
 | [B-282](B-282-login-haertung-restpunkte.md) | Restpunkte der Login-Härtung (NP-3) | Defekt | `idee` | P3 | — | backend | — |
 | [B-310](B-310-profil-match-verraet-kind-ids.md) | `GET creator/profiles/match` verrät per 404 gegen 403, ob es eine Kind-Id gibt | Defekt | `idee` | P3 | — | backend | — |
 | [B-329](B-329-uebung-unbekannte-referenz-validation-error.md) | Die Übungs-Validierung meldet eine unbekannte Id als `validation_error`, die Kategorie daneben als `invalid_reference` | Defekt | `idee` | P3 | — | backend | — |
 | [B-346](B-346-vocabkey-trenner-mehrdeutig.md) | Zwei verschiedene Wortpaare können denselben Vokabel-Schlüssel ergeben | Defekt | `idee` | P3 | — | backend | — |
 | [B-347](B-347-store-speichert-wort-ungetrimmt.md) | Ein per PATCH geändertes Store-Wort trifft nur bis auf ASCII-Groß/Klein | Defekt | `idee` | P3 | — | backend | — |
-| [B-348](B-348-assistent-pillen-ohne-aria-pressed.md) | Die Auswahl-Pillen im Assistenten sagen nicht, welche gewählt ist | Defekt | `idee` | P3 | — | frontend | — |
+| [B-349](B-349-batch-treffer-haengt-an-der-reihenfolge.md) | Im Vokabel-Batch hängt ein Treffer davon ab, was frühere Einträge desselben Batches geladen haben | Defekt | `idee` | P3 | — | backend | — |
+| [B-350](B-350-wartebild-der-klausur-ohne-ausweg.md) | Im Wartebild der Klausur hat das Kind keinen Ausweg | Defekt | `idee` | P3 | — | frontend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-231](B-231-fokus-ohne-fehlerkasten.md) | Wohin gehört der Fokus, wenn ein Knopf ohne Fehlerkasten gesperrt wird? | Frage | `idee` | P3 | — | frontend | — |
 | [B-232](B-232-bestaetigung-ausserhalb-des-sichtfelds.md) | Soll eine Bestätigung zum Meldungsplatz scrollen, wenn er weit vom Knopf entfernt liegt? | Frage | `idee` | P3 | — | frontend | — |
@@ -564,7 +564,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (270)</summary>
+<summary>Abgenommen (272)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -722,6 +722,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-27](B-27-testsuite-grenzfaelle.md) | Die Grenzen des `ScoringService` als Tabelle statt als Flow | Aufräumen | `abgenommen` | P2 | S | backend | — |
 | [B-275](B-275-bewertungsformular-fuer-grantee-ungetestet.md) | Ob ein Schreib-Grantee das Bewertungsformular sieht, prüft kein Test an der Aufrufstelle | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-277](B-277-schnellanlage-legt-doppelten-store-eintrag-an.md) | Der Schnellanleger im Assistenten legt für ein bekanntes Wort einen zweiten Store-Eintrag an | Defekt | `abgenommen` | P3 | S | beides | — |
+| [B-278](B-278-platzhalter-sieht-aus-wie-gespeicherter-wert.md) | Im leeren Verlagsfeld sieht der Platzhalter aus wie ein gespeicherter Wert | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-279](B-279-general-use-weak-zieht-woerter-trotzdem.md) | `--child X --general --use-weak` zieht die schwachen Wörter weiter in den Pflicht-Wortschatz | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-28](B-28-login-name-sequenziell.md) | Sequenzielle IDs als Login-Name | Wunsch | `abgenommen` | P3 | S | backend | — |
 | [B-280](B-280-fokusziel-nicht-geleert-ungetestet.md) | Dass das Fokusziel nach dem Sprung geleert wird, prüft kein Test | Defekt | `abgenommen` | P2 | XS | frontend | — |
@@ -783,6 +784,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-343](B-343-store-treffer-kanten-ungetestet.md) | Dass `PeekDesiredIdsAsync` nach Inhalt auflöst, prüft kein Test – und zwei Kanten des Store-Treffers sind offen | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-344](B-344-reuse-faltete-sprache-und-leerraum-nicht.md) | `reuseExisting` verglich die Sprache exakt und das Wort ungetrimmt | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-345](B-345-batch-prueft-grundform-vor-dem-belegten-schluessel.md) | Der Vokabel-Batch prüfte die Grundform vor dem belegten Schlüssel und war nicht mehr idempotent | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-348](B-348-assistent-pillen-ohne-aria-pressed.md) | Die Auswahl-Pillen im Assistenten sagen nicht, welche gewählt ist | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-35](B-35-karten-umdrehen-animation.md) | Karten drehen sich beim Aufdecken um | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-36](B-36-motivations-animationen-teilziele.md) | Motivations-Animationen bei erreichten Teilzielen | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-37](B-37-uebung-abbruch-unvollendet.md) | Abgebrochene Runden: Pflicht härten, Klausur deckeln | Defekt | `abgenommen` | P1 | M | beides | — |
@@ -853,7 +855,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (107)
 
-**Nachgeschaut: 259 von 270 abgenommenen** — und in 86 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 11 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 268 von 272 abgenommenen** — und in 86 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 4 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -966,24 +968,17 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-345](B-345-batch-prueft-grundform-vor-dem-belegten-schluessel.md) | Der Vokabel-Batch prüfte die Grundform vor dem belegten Schlüssel und war nicht mehr idempotent | [B-277] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (11) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (4) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-262](B-262-vorwahl-bestehendes-kind-ohne-eigene-spec.md) | „Ohne Eingabe bleibt die Vorwahl ‚bestehendes Kind‘“ hält keine Spec gezielt |
-| [B-266](B-266-wartepunkt-netzwerk-statt-app-zustand.md) | Der Wartepunkt aus B-180 wartet aufs Netzwerk, nicht auf die App |
-| [B-275](B-275-bewertungsformular-fuer-grantee-ungetestet.md) | Ob ein Schreib-Grantee das Bewertungsformular sieht, prüft kein Test an der Aufrufstelle |
-| [B-280](B-280-fokusziel-nicht-geleert-ungetestet.md) | Dass das Fokusziel nach dem Sprung geleert wird, prüft kein Test |
-| [B-339](B-339-fortsetzen-sagt-alte-frage-an.md) | „Weiter versuchen" in der Klausur sagt die schon beantwortete Frage noch einmal als neue an |
-| [B-340](B-340-store-vertrag-beschreibt-schluessel-statt-inhalt.md) | Der Vertrag beschreibt die Wiederverwendung im Store noch über den Schlüssel, nicht über den Inhalt |
-| [B-341](B-341-tag-patch-mit-eigenem-label-409.md) | Ein Schlagwort lässt sich nicht mehr speichern, sobald ein anderes sein Label als Synonym führt |
-| [B-342](B-342-doppeltes-wort-faltung-nur-gross-klein-getestet.md) | Der Fall „doppeltes Wort nach dem Schlüssel" unterscheidet seine Eingaben nur in ASCII-Groß/Klein |
-| [B-343](B-343-store-treffer-kanten-ungetestet.md) | Dass `PeekDesiredIdsAsync` nach Inhalt auflöst, prüft kein Test – und zwei Kanten des Store-Treffers sind offen |
+| [B-278](B-278-platzhalter-sieht-aus-wie-gespeicherter-wert.md) | Im leeren Verlagsfeld sieht der Platzhalter aus wie ein gespeicherter Wert |
 | [B-344](B-344-reuse-faltete-sprache-und-leerraum-nicht.md) | `reuseExisting` verglich die Sprache exakt und das Wort ungetrimmt |
 | [B-345](B-345-batch-prueft-grundform-vor-dem-belegten-schluessel.md) | Der Vokabel-Batch prüfte die Grundform vor dem belegten Schlüssel und war nicht mehr idempotent |
+| [B-348](B-348-assistent-pillen-ohne-aria-pressed.md) | Die Auswahl-Pillen im Assistenten sagen nicht, welche gewählt ist |
 
 </details>
 
@@ -1022,7 +1017,6 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-269](B-269-bewertungen-reihenfolge-und-updatedat-ungetestet.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-272](B-272-live-region-und-gruppen-tests-tragen-nicht-alles.md) | `idee` | `unverifiziert: true` |
 | [B-274](B-274-atomares-schreiben-flackert-wieder.md) | `idee` | `unverifiziert: true` |
-| [B-278](B-278-platzhalter-sieht-aus-wie-gespeicherter-wert.md) | `idee` | `unverifiziert: true` |
 | [B-283](B-283-buchstaben-ordnen-testluecken.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-285](B-285-kind-konto-bleibt-nach-vater-loeschung.md) | `abgenommen` | Abschnitt „Entscheidungen" |
 | [B-287](B-287-fokus-test-prueft-den-ausgangszustand.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
@@ -1048,7 +1042,6 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-316](B-316-plural-schluessel-aus-b-304-ohne-fall.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-337](B-337-reuse-folgt-veraltetem-schluessel.md) | `abgenommen` | Abschnitt „User Story" |
 | [B-338](B-338-doppeltes-wort-schreibweise-ungetestet.md) | `abgenommen` | Abschnitt „User Story" |
-| [B-348](B-348-assistent-pillen-ohne-aria-pressed.md) | `idee` | `unverifiziert: true` |
 
 <details>
 <summary>Verworfen (25)</summary>

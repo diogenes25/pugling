@@ -23,7 +23,7 @@ const CHILD_NAME = `E2E-Assistent-${RUN}`;
  * – an einer Stelle, die die Ursache nicht nennt.
  */
 async function waehleSohnUndEnglisch(page: Page) {
-  await page.getByRole("button", { name: "Bestehendes Kind" }).click();
+  await page.getByRole("radio", { name: "Bestehendes Kind" }).click();
   await page.getByRole("combobox", { name: "Kind" }).selectOption("1");
   await page.getByRole("button", { name: "Weiter" }).click();
 
@@ -50,15 +50,15 @@ test("Der Assistent legt Kind, Plan und Position mit den eingetippten Feinschlif
   // vor - die Pille muss darum explizit zurueckgeklickt werden. Seit B-18 ist dieser Klick auch dann
   // bindend, wenn die Kinderliste ERST DANACH ankommt; vorher nahm der Effekt ihn wieder zurueck, und der
   // Test haengte an einem `#wiz-name`, das nicht mehr da war.
-  await page.getByRole("button", { name: "Neues Kind anlegen" }).click();
+  await page.getByRole("radio", { name: "Neues Kind anlegen" }).click();
   await page.locator("#wiz-name").fill(CHILD_NAME);
   await page.locator("#wiz-pin").fill("1357");
   await page.getByRole("button", { name: "Weiter" }).click();
 
   // ---------- Schritt 2: Problemfeld ----------
   await page.getByLabel("Fach", { exact: true }).selectOption({ label: "Englisch" });
-  await page.getByRole("button", { name: /Regelmäßig üben/ }).click();
-  await page.getByRole("button", { name: /^Normal/ }).click();
+  await page.getByRole("radio", { name: /Regelmäßig üben/ }).click();
+  await page.getByRole("radio", { name: /^Normal/ }).click();
   await page.getByRole("button", { name: "Weiter" }).click();
 
   // ---------- Schritt 3: Übungen (auf eine einzelne, seed-stabile Übung gefiltert) ----------

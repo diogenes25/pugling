@@ -54,7 +54,7 @@ test("Assistent: „Erneut suchen“ bleibt während der Wiederholung unter dem 
   await page.goto("/vater/wizard");
 
   // Zu Schritt 3 wie in `ausfall-wird-genannt.spec.ts`: Kind „1" ist der geseedete Sohn.
-  await page.getByRole("button", { name: "Bestehendes Kind" }).click();
+  await page.getByRole("radio", { name: "Bestehendes Kind" }).click();
   await page.getByRole("combobox", { name: "Kind" }).selectOption("1");
   await page.getByRole("button", { name: "Weiter" }).click();
   await expect(page.getByRole("heading", { name: /Wo hakt es/ })).toBeVisible();

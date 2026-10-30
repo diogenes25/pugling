@@ -43,7 +43,7 @@ test("B-162: Scheitert die Übungssuche, nennt der Assistent nicht den Katalog �
 
   // Zu Schritt 3 durchklicken: erst ein Kind, dann ein Fach – ohne Fach fliegt gar keine Suche.
   // Der Weg ist derselbe wie in `assistent.spec.ts`; Kind „1" ist der geseedete Sohn.
-  await page.getByRole("button", { name: "Bestehendes Kind" }).click();
+  await page.getByRole("radio", { name: "Bestehendes Kind" }).click();
   await page.getByRole("combobox", { name: "Kind" }).selectOption("1");
   await page.getByRole("button", { name: "Weiter" }).click();
   await expect(page.getByRole("heading", { name: /Wo hakt es/ })).toBeVisible();

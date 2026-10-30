@@ -221,3 +221,72 @@ war – ein `unverifiziert`-Defekt, dessen Beweisweg in der Story stand, hat sic
 
 - **(AM)** Ergänzung zu (AL): „… und gegen die Aufrufer, die einen geteilten Kontext oder Zustand mitbringen (Batch,
   Schleife, `Local`)." Mechanisch nicht greifbar.
+
+## Lauf L, Teil 4 — Das Vater-Web sagt, was gewählt und was leer ist (B-348, B-278)
+
+**Sprint-Ziel:** *Der Vater hört im Assistenten, welche Wahl getroffen ist, und erkennt ein leeres Lehrbuchfeld als leer.*
+
+**Umfang:** [B-348](backlog/B-348-assistent-pillen-ohne-aria-pressed.md) (beim Bau von B-262 gefunden) und
+[B-278](backlog/B-278-platzhalter-sieht-aus-wie-gespeicherter-wert.md), beide `Defekt`, XS, unter Freigabe 1 gegrillt.
+
+**Entwickler-Brief:** Zwei Bausteine des Assistenten (`ChoicePill`, `OptionCard`) tragen ihre Wahl zugänglich; zwei
+Platzhalter bekommen „z. B." vorweg. Testweg: rote Probe in der Assistenten-Spec bzw. `TextbookForm.test.tsx`.
+
+### Iteration
+
+- **B-348:** rote Probe **2 failed** (erwartet 2); nach dem Review auf `radio`/`aria-checked` und benannte `radiogroup`
+  umgestellt, sieben Specs nachgezogen; Proben „Ziel-Gruppe ohne Namen" **1 failed**, „`ChoicePill` ohne `role`" **2 failed**.
+- **B-278:** rote Probe **1 failed** – erst nach einem Umbau des Aufbaus: die erste Fassung fiel zu früh am Wert, weil der
+  Test-Helfer `publisherFreeText` aus `publisher` füllte. Klassen-Probe einzeln **1 failed**.
+- Nachschau-🟢 aus Teil 3 mitgenommen (ohne Zählung): realistischer Fortsetzen-Fall, „Rot, wenn" am zweiten.
+- `tsc -b` sauber, Vitest **587/587**, E2E-Gesamtlauf **102 passed** (`exit=0`, nach dem letzten Produktcode-Edit).
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `frontend-reviewer` 🟡 | B-348: Einfachauswahl als Umschalter; die Begründung „Konvention ist `aria-pressed`" nur halb wahr | `role="radio"`/`aria-checked`, benannte `radiogroup` wie Login/Bilder/Lernstand | ja |
+| 2 | `frontend-reviewer` 🟡 | Ziel- und Intensitäts-Gruppe ohne Namen (`<label>` an keinem Feld) | `span` mit `id` + `aria-labelledby` | ja |
+| 3 | `frontend-reviewer` 🟢 | AK 1 „umgekehrt" nur halb geprüft | Gegenseite ergänzt | nein |
+| 4 | `frontend-reviewer` 🟢 | Klassen-Zusicherung von der Verlags-Probe verdeckt | einzeln gemessen | nein |
+| 5 | `frontend-reviewer` 🟢 | Stepper zeigt den Schritt nur über Farbe (älter) | in [B-350](backlog/B-350-wartebild-der-klausur-ohne-ausweg.md) vermerkt | nein |
+
+**Zähler Teil 4: 2.** Kein Delta-Review (Selbst-Check mit gemessenen Proben, so beschriftet). **Rollengang** als E2E: Vater
+über die sieben Assistenten-Specs und `TextbookForm`; Sohn und Creator Regressionszeugen. **Gerätecheck offen:** die
+Radiogruppen des Assistenten einmal mit Screenreader anhören. **B-348, B-278 abgenommen.**
+
+### Retrospektive
+
+**Nachschau:** Teil 3 (`fce0076`: B-339, B-280, B-275, B-262, B-266) von einem frischen `frontend-reviewer`: kein 🔴/🟡, drei
+🟢 an B-339 (Wartebild ohne Ausweg → [B-350](backlog/B-350-wartebild-der-klausur-ohne-ausweg.md), älter; zwei
+Testpräzisierungen, in Teil 4 behoben). `nachgeschaut` an allen fünf, mit Prüfpunkten.
+
+**Was die eigenen Tore durchgelassen haben:** Die Entscheidung von B-348 berief sich auf eine Konvention, die es so nicht
+gibt – (AD) zum vierten Mal: eine Gleichsetzung („das Vater-Web macht das so"), nicht am Code nachgewiesen; ein `grep` nach
+`aria-pressed` **und** `role="radio"` hätte beide Muster gezeigt. Und B-278s erste Probe fiel am falschen Ort, weil ein
+Test-Helfer einen Wert stillschweigend befüllte – „Rote Probe am richtigen Ort" hat es gefangen, weil die Meldung gelesen
+wurde.
+
+**Vorschlag, nicht gelandet (Freigabe 3):**
+
+- **(AN)** Ergänzung zu (AD)/(AH): „Beruft sich eine Entscheidung auf eine Konvention des Repos, nennt sie die Fundstellen
+  **und** die Gegenfundstellen (`grep` nach beiden Mustern)." Mechanisch nicht greifbar.
+
+## Ende Lauf L
+
+Endgrund: **Pause auf Rückfrage des Nutzers** nach vier Teilen; keine Halt-Bedingung gegriffen (Zähler 2/1/0/2, keine Retro
+hat ein Tor gelandet, keine Nachschau fand ein 🟡/🔴 im Increment dieses Laufs). **Zwölf Stories abgenommen:** B-336 (Teil 1);
+B-341, B-340, B-342, B-343 (Teil 2); B-339, B-280, B-275, B-262, B-266 (Teil 3); B-348, B-278 (Teil 4). Dazu B-344/B-345
+nachgetragen (vom Nutzer in `3190f9e` behoben). Nachgeschaut: B-335, B-286, B-337, B-338 (Lauf K) und Teil 1–3 dieses Laufs;
+Teil 4 ist **unbeobachtet**. Alles **ungepusht**.
+
+**Offene Entscheidungen für den Nutzer:**
+
+1. **Retro-Vorschläge (AJ)–(AN)**; dazu unverändert die älteren aus Lauf K und J.
+2. **B-341 Entscheidung 2 (Produktfrage):** Soll die Synonym-Regel aus `3190f9e` symmetrisch werden, passt ihr
+   Slug-Vergleich zu B-141 AK 3, und stimmt die Begründung am `SynonymTakenAsync` (der Prüfer hält sie für falsch)? Dazu die
+   ältere Lücke in `EnsureAsync` (Synonym gegen den Slug von `text`, nicht von `label`).
+3. **Gerätechecks:** Ansage nach „Weiter versuchen" (B-286/B-339) und die Radiogruppen des Assistenten (B-348) mit
+   Screenreader.
+4. Nächste baubare `Defekt`-Kandidaten: Store-Faltung als ein Thema (B-346, B-347, B-349 – je eine Messung und eine Wahl
+   zwischen Inhalt- und Schlüsselvergleich), B-350, B-272/B-273/B-276, B-255.

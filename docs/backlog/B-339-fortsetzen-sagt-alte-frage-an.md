@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-286]
 wartet_auf: ""
+nachgeschaut: "2026-10-30"
 ---
 
 # B-339 · „Weiter versuchen" in der Klausur sagt die schon beantwortete Frage noch einmal als neue an
@@ -66,3 +67,4 @@ nach dem Klick" fällt (rote Probe unten).
   Frage). Danach `src/sohn/` **135/135**. Die Mutante „ohne `setItem(null)`" ist der Ausgangsstand der Probe.
 - **2026-10-30** — Review `frontend-reviewer`: alle Übergänge geprüft (Antwort gescheitert, nächste Frage gescheitert, `finish` scheitert, zweites Scheitern, Doppelklick-Sperre, Fokus); 🟢 der Kommentar nannte einen Fall, den der Test nicht fuhr → Kommentar berichtigt und den häufigeren Fall (Antwort angenommen, nur `nextTest` scheitert) als eigenen Fall ergänzt; Mutante „ohne `setItem(null)`" → **2 failed** (beide Fälle; ohne Zählung).
 - **2026-10-30** — Abnahme Lauf L, Teil 3: `tsc -b` sauber, Vitest **585/585** (danach + 1 Fall in `SohnTest.test.tsx`, **14/14**), volle Backend-Suite siehe Protokoll. E2E-Gesamtlauf **102 passed** (`exit=0`, nach dem letzten Produktcode-Edit gestartet; danach nur Tests). Rollengang als E2E (Browser-Extension nicht genutzt): Vater über `assistent-kinderliste-kommt-spaet`, `assistent` und `uebungen-bewerten` (Kollege mit Schreibrecht), Sohn über die Klausur-Komponententests (Fehler → „Weiter versuchen" → nächste Frage; eine E2E-Spec mit gescheitertem `nextTest` bräuchte einen kaputten Server, das gehört auf Komponentenebene), Creator Regressionszeuge. Review `frontend-reviewer`: kein 🔴/🟡. **Abgenommen**, Commit siehe Protokoll ([Lauf L](../pm-sitzung-2026-10-30-nacht.md)).
+- **2026-10-30** — Nachschau in Lauf L, Teil 4 (frischer `frontend-reviewer` über `fce0076`): **sauber** (nur 🟢). Geprüft: jeder Zustand, wenn `item` null wird (Region, Zähler „Frage x von y“, `cursor`, `typedAnswer`/`revealed`, `action.busy`, `planStopped`, Feier/Serie nur in `finish`); Doppelklick; jeder Weg ins Wartebild; `SohnPractice` hat kein gleiches Fortsetzen-Muster. 🟢 im Wartebild fehlt ein Ausweg → [B-350](B-350-wartebild-der-klausur-ohne-ausweg.md); 🟢 der erste Fall lieferte nach gescheiterter Antwort eine andere Frage → realistisch umgebaut (dieselbe Frage kommt wieder und wird erneut angesagt); 🟢 „Rot, wenn“ im zweiten Fall ergänzt (beides ohne Zählung, Mutante weiter **2 failed**).

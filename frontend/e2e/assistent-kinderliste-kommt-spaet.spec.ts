@@ -29,6 +29,16 @@ test("Eine spät ankommende Kinderliste nimmt dem Vater sein neues Kind nicht we
   await page.locator("#wiz-pin").fill("1357");
   await page.getByRole("button", { name: "Weiter" }).click();
   await expect(page.getByRole("heading", { name: /Wo hakt es/ })).toBeVisible();
+  // B-348, dieselbe Regel an den Ziel-Karten: die Vorbelegung und ein Wechsel stehen am Radio, nicht nur im Rahmen, und
+  // die Gruppe trägt ihre Frage als Namen.
+  await expect(page.getByRole("radiogroup", { name: "Was ist das Ziel?" })).toBeVisible();
+  await expect(page.getByRole("radiogroup", { name: "Wie intensiv soll geübt werden?" })).toBeVisible();
+  const klassenarbeit = page.getByRole("radio", { name: /Klassenarbeit vorbereiten/ });
+  const aufholen = page.getByRole("radio", { name: /Rückstand aufholen/ });
+  await expect(klassenarbeit).toHaveAttribute("aria-checked", "true");
+  await aufholen.click();
+  await expect(aufholen).toHaveAttribute("aria-checked", "true");
+  await expect(klassenarbeit).toHaveAttribute("aria-checked", "false");
 
   // Jetzt kommt die Liste – während der Vater schon in Schritt 2 ist und den Wechsel nicht sähe.
   const liste = page.waitForResponse((r) => r.url().endsWith("/api/v1/supervisor/children") && r.ok());
@@ -40,9 +50,11 @@ test("Eine spät ankommende Kinderliste nimmt dem Vater sein neues Kind nicht we
   await page.getByRole("button", { name: "Zurück" }).click();
   // Erst belegen, dass React die Liste verarbeitet hat: die Pille ist gesperrt, solange keine Kinder da
   // sind. Ohne diese Wartezeile könnten die zwei Zusicherungen darunter vor dem Umschalten grün werden.
-  await expect(page.getByRole("button", { name: "Bestehendes Kind" })).toBeEnabled();
+  await expect(page.getByRole("radio", { name: "Bestehendes Kind" })).toBeEnabled();
   await expect(page.locator("#wiz-name")).toHaveValue("Spät-Neu");
   await expect(page.getByRole("combobox", { name: "Kind" })).toHaveCount(0);
+  await expect(page.getByRole("radio", { name: "Neues Kind anlegen" })).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByRole("radio", { name: "Bestehendes Kind" })).toHaveAttribute("aria-checked", "false");
 });
 
 /*
@@ -68,5 +80,10 @@ test("Ohne Eingabe wählt der Assistent nach der späten Liste das bestehende Ki
 
   await expect(page.getByRole("combobox", { name: "Kind" })).toBeVisible();
   await expect(page.getByRole("combobox", { name: "Kind" })).not.toHaveValue("");
+  // B-348: die Wahl steht auch für einen Screenreader an der Pille, nicht nur in ihrer Farbe – als Radio einer benannten
+  // Gruppe, wie die übrigen Einfachauswahlen des Vater-Webs.
+  await expect(page.getByRole("radiogroup", { name: "Welches Kind?" })).toBeVisible();
+  await expect(page.getByRole("radio", { name: "Bestehendes Kind" })).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByRole("radio", { name: "Neues Kind anlegen" })).toHaveAttribute("aria-checked", "false");
   await expect(page.locator("#wiz-name")).toHaveCount(0);
 });

@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-10-30"
 ---
 
 # B-275 · Ob ein Schreib-Grantee das Bewertungsformular sieht, prüft kein Test an der Aufrufstelle
@@ -59,3 +60,4 @@ Siehe oben; die E2E-Spec fuhr keinen Grantee, `isOwn` und `isOwner` fielen bei k
   (erwartet 1) an `uebungen-bewerten.spec.ts:158`, der neuen Zusicherung.
 - **2026-10-30** — Review `frontend-reviewer`: sauber; „Bewertung ändern" stammt aus der Bewertung des Kollegen per API, nicht aus dem Vater-Teil.
 - **2026-10-30** — Abnahme Lauf L, Teil 3: `tsc -b` sauber, Vitest **585/585** (danach + 1 Fall in `SohnTest.test.tsx`, **14/14**), volle Backend-Suite siehe Protokoll. E2E-Gesamtlauf **102 passed** (`exit=0`, nach dem letzten Produktcode-Edit gestartet; danach nur Tests). Rollengang als E2E (Browser-Extension nicht genutzt): Vater über `assistent-kinderliste-kommt-spaet`, `assistent` und `uebungen-bewerten` (Kollege mit Schreibrecht), Sohn über die Klausur-Komponententests (Fehler → „Weiter versuchen" → nächste Frage; eine E2E-Spec mit gescheitertem `nextTest` bräuchte einen kaputten Server, das gehört auf Komponentenebene), Creator Regressionszeuge. Review `frontend-reviewer`: kein 🔴/🟡. **Abgenommen**, Commit siehe Protokoll ([Lauf L](../pm-sitzung-2026-10-30-nacht.md)).
+- **2026-10-30** — Nachschau in Lauf L, Teil 4: **sauber**. Geprüft: Nutzlast gegen `AddGrantDto`; Mutante `!isOwn` an der Aufrufstelle → beide neuen Zusicherungen rot; Daten über eigene Lehrer-Konten und `RUN` getrennt, kein Index.

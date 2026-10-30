@@ -101,8 +101,8 @@ test("Assistent und Plan-Seite erklären dieselbe Größe mit demselben Text", a
   const weiter = page.getByRole("button", { name: "Weiter" });
   await weiter.click();                                             // 1. Kind (das geseedete ist vorgewählt)
   await page.getByLabel("Fach").selectOption({ label: "Englisch" }); // 2. Problemfeld
-  await page.getByRole("button", { name: /Regelmäßig üben/ }).click();
-  await page.getByRole("button", { name: /^Normal/ }).click();
+  await page.getByRole("radio", { name: /Regelmäßig üben/ }).click();
+  await page.getByRole("radio", { name: /^Normal/ }).click();
   await weiter.click();
   await page.getByRole("button", { name: "Alle wählen" }).click();   // 3. Übungen
   await weiter.click();

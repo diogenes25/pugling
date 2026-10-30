@@ -464,7 +464,7 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
             ) : (
               <>
                 <label htmlFor={`${id}-publisher`}>Verlag</label>
-                <input id={`${id}-publisher`} value={form.publisher} onChange={(e) => up("publisher", e.target.value)} placeholder="Cornelsen" />
+                <input id={`${id}-publisher`} value={form.publisher} onChange={(e) => up("publisher", e.target.value)} placeholder="z. B. Cornelsen" />
               </>
             )}
           </div>
@@ -479,7 +479,8 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
                 <label htmlFor={`${id}-grade`}>Für Klasse</label>
                 <input
                   id={`${id}-grade`} type="number" min={1} max={13} value={form.grade}
-                  onChange={(e) => up("grade", e.target.value)} placeholder="8"
+                  // „z. B.“ vorweg: nach dem Entkoppeln ist das Feld leer, und ein nacktes Beispiel läse sich als Wert (B-278).
+                  onChange={(e) => up("grade", e.target.value)} placeholder="z. B. 8"
                 />
               </>
             )}

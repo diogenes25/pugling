@@ -299,6 +299,21 @@ describe("TextbookForm – Katalog zuerst, Verlag und Klasse aus dem Katalog (B-
     expect((screen.getByLabelText("Verlag", { exact: true }) as HTMLInputElement).value).toBe("Klett");
   });
 
+  // B-278: Nach dem Entkoppeln eines nur über den Katalog verknüpften Buchs ist das Verlagsfeld leer – und ein
+  // Platzhalter „Cornelsen“ läse sich dann wie „der Verlag ist noch da“. Rot, wenn die Beispiele wieder wie Werte aussehen.
+  it("zeigt in leeren Feldern ein Beispiel, das sich nicht als gespeicherter Wert liest", () => {
+    vi.spyOn(api, "seriesUnits").mockResolvedValue([]);
+    // Nur über den Katalog verknüpft: gespeichert ist weder Verlag noch Klasse.
+    zeigeMit([reihe(9, "Access", "Cornelsen")],
+      { seriesId: 9, seriesName: "Access", publisher: "Cornelsen", publisherFreeText: null, gradeFreeText: null });
+
+    fireEvent.change(screen.getByLabelText("Reihe im Katalog", { exact: true }), { target: { value: "" } });
+    const verlag = screen.getByLabelText("Verlag", { exact: true }) as HTMLInputElement;
+    expect(verlag.value).toBe("");
+    expect(verlag.placeholder).toMatch(/^z\. B\. /);
+    expect((screen.getByLabelText("Für Klasse", { exact: true }) as HTMLInputElement).placeholder).toMatch(/^z\. B\. /);
+  });
+
   it("legt eine neue Reihe mit dem Fach des Buchs an und wählt sie", async () => {
     vi.spyOn(api, "seriesUnits").mockResolvedValue([]);
     const anlegen = vi.spyOn(api, "createTextbookSeries").mockResolvedValue(reihe(42, "Green Line", null));

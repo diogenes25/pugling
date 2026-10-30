@@ -27,7 +27,7 @@ test("Fällt die Kinderliste aus, sagt der Assistent es — statt „du hast kei
   await page.route("**/api/v1/supervisor/children", (route) => route.abort("failed"));
   await page.goto("/vater/wizard");
 
-  const knopf = page.getByRole("button", { name: "Bestehendes Kind" });
+  const knopf = page.getByRole("radio", { name: "Bestehendes Kind" });
   await expect(knopf).toBeVisible();
   // Auf die Karte des Schritts eingeschränkt: `getByRole("alert")` ist seitenweit und bräche in Strict
   // Mode, sobald irgendwo sonst ein zweiter Alert entsteht. Je Schritt rendert genau eine Karte.

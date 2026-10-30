@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-268]
 wartet_auf: ""
+nachgeschaut: "2026-10-30"
 ---
 
 # B-280 · Dass das Fokusziel nach dem Sprung geleert wird, prüft kein Test
@@ -60,3 +61,4 @@ Siehe oben. `ChildMaterialSection.tsx` leert `fokusZiel.current` im Effekt; kein
   an `TextbookForm.test.tsx:359` und `:376` – den beiden neuen Zusicherungen, nicht früher. Danach **19/19**.
 - **2026-10-30** — Review `frontend-reviewer`: sauber; beide Fälle setzen den Fokus bewusst weg und rendern dann neu, sind also nicht im Ausgangszustand wahr.
 - **2026-10-30** — Abnahme Lauf L, Teil 3: `tsc -b` sauber, Vitest **585/585** (danach + 1 Fall in `SohnTest.test.tsx`, **14/14**), volle Backend-Suite siehe Protokoll. E2E-Gesamtlauf **102 passed** (`exit=0`, nach dem letzten Produktcode-Edit gestartet; danach nur Tests). Rollengang als E2E (Browser-Extension nicht genutzt): Vater über `assistent-kinderliste-kommt-spaet`, `assistent` und `uebungen-bewerten` (Kollege mit Schreibrecht), Sohn über die Klausur-Komponententests (Fehler → „Weiter versuchen" → nächste Frage; eine E2E-Spec mit gescheitertem `nextTest` bräuchte einen kaputten Server, das gehört auf Komponentenebene), Creator Regressionszeuge. Review `frontend-reviewer`: kein 🔴/🟡. **Abgenommen**, Commit siehe Protokoll ([Lauf L](../pm-sitzung-2026-10-30-nacht.md)).
+- **2026-10-30** — Nachschau in Lauf L, Teil 4: **sauber**. Geprüft: Effekt ohne Abhängigkeiten, `fokusZiel.current = null` ist das einzige Leeren; unter der Mutante zieht das Neurendern beim Tippen den Fokus zurück, ohne sie bleibt er; keine Datenreihenfolge.

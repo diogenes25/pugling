@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-180]
 wartet_auf: ""
+nachgeschaut: "2026-10-30"
 ---
 
 # B-266 · Der Wartepunkt aus B-180 wartet aufs Netzwerk, nicht auf die App
@@ -61,3 +62,4 @@ strukturell trotzdem; ob es auf Linux in CI aufgeht, ist hier nicht messbar.
   trotzdem gebaut (Entscheidung 1). Danach Mutante **10 failed von 10**, ohne Mutante **5 passed von 5**.
 - **2026-10-30** — Review `frontend-reviewer`: sauber; „Suche gescheitert" erscheint erst im Render mit `loading = false` (`useGemerkterFehler`), `exact` trennt es von „(Suche gescheitert)" in `PlanPositions`.
 - **2026-10-30** — Abnahme Lauf L, Teil 3: `tsc -b` sauber, Vitest **585/585** (danach + 1 Fall in `SohnTest.test.tsx`, **14/14**), volle Backend-Suite siehe Protokoll. E2E-Gesamtlauf **102 passed** (`exit=0`, nach dem letzten Produktcode-Edit gestartet; danach nur Tests). Rollengang als E2E (Browser-Extension nicht genutzt): Vater über `assistent-kinderliste-kommt-spaet`, `assistent` und `uebungen-bewerten` (Kollege mit Schreibrecht), Sohn über die Klausur-Komponententests (Fehler → „Weiter versuchen" → nächste Frage; eine E2E-Spec mit gescheitertem `nextTest` bräuchte einen kaputten Server, das gehört auf Komponentenebene), Creator Regressionszeuge. Review `frontend-reviewer`: kein 🔴/🟡. **Abgenommen**, Commit siehe Protokoll ([Lauf L](../pm-sitzung-2026-10-30-nacht.md)).
+- **2026-10-30** — Nachschau in Lauf L, Teil 4: **sauber**. Geprüft: `useGemerkterFehler` liefert den Fehler erst im Render mit `loading = false`; Mutante „ohne `zeilenVeraltet`“ damit deterministisch rot; `exact` fiele bei doppeltem Text laut.
