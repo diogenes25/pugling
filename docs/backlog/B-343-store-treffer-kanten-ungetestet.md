@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-10-30"
 ---
 
 # B-343 · Dass `PeekDesiredIdsAsync` nach Inhalt auflöst, prüft kein Test – und zwei Kanten des Store-Treffers sind offen
@@ -71,3 +72,4 @@ Schlüssel mit anders geschriebenem Wort.
   `ReuseExisting_FolgtDemInhaltNichtDemVeraltetenSchluessel`). Punkt 3 → B-347.
 - **2026-10-30** — Review `pugling-reviewer`: 🟢 beide Fälle hingen an der unbelegten Prämisse „der `PATCH` lässt den Schlüssel stehen" → je eine Zusicherung auf den Schlüssel nach dem `PATCH` (ohne Zählung).
 - **2026-10-30** — Abnahme Lauf L, Teil 2: volle Suite **1028/1028**, Build ohne Warnung. E2E-Gesamtlauf **100 passed** (`exit=0`, nach dem letzten Produktcode-Edit gestartet; danach nur Tests, Vertragskommentar und die neue Spec), danach die neue Spec und die drei Nachbar-Specs **4 passed**. Rollengang: Vater/Creator über die neue Spec `schlagwort-trotz-fremdem-synonym` (Schlagwort-Verwaltung, Facette ändern → Neuladen → gespeichert; rote Probe ohne den Fix **1 failed**); Sohn Regressionszeuge (seine Specs im Gesamtlauf grün, kein Pfad von ihm im Diff). Kein Delta-Review nach den Nachbesserungen: sie sind Testfälle und Kommentare, je mit gemessener Mutante (Selbst-Check). **Abgenommen**, Commit siehe Protokoll ([Lauf L](../pm-sitzung-2026-10-30-nacht.md)).
+- **2026-10-30** — Nachschau in Lauf L, Teil 3: **sauber**. Geprüft: die siebte Form erreicht den Peek mit veraltetem Schlüssel; der Reuse-Fall trifft nur über den NOCASE-Wortkandidaten; beide Prämissen-Zusicherungen stehen.

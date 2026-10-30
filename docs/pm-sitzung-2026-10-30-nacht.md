@@ -200,3 +200,24 @@ der Story), dann entscheiden. Testweg: Vitest, E2E-Specs, Gesamtlauf.
 gescheitertem `nextTest` bräuchte einen kaputten Server, das gehört begründet auf Komponentenebene; Creator
 Regressionszeuge (Gesamtlauf grün, kein Pfad im Diff). **Gerätecheck offen, unverändert aus B-286:** die Ansage nach
 „Weiter versuchen" einmal mit NVDA/VoiceOver anhören. **B-339, B-280, B-275, B-262, B-266 abgenommen.**
+
+### Retrospektive
+
+**Nachschau:** Teil 2 (`d2be0a3`: B-341, B-340, B-342, B-343) von einem frischen `pugling-reviewer` in einem eigenen Worktree
+auf dem Commit (Suite **1028/1028**): kein 🔴/🟡, vier 🟢. Zwei davon betreffen den neuen Vertragssatz von B-340: „whitespace"
+versprach mehr, als der Schlüssel faltet (berichtigt, nur Kommentar), und im Batch zählen Zeilen, die frühere Einträge
+geladen haben ([B-349](backlog/B-349-batch-treffer-haengt-an-der-reihenfolge.md), älter als der Satz). Zu B-341 ein ungetöteter
+Mutant ohne realistischen Weg (zwei exakt gleiche Labels nur aus Altdaten) und eine ältere Lücke in `EnsureAsync`, die zur
+offenen Produktfrage der Story gehört. `nachgeschaut` an allen vier, mit Prüfpunkten.
+
+**Was die eigenen Tore durchgelassen haben:** Zum zweiten Mal in dieser Nacht ein Vertragssatz über Verhalten, der genauer
+klingt, als der Code ist – diesmal nach einem Review, das genau das schon einmal gefunden hatte. Der Satz wurde gegen
+`FindManyAsync` gelesen, aber nicht gegen seine Aufrufer (`CreateBatch` teilt einen Kontext). Das stützt (AL) und schärft
+es: eine Behauptung über einen Service gilt erst, wenn auch seine Aufrufer gelesen sind, die den Zustand mitbringen.
+In Teil 3 selbst hat kein Review ein 🟡 oder 🔴 gefunden (Zähler 0). Gemessen ist auch, dass B-266 lokal nicht reproduzierbar
+war – ein `unverifiziert`-Defekt, dessen Beweisweg in der Story stand, hat sich in zwei Minuten entschieden.
+
+**Vorschlag, nicht gelandet (Freigabe 3):**
+
+- **(AM)** Ergänzung zu (AL): „… und gegen die Aufrufer, die einen geteilten Kontext oder Zustand mitbringen (Batch,
+  Schleife, `Local`)." Mechanisch nicht greifbar.

@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-10-30"
 ---
 
 # B-341 · Ein Schlagwort lässt sich nicht mehr speichern, sobald ein anderes sein Label als Synonym führt
@@ -85,3 +86,4 @@ Testweg: `InterestTagLabelTests`.
   `Anlegen_Mit_Dem_Label_…` (grün).
 - **2026-10-30** — Review `pugling-reviewer`: 🟡 „ordinal" aus Entscheidung 1 hielt kein Test (Mutante `OrdinalIgnoreCase` ließe zwei Tags „X" zu) → Fall `Umbenennen_Nur_In_Der_Schreibweise_Auf_Ein_Fremdes_Label_Wird_Abgewiesen`, Mutante **1 failed** (zählt); 🟢 „nach Trim" ungetestet → der Synonym-Fall schickt das Label mit Leerraum, Mutante „roher `dto.Label`" **1 failed** (ohne Zählung); 🟢 Slug-Fall prüft jetzt auch die Farbe (ohne Zählung); 🟢 AK 3 „auf einen fremden Slug" hält `SlugRenameGuardTests.Umbenennen_Auf_Einen_Belegten_Namen_Wird_Abgewiesen` (Zeile interest-tags), nicht `InterestTagLabelTests`.
 - **2026-10-30** — Abnahme Lauf L, Teil 2: volle Suite **1028/1028**, Build ohne Warnung. E2E-Gesamtlauf **100 passed** (`exit=0`, nach dem letzten Produktcode-Edit gestartet; danach nur Tests, Vertragskommentar und die neue Spec), danach die neue Spec und die drei Nachbar-Specs **4 passed**. Rollengang: Vater/Creator über die neue Spec `schlagwort-trotz-fremdem-synonym` (Schlagwort-Verwaltung, Facette ändern → Neuladen → gespeichert; rote Probe ohne den Fix **1 failed**); Sohn Regressionszeuge (seine Specs im Gesamtlauf grün, kein Pfad von ihm im Diff). Kein Delta-Review nach den Nachbesserungen: sie sind Testfälle und Kommentare, je mit gemessener Mutante (Selbst-Check). **Abgenommen**, Commit siehe Protokoll ([Lauf L](../pm-sitzung-2026-10-30-nacht.md)).
+- **2026-10-30** — Nachschau in Lauf L, Teil 3 (frischer `pugling-reviewer`, eigener Worktree auf `d2be0a3`, Suite **1028/1028**): **sauber** (nur 🟢). Geprüft: `Update`/`LabelConflictAsync`/`Create`, `InterestTagService.EnsureAsync`, `ChildInterestsController.ResolveAsync`, `InterestTagAdmin.tsx` (Nutzlast, Suche, `dirty`); Trimmen an jedem Label-Schreiber (alle gespeicherten Labels sind getrimmt); Reihenfolge der drei Prüfungen; je Fall die tötende Mutante; die Spec gegen `playwright.config.ts` (frische DB je Lauf). 🟢 ungetötet: „`LabelTakenAsync` auch bei unverändertem Label" (braucht zwei exakt gleiche Labels, nur aus Altdaten). 🟢 älter, zur offenen Frage in Entscheidung 2: `EnsureAsync` prüft Synonyme gegen den Slug von `text`, nicht von `label` – über Kind-Interessen entsteht so ein zweiter Tag mit einem Label, das `Create` mit `409` ablehnt.

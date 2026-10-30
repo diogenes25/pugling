@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-337]
 wartet_auf: ""
+nachgeschaut: "2026-10-30"
 ---
 
 # B-340 · Der Vertrag beschreibt die Wiederverwendung im Store noch über den Schlüssel, nicht über den Inhalt
@@ -58,3 +59,4 @@ Vier Doku-Stellen beschreiben den Treffer über den Schlüssel: `VocabularyStore
   Suite schrieb `docs/openapi/v1.json` neu (3 Zeilen).
 - **2026-10-30** — Review `pugling-reviewer`: 🟡 der neue Text versprach mehr Faltung, als `FindManyAsync` für einen per `PATCH` geänderten Eintrag leistet (Wortseite nur bis ASCII-Groß/Klein) → Text auf das heutige Verhalten verengt, die Lücke nach [B-347](B-347-store-speichert-wort-ungetrimmt.md) (nur Kommentar, ohne Zählung).
 - **2026-10-30** — Abnahme Lauf L, Teil 2: volle Suite **1028/1028**, Build ohne Warnung. E2E-Gesamtlauf **100 passed** (`exit=0`, nach dem letzten Produktcode-Edit gestartet; danach nur Tests, Vertragskommentar und die neue Spec), danach die neue Spec und die drei Nachbar-Specs **4 passed**. Rollengang: Vater/Creator über die neue Spec `schlagwort-trotz-fremdem-synonym` (Schlagwort-Verwaltung, Facette ändern → Neuladen → gespeichert; rote Probe ohne den Fix **1 failed**); Sohn Regressionszeuge (seine Specs im Gesamtlauf grün, kein Pfad von ihm im Diff). Kein Delta-Review nach den Nachbesserungen: sie sind Testfälle und Kommentare, je mit gemessener Mutante (Selbst-Check). **Abgenommen**, Commit siehe Protokoll ([Lauf L](../pm-sitzung-2026-10-30-nacht.md)).
+- **2026-10-30** — Nachschau in Lauf L, Teil 3 (frischer `pugling-reviewer`): Satz gegen `FindManyAsync`, `VocabKey.Slug`/`Generate`, `CreateCoreAsync`, `CreateBatch` Zeile für Zeile gelesen. 🟢 „whitespace" versprach mehr, als der Schlüssel faltet (nur ein `"__"→"_"`-Durchgang, keine Tabs/NBSP) → „surrounding whitespace" (Kommentar, ohne Zählung). 🟢 im Batch zählen Zeilen, die frühere Einträge geladen haben → [B-349](B-349-batch-treffer-haengt-an-der-reihenfolge.md). Kein 🟡/🔴.

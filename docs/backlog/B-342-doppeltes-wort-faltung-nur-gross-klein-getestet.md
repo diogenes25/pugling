@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-338]
 wartet_auf: ""
+nachgeschaut: "2026-10-30"
 ---
 
 # B-342 · Der Fall „doppeltes Wort nach dem Schlüssel" unterscheidet seine Eingaben nur in ASCII-Groß/Klein
@@ -57,3 +58,4 @@ Siehe oben: „Moon…"/„moon…" und „Mond"/„mond" unterscheiden sich nur
   dieser Mutante grün blieb, ist aus Code gelesen (Moon/moon sind kleingeschrieben gleich), nicht gemessen.
 - **2026-10-30** — Review `pugling-reviewer`: sauber; die drei Faltungs-Mutanten (nur Kleinschreibung, Akzente ohne ß, ß ohne Akzente) fallen je über Vorder- oder Rückseite (aus Code gelesen).
 - **2026-10-30** — Abnahme Lauf L, Teil 2: volle Suite **1028/1028**, Build ohne Warnung. E2E-Gesamtlauf **100 passed** (`exit=0`, nach dem letzten Produktcode-Edit gestartet; danach nur Tests, Vertragskommentar und die neue Spec), danach die neue Spec und die drei Nachbar-Specs **4 passed**. Rollengang: Vater/Creator über die neue Spec `schlagwort-trotz-fremdem-synonym` (Schlagwort-Verwaltung, Facette ändern → Neuladen → gespeichert; rote Probe ohne den Fix **1 failed**); Sohn Regressionszeuge (seine Specs im Gesamtlauf grün, kein Pfad von ihm im Diff). Kein Delta-Review nach den Nachbesserungen: sie sind Testfälle und Kommentare, je mit gemessener Mutante (Selbst-Check). **Abgenommen**, Commit siehe Protokoll ([Lauf L](../pm-sitzung-2026-10-30-nacht.md)).
+- **2026-10-30** — Nachschau in Lauf L, Teil 3: **sauber**. Geprüft: Vorder- und Rückseite unterscheiden sich nur in õ und ß, die `OrdinalIgnoreCase` nicht faltet und der Schlüssel schon; Mutante `ToLowerInvariant` in `RepeatedWordAsync` → `500`.
