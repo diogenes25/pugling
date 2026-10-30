@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Pugling.Api.Tests;
 
@@ -145,7 +147,8 @@ public class InterestTagLabelTests(PuglingWebAppFactory factory) : IClassFixture
         var label = TestApi.UniqueName("Soccer");
         var id = await TestApi.IdAsync(await creator.PostAsJsonAsync(Root, new { label }));
         var otherId = await TestApi.IdAsync(await creator.PostAsJsonAsync(Root, new { label = TestApi.UniqueName("Fussball") }));
-        (await creator.PatchAsJsonAsync($"{Root}/{otherId}", new { synonyms = new[] { label.ToLowerInvariant() } })).EnsureSuccessStatusCode();
+        // Old data: since B-351 the API refuses this synonym, so the clash is written past it.
+        await SetSynonymsDirectlyAsync(otherId, label.ToLowerInvariant());
 
         // Surrounded by spaces: the comparison runs on the trimmed label, as the stored one is trimmed.
         var response = await creator.PatchAsJsonAsync($"{Root}/{id}", new { label = $" {label} ", color = "#654321" });
@@ -189,6 +192,104 @@ public class InterestTagLabelTests(PuglingWebAppFactory factory) : IClassFixture
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
         Assert.Equal("duplicate_interest_tag", await CodeAsync(response));
+    }
+
+    /// <summary>
+    /// B-351: the rule runs both ways - a synonym that is another tag's label (in another spelling, folded like the slug)
+    /// makes one text name two tags. Red if create or patch skips the synonym check (201/200).
+    /// </summary>
+    [Fact]
+    public async Task Synonym_Das_Ein_Fremdes_Label_Ist_Wird_Abgewiesen()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        // Renamed, so its label no longer folds to its slug: only the label half of the rule can catch the synonym.
+        var (_, label) = await RenamedTagAsync(creator);
+
+        var created = await creator.PostAsJsonAsync(Root,
+            new { label = TestApi.UniqueName("Ballsport"), synonyms = new[] { label.ToUpperInvariant() } });
+        Assert.Equal(HttpStatusCode.Conflict, created.StatusCode);
+        Assert.Equal("duplicate_interest_tag", await CodeAsync(created));
+
+        var otherId = await TestApi.IdAsync(await creator.PostAsJsonAsync(Root, new { label = TestApi.UniqueName("Teamsport") }));
+        var patched = await creator.PatchAsJsonAsync($"{Root}/{otherId}", new { synonyms = new[] { label.ToUpperInvariant() } });
+        Assert.Equal(HttpStatusCode.Conflict, patched.StatusCode);
+        Assert.Empty((await creator.GetFromJsonAsync<JsonElement>($"{Root}/{otherId}")).GetProperty("synonyms").EnumerateArray());
+    }
+
+    /// <summary>
+    /// B-351, the other two texts a tag answers to: a synonym that is another tag's synonym, and an explicit slug that is
+    /// another tag's synonym. Red if the clash check ignores foreign synonyms (201) or the create path skips the explicit
+    /// slug (201).
+    /// </summary>
+    [Fact]
+    public async Task Synonym_Oder_Slug_Das_Ein_Fremdes_Synonym_Ist_Wird_Abgewiesen()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var synonym = TestApi.UniqueName("Futsal").ToLowerInvariant();
+        await TestApi.IdAsync(await creator.PostAsJsonAsync(Root,
+            new { label = TestApi.UniqueName("Hallenfussball"), synonyms = new[] { synonym } }));
+
+        var asSynonym = await creator.PostAsJsonAsync(Root,
+            new { label = TestApi.UniqueName("Kleinfeld"), synonyms = new[] { synonym.ToUpperInvariant() } });
+        Assert.Equal(HttpStatusCode.Conflict, asSynonym.StatusCode);
+
+        var asSlug = await creator.PostAsJsonAsync(Root,
+            new { label = TestApi.UniqueName("Kicken"), slug = Pugling.Api.Data.InterestSlug.From(synonym) });
+        Assert.Equal(HttpStatusCode.Conflict, asSlug.StatusCode);
+        Assert.Equal("duplicate_interest_tag", await CodeAsync(asSlug));
+    }
+
+    /// <summary>
+    /// B-351 decision 2: only synonyms the tag does not carry yet are checked. The editor resends the whole list with every
+    /// save; a clash from old data must not lock the tag. Red if every sent synonym is checked (409).
+    /// </summary>
+    [Fact]
+    public async Task Unveraenderte_Synonyme_Bleiben_Speicherbar_Trotz_Altdaten_Konflikt()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var label = TestApi.UniqueName("Hockey");
+        await TestApi.IdAsync(await creator.PostAsJsonAsync(Root, new { label }));
+        var id = await TestApi.IdAsync(await creator.PostAsJsonAsync(Root, new { label = TestApi.UniqueName("Eissport") }));
+        await SetSynonymsDirectlyAsync(id, label.ToLowerInvariant());
+
+        var response = await creator.PatchAsJsonAsync($"{Root}/{id}",
+            new { synonyms = new[] { label.ToLowerInvariant() }, color = "#112233" });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("#112233", (await creator.GetFromJsonAsync<JsonElement>($"{Root}/{id}")).GetProperty("color").GetString());
+    }
+
+    /// <summary>
+    /// B-351 decision 4: the interest path checks the label against synonyms too, not only the text it resolves by. With
+    /// an explicit slug the text is the slug, and the label used to slip past - a second tag beside the synonym's. Red if
+    /// <c>EnsureAsync</c> compares synonyms with the slug of the text alone.
+    /// </summary>
+    [Fact]
+    public async Task Interesse_Mit_Label_Eines_Fremden_Synonyms_Trifft_Dessen_Tag()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var synonym = TestApi.UniqueName("Soccer");
+        var ownerId = await TestApi.IdAsync(await father.PostAsJsonAsync(Root,
+            new { label = TestApi.UniqueName("Fussball"), synonyms = new[] { synonym } }));
+        var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = "Synonym-Treffer", pin = "4711" }));
+
+        (await father.PutAsJsonAsync($"/api/v1/supervisor/children/{childId}/interests",
+            new { interests = new[] { new { slug = $"eigen-{Guid.NewGuid():N}", label = synonym, weight = 2 } } }))
+            .EnsureSuccessStatusCode();
+
+        var interests = await father.GetFromJsonAsync<List<JsonElement>>($"/api/v1/supervisor/children/{childId}/interests");
+        Assert.Equal([ownerId], interests!.Select(i => i.GetProperty("tagId").GetInt32()));
+    }
+
+    /// <summary>Writes synonyms past the API - for clashes that only old data can carry.</summary>
+    private async Task SetSynonymsDirectlyAsync(int tagId, params string[] synonyms)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<Pugling.Api.Data.PuglingDbContext>();
+        var tag = await db.InterestTags.SingleAsync(t => t.Id == tagId);
+        tag.Synonyms = [.. synonyms];
+        await db.SaveChangesAsync();
     }
 
     /// <summary>A tag whose label no longer derives to its slug: created as one name, renamed to another.</summary>

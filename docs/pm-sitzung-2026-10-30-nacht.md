@@ -290,3 +290,24 @@ Teil 4 ist **unbeobachtet**. Alles **ungepusht**.
    Screenreader.
 4. Nächste baubare `Defekt`-Kandidaten: Store-Faltung als ein Thema (B-346, B-347, B-349 – je eine Messung und eine Wahl
    zwischen Inhalt- und Schlüsselvergleich), B-350, B-272/B-273/B-276, B-255.
+
+## Nachtrag — Entscheidungen des Nutzers (2026-10-30)
+
+Auftrag im Dialog: „Beantworte die Fragen selber. Nehme immer deinen Vorschlag." Umgesetzt:
+
+1. **Retro-Vorschläge (AJ)–(AN) gelandet**, alle als Prosa: (AJ) in pm-loop Step 5 (je AK und Entscheidungsteil eine
+   Zusicherung vor dem Review); (AK) in `docs/backlog/README.md` → „Der Auslöser" (Umordnungen vorher/nachher lesen);
+   (AN) zusammen mit (AD)/(AH) in „Ausformulieren heißt gegen den Code belegen" (Gleichsetzung und Konvention mit Fund- und
+   Gegenfundstellen belegen); (AL)+(AM) in `backend/Pugling.Contracts/CLAUDE.md` (ein `summary` über Verhalten gegen Service
+   **und** Aufrufer lesen). Budget im selben Durchgang bezahlt: `pm-loop` −26 B, README-Regeltext −81 B netto (historische
+   Erzählpassagen gekürzt). Die älteren Vorschläge (AC)–(AI) aus Lauf J/K sind damit nicht entschieden, außer wo (AN) sie
+   aufnimmt (AD, AH).
+2. **B-341 Entscheidung 2** → [B-351](backlog/B-351-synonym-regel-symmetrisch.md): Synonym-Regel symmetrisch (Synonym gegen
+   fremden Slug, gefaltetes Label und fremdes Synonym; ausdrücklicher Slug gegen fremde Synonyme), beim Ändern nur neue
+   Synonyme, Slug-Vergleich bleibt als bewusste Ausnahme zu B-141 AK 3, `EnsureAsync` faltet auch das Label gegen Synonyme,
+   Kommentar richtiggestellt. Review: drei 🟡, alle behoben (Zähler 3). Suite **1033/1033**, E2E **102 passed**.
+   **Abgenommen.**
+3. **Gerätechecks:** Die Chrome-Extension war nicht verbunden; statt dessen der Barrierefreiheitsbaum aus echtem Chromium
+   (Playwright `ariaSnapshot`, Wegwerf-DB): drei benannte `radiogroup` („Welches Kind?", „Was ist das Ziel?", „Wie intensiv
+   soll geübt werden?"), je Option `radio` mit `[checked]` an der Wahl. Das ist, was ein Screenreader bekommt. Offen bleibt
+   nur das Anhören selbst (Betonung durch NVDA/VoiceOver) – für B-348 und B-339 unverändert ein Mensch-Check.

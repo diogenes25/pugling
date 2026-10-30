@@ -164,8 +164,7 @@ clock**:
   slice, "Sprint 2" was three decisions and no code at all.
 - **Take as few as the thread demands — there is no lower bound, and a sprint of one is legitimate.**
   The *cap* has a reason (Step 6 has to stay affordable); a floor would only force a lone defect to wait
-  for two companions it has nothing to do with. Sprint 1 of 2026-08-05 ran two stories and was cut
-  correctly: the third candidate on the table (B-112) served the goal not at all and stayed out.
+  for two companions it has nothing to do with.
 - **The cap is not tidiness — it is what keeps Step 6 affordable.** Three roles × fourteen stories is
   a walkthrough nobody runs; the 2026-08-05 run measured exactly that (numbers in
   `docs/backlog/README.md` → "Der Rollengang fällt am leichtesten weg"). Same care while building; the
@@ -236,8 +235,9 @@ Before you let any role look again:
 - Add or extend an integration test in `Pugling.Api.Tests` for nontrivial backend changes.
 - **A test case that claims a distinction needs the two values to differ in its setup** ("not X",
   "newest first", "own vs. foreign"). Mandatory before the review: per case, name the mutant "both
-  equal" and log the setup line that keeps them apart; no such line → rewrite the case first. (User,
-  2026-10-26: dominant finding class of sprints 11/12. A gate would have to read test data.)
+  equal" and log the setup line that keeps them apart; no such line → rewrite the case first (sprints 11/12).
+- **Before the review, one `## Verlauf` line per AK and per part of a decision:** *AK n → test (file:line), mutant → red*.
+  A part without its own assertion gets one first (Lauf L: B-336 AK 2, B-341).
 - Run the **`pugling-reviewer`** agent (correctness + project conventions) and fold in its
   correctness findings before sign-off; note cleanup-only findings as non-blocking refactors.
 

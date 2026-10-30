@@ -22495,7 +22495,7 @@
         "tags": [
           "Creator \u2013 Interest Tags"
         ],
-        "summary": "Creates a tag. If the slug is missing, it is derived from the label. If the slug already\nexists, the existing entry comes back (idempotent) \u2013 so an agent can safely repeat the same\ncatalog build, as long as it sends the slug (or the label it was created with). A label that another\ntag already carries (exact comparison) or lists as a synonym is rejected with 409 - deliberately unlike\n\u0060InterestTagService.EnsureAsync\u0060, which resolves the same text to that tag: here the caller names a\nnew tag, and quietly handing back a differently named one would hide that it already exists (B-141).",
+        "summary": "Creates a tag. If the slug is missing, it is derived from the label. If the slug already\nexists, the existing entry comes back (idempotent) \u2013 so an agent can safely repeat the same\ncatalog build, as long as it sends the slug (or the label it was created with). A label that another\ntag already carries (exact comparison) or lists as a synonym is rejected with 409 - deliberately unlike\n\u0060InterestTagService.EnsureAsync\u0060, which resolves the same text to that tag: here the caller names a\nnew tag, and quietly handing back a differently named one would hide that it already exists (B-141). The same\n409 meets a synonym whose slug is another tag\u0027s slug, folded label or synonym, and an explicit slug that another\ntag lists as a synonym (B-351).",
         "requestBody": {
           "content": {
             "application/json": {
@@ -22645,7 +22645,7 @@
         "tags": [
           "Creator \u2013 Interest Tags"
         ],
-        "summary": "Changes label, facet, synonyms, or color. The \u0060Slug\u0060 is deliberately immutable \u2013\nit is the stable reference that images and child profiles hang off. A new label is rejected when another\ntag already carries it (exact comparison, B-141) or the slug it derives to (B-124) - otherwise two tags\nshare a label in every picker.",
+        "summary": "Changes label, facet, synonyms, or color. The \u0060Slug\u0060 is deliberately immutable \u2013\nit is the stable reference that images and child profiles hang off. A new label is rejected when another\ntag already carries it (exact comparison, B-141), the slug it derives to (B-124) or lists it as a synonym -\notherwise two tags share a label in every picker. An unchanged label is not checked again (B-341). Likewise a\nsynonym the tag does not carry yet (compared by slug) is rejected when its slug is another tag\u0027s slug, folded label\nor synonym (B-351).",
         "parameters": [
           {
             "name": "id",

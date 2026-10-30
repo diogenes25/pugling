@@ -88,7 +88,9 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
     /// catalog build, as long as it sends the slug (or the label it was created with). A label that another
     /// tag already carries (exact comparison) or lists as a synonym is rejected with 409 - deliberately unlike
     /// <c>InterestTagService.EnsureAsync</c>, which resolves the same text to that tag: here the caller names a
-    /// new tag, and quietly handing back a differently named one would hide that it already exists (B-141).
+    /// new tag, and quietly handing back a differently named one would hide that it already exists (B-141). The same
+    /// 409 meets a synonym whose slug is another tag's slug, folded label or synonym, and an explicit slug that another
+    /// tag lists as a synonym (B-351).
     /// </summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -109,13 +111,20 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
             return this.ProblemWithCode(ApiErrors.DuplicateInterestTag, "Another interest tag already carries this label.");
         if (await SynonymTakenAsync(label, exceptId: null, ct))
             return this.ProblemWithCode(ApiErrors.DuplicateInterestTag, "Another interest tag already lists this label as a synonym.");
+        // An explicit slug is a second text the tag answers to (EnsureAsync looks it up first), so it must not be another
+        // tag's synonym either; a derived slug folds from the label, which the line above already checked (B-351).
+        if (!string.IsNullOrWhiteSpace(dto.Slug) && await SynonymTakenAsync(slug!, exceptId: null, ct))
+            return this.ProblemWithCode(ApiErrors.DuplicateInterestTag, "Another interest tag already lists this slug as a synonym.");
+        var synonyms = Clean(dto.Synonyms);
+        if (await SynonymClashAsync(synonyms, exceptId: null, ct) is { } clash)
+            return this.ProblemWithCode(ApiErrors.DuplicateInterestTag, $"The synonym '{clash}' is another interest tag's label or slug.");
 
         var tag = new InterestTag
         {
             Slug = slug!,
             Label = label,
             Facet = dto.Facet,
-            Synonyms = Clean(dto.Synonyms),
+            Synonyms = synonyms,
             Color = dto.Color?.Trim() is { Length: > 0 } c ? c : null,
         };
         db.InterestTags.Add(tag);
@@ -132,8 +141,10 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
     /// <summary>
     /// Changes label, facet, synonyms, or color. The <c>Slug</c> is deliberately <b>immutable</b> –
     /// it is the stable reference that images and child profiles hang off. A new label is rejected when another
-    /// tag already carries it (exact comparison, B-141) or the slug it derives to (B-124) - otherwise two tags
-    /// share a label in every picker.
+    /// tag already carries it (exact comparison, B-141), the slug it derives to (B-124) or lists it as a synonym -
+    /// otherwise two tags share a label in every picker. An unchanged label is not checked again (B-341). Likewise a
+    /// synonym the tag does not carry yet (compared by slug) is rejected when its slug is another tag's slug, folded label
+    /// or synonym (B-351).
     /// </summary>
     [HttpPatch("{id:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -156,7 +167,16 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
         }
         if (dto.Facet.HasValue) tag.Facet = dto.Facet.Value;
         // Assign a new list (no in-place mutation - the JSON column pitfall).
-        if (dto.Synonyms is not null) tag.Synonyms = Clean(dto.Synonyms);
+        if (dto.Synonyms is not null)
+        {
+            var synonyms = Clean(dto.Synonyms);
+            // Only synonyms the tag does not carry yet claim something new; the editor resends the whole list, and a
+            // clash from old data must not lock the tag (B-351, the same reasoning as the unchanged label above).
+            var carried = tag.Synonyms.Select(InterestSlug.From).ToHashSet(StringComparer.Ordinal);
+            if (await SynonymClashAsync(synonyms.Where(s => !carried.Contains(InterestSlug.From(s))), id, ct) is { } clash)
+                return this.ProblemWithCode(ApiErrors.DuplicateInterestTag, $"The synonym '{clash}' is another interest tag's label or slug.");
+            tag.Synonyms = synonyms;
+        }
         if (dto.Color is not null) tag.Color = dto.Color.Trim() is { Length: > 0 } c ? c : null;
 
         await db.SaveChangesAsync(ct);
@@ -238,9 +258,10 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
         db.InterestTags.AnyAsync(t => t.Id != exceptId && t.Label == label, ct);
 
     /// <summary>
-    /// Whether another tag lists the label as a synonym, compared by slug like <c>InterestTagService.EnsureAsync</c>:
-    /// that path resolves the text to the synonym's tag, so a second tag under this label would never be found by it.
-    /// Synonyms sit in a JSON column and are not queryable, hence the scan.
+    /// Whether another tag lists the label as a synonym, compared by slug like <c>InterestTagService.EnsureAsync</c>.
+    /// That path resolves a text by slug, then label, then synonym, so a label that is another tag's synonym makes one
+    /// text name two tags, and which one a child's interest lands on depends on that order. Synonyms sit in a JSON
+    /// column and are not queryable, hence the scan.
     /// </summary>
     private async Task<bool> SynonymTakenAsync(string label, int? exceptId, CancellationToken ct)
     {
@@ -248,6 +269,23 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
         if (slug.Length == 0) return false;
         var synonyms = await db.InterestTags.AsNoTracking().Where(t => t.Id != exceptId).Select(t => t.Synonyms).ToListAsync(ct);
         return synonyms.Any(list => list.Any(s => InterestSlug.From(s) == slug));
+    }
+
+    /// <summary>
+    /// The first of <paramref name="synonyms"/> whose slug is another tag's slug, folded label or synonym, or <c>null</c> -
+    /// the mirror of <see cref="SynonymTakenAsync"/> (B-351): either way round, one text would name two tags, and which
+    /// one <c>EnsureAsync</c> returns would depend on lookup or load order.
+    /// </summary>
+    private async Task<string?> SynonymClashAsync(IEnumerable<string> synonyms, int? exceptId, CancellationToken ct)
+    {
+        var wanted = synonyms.Select(s => (Text: s, Slug: InterestSlug.From(s))).Where(x => x.Slug.Length > 0).ToList();
+        if (wanted.Count == 0) return null;
+        var others = await db.InterestTags.AsNoTracking().Where(t => t.Id != exceptId)
+            .Select(t => new { t.Slug, t.Label, t.Synonyms }).ToListAsync(ct);
+        var taken = others
+            .SelectMany(t => t.Synonyms.Select(InterestSlug.From).Append(t.Slug).Append(InterestSlug.From(t.Label)))
+            .ToHashSet(StringComparer.Ordinal);
+        return wanted.Where(x => taken.Contains(x.Slug)).Select(x => (string?)x.Text).FirstOrDefault();
     }
 
     /// <summary>Trims, discards empty entries, and deduplicates – synonyms are a pure search aid.</summary>

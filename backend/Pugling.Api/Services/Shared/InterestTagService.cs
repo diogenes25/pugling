@@ -13,9 +13,9 @@ namespace Pugling.Api.Services.Shared;
 public class InterestTagService(PuglingDbContext db)
 {
     /// <summary>
-    /// Finds the tag for a given text or creates it. The lookup runs in two stages: first the
-    /// indexed slug match, otherwise a synonym comparison (synonyms live in a JSON column and are
-    /// not queryable – the scan is only worthwhile because it only kicks in on a miss).
+    /// Finds the tag for a given text or creates it. The lookup runs in three stages: the indexed slug match, then the
+    /// exact label (B-141), then the synonyms against the slug of the text and of the label (B-351; synonyms live in a
+    /// JSON column and are not queryable – the scan is only worthwhile because it only kicks in on a miss).
     /// </summary>
     /// <param name="text">Slug or display name ("pokemon", "Pokémon", "Poke").</param>
     /// <param name="label">Display name for a possibly newly created tag; otherwise <paramref name="text"/> is used.</param>
@@ -43,9 +43,12 @@ public class InterestTagService(PuglingDbContext db)
         // Loaded tracked and searched through the local view, so that the not yet saved tags of this call count
         // here as well (synonyms sit in a JSON column and are not queryable).
         var newLabel = label?.Trim() is { Length: > 0 } l ? l : text.Trim();
+        // The label folds against the synonyms as well: with an explicit slug the text is that slug, and a label that is
+        // another tag's synonym would otherwise create a second tag beside it - the one Create refuses with 409 (B-351).
+        var labelSlug = InterestSlug.From(newLabel);
         await db.InterestTags.LoadAsync(ct);
         var byLabelOrSynonym = db.InterestTags.Local.FirstOrDefault(t => t.Label == newLabel)
-            ?? db.InterestTags.Local.FirstOrDefault(t => t.Synonyms.Any(s => InterestSlug.From(s) == slug));
+            ?? db.InterestTags.Local.FirstOrDefault(t => t.Synonyms.Any(s => InterestSlug.From(s) is var x && (x == slug || x == labelSlug)));
         if (byLabelOrSynonym is not null) return byLabelOrSynonym;
 
         // Create it. Careful: the tag only hangs in the ChangeTracker here - the caller saves.

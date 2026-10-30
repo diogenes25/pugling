@@ -16,4 +16,8 @@ Einzige reine Funktion neben den Typen (und dem `Exercise/VocabRefJsonConverter.
 (B-336). Der Vokabel-Schlüssel ist der Server-Begriff „dasselbe Wort", und der KI-Creator muss vor dem Anlegen
 genauso falten – eine zweite Kopie würde driften.
 
+Beschreibt ein `/// <summary>` ein **Verhalten** (wann ein Treffer, wann ein Fehler), ist der Satz eine Behauptung wie ein
+Ist-Stand: er nennt die Grenze, an der der Code aufhört, und wird gegen die Service-Methode **und** ihre Aufrufer gelesen,
+die geteilten Zustand mitbringen (Batch, Schleife, `Local`) – nicht gegen die Story. Zweimal in Lauf L gemessen (B-340).
+
 Jedes DTO trägt ein `/// <summary>` – **auf Englisch** (siehe [docs/translate.md](../../docs/translate.md)).

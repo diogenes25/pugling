@@ -85,12 +85,14 @@ B-257 bestand seine AKs und verfehlte seine Story (B-327). Und **ändert ein Fix
 entsteht** (`localStorage`, Cache), sagt die Story, was mit dem schon gespeicherten geschieht – sonst heilt er nur
 neue Geräte.
 
+Setzt eine Entscheidung zwei Größen gleich („Schlüssel = Inhalt") oder beruft sie sich auf eine **Konvention des
+Repos**, belegt sie das am Code: je Größe den Schreiber mit `Datei:Zeile`, bei einer Konvention Fund- **und**
+Gegenfundstellen (B-277, B-348).
+
 Weil dieser Schritt teuer ist, trägt **schon `idee` eine `prio`**. Sonst müsste `/backlog` raten, welche
 von zwei Dutzend Ideen es als Nächstes recherchiert.
 
-Die Prios der Erst-Ernte sind **am 2026-07-30 vom Nutzer im Triage-Durchgang bestätigt** worden (Vorschlag
-vorgelegt, Abweichungen übernommen) — sie sind keine Maschinen-Schätzung. Der Weg bleibt so: `/backlog`
-schlägt vor, der Mensch entscheidet in einer Runde.
+`/backlog` schlägt die Prio vor, der Mensch entscheidet in einer Runde (Triage vom 2026-07-30).
 
 ### Der Rollengang fällt am leichtesten weg — und kostet am meisten
 
@@ -126,7 +128,6 @@ ihn, und eine Sitzung kann die Regel tragen, keine Agenten unaufgefordert zu sta
 ehrliche Ausgang: alles andere belegt, Stufe `in-arbeit`, eine `## Verlauf`-Zeile mit dem Grund — und die
 Freigabe beim Nutzer erfragen. Nicht erlaubt ist, den eigenen Blick auf den Diff „das Review" zu nennen;
 ein Selbst-Check ist der schwächere Beleg und muss, wenn er überhaupt zählt, als solcher beschriftet sein.
-So gelaufen am 2026-08-05 bei B-110/B-111.
 
 ## Frontmatter
 
@@ -433,13 +434,12 @@ nicht mechanisch prüfbar, nur ihre *Aufzeichnung*. Was der Mechanismus leistet,
 **sichtbar** zu machen — eine fehlende Zeile in einem datierten Protokoll und ein Nenner, der nicht wächst.
 Was er nicht leisten kann, ist, einen flüchtigen Blick von einem sorgfältigen zu unterscheiden.
 
-**Der Stand** steht im Index (er rechnet ihn), die Herkunft in den Protokollen. Bewusst **nicht**
-nachgetragen ist der Durchgang vom 2026-08-04: welche Stories er abdeckte, ist nicht belegt — und ein
-geratener Nenner wäre schlimmer als ein kleiner.
+**Der Stand** steht im Index (er rechnet ihn), die Herkunft in den Protokollen.
 
-**Unbeaufsichtigt** (über Nacht) braucht dieser Lauf mehrere Vorab-Freigaben; seit der Erprobung vom
-2026-08-05 darf er mehrere thematisch verwandte Sprints hintereinander fahren statt nur einen.
-Auftragstext und ehrliche Erwartung stehen in [nachtlauf.md](../nachtlauf.md).
+**Unbeaufsichtigt** (über Nacht) braucht dieser Lauf Vorab-Freigaben: [nachtlauf.md](../nachtlauf.md).
+
+**Verschiebt der Diff Prüfungen gegeneinander**, liest die Nachschau die Reihenfolge vorher und nachher
+(`git show <commit>^:<datei>`) und nennt sie im Prüfpunkt (B-345: Umordnung, als „sauber" nachgeschaut).
 
 ### Warum der Defekt eine eigene Story braucht
 
@@ -564,7 +564,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (272)</summary>
+<summary>Abgenommen (273)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -786,6 +786,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-345](B-345-batch-prueft-grundform-vor-dem-belegten-schluessel.md) | Der Vokabel-Batch prüfte die Grundform vor dem belegten Schlüssel und war nicht mehr idempotent | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-348](B-348-assistent-pillen-ohne-aria-pressed.md) | Die Auswahl-Pillen im Assistenten sagen nicht, welche gewählt ist | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-35](B-35-karten-umdrehen-animation.md) | Karten drehen sich beim Aufdecken um | Wunsch | `abgenommen` | P3 | S | frontend | — |
+| [B-351](B-351-synonym-regel-symmetrisch.md) | Ein Synonym darf nicht das Label oder den Slug eines anderen Schlagworts tragen | Wunsch | `abgenommen` | P3 | S | backend | — |
 | [B-36](B-36-motivations-animationen-teilziele.md) | Motivations-Animationen bei erreichten Teilzielen | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-37](B-37-uebung-abbruch-unvollendet.md) | Abgebrochene Runden: Pflicht härten, Klausur deckeln | Defekt | `abgenommen` | P1 | M | beides | — |
 | [B-40](B-40-client-routen-waechter.md) | Routen aus `Pugling.Client` gegen das OpenAPI-Dokument halten | Aufräumen | `abgenommen` | P3 | XS | backend | — |
@@ -855,7 +856,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (107)
 
-**Nachgeschaut: 268 von 272 abgenommenen** — und in 86 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 4 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 268 von 273 abgenommenen** — und in 86 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 5 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -968,7 +969,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-345](B-345-batch-prueft-grundform-vor-dem-belegten-schluessel.md) | Der Vokabel-Batch prüfte die Grundform vor dem belegten Schlüssel und war nicht mehr idempotent | [B-277] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (4) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (5) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -979,6 +980,7 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-344](B-344-reuse-faltete-sprache-und-leerraum-nicht.md) | `reuseExisting` verglich die Sprache exakt und das Wort ungetrimmt |
 | [B-345](B-345-batch-prueft-grundform-vor-dem-belegten-schluessel.md) | Der Vokabel-Batch prüfte die Grundform vor dem belegten Schlüssel und war nicht mehr idempotent |
 | [B-348](B-348-assistent-pillen-ohne-aria-pressed.md) | Die Auswahl-Pillen im Assistenten sagen nicht, welche gewählt ist |
+| [B-351](B-351-synonym-regel-symmetrisch.md) | Ein Synonym darf nicht das Label oder den Slug eines anderen Schlagworts tragen |
 
 </details>
 
