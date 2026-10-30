@@ -111,7 +111,9 @@ export function SohnTest() {
   // Laufenden Versuch nach einem transienten Fehler fortsetzen: aktuelle Cursor-Frage erneut holen.
   async function resume() {
     if (!planId || attemptId === null) { await start(); return; }
-    setError(null);
+    // Die alte Frage weg, bevor die neue geholt wird: meist ist sie schon beantwortet (nur `nextTest` scheiterte), und
+    // stünde sie bis zur Antwort wieder da, sagte die Region sie als neue Aufgabe an und die Karte wäre anklickbar (B-339).
+    setError(null); setItem(null);
     try {
       const nx = await api.nextTest(planId, positionId, attemptId);
       if (nx.done) { await finish(attemptId); return; }

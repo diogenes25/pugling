@@ -136,3 +136,67 @@ Delta-Review: die Nachbesserungen sind Testfälle und Kommentare, je mit gemesse
 neue Wert steht (ohne den Fix scheitert das Speichern). Die übrigen Store-Änderungen sind Tests und Doku; ihr Rollengang ist
 der unveränderte E2E-Gesamtlauf. Sohn Regressionszeuge: seine Specs grün, kein Pfad von ihm im Diff. **B-340, B-341, B-342,
 B-343 abgenommen.**
+
+### Retrospektive
+
+**Nachschau:** Teil 1 (`0cb732b`, B-336) von einem frischen `pugling-reviewer` am Commit-Snapshot (`git archive`, Suite
+**1025/1025**): **sauber**, nur 🟢 – die Zusage „nennt jede Schreibweise" trug kein Fall (Mutante
+`Distinct(OrdinalIgnoreCase)` grün), `Pugling.Contracts/CLAUDE.md` übersah den `VocabRefJsonConverter`; beides in Teil 3
+behoben (ohne Zählung). Je Theorie-Zeile eine eigene Mutante in `VocabKey` gemessen, jede fällt genau an ihrer Zeile.
+`nachgeschaut` an B-336 mit Prüfpunkten.
+
+**Was die eigenen Tore durchgelassen haben:** (1) In B-341 trug der erste Testfall nur die eine Hälfte der Entscheidung
+(„unverändert" → überspringen), nicht die andere („ordinal, nach Trim"). Eine Entscheidung mit zwei Bestandteilen bekam
+einen Fall – dieselbe Familie wie (AJ): ein AK bzw. eine Entscheidung, deren Teile nicht je eine Zusicherung haben.
+(2) B-340: der neue Vertragstext beschrieb, was der Code tun **soll** (nach Inhalt), nicht, was er tut (die Wortseite
+faltet für einen veralteten Schlüssel nur NOCASE). Ein Doku-Satz über Verhalten ist eine Behauptung wie ein Ist-Stand und
+gehört gegen den Code gelesen – das hat der Satz in `VocabularyStoreService` richtig gemacht, der neue im Vertrag nicht.
+
+**Vorschlag, nicht gelandet (Freigabe 3):**
+
+- **(AL)** Prosa in `backend/CLAUDE.md` (Vertragsdoku): „Beschreibt ein `/// <summary>` im Vertrag ein Verhalten (wann ein
+  Treffer, wann ein Fehler), nennt der Satz die Grenze, an der der Code aufhört – und wird gegen die Service-Methode
+  gelesen, nicht gegen die Story." Würde Fund 1 vor dem Review fangen. Mechanisch nicht greifbar (Text gegen Verhalten).
+
+## Lauf L, Teil 3 — Was Vater-Web und Klausur behaupten, macht ein Test rot (B-339, B-280, B-275, B-262, B-266)
+
+**Sprint-Ziel:** *Der Sohn hört nach „Weiter versuchen" nur die Frage, die jetzt dran ist – und für den Vater gilt: jede
+Zusage, die das Vater-Web über Fokus, Vorwahl und Bewertungsrecht macht, fällt rot, sobald jemand sie bricht.*
+
+**Umfang:** fünf `Defekt`-Stories, unter Freigabe 1 ausformuliert, gegrillt, geschätzt (je XS):
+[B-339](backlog/B-339-fortsetzen-sagt-alte-frage-an.md) (aus der Nachschau von Teil 1, der einzige mit Produktcode),
+[B-280](backlog/B-280-fokusziel-nicht-geleert-ungetestet.md), [B-275](backlog/B-275-bewertungsformular-fuer-grantee-ungetestet.md),
+[B-262](backlog/B-262-vorwahl-bestehendes-kind-ohne-eigene-spec.md), [B-266](backlog/B-266-wartepunkt-netzwerk-statt-app-zustand.md).
+Draußen: B-272/B-273/B-276 (mehrteilig bzw. ungemessen, je eigenes Thema), B-348 (beim Bau gefunden, eigene Story).
+
+**Entwickler-Brief:** **B-339**: `resume()` leert die Frage vor dem Nachladen. Die übrigen vier sind Zusicherungen, je mit der
+Mutante, die sie rot macht, und je am richtigen Ort (Zeile der Fehlermeldung geprüft). **B-266** zuerst messen (Beweisweg
+der Story), dann entscheiden. Testweg: Vitest, E2E-Specs, Gesamtlauf.
+
+### Iteration
+
+- **B-339:** rote Probe **1 failed** (erwartet 1). Danach `src/sohn/` **135/135**.
+- **B-280:** Mutante „Ziel nicht geleert" **2 failed** (erwartet 2) an `:359`/`:376`, den neuen Zusicherungen.
+- **B-275:** Mutante an der Aufrufstelle **1 failed** (erwartet 1) an `uebungen-bewerten.spec.ts:158`.
+- **B-262:** Mutante `touchedMode` startet `true` → **1 failed, 1 passed** (der neue fällt, der alte nicht). Beim Bau
+  gefunden: `ChoicePill` ohne `aria-pressed` → [B-348](backlog/B-348-assistent-pillen-ohne-aria-pressed.md).
+- **B-266:** Beweisweg **20 failed von 20** – lokal nicht reproduziert; billig gehärtet, danach Mutante **10/10 failed**, ohne
+  Mutante **5/5 passed**.
+- Nachschau-🟢 aus Teil 2 mitgenommen (ohne Zählung): Theorie-Zeile „The horse"/„the horse" (Mutante **1 failed**),
+  `Pugling.Contracts/CLAUDE.md` nennt den `VocabRefJsonConverter`.
+- `tsc -b` sauber, Vitest **585/585**; E2E-Gesamtlauf **102 passed** (`exit=0`).
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `frontend-reviewer` 🟢 | B-339: Kommentar nennt den häufigeren Fall, der Test fährt ihn nicht | Kommentar berichtigt, Fall ergänzt (Mutante **2 failed**) | nein (🟢) |
+| 2 | `frontend-reviewer` 🟢 | B-262: Titel „wählt vor", geprüft nur „Auswahl sichtbar" | `not.toHaveValue("")` | nein (🟢) |
+
+**Zähler Teil 3: 0.** Danach Backend **1029/1029**, Vitest **586/586**, Spec **2 passed**.
+
+**Rollengang** als E2E (Browser-Extension nicht genutzt): Vater über `assistent-kinderliste-kommt-spaet`, `assistent` und
+`uebungen-bewerten` (jetzt auch als Kollege mit Schreibrecht); Sohn über die Klausur-Komponententests – ein E2E mit
+gescheitertem `nextTest` bräuchte einen kaputten Server, das gehört begründet auf Komponentenebene; Creator
+Regressionszeuge (Gesamtlauf grün, kein Pfad im Diff). **Gerätecheck offen, unverändert aus B-286:** die Ansage nach
+„Weiter versuchen" einmal mit NVDA/VoiceOver anhören. **B-339, B-280, B-275, B-262, B-266 abgenommen.**

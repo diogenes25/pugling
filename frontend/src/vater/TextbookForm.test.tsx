@@ -350,6 +350,30 @@ describe("TextbookForm – Katalog zuerst, Verlag und Klasse aus dem Katalog (B-
     expect(document.activeElement).not.toBe(reiheFeld);
     fireEvent.click(anlegen);
     await waitFor(() => expect(document.activeElement).toBe(reiheFeld));
+
+    // B-280: Das Ziel gilt einem Sprung, nicht jedem Rendern. Die Nutzerin geht weiter ins Titelfeld und tippt – jedes
+    // Tippen rendert neu, und der Fokus bleibt, wo sie ihn hingesetzt hat. Rot, wenn der Effekt das Ziel nicht leert.
+    const titel = screen.getByLabelText("Titel", { exact: true });
+    titel.focus();
+    fireEvent.change(titel, { target: { value: "Green Line 2" } });
+    expect(document.activeElement).toBe(titel);
+  });
+
+  // B-280, derselbe Fall nach „Abbrechen": dort ist das Ziel der Knopf, und ein liegengebliebenes Ziel risse den Fokus
+  // beim nächsten Tippen dorthin zurück.
+  it("lässt den Fokus nach „Abbrechen“ beim Tippen im Titel stehen", async () => {
+    vi.spyOn(api, "seriesUnits").mockResolvedValue([]);
+    zeigeMit([]);
+    const knopf = screen.getByRole("button", { name: "+ Neue Reihe" });
+    fireEvent.click(knopf);
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText("Name der neuen Reihe", { exact: true })));
+    fireEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+    await waitFor(() => expect(document.activeElement).toBe(knopf));
+
+    const titel = screen.getByLabelText("Titel", { exact: true });
+    titel.focus();
+    fireEvent.change(titel, { target: { value: "Green Line 2" } });
+    expect(document.activeElement).toBe(titel);
   });
 
   // jsdom setzt die Browser-Regel nicht um, nach der ein gesperrter Knopf den Fokus abgibt – den echten Weg prüft

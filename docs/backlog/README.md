@@ -506,11 +506,10 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (56)
+### Offen (52)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [B-280](B-280-fokusziel-nicht-geleert-ungetestet.md) | Dass das Fokusziel nach dem Sprung geleert wird, prüft kein Test | Defekt | `idee` | P2 | — | frontend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `gegrillt` | P2 | — | backend | Vertrag? |
 | [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder | Wunsch | `geschaetzt` | P2 | L | beides | — |
@@ -526,21 +525,18 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-259](B-259-generator-verschluckt-leerzeichen-neben-xml-elementen.md) | Der XML-Doc-Generator verschluckt Leerzeichen zwischen zwei Elementen | Defekt | `idee` | P3 | — | — | — |
 | [B-260](B-260-normalisierer-setzt-absatz-mitten-im-satz.md) | Der OpenAPI-Normalisierer setzt einen Absatz mitten in einen Satz | Defekt | `idee` | P3 | — | — | — |
 | [B-261](B-261-produktionspfad-des-beispielkatalogs-ungetestet.md) | Der Produktionspfad des Beispielkatalogs hängt an keinem Test | Defekt | `idee` | P3 | — | — | — |
-| [B-262](B-262-vorwahl-bestehendes-kind-ohne-eigene-spec.md) | „Ohne Eingabe bleibt die Vorwahl ‚bestehendes Kind‘“ hält keine Spec gezielt | Defekt | `idee` | P3 | — | — | — |
 | [B-265](B-265-sperr-zaehler-zusicherung-kann-nie-fallen.md) | Die „Spur“ der gesperrten Lesevorgänge ist eine Zusicherung, die nie fallen kann | Defekt | `idee` | P3 | — | backend | — |
-| [B-266](B-266-wartepunkt-netzwerk-statt-app-zustand.md) | Der Wartepunkt aus B-180 wartet aufs Netzwerk, nicht auf die App | Defekt | `idee` | P3 | — | frontend | — |
 | [B-272](B-272-live-region-und-gruppen-tests-tragen-nicht-alles.md) | Tests zu B-134 und B-236 lassen Mutanten grün | Defekt | `idee` | P3 | — | frontend | — |
 | [B-273](B-273-feste-feldhilfe-resize-und-layoutverschiebung.md) | Das feste ⓘ-Popover: Resize ohne Prüfung, Layout-Verschiebung ohne Schließen | Defekt | `idee` | P3 | — | frontend | — |
 | [B-274](B-274-atomares-schreiben-flackert-wieder.md) | `AtomaresSchreiben_KeineLeseFehler` flackert wieder | Defekt | `idee` | P3 | — | backend | — |
-| [B-275](B-275-bewertungsformular-fuer-grantee-ungetestet.md) | Ob ein Schreib-Grantee das Bewertungsformular sieht, prüft kein Test an der Aufrufstelle | Defekt | `idee` | P3 | — | frontend | — |
 | [B-276](B-276-vater-main-ueberlauf-regel-ungetragen.md) | Die Überlauf-Regel von `.vater-main` trägt kein Test mehr | Defekt | `idee` | P3 | — | frontend | — |
 | [B-278](B-278-platzhalter-sieht-aus-wie-gespeicherter-wert.md) | Im leeren Verlagsfeld sieht der Platzhalter aus wie ein gespeicherter Wert | Defekt | `idee` | P3 | — | frontend | — |
 | [B-282](B-282-login-haertung-restpunkte.md) | Restpunkte der Login-Härtung (NP-3) | Defekt | `idee` | P3 | — | backend | — |
 | [B-310](B-310-profil-match-verraet-kind-ids.md) | `GET creator/profiles/match` verrät per 404 gegen 403, ob es eine Kind-Id gibt | Defekt | `idee` | P3 | — | backend | — |
 | [B-329](B-329-uebung-unbekannte-referenz-validation-error.md) | Die Übungs-Validierung meldet eine unbekannte Id als `validation_error`, die Kategorie daneben als `invalid_reference` | Defekt | `idee` | P3 | — | backend | — |
-| [B-339](B-339-fortsetzen-sagt-alte-frage-an.md) | „Weiter versuchen" in der Klausur sagt die schon beantwortete Frage noch einmal als neue an | Defekt | `idee` | P3 | — | frontend | — |
 | [B-346](B-346-vocabkey-trenner-mehrdeutig.md) | Zwei verschiedene Wortpaare können denselben Vokabel-Schlüssel ergeben | Defekt | `idee` | P3 | — | backend | — |
 | [B-347](B-347-store-speichert-wort-ungetrimmt.md) | Ein per PATCH geändertes Store-Wort trifft nur bis auf ASCII-Groß/Klein | Defekt | `idee` | P3 | — | backend | — |
+| [B-348](B-348-assistent-pillen-ohne-aria-pressed.md) | Die Auswahl-Pillen im Assistenten sagen nicht, welche gewählt ist | Defekt | `idee` | P3 | — | frontend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-231](B-231-fokus-ohne-fehlerkasten.md) | Wohin gehört der Fokus, wenn ein Knopf ohne Fehlerkasten gesperrt wird? | Frage | `idee` | P3 | — | frontend | — |
 | [B-232](B-232-bestaetigung-ausserhalb-des-sichtfelds.md) | Soll eine Bestätigung zum Meldungsplatz scrollen, wenn er weit vom Knopf entfernt liegt? | Frage | `idee` | P3 | — | frontend | — |
@@ -568,7 +564,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (265)</summary>
+<summary>Abgenommen (270)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -716,15 +712,19 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-257](B-257-zielfeier-verspaetet-jenseits-der-ersten-fuenf.md) | Ein schon erreichtes Ziel jenseits der ersten fünf wird später verspätet gefeiert | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-258](B-258-unbekannte-fach-id-zwei-fehlercodes.md) | Eine unbekannte `SubjectId` meldet je nach Ressource zwei verschiedene Fehlercodes | Defekt | `abgenommen` | P3 | XS | backend | Vertrag |
 | [B-26](B-26-e2e-in-ci.md) | Der E2E-Nachtlauf ist rot – und niemand erfährt es | Defekt | `abgenommen` | P1 | S | frontend | — |
+| [B-262](B-262-vorwahl-bestehendes-kind-ohne-eigene-spec.md) | „Ohne Eingabe bleibt die Vorwahl ‚bestehendes Kind‘“ hält keine Spec gezielt | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-263](B-263-info-popover-steht-am-rechten-rand-ueber.md) | Ein aufgeklapptes ⓘ am rechten Rand lässt die Seite seitlich scrollen | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-264](B-264-interessen-ohne-kind-kleiden-nicht-ein.md) | `--interests` ohne Kind setzt die Tags an die Übung, kleidet ihren Inhalt aber nicht ein | Defekt | `abgenommen` | P3 | S | backend | — |
+| [B-266](B-266-wartepunkt-netzwerk-statt-app-zustand.md) | Der Wartepunkt aus B-180 wartet aufs Netzwerk, nicht auf die App | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-267](B-267-entkoppeltes-lehrbuch-zeigt-katalogwert-im-freitextfeld.md) | Nach dem Entkoppeln zeigt das Freitextfeld den Katalogwert – gespeichert wird er nicht | Frage | `abgenommen` | P3 | S | beides | — |
 | [B-268](B-268-fokus-nach-inline-reihe.md) | Nach „Reihe anlegen & wählen“ fällt der Fokus auf `body` | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-269](B-269-bewertungen-reihenfolge-und-updatedat-ungetestet.md) | Bewertungen: Reihenfolge der Liste und `UpdatedAt` beim Überschreiben sind ungetestet | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-27](B-27-testsuite-grenzfaelle.md) | Die Grenzen des `ScoringService` als Tabelle statt als Flow | Aufräumen | `abgenommen` | P2 | S | backend | — |
+| [B-275](B-275-bewertungsformular-fuer-grantee-ungetestet.md) | Ob ein Schreib-Grantee das Bewertungsformular sieht, prüft kein Test an der Aufrufstelle | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-277](B-277-schnellanlage-legt-doppelten-store-eintrag-an.md) | Der Schnellanleger im Assistenten legt für ein bekanntes Wort einen zweiten Store-Eintrag an | Defekt | `abgenommen` | P3 | S | beides | — |
 | [B-279](B-279-general-use-weak-zieht-woerter-trotzdem.md) | `--child X --general --use-weak` zieht die schwachen Wörter weiter in den Pflicht-Wortschatz | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-28](B-28-login-name-sequenziell.md) | Sequenzielle IDs als Login-Name | Wunsch | `abgenommen` | P3 | S | backend | — |
+| [B-280](B-280-fokusziel-nicht-geleert-ungetestet.md) | Dass das Fokusziel nach dem Sprung geleert wird, prüft kein Test | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-281](B-281-pin-felder-pruefen-mindestlaenge-im-ui.md) | Eine zu kurze PIN meldet die Oberfläche auf Englisch | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-283](B-283-buchstaben-ordnen-testluecken.md) | Buchstaben ordnen: neue Anordnung je Prüfungsversuch und die Vorschau sind ungetestet | Defekt | `abgenommen` | P3 | XS | beides | — |
 | [B-284](B-284-doppeltes-enter-ueberspringt-karte.md) | Ein doppeltes Enter während der Prüfung überspringt eine Karte | Defekt | `abgenommen` | P3 | XS | frontend | — |
@@ -776,6 +776,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-336](B-336-ki-creator-dublettenregel-schwaecher-als-store-schluessel.md) | Die Dubletten-Regel des KI-Creators ist schwächer als der Store-Schlüssel | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-337](B-337-reuse-folgt-veraltetem-schluessel.md) | `reuseExisting` folgt dem Schlüssel, auch wenn der Eintrag inzwischen etwas anderes sagt | Defekt | `abgenommen` | P2 | XS | backend | — |
 | [B-338](B-338-doppeltes-wort-schreibweise-ungetestet.md) | Dass doppelte Wörter nach dem Store-Schlüssel verglichen werden, hält kein Fall mit zwei Schreibweisen | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-339](B-339-fortsetzen-sagt-alte-frage-an.md) | „Weiter versuchen" in der Klausur sagt die schon beantwortete Frage noch einmal als neue an | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-340](B-340-store-vertrag-beschreibt-schluessel-statt-inhalt.md) | Der Vertrag beschreibt die Wiederverwendung im Store noch über den Schlüssel, nicht über den Inhalt | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-341](B-341-tag-patch-mit-eigenem-label-409.md) | Ein Schlagwort lässt sich nicht mehr speichern, sobald ein anderes sein Label als Synonym führt | Defekt | `abgenommen` | P2 | XS | backend | — |
 | [B-342](B-342-doppeltes-wort-faltung-nur-gross-klein-getestet.md) | Der Fall „doppeltes Wort nach dem Schlüssel" unterscheidet seine Eingaben nur in ASCII-Groß/Klein | Defekt | `abgenommen` | P3 | XS | backend | — |
@@ -852,7 +853,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (107)
 
-**Nachgeschaut: 258 von 265 abgenommenen** — und in 86 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 7 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 259 von 270 abgenommenen** — und in 86 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 11 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -913,14 +914,14 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-257](B-257-zielfeier-verspaetet-jenseits-der-ersten-fuenf.md) | Ein schon erreichtes Ziel jenseits der ersten fünf wird später verspätet gefeiert | [B-36] | `abgenommen` |
 | [B-260](B-260-normalisierer-setzt-absatz-mitten-im-satz.md) | Der OpenAPI-Normalisierer setzt einen Absatz mitten in einen Satz | [B-147] | `idee` |
 | [B-261](B-261-produktionspfad-des-beispielkatalogs-ungetestet.md) | Der Produktionspfad des Beispielkatalogs hängt an keinem Test | [B-181] | `idee` |
-| [B-262](B-262-vorwahl-bestehendes-kind-ohne-eigene-spec.md) | „Ohne Eingabe bleibt die Vorwahl ‚bestehendes Kind‘“ hält keine Spec gezielt | [B-177] | `idee` |
+| [B-262](B-262-vorwahl-bestehendes-kind-ohne-eigene-spec.md) | „Ohne Eingabe bleibt die Vorwahl ‚bestehendes Kind‘“ hält keine Spec gezielt | [B-177] | `abgenommen` |
 | [B-264](B-264-interessen-ohne-kind-kleiden-nicht-ein.md) | `--interests` ohne Kind setzt die Tags an die Übung, kleidet ihren Inhalt aber nicht ein | [B-46] | `abgenommen` |
 | [B-265](B-265-sperr-zaehler-zusicherung-kann-nie-fallen.md) | Die „Spur“ der gesperrten Lesevorgänge ist eine Zusicherung, die nie fallen kann | [B-165] | `idee` |
-| [B-266](B-266-wartepunkt-netzwerk-statt-app-zustand.md) | Der Wartepunkt aus B-180 wartet aufs Netzwerk, nicht auf die App | [B-180] | `idee` |
+| [B-266](B-266-wartepunkt-netzwerk-statt-app-zustand.md) | Der Wartepunkt aus B-180 wartet aufs Netzwerk, nicht auf die App | [B-180] | `abgenommen` |
 | [B-274](B-274-atomares-schreiben-flackert-wieder.md) | `AtomaresSchreiben_KeineLeseFehler` flackert wieder | [B-165] | `idee` |
 | [B-276](B-276-vater-main-ueberlauf-regel-ungetragen.md) | Die Überlauf-Regel von `.vater-main` trägt kein Test mehr | [B-68] | `idee` |
 | [B-277](B-277-schnellanlage-legt-doppelten-store-eintrag-an.md) | Der Schnellanleger im Assistenten legt für ein bekanntes Wort einen zweiten Store-Eintrag an | [B-71] | `abgenommen` |
-| [B-280](B-280-fokusziel-nicht-geleert-ungetestet.md) | Dass das Fokusziel nach dem Sprung geleert wird, prüft kein Test | [B-268] | `idee` |
+| [B-280](B-280-fokusziel-nicht-geleert-ungetestet.md) | Dass das Fokusziel nach dem Sprung geleert wird, prüft kein Test | [B-268] | `abgenommen` |
 | [B-285](B-285-kind-konto-bleibt-nach-vater-loeschung.md) | Löscht sich ein Vater, bleibt das Konto seines Kindes als leere Hülle – und der Kind-Token bleibt gültig | [B-245] | `abgenommen` |
 | [B-287](B-287-fokus-test-prueft-den-ausgangszustand.md) | Der Fokus-Test in `LetterTiles.test.tsx` prüft eine Zusicherung, die nie fallen kann | [B-05] | `abgenommen` |
 | [B-288](B-288-pruefungstest-misst-neu-je-position.md) | Der Prüfungstest zu „Buchstaben ordnen“ verspricht „neu je Versuch“, misst aber „neu je Position“ | [B-283] | `abgenommen` |
@@ -958,21 +959,25 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-335](B-335-klausurstart-plan-inactive-weiter-versuchen.md) | Scheitert der erste Schritt nach dem Klausurstart an `plan_inactive`, bietet die Arcade „Weiter versuchen" an | [B-330] | `abgenommen` |
 | [B-337](B-337-reuse-folgt-veraltetem-schluessel.md) | `reuseExisting` folgt dem Schlüssel, auch wenn der Eintrag inzwischen etwas anderes sagt | [B-277] | `abgenommen` |
 | [B-338](B-338-doppeltes-wort-schreibweise-ungetestet.md) | Dass doppelte Wörter nach dem Store-Schlüssel verglichen werden, hält kein Fall mit zwei Schreibweisen | [B-331, B-141] | `abgenommen` |
-| [B-339](B-339-fortsetzen-sagt-alte-frage-an.md) | „Weiter versuchen" in der Klausur sagt die schon beantwortete Frage noch einmal als neue an | [B-286] | `idee` |
+| [B-339](B-339-fortsetzen-sagt-alte-frage-an.md) | „Weiter versuchen" in der Klausur sagt die schon beantwortete Frage noch einmal als neue an | [B-286] | `abgenommen` |
 | [B-340](B-340-store-vertrag-beschreibt-schluessel-statt-inhalt.md) | Der Vertrag beschreibt die Wiederverwendung im Store noch über den Schlüssel, nicht über den Inhalt | [B-337] | `abgenommen` |
 | [B-342](B-342-doppeltes-wort-faltung-nur-gross-klein-getestet.md) | Der Fall „doppeltes Wort nach dem Schlüssel" unterscheidet seine Eingaben nur in ASCII-Groß/Klein | [B-338] | `abgenommen` |
 | [B-344](B-344-reuse-faltete-sprache-und-leerraum-nicht.md) | `reuseExisting` verglich die Sprache exakt und das Wort ungetrimmt | [B-337] | `abgenommen` |
 | [B-345](B-345-batch-prueft-grundform-vor-dem-belegten-schluessel.md) | Der Vokabel-Batch prüfte die Grundform vor dem belegten Schlüssel und war nicht mehr idempotent | [B-277] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (7) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (11) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-336](B-336-ki-creator-dublettenregel-schwaecher-als-store-schluessel.md) | Die Dubletten-Regel des KI-Creators ist schwächer als der Store-Schlüssel |
+| [B-262](B-262-vorwahl-bestehendes-kind-ohne-eigene-spec.md) | „Ohne Eingabe bleibt die Vorwahl ‚bestehendes Kind‘“ hält keine Spec gezielt |
+| [B-266](B-266-wartepunkt-netzwerk-statt-app-zustand.md) | Der Wartepunkt aus B-180 wartet aufs Netzwerk, nicht auf die App |
+| [B-275](B-275-bewertungsformular-fuer-grantee-ungetestet.md) | Ob ein Schreib-Grantee das Bewertungsformular sieht, prüft kein Test an der Aufrufstelle |
+| [B-280](B-280-fokusziel-nicht-geleert-ungetestet.md) | Dass das Fokusziel nach dem Sprung geleert wird, prüft kein Test |
+| [B-339](B-339-fortsetzen-sagt-alte-frage-an.md) | „Weiter versuchen" in der Klausur sagt die schon beantwortete Frage noch einmal als neue an |
 | [B-340](B-340-store-vertrag-beschreibt-schluessel-statt-inhalt.md) | Der Vertrag beschreibt die Wiederverwendung im Store noch über den Schlüssel, nicht über den Inhalt |
 | [B-341](B-341-tag-patch-mit-eigenem-label-409.md) | Ein Schlagwort lässt sich nicht mehr speichern, sobald ein anderes sein Label als Synonym führt |
 | [B-342](B-342-doppeltes-wort-faltung-nur-gross-klein-getestet.md) | Der Fall „doppeltes Wort nach dem Schlüssel" unterscheidet seine Eingaben nur in ASCII-Groß/Klein |
@@ -1011,16 +1016,13 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-245](B-245-token-mit-fid-auf-geloeschten-adult.md) | `abgenommen` | Abschnitt „User Story" |
 | [B-260](B-260-normalisierer-setzt-absatz-mitten-im-satz.md) | `idee` | `unverifiziert: true` |
 | [B-261](B-261-produktionspfad-des-beispielkatalogs-ungetestet.md) | `idee` | `unverifiziert: true` |
-| [B-262](B-262-vorwahl-bestehendes-kind-ohne-eigene-spec.md) | `idee` | `unverifiziert: true` |
 | [B-265](B-265-sperr-zaehler-zusicherung-kann-nie-fallen.md) | `idee` | `unverifiziert: true` |
 | [B-267](B-267-entkoppeltes-lehrbuch-zeigt-katalogwert-im-freitextfeld.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…" |
 | [B-268](B-268-fokus-nach-inline-reihe.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…" |
 | [B-269](B-269-bewertungen-reihenfolge-und-updatedat-ungetestet.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-272](B-272-live-region-und-gruppen-tests-tragen-nicht-alles.md) | `idee` | `unverifiziert: true` |
 | [B-274](B-274-atomares-schreiben-flackert-wieder.md) | `idee` | `unverifiziert: true` |
-| [B-275](B-275-bewertungsformular-fuer-grantee-ungetestet.md) | `idee` | `unverifiziert: true` |
 | [B-278](B-278-platzhalter-sieht-aus-wie-gespeicherter-wert.md) | `idee` | `unverifiziert: true` |
-| [B-280](B-280-fokusziel-nicht-geleert-ungetestet.md) | `idee` | `unverifiziert: true` |
 | [B-283](B-283-buchstaben-ordnen-testluecken.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-285](B-285-kind-konto-bleibt-nach-vater-loeschung.md) | `abgenommen` | Abschnitt „Entscheidungen" |
 | [B-287](B-287-fokus-test-prueft-den-ausgangszustand.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
@@ -1046,6 +1048,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-316](B-316-plural-schluessel-aus-b-304-ohne-fall.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-337](B-337-reuse-folgt-veraltetem-schluessel.md) | `abgenommen` | Abschnitt „User Story" |
 | [B-338](B-338-doppeltes-wort-schreibweise-ungetestet.md) | `abgenommen` | Abschnitt „User Story" |
+| [B-348](B-348-assistent-pillen-ohne-aria-pressed.md) | `idee` | `unverifiziert: true` |
 
 <details>
 <summary>Verworfen (25)</summary>

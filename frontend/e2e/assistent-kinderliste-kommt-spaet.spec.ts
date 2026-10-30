@@ -44,3 +44,29 @@ test("Eine spät ankommende Kinderliste nimmt dem Vater sein neues Kind nicht we
   await expect(page.locator("#wiz-name")).toHaveValue("Spät-Neu");
   await expect(page.getByRole("combobox", { name: "Kind" })).toHaveCount(0);
 });
+
+/*
+ * B-262 (AK 2 von B-177): Ohne Eingabe wählt der Assistent weiter das bestehende Kind vor – auch wenn die Liste spät
+ * kommt. Der Fall darüber belegt nur die Sperre; ein Fix, der `touchedMode` zu früh setzt (schon beim Rendern),
+ * bestünde ihn und nähme dem Vater ohne neues Kind die Vorwahl. Rot, wenn `touchedMode` mit `true` beginnt.
+ */
+test("Ohne Eingabe wählt der Assistent nach der späten Liste das bestehende Kind vor", async ({ page }) => {
+  await page.goto("/vater");
+  await page.locator("#fid").fill("1");
+  await page.locator("#pin").fill("0000");
+  await page.getByRole("button", { name: "Anmelden" }).click();
+  await expect(page.getByRole("heading", { name: "Kinder" })).toBeVisible();
+
+  let freigeben!: () => void;
+  const freigegeben = new Promise<void>((resolve) => { freigeben = resolve; });
+  await page.route("**/api/v1/supervisor/children", async (route) => { await freigegeben; await route.continue(); });
+
+  await page.goto("/vater/wizard");
+  // Ausgangslage: ohne Liste steht das Neues-Kind-Formular – die Vorwahl unten ist also ein Wechsel, kein Startzustand.
+  await expect(page.locator("#wiz-name")).toBeVisible();
+  freigeben();
+
+  await expect(page.getByRole("combobox", { name: "Kind" })).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Kind" })).not.toHaveValue("");
+  await expect(page.locator("#wiz-name")).toHaveCount(0);
+});

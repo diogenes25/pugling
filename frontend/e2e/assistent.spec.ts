@@ -184,6 +184,9 @@ test("Scheitert die Suche, ist auch der Knopf »Alle wählen« gesperrt", async 
     (r) => r.url().includes("/creator/exercises") && r.status() === 500);
   await page.getByLabel("Übung suchen", { exact: true }).fill("environment");
   await gescheitert;
+  // Und auf die App, nicht nur aufs Netz (B-266): die Antwort ist da, bevor `useAsync` sie verarbeitet hat, und bis dahin
+  // sperrte `laedt` den Knopf allein. „Suche gescheitert" steht erst im Render, in dem `loading` schon falsch ist.
+  await expect(page.getByText("Suche gescheitert", { exact: true })).toBeVisible();
 
   // Die alten Zeilen stehen noch (das ist die B-116-Regel, gewollt) – und beides ist gesperrt. Das Kästchen
   // trägt nur `zeilenVeraltet`, ist also von sich aus eindeutig; der Knopf braucht den Wartepunkt oben.

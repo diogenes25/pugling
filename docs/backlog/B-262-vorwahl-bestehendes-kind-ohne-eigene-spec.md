@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/idee, bereich/frontend, bereich/test, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/test, rolle/supervisor]
 aliases: [Assistent-Vorwahl ohne Spec, AK 2 von B-177 nur nebenbei]
-status: idee
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: XS
+wo: frontend
+migration: nein
+vertragsbruch: nein
 quelle: Nachschau zu Sprint 9 (fünfter Nachtlauf, docs/pm-sitzung-2026-10-24-nacht.md)
 unverifiziert: false
 grund: ""
@@ -30,7 +30,34 @@ Vorschlag: ein Fall in `assistent-kinderliste-kommt-spaet.spec.ts` ohne Eingabe 
 erwarten, dass „Bestehendes Kind“ gewählt ist; rote Probe: `touchedMode` initial auf `true`.
 **Nicht in diesem Lauf behoben:** Increment von Sprint 9 (vierter Lauf), vom Auftrag ausgenommen.
 
+## User Story
+
+Als **Vater** ohne neues Kind möchte ich, dass der Assistent mein bestehendes Kind vorwählt, auch wenn die Kinderliste
+spät kommt.
+
+## Ist-Stand (Lauf L, am Code belegt)
+
+Siehe oben. Gemessen beim Bau: `ChoicePill` trägt kein `aria-pressed` → [B-348](B-348-assistent-pillen-ohne-aria-pressed.md).
+
+## Entscheidungen (autonom gegrillt, Freigabe 1 – `Defekt`)
+
+1. **Zweiter Fall in `assistent-kinderliste-kommt-spaet.spec.ts`:** Liste anhalten, Ausgangslage „Namensfeld sichtbar"
+   feststellen, freigeben, dann Kind-Auswahl sichtbar und kein Namensfeld. Die Pille selbst ist nicht abfragbar (B-348).
+   *Kosten:* ~20 s Laufzeit.
+
+## Akzeptanzkriterien
+
+1. Mutante `touchedMode` beginnt mit `true` → der neue Fall fällt, der alte bleibt grün.
+
+## Schätzung
+
+`XS`, nur Test.
+
 ## Verlauf
 
 - **2026-10-23** — angelegt in der Nachschau zu Sprint 9 (fünfter Nachtlauf); Grep über `frontend/e2e` nach Assistent-Specs
   ohne Pillenklick: einziger Treffer `feldhilfe.spec.ts:101`.
+- **2026-10-30** — Lauf L, Teil 3: gebaut. Beide Fälle **2 passed**; Mutante `useState(true)` für `touchedMode` →
+  **1 failed, 1 passed** (erwartet: der neue fällt, der alte nicht).
+- **2026-10-30** — Review `frontend-reviewer`: 🟢 der Titel sagt „wählt vor", geprüft war nur die sichtbare Auswahl → `not.toHaveValue("")` ergänzt, Spec **2 passed** (ohne Zählung).
+- **2026-10-30** — Abnahme Lauf L, Teil 3: `tsc -b` sauber, Vitest **585/585** (danach + 1 Fall in `SohnTest.test.tsx`, **14/14**), volle Backend-Suite siehe Protokoll. E2E-Gesamtlauf **102 passed** (`exit=0`, nach dem letzten Produktcode-Edit gestartet; danach nur Tests). Rollengang als E2E (Browser-Extension nicht genutzt): Vater über `assistent-kinderliste-kommt-spaet`, `assistent` und `uebungen-bewerten` (Kollege mit Schreibrecht), Sohn über die Klausur-Komponententests (Fehler → „Weiter versuchen" → nächste Frage; eine E2E-Spec mit gescheitertem `nextTest` bräuchte einen kaputten Server, das gehört auf Komponentenebene), Creator Regressionszeuge. Review `frontend-reviewer`: kein 🔴/🟡. **Abgenommen**, Commit siehe Protokoll ([Lauf L](../pm-sitzung-2026-10-30-nacht.md)).

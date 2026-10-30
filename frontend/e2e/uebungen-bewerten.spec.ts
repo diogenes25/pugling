@@ -140,4 +140,21 @@ test("Vater bewertet eine geteilte Übung, sortiert danach – der Autor liest m
   await expect(proven.getByText("Deine eigene Übung kannst du nicht bewerten")).toBeVisible();
   await expect(proven.getByRole("button", { name: /Bewertung (speichern|ändern)/ })).toHaveCount(0);
   await expect(proven.getByLabel("1 Stern", { exact: true })).toHaveCount(0);
+
+  // ── Kollege mit Schreibrecht: bearbeiten darf er, verwalten nicht – also bewertet er (B-12 AK 7, B-275) ──────────
+  // Er ist der einzige der drei, bei dem `isOwn` und `isOwner` auseinanderfallen; nur er trennt die Aufrufstelle, die
+  // `isOwner` fragen muss, von einer, die `isOwn` fragt.
+  const granted = await request.post(`/api/v1/creator/exercises/${provenId}/grants`,
+    { headers: author.headers, data: { creatorId: other.id, permission: "Write" } });
+  expect(granted.ok(), await granted.text()).toBeTruthy();
+  await page.getByRole("button", { name: "Abmelden" }).first().click();
+  await page.locator("#fid").fill(String(other.id));
+  await page.locator("#pin").fill(other.pin);
+  await page.getByRole("button", { name: "Anmelden" }).click();
+  await expect(page.locator("#fid")).toHaveCount(0);
+  await page.goto(listUrl);
+  await proven.getByRole("button", { name: "★ Bewertungen" }).click();
+  // Seine Bewertung von oben (5 Sterne) steht im Formular – „ändern", nicht „speichern".
+  await expect(proven.getByRole("button", { name: "Bewertung ändern" })).toBeVisible();
+  await expect(proven.getByText("Deine eigene Übung kannst du nicht bewerten")).toHaveCount(0);
 });

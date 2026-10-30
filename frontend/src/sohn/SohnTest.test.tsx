@@ -178,6 +178,31 @@ describe("SohnTest, Fehler beim Beantworten", () => {
     expect(region.textContent).toBe("");
 
     fireEvent.click(resume);
+    // B-339: Bis die nächste Frage da ist, wird nichts angesagt, und die alte Karte ist nicht mehr anklickbar. Rot, wenn
+    // `resume` die alte Frage beim Nachladen stehen lässt. (Hier scheiterte die Antwort; den häufigeren Fall – Antwort
+    // angenommen, nur die nächste Frage scheitert – fährt der Fall darunter.)
+    expect(region.textContent).toBe("");
+    expect(screen.queryByRole("button", { name: "das Pferd" })).toBeNull();
+
+    expect(await screen.findByText("Neue Aufgabe: the sheep")).toBe(region);
+  });
+
+  // B-339, der Fall, für den „Weiter versuchen" vor allem da ist: die Antwort ist angenommen, nur das Holen der nächsten
+  // Frage scheitert. Das beantwortete „the horse" darf danach nicht noch einmal als neue Aufgabe kommen.
+  it("sagt nach angenommener Antwort und gescheiterter nächster Frage die alte nicht erneut an", async () => {
+    await setLanguage("de");
+    answerTest.mockResolvedValueOnce({ done: false });
+    nextTest.mockResolvedValueOnce({ item, done: false, cursor: 0, total: 2 })
+      .mockRejectedValueOnce(new ApiError(500, "Server kaputt.", "trace-2"))
+      .mockResolvedValueOnce({ item: { ...item, itemIndex: 1, prompt: "the sheep" }, done: false, cursor: 1, total: 2 });
+    renderTest();
+    fireEvent.click(await screen.findByRole("button", { name: "das Pferd" }));
+    const resume = await screen.findByRole("button", { name: "Weiter versuchen" });
+    const region = taskRegion();
+
+    fireEvent.click(resume);
+    expect(region.textContent).toBe("");
+    expect(screen.queryByRole("button", { name: "das Pferd" })).toBeNull();
 
     expect(await screen.findByText("Neue Aufgabe: the sheep")).toBe(region);
   });

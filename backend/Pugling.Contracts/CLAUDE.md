@@ -12,7 +12,8 @@ es pur verwenden kann. Folgerichtig bleibt Entity-Wissen in der API (Mapping-Kla
 siehe `ExerciseBriefMapping`), und Service-Ergebnisse, die `ApiError` oder Entities tragen, bleiben ebenfalls
 dort.
 
-Einzige reine Funktion neben den Typen: `Common/VocabKey.cs` (B-336). Der Vokabel-Schlüssel ist der Server-Begriff
-„dasselbe Wort", und der KI-Creator muss vor dem Anlegen genauso falten – eine zweite Kopie würde driften.
+Einzige reine Funktion neben den Typen (und dem `Exercise/VocabRefJsonConverter.cs`): `Common/VocabKey.cs`
+(B-336). Der Vokabel-Schlüssel ist der Server-Begriff „dasselbe Wort", und der KI-Creator muss vor dem Anlegen
+genauso falten – eine zweite Kopie würde driften.
 
 Jedes DTO trägt ein `/// <summary>` – **auf Englisch** (siehe [docs/translate.md](../../docs/translate.md)).

@@ -613,6 +613,8 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [InlineData("the café", "the cafe")]
     [InlineData("rock'n'roll", "rock n roll")]
     [InlineData("the  stable", "the stable")]
+    // Case only: the old rule caught it too, but the message must still name both spellings (Ordinal, not IgnoreCase).
+    [InlineData("The horse", "the horse")]
     public async Task Eine_Dublette_nach_dem_Store_Schluessel_geht_in_die_Reparatur(string first, string second)
     {
         var broken = $$"""

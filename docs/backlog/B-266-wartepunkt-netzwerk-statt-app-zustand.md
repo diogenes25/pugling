@@ -1,15 +1,15 @@
 ---
-tags: [typ/story, status/idee, bereich/frontend, bereich/test]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/test]
 aliases: [waitForResponse statt App-Zustand, AK 3 von B-169 hängt weiter am Timing]
-status: idee
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
+groesse: XS
 wo: frontend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: Nachschau Sprint 11 (sechster Nachtlauf, docs/pm-sitzung-2026-10-26-nacht.md)
-unverifiziert: true
+unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-180]
@@ -30,6 +30,34 @@ Fix lief keine rote Probe, nur grüne Läufe.
 belegt den Defekt. Vorschlag: vorher auf einen App-Zustand warten (z. B. „Suche gescheitert“, `VaterWizard.tsx:714`),
 gegen `useAsync` gegenprüfen. **Nicht in diesem Lauf behoben:** außerhalb des Sprint-11-Diffs.
 
+## User Story
+
+Als **Entwickler** möchte ich, dass der Fall „Scheitert die Suche, ist auch »Alle wählen« gesperrt" an der App hängt, nicht
+am Netzwerk-Timing.
+
+## Ist-Stand (Lauf L, gemessen)
+
+Der Beweisweg der Story wurde gefahren: `zeilenVeraltet` am Knopf entfernt, Fall `--repeat-each 20` → **20 failed**. Der
+behauptete Fehlgrün ist lokal (Windows) **nicht reproduziert**. Das Fenster zwischen Antwort und Commit gibt es
+strukturell trotzdem; ob es auf Linux in CI aufgeht, ist hier nicht messbar.
+
+## Entscheidungen (autonom gegrillt, Freigabe 1 – `Defekt`)
+
+1. **Billig härten statt verwerfen:** nach `waitForResponse` zusätzlich auf „Suche gescheitert" warten – das steht erst
+   im Render, in dem `loading` falsch ist. *Kosten:* eine Zeile; der Fall wird nicht langsamer.
+
+## Akzeptanzkriterien
+
+1. Mit der Härtung: Mutante „ohne `zeilenVeraltet`" fällt jedes Mal (10×), ohne Mutante grün (5×).
+
+## Schätzung
+
+`XS`, nur Test.
+
 ## Verlauf
 
 - **2026-10-26** — angelegt aus der Nachschau zu B-180 (sechster Nachtlauf, Sprint 11); strukturell belegt.
+- **2026-10-30** — Lauf L, Teil 3: Beweisweg gefahren, **20 failed von 20** (Defekt lokal nicht reproduziert); Härtung
+  trotzdem gebaut (Entscheidung 1). Danach Mutante **10 failed von 10**, ohne Mutante **5 passed von 5**.
+- **2026-10-30** — Review `frontend-reviewer`: sauber; „Suche gescheitert" erscheint erst im Render mit `loading = false` (`useGemerkterFehler`), `exact` trennt es von „(Suche gescheitert)" in `PlanPositions`.
+- **2026-10-30** — Abnahme Lauf L, Teil 3: `tsc -b` sauber, Vitest **585/585** (danach + 1 Fall in `SohnTest.test.tsx`, **14/14**), volle Backend-Suite siehe Protokoll. E2E-Gesamtlauf **102 passed** (`exit=0`, nach dem letzten Produktcode-Edit gestartet; danach nur Tests). Rollengang als E2E (Browser-Extension nicht genutzt): Vater über `assistent-kinderliste-kommt-spaet`, `assistent` und `uebungen-bewerten` (Kollege mit Schreibrecht), Sohn über die Klausur-Komponententests (Fehler → „Weiter versuchen" → nächste Frage; eine E2E-Spec mit gescheitertem `nextTest` bräuchte einen kaputten Server, das gehört auf Komponentenebene), Creator Regressionszeuge. Review `frontend-reviewer`: kein 🔴/🟡. **Abgenommen**, Commit siehe Protokoll ([Lauf L](../pm-sitzung-2026-10-30-nacht.md)).

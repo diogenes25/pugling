@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-10-30"
 ---
 
 # B-336 · Die Dubletten-Regel des KI-Creators ist schwächer als der Store-Schlüssel
@@ -104,3 +105,4 @@ unverändert). Angriffsplan: rote Probe → `VocabKey` verschieben → Faltung i
   gegen die In-Process-API (die neue Theorie ist sein Weg: Entwurf → Reparatur → veröffentlicht); kein echtes Ollama-Modell
   gefahren. Vater und Sohn Regressionszeugen: ihre Specs im E2E-Lauf grün, kein Pfad von ihnen im Diff außer dem
   verschobenen `VocabKey` (Inhalt unverändert). **Abgenommen**, Commit siehe Protokoll ([Lauf L](../pm-sitzung-2026-10-30-nacht.md)).
+- **2026-10-30** — Nachschau in Lauf L, Teil 2 (frischer `pugling-reviewer`, `git archive 0cb732b`, Build und Suite **1025/1025** am Snapshot): **sauber** (nur 🟢). Geprüft: keine Referenz mehr auf den alten Ort (backend, docs, wiki, `.http`, `.claude`, frontend); alle Aufrufer von `NoDuplicates`/`DraftRules`/`VocabKey` im Agenten (Exam-/PlanPlanner, UnitNotesFiller rufen beides nicht); Server-Dublettenprüfung und Peek gegen die Faltung des Agenten (Superset bis auf B-346); je Theorie-Zeile eine eigene Mutante in `VocabKey` gemessen, jede fällt genau an ihrer Zeile. 🟢 behoben in Teil 3: Zusage „names every spelling" trug kein Fall (Mutante `Distinct(OrdinalIgnoreCase)` grün) → Zeile „The horse"/„the horse", Mutante **1 failed**; `Pugling.Contracts/CLAUDE.md` nennt den `VocabRefJsonConverter`. 🟢 offen, ohne Story: Translation-/Grammar-Dubletten prüft kein Test (älter, nur Meldungstext).
