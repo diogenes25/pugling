@@ -506,12 +506,11 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (59)
+### Offen (56)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-280](B-280-fokusziel-nicht-geleert-ungetestet.md) | Dass das Fokusziel nach dem Sprung geleert wird, prüft kein Test | Defekt | `idee` | P2 | — | frontend | — |
-| [B-341](B-341-tag-patch-mit-eigenem-label-409.md) | Ein Schlagwort lässt sich nicht mehr speichern, sobald ein anderes sein Label als Synonym führt | Defekt | `idee` | P2 | — | backend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `gegrillt` | P2 | — | backend | Vertrag? |
 | [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder | Wunsch | `geschaetzt` | P2 | L | beides | — |
@@ -540,10 +539,8 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-310](B-310-profil-match-verraet-kind-ids.md) | `GET creator/profiles/match` verrät per 404 gegen 403, ob es eine Kind-Id gibt | Defekt | `idee` | P3 | — | backend | — |
 | [B-329](B-329-uebung-unbekannte-referenz-validation-error.md) | Die Übungs-Validierung meldet eine unbekannte Id als `validation_error`, die Kategorie daneben als `invalid_reference` | Defekt | `idee` | P3 | — | backend | — |
 | [B-339](B-339-fortsetzen-sagt-alte-frage-an.md) | „Weiter versuchen" in der Klausur sagt die schon beantwortete Frage noch einmal als neue an | Defekt | `idee` | P3 | — | frontend | — |
-| [B-340](B-340-store-vertrag-beschreibt-schluessel-statt-inhalt.md) | Der Vertrag beschreibt die Wiederverwendung im Store noch über den Schlüssel, nicht über den Inhalt | Defekt | `idee` | P3 | — | backend | — |
-| [B-342](B-342-doppeltes-wort-faltung-nur-gross-klein-getestet.md) | Der Fall „doppeltes Wort nach dem Schlüssel" unterscheidet seine Eingaben nur in ASCII-Groß/Klein | Defekt | `idee` | P3 | — | backend | — |
-| [B-343](B-343-store-treffer-kanten-ungetestet.md) | Dass `PeekDesiredIdsAsync` nach Inhalt auflöst, prüft kein Test – und zwei Kanten des Store-Treffers sind offen | Defekt | `idee` | P3 | — | backend | — |
 | [B-346](B-346-vocabkey-trenner-mehrdeutig.md) | Zwei verschiedene Wortpaare können denselben Vokabel-Schlüssel ergeben | Defekt | `idee` | P3 | — | backend | — |
+| [B-347](B-347-store-speichert-wort-ungetrimmt.md) | Ein per PATCH geändertes Store-Wort trifft nur bis auf ASCII-Groß/Klein | Defekt | `idee` | P3 | — | backend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-231](B-231-fokus-ohne-fehlerkasten.md) | Wohin gehört der Fokus, wenn ein Knopf ohne Fehlerkasten gesperrt wird? | Frage | `idee` | P3 | — | frontend | — |
 | [B-232](B-232-bestaetigung-ausserhalb-des-sichtfelds.md) | Soll eine Bestätigung zum Meldungsplatz scrollen, wenn er weit vom Knopf entfernt liegt? | Frage | `idee` | P3 | — | frontend | — |
@@ -571,7 +568,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (261)</summary>
+<summary>Abgenommen (265)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -779,6 +776,10 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-336](B-336-ki-creator-dublettenregel-schwaecher-als-store-schluessel.md) | Die Dubletten-Regel des KI-Creators ist schwächer als der Store-Schlüssel | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-337](B-337-reuse-folgt-veraltetem-schluessel.md) | `reuseExisting` folgt dem Schlüssel, auch wenn der Eintrag inzwischen etwas anderes sagt | Defekt | `abgenommen` | P2 | XS | backend | — |
 | [B-338](B-338-doppeltes-wort-schreibweise-ungetestet.md) | Dass doppelte Wörter nach dem Store-Schlüssel verglichen werden, hält kein Fall mit zwei Schreibweisen | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-340](B-340-store-vertrag-beschreibt-schluessel-statt-inhalt.md) | Der Vertrag beschreibt die Wiederverwendung im Store noch über den Schlüssel, nicht über den Inhalt | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-341](B-341-tag-patch-mit-eigenem-label-409.md) | Ein Schlagwort lässt sich nicht mehr speichern, sobald ein anderes sein Label als Synonym führt | Defekt | `abgenommen` | P2 | XS | backend | — |
+| [B-342](B-342-doppeltes-wort-faltung-nur-gross-klein-getestet.md) | Der Fall „doppeltes Wort nach dem Schlüssel" unterscheidet seine Eingaben nur in ASCII-Groß/Klein | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-343](B-343-store-treffer-kanten-ungetestet.md) | Dass `PeekDesiredIdsAsync` nach Inhalt auflöst, prüft kein Test – und zwei Kanten des Store-Treffers sind offen | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-344](B-344-reuse-faltete-sprache-und-leerraum-nicht.md) | `reuseExisting` verglich die Sprache exakt und das Wort ungetrimmt | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-345](B-345-batch-prueft-grundform-vor-dem-belegten-schluessel.md) | Der Vokabel-Batch prüfte die Grundform vor dem belegten Schlüssel und war nicht mehr idempotent | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-35](B-35-karten-umdrehen-animation.md) | Karten drehen sich beim Aufdecken um | Wunsch | `abgenommen` | P3 | S | frontend | — |
@@ -851,7 +852,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (107)
 
-**Nachgeschaut: 258 von 261 abgenommenen** — und in 86 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 3 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 258 von 265 abgenommenen** — und in 86 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 7 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -958,13 +959,13 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-337](B-337-reuse-folgt-veraltetem-schluessel.md) | `reuseExisting` folgt dem Schlüssel, auch wenn der Eintrag inzwischen etwas anderes sagt | [B-277] | `abgenommen` |
 | [B-338](B-338-doppeltes-wort-schreibweise-ungetestet.md) | Dass doppelte Wörter nach dem Store-Schlüssel verglichen werden, hält kein Fall mit zwei Schreibweisen | [B-331, B-141] | `abgenommen` |
 | [B-339](B-339-fortsetzen-sagt-alte-frage-an.md) | „Weiter versuchen" in der Klausur sagt die schon beantwortete Frage noch einmal als neue an | [B-286] | `idee` |
-| [B-340](B-340-store-vertrag-beschreibt-schluessel-statt-inhalt.md) | Der Vertrag beschreibt die Wiederverwendung im Store noch über den Schlüssel, nicht über den Inhalt | [B-337] | `idee` |
-| [B-342](B-342-doppeltes-wort-faltung-nur-gross-klein-getestet.md) | Der Fall „doppeltes Wort nach dem Schlüssel" unterscheidet seine Eingaben nur in ASCII-Groß/Klein | [B-338] | `idee` |
+| [B-340](B-340-store-vertrag-beschreibt-schluessel-statt-inhalt.md) | Der Vertrag beschreibt die Wiederverwendung im Store noch über den Schlüssel, nicht über den Inhalt | [B-337] | `abgenommen` |
+| [B-342](B-342-doppeltes-wort-faltung-nur-gross-klein-getestet.md) | Der Fall „doppeltes Wort nach dem Schlüssel" unterscheidet seine Eingaben nur in ASCII-Groß/Klein | [B-338] | `abgenommen` |
 | [B-344](B-344-reuse-faltete-sprache-und-leerraum-nicht.md) | `reuseExisting` verglich die Sprache exakt und das Wort ungetrimmt | [B-337] | `abgenommen` |
 | [B-345](B-345-batch-prueft-grundform-vor-dem-belegten-schluessel.md) | Der Vokabel-Batch prüfte die Grundform vor dem belegten Schlüssel und war nicht mehr idempotent | [B-277] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (3) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (7) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -972,6 +973,10 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | Id | Story |
 | --- | --- |
 | [B-336](B-336-ki-creator-dublettenregel-schwaecher-als-store-schluessel.md) | Die Dubletten-Regel des KI-Creators ist schwächer als der Store-Schlüssel |
+| [B-340](B-340-store-vertrag-beschreibt-schluessel-statt-inhalt.md) | Der Vertrag beschreibt die Wiederverwendung im Store noch über den Schlüssel, nicht über den Inhalt |
+| [B-341](B-341-tag-patch-mit-eigenem-label-409.md) | Ein Schlagwort lässt sich nicht mehr speichern, sobald ein anderes sein Label als Synonym führt |
+| [B-342](B-342-doppeltes-wort-faltung-nur-gross-klein-getestet.md) | Der Fall „doppeltes Wort nach dem Schlüssel" unterscheidet seine Eingaben nur in ASCII-Groß/Klein |
+| [B-343](B-343-store-treffer-kanten-ungetestet.md) | Dass `PeekDesiredIdsAsync` nach Inhalt auflöst, prüft kein Test – und zwei Kanten des Store-Treffers sind offen |
 | [B-344](B-344-reuse-faltete-sprache-und-leerraum-nicht.md) | `reuseExisting` verglich die Sprache exakt und das Wort ungetrimmt |
 | [B-345](B-345-batch-prueft-grundform-vor-dem-belegten-schluessel.md) | Der Vokabel-Batch prüfte die Grundform vor dem belegten Schlüssel und war nicht mehr idempotent |
 

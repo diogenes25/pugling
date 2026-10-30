@@ -418,6 +418,12 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
 
         // A word no other test puts in the store, so the inline case really takes the key branch (new word), not the id one.
         var fresh = $"moon{Guid.NewGuid():N}";
+        var drifted = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/vocabulary",
+            new { sourceLanguage = "en", targetLanguage = "de", word = $"hus{fresh}", translation = "Haus" }));
+        var staleKey = (await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/vocabulary/{drifted}")).GetProperty("key").GetString();
+        (await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{drifted}", new { word = $"house{fresh}" })).EnsureSuccessStatusCode();
+        // The premise of the shape below: the PATCH left the key alone, so only the content names the entry.
+        Assert.Equal(staleKey, (await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/vocabulary/{drifted}")).GetProperty("key").GetString());
         // The title differs from "Items-Übung", so a half-written PUT shows up below.
         object Put(object config) => new { title = "Umbenannt", orderIndex = 1, rewardPoints = 10, config };
         var shapes = new (string Name, object Config)[]
@@ -428,9 +434,14 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
             ("inline word twice", new { direction = "front-to-back", sourceLang = "en", targetLang = "de",
                 items = new[] { new { front = fresh, back = "Mond" }, new { front = fresh, back = "Mond" } } }),
             // Two spellings the store key folds into one (B-338): a check on the raw strings would let them through, and the
-            // reconcile would map both onto the same new store entry - the old 500.
+            // reconcile would map both onto the same new store entry - the old 500. They differ in a diacritic and ß, not
+            // only in case, so a case-insensitive comparison lets them through as well (B-342).
             ("inline word twice, folded by the key", new { direction = "front-to-back", sourceLang = "en", targetLang = "de",
-                items = new[] { new { front = "M" + fresh[1..], back = "Mond" }, new { front = fresh, back = "mond" } } }),
+                items = new[] { new { front = "mõ" + fresh[2..], back = "Straße" }, new { front = fresh, back = "strasse" } } }),
+            // An entry whose word a PATCH corrected keeps its old key; the inline word names its current content, so both
+            // items are the same entry (B-343). Peeking by the stored key misses that and the reconcile hits the unique index.
+            ("id after a word fix and the same word inline", new { direction = "front-to-back", sourceLang = "en", targetLang = "de",
+                items = new object[] { new { vocabularyId = drifted }, new { front = $"house{fresh}", back = "Haus" } } }),
             ("id and the same word inline", new { direction = "front-to-back", sourceLang = "en", targetLang = "de",
                 items = new object[] { new { vocabularyId = hello }, new { front = "hello", back = "hallo" } } }),
             ("inline vocabularyId 0", new { direction = "front-to-back", sourceLang = "en", targetLang = "de",

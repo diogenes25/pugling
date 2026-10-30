@@ -27127,7 +27127,7 @@
         "tags": [
           "Creator \u2013 Vocabulary Store"
         ],
-        "summary": "Creates a vocabulary entry. If the key is missing, a unique one is generated; BaseFormKey (if set) must exist.\nWith \u0060reuseExisting\u0060 an entry under the generated key comes back with 200 instead (alternatives merged).",
+        "summary": "Creates a vocabulary entry. If the key is missing, a unique one is generated; BaseFormKey (if set) must exist.\nWith \u0060reuseExisting\u0060 an entry whose current content folds to the generated key comes back with 200 instead\n(alternatives merged).",
         "requestBody": {
           "content": {
             "application/json": {
@@ -27685,7 +27685,7 @@
         "tags": [
           "Creator \u2013 Vocabulary Store"
         ],
-        "summary": "Creates many vocabulary entries in one call \u2013 idempotent: an already existing, explicitly set\nkey returns status \u0060existing\u0060 (no error), so the same batch can be safely repeated.\nWithout a key, the server generates a unique one (status \u0060created\u0060) \u2013 or, with \u0060reuseExisting\u0060, reports\nthe entry under the generated key (status \u0060existing\u0060, alternatives and tags added). Language logic\n(tokenizing/translating) is up to the caller \u2013 the API only manages the data.",
+        "summary": "Creates many vocabulary entries in one call \u2013 idempotent: an already existing, explicitly set\nkey returns status \u0060existing\u0060 (no error), so the same batch can be safely repeated.\nWithout a key, the server generates a unique one (status \u0060created\u0060) \u2013 or, with \u0060reuseExisting\u0060, reports\nthe entry that says this word and translation now (status \u0060existing\u0060, alternatives and tags added). Language logic\n(tokenizing/translating) is up to the caller \u2013 the API only manages the data.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -31536,7 +31536,7 @@
             ]
           }
         },
-        "description": "Creating a vocabulary entry. \u0022Simple\u0022 only needs \u0060Word\u0060 (\u002B languages): \u0060Key\u0060 may stay\nempty (the server generates a unique slug), \u0060Translation\u0060 may be omitted\n(stays empty and is findable via \u0060?untranslated=true\u0060) and \u0060PartOfSpeech\u0060 may be\nomitted (default PartOfSpeech.Other). \u0022Complex\u0022 additionally fills in\nnoun/verb/base form/audio; missing details can be supplied later via PATCH.\n\u0060Tags\u0060 (names) are linked create-if-missing. \u0060TranslationAlternatives\u0060 declares further\nequally valid translations \u2013 equivalence is never derived from two entries sharing a word (those are\nhomonyms).\nReuseExisting (only without Key, otherwise 400): if the key the server would generate already names an\nentry, that entry comes back (200) instead of a _2 copy; the sent TranslationAlternatives and\nTags are added to its own, its other fields stay as they are. For quick-add paths that mean \u0022this word\u0022, not\n\u0022another entry\u0022."
+        "description": "Creating a vocabulary entry. \u0022Simple\u0022 only needs \u0060Word\u0060 (\u002B languages): \u0060Key\u0060 may stay\nempty (the server generates a unique slug), \u0060Translation\u0060 may be omitted\n(stays empty and is findable via \u0060?untranslated=true\u0060) and \u0060PartOfSpeech\u0060 may be\nomitted (default PartOfSpeech.Other). \u0022Complex\u0022 additionally fills in\nnoun/verb/base form/audio; missing details can be supplied later via PATCH.\n\u0060Tags\u0060 (names) are linked create-if-missing. \u0060TranslationAlternatives\u0060 declares further\nequally valid translations \u2013 equivalence is never derived from two entries sharing a word (those are\nhomonyms).\nReuseExisting (only without Key, otherwise 400): an entry that says this word and translation comes\nback (200) instead of a _2 copy. It is judged by what it says now, not by its stored key, which a PATCH does\nnot update: an entry is a hit if its key matches or its word matches up to ASCII case, and its current content then\nfolds to the generated key (case, diacritics, \u00DF, apostrophes, whitespace); the sent TranslationAlternatives and\nTags are added to its own, its other fields stay as they are. For quick-add paths that mean \u0022this word\u0022, not\n\u0022another entry\u0022."
       },
       "CreatorProfileMatch": {
         "required": [

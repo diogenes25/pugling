@@ -148,17 +148,9 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
         {
             var label = dto.Label.Trim();
             if (label.Length == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Label must not be empty.");
-
-            var (slug, slugProblem) = this.DeriveRequiredSlug(label, "Label");
-            if (slugProblem is not null) return slugProblem;
-            // Excluded by id, not by slug - see PublishersController.Update.
-            if (await db.InterestTags.AnyAsync(t => t.Id != id && t.Slug == slug, ct))
-                return this.ProblemWithCode(ApiErrors.DuplicateInterestTag,
-                    "Another interest tag already uses the slug this label derives to.");
-            if (await LabelTakenAsync(label, exceptId: id, ct))
-                return this.ProblemWithCode(ApiErrors.DuplicateInterestTag, "Another interest tag already carries this label.");
-            if (await SynonymTakenAsync(label, exceptId: id, ct))
-                return this.ProblemWithCode(ApiErrors.DuplicateInterestTag, "Another interest tag already lists this label as a synonym.");
+            // An editor sends the unchanged label with every save; it claims nothing new, so a slug or synonym another
+            // tag took on since must not lock this tag (B-341).
+            if (label != tag.Label && await LabelConflictAsync(label, id, ct) is { } conflict) return conflict;
 
             tag.Label = label;
         }
@@ -217,6 +209,25 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
         db.InterestTags.Remove(tag);
         await db.SaveChangesAsync(ct);
         return NoContent();
+    }
+
+    /// <summary>
+    /// The conflict a new label for tag <paramref name="id"/> runs into, or <c>null</c>: its derived slug, its exact text,
+    /// or a synonym of another tag.
+    /// </summary>
+    private async Task<ObjectResult?> LabelConflictAsync(string label, int id, CancellationToken ct)
+    {
+        var (slug, slugProblem) = this.DeriveRequiredSlug(label, "Label");
+        if (slugProblem is not null) return slugProblem;
+        // Excluded by id, not by slug - see PublishersController.Update.
+        if (await db.InterestTags.AnyAsync(t => t.Id != id && t.Slug == slug, ct))
+            return this.ProblemWithCode(ApiErrors.DuplicateInterestTag,
+                "Another interest tag already uses the slug this label derives to.");
+        if (await LabelTakenAsync(label, exceptId: id, ct))
+            return this.ProblemWithCode(ApiErrors.DuplicateInterestTag, "Another interest tag already carries this label.");
+        if (await SynonymTakenAsync(label, exceptId: id, ct))
+            return this.ProblemWithCode(ApiErrors.DuplicateInterestTag, "Another interest tag already lists this label as a synonym.");
+        return null;
     }
 
     /// <summary>

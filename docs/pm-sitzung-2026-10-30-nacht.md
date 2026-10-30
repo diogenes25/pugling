@@ -90,3 +90,49 @@ Prüfungen, und die Nachschau in Lauf K hatte B-277 sauber gemeldet – sie las 
 - **(AK)** Prosa im Nachschau-Auftrag (`docs/backlog/README.md` → „Der Auslöser"): „Verschiebt der Diff Prüfungen oder
   Zweige gegeneinander, liest die Nachschau die Reihenfolge vorher und nachher (`git show <commit>^:<datei>`) und nennt sie im
   Prüfpunkt." Würde B-345 fangen.
+
+## Lauf L, Teil 2 — Store und Schlagwörter halten, was Vertrag und Tests sagen (B-341, B-340, B-342, B-343)
+
+**Sprint-Ziel:** *Der Creator bzw. Vater, der Wörter und Schlagwörter pflegt, kann jedes Schlagwort speichern, das er
+nicht umbenennt, und liest im Vertrag, was der Store-Abgleich wirklich tut – und jeder Rückfall des Abgleichs macht einen
+Test rot.*
+
+**Umfang:** die Funde aus der Nachschau von Teil 1, alle `Defekt`, unter Freigabe 1 ausformuliert, gegrillt, geschätzt:
+[B-341](backlog/B-341-tag-patch-mit-eigenem-label-409.md) (P2, XS), [B-340](backlog/B-340-store-vertrag-beschreibt-schluessel-statt-inhalt.md)
+(XS, Doku), [B-342](backlog/B-342-doppeltes-wort-faltung-nur-gross-klein-getestet.md) (XS, Test),
+[B-343](backlog/B-343-store-treffer-kanten-ungetestet.md) (S, Tests). Draußen: B-343 Punkt 3 →
+[B-347](backlog/B-347-store-speichert-wort-ungetrimmt.md) (Verhaltensfrage mit zwei Wegen), B-346 (braucht eine Messung
+und eine Wahl zwischen Inhalt- und Schlüsselvergleich), B-339 (Frontend, Teil 3).
+
+**Entwickler-Brief:** Ein Faden – der Abgleich „dasselbe Wort / dasselbe Schlagwort" so, wie `3190f9e` ihn gebaut hat, belegt
+und beschrieben. **B-341** (Backend): ein unverändertes Label (ordinal, nach Trim) durchläuft keine Konfliktprüfung; die drei
+Prüfungen ziehen in `LabelConflictAsync`. Die Produktfrage hinter der Synonym-Regel bleibt beim Nutzer. **B-340**: vier
+Doku-Stellen auf „nach Inhalt". **B-342/B-343**: Testfälle, je mit der Mutante, die sie rot macht. Testweg: rote Probe bzw.
+Mutante je Fall, volle Suite, E2E-Gesamtlauf, eine neue Spec als Rollengang des Vaters.
+
+### Iteration
+
+- **B-341:** rote Probe **2 failed** (erwartet 2; Synonym- und Slug-Fall je `409`). Danach `InterestTagLabelTests` **9/9**.
+  Neue Spec `e2e/schlagwort-trotz-fremdem-synonym.spec.ts`: grün, ohne den Fix **1 failed** (erwartet 1).
+- **B-340:** Doku, keine Probe; `docs/openapi/v1.json` neu erzeugt (3 Beschreibungen).
+- **B-342:** Mutante „roh und kleingeschrieben" **1 failed** (erwartet 1).
+- **B-343:** Mutante „Peek nach gespeichertem Schlüssel" **1 failed**, Mutante „`Word` BINARY" **1 failed** (je erwartet 1).
+- Volle Suite **1027/1027**; E2E-Gesamtlauf **100 passed** (`exit=0`).
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `pugling-reviewer` 🟡 | B-340: Vertragstext verspricht für einen per `PATCH` geänderten Eintrag mehr Faltung als die Wortseite leistet | Text verengt, Lücke nach B-347 | nein (Kommentar) |
+| 2 | `pugling-reviewer` 🟡 | B-341: „ordinal" ungetestet, Mutante `OrdinalIgnoreCase` ließe zwei Tags „X" zu | neuer Fall, Mutante **1 failed** | ja |
+| 3 | `pugling-reviewer` 🟢 | B-341: „nach Trim" ungetestet | Label mit Leerraum im Synonym-Fall, Mutante **1 failed** | nein (🟢) |
+| 4 | `pugling-reviewer` 🟢 | B-343: Prämisse „Schlüssel bleibt stehen" unbelegt | je eine Zusicherung | nein (🟢) |
+| 5 | `pugling-reviewer` 🟢 | Slug-Fall prüft nur `200`; AK 3 im Verlauf falsch zugeordnet | Farbe geprüft; Verlauf berichtigt | nein (🟢) |
+
+**Zähler Teil 2: 1.** Danach volle Suite **1028/1028**, die neue Spec und drei Nachbar-Specs **4 passed**. Kein
+Delta-Review: die Nachbesserungen sind Testfälle und Kommentare, je mit gemessener Mutante (Selbst-Check, so beschriftet).
+
+**Rollengang:** Vater/Creator über die neue Spec – Schlagwort-Verwaltung, Facette ändern, „Gespeichert.", Neuladen, der
+neue Wert steht (ohne den Fix scheitert das Speichern). Die übrigen Store-Änderungen sind Tests und Doku; ihr Rollengang ist
+der unveränderte E2E-Gesamtlauf. Sohn Regressionszeuge: seine Specs grün, kein Pfad von ihm im Diff. **B-340, B-341, B-342,
+B-343 abgenommen.**

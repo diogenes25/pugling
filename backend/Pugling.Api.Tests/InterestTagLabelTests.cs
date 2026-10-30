@@ -133,6 +133,64 @@ public class InterestTagLabelTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal("duplicate_interest_tag", await CodeAsync(renamed));
     }
 
+    /// <summary>
+    /// B-341: an editor sends the unchanged label with every save, and an unchanged label claims nothing new. A synonym
+    /// another tag took on later must not lock the tag - the colour change has to go through. Red if the synonym check
+    /// runs for an unchanged label (409).
+    /// </summary>
+    [Fact]
+    public async Task Eigenes_Label_Bleibt_Speicherbar_Wenn_Ein_Anderer_Tag_Es_Als_Synonym_Fuehrt()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var label = TestApi.UniqueName("Soccer");
+        var id = await TestApi.IdAsync(await creator.PostAsJsonAsync(Root, new { label }));
+        var otherId = await TestApi.IdAsync(await creator.PostAsJsonAsync(Root, new { label = TestApi.UniqueName("Fussball") }));
+        (await creator.PatchAsJsonAsync($"{Root}/{otherId}", new { synonyms = new[] { label.ToLowerInvariant() } })).EnsureSuccessStatusCode();
+
+        // Surrounded by spaces: the comparison runs on the trimmed label, as the stored one is trimmed.
+        var response = await creator.PatchAsJsonAsync($"{Root}/{id}", new { label = $" {label} ", color = "#654321" });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("#654321", (await creator.GetFromJsonAsync<JsonElement>($"{Root}/{id}")).GetProperty("color").GetString());
+    }
+
+    /// <summary>
+    /// B-341, the same for the slug: a renamed tag keeps its old slug, so another tag may hold the slug its current
+    /// label derives to. Saving the renamed tag with its unchanged label must still go through. Red if the slug check
+    /// runs for an unchanged label (409).
+    /// </summary>
+    [Fact]
+    public async Task Eigenes_Label_Bleibt_Speicherbar_Wenn_Ein_Anderer_Tag_Seinen_Slug_Traegt()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var (id, label) = await RenamedTagAsync(creator);
+        var derived = Pugling.Api.Data.InterestSlug.From(label);
+        await TestApi.IdAsync(await creator.PostAsJsonAsync(Root, new { label = TestApi.UniqueName("Golf"), slug = derived }));
+
+        var response = await creator.PatchAsJsonAsync($"{Root}/{id}", new { label, color = "#654322" });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("#654322", (await creator.GetFromJsonAsync<JsonElement>($"{Root}/{id}")).GetProperty("color").GetString());
+    }
+
+    /// <summary>
+    /// B-341: "unchanged" means ordinally equal - labels are compared exactly (B-141), so a case-only rename is a new
+    /// label and must still meet the checks. Red if the skip compares ignoring case (two tags would then carry "X").
+    /// </summary>
+    [Fact]
+    public async Task Umbenennen_Nur_In_Der_Schreibweise_Auf_Ein_Fremdes_Label_Wird_Abgewiesen()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var label = TestApi.UniqueName("tischtennis").ToLowerInvariant();
+        await TestApi.IdAsync(await creator.PostAsJsonAsync(Root, new { label = label.ToUpperInvariant(), slug = $"eigen-{Guid.NewGuid():N}" }));
+        var id = await TestApi.IdAsync(await creator.PostAsJsonAsync(Root, new { label }));
+
+        var response = await creator.PatchAsJsonAsync($"{Root}/{id}", new { label = label.ToUpperInvariant() });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Equal("duplicate_interest_tag", await CodeAsync(response));
+    }
+
     /// <summary>A tag whose label no longer derives to its slug: created as one name, renamed to another.</summary>
     private static async Task<(int Id, string Label)> RenamedTagAsync(HttpClient creator)
     {

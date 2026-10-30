@@ -203,7 +203,8 @@ public class VocabularyStoreController(PuglingDbContext db, VocabularyStoreServi
 
     /// <summary>
     /// Creates a vocabulary entry. If the key is missing, a unique one is generated; BaseFormKey (if set) must exist.
-    /// With <c>reuseExisting</c> an entry under the generated key comes back with 200 instead (alternatives merged).
+    /// With <c>reuseExisting</c> an entry whose current content folds to the generated key comes back with 200 instead
+    /// (alternatives merged).
     /// </summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -485,7 +486,7 @@ public class VocabularyStoreController(PuglingDbContext db, VocabularyStoreServi
     /// Creates many vocabulary entries in one call – idempotent: an already existing, explicitly set
     /// key returns status <c>existing</c> (no error), so the same batch can be safely repeated.
     /// Without a key, the server generates a unique one (status <c>created</c>) – or, with <c>reuseExisting</c>, reports
-    /// the entry under the generated key (status <c>existing</c>, alternatives and tags added). Language logic
+    /// the entry that says this word and translation now (status <c>existing</c>, alternatives and tags added). Language logic
     /// (tokenizing/translating) is up to the caller – the API only manages the data.
     /// </summary>
     [HttpPost("batch")]

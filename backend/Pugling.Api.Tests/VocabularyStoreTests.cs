@@ -168,7 +168,10 @@ public class VocabularyStoreTests(PuglingWebAppFactory factory) : IClassFixture<
 
         var fixedTypo = await CreateAsync($"hgue{u}", "Ungeheuer");
         (await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{fixedTypo}", new { word = $"hgu{u}e" })).EnsureSuccessStatusCode();
-        var hit = await ReuseAsync($"hgu{u}e", "ungeheuer");
+        // The premise: the key still carries the typo, so the hit below can only come from the content.
+        Assert.Contains($"hgue{u}", (await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/vocabulary/{fixedTypo}")).GetProperty("key").GetString());
+        // Upper case on purpose: the stale key cannot find it, so the word candidate has to compare like the NOCASE column.
+        var hit = await ReuseAsync($"HGU{u}E", "ungeheuer");
         Assert.Equal(HttpStatusCode.OK, hit.StatusCode);
         Assert.Equal(fixedTypo, (await hit.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32());
     }

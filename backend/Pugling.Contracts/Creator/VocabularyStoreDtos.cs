@@ -24,8 +24,10 @@ public record VocabularyResponse(int Id, string Key, string Version, string Sour
 /// equally valid translations – equivalence is never derived from two entries sharing a word (those are
 /// homonyms).
 /// <para>
-/// <c>ReuseExisting</c> (only without <c>Key</c>, otherwise 400): if the key the server would generate already names an
-/// entry, that entry comes back (200) instead of a <c>_2</c> copy; the sent <c>TranslationAlternatives</c> and
+/// <c>ReuseExisting</c> (only without <c>Key</c>, otherwise 400): an entry that says this word and translation comes
+/// back (200) instead of a <c>_2</c> copy. It is judged by what it says now, not by its stored key, which a PATCH does
+/// not update: an entry is a hit if its key matches or its word matches up to ASCII case, and its current content then
+/// folds to the generated key (case, diacritics, ß, apostrophes, whitespace); the sent <c>TranslationAlternatives</c> and
 /// <c>Tags</c> are added to its own, its other fields stay as they are. For quick-add paths that mean "this word", not
 /// "another entry".
 /// </para>
@@ -70,7 +72,7 @@ public enum BatchItemStatus
 {
     /// <summary>`CreateBatch` only: a new store entry was created.</summary>
     Created = 0,
-    /// <summary>`CreateBatch` only: the key already existed (explicit, or the generated one with `reuseExisting`); no new entry was created.</summary>
+    /// <summary>`CreateBatch` only: the explicit key already existed, or with `reuseExisting` an entry already says this word and translation; no new entry was created.</summary>
     Existing = 1,
     /// <summary>`UpdateBatch` only: an existing store entry was updated.</summary>
     Updated = 2,

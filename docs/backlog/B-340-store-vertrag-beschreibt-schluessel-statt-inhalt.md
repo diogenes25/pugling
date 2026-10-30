@@ -1,15 +1,15 @@
 ---
-tags: [typ/story, status/idee, bereich/backend, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/backend, rolle/creator]
 aliases: [Vertragstext zu reuseExisting/BatchItemStatus.Existing nennt den Schlüssel]
-status: idee
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
+groesse: XS
 wo: backend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: Nachschau zu Lauf K, Teil 2 in Lauf L (docs/pm-sitzung-2026-10-30-nacht.md)
-unverifiziert: true
+unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-337]
@@ -26,6 +26,35 @@ Schlüssel ist das Verhalten heute genau umgekehrt. Weder `448785c` noch `3190f9
 
 Vorschlag: „an entry whose current word and translation fold to the same key", OpenAPI-Datei neu erzeugen.
 
+## User Story
+
+Als **Creator**, der den Store über die API anspricht, möchte ich in der Vertragsdoku lesen, was `reuseExisting` wirklich
+tut, damit ich mich nicht auf den gespeicherten Schlüssel verlasse.
+
+## Ist-Stand (Lauf L, am Code belegt)
+
+Vier Doku-Stellen beschreiben den Treffer über den Schlüssel: `VocabularyStoreDtos.cs` (`CreateVocabularyDto`,
+`BatchItemStatus.Existing`) und `VocabularyStoreController.cs` (`Create`, `CreateBatch`). Der Code trifft seit B-337/
+`3190f9e` über `FindManyAsync` nach aktuellem Inhalt.
+
+## Entscheidungen (autonom gegrillt, Freigabe 1 – `Defekt`)
+
+1. **Text an den Code angleichen, nicht umgekehrt.** B-337 hat die Richtung entschieden. *Kosten:* keine; die
+   OpenAPI-Datei ändert drei Beschreibungen.
+
+## Akzeptanzkriterien
+
+1. Keine der vier Stellen nennt mehr den Schlüssel als Treffergrund für `reuseExisting`; `docs/openapi/v1.json` trägt den
+   neuen Text.
+
+## Schätzung
+
+`XS`, nur Doku im Vertrag. Testweg: `ContractDocumentTests` erzeugt die OpenAPI-Datei.
+
 ## Verlauf
 
 - **2026-10-30** — angelegt aus der Nachschau zu Lauf K, Teil 2 (`pugling-reviewer`, 🟡). Aus Code gelesen.
+- **2026-10-30** — Lauf L, Teil 2: ausformuliert, gegrillt, geschätzt, gebaut. Kein Verhalten, keine rote Probe; die volle
+  Suite schrieb `docs/openapi/v1.json` neu (3 Zeilen).
+- **2026-10-30** — Review `pugling-reviewer`: 🟡 der neue Text versprach mehr Faltung, als `FindManyAsync` für einen per `PATCH` geänderten Eintrag leistet (Wortseite nur bis ASCII-Groß/Klein) → Text auf das heutige Verhalten verengt, die Lücke nach [B-347](B-347-store-speichert-wort-ungetrimmt.md) (nur Kommentar, ohne Zählung).
+- **2026-10-30** — Abnahme Lauf L, Teil 2: volle Suite **1028/1028**, Build ohne Warnung. E2E-Gesamtlauf **100 passed** (`exit=0`, nach dem letzten Produktcode-Edit gestartet; danach nur Tests, Vertragskommentar und die neue Spec), danach die neue Spec und die drei Nachbar-Specs **4 passed**. Rollengang: Vater/Creator über die neue Spec `schlagwort-trotz-fremdem-synonym` (Schlagwort-Verwaltung, Facette ändern → Neuladen → gespeichert; rote Probe ohne den Fix **1 failed**); Sohn Regressionszeuge (seine Specs im Gesamtlauf grün, kein Pfad von ihm im Diff). Kein Delta-Review nach den Nachbesserungen: sie sind Testfälle und Kommentare, je mit gemessener Mutante (Selbst-Check). **Abgenommen**, Commit siehe Protokoll ([Lauf L](../pm-sitzung-2026-10-30-nacht.md)).
