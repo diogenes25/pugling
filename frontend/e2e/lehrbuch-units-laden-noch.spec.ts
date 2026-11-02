@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { vaterLogin } from "./helpers";
+import { createChild, vaterLogin } from "./helpers";
 
 /*
  * B-235. Das Lehrbuch-Formular unter dem Kind lädt die Units seiner Reihe erst beim Klick auf „Bearbeiten" –
@@ -23,13 +23,7 @@ test("Solange die Units laden, sagt das Unit-Feld „lädt…“ und ist gesperr
   await vaterLogin(page, FATHER);
 
   // ---- Ein eigenes Kind: das geseedete trägt Lernstand, den diese Spec nicht anfassen soll ----
-  await page.goto("/vater");
-  await page.locator("#new-child-name").fill(CHILD.name);
-  await page.locator("#new-child-pin").fill(CHILD.pin);
-  await page.getByRole("button", { name: "Kind anlegen" }).click();
-  const kindZeile = page.getByRole("row", { name: new RegExp(CHILD.name) });
-  await expect(kindZeile).toBeVisible();
-  const childId = (await kindZeile.getByRole("cell").first().textContent())!.trim();
+  const childId = await createChild(page, CHILD.name, CHILD.pin);
 
   // ---- Ein Buch mit Reihe und Unit aus dem Seed („Green Line 1", „Unit 1 – Greetings") ----
   const buch = `Unit-Buch ${STAMP}`;

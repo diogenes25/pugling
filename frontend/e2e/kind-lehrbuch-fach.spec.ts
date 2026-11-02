@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { vaterLogin } from "./helpers";
+import { createChild, vaterLogin } from "./helpers";
 
 /*
  * B-148: Das Lehrbuch eines Kindes verlor bei JEDEM Speichern den Fachnamen, sobald sein Fach gelöscht
@@ -26,13 +26,7 @@ test("Ein gelöschtes Fach am Lehrbuch überlebt das Speichern anderer Felder", 
   await vaterLogin(page, FATHER);
 
   // ---- Ein eigenes Kind: das geseedete trägt Lernstand, den diese Spec nicht anfassen soll ----
-  await page.goto("/vater");
-  await page.locator("#new-child-name").fill(CHILD.name);
-  await page.locator("#new-child-pin").fill(CHILD.pin);
-  await page.getByRole("button", { name: "Kind anlegen" }).click();
-  const kindZeile = page.getByRole("row", { name: new RegExp(CHILD.name) });
-  await expect(kindZeile).toBeVisible();
-  const childId = (await kindZeile.getByRole("cell").first().textContent())!.trim();
+  const childId = await createChild(page, CHILD.name, CHILD.pin);
 
   // ---- Ein eigenes Fach: es wird gleich gelöscht, und das darf kein geseedetes treffen ----
   const fach = `Wegwerf-Fach ${STAMP}`;

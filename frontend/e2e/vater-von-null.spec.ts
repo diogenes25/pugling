@@ -92,7 +92,11 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
   await vater.locator("#new-child-name").fill(CHILD.name);
   await vater.locator("#new-child-grade").fill("5");
   await vater.locator("#new-child-pin").fill(CHILD.pin);
+  // Die Id aus der Antwort, nicht aus einer Zeile, die über den Namen gefunden wird (B-255, Muster `createChild`).
+  const childCreated = vater.waitForResponse((r) =>
+    r.request().method() === "POST" && r.url().endsWith("/api/v1/supervisor/children"));
   await vater.getByRole("button", { name: "Kind anlegen" }).click();
+  const childId = String(((await (await childCreated).json()) as { id: number }).id);
   await expect(vater.getByText("Kind angelegt.")).toBeVisible();
   // Die verzögerte Kinderliste läuft noch – die Sektion darf jetzt keine Ladeanzeige zeigen.
   const kinderSection = vater.locator("section", { has: vater.getByRole("heading", { name: "Kinder" }) });
@@ -100,9 +104,8 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
   releaseChildrenReload!();
   await vater.unroute("**/api/v1/supervisor/children");
 
-  const childLink = vater.getByRole("link", { name: CHILD.name });
+  const childLink = vater.getByRole("link", { name: CHILD.name, exact: true });
   await expect(childLink).toBeVisible();
-  const childId = (await childLink.getAttribute("href"))!.split("/").pop()!;
 
   // ---------- 3. Stammdaten des Kindes nachziehen ----------
   await childLink.click();

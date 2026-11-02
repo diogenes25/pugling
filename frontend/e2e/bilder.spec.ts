@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { createChild } from "./helpers";
 
 // End-to-End der individualisierten Bebilderung:
 //   Vater legt zwei Darstellungen desselben Motivs an  →  ordnet beide der Vokabel „la ville" zu
@@ -61,17 +62,6 @@ async function sohnLogin(page: Page, childId: string) {
   await page.getByRole("button", { name: "▶ LOS" }).click();
 }
 
-/** Legt ein frisches Kind an und liefert dessen Id (erste Spalte der Kinder-Tabelle). */
-async function createChild(vater: Page): Promise<string> {
-  await vater.goto("/vater");
-  await vater.locator("#new-child-name").fill(CHILD.name);
-  await vater.locator("#new-child-pin").fill(CHILD.pin);
-  await vater.getByRole("button", { name: "Kind anlegen" }).click();
-  const row = vater.getByRole("row", { name: new RegExp(CHILD.name) });
-  await expect(row).toBeVisible();
-  return (await row.getByRole("cell").first().textContent())!.trim();
-}
-
 /**
  * Legt über die Bild-Bibliothek eine Darstellung an – per <b>echtem Datei-Upload</b>. Damit läuft im Test
  * die ganze Kette: multipart → Dekodieren → Skalieren → Ablage → Auslieferung unter <c>/media/…</c>.
@@ -96,7 +86,7 @@ test("Vater bebildert eine Vokabel, der Sohn sieht sein Bild und kann es wechsel
   const vaterCtx = await browser.newContext();
   const vater = await vaterCtx.newPage();
   await vaterLogin(vater);
-  const childId = await createChild(vater);
+  const childId = await createChild(vater, CHILD.name, CHILD.pin);
 
   // ---------- Vorrat: zwei Darstellungen desselben Motivs ----------
   // Erst dadurch gibt es überhaupt etwas auszuwählen – ein einzelnes Bild sähe jedes Kind gleich.

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { vaterLogin } from "./helpers";
+import { createChild, vaterLogin } from "./helpers";
 
 /*
  * `{ exact: true }` an beiden „Gespeichert."-Zusicherungen ist nicht Stil: `getByText` vergleicht als
@@ -66,13 +66,7 @@ test("B-151: Das Lehrbuch-Formular schließt beim Speichern – die Bestätigung
   // Ein eigenes Kind: das geseedete trägt Lernstand, den diese Spec nicht anfassen soll (Muster
   // `kind-lehrbuch-fach.spec.ts`).
   const KIND = `Meldungskind ${STAMP}`;
-  await page.goto("/vater");
-  await page.locator("#new-child-name").fill(KIND);
-  await page.locator("#new-child-pin").fill("4321");
-  await page.getByRole("button", { name: "Kind anlegen" }).click();
-  const kindZeile = page.getByRole("row", { name: new RegExp(KIND) });
-  await expect(kindZeile).toBeVisible();
-  const childId = (await kindZeile.getByRole("cell").first().textContent())!.trim();
+  const childId = await createChild(page, KIND, "4321");
 
   const BUCH = `Prüfbuch ${STAMP}`;
   await page.goto(`/vater/kind/${childId}`);

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { vaterLogin } from "./helpers";
+import { createChild, vaterLogin } from "./helpers";
 
 /*
  * B-45: Die Punkte-Empfehlung des Creators erreicht den Supervisor.
@@ -29,15 +29,7 @@ const CHILD = { name: `Empfehlungs-Kind ${RUN}`, pin: "4321" };
 test("Die Punkte der Übung belegen das Ziel-Feld der neuen Position vor", async ({ page }) => {
   await vaterLogin(page, FATHER);
 
-  await page.locator("#new-child-name").fill(CHILD.name);
-  await page.locator("#new-child-pin").fill(CHILD.pin);
-  await page.getByRole("button", { name: "Kind anlegen" }).click();
-  // Über den LINK, nicht über Tabelle und Zellindex: der Name steht auch in der „Heute"-Tabelle darüber,
-  // dort aber als reiner Text – nur in der Kinder-Liste ist er ein Link. Das löst den
-  // Strict-Mode-Verstoß ohne jede Annahme über Reihenfolge oder Spalten (Muster `vater-von-null.spec.ts`).
-  const kindLink = page.getByRole("link", { name: CHILD.name });
-  await expect(kindLink).toBeVisible();
-  const childId = (await kindLink.getAttribute("href"))!.split("/").pop()!;
+  const childId = await createChild(page, CHILD.name, CHILD.pin);
 
   // ---- Reihe und Unit: seit B-106 hängt jede Übung zwingend an einer Unit ----
   await page.goto("/vater/lehrwerke");
@@ -113,12 +105,7 @@ test("Eine unsinnige Empfehlung wird nicht vorbelegt - und leckt nicht in die na
   const kind = { name: `Grenz-Kind ${LAUF}`, pin: "4321" };
 
   await vaterLogin(page, FATHER);
-  await page.locator("#new-child-name").fill(kind.name);
-  await page.locator("#new-child-pin").fill(kind.pin);
-  await page.getByRole("button", { name: "Kind anlegen" }).click();
-  const kindLink = page.getByRole("link", { name: kind.name });
-  await expect(kindLink).toBeVisible();
-  const childId = (await kindLink.getAttribute("href"))!.split("/").pop()!;
+  const childId = await createChild(page, kind.name, kind.pin);
 
   await page.goto("/vater/lehrwerke");
   await page.locator("#ns-name").fill(reiheName);
@@ -195,12 +182,7 @@ test("Was der Vater selbst tippt, ueberlebt den Uebungswechsel - bis die Positio
   const kind = { name: `Tipp-Kind ${LAUF}`, pin: "4321" };
 
   await vaterLogin(page, FATHER);
-  await page.locator("#new-child-name").fill(kind.name);
-  await page.locator("#new-child-pin").fill(kind.pin);
-  await page.getByRole("button", { name: "Kind anlegen" }).click();
-  const kindLink = page.getByRole("link", { name: kind.name });
-  await expect(kindLink).toBeVisible();
-  const childId = (await kindLink.getAttribute("href"))!.split("/").pop()!;
+  const childId = await createChild(page, kind.name, kind.pin);
 
   await page.goto("/vater/lehrwerke");
   await page.locator("#ns-name").fill(reiheName);

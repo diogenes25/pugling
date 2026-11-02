@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { vaterLogin } from "./helpers";
+import { createChild, vaterLogin } from "./helpers";
 
 // B-50: Das Kind beschreibt sich selbst. Eigene, kurze Spec statt eines Blocks im Durchstich
 // (`frontend/CLAUDE.md`: eine Fläche je Spec) – der Durchstich bleibt EIN Weg.
@@ -28,13 +28,7 @@ test("Das Kind beschreibt sich selbst, und der Vater sieht es", async ({ browser
   const vaterCtx = await browser.newContext();
   const vater = await vaterCtx.newPage();
   await vaterLogin(vater, FATHER);
-  await vater.locator("#new-child-name").fill(CHILD.name);
-  await vater.locator("#new-child-pin").fill(CHILD.pin);
-  await vater.getByRole("button", { name: "Kind anlegen" }).click();
-  // Die Id-Spalte mitmatchen: der Name allein trifft auch die Betreuungs-Zeile des Dashboards.
-  const zeile = vater.getByRole("row", { name: new RegExp(`^\\d+ ${CHILD.name}`) });
-  await expect(zeile).toBeVisible();
-  const childId = (await zeile.getByRole("cell").first().textContent())!.trim();
+  const childId = await createChild(vater, CHILD.name, CHILD.pin);
 
   // Der Sohn-Kontext fährt unter **„Bewegung reduzieren"** – die härtere Bedingung und der Grund, warum
   // die Bestätigung nach dem Speichern nicht die Feier sein darf: `.cel-layer` ist dort `display: none`

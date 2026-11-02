@@ -506,7 +506,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (51)
+### Offen (49)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -520,10 +520,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-247](B-247-knowunity-vergleich-sammel-story.md) | Knowunity-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | Wunsch | `idee` | P2 | — | — | — |
 | [B-248](B-248-klassenarbeit-countdown-treibt-den-plan.md) | Die Klassenarbeit wird beim Kind sichtbar und verdichtet den Plan vor dem Termin | Wunsch | `idee` | P2 | — | — | — |
 | [B-249](B-249-probeklausur-mit-notenprognose.md) | Eine Probeklausur über das Bündel einer Klassenarbeit, mit Notenprognose | Wunsch | `idee` | P2 | — | — | — |
-| [B-350](B-350-wartebild-der-klausur-ohne-ausweg.md) | Im Wartebild der Klausur hat das Kind keinen Ausweg | Defekt | `geschaetzt` | P3 | XS | frontend | — |
-| [B-352](B-352-radiogruppen-ohne-pfeiltasten.md) | Die Radiogruppen des Vater-Webs versprechen Pfeiltasten, die nicht kommen | Defekt | `geschaetzt` | P3 | S | frontend | — |
 | [B-164](B-164-useasync-paart-frischen-zustand-mit-alten-daten.md) | Nach einem Wechsel zeigt der Bildschirm für einen Moment frischen Zustand mit alten Daten | Defekt | `ausformuliert` | P3 | — | frontend | — |
-| [B-255](B-255-kinderzeile-per-namen-zweideutig.md) | E2E-Specs suchen die Kinderzeile per Namen, den zwei Tabellen tragen | Defekt | `idee` | P3 | — | — | — |
 | [B-259](B-259-generator-verschluckt-leerzeichen-neben-xml-elementen.md) | Der XML-Doc-Generator verschluckt Leerzeichen zwischen zwei Elementen | Defekt | `idee` | P3 | — | — | — |
 | [B-260](B-260-normalisierer-setzt-absatz-mitten-im-satz.md) | Der OpenAPI-Normalisierer setzt einen Absatz mitten in einen Satz | Defekt | `idee` | P3 | — | — | — |
 | [B-261](B-261-produktionspfad-des-beispielkatalogs-ungetestet.md) | Der Produktionspfad des Beispielkatalogs hängt an keinem Test | Defekt | `idee` | P3 | — | — | — |
@@ -560,10 +557,11 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-271](B-271-gewaehltes-profil-setzt-reihe.md) | Das zum Kind gewählte Profil setzt Reihe und Fach des KI-Creators | Wunsch | `idee` | P3 | — | backend | — |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `geschaetzt` | P3 | S | backend | — |
 | [B-355](B-355-store-faltung-restkanten.md) | Restkanten der Store-Faltung: Sprachkürzel mit Leerraum, zwei gleiche Paare in einem Aufruf | Defekt | `idee` | P4 | — | backend | — |
+| [B-356](B-356-radiogruppe-und-wartebild-restkanten.md) | Restkanten an Radiogruppen und Wartebild (Nachschau über `b73bcde`) | Defekt | `idee` | P4 | — | frontend | — |
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (278)</summary>
+<summary>Abgenommen (281)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -707,6 +705,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-246](B-246-b-241-zwei-saetze-falsch-und-sweep-zu-frueh.md) | B-241 hat zwei Sätze beim Wortwechsel falsch gemacht und den Sweep vor der letzten Änderung gemessen | Defekt | `abgenommen` | P3 | XS | doku | — |
 | [B-25](B-25-vite-pwa-peer-konflikt.md) | Peer-Konflikt `vite-plugin-pwa` ↔ `vite@8` lösen | Aufräumen | `abgenommen` | P3 | XS | frontend | — |
 | [B-254](B-254-weg-zeigt-englischen-planfehler.md) | Der Trophäenweg zeigt dem Kind „Study plan not found." statt einer Erklärung | Defekt | `abgenommen` | P2 | S | frontend | — |
+| [B-255](B-255-kinderzeile-per-namen-zweideutig.md) | E2E-Specs suchen die Kinderzeile per Namen, den zwei Tabellen tragen | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-256](B-256-sprint-5-drei-saetze-nach-der-abnahme.md) | Drei Sätze aus Sprint 5, die nach der Abnahme nicht stimmen | Defekt | `abgenommen` | P3 | XS | beides | — |
 | [B-257](B-257-zielfeier-verspaetet-jenseits-der-ersten-fuenf.md) | Ein schon erreichtes Ziel jenseits der ersten fünf wird später verspätet gefeiert | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-258](B-258-unbekannte-fach-id-zwei-fehlercodes.md) | Eine unbekannte `SubjectId` meldet je nach Ressource zwei verschiedene Fehlercodes | Defekt | `abgenommen` | P3 | XS | backend | Vertrag |
@@ -788,7 +787,9 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-348](B-348-assistent-pillen-ohne-aria-pressed.md) | Die Auswahl-Pillen im Assistenten sagen nicht, welche gewählt ist | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-349](B-349-batch-treffer-haengt-an-der-reihenfolge.md) | Im Vokabel-Batch hängt ein Treffer davon ab, was frühere Einträge desselben Batches geladen haben | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-35](B-35-karten-umdrehen-animation.md) | Karten drehen sich beim Aufdecken um | Wunsch | `abgenommen` | P3 | S | frontend | — |
+| [B-350](B-350-wartebild-der-klausur-ohne-ausweg.md) | Im Wartebild der Klausur hat das Kind keinen Ausweg | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-351](B-351-synonym-regel-symmetrisch.md) | Ein Synonym darf nicht das Label oder den Slug eines anderen Schlagworts tragen | Wunsch | `abgenommen` | P3 | S | backend | — |
+| [B-352](B-352-radiogruppen-ohne-pfeiltasten.md) | Die Radiogruppen des Vater-Webs versprechen Pfeiltasten, die nicht kommen | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-353](B-353-leerer-label-slug-trifft-emoji-synonym.md) | Ein Interesse ohne Buchstaben landet auf einem fremden Schlagwort mit Emoji-Synonym | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-354](B-354-synonym-gegen-fremden-slug-ungetestet.md) | Dass ein Synonym nicht den Slug eines fremden Schlagworts tragen darf, prüft kein Test | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-36](B-36-motivations-animationen-teilziele.md) | Motivations-Animationen bei erreichten Teilzielen | Wunsch | `abgenommen` | P3 | S | frontend | — |
@@ -860,7 +861,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (110)
 
-**Nachgeschaut: 276 von 278 abgenommenen** — und in 88 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 2 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 280 von 281 abgenommenen** — und in 88 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 1 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -971,20 +972,19 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-342](B-342-doppeltes-wort-faltung-nur-gross-klein-getestet.md) | Der Fall „doppeltes Wort nach dem Schlüssel" unterscheidet seine Eingaben nur in ASCII-Groß/Klein | [B-338] | `abgenommen` |
 | [B-344](B-344-reuse-faltete-sprache-und-leerraum-nicht.md) | `reuseExisting` verglich die Sprache exakt und das Wort ungetrimmt | [B-337] | `abgenommen` |
 | [B-345](B-345-batch-prueft-grundform-vor-dem-belegten-schluessel.md) | Der Vokabel-Batch prüfte die Grundform vor dem belegten Schlüssel und war nicht mehr idempotent | [B-277] | `abgenommen` |
-| [B-352](B-352-radiogruppen-ohne-pfeiltasten.md) | Die Radiogruppen des Vater-Webs versprechen Pfeiltasten, die nicht kommen | [B-348] | `geschaetzt` |
+| [B-352](B-352-radiogruppen-ohne-pfeiltasten.md) | Die Radiogruppen des Vater-Webs versprechen Pfeiltasten, die nicht kommen | [B-348] | `abgenommen` |
 | [B-353](B-353-leerer-label-slug-trifft-emoji-synonym.md) | Ein Interesse ohne Buchstaben landet auf einem fremden Schlagwort mit Emoji-Synonym | [B-351] | `abgenommen` |
 | [B-354](B-354-synonym-gegen-fremden-slug-ungetestet.md) | Dass ein Synonym nicht den Slug eines fremden Schlagworts tragen darf, prüft kein Test | [B-351] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (2) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (1) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-353](B-353-leerer-label-slug-trifft-emoji-synonym.md) | Ein Interesse ohne Buchstaben landet auf einem fremden Schlagwort mit Emoji-Synonym |
-| [B-354](B-354-synonym-gegen-fremden-slug-ungetestet.md) | Dass ein Synonym nicht den Slug eines fremden Schlagworts tragen darf, prüft kein Test |
+| [B-255](B-255-kinderzeile-per-namen-zweideutig.md) | E2E-Specs suchen die Kinderzeile per Namen, den zwei Tabellen tragen |
 
 </details>
 

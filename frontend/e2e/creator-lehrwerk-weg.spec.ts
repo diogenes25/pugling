@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { createChild } from "./helpers";
 
 /*
  * Der ganze Creator-Weg in einem Zug: Reihe anlegen → Unit anlegen → Übung über den
@@ -27,20 +28,9 @@ async function vaterLogin(page: Page) {
   await expect(page.getByRole("heading", { name: "Kinder" })).toBeVisible();
 }
 
-/** Legt ein frisches Kind an und liefert dessen Id (erste Spalte der Kinder-Tabelle). */
-async function createChild(page: Page): Promise<string> {
-  await page.goto("/vater");
-  await page.locator("#new-child-name").fill(CHILD.name);
-  await page.locator("#new-child-pin").fill(CHILD.pin);
-  await page.getByRole("button", { name: "Kind anlegen" }).click();
-  const row = page.getByRole("row", { name: new RegExp(CHILD.name) });
-  await expect(row).toBeVisible();
-  return (await row.getByRole("cell").first().textContent())!.trim();
-}
-
 test("Reihe, Unit, Übung, Zuweisung – der Creator-Weg in einem Zug", async ({ page }) => {
   await vaterLogin(page);
-  const childId = await createChild(page);
+  const childId = await createChild(page, CHILD.name, CHILD.pin);
 
   // ---- 1. Reihe anlegen (geteilter Katalog) ----
   await page.goto("/vater/lehrwerke");

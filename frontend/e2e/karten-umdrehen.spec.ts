@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { sohnLogin, vaterLogin } from "./helpers";
+import { createChild, sohnLogin, vaterLogin } from "./helpers";
 
 // B-35: beim Aufdecken dreht sich die Karte um – in der Übung („Umdrehen") und in der Klausur („Aufdecken").
 // Eine eigene Spec statt eines Blocks im Durchstich (frontend/CLAUDE.md, „Eine Fläche je E2E-Spec"): eine
@@ -18,15 +18,7 @@ test("Die Karte dreht sich beim Aufdecken um – beim Üben und in der Klausur",
   // ---------- VATER: frisches Kind mit einem Plan über die Vokabel-Übung ----------
   const vater = await (await browser.newContext()).newPage();
   await vaterLogin(vater, FATHER);
-  await vater.locator("#new-child-name").fill(CHILD.name);
-  await vater.locator("#new-child-pin").fill(CHILD.pin);
-  await vater.getByRole("button", { name: "Kind anlegen" }).click();
-  // Die Zeile der Kinder-Tabelle (Id vorn, Name als Link) – nicht die der Tagesübersicht darüber, die den
-  // Namen auch trägt, aber keine Id; welche zuerst geladen ist, wäre sonst ein Rennen.
-  const row = vater.getByRole("row", { name: new RegExp(CHILD.name) })
-    .filter({ has: vater.getByRole("link", { name: CHILD.name, exact: true }) });
-  await expect(row).toBeVisible();
-  const childId = (await row.getByRole("cell").first().textContent())!.trim();
+  const childId = await createChild(vater, CHILD.name, CHILD.pin);
 
   await vater.goto("/vater/plaene");
   await vater.getByRole("link", { name: /Neuer Plan/ }).click();

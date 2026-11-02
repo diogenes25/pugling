@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { createChild } from "./helpers";
 
 // End-to-End der Frage „wer kennt den Stoff dieses Kindes?":
 //   Vater legt die Buchreihe an  →  eine Unit mit Themen/Grammatik/Wortschatz  →  einen Fachlehrer auf
@@ -25,20 +26,9 @@ async function vaterLogin(page: Page) {
   await expect(page.getByRole("heading", { name: "Kinder" })).toBeVisible();
 }
 
-/** Legt ein frisches Kind an und liefert dessen Id (erste Spalte der Kinder-Tabelle). */
-async function createChild(page: Page): Promise<string> {
-  await page.goto("/vater");
-  await page.locator("#new-child-name").fill(CHILD.name);
-  await page.locator("#new-child-pin").fill(CHILD.pin);
-  await page.getByRole("button", { name: "Kind anlegen" }).click();
-  const row = page.getByRole("row", { name: new RegExp(CHILD.name) });
-  await expect(row).toBeVisible();
-  return (await row.getByRole("cell").first().textContent())!.trim();
-}
-
 test("Buchreihe, Fachlehrer und Kind treffen zusammen", async ({ page }) => {
   await vaterLogin(page);
-  const childId = await createChild(page);
+  const childId = await createChild(page, CHILD.name, CHILD.pin);
 
   // ---- Klasse und Schulart am Kind: sie entscheiden mit, welches Profil überhaupt passt ----
   await page.goto(`/vater/kind/${childId}`);

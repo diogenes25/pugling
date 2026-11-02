@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { vaterLogin } from "./helpers";
+import { createChild, vaterLogin } from "./helpers";
 
 /*
  * B-64. Das Buch am Kind gab es zweimal: als Freitext (Titel, Verlag, Klasse) und als Verweis in den Katalog
@@ -27,13 +27,7 @@ test("Katalog zuerst: Reihe inline anlegen, Verlag und Klasse aus dem Katalog, F
 
   // ---- Ein eigenes Kind ----
   const kind = `Katalogkind ${STAMP}`;
-  await page.goto("/vater");
-  await page.locator("#new-child-name").fill(kind);
-  await page.locator("#new-child-pin").fill("4322");
-  await page.getByRole("button", { name: "Kind anlegen" }).click();
-  const kindZeile = page.getByRole("row", { name: new RegExp(kind) });
-  await expect(kindZeile).toBeVisible();
-  const childId = (await kindZeile.getByRole("cell").first().textContent())!.trim();
+  const childId = await createChild(page, kind, "4322");
 
   // ---- Eine Reihe MIT Verlag und einer Unit MIT Klasse, auf dem gewöhnlichen Weg unter „Lehrwerke" ----
   const reihe = `Katalogreihe ${STAMP}`;

@@ -210,3 +210,61 @@ keine Regel verbindet sie mit „Navigation hinzufügen".
 - **(AR)** Prosa in `frontend/CLAUDE.md`: „Wer einem Bildschirm einen Weg hinaus gibt, prüft jede Fortsetzung nach einem
   `await` darin auf ‚noch da?' – `navigate` bleibt nach dem Aushängen wirksam (react-router 6)." Mechanisch nur grob
   (ein Wächter, der in Dateien mit `nav(` nach `await` ohne Ref-Prüfung sucht, wäre laut und unscharf).
+
+## Lauf N, Teil 2 — Jede Spec kennt die Id ihres eigenen Kindes (B-255)
+
+**Sprint-Ziel:** *Der Entwickler, der den Vater→Sohn-Durchstich per E2E fährt, bekommt für jedes angelegte Kind dessen Id –
+unabhängig davon, welche Tabelle zuerst lädt und ob der Name schon existiert.*
+
+**Umfang:** [B-255](backlog/B-255-kinderzeile-per-namen-zweideutig.md) (`Defekt`, S, unter Freigabe 1 gegrillt). Ein
+Sprint aus einer Story; die Testlücken B-272/B-273/B-276 sind ein anderes Thema (Feldhilfe, Live-Regionen) und bleiben draußen.
+
+**Entwickler-Brief:** Ein gemeinsamer Helfer `createChild(page, name, pin)` in `e2e/helpers.ts`, der die Id aus der
+POST-Antwort liest; alle Stellen ziehen darauf um. Testweg: rote Probe mit dem alten Muster im Helfer, neue Spec mit zwei
+gleichnamigen Kindern, Gesamtlauf.
+
+### Iteration
+
+- Rote Probe (Helfer mit altem Muster): `kind-anlegen-id.spec.ts` **1 failed** (Strict-Mode-Verstoß, erwartet 1); mit dem
+  Fix **1 passed**. Zehn Stellen umgestellt; E2E-Gesamtlauf **103 passed** (`exit=0`).
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `frontend-reviewer` 🟡 | vier weitere Stellen (`punkte-empfehlung` 3×, `vater-von-null`) nehmen die Id aus einem Namens-Link; AK 2 zu eng gemessen | drei auf den Helfer, eine liest die POST-Antwort; Prüf-grep erweitert | ja |
+| 2 | `frontend-reviewer` 🟡 | gescheitertes Anlegen hängt bis zum Test-Timeout ohne Grund | Status/Text zugesichert, Warten auf 10 s begrenzt; Probe PIN „1" fällt nach 10 s an `helpers.ts:42` | ja |
+| 3 | `frontend-reviewer` 🟢 | die neue Spec unterscheidet die Kinder nur über „zwei Ids + eindeutiger Name" | als Kommentar benannt | nein |
+
+**Zähler Teil 2: 2.**
+
+**Rollengang:** Die Specs sind hier der Weg selbst: Vater und Sohn fahren zwölf Specs über den neuen Helfer, alle grün;
+Creator Regressionszeuge. E2E-Gesamtlauf **103 passed** (`exit=0`, nach dem letzten Edit). **B-255 abgenommen.**
+
+### Retrospektive
+
+**Nachschau:** Teil 1 (`b73bcde`: B-350, B-352) per frischem `frontend-reviewer`: **sauber**, fünf 🟢 (erneuter Klick auf die
+gewählte Option, `preventDefault` ohne Zusicherung, Wächter-Ausnahme je Datei, Serie nach dem Verlassen nicht aufgefrischt,
+negativer `celebrate`-Fall ohne Erreichbarkeits-Beleg) → [B-356](backlog/B-356-radiogruppe-und-wartebild-restkanten.md), P4.
+`nachgeschaut` an beiden, mit Prüfpunkten.
+
+**Was die eigenen Tore durchgelassen haben:** AK 2 („keine Spec liest die Id mehr aus einer über den Namen gefundenen
+Zeile") wurde mit einem `grep` nach **einer** Form des Musters belegt; die zweite Form (Link + `href`) entging. Das ist
+dieselbe Klasse wie (AN) – ein Beleg per Suche nennt seine Suchmuster und sucht nach Fund- **und** Gegenformen –, nur an
+einem AK statt an einer Konvention.
+
+**Vorschlag, nicht gelandet (Freigabe 3):**
+
+- **(AS)** Ergänzung zu (AN) in `docs/backlog/README.md` („Ausformulieren heißt gegen den Code belegen"): „Ein AK der Form
+  ‚nirgends mehr X' wird nicht mit der Suche nach der Gestalt belegt, die man umgebaut hat, sondern nach der Handlung
+  (hier: ‚wo entsteht eine Kind-Id?')." Mechanisch hier sogar greifbar: ein Wächter über `e2e/*.ts`, der `childId =` nur aus
+  `createChild(` oder einer Antwort zulässt.
+
+## Ende Lauf N
+
+Endgrund: **beide Sprints geschlossen**, keine Halt-Bedingung gegriffen (Zähler 1/2, keine Retro hat ein Tor gelandet, die
+Nachschau über Teil 1 fand nichts im Increment dieses Laufs). **Drei Stories abgenommen:** B-350, B-352 (Teil 1); B-255
+(Teil 2). Nachgeschaut: Lauf M Teil 2 und Teil 1 dieses Laufs; Teil 2 ist **unbeobachtet** (Nachschau in Lauf O). Neu:
+B-356 (P4). **Gerätecheck offen:** Radiogruppen mit Screenreader und Pfeiltasten. Alles **ungepusht**.
+
+**Offene Entscheidungen für den Nutzer:** Retro-Vorschläge (AR), (AS); dazu (AO)–(AQ) aus Lauf M.
