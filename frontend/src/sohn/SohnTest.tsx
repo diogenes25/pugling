@@ -56,10 +56,16 @@ export function SohnTest() {
   // Ref-Gate gegen den Doppelklick (B-49). Der Fehler speist die `error`-Vollbild-Anzeige; `action.message`
   // wird hier nicht gerendert.
   const action = useAction(errorMessage);
+  // Hat das Kind die Klausur verlassen (seit B-350 auch aus dem Wartebild), darf ein später antwortender Aufruf es nicht
+  // zurückholen und nicht anderswo feiern. Beim Einhängen zurückgesetzt, weil StrictMode im Dev einmal aus- und wieder
+  // einhängt.
+  const gone = useRef(false);
+  useEffect(() => { gone.current = false; return () => { gone.current = true; }; }, []);
 
   async function finish(id: number) {
     if (!planId) return;
     const res = await api.submitTest(planId, positionId, id);
+    if (gone.current) { refreshWallet(); return; }
     setResult(res);
     setItem(null);
     celebrate(res.passed ? "big" : "small", res.passed ? "🎉" : "💪",
@@ -83,7 +89,7 @@ export function SohnTest() {
     } catch (e) {
       // 404 beim Start: Plan oder Position gibt es nicht mehr (Reload nach dem Löschen, B-326). Die Basis korrigiert die
       // Wahl; die Serverzeile („Study plan not found.“) sagte dem Kind nur, dass etwas kaputt ist.
-      if (e instanceof ApiError && e.status === 404) { nav("/sohn", { replace: true }); return; }
+      if (e instanceof ApiError && e.status === 404) { if (!gone.current) nav("/sohn", { replace: true }); return; }
       // Scheitert erst die erste Frage, steht die Versuchs-Id schon – „Weiter versuchen“ darf dann nur kommen, wenn der Plan
       // noch dran ist (B-335), sonst holte es nur dieselbe 403.
       setError(errorMessage(e)); setPlanStopped(isPlanInactive(e));
@@ -167,7 +173,9 @@ export function SohnTest() {
     <TestResult result={result} skin={skin} onHome={() => nav("/sohn")} onRetry={start} />
   );
 
-  if (!item) return <div className="sohn-body"><div className="loading">{t("test.preparing")}</div></div>;
+  // B-350: hängt der Start oder die nächste Frage, ist das Bild sonst eine Sackgasse – nur der Browser führte zurück.
+  if (!item) return <div className="sohn-body"><div className="loading">{t("test.preparing")}</div>
+    <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>{t("progress.toHome")}</button></div>;
 
   // Getippte Stufe: Server liefert keine aufgedeckte Lösung (reveal === null) → Eingabefeld.
   const typed = item.reveal === null;

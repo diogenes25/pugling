@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-351]
 wartet_auf: ""
+nachgeschaut: "2026-11-02"
 ---
 
 # B-353 · Ein Interesse ohne Buchstaben landet auf einem fremden Schlagwort mit Emoji-Synonym
@@ -66,3 +67,4 @@ statt auf einem fremden zu landen, das zufällig ein Emoji als Synonym führt.
   Test; Mutante „ohne Leer-Wächter" → **1 failed**.
 - **2026-11-02** — Review `pugling-reviewer`: kein 🔴/🟡 zu B-353; 🟢 Zusicherung nur negativ → positive Zusicherung auf den eigenen Slug ergänzt (ohne Zählung), Mutante „ohne Leer-Wächter" weiter **1 failed**. Geschwisterpfade (`SynonymClashAsync`, `SynonymTakenAsync`, Create/Update, `EnsureManyAsync`) laut Prüfer ohne dasselbe Problem.
 - **2026-11-02** — Abnahme Lauf M, Teil 2: volle Suite **1045/1045**, `InterestTagLabelTests` **17/17**. E2E **102 passed** (`exit=0`, nach dem letzten Code-Edit gestartet; die Specs `schlagwort-*` fahren den Schlagwort-Pfad). Rollengang: Vater maschinell über `Interesse_Ohne_Buchstaben_Trifft_Kein_Emoji_Synonym` (Kind-Interesse über die echte Supervisor-Route), Creator über die Schlagwort-Tests; Sohn Regressionszeuge (kein Pfad im Diff). **Abgenommen**, Commit siehe Protokoll ([Lauf M](../pm-sitzung-2026-11-02-nacht.md)).
+- **2026-11-02** — Nachschau in Lauf N, Teil 1 (frischer `pugling-reviewer`): **sauber**. Geprüft: Wächter an `InterestTagService.cs:52`, Mutante „ohne Wächter" macht die positive Zusicherung `[gaming]` rot, gleich welcher Tag mit leer faltendem Synonym zuerst steht; Nachbarpfade `SynonymTakenAsync`, `SynonymClashAsync`, PATCH-`carried`, `EnsureManyAsync`, `MediaAssetsController:96` ohne dasselbe Problem. 🟢 (Produktfrage, ohne Story): ein Emoji-Label lässt sich anlegen, aber nicht per `PATCH` setzen (`DeriveRequiredSlug`).

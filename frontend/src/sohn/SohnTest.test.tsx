@@ -1,5 +1,6 @@
+import { StrictMode } from "react";
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { Link, MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../lib/api";
 import { setLanguage } from "../lib/i18n";
@@ -14,11 +15,12 @@ const startTest = vi.fn();
 const nextTest = vi.fn();
 const answerTest = vi.fn();
 const submitTest = vi.fn();
+const celebrate = vi.fn();
 
 // Ein echter Skin: der Ergebnis-Bildschirm zeichnet das Maskottchen (der Neustart-Fall erreicht ihn).
 const { SKINS } = await import("../lib/skins");
 vi.mock("./SohnApp", () => ({
-  useSohn: () => ({ planId: 3, refreshWallet: () => {}, setStreak: () => {}, skin: SKINS[0], celebrate: () => {} }),
+  useSohn: () => ({ planId: 3, refreshWallet: () => {}, setStreak: () => {}, skin: SKINS[0], celebrate: (...a: unknown[]) => celebrate(...a) }),
 }));
 vi.mock("../lib/api", async (importOriginal) => {
   const original = await importOriginal<typeof import("../lib/api")>();
@@ -279,6 +281,84 @@ describe("SohnTest mit einem Plan, den es nicht mehr gibt", () => {
     expect(await screen.findByText("Server kaputt. (Ref: trace-8)")).toBeTruthy();
   });
 });
+
+describe("SohnTest im Wartebild", () => {
+  // B-350: hängt der Start, steht das Kind im Bild „wird vorbereitet“. Rot, wenn das Bild wieder nur den Kasten zeigt:
+  // dann gibt es keinen Knopf, und die Basis ist nur über den Browser erreichbar.
+  it("bietet den Weg zur Basis an, solange die Frage noch nicht da ist", async () => {
+    startTest.mockReset().mockReturnValue(new Promise(() => {}));
+    render(
+      <MemoryRouter initialEntries={["/sohn/test/5"]}>
+        <Routes>
+          <Route path="/sohn/test/:positionId" element={<SohnTest />} />
+          <Route path="/sohn" element={<p>BASIS</p>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(screen.getByText("Test wird vorbereitet…")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Zur Basis" }));
+
+    expect(await screen.findByText("BASIS")).toBeTruthy();
+  });
+
+  // Review zu B-350: wer das Wartebild verlässt, hat die Klausur verlassen. Antwortet der hängende Start später, darf er
+  // das Kind nicht von einer anderen Seite zurückholen (404 → Basis) und nicht dort feiern (fertig → Ergebnis). Rot, wenn
+  // der Start nach dem Verlassen weiterwirkt: dann steht wieder BASIS statt SHOP bzw. `celebrate` wurde gerufen.
+  it.each([
+    ["ein 404", (s: Deferred) => s.reject(new ApiError(404, "Study plan not found.", "t", "not_found"))],
+    ["ein fertiger Versuch", (s: Deferred) => s.resolve({ attemptId: 9, stage: 3, totalItems: 0 })],
+  ])("lässt das Kind nach dem Verlassen in Ruhe, wenn der Start spät mit %s antwortet", async (_, antwort) => {
+    const start = deferred();
+    startTest.mockReset().mockReturnValue(start.promise);
+    nextTest.mockReset().mockResolvedValue({ item: null, done: true, cursor: 0, total: 0 });
+    submitTest.mockReset().mockResolvedValue({ passed: true, scorePercent: 100, passPercent: 80, correctItems: 0, totalItems: 0, stage: 3, items: [], attemptsRemaining: 1 });
+    celebrate.mockReset();
+    render(
+      <MemoryRouter initialEntries={["/sohn/test/5"]}>
+        <Routes>
+          <Route path="/sohn/test/:positionId" element={<SohnTest />} />
+          <Route path="/sohn" element={<Link to="/sohn/shop">Laden</Link>} />
+          <Route path="/sohn/shop" element={<p>SHOP</p>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Zur Basis" }));
+    fireEvent.click(await screen.findByRole("link", { name: "Laden" }));
+
+    await act(async () => { antwort(start); await start.promise.catch(() => {}); await Promise.resolve(); });
+
+    expect(screen.getByText("SHOP")).toBeTruthy();
+    expect(celebrate).not.toHaveBeenCalled();
+  });
+});
+
+describe("SohnTest unter StrictMode", () => {
+  // Im Dev hängt StrictMode einmal aus und wieder ein. Rot, wenn das Verlassen-Merkmal beim Wiedereinhängen nicht
+  // zurückgesetzt wird: dann gilt die Klausur als verlassen, und der 404 führt nicht mehr zur Basis.
+  it("führt nach dem Doppel-Einhängen bei einem 404 weiter zur Basis", async () => {
+    startTest.mockReset().mockRejectedValue(new ApiError(404, "Study plan not found.", "trace-9", "not_found"));
+    render(
+      <StrictMode>
+        <MemoryRouter initialEntries={["/sohn/test/5"]}>
+          <Routes>
+            <Route path="/sohn/test/:positionId" element={<SohnTest />} />
+            <Route path="/sohn" element={<p>BASIS</p>} />
+          </Routes>
+        </MemoryRouter>
+      </StrictMode>,
+    );
+
+    expect(await screen.findByText("BASIS")).toBeTruthy();
+  });
+});
+
+type Deferred = { promise: Promise<unknown>; resolve: (v: unknown) => void; reject: (e: unknown) => void };
+function deferred(): Deferred {
+  let resolve!: (v: unknown) => void, reject!: (e: unknown) => void;
+  const promise = new Promise<unknown>((res, rej) => { resolve = res; reject = rej; });
+  return { promise, resolve, reject };
+}
 
 /** Die Ansage-Region der Aufgabe (das `sr-only`-Absatz-Element). */
 function taskRegion(): HTMLElement {

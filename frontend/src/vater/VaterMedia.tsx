@@ -4,7 +4,7 @@ import { StatusBanner } from "../components/StatusBanner";
 import { api, errorMessage } from "../lib/api";
 import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
-import { confirmAction } from "../lib/ui";
+import { confirmAction, radioGroupKeys } from "../lib/ui";
 import type { ContentRating, MediaAssetResponse, MediaUsage } from "../lib/types";
 
 /**
@@ -195,11 +195,11 @@ function NewAsset({ onCreated }: { onCreated: () => void }) {
     <section>
       <h3 className="h-section">Bild hinzufügen</h3>
 
-      <div className="row" style={{ gap: 8, marginBottom: 8 }} role="radiogroup" aria-label="Quelle">
+      <div className="row" style={{ gap: 8, marginBottom: 8 }} role="radiogroup" aria-label="Quelle" onKeyDown={radioGroupKeys}>
         {([["upload", "📤 Datei hochladen"], ["url", "🔗 Per URL"]] as const).map(([value, label]) => (
           <button
             key={value} type="button" className={`pill toggle-pill ${mode === value ? "lime" : ""}`}
-            role="radio" aria-checked={mode === value} onClick={() => setMode(value)}
+            role="radio" aria-checked={mode === value} tabIndex={mode === value ? 0 : -1} onClick={() => setMode(value)}
           >{label}</button>
         ))}
       </div>

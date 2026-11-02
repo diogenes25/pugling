@@ -150,3 +150,63 @@ B-353, B-354 (Teil 2). Nachgeschaut: Lauf L Teil 4 + B-351 + B-344/B-345 und Tei
 (Nachschau in Lauf N). Entgangen gefunden: B-352 (bei B-348), B-353/B-354 (bei B-351). Neu: B-355 (P4). Alles **ungepusht**.
 
 **Offene Entscheidungen für den Nutzer:** Retro-Vorschläge (AO), (AP), (AQ); dazu unverändert (AC)–(AI) außer (AD)/(AH).
+
+## Lauf N, Teil 1 — Jede Bedienung hält, was sie ansagt (B-350, B-352)
+
+Lauf N beginnt nach Lauf M ohne Unterbrechung; Ausgangslage `110c0a2`. Kandidaten aus Ende Lauf M: die Entgleitung B-352
+und B-350 (Nachschau Lauf L, Teil 3).
+
+**Sprint-Ziel:** *Der Vater wählt in jeder Auswahlgruppe mit den Pfeiltasten und verlässt sie mit einem Tab; der Sohn kommt
+aus dem Wartebild der Klausur zur Basis, ohne den Browser zu bemühen.*
+
+**Umfang:** [B-350](backlog/B-350-wartebild-der-klausur-ohne-ausweg.md) (XS) und
+[B-352](backlog/B-352-radiogruppen-ohne-pfeiltasten.md) (S), beide `Defekt`, unter Freigabe 1 ausformuliert, gegrillt,
+geschätzt. Ein Thema: Bedienwege ohne Sackgasse und ohne leeres Versprechen.
+
+**Entwickler-Brief:** Frontend allein. Ein Helfer `radioGroupKeys` (`lib/ui.ts`, framework-frei) am Container jeder
+Radiogruppe aus Knöpfen, roving tabindex an jeder Option, ein Wächter über alle Quellen; ein Geister-Knopf im Wartebild.
+Testweg: Vitest je Taste, Wächter mit Selbsttest, E2E im Assistenten (Pfeil und Tab im echten Browser), `SohnTest.test.tsx`.
+
+### Iteration
+
+- **B-350:** rote Probe **1 failed** (erwartet 1), danach grün.
+- **B-352:** rote Probe **6 failed** (erwartet 6); sieben Gruppen in vier Dateien umgestellt; Mutanten „ohne Umlauf" 2,
+  „jede Taste wandert" 1, „Sperre ignoriert" 1 failed; Wächter fällt bei zurückgesetztem `VaterMedia.tsx` (2 Funde); im
+  Browser „ohne Helfer" und „ohne `tabIndex`" je **1 failed** an ihrer Zeile.
+- Vitest **597/597**, `tsc -b` sauber, Assistenten-Spec **2 passed**.
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `frontend-reviewer` 🟡 | B-350: nach „Zur Basis" wirken hängende Aufrufe weiter – ein später 404 holt das Kind von einer anderen Seite zurück, ein später fertiger Versuch feiert dort | Ref `gone` (StrictMode-fest), geprüft vor Umleitung und Feier; rote Probe **2 failed**, drei Mutanten je **1 failed** | ja |
+| 2 | `frontend-reviewer` 🟢 | Pfeile mit Alt/Strg/Cmd ändern die Wahl (Alt+Links ist „Zurück") | ausgenommen, Test; Mutante **1 failed** | nein |
+| 3 | `frontend-reviewer` 🟢 | Wächter prüft nur, *dass* `tabIndex` steht, nicht dass er wandert | verlangt `… ? 0 : -1`, Selbsttest | nein |
+| 4 | `frontend-reviewer` 🟢 | Wächter übersieht eine Gruppe, deren Optionen aus einem Baustein anderer Datei kommen | zählt jetzt jede Datei mit `radiogroup` ohne native Radios | nein |
+| 5 | `frontend-reviewer` 🟢 | gesperrte gewählte Option → Gruppe ohne Tab-Stopp | als Voraussetzung im JSDoc (Entscheidung 2: kommt nicht vor) | nein |
+| 6 | `frontend-reviewer` 🟢 | Fokus fällt beim Erscheinen der Frage auf `<body>` (wie im Fehlerbild) | nur vermerkt | nein |
+
+**Zähler Teil 1: 1.** Vitest danach **601/601**, `tsc -b` sauber.
+
+**Rollengang:** Vater im echten Browser über die Assistenten-Spec (Pfeiltaste wählt und fokussiert, Tab verlässt die
+Gruppe); Sohn über die Komponententests des Wartebilds – ein hängender Start ist im E2E nur mit einem künstlich kaputten
+Server zu haben (argumentierte Ausnahme, pm-loop Step 6), seine Specs im Gesamtlauf grün; Creator Regressionszeuge.
+E2E-Gesamtlauf **102 passed** (`exit=0`, nach dem letzten Edit). **Gerätecheck offen:** die Radiogruppen einmal mit
+Screenreader und Pfeiltasten bedienen. **B-350, B-352 abgenommen.**
+
+### Retrospektive
+
+**Nachschau:** Lauf M, Teil 2 (`51783ae`: B-353, B-354) per frischem `pugling-reviewer`: **sauber**, zwei 🟢 (Entscheidungstext
+von B-354 nannte noch „Groß/Klein" – berichtigt; Emoji-Label per `PATCH` nicht setzbar – Produktfrage, ohne Story).
+`nachgeschaut` an beiden, mit Prüfpunkten.
+
+**Was die eigenen Tore durchgelassen haben:** B-350 fügte einen Ausweg in einen Bildschirm mit laufenden Aufrufen ein und
+übersah, dass ein neuer Ausweg zugleich ein neuer Abbruchpfad für jeden ausstehenden `await` ist. Die Story dachte nur an
+das Bild, nicht an die Aufrufe dahinter; das Repo kennt die Klasse (Gedächtnis „Effekt-Doppellauf", `alive`-Flags), aber
+keine Regel verbindet sie mit „Navigation hinzufügen".
+
+**Vorschlag, nicht gelandet (Freigabe 3):**
+
+- **(AR)** Prosa in `frontend/CLAUDE.md`: „Wer einem Bildschirm einen Weg hinaus gibt, prüft jede Fortsetzung nach einem
+  `await` darin auf ‚noch da?' – `navigate` bleibt nach dem Aushängen wirksam (react-router 6)." Mechanisch nur grob
+  (ein Wächter, der in Dateien mit `nav(` nach `await` ohne Ref-Prüfung sucht, wäre laut und unscharf).

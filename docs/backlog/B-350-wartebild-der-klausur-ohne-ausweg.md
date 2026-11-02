@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/student]
 aliases: [Klausur „wird vorbereitet" ohne Ausweg]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: XS
@@ -59,3 +59,6 @@ Das einzige Bild der Klausur ohne Ausweg ist das, in dem man hängen bleiben kan
 - **2026-10-30** — angelegt aus der Nachschau zu Lauf L, Teil 3 (`frontend-reviewer` über `fce0076`, 🟢). Aus Code
   gelesen. Älter als B-339 (der `start()`-Pfad führte schon dorthin).
 - **2026-11-02** — Lauf N: ausformuliert, autonom gegrillt (Freigabe 1), geschätzt.
+- **2026-11-02** — Lauf N, Teil 1: gebaut. Rote Probe **1 failed** (erwartet 1): `SohnTest.test.tsx` „bietet den Weg zur Basis an, solange die Frage noch nicht da ist" (kein Knopf „Zur Basis"). AK 1 → dieser Fall (Klick führt zur Basis-Route); Mutante „Knopf weg" ist der Ausgangszustand. Vitest **597/597**.
+- **2026-11-02** — Review `frontend-reviewer`: 🟡 der neue Ausweg ließ hängende Aufrufe weiterwirken – ein später 404 holte das Kind von einer anderen Seite zur Basis zurück, ein später fertiger Versuch feierte dort (react-router setzt `navigate` beim Aushängen nicht still). Behoben: Ref `gone` (beim Einhängen zurückgesetzt, StrictMode), geprüft vor der Umleitung und vor Ergebnis/Feier; das Guthaben wird trotzdem aufgefrischt. Rote Probe **2 failed** (erwartet 2: SHOP fehlt bzw. `celebrate` gerufen); Mutanten „ohne `gone` im 404", „ohne `gone` in `finish`", „ohne Zurücksetzen" (StrictMode-Fall) je **1 failed**. Zählt (Zähler Teil 1: 1). 🟢 ohne Zählung, nur vermerkt: der Fokus fällt beim Erscheinen der Frage auf `<body>` (wie im Fehlerbild).
+- **2026-11-02** — Abnahme Lauf N, Teil 1: Vitest **601/601**, `tsc -b` sauber, E2E **102 passed** (`exit=0`, nach dem letzten Edit gestartet). Rollengang: Vater im echten Browser über `assistent-kinderliste-kommt-spaet.spec.ts` (Pfeiltaste und Tab-Stopp in der Intensitäts- bzw. Ziel-Gruppe); Sohn über die Komponententests des Wartebilds (ein hängender Start lässt sich im E2E nicht billig erzeugen – argumentierte Ausnahme nach pm-loop Step 6), seine Specs im E2E grün; Creator Regressionszeuge. **Gerätecheck offen:** die Gruppen einmal mit Screenreader und Pfeiltasten bedienen. **Abgenommen**, Commit siehe Protokoll ([Lauf N](../pm-sitzung-2026-11-02-nacht.md)).

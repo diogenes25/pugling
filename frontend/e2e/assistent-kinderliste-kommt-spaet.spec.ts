@@ -47,6 +47,19 @@ test("Eine spät ankommende Kinderliste nimmt dem Vater sein neues Kind nicht we
   await intensiv.click();
   await expect(intensiv).toHaveAttribute("aria-checked", "true");
   await expect(normal).toHaveAttribute("aria-checked", "false");
+  // B-352: die Gruppe hält, was `role="radio"` ansagt – Pfeiltasten wählen, und sie ist EIN Tab-Stopp. Rot, wenn die
+  // Pfeiltaste nichts tut oder Tab auf die nächste Karte derselben Gruppe statt aus ihr heraus führt.
+  await intensiv.focus();
+  await page.keyboard.press("ArrowRight");
+  const locker = page.getByRole("radio", { name: /^Locker/ });
+  await expect(locker).toBeFocused();
+  await expect(locker).toHaveAttribute("aria-checked", "true");
+  await page.keyboard.press("ArrowLeft");
+  await expect(intensiv).toBeFocused();
+  await expect(intensiv).toHaveAttribute("aria-checked", "true");
+  await aufholen.focus();
+  await page.keyboard.press("Tab");
+  await expect(intensiv).toBeFocused();
 
   // Jetzt kommt die Liste – während der Vater schon in Schritt 2 ist und den Wechsel nicht sähe.
   const liste = page.waitForResponse((r) => r.url().endsWith("/api/v1/supervisor/children") && r.ok());

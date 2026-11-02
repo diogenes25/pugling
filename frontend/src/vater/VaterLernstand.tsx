@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { MasteryPill } from "../components/MasteryPill";
 import { PAGE_SIZE, Pager } from "../components/ListControls";
+import { radioGroupKeys } from "../lib/ui";
 import type {
   SeriesUnitProgress, ChildResponse, ExerciseProgress, ItemHistoryEntry, ItemProgressResponse,
   MasteryRollup, Paged, SubjectProgress, WordMastery,
@@ -38,10 +39,10 @@ export function VaterLernstand() {
           style={{ marginLeft: "auto", textDecoration: "none" }}>← Kind</Link>
       </div>
 
-      <div className="row" style={{ gap: 8, marginBottom: 12 }} role="radiogroup" aria-label="Sicht">
+      <div className="row" style={{ gap: 8, marginBottom: 12 }} role="radiogroup" aria-label="Sicht" onKeyDown={radioGroupKeys}>
         {([["weak", "🩹 Schlecht gelernte Wörter"], ["catalog", "📚 Nach Katalog"]] as const).map(([value, label]) => (
           <button key={value} type="button" className={`pill toggle-pill ${tab === value ? "lime" : ""}`}
-            role="radio" aria-checked={tab === value} onClick={() => setTab(value)}>{label}</button>
+            role="radio" aria-checked={tab === value} tabIndex={tab === value ? 0 : -1} onClick={() => setTab(value)}>{label}</button>
         ))}
       </div>
 

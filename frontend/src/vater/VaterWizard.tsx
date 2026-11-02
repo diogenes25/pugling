@@ -15,6 +15,7 @@ import { VOCAB_FORMS } from "./exerciseConfig";
 import { auswahlNachFilterwechsel, unsichtbareAuswahl, wizardFilterKey, wizardSearchParams } from "./wizardSearch";
 import { newWizardProgress, runWizardFinish } from "./wizardFinish";
 import type { WizardProgress } from "./wizardFinish";
+import { radioGroupKeys } from "../lib/ui";
 import type {
   CategoryResponse, ChildResponse, ExerciseSummary, GrammarTopicResponse, Paged, SchoolType, SubjectResponse,
 } from "../lib/types";
@@ -413,7 +414,7 @@ export function VaterWizard() {
               war der Unterschied zwischen „keine da" und „nicht geladen". */}
           <ListenAusfall was="Deine Kinder" fehler={children.error} laedt={children.loading}
             onRetry={children.reload} />
-          <div className="row" style={{ gap: 10, flexWrap: "wrap" }} role="radiogroup" aria-label="Welches Kind?">
+          <div className="row" style={{ gap: 10, flexWrap: "wrap" }} role="radiogroup" aria-label="Welches Kind?" onKeyDown={radioGroupKeys}>
             <ChoicePill active={mode === "existing"} disabled={(children.data?.length ?? 0) === 0}
               onClick={() => {
                 setTouchedMode(true); setMode("existing");
@@ -483,7 +484,7 @@ export function VaterWizard() {
 
           <div>
             <span id="wiz-ziel" className="sub" style={{ display: "block", marginBottom: 8 }}>Was ist das Ziel?</span>
-            <div className="row" style={{ gap: 10, flexWrap: "wrap" }} role="radiogroup" aria-labelledby="wiz-ziel">
+            <div className="row" style={{ gap: 10, flexWrap: "wrap" }} role="radiogroup" aria-labelledby="wiz-ziel" onKeyDown={radioGroupKeys}>
               {(Object.keys(GOALS) as Goal[]).map((g) => (
                 <OptionCard key={g} active={goal === g} onClick={() => setGoal(g)}
                   title={`${GOALS[g].emoji} ${GOALS[g].label}`} hint={GOALS[g].hint} />
@@ -493,7 +494,7 @@ export function VaterWizard() {
 
           <div>
             <span id="wiz-intensitaet" className="sub" style={{ display: "block", marginBottom: 8 }}>Wie intensiv soll geübt werden?</span>
-            <div className="row" style={{ gap: 10, flexWrap: "wrap" }} role="radiogroup" aria-labelledby="wiz-intensitaet">
+            <div className="row" style={{ gap: 10, flexWrap: "wrap" }} role="radiogroup" aria-labelledby="wiz-intensitaet" onKeyDown={radioGroupKeys}>
               {(Object.keys(INTENSITY) as Intensity[]).map((i) => (
                 <OptionCard key={i} active={intensity === i} onClick={() => setIntensity(i)}
                   title={INTENSITY[i].label} hint={INTENSITY[i].hint} />
@@ -809,7 +810,8 @@ function ChoicePill({ active, disabled, onClick, children }: { active: boolean; 
   return (
     // Ein Radio, kein Umschalter: die Gruppe hat immer genau eine Wahl, ein zweiter Klick löst sie nicht – dieselbe
     // Auszeichnung wie die Pillen in Anmeldung, Bildern und Lernstand. Sonst steckte die Wahl nur in der Farbe (B-348).
-    <button type="button" role="radio" aria-checked={active} disabled={disabled} onClick={onClick}
+    // Nur die gewählte Option ist ein Tab-Stopp; die Pfeiltasten der Gruppe liefert `radioGroupKeys` (B-352).
+    <button type="button" role="radio" aria-checked={active} tabIndex={active ? 0 : -1} disabled={disabled} onClick={onClick}
       className={`btn ${active ? "" : "ghost"} inline-btn`} style={{ width: "auto", opacity: disabled ? 0.4 : 1 }}>
       {children}
     </button>
@@ -818,7 +820,7 @@ function ChoicePill({ active, disabled, onClick, children }: { active: boolean; 
 
 function OptionCard({ active, onClick, title, hint }: { active: boolean; onClick: () => void; title: string; hint: string }) {
   return (
-    <button type="button" role="radio" aria-checked={active} onClick={onClick}
+    <button type="button" role="radio" aria-checked={active} tabIndex={active ? 0 : -1} onClick={onClick}
       style={{
         flex: "1 1 180px", textAlign: "left", cursor: "pointer", padding: "12px 14px", borderRadius: 14,
         border: active ? "2px solid var(--cyan)" : "1.5px solid var(--stroke)",

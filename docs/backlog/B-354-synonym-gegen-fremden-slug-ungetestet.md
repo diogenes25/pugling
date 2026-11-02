@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-351]
 wartet_auf: ""
+nachgeschaut: "2026-11-02"
 ---
 
 # B-354 · Dass ein Synonym nicht den Slug eines fremden Schlagworts tragen darf, prüft kein Test
@@ -48,7 +49,7 @@ Zwei Teile von B-351 Entscheidung 1 und 2 standen nur im Code.
 ## Entscheidungen (autonom gegrillt, Freigabe 1 – `Defekt`, Testlücke)
 
 1. **Je Teil ein Test**, kein Produktcode: ein Synonym mit dem Slug eines umbenannten Tags (in anderer Schreibweise,
-   damit nur die Faltung trifft) → `409`; ein geführtes Synonym in anderer Groß/Kleinschreibung erneut gespeichert → `200`.
+   damit nur die Faltung trifft) → `409`; ein geführtes Synonym in einer Schreibweise, die über Groß/Klein hinaus abweicht (Bindestrich statt Leerzeichen), erneut gespeichert → `200`.
 
 ## Akzeptanzkriterien
 
@@ -69,3 +70,4 @@ Zwei Teile von B-351 Entscheidung 1 und 2 standen nur im Code.
   Mutante „`carried` per Rohtext" → **1 failed**.
 - **2026-11-02** — Review `pugling-reviewer`: 🟡 AK 2 fing nur die case-sensitive Rohtext-Mutante (`OrdinalIgnoreCase` bliebe grün) → die erneut geschickte Schreibweise weicht jetzt über Groß/Klein hinaus ab (Bindestrich statt Leerzeichen); Mutanten „Rohtext" und „Rohtext ohne Groß/Klein" je **1 failed** (zählt, Zähler Teil 2: 1).
 - **2026-11-02** — Abnahme Lauf M, Teil 2: volle Suite **1045/1045**, `InterestTagLabelTests` **17/17**. E2E **102 passed** (`exit=0`, nach dem letzten Code-Edit gestartet; die Specs `schlagwort-*` fahren den Schlagwort-Pfad). Rollengang: Vater maschinell über `Interesse_Ohne_Buchstaben_Trifft_Kein_Emoji_Synonym` (Kind-Interesse über die echte Supervisor-Route), Creator über die Schlagwort-Tests; Sohn Regressionszeuge (kein Pfad im Diff). **Abgenommen**, Commit siehe Protokoll ([Lauf M](../pm-sitzung-2026-11-02-nacht.md)).
+- **2026-11-02** — Nachschau in Lauf N, Teil 1 (frischer `pugling-reviewer`, `git show 51783ae`, 17/17): **sauber**. Geprüft: AK 1 → Mutante „`.Append(t.Slug)` weg" ergibt 201 (kein anderer Tag faltet auf `fussball-N`, kein früherer 409-Zweig verdeckt); AK 2 → „RUGBY-N" weicht über Groß/Klein hinaus ab, beide Rohtext-Mutanten und „ohne `carried`" rot; Testdaten über den globalen `UniqueName`-Zähler unabhängig. 🟢: Entscheidung 1 nannte noch „andere Groß/Kleinschreibung" – berichtigt.

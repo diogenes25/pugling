@@ -2,6 +2,7 @@ import { useState } from "react";
 import { api, ApiError, errorMessage } from "../lib/api";
 import { pinProblem } from "../lib/pin";
 import { useAuth } from "../lib/auth";
+import { radioGroupKeys } from "../lib/ui";
 
 /**
  * Der Einstieg für Erwachsene – bewusst mit **zwei** Modi, und die Registrierung mit **zwei Konto-Arten**:
@@ -33,11 +34,11 @@ export function VaterLogin() {
       <div className="card" style={{ width: 380, maxWidth: "90vw", display: "flex", flexDirection: "column", gap: 14 }}>
         <div className="brand" style={{ fontFamily: "var(--font-display)", fontSize: 22 }}>🛠️ Pugling · Vater</div>
 
-        <div className="row" style={{ gap: 8 }} role="radiogroup" aria-label="Zugang">
+        <div className="row" style={{ gap: 8 }} role="radiogroup" aria-label="Zugang" onKeyDown={radioGroupKeys}>
           {([["login", "Anmelden"], ["register", "Neu registrieren"]] as const).map(([value, label]) => (
             <button
               key={value} type="button" className={`pill toggle-pill ${mode === value ? "lime" : ""}`}
-              role="radio" aria-checked={mode === value} onClick={() => setMode(value)}
+              role="radio" aria-checked={mode === value} tabIndex={mode === value ? 0 : -1} onClick={() => setMode(value)}
             >{label}</button>
           ))}
         </div>
@@ -151,11 +152,11 @@ function RegisterForm({ onRegistered }: { onRegistered: (id: number) => void }) 
 
   return (
     <form style={{ display: "flex", flexDirection: "column", gap: 14 }} onSubmit={submit}>
-      <div className="row" style={{ gap: 8 }} role="radiogroup" aria-label="Art des Kontos">
+      <div className="row" style={{ gap: 8 }} role="radiogroup" aria-label="Art des Kontos" onKeyDown={radioGroupKeys}>
         {([["father", "👤 Vater"], ["teacher", "🎓 Lehrer"]] as const).map(([value, label]) => (
           <button
             key={value} type="button" className={`pill toggle-pill ${kind === value ? "lime" : ""}`}
-            role="radio" aria-checked={kind === value} onClick={() => setKind(value)}
+            role="radio" aria-checked={kind === value} tabIndex={kind === value ? 0 : -1} onClick={() => setKind(value)}
           >{label}</button>
         ))}
       </div>
