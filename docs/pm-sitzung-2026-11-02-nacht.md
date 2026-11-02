@@ -121,3 +121,32 @@ der Wiederherstellung grün.
 **Rollengang:** Vater maschinell – der B-353-Test setzt das Kind-Interesse über die echte Supervisor-Route; Creator über die
 Schlagwort-Tests der Creator-Route. Sohn als Regressionszeuge. E2E-Gesamtlauf **102 passed** (`exit=0`, gestartet nach dem
 letzten Code-Edit). **B-353, B-354 abgenommen.**
+
+### Retrospektive
+
+**Nachschau:** Teil 1 (`ffbb0b6`: B-346, B-347, B-349) per frischem `pugling-reviewer`: **sauber**, kein 🔴/🟡. Drei 🟢
+(Sprachkürzel mit anderem Leerraum als Leerzeichen fallen aus den Kandidaten; zwei gleiche Paare in einem
+`GetOrCreateManyAsync`-Aufruf ungetestet; `Slug` entfernt auch nichtlateinische Diakritika) →
+[B-355](backlog/B-355-store-faltung-restkanten.md), P4. `nachgeschaut` an allen drei, mit Prüfpunkten. Index danach:
+**Nachgeschaut 276 von 278** (offen: B-353, B-354 – dieser Teil).
+
+**Was die eigenen Tore durchgelassen haben:** Die Mutante zu B-354 AK 2 war in ihrer schwächsten Form gemessen (Rohtext,
+case-sensitiv); die natürlichere Form (`OrdinalIgnoreCase`, wie `Clean()` selbst dedupliziert) blieb grün, der Reviewer
+fand es. Dazu derselbe Prozessfall wie in Teil 1 in anderer Gestalt: das Test-Tor (Stop-Hook) lief, während eine
+Mutanten-Probe im Quelltext stand, und meldete deren rotes Ergebnis als Tor-Fehler.
+
+**Vorschlag, nicht gelandet (Freigabe 3):**
+
+- **(AQ)** Prosa in pm-loop Step 5 neben (AJ): „Eine Vergleichs-Mutante wird in ihrer stärksten naheliegenden Form gemessen
+  – bei Textvergleichen auch ohne Groß/Klein –, nicht nur in der schwächsten." Gemeinsam mit (AP) wäre der Prozessfall
+  gedeckt: ein Mutanten-Werkzeug, das vor dem Start prüft, ob ein Server lauscht, und die Datei unter einer Sperre hält,
+  die das Test-Tor respektiert.
+
+## Ende Lauf M
+
+Endgrund: **beide Sprints geschlossen**, keine Halt-Bedingung gegriffen (Zähler 0/1, keine Retro hat ein Tor gelandet, die
+Nachschau über Teil 1 fand nichts im Increment dieses Laufs). **Fünf Stories abgenommen:** B-346, B-347, B-349 (Teil 1);
+B-353, B-354 (Teil 2). Nachgeschaut: Lauf L Teil 4 + B-351 + B-344/B-345 und Teil 1 dieses Laufs; Teil 2 ist **unbeobachtet**
+(Nachschau in Lauf N). Entgangen gefunden: B-352 (bei B-348), B-353/B-354 (bei B-351). Neu: B-355 (P4). Alles **ungepusht**.
+
+**Offene Entscheidungen für den Nutzer:** Retro-Vorschläge (AO), (AP), (AQ); dazu unverändert (AC)–(AI) außer (AD)/(AH).

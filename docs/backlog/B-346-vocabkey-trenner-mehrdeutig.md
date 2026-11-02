@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-11-02"
 ---
 
 # B-346 · Zwei verschiedene Wortpaare können denselben Vokabel-Schlüssel ergeben
@@ -85,3 +86,4 @@ Der Schlüssel ist ein Bezeichner, kein Vergleichsbegriff – er wurde als beide
   `CreatorAgentTests` (die B-336-Theorie) unverändert grün.
 - **2026-11-02** — Review `pugling-reviewer` (Teil 1, 1041/1041 am Review-Stand): kein 🔴. 🟡 die Klassen-Doku von `VocabKey` nannte den Schlüssel noch „den Begriff von dasselbe Wort" → berichtigt (Doku, ohne Zählung); 🟡 der B-349-Test behauptete „rot, wenn der ganze Tracker zählt" – im neuen Aufbau nicht erzeugbar → Beschriftung auf den Fall, der ihn wirklich rot macht (Kandidaten wieder über Schlüssel/NOCASE), und den Service-Satz entsprechend gekürzt (nur Kommentare, ohne Zählung). 🟢 behoben ohne Zählung: veraltete Testkommentare („key"/„NOCASE-Kandidat") in drei Testdateien, SQL-`trim()` faltet nur Leerzeichen (Kommentar präzisiert), Theorie-Zeile „`_` gegen Leerraum-Folge" ergänzt und im Vertragstext genannt. 🟢 bewusst stehen gelassen: ein Scan des Sprachpaars je Batch-Zeile (Entscheidung 1 von B-347, Kosten benannt). **Zähler Teil 1: 0.**
 - **2026-11-02** — Abnahme Lauf M, Teil 1: volle Suite **1045/1045**, Build ohne Warnung. E2E **102 passed** (`exit=0`, nach dem letzten Produktcode-Edit gestartet). Rollengang: Creator maschinell über die neuen Integrationstests gegen die In-Process-API; Vater und Sohn Regressionszeugen (ihre Specs im E2E-Lauf grün, kein Pfad von ihnen im Diff). **Abgenommen**, Commit siehe Protokoll ([Lauf M](../pm-sitzung-2026-11-02-nacht.md)).
+- **2026-11-02** — Nachschau in Lauf M, Teil 2 (frischer `pugling-reviewer`, `git show ffbb0b6`, 117/117 in den drei Testklassen): **sauber**. Geprüft: AK 1 → `ReuseExisting_UnterscheidetPaare…`, Mutante „`Identity` = `Generate`" rot; AK 2 → `UebungsPost_ZweiPaare…`, Mutanten „`RepeatedWordAsync` per `Generate`" und „`found` per `Generate`" rot; Entscheidung 3 → B-336-Theorie (Mutante „`Part` = `Slug`" rot); Peek kann wegen des `Dictionary<VocabIdentity,…>`-Typs nicht vom Reconcile abweichen; `Part` faltet außer an der Naht mindestens so viel wie `Generate` (kein alter Treffer wird strenger).
