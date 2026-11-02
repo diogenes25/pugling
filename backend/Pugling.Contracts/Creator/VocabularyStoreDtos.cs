@@ -26,8 +26,9 @@ public record VocabularyResponse(int Id, string Key, string Version, string Sour
 /// <para>
 /// <c>ReuseExisting</c> (only without <c>Key</c>, otherwise 400): an entry that says this word and translation comes
 /// back (200) instead of a <c>_2</c> copy. It is judged by what it says now, not by its stored key, which a PATCH does
-/// not update: an entry is a hit if its key matches or its word matches up to ASCII case, and its current content then
-/// folds to the generated key (case, diacritics, ß, apostrophes, surrounding whitespace); the sent <c>TranslationAlternatives</c> and
+/// not update: an entry of the same language pair is a hit if word and translation each fold to the sent ones (case,
+/// diacritics, ß, apostrophes, surrounding whitespace, underscores and runs of whitespace as one space); the oldest such
+/// entry wins. The sent <c>TranslationAlternatives</c> and
 /// <c>Tags</c> are added to its own, its other fields stay as they are. For quick-add paths that mean "this word", not
 /// "another entry".
 /// </para>

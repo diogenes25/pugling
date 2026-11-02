@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-277]
 wartet_auf: ""
+nachgeschaut: "2026-11-02"
 ---
 
 # B-345 · Der Vokabel-Batch prüfte die Grundform vor dem belegten Schlüssel und war nicht mehr idempotent
@@ -54,3 +55,4 @@ Keine eigenen – vom Nutzer in `3190f9e` gebaut; hier nur nachgetragen.
 - **2026-10-30** — angelegt in der Nachschau zu Lauf K, Teil 2 (`pugling-reviewer`, Diff von `0fcff19` gegen seinen
   Vorgänger gelesen): Fluchtweg von B-277, außerhalb der Schleife gefunden und behoben. `abgenommen` steht für
   `3190f9e` des Nutzers.
+- **2026-11-02** — Nachschau in Lauf M, Teil 1 (frischer `pugling-reviewer`): **sauber**. Geprüft: Reihenfolge vor `0fcff19`, in `0fcff19` und in `3190f9e` per `git show <commit>^:<datei>` gelesen – Word → reuse+Schlüssel-Fehler → Konflikt → Grundform → Reuse; Mutante „Konflikt hinter die Grundform" macht `Batch_VorhandenerSchluessel_MitVerschwundenerGrundform_BleibtExisting` rot (`Error` statt `Existing`). Gewollte Nebenwirkung: einzelner `POST` mit belegtem Schlüssel und ungültiger Grundform → 409 statt 400.

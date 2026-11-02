@@ -433,10 +433,10 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
                 items = new[] { hello, bye, hello }.Select(id => new { vocabularyId = id }) }),
             ("inline word twice", new { direction = "front-to-back", sourceLang = "en", targetLang = "de",
                 items = new[] { new { front = fresh, back = "Mond" }, new { front = fresh, back = "Mond" } } }),
-            // Two spellings the store key folds into one (B-338): a check on the raw strings would let them through, and the
+            // Two spellings the server folds into one word (B-338): a check on the raw strings would let them through, and the
             // reconcile would map both onto the same new store entry - the old 500. They differ in a diacritic and ß, not
             // only in case, so a case-insensitive comparison lets them through as well (B-342).
-            ("inline word twice, folded by the key", new { direction = "front-to-back", sourceLang = "en", targetLang = "de",
+            ("inline word twice, folded like the server", new { direction = "front-to-back", sourceLang = "en", targetLang = "de",
                 items = new[] { new { front = "mõ" + fresh[2..], back = "Straße" }, new { front = fresh, back = "strasse" } } }),
             // An entry whose word a PATCH corrected keeps its old key; the inline word names its current content, so both
             // items are the same entry (B-343). Peeking by the stored key misses that and the reconcile hits the unique index.
@@ -456,6 +456,21 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
                 .Select(i => i.GetProperty("vocabularyId").GetInt32()));
             Assert.Equal("Items-Übung", (await father.GetFromJsonAsync<JsonElement>(exerciseUrl)).GetProperty("title").GetString());
         }
+    }
+
+    // Two different pairs whose joined store keys coincide, because the target language code "de" sits at the seam:
+    // "pomme de terre" → "Kartoffel" and "pomme" → "terre de Kartoffel" (B-346). They are two words, so the exercise is
+    // valid and links two store entries. Red if "the same word" is judged by the joined key: 400 on the POST.
+    [Fact]
+    public async Task UebungsPost_ZweiPaareMitGleichemVerbundschluessel_SindZweiWoerter()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var u = Guid.NewGuid().ToString("N")[..8];
+        var (s, c, exerciseId) = await VocabWithItemsAsync(father, ($"pomme{u} de terre", "Kartoffel"), ($"pomme{u}", "terre de Kartoffel"));
+
+        var items = (await father.GetFromJsonAsync<List<JsonElement>>(
+            $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary/{exerciseId}/items"))!;
+        Assert.Equal(2, items.Select(i => i.GetProperty("vocabularyId").GetInt32()).Distinct().Count());
     }
 
     // The POST runs the same validation; a rejected one must not leave an exercise without words behind.

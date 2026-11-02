@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Pugling.Api.Tests;
 
@@ -51,9 +52,9 @@ public class VocabularyStoreTests(PuglingWebAppFactory factory) : IClassFixture<
     }
 
     /// <summary>
-    /// B-277: <c>reuseExisting</c> lets a quick-add hit the entry the server key already names instead of creating a
+    /// B-277: <c>reuseExisting</c> lets a quick-add hit the entry that already says this word instead of creating a
     /// <c>_2</c> copy. The two spellings differ in an accented capital, which SQLite's NOCASE does not fold - only the
-    /// server key does, so a client-side comparison could not get this case right. Without the flag the old behaviour
+    /// server's folding does, so a client-side comparison could not get this case right. Without the flag the old behaviour
     /// stays (a second entry), which is what keeps the flag from being decoration.
     /// </summary>
     [Fact]
@@ -170,7 +171,7 @@ public class VocabularyStoreTests(PuglingWebAppFactory factory) : IClassFixture<
         (await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{fixedTypo}", new { word = $"hgu{u}e" })).EnsureSuccessStatusCode();
         // The premise: the key still carries the typo, so the hit below can only come from the content.
         Assert.Contains($"hgue{u}", (await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/vocabulary/{fixedTypo}")).GetProperty("key").GetString());
-        // Upper case on purpose: the stale key cannot find it, so the word candidate has to compare like the NOCASE column.
+        // Upper case on purpose: the stale key cannot find it, so the content comparison has to fold the case.
         var hit = await ReuseAsync($"HGU{u}E", "ungeheuer");
         Assert.Equal(HttpStatusCode.OK, hit.StatusCode);
         Assert.Equal(fixedTypo, (await hit.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32());
@@ -195,6 +196,127 @@ public class VocabularyStoreTests(PuglingWebAppFactory factory) : IClassFixture<
 
         Assert.Equal(HttpStatusCode.OK, hit.StatusCode);
         Assert.Equal(id, (await hit.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32());
+    }
+
+    /// <summary>
+    /// B-346: "pomme de terre" → "Kartoffel" and "pomme" → "terre de Kartoffel" join to the same key, because the target
+    /// language code "de" sits at the seam. They are different words, so reuse must not hand back the first for the
+    /// second. Red if the lookup compares the joined key: 200 with the first entry instead of 201.
+    /// </summary>
+    [Fact]
+    public async Task ReuseExisting_UnterscheidetPaareMitGleichemVerbundschluessel()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var u = Guid.NewGuid().ToString("N")[..8];
+        var first = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/vocabulary",
+            new { sourceLanguage = "fr", targetLanguage = "de", word = $"pomme{u} de terre", translation = "Kartoffel" }));
+
+        var second = await father.PostAsJsonAsync("/api/v1/creator/vocabulary", new
+        {
+            sourceLanguage = "fr",
+            targetLanguage = "de",
+            word = $"pomme{u}",
+            translation = "terre de Kartoffel",
+            reuseExisting = true,
+        });
+
+        Assert.Equal(HttpStatusCode.Created, second.StatusCode);
+        var body = await second.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.NotEqual(first, body.GetProperty("id").GetInt32());
+        Assert.Equal("terre de Kartoffel", body.GetProperty("translation").GetString());
+    }
+
+    /// <summary>
+    /// B-347: an entry whose key a PATCH left stale is found by what it says now - also where the fold goes beyond what
+    /// SQLite's NOCASE folds. Each case differs from the reused spelling in exactly one such property: a diacritic,
+    /// a non-ASCII capital, surrounding whitespace on the stored side, an underscore against a run of spaces. Red if the candidates come from the NOCASE word
+    /// column: 201 with a second entry of the same content.
+    /// </summary>
+    [Theory]
+    [InlineData("#café", "#cafe")]
+    [InlineData("#Über", "#über")]
+    [InlineData(" #lake ", "#lake")]
+    [InlineData("#_lake", "#  lake")]
+    public async Task ReuseExisting_FindetGepatchtesWortUeberDieGanzeFaltung(string stored, string reused)
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var u = Guid.NewGuid().ToString("N")[..8];
+        var id = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/vocabulary",
+            new { sourceLanguage = "en", targetLanguage = "de", word = $"kaffe{u}", translation = "x" }));
+        (await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{id}", new { word = stored.Replace("#", u) })).EnsureSuccessStatusCode();
+
+        var hit = await father.PostAsJsonAsync("/api/v1/creator/vocabulary",
+            new { sourceLanguage = "en", targetLanguage = "de", word = reused.Replace("#", u), translation = "x", reuseExisting = true });
+
+        Assert.Equal(HttpStatusCode.OK, hit.StatusCode);
+        Assert.Equal(id, (await hit.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32());
+    }
+
+    /// <summary>
+    /// Two entries say the same word (the second created without the flag, so it got a <c>_2</c> key); reuse hands back
+    /// the oldest. The newer one is created second on purpose, so "newest wins" picks the other id. Red if the hits are
+    /// ordered the other way.
+    /// </summary>
+    [Fact]
+    public async Task ReuseExisting_BeiZweiGleichenEintraegenGewinntDerAeltere()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var u = Guid.NewGuid().ToString("N")[..8];
+        async Task<int> CreateAsync() => await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/vocabulary",
+            new { sourceLanguage = "en", targetLanguage = "de", word = $"twin{u}", translation = "Zwilling" }));
+        var older = await CreateAsync();
+        var newer = await CreateAsync();
+        Assert.NotEqual(older, newer);
+
+        var hit = await father.PostAsJsonAsync("/api/v1/creator/vocabulary",
+            new { sourceLanguage = "en", targetLanguage = "de", word = $"twin{u}", translation = "Zwilling", reuseExisting = true });
+
+        Assert.Equal(older, (await hit.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32());
+    }
+
+    /// <summary>
+    /// An entry added but not saved yet counts for a later lookup in the same unit of work, so a caller that resolves
+    /// several words before saving does not create one word twice. Red if the lookup sees only saved rows: two instances.
+    /// </summary>
+    [Fact]
+    public async Task GetOrCreate_VorDemSpeichern_FindetDenEbenAngelegtenEintrag()
+    {
+        using var scope = factory.Services.CreateScope();
+        var store = scope.ServiceProvider.GetRequiredService<VocabularyStoreService>();
+        var u = Guid.NewGuid().ToString("N")[..8];
+
+        var first = await store.GetOrCreateAsync("en", $"pending{u}", "de", "offen");
+        var again = await store.GetOrCreateAsync("EN", $"Pending{u} ", "de", "Offen");
+
+        Assert.Equal(0, first.Id);
+        Assert.Same(first, again);
+    }
+
+    /// <summary>
+    /// B-349: within one batch, an entry's result must not depend on what earlier entries of the same batch loaded. The
+    /// entry patched to "Hõuse" says "house" → "Haus"; sent alone and after a line that names it by its stale key,
+    /// "house" must get the same answer. Red if the candidates are narrowed to key or NOCASE word again: then only the
+    /// order made the entry visible, and "alone" creates a second one. The order independence itself follows from
+    /// loading every entry of the pair - no tracker state can add a candidate, so no mutant of it is observable.
+    /// </summary>
+    [Fact]
+    public async Task ReuseExisting_ImBatch_HaengtNichtAnDerReihenfolge()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var u = Guid.NewGuid().ToString("N")[..8];
+        var id = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/vocabulary",
+            new { sourceLanguage = "en", targetLanguage = "de", word = $"hus{u}", translation = "Haus" }));
+        (await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{id}", new { word = $"Hõuse{u}" })).EnsureSuccessStatusCode();
+        async Task<JsonElement> LastAsync(params string[] words) => (await (await father.PostAsJsonAsync(
+            "/api/v1/creator/vocabulary/batch",
+            words.Select(w => new { sourceLanguage = "en", targetLanguage = "de", word = w, translation = "Haus", reuseExisting = true })))
+            .Content.ReadFromJsonAsync<List<JsonElement>>())!.Last();
+
+        var afterLoad = await LastAsync($"hus{u}", $"house{u}");
+        var alone = await LastAsync($"house{u}");
+
+        Assert.Equal(("Existing", id), (afterLoad.GetProperty("status").GetString(), afterLoad.GetProperty("id").GetInt32()));
+        Assert.Equal(("Existing", id), (alone.GetProperty("status").GetString(), alone.GetProperty("id").GetInt32()));
     }
 
     /// <summary>

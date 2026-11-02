@@ -39,6 +39,14 @@ test("Eine spät ankommende Kinderliste nimmt dem Vater sein neues Kind nicht we
   await aufholen.click();
   await expect(aufholen).toHaveAttribute("aria-checked", "true");
   await expect(klassenarbeit).toHaveAttribute("aria-checked", "false");
+  // Dasselbe an der Intensität (Nachschau B-348): ein Aufrufer, der `active` falsch verdrahtet, ließe sonst drei
+  // ungewählte Optionen ansagen. Vorbelegt ist „Normal".
+  const normal = page.getByRole("radio", { name: /^Normal/ });
+  const intensiv = page.getByRole("radio", { name: /^Intensiv/ });
+  await expect(normal).toHaveAttribute("aria-checked", "true");
+  await intensiv.click();
+  await expect(intensiv).toHaveAttribute("aria-checked", "true");
+  await expect(normal).toHaveAttribute("aria-checked", "false");
 
   // Jetzt kommt die Liste – während der Vater schon in Schritt 2 ist und den Wechsel nicht sähe.
   const liste = page.waitForResponse((r) => r.url().endsWith("/api/v1/supervisor/children") && r.ok());

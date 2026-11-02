@@ -13,6 +13,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-11-02"
 ---
 
 # B-351 · Ein Synonym darf nicht das Label oder den Slug eines anderen Schlagworts tragen
@@ -88,3 +89,4 @@ Testweg: `InterestTagLabelTests`, E2E `schlagwort-trotz-fremdem-synonym` auf den
   (`exit=0`, nach dem letzten Produktcode-Edit). Rollengang: Vater/Creator über `schlagwort-trotz-fremdem-synonym` (Slug-Fall)
   und `interessen`/`einkleidung` im Gesamtlauf; Sohn Regressionszeuge. Kein Delta-Review (die Nachbesserungen sind je mit
   gemessener Mutante belegt, Selbst-Check). **Abgenommen**, Commit siehe Protokoll ([Lauf L](../pm-sitzung-2026-10-30-nacht.md)).
+- **2026-11-02** — Nachschau in Lauf M, Teil 1 (frischer `pugling-reviewer`, `git show d0afbc0`, `InterestTagLabelTests` grün): **entgangen** [B-353](B-353-leerer-label-slug-trifft-emoji-synonym.md) (🟡, leerer Label-Slug trifft jedes Emoji-Synonym – Regression dieses Commits) und [B-354](B-354-synonym-gegen-fremden-slug-ungetestet.md) (🟡, Slug-Hälfte von Entscheidung 1 ohne Zusicherung; 🟢 „bereits geführt" nur mit identischem Text geprüft). Geprüft: AK 1–6 je mit Mutante (Label-Faltung, `carried`-Filter, `labelSlug`, `t.Synonyms` in `taken`, Zeile 116) rot; Reihenfolge in `Create` vorher/nachher gelesen – neue Prüfungen hängen hinten an, idempotenter Slug-Treffer weiter zuerst.

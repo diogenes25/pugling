@@ -203,7 +203,7 @@ public class VocabularyStoreController(PuglingDbContext db, VocabularyStoreServi
 
     /// <summary>
     /// Creates a vocabulary entry. If the key is missing, a unique one is generated; BaseFormKey (if set) must exist.
-    /// With <c>reuseExisting</c> an entry whose current content folds to the generated key comes back with 200 instead
+    /// With <c>reuseExisting</c> an entry whose current content folds like the sent word and translation comes back with 200 instead
     /// (alternatives merged).
     /// </summary>
     [HttpPost]
@@ -257,8 +257,8 @@ public class VocabularyStoreController(PuglingDbContext db, VocabularyStoreServi
         string key;
         if (explicitKey is null)
         {
-            // The server key is the only comparison that folds case, diacritics and ß the way the store does - a client
-            // cannot rebuild it, so "is this word already there?" is answered here (B-277).
+            // Only the server folds case, diacritics and ß against what every entry says now - a client cannot rebuild
+            // that, so "is this word already there?" is answered here (B-277).
             if (dto.ReuseExisting == true
                 && await store.FindAsync(dto.SourceLanguage, dto.Word, dto.TargetLanguage, dto.Translation ?? "", ct) is { } existing)
             {

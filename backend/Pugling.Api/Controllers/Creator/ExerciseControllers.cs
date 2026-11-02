@@ -72,18 +72,18 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     /// The first payload position that names a word an earlier one already names, as a message - or <c>null</c>.
     /// Checked up front because the unique index (ExerciseId, VocabularyId) would only fire in the reconcile,
     /// after the exercise head is saved (B-331). Same resolution as the reconcile: an inline word not yet in the
-    /// store is compared by its key, everything else by store id.
+    /// store is compared by its folded content (<see cref="VocabKey.Identity"/>), everything else by store id.
     /// </summary>
     private async Task<string?> RepeatedWordAsync(VocabularyConfig config, CancellationToken ct)
     {
         var peeked = await items.PeekDesiredIdsAsync(config, ct);
         var seenIds = new HashSet<int>();
-        var seenKeys = new HashSet<string>(StringComparer.Ordinal);
+        var seenWords = new HashSet<VocabIdentity>();
         for (var i = 0; i < peeked.Count; i++)
         {
             var repeated = peeked[i] is { } id
                 ? !seenIds.Add(id)
-                : !seenKeys.Add(VocabKey.Generate(config.SourceLang, config.Items[i].Front ?? "", config.TargetLang, config.Items[i].Back ?? ""));
+                : !seenWords.Add(VocabKey.Identity(config.SourceLang, config.Items[i].Front ?? "", config.TargetLang, config.Items[i].Back ?? ""));
             if (repeated)
                 return $"Entry {i} repeats a word that an earlier entry of this exercise already names; each word can be an item only once.";
         }

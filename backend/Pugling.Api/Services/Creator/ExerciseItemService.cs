@@ -71,7 +71,7 @@ public class ExerciseItemService(PuglingDbContext db, VocabularyStoreService sto
         // The same content-based lookup as the reconcile, so the lock and duplicate checks judge the entry it will link.
         var found = await store.FindManyAsync(config.SourceLang, config.TargetLang, InlineItems(config).Select(x => x.Pair), ct);
         return config.Items.Select(item => item.VocabularyId is { } id ? id
-            : found.TryGetValue(VocabKey.Generate(config.SourceLang, item.Front ?? "", config.TargetLang, item.Back ?? ""), out var v)
+            : found.TryGetValue(VocabKey.Identity(config.SourceLang, item.Front ?? "", config.TargetLang, item.Back ?? ""), out var v)
               && v.Id > 0 ? v.Id : (int?)null).ToList();
     }
 

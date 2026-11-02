@@ -604,10 +604,10 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
-    /// B-336: two fronts that differ only in what the store key folds (accent, apostrophe, doubled space) are the same word
+    /// B-336: two fronts that differ only in what the server folds (accent, apostrophe, doubled space) are the same word
     /// to the server, which refuses the second with a 400 after the draft rule let it through - the run then ended instead
     /// of repairing. Each row differs in exactly one folded property; red if the rule groups the fronts by anything weaker
-    /// than <c>VocabKey</c> (the old case-insensitive comparison keeps all three green on the rule and red on the 400).
+    /// than <c>VocabKey.Part</c> (the old case-insensitive comparison keeps all three green on the rule and red on the 400).
     /// </summary>
     [Theory]
     [InlineData("the café", "the cafe")]

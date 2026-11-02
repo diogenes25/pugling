@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-337]
 wartet_auf: ""
+nachgeschaut: "2026-11-02"
 ---
 
 # B-344 · `reuseExisting` verglich die Sprache exakt und das Wort ungetrimmt
@@ -54,3 +55,4 @@ Keine eigenen – vom Nutzer in `3190f9e` gebaut; hier nur nachgetragen.
 - **2026-10-30** — angelegt in der Nachschau zu Lauf K, Teil 2 (`pugling-reviewer`): Fluchtweg von B-337, gefunden
   durch ein Review außerhalb der Schleife und dort behoben. Hier nur nachgetragen, damit die Entgleitung im Index zählt;
   `abgenommen` steht für den Commit `3190f9e` des Nutzers, kein eigener Rollengang.
+- **2026-11-02** — Nachschau in Lauf M, Teil 1 (frischer `pugling-reviewer`, `git show 3190f9e`): **sauber**. Geprüft: `ReuseExisting_FaltetSpracheUndLeerraumWieDerSchluessel` fällt unter den Mutanten „`p.Word` ungetrimmt" und „Sprachfilter exakt" (201 statt 200); die gespeicherte Seite (Leerraum, Diakritika bei veraltetem Schlüssel) war schon B-347 und ist mit Lauf M, Teil 1 behoben.

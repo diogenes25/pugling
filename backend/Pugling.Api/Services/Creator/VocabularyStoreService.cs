@@ -20,25 +20,25 @@ public class VocabularyStoreService(PuglingDbContext db)
         (await GetOrCreateManyAsync(sourceLanguage, targetLanguage, [(word, translation)], partOfSpeech, ct))[0];
 
     /// <summary>
-    /// <see cref="GetOrCreateAsync"/> for many pairs of one language pair, with a single lookup query. The result is
-    /// parallel to <paramref name="pairs"/>; two pairs that fold to the same key yield the same (possibly new) entry.
+    /// <see cref="GetOrCreateAsync"/> for many pairs of one language pair, with one lookup for all of them. The result is
+    /// parallel to <paramref name="pairs"/>; two pairs with the same <see cref="VocabKey.Identity"/> yield the same
+    /// (possibly new) entry.
     /// </summary>
     public async Task<IReadOnlyList<Vocabulary>> GetOrCreateManyAsync(string sourceLanguage, string targetLanguage,
         IReadOnlyList<(string Word, string Translation)> pairs, PartOfSpeech? partOfSpeech = null, CancellationToken ct = default)
     {
         var found = await FindManyAsync(sourceLanguage, targetLanguage, pairs, ct);
-        // FindManyAsync loaded every row whose stored key is one of the generated ones, so the local view knows
-        // which of them are taken - a stale key (B-337) keeps its slot, and the new entry moves on to _2.
-        var takenKeys = db.Vocabularies.Local.Select(v => v.Key).ToHashSet(StringComparer.Ordinal);
         var result = new List<Vocabulary>(pairs.Count);
         foreach (var (word, translation) in pairs)
         {
-            var key = VocabKey.Generate(sourceLanguage, word, targetLanguage, translation);
-            if (!found.TryGetValue(key, out var vocab))
+            var identity = VocabKey.Identity(sourceLanguage, word, targetLanguage, translation);
+            if (!found.TryGetValue(identity, out var vocab))
             {
                 vocab = new Vocabulary
                 {
-                    Key = takenKeys.Contains(key) ? await UniqueKeyAsync(key, ct) : key,
+                    // The generated key can be taken by an entry that says something else now (a stale key, B-337, or
+                    // another pair joining to the same key, B-346); that entry keeps it, and this one moves on to _2.
+                    Key = await UniqueKeyAsync(VocabKey.Generate(sourceLanguage, word, targetLanguage, translation), ct),
                     SourceLanguage = sourceLanguage,
                     TargetLanguage = targetLanguage,
                     Word = word,
@@ -46,45 +46,56 @@ public class VocabularyStoreService(PuglingDbContext db)
                     PartOfSpeech = partOfSpeech ?? PartOfSpeech.Other,
                 };
                 db.Vocabularies.Add(vocab);
-                takenKeys.Add(vocab.Key);
-                found[key] = vocab;
+                found[identity] = vocab;
             }
             result.Add(vocab);
         }
         return result;
     }
 
-    /// <summary>The entry whose <b>current</b> content folds to the key of this word/translation, or <c>null</c>.</summary>
+    /// <summary>The entry whose <b>current</b> content folds like this word/translation, or <c>null</c>.</summary>
     public async Task<Vocabulary?> FindAsync(string sourceLanguage, string word, string targetLanguage, string translation,
         CancellationToken ct) =>
         (await FindManyAsync(sourceLanguage, targetLanguage, [(word, translation)], ct))
-            .GetValueOrDefault(VocabKey.Generate(sourceLanguage, word, targetLanguage, translation));
+            .GetValueOrDefault(VocabKey.Identity(sourceLanguage, word, targetLanguage, translation));
 
     /// <summary>
-    /// The store entries for many word/translation pairs, keyed by the key each pair generates. A hit is judged by
-    /// what an entry says <b>now</b>: a PATCH changes word or translation without touching the stored key, so the key
-    /// alone can name an entry that says something else - or miss one whose typo was fixed (B-337). Candidates are the
-    /// key matches plus the entries with the same word (NOCASE, the index); language case and surrounding whitespace
-    /// fold in memory, the same way the key folds them. The oldest entry wins; entries added but not yet saved in this
-    /// unit of work count as well (after the saved ones), so a word is not created twice in one batch.
+    /// The store entries for many word/translation pairs of one language pair, keyed by
+    /// <see cref="VocabKey.Identity"/>. A hit is judged by what an entry says <b>now</b>, folded completely: a PATCH
+    /// changes word or translation without touching the stored key (B-337), the joined key is ambiguous (B-346), and
+    /// SQL folds no more than ASCII case (B-347). So every saved entry of the language pair is a candidate, read as a
+    /// narrow projection and folded in memory - a store holds hundreds of words per pair, not millions. The oldest entry
+    /// wins; entries added but not yet saved in this unit of work count after the saved ones, so a word is not created
+    /// twice in one batch. The candidates are fixed per call, not by what an earlier call happened to load (B-349).
     /// </summary>
-    public async Task<Dictionary<string, Vocabulary>> FindManyAsync(string sourceLanguage, string targetLanguage,
+    public async Task<Dictionary<VocabIdentity, Vocabulary>> FindManyAsync(string sourceLanguage, string targetLanguage,
         IEnumerable<(string Word, string Translation)> pairs, CancellationToken ct)
     {
-        var list = pairs.ToList();
-        var keys = list.Select(p => VocabKey.Generate(sourceLanguage, p.Word, targetLanguage, p.Translation)).Distinct().ToList();
-        if (keys.Count == 0) return new(StringComparer.Ordinal);
-        var words = list.Select(p => p.Word.Trim()).Distinct().ToList();
+        var wanted = pairs.Select(p => VocabKey.Identity(sourceLanguage, p.Word, targetLanguage, p.Translation)).ToHashSet();
+        if (wanted.Count == 0) return [];
 
-        // Loaded tracked into the local view, which also holds the entries of this unit of work that are not saved yet.
-        await db.Vocabularies.Where(v => keys.Contains(v.Key) || words.Contains(v.Word)).LoadAsync(ct);
-        var wanted = keys.ToHashSet(StringComparer.Ordinal);
-        return db.Vocabularies.Local
-            .Select(v => (Vocab: v, Key: VocabKey.Generate(v.SourceLanguage, v.Word, v.TargetLanguage, v.Translation)))
-            .Where(x => wanted.Contains(x.Key))
-            .OrderBy(x => x.Vocab.Id > 0 ? x.Vocab.Id : int.MaxValue)
-            .GroupBy(x => x.Key)
-            .ToDictionary(g => g.Key, g => g.First().Vocab, StringComparer.Ordinal);
+        // Language codes are plain ASCII, where SQL's lower() and trim() (spaces only) fold them like the identity does.
+        var src = sourceLanguage.Trim().ToLowerInvariant();
+        var tgt = targetLanguage.Trim().ToLowerInvariant();
+        var saved = await db.Vocabularies.AsNoTracking()
+            .Where(v => v.SourceLanguage.Trim().ToLower() == src && v.TargetLanguage.Trim().ToLower() == tgt)
+            .Select(v => new { v.Id, v.SourceLanguage, v.Word, v.TargetLanguage, v.Translation })
+            .ToListAsync(ct);
+        var savedHits = saved
+            .Select(v => (v.Id, Identity: VocabKey.Identity(v.SourceLanguage, v.Word, v.TargetLanguage, v.Translation)))
+            .Where(x => wanted.Contains(x.Identity))
+            .GroupBy(x => x.Identity)
+            .ToDictionary(g => g.Key, g => g.Min(x => x.Id));
+        var ids = savedHits.Values.ToList();
+        var byId = await db.Vocabularies.Where(v => ids.Contains(v.Id)).ToDictionaryAsync(v => v.Id, ct);
+        var found = savedHits.Where(h => byId.ContainsKey(h.Value)).ToDictionary(h => h.Key, h => byId[h.Value]);
+
+        foreach (var pending in db.ChangeTracker.Entries<Vocabulary>().Where(e => e.State == EntityState.Added).Select(e => e.Entity))
+        {
+            var identity = VocabKey.Identity(pending.SourceLanguage, pending.Word, pending.TargetLanguage, pending.Translation);
+            if (wanted.Contains(identity)) found.TryAdd(identity, pending);
+        }
+        return found;
     }
 
     /// <summary>Makes a generated base key unique by appending _2, _3 … on collision (saved or pending in this unit of work).</summary>

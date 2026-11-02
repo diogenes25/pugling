@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-11-02"
 ---
 
 # B-348 · Die Auswahl-Pillen im Assistenten sagen nicht, welche gewählt ist
@@ -68,3 +69,4 @@ ist.
   ohne `aria-labelledby`" **1 failed** an `:34`, Probe „`ChoicePill` ohne `role`" **2 failed**. Kein Delta-Review
   (Selbst-Check mit gemessenen Proben).
 - **2026-10-30** — Abnahme Lauf L, Teil 4: `tsc -b` sauber, Vitest **587/587**, E2E-Gesamtlauf **102 passed** (`exit=0`, nach dem letzten Produktcode-Edit gestartet). Rollengang als E2E: Vater über die sieben Assistenten-Specs (Pillen und Karten jetzt als `radio` angesprochen) und `TextbookForm`; Sohn und Creator Regressionszeugen (Gesamtlauf grün, kein Pfad im Diff). Gerätecheck offen: die Radiogruppen einmal mit NVDA/VoiceOver anhören. **Abgenommen**, Commit siehe Protokoll ([Lauf L](../pm-sitzung-2026-10-30-nacht.md)).
+- **2026-11-02** — Nachschau in Lauf M, Teil 1 (frischer `frontend-reviewer`, `git show d8cc6b9 -- frontend`, Vitest **34 passed** in `TextbookForm`/`SohnTest`): **entgangen** [B-352](B-352-radiogruppen-ohne-pfeiltasten.md) (🟡, `role="radio"` ohne Pfeiltasten/roving tabindex – das Muster der zitierten Vorbilder, aber hier neu eingeführt). Geprüft: AK 1 → `assistent-kinderliste-kommt-spaet.spec.ts:56-57/86-87`, Mutanten „`aria-checked` weg", „konstant true", „`role` weg", „Call-Site vertauscht" je rot (abgeleitet); AK 2 → `:38-41`; AK 3 → `:34/35/85`; kein übriggebliebener `getByRole("button", …)` auf Pillen/Karten. 🟢: Zustand der Intensitäts-Karten nirgends zugesichert (Mutante `active={false}` an `VaterWizard.tsx:498` bliebe grün) – in Lauf M, Teil 2 behoben; `aria-label` „Welches Kind?" statt `aria-labelledby` am sichtbaren „Für welches Kind?" (ohne Story).

@@ -311,7 +311,9 @@ describe("TextbookForm – Katalog zuerst, Verlag und Klasse aus dem Katalog (B-
     const verlag = screen.getByLabelText("Verlag", { exact: true }) as HTMLInputElement;
     expect(verlag.value).toBe("");
     expect(verlag.placeholder).toMatch(/^z\. B\. /);
-    expect((screen.getByLabelText("Für Klasse", { exact: true }) as HTMLInputElement).placeholder).toMatch(/^z\. B\. /);
+    const klasse = screen.getByLabelText("Für Klasse", { exact: true }) as HTMLInputElement;
+    expect(klasse.value).toBe("");
+    expect(klasse.placeholder).toMatch(/^z\. B\. /);
   });
 
   it("legt eine neue Reihe mit dem Fach des Buchs an und wählt sie", async () => {
