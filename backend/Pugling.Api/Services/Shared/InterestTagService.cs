@@ -45,10 +45,11 @@ public class InterestTagService(PuglingDbContext db)
         var newLabel = label?.Trim() is { Length: > 0 } l ? l : text.Trim();
         // The label folds against the synonyms as well: with an explicit slug the text is that slug, and a label that is
         // another tag's synonym would otherwise create a second tag beside it - the one Create refuses with 409 (B-351).
+        // A label without letters or digits folds to "", like an emoji synonym; empty must not match empty (B-353).
         var labelSlug = InterestSlug.From(newLabel);
         await db.InterestTags.LoadAsync(ct);
         var byLabelOrSynonym = db.InterestTags.Local.FirstOrDefault(t => t.Label == newLabel)
-            ?? db.InterestTags.Local.FirstOrDefault(t => t.Synonyms.Any(s => InterestSlug.From(s) is var x && (x == slug || x == labelSlug)));
+            ?? db.InterestTags.Local.FirstOrDefault(t => t.Synonyms.Any(s => InterestSlug.From(s) is var x && (x == slug || (labelSlug.Length > 0 && x == labelSlug))));
         if (byLabelOrSynonym is not null) return byLabelOrSynonym;
 
         // Create it. Careful: the tag only hangs in the ChangeTracker here - the caller saves.

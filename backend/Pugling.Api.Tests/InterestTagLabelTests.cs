@@ -282,6 +282,70 @@ public class InterestTagLabelTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal([ownerId], interests!.Select(i => i.GetProperty("tagId").GetInt32()));
     }
 
+    /// <summary>
+    /// B-353: a label without letters or digits folds to an empty slug, and so does an emoji synonym. Empty must not
+    /// equal empty - the interest is its own tag, not the one that happens to carry "⚽". Red if the label is compared
+    /// against synonyms without a guard: the interest lands on the foreign tag.
+    /// </summary>
+    [Fact]
+    public async Task Interesse_Ohne_Buchstaben_Trifft_Kein_Emoji_Synonym()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var ownerId = await TestApi.IdAsync(await father.PostAsJsonAsync(Root,
+            new { label = TestApi.UniqueName("Fussball"), synonyms = new[] { "⚽" } }));
+        var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = "Emoji-Interesse", pin = "4711" }));
+
+        var gaming = $"gaming-{Guid.NewGuid():N}";
+
+        (await father.PutAsJsonAsync($"/api/v1/supervisor/children/{childId}/interests",
+            new { interests = new[] { new { slug = gaming, label = "🎮", weight = 2 } } }))
+            .EnsureSuccessStatusCode();
+
+        // Positive on purpose: "not the owner" would stay green if another empty-folding synonym caught the interest.
+        var interests = await father.GetFromJsonAsync<List<JsonElement>>($"/api/v1/supervisor/children/{childId}/interests");
+        Assert.Equal([gaming], interests!.Select(i => i.GetProperty("slug").GetString()));
+        Assert.DoesNotContain(ownerId, interests!.Select(i => i.GetProperty("tagId").GetInt32()));
+    }
+
+    /// <summary>
+    /// B-354, the slug half of B-351 decision 1: a synonym that is another tag's slug. The tag is renamed, so its label no
+    /// longer folds to its slug and only the slug can catch the synonym. Red if the clash check leaves the slug out (201).
+    /// </summary>
+    [Fact]
+    public async Task Synonym_Das_Ein_Fremder_Slug_Ist_Wird_Abgewiesen()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var (renamedId, _) = await RenamedTagAsync(creator);
+        var slug = (await creator.GetFromJsonAsync<JsonElement>($"{Root}/{renamedId}")).GetProperty("slug").GetString()!;
+
+        var response = await creator.PostAsJsonAsync(Root,
+            new { label = TestApi.UniqueName("Kicker"), synonyms = new[] { slug.Replace('-', ' ').ToUpperInvariant() } });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Equal("duplicate_interest_tag", await CodeAsync(response));
+    }
+
+    /// <summary>
+    /// B-354, B-351 decision 2 by slug: a synonym the tag already carries counts as carried in another spelling as well.
+    /// The resent spelling differs beyond case (a hyphen for the space), so a raw-text comparison is red whether it is
+    /// case-sensitive or not (409).
+    /// </summary>
+    [Fact]
+    public async Task Gefuehrtes_Synonym_In_Anderer_Schreibweise_Bleibt_Speicherbar()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var label = TestApi.UniqueName("Rugby");
+        await TestApi.IdAsync(await creator.PostAsJsonAsync(Root, new { label }));
+        var id = await TestApi.IdAsync(await creator.PostAsJsonAsync(Root, new { label = TestApi.UniqueName("Ovalball") }));
+        await SetSynonymsDirectlyAsync(id, label.ToLowerInvariant());
+
+        var response = await creator.PatchAsJsonAsync($"{Root}/{id}",
+            new { synonyms = new[] { label.Replace(' ', '-').ToUpperInvariant() } });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
     /// <summary>Writes synonyms past the API - for clashes that only old data can carry.</summary>
     private async Task SetSynonymsDirectlyAsync(int tagId, params string[] synonyms)
     {

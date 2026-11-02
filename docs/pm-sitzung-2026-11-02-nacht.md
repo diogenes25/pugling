@@ -87,3 +87,37 @@ ausliefern können. Bemerkt, Lauf abgebrochen, Server beendet, neu gestartet. (3
 - **(AP)** Tor im Mutanten-Werkzeug: ein Mutanten-Lauf verweigert den Start, solange auf `:5200`/`:5173` ein Server lauscht
   (der E2E-Server baut aus denselben Quellen). Mechanisch billig; heute gibt es kein gemeinsames Mutanten-Skript im Repo,
   also wäre es zugleich dessen Einführung.
+
+## Lauf M, Teil 2 — Ein Text benennt genau ein Schlagwort, auch ohne Buchstaben (B-353, B-354)
+
+**Sprint-Ziel:** *Der Vater, der dem Kind ein Interesse mit einem Emoji gibt, bekommt ein eigenes Schlagwort; der Creator
+kann sich darauf verlassen, dass jede Hälfte der Synonym-Regel von einem Test gehalten wird.*
+
+**Umfang:** [B-353](backlog/B-353-leerer-label-slug-trifft-emoji-synonym.md) und
+[B-354](backlog/B-354-synonym-gegen-fremden-slug-ungetestet.md), beide aus der Nachschau von Teil 1, `Defekt`, XS, unter
+Freigabe 1 gegrillt. Ein Thema: die Synonym-Regel aus B-351.
+
+**Entwickler-Brief:** Ein Leer-Wächter am Label-Vergleich in `EnsureAsync`; zwei Tests für die bisher ungetragenen Teile
+von B-351 (Slug in der Konfliktmenge, „bereits geführt" per Slug). Testweg: `InterestTagLabelTests`, Mutanten je Teil.
+
+### Iteration
+
+- **B-353:** rote Probe **1 failed** (erwartet 1); nach dem Fix grün; Mutante „ohne Leer-Wächter" **1 failed**.
+- **B-354:** beide Tests vor jeder Mutante grün (Testlücke); Mutante „Slug fehlt in der Konfliktmenge" **1 failed**,
+  „`carried` per Rohtext" **1 failed**.
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `pugling-reviewer` 🟡 | AK 2 von B-354 fängt nur die case-sensitive Rohtext-Mutante; `OrdinalIgnoreCase` bliebe grün | erneut geschickte Schreibweise weicht über Groß/Klein hinaus ab (Bindestrich); beide Mutanten **1 failed** | ja |
+| 2 | `pugling-reviewer` 🟢 | B-353-Zusicherung nur negativ („nicht der Eigentümer") | positive Zusicherung auf den eigenen Slug ergänzt; Mutante weiter **1 failed** | nein (🟢) |
+
+Geprüft und sauber laut Prüfer: kein Geschwisterpfad mit demselben Leer-Problem (`SynonymClashAsync`, `SynonymTakenAsync`,
+Create/Update, `EnsureManyAsync`, `Pending`). **Zähler Teil 2: 1.** Volle Suite danach **1045/1045**. Ein Lauf des
+Test-Tors fiel während einer Mutanten-Probe rot (die Mutante stand im Quelltext) – der rote Fall war genau die Probe; nach
+der Wiederherstellung grün.
+
+**Rollengang:** Vater maschinell – der B-353-Test setzt das Kind-Interesse über die echte Supervisor-Route; Creator über die
+Schlagwort-Tests der Creator-Route. Sohn als Regressionszeuge. E2E-Gesamtlauf **102 passed** (`exit=0`, gestartet nach dem
+letzten Code-Edit). **B-353, B-354 abgenommen.**
