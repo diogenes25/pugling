@@ -12,6 +12,7 @@ quelle: Nachschau zu Lauf N, Teil 2 in Lauf O (docs/pm-sitzung-2026-11-02-nacht.
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-03"
 entgangen_bei: []
 wartet_auf: ""
 ---
@@ -34,7 +35,7 @@ sagt, was fehlt, statt an einer Zeile zu warten, die nie kommt.
 
 ## Ist-Stand am Code (Lauf P, Stand `299d216`)
 
-1. `frontend/e2e/helpers.ts:47` macht aus `(await response.json()).id` ohne Prüfung einen String.
+1. `frontend/e2e/helpers.ts:48` macht aus `(await response.json()).id` ohne Prüfung einen String.
 2. `helpers.ts:42-43` wartet höchstens 10 s auf die POST-Antwort; `playwright.config.ts:22` setzt das Expect-Timeout auf 10 s.
 3. `responsive-vater.spec.ts:94-97` nimmt `plans[0]` bzw. `kids[0]`.
 
@@ -68,3 +69,4 @@ bräuchte einen gebrochenen Server (pm-loop Step 6: solche Fehlerzustände sind 
   Zweige sind mit dem Seed unerreichbar (Schätzung). Geprüft per `tsc --strict` über `helpers.ts` und die Spec (sauber).
 - **2026-11-03** — Review `frontend-reviewer`: sauber für B-357 (Antworttext in der Meldung, Index mit Begründung, Grund bei leerem Vater); Kommentar in `responsive-vater.spec.ts` auf Deutsch wie die Umgebung.
 - **2026-11-03** — Abnahme Lauf P, Teil 1: Vitest **619/619**, `tsc -b` sauber, E2E-Gesamtlauf **103 passed** (`exit=0`, nach dem letzten Code-Edit gestartet). Rollengang: Der Entwickler ist die Rolle – die Specs über `createChild` (elf) und die Tablet-Spec liefen grün; Creator, Vater, Sohn Regressionszeugen. **Abgenommen**, Commit siehe Protokoll ([Lauf P](../pm-sitzung-2026-11-03-nacht.md)).
+- **2026-11-03** — Nachschau in Lauf P, Teil 2 (frischer `frontend-reviewer`, `git show bffb583 -- frontend`, read-only): **sauber.**** Geprüft: die Meldung trägt den Antworttext, der leere Vater nennt seinen Grund, das Fehlen einer roten Probe ist begründet. Ist-Stand-Zeile `:47` → `:48` berichtigt (🟢).

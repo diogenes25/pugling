@@ -76,7 +76,7 @@ export function findeBedingteLiveRegionen(datei: string, quelle: string): string
   for (let m = tag.exec(text); m; m = tag.exec(text)) {
     if (!LIVE.test(m[0]) && !BAUSTEIN.test(m[0])) continue;
     const zeile = zeileVon(m.index);
-    const davor = text.slice(Math.max(0, m.index - 200), m.index).replace(/\{\/\*[\s\S]*?\*\/\}/g, "").trimEnd();
+    const davor = text.slice(Math.max(0, m.index - 200), m.index).replace(/\{?\/\*[\s\S]*?\*\/\}?|\/\/[^\n]*/g, "").trimEnd();
     if (/(&&|\?|:)\s*\(?\s*$/.test(davor)) {
       funde.push(`${datei}:${zeile + 1} steht hinter einer Bedingung (${davor.slice(-30).replace(/\s+/g, " ").trim()}) ${m[0]}`);
       continue;
@@ -170,11 +170,10 @@ describe("Live-Regionen stehen vor ihrem Text im DOM (B-134)", () => {
     ["Ternär", `{busy ? <span aria-live="polite">…</span> : null}`, 1],
     // B-272: rot, wenn `:` aus der Bedingungs-Regex fällt.
     ["Ternär, Region im Else-Zweig", `{busy ? null : <p role="status">fertig</p>}`, 1],
-    // B-272: rot, wenn JSX-Kommentare vor dem Tag nicht entfernt werden – dann steht `*/}` davor statt `&&`.
-    ["&& mit JSX-Kommentar davor", `{ok && (
-  {/* warum */}
-  <div role="status">x</div>
-)}`, 1],
+    // B-359: rot, wenn Kommentare vor dem Tag nicht entfernt werden – dann steht `warum` bzw. `*/` davor statt `&&`. Nur
+    // diese zwei Formen kompilieren zwischen `&&` und dem Tag (B-272 maß an `{/* … */}`, das dort kein gültiges TSX ist).
+    ["&& mit Zeilenkommentar davor", `{ok && ( // warum\n  <div role="status">x</div>\n)}`, 1],
+    ["&& mit Blockkommentar davor", `{ok && /* warum */ <div role="status">x</div>}`, 1],
     // B-272: rot, wenn die Pfeil-Form aus dem Funktionskopf fällt – dann sucht die Erkennung bis in die Funktion davor.
     ["return null in der Funktion vor einer Pfeil-Komponente",
       `function A() { return null; }

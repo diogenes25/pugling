@@ -12,6 +12,7 @@ quelle: Nachschau zu Lauf N, Teil 1 (docs/pm-sitzung-2026-11-02-nacht.md)
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-03"
 entgangen_bei: []
 wartet_auf: ""
 ---
@@ -40,13 +41,13 @@ halten, was sie ansagen, und ihre Tests das auch festhalten.
 
 ## Ist-Stand am Code (Lauf P, Stand `299d216`)
 
-1. `frontend/src/lib/ui.ts:56-57` fokussiert und klickt `radios[to]` auch bei `to === at`; `VaterWizard.tsx:419-421` setzt im
+1. `frontend/src/lib/ui.ts:55-56` fokussiert und klickt `radios[to]` auch bei `to === at`; `VaterWizard.tsx:419-421` setzt im
    `onClick` `setTouchedMode(true)` – der Effekt `:159` belegt danach nicht mehr vor.
 2. `lib/ui.test.ts` prüft `defaultPrevented` nur für Tab (`false`), für keine Pfeiltaste.
 3. `radioGroups.test.ts:21` gibt `[]` für jede Datei mit `type="radio"`; `PlanPositions.tsx:571/581` ist die einzige solche.
    `role={"radio"}` matcht `role="radio(group)?"` nicht.
-4. `SohnTest.tsx:68` ruft nach dem Verlassen nur `refreshWallet()`; `setStreak` (`:74`) nur im Weg mit Ergebnis.
-5. `SohnTest.test.tsx:333-334` prüft `celebrate` negativ, `submitTest` gar nicht.
+4. `SohnTest.tsx:68` ruft nach dem Verlassen nur `refreshWallet()`; `setStreak` (`:73`) nur im Weg mit Ergebnis.
+5. `SohnTest.test.tsx:332` prüft `celebrate` negativ, `submitTest` gar nicht.
 
 ## Die echte Lücke
 
@@ -86,3 +87,4 @@ E2E-Gesamtlauf als Regression.
   roten Proben. Vitest **619/619**, `tsc -b` sauber.
 - **2026-11-03** — Review `frontend-reviewer`: 🟡 die Scroll-Hälfte von Entscheidung 1 trug keinen Test – die naheliegende Mutante „Wächter `to === at` vor `preventDefault`" blieb grün, weil der AK-1-Fall nur Wahl und Fokus prüfte und der `preventDefault`-Fall nie auf `to === at` traf. Behoben: AK-1-Fall prüft `defaultPrevented` an Home auf der ersten und am Pfeil bei einer einzigen Option; Mutante **1 failed** (zählt). 🟢 der Wächter prüfte nicht, wo der Helfer sitzt (Anker am Gruppen-Tag) → Selbsttest „Helfer an einem Kind", Mutante „ohne Anker" **1 failed** (ohne Zählung). Englische Kommentare im deutsch kommentierten Umfeld auf Deutsch umgestellt. Vitest **619/619**.
 - **2026-11-03** — Abnahme Lauf P, Teil 1: Vitest **619/619**, `tsc -b` sauber, E2E-Gesamtlauf **103 passed** (`exit=0`, nach dem letzten Code-Edit gestartet). Rollengang: Vater maschinell – die Radiogruppen des Vater-Webs fahren die Specs mit Tastatur und Klick (`radiogruppen`-Wächter über alle Quellen, Assistent in seinen Specs); Sohn über `SohnTest.test.tsx` (Verlassen mit fertigem Versuch, Kopfzeile bekommt die Serie) und die Klausur-Specs im Gesamtlauf; Creator Regressionszeuge. Gerätecheck aus B-352 bleibt offen (Screenreader). **Abgenommen**, Commit siehe Protokoll ([Lauf P](../pm-sitzung-2026-11-03-nacht.md)).
+- **2026-11-03** — Nachschau in Lauf P, Teil 2 (frischer `frontend-reviewer`, `git show bffb583 -- frontend`, read-only): **Entgleitung** → [B-360](B-360-guthaben-nach-verlassener-klausur-ungetestet.md) (🟡: die Guthaben-Hälfte von Entscheidung 3 ohne Zusicherung, im selben Sprint behoben).** Geprüft: `radioGroupKeys` – Mutanten „Wächter davor", „nur first/last", „nur Home" fallen an `ui.test.ts:68-83`; `finish` nach dem Verlassen – ein Fehlschlag von `overview` landet im `catch` des Aufrufers, keine unbehandelte Ablehnung; Radiogruppen-Wächter – „ganze Datei ausnehmen", „ohne Anker", „ohne Faltung" je rot, `PlanPositions.tsx:571` einzige native Gruppe. Ist-Stand-Zeilen um eins verschoben → berichtigt (🟢, ohne Zählung).

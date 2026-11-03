@@ -1,15 +1,15 @@
 ---
-tags: [typ/story, status/idee, bereich/frontend, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/supervisor]
 aliases: [Feste Feldhilfe schließt bei Tastatur-Resize, Popover zeigt nach Layout-Verschiebung aufs falsche Feld]
-status: idee
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
+groesse: S
 wo: frontend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: frontend-reviewer zu B-263 in Lauf A (docs/pm-sitzung-2026-10-26-tag.md)
-unverifiziert: true
+unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
@@ -37,7 +37,58 @@ Seit [B-263](B-263-info-popover-steht-am-rechten-rand-ueber.md) steht das ⓘ-Po
 **In Lauf A bewusst nicht behoben:** Punkt 1 ist ungemessen, und die Zielbrowser lösen den Fall nicht aus. Jede
 Behebung hätte als Fund gezählt (Freigabe 3), der Zähler stand bei 4.
 
+## User Story
+
+Als **Vater** möchte ich, dass ein aufgeklapptes ⓘ immer am Feld steht, zu dem es gehört – es schließt, sobald der Knopf
+wandert, und bleibt offen, wenn sich nur das Fenster ändert –, damit ich keine Erklärung neben dem falschen Feld lese.
+
+## Ist-Stand am Code (Lauf P, Stand `bffb583`)
+
+- `frontend/src/components/InfoHint.tsx:31-53`: `scroll` (capture) schließt nur, wenn der Knopf sich bewegt hat
+  (Vergleich `left` und `top`); `resize` ruft `close` ohne Prüfung (`:46`).
+- Nichts reagiert auf Inhalt, der über dem Knopf aufgeht, ohne dass gescrollt wird.
+- `e2e/feldhilfe-lage.spec.ts` prüft senkrechtes Scrollen (`:166-183`) und eine Breitenänderung, kein waagrechtes Scrollen.
+- **Gemessen** (rote Proben, neue Fälle gegen den Ausgang): Layout-Verschiebung **1 failed**, Größenänderung nur der Höhe
+  **1 failed**, waagrechtes Scrollen **1 passed** (Testlücke).
+
+## Die echte Lücke
+
+Punkt 1 und 2 wie beschrieben; Punkt 1 ist in Chromium nicht über die Tastatur, aber über eine reine Höhenänderung
+reproduzierbar. Von Punkt 3 bleibt das waagrechte Scrollen; „nie über den linken Rand" greift bei keiner realen Breite.
+
+## Entscheidungen (autonom gegrillt, Freigabe 1 – `Defekt`)
+
+1. **Eine Anker-Prüfung je Frame (`requestAnimationFrame`) ersetzt den `scroll`-Listener.** Sie fängt Scrollen in jedem
+   Rahmen, auch nur waagrecht, und Inhalt, der darüber aufgeht. *Kosten:* ein `getBoundingClientRect` je Frame, solange
+   ein Popover offen ist (höchstens eins); ein Schließen kommt bis zu einen Frame später als mit `scroll`.
+2. **`resize` schließt nur, wenn der Knopf sich bewegt hat; sonst wird neu ausgerichtet** (Zähler `measureTick` am
+   Mess-Effekt). Eine zusätzliche Breiten-Bedingung entfällt: gemessen grün als Mutante, und das Neumessen richtet die
+   Breite ohnehin neu aus. *Kosten:* keine bekannten.
+3. **„Nie über den linken Rand" bleibt ungeprüft**, begründet: das Popover ist höchstens 320 px breit, unter 336 px Fenster
+   gibt es kein Vater-Web-Layout, das getestet wird; eine Zusicherung dort wäre ein künstliches Fenster. Der Wächter für
+   `.up` bleibt, wie er ist.
+
+## Akzeptanzkriterien
+
+1. Inhalt, der über dem Knopf aufgeht, schließt ein offenes ⓘ.
+2. Waagrechtes Scrollen allein schließt es.
+3. Eine Größenänderung, die den Knopf nicht bewegt, lässt es offen und richtet es so aus, dass es im Fenster steht.
+4. Die bestehenden Fälle (Scrollen von vor dem Öffnen, Scrollen und Breitenänderung schließen) bleiben grün.
+
+## Schätzung
+
+`S`, frontend. Testweg: drei neue Fälle in `feldhilfe-lage.spec.ts`, Mutanten je AK und Entscheidungsteil.
+
 ## Verlauf
 
 - **2026-10-26** — angelegt aus dem `frontend-reviewer` zu B-263 in Lauf A
   ([Protokoll](../pm-sitzung-2026-10-26-tag.md)), Funde 2–4 und die Restzeilen der Mutanten-Tabelle.
+- **2026-11-03** — Lauf P, Teil 2: ausformuliert, autonom gegrillt (Freigabe 1), geschätzt, gebaut. Rote Proben: AK 1 **1
+  failed**, AK 3 **1 failed** (erwartet je 1); AK 2 **1 passed** (Testlücke). Nach dem Bau `feldhilfe-lage.spec.ts` **9
+  passed**. Mutanten: „nur `top` verglichen" **1 failed** (AK 2, `:204`); „ohne Anker-Wächter je Frame" rot an AK 1 (`:220`),
+  AK 2 und den Scroll-Fällen; „resize schließt immer" **1 failed** (AK 3, `:240`); „ohne Neuausrichtung" **1 failed** (AK
+  3, `:242`, erst nachdem der Fall bei 1000 px Höhe startet – bei 700 px klappte das Popover nach oben, und die Vorbedingung
+  „stünde unten über" hielt nicht); „Breite nicht geprüft" grün → Bedingung gestrichen (Entscheidung 2). Vitest **620/620**,
+  `tsc -b` sauber.
+- **2026-11-03** — Review `frontend-reviewer`: 🟡 die Bewegungsprüfung in `onResize` sei vermutlich ungetragen (rAF schließe vorher) → **gemessen statt vermutet:** Mutante „`onResize` ohne `moved()`" **1 failed** am Breitenfall – getragen, kein Code geändert (ohne Zählung). 🟡 der Breitenfall prüfte das Layout statt der Regel → Vorbedingung „der Knopf wandert" (zählt). 🟡 Banner- und Waagrecht-Fall ohne Vorbedingung (Scroll-Anchoring könnte das `prepend` ausgleichen) → Vorbedingungen „der Knopf rutscht" bzw. „nur waagrecht gewandert" (zählt). 🟢 Dateikopf und Wartezeit-Kommentar nach dem entfernten `scroll`-Listener nachgezogen, `imFenster` per `expect.poll` (ohne Zählung). Danach `feldhilfe-lage.spec.ts` **9 passed**.
+- **2026-11-03** — Abnahme Lauf P, Teil 2: Vitest **620/620**, `tsc -b` sauber, E2E-Gesamtlauf **107 passed** (`exit=0`, nach dem letzten Code-Edit gestartet). Rollengang: Vater maschinell – `feldhilfe-lage.spec.ts` (neun Fälle) öffnet das ⓘ im echten Browser und bewegt Knopf, Rahmen und Fenster; Creator und Sohn Regressionszeugen. Gerätecheck offen: die Bildschirmtastatur eines echten Handys (Firefox Android) einmal gegen ein offenes ⓘ. **Abgenommen**, Commit siehe Protokoll ([Lauf P](../pm-sitzung-2026-11-03-nacht.md)).

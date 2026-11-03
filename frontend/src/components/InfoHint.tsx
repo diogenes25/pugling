@@ -20,21 +20,35 @@ export function InfoHint({ topic }: { topic: HelpTopic }) {
   const popRef = useRef<HTMLSpanElement | null>(null);
   // Lage im Fenster (B-263): gemessen beim Öffnen, `null` bis dahin.
   const [place, setPlace] = useState<Placement | null>(null);
-  // Wo der Knopf beim Messen stand – der Bezug, an dem Scrollen erkannt wird.
+  // Wo der Knopf beim Messen stand – der Bezug, an dem Bewegung erkannt wird.
   const anchorRef = useRef<{ left: number; top: number } | null>(null);
+  // Neues Messen bei unbewegtem Knopf (Größenänderung nur der Höhe): ein Zähler, an dem der Mess-Effekt hängt.
+  const [measureTick, setMeasureTick] = useState(0);
 
   // Escape schließt, Klick daneben schließt – ein Popover, das offen bleibt, verdeckt das nächste Feld.
-  // Scrollen und Größenänderung schließen ebenfalls: das Popover steht fest zum Fenster und liefe sonst vom
-  // Knopf weg. `capture`, weil `scroll` nicht hochblubbert – so meldet sich auch ein scrollender Rahmen.
-  // Geschlossen wird nur, wenn der Knopf sich tatsächlich bewegt hat: `scroll` kommt erst im nächsten Frame an,
-  // und ein Scrollen von VOR dem Öffnen (der Browser rollt den Knopf ins Bild) schlösse es sonst sofort wieder.
+  // Das Popover steht fest zum Fenster und hängt nur über seinen Anker am Knopf: bewegt sich der Knopf, liefe es
+  // vom Feld weg. Darum prüft es je Frame, ob der Knopf noch dort steht, wo er beim Messen stand – das fängt
+  // Scrollen in jedem Rahmen (auch nur waagrecht) und Inhalt, der darüber aufgeht, ohne dass gescrollt wird (B-273).
+  // Ein Scrollen von VOR dem Öffnen (der Browser rollt den Knopf ins Bild) schließt es nicht: gemessen wird danach.
+  // Eine Größenänderung schließt nur, wenn sie den Knopf bewegt; sonst – etwa die Bildschirmtastatur, die in manchen
+  // Browsern das Layout-Fenster niedriger macht – wird es am selben Knopf neu ausgerichtet.
   useEffect(() => {
     if (!open) return;
     const close = () => setOpen(false);
-    const onScroll = () => {
+    const moved = () => {
       const at = anchorRef.current;
       const now = wrapRef.current?.getBoundingClientRect();
-      if (!at || !now || Math.abs(now.left - at.left) > 1 || Math.abs(now.top - at.top) > 1) close();
+      return !at || !now || Math.abs(now.left - at.left) > 1 || Math.abs(now.top - at.top) > 1;
+    };
+    let frame = 0;
+    const watch = () => {
+      if (anchorRef.current && moved()) { close(); return; }
+      frame = requestAnimationFrame(watch);
+    };
+    frame = requestAnimationFrame(watch);
+    const onResize = () => {
+      if (moved()) close();
+      else setMeasureTick((n) => n + 1);
     };
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
     const onDown = (e: MouseEvent) => {
@@ -42,13 +56,12 @@ export function InfoHint({ topic }: { topic: HelpTopic }) {
     };
     window.addEventListener("keydown", onKey);
     window.addEventListener("mousedown", onDown);
-    window.addEventListener("scroll", onScroll, { capture: true, passive: true });
-    window.addEventListener("resize", close);
+    window.addEventListener("resize", onResize);
     return () => {
+      cancelAnimationFrame(frame);
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("mousedown", onDown);
-      window.removeEventListener("scroll", onScroll, { capture: true });
-      window.removeEventListener("resize", close);
+      window.removeEventListener("resize", onResize);
     };
   }, [open]);
 
@@ -56,16 +69,16 @@ export function InfoHint({ topic }: { topic: HelpTopic }) {
   // 768-px-Tablet scrollte dadurch die ganze Seite seitlich (B-68), und in jedem Rahmen mit beschnittenem
   // Überlauf (`.vater-main`, der `overflowX`-Rahmen einer Tabelle) wurde es abgeschnitten – auch unten, wo
   // der Rahmen niedriger ist als das Popover. `position: fixed` hebt es aus allen diesen Rahmen; die Lage
-  // rechnet es darum selbst aus den Maßen des Knopfs, einmal je Öffnen, bevor der Browser zeichnet.
+  // rechnet es darum selbst aus den Maßen des Knopfs, je Öffnen und je Größenänderung, bevor der Browser zeichnet.
   useLayoutEffect(() => {
     if (!open) { setPlace(null); return; }
     const pop = popRef.current;
     const wrap = wrapRef.current;
     if (!pop || !wrap) return;
     const btn = wrap.getBoundingClientRect();
+    const viewW = document.documentElement.clientWidth;
     anchorRef.current = { left: btn.left, top: btn.top };
     const { width, height } = pop.getBoundingClientRect();
-    const viewW = document.documentElement.clientWidth;
     const viewH = document.documentElement.clientHeight;
     // Ruhelage links am Knopf; nach links verschoben, so weit es rechts übersteht – nie über den linken
     // Rand hinaus: ist das Fenster zu schmal, bleibt wenigstens der Textanfang lesbar.
@@ -77,7 +90,7 @@ export function InfoHint({ topic }: { topic: HelpTopic }) {
     // scrollen schlösse es ja. Höher als das Fenster wird es nie – `max-height` in index.css, es scrollt dann selbst.
     const top = Math.max(EDGE, Math.min(up ? btn.top - GAP - height : below, viewH - EDGE - height));
     setPlace({ left, top, up });
-  }, [open]);
+  }, [open, measureTick]);
 
   return (
     <span className="info-hint" ref={wrapRef}>

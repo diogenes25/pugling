@@ -11,8 +11,9 @@ import { vaterLogin } from "./helpers";
  * 2. Steht der Knopf am unteren Fensterrand, klappt es über den Knopf (AK 1, „dort klappt es über den Knopf").
  * 3. Passt es weder unten noch oben (Querformat), steht es trotzdem ganz im Fenster – herscrollen ginge nicht;
  *    ist es höher als das Fenster, scrollt es in sich.
- * 4. Scrollen und Größenänderung schließen es – sonst liefe es, fest am Fenster, vom Knopf weg. Ein Scrollen von
- *    VOR dem Öffnen schließt es nicht.
+ * 4. Jede Bewegung des Knopfs schließt es (Scrollen, auch nur waagrecht, Inhalt darüber, eine Größenänderung, die ihn
+ *    verschiebt) – sonst liefe es, fest am Fenster, vom Knopf weg. Ein Scrollen von VOR dem Öffnen schließt es nicht,
+ *    und eine Größenänderung, die den Knopf stehen lässt, richtet es neu aus (B-273).
  */
 
 const FATHER = { id: "1", pin: "0000" };
@@ -158,7 +159,7 @@ test("ein Scrollen von vor dem Öffnen schließt das ⓘ nicht", async ({ page }
   const unterDemFalz = await btn.evaluate((el) => el.getBoundingClientRect().top > document.documentElement.clientHeight);
   expect(unterDemFalz).toBe(true);
   await openHint(btn);
-  // Zwei Frames abwarten: so lange braucht ein nachgereichtes `scroll`, um anzukommen.
+  // Zwei Frames abwarten: so lange braucht der Anker-Wächter (je Frame, B-273), um ein Scrollen nach dem Messen zu sehen.
   await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
   await expect(page.locator(".info-hint-pop")).toBeVisible();
 });
@@ -180,6 +181,72 @@ test("Scrollen und Größenänderung schließen ein offenes ⓘ", async ({ page 
   await expect(btn).toHaveAttribute("aria-expanded", "false");
 
   await openHint(btn);
+  const vorher = await btn.evaluate((el) => el.getBoundingClientRect().left);
   await page.setViewportSize({ width: 700, height: 600 });
+  // Vorbedingung (B-273): seit Entscheidung 2 schließt nur eine Größenänderung, die den Knopf bewegt.
+  expect(await btn.evaluate((el) => el.getBoundingClientRect().left), "Vorbedingung: der Knopf wandert").not.toBe(vorher);
   await expect(page.locator(".info-hint-pop")).toHaveCount(0);
+});
+
+// B-273: das Popover steht fest zum Fenster und hängt nur über seinen Anker am Knopf. Jede Bewegung des Knopfs muss es
+// schließen, auch eine ohne senkrechtes Scrollen; eine Größenänderung, die den Knopf nicht bewegt, darf es nicht.
+test("waagrechtes Scrollen allein schließt ein offenes ⓘ", async ({ page }) => {
+  await page.setViewportSize({ width: 768, height: 600 });
+  await page.goto("/vater/exercises/neu");
+  // Ein breiter Inhalt, damit `.vater-main` seitlich scrollen kann (B-276) – das Seed-Formular tut es nie.
+  await page.locator(".vater-main").evaluate((main) => {
+    const breit = document.createElement("div");
+    breit.style.minWidth = "1600px";
+    breit.textContent = "breit";
+    main.appendChild(breit);
+  });
+  const btn = page.locator(".vater-main .info-hint-btn").first();
+  await openHint(btn);
+  // Rot, wenn nur `top` verglichen wird: waagrecht wandert der Knopf, senkrecht nicht.
+  const vorher = await btn.evaluate((el) => el.getBoundingClientRect());
+  await page.locator(".vater-main").evaluate((main) => { main.scrollLeft += 3; });
+  const nachher = await btn.evaluate((el) => el.getBoundingClientRect());
+  expect([nachher.left !== vorher.left, nachher.top === vorher.top], "Vorbedingung: nur waagrecht gewandert").toEqual([true, true]);
+  await expect(page.locator(".info-hint-pop")).toHaveCount(0);
+});
+
+test("ein Inhalt, der über dem Knopf aufgeht, schließt ein offenes ⓘ", async ({ page }) => {
+  await page.setViewportSize({ width: 768, height: 600 });
+  await page.goto("/vater/exercises/neu");
+  const btn = page.locator(".vater-main .info-hint-btn").first();
+  await openHint(btn);
+  // Wie ein nachgeladener Banner: der Knopf rutscht, ohne dass gescrollt wird. Rot, solange nur `scroll` und `resize`
+  // das Popover schließen – dann zeigt es auf die Stelle, an der der Knopf vorher stand.
+  const vorher = await btn.evaluate((el) => el.getBoundingClientRect().top);
+  await page.locator(".vater-main").evaluate((main) => {
+    const banner = document.createElement("div");
+    banner.style.height = "60px";
+    banner.textContent = "Banner";
+    main.prepend(banner);
+  });
+  // Vorbedingung: der Knopf ist wirklich gerutscht (ein gescrollter Rahmen gliche das `prepend` per Scroll-Anchoring aus).
+  expect(await btn.evaluate((el) => el.getBoundingClientRect().top), "Vorbedingung: der Knopf rutscht").not.toBe(vorher);
+  await expect(page.locator(".info-hint-pop")).toHaveCount(0);
+});
+
+test("eine Größenänderung, die den Knopf nicht bewegt, lässt ein offenes ⓘ offen und im Fenster", async ({ page }) => {
+  // Hoch genug, dass das Popover unter dem Knopf steht – erst dann kann ein niedrigeres Fenster es unten abschneiden.
+  await page.setViewportSize({ width: 768, height: 1000 });
+  await page.goto("/vater/exercises/neu");
+  const btn = page.locator(".vater-main .info-hint-btn").first();
+  await openHint(btn);
+  const vorher = await btn.evaluate((el) => el.getBoundingClientRect().top);
+  // Wie die Bildschirmtastatur in Browsern, die das Layout-Fenster verkleinern: nur die Höhe ändert sich – und zwar so
+  // weit, dass das Popover an seiner alten Stelle unten überstünde. Sonst bewiese `imFenster` unten nichts.
+  const unten = await page.locator(".info-hint-pop").evaluate((el) => el.getBoundingClientRect().bottom);
+  const knopfUnten = await btn.evaluate((el) => el.getBoundingClientRect().bottom);
+  const hoehe = Math.floor(unten);
+  expect(hoehe - 8, "Vorbedingung: der Knopf bleibt sichtbar, das alte Popover stünde über").toBeGreaterThan(knopfUnten);
+  await page.setViewportSize({ width: 768, height: hoehe });
+  expect(await btn.evaluate((el) => el.getBoundingClientRect().top), "Vorbedingung: der Knopf steht still").toBe(vorher);
+  await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+  // Rot, wenn `resize` ohne Prüfung schließt.
+  await expect(page.locator(".info-hint-pop")).toBeVisible();
+  // Rot, wenn es nach der Änderung nicht neu ausgerichtet wird und unten übersteht.
+  await expect.poll(() => imFenster(page)).toBe(true);
 });

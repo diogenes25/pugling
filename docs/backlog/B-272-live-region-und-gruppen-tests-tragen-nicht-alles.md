@@ -12,6 +12,7 @@ quelle: frontend-reviewer zu B-134/B-236 in Lauf A (docs/pm-sitzung-2026-10-26-t
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-03"
 entgangen_bei: []
 wartet_auf: ""
 ---
@@ -67,11 +68,12 @@ Liste selbst ab – streicht man einen Namen, verschwindet sein Fall mit, und al
 
 ## Entscheidungen (autonom gegrillt, Freigabe 1 – `Defekt`)
 
-1. **Vier Selbsttest-Fälle** (Else-Zweig, JSX-Kommentar, Pfeil-Komponente in beiden Richtungen) und ein Ausnahmen-Test, der
-   je Eintrag einen **Fund** verlangt.
+1. **Drei Selbsttest-Fälle** (Else-Zweig, JSX-Kommentar, `return null` in der Funktion vor einer Pfeil-Komponente) und ein
+   Ausnahmen-Test, der je Eintrag einen **Fund** verlangt. (Ein vierter Fall wurde im Review gestrichen, siehe Verlauf.)
 2. **`REGION_BAUSTEINE` wird gegen die Quellen geprüft:** jede Komponente, deren eigenes `return` als erstes Element eine
    Region oder einen Baustein liefert, muss in der Liste stehen, und umgekehrt. *Kosten:* ein halber Parser mehr
-   (Funktionskopf in Spalte 0, `return` mit zwei Leerzeichen); eine Pfeil-Komponente mit Region an der Wurzel sähe er nicht.
+   (Funktionskopf in Spalte 0, `return` mit zwei Leerzeichen); eine Pfeil-Komponente, `export default function` und ein
+   Fragment `<>` an der Wurzel sieht er nicht (heute keiner davon mit Region).
 3. **„Freigabe (Startzustand)" bleibt der Gruppenname.** Der Zusatz gehört hier zur Bedeutung: die Gruppe stellt den
    Startzustand ein, nachträglich wird anderswo umentschieden (Kommentar `VaterExerciseCreate.tsx:299-307`). Abweichung von
    B-236 Entscheidung 2, ohne Code. *Kosten:* der Name ist länger als bei den anderen Gruppen.
@@ -101,3 +103,4 @@ Liste selbst ab – streicht man einen Namen, verschwindet sein Fall mit, und al
   `DuplicateHint` beendete den Rumpf zu früh – Rumpfende ist jetzt eine Zeile aus `}` allein. Vitest **619/619**.
 - **2026-11-03** — Review `frontend-reviewer`: 🟢 der Fall „return null in einer Pfeil-Komponente" hatte keine eigene Mutante (unter „ohne Pfeil-Kopf" findet die Suche dasselbe `return null`) → gestrichen, der Gegenfall davor trägt die Regel (ohne Zählung). 🟢 der Kommentar am `REGION_BAUSTEINE`-Test nannte eine ungemessene Hälfte → gemessen: eine neue Komponente `ProbeHinweis` mit `role="status"` an der Wurzel, nicht in der Liste, **1 failed** (ohne Zählung). Vitest **619/619**.
 - **2026-11-03** — Abnahme Lauf P, Teil 1: Vitest **619/619**, `tsc -b` sauber, E2E-Gesamtlauf **103 passed** (`exit=0`, nach dem letzten Code-Edit gestartet). Rollengang: Der Entwickler ist die Rolle – jede Probe mit benannter Mutante; Vater über die Gruppen-Spec im echten Browser (Barrierefreiheitsbaum); Creator und Sohn Regressionszeugen. **Abgenommen**, Commit siehe Protokoll ([Lauf P](../pm-sitzung-2026-11-03-nacht.md)).
+- **2026-11-03** — Nachschau in Lauf P, Teil 2 (frischer `frontend-reviewer`, `git show bffb583 -- frontend`, read-only): **Entgleitung** → [B-359](B-359-live-region-waechter-uebersieht-echte-kommentare.md) (🟡: die Kommentar-Mutante war an ungültigem TSX gemessen; die zwei gültigen Formen blieben unerkannt; im selben Sprint behoben).** Geprüft: `REGION_BAUSTEINE` gegen die Quellen – „`StatusBanner` gestrichen" fällt über `SavedNotice`, die Gleichheit fällt in beide Richtungen; `TruncationHint` – `return null` und Neu-Einhängen je rot; Gruppen-Spec – vor jedem `toHaveCount(0)` eine positive Sichtbarkeit. Entscheidungstexte (Fallzahl, Kosten von `wurzelRegionen`) nachgezogen (🟢).

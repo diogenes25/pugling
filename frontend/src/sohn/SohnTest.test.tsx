@@ -17,11 +17,12 @@ const answerTest = vi.fn();
 const submitTest = vi.fn();
 const celebrate = vi.fn();
 const setStreak = vi.fn();
+const refreshWallet = vi.fn();
 
 // Ein echter Skin: der Ergebnis-Bildschirm zeichnet das Maskottchen (der Neustart-Fall erreicht ihn).
 const { SKINS } = await import("../lib/skins");
 vi.mock("./SohnApp", () => ({
-  useSohn: () => ({ planId: 3, refreshWallet: () => {}, setStreak: (...a: unknown[]) => setStreak(...a), skin: SKINS[0], celebrate: (...a: unknown[]) => celebrate(...a) }),
+  useSohn: () => ({ planId: 3, refreshWallet: () => refreshWallet(), setStreak: (...a: unknown[]) => setStreak(...a), skin: SKINS[0], celebrate: (...a: unknown[]) => celebrate(...a) }),
 }));
 vi.mock("../lib/api", async (importOriginal) => {
   const original = await importOriginal<typeof import("../lib/api")>();
@@ -307,7 +308,7 @@ describe("SohnTest im Wartebild", () => {
   // das Kind nicht von einer anderen Seite zurückholen (404 → Basis) und nicht dort feiern (fertig → Ergebnis). Rot, wenn
   // der Start nach dem Verlassen weiterwirkt: dann steht wieder BASIS statt SHOP bzw. `celebrate` wurde gerufen.
   // Der fertige Versuch wird trotzdem abgegeben, und die Kopfzeile zeigt danach seine Serie (B-356): rot, wenn `finish`
-  // nach dem Verlassen nur das Guthaben auffrischt – oder wenn die Abgabe gar nicht erreicht wird und der Fall leer bleibt.
+  // nach dem Verlassen nur eines von Guthaben und Serie auffrischt – oder wenn die Abgabe gar nicht erreicht wird und der Fall leer bleibt.
   it.each([
     ["ein 404", (s: Deferred) => s.reject(new ApiError(404, "Study plan not found.", "t", "not_found")), false],
     ["ein fertiger Versuch", (s: Deferred) => s.resolve({ attemptId: 9, stage: 3, totalItems: 0 }), true],
@@ -318,6 +319,7 @@ describe("SohnTest im Wartebild", () => {
     submitTest.mockReset().mockResolvedValue({ passed: true, scorePercent: 100, passPercent: 80, correctItems: 0, totalItems: 0, stage: 3, items: [], attemptsRemaining: 1 });
     celebrate.mockReset();
     setStreak.mockReset();
+    refreshWallet.mockReset();
     render(
       <MemoryRouter initialEntries={["/sohn/test/5"]}>
         <Routes>
@@ -336,6 +338,8 @@ describe("SohnTest im Wartebild", () => {
     expect(celebrate).not.toHaveBeenCalled();
     expect(submitTest).toHaveBeenCalledTimes(abgegeben ? 1 : 0);
     expect(setStreak.mock.calls).toEqual(abgegeben ? [[4]] : []);
+    // B-360: die Guthaben-Hälfte derselben Entscheidung – rot, wenn der Verlassen-Zweig die Münzen nicht mehr auffrischt.
+    expect(refreshWallet).toHaveBeenCalledTimes(abgegeben ? 1 : 0);
   });
 });
 

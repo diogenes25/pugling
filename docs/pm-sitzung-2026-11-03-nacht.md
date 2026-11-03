@@ -84,3 +84,87 @@ dem beide zugleich greifen, beide". In die andere Richtung hat der Lauf selbst g
 
 - **(AU)** Prosa in pm-loop Step 5 neben (AJ): „Hat eine Entscheidung zwei Wächter, deren Reihenfolge zählt, braucht es einen
   Fall, in dem beide zugleich greifen, und die Mutante ‚Reihenfolge vertauscht' wird gemessen."
+
+## Lauf P, Teil 2 — Das ⓘ bleibt am Feld, die breite Tabelle bleibt erreichbar (B-276, B-273, B-359, B-360)
+
+**Sprint-Ziel:** *Der Vater am Tablet liest eine Erklärung nie neben dem falschen Feld – sie schließt, sobald ihr Knopf
+wandert, bleibt offen, wenn nur das Fenster niedriger wird – und eine breite Tabelle scrollt in ihrem Bereich, statt
+abgeschnitten zu sein.*
+
+**Umfang:** [B-276](backlog/B-276-vater-main-ueberlauf-regel-ungetragen.md) (XS),
+[B-273](backlog/B-273-feste-feldhilfe-resize-und-layoutverschiebung.md) (S) – beide `Defekt`, unter Freigabe 1
+ausformuliert, gegrillt, geschätzt; ein Thema: Lage und Überlauf im Vater-Web. Dazu die zwei Entgleitungen aus der Nachschau
+über Teil 1, im selben Sprint bearbeitet (Freigabe 3): [B-359](backlog/B-359-live-region-waechter-uebersieht-echte-kommentare.md),
+[B-360](backlog/B-360-guthaben-nach-verlassener-klausur-ungetestet.md).
+
+**Entwickler-Brief:** Erst messen, ob ein Rückbau von `.vater-main` heute auffällt, dann die Regel mit einer Probe in der
+echten Seite tragen. Das ⓘ hängt nur über seinen Anker am Knopf: eine Prüfung je Frame statt eines `scroll`-Listeners,
+`resize` richtet neu aus, solange der Knopf steht. Testweg: rote Proben als E2E, Mutanten je AK und Entscheidungsteil.
+
+### Iteration
+
+- **B-276:** vor dem Bau „Regel weg" **7 passed** (Lücke bestätigt). Neuer Fall: „beide weg" und „ohne `overflow-x`" je
+  **1 failed**, „ohne `min-width: 0`" **grün** → gestrichen, Kommentar berichtigt (der behauptete das Gegenteil).
+- **B-273:** rote Proben Layout-Verschiebung und reine Höhenänderung je **1 failed**, waagrecht **grün** (Testlücke). Vier
+  Mutanten rot je am erwarteten Fall; „Breite nicht geprüft" grün → Bedingung gestrichen. Eine Messung war zuerst ungültig:
+  bei 700 px klappte das Popover nach oben, die Vorbedingung „stünde unten über" hielt nicht – der Fall startet jetzt bei
+  1000 px. Dazu eine eigene Panne: eine Mutante mit kaputter Syntax lief als „rot" durch die Schleife; neu gemessen mit einer
+  gültigen Ersatzzeile.
+- **B-359:** rote Probe **2 failed** (erwartet 2); **B-360:** Mutante **1 failed**.
+- Vitest **620/620**, `tsc -b` sauber; `feldhilfe-lage` **9 passed**, `responsive-vater` **2 passed**.
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `frontend-reviewer` 🟡 | B-273: Bewegungsprüfung in `onResize` vermutlich ungetragen | gemessen: Mutante „ohne `moved()`" **1 failed** – getragen, nichts geändert | nein (kein Code/Test) |
+| 2 | `frontend-reviewer` 🟡 | B-273: Breitenfall prüft das Layout, nicht die Regel | Vorbedingung „der Knopf wandert" | ja |
+| 3 | `frontend-reviewer` 🟡 | B-273: Banner-/Waagrecht-Fall ohne Vorbedingung (Scroll-Anchoring) | Vorbedingungen „rutscht" bzw. „nur waagrecht" | ja |
+| 4 | `frontend-reviewer` 🟢 | veraltete Texte nach dem entfernten `scroll`-Listener | nachgezogen | nein |
+| 5 | `frontend-reviewer` 🟢 | `imFenster` nur einmal gelesen | `expect.poll` | nein |
+
+**Zähler Teil 2: 2.** Fund 1 ist das Gegenstück zur Retro-Regel „den Fund annehmen, die Reparatur selbst herleiten": hier war
+schon der Fund eine Vermutung über Frame-Timing, und die Messung widerlegte ihn.
+
+**Rollengang:** Vater maschinell – `feldhilfe-lage.spec.ts` und `responsive-vater.spec.ts` fahren das ⓘ und die breite
+Tabelle im echten Browser bei 768 px; Sohn über `SohnTest.test.tsx` und die Klausur-Specs; Entwickler über die Proben.
+Creator Regressionszeuge. E2E-Gesamtlauf **107 passed** (`exit=0`, gestartet nach dem letzten Code-Edit), Vitest **620/620**.
+**B-276, B-273, B-359, B-360 abgenommen.** Gerätecheck offen: die Bildschirmtastatur eines echten Handys gegen ein offenes ⓘ
+(B-273 Punkt 1 ist in Chromium nur über eine reine Höhenänderung nachgestellt).
+
+### Retrospektive
+
+**Nachschau:** Lauf P, Teil 1 (`bffb583`: B-356, B-357, B-272) per frischem `frontend-reviewer`, read-only. **Entgangen:**
+[B-359](backlog/B-359-live-region-waechter-uebersieht-echte-kommentare.md) bei B-272 (🟡, die Kommentar-Mutante war an
+ungültigem TSX gemessen) und [B-360](backlog/B-360-guthaben-nach-verlassener-klausur-ungetestet.md) bei B-356 (🟡, die
+Guthaben-Hälfte von Entscheidung 3 ohne Zusicherung) – beide in diesem Teil behoben. B-357 sauber. Fünf 🟢 (Zeilenzeiger,
+Entscheidungstexte, Kosten von `wurzelRegionen`) ohne Zählung nachgezogen. `nachgeschaut` an allen drei, mit Prüfpunkten.
+
+**Was die eigenen Tore durchgelassen haben:**
+
+1. *Eine Probe an Eingaben, die es im echten Code nicht gibt.* Der Selbsttest eines Quelltext-Wächters fütterte ihn mit einem
+   Text, der nicht kompiliert; die Mutante fiel, aber an einem Pfad, der in kompilierendem Code nichts entscheidet – und die
+   zwei Formen, die es wirklich gibt, blieben unerkannt. Keine Prüfung fragt, ob ein Selbsttest-Schnipsel gültiges TSX ist.
+2. *Ein Stummschalter im Mock verdeckt eine Hälfte.* `refreshWallet: () => {}` stand schon vor dem Sprint im Mock; die
+   Entscheidung nannte Guthaben **und** Serie, der Test beobachtete nur, was neu dazukam.
+3. *Eigene Messpanne:* eine Mutante mit kaputter Syntax lief als „rot" durch die Schleife (Vite meldete den Transformfehler,
+   die Specs fielen aus diesem Grund). Bemerkt am Log, neu gemessen.
+
+**Vorschläge, nicht gelandet (Freigabe 3):**
+
+- **(AV)** Tor: die Selbsttest-Schnipsel von `liveRegions.test.ts` und `radioGroups.test.ts` laufen einmal durch den
+  TypeScript-Parser (`ts.createSourceFile`, `.tsx`) und dürfen keine Syntaxfehler tragen. Billig; hätte B-359 vor dem Review
+  gefangen.
+- **(AW)** Prosa in pm-loop Step 5 neben (AJ): „Nennt eine Entscheidung einen Aufruf, der im Mock als `() => {}` steht, wird
+  er `vi.fn()` und zugesichert – ein Stummschalter ist eine Zusicherung, dass niemand hinsieht."
+- **(AX)** Prosa (oder Teil von (AP)): eine Mutante zählt erst als rot, wenn die mutierte Datei noch übersetzt (`tsc` bzw.
+  der Vite-Log ohne Transformfehler).
+
+## Ende Lauf P
+
+Endgrund: **Limit 2** – die Nachschau in Teil 2 fand im Increment von Teil 1 zwei Entgleitungen (B-359, B-360, behoben).
+Zwei Teile, **sieben Stories abgenommen:** B-356, B-357, B-272 (Teil 1); B-276, B-273, B-359, B-360 (Teil 2). Nachgeschaut:
+Lauf O und Teil 1; Teil 2 ist **unbeobachtet** (Nachschau in Lauf Q). Neu: B-358 (P4). Zähler 1 / 2. **Gerätechecks offen:**
+Radiogruppen mit Screenreader (B-352), Bildschirmtastatur gegen ein offenes ⓘ (B-273). Alles **ungepusht**.
+
+**Offene Entscheidungen für den Nutzer:** Retro-Vorschläge (AU)–(AX); dazu (AO)–(AT) aus der Nacht zuvor.
