@@ -29,14 +29,18 @@ public sealed class OpenApiExampleCatalog
     /// <summary>How often <see cref="Load"/> tries to read the catalog before it gives up.</summary>
     public const int ReadAttempts = 5;
 
-    /// <summary>Loads the generated catalog, if it is present in the build output.</summary>
-    public static OpenApiExampleCatalog Load(string contentRootPath)
+    /// <summary>
+    /// Loads the generated catalog, if it is present in the build output. The app passes only the content root;
+    /// <paramref name="open"/> and <paramref name="pause"/> are seams, so a test drives this very method - file lookup,
+    /// <see cref="ReadAttempts"/> - with a scripted failure instead of racing a real writer (B-261).
+    /// </summary>
+    public static OpenApiExampleCatalog Load(string contentRootPath, Func<string, Stream>? open = null, TimeSpan? pause = null)
     {
         var path = Path.Combine(contentRootPath, "OpenApi", "openapi-examples.generated.json");
         if (!File.Exists(path))
             return Empty;
 
-        return LoadWithRetry(path, File.OpenRead, ReadAttempts, TimeSpan.FromMilliseconds(50));
+        return LoadWithRetry(path, open ?? File.OpenRead, ReadAttempts, pause ?? TimeSpan.FromMilliseconds(50));
     }
 
     /// <summary>

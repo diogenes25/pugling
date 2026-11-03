@@ -70,6 +70,61 @@ public class OpenApiExampleCatalogRetryTests
         Assert.Single(catalog.Entries);
     }
 
+    // B-261: the pause between attempts is what gives a writer time to finish. Two refused opens with 40 ms each
+    // sleep twice; without the sleep the call takes well under a millisecond. The bound leaves room below 80 ms on
+    // purpose: Windows may wake a sleep up to a timer tick early (Win32 `Sleep` docs), so 2 x 40 ms can measure ~62 ms.
+    // Red if the retry loop stops sleeping.
+    [Fact]
+    public void Zwischen_Den_Versuchen_Wird_Gewartet()
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        OpenApiExampleCatalog.LoadWithRetry(Path, Scripted(Locked, Locked), 5, TimeSpan.FromMilliseconds(40));
+        Assert.True(watch.Elapsed >= TimeSpan.FromMilliseconds(50), $"Elapsed: {watch.Elapsed.TotalMilliseconds} ms.");
+    }
+
+    // B-261: the path the app takes (`Load` with a content root, Program.cs) retries as well, with its own attempt
+    // count. Four refused opens stay below ReadAttempts (5). Red if `Load` reads directly or with fewer attempts.
+    [Fact]
+    public void Load_Wiederholt_Ueber_Den_Inhaltspfad()
+    {
+        using var root = CatalogRoot();
+        var calls = 0;
+        // The fifth attempt is served from memory: the case is about the lookup and the attempt count, and a freshly
+        // written file can be held by this machine's antivirus for a moment.
+        Stream Open(string _) => ++calls <= 4 ? Locked() : new MemoryStream(Encoding.UTF8.GetBytes(Valid));
+
+        var catalog = OpenApiExampleCatalog.Load(root.Path, Open, TimeSpan.Zero);
+
+        Assert.Single(catalog.Entries);
+        Assert.Equal(5, calls);
+    }
+
+    // B-261: no catalog in the build output is not an error - the transformer then leaves the operations alone.
+    // Red if the lookup goes away and the opener is asked for a file that is not there.
+    [Fact]
+    public void Load_Ohne_Katalog_Liefert_Den_Leeren()
+    {
+        using var root = new TempRoot();
+        var catalog = OpenApiExampleCatalog.Load(root.Path, _ => throw new FileNotFoundException(), TimeSpan.Zero);
+        Assert.Same(OpenApiExampleCatalog.Empty, catalog);
+    }
+
+    /// <summary>A temporary content root with a valid catalog at the path `Load` looks for.</summary>
+    private static TempRoot CatalogRoot()
+    {
+        var root = new TempRoot();
+        Directory.CreateDirectory(System.IO.Path.Combine(root.Path, "OpenApi"));
+        File.WriteAllText(System.IO.Path.Combine(root.Path, "OpenApi", "openapi-examples.generated.json"), Valid);
+        return root;
+    }
+
+    private sealed class TempRoot : IDisposable
+    {
+        public string Path { get; } = Directory.CreateTempSubdirectory("pugling_catalog_").FullName;
+        // Cleanup only: a temp dir the antivirus still holds is left for the OS, it must not fail the case.
+        public void Dispose() { try { Directory.Delete(Path, recursive: true); } catch (IOException) { } }
+    }
+
     // A programming error is not a race and must not be retried. Red if the filter widens to every exception.
     [Fact]
     public void Andere_Fehler_Schlagen_Sofort_Durch()

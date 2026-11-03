@@ -506,7 +506,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (49)
+### Offen (47)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -523,11 +523,8 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-164](B-164-useasync-paart-frischen-zustand-mit-alten-daten.md) | Nach einem Wechsel zeigt der Bildschirm für einen Moment frischen Zustand mit alten Daten | Defekt | `ausformuliert` | P3 | — | frontend | — |
 | [B-259](B-259-generator-verschluckt-leerzeichen-neben-xml-elementen.md) | Der XML-Doc-Generator verschluckt Leerzeichen zwischen zwei Elementen | Defekt | `idee` | P3 | — | — | — |
 | [B-260](B-260-normalisierer-setzt-absatz-mitten-im-satz.md) | Der OpenAPI-Normalisierer setzt einen Absatz mitten in einen Satz | Defekt | `idee` | P3 | — | — | — |
-| [B-261](B-261-produktionspfad-des-beispielkatalogs-ungetestet.md) | Der Produktionspfad des Beispielkatalogs hängt an keinem Test | Defekt | `idee` | P3 | — | — | — |
-| [B-265](B-265-sperr-zaehler-zusicherung-kann-nie-fallen.md) | Die „Spur“ der gesperrten Lesevorgänge ist eine Zusicherung, die nie fallen kann | Defekt | `idee` | P3 | — | backend | — |
 | [B-272](B-272-live-region-und-gruppen-tests-tragen-nicht-alles.md) | Tests zu B-134 und B-236 lassen Mutanten grün | Defekt | `idee` | P3 | — | frontend | — |
 | [B-273](B-273-feste-feldhilfe-resize-und-layoutverschiebung.md) | Das feste ⓘ-Popover: Resize ohne Prüfung, Layout-Verschiebung ohne Schließen | Defekt | `idee` | P3 | — | frontend | — |
-| [B-274](B-274-atomares-schreiben-flackert-wieder.md) | `AtomaresSchreiben_KeineLeseFehler` flackert wieder | Defekt | `idee` | P3 | — | backend | — |
 | [B-276](B-276-vater-main-ueberlauf-regel-ungetragen.md) | Die Überlauf-Regel von `.vater-main` trägt kein Test mehr | Defekt | `idee` | P3 | — | frontend | — |
 | [B-282](B-282-login-haertung-restpunkte.md) | Restpunkte der Login-Härtung (NP-3) | Defekt | `idee` | P3 | — | backend | — |
 | [B-310](B-310-profil-match-verraet-kind-ids.md) | `GET creator/profiles/match` verrät per 404 gegen 403, ob es eine Kind-Id gibt | Defekt | `idee` | P3 | — | backend | — |
@@ -558,10 +555,11 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `geschaetzt` | P3 | S | backend | — |
 | [B-355](B-355-store-faltung-restkanten.md) | Restkanten der Store-Faltung: Sprachkürzel mit Leerraum, zwei gleiche Paare in einem Aufruf | Defekt | `idee` | P4 | — | backend | — |
 | [B-356](B-356-radiogruppe-und-wartebild-restkanten.md) | Restkanten an Radiogruppen und Wartebild (Nachschau über `b73bcde`) | Defekt | `idee` | P4 | — | frontend | — |
+| [B-357](B-357-e2e-helfer-restkanten.md) | Restkanten des E2E-Helfers `createChild` und eine Kind-Auswahl per Index | Defekt | `idee` | P4 | — | frontend | — |
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (281)</summary>
+<summary>Abgenommen (284)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -710,14 +708,17 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-257](B-257-zielfeier-verspaetet-jenseits-der-ersten-fuenf.md) | Ein schon erreichtes Ziel jenseits der ersten fünf wird später verspätet gefeiert | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-258](B-258-unbekannte-fach-id-zwei-fehlercodes.md) | Eine unbekannte `SubjectId` meldet je nach Ressource zwei verschiedene Fehlercodes | Defekt | `abgenommen` | P3 | XS | backend | Vertrag |
 | [B-26](B-26-e2e-in-ci.md) | Der E2E-Nachtlauf ist rot – und niemand erfährt es | Defekt | `abgenommen` | P1 | S | frontend | — |
+| [B-261](B-261-produktionspfad-des-beispielkatalogs-ungetestet.md) | Der Produktionspfad des Beispielkatalogs hängt an keinem Test | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-262](B-262-vorwahl-bestehendes-kind-ohne-eigene-spec.md) | „Ohne Eingabe bleibt die Vorwahl ‚bestehendes Kind‘“ hält keine Spec gezielt | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-263](B-263-info-popover-steht-am-rechten-rand-ueber.md) | Ein aufgeklapptes ⓘ am rechten Rand lässt die Seite seitlich scrollen | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-264](B-264-interessen-ohne-kind-kleiden-nicht-ein.md) | `--interests` ohne Kind setzt die Tags an die Übung, kleidet ihren Inhalt aber nicht ein | Defekt | `abgenommen` | P3 | S | backend | — |
+| [B-265](B-265-sperr-zaehler-zusicherung-kann-nie-fallen.md) | Die „Spur“ der gesperrten Lesevorgänge ist eine Zusicherung, die nie fallen kann | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-266](B-266-wartepunkt-netzwerk-statt-app-zustand.md) | Der Wartepunkt aus B-180 wartet aufs Netzwerk, nicht auf die App | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-267](B-267-entkoppeltes-lehrbuch-zeigt-katalogwert-im-freitextfeld.md) | Nach dem Entkoppeln zeigt das Freitextfeld den Katalogwert – gespeichert wird er nicht | Frage | `abgenommen` | P3 | S | beides | — |
 | [B-268](B-268-fokus-nach-inline-reihe.md) | Nach „Reihe anlegen & wählen“ fällt der Fokus auf `body` | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-269](B-269-bewertungen-reihenfolge-und-updatedat-ungetestet.md) | Bewertungen: Reihenfolge der Liste und `UpdatedAt` beim Überschreiben sind ungetestet | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-27](B-27-testsuite-grenzfaelle.md) | Die Grenzen des `ScoringService` als Tabelle statt als Flow | Aufräumen | `abgenommen` | P2 | S | backend | — |
+| [B-274](B-274-atomares-schreiben-flackert-wieder.md) | `AtomaresSchreiben_KeineLeseFehler` flackert wieder | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-275](B-275-bewertungsformular-fuer-grantee-ungetestet.md) | Ob ein Schreib-Grantee das Bewertungsformular sieht, prüft kein Test an der Aufrufstelle | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-277](B-277-schnellanlage-legt-doppelten-store-eintrag-an.md) | Der Schnellanleger im Assistenten legt für ein bekanntes Wort einen zweiten Store-Eintrag an | Defekt | `abgenommen` | P3 | S | beides | — |
 | [B-278](B-278-platzhalter-sieht-aus-wie-gespeicherter-wert.md) | Im leeren Verlagsfeld sieht der Platzhalter aus wie ein gespeicherter Wert | Defekt | `abgenommen` | P3 | XS | frontend | — |
@@ -861,7 +862,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (110)
 
-**Nachgeschaut: 280 von 281 abgenommenen** — und in 88 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 1 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 281 von 284 abgenommenen** — und in 88 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 3 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -921,12 +922,12 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-256](B-256-sprint-5-drei-saetze-nach-der-abnahme.md) | Drei Sätze aus Sprint 5, die nach der Abnahme nicht stimmen | [B-237, B-244, B-246] | `abgenommen` |
 | [B-257](B-257-zielfeier-verspaetet-jenseits-der-ersten-fuenf.md) | Ein schon erreichtes Ziel jenseits der ersten fünf wird später verspätet gefeiert | [B-36] | `abgenommen` |
 | [B-260](B-260-normalisierer-setzt-absatz-mitten-im-satz.md) | Der OpenAPI-Normalisierer setzt einen Absatz mitten in einen Satz | [B-147] | `idee` |
-| [B-261](B-261-produktionspfad-des-beispielkatalogs-ungetestet.md) | Der Produktionspfad des Beispielkatalogs hängt an keinem Test | [B-181] | `idee` |
+| [B-261](B-261-produktionspfad-des-beispielkatalogs-ungetestet.md) | Der Produktionspfad des Beispielkatalogs hängt an keinem Test | [B-181] | `abgenommen` |
 | [B-262](B-262-vorwahl-bestehendes-kind-ohne-eigene-spec.md) | „Ohne Eingabe bleibt die Vorwahl ‚bestehendes Kind‘“ hält keine Spec gezielt | [B-177] | `abgenommen` |
 | [B-264](B-264-interessen-ohne-kind-kleiden-nicht-ein.md) | `--interests` ohne Kind setzt die Tags an die Übung, kleidet ihren Inhalt aber nicht ein | [B-46] | `abgenommen` |
-| [B-265](B-265-sperr-zaehler-zusicherung-kann-nie-fallen.md) | Die „Spur“ der gesperrten Lesevorgänge ist eine Zusicherung, die nie fallen kann | [B-165] | `idee` |
+| [B-265](B-265-sperr-zaehler-zusicherung-kann-nie-fallen.md) | Die „Spur“ der gesperrten Lesevorgänge ist eine Zusicherung, die nie fallen kann | [B-165] | `abgenommen` |
 | [B-266](B-266-wartepunkt-netzwerk-statt-app-zustand.md) | Der Wartepunkt aus B-180 wartet aufs Netzwerk, nicht auf die App | [B-180] | `abgenommen` |
-| [B-274](B-274-atomares-schreiben-flackert-wieder.md) | `AtomaresSchreiben_KeineLeseFehler` flackert wieder | [B-165] | `idee` |
+| [B-274](B-274-atomares-schreiben-flackert-wieder.md) | `AtomaresSchreiben_KeineLeseFehler` flackert wieder | [B-165] | `abgenommen` |
 | [B-276](B-276-vater-main-ueberlauf-regel-ungetragen.md) | Die Überlauf-Regel von `.vater-main` trägt kein Test mehr | [B-68] | `idee` |
 | [B-277](B-277-schnellanlage-legt-doppelten-store-eintrag-an.md) | Der Schnellanleger im Assistenten legt für ein bekanntes Wort einen zweiten Store-Eintrag an | [B-71] | `abgenommen` |
 | [B-280](B-280-fokusziel-nicht-geleert-ungetestet.md) | Dass das Fokusziel nach dem Sprung geleert wird, prüft kein Test | [B-268] | `abgenommen` |
@@ -977,14 +978,16 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-354](B-354-synonym-gegen-fremden-slug-ungetestet.md) | Dass ein Synonym nicht den Slug eines fremden Schlagworts tragen darf, prüft kein Test | [B-351] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (1) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (3) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-255](B-255-kinderzeile-per-namen-zweideutig.md) | E2E-Specs suchen die Kinderzeile per Namen, den zwei Tabellen tragen |
+| [B-261](B-261-produktionspfad-des-beispielkatalogs-ungetestet.md) | Der Produktionspfad des Beispielkatalogs hängt an keinem Test |
+| [B-265](B-265-sperr-zaehler-zusicherung-kann-nie-fallen.md) | Die „Spur“ der gesperrten Lesevorgänge ist eine Zusicherung, die nie fallen kann |
+| [B-274](B-274-atomares-schreiben-flackert-wieder.md) | `AtomaresSchreiben_KeineLeseFehler` flackert wieder |
 
 </details>
 
@@ -1016,13 +1019,10 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-236](B-236-checkbox-gruppe-ohne-zugaenglichen-gruppennamen.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…" |
 | [B-245](B-245-token-mit-fid-auf-geloeschten-adult.md) | `abgenommen` | Abschnitt „User Story" |
 | [B-260](B-260-normalisierer-setzt-absatz-mitten-im-satz.md) | `idee` | `unverifiziert: true` |
-| [B-261](B-261-produktionspfad-des-beispielkatalogs-ungetestet.md) | `idee` | `unverifiziert: true` |
-| [B-265](B-265-sperr-zaehler-zusicherung-kann-nie-fallen.md) | `idee` | `unverifiziert: true` |
 | [B-267](B-267-entkoppeltes-lehrbuch-zeigt-katalogwert-im-freitextfeld.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…" |
 | [B-268](B-268-fokus-nach-inline-reihe.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…" |
 | [B-269](B-269-bewertungen-reihenfolge-und-updatedat-ungetestet.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-272](B-272-live-region-und-gruppen-tests-tragen-nicht-alles.md) | `idee` | `unverifiziert: true` |
-| [B-274](B-274-atomares-schreiben-flackert-wieder.md) | `idee` | `unverifiziert: true` |
 | [B-283](B-283-buchstaben-ordnen-testluecken.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-285](B-285-kind-konto-bleibt-nach-vater-loeschung.md) | `abgenommen` | Abschnitt „Entscheidungen" |
 | [B-287](B-287-fokus-test-prueft-den-ausgangszustand.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |

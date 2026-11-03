@@ -271,37 +271,35 @@ public class OpenApiExampleCatalogConcurrencyTests
             // B-165 the repetitions only multiply the evidence about TORN content - while a lock still failed
             // the case, they multiplied the chance of catching this machine's antivirus blip by ten, which is
             // what made the case flake in the full suite (one run in three).
-            var gesperrtGesamt = 0;
+            var runs = new List<(int Ok, int Gesperrt)>();
             for (var i = 0; i < 10; i++)
             {
                 var (ok, gesperrt, zerrissen) = CountFailedReadsDuring(path, pause => WriteAtomicPaused(path, PayloadOf(40), pause));
-                gesperrtGesamt += gesperrt;
+                runs.Add((ok, gesperrt));
 
-                // Only torn content fails this case, and it fails on a single one - that is the property the
-                // atomic write guarantees exactly. A locked file is reported, not punished: it is an artifact
-                // of this machine (class summary) and says nothing about content.
-                //
-                // TWO assertions, because on Windows the first one alone is TOOTHLESS - measured while
-                // building B-165: swapping the atomic writer for the unsafe one kept `zerrissen == 0` green,
-                // since an unsafe write is denied to the reader there rather than showing it torn bytes. (On
-                // Linux the unsafe writer does produce torn content, so there the first assertion bites on
-                // its own - see UnsicheresSchreiben_ErzeugtLeseFehler for both measurements.)
-                //
-                // What separates the two writers on EVERY platform is whether reads SUCCEED during the pause:
-                //   atomic  - the final path is never opened for writing, so reads succeed (~2000 per window)
-                //   unsafe  - the final path is held open, so reads fail (measured 1867 of 1867 on Windows)
-                // A single denied read is this machine's antivirus blip and stays tolerated - that is the
-                // flake B-165 removes. Zero successful reads means the write is not atomic any more.
+                // Torn content fails this case, and on a single read - that is the property the atomic write
+                // guarantees exactly. A locked read is counted, not punished here (see below).
                 Assert.True(zerrissen == 0,
                     $"Run {i + 1}/10: {zerrissen} reader(s) saw torn content - the atomic write must never "
                     + $"expose an intermediate state. Locked: {gesperrt}, ok: {ok}.");
-                Assert.True(ok > gesperrt,
-                    $"Run {i + 1}/10: {gesperrt} reads were denied and only {ok} succeeded - the final path "
-                    + "was held open for most of the window, so the write is no longer atomic. A single "
-                    + "denied read is this machine's antivirus and stays tolerated; a majority is not.");
             }
-            // Not an assertion - a trace, so a future flake can be told apart from a content regression.
-            Assert.True(gesperrtGesamt >= 0, $"Locked reads across all 10 runs: {gesperrtGesamt}.");
+
+            // On Windows the torn rule alone is toothless: an unsafe write is denied to the reader rather than
+            // showing it torn bytes (B-165; on Linux the torn rule bites on its own, see UnsicheresSchreiben_*).
+            // What separates the writers on every platform is how many reads SUCCEED - atomic ~2000 per window,
+            // unsafe mostly denied in every window (Lauf O: 925 ok against 13639 locked over ten windows).
+            // "Held open" is judged over all ten windows, not per window (B-274): under load a single window can
+            // be mostly denied by this machine's antivirus without the write being any less atomic, and that is
+            // how the per-window rule flaked in the full suite. Every window's numbers stand in the message, so a failure says
+            // which case it was (B-265: the former "trace" assertion could never fail and printed nothing).
+            var okGesamt = runs.Sum(r => r.Ok);
+            var gesperrtGesamt = runs.Sum(r => r.Gesperrt);
+            var detail = string.Join(", ", runs.Select((r, n) => $"#{n + 1} ok {r.Ok}/locked {r.Gesperrt}"));
+            // A reader that never got CPU time measured nothing - say so instead of blaming the writer.
+            Assert.True(okGesamt + gesperrtGesamt > 0, $"The reader thread made no attempt in any window ({detail}).");
+            Assert.True(okGesamt > gesperrtGesamt,
+                $"{gesperrtGesamt} reads were denied and only {okGesamt} succeeded across all windows - the final "
+                + $"path was held open for most of the time, so the write is no longer atomic ({detail}).");
         }
         finally { DeleteTolerantly(path); }
     }

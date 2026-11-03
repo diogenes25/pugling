@@ -268,3 +268,89 @@ Nachschau über Teil 1 fand nichts im Increment dieses Laufs). **Drei Stories ab
 B-356 (P4). **Gerätecheck offen:** Radiogruppen mit Screenreader und Pfeiltasten. Alles **ungepusht**.
 
 **Offene Entscheidungen für den Nutzer:** Retro-Vorschläge (AR), (AS); dazu (AO)–(AQ) aus Lauf M.
+
+## Lauf O, Teil 1 — Die Proben des Beispielkatalogs messen, was sie behaupten (B-261, B-265, B-274)
+
+Lauf O beginnt nach Lauf N ohne Unterbrechung (Kalendertag inzwischen 2026-11-03); Ausgangslage `cc19020`.
+
+**Sprint-Ziel:** *Der Entwickler, dessen Suite an einer Probe des Beispielkatalogs rot wird, weiß, ob der Start-Pfad der App
+kaputt ist oder die Maschine nur belastet war – und ein Rückbau des Start-Pfads fällt überhaupt auf.*
+
+**Umfang:** [B-261](backlog/B-261-produktionspfad-des-beispielkatalogs-ungetestet.md) (S),
+[B-265](backlog/B-265-sperr-zaehler-zusicherung-kann-nie-fallen.md) (XS),
+[B-274](backlog/B-274-atomares-schreiben-flackert-wieder.md) (XS) – alle `Defekt`, unter Freigabe 1 gegrillt. Ein Thema:
+`OpenApiExampleCatalog` und seine zwei Testklassen. Draußen bleiben die übrigen Testlücken (B-272/B-273/B-276, Frontend)
+und die Doku-Generator-Defekte B-259/B-260 (eigenes Thema).
+
+**Entwickler-Brief:** Eine Naht `Load(contentRoot, open, pause)` unter dem öffentlichen `Load(string)`; vier neue Fälle
+(Inhaltspfad mit `ReadAttempts`, fehlender Katalog, Pause als Untergrenze, echte Sperre). In der Nebenläufigkeitsprobe die
+leere Spur weg, „gehalten" über alle zehn Fenster, Verhungern eigens. Testweg: Mutanten je AK, volle Suite.
+
+### Iteration
+
+- **B-261:** neue Fälle vor jeder Mutante grün (Testlücke). Mutanten „`ReadAttempts` → 1" 2, „öffentlich direkt" 1, „ohne
+  Pause" 2, „ohne `File.Exists`" 1 failed. Retry-Klasse **9/9**.
+- **B-265/B-274:** Mutante „unsicherer Schreiber" **1 failed** an der Summen-Zusicherung: 925 ok gegen 13 639 gesperrt, alle
+  zehn Fenster in der Meldung. Probe **2/2**. Für das Flackern selbst gibt es keine rote Probe (nicht reproduzierbar).
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | Test-Tor rot + `pugling-reviewer` 🟡 | der neue Fall „echte Sperre" ist zeitabhängig (Fenster real ~200 ms, Freigabe am Thread-Pool); unter Volllast **1 failed** | eine Methode mit optionalen Nähten statt zwei Überladungen, der Fall entfällt | ja |
+| 2 | `pugling-reviewer` 🟡 | Untergrenze `>= 80 ms` unter Windows nicht garantiert | `>= 50 ms`, Grund im Kommentar | ja |
+| 3 | `pugling-reviewer` 🟡 | Schleifen-Kommentar beschreibt die alte Regel | gekürzt, Begründung mit den Lauf-O-Zahlen an die Summe | nein (Kommentar) |
+| 4 | `pugling-reviewer` 🟢 | fünfter Versuch liest die frische Datei von der Platte | aus dem Speicher | nein |
+| 5 | `pugling-reviewer` 🟢 | leerer `catch` in `TempRoot.Dispose` | begründet | nein |
+| 6 | `pugling-reviewer` 🟢 | zweite öffentliche Überladung | mit Fund 1 gegenstandslos | nein |
+
+**Zähler Teil 1: 2.** Volle Suite danach **1048/1048** (ein Fall weniger: der zeitabhängige ist bewusst entfernt).
+
+**Rollengang:** Der Entwickler ist hier die Rolle: die Proben sind sein Weg, jede mit benannter Mutante. Creator, Vater und
+Sohn als Regressionszeugen – E2E-Gesamtlauf **103 passed** (`exit=0`, nach dem letzten Edit; der Dev-Server lädt den
+Beispielkatalog über `Load`). **B-261, B-265, B-274 abgenommen.** Für B-274 bleibt ehrlich offen, ob das Flackern weg ist –
+das zeigt nur die Zeit; tritt es wieder auf, nennt die Meldung jetzt jedes Fenster.
+
+### Retrospektive
+
+**Nachschau:** Lauf N, Teil 2 (`cc19020`: B-255) per frischem `frontend-reviewer`: **sauber**. AK 2 diesmal nach der Handlung
+gesucht (jede Stelle, an der in `e2e/*.ts` eine Kind-Id entsteht) – keine über einen Namen. Drei 🟢 →
+[B-357](backlog/B-357-e2e-helfer-restkanten.md), P4. `nachgeschaut` gesetzt. Index danach: **Nachgeschaut: 281 von 284**.
+
+**Was die eigenen Tore durchgelassen haben:** Ein neuer zeitabhängiger Fall (echte Dateisperre mit Freigabe nach 120 ms)
+wurde nur gefiltert auf einer ruhigen Maschine gemessen und erst vom Test-Tor unter Volllast rot – obwohl dieselbe
+Testklasse im Kommentar von `CountFailedReadsDuring` festhält, dass der Thread-Pool unter der vollen Suite Arbeit weit
+über 300 ms zurückhält. Das Wissen stand im Repo, nur nicht an der Stelle, an der der neue Fall entstand. Das Test-Tor hat
+gehalten – genau dafür ist es da.
+
+**Vorschlag, nicht gelandet (Freigabe 3):**
+
+- **(AT)** Prosa in `backend/Pugling.Api.Tests/CLAUDE.md`: „Ein neuer Fall mit Zeitschranke (`Delay`, `Sleep`,
+  Stoppuhr) läuft vor dem Review einmal in der vollen Suite; die Schranke steht mit ihrem Abstand zum Mutanten im
+  Kommentar, nicht mit dem Idealwert." Mechanisch denkbar als Wächter, der `Task.Delay`/`Stopwatch` in Testdateien ohne
+  Kommentarzeile meldet – laut und unscharf, darum Prosa.
+
+## Ende Lauf O
+
+Endgrund: **Sprint geschlossen**, keine Halt-Bedingung gegriffen (Zähler 2, keine Retro hat ein Tor gelandet, die Nachschau
+über Lauf N Teil 2 fand nichts). **Drei Stories abgenommen:** B-261, B-265, B-274. Teil 1 dieses Laufs ist **unbeobachtet**
+(Nachschau im nächsten Lauf). Neu: B-357 (P4). Alles **ungepusht**.
+
+## Ende der Nacht — drei Läufe
+
+| Lauf | Teile | Abgenommen | Zähler | Commits |
+| --- | --- | --- | --- | --- |
+| M | 2 | B-346, B-347, B-349; B-353, B-354 | 0 / 1 | `ffbb0b6`, `51783ae`, `110c0a2` |
+| N | 2 | B-350, B-352; B-255 | 1 / 2 | `b73bcde`, `cc19020` |
+| O | 1 | B-261, B-265, B-274 | 2 | siehe `git log` |
+
+**Elf Stories abgenommen**, drei Entgleitungen aus älteren Läufen gefunden und behoben (B-352 bei B-348, B-353/B-354 bei
+B-351), vier P4-Restkanten-Stories neu (B-355, B-356, B-357; dazu B-352 als Entgleitung). Nachgeschaut bis auf Lauf O, Teil 1.
+
+**Offene Entscheidungen für den Nutzer:**
+
+1. **Retro-Vorschläge (AO)–(AT)** – keiner gelandet (Freigabe 3). Der Auftrag „Nachfragen selbst beantworten" wurde so
+   gelesen, dass er Fragen an den Lauf deckt, nicht die Freigaben-Sperren; (AP) und (AS) wären Tore.
+2. **Gerätecheck:** die Radiogruppen des Vater-Webs mit Screenreader und Pfeiltasten bedienen (B-352).
+3. **Produktfrage aus der Nachschau (ohne Story):** ein Emoji-Label lässt sich anlegen, aber per `PATCH` nicht setzen.
+4. **B-274:** ob das Flackern weg ist, zeigt nur die Zeit.

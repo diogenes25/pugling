@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+nachgeschaut: "2026-11-03"
 ---
 
 # B-255 · E2E-Specs suchen die Kinderzeile per Namen, den zwei Tabellen tragen
@@ -67,3 +68,4 @@ Ein Name ist kein Schlüssel; die Specs nutzten ihn als einen, während der Serv
   Stellen umgestellt. `tsc` über `e2e/*.ts` sauber.
 - **2026-11-02** — Review `frontend-reviewer`: 🟡 AK 2 zu eng gemessen – vier weitere Stellen leiteten die Id aus einem über den Namen gefundenen Link ab (`punkte-empfehlung.spec.ts` dreimal, `vater-von-null.spec.ts`); der grep suchte nur nach der Zellen-Form. Behoben: die drei auf `createChild`, `vater-von-null` (verzögert das Neuladen, setzt eine Klasse) liest die Id ebenfalls aus der POST-Antwort; Prüfweg jetzt `grep "getAttribute(\"href\")\|getByRole(\"cell\").first()" e2e` ohne Kinder-Treffer (zählt). 🟡 der Helfer hing bei einem gescheiterten Anlegen bis zum Test-Timeout ohne Grund → Antwort ohne `ok()`-Filter abwarten und mit Status und Text zusichern, Warten auf 10 s begrenzt; Probe mit PIN „1" (der Client schickt nichts): **1 failed** nach 10 s mit `TimeoutError` an `helpers.ts:42` statt nach 60 s (zählt). 🟢 die Zusicherung der neuen Spec trägt nur über „zwei Ids + eindeutiger Name" – als Kommentar benannt (ohne Zählung). **Zähler Teil 2: 2.**
 - **2026-11-02** — Abnahme Lauf N, Teil 2: E2E-Gesamtlauf **103 passed** (`exit=0`, nach dem letzten Edit gestartet), `tsc` über `e2e/*.ts` sauber. Rollengang: die Specs SIND der Weg des Entwicklers; Vater und Sohn fahren ihre Specs über den neuen Helfer (zwölf Specs, alle grün), Creator Regressionszeuge. **Abgenommen**, Commit siehe Protokoll ([Lauf N](../pm-sitzung-2026-11-02-nacht.md)).
+- **2026-11-03** — Nachschau in Lauf O, Teil 1 (frischer `frontend-reviewer`, `git show cc19020 -- frontend`): **sauber** (🟢 → [B-357](B-357-e2e-helfer-restkanten.md)). Geprüft: AK 1 – auf der frisch geladenen Seite tragen „Heute" und zwei „Kinder"-Zeilen den Namen, das alte Muster wirft im Helfer; Mutanten „erste Id zweimal" und „fremde Id" je rot. AK 2 nach der *Handlung* gesucht (jede Stelle, an der in `e2e/*.ts` eine Kind-Id entsteht: Helfer, POST-Antwort in `vater-von-null`, `postId` in `buchstaben-ordnen`, Seed-Konstanten) – keine über einen Namen. Verschobene Stellen gleichwertig (ein zusätzliches `goto`), `vater-von-null`: Warten nach dem `unroute` registriert, Rückhalt nur für GET. Wortlaut: „zwölf Specs über den Helfer" – elf über den Helfer, eine mit demselben Muster inline.
