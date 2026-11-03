@@ -12,6 +12,7 @@ quelle: Nachschau zu Sprint 10 in Lauf B (docs/pm-sitzung-2026-10-26-tag.md)
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-03"
 entgangen_bei: [B-68]
 wartet_auf: ""
 ---
@@ -81,3 +82,4 @@ Mindestgröße 0; der Kommentar behauptete das Gegenteil.
   Mit der vereinfachten Regel `responsive-vater.spec.ts` **2 passed**.
 - **2026-11-03** — Review `frontend-reviewer`: sauber für B-276 – entfällt `overflow-x: auto`, fallen `mainBreite`, `verschoben` und `dokument`; Streichen von `min-width: 0` nach Flexbox §4.5 browserübergreifend unbedenklich (die automatische Mindestgröße gilt nur für Flex-Kinder, die keine Scroll-Container sind); alles synchron in einem `evaluate`, ohne Seed-Abhängigkeit.
 - **2026-11-03** — Abnahme Lauf P, Teil 2: Vitest **620/620**, `tsc -b` sauber, E2E-Gesamtlauf **107 passed** (`exit=0`, nach dem letzten Code-Edit gestartet). Rollengang: Vater maschinell – die neue Probe fährt die echte Seite bei 768 px im Browser, die 22 Routen der Spec bleiben ohne seitliches Scrollen; Creator und Sohn Regressionszeugen. **Abgenommen**, Commit siehe Protokoll ([Lauf P](../pm-sitzung-2026-11-03-nacht.md)).
+- **2026-11-03** — Nachschau in Lauf Q, Teil 1 (frischer `frontend-reviewer`, `git show a25a1a6 -- frontend`, read-only): **Entgleitung** → [B-363](B-363-begruendung-zu-min-width-falsch-mainbreite-traegt-nichts.md) (🟡: `.app-vater` ist eine Flex-Spalte, die Begründung zu `min-width: 0` ist falsch, `mainBreite` trägt nichts). Geprüft: `verschoben` hält AK 1 gegen die Mutante „ohne `overflow-x`".

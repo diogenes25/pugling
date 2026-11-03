@@ -742,6 +742,65 @@ public class ConventionGuardTests
             + string.Join("\n", offenders));
     }
 
+    /// <summary>
+    /// B-259: the OpenAPI source generator drops a text node that is only whitespace, so two inline elements with
+    /// nothing but spaces (or a line break) between them arrive glued - <c>&lt;b&gt;PATCH semantics:&lt;/b&gt;
+    /// &lt;c&gt;null&lt;/c&gt;</c> became <c>**PATCH semantics:**`null`</c>, and a <c>&lt;/list&gt;</c> ran into the
+    /// next sentence. The normalizer cannot repair it: the space is gone before it runs. So the form is refused in
+    /// the source, for every file whose doc reaches <c>docs/openapi/v1.json</c> (contracts and controllers).
+    /// <para>
+    /// <b>Limits.</b> A line scan over contiguous <c>///</c> runs; the right-hand element is one of the inline tags.
+    /// <c>&lt;/para&gt;</c> or <c>&lt;/item&gt;</c> before the next block element is fine - the break survives. Not
+    /// covered: <c>&lt;/see&gt;</c>/<c>&lt;/a&gt;</c> on the left and <c>&lt;a&gt;</c> on the right (none in the sources today).
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void Doku_Stellt_Zwei_Elemente_Nie_Nur_Durch_Leerraum_Getrennt()
+    {
+        var root = Path.Combine(RepoRoot(), "backend");
+        var files = Directory.GetFiles(Path.Combine(root, "Pugling.Contracts"), "*.cs", SearchOption.AllDirectories)
+            .Concat(Directory.GetFiles(Path.Combine(root, "Pugling.Api", "Controllers"), "*.cs", SearchOption.AllDirectories))
+            .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
+            .ToArray();
+
+        var offenders = files
+            .SelectMany(f => GluedElements(File.ReadAllLines(f)).Select(line => $"{Path.GetRelativePath(root, f)}:{line}"))
+            .ToList();
+
+        Assert.True(files.Length >= 40, $"Too few files found ({files.Length}) - wrong path?");
+        Assert.True(offenders.Count == 0,
+            "Two doc elements separated only by whitespace - the OpenAPI generator drops the space and glues them "
+            + "(\"**PATCH semantics:**`null`\"). Put a word between them or drop one of the two tags:\n"
+            + string.Join("\n", offenders));
+    }
+
+    // Self-test of the scan: each case names the form that turns it red.
+    [Theory]
+    [InlineData("/// <b>PATCH semantics:</b> <c>null</c> means", 1)]   // red if closing inline tags are not seen
+    [InlineData("/// a (<paramref name=\"X\"/> <c>null</c>) b", 1)]    // red if self-closing references are not seen
+    [InlineData("/// </list>\n/// <b>Children</b> are counted", 1)]   // red if the scan stops at the line break
+    [InlineData("/// <b>a</b>, <c>b</c>", 0)]                           // red if any text in between counts as glue
+    [InlineData("/// </para>\n/// <para>", 0)]                          // red if block elements count as inline
+    public void Leerraum_Zwischen_Elementen_Wird_Erkannt(string source, int expected)
+        => Assert.Equal(expected, GluedElements(source.Split('\n')).Count());
+
+    /// <summary>Line numbers (1-based) where an inline element follows another with only whitespace between.</summary>
+    private static IEnumerable<int> GluedElements(string[] lines)
+    {
+        for (var i = 0; i < lines.Length; i++)
+        {
+            if (!lines[i].TrimStart().StartsWith("///", StringComparison.Ordinal)) continue;
+            var start = i;
+            var run = new List<string>();
+            while (i < lines.Length && lines[i].TrimStart().StartsWith("///", StringComparison.Ordinal))
+                run.Add(lines[i++].TrimStart()[3..]);
+            var text = string.Join("\n", run);
+            foreach (Match m in Regex.Matches(text,
+                         @"(</(?:b|c|i|em|strong|list)>|<(?:see|paramref|typeparamref)\b[^>]*/>)\s+<(?:b|c|i|em|strong|see|paramref|typeparamref)\b"))
+                yield return start + 1 + text[..m.Index].Count(ch => ch == '\n');
+        }
+    }
+
     /// <summary>Repo root: upward from <see cref="AppContext.BaseDirectory"/> until <c>backend</c>+<c>docs</c> or <c>.git</c>.</summary>
     private static string RepoRoot()
     {

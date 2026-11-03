@@ -32,7 +32,7 @@ public record MeResponse(int? AccountId, string Role, IReadOnlyList<string> Role
 /// Self-service management of the caller's own account (<c>PATCH auth/me</c>) – for <b>every</b> adult
 /// role, including a teacher account that has no access to the supervisor endpoints.
 ///
-/// <b>PATCH semantics:</b> <c>null</c> means "not specified" (the value stays). Email is the only
+/// <b>PATCH semantics:</b> a <c>null</c> means "not specified" (the value stays). Email is the only
 /// clearable field and needs <see cref="ClearEmail"/> for that – without the switch, a form with an
 /// empty field would report "saved" while the old address stayed in place.
 /// </summary>

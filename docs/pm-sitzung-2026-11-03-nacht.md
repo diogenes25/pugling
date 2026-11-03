@@ -168,3 +168,70 @@ Lauf O und Teil 1; Teil 2 ist **unbeobachtet** (Nachschau in Lauf Q). Neu: B-358
 Radiogruppen mit Screenreader (B-352), Bildschirmtastatur gegen ein offenes ⓘ (B-273). Alles **ungepusht**.
 
 **Offene Entscheidungen für den Nutzer:** Retro-Vorschläge (AU)–(AX); dazu (AO)–(AT) aus der Nacht zuvor.
+
+## Lauf Q, Teil 1 — Das Vertragsdokument liest sich wie die Quelle (B-259, B-260)
+
+Lauf Q beginnt nach Lauf P ohne Unterbrechung; Ausgangslage `a25a1a6`.
+
+**Sprint-Ziel:** *Der Creator, der die API in Swagger liest, findet jeden Satz am Stück – kein Absatz mitten im Satz, kein
+Code-Wort, das am Nachbarwort klebt –, und eine neue Klebestelle in der Quelle macht ein Tor rot.*
+
+**Umfang:** [B-259](backlog/B-259-generator-verschluckt-leerzeichen-neben-xml-elementen.md) (S),
+[B-260](backlog/B-260-normalisierer-setzt-absatz-mitten-im-satz.md) (S) – beide `Defekt`, unter Freigabe 1 ausformuliert,
+gegrillt, geschätzt. Ein Thema: der Weg von `///` nach `docs/openapi/v1.json`.
+
+**Entwickler-Brief:** Erst die Rohstrings des Generators messen (Normalisierer einmal abgeschaltet, `ContractDocumentTests`
+schreibt das rohe Dokument, danach alles zurück), dann entscheiden, was der Normalisierer heilen kann (B-260: ja) und was nur
+die Quelle (B-259: das Leerzeichen ist vor ihm verloren). Jede geänderte Zeile des Dokuments wird nachgelesen.
+
+### Iteration
+
+- **Rohstrings:** eine bündige Zeile vor eingerückten kommt in drei Formen vor – erste Zeile eines Tag-Zeilen-Texts,
+  `<para>`-Folgezeile, späterer Listenpunkt; nur die zweite ist ein Absatz. Ein Leerraum-Textknoten zwischen zwei Elementen
+  fällt weg. Nebenfund: in Listenpunkten fällt Inline-Markup ganz weg → [B-361](backlog/B-361-listenpunkte-verlieren-inline-markup.md).
+- **B-260:** rote Probe **2 failed** (erwartet 2); im Dokument genau **10** Zeilen geändert, jede nachgelesen (alle Brüche
+  mitten im Satz). Mutanten je **1 failed** (Listenpunkt-, Erste-Zeile-Ausnahme, „nie ein Absatz").
+- **B-259:** neues Tor in `ConventionGuardTests` meldet als rote Probe **8 Stellen**; acht Quellen umformuliert, im Dokument
+  alle fünf Klebestellen getrennt. Mutanten am Scan **2/1/1 failed**.
+- Volle Suite **1056/1056**, Solution-Build ohne Warnung.
+
+### Review / Rollengang / Abnahme
+
+`pugling-reviewer`: **kein 🔴/🟡.** Geprüft u. a.: alle 13 geänderten Dokumentzeilen, verbliebene `\n\n` im ganzen Dokument
+(zwei Treffer, beide echte Absätze vor einem `<see cref>`-Typnamen), jede Generator-Form, Geltungsbereich des Tors (die Enums
+liegen in `Contracts/Common`, `Api/Models` erreicht das Dokument nie). 🟢 ohne Zählung: relativer Pfad in der Tor-Meldung,
+Formulierung „It counts **children**", Grenzen (nummerierte Listen, `</see>`/`<a>`) im Kommentar benannt; deutsche Meldungen
+des Nachbar-Wächters → [B-365](backlog/B-365-waechter-meldungen-auf-deutsch.md). **Zähler Teil 1: 0.**
+
+**Rollengang:** Creator – sein Weg ist das Vertragsdokument; jede der 13 geänderten Zeilen von `docs/openapi/v1.json` ist
+nachgelesen. Vater und Sohn Regressionszeugen (kein Pfad von ihnen im Diff). Volle Suite **1056/1056**, E2E-Gesamtlauf **107
+passed** (`exit=0`, nach dem letzten Edit). **B-259, B-260 abgenommen.**
+
+### Retrospektive
+
+**Nachschau:** Lauf P, Teil 2 (`a25a1a6`: B-273, B-276, B-359, B-360) per frischem `frontend-reviewer`, read-only.
+**Entgangen:** [B-362](backlog/B-362-infohint-mit-crlf-und-einzelnem-cr-committet.md) bei B-273 (🟡, `InfoHint.tsx` mit CRLF und
+einem einzelnen CR committet, `i/-text`) und [B-363](backlog/B-363-begruendung-zu-min-width-falsch-mainbreite-traegt-nichts.md)
+bei B-276 (🟡, `.app-vater` ist eine Flex-Spalte – die Begründung zu `min-width: 0` ist falsch, `mainBreite` trägt nichts).
+Beide selbst nachgemessen (Bytezählung am Blob, Flex-Richtung in `index.css:293`). Increment eines **früheren** Laufs – Limit 2
+greift nicht; beide werden in Teil 2 gebaut. B-359, B-360 sauber; zwei 🟢 → [B-364](backlog/B-364-feldhilfe-und-kommentar-regex-restkanten.md).
+`nachgeschaut` an allen vier, mit Prüfpunkten.
+
+**Was die eigenen Tore durchgelassen haben:**
+
+1. *Zeilenenden aus eigenen Skripten.* Die Edits liefen über kleine Python-Skripte, die die Zeilenenden der Arbeitskopie
+   (CRLF) zurückschrieben und an einer Stelle ein `\r` stehen ließen. Kein Tor sieht, ob eine Textdatei mit CR in den Index geht;
+   `dotnet format` läuft nur über `.cs`, Vitest und `tsc` stört CR nicht.
+2. *Eine Begründung aus dem Gedächtnis.* „Flex-Kind mit Überlauf ≠ `visible` hat Mindestgröße 0" ist für die Hauptachse richtig –
+   ob `.vater-main` auf ihr liegt, war nicht nachgelesen. Gemessen war der Effekt, geraten seine Ursache. Dieselbe Familie wie
+   die Retro-Regel „Prämisse prüfen, bevor man darauf landet" – nur im Kommentar statt in der Retro.
+3. *Was diesmal trug:* die Rohstrings einmal messen statt die Generator-Formen zu erraten (B-260), und den Vorschlag aus der Idee
+   (Quelltext-Tor für B-260) gegen die Messung verworfen.
+
+**Vorschläge, nicht gelandet (Freigabe 3):**
+
+- **(AY)** Tor: ein Test (oder CI-Schritt), der `git ls-files --eol` liest und jede getrackte Textdatei unter `frontend/src`,
+  `frontend/e2e`, `backend/` und `docs/` mit `i/crlf`, `i/mixed` oder `i/-text` (außer Binärendungen) meldet. Billig; hätte
+  B-362 vor dem Commit gefangen.
+- **(AZ)** Prosa in pm-loop Step 5: „Ein Kommentar, der einen gemessenen Effekt begründet, nennt die nachgelesene Stelle der
+  Ursache (Datei:Zeile) – sonst ist die Begründung eine Vermutung und wird so beschriftet."

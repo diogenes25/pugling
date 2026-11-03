@@ -39,7 +39,7 @@ public record CreateTeacherDto(string Name, string? Email, string? Pin);
 /// <param name="Name">Display name.</param>
 /// <param name="Email">Email, if specified.</param>
 /// <param name="Roles">
-/// The account's roles – for a teacher <b>only</b> <c>Creator</c>. Deliberately in the response: the
+/// The account's roles – for a teacher only <c>Creator</c>. Deliberately in the response: the
 /// difference to a father account is exactly this list, and it should be visible without a second call.
 /// </param>
 public record TeacherAccountResponse(int CreatorId, int AccountId, string Name, string? Email,

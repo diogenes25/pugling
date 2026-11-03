@@ -270,7 +270,7 @@ public class RemarksController(
     /// <summary>
     /// A single remark – the entry point of the skill for "Answer question 123".
     ///
-    /// An admin accesses this <b>without</b> <c>scope=all</c>: targeting a single id is exactly the
+    /// An admin accesses this without <c>scope=all</c>: targeting a single id is exactly the
     /// break-glass case, and a parameter you'd always have to send along would just be noise.
     /// </summary>
     [HttpGet("{id:int}")]

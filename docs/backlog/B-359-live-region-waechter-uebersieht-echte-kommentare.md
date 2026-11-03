@@ -12,6 +12,7 @@ quelle: Nachschau zu Lauf P, Teil 1 in Lauf P, Teil 2 (docs/pm-sitzung-2026-11-0
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-03"
 entgangen_bei: [B-272]
 wartet_auf: ""
 ---
@@ -60,3 +61,4 @@ Die einzige Kommentar-Form, die die Erkennung kannte, kommt an der Stelle in kom
   Mutante „nur Klammer-Kommentar".
 - **2026-11-03** — Review `frontend-reviewer`: sauber – Regex-Reihenfolge erkennt einen Block-Kommentar vor einem `//` darin; der String-Grenzfall steht in Entscheidung 1.
 - **2026-11-03** — Abnahme Lauf P, Teil 2: Vitest **620/620**, `tsc -b` sauber, E2E-Gesamtlauf **107 passed** (`exit=0`, nach dem letzten Code-Edit gestartet). Rollengang: Der Entwickler ist die Rolle – die Probe ist sein Weg; Creator, Vater, Sohn Regressionszeugen. **Abgenommen**, Commit siehe Protokoll ([Lauf P](../pm-sitzung-2026-11-03-nacht.md)).
+- **2026-11-03** — Nachschau in Lauf Q, Teil 1 (frischer `frontend-reviewer`, `git show a25a1a6 -- frontend`, read-only): **sauber.** Geprüft: die alte Eingabe war wirklich ungültiges TSX, beide neuen Fälle enthalten einen echten Zeilenumbruch und sind gegen die alte Entfernung rot; Reihenfolge der Alternativen für `/* // */` und `// … /*` richtig; in den echten Quellen (4 Zeilen vor jedem Live-Tag) kein `//` oder `/*` in einem String. 🟢 zwei Blockkommentare ohne Fall → [B-364](B-364-feldhilfe-und-kommentar-regex-restkanten.md).

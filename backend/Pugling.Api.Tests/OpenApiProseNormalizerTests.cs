@@ -24,6 +24,21 @@ public class OpenApiProseNormalizerTests
             "Intro line\nstill intro\nFirst para\ncontinued\n\nSecond para\ncontinued",
             OpenApiProseNormalizer.Description("    Intro line\n    still intro\n    First para\ncontinued\n    Second para\ncontinued"));
 
+    // B-260: a <param> whose text starts on the tag line arrives unindented first, indented after - the reverse of a
+    // <para>. Red if every "indented after unindented" counts as a paragraph: the sentence then breaks after "can".
+    [Fact]
+    public void Text_Auf_Der_Tag_Zeile_Bricht_Nicht_In_Einen_Absatz()
+        => Assert.Equal("New login PIN, so an account can\nbe deliberately deactivated.",
+            OpenApiProseNormalizer.Description("New login PIN, so an account can\n            be deliberately deactivated."));
+
+    // B-260: the generator writes the first list item indented and every later one at column 0, each continued
+    // indented. Red if the continuation of a later item counts as a paragraph (measured: "both\n\nlists").
+    [Fact]
+    public void Folgezeile_Eines_Listenpunkts_Bricht_Nicht_In_Einen_Absatz()
+        => Assert.Equal("Two reasons:\n* First item\nwraps here.\n* Second item, both\nlists empty.",
+            OpenApiProseNormalizer.Description(
+                "            Two reasons:\n            * First item\n            wraps here.\n* Second item, both\n            lists empty."));
+
     // Red if blank runs are kept (three blank lines say nothing a single one does not) or the outer
     // blank lines survive the trim.
     [Fact]

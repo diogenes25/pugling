@@ -12,6 +12,7 @@ quelle: frontend-reviewer zu B-263 in Lauf A (docs/pm-sitzung-2026-10-26-tag.md)
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-03"
 entgangen_bei: []
 wartet_auf: ""
 ---
@@ -92,3 +93,4 @@ reproduzierbar. Von Punkt 3 bleibt das waagrechte Scrollen; „nie über den lin
   `tsc -b` sauber.
 - **2026-11-03** — Review `frontend-reviewer`: 🟡 die Bewegungsprüfung in `onResize` sei vermutlich ungetragen (rAF schließe vorher) → **gemessen statt vermutet:** Mutante „`onResize` ohne `moved()`" **1 failed** am Breitenfall – getragen, kein Code geändert (ohne Zählung). 🟡 der Breitenfall prüfte das Layout statt der Regel → Vorbedingung „der Knopf wandert" (zählt). 🟡 Banner- und Waagrecht-Fall ohne Vorbedingung (Scroll-Anchoring könnte das `prepend` ausgleichen) → Vorbedingungen „der Knopf rutscht" bzw. „nur waagrecht gewandert" (zählt). 🟢 Dateikopf und Wartezeit-Kommentar nach dem entfernten `scroll`-Listener nachgezogen, `imFenster` per `expect.poll` (ohne Zählung). Danach `feldhilfe-lage.spec.ts` **9 passed**.
 - **2026-11-03** — Abnahme Lauf P, Teil 2: Vitest **620/620**, `tsc -b` sauber, E2E-Gesamtlauf **107 passed** (`exit=0`, nach dem letzten Code-Edit gestartet). Rollengang: Vater maschinell – `feldhilfe-lage.spec.ts` (neun Fälle) öffnet das ⓘ im echten Browser und bewegt Knopf, Rahmen und Fenster; Creator und Sohn Regressionszeugen. Gerätecheck offen: die Bildschirmtastatur eines echten Handys (Firefox Android) einmal gegen ein offenes ⓘ. **Abgenommen**, Commit siehe Protokoll ([Lauf P](../pm-sitzung-2026-11-03-nacht.md)).
+- **2026-11-03** — Nachschau in Lauf Q, Teil 1 (frischer `frontend-reviewer`, `git show a25a1a6 -- frontend`, read-only): **Entgleitung** → [B-362](B-362-infohint-mit-crlf-und-einzelnem-cr-committet.md) (🟡: die Datei ging mit CRLF und einem einzelnen CR in den Index, `i/-text`). Fachlich sauber; geprüft: jede AK mit Vorbedingung gegen den falschen Grund (bewegt / nur waagrecht / steht still), Start bei 1000 px trägt „stünde unten über", Effekt-Reihenfolge (Anker vor dem ersten Frame), Aufräumen bricht den Frame ab, Scrollen im Popover bewegt den Knopf nicht, ein per `display:none` versteckter Knopf zählt als bewegt.

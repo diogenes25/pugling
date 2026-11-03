@@ -18,7 +18,7 @@ namespace Pugling.Api.Controllers.Creator;
 /// only ones an ordinary user has.
 ///
 /// Renaming and deleting need <b>one of two</b> owner rights (B-170): the category's own
-/// <c>ExerciseCategory.OwnerAdultId</c> <b>or</b> the subject's <c>Subject.OwnerAdultId</c>. Two bearers,
+/// <c>ExerciseCategory.OwnerAdultId</c>, <b>or</b> the subject's <c>Subject.OwnerAdultId</c>. Two bearers,
 /// because one alone breaks in each direction: without the category's, whoever adds a category to a seeded
 /// subject can never remove it again - a typo stayed in the study-plan pre-filter forever, which is exactly
 /// what B-157 caused and B-170 undid. Without the subject's, a stranger could plant a category in my

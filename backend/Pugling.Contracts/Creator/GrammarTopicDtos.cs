@@ -5,7 +5,7 @@ namespace Pugling.Contracts.Creator;
 
 /// <summary>
 /// A grammar topic of the shared vocabulary. <paramref name="IsOwn"/> = the caller may change and delete it;
-/// a seeded topic (<paramref name="OwnerAdultId"/> <c>null</c>) is changeable by nobody. The two counts show
+/// a seeded topic (<paramref name="OwnerAdultId"/> is <c>null</c>) is changeable by nobody. The two counts show
 /// whether a topic is in use - a used topic cannot be deleted.
 /// </summary>
 /// <param name="Id">Topic id.</param>

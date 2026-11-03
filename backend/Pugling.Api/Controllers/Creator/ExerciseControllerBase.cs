@@ -156,7 +156,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     /// Checks the <b>write permission</b> (change) on an exercise: the catalog is global (every creator may find
     /// any exercise and adopt it into their study plans), but only whoever holds an owner or write grant may
     /// change it. Requires the exercise's grants to be loaded (<see cref="FindAsync"/> loads them along).
-    /// Returns a <c>403</c> <see cref="ProblemDetails"/> if the permission is missing, otherwise <c>null</c>.
+    /// Returns a <see cref="ProblemDetails"/> with status <c>403</c> if the permission is missing, otherwise <c>null</c>.
     /// </summary>
     protected ObjectResult? EnsureCanWrite(Exercise exercise) =>
         ExercisePermissionService.CanWrite(exercise.Grants, User.AdultId(), User.IsAdmin())

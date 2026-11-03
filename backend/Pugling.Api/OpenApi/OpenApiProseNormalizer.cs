@@ -116,7 +116,9 @@ public static partial class OpenApiProseNormalizer
         var lines = text.ReplaceLineEndings("\n").Split('\n');
         var output = new StringBuilder(text.Length);
         var previousIndented = false;
+        var previousContinuation = false;
         var previousBlank = true;
+        var first = true;
         foreach (var raw in lines)
         {
             var indented = raw.Length > 0 && char.IsWhiteSpace(raw[0]);
@@ -127,22 +129,29 @@ public static partial class OpenApiProseNormalizer
                 if (!previousBlank) output.Append("\n\n");
                 previousBlank = true;
                 previousIndented = false;
+                previousContinuation = false;
                 continue;
             }
 
             if (!previousBlank)
             {
                 // The generator indents only the FIRST line of a <para>, its continuation lines start at
-                // column 0. So an indented line after an unindented one is the start of a paragraph - the
-                // one signal that survives into the generated string. The reverse case (a <para> right
-                // after indented text, or two single-line paragraphs in a row) cannot be told apart from a
-                // wrapped line and stays a soft break; a blank /// line instead of <para> makes it explicit.
-                output.Append(indented && !previousIndented ? "\n\n" : "\n");
+                // column 0. So an indented line after such a continuation line is the start of a paragraph -
+                // the one signal that survives into the generated string. Two other lines also sit at column 0
+                // and are followed by indented ones without a paragraph (B-260): the first line of a text that
+                // starts on its tag line (<param name="x">Text…) and every list item after the first ("* …"; a
+                // numbered list is not covered - none exists in the documented sources).
+                // The reverse case (a <para> right after indented text, or two single-line paragraphs in a row)
+                // cannot be told apart from a wrapped line and stays a soft break; a blank /// line instead of
+                // <para> makes it explicit.
+                output.Append(indented && !previousIndented && previousContinuation ? "\n\n" : "\n");
             }
 
             output.Append(line);
+            previousContinuation = !indented && !first && !line.StartsWith("* ", StringComparison.Ordinal);
             previousBlank = false;
             previousIndented = indented;
+            first = false;
         }
 
         var result = output.ToString().TrimEnd();

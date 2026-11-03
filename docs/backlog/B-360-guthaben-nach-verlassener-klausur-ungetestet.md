@@ -12,6 +12,7 @@ quelle: Nachschau zu Lauf P, Teil 1 in Lauf P, Teil 2 (docs/pm-sitzung-2026-11-0
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-03"
 entgangen_bei: [B-356]
 wartet_auf: ""
 ---
@@ -55,3 +56,4 @@ Eine Hälfte einer Entscheidung ohne Zusicherung (die (AJ)-Zeile je Entscheidung
   dem Verlassen" **1 failed** (AK 1). `SohnTest.test.tsx` **18/18**.
 - **2026-11-03** — Review `frontend-reviewer`: sauber – `refreshWallet` wird nur im Verlassen-Zweig gerufen (`SohnTest.tsx:70`), der Zweig `:76` ist bei verlassener Seite unerreichbar; `toHaveBeenCalledTimes(abgegeben ? 1 : 0)` ist scharf.
 - **2026-11-03** — Abnahme Lauf P, Teil 2: Vitest **620/620**, `tsc -b` sauber, E2E-Gesamtlauf **107 passed** (`exit=0`, nach dem letzten Code-Edit gestartet). Rollengang: Sohn maschinell über `SohnTest.test.tsx` (verlassene Klausur, Kopfzeile bekommt Münzen und Serie) und die Klausur-Specs; Creator, Vater Regressionszeugen. **Abgenommen**, Commit siehe Protokoll ([Lauf P](../pm-sitzung-2026-11-03-nacht.md)).
+- **2026-11-03** — Nachschau in Lauf Q, Teil 1 (frischer `frontend-reviewer`, `git show a25a1a6 -- frontend`, read-only): **sauber.** Geprüft: `refreshWallet` nur im Verlassen-Zweig (`SohnTest.tsx:70`), `toHaveBeenCalledTimes(abgegeben ? 1 : 0)` streng in beide Richtungen.

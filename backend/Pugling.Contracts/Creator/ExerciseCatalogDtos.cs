@@ -76,7 +76,7 @@ public record ClassTestUsage(int Id, string Title, int ChildId, string ChildName
 /// lists are permanently empty. This number is then not the footnote but the only answer to their
 /// actual question: is my material being used?</item>
 /// </list>
-/// <b>Children</b> are counted, not usage sites: three positions in the same child's plans
+/// It counts <b>children</b>, not usage sites: three positions in the same child's plans
 /// are one user. The basis is the FK-relevant usages that also block deletion – a class test only
 /// collected via a tag does not prevent it and is therefore not counted.
 /// </param>
