@@ -6,6 +6,7 @@ import { useAction } from "../lib/useAction";
 import type { ActionMessage } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import type { PublisherResponse } from "../lib/types";
+import { ListenAusfall } from "../components/ListenAusfall";
 
 /**
  * Das Verlags-Vokabular – wie das Schlagwort-Vokabular in InterestTagAdmin eine geteilte Taxonomie, die
@@ -78,7 +79,7 @@ export function PublisherAdmin({ onChanged, onMeldung }: {
         <button type="submit" className="btn ghost inline-btn" style={{ width: "auto" }}>Suchen</button>
       </form>
 
-      {publishers.error && <div className="banner err">{publishers.error}</div>}
+      <ListenAusfall was="Die Verlage" fehler={publishers.error} laedt={publishers.loading} onRetry={publishers.reload} schluessel={applied} />
       {publishers.loading && publishers.data === null ? <div className="loading">Lade…</div> : (
         <div style={{ overflowX: "auto", marginTop: 8 }}>
           <table className="table">

@@ -6,6 +6,7 @@ import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import { confirmAction, radioGroupKeys } from "../lib/ui";
 import type { ContentRating, MediaAssetResponse, MediaUsage } from "../lib/types";
+import { ListenAusfall } from "../components/ListenAusfall";
 
 /**
  * Die Bild-Bibliothek: der Vorrat, aus dem die App je Kind auswählt.
@@ -49,7 +50,7 @@ export function VaterMedia() {
           <button type="submit" className="btn ghost small" style={{ width: "auto" }}>Suchen</button>
         </form>
 
-        {list.error && <div className="banner err">{list.error}</div>}
+        <ListenAusfall was="Die Bilder" fehler={list.error} laedt={list.loading} onRetry={list.reload} schluessel={applied} />
         {list.loading && list.data === null ? <div className="loading">Lade…</div> : (
           <table className="table">
             <thead><tr><th>Vorschau</th><th>Beschreibung</th><th>Schlagworte</th><th>Eignung</th><th /></tr></thead>

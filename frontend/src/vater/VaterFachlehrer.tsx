@@ -18,6 +18,7 @@ import { FREETEXT_SUBJECT, subjectFormValue } from "./subjectField";
 import type {
   CreateCreatorProfileDto, CreatorProfileResponse, SchoolType, SubjectResponse, TextbookSeriesResponse,
 } from "../lib/types";
+import { ListenAusfall } from "../components/ListenAusfall";
 
 /** Die Übungstypen, die der KI-Creator selbst entwerfen kann (Manifest-Schlüssel des Servers). */
 const TYPES = ["Vocabulary", "Cloze", "Translation", "Grammar"] as const;
@@ -62,11 +63,11 @@ export function VaterFachlehrer() {
           <span>Stillgelegte Profile mitzeigen</span>
         </label>
 
-        {list.error && <div className="banner err">{list.error}</div>}
+        <ListenAusfall was="Die Fachlehrer-Profile" fehler={list.error} laedt={list.loading} onRetry={list.reload} schluessel={includeInactive} />
         {/* Fächer und Reihen speisen die Auswahlfelder der Formulare (B-172) – scheitert einer dieser
             Abrufe, fehlt dort die Auswahl. Neben der Liste, nicht an ihrer Stelle. */}
-        {subjects.error && <div className="banner err">Fächer: {subjects.error}</div>}
-        {series.error && <div className="banner err">Reihen: {series.error}</div>}
+        <ListenAusfall was="Die Fächer" fehler={subjects.error} laedt={subjects.loading} onRetry={subjects.reload} />
+        <ListenAusfall was="Die Reihen" fehler={series.error} laedt={series.loading} onRetry={series.reload} />
         {list.loading && list.data === null ? <div className="loading">Lade…</div> : (
           <table className="table">
             <thead><tr><th>Profil</th><th>Fach</th><th>Klassen</th><th>Lehrwerk</th><th /></tr></thead>

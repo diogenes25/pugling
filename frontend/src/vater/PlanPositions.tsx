@@ -527,10 +527,10 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
           </span>
         </label>
         {/* Der Fehlerzweig braucht seine eigene Fläche, nicht nur die Sperre: Scheitert die Suche, bleibt
-            `zeilenVeraltet` **dauerhaft** wahr (der Effekt hängt an `exercises.data`, und das ändert sich
-            nicht mehr). Ohne diesen Kasten stünde für immer „Suche läuft…" neben einer Liste, die nie
+            `zeilenVeraltet` **dauerhaft** wahr (`exercises.stale`: die Deps der Daten ziehen nur bei Erfolg nach,
+            B-164). Ohne diesen Kasten stünde für immer „Suche läuft…" neben einer Liste, die nie
             wieder wählbar wird — und der einzige Ausweg wäre, blind am Filter zu drehen. `reload()` ist
-            der Weg zurück: es setzt `data` neu und löst damit die Sperre. Derselbe Aufbau wie im
+            der Weg zurück: gelingt es, gehören die Daten wieder zur Suche, und die Sperre fällt. Derselbe Aufbau wie im
             Zwilling (`VaterWizard.tsx`). */}
         {sucheGescheitert && (
           <div className="banner err" role="alert" tabIndex={-1} ref={fehlerKasten}>

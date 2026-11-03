@@ -6,6 +6,7 @@ import { confirmAction } from "../lib/ui";
 import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import type { SubjectResponse, SupervisorLink, SupervisorRelation, TimetableEntry, Weekday } from "../lib/types";
+import { ListenAusfall } from "../components/ListenAusfall";
 
 /*
  * Zwei Seiten des Kind-Profils, die bisher nur über die API erreichbar waren.
@@ -55,7 +56,7 @@ export function SupervisorsSection({ childId, childName }: { childId: number; ch
         Belohnung in seinen Shop gestellt hat.
       </p>
 
-      {links.error && <div className="banner err">{links.error}</div>}
+      <ListenAusfall was="Die Betreuer" fehler={links.error} laedt={links.loading} onRetry={links.reload} schluessel={childId} />
       {links.data && (
         <table className="table">
           <thead><tr><th>Name</th><th>Rolle</th><th>Seit</th><th /></tr></thead>
@@ -142,7 +143,7 @@ export function TimetableSection({ childId, subjects }: { childId: number; subje
         KI-Creator) zu entscheiden, worauf heute der Schwerpunkt liegt.
       </p>
 
-      {entries.error && <div className="banner err">{entries.error}</div>}
+      <ListenAusfall was="Die Stundenplan-Einträge" fehler={entries.error} laedt={entries.loading} onRetry={entries.reload} schluessel={childId} />
       {entries.data && (byDay.length === 0
         ? <p className="muted">Noch nichts eingetragen.</p>
         : (

@@ -5,6 +5,7 @@ import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import { AssetThumb, MediaSearch } from "./MediaPickers";
 import type { MediaLinkResponse } from "../lib/types";
+import { ListenAusfall } from "../components/ListenAusfall";
 
 /*
  * Die zwei Ebenen der Bebilderung eines Wortes – bewusst in einer Datei, weil sie nur zusammen Sinn ergeben:
@@ -102,7 +103,7 @@ function MediaLinkEditor({ heading, hint, empty, word, load, deps, onLink, onUnl
     <div style={{ padding: "8px 0" }}>
       <h4 className="h-section" style={{ fontSize: "1rem" }}>{heading}</h4>
       <p className="muted" style={{ marginTop: 0, fontSize: 13 }}>{hint}</p>
-      {links.error && <div className="banner err">{links.error}</div>}
+      <ListenAusfall was="Die verknüpften Bilder" fehler={links.error} laedt={links.loading} onRetry={links.reload} schluessel={JSON.stringify(deps)} />
 
       {links.loading && links.data === null ? <div className="loading">Lade…</div> : (
         (links.data ?? []).length === 0

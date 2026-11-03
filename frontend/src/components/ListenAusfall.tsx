@@ -19,18 +19,26 @@ import { useGemerkterFehler } from "../lib/useGemerkterFehler";
  * passiert, und scheitert die Wiederholung erneut, ist der Knopf von dort mit Tab erreichbar. Gelingt sie,
  * verschwindet der Kasten – und mit ihm ein Fehlerzustand, in dem nichts mehr zu fokussieren ist.
  */
-export function ListenAusfall({ was, fehler, laedt, onRetry }: {
+export function ListenAusfall({ was, fehler, laedt, onRetry, schluessel, style }: {
   /** Was nicht geladen werden konnte, als Satzanfang: „Deine Kinder", „Die Fächer". */
   was: string;
   fehler: string | null;
   laedt: boolean;
   onRetry: () => void;
+  /**
+   * Wofür der Fehler gilt (B-183): die Abhängigkeiten der Abfrage, wo sie wechseln können (Suche, anderes Kind). Ein Wechsel
+   * ist keine Wiederholung – ohne ihn stünde der alte Fehler mit „Lädt…" über der neuen Abfrage (B-227). Abfragen ohne
+   * Abhängigkeiten lassen ihn weg.
+   */
+  schluessel?: unknown;
+  /** Abstand zur Umgebung, wo der Kasten ihn braucht – er hat selbst keinen Rand (`.banner`). */
+  style?: React.CSSProperties;
 }) {
-  const gescheitert = useGemerkterFehler(fehler, laedt);
+  const gescheitert = useGemerkterFehler(fehler, laedt, schluessel);
   const kasten = useRef<HTMLDivElement>(null);
   if (!gescheitert) return null;
   return (
-    <div className="banner err" role="alert" tabIndex={-1} ref={kasten}>
+    <div className="banner err" role="alert" tabIndex={-1} ref={kasten} style={style}>
       {was} konnten nicht geladen werden: {gescheitert}
       <button type="button" className="btn ghost inline-btn" style={{ width: "auto", marginLeft: 8 }}
         disabled={laedt} onClick={() => { kasten.current?.focus(); onRetry(); }}>

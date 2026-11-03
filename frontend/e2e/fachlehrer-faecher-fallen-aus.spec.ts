@@ -20,7 +20,8 @@ test("Fällt die Fächerliste aus, zeigt das Fach-Feld das abgeleitete Fach – 
   await vaterLogin(page, FATHER);
   await page.route("**/api/v1/creator/subjects", (route) => route.abort("failed"));
   await page.goto("/vater/fachlehrer");
-  await expect(page.getByText(/^Fächer:/)).toBeVisible();
+  // Seit B-183 als ListenAusfall mit Satzanfang und „Erneut laden".
+  await expect(page.getByText(/^Die Fächer konnten nicht geladen werden/)).toBeVisible();
 
   // Eine geseedete Reihe mit Katalog-Fach: „Green Line 1" (Englisch). Über den Optionstext gegriffen, weil
   // die Beschriftung den Verlag mitträgt und dessen Name nicht zur Spec gehört.

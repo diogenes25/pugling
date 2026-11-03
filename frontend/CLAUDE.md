@@ -31,8 +31,7 @@ Eingabefelder tragen statt `<label>` ein `<FieldLabel htmlFor=… topic="…">`,
 (Assistent wie Plan-Seite), und zwei Formulierungen desselben Begriffs werden zwei Bedeutungen; `HelpTopic`
 lässt einen Tippfehler beim Übersetzen auffallen. Der Hinweis-Knopf heißt
 `Erklärung zu „<Feldname>"` – **`getByLabel` in Tests darum mit `{ exact: true }`**, sonst trifft der
-Teilstring-Vergleich den Knopf statt das Eingabefeld. `e2e/feldhilfe.spec.ts` prüft Feld → *richtiger* Text,
-nicht „irgendein Popover".
+Teilstring-Vergleich den Knopf statt das Eingabefeld.
 
 **Komponenten/Hooks testet React Testing Library** (`render`, `renderHook`); der Test liegt beim Geprüften.
 Tragend: `setupFiles: ["src/test-setup.ts"]` räumt das DOM zwischen den Fällen ab – ohne `globals: true` tut
@@ -84,11 +83,11 @@ Drei Regeln beim Ergänzen: **eine Aktion bekommt keinen Nav-Eintrag** (deshalb 
 Anlegen und Verwalten sind getrennt: `/vater/exercises` verwaltet, `/vater/exercises/neu` legt an.
 **Der Einstieg zum Anlegen ist „Unit zuerst"**: `/vater/lehrwerke` trägt je Unit ein „+ Übung"
 (`createExerciseHref` reicht die Auswahl als Query durch), die Bestandsliste ihr
-„+ Neue Übung" mit dem gesetzten Filter. Die Werkstatt hat **bewusst keinen kontextfreien Knopf** mehr
-(seit B-106 ist die Unit Pflichtfeld). Der Knopf hängt am Fach, nicht an `series.isOwn`: eine Reihe ohne `subjectId` trägt keine (`series_without_subject`).
-Ein Vater entsteht **im UI**: `/vater` hat neben „Anmelden" den Modus „Neu registrieren" (anonymes
-`POST supervisor/adults`; die neue Id ist der Login-Name); das eigene Konto liegt unter
-`/vater/profil`. `/vater/kind/:id` ist der **Kind-Hub** (Stammdaten, PIN, Bild, Interessen) und verlinkt alles Kindbezogene per `?childId=`, darunter `…/lernstand` (schwache Wörter + Katalog-Drilldown) und `…/ziele` (Objectives/OKR mit ihren Etappen).
+„+ Neue Übung" mit dem gesetzten Filter. Die Werkstatt hat **bewusst keinen kontextfreien Knopf** mehr.
+Der Knopf hängt am Fach, nicht an `series.isOwn`: eine Reihe ohne `subjectId` trägt keine (`series_without_subject`).
+Ein Vater registriert sich **im UI** (`/vater`, „Neu registrieren": anonymes `POST supervisor/adults`, die Id ist der
+Login-Name); `/vater/kind/:id` ist der **Kind-Hub** und
+verlinkt alles Kindbezogene per `?childId=`.
 **Alle Übungstypen des Servers sind im UI anlegbar** — Anzeigename und Routen-Segment kommen aus dem
 Typ-Manifest (`GET creator/exercise-types`, gelesen über [src/lib/exerciseTypes.ts](src/lib/exerciseTypes.ts)),
 **nicht** aus einer Tabelle im Frontend: der Schlüssel weicht von der Route ab (Aufsatz → `essays`), und drei
@@ -111,7 +110,10 @@ Ladefenster stehen noch die Zeilen des vorigen Elternteils, während die Rückru
 (`DELETE {neu}/{Zeile aus alt}`). Die Zeile muss ihr Elternteil **mitbringen** und bei Nichtpassung nicht
 rendern (`c.subjectId === subjectId`, B-170); ein `disabled` sperrt nur die Folge. Ein früher Ausstieg wie
 `if (!subject.isMine)` deckte das Fenster zu – wer ihn durch eine Entscheidung **pro Zeile** ersetzt,
-macht es auf.
+macht es auf. Ohne Schlüssel an der Zeile (Suchtreffer) sagt `x.stale` es (B-164): sperren, nicht ausblenden.
+
+**Gescheitertes Lesen → `ListenAusfall`** mit `onRetry={x.reload}` und `schluessel` (die Deps), nie ein nacktes
+`{x.error && <… banner err>}` (B-183, `src/lesefehler.test.ts`); die Ternär-Form hinter „Lade…" ist offen (B-369).
 
 Übungen sind über `/vater/exercises` **bearbeitbar**: Metadaten per PUT — den geladenen
 `config`/`suggestedBonus`/`executePublic` **mitschicken**, sonst löscht der Vollersatz sie; Vokabelpaare

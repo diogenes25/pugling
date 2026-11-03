@@ -35,7 +35,8 @@ test("Fehlt die Fächerliste, zeigt das Feld das geladene Fach – und der Ausfa
   await page.route("**/api/v1/creator/subjects", (route) => route.abort("failed"));
   await page.reload();
 
-  await expect(page.getByText(/^Fächer:/)).toBeVisible();
+  // Seit B-183 als ListenAusfall mit Satzanfang und „Erneut laden".
+  await expect(page.getByText(/^Die Fächer konnten nicht geladen werden/)).toBeVisible();
 
   await page.getByRole("button", { name: `Reihe bearbeiten: „${REIHE}"` }).click();
   const feld = page.locator('select[id^="se-subject-"]');

@@ -16,6 +16,7 @@ import type {
   CreateTextbookDto, CreatorProfileMatch, SeriesUnitResponse, SubjectResponse, TextbookResponse,
   TextbookSeriesResponse,
 } from "../lib/types";
+import { ListenAusfall } from "../components/ListenAusfall";
 
 /**
  * Das Unterrichtsmaterial eines Kindes – und wer es kennt.
@@ -57,10 +58,10 @@ export function ChildMaterialSection({ childId, childName, subjects }: {
         <Link to="/vater/lehrwerke">Lehrwerke</Link>.
       </p>
 
-      {books.error && <div className="banner err">{books.error}</div>}
+      <ListenAusfall was="Die Lehrbücher" fehler={books.error} laedt={books.loading} onRetry={books.reload} schluessel={childId} />
       {/* Die Reihen speisen das Auswahlfeld der Formulare (B-172) – scheitert der Abruf, fehlt dort die
           Auswahl, und ohne diese Zeile war das nicht zu sehen. */}
-      {series.error && <div className="banner err">Reihen: {series.error}</div>}
+      <ListenAusfall was="Die Reihen" fehler={series.error} laedt={series.loading} onRetry={series.reload} />
       {books.showPlaceholder ? <div className="loading">Lade…</div> : books.data === null ? null : books.data.length === 0 ? (
         <p className="muted">Noch kein Buch hinterlegt.</p>
       ) : (
@@ -404,7 +405,7 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
             )}
             {/* Der Hinweis oben prüft `length === 0` und schweigt darum bei `null`, also genau im
                 Fehlerfall (B-172). Ohne diese Zeile sah ein gescheiterter Abruf aus wie „lädt noch". */}
-            {units.error && <div className="banner err">Units: {units.error}</div>}
+            <ListenAusfall was="Die Units" fehler={units.error} laedt={units.loading} onRetry={units.reload} schluessel={seriesId} />
           </div>
         </div>
         {neueReiheOffen && (
@@ -559,7 +560,7 @@ function MatchPanel({ childId, childName, books }: {
         </div>
       )}
 
-      {matches.error && <div className="banner err">{matches.error}</div>}
+      <ListenAusfall was="Die passenden Fachlehrer" fehler={matches.error} laedt={matches.loading} onRetry={matches.reload} schluessel={JSON.stringify([childId, filter, signature])} />
       {matches.loading && matches.data === null ? <div className="loading">Lade…</div>
         : matches.data?.length === 0 ? (
           <p className="muted">

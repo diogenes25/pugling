@@ -6,6 +6,7 @@ import { confirmAction } from "../lib/ui";
 import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import type { InterestFacet, InterestTagResponse } from "../lib/types";
+import { ListenAusfall } from "../components/ListenAusfall";
 
 /*
  * Das Schlagwort-Vokabular – die **eine** Taxonomie, aus der Bilder *und* Kinder schöpfen. Genau deshalb
@@ -55,7 +56,7 @@ export function InterestTagAdmin() {
           für ihn passiert dann scheinbar nichts (B-160). */}
       <StatusBanner message={action.message} style={{ marginTop: 0, marginBottom: 10 }} />
 
-      {tags.error && <div className="banner err">{tags.error}</div>}
+      <ListenAusfall was="Die Stichwörter" fehler={tags.error} laedt={tags.loading} onRetry={tags.reload} schluessel={applied} />
       {tags.loading && tags.data === null ? <div className="loading">Lade…</div> : (
         <div style={{ overflowX: "auto", marginTop: 8 }}>
           <table className="table">

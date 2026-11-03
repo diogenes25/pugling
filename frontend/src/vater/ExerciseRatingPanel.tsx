@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import { type ActionState, useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import type { ExerciseRating, ExerciseSummary } from "../lib/types";
+import { ListenAusfall } from "../components/ListenAusfall";
 
 /*
  * Bewertungen geteilter Übungen (B-12).
@@ -57,7 +58,7 @@ export function ExerciseRatingPanel({ exercise, onChanged }: { exercise: Exercis
 
   return (
     <div style={{ marginTop: 8, fontSize: 13 }}>
-      {ratings.error && <div className="banner err">{ratings.error}</div>}
+      <ListenAusfall was="Die Bewertungen" fehler={ratings.error} laedt={ratings.loading} onRetry={ratings.reload} schluessel={exercise.id} />
       {ratings.loading && ratings.data === null && <div className="loading">Lade…</div>}
       {ratings.data && (ratings.data.length === 0
         ? <p className="muted" style={{ margin: "4px 0" }}>Noch niemand hat diese Übung bewertet.</p>

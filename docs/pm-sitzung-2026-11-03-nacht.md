@@ -373,3 +373,97 @@ Increment eines früheren Laufs, Limit 2 greift nicht; in diesem Teil behoben. B
 - **(BC)** Prosa in `frontend/CLAUDE.md` (oder pm-loop Step 4): „Wer ein Muster vom Aufrufer in einen Hook zieht, liest zuerst
   dessen Startwert und jede Zusicherung, die das Muster an irgendeinem Aufrufer trägt, und gibt jedem Aufrufer jede davon."
 - (BB) und (AY) aus Lauf Q decken Punkt 3.
+
+## Lauf R, Teil 2 — Jedes gescheiterte Lesen bietet den Weg zurück (B-183, B-368)
+
+**Sprint-Ziel:** *Der Vater, bei dem eine Liste nicht geladen werden konnte, bekommt an jeder Stelle des Vater-Webs „Erneut
+laden" – ohne F5, ohne seine Eingaben daneben zu verlieren –, und ein Wächter hält die Regel.*
+
+**Umfang:** [B-183](backlog/B-183-gescheitertes-lesen-ohne-erneuten-versuch.md) (M, `Wunsch` mit Freigabe des Nutzers vom
+2026-10-23, Freigabe 9: selbst ausformuliert, geschätzt, gebaut) und [B-368](backlog/B-368-stale-kommentar-und-zaehlung.md)
+(XS, Entgleitung aus Teil 1 dieses Laufs, im selben Sprint nach Freigabe 3). Draußen bleiben die übrigen `banner err` (Mutations-
+und Formularfehler – kein Lesen) und die Sohn-Arcade (kein solches Banner gefunden).
+
+**Entwickler-Brief:** Zählen statt der Zahl der Idee glauben (68 → 29 echte Lesefehler); alle 29 auf `ListenAusfall`, je mit
+Satzanfang und – wo die Abfrage Abhängigkeiten hat – `schluessel`; ein Wächter mit Selbsttest; eine Spec, die den Weg im Browser
+fährt. Die Hausregel in `frontend/CLAUDE.md`, im selben Durchgang bezahlt.
+
+### Iteration
+
+- **Wächter:** rote Probe **29 Funde** (erwartet 29); nach dem Umbau 0. **Schlüssel:** rote Probe **1 failed** (erwartet 1).
+- **Spec** `lesefehler-erneut-laden.spec.ts` grün; Mutanten „nacktes Banner" und „Knopf ruft nicht `reload`" je **1 failed**.
+- **B-368:** Kommentar und Zahl (113) berichtigt; Mutante „Merker statt Vergleich" **1 failed**, nur am neuen Fall.
+- Eigene Panne: zwei, dann drei Importe landeten in einer mehrzeiligen Import-Klammer (`tsc` rot), korrigiert.
+- `frontend/CLAUDE.md` danach 10 336 B statt 10 365 B (die neue Regel ist durch das Verdichten des Routen-Absatzes bezahlt).
+- Vitest **638/638**, `tsc -b` sauber.
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `frontend-reviewer` 🔴 | AK 1 und die Hausregel zu weit: die Zählung sah nur die `&&`-Form; 21 Lesefehler in Ternär-Form, drei unter nacktem Namen, zwei in der Arcade blieben nackt | **geteilt** → [B-369](backlog/B-369-lesefehler-in-ternaer-form.md); AK 1, Wächter-Kommentar, `CLAUDE.md` eingeengt, Selbsttest-Fall beschriftet | ja |
+| 2 | `frontend-reviewer` 🟡 | `ExerciseEditModal` verlor `marginBottom: 6` | `ListenAusfall` nimmt `style` | ja |
+| 3 | `frontend-reviewer` 🟡 | `VaterPlanDetail` nannte den Kasten „ohne Wiederhol-Knopf" | berichtigt | nein (Kommentar) |
+| 4 | `frontend-reviewer` 🟢 ×4 | Spec-Filter als Teilstring; Gegenfall ohne „Rot, wenn"; eine Tatsache aus `CLAUDE.md` verloren; Wächter für fehlenden `schluessel` | die ersten drei behoben, der vierte in B-369 notiert | nein |
+
+Warum geteilt und nicht umgebaut: in der Ternär-Form steht „Lade…" **vor** dem Ausfall, und „Erneut laden" tauschte den Kasten
+samt Knopf dagegen – genau der Fokusverlust aus B-216. Das ist eine Gestaltungsfrage; Freigabe 9 deckt sie nicht ab (sie gilt nur
+für die Story, in der sie steht, und die Entscheidung des Nutzers sagt „wo das `reload` eindeutig ist", nicht, wie der Platzhalter
+weicht). **Zähler Teil 2: 2.**
+
+Danach ein **roter Gesamtlauf** (3 failed, 106 passed): drei Specs suchten den alten Präfix des Banners. Umgestellt auf den neuen
+Satz; dabei selbst gefunden, dass `lehrbuch-units-laden-noch.spec.ts:60` („kein ‚Units: …'") mit dem neuen Text leer geworden
+wäre – ebenfalls umgestellt (zählt, **Zähler Teil 2: 3**).
+
+**Rollengang:** Vater maschinell – `lesefehler-erneut-laden.spec.ts` holt ausgefallene Fächer mit „Erneut laden" zurück, ohne
+die Seite neu zu laden; die Ausfall-Specs von Fachlehrer, Optionsliste und Plan sehen den neuen Satz im echten Browser.
+Creator über Katalog und Lehrwerke, Sohn Regressionszeuge (Arcade unberührt). Vitest **638/638**, E2E-Gesamtlauf **109
+passed** (`exit=0`, nach dem letzten Edit). **B-183 (Umfang: `&&`-Form), B-368 abgenommen.**
+
+### Retrospektive
+
+**Nachschau:** Lauf R, Teil 1 (`66ff94d`: B-164, B-367) per frischem `frontend-reviewer`, read-only. **Entgangen:**
+[B-368](backlog/B-368-stale-kommentar-und-zaehlung.md) bei B-164 (🟡 ×2: Kommentar nannte den entfernten Effekt, „111" statt
+113) – Increment **dieses** Laufs, also Limit 2; in diesem Teil behoben. B-367 sauber. `nachgeschaut` an beiden.
+
+**Was die eigenen Tore durchgelassen haben:**
+
+1. *Gezählt nach der Form, nicht nach der Handlung.* „29 Lesefehler" war eine Regex über *eine* Schreibweise; die Behauptung
+   „alle" stand in AK, Wächter und `CLAUDE.md`. Das ist wörtlich (AS) aus Lauf N („ein AK ‚nirgends mehr X' wird nach der
+   Handlung gesucht") – vorgeschlagen, nicht gelandet, und hier ein zweites Mal gemessen.
+2. *Eine Textänderung leert Negativ-Zusicherungen anderswo.* Drei Specs fielen laut, eine wäre still leer geworden. Der Gesamtlauf
+   fand die lauten; die stille fand nur das Nachsuchen nach dem alten Text.
+
+**Vorschläge, nicht gelandet (Freigabe 3):**
+
+- **(BD)** Prosa in pm-loop Step 5 (oder `frontend/CLAUDE.md`): „Ändert sich ein sichtbarer Text, wird der alte Text in
+  `e2e/` und `src/**/*.test.*` gesucht; jede `toHaveCount(0)`/`not`-Zusicherung darauf wird umgestellt oder gestrichen."
+- (AS) bleibt der Vorschlag für Punkt 1 – jetzt mit zwei Messungen.
+
+## Ende Lauf R
+
+Endgrund: **Limit 2** – die Nachschau in Teil 2 fand im Increment von Teil 1 eine Entgleitung (B-368, behoben). Zwei Teile, **vier
+Stories abgenommen:** B-164, B-367 (Teil 1); B-183 (geteilt, `&&`-Form), B-368 (Teil 2). Neu: B-369 (der Rest von B-183, mit der
+Entscheidung des Nutzers, ohne Bau-Freigabe). Teil 2 ist **unbeobachtet** (Nachschau im nächsten Lauf). Zähler 2 / 3. Alles
+**ungepusht**.
+
+## Ende der Nacht — drei Läufe
+
+| Lauf | Teile | Abgenommen | Zähler | Commits | Endgrund |
+| --- | --- | --- | --- | --- | --- |
+| P | 2 | B-356, B-357, B-272; B-276, B-273, B-359, B-360 | 1 / 2 | `bffb583`, `a25a1a6` | Limit 2 |
+| Q | 2 | B-259, B-260; B-362, B-363, B-364, B-366 | 0 / 0 | `1067b55`, `617df82` | Limit 2 |
+| R | 2 | B-164, B-367; B-183, B-368 | 2 / 3 | `66ff94d`, siehe `git log` | Limit 2 |
+
+**Siebzehn Stories abgenommen**, davon acht Entgleitungen aus den Nachschauen dieser Nacht (B-359, B-360, B-362, B-363, B-366,
+B-367, B-368 – und B-366/B-368 aus dem eigenen Lauf). Neu offen: B-358, B-361, B-364 (erledigt), B-365, B-369. Jeder Lauf endete an
+Limit 2: in jedem fand die Nachschau des zweiten Teils etwas im ersten – meist Text, der mehr behauptet, als Code oder Test halten.
+
+**Offene Entscheidungen für den Nutzer:**
+
+1. **Retro-Vorschläge (AU)–(BD)** – keiner gelandet (Freigabe 3); darunter zwei Tore: (AV) Wächter-Selbsttests durch den
+   TSX-Parser, (AY) CR/`i/-text` im Index. Dazu unverändert (AO)–(AT) aus der Nacht zuvor; (AS) ist jetzt zweimal gemessen.
+2. **B-369:** wie weicht der „Lade…"-Platzhalter, wenn ein Lesefehler in der Ternär-Form „Erneut laden" bekommt – und soll der
+   Wächter nackte `error`-Namen sehen (dann mit Ausnahme für Anmeldefehler)?
+3. **Gerätechecks:** Radiogruppen mit Screenreader (B-352); die Bildschirmtastatur eines echten Handys gegen ein offenes ⓘ (B-273).
+4. **Retro-Vorschlag (BB)/(AY):** ein Edit-Werkzeug für Ad-hoc-Ersetzungen – dreimal hat ein Heredoc-Skript Bytes verdorben.

@@ -8,6 +8,7 @@ import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import { PlanPositions } from "./PlanPositions";
 import type { ChildResponse, PlanResponse, ProgressResponse, UpdatePlanDto } from "../lib/types";
+import { ListenAusfall } from "../components/ListenAusfall";
 
 export function VaterPlanDetail() {
   const { planId } = useParams();
@@ -138,9 +139,8 @@ function PlanEditForm({ plan, childName, busy, onSave }: {
   return (
     <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {/* Der Ausfall der Kinderliste war unsichtbar – das Feld stand leer, für einen Plan, der ein Kind hat
-          (B-194, derselbe Fall wie B-172s Kriterium 5). Ohne Wiederhol-Knopf, wie die 68 anderen
-          Lesefehler-Banner (B-172, Entscheidung 5); der Weg zurück ist B-183. */}
-      {children.error && <div className="banner err" role="alert">Kinder: {children.error}</div>}
+          (B-194, derselbe Fall wie B-172s Kriterium 5). Seit B-183 mit „Erneut laden". */}
+      <ListenAusfall was="Die Kinder" fehler={children.error} laedt={children.loading} onRetry={children.reload} />
       <div className="form-grid" style={{ alignItems: "end" }}>
         <div className="field" style={{ minWidth: 220 }}><label htmlFor="plan-edit-title">Titel</label>
           <input id="plan-edit-title" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} /></div>

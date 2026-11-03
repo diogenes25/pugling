@@ -54,10 +54,9 @@ test("Solange die Units laden, sagt das Unit-Feld „lädt…“ und ist gesperr
   await expect(unit).toBeDisabled({ timeout: 1200 });
   // Kein Ausfall-Banner im Fenster. Absichtserklärung, kein Beleg für B-235: auch vor dem Fix stand hier kein
   // Banner (die Liste fällt ja nicht aus). Rot nur, wenn ein Umbau das Ladefenster als Ausfall meldet.
-  // Per TEXT, nicht per `getByRole("alert")` wie im Plan-Vorbild: der Units-Banner (`ChildMaterialSection.tsx`,
-  // „Units: …") trägt keine Rolle – eine Rollen-Abfrage zählte hier immer 0 (Reviewer-Fund). Die fehlende Rolle
-  // ist B-134s Sweep, nicht diese Spec.
-  await expect(page.getByText(/^Units: /)).toHaveCount(0, { timeout: 1200 });
+  // Per TEXT: seit B-183 ist der Units-Banner ein `ListenAusfall` („Die Units konnten nicht geladen werden …"); der alte
+  // Text „Units: …" kommt nie mehr und machte diese Zusicherung leer. Gesucht wird darum der Satz, den der Baustein sagt.
+  await expect(page.getByText(/^Die Units konnten nicht geladen werden/)).toHaveCount(0, { timeout: 1200 });
 
   // Danach: die Unit als reguläre Option, keine Sonderbeschriftung, Feld bedienbar.
   await expect(unit.locator("option:checked")).toHaveText(/Unit 1 – Greetings$/, { timeout: 10_000 });

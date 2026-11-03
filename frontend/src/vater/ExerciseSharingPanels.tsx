@@ -7,6 +7,7 @@ import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import { AssetThumb, MediaSearch } from "./MediaPickers";
 import type { ExerciseGrant, GrantPermission, MediaLinkResponse } from "../lib/types";
+import { ListenAusfall } from "../components/ListenAusfall";
 
 /*
  * Die beiden Seiten einer Übung, die über ihren Inhalt hinausgehen.
@@ -55,7 +56,7 @@ export function GrantsSection({ exerciseId, isOwner }: { exerciseId: number; isO
         Bearbeiten oder Verwalten. Gedacht für „ein Lehrer erstellt, mehrere Väter nutzen".
       </p>
 
-      {grants.error && <div className="banner err">{grants.error}</div>}
+      <ListenAusfall was="Die Rechte an der Übung" fehler={grants.error} laedt={grants.loading} onRetry={grants.reload} schluessel={exerciseId} />
       {grants.data && (
         <table className="table">
           <thead><tr><th>Creator</th><th>Recht</th><th>Vergeben von</th><th /></tr></thead>
@@ -130,7 +131,7 @@ export function ExerciseCoverSection({ exerciseId, canWrite }: { exerciseId: num
         die Vokabel (Reiter <strong>Vokabeln</strong>) bzw. eine übungslokale Übersteuerung.
       </p>
 
-      {linked.error && <div className="banner err">{linked.error}</div>}
+      <ListenAusfall was="Die verknüpften Bilder" fehler={linked.error} laedt={linked.loading} onRetry={linked.reload} schluessel={exerciseId} />
       {linked.data && (linked.data.length === 0
         ? <p className="muted">Kein Titelbild.</p>
         : (

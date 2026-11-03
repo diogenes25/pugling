@@ -13,6 +13,7 @@ quelle: frontend-reviewer zu B-157 (2026-08-13, Fund außerhalb des Diffs)
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-03"
 entgangen_bei: []
 ---
 
@@ -181,7 +182,7 @@ werden darauf zurückgeführt, wo es passt. Was der Lauf daraus autonom entschie
 
 1. **`useAsync` liefert `stale`**: wahr, solange das Gezeigte zu anderen Abhängigkeiten gehört als den aktuellen – nach einem
    Wechsel bis zur neuen Antwort und weiter, wenn sie scheitert. Ein `reload` macht es nicht wahr. Vergleich je Element
-   (`Object.is`). *Kosten:* ein Zustand mehr an allen 111 Aufrufstellen (die zwei Setter im selben Rückruf werden
+   (`Object.is`). *Kosten:* ein Zustand mehr an allen 113 Aufrufstellen (nachgezählt in B-368; die 111 stammen vom 2026-09-03) (die zwei Setter im selben Rückruf werden
    gebündelt, ein zusätzlicher Render entsteht nicht – Review).
 2. **Anfangs gelten die Abhängigkeiten des ersten Renders**, nicht „ohne Daten nie veraltet". Gemessen: die erste Fassung
    (ohne Daten nie veraltet) ließ `filterwechsel-raeumt-den-fehler.spec.ts` (Planbau) fallen – scheitert die erste Suche und
@@ -314,3 +315,4 @@ drei gemessene Stellen begrenzt ist (Entscheidung 5).
   unangetastet und grün (AK 6).
 - **2026-11-03** — Review `frontend-reviewer`: kein 🔴. 🟡 die Wiederholung nach gescheiterter geänderter Abfrage trug keinen Fall (Mutante „`reload` zieht Deps nach" blieb grün) → Fall 3 erweitert, Mutante **1 failed**, „Deps beim Start nachgezogen" **3 failed** (zählt). 🟡 Entscheidung 3 (Leerschlag im Assistenten) ohne Zusicherung → Zwilling in `assistent.spec.ts` (Anfragen gezählt, Kästchen bedienbar), Mutante „Rohfelder als Deps" **1 failed** an „keine neue Suche" (zählt; ein erster Mutantenlauf brach an einem Server-Startfehler ab und ist nicht gewertet). 🟡 der Kommentar an Fall 1 nannte die `loading`-Mutante, die er nicht fängt → berichtigt (nur Kommentar). 🟢 kein zusätzlicher Render (Entscheidung 1 berichtigt). **Zähler Teil 1: 2.**
 - **2026-11-03** — Abnahme Lauf R, Teil 1: Vitest **627/627**, `tsc -b` sauber, E2E-Gesamtlauf **108 passed** (`exit=0`, nach dem letzten Code-Edit; darin der neue Zwilling). Rollengang: Vater maschinell – `assistent.spec.ts` und `planbau-ladefenster.spec.ts` fahren das Ladefenster, den Fehlerzweig und den Leerschlag im echten Browser, `filterwechsel-raeumt-den-fehler.spec.ts` den Wechsel nach gescheiterter Suche; Creator und Sohn Regressionszeugen (ihre Specs grün, kein Pfad von ihnen geändert außer dem geteilten Hook). **Abgenommen**, Commit siehe Protokoll ([Lauf R](../pm-sitzung-2026-11-03-nacht.md)).
+- **2026-11-03** — Nachschau in Lauf R, Teil 2 (frischer `frontend-reviewer`, `git show 66ff94d`, read-only): **Entgleitung** → [B-368](B-368-stale-kommentar-und-zaehlung.md) (🟡 ×2: Kommentar nennt den entfernten Effekt, „111" statt 113). Sonst geprüft: jede Transition mit Fall (Mount, Erfolg, Wechsel, Fehler, Wiederholung), Aufrufer-Mutanten fallen in den Ladefenster-Specs, `wizardFilterKey` deckt alle Felder (`wizardSearch.test.ts:96`), `kriterien` nur primitiv; alle 13 Dateien `i/lf`, 0 CR.

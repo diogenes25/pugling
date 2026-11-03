@@ -21,6 +21,7 @@ import {
 import { useExerciseTypes } from "../lib/exerciseTypes";
 import { ExerciseCoverSection, GrantsSection } from "./ExerciseSharingPanels";
 import { ExerciseItemMediaPanel } from "./VocabMediaPanel";
+import { ListenAusfall } from "../components/ListenAusfall";
 
 /**
  * Eine bestehende Übung ändern. Ohne diesen Dialog wäre ein Tippfehler nur durch Löschen und Neuanlegen
@@ -529,7 +530,7 @@ function ItemEditor({ detail }: { detail: ExerciseDetail }) {
         gehört zum Wort im Store und gilt darum in jeder Übung, die es benutzt.
       </p>
 
-      {items.error && <div className="banner err">{items.error}</div>}
+      <ListenAusfall was="Die Einträge der Übung" fehler={items.error} laedt={items.loading} onRetry={items.reload} schluessel={detail.id} />
       {/* frontend/CLAUDE.md, "Wiederkehrende Falle beim Platzhalter": both parts of
           `loading && data === null` are required. `loading` alone would hide the already visible table
           during a `reload`, since `useAsync` keeps `data` but resets `loading`; `data === null` alone
@@ -759,7 +760,8 @@ function InterestDressing({ tagIds, onChange, disabled }: {
       {/* Ein Ausfall der Liste darf die Einkleidung nicht verstecken: die Chips unten stehen auch ohne sie
           (dann mit Id statt Name), und nur das Nachtragen fällt weg. Sonst sähe „Laden gescheitert" aus wie
           „nicht eingekleidet" – die Verwechslung aus B-174. */}
-      {known.error && <div className="banner err" style={{ marginBottom: 6 }}>{known.error}</div>}
+      <ListenAusfall was="Die Interessen-Stichwörter" fehler={known.error} laedt={known.loading} onRetry={known.reload}
+        style={{ marginBottom: 6 }} />
       <InterestChips
         tagIds={tagIds}
         known={known.data ?? []}

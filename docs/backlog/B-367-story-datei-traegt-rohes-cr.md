@@ -12,6 +12,7 @@ quelle: Nachschau zu Lauf Q, Teil 2 in Lauf R, Teil 1 (docs/pm-sitzung-2026-11-0
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-03"
 entgangen_bei: [B-362]
 wartet_auf: ""
 ---
@@ -52,3 +53,4 @@ Wie beschrieben; dieselbe Ursache wie B-362 und derselbe fehlende Wächter (Retr
 - **2026-11-03** — angelegt aus der Nachschau zu Lauf Q, Teil 2 (`frontend-reviewer` über `617df82`, 🟡). Gebaut: beide Bytes
   ersetzt (Zählung danach 0), der Satz umformuliert; `git add --renormalize` zeigte `i/lf`.
 - **2026-11-03** — Abnahme Lauf R, Teil 1: Vitest **627/627**, `tsc -b` sauber, E2E-Gesamtlauf **108 passed** (`exit=0`, nach dem letzten Code-Edit; darin der neue Zwilling). Rollengang: der Entwickler ist die Rolle (Diff und Blame der Story); kein Produktpfad berührt. **Abgenommen**, Commit siehe Protokoll ([Lauf R](../pm-sitzung-2026-11-03-nacht.md)).
+- **2026-11-03** — Nachschau in Lauf R, Teil 2 (frischer `frontend-reviewer`, `git show 66ff94d`, read-only): **sauber.** Geprüft: zwei CR-Bytes ersetzt und der Code-Span umformuliert – deckt sich mit dem Diff von B-362.

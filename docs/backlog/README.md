@@ -537,7 +537,6 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-20](B-20-ki-supervisor-agent.md) | KI-Supervisor-Agent (Teil D) — erster Schritt: Übungen einem Plan zuweisen | Wunsch | `ausformuliert` | P3 | L | backend | — |
 | [B-122](B-122-top-level-listen-bekommen-paging.md) | Sieben Top-Level-Sammlungen bekommen `skip`/`take` | Wunsch | `idee` | P3 | — | — | — |
 | [B-140](B-140-freigabe-kennzeichen-in-der-uebungsauswahl.md) | Die Übungsauswahl verschweigt, dass eine Übung zurückgezogen ist | Wunsch | `idee` | P3 | — | — | — |
-| [B-183](B-183-gescheitertes-lesen-ohne-erneuten-versuch.md) | Ein gescheitertes Lesen ist ohne F5 nicht zu wiederholen | Wunsch | `idee` | P3 | — | — | — |
 | [B-219](B-219-verzeihende-abstufung-je-position.md) | Verzeihende Abstufung als Positions-Option | Wunsch | `idee` | P3 | — | — | — |
 | [B-221](B-221-level-leiter-fuer-auszeichnungen.md) | Eine Level-Leiter für Auszeichnungen statt einzelner Badges | Wunsch | `idee` | P3 | — | — | — |
 | [B-223](B-223-gestufte-hinweise-vor-der-antwort.md) | Gestufte Hinweise vor der Antwort, die Punkte kosten | Wunsch | `idee` | P3 | — | — | — |
@@ -546,6 +545,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-252](B-252-vorlesen-und-sprechen-bei-vokabeln.md) | Vokabeln vorlesen lassen und optional per Stimme beantworten | Wunsch | `idee` | P3 | — | — | — |
 | [B-270](B-270-bewertung-im-positions-formular.md) | Die Bewertung einer Übung beim Zusammenstellen des Plans sehen | Wunsch | `idee` | P3 | — | frontend | — |
 | [B-271](B-271-gewaehltes-profil-setzt-reihe.md) | Das zum Kind gewählte Profil setzt Reihe und Fach des KI-Creators | Wunsch | `idee` | P3 | — | backend | — |
+| [B-369](B-369-lesefehler-in-ternaer-form.md) | Lesefehler in Ternär-Form und unter nacktem Namen bieten noch keinen erneuten Versuch | Wunsch | `idee` | P3 | — | frontend | — |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `geschaetzt` | P3 | S | backend | — |
 | [B-355](B-355-store-faltung-restkanten.md) | Restkanten der Store-Faltung: Sprachkürzel mit Leerraum, zwei gleiche Paare in einem Aufruf | Defekt | `idee` | P4 | — | backend | — |
 | [B-358](B-358-beispielkatalog-proben-restkanten.md) | Restkanten der Beispielkatalog-Proben (Nachschau über `299d216`) | Defekt | `idee` | P4 | — | backend | — |
@@ -554,7 +554,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-365](B-365-waechter-meldungen-auf-deutsch.md) | Zwei Meldungen des Vertrags-Doku-Wächters sind deutsch | Aufräumen | `idee` | P4 | — | backend | — |
 
 <details>
-<summary>Abgenommen (299)</summary>
+<summary>Abgenommen (301)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -647,6 +647,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-180](B-180-zusicherung-haengt-an-scheduling-statt-am-gate.md) | Eine Zusicherung hing an 20 ms Scheduling statt am Gate | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-181](B-181-praemisse-der-rennen-klasse-stimmt-nicht.md) | Die Rennen-Klasse nennt nur einen von zwei Fehlermodi — welcher auftritt, entscheidet die Plattform | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-182](B-182-reichweite-nur-am-patch-festgenagelt.md) | Die Reichweite des Ventils war nur am PATCH festgenagelt | Defekt | `abgenommen` | P2 | XS | backend | — |
+| [B-183](B-183-gescheitertes-lesen-ohne-erneuten-versuch.md) | Ein gescheitertes Lesen ist ohne F5 nicht zu wiederholen | Wunsch | `abgenommen` | P3 | M | frontend | — |
 | [B-184](B-184-vier-platzhalter-zeigen-fehler-als-laedt-noch.md) | Vier Platzhalter zeigen einen Fehler dauerhaft als „Lade…" | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-185](B-185-anlegemodus-behauptet-uebernommenes-fach.md) | Beim Anlegen behauptet der Hinweis ein übernommenes Fach, das das Feld nicht zeigt | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-187](B-187-unitform-verliert-seine-bestaetigung.md) | Auch das Unit-Formular schließt sich mit seiner eigenen Bestätigung | Defekt | `abgenommen` | P3 | XS | frontend | — |
@@ -804,6 +805,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-364](B-364-feldhilfe-und-kommentar-regex-restkanten.md) | Restkanten der Nachschau über `a25a1a6`: zwei Blockkommentare, ⓘ-Schleife der Tablet-Spec | Defekt | `abgenommen` | P4 | XS | frontend | — |
 | [B-366](B-366-klebestellen-tor-nennt-ungepruefte-zeile.md) | Das Klebestellen-Tor nennt eine Zeile, die kein Test prüft | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-367](B-367-story-datei-traegt-rohes-cr.md) | Die Story-Datei von B-362 trägt selbst rohe CR-Bytes | Defekt | `abgenommen` | P4 | XS | doku | — |
+| [B-368](B-368-stale-kommentar-und-zaehlung.md) | Nach B-164 behauptet ein Kommentar den entfernten Effekt, und die Story zählt falsch | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-37](B-37-uebung-abbruch-unvollendet.md) | Abgebrochene Runden: Pflicht härten, Klausur deckeln | Defekt | `abgenommen` | P1 | M | beides | — |
 | [B-40](B-40-client-routen-waechter.md) | Routen aus `Pugling.Client` gegen das OpenAPI-Dokument halten | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-41](B-41-produktions-startup-smoke.md) | Der Produktionspfad des Starts ist der einzige ohne Test | Aufräumen | `abgenommen` | P2 | S | backend | — |
@@ -870,9 +872,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
-### Nach der Abnahme entgangen (116)
+### Nach der Abnahme entgangen (117)
 
-**Nachgeschaut: 297 von 299 abgenommenen** — und in 94 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 2 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 299 von 301 abgenommenen** — und in 95 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 2 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -992,6 +994,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-363](B-363-begruendung-zu-min-width-falsch-mainbreite-traegt-nichts.md) | B-276 begründet `min-width: 0` falsch, und eine Zusicherung der neuen Probe trägt nichts | [B-276] | `abgenommen` |
 | [B-366](B-366-klebestellen-tor-nennt-ungepruefte-zeile.md) | Das Klebestellen-Tor nennt eine Zeile, die kein Test prüft | [B-259] | `abgenommen` |
 | [B-367](B-367-story-datei-traegt-rohes-cr.md) | Die Story-Datei von B-362 trägt selbst rohe CR-Bytes | [B-362] | `abgenommen` |
+| [B-368](B-368-stale-kommentar-und-zaehlung.md) | Nach B-164 behauptet ein Kommentar den entfernten Effekt, und die Story zählt falsch | [B-164] | `abgenommen` |
 
 <details>
 <summary>Nie nachgeschaut (2) — Arbeitsvorrat der Nachschau</summary>
@@ -1001,8 +1004,8 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 
 | Id | Story |
 | --- | --- |
-| [B-164](B-164-useasync-paart-frischen-zustand-mit-alten-daten.md) | Nach einem Wechsel zeigt der Bildschirm für einen Moment frischen Zustand mit alten Daten |
-| [B-367](B-367-story-datei-traegt-rohes-cr.md) | Die Story-Datei von B-362 trägt selbst rohe CR-Bytes |
+| [B-183](B-183-gescheitertes-lesen-ohne-erneuten-versuch.md) | Ein gescheitertes Lesen ist ohne F5 nicht zu wiederholen |
+| [B-368](B-368-stale-kommentar-und-zaehlung.md) | Nach B-164 behauptet ein Kommentar den entfernten Effekt, und die Story zählt falsch |
 
 </details>
 
@@ -1061,6 +1064,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-316](B-316-plural-schluessel-aus-b-304-ohne-fall.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-337](B-337-reuse-folgt-veraltetem-schluessel.md) | `abgenommen` | Abschnitt „User Story" |
 | [B-338](B-338-doppeltes-wort-schreibweise-ungetestet.md) | `abgenommen` | Abschnitt „User Story" |
+| [B-369](B-369-lesefehler-in-ternaer-form.md) | `idee` | `unverifiziert: true` |
 
 <details>
 <summary>Verworfen (25)</summary>

@@ -218,6 +218,19 @@ describe("useAsync – ob die Daten zu den aktuellen Abhängigkeiten gehören", 
     expect(result.current.stale).toBe(false);
   });
 
+  // B-368: rot, wenn „veraltet" ein Merker ist, der beim Wechsel gesetzt und erst beim Erfolg gelöscht wird – kehrt die
+  // Suche zu A zurück, gehören die gezeigten A-Zeilen wieder zu ihr, auch bevor irgendetwas antwortet.
+  it("ist nach einem Hin und Zurück sofort wieder aktuell", async () => {
+    const a = deferred<string>();
+    const { result, rerender } = renderHook(({ key }) => useAsync(() => (key === "a" ? a.promise : new Promise<string>(() => {})), [key]),
+      { wrapper, initialProps: { key: "a" } });
+    await act(async () => { a.resolve("A"); });
+    rerender({ key: "b" });
+    expect(result.current.stale).toBe(true);
+    rerender({ key: "a" });
+    expect([result.current.data, result.current.stale]).toEqual(["A", false]);
+  });
+
   // Rot, wenn nach Identität des Arrays statt je Element verglichen wird: jeder Render baut eine neue Dep-Liste.
   it("vergleicht die Abhängigkeiten je Element, nicht als Liste", async () => {
     const a = deferred<string>();

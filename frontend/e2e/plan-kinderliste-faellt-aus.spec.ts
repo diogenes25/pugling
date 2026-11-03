@@ -33,7 +33,7 @@ test("Fällt die Kinderliste aus, zeigt das Plan-Formular das geladene Kind und 
   // und darüber steht, warum. Vorher: leeres Feld, keine Meldung.
   const kind = page.getByRole("combobox", { name: "Kind" });
   await expect(kind.locator("option:checked")).toHaveText(/\(nicht geladen\)$/);
-  await expect(page.getByRole("alert")).toContainText("Kinder:");
+  await expect(page.getByRole("alert")).toContainText("Die Kinder konnten nicht geladen werden");
   // Ein Plan ohne Kind ist kein wählbarer Zustand: genau eine Option, keine leere Wahl.
   await expect(kind.locator("option")).toHaveCount(1);
 

@@ -9,6 +9,7 @@ import type {
   SeriesUnitProgress, ChildResponse, ExerciseProgress, ItemHistoryEntry, ItemProgressResponse,
   MasteryRollup, Paged, SubjectProgress, WordMastery,
 } from "../lib/types";
+import { ListenAusfall } from "../components/ListenAusfall";
 
 /**
  * Der Lernstand eines Kindes **über alle Lehrpläne hinweg** – die Sicht, die der Positions-Report nicht
@@ -80,7 +81,7 @@ function WeakWords({ childId }: { childId: number }) {
         Kandidaten für eine gezielte Wiederholungs-Übung.
       </p>
 
-      {words.error && <div className="banner err">{words.error}</div>}
+      <ListenAusfall was="Die Vokabeln" fehler={words.error} laedt={words.loading} onRetry={words.reload} schluessel={JSON.stringify([childId, onlyWeak, skip])} />
       {words.loading && words.data === null ? <div className="loading">Lade…</div> : (
         <div style={{ overflowX: "auto" }}>
           <table className="table">
@@ -242,7 +243,7 @@ function CatalogDrilldown({ childId }: { childId: number }) {
         Abgeleitet aus den Lehrplänen des Kindes. <span className="pill lime">aktiv</span> = über einen
         laufenden Plan zugewiesen; ohne Marke ist der Stoff nur noch Historie.
       </p>
-      {subjects.error && <div className="banner err">{subjects.error}</div>}
+      <ListenAusfall was="Die Fächer" fehler={subjects.error} laedt={subjects.loading} onRetry={subjects.reload} schluessel={childId} />
       {subjects.loading && subjects.data === null ? <div className="loading">Lade…</div> : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {subjects.data?.map((s) => (

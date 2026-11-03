@@ -2,6 +2,7 @@ import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { CatalogAdmin } from "./CatalogAdmin";
 import type { SubjectResponse } from "../lib/types";
+import { ListenAusfall } from "../components/ListenAusfall";
 
 /**
  * Der Katalog als eigener Bereich: **Fach → Art**. Übungen selbst hängen seit B-106 an einer
@@ -37,7 +38,7 @@ export function VaterKatalog() {
         Vätern. Neue anlegen darf jeder; umbenennen und löschen nur, wer das <strong>Fach</strong> oder
         die <strong>Art</strong> selbst angelegt hat – die mitgelieferten kannst du nur ergänzen.
       </p>
-      {subjects.error && <div className="banner err">{subjects.error}</div>}
+      <ListenAusfall was="Die Fächer" fehler={subjects.error} laedt={subjects.loading} onRetry={subjects.reload} />
       {/*
         Der Platzhalter gilt nur fürs **erste** Laden. `onCatalogChanged` löst nach jeder Änderung ein
         `reload` aus, und das setzt `loading` erneut auf `true` (useAsync.ts:27) – würde `CatalogAdmin`

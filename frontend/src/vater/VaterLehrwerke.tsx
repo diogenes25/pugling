@@ -19,6 +19,7 @@ import type {
   BookType, CreateSeriesUnitDto, PublisherResponse, SchoolType, SeriesUnitResponse, SubjectResponse,
   TextbookSeriesResponse,
 } from "../lib/types";
+import { ListenAusfall } from "../components/ListenAusfall";
 
 /** Anzeigename je Buchtyp; Lehrbuch ist der Regelfall und bleibt darum ohne Chip in der Unit-Zeile. */
 const BOOK_TYPE_LABEL: Record<BookType, string> = {
@@ -194,12 +195,12 @@ export function VaterLehrwerke() {
           <button type="submit" className="btn ghost small" style={{ width: "auto" }}>Suchen</button>
         </form>
 
-        {list.error && <div className="banner err">{list.error}</div>}
+        <ListenAusfall was="Die Reihen" fehler={list.error} laedt={list.loading} onRetry={list.reload} schluessel={JSON.stringify([applied, subjectId, publisherId, schoolTypes, grade])} />
         {/* Die Optionslisten der Formulare (B-172): scheitert einer dieser Abrufe, fehlt im
             Bearbeiten-Formular die Auswahl – ohne diese Zeilen war das nirgends zu sehen. Neben der
             Liste, nicht an ihrer Stelle: die Reihen sind ja da. */}
-        {subjects.error && <div className="banner err">Fächer: {subjects.error}</div>}
-        {publishers.error && <div className="banner err">Verlage: {publishers.error}</div>}
+        <ListenAusfall was="Die Fächer" fehler={subjects.error} laedt={subjects.loading} onRetry={subjects.reload} />
+        <ListenAusfall was="Die Verlage" fehler={publishers.error} laedt={publishers.loading} onRetry={publishers.reload} />
         {list.loading && list.data === null ? <div className="loading">Lade…</div> : (
           <table className="table">
             <thead><tr><th>Reihe</th><th>Fach</th><th>Schulart</th><th>Band</th><th>Units</th><th /></tr></thead>
@@ -597,7 +598,7 @@ function UnitPanel({ series, onChanged, onMeldung }: {
           Setze es unter „Reihe bearbeiten", dann steht an jeder Unit der Weg zur Übung.
         </p>
       )}
-      {units.error && <div className="banner err">{units.error}</div>}
+      <ListenAusfall was="Die Units" fehler={units.error} laedt={units.loading} onRetry={units.reload} schluessel={series.id} />
       {units.showPlaceholder ? <div className="loading">Lade…</div> : units.data === null ? null : units.data.length === 0 ? (
         <p className="muted">Noch keine Unit. Ohne Unit kennt der Creator nur den Reihennamen, nicht den Stoff.</p>
       ) : (

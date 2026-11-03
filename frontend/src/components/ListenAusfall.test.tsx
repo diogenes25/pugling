@@ -60,4 +60,25 @@ describe("ListenAusfall", () => {
 
     expect(container.innerHTML).toBe("");
   });
+
+  // B-183: an einer Abfrage mit wechselnden Abhängigkeiten (Suche, anderes Kind) ist ein Wechsel keine Wiederholung – der
+  // alte Fehler gehört zu einer Abfrage, die es nicht mehr gibt (B-227). Rot, wenn `schluessel` nicht bis zum Gedächtnis
+  // durchgereicht wird: dann stünde „Lädt…" mit dem alten Fehler über der neuen Suche.
+  it("vergisst den Fehler, wenn die Abfrage eine andere geworden ist", () => {
+    const { rerender, container } = render(
+      <ListenAusfall was="Die Verlage" fehler="Netz weg" laedt={false} onRetry={() => {}} schluessel="a" />);
+    rerender(<ListenAusfall was="Die Verlage" fehler={null} laedt onRetry={() => {}} schluessel="b" />);
+
+    expect(container.innerHTML).toBe("");
+  });
+
+  // Gegenprobe zum Fall darüber: unter demselben Schlüssel ist es eine Wiederholung, und das Banner bleibt stehen. Rot,
+  // wenn der Baustein unter einem Schlüssel nie mehr festhält (etwa jeden Schlüssel als Wechsel liest).
+  it("hält den Fehler unter demselben Schlüssel während der Wiederholung", () => {
+    const { rerender } = render(
+      <ListenAusfall was="Die Verlage" fehler="Netz weg" laedt={false} onRetry={() => {}} schluessel="a" />);
+    rerender(<ListenAusfall was="Die Verlage" fehler={null} laedt onRetry={() => {}} schluessel="a" />);
+
+    expect(screen.getByRole("alert").textContent).toMatch(/Die Verlage konnten nicht geladen werden: Netz weg/);
+  });
 });

@@ -15,6 +15,7 @@ import type {
   ChildInterestResponse, ChildResponse, ContentRating, Gender, InterestFacet,
   InterestTagResponse, SchoolType, SubjectResponse, UpdateChildDto,
 } from "../lib/types";
+import { ListenAusfall } from "../components/ListenAusfall";
 
 /**
  * Das Profil eines Kindes – bis hierher nur über die API pflegbar, obwohl es die Grundlage der
@@ -71,7 +72,7 @@ export function VaterKind() {
           der Abruf, fehlt dort die Auswahl. Hier und nicht am Seitenkopf: auf einem 393-px-Viewport wäre
           der Kopf weit außerhalb des Blicks, in dem das leere Pulldown steht. Der Stundenplan liegt
           zwei Abschnitte tiefer und teilt sich diese Meldung – das ist die kleinere Ungenauigkeit. */}
-      {subjects.error && <div className="banner err">Fächer: {subjects.error}</div>}
+      <ListenAusfall was="Die Fächer" fehler={subjects.error} laedt={subjects.loading} onRetry={subjects.reload} />
       <ChildMaterialSection childId={childId} childName={me.name} subjects={subjects.data ?? []} />
 
       {/* Wer betreut das Kind (gemeinsames Wallet) und wann welches Fach ansteht – beides Profilwissen. */}
@@ -86,7 +87,7 @@ export function VaterKind() {
           Steuern, welches Bild dein Kind zu einer Vokabel sieht. <strong>Minus-Werte sind Abneigungen</strong> –
           passende Bilder werden dann gar nicht erst gezeigt.
         </p>
-        {interests.error && <div className="banner err">{interests.error}</div>}
+        <ListenAusfall was="Die Interessen des Kindes" fehler={interests.error} laedt={interests.loading} onRetry={interests.reload} schluessel={childId} />
         {/*
           Auf `data` prüfen, nicht auf `loading`: nach dem Speichern lädt die Liste neu, und ein
           Platzhalter würde den Editor kurz aus dem DOM nehmen. Er verlöre dabei seinen Zustand –

@@ -10,6 +10,7 @@ import { confirmAction } from "../lib/ui";
 import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import type { ClozeResponse, Gap, Paged } from "../lib/types";
+import { ListenAusfall } from "../components/ListenAusfall";
 
 /*
  * Der Lückentext-Store: Trägertexte als **Lerngrundlage**, analog zum Vokabel-Store und unabhängig von
@@ -85,7 +86,7 @@ export function ClozeTexts() {
         <button type="submit" className="btn ghost inline-btn" style={{ width: "auto" }}>Suchen</button>
       </form>
 
-      {list.error && <div className="banner err">{list.error}</div>}
+      <ListenAusfall was="Die Lückentexte" fehler={list.error} laedt={list.loading} onRetry={list.reload} schluessel={JSON.stringify([applied, skip])} />
       {list.loading && list.data === null ? <div className="loading">Lade…</div> : (
         <div style={{ overflowX: "auto", marginTop: 8 }}>
           <table className="table">
