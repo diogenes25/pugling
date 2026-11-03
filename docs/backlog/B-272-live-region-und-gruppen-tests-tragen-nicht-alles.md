@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/idee, bereich/frontend, bereich/a11y, bereich/test]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/a11y, bereich/test]
 aliases: [Wächter-Selbsttests B-134, Gruppen-Spec zu weit]
-status: idee
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
+groesse: S
 wo: frontend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: frontend-reviewer zu B-134/B-236 in Lauf A (docs/pm-sitzung-2026-10-26-tag.md)
 unverifiziert: false
 grund: ""
@@ -45,7 +45,59 @@ damit als Fund (Freigabe 3). Die beiden 🟡-Funde desselben Reviews wurden beho
 B-263 stand noch aus. Das ist dieselbe Abwägung wie bei B-268/B-269, die der Nutzer am 2026-10-26 als richtig
 bestätigt hat.
 
+## User Story
+
+Als **Entwickler** möchte ich, dass jeder Teil des Live-Region-Wächters, der `TruncationHint`-Test und die Gruppen-Spec
+eine benannte Mutante rot machen, damit ein Rückbau von B-134 oder B-236 nicht grün durchläuft.
+
+## Ist-Stand am Code (Lauf P, Stand `299d216`)
+
+1. `frontend/src/liveRegions.test.ts`: kein Fall mit der Region im Else-Zweig, keiner mit JSX-Kommentar vor dem Tag, keiner
+   mit Pfeil-Komponente; der Ausnahmen-Test prüft nur `includes(tag)`.
+2. `components/ListControls.test.tsx:56-59` prüft `textContent === ""` – das gilt auch ohne Region.
+3. `vater/VaterExerciseCreate.tsx:310ff.`: Gruppenname „Freigabe (Startzustand)"; der Kommentar `:299-307` begründet,
+   warum die Beschriftung vom **Startzustand** spricht.
+4. `e2e/gruppenkopf-benennt-die-gruppe.spec.ts` prüft je Gruppe nur, was darin sein soll.
+5. `REGION_BAUSTEINE` ohne `DerivedHint` (`VaterFachlehrer.tsx:153`) und `DuplicateHint` (`VaterVocab.tsx:344`).
+
+## Die echte Lücke
+
+Wie beschrieben, mit einer Verschärfung zu 5: der vorgeschlagene `it.each(REGION_BAUSTEINE)` leitet seine Fälle aus der
+Liste selbst ab – streicht man einen Namen, verschwindet sein Fall mit, und alles bleibt grün.
+
+## Entscheidungen (autonom gegrillt, Freigabe 1 – `Defekt`)
+
+1. **Vier Selbsttest-Fälle** (Else-Zweig, JSX-Kommentar, Pfeil-Komponente in beiden Richtungen) und ein Ausnahmen-Test, der
+   je Eintrag einen **Fund** verlangt.
+2. **`REGION_BAUSTEINE` wird gegen die Quellen geprüft:** jede Komponente, deren eigenes `return` als erstes Element eine
+   Region oder einen Baustein liefert, muss in der Liste stehen, und umgekehrt. *Kosten:* ein halber Parser mehr
+   (Funktionskopf in Spalte 0, `return` mit zwei Leerzeichen); eine Pfeil-Komponente mit Region an der Wurzel sähe er nicht.
+3. **„Freigabe (Startzustand)" bleibt der Gruppenname.** Der Zusatz gehört hier zur Bedeutung: die Gruppe stellt den
+   Startzustand ein, nachträglich wird anderswo umentschieden (Kommentar `VaterExerciseCreate.tsx:299-307`). Abweichung von
+   B-236 Entscheidung 2, ohne Code. *Kosten:* der Name ist länger als bei den anderen Gruppen.
+4. **Je Gruppe eine `toHaveCount(0)`-Zusicherung** auf ein Kästchen einer anderen Gruppe.
+
+## Akzeptanzkriterien
+
+1. Jede der Mutanten „ohne `:`", „ohne Kommentar-Entfernung", „ohne Pfeil-Kopf", „Ausnahme überholt" macht einen Fall rot.
+2. `TruncationHint` mit `return null` bei voller Liste macht einen Fall rot.
+3. Rückt `role="group"` an die umgebende Karte, fällt die Gruppen-Spec.
+4. Fällt ein Baustein aus `REGION_BAUSTEINE`, fällt ein Fall.
+
+## Schätzung
+
+`S`, frontend (nur Tests). Testweg: `liveRegions.test.ts`, `ListControls.test.tsx`, Gruppen-Spec mit Mutante.
+
 ## Verlauf
 
 - **2026-10-26** — angelegt aus dem `frontend-reviewer` zu B-134/B-236 in Lauf A
   ([Protokoll](../pm-sitzung-2026-10-26-tag.md)), Hinweise 3–6.
+- **2026-11-03** — Lauf P, Teil 1: ausformuliert, autonom gegrillt (Freigabe 1), geschätzt, gebaut. Alle neuen Fälle vor jeder
+  Mutante grün (Testlücke, das Verhalten stimmte). AK 1 → „ohne `:`" **1 failed** („Ternär, Region im Else-Zweig"), „ohne
+  Kommentar-Entfernung" **1 failed** („&& mit JSX-Kommentar davor"), „ohne Pfeil-Kopf" **1 failed** („return null in der
+  Funktion vor einer Pfeil-Komponente"), „Ausnahme überholt" (`return null` im `Pager` gestrichen) **1 failed**; AK 2 →
+  „`return null` bei voller Liste" **1 failed**; AK 3 → Gruppe an die Karte gerückt: Spec **1 failed** an der neuen
+  `toHaveCount(0)` (`:24`); AK 4 → „`SavedNotice` gestrichen" **1 failed**. Beim Bau gefunden: die mehrzeilige Signatur von
+  `DuplicateHint` beendete den Rumpf zu früh – Rumpfende ist jetzt eine Zeile aus `}` allein. Vitest **619/619**.
+- **2026-11-03** — Review `frontend-reviewer`: 🟢 der Fall „return null in einer Pfeil-Komponente" hatte keine eigene Mutante (unter „ohne Pfeil-Kopf" findet die Suche dasselbe `return null`) → gestrichen, der Gegenfall davor trägt die Regel (ohne Zählung). 🟢 der Kommentar am `REGION_BAUSTEINE`-Test nannte eine ungemessene Hälfte → gemessen: eine neue Komponente `ProbeHinweis` mit `role="status"` an der Wurzel, nicht in der Liste, **1 failed** (ohne Zählung). Vitest **619/619**.
+- **2026-11-03** — Abnahme Lauf P, Teil 1: Vitest **619/619**, `tsc -b` sauber, E2E-Gesamtlauf **103 passed** (`exit=0`, nach dem letzten Code-Edit gestartet). Rollengang: Der Entwickler ist die Rolle – jede Probe mit benannter Mutante; Vater über die Gruppen-Spec im echten Browser (Barrierefreiheitsbaum); Creator und Sohn Regressionszeugen. **Abgenommen**, Commit siehe Protokoll ([Lauf P](../pm-sitzung-2026-11-03-nacht.md)).

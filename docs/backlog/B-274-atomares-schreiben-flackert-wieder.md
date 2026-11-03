@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-165]
 wartet_auf: ""
+nachgeschaut: "2026-11-03"
 ---
 
 # B-274 · `AtomaresSchreiben_KeineLeseFehler` flackert wieder
@@ -77,3 +78,4 @@ Ein Kriterium je Fenster misst die Last der Maschine mit; die Eigenschaft „ato
   Probe grün **2/2**. Keine rote Probe für das Flackern selbst – nicht reproduzierbar (Entscheidung 2).
 - **2026-11-03** — Review `pugling-reviewer`: Entscheidung 1 als vertretbare Abschwächung bestätigt (ein Schreiber, der nur in 1–5 von 10 Fenstern hält, bliebe unter Windows grün; der echte Schreiber ist deterministisch, unter Linux fängt die Zerrissen-Regel jedes Fenster). 🟡 der Kommentar in der Schleife beschrieb noch die alte Regel und „1867 von 1867" → gekürzt, Begründung mit den Lauf-O-Zahlen an die Summen-Zusicherung verschoben (nur Kommentar, ohne Zählung).
 - **2026-11-03** — Abnahme Lauf O, Teil 1: volle Suite **1048/1048**, Build ohne Warnung, E2E **103 passed** (`exit=0`, nach dem letzten Edit; der Dev-Server lädt den Beispielkatalog über `Load`). Rollengang: der Entwickler ist die Rolle – die Proben selbst sind sein Weg, ihre Mutanten je benannt; Creator, Vater und Sohn Regressionszeugen (kein Pfad von ihnen im Diff, ihre Specs grün). **Abgenommen**, Commit siehe Protokoll ([Lauf O](../pm-sitzung-2026-11-02-nacht.md)).
+- **2026-11-03** — Nachschau in Lauf P, Teil 1 (frischer `pugling-reviewer`, read-only): **sauber**. Geprüft: die Summe über zehn Fenster nimmt das Ein-Fenster-Verhungern aus dem Flackern; ein falsches Rot verlangt, dass über alle Fenster die Mehrzahl der Lesezugriffe gesperrt ist (Entscheidung 2 nimmt das an); `:297` nennt alle zehn Fenster.

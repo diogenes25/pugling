@@ -65,7 +65,9 @@ export function SohnTest() {
   async function finish(id: number) {
     if (!planId) return;
     const res = await api.submitTest(planId, positionId, id);
-    if (gone.current) { refreshWallet(); return; }
+    // Schon verlassen: kein Ergebnisbild und keine Feier anderswo, aber die Kopfzeile lebt weiter und zeigt, was die
+    // Abgabe eingebracht hat (Münzen und Serie, B-356).
+    if (gone.current) { refreshWallet(); setStreak((await api.overview(planId)).currentStreak); return; }
     setResult(res);
     setItem(null);
     celebrate(res.passed ? "big" : "small", res.passed ? "🎉" : "💪",

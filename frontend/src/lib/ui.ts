@@ -52,6 +52,9 @@ export function radioGroupKeys(e: GroupKeyEvent): void {
   e.preventDefault();
   const n = radios.length;
   const to = step === "first" ? 0 : step === "last" ? n - 1 : (at + (step === "next" ? 1 : -1) + n) % n;
+  // Schon dort (Home auf der ersten, eine einzige freie Option): ein zweiter Klick ist nicht für jeden Aufrufer folgenlos –
+  // der Assistent liest ihn als Wahl des Vaters und belegt die spät ankommende Kinderliste nicht mehr vor (B-356).
+  if (to === at) return;
   radios[to].focus();
   radios[to].click();
 }

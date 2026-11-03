@@ -53,14 +53,17 @@ describe("Pager", () => {
 });
 
 describe("TruncationHint", () => {
-  it("schweigt bei vollständiger Liste und meldet die Kappung sonst", () => {
-    const { container, unmount } = render(<TruncationHint shown={12} total={12} />);
-    expect(container.textContent).toBe("");
-    unmount();
+  // B-272: rot, wenn die Region bei vollständiger Liste wegfällt (`if (total <= shown) return null`) – dann entstünde sie
+  // erst zusammen mit dem Hinweis, und der wird nicht angesagt (B-134). Darum derselbe Knoten vor und nach dem Wachsen.
+  it("schweigt bei vollständiger Liste in einer stehenden Region und meldet die Kappung in derselben", () => {
+    const { rerender } = render(<TruncationHint shown={12} total={12} />);
+    const region = screen.getByRole("status");
+    expect(region.textContent).toBe("");
 
-    render(<TruncationHint shown={12} total={40} />);
+    rerender(<TruncationHint shown={12} total={40} />);
     // Eine still gekappte Auswahlliste liest sich wie „mehr gibt es nicht".
-    expect(screen.getByRole("status").textContent).toContain("Zeigt 12 von 40 Treffern");
+    expect(screen.getByRole("status")).toBe(region);
+    expect(region.textContent).toContain("Zeigt 12 von 40 Treffern");
   });
 });
 

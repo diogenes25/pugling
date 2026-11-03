@@ -20,20 +20,25 @@ test("Übung anlegen: jede Kästchen-Gruppe trägt ihre Überschrift als Namen",
 
   const schularten = page.getByRole("group", { name: "Schularten", exact: true });
   await expect.soft(schularten.getByRole("checkbox", { name: "Gymnasium" })).toBeVisible();
+  // Nichts Fremdes in der Gruppe (B-272): rot, wenn `role="group"` an einen Container rückt, der mehrere Gruppen umfasst.
+  await expect.soft(schularten.getByRole("checkbox", { name: "Leitner-Kasten" })).toHaveCount(0);
 
   // Nur das Stichwort, nicht die Klammer dahinter: der Name ist, was vor jedem Kästchen angesagt wird.
   const standards = page.getByRole("group", { name: "Lern-Standards", exact: true });
   await expect.soft(standards.getByRole("checkbox", { name: "Leitner-Kasten" })).toBeVisible();
   await expect.soft(standards.getByRole("checkbox", { name: "nur getippte Tests" })).toBeVisible();
+  await expect.soft(standards.getByRole("checkbox", { name: "Gymnasium" })).toHaveCount(0);
 
   const freigabe = page.getByRole("group", { name: "Freigabe (Startzustand)", exact: true });
   await expect.soft(freigabe.getByRole("checkbox", { name: "Für andere Betreuer zuweisbar" })).toBeVisible();
+  await expect.soft(freigabe.getByRole("checkbox", { name: "Leitner-Kasten" })).toHaveCount(0);
 
   // Die Rechenarten gibt es nur beim Rechen-Drill; sie stehen im geteilten Editor (auch im Bearbeiten-Dialog).
   await page.locator('select[aria-label="Übungstyp"]').selectOption("ArithmeticDrill");
   const rechenarten = page.getByRole("group", { name: "Rechenarten", exact: true });
   await expect.soft(rechenarten.getByRole("checkbox").first()).toBeVisible();
   expect.soft(await rechenarten.getByRole("checkbox").count()).toBeGreaterThan(1);
+  await expect.soft(rechenarten.getByRole("checkbox", { name: "Gymnasium" })).toHaveCount(0);
 });
 
 test("Übung bearbeiten: Schularten und Lern-Standards sind benannte Gruppen", async ({ page }) => {
@@ -75,6 +80,8 @@ test("Übung bearbeiten: Schularten und Lern-Standards sind benannte Gruppen", a
 
   const schularten = dialog.getByRole("group", { name: "Schularten", exact: true });
   await expect.soft(schularten.getByRole("checkbox", { name: "Gymnasium" })).toBeVisible();
+  await expect.soft(schularten.getByRole("checkbox", { name: "Leitner-Kasten" })).toHaveCount(0);
   const standards = dialog.getByRole("group", { name: "Lern-Standards", exact: true });
   await expect.soft(standards.getByRole("checkbox", { name: "Leitner-Kasten" })).toBeVisible();
+  await expect.soft(standards.getByRole("checkbox", { name: "Gymnasium" })).toHaveCount(0);
 });

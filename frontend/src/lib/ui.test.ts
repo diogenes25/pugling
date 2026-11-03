@@ -65,6 +65,33 @@ describe("radioGroupKeys", () => {
     expect(g.gewaehlt).toEqual(["C"]);
   });
 
+  // B-356: rot, wenn ein Schritt auf die schon gewählte Option klickt – im Assistenten setzt der Klick `touchedMode` und
+  // schaltet damit die Vorbelegung der spät ankommenden Kinderliste ab (B-177). Und rot, wenn die Taste dabei an den
+  // Browser zurückfällt (Wächter vor `preventDefault`): dann scrollte Home die Seite, obwohl die Gruppe sie angesagt hat.
+  it("klickt die schon gewählte Option nicht erneut und behält die Taste", () => {
+    const g = gruppe(["A", "B", "C"]);
+    const home = new KeyboardEvent("keydown", { key: "Home", bubbles: true, cancelable: true });
+    g.knopf("A").focus();
+    g.knopf("A").dispatchEvent(home);
+    g.druecke("C", "End");
+    const einzeln = gruppe(["X", "Y"], ["Y"]);
+    const pfeil = new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true, cancelable: true });
+    einzeln.knopf("X").focus();
+    einzeln.knopf("X").dispatchEvent(pfeil);
+    expect(g.gewaehlt).toEqual([]);
+    expect(einzeln.gewaehlt).toEqual([]);
+    expect([home.defaultPrevented, pfeil.defaultPrevented]).toEqual([true, true]);
+  });
+
+  // B-356: rot ohne `preventDefault` – dann scrollten Pfeil oben/unten und Home/End zusätzlich die Seite.
+  it.each(["ArrowDown", "ArrowUp", "Home", "End"])("nimmt %s dem Browser", (key) => {
+    const g = gruppe(["A", "B", "C"]);
+    const ev = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true });
+    g.knopf("B").focus();
+    g.knopf("B").dispatchEvent(ev);
+    expect(ev.defaultPrevented).toBe(true);
+  });
+
   // Rot, wenn Modifier nicht ausgenommen sind: Alt+Links ist im Browser „Zurück“ und darf die Wahl nicht ändern.
   it("lässt Pfeile mit Alt, Strg oder Cmd dem Browser", () => {
     const g = gruppe(["A", "B"]);

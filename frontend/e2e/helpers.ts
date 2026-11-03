@@ -45,7 +45,10 @@ export async function createChild(page: Page, name: string, pin: string): Promis
   const response = await created;
   // A refused create fails here with its status and problem detail, not after a timeout with nothing to read.
   expect(response.ok(), `${response.status()} ${await response.text()}`).toBe(true);
-  const id = String(((await response.json()) as { id: number }).id);
+  // Without this a missing id becomes the string "undefined", and the failure shows up as a row that never appears (B-357).
+  const body = (await response.json()) as { id?: unknown };
+  expect(typeof body.id, `create response without a numeric id: ${JSON.stringify(body)}`).toBe("number");
+  const id = String(body.id);
   // The "Kinder" table has picked the child up, so the caller continues on a settled page. Its row carries the name as
   // a link and the id in a cell; either alone could repeat (a same-named child, a coin count equal to the id).
   await expect(page.getByRole("row")

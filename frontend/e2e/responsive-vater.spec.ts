@@ -91,7 +91,10 @@ test("Vater-Web bei 768 px: keine Seite scrollt seitlich, auch nicht mit offenem
     const headers = { Authorization: `Bearer ${localStorage.getItem("pugling.token")}`, "Content-Type": "application/json" };
     const plans = (await (await fetch("/api/v1/supervisor/study-plans", { headers })).json()) as { id: number }[];
     if (plans.length > 0) return plans[0].id;
+    // Index mit Absicht (B-357): jeder eigene Plan und jedes eigene Kind trägt die Detailseite, keines ist gemeint. Ein
+    // Vater ohne Kind scheitert mit diesem Grund, nicht mit einem TypeError aus `kids[0]`.
     const kids = (await (await fetch("/api/v1/supervisor/children", { headers })).json()) as { id: number }[];
+    if (kids.length === 0) throw new Error("Vater 1 hat weder einen Plan noch ein Kind – der Seed fehlt.");
     const res = await fetch("/api/v1/supervisor/study-plans", {
       method: "POST", headers,
       body: JSON.stringify({ childId: kids[0].id, title: "Tablet-Probe", durationDays: 7, active: false }),

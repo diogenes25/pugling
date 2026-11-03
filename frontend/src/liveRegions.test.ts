@@ -53,7 +53,7 @@ const LIVE = /\b(role="status"|aria-live=)/;
  * Bausteine, die selbst eine Live-Region rendern. Wer sie bedingt einhängt (`{x && <StatusBanner …/>}`), baut die
  * Region zusammen mit ihrem Text – genau der Fall, an dem B-134 gefunden wurde (`VaterLehrwerke.tsx`).
  */
-const REGION_BAUSTEINE = ["StatusBanner", "TruncationHint", "SavedNotice", "TaskAnnouncer"];
+const REGION_BAUSTEINE = ["StatusBanner", "TruncationHint", "SavedNotice", "TaskAnnouncer", "DerivedHint", "DuplicateHint"];
 const BAUSTEIN = new RegExp(`^<(${REGION_BAUSTEINE.join("|")})\\b`);
 const FUNKTIONSKOPF = /^(export\s+)?(default\s+)?function\s|^(export\s+)?const\s+\w+\s*=\s*(\([^)]*\)|\w+)\s*=>/;
 
@@ -92,6 +92,28 @@ export function findeBedingteLiveRegionen(datei: string, quelle: string): string
 }
 
 /**
+ * Komponenten einer Quelle, deren eigenes `return` (zwei Leerzeichen eingerückt, also das der Funktion selbst) als
+ * erstes Element eine Live-Region oder einen Region-Baustein liefert – die Kandidaten für `REGION_BAUSTEINE`.
+ */
+function wurzelRegionen(quelle: string): string[] {
+  const namen: string[] = [];
+  const zeilen = quelle.split(/\r?\n/);
+  zeilen.forEach((zeile, i) => {
+    const kopf = /^(?:export\s+)?function\s+([A-Z]\w*)\s*\(/.exec(zeile);
+    if (!kopf) return;
+    const ende = zeilen.findIndex((z, j) => j > i && /^}\s*$/.test(z));
+    const rumpf = zeilen.slice(i + 1, ende < 0 ? undefined : ende);
+    const ret = rumpf.findIndex((z) => /^ {2}return\b/.test(z));
+    if (ret < 0) return;
+    const rest = rumpf.slice(ret).join("\n").replace(/^\s*return\s*\(?/, "")
+      .replace(/^(\s*(\/\/[^\n]*|\{?\/\*[\s\S]*?\*\/\}?))*/, "").trimStart();
+    const tag = /^<([A-Za-z][\w.]*)\b(?:=>|[^<>])*?>/s.exec(rest);
+    if (tag && (LIVE.test(tag[0]) || BAUSTEIN.test(tag[0]))) namen.push(kopf[1]);
+  });
+  return namen;
+}
+
+/**
  * Erste Zeile (ab dem Funktionskopf gezählt), in der die Funktion selbst `return null` liefern kann – `null`, wenn
  * es keine gibt. Ein `return null` in einer inneren Funktion oder einem Lambda zählt nicht: dort beendet es nur
  * diese (`function canAdvance(): string | null` im Assistenten). Erkannt an der Klammertiefe: jede `{`, deren
@@ -118,11 +140,27 @@ describe("Live-Regionen stehen vor ihrem Text im DOM (B-134)", () => {
     expect(funde, "Region immer rendern und nur den Inhalt bedingt tragen – Vorbild StatusBanner").toEqual([]);
   });
 
-  it("die Ausnahmeliste nennt nur Dateien, die es gibt, und jede mit Grund", () => {
+  // Rot, wenn eine Ausnahme überholt ist: das Tag steht noch, meldet aber nichts mehr – der Eintrag deckte dann einen
+  // künftigen echten Fund mit (B-272).
+  it("die Ausnahmeliste nennt nur Funde, die es gibt, und jeden mit Grund", () => {
     for (const { datei, tag, grund } of AUSNAHMEN) {
       expect(QUELLEN[datei]?.includes(tag), `${datei}: Tag ${tag} gibt es nicht mehr – Eintrag streichen`).toBe(true);
+      expect(findeBedingteLiveRegionen(datei, QUELLEN[datei]).some((f) => f.includes(tag)),
+        `${datei}: ${tag} erzeugt keinen Fund mehr – Eintrag streichen`).toBe(true);
       expect(grund.trim().length, `${datei} ohne Grund`).toBeGreaterThan(10);
     }
+  });
+
+  // Rot, wenn ein Name aus der Liste fällt oder ein neuer Baustein mit Region entsteht, ohne hineinzukommen: dann dürfte
+  // genau er wieder bedingt hängen (B-272). Die Liste wird darum gegen die Quellen geprüft, nicht gegen sich selbst.
+  it("REGION_BAUSTEINE nennt jede Komponente, deren Wurzel eine Region oder ein solcher Baustein ist", () => {
+    const gefunden = Object.values(QUELLEN).flatMap(wurzelRegionen).sort();
+    expect(gefunden.length).toBeGreaterThanOrEqual(5);
+    expect(gefunden).toEqual([...REGION_BAUSTEINE].sort());
+  });
+
+  it.each(REGION_BAUSTEINE)("Baustein %s hinter && wird gemeldet", (name) => {
+    expect(findeBedingteLiveRegionen("x.tsx", `{x && <${name} a={1} />}`)).toHaveLength(1);
   });
 
   // Die Erkennung selbst: jeder Fall benennt die Form, die ihn rot macht.
@@ -130,6 +168,19 @@ describe("Live-Regionen stehen vor ihrem Text im DOM (B-134)", () => {
     ["&& direkt", `{error && <div role="status" aria-live="polite">{error}</div>}`, 1],
     ["&& mit Klammer und Umbruch", `{ok && (\n  <div className="banner ok" role="status">x</div>\n)}`, 1],
     ["Ternär", `{busy ? <span aria-live="polite">…</span> : null}`, 1],
+    // B-272: rot, wenn `:` aus der Bedingungs-Regex fällt.
+    ["Ternär, Region im Else-Zweig", `{busy ? null : <p role="status">fertig</p>}`, 1],
+    // B-272: rot, wenn JSX-Kommentare vor dem Tag nicht entfernt werden – dann steht `*/}` davor statt `&&`.
+    ["&& mit JSX-Kommentar davor", `{ok && (
+  {/* warum */}
+  <div role="status">x</div>
+)}`, 1],
+    // B-272: rot, wenn die Pfeil-Form aus dem Funktionskopf fällt – dann sucht die Erkennung bis in die Funktion davor.
+    ["return null in der Funktion vor einer Pfeil-Komponente",
+      `function A() { return null; }
+const B = () => {
+  return <p role="status">x</p>;
+};`, 0],
     ["return null davor", `function H({ n }: P) {\n  if (n === 0) return null;\n  return <p role="status">{n}</p>;\n}`, 1],
     ["dauerhafte Region", `<div role="status" aria-live="polite">{error && <div>{error}</div>}</div>`, 0],
     ["return null in einer anderen Funktion", `function A() { return null; }\nfunction B() {\n  return <p role="status">x</p>;\n}`, 0],

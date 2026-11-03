@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-181]
 wartet_auf: ""
+nachgeschaut: "2026-11-03"
 ---
 
 # B-261 · Der Produktionspfad des Beispielkatalogs hängt an keinem Test
@@ -84,3 +85,4 @@ prüft kein Fall.
   Nachschau-Zeile im Verlauf von B-181 (2026-10-23); nichts weiter nachzuziehen.
 - **2026-11-03** — Test-Tor und Review: 🟡 der Fall „echte Sperre" war zeitabhängig – das Fenster ist real ~200 ms (Pause nach jedem Fehlversuch), die Freigabe hing am Thread-Pool; unter Volllast im Test-Tor **1 failed** (`Load_Ueberwindet_Eine_Echte_Sperre`, 252 ms). Behoben, indem die zwei Überladungen zu **einer** Methode mit optionalen Nähten werden (`Load(contentRoot, open = null, pause = null)`): der Produktionspfad ist jetzt genau die getestete Methode, der zeitabhängige Fall entfällt (zählt). *Kosten:* der Vorgabewert 50 ms trägt keine Zusicherung mehr. 🟡 die Untergrenze `>= 80 ms` ist unter Windows nicht garantiert (`Sleep` kann einen Takt früher wecken) → `>= 50 ms`, Kommentar nennt den Grund (zählt). 🟢 fünfter Versuch aus dem Speicher statt von der Platte, leerer `catch` begründet (ohne Zählung). Mutanten danach: „ohne Pause", „`ReadAttempts` → 1", „`open` ignoriert" je **1 failed**; Klasse **10/10** mit der Nebenläufigkeitsprobe, volle Suite **1048/1048**.
 - **2026-11-03** — Abnahme Lauf O, Teil 1: volle Suite **1048/1048**, Build ohne Warnung, E2E **103 passed** (`exit=0`, nach dem letzten Edit; der Dev-Server lädt den Beispielkatalog über `Load`). Rollengang: der Entwickler ist die Rolle – die Proben selbst sind sein Weg, ihre Mutanten je benannt; Creator, Vater und Sohn Regressionszeugen (kein Pfad von ihnen im Diff, ihre Specs grün). **Abgenommen**, Commit siehe Protokoll ([Lauf O](../pm-sitzung-2026-11-02-nacht.md)).
+- **2026-11-03** — Nachschau in Lauf P, Teil 1 (frischer `pugling-reviewer`, `git show 299d216 -- '*.cs'`, read-only): **sauber** (🟢 → [B-358](B-358-beispielkatalog-proben-restkanten.md)). Geprüft: AK 1 → Mutanten „`open` ignoriert" (rot an `calls == 0`, RetryTests `:99`), „`ReadAttempts` → 4" und „ohne Wiederholung" (rot an `:96`); AK 2 → „ohne `Thread.Sleep`" rot an `:82`, kürzeste Zeit unter Windows 2 × 31,25 ms über der 50-ms-Grenze; AK 3 → „ohne `File.Exists`" rot an `:108`; `Program.cs:295` ruft genau die getestete Methode.

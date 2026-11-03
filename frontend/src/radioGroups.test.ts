@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
  * an. Beides liefert nur `radioGroupKeys` am Container plus ein wandernder `tabIndex` an jeder Option. Native
  * `<input type="radio">` (PlanPositions) bringen das selbst mit und fallen nicht unter die Regel.
  *
- * Gezählt wird je Datei, die eine `radiogroup` ohne native Radios trägt: so viele `role="radiogroup"` wie
+ * Geprüft wird je Gruppe (bis zur nächsten `radiogroup`), die keine nativen Radios trägt: ihr öffnendes Tag hat
  * `onKeyDown={radioGroupKeys}` – auch dort, wo die Optionen aus einem Baustein einer anderen Datei kommen –, und an jedem
  * `role="radio"` ein `tabIndex={… ? 0 : -1}` in derselben Zeile. Rot, wenn eine Gruppe aus Knöpfen ohne den Helfer
  * entsteht oder jede Option ein Tab-Stopp bleibt.
@@ -17,11 +17,20 @@ const QUELLEN = import.meta.glob(["./**/*.tsx", "!./**/*.test.tsx"], {
 const ROVING = /tabIndex=\{[^}]*\?\s*0\s*:\s*-1\}/;
 
 /** Die Funde einer Quelle (auch vom Selbsttest unten benutzt). */
-function funde(datei: string, text: string): string[] {
-  if (!/role="radio(group)?"/.test(text) || /type="radio"/.test(text)) return [];
+function funde(datei: string, roh: string): string[] {
+  // `role={"radio"}` ist dasselbe Attribut wie `role="radio"`.
+  const text = roh.replace(/role=\{\s*["'](radio(?:group)?)["']\s*\}/g, 'role="$1"');
+  if (!/role="radio(group)?"/.test(text)) return [];
   const out: string[] = [];
-  const gruppen = (text.match(/role="radiogroup"/g) ?? []).length;
-  const helfer = (text.match(/onKeyDown=\{radioGroupKeys\}/g) ?? []).length;
+  // Je Gruppe geurteilt, nicht je Datei (B-356): eine Gruppe reicht bis zur nächsten `radiogroup`. Eine mit nativen Radios
+  // bringt das Tastaturmodell selbst mit; jede andere braucht den Helfer an ihrem eigenen öffnenden Tag.
+  const teile = text.split('role="radiogroup"');
+  let gruppen = 0, helfer = 0;
+  for (const teil of teile.slice(1)) {
+    if (/type="radio"/.test(teil)) continue;
+    gruppen++;
+    if (/^(?:=>|[^>])*onKeyDown=\{radioGroupKeys\}/.test(teil)) helfer++;
+  }
   if (gruppen !== helfer) out.push(`${datei}: ${gruppen} radiogroup, ${helfer} with onKeyDown={radioGroupKeys}`);
   text.split("\n").forEach((zeile, i) => {
     if (/role="radio"/.test(zeile) && !ROVING.test(zeile)) out.push(`${datei}:${i + 1}: role="radio" without a roving tabIndex`);
@@ -48,5 +57,24 @@ describe("Radiogruppen aus Knöpfen", () => {
 
   it("lässt native Radios in Ruhe", () => {
     expect(funde("f.tsx", '<div role="radiogroup">\n<input type="radio" />')).toEqual([]);
+  });
+
+  // B-356: rot, wenn ein natives Radio irgendwo in der Datei die ganze Datei ausnimmt – eine Knopf-Gruppe daneben
+  // (PlanPositions trägt beides in einer Datei) bliebe ungeprüft.
+  it("prüft eine Knopf-Gruppe auch neben einer nativen Gruppe", () => {
+    const beides = '<div role="radiogroup">\n<input type="radio" />\n</div>\n<div role="radiogroup">\n<button role="radio" />';
+    expect(funde("g.tsx", beides)).toHaveLength(2);
+  });
+
+  // B-356: rot, wenn der Helfer irgendwo in der Gruppe zählt statt an ihrem Tag – an einer Option fängt er die Pfeile
+  // nur, solange diese Option den Fokus hat.
+  it("verlangt den Helfer am Tag der Gruppe, nicht an einem Kind", () => {
+    const kind = '<div role="radiogroup">\n<span onKeyDown={radioGroupKeys}>\n<button role="radio" tabIndex={on ? 0 : -1} />';
+    expect(funde("i.tsx", kind)).toHaveLength(1);
+  });
+
+  // B-356: rot, wenn nur die Anführungszeichen-Form zählt.
+  it("erkennt die Rolle auch als Ausdruck", () => {
+    expect(funde("h.tsx", '<div role={"radiogroup"}>\n<button role={"radio"} />')).toHaveLength(2);
   });
 });

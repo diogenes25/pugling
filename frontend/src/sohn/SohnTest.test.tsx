@@ -16,11 +16,12 @@ const nextTest = vi.fn();
 const answerTest = vi.fn();
 const submitTest = vi.fn();
 const celebrate = vi.fn();
+const setStreak = vi.fn();
 
 // Ein echter Skin: der Ergebnis-Bildschirm zeichnet das Maskottchen (der Neustart-Fall erreicht ihn).
 const { SKINS } = await import("../lib/skins");
 vi.mock("./SohnApp", () => ({
-  useSohn: () => ({ planId: 3, refreshWallet: () => {}, setStreak: () => {}, skin: SKINS[0], celebrate: (...a: unknown[]) => celebrate(...a) }),
+  useSohn: () => ({ planId: 3, refreshWallet: () => {}, setStreak: (...a: unknown[]) => setStreak(...a), skin: SKINS[0], celebrate: (...a: unknown[]) => celebrate(...a) }),
 }));
 vi.mock("../lib/api", async (importOriginal) => {
   const original = await importOriginal<typeof import("../lib/api")>();
@@ -31,7 +32,7 @@ vi.mock("../lib/api", async (importOriginal) => {
       nextTest: (...a: unknown[]) => nextTest(...a),
       answerTest: (...a: unknown[]) => answerTest(...a),
       submitTest: (...a: unknown[]) => submitTest(...a),
-      overview: () => Promise.resolve({ currentStreak: 0 }),
+      overview: () => Promise.resolve({ currentStreak: 4 }),
     },
   };
 });
@@ -305,15 +306,18 @@ describe("SohnTest im Wartebild", () => {
   // Review zu B-350: wer das Wartebild verlässt, hat die Klausur verlassen. Antwortet der hängende Start später, darf er
   // das Kind nicht von einer anderen Seite zurückholen (404 → Basis) und nicht dort feiern (fertig → Ergebnis). Rot, wenn
   // der Start nach dem Verlassen weiterwirkt: dann steht wieder BASIS statt SHOP bzw. `celebrate` wurde gerufen.
+  // Der fertige Versuch wird trotzdem abgegeben, und die Kopfzeile zeigt danach seine Serie (B-356): rot, wenn `finish`
+  // nach dem Verlassen nur das Guthaben auffrischt – oder wenn die Abgabe gar nicht erreicht wird und der Fall leer bleibt.
   it.each([
-    ["ein 404", (s: Deferred) => s.reject(new ApiError(404, "Study plan not found.", "t", "not_found"))],
-    ["ein fertiger Versuch", (s: Deferred) => s.resolve({ attemptId: 9, stage: 3, totalItems: 0 })],
-  ])("lässt das Kind nach dem Verlassen in Ruhe, wenn der Start spät mit %s antwortet", async (_, antwort) => {
+    ["ein 404", (s: Deferred) => s.reject(new ApiError(404, "Study plan not found.", "t", "not_found")), false],
+    ["ein fertiger Versuch", (s: Deferred) => s.resolve({ attemptId: 9, stage: 3, totalItems: 0 }), true],
+  ])("lässt das Kind nach dem Verlassen in Ruhe, wenn der Start spät mit %s antwortet", async (_, antwort, abgegeben) => {
     const start = deferred();
     startTest.mockReset().mockReturnValue(start.promise);
     nextTest.mockReset().mockResolvedValue({ item: null, done: true, cursor: 0, total: 0 });
     submitTest.mockReset().mockResolvedValue({ passed: true, scorePercent: 100, passPercent: 80, correctItems: 0, totalItems: 0, stage: 3, items: [], attemptsRemaining: 1 });
     celebrate.mockReset();
+    setStreak.mockReset();
     render(
       <MemoryRouter initialEntries={["/sohn/test/5"]}>
         <Routes>
@@ -330,6 +334,8 @@ describe("SohnTest im Wartebild", () => {
 
     expect(screen.getByText("SHOP")).toBeTruthy();
     expect(celebrate).not.toHaveBeenCalled();
+    expect(submitTest).toHaveBeenCalledTimes(abgegeben ? 1 : 0);
+    expect(setStreak.mock.calls).toEqual(abgegeben ? [[4]] : []);
   });
 });
 
