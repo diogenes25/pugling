@@ -12,6 +12,7 @@ quelle: Nachschau zu Lauf Q, Teil 1 in Lauf Q, Teil 2 (docs/pm-sitzung-2026-11-0
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-03"
 entgangen_bei: [B-259]
 wartet_auf: ""
 ---
@@ -56,3 +57,4 @@ Eine Hälfte des AK ohne Zusicherung.
   B-260-Fall „Fett am Zeilenanfang ist kein Listenpunkt" (Mutante „jedes `*`" **1 failed**), der überflüssige Term
   `previousIndented` im Normalisierer gestrichen, zwei Sätze in B-259 berichtigt.
 - **2026-11-03** — Review `frontend-reviewer` und `pugling-reviewer`: kein 🔴; ein 🟡 (InfoHint noch nicht gestaged – AK 1 von B-362 gilt erst nach dem Commit, dort per `git ls-files --eol` geprüft, siehe Protokoll; kein Code geändert, ohne Zählung); drei 🟢 (Umbruch, zwei Kommentar-Formulierungen) ohne Zählung behoben. Abnahme Lauf Q, Teil 2: volle Suite **1059/1059**, Vitest **621/621**, E2E-Gesamtlauf **107 passed** (`exit=0`, nach dem letzten Edit). Rollengang: der Entwickler ist die Rolle (die Tor-Meldung); Creator, Vater, Sohn Regressionszeugen. **Abgenommen**, Commit siehe Protokoll ([Lauf Q](../pm-sitzung-2026-11-03-nacht.md)).
+- **2026-11-03** — Nachschau in Lauf R, Teil 1 (frischer `frontend-reviewer`, `git show 617df82`, read-only): **sauber.** Geprüft: 1+1+2 = 4; „ohne Versatz" 2, „um eins daneben" 3 oder 5, „Zeile des zweiten Elements" 5 – alle rot; `</item>`-Fall rot gegen `item` und gegen ein allgemeines `</\w+>`.

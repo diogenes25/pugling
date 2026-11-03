@@ -193,3 +193,29 @@ test("Scheitert die Suche, ist auch der Knopf »Alle wählen« gesperrt", async 
   await expect(page.getByRole("checkbox", { name: /Begrüßungen/ })).toBeDisabled();
   await expect(alleWaehlen).toBeDisabled();
 });
+
+/*
+ * B-164, Entscheidung 3: die Suche des Assistenten hängt am normalisierten `filterKey`, nicht an den Rohfeldern. Ein
+ * Leerschlag am Ende ist dieselbe Suche – er löst keine Abfrage aus und sperrt die Zeilen nicht. Rot, wenn die
+ * Abhängigkeiten wieder die Rohfelder sind: dann ginge eine Suche hinaus, und für ihre Dauer wäre das Kästchen gesperrt.
+ * Zwilling von `planbau-ladefenster.spec.ts` („Ein Leerschlag am Ende der Suche …"); die Abwesenheit einer Anfrage braucht
+ * ein begrenztes Fenster, darum Zähler plus kurze Frist.
+ */
+test("Ein Leerschlag am Ende der Suche ist dieselbe Suche und sperrt nichts", async ({ page }) => {
+  await vaterLogin(page);
+  await page.goto("/vater/wizard");
+  await waehleSohnUndEnglisch(page);
+
+  const suche = page.getByLabel("Übung suchen", { exact: true });
+  await suche.fill("Begrüßungen");
+  const zeile = page.getByRole("checkbox", { name: /Begrüßungen/ });
+  await expect(zeile).toBeEnabled({ timeout: 10_000 });
+
+  let suchen = 0;
+  page.on("request", (r) => { if (r.url().includes("/creator/exercises?")) suchen++; });
+  await suche.fill("Begrüßungen ");
+  await page.waitForTimeout(500);
+
+  expect(suchen, "ein Leerschlag ist keine neue Suche").toBe(0);
+  await expect(zeile).toBeEnabled({ timeout: 200 });
+});

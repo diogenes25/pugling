@@ -506,7 +506,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (43)
+### Offen (42)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -520,7 +520,6 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-247](B-247-knowunity-vergleich-sammel-story.md) | Knowunity-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | Wunsch | `idee` | P2 | — | — | — |
 | [B-248](B-248-klassenarbeit-countdown-treibt-den-plan.md) | Die Klassenarbeit wird beim Kind sichtbar und verdichtet den Plan vor dem Termin | Wunsch | `idee` | P2 | — | — | — |
 | [B-249](B-249-probeklausur-mit-notenprognose.md) | Eine Probeklausur über das Bündel einer Klassenarbeit, mit Notenprognose | Wunsch | `idee` | P2 | — | — | — |
-| [B-164](B-164-useasync-paart-frischen-zustand-mit-alten-daten.md) | Nach einem Wechsel zeigt der Bildschirm für einen Moment frischen Zustand mit alten Daten | Defekt | `ausformuliert` | P3 | — | frontend | — |
 | [B-282](B-282-login-haertung-restpunkte.md) | Restpunkte der Login-Härtung (NP-3) | Defekt | `idee` | P3 | — | backend | — |
 | [B-310](B-310-profil-match-verraet-kind-ids.md) | `GET creator/profiles/match` verrät per 404 gegen 403, ob es eine Kind-Id gibt | Defekt | `idee` | P3 | — | backend | — |
 | [B-329](B-329-uebung-unbekannte-referenz-validation-error.md) | Die Übungs-Validierung meldet eine unbekannte Id als `validation_error`, die Kategorie daneben als `invalid_reference` | Defekt | `idee` | P3 | — | backend | — |
@@ -555,7 +554,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-365](B-365-waechter-meldungen-auf-deutsch.md) | Zwei Meldungen des Vertrags-Doku-Wächters sind deutsch | Aufräumen | `idee` | P4 | — | backend | — |
 
 <details>
-<summary>Abgenommen (297)</summary>
+<summary>Abgenommen (299)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -627,6 +626,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-161](B-161-alle-waehlen-macht-die-auswahl-unsichtbar.md) | „Alle wählen" wählt bis zu 400 Übungen, die der Vater nie sieht und nicht abwählen kann | Defekt | `abgenommen` | P1 | S | frontend | — |
 | [B-162](B-162-assistent-nennt-den-leeren-katalog-als-ursache.md) | Scheitert die Übungssuche im Assistenten, behauptet er einen leeren Katalog | Defekt | `abgenommen` | P2 | M | frontend | — |
 | [B-163](B-163-art-und-typ-tragen-dieselben-woerter.md) | „Art" und „Typ" tragen dieselben Wörter — in einer Zeile sogar zweimal hintereinander | Defekt | `abgenommen` | P2 | S | beides | — |
+| [B-164](B-164-useasync-paart-frischen-zustand-mit-alten-daten.md) | Nach einem Wechsel zeigt der Bildschirm für einen Moment frischen Zustand mit alten Daten | Defekt | `abgenommen` | P3 | M | frontend | — |
 | [B-165](B-165-backend-suite-flackert.md) | `AtomaresSchreiben_KeineLeseFehler` fällt unter Volllast — und färbt das Test-Tor rot | Defekt | `abgenommen` | P1 | XS | backend | — |
 | [B-166](B-166-wiki-nennt-die-entfernte-kapitel-route.md) | Wiki und Endpunkt-Karte nennen die entfernte Kapitel-Route | Defekt | `abgenommen` | P2 | XS | doku | — |
 | [B-167](B-167-katalogliste-zeigt-beim-filterwechsel-alte-treffer.md) | Katalogliste im Planbau zeigt beim Filterwechsel die alten Treffer weiter | Defekt | `abgenommen` | P3 | S | frontend | — |
@@ -803,6 +803,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-363](B-363-begruendung-zu-min-width-falsch-mainbreite-traegt-nichts.md) | B-276 begründet `min-width: 0` falsch, und eine Zusicherung der neuen Probe trägt nichts | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-364](B-364-feldhilfe-und-kommentar-regex-restkanten.md) | Restkanten der Nachschau über `a25a1a6`: zwei Blockkommentare, ⓘ-Schleife der Tablet-Spec | Defekt | `abgenommen` | P4 | XS | frontend | — |
 | [B-366](B-366-klebestellen-tor-nennt-ungepruefte-zeile.md) | Das Klebestellen-Tor nennt eine Zeile, die kein Test prüft | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-367](B-367-story-datei-traegt-rohes-cr.md) | Die Story-Datei von B-362 trägt selbst rohe CR-Bytes | Defekt | `abgenommen` | P4 | XS | doku | — |
 | [B-37](B-37-uebung-abbruch-unvollendet.md) | Abgebrochene Runden: Pflicht härten, Klausur deckeln | Defekt | `abgenommen` | P1 | M | beides | — |
 | [B-40](B-40-client-routen-waechter.md) | Routen aus `Pugling.Client` gegen das OpenAPI-Dokument halten | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-41](B-41-produktions-startup-smoke.md) | Der Produktionspfad des Starts ist der einzige ohne Test | Aufräumen | `abgenommen` | P2 | S | backend | — |
@@ -869,9 +870,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
-### Nach der Abnahme entgangen (115)
+### Nach der Abnahme entgangen (116)
 
-**Nachgeschaut: 293 von 297 abgenommenen** — und in 93 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 4 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 297 von 299 abgenommenen** — und in 94 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 2 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -990,19 +991,18 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-362](B-362-infohint-mit-crlf-und-einzelnem-cr-committet.md) | `InfoHint.tsx` ist mit CRLF und einem einzelnen CR committet – git hält es nicht mehr für Text | [B-273] | `abgenommen` |
 | [B-363](B-363-begruendung-zu-min-width-falsch-mainbreite-traegt-nichts.md) | B-276 begründet `min-width: 0` falsch, und eine Zusicherung der neuen Probe trägt nichts | [B-276] | `abgenommen` |
 | [B-366](B-366-klebestellen-tor-nennt-ungepruefte-zeile.md) | Das Klebestellen-Tor nennt eine Zeile, die kein Test prüft | [B-259] | `abgenommen` |
+| [B-367](B-367-story-datei-traegt-rohes-cr.md) | Die Story-Datei von B-362 trägt selbst rohe CR-Bytes | [B-362] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (4) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (2) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-362](B-362-infohint-mit-crlf-und-einzelnem-cr-committet.md) | `InfoHint.tsx` ist mit CRLF und einem einzelnen CR committet – git hält es nicht mehr für Text |
-| [B-363](B-363-begruendung-zu-min-width-falsch-mainbreite-traegt-nichts.md) | B-276 begründet `min-width: 0` falsch, und eine Zusicherung der neuen Probe trägt nichts |
-| [B-364](B-364-feldhilfe-und-kommentar-regex-restkanten.md) | Restkanten der Nachschau über `a25a1a6`: zwei Blockkommentare, ⓘ-Schleife der Tablet-Spec |
-| [B-366](B-366-klebestellen-tor-nennt-ungepruefte-zeile.md) | Das Klebestellen-Tor nennt eine Zeile, die kein Test prüft |
+| [B-164](B-164-useasync-paart-frischen-zustand-mit-alten-daten.md) | Nach einem Wechsel zeigt der Bildschirm für einen Moment frischen Zustand mit alten Daten |
+| [B-367](B-367-story-datei-traegt-rohes-cr.md) | Die Story-Datei von B-362 trägt selbst rohe CR-Bytes |
 
 </details>
 

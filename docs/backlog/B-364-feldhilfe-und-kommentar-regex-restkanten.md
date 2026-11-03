@@ -12,6 +12,7 @@ quelle: Nachschau zu Lauf P, Teil 2 in Lauf Q, Teil 1 (docs/pm-sitzung-2026-11-0
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-03"
 entgangen_bei: []
 wartet_auf: ""
 ---
@@ -59,3 +60,4 @@ Punkt 1 wie beschrieben; Punkt 2 ist eine Vermutung ohne Messung.
 - **2026-11-03** — Lauf Q, Teil 2: autonom gegrillt (Freigabe 1), gebaut. Neuer Fall grün; Mutante „gierig" (`[\s\S]*`)
   **1 failed** an „&& zwischen zwei Blockkommentaren". Vitest **621/621**.
 - **2026-11-03** — Review `frontend-reviewer` und `pugling-reviewer`: kein 🔴; ein 🟡 (InfoHint noch nicht gestaged – AK 1 von B-362 gilt erst nach dem Commit, dort per `git ls-files --eol` geprüft, siehe Protokoll; kein Code geändert, ohne Zählung); drei 🟢 (Umbruch, zwei Kommentar-Formulierungen) ohne Zählung behoben. Abnahme Lauf Q, Teil 2: volle Suite **1059/1059**, Vitest **621/621**, E2E-Gesamtlauf **107 passed** (`exit=0`, nach dem letzten Edit). Rollengang: der Entwickler ist die Rolle (die Probe); Creator, Vater, Sohn Regressionszeugen. **Abgenommen**, Commit siehe Protokoll ([Lauf Q](../pm-sitzung-2026-11-03-nacht.md)).
+- **2026-11-03** — Nachschau in Lauf R, Teil 1 (frischer `frontend-reviewer`, `git show 617df82`, read-only): **sauber.** Geprüft: die gierige Form schluckt `{/* a */ ok && /* b */` ganz, `davor` wird leer, 0 statt 1 Fund.

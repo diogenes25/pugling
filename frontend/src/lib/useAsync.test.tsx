@@ -134,3 +134,97 @@ describe("useAsync – wann ein Platzhalter die Wahrheit sagt", () => {
     await act(async () => { second.resolve([2]); });
   });
 });
+
+/*
+ * B-164: `stale` sagt, ob die vorliegenden Daten zu **anderen** Abhängigkeiten gehören als den aktuellen – die Frage, die
+ * `loading` nicht beantwortet (es zieht „andere Abfrage" und „dieselbe neu geladen" zusammen). Die Aufrufer mit eigenem
+ * Schlüsselvergleich (`PlanPositions`, Assistent) lesen jetzt dieses Feld. Jeder Fall unterscheidet sich vom Ausgangszustand
+ * in genau einer Sache.
+ */
+describe("useAsync – ob die Daten zu den aktuellen Abhängigkeiten gehören", () => {
+  // Rot, wenn `stale` fehlt, immer falsch ist oder schon beim Start der Abfrage nachgezogen wird: nach dem Wechsel läuft
+  // eine andere Abfrage, die Daten sind von vorhin. (Die Mutante „= `loading` mit Daten" fängt dieser Fall nicht – sie
+  // trifft die zwei Fälle darunter.)
+  it("meldet die Daten nach einem Wechsel als veraltet, bis die neue Antwort da ist", async () => {
+    const a = deferred<string>();
+    const b = deferred<string>();
+    const { result, rerender } = renderHook(({ key }) => useAsync(() => (key === "a" ? a.promise : b.promise), [key]),
+      { wrapper, initialProps: { key: "a" } });
+    await act(async () => { a.resolve("A"); });
+    expect(result.current.stale).toBe(false);
+
+    rerender({ key: "b" });
+    expect([result.current.data, result.current.stale]).toEqual(["A", true]);
+
+    await act(async () => { b.resolve("B"); });
+    expect([result.current.data, result.current.stale]).toEqual(["B", false]);
+  });
+
+  // Rot, wenn `stale` an `loading` hängt: ein `reload` lädt dieselbe Sache neu, die Zeilen bleiben gültig und bedienbar.
+  it("meldet ein Neuladen derselben Abfrage nicht als veraltet", async () => {
+    const first = deferred<string>();
+    const second = deferred<string>();
+    let calls = 0;
+    const { result } = renderHook(() => useAsync(() => (++calls === 1 ? first.promise : second.promise), ["x"]), { wrapper });
+    await act(async () => { first.resolve("A"); });
+
+    await act(async () => { result.current.reload(); });
+    expect([result.current.loading, result.current.stale]).toEqual([true, false]);
+    await act(async () => { second.resolve("A2"); });
+  });
+
+  // Rot, wenn `stale` mit dem Ende der Abfrage zurückfällt: scheitert die neue, stehen weiter die alten Daten da (B-169).
+  // Und rot, wenn „Erneut suchen" (`reload`) die Abhängigkeiten schon beim Start nachzieht: während der Wiederholung
+  // stehen noch die Zeilen von A da, und sie würden wählbar (Review B-164).
+  it("bleibt veraltet, wenn die neue Abfrage scheitert, und auch während ihrer Wiederholung", async () => {
+    const a = deferred<string>();
+    const b = deferred<string>();
+    const retry = deferred<string>();
+    let callsB = 0;
+    const { result, rerender } = renderHook(
+      ({ key }) => useAsync(() => (key === "a" ? a.promise : ++callsB === 1 ? b.promise : retry.promise), [key]),
+      { wrapper, initialProps: { key: "a" } });
+    await act(async () => { a.resolve("A"); });
+    rerender({ key: "b" });
+    await act(async () => { b.reject(new Error("weg")); });
+    expect([result.current.loading, result.current.data, result.current.stale]).toEqual([false, "A", true]);
+
+    await act(async () => { result.current.reload(); });
+    expect([result.current.loading, result.current.data, result.current.stale]).toEqual([true, "A", true]);
+    await act(async () => { retry.resolve("B"); });
+    expect([result.current.data, result.current.stale]).toEqual(["B", false]);
+  });
+
+  // Rot, wenn schon die erste Ladung als veraltet gilt: das Gezeigte (noch nichts) gehört zu den Abhängigkeiten des
+  // ersten Renders.
+  it("ist während der ersten Ladung nicht veraltet", () => {
+    const pending = deferred<string>();
+    const { result } = renderHook(() => useAsync(() => pending.promise, ["x"]), { wrapper });
+    expect([result.current.loading, result.current.stale]).toEqual([true, false]);
+  });
+
+  // Rot, wenn „ohne Daten nie veraltet" gilt: scheitert die erste Abfrage und wechseln die Kriterien, läuft eine ANDERE
+  // Suche – der Planbau sagt dann „Suche läuft…", nicht „0 Treffer" (gemessen: `filterwechsel-raeumt-den-fehler.spec.ts`).
+  it("ist nach gescheiterter erster Ladung und einem Wechsel veraltet", async () => {
+    const a = deferred<string>();
+    const b = deferred<string>();
+    const { result, rerender } = renderHook(({ key }) => useAsync(() => (key === "a" ? a.promise : b.promise), [key]),
+      { wrapper, initialProps: { key: "a" } });
+    await act(async () => { a.reject(new Error("weg")); });
+    expect(result.current.stale).toBe(false);
+    rerender({ key: "b" });
+    expect([result.current.data, result.current.stale]).toEqual([null, true]);
+    await act(async () => { b.resolve("B"); });
+    expect(result.current.stale).toBe(false);
+  });
+
+  // Rot, wenn nach Identität des Arrays statt je Element verglichen wird: jeder Render baut eine neue Dep-Liste.
+  it("vergleicht die Abhängigkeiten je Element, nicht als Liste", async () => {
+    const a = deferred<string>();
+    const { result, rerender } = renderHook(({ n }) => useAsync(() => a.promise, [n, "fest"]),
+      { wrapper, initialProps: { n: 1 } });
+    await act(async () => { a.resolve("A"); });
+    rerender({ n: 1 });
+    expect(result.current.stale).toBe(false);
+  });
+});

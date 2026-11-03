@@ -439,27 +439,15 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
    * dieselbe Filterleiste, dieselben `ExerciseSummary`-Zeilen, dieselbe geblätterte Suche. Dort steht sie
    * seit B-169, hier fehlte sie (B-167).
    *
-   * Verglichen werden **Schlüssel** über die Suchkriterien, nicht Ladezustände. Der Grund gilt hier
-   * unverändert: `loading` zöge „Kriterien geändert" und „dieselben Kriterien neu geladen" zusammen, und
-   * es deckt den **Fehlerzweig** nicht — scheitert die neue Abfrage, fällt `loading` zurück, während die
-   * alten Zeilen stehen bleiben.
+   * Ob die gezeigten Zeilen zu den eingestellten Kriterien gehören, sagt `exercises.stale` (B-164) – nicht `loading`:
+   * das zöge „Kriterien geändert" und „dieselben Kriterien neu geladen" zusammen und deckte den **Fehlerzweig** nicht
+   * (scheitert die neue Abfrage, fällt `loading` zurück, während die alten Zeilen stehen bleiben). Die Kriterien gehen
+   * normalisiert in den Hook, darum ist „abc " dieselbe Suche wie „abc".
    */
   const filterKey = JSON.stringify(kriterien);
   /** Der Schlüssel, für den die aktuelle Auswahl gilt – nach dem Effekt immer der aktuelle. */
   const geltenderFilterKey = useRef(filterKey);
-  /*
-   * Der Schlüssel, zu dem die **gerenderten Zeilen** gehören — `useState` und nicht `useRef`, weil eine
-   * Ref am Rendern nicht teilnimmt: der Render, der die frischen Zeilen erstmals zeigt, berechnete die
-   * Sperre sonst, bevor ein Effekt die Ref nachziehen kann, und die neuen Zeilen blieben gesperrt.
-   */
-  const [seitenSchluessel, setSeitenSchluessel] = useState(filterKey);
-  const zeilenVeraltet = seitenSchluessel !== filterKey;
-  useEffect(() => {
-    // `useAsync` verwirft die Antwort einer überholten Anfrage (`cancelled`-Flag), setzt `data` also nur
-    // aus der neuesten Generation — der hier gelesene Schlüssel gehört damit wirklich zu den Zeilen.
-    setSeitenSchluessel(filterKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [exercises.data]);
+  const zeilenVeraltet = exercises.stale;
   useEffect(() => {
     /*
      * Die Auswahl überlebte den Filterwechsel: Ihre Markierung verschwand mit der Zeile, `exerciseId`

@@ -1,10 +1,10 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/frontend, rolle/creator, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/creator, rolle/supervisor]
 aliases: [useAsync behält alte Daten, Fachwechsel zeigt Arten des vorigen Fachs]
-status: ausformuliert
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
+groesse: M
 wo: frontend
 migration: nein
 vertragsbruch: nein
@@ -174,6 +174,28 @@ die Antwort auf eine beliebige Kombination und tragen sie nicht bei sich. Diese 
 weg ist nur ihr Beispiel. Ein Signal ohne Abnehmer wäre allerdings toter Code — deshalb ist B-167 in
 denselben Sprint gebunden, und ohne ihn wäre diese Story `verworfen` statt gebaut.
 
+## Entscheidungen (Lauf R, 2026-11-03 – auf der Entscheidung des Nutzers vom 2026-10-23)
+
+Der Nutzer hat die Architekturfrage aus „Angehalten" entschieden: „veraltet" lebt **im Hook**, die Prüfungen am Aufrufer
+werden darauf zurückgeführt, wo es passt. Was der Lauf daraus autonom entschieden hat (Freigabe 1, `Defekt`):
+
+1. **`useAsync` liefert `stale`**: wahr, solange das Gezeigte zu anderen Abhängigkeiten gehört als den aktuellen – nach einem
+   Wechsel bis zur neuen Antwort und weiter, wenn sie scheitert. Ein `reload` macht es nicht wahr. Vergleich je Element
+   (`Object.is`). *Kosten:* ein Zustand mehr an allen 111 Aufrufstellen (die zwei Setter im selben Rückruf werden
+   gebündelt, ein zusätzlicher Render entsteht nicht – Review).
+2. **Anfangs gelten die Abhängigkeiten des ersten Renders**, nicht „ohne Daten nie veraltet". Gemessen: die erste Fassung
+   (ohne Daten nie veraltet) ließ `filterwechsel-raeumt-den-fehler.spec.ts` (Planbau) fallen – scheitert die erste Suche und
+   wechselt danach der Filter, läuft eine *andere* Suche, und der Planbau sagt „Suche läuft…", nicht „0 Treffer". Das alte
+   Muster am Aufrufer startete genau so (`useState(filterKey)`).
+3. **`PlanPositions` und der Assistent lesen `exercises.stale`**; ihre eigenen `seitenSchluessel`-Zustände samt Effekt
+   entfallen. Der Assistent übergibt dafür den normalisierten `filterKey` als Abhängigkeit statt der Rohfelder – „abc " ist
+   dieselbe Suche, löst keine Abfrage aus und sperrt nichts (wie im Planbau schon). *Kosten:* `filterKey` muss jedes Feld der
+   Abfrage enthalten; er entsteht aus `wizardSearchParams`, also aus der Abfrage selbst.
+4. **`useGemerkterFehler` bleibt, wie er ist.** Er beantwortet eine andere Frage (welcher Fehler die Wiederholung
+   überlebt), nicht, ob Daten zu den Abhängigkeiten gehören – „wo es passt" passt dort nicht.
+5. **Keine weiteren Aufrufer in diesem Sprint**; die übrigen ~70 Kandidaten (oben) bleiben Kandidaten. Kein Tor (Entscheidung
+   5 unten gilt fort).
+
 ## Entscheidungen (ZURÜCKGEZOGEN — siehe „Angehalten")
 
 Die folgenden fünf Entscheidungen stammen aus dem autonomen Grillen derselben Nacht und stehen hier
@@ -230,7 +252,10 @@ erste ruht auf der falschen Prämisse, dass es für diese Frage noch kein entsch
    `VaterKatalog.tsx`): `reload` ist **nicht** `stale`, ein Dep-Wechsel schon.
 6. `showPlaceholder` verhält sich unverändert; die bestehenden fünf Fälle in `useAsync.test.tsx` bleiben
    grün, ohne angefasst zu werden.
-7. Das Signal hat in diesem Sprint einen echten Abnehmer (B-167) — kein Feld, das niemand liest.
+7. Das Signal hat in diesem Sprint echte Abnehmer – `PlanPositions` (Zwilling von B-167) und der Assistent (B-169) –, und
+   ihre E2E-Specs zum Ladefenster bleiben grün.
+8. Scheitert die erste Abfrage und wechseln danach die Abhängigkeiten, gilt das Gezeigte als veraltet (Lauf R,
+   Entscheidung 2).
 
 ## Schätzung
 
@@ -278,3 +303,14 @@ drei gemessene Stellen begrenzt ist (Entscheidung 5).
   Anlassfall im Katalog längst geschlossen und durch `CatalogAdmin.test.tsx:240` gedeckt ist.
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht, weiter angehalten. Inzwischen gibt es **drei** Muster statt zwei: Prüfung am Aufrufer (`VaterWizard.tsx:203-204`, `PlanPositions.tsx`), und den Schlüssel-Hook `lib/useGemerkterFehler.ts` (B-227), dessen Kopf ausdrücklich nicht vorgreift. Die Architekturfrage (querschnittliches `stale` im Hook vs. Muster am Aufrufer) wird damit dringlicher – Tagesordnung fürs Grillen.
 - **2026-10-23** — **Entscheidung des Nutzers** in der Grill-Runde G-2 der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): „veraltet“ lebt **im Hook** – `useAsync` bekommt ein querschnittliches `stale`-Feld; die Prüfungen am Aufrufer (`seitenSchluessel`/`zeilenVeraltet` in `VaterWizard.tsx`, `PlanPositions.tsx`) und der Schlüssel-Hook `useGemerkterFehler` werden darauf zurückgeführt, wo es passt. Damit ist die Story nicht mehr angehalten (`wartet_auf` geleert) und als `Defekt` autonom grill- und schätzbar. Wahrscheinlich M – vor dem Bau teilen, wenn der Rückbau der Aufrufer mehr als eine Handvoll Stellen trifft.
+- **2026-11-03** — Lauf R, Teil 1: auf der Nutzer-Entscheidung vom 2026-10-23 autonom gegrillt (Freigabe 1), gebaut. Rote
+  Probe: fünf neue Fälle in `useAsync.test.tsx` **5 failed** (erwartet 5, das Feld fehlte). Mutanten am Hook: „`stale` = `loading`
+  mit Daten" **2 failed** (Neuladen, Fehlerzweig), „immer falsch" **2 failed**, „Liste per Identität" **3 failed**, „Deps auch
+  beim Fehler nachgezogen" **1 failed**. Nach dem Umzug der Aufrufer fiel in den drei Ladefenster-Specs **1 failed**
+  (`filterwechsel-raeumt-den-fehler.spec.ts`, Planbau) – die Startsemantik war falsch (Entscheidung 2); ein sechster Fall
+  dafür war gegen die erste Fassung **1 failed**, danach grün. Aufrufer-Mutanten „liest `stale` nicht": Assistent **3
+  failed** (`assistent.spec.ts:126`, `:165`, Filterwechsel), Planbau **2 failed** eigene (`planbau-ladefenster.spec.ts:43`,
+  `:76`). Danach die drei Specs **9 passed**, Vitest voll **627/627**, `tsc -b` sauber. Die bestehenden fünf Fälle des Hooks
+  unangetastet und grün (AK 6).
+- **2026-11-03** — Review `frontend-reviewer`: kein 🔴. 🟡 die Wiederholung nach gescheiterter geänderter Abfrage trug keinen Fall (Mutante „`reload` zieht Deps nach" blieb grün) → Fall 3 erweitert, Mutante **1 failed**, „Deps beim Start nachgezogen" **3 failed** (zählt). 🟡 Entscheidung 3 (Leerschlag im Assistenten) ohne Zusicherung → Zwilling in `assistent.spec.ts` (Anfragen gezählt, Kästchen bedienbar), Mutante „Rohfelder als Deps" **1 failed** an „keine neue Suche" (zählt; ein erster Mutantenlauf brach an einem Server-Startfehler ab und ist nicht gewertet). 🟡 der Kommentar an Fall 1 nannte die `loading`-Mutante, die er nicht fängt → berichtigt (nur Kommentar). 🟢 kein zusätzlicher Render (Entscheidung 1 berichtigt). **Zähler Teil 1: 2.**
+- **2026-11-03** — Abnahme Lauf R, Teil 1: Vitest **627/627**, `tsc -b` sauber, E2E-Gesamtlauf **108 passed** (`exit=0`, nach dem letzten Code-Edit; darin der neue Zwilling). Rollengang: Vater maschinell – `assistent.spec.ts` und `planbau-ladefenster.spec.ts` fahren das Ladefenster, den Fehlerzweig und den Leerschlag im echten Browser, `filterwechsel-raeumt-den-fehler.spec.ts` den Wechsel nach gescheiterter Suche; Creator und Sohn Regressionszeugen (ihre Specs grün, kein Pfad von ihnen geändert außer dem geteilten Hook). **Abgenommen**, Commit siehe Protokoll ([Lauf R](../pm-sitzung-2026-11-03-nacht.md)).

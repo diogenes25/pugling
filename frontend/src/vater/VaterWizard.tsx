@@ -121,6 +121,14 @@ export function VaterWizard() {
     mode === "new" ? schoolType : (selectedChild?.schoolType as SchoolType | undefined);
   const subject = subjects.data?.find((s) => s.id === subjectId);
 
+  // Der Schlüssel über die Suchkriterien (B-161) – gebildet aus `wizardSearchParams`, also aus genau der Abfrage. Er ist
+  // zugleich die Abhängigkeit der Suche (B-164): getrimmte Eingaben („abc " → "abc") sind dieselbe Suche, lösen keine
+  // Abfrage aus und machen die gezeigten Zeilen nicht veraltet.
+  const filterKey = subjectId === "" ? "" : wizardFilterKey({
+    subjectId: Number(subjectId), grade: effectiveGrade, schoolType: effectiveSchoolType,
+    search: contentSearch, categoryId, type: typeKey, source: sourceSearch, grammarTopicId,
+  });
+
   // Passende Katalog-Übungen (die Bausteine des Plans – jede wird zu einer Position). Die Gesamtzahl wird
   // mitgeführt, weil der Server nur eine Seite liefert: ohne sie wäre eine gekappte Liste nicht erkennbar.
   const exercises = useAsync<Paged<ExerciseSummary>>(
@@ -132,7 +140,7 @@ export function VaterWizard() {
         subjectId: Number(subjectId), grade: effectiveGrade, schoolType: effectiveSchoolType,
         search: contentSearch, categoryId, type: typeKey, source: sourceSearch, grammarTopicId,
       }))),
-    [subjectId, effectiveGrade, effectiveSchoolType, contentSearch, categoryId, typeKey, sourceSearch, grammarTopicId],
+    [filterKey],
   );
 
   // Arten des gewählten Fachs; die Liste hängt am Fach, nicht am Katalog insgesamt.
@@ -177,13 +185,8 @@ export function VaterWizard() {
    * mit „Auswahl zurückgesetzt", bevor er etwas getan hat. Stumm zu leeren wäre die andere Falle (B-116) –
    * eine Änderung ohne Rückmeldung liest sich als Fehler.
    *
-   * Der Schlüssel kommt aus `wizardFilterKey`, nicht aus der Abhängigkeitsliste oben: ein Objektvergleich
-   * per Referenz feuerte bei jedem Rendern, und getrimmte Eingaben („abc " → "abc") sind dieselbe Suche.
+   * Verglichen wird `filterKey` (oben, B-161), kein Objekt: ein Vergleich per Referenz feuerte bei jedem Rendern.
    */
-  const filterKey = subjectId === "" ? "" : wizardFilterKey({
-    subjectId: Number(subjectId), grade: effectiveGrade, schoolType: effectiveSchoolType,
-    search: contentSearch, categoryId, type: typeKey, source: sourceSearch, grammarTopicId,
-  });
   /*
    * Der Schlüssel, für den die aktuelle Auswahl gilt. Nach dem Effekt trägt die Ref immer den *aktuellen*
    * Schlüssel – „vorig" ist sie nur innerhalb des Effektrumpfs. Sie ist damit auch das Generationen-Gate
@@ -192,24 +195,14 @@ export function VaterWizard() {
    */
   const geltenderFilterKey = useRef(filterKey);
   /*
-   * Der Schlüssel, zu dem die **gerenderten Zeilen** gehören — nicht der, den die Kriterien gerade tragen.
-   * Die zwei laufen für die Dauer einer Abfrage auseinander: `useAsync` behält `data` über den Wechsel
-   * (B-116, gewollt), also stehen die Zeilen des vorigen Filters noch da. Ein Haken darin gehörte zu einem
-   * Filter, der nicht mehr gilt, und der Effekt oben leert ihn nie wieder — sein Schlüssel hat sich schon
-   * geändert (B-169).
-   *
-   * `useState`, nicht `useRef`: Eine Ref nimmt am Rendern nicht teil. Der Render, der die frischen Zeilen
-   * erstmals zeigt, berechnete die Sperre, **bevor** ein Effekt die Ref nachziehen kann — die neuen Zeilen
-   * blieben gesperrt, bis irgendetwas anderes ein Rendern auslöst.
-   *
-   * Und verglichen werden **Schlüssel**, nicht Ladezustände: `exercises.loading && data !== null` zöge
-   * „Kriterien geändert" und „dieselben Kriterien neu geladen" zusammen — und das Zweite gibt es hier:
-   * „Erneut suchen" ruft `exercises.reload()` (B-162). Mit der Ladezustands-Variante könnte eine
-   * Wiederholung derselben Suche frische Zeilen fälschlich sperren (B-199 – die vorige Fassung dieses Satzes
-   * behauptete, die Abfrage rufe nirgends `reload()`, und derselbe Sprint hat den Knopf gebaut).
+   * Ob die **gerenderten Zeilen** zu den eingestellten Kriterien gehören: `useAsync` behält `data` über den Wechsel
+   * (B-116, gewollt), also stehen die Zeilen des vorigen Filters für die Dauer einer Abfrage noch da. Ein Haken darin
+   * gehörte zu einem Filter, der nicht mehr gilt, und der Effekt oben leert ihn nie wieder (B-169). Das sagt seit B-164
+   * der Hook selbst (`stale`) – und nicht `loading`: „Erneut suchen" ruft `exercises.reload()` (B-162), und dieselbe
+   * Suche neu geladen darf frische Zeilen nicht sperren (B-199). Scheitert die neue Abfrage, bleiben die alten Zeilen
+   * gesperrt.
    */
-  const [seitenSchluessel, setSeitenSchluessel] = useState(filterKey);
-  const zeilenVeraltet = seitenSchluessel !== filterKey;
+  const zeilenVeraltet = exercises.stale;
   useEffect(() => {
     // `selected` bewusst nicht in der Abhängigkeitsliste: der Effekt soll auf den Kriterien-Wechsel
     // reagieren, nicht auf jedes Anklicken. Gelesen wird der Stand zum Zeitpunkt des Wechsels.
@@ -269,11 +262,6 @@ export function VaterWizard() {
   }
   useEffect(() => {
     merken(exercises.data?.items ?? []);
-    // Die Antwort ist da – ab jetzt gehören die Zeilen zum eingestellten Filter (B-169). `useAsync` bricht
-    // die vorige Anfrage ab, `data` trägt also immer die Antwort der neuesten Generation; der hier gelesene
-    // Schlüssel gehört damit wirklich zu den gezeigten Zeilen.
-    setSeitenSchluessel(filterKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exercises.data]);
 
   /*

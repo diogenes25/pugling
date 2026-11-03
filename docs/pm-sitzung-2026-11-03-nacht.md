@@ -301,3 +301,75 @@ Escapes (`\n`, `\r\n`) – zweimal griff ein Muster nicht, einmal (B-362) blieb 
 Endgrund: **Limit 2** – die Nachschau in Teil 2 fand im Increment von Teil 1 eine Entgleitung (B-366, behoben). Zwei Teile,
 **sechs Stories abgenommen:** B-259, B-260 (Teil 1); B-362, B-363, B-364, B-366 (Teil 2). Nachgeschaut: Lauf P Teil 2 und Teil 1
 dieses Laufs; Teil 2 ist **unbeobachtet** (Nachschau in Lauf R). Neu: B-361, B-365 (P4/Idee). Zähler 0 / 0. Alles **ungepusht**.
+
+## Lauf R, Teil 1 — Ob eine Liste zur eingestellten Suche gehört, sagt der Hook (B-164, B-367)
+
+Lauf R beginnt nach Lauf Q ohne Unterbrechung; Ausgangslage `617df82`. Paket NP-15 aus der
+[Backlog-Sichtung](pm-sitzung-2026-10-23-backlog-sichtung.md): erst B-164, dann B-183.
+
+**Sprint-Ziel:** *Der Vater wählt im Assistenten und im Planbau nie eine Übung aus einer Trefferliste, die zu einem vorigen
+Filter gehört – und der Entwickler bekommt diese Aussage vom Hook statt sie an jeder Stelle nachzubauen.*
+
+**Umfang:** [B-164](backlog/B-164-useasync-paart-frischen-zustand-mit-alten-daten.md) (M, `Defekt`, auf der Entscheidung des
+Nutzers vom 2026-10-23 autonom gegrillt) und [B-367](backlog/B-367-story-datei-traegt-rohes-cr.md) (XS, Entgleitung aus der
+Nachschau über Lauf Q Teil 2, Doku). Draußen bleiben die ~70 übrigen `useAsync`-Kandidaten und `useGemerkterFehler`
+(Entscheidung 4).
+
+**Entwickler-Brief:** `stale` im Hook (Deps des Gezeigten gegen die aktuellen, je Element), dann die zwei handgebauten Muster
+darauf zurückführen. Testweg: Hook-Fälle mit Mutanten je Teilentscheidung, die drei Ladefenster-Specs als Abnehmer-Beleg, je
+Aufrufer die Mutante „liest `stale` nicht".
+
+### Iteration
+
+- **Hook:** rote Probe **5 failed** (erwartet 5); Mutanten „= `loading` mit Daten" 2, „immer falsch" 2, „Identität" 3,
+  „Deps beim Fehler" 1 failed.
+- **Aufrufer:** nach dem Umzug fiel `filterwechsel-raeumt-den-fehler.spec.ts` (Planbau) – die Startsemantik „ohne Daten nie
+  veraltet" war falsch; der alte Aufrufer startete mit den Kriterien des ersten Renders. Ein sechster Hook-Fall hält das jetzt
+  (gegen die erste Fassung **1 failed**). Danach die drei Ladefenster-Specs **9 passed**; Mutanten „liest `stale` nicht"
+  Assistent **3 failed**, Planbau **2 failed** eigene.
+- **B-367:** zwei rohe CR-Bytes in der Story-Datei von B-362 durch den gemeinten Text ersetzt, ein verunglückter Code-Span
+  umformuliert; `git add --renormalize` zeigt `i/lf`.
+- Vitest **627/627**, `tsc -b` sauber.
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `frontend-reviewer` 🟡 | Wiederholung nach gescheiterter geänderter Abfrage ohne Fall – „`reload` zieht Deps nach" bliebe grün und machte die alten Zeilen während „Erneut suchen" wählbar | Fall 3 erweitert; Mutanten **1 failed** bzw. **3 failed** | ja |
+| 2 | `frontend-reviewer` 🟡 | Entscheidung 3 (Leerschlag im Assistenten) ohne Zusicherung | Zwilling in `assistent.spec.ts`; Mutante „Rohfelder als Deps" **1 failed** | ja |
+| 3 | `frontend-reviewer` 🟡 | Kommentar an Fall 1 nennt die `loading`-Mutante, die er nicht fängt | berichtigt | nein (Kommentar) |
+| 4 | `frontend-reviewer` 🟢 | „ein Render mehr" stimmt nicht (gebündelte Setter) | Entscheidung 1 berichtigt | nein |
+
+Geprüft und sauber laut Prüfer: jede Hook-Transition (Start, Erfolg, Wechsel, Fehler, Fehler beim ersten Laden, StrictMode,
+Unmount, `null`-Antwort, A→B→A, Längenwechsel der Deps); Aufrufer-Verhalten gegen das alte Muster (`subjectId ""`, Gate von
+„Alle wählen", `useGemerkterFehler` mit demselben Schlüssel). Ein Mutantenlauf brach an einem Server-Startfehler ab und ist
+nicht gewertet, neu gemessen. **Zähler Teil 1: 2.**
+
+**Rollengang:** Vater maschinell – die Ladefenster-Specs im Assistenten und im Planbau (Sperre, Fehlerzweig, Leerschlag,
+Wechsel nach gescheiterter Suche) im echten Browser; Entwickler über die Hook-Fälle; Creator und Sohn Regressionszeugen
+(der Hook ist geteilt, ihre Specs grün). Vitest **627/627**, E2E-Gesamtlauf **108 passed** (`exit=0`, nach dem letzten Edit).
+**B-164, B-367 abgenommen.**
+
+### Retrospektive
+
+**Nachschau:** Lauf Q, Teil 2 (`617df82`: B-362, B-363, B-364, B-366) per frischem `frontend-reviewer`, read-only.
+**Entgangen:** [B-367](backlog/B-367-story-datei-traegt-rohes-cr.md) bei B-362 (🟡, die Story-Datei selbst trug rohe CR-Bytes) –
+Increment eines früheren Laufs, Limit 2 greift nicht; in diesem Teil behoben. B-363, B-364, B-366 sauber, mit Prüfpunkten.
+`nachgeschaut` an allen vier.
+
+**Was die eigenen Tore durchgelassen haben:**
+
+1. *Eine Semantik aus Überlegung statt aus dem ersetzten Code.* „Ohne Daten ist nichts veraltet" klang richtig; das alte Muster
+   startete aber mit den Kriterien des ersten Renders, und genau daran hing ein Spec. Gefangen hat es die E2E-Suite vor dem
+   Review – das Tor hat gehalten, die Herleitung nicht.
+2. *Beim Umzug in den Hook blieben zwei Fälle am Aufrufer liegen.* Der Leerschlag-Fall stand nur im Planbau, nicht im
+   Assistenten; die Wiederholung nach gescheiterter geänderter Abfrage hatte nur ein Aufrufer-Muster, keinen Fall. Der Reviewer
+   fand beide.
+3. *Zum dritten Mal Heredoc-Bytes*, diesmal in einer Story-Datei (B-367). Das eigene `edit.py` dieser Sitzung hat die
+   Ad-hoc-Einschübe für Code ab Teil 1 von Lauf R ersetzt; Story-Texte liefen noch per Heredoc.
+
+**Vorschläge, nicht gelandet (Freigabe 3):**
+
+- **(BC)** Prosa in `frontend/CLAUDE.md` (oder pm-loop Step 4): „Wer ein Muster vom Aufrufer in einen Hook zieht, liest zuerst
+  dessen Startwert und jede Zusicherung, die das Muster an irgendeinem Aufrufer trägt, und gibt jedem Aufrufer jede davon."
+- (BB) und (AY) aus Lauf Q decken Punkt 3.

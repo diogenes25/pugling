@@ -12,6 +12,7 @@ quelle: Nachschau zu Lauf P, Teil 2 in Lauf Q, Teil 1 (docs/pm-sitzung-2026-11-0
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-03"
 entgangen_bei: [B-276]
 wartet_auf: ""
 ---
@@ -65,3 +66,4 @@ Wie beschrieben.
   „der Seiten-Container scrollt seitlich" (Meldung gelesen); AK 2 → `index.css` und Spec-Kommentar berichtigt. B-276 behält
   seinen Text; die Berichtigung steht hier.
 - **2026-11-03** — Review `frontend-reviewer` und `pugling-reviewer`: kein 🔴; ein 🟡 (InfoHint noch nicht gestaged – AK 1 von B-362 gilt erst nach dem Commit, dort per `git ls-files --eol` geprüft, siehe Protokoll; kein Code geändert, ohne Zählung); drei 🟢 (Umbruch, zwei Kommentar-Formulierungen) ohne Zählung behoben. Abnahme Lauf Q, Teil 2: volle Suite **1059/1059**, Vitest **621/621**, E2E-Gesamtlauf **107 passed** (`exit=0`, nach dem letzten Edit). Rollengang: Vater maschinell über `responsive-vater.spec.ts` (breite Tabelle bei 768 px), die Mutante fällt am tragenden Satz; Creator, Sohn Regressionszeugen. **Abgenommen**, Commit siehe Protokoll ([Lauf Q](../pm-sitzung-2026-11-03-nacht.md)).
+- **2026-11-03** — Nachschau in Lauf R, Teil 1 (frischer `frontend-reviewer`, `git show 617df82`, read-only): **sauber.** Geprüft: beide Vorbedingungen stehen vor `verschoben` und sind beschriftet; `scrollWidth` zählt den Überlauf auch bei `visible`; `.app-vater` ist `flex-direction: column` (`index.css:293`).
