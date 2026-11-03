@@ -1064,7 +1064,6 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-316](B-316-plural-schluessel-aus-b-304-ohne-fall.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-337](B-337-reuse-folgt-veraltetem-schluessel.md) | `abgenommen` | Abschnitt „User Story" |
 | [B-338](B-338-doppeltes-wort-schreibweise-ungetestet.md) | `abgenommen` | Abschnitt „User Story" |
-| [B-369](B-369-lesefehler-in-ternaer-form.md) | `idee` | `unverifiziert: true` |
 
 <details>
 <summary>Verworfen (25)</summary>

@@ -9,7 +9,7 @@ wo: frontend
 migration: ""
 vertragsbruch: ""
 quelle: Review zu B-183 in Lauf R, Teil 2 (docs/pm-sitzung-2026-11-03-nacht.md)
-unverifiziert: false
+unverifiziert: true
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
