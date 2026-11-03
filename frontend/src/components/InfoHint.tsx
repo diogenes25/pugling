@@ -23,7 +23,7 @@ export function InfoHint({ topic }: { topic: HelpTopic }) {
   // Wo der Knopf beim Messen stand – der Bezug, an dem Bewegung erkannt wird.
   const anchorRef = useRef<{ left: number; top: number } | null>(null);
   // Neues Messen bei unbewegtem Knopf (Größenänderung nur der Höhe): ein Zähler, an dem der Mess-Effekt hängt.
-  const [measureTick, setMeasureTick] = useState(0);
+  const [measureTick, setMeasureTick] = useState(0);
 
   // Escape schließt, Klick daneben schließt – ein Popover, das offen bleibt, verdeckt das nächste Feld.
   // Das Popover steht fest zum Fenster und hängt nur über seinen Anker am Knopf: bewegt sich der Knopf, liefe es

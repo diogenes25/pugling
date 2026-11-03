@@ -12,6 +12,7 @@ quelle: Nachschau zu Sprint 8 (vierter Nachtlauf 2026-10-23)
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-03"
 entgangen_bei: [B-147]
 ---
 
@@ -81,3 +82,4 @@ Die Regel kannte nur Form (b) und deutete (a) und (c) als Absatz.
   Fassung übersetzte nicht – unbenutzte Variable unter `TreatWarningsAsErrors` – und zählt nicht), „nie ein Absatz" **1
   failed** (AK 3, bestehender Fall).
 - **2026-11-03** — Review `pugling-reviewer`: kein 🔴/🟡 (Prüfpunkte im Protokoll); 🟢 ohne Zählung behoben bzw. benannt. Abnahme Lauf Q, Teil 1: volle Suite **1056/1056**, Solution-Build ohne Warnung, E2E-Gesamtlauf **107 passed** (`exit=0`, nach dem letzten Edit). Rollengang: Creator – sein Weg ist das Vertragsdokument, jede geänderte Zeile von `docs/openapi/v1.json` nachgelesen; Vater und Sohn Regressionszeugen (nur Doku-Text und ein Normalisierer, kein Pfad von ihnen; ihre Specs grün). **Abgenommen**, Commit siehe Protokoll ([Lauf Q](../pm-sitzung-2026-11-03-nacht.md)).
+- **2026-11-03** — Nachschau in Lauf Q, Teil 2 (frischer `pugling-reviewer`, `git show 1067b55`, read-only): **sauber.** Geprüft: AK 1/3 und Entscheidung 1 je mit rotem Fall; kein anderer String geändert als die zehn; Text nach `</list>` kommt als weicher Umbruch. 🟢 Mutante „jedes `*`" war unsichtbar → Fall ergänzt, überflüssiger Term `previousIndented` gestrichen (in B-366 gemessen).

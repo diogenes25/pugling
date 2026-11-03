@@ -115,7 +115,6 @@ public static partial class OpenApiProseNormalizer
     {
         var lines = text.ReplaceLineEndings("\n").Split('\n');
         var output = new StringBuilder(text.Length);
-        var previousIndented = false;
         var previousContinuation = false;
         var previousBlank = true;
         var first = true;
@@ -128,7 +127,6 @@ public static partial class OpenApiProseNormalizer
                 // Collapse runs of blank lines: one blank line is a paragraph break, more say nothing extra.
                 if (!previousBlank) output.Append("\n\n");
                 previousBlank = true;
-                previousIndented = false;
                 previousContinuation = false;
                 continue;
             }
@@ -144,13 +142,12 @@ public static partial class OpenApiProseNormalizer
                 // The reverse case (a <para> right after indented text, or two single-line paragraphs in a row)
                 // cannot be told apart from a wrapped line and stays a soft break; a blank /// line instead of
                 // <para> makes it explicit.
-                output.Append(indented && !previousIndented && previousContinuation ? "\n\n" : "\n");
+                output.Append(indented && previousContinuation ? "\n\n" : "\n");
             }
 
             output.Append(line);
             previousContinuation = !indented && !first && !line.StartsWith("* ", StringComparison.Ordinal);
             previousBlank = false;
-            previousIndented = indented;
             first = false;
         }
 

@@ -150,9 +150,9 @@ test("Vater-Web bei 768 px: keine Seite scrollt seitlich, auch nicht mit offenem
 // B-276: die Kernregel von B-68 (`.vater-main { overflow-x: auto }`) trug kein Fall mehr – mit dem Seed läuft
 // keine Route über, und das ⓘ steht seit B-263 fest zum Fenster. Gemessen: ohne die Regel blieben diese Spec und
 // `feldhilfe-lage.spec.ts` grün (7 passed). Darum eine breite Tabelle ohne eigenen Rahmen als Probe in die echte Seite: der
-// Seiten-Container muss sie in sich scrollen, das Fenster nicht. Rot, wenn `overflow-x: auto` fehlt (gemessen) – dann
-// wächst `.vater-main` mit der Tabelle, und `html { overflow-x: hidden }` schneidet sie unerreichbar ab. Ein `min-width: 0`
-// daneben trug nichts (gemessen, darum gestrichen).
+// Seiten-Container muss sie in sich scrollen, das Fenster nicht. Rot, wenn `overflow-x: auto` fehlt (gemessen, an „scrollt
+// seitlich") – dann behält `.vater-main` seine Breite, die Tabelle läuft aus ihm heraus, und `html { overflow-x: hidden }`
+// schneidet sie unerreichbar ab. Ein `min-width: 0` daneben trug nichts (gemessen, darum gestrichen; Grund B-363).
 test("Vater-Web bei 768 px: eine breite Tabelle scrollt in .vater-main, nicht im Fenster", async ({ page }) => {
   await vaterLogin(page, FATHER);
   await page.setViewportSize({ width: WIDTH, height: 900 });
@@ -171,8 +171,10 @@ test("Vater-Web bei 768 px: eine breite Tabelle scrollt in .vater-main, nicht im
       senkrecht: main.scrollHeight > main.clientHeight,
     };
   });
-  expect(lage.mainInhalt, "die Tabelle ist breiter als der Seiten-Container").toBeGreaterThan(lage.mainBreite);
-  expect(lage.mainBreite, "der Seiten-Container bleibt im Fenster").toBeLessThanOrEqual(WIDTH);
+  // Vorbedingungen, keine Belege (B-363): beide gelten auch ohne die Regel – die erste ist eine Eigenschaft der Probe, die
+  // zweite gilt, weil `.vater-main` auf der Querachse nie mit seinem Inhalt wächst.
+  expect(lage.mainInhalt, "Vorbedingung: die Tabelle ist breiter als der Seiten-Container").toBeGreaterThan(lage.mainBreite);
+  expect(lage.mainBreite, "Vorbedingung: der Seiten-Container bleibt im Fenster").toBeLessThanOrEqual(WIDTH);
   expect(lage.verschoben, "der Seiten-Container scrollt seitlich").toBeGreaterThan(0);
   expect(lage.dokument, "das Dokument wird nicht breiter").toBeLessThanOrEqual(WIDTH);
   // Mitgemessen, nicht zugesichert (B-276, offene Frage): ob `.vater-main` auch senkrecht scrollt.

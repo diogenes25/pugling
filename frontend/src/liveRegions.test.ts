@@ -174,6 +174,9 @@ describe("Live-Regionen stehen vor ihrem Text im DOM (B-134)", () => {
     // diese zwei Formen kompilieren zwischen `&&` und dem Tag (B-272 maß an `{/* … */}`, das dort kein gültiges TSX ist).
     ["&& mit Zeilenkommentar davor", `{ok && ( // warum\n  <div role="status">x</div>\n)}`, 1],
     ["&& mit Blockkommentar davor", `{ok && /* warum */ <div role="status">x</div>}`, 1],
+    // B-364: rot, wenn die Kommentar-Entfernung gierig ist – dann verschluckt sie von `/* a */` bis `*/` des zweiten auch das
+    // `&&` dazwischen.
+    ["&& zwischen zwei Blockkommentaren", `{/* a */ ok && /* b */ <div role="status">x</div>}`, 1],
     // B-272: rot, wenn die Pfeil-Form aus dem Funktionskopf fällt – dann sucht die Erkennung bis in die Funktion davor.
     ["return null in der Funktion vor einer Pfeil-Komponente",
       `function A() { return null; }

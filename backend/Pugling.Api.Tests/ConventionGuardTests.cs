@@ -781,8 +781,15 @@ public class ConventionGuardTests
     [InlineData("/// </list>\n/// <b>Children</b> are counted", 1)]   // red if the scan stops at the line break
     [InlineData("/// <b>a</b>, <c>b</c>", 0)]                           // red if any text in between counts as glue
     [InlineData("/// </para>\n/// <para>", 0)]                          // red if block elements count as inline
+    [InlineData("/// </item>\n/// <b>x</b>", 0)]                        // red if a closing block element counts on the left
     public void Leerraum_Zwischen_Elementen_Wird_Erkannt(string source, int expected)
         => Assert.Equal(expected, GluedElements(source.Split('\n')).Count());
+
+    // B-366: the message names file AND line. Red if the line drops the offset inside the run (the match sits on the
+    // run's third line) or is off by one: then the reported line points at the wrong comment.
+    [Fact]
+    public void Leerraum_Zwischen_Elementen_Nennt_Die_Zeile()
+        => Assert.Equal([4], GluedElements(["namespace X;", "/// <summary>", "/// a list", "/// </list>", "/// <b>C</b> b", "/// </summary>"]));
 
     /// <summary>Line numbers (1-based) where an inline element follows another with only whitespace between.</summary>
     private static IEnumerable<int> GluedElements(string[] lines)

@@ -506,7 +506,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (46)
+### Offen (43)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -524,8 +524,6 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-282](B-282-login-haertung-restpunkte.md) | Restpunkte der Login-Härtung (NP-3) | Defekt | `idee` | P3 | — | backend | — |
 | [B-310](B-310-profil-match-verraet-kind-ids.md) | `GET creator/profiles/match` verrät per 404 gegen 403, ob es eine Kind-Id gibt | Defekt | `idee` | P3 | — | backend | — |
 | [B-329](B-329-uebung-unbekannte-referenz-validation-error.md) | Die Übungs-Validierung meldet eine unbekannte Id als `validation_error`, die Kategorie daneben als `invalid_reference` | Defekt | `idee` | P3 | — | backend | — |
-| [B-362](B-362-infohint-mit-crlf-und-einzelnem-cr-committet.md) | `InfoHint.tsx` ist mit CRLF und einem einzelnen CR committet – git hält es nicht mehr für Text | Defekt | `idee` | P3 | — | frontend | — |
-| [B-363](B-363-begruendung-zu-min-width-falsch-mainbreite-traegt-nichts.md) | B-276 begründet `min-width: 0` falsch, und eine Zusicherung der neuen Probe trägt nichts | Defekt | `idee` | P3 | — | frontend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-231](B-231-fokus-ohne-fehlerkasten.md) | Wohin gehört der Fokus, wenn ein Knopf ohne Fehlerkasten gesperrt wird? | Frage | `idee` | P3 | — | frontend | — |
 | [B-232](B-232-bestaetigung-ausserhalb-des-sichtfelds.md) | Soll eine Bestätigung zum Meldungsplatz scrollen, wenn er weit vom Knopf entfernt liegt? | Frage | `idee` | P3 | — | frontend | — |
@@ -553,12 +551,11 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-355](B-355-store-faltung-restkanten.md) | Restkanten der Store-Faltung: Sprachkürzel mit Leerraum, zwei gleiche Paare in einem Aufruf | Defekt | `idee` | P4 | — | backend | — |
 | [B-358](B-358-beispielkatalog-proben-restkanten.md) | Restkanten der Beispielkatalog-Proben (Nachschau über `299d216`) | Defekt | `idee` | P4 | — | backend | — |
 | [B-361](B-361-listenpunkte-verlieren-inline-markup.md) | In Listenpunkten verliert das Vertragsdokument `<c>` und `<b>` | Defekt | `idee` | P4 | — | backend | — |
-| [B-364](B-364-feldhilfe-und-kommentar-regex-restkanten.md) | Restkanten der Nachschau über `a25a1a6`: zwei Blockkommentare, ⓘ-Schleife der Tablet-Spec | Defekt | `idee` | P4 | — | frontend | — |
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 | [B-365](B-365-waechter-meldungen-auf-deutsch.md) | Zwei Meldungen des Vertrags-Doku-Wächters sind deutsch | Aufräumen | `idee` | P4 | — | backend | — |
 
 <details>
-<summary>Abgenommen (293)</summary>
+<summary>Abgenommen (297)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -802,6 +799,10 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-359](B-359-live-region-waechter-uebersieht-echte-kommentare.md) | Der Live-Region-Wächter übersieht die Kommentare, die zwischen `&&` und Tag wirklich vorkommen | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-36](B-36-motivations-animationen-teilziele.md) | Motivations-Animationen bei erreichten Teilzielen | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-360](B-360-guthaben-nach-verlassener-klausur-ungetestet.md) | Dass die verlassene Klausur das Guthaben auffrischt, trägt kein Test | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-362](B-362-infohint-mit-crlf-und-einzelnem-cr-committet.md) | `InfoHint.tsx` ist mit CRLF und einem einzelnen CR committet – git hält es nicht mehr für Text | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-363](B-363-begruendung-zu-min-width-falsch-mainbreite-traegt-nichts.md) | B-276 begründet `min-width: 0` falsch, und eine Zusicherung der neuen Probe trägt nichts | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-364](B-364-feldhilfe-und-kommentar-regex-restkanten.md) | Restkanten der Nachschau über `a25a1a6`: zwei Blockkommentare, ⓘ-Schleife der Tablet-Spec | Defekt | `abgenommen` | P4 | XS | frontend | — |
+| [B-366](B-366-klebestellen-tor-nennt-ungepruefte-zeile.md) | Das Klebestellen-Tor nennt eine Zeile, die kein Test prüft | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-37](B-37-uebung-abbruch-unvollendet.md) | Abgebrochene Runden: Pflicht härten, Klausur deckeln | Defekt | `abgenommen` | P1 | M | beides | — |
 | [B-40](B-40-client-routen-waechter.md) | Routen aus `Pugling.Client` gegen das OpenAPI-Dokument halten | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-41](B-41-produktions-startup-smoke.md) | Der Produktionspfad des Starts ist der einzige ohne Test | Aufräumen | `abgenommen` | P2 | S | backend | — |
@@ -868,9 +869,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
-### Nach der Abnahme entgangen (114)
+### Nach der Abnahme entgangen (115)
 
-**Nachgeschaut: 291 von 293 abgenommenen** — und in 92 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 2 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 293 von 297 abgenommenen** — und in 93 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 4 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -986,19 +987,22 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-354](B-354-synonym-gegen-fremden-slug-ungetestet.md) | Dass ein Synonym nicht den Slug eines fremden Schlagworts tragen darf, prüft kein Test | [B-351] | `abgenommen` |
 | [B-359](B-359-live-region-waechter-uebersieht-echte-kommentare.md) | Der Live-Region-Wächter übersieht die Kommentare, die zwischen `&&` und Tag wirklich vorkommen | [B-272] | `abgenommen` |
 | [B-360](B-360-guthaben-nach-verlassener-klausur-ungetestet.md) | Dass die verlassene Klausur das Guthaben auffrischt, trägt kein Test | [B-356] | `abgenommen` |
-| [B-362](B-362-infohint-mit-crlf-und-einzelnem-cr-committet.md) | `InfoHint.tsx` ist mit CRLF und einem einzelnen CR committet – git hält es nicht mehr für Text | [B-273] | `idee` |
-| [B-363](B-363-begruendung-zu-min-width-falsch-mainbreite-traegt-nichts.md) | B-276 begründet `min-width: 0` falsch, und eine Zusicherung der neuen Probe trägt nichts | [B-276] | `idee` |
+| [B-362](B-362-infohint-mit-crlf-und-einzelnem-cr-committet.md) | `InfoHint.tsx` ist mit CRLF und einem einzelnen CR committet – git hält es nicht mehr für Text | [B-273] | `abgenommen` |
+| [B-363](B-363-begruendung-zu-min-width-falsch-mainbreite-traegt-nichts.md) | B-276 begründet `min-width: 0` falsch, und eine Zusicherung der neuen Probe trägt nichts | [B-276] | `abgenommen` |
+| [B-366](B-366-klebestellen-tor-nennt-ungepruefte-zeile.md) | Das Klebestellen-Tor nennt eine Zeile, die kein Test prüft | [B-259] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (2) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (4) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-259](B-259-generator-verschluckt-leerzeichen-neben-xml-elementen.md) | Der XML-Doc-Generator verschluckt Leerzeichen zwischen zwei Elementen |
-| [B-260](B-260-normalisierer-setzt-absatz-mitten-im-satz.md) | Der OpenAPI-Normalisierer setzt einen Absatz mitten in einen Satz |
+| [B-362](B-362-infohint-mit-crlf-und-einzelnem-cr-committet.md) | `InfoHint.tsx` ist mit CRLF und einem einzelnen CR committet – git hält es nicht mehr für Text |
+| [B-363](B-363-begruendung-zu-min-width-falsch-mainbreite-traegt-nichts.md) | B-276 begründet `min-width: 0` falsch, und eine Zusicherung der neuen Probe trägt nichts |
+| [B-364](B-364-feldhilfe-und-kommentar-regex-restkanten.md) | Restkanten der Nachschau über `a25a1a6`: zwei Blockkommentare, ⓘ-Schleife der Tablet-Spec |
+| [B-366](B-366-klebestellen-tor-nennt-ungepruefte-zeile.md) | Das Klebestellen-Tor nennt eine Zeile, die kein Test prüft |
 
 </details>
 
@@ -1057,9 +1061,6 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-316](B-316-plural-schluessel-aus-b-304-ohne-fall.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-337](B-337-reuse-folgt-veraltetem-schluessel.md) | `abgenommen` | Abschnitt „User Story" |
 | [B-338](B-338-doppeltes-wort-schreibweise-ungetestet.md) | `abgenommen` | Abschnitt „User Story" |
-| [B-362](B-362-infohint-mit-crlf-und-einzelnem-cr-committet.md) | `idee` | `unverifiziert: true` |
-| [B-363](B-363-begruendung-zu-min-width-falsch-mainbreite-traegt-nichts.md) | `idee` | `unverifiziert: true` |
-| [B-364](B-364-feldhilfe-und-kommentar-regex-restkanten.md) | `idee` | `unverifiziert: true` |
 
 <details>
 <summary>Verworfen (25)</summary>

@@ -235,3 +235,69 @@ greift nicht; beide werden in Teil 2 gebaut. B-359, B-360 sauber; zwei 🟢 → 
   B-362 vor dem Commit gefangen.
 - **(AZ)** Prosa in pm-loop Step 5: „Ein Kommentar, der einen gemessenen Effekt begründet, nennt die nachgelesene Stelle der
   Ursache (Datei:Zeile) – sonst ist die Begründung eine Vermutung und wird so beschriftet."
+
+## Lauf Q, Teil 2 — Was die Nachschauen dieser Nacht fanden, wird getragen (B-362, B-363, B-364, B-366)
+
+**Sprint-Ziel:** *Der Entwickler liest in Diff, Kommentar und Tor-Meldung, was wirklich ist – keine Datei mit verdeckten
+Zeilenenden, keine geratene Ursache, keine Zeilenangabe ohne Probe.*
+
+**Umfang:** die Entgleitungen und Restkanten der Nachschauen über `a25a1a6` und `1067b55`:
+[B-362](backlog/B-362-infohint-mit-crlf-und-einzelnem-cr-committet.md),
+[B-363](backlog/B-363-begruendung-zu-min-width-falsch-mainbreite-traegt-nichts.md),
+[B-364](backlog/B-364-feldhilfe-und-kommentar-regex-restkanten.md) (alle XS, frontend) und
+[B-366](backlog/B-366-klebestellen-tor-nennt-ungepruefte-zeile.md) (XS, backend; Entgleitung aus Teil 1 dieses Laufs, im selben
+Sprint bearbeitet nach Freigabe 3). Ein Thema: Belege, die mehr behaupten, als sie tragen. Draußen bleiben B-358 (Backend-Proben
+des Beispielkatalogs) und B-361 (Listenpunkte im Dokument) – eigene Flächen.
+
+**Entwickler-Brief:** keine Verhaltensänderung außer einer behaviour-erhaltenden Vereinfachung im Normalisierer. Je AK eine
+Mutante; Zeilenenden jeder geänderten Datei per `git ls-files --eol` und Bytezählung.
+
+### Iteration
+
+- **B-362:** `InfoHint.tsx` auf LF, CR entfernt; ohne Zeilenenden ändert sich genau die eine Zeile.
+- **B-363:** Mutante „ohne `overflow-x`" **1 failed** an „scrollt seitlich" (nicht an einer Vorbedingung); Kommentare berichtigt.
+- **B-364:** Mutante „gierig" **1 failed**; die ⓘ-Schleife bleibt bewusst (Entscheidung 2).
+- **B-366:** Mutanten „ohne Versatz im Lauf" und „um eins daneben" je **1 failed**; dazu ohne Zählung „`item` links" und
+  „jedes `*`" je **1 failed**, `previousIndented` gestrichen.
+- Vitest **621/621**, `tsc -b` sauber; die betroffenen Backend-Klassen **19/19**.
+
+### Review / Rollengang / Abnahme
+
+| # | Quelle | Fund | Behebung | zählt |
+| --- | --- | --- | --- | --- |
+| 1 | `frontend-reviewer` 🟡 | `InfoHint.tsx` noch `i/-text` – die Arbeitskopie ist LF, aber nicht gestaged | AK 1 nach dem Commit geprüft (unten); kein Code | nein |
+| 2 | `frontend-reviewer` 🟢 | Kommentarzeile in `index.css` nicht umbrochen; zwei Kommentare ungenau | nachgezogen | nein |
+| 3 | `pugling-reviewer` 🟢 | der `</item>`-Fall fängt auch „`>` fehlt" | benannt, nicht geändert | nein |
+
+`pugling-reviewer` bestätigt außerdem: die Streichung von `previousIndented` ist verhaltensgleich (beide Flags an derselben
+Stelle gesetzt und an derselben Stelle zurückgesetzt). **Zähler Teil 2: 0.**
+
+**Rollengang:** Entwickler über Diff, Tor-Meldung und Proben; Vater über `responsive-vater.spec.ts` und die ⓘ-Specs; Creator und
+Sohn Regressionszeugen. Volle Suite **1059/1059**, Vitest **621/621**, E2E-Gesamtlauf **107 passed** (`exit=0`, nach dem
+letzten Edit). **B-362, B-363, B-364, B-366 abgenommen.**
+
+### Retrospektive
+
+**Nachschau:** Lauf Q, Teil 1 (`1067b55`: B-259, B-260) per frischem `pugling-reviewer`, read-only. **Entgangen:**
+[B-366](backlog/B-366-klebestellen-tor-nennt-ungepruefte-zeile.md) bei B-259 (🟡, die Zeile der Tor-Meldung ohne
+Zusicherung) – in diesem Teil behoben. B-260 sauber. Fünf 🟢 ohne Zählung mitgenommen. Geprüft: Diff von `v1.json` genau 14
+Zeilen, keine weitere Klebestelle, die Zählangaben der Stories stimmen. `nachgeschaut` an beiden.
+
+**Was die eigenen Tore durchgelassen haben:** Ein AK mit zwei Hälften („mit Datei **und** Zeile") hatte eine Probe für die
+erste; der Selbsttest des Tors fragte, *ob* es anschlägt, nicht *wo*. Das ist die vierte Spielart derselben Familie dieser
+Nacht (B-356 Scroll-Hälfte, B-360 Guthaben-Hälfte, B-366 Zeilen-Hälfte): die (AJ)-Zeile je AK wird geschrieben, aber je AK, nicht
+je Hälfte. Dazu ein eigener Prozessfaden, der dreimal Zeit kostete: Python-Einschübe im Heredoc verdoppeln oder verschlucken
+Escapes (`\n`, `\r\n`) – zweimal griff ein Muster nicht, einmal (B-362) blieb ein CR stehen.
+
+**Vorschläge, nicht gelandet (Freigabe 3):**
+
+- **(BA)** Prosa in pm-loop Step 5, (AJ) schärfend: „Ein AK mit ‚und' bekommt je Hälfte eine eigene Zeile im Verlauf; ein
+  Selbsttest eines Tors prüft auch, was die Meldung zusagt (Datei, Zeile, Name), nicht nur ob sie kommt."
+- **(BB)** Werkzeug statt Disziplin: ein kleines Skript `.claude/scripts/edit.py` (Ersetzen mit Zählprüfung, Zeilenenden der
+  Datei erhalten), das die Ad-hoc-Einschübe ersetzt. Zusammen mit (AY) wäre B-362 an zwei Stellen abgefangen.
+
+## Ende Lauf Q
+
+Endgrund: **Limit 2** – die Nachschau in Teil 2 fand im Increment von Teil 1 eine Entgleitung (B-366, behoben). Zwei Teile,
+**sechs Stories abgenommen:** B-259, B-260 (Teil 1); B-362, B-363, B-364, B-366 (Teil 2). Nachgeschaut: Lauf P Teil 2 und Teil 1
+dieses Laufs; Teil 2 ist **unbeobachtet** (Nachschau in Lauf R). Neu: B-361, B-365 (P4/Idee). Zähler 0 / 0. Alles **ungepusht**.

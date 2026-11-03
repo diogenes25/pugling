@@ -12,6 +12,7 @@ quelle: pugling-reviewer zu Sprint 8 (vierter Nachtlauf 2026-10-23, Nit 5)
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-03"
 entgangen_bei: []
 ---
 
@@ -42,7 +43,7 @@ Code gesetzte Wörter im Vertragsdokument durch ein Leerzeichen getrennt bleiben
   `TeacherAccountResponse.roles` („**only**`Creator`"), `GrammarTopicResponse` („OwnerAdultId`null`"),
   `UsageResponse.otherLearnersCount` („used?**Children**").
 - In den Quellen, deren Doku ins Dokument fließt (`Pugling.Contracts`, `Pugling.Api/Controllers`), **acht** solche Stellen;
-  drei davon in Controllern, deren Text heute nicht im Dokument steht.
+  drei davon in Controllern (zwei davon heute nicht im Dokument; `RemarksController` GetOne steht als `summary` darin, die Hervorhebung fiel dort schon weg, das Leerzeichen blieb).
 
 ## Die echte Lücke
 
@@ -71,7 +72,8 @@ Kein Weg im Normalisierer – die Information ist vor ihm verloren. Nur die Quel
 - **2026-11-03** — Lauf Q, Teil 1: ausformuliert, autonom gegrillt (Freigabe 1), geschätzt, gebaut. Rote Probe: das neue Tor
   meldet **8 Stellen** (erwartet: die fünf im Dokument nachgewiesenen plus Controller – gemessen 8), Selbsttests **5/5**. Nach
   dem Umformulieren grün; im Dokument alle fünf getrennt (nachgelesen: „**PATCH semantics:** a `null`", „only `Creator`",
-  „OwnerAdultId is `null`", „used?\nWhat is counted are **children**"). Mutanten am Scan: „schließende Tags nicht gesehen"
+  „OwnerAdultId is `null`", „used?\nIt counts **children** (nach dem Review so formuliert)"). Mutanten am Scan: „schließende Tags nicht gesehen"
   **2 failed**, „selbstschließende nicht gesehen" **1 failed**, „nur Leerzeichen, kein Umbruch" **1 failed**. Nebenfund beim
   Lesen der Rohstrings: in Listenpunkten fallen `<c>`/`<b>` ganz weg → [B-361](B-361-listenpunkte-verlieren-inline-markup.md).
 - **2026-11-03** — Review `pugling-reviewer`: kein 🔴/🟡 (Prüfpunkte im Protokoll); 🟢 ohne Zählung behoben bzw. benannt. Abnahme Lauf Q, Teil 1: volle Suite **1056/1056**, Solution-Build ohne Warnung, E2E-Gesamtlauf **107 passed** (`exit=0`, nach dem letzten Edit). Rollengang: Creator – sein Weg ist das Vertragsdokument, jede geänderte Zeile von `docs/openapi/v1.json` nachgelesen; Vater und Sohn Regressionszeugen (nur Doku-Text und ein Normalisierer, kein Pfad von ihnen; ihre Specs grün). **Abgenommen**, Commit siehe Protokoll ([Lauf Q](../pm-sitzung-2026-11-03-nacht.md)).
+- **2026-11-03** — Nachschau in Lauf Q, Teil 2 (frischer `pugling-reviewer`, `git show 1067b55`, read-only): **Entgleitung** → [B-366](B-366-klebestellen-tor-nennt-ungepruefte-zeile.md) (🟡: die Zeile der Meldung trug keine Zusicherung). Sonst geprüft: Diff von `v1.json` genau 14 Zeilen (10 × B-260, 4 × B-259), keine weitere Klebestelle im Dokument; „8 Stellen", „fünf Klebestellen" stimmen; Tags mit Attributen links über Fall 2 gedeckt. Zwei Sätze berichtigt (🟢).

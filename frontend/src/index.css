@@ -317,8 +317,9 @@ a { color: var(--cyan); }
 .nav-group-label { color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; opacity: .65; padding-right: 2px; }
 .vater-top .spacer { margin-left: auto; }
 /* `overflow-x: auto` (B-68): eine breite Tabelle ohne eigenen `overflowX`-Rahmen scrollt hier, nicht im Fenster.
-   Ein `min-width: 0` braucht es daneben nicht – ein Flex-Kind, dessen Überlauf nicht `visible` ist, darf ohnehin
-   schmaler werden als sein Inhalt (gemessen in B-276). Das ⓘ-Popover steht seit B-263 fest zum Fenster und wird hier
+   Ein `min-width: 0` braucht es daneben nicht: `.app-vater` ist eine Flex-Spalte (oben), die Breite von `.vater-main`
+   liegt also auf der Querachse, und dort gibt es keine automatische Mindestbreite
+   (gemessen in B-276, Ursache B-363). Das ⓘ-Popover steht seit B-263 fest zum Fenster und wird hier
    nicht abgeschnitten. Gehalten von `responsive-vater.spec.ts` („breite Tabelle scrollt in .vater-main"). */
 .vater-main { flex: 1; max-width: 1000px; width: 100%; overflow-x: auto; margin: 0 auto; padding: 22px; display: flex; flex-direction: column; gap: 18px; }
 .vater-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }

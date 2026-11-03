@@ -39,6 +39,14 @@ public class OpenApiProseNormalizerTests
             OpenApiProseNormalizer.Description(
                 "            Two reasons:\n            * First item\n            wraps here.\n* Second item, both\n            lists empty."));
 
+    // B-260: only "* " marks a list item. Red if any line starting with "*" counts as one - then a <para> continuation
+    // that begins with a literal asterisk ("**Bold** continued"; <b> is still a tag at this point) no longer starts the
+    // next paragraph.
+    [Fact]
+    public void Fett_Am_Zeilenanfang_Ist_Kein_Listenpunkt()
+        => Assert.Equal("First para\n**Bold** continued\n\nSecond para",
+            OpenApiProseNormalizer.Description("    First para\n**Bold** continued\n    Second para"));
+
     // Red if blank runs are kept (three blank lines say nothing a single one does not) or the outer
     // blank lines survive the trim.
     [Fact]
