@@ -110,6 +110,21 @@ public class AccountSelfServiceTests(PuglingWebAppFactory factory) : IClassFixtu
         Assert.Equal("duplicate_email", (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
     }
 
+    // B-372: moving the guards ahead of the assignments must not reorder them. A taken e-mail together with a too-short
+    // PIN has always answered 409 duplicate_email. Red if the PIN guard runs first: 400 validation_error.
+    [Fact]
+    public async Task FremdeEMail_MitZuKurzerPin_MeldetWeiterDieEMail()
+    {
+        var mail = $"besetzt-{Guid.NewGuid():N}@schule.example";
+        var (_, first) = await NewTeacherAsync("Frau Vorher", "4545");
+        (await first.PatchAsJsonAsync("/api/v1/auth/me", new { email = mail })).EnsureSuccessStatusCode();
+
+        var (_, second) = await NewTeacherAsync("Frau Nachher", "5656");
+        var res = await second.PatchAsJsonAsync("/api/v1/auth/me", new { email = mail, pin = "12" });
+        Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
+        Assert.Equal("duplicate_email", (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+    }
+
     [Fact]
     public async Task LeererName_WirdAbgewiesen()
     {

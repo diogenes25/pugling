@@ -161,24 +161,18 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
         var adult = await db.Adults.FirstOrDefaultAsync(a => a.Id == fid, ct);
         if (account is null || adult is null) return NotFound();
 
-        if (dto.Name is not null)
-        {
-            var name = dto.Name.Trim();
-            if (name.Length == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Name must not be empty.");
-            adult.Name = name;
-        }
-
-        // Value first, switch second - that way "clear" wins if a form sends both.
-        if (dto.Email is not null)
-        {
-            var email = dto.Email.Trim();
-            if (email.Length > 0 && await db.Accounts.AnyAsync(a => a.Id != accountId && a.Email == email, ct))
-                return this.ProblemWithCode(ApiErrors.DuplicateEmail, "This e-mail is already used by another account.");
-            adult.Email = email.Length == 0 ? null : email;
-        }
-        if (dto.ClearEmail) adult.Email = null;
-
+        // Every refusal before the first assignment, in the order clients have always seen them (name, e-mail, PIN).
+        var name = dto.Name?.Trim();
+        if (name is { Length: 0 }) return this.ProblemWithCode(ApiErrors.ValidationError, "Name must not be empty.");
+        var email = dto.Email?.Trim();
+        if (email is { Length: > 0 } && await db.Accounts.AnyAsync(a => a.Id != accountId && a.Email == email, ct))
+            return this.ProblemWithCode(ApiErrors.DuplicateEmail, "This e-mail is already used by another account.");
         if (dto.Pin is not null && !PinHasher.IsAcceptable(dto.Pin)) return this.ProblemWithCode(ApiErrors.ValidationError, PinHasher.TooShortMessage);
+
+        if (name is not null) adult.Name = name;
+        // Value first, switch second - that way "clear" wins if a form sends both.
+        if (email is not null) adult.Email = email.Length == 0 ? null : email;
+        if (dto.ClearEmail) adult.Email = null;
 
         // Name and address are written on the domain row and mirrored onto the account (AccountService.MirrorAsync) -
         // the same one place both supervisor PATCHes use. The PIN lives on the account only (B-230). `account` is

@@ -12,6 +12,7 @@ quelle: Nachschau zu Lauf O in Lauf P, Teil 1 (docs/pm-sitzung-2026-11-03-nacht.
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-04"
 entgangen_bei: []
 wartet_auf: ""
 ---
@@ -56,8 +57,9 @@ und dass die Meldung einer roten Probe hält, was ihre Story verspricht.
 ## Verlauf
 
 - **2026-11-03** — angelegt aus der Nachschau zu Lauf O (`pugling-reviewer` über `299d216`, 🟢 ×3). Aus Code gelesen.
-- **2026-11-04** — Lauf S, Teil 2: ausformuliert, gegrillt (Freigabe 1), geschätzt, gebaut. Keine rote Probe möglich (Punkt 1 braucht
-  einen Scanner-Griff unter Windows; nicht lohnend, siehe Entscheidung 1 – Punkt 2/3 ändern keine Zusicherung). Lange Zeile umbrochen
+- **2026-11-04** — Lauf S, Teil 2: ausformuliert, gegrillt (Freigabe 1), geschätzt, gebaut. Keine rote Probe (Punkt 1: herstellbar, aber
+  nicht lohnend, siehe Entscheidung 1 – Punkt 2/3 ändern keine Zusicherung). Lange Zeile umbrochen
   (max. 118 Zeichen).
 - **2026-11-04** — Review `pugling-reviewer`: kein 🔴/🟡. Zwei 🟢, ohne Zählung behoben: „keine rote Probe möglich" war zu stark – die Ausnahme ist herstellbar, nur nicht lohnend (Entscheidung 1 umformuliert); und die AK-Zeile von B-265 selbst nennt jetzt die Summen-Zusicherung, nicht nur ihr Verlauf. Vom Prüfer nachgerechnet: der Filter fängt `IOException` (samt `DirectoryNotFoundException`) und `UnauthorizedAccessException`, sonst nichts; „max. 118 Zeichen" gilt für den umbrochenen Block (`:287-296`).
 - **2026-11-04** — Abnahme Lauf S, Teil 2: volle Suite **1071/1071**, Build ohne Warnung, Vitest **638/638**, E2E-Gesamtlauf **109 passed** (`exit=0`, nach dem letzten Code-Edit). Rollengang: der Entwickler ist die Rolle (Aufräumschritt, Meldung); Creator, Vater, Sohn Regressionszeugen. **Abgenommen**, Commit siehe Protokoll ([Lauf S](../pm-sitzung-2026-11-04-nacht.md)).
+- **2026-11-04** — Nachschau in Lauf S, Teil 3 (frischer `pugling-reviewer`, `git show 764f7b5`, read-only). **Entgangen:** die Begründung widersprach sich (Verlauf und Protokoll „nicht möglich", Entscheidung 1 „nicht lohnend") – [B-373](B-373-inventar-und-begruendung-aus-lauf-s.md). Ohne Befund nachgerechnet: Filter minimal; „max. 118 Zeichen" erwartet 118, gemessen 118 (`:295`); die eingeengte AK von B-265 stimmt mit `:283` (eigenes Fenster) und `:302-303` (alle zehn).

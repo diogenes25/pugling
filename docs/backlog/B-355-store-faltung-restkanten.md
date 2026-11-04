@@ -12,6 +12,7 @@ quelle: Nachschau zu Lauf M, Teil 1 (docs/pm-sitzung-2026-11-02-nacht.md)
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-04"
 entgangen_bei: []
 wartet_auf: ""
 ---
@@ -40,8 +41,8 @@ auch wenn es zweimal in derselben Übung steht oder ein älterer Eintrag sein Sp
 
 ## Ist-Stand am Code (Stand `cc789ed`)
 
-Wie oben beschrieben; nachgelesen: `VocabularyStoreService.cs:49` (`found[identity] = vocab`) und `:79-82` (SQL-Filter
-`Trim().ToLower()` auf beiden Seiten). Beide Zeilen sind richtig, nur ungetestet.
+Wie oben beschrieben; nachgelesen: `VocabularyStoreService.cs:49` (`found[identity] = vocab`) und `:78-81` (Faltung der Anfrage,
+SQL-Filter `Trim().ToLower()` auf beiden Seiten). Beide Zeilen sind richtig, nur ungetestet.
 
 ## Entscheidungen (autonom gegrillt, Freigabe 1 – `Defekt`)
 
@@ -70,3 +71,4 @@ Wie oben beschrieben; nachgelesen: `VocabularyStoreService.cs:49` (`found[identi
   Zusicherung); die Mutanten per Skript gesetzt und byte-gleich zurückgespielt.
 - **2026-11-04** — Review `pugling-reviewer`: kein 🔴/🟡. Ein 🟢 hier, ohne Zählung behoben: die Zeilennummer von `found[identity] = vocab` ist `:49`, nicht `:46`. Zum Test vom Prüfer nachgerechnet: `" en "` bleibt beim POST unverändert gespeichert, die Mutante scheitert an der Status-Zusicherung (201 statt 200); der Service-Test läuft in eigenem Scope, die Mutante scheitert an `Assert.Same`. Ein 🟢 am Test, ohne Zählung behoben: der PATCH vor dem Wiederfinden trug nichts (`reuseExisting` ohne `key` sucht nur über den Inhalt) – entfernt, Mutante „gespeicherte Sprache ohne `Trim()`" danach erneut **1 failed**.
 - **2026-11-04** — Abnahme Lauf S, Teil 2: volle Suite **1071/1071**, Build ohne Warnung, Vitest **638/638**, E2E-Gesamtlauf **109 passed** (`exit=0`, nach dem letzten Code-Edit). Rollengang: der Entwickler ist die Rolle (jede richtige Zeile trägt jetzt eine Zusicherung, Mutanten je rot); Creator maschinell über die beiden Store-Fälle im echten HTTP-Pfad; Vater und Sohn Regressionszeugen. **Abgenommen**, Commit siehe Protokoll ([Lauf S](../pm-sitzung-2026-11-04-nacht.md)).
+- **2026-11-04** — Nachschau in Lauf S, Teil 3 (frischer `pugling-reviewer`, `git show 764f7b5`, read-only). Im Code ohne Befund: Sprach-Test rot an der Status-Zusicherung (201 statt 200), Batch-Test rot an `Assert.Same`, Kommentar erwähnt den entfernten PATCH nicht mehr. 🟢 ohne Zählung: `:78-81` statt `:79-82`.

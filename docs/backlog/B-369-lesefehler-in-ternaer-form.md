@@ -26,7 +26,8 @@ Abgeteilt von [B-183](B-183-gescheitertes-lesen-ohne-erneuten-versuch.md) in Lau
   `VaterDashboard.tsx:51/76`, `VaterKonto.tsx:24/64`, `VaterPlaene.tsx:74`, `VaterVocab.tsx:305`, `VaterZiele.tsx:216`,
   `VaterAnmerkungen.tsx:147`, `PlanPositions.tsx:53` (dort steht das Banner eine Zeile unter `positions.error ? (` – die
   zeilenweise Regex sah es nicht; mehrzeilig nachgezählt in der Nachschau von Lauf S).
-- **Frühe Rückgabe mit Banner:** `PlanPositions.tsx:738`, `VaterPlanDetail.tsx:32`.
+- **Frühe Rückgabe mit Banner** (acht, gezählt per `return .*banner err`): `PlanPositions.tsx:738`, `VaterPlanDetail.tsx:32`,
+  `VaterKind.tsx:46`, `VaterLernstand.tsx:165/216/280/312/346`.
 - **Ein Suchfehler über `StatusBanner`, ohne `reload`:** `MediaPickers.tsx:139` (keine frühe Rückgabe).
 - **Drei Stellen unter nacktem Namen:** `CatalogAdmin.tsx:179` (`categories.error` als Prop, ohne `reload`/`loading`),
   `ExercisePreviewModal.tsx:116`, `VaterProfil.tsx:56`.

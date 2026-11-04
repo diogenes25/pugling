@@ -12,6 +12,7 @@ quelle: B-282 Punkt 5 (Delta-Review zu NP-3, docs/pm-sitzung-2026-10-26-tag.md),
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-04"
 entgangen_bei: []
 wartet_auf: ""
 ---
@@ -56,3 +57,4 @@ die alte PIN danach nicht mehr öffnet.
   Ausgangszustand grün (der Code war richtig, es fehlte die Zusicherung).
 - **2026-11-04** — Review `pugling-reviewer`: kein 🔴/🟡. Vom Prüfer nachgerechnet: drei eigene Subjekte, je Login vor dem PATCH 200; Ratenbegrenzer im Test aus (`PuglingWebAppFactory.cs:144`); keine Überschneidung mit `Aendern_…`; zitierte Zeilen `:122`/`:95`/`:187` stimmen.
 - **2026-11-04** — Abnahme Lauf S, Teil 2: volle Suite **1071/1071**, Build ohne Warnung, Vitest **638/638**, E2E-Gesamtlauf **109 passed** (`exit=0`, nach dem letzten Code-Edit). Rollengang: Vater maschinell – der Fall schaltet Kind- und eigenen Login per leerer PIN ab und prüft im echten HTTP-Pfad, dass die alte PIN danach 401 bekommt; Creator und Sohn Regressionszeugen. **Abgenommen**, Commit siehe Protokoll ([Lauf S](../pm-sitzung-2026-11-04-nacht.md)).
+- **2026-11-04** — Nachschau in Lauf S, Teil 3 (frischer `pugling-reviewer`, `git show 764f7b5`, read-only). Ohne Befund: drei getrennte Subjekte, je 200 vor dem PATCH, Mutante je Pfad rot an seiner 401-Zusicherung; Zeilen `:122`/`:95`/`:187` stimmen; Ratenbegrenzer aus.

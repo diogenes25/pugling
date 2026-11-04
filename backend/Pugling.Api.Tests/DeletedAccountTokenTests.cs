@@ -3,6 +3,11 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
+using Pugling.Api.Auth;
 using Pugling.Api.Data;
 
 namespace Pugling.Api.Tests;
@@ -150,5 +155,32 @@ public class DeletedAccountTokenTests(PuglingWebAppFactory factory) : IClassFixt
         // And it still works: the child logs in through that account (its PIN is the account's, i.e. the adult's).
         var child = await TestApi.ChildAsync(factory, childId, "4545");
         Assert.Equal(HttpStatusCode.OK, (await child.GetAsync("/api/v1/auth/me")).StatusCode);
+    }
+
+    /// <summary>
+    /// B-372: a client that hangs up while its token is being checked must not end as an exception. JwtBearerHandler
+    /// logs any exception from OnTokenValidated as an error before rethrowing it, so a cancelled lookup would undo the
+    /// decision that an aborted request ends as 499 without an error log. The request is already aborted here; the
+    /// account exists, so the check must pass. Red if the lookup takes RequestAborted: OperationCanceledException.
+    /// </summary>
+    [Fact]
+    public async Task Abgebrochene_Anfrage_Wirft_Nicht_Bei_Der_Kontopruefung()
+    {
+        var (_, adultId) = await FreshAdultAsync();
+        using var scope = factory.Services.CreateScope();
+        var accountId = await scope.ServiceProvider.GetRequiredService<PuglingDbContext>().Accounts
+            .Where(a => a.Profiles.Any(p => p.AdultId == adultId)).Select(a => a.Id).SingleAsync();
+        using var aborted = new CancellationTokenSource();
+        await aborted.CancelAsync();
+        var http = new DefaultHttpContext { RequestServices = scope.ServiceProvider, RequestAborted = aborted.Token };
+        var context = new TokenValidatedContext(http,
+            new AuthenticationScheme(JwtBearerDefaults.AuthenticationScheme, null, typeof(JwtBearerHandler)), new JwtBearerOptions())
+        {
+            Principal = new ClaimsPrincipal(new ClaimsIdentity([new Claim("aid", accountId.ToString())], "test")),
+        };
+
+        await TokenSubjectCheck.ValidateAsync(context);
+
+        Assert.Null(context.Result); // not failed: the account exists
     }
 }

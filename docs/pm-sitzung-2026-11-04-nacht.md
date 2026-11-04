@@ -87,8 +87,8 @@ Verhalten im Auth-Pfad, Seed-PIN und Zeitseitenkanal brauchen eine Abwägung –
 
 **Entwickler-Brief:** Alle drei Stories betreffen Code, der richtig ist und nur keine Zusicherung hat. Je Fall ein Test, der im
 Ausgangszustand grün ist, und eine Mutante, die ihn rot macht – gesetzt per Skript mit Byte-Vergleich beim Zurückspielen (Lehre aus
-Lauf R). Keine Verhaltensänderung, keine Migration, kein Vertragsbruch. B-358 Punkt 1 ist Robustheit im Aufräumen (keine rote Probe
-möglich), Punkt 2 eine Einengung der AK von B-265.
+Lauf R). Keine Verhaltensänderung, keine Migration, kein Vertragsbruch. B-358 Punkt 1 ist Robustheit im Aufräumen (eine rote Probe
+lohnt nicht, siehe B-358), Punkt 2 eine Einengung der AK von B-265.
 
 ### Umgesetzt
 
@@ -134,3 +134,73 @@ Probe, 22/22 bzw. 25/25 Stellen).
    (BE) deckt es, jetzt mit fünf Messungen.
 
 **Vorschlag:** keiner neu; (BE) aus Teil 1 bleibt der Vorschlag.
+
+## Lauf S, Teil 3 — Was im Login-Pfad noch schief steht (B-372)
+
+**Sprint-Ziel:** *Der Entwickler, der das Fehler-Log liest, findet dort keinen Client, der beim Prüfen seines Tokens aufgelegt hat; wer
+`ChildrenController` oder `auth/me` liest, sieht jede Ablehnung vor der ersten Änderung.*
+**Umfang:** [B-372](backlog/B-372-abbruch-log-und-guard-reihenfolge-im-login-pfad.md), abgeteilt aus B-282 (Punkte 1 und 3). Die
+übrigen Punkte von B-282 bleiben dort: Seed-PIN nach Namen und Zeitseitenkanal verlangen eine Abwägung (zwei Wege bzw. „falls relevant").
+
+**Entwickler-Brief:** Die Kontoprüfung im `OnTokenValidated`-Hook nimmt `CancellationToken.None` (Teil 3 der Token-Regel), mit Satz am
+Code; die PIN-Prüfung rückt in zwei Controllern hinter die Null-Prüfung wie im Zwilling. Test für den Hook direkt (bereits abgebrochene
+Anfrage, existierendes Konto). Keine Migration, kein Vertragsbruch.
+
+### Umgesetzt
+
+- **B-372:** `TokenSubjectCheck` fragt das Konto mit `CancellationToken.None` ab (Satz am Code); in `ChildrenController.Update` steht die
+  PIN-Prüfung hinter der Null-Prüfung, in `auth/me` stehen Name, E-Mail-Dublette und PIN vor jeder Zuweisung – in alter Reihenfolge.
+  Rote Probe für den Abbruch: erwartet 1 failed, gemessen **1 failed** (`TaskCanceledException`).
+
+**Zähler Teil 3: 1** – 🟡 aus dem Review: die erste Fassung zog in `auth/me` nur die PIN nach oben und machte aus `409 duplicate_email`
+still ein `400` (belegte E-Mail + kurze PIN). Behoben samt Fall `FremdeEMail_MitZuKurzerPin_MeldetWeiterDieEMail`; Mutante „PIN
+zuerst" (= die erste Fassung) **1 failed**. Ohne Zählung: Story-Satz zur Token-Regel berichtigt (nur Text), Zeile `:35`.
+
+**Verifikation nach dem letzten Code-Edit:** volle Suite **1073/1073**, Build ohne Warnung, E2E-Gesamtlauf **109 passed** (`exit=0`).
+
+### Rollengang
+
+**Entwickler** über die rote Probe und die Mutante. **Vater** maschinell: `AccountSelfServiceTests` und `PinPolicyTests` fahren `auth/me`
+und den Kind-PATCH im echten HTTP-Pfad, die Antworten sind dieselben wie vorher. **Creator** und **Sohn** Regressionszeugen (E2E grün).
+**B-372 abgenommen.**
+
+### Retrospektive
+
+**Nachschau:** Lauf S, Teil 2 (`764f7b5`: B-355, B-358, B-371 und der Nachschau-Nachtrag zu Teil 1) per frischem `pugling-reviewer`,
+read-only. Im Code **ohne Befund** (Tests rot an der richtigen Zusicherung, Zeilen und Zahlen nachgerechnet). **Entgangen** in Text:
+[B-373](backlog/B-373-inventar-und-begruendung-aus-lauf-s.md) – B-369 nannte zwei statt acht frühe Rückgaben (B-370 AK 2), und B-358
+widersprach sich („nicht möglich" gegen „nicht lohnend"). Beides **Increment dieses Laufs → Limit 2**; in diesem Teil behoben (ohne
+Zählung, nur Text). `nachgeschaut` an B-355, B-358, B-371.
+
+**Was die eigenen Tore durchgelassen haben:**
+
+1. *Eine Inventar-Ergänzung, die wieder nach der bekannten Form suchte.* B-370 ergänzte B-369 um die Formen, die die erste Nachschau
+   genannt hatte – und suchte nicht selbst nach weiteren. Die zweite Nachschau fand sechs. Dritte Messung derselben Familie in dieser
+   Nacht, (BE) trifft sie genau.
+2. *Ein Review-Fund, der nur an einer von drei Stellen behoben wurde.* „Nicht möglich" wurde in Entscheidung 1 umformuliert, blieb aber
+   im Verlauf und im Protokoll stehen. Das ist (BD) aus Lauf R in anderer Gestalt: wer eine Aussage ändert, sucht die alte Formulierung.
+3. *Eine „reine Umordnung" mit Verhaltensänderung.* B-372 nannte die Guard-Verschiebung verhaltensneutral; sie änderte eine
+   Fehlerantwort. Gefunden vom Review, nicht von der Suite (kein Test schickte beide Felder).
+
+**Vorschläge, nicht gelandet (Freigabe 3):**
+
+- **(BF)** Prosa in `backend/CLAUDE.md` bei „Guard Clauses zuerst": „Wer Guards umordnet, ändert die **Vorrangfolge** der Fehler. Vor
+  dem Umzug jedes Paar von Ablehnungen durchgehen, das ein Formular zugleich auslösen kann, und die alte Folge halten oder die
+  Änderung als Vertragsfrage benennen." Gemessen einmal (B-372), aber die Suite sieht diese Klasse strukturell nicht.
+- (BE) bleibt der Vorschlag für Punkt 1, (BD) für Punkt 2 – jetzt beide mit einer weiteren Messung.
+
+## Ende Lauf S
+
+Endgrund: **Limit 2** – die Nachschau in Teil 3 fand im Increment von Teil 2 (bzw. im Nachtrag zu Teil 1) zwei Text-Entgleitungen
+(B-373, behoben). Drei Teile, **sieben Stories abgenommen:** B-361, B-365, B-370 (Teil 1); B-355, B-358, B-371 (Teil 2); B-372, B-373
+(Teil 3). Zähler 2 / 0 / 1. Neu abgeteilt aus B-282: B-371, B-372; B-282 bleibt mit Seed-PIN, Zeitseitenkanal und den Restpunkten zu
+gemischten Konten (alle verlangen eine Abwägung). Teil 3 ist **unbeobachtet** (Nachschau im nächsten Lauf). Alles **ungepusht**.
+
+**Offene Entscheidungen für den Nutzer:**
+
+1. **Retro-Vorschläge** (BE) Gegenzählung im Ist-Stand und (BF) Vorrangfolge beim Umordnen von Guards – keiner gelandet (Freigabe 3);
+   dazu unverändert (AO)–(BD) aus den Nächten zuvor; (AS)/(BE) ist jetzt fünfmal gemessen.
+2. **B-369:** weiter die zwei Gestaltungsfragen aus Lauf R – das Inventar ist jetzt vollständiger (22 Ternär, 8 frühe Rückgaben, 8
+   Arcade, 2 Start-Fehler offen zugeordnet).
+3. **B-282-Rest:** Seed-PIN nach Namen (zwei Wege), Zeitseitenkanal („falls relevant") – beides Abwägungen.
+4. **Gesperrt wie zuvor:** B-329, B-310 (Vertragsbruch ohne Freigabe).

@@ -32,7 +32,10 @@ public static class TokenSubjectCheck
             return;
         }
         var db = context.HttpContext.RequestServices.GetRequiredService<PuglingDbContext>();
-        if (!await db.Accounts.AsNoTracking().AnyAsync(a => a.Id == aid, context.HttpContext.RequestAborted))
+        // Deliberately not RequestAborted (B-372): JwtBearerHandler logs any exception from this hook as an error before
+        // rethrowing, so a client hanging up would bypass the "abort ends as 499 without an error log" rule. A
+        // primary-key lookup is too short to be worth cancelling.
+        if (!await db.Accounts.AsNoTracking().AnyAsync(a => a.Id == aid, CancellationToken.None))
             context.Fail("The account behind this token no longer exists.");
     }
 }
