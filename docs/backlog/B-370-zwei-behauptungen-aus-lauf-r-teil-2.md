@@ -12,6 +12,7 @@ quelle: Nachschau zu Lauf R, Teil 2 in Lauf S, Teil 1 (docs/pm-sitzung-2026-11-0
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-04"
 entgangen_bei: [B-368, B-183]
 wartet_auf: ""
 ---
@@ -56,3 +57,4 @@ ich nicht an einem Effekt suche, den es nicht mehr gibt, oder Stellen übersehe.
   (`zeilenVeraltet = exercises.stale`, `useAsync.test.tsx:176-190` pinnt `stale` nach gescheiterter Abfrage); B-369 und der
   Wächter-Kommentar nennen 22, die Arcade-Liste 2 + 6 = 8.
 - **2026-11-04** — Abnahme Lauf S, Teil 1: volle Suite **1068/1068**, Vitest **638/638**, `tsc -b` sauber, E2E-Gesamtlauf **109 passed** (`exit=0`, nach dem letzten Edit). Rollengang: der Entwickler ist die Rolle (Tor-Meldungen, Tor gegen Inline-Elemente im Listenpunkt); Creator über `ContractDocumentTests` und den Dokument-Diff (eine Zeile, Code- und Fettsatz da); Vater und Sohn Regressionszeugen (Suiten grün, nur Kommentare im Frontend). **Abgenommen**, Commit siehe Protokoll ([Lauf S](../pm-sitzung-2026-11-04-nacht.md)).
+- **2026-11-04** — Nachschau in Lauf S, Teil 2 (frischer `pugling-reviewer`, `git show cc789ed`, read-only): kein 🔴/🟡, **keine Entgleitung**. Nachgerechnet: Ternär-Stellen im Vater-Web 22/22, mit `VaterProfil` und zwei Arcade-Stellen 25/25; Kommentar am Wizard gegen `useAsync.ts:69` (Deps nur bei Erfolg) und die drei Steuerelemente. 🟢 ohne Zählung behoben: der Wächter-Kommentar sagte „22 Stellen“ ohne „im Vater-Web“ (über ganz `src` sind es 26) – jetzt beides; in B-369 `MediaPickers` aus „frühe Rückgabe“ gelöst und die zwei Start-Fehler der Arcade (`SohnPractice.tsx:212`, `SohnTest.tsx:170`) als offene Zuordnung notiert.

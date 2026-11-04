@@ -53,7 +53,7 @@ Die „Spur" war eine Zusicherung über den Ausgangszustand; die Unterscheidung,
 ## Akzeptanzkriterien
 
 1. Keine Zusicherung der Probe kann im Ausgangszustand nicht fallen.
-2. Eine rote Probe nennt die Zahlen aller zehn Fenster.
+2. Eine rote Probe der Summen-Zusicherung nennt die Zahlen aller zehn Fenster (die Zerrissen-Regel nennt ihr eigenes, präzisiert 2026-11-04).
 
 ## Schätzung
 
@@ -67,3 +67,4 @@ Die „Spur" war eine Zusicherung über den Ausgangszustand; die Unterscheidung,
   were denied and only 925 succeeded across all windows … (#1 ok 301/locked 1392, …, #10 ok 10/locked 1742)".
 - **2026-11-03** — Abnahme Lauf O, Teil 1: volle Suite **1048/1048**, Build ohne Warnung, E2E **103 passed** (`exit=0`, nach dem letzten Edit; der Dev-Server lädt den Beispielkatalog über `Load`). Rollengang: der Entwickler ist die Rolle – die Proben selbst sind sein Weg, ihre Mutanten je benannt; Creator, Vater und Sohn Regressionszeugen (kein Pfad von ihnen im Diff, ihre Specs grün). **Abgenommen**, Commit siehe Protokoll ([Lauf O](../pm-sitzung-2026-11-02-nacht.md)).
 - **2026-11-03** — Nachschau in Lauf P, Teil 1 (frischer `pugling-reviewer`, read-only): **sauber** (🟢 → [B-358](B-358-beispielkatalog-proben-restkanten.md), Punkt 2: unter Linux nennt die Meldung an `:282` nur das aktuelle Fenster). Geprüft: die alte Spur-Zusicherung `>= 0` ist weg; unsicherer Schreiber rot an `:282` (Linux) bzw. `:300` (Windows, 925 gegen 13 639); `:299` fängt eine Harness-Mutante (Leser-Schleife nie betreten), ist also nicht leer.
+- **2026-11-04** — Präzisiert in Lauf S, Teil 2 ([B-358](B-358-beispielkatalog-proben-restkanten.md), Punkt 2): AK 2 („eine rote Probe nennt alle zehn Fenster") gilt für die **Summen-Zusicherung**. Die Zerrissen-Regel scheitert am ersten zerrissenen Lesevorgang und nennt bewusst nur ihr Fenster – frühere Fenster sagen über zerrissene Bytes nichts; so steht es jetzt auch am Code.

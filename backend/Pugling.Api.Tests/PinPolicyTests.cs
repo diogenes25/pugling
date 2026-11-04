@@ -73,6 +73,44 @@ public class PinPolicyTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     }
 
     /// <summary>
+    /// B-282 point 5: an empty PIN sent by PATCH really disables the login - each path on its own subject, so one path
+    /// cannot pass on another's work. The old PIN logs in before the PATCH (the case can fail) and is refused after it.
+    /// Red if a path accepts "" with 2xx but skips it (<c>if (!string.IsNullOrEmpty(dto.Pin)) SetPin(…)</c>).
+    /// </summary>
+    [Fact]
+    public async Task Leere_Pin_Per_Patch_Sperrt_Den_Alten_Login()
+    {
+        var anonym = factory.CreateClient();
+        async Task<int> NewAdultAsync() => (await (await anonym.PostAsJsonAsync("/api/v1/supervisor/adults",
+            new { name = TestApi.UniqueName("Pin-Leer"), pin = "8080" })).Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+        Task<HttpResponseMessage> AdultLogin(int id) => anonym.PostAsJsonAsync("/api/v1/auth/adult", new { adultId = id, pin = "8080" });
+
+        // Child, via the supervising adult.
+        var papaId = await NewAdultAsync();
+        var papa = await TestApi.AdultAsync(factory, papaId, "8080");
+        var childId = await TestApi.IdAsync(await papa.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = TestApi.UniqueName("Pin-Leer-Kind"), pin = "8181" }));
+        Task<HttpResponseMessage> ChildLogin() => anonym.PostAsJsonAsync("/api/v1/auth/child", new { childId, pin = "8181" });
+        Assert.Equal(HttpStatusCode.OK, (await ChildLogin()).StatusCode);
+        (await papa.PatchAsJsonAsync($"/api/v1/supervisor/children/{childId}", new { pin = "" })).EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.Unauthorized, (await ChildLogin()).StatusCode);
+
+        // Adult, via supervisor/adults/{id}.
+        var viaAdults = await NewAdultAsync();
+        var self = await TestApi.AdultAsync(factory, viaAdults, "8080");
+        Assert.Equal(HttpStatusCode.OK, (await AdultLogin(viaAdults)).StatusCode);
+        (await self.PatchAsJsonAsync($"/api/v1/supervisor/adults/{viaAdults}", new { pin = "" })).EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.Unauthorized, (await AdultLogin(viaAdults)).StatusCode);
+
+        // Adult, via auth/me.
+        var viaMe = await NewAdultAsync();
+        var me = await TestApi.AdultAsync(factory, viaMe, "8080");
+        Assert.Equal(HttpStatusCode.OK, (await AdultLogin(viaMe)).StatusCode);
+        (await me.PatchAsJsonAsync("/api/v1/auth/me", new { pin = "" })).EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.Unauthorized, (await AdultLogin(viaMe)).StatusCode);
+    }
+
+    /// <summary>
     /// AC 3: an empty stored PIN does not log in through any of the three logins - not with an empty input either.
     /// Red without the guard in <see cref="PinHasher.Verify"/>: the legacy plaintext branch compared "" with "".
     /// </summary>

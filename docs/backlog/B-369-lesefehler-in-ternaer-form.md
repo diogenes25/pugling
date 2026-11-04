@@ -26,13 +26,15 @@ Abgeteilt von [B-183](B-183-gescheitertes-lesen-ohne-erneuten-versuch.md) in Lau
   `VaterDashboard.tsx:51/76`, `VaterKonto.tsx:24/64`, `VaterPlaene.tsx:74`, `VaterVocab.tsx:305`, `VaterZiele.tsx:216`,
   `VaterAnmerkungen.tsx:147`, `PlanPositions.tsx:53` (dort steht das Banner eine Zeile unter `positions.error ? (` – die
   zeilenweise Regex sah es nicht; mehrzeilig nachgezählt in der Nachschau von Lauf S).
-- **Frühe Rückgabe mit Banner:** `PlanPositions.tsx:738`, `VaterPlanDetail.tsx:32`; dazu `MediaPickers.tsx:139` (Suchfehler über
-  `StatusBanner`, ohne `reload`).
+- **Frühe Rückgabe mit Banner:** `PlanPositions.tsx:738`, `VaterPlanDetail.tsx:32`.
+- **Ein Suchfehler über `StatusBanner`, ohne `reload`:** `MediaPickers.tsx:139` (keine frühe Rückgabe).
 - **Drei Stellen unter nacktem Namen:** `CatalogAdmin.tsx:179` (`categories.error` als Prop, ohne `reload`/`loading`),
   `ExercisePreviewModal.tsx:116`, `VaterProfil.tsx:56`.
 - **Die Sohn-Arcade** (mindestens acht): `SohnKonto.tsx:29`, `SohnShop.tsx:188`, die `error-box` in `SohnHome.tsx:30/64`,
   `SohnProgress.tsx:16/30`, `SohnInterests.tsx:145` und `SohnSkins.tsx:64` (`banner err` unter `loadError`) – `ListenAusfall` ist
-  fest deutsch, die Arcade läuft zweisprachig.
+  fest deutsch, die Arcade läuft zweisprachig. Nicht gezählt, weil kein reines Lesen und schon mit Ausweg: die `error-box` beim
+  gescheiterten Start in `SohnPractice.tsx:212` (Knopf „zur Startseite“) und `SohnTest.tsx:170` (Knopf „fortsetzen“) – beim Bau zu
+  entscheiden, ob sie dazugehören (Nachschau Lauf S, Teil 2).
 - **Lücken des Wächters** (`src/lesefehler.test.ts`, Nachschau Lauf S, 🟢): er sieht nur `{x.error && …`; durch rutschen dagegen
   `{!x.loading && x.error && …}`, `{x.error != null && …}`, `<span className="banner err">` und `className="err banner"`.
 

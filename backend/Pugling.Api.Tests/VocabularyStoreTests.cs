@@ -1,7 +1,10 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Pugling.Api.Data;
+using Pugling.Api.Models;
 
 namespace Pugling.Api.Tests;
 
@@ -290,6 +293,46 @@ public class VocabularyStoreTests(PuglingWebAppFactory factory) : IClassFixture<
 
         Assert.Equal(0, first.Id);
         Assert.Same(first, again);
+    }
+
+    /// <summary>
+    /// B-355: two pairs of the same identity in ONE call resolve to one entry. The vocabulary POST refuses such a payload
+    /// before it gets here, the translation exercise does not - so this line is the only thing between "Haus, haus " in one
+    /// exercise and two store entries (<c>key</c>, <c>key_2</c>). Red if a freshly created entry is not remembered for the
+    /// rest of the batch: two instances, two Added rows.
+    /// </summary>
+    [Fact]
+    public async Task GetOrCreateMany_ZweiGleichePaareImSelbenAufruf_LegenEinenEintragAn()
+    {
+        using var scope = factory.Services.CreateScope();
+        var store = scope.ServiceProvider.GetRequiredService<VocabularyStoreService>();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        var u = Guid.NewGuid().ToString("N")[..8];
+
+        var result = await store.GetOrCreateManyAsync("en", "de", [($"twice{u}", "zweimal"), ($"Twice{u} ", "Zweimal")], ct: default);
+
+        Assert.Same(result[0], result[1]);
+        Assert.Single(db.ChangeTracker.Entries<Vocabulary>(), e => e.State == EntityState.Added);
+    }
+
+    /// <summary>
+    /// B-355: the language filter in SQL folds the STORED side too - an entry saved as " en " is a candidate for "en", as
+    /// the identity says. Red if the stored language is compared untrimmed: 201 with a second entry. Only spaces are
+    /// pinned: SQLite's trim() strips nothing else, and no writer stores a tab in a language code.
+    /// </summary>
+    [Fact]
+    public async Task ReuseExisting_FaltetDieGespeicherteSpracheMitLeerraum()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var u = Guid.NewGuid().ToString("N")[..8];
+        var id = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/vocabulary",
+            new { sourceLanguage = " en ", targetLanguage = " de ", word = $"edge{u}", translation = "Rand" }));
+
+        var hit = await father.PostAsJsonAsync("/api/v1/creator/vocabulary",
+            new { sourceLanguage = "en", targetLanguage = "de", word = $"edge{u}", translation = "Rand", reuseExisting = true });
+
+        Assert.Equal(HttpStatusCode.OK, hit.StatusCode);
+        Assert.Equal(id, (await hit.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32());
     }
 
     /// <summary>

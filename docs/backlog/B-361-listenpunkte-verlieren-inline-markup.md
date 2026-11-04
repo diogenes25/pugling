@@ -12,6 +12,7 @@ quelle: Lauf Q, Teil 1 – Rohstrings des OpenAPI-Generators zu B-259/B-260 (doc
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-04"
 entgangen_bei: []
 wartet_auf: ""
 ---
@@ -74,3 +75,4 @@ damit ich ihn als maschinenlesbaren Wert erkenne und nicht als Prosa überlese.
   Inhalt von `<listheader>`; nachgerechnet vom Prüfer: übrige `<list>` außerhalb von Contracts/Controllers erreichen das Dokument
   nicht (0 Treffer ihrer Texte in `v1.json`).
 - **2026-11-04** — Abnahme Lauf S, Teil 1: volle Suite **1068/1068**, Vitest **638/638**, `tsc -b` sauber, E2E-Gesamtlauf **109 passed** (`exit=0`, nach dem letzten Edit). Rollengang: der Entwickler ist die Rolle (Tor-Meldungen, Tor gegen Inline-Elemente im Listenpunkt); Creator über `ContractDocumentTests` und den Dokument-Diff (eine Zeile, Code- und Fettsatz da); Vater und Sohn Regressionszeugen (Suiten grün, nur Kommentare im Frontend). **Abgenommen**, Commit siehe Protokoll ([Lauf S](../pm-sitzung-2026-11-04-nacht.md)).
+- **2026-11-04** — Nachschau in Lauf S, Teil 2 (frischer `pugling-reviewer`, `git show cc789ed`, read-only): kein 🔴/🟡, **keine Entgleitung**. Nachgerechnet: rote Probe 4/4 (von Hand gegen die Elterndatei), `v1.json` 1/1 geänderte Zeile, `<list>`/`<item>`/`<code>`/`<seealso>` in Contracts und Controllern 0, je Selbsttest-Fall die benannte Mutante von Hand nachvollzogen (drei davon nur gelesen, nicht gelaufen: `see`, Zeilenumbruch, „Scan beginnt im Item“); die umformulierten Doku-Kommentare inhaltsgleich.

@@ -122,7 +122,12 @@ public class OpenApiExampleCatalogRetryTests
     {
         public string Path { get; } = Directory.CreateTempSubdirectory("pugling_catalog_").FullName;
         // Cleanup only: a temp dir the antivirus still holds is left for the OS, it must not fail the case.
-        public void Dispose() { try { Directory.Delete(Path, recursive: true); } catch (IOException) { } }
+        // Windows reports a handle held by a scanner as either error, depending on the moment it is caught.
+        public void Dispose()
+        {
+            try { Directory.Delete(Path, recursive: true); }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+        }
     }
 
     // A programming error is not a race and must not be retried. Red if the filter widens to every exception.

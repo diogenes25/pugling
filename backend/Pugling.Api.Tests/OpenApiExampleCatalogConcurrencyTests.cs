@@ -290,8 +290,9 @@ public class OpenApiExampleCatalogConcurrencyTests
             // unsafe mostly denied in every window (Lauf O: 925 ok against 13639 locked over ten windows).
             // "Held open" is judged over all ten windows, not per window (B-274): under load a single window can
             // be mostly denied by this machine's antivirus without the write being any less atomic, and that is
-            // how the per-window rule flaked in the full suite. Every window's numbers stand in the message, so a failure says
-            // which case it was (B-265: the former "trace" assertion could never fail and printed nothing).
+            // how the per-window rule flaked in the full suite. Every window's numbers stand in the message, so a
+            // failure says which case it was (B-265: the former "trace" assertion could never fail and printed
+            // nothing). The torn rule above names only its own window on purpose: one torn read is the whole verdict.
             var okGesamt = runs.Sum(r => r.Ok);
             var gesperrtGesamt = runs.Sum(r => r.Gesperrt);
             var detail = string.Join(", ", runs.Select((r, n) => $"#{n + 1} ok {r.Ok}/locked {r.Gesperrt}"));

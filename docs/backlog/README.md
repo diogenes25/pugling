@@ -506,7 +506,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (40)
+### Offen (38)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -547,12 +547,10 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-271](B-271-gewaehltes-profil-setzt-reihe.md) | Das zum Kind gewählte Profil setzt Reihe und Fach des KI-Creators | Wunsch | `idee` | P3 | — | backend | — |
 | [B-369](B-369-lesefehler-in-ternaer-form.md) | Lesefehler in Ternär-Form und unter nacktem Namen bieten noch keinen erneuten Versuch | Wunsch | `idee` | P3 | — | frontend | — |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `geschaetzt` | P3 | S | backend | — |
-| [B-355](B-355-store-faltung-restkanten.md) | Restkanten der Store-Faltung: Sprachkürzel mit Leerraum, zwei gleiche Paare in einem Aufruf | Defekt | `idee` | P4 | — | backend | — |
-| [B-358](B-358-beispielkatalog-proben-restkanten.md) | Restkanten der Beispielkatalog-Proben (Nachschau über `299d216`) | Defekt | `idee` | P4 | — | backend | — |
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (304)</summary>
+<summary>Abgenommen (307)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -793,8 +791,10 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-352](B-352-radiogruppen-ohne-pfeiltasten.md) | Die Radiogruppen des Vater-Webs versprechen Pfeiltasten, die nicht kommen | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-353](B-353-leerer-label-slug-trifft-emoji-synonym.md) | Ein Interesse ohne Buchstaben landet auf einem fremden Schlagwort mit Emoji-Synonym | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-354](B-354-synonym-gegen-fremden-slug-ungetestet.md) | Dass ein Synonym nicht den Slug eines fremden Schlagworts tragen darf, prüft kein Test | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-355](B-355-store-faltung-restkanten.md) | Restkanten der Store-Faltung: Sprachkürzel mit Leerraum, zwei gleiche Paare in einem Aufruf | Defekt | `abgenommen` | P4 | XS | backend | — |
 | [B-356](B-356-radiogruppe-und-wartebild-restkanten.md) | Restkanten an Radiogruppen und Wartebild (Nachschau über `b73bcde`) | Defekt | `abgenommen` | P4 | S | frontend | — |
 | [B-357](B-357-e2e-helfer-restkanten.md) | Restkanten des E2E-Helfers `createChild` und eine Kind-Auswahl per Index | Defekt | `abgenommen` | P4 | XS | frontend | — |
+| [B-358](B-358-beispielkatalog-proben-restkanten.md) | Restkanten der Beispielkatalog-Proben (Nachschau über `299d216`) | Defekt | `abgenommen` | P4 | XS | backend | — |
 | [B-359](B-359-live-region-waechter-uebersieht-echte-kommentare.md) | Der Live-Region-Wächter übersieht die Kommentare, die zwischen `&&` und Tag wirklich vorkommen | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-36](B-36-motivations-animationen-teilziele.md) | Motivations-Animationen bei erreichten Teilzielen | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-360](B-360-guthaben-nach-verlassener-klausur-ungetestet.md) | Dass die verlassene Klausur das Guthaben auffrischt, trägt kein Test | Defekt | `abgenommen` | P3 | XS | frontend | — |
@@ -808,6 +808,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-368](B-368-stale-kommentar-und-zaehlung.md) | Nach B-164 behauptet ein Kommentar den entfernten Effekt, und die Story zählt falsch | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-37](B-37-uebung-abbruch-unvollendet.md) | Abgebrochene Runden: Pflicht härten, Klausur deckeln | Defekt | `abgenommen` | P1 | M | beides | — |
 | [B-370](B-370-zwei-behauptungen-aus-lauf-r-teil-2.md) | Zwei Behauptungen aus Lauf R, Teil 2 halten nicht | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-371](B-371-leere-pin-per-patch-nur-als-angenommen-geprueft.md) | Eine leere PIN per PATCH war nur als „angenommen" geprüft | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-40](B-40-client-routen-waechter.md) | Routen aus `Pugling.Client` gegen das OpenAPI-Dokument halten | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-41](B-41-produktions-startup-smoke.md) | Der Produktionspfad des Starts ist der einzige ohne Test | Aufräumen | `abgenommen` | P2 | S | backend | — |
 | [B-42](B-42-openapi-typen-generieren.md) | TypeScript-Typen aus dem OpenAPI-Dokument erzeugen statt von Hand pflegen | Aufräumen | `abgenommen` | P2 | M | beides | — |
@@ -875,7 +876,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (118)
 
-**Nachgeschaut: 301 von 304 abgenommenen** — und in 97 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 3 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 304 von 307 abgenommenen** — und in 97 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 3 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -1006,9 +1007,9 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 
 | Id | Story |
 | --- | --- |
-| [B-361](B-361-listenpunkte-verlieren-inline-markup.md) | In Listenpunkten verliert das Vertragsdokument `<c>` und `<b>` |
-| [B-365](B-365-waechter-meldungen-auf-deutsch.md) | Die Meldungen der reflexiven Wächter sind teils deutsch |
-| [B-370](B-370-zwei-behauptungen-aus-lauf-r-teil-2.md) | Zwei Behauptungen aus Lauf R, Teil 2 halten nicht |
+| [B-355](B-355-store-faltung-restkanten.md) | Restkanten der Store-Faltung: Sprachkürzel mit Leerraum, zwei gleiche Paare in einem Aufruf |
+| [B-358](B-358-beispielkatalog-proben-restkanten.md) | Restkanten der Beispielkatalog-Proben (Nachschau über `299d216`) |
+| [B-371](B-371-leere-pin-per-patch-nur-als-angenommen-geprueft.md) | Eine leere PIN per PATCH war nur als „angenommen" geprüft |
 
 </details>
 
@@ -1067,6 +1068,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-316](B-316-plural-schluessel-aus-b-304-ohne-fall.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-337](B-337-reuse-folgt-veraltetem-schluessel.md) | `abgenommen` | Abschnitt „User Story" |
 | [B-338](B-338-doppeltes-wort-schreibweise-ungetestet.md) | `abgenommen` | Abschnitt „User Story" |
+| [B-358](B-358-beispielkatalog-proben-restkanten.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 | [B-370](B-370-zwei-behauptungen-aus-lauf-r-teil-2.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 
 <details>

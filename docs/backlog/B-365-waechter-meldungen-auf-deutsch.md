@@ -12,6 +12,7 @@ quelle: pugling-reviewer zu B-259 in Lauf Q, Teil 1 (docs/pm-sitzung-2026-11-03-
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-04"
 entgangen_bei: []
 wartet_auf: ""
 ---
@@ -65,6 +66,7 @@ Deutsche Meldungstexte reflexiver Wächter (`Assert`-Meldung oder Fund-Zeile), p
   danach grün (`ConventionGuardTests|ContractDocument|SchemaGuard`: **40/40**). Rote Probe entfällt: `Aufräumen` ohne Verhaltensänderung.
 - **2026-11-04** — Review `pugling-reviewer` (🟡): zwei deutsche Meldungen übersehen – `ConventionGuardTests.cs:257` und
   `SeedContractTests.cs:81`; die erste AK suchte nur die bekannten Sätze und hätte das nie gemeldet. Beide übersetzt, AK auf
-  Umlaute in String-Literalen umgestellt: über die Wächter-Dateien erwartet 0, gemessen 0 (übrig nur deutsche Testdaten in
-  `PatchSemanticsTests`, die bleiben). Zählt (Code geändert, 🟡): **Zähler Teil 1: 2.**
+  Umlaute in String-Literalen umgestellt: über die Wächter-Dateien erwartet 0, gemessen 0 (übrig nur deutsche Testdaten, die bleiben –
+  `PatchSemanticsTests`, nach der Nachschau auch `EmptyExerciseGuardTests` und `PatchClearFieldTests:58`). Zählt (Code geändert, 🟡): **Zähler Teil 1: 2.**
 - **2026-11-04** — Abnahme Lauf S, Teil 1: volle Suite **1068/1068**, Vitest **638/638**, `tsc -b` sauber, E2E-Gesamtlauf **109 passed** (`exit=0`, nach dem letzten Edit). Rollengang: der Entwickler ist die Rolle (Tor-Meldungen, Tor gegen Inline-Elemente im Listenpunkt); Creator über `ContractDocumentTests` und den Dokument-Diff (eine Zeile, Code- und Fettsatz da); Vater und Sohn Regressionszeugen (Suiten grün, nur Kommentare im Frontend). **Abgenommen**, Commit siehe Protokoll ([Lauf S](../pm-sitzung-2026-11-04-nacht.md)).
+- **2026-11-04** — Nachschau in Lauf S, Teil 2 (frischer `pugling-reviewer`, `git show cc789ed`, read-only): kein 🔴/🟡, **keine Entgleitung**. Nachgerechnet: 21/21 übersetzte Meldungen mit Zeilen; deutsche Meldungen über 13 Wächter-Dateien 0. 🟢 ohne Zählung: der Verlauf nannte die übrig bleibenden Testdaten nur für `PatchSemanticsTests` – ergänzt.

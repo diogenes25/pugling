@@ -1,15 +1,15 @@
 ---
-tags: [typ/story, status/idee, bereich/backend, bereich/test]
+tags: [typ/story, status/abgenommen, bereich/backend, bereich/test]
 aliases: [Beispielkatalog Restkanten, TempRoot UnauthorizedAccess]
-status: idee
+status: abgenommen
 prio: P4
 art: Defekt
-groesse: ""
+groesse: XS
 wo: backend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: Nachschau zu Lauf O in Lauf P, Teil 1 (docs/pm-sitzung-2026-11-03-nacht.md)
-unverifiziert: true
+unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
@@ -29,6 +29,35 @@ Drei 🟢 der Nachschau über B-261/B-265/B-274, keiner eine Entgleitung:
 3. **Der Vorgabewert der Pause trägt keine Zusicherung** (Mutante „`pause` ignoriert, immer 50 ms" bliebe grün; B-261
    Entscheidung 1 nimmt das an). Dazu eine Zeile von ~127 Zeichen (`ConcurrencyTests.cs:293`).
 
+## User Story
+
+Als **Entwickler**, dessen Suite unter Windows mit Virenscanner läuft, möchte ich, dass ein Aufräumschritt keinen Test rot färbt
+und dass die Meldung einer roten Probe hält, was ihre Story verspricht.
+
+## Entscheidungen (autonom gegrillt, Freigabe 1 – `Defekt`)
+
+1. **Punkt 1:** Ausnahmefilter auf `IOException or UnauthorizedAccessException` (welche der beiden Windows wirft, hängt am
+   Zeitpunkt). Keine rote Probe, weil sie den Aufwand nicht lohnt: der Scanner-Griff selbst ist nicht herstellbar, die Ausnahme
+   schon (eine schreibgeschützte Datei im Ordner lässt `Directory.Delete` unter Windows mit `UnauthorizedAccessException`
+   scheitern) – aber nur unter Windows, und der Test ließe den Ordner liegen. Benannte Lücke.
+2. **Punkt 2:** die **AK einengen**, nicht die Meldung erweitern. Ein einziger zerrissener Lesevorgang ist das ganze Urteil; die
+   Zahlen früherer Fenster sagen darüber nichts. Ein Satz am Code sagt das, eine Zeile im Verlauf von B-265.
+3. **Punkt 3:** bleibt angenommen (B-261, Entscheidung 1); nur die lange Zeile wird umbrochen.
+
+## Akzeptanzkriterien
+
+1. `TempRoot.Dispose` schluckt `UnauthorizedAccessException` wie `IOException`, sonst nichts.
+2. Am Code und in B-265 steht, dass die Zerrissen-Regel nur ihr eigenes Fenster nennt.
+
+## Schätzung
+
+`XS`. Testweg: volle Suite; keine Verhaltensänderung einer Zusicherung.
+
 ## Verlauf
 
 - **2026-11-03** — angelegt aus der Nachschau zu Lauf O (`pugling-reviewer` über `299d216`, 🟢 ×3). Aus Code gelesen.
+- **2026-11-04** — Lauf S, Teil 2: ausformuliert, gegrillt (Freigabe 1), geschätzt, gebaut. Keine rote Probe möglich (Punkt 1 braucht
+  einen Scanner-Griff unter Windows; nicht lohnend, siehe Entscheidung 1 – Punkt 2/3 ändern keine Zusicherung). Lange Zeile umbrochen
+  (max. 118 Zeichen).
+- **2026-11-04** — Review `pugling-reviewer`: kein 🔴/🟡. Zwei 🟢, ohne Zählung behoben: „keine rote Probe möglich" war zu stark – die Ausnahme ist herstellbar, nur nicht lohnend (Entscheidung 1 umformuliert); und die AK-Zeile von B-265 selbst nennt jetzt die Summen-Zusicherung, nicht nur ihr Verlauf. Vom Prüfer nachgerechnet: der Filter fängt `IOException` (samt `DirectoryNotFoundException`) und `UnauthorizedAccessException`, sonst nichts; „max. 118 Zeichen" gilt für den umbrochenen Block (`:287-296`).
+- **2026-11-04** — Abnahme Lauf S, Teil 2: volle Suite **1071/1071**, Build ohne Warnung, Vitest **638/638**, E2E-Gesamtlauf **109 passed** (`exit=0`, nach dem letzten Code-Edit). Rollengang: der Entwickler ist die Rolle (Aufräumschritt, Meldung); Creator, Vater, Sohn Regressionszeugen. **Abgenommen**, Commit siehe Protokoll ([Lauf S](../pm-sitzung-2026-11-04-nacht.md)).
