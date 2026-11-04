@@ -45030,7 +45030,7 @@
               "integer",
               "string"
             ],
-            "description": "How many **different children** use the exercise whom the caller **does not supervise** \u2013 just the\nnumber, without names. Two reasons:\n* Without it the lists report \u0022nowhere\u0022 while deletion fails with 409 exercise_in_use \u2013\na contradiction the author cannot resolve (remark 14).\n* For a creator without own children (a teacher, or an AI creator app), both\nlists are permanently empty. This number is then not the footnote but the only answer to their\nactual question: is my material being used?\nIt counts **children**, not usage sites: three positions in the same child\u0027s plans\nare one user. The basis is the FK-relevant usages that also block deletion \u2013 a class test only\ncollected via a tag does not prevent it and is therefore not counted.",
+            "description": "How many **different children** use the exercise whom the caller **does not supervise** \u2013 just the\nnumber, without names. Two reasons. Without it the lists report \u0022nowhere\u0022 while deletion fails with\n\u0060409 exercise_in_use\u0060 \u2013 a contradiction the author cannot resolve (remark 14). And for a\n**creator without own children** (a teacher, or an AI creator app), both lists are permanently empty:\nthis number is then not the footnote but the only answer to their actual question \u2013 is my material being used?\nIt counts **children**, not usage sites: three positions in the same child\u0027s plans\nare one user. The basis is the FK-relevant usages that also block deletion \u2013 a class test only\ncollected via a tag does not prevent it and is therefore not counted.",
             "format": "int32"
           }
         },

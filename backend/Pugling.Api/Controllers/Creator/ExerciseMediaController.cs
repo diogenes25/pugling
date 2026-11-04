@@ -10,13 +10,10 @@ namespace Pugling.Api.Controllers.Creator;
 /// <summary>
 /// Images on an exercise – the two cases that the store assignment
 /// (<see cref="VocabularyMediaController"/>) does not cover:
-/// <list type="bullet">
-/// <item><b>Item override</b> (<c>items/{itemId}/media</c>): in <i>this</i> exercise, a
-/// different image should appear than the one hanging off the word in the store – without bending the store. The resolver
-/// later reads bottom-up: item beats vocabulary entry.</item>
-/// <item><b>Title image</b> (<c>media</c>): the header image of a text/reading/sentence exercise that has no
-/// single word to illustrate at all.</item>
-/// </list>
+/// the <b>item override</b> (<c>items/{itemId}/media</c>), where in <i>this</i> exercise a different image should
+/// appear than the one hanging off the word in the store – without bending the store (the resolver reads bottom-up:
+/// item beats vocabulary entry); and the <b>title image</b> (<c>media</c>), the header image of a
+/// text/reading/sentence exercise that has no single word to illustrate at all.
 /// Both change the content of an exercise and therefore require <b>write permission</b> – unlike the
 /// child-neutral store, which every creator may maintain.
 /// </summary>

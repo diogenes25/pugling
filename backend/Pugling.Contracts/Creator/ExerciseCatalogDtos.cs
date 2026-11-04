@@ -68,14 +68,10 @@ public record ClassTestUsage(int Id, string Title, int ChildId, string ChildName
 /// <param name="ClassTests">Class tests of own children (assigned directly or via a tag).</param>
 /// <param name="OtherLearnersCount">
 /// How many <b>different children</b> use the exercise whom the caller <b>does not supervise</b> – just the
-/// number, without names. Two reasons:
-/// <list type="bullet">
-/// <item>Without it the lists report "nowhere" while deletion fails with <c>409 exercise_in_use</c> –
-/// a contradiction the author cannot resolve (remark 14).</item>
-/// <item>For a <b>creator without own children</b> (a teacher, or an AI creator app), both
-/// lists are permanently empty. This number is then not the footnote but the only answer to their
-/// actual question: is my material being used?</item>
-/// </list>
+/// number, without names. Two reasons. Without it the lists report "nowhere" while deletion fails with
+/// <c>409 exercise_in_use</c> – a contradiction the author cannot resolve (remark 14). And for a
+/// <b>creator without own children</b> (a teacher, or an AI creator app), both lists are permanently empty:
+/// this number is then not the footnote but the only answer to their actual question – is my material being used?
 /// It counts <b>children</b>, not usage sites: three positions in the same child's plans
 /// are one user. The basis is the FK-relevant usages that also block deletion – a class test only
 /// collected via a tag does not prevent it and is therefore not counted.

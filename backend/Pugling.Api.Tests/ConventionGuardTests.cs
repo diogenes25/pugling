@@ -60,7 +60,7 @@ public class ConventionGuardTests
 
         // Self-protection: the scan must really have read the folder - there are plenty of controllers and
         // three-digit numbers of `ProblemWithCode` calls.
-        Assert.True(files.Length >= 30, $"Zu wenige Controller-Dateien gefunden ({files.Length}) – Pfad falsch?");
+        Assert.True(files.Length >= 30, $"Too few controller files found ({files.Length}) - wrong path?");
         Assert.True(blessedHits >= 100, $"Too few ProblemWithCode calls found ({blessedHits}) - the scan does not bite.");
         Assert.True(offenders.Count == 0,
             "Errors have to go through this.ProblemWithCode(ApiErrors.…) (RFC 7807 + a machine-readable code):\n"
@@ -97,10 +97,10 @@ public class ConventionGuardTests
             }
         }
 
-        Assert.True(files.Length >= 30, $"Zu wenige Controller-Dateien gefunden ({files.Length}) – Pfad falsch?");
+        Assert.True(files.Length >= 30, $"Too few controller files found ({files.Length}) - wrong path?");
         Assert.True(offenders.Count == 0,
-            "Ein Controller meldet einen fachlichen Konflikt nicht generisch, sondern über einen eigenen "
-            + "ApiErrors-Code (siehe ApiErrors.Conflict selbst - es bleibt der Fallback von ApiErrors.ForStatus):\n"
+            "A controller reports a domain conflict through its own ApiErrors code, not the generic one "
+            + "(see ApiErrors.Conflict itself - it stays the fallback of ApiErrors.ForStatus):\n"
             + string.Join("\n", offenders));
     }
 
@@ -154,13 +154,13 @@ public class ConventionGuardTests
                 .Where(n => !redListBysegment[group.Key].Contains(n))
                 .ToList();
             if (remaining.Count > 1)
-                offenders.Add($"{group.Key}: {string.Join(", ", remaining)} (nicht in der Rot-Liste)");
+                offenders.Add($"{group.Key}: {string.Join(", ", remaining)} (not on the red list)");
         }
 
-        Assert.True(observed.Count >= 150, $"Zu wenige Segment/Platzhalter-Paare gefunden ({observed.Count}) - die Reflexion greift nicht.");
+        Assert.True(observed.Count >= 150, $"Too few segment/placeholder pairs found ({observed.Count}) - the reflection does not bite.");
         Assert.True(offenders.Count == 0,
-            "Ein Sammlungs-Segment trägt mehr als einen Platzhalternamen, ohne in der Rot-Liste zu stehen "
-            + "(neuer Fund oder neue Route mit einem zweiten Namen):\n" + string.Join("\n", offenders));
+            "A collection segment carries more than one placeholder name without being on the red list "
+            + "(a new finding, or a new route with a second name):\n" + string.Join("\n", offenders));
     }
 
     // ─────────────────────────────────────────────────────── (g) unpaginated array GETs are pinned
@@ -201,9 +201,9 @@ public class ConventionGuardTests
             }
 
         Assert.True(offenders.Count == UnpaginatedArrayGetCount,
-            $"{offenders.Count} unpaginierte Array-GETs gefunden, {UnpaginatedArrayGetCount} gepinnt. "
-            + "Eine neue Zahl ist eine bewusste Zeile (README, \"Der Nenner ist die Falle\"), keine stille "
-            + "Anpassung:\n" + string.Join("\n", offenders.OrderBy(x => x)));
+            $"{offenders.Count} unpaginated array GETs found, {UnpaginatedArrayGetCount} pinned. "
+            + "A new number is a deliberate line (README, \"Der Nenner ist die Falle\"), not a silent "
+            + "adjustment:\n" + string.Join("\n", offenders.OrderBy(x => x)));
     }
 
     // ─────────────────────────────────────────────────────── (c) the contract lives in Pugling.Contracts
@@ -223,9 +223,9 @@ public class ConventionGuardTests
             .Select(g => $"{g.Key}: {string.Join(", ", g.Select(t => t.Namespace))}")
             .ToList();
 
-        Assert.True(types.Count >= 200, $"Zu wenige Vertragstypen gefunden ({types.Count}) – falsche Assembly?");
+        Assert.True(types.Count >= 200, $"Too few contract types found ({types.Count}) - wrong assembly?");
         Assert.True(duplicates.Count == 0,
-            "Gleichnamige Vertragstypen verschmelzen im OpenAPI-Schema:\n" + string.Join("\n", duplicates));
+            "Contract types with the same name merge into one OpenAPI schema:\n" + string.Join("\n", duplicates));
     }
 
     [Fact]
@@ -254,7 +254,7 @@ public class ConventionGuardTests
         Assert.True(checkedActions >= 100, $"Too few typed actions found ({checkedActions}) - the reflection does not bite.");
         Assert.True(contracts.GetTypes().Length > 0);
         Assert.True(offenders.Count == 0,
-            "Antworttypen gehören ins Vertrags-Projekt (nie EF-Entities):\n" + string.Join("\n", offenders));
+            "Response types belong in the contract project (never EF entities):\n" + string.Join("\n", offenders));
     }
 
     // ─────────────────────────────────────────────────────── (d) pass the CancellationToken on
@@ -451,11 +451,11 @@ public class ConventionGuardTests
         // that reads like a permitted leak (pattern: PatchSemanticsTests holds every switch against its table).
         var stale = SolutionFieldExceptions.Keys.Where(k => !reachable.Contains(k)).ToList();
         Assert.True(stale.Count == 0,
-            "Ausnahmen zeigen auf keine Action, die ein Lösungsfeld ungegated herausgibt (umbenannt oder erledigt?):\n"
+            "Exceptions that point at no action returning a solution field ungated (renamed or resolved?):\n"
             + string.Join("\n", stale));
 
         Assert.True(offenders.Count == 0,
-            "Ein Lösungsfeld darf kein Student-Token erreichen – die Action braucht [Authorize(Roles = …)] ohne Student:\n"
+            "A solution field must not reach a Student token - the action needs [Authorize(Roles = …)] without Student:\n"
             + string.Join("\n", offenders));
     }
 
@@ -721,7 +721,7 @@ public class ConventionGuardTests
                     if (tag == "para")
                     {
                         if (!closing && open == 0)
-                            offenders.Add($"{Path.GetFileName(file)}:{i + 1}: <para> ausserhalb von <summary>/<param>/<remarks> - der Text erscheint nicht im Dokument.");
+                            offenders.Add($"{Path.GetFileName(file)}:{i + 1}: <para> outside <summary>/<param>/<remarks> - the text never reaches the document.");
                         continue;
                     }
                     if (closing) { open = Math.Max(0, open - 1); continue; }
@@ -729,7 +729,7 @@ public class ConventionGuardTests
                     if (tag != "summary") continue;
                     summaries++;
                     if (++count > 1)
-                        offenders.Add($"{Path.GetFileName(file)}:{i + 1}: zweites <summary> im selben Doku-Block (ab Zeile {blockStart}) - der Compiler nimmt nur das erste.");
+                        offenders.Add($"{Path.GetFileName(file)}:{i + 1}: second <summary> in the same doc block (from line {blockStart}) - the compiler keeps only the first.");
                 }
             }
         }
@@ -790,6 +790,81 @@ public class ConventionGuardTests
     [Fact]
     public void Leerraum_Zwischen_Elementen_Nennt_Die_Zeile()
         => Assert.Equal([4], GluedElements(["namespace X;", "/// <summary>", "/// a list", "/// </list>", "/// <b>C</b> b", "/// </summary>"]));
+
+    /// <summary>
+    /// B-361: inside a <c>&lt;item&gt;</c> of a <c>&lt;list&gt;</c> the OpenAPI source generator drops inline elements and keeps
+    /// only their text - <c>&lt;c&gt;409 exercise_in_use&lt;/c&gt;</c> arrived as plain "409 exercise_in_use", a bold phrase as
+    /// plain words. The normalizer cannot restore markup that never reached it, so the form is refused in the source, for the
+    /// same files as the glue gate above.
+    /// <para>
+    /// <b>Limits.</b> A line scan over contiguous <c>///</c> runs. It also reports a controller's class summary, which does not
+    /// reach the document today - cheaper to keep one rule for every file than to guess which block the generator reads.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void Listenpunkte_Tragen_Keine_Inline_Elemente()
+    {
+        var root = Path.Combine(RepoRoot(), "backend");
+        var files = Directory.GetFiles(Path.Combine(root, "Pugling.Contracts"), "*.cs", SearchOption.AllDirectories)
+            .Concat(Directory.GetFiles(Path.Combine(root, "Pugling.Api", "Controllers"), "*.cs", SearchOption.AllDirectories))
+            .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
+            .ToArray();
+
+        var offenders = files
+            .SelectMany(f => InlineInListItems(File.ReadAllLines(f)).Select(line => $"{Path.GetRelativePath(root, f)}:{line}"))
+            .ToList();
+
+        Assert.True(files.Length >= 40, $"Too few files found ({files.Length}) - wrong path?");
+        Assert.True(offenders.Count == 0,
+            "An inline element inside a list <item> - the OpenAPI generator keeps only its text (\"409 exercise_in_use\" "
+            + "without code formatting). Write the sentence as prose or drop the tag:\n"
+            + string.Join("\n", offenders));
+    }
+
+    // Self-test of the scan: each case names the change that turns it red.
+    [Theory]
+    [InlineData("/// <item>fails with <c>409</c></item>", 1)]                    // red if <c> is not an inline tag
+    [InlineData("/// <item>a <see cref=\"X\"/> b</item>", 1)]                     // red if self-closing references are not seen
+    [InlineData("/// <item>first line\n/// with <b>bold</b></item>", 1)]          // red if the item ends at the line break
+    [InlineData("/// </list>\n/// <b>Children</b> are counted", 0)]               // red if the scan starts inside an item
+    [InlineData("/// <item>a <c>x</c></item>\n/// <b>after</b>", 1)]              // red if a report skips the rest of its line
+    [InlineData("/// <item>plain text</item> <c>after</c>", 0)]                  // red if a closed item still counts
+    [InlineData("/// <item>never closed\nclass A {}\n/// <c>b</c>", 0)]       // red if an open item leaks into the next run
+    public void Inline_Element_Im_Listenpunkt_Wird_Erkannt(string source, int expected)
+        => Assert.Equal(expected, InlineInListItems(source.Split('\n')).Count());
+
+    // The message names the line: red if the line is the run's start or off by one.
+    [Fact]
+    public void Inline_Element_Im_Listenpunkt_Nennt_Die_Zeile()
+        => Assert.Equal([5], InlineInListItems(["namespace X;", "/// <summary>", "/// <list type=\"bullet\">", "/// <item>a",
+            "/// b <c>c</c></item>", "/// </list>", "/// </summary>"]));
+
+    /// <summary>Line numbers (1-based) where an inline element sits inside an open <c>&lt;item&gt;</c>.</summary>
+    private static IEnumerable<int> InlineInListItems(string[] lines)
+    {
+        var inItem = false;
+        for (var i = 0; i < lines.Length; i++)
+        {
+            var line = lines[i].TrimStart();
+            var reported = false;
+            if (!line.StartsWith("///", StringComparison.Ordinal))
+            {
+                inItem = false; // a run ended - an unclosed item must not reach the next declaration
+                continue;
+            }
+            foreach (Match m in Regex.Matches(line, @"<(/?)(item|b|c|i|em|strong|see|paramref|typeparamref|a)\b[^>]*>"))
+            {
+                if (m.Groups[2].Value == "item")
+                {
+                    inItem = m.Groups[1].Value.Length == 0;
+                    continue;
+                }
+                if (!inItem || m.Groups[1].Value.Length > 0 || reported) continue;
+                reported = true; // one report per line, but keep reading: a later </item> on it must still close the item
+                yield return i + 1;
+            }
+        }
+    }
 
     /// <summary>Line numbers (1-based) where an inline element follows another with only whitespace between.</summary>
     private static IEnumerable<int> GluedElements(string[] lines)

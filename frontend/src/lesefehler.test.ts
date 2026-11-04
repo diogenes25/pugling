@@ -7,7 +7,8 @@ import { describe, expect, it } from "vitest";
  * `message` und fallen nicht darunter.
  *
  * Ein halber Parser: erkannt wird die `&&`-Form (gezählt beim Bau: 29 Stellen, keine mehrzeilige). **Bekannte Lücke:** die
- * Ternär-Form `x.loading … ? „Lade…" : x.error ? <banner> : …` (21 Stellen) und Fehler unter einem nackten Namen (`error`,
+ * Ternär-Form `x.loading … ? „Lade…" : x.error ? <banner> : …` (mehrzeilig gezählt 22 Stellen), frühe Rückgaben mit Banner,
+ * die `error-box` der Arcade und Fehler unter einem nackten Namen (`error`,
  * auch für Anmeldefehler benutzt) sieht er nicht – sie trägt [B-369](../../docs/backlog/B-369-lesefehler-in-ternaer-form.md),
  * weil dort der Platzhalter vor dem Ausfall steht und „Erneut laden" ihn sonst gegen „Lade…" tauschte (B-216).
  * Rot, wenn ein Lesefehler in der `&&`-Form wieder als nacktes Banner entsteht.

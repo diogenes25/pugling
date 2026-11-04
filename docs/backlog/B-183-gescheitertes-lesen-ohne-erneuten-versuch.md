@@ -12,6 +12,7 @@ quelle: B-172, Entscheidung 5
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-04"
 entgangen_bei: []
 ---
 
@@ -109,3 +110,4 @@ E2E-Gesamtlauf.
   danach 10 347 B gegen 10 365 B vorher. **Zähler Teil 2: 2.**
 - **2026-11-03** — E2E-Gesamtlauf nach dem Review **rot**: 3 failed, 106 passed – drei Specs suchten den alten Präfix („Fächer:", „Kinder:") des Banners (`fachlehrer-faecher-fallen-aus`, `optionsliste-faellt-aus`, `plan-kinderliste-faellt-aus`). Auf den neuen Satz umgestellt (dieselbe Aussage: der Ausfall ist sichtbar). Dabei selbst gefunden: `lehrbuch-units-laden-noch.spec.ts:60` sicherte zu, dass **kein** „Units: …" erscheint – mit dem neuen Text immer wahr, also leer; auf den Satz des Bausteins umgestellt. Die vier Specs danach **4 passed** (zählt: Tests geändert). **Zähler Teil 2: 3.**
 - **2026-11-03** — Abnahme Lauf R, Teil 2: Vitest **638/638**, `tsc -b` sauber, E2E-Gesamtlauf **109 passed** (`exit=0`, nach dem letzten Edit). Rollengang: Vater maschinell – `lesefehler-erneut-laden.spec.ts` schießt die Fächer im Katalog ab und holt sie mit „Erneut laden" zurück, ohne Neuladen der Seite; die drei Ausfall-Specs (Fachlehrer, Optionsliste, Plan) sehen den neuen Satz im echten Browser. Creator (Katalog, Lehrwerke) über dieselben Seiten, Sohn Regressionszeuge (Arcade unberührt, B-369). Umfang ausdrücklich: die `&&`-Form; der Rest in B-369. **Abgenommen**, Commit siehe Protokoll ([Lauf R](../pm-sitzung-2026-11-03-nacht.md)).
+- **2026-11-04** — Nachschau in Lauf S, Teil 1 (frischer `frontend-reviewer`, `git show 3ea3b1d`, read-only). **Entgangen:** das Inventar der Ternär-Form (21 statt mehrzeilig 22, ohne frühe Rückgaben und sechs Arcade-Stellen) – [B-370](B-370-zwei-behauptungen-aus-lauf-r-teil-2.md). Ohne Befund nachgerechnet: nackte `&&`-Banner über `66ff94d` erwartet 29, gemessen 29; neue `<ListenAusfall` erwartet 29, gemessen 29; an allen 29 Stellen ruft der Knopf das `reload` derselben `useAsync`-Instanz, und `schluessel` entspricht der Dep-Liste; keine Stelle sitzt in einem Zweig, den `loading` aushängt. 🟢 ohne Zählung: der Ist-Stand nennt „sieben Dateien“ – vor dem Commit waren es 4 Dateien mit 6 Einsätzen (sieben nur mit Kommentaren und CSS); die Wächter-Lücken stehen jetzt in B-369.

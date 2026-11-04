@@ -719,10 +719,10 @@ export function WizardTrefferbereich({
           {gescheitert ? "Suche gescheitert" : zeilenVeraltet ? "Suche läuft…" : `${treffer.length} passende Übungen`}
         </span>
         {/* `zeilenVeraltet` muss am Knopf mit, nicht nur am Kästchen (B-169): `laedt` deckt das
-            Ladefenster, aber NICHT den Fehlerzweig. Scheitert die Abfrage, bleibt `data` die alte Seite,
-            `loading` fällt auf `false`, und der Effekt auf `[exercises.data]` läuft nie — der Knopf wäre
-            wieder bedienbar und wählte die Ids der veralteten Liste. Es ist derselbe Schlüsselvergleich,
-            kein zweites Gate: eine Wahrheit, an drei Steuerelementen. */}
+            Ladefenster, aber NICHT den Fehlerzweig. Scheitert die Abfrage, bleibt `data` die alte Seite und
+            `loading` fällt auf `false` — ohne `zeilenVeraltet` wäre der Knopf wieder bedienbar und wählte die
+            Ids der veralteten Liste. `exercises.stale` bleibt in dem Fall wahr, weil die Deps der Daten nur bei
+            Erfolg nachziehen (B-164). Eine Wahrheit, an drei Steuerelementen, kein zweites Gate. */}
         {treffer.length > 0 && (
           <button type="button" className="btn ghost inline-btn" style={{ marginLeft: "auto" }}
             disabled={selectAllBusy || laedt || zeilenVeraltet} onClick={onSelectAll}>

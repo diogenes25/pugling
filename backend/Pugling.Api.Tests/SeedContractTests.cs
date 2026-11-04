@@ -77,8 +77,8 @@ public class SeedContractTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         // Self-protection: if the seed did not run (or only halfway), the assurance above would hold by
         // accident, and every test building on seeded content would fail somewhere else.
         Assert.True(await db.Subjects.CountAsync() >= 3, "Fewer than three seeded subjects - did SeedCatalog run?");
-        Assert.True(await db.Vocabularies.CountAsync() >= 10, "Zu wenige geseedete Vokabeln – lief SeedVocabulary?");
-        Assert.True(await db.StudyPlans.AnyAsync(), "Kein geseedeter Lehrplan – lief SeedDemoPlan?");
+        Assert.True(await db.Vocabularies.CountAsync() >= 10, "Too few seeded vocabularies - did SeedVocabulary run?");
+        Assert.True(await db.StudyPlans.AnyAsync(), "No seeded study plan - did SeedDemoPlan run?");
     }
 
     /// <summary>

@@ -115,7 +115,7 @@ public class SchemaGuardTests
 
         // Self-protection: if the reflection does not bite, the set would be empty and the test would pass
         // vacuously - and on top of that would not notice that the one intended default is missing.
-        Assert.True(tables.Count >= 55, $"Zu wenige Tabellen im relationalen Modell ({tables.Count}).");
+        Assert.True(tables.Count >= 55, $"Too few tables in the relational model ({tables.Count}).");
 
         Assert.Equal(erlaubt.Keys.OrderBy(n => n, StringComparer.Ordinal), mitDefault);
     }
@@ -159,7 +159,7 @@ public class SchemaGuardTests
         }
 
         // Self-protection: if the reflection finds no enums, the test would pass vacuously.
-        Assert.True(alleEnums.Count >= 30, $"Zu wenige Enum-Properties gefunden ({alleEnums.Count}).");
+        Assert.True(alleEnums.Count >= 30, $"Too few enum properties found ({alleEnums.Count}).");
 
         Assert.True(alsZahl.Count == 0,
             "These enum columns sit in the DB as numbers. Either the convention does not bite, or they "
@@ -503,7 +503,7 @@ public class SchemaGuardTests
             }
 
         // Self-protection: if the reflection finds no string columns, the test would pass vacuously.
-        Assert.True(alleStrings.Count >= 100, $"Zu wenige String-Spalten gefunden ({alleStrings.Count}).");
+        Assert.True(alleStrings.Count >= 100, $"Too few string columns found ({alleStrings.Count}).");
 
         Assert.True(treffer.Count == 0,
             "These string columns promise a time value by their name. Use a real type "
@@ -542,7 +542,7 @@ public class SchemaGuardTests
 
         // Self-protection: if the reflection does not bite, the set would be empty - and the comparison would
         // wrongly report "all three are missing" instead of "the test is broken".
-        Assert.True(entities.Count >= 55, $"Zu wenige Entity-Typen im Modell ({entities.Count}).");
+        Assert.True(entities.Count >= 55, $"Too few entity types in the model ({entities.Count}).");
 
         // The entity name as the key instead of the table name: E11 pulls table names onto the DbSet names, and
         // this guard checks an invariant, not the naming.

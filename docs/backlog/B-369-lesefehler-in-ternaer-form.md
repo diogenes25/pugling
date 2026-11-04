@@ -21,13 +21,20 @@ wartet_auf: ""
 Abgeteilt von [B-183](B-183-gescheitertes-lesen-ohne-erneuten-versuch.md) in Lauf R, Teil 2. B-183 hat die 29 Lesefehler in der
 `&&`-Form auf `ListenAusfall` umgestellt; der `frontend-reviewer` fand **weitere** in einer Form, die die Zählung nicht sah:
 
-- **21 Stellen im Vater-Web in Ternär-Form** `x.loading && x.data === null ? „Lade…" : x.error ? <div className="banner err">` –
+- **22 Stellen im Vater-Web in Ternär-Form** `x.loading && x.data === null ? „Lade…" : x.error ? <div className="banner err">` –
   `VaterClassTests.tsx:30/116/194/256`, `VaterShop.tsx:97/255/355/399/425/445`, `VaterRewards.tsx:45/118/203`,
   `VaterDashboard.tsx:51/76`, `VaterKonto.tsx:24/64`, `VaterPlaene.tsx:74`, `VaterVocab.tsx:305`, `VaterZiele.tsx:216`,
-  `VaterAnmerkungen.tsx:147` (selbst per Regex nachgezählt).
+  `VaterAnmerkungen.tsx:147`, `PlanPositions.tsx:53` (dort steht das Banner eine Zeile unter `positions.error ? (` – die
+  zeilenweise Regex sah es nicht; mehrzeilig nachgezählt in der Nachschau von Lauf S).
+- **Frühe Rückgabe mit Banner:** `PlanPositions.tsx:738`, `VaterPlanDetail.tsx:32`; dazu `MediaPickers.tsx:139` (Suchfehler über
+  `StatusBanner`, ohne `reload`).
 - **Drei Stellen unter nacktem Namen:** `CatalogAdmin.tsx:179` (`categories.error` als Prop, ohne `reload`/`loading`),
   `ExercisePreviewModal.tsx:116`, `VaterProfil.tsx:56`.
-- **Die Sohn-Arcade:** `SohnKonto.tsx:29`, `SohnShop.tsx:188` – `ListenAusfall` ist fest deutsch, die Arcade läuft zweisprachig.
+- **Die Sohn-Arcade** (mindestens acht): `SohnKonto.tsx:29`, `SohnShop.tsx:188`, die `error-box` in `SohnHome.tsx:30/64`,
+  `SohnProgress.tsx:16/30`, `SohnInterests.tsx:145` und `SohnSkins.tsx:64` (`banner err` unter `loadError`) – `ListenAusfall` ist
+  fest deutsch, die Arcade läuft zweisprachig.
+- **Lücken des Wächters** (`src/lesefehler.test.ts`, Nachschau Lauf S, 🟢): er sieht nur `{x.error && …`; durch rutschen dagegen
+  `{!x.loading && x.error && …}`, `{x.error != null && …}`, `<span className="banner err">` und `className="err banner"`.
 
 **Warum nicht mechanisch in B-183:** In der Ternär-Form steht der Platzhalter **vor** dem Ausfall. Nach einer gescheiterten
 ersten Ladung würde „Erneut laden" `loading` setzen und den Kasten samt Knopf gegen „Lade…" tauschen – der Fokus fiele unter dem

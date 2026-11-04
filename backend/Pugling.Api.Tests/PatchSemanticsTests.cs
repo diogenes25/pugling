@@ -423,7 +423,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
         var belegt = Faelle.Select(f => f.UpdateDto.Name).ToHashSet(StringComparer.Ordinal);
 
         // Self-protection: if the reflection does not bite, the check would be vacuous.
-        Assert.True(vertrag.Count >= 20, $"Zu wenige Update-DTOs gefunden ({vertrag.Count}) – falsche Assembly?");
+        Assert.True(vertrag.Count >= 20, $"Too few update DTOs found ({vertrag.Count}) - wrong assembly?");
         Assert.True(belegt.All(vertrag.Contains),
             "The case table names DTOs that do not (or no longer) exist in the contract:\n"
             + string.Join("\n", belegt.Except(vertrag)));

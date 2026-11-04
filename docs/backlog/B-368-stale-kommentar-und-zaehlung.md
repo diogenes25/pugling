@@ -12,6 +12,7 @@ quelle: Nachschau zu Lauf R, Teil 1 in Lauf R, Teil 2 (docs/pm-sitzung-2026-11-0
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-04"
 entgangen_bei: [B-164]
 wartet_auf: ""
 ---
@@ -56,3 +57,4 @@ Zwei Texte, die nicht mehr stimmen, und ein ungeprüfter Übergang.
   selben Sprint gebaut (Freigabe 3). Neuer Fall grün; Mutante „Merker statt Vergleich" **1 failed** – nur am neuen Fall (er
   trägt genau diese Lücke). Kommentar in `PlanPositions.tsx` und Zahl in B-164 berichtigt.
 - **2026-11-03** — Abnahme Lauf R, Teil 2: Vitest **638/638**, `tsc -b` sauber, E2E-Gesamtlauf **109 passed** (`exit=0`, nach dem letzten Edit). Rollengang: der Entwickler ist die Rolle (Kommentar, Zahl, Hook-Fall); Vater über die Ladefenster-Specs im Gesamtlauf. **Abgenommen**, Commit siehe Protokoll ([Lauf R](../pm-sitzung-2026-11-03-nacht.md)).
+- **2026-11-04** — Nachschau in Lauf S, Teil 1 (frischer `frontend-reviewer`, `git show 3ea3b1d`, read-only). **Entgangen:** AK 2 galt nur für `PlanPositions.tsx`; der Zwilling `VaterWizard.tsx:721` nannte weiter den entfernten Effekt – [B-370](B-370-zwei-behauptungen-aus-lauf-r-teil-2.md). Ohne Befund nachgerechnet: `useAsync`-Aufrufstellen erwartet 113, gemessen 113; der Fall A→B→A in `useAsync.test.tsx` wird rot unter der Mutante „Merker statt Vergleich“.
