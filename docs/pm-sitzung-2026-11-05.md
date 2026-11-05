@@ -245,3 +245,45 @@ Platzes um die gelöschte Zeile nicht ein (Test geändert, Probe wiederholt, **Z
 
 **Abnahme:** Creator – die volle Suite fährt beide Wege und die Gegenprobe im echten Browser (Rollengang als E2E). Vater und Sohn:
 Regressionszeugen, ihre Specs grün, kein Pfad von ihnen berührt.
+
+### Retrospektive (Sprint 5)
+
+**Nachschau:** Lauf U, Sprint 4 (`f4cf656`, B-329) per frischem `pugling-reviewer`, der den Commit selbst per `git archive` gebaut
+und getestet hat (1085/1085); `nachgeschaut: 2026-11-05` an B-329. **Entgangen (🟢):** zwei der vier Stellen, an denen AK 1 „Id 0
+bleibt `validation_error`" behauptet, haben keinen Test → [B-388](backlog/B-388-id-null-faelle-ohne-test.md). Außerhalb des Diffs:
+Birkenbihl nimmt eine unbekannte Id still an → [B-387](backlog/B-387-birkenbihl-speichert-unbekannte-vokabel-id.md); Leerzeichen-
+Grundform → [B-389](backlog/B-389-leerzeichen-grundform-meldet-invalid-reference.md). Index: Nachgeschaut 320 von 321.
+**Limit 2 greift nicht:** die Entgleitung liegt im Increment von Lauf U, nicht von Lauf V.
+
+**Was durchkam:** dieselbe Form wie B-381/B-385, diesmal im Test statt im Bau – eine Regel für mehrere Stellen, belegt an einem Teil
+davon. (BK) hätte es gefangen, wenn die Tabelle je *Stelle* statt je *Absender* verlangt würde; das ist eine Schärfung desselben
+Vorschlags, kein neuer.
+
+**Eigener Fund in diesem Sprint, ohne Folgen:** zwei Mutanten zu B-386 kompilierten nicht (`CS0162`, Warnungen sind Fehler), und
+`dotnet test --no-build` lief gegen die Assembly des vorigen Mutanten – die Ausgabe sah aus wie zwei gültige rote Proben. Bemerkt an
+der identischen Fehlerzeile, beide wiederholt. Verwandt mit [[wiederherstellung-braucht-neue-zeit]].
+
+**Vorschlag (nicht gelandet, Freigabe 3):** (BL) ein kleines Proben-Skript unter `.claude/scripts/`, das Mutant anwenden → bauen →
+**bei Build-Fehler abbrechen** → gefilterten Test laufen lassen → zurückspielen und neu bauen in einem Schritt erledigt. Ein Tor im
+weiteren Sinn, darum nur Vorschlag.
+
+### Sprint 6
+
+**Sprint-Ziel (Creator):** Keine Übersetzungsübung speichert mehr einen Verweis in den Vokabelspeicher, den es nicht gibt – und keine
+Vokabel verschwindet unter einer Übersetzung weg.
+**Umfang:** [B-386](backlog/B-386-uebersetzung-speichert-unbekannte-vokabel-id.md) (S, `Defekt`, im Lauf gegrillt). Birkenbihl
+([B-387](backlog/B-387-birkenbihl-speichert-unbekannte-vokabel-id.md)) bleibt draußen: in der Retro von Sprint 5 gefunden, eigene
+Story, damit der Sprint nicht wächst.
+**Entwickler-Brief:** Übersetzung prüft `vocabularyId` wie die Vokabelübung; die Löschsperre und `usage` kennen Übersetzungen (sonst
+macht die Prüfung aus einem erlaubten Löschen eine nicht mehr speicherbare Übung). Testweg: Integrationsfälle, Gegenprobe über eine
+fremde Id im Satztext.
+
+**Umgesetzt:** `TranslationController.ValidateConfigAsync`, `VocabularyStoreController.ReferencingExercisesAsync` + Doku,
+`VocabUsage`-Vertragskommentar, `docs/uebergabe-vokabeln.md`; zwei Integrationsfälle.
+**Verifikation:** vier rote Proben je in eigener Zeile (zwei davon wiederholt, weil der erste Mutant nicht kompilierte – siehe
+Retro Sprint 5); volle Suite 1087/1087; `dotnet format` ohne Befund an berührten Dateien (ein alter WHITESPACE-Fund in
+`ExerciseCatalogController.cs`, nicht berührt).
+**Review** `pugling-reviewer`: kein 🔴, ein 🟡 nur Text (Vertragskommentar), drei 🟢 – **Zähler Sprint 6: 0 von 5**.
+
+**Abnahme:** Creator – sechs E2E-Specs über Übersetzung und Vokabelspeicher, 8 passed (Rollengang als E2E). Vater und Sohn:
+Regressionszeugen, Suite grün, der Spielweg liest die Id nicht.

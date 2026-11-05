@@ -369,7 +369,10 @@ public class VocabularyStoreController(PuglingDbContext db, VocabularyStoreServi
         return (UpdateStatus.Ok, vocab, null);
     }
 
-    /// <summary>Deletes a vocabulary entry. Not possible while it is the base form of other entries.</summary>
+    /// <summary>
+    /// Deletes a vocabulary entry. Not possible while it is the base form of other entries or while an exercise (vocabulary
+    /// item, cloze gap, translation pair) references it - see <c>usage</c>.
+    /// </summary>
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -393,7 +396,8 @@ public class VocabularyStoreController(PuglingDbContext db, VocabularyStoreServi
 
     /// <summary>
     /// Which exercises reference the vocabulary entry – vocabulary exercises via their <see cref="ExerciseItem"/> rows (by id),
-    /// cloze texts via <see cref="Gap.VocabKey"/> in the config. Basis for the delete protection and the author view.
+    /// cloze texts via <see cref="Gap.VocabKey"/>, translations via <see cref="TranslationItem.VocabularyId"/> in the config.
+    /// Basis for the delete protection and the author view.
     /// </summary>
     [HttpGet("{id:int}/usage")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -406,7 +410,7 @@ public class VocabularyStoreController(PuglingDbContext db, VocabularyStoreServi
 
     /// <summary>
     /// Finds referencing exercises: vocabulary exercises via the <see cref="ExerciseItem"/> table (by vocabulary id),
-    /// cloze texts still by key in the ConfigJson (SQL pre-filter + precise JSON check).
+    /// cloze texts by key and translations by id in the ConfigJson (SQL pre-filter + precise JSON check).
     /// </summary>
     private async Task<List<VocabUsage>> ReferencingExercisesAsync(int id, string key, CancellationToken ct)
     {
@@ -434,6 +438,18 @@ public class VocabularyStoreController(PuglingDbContext db, VocabularyStoreServi
         foreach (var e in clozeCandidates)
         {
             var referenced = JsonSerializer.Deserialize<ClozeConfig>(e.ConfigJson, JsonOptions)?.Gaps.Any(g => g.VocabKey == key) ?? false;
+            if (referenced)
+                used.Add(new VocabUsage(e.Id, e.Title, e.Type.ToString(), e.SeriesUnitId, e.SeriesUnit?.Series?.SubjectId));
+        }
+        // Translations: an id reference in the ConfigJson. Without it, deleting the entry would leave a dead id that the
+        // editor sends back unchanged - and the exercise could no longer be saved (B-386).
+        var idText = id.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var translationCandidates = await db.Exercises.AsNoTracking().Include(e => e.SeriesUnit!).ThenInclude(u => u.Series!)
+            .Where(e => e.Type == ExerciseTypeKeys.Translation && e.ConfigJson.Contains(idText))
+            .ToListAsync(ct);
+        foreach (var e in translationCandidates)
+        {
+            var referenced = JsonSerializer.Deserialize<TranslationConfig>(e.ConfigJson, JsonOptions)?.Items.Any(i => i.VocabularyId == id) ?? false;
             if (referenced)
                 used.Add(new VocabUsage(e.Id, e.Title, e.Type.ToString(), e.SeriesUnitId, e.SeriesUnit?.Series?.SubjectId));
         }

@@ -119,7 +119,8 @@ Kind-Plan zuweisen (die Kette „globale Übung → individueller Lehrplan").
   werden entfernt. `baseFormsOnly` schließt flektierte Formen aus.
 - **Validierung + Usage:** Anlegen/Ändern einer Vokabelübung prüft referenzierte `vocabularyId`s (400 bei
   unbekannt). Lückentext-Lücken prüfen weiter `vocabKey`s. `GET learn/vocabulary/{id}/usage` listet
-  referenzierende Vokabelübungen über `ExerciseItems`; Löschen einer referenzierten Vokabel → 409.
+  referenzierende Vokabelübungen über `ExerciseItems`, Lückentexte über `vocabKey` und Übersetzungen über
+  `vocabularyId` in der Config (B-386); Löschen einer referenzierten Vokabel → 409.
 
 ## Kindzentrierter Vokabel-Lernstand
 

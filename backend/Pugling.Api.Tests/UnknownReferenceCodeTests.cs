@@ -91,6 +91,40 @@ public class UnknownReferenceCodeTests(PuglingWebAppFactory factory) : IClassFix
         await AssertProblemAsync(await creator.PatchAsJsonAsync($"{items}/{itemId}", new { vocabularyId = Unknown }), "invalid_reference");
     }
 
+    private static object Translation(int? vocabularyId) => new
+    {
+        title = TestApi.UniqueName("Referenz-Übersetzung"),
+        orderIndex = 1,
+        rewardPoints = 10,
+        config = new
+        {
+            sourceLang = "de",
+            targetLang = "en",
+            items = new[] { new { source = "Der Baum ist grün.", target = "The tree is green.", vocabularyId } },
+        },
+    };
+
+    /// <summary>
+    /// B-386: a translation pair with a set <c>vocabularyId</c> skips the store, so an unknown id used to be saved silently
+    /// and left the pair unlinked. Red if the translation validator stops checking the id on create or on replace; the
+    /// existing id is the counter-check that a real link still saves.
+    /// </summary>
+    [Fact]
+    public async Task Unbekannte_Vokabel_an_einem_Uebersetzungspaar_ist_eine_unbekannte_Referenz()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var unit = await UnitPathAsync(creator);
+        var (vocabId, _) = await TestApi.CreateStoreVocabAsync(creator, TestApi.UniqueName("Baum"), "tree", "de", "en");
+
+        await AssertProblemAsync(await creator.PostAsJsonAsync($"{unit}/translation", Translation(Unknown)), "invalid_reference");
+        await AssertProblemAsync(await creator.PostAsJsonAsync($"{unit}/translation", Translation(0)), "validation_error");
+
+        var created = await creator.PostAsJsonAsync($"{unit}/translation", Translation(vocabId));
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var exerciseId = await TestApi.IdAsync(created);
+        await AssertProblemAsync(await creator.PutAsJsonAsync($"{unit}/translation/{exerciseId}", Translation(Unknown)), "invalid_reference");
+    }
+
     [Fact]
     public async Task Unbekannter_Schluessel_in_einer_Luecke_ist_eine_unbekannte_Referenz()
     {

@@ -127,6 +127,46 @@ public class CatalogReadDeleteTests(PuglingWebAppFactory factory) : IClassFixtur
         Assert.Equal(HttpStatusCode.NotFound, (await creator.DeleteAsync($"/api/v1/creator/vocabulary/{unbenutztId}")).StatusCode);
     }
 
+    /// <summary>
+    /// B-386: a translation links its pairs by id in the config, not in the item table. Red if the usage lookup ignores
+    /// translations - then the entry could be deleted, and the editor would send the dead id back on the next save.
+    /// Counter-check: the id of an unrelated entry stands in the sentence text, so the SQL pre-filter matches it - only the
+    /// exact id comparison keeps it deletable. Red if the pre-filter alone decides.
+    /// </summary>
+    [Fact]
+    public async Task Store_Vokabel_An_Einer_Uebersetzung_Ist_Benutzt()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var (verlinktId, _) = await TestApi.CreateStoreVocabAsync(creator, Eindeutig("Brücke"), "bridge", "de", "en");
+        var (fremdId, _) = await TestApi.CreateStoreVocabAsync(creator, Eindeutig("Fluss"), "river", "de", "en");
+        var subjectId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = TestApi.UniqueName("Übersetzungs-Fach") }));
+        var (seriesId, unitId) = await TestApi.CreateSeriesAndUnitAsync(creator, subjectId);
+        var exerciseId = await TestApi.IdAsync(await creator.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{unitId}/translation", new
+            {
+                title = TestApi.UniqueName("Brücken-Übersetzung"),
+                orderIndex = 1,
+                rewardPoints = 10,
+                config = new
+                {
+                    sourceLang = "de",
+                    targetLang = "en",
+                    items = new[] { new { source = $"Die Brücke Nr. {fremdId} ist alt.", target = "The bridge is old.", vocabularyId = (int?)verlinktId } },
+                },
+            }));
+
+        var usage = await creator.GetFromJsonAsync<List<JsonElement>>($"/api/v1/creator/vocabulary/{verlinktId}/usage");
+        Assert.Contains(usage!, u => u.GetProperty("exerciseId").GetInt32() == exerciseId);
+
+        var verweigert = await creator.DeleteAsync($"/api/v1/creator/vocabulary/{verlinktId}");
+        Assert.Equal(HttpStatusCode.Conflict, verweigert.StatusCode);
+        Assert.Equal("vocabulary_in_use",
+            (await verweigert.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+
+        Assert.Equal(HttpStatusCode.NoContent, (await creator.DeleteAsync($"/api/v1/creator/vocabulary/{fremdId}")).StatusCode);
+    }
+
     [Fact]
     public async Task Vokabel_Item_Einzeln_Lesen()
     {

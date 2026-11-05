@@ -92,3 +92,4 @@ auch wenn die Zeile dabei verschwindet oder wegsortiert wird.
   1 von 5.** 🟢 Prop-Doku von `onMeldung` sprach noch von „ein Prop", ergänzt (nur Text).
 - **2026-11-05** — **abgenommen.** Playwright 113 passed (volle Suite = Rollengang aus der Creator-Rolle), Vitest 648/648, `tsc -b`
   sauber. Commit: siehe nächster Eintrag.
+- **2026-11-05** — Commit `b27dc51`.

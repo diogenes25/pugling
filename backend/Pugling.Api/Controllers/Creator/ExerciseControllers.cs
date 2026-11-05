@@ -417,12 +417,24 @@ public class TranslationController(PuglingDbContext db, ExerciseTypeRegistry reg
     /// <inheritdoc/>
     protected override string TypeKey => ExerciseTypeKeys.Translation;
 
-    /// <summary>Requires the language codes as soon as pairs without <see cref="TranslationItem.VocabularyId"/> need to be created.</summary>
-    protected override Task<RequestProblem?> ValidateConfigAsync(int seriesId, TranslationConfig config, CancellationToken ct = default) =>
-        Task.FromResult<RequestProblem?>(config.Items.Any(i => i.VocabularyId is null)
-            && (string.IsNullOrWhiteSpace(config.SourceLang) || string.IsNullOrWhiteSpace(config.TargetLang))
-            ? RequestProblem.Invalid("sourceLang and targetLang are required to create translation pairs in the store.")
-            : null);
+    /// <summary>
+    /// Requires the language codes as soon as pairs without <see cref="TranslationItem.VocabularyId"/> need to be created, and
+    /// that every set id names an existing store entry - a set id skips the store, so an unknown one would leave the pair
+    /// unlinked and its <c>_self</c> link dangling (B-386).
+    /// </summary>
+    protected override async Task<RequestProblem?> ValidateConfigAsync(int seriesId, TranslationConfig config, CancellationToken ct = default)
+    {
+        if (config.Items.Any(i => i.VocabularyId is null)
+            && (string.IsNullOrWhiteSpace(config.SourceLang) || string.IsNullOrWhiteSpace(config.TargetLang)))
+            return RequestProblem.Invalid("sourceLang and targetLang are required to create translation pairs in the store.");
+        if (config.Items.Any(i => i.VocabularyId is <= 0))
+            return RequestProblem.Invalid("A translation pair's vocabularyId must be > 0 when set.");
+        var ids = config.Items.Where(i => i.VocabularyId is > 0).Select(i => i.VocabularyId!.Value).Distinct().ToList();
+        if (ids.Count == 0) return null;
+        var existing = await Db.Vocabularies.Where(v => ids.Contains(v.Id)).Select(v => v.Id).ToListAsync(ct);
+        var missing = ids.Except(existing).ToList();
+        return missing.Count == 0 ? null : RequestProblem.UnknownReference($"Unknown vocabulary item IDs: {string.Join(", ", missing)}");
+    }
 
     /// <summary>Creates each not-yet-linked pair in the store (or finds it) and links it by ID.</summary>
     protected override async Task NormalizeConfigAsync(int seriesId, TranslationConfig config, CancellationToken ct = default)
