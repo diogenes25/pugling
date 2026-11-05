@@ -167,6 +167,52 @@ public class CatalogReadDeleteTests(PuglingWebAppFactory factory) : IClassFixtur
         Assert.Equal(HttpStatusCode.NoContent, (await creator.DeleteAsync($"/api/v1/creator/vocabulary/{fremdId}")).StatusCode);
     }
 
+    /// <summary>
+    /// B-387: a Birkenbihl decoding links its words by id in the config, like a translation. Red if the usage lookup ignores
+    /// Birkenbihl. Counter-check as in B-386: an unrelated entry's id stands in the sentence text and must not lock it.
+    /// </summary>
+    [Fact]
+    public async Task Store_Vokabel_An_Einem_Birkenbihl_Wort_Ist_Benutzt()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var (verlinktId, _) = await TestApi.CreateStoreVocabAsync(creator, Eindeutig("bridge"), "Brücke", "en", "de");
+        var (fremdId, _) = await TestApi.CreateStoreVocabAsync(creator, Eindeutig("river"), "Fluss", "en", "de");
+        var subjectId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = TestApi.UniqueName("Birkenbihl-Fach") }));
+        var (seriesId, unitId) = await TestApi.CreateSeriesAndUnitAsync(creator, subjectId);
+        var exerciseId = await TestApi.IdAsync(await creator.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{unitId}/birkenbihl", new
+            {
+                title = TestApi.UniqueName("Brücken-Birkenbihl"),
+                orderIndex = 1,
+                rewardPoints = 10,
+                config = new
+                {
+                    learningLang = "en",
+                    nativeLang = "de",
+                    sentences = new[]
+                    {
+                        new
+                        {
+                            learningSentence = $"Bridge {fremdId}.",
+                            naturalTranslation = $"Brücke {fremdId}.",
+                            decoding = new[] { new { learningWord = "Bridge", gloss = "Brücke", vocabularyId = (int?)verlinktId } },
+                        },
+                    },
+                },
+            }));
+
+        var usage = await creator.GetFromJsonAsync<List<JsonElement>>($"/api/v1/creator/vocabulary/{verlinktId}/usage");
+        Assert.Contains(usage!, u => u.GetProperty("exerciseId").GetInt32() == exerciseId);
+
+        var verweigert = await creator.DeleteAsync($"/api/v1/creator/vocabulary/{verlinktId}");
+        Assert.Equal(HttpStatusCode.Conflict, verweigert.StatusCode);
+        Assert.Equal("vocabulary_in_use",
+            (await verweigert.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+
+        Assert.Equal(HttpStatusCode.NoContent, (await creator.DeleteAsync($"/api/v1/creator/vocabulary/{fremdId}")).StatusCode);
+    }
+
     [Fact]
     public async Task Vokabel_Item_Einzeln_Lesen()
     {

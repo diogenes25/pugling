@@ -371,7 +371,7 @@ public class VocabularyStoreController(PuglingDbContext db, VocabularyStoreServi
 
     /// <summary>
     /// Deletes a vocabulary entry. Not possible while it is the base form of other entries or while an exercise (vocabulary
-    /// item, cloze gap, translation pair) references it - see <c>usage</c>.
+    /// item, cloze gap, translation pair, decoded Birkenbihl word) references it - see <c>usage</c>.
     /// </summary>
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -396,7 +396,7 @@ public class VocabularyStoreController(PuglingDbContext db, VocabularyStoreServi
 
     /// <summary>
     /// Which exercises reference the vocabulary entry – vocabulary exercises via their <see cref="ExerciseItem"/> rows (by id),
-    /// cloze texts via <see cref="Gap.VocabKey"/>, translations via <see cref="TranslationItem.VocabularyId"/> in the config.
+    /// cloze texts via <see cref="Gap.VocabKey"/>, translations and Birkenbihl decodings via their <c>vocabularyId</c> in the config.
     /// Basis for the delete protection and the author view.
     /// </summary>
     [HttpGet("{id:int}/usage")]
@@ -441,20 +441,31 @@ public class VocabularyStoreController(PuglingDbContext db, VocabularyStoreServi
             if (referenced)
                 used.Add(new VocabUsage(e.Id, e.Title, e.Type.ToString(), e.SeriesUnitId, e.SeriesUnit?.Series?.SubjectId));
         }
-        // Translations: an id reference in the ConfigJson. Without it, deleting the entry would leave a dead id that the
-        // editor sends back unchanged - and the exercise could no longer be saved (B-386).
+        // Translations and Birkenbihl decodings: an id reference in the ConfigJson. Without it, deleting the entry would
+        // leave a dead id that a client sends back unchanged - and the exercise could no longer be saved (B-386, B-387).
+        // The text match only pre-filters; the deserialized config decides, so an id inside a sentence does not lock.
         var idText = id.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        var translationCandidates = await db.Exercises.AsNoTracking().Include(e => e.SeriesUnit!).ThenInclude(u => u.Series!)
-            .Where(e => e.Type == ExerciseTypeKeys.Translation && e.ConfigJson.Contains(idText))
+        var idCandidates = await db.Exercises.AsNoTracking().Include(e => e.SeriesUnit!).ThenInclude(u => u.Series!)
+            .Where(e => (e.Type == ExerciseTypeKeys.Translation || e.Type == ExerciseTypeKeys.Birkenbihl) && e.ConfigJson.Contains(idText))
             .ToListAsync(ct);
-        foreach (var e in translationCandidates)
+        foreach (var e in idCandidates)
         {
-            var referenced = JsonSerializer.Deserialize<TranslationConfig>(e.ConfigJson, JsonOptions)?.Items.Any(i => i.VocabularyId == id) ?? false;
-            if (referenced)
+            if (LinkedVocabularyIds(e).Contains(id))
                 used.Add(new VocabUsage(e.Id, e.Title, e.Type.ToString(), e.SeriesUnitId, e.SeriesUnit?.Series?.SubjectId));
         }
         return used;
     }
+
+    /// <summary>The store ids an exercise's config links by id; only the types that carry such a link return any.</summary>
+    private static IEnumerable<int?> LinkedVocabularyIds(Exercise e) => e.Type switch
+    {
+        ExerciseTypeKeys.Translation =>
+            JsonSerializer.Deserialize<TranslationConfig>(e.ConfigJson, JsonOptions)?.Items.Select(i => i.VocabularyId) ?? [],
+        ExerciseTypeKeys.Birkenbihl =>
+            JsonSerializer.Deserialize<BirkenbihlConfig>(e.ConfigJson, JsonOptions)?.Sentences
+                .SelectMany(s => s.Decoding).Select(w => w.VocabularyId) ?? [],
+        _ => [],
+    };
 
     // ---- Agent primitives: lookup (dedup) + batch create/append ------------------------------
 

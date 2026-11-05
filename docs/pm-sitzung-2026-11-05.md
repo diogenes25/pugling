@@ -336,3 +336,33 @@ einzigen Unit die ganze Tabelle verschwindet) → **Zähler 1 von 5**; zwei Komm
 
 **Retrospektive Sprint 7:** Die Tabelle je Handlung hat ihren Zweck erfüllt – sie stellte die Frage für Ändern und Löschen getrennt,
 an der B-385 vorbeiging. Kein neuer Mechanismus; (BM) bleibt Vorschlag, jetzt mit einer Messung dafür.
+
+### Sprint 8 — B-387 + B-388
+
+**Sprint-Ziel (Creator/KI-Agent):** Jede Vokabel-Referenz, die eine Übung beim Anlegen oder Ersetzen nennt, ist entweder gültig oder
+wird mit dem richtigen Code abgewiesen – und eine verlinkte Vokabel verschwindet nicht still aus dem Speicher.
+
+**Gebaut:** Die Existenzprüfung ist **ein** Helfer (`ExerciseControllerBase.VocabularyIdsProblemAsync`) für Vokabelübung, Übersetzung
+und Birkenbihl; Birkenbihl prüft damit `decoding[].vocabularyId` (B-387), die Verwendung im Speicher kennt Birkenbihl-Wörter. B-388
+ergänzt die zwei fehlenden Zusicherungen „Id 0 bleibt Formfehler".
+
+**Belege:** sechs rote Proben, je in ihrem eigenen Fall an der eigenen Zeile, alle mit Build-Prüfung im Proben-Skript (Vorschlag
+(BL) angewandt – ein Mutant, der nicht kompiliert, hätte den Lauf abgebrochen statt gegen die alte Assembly zu testen). Volle Suite
+1089/1089, Playwright 115 passed gegen ein frisch gestartetes Backend.
+
+**Review** (`pugling-reviewer`): kein 🔴/🟡, die Extraktion verhaltensgleich. 🟢 „Wort-`PATCH`" ist ein `PUT` (nur Text);
+`"decoding": null` endet schon vorher in einer 500 → [B-391](backlog/B-391-birkenbihl-decoding-null-ist-500.md). **Zähler 0 von 5.**
+
+**Retrospektive Sprint 8 — Nachschau:** Die Retro zu Sprint 7 hatte die Nachschau zu Sprint 6 (B-386) ausgelassen; beide jetzt nachgeholt.
+- **Sprint 7 (`e0fdd3b`, B-390)**, frischer `frontend-reviewer`: kein 🔴/🟡 – **nichts entgangen**, kein Limit 2.
+- **Sprint 6 (`28cb072`, B-386, Lauf V)**, frischer `pugling-reviewer`: **entgangen (🟢)** – AK 1 „Ändern mit `0`" ohne Test →
+  [B-393](backlog/B-393-uebersetzung-put-id-null-ohne-test.md). Daneben **älter** (🟡): der `PUT` legt neue Übersetzungspaare nie im
+  Speicher an, und die Oberfläche löst das bei jeder Textänderung eines Paars aus →
+  [B-392](backlog/B-392-uebersetzung-put-legt-paare-nicht-an.md). Increment von Lauf V, darum kein Limit 2 für Lauf W.
+
+**Was durchkam:** zum dritten Mal in diesem Tag „ein AK nennt zwei Wege, der Test trägt einen" (B-388 an B-329, B-393 an B-386). Die
+Verlauf-Zeile „AK n → Test" listete beim PUT nur die unbekannte Id und schrieb trotzdem „AK 1" daran.
+
+**Vorschlag (nicht gelandet, Freigabe 3):** (BN) Die Belegzeile je AK zerlegt ein AK in seine **Fälle** (Weg × Wert): „Anlegen/Ändern ×
+unbekannt/0" sind vier Zeilen, nicht eine. Ein AK mit „und"/„oder" bekommt so je Kombination eine Datei:Zeile oder ein ausdrückliches
+„nicht getestet, weil …". Kein Tor, darum nur Vorschlag.

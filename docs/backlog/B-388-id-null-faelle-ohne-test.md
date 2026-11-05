@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/backend, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/backend, rolle/creator]
 aliases: [Id 0 an Inline-Items und Item-PATCH ungetestet]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: XS
@@ -49,3 +49,9 @@ die Stelle `0` als unbekannte Referenz meldet.
 - **2026-11-05** — angelegt aus der Nachschau zu Lauf U, Sprint 4 (Lauf V, Retro Sprint 5; frischer `pugling-reviewer`,
   `git show f4cf656`, 🟢). Entgangen bei B-329: das AK behauptete die Unterscheidung, der Test trug sie nur an zwei von vier Stellen.
 - **2026-11-05** — ausformuliert und geschätzt in Lauf V.
+- **2026-11-05** — gebaut in Lauf W, Sprint 8 (mit B-387). AK 1 → `UnknownReferenceCodeTests.cs:67` (Inline-Item `0` →
+  `validation_error`), AK 2 → `:101` (Item-`PATCH` `0`). Rote Proben: Inline-Validator meldet `0` als `invalid_reference` → rot nur in
+  `:67`; der `PATCH` wählt den Code mit `>= 0` → rot nur in `:101`; je 1 von 18 im gefilterten Lauf, beide Mutanten kompiliert
+  (Build-Prüfung im Proben-Skript, Vorschlag (BL) angewandt).
+- **2026-11-05** — Review `pugling-reviewer` (gemeinsam mit B-387): kein Fund zu B-388.
+- **2026-11-05** — **abgenommen.** Volle Suite 1089/1089 (danach nur Kommentartext geändert); Rollengang Creator als E2E: volle Playwright-Suite 115 passed gegen ein Backend, das nach dem letzten Code-Edit startete. Birkenbihl- und Übersetzungs-Anlage im Browser (`uebungstypen.spec.ts`) und der Vokabelspeicher grün; Vater und Sohn unberührt (nur Creator-Schreibwege), ihre Specs in derselben Suite grün. Commit: siehe nächster Eintrag.

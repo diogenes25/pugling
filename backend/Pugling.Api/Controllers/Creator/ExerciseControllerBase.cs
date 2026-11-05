@@ -45,6 +45,24 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     }
 
     /// <summary>
+    /// Checks the store ids a config sets explicitly. A set id skips the store, so an unknown one would leave the entry
+    /// unlinked and its <c>_self</c> link dangling (B-386, B-387): <c>≤ 0</c> is malformed input (<c>validation_error</c>), an id
+    /// without a store entry an unknown reference (<c>invalid_reference</c>, B-329). <paramref name="owner"/> names the entry
+    /// in the message, e.g. "A translation pair's".
+    /// </summary>
+    protected async Task<RequestProblem?> VocabularyIdsProblemAsync(IEnumerable<int?> ids, string owner, CancellationToken ct)
+    {
+        var set = ids.OfType<int>().ToList();
+        if (set.Any(i => i <= 0))
+            return RequestProblem.Invalid($"{owner} vocabularyId must be > 0 when set.");
+        var distinct = set.Distinct().ToList();
+        if (distinct.Count == 0) return null;
+        var existing = await Db.Vocabularies.Where(v => distinct.Contains(v.Id)).Select(v => v.Id).ToListAsync(ct);
+        var missing = distinct.Except(existing).ToList();
+        return missing.Count == 0 ? null : RequestProblem.UnknownReference($"Unknown vocabulary item IDs: {string.Join(", ", missing)}");
+    }
+
+    /// <summary>
     /// Type-specific validation of the config on create/change. Default: none. Derived controllers
     /// override this to e.g. check store references (vocabulary keys); return value = the problem with its code (an
     /// unknown id or key is <c>invalid_reference</c>, anything else <c>validation_error</c>, B-329) or <c>null</c> if fine.

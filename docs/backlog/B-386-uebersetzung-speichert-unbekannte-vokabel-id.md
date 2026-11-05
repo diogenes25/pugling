@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-05.md#lauf-u
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-05"
 ---
 
 # B-386 · Eine Übersetzungsübung speichert eine unbekannte `vocabularyId` ohne Prüfung
@@ -85,3 +86,9 @@ Testweg: Integrationsfälle in `UnknownReferenceCodeTests` (AK 1/2) und neben de
   Vokabelübung. Das erneute Speichern mit bestehender Id deckt nur der Integrationsfall (Anlegen mit bestehender Id → `201`, derselbe
   Validator wie beim PUT), keine Spec im Browser. Vater und Sohn unberührt (Spielweg liest nur `Source`/`Target`). Commit: siehe nächster Eintrag.
 - **2026-11-05** — Commit `28cb072`.
+- **2026-11-05** — **Nachschau** (Lauf W, Retro Sprint 8; frischer `pugling-reviewer`, `git show 28cb072`, Stand per
+  `git archive` gebaut: 1087/1087). **Entgangen (🟢):** AK 1 „Ändern mit `0`" trägt kein Test – der `PUT` ist nur mit unbekannter
+  Id belegt → [B-393](B-393-uebersetzung-put-id-null-ohne-test.md). Daneben, **älter** als dieses Increment (🟡): der `PUT` legt neue
+  Paare nie im Speicher an, weil `Update` `NormalizeConfigAsync` nicht ruft → [B-392](B-392-uebersetzung-put-legt-paare-nicht-an.md).
+  Der Satz oben „löschgeschützt, bis Satz oder Übung sich ändern" verschweigt darum: ein bearbeitetes Paar bleibt danach
+  unverlinkt. 🟢 `docs/uebergabe-vokabeln.md` nannte `learn/…/usage` statt `creator/…/usage` – berichtigt (nur Text).

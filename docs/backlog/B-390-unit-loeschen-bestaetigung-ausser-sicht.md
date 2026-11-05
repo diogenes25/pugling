@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-385]
+nachgeschaut: "2026-11-05"
 ---
 
 # B-390 · „Unit … gelöscht." und „Gespeichert." einer Unit landen in einer langen Liste außer Sicht
@@ -76,3 +77,5 @@ ist – sonst sieht ein geglücktes Löschen aus wie nichts.
   🟢 die Vorbedingung des Löschfalls zog nur Unit- und Formularzeile ab, obwohl mit der einzigen Unit die ganze Tabelle verschwindet
   – jetzt wird die ganze Tabelle abgezogen (strenger), **Zähler Sprint 7: 1 von 5**; 🟢 `exact` am Knopf „Unit hinzufügen".
 - **2026-11-05** — **abgenommen.** Rollengang Creator als E2E: volle Playwright-Suite 115 passed (die zwei neuen Fälle dabei, `unit-anlegen-bleibt-im-bild.spec.ts` als Gegenprobe grün), Vitest 648/648, `tsc -b` sauber. Vater und Sohn unberührt (nur `/vater/lehrwerke`, Creator-Perspektive), ihre Specs in derselben Suite grün. Commit: siehe nächster Eintrag.
+- **2026-11-05** — Commit `e0fdd3b`.
+- **2026-11-05** — **Nachschau** (Lauf W, Retro Sprint 8; frischer `frontend-reviewer`, `git show e0fdd3b`): kein 🔴/🟡, nichts entgangen. 🟢 hingenommen: der Speicherfall prüft die Meldung, nicht den gespeicherten Namen (AK 2 verlangt nur die Meldung); zwei überlange Kommentarzeilen.

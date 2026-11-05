@@ -51,7 +51,7 @@ public record UpdateVocabularyDto(string? Version, string? SourceLanguage, strin
     string? BaseFormKey, string? BaseFormRelation, string? PronunciationAudioUrl, List<string>? Tags,
     List<string>? TranslationAlternatives = null, bool ClearTranslationAlternatives = false);
 
-/// <summary>An exercise that references this vocabulary entry (vocabulary item, cloze gap or translation pair).</summary>
+/// <summary>An exercise that references this vocabulary entry (vocabulary item, cloze gap, translation pair or decoded Birkenbihl word).</summary>
 public record VocabUsage(int ExerciseId, string Title, string Type, int SeriesUnitId, int? SubjectId);
 
 /// <summary>Request for the existence check: words (for text extraction) and/or keys (for ref validation).</summary>

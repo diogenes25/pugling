@@ -56,15 +56,8 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
             && (string.IsNullOrWhiteSpace(config.SourceLang) || string.IsNullOrWhiteSpace(config.TargetLang)))
             return RequestProblem.Invalid("sourceLang and targetLang are required to create inline vocabulary items in the store.");
 
-        if (config.Items.Any(i => i.VocabularyId is <= 0))
-            return RequestProblem.Invalid("An inline item's vocabularyId must be > 0 when set.");
-        var itemIds = config.Items.Where(i => i.VocabularyId is > 0).Select(i => i.VocabularyId!.Value).Distinct().ToList();
-        if (itemIds.Count > 0)
-        {
-            var existing = await Db.Vocabularies.Where(v => itemIds.Contains(v.Id)).Select(v => v.Id).ToListAsync(ct);
-            var missing = itemIds.Except(existing).ToList();
-            if (missing.Count > 0) return RequestProblem.UnknownReference($"Unknown vocabulary item IDs: {string.Join(", ", missing)}");
-        }
+        if (await VocabularyIdsProblemAsync(config.Items.Select(i => i.VocabularyId), "An inline item's", ct) is { } idProblem)
+            return idProblem;
         return await RepeatedWordAsync(config, ct) is { } repeated ? RequestProblem.Invalid(repeated) : null;
     }
 
@@ -427,13 +420,7 @@ public class TranslationController(PuglingDbContext db, ExerciseTypeRegistry reg
         if (config.Items.Any(i => i.VocabularyId is null)
             && (string.IsNullOrWhiteSpace(config.SourceLang) || string.IsNullOrWhiteSpace(config.TargetLang)))
             return RequestProblem.Invalid("sourceLang and targetLang are required to create translation pairs in the store.");
-        if (config.Items.Any(i => i.VocabularyId is <= 0))
-            return RequestProblem.Invalid("A translation pair's vocabularyId must be > 0 when set.");
-        var ids = config.Items.Where(i => i.VocabularyId is > 0).Select(i => i.VocabularyId!.Value).Distinct().ToList();
-        if (ids.Count == 0) return null;
-        var existing = await Db.Vocabularies.Where(v => ids.Contains(v.Id)).Select(v => v.Id).ToListAsync(ct);
-        var missing = ids.Except(existing).ToList();
-        return missing.Count == 0 ? null : RequestProblem.UnknownReference($"Unknown vocabulary item IDs: {string.Join(", ", missing)}");
+        return await VocabularyIdsProblemAsync(config.Items.Select(i => i.VocabularyId), "A translation pair's", ct);
     }
 
     /// <summary>Creates each not-yet-linked pair in the store (or finds it) and links it by ID.</summary>
@@ -476,6 +463,13 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
 {
     /// <inheritdoc/>
     protected override string TypeKey => ExerciseTypeKeys.Birkenbihl;
+
+    /// <summary>
+    /// Checks the store ids of decoded words on create and replace, like the word endpoint <c>PUT …/words/{wordId}</c> does (B-387). The language pair
+    /// is deliberately not checked here: changing the exercise's languages would otherwise turn every linked word into an error.
+    /// </summary>
+    protected override Task<RequestProblem?> ValidateConfigAsync(int seriesId, BirkenbihlConfig config, CancellationToken ct = default) =>
+        VocabularyIdsProblemAsync(config.Sentences.SelectMany(s => s.Decoding).Select(w => w.VocabularyId), "A decoded word's", ct);
 
     /// <summary>Adds the derived self-link <c>_self</c> per decoded word from its vocabulary ID (not persisted).</summary>
     protected override BirkenbihlConfig ConfigForResponse(Exercise exercise)

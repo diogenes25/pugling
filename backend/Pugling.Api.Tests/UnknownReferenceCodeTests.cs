@@ -63,6 +63,14 @@ public class UnknownReferenceCodeTests(PuglingWebAppFactory factory) : IClassFix
             targetLang = "de",
             items = new[] { new { vocabularyId = (int?)Unknown } },
         })), "invalid_reference");
+        // B-388: an id of 0 stays malformed input here too. Red if the inline validator reports it as an unknown reference.
+        await AssertProblemAsync(await creator.PostAsJsonAsync($"{unit}/vocabulary", Vocabulary(new
+        {
+            direction = "front-to-back",
+            sourceLang = "en",
+            targetLang = "de",
+            items = new[] { new { vocabularyId = (int?)0 } },
+        })), "validation_error");
     }
 
     /// <summary>
@@ -89,6 +97,8 @@ public class UnknownReferenceCodeTests(PuglingWebAppFactory factory) : IClassFix
 
         var itemId = (await creator.GetFromJsonAsync<JsonElement>(items)).EnumerateArray().First().GetProperty("id").GetInt32();
         await AssertProblemAsync(await creator.PatchAsJsonAsync($"{items}/{itemId}", new { vocabularyId = Unknown }), "invalid_reference");
+        // B-388: red if the item PATCH reports an id of 0 as an unknown reference.
+        await AssertProblemAsync(await creator.PatchAsJsonAsync($"{items}/{itemId}", new { vocabularyId = 0 }), "validation_error");
     }
 
     private static object Translation(int? vocabularyId) => new
@@ -123,6 +133,48 @@ public class UnknownReferenceCodeTests(PuglingWebAppFactory factory) : IClassFix
         Assert.Equal(HttpStatusCode.Created, created.StatusCode);
         var exerciseId = await TestApi.IdAsync(created);
         await AssertProblemAsync(await creator.PutAsJsonAsync($"{unit}/translation/{exerciseId}", Translation(Unknown)), "invalid_reference");
+    }
+
+    private static object Birkenbihl(int? vocabularyId) => new
+    {
+        title = TestApi.UniqueName("Referenz-Birkenbihl"),
+        orderIndex = 1,
+        rewardPoints = 10,
+        config = new
+        {
+            learningLang = "en",
+            nativeLang = "de",
+            sentences = new[]
+            {
+                new
+                {
+                    learningSentence = "The tree.",
+                    naturalTranslation = "Der Baum.",
+                    decoding = new[] { new { learningWord = "tree", gloss = "Baum", vocabularyId } },
+                },
+            },
+        },
+    };
+
+    /// <summary>
+    /// B-387: a decoded word with a set <c>vocabularyId</c> was saved without a check on create and replace, while the word endpoint
+    /// <c>PUT …/words/{wordId}</c> answered <c>invalid_reference</c> for the same field. Red if the Birkenbihl validator stops checking the id
+    /// on create or replace, or reports 0 as an unknown reference; the existing id is the counter-check.
+    /// </summary>
+    [Fact]
+    public async Task Unbekannte_Vokabel_an_einem_Birkenbihl_Wort_ist_eine_unbekannte_Referenz()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var unit = await UnitPathAsync(creator);
+        var (vocabId, _) = await TestApi.CreateStoreVocabAsync(creator, TestApi.UniqueName("tree"), "Baum", "en", "de");
+
+        await AssertProblemAsync(await creator.PostAsJsonAsync($"{unit}/birkenbihl", Birkenbihl(Unknown)), "invalid_reference");
+        await AssertProblemAsync(await creator.PostAsJsonAsync($"{unit}/birkenbihl", Birkenbihl(0)), "validation_error");
+
+        var created = await creator.PostAsJsonAsync($"{unit}/birkenbihl", Birkenbihl(vocabId));
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var exerciseId = await TestApi.IdAsync(created);
+        await AssertProblemAsync(await creator.PutAsJsonAsync($"{unit}/birkenbihl/{exerciseId}", Birkenbihl(Unknown)), "invalid_reference");
     }
 
     [Fact]

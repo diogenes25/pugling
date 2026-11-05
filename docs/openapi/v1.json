@@ -27367,7 +27367,7 @@
         "tags": [
           "Creator \u2013 Vocabulary Store"
         ],
-        "summary": "Deletes a vocabulary entry. Not possible while it is the base form of other entries or while an exercise (vocabulary\nitem, cloze gap, translation pair) references it - see \u0060usage\u0060.",
+        "summary": "Deletes a vocabulary entry. Not possible while it is the base form of other entries or while an exercise (vocabulary\nitem, cloze gap, translation pair, decoded Birkenbihl word) references it - see \u0060usage\u0060.",
         "parameters": [
           {
             "name": "id",
@@ -27560,7 +27560,7 @@
         "tags": [
           "Creator \u2013 Vocabulary Store"
         ],
-        "summary": "Which exercises reference the vocabulary entry \u2013 vocabulary exercises via their ExerciseItem rows (by id),\ncloze texts via string? Gap.VocabKey, translations via int? TranslationItem.VocabularyId in the config.\nBasis for the delete protection and the author view.",
+        "summary": "Which exercises reference the vocabulary entry \u2013 vocabulary exercises via their ExerciseItem rows (by id),\ncloze texts via string? Gap.VocabKey, translations and Birkenbihl decodings via their \u0060vocabularyId\u0060 in the config.\nBasis for the delete protection and the author view.",
         "parameters": [
           {
             "name": "id",
@@ -45519,7 +45519,7 @@
             "format": "int32"
           }
         },
-        "description": "An exercise that references this vocabulary entry (vocabulary item, cloze gap or translation pair)."
+        "description": "An exercise that references this vocabulary entry (vocabulary item, cloze gap, translation pair or decoded Birkenbihl word)."
       },
       "WalletResponse": {
         "required": [
