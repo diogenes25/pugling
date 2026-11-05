@@ -129,6 +129,7 @@ Der Graph-Hub: Bereich → maßgebliche Seite(n). Von hier aus ist jede Domäne 
 | **Offene Ideen & User-Stories** (der Bereich mit Stufen-Kette, `/backlog`) | [docs/backlog/](backlog/README.md) |
 | **Khan-Academy-Vergleich** (Gemeinsamkeiten, Lücken, Übernahmeplan B-217…B-223) | [docs/khan-academy-vergleich-plan.md](khan-academy-vergleich-plan.md) |
 | **Knowunity-Vergleich** (Klausur-Countdown, Notenprognose, Übernahmeplan B-247…B-253) | [docs/knowunity-vergleich-plan.md](knowunity-vergleich-plan.md) |
+| **Baobab-Vergleich** (Heftseite zur Übung, Lob-Kanal, Sammelalbum, Übernahmeplan B-374…B-378) | [docs/baobab-vergleich-plan.md](baobab-vergleich-plan.md) |
 | **Nachtlauf** (unbeaufsichtigter Backlog-Lauf: Auftragstext, Freigaben, Grenzen) | [docs/nachtlauf.md](nachtlauf.md) |
 | Grill-Protokoll Vokabellernen (Quelle der Stories B-01…B-06) | [docs/backlog-vokabellernen.md](backlog-vokabellernen.md) |
 | KI-Gedächtnis | `MEMORY.md` + Notizen im Memory-Ordner (eigene Vault) |
