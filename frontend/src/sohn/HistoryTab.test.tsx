@@ -118,6 +118,24 @@ describe("HistoryTab", () => {
     expect(document.activeElement).toBe(screen.getByRole("alert"));
   });
 
+  /*
+   * B-231, der Fall ohne Meldung: Der Fokus geht auf die Liste (Entscheidung des Nutzers: der umgebende
+   * Container, `tabIndex={-1}`). Rot macht ihn das Weglassen von `?? liste.current` – dann landet der Fokus
+   * auf `<body>`. Die Vorrangfolge „Meldung vor Liste" trägt der Fall darüber (B-228): vertauscht, fällt er.
+   *
+   * happy-dom fokussiert jedes Element, auch ohne `tabindex` – Chromium nicht. Darum sichert die letzte Zeile das
+   * Attribut selbst zu (Review-Fund 🟡 2, Mutant „`tabIndex={-1}` weglassen").
+   */
+  it("legt beim Nachladen ohne Fehler den Fokus auf die Liste", () => {
+    render(<HistoryTab purchases={[purchase()]} total={2} loading={false} error={null} onLoadMore={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Mehr laden/ }));
+    const liste = screen.getByText("Kinoabend").closest(".list");
+    expect(liste).not.toBeNull();
+    expect(document.activeElement).toBe(liste);
+    expect(liste?.getAttribute("tabindex")).toBe("-1");
+  });
+
   it("sagt waehrend des ersten Ladens weder 'nichts gekauft' noch etwas ueber einen Fehler", () => {
     render(<HistoryTab purchases={[]} total={0} loading={true} error={null} onLoadMore={vi.fn()} />);
     expect(screen.queryByText(/Noch nichts gekauft/)).toBeNull();

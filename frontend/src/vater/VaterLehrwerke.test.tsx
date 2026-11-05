@@ -230,3 +230,35 @@ describe("SeriesEigentumsHinweis – wem eine nicht eigene Reihe gehört", () =>
     expect(screen.getByText(/gehört zum Grundbestand/)).toBeTruthy();
   });
 });
+
+/*
+ * B-233, Hausregel „Pflichtfeld leer → Speichern gesperrt, Label sagt (Pflicht), keine lokale Meldung".
+ * Je Fall der Mutant, der ihn rot macht: `|| !form.label.trim()` am Knopf weglassen (Fall 1), das Label
+ * ohne „(Pflicht)" (Fall 1, `getByLabelText` exakt), und der stille Riegel hinter `onMeldung(null)` statt
+ * davor (Fall 2: ein leerer Versuch räumte den Platz der Seite).
+ */
+describe("UnitForm – Pflichtfeld Bezeichnung (B-233)", () => {
+  const knopf = () => screen.getByRole("button", { name: "Unit hinzufügen" }) as HTMLButtonElement;
+
+  it("sperrt „Unit hinzufügen“, solange die Bezeichnung leer ist, und gibt ihn mit Inhalt frei", () => {
+    render(<UnitForm onMeldung={() => {}} seriesId={1} subjectId={null} onDone={() => {}} />);
+    const feld = screen.getByLabelText("Bezeichnung (Pflicht)", { exact: true });
+
+    expect(knopf().disabled).toBe(true);
+    fireEvent.change(feld, { target: { value: "   " } });
+    expect(knopf().disabled).toBe(true);
+    fireEvent.change(feld, { target: { value: "Unit 1" } });
+    expect(knopf().disabled).toBe(false);
+  });
+
+  it("räumt den Meldungsplatz nicht und meldet nichts, wenn das Formular leer abgeschickt wird", () => {
+    const meldungen: unknown[] = [];
+    render(<UnitForm onMeldung={(m) => meldungen.push(m)} seriesId={1} subjectId={null} onDone={() => {}} />);
+
+    // Der Weg am gesperrten Knopf vorbei (ein Absenden per Skript); im Browser sperrt der Knopf auch Enter.
+    fireEvent.submit(knopf().closest("form")!);
+
+    expect(meldungen).toEqual([]);
+    expect(screen.queryByText("Die Bezeichnung fehlt.")).toBeNull();
+  });
+});

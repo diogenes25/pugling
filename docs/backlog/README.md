@@ -506,7 +506,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (42)
+### Offen (40)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -525,11 +525,8 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-282](B-282-login-haertung-restpunkte.md) | Restpunkte der Login-Härtung (NP-3) | Defekt | `idee` | P3 | — | backend | — |
 | [B-310](B-310-profil-match-verraet-kind-ids.md) | `GET creator/profiles/match` verrät per 404 gegen 403, ob es eine Kind-Id gibt | Defekt | `idee` | P3 | — | backend | — |
 | [B-329](B-329-uebung-unbekannte-referenz-validation-error.md) | Die Übungs-Validierung meldet eine unbekannte Id als `validation_error`, die Kategorie daneben als `invalid_reference` | Defekt | `idee` | P3 | — | backend | — |
+| [B-379](B-379-name-vor-pin-vorrang-ungetestet.md) | Die Vorrangfolge „leerer Name vor zu kurzer PIN" an `auth/me` ist ungetestet | Defekt | `idee` | P3 | — | backend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
-| [B-231](B-231-fokus-ohne-fehlerkasten.md) | Wohin gehört der Fokus, wenn ein Knopf ohne Fehlerkasten gesperrt wird? | Frage | `idee` | P3 | — | frontend | — |
-| [B-232](B-232-bestaetigung-ausserhalb-des-sichtfelds.md) | Soll eine Bestätigung zum Meldungsplatz scrollen, wenn er weit vom Knopf entfernt liegt? | Frage | `idee` | P3 | — | frontend | — |
-| [B-233](B-233-zwei-sperrmuster-auf-der-lehrwerke-seite.md) | Eine Seite, zwei Sperrmuster: Soll „Pflichtfeld leer" überall gleich aussehen? | Frage | `idee` | P3 | — | frontend | — |
-| [B-234](B-234-dritter-zustand-der-arten-liste.md) | Soll die Arten-Liste einen dritten Zustand bekommen – oder B-174s Entscheidung 3 zurückgenommen werden? | Frage | `idee` | P3 | — | frontend | — |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `idee` | P3 | — | — | — |
 | [B-291](B-291-fachwechsel-der-reihe-laesst-themen-stehen.md) | Wechselt eine Reihe ihr Fach, bleiben die Grammatik-Themen des alten Fachs an Übungen und Units stehen | Frage | `idee` | P3 | — | backend | — |
 | [B-313](B-313-agent-unbekannter-typ-je-teil-statt-fehlbedienung.md) | Soll ein unbekannter Übungstyp in `plan`/`exam` eine Fehlbedienung sein? | Frage | `idee` | P3 | — | backend | — |
@@ -551,10 +548,11 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-376](B-376-sammelalbum-fuer-gems.md) | Ein Sammelalbum mit Karten-Sets für Gems statt einzelner Skins | Wunsch | `idee` | P3 | — | — | — |
 | [B-377](B-377-lob-kanal-des-vaters.md) | Ein Lob-Kanal: der Vater schickt Lob, und Erfolge des Kindes erreichen den Vater | Wunsch | `idee` | P3 | — | — | — |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `geschaetzt` | P3 | S | backend | — |
+| [B-380](B-380-pflichtfeld-sperre-in-den-uebrigen-formularen.md) | Die Hausregel „Pflichtfeld leer → Speichern gesperrt" gilt erst auf der Lehrwerke-Seite | Aufräumen | `idee` | P3 | — | frontend | — |
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (309)</summary>
+<summary>Abgenommen (313)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -686,6 +684,10 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-228](B-228-mehr-laden-verliert-den-fokus.md) | „Mehr laden“ in der gefüllten Verlaufskarte verliert den Fokus | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-229](B-229-nicht-geladen-waehrend-des-ladens.md) | Das Kind-Feld im Plan-Formular sagt „(nicht geladen)“, solange die Liste erst lädt | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-230](B-230-pin-hash-doppelt-gehalten.md) | Der PIN-Hash liegt doppelt: Profil und Konto halten denselben Wert | Aufräumen | `abgenommen` | P3 | — | — | — |
+| [B-231](B-231-fokus-ohne-fehlerkasten.md) | Wohin gehört der Fokus, wenn ein Knopf ohne Fehlerkasten gesperrt wird? | Frage | `abgenommen` | P3 | XS | frontend | — |
+| [B-232](B-232-bestaetigung-ausserhalb-des-sichtfelds.md) | Soll eine Bestätigung zum Meldungsplatz scrollen, wenn er weit vom Knopf entfernt liegt? | Frage | `abgenommen` | P3 | XS | frontend | — |
+| [B-233](B-233-zwei-sperrmuster-auf-der-lehrwerke-seite.md) | Eine Seite, zwei Sperrmuster: Soll „Pflichtfeld leer" überall gleich aussehen? | Frage | `abgenommen` | P3 | S | frontend | — |
+| [B-234](B-234-dritter-zustand-der-arten-liste.md) | Soll die Arten-Liste einen dritten Zustand bekommen – oder B-174s Entscheidung 3 zurückgenommen werden? | Frage | `abgenommen` | P3 | XS | frontend | — |
 | [B-235](B-235-unit-feld-sagt-nicht-geladen-waehrend-des-ladens.md) | Das Unit-Feld im Lehrbuch-Formular sagt „(nicht geladen)“, solange die Units erst laden | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-236](B-236-checkbox-gruppe-ohne-zugaenglichen-gruppennamen.md) | Eine Gruppen-Überschrift über Kontrollkästchen ist sichtbar, aber für den Screenreader an nichts gebunden | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-237](B-237-ki-creator-hilfe-nennt-ein-kapitel.md) | Die Hilfe des KI-Creators bietet `--chapter <id>` an – ein Kapitel gibt es seit B-106 nicht mehr | Defekt | `abgenommen` | P3 | S | backend | — |
@@ -880,9 +882,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
-### Nach der Abnahme entgangen (119)
+### Nach der Abnahme entgangen (120)
 
-**Nachgeschaut: 307 von 309 abgenommenen** — und in 99 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 2 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 309 von 313 abgenommenen** — und in 100 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 4 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -1005,17 +1007,20 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-368](B-368-stale-kommentar-und-zaehlung.md) | Nach B-164 behauptet ein Kommentar den entfernten Effekt, und die Story zählt falsch | [B-164] | `abgenommen` |
 | [B-370](B-370-zwei-behauptungen-aus-lauf-r-teil-2.md) | Zwei Behauptungen aus Lauf R, Teil 2 halten nicht | [B-368, B-183] | `abgenommen` |
 | [B-373](B-373-inventar-und-begruendung-aus-lauf-s.md) | Ein Inventar, das wieder zu kurz war, und eine Begründung, die sich selbst widerspricht | [B-370, B-358] | `abgenommen` |
+| [B-379](B-379-name-vor-pin-vorrang-ungetestet.md) | Die Vorrangfolge „leerer Name vor zu kurzer PIN" an `auth/me` ist ungetestet | [B-372] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (2) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (4) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-372](B-372-abbruch-log-und-guard-reihenfolge-im-login-pfad.md) | Ein Abbruch bei der Kontoprüfung landet als Fehler im Log, und zwei PIN-Prüfungen stehen hinter Änderungen |
-| [B-373](B-373-inventar-und-begruendung-aus-lauf-s.md) | Ein Inventar, das wieder zu kurz war, und eine Begründung, die sich selbst widerspricht |
+| [B-231](B-231-fokus-ohne-fehlerkasten.md) | Wohin gehört der Fokus, wenn ein Knopf ohne Fehlerkasten gesperrt wird? |
+| [B-232](B-232-bestaetigung-ausserhalb-des-sichtfelds.md) | Soll eine Bestätigung zum Meldungsplatz scrollen, wenn er weit vom Knopf entfernt liegt? |
+| [B-233](B-233-zwei-sperrmuster-auf-der-lehrwerke-seite.md) | Eine Seite, zwei Sperrmuster: Soll „Pflichtfeld leer" überall gleich aussehen? |
+| [B-234](B-234-dritter-zustand-der-arten-liste.md) | Soll die Arten-Liste einen dritten Zustand bekommen – oder B-174s Entscheidung 3 zurückgenommen werden? |
 
 </details>
 

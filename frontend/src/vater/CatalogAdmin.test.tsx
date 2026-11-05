@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { CategoryRows, CategorySection, NameRow, SubjectRow } from "./CatalogAdmin";
+import { artenPending, CategoryRows, CategorySection, NameRow, SubjectRow } from "./CatalogAdmin";
 import type { CategoryResponse, SubjectResponse } from "../lib/types";
 
 /*
@@ -199,7 +199,7 @@ const anlegenKnopf = () => screen.queryByRole("button", { name: "Neue Art anlege
 describe("CategorySection – das Anlege-Formular", () => {
   it('bietet „Neue Art" an und reicht die Eingabe durch', () => {
     const onCreate = vi.fn(async () => true);
-    render(<CategorySection subjectId={3} error={null} categories={[art()]} busy={false}
+    render(<CategorySection subjectId={3} error={null} pending={false} categories={[art()]} busy={false}
       onSave={() => {}} onDelete={() => {}} onCreate={onCreate} />);
 
     expect(screen.getByLabelText("Neue Art")).toBeTruthy();
@@ -214,7 +214,7 @@ describe("CategorySection – das Anlege-Formular", () => {
   it("zeigt fremde Arten weiter lesbar, nur ohne Knöpfe", () => {
     // Die Überschrift zählt die Arten – eine Seite, die „du kannst sie zum Filtern verwenden" sagt und
     // dann keine zeigt, hält ihr eigenes Versprechen nicht.
-    render(<CategorySection subjectId={3} error={null}
+    render(<CategorySection subjectId={3} error={null} pending={false}
       categories={[art({ isOwn: false }), art({ id: 10, name: "Vokabeln", isOwn: false })]} busy={false}
       onSave={() => {}} onDelete={() => {}} onCreate={async () => true} />);
 
@@ -238,7 +238,7 @@ describe("CategorySection – das Anlege-Formular", () => {
    * gesperrt. Rote Probe: den `filter` entfernen — dann fällt dieser Fall und nur er.
    */
   it("rendert keine Art, die zu einem anderen Fach gehört", () => {
-    render(<CategorySection subjectId={3} error={null}
+    render(<CategorySection subjectId={3} error={null} pending={false}
       categories={[art({ id: 9, name: "Grammatik" }), art({ id: 10, name: "Aus-Fach-4", subjectId: 4 })]}
       busy={false} onSave={() => {}} onDelete={() => {}} onCreate={async () => true} />);
 
@@ -269,7 +269,7 @@ describe("CategorySection – das Anlege-Formular", () => {
  */
 describe("CategorySection – ein gescheitertes Laden sieht nicht aus wie ein leeres Fach", () => {
   const props = {
-    subjectId: 3, busy: false, onSave: () => {}, onDelete: () => {}, onCreate: async () => true,
+    subjectId: 3, pending: false, busy: false, onSave: () => {}, onDelete: () => {}, onCreate: async () => true,
   };
 
   it("zeigt den Fehler, statt wie ein leeres Fach auszusehen", () => {
@@ -284,5 +284,59 @@ describe("CategorySection – ein gescheitertes Laden sieht nicht aus wie ein le
     // sobald der Banner unbedingt rendert. (Eine frühere Fassung prüfte `role="alert"`, das es zu dem
     // Zeitpunkt nirgends gab: sie prüfte den Ausgangszustand und konnte nicht fallschlagen.)
     expect(screen.queryByText(/^Arten:/)).toBeNull();
+  });
+});
+
+/*
+ * B-234: der dritte Zustand, den B-174 in Entscheidung 3 versprochen hatte. „Keine Arten" steht nur nach
+ * einer geglückten Ladung DIESES Fachs; davor steht „werden geladen", und neben einem Fehler keins von
+ * beiden. Je Fall der Mutant, der ihn rot macht, steht am Fall.
+ */
+describe("CategorySection – geladen, noch ladend, leer (B-234)", () => {
+  const props = { subjectId: 3, busy: false, onSave: () => {}, onDelete: () => {}, onCreate: async () => true };
+  const laedt = () => screen.queryByText("Arten werden geladen…");
+  const leer = () => screen.queryByText("Keine Arten.");
+
+  it("sagt im Ladefenster eines Fachwechsels „werden geladen“ – nicht „keine“ und keine Zahl", () => {
+    // Die Daten stammen noch vom VORIGEN Fach (4). Mutant „`pending` ignorieren": der Filter liefert dann
+    // eine leere Liste, und es stünde „Arten (0)" samt „Keine Arten." da.
+    render(<CategorySection categories={[art({ subjectId: 4 })]} error={null} pending {...props} />);
+    expect(laedt()).not.toBeNull();
+    expect(leer()).toBeNull();
+    expect(screen.getByRole("heading", { name: "Arten" })).toBeTruthy();
+  });
+
+  it("sagt „Keine Arten.“ erst nach einer geglückten Ladung", () => {
+    // Mutant „Leer-Zweig entfernen": vorher stand hier gar nichts (`CategoryRows` gibt `null`).
+    render(<CategorySection categories={[]} error={null} pending={false} {...props} />);
+    expect(leer()).not.toBeNull();
+    expect(laedt()).toBeNull();
+  });
+
+  it("behauptet neben einem Fehler weder „lädt“ noch „keine“", () => {
+    // Mutant „`!error &&` am Lade-Zweig weglassen": dann stünde „werden geladen" neben dem Banner.
+    render(<CategorySection categories={null} error="Netz weg" pending {...props} />);
+    expect(screen.getByText(/^Arten:/)).toBeTruthy();
+    expect(laedt()).toBeNull();
+    expect(leer()).toBeNull();
+  });
+
+  it("behauptet neben einem Fehler beim Nachladen kein leeres Fach", () => {
+    // Geladen war leer, dann scheitert ein `reload`. Mutant „`!error &&` am Leer-Zweig weglassen".
+    render(<CategorySection categories={[]} error="Netz weg" pending={false} {...props} />);
+    expect(leer()).toBeNull();
+  });
+});
+
+/*
+ * Die Verdrahtung von B-234 (Review-Fund 🟡 1): `CategorySection` sieht nur das Ergebnis. Mutant
+ * „`|| categories.stale` weglassen" macht den mittleren Fall rot – genau der Fachwechsel, in dem sonst „Arten (0)"
+ * und „Keine Arten." stünden. Mutant „immer `false`" macht den ersten rot.
+ */
+describe("artenPending (B-234)", () => {
+  it("ist wahr vor der ersten Ladung, wahr im Fachwechsel und falsch, sobald die Arten dieses Fachs da sind", () => {
+    expect(artenPending({ data: null, stale: false })).toBe(true);
+    expect(artenPending({ data: [art({ subjectId: 4 })], stale: true })).toBe(true);
+    expect(artenPending({ data: [], stale: false })).toBe(false);
   });
 });

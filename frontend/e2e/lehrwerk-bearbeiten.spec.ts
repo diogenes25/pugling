@@ -50,7 +50,7 @@ test("Reihe anlegen, dann Namen ändern und Verlag entfernen", async ({ page }) 
   // den Test also nicht rot machen (Muster feldhilfe.spec.ts).
   await expect(page.getByRole("note")).toHaveCount(0);
 
-  await page.getByLabel("Name der Reihe", { exact: true }).fill(NEU);
+  await page.getByLabel("Name der Reihe (Pflicht)", { exact: true }).fill(NEU);
   // „– keine Angabe –" ist hier eine Handlung, kein Ausgangszustand: der Verlag war vorausgewählt.
   await page.locator('select[id^="se-publisher-"]').selectOption("");
   // Der Knopf nennt den PERSISTIERTEN Namen, im Feld steht schon der neue – darum hier `ALT`.

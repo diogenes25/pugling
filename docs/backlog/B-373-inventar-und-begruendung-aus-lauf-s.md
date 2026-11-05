@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-370, B-358]
 wartet_auf: ""
+nachgeschaut: "2026-11-05"
 ---
 
 # B-373 · Ein Inventar, das wieder zu kurz war, und eine Begründung, die sich selbst widerspricht
@@ -51,3 +52,4 @@ Als **Entwickler**, der B-369 baut, möchte ich ein vollständiges Inventar, und
   gemessen 8, deckungsgleich mit B-369. AK 2: `grep -n "rote Probe möglich"` über B-358 und Protokoll – nur noch das Zitat in der
   Review-Zeile. Es ist eine Entgleitung im Increment **dieses** Laufs: **Limit 2**, der Lauf endet nach Teil 3. **Abgenommen** mit
   Teil 3 (Rollengang: der Entwickler ist die Rolle; Doku, kein Verhalten).
+- **2026-11-05** — **Nachschau** (selbst, nur Doku): AK 1 nachgerechnet – `grep -rn "return .*banner err" frontend/src` ohne Tests liefert 8 (PlanPositions 1, VaterKind 1, VaterLernstand 5, VaterPlanDetail 1), deckungsgleich mit dem Inventar in B-369. AK 2 – „rote Probe möglich" steht in B-358 und im Protokoll nur noch als Zitat in der Review-Zeile (`B-358:63`, Protokoll `:107`). Kein Befund.

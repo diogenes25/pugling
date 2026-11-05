@@ -129,7 +129,7 @@ test("Reihe, Unit, Übung, Zuweisung – der Creator-Weg in einem Zug", async ({
 
   const UMBENANNT = `${SERIES.name} b`;
   await page.getByRole("button", { name: `Reihe bearbeiten: „${SERIES.name}"` }).click();
-  await page.getByLabel("Name der Reihe", { exact: true }).fill(UMBENANNT);
+  await page.getByLabel("Name der Reihe (Pflicht)", { exact: true }).fill(UMBENANNT);
   await page.getByRole("button", { name: `Speichern: „${SERIES.name}"` }).click();
   await expect(page.getByText("Gespeichert.", { exact: true })).toBeVisible();
   await expect(page.getByText(/Inhalte daraus werden noch benutzt/)).toHaveCount(0);

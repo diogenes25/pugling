@@ -1,15 +1,15 @@
 ---
-tags: [typ/story, status/idee, bereich/frontend, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/creator]
 aliases: [Gespeichert außerhalb des Sichtfelds, Meldungsplatz scrollt nur bei Fehlern]
-status: idee
+status: abgenommen
 prio: P3
 art: Frage
-groesse: ""
+groesse: XS
 wo: frontend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-10-17-nacht.md (Nachschau zu Sprint 2, Fund D1)
-unverifiziert: true
+unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
@@ -39,9 +39,37 @@ fallen lassen (`block: "nearest"` scrollt ohnehin nur, wenn nötig – eine sich
 No-op); oder den Meldungsplatz ans Seitenende/sticky setzen. Beides ändert, wie die Seite sich beim Speichern
 bewegt – Produktgefühl, darum beim Nutzer.
 
+## User Story
+
+Als **Creator**, der im Verlags-Vokabular einen Verlag umbenennt, möchte ich die Bestätigung sehen, auch wenn der
+Meldungsplatz der Seite weit über dem Knopf liegt.
+
+## Ist-Stand am Code (vor dem Bau, Stand `37e6f6e`)
+
+- `frontend/src/vater/VaterLehrwerke.tsx:154`: `if (meldung && !meldung.ok) meldungsplatz.current?.scrollIntoView({ block: "nearest" })`
+  – nur ein Fehler holte den Platz in den Sichtbereich.
+- Sonst nutzt keine Seite `scrollIntoView` (`grep -rn scrollIntoView frontend/src`, ohne Tests: ein Treffer) – der Sweep „übrige Seiten mit
+  Meldungsplatz" hat nichts weiter zu ändern.
+
+## Entscheidungen
+
+1. **(Nutzer, 2026-10-23)** Auch eine Bestätigung scrollt, aber nur wenn nötig: `!meldung.ok` fällt, `block: "nearest"` bleibt.
+
+## Akzeptanzkriterien
+
+1. Nach einem geglückten Umbenennen im Verlags-Vokabular steht „Gespeichert." im Sichtbereich, wenn der Platz beim Klick
+   außerhalb lag.
+
+## Schätzung
+
+`XS`, `wo: frontend`. Testweg: eigene E2E-Spec mit niedriger Fensterhöhe und `toBeInViewport` (die bestehenden prüfen nur
+`toBeVisible`).
+
 ## Verlauf
 
 - **2026-10-18** — angelegt aus der Nachschau zu Sprint 2 des Nachtlaufs 2026-10-17 (Fund D1, `frontend-reviewer`),
   im Browser nachgemessen (Werte oben). Als `Frage` abgelegt, weil B-212 den Punkt entschieden hat.
 - **2026-10-23** — **Entscheidung des Nutzers** in der Grill-Runde G-2 der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): auch eine **Bestätigung** scrollt zum Meldungsplatz, aber **nur wenn nötig** – die Bedingung `!meldung.ok` fällt, `scrollIntoView({ block: "nearest" })` bleibt (eine sichtbare Meldung bewegt nichts). Damit ist B-212s Abwägung („eine unsichtbare Bestätigung ist verschmerzbar“) zurückgenommen. Rest ist Handwerk: dieselbe Regel für die übrigen Seiten mit einem Meldungsplatz prüfen.
 - **2026-10-23** — **Freigabe des Nutzers (Autonomer Modus, Opt-in je Vorhaben, README):** ein Nachtlauf darf diese Story auf Grundlage der getroffenen Entscheidung selbst ausformulieren, schätzen und bauen (Paket NP-14); trifft er dabei auf eine Produktfrage, die die Entscheidung nicht hergibt, hält er an und notiert sie. Rollengang und Reviewer bleiben Pflicht. Erteilt in der Grill-Runde der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)).
+- **2026-11-05** — ausformuliert, geschätzt und gebaut in Sprint 1 der Sitzung 2026-11-05 ([Protokoll](../pm-sitzung-2026-11-05.md)). AK 1 → neue Spec `e2e/bestaetigung-scrollt-zum-platz.spec.ts` (Vorbedingung: Platz beim Klick oberhalb, `top < 0`). Rote Probe: `!meldung.ok` zurück → die Spec fällt in Zeile 46 (`toBeInViewport`), erwartet 1 failed, gemessen 1 failed; mit Fix 1 passed.
+- **2026-11-05** — **abgenommen.** Die Spec ist zugleich der Rollengang aus der Creator-Rolle (echter Browser, echter Server); volle E2E-Suite 110/110, Vitest 648/648. Review `frontend-reviewer`: zur Spec kein Fund. Commit: siehe nächster Eintrag.

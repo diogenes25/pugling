@@ -127,17 +127,20 @@ test("B-197/B-196: der Meldungsplatz gehoert zur letzten Handlung", async ({ pag
 
   // ---- Schritt 1: ein erfolgreiches Speichern legt eine Meldung auf den Platz ----
   await page.getByRole("button", { name: `Reihe bearbeiten: „${reiheA}"` }).click();
-  const nameFeld = page.getByLabel("Name der Reihe", { exact: true });
+  const nameFeld = page.getByLabel("Name der Reihe (Pflicht)", { exact: true });
   await nameFeld.fill(`${reiheA} neu`);
   await page.getByRole("button", { name: `Speichern: „${reiheA}"` }).click();
   await expect(page.getByText("Gespeichert.", { exact: true })).toBeVisible();
 
-  // ---- Schritt 2 (B-197): ein ZWEITER Versuch derselben Sitzung scheitert ----
-  // Das Formular bleibt nach dem Speichern offen - das ist Absicht (B-123). Ein leerer Name wird
-  // clientseitig abgewiesen; die Fehlermeldung gehoert ans Formular.
-  await page.getByLabel("Name der Reihe", { exact: true }).fill("");
+  // ---- Schritt 2 (B-197): ein ZWEITER Versuch derselben Sitzung meldet am Formular ----
+  // Das Formular bleibt nach dem Speichern offen - das ist Absicht (B-123). Bis B-233 trug hier ein leerer
+  // Name den Fall („Der Name der Reihe fehlt."); seitdem ist der Knopf bei leerem Pflichtfeld gesperrt.
+  // Uebrig bleibt die zweite lokale Meldung: nochmal speichern ohne Aenderung.
+  await page.getByLabel("Name der Reihe (Pflicht)", { exact: true }).fill("");
+  await expect(page.getByRole("button", { name: `Speichern: „${reiheA} neu"` })).toBeDisabled();
+  await page.getByLabel("Name der Reihe (Pflicht)", { exact: true }).fill(`${reiheA} neu`);
   await page.getByRole("button", { name: `Speichern: „${reiheA} neu"` }).click();
-  await expect(page.getByText("Der Name der Reihe fehlt.")).toBeVisible();
+  await expect(page.getByText("Nichts geändert.", { exact: true })).toBeVisible();
 
   // Der Kern: das gruene "Gespeichert." von Schritt 1 darf jetzt NICHT mehr dastehen.
   await expect(page.getByText("Gespeichert.", { exact: true })).toHaveCount(0);
@@ -147,7 +150,7 @@ test("B-197/B-196: der Meldungsplatz gehoert zur letzten Handlung", async ({ pag
   // ohne sie koennte der Fall nicht zeigen, dass das Loeschen sie ersetzt statt sie zu erben.
   // Ein ANDERER Name, sonst gibt es nichts zu speichern und das Formular meldet "Nichts geaendert."
   // (am 2026-09-02 genau so gemessen - der erste Entwurf fuellte den bereits gespeicherten Wert zurueck).
-  await page.getByLabel("Name der Reihe", { exact: true }).fill(`${reiheA} dritt`);
+  await page.getByLabel("Name der Reihe (Pflicht)", { exact: true }).fill(`${reiheA} dritt`);
   await page.getByRole("button", { name: `Speichern: „${reiheA} neu"` }).click();
   await expect(page.getByText("Gespeichert.", { exact: true })).toBeVisible();
 

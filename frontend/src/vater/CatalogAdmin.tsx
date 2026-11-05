@@ -105,7 +105,7 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
           </p>
 
           <CategorySection subjectId={subject.id} categories={categories.data} error={categories.error}
-            busy={action.busy}
+            pending={artenPending(categories)} busy={action.busy}
             onSave={(c, name) => act(() => api.updateCategory(subject.id, c.id, name), "Art umbenannt.", categories.reload)}
             onDelete={(c) => {
               if (!confirmAction(`Art „${c.name}" löschen? Übungen behalten ihren Inhalt, verlieren aber die Zuordnung.`)) return;
@@ -118,6 +118,15 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
       <StatusBanner message={action.message} style={{ marginTop: 10 }} />
     </section>
   );
+}
+
+/**
+ * Ob die Arten des GEWÄHLTEN Fachs noch nicht vorliegen (B-234): erste Ladung (`data === null`) oder Fachwechsel
+ * (`stale` – `useAsync` behält die Arten des vorigen Fachs, bis die neue Antwort da ist). Eigene Funktion, damit die
+ * Verdrahtung einen Test hat: `CategorySection` bekommt nur das Ergebnis und kann ein vergessenes `stale` nicht sehen.
+ */
+export function artenPending(categories: { data: unknown; stale: boolean }): boolean {
+  return categories.data === null || categories.stale;
 }
 
 /**
@@ -138,7 +147,7 @@ export function CatalogAdmin({ subjects, onCatalogChanged }: {
  * Eigener exportierter Baustein aus demselben Grund wie `SubjectRow`: `CatalogAdmin` lädt beim Fachwechsel
  * nach und hängt am Netz, dieser Abschnitt nicht.
  */
-export function CategorySection({ subjectId, categories, error, busy, onSave, onDelete, onCreate }: {
+export function CategorySection({ subjectId, categories, error, pending, busy, onSave, onDelete, onCreate }: {
   /**
    * Das Fach, zu dem dieser Abschnitt gehört – als **Id**, nicht als `SubjectResponse` (siehe oben: eine
    * Zahl kann nicht als Eigentums-Bedingung missbraucht werden). Sie ist nötig, weil `useAsync` seine
@@ -156,14 +165,21 @@ export function CategorySection({ subjectId, categories, error, busy, onSave, on
    * Fach auch der Erklärsatz an den Arten, dort wurde die Fläche also vollständig stumm.
    */
   error: string | null;
+  /**
+   * Ob die Arten DIESES Fachs noch nicht vorliegen – erste Ladung oder Fachwechsel (`data === null ||
+   * stale`). Der dritte Zustand, den B-174 in Entscheidung 3 versprochen und B-234 nachgebaut hat: „Keine
+   * Arten" darf nur stehen, wenn wirklich geladen wurde, sonst ist ein leeres Fach von einem noch
+   * ladenden nicht zu unterscheiden – und wer dann anlegt, erzeugt eine Dublette im geteilten Katalog.
+   */
+  pending: boolean;
   busy: boolean;
   onSave: (category: CategoryResponse, name: string) => void;
   onDelete: (category: CategoryResponse) => void;
   onCreate: (name: string) => Promise<boolean>;
 }) {
   // Nur die Zeilen dieses Fachs – die Zählung in der Überschrift eingeschlossen, sonst nennt sie im
-  // Ladefenster die Anzahl des vorigen Fachs.
-  const arten = categories?.filter((c) => c.subjectId === subjectId);
+  // Ladefenster die Anzahl des vorigen Fachs. Solange nichts für dieses Fach vorliegt, gibt es keine Zahl.
+  const arten = pending ? undefined : categories?.filter((c) => c.subjectId === subjectId);
   return (
     <>
       <h4 className="h-section" style={{ fontSize: 15, marginTop: 14 }}>
@@ -177,6 +193,9 @@ export function CategorySection({ subjectId, categories, error, busy, onSave, on
           der Nutzer schon auf der Seite steht – ohne Rolle bemerkt ein Screenreader ihn nicht, und die
           Einfärbung allein ist keine Rückmeldung. */}
       {error && <div className="banner err" role="alert">Arten: {error}</div>}
+      {/* Neben einem Fehler weder „lädt" noch „keine": beides wäre eine Behauptung, die der Banner widerlegt. */}
+      {!error && arten === undefined && <p className="muted" style={{ fontSize: 13 }}>Arten werden geladen…</p>}
+      {!error && arten?.length === 0 && <p className="muted" style={{ fontSize: 13 }}>Keine Arten.</p>}
       <CategoryRows categories={arten} busy={busy} onSave={onSave} onDelete={onDelete} />
       <NewName fieldId="ca-new-category" label="Neue Art" placeholder="z. B. Grammatik"
         busy={busy} onCreate={onCreate} />

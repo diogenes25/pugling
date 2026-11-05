@@ -95,7 +95,7 @@ test("Ein Fehler am Formular überlebt keine spätere Handlung an einer anderen 
 
   // ---- Ein Server-Fehler am Formular von A ----
   await page.getByRole("button", { name: `Reihe bearbeiten: „${A}"` }).click();
-  await page.getByLabel("Name der Reihe", { exact: true }).fill(`${A} neu`);
+  await page.getByLabel("Name der Reihe (Pflicht)", { exact: true }).fill(`${A} neu`);
   /*
    * Der Ausfall wird erzwungen statt provoziert: Welche Eingabe der Server ablehnt, ist eine Zusage, die
    * diese Spec nicht braucht — geprüft wird, WO die Meldung landet. Vorbild `optionsliste-faellt-aus.spec.ts`.

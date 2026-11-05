@@ -48,7 +48,9 @@ Nachfolgende mit ([B-109](../docs/backlog/B-109-full-flow-spec-flackert-bei-frag
 Wiedereintritt selbst sperrt (`useRef`, synchron): es ist der Wartepunkt der Playwright-Actionability und der
 sichtbare Grund, warum eine verworfene zweite Aktion nicht wie „nichts passiert" aussieht. Die Sperre gilt je
 **Hook-Instanz**, in Listen mit *geteilter* `ActionState` also listenweit. Als **Regel**, nicht als Zustand:
-die Sohn-Arcade (B-49) folgt ihr noch nicht. **Erfolg darf stumm bleiben** (`run` ohne `okText`), wo die
+die Sohn-Arcade (B-49) folgt ihr noch nicht. **Pflichtfeld leer → Speichern `disabled`**, das Label trägt
+„(Pflicht)", keine lokale Meldung (B-233; Rest-Formulare: B-380). Verliert ein `disabled={busy}`-Knopf nach dem Klick
+den Fokus und gibt es keinen Fehlerkasten, nimmt ihn der Container (`tabIndex={-1}`, B-231). **Erfolg darf stumm bleiben** (`run` ohne `okText`), wo die
 Änderung selbst die Rückmeldung ist – so der Tag-Editor im Vokabel-Store; ein Banner je Chip wäre Lärm.
 
 **`npm install`/`npm ci` ohne `--legacy-peer-deps`**, auch in CI ([B-25](../docs/backlog/B-25-vite-pwa-peer-konflikt.md)).
@@ -99,11 +101,9 @@ Server-Typ kein UI hat.
 dem Verkehr zu nehmen – Löschen verweigert eine benutzte Übung zu Recht (laufende Pflichten dürfen nicht unter
 dem Kind wegbrechen). Es stoppt nur **neue** Zuweisungen; der Schalter sitzt neben der Verwendungs-Anzeige.
 
-**Wiederkehrende Falle beim Platzhalter:** `useAsync` behält `data` über ein `reload`, setzt aber
-`loading` erneut. Wer `{loading ? "Lade…" : rows}` schreibt, hängt bei **jeder** Änderung alles aus –
-aufgeklappte Bereiche und offene Formulare sind weg. Zwei Formen sind richtig: `loading && data === null`
-für Listen, `showPlaceholder` für Flächen, die ein `reload` überstehen müssen. Ein blankes
-`data === null` ist **nie** richtig – es zeigt eine gescheiterte Ladung dauerhaft als „Lade…" (B-184).
+**Platzhalter:** `loading && data === null` für Listen, `showPlaceholder` für Flächen, die ein `reload`
+überstehen müssen; nie `loading ? … : rows` (hängt bei jedem `reload` alles aus) und nie ein blankes
+`data === null` (Begründung am Feld in `src/lib/useAsync.ts`, B-184).
 
 **Die andere Hälfte derselben Falle:** `data` überlebt auch einen **Wechsel der Abhängigkeit** – im
 Ladefenster stehen noch die Zeilen des vorigen Elternteils, während die Rückrufe schon das neue binden

@@ -132,3 +132,32 @@ describe("SeriesForm – wenn die Optionsliste den geladenen Wert nicht kennt", 
     expect(screen.getByRole("option", { name: "Klett (nicht geladen)" })).toBeTruthy();
   });
 });
+
+/*
+ * B-233 für die Reihe. Mutanten: `|| !form.name.trim()` am Knopf weglassen (Fall 1); Riegel hinter
+ * `onMeldung(null)` (Fall 2).
+ */
+describe("SeriesForm – Pflichtfeld Name (B-233)", () => {
+  const knopf = () => screen.getByRole("button", { name: 'Speichern: „Access"' }) as HTMLButtonElement;
+
+  it("sperrt Speichern, solange der Name leer ist", () => {
+    zeige();
+    const feld = screen.getByLabelText("Name der Reihe (Pflicht)", { exact: true });
+
+    expect(knopf().disabled).toBe(false);
+    fireEvent.change(feld, { target: { value: "  " } });
+    expect(knopf().disabled).toBe(true);
+  });
+
+  it("räumt den Meldungsplatz nicht, wenn ein leerer Name abgeschickt wird", () => {
+    const meldungen: unknown[] = [];
+    render(<SeriesForm series={reihe()} subjects={SUBJECTS} publishers={PUBLISHERS} onSaved={() => {}}
+      onMeldung={(m) => meldungen.push(m)} />);
+    fireEvent.change(screen.getByLabelText("Name der Reihe (Pflicht)", { exact: true }), { target: { value: "" } });
+
+    fireEvent.submit(knopf().closest("form")!);
+
+    expect(meldungen).toEqual([]);
+    expect(screen.queryByText("Der Name der Reihe fehlt.")).toBeNull();
+  });
+});

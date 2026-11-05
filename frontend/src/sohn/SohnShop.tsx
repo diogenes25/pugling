@@ -353,6 +353,10 @@ export function HistoryTab({ purchases, total, loading, error, onLoadMore }: {
   // Ein gesperrter Knopf verliert in Chromium den Fokus – darum wandert er beim Klick auf die Meldung
   // (Begründung in `ListenAusfall.tsx`).
   const meldung = useRef<HTMLDivElement>(null);
+  // Ohne Meldung nimmt die Liste selbst den Fokus (B-231, Entscheidung des Nutzers): sonst fiele er beim
+  // gesperrten „Mehr laden" auf `<body>`, und der Sohn stünde nach dem Laden wieder am Seitenanfang. Auch
+  // wenn die letzte Seite den Knopf ganz verschwinden lässt, bleibt der Fokus so in der Liste.
+  const liste = useRef<HTMLDivElement>(null);
   if (purchases.length === 0) {
     if (gescheitert != null)
       return (
@@ -370,13 +374,13 @@ export function HistoryTab({ purchases, total, loading, error, onLoadMore }: {
     return <p className="sub"><Trans i18nKey="shop.nothingBought" components={{ b: <b /> }} /></p>;
   }
   return (
-    <div className="list">
+    <div className="list" tabIndex={-1} ref={liste}>
       {/* Scheitert eine SPÄTERE Seite, bleiben die schon geladenen Zeilen stehen - der "Mehr laden"-Knopf
           darunter ist dann selbst der Wiederholen-Knopf. */}
       {/* Auch hier `gescheitert`: Sonst verschwände die Meldung, sobald „Mehr laden" die nächste Seite
           anstößt – derselbe Aushänger wie oben, nur mit stehenbleibendem Knopf (Reviewer-Fund, B-216).
           Und dieselbe Fokusregel wie oben (B-228): der gesperrte Knopf verliert den Fokus, die Meldung nimmt
-          ihn. Ohne Meldung fällt er weiter auf `<body>` – wohin er dann gehört, ist B-231. */}
+          ihn – und ohne Meldung die Liste (B-231). */}
       {gescheitert != null && <div className="banner err" role="alert" tabIndex={-1} ref={meldung}>{gescheitert}</div>}
       {purchases.map((p) => (
         <div key={p.id} className="row" style={{ justifyContent: "space-between", padding: "8px 0" }}>
@@ -389,7 +393,7 @@ export function HistoryTab({ purchases, total, loading, error, onLoadMore }: {
       ))}
       {purchases.length < total && (
         <button type="button" className="btn ghost small" style={{ marginTop: 8 }} disabled={loading}
-          onClick={() => { meldung.current?.focus(); onLoadMore(); }}>
+          onClick={() => { (meldung.current ?? liste.current)?.focus(); onLoadMore(); }}>
           {loading ? t("shop.loadingMore") : t("shop.loadMore", { shown: purchases.length, total })}
         </button>
       )}

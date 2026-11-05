@@ -147,11 +147,12 @@ export function VaterLehrwerke() {
    * des Sichtfelds — der Knopf entgraut, sonst passiert sichtbar nichts. Vorher stand er direkt unter dem
    * Formular, in das der Creator gerade tippt.
    *
-   * `block: "nearest"` scrollt darum **nur, wenn nötig**, und nur beim Fehler: Eine Bestätigung, die man
-   * nicht sieht, ist verschmerzbar; ein Fehler, den man nicht sieht, ist der stumme Pfad aus B-200.
+   * `block: "nearest"` scrollt darum **nur, wenn nötig** – und seit B-232 auch bei einer Bestätigung: Das
+   * Verlags-Vokabular meldet von zwei Abschnitten tiefer hierher, und dort sah der Creator nur den Knopf
+   * verschwinden. Eine sichtbare Meldung bewegt nichts (`nearest`), darum kostet die Regel im Normalfall nichts.
    */
   useEffect(() => {
-    if (meldung && !meldung.ok) meldungsplatz.current?.scrollIntoView({ block: "nearest" });
+    if (meldung) meldungsplatz.current?.scrollIntoView({ block: "nearest" });
   }, [meldung]);
   const gefiltert = istGefiltert({ search: applied, subjectId, publisherId, schoolTypes, grade });
 
@@ -412,8 +413,8 @@ export function SeriesForm({ series, subjects, publishers, onSaved, onMeldung }:
    * schiefging: Was vom Server kommt — Erfolg **und** Fehler — geht dorthin, weil die Zeile aus der
    * gefilterten Abfrage fallen kann (B-173) und ein zweiter Platz von niemandem geräumt werden kann als
    * von dem Formular, in dem er steckt. Hier unten bleibt nur, was der Bildschirm **selbst** festgestellt
-   * hat: „Der Name der Reihe fehlt.", „Nichts geändert." — dabei ist nichts passiert, das die Zeile
-   * überdauern könnte.
+   * hat: „Nichts geändert." — dabei ist nichts passiert, das die Zeile überdauern könnte. (Ein leerer Name
+   * meldet seit B-233 nichts mehr: der Knopf ist gesperrt, das Label sagt „Pflicht".)
    *
    * `null` räumt den Platz. Das Formular ruft es zu Beginn jedes Absendens (B-197): Sonst stünde die
    * Bestätigung des vorigen Versuchs noch da, während dieser läuft.
@@ -441,9 +442,11 @@ export function SeriesForm({ series, subjects, publishers, onSaved, onMeldung }:
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    // Pflichtfeld leer: der Knopf ist gesperrt (B-233), also auch kein Absenden per Enter. Die Zeile bleibt
+    // als stiller Riegel – VOR dem Räumen, denn ein Versuch, der nicht stattfindet, räumt nichts.
+    if (!form.name.trim()) return;
     // Der Platz gilt ab jetzt nicht mehr – egal wie dieser Versuch ausgeht (B-197).
     onMeldung(null);
-    if (!form.name.trim()) { action.fail("Der Name der Reihe fehlt."); return; }
 
     const dto = seriesPatch(geladen.current, form);
     // Kein leerer PATCH: er wäre erfolgreich und folgenlos, und „Gespeichert." wäre dann eine Lüge.
@@ -460,8 +463,7 @@ export function SeriesForm({ series, subjects, publishers, onSaved, onMeldung }:
      * „Name schon vergeben" hier unten stehen, wo es niemand mehr erreichen konnte: Der Creator machte an
      * einer anderen Reihe weiter, deren Meldung in den Platz der Seite ging, und beides stand
      * gleichzeitig im Blickfeld. Am Formular bleibt jetzt nur, was der Bildschirm SELBST festgestellt hat
-     * („Der Name der Reihe fehlt.", „Nichts geändert.") – das verlässt die Zeile nie, weil dabei nichts
-     * passiert ist.
+     * („Nichts geändert.") – das verlässt die Zeile nie, weil dabei nichts passiert ist.
      */
     const aktualisiert = await nachObenMelden(action, onMeldung,
       () => api.updateTextbookSeries(series.id, dto), "Gespeichert.");
@@ -484,7 +486,9 @@ export function SeriesForm({ series, subjects, publishers, onSaved, onMeldung }:
     <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       <div className="form-grid" style={{ alignItems: "end" }}>
         <div className="field">
-          <FieldLabel htmlFor={`se-name-${id}`} topic="seriesName">Name der Reihe</FieldLabel>
+          <FieldLabel htmlFor={`se-name-${id}`} topic="seriesName">
+            Name der Reihe <span className="muted">(Pflicht)</span>
+          </FieldLabel>
           <input id={`se-name-${id}`} value={form.name} onChange={(e) => up("name", e.target.value)} />
           {/* Nur der WERT – die Erklärung dazu steht im `HelpTopic` und darf nicht zweimal dastehen
               (`frontend/CLAUDE.md`: der Text steht nie am Feld). Den Wert kann das Popover nicht
@@ -550,7 +554,7 @@ export function SeriesForm({ series, subjects, publishers, onSaved, onMeldung }:
         {/* Der Name im Label ist der PERSISTIERTE – im Feld steht ggf. schon der neue. Gewollt: er
             benennt die Zeile, die bearbeitet wird, nicht den Entwurf darin. */}
         <button type="submit" className="btn inline-btn" style={{ width: "auto" }}
-          aria-label={`Speichern: „${series.name}"`} disabled={action.busy}>
+          aria-label={`Speichern: „${series.name}"`} disabled={action.busy || !form.name.trim()}>
           {action.busy ? "Speichere…" : "Speichern"}
         </button>
       </div>
@@ -734,9 +738,10 @@ export function UnitForm({ seriesId, subjectId, unit, defaults, onDone, onMeldun
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    // Pflichtfeld leer: Knopf gesperrt (B-233); stiller Riegel vor dem Räumen, wie in `SeriesForm`.
+    if (!form.label.trim()) return;
     // Der Meldungsplatz der Seite gilt ab jetzt nicht mehr — egal wie dieser Versuch ausgeht (B-197).
     onMeldung(null);
-    if (!form.label.trim()) { action.fail("Die Bezeichnung fehlt."); return; }
     const dto: CreateSeriesUnitDto = {
       label: form.label.trim(),
       grade: form.grade.trim() === "" ? null : Number(form.grade),
@@ -781,7 +786,7 @@ export function UnitForm({ seriesId, subjectId, unit, defaults, onDone, onMeldun
     <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       <div className="form-grid" style={{ alignItems: "end" }}>
         <div className="field">
-          <label htmlFor={`unit-label-${id}`}>Bezeichnung</label>
+          <label htmlFor={`unit-label-${id}`}>Bezeichnung <span className="muted">(Pflicht)</span></label>
           <input
             id={`unit-label-${id}`} value={form.label} onChange={(e) => up("label", e.target.value)}
             placeholder="Unit 3 – Growing up"
@@ -863,7 +868,8 @@ export function UnitForm({ seriesId, subjectId, unit, defaults, onDone, onMeldun
         </span>
       </div>
       <div className="row" style={{ gap: 8 }}>
-        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>
+        <button type="submit" className="btn inline-btn" style={{ width: "auto" }}
+          disabled={action.busy || !form.label.trim()}>
           {action.busy ? "Speichere…" : unit ? "Speichern" : "Unit hinzufügen"}
         </button>
         {unit && (
