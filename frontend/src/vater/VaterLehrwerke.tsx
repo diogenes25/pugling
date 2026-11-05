@@ -149,13 +149,15 @@ export function VaterLehrwerke() {
    *
    * `block: "nearest"` scrollt darum **nur, wenn nötig**. Ein **Fehler** holt den Platz immer; eine
    * **Bestätigung** nur, wenn ihr Absender weit weg sitzt (B-232: das Verlags-Vokabular, zwei Abschnitte
-   * tiefer – dort sah der Creator nur den Knopf verschwinden). Aus einem Formular in oder direkt unter der
-   * Tabelle scrollt sie nicht (B-381): wer Units hintereinander anlegt, verlöre sonst bei jedem Speichern sein
+   * tiefer – dort sah der Creator nur den Knopf verschwinden). Aus einem Formular, das nach dem Erfolg
+   * stehen bleibt (Anlegen einer Reihe oder Unit), scrollt sie nicht (B-381): wer Units hintereinander anlegt, verlöre sonst bei jedem Speichern sein
    * offenes Formular aus dem Bild. Ob weit weg, sagt der Absender über `meldeVonWeitWeg`, nicht die Seite.
    *
    * „Weit weg" heißt auch: **die eigene Zeile kann dabei verschwinden** (B-385). Löschen und Speichern einer Reihe
    * (Umbenennen sortiert um, ein geänderter Wert fällt aus dem Filter) lassen sonst nichts zurück, woran der
-   * Creator den Erfolg sähe – ein geglücktes Löschen sähe aus wie nichts. Units bleiben nah: ihr Formular steht.
+   * Creator den Erfolg sähe – ein geglücktes Löschen sähe aus wie nichts. Das gilt **je Handlung**, nicht je Formular
+   * (B-390): Löschen und Ändern einer Unit lassen ihre Zeile bzw. ihr Formular ebenso verschwinden und holen den Platz;
+   * nur das Anlegen einer Unit bleibt nah, weil sein Formular stehen bleibt.
    */
   const holeBestaetigung = useRef(false);
   const melde = useCallback((m: ActionMessage | null) => { holeBestaetigung.current = false; setMeldung(m); }, []);
@@ -268,7 +270,7 @@ function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, on
    * Platz; sie unterscheiden sich nur darin, ob eine Bestätigung ihn ins Bild holt (B-385).
    */
   onMeldung: (m: ActionMessage | null) => void;
-  /** Für Handlungen, nach denen diese Zeile fehlen kann (Löschen, Speichern der Reihe): holt den Platz ins Bild (B-385). */
+  /** Für Handlungen, nach denen diese Zeile fehlen kann (Löschen, Speichern der Reihe, B-385; Löschen und Ändern ihrer Units, B-390): holt den Platz ins Bild. */
   onMeldungZeileWeg: (m: ActionMessage | null) => void;
 }) {
   const action = useAction();
@@ -376,7 +378,7 @@ function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, on
         <tr>
           <td colSpan={6}>
             {!series.isOwn && <SeriesEigentumsHinweis series={series} />}
-            <UnitPanel series={series} onChanged={onChanged} onMeldung={onMeldung} />
+            <UnitPanel series={series} onChanged={onChanged} onMeldung={onMeldung} onMeldungZeileWeg={onMeldungZeileWeg} />
           </td>
         </tr>
       )}
@@ -585,15 +587,16 @@ export function SeriesForm({ series, subjects, publishers, onSaved, onMeldung }:
  * Unit ist damit die natürliche Stelle, an der man eine anlegt („+ Übung" reicht Fach/Reihe/Unit als Query
  * durch). Ohne diesen Weg musste man sich die Auswahl im Anlege-Formular ein zweites Mal zusammenklicken.
  */
-function UnitPanel({ series, onChanged, onMeldung }: {
+function UnitPanel({ series, onChanged, onMeldung, onMeldungZeileWeg }: {
   series: TextbookSeriesResponse;
   onChanged: () => void;
   /**
-   * Räumt bzw. setzt den Meldungsplatz der Seite (B-197). Das Unit-Formular sitzt als aufgeklappte Zeile
-   * **in** der Tabelle, der Platz steht direkt darunter — ein roter Fehler hier und ein grünes
-   * „Gespeichert." dort sind benachbart, nicht seitenweit getrennt.
+   * Räumt bzw. setzt den Meldungsplatz der Seite (B-197). Der Platz steht unter der **ganzen** Reihen-Tabelle, bei
+   * vielen Reihen also außer Sicht. Für das Anlegen ist das recht: sein Formular bleibt stehen (B-381).
    */
   onMeldung: (m: ActionMessage | null) => void;
+  /** Für Löschen und Ändern einer Unit: Zeile bzw. Formular verschwinden, die Bestätigung holt den Platz (B-390). */
+  onMeldungZeileWeg: (m: ActionMessage | null) => void;
 }) {
   const units = useAsync<SeriesUnitResponse[]>(() => api.seriesUnits(series.id), [series.id]);
   const [editing, setEditing] = useState<number | null>(null);
@@ -673,7 +676,7 @@ function UnitPanel({ series, onChanged, onMeldung }: {
                 {editing === u.id && (
                   <tr>
                     <td colSpan={4}>
-                      <UnitForm onMeldung={onMeldung}
+                      <UnitForm onMeldung={onMeldungZeileWeg}
                         seriesId={series.id} subjectId={series.subjectId ?? null} unit={u}
                         onDone={() => { setEditing(null); units.reload(); onChanged(); }}
                       />

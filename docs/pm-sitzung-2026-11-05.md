@@ -315,3 +315,24 @@ Nichts gepusht.
 
 **Nächster Start:** B-390, dann B-388 + B-387 (ein Sprint: „jede unbekannte Vokabel-Referenz abgewiesen"), dann die Wünsche nach dem
 [Delegations-Protokoll](pm-sitzung-2026-11-05-delegation.md).
+
+## Lauf W
+
+Gestartet im Dialog („Ja, weiter"), unter der Delegation vom selben Tag.
+
+### Sprint 7 — B-390
+
+**Sprint-Ziel (Creator):** Wer in einer langen Reihen-Liste eine Unit löscht oder ändert, sieht die Bestätigung.
+
+**Gebaut:** Das Bearbeiten-Formular einer Unit meldet über den holenden Kanal (`meldeVonWeitWeg`), das Anlege-Formular bleibt nah.
+Zuerst die Handlungs-Tabelle nach (BM), per `grep` statt aus dem Gedächtnis – sie steht in B-390 und fand keine weitere Handlung.
+Zwei Kommentare berichtigt, die „aus einem Formular in der Tabelle scrollt nichts" bzw. „Units bleiben nah" behaupteten.
+
+**Belege:** `e2e/unit-bestaetigung-im-bild.spec.ts` (Löschen, Ändern), rote Probe → beide rot an der letzten Zeile; Gegenprobe
+`unit-anlegen-bleibt-im-bild.spec.ts` grün. Volle Playwright-Suite 115 passed, Vitest 648/648.
+
+**Review** (`frontend-reviewer`): kein 🔴. Ein Testfund (Vorbedingung des Löschfalls rechnete das Nachrücken zu knapp, weil mit der
+einzigen Unit die ganze Tabelle verschwindet) → **Zähler 1 von 5**; zwei Kommentar-Funde nur Text.
+
+**Retrospektive Sprint 7:** Die Tabelle je Handlung hat ihren Zweck erfüllt – sie stellte die Frage für Ändern und Löschen getrennt,
+an der B-385 vorbeiging. Kein neuer Mechanismus; (BM) bleibt Vorschlag, jetzt mit einer Messung dafür.
