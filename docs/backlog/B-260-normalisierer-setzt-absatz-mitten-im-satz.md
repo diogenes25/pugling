@@ -56,7 +56,7 @@ Die Regel kannte nur Form (b) und deutete (a) und (c) als Absatz.
 ## Entscheidungen (autonom gegrillt, Freigabe 1 – `Defekt`)
 
 1. **Ein Absatz beginnt nur nach einer bündigen Zeile, die selbst Folgezeile ist** – weder die erste Zeile des Texts noch
-   ein Listenpunkt (`* `). *Kosten:* ein einzeiliger `<para>` direkt nach Text auf der Tag-Zeile wird ein weicher Umbruch
+   ein Listenpunkt (`*` mit folgendem Leerzeichen). *Kosten:* ein einzeiliger `<para>` direkt nach Text auf der Tag-Zeile wird ein weicher Umbruch
    (im Dokument heute nirgends; die Gegenrichtung stand schon als bekannte Grenze im Kommentar).
 2. **Kein Quelltext-Tor**, anders als der Vorschlag der Idee: die Regel lässt sich im Normalisierer richtig herstellen, und die
    Quellform „Text auf der Tag-Zeile" ist im Repo der Normalfall.

@@ -67,12 +67,12 @@ die ganze Seite neu laden und dabei meine Eingaben verlieren muss.
    Abhängigkeiten übergibt sie (bei mehreren als `JSON.stringify([...])`). *Kosten:* der Aufrufer muss die Deps zweimal
    nennen; vergisst er den Schlüssel, steht nach einem Wechsel der alte Fehler (das prüft kein Wächter).
 4. **(Lauf R) Ein Wächter `src/lesefehler.test.ts`** meldet jedes `{x.error && <… banner err>}`, mit Selbsttest je Form.
+5. **(Lauf R) Die Hausregel steht als zwei Zeilen in `frontend/CLAUDE.md`** – im selben Durchgang bezahlt (die Datei ist danach
+   kleiner als vorher).
 6. **(Lauf R, nach dem Review) Geteilt:** diese Story liefert die `&&`-Form; die Ternär-Form, die nackten Namen und die
    Arcade trägt [B-369](B-369-lesefehler-in-ternaer-form.md). Grund: dort steht der Platzhalter vor dem Ausfall, und „Erneut
    laden" tauschte den Kasten gegen „Lade…" (B-216) – eine Gestaltungsfrage, kein Ersetzen. *Kosten:* bis B-369 gilt die
    Hausregel nur zur Hälfte; Wächter, `CLAUDE.md` und AK 1 sagen das ausdrücklich.
-5. **(Lauf R) Die Hausregel steht als zwei Zeilen in `frontend/CLAUDE.md`** – im selben Durchgang bezahlt (die Datei ist danach
-   kleiner als vorher).
 
 ## Akzeptanzkriterien
 
