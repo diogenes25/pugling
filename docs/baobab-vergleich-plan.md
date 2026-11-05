@@ -81,7 +81,7 @@ Ende). Die App selbst wurde nicht mit Konto durchgespielt; Aussagen über Baobab
 - **Scan und KI-Auswertung beim Kind.** Bricht „kein LLM im Backend" und öffnet einen Weg zum
   Hausaufgaben-Löser. Übernommen wird nur die Creator-Form mit Prüfung durch den Vater (B-375).
 - **KI bewertet die offene Antwort des Kindes.** Bricht dieselbe Entscheidung und die Server-Autorität.
-  Geprüft wird nur eine Selbsteinschätzungs-Form (B-378).
+  Auch eine Selbsteinschätzungs-Form wurde verworfen (B-378): die Stufe gibt es schon (B-70).
 - **Herausforderungen gegen Freunde oder Geschwister.** Der Nutzer hat am 2026-10-23 entschieden, dass
   das Kind sich nur mit der eigenen Vorwoche vergleicht (G-6 in
   [B-253](backlog/B-253-wochenvergleich-familie-statt-liga.md)). Baobab ändert daran nichts.
@@ -99,7 +99,7 @@ der Anlass, nicht der Ist-Stand – beim Ausformulieren wird gegen den Code bele
 | 1 | [B-375](backlog/B-375-heftseite-wird-uebungsentwurf.md) | Foto oder PDF einer Heftseite → KI-Creator legt Übungsentwürfe an, der Vater prüft vor dem Zuweisen | keine; verallgemeinert [B-251](backlog/B-251-foto-der-vokabelliste-in-den-store.md) |
 | 2 | [B-377](backlog/B-377-lob-kanal-des-vaters.md) | Der Vater schickt Lob; Erfolge des Kindes erreichen den Vater | keine |
 | 3 | [B-376](backlog/B-376-sammelalbum-fuer-gems.md) | Sammelalbum mit Karten-Sets für Gems, Bonus für ein komplettes Set | berührt [B-221](backlog/B-221-level-leiter-fuer-auszeichnungen.md) |
-| 4 | [B-378](backlog/B-378-muendliche-abfrage-als-selbsteinschaetzung.md) | Prüfauftrag: mündliche Abfrage als Selbsteinschätzung ohne KI-Bewertung | Vorbehalt [B-31](backlog/B-31-geraete-vorbehalt-klang.md); darf `verworfen` werden |
+| 4 | [B-378](backlog/B-378-muendliche-abfrage-als-selbsteinschaetzung.md) | Prüfauftrag: mündliche Abfrage als Selbsteinschätzung ohne KI-Bewertung – **verworfen** am 2026-11-05 ([Protokoll](pm-sitzung-2026-11-05-delegation.md)) | — |
 
 Dazu stützt der Vergleich die Priorität zweier bestehender Stories, ohne eine neue anzulegen:
 [B-248](backlog/B-248-klassenarbeit-countdown-treibt-den-plan.md) (Klassenarbeit treibt den Plan) und

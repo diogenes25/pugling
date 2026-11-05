@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/idee, bereich/training, rolle/student]
+tags: [typ/story, status/verworfen, bereich/training, rolle/student]
 aliases: [Mündliche Abfrage, InterroBao-Gegenstück]
-status: idee
+status: verworfen
 prio: P3
 art: Frage
 groesse: ""
@@ -9,8 +9,8 @@ wo: ""
 migration: ""
 vertragsbruch: ""
 quelle: docs/baobab-vergleich-plan.md#wo-baobab-weiter-ist
-unverifiziert: true
-grund: ""
+unverifiziert: false
+grund: "gegenstandslos: die Selbsteinschätzungs-Stufe gibt es schon (B-70), Vorlesen kommt mit B-252; eine Selbsteinschätzung, die auf den Leitner-Stand zählt, wäre ein Selbstbetrugs-Weg (Entscheidung im Auftrag des Nutzers, 2026-11-05)"
 ersetzt_durch: []
 ---
 
@@ -29,3 +29,4 @@ ist ein zulässiges Ergebnis.
 ## Verlauf
 
 - **2026-11-05** — angelegt (Quelle: Baobab-Vergleich, Etappe 4 des Übernahmeplans).
+- **2026-11-05** — **`verworfen`, Entscheidung im Auftrag des Nutzers** (getroffen von Claude; Delegation im Dialog am 2026-11-05, [Protokoll](../pm-sitzung-2026-11-05-delegation.md)): die Selbsteinschätzungs-Stufe gibt es schon (B-70, `VocabularyExerciseType`), das Vorlesen kommt mit B-252, und laut antworten braucht keine App-Unterstützung. Nichts bleibt zu bauen.

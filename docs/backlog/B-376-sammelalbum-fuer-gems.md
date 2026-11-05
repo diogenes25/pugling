@@ -28,3 +28,4 @@ ein Kind um 11 Jahre: ja, kein Lootbox-Mechanismus).
 ## Verlauf
 
 - **2026-11-05** — angelegt (Quelle: Baobab-Vergleich, Etappe 3 des Übernahmeplans).
+- **2026-11-05** — **Entscheidung im Auftrag des Nutzers** (getroffen von Claude; Delegation im Dialog am 2026-11-05: „Wenn es etwas zu entscheiden gibt, übernimm meine Position und entscheide nach bestem Wissen und Gewissen“; [Protokoll](../pm-sitzung-2026-11-05-delegation.md)): (1) ergänzt die Skins; (2) keine Zufallsziehung, jede Karte gezielt mit Gems, komplettes Set gibt Gems-Bonus; (3) Karten sind Emoji plus Name in einem Katalog im Code. Die Anmutung braucht einen Augencheck. **Freigabe des Nutzers (Autonomer Modus, Opt-in, erteilt im Dialog am 2026-11-05 mit derselben Delegation):** ein Lauf darf diese Story auf Grundlage der Entscheidungen selbst ausformulieren, schätzen und bauen; trifft er auf eine Produktfrage, die sie nicht hergeben, hält er an.

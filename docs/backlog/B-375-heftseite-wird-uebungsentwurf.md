@@ -31,3 +31,4 @@ oder Nachfolger) und wo die Prüfung stattfindet (Testmodus der Übung oder eige
 ## Verlauf
 
 - **2026-11-05** — angelegt (Quelle: Baobab-Vergleich, Etappe 1 des Übernahmeplans).
+- **2026-11-05** — **Entscheidung im Auftrag des Nutzers** (getroffen von Claude; Delegation im Dialog am 2026-11-05: „Wenn es etwas zu entscheiden gibt, übernimm meine Position und entscheide nach bestem Wissen und Gewissen“; [Protokoll](../pm-sitzung-2026-11-05-delegation.md)): (1) Nachfolger von B-251 auf demselben Vision-Weg; (2) Prüfung ohne neue Oberfläche: `--dry-run` zeigt erkannten Text und Entwurf, angelegt wird ohne Zuweisung, der Vater probiert im Testmodus; (3) nur Typen, die der Agent heute kann. **Freigabe des Nutzers (Autonomer Modus, Opt-in, erteilt im Dialog am 2026-11-05 mit derselben Delegation):** ein Lauf darf diese Story auf Grundlage der Entscheidungen selbst ausformulieren, schätzen und bauen; trifft er auf eine Produktfrage, die sie nicht hergeben, hält er an.
