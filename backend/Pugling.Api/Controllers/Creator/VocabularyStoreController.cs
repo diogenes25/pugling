@@ -346,7 +346,8 @@ public class VocabularyStoreController(PuglingDbContext db, VocabularyStoreServi
 
         if (dto.BaseFormKey is not null)
         {
-            if (dto.BaseFormKey.Length == 0)
+            // Blanks are no key: create treats them as "not given", so here they mean the same as "" - remove the link (B-389).
+            if (string.IsNullOrWhiteSpace(dto.BaseFormKey))
             {
                 vocab.BaseFormId = null;
                 vocab.BaseFormRelation = null;

@@ -40,7 +40,7 @@ public record CreateVocabularyDto(string? Key, string SourceLanguage, string Tar
     List<string>? TranslationAlternatives = null, bool? ReuseExisting = null);
 
 /// <summary>
-/// Only fields that are set are changed. BaseFormKey = "" removes the link (and its label); tags are
+/// Only fields that are set are changed. BaseFormKey = "" (or only blanks) removes the link (and its label); tags are
 /// appended (not replaced). <c>null</c> means "not specified" (the value remains), so the alternatives are
 /// dropped via <see cref="ClearTranslationAlternatives"/> – a list emptied in a form would arrive as
 /// <c>null</c> and would otherwise be indistinguishable from "unchanged". An explicitly empty list clears

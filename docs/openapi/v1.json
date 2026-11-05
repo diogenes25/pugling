@@ -45000,7 +45000,7 @@
             "default": false
           }
         },
-        "description": "Only fields that are set are changed. BaseFormKey = \u0022\u0022 removes the link (and its label); tags are\nappended (not replaced). \u0060null\u0060 means \u0022not specified\u0022 (the value remains), so the alternatives are\ndropped via bool UpdateVocabularyDto.ClearTranslationAlternatives \u2013 a list emptied in a form would arrive as\n\u0060null\u0060 and would otherwise be indistinguishable from \u0022unchanged\u0022. An explicitly empty list clears\nthem too; the switch exists for the case the client cannot tell the two apart."
+        "description": "Only fields that are set are changed. BaseFormKey = \u0022\u0022 (or only blanks) removes the link (and its label); tags are\nappended (not replaced). \u0060null\u0060 means \u0022not specified\u0022 (the value remains), so the alternatives are\ndropped via bool UpdateVocabularyDto.ClearTranslationAlternatives \u2013 a list emptied in a form would arrive as\n\u0060null\u0060 and would otherwise be indistinguishable from \u0022unchanged\u0022. An explicitly empty list clears\nthem too; the switch exists for the case the client cannot tell the two apart."
       },
       "UsageResponse": {
         "required": [

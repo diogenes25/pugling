@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/idee, bereich/backend, rolle/creator]
+tags: [typ/story, status/verworfen, bereich/backend, rolle/creator]
 aliases: [Birkenbihl decoding null 500]
-status: idee
+status: verworfen
 prio: P3
 art: Defekt
 groesse: ""
@@ -9,8 +9,8 @@ wo: backend
 migration: ""
 vertragsbruch: ""
 quelle: docs/pm-sitzung-2026-11-05.md#lauf-w
-unverifiziert: true
-grund: ""
+unverifiziert: false
+grund: "Widerlegt: die Modellvalidierung (implizites [Required] für nicht-nullbare Member) antwortet schon 400 validation_error mit dem Pfad in errors – keine 500."
 ersetzt_durch: []
 ---
 
@@ -27,3 +27,11 @@ Stelle).
 - **2026-11-05** — angelegt aus dem Review zu B-387 (Lauf W, Sprint 8, `pugling-reviewer`, 🟢). Älter als B-387, darum eigene Story
   und kein Fund im Zähler; am Code nicht reproduziert (`unverifiziert: true`).
 - **2026-11-05** — ergänzt aus der Nachschau zu Sprint 8: auch `"sentences": null` endet in einer 500 (`SelectMany` auf `null`).
+- **2026-11-05** — **verworfen** in Lauf X, Sprint 10, nach Messung. Die Tests liefen gegen den Ausgangszustand: `"sentences": null`,
+  `"decoding": null`, `"items": null` (Übersetzung, Vokabelübung) und ein `null`-String antworten schon heute `400 validation_error`,
+  `errors` nennt den Pfad (`Config.Sentences[0].Decoding`). Die 500 stammte aus dem Lesen des Validators, der hinter der
+  Modellvalidierung gar nicht erreicht wird. Ein gebauter Reflexions-Wächter war darum doppelt und ist wieder entfernt. **Geblieben:**
+  sechs Regressionsfälle (`UnknownReferenceCodeTests.cs:295`, `:307`); rote Probe: implizites `[Required]` abgeschaltet → genau diese
+  sechs rot. **Entscheidung im Auftrag des Nutzers** (getroffen von Claude; Delegation im Dialog am 2026-11-05: „Wenn es etwas zu
+  entscheiden gibt, übernimm meine Position und entscheide nach bestem Wissen und Gewissen“; [Protokoll](../pm-sitzung-2026-11-05-delegation.md)):
+  `verworfen` ist laut Stufentabelle eine Sache des Menschen – hier belegt widerlegt, darum im Auftrag gesetzt.

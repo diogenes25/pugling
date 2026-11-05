@@ -404,3 +404,25 @@ Sprint 6, 7 und 8 erledigt. Neu: B-391 (idee), B-392/B-393 (aus der Nachschau, g
 
 **Nächster Start:** B-394 (klein, Defekt), dann B-389 und B-391 (beide `idee`, Defekt), dann die Wünsche nach dem
 [Delegations-Protokoll](pm-sitzung-2026-11-05-delegation.md).
+
+## Lauf X
+
+Gestartet im Dialog („Ja, weiter“), unter der Delegation vom selben Tag.
+
+### Sprint 10 — B-394, B-389, B-391
+
+**Sprint-Ziel (Creator/KI-Agent):** Ein Formfehler im Creator-Payload heißt `validation_error` – nicht `invalid_reference`, nicht 500.
+
+**Vorgehen:** Tests zuerst gegen den Ausgangszustand; die Fälle je Weg × Wert als Tabelle, mit dem Vergleichsweg (Vorschläge (BN)/(BO)
+angewandt). Die roten Läufe vor dem Fix sind die Belege für B-394 (`:200`) und B-389 (`:273`).
+
+**B-391 widerlegt:** die angenommene 500 bei `null` in einer Config gibt es nicht – die Modellvalidierung (implizites `[Required]`)
+antwortet schon `400 validation_error` mit dem Pfad in `errors`. Ein zuerst gebauter Reflexions-Wächter war doppelt und ist wieder
+entfernt; geblieben sind sechs Regressionsfälle (rote Probe: implizites `[Required]` aus → genau diese sechs rot). `verworfen` im
+Auftrag. Die falsche 500-Aussage in B-387 ist berichtigt.
+
+**Review** (`pugling-reviewer`): kein 🔴/🟡. Ein Testfund (B-389: die Entscheidung entfernt auch die Bezeichnung, der Test prüfte sie
+nicht) → **Zähler 1 von 5**. Volle Suite 1098/1098, Playwright 115 passed.
+
+**Was durchkam, bevor es durchkam:** Die 500 aus B-391 stammte aus einer Nachschau, die den Validator las, ohne zu messen – und ich
+hatte sie in B-387 übernommen und darauf einen Wächter gebaut. Der Test gegen den Ausgangszustand zuerst hat das in Minuten gezeigt.

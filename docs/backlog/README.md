@@ -506,7 +506,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (40)
+### Offen (37)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -522,9 +522,6 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-249](B-249-probeklausur-mit-notenprognose.md) | Eine Probeklausur über das Bündel einer Klassenarbeit, mit Notenprognose | Wunsch | `idee` | P2 | — | — | — |
 | [B-374](B-374-baobab-vergleich-sammel-story.md) | Baobab-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | Wunsch | `idee` | P2 | — | — | — |
 | [B-375](B-375-heftseite-wird-uebungsentwurf.md) | Eine fotografierte Heftseite wird zum Übungsentwurf, den der Vater vor dem Zuweisen prüft | Wunsch | `idee` | P2 | — | — | — |
-| [B-389](B-389-leerzeichen-grundform-meldet-invalid-reference.md) | Ein `PATCH` im Vokabelspeicher mit `baseFormKey: "  "` meldet `invalid_reference` | Defekt | `idee` | P3 | — | backend | — |
-| [B-391](B-391-birkenbihl-decoding-null-ist-500.md) | Ein Birkenbihl-Satz mit `"decoding": null` endet in einer 500 statt einer 400 | Defekt | `idee` | P3 | — | backend | — |
-| [B-394](B-394-birkenbihl-wort-put-id-null-ist-unbekannte-referenz.md) | Der Birkenbihl-Wort-`PUT` meldet `vocabularyId = 0` als `invalid_reference`, der CRUD-Weg als `validation_error` | Defekt | `idee` | P3 | — | backend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `idee` | P3 | — | — | — |
 | [B-291](B-291-fachwechsel-der-reihe-laesst-themen-stehen.md) | Wechselt eine Reihe ihr Fach, bleiben die Grammatik-Themen des alten Fachs an Übungen und Units stehen | Frage | `idee` | P3 | — | backend | — |
@@ -552,7 +549,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (327)</summary>
+<summary>Abgenommen (329)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -828,9 +825,11 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-386](B-386-uebersetzung-speichert-unbekannte-vokabel-id.md) | Eine Übersetzungsübung speichert eine unbekannte `vocabularyId` ohne Prüfung | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-387](B-387-birkenbihl-speichert-unbekannte-vokabel-id.md) | Eine Birkenbihl-Übung speichert eine unbekannte `vocabularyId` an einem dekodierten Wort ohne Prüfung | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-388](B-388-id-null-faelle-ohne-test.md) | Zwei Fälle „Id 0 bleibt `validation_error`“ aus B-329 haben keinen Test | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-389](B-389-leerzeichen-grundform-meldet-invalid-reference.md) | Ein `PATCH` im Vokabelspeicher mit `baseFormKey: "  "` meldet `invalid_reference` | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-390](B-390-unit-loeschen-bestaetigung-ausser-sicht.md) | „Unit … gelöscht." und „Gespeichert." einer Unit landen in einer langen Liste außer Sicht | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-392](B-392-uebersetzung-put-legt-paare-nicht-an.md) | Eine geänderte Übersetzung legt neue Paare nicht im Speicher an | Defekt | `abgenommen` | P2 | XS | backend | — |
 | [B-393](B-393-uebersetzung-put-id-null-ohne-test.md) | B-386 AK 1 „Ändern mit `0`" hat keinen Test | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-394](B-394-birkenbihl-wort-put-id-null-ist-unbekannte-referenz.md) | Der Birkenbihl-Wort-`PUT` meldet `vocabularyId = 0` als `invalid_reference`, der CRUD-Weg als `validation_error` | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-40](B-40-client-routen-waechter.md) | Routen aus `Pugling.Client` gegen das OpenAPI-Dokument halten | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-41](B-41-produktions-startup-smoke.md) | Der Produktionspfad des Starts ist der einzige ohne Test | Aufräumen | `abgenommen` | P2 | S | backend | — |
 | [B-42](B-42-openapi-typen-generieren.md) | TypeScript-Typen aus dem OpenAPI-Dokument erzeugen statt von Hand pflegen | Aufräumen | `abgenommen` | P2 | M | beides | — |
@@ -898,7 +897,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (128)
 
-**Nachgeschaut: 325 von 327 abgenommenen** — und in 109 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 2 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 325 von 329 abgenommenen** — und in 109 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 4 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -1029,18 +1028,20 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-388](B-388-id-null-faelle-ohne-test.md) | Zwei Fälle „Id 0 bleibt `validation_error`“ aus B-329 haben keinen Test | [B-329] | `abgenommen` |
 | [B-390](B-390-unit-loeschen-bestaetigung-ausser-sicht.md) | „Unit … gelöscht." und „Gespeichert." einer Unit landen in einer langen Liste außer Sicht | [B-385] | `abgenommen` |
 | [B-393](B-393-uebersetzung-put-id-null-ohne-test.md) | B-386 AK 1 „Ändern mit `0`" hat keinen Test | [B-386] | `abgenommen` |
-| [B-394](B-394-birkenbihl-wort-put-id-null-ist-unbekannte-referenz.md) | Der Birkenbihl-Wort-`PUT` meldet `vocabularyId = 0` als `invalid_reference`, der CRUD-Weg als `validation_error` | [B-387] | `idee` |
+| [B-394](B-394-birkenbihl-wort-put-id-null-ist-unbekannte-referenz.md) | Der Birkenbihl-Wort-`PUT` meldet `vocabularyId = 0` als `invalid_reference`, der CRUD-Weg als `validation_error` | [B-387] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (2) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (4) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
+| [B-389](B-389-leerzeichen-grundform-meldet-invalid-reference.md) | Ein `PATCH` im Vokabelspeicher mit `baseFormKey: "  "` meldet `invalid_reference` |
 | [B-392](B-392-uebersetzung-put-legt-paare-nicht-an.md) | Eine geänderte Übersetzung legt neue Paare nicht im Speicher an |
 | [B-393](B-393-uebersetzung-put-id-null-ohne-test.md) | B-386 AK 1 „Ändern mit `0`" hat keinen Test |
+| [B-394](B-394-birkenbihl-wort-put-id-null-ist-unbekannte-referenz.md) | Der Birkenbihl-Wort-`PUT` meldet `vocabularyId = 0` als `invalid_reference`, der CRUD-Weg als `validation_error` |
 
 </details>
 
@@ -1102,13 +1103,14 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-358](B-358-beispielkatalog-proben-restkanten.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 | [B-370](B-370-zwei-behauptungen-aus-lauf-r-teil-2.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 | [B-373](B-373-inventar-und-begruendung-aus-lauf-s.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
+| [B-389](B-389-leerzeichen-grundform-meldet-invalid-reference.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 | [B-390](B-390-unit-loeschen-bestaetigung-ausser-sicht.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 | [B-392](B-392-uebersetzung-put-legt-paare-nicht-an.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 | [B-393](B-393-uebersetzung-put-id-null-ohne-test.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen" |
-| [B-394](B-394-birkenbihl-wort-put-id-null-ist-unbekannte-referenz.md) | `idee` | `unverifiziert: true` |
+| [B-394](B-394-birkenbihl-wort-put-id-null-ist-unbekannte-referenz.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 
 <details>
-<summary>Verworfen (26)</summary>
+<summary>Verworfen (27)</summary>
 
 | Id | Story | Grund |
 | --- | --- | --- |
@@ -1132,6 +1134,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-34](B-34-sitzungsbonus-dauer.md) | „Dauer durchgehend gelernt" als eskalierender Sitzungs-Bonus | durch MinutesPracticed-Missionen abgelöst |
 | [B-378](B-378-muendliche-abfrage-als-selbsteinschaetzung.md) | Prüfauftrag: eine mündliche Abfrage als Selbsteinschätzung ohne KI-Bewertung? | gegenstandslos: die Selbsteinschätzungs-Stufe gibt es schon (B-70), Vorlesen kommt mit B-252; eine Selbsteinschätzung, die auf den Leitner-Stand zählt, wäre ein Selbstbetrugs-Weg (Entscheidung im Auftrag des Nutzers, 2026-11-05) |
 | [B-38](B-38-mehrsprachige-oberflaeche.md) | Mehrsprachige Oberfläche (Deutsch, Englisch, Französisch) | "geteilt — ein Programm, keine Story (Entscheidung 8); siehe die recherchierte Grundlage unten und → [B-85, B-86, B-87] |
+| [B-391](B-391-birkenbihl-decoding-null-ist-500.md) | Ein Birkenbihl-Satz mit `"decoding": null` endet in einer 500 statt einer 400 | Widerlegt: die Modellvalidierung (implizites [Required] für nicht-nullbare Member) antwortet schon 400 validation_error mit dem Pfad in errors – keine 500. |
 | [B-85](B-85-i18n-infrastruktur-sohn-arcade-englisch.md) | i18n-Infrastruktur + Sohn-Arcade auf Englisch (erste Teilstufe der Mehrsprachigkeit) | geteilt (NP-11 Schritt 0, Lauf E Teil 8): Infrastruktur + Startbildschirm → B-294, Rest des Korpus → B-295 → [B-294, B-295] |
 | [B-86](B-86-uebungstyp-manifest-anzeigenamen-schluessel.md) | Das Übungstyp-Manifest liefert Anzeigenamen als Daten, nicht als Schlüssel | gegenstandslos im Backend – das Manifest trägt mit `type` (= IExerciseType.Key, ExerciseTypeManifest.cs:33,43) bereits einen stabilen, sprachneutralen Schlüssel; `Label` ist der deutsche Anzeigename daneben. Der Rest – eine Frontend-Übersetzungstabelle mit `type` als Schlüssel – gehört in B-85 |
 | [B-87](B-87-vater-web-franzoesisch-server-sprachfeld.md) | Rest des Mehrsprachigkeits-Programms: Vater-Web, Französisch, Server-Sprachfeld | "geteilt — selbst noch ein Programm (Entscheidung 1); siehe die recherchierte Grundlage oben und die → [B-91, B-92, B-90] |

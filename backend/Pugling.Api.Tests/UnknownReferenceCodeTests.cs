@@ -180,6 +180,28 @@ public class UnknownReferenceCodeTests(PuglingWebAppFactory factory) : IClassFix
         await AssertProblemAsync(await creator.PutAsJsonAsync($"{unit}/birkenbihl/{exerciseId}", Birkenbihl(Unknown)), "invalid_reference");
     }
 
+    /// <summary>
+    /// B-394: the word endpoint answers like create and replace of the exercise - an id ≤ 0 is malformed input, an unknown id a
+    /// missing row. Red if the word endpoint looks an id of 0 up again (then it reports <c>invalid_reference</c>); the unknown id
+    /// is the counter-check that the lookup still runs.
+    /// </summary>
+    [Fact]
+    public async Task Birkenbihl_Wort_mit_Id_0_ist_ein_Formfehler()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var unit = await UnitPathAsync(creator);
+        var created = await creator.PostAsJsonAsync($"{unit}/birkenbihl", Birkenbihl(null));
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var body = await created.Content.ReadFromJsonAsync<JsonElement>();
+        var exerciseId = body.GetProperty("id").GetInt32();
+        var wordId = body.GetProperty("config").GetProperty("sentences")[0].GetProperty("decoding")[0].GetProperty("wordId").GetInt32();
+        var word = $"{unit}/birkenbihl/{exerciseId}/words/{wordId}";
+
+        await AssertProblemAsync(await creator.PutAsJsonAsync(word, new { vocabularyId = 0 }), "validation_error");
+        await AssertProblemAsync(await creator.PutAsJsonAsync(word, new { vocabularyId = -3 }), "validation_error");
+        await AssertProblemAsync(await creator.PutAsJsonAsync(word, new { vocabularyId = Unknown }), "invalid_reference");
+    }
+
     [Fact]
     public async Task Unbekannter_Schluessel_in_einer_Luecke_ist_eine_unbekannte_Referenz()
     {
@@ -224,5 +246,78 @@ public class UnknownReferenceCodeTests(PuglingWebAppFactory factory) : IClassFix
         var (id, _) = await TestApi.CreateStoreVocabAsync(creator, TestApi.UniqueName("gone"), "gegangen");
         await AssertProblemAsync(await creator.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{id}", new { baseFormKey = missing }),
             "invalid_reference");
+    }
+
+    /// <summary>
+    /// B-389: a base-form key of only blanks is no key. Create already treats it as "not given"; a PATCH treats it like the empty
+    /// string, which removes the link. Red if the PATCH looks the blanks up as a key (then <c>invalid_reference</c>). The link is
+    /// set before the PATCH, so "removed" differs from the starting state.
+    /// </summary>
+    [Fact]
+    public async Task Leere_Grundform_im_Patch_entfernt_die_Verknuepfung()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var (grundId, grundKey) = await TestApi.CreateStoreVocabAsync(creator, TestApi.UniqueName("go"), "gehen");
+        var formId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/vocabulary", new
+        {
+            sourceLanguage = "en",
+            targetLanguage = "de",
+            word = TestApi.UniqueName("went"),
+            translation = "ging",
+            baseFormKey = grundKey,
+            baseFormRelation = "past",
+        }));
+        var vorher = await creator.GetFromJsonAsync<JsonElement>($"/api/v1/creator/vocabulary/{formId}");
+        Assert.Equal(grundId, vorher.GetProperty("baseFormId").GetInt32());
+        Assert.Equal("past", vorher.GetProperty("baseFormRelation").GetString());
+
+        var res = await creator.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{formId}", new { baseFormKey = "   " });
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+        var nachher = await creator.GetFromJsonAsync<JsonElement>($"/api/v1/creator/vocabulary/{formId}");
+        Assert.Equal(JsonValueKind.Null, nachher.GetProperty("baseFormId").ValueKind);
+        // The decision removes the label with the link; red if the blank branch clears only the id.
+        Assert.Equal(JsonValueKind.Null, nachher.GetProperty("baseFormRelation").ValueKind);
+    }
+
+    /// <summary>
+    /// B-391: an explicit <c>null</c> where a config's contract says "never null" (a list, a required string) is malformed input.
+    /// Model validation already answers it (the implicit <c>[Required]</c> of non-nullable members), with the path as the key of
+    /// <c>errors</c> - B-391 assumed a 500 and was refuted here. Red if that implicit check is switched off or a member loses its annotation.
+    /// </summary>
+    [Theory]
+    [InlineData("birkenbihl", "{\"learningLang\":\"en\",\"nativeLang\":\"de\",\"sentences\":null}", "config.sentences")]
+    [InlineData("birkenbihl", "{\"learningLang\":\"en\",\"nativeLang\":\"de\",\"sentences\":[{\"learningSentence\":\"Hi.\",\"naturalTranslation\":\"Hallo.\",\"decoding\":null}]}", "config.sentences[0].decoding")]
+    [InlineData("translation", "{\"sourceLang\":\"de\",\"targetLang\":\"en\",\"items\":null}", "config.items")]
+    [InlineData("translation", "{\"sourceLang\":\"de\",\"targetLang\":\"en\",\"items\":[{\"source\":null,\"target\":\"x\"}]}", "config.items[0].source")]
+    [InlineData("vocabulary", "{\"direction\":\"front-to-back\",\"items\":null}", "config.items")]
+    public async Task Null_in_einer_Config_ist_ein_Formfehler(string type, string configJson, string path)
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var unit = await UnitPathAsync(creator);
+        var payload = $"{{\"title\":\"{TestApi.UniqueName("Null")}\",\"orderIndex\":1,\"rewardPoints\":10,\"config\":{configJson}}}";
+
+        await AssertNullProblemAsync(await creator.PostAsync($"{unit}/{type}", Json(payload)), path);
+    }
+
+    /// <summary>B-391 on the replace path: red if replace binds its config without model validation.</summary>
+    [Fact]
+    public async Task Null_in_einer_Config_ist_auch_beim_Ersetzen_ein_Formfehler()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var unit = await UnitPathAsync(creator);
+        var exerciseId = await TestApi.IdAsync(await creator.PostAsJsonAsync($"{unit}/translation", Translation(null)));
+        var payload = $"{{\"title\":\"Null\",\"orderIndex\":1,\"rewardPoints\":10,\"config\":{{\"sourceLang\":\"de\",\"targetLang\":\"en\",\"items\":null}}}}";
+
+        await AssertNullProblemAsync(await creator.PutAsync($"{unit}/translation/{exerciseId}", Json(payload)), "config.items");
+    }
+
+    private static StringContent Json(string payload) => new(payload, System.Text.Encoding.UTF8, "application/json");
+
+    private static async Task AssertNullProblemAsync(HttpResponseMessage res, string path)
+    {
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+        var problem = await res.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("validation_error", problem.GetProperty("code").GetString());
+        Assert.Contains(problem.GetProperty("errors").EnumerateObject(), e => string.Equals(e.Name, path, StringComparison.OrdinalIgnoreCase));
     }
 }

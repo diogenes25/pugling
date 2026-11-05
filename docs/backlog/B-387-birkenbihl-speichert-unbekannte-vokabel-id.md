@@ -89,3 +89,4 @@ nach dem Muster von B-386.
   (Summary jetzt eingeschränkt, nur Text). 🟢 Summary von `ReferencingExercisesAsync` nannte Birkenbihl nicht – berichtigt (nur Text).
   🟢 `"sentences": null` → 500, zu B-391 ergänzt. 🟢 hingenommen: `PUT` mit `0`/bestehender Id ohne eigenen Birkenbihl-Fall
   (geteilter Validator, vgl. B-393).
+- **2026-11-05** — **Berichtigt:** die oben genannte 500 bei `"sentences": null` ist widerlegt – die Modellvalidierung antwortet schon `400 validation_error` (gemessen in Lauf X, B-391 `verworfen`).

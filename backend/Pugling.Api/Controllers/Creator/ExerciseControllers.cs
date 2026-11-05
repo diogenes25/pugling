@@ -465,10 +465,9 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
     protected override string TypeKey => ExerciseTypeKeys.Birkenbihl;
 
     /// <summary>
-    /// Checks the store ids of decoded words on create and replace (B-387): an unknown id is <c>invalid_reference</c>, as at the
-    /// word endpoint <c>PUT …/words/{wordId}</c>; an id ≤ 0 is <c>validation_error</c> here, while the word endpoint still answers
-    /// <c>invalid_reference</c> for it (B-394). The language pair is deliberately not checked here: changing the exercise's
-    /// languages would otherwise turn every linked word into an error.
+    /// Checks the store ids of decoded words on create and replace (B-387) with the same answers as the word endpoint
+    /// <c>PUT …/words/{wordId}</c>: an id ≤ 0 is <c>validation_error</c>, an unknown id <c>invalid_reference</c> (B-394). The language
+    /// pair is deliberately not checked here: changing the exercise's languages would otherwise turn every linked word into an error.
     /// </summary>
     protected override Task<RequestProblem?> ValidateConfigAsync(int seriesId, BirkenbihlConfig config, CancellationToken ct = default) =>
         VocabularyIdsProblemAsync(config.Sentences.SelectMany(s => s.Decoding).Select(w => w.VocabularyId), "A decoded word's", ct);
@@ -587,6 +586,8 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
         WordPair updated;
         if (body.VocabularyId is { } vocabId)
         {
+            // Same answer as create and replace of the exercise (B-394): an id ≤ 0 is malformed input, not a missing row.
+            if (vocabId <= 0) return this.ProblemWithCode(ApiErrors.ValidationError, "A decoded word's vocabularyId must be > 0 when set.");
             // The card must exist and match the exercise's language pair - otherwise a foreign gloss would be set.
             var card = await Db.Vocabularies.AsNoTracking()
                 .FirstOrDefaultAsync(v => v.Id == vocabId
