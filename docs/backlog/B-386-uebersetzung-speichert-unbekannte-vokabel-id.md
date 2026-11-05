@@ -80,5 +80,8 @@ Testweg: Integrationsfälle in `UnknownReferenceCodeTests` (AK 1/2) und neben de
   nachgezogen. **Bekanntes Verhalten, kein Defekt:** eine Vokabel, die eine Übersetzung angelegt oder wiederverwendet hat, ist
   danach löschgeschützt, bis Satz oder Übung sich ändern – wie bei der Vokabelübung; `usage` nennt die sperrende Übung.
 - **2026-11-05** — **abgenommen.** Volle Suite 1087/1087; Rollengang Creator: die sechs E2E-Specs, die Übersetzung und Vokabelspeicher
-  im Browser fahren, 8 passed – darunter `auch-richtig-im-uebungseditor.spec.ts`, das eine Übersetzung mit geladener `vocabularyId`
-  erneut speichert (Entscheidung 2). Vater und Sohn unberührt (Spielweg liest nur `Source`/`Target`). Commit: siehe nächster Eintrag.
+  im Browser fahren, 8 passed – davon legt `uebungstypen.spec.ts:105` eine Übersetzung an. **Berichtigt:** zuerst stand hier,
+  `auch-richtig-im-uebungseditor.spec.ts` speichere eine Übersetzung mit geladener Id erneut; die Spec bearbeitet aber eine
+  Vokabelübung. Das erneute Speichern mit bestehender Id deckt nur der Integrationsfall (Anlegen mit bestehender Id → `201`, derselbe
+  Validator wie beim PUT), keine Spec im Browser. Vater und Sohn unberührt (Spielweg liest nur `Source`/`Target`). Commit: siehe nächster Eintrag.
+- **2026-11-05** — Commit `28cb072`.

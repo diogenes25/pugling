@@ -285,5 +285,6 @@ Retro Sprint 5); volle Suite 1087/1087; `dotnet format` ohne Befund an berührte
 `ExerciseCatalogController.cs`, nicht berührt).
 **Review** `pugling-reviewer`: kein 🔴, ein 🟡 nur Text (Vertragskommentar), drei 🟢 – **Zähler Sprint 6: 0 von 5**.
 
-**Abnahme:** Creator – sechs E2E-Specs über Übersetzung und Vokabelspeicher, 8 passed (Rollengang als E2E). Vater und Sohn:
+**Abnahme:** Creator – sechs E2E-Specs über Übersetzung und Vokabelspeicher, 8 passed (Rollengang als E2E; eine Übersetzung
+*angelegt* in `uebungstypen.spec.ts`, das erneute Speichern mit geladener Id nur über den Integrationsfall belegt). Vater und Sohn:
 Regressionszeugen, Suite grün, der Spielweg liest die Id nicht.
