@@ -12015,7 +12015,7 @@
         "tags": [
           "Creator \u2013 Profiles"
         ],
-        "summary": "The profiles matching a child, best first (a series match weighs the heaviest).\nThe endpoint reads child data and is therefore bound to supervision: a creator who\ndoes not supervise this child gets \u0060403\u0060 \u2013 otherwise the profile search would be a side\nchannel onto other people\u0027s child profiles.",
+        "summary": "The profiles matching a child, best first (a series match weighs the heaviest).\nThe endpoint reads child data and is therefore bound to supervision: a creator who\ndoes not supervise this child gets \u0060404\u0060, exactly like a child that does not exist \u2013 otherwise\nthe profile search would be a side channel onto other people\u0027s child profiles, and the difference\nbetween 403 and 404 would reveal which child ids exist (B-310; same answer as \u0060ChildOwnershipFilter\u0060).",
         "parameters": [
           {
             "name": "childId",
@@ -12045,16 +12045,6 @@
           }
         ],
         "responses": {
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Not Found",
             "content": {
@@ -12080,6 +12070,16 @@
           },
           "401": {
             "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {

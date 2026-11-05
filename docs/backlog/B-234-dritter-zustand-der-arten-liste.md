@@ -14,13 +14,14 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-11-05"
 ---
 
 # B-234 · Soll die Arten-Liste einen dritten Zustand bekommen – oder B-174s Entscheidung 3 zurückgenommen werden?
 
 B-174 versprach in Entscheidung 3: „Der Leer-Zweig bleibt, wird aber nachgeschärft – ‚Keine Arten' darf nur
 greifen, wenn wirklich geladen wurde", samt angekündigtem Preis „ein dritter sichtbarer Zustand". Gebaut wurde
-nur der Ausfall-Banner; `CategoryRows` (`frontend/src/vater/CatalogAdmin.tsx:210`) steht unverändert auf
+nur der Ausfall-Banner; `CategoryRows` (`frontend/src/vater/CatalogAdmin.tsx:212`) steht unverändert auf
 `if (!categories?.length) return null`. Das Akzeptanzkriterium hält trotzdem – über die Überschriftenzahl
 (`Arten (n)` erscheint bei `error` nicht), die die Story nirgends als tragendes Merkmal nennt. Der Verlauf von
 B-174 protokolliert die Abweichung von Entscheidung 1 ausdrücklich, die von Entscheidung 3 gar nicht.
@@ -67,3 +68,4 @@ sie noch laden, damit ich keine Dublette im geteilten Katalog anlege.
 - **2026-11-05** — ausformuliert, geschätzt und gebaut in Sprint 1 der Sitzung 2026-11-05 ([Protokoll](../pm-sitzung-2026-11-05.md)). AK 1 → `CatalogAdmin.test.tsx:300` („sagt im Ladefenster …"), Mutant „`pending` ignorieren" → rot (1 von 20). AK 2 → `:309`, Mutant „Leer-Zweig weg" → rot (1 von 20). AK 3 → `:316` und `:324`, Mutanten „`!error` am Lade- bzw. Leer-Zweig weg" → je rot (1 von 20). AK 4 (Review-Fund 🟡 1, `frontend-reviewer`) → `artenPending`-Fall am Dateiende, Mutant „`|| stale` weg" → rot (1 von 34 in zwei Dateien).
 - **2026-11-05** — **abgenommen.** Vitest 648/648, `tsc -b` sauber, E2E 110/110 (volle Suite, vor den Review-Fixes, die nur eine Funktion herauslösen und Tests ergänzen). Review `frontend-reviewer`: zwei 🟡 (gezählt, Zähler Sprint 1: 2), zwei 🟢 (ohne Zählung) – alle behoben. Rollengang: kein eigener E2E-Weg (ein Ladefenster ist im Browser nicht zuverlässig herzustellen ohne künstlich langsamen Server); belegt über die Vitest-Fälle, die Creator-Specs der Lehrwerke- und Katalog-Seiten liefen grün. Commit: siehe nächster Eintrag.
 - **2026-11-05** — Commit `c6876b4`.
+- **2026-11-05** — **Nachschau** (frischer `frontend-reviewer`, `git show c6876b4 -- frontend/`, read-only): `CatalogAdmin.tsx:128` und die Testzeilen `:300/309/316/324` nachgerechnet, kein Befund im Verhalten. 🟢: die Einleitung nannte `:210` statt `:212` (berichtigt in B-382).

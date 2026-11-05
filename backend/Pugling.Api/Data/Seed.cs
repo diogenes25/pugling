@@ -139,9 +139,28 @@ public static class Seed
             else await accounts.EnsureForTeacherAsync(adult, pin, ct);
         }
 
+        var supervisorEmails = await db.SupervisorLinks.AsNoTracking()
+            .Where(l => l.Supervisor!.Email != null)
+            .Select(l => new { l.StudentId, Email = l.Supervisor!.Email! })
+            .ToListAsync(ct);
         foreach (var child in await db.Children.AsNoTracking().ToListAsync(ct))
-            await accounts.EnsureForChildAsync(child, SeededChildPins.GetValueOrDefault(child.Name), ct);
+        {
+            var emails = supervisorEmails.Where(l => l.StudentId == child.Id).Select(l => l.Email);
+            await accounts.EnsureForChildAsync(child, SeededChildPin(child.Name, emails), ct);
+        }
     }
+
+    /// <summary>
+    /// The known seed PIN for a child – only if it is supervised by the seeded adult it belongs to. Keyed by name
+    /// alone, a self-created child called "Sohn" whose account creation was interrupted would get the public PIN
+    /// 1111 on the next start (B-282, point 2): the name is chosen by users, the seeded e-mail is not.
+    /// </summary>
+    /// <param name="childName">The child's name.</param>
+    /// <param name="supervisorEmails">The e-mail addresses of the adults supervising this child.</param>
+    /// <returns>The seed PIN, or <c>null</c> (no PIN, login disabled) for every other child.</returns>
+    public static string? SeededChildPin(string childName, IEnumerable<string> supervisorEmails) =>
+        supervisorEmails.Select(email => SeededChildPins.GetValueOrDefault((email, childName)))
+            .FirstOrDefault(pin => pin is not null);
 
     /// <summary>
     /// The PINs of the seeded people, by e-mail. Since B-230 the PIN lives on the login account only, and the account
@@ -155,11 +174,14 @@ public static class Seed
         ["englischlehrer@example.com"] = "9999",
     };
 
-    /// <summary>The PINs of the seeded children, by name (children have no e-mail). See <see cref="SeededAdultPins"/>.</summary>
-    private static readonly Dictionary<string, string> SeededChildPins = new()
+    /// <summary>
+    /// The PINs of the seeded children, by the seeded supervisor's e-mail plus the child's name (children have no
+    /// e-mail of their own). See <see cref="SeededAdultPins"/> and <see cref="SeededChildPin"/>.
+    /// </summary>
+    private static readonly Dictionary<(string SupervisorEmail, string ChildName), string> SeededChildPins = new()
     {
-        ["Sohn"] = "1111",
-        ["Demo-Kind"] = "2222",
+        [("papa@example.com", "Sohn")] = "1111",
+        [("demo-vater@example.com", "Demo-Kind")] = "2222",
     };
 
     /// <summary>

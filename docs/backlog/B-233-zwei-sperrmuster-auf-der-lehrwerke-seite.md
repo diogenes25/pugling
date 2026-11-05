@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-11-05"
 ---
 
 # B-233 · Eine Seite, zwei Sperrmuster: Soll „Pflichtfeld leer" überall gleich aussehen?
@@ -44,7 +45,7 @@ tun kann, ist gesperrt, und das Label sagt warum.
 
 ## Ist-Stand am Code (vor dem Bau, Stand `37e6f6e`)
 
-- `frontend/src/vater/VaterLehrwerke.tsx:447` (`SeriesForm`) und `:740` (`UnitForm`): Speichern blieb bei leerem Pflichtfeld klickbar und
+- `frontend/src/vater/VaterLehrwerke.tsx:446` (`SeriesForm`) und `:739` (`UnitForm`): Speichern blieb bei leerem Pflichtfeld klickbar und
   meldete lokal „Der Name der Reihe fehlt." bzw. „Die Bezeichnung fehlt."; die Labels trugen kein „(Pflicht)".
 - „Reihe anlegen" (`:991`) und die Verlags-Knöpfe sperrten schon (B-225).
 
@@ -55,7 +56,7 @@ tun kann, ist gesperrt, und das Label sagt warum.
 2. **(Nutzer, über B-231)** Die Sperre ist echtes `disabled`, nicht `aria-disabled`.
 3. **(Im Auftrag des Nutzers, beim Bau)** Ein stiller Riegel bleibt im `submit`, und zwar **vor** `onMeldung(null)`: ein Versuch,
    der nicht stattfindet, räumt den Platz der Seite nicht.
-4. **(Im Auftrag des Nutzers, beim Bau)** Nur die Lehrwerke-Seite; die übrigen zehn Formulare mit demselben Muster →
+4. **(Im Auftrag des Nutzers, beim Bau)** Nur die Lehrwerke-Seite; die übrigen fünfzehn Formulare mit demselben Muster →
    [B-380](B-380-pflichtfeld-sperre-in-den-uebrigen-formularen.md).
 
 ## Akzeptanzkriterien
@@ -79,3 +80,4 @@ tun kann, ist gesperrt, und das Label sagt warum.
 - **2026-11-05** — ausformuliert, geschätzt und gebaut in Sprint 1 der Sitzung 2026-11-05 ([Protokoll](../pm-sitzung-2026-11-05.md)). AK 1 → `SeriesForm.test.tsx:143` und `VaterLehrwerke.test.tsx:243`, Mutanten „`|| !form.name.trim()` bzw. `|| !form.label.trim()` am Knopf weg" → je rot (1 von 34); „(Pflicht)" trägt die exakte Label-Abfrage derselben Fälle. AK 2 → `SeriesForm.test.tsx:152` und `VaterLehrwerke.test.tsx:254`, Mutanten „Riegel hinter `onMeldung(null)`" → je rot (1 von 34). AK 3: `frontend/CLAUDE.md` 10347 → 10333 B (Platzhalter-Absatz verdichtet, Begründung liegt in `useAsync.ts`). E2E: vier Specs auf das neue Label nachgezogen, `bestaetigung-ueberlebt.spec.ts` Schritt 2 fährt B-197 über „Nichts geändert.".
 - **2026-11-05** — **abgenommen.** Vitest 648/648, E2E 110/110 (darunter die vier nachgezogenen Creator-Specs = Rollengang). Review `frontend-reviewer`: B-233-Fälle je mit Mutant bestätigt; 🟢 4 (Hausregel-Satz vermischte B-231 und B-233) behoben, ohne Zählung. Commit: siehe nächster Eintrag.
 - **2026-11-05** — Commit `c6876b4`.
+- **2026-11-05** — **Nachschau** (frischer `frontend-reviewer`, `git show c6876b4 -- frontend/`, read-only): Riegel vor `onMeldung(null)` und keine übrige exakte Label-Abfrage bestätigt. **Entgangen (🟡):** AK 3 hielt nicht – die Datei wuchs um 42 B (gemessen am Blob) → [B-382](B-382-groessenangabe-und-zaehlungen-aus-sprint-1.md), im selben Sprint berichtigt (jetzt 10325 B); dazu die Ist-Stand-Zeilen `:446`/`:739` und die Zählung „fünfzehn Formulare".

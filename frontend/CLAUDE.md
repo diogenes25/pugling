@@ -49,8 +49,8 @@ Wiedereintritt selbst sperrt (`useRef`, synchron): es ist der Wartepunkt der Pla
 sichtbare Grund, warum eine verworfene zweite Aktion nicht wie „nichts passiert" aussieht. Die Sperre gilt je
 **Hook-Instanz**, in Listen mit *geteilter* `ActionState` also listenweit. Als **Regel**, nicht als Zustand:
 die Sohn-Arcade (B-49) folgt ihr noch nicht. **Pflichtfeld leer → Speichern `disabled`**, das Label trägt
-„(Pflicht)", keine lokale Meldung (B-233; Rest-Formulare: B-380). Verliert ein `disabled={busy}`-Knopf nach dem Klick
-den Fokus und gibt es keinen Fehlerkasten, nimmt ihn der Container (`tabIndex={-1}`, B-231). **Erfolg darf stumm bleiben** (`run` ohne `okText`), wo die
+„(Pflicht)", keine lokale Meldung (B-233; Rest: B-380). Den Fokus eines gesperrten `busy`-Knopfs nimmt ohne
+Fehlerkasten der Container (`tabIndex={-1}`, B-231). **Erfolg darf stumm bleiben** (`run` ohne `okText`), wo die
 Änderung selbst die Rückmeldung ist – so der Tag-Editor im Vokabel-Store; ein Banner je Chip wäre Lärm.
 
 **`npm install`/`npm ci` ohne `--legacy-peer-deps`**, auch in CI ([B-25](../docs/backlog/B-25-vite-pwa-peer-konflikt.md)).
@@ -103,7 +103,7 @@ dem Kind wegbrechen). Es stoppt nur **neue** Zuweisungen; der Schalter sitzt neb
 
 **Platzhalter:** `loading && data === null` für Listen, `showPlaceholder` für Flächen, die ein `reload`
 überstehen müssen; nie `loading ? … : rows` (hängt bei jedem `reload` alles aus) und nie ein blankes
-`data === null` (Begründung am Feld in `src/lib/useAsync.ts`, B-184).
+`data === null` (Grund am Feld in `useAsync.ts`, B-184).
 
 **Die andere Hälfte derselben Falle:** `data` überlebt auch einen **Wechsel der Abhängigkeit** – im
 Ladefenster stehen noch die Zeilen des vorigen Elternteils, während die Rückrufe schon das neue binden

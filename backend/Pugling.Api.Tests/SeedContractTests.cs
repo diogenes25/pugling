@@ -166,4 +166,19 @@ public class SeedContractTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
         Assert.Equal(HttpStatusCode.Created, res.StatusCode);
     }
+
+    /// <summary>
+    /// B-282, point 2: the seed PIN of a child hangs on the seeded supervisor, not on the name alone. A self-created
+    /// child named "Sohn" under another adult must not get the public PIN 1111 when its account is created at startup.
+    /// Red if the lookup ignores the supervisor (keyed by name only): the second assertion gets "1111".
+    /// </summary>
+    [Fact]
+    public void Seed_PIN_eines_Kindes_gilt_nur_unter_dem_geseedeten_Betreuer()
+    {
+        Assert.Equal("1111", Seed.SeededChildPin("Sohn", ["papa@example.com"]));
+        Assert.Null(Seed.SeededChildPin("Sohn", ["andere-mutter@example.com"]));
+        Assert.Null(Seed.SeededChildPin("Sohn", []));
+        // A co-supervisor next to the seeded one does not take the PIN away.
+        Assert.Equal("2222", Seed.SeededChildPin("Demo-Kind", ["oma@example.com", "demo-vater@example.com"]));
+    }
 }

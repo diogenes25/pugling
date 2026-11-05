@@ -166,9 +166,8 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
             {
                 matches = await creator.MatchProfilesAsync(childId, subjectId, ct);
             }
-            // Same answer as the briefing's child lookup: unknown and not supervised look alike from here (B-308).
-            catch (PuglingApiException ex) when (ex.StatusCode is System.Net.HttpStatusCode.NotFound
-                                                     or System.Net.HttpStatusCode.Forbidden)
+            // Unknown and not supervised are one answer, 404, on the server as well (B-308, B-310).
+            catch (PuglingApiException ex) when (ex.StatusCode is System.Net.HttpStatusCode.NotFound)
             {
                 throw new AgentUsageException(
                     $"Kind {childId} ist für dieses Konto nicht sichtbar – es existiert nicht, oder das Konto betreut es nicht. "

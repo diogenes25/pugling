@@ -39,17 +39,30 @@ public static class PinHasher
     }
 
     /// <summary>
+    /// A fixed salt for the decoy derivation in <see cref="Verify"/>. Not secret and never compared against anything:
+    /// it only exists so that the decoy costs exactly what a real check costs.
+    /// </summary>
+    private static readonly byte[] DecoySalt = new byte[SaltSize];
+
+    /// <summary>
     /// Checks a PIN against the stored value. Recognizes the hash format; if the stored value is
     /// not a hash (legacy plain text), it is compared directly – so accounts created before the switch stay usable.
+    /// <para>
+    /// <paramref name="stored"/> may be <c>null</c> (unknown id, no account). Every path that does not reach a real
+    /// hash still runs one PBKDF2 derivation, so the response time does not tell "unknown or disabled" apart from
+    /// "wrong PIN" (B-282, point 4) – callers therefore verify <b>before</b> they branch on a missing row.
+    /// </para>
     /// </summary>
-    public static bool Verify(string pin, string stored)
+    public static bool Verify(string pin, string? stored)
     {
-        // An empty stored PIN means "login disabled" - not "log in with an empty input". Without this line the
-        // legacy plaintext branch below compared "" with "" and let exactly that through (B-28).
-        if (stored.Length == 0) return false;
-        var parts = stored.Split('.');
-        if (parts.Length != 4 || parts[0] != Prefix)
-            return stored == pin; // legacy plaintext (from before hashing was introduced)
+        var parts = stored?.Split('.');
+        if (stored is null || stored.Length == 0 || parts!.Length != 4 || parts[0] != Prefix)
+        {
+            Rfc2898DeriveBytes.Pbkdf2(pin, DecoySalt, Iterations, HashAlgorithmName.SHA256, KeySize);
+            // An empty stored PIN means "login disabled" - not "log in with an empty input" (B-28). Legacy plaintext
+            // from before hashing was introduced is still compared directly.
+            return stored is { Length: > 0 } && stored == pin;
+        }
 
         if (!int.TryParse(parts[1], out var iterations)) return false;
         var salt = Convert.FromBase64String(parts[2]);

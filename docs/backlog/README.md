@@ -506,10 +506,11 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (40)
+### Offen (38)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| [B-381](B-381-erfolgs-scroll-springt-aus-dem-formular.md) | Seit B-232 scrollt jede Bestätigung zum Meldungsplatz – auch die aus einem Formular mitten in der Tabelle | Defekt | `idee` | P2 | — | frontend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `gegrillt` | P2 | — | backend | Vertrag? |
 | [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder | Wunsch | `geschaetzt` | P2 | L | beides | — |
@@ -522,10 +523,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-249](B-249-probeklausur-mit-notenprognose.md) | Eine Probeklausur über das Bündel einer Klassenarbeit, mit Notenprognose | Wunsch | `idee` | P2 | — | — | — |
 | [B-374](B-374-baobab-vergleich-sammel-story.md) | Baobab-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | Wunsch | `idee` | P2 | — | — | — |
 | [B-375](B-375-heftseite-wird-uebungsentwurf.md) | Eine fotografierte Heftseite wird zum Übungsentwurf, den der Vater vor dem Zuweisen prüft | Wunsch | `idee` | P2 | — | — | — |
-| [B-282](B-282-login-haertung-restpunkte.md) | Restpunkte der Login-Härtung (NP-3) | Defekt | `idee` | P3 | — | backend | — |
-| [B-310](B-310-profil-match-verraet-kind-ids.md) | `GET creator/profiles/match` verrät per 404 gegen 403, ob es eine Kind-Id gibt | Defekt | `idee` | P3 | — | backend | — |
 | [B-329](B-329-uebung-unbekannte-referenz-validation-error.md) | Die Übungs-Validierung meldet eine unbekannte Id als `validation_error`, die Kategorie daneben als `invalid_reference` | Defekt | `idee` | P3 | — | backend | — |
-| [B-379](B-379-name-vor-pin-vorrang-ungetestet.md) | Die Vorrangfolge „leerer Name vor zu kurzer PIN" an `auth/me` ist ungetestet | Defekt | `idee` | P3 | — | backend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `idee` | P3 | — | — | — |
 | [B-291](B-291-fachwechsel-der-reihe-laesst-themen-stehen.md) | Wechselt eine Reihe ihr Fach, bleiben die Grammatik-Themen des alten Fachs an Übungen und Units stehen | Frage | `idee` | P3 | — | backend | — |
@@ -552,7 +550,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (313)</summary>
+<summary>Abgenommen (317)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -730,6 +728,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-28](B-28-login-name-sequenziell.md) | Sequenzielle IDs als Login-Name | Wunsch | `abgenommen` | P3 | S | backend | — |
 | [B-280](B-280-fokusziel-nicht-geleert-ungetestet.md) | Dass das Fokusziel nach dem Sprung geleert wird, prüft kein Test | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-281](B-281-pin-felder-pruefen-mindestlaenge-im-ui.md) | Eine zu kurze PIN meldet die Oberfläche auf Englisch | Defekt | `abgenommen` | P3 | S | frontend | — |
+| [B-282](B-282-login-haertung-restpunkte.md) | Restpunkte der Login-Härtung (NP-3) | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-283](B-283-buchstaben-ordnen-testluecken.md) | Buchstaben ordnen: neue Anordnung je Prüfungsversuch und die Vorschau sind ungetestet | Defekt | `abgenommen` | P3 | XS | beides | — |
 | [B-284](B-284-doppeltes-enter-ueberspringt-karte.md) | Ein doppeltes Enter während der Prüfung überspringt eine Karte | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-285](B-285-kind-konto-bleibt-nach-vater-loeschung.md) | Löscht sich ein Vater, bleibt das Konto seines Kindes als leere Hülle – und der Kind-Token bleibt gültig | Defekt | `abgenommen` | P2 | XS | backend | — |
@@ -755,6 +754,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-307](B-307-create-mit-unbekannter-reihe-rohe-404.md) | `create --series 99999 --series-unit 1` endet als rohe 404 statt als Fehlbedienung | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-308](B-308-agent-fehlbedienung-plan-exam-profiles.md) | Zwei Rest-Pfade des Agenten bei einer falschen Id: `plan`/`exam` melden sie je Teil, `profiles` evtl. roh | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-309](B-309-leerraum-auf-der-grenze-nur-mit-leerzeichen-belegt.md) | „Dieselbe Leerraum-Menge an jeder Stelle“ ist nur in einer Richtung belegt | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-310](B-310-profil-match-verraet-kind-ids.md) | `GET creator/profiles/match` verrät per 404 gegen 403, ob es eine Kind-Id gibt | Defekt | `abgenommen` | P3 | XS | backend | Vertrag |
 | [B-311](B-311-agent-reihensuche-liest-nur-50-reihen.md) | Der Agent sucht Reihe und Unit nur in den ersten 50 Reihen | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-312](B-312-agent-profiles-unbekanntes-fach-meldet-kein-profil.md) | `profiles --subject <unbekannt>` endet mit Exit 0 und der Behauptung, es gebe kein Profil | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-315](B-315-arcade-buchungsart-und-facette-ohne-abgleich.md) | Deutsche Buchungsarten und Facetten der Arcade sind nicht an die Vater-Helfer gebunden | Defekt | `abgenommen` | P3 | XS | frontend | — |
@@ -817,6 +817,8 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-371](B-371-leere-pin-per-patch-nur-als-angenommen-geprueft.md) | Eine leere PIN per PATCH war nur als „angenommen" geprüft | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-372](B-372-abbruch-log-und-guard-reihenfolge-im-login-pfad.md) | Ein Abbruch bei der Kontoprüfung landet als Fehler im Log, und zwei PIN-Prüfungen stehen hinter Änderungen | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-373](B-373-inventar-und-begruendung-aus-lauf-s.md) | Ein Inventar, das wieder zu kurz war, und eine Begründung, die sich selbst widerspricht | Defekt | `abgenommen` | P3 | XS | doku | — |
+| [B-379](B-379-name-vor-pin-vorrang-ungetestet.md) | Die Vorrangfolge „leerer Name vor zu kurzer PIN" an `auth/me` ist ungetestet | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-382](B-382-groessenangabe-und-zaehlungen-aus-sprint-1.md) | `frontend/CLAUDE.md` wuchs entgegen B-233 AK 3, und vier Angaben aus Sprint 1 stimmten nicht | Defekt | `abgenommen` | P3 | XS | doku | — |
 | [B-40](B-40-client-routen-waechter.md) | Routen aus `Pugling.Client` gegen das OpenAPI-Dokument halten | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-41](B-41-produktions-startup-smoke.md) | Der Produktionspfad des Starts ist der einzige ohne Test | Aufräumen | `abgenommen` | P2 | S | backend | — |
 | [B-42](B-42-openapi-typen-generieren.md) | TypeScript-Typen aus dem OpenAPI-Dokument erzeugen statt von Hand pflegen | Aufräumen | `abgenommen` | P2 | M | beides | — |
@@ -882,9 +884,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
-### Nach der Abnahme entgangen (120)
+### Nach der Abnahme entgangen (122)
 
-**Nachgeschaut: 309 von 313 abgenommenen** — und in 100 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 4 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 313 von 317 abgenommenen** — und in 102 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 4 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -1007,7 +1009,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-368](B-368-stale-kommentar-und-zaehlung.md) | Nach B-164 behauptet ein Kommentar den entfernten Effekt, und die Story zählt falsch | [B-164] | `abgenommen` |
 | [B-370](B-370-zwei-behauptungen-aus-lauf-r-teil-2.md) | Zwei Behauptungen aus Lauf R, Teil 2 halten nicht | [B-368, B-183] | `abgenommen` |
 | [B-373](B-373-inventar-und-begruendung-aus-lauf-s.md) | Ein Inventar, das wieder zu kurz war, und eine Begründung, die sich selbst widerspricht | [B-370, B-358] | `abgenommen` |
-| [B-379](B-379-name-vor-pin-vorrang-ungetestet.md) | Die Vorrangfolge „leerer Name vor zu kurzer PIN" an `auth/me` ist ungetestet | [B-372] | `idee` |
+| [B-379](B-379-name-vor-pin-vorrang-ungetestet.md) | Die Vorrangfolge „leerer Name vor zu kurzer PIN" an `auth/me` ist ungetestet | [B-372] | `abgenommen` |
+| [B-381](B-381-erfolgs-scroll-springt-aus-dem-formular.md) | Seit B-232 scrollt jede Bestätigung zum Meldungsplatz – auch die aus einem Formular mitten in der Tabelle | [B-232] | `idee` |
+| [B-382](B-382-groessenangabe-und-zaehlungen-aus-sprint-1.md) | `frontend/CLAUDE.md` wuchs entgegen B-233 AK 3, und vier Angaben aus Sprint 1 stimmten nicht | [B-233] | `abgenommen` |
 
 <details>
 <summary>Nie nachgeschaut (4) — Arbeitsvorrat der Nachschau</summary>
@@ -1017,10 +1021,10 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 
 | Id | Story |
 | --- | --- |
-| [B-231](B-231-fokus-ohne-fehlerkasten.md) | Wohin gehört der Fokus, wenn ein Knopf ohne Fehlerkasten gesperrt wird? |
-| [B-232](B-232-bestaetigung-ausserhalb-des-sichtfelds.md) | Soll eine Bestätigung zum Meldungsplatz scrollen, wenn er weit vom Knopf entfernt liegt? |
-| [B-233](B-233-zwei-sperrmuster-auf-der-lehrwerke-seite.md) | Eine Seite, zwei Sperrmuster: Soll „Pflichtfeld leer" überall gleich aussehen? |
-| [B-234](B-234-dritter-zustand-der-arten-liste.md) | Soll die Arten-Liste einen dritten Zustand bekommen – oder B-174s Entscheidung 3 zurückgenommen werden? |
+| [B-282](B-282-login-haertung-restpunkte.md) | Restpunkte der Login-Härtung (NP-3) |
+| [B-310](B-310-profil-match-verraet-kind-ids.md) | `GET creator/profiles/match` verrät per 404 gegen 403, ob es eine Kind-Id gibt |
+| [B-379](B-379-name-vor-pin-vorrang-ungetestet.md) | Die Vorrangfolge „leerer Name vor zu kurzer PIN" an `auth/me` ist ungetestet |
+| [B-382](B-382-groessenangabe-und-zaehlungen-aus-sprint-1.md) | `frontend/CLAUDE.md` wuchs entgegen B-233 AK 3, und vier Angaben aus Sprint 1 stimmten nicht |
 
 </details>
 

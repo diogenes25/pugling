@@ -17,15 +17,15 @@ ersetzt_durch: []
 # B-380 · Die Hausregel „Pflichtfeld leer → Speichern gesperrt" gilt erst auf der Lehrwerke-Seite
 
 B-233 hat die Regel in `frontend/CLAUDE.md` gesetzt und für `SeriesForm`/`UnitForm` gebaut. Dasselbe Muster – Knopf
-klickbar, lokale Meldung „… fehlt." – steht noch in mindestens zehn Formularen (gezählt per `grep "action.fail("` am
+klickbar, lokale Meldung „… fehlt." – steht noch in fünfzehn Formularen (gezählt per `grep "action.fail("` am
 2026-11-05, nur die Pflichtfeld-Fälle): `ChildMaterialSection.tsx:254` (neue Reihe) und `:292` (Titel),
 `ClozeTexts.tsx:165/166`, `VaterFachlehrer.tsx:259`, `VaterKind.tsx:176`, `VaterDashboard.tsx:33`,
 `VaterClassTests.tsx:69/70`, `VaterAnmerkungen.tsx:271`, `ChildCarePanels.tsx:36/121`, `ExerciseSharingPanels.tsx:36`,
-`RemarkWidget.tsx:107`. Nicht mitgezählt sind Prüfungen, die keinen leeren Pflichtwert meinen (PIN-Länge, Klassenstufen-
+`RemarkWidget.tsx:107`, `VaterProfil.tsx:111`, `VaterZiele.tsx:433`, `PlanPositions.tsx:490` (die letzten drei aus der Nachschau vom 2026-11-05 nachgetragen). Nicht mitgezählt sind Prüfungen, die keinen leeren Pflichtwert meinen (PIN-Länge, Klassenstufen-
 Reihenfolge, Sterne).
 
 Bewusst nicht in B-233 genommen: das Sprint-Ziel (eine Seite, ein Sperrmuster) war ohne diese Stellen erfüllt, und
-mehrere davon werden per exaktem Label in E2E und Vitest angesprochen (`"Name der neuen Reihe"` allein elfmal) – das
+mehrere davon werden per exaktem Label in E2E und Vitest angesprochen (`"Name der neuen Reihe"` allein zehnmal) – das
 Nachziehen ist eigenes Handwerk.
 
 ## Verlauf

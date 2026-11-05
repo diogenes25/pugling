@@ -55,7 +55,9 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
         // The PIN lives on the account only (B-230); the adult row is looked up for the admin flag and the name.
         var adult = await db.Adults.FirstOrDefaultAsync(a => a.Id == dto.AdultId, ct);
         var account = adult is null ? null : await accounts.FindForAdultAsync(adult.Id, ct);
-        if (adult is null || account is null || !PinHasher.Verify(dto.Pin, account.PinHash))
+        // Verify before branching: a missing row costs the same PBKDF2 work as a wrong PIN (B-282).
+        var pinOk = PinHasher.Verify(dto.Pin, account?.PinHash);
+        if (adult is null || account is null || !pinOk)
             return this.ProblemWithCode(ApiErrors.InvalidCredentials, "Invalid adult ID or PIN.");
 
         var (token, expires) = tokens.IssueForAccount(account, account.Profiles, isAdmin: adult.IsAdmin);
@@ -73,7 +75,8 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
     {
         var child = await db.Children.FirstOrDefaultAsync(c => c.Id == dto.ChildId, ct);
         var account = child is null ? null : await accounts.FindForChildAsync(child.Id, ct);
-        if (child is null || account is null || !PinHasher.Verify(dto.Pin, account.PinHash))
+        var pinOk = PinHasher.Verify(dto.Pin, account?.PinHash); // before branching, see LoginAdult (B-282)
+        if (child is null || account is null || !pinOk)
             return this.ProblemWithCode(ApiErrors.InvalidCredentials, "Invalid child ID or PIN.");
 
         // Settle open mandatory periods on login: a penalty for not learning lands before the child sees its
@@ -100,7 +103,8 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
     public async Task<ActionResult<LoginResponse>> Login(AccountLoginDto dto, CancellationToken ct = default)
     {
         var account = await accounts.FindWithProfilesAsync(dto.AccountId, ct);
-        if (account is null || !PinHasher.Verify(dto.Pin, account.PinHash)) return this.ProblemWithCode(ApiErrors.InvalidCredentials, "Invalid account ID or PIN.");
+        var pinOk = PinHasher.Verify(dto.Pin, account?.PinHash); // before branching, see LoginAdult (B-282)
+        if (account is null || !pinOk) return this.ProblemWithCode(ApiErrors.InvalidCredentials, "Invalid account ID or PIN.");
 
         // Break-glass admin: applies when an adult bound to this account is flagged as admin.
         var adultIds = account.Profiles.Where(p => p.AdultId is not null).Select(p => p.AdultId!.Value).ToList();

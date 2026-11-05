@@ -60,21 +60,21 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
     /// <summary>
     /// The profiles matching a child, best first (a series match weighs the heaviest).
     /// The endpoint reads child data and is therefore bound to <b>supervision</b>: a creator who
-    /// does not supervise this child gets <c>403</c> – otherwise the profile search would be a side
-    /// channel onto other people's child profiles.
+    /// does not supervise this child gets <c>404</c>, exactly like a child that does not exist – otherwise
+    /// the profile search would be a side channel onto other people's child profiles, and the difference
+    /// between 403 and 404 would reveal which child ids exist (B-310; same answer as <c>ChildOwnershipFilter</c>).
     /// </summary>
     /// <param name="childId">The child for whom the matching creator is sought.</param>
     /// <param name="subjectId">Optionally narrow to one subject (subject-neutral profiles remain included).</param>
     /// <param name="ct">Cancellation token.</param>
     [HttpGet("match")]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IReadOnlyList<CreatorProfileMatch>>> Match(
         [FromQuery] int childId, [FromQuery] int? subjectId, CancellationToken ct)
     {
-        if (!await db.Children.AnyAsync(c => c.Id == childId, ct)) return NotFound();
+        // One check for "unknown" and "not yours": a supervision link only exists for an existing child.
         if (!await access.SupervisorOwnsChildAsync(User, childId, ct))
-            return this.ProblemWithCode(ApiErrors.Forbidden, "You do not supervise this child.");
+            return this.ProblemWithCode(ApiErrors.NotFound, "Child not found.");
 
         return Ok(await profiles.MatchAsync(childId, subjectId, User.CreatorId(), ct));
     }

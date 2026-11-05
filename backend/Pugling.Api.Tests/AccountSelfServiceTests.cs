@@ -125,6 +125,19 @@ public class AccountSelfServiceTests(PuglingWebAppFactory factory) : IClassFixtu
         Assert.Equal("duplicate_email", (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
     }
 
+    // B-379: the other half of B-372's precedence claim. A blank name with a too-short PIN answers with the NAME. Both
+    // are 400 validation_error, so only the detail tells them apart. Red if the PIN guard runs before the name guard.
+    [Fact]
+    public async Task LeererName_MitZuKurzerPin_MeldetWeiterDenNamen()
+    {
+        var (_, teacher) = await NewTeacherAsync("Frau Reihenfolge", "7878");
+        var res = await teacher.PatchAsJsonAsync("/api/v1/auth/me", new { name = "   ", pin = "12" });
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+        var body = await res.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("validation_error", body.GetProperty("code").GetString());
+        Assert.Equal("Name must not be empty.", body.GetProperty("detail").GetString());
+    }
+
     [Fact]
     public async Task LeererName_WirdAbgewiesen()
     {

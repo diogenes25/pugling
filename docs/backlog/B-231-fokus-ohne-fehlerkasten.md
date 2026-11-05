@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: "Tastatur-Check im Browser: Kaufhistorie, Mehr laden, Fokusring an der Liste"
+nachgeschaut: "2026-11-05"
 ---
 
 # B-231 · Wohin gehört der Fokus, wenn ein Knopf ohne Fehlerkasten gesperrt wird?
@@ -62,6 +63,7 @@ am Seitenanfang zu landen.
 - **2026-10-17** — angelegt aus B-228, Entscheidung 2: der Fehlerfall ist dort behoben, der Fall ohne Meldung
   bewusst ausgespart.
 - **2026-10-23** — **Entscheidung des Nutzers** in der Grill-Runde der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): der Fokus geht auf den **umgebenden Container** (`tabIndex={-1}`, sichtbarer Fokusring); `disabled={busy}` bleibt Hausregel. **Freigabe des Nutzers (Autonomer Modus, Opt-in je Vorhaben, README):** ein Nachtlauf darf diese Story auf Grundlage der getroffenen Entscheidung selbst ausformulieren, schätzen und bauen (Paket NP-14); trifft er dabei auf eine Produktfrage, die die Entscheidung nicht hergibt, hält er an und notiert sie. Rollengang und Reviewer bleiben Pflicht.
-- **2026-11-05** — ausformuliert, geschätzt und gebaut in Sprint 1 der Sitzung 2026-11-05 ([Protokoll](../pm-sitzung-2026-11-05.md)). AK 1 → `HistoryTab.test.tsx:127`, Mutanten „`?? liste.current` weg" und (Review-Fund 🟡 2) „`tabIndex={-1}` weg" → je rot (1 von 13). AK 2 → der B-228-Fall `:111`, Mutant „Vorrang vertauscht" → rot (1 von 13). 🟢 3: ein Rerender-Teil, der in happy-dom nicht fallen konnte, ist entfernt.
+- **2026-11-05** — ausformuliert, geschätzt und gebaut in Sprint 1 der Sitzung 2026-11-05 ([Protokoll](../pm-sitzung-2026-11-05.md)). AK 1 → `HistoryTab.test.tsx:129`, Mutanten „`?? liste.current` weg" und (Review-Fund 🟡 2) „`tabIndex={-1}` weg" → je rot (1 von 13). AK 2 → der B-228-Fall `:111`, Mutant „Vorrang vertauscht" → rot (1 von 13). 🟢 3: ein Rerender-Teil, der in happy-dom nicht fallen konnte, ist entfernt.
 - **2026-11-05** — **abgenommen** mit einer benannten Lücke: den Fokusverlust des gesperrten Knopfs selbst hat nur Chromium, und eine E2E dafür bräuchte mehr Käufe als eine Seite fasst – der Weg ist nicht im Browser gefahren. Zu prüfen bleibt am Gerät: in der Kaufhistorie per Tastatur „Mehr laden" drücken, der Fokusring steht danach an der Liste. Vitest 648/648, E2E 110/110 (Sohn-Specs grün als Regressionszeugen). Commit: siehe nächster Eintrag.
 - **2026-11-05** — Commit `c6876b4`.
+- **2026-11-05** — **Nachschau** (frischer `frontend-reviewer`, `git show c6876b4 -- frontend/`, read-only): Zeilenverweise nachgerechnet, AK 1 gegen `SohnShop.tsx:377/396` geprüft, `.list[tabindex]` trifft nur diese Liste. 🟢: der Verweis `:127` war Kommentar (richtig `:129`, berichtigt in B-382); `liste.current.focus()` ohne `{ preventScroll: true }` könnte in Chromium bei einer hohen Liste nach oben scrollen – ungeprüft, gehört zum offenen Gerätecheck (`wartet_auf`).

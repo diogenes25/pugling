@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-11-05"
 ---
 
 # B-232 · Soll eine Bestätigung zum Meldungsplatz scrollen, wenn er weit vom Knopf entfernt liegt?
@@ -74,3 +75,4 @@ Meldungsplatz der Seite weit über dem Knopf liegt.
 - **2026-11-05** — ausformuliert, geschätzt und gebaut in Sprint 1 der Sitzung 2026-11-05 ([Protokoll](../pm-sitzung-2026-11-05.md)). AK 1 → neue Spec `e2e/bestaetigung-scrollt-zum-platz.spec.ts` (Vorbedingung: Platz beim Klick oberhalb, `top < 0`). Rote Probe: `!meldung.ok` zurück → die Spec fällt in Zeile 46 (`toBeInViewport`), erwartet 1 failed, gemessen 1 failed; mit Fix 1 passed.
 - **2026-11-05** — **abgenommen.** Die Spec ist zugleich der Rollengang aus der Creator-Rolle (echter Browser, echter Server); volle E2E-Suite 110/110, Vitest 648/648. Review `frontend-reviewer`: zur Spec kein Fund. Commit: siehe nächster Eintrag.
 - **2026-11-05** — Commit `c6876b4`.
+- **2026-11-05** — **Nachschau** (frischer `frontend-reviewer`, `git show c6876b4 -- frontend/`, read-only): kein Scroll beim Laden oder `reload` (`meldung` startet `null`, nur `setMeldung` setzt es). **Entgangen (🟡):** die Entscheidung wog nur den entfernten Absender – Bestätigungen aus Formularen in der Tabelle scrollen jetzt auch und schieben das offene Formular aus dem Bild → [B-381](B-381-erfolgs-scroll-springt-aus-dem-formular.md).

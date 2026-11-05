@@ -350,7 +350,8 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
 
     /// <summary>
     /// The match endpoint reads child data. A creator who does not supervise the child must not use it as a
-    /// side channel onto other children's profiles.
+    /// side channel onto other children's profiles – and since B-310 not a way to probe which child ids
+    /// exist: a foreign and an unknown child get the same status, code and detail.
     /// </summary>
     [Fact]
     public async Task Ein_fremdes_Kind_wird_beim_Matching_abgewiesen()
@@ -363,12 +364,17 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
             new { name = $"Fremder {Guid.NewGuid():N}", pin = "4322" }));
         var stranger = await TestApi.AdultAsync(factory, strangerId, "4322");
 
-        var response = await stranger.GetAsync($"{ProfileRoot}/match?childId={childId}");
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-        Assert.Equal("forbidden", await CodeOfAsync(response));
+        var foreign = await stranger.GetAsync($"{ProfileRoot}/match?childId={childId}");
+        var unknown = await stranger.GetAsync($"{ProfileRoot}/match?childId=999999");
 
-        Assert.Equal(HttpStatusCode.NotFound,
-            (await stranger.GetAsync($"{ProfileRoot}/match?childId=999999")).StatusCode);
+        // Red before B-310: the foreign child answered 403 "forbidden", the unknown one 404.
+        Assert.Equal(HttpStatusCode.NotFound, foreign.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, unknown.StatusCode);
+        var foreignBody = await foreign.Content.ReadFromJsonAsync<JsonElement>();
+        var unknownBody = await unknown.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("not_found", foreignBody.GetProperty("code").GetString());
+        Assert.Equal(unknownBody.GetProperty("code").GetString(), foreignBody.GetProperty("code").GetString());
+        Assert.Equal(unknownBody.GetProperty("detail").GetString(), foreignBody.GetProperty("detail").GetString());
     }
 
     /// <summary>

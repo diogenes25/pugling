@@ -243,7 +243,7 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
 
         // The same child with another account: the profile search is not a side channel onto child data.
         var foreign = await Assert.ThrowsAsync<PuglingApiException>(() => creator.MatchProfilesAsync(1));
-        Assert.Equal(HttpStatusCode.Forbidden, foreign.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, foreign.StatusCode);
 
         // The agent reads the units of the series before it invents subject matter.
         var units = await creator.ListUnitsAsync(series.Id, grade: 8);

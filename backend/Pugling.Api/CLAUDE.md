@@ -91,7 +91,7 @@ mutieren). Angelpunkt `…/profiles/match?childId=` (`CreatorProfileService`): h
 Klassenstufe außerhalb, Schulart disjunkt), dann Punkte **Reihe 8 > Fach 4 > Klassenstufe 2 > Schulart 1**,
 Gleichstand über die `Id` – deterministisch wie der `MediaSelector`, damit derselbe Datenstand denselben
 Lehrer liefert. Der Endpunkt liest Kind-Daten und trägt darum **trotz Creator-Route** eine
-Betreuungs-Prüfung (`AuthAccess`, sonst 403). Die `Reasons` sind stabile Codes (`series_match` …), die
+Betreuungs-Prüfung (`AuthAccess`, sonst 404 wie ein unbekanntes Kind, B-310). Die `Reasons` sind stabile Codes (`series_match` …), die
 Formulierung macht die Oberfläche.
 
 ## Lehrplan/Training

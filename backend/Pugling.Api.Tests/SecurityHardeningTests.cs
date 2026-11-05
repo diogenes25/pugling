@@ -29,6 +29,69 @@ public class SecurityHardeningTests(PuglingWebAppFactory factory) : IClassFixtur
         Assert.False(PinHasher.Verify("9999", "0000"));
     }
 
+    /// <summary>
+    /// B-282, point 4: unknown id, missing account and disabled login (<c>null</c>/empty stored PIN) cost the same
+    /// PBKDF2 work as a wrong PIN, so the response time does not reveal which case it was. Measured as the fastest of
+    /// five runs per path; without the decoy the early paths take microseconds against tens of milliseconds, so the
+    /// generous factor of 0.3 does not flicker. Red if the decoy derivation in <c>PinHasher.Verify</c> is removed.
+    /// </summary>
+    [Fact]
+    public void PinHasher_Verify_RechnetAuchOhneGespeichertenHash()
+    {
+        var hash = PinHasher.Hash("1234");
+        static long Fastest(Action check)
+        {
+            check(); // warm-up
+            var best = long.MaxValue;
+            for (var i = 0; i < 5; i++)
+            {
+                var watch = System.Diagnostics.Stopwatch.StartNew();
+                check();
+                best = Math.Min(best, watch.ElapsedTicks);
+            }
+            return best;
+        }
+
+        var wrongPin = Fastest(() => Assert.False(PinHasher.Verify("0000", hash)));
+        Assert.True(Fastest(() => Assert.False(PinHasher.Verify("0000", null))) > wrongPin * 0.3, "unknown account");
+        Assert.True(Fastest(() => Assert.False(PinHasher.Verify("0000", ""))) > wrongPin * 0.3, "disabled login");
+        // Legacy plaintext is the third path without a real hash (review finding, Sprint 2 of 2026-11-05).
+        Assert.True(Fastest(() => Assert.False(PinHasher.Verify("0000", "1111"))) > wrongPin * 0.3, "legacy plaintext");
+    }
+
+    /// <summary>
+    /// B-282, point 4, in the controllers: each login action verifies BEFORE it branches on a missing row, so an
+    /// unknown id costs the same PBKDF2 work as a wrong PIN on a known one. Red if one action goes back to
+    /// <c>if (x is null || account is null || !PinHasher.Verify(...))</c> – the unknown id then skips the derivation.
+    /// Fastest of five requests per path; the gap without the fix is a full PBKDF2 run (tens of milliseconds).
+    /// </summary>
+    [Theory]
+    [InlineData("adult", "adultId")]
+    [InlineData("child", "childId")]
+    [InlineData("login", "accountId")]
+    public async Task Login_mit_unbekannter_Id_kostet_so_viel_wie_eine_falsche_PIN(string route, string idField)
+    {
+        var client = _factory.CreateClient();
+        async Task<long> Fastest(int id)
+        {
+            var body = new Dictionary<string, object> { [idField] = id, ["pin"] = "9876" };
+            Assert.Equal(HttpStatusCode.Unauthorized, (await client.PostAsJsonAsync($"/api/v1/auth/{route}", body)).StatusCode);
+            var best = long.MaxValue;
+            for (var i = 0; i < 5; i++)
+            {
+                var watch = System.Diagnostics.Stopwatch.StartNew();
+                var res = await client.PostAsJsonAsync($"/api/v1/auth/{route}", body);
+                best = Math.Min(best, watch.ElapsedTicks);
+                Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
+            }
+            return best;
+        }
+
+        // Id 1 exists for all three (seeded father, seeded child, the father's account); 999999 exists for none.
+        var wrongPin = await Fastest(1);
+        Assert.True(await Fastest(999_999) > wrongPin * 0.3, $"auth/{route}: an unknown id answered without PBKDF2 work");
+    }
+
     [Fact]
     public async Task GeseederterLogin_FunktioniertMitGehashterPin()
     {

@@ -285,7 +285,7 @@ Content-Type: application/json
 }
 
 ### Den passenden Creator zum Kind finden: Reihe (8) > Fach (4) > Klassenstufe (2) > Schulart (1)
-# Braucht ein Konto, das dieses Kind betreut – sonst 403 forbidden.
+# Braucht ein Konto, das dieses Kind betreut – sonst 404 not_found, wie bei einem unbekannten Kind (B-310).
 # @name matchProfiles
 GET {{baseUrl}}/creator/profiles/match?childId={{childId}}&subjectId={{subjectId}}
 Authorization: Bearer {{authToken}}

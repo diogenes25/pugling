@@ -1669,9 +1669,10 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
-    /// B-308, the other half: an existing child the account does not supervise (the server answers 403, the
-    /// realistic case - a teacher asking about a real child). Seed account 2, Herr Schmidt, holds only the Creator
-    /// role and supervises no child. Red if the catch is narrowed to NotFound.
+    /// B-308, the other half: an existing child the account does not supervise (the realistic case - a teacher asking
+    /// about a real child). Since B-310 the server answers 404 here too, so this case and the one above share their
+    /// red condition (the catch removed); it stays because it walks the real teacher account instead of an unknown id.
+    /// Seed account 2, Herr Schmidt, holds only the Creator role and supervises no child.
     /// </summary>
     [Fact]
     public async Task Profile_fuer_ein_fremdes_Kind_sind_eine_Fehlbedienung()

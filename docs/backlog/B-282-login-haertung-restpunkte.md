@@ -1,15 +1,15 @@
 ---
-tags: [typ/story, status/idee, bereich/backend, bereich/sicherheit]
+tags: [typ/story, status/abgenommen, bereich/backend, bereich/sicherheit]
 aliases: [NP-3 Restpunkte, Login-Härtung Restpunkte]
-status: idee
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
+groesse: S
 wo: backend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: pugling-reviewer zu NP-3 in Lauf C (docs/pm-sitzung-2026-10-26-tag.md)
-unverifiziert: true
+unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
@@ -46,6 +46,43 @@ mit dem größten Gewicht für die Tests sind behoben. Diese vier bleiben, ausdr
 **In Lauf C bewusst nicht behoben:** Jede Behebung hätte gezählt, und der Zähler stand nach den vier wichtigeren
 Behebungen bei 4.
 
+## User Story
+
+Als **Familie** möchte ich, dass der Login weder über eine bekannte Seed-PIN noch über die Antwortzeit etwas über fremde
+Konten preisgibt.
+
+## Ist-Stand am Code (vor dem Bau, Stand `2361974`)
+
+- `backend/Pugling.Api/Data/Seed.cs:143,159-163`: `SeededChildPins` nach Namen („Sohn" → 1111) für **jedes** Kind ohne Konto.
+- `backend/Pugling.Api/Auth/PinHasher.cs:45-52` und `AuthController.cs:58,76,103`: unbekannte Id, fehlendes Konto und leere
+  gespeicherte PIN kehrten vor jeder PBKDF2-Arbeit zurück.
+- Punkte 1, 3 und 5 sind in B-371/B-372 gebaut; die drei Restpunkte zu gemischten Konten (Verlauf 2026-10-27) setzen ein
+  Konto mit Erwachsenen- **und** Student-Profil voraus, das kein Anlege-Pfad baut.
+
+## Entscheidungen
+
+1. **(Im Auftrag des Nutzers)** Punkt 2: die Seed-PIN gilt nur unter dem geseedeten Betreuer – Schlüssel
+   (Betreuer-E-Mail, Name), `Seed.SeededChildPin`. Ein selbst angelegtes „Sohn" unter einem anderen Erwachsenen bekommt keine
+   PIN (Login deaktiviert, wie jedes Kind ohne gesetzte PIN). Kosten: eine Abfrage mehr beim Start.
+2. **(Im Auftrag des Nutzers)** Punkt 4: `PinHasher.Verify` nimmt `string?` und rechnet auf jedem Weg ohne echten Hash eine
+   Attrappen-Ableitung; die drei Login-Aktionen prüfen **vor** der Verzweigung. Übrig bleibt der Unterschied der
+   DB-Abfragen (eine gegen zwei) – Mikrosekunden gegen ~50 ms PBKDF2, hingenommen.
+3. **(Im Auftrag des Nutzers)** Die drei Restpunkte zu gemischten Konten werden **nicht** gebaut: kein Anlege-Pfad erzeugt
+   ein solches Konto. Sie bleiben im Verlauf als bekannte Grenze; ein künftiger Pfad, der gemischte Konten baut, muss sie
+   mitnehmen.
+
+## Akzeptanzkriterien
+
+1. `Seed.SeededChildPin("Sohn", [fremde E-Mail])` ist `null`, unter `papa@example.com` „1111"; ein Mitbetreuer nimmt die PIN
+   nicht weg.
+2. `Verify(pin, null)` und `Verify(pin, "")` kosten mindestens 30 % der Zeit einer falschen PIN gegen einen echten Hash.
+3. Altklartext und das Abweisen einer leeren gespeicherten PIN verhalten sich wie vorher.
+
+## Schätzung
+
+`S`, `wo: backend`, keine Migration, kein Vertragsbruch. Testweg: `SeedContractTests`, `SecurityHardeningTests`,
+`PinPolicyTests` (unverändert grün).
+
 ## Verlauf
 
 - **2026-10-26** — angelegt aus dem `pugling-reviewer` zu NP-3 in Lauf C ([Protokoll](../pm-sitzung-2026-10-26-tag.md)),
@@ -55,3 +92,5 @@ Behebungen bei 4.
 - **2026-10-27** — dritter Restpunkt (Review zu B-289): derselbe hypothetische Fall über einen **vorher ausgestellten** Token – überlebt ein gemischtes Konto die Löschung des Erwachsenen, trägt dessen alter Token weiter `aid` (lebend) und `fid` (gelöscht); `TokenSubjectCheck` prüft nur `aid`, ein Schreiber mit `fid` im Fremdschlüssel liefe wieder in die 500 aus B-245. Baut heute kein Anlege-Pfad.
 - **2026-11-04** — Punkt 5 abgeteilt nach [B-371](B-371-leere-pin-per-patch-nur-als-angenommen-geprueft.md) und dort in Lauf S, Teil 2 gebaut. Die Punkte 1–4 und die drei Restpunkte vom 2026-10-27 bleiben hier.
 - **2026-11-04** — Punkte 1 und 3 abgeteilt nach [B-372](B-372-abbruch-log-und-guard-reihenfolge-im-login-pfad.md) und dort in Lauf S, Teil 3 gebaut. Hier bleiben Punkt 2 (Seed-PIN nach Namen), Punkt 4 (Zeitseitenkanal) und die drei Restpunkte zu gemischten Konten – alle verlangen eine Abwägung.
+- **2026-11-05** — Punkte 2 und 4 gebaut in Sprint 2 der Sitzung 2026-11-05 ([Protokoll](../pm-sitzung-2026-11-05.md)). AK 1 → `SeedContractTests.cs:176`, Mutant „Seed-PIN nur nach Namen" → erwartet 1 failed, gemessen 1 von 43. AK 2 → `SecurityHardeningTests.PinHasher_Verify_RechnetAuchOhneGespeichertenHash`, Mutanten „Attrappe weg" und (Review) „Attrappe nicht für Altklartext" → je 1 von 11; dazu (Review) `Login_mit_unbekannter_Id_kostet_so_viel_wie_eine_falsche_PIN` je Login-Route, Mutant „Kind-Login schließt vor `Verify` kurz" → genau der Fall `child` rot (1 von 11). AK 3 → `PinPolicyTests` und `SecurityHardeningTests.PinHasher_Verify_AkzeptiertAltKlartext` unverändert grün. Seed-Wirkung vom Reviewer gegen `Seed.cs:307/1068` und `AccountService.cs:60` gelesen: frische DB bekommt beide PINs, bestehende Konten bleiben unberührt.
+- **2026-11-05** — Review `pugling-reviewer`: keine 🔴, vier 🟡 – zwei mit Test-Änderung behoben (Zähler Sprint 2: 2 von 5: Controller-Reihenfolge der Attrappe ungetestet, Altklartext-Pfad ohne Zeitprobe), zwei nur Text (veralteter Kommentar `CreatorAgentTests`, „403" in `docs/REST/Creator.http`) ohne Zählung. Volle Backend-Suite 1076/1076 vor den Review-Fixes, danach die betroffenen Klassen grün (Zahlen im Protokoll). **abgenommen.** Rollengang: der Login aller drei Rollen läuft durch jede Integrations- und E2E-Klasse (Seed-Familie mit 0000/1111); die Zeitmessung selbst ist kein Rollenweg. Commit: siehe nächster Eintrag.

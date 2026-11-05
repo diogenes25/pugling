@@ -30,8 +30,8 @@ Meldung; B-231 legt den Fokus beim gesperrten „Mehr laden" ohne Fehlerkasten a
 Mutanten, eine neue E2E für den Sichtbereich (B-232), die volle E2E-Suite als Rollengang.
 
 **Entscheidung im Auftrag des Nutzers (beim Bau aufgetreten):** B-233 zieht die Regel nur auf der Lehrwerke-Seite nach;
-die übrigen zehn Formulare mit demselben Muster gehen als [B-380](backlog/B-380-pflichtfeld-sperre-in-den-uebrigen-formularen.md)
-in den Backlog. Begründung: das Sprint-Ziel ist ohne sie erfüllt, und das Nachziehen trifft elf exakte Label-Abfragen in
+die übrigen fünfzehn Formulare mit demselben Muster gehen als [B-380](backlog/B-380-pflichtfeld-sperre-in-den-uebrigen-formularen.md)
+in den Backlog. Begründung: das Sprint-Ziel ist ohne sie erfüllt, und das Nachziehen trifft zehn exakte Label-Abfragen in
 fremden Tests.
 
 ### Iteration 1 — umgesetzt
@@ -40,7 +40,7 @@ fremden Tests.
 - **B-232** (`VaterLehrwerke.tsx:155`): Scroll zum Meldungsplatz auch bei Erfolg; neue Spec `bestaetigung-scrollt-zum-platz.spec.ts`.
 - **B-233** (`VaterLehrwerke.tsx`): `SeriesForm`/`UnitForm` sperren bei leerem Pflichtfeld, „(Pflicht)" am Label, stiller Riegel vor
   dem Räumen; vier E2E auf das neue Label, `bestaetigung-ueberlebt.spec.ts` Schritt 2 umgestellt; Hausregel in `frontend/CLAUDE.md`
-  (Datei danach 14 B kleiner).
+  (Datei nach dem Sprint zunächst 42 B größer, nicht kleiner – in Sprint 2 berichtigt, siehe B-382).
 - **B-231** (`SohnShop.tsx`, `index.css`): Fokus auf die Liste beim gesperrten „Mehr laden" ohne Fehlerkasten.
 
 **Verifikation:** Vitest 648/648, `tsc -b` sauber, Playwright 110 passed (volle Suite, 6,7 min; vor den zwei Review-Fixes, die nur
@@ -74,3 +74,75 @@ kein Tor. B-379 aus der Nachschau ist eine Verwandte: eine Entscheidung nennt zw
 **Vorschlag (nicht gelandet, Freigabe 3):** (BG) In Step 5 von `pm-loop` ein Satz: „Wird ein Prop am Aufrufer **berechnet**, braucht
 die Berechnung einen eigenen Fall (reine Funktion), sonst testet der Baustein-Fall einen Wert, den niemand liefert." Ein Tor dafür
 wäre eine Regel über Prop-Ausdrücke in JSX – zu unscharf, um es zu mechanisieren; darum Prosa.
+
+## Sprint 2
+
+**Sprint-Ziel (Vater, für die Familie):** „Weder ein fremder Creator noch ein Fremder am Login erfährt über eine Antwort
+etwas über unsere Konten oder Kinder – nicht über den Statuscode, nicht über eine bekannte PIN, nicht über die Antwortzeit."
+
+**Umfang:** B-310, B-379, B-282 (Punkte 2 und 4). Alle `Defekt`, autonom gegrillt (Freigabe 1); in B-282 zusätzlich drei
+Entscheidungen im Auftrag des Nutzers (Seed-PIN an den Betreuer, Attrappen-Ableitung, gemischte Konten nicht bauen).
+B-329 (Fehlercodes im Übungspfad) bleibt draußen: anderes Thema, eigener Vertragsbruch.
+
+**Entwickler-Brief:** Quelle der Wahrheit ist der Server. B-310 – eine Prüfung über `SupervisorOwnsChildAsync`, 404 wie der
+`ChildOwnershipFilter`; der Agent fängt nur noch 404. B-379 – ein Testfall. B-282 – `SeededChildPins` nach (Betreuer-E-Mail,
+Name), `PinHasher.Verify(string?)` mit Attrappe, Login-Aktionen prüfen vor der Verzweigung. Keine Migration; Vertragsbruch nur
+B-310 (403 fällt weg). Testweg: Integrationstests mit Mutanten, volle Suite.
+
+### Iteration 2 — umgesetzt
+
+- **B-310** `CreatorProfilesController.Match`, `AgentCommands.ShowProfilesAsync`, `Pugling.Api/CLAUDE.md`, `docs/REST/Creator.http`.
+- **B-379** `AccountSelfServiceTests.LeererName_MitZuKurzerPin_MeldetWeiterDenNamen`.
+- **B-282** `Seed.SeededChildPin`, `PinHasher.Verify`, `AuthController` (drei Login-Aktionen); Tests in `SeedContractTests` und
+  `SecurityHardeningTests` (Zeitproben je Pfad und je Login-Route).
+- Nebenbei (🟢 aus der Nachschau zu Lauf S): Using-Reihenfolge in `DeletedAccountTokenTests.cs` per `dotnet format`.
+
+**Verifikation:** `dotnet build Pugling.sln` ohne Warnung, volle Suite 1076/1076, nach den Review-Fixes 1079/1079. Sechs
+Mutanten, jeder fällt genau in seinem Fall (Zahlen in den Stories). **Review** `pugling-reviewer`: keine 🔴; vier 🟡 – zwei mit
+Test-Änderung behoben (**Zähler Sprint 2: 2 von 5**), zwei nur Text ohne Zählung; zwei 🟢 hingenommen (eine SQLite-Abfrage
+Zeitunterschied; Seed-Test fängt das Weglassen des `StudentId`-Filters nicht).
+
+### Runde 2 — Re-Review / Abnahme
+
+- **Vater:** „Ein fremder Lehrer bekommt für mein Kind dieselbe Antwort wie für ein Kind, das es nicht gibt, und mein Sohn
+  behält seine 1111." Belegt durch `CreatorProfileTests`/`PuglingClientTests` gegen den echten In-Process-Server und den
+  Seed-Test; der Login der Familie läuft durch jede Testklasse.
+- **Creator:** der Agent-Weg `profiles --child` meldet ein fremdes Kind weiter als Fehlbedienung (`CreatorAgentTests`).
+- **Sohn:** Regressionszeuge – sein Login (1111) ist der Login jeder Student-Testklasse, Suite grün.
+
+## Retrospektive (Sprint 2)
+
+**Nachschau:** Sprint 1 (`c6876b4`) per frischem `frontend-reviewer`, read-only; `nachgeschaut: 2026-11-05` an B-231…B-234.
+**Entgangen:** zwei 🟡 im Increment **dieses Laufs** – B-232s Erfolgs-Scroll springt auch für Formulare in der Tabelle
+→ [B-381](backlog/B-381-erfolgs-scroll-springt-aus-dem-formular.md), und B-233 AK 3 hielt nicht (`frontend/CLAUDE.md` +42 B,
+dazu vier Verweise/Zählungen) → [B-382](backlog/B-382-groessenangabe-und-zaehlungen-aus-sprint-1.md), im selben Sprint
+berichtigt (nur Text, jetzt 10325 B). Zwei 🟢 (`preventScroll` an B-231s Fokus, Zeilenverweise) in B-231/B-382.
+
+**Was die eigenen Tore durchgelassen haben:**
+
+1. **Eine Messung vor dem letzten Edit.** Die Größe von `frontend/CLAUDE.md` wurde vor dem 🟢-Fix des Reviews gemessen und danach
+   als Beleg weitergetragen – dieselbe Fehlerklasse wie „Probe gegen den alten Stand" (Memory „Wiederherstellung braucht neue Zeit").
+2. **Eine Entscheidung über einen Absender, gebaut für alle.** B-232 entschied für das Verlags-Vokabular, der Bau änderte die
+   Bedingung für jeden Absender der Seite. Die neue Spec fuhr genau den entfernten Fall und keinen nahen.
+
+**Vorschläge (nicht gelandet, Freigabe 3):**
+
+- (BH) Die Belegzeile eines AK, das eine **Größe** behauptet (Bytes, Anzahl), wird erst **nach dem letzten Edit des Sprints** und
+  direkt vor dem Commit geschrieben – als letzter Schritt vor `git commit`, mit dem Befehl in der Zeile. Prosa im `pm-loop`
+  Step 5; ein Tor wäre ein Skript, das `wc -c`-Behauptungen in Story-Zeilen gegen die Datei rechnet – möglich, aber für zwei Fälle
+  im ganzen Backlog zu teuer.
+- (BI) Ändert ein Bau eine **gemeinsame** Bedingung (ein Effekt, der für alle Absender einer Seite gilt), nennt die Story je
+  Absender, ob die Entscheidung ihn meint. Prosa in `frontend/CLAUDE.md` wäre die Stelle; sie ist über Budget, darum nur Vorschlag.
+
+## Ende des Laufs — Limit 2
+
+Die Nachschau hat Entgleitungen im Increment **dieses** Laufs gefunden (B-381, B-382). Nach `docs/backlog/README.md` („Der
+Backlog-Lauf", Limit 2) endet der Lauf mit Sprint 2, damit der Nutzer die Funde sieht, bevor weitergebaut wird.
+
+**Stand:** 7 Stories abgenommen (B-231, B-232, B-233, B-234, B-310, B-379, B-282), dazu B-382 (nur Text) und die Nachschau
+über Lauf S. Neu im Backlog: B-379 (abgenommen), B-380, B-381 (mit Entscheidung und Freigabe), B-382 (abgenommen).
+Offene Gerätechecks: B-231 (Tastatur „Mehr laden", Fokusring, `preventScroll`). Retro-Vorschläge (BG), (BH), (BI) unentschieden.
+Nichts gepusht.
+
+**Nächster Start:** B-381 zuerst (P2, Defekt aus diesem Lauf), dann B-329, dann die Wünsche nach der Reihenfolge im
+[Delegations-Protokoll](pm-sitzung-2026-11-05-delegation.md).
