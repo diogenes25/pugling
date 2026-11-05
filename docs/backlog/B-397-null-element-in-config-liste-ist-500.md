@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-05.md#lauf-x
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-05"
 entgangen_bei: [B-391]
 ---
 
@@ -79,3 +80,10 @@ bekommen – wie für ein `null` als Member –, nicht eine 500 und nicht ein st
   Agent oder Client schicken; die Oberfläche schickt keine `null`-Elemente, darum kein Klickweg). Vater und Sohn als Regressionszeugen:
   volle Playwright-Suite **115 passed** gegen ein frisch gestartetes Backend nach dem letzten Code-Edit (danach nur Kommentare). Commit:
   siehe nächster Eintrag.
+- **2026-11-05** — Commit `49e773d`.
+- **2026-11-05** — **Nachschau** (Lauf Y, Retro Sprint 13; frischer `pugling-reviewer`, `git show 49e773d`): geprüft (1) je Belegzeile
+  Fundort und Mutante, (2) „eine Regel für jeden Body" gegen alle `[FromBody]`-Parameter (alle Vertragstypen oder `List<Vertragstyp>`,
+  kein `Dictionary`, keine eigenen Binder, Agent und Frontend schicken keine `null`-Elemente), (3) `NaturalTranslation`-`null` auf allen
+  Wegen (`?? ""` in beiden Handlern, Birkenbihl wird nie bewertet) und die `Gap.Answer`-Summary gegen Config- und Lückentext-Weg.
+  **Entgangen:** eine Mutanten-Zeile in B-398 (kompiliert nicht) und eine verrutschte Zeilenangabe in B-397 →
+  [B-399](B-399-b398-mutantenzeile-ungemessen-und-falsch.md).

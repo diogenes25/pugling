@@ -507,3 +507,33 @@ Familie wie (BN)/(BO): eine Behauptung über *alle*, gebaut und getestet an der 
 **Vorschlag (nicht gelandet, Freigabe 3):** (BR) Ein reflexiver Wächter über alle `[FromBody]`-Parameter: für jede Liste im Typgraphen
 (auch den Body selbst) wird ein `null`-Element erzeugt und geprüft, dass der Filter es meldet. Dann hängt „jede Liste" an einer
 Aufzählung, nicht an meiner Vorstellung.
+
+### Sprint 13 — B-396
+
+**Sprint-Ziel (Creator):** Wer im Übersetzungs-Editor nur das Sprachpaar ändert, findet seine Paare danach im neuen Sprachpaar im Store.
+
+**Gebaut:** jede geladene Zeile merkt sich ihr Sprachpaar (mit dem Rückfall, den der Editor zeigt); die Bindung reist nur, solange Text
+**und** Sprachpaar stehen. Im Auftrag entschieden: keine Server-Prüfung des Sprachpaars (wie B-387). Rote Probe 2/2, drei Mutanten je
+einzeln rot, eine neue E2E-Spec als Klickweg (Mutante → rot an der Schlusszusicherung). Vitest 651/651, Playwright 116 passed.
+
+**Review** (`frontend-reviewer`): kein 🔴/🟡; zwei 🟢 an der Spec nachgezogen, eine bekannte Grenze in der Story. **Zähler 0 von 5.**
+
+**Retrospektive Sprint 13 — Nachschau zu Sprint 12** (`49e773d`, frischer `pugling-reviewer`): geprüft Belegzeilen, „eine Regel für
+jeden Body" gegen alle `[FromBody]`-Parameter, `NaturalTranslation`-`null` auf allen Wegen, `Gap.Answer`-Summary. **Entgangen (🟡):**
+eine Mutanten-Zeile in B-398 behauptet „rot `:193`" für eine Mutante, die nicht kompiliert – ich hatte sie nicht gemessen, aber wie
+gemessen notiert; dazu eine verrutschte Zeilenangabe in B-397 → [B-399](backlog/B-399-b398-mutantenzeile-ungemessen-und-falsch.md).
+Increment **dieses** Laufs: **Limit 2.**
+
+**Was durchkam:** eine Beleg-Zeile, die nach Messung aussah. Der Reviewer hatte die Mutanten aufgezählt, ich habe sie in den Verlauf
+übernommen und nur die erste gemessen – der Satz „Gemessen ist nur die erste" stand dahinter, die Zeile selbst trug keine Kennzeichnung.
+
+**Vorschlag (nicht gelandet, Freigabe 3):** (BS) Eine Mutanten-Zeile trägt `gemessen: erwartet/gemessen` oder `ungemessen`, je Mutante;
+eine ungemessene zählt nicht als Beleg. Verwandt mit (BP); prüfbar per Grep über `## Verlauf`.
+
+## Ende von Lauf Y — Limit 2
+
+Die Nachschau zu Sprint 12 fand eine Entgleitung im Increment **dieses** Laufs (B-399 an B-398/B-397). Lauf Y endet mit Sprint 13.
+
+**Stand Lauf Y:** 3 Stories abgenommen (B-397, B-398 `49e773d`; B-396 siehe Commit). Neu: B-399 (Defekt, Doku). Vorschläge (BG)–(BS)
+unentschieden. Nichts gepusht. **Nächster Start:** B-399 (messen und berichtigen), dann die Wünsche nach dem
+[Delegations-Protokoll](pm-sitzung-2026-11-05-delegation.md).

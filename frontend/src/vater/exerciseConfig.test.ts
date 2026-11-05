@@ -38,11 +38,45 @@ describe("Rundlauf über die umgestellten Listenfelder", () => {
   it("Übersetzung: Alternativen bleiben Listen und die Store-Bindung bleibt erhalten", () => {
     const { rows } = rundlauf("Translation",
       [{ source: "Where do you live?", target: "Wo wohnst du?", alternatives: ["Wo lebst du?", MIT_KOMMA],
-        vocabularyId: 7, origSource: "Where do you live?", origTarget: "Wo wohnst du?" }],
+        vocabularyId: 7, origSource: "Where do you live?", origTarget: "Wo wohnst du?",
+        origSourceLang: "en", origTargetLang: "de" }],
       { sourceLang: "en", targetLang: "de" });
 
     expect(rows[0].alternatives).toEqual(["Wo lebst du?", MIT_KOMMA]);
     expect(rows[0].vocabularyId).toBe(7);
+  });
+
+  /*
+   * B-396: die Bindung eines Paars zeigt auf einen Speicher-Eintrag EINES Sprachpaars. Ändert der Vater nur
+   * Quell- oder Zielsprache, meint dasselbe Paar ein anderes Wort – die Bindung muss fallen, sonst zeigt die
+   * Übung weiter auf die Vokabel des alten Sprachpaars. Je Fall rot, wenn der Vergleich die jeweilige Sprache
+   * nicht prüft; der Fall oben ("Bindung bleibt erhalten") ist die Gegenprobe mit unverändertem Paar.
+   */
+  it.each([
+    ["Quellsprache", { sourceLang: "fr", targetLang: "de" }],
+    ["Zielsprache", { sourceLang: "en", targetLang: "fr" }],
+  ])("Übersetzung: ein Wechsel der %s löst die Store-Bindung", (_, neu) => {
+    const geladen = configToEditorState("Translation", {
+      sourceLang: "en", targetLang: "de",
+      items: [{ source: "Where do you live?", target: "Wo wohnst du?", vocabularyId: 7 }],
+    });
+    expect(geladen.rows[0].vocabularyId).toBe(7);
+
+    const gespeichert = buildTypeConfig("Translation", geladen.rows, { ...geladen.extra, ...neu }) as { items: { vocabularyId: number | null }[] };
+
+    expect(gespeichert.items[0].vocabularyId).toBeNull();
+  });
+
+  // Eine Altübung ohne Sprachen zeigt im Editor den Rückfall en→de; bloßes Öffnen und Speichern darf die
+  // Bindung nicht lösen. Rot, wenn das gemerkte Sprachpaar den Rückfall nicht mitnimmt.
+  it("Übersetzung: Öffnen und Speichern einer Übung ohne Sprachen behält die Store-Bindung", () => {
+    const geladen = configToEditorState("Translation", {
+      items: [{ source: "Where do you live?", target: "Wo wohnst du?", vocabularyId: 7 }],
+    });
+
+    const gespeichert = buildTypeConfig("Translation", geladen.rows, geladen.extra) as { items: { vocabularyId: number | null }[] };
+
+    expect(gespeichert.items[0].vocabularyId).toBe(7);
   });
 
   it("Leseverstehen: die Auswahl bleibt eine Liste", () => {

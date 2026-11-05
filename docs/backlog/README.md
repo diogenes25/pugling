@@ -522,7 +522,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-249](B-249-probeklausur-mit-notenprognose.md) | Eine Probeklausur über das Bündel einer Klassenarbeit, mit Notenprognose | Wunsch | `idee` | P2 | — | — | — |
 | [B-374](B-374-baobab-vergleich-sammel-story.md) | Baobab-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | Wunsch | `idee` | P2 | — | — | — |
 | [B-375](B-375-heftseite-wird-uebungsentwurf.md) | Eine fotografierte Heftseite wird zum Übungsentwurf, den der Vater vor dem Zuweisen prüft | Wunsch | `idee` | P2 | — | — | — |
-| [B-396](B-396-uebersetzung-sprachwechsel-behaelt-bindung.md) | Wer im Übersetzungs-Editor nur das Sprachpaar ändert, behält die Bindung an die Vokabel des alten Sprachpaars | Defekt | `idee` | P3 | — | frontend | — |
+| [B-399](B-399-b398-mutantenzeile-ungemessen-und-falsch.md) | Eine Belegzeile in B-398 nennt eine Mutante, die nicht kompiliert, und B-397 eine verrutschte Zeile | Defekt | `idee` | P3 | — | backend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `idee` | P3 | — | — | — |
 | [B-291](B-291-fachwechsel-der-reihe-laesst-themen-stehen.md) | Wechselt eine Reihe ihr Fach, bleiben die Grammatik-Themen des alten Fachs an Übungen und Units stehen | Frage | `idee` | P3 | — | backend | — |
@@ -550,7 +550,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (332)</summary>
+<summary>Abgenommen (333)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -832,6 +832,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-393](B-393-uebersetzung-put-id-null-ohne-test.md) | B-386 AK 1 „Ändern mit `0`" hat keinen Test | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-394](B-394-birkenbihl-wort-put-id-null-ist-unbekannte-referenz.md) | Der Birkenbihl-Wort-`PUT` meldet `vocabularyId = 0` als `invalid_reference`, der CRUD-Weg als `validation_error` | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-395](B-395-uebersetzung-put-mischliste-ungetestet.md) | Der Klickweg „ein Paar einer Übersetzung ändern" hat keinen Test | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-396](B-396-uebersetzung-sprachwechsel-behaelt-bindung.md) | Wer im Übersetzungs-Editor nur das Sprachpaar ändert, behält die Bindung an die Vokabel des alten Sprachpaars | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-397](B-397-null-element-in-config-liste-ist-500.md) | Ein `null`-Element in einer Config-Liste endet in einer 500 | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-398](B-398-pflichtfelder-die-optional-gemeint-sind.md) | Zwei Felder sind im Vertrag Pflicht, im Code aber optional gemeint | Frage | `abgenommen` | P3 | XS | backend | — |
 | [B-40](B-40-client-routen-waechter.md) | Routen aus `Pugling.Client` gegen das OpenAPI-Dokument halten | Aufräumen | `abgenommen` | P3 | XS | backend | — |
@@ -899,9 +900,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
-### Nach der Abnahme entgangen (130)
+### Nach der Abnahme entgangen (131)
 
-**Nachgeschaut: 330 von 332 abgenommenen** — und in 110 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 2 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 332 von 333 abgenommenen** — und in 112 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 1 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -1035,17 +1036,17 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-394](B-394-birkenbihl-wort-put-id-null-ist-unbekannte-referenz.md) | Der Birkenbihl-Wort-`PUT` meldet `vocabularyId = 0` als `invalid_reference`, der CRUD-Weg als `validation_error` | [B-387] | `abgenommen` |
 | [B-395](B-395-uebersetzung-put-mischliste-ungetestet.md) | Der Klickweg „ein Paar einer Übersetzung ändern" hat keinen Test | [B-392] | `abgenommen` |
 | [B-397](B-397-null-element-in-config-liste-ist-500.md) | Ein `null`-Element in einer Config-Liste endet in einer 500 | [B-391] | `abgenommen` |
+| [B-399](B-399-b398-mutantenzeile-ungemessen-und-falsch.md) | Eine Belegzeile in B-398 nennt eine Mutante, die nicht kompiliert, und B-397 eine verrutschte Zeile | [B-398, B-397] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (2) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (1) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-397](B-397-null-element-in-config-liste-ist-500.md) | Ein `null`-Element in einer Config-Liste endet in einer 500 |
-| [B-398](B-398-pflichtfelder-die-optional-gemeint-sind.md) | Zwei Felder sind im Vertrag Pflicht, im Code aber optional gemeint |
+| [B-396](B-396-uebersetzung-sprachwechsel-behaelt-bindung.md) | Wer im Übersetzungs-Editor nur das Sprachpaar ändert, behält die Bindung an die Vokabel des alten Sprachpaars |
 
 </details>
 
@@ -1113,8 +1114,10 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-393](B-393-uebersetzung-put-id-null-ohne-test.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen" |
 | [B-394](B-394-birkenbihl-wort-put-id-null-ist-unbekannte-referenz.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 | [B-395](B-395-uebersetzung-put-mischliste-ungetestet.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen" |
+| [B-396](B-396-uebersetzung-sprachwechsel-behaelt-bindung.md) | `abgenommen` | Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 | [B-397](B-397-null-element-in-config-liste-ist-500.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 | [B-398](B-398-pflichtfelder-die-optional-gemeint-sind.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
+| [B-399](B-399-b398-mutantenzeile-ungemessen-und-falsch.md) | `idee` | `unverifiziert: true` |
 
 <details>
 <summary>Verworfen (27)</summary>

@@ -68,6 +68,8 @@ interface TranslationRow {
   source: string; target: string; alternatives: string[]; vocabularyId: number | null;
   /** Only present once loaded back from a saved config - see `configToEditorState`. */
   origSource?: string; origTarget?: string;
+  /** The language pair the binding was loaded under (B-396) - a pair change unbinds like a text change. */
+  origSourceLang?: string; origTargetLang?: string;
 }
 interface TranslationExtra { sourceLang: string; targetLang: string }
 
@@ -287,11 +289,13 @@ export function buildTypeConfig(
         items: items.map((r) => ({
           source: r.source, target: r.target, alternatives: nonEmpty(strList(r.alternatives)),
           /*
-           * Die Store-Bindung nur behalten, solange der Text unverändert ist. Wurde er bearbeitet, meint
-           * das Paar ein anderes Wort – dann muss der Server neu auflösen (er legt es an bzw. findet es),
-           * sonst zeigte die Übung auf die Vokabel des alten Wortlauts.
+           * Die Store-Bindung nur behalten, solange Text UND Sprachpaar unverändert sind. Wurde eins davon
+           * bearbeitet, meint das Paar ein anderes Wort – dann muss der Server neu auflösen (er legt es an
+           * bzw. findet es), sonst zeigte die Übung auf die Vokabel des alten Wortlauts bzw. Sprachpaars (B-396).
            */
-          vocabularyId: r.source === r.origSource && r.target === r.origTarget ? r.vocabularyId ?? null : null,
+          vocabularyId: r.source === r.origSource && r.target === r.origTarget
+            && (cfg.sourceLang || "") === r.origSourceLang && (cfg.targetLang || "") === r.origTargetLang
+            ? r.vocabularyId ?? null : null,
         })),
       };
     }
@@ -383,11 +387,12 @@ export function configToEditorState(type: ExerciseTypeKey, config: unknown): { r
         { instruction: str(c.instruction) } satisfies GrammarExtra);
     case "Translation":
       return fallback(
-        // origSource/origTarget merken sich den geladenen Wortlaut: nur solange er steht, darf die
-        // Store-Bindung (vocabularyId) mitwandern.
+        // origSource/origTarget und das Sprachpaar merken sich den geladenen Stand: nur solange er steht,
+        // darf die Store-Bindung (vocabularyId) mitwandern.
         list(c.items).map((i): TranslationRow => ({
           source: i.source ?? "", target: i.target ?? "", alternatives: strList(i.alternatives),
           vocabularyId: i.vocabularyId ?? null, origSource: i.source ?? "", origTarget: i.target ?? "",
+          origSourceLang: str(c.sourceLang) || "en", origTargetLang: str(c.targetLang) || "de",
         })),
         { sourceLang: str(c.sourceLang) || "en", targetLang: str(c.targetLang) || "de" } satisfies TranslationExtra);
     case "Birkenbihl":
