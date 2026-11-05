@@ -55,3 +55,4 @@ Als **Leser** einer abgenommenen Story möchte ich, dass ihre Zahlen und Verweis
   `37e6f6e` auf 446/739; `grep -rn '"Name der neuen Reihe", { exact: true }'` liefert 10; die drei nachgetragenen Formulare per `sed -n`
   gelesen (`VaterProfil.tsx:111`, `VaterZiele.tsx:433`, `PlanPositions.tsx:490`). **Abgenommen** mit Sprint 2 (Rollengang: der
   Entwickler ist die Rolle; Doku, kein Verhalten). Eine Entgleitung im Increment dieses Laufs: **Limit 2**.
+- **2026-11-05** — Commit `b32460e`.
