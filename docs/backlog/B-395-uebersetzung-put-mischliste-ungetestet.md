@@ -56,3 +56,4 @@ mit ihrer Id, das bearbeitete mit `null` (`frontend/src/vater/exerciseConfig.tsx
 - **2026-11-05** — **abgenommen.** Volle Suite 1099/1099 nach dem letzten Edit. **Kein Rollengang im Browser:** die Story ändert nur
   einen Test, keinen Laufzeit-Code – ein Gang durch die App prüfte nichts, was dieser Sprint geändert hat (Playwright lief zuletzt in
   Sprint 10 mit 115 passed auf demselben Produktionscode). Commit: siehe nächster Eintrag.
+- **2026-11-05** — Commit `e5ff96e`.
