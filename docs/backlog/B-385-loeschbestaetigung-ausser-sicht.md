@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-381]
+nachgeschaut: "2026-11-05"
 ---
 
 # B-385 · Seit B-381 landet „Reihe … gelöscht." in einer langen Liste wieder außerhalb des Sichtbereichs
@@ -93,3 +94,9 @@ auch wenn die Zeile dabei verschwindet oder wegsortiert wird.
 - **2026-11-05** — **abgenommen.** Playwright 113 passed (volle Suite = Rollengang aus der Creator-Rolle), Vitest 648/648, `tsc -b`
   sauber. Commit: siehe nächster Eintrag.
 - **2026-11-05** — Commit `b27dc51`.
+- **2026-11-05** — **Nachschau** (Lauf V, Retro Sprint 6; frischer `frontend-reviewer`, `git show b27dc51`; 7 passed in den
+  vier Lehrwerke-Specs). Verdrahtung je Tabellenzeile und beide Vorbedingungen bestätigt. **Entgangen (🟡):** die Tabellenzeile
+  „`UnitPanel`/`UnitForm` – nein" gilt nur fürs Anlegen; Löschen und Ändern einer Unit lassen Zeile bzw. Formular verschwinden →
+  [B-390](B-390-unit-loeschen-bestaetigung-ausser-sicht.md). 🟢 hingenommen: das Speichern einer Reihe scrollt jetzt auch, wenn die
+  Zeile bleibt (Notizen, Sprache) – so entschieden; eine Verfeinerung („nur wenn die Zeile das Ergebnis verlässt") wäre möglich, ist
+  aber ohne Fund.

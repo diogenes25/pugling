@@ -288,3 +288,30 @@ Retro Sprint 5); volle Suite 1087/1087; `dotnet format` ohne Befund an berührte
 **Abnahme:** Creator – sechs E2E-Specs über Übersetzung und Vokabelspeicher, 8 passed (Rollengang als E2E; eine Übersetzung
 *angelegt* in `uebungstypen.spec.ts`, das erneute Speichern mit geladener Id nur über den Integrationsfall belegt). Vater und Sohn:
 Regressionszeugen, Suite grün, der Spielweg liest die Id nicht.
+
+### Retrospektive (Sprint 6)
+
+**Nachschau:** Lauf V, Sprint 5 (`b27dc51`, B-385) per frischem `frontend-reviewer`; `nachgeschaut: 2026-11-05` an B-385.
+**Entgangen (🟡):** Löschen und Ändern einer Unit lassen Zeile bzw. Formular verschwinden, ihre Bestätigung bleibt aber ohne Scroll →
+[B-390](backlog/B-390-unit-loeschen-bestaetigung-ausser-sicht.md), mit Entscheidung und Freigabe, **nicht** gebaut. 🟢 hingenommen:
+das Speichern einer Reihe scrollt auch, wenn die Zeile bleibt.
+
+**Was durchkam:** zum dritten Mal dieselbe Klasse (B-232 → B-381 → B-385 → B-390). Diesmal **trotz** der Absender-Tabelle nach (BK):
+sie fragte je *Absender*, und für `UnitForm` habe ich die Frage für eine seiner drei Handlungen beantwortet. Die Tabelle hätte je
+**Handlung** fragen müssen (anlegen / ändern / löschen), denn das Kriterium hängt an der Handlung, nicht am Formular. Dasselbe Muster
+wie die Nachschau zu Sprint 4 fand (B-388): eine Regel für mehrere Stellen, belegt an einem Teil davon.
+
+**Vorschlag (nicht gelandet, Freigabe 3):** (BM) Schärfung von (BK): die Tabelle hat **eine Zeile je Handlung**, die eine Meldung
+auslöst, ermittelt per `grep` nach den Aufrufen von `nachObenMelden`/`onMeldung(` in der Datei – nicht aus dem Gedächtnis; der
+Index könnte die Zeilenzahl gegen die Trefferzahl prüfen. Ein Tor, darum nur Vorschlag.
+
+## Ende von Lauf V — Limit 2
+
+Die Nachschau hat eine Entgleitung im Increment **dieses** Laufs gefunden (B-390). Lauf V endet mit Sprint 6.
+
+**Stand:** 2 Stories abgenommen (B-385 `b27dc51`, B-386 `28cb072`). Neu: B-387 und B-388 (geschätzt, bereit für den nächsten Sprint),
+B-389 (idee), B-390 (Defekt, entschieden und freigegeben). Retro-Vorschläge (BG)–(BM) unentschieden. Gerätecheck B-231 offen.
+Nichts gepusht.
+
+**Nächster Start:** B-390, dann B-388 + B-387 (ein Sprint: „jede unbekannte Vokabel-Referenz abgewiesen"), dann die Wünsche nach dem
+[Delegations-Protokoll](pm-sitzung-2026-11-05-delegation.md).

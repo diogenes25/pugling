@@ -506,10 +506,11 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (40)
+### Offen (41)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| [B-390](B-390-unit-loeschen-bestaetigung-ausser-sicht.md) | „Unit … gelöscht." und „Gespeichert." einer Unit landen in einer langen Liste außer Sicht | Defekt | `idee` | P2 | — | frontend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `gegrillt` | P2 | — | backend | Vertrag? |
 | [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder | Wunsch | `geschaetzt` | P2 | L | beides | — |
@@ -522,8 +523,8 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-249](B-249-probeklausur-mit-notenprognose.md) | Eine Probeklausur über das Bündel einer Klassenarbeit, mit Notenprognose | Wunsch | `idee` | P2 | — | — | — |
 | [B-374](B-374-baobab-vergleich-sammel-story.md) | Baobab-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | Wunsch | `idee` | P2 | — | — | — |
 | [B-375](B-375-heftseite-wird-uebungsentwurf.md) | Eine fotografierte Heftseite wird zum Übungsentwurf, den der Vater vor dem Zuweisen prüft | Wunsch | `idee` | P2 | — | — | — |
-| [B-387](B-387-birkenbihl-speichert-unbekannte-vokabel-id.md) | Eine Birkenbihl-Übung speichert eine unbekannte `vocabularyId` an einem dekodierten Wort ohne Prüfung | Defekt | `idee` | P3 | — | backend | — |
-| [B-388](B-388-id-null-faelle-ohne-test.md) | Zwei Fälle „Id 0 bleibt `validation_error`“ aus B-329 haben keinen Test | Defekt | `idee` | P3 | — | backend | — |
+| [B-387](B-387-birkenbihl-speichert-unbekannte-vokabel-id.md) | Eine Birkenbihl-Übung speichert eine unbekannte `vocabularyId` an einem dekodierten Wort ohne Prüfung | Defekt | `geschaetzt` | P3 | S | backend | — |
+| [B-388](B-388-id-null-faelle-ohne-test.md) | Zwei Fälle „Id 0 bleibt `validation_error`“ aus B-329 haben keinen Test | Defekt | `geschaetzt` | P3 | XS | backend | — |
 | [B-389](B-389-leerzeichen-grundform-meldet-invalid-reference.md) | Ein `PATCH` im Vokabelspeicher mit `baseFormKey: "  "` meldet `invalid_reference` | Defekt | `idee` | P3 | — | backend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `idee` | P3 | — | — | — |
@@ -891,9 +892,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
-### Nach der Abnahme entgangen (125)
+### Nach der Abnahme entgangen (126)
 
-**Nachgeschaut: 320 von 322 abgenommenen** — und in 106 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 2 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 321 von 322 abgenommenen** — und in 107 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 1 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -1021,17 +1022,17 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-382](B-382-groessenangabe-und-zaehlungen-aus-sprint-1.md) | `frontend/CLAUDE.md` wuchs entgegen B-233 AK 3, und vier Angaben aus Sprint 1 stimmten nicht | [B-233] | `abgenommen` |
 | [B-383](B-383-match-403-behauptungen-nach-b-310.md) | Nach B-310 versprechen Client-Doku und Story weiter 403, und ein Seed-Kommentar ist zu stark | [B-310, B-282] | `abgenommen` |
 | [B-385](B-385-loeschbestaetigung-ausser-sicht.md) | Seit B-381 landet „Reihe … gelöscht." in einer langen Liste wieder außerhalb des Sichtbereichs | [B-381] | `abgenommen` |
-| [B-388](B-388-id-null-faelle-ohne-test.md) | Zwei Fälle „Id 0 bleibt `validation_error`“ aus B-329 haben keinen Test | [B-329] | `idee` |
+| [B-388](B-388-id-null-faelle-ohne-test.md) | Zwei Fälle „Id 0 bleibt `validation_error`“ aus B-329 haben keinen Test | [B-329] | `geschaetzt` |
+| [B-390](B-390-unit-loeschen-bestaetigung-ausser-sicht.md) | „Unit … gelöscht." und „Gespeichert." einer Unit landen in einer langen Liste außer Sicht | [B-385] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (2) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (1) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-385](B-385-loeschbestaetigung-ausser-sicht.md) | Seit B-381 landet „Reihe … gelöscht." in einer langen Liste wieder außerhalb des Sichtbereichs |
 | [B-386](B-386-uebersetzung-speichert-unbekannte-vokabel-id.md) | Eine Übersetzungsübung speichert eine unbekannte `vocabularyId` ohne Prüfung |
 
 </details>
@@ -1094,6 +1095,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-358](B-358-beispielkatalog-proben-restkanten.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 | [B-370](B-370-zwei-behauptungen-aus-lauf-r-teil-2.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 | [B-373](B-373-inventar-und-begruendung-aus-lauf-s.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
+| [B-390](B-390-unit-loeschen-bestaetigung-ausser-sicht.md) | `idee` | `unverifiziert: true` |
 
 <details>
 <summary>Verworfen (26)</summary>
