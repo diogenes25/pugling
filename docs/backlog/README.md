@@ -506,11 +506,10 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (41)
+### Offen (39)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [B-392](B-392-uebersetzung-put-legt-paare-nicht-an.md) | Eine geänderte Übersetzung legt neue Paare nicht im Speicher an | Defekt | `idee` | P2 | — | backend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `gegrillt` | P2 | — | backend | Vertrag? |
 | [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder | Wunsch | `geschaetzt` | P2 | L | beides | — |
@@ -525,7 +524,6 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-375](B-375-heftseite-wird-uebungsentwurf.md) | Eine fotografierte Heftseite wird zum Übungsentwurf, den der Vater vor dem Zuweisen prüft | Wunsch | `idee` | P2 | — | — | — |
 | [B-389](B-389-leerzeichen-grundform-meldet-invalid-reference.md) | Ein `PATCH` im Vokabelspeicher mit `baseFormKey: "  "` meldet `invalid_reference` | Defekt | `idee` | P3 | — | backend | — |
 | [B-391](B-391-birkenbihl-decoding-null-ist-500.md) | Ein Birkenbihl-Satz mit `"decoding": null` endet in einer 500 statt einer 400 | Defekt | `idee` | P3 | — | backend | — |
-| [B-393](B-393-uebersetzung-put-id-null-ohne-test.md) | B-386 AK 1 „Ändern mit `0`" hat keinen Test | Defekt | `idee` | P3 | — | backend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `idee` | P3 | — | — | — |
 | [B-291](B-291-fachwechsel-der-reihe-laesst-themen-stehen.md) | Wechselt eine Reihe ihr Fach, bleiben die Grammatik-Themen des alten Fachs an Übungen und Units stehen | Frage | `idee` | P3 | — | backend | — |
@@ -553,7 +551,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (325)</summary>
+<summary>Abgenommen (327)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -830,6 +828,8 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-387](B-387-birkenbihl-speichert-unbekannte-vokabel-id.md) | Eine Birkenbihl-Übung speichert eine unbekannte `vocabularyId` an einem dekodierten Wort ohne Prüfung | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-388](B-388-id-null-faelle-ohne-test.md) | Zwei Fälle „Id 0 bleibt `validation_error`“ aus B-329 haben keinen Test | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-390](B-390-unit-loeschen-bestaetigung-ausser-sicht.md) | „Unit … gelöscht." und „Gespeichert." einer Unit landen in einer langen Liste außer Sicht | Defekt | `abgenommen` | P2 | XS | frontend | — |
+| [B-392](B-392-uebersetzung-put-legt-paare-nicht-an.md) | Eine geänderte Übersetzung legt neue Paare nicht im Speicher an | Defekt | `abgenommen` | P2 | XS | backend | — |
+| [B-393](B-393-uebersetzung-put-id-null-ohne-test.md) | B-386 AK 1 „Ändern mit `0`" hat keinen Test | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-40](B-40-client-routen-waechter.md) | Routen aus `Pugling.Client` gegen das OpenAPI-Dokument halten | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-41](B-41-produktions-startup-smoke.md) | Der Produktionspfad des Starts ist der einzige ohne Test | Aufräumen | `abgenommen` | P2 | S | backend | — |
 | [B-42](B-42-openapi-typen-generieren.md) | TypeScript-Typen aus dem OpenAPI-Dokument erzeugen statt von Hand pflegen | Aufräumen | `abgenommen` | P2 | M | beides | — |
@@ -897,7 +897,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (127)
 
-**Nachgeschaut: 323 von 325 abgenommenen** — und in 108 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 2 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 323 von 327 abgenommenen** — und in 108 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 4 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -1027,10 +1027,10 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-385](B-385-loeschbestaetigung-ausser-sicht.md) | Seit B-381 landet „Reihe … gelöscht." in einer langen Liste wieder außerhalb des Sichtbereichs | [B-381] | `abgenommen` |
 | [B-388](B-388-id-null-faelle-ohne-test.md) | Zwei Fälle „Id 0 bleibt `validation_error`“ aus B-329 haben keinen Test | [B-329] | `abgenommen` |
 | [B-390](B-390-unit-loeschen-bestaetigung-ausser-sicht.md) | „Unit … gelöscht." und „Gespeichert." einer Unit landen in einer langen Liste außer Sicht | [B-385] | `abgenommen` |
-| [B-393](B-393-uebersetzung-put-id-null-ohne-test.md) | B-386 AK 1 „Ändern mit `0`" hat keinen Test | [B-386] | `idee` |
+| [B-393](B-393-uebersetzung-put-id-null-ohne-test.md) | B-386 AK 1 „Ändern mit `0`" hat keinen Test | [B-386] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (2) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (4) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -1039,6 +1039,8 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | --- | --- |
 | [B-387](B-387-birkenbihl-speichert-unbekannte-vokabel-id.md) | Eine Birkenbihl-Übung speichert eine unbekannte `vocabularyId` an einem dekodierten Wort ohne Prüfung |
 | [B-388](B-388-id-null-faelle-ohne-test.md) | Zwei Fälle „Id 0 bleibt `validation_error`“ aus B-329 haben keinen Test |
+| [B-392](B-392-uebersetzung-put-legt-paare-nicht-an.md) | Eine geänderte Übersetzung legt neue Paare nicht im Speicher an |
+| [B-393](B-393-uebersetzung-put-id-null-ohne-test.md) | B-386 AK 1 „Ändern mit `0`" hat keinen Test |
 
 </details>
 
@@ -1101,8 +1103,8 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-370](B-370-zwei-behauptungen-aus-lauf-r-teil-2.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 | [B-373](B-373-inventar-und-begruendung-aus-lauf-s.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 | [B-390](B-390-unit-loeschen-bestaetigung-ausser-sicht.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
-| [B-392](B-392-uebersetzung-put-legt-paare-nicht-an.md) | `idee` | `unverifiziert: true` |
-| [B-393](B-393-uebersetzung-put-id-null-ohne-test.md) | `idee` | `unverifiziert: true` |
+| [B-392](B-392-uebersetzung-put-legt-paare-nicht-an.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
+| [B-393](B-393-uebersetzung-put-id-null-ohne-test.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen" |
 
 <details>
 <summary>Verworfen (26)</summary>

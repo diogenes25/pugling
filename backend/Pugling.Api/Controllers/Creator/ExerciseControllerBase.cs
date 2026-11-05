@@ -80,9 +80,10 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     /// <summary>
     /// Asynchronous normalization before saving (default: nothing). Derived controllers override this
     /// when the invariant needs DB access – e.g. vocabulary exercises that create inline used words in the store
-    /// and link them with their store ID. Runs after <see cref="NormalizeConfig"/> and may use <c>SaveChanges</c>.
+    /// and link them with their store ID. Runs after <see cref="NormalizeConfig"/> and may use <c>SaveChanges</c>, on create
+    /// and on replace alike: an edited entry arrives without its id, and replace must link it just as create does (B-392).
     /// </summary>
-    protected virtual Task NormalizeConfigAsync(int subjectId, TConfig config, CancellationToken ct = default) => Task.CompletedTask;
+    protected virtual Task NormalizeConfigAsync(int seriesId, TConfig config, CancellationToken ct = default) => Task.CompletedTask;
 
     /// <summary>
     /// Shapes the config for the response (default: as stored). Derived controllers override this
@@ -453,6 +454,8 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         if (await ValidateConfigAsync(seriesId, config, ct) is { } updateErr) return this.ProblemWithCode(updateErr.Error, updateErr.Detail);
         NormalizeConfig(config);
         if (await UpdateConflictAsync(exercise, config, ct) is { } conflict) return conflict;
+        // After the conflict check: this step may already write store entries, and a rejected PUT must not half-write.
+        await NormalizeConfigAsync(seriesId, config, ct);
 
         exercise.ExecutePublic = body.ExecutePublic;
         exercise.Title = body.Title.Trim();

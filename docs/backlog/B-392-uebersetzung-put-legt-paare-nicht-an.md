@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/idee, bereich/backend, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/backend, rolle/creator]
 aliases: [Übersetzung PUT verlinkt neue Paare nicht]
-status: idee
+status: abgenommen
 prio: P2
 art: Defekt
-groesse: ""
+groesse: XS
 wo: backend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-05.md#lauf-w
 unverifiziert: false
 grund: ""
@@ -28,7 +28,35 @@ nicht.
 Am Code bestätigt (Stand `e0fdd3b`). Beim Ausformulieren zu prüfen: ob andere Typen mit `NormalizeConfigAsync` betroffen sind, und
 dass die Vokabelübung (Abgleich über `AfterSaveAsync`) unberührt bleibt.
 
+
+## User Story
+
+Als **Creator** möchte ich, dass ein Übersetzungspaar, dessen Text ich ändere, wieder im Vokabelspeicher steht und verlinkt ist –
+so wie beim Anlegen. Sonst verliert jede Korrektur eines Satzes still seinen Speicher-Eintrag.
+
+## Entscheidungen
+
+1. **(Defekt, im Lauf gegrillt)** `Update` ruft `NormalizeConfigAsync` wie `Create`. Am Code geprüft: nur die Übersetzung überschreibt
+   den Schritt, kein anderer Typ ändert sein Verhalten beim `PUT`.
+2. **(Bau)** Der Aufruf steht **nach** `UpdateConflictAsync`: der Schritt darf schon Speicher-Einträge schreiben, und ein abgewiesener
+   `PUT` soll nichts halb schreiben.
+
+## Akzeptanzkriterien
+
+1. `PUT` einer Übersetzung mit einem Paar ohne `vocabularyId` → die Antwort trägt eine `vocabularyId` und `_self`, und `usage` dieser
+   Vokabel listet die Übung.
+2. Die vorher verlinkte Vokabel ist danach nicht mehr verwendet (löschbar).
+
+## Schätzung
+
+`XS`, `wo: backend`, eine Zeile im Basis-Controller plus Summary; Integrationsfall neben den B-386-Fällen.
+
 ## Verlauf
 
 - **2026-11-05** — angelegt aus der Nachschau zu B-386 (Lauf W, Retro Sprint 8; frischer `pugling-reviewer`, 🟡). Älter als B-386
   (der `PUT` hat nie normalisiert), darum ohne `entgangen_bei`.
+- **2026-11-05** — ausformuliert, gegrillt (`art: Defekt`), geschätzt und gebaut in Lauf W, Sprint 9. AK 1 →
+  `CatalogReadDeleteTests.cs:197-202` (Id, `_self`, Usage), AK 2 → `:203` (alte Vokabel → `204`). Rote Probe: der Aufruf in `Update`
+  entfällt → rot in `:197` (das Paar hat keine Id), 1 von 19, kompiliert.
+- **2026-11-05** — Review `pugling-reviewer`: kein 🔴; Reihenfolge geprüft (nach dem Aufruf kann nichts mehr abweisen, die Übung ist bis dahin unverändert), kein anderer Typ betroffen, die Klassen-Summary der Übersetzung stimmt jetzt auch beim Ersetzen. 🟢 Parameter `subjectId` der Basis hieß falsch (übergeben wird `seriesId`) – umbenannt, **Zähler Sprint 9: 1 von 5**. 🟡 zu B-393 siehe dort.
+- **2026-11-05** — **abgenommen.** Volle Suite 1090/1090 nach dem letzten Edit; Rollengang Creator als E2E: volle Playwright-Suite 115 passed gegen ein frisch gestartetes Backend mit der Änderung (danach nur die Umbenennung eines Parameters). **Grenze:** keine Spec ändert den Text eines Übersetzungspaars im Browser – der Weg „Paar bearbeiten → Speichern → neu verlinkt“ ist nur durch den Integrationsfall belegt, nicht geklickt. Vater und Sohn unberührt (nur der Creator-`PUT`). Commit: siehe nächster Eintrag.

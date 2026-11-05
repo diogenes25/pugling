@@ -133,6 +133,9 @@ public class UnknownReferenceCodeTests(PuglingWebAppFactory factory) : IClassFix
         Assert.Equal(HttpStatusCode.Created, created.StatusCode);
         var exerciseId = await TestApi.IdAsync(created);
         await AssertProblemAsync(await creator.PutAsJsonAsync($"{unit}/translation/{exerciseId}", Translation(Unknown)), "invalid_reference");
+        // B-393: statement of intent, not a separate guard - create and replace share one validator, so the POST cases above
+        // already catch a loosened check. It pins AK 1 of B-386 ("create AND change") should replace ever get its own path.
+        await AssertProblemAsync(await creator.PutAsJsonAsync($"{unit}/translation/{exerciseId}", Translation(0)), "validation_error");
     }
 
     private static object Birkenbihl(int? vocabularyId) => new

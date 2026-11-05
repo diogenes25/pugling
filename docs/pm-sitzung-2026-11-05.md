@@ -366,3 +366,17 @@ Verlauf-Zeile „AK n → Test" listete beim PUT nur die unbekannte Id und schri
 **Vorschlag (nicht gelandet, Freigabe 3):** (BN) Die Belegzeile je AK zerlegt ein AK in seine **Fälle** (Weg × Wert): „Anlegen/Ändern ×
 unbekannt/0" sind vier Zeilen, nicht eine. Ein AK mit „und"/„oder" bekommt so je Kombination eine Datei:Zeile oder ein ausdrückliches
 „nicht getestet, weil …". Kein Tor, darum nur Vorschlag.
+
+### Sprint 9 — B-392 + B-393
+
+**Sprint-Ziel (Creator):** Wer den Text eines Übersetzungspaars ändert, findet das Paar danach verlinkt im Vokabelspeicher – wie
+nach dem Anlegen.
+
+**Gebaut:** `Update` ruft `NormalizeConfigAsync` wie `Create` – nach dem Konfliktcheck, damit ein abgewiesener `PUT` nichts halb schreibt.
+Nur die Übersetzung überschreibt den Schritt; kein anderer Typ ändert sein Verhalten. B-393 ergänzt `PUT` mit `0`.
+
+**Belege:** zwei rote Proben (Aufruf entfällt → rot `CatalogReadDeleteTests.cs:197`; nur der `PUT` meldet `0` als unbekannt → rot
+`UnknownReferenceCodeTests.cs:137`), beide kompiliert. Volle Suite 1090/1090, Playwright 115 passed. Keine Spec klickt „Paar ändern“.
+
+**Review** (`pugling-reviewer`): kein 🔴. 🟡 Die B-393-Zusicherung fängt allein nichts (ein Validator für beide Wege) → als
+Absichtserklärung beschriftet, nur Text. 🟢 Parameter `subjectId` → `seriesId` (Code) → **Zähler 1 von 5**.

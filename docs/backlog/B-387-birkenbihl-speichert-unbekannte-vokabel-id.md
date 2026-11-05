@@ -81,3 +81,4 @@ nach dem Muster von B-386.
   `PUT` solcher Übung meldet dann `invalid_reference` – dieselbe Parität wie B-386, das Frontend schickt Birkenbihl-Configs nicht
   zurück (B-72). 🟢 `"decoding": null` endet schon vorher in einer 500 → [B-391](B-391-birkenbihl-decoding-null-ist-500.md).
 - **2026-11-05** — **abgenommen.** Volle Suite 1089/1089 (danach nur Kommentartext geändert); Rollengang Creator als E2E: volle Playwright-Suite 115 passed gegen ein Backend, das nach dem letzten Code-Edit startete. Birkenbihl- und Übersetzungs-Anlage im Browser (`uebungstypen.spec.ts`) und der Vokabelspeicher grün; Vater und Sohn unberührt (nur Creator-Schreibwege), ihre Specs in derselben Suite grün. Commit: siehe nächster Eintrag.
+- **2026-11-05** — Commit `cae15a1`.

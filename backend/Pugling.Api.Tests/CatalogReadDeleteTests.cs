@@ -168,6 +168,42 @@ public class CatalogReadDeleteTests(PuglingWebAppFactory factory) : IClassFixtur
     }
 
     /// <summary>
+    /// B-392: the editor drops a pair's id as soon as its text was edited and expects the server to link it again. Replace
+    /// used to save such a pair unlinked. Red if replace skips the store normalization: the new pair would then have no id,
+    /// no <c>_self</c> and no usage. The old entry is the counter-check that the stale link is really gone.
+    /// </summary>
+    [Fact]
+    public async Task Geaenderte_Uebersetzung_Legt_Ihr_Neues_Paar_Im_Speicher_An()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var (altId, _) = await TestApi.CreateStoreVocabAsync(creator, Eindeutig("Brücke alt"), "The bridge is old.", "de", "en");
+        var subjectId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = TestApi.UniqueName("Übersetzungs-Fach") }));
+        var (seriesId, unitId) = await TestApi.CreateSeriesAndUnitAsync(creator, subjectId);
+        var route = $"/api/v1/creator/textbook-series/{seriesId}/units/{unitId}/translation";
+        object Payload(string source, string target, int? vocabularyId) => new
+        {
+            title = "Brücken-Übersetzung",
+            orderIndex = 1,
+            rewardPoints = 10,
+            config = new { sourceLang = "de", targetLang = "en", items = new[] { new { source, target, vocabularyId } } },
+        };
+        var exerciseId = await TestApi.IdAsync(await creator.PostAsJsonAsync(route, Payload("Die Brücke ist alt.", "The bridge is old.", altId)));
+
+        var neuerSatz = Eindeutig("Fluss breit");
+        var res = await creator.PutAsJsonAsync($"{route}/{exerciseId}", Payload(neuerSatz, "The river is wide.", null));
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+        var paar = (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("config").GetProperty("items")[0];
+        var neuId = paar.GetProperty("vocabularyId").GetInt32();
+        Assert.NotEqual(altId, neuId);
+        Assert.Equal($"/api/v1/creator/vocabulary/{neuId}", paar.GetProperty("_self").GetString());
+
+        var usage = await creator.GetFromJsonAsync<List<JsonElement>>($"/api/v1/creator/vocabulary/{neuId}/usage");
+        Assert.Contains(usage!, u => u.GetProperty("exerciseId").GetInt32() == exerciseId);
+        Assert.Equal(HttpStatusCode.NoContent, (await creator.DeleteAsync($"/api/v1/creator/vocabulary/{altId}")).StatusCode);
+    }
+
+    /// <summary>
     /// B-387: a Birkenbihl decoding links its words by id in the config, like a translation. Red if the usage lookup ignores
     /// Birkenbihl. Counter-check as in B-386: an unrelated entry's id stands in the sentence text and must not lock it.
     /// </summary>
