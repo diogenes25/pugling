@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-05.md#lauf-w
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-05"
 entgangen_bei: [B-386]
 ---
 
@@ -40,3 +41,5 @@ ist nur mit einer unbekannten Id geprüft. Das Risiko ist klein (derselbe Valida
 - **2026-11-05** — Review `pugling-reviewer` (mit B-392): 🟡 die Zusicherung fängt allein keine Regression – Anlegen und Ersetzen teilen einen Validator, die `POST`-Fälle fangen jede Lockerung schon; die Probe brauchte einen künstlichen eigenen `PUT`-Weg. Darum jetzt im Test als **Absichtserklärung** beschriftet (`CLAUDE.md`: „Eine Zusicherung, die den Ausgangszustand prüft …"), nur Text.
 - **2026-11-05** — **abgenommen.** Volle Suite 1090/1090 nach dem letzten Edit; Rollengang Creator als E2E: volle Playwright-Suite 115 passed gegen ein frisch gestartetes Backend mit der Änderung (danach nur die Umbenennung eines Parameters). **Grenze:** keine Spec ändert den Text eines Übersetzungspaars im Browser – der Weg „Paar bearbeiten → Speichern → neu verlinkt“ ist nur durch den Integrationsfall belegt, nicht geklickt. Vater und Sohn unberührt (nur der Creator-`PUT`). Commit: siehe nächster Eintrag.
 - **2026-11-05** — Commit `c429792`.
+- **2026-11-05** — **Nachschau** (Lauf X, Retro Sprint 10): nichts entgangen; die Zusicherung ist als Absichtserklärung beschriftet und
+  wird nicht als Absicherung gezählt.

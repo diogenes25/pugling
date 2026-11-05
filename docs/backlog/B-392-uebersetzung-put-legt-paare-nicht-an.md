@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-05.md#lauf-w
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-05"
 ---
 
 # B-392 · Eine geänderte Übersetzung legt neue Paare nicht im Speicher an
@@ -61,3 +62,11 @@ so wie beim Anlegen. Sonst verliert jede Korrektur eines Satzes still seinen Spe
 - **2026-11-05** — Review `pugling-reviewer`: kein 🔴; Reihenfolge geprüft (nach dem Aufruf kann nichts mehr abweisen, die Übung ist bis dahin unverändert), kein anderer Typ betroffen, die Klassen-Summary der Übersetzung stimmt jetzt auch beim Ersetzen. 🟢 Parameter `subjectId` der Basis hieß falsch (übergeben wird `seriesId`) – umbenannt, **Zähler Sprint 9: 1 von 5**. 🟡 zu B-393 siehe dort.
 - **2026-11-05** — **abgenommen.** Volle Suite 1090/1090 nach dem letzten Edit; Rollengang Creator als E2E: volle Playwright-Suite 115 passed gegen ein frisch gestartetes Backend mit der Änderung (danach nur die Umbenennung eines Parameters). **Grenze:** keine Spec ändert den Text eines Übersetzungspaars im Browser – der Weg „Paar bearbeiten → Speichern → neu verlinkt“ ist nur durch den Integrationsfall belegt, nicht geklickt. Vater und Sohn unberührt (nur der Creator-`PUT`). Commit: siehe nächster Eintrag.
 - **2026-11-05** — Commit `c429792`.
+- **2026-11-05** — **Nachschau** (Lauf X, Retro Sprint 10; frischer `pugling-reviewer`, `git show c429792`, 1098/1098 an HEAD). Kein 🔴;
+  ein abgewiesener `PUT` schreibt nichts halb, kein anderer Typ betroffen, der Editor-Kommentar stimmt jetzt. **Entgangen (🟡):** der
+  eigentliche Klickweg – eine gemischte Liste (ein Paar behält seine Id, das bearbeitete bekommt eine neue) und „findet es“ (geänderter
+  Text trifft einen vorhandenen Eintrag) – hat keinen Test → [B-395](B-395-uebersetzung-put-mischliste-ungetestet.md). **Berichtigt:**
+  oben steht „AK 2 → `:203`“; diese Zusicherung ist auch ohne den Fix grün (ein unverlinktes Paar gibt die alte Vokabel ebenso frei) –
+  sie ist Gegenprobe, kein Beleg; AK 2 hat damit keinen Test, der allein fällt (in B-395 mit aufgenommen). 🟢 hingenommen: zwei
+  getrennte Speichervorgänge (älteres Muster, verwaiste Einträge wären löschbar); `= default` am Token des virtuellen Hooks (älter).
+  🟢 Sprachwechsel im Editor behält die alte Bindung → [B-396](B-396-uebersetzung-sprachwechsel-behaelt-bindung.md).

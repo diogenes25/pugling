@@ -426,3 +426,19 @@ nicht) → **Zähler 1 von 5**. Volle Suite 1098/1098, Playwright 115 passed.
 
 **Was durchkam, bevor es durchkam:** Die 500 aus B-391 stammte aus einer Nachschau, die den Validator las, ohne zu messen – und ich
 hatte sie in B-387 übernommen und darauf einen Wächter gebaut. Der Test gegen den Ausgangszustand zuerst hat das in Minuten gezeigt.
+
+**Retrospektive Sprint 10 — Nachschau zu Sprint 9** (`c429792`, B-392 + B-393, frischer `pugling-reviewer`): kein 🔴. **Entgangen (🟡):**
+der echte Klickweg (Mischliste, „findet es") hat keinen Test, und mein Beleg „AK 2 → `:203`" kann nicht fallen →
+[B-395](backlog/B-395-uebersetzung-put-mischliste-ungetestet.md). Increment von Lauf W, darum **kein Limit 2** für Lauf X. Daneben
+[B-396](backlog/B-396-uebersetzung-sprachwechsel-behaelt-bindung.md) (älter, `idee`).
+
+**Was durchkam:** wieder „ein AK, ein Fall getestet" – diesmal nicht Weg × Wert, sondern **Listenform**: ich testete die kleinste Liste,
+der Klickweg schickt eine gemischte. Und eine Gegenprobe stand als Beleg im Verlauf. (BN) bekommt damit eine dritte Spalte: die Form
+der Eingabe, wie die Oberfläche sie schickt.
+
+**Vorschlag (nicht gelandet, Freigabe 3):** (BP) Jede Belegzeile „AK n → Test" nennt die Mutante, die **nur** diese Zeile rot macht;
+eine Zeile, die auch ohne den Fix grün ist, heißt „Gegenprobe" und zählt nicht als Beleg.
+
+**Lauf X pausiert** nach Sprint 10 auf Wunsch im Dialog (App im eingebauten Browser geöffnet). Kein Limit erreicht. **Nächster Start:**
+B-395 (XS, Tests), dann B-396 (`idee`, Frage nach dem Sprachwechsel) und die Wünsche nach dem
+[Delegations-Protokoll](pm-sitzung-2026-11-05-delegation.md).
