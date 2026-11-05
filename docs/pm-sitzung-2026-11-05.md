@@ -220,3 +220,28 @@ Die Nachschau hat eine Entgleitung im Increment **dieses** Laufs gefunden (B-385
 B-386 (Defekt). Retro-Vorschläge (BG)–(BK) unentschieden. Gerätecheck B-231 offen. Nichts gepusht.
 
 **Nächster Start:** B-385, dann B-386, dann die Wünsche nach dem [Delegations-Protokoll](pm-sitzung-2026-11-05-delegation.md).
+
+## Lauf V
+
+Gestartet im Dialog („Ja, weiter") auf Grundlage derselben Delegation; Reihenfolge aus dem Ende von Lauf U.
+
+### Sprint 5
+
+**Sprint-Ziel (Creator):** Wer in einer langen Reihen-Liste eine Reihe löscht oder speichert, sieht die Bestätigung – auch wenn
+die Zeile dabei verschwindet –, und wer Units anlegt, behält sein Formular weiter im Bild.
+**Umfang:** [B-385](backlog/B-385-loeschbestaetigung-ausser-sicht.md) (XS, auf Grundlage der Entscheidung im Auftrag ausformuliert
+und geschätzt).
+**Entwickler-Brief:** `SeriesRow` bekommt einen zweiten Prop für die Handlungen, nach denen die Zeile fehlen kann, verdrahtet mit
+`meldeVonWeitWeg`; Units, Umschalter und `NewSeries` bleiben bei `melde`. Testweg: eigene Spec mit nachgerechneter Vorbedingung,
+die B-381-Spec als Gegenprobe. Die Absender stehen als Tabelle in der Story (freiwillig nach (BK)).
+
+**Umgesetzt:** `frontend/src/vater/VaterLehrwerke.tsx` (Prop `onMeldungZeileWeg`, Kommentar am Effekt), neue Spec
+`frontend/e2e/reihe-bestaetigung-im-bild.spec.ts` (zwei Fälle). Die Vorbedingung schlug im ersten Lauf zu Recht an (die Reihen
+sortierten nach unten) – Präfix „0".
+**Verifikation:** zwei rote Proben je genau im eigenen Fall, Units-Spec in beiden grün; Vitest 648/648, `tsc -b` sauber,
+Playwright **113 passed** (volle Suite).
+**Review** `frontend-reviewer`: Verdrahtung je Absender bestätigt; ein 🟡 – die Lösch-Vorbedingung rechnete das Nachrücken des
+Platzes um die gelöschte Zeile nicht ein (Test geändert, Probe wiederholt, **Zähler Sprint 5: 1 von 5**); ein 🟢 Prop-Doku (nur Text).
+
+**Abnahme:** Creator – die volle Suite fährt beide Wege und die Gegenprobe im echten Browser (Rollengang als E2E). Vater und Sohn:
+Regressionszeugen, ihre Specs grün, kein Pfad von ihnen berührt.

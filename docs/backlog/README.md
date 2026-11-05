@@ -506,11 +506,10 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (39)
+### Offen (38)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [B-385](B-385-loeschbestaetigung-ausser-sicht.md) | Seit B-381 landet „Reihe … gelöscht." in einer langen Liste wieder außerhalb des Sichtbereichs | Defekt | `idee` | P2 | — | frontend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `gegrillt` | P2 | — | backend | Vertrag? |
 | [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder | Wunsch | `geschaetzt` | P2 | L | beides | — |
@@ -523,7 +522,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-249](B-249-probeklausur-mit-notenprognose.md) | Eine Probeklausur über das Bündel einer Klassenarbeit, mit Notenprognose | Wunsch | `idee` | P2 | — | — | — |
 | [B-374](B-374-baobab-vergleich-sammel-story.md) | Baobab-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | Wunsch | `idee` | P2 | — | — | — |
 | [B-375](B-375-heftseite-wird-uebungsentwurf.md) | Eine fotografierte Heftseite wird zum Übungsentwurf, den der Vater vor dem Zuweisen prüft | Wunsch | `idee` | P2 | — | — | — |
-| [B-386](B-386-uebersetzung-speichert-unbekannte-vokabel-id.md) | Eine Übersetzungsübung speichert eine unbekannte `vocabularyId` ohne Prüfung | Defekt | `idee` | P3 | — | backend | — |
+| [B-386](B-386-uebersetzung-speichert-unbekannte-vokabel-id.md) | Eine Übersetzungsübung speichert eine unbekannte `vocabularyId` ohne Prüfung | Defekt | `in-arbeit` | P3 | S | backend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `idee` | P3 | — | — | — |
 | [B-291](B-291-fachwechsel-der-reihe-laesst-themen-stehen.md) | Wechselt eine Reihe ihr Fach, bleiben die Grammatik-Themen des alten Fachs an Übungen und Units stehen | Frage | `idee` | P3 | — | backend | — |
@@ -551,7 +550,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (320)</summary>
+<summary>Abgenommen (321)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -823,6 +822,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-381](B-381-erfolgs-scroll-springt-aus-dem-formular.md) | Seit B-232 scrollt jede Bestätigung zum Meldungsplatz – auch die aus einem Formular mitten in der Tabelle | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-382](B-382-groessenangabe-und-zaehlungen-aus-sprint-1.md) | `frontend/CLAUDE.md` wuchs entgegen B-233 AK 3, und vier Angaben aus Sprint 1 stimmten nicht | Defekt | `abgenommen` | P3 | XS | doku | — |
 | [B-383](B-383-match-403-behauptungen-nach-b-310.md) | Nach B-310 versprechen Client-Doku und Story weiter 403, und ein Seed-Kommentar ist zu stark | Defekt | `abgenommen` | P3 | XS | doku | — |
+| [B-385](B-385-loeschbestaetigung-ausser-sicht.md) | Seit B-381 landet „Reihe … gelöscht." in einer langen Liste wieder außerhalb des Sichtbereichs | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-40](B-40-client-routen-waechter.md) | Routen aus `Pugling.Client` gegen das OpenAPI-Dokument halten | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-41](B-41-produktions-startup-smoke.md) | Der Produktionspfad des Starts ist der einzige ohne Test | Aufräumen | `abgenommen` | P2 | S | backend | — |
 | [B-42](B-42-openapi-typen-generieren.md) | TypeScript-Typen aus dem OpenAPI-Dokument erzeugen statt von Hand pflegen | Aufräumen | `abgenommen` | P2 | M | beides | — |
@@ -890,7 +890,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (124)
 
-**Nachgeschaut: 319 von 320 abgenommenen** — und in 105 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 1 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 319 von 321 abgenommenen** — und in 105 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 2 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -1017,10 +1017,10 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-381](B-381-erfolgs-scroll-springt-aus-dem-formular.md) | Seit B-232 scrollt jede Bestätigung zum Meldungsplatz – auch die aus einem Formular mitten in der Tabelle | [B-232] | `abgenommen` |
 | [B-382](B-382-groessenangabe-und-zaehlungen-aus-sprint-1.md) | `frontend/CLAUDE.md` wuchs entgegen B-233 AK 3, und vier Angaben aus Sprint 1 stimmten nicht | [B-233] | `abgenommen` |
 | [B-383](B-383-match-403-behauptungen-nach-b-310.md) | Nach B-310 versprechen Client-Doku und Story weiter 403, und ein Seed-Kommentar ist zu stark | [B-310, B-282] | `abgenommen` |
-| [B-385](B-385-loeschbestaetigung-ausser-sicht.md) | Seit B-381 landet „Reihe … gelöscht." in einer langen Liste wieder außerhalb des Sichtbereichs | [B-381] | `idee` |
+| [B-385](B-385-loeschbestaetigung-ausser-sicht.md) | Seit B-381 landet „Reihe … gelöscht." in einer langen Liste wieder außerhalb des Sichtbereichs | [B-381] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (1) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (2) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -1028,6 +1028,7 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | Id | Story |
 | --- | --- |
 | [B-329](B-329-uebung-unbekannte-referenz-validation-error.md) | Die Übungs-Validierung meldet eine unbekannte Id als `validation_error`, die Kategorie daneben als `invalid_reference` |
+| [B-385](B-385-loeschbestaetigung-ausser-sicht.md) | Seit B-381 landet „Reihe … gelöscht." in einer langen Liste wieder außerhalb des Sichtbereichs |
 
 </details>
 

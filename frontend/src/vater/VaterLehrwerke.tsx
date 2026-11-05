@@ -152,6 +152,10 @@ export function VaterLehrwerke() {
    * tiefer – dort sah der Creator nur den Knopf verschwinden). Aus einem Formular in oder direkt unter der
    * Tabelle scrollt sie nicht (B-381): wer Units hintereinander anlegt, verlöre sonst bei jedem Speichern sein
    * offenes Formular aus dem Bild. Ob weit weg, sagt der Absender über `meldeVonWeitWeg`, nicht die Seite.
+   *
+   * „Weit weg" heißt auch: **die eigene Zeile kann dabei verschwinden** (B-385). Löschen und Speichern einer Reihe
+   * (Umbenennen sortiert um, ein geänderter Wert fällt aus dem Filter) lassen sonst nichts zurück, woran der
+   * Creator den Erfolg sähe – ein geglücktes Löschen sähe aus wie nichts. Units bleiben nah: ihr Formular steht.
    */
   const holeBestaetigung = useRef(false);
   const melde = useCallback((m: ActionMessage | null) => { holeBestaetigung.current = false; setMeldung(m); }, []);
@@ -217,7 +221,7 @@ export function VaterLehrwerke() {
                   key={s.id} series={s} subjects={subjects.data ?? []} publishers={publishers.data ?? []}
                   open={open === s.id}
                   onToggle={() => { melde(null); setOpen(open === s.id ? null : s.id); }}
-                  onChanged={list.reload} onMeldung={melde}
+                  onChanged={list.reload} onMeldung={melde} onMeldungZeileWeg={meldeVonWeitWeg}
                 />
               ))}
               {list.data?.length === 0 && (
@@ -244,7 +248,7 @@ export function VaterLehrwerke() {
   );
 }
 
-function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, onMeldung }: {
+function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, onMeldung, onMeldungZeileWeg }: {
   series: TextbookSeriesResponse;
   subjects: SubjectResponse[];
   publishers: PublisherResponse[];
@@ -259,8 +263,13 @@ function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, on
    * vierte Räum-Stelle entstanden: Alle drei existierenden hingen am *Öffnen*, keine am *Absenden* – so
    * stand ein grünes „Gespeichert." über einer roten Fehlermeldung. Ein Prop mit `null` als Wert kann
    * man nicht halb verdrahten.
+   *
+   * `onMeldungZeileWeg` darunter ist kein zweiter Kanal im Sinn von B-197: Beide Props räumen und setzen denselben
+   * Platz; sie unterscheiden sich nur darin, ob eine Bestätigung ihn ins Bild holt (B-385).
    */
   onMeldung: (m: ActionMessage | null) => void;
+  /** Für Handlungen, nach denen diese Zeile fehlen kann (Löschen, Speichern der Reihe): holt den Platz ins Bild (B-385). */
+  onMeldungZeileWeg: (m: ActionMessage | null) => void;
 }) {
   const action = useAction();
   // Lokal, nicht im seiten-globalen `open`: das ist der Akkordeon-Platz der Units, und beide Bereiche
@@ -278,10 +287,10 @@ function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, on
       + "Lehrbücher der Kinder und Profile verlieren nur die Zuordnung und bleiben nutzbar.")) return;
     // Räumen VOR dem Löschen: Sonst bliebe die Bestätigung der vorigen Handlung über der gerade
     // verschwundenen Zeile stehen und läse sich als Löschbestätigung (B-196).
-    onMeldung(null);
+    onMeldungZeileWeg(null);
 
     // Der Name MUSS mit: Die Zeile, auf die sich die Meldung bezieht, ist ja gerade verschwunden.
-    const ok = await nachObenMelden(action, onMeldung,
+    const ok = await nachObenMelden(action, onMeldungZeileWeg,
       () => api.deleteTextbookSeries(series.id), `Reihe „${series.name}" gelöscht.`);
     if (ok === null) return;
     onChanged();
@@ -358,7 +367,7 @@ function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, on
           <td colSpan={6}>
             <SeriesForm
               series={series} subjects={subjects} publishers={publishers} onSaved={onChanged}
-              onMeldung={onMeldung}
+              onMeldung={onMeldungZeileWeg}
             />
           </td>
         </tr>
