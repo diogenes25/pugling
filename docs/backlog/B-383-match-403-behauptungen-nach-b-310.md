@@ -56,3 +56,4 @@ Als **Entwickler**, der den Client oder eine Story liest, möchte ich die Antwor
   Klassen; mit `CreatorAgentTests.Profile_fuer_*` fielen beim selben Mutanten mehr – in B-310 vermerkt. **Abgenommen**
   (Rollengang: der Entwickler ist die Rolle; Doku, kein Verhalten). Kein Limit 2: die Entgleitung liegt im Increment des
   vorigen Laufs (T), nicht dieses (U).
+- **2026-11-05** — Commit `2a9add3`.
