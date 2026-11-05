@@ -71,7 +71,7 @@ bekommen – wie für ein `null` als Member –, nicht eine 500 und nicht ein st
   grün. Volle Suite 1103/1103 nach B-397, 1105/1105 mit B-398.
 - **2026-11-05** — Review `pugling-reviewer`: 🟡 ein Body, der selbst eine Liste ist (`POST`/`PATCH …/vocabulary/batch`, vom KI-Agenten
   benutzt), lief am Filter vorbei → `[null]` gab weiter 500. **Zähler 1 von 5.** Behoben: Listen werden an jeder Stelle gleich besucht,
-  die Element-Nullbarkeit des Bodys kommt aus dem Aktionsparameter. **Rote Probe** `CatalogReadDeleteTests.cs:379-381` (Theory, drei
+  die Element-Nullbarkeit des Bodys kommt aus dem Aktionsparameter. **Rote Probe** `CatalogReadDeleteTests.cs:380-382` (Theory, drei
   Fälle): erwartet 3 rot, gemessen 3 rot (alle `500`); danach grün. 🟢 Kommentar in `Program.cs` verrutscht (berichtigt), 🟢 verschachtelte
   Listen (`List<List<T>>`) nicht durchsucht – keine im Vertrag, im Remarks benannt, 🟢 kein Test gegen Fehlalarm bei `List<string?>` – kein
   solcher Vertragstyp, ohne Zählung zurückgestellt. Delta-Review: kein 🔴/🟡; 🟢 effektive Tiefe über Listen halbiert – im Kommentar

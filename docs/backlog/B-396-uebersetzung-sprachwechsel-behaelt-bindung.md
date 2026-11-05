@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-05.md#lauf-x
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-05"
 ---
 
 # B-396 · Wer im Übersetzungs-Editor nur das Sprachpaar ändert, behält die Bindung an die Vokabel des alten Sprachpaars
@@ -49,7 +50,7 @@ Sprachpaars zeigen.
 ## Verlauf
 
 - **2026-11-05** — angelegt aus der Nachschau zu Lauf W, Sprint 9 (Lauf X, Retro Sprint 10; frischer `pugling-reviewer`, 🟢). Älter als
-  B-392, darum ohne `entgangen_bei`; am Code gelesen, nicht im Browser gemessen (`unverifiziert: false`).
+  B-392, darum ohne `entgangen_bei`; am Code gelesen, nicht im Browser gemessen (`unverifiziert: true`).
 - **2026-11-05** — gegrillt, geschätzt und gebaut in Lauf Y, Sprint 13. **Rote Probe** gegen den Ausgangszustand: die zwei Wechsel-Fälle –
   erwartet 2 rot, gemessen 2 rot („expected 7 to be null"). **Mutanten:** gemerktes Sprachpaar ohne Rückfall → rot nur der Altübungs-Fall;
   Zielsprachen-Vergleich entfernt → rot nur der Zielsprachen-Fall; Sprach-Vergleich ganz entfernt → E2E rot an der Schlusszusicherung
@@ -62,3 +63,11 @@ Sprachpaars zeigen.
 - **2026-11-05** — **abgenommen.** Rollengang Creator als E2E: `e2e/uebersetzung-sprachwechsel.spec.ts` fährt den echten
   Bearbeiten-Dialog (Ausgangssprache en→fr, „Inhalt speichern") und misst am Store – 1 passed nach dem letzten Edit; volle Playwright-Suite
   116 passed (Vater und Sohn als Regressionszeugen, kein Pfad von ihnen berührt). Commit: siehe nächster Eintrag.
+- **2026-11-05** — Commit `609b754`.
+- **2026-11-05** — **Nachschau** (Lauf Z, Retro Sprint 14; frischer `frontend-reviewer`, `git show 609b754`): geprüft (1) rote Probe und die
+  drei Mutanten am Code nachgerechnet – plausibel; (2) Kommentare gegen Code, Mehrfach-Speichern im Dialog; (3) andere Zeilen-Bauer
+  (Anlegen nur über `emptyRow`, kein Kopieren/Import, Birkenbihl ohne Bindung); (4) Vokabel-Typ mit eigenen Sprachfeldern – kein
+  Geschwister-Defekt (Einträge sind die Store-Vokabeln selbst). **Entgangen (🟡):** die Gegenprobe baut ihre Zeile von Hand, kein Fall lädt
+  ein Paar ≠ en/de zurück – eine fest verdrahtete `origSourceLang: "en"` überlebt alle Tests, und eine `fr→de`-Übung verlöre beim bloßen
+  Speichern ihre Bindung → [B-400](B-400-uebersetzung-sprachpaar-rueckweg-ungetestet.md). 🟢 eine ältere Verlaufszeile war beim Umstellen
+  des Frontmatters mitersetzt worden – zurückgestellt.

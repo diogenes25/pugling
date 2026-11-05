@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/idee, bereich/backend, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/backend, rolle/creator]
 aliases: [B-398 Mutantenzeile falsch]
-status: idee
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
+groesse: XS
 wo: backend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-05.md#lauf-y
 unverifiziert: false
 grund: ""
@@ -29,3 +29,9 @@ Zu tun: die Mutante `?.Trim()` **messen** und die Zeile berichtigen; die Zeilena
 
 - **2026-11-05** — angelegt aus der Nachschau zu Lauf Y, Sprint 12 (Retro Sprint 13; frischer `pugling-reviewer`, `git show 49e773d`, 🟡
   bzw. 🟢). Increment **dieses** Laufs: **Limit 2**, Lauf Y endet nach Sprint 13.
+- **2026-11-05** — gegrillt (Defekt, nur Doku: messen und berichtigen) und erledigt in Lauf Z, Sprint 14. **Gemessen:** Mutante
+  `body.NaturalTranslation.Trim()` → `error CS8602`, kein Build; Mutante `body.NaturalTranslation?.Trim()!` → baut, rot **nur**
+  `BirkenbihlExerciseTests.cs:193` (erwartet `""`, gemessen `null`); zurück → 1/1 grün, `git status` sauber. B-398-Zeile durchgestrichen und
+  ersetzt, B-397-Zeilenangabe auf `:380-382` berichtigt. Kein Code, kein Laufzeit-Effekt – darum kein Review-Agent und kein Rollengang
+  (Ersatz: die zwei Messungen selbst; die Abnahme prüft eine Doku-Zeile gegen den Test).
+- **2026-11-05** — **abgenommen.** Commit: siehe nächster Eintrag.

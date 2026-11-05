@@ -159,6 +159,12 @@ public static class ApiErrors
     /// </summary>
     public static readonly ApiError SubjectInUse = new("subject_in_use", 409, "Subject is in use.");
     /// <summary>
+    /// A series may not change or clear its subject while one of its exercises or units carries a grammar topic or category
+    /// of the old subject (409, B-291). The subject boundary is checked when a carrier is written; a silent subject change
+    /// would leave assignments that the carrier's next save rejects - and dropping them instead would erase authored data.
+    /// </summary>
+    public static readonly ApiError SeriesSubjectInUse = new("series_subject_in_use", 409, "The series' subject is in use.");
+    /// <summary>
     /// Publisher is referenced by a series that is not the caller's own and cannot be deleted (409) - a
     /// foreign account's series, or an ownerless one of the shared catalog. A publisher has no owner on
     /// purpose, so this is the only thing standing between a shared catalog row and an unrelated creator's

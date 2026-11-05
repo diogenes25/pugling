@@ -186,6 +186,23 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
+    /// The 409 for a subject change while carriers of the series hold topics or categories of the old subject (B-291), or
+    /// <c>null</c>. Names the counts so the creator knows how much to clear first.
+    /// </summary>
+    private async Task<ActionResult?> SubjectInUseProblemAsync(int seriesId, int oldSubjectId, CancellationToken ct)
+    {
+        var exercises = await db.Exercises.CountAsync(e => e.SeriesUnit!.SeriesId == seriesId
+            && ((e.Category != null && e.Category.SubjectId == oldSubjectId)
+                || e.GrammarTopicLinks.Any(l => l.GrammarTopic!.SubjectId == oldSubjectId)), ct);
+        var units = await db.SeriesUnits.CountAsync(u => u.SeriesId == seriesId
+            && u.GrammarTopicLinks.Any(l => l.GrammarTopic!.SubjectId == oldSubjectId), ct);
+        if (exercises == 0 && units == 0) return null;
+        return this.ProblemWithCode(ApiErrors.SeriesSubjectInUse,
+            $"{exercises} exercise(s) and {units} unit(s) of this series carry grammar topics or categories of its current subject; "
+            + "remove them before changing the subject.");
+    }
+
+    /// <summary>
     /// Changes a series (partial, owner only). The slug remains immutable, but still decides: a new name
     /// whose slug another series already carries is rejected, the same rule <c>Create</c> enforces
     /// (B-124) - otherwise two series share a display name in every picker.
@@ -203,6 +220,11 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
         if (!ClaimsPrincipalExtensions.IsOwnedBy(series.OwnerAdultId, fid))
             return this.ProblemWithCode(ApiErrors.NotOwner, "Only the owner may change this textbook series.");
         if (await ValidateReferencesAsync(dto.SubjectId, dto.PublisherId, ct) is { } refProblem) return refProblem;
+        // Against the resulting subject, before anything is written (B-291): "clear" wins over a sent id, as below.
+        var newSubjectId = dto.ClearSubject ? null : dto.SubjectId ?? series.SubjectId;
+        if (series.SubjectId is int oldSubjectId && newSubjectId != oldSubjectId
+            && await SubjectInUseProblemAsync(seriesId, oldSubjectId, ct) is { } inUse)
+            return inUse;
 
         if (dto.Name is not null)
         {

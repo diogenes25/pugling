@@ -537,3 +537,32 @@ Die Nachschau zu Sprint 12 fand eine Entgleitung im Increment **dieses** Laufs (
 **Stand Lauf Y:** 3 Stories abgenommen (B-397, B-398 `49e773d`; B-396 siehe Commit). Neu: B-399 (Defekt, Doku). Vorschläge (BG)–(BS)
 unentschieden. Nichts gepusht. **Nächster Start:** B-399 (messen und berichtigen), dann die Wünsche nach dem
 [Delegations-Protokoll](pm-sitzung-2026-11-05-delegation.md).
+
+## Lauf Z
+
+Zweiter von vier Läufen desselben Auftrags („Starte 4 Nachtläufe hintereinander …").
+
+### Sprint 14 — B-399, B-291
+
+**Sprint-Ziel (Creator):** Was der Creator über seine Reihe und ihre Belege liest, stimmt – ein Fachwechsel lässt keine Zuordnung still
+verwaisen, und jede Mutanten-Zeile ist gemessen.
+
+**Gebaut:** B-399 – die zwei Behauptungen gemessen (`.Trim()` → CS8602; `?.Trim()!` → rot nur `:193`) und berichtigt. B-291 – der
+Fachwechsel einer Reihe ist `409 series_subject_in_use`, solange Übungen oder Units Themen/Kategorien des alten Fachs tragen (im
+Auftrag entschieden, Antwort a); Mutante je Fall gemessen; E2E über das Bearbeiten-Formular.
+
+**Review** (`pugling-reviewer`): 🟡 Reihen-Filter ungetestet → Fall ergänzt, **Zähler 1 von 5**; drei 🟢 (einer als B-401). Volle Suite
+1114/1114, Playwright 117 passed.
+
+**Retrospektive Sprint 14 — Nachschau zu Sprint 13** (`609b754`, B-396, frischer `frontend-reviewer`): geprüft Mutanten am Code,
+Kommentare, andere Zeilen-Bauer, Geschwister beim Vokabel-Typ. **Entgangen (🟡):** kein Test lädt ein Sprachpaar ≠ en→de zurück – eine
+fest verdrahtete Mutante überlebt alles → [B-400](backlog/B-400-uebersetzung-sprachpaar-rueckweg-ungetestet.md). Daneben hatte mein
+Frontmatter-Ersetzen eine alte Verlaufszeile von B-396 verfälscht (zurückgestellt). Increment von Lauf Y: **kein Limit 2.**
+
+**Was durchkam:** zweimal dieselbe Form in einem Sprint – eine Unterscheidung, deren zwei Seiten im Test nie verschieden waren
+(eigene vs. fremde Reihe in B-291; geladenes vs. vorgegebenes Sprachpaar in B-396). Die pm-loop-Regel „Mutante *beide gleich* je Fall"
+stand da; ich habe sie je **Test** angewandt, nicht je **Prädikat** der neuen Abfrage.
+
+**Vorschlag (nicht gelandet, Freigabe 3):** (BT) Vor dem Review jede Bedingung einer neuen Abfrage bzw. eines neuen Vergleichs einzeln
+streichen (Mutanten-Skript) und je Bedingung den Test notieren, der rot wird; eine Bedingung ohne roten Test bekommt einen Fall, bevor
+der Reviewer läuft. Das ist mechanisch – das Skript dieses Sprints tut es schon, nur nicht für jede Bedingung.

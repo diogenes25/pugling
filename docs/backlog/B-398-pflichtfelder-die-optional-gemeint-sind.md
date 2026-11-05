@@ -54,7 +54,7 @@ kläre diese selber nach bestem Wissen und Gewissen"). Leitlinie: im Zweifel die
   Ausgangszustand: `BirkenbihlExerciseTests.cs:192` erwartet `201`, gemessen `400`. Volle Suite 1105/1105.
 - **2026-11-05** — Review `pugling-reviewer`: kein Fund zu B-398; Mutanten je Zusicherung benannt und plausibel: `BirkenbihlSentenceInput.
   NaturalTranslation` zurück auf `string` → rot `:192` (und `:197`, nie allein erreichbar, da derselbe Typ); `DecodePreviewInput.
-  NaturalTranslation` zurück → rot nur `:201`; `?? ""` im Satz-Handler entfernt → rot `:193`. Gemessen ist nur die erste (Ausgangszustand).
+  NaturalTranslation` zurück → rot nur `:201`; ~~`?? ""` im Satz-Handler entfernt → rot `:193`~~ (berichtigt durch B-399: kompiliert nicht, CS8602 – gemessen; die Mutante, die `:193` allein rot macht, ist `?.Trim()!` – gemessen: erwartet `""`, gemessen `null`). Gemessen ist nur die erste (Ausgangszustand).
   Vertrag `docs/openapi/v1.json` und `frontend/src/lib/contract.ts` neu erzeugt, `tsc` sauber.
 - **2026-11-05** — **abgenommen.** Rollengang Creator als Integrationsfall (die Oberfläche schickt `naturalTranslation` immer mit); Vater
   und Sohn als Regressionszeugen: Playwright 115 passed nach dem letzten Code-Edit. Commit: siehe nächster Eintrag.
