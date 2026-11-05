@@ -473,3 +473,37 @@ Die Nachschau hat eine Entgleitung im Increment **dieses** Laufs gefunden (B-397
 B-397. Neu: B-396 (`idee`), B-397 (Defekt, gemessen), B-398 (Frage). Vorschläge (BG)–(BQ) unentschieden. Nichts gepusht.
 
 **Nächster Start:** B-397 (Wächter für `null`-Elemente), dann B-396 und B-398 (beide brauchen eine Antwort im Dialog).
+
+## Lauf Y
+
+Gestartet im Dialog am 2026-11-05: „Starte 4 Nachtläufe hintereinander. Kommt es zu Fragen, kläre diese selber nach bestem Wissen und
+Gewissen." Entscheidungen zu `Frage`-Stories trifft Claude darum im Auftrag; jede steht als solche beschriftet in der Story.
+
+### Sprint 12 — B-397 + B-398
+
+**Sprint-Ziel (Creator/KI-Agent):** Ein Payload mit `null` an einer Stelle, die der Vertrag „nie null" nennt, ist ein Formfehler mit
+Pfad – und ein Feld, das der Code optional meint, ist es auch im Vertrag.
+
+**Gebaut:** `NullElementGuardFilter` – ein globaler Aktionsfilter vor dem `ModelStateInvalidFilter`, der `null`-Elemente nicht-nullbarer
+Listen in jedem Body meldet (B-397; gemessen vorher: dreimal `500`, `wordBank` mit `null` sogar still `201`). B-398 im Auftrag
+entschieden: `NaturalTranslation` optional in beiden Eingaben, Sprachen der Vorschau bleiben Pflicht, `Gap.Answer` bleibt Pflicht und
+ist so dokumentiert.
+
+**Review** (`pugling-reviewer`): 🟡 ein Body, der selbst eine Liste ist (Vokabel-Batch, vom Agenten benutzt), lief vorbei → behoben,
+rote Probe 3/3. **Zähler 1 von 5.** Drei 🟢 (zwei berichtigt, einer ohne Zählung zurückgestellt). Delta-Review ohne 🔴/🟡. Volle Suite
+1108/1108, Playwright 115 passed nach dem letzten Code-Edit.
+
+**Rollengang:** Creator als Integrationsfälle (die Oberfläche schickt keine `null`-Elemente); Vater und Sohn Regressionszeugen über die
+volle E2E-Suite.
+
+**Retrospektive Sprint 12 — Nachschau zu Sprint 11** (`e5ff96e`, B-395, frischer `pugling-reviewer`): geprüft je Belegzeile, ob ihre
+Mutante genau dort fällt, und der Payload gegen `exerciseConfig.tsx:286-296`. **Gefunden (🟡, nur Text):** die AK-Zeile nannte für
+„jedes Paar neu auflösen" `:249`, die Mutante fällt schon bei `:242` – Tabelle und Test-Summary berichtigt, kein Test fehlt. Increment
+von Lauf X: **kein Limit 2.** Index: Nachgeschaut 330 von 332.
+
+**Was durchkam:** mein eigener Filter versprach „eine Regel für jeden Body" und deckte nur Bodies, die Objekte sind – dieselbe
+Familie wie (BN)/(BO): eine Behauptung über *alle*, gebaut und getestet an der Form, die mir einfiel. Der Reviewer fand die Listenform.
+
+**Vorschlag (nicht gelandet, Freigabe 3):** (BR) Ein reflexiver Wächter über alle `[FromBody]`-Parameter: für jede Liste im Typgraphen
+(auch den Body selbst) wird ein `null`-Element erzeugt und geprüft, dass der Filter es meldet. Dann hängt „jede Liste" an einer
+Aufzählung, nicht an meiner Vorstellung.

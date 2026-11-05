@@ -29292,8 +29292,7 @@
       },
       "BirkenbihlSentenceInput": {
         "required": [
-          "learningSentence",
-          "naturalTranslation"
+          "learningSentence"
         ],
         "type": "object",
         "properties": {
@@ -29301,10 +29300,13 @@
             "type": "string"
           },
           "naturalTranslation": {
-            "type": "string"
+            "type": [
+              "null",
+              "string"
+            ]
           }
         },
-        "description": "Input for adding a sentence: the sentence in the learning language \u002B its natural, correct translation."
+        "description": "Input for adding a sentence: the sentence in the learning language \u002B its natural, correct translation. The translation is\noptional; missing or \u0060null\u0060 is stored as an empty string."
       },
       "BookType": {
         "enum": [
@@ -31914,8 +31916,7 @@
         "required": [
           "learningLang",
           "learningSentence",
-          "nativeLang",
-          "naturalTranslation"
+          "nativeLang"
         ],
         "type": "object",
         "properties": {
@@ -31929,10 +31930,13 @@
             "type": "string"
           },
           "naturalTranslation": {
-            "type": "string"
+            "type": [
+              "null",
+              "string"
+            ]
           }
         },
-        "description": "Input for the stateless preview: languages \u002B the sentence to decode along with its translation."
+        "description": "Input for the stateless preview: languages \u002B the sentence to decode along with its translation. The translation is\noptional and comes back empty when missing; the languages are required, because the store is matched per language pair."
       },
       "EntryResponse": {
         "required": [
@@ -37025,7 +37029,7 @@
             ]
           }
         },
-        "description": "A gap. If VocabKey is set, the solution comes from the vocabulary store\n(the entry\u0027s word), centrally maintainable; the inline Answer remains a fallback for\ngaps without a store reference. This allows building a cloze from the maintained vocabulary."
+        "description": "A gap. If VocabKey is set, the solution comes from the vocabulary store\n(the entry\u0027s word), centrally maintainable; the inline Answer remains a fallback for\ngaps without a store reference. This allows building a cloze from the maintained vocabulary.\nAnswer is required even with a store reference - send \u0060\u0022\u0022\u0060 there; \u0060null\u0060 is a validation error."
       },
       "Gender": {
         "enum": [

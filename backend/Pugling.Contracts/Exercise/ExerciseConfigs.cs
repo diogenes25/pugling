@@ -76,6 +76,7 @@ public class ClozeConfig
 /// A gap. If <paramref name="VocabKey"/> is set, the solution comes from the vocabulary store
 /// (the entry's word), centrally maintainable; the inline <paramref name="Answer"/> remains a fallback for
 /// gaps without a store reference. This allows building a cloze from the maintained vocabulary.
+/// <paramref name="Answer"/> is required even with a store reference - send <c>""</c> there; <c>null</c> is a validation error.
 /// </summary>
 public record Gap(int Index, string Answer, List<string>? Alternatives = null, string? VocabKey = null);
 

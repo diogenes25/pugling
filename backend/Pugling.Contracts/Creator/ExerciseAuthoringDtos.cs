@@ -111,8 +111,11 @@ public record DecodedWord(int WordId, string LearningWord, string? Gloss, int? V
 /// <summary>A decoded sentence: original + natural translation + the word-for-word tuples.</summary>
 public record DecodedSentence(int SentenceId, string LearningSentence, string NaturalTranslation, IReadOnlyList<DecodedWord> Result);
 
-/// <summary>Input for adding a sentence: the sentence in the learning language + its natural, correct translation.</summary>
-public record BirkenbihlSentenceInput(string LearningSentence, string NaturalTranslation);
+/// <summary>
+/// Input for adding a sentence: the sentence in the learning language + its natural, correct translation. The translation is
+/// optional; missing or <c>null</c> is stored as an empty string.
+/// </summary>
+public record BirkenbihlSentenceInput(string LearningSentence, string? NaturalTranslation);
 
 /// <summary>
 /// Correction of a single word. <paramref name="VocabularyId"/> set → the gloss follows this card
@@ -121,8 +124,11 @@ public record BirkenbihlSentenceInput(string LearningSentence, string NaturalTra
 /// </summary>
 public record WordOverride(int? VocabularyId, string? Gloss);
 
-/// <summary>Input for the stateless preview: languages + the sentence to decode along with its translation.</summary>
-public record DecodePreviewInput(string LearningLang, string NativeLang, string LearningSentence, string NaturalTranslation);
+/// <summary>
+/// Input for the stateless preview: languages + the sentence to decode along with its translation. The translation is
+/// optional and comes back empty when missing; the languages are required, because the store is matched per language pair.
+/// </summary>
+public record DecodePreviewInput(string LearningLang, string NativeLang, string LearningSentence, string? NaturalTranslation);
 
 /// <summary>A freshly generated problem set for a drill exercise.</summary>
 public record GeneratedDrill(int ExerciseId, string Title, int Seed, IReadOnlyList<Shared.GeneratedProblem> Problems);

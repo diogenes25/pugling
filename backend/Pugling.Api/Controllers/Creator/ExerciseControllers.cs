@@ -666,7 +666,7 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
     {
         if (string.IsNullOrWhiteSpace(body.LearningSentence)) return this.ProblemWithCode(ApiErrors.ValidationError, "The sentence in the learning language is required.");
 
-        var lookups = await decoder.LookupAsync(body.LearningLang ?? "", body.NativeLang ?? "", body.LearningSentence, ct);
+        var lookups = await decoder.LookupAsync(body.LearningLang, body.NativeLang, body.LearningSentence, ct);
         var words = lookups.Select(t =>
             new DecodedWord(0, t.Surface, t.Best?.Translation, t.Best?.Id, VocabLink.Self(t.Best?.Id), CandidatesOf(t))).ToList();
         return new DecodedSentence(0, body.LearningSentence.Trim(), (body.NaturalTranslation ?? "").Trim(), words);

@@ -178,6 +178,29 @@ public class BirkenbihlExerciseTests(PuglingWebAppFactory factory) : IClassFixtu
         Assert.Equal(sentenceIds.Length, sentenceIds.Distinct().Count());
     }
 
+    /// <summary>
+    /// B-398: the natural translation is optional when adding a sentence and in the decode preview -
+    /// the handlers always meant it (<c>?? ""</c>). Red if a field goes back to non-nullable (400 "field is required").
+    /// </summary>
+    [Fact]
+    public async Task Natuerliche_Uebersetzung_Ist_Optional()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var (route, exerciseId) = await CreateExerciseAsync(father);
+
+        var weggelassen = await father.PostAsJsonAsync($"{route}/{exerciseId}/sentences", new { learningSentence = "Hello." });
+        Assert.Equal(HttpStatusCode.Created, weggelassen.StatusCode);
+        Assert.Equal("", (await weggelassen.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("naturalTranslation").GetString());
+
+        var ausdruecklichNull = await father.PostAsJsonAsync($"{route}/{exerciseId}/sentences",
+            new { learningSentence = "Bye.", naturalTranslation = (string?)null });
+        Assert.Equal(HttpStatusCode.Created, ausdruecklichNull.StatusCode);
+
+        var vorschau = await father.PostAsJsonAsync("/api/v1/creator/birkenbihl/decode",
+            new { learningLang = "en", nativeLang = "de", learningSentence = "Hello." });
+        Assert.Equal(HttpStatusCode.OK, vorschau.StatusCode);
+    }
+
     [Fact]
     public async Task AddSentence_VerlinktBekannteWoerter_LaesstUnbekannteLeer()
     {

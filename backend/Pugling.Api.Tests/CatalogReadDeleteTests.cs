@@ -206,8 +206,8 @@ public class CatalogReadDeleteTests(PuglingWebAppFactory factory) : IClassFixtur
     /// <summary>
     /// B-395: the editor's click path sends the WHOLE list on replace - unchanged pairs with their id, the edited one with
     /// <c>null</c>. Three cases, each with its own red mutant:
-    /// the unchanged pair keeps its id (red if normalization re-resolves every pair - its text differs from its entry's word,
-    /// so it would get a new id - or if the result lands on the wrong index, visible because the edited pair comes last); the
+    /// the unchanged pair keeps its id (red if the result lands on the wrong index, visible because the edited pair comes last;
+    /// a normalization that re-resolves every pair already fails at the precondition, because the POST loses the binding); the
     /// edited pair gets the entry that already carries its new text (red if the store lookup is skipped and a duplicate is
     /// created); the edited pair's former entry is locked before and free after, while the unchanged pair's entry stays locked
     /// (counter-check, also green without B-392).
@@ -351,6 +351,49 @@ public class CatalogReadDeleteTests(PuglingWebAppFactory factory) : IClassFixtur
         var danach = await Json(await creator.PostAsJsonAsync(url, new { tags = new[] { "Wasser" } }));
         Assert.Equal("Wasser", Assert.Single(danach.EnumerateArray()).GetProperty("name").GetString());
         Assert.Equal(HttpStatusCode.NotFound, (await creator.DeleteAsync($"{url}/{tagId}")).StatusCode);
+    }
+
+    /// <summary>
+    /// B-397 outside the exercise configs: the null-element guard is one rule for every body. Red (500 from <c>Trim()</c>) if the
+    /// filter is limited to configs or removed.
+    /// </summary>
+    [Fact]
+    public async Task Vokabel_Tags_Mit_Null_Element_Sind_Ein_Formfehler()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var (vocabId, _) = await TestApi.CreateStoreVocabAsync(creator, Eindeutig("biber"), "Biber");
+        var payload = new StringContent("{\"tags\":[\"Tiere\",null]}", System.Text.Encoding.UTF8, "application/json");
+
+        var res = await creator.PostAsync($"/api/v1/creator/vocabulary/{vocabId}/tags", payload);
+
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+        var problem = await res.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("validation_error", problem.GetProperty("code").GetString());
+        Assert.Contains(problem.GetProperty("errors").EnumerateObject(), e => string.Equals(e.Name, "tags[1]", StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// B-397 for a body that is itself a list (the batch endpoints the creator agent uses). Red (500) if the filter walks only
+    /// contract objects and skips a list at the top.
+    /// </summary>
+    [Theory]
+    [InlineData("POST", "[null]", "[0]")]
+    [InlineData("PATCH", "[null]", "[0]")]
+    [InlineData("POST", "[{\"sourceLanguage\":\"de\",\"targetLanguage\":\"en\",\"word\":\"Dachs\",\"translation\":\"badger\",\"tags\":[null]}]", "[0].tags[0]")]
+    public async Task Vokabel_Batch_Mit_Null_Element_Ist_Ein_Formfehler(string method, string body, string path)
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var request = new HttpRequestMessage(new HttpMethod(method), "/api/v1/creator/vocabulary/batch")
+        {
+            Content = new StringContent(body, System.Text.Encoding.UTF8, "application/json"),
+        };
+
+        var res = await creator.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+        var problem = await res.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("validation_error", problem.GetProperty("code").GetString());
+        Assert.Contains(problem.GetProperty("errors").EnumerateObject(), e => string.Equals(e.Name, path, StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]

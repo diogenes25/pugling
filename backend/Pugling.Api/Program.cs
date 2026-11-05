@@ -30,8 +30,12 @@ builder.Host.UseSerilog((context, services, config) => config
         rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14, shared: true));
 
 builder.Services.AddControllers(o =>
+    {
         // Why a convention and not an attribute per action: see SuccessResponseConvention.
-        o.Conventions.Add(new SuccessResponseConvention()))
+        o.Conventions.Add(new SuccessResponseConvention());
+        // A null element of a non-nullable list is malformed input, not a 500 (B-397).
+        o.Filters.Add(new Pugling.Api.Errors.NullElementGuardFilter());
+    })
     .AddJsonOptions(o =>
     {
         o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());

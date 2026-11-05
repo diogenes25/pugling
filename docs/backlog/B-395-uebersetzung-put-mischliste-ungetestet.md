@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-05.md#lauf-x
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-05"
 entgangen_bei: [B-392]
 ---
 
@@ -31,7 +32,7 @@ mit ihrer Id, das bearbeitete mit `null` (`frontend/src/vater/exerciseConfig.tsx
 
 | Fall | Beleg | Mutante |
 |---|---|---|
-| unverändertes Paar behält seine Id | `CatalogReadDeleteTests.cs:249` | jedes Paar neu auflösen; Ergebnis auf falschem Index |
+| unverändertes Paar behält seine Id | `CatalogReadDeleteTests.cs:249` | Ergebnis auf falschem Index (nur `:249`); „jedes Paar neu auflösen" fällt schon bei `:242` (der `POST` verliert die Bindung) – berichtigt in der Nachschau |
 | bearbeitetes Paar findet den vorhandenen Eintrag | `:250` | Speicher-Suche übersprungen (Dublette) |
 | alte Vokabel des bearbeiteten Paars vorher gesperrt (`:242`), danach frei (`:253`); die des unveränderten bleibt gesperrt (`:252`) | `:242`, `:252-253` | **Gegenprobe**, auch ohne B-392 grün |
 
@@ -57,3 +58,9 @@ mit ihrer Id, das bearbeitete mit `null` (`frontend/src/vater/exerciseConfig.tsx
   einen Test, keinen Laufzeit-Code – ein Gang durch die App prüfte nichts, was dieser Sprint geändert hat (Playwright lief zuletzt in
   Sprint 10 mit 115 passed auf demselben Produktionscode). Commit: siehe nächster Eintrag.
 - **2026-11-05** — Commit `e5ff96e`.
+- **2026-11-05** — **Nachschau** (Lauf Y, Retro Sprint 12; frischer `pugling-reviewer`, `git show e5ff96e`): geprüft (1) je Belegzeile,
+  ob ihre Mutante genau dort fällt – falscher Index → nur `:249` ✔, Suche übersprungen → nur `:250` ✔, `:242`/`:252`/`:253` als
+  Gegenprobe beschriftet ✔; **aber** die AK-Zeile nannte für „jedes Paar neu auflösen" `:249`, die Mutante fällt schon bei `:242`
+  (der eigene Verlauf sagte es richtig, die Tabelle nicht) – Tabelle und Test-Summary berichtigt, 🟡, kein Test fehlt. (2) Payload
+  gegen `exerciseConfig.tsx:286-296`: Feldnamen, `null` am bearbeiteten Paar, Listenform stimmen; `alternatives` fehlt im Test,
+  gleichwertig zum Default `null` ✔.

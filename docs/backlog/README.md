@@ -506,7 +506,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (40)
+### Offen (38)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -523,14 +523,12 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-374](B-374-baobab-vergleich-sammel-story.md) | Baobab-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | Wunsch | `idee` | P2 | — | — | — |
 | [B-375](B-375-heftseite-wird-uebungsentwurf.md) | Eine fotografierte Heftseite wird zum Übungsentwurf, den der Vater vor dem Zuweisen prüft | Wunsch | `idee` | P2 | — | — | — |
 | [B-396](B-396-uebersetzung-sprachwechsel-behaelt-bindung.md) | Wer im Übersetzungs-Editor nur das Sprachpaar ändert, behält die Bindung an die Vokabel des alten Sprachpaars | Defekt | `idee` | P3 | — | frontend | — |
-| [B-397](B-397-null-element-in-config-liste-ist-500.md) | Ein `null`-Element in einer Config-Liste endet in einer 500 | Defekt | `idee` | P3 | — | backend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `idee` | P3 | — | — | — |
 | [B-291](B-291-fachwechsel-der-reihe-laesst-themen-stehen.md) | Wechselt eine Reihe ihr Fach, bleiben die Grammatik-Themen des alten Fachs an Übungen und Units stehen | Frage | `idee` | P3 | — | backend | — |
 | [B-313](B-313-agent-unbekannter-typ-je-teil-statt-fehlbedienung.md) | Soll ein unbekannter Übungstyp in `plan`/`exam` eine Fehlbedienung sein? | Frage | `idee` | P3 | — | backend | — |
 | [B-328](B-328-inline-typen-put-verschiebt-lernstand.md) | Sollen die Inhaltslisten gespielter Übungen anderer Typen (und der Wort-Tausch) gesperrt sein? | Frage | `idee` | P3 | — | backend | — |
 | [B-384](B-384-reihe-anlegen-bestaetigung-auf-dem-handy.md) | Prüfauftrag: sieht man „steht im Katalog" auf dem Handy, wenn man unten auf „Reihe anlegen" drückt? | Frage | `idee` | P3 | — | frontend | — |
-| [B-398](B-398-pflichtfelder-die-optional-gemeint-sind.md) | Zwei Felder sind im Vertrag Pflicht, im Code aber optional gemeint | Frage | `idee` | P3 | — | backend | — |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `ausformuliert` | P3 | L | backend | Migration |
 | [B-16](B-16-positions-formular-umfang.md) | Prüfauftrag: deckt das Positions-Edit-Formular alle Felder ab? | Wunsch | `ausformuliert` | P3 | S | frontend | — |
 | [B-20](B-20-ki-supervisor-agent.md) | KI-Supervisor-Agent (Teil D) — erster Schritt: Übungen einem Plan zuweisen | Wunsch | `ausformuliert` | P3 | L | backend | — |
@@ -552,7 +550,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (330)</summary>
+<summary>Abgenommen (332)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -834,6 +832,8 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-393](B-393-uebersetzung-put-id-null-ohne-test.md) | B-386 AK 1 „Ändern mit `0`" hat keinen Test | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-394](B-394-birkenbihl-wort-put-id-null-ist-unbekannte-referenz.md) | Der Birkenbihl-Wort-`PUT` meldet `vocabularyId = 0` als `invalid_reference`, der CRUD-Weg als `validation_error` | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-395](B-395-uebersetzung-put-mischliste-ungetestet.md) | Der Klickweg „ein Paar einer Übersetzung ändern" hat keinen Test | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-397](B-397-null-element-in-config-liste-ist-500.md) | Ein `null`-Element in einer Config-Liste endet in einer 500 | Defekt | `abgenommen` | P3 | S | backend | — |
+| [B-398](B-398-pflichtfelder-die-optional-gemeint-sind.md) | Zwei Felder sind im Vertrag Pflicht, im Code aber optional gemeint | Frage | `abgenommen` | P3 | XS | backend | — |
 | [B-40](B-40-client-routen-waechter.md) | Routen aus `Pugling.Client` gegen das OpenAPI-Dokument halten | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-41](B-41-produktions-startup-smoke.md) | Der Produktionspfad des Starts ist der einzige ohne Test | Aufräumen | `abgenommen` | P2 | S | backend | — |
 | [B-42](B-42-openapi-typen-generieren.md) | TypeScript-Typen aus dem OpenAPI-Dokument erzeugen statt von Hand pflegen | Aufräumen | `abgenommen` | P2 | M | beides | — |
@@ -901,7 +901,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (130)
 
-**Nachgeschaut: 329 von 330 abgenommenen** — und in 110 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 1 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 330 von 332 abgenommenen** — und in 110 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 2 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -1034,17 +1034,18 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-393](B-393-uebersetzung-put-id-null-ohne-test.md) | B-386 AK 1 „Ändern mit `0`" hat keinen Test | [B-386] | `abgenommen` |
 | [B-394](B-394-birkenbihl-wort-put-id-null-ist-unbekannte-referenz.md) | Der Birkenbihl-Wort-`PUT` meldet `vocabularyId = 0` als `invalid_reference`, der CRUD-Weg als `validation_error` | [B-387] | `abgenommen` |
 | [B-395](B-395-uebersetzung-put-mischliste-ungetestet.md) | Der Klickweg „ein Paar einer Übersetzung ändern" hat keinen Test | [B-392] | `abgenommen` |
-| [B-397](B-397-null-element-in-config-liste-ist-500.md) | Ein `null`-Element in einer Config-Liste endet in einer 500 | [B-391] | `idee` |
+| [B-397](B-397-null-element-in-config-liste-ist-500.md) | Ein `null`-Element in einer Config-Liste endet in einer 500 | [B-391] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (1) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (2) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-395](B-395-uebersetzung-put-mischliste-ungetestet.md) | Der Klickweg „ein Paar einer Übersetzung ändern" hat keinen Test |
+| [B-397](B-397-null-element-in-config-liste-ist-500.md) | Ein `null`-Element in einer Config-Liste endet in einer 500 |
+| [B-398](B-398-pflichtfelder-die-optional-gemeint-sind.md) | Zwei Felder sind im Vertrag Pflicht, im Code aber optional gemeint |
 
 </details>
 
@@ -1112,7 +1113,8 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-393](B-393-uebersetzung-put-id-null-ohne-test.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen" |
 | [B-394](B-394-birkenbihl-wort-put-id-null-ist-unbekannte-referenz.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 | [B-395](B-395-uebersetzung-put-mischliste-ungetestet.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen" |
-| [B-397](B-397-null-element-in-config-liste-ist-500.md) | `idee` | `unverifiziert: true` |
+| [B-397](B-397-null-element-in-config-liste-ist-500.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
+| [B-398](B-398-pflichtfelder-die-optional-gemeint-sind.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 
 <details>
 <summary>Verworfen (27)</summary>

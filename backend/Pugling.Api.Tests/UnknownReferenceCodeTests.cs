@@ -282,7 +282,9 @@ public class UnknownReferenceCodeTests(PuglingWebAppFactory factory) : IClassFix
     /// <summary>
     /// B-391: an explicit <c>null</c> where a config's contract says "never null" (a list, a required string) is malformed input.
     /// Model validation already answers it (the implicit <c>[Required]</c> of non-nullable members), with the path as the key of
-    /// <c>errors</c> - B-391 assumed a 500 and was refuted here. Red if that implicit check is switched off or a member loses its annotation.
+    /// <c>errors</c> - B-391 assumed a 500 and was refuted here, but only for null MEMBERS. A null ELEMENT of a list
+    /// (<c>[null]</c>) passes model validation and was a 500 (B-397); <c>NullElementGuardFilter</c> answers it with the same shape.
+    /// Red if the implicit check or the filter is switched off, or a member loses its annotation.
     /// </summary>
     [Theory]
     [InlineData("birkenbihl", "{\"learningLang\":\"en\",\"nativeLang\":\"de\",\"sentences\":null}", "config.sentences")]
@@ -290,6 +292,11 @@ public class UnknownReferenceCodeTests(PuglingWebAppFactory factory) : IClassFix
     [InlineData("translation", "{\"sourceLang\":\"de\",\"targetLang\":\"en\",\"items\":null}", "config.items")]
     [InlineData("translation", "{\"sourceLang\":\"de\",\"targetLang\":\"en\",\"items\":[{\"source\":null,\"target\":\"x\"}]}", "config.items[0].source")]
     [InlineData("vocabulary", "{\"direction\":\"front-to-back\",\"items\":null}", "config.items")]
+    // B-397: a null ELEMENT of a list is not covered by the implicit [Required] above - model validation never sees it.
+    [InlineData("translation", "{\"sourceLang\":\"de\",\"targetLang\":\"en\",\"items\":[null]}", "config.items[0]")]
+    [InlineData("birkenbihl", "{\"learningLang\":\"en\",\"nativeLang\":\"de\",\"sentences\":[null]}", "config.sentences[0]")]
+    [InlineData("cloze", "{\"text\":\"Ich {{1}}.\",\"gaps\":[null]}", "config.gaps[0]")]
+    [InlineData("cloze", "{\"text\":\"Ich {{1}}.\",\"gaps\":[{\"index\":1,\"answer\":\"bin\"}],\"wordBank\":[\"bin\",null]}", "config.wordBank[1]")]
     public async Task Null_in_einer_Config_ist_ein_Formfehler(string type, string configJson, string path)
     {
         var creator = await TestApi.AdultAsync(factory);
