@@ -442,3 +442,34 @@ eine Zeile, die auch ohne den Fix grün ist, heißt „Gegenprobe" und zählt ni
 **Lauf X pausiert** nach Sprint 10 auf Wunsch im Dialog (App im eingebauten Browser geöffnet). Kein Limit erreicht. **Nächster Start:**
 B-395 (XS, Tests), dann B-396 (`idee`, Frage nach dem Sprachwechsel) und die Wünsche nach dem
 [Delegations-Protokoll](pm-sitzung-2026-11-05-delegation.md).
+
+### Sprint 11 — B-395
+
+**Sprint-Ziel (Creator):** Der echte Klickweg „ein Paar einer Übersetzung ändern“ ist belegt – mit der Liste, wie der Editor sie schickt.
+
+**Gebaut:** ein Test (Mischliste: ein Paar behält seine Id, das bearbeitete findet den vorhandenen Eintrag; die alte Vokabel ist vorher
+gesperrt und danach frei). Je Fall die Mutante, die nur ihn rot macht (Vorschlag (BP) angewandt), die Gegenprobe als solche beschriftet.
+Volle Suite 1099/1099. Kein Laufzeit-Code, darum kein Gang durch die App.
+
+**Review:** 🟡 die Gegenprobe zeigte nicht, dass die Vokabel vorher gesperrt war – ergänzt; 🟢 Anzahl der Paare. **Zähler 2 von 5.**
+
+**Retrospektive Sprint 11 — Nachschau zu Sprint 10** (`2312aaf`, frischer `pugling-reviewer`): **entgangen (🟡):** B-391 war nur zur
+Hälfte widerlegt – `null` als Wert eines Members ist `400`, `null` als **Element** einer Liste ist **500**, jetzt **gemessen** →
+[B-397](backlog/B-397-null-element-in-config-liste-ist-500.md). Daneben [B-398](backlog/B-398-pflichtfelder-die-optional-gemeint-sind.md)
+(Frage: zwei Pflichtfelder, die optional gemeint sind) und veraltete Zeilenangaben in B-389 (berichtigt). B-394: nichts entgangen.
+
+**Was durchkam:** derselbe Fehler zweimal in einer Richtung. Erst übernahm ich eine 500 aus dem Lesen von Code (B-391), dann widerlegte
+ich sie mit Messungen – aber nur an der Form, die mir einfiel (`null` als Wert), nicht an der zweiten Form (`null` in der Liste). Die
+Messung schützte vor der falschen Behauptung, nicht vor der zu weiten Verallgemeinerung.
+
+**Vorschlag (nicht gelandet, Freigabe 3):** (BQ) Wer eine Behauptung *verwirft*, schreibt in den `grund` die gemessenen Formen und lässt
+alles andere ausdrücklich offen („gemessen: X, Y; nicht gemessen: Z“). Ein `verworfen` gilt nur für das Gemessene.
+
+## Ende von Lauf X — Limit 2
+
+Die Nachschau hat eine Entgleitung im Increment **dieses** Laufs gefunden (B-397 an B-391). Lauf X endet mit Sprint 11.
+
+**Stand Lauf X:** 3 Stories abgenommen (B-394, B-389 `2312aaf`; B-395 siehe Commit), B-391 `verworfen` und teilweise wieder geöffnet als
+B-397. Neu: B-396 (`idee`), B-397 (Defekt, gemessen), B-398 (Frage). Vorschläge (BG)–(BQ) unentschieden. Nichts gepusht.
+
+**Nächster Start:** B-397 (Wächter für `null`-Elemente), dann B-396 und B-398 (beide brauchen eine Antwort im Dialog).

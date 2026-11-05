@@ -10,7 +10,7 @@ migration: ""
 vertragsbruch: ""
 quelle: docs/pm-sitzung-2026-11-05.md#lauf-w
 unverifiziert: false
-grund: "Widerlegt: die Modellvalidierung (implizites [Required] für nicht-nullbare Member) antwortet schon 400 validation_error mit dem Pfad in errors – keine 500."
+grund: "Für null-MEMBER widerlegt (implizites [Required] antwortet 400 validation_error mit dem Pfad in errors); für null-ELEMENTE einer Liste bestätigt – weiter in B-397."
 ersetzt_durch: []
 ---
 
@@ -35,3 +35,8 @@ Stelle).
   sechs rot. **Entscheidung im Auftrag des Nutzers** (getroffen von Claude; Delegation im Dialog am 2026-11-05: „Wenn es etwas zu
   entscheiden gibt, übernimm meine Position und entscheide nach bestem Wissen und Gewissen“; [Protokoll](../pm-sitzung-2026-11-05-delegation.md)):
   `verworfen` ist laut Stufentabelle eine Sache des Menschen – hier belegt widerlegt, darum im Auftrag gesetzt.
+- **2026-11-05** — **Berichtigt in der Nachschau** (Lauf X, Retro Sprint 11; frischer `pugling-reviewer`, `git show 2312aaf`): die
+  Widerlegung galt nur für `null` als **Wert eines Members**. `[Required]` greift nicht für **Elemente** einer Liste – gemessen:
+  `"items":[null]` (Übersetzung), `"sentences":[null]` (Birkenbihl), `"gaps":[null]` (Lückentext) antworten **500**. Weiter in
+  [B-397](B-397-null-element-in-config-liste-ist-500.md). Die Summary des Regressionstests behauptet „explicit null … is malformed
+  input" zu weit – B-397 berichtigt sie mit.

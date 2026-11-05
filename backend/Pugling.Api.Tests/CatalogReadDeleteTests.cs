@@ -204,6 +204,56 @@ public class CatalogReadDeleteTests(PuglingWebAppFactory factory) : IClassFixtur
     }
 
     /// <summary>
+    /// B-395: the editor's click path sends the WHOLE list on replace - unchanged pairs with their id, the edited one with
+    /// <c>null</c>. Three cases, each with its own red mutant:
+    /// the unchanged pair keeps its id (red if normalization re-resolves every pair - its text differs from its entry's word,
+    /// so it would get a new id - or if the result lands on the wrong index, visible because the edited pair comes last); the
+    /// edited pair gets the entry that already carries its new text (red if the store lookup is skipped and a duplicate is
+    /// created); the edited pair's former entry is locked before and free after, while the unchanged pair's entry stays locked
+    /// (counter-check, also green without B-392).
+    /// </summary>
+    [Fact]
+    public async Task Uebersetzung_Ersetzen_Mit_Gemischter_Liste_Behaelt_Und_Findet()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var (bleibtId, _) = await TestApi.CreateStoreVocabAsync(creator, Eindeutig("Brücke"), "bridge", "de", "en");
+        var (altId, _) = await TestApi.CreateStoreVocabAsync(creator, Eindeutig("Turm"), "tower", "de", "en");
+        var vorhandenerSatz = Eindeutig("Fluss breit");
+        var (vorhandenId, _) = await TestApi.CreateStoreVocabAsync(creator, vorhandenerSatz, "The river is wide.", "de", "en");
+        var subjectId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = TestApi.UniqueName("Übersetzungs-Fach") }));
+        var (seriesId, unitId) = await TestApi.CreateSeriesAndUnitAsync(creator, subjectId);
+        var route = $"/api/v1/creator/textbook-series/{seriesId}/units/{unitId}/translation";
+        object Payload(params (string Source, string Target, int? VocabularyId)[] pairs) => new
+        {
+            title = "Gemischte Übersetzung",
+            orderIndex = 1,
+            rewardPoints = 10,
+            config = new
+            {
+                sourceLang = "de",
+                targetLang = "en",
+                items = pairs.Select(p => new { source = p.Source, target = p.Target, vocabularyId = p.VocabularyId }).ToArray(),
+            },
+        };
+        var exerciseId = await TestApi.IdAsync(await creator.PostAsJsonAsync(route, Payload(
+            ("Die Brücke ist alt.", "The bridge is old.", bleibtId), ("Der Turm ist hoch.", "The tower is high.", altId))));
+        // Before: the edited pair's entry is in use - so "free" after the PUT is a change, not the starting state.
+        Assert.Equal(HttpStatusCode.Conflict, (await creator.DeleteAsync($"/api/v1/creator/vocabulary/{altId}")).StatusCode);
+
+        var res = await creator.PutAsJsonAsync($"{route}/{exerciseId}", Payload(
+            ("Die Brücke ist alt.", "The bridge is old.", bleibtId), (vorhandenerSatz, "The river is wide.", null)));
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+        var items = (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("config").GetProperty("items");
+        Assert.Equal(2, items.GetArrayLength());
+        Assert.Equal(bleibtId, items[0].GetProperty("vocabularyId").GetInt32());
+        Assert.Equal(vorhandenId, items[1].GetProperty("vocabularyId").GetInt32());
+
+        Assert.Equal(HttpStatusCode.Conflict, (await creator.DeleteAsync($"/api/v1/creator/vocabulary/{bleibtId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await creator.DeleteAsync($"/api/v1/creator/vocabulary/{altId}")).StatusCode);
+    }
+
+    /// <summary>
     /// B-387: a Birkenbihl decoding links its words by id in the config, like a translation. Red if the usage lookup ignores
     /// Birkenbihl. Counter-check as in B-386: an unrelated entry's id stands in the sentence text and must not lock it.
     /// </summary>

@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-05.md#lauf-w
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-05"
 entgangen_bei: [B-387]
 ---
 
@@ -56,3 +57,4 @@ unbekannte eine fehlende Zeile – am Wort-Endpunkt wie beim Anlegen und Ersetze
 - **2026-11-05** — Review `pugling-reviewer`: kein Fund; die Prüfung sitzt nach 404/403 (keine fremden Daten), vor dem Nachschlagen, mit demselben Text wie der geteilte Validator.
 - **2026-11-05** — **abgenommen.** Volle Suite 1098/1098 nach dem letzten Edit; Rollengang Creator als E2E: volle Playwright-Suite 115 passed gegen ein frisch gestartetes Backend mit der Änderung (danach nur Test und DTO-Summary). **Grenze:** kein Klickweg – der Vokabelspeicher trimmt die Eingabe vorher (B-389), und der Wort-Endpunkt hat im Dialog keine Id-Eingabe (B-394); belegt per Integrationsfall. Vater und Sohn unberührt. Commit: siehe nächster Eintrag.
 - **2026-11-05** — Commit `2312aaf`.
+- **2026-11-05** — **Nachschau** (Lauf X, Retro Sprint 11): nichts entgangen; `:200`/`:201` fallen allein, `:202` ist als Gegenprobe beschriftet.

@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-05.md#lauf-v
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-05"
 ---
 
 # B-389 · Ein `PATCH` im Vokabelspeicher mit `baseFormKey: "  "` meldet `invalid_reference`
@@ -43,9 +44,12 @@ statt als unbekannte Referenz abgewiesen zu werden.
 ## Verlauf
 
 - **2026-11-05** — angelegt aus der Nachschau zu Lauf U, Sprint 4 (Lauf V, Retro Sprint 5; frischer `pugling-reviewer`, 🟢).
-- **2026-11-05** — am Code verifiziert (der Test fiel vor dem Fix mit `400` in `UnknownReferenceCodeTests.cs:273`), ausformuliert,
-  gegrillt, geschätzt und gebaut in Lauf X, Sprint 10. AK 1 → `:272-275`; die Verknüpfung ist vorher gesetzt (`:270`), „entfernt“
+- **2026-11-05** — am Code verifiziert (der Test fiel vor dem Fix mit `400` in `UnknownReferenceCodeTests.cs:273`, im Commit `:275`), ausformuliert,
+  gegrillt, geschätzt und gebaut in Lauf X, Sprint 10. AK 1 → `:272-275` (im Commit `:274-277`); die Verknüpfung ist vorher gesetzt (`:270`, im Commit `:271`), „entfernt“
   unterscheidet sich also vom Ausgangszustand.
 - **2026-11-05** — Review `pugling-reviewer`: kein 🔴/🟡; Lesart „Leerraum = entfernen“ bestätigt (der `PATCH` hat für „nicht angegeben“ schon `null`). 🟢 die Entscheidung entfernt auch die Bezeichnung, der Test prüfte sie nicht – jetzt `baseFormRelation` gesetzt (`:268`, vorher geprüft `:272`) und danach `null` (`:279`); rote Probe „Leerraum räumt nur die Id“ → rot nur in `:279`. **Zähler Sprint 10: 1 von 5.** 🟢 DTO-Summary nennt Leerraum (nur Text). 🟢 hingenommen: der Batch-Weg nutzt dieselbe Kernmethode, ohne eigenen Fall; ein Schlüssel mit Rand-Leerzeichen wird weiter nicht getrimmt (Anlegen und Ändern gleich).
 - **2026-11-05** — **abgenommen.** Volle Suite 1098/1098 nach dem letzten Edit; Rollengang Creator als E2E: volle Playwright-Suite 115 passed gegen ein frisch gestartetes Backend mit der Änderung (danach nur Test und DTO-Summary). **Grenze:** kein Klickweg – der Vokabelspeicher trimmt die Eingabe vorher (B-389), und der Wort-Endpunkt hat im Dialog keine Id-Eingabe (B-394); belegt per Integrationsfall. Vater und Sohn unberührt. Commit: siehe nächster Eintrag.
 - **2026-11-05** — Commit `2312aaf`.
+- **2026-11-05** — **Nachschau** (Lauf X, Retro Sprint 11, `git show 2312aaf`): nichts entgangen; Zeilenangaben oben ergänzt (sie
+  verschoben sich mit dem Review-Nachtrag). 🟢 hingenommen: `PATCH {baseFormKey:"   ", baseFormRelation:"past"}` entfernt die
+  Verknüpfung und setzt danach die Bezeichnung wieder – wie bei `""`, kein Rückschritt.
