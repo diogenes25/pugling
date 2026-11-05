@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-372]
+nachgeschaut: "2026-11-05"
 ---
 
 # B-379 · Die Vorrangfolge „leerer Name vor zu kurzer PIN" an `auth/me` ist ungetestet
@@ -50,3 +51,4 @@ Als **Entwickler** möchte ich, dass jede Vorrangfolge, die eine Entscheidung be
 - **2026-11-05** — gebaut in Sprint 2 der Sitzung 2026-11-05 ([Protokoll](../pm-sitzung-2026-11-05.md)). AK 1 → `AccountSelfServiceTests.cs:131`. Rote Probe: Namensprüfung hinter die PIN-Prüfung (E-Mail bleibt vorn) → erwartet 1 failed, gemessen 1 failed von 10 – nur der neue Fall; der breitere Mutant „PIN ganz vorn" fällt durch ihn und den B-372-Fall (2 von 18).
 - **2026-11-05** — **abgenommen.** Review `pugling-reviewer`: keine 🔴, vier 🟡 – zwei mit Test-Änderung behoben (Zähler Sprint 2: 2 von 5: Controller-Reihenfolge der Attrappe ungetestet, Altklartext-Pfad ohne Zeitprobe), zwei nur Text (veralteter Kommentar `CreatorAgentTests`, „403" in `docs/REST/Creator.http`) ohne Zählung. Volle Backend-Suite 1076/1076 vor den Review-Fixes, danach die betroffenen Klassen grün (Zahlen im Protokoll). Rollengang: kein eigener Weg (reine Testlücke, kein Verhalten geändert). Commit: siehe nächster Eintrag.
 - **2026-11-05** — Commit `b32460e`.
+- **2026-11-05** — **Nachschau** (frischer `pugling-reviewer`): Mutant „Namensprüfung hinter PIN" gegen `AuthController.cs:165-170` (Stand `2361974`) nachvollzogen, kein Befund.

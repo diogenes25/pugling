@@ -1,15 +1,15 @@
 ---
-tags: [typ/story, status/idee, bereich/frontend, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/creator]
 aliases: [Erfolgs-Scroll springt]
-status: idee
+status: abgenommen
 prio: P2
 art: Defekt
-groesse: ""
+groesse: S
 wo: frontend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-05.md#retrospektive-sprint-2
-unverifiziert: true
+unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-232]
@@ -28,6 +28,34 @@ Tabelle bricht sie das Sprint-Ziel („verliert seinen Platz nicht"):
 
 Gefunden in der Nachschau zu Sprint 1 der Sitzung 2026-11-05 (frischer `frontend-reviewer`, `git show c6876b4`, 🟡).
 
+## User Story
+
+Als **Creator**, der Units hintereinander anlegt, möchte ich nach jedem Speichern mein offenes Formular im Bild behalten –
+und eine Bestätigung aus dem weit entfernten Verlags-Vokabular trotzdem sehen.
+
+## Ist-Stand am Code (vor dem Bau, Stand `9fd94d8`)
+
+- `frontend/src/vater/VaterLehrwerke.tsx:155`: `if (meldung) meldungsplatz.current?.scrollIntoView({ block: "nearest" })` – jede
+  Meldung jedes Absenders holte den Platz unter der Tabelle.
+
+## Entscheidungen
+
+1. **(Im Auftrag des Nutzers, siehe Verlauf)** Fehler scrollen immer; eine Bestätigung nur, wenn ihr Absender es verlangt –
+   heute nur `PublisherAdmin`. Kein klebender Platz.
+2. **(Bau)** Der Absender sagt es über die Funktion, die er bekommt: `melde` oder `meldeVonWeitWeg` (`:157-158`); beide setzen eine
+   Ref vor `setMeldung`, der Effekt liest sie (`:160`). `NewSeries` gilt als nah (Platz direkt darüber); die Frage, ob das auf dem
+   Handy hält, ist [B-384](B-384-reihe-anlegen-bestaetigung-auf-dem-handy.md).
+
+## Akzeptanzkriterien
+
+1. Nach „Unit hinzufügen" in einer oberen Zeile bleibt der Knopf im Sichtbereich, obwohl der Platz weit darunter liegt.
+2. Eine Bestätigung aus dem Verlags-Vokabular scrollt weiter in den Sichtbereich (B-232).
+
+## Schätzung
+
+`S`, `wo: frontend`, keine Migration, kein Vertragsbruch. Testweg: neue Spec `unit-anlegen-bleibt-im-bild.spec.ts` mit
+nachgerechneter Vorbedingung, B-232-Spec als Gegenprobe.
+
 ## Verlauf
 
 - **2026-11-05** — angelegt aus der Nachschau (Lauf T, Sprint 2). Eine Entgleitung im Increment **dieses** Laufs: **Limit 2**,
@@ -41,3 +69,5 @@ Gefunden in der Nachschau zu Sprint 1 der Sitzung 2026-11-05 (frischer `frontend
   nicht aus dem Sichtbereich schiebt. **Freigabe des Nutzers (Autonomer Modus, Opt-in, erteilt im Dialog am 2026-11-05 mit
   derselben Delegation):** ein Lauf darf diese Story auf Grundlage der Entscheidung selbst ausformulieren, schätzen und bauen;
   trifft er auf eine Produktfrage, die sie nicht hergibt, hält er an.
+- **2026-11-05** — gebaut in Lauf U, Sprint 3 ([Protokoll](../pm-sitzung-2026-11-05.md)). AK 1 → `e2e/unit-anlegen-bleibt-im-bild.spec.ts` (Vorbedingung `platzOben − Fensterhöhe > knopfUnten` nachgerechnet). Rote Probe 1: jede Bestätigung scrollt (`if (meldung)`) → erwartet 1 failed, gemessen 1 failed in Zeile 52 (`toBeInViewport`), B-232-Spec grün. AK 2 → `bestaetigung-scrollt-zum-platz.spec.ts`; Rote Probe 2: `PublisherAdmin` mit `melde` → 1 failed in deren Zeile 46, die neue Spec grün.
+- **2026-11-05** — **abgenommen.** Vitest 648/648, `tsc -b` sauber, Playwright 111 passed (volle Suite = Rollengang aus der Creator-Rolle, die neue Spec fährt den Weg). Review `frontend-reviewer`: keine 🔴/🟡; drei 🟢 ohne Zählung – `onToggle` über `melde(null)` statt `setMeldung(null)` behoben (danach die vier Lehrwerke-Specs 7 passed), Handy-Frage als B-384 abgelegt, acht Reihen je Lauf in der Wegwerf-DB hingenommen. Zähler Sprint 3: 0 von 5. Commit: siehe nächster Eintrag.

@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-11-05"
 ---
 
 # B-310 · `GET creator/profiles/match` verrät per 404 gegen 403, ob es eine Kind-Id gibt
@@ -64,3 +65,4 @@ gibt.
 - **2026-11-05** — ausformuliert, geschätzt und gebaut in Sprint 2 der Sitzung 2026-11-05 ([Protokoll](../pm-sitzung-2026-11-05.md)). AK 1 → `CreatorProfileTests.cs:357` (Status, `code` und `detail` beider Fälle gleich), AK 2 → `PuglingClientTests` (Treffer des betreuenden Kontos). Rote Probe: `ApiErrors.NotFound` → `ApiErrors.Forbidden` am Endpunkt → erwartet 2 failed, gemessen 2 failed von 43 (genau diese beiden Fälle). `docs/openapi/v1.json` vom Testlauf neu geschrieben (403 fällt weg).
 - **2026-11-05** — Review `pugling-reviewer`: keine 🔴, vier 🟡 – zwei mit Test-Änderung behoben (Zähler Sprint 2: 2 von 5: Controller-Reihenfolge der Attrappe ungetestet, Altklartext-Pfad ohne Zeitprobe), zwei nur Text (veralteter Kommentar `CreatorAgentTests`, „403" in `docs/REST/Creator.http`) ohne Zählung. Volle Backend-Suite 1076/1076 vor den Review-Fixes, danach die betroffenen Klassen grün (Zahlen im Protokoll). **abgenommen.** Rollengang: der Creator-Weg „Fachlehrer zum Kind finden" ist im `PuglingClientTests`-Durchstich gegen den echten Server gefahren (betreutes Kind: Treffer; fremdes: 404), der Agent-Weg in `CreatorAgentTests.Profile_fuer_*`. Commit: siehe nächster Eintrag.
 - **2026-11-05** — Commit `b32460e`.
+- **2026-11-05** — **Nachschau** (frischer `pugling-reviewer`, `git show b32460e`, read-only; Zeilenverweise `CreatorProfileTests.cs:357`, `Seed.cs:307/1068`, `AccountService.cs:60` nachgerechnet, keine weitere Kind-Route mit 403/404-Unterschied gefunden). **Richtigstellung:** „403 fällt aus dem Dokument" stimmt nicht – 403 bleibt im Dokument für ein Konto ohne Creator-Rolle (B-100-Transformer `Program.cs:486`); gefallen ist nur das 403 für ein fremdes Kind. Die Client-Doku nannte weiter 403 → [B-383](B-383-match-403-behauptungen-nach-b-310.md), berichtigt. 🟢: „2 failed von 43" galt für die vier gefilterten Klassen; derselbe Mutant macht auch `CreatorAgentTests.Profile_fuer_*` rot.

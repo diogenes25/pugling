@@ -510,7 +510,6 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [B-381](B-381-erfolgs-scroll-springt-aus-dem-formular.md) | Seit B-232 scrollt jede Bestätigung zum Meldungsplatz – auch die aus einem Formular mitten in der Tabelle | Defekt | `idee` | P2 | — | frontend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `gegrillt` | P2 | — | backend | Vertrag? |
 | [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder | Wunsch | `geschaetzt` | P2 | L | beides | — |
@@ -529,6 +528,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-291](B-291-fachwechsel-der-reihe-laesst-themen-stehen.md) | Wechselt eine Reihe ihr Fach, bleiben die Grammatik-Themen des alten Fachs an Übungen und Units stehen | Frage | `idee` | P3 | — | backend | — |
 | [B-313](B-313-agent-unbekannter-typ-je-teil-statt-fehlbedienung.md) | Soll ein unbekannter Übungstyp in `plan`/`exam` eine Fehlbedienung sein? | Frage | `idee` | P3 | — | backend | — |
 | [B-328](B-328-inline-typen-put-verschiebt-lernstand.md) | Sollen die Inhaltslisten gespielter Übungen anderer Typen (und der Wort-Tausch) gesperrt sein? | Frage | `idee` | P3 | — | backend | — |
+| [B-384](B-384-reihe-anlegen-bestaetigung-auf-dem-handy.md) | Prüfauftrag: sieht man „steht im Katalog" auf dem Handy, wenn man unten auf „Reihe anlegen" drückt? | Frage | `idee` | P3 | — | frontend | — |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `ausformuliert` | P3 | L | backend | Migration |
 | [B-16](B-16-positions-formular-umfang.md) | Prüfauftrag: deckt das Positions-Edit-Formular alle Felder ab? | Wunsch | `ausformuliert` | P3 | S | frontend | — |
 | [B-20](B-20-ki-supervisor-agent.md) | KI-Supervisor-Agent (Teil D) — erster Schritt: Übungen einem Plan zuweisen | Wunsch | `ausformuliert` | P3 | L | backend | — |
@@ -550,7 +550,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (317)</summary>
+<summary>Abgenommen (319)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -818,7 +818,9 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-372](B-372-abbruch-log-und-guard-reihenfolge-im-login-pfad.md) | Ein Abbruch bei der Kontoprüfung landet als Fehler im Log, und zwei PIN-Prüfungen stehen hinter Änderungen | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-373](B-373-inventar-und-begruendung-aus-lauf-s.md) | Ein Inventar, das wieder zu kurz war, und eine Begründung, die sich selbst widerspricht | Defekt | `abgenommen` | P3 | XS | doku | — |
 | [B-379](B-379-name-vor-pin-vorrang-ungetestet.md) | Die Vorrangfolge „leerer Name vor zu kurzer PIN" an `auth/me` ist ungetestet | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-381](B-381-erfolgs-scroll-springt-aus-dem-formular.md) | Seit B-232 scrollt jede Bestätigung zum Meldungsplatz – auch die aus einem Formular mitten in der Tabelle | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-382](B-382-groessenangabe-und-zaehlungen-aus-sprint-1.md) | `frontend/CLAUDE.md` wuchs entgegen B-233 AK 3, und vier Angaben aus Sprint 1 stimmten nicht | Defekt | `abgenommen` | P3 | XS | doku | — |
+| [B-383](B-383-match-403-behauptungen-nach-b-310.md) | Nach B-310 versprechen Client-Doku und Story weiter 403, und ein Seed-Kommentar ist zu stark | Defekt | `abgenommen` | P3 | XS | doku | — |
 | [B-40](B-40-client-routen-waechter.md) | Routen aus `Pugling.Client` gegen das OpenAPI-Dokument halten | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-41](B-41-produktions-startup-smoke.md) | Der Produktionspfad des Starts ist der einzige ohne Test | Aufräumen | `abgenommen` | P2 | S | backend | — |
 | [B-42](B-42-openapi-typen-generieren.md) | TypeScript-Typen aus dem OpenAPI-Dokument erzeugen statt von Hand pflegen | Aufräumen | `abgenommen` | P2 | M | beides | — |
@@ -884,9 +886,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
-### Nach der Abnahme entgangen (122)
+### Nach der Abnahme entgangen (123)
 
-**Nachgeschaut: 313 von 317 abgenommenen** — und in 102 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 4 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 317 von 319 abgenommenen** — und in 104 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 2 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -1010,21 +1012,20 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-370](B-370-zwei-behauptungen-aus-lauf-r-teil-2.md) | Zwei Behauptungen aus Lauf R, Teil 2 halten nicht | [B-368, B-183] | `abgenommen` |
 | [B-373](B-373-inventar-und-begruendung-aus-lauf-s.md) | Ein Inventar, das wieder zu kurz war, und eine Begründung, die sich selbst widerspricht | [B-370, B-358] | `abgenommen` |
 | [B-379](B-379-name-vor-pin-vorrang-ungetestet.md) | Die Vorrangfolge „leerer Name vor zu kurzer PIN" an `auth/me` ist ungetestet | [B-372] | `abgenommen` |
-| [B-381](B-381-erfolgs-scroll-springt-aus-dem-formular.md) | Seit B-232 scrollt jede Bestätigung zum Meldungsplatz – auch die aus einem Formular mitten in der Tabelle | [B-232] | `idee` |
+| [B-381](B-381-erfolgs-scroll-springt-aus-dem-formular.md) | Seit B-232 scrollt jede Bestätigung zum Meldungsplatz – auch die aus einem Formular mitten in der Tabelle | [B-232] | `abgenommen` |
 | [B-382](B-382-groessenangabe-und-zaehlungen-aus-sprint-1.md) | `frontend/CLAUDE.md` wuchs entgegen B-233 AK 3, und vier Angaben aus Sprint 1 stimmten nicht | [B-233] | `abgenommen` |
+| [B-383](B-383-match-403-behauptungen-nach-b-310.md) | Nach B-310 versprechen Client-Doku und Story weiter 403, und ein Seed-Kommentar ist zu stark | [B-310, B-282] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (4) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (2) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-282](B-282-login-haertung-restpunkte.md) | Restpunkte der Login-Härtung (NP-3) |
-| [B-310](B-310-profil-match-verraet-kind-ids.md) | `GET creator/profiles/match` verrät per 404 gegen 403, ob es eine Kind-Id gibt |
-| [B-379](B-379-name-vor-pin-vorrang-ungetestet.md) | Die Vorrangfolge „leerer Name vor zu kurzer PIN" an `auth/me` ist ungetestet |
-| [B-382](B-382-groessenangabe-und-zaehlungen-aus-sprint-1.md) | `frontend/CLAUDE.md` wuchs entgegen B-233 AK 3, und vier Angaben aus Sprint 1 stimmten nicht |
+| [B-381](B-381-erfolgs-scroll-springt-aus-dem-formular.md) | Seit B-232 scrollt jede Bestätigung zum Meldungsplatz – auch die aus einem Formular mitten in der Tabelle |
+| [B-383](B-383-match-403-behauptungen-nach-b-310.md) | Nach B-310 versprechen Client-Doku und Story weiter 403, und ein Seed-Kommentar ist zu stark |
 
 </details>
 

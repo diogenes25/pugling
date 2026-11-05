@@ -146,3 +146,37 @@ Nichts gepusht.
 
 **Nächster Start:** B-381 zuerst (P2, Defekt aus diesem Lauf), dann B-329, dann die Wünsche nach der Reihenfolge im
 [Delegations-Protokoll](pm-sitzung-2026-11-05-delegation.md).
+
+## Lauf U
+
+Fortsetzung nach „Ja, weiter" (Dialog, 2026-11-05) unter demselben Auftrag; neuer Fünfer-Zähler je Sprint.
+
+### Sprint 3
+
+**Sprint-Ziel (Creator):** „Wer Units hintereinander anlegt, behält sein offenes Formular im Bild – und sieht die Bestätigung
+aus dem Verlags-Vokabular trotzdem."
+
+**Umfang:** B-381 (Defekt aus der Nachschau von Lauf T, mit Entscheidung und Freigabe). **Entwickler-Brief:** reines Frontend;
+der Absender wählt über `melde`/`meldeVonWeitWeg`, ob eine Bestätigung den Platz holt; Fehler immer. Testweg: neue Spec mit
+nachgerechneter Vorbedingung, B-232-Spec als Gegenprobe, volle Suite als Rollengang.
+
+**Verifikation:** Vitest 648/648, `tsc -b` sauber, Playwright 111 passed; zwei rote Proben je genau in ihrer Spec (Zahlen in B-381).
+**Review** `frontend-reviewer`: keine 🔴/🟡, drei 🟢 ohne Zählung (eins behoben, eins → [B-384](backlog/B-384-reihe-anlegen-bestaetigung-auf-dem-handy.md),
+eins hingenommen). **Zähler Sprint 3: 0 von 5.**
+
+**Abnahme:** Creator – „Ich lege vier Units am Stück an und muss nicht mehr zurückscrollen; das Umbenennen eines Verlags
+bestätigt weiter sichtbar." (beide Specs im echten Browser). Vater und Sohn: Regressionszeugen, Suite grün.
+
+### Retrospektive (Sprint 3)
+
+**Nachschau:** Lauf T, Sprint 2 (`b32460e`) per frischem `pugling-reviewer`; `nachgeschaut: 2026-11-05` an B-310, B-282, B-379, B-382.
+**Entgangen:** zwei 🟡, beide Text – die Client-Doku versprach weiter 403, und „403 fällt aus dem Dokument" stimmte nicht (das
+403 bleibt für eine fehlende Creator-Rolle) → [B-383](backlog/B-383-match-403-behauptungen-nach-b-310.md), im selben Sprint berichtigt.
+Die Entgleitung liegt im Increment von Lauf T, darum **kein Limit 2** für Lauf U.
+
+**Was durchkam:** „403 fällt weg" war aus einem Diff gelesen, in dem die 403-Zeilen mit `-` standen – sie standen weiter unten
+wieder mit `+`. Eine Behauptung über ein generiertes Dokument wurde am Diff statt am Ergebnis geprüft.
+
+**Vorschlag (nicht gelandet, Freigabe 3):** (BJ) Eine Behauptung über den Vertrag („X fällt weg", „Y kommt dazu") wird an der
+**Datei** belegt (`jq`/`grep` auf `docs/openapi/v1.json`), nicht am Diff. Prosa im `pm-loop` Step 5; ein Tor wäre der vorhandene
+OpenAPI-Abgleich, er prüft aber nur Gleichheit mit dem Server, nicht Behauptungen in Stories.

@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-233]
+nachgeschaut: "2026-11-05"
 ---
 
 # B-382 · `frontend/CLAUDE.md` wuchs entgegen B-233 AK 3, und vier Angaben aus Sprint 1 stimmten nicht
@@ -56,3 +57,4 @@ Als **Leser** einer abgenommenen Story möchte ich, dass ihre Zahlen und Verweis
   gelesen (`VaterProfil.tsx:111`, `VaterZiele.tsx:433`, `PlanPositions.tsx:490`). **Abgenommen** mit Sprint 2 (Rollengang: der
   Entwickler ist die Rolle; Doku, kein Verhalten). Eine Entgleitung im Increment dieses Laufs: **Limit 2**.
 - **2026-11-05** — Commit `b32460e`.
+- **2026-11-05** — **Nachschau** (frischer `pugling-reviewer`): Messung und Verweise nicht erneut beanstandet; kein Befund.

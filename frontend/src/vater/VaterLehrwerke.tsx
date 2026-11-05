@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { FieldLabel } from "../components/InfoHint";
 import { ReferenceSelect } from "../components/ReferenceSelect";
@@ -147,12 +147,18 @@ export function VaterLehrwerke() {
    * des Sichtfelds — der Knopf entgraut, sonst passiert sichtbar nichts. Vorher stand er direkt unter dem
    * Formular, in das der Creator gerade tippt.
    *
-   * `block: "nearest"` scrollt darum **nur, wenn nötig** – und seit B-232 auch bei einer Bestätigung: Das
-   * Verlags-Vokabular meldet von zwei Abschnitten tiefer hierher, und dort sah der Creator nur den Knopf
-   * verschwinden. Eine sichtbare Meldung bewegt nichts (`nearest`), darum kostet die Regel im Normalfall nichts.
+   * `block: "nearest"` scrollt darum **nur, wenn nötig**. Ein **Fehler** holt den Platz immer; eine
+   * **Bestätigung** nur, wenn ihr Absender weit weg sitzt (B-232: das Verlags-Vokabular, zwei Abschnitte
+   * tiefer – dort sah der Creator nur den Knopf verschwinden). Aus einem Formular in oder direkt unter der
+   * Tabelle scrollt sie nicht (B-381): wer Units hintereinander anlegt, verlöre sonst bei jedem Speichern sein
+   * offenes Formular aus dem Bild. Ob weit weg, sagt der Absender über `meldeVonWeitWeg`, nicht die Seite.
    */
+  const holeBestaetigung = useRef(false);
+  const melde = useCallback((m: ActionMessage | null) => { holeBestaetigung.current = false; setMeldung(m); }, []);
+  const meldeVonWeitWeg = useCallback((m: ActionMessage | null) => { holeBestaetigung.current = true; setMeldung(m); }, []);
   useEffect(() => {
-    if (meldung) meldungsplatz.current?.scrollIntoView({ block: "nearest" });
+    if (meldung && (!meldung.ok || holeBestaetigung.current))
+      meldungsplatz.current?.scrollIntoView({ block: "nearest" });
   }, [meldung]);
   const gefiltert = istGefiltert({ search: applied, subjectId, publisherId, schoolTypes, grade });
 
@@ -210,8 +216,8 @@ export function VaterLehrwerke() {
                 <SeriesRow
                   key={s.id} series={s} subjects={subjects.data ?? []} publishers={publishers.data ?? []}
                   open={open === s.id}
-                  onToggle={() => { setMeldung(null); setOpen(open === s.id ? null : s.id); }}
-                  onChanged={list.reload} onMeldung={setMeldung}
+                  onToggle={() => { melde(null); setOpen(open === s.id ? null : s.id); }}
+                  onChanged={list.reload} onMeldung={melde}
                 />
               ))}
               {list.data?.length === 0 && (
@@ -228,12 +234,12 @@ export function VaterLehrwerke() {
       </section>
 
       <NewSeries
-        subjects={subjects.data ?? []} publishers={publishers.data ?? []} onMeldung={setMeldung}
+        subjects={subjects.data ?? []} publishers={publishers.data ?? []} onMeldung={melde}
         onPublisherCreated={publishers.reload} onCreated={list.reload}
       />
       {/* Auch das Vokabular meldet an den Platz der Seite (B-224) – vorher war es der letzte Platz, an dem
           noch Server-Meldungen standen. */}
-      <PublisherAdmin onChanged={() => { publishers.reload(); list.reload(); }} onMeldung={setMeldung} />
+      <PublisherAdmin onChanged={() => { publishers.reload(); list.reload(); }} onMeldung={meldeVonWeitWeg} />
     </>
   );
 }

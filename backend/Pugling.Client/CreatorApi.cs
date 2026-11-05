@@ -135,7 +135,8 @@ public sealed class CreatorApi(HttpClient http)
 
     /// <summary>
     /// The profiles matching a child, best first. Requires an account that <b>supervises</b> the
-    /// child – otherwise <c>403 forbidden</c>.
+    /// child – otherwise <c>404 not_found</c>, exactly like an unknown child (B-310); <c>403</c> only means the
+    /// account lacks the Creator role.
     /// </summary>
     public Task<IReadOnlyList<CreatorProfileMatch>> MatchProfilesAsync(int childId, int? subjectId = null,
         CancellationToken ct = default) =>

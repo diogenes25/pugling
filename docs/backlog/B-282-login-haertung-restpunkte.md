@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-11-05"
 ---
 
 # B-282 · Restpunkte der Login-Härtung (NP-3)
@@ -95,3 +96,4 @@ Konten preisgibt.
 - **2026-11-05** — Punkte 2 und 4 gebaut in Sprint 2 der Sitzung 2026-11-05 ([Protokoll](../pm-sitzung-2026-11-05.md)). AK 1 → `SeedContractTests.cs:176`, Mutant „Seed-PIN nur nach Namen" → erwartet 1 failed, gemessen 1 von 43. AK 2 → `SecurityHardeningTests.PinHasher_Verify_RechnetAuchOhneGespeichertenHash`, Mutanten „Attrappe weg" und (Review) „Attrappe nicht für Altklartext" → je 1 von 11; dazu (Review) `Login_mit_unbekannter_Id_kostet_so_viel_wie_eine_falsche_PIN` je Login-Route, Mutant „Kind-Login schließt vor `Verify` kurz" → genau der Fall `child` rot (1 von 11). AK 3 → `PinPolicyTests` und `SecurityHardeningTests.PinHasher_Verify_AkzeptiertAltKlartext` unverändert grün. Seed-Wirkung vom Reviewer gegen `Seed.cs:307/1068` und `AccountService.cs:60` gelesen: frische DB bekommt beide PINs, bestehende Konten bleiben unberührt.
 - **2026-11-05** — Review `pugling-reviewer`: keine 🔴, vier 🟡 – zwei mit Test-Änderung behoben (Zähler Sprint 2: 2 von 5: Controller-Reihenfolge der Attrappe ungetestet, Altklartext-Pfad ohne Zeitprobe), zwei nur Text (veralteter Kommentar `CreatorAgentTests`, „403" in `docs/REST/Creator.http`) ohne Zählung. Volle Backend-Suite 1076/1076 vor den Review-Fixes, danach die betroffenen Klassen grün (Zahlen im Protokoll). **abgenommen.** Rollengang: der Login aller drei Rollen läuft durch jede Integrations- und E2E-Klasse (Seed-Familie mit 0000/1111); die Zeitmessung selbst ist kein Rollenweg. Commit: siehe nächster Eintrag.
 - **2026-11-05** — Commit `b32460e`.
+- **2026-11-05** — **Nachschau** (frischer `pugling-reviewer`, `git show b32460e`): nur drei `Verify`-Aufrufe (`AuthController.cs:59/78/106`), kein Reset-Pfad; Seed auf bestehender DB unberührt (`AccountService.cs:60`); Zeittests mit Faktor ~1,0 gegen 0,3. 🟢: der Kommentar an `Seed.SeededChildPin` behauptete, die E-Mail sei nicht vom Nutzer wählbar – sie ist es per `PATCH auth/me` → abgeschwächt in [B-383](B-383-match-403-behauptungen-nach-b-310.md). 🟢: die Stories nannten den vollen Lauf nach den Review-Fixes nicht – 1079/1079 (1076 + drei Fälle der neuen Theory).

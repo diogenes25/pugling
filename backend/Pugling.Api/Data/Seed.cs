@@ -153,7 +153,8 @@ public static class Seed
     /// <summary>
     /// The known seed PIN for a child – only if it is supervised by the seeded adult it belongs to. Keyed by name
     /// alone, a self-created child called "Sohn" whose account creation was interrupted would get the public PIN
-    /// 1111 on the next start (B-282, point 2): the name is chosen by users, the seeded e-mail is not.
+    /// 1111 on the next start (B-282, point 2). The e-mail narrows that to the seeded family: a user could set the
+    /// address through <c>PATCH auth/me</c> only on a database without the seeded adult, and then only for own children.
     /// </summary>
     /// <param name="childName">The child's name.</param>
     /// <param name="supervisorEmails">The e-mail addresses of the adults supervising this child.</param>
