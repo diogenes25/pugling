@@ -566,3 +566,35 @@ stand da; ich habe sie je **Test** angewandt, nicht je **Prädikat** der neuen A
 **Vorschlag (nicht gelandet, Freigabe 3):** (BT) Vor dem Review jede Bedingung einer neuen Abfrage bzw. eines neuen Vergleichs einzeln
 streichen (Mutanten-Skript) und je Bedingung den Test notieren, der rot wird; eine Bedingung ohne roten Test bekommt einen Fall, bevor
 der Reviewer läuft. Das ist mechanisch – das Skript dieses Sprints tut es schon, nur nicht für jede Bedingung.
+
+### Sprint 15 — B-400, B-401
+
+**Sprint-Ziel (Creator):** Der Rahmen einer Übung bleibt nach einer Änderung stimmig – ein geladenes Sprachpaar hält seine Bindung
+belegt, und eine Reihe mit Übungen wird nicht fachlos.
+
+**Gebaut:** B-400 – ein Testfall (fr→es zurückgelesen), die fest verdrahtete Mutante gemessen. B-401 – `clearSubject` auf einer Reihe
+mit Übungen ist `409 series_subject_in_use` mit eigener Begründung (vorher gemessen: `200`); Mutante je neuer Bedingung gemessen
+(Vorschlag (BT) angewandt).
+
+**Review** (`pugling-reviewer`): 🟡 Meldung versprach ein Verschieben, das es nicht gibt → Text berichtigt, **Zähler 1 von 5**; 🟡
+Geschwisterweg „Fach löschen" → [B-404](backlog/B-404-fach-loeschen-laesst-reihe-mit-uebungen-fachlos.md) (Frage, widerspricht einer
+absichtlich gebauten E2E); 🟢 Meldungs-Variante → Zusicherung ergänzt, gemessen. Volle Suite 1115/1115, Playwright 117 passed.
+
+**Retrospektive Sprint 15 — Nachschau zu Sprint 14** (`b6e3724`, frischer `pugling-reviewer`): geprüft Mutanten-Zeilen gegen alle sechs
+Fälle, Doku gegen Code, Katalog/Vertrag/Frontend-Anzeige, die Berichtigungen aus B-399. **Entgangen (🟡 ×2):** zwei Mutanten-Zeilen von
+B-291 sind seit dem Review-Fall veraltet → [B-402](backlog/B-402-b291-mutantenzeilen-veraltet.md); `series_subject_in_use` fehlt in
+`GERMAN_PROBLEM_TEXT` → [B-403](backlog/B-403-reihe-fachwechsel-meldung-ohne-deutschen-text.md). Increment **dieses** Laufs: **Limit 2.**
+
+**Was durchkam:** (1) dieselbe Klasse wie B-399 ein Sprint später – eine Belegzeile, die nach einer Änderung am Test nicht nachgemessen
+wurde; (2) ein neuer Fehlercode ohne den Schritt, den seine Geschwister alle hatten (deutscher Text im Vater-Web).
+
+**Vorschläge (nicht gelandet, Freigabe 3):** (BU) Die Mutanten-Tabelle einer Story wird **nach dem letzten Test-Edit** neu gemessen – das
+Skript liegt ohnehin vor; eine Zeile trägt den Stand, an dem sie gemessen wurde. (BV) Ein Tor: jeder `ApiErrors`-Code mit Status 409, den
+eine Creator-/Supervisor-Action liefert, hat einen Eintrag in `GERMAN_PROBLEM_TEXT` oder steht mit Grund auf einer Ausnahmeliste.
+
+## Ende von Lauf Z — Limit 2
+
+Die Nachschau zu Sprint 14 fand zwei Entgleitungen im Increment **dieses** Laufs (B-402, B-403 an B-291). Lauf Z endet mit Sprint 15.
+
+**Stand Lauf Z:** 5 Stories abgenommen (B-399, B-291 `b6e3724`; B-400, B-401 siehe Commit). Neu: B-402, B-403 (Defekte), B-404 (Frage).
+Vorschläge (BG)–(BV) unentschieden. Nichts gepusht. **Nächster Start:** B-402 und B-403.

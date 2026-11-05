@@ -187,19 +187,25 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
 
     /// <summary>
     /// The 409 for a subject change while carriers of the series hold topics or categories of the old subject (B-291), or
-    /// <c>null</c>. Names the counts so the creator knows how much to clear first.
+    /// <c>null</c>. Names the counts so the creator knows how much to clear first. When the subject is CLEARED, every exercise
+    /// counts (B-401): a series without a subject may not host one at all (B-106 T-01).
     /// </summary>
-    private async Task<ActionResult?> SubjectInUseProblemAsync(int seriesId, int oldSubjectId, CancellationToken ct)
+    private async Task<ActionResult?> SubjectInUseProblemAsync(int seriesId, int oldSubjectId, bool clearing, CancellationToken ct)
     {
         var exercises = await db.Exercises.CountAsync(e => e.SeriesUnit!.SeriesId == seriesId
-            && ((e.Category != null && e.Category.SubjectId == oldSubjectId)
+            && (clearing
+                || (e.Category != null && e.Category.SubjectId == oldSubjectId)
                 || e.GrammarTopicLinks.Any(l => l.GrammarTopic!.SubjectId == oldSubjectId)), ct);
         var units = await db.SeriesUnits.CountAsync(u => u.SeriesId == seriesId
             && u.GrammarTopicLinks.Any(l => l.GrammarTopic!.SubjectId == oldSubjectId), ct);
         if (exercises == 0 && units == 0) return null;
         return this.ProblemWithCode(ApiErrors.SeriesSubjectInUse,
-            $"{exercises} exercise(s) and {units} unit(s) of this series carry grammar topics or categories of its current subject; "
-            + "remove them before changing the subject.");
+            clearing
+                ? $"{exercises} exercise(s) and {units} unit(s) of this series depend on its subject; a series without a subject may "
+                    + "not host exercises, and unit topics belong to the subject. Remove them before clearing the subject, or switch to "
+                    + "another subject instead."
+                : $"{exercises} exercise(s) and {units} unit(s) of this series carry grammar topics or categories of its current subject; "
+                    + "remove them before changing the subject.");
     }
 
     /// <summary>
@@ -223,7 +229,7 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
         // Against the resulting subject, before anything is written (B-291): "clear" wins over a sent id, as below.
         var newSubjectId = dto.ClearSubject ? null : dto.SubjectId ?? series.SubjectId;
         if (series.SubjectId is int oldSubjectId && newSubjectId != oldSubjectId
-            && await SubjectInUseProblemAsync(seriesId, oldSubjectId, ct) is { } inUse)
+            && await SubjectInUseProblemAsync(seriesId, oldSubjectId, newSubjectId is null, ct) is { } inUse)
             return inUse;
 
         if (dto.Name is not null)

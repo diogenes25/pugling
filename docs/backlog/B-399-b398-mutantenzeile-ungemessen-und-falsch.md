@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-05.md#lauf-y
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-05"
 entgangen_bei: [B-398, B-397]
 ---
 
@@ -35,3 +36,7 @@ Zu tun: die Mutante `?.Trim()` **messen** und die Zeile berichtigen; die Zeilena
   ersetzt, B-397-Zeilenangabe auf `:380-382` berichtigt. Kein Code, kein Laufzeit-Effekt – darum kein Review-Agent und kein Rollengang
   (Ersatz: die zwei Messungen selbst; die Abnahme prüft eine Doku-Zeile gegen den Test).
 - **2026-11-05** — **abgenommen.** Commit: siehe nächster Eintrag.
+- **2026-11-05** — Commit `b6e3724`.
+- **2026-11-05** — **Nachschau** (Lauf Z, Retro Sprint 15; frischer `pugling-reviewer`): geprüft, ob die berichtigten Zeilen stimmen –
+  `BirkenbihlExerciseTests.cs:193` ist die `""`-Zusicherung, `?.Trim()!` lässt sie fallen, `.Trim()` gibt CS8602; B-397 `:380-382` sind
+  genau die drei `InlineData`. Nichts entgangen.

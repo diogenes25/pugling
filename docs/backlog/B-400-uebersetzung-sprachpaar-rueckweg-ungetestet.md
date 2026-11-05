@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/idee, bereich/frontend, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/creator]
 aliases: [Sprachpaar-Rückweg ungetestet]
-status: idee
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
+groesse: XS
 wo: frontend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-05.md#lauf-z
 unverifiziert: false
 grund: ""
@@ -24,7 +24,20 @@ und eine `fr→de`-Übung verlöre beim bloßen Öffnen und Speichern ihre Bindu
 
 Zu tun: ein Fall „geladen mit z. B. fr→es, unverändert gespeichert → Bindung bleibt", gegen die Mutante gemessen.
 
+## Entscheidungen
+
+1. **(Defekt, im Lauf gegrillt)** Nur ein Testfall, kein Code: das Verhalten stimmt, es war unbelegt.
+
+## Akzeptanzkriterien
+
+| Fall | Erwartet | Beleg | Mutante |
+|---|---|---|---|
+| geladen fr→es, unverändert gespeichert | Bindung 9 bleibt | `exerciseConfig.test.ts` „ein geladenes Sprachpaar fr→es bleibt beim Speichern gebunden" | `origSourceLang: "en", origTargetLang: "de"` fest – gemessen: rot nur dieser Fall („expected null to be 9") |
+
 ## Verlauf
 
 - **2026-11-05** — angelegt aus der Nachschau zu Lauf Y, Sprint 13 (Lauf Z, Retro Sprint 14; frischer `frontend-reviewer`,
   `git show 609b754`, 🟡). Increment von Lauf Y: **kein Limit 2** für Lauf Z.
+- **2026-11-05** — gebaut in Lauf Z, Sprint 15. Test grün gegen den heutigen Code (kein Defekt im Verhalten, sondern im Beleg); die
+  Mutante aus der Nachschau gemessen: 1 rot von 15, genau der neue Fall; zurück → 15/15.
+- **2026-11-05** — **abgenommen.** Kein Laufzeit-Code, darum kein Klickweg; Vitest 15/15 in der Datei, volle Playwright-Suite 117 passed als Regression. Volle Suite 1115/1115. Commit: siehe nächster Eintrag.

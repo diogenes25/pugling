@@ -67,6 +67,19 @@ describe("Rundlauf über die umgestellten Listenfelder", () => {
     expect(gespeichert.items[0].vocabularyId).toBeNull();
   });
 
+  // B-400: eine Übung mit einem anderen Sprachpaar als dem Rückfall, geladen und unverändert gespeichert, behält ihre
+  // Bindung. Rot, wenn das gemerkte Sprachpaar nicht aus der Config kommt (etwa fest "en"/"de").
+  it("Übersetzung: ein geladenes Sprachpaar fr→es bleibt beim Speichern gebunden", () => {
+    const geladen = configToEditorState("Translation", {
+      sourceLang: "fr", targetLang: "es",
+      items: [{ source: "Où habites-tu ?", target: "¿Dónde vives?", vocabularyId: 9 }],
+    });
+
+    const gespeichert = buildTypeConfig("Translation", geladen.rows, geladen.extra) as { items: { vocabularyId: number | null }[] };
+
+    expect(gespeichert.items[0].vocabularyId).toBe(9);
+  });
+
   // Eine Altübung ohne Sprachen zeigt im Editor den Rückfall en→de; bloßes Öffnen und Speichern darf die
   // Bindung nicht lösen. Rot, wenn das gemerkte Sprachpaar den Rückfall nicht mitnimmt.
   it("Übersetzung: Öffnen und Speichern einer Übung ohne Sprachen behält die Store-Bindung", () => {

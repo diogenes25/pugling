@@ -12,6 +12,7 @@ quelle: Nachschau zu Lauf E Teil 4 (docs/pm-sitzung-2026-10-27-nacht.md)
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-05"
 entgangen_bei: []
 wartet_auf: ""
 ---
@@ -69,3 +70,9 @@ Themen bzw. Kategorien des alten Fachs tragen, wird der Wechsel verweigert, und 
 - **2026-11-05** — **abgenommen.** Rollengang Creator als E2E: `e2e/reihe-fachwechsel-gesperrt.spec.ts` (Aufbau per API, Fachwechsel per
   Klick im Bearbeiten-Formular, Begründung sichtbar, Fach bleibt nach Neuladen) – volle Playwright-Suite **117 passed** nach dem letzten
   Laufzeit-Edit (danach nur ein Testfall). Vater und Sohn Regressionszeugen. Commit: siehe nächster Eintrag.
+- **2026-11-05** — Commit `b6e3724`.
+- **2026-11-05** — **Nachschau** (Lauf Z, Retro Sprint 15; frischer `pugling-reviewer`, `git show b6e3724`, ohne Build, am Code
+  nachgerechnet): geprüft (1) jede Mutanten-Zeile gegen alle sechs Fälle, (2) ApiErrors-Doku und Entscheidung 2 gegen den Code, (3)
+  Fehler-Katalog, Vertrag und die einzige Stelle im Frontend, die eine Reihe patcht, (4) die Berichtigungen aus B-399. **Entgangen:** zwei
+  Mutanten-Zeilen gelten seit dem Review-Fall nicht mehr → [B-402](B-402-b291-mutantenzeilen-veraltet.md); der neue Code hat keinen
+  deutschen Text im Vater-Web → [B-403](B-403-reihe-fachwechsel-meldung-ohne-deutschen-text.md).
