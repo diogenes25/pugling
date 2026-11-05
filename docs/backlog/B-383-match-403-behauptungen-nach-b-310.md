@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-310, B-282]
+nachgeschaut: "2026-11-05"
 ---
 
 # B-383 · Nach B-310 versprechen Client-Doku und Story weiter 403, und ein Seed-Kommentar ist zu stark
@@ -57,3 +58,4 @@ Als **Entwickler**, der den Client oder eine Story liest, möchte ich die Antwor
   (Rollengang: der Entwickler ist die Rolle; Doku, kein Verhalten). Kein Limit 2: die Entgleitung liegt im Increment des
   vorigen Laufs (T), nicht dieses (U).
 - **2026-11-05** — Commit `2a9add3`.
+- **2026-11-05** — **Nachschau** (frischer `frontend-reviewer`): `CreatorApi.cs:137-139` und `Program.cs:486` bestätigt. 🟢: der Seed-Kommentar war noch zu stark (der geseedete Erwachsene kann seine Adresse selbst aufgeben) – auf „only while no other account holds it" berichtigt; der Verweis `Seed.cs:155` meinte Zeile 156.

@@ -1,0 +1,139 @@
+using System.Net;
+using System.Net.Http.Json;
+using System.Text.Json;
+
+namespace Pugling.Api.Tests;
+
+/// <summary>
+/// B-329: a payload that names an id or key which does not exist answers <c>invalid_reference</c> on the exercise path
+/// and in the vocabulary store - the same code B-258 gave the six other places, so a client can branch on it. A rule
+/// break next to it stays <c>validation_error</c>. Status (400) and detail are unchanged; only the code moved.
+/// Each case is red if its validator goes back to the plain <c>validation_error</c>.
+/// </summary>
+public class UnknownReferenceCodeTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
+{
+    private const int Unknown = 987_654;
+
+    private static async Task<string> UnitPathAsync(HttpClient creator)
+    {
+        var subjectId = await TestApi.IdAsync(await creator.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = TestApi.UniqueName("Referenz-Fach") }));
+        var (seriesId, unitId) = await TestApi.CreateSeriesAndUnitAsync(creator, subjectId);
+        return $"/api/v1/creator/textbook-series/{seriesId}/units/{unitId}";
+    }
+
+    private static async Task AssertProblemAsync(HttpResponseMessage res, string code)
+    {
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+        Assert.Equal(code, (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+    }
+
+    private static object Vocabulary(object config, int[]? grammarTopicIds = null) => new
+    {
+        title = TestApi.UniqueName("Referenz-Übung"),
+        orderIndex = 1,
+        rewardPoints = 10,
+        config,
+        grammarTopicIds = grammarTopicIds ?? [],
+    };
+
+    [Fact]
+    public async Task Unbekannte_Vokabel_in_refs_ist_eine_unbekannte_Referenz_ein_Id_0_bleibt_Regelbruch()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var unit = await UnitPathAsync(creator);
+
+        await AssertProblemAsync(await creator.PostAsJsonAsync($"{unit}/vocabulary",
+            Vocabulary(new { direction = "front-to-back", refs = new[] { new { vocabularyId = Unknown } } })), "invalid_reference");
+        // The rule "an id must be > 0" is malformed input, not a missing row.
+        await AssertProblemAsync(await creator.PostAsJsonAsync($"{unit}/vocabulary",
+            Vocabulary(new { direction = "front-to-back", refs = new[] { new { vocabularyId = 0 } } })), "validation_error");
+    }
+
+    [Fact]
+    public async Task Unbekannte_Vokabel_an_einem_Inline_Eintrag_ist_eine_unbekannte_Referenz()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var unit = await UnitPathAsync(creator);
+
+        await AssertProblemAsync(await creator.PostAsJsonAsync($"{unit}/vocabulary", Vocabulary(new
+        {
+            direction = "front-to-back",
+            sourceLang = "en",
+            targetLang = "de",
+            items = new[] { new { vocabularyId = (int?)Unknown } },
+        })), "invalid_reference");
+    }
+
+    /// <summary>
+    /// The item routes (review finding, Sprint 4): <c>POST/PATCH …/items</c> with an id that does not exist is the same
+    /// missing row as in inline <c>items</c>. An id of 0 stays malformed input. Red if either route reports the unknown
+    /// id as <c>validation_error</c> again.
+    /// </summary>
+    [Fact]
+    public async Task Unbekannte_Vokabel_an_den_Item_Routen_ist_eine_unbekannte_Referenz()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var unit = await UnitPathAsync(creator);
+        var exerciseId = await TestApi.IdAsync(await creator.PostAsJsonAsync($"{unit}/vocabulary", Vocabulary(new
+        {
+            direction = "front-to-back",
+            sourceLang = "en",
+            targetLang = "de",
+            items = new[] { new { front = TestApi.UniqueName("tree"), back = "Baum" } },
+        })));
+        var items = $"{unit}/vocabulary/{exerciseId}/items";
+
+        await AssertProblemAsync(await creator.PostAsJsonAsync(items, new { vocabularyId = Unknown }), "invalid_reference");
+        await AssertProblemAsync(await creator.PostAsJsonAsync(items, new { vocabularyId = 0 }), "validation_error");
+
+        var itemId = (await creator.GetFromJsonAsync<JsonElement>(items)).EnumerateArray().First().GetProperty("id").GetInt32();
+        await AssertProblemAsync(await creator.PatchAsJsonAsync($"{items}/{itemId}", new { vocabularyId = Unknown }), "invalid_reference");
+    }
+
+    [Fact]
+    public async Task Unbekannter_Schluessel_in_einer_Luecke_ist_eine_unbekannte_Referenz()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var unit = await UnitPathAsync(creator);
+
+        await AssertProblemAsync(await creator.PostAsJsonAsync($"{unit}/cloze", new
+        {
+            title = TestApi.UniqueName("Referenz-Lücke"),
+            orderIndex = 1,
+            rewardPoints = 10,
+            config = new { text = "A {{1}}.", gaps = new[] { new { index = 1, answer = "", vocabKey = $"gibt-es-nicht-{Guid.NewGuid():N}" } } },
+        }), "invalid_reference");
+    }
+
+    [Fact]
+    public async Task Unbekanntes_Grammatikthema_ist_eine_unbekannte_Referenz()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var unit = await UnitPathAsync(creator);
+
+        await AssertProblemAsync(await creator.PostAsJsonAsync($"{unit}/vocabulary", Vocabulary(
+            new { direction = "front-to-back", sourceLang = "en", targetLang = "de", items = new[] { new { front = "hello", back = "hallo" } } },
+            [Unknown])), "invalid_reference");
+    }
+
+    [Fact]
+    public async Task Unbekannte_Grundform_im_Vokabelspeicher_ist_eine_unbekannte_Referenz()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var missing = $"gibt-es-nicht-{Guid.NewGuid():N}";
+
+        await AssertProblemAsync(await creator.PostAsJsonAsync("/api/v1/creator/vocabulary", new
+        {
+            sourceLanguage = "en",
+            targetLanguage = "de",
+            word = TestApi.UniqueName("went"),
+            translation = "ging",
+            baseFormKey = missing,
+        }), "invalid_reference");
+
+        var (id, _) = await TestApi.CreateStoreVocabAsync(creator, TestApi.UniqueName("gone"), "gegangen");
+        await AssertProblemAsync(await creator.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{id}", new { baseFormKey = missing }),
+            "invalid_reference");
+    }
+}

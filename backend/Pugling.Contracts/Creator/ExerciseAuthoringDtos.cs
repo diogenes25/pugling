@@ -16,11 +16,12 @@ namespace Pugling.Contracts.Creator;
 ///
 /// <paramref name="InterestTagIds"/> names the interests the exercise is <b>dressed</b> in (B-46) - ids of
 /// the shared taxonomy that the child's interests and the images already use. It is a full representation
-/// like every other field here: what the payload does not list is removed. An unknown id is a
-/// <c>validation_error</c>, never a silent skip.
+/// like every other field here: what the payload does not list is removed. An unknown id is an
+/// <c>invalid_reference</c> (B-329), never a silent skip.
 ///
 /// <paramref name="GrammarTopicIds"/> names the grammar topics the exercise practices (B-155), with the same
-/// full-representation semantics. A topic of another subject than the series' is a <c>validation_error</c>.
+/// full-representation semantics. An unknown id is an <c>invalid_reference</c>; a topic of another subject than the
+/// series' is a <c>validation_error</c>.
 /// </summary>
 public record ExercisePayload<TConfig>(string Title, int OrderIndex, int RewardPoints, TConfig Config,
     SuggestedBonus? SuggestedBonus = null,

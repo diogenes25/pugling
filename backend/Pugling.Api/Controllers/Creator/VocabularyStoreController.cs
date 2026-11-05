@@ -219,11 +219,12 @@ public class VocabularyStoreController(PuglingDbContext db, VocabularyStoreServi
             CreateKind.Created => CreatedAtAction(nameof(Get), new { id = outcome.Vocab!.Id }, Map(outcome.Vocab)),
             CreateKind.Reused => Ok(Map(outcome.Vocab!)),
             CreateKind.Conflict => this.ProblemWithCode(ApiErrors.DuplicateKey, outcome.Error),
+            CreateKind.UnknownReference => this.ProblemWithCode(ApiErrors.InvalidReference, outcome.Error),
             _ => this.ProblemWithCode(ApiErrors.ValidationError, outcome.Error),
         };
     }
 
-    private enum CreateKind { Created, Reused, Conflict, Error }
+    private enum CreateKind { Created, Reused, Conflict, UnknownReference, Error }
     private record CreateOutcome(CreateKind Kind, Vocabulary? Vocab, string? Key, string? Error);
 
     /// <summary>
@@ -251,7 +252,7 @@ public class VocabularyStoreController(PuglingDbContext db, VocabularyStoreServi
         {
             baseFormId = await db.Vocabularies.Where(v => v.Key == dto.BaseFormKey)
                 .Select(v => (int?)v.Id).FirstOrDefaultAsync(ct);
-            if (baseFormId is null) return new(CreateKind.Error, null, explicitKey ?? generated, $"BaseFormKey '{dto.BaseFormKey}' not found.");
+            if (baseFormId is null) return new(CreateKind.UnknownReference, null, explicitKey ?? generated, $"BaseFormKey '{dto.BaseFormKey}' not found.");
         }
 
         string key;
@@ -310,11 +311,12 @@ public class VocabularyStoreController(PuglingDbContext db, VocabularyStoreServi
         {
             UpdateStatus.Ok => Map(vocab!),
             UpdateStatus.NotFound => NotFound(),
+            UpdateStatus.UnknownReference => this.ProblemWithCode(ApiErrors.InvalidReference, error),
             _ => this.ProblemWithCode(ApiErrors.ValidationError, error),
         };
     }
 
-    private enum UpdateStatus { Ok, NotFound, Error }
+    private enum UpdateStatus { Ok, NotFound, UnknownReference, Error }
 
     /// <summary>Shared update logic for single PATCH and batch (loads base form + tags for the response).</summary>
     private async Task<(UpdateStatus Status, Vocabulary? Vocab, string? Error)> UpdateCoreAsync(int id, UpdateVocabularyDto dto, CancellationToken ct)
@@ -354,7 +356,7 @@ public class VocabularyStoreController(PuglingDbContext db, VocabularyStoreServi
                 if (dto.BaseFormKey == vocab.Key) return (UpdateStatus.Error, null, "A vocabulary item cannot be its own base form.");
                 var baseFormId = await db.Vocabularies.Where(v => v.Key == dto.BaseFormKey)
                     .Select(v => (int?)v.Id).FirstOrDefaultAsync(ct);
-                if (baseFormId is null) return (UpdateStatus.Error, null, $"BaseFormKey '{dto.BaseFormKey}' not found.");
+                if (baseFormId is null) return (UpdateStatus.UnknownReference, null, $"BaseFormKey '{dto.BaseFormKey}' not found.");
                 vocab.BaseFormId = baseFormId;
             }
         }

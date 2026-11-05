@@ -180,3 +180,43 @@ wieder mit `+`. Eine Behauptung über ein generiertes Dokument wurde am Diff sta
 **Vorschlag (nicht gelandet, Freigabe 3):** (BJ) Eine Behauptung über den Vertrag („X fällt weg", „Y kommt dazu") wird an der
 **Datei** belegt (`jq`/`grep` auf `docs/openapi/v1.json`), nicht am Diff. Prosa im `pm-loop` Step 5; ein Tor wäre der vorhandene
 OpenAPI-Abgleich, er prüft aber nur Gleichheit mit dem Server, nicht Behauptungen in Stories.
+
+### Sprint 4
+
+**Sprint-Ziel (Creator und KI-Agent):** „Wer beim Anlegen einer Übung eine Id oder einen Schlüssel nennt, den es nicht gibt,
+bekommt überall denselben Code – `invalid_reference` – und kann darauf verzweigen."
+
+**Umfang:** B-329 (Defekt, autonom gegrillt). **Entwickler-Brief:** `RequestProblem` trägt den Code; nur der Code wechselt, Status
+und Text bleiben (wie B-258); Regelbrüche bleiben `validation_error`; Stapelpfad unverändert. Testweg: `UnknownReferenceCodeTests`,
+ein Mutant je Fundstelle, volle Suite.
+
+**Verifikation:** volle Suite 1085/1085, `dotnet format` ohne Befund, neun Mutanten je genau in ihrem Fall rot (Zahlen in B-329).
+**Review** `pugling-reviewer`: zwei 🟡 (Item-Routen – Code und Test, **Zähler Sprint 4: 1 von 5**; Vertragskommentar – nur Text),
+ein 🟢 → [B-386](backlog/B-386-uebersetzung-speichert-unbekannte-vokabel-id.md).
+
+**Abnahme:** Creator/Agent – die sechs Integrationsfälle fahren die Anlege-Wege gegen den In-Process-Server; das Frontend
+verzweigt nicht auf den Code. Vater und Sohn: Regressionszeugen, Suite grün.
+
+### Retrospektive (Sprint 4)
+
+**Nachschau:** Lauf U, Sprint 3 (`2a9add3`) per frischem `frontend-reviewer`; `nachgeschaut: 2026-11-05` an B-381 und B-383.
+**Entgangen (🟡):** B-381 nahm auch den Bestätigungen das Scrollen, deren Zeile dabei verschwindet (Reihe löschen, umbenennen mit
+Umsortierung) – genau der Fall, für den B-173 den Platz gebaut hat → [B-385](backlog/B-385-loeschbestaetigung-ausser-sicht.md), mit
+Entscheidung und Freigabe, **nicht** gebaut. 🟢: der Seed-Kommentar war noch zu stark, berichtigt.
+
+**Was durchkam:** dieselbe Klasse wie B-232 → B-381, nur in die andere Richtung. Die Entscheidung über eine gemeinsame Bedingung
+wurde an einem Absender gemessen (Units anlegen) und für alle gebaut. Vorschlag (BI) aus Sprint 2 hätte genau das verlangt:
+„je Absender nennen, ob die Entscheidung ihn meint". Er ist unentschieden geblieben – die Retro darf ihn nicht landen.
+
+**Vorschlag (nicht gelandet, Freigabe 3):** (BK) (BI) als **Tabelle in der Story**, nicht als Satz: jede Story, die eine gemeinsame
+Bedingung einer Seite ändert, trägt eine Zeile je Absender mit „gemeint ja/nein" und dem Testfall dazu. Der Index könnte das Fehlen
+prüfen, wenn die Story ein Kennzeichen `gemeinsame_bedingung: ja` trägt – ein Tor, darum nur Vorschlag.
+
+## Ende von Lauf U — Limit 2
+
+Die Nachschau hat eine Entgleitung im Increment **dieses** Laufs gefunden (B-385). Lauf U endet mit Sprint 4.
+
+**Stand:** 2 Stories abgenommen (B-381, B-329), dazu B-383 (nur Text). Neu: B-384 (Frage), B-385 (Defekt, entschieden und freigegeben),
+B-386 (Defekt). Retro-Vorschläge (BG)–(BK) unentschieden. Gerätecheck B-231 offen. Nichts gepusht.
+
+**Nächster Start:** B-385, dann B-386, dann die Wünsche nach dem [Delegations-Protokoll](pm-sitzung-2026-11-05-delegation.md).

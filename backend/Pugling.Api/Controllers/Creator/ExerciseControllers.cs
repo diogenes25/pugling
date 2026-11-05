@@ -35,37 +35,37 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     /// Ensures on create/change that all store entries referenced by ID exist and – if
     /// inline vocabulary entries without an ID are present – that the language codes are set (needed to create them in the store).
     /// </summary>
-    protected override async Task<string?> ValidateConfigAsync(int seriesId, VocabularyConfig config, CancellationToken ct = default)
+    protected override async Task<RequestProblem?> ValidateConfigAsync(int seriesId, VocabularyConfig config, CancellationToken ct = default)
     {
         if (config.Refs is { Count: > 0 } refs)
         {
             if (refs.Any(r => r.VocabularyId <= 0))
-                return "Every reference needs a valid vocabularyId (> 0).";
+                return RequestProblem.Invalid("Every reference needs a valid vocabularyId (> 0).");
             var ids = refs.Select(r => r.VocabularyId).Distinct().ToList();
             var existing = await Db.Vocabularies.Where(v => ids.Contains(v.Id)).Select(v => v.Id).ToListAsync(ct);
             var missing = ids.Except(existing).ToList();
-            if (missing.Count > 0) return $"Unknown vocabulary item IDs: {string.Join(", ", missing)}";
+            if (missing.Count > 0) return RequestProblem.UnknownReference($"Unknown vocabulary item IDs: {string.Join(", ", missing)}");
         }
 
         // Inline items carry - like the item endpoint - either an (existing) VocabularyId OR front + back
         // (which are then created in the store). Front/back are optional, but without a VocabularyId both are required.
         if (config.Items.Any(i => i.VocabularyId is null
             && (string.IsNullOrWhiteSpace(i.Front) || string.IsNullOrWhiteSpace(i.Back))))
-            return "Every inline item needs either a vocabularyId or both front and back.";
+            return RequestProblem.Invalid("Every inline item needs either a vocabularyId or both front and back.");
         if (config.Items.Any(i => i.VocabularyId is null)
             && (string.IsNullOrWhiteSpace(config.SourceLang) || string.IsNullOrWhiteSpace(config.TargetLang)))
-            return "sourceLang and targetLang are required to create inline vocabulary items in the store.";
+            return RequestProblem.Invalid("sourceLang and targetLang are required to create inline vocabulary items in the store.");
 
         if (config.Items.Any(i => i.VocabularyId is <= 0))
-            return "An inline item's vocabularyId must be > 0 when set.";
+            return RequestProblem.Invalid("An inline item's vocabularyId must be > 0 when set.");
         var itemIds = config.Items.Where(i => i.VocabularyId is > 0).Select(i => i.VocabularyId!.Value).Distinct().ToList();
         if (itemIds.Count > 0)
         {
             var existing = await Db.Vocabularies.Where(v => itemIds.Contains(v.Id)).Select(v => v.Id).ToListAsync(ct);
             var missing = itemIds.Except(existing).ToList();
-            if (missing.Count > 0) return $"Unknown vocabulary item IDs: {string.Join(", ", missing)}";
+            if (missing.Count > 0) return RequestProblem.UnknownReference($"Unknown vocabulary item IDs: {string.Join(", ", missing)}");
         }
-        return await RepeatedWordAsync(config, ct);
+        return await RepeatedWordAsync(config, ct) is { } repeated ? RequestProblem.Invalid(repeated) : null;
     }
 
     /// <summary>
@@ -210,7 +210,8 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
 
         var config = ConfigOf(exercise);
         var vocab = await ResolveVocabularyAsync(body, config, ct);
-        if (vocab is null) return this.ProblemWithCode(ApiErrors.ValidationError,
+        // A given id that does not exist is a missing row, not malformed input (B-329); the detail stays the same.
+        if (vocab is null) return this.ProblemWithCode(body.VocabularyId is > 0 ? ApiErrors.InvalidReference : ApiErrors.ValidationError,
             "Provide an existing vocabularyId, or front and back (plus the exercise's sourceLang/targetLang) to create one.");
 
         // A vocabulary entry may have only one item per exercise (unique in the DB): two items on the same word
@@ -258,7 +259,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         {
             var config = ConfigOf(exercise);
             var vocab = await ResolveVocabularyAsync(body, config, ct);
-            if (vocab is null) return this.ProblemWithCode(ApiErrors.ValidationError,
+            if (vocab is null) return this.ProblemWithCode(body.VocabularyId is > 0 ? ApiErrors.InvalidReference : ApiErrors.ValidationError,
                 "Provide an existing vocabularyId, or front and back (plus the exercise's sourceLang/targetLang) to change the word.");
             // The same rule as AddItem, checked before saving: the unique index would only answer with a 500 (B-334).
             if (vocab.Id > 0 && await Db.ExerciseItems.AnyAsync(i => i.ExerciseId == exerciseId && i.Id != itemId && i.VocabularyId == vocab.Id, ct))
@@ -351,14 +352,14 @@ public class ClozeController(PuglingDbContext db, ExerciseTypeRegistry registry)
     protected override string TypeKey => ExerciseTypeKeys.Cloze;
 
     /// <summary>Ensures on create/change that all store keys referenced in gaps exist.</summary>
-    protected override async Task<string?> ValidateConfigAsync(int seriesId, ClozeConfig config, CancellationToken ct = default)
+    protected override async Task<RequestProblem?> ValidateConfigAsync(int seriesId, ClozeConfig config, CancellationToken ct = default)
     {
         var keys = config.Gaps.Where(g => !string.IsNullOrWhiteSpace(g.VocabKey))
             .Select(g => g.VocabKey!).Distinct().ToList();
         if (keys.Count == 0) return null;
         var existing = await Db.Vocabularies.Where(v => keys.Contains(v.Key)).Select(v => v.Key).ToListAsync(ct);
         var missing = keys.Except(existing).ToList();
-        return missing.Count == 0 ? null : $"Unknown vocabulary keys in gaps: {string.Join(", ", missing)}";
+        return missing.Count == 0 ? null : RequestProblem.UnknownReference($"Unknown vocabulary keys in gaps: {string.Join(", ", missing)}");
     }
 }
 
@@ -417,10 +418,10 @@ public class TranslationController(PuglingDbContext db, ExerciseTypeRegistry reg
     protected override string TypeKey => ExerciseTypeKeys.Translation;
 
     /// <summary>Requires the language codes as soon as pairs without <see cref="TranslationItem.VocabularyId"/> need to be created.</summary>
-    protected override Task<string?> ValidateConfigAsync(int seriesId, TranslationConfig config, CancellationToken ct = default) =>
-        Task.FromResult(config.Items.Any(i => i.VocabularyId is null)
+    protected override Task<RequestProblem?> ValidateConfigAsync(int seriesId, TranslationConfig config, CancellationToken ct = default) =>
+        Task.FromResult<RequestProblem?>(config.Items.Any(i => i.VocabularyId is null)
             && (string.IsNullOrWhiteSpace(config.SourceLang) || string.IsNullOrWhiteSpace(config.TargetLang))
-            ? "sourceLang and targetLang are required to create translation pairs in the store."
+            ? RequestProblem.Invalid("sourceLang and targetLang are required to create translation pairs in the store.")
             : null);
 
     /// <summary>Creates each not-yet-linked pair in the store (or finds it) and links it by ID.</summary>
@@ -753,9 +754,9 @@ public class ListController(PuglingDbContext db, ExerciseTypeRegistry registry)
     /// something without saying what. The play path can supply the rule ("one that has not come up yet") but
     /// never the subject, and <c>ItemsOf</c> sees only the config – not even the exercise title is reachable there.
     /// </summary>
-    protected override Task<string?> ValidateConfigAsync(int seriesId, ListConfig config, CancellationToken ct = default) =>
-        Task.FromResult(string.IsNullOrWhiteSpace(config.Instruction)
-            ? "Instruction is required for a list: it is the only question the card can show."
+    protected override Task<RequestProblem?> ValidateConfigAsync(int seriesId, ListConfig config, CancellationToken ct = default) =>
+        Task.FromResult<RequestProblem?>(string.IsNullOrWhiteSpace(config.Instruction)
+            ? RequestProblem.Invalid("Instruction is required for a list: it is the only question the card can show.")
             : null);
 
     /// <summary>Evaluates the given entries – as a set, or position-exact with <c>Ordered</c>.</summary>

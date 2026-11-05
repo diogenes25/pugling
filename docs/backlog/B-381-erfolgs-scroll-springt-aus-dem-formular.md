@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-232]
+nachgeschaut: "2026-11-05"
 ---
 
 # B-381 · Seit B-232 scrollt jede Bestätigung zum Meldungsplatz – auch die aus einem Formular mitten in der Tabelle
@@ -72,3 +73,4 @@ nachgerechneter Vorbedingung, B-232-Spec als Gegenprobe.
 - **2026-11-05** — gebaut in Lauf U, Sprint 3 ([Protokoll](../pm-sitzung-2026-11-05.md)). AK 1 → `e2e/unit-anlegen-bleibt-im-bild.spec.ts` (Vorbedingung `platzOben − Fensterhöhe > knopfUnten` nachgerechnet). Rote Probe 1: jede Bestätigung scrollt (`if (meldung)`) → erwartet 1 failed, gemessen 1 failed in Zeile 52 (`toBeInViewport`), B-232-Spec grün. AK 2 → `bestaetigung-scrollt-zum-platz.spec.ts`; Rote Probe 2: `PublisherAdmin` mit `melde` → 1 failed in deren Zeile 46, die neue Spec grün.
 - **2026-11-05** — **abgenommen.** Vitest 648/648, `tsc -b` sauber, Playwright 111 passed (volle Suite = Rollengang aus der Creator-Rolle, die neue Spec fährt den Weg). Review `frontend-reviewer`: keine 🔴/🟡; drei 🟢 ohne Zählung – `onToggle` über `melde(null)` statt `setMeldung(null)` behoben (danach die vier Lehrwerke-Specs 7 passed), Handy-Frage als B-384 abgelegt, acht Reihen je Lauf in der Wegwerf-DB hingenommen. Zähler Sprint 3: 0 von 5. Commit: siehe nächster Eintrag.
 - **2026-11-05** — Commit `2a9add3`.
+- **2026-11-05** — **Nachschau** (frischer `frontend-reviewer`, `git show 2a9add3`, read-only): Zeilen `:155/157-158/160/242`, Spec-Zeile 52 und „111 passed" (111 Tests per `grep`) nachgerechnet; Vorbedingung der Spec bestätigt, keine Verschmutzung anderer Specs. **Entgangen (🟡):** die Entscheidung nahm auch Bestätigungen das Scrollen, deren Zeile dabei verschwindet (Reihe löschen, umbenennen mit Umsortierung) → [B-385](B-385-loeschbestaetigung-ausser-sicht.md).

@@ -119,7 +119,7 @@ public class ExerciseMetadataTests(PuglingWebAppFactory factory) : IClassFixture
             ArithmeticBody("Umbenannt", categoryId, 5, 7, "Gymnasium", [einhorn, 999999]));
         Assert.Equal(HttpStatusCode.BadRequest, falsch.StatusCode);
         var problem = await falsch.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal("validation_error", problem.GetProperty("code").GetString());
+        Assert.Equal("invalid_reference", problem.GetProperty("code").GetString()); // since B-329
 
         // The rejected PUT wrote NOTHING - neither the dressing nor the title. This is the load-bearing
         // half: a check that rejects but has already half-written is worse than none.
@@ -151,7 +151,7 @@ public class ExerciseMetadataTests(PuglingWebAppFactory factory) : IClassFixture
             ArithmeticBody("Falscher Tag", categoryId, 5, 7, "Gymnasium", [999999]));
         Assert.Equal(HttpStatusCode.BadRequest, abgelehnt.StatusCode);
         var problem = await abgelehnt.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal("validation_error", problem.GetProperty("code").GetString());
+        Assert.Equal("invalid_reference", problem.GetProperty("code").GetString()); // since B-329
 
         // Nothing was created on the way - a rejected POST must not leave half an exercise behind.
         var liste = await father.GetFromJsonAsync<JsonElement>(basePath);

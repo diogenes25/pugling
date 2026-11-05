@@ -46,11 +46,11 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
 
     /// <summary>
     /// Type-specific validation of the config on create/change. Default: none. Derived controllers
-    /// override this to e.g. check store references (vocabulary keys); return value = error text (→ 400)
-    /// or <c>null</c> if everything is fine.
+    /// override this to e.g. check store references (vocabulary keys); return value = the problem with its code (an
+    /// unknown id or key is <c>invalid_reference</c>, anything else <c>validation_error</c>, B-329) or <c>null</c> if fine.
     /// </summary>
-    protected virtual Task<string?> ValidateConfigAsync(int seriesId, TConfig config, CancellationToken ct = default) =>
-        Task.FromResult<string?>(null);
+    protected virtual Task<RequestProblem?> ValidateConfigAsync(int seriesId, TConfig config, CancellationToken ct = default) =>
+        Task.FromResult<RequestProblem?>(null);
 
     /// <summary>
     /// Normalizes the config before saving (default: unchanged). Derived controllers override this
@@ -117,12 +117,12 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
                 : db.ExerciseCategories.AnyAsync(c => c.Id == categoryId && c.SubjectId == subjectId, ct);
 
     /// <summary>
-    /// Validates the dressing tags (B-46) and returns the problem text, or <c>null</c> when there is none.
+    /// Validates the dressing tags (B-46) and returns the problem (<c>invalid_reference</c>), or <c>null</c> when there is none.
     /// An unknown id is rejected rather than skipped: a caller who mistypes one would otherwise be told
     /// <c>201</c> and believe the exercise carries a dressing it does not have - the same reason
     /// <c>unknown_field</c> exists at all.
     /// </summary>
-    private async Task<string?> InterestTagsProblemAsync(IReadOnlyList<int>? tagIds, CancellationToken ct)
+    private async Task<RequestProblem?> InterestTagsProblemAsync(IReadOnlyList<int>? tagIds, CancellationToken ct)
     {
         if (tagIds is null || tagIds.Count == 0) return null;
         var wanted = tagIds.Distinct().ToList();
@@ -130,7 +130,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         var unknown = wanted.Except(known).OrderBy(id => id).ToList();
         return unknown.Count == 0
             ? null
-            : $"Unknown interest tag id(s): {string.Join(", ", unknown)}.";
+            : RequestProblem.UnknownReference($"Unknown interest tag id(s): {string.Join(", ", unknown)}.");
     }
 
     /// <summary>
@@ -202,26 +202,26 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     }
 
     /// <summary>
-    /// Validates the grammar topics (B-155) and returns the problem text, or <c>null</c>. Two rules: every id must
+    /// Validates the grammar topics (B-155) and returns the problem, or <c>null</c>. Two rules: every id must
     /// exist (an unknown one is rejected, not skipped - the same reason as for the dressing), and every topic must
     /// belong to the series' subject - a French topic on an English exercise would be a silent hit in the filter.
     /// </summary>
-    private async Task<string?> GrammarTopicsProblemAsync(int seriesId, IReadOnlyList<int>? topicIds, CancellationToken ct)
+    private async Task<RequestProblem?> GrammarTopicsProblemAsync(int seriesId, IReadOnlyList<int>? topicIds, CancellationToken ct)
     {
         if (topicIds is null || topicIds.Count == 0) return null;
         var wanted = topicIds.Distinct().ToList();
         var known = await db.GrammarTopics.Where(t => wanted.Contains(t.Id))
             .Select(t => new { t.Id, t.SubjectId }).ToListAsync(ct);
         var unknown = wanted.Except(known.Select(k => k.Id)).OrderBy(id => id).ToList();
-        if (unknown.Count > 0) return $"Unknown grammar topic id(s): {string.Join(", ", unknown)}.";
+        if (unknown.Count > 0) return RequestProblem.UnknownReference($"Unknown grammar topic id(s): {string.Join(", ", unknown)}.");
 
         var subjectId = await db.TextbookSeries.Where(s => s.Id == seriesId).Select(s => s.SubjectId).FirstOrDefaultAsync(ct);
         // Fail closed, but with the true reason: a series without a subject can carry no topic at all.
-        if (subjectId is null) return "This series has no subject; it cannot carry grammar topics.";
+        if (subjectId is null) return RequestProblem.Invalid("This series has no subject; it cannot carry grammar topics.");
         var foreign = known.Where(k => k.SubjectId != subjectId).Select(k => k.Id).OrderBy(id => id).ToList();
         return foreign.Count == 0
             ? null
-            : $"Grammar topic(s) {string.Join(", ", foreign)} belong to another subject than this series.";
+            : RequestProblem.Invalid($"Grammar topic(s) {string.Join(", ", foreign)} belong to another subject than this series.");
     }
 
     /// <summary>Sets the grammar topics as the complete set (B-155) - replacement, not merge, like the dressing.</summary>
@@ -341,10 +341,10 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             return this.ProblemWithCode(ApiErrors.ValidationError, createTypedErr);
         var config = body.Config ?? new TConfig();
         if (await InterestTagsProblemAsync(body.InterestTagIds, ct) is { } createTagErr)
-            return this.ProblemWithCode(ApiErrors.ValidationError, createTagErr);
+            return this.ProblemWithCode(createTagErr.Error, createTagErr.Detail);
         if (await GrammarTopicsProblemAsync(seriesId, body.GrammarTopicIds, ct) is { } createTopicErr)
-            return this.ProblemWithCode(ApiErrors.ValidationError, createTopicErr);
-        if (await ValidateConfigAsync(seriesId, config, ct) is { } createErr) return this.ProblemWithCode(ApiErrors.ValidationError, createErr);
+            return this.ProblemWithCode(createTopicErr.Error, createTopicErr.Detail);
+        if (await ValidateConfigAsync(seriesId, config, ct) is { } createErr) return this.ProblemWithCode(createErr.Error, createErr.Detail);
         NormalizeConfig(config);
         await NormalizeConfigAsync(seriesId, config, ct);
 
@@ -429,10 +429,10 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             return this.ProblemWithCode(ApiErrors.ValidationError, updateTypedErr);
         var config = body.Config ?? new TConfig();
         if (await InterestTagsProblemAsync(body.InterestTagIds, ct) is { } updateTagErr)
-            return this.ProblemWithCode(ApiErrors.ValidationError, updateTagErr);
+            return this.ProblemWithCode(updateTagErr.Error, updateTagErr.Detail);
         if (await GrammarTopicsProblemAsync(seriesId, body.GrammarTopicIds, ct) is { } updateTopicErr)
-            return this.ProblemWithCode(ApiErrors.ValidationError, updateTopicErr);
-        if (await ValidateConfigAsync(seriesId, config, ct) is { } updateErr) return this.ProblemWithCode(ApiErrors.ValidationError, updateErr);
+            return this.ProblemWithCode(updateTopicErr.Error, updateTopicErr.Detail);
+        if (await ValidateConfigAsync(seriesId, config, ct) is { } updateErr) return this.ProblemWithCode(updateErr.Error, updateErr.Detail);
         NormalizeConfig(config);
         if (await UpdateConflictAsync(exercise, config, ct) is { } conflict) return conflict;
 
