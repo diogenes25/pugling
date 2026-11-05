@@ -465,8 +465,10 @@ public class BirkenbihlController(PuglingDbContext db, ExerciseTypeRegistry regi
     protected override string TypeKey => ExerciseTypeKeys.Birkenbihl;
 
     /// <summary>
-    /// Checks the store ids of decoded words on create and replace, like the word endpoint <c>PUT …/words/{wordId}</c> does (B-387). The language pair
-    /// is deliberately not checked here: changing the exercise's languages would otherwise turn every linked word into an error.
+    /// Checks the store ids of decoded words on create and replace (B-387): an unknown id is <c>invalid_reference</c>, as at the
+    /// word endpoint <c>PUT …/words/{wordId}</c>; an id ≤ 0 is <c>validation_error</c> here, while the word endpoint still answers
+    /// <c>invalid_reference</c> for it (B-394). The language pair is deliberately not checked here: changing the exercise's
+    /// languages would otherwise turn every linked word into an error.
     /// </summary>
     protected override Task<RequestProblem?> ValidateConfigAsync(int seriesId, BirkenbihlConfig config, CancellationToken ct = default) =>
         VocabularyIdsProblemAsync(config.Sentences.SelectMany(s => s.Decoding).Select(w => w.VocabularyId), "A decoded word's", ct);

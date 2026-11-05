@@ -380,3 +380,27 @@ Nur die Übersetzung überschreibt den Schritt; kein anderer Typ ändert sein Ve
 
 **Review** (`pugling-reviewer`): kein 🔴. 🟡 Die B-393-Zusicherung fängt allein nichts (ein Validator für beide Wege) → als
 Absichtserklärung beschriftet, nur Text. 🟢 Parameter `subjectId` → `seriesId` (Code) → **Zähler 1 von 5**.
+
+**Retrospektive Sprint 9 — Nachschau zu Sprint 8** (`cae15a1`, B-387 + B-388, frischer `pugling-reviewer`): kein 🔴/🟡, die
+Extraktion verhaltensgleich. **Entgangen (🟢):** B-387 versprach „ein Feld, eine Antwort", glich aber nur die unbekannte Id an – der
+Wort-`PUT` meldet `0` weiter als `invalid_reference`, und meine Summary behauptete „wie der Wort-Endpunkt" →
+[B-394](backlog/B-394-birkenbihl-wort-put-id-null-ist-unbekannte-referenz.md). Zwei Summaries berichtigt (nur Text), `"sentences": null`
+zu B-391 ergänzt. B-388: nichts entgangen.
+
+**Was durchkam:** dieselbe Klasse wie B-388 und B-393, diesmal über zwei Endpunkte statt zwei Fälle eines Endpunkts: die Story
+nannte den Vergleichsweg („wie der Wort-`PUT`") in ihrem Motiv, die AKs prüften ihn aber nicht mit. Vorschlag (BN) aus Sprint 8 hätte
+es gefangen, wenn der **Vergleichsweg** als eigene Spalte der Fälle zählt.
+
+**Vorschlag (nicht gelandet, Freigabe 3):** (BO) Schärfung von (BN): nennt eine Story einen zweiten Weg als Maßstab („wie X"), wird X
+mit denselben Werten in die Fall-Tabelle aufgenommen – ein Abgleich, kein Neubau.
+
+## Ende von Lauf W — Limit 2
+
+Die Nachschau zu Sprint 8 hat eine Entgleitung im Increment **dieses** Laufs gefunden (B-394). Lauf W endet mit Sprint 9.
+
+**Stand:** 5 Stories abgenommen in drei Sprints: B-390 (`e0fdd3b`), B-387 + B-388 (`cae15a1`), B-392 + B-393 (`c429792`). Nachschau zu
+Sprint 6, 7 und 8 erledigt. Neu: B-391 (idee), B-392/B-393 (aus der Nachschau, gleich gebaut), B-394 (idee, Defekt). Retro-Vorschläge
+(BG)–(BO) unentschieden. Gerätecheck B-231 offen. Nichts gepusht.
+
+**Nächster Start:** B-394 (klein, Defekt), dann B-389 und B-391 (beide `idee`, Defekt), dann die Wünsche nach dem
+[Delegations-Protokoll](pm-sitzung-2026-11-05-delegation.md).

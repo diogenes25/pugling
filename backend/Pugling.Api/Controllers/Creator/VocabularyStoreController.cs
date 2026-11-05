@@ -410,7 +410,7 @@ public class VocabularyStoreController(PuglingDbContext db, VocabularyStoreServi
 
     /// <summary>
     /// Finds referencing exercises: vocabulary exercises via the <see cref="ExerciseItem"/> table (by vocabulary id),
-    /// cloze texts by key and translations by id in the ConfigJson (SQL pre-filter + precise JSON check).
+    /// cloze texts by key, translations and Birkenbihl decodings by id in the ConfigJson (SQL pre-filter + precise JSON check).
     /// </summary>
     private async Task<List<VocabUsage>> ReferencingExercisesAsync(int id, string key, CancellationToken ct)
     {

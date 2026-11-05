@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-05.md#lauf-v
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-05"
 ---
 
 # B-387 · Eine Birkenbihl-Übung speichert eine unbekannte `vocabularyId` an einem dekodierten Wort ohne Prüfung
@@ -82,3 +83,9 @@ nach dem Muster von B-386.
   zurück (B-72). 🟢 `"decoding": null` endet schon vorher in einer 500 → [B-391](B-391-birkenbihl-decoding-null-ist-500.md).
 - **2026-11-05** — **abgenommen.** Volle Suite 1089/1089 (danach nur Kommentartext geändert); Rollengang Creator als E2E: volle Playwright-Suite 115 passed gegen ein Backend, das nach dem letzten Code-Edit startete. Birkenbihl- und Übersetzungs-Anlage im Browser (`uebungstypen.spec.ts`) und der Vokabelspeicher grün; Vater und Sohn unberührt (nur Creator-Schreibwege), ihre Specs in derselben Suite grün. Commit: siehe nächster Eintrag.
 - **2026-11-05** — Commit `cae15a1`.
+- **2026-11-05** — **Nachschau** (Lauf W, Retro Sprint 9; frischer `pugling-reviewer`, `git show cae15a1`, 1090/1090 an HEAD).
+  **Entgangen (🟢):** der Wort-`PUT` antwortet auf `0` weiter `invalid_reference` – die Angleichung, die diese Story versprach, gilt
+  nur für die unbekannte Id, und die Summary behauptete „wie der Wort-Endpunkt" → [B-394](B-394-birkenbihl-wort-put-id-null-ist-unbekannte-referenz.md)
+  (Summary jetzt eingeschränkt, nur Text). 🟢 Summary von `ReferencingExercisesAsync` nannte Birkenbihl nicht – berichtigt (nur Text).
+  🟢 `"sentences": null` → 500, zu B-391 ergänzt. 🟢 hingenommen: `PUT` mit `0`/bestehender Id ohne eigenen Birkenbihl-Fall
+  (geteilter Validator, vgl. B-393).

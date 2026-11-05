@@ -506,7 +506,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (39)
+### Offen (40)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -524,6 +524,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-375](B-375-heftseite-wird-uebungsentwurf.md) | Eine fotografierte Heftseite wird zum Übungsentwurf, den der Vater vor dem Zuweisen prüft | Wunsch | `idee` | P2 | — | — | — |
 | [B-389](B-389-leerzeichen-grundform-meldet-invalid-reference.md) | Ein `PATCH` im Vokabelspeicher mit `baseFormKey: "  "` meldet `invalid_reference` | Defekt | `idee` | P3 | — | backend | — |
 | [B-391](B-391-birkenbihl-decoding-null-ist-500.md) | Ein Birkenbihl-Satz mit `"decoding": null` endet in einer 500 statt einer 400 | Defekt | `idee` | P3 | — | backend | — |
+| [B-394](B-394-birkenbihl-wort-put-id-null-ist-unbekannte-referenz.md) | Der Birkenbihl-Wort-`PUT` meldet `vocabularyId = 0` als `invalid_reference`, der CRUD-Weg als `validation_error` | Defekt | `idee` | P3 | — | backend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `idee` | P3 | — | — | — |
 | [B-291](B-291-fachwechsel-der-reihe-laesst-themen-stehen.md) | Wechselt eine Reihe ihr Fach, bleiben die Grammatik-Themen des alten Fachs an Übungen und Units stehen | Frage | `idee` | P3 | — | backend | — |
@@ -895,9 +896,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
-### Nach der Abnahme entgangen (127)
+### Nach der Abnahme entgangen (128)
 
-**Nachgeschaut: 323 von 327 abgenommenen** — und in 108 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 4 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 325 von 327 abgenommenen** — und in 109 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 2 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -1028,17 +1029,16 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-388](B-388-id-null-faelle-ohne-test.md) | Zwei Fälle „Id 0 bleibt `validation_error`“ aus B-329 haben keinen Test | [B-329] | `abgenommen` |
 | [B-390](B-390-unit-loeschen-bestaetigung-ausser-sicht.md) | „Unit … gelöscht." und „Gespeichert." einer Unit landen in einer langen Liste außer Sicht | [B-385] | `abgenommen` |
 | [B-393](B-393-uebersetzung-put-id-null-ohne-test.md) | B-386 AK 1 „Ändern mit `0`" hat keinen Test | [B-386] | `abgenommen` |
+| [B-394](B-394-birkenbihl-wort-put-id-null-ist-unbekannte-referenz.md) | Der Birkenbihl-Wort-`PUT` meldet `vocabularyId = 0` als `invalid_reference`, der CRUD-Weg als `validation_error` | [B-387] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (4) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (2) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-387](B-387-birkenbihl-speichert-unbekannte-vokabel-id.md) | Eine Birkenbihl-Übung speichert eine unbekannte `vocabularyId` an einem dekodierten Wort ohne Prüfung |
-| [B-388](B-388-id-null-faelle-ohne-test.md) | Zwei Fälle „Id 0 bleibt `validation_error`“ aus B-329 haben keinen Test |
 | [B-392](B-392-uebersetzung-put-legt-paare-nicht-an.md) | Eine geänderte Übersetzung legt neue Paare nicht im Speicher an |
 | [B-393](B-393-uebersetzung-put-id-null-ohne-test.md) | B-386 AK 1 „Ändern mit `0`" hat keinen Test |
 
@@ -1105,6 +1105,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-390](B-390-unit-loeschen-bestaetigung-ausser-sicht.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 | [B-392](B-392-uebersetzung-put-legt-paare-nicht-an.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 | [B-393](B-393-uebersetzung-put-id-null-ohne-test.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen" |
+| [B-394](B-394-birkenbihl-wort-put-id-null-ist-unbekannte-referenz.md) | `idee` | `unverifiziert: true` |
 
 <details>
 <summary>Verworfen (26)</summary>

@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-05.md#lauf-v
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-05"
 entgangen_bei: [B-329]
 ---
 
@@ -56,3 +57,4 @@ die Stelle `0` als unbekannte Referenz meldet.
 - **2026-11-05** — Review `pugling-reviewer` (gemeinsam mit B-387): kein Fund zu B-388.
 - **2026-11-05** — **abgenommen.** Volle Suite 1089/1089 (danach nur Kommentartext geändert); Rollengang Creator als E2E: volle Playwright-Suite 115 passed gegen ein Backend, das nach dem letzten Code-Edit startete. Birkenbihl- und Übersetzungs-Anlage im Browser (`uebungstypen.spec.ts`) und der Vokabelspeicher grün; Vater und Sohn unberührt (nur Creator-Schreibwege), ihre Specs in derselben Suite grün. Commit: siehe nächster Eintrag.
 - **2026-11-05** — Commit `cae15a1`.
+- **2026-11-05** — **Nachschau** (Lauf W, Retro Sprint 9, `git show cae15a1`): nichts entgangen.
