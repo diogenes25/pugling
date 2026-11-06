@@ -684,3 +684,36 @@ Familie wie (BN)/(BO): der Gang belegt den Ausweg für die Form, die mir einfiel
 **Vorschlag (nicht gelandet, Freigabe 3):** (BY) (BX) präzisiert: ein Ausweg in einer Meldung wird **auch** in seinen Sperrfällen gegangen –
 für jede Sperre, die auf dem Ausweg selbst liegt (hier `position_has_data`, fremder Plan), ein Fall „Ausweg gesperrt"; gibt es einen, nennt
 die Meldung den Ausweg nur mit dieser Bedingung oder gar nicht.
+
+### Sprint 19 — B-270
+
+**Sprint-Ziel (Vater):** Wer einem Kind eine Position anlegt, sieht bei jeder Übung ihre Bewertung und kann die besten nach vorn holen.
+
+**Gebaut:** Übungsauswahl im Planbau zeigt `ratingSummary` je Zeile und „Trefferliste sortieren: wie im Katalog / beste Bewertung zuerst"
+(`sort=rating&dir=desc`), als Suchkriterium in derselben Stale-/Auswahl-Maschine. Klickweg-Spec mit zweitem Konto als Bewerter; je Mutante
+rot an ihrer Zusicherung, nach dem letzten Test-Edit erneut gemessen. Vitest 653/653.
+
+**Review** (`frontend-reviewer`): kein 🔴; 🟡 Zwilling „Assistent" → [B-408](backlog/B-408-assistent-zeigt-keine-bewertung.md) (Wunsch);
+zwei 🟢 nachgezogen. **Zähler 0 von 5.**
+
+**Retrospektive Sprint 19 — Nachschau zu Sprint 18** (`98e684d`, frischer `pugling-reviewer`): **Entgangen (🟡):** der Verweis auf
+„Verwendung" ist halb wahr – sie zeigt keine Ziel-Etappen; zwei AK-Zeilen und ein Summary von B-406 veraltet →
+[B-409](backlog/B-409-verwendung-zeigt-keine-ziel-etappen.md). Increment **dieses** Laufs: **Limit 2.**
+
+**Was durchkam:** derselbe Satz an den Nutzer zum fünften Mal (B-403 → B-405 → B-406 → Review 🔴 → B-409). Jede Runde prüfte den nächsten
+Schritt hinter dem Ausweg, keine den übernächsten. Das ist kein Sorgfaltsproblem mehr, sondern ein Zeichen, dass ein Satz, der Auswege
+aufzählt, an einer Kette von Sperren hängt, die er nicht kennt.
+
+**Vorschlag (nicht gelandet, Freigabe 3):** (BZ) Meldungen nennen **keine** Auswege über ihre eigene Sperre hinaus – sie sagen, was sperrt,
+und verweisen höchstens auf die Fläche, die die Sperre selbst erklärt. Ein Ausweg, der eine zweite Sperre durchquert, gehört in deren Meldung.
+
+## Ende von Lauf AB — Limit 2 · Ende des Auftrags (4 Läufe)
+
+Die Nachschau zu Sprint 18 fand eine Entgleitung im Increment **dieses** Laufs (B-409 an B-406). Lauf AB endet mit Sprint 19 – und damit der
+Auftrag „Starte 4 Nachtläufe hintereinander".
+
+**Stand der vier Läufe (Y, Z, AA, AB), Sprints 12–19:** 17 Stories abgenommen – B-397, B-398, B-396 (Y); B-399, B-291, B-400, B-401 (Z);
+B-402, B-403, B-405, B-313 (AA); B-406, B-270 (AB), dazu die im Lauf entstandenen und erledigten. Jeder Lauf endete an Limit 2 (Nachschau fand
+eine Entgleitung im eigenen Increment). Im Auftrag entschieden: B-398 (Frage), B-396 Entscheidung 2. Offen und neu: B-404, B-407 (Fragen),
+B-408 (Wunsch), B-409 (Defekt). Vorschläge (BG)–(BZ) unentschieden; besonders (BX)/(BY)/(BZ) zur Meldungs-Kette und (BR)/(BV) als Tore.
+Nichts gepusht. **Nächster Start:** B-409.

@@ -15,6 +15,7 @@ import type {
   ScoringTimeSlot, SubjectResponse, UpdatePositionDto,
 } from "../lib/types";
 import { ExerciseFilterBar, type ExerciseFilter } from "./ExerciseFilterBar";
+import { ratingSummary } from "./ExerciseRatingPanel";
 
 /*
  * Positions-UI des neuen Lehrplan-Modells: Ein Plan ist ein Container aus Katalog-Übungen. Jede
@@ -408,6 +409,10 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
   const types = useExerciseTypes();
   const typeLabel = types.label;
   const [filter, setFilter] = useState<ExerciseFilter>({});
+  // B-270: gute Übungen dort finden, wo man sie auswählt. Nur zwei Reihenfolgen – die Katalog-Ordnung (Server-Vorgabe)
+  // und „beste zuerst"; unbewertete stehen dabei hinten (Server-Regel aus B-12). Eine Richtung zum Umdrehen braucht es
+  // hier nicht: wer die schlechtesten sucht, stellt keinen Plan zusammen.
+  const [besteZuerst, setBesteZuerst] = useState(false);
   // Die Gesamtzahl wird mitgeführt: der Server liefert nur eine Seite, und eine still gekappte
   // Auswahlliste liest sich wie „mehr gibt es nicht".
   /*
@@ -427,8 +432,11 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
     // Die achte Facette (B-155) – genau das Feld, das der Absatz oben als Vergessens-Kandidat benennt: ohne
     // diese Zeile wechselte der Filter, ohne dass die Abfrage neu liefe (in der E2E-Spec gemessen).
     filter.grammarTopicId,
+    // Die Reihenfolge gehört dazu: die Liste ist eine Seite, und eine andere Sortierung zeigt andere Zeilen (B-270).
+    besteZuerst,
   ];
-  const exercises = useAsync<Paged<ExerciseSummary>>(() => api.searchExercises(filter), kriterien);
+  const exercises = useAsync<Paged<ExerciseSummary>>(
+    () => api.searchExercises(besteZuerst ? { ...filter, sort: "rating", dir: "desc" } : filter), kriterien);
   const [exerciseId, setExerciseId] = useState<number | "">("");
   const [auswahlHinweis, setAuswahlHinweis] = useState<string | null>(null);
   // Eigene Id-Wurzel: Der Grund für die gesperrte Liste braucht eine stabile Id, damit die Radiogruppe
@@ -526,6 +534,14 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
             {sucheGescheitert ? "(Suche gescheitert)" : zeilenVeraltet ? "(Suche läuft…)" : `(${results.length} Treffer)`}
           </span>
         </label>
+        <div className="row" style={{ gap: 6, alignItems: "center", margin: "4px 0" }}>
+          <label className="muted" htmlFor={`${uid}-reihenfolge`} style={{ fontSize: 12 }}>Trefferliste sortieren</label>
+          <select id={`${uid}-reihenfolge`} value={besteZuerst ? "rating" : "catalog"}
+            onChange={(e) => setBesteZuerst(e.target.value === "rating")}>
+            <option value="catalog">wie im Katalog</option>
+            <option value="rating">beste Bewertung zuerst</option>
+          </select>
+        </div>
         {/* Der Fehlerzweig braucht seine eigene Fläche, nicht nur die Sperre: Scheitert die Suche, bleibt
             `zeilenVeraltet` **dauerhaft** wahr (`exercises.stale`: die Deps der Daten ziehen nur bei Erfolg nach,
             B-164). Ohne diesen Kasten stünde für immer „Suche läuft…" neben einer Liste, die nie
@@ -596,6 +612,7 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
                         Fragmente hier glattzieht, nimmt genau diese Unterscheidung wieder weg. */}
                     {ex.categoryName && <span className="muted"> · Art: {ex.categoryName}</span>}
                     {ex.source && <span className="muted"> · {ex.source}</span>}
+                    <span className="muted"> · {ratingSummary(ex.averageRating, ex.ratingCount)}</span>
                   </span>
                   {ex.description && <span className="muted" style={{ fontSize: 12 }}>{ex.description}</span>}
                 </span>

@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-05.md#lauf-aa
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-05"
 entgangen_bei: [B-403, B-405]
 ---
 
@@ -65,3 +66,7 @@ Dazu zwei Beleg-Mängel aus derselben Nachschau:
 - **2026-11-05** — **abgenommen.** Rollengang Creator: `e2e/reihe-fachwechsel-gesperrt.spec.ts` 1 passed nach dem letzten Edit; volle
   Playwright-Suite 117 passed nach dem vorletzten (seither nur die zwei Meldungstexte); Integrationsfälle gehen beide Auswege. Volle Suite
   1119/1119. Vater und Sohn Regressionszeugen. Commit: siehe nächster Eintrag.
+- **2026-11-05** — Commit `98e684d`.
+- **2026-11-05** — **Nachschau** (Lauf AB, Retro Sprint 19; frischer `pugling-reviewer`, `git show 98e684d`, `ReiheFachwechselTests` 9/9):
+  geprüft AK-Zeilen, beide Sätze gegen `CountBlockingAsync`/`Explain` und gegen „Verwendung", die zwei Gänge, Summaries. **Entgangen (🟡):**
+  „Verwendung" zeigt keine Ziel-Etappen; zwei AK-Zeilen und ein Summary veraltet → [B-409](B-409-verwendung-zeigt-keine-ziel-etappen.md).
