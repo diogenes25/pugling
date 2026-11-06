@@ -712,8 +712,8 @@ und verweisen höchstens auf die Fläche, die die Sperre selbst erklärt. Ein Au
 Die Nachschau zu Sprint 18 fand eine Entgleitung im Increment **dieses** Laufs (B-409 an B-406). Lauf AB endet mit Sprint 19 – und damit der
 Auftrag „Starte 4 Nachtläufe hintereinander".
 
-**Stand der vier Läufe (Y, Z, AA, AB), Sprints 12–19:** 17 Stories abgenommen – B-397, B-398, B-396 (Y); B-399, B-291, B-400, B-401 (Z);
-B-402, B-403, B-405, B-313 (AA); B-406, B-270 (AB), dazu die im Lauf entstandenen und erledigten. Jeder Lauf endete an Limit 2 (Nachschau fand
+**Stand der vier Läufe (Y, Z, AA, AB), Sprints 12–19:** 13 Stories abgenommen – B-397, B-398, B-396 (Y); B-399, B-291, B-400, B-401 (Z);
+B-402, B-403, B-405, B-313 (AA); B-406, B-270 (AB) – davon sechs (B-399, B-400, B-401, B-402, B-403, B-405) erst in diesen Läufen entstanden. Jeder Lauf endete an Limit 2 (Nachschau fand
 eine Entgleitung im eigenen Increment). Im Auftrag entschieden: B-398 (Frage), B-396 Entscheidung 2. Offen und neu: B-404, B-407 (Fragen),
 B-408 (Wunsch), B-409 (Defekt). Vorschläge (BG)–(BZ) unentschieden; besonders (BX)/(BY)/(BZ) zur Meldungs-Kette und (BR)/(BV) als Tore.
 Nichts gepusht. **Nächster Start:** B-409.
