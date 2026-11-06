@@ -1654,6 +1654,29 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
+    /// B-313: a type the agent cannot generate in <c>--types</c> is a usage error of the whole request (exit 2), checked before the
+    /// first model call - a typo must not leave a partial plan or exam behind. The valid type comes FIRST, so a per-part check would
+    /// already have called the model for it: red (Calls &gt; 0, or no exception) if the check moves back into the part loop.
+    /// </summary>
+    [Theory]
+    [InlineData("plan", "--child", "1")]
+    [InlineData("exam", "--child", "1")]
+    public async Task Plan_und_Klausur_mit_unbekanntem_Typ_brechen_vor_dem_Modell_ab(string verb, params string[] extra)
+    {
+        var (pipeline, creator, chat) = BuildAgent(VocabularyJson);
+        var (_, seriesId, seriesUnitId) = await FreshUnitAsync(creator, $"Typ-Tippfehler-{verb}");
+
+        var command = CommandLine.Parse([
+            verb, "--types", "Vocabulary,Clozee", "--per-type", "1", "--title", TestApi.UniqueName("Tippfehler"),
+            "--series", seriesId.ToString(), "--series-unit", seriesUnitId.ToString(), .. extra,
+        ]);
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline).RunAsync(command, default));
+
+        Assert.Contains("Clozee", error.Message);
+        Assert.Equal(0, chat.Calls);
+    }
+
+    /// <summary>
     /// B-308: <c>profiles --child</c> with a child the server does not know is a usage error naming the child, not a
     /// raw 404 (exit 1). Red if the NotFound catch in <c>AgentCommands.ShowProfilesAsync</c> is removed.
     /// </summary>

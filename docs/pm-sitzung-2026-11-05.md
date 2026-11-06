@@ -626,3 +626,32 @@ Oberfläche geprüft hatte (anderes Fach, Art entfernen, „nur Übungen"). Test
 **Vorschlag (nicht gelandet, Freigabe 3):** (BW) Jeder Ausweg in einer Fehlermeldung nennt das Bedienelement, über das er geht
 („im Bearbeiten-Dialog der Übung", „an der Unit"), und der Review-Auftrag fragt je genannten Ausweg: gibt es dieses Element, und hebt es
 die Sperre wirklich auf? Prosa im Reviewer-Brief, kein Tor – ob ein Satz wahr ist, misst kein Grep.
+
+### Sprint 17 — B-313
+
+**Sprint-Ziel (Creator/KI-Agent):** Ein Tippfehler in `--types` kostet keinen halben Lehrplan und keine halbe Klausur, sondern endet sofort
+als Fehlbedienung.
+
+**Gebaut:** `CreatorPipeline.EnsureSupported` (eine Meldung mit `create`), aufgerufen von `PlanPlanner` und `ExamPlanner` vor dem ersten
+Modellaufruf. Rote Probe 2/2, je Aufrufstelle eine Mutante, die nur ihren Fall rot macht. Volle Suite 1117/1117.
+
+**Review** (`pugling-reviewer`): kein 🔴/🟡, zwei 🟢 kosmetisch. **Zähler 0 von 5.**
+
+**Retrospektive Sprint 17 — Nachschau zu Sprint 16** (`9f395d2`, frischer `frontend-reviewer`): geprüft Belegzeilen, beide Textvarianten
+gegen Server und Oberfläche. **Entgangen (🟡):** der Ausweg „Übung löschen" kann selbst gesperrt sein (`exercise_in_use`); die B-405-Tabelle
+zitiert eine überholte Zusicherung; die Anzahl-Zusicherung passt auch auf „11" → [B-406](backlog/B-406-fachwechsel-meldung-loeschen-kann-gesperrt-sein.md).
+Ein weiterer Fund (rote Probe in B-403 könne nicht stimmen) ist gegengerechnet und falsch – „Themen" enthält „Thema" nicht. Increment
+**dieses** Laufs: **Limit 2.**
+
+**Was durchkam:** der Satz an den Nutzer zum dritten Mal in Folge – jede Runde machte ihn wahrer, keine prüfte den nächsten Schritt hinter
+dem genannten Ausweg (Löschen → `exercise_in_use`). Vorschlag (BW) aus Sprint 16 hätte es gefragt; er ist nicht gelandet.
+
+**Vorschlag (nicht gelandet, Freigabe 3):** (BX) Eine Meldung, die einen Ausweg nennt, wird erst geschrieben, nachdem der Ausweg einmal
+selbst gegangen wurde (E2E oder Integrationsfall „gesperrt → Ausweg → entsperrt"); ein Ausweg ohne solchen Gang wird nicht genannt.
+
+## Ende von Lauf AA — Limit 2
+
+Die Nachschau zu Sprint 16 fand eine Entgleitung im Increment **dieses** Laufs (B-406 an B-403/B-405). Lauf AA endet mit Sprint 17.
+
+**Stand Lauf AA:** 4 Stories abgenommen (B-402, B-403, B-405 `9f395d2`; B-313 siehe Commit). Neu: B-405 (im Lauf erledigt), B-406.
+Vorschläge (BG)–(BX) unentschieden. Nichts gepusht. **Nächster Start:** B-406.

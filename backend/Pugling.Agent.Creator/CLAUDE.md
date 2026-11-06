@@ -18,7 +18,8 @@ bestpassende (`profiles/match`).
 Der `ExamPlanner` baut **Übungsklausuren**: ein Pipeline-Lauf je Typ (jeder mit eigenem Selbsttest),
 danach – nur mit Kind – ein kind-skopierter Tag und eine `Klassenarbeit` (Status *geplant*) mit genau
 diesen Übungen; ein gescheiterter Teil bricht die Klausur nicht ab, macht sie aber sichtbar unvollständig
-(Exit 1).
+(Exit 1). Ein Typ in `--types`, den der Agent nicht erzeugt, ist dagegen kein gescheiterter Teil, sondern eine
+Fehlbedienung des ganzen Aufrufs – vor dem ersten Modellaufruf, Exit 2 (B-313; gilt ebenso für `plan`).
 
 Der `PlanPlanner` ist sein Zwilling für **Lehrpläne**: gleicher Ablauf, anderer Behälter – ein
 `StudyPlan` mit je einer `PlanPosition` pro erzeugter Übung, Ziel/Punkte/Malus aus `--intensity`

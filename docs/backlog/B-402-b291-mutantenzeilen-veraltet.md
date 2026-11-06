@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-05.md#lauf-z
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-05"
 entgangen_bei: [B-291]
 ---
 
@@ -36,3 +37,5 @@ Zu tun: die zwei Zeilen nachmessen und berichtigen.
   macht" (die alte Überschrift „nur ihn" war für drei Zeilen nie wahr). Kein Code; kein Review-Agent und kein Rollengang (Doku-Berichtigung,
   die Messung ist der Beleg).
 - **2026-11-05** — **abgenommen.** Commit: siehe nächster Eintrag.
+- **2026-11-05** — Commit `9f395d2`.
+- **2026-11-05** — **Nachschau** (Lauf AA, Retro Sprint 17; frischer `frontend-reviewer`, `git show 9f395d2`): geprüft Belegzeilen gegen Tests, Texte gegen Server (beide Varianten) und Oberfläche (Themen-Picker an Unit und Dialog, „Art" nicht editierbar, Löschen erreichbar). Alle sechs Zeilen plausibel; Vorbehalt zur `Contains`-Zählung → [B-406](B-406-fachwechsel-meldung-loeschen-kann-gesperrt-sein.md).

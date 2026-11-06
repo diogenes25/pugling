@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-05.md#lauf-aa
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-05"
 entgangen_bei: [B-401]
 ---
 
@@ -44,3 +45,5 @@ nur, wenn keine Übung und keine Unit mehr Themen oder Kategorien des alten Fach
 - **2026-11-05** — Delta-Review: 🟢 der englische Satz unterstellte Units Kategorien → „no unit carries grammar topics and no exercise
   carries grammar topics or categories", Zusicherung nachgezogen und gegen den vorigen Satz gemessen: rot. Ohne Zählung (🟢).
 - **2026-11-05** — **abgenommen.** Rollengang Creator: Integrationsfall (englischer Satz) und Vitest (deutscher Satz); die Anzeige im Formular deckt dieselbe E2E wie B-403. Volle Suite 1115/1115, Playwright 117 passed nach dem letzten Edit; Vater und Sohn Regressionszeugen. Commit: siehe nächster Eintrag.
+- **2026-11-05** — Commit `9f395d2`.
+- **2026-11-05** — **Nachschau** (Lauf AA, Retro Sprint 17; frischer `frontend-reviewer`, `git show 9f395d2`): geprüft Belegzeilen gegen Tests, Texte gegen Server (beide Varianten) und Oberfläche (Themen-Picker an Unit und Dialog, „Art" nicht editierbar, Löschen erreichbar). **Entgangen:** → [B-406](B-406-fachwechsel-meldung-loeschen-kann-gesperrt-sein.md).

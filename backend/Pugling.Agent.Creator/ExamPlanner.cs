@@ -53,6 +53,8 @@ public sealed class ExamPlanner(CreatorPipeline pipeline, CreatorApi creator, Su
     {
         if (request.Types.Count == 0)
             throw new AgentUsageException("Eine Klausur braucht mindestens einen Übungstyp (--types).");
+        // A typo in --types is a usage error of the whole request, before the first model call (B-313).
+        pipeline.EnsureSupported(request.Types);
 
         // Briefed once before the parts, title given or not: a wrong series, unit, child, profile or interest is a
         // usage error of the whole request (exit 2), not a failed part (B-308).

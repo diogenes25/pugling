@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-05.md#lauf-z
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-05"
 entgangen_bei: [B-291]
 ---
 
@@ -56,3 +57,5 @@ Die E2E-Spec `reihe-fachwechsel-gesperrt.spec.ts` prüft heute den englischen Wo
   `SubjectInUseProblemAsync` gelesen (Selbst-Check, so beschriftet): Wechsel zählt Unit-Themen, Übungs-Themen, Übungs-Arten; Entfernen
   zusätzlich jede Übung – der Satz nennt alle vier.
 - **2026-11-05** — **abgenommen.** Rollengang Creator als E2E: `e2e/reihe-fachwechsel-gesperrt.spec.ts` zeigt den deutschen Satz am Reihen-Formular, Fach bleibt nach Neuladen. Volle Suite 1115/1115, Playwright 117 passed nach dem letzten Edit; Vater und Sohn Regressionszeugen. Commit: siehe nächster Eintrag.
+- **2026-11-05** — Commit `9f395d2`.
+- **2026-11-05** — **Nachschau** (Lauf AA, Retro Sprint 17; frischer `frontend-reviewer`, `git show 9f395d2`): geprüft Belegzeilen gegen Tests, Texte gegen Server (beide Varianten) und Oberfläche (Themen-Picker an Unit und Dialog, „Art" nicht editierbar, Löschen erreichbar). **Entgangen:** → [B-406](B-406-fachwechsel-meldung-loeschen-kann-gesperrt-sein.md).

@@ -123,10 +123,11 @@ public sealed class PlanPlanner(CreatorPipeline pipeline, SupervisorApi supervis
     /// <summary>Generates the exercises and, from them, the study plan with one position each.</summary>
     public async Task<PlanOutcome> RunAsync(PlanRequest request, CancellationToken ct = default)
     {
-        // All four checks come before the first model call: a run that cannot end in a plan should not
+        // All five checks come before the first model call: a run that cannot end in a plan should not
         // cost minutes of generation first.
         if (request.Types.Count == 0)
             throw new AgentUsageException("Ein Lehrplan braucht mindestens einen Übungstyp (--types).");
+        pipeline.EnsureSupported(request.Types);
         if (request.PerType <= 0)
             throw new AgentUsageException($"--per-type erwartet mindestens 1, bekam {request.PerType}.");
         // The run is not left to the server: it silently turns a non-positive value into 10 days, while

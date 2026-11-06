@@ -522,9 +522,9 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-249](B-249-probeklausur-mit-notenprognose.md) | Eine Probeklausur über das Bündel einer Klassenarbeit, mit Notenprognose | Wunsch | `idee` | P2 | — | — | — |
 | [B-374](B-374-baobab-vergleich-sammel-story.md) | Baobab-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | Wunsch | `idee` | P2 | — | — | — |
 | [B-375](B-375-heftseite-wird-uebungsentwurf.md) | Eine fotografierte Heftseite wird zum Übungsentwurf, den der Vater vor dem Zuweisen prüft | Wunsch | `idee` | P2 | — | — | — |
+| [B-406](B-406-fachwechsel-meldung-loeschen-kann-gesperrt-sein.md) | Der Ausweg „Übung löschen" in der Fachwechsel-Meldung kann selbst gesperrt sein | Defekt | `idee` | P3 | — | beides | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `idee` | P3 | — | — | — |
-| [B-313](B-313-agent-unbekannter-typ-je-teil-statt-fehlbedienung.md) | Soll ein unbekannter Übungstyp in `plan`/`exam` eine Fehlbedienung sein? | Frage | `idee` | P3 | — | backend | — |
 | [B-328](B-328-inline-typen-put-verschiebt-lernstand.md) | Sollen die Inhaltslisten gespielter Übungen anderer Typen (und der Wort-Tausch) gesperrt sein? | Frage | `idee` | P3 | — | backend | — |
 | [B-384](B-384-reihe-anlegen-bestaetigung-auf-dem-handy.md) | Prüfauftrag: sieht man „steht im Katalog" auf dem Handy, wenn man unten auf „Reihe anlegen" drückt? | Frage | `idee` | P3 | — | frontend | — |
 | [B-404](B-404-fach-loeschen-laesst-reihe-mit-uebungen-fachlos.md) | Ein gelöschtes Fach lässt Reihen mit Übungen fachlos zurück | Frage | `idee` | P3 | — | backend | — |
@@ -549,7 +549,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (340)</summary>
+<summary>Abgenommen (341)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -757,6 +757,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-310](B-310-profil-match-verraet-kind-ids.md) | `GET creator/profiles/match` verrät per 404 gegen 403, ob es eine Kind-Id gibt | Defekt | `abgenommen` | P3 | XS | backend | Vertrag |
 | [B-311](B-311-agent-reihensuche-liest-nur-50-reihen.md) | Der Agent sucht Reihe und Unit nur in den ersten 50 Reihen | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-312](B-312-agent-profiles-unbekanntes-fach-meldet-kein-profil.md) | `profiles --subject <unbekannt>` endet mit Exit 0 und der Behauptung, es gebe kein Profil | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-313](B-313-agent-unbekannter-typ-je-teil-statt-fehlbedienung.md) | Soll ein unbekannter Übungstyp in `plan`/`exam` eine Fehlbedienung sein? | Frage | `abgenommen` | P3 | XS | backend | — |
 | [B-315](B-315-arcade-buchungsart-und-facette-ohne-abgleich.md) | Deutsche Buchungsarten und Facetten der Arcade sind nicht an die Vater-Helfer gebunden | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-316](B-316-plural-schluessel-aus-b-304-ohne-fall.md) | Die Zählschlüssel aus B-304 haben keinen Singular-/Plural-Fall | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-317](B-317-ziel-etappe-ohne-titel-zeigt-enum.md) | Eine Ziel-Etappe ohne Titel zeigt dem Kind den rohen Enum-Wert | Defekt | `abgenommen` | P3 | XS | frontend | — |
@@ -906,9 +907,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
-### Nach der Abnahme entgangen (135)
+### Nach der Abnahme entgangen (136)
 
-**Nachgeschaut: 337 von 340 abgenommenen** — und in 115 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 3 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 340 von 341 abgenommenen** — und in 117 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 1 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -1047,18 +1048,17 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-402](B-402-b291-mutantenzeilen-veraltet.md) | Zwei „gemessen"-Zeilen in B-291 gelten nicht mehr, seit der Review-Fall dazukam | [B-291] | `abgenommen` |
 | [B-403](B-403-reihe-fachwechsel-meldung-ohne-deutschen-text.md) | Die Sperre beim Fachwechsel einer Reihe erscheint im deutschen Vater-Web als englischer Satz mit Ref-Nummer | [B-291] | `abgenommen` |
 | [B-405](B-405-fach-leeren-meldung-verspricht-wechsel.md) | Die Meldung beim Leeren des Fachs schlägt einen Fachwechsel vor, der genauso gesperrt sein kann | [B-401] | `abgenommen` |
+| [B-406](B-406-fachwechsel-meldung-loeschen-kann-gesperrt-sein.md) | Der Ausweg „Übung löschen" in der Fachwechsel-Meldung kann selbst gesperrt sein | [B-403, B-405] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (3) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (1) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-402](B-402-b291-mutantenzeilen-veraltet.md) | Zwei „gemessen"-Zeilen in B-291 gelten nicht mehr, seit der Review-Fall dazukam |
-| [B-403](B-403-reihe-fachwechsel-meldung-ohne-deutschen-text.md) | Die Sperre beim Fachwechsel einer Reihe erscheint im deutschen Vater-Web als englischer Satz mit Ref-Nummer |
-| [B-405](B-405-fach-leeren-meldung-verspricht-wechsel.md) | Die Meldung beim Leeren des Fachs schlägt einen Fachwechsel vor, der genauso gesperrt sein kann |
+| [B-313](B-313-agent-unbekannter-typ-je-teil-statt-fehlbedienung.md) | Soll ein unbekannter Übungstyp in `plan`/`exam` eine Fehlbedienung sein? |
 
 </details>
 
@@ -1113,6 +1113,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-307](B-307-create-mit-unbekannter-reihe-rohe-404.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-308](B-308-agent-fehlbedienung-plan-exam-profiles.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-309](B-309-leerraum-auf-der-grenze-nur-mit-leerzeichen-belegt.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
+| [B-313](B-313-agent-unbekannter-typ-je-teil-statt-fehlbedienung.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 | [B-315](B-315-arcade-buchungsart-und-facette-ohne-abgleich.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-316](B-316-plural-schluessel-aus-b-304-ohne-fall.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-337](B-337-reuse-folgt-veraltetem-schluessel.md) | `abgenommen` | Abschnitt „User Story" |
