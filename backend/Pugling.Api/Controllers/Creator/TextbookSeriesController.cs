@@ -202,8 +202,9 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
         return this.ProblemWithCode(ApiErrors.SeriesSubjectInUse,
             clearing
                 ? $"{exercises} exercise(s) and {units} unit(s) of this series depend on its subject; a series without a subject may "
-                    + "not host exercises, and unit topics belong to the subject. Remove them before clearing the subject, or switch to "
-                    + "another subject instead."
+                    + "not host exercises, and unit topics belong to the subject. Remove them before clearing the subject; switching to "
+                    + "another subject instead works once no unit carries grammar topics and no exercise carries grammar topics or "
+                    + "categories of the current subject."
                 : $"{exercises} exercise(s) and {units} unit(s) of this series carry grammar topics or categories of its current subject; "
                     + "remove them before changing the subject.");
     }

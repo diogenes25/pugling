@@ -598,3 +598,31 @@ Die Nachschau zu Sprint 14 fand zwei Entgleitungen im Increment **dieses** Laufs
 
 **Stand Lauf Z:** 5 Stories abgenommen (B-399, B-291 `b6e3724`; B-400, B-401 siehe Commit). Neu: B-402, B-403 (Defekte), B-404 (Frage).
 Vorschläge (BG)–(BV) unentschieden. Nichts gepusht. **Nächster Start:** B-402 und B-403.
+
+## Lauf AA
+
+Dritter von vier Läufen desselben Auftrags.
+
+### Sprint 16 — B-402, B-403, B-405
+
+**Sprint-Ziel (Creator):** Wer beim Fachwechsel einer Reihe gesperrt wird, liest auf Deutsch, warum, und nur Auswege, die es gibt – und
+die Belege dazu sind am heutigen Teststand gemessen.
+
+**Gebaut:** B-402 – alle sechs B-291-Mutanten nach dem letzten Test-Edit neu gemessen (Vorschlag (BU) angewandt), Tabelle ersetzt.
+B-403 – `series_subject_in_use` in `GERMAN_PROBLEM_TEXT`, fester Satz ohne Anzahlen. B-405 (aus der Nachschau, im selben Sprint, weil
+derselbe Satz) – der englische Ausweg „anderes Fach" nur mit seiner Bedingung.
+
+**Review:** `frontend-reviewer` drei 🟡 am deutschen Satz (Ausweg „anderes Fach" nie wirksam; „Art" statt „Kategorie" und nur löschbar;
+Satzbau), Delta-Review ein 🟡 (Unit-Themen beim Entfernen) und ein 🟢. **Zähler 4 von 5.** Kein weiteres Delta-Review – beide Varianten
+selbst gegen den Server gelesen und so beschriftet. Volle Suite 1115/1115, Playwright 117 passed.
+
+**Retrospektive Sprint 16 — Nachschau zu Sprint 15** (`176eaf5`, frischer `pugling-reviewer`): geprüft Mutanten-Zeilen, `clearing`-Fälle,
+weitere Erzeuger fachloser Reihen. **Entgangen (🟡):** der Ausweg im englischen Satz war ohne Bedingung → B-405, im Sprint behoben.
+Increment von Lauf Z: **kein Limit 2.** Index: Nachgeschaut siehe README.
+
+**Was durchkam:** viermal in einem Sprint dieselbe Form – ein Satz an den Nutzer verspricht einen Ausweg, den ich nicht gegen die
+Oberfläche geprüft hatte (anderes Fach, Art entfernen, „nur Übungen"). Tests prüften, dass der Satz da ist, nicht, dass er stimmt.
+
+**Vorschlag (nicht gelandet, Freigabe 3):** (BW) Jeder Ausweg in einer Fehlermeldung nennt das Bedienelement, über das er geht
+(„im Bearbeiten-Dialog der Übung", „an der Unit"), und der Review-Auftrag fragt je genannten Ausweg: gibt es dieses Element, und hebt es
+die Sperre wirklich auf? Prosa im Reviewer-Brief, kein Tor – ob ein Satz wahr ist, misst kein Grep.

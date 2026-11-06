@@ -506,7 +506,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (39)
+### Offen (37)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -522,8 +522,6 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-249](B-249-probeklausur-mit-notenprognose.md) | Eine Probeklausur über das Bündel einer Klassenarbeit, mit Notenprognose | Wunsch | `idee` | P2 | — | — | — |
 | [B-374](B-374-baobab-vergleich-sammel-story.md) | Baobab-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | Wunsch | `idee` | P2 | — | — | — |
 | [B-375](B-375-heftseite-wird-uebungsentwurf.md) | Eine fotografierte Heftseite wird zum Übungsentwurf, den der Vater vor dem Zuweisen prüft | Wunsch | `idee` | P2 | — | — | — |
-| [B-402](B-402-b291-mutantenzeilen-veraltet.md) | Zwei „gemessen"-Zeilen in B-291 gelten nicht mehr, seit der Review-Fall dazukam | Defekt | `idee` | P3 | — | backend | — |
-| [B-403](B-403-reihe-fachwechsel-meldung-ohne-deutschen-text.md) | Die Sperre beim Fachwechsel einer Reihe erscheint im deutschen Vater-Web als englischer Satz mit Ref-Nummer | Defekt | `idee` | P3 | — | frontend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `idee` | P3 | — | — | — |
 | [B-313](B-313-agent-unbekannter-typ-je-teil-statt-fehlbedienung.md) | Soll ein unbekannter Übungstyp in `plan`/`exam` eine Fehlbedienung sein? | Frage | `idee` | P3 | — | backend | — |
@@ -551,7 +549,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (337)</summary>
+<summary>Abgenommen (340)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -841,6 +839,9 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-40](B-40-client-routen-waechter.md) | Routen aus `Pugling.Client` gegen das OpenAPI-Dokument halten | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-400](B-400-uebersetzung-sprachpaar-rueckweg-ungetestet.md) | Kein Test liest eine Übersetzung mit einem anderen Sprachpaar als en→de zurück | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-401](B-401-fach-leeren-laesst-uebungen-ohne-fach.md) | Eine Reihe mit Übungen darf ihr Fach leeren, obwohl eine Reihe ohne Fach keine Übung tragen darf | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-402](B-402-b291-mutantenzeilen-veraltet.md) | Zwei „gemessen"-Zeilen in B-291 gelten nicht mehr, seit der Review-Fall dazukam | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-403](B-403-reihe-fachwechsel-meldung-ohne-deutschen-text.md) | Die Sperre beim Fachwechsel einer Reihe erscheint im deutschen Vater-Web als englischer Satz mit Ref-Nummer | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-405](B-405-fach-leeren-meldung-verspricht-wechsel.md) | Die Meldung beim Leeren des Fachs schlägt einen Fachwechsel vor, der genauso gesperrt sein kann | Defekt | `abgenommen` | P3 | XS | beides | — |
 | [B-41](B-41-produktions-startup-smoke.md) | Der Produktionspfad des Starts ist der einzige ohne Test | Aufräumen | `abgenommen` | P2 | S | backend | — |
 | [B-42](B-42-openapi-typen-generieren.md) | TypeScript-Typen aus dem OpenAPI-Dokument erzeugen statt von Hand pflegen | Aufräumen | `abgenommen` | P2 | M | beides | — |
 | [B-43](B-43-frontend-komponententests.md) | Die Doppelklick-Lücke in `useAction` – und die fehlende Ebene für unsichtbare Zusicherungen | Defekt | `abgenommen` | P3 | M | frontend | — |
@@ -905,9 +906,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
-### Nach der Abnahme entgangen (134)
+### Nach der Abnahme entgangen (135)
 
-**Nachgeschaut: 335 von 337 abgenommenen** — und in 114 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 2 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 337 von 340 abgenommenen** — und in 115 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 3 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -1043,19 +1044,21 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-397](B-397-null-element-in-config-liste-ist-500.md) | Ein `null`-Element in einer Config-Liste endet in einer 500 | [B-391] | `abgenommen` |
 | [B-399](B-399-b398-mutantenzeile-ungemessen-und-falsch.md) | Eine Belegzeile in B-398 nennt eine Mutante, die nicht kompiliert, und B-397 eine verrutschte Zeile | [B-398, B-397] | `abgenommen` |
 | [B-400](B-400-uebersetzung-sprachpaar-rueckweg-ungetestet.md) | Kein Test liest eine Übersetzung mit einem anderen Sprachpaar als en→de zurück | [B-396] | `abgenommen` |
-| [B-402](B-402-b291-mutantenzeilen-veraltet.md) | Zwei „gemessen"-Zeilen in B-291 gelten nicht mehr, seit der Review-Fall dazukam | [B-291] | `idee` |
-| [B-403](B-403-reihe-fachwechsel-meldung-ohne-deutschen-text.md) | Die Sperre beim Fachwechsel einer Reihe erscheint im deutschen Vater-Web als englischer Satz mit Ref-Nummer | [B-291] | `idee` |
+| [B-402](B-402-b291-mutantenzeilen-veraltet.md) | Zwei „gemessen"-Zeilen in B-291 gelten nicht mehr, seit der Review-Fall dazukam | [B-291] | `abgenommen` |
+| [B-403](B-403-reihe-fachwechsel-meldung-ohne-deutschen-text.md) | Die Sperre beim Fachwechsel einer Reihe erscheint im deutschen Vater-Web als englischer Satz mit Ref-Nummer | [B-291] | `abgenommen` |
+| [B-405](B-405-fach-leeren-meldung-verspricht-wechsel.md) | Die Meldung beim Leeren des Fachs schlägt einen Fachwechsel vor, der genauso gesperrt sein kann | [B-401] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (2) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (3) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-400](B-400-uebersetzung-sprachpaar-rueckweg-ungetestet.md) | Kein Test liest eine Übersetzung mit einem anderen Sprachpaar als en→de zurück |
-| [B-401](B-401-fach-leeren-laesst-uebungen-ohne-fach.md) | Eine Reihe mit Übungen darf ihr Fach leeren, obwohl eine Reihe ohne Fach keine Übung tragen darf |
+| [B-402](B-402-b291-mutantenzeilen-veraltet.md) | Zwei „gemessen"-Zeilen in B-291 gelten nicht mehr, seit der Review-Fall dazukam |
+| [B-403](B-403-reihe-fachwechsel-meldung-ohne-deutschen-text.md) | Die Sperre beim Fachwechsel einer Reihe erscheint im deutschen Vater-Web als englischer Satz mit Ref-Nummer |
+| [B-405](B-405-fach-leeren-meldung-verspricht-wechsel.md) | Die Meldung beim Leeren des Fachs schlägt einen Fachwechsel vor, der genauso gesperrt sein kann |
 
 </details>
 
@@ -1129,6 +1132,9 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-399](B-399-b398-mutantenzeile-ungemessen-und-falsch.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-400](B-400-uebersetzung-sprachpaar-rueckweg-ungetestet.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 | [B-401](B-401-fach-leeren-laesst-uebungen-ohne-fach.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
+| [B-402](B-402-b291-mutantenzeilen-veraltet.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
+| [B-403](B-403-reihe-fachwechsel-meldung-ohne-deutschen-text.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
+| [B-405](B-405-fach-leeren-meldung-verspricht-wechsel.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 
 <details>
 <summary>Verworfen (27)</summary>

@@ -44,15 +44,15 @@ Themen bzw. Kategorien des alten Fachs tragen, wird der Wechsel verweigert, und 
 
 ## Akzeptanzkriterien (je Fall)
 
-| Fall | Erwartet | Beleg | Mutante, die nur ihn rot macht |
+| Fall | Erwartet | Beleg | Mutante und was sie rot macht |
 |---|---|---|---|
-| Übung mit Thema, `subjectId` neu | 409, „1 exercise(s) and 0 unit(s)", Fach bleibt | `ReiheFachwechselTests` `Thema_An_Einer_Uebung…` | Übungs-Themen-Klausel weg (rot auch „Fach leeren", gemessen) |
-| Unit mit Thema | 409, „0 exercise(s) and 1 unit(s)" | `Thema_An_Einer_Unit…` | Unit-Zählung weg – gemessen: nur dieser Fall |
-| Übung mit Kategorie | 409 | `Kategorie_An_Einer_Uebung…` | Kategorie-Klausel weg – gemessen: nur dieser Fall |
-| `clearSubject` | 409 | `Fach_Leeren…` | `ClearSubject` ignoriert – gemessen: nur dieser Fall |
-| zwei Reihen desselben Fachs, nur A trägt ein Thema | B darf wechseln (200), A: 409 mit „1 exercise(s) and 1 unit(s)" | `Nur_Die_Eigenen_Traeger…` | Reihenfilter der Übungs- **oder** der Unit-Zählung weg – gemessen: je nur dieser Fall |
+| Übung mit Thema, `subjectId` neu | 409, „1 exercise(s) and 0 unit(s)", Fach bleibt | `ReiheFachwechselTests` `Thema_An_Einer_Uebung…` | Übungs-Themen-Klausel weg → rot dieser + `Nur_Die_Eigenen…` (gemessen, Stand B-402) |
+| Unit mit Thema | 409, „0 exercise(s) and 1 unit(s)" | `Thema_An_Einer_Unit…` | Unit-Zählung weg → rot dieser + `Nur_Die_Eigenen…` (gemessen, Stand B-402) |
+| Übung mit Kategorie | 409 | `Kategorie_An_Einer_Uebung…` | Kategorie-Klausel weg → rot nur dieser (gemessen, Stand B-402) |
+| `clearSubject` | 409 | `Fach_Leeren…` | `ClearSubject` ignoriert → rot dieser + `Fach_Leeren_Mit_Uebungen…` (B-401) (gemessen, Stand B-402) |
+| zwei Reihen desselben Fachs, nur A trägt ein Thema | B darf wechseln (200), A: 409 mit „1 exercise(s) and 1 unit(s)" | `Nur_Die_Eigenen_Traeger…` | Reihenfilter Units weg → rot nur dieser; Reihenfilter Übungen weg → rot dieser + beide „Fach leeren"-Fälle (gemessen, Stand B-402) |
 | ohne Zuordnungen / gleiches Fach erneut | 200 | `Ohne_Zuordnungen…` | **Gegenprobe**, vorher und nachher grün |
-| Klickweg: Bearbeiten-Formular der Reihe | Begründung sichtbar, Fach bleibt | `e2e/reihe-fachwechsel-gesperrt.spec.ts` | Sperre aus – gemessen: rot an der 409-Zusicherung |
+| Klickweg: Bearbeiten-Formular der Reihe | Begründung sichtbar, Fach bleibt | `e2e/reihe-fachwechsel-gesperrt.spec.ts` | Sperre aus – gemessen: rot an der Zusicherung der Begründung (seit B-403 der deutsche Text) |
 
 ## Verlauf
 

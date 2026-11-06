@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-05.md#lauf-z
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-05"
 ---
 
 # B-401 · Eine Reihe mit Übungen darf ihr Fach leeren, obwohl eine Reihe ohne Fach keine Übung tragen darf
@@ -46,3 +47,5 @@ oder ist eine fachlose Reihe mit Bestand ein zulässiger Zwischenzustand?
   B-404 (Frage), hier als Grenze benannt. 🟢 die Meldungs-Variante war ungeprüft → Zusicherung ergänzt, **gemessen:** Zweige vertauscht →
   rot nur `Fach_Leeren_Mit_Uebungen_Wird_Gesperrt`. B-400 ohne Fund.
 - **2026-11-05** — **abgenommen.** Rollengang Creator: Integrationsfall gegen den echten Host; der Anzeigeweg der 409 im Bearbeiten-Formular ist derselbe wie in `e2e/reihe-fachwechsel-gesperrt.spec.ts` (B-291) – volle Playwright-Suite 117 passed nach dem letzten Code-Edit. Vater und Sohn Regressionszeugen. Volle Suite 1115/1115. Commit: siehe nächster Eintrag.
+- **2026-11-05** — Commit `176eaf5`.
+- **2026-11-05** — **Nachschau** (Lauf AA, Retro Sprint 16; frischer `pugling-reviewer`, `git show 176eaf5`): geprüft Mutanten-Zeilen am Code (fr→es-Mutante, `clearing`-Mutanten, vertauschte Zweige, Gegenprobe), wann `clearing` greift (`subjectId: null` ohne `clearSubject` = kein Wechsel; fachlose Reihe ohne Prüfung), weitere Erzeuger fachloser Reihen (nur B-404). **Entgangen (🟡):** der Ausweg „switch to another subject" war ohne Bedingung → [B-405](B-405-fach-leeren-meldung-verspricht-wechsel.md).

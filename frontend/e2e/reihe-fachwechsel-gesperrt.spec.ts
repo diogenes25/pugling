@@ -39,7 +39,8 @@ test("Der Fachwechsel einer Reihe mit Themen des alten Fachs wird verweigert und
   await page.locator('select[id^="se-subject-"]').selectOption({ label: neu });
   await page.getByRole("button", { name: `Speichern: „${reihe}"` }).click();
 
-  await expect(page.getByText(/0 exercise\(s\) and 1 unit\(s\)/)).toBeVisible();
+  // Deutsch seit B-403 (`GERMAN_PROBLEM_TEXT`); die Anzahlen trägt nur das englische `detail`.
+  await expect(page.getByText(/hängt noch an ihrem bisherigen Fach/)).toBeVisible();
   await expect(page.getByText("Gespeichert.", { exact: true })).toHaveCount(0);
 
   await page.reload();

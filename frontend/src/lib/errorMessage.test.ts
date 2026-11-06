@@ -36,6 +36,23 @@ describe("errorMessage – deutsche Fassung fachlicher Codes", () => {
     expect(text).not.toContain("Some English sentence.");
   });
 
+  // B-403: die Sperre beim Fachwechsel einer Reihe (B-291/B-401) trifft den Creator am Speichern-Knopf des
+  // Reihen-Formulars. Rot ohne Eintrag (dann steht die englische Zeile da) oder wenn der Satz einen der beiden
+  // Gründe verschweigt – Zuordnungen beim Wechsel, die Übungen selbst beim Entfernen.
+  it("übersetzt die Sperre beim Fachwechsel einer Reihe und nennt beide Gründe", () => {
+    const text = problem("series_subject_in_use");
+
+    expect(text).toContain("Grammatik-Thema");
+    // Die Oberfläche nennt Kategorien „Art"; eine Übung mit Art lässt sich nicht umstellen, nur löschen (B-403-Review).
+    expect(text).toContain("Art dieses Fachs");
+    expect(text).toContain("nur löschen");
+    // Beim Entfernen sperren auch Unit-Themen (Delta-Review): rot, wenn der Satz nur die Übungen nennt.
+    expect(text).toContain("keine Übungen trägt und keine ihrer Units");
+    // B-405: ein anderes Fach zu wählen ist kein Ausweg aus dieser Sperre – es prüft dieselben Zuordnungen.
+    expect(text).not.toContain("anderes Fach");
+    expect(text).not.toContain("Some English sentence.");
+  });
+
   it("übersetzt die Löschsperre am Schlagwort und nennt den Ausweg", () => {
     const text = problem("interest_tag_in_use");
 

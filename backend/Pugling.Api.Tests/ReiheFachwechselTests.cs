@@ -105,7 +105,7 @@ public class ReiheFachwechselTests(PuglingWebAppFactory factory) : IClassFixture
 
     /// <summary>
     /// B-401: a series without a subject may not host an exercise (B-106 T-01), so clearing the subject of a series that has
-    /// exercises is refused even without topics or categories. Changing to ANOTHER subject stays allowed (counter-check in
+    /// exercises is refused even without topics or categories. Changing to ANOTHER subject stays allowed as long as no topics or categories of the old subject remain (counter-check in
     /// <see cref="Ohne_Zuordnungen_Oder_Ohne_Wechsel_Geht_Es_Durch"/>). Red if clearing is checked only for assignments.
     /// </summary>
     [Fact]
@@ -116,7 +116,10 @@ public class ReiheFachwechselTests(PuglingWebAppFactory factory) : IClassFixture
 
         var res = await r.Creator.PatchAsJsonAsync(r.Url, new { clearSubject = true });
         // The clearing variant names its own reason - red if the two message branches are swapped.
-        Assert.Contains("depend on its subject", await res.Content.ReadAsStringAsync());
+        var body = await res.Content.ReadAsStringAsync();
+        Assert.Contains("depend on its subject", body);
+        // B-405: switching is offered only with its condition - red if the message promises it unconditionally.
+        Assert.Contains("once no unit carries grammar topics and no exercise", body);
         await AssertBlockedAsync(r, res, "1 exercise(s)");
     }
 
