@@ -46,6 +46,13 @@ describe("errorMessage – deutsche Fassung fachlicher Codes", () => {
     // Die Oberfläche nennt Kategorien „Art"; eine Übung mit Art lässt sich nicht umstellen, nur löschen (B-403-Review).
     expect(text).toContain("Art dieses Fachs");
     expect(text).toContain("nur löschen");
+    // B-406: Löschen ist selbst gesperrt, solange die Übung benutzt wird (Lehrplan, Klassenarbeit, Ziel – auch fremde, auch
+    // gespielte Positionen). Der Satz verspricht darum keinen Zwischenschritt, sondern verweist auf die Meldung beim Löschen.
+    expect(text).toContain("nirgends mehr benutzt");
+    expect(text).not.toContain("nimm sie dort zuerst heraus");
+    // Die deutsche Meldung beim Löschen nennt nur die Arten, nicht die Stellen – die eigenen zeigt der Knopf „Verwendung".
+    expect(text).toContain("„Verwendung“");
+    expect(text).not.toContain("sagt dir die Meldung beim Löschen");
     // Beim Entfernen sperren auch Unit-Themen (Delta-Review): rot, wenn der Satz nur die Übungen nennt.
     expect(text).toContain("keine Übungen trägt und keine ihrer Units");
     // B-405: ein anderes Fach zu wählen ist kein Ausweg aus dieser Sperre – es prüft dieselben Zuordnungen.

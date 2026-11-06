@@ -655,3 +655,32 @@ Die Nachschau zu Sprint 16 fand eine Entgleitung im Increment **dieses** Laufs (
 
 **Stand Lauf AA:** 4 Stories abgenommen (B-402, B-403, B-405 `9f395d2`; B-313 siehe Commit). Neu: B-405 (im Lauf erledigt), B-406.
 Vorschläge (BG)–(BX) unentschieden. Nichts gepusht. **Nächster Start:** B-406.
+
+## Lauf AB
+
+Vierter von vier Läufen desselben Auftrags.
+
+### Sprint 18 — B-406
+
+**Sprint-Ziel (Creator):** Die Meldung beim gesperrten Fachwechsel nennt nur Auswege, die der Creator wirklich gehen kann – und jeder
+genannte Ausweg ist einmal gegangen.
+
+**Gebaut:** Vorschlag (BX) angewandt – zwei Integrationsfälle gehen die Auswege (Themen herausnehmen → Wechsel geht; verplante Übung:
+Löschen gesperrt → Position raus → Löschen → Fach leeren geht). Anzahl-Zusicherung exakt (`StartsWith`). Beide Sätze nennen das Löschen
+nur mit seiner Bedingung, der deutsche verweist auf den Knopf „Verwendung".
+
+**Review:** 🔴 der erste neue Satz versprach „aus dem Plan herausnehmen" – bei gespielten Positionen und fremden Plänen unmöglich; 🟡
+Klassenarbeit/Ziel sperren auch; Delta 🟡 „die Meldung beim Löschen sagt, wo" stimmt im deutschen UI nicht. **Zähler 3 von 5.** Die
+dauerhafte Sperre → [B-407](backlog/B-407-gespielte-uebung-sperrt-fachwechsel-dauerhaft.md) (Frage). Volle Suite 1119/1119,
+Playwright 117 passed, Klickweg nach dem letzten Edit 1 passed.
+
+**Retrospektive Sprint 18 — Nachschau zu Sprint 17** (`a2d0e38`, B-313, frischer `pugling-reviewer`): geprüft Mutanten, Kommentar-Zählung,
+Doku/Hilfe/Skill, weitere Mehr-Typ-Pfade. **Nichts entgangen**; 🟢 README ergänzt. Index: Nachgeschaut siehe README.
+
+**Was durchkam (in diesem Sprint, vom Review gefangen):** der Gang über den Ausweg (BX) prüfte den Ausweg in **meinem** Testaufbau – einer
+frischen, ungespielten Position im eigenen Plan. Die Fälle, in denen er nicht geht (gespielt, fremd), kamen im Aufbau nie vor. Dieselbe
+Familie wie (BN)/(BO): der Gang belegt den Ausweg für die Form, die mir einfiel.
+
+**Vorschlag (nicht gelandet, Freigabe 3):** (BY) (BX) präzisiert: ein Ausweg in einer Meldung wird **auch** in seinen Sperrfällen gegangen –
+für jede Sperre, die auf dem Ausweg selbst liegt (hier `position_has_data`, fremder Plan), ein Fall „Ausweg gesperrt"; gibt es einen, nennt
+die Meldung den Ausweg nur mit dieser Bedingung oder gar nicht.

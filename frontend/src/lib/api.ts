@@ -115,11 +115,15 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
   // Die Sperre beim Fachwechsel einer Reihe (B-291, B-401; Text B-403). Fest übersetzt wie `exercise_in_use`: die
   // Anzahlen stehen nur im englischen `detail`, und den Satz zu zerlegen hieße, den Vertrag an eine Formulierung zu binden.
   series_subject_in_use:
-    // Der Satz nennt nur Auswege, die es gibt (B-403-Review, B-405): ein anderes Fach zu wählen hilft nie, weil die Sperre
-    // dieselben Zuordnungen prüft; eine Art lässt sich im Bearbeiten-Dialog nicht entfernen, nur die Übung löschen.
+    // Der Satz nennt nur Auswege, die es gibt (B-403-Review, B-405, B-406): ein anderes Fach zu wählen hilft nie, weil die
+    // Sperre dieselben Zuordnungen prüft; eine Art lässt sich im Bearbeiten-Dialog nicht entfernen, nur die Übung löschen – und
+    // das Löschen hat eine eigene Sperre (`exercise_in_use`), deren deutsche Meldung nur die ARTEN der Verwendung nennt. Die
+    // eigenen Stellen zeigt der Knopf „Verwendung" in der Übungsliste; fremde bleiben verborgen. Darum kein Zwischenschritt hier.
     "Diese Reihe hängt noch an ihrem bisherigen Fach. Wechseln geht erst, wenn keine Unit und keine Übung mehr ein "
     + "Grammatik-Thema und keine Übung eine Art dieses Fachs trägt. Grammatik-Themen nimmst du an der Unit bzw. im "
-    + "Bearbeiten-Dialog der Übung heraus; eine Übung mit einer Art dieses Fachs kannst du nur löschen. Ganz entfernen "
+    + "Bearbeiten-Dialog der Übung heraus; eine Übung mit einer Art dieses Fachs kannst du nur löschen – und das nur, "
+    + "solange sie nirgends mehr benutzt wird (Lehrplan, Klassenarbeit, Ziel); wo sie bei deinen Kindern steckt, zeigt "
+    + "„Verwendung“ an der Übung. Ganz entfernen "
     + "lässt sich das Fach nur, solange die Reihe keine Übungen trägt und keine ihrer Units ein Grammatik-Thema dieses "
     + "Fachs hat.",
   // Die dritte Löschsperre (B-206), und die einzige, die einen Vater trifft, der gerade NICHTS falsch

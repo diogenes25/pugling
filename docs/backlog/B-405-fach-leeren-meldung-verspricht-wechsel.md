@@ -33,7 +33,7 @@ nur, wenn keine Übung und keine Unit mehr Themen oder Kategorien des alten Fach
 
 | Fall | Beleg | Rote Probe |
 |---|---|---|
-| englischer Satz nennt die Bedingung | `ReiheFachwechselTests.Fach_Leeren_Mit_Uebungen_Wird_Gesperrt` (`once no exercise or unit carries`) | gegen den alten Satz gemessen: rot („Not found") |
+| englischer Satz nennt die Bedingung | `ReiheFachwechselTests.Fach_Leeren_Mit_Uebungen_Wird_Gesperrt` (`once no unit carries grammar topics and no exercise`; berichtigt in B-406) | gegen den alten Satz gemessen: rot („Not found") |
 | deutscher Satz verspricht keinen Wechsel | `errorMessage.test.ts` (`not.toContain("anderes Fach")`) | gegen den alten Satz gemessen: rot (Fall fiel an der ersten Zusicherung) |
 
 ## Verlauf

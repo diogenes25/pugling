@@ -171,6 +171,8 @@ Selbsttest**. Erst danach entstehen (nur mit `--child`) ein kind-skopierter Tag 
 **Klassenarbeit** im Status *geplant*, der genau diese Übungen zugewiesen sind. Ein gescheiterter Teil
 bricht den Lauf nicht ab, wird aber gemeldet und setzt Exit-Code 1: eine halb gelungene Klausur soll
 sichtbar halb gelungen sein, statt als vollständige Arbeit im Kalender des Kindes zu landen.
+Ein Typ in `--types`, den der Agent nicht erzeugt, ist dagegen kein gescheiterter Teil: er bricht den Aufruf vor dem
+ersten Modellaufruf als Fehlbedienung ab (Exit-Code 2, B-313; ebenso bei `plan`).
 Ohne `--child` gibt es keinen Tag (Tags sind kind-skopiert) – dann hält allein die Quellenangabe das
 Bündel zusammen.
 

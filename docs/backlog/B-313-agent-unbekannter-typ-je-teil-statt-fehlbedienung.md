@@ -12,6 +12,7 @@ quelle: Nachschau zu Lauf F Teil 5 in Lauf G, Teil 1 (docs/pm-sitzung-2026-10-27
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-05"
 entgangen_bei: []
 wartet_auf: ""
 ---
@@ -59,3 +60,7 @@ Der gültige Typ steht **zuerst**: eine Prüfung je Teil hätte für ihn das Mod
 - **2026-11-05** — **abgenommen.** Rollengang Creator (KI-Agent) als Integrationsfall über die echte Kommandozeile (`CommandLine.Parse` →
   `AgentCommands.RunAsync`) gegen den echten Host – das ist der Bedienweg des Agenten. Das Web (Vater/Sohn) berührt der Diff nicht; volle
   Suite 1117/1117 als Regression, keine E2E nötig (kein Laufzeit-Code im Web-Pfad). Commit: siehe nächster Eintrag.
+- **2026-11-05** — Commit `a2d0e38`.
+- **2026-11-05** — **Nachschau** (Lauf AB, Retro Sprint 18; frischer `pugling-reviewer`, `git show a2d0e38`): geprüft Mutanten am Code (je
+  Aufrufstelle nur ihr Fall), „All five checks" gezählt (fünf), `CLAUDE.md`, `--help`, README, Skill, weitere Pfade mit mehreren Typen (nur
+  `plan`/`exam`). Nichts entgangen; 🟢 README-Abschnitt zu `exam` nannte Exit 2 nicht – ergänzt.

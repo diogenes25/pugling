@@ -44,6 +44,15 @@ public class ReiheFachwechselTests(PuglingWebAppFactory factory) : IClassFixture
             grammarTopicIds = topicIds ?? [],
         }));
 
+    private static object Payload(string title, int[] topicIds) => new
+    {
+        title,
+        orderIndex = 1,
+        rewardPoints = 10,
+        config = new { direction = "front-to-back", sourceLang = "en", targetLang = "de", items = new[] { new { front = "hello", back = "hallo" } } },
+        grammarTopicIds = topicIds,
+    };
+
     private static async Task<int?> SubjectOfAsync(Reihe r)
     {
         var series = await r.Creator.GetFromJsonAsync<JsonElement>(r.Url);
@@ -55,7 +64,8 @@ public class ReiheFachwechselTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
         var problem = await res.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("series_subject_in_use", problem.GetProperty("code").GetString());
-        Assert.Contains(counts, problem.GetProperty("detail").GetString());
+        // StartsWith, not Contains: the detail opens with the counts, and "1 exercise(s)" is also a suffix of "11 exercise(s)" (B-406).
+        Assert.StartsWith(counts, problem.GetProperty("detail").GetString());
         // Refused means nothing written: the series keeps its old subject.
         Assert.Equal(r.OldSubject, await SubjectOfAsync(r));
     }
@@ -120,7 +130,56 @@ public class ReiheFachwechselTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Contains("depend on its subject", body);
         // B-405: switching is offered only with its condition - red if the message promises it unconditionally.
         Assert.Contains("once no unit carries grammar topics and no exercise", body);
+        // B-406: an exercise in use cannot be deleted at all (plans - also foreign or already played -, class tests, objectives);
+        // the message states the condition instead of promising a step the creator may not be able to take.
+        Assert.Contains("only while nothing uses it", body);
         await AssertBlockedAsync(r, res, "1 exercise(s)");
+    }
+
+    /// <summary>
+    /// B-406: the ways out the message names are walked once - blocked, way out, unblocked. Topics come off at the unit (PATCH)
+    /// and at the exercise (PUT, as the edit dialog sends it); then the change goes through. Red if a way out does not lift the
+    /// block, i.e. if the message promises something the server does not honour.
+    /// </summary>
+    [Fact]
+    public async Task Ausweg_Themen_Herausnehmen_Entsperrt_Den_Wechsel()
+    {
+        var r = await ReiheAsync();
+        var topic = await TopicAsync(r.Creator, r.OldSubject);
+        var title = TestApi.UniqueName("Ausweg-Übung");
+        var exerciseId = await TestApi.IdAsync(await r.Creator.PostAsJsonAsync($"{r.Url}/units/{r.UnitId}/vocabulary", Payload(title, [topic])));
+        (await r.Creator.PatchAsJsonAsync($"{r.Url}/units/{r.UnitId}", new { grammarTopicIds = new[] { topic } })).EnsureSuccessStatusCode();
+        await AssertBlockedAsync(r, await r.Creator.PatchAsJsonAsync(r.Url, new { subjectId = r.NewSubject }), "1 exercise(s) and 1 unit(s)");
+
+        (await r.Creator.PatchAsJsonAsync($"{r.Url}/units/{r.UnitId}", new { grammarTopicIds = Array.Empty<int>() })).EnsureSuccessStatusCode();
+        (await r.Creator.PutAsJsonAsync($"{r.Url}/units/{r.UnitId}/vocabulary/{exerciseId}", Payload(title, []))).EnsureSuccessStatusCode();
+
+        Assert.Equal(HttpStatusCode.OK, (await r.Creator.PatchAsJsonAsync(r.Url, new { subjectId = r.NewSubject })).StatusCode);
+        Assert.Equal(r.NewSubject, await SubjectOfAsync(r));
+    }
+
+    /// <summary>
+    /// B-406: "delete the exercise" is a way out only once the exercise is in no study plan - deleting a planned one is
+    /// <c>exercise_in_use</c>. Walked: blocked clear, refused delete, position removed, delete, clear goes through. Red if the
+    /// delete lock or the order changes, which would make the message's "take it out of the plan first" untrue.
+    /// </summary>
+    [Fact]
+    public async Task Ausweg_Loeschen_Geht_Bei_Einer_Verplanten_Uebung_Erst_Nach_Dem_Herausnehmen()
+    {
+        var r = await ReiheAsync();
+        var exerciseId = await ExerciseAsync(r);
+        var planId = await TestApi.CreateEmptyPlanAsync(r.Creator);
+        var positionId = await TestApi.IdAsync(await r.Creator.PostAsJsonAsync(
+            $"/api/v1/supervisor/study-plans/{planId}/positions", new { exerciseId }));
+        await AssertBlockedAsync(r, await r.Creator.PatchAsJsonAsync(r.Url, new { clearSubject = true }), "1 exercise(s)");
+
+        var refused = await r.Creator.DeleteAsync($"{r.Url}/units/{r.UnitId}/vocabulary/{exerciseId}");
+        Assert.Equal(HttpStatusCode.Conflict, refused.StatusCode);
+        Assert.Equal("exercise_in_use", (await refused.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+
+        Assert.Equal(HttpStatusCode.NoContent, (await r.Creator.DeleteAsync($"/api/v1/supervisor/study-plans/{planId}/positions/{positionId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await r.Creator.DeleteAsync($"{r.Url}/units/{r.UnitId}/vocabulary/{exerciseId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await r.Creator.PatchAsJsonAsync(r.Url, new { clearSubject = true })).StatusCode);
     }
 
     /// <summary>

@@ -76,3 +76,6 @@ Themen bzw. Kategorien des alten Fachs tragen, wird der Wechsel verweigert, und 
   Fehler-Katalog, Vertrag und die einzige Stelle im Frontend, die eine Reihe patcht, (4) die Berichtigungen aus B-399. **Entgangen:** zwei
   Mutanten-Zeilen gelten seit dem Review-Fall nicht mehr → [B-402](B-402-b291-mutantenzeilen-veraltet.md); der neue Code hat keinen
   deutschen Text im Vater-Web → [B-403](B-403-reihe-fachwechsel-meldung-ohne-deutschen-text.md).
+- **2026-11-05** — Mutanten nach dem letzten Test-Edit von B-406 erneut gemessen (Anzahl jetzt per `StartsWith`, dazu zwei Ausweg-Gänge):
+  jede Bedingung weiter mit mindestens einem roten Fall; die Gänge kommen bei Themen-, Unit-, Clear- und Reihenfilter-Mutante hinzu. Die
+  Tabelle oben gilt mit diesem Zusatz (Stand B-406).
