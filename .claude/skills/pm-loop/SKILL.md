@@ -233,11 +233,15 @@ Before you let any role look again:
   `/smoke-test`, and for UI flows `npm run test:e2e`. Report the actual counts ("98/98 grün"), not
   a hopeful "should pass". If something's red, say so and fix it.
 - Add or extend an integration test in `Pugling.Api.Tests` for nontrivial backend changes.
-- **A test case that claims a distinction needs the two values to differ in its setup** ("not X",
-  "newest first", "own vs. foreign"). Mandatory before the review: per case, name the mutant "both
-  equal" and log the setup line that keeps them apart; no such line → rewrite the case first (sprints 11/12).
-- **Before the review, one `## Verlauf` line per AK and per part of a decision:** *AK n → test (file:line), mutant → red*.
-  A part without its own assertion gets one first (Lauf L: B-336 AK 2, B-341).
+- **Before the review, one `## Verlauf` line per AK *case* and per part of a decision:** *AK n, case → test (file:line),
+  mutant → red*. Cases are path × value; a "like X" yardstick joins the table with the same values; a computed prop is a
+  case; a changed shared condition gets one row per *action*, found by `grep`. A distinction needs the two
+  values to differ in the setup. `verworfen` holds only for the forms measured — name them in `grund`.
+- **Measure with `.claude/scripts/mutant-probe.py` after the last edit** and paste its table: per case and per condition of a
+  new query one mutant that turns only it red. `ungemessen`, `abweichend` and a line green without the fix (*Gegenprobe*)
+  are no evidence. Size or contract claims: measured at the file, command in the line.
+- **Error messages name the lock, never a way out** (decided 2026-11-07); a surface they point at must exist and
+  show the lock. Origin: `docs/pm-sitzung-2026-11-05.md`, last section.
 - Run the **`pugling-reviewer`** agent (correctness + project conventions) and fold in its
   correctness findings before sign-off; note cleanup-only findings as non-blocking refactors.
 
@@ -247,7 +251,6 @@ condition for `abgenommen` (`docs/backlog/README.md`). Then the honest outcome i
 verified, story stays `in-arbeit`, and one `## Verlauf` line names *why* the condition is unmet. Ask the
 user for the one word that unblocks it. What is **not** allowed is calling your own reading of the diff
 "the review" — a self-check is weaker evidence and must be labelled as such if it is used at all.
-(Happened on 2026-08-05: B-110/B-111 were fully verified and still stayed `in-arbeit`.)
 
 **A finding that surfaces *during* verification becomes its own story — it does not widen this sprint.**
 The rule is the repo's own precedent (B-97 → B-104, and B-110 → B-113 on 2026-08-05): file it if the
@@ -380,8 +383,7 @@ Then land **exactly one change to a mechanism**, in this session, before the spr
   if the file went over, compress or relocate something of comparable size right there — a passage whose
   full reasoning already lives in `docs/` is the first candidate. One rule per sprint against a fixed
   budget overflows within a few sprints, so "put it in the area's `CLAUDE.md`" is only honest if the pass
-  includes the payment. (On 2026-08-05 `frontend/CLAUDE.md` had 13 bytes of headroom and the retro's rule
-  put it 387 over — the debt was reported instead of paid, which is the weaker outcome.)
+  includes the payment (2026-08-05: reported 387 B over instead of paid — the weaker outcome).
 - "No mechanism would have caught this" is a permitted answer, but it must be **argued** — name why the
   failure is genuinely unmechanizable (subjective-sensory judgment is the usual honest case, per Step 6's
   third outcome) rather than defaulting to it because inventing a gate is work.
@@ -390,9 +392,6 @@ Then land **exactly one change to a mechanism**, in this session, before the spr
 
 Record it in the session log under `## Retrospektive` — what slipped, what mechanism now covers it, and
 what deliberately stays uncovered.
-
-Why the event earns its cost: the 2026-08-05 batch had no retro, and its six review findings arrived a
-day later through a separate manual pass — with fourteen stories already stamped `abgenommen`.
 
 ## Session log — the durable artifact
 

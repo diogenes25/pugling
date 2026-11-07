@@ -31,6 +31,10 @@ worauf du schaust und **warum es weh tut**, wenn es fehlt; die Regeln selbst leb
 - **PATCH: `null` heißt „nicht angegeben", nicht „leeren".** Eine Oberfläche mit „– keine Angabe –" braucht
   den `clear<Feld>`-Schalter des DTOs. Ohne ihn meldet das Formular fröhlich „Gespeichert." und der alte
   Wert steht weiter da — der teuerste stille Fehler dieser Codebasis.
+- **Meldungen in `GERMAN_PROBLEM_TEXT` nennen, was sperrt – keine Auswege** (Entscheidung 2026-11-07,
+  `pm-loop` Step 5). Ein aufgezählter Ausweg ist ein 🟡, weil jeder Ausweg eigene Sperren hat: die
+  Fachwechsel-Meldung brauchte so fünf Runden. Verweist der Satz auf einen Knopf („Verwendung"), prüfe,
+  dass es ihn gibt und dass er die Sperre zeigt.
 - Kein HTTP-Plumbing neben `src/lib/api.ts`; Paging über `httpPaged`/`X-Total-Count`, nicht per Hand gezählt.
 
 **2. Die Schreib-Primitive benutzen, nicht nachbauen**

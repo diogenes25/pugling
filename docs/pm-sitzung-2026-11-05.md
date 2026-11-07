@@ -717,3 +717,18 @@ B-402, B-403, B-405, B-313 (AA); B-406, B-270 (AB) – davon sechs (B-399, B-400
 eine Entgleitung im eigenen Increment). Im Auftrag entschieden: B-398 (Frage), B-396 Entscheidung 2. Offen und neu: B-404, B-407 (Fragen),
 B-408 (Wunsch), B-409 (Defekt). Vorschläge (BG)–(BZ) unentschieden; besonders (BX)/(BY)/(BZ) zur Meldungs-Kette und (BR)/(BV) als Tore.
 Nichts gepusht. **Nächster Start:** B-409.
+
+## Entscheidung über die Retro-Vorschläge (BG)–(BZ) — 2026-11-07
+
+Gesichtet im Dialog, gebündelt in fünf Familien; **Entscheidung des Nutzers** („Ja, wie empfohlen"), nicht im Auftrag:
+
+| Familie | Vorschläge | Entscheidung | Gelandet in |
+|---|---|---|---|
+| A · Belege und Mutanten | (BH), (BJ), (BL), (BP), (BS), (BT), (BU) | angenommen, zusammengefasst; (BL) als Skript | `.claude/scripts/mutant-probe.py`, `pm-loop` Step 5 |
+| B · AK in Fälle zerlegen | (BG), (BN), (BO), (BQ) | angenommen, zusammengefasst | `pm-loop` Step 5 |
+| C · Gemeinsame Bedingung | (BI), (BK), (BM) | (BM) angenommen; (BI), (BK) überholt | `pm-loop` Step 5 |
+| D · Auswege in Meldungen | (BW), (BX), (BY), (BZ) | (BZ) angenommen (Produktentscheidung), (BW) als Satz darin; (BX), (BY) überholt | `pm-loop` Step 5, beide Reviewer-Briefs |
+| E · Tore | (BR), (BV) | als Stories, erst messen | [B-410](backlog/B-410-tor-null-element-ueber-alle-body-listen.md), [B-411](backlog/B-411-tor-409-codes-haben-deutschen-text.md) |
+
+Das Proben-Skript wurde an `PinHasher.IsAcceptable` erprobt: ein echter Mutant ergibt `red`, ein nicht kompilierender `ungemessen`,
+ein am falschen Ort fallender `abweichend`; danach ist die Grundlinie grün. Damit sind keine Retro-Vorschläge mehr offen.
