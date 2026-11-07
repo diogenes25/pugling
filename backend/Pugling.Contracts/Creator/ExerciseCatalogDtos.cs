@@ -60,12 +60,25 @@ public record PlanUsage(int PlanId, string PlanTitle, int ChildId, string ChildN
 /// <summary>A class test to which an exercise is assigned (directly or via a tag).</summary>
 public record ClassTestUsage(int Id, string Title, int ChildId, string ChildName);
 
+/// <summary>A milestone of an objective (<c>KeyResult</c>) that points at an exercise.</summary>
+/// <param name="ObjectiveId">The objective the milestone belongs to.</param>
+/// <param name="ObjectiveTitle">Title of the objective.</param>
+/// <param name="KeyResultTitle">Free title of the milestone; <c>null</c> when the supervisor set none.</param>
+/// <param name="ChildId">The child whose objective it is.</param>
+/// <param name="ChildName">That child's name.</param>
+public record GoalUsage(int ObjectiveId, string ObjectiveTitle, string? KeyResultTitle, int ChildId, string ChildName);
+
 /// <summary>
-/// Where an exercise is used. <see cref="Plans"/> and <see cref="ClassTests"/> only name resources of the
-/// caller's <b>own</b> children – other supervisors' children must not show up here.
+/// Where an exercise is used. <see cref="Plans"/>, <see cref="ClassTests"/> and <see cref="Goals"/> only name resources
+/// of the caller's <b>own</b> children – other supervisors' children must not show up here.
 /// </summary>
 /// <param name="Plans">Study plans of own children in which the exercise is used as a position.</param>
 /// <param name="ClassTests">Class tests of own children (assigned directly or via a tag).</param>
+/// <param name="Goals">
+/// Objective milestones of own children that point at this exercise. They block deleting it like a position does, so
+/// a display without them promised "deletable" for an exercise the delete refuses (B-409). Milestones on a whole unit
+/// are not listed: they do not reference the exercise and do not block its deletion.
+/// </param>
 /// <param name="OtherLearnersCount">
 /// How many <b>different children</b> use the exercise whom the caller <b>does not supervise</b> – just the
 /// number, without names. Two reasons. Without it the lists report "nowhere" while deletion fails with
@@ -77,4 +90,5 @@ public record ClassTestUsage(int Id, string Title, int ChildId, string ChildName
 /// collected via a tag does not prevent it and is therefore not counted.
 /// </param>
 public record UsageResponse(
-    IReadOnlyList<PlanUsage> Plans, IReadOnlyList<ClassTestUsage> ClassTests, int OtherLearnersCount);
+    IReadOnlyList<PlanUsage> Plans, IReadOnlyList<ClassTestUsage> ClassTests, IReadOnlyList<GoalUsage> Goals,
+    int OtherLearnersCount);

@@ -40,8 +40,8 @@ Dazu zwei Beleg-Mängel aus derselben Nachschau:
 
 | Fall | Beleg | Rote Probe / Mutante |
 |---|---|---|
-| deutscher Satz nennt den Lehrplan | `errorMessage.test.ts` (`in einem Lehrplan`) | gegen den vorigen Satz gemessen: rot |
-| englischer Satz nennt den Lehrplan | `ReiheFachwechselTests.Fach_Leeren_Mit_Uebungen…` (`study plan`) | gegen den vorigen Satz gemessen: rot (`Not found: "study plan"`) |
+| deutscher Satz nennt das Löschen nur mit seiner Bedingung | `errorMessage.test.ts` (`nirgends mehr benutzt`) | gegen den vorigen Satz gemessen: rot (Zeile berichtigt in B-409: zitierte zuerst die überholte Zusicherung `in einem Lehrplan`) |
+| englischer Satz nennt das Löschen nur mit seiner Bedingung | `ReiheFachwechselTests.Fach_Leeren_Mit_Uebungen…` (`only while nothing uses it`) | gegen den vorigen Satz gemessen: rot (Zeile berichtigt in B-409: zitierte zuerst `study plan`) |
 | Ausweg „Themen herausnehmen" (Unit-PATCH, Übungs-PUT) hebt die Sperre | `Ausweg_Themen_Herausnehmen_Entsperrt_Den_Wechsel` | **Gang**, vorher grün; rot unter Themen-/Unit-Mutante (gemessen) |
 | Ausweg „Löschen" erst nach Herausnehmen aus dem Plan | `Ausweg_Loeschen_Geht_Bei_Einer_Verplanten_Uebung…` | **Gang**, vorher grün; rot unter Clear-/Reihenfilter-Mutante (gemessen) |
 | Anzahl exakt | `AssertBlockedAsync` (`StartsWith`) | Reihenfilter-Übungen-Mutante: rot in vier Fällen (gemessen) |

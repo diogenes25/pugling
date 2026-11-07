@@ -234,9 +234,9 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     }
 
     /// <summary>
-    /// Which study plans and class tests (of which own children) an exercise is embedded in.
+    /// Which study plans, class tests and objective milestones (of which own children) an exercise is embedded in.
     /// Study plans via the position model (<see cref="PlanPosition"/>); class tests either directly
-    /// assigned OR via a shared tag.
+    /// assigned OR via a shared tag; milestones only when they point at the exercise itself (B-409).
     ///
     /// In addition <see cref="UsageResponse.OtherLearnersCount"/>: the <b>number of children</b> of other
     /// supervisors who use the exercise. Without it, this response claimed "nowhere" while deletion
@@ -267,10 +267,17 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
             .Select(k => new ClassTestUsage(k.Id, k.Title, k.ChildId, k.Child!.Name))
             .ToListAsync(ct);
 
+        // Same predicate as the goal count of CountBlockingAsync: a milestone on the exercise itself, for a child the
+        // caller supervises. Unit milestones never block deleting an exercise, so they are not usages of it.
+        var goals = await db.KeyResults.AsNoTracking()
+            .Where(k => k.ExerciseId == id && k.Objective!.Child!.SupervisorLinks.Any(l => l.SupervisorId == fid))
+            .Select(k => new GoalUsage(k.ObjectiveId, k.Objective!.Title, k.Title, k.Objective.ChildId, k.Objective.Child!.Name))
+            .ToListAsync(ct);
+
         // The same count that deleting uses - one source, so the two answers cannot drift apart again. What we
         // hand out is the number of **children**, not of places: that is the answer to "is my material being
         // used", and places would be a meaningless number for a creator without children of their own.
         var blocking = await ExerciseUsageQueries.CountBlockingAsync(db, id, fid, ct);
-        return new UsageResponse(plans, classTests, blocking.HiddenLearners);
+        return new UsageResponse(plans, classTests, goals, blocking.HiddenLearners);
     }
 }

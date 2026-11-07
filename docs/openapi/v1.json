@@ -12442,7 +12442,7 @@
         "tags": [
           "Creator \u2013 Exercise Catalog"
         ],
-        "summary": "Which study plans and class tests (of which own children) an exercise is embedded in.\nStudy plans via the position model (PlanPosition); class tests either directly\nassigned OR via a shared tag.\n\nIn addition int UsageResponse.OtherLearnersCount: the number of children of other\nsupervisors who use the exercise. Without it, this response claimed \u0022nowhere\u0022 while deletion\nfailed with \u0060409\u0060 \u2013 the same count now feeds both places (remark 14). For a creator without\nown children (teacher, AI creator app) it is the only meaningful information here.",
+        "summary": "Which study plans, class tests and objective milestones (of which own children) an exercise is embedded in.\nStudy plans via the position model (PlanPosition); class tests either directly\nassigned OR via a shared tag; milestones only when they point at the exercise itself (B-409).\n\nIn addition int UsageResponse.OtherLearnersCount: the number of children of other\nsupervisors who use the exercise. Without it, this response claimed \u0022nowhere\u0022 while deletion\nfailed with \u0060409\u0060 \u2013 the same count now feeds both places (remark 14). For a creator without\nown children (teacher, AI creator app) it is the only meaningful information here.",
         "parameters": [
           {
             "name": "id",
@@ -37149,6 +37149,51 @@
         "type": "string",
         "description": "Live-computed status of an \u0060Objective\u0060/\u0060KeyResult\u0060 \u2013 never a stored column\n(\u0060ObjectiveEvaluationService.StatusOf\u0060 computes it on every read).\n\nAllowed values: Open, Achieved, Overdue."
       },
+      "GoalUsage": {
+        "required": [
+          "childId",
+          "childName",
+          "objectiveId",
+          "objectiveTitle"
+        ],
+        "type": "object",
+        "properties": {
+          "objectiveId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The objective the milestone belongs to.",
+            "format": "int32"
+          },
+          "objectiveTitle": {
+            "type": "string",
+            "description": "Title of the objective."
+          },
+          "keyResultTitle": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Free title of the milestone; \u0060null\u0060 when the supervisor set none."
+          },
+          "childId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The child whose objective it is.",
+            "format": "int32"
+          },
+          "childName": {
+            "type": "string",
+            "description": "That child\u0027s name."
+          }
+        },
+        "description": "A milestone of an objective (\u0060KeyResult\u0060) that points at an exercise."
+      },
       "GrammarConfig": {
         "required": [
           "tasks"
@@ -45010,6 +45055,7 @@
       "UsageResponse": {
         "required": [
           "classTests",
+          "goals",
           "otherLearnersCount",
           "plans"
         ],
@@ -45029,6 +45075,13 @@
             },
             "description": "Class tests of own children (assigned directly or via a tag)."
           },
+          "goals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GoalUsage"
+            },
+            "description": "Objective milestones of own children that point at this exercise. They block deleting it like a position does, so\na display without them promised \u0022deletable\u0022 for an exercise the delete refuses (B-409). Milestones on a whole unit\nare not listed: they do not reference the exercise and do not block its deletion."
+          },
           "otherLearnersCount": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
@@ -45039,7 +45092,7 @@
             "format": "int32"
           }
         },
-        "description": "Where an exercise is used. IReadOnlyList\u0026lt;PlanUsage\u0026gt; UsageResponse.Plans and IReadOnlyList\u0026lt;ClassTestUsage\u0026gt; UsageResponse.ClassTests only name resources of the\ncaller\u0027s **own** children \u2013 other supervisors\u0027 children must not show up here."
+        "description": "Where an exercise is used. IReadOnlyList\u0026lt;PlanUsage\u0026gt; UsageResponse.Plans, IReadOnlyList\u0026lt;ClassTestUsage\u0026gt; UsageResponse.ClassTests and IReadOnlyList\u0026lt;GoalUsage\u0026gt; UsageResponse.Goals only name resources\nof the caller\u0027s **own** children \u2013 other supervisors\u0027 children must not show up here."
       },
       "VerbInfo": {
         "required": [

@@ -96,11 +96,19 @@ def load(path):
 
 
 def split_lines(path):
+    """Lines without their ending, plus each line's own ending: the format hook writes touched lines as CRLF into
+    an LF file, so one ending per file guessed from the first CRLF splits a mixed file wrongly (measured on B-409)."""
     data = open(path, "rb").read()
     bom = data.startswith(b"\xef\xbb\xbf")
-    text = data.decode("utf-8-sig")
-    nl = "\r\n" if "\r\n" in text else "\n"
-    return data, bom, nl, text.split(nl)
+    # Only at "\n" - str.splitlines would also split at U+2028 and friends inside string literals.
+    raw = re.findall(r"[^\n]*\n|[^\n]+$", data.decode("utf-8-sig"))
+    lines = [r.rstrip("\r\n") for r in raw]
+    endings = [r[len(l):] for r, l in zip(raw, lines)]
+    return data, bom, endings, lines
+
+
+def join_lines(lines, endings):
+    return "".join(l + e for l, e in zip(lines, endings))
 
 
 def main():
@@ -120,20 +128,22 @@ def main():
             sys.exit(f"{m['id']}: Zeile {m['f']}:{m['l']} stimmt nicht.\n"
                      f"  erwartet: {m['old']!r}\n  gefunden: {actual!r}")
 
-    baseline_build, baseline_test = mutants[0]["build"], mutants[0]["test"]
-    print(f"Grundlinie: {baseline_build}", file=sys.stderr)
-    code, out = run(baseline_build)
-    if code != 0:
-        sys.exit("Grundlinie kompiliert nicht – Abbruch.\n" + out[-3000:])
-    if verdict(*run(baseline_test)) != "green":
-        sys.exit("Grundlinie ist nicht grün – keine Probe misst dann etwas. Abbruch.")
+    # One baseline per distinct (build, test) pair: a list mixing dotnet, vitest and playwright needs each one green.
+    baselines = list(dict.fromkeys((m["build"], m["test"]) for m in mutants))
+    for build, test in baselines:
+        print(f"Grundlinie: {test}", file=sys.stderr)
+        code, out = run(build)
+        if code != 0:
+            sys.exit("Grundlinie kompiliert nicht – Abbruch.\n" + out[-3000:])
+        if verdict(*run(test)) != "green":
+            sys.exit(f"Grundlinie ist nicht grün ({test}) – keine Probe misst dann etwas. Abbruch.")
 
     measured_at = stand()
     rows = []
     for m in mutants:
-        original, bom, nl, lines = split_lines(m["f"])
+        original, bom, endings, lines = split_lines(m["f"])
         lines[m["l"] - 1] = m["new"]
-        mutated = nl.join(lines).encode("utf-8")
+        mutated = join_lines(lines, endings).encode("utf-8")
         if bom:
             mutated = b"\xef\xbb\xbf" + mutated
         expect = m.get("expect", "red")
@@ -160,8 +170,12 @@ def main():
                      got if ok or got in ("ungemessen", "abweichend", "unklar") else f"{got} (abweichend)",
                      note))
 
-    code, out = run(baseline_build)
-    final = verdict(*run(baseline_test)) if code == 0 else "kompiliert nicht"
+    final = "green"
+    for build, test in baselines:
+        code, out = run(build)
+        got = verdict(*run(test)) if code == 0 else "kompiliert nicht"
+        if got != "green":
+            final = f"{got} ({test})"
     print(f"\nGemessen an `{measured_at}`, {time.strftime('%Y-%m-%d %H:%M')}.\n")
     print("| Mutante | Stelle | erwartet | gemessen | Anmerkung |")
     print("|---|---|---|---|---|")

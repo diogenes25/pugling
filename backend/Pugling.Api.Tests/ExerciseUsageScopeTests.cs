@@ -176,4 +176,166 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
             $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary/{exerciseId}");
         Assert.Equal(HttpStatusCode.NoContent, del.StatusCode);
     }
+
+    /// <summary>
+    /// B-409, case 1: a goal milestone of an own child blocks deleting the exercise, so the usage display names it.
+    /// Before, the display had no goal list and the panel promised "deleting is possible" while the delete was a 409.
+    /// Red if the goal list is dropped or loses the exercise filter.
+    /// </summary>
+    [Fact]
+    public async Task EigeneZielEtappe_WirdUnterVerwendungGenannt()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var exercise = await VocabExerciseAsync(father, "lighthouse", "Leuchtturm");
+        var title = TestApi.UniqueName("Ziel");
+        await GoalOnExerciseAsync(father, 1, exercise, title);
+
+        var usage = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exercise.Id}/usage");
+        var goal = Assert.Single(usage.GetProperty("goals").EnumerateArray());
+        Assert.Equal(title, goal.GetProperty("objectiveTitle").GetString());
+        Assert.Equal("Etappe Leuchtturm", goal.GetProperty("keyResultTitle").GetString());
+        Assert.Equal(1, goal.GetProperty("childId").GetInt32());
+        Assert.False(string.IsNullOrEmpty(goal.GetProperty("childName").GetString()));
+        Assert.Equal(0, usage.GetProperty("otherLearnersCount").GetInt32());
+
+        // The comparison path: the delete lock counts the same milestone as "of yours".
+        var del = await father.DeleteAsync(
+            $"/api/v1/creator/textbook-series/{exercise.SeriesId}/units/{exercise.SeriesUnitId}/vocabulary/{exercise.Id}");
+        Assert.Equal(HttpStatusCode.Conflict, del.StatusCode);
+        Assert.Contains("1 objective milestone of yours", (await del.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("detail").GetString());
+    }
+
+    /// <summary>
+    /// B-409, case 2: the milestone of a child the caller does not supervise stays a number - no title, no name.
+    /// Red if the goal list loses its supervision filter (then the foreign goal would be listed by name). The count of 1
+    /// already held before B-409 (HiddenLearners included foreign milestones); here it only guards the number.
+    /// </summary>
+    [Fact]
+    public async Task FremdeZielEtappe_BleibtEineZahl()
+    {
+        var owner = await NewFatherAsync("Ziel-Owner", "5151");
+        var exercise = await VocabExerciseAsync(owner, "anchor", "Anker");
+        var other = await NewFatherAsync("Fremder Ziel-Betreuer", "6161");
+        var childId = await TestApi.IdAsync(await other.PostAsJsonAsync(
+            "/api/v1/supervisor/children", new { name = "Zielkind", pin = "7777" }));
+        await GoalOnExerciseAsync(other, childId, exercise, TestApi.UniqueName("Fremdziel"));
+
+        var usage = await owner.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exercise.Id}/usage");
+        Assert.Empty(usage.GetProperty("goals").EnumerateArray());
+        Assert.Equal(1, usage.GetProperty("otherLearnersCount").GetInt32());
+
+        // Counter-view: for the supervising adult it is an ordinary, named usage.
+        var otherUsage = await other.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exercise.Id}/usage");
+        Assert.Single(otherUsage.GetProperty("goals").EnumerateArray());
+        Assert.Equal(0, otherUsage.GetProperty("otherLearnersCount").GetInt32());
+    }
+
+    /// <summary>
+    /// B-409, case 3: a milestone on a sibling exercise of the same unit does not concern this exercise.
+    /// Red if the goal list filters by unit instead of by exercise.
+    /// </summary>
+    [Fact]
+    public async Task ZielEtappe_EinerAnderenUebung_ZaehltNicht()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var exercise = await VocabExerciseAsync(father, "harbour wall", "Hafenmauer");
+        var sibling = await VocabExerciseAsync(father, "quay", "Kai", exercise);
+        await GoalOnExerciseAsync(father, 1, sibling, TestApi.UniqueName("Nachbarziel"));
+
+        var usage = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exercise.Id}/usage");
+        Assert.Empty(usage.GetProperty("goals").EnumerateArray());
+        var siblingUsage = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{sibling.Id}/usage");
+        Assert.Single(siblingUsage.GetProperty("goals").EnumerateArray());
+    }
+
+    /// <summary>
+    /// B-409, case 3b: a milestone on the exercise's whole unit (no exercise set) does not block deleting the exercise,
+    /// so it is not a usage of it - the contract promises exactly this exclusion. Red if the goal list also takes the
+    /// milestones of the exercise's unit.
+    /// </summary>
+    [Fact]
+    public async Task ZielEtappe_AufDieGanzeUnit_IstKeineVerwendungDerUebung()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var exercise = await VocabExerciseAsync(father, "pier", "Mole");
+        await GoalAsync(father, 1, exercise, TestApi.UniqueName("Unitziel"), exerciseId: null);
+
+        var usage = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exercise.Id}/usage");
+        Assert.Empty(usage.GetProperty("goals").EnumerateArray());
+
+        // The comparison path: deleting the exercise is not blocked by the unit milestone.
+        var del = await father.DeleteAsync(
+            $"/api/v1/creator/textbook-series/{exercise.SeriesId}/units/{exercise.SeriesUnitId}/vocabulary/{exercise.Id}");
+        Assert.Equal(HttpStatusCode.NoContent, del.StatusCode);
+    }
+
+    private sealed record ExerciseRef(int Id, int SubjectId, int SeriesId, int SeriesUnitId);
+
+    /// <summary>A vocabulary exercise in a fresh unit, or - with <paramref name="sameUnitAs"/> - next to another one.</summary>
+    private static async Task<ExerciseRef> VocabExerciseAsync(HttpClient creator, string front, string back, ExerciseRef? sameUnitAs = null)
+    {
+        int subjectId, seriesId, seriesUnitId;
+        if (sameUnitAs is null)
+        {
+            subjectId = await TestApi.IdAsync(await creator.PostAsJsonAsync(
+                "/api/v1/creator/subjects", new { name = TestApi.UniqueName("Ziel-Fach") }));
+            (seriesId, seriesUnitId) = await TestApi.CreateSeriesAndUnitAsync(creator, subjectId);
+        }
+        else
+        {
+            (subjectId, seriesId, seriesUnitId) = (sameUnitAs.SubjectId, sameUnitAs.SeriesId, sameUnitAs.SeriesUnitId);
+        }
+
+        var id = await TestApi.IdAsync(await creator.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary",
+            new
+            {
+                title = $"Wörter {front}",
+                orderIndex = 1,
+                rewardPoints = 10,
+                config = new
+                {
+                    direction = "front-to-back",
+                    sourceLang = "en",
+                    targetLang = "de",
+                    items = new[] { new { front, back } },
+                },
+            }));
+        return new ExerciseRef(id, subjectId, seriesId, seriesUnitId);
+    }
+
+    /// <summary>An objective for <paramref name="childId"/> with one mastery milestone on <paramref name="exercise"/>.</summary>
+    private static Task GoalOnExerciseAsync(HttpClient supervisor, int childId, ExerciseRef exercise, string title) =>
+        GoalAsync(supervisor, childId, exercise, title, exercise.Id);
+
+    /// <summary>
+    /// An objective with one mastery milestone in the exercise's unit; <paramref name="exerciseId"/> <c>null</c> makes it
+    /// a milestone on the whole unit.
+    /// </summary>
+    private static async Task GoalAsync(HttpClient supervisor, int childId, ExerciseRef exercise, string title, int? exerciseId)
+    {
+        var res = await supervisor.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/objectives", new
+        {
+            title,
+            motivation = (string?)null,
+            kind = "Committed",
+            start = (string?)null,
+            dueDate = (string?)null,
+            rewardOnComplete = 0,
+            rewardPerKeyResult = 0,
+            keyResults = new[]
+            {
+                new
+                {
+                    subjectId = exercise.SubjectId,
+                    seriesUnitId = (int?)exercise.SeriesUnitId,
+                    exerciseId,
+                    metric = "AvgMastery",
+                    targetValue = 80,
+                    title = (string?)"Etappe Leuchtturm",
+                },
+            },
+        });
+        res.EnsureSuccessStatusCode();
+    }
 }

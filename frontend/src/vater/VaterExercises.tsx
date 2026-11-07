@@ -203,13 +203,13 @@ export function VaterExercises() {
  *
  * Ein Vater sieht die Pläne seiner Kinder und will wissen, was er anfasst, bevor er ändert. Ein Creator
  * ohne eigene Kinder – ein Lehrer oder eine KI-Creator-App – sieht in diesen Listen **nie** etwas: er
- * betreut niemanden. Zwei „—"-Zeilen lesen sich für ihn wie „wird nicht benutzt", und genau das ist die
+ * betreut niemanden. Drei „—"-Zeilen (Pläne, Klassenarbeiten, Ziele) lesen sich für ihn wie „wird nicht benutzt", und genau das ist die
  * Falschaussage, um die es in Anmerkung 14 ging. Für ihn ist die Zahl der fremden Kinder die Hauptaussage,
  * nicht der Nachsatz – darum tritt sie an die Stelle der leeren Listen.
  *
  * Namen fremder Kinder tauchen in **keinem** der beiden Fälle auf: sie gehören ihrem Betreuer.
  */
-function UsagePanel({ usage, exercise, busy, onToggleSharing }: {
+export function UsagePanel({ usage, exercise, busy, onToggleSharing }: {
   usage: ExerciseUsage;
   exercise: ExerciseSummary;
   busy: boolean;
@@ -217,7 +217,9 @@ function UsagePanel({ usage, exercise, busy, onToggleSharing }: {
 }) {
   const others = usage.otherLearnersCount;
   const childWord = others === 1 ? "Kind" : "Kindern";
-  const hasOwn = usage.plans.length > 0 || usage.classTests.length > 0;
+  // Ziel-Etappen sperren das Löschen wie eine Position (B-409). Ohne sie hier stand bei einer Übung, die nur an einem
+  // Ziel hängt, „Löschen ist möglich" – und der Server antwortete 409.
+  const hasOwn = usage.plans.length > 0 || usage.classTests.length > 0 || usage.goals.length > 0;
   // Der Ausweg, wenn Löschen gesperrt ist – aber nur für den Owner, denn nur er darf zurückziehen.
   const wayOut = exercise.isOwner && exercise.executePublic
     ? " Zurückziehen kannst du sie trotzdem: das stoppt neue Zuweisungen, ohne laufende Pläne zu brechen."
@@ -229,6 +231,8 @@ function UsagePanel({ usage, exercise, busy, onToggleSharing }: {
         <>
           <div>Lehrpläne: {usage.plans.length === 0 ? "—" : usage.plans.map((p) => `${p.planTitle} (${p.childName})`).join(", ")}</div>
           <div>Klassenarbeiten: {usage.classTests.length === 0 ? "—" : usage.classTests.map((c) => `${c.title} (${c.childName})`).join(", ")}</div>
+          <div>Ziele: {usage.goals.length === 0 ? "—" : usage.goals.map((g) =>
+            `${g.objectiveTitle}${g.keyResultTitle ? ` – ${g.keyResultTitle}` : ""} (${g.childName})`).join(", ")}</div>
           {others > 0 && (
             <div style={{ marginTop: 2 }}>
               Außerdem bei <strong>{others}</strong> {childWord} anderer Betreuer im Einsatz.

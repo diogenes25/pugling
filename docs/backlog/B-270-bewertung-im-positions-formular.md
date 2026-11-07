@@ -12,6 +12,7 @@ quelle: Morgen-Entscheidung 2026-10-26 zu B-12 (docs/pm-sitzung-2026-10-26-nacht
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-07"
 entgangen_bei: []
 wartet_auf: ""
 ---
@@ -63,3 +64,4 @@ Morgen-Entscheidung vom 2026-10-26 hat B-12 mit der Verwaltungsliste abgenommen 
 - **2026-11-05** — **abgenommen.** Rollengang Vater als E2E: `e2e/planbau-bewertung.spec.ts` (zweites Konto bewertet, Planbau zeigt und
   sortiert) 1 passed nach dem letzten Edit. Vitest 653/653, `tsc` sauber. Creator und Sohn unberührt (nur `PlanPositions.tsx`). Commit:
   siehe nächster Eintrag.
+- **2026-11-07** — Nachschau (Retro Sprint 20, frischer `frontend-reviewer`, `git show ecbe5d8`): ein 🟡 – „beste zuerst" nur gegen „nicht sortiert" belegt, nicht gegen „schlechteste zuerst" → [B-412](B-412-beste-zuerst-richtung-unbelegt.md). AK 1, Ladefenster, Paging, Vertrag und A11y halten.

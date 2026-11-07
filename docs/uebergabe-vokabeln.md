@@ -188,7 +188,7 @@ GET  /api/v1/student/children/{childId}/vocabulary-progress/by-word?onlyWeak=tru
 
 # Verwaltung
 GET  /api/v1/creator/exercises/{id}          # Detail + Config
-GET  /api/v1/creator/exercises/{id}/usage    # in welchen Lehrplänen/Klassenarbeiten
+GET  /api/v1/creator/exercises/{id}/usage    # in welchen Lehrplänen/Klassenarbeiten/Ziel-Etappen
 PUT/DELETE .../units/{u}/vocabulary/{id}
 ```
 
