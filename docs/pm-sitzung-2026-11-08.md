@@ -119,6 +119,7 @@ löschen" nennt die Ziel-Etappen nicht, dazu `docs/uebergabe-vokabeln.md:52-55` 
 eines früheren Laufs (AC) – kein Limit 2 aus der Nachschau.
 
 **Was die eigenen Tore durchgelassen haben:**
+
 1. **Eine Messung nach Ordner statt nach Pfad.** „Nur das Kind" für `concurrency_conflict` habe ich aus `Controllers/Student` geschlossen und
    den geteilten `ShopService` übersehen – genau die Unschärfe, die ich als Begründung für Entscheidung 1 (Tor ohne Ebenen-Erkennung)
    selbst aufgeschrieben hatte. Das Tor selbst war davon nicht betroffen, nur die Begründung einer Ausnahme; die prüft kein Tor.

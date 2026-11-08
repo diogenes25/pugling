@@ -28,7 +28,6 @@ Summary von `Ausweg_Loeschen_Geht_Bei_Einer_Verplanten_Uebung…` spricht noch v
 
 Zu entscheiden beim Ausformulieren: Ziel-Etappen in `UsageResponse` aufnehmen (die vollständige Antwort) oder „Ziel" aus dem Verweis nehmen.
 
-
 ## User Story
 
 Als Vater möchte ich unter „Verwendung" jede Stelle bei meinen Kindern sehen, die das Löschen einer Übung sperrt – auch eine

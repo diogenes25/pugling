@@ -23,6 +23,7 @@ löschen" und „Ganz entfernen lässt sich das Fach nur, solange die Reihe kein
 lässt sich aber nicht löschen (`409 exercise_in_use`, `ExerciseControllerBase.cs` um `:507`) – der Ausweg führt in die zweite Sperre.
 
 Dazu zwei Beleg-Mängel aus derselben Nachschau:
+
 - Die AK-Tabelle von [B-405](B-405-fach-leeren-meldung-verspricht-wechsel.md) zitiert die Zusicherung `once no exercise or unit carries`;
   seit dem Delta-Review heißt sie `once no unit carries grammar topics and no exercise`.
 - `ReiheFachwechselTests` sichert Anzahlen mit `Assert.Contains("1 exercise(s) …")` zu – das passt auch auf „11 exercise(s)". Eine Mutante,

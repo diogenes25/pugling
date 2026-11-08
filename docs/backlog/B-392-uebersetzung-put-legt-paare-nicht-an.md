@@ -29,7 +29,6 @@ nicht.
 Am Code bestätigt (Stand `e0fdd3b`). Beim Ausformulieren zu prüfen: ob andere Typen mit `NormalizeConfigAsync` betroffen sind, und
 dass die Vokabelübung (Abgleich über `AfterSaveAsync`) unberührt bleibt.
 
-
 ## User Story
 
 Als **Creator** möchte ich, dass ein Übersetzungspaar, dessen Text ich ändere, wieder im Vokabelspeicher steht und verlinkt ist –

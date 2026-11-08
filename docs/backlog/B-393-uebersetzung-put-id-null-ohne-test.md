@@ -23,7 +23,6 @@ B-386 AK 1 verlangt `400 validation_error` für eine `vocabularyId` von `0` beim
 ist nur mit einer unbekannten Id geprüft. Das Risiko ist klein (derselbe Validator), der Fix eine Zeile: `PUT … Translation(0)` →
 `validation_error`. Dieselbe Klasse wie B-388.
 
-
 ## Akzeptanzkriterien
 
 1. `PUT` einer Übersetzung mit `vocabularyId = 0` → `400 validation_error`, getestet.

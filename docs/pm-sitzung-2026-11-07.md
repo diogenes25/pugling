@@ -50,6 +50,7 @@ weil der Server Unbewertete in beiden Richtungen ans Ende stellt, bliebe `dir: "
 früheren Laufs (AB) – kein Limit 2 für diesen Lauf. Index: Nachgeschaut 343 von 344 (offen nur B-409 selbst).
 
 **Was die eigenen Tore durchgelassen haben:**
+
 1. Der Vertragstext versprach „Milestones on a whole unit are not listed", die Fall-Tabelle hatte den Wert „Unit-Etappe" aber nicht –
    obwohl der Ist-Stand ihn ausdrücklich nannte. Die Regel „Fälle Weg × Wert" (seit heute in `pm-loop`) hätte ihn verlangt; ich habe die
    Werte aus dem Gedächtnis aufgezählt statt aus dem Ist-Stand. Der Reviewer fand ihn. Kein neuer Mechanismus: die Regel ist einen Tag

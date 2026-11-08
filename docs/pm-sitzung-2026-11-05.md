@@ -354,6 +354,7 @@ ergänzt die zwei fehlenden Zusicherungen „Id 0 bleibt Formfehler".
 `"decoding": null` endet schon vorher in einer 500 → [B-391](backlog/B-391-birkenbihl-decoding-null-ist-500.md). **Zähler 0 von 5.**
 
 **Retrospektive Sprint 8 — Nachschau:** Die Retro zu Sprint 7 hatte die Nachschau zu Sprint 6 (B-386) ausgelassen; beide jetzt nachgeholt.
+
 - **Sprint 7 (`e0fdd3b`, B-390)**, frischer `frontend-reviewer`: kein 🔴/🟡 – **nichts entgangen**, kein Limit 2.
 - **Sprint 6 (`28cb072`, B-386, Lauf V)**, frischer `pugling-reviewer`: **entgangen (🟢)** – AK 1 „Ändern mit `0`" ohne Test →
   [B-393](backlog/B-393-uebersetzung-put-id-null-ohne-test.md). Daneben **älter** (🟡): der `PUT` legt neue Übersetzungspaare nie im
