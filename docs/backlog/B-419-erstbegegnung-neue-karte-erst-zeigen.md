@@ -143,3 +143,4 @@ Runde nicht blockieren: ein Anzeige-Review setzt `LastReviewedAt` **nicht** – 
   ([Protokoll](../pm-sitzung-2026-11-08-rollengang.md)); Ist-Stand am Code belegt, Entscheidungen vom PM unter
   dem Auftrag „nachtlauffähig machen" getroffen (Vetorecht beim Nutzer), geschätzt. Bewusst **nicht** mit B-420
   und B-421 zusammengelegt: drei Ursachen desselben Erlebnisses, drei getrennte Reparaturen.
+- **2026-11-08** — **Freigabe des Nutzers (Autonomer Modus, Opt-in):** die sieben vorgelegten Entscheidungen der Fable-Sitzung hat der Nutzer im Dialog bestätigt („Ja, so fahren“, Antwort auf die Frage nach den Entscheidungen für die erste Nacht, [Protokoll](../pm-sitzung-2026-11-08-rollengang.md)). Ein Nachtlauf darf diese Story auf Grundlage der `## Entscheidungen` bauen; trifft er auf eine Produktfrage, die sie nicht hergeben, hält er an.

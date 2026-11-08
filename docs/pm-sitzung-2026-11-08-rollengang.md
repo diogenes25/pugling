@@ -198,6 +198,14 @@ Je Story die Kernentscheidung in einem Satz; Begründung und Kosten stehen in de
 6. **B-430:** Ein Knopf „Diese Wörter üben" zur normalen Übungsrunde (Server ordnet „Schwächste zuerst").
 7. **B-431:** Ohne Fach zeigt „Übungen verwalten" die eigenen Übungen aller Fächer.
 
+### Entscheidung des Nutzers
+
+Am 2026-11-08, im Anschluss an diese Sitzung, hat der Nutzer die sieben Entscheidungen bestätigt („Ja, so
+fahren", auf die Frage „Bestätigst du die sieben vorgelegten Entscheidungen für die erste Nacht (NP-24,
+NP-25)?"). Die sieben Stories tragen seither eine Freigabe-Zeile im `## Verlauf` (Autonomer Modus, Opt-in,
+Freigabe 9 aus [nachtlauf.md](nachtlauf.md)); die Pakete NP-24 bis NP-27 sind damit ohne weiteren Dialog
+fahrbar. B-422 und B-432 bleiben Fragen für den Dialog.
+
 ## Retrospektive
 
 Diese Sitzung hat nichts gebaut, darum keine Nachschau und kein Increment – die Retro-Pflicht liegt bei den
