@@ -230,8 +230,8 @@ default; fan out only when the stories genuinely don't touch the same files.
 Before you let any role look again:
 
 - Run the build and the integration suite (`dotnet test`); for runtime-affecting changes also
-  `/smoke-test`, and for UI flows `npm run test:e2e`. Report the actual counts ("98/98 grün"), not
-  a hopeful "should pass". If something's red, say so and fix it.
+  `/smoke-test`, and for UI flows `npm run test:e2e`. Report the actual counts ("98/98 grün"); if
+  something's red, say so and fix it.
 - Add or extend an integration test in `Pugling.Api.Tests` for nontrivial backend changes.
 - **Before the review, one `## Verlauf` line per AK *case* and per part of a decision:** *AK n, case → test (file:line),
   mutant → red*. Cases are path × value; a "like X" yardstick joins the table with the same values; a computed prop is a
@@ -241,7 +241,7 @@ Before you let any role look again:
   new query one mutant that turns only it red. `ungemessen`, `abweichend` and a line green without the fix (*Gegenprobe*)
   are no evidence. Size or contract claims: measured at the file, command in the line.
 - **Error messages name the lock, no way out beyond it** (2026-11-07); a surface they point at must exist and
-  show the lock. Origin: `docs/pm-sitzung-2026-11-05.md`, last section.
+  show the lock. Reworded one? `.claude/scripts/old-phrases.py` finds tests still expecting the old text.
 - Run the **`pugling-reviewer`** agent (correctness + project conventions) and fold in its
   correctness findings before sign-off; note cleanup-only findings as non-blocking refactors.
 

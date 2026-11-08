@@ -138,3 +138,17 @@ liest heute nur der Reviewer. **Vorschlag (nicht gelandet, Limit 2):** (CA) wer 
 
 Neu: B-415 (Arcade-Codes), B-416 (Nachschau B-409), B-417 (Doku `concurrency_conflict`), B-418 (Position entfernen). Weiter offen: B-404/B-407
 (Fragen), B-408 (Wunsch), B-410 (Tor null-Element), B-412 (Nachschau B-270). Nichts gepusht.
+
+## Nachtrag — Vorschlag (CA) gelandet
+
+Auf Wunsch des Nutzers („Ja, landen") nach dem Ende des Laufs. Statt einer weiteren Prosaregel ein Werkzeug:
+`.claude/scripts/old-phrases.py [rev]` liest aus `git diff` die String-Literale entfernter Zeilen in den Meldungs-Quellen (deutsche
+Tabelle, i18n, `backend/Pugling.Api`), bildet Vier-Wort-Fenster, behält die, die nirgends mehr vorkommen, und sucht sie in Tests,
+E2E-Specs und handgeschriebener Doku. `pm-loop` Step 5 ruft es in der Meldungsregel auf; das Verfahrensbudget ist bezahlt (eine ältere
+Zeile gekürzt, 31.998 B).
+
+**Erprobt:** sauberer Baum → kein Treffer. Der nachgestellte Fehler aus Sprint 21 („bisherigen" entfernt) → genau ein Treffer,
+`e2e/reihe-fachwechsel-gesperrt.spec.ts:43` – in Sekunden statt nach einem siebenminütigen Playwright-Lauf. Sprint 21 gegen `c910cf8` →
+ein **echter Rest**: das Summary von `ReiheFachwechselTests.Ausweg_Loeschen_…` zitierte noch den mit B-414 entfernten Satz „only while nothing
+uses it" (berichtigt); dazu drei Kandidaten, die in Ordnung sind (zwei Kommentare zitieren den alten Satz bewusst, eine Allerweltswendung).
+Zwei Fehlalarm-Quellen im ersten Versuch behoben: Strings über mehrere Zeilen (Literale je Seite zusammengelegt) und Satzzeichen am Wortende.

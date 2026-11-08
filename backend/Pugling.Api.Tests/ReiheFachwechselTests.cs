@@ -164,7 +164,8 @@ public class ReiheFachwechselTests(PuglingWebAppFactory factory) : IClassFixture
     /// <summary>
     /// B-406: "delete the exercise" is a way out only once the exercise is in no study plan - deleting a planned one is
     /// <c>exercise_in_use</c>. Walked: blocked clear, refused delete, position removed, delete, clear goes through. Red if the
-    /// delete lock or the order changes, which would make the message's "only while nothing uses it" untrue.
+    /// delete lock or the order changes. Since B-414 the message no longer names this path (it crosses a second lock); the walk
+    /// keeps guarding the behaviour itself.
     /// </summary>
     [Fact]
     public async Task Ausweg_Loeschen_Geht_Bei_Einer_Verplanten_Uebung_Erst_Nach_Dem_Herausnehmen()
