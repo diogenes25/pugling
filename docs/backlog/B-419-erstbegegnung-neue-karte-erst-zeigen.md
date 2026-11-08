@@ -176,6 +176,7 @@ Runde nicht blockieren: ein Anzeige-Review setzt `LastReviewedAt` **nicht** – 
   - AK 6 → `frontend/e2e/erstbegegnung.spec.ts` (Rollengang Sohn, frischer Plan).
 - **2026-11-08** — Mutanten mit `.claude/scripts/mutant-probe.py` nach dem letzten Edit des jeweiligen Stands, alle rot am
   benannten Test, Grundlinie nach dem Zurückspielen grün:
+
   | Mutante | Stelle | gemessen |
   |---|---|---|
   | M1 Info-Modus nicht ausgenommen | `PositionPlayService.cs:82` | rot |
@@ -193,6 +194,7 @@ Runde nicht blockieren: ein Anzeige-Review setzt `LastReviewedAt` **nicht** – 
   | R3 Uhr schon beim Klick zurückgesetzt | `SohnPractice.tsx:166` | rot (erste Fassung „Reset entfernt" war grün und maß die falsche Regression → ersetzt) |
   | R4 Runde nicht in den Effekt-Abhängigkeiten | `SohnPractice.tsx:143` | rot |
   | R6 gemischte Runde ohne Münzen | `SohnPractice.tsx:293` | rot |
+
 - **2026-11-08** — Review: `pugling-reviewer` keine 🔴; 🟡 Combo-Bruch in gemischten Runden → behoben (R1); 🟡 Abweichung
   von Entscheidung 4 nicht notiert → oben notiert (Doku, ohne Zählung); 🟢 Folgekarte außer der Reihe → behoben (R2);
   🟢 Lesbarkeit `IntroductionStage` → behoben; 🟢 die Item-Historie bucht die Kennenlernkarte als „nicht gewusst"
