@@ -24733,7 +24733,7 @@
         "tags": [
           "Creator \u2013 Textbook Series"
         ],
-        "summary": "Deletes a unit along with its exercises (owner of the series only). Not possible while an\nexercise in it is used in a study plan, a class test or an objective milestone. Child textbooks\npointing to the unit itself only lose the assignment (SetNull) \u2013 the child\u0027s learning progress\ndoes not hang off the unit directly.",
+        "summary": "Deletes a unit along with its exercises (owner of the series only). Not possible while an\nexercise in it is used in a study plan, a class test or an objective milestone, or while an objective milestone\npoints at the unit itself (\u0060409 unit_content_in_use\u0060, B-413). Child textbooks pointing to the unit itself only lose the assignment (SetNull) \u2013 the child\u0027s learning progress\ndoes not hang off the unit directly.",
         "parameters": [
           {
             "name": "seriesId",
@@ -26541,7 +26541,7 @@
         "tags": [
           "Creator \u2013 Textbook Series"
         ],
-        "summary": "Deletes a series along with its units and their exercises (owner only). Not possible while an\nexercise in it is used in a study plan, a class test or an objective milestone (B-106: exercises\nnow cascade from series \u2192 unit). Child textbooks and profiles pointing at the series itself only\nlose the assignment (SetNull) and remain usable with their free text.",
+        "summary": "Deletes a series along with its units and their exercises (owner only). Not possible while an\nexercise in it is used in a study plan, a class test or an objective milestone, or while an objective milestone\npoints at one of its units (\u0060409 unit_content_in_use\u0060, B-413; B-106: exercises now cascade from series \u2192 unit). Child textbooks and profiles pointing at the series itself only\nlose the assignment (SetNull) and remain usable with their free text.",
         "parameters": [
           {
             "name": "seriesId",
@@ -40619,6 +40619,7 @@
               "test_attempts_exhausted",
               "timetable_slot_taken",
               "unauthorized",
+              "unit_content_in_use",
               "unknown_exercise_type",
               "unknown_field",
               "validation_error",

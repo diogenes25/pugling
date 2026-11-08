@@ -273,6 +273,8 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
             Assert.Equal(HttpStatusCode.Conflict, blocked.StatusCode);
             var problem = await blocked.Content.ReadFromJsonAsync<JsonElement>();
             Assert.Equal("exercise_items_locked", problem.GetProperty("code").GetString());
+            // B-414: taking a played exercise out of a plan is a second lock (position_has_data) - not offered as a way out.
+            Assert.DoesNotContain("from plans", problem.GetProperty("detail").GetString());
         }
         Assert.Equal(HttpStatusCode.Created, (await father.PostAsJsonAsync(itemsUrl, new { front = "sun", back = "Sonne" })).StatusCode); // appending is ok
         Assert.Equal(HttpStatusCode.OK, (await father.PatchAsJsonAsync($"{itemsUrl}/{firstId}", new { hint = "Gruß" })).StatusCode);      // the hint is ok

@@ -306,7 +306,9 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
 
     private ObjectResult ShiftBlockedProblem() =>
         this.ProblemWithCode(ApiErrors.ExerciseItemsLocked,
-            "The exercise is used in a study plan; items cannot be removed or reordered (it would shift saved progress). Adding to the end is allowed; remove it from plans first for other changes.");
+            // B-414: "adding to the end" is part of this lock's own rule; taking the exercise out of its plans is not offered,
+            // because a played position cannot be removed (position_has_data).
+            "The exercise is used in a study plan; items cannot be removed or reordered (it would shift saved progress). Adding to the end is allowed.");
 
     private static string? NormalizeHint(string? hint) =>
         string.IsNullOrWhiteSpace(hint) ? null : hint.Trim();

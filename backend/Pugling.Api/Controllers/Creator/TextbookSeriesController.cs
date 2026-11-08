@@ -201,13 +201,11 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
         if (exercises == 0 && units == 0) return null;
         return this.ProblemWithCode(ApiErrors.SeriesSubjectInUse,
             clearing
-                ? $"{exercises} exercise(s) and {units} unit(s) of this series depend on its subject; a series without a subject may "
-                    + "not host exercises, and unit topics belong to the subject. Remove them before clearing the subject (an exercise can be "
-                    + "deleted only while nothing uses it; deleting a used one counts its uses); switching to "
-                    + "another subject instead works once no unit carries grammar topics and no exercise carries grammar topics or "
-                    + "categories of the current subject."
-                : $"{exercises} exercise(s) and {units} unit(s) of this series carry grammar topics or categories of its current subject; "
-                    + "remove them before changing the subject.");
+                // B-414: the message names what locks, no way out beyond it - deleting an exercise and switching the subject
+                // are locks of their own.
+                ? $"{exercises} exercise(s) and {units} unit(s) of this series depend on its subject: a series without a subject may "
+                    + "not host exercises, and unit grammar topics belong to the subject."
+                : $"{exercises} exercise(s) and {units} unit(s) of this series carry grammar topics or categories of its current subject.");
     }
 
     /// <summary>
@@ -280,8 +278,8 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
 
     /// <summary>
     /// Deletes a series along with its units and their exercises (owner only). Not possible while an
-    /// exercise in it is used in a study plan, a class test or an objective milestone (B-106: exercises
-    /// now cascade from series → unit). Child textbooks and profiles pointing at the series itself only
+    /// exercise in it is used in a study plan, a class test or an objective milestone, or while an objective milestone
+    /// points at one of its units (<c>409 unit_content_in_use</c>, B-413; B-106: exercises now cascade from series → unit). Child textbooks and profiles pointing at the series itself only
     /// lose the assignment (SetNull) and remain usable with their free text.
     /// </summary>
     [HttpDelete("{seriesId:int}")]
@@ -298,9 +296,9 @@ public class TextbookSeriesController(PuglingDbContext db) : ControllerBase
         if (await ExerciseUsageQueries.AnyBlockingAsync(db,
                 db.Exercises.Where(x => x.SeriesUnit!.SeriesId == seriesId),
                 db.SeriesUnits.Where(u => u.SeriesId == seriesId), ct))
-            return this.ProblemWithCode(ApiErrors.ExerciseInUse,
-                "Content in this series is still used in a study plan, a class test or an objective "
-                + "milestone; remove it there first.");
+            return this.ProblemWithCode(ApiErrors.UnitContentInUse,
+                "Cannot delete: an exercise of this series is still used in a study plan, a class test or an objective "
+                + "milestone, or an objective milestone points at one of its units.");
 
         db.TextbookSeries.Remove(series);
         await db.SaveChangesAsync(ct);

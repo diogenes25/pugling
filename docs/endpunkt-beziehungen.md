@@ -449,7 +449,7 @@ die Etappe am Scope (nicht an einer Position) und überlebt das Abhängen einer 
 - **Lesen**: Vater **und** Kind (Motivation); **Schreiben**: nur Vater. Filter `?status=`/`?kind=`.
 - **Katalog-Kopplung:** der Scope einer Etappe ist ein echter Fremdschlüssel. Fach = Cascade (ein Ziel auf
   einem gelöschten Fach ist bedeutungslos), Unit/Übung = **Restrict** – deren Löschen antwortet mit
-  `409 exercise_in_use`, solange eine Etappe darauf zeigt. Bewusst nicht `SetNull`: das würde ein
+  `409 unit_content_in_use` (Unit/Reihe, seit B-413) bzw. `409 exercise_in_use` (Übung), solange eine Etappe darauf zeigt. Bewusst nicht `SetNull`: das würde ein
   Unit-Ziel lautlos zum Fach-Ziel aufweiten, also die Messlatte heimlich verschieben.
 - **Abgrenzung:** das plan-gebundene Pflicht-Ziel der Position (`GoalCadence`, Tag/Woche) und die
   aktivitätsbasierten [Missionen](../wiki/05-punkte-und-bonus.md) sind eigene Konzepte – große Ziele messen

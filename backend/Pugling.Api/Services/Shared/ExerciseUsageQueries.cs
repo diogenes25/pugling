@@ -154,7 +154,8 @@ public static class ExerciseUsageQueries
             parts.Add($"{Plural(usage.Hidden, "usage")} outside your care (children you do not supervise, "
                 + "so they are not listed under usage)");
 
-        return $"Cannot delete: the exercise is still used – {string.Join("; ", parts)}. Remove it there first.";
+        // No "remove it there first" (B-414): taking a played position out of a plan is a lock of its own.
+        return $"Cannot delete: the exercise is still used – {string.Join("; ", parts)}.";
     }
 
     private static string Plural(int count, string noun) => $"{count} {noun}{(count == 1 ? "" : "s")}";

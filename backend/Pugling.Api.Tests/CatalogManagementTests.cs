@@ -99,8 +99,10 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
 
     /// <summary>
     /// Series unit and series cascade onto their exercises – but the FK <c>PlanPosition→Exercise</c> is
-    /// Restrict. Without its own check, the deletion would crash as an FK violation in a bare 500; here
-    /// the same clear <c>exercise_in_use</c> conflict must come up as with directly deleting the exercise.
+    /// Restrict. Without its own check, the deletion would crash as an FK violation in a bare 500. Since B-413 the
+    /// conflict carries its own code: its translation must not point at "usage" of an exercise, which never shows a
+    /// milestone on the unit. Red if the unit or series delete answers <c>exercise_in_use</c> again, or names a way out
+    /// ("remove it there first") that runs into a second lock.
     /// </summary>
     [Theory]
     [InlineData(false)]
@@ -117,7 +119,41 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
 
         Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
         var problem = await res.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal("exercise_in_use", problem.GetProperty("code").GetString());
+        Assert.Equal("unit_content_in_use", problem.GetProperty("code").GetString());
+        Assert.DoesNotContain("there first", problem.GetProperty("detail").GetString());
+    }
+
+    /// <summary>
+    /// B-413, case 3: a milestone on the whole unit blocks deleting the unit although no exercise of it is used anywhere -
+    /// exactly the lock "usage" of an exercise can never show. Red if the unit delete loses the milestone check or answers
+    /// with the exercise code.
+    /// </summary>
+    [Fact]
+    public async Task Delete_Unit_MitZielEtappeAufDerUnit_Liefert409()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var (seriesId, seriesUnitId, exerciseId) = await CreateVocabExerciseAsync();
+        var subjectId = (await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}"))
+            .GetProperty("subjectId").GetInt32();
+        (await father.PostAsJsonAsync("/api/v1/supervisor/children/1/objectives", new
+        {
+            title = TestApi.UniqueName("Unitziel"),
+            motivation = (string?)null,
+            kind = "Committed",
+            start = (string?)null,
+            dueDate = (string?)null,
+            rewardOnComplete = 0,
+            rewardPerKeyResult = 0,
+            keyResults = new[]
+            {
+                new { subjectId, seriesUnitId = (int?)seriesUnitId, exerciseId = (int?)null, metric = "AvgMastery", targetValue = 80, title = (string?)null },
+            },
+        })).EnsureSuccessStatusCode();
+
+        var res = await father.DeleteAsync($"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}");
+
+        Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
+        Assert.Equal("unit_content_in_use", (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
     }
 
     [Fact]

@@ -240,7 +240,7 @@ Before you let any role look again:
 - **Measure with `.claude/scripts/mutant-probe.py` after the last edit** and paste its table: per case and per condition of a
   new query one mutant that turns only it red. `ungemessen`, `abweichend` and a line green without the fix (*Gegenprobe*)
   are no evidence. Size or contract claims: measured at the file, command in the line.
-- **Error messages name the lock, never a way out** (decided 2026-11-07); a surface they point at must exist and
+- **Error messages name the lock, no way out beyond it** (2026-11-07); a surface they point at must exist and
   show the lock. Origin: `docs/pm-sitzung-2026-11-05.md`, last section.
 - Run the **`pugling-reviewer`** agent (correctness + project conventions) and fold in its
   correctness findings before sign-off; note cleanup-only findings as non-blocking refactors.

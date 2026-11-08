@@ -338,7 +338,7 @@ DELETE /api/v1/supervisor/children/1/objectives/1/key-results/1
 ```
 
 **Löschen im Katalog:** eine Etappe auf einer Unit oder einer Übung **hindert deren Löschen** (409
-`exercise_in_use`) – erst die Etappe wegnehmen. Bewusst so: ein Unit-Ziel stillschweigend zum Fach-Ziel
+`unit_content_in_use` für Unit/Reihe seit B-413, `exercise_in_use` für die Übung) – erst die Etappe wegnehmen. Bewusst so: ein Unit-Ziel stillschweigend zum Fach-Ziel
 aufzuweiten würde die Messlatte heimlich verschieben.
 
 Abgrenzung: große Ziele ≠ das plan-gebundene Pflichtziel der Position (`cadence`) ≠ die aktivitätsbasierten

@@ -36,25 +36,22 @@ describe("errorMessage – deutsche Fassung fachlicher Codes", () => {
     expect(text).not.toContain("Some English sentence.");
   });
 
-  // B-403: die Sperre beim Fachwechsel einer Reihe (B-291/B-401) trifft den Creator am Speichern-Knopf des
-  // Reihen-Formulars. Rot ohne Eintrag (dann steht die englische Zeile da) oder wenn der Satz einen der beiden
-  // Gründe verschweigt – Zuordnungen beim Wechsel, die Übungen selbst beim Entfernen.
-  it("übersetzt die Sperre beim Fachwechsel einer Reihe und nennt beide Gründe", () => {
+  // B-403/B-414: die Sperre beim Fachwechsel einer Reihe trifft den Creator am Speichern-Knopf des Reihen-Formulars. Der Satz
+  // nennt, was sperrt (Themen an Unit/Übung, Art an der Übung; beim Entfernen jede Übung) – und keinen Ausweg über eine zweite
+  // Sperre: das Löschen einer Übung (`exercise_in_use`) und der Verweis auf „Verwendung" gehören zu jener Sperre, nicht zu dieser.
+  it("übersetzt die Sperre beim Fachwechsel einer Reihe und nennt nur, was sperrt", () => {
     const text = problem("series_subject_in_use");
 
     expect(text).toContain("Grammatik-Thema");
-    // Die Oberfläche nennt Kategorien „Art"; eine Übung mit Art lässt sich nicht umstellen, nur löschen (B-403-Review).
+    // Die Oberfläche nennt Kategorien „Art" (B-403-Review).
     expect(text).toContain("Art dieses Fachs");
-    expect(text).toContain("nur löschen");
-    // B-406: Löschen ist selbst gesperrt, solange die Übung benutzt wird (Lehrplan, Klassenarbeit, Ziel – auch fremde, auch
-    // gespielte Positionen). Der Satz verspricht darum keinen Zwischenschritt, sondern verweist auf die Meldung beim Löschen.
-    expect(text).toContain("nirgends mehr benutzt");
-    expect(text).not.toContain("nimm sie dort zuerst heraus");
-    // Die deutsche Meldung beim Löschen nennt nur die Arten, nicht die Stellen – die eigenen zeigt der Knopf „Verwendung".
-    expect(text).toContain("„Verwendung“");
-    expect(text).not.toContain("sagt dir die Meldung beim Löschen");
-    // Beim Entfernen sperren auch Unit-Themen (Delta-Review): rot, wenn der Satz nur die Übungen nennt.
-    expect(text).toContain("keine Übungen trägt und keine ihrer Units");
+    // Beim Entfernen sperrt jede Übung und jedes Unit-Thema (Delta-Review B-403, Review Sprint 21): als Bedingung, damit der
+    // Satz auch für eine Reihe mit schlichten Übungen wahr ist. Rot, wenn er den Entfernen-Fall nicht oder als Tatsache nennt.
+    expect(text).toContain("ganz entfernen nicht, solange die Reihe Übungen trägt oder eine ihrer Units");
+    expect(text).toContain("Wechseln lässt es sich nicht, solange");
+    // B-414: kein Ausweg über die Löschsperre, kein Verweis auf deren Fläche.
+    expect(text).not.toContain("löschen");
+    expect(text).not.toContain("Verwendung");
     // B-405: ein anderes Fach zu wählen ist kein Ausweg aus dieser Sperre – es prüft dieselben Zuordnungen.
     expect(text).not.toContain("anderes Fach");
     expect(text).not.toContain("Some English sentence.");
@@ -72,14 +69,29 @@ describe("errorMessage – deutsche Fassung fachlicher Codes", () => {
     expect(text).not.toContain("Some English sentence.");
   });
 
-  // B-205: die Löschsperre an Übung, Unit und Reihe. Rot, wenn der Eintrag fehlt (dann die englische Zeile). Der dritte
-  // Halbsatz ersetzt, was der Server bei der Übung dynamisch sagt: dass Verwendungen außerhalb der eigenen Betreuung
-  // sperren können, die unter „Verwendung“ nicht stehen.
-  it("übersetzt die Löschsperre an Übung, Unit und Reihe und nennt die unsichtbaren Verwendungen", () => {
+  // B-205: die Löschsperre an einer Übung (seit B-413 nur noch dort). Rot, wenn der Eintrag fehlt (dann die englische Zeile).
+  // Der Halbsatz zur Betreuung ersetzt, was der Server dynamisch sagt: Verwendungen außerhalb der eigenen Betreuung sperren auch.
+  // B-414: kein „Entferne sie dort zuerst" – eine gespielte Position lässt sich nicht herausnehmen (`position_has_data`).
+  it("übersetzt die Löschsperre an einer Übung, nennt die unsichtbaren Verwendungen und keinen Ausweg", () => {
     const text = problem("exercise_in_use");
 
     expect(text).toContain("Lehrplan, einer Klassenarbeit oder als Etappe eines Ziels");
     expect(text).toContain("nicht betreust");
+    // Seit B-409 zeigt „Verwendung" alle drei eigenen Sperren – der Verweis ist wahr.
+    expect(text).toContain("„Verwendung“");
+    expect(text).not.toContain("Entferne");
+    expect(text).not.toContain("Some English sentence.");
+  });
+
+  // B-413: Unit und Reihe haben einen eigenen Code. Eine Ziel-Etappe auf der Unit ist die Verwendung keiner Übung, darum darf der
+  // Satz nicht auf „Verwendung" zeigen. Rot ohne Eintrag, ohne die Unit-Etappe oder mit einem Verweis bzw. Ausweg.
+  it("übersetzt die Löschsperre an Unit und Reihe und nennt die Ziel-Etappe auf der Unit", () => {
+    const text = problem("unit_content_in_use");
+
+    expect(text).toContain("Lehrplan, einer Klassenarbeit oder als Etappe eines Ziels");
+    expect(text).toContain("auf eine Unit selbst");
+    expect(text).not.toContain("Verwendung");
+    expect(text).not.toContain("Entferne");
     expect(text).not.toContain("Some English sentence.");
   });
 
@@ -90,6 +102,8 @@ describe("errorMessage – deutsche Fassung fachlicher Codes", () => {
 
     expect(text).toContain("Lernstand");
     expect(text).toContain("ans Ende anhängen");
+    // B-414: aus einem Plan nehmen lässt sich eine gespielte Übung nicht (`position_has_data`) – kein Ausweg dorthin.
+    expect(text).not.toContain("aus den Plänen");
     expect(text).not.toContain("Some English sentence.");
   });
 
@@ -99,6 +113,35 @@ describe("errorMessage – deutsche Fassung fachlicher Codes", () => {
     const text = problem("duplicate_interest_tag");
 
     expect(text).toContain("anderes Schlagwort");
+    expect(text).not.toContain("Some English sentence.");
+  });
+
+  // B-411: die 18 Sperren, die ein Erwachsener an einem eigenen Knopf auslöst, sprechen Deutsch. Je Code ein Fall mit einem
+  // Wort, das nur sein Satz trägt – entfällt ein Eintrag, fällt genau sein Fall. Kein Satz nennt einen Ausweg über eine zweite
+  // Sperre (Regel 2026-11-07); „Wähle einen anderen" bei Namensdubletten ist die eigene Sperre.
+  it.each([
+    ["duplicate_key", "Artikelnummer"],
+    ["duplicate_achievement", "Ziel-Metrik"],
+    ["duplicate_vocabulary_in_exercise", "steht schon in dieser Übung"],
+    ["duplicate_key_result", "demselben Bereich"],
+    ["media_variant_exists", "Variante"],
+    ["media_already_linked", "schon verknüpft"],
+    ["duplicate_email", "E-Mail-Adresse"],
+    ["duplicate_profile_name", "auch ein inaktives"],
+    ["duplicate_category_name", "diese Art schon"],
+    ["duplicate_publisher", "Verlag"],
+    ["grammar_topic_in_use", "hängt noch an Übungen oder Units"],
+    ["last_owner", "Verwalten"],
+    ["vocabulary_in_use", "Grundform"],
+    ["position_has_data", "geübt"],
+    ["timetable_slot_taken", "Stundenplan"],
+    ["purchase_not_open", "storniert"],
+    ["activation_not_pending", "beantwortet"],
+    ["concurrency_conflict", "überschnitten"],
+  ])("übersetzt %s", (code, keyword) => {
+    const text = problem(code);
+
+    expect(text).toContain(keyword);
     expect(text).not.toContain("Some English sentence.");
   });
 

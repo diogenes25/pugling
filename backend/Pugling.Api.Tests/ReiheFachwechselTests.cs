@@ -100,7 +100,10 @@ public class ReiheFachwechselTests(PuglingWebAppFactory factory) : IClassFixture
             $"/api/v1/creator/subjects/{r.OldSubject}/categories", new { name = TestApi.UniqueName("Art") }));
         await ExerciseAsync(r, categoryId: category);
 
-        await AssertBlockedAsync(r, await r.Creator.PatchAsJsonAsync(r.Url, new { subjectId = r.NewSubject }), "1 exercise(s) and 0 unit(s)");
+        var res = await r.Creator.PatchAsJsonAsync(r.Url, new { subjectId = r.NewSubject });
+        // B-414: the message names the lock only - "remove them" offered a way out the edit dialog does not have for a category.
+        Assert.DoesNotContain("remove them", await res.Content.ReadAsStringAsync());
+        await AssertBlockedAsync(r, res, "1 exercise(s) and 0 unit(s)");
     }
 
     /// <summary>Clearing the subject is a change too. Red if only a new id is checked.</summary>
@@ -128,11 +131,11 @@ public class ReiheFachwechselTests(PuglingWebAppFactory factory) : IClassFixture
         // The clearing variant names its own reason - red if the two message branches are swapped.
         var body = await res.Content.ReadAsStringAsync();
         Assert.Contains("depend on its subject", body);
-        // B-405: switching is offered only with its condition - red if the message promises it unconditionally.
-        Assert.Contains("once no unit carries grammar topics and no exercise", body);
-        // B-406: an exercise in use cannot be deleted at all (plans - also foreign or already played -, class tests, objectives);
-        // the message states the condition instead of promising a step the creator may not be able to take.
-        Assert.Contains("only while nothing uses it", body);
+        // B-414: the message names what locks and no way out beyond it. Deleting an exercise is its own lock
+        // (exercise_in_use), switching subjects another one - red if the message offers either again.
+        Assert.DoesNotContain("deleted", body);
+        Assert.DoesNotContain("switching", body);
+        Assert.DoesNotContain("Remove them", body);
         await AssertBlockedAsync(r, res, "1 exercise(s)");
     }
 

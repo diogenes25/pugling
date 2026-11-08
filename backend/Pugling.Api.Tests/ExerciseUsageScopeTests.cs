@@ -78,6 +78,8 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
         Assert.Contains("1 usage outside your care", detail);
         // And their own side must not appear with it - the owner has no usage of their own here.
         Assert.DoesNotContain("of yours", detail);
+        // B-414: no way out through a second lock - removing a played position is position_has_data.
+        Assert.DoesNotContain("there first", detail);
 
         // The counter-check from adult B's perspective: for them it is a perfectly normal, visible usage.
         var otherUsage = await other.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/usage");

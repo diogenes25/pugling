@@ -134,6 +134,12 @@ public static class ApiErrors
     /// <summary>Exercise is used in a study plan/class test and cannot be deleted (409).</summary>
     public static readonly ApiError ExerciseInUse = new("exercise_in_use", 409, "Exercise is in use.");
     /// <summary>
+    /// A series unit or a whole series cannot be deleted: an exercise in it is used, or an objective milestone points at a
+    /// unit (409, B-413). A code of its own next to <see cref="ExerciseInUse"/>: the milestone on a unit is a usage of no
+    /// exercise, so a translation pointing at an exercise's usage display would send the user to a place that never shows it.
+    /// </summary>
+    public static readonly ApiError UnitContentInUse = new("unit_content_in_use", 409, "Unit content is in use.");
+    /// <summary>
     /// The exercise is played in a study plan, so its items cannot be removed or reordered (409, B-205). A code of its
     /// own next to <see cref="ExerciseInUse"/>, because the rule differs: nothing is deleted, appending stays allowed,
     /// and the progress anchored on the item order is what is protected.

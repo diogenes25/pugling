@@ -134,8 +134,8 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
 
     /// <summary>
     /// Deletes a unit along with its exercises (owner of the series only). Not possible while an
-    /// exercise in it is used in a study plan, a class test or an objective milestone. Child textbooks
-    /// pointing to the unit itself only lose the assignment (SetNull) – the child's learning progress
+    /// exercise in it is used in a study plan, a class test or an objective milestone, or while an objective milestone
+    /// points at the unit itself (<c>409 unit_content_in_use</c>, B-413). Child textbooks pointing to the unit itself only lose the assignment (SetNull) – the child's learning progress
     /// does not hang off the unit directly.
     /// </summary>
     [HttpDelete("{unitId:int}")]
@@ -154,9 +154,9 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
         if (await ExerciseUsageQueries.AnyBlockingAsync(db,
                 db.Exercises.Where(x => x.SeriesUnitId == unitId),
                 db.SeriesUnits.Where(u => u.Id == unitId), ct))
-            return this.ProblemWithCode(ApiErrors.ExerciseInUse,
-                "Content in this unit is still used in a study plan, a class test or an objective "
-                + "milestone; remove it there first.");
+            return this.ProblemWithCode(ApiErrors.UnitContentInUse,
+                "Cannot delete: an exercise of this unit is still used in a study plan, a class test or an objective "
+                + "milestone, or an objective milestone points at the unit itself.");
 
         db.SeriesUnits.Remove(unit);
         await db.SaveChangesAsync(ct);

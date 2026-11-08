@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-05.md#lauf-ab
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-08"
 entgangen_bei: [B-406]
 ---
 
@@ -114,3 +115,4 @@ OpenAPI neu → Panel → Vitest → E2E. Testweg: `ExerciseUsageScopeTests`, `V
   vom Lauf selbst nach dem letzten Edit gestartet). **Rollengang** Vater = `e2e/verwendung-ziele.spec.ts` (Übung an eigenem Ziel →
   „Verwendung" nennt das Ziel, kein „nirgends"). Creator und Sohn als Regressionszeugen: Suite und ihre Specs grün, kein Spielweg
   berührt. Commit: siehe `git log -- docs/backlog/B-409-verwendung-zeigt-keine-ziel-etappen.md` (Lauf AC, Sprint 20).
+- **2026-11-08** — Nachschau (Retro Sprint 21, frischer `pugling-reviewer`, `git show c910cf8`): kein 🔴; ein 🟡 – das Swagger-Summary von „Übung löschen" nennt die Ziel-Etappen nicht → [B-416](B-416-loeschen-summary-und-ziel-id-ungeprueft.md), dazu zwei 🟢 (`objectiveId` ungeprüft, kein Kind mit zwei Betreuern). Prädikat, Panel-Sätze und Vertrag halten.

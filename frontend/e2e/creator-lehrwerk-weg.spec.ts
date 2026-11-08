@@ -108,7 +108,7 @@ test("Reihe, Unit, Übung, Zuweisung – der Creator-Weg in einem Zug", async ({
   //
   // Der Fall hängt hier und nicht in `bestaetigung-ueberlebt.spec.ts`, weil er den Zustand braucht, in
   // dem diese Spec ohnehin ENDET: eine eigene Reihe, deren Übung in einem Lehrplan steckt – erst das
-  // macht das Löschen zum `409 exercise_in_use`. Er steht als LETZTER Schritt und verdeckt damit nichts;
+  // macht das Löschen zum `409 unit_content_in_use` (seit B-413). Er steht als LETZTER Schritt und verdeckt damit nichts;
   // die andere Richtung der Regel aus `frontend/CLAUDE.md` gilt aber auch: jedes Rot in den Schritten
   // 1–5 legt ihn still.
   await page.goto("/vater/lehrwerke");
@@ -124,7 +124,8 @@ test("Reihe, Unit, Übung, Zuweisung – der Creator-Weg in einem Zug", async ({
   // ---- 6a. Der gemeldete Weg: Fehlschlag, dann ein Speichern DERSELBEN Zeile ----
   page.once("dialog", (d) => d.accept());
   await page.getByRole("button", { name: `Löschen: „${SERIES.name}"` }).click();
-  // Die deutsche Fassung von `exercise_in_use` (B-205); vorher stand hier der englische Servertext.
+  // Die deutsche Fassung von `unit_content_in_use` (B-413; vorher `exercise_in_use`, B-205). Der Satz der Übungs-Sperre beginnt
+  // anders („Diese Übung wird noch benutzt“) – kommt hier wieder der Übungs-Code, wird dieser Schritt rot.
   await expect(page.getByText(/Inhalte daraus werden noch benutzt/)).toBeVisible();
 
   const UMBENANNT = `${SERIES.name} b`;

@@ -37,6 +37,6 @@ test("Ein Fehler einer Verlags-Änderung steht am Platz der Seite, nicht im Voka
   const fehler = page.locator(".banner.err");
   await expect(fehler).toHaveCount(1);
   await expect(vokabular.locator(".banner.err")).toHaveCount(0);
-  // Und er sagt, was der Server gesagt hat – nicht nur „irgendein Fehler".
-  await expect(fehler).toContainText(/Klett|vergeben|exist|Publisher/i);
+  // Und er sagt, was sperrt – nicht nur „irgendein Fehler". Seit B-411 auf Deutsch (`duplicate_publisher`).
+  await expect(fehler).toContainText("Ein anderer Verlag trägt diesen oder einen fast gleichen Namen schon");
 });

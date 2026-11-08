@@ -76,8 +76,11 @@ export class ApiError extends Error {
  *
  * Die `detail`-Texte des Servers sind bewusst englisch (i18n-Vertrag, siehe CLAUDE.md) – im UI liest sich
  * eine englische Zeile aber wie ein Defekt, gerade dort, wo der Nutzer selbst etwas richten kann. Der
- * `code` ist stabiler Vertragsbestandteil, die Formulierung gehört der Oberfläche. Hier stehen nur Codes,
- * die einen **Nutzer** treffen und ihm sagen, was zu tun ist; technische Fälle behalten ihre Rohmeldung.
+ * `code` ist stabiler Vertragsbestandteil, die Formulierung gehört der Oberfläche. Hier stehen die Codes, die einen
+ * **Erwachsenen** an einem eigenen Knopf treffen (die deutsche Arcade fällt für Codes ohne `problem.*` ebenfalls hierauf
+ * zurück); technische Fälle behalten ihre Rohmeldung. Ein Satz nennt, was sperrt –
+ * keinen Ausweg über eine zweite Sperre (Regel 2026-11-07, `pm-loop` Step 5). Dass jeder 409-Code hier steht oder mit
+ * Grund ausgenommen ist, hält `ProblemTextGuardTests` (B-411).
  */
 const GERMAN_PROBLEM_TEXT: Record<string, string> = {
   exercise_empty:
@@ -115,17 +118,12 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
   // Die Sperre beim Fachwechsel einer Reihe (B-291, B-401; Text B-403). Fest übersetzt wie `exercise_in_use`: die
   // Anzahlen stehen nur im englischen `detail`, und den Satz zu zerlegen hieße, den Vertrag an eine Formulierung zu binden.
   series_subject_in_use:
-    // Der Satz nennt nur Auswege, die es gibt (B-403-Review, B-405, B-406): ein anderes Fach zu wählen hilft nie, weil die
-    // Sperre dieselben Zuordnungen prüft; eine Art lässt sich im Bearbeiten-Dialog nicht entfernen, nur die Übung löschen – und
-    // das Löschen hat eine eigene Sperre (`exercise_in_use`), deren deutsche Meldung nur die ARTEN der Verwendung nennt. Die
-    // eigenen Stellen zeigt der Knopf „Verwendung" in der Übungsliste; fremde bleiben verborgen. Darum kein Zwischenschritt hier.
-    "Diese Reihe hängt noch an ihrem bisherigen Fach. Wechseln geht erst, wenn keine Unit und keine Übung mehr ein "
-    + "Grammatik-Thema und keine Übung eine Art dieses Fachs trägt. Grammatik-Themen nimmst du an der Unit bzw. im "
-    + "Bearbeiten-Dialog der Übung heraus; eine Übung mit einer Art dieses Fachs kannst du nur löschen – und das nur, "
-    + "solange sie nirgends mehr benutzt wird (Lehrplan, Klassenarbeit, Ziel); wo sie bei deinen Kindern steckt, zeigt "
-    + "„Verwendung“ an der Übung. Ganz entfernen "
-    + "lässt sich das Fach nur, solange die Reihe keine Übungen trägt und keine ihrer Units ein Grammatik-Thema dieses "
-    + "Fachs hat.",
+    // B-414: der Satz nennt, was sperrt – kein Ausweg über eine zweite Sperre. Das Löschen einer Übung mit Art ist selbst gesperrt
+    // (`exercise_in_use`) und hat seine eigene Meldung; ein anderes Fach zu wählen prüft dieselben Zuordnungen (B-405).
+    // Als Bedingung, nicht als Tatsache: beim Entfernen zählt JEDE Übung der Reihe, auch eine ohne Thema und Art (B-401).
+    "Diese Reihe hängt noch an ihrem bisherigen Fach. Wechseln lässt es sich nicht, solange Units oder Übungen ein Grammatik-Thema "
+    + "dieses Fachs tragen oder Übungen eine Art dieses Fachs; ganz entfernen nicht, solange die Reihe Übungen trägt oder "
+    + "eine ihrer Units ein Grammatik-Thema dieses Fachs hat.",
   // Die dritte Löschsperre (B-206), und die einzige, die einen Vater trifft, der gerade NICHTS falsch
   // gemacht hat: der KI-Creator kleidet Übungen ein, ohne dass er es sieht, und die Übungszahl in der
   // Tabelle ist nur so frisch wie die letzte Suche. Der Satz muss darum den Ausweg nennen.
@@ -133,16 +131,48 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
     "Dieses Schlagwort kleidet mindestens eine Übung ein – die Einkleidung ist Autoren-Arbeit und nicht "
     + "wiederherstellbar. Nimm es zuerst im Bearbeiten-Dialog dieser Übungen heraus; bei Übungen, die dir "
     + "nicht gehören, kann das nur ihr Autor.",
-  // Die dritte Geschwister-Sperre (B-205): Übung, Unit oder Reihe löschen. Fest übersetzt verliert der Satz, was der
-  // Server beim Löschen einer Übung dynamisch zählt – darum nennt er die Verwendungen, die der Vater nicht sehen kann.
+  // Die Löschsperre an einer Übung (B-205; seit B-413 nur noch dort). Fest übersetzt verliert der Satz, was der Server
+  // dynamisch zählt – darum nennt er die Verwendungen, die der Vater nicht sehen kann. Der Verweis auf „Verwendung“ ist wahr,
+  // seit sie alle drei eigenen Sperren zeigt (B-409). Kein „Entferne sie dort zuerst“ (B-414): eine gespielte Position lässt
+  // sich nicht herausnehmen (`position_has_data`).
   exercise_in_use:
-    "Inhalte daraus werden noch benutzt – in einem Lehrplan, einer Klassenarbeit oder als Etappe eines Ziels, "
-    + "vielleicht auch bei einem Kind, das du nicht betreust (das steht dann nicht unter „Verwendung“). "
-    + "Entferne sie dort zuerst.",
+    "Diese Übung wird noch benutzt – in einem Lehrplan, einer Klassenarbeit oder als Etappe eines Ziels, vielleicht auch "
+    + "bei einem Kind, das du nicht betreust. Die Stellen bei deinen Kindern zeigt „Verwendung“ an der Übung.",
+  // B-413: Unit und Reihe löschen. Ein eigener Code, weil eine Ziel-Etappe auf der Unit die Verwendung KEINER Übung ist –
+  // ein Verweis auf „Verwendung“ schickte den Vater an eine Stelle, die sie nie zeigt. Darum hier kein Verweis.
+  unit_content_in_use:
+    "Inhalte daraus werden noch benutzt – eine Übung in einem Lehrplan, einer Klassenarbeit oder als Etappe eines Ziels, "
+    + "oder ein Ziel zeigt mit einer Etappe auf eine Unit selbst; vielleicht auch bei einem Kind, das du nicht betreust.",
   // Seit B-205 ein eigener Code: nichts wird gelöscht, und Anhängen bleibt erlaubt – das sagte der Löschtext falsch.
   exercise_items_locked:
-    "Diese Übung wird in einem Lehrplan gespielt. Wörter entfernen oder umsortieren würde den gespeicherten "
-    + "Lernstand verschieben – neue Wörter ans Ende anhängen geht. Für alles andere nimm die Übung erst aus den Plänen.",
+    "Diese Übung steckt in einem Lehrplan. Wörter entfernen oder umsortieren würde den gespeicherten "
+    + "Lernstand verschieben – neue Wörter ans Ende anhängen geht.",
+  // B-411: die übrigen Sperren, die ein Erwachsener an einem eigenen Knopf auslöst. Jeder Satz nennt, was sperrt; „Wähle einen
+  // anderen“ nur bei Namensdubletten – dort ist der eigene Name die Sperre.
+  // Derselbe Code für den Key eines Lückentexts (im Web erreichbar), eines Bilds oder einer Vokabel (nur über die API) und die
+  // Artikelnummer im Familien-Shop – die Oberfläche sagt „Key“, nicht „Schlüssel“.
+  duplicate_key: "Diese Kennung (Key bzw. Artikelnummer) trägt schon ein anderer Eintrag. Wähle eine andere.",
+  duplicate_achievement: "Für dieses Kind gibt es schon eine Auszeichnung mit derselben Ziel-Metrik und Schwelle.",
+  duplicate_vocabulary_in_exercise: "Diese Vokabel steht schon in dieser Übung.",
+  duplicate_key_result: "Dieses Ziel hat schon eine Etappe mit demselben Bereich und derselben Messlatte.",
+  media_variant_exists: "Dieses Bild hat schon eine Variante für diesen Zweck und dieses Format.",
+  media_already_linked: "Dieses Bild ist hier schon verknüpft.",
+  duplicate_email: "Diese E-Mail-Adresse nutzt schon ein anderes Konto.",
+  // Eindeutig nur unter den EIGENEN Profilen, inaktive eingeschlossen – die Liste blendet sie standardmäßig aus.
+  duplicate_profile_name: "Eines deiner Fachlehrer-Profile – auch ein inaktives – trägt diesen Namen schon. Wähle einen anderen.",
+  duplicate_category_name: "In diesem Fach gibt es diese Art schon.",
+  // Der Server vergleicht auch die abgeleitete Kurzform des Namens – darum „oder einen fast gleichen“.
+  duplicate_publisher: "Ein anderer Verlag trägt diesen oder einen fast gleichen Namen schon. Wähle einen anderen.",
+  grammar_topic_in_use: "Dieses Grammatik-Thema hängt noch an Übungen oder Units.",
+  last_owner: "Eine Übung braucht mindestens jemanden, der sie verwaltet – das letzte Recht „Verwalten“ kannst du nicht entziehen.",
+  vocabulary_in_use: "Diese Vokabel wird noch benutzt – in Übungen oder als Grundform anderer Einträge.",
+  position_has_data: "An dieser Position wurde schon geübt oder getestet. Entfernen würde diesen Lernstand mitnehmen und geht darum nicht mehr.",
+  timetable_slot_taken: "Dieses Fach steht an diesem Wochentag schon im Stundenplan.",
+  purchase_not_open: "Dieser Kauf ist schon storniert.",
+  activation_not_pending: "Diese Anfrage ist schon beantwortet.",
+  // Trifft den Vater beim Stornieren, Genehmigen oder Ablehnen im Familien-Shop, wenn zwei Speichervorgänge sich kreuzen
+  // (ShopService). Dieselbe Handlung noch einmal ist kein Weg über eine zweite Sperre.
+  concurrency_conflict: "Das hat sich gerade mit einer anderen Änderung überschnitten und wurde nicht gespeichert. Versuch es noch einmal.",
 };
 
 export function errorMessage(e: unknown): string {

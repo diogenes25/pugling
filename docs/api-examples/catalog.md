@@ -314,7 +314,7 @@ Response — `HTTP 409`:
   "type": "https://pugling.app/errors/exercise_in_use",
   "title": "Exercise is in use.",
   "status": 409,
-  "detail": "Cannot delete: the exercise is still used \u2013 1 study plan of yours. Remove it there first.",
+  "detail": "Cannot delete: the exercise is still used \u2013 1 study plan of yours.",
   "code": "exercise_in_use",
   "traceId": "<trace-id>"
 }
