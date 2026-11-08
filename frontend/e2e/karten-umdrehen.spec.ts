@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { createChild, sohnLogin, vaterLogin } from "./helpers";
+import { createChild, introduceAndQuiz, sohnLogin, vaterLogin } from "./helpers";
 
 // B-35: beim Aufdecken dreht sich die Karte um – in der Übung („Umdrehen") und in der Klausur („Aufdecken").
 // Eine eigene Spec statt eines Blocks im Durchstich (frontend/CLAUDE.md, „Eine Fläche je E2E-Spec"): eine
@@ -43,6 +43,8 @@ test("Die Karte dreht sich beim Aufdecken um – beim Üben und in der Klausur",
   await expect(counter).toBeVisible();
   const total = Number((await counter.textContent())!.match(/\/ (\d+)/)![1]);
   expect(total, "zwei Karten: eine mit, eine ohne Bewegung").toBeGreaterThanOrEqual(2);
+  // B-419: der Plan ist neu – erst das Kennenlernen (ohne Umdrehen), dann dreht die Abfrage-Runde die Karten.
+  await introduceAndQuiz(sohn, total);
 
   for (let i = 0; i < total; i++) {
     await expect(counter).toHaveText(new RegExp(`Karte ${i + 1} / `));

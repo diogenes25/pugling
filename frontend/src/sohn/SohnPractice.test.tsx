@@ -12,6 +12,9 @@ import type { PracticeCard, ReviewOutcome } from "../lib/types";
  */
 const review = vi.fn();
 const startSession = vi.fn();
+const cards = vi.fn();
+const endSession = vi.fn();
+const heartbeat = vi.fn();
 
 vi.mock("./SohnApp", () => ({
   useSohn: () => ({ planId: 3, refreshWallet: () => {}, setStreak: () => {}, celebrate: () => {} }),
@@ -22,10 +25,10 @@ vi.mock("../lib/api", async (importOriginal) => {
     ...original,
     api: {
       startSession: (...a: unknown[]) => startSession(...a),
-      cards: () => Promise.resolve(["eins", "zwei", "drei"].map((prompt, i) => card(i, prompt))),
+      cards: (...a: unknown[]) => cards(...a),
       review: (...a: unknown[]) => review(...a),
-      heartbeat: () => Promise.resolve(),
-      endSession: () => Promise.resolve(),
+      heartbeat: (...a: unknown[]) => heartbeat(...a),
+      endSession: (...a: unknown[]) => endSession(...a),
       overview: () => Promise.resolve({ currentStreak: 0 }),
     },
   };
@@ -41,6 +44,9 @@ function card(itemIndex: number, prompt: string): PracticeCard {
 beforeEach(() => {
   review.mockReset();
   startSession.mockReset().mockResolvedValue({ id: 11, testable: true });
+  endSession.mockReset().mockResolvedValue(undefined);
+  heartbeat.mockReset().mockResolvedValue(undefined);
+  cards.mockReset().mockImplementation(() => Promise.resolve(["eins", "zwei", "drei"].map((prompt, i) => card(i, prompt))));
 });
 
 describe("SohnPractice, doppeltes Absenden", () => {
@@ -191,3 +197,157 @@ function taskRegion(): HTMLElement {
   if (!region) throw new Error("keine Ansage-Region");
   return region;
 }
+
+function renderPractice() {
+  return render(
+    <MemoryRouter initialEntries={["/sohn/practice/5"]}>
+      <Routes><Route path="/sohn/practice/:positionId" element={<SohnPractice />} /></Routes>
+    </MemoryRouter>,
+  );
+}
+
+function outcome(wasCorrect: boolean, expected: string | null): ReviewOutcome {
+  return { wasCorrect, expected, awarded: wasCorrect ? 10 : 0, box: 1, dueOn: null, combo: 0, comboBonus: 0, speedBonus: 0, next: null, done: false } as ReviewOutcome;
+}
+
+async function answerTyped(text: string) {
+  const input = await screen.findByRole("textbox");
+  fireEvent.change(input, { target: { value: text } });
+  fireEvent.submit(input.closest("form")!);
+  await act(async () => {});
+}
+
+/** B-420: eine falsch getippte Antwort hält die Karte an, bis das Kind „Weiter" drückt. */
+describe("SohnPractice, falsche Antwort", () => {
+  beforeEach(async () => { await setLanguage("de"); });
+
+  // AK 1. Rot, wenn der wrong-Zweig wieder weiterschaltet (dann steht „zwei" da) oder die Lösung/eigene Antwort fehlt.
+  it("hält die Karte mit eigener Antwort und Lösung an, bis Weiter gedrückt wird", async () => {
+    review.mockResolvedValueOnce(outcome(false, "die Straße"));
+    renderPractice();
+    await answerTyped("die Strasse");
+
+    expect(screen.getByText("eins")).toBeTruthy();
+    expect(screen.queryByText("zwei")).toBeNull();
+    expect(screen.getByText("die Strasse").tagName).toBe("S");
+    expect(screen.getAllByText("Lösung: die Straße").length).toBeGreaterThan(0);
+    // Der Fokus steht auf „Weiter" – Enter trägt das Kind weiter, ohne erst zu zielen.
+    const weiter = screen.getByRole("button", { name: de.sohn.practice.next });
+    expect(document.activeElement).toBe(weiter);
+
+    fireEvent.click(weiter);
+    expect(await screen.findByText("zwei")).toBeTruthy();
+    expect(screen.queryByText("die Strasse")).toBeNull();
+    // Zurück ins Antwortfeld der nächsten Karte – sonst müsste das Kind erst hineinklicken (Review-Fund).
+    expect(document.activeElement).toBe(screen.getByRole("textbox"));
+  });
+
+  // AK 2. Rot, wenn auch der Treffer anhält.
+  it("rückt nach einer richtigen Antwort sofort weiter", async () => {
+    review.mockResolvedValueOnce(outcome(true, "die Stadt"));
+    renderPractice();
+    await answerTyped("die Stadt");
+
+    expect(await screen.findByText("zwei")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: de.sohn.practice.next })).toBeNull();
+  });
+
+  // AK 3. Rot, wenn der Halt an einer gelieferten Lösung hängt statt an der falschen Antwort.
+  it("hält in einer Menge ohne Lösung mit der Absage an", async () => {
+    review.mockResolvedValueOnce(outcome(false, null));
+    renderPractice();
+    await answerTyped("Hamburg");
+
+    expect(screen.getByText("eins")).toBeTruthy();
+    expect(screen.getAllByText(de.sohn.practice.wrong).length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: de.sohn.practice.next })).toBeTruthy();
+  });
+
+  // AK 4. Rot, wenn „Weiter" auf der letzten Karte nicht ins Rundenende führt.
+  it("führt nach der letzten Karte über Weiter ins Rundenende", async () => {
+    cards.mockImplementation(() => Promise.resolve([card(0, "eins")]));
+    review.mockResolvedValueOnce(outcome(false, "die Stadt"));
+    renderPractice();
+    await answerTyped("falsch");
+    expect(screen.queryByText(de.sohn.practice.roundDone)).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: de.sohn.practice.next }));
+    expect(await screen.findByText(de.sohn.practice.roundDone)).toBeTruthy();
+  });
+
+  // Rot, wenn auch „Nochmal" der Selbsteinschätzung anhält – dort stand die Lösung schon auf der Rückseite.
+  it("hält bei der Selbsteinschätzung nicht an", async () => {
+    cards.mockImplementation(() => Promise.resolve([
+      { itemIndex: 0, prompt: "eins", reveal: "one" } as PracticeCard,
+      { itemIndex: 1, prompt: "zwei", reveal: "two" } as PracticeCard,
+    ]));
+    review.mockResolvedValueOnce(outcome(false, "one"));
+    renderPractice();
+    fireEvent.click(await screen.findByRole("button", { name: de.sohn.practice.flip }));
+    fireEvent.click(screen.getByRole("button", { name: de.sohn.practice.again }));
+
+    expect(await screen.findByText("zwei")).toBeTruthy();
+  });
+});
+
+/** B-419: eine Runde, die neue Wörter gezeigt hat, sagt das am Ende und bietet die Abfrage an. */
+describe("SohnPractice, Rundenende nach dem Kennenlernen", () => {
+  beforeEach(async () => { await setLanguage("de"); });
+
+  function shown(itemIndex: number, prompt: string, introduction: boolean): PracticeCard {
+    return { itemIndex, prompt, reveal: "x", displayOnly: true, introduction } as PracticeCard;
+  }
+
+  // AK 5. Rot, wenn das Ende die Einführung nicht zählt oder „Jetzt abfragen" keine neue Runde startet.
+  it("nennt die neuen Wörter und startet mit Jetzt abfragen eine neue Runde", async () => {
+    cards.mockImplementationOnce(() => Promise.resolve([shown(0, "la ville", true), shown(1, "la rue", true)]));
+    review.mockResolvedValue(outcome(false, null));
+    const clock = vi.spyOn(Date, "now").mockReturnValue(1_000_000);
+    renderPractice();
+    for (const _ of [0, 1]) {
+      fireEvent.click(await screen.findByRole("button", { name: de.sohn.practice.next }));
+      await act(async () => {});
+    }
+
+    expect(await screen.findByText("2 neue Wörter kennengelernt")).toBeTruthy();
+    expect(startSession).toHaveBeenCalledTimes(1);
+    startSession.mockResolvedValueOnce({ id: 12, testable: true });
+    clock.mockReturnValue(1_005_000); // fünf Sekunden nach dem Start der Kennenlern-Runde
+    fireEvent.click(screen.getByRole("button", { name: de.sohn.practice.quizNow }));
+
+    expect(await screen.findByText("eins")).toBeTruthy(); // die Abfrage-Runde (Standard-Karten des Mocks)
+    expect(startSession).toHaveBeenCalledTimes(2);
+    // Die Kennenlern-Sitzung ist geschlossen, genau einmal, und nur sie (Review-Fund: ohne `round` in den
+    // Abhängigkeiten des Heartbeat-Effekts bliebe sie offen).
+    await act(async () => {});
+    expect(endSession.mock.calls).toEqual([[3, 5, 11]]);
+    // Mit ihren Rest-Sekunden: ein Zurücksetzen der Uhr schon beim Klick schickte 0 (Review-Fund).
+    expect(heartbeat).toHaveBeenCalledWith(3, 5, 11, 5, true);
+    clock.mockRestore();
+  });
+
+  // AK 5, zweiter Teil. Rot, wenn das Ende an `displayOnly` statt an `introduction` hängt.
+  it("behält nach einer Kennenlern-Stufe des Tages den heutigen Bildschirm", async () => {
+    cards.mockImplementationOnce(() => Promise.resolve([shown(0, "la ville", false)]));
+    review.mockResolvedValue(outcome(false, null));
+    renderPractice();
+    fireEvent.click(await screen.findByRole("button", { name: de.sohn.practice.next }));
+
+    expect(await screen.findByText(de.sohn.practice.roundDone)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: de.sohn.practice.quizNow })).toBeNull();
+    expect(screen.getByText("1 Karte")).toBeTruthy();
+  });
+
+  // Review-Fund: eine Runde mischt neue und schon bekannte Karten – was die abgefragten verdient haben, bleibt stehen.
+  it("zeigt in einer gemischten Runde neben den neuen Wörtern auch die verdienten Münzen", async () => {
+    cards.mockImplementationOnce(() => Promise.resolve([shown(0, "la ville", true), card(1, "la rue")]));
+    review.mockResolvedValueOnce(outcome(false, null)).mockResolvedValueOnce(outcome(true, "die Straße"));
+    renderPractice();
+    fireEvent.click(await screen.findByRole("button", { name: de.sohn.practice.next }));
+    await answerTyped("die Straße");
+
+    expect(await screen.findByText("1 neues Wort kennengelernt")).toBeTruthy();
+    expect(screen.getByText("+10")).toBeTruthy();
+    expect(screen.getByText("1 Karte")).toBeTruthy();
+  });
+});

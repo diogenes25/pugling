@@ -65,13 +65,18 @@ public record HeartbeatDto(int Seconds, bool Active);
 /// them; the child sends the word it builds as <c>GivenAnswer</c>. Shuffled once per session/attempt (the same card
 /// shows the same order when fetched again). <c>null</c> on every other stage and for an answer that is not one
 /// short word - that card comes as letter boxes instead.
+///
+/// <c>Introduction</c> (B-419) marks a card the child has never seen: it is shown at the type's display stage
+/// (so <c>DisplayOnly</c> is set too) whatever the day's stage, and asked for in the next round. The second way to
+/// <c>DisplayOnly</c> next to a display stage of the day, told apart here so the round's end can say "new words
+/// learned" only where there were new words - a display stage of the day introduces nothing.
 /// </summary>
 public record PracticeCard(int ItemIndex, int Stage, string Type, string? Prompt,
     string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices, string? AudioUrl,
     string? ImageUrl = null, string? ImageAlt = null, int? GapIndex = null, string? Passage = null,
     bool AnyOrder = false, IReadOnlyList<string>? RevealAlternatives = null,
     IReadOnlyList<WordPair>? Decoding = null, bool DisplayOnly = false, string? AnswerPattern = null,
-    IReadOnlyList<string>? LetterTiles = null);
+    IReadOnlyList<string>? LetterTiles = null, bool Introduction = false);
 
 /// <summary>The next card in learn mode (or <c>Done</c>), server-driven via the session cursor.</summary>
 public record NextResponse(PracticeCard? Card, bool Done, int Cursor, int Total);

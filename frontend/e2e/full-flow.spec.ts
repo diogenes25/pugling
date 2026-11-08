@@ -67,6 +67,14 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   // Nur Sichtprüfung: ein Klick würde die Runde beenden und den restlichen Durchstich abschneiden.
   await expect(sohn.getByRole("button", { name: "Runde beenden" })).toBeVisible();
   const total = Number((await counter.textContent())!.match(/\/ (\d+)/)![1]);
+  // B-419: die Position ist neu, also lernt der Sohn die Wörter zuerst kennen – jede Karte zeigt ihre Lösung, ohne Urteil.
+  for (let i = 0; i < total; i++) {
+    await expect(counter).toHaveText(`Karte ${i + 1} / ${total}`);
+    await sohn.getByRole("button", { name: "Weiter →" }).click();
+  }
+  await expect(sohn.getByText(`${total} neue Wörter kennengelernt`)).toBeVisible();
+  await sohn.getByRole("button", { name: /Jetzt abfragen/ }).click();
+  await expect(counter).toHaveText(`Karte 1 / ${total}`);
   // Genug Karten, damit der Combo-Meilenstein ×5 sicher fällt (bewusste Coverage, kein stiller Skip).
   expect(total).toBeGreaterThanOrEqual(5);
   for (let i = 0; i < total; i++) {

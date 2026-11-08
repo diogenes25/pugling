@@ -116,7 +116,7 @@ Response — `HTTP 200`:
     "metric": "NewWords",
     "period": "Weekly",
     "target": 25,
-    "current": 0,
+    "current": 2,
     "completed": false,
     "rewardPoints": 40
   }
@@ -193,7 +193,7 @@ Response — `HTTP 200`:
     "icon": "\uD83D\uDCDA",
     "metric": "NewWords",
     "threshold": 100,
-    "current": 0,
+    "current": 2,
     "earned": false,
     "earnedAt": null,
     "rewardPoints": 50

@@ -71,7 +71,9 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Single(list!);
         Assert.Equal(exerciseId, list![0].GetProperty("exerciseId").GetInt32());
 
-        // The child plays the position → the content comes from the referenced exercise/store.
+        // The child plays the position → the content comes from the referenced exercise/store. Known words, so the
+        // card is asked rather than introduced (B-419).
+        TestApi.MarkIntroduced(_factory, posId);
         var child = await TestApi.ChildAsync(_factory);
         var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{posId}/practice-sessions";
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));

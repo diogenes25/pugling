@@ -19,7 +19,8 @@ import type { PracticeCard, PositionSession, ReviewOutcome } from "../lib/types"
 // Kleine Anerkennung bei jedem Treffer – Variation sorgt für Abwechslung (Daumen, Stern, Feuer, Muskel).
 const SMALL_EMOJI = ["👍", "⭐", "🔥", "💪", "✨"];
 
-type Phase = "loading" | "front" | "back" | "done" | "empty" | "error";
+/** `wrong` (B-420): eine falsch getippte Antwort hält die Karte an, bis das Kind die Lösung gelesen hat und weiterdrückt. */
+type Phase = "loading" | "front" | "back" | "wrong" | "done" | "empty" | "error";
 
 /**
  * Wie eine Review-Antwort dargestellt wird – als reine Regel statt inline in `judge()`, damit sie ohne
@@ -62,6 +63,12 @@ export function SohnPractice() {
   const [earned, setEarned] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const [lastOutcome, setLastOutcome] = useState<ReviewOutcome | null>(null);
+  // B-420: was auf der angehaltenen Karte steht – die eigene Antwort und die Lösung (null in einer Menge).
+  const [mistake, setMistake] = useState<{ given: string; expected: string | null } | null>(null);
+  const continueRef = useRef<HTMLButtonElement>(null);
+  // B-419: „Jetzt abfragen" startet eine neue Runde derselben Position – eine neue Sitzung, darum ein neuer Schlüssel
+  // für den Start und ein neuer Lauf des Heartbeat-Effekts, der die alte Sitzung schließt.
+  const [round, setRound] = useState(0);
   // Abwechslung: Tipp erst auf Wunsch aufdecken; Tempo-Modus (persistiert) blendet eine Countdown-Leiste ein.
   const [hintShown, setHintShown] = useState(false);
   const [tempo, setTempo] = useState(() => localStorage.getItem("pugling.tempo") === "1");
@@ -88,7 +95,7 @@ export function SohnPractice() {
   // zweite blieb bei Cursor 0 offen liegen (B-62). Ein reiner Boolean-Gate reicht dafür nicht - siehe
   // `useOncePerKey`s eigene Dokumentation für den Stolperstein, den diese Reparatur selbst erst aufdeckte.
   useOncePerKey(
-    planId && positionId ? `${planId}:${positionId}` : null,
+    planId && positionId ? `${planId}:${positionId}:${round}` : null,
     async () => {
       const sess = await api.startSession(planId!, positionId);
       const due = await api.cards(planId!, positionId, sess.id);
@@ -109,14 +116,21 @@ export function SohnPractice() {
   // Heartbeat: alle 12s aktive Zeit melden (Server clamped ohnehin). Session am Ende schließen.
   useEffect(() => {
     if (!planId || !positionId) return;
+    // Hier und nicht beim Klick auf „Jetzt abfragen": das Cleanup der vorigen Runde liest den Wert noch für ihre
+    // Rest-Sekunden, und es läuft erst nach dem Klick (Review-Fund).
+    startedIso.current = Date.now();
     const iv = setInterval(() => {
       if (session.current) api.heartbeat(planId, positionId, session.current.id, 12, true).catch(() => {});
     }, 12000);
     return () => {
       clearInterval(iv);
-      if (session.current) {
+      // Die Sitzung gehört ab hier dem Schließen: eine neue Runde (B-419) setzt die nächste erst, wenn sie gestartet ist,
+      // und bis dahin pingte der Heartbeat der neuen Runde sonst die alte an.
+      const ending = session.current;
+      session.current = null;
+      if (ending) {
         const secs = Math.round((Date.now() - startedIso.current) / 1000) % 12;
-        const sessionId = session.current.id;
+        const sessionId = ending.id;
         // Erst die Rest-Sekunden, dann schließen: `end` wertet das Ziel sofort aus, und bei einer Übung
         // ohne einzelne Inhalte hängt die Pflicht an der Verweildauer. Kämen die Sekunden danach an,
         // stünde die Gutschrift bis zum Periodenschluss aus.
@@ -126,7 +140,31 @@ export function SohnPractice() {
           .catch(() => {});
       }
     };
-  }, [planId, positionId]);
+  }, [planId, positionId, round]);
+
+  // B-420: auf der angehaltenen Karte gehört der Fokus dem „Weiter" – so trägt Enter das Kind weiter, und die Ansage der
+  // Lösung (Live-Region) wird nicht von einem Feld übertönt, das nichts mehr annimmt.
+  useEffect(() => { if (phase === "wrong") continueRef.current?.focus(); }, [phase]);
+  // Und danach zurück in die Antwort der nächsten Karte: vor dem Halt blieb das Feld von Karte zu Karte stehen, jetzt
+  // ersetzt der Knopf es, und ohne diesen Schritt fiele der Fokus auf `body` (Review-Fund).
+  const answerRef = useRef<HTMLDivElement>(null);
+  const prevPhase = useRef<Phase>(phase);
+  useEffect(() => {
+    if (prevPhase.current === "wrong" && phase === "front")
+      answerRef.current?.querySelector<HTMLElement>("input, button:not([disabled])")?.focus();
+    prevPhase.current = phase;
+  }, [phase]);
+
+  /** B-419: eine neue Runde derselben Position – nach dem Kennenlernen die Abfrage. */
+  function startNextRound() {
+    setPhase("loading");
+    setCards([]);
+    setIdx(0);
+    setEarned(0);
+    setCombo(0);
+    setLastOutcome(null);
+    setRound((r) => r + 1);
+  }
 
   /*
    * Eine Bewertung je Karte, seit B-49 über `useAction` gesperrt (Ref, nicht State - dieselbe Begründung
@@ -143,6 +181,9 @@ export function SohnPractice() {
     // gehört das Weiterschalten dem laufenden Aufruf, sonst überspränge ein doppeltes Enter eine Karte (B-284).
     // Ausnahme `plan_inactive` (B-330): dann zählt keine Karte mehr, und die Runde endet mit dem Satz der Arcade.
     let planStopped = false;
+    // B-420: eine falsch GETIPPTE Antwort hält an. Die Selbsteinschätzung nicht – dort stand die Lösung schon auf der
+    // Rückseite, bevor das Kind „Nochmal" drückte.
+    let halted = false;
     const ran = await action.run(async () => {
       try {
         const outcome = await api.review(planId, positionId, session.current!.id, { itemIndex: card.itemIndex, ...payload });
@@ -167,7 +208,13 @@ export function SohnPractice() {
           // „Lösung: Hessen" willkürlich, solange ein Dutzend Einträge offen ist – und verriete einen, der noch
           // gefragt wird. Der Server liefert dann `null`, und hier bleibt es bei der schlichten Absage.
           setToast(feedback.expected ? t("practice.solution", { expected: feedback.expected }) : t("practice.wrong"));
-          setTimeout(() => setToast(null), 1600);
+          if (payload.givenAnswer !== undefined) {
+            halted = true;
+            setMistake({ given: payload.givenAnswer, expected: feedback.expected });
+            setPhase("wrong");
+          } else {
+            setTimeout(() => setToast(null), 1600);
+          }
         }
         // feedback.kind === "none": kein Outcome ODER eine Anzeigenurstufe (ShowBoth) - kein Urteil, kein Toast.
       } catch (e) {
@@ -178,12 +225,14 @@ export function SohnPractice() {
         }
       }
     });
-    if (ran && !planStopped) next();
+    if (ran && !planStopped && !halted) next();
   }
 
   function next() {
     setTypedAnswer("");
     setHintShown(false);
+    setMistake(null);
+    setToast(null);
     if (idx + 1 >= cards.length) {
       if (planId) api.overview(planId).then((o) => setStreak(o.currentStreak)).catch(() => {});
       setPhase("done");
@@ -199,7 +248,7 @@ export function SohnPractice() {
    * und die nach einem Fehler fortgesetzte; eine Region in der Karte entstünde dort zusammen mit ihrem Text und bliebe
    * stumm.
    */
-  const asked = phase === "front" || phase === "back" ? cards[idx] : null;
+  const asked = phase === "front" || phase === "back" || phase === "wrong" ? cards[idx] : null;
   return (
     <>
       <TaskAnnouncer text={asked?.prompt} gapIndex={asked?.gapIndex} />
@@ -230,14 +279,24 @@ export function SohnPractice() {
     </div>
   );
 
+  // B-419: wie viele Karten dieser Runde zum ersten Mal gezeigt wurden – das sagt der Server je Karte (`introduction`),
+  // nicht die Stufe: eine Kennenlern-Stufe des Tages führt nichts ein und behält den heutigen Bildschirm.
+  const introduced = cards.filter((c) => c.introduction).length;
+
   if (phase === "done") return (
     <div className="sohn-body">
       <div className="victory">
         <div className="vtitle win">{t("practice.roundDone")}</div>
-        <div className="reward">
-          <div className="card">🪙<span style={{ color: "var(--gold)" }}>+{earned}</span></div>
-          <div className="card">🃏<span>{t("practice.cards", { count: cards.length })}</span></div>
-        </div>
+        {introduced > 0 && <p className="sub" style={{ textAlign: "center" }}>{t("practice.introduced", { count: introduced })}</p>}
+        {/* Eine Runde kann neue und schon bekannte Karten mischen (die Einführung gilt je Karte): was die
+            abgefragten verdient haben, bleibt sichtbar. Nur eine reine Kennenlern-Runde hat nichts zu zeigen. */}
+        {cards.length > introduced && (
+          <div className="reward">
+            <div className="card">🪙<span style={{ color: "var(--gold)" }}>+{earned}</span></div>
+            <div className="card">🃏<span>{t("practice.cards", { count: cards.length - introduced })}</span></div>
+          </div>
+        )}
+        {introduced > 0 && <button type="button" className="btn lime" onClick={startNextRound} style={{ marginTop: 10 }}>{t("practice.quizNow")}</button>}
         {testable && <button type="button" className="btn gold" onClick={() => nav(`/sohn/test/${positionId}`)} style={{ marginTop: 10 }}>{t("practice.onToTest")}</button>}
         <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>{t("progress.toHome")}</button>
       </div>
@@ -294,7 +353,7 @@ export function SohnPractice() {
       </div>
 
       {/* Tempo-Modus: Countdown-Leiste je Karte (rein visueller Ansporn; der Schnell-Bonus zählt serverseitig). */}
-      {tempo && typed && phase !== "back" && <div className="tempo-bar" key={idx}><i /></div>}
+      {tempo && typed && phase === "front" && <div className="tempo-bar" key={idx}><i /></div>}
 
       <div className="flash">
         {/* Nur die Selbsteinschätzung kommt auf „back" – ShowBoth ist von Anfang an offen und dreht nichts (B-35). */}
@@ -310,7 +369,8 @@ export function SohnPractice() {
               key={card.imageUrl}
               url={card.imageUrl}
               alt={card.imageAlt ?? ""}
-              busy={action.busy}
+              // Auf der angehaltenen Karte liefe die Meldung eines 409 in die stumme Region (sr-only) – dort kein Wechsel.
+              busy={action.busy || phase === "wrong"}
               onReshuffle={reshuffleImage}
             />
           )}
@@ -346,15 +406,22 @@ export function SohnPractice() {
 
         {/* Gruppe statt loser Knöpfe: ein Screenreader liest sonst „Leeds, Schaltfläche" ohne Bezug zur
             Frage. Der Key trägt den Index mit – der Autor darf dieselbe Option zweimal eintragen. */}
-        {typed && card.choices ? (
-          <div className="row" style={{ gap: 8, flexWrap: "wrap" }} role="group" aria-label={t("practice.choices")}>
+        {phase === "wrong" && mistake ? (
+          // B-420: die Karte bleibt stehen – Frage oben, darunter die eigene Antwort und die Lösung, bis „Weiter".
+          <div className="card mistake">
+            <div className="sub">{t("practice.yourAnswerWas")} <s>{mistake.given}</s></div>
+            <div className="rev">{mistake.expected ? t("practice.solution", { expected: mistake.expected }) : t("practice.wrong")}</div>
+            <button type="button" ref={continueRef} className="btn lime" style={{ marginTop: 10 }} onClick={next}>{t("practice.next")}</button>
+          </div>
+        ) : typed && card.choices ? (
+          <div ref={answerRef} className="row" style={{ gap: 8, flexWrap: "wrap" }} role="group" aria-label={t("practice.choices")}>
             {card.choices.map((c, i) => (
               <button type="button" key={`${i}-${c}`} className="btn ghost" disabled={action.busy}
                 onClick={() => judge(card, { givenAnswer: c })}>{c}</button>
             ))}
           </div>
         ) : typed ? (
-          <div>
+          <div ref={answerRef}>
             {card.letterTiles ? (
               <LetterTiles tiles={card.letterTiles} value={typedAnswer} onChange={setTypedAnswer} onSubmit={submitTyped} />
             ) : card.answerLength ? (
@@ -393,7 +460,8 @@ export function SohnPractice() {
         )}
       </div>
 
-      <div className={`live-region${toast ? " toast" : ""}`} role="status" aria-live="polite">{toast}</div>
+      {/* Auf der angehaltenen Karte (B-420) steht die Lösung schon sichtbar in der Karte – die Region sagt sie nur an. */}
+      <div className={`live-region${toast ? (phase === "wrong" ? " sr-only" : " toast") : ""}`} role="status" aria-live="polite">{toast}</div>
       {lastOutcome?.dueOn && phase === "front" && (
         <p className="sub" style={{ textAlign: "center" }}>{t("practice.nextDue", { date: lastOutcome.dueOn })}</p>
       )}

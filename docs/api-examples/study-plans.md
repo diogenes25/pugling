@@ -175,12 +175,12 @@ Response — `HTTP 200`:
 {
   "card": {
     "itemIndex": 0,
-    "stage": 4,
+    "stage": 1,
     "type": "Vocabulary",
     "prompt": "hello",
     "hint": null,
     "answerLength": null,
-    "reveal": null,
+    "reveal": "hallo",
     "choices": null,
     "audioUrl": null,
     "imageUrl": null,
@@ -190,9 +190,10 @@ Response — `HTTP 200`:
     "anyOrder": false,
     "revealAlternatives": null,
     "decoding": null,
-    "displayOnly": false,
+    "displayOnly": true,
     "answerPattern": null,
-    "letterTiles": null
+    "letterTiles": null,
+    "introduction": true
   },
   "done": false,
   "cursor": 0,
@@ -219,22 +220,22 @@ Response — `HTTP 200`:
 
 ```json
 {
-  "wasCorrect": true,
+  "wasCorrect": false,
   "expected": "hallo",
-  "awarded": 10,
-  "box": 2,
+  "awarded": 0,
+  "box": 1,
   "dueOn": "<date>",
-  "combo": 1,
+  "combo": 0,
   "comboBonus": 0,
   "speedBonus": 0,
   "next": {
     "itemIndex": 1,
-    "stage": 4,
+    "stage": 1,
     "type": "Vocabulary",
     "prompt": "goodbye",
     "hint": null,
     "answerLength": null,
-    "reveal": null,
+    "reveal": "tsch\u00FCss",
     "choices": null,
     "audioUrl": null,
     "imageUrl": null,
@@ -244,9 +245,10 @@ Response — `HTTP 200`:
     "anyOrder": false,
     "revealAlternatives": null,
     "decoding": null,
-    "displayOnly": false,
+    "displayOnly": true,
     "answerPattern": null,
-    "letterTiles": null
+    "letterTiles": null,
+    "introduction": true
   },
   "done": false
 }
@@ -296,27 +298,6 @@ Response — `HTTP 200`:
 ```json
 [
   {
-    "itemIndex": 1,
-    "stage": 4,
-    "type": "Vocabulary",
-    "prompt": "goodbye",
-    "hint": null,
-    "answerLength": null,
-    "reveal": null,
-    "choices": null,
-    "audioUrl": null,
-    "imageUrl": null,
-    "imageAlt": null,
-    "gapIndex": null,
-    "passage": null,
-    "anyOrder": false,
-    "revealAlternatives": null,
-    "decoding": null,
-    "displayOnly": false,
-    "answerPattern": null,
-    "letterTiles": null
-  },
-  {
     "itemIndex": 0,
     "stage": 4,
     "type": "Vocabulary",
@@ -335,7 +316,30 @@ Response — `HTTP 200`:
     "decoding": null,
     "displayOnly": false,
     "answerPattern": null,
-    "letterTiles": null
+    "letterTiles": null,
+    "introduction": false
+  },
+  {
+    "itemIndex": 1,
+    "stage": 4,
+    "type": "Vocabulary",
+    "prompt": "goodbye",
+    "hint": null,
+    "answerLength": null,
+    "reveal": null,
+    "choices": null,
+    "audioUrl": null,
+    "imageUrl": null,
+    "imageAlt": null,
+    "gapIndex": null,
+    "passage": null,
+    "anyOrder": false,
+    "revealAlternatives": null,
+    "decoding": null,
+    "displayOnly": false,
+    "answerPattern": null,
+    "letterTiles": null,
+    "introduction": false
   }
 ]
 ```
@@ -543,7 +547,7 @@ Response — `HTTP 200`:
         "useLeitner": true,
         "testable": true,
         "goalMet": true,
-        "dueCount": 1,
+        "dueCount": 2,
         "poolSize": 2,
         "pointsGoalMet": 10
       }

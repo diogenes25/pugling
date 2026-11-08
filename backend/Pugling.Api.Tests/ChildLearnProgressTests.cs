@@ -63,6 +63,9 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
         plan.Positions.Add(p2);
         db.StudyPlans.Add(plan);
         db.SaveChanges();
+        // Known words: the answers below are graded, not introductions (B-419), so they reach the mastery rollup.
+        TestApi.MarkIntroduced(_factory, p1.Id);
+        TestApi.MarkIntroduced(_factory, p2.Id);
         return (plan.Id, p1.Id, p2.Id);
     }
 

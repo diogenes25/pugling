@@ -63,6 +63,35 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
         return step?.Stage ?? pos.Stage ?? pos.Exercise?.DefaultStage ?? type.DefaultStage;
     }
 
+    /// <summary>
+    /// The stage a never-seen card is shown at first (B-419): the type's free display stage, or <c>null</c> for a
+    /// type that has none - there the card is played at the day's stage as before, because there is no way to
+    /// show it without grading it.
+    /// </summary>
+    public static int? IntroductionStage(IExerciseType type) =>
+        type.StageOptions.Where(o => type.IsDisplayOnlyStage(o.Value)).Select(o => (int?)o.Value).FirstOrDefault();
+
+    /// <summary>
+    /// Is this card an introduction (B-419)? The child must see an atom once with its solution before it is asked
+    /// for it, so first contact is a property of the card, not of the day: an atom without an introduction date is
+    /// shown at <see cref="IntroductionStage"/> in a learn round, whatever the schedule says. The info mode is left
+    /// out because it records nothing - every card would stay "new" there forever. A day that is already a display
+    /// stage needs no second rule.
+    /// </summary>
+    public static bool IsIntroduction(IExerciseType type, int dayStage, PlayMode mode, bool introduced) =>
+        mode != PlayMode.Info && !introduced && !type.IsDisplayOnlyStage(dayStage)
+            && IntroductionStage(type) is not null;
+
+    /// <summary>
+    /// Item indices of the position that have been introduced already - the one lookup the card projection needs
+    /// to tell an introduction from a regular card (<see cref="IsIntroduction"/>).
+    /// </summary>
+    public async Task<HashSet<int>> IntroducedIndicesAsync(int positionId, CancellationToken ct) =>
+        [.. await db.PositionItemProgress.AsNoTracking()
+            .Where(p => p.PlanPositionId == positionId && p.IntroducedAt != null)
+            .Select(p => p.ItemIndex)
+            .ToListAsync(ct)];
+
     /// <summary>Number of content items used by the position (override, exercise default, otherwise all available).</summary>
     public int PoolSize(PlanPosition pos, int available) =>
         (pos.ItemCount ?? pos.Exercise?.DefaultItemCount) is > 0 and var count ? Math.Min(count, available) : available;

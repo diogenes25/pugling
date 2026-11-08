@@ -301,6 +301,24 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
+    /// An introduction (B-419) is shown at the display stage even when the day is typed - it shows its image, so
+    /// "different image" must work on it too. The stage the guard checks is the card's, not the day's.
+    /// </summary>
+    [Fact]
+    public async Task AnderesBild_AufKennenlernkarte_EinerTippstufe_GehtWeiter()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var setup = await ScenarioAsync(father, "reshuffle-einfuehrung");
+        await SetInterestsAsync(father, setup.ChildId, [("Einhorn", 3)]);
+        var sohn = await TestApi.ChildAsync(factory, setup.ChildId, ChildPin);
+
+        var (session, card) = await SessionAsync(father, sohn, setup, LetterBoxes, introduced: false);
+        Assert.True(card.GetProperty("introduction").GetBoolean());
+        Assert.False(IsNull(card, "imageUrl"), "The introduction shows the image.");
+        (await sohn.PostAsync(ReshuffleUrl(setup, session, CardIndex(card)), null)).EnsureSuccessStatusCode();
+    }
+
+    /// <summary>
     /// The index addresses a card <b>of this session</b>. Without this boundary, an unrestricted index
     /// could be used to enumerate the motifs and descriptions of the entire exercise – including those of
     /// cards the session never delivers.
@@ -498,7 +516,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>Starts an exercise session at the desired stage and returns the first card.</summary>
-    private static async Task<JsonElement> FirstCardAsync(HttpClient father, Scenario s, int stage) =>
+    private async Task<JsonElement> FirstCardAsync(HttpClient father, Scenario s, int stage) =>
         (await SessionAsync(father, father, s, stage)).Card;
 
     /// <summary>
@@ -506,9 +524,12 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
     /// <paramref name="player"/> play – for the endpoints that the child calls themselves (the stage is
     /// still only set by the supervisor).
     /// </summary>
-    private static async Task<(int SessionId, JsonElement Card)> SessionAsync(HttpClient father, HttpClient player,
-        Scenario s, int stage)
+    private async Task<(int SessionId, JsonElement Card)> SessionAsync(HttpClient father, HttpClient player,
+        Scenario s, int stage, bool introduced = true)
     {
+        // Known words: the card comes at the stage under test instead of as an introduction (B-419), which would
+        // show the image on every stage.
+        if (introduced) TestApi.MarkIntroduced(factory, s.PositionId);
         // The stage comes from the position's schedule (the server enforces it - never the client).
         var patch = await father.PatchAsJsonAsync(
             $"/api/v1/supervisor/study-plans/{s.PlanId}/positions/{s.PositionId}", new { stage });

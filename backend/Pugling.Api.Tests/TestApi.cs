@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
@@ -235,12 +236,54 @@ internal static class TestApi
             }));
     }
 
-    /// <summary>Seeds a plan container directly with one (Leitner) position on the exercise.</summary>
+    /// <summary>
+    /// Seeds a plan container directly with one (Leitner) position on the exercise. With
+    /// <paramref name="introduced"/> (default) every atom counts as already shown, so the cards come at the stage
+    /// under test - without it a vocabulary card's first contact is an introduction (B-419). Pass <c>false</c>
+    /// to test that first contact.
+    /// </summary>
     public static (int planId, int positionId) SeedLeitnerPosition(WebApplicationFactory<Program> f, int exerciseId,
         int stage, int childId = 1, GoalCadence cadence = GoalCadence.Daily, int? goalThreshold = null,
         bool useLeitner = true, bool requireTypedTest = false, int pointsGoalMet = 20,
         int comboThreshold = 5, int comboBonusPoints = 5, int speedThresholdSeconds = 0, int speedBonusPoints = 0,
-        PracticeOrder orderStrategy = PracticeOrder.WeakestFirst, List<ScoringTimeSlot>? timeSlots = null)
+        PracticeOrder orderStrategy = PracticeOrder.WeakestFirst, List<ScoringTimeSlot>? timeSlots = null,
+        bool introduced = true)
+    {
+        var ids = SeedLeitnerPositionCore(f, exerciseId, stage, childId, cadence, goalThreshold, useLeitner,
+            requireTypedTest, pointsGoalMet, comboThreshold, comboBonusPoints, speedThresholdSeconds, speedBonusPoints,
+            orderStrategy, timeSlots);
+        if (introduced) MarkIntroduced(f, ids.positionId);
+        return ids;
+    }
+
+    /// <summary>
+    /// Marks every atom of the position as introduced the day before (B-419), as if the child had seen it in an
+    /// earlier round. Box, review count and due date stay untouched, so the first graded review still counts as
+    /// new content - the test plays a known word at its stage instead of an introduction card.
+    /// </summary>
+    public static void MarkIntroduced(WebApplicationFactory<Program> f, int positionId)
+    {
+        using var scope = f.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        var play = scope.ServiceProvider.GetRequiredService<PositionPlayService>();
+        var pos = db.PlanPositions.Include(p => p.Exercise).Include(p => p.StudyPlan).Single(p => p.Id == positionId);
+        // Only a type that introduces its cards has a first contact to skip; the others keep no progress here.
+        if (play.TypeOf(pos.Exercise!) is not { } type || PositionPlayService.IntroductionStage(type) is null) return;
+        var count = play.ItemsOfAsync(pos, pos.StudyPlan!.ChildId, CancellationToken.None).GetAwaiter().GetResult().Count;
+        var yesterday = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-1);
+        var existing = db.PositionItemProgress.Where(p => p.PlanPositionId == positionId).ToDictionary(p => p.ItemIndex);
+        for (var i = 0; i < count; i++)
+        {
+            if (existing.TryGetValue(i, out var prog)) prog.IntroducedAt ??= yesterday;
+            else db.PositionItemProgress.Add(new PositionItemProgress { PlanPositionId = positionId, ItemIndex = i, IntroducedAt = yesterday });
+        }
+        db.SaveChanges();
+    }
+
+    private static (int planId, int positionId) SeedLeitnerPositionCore(WebApplicationFactory<Program> f, int exerciseId,
+        int stage, int childId, GoalCadence cadence, int? goalThreshold, bool useLeitner, bool requireTypedTest,
+        int pointsGoalMet, int comboThreshold, int comboBonusPoints, int speedThresholdSeconds, int speedBonusPoints,
+        PracticeOrder orderStrategy, List<ScoringTimeSlot>? timeSlots)
     {
         using var scope = f.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();

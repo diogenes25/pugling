@@ -1,5 +1,5 @@
 import { test, expect, type APIRequestContext } from "@playwright/test";
-import { sohnLogin } from "./helpers";
+import { introduceAndQuiz, sohnLogin } from "./helpers";
 
 /*
  * B-05 – Buchstaben ordnen, aus dem Sohn-Sitz. Der Stoff entsteht über die API (Gegenstand ist das Spielen, nicht das
@@ -59,6 +59,8 @@ test("Sohn ordnet Buchstaben per Tastatur und per Klick, der Fokus folgt jeder K
   await sohnLogin(page, { id: String(childId), pin: childPin });
   await page.getByRole("link", { name: /ÜBEN/ }).click();
   const counter = page.locator(".pill.cyan", { hasText: /Karte \d+ \/ \d+/ });
+  // B-419: neue Wörter kommen zuerst zum Kennenlernen; die Buchstaben ordnet erst die Abfrage-Runde.
+  await introduceAndQuiz(page, CARDS.length);
 
   // Jede Antwort muss der Server als richtig werten (B-283, Fund b): durchgeklickt ist nicht gelöst.
   async function pruefen(ausloesen: () => Promise<void>) {

@@ -56,3 +56,18 @@ export async function createChild(page: Page, name: string, pin: string): Promis
     .filter({ has: page.getByRole("cell", { name: id, exact: true }) })).toBeVisible();
   return id;
 }
+
+/**
+ * Plays the introduction round of a fresh position (B-419) and starts the quiz round: every never-seen card is shown
+ * with its solution first ("Weiter →"), and the round's end offers "Jetzt abfragen". Specs about the quiz itself start
+ * from here, so the introduction does not have to be restated in each of them. Expects to be on the practice screen.
+ */
+export async function introduceAndQuiz(page: Page, total: number) {
+  const counter = page.locator(".pill.cyan", { hasText: /Karte \d+ \/ \d+/ });
+  for (let i = 0; i < total; i++) {
+    await expect(counter).toHaveText(`Karte ${i + 1} / ${total}`);
+    await page.getByRole("button", { name: "Weiter →" }).click();
+  }
+  await page.getByRole("button", { name: /Jetzt abfragen/ }).click();
+  await expect(counter).toHaveText(`Karte 1 / ${total}`);
+}

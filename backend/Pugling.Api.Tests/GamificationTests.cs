@@ -16,11 +16,12 @@ namespace Pugling.Api.Tests;
 public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
     // Combo off (threshold 0), so that only mission/achievement points show up.
-    private async Task<(int planId, int positionId, int sessionId)> SetupAsync()
+    private async Task<(int planId, int positionId, int sessionId)> SetupAsync(bool introduced = true)
     {
         var father = await TestApi.AdultAsync(factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
-        var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.SelfAssess, comboThreshold: 0);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.SelfAssess,
+            comboThreshold: 0, introduced: introduced);
         var child = await TestApi.ChildAsync(factory);
         var sessionId = await TestApi.StartPositionSessionAsync(child, planId, positionId);
         return (planId, positionId, sessionId);
@@ -229,7 +230,8 @@ public class GamificationTests(PuglingWebAppFactory factory) : IClassFixture<Pug
             rewardPoints = 15,
         });
 
-        var (planId, positionId, sid) = await SetupAsync();
+        // Never-seen words: their first round is the introduction (B-419), and that is what the metric counts.
+        var (planId, positionId, sid) = await SetupAsync(introduced: false);
         var child = await TestApi.ChildAsync(factory);
 
         // Working on two so far unknown contents for the first time → 2 words introduced today (ProgressMetric.NewWords).

@@ -79,8 +79,9 @@ test("Der Sohn stellt die Arcade auf Englisch, sie bleibt es nach dem Neuladen, 
 
 /*
  * B-305 – der Spielweg auf Englisch: eine Übungsrunde in der englischen Arcade. Der Vater legt dafür eine frische
- * Position an (wie `uebung-abbruch.spec.ts`). Ihre erste Karte ist eine Selbsteinschätzung (gemessen: „Flip 🔄“, dann
- * „Knew it!“). Ein Zweig für andere Stufen fehlt mit Absicht – er liefe hier nie und sähe trotzdem wie ein Beleg aus.
+ * Position an (wie `uebung-abbruch.spec.ts`). Ihre Wörter sind neu, also ist die erste Karte eine Einführung (B-419):
+ * Lösung sichtbar, „Next →“. Ein Zweig für andere Stufen fehlt mit Absicht – er liefe hier nie und sähe trotzdem wie ein
+ * Beleg aus.
  */
 const EXERCISE = "Vokabeln: En ville";
 
@@ -113,10 +114,9 @@ test("Der Sohn spielt eine Übungsrunde in der englischen Arcade", async ({ brow
   await page.locator(".card", { hasText: EXERCISE }).getByRole("link", { name: /PRACTISE/ }).click();
   await expect(page.locator(".pill.cyan", { hasText: /^Card \d+ \/ \d+$/ })).toBeVisible();
   await expect(page.locator(".fcard .lang")).toHaveText("Task");
-  await expect(page.getByText(/^(Karte \d|Aufgabe|Runde beenden|Umdrehen)/)).toHaveCount(0);
+  await expect(page.getByText(/^(Karte \d|Aufgabe|Runde beenden|Weiter)/)).toHaveCount(0);
 
-  await page.getByRole("button", { name: "Flip 🔄" }).click();
-  await page.getByRole("button", { name: "Knew it!" }).click();
+  await page.getByRole("button", { name: "Next →" }).click();
 
   // Nach der ersten Karte die zweite: die Seed-Übung hat mehrere Einträge. Ein Zweig „oder schon ROUND DONE!“ lief hier
   // nie und sah nur wie ein Beleg für das Rundenende aus (B-319).

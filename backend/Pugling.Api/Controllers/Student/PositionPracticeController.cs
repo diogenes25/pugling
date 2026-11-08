@@ -78,10 +78,25 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // cursor (learn) and batch (info/offline) use the same stable sequence.
         // Info = free practice: the whole scope-filtered pool (no Leitner due date), so that already learned
         // words can be repeated too. Learn = only the cards due today.
-        session.Order = [.. await play.DueItemIndicesAsync(pos, day, pos.OrderStrategy, dueOnly: dto.Mode != PlayMode.Info, ct)];
+        var due = await play.DueItemIndicesAsync(pos, day, pos.OrderStrategy, dueOnly: dto.Mode != PlayMode.Info, ct);
+        session.Order = [.. await IntroductionsFirstAsync(pos, day, dto.Mode, due, ct)];
         db.PracticeSessions.Add(session);
         await db.SaveChangesAsync(ct);
         return CreatedAtAction(nameof(Get), new { planId, positionId, sessionId = session.Id }, Map(session));
+    }
+
+    /// <summary>
+    /// The frozen order with the introductions (B-419) in front, otherwise as the strategy sorted it (stable). Show
+    /// first, then ask - and an introduction review is never a hit, so one between two asked cards would break the
+    /// child's combo in a round that mixes new and known atoms.
+    /// </summary>
+    private async Task<IReadOnlyList<int>> IntroductionsFirstAsync(PlanPosition pos, DateOnly day, PlayMode mode,
+        IReadOnlyList<int> order, CancellationToken ct)
+    {
+        if (pos.Exercise is null || pos.StudyPlan is null || play.TypeOf(pos.Exercise) is not { } type) return order;
+        var dayStage = PositionPlayService.StageForDay(pos, pos.StudyPlan, day, type);
+        var introduced = await play.IntroducedIndicesAsync(pos.Id, ct);
+        return [.. order.OrderBy(i => PositionPlayService.IsIntroduction(type, dayStage, mode, introduced.Contains(i)) ? 0 : 1)];
     }
 
     /// <summary>A practice session of the position.</summary>
@@ -107,15 +122,23 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     /// (the server grades, never the frontend); display/self-assessment and the listening stage reveal
     /// it by design, or supply the audio source.
     /// </summary>
-    private static PracticeCard BuildCard(Exercise exercise, IExerciseType type, int stage, bool typed,
-        IReadOnlyList<ContentItem> items, int index, int sessionId)
+    private static PracticeCard BuildCard(Exercise exercise, IExerciseType type, int dayStage, PlayMode mode,
+        HashSet<int> introduced, IReadOnlyList<ContentItem> items, int index, int sessionId)
     {
         var item = items[index];
-        var f = PositionPlayService.CardFacets(PositionPlayService.ConfigOf(exercise), items, item, type, stage, typed, sessionId);
+        var introduction = PositionPlayService.IsIntroduction(type, dayStage, mode, introduced.Contains(index));
+        var stage = CardStage(type, dayStage, introduction);
+        var f = PositionPlayService.CardFacets(PositionPlayService.ConfigOf(exercise), items, item, type, stage,
+            type.IsTypedStage(stage), sessionId);
         return new PracticeCard(index, stage, type.Key, f.Prompt,
             f.Hint, f.AnswerLength, f.Reveal, f.Choices, f.AudioUrl, f.ImageUrl, f.ImageAlt, f.GapIndex, f.Passage,
-            f.AnyOrder, f.RevealAlternatives, f.Decoding, type.IsDisplayOnlyStage(stage), f.AnswerPattern, f.LetterTiles);
+            f.AnyOrder, f.RevealAlternatives, f.Decoding, type.IsDisplayOnlyStage(stage), f.AnswerPattern, f.LetterTiles,
+            introduction);
     }
+
+    // The stage one card is played at: an introduction is shown, everything else follows the day's schedule.
+    private static int CardStage(IExerciseType type, int dayStage, bool introduction) =>
+        introduction ? PositionPlayService.IntroductionStage(type)!.Value : dayStage;
 
     /// <summary>
     /// The entries already named in a set-graded exercise within the round's period – the progress rows
@@ -179,11 +202,11 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (play.TypeOf(pos.Exercise) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
         var stage = PositionPlayService.StageForDay(pos, plan, session.Day, type);
-        var typed = type.IsTypedStage(stage);
+        var introduced = await play.IntroducedIndicesAsync(positionId, ct);
 
         // The frozen order; skip items removed since the start (item CRUD).
         return session.Order.Where(i => i >= 0 && i < items.Count)
-            .Select(i => BuildCard(pos.Exercise, type, stage, typed, items, i, session.Id)).ToList();
+            .Select(i => BuildCard(pos.Exercise, type, stage, session.Mode, introduced, items, i, session.Id)).ToList();
     }
 
     /// <summary>
@@ -228,7 +251,11 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
 
         // Only the image the card actually shows can be re-chosen - and the stage comes from the schedule as
         // everywhere else, never from the client.
-        var stage = PositionPlayService.StageForDay(pos, pos.StudyPlan, session.Day, type);
+        // An introduction (B-419) is shown at the display stage and therefore does show its image.
+        var dayStage = PositionPlayService.StageForDay(pos, pos.StudyPlan, session.Day, type);
+        var introduced = await play.IntroducedIndicesAsync(positionId, ct);
+        var stage = CardStage(type, dayStage,
+            PositionPlayService.IsIntroduction(type, dayStage, session.Mode, introduced.Contains(itemIndex)));
         if (PositionPlayService.CardFacets(PositionPlayService.ConfigOf(pos.Exercise), items, item, type, stage, type.IsTypedStage(stage), seed: 0).ImageUrl is null)
             return this.ProblemWithCode(ApiErrors.MediaNotOnCard, "This card does not show an image.");
 
@@ -259,13 +286,13 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (play.TypeOf(pos.Exercise) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
         var stage = PositionPlayService.StageForDay(pos, plan, session.Day, type);
-        var typed = type.IsTypedStage(stage);
 
         var cursor = PositionPlayService.SkipRemoved(session.Order, session.Cursor, items.Count);
         if (cursor != session.Cursor) { session.Cursor = cursor; await db.SaveChangesAsync(ct); }
         if (cursor >= session.Order.Count) return new NextResponse(null, true, cursor, session.Order.Count);
 
-        var card = BuildCard(pos.Exercise, type, stage, typed, items, session.Order[cursor], session.Id);
+        var introduced = await play.IntroducedIndicesAsync(positionId, ct);
+        var card = BuildCard(pos.Exercise, type, stage, session.Mode, introduced, items, session.Order[cursor], session.Id);
         return new NextResponse(card, false, cursor, session.Order.Count);
     }
 
@@ -304,7 +331,12 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // Enforce the stage server-side (not selectable by the client) and grade type-agnostically.
         if (play.TypeOf(pos.Exercise) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
-        var stage = PositionPlayService.StageForDay(pos, plan, session.Day, type);
+        var dayStage = PositionPlayService.StageForDay(pos, plan, session.Day, type);
+        // The card's own stage, not the day's (B-419): an introduction is graded as what it was shown as - a
+        // display card that earns nothing - so skipping the reading cannot be traded for points.
+        var introduced = await play.IntroducedIndicesAsync(positionId, ct);
+        var stage = CardStage(type, dayStage,
+            PositionPlayService.IsIntroduction(type, dayStage, session.Mode, introduced.Contains(dto.ItemIndex)));
         var typed = type.IsTypedStage(stage);
         var displayOnly = type.IsDisplayOnlyStage(stage);
 
@@ -432,8 +464,12 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (leitnerScored)
             await gamification.EvaluateAndAwardAsync(plan.ChildId, session.Day, ct);
 
+        // The atom just reviewed is introduced now; the set was read before, and the next card may be that atom when a
+        // client answered a card other than the cursor's (offline batch).
+        if (prog?.IntroducedAt is not null) introduced.Add(prog.ItemIndex);
         var done = session.Cursor >= session.Order.Count;
-        var next = done ? null : BuildCard(pos.Exercise, type, stage, typed, items, session.Order[session.Cursor], session.Id);
+        var next = done ? null : BuildCard(pos.Exercise, type, dayStage, session.Mode, introduced, items,
+            session.Order[session.Cursor], session.Id);
         // Without a credited atom there is no solution to name and no box that moved (set mode, wrong answer):
         // the feedback stays empty instead of pointing at the card's own entry, which would both be arbitrary
         // and give away an entry that is still to be asked for.

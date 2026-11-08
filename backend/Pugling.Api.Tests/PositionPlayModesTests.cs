@@ -75,7 +75,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
     {
         var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ThreeWords);
-        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText, introduced: false);
         var child = await TestApi.ChildAsync(_factory);
         var baseUrl = TestApi.PracticeBase(planId, positionId);
 
