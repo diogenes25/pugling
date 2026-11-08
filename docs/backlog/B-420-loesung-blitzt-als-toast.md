@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, bereich/training, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/training, rolle/student]
 aliases: [Lösung als Toast, Falsche Antwort ohne Pause]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: S
@@ -90,3 +90,24 @@ Fall in `karten-umdrehen.spec.ts`.
 - **2026-11-08** — angelegt aus dem Rollengang Sohn ([Protokoll](../pm-sitzung-2026-11-08-rollengang.md)),
   autonom gegrillt (Defekt), geschätzt. Nicht in B-419 aufgenommen: der Fehler trifft auch längst eingeführte
   Karten.
+- **2026-11-08** — Lauf AE, Sprint 22 ([Protokoll](../pm-sitzung-2026-11-08-nacht.md)), Commit `652e5d3`. Neuer Zustand
+  `wrong` in `SohnPractice.tsx`: die Karte bleibt stehen, zeigt die eigene Antwort durchgestrichen und „Lösung: …" (bzw.
+  „Leider nicht." in einer Menge), Fokus auf „Weiter →", nach „Weiter" zurück ins Antwortfeld der nächsten Karte (Fund des
+  `frontend-reviewer`, R5). **Präzisierung von Entscheidung 1:** angehalten wird nur nach einer **getippten** Antwort
+  (Freitext, Kästchen, Kacheln, Auswahl); die Selbsteinschätzung („Nochmal") nicht – dort stand die Lösung schon auf der
+  Rückseite, bevor das Kind urteilte. Die Live-Region trägt die Lösung im Haltezustand `sr-only` (sichtbar steht sie in
+  der Karte); „anderes Bild" ist dort gesperrt.
+- **2026-11-08** — Verifikation: Vitest 683/683, Playwright 120 passed. Fälle → Tests (`SohnPractice.test.tsx`):
+  AK 1 „hält die Karte mit eigener Antwort und Lösung an, bis Weiter gedrückt wird" (inkl. Fokus auf Weiter und zurück
+  ins Feld); AK 2 „rückt nach einer richtigen Antwort sofort weiter"; AK 3 „hält in einer Menge ohne Lösung mit der
+  Absage an"; AK 4 „führt nach der letzten Karte über Weiter ins Rundenende"; Präzisierung „hält bei der
+  Selbsteinschätzung nicht an". E2E: `erstbegegnung.spec.ts` (falsch → Karte bleibt nach 2 s stehen → Enter → nächste
+  Karte, Fokus im Feld). Regression `full-flow`, `buchstaben-ordnen` grün; `old-phrases.py` nicht nötig (kein
+  Meldungstext umformuliert).
+- **2026-11-08** — Mutanten (`mutant-probe.py`, alle rot am benannten Test, Grundlinie grün): F1 wrong-Zweig rückt
+  weiter (`SohnPractice.tsx:201`) rot; F2 auch Selbsteinschätzung hält (`:200`) rot; F3 Fokus nicht auf Weiter (`:144`)
+  rot; R5 Fokus nicht zurück ins Feld (`:154`) rot.
+- **2026-11-08** — Review `frontend-reviewer`: 🟡 Fokus nach „Weiter" fiel auf `body` → behoben (R5); 🟡 Schnellbonus
+  misst die Lesezeit der Lösung mit (Server) → [B-434](B-434-schnellbonus-misst-die-lesezeit-der-loesung-mit.md); 🟢
+  gedrücktes Enter (Autorepeat) kann die Lösung überspringen → hingenommen (selten, kein Doppel-Weiterrücken).
+  Rollengang Sohn als E2E (siehe B-419). → `abgenommen`.

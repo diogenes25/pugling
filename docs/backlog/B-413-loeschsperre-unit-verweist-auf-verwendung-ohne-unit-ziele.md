@@ -2,6 +2,7 @@
 tags: [typ/story, status/abgenommen, bereich/beides, rolle/creator]
 aliases: [Unit-Löschsperre zeigt auf „Verwendung"]
 status: abgenommen
+nachgeschaut: "2026-11-08"
 prio: P2
 art: Defekt
 groesse: S
@@ -79,3 +80,4 @@ zuerst (rot), `ApiErrors` additiv, Controller, Text, E2E-Erwartung. Testweg: `Ca
 - **2026-11-08** — ausformuliert, gegrillt (Defekt, im Lauf entschieden, beschriftet) und geschätzt; Sprint 21 mit B-411/B-414.
 - **2026-11-08** — gebaut. Tests zuerst gegen den Ausgangszustand: die Unit-/Reihen-Fälle rot am Code (`exercise_in_use` statt `unit_content_in_use`), Fall 3 (`Delete_Unit_MitZielEtappeAufDerUnit_Liefert409`) ebenso. `ApiErrors.UnitContentInUse` additiv, `SeriesUnitsController`/`TextbookSeriesController` liefern ihn mit einem Satz ohne Ausweg, Swagger-Summaries nennen die Unit-Etappe. Deutscher Text ohne Verweis auf „Verwendung“. Belege: Fall 1/2 ← Mutanten B413-1/-2, Fall 3 ← B413-1, Fall 4 ← `ExerciseUsageScopeTests` (Vergleichsweg, `exercise_in_use` unverändert), Fall 5 ← B413-DE, Fall 6 ← B413-E2E (`creator-lehrwerk-weg.spec.ts`).
 - **2026-11-08** — abgenommen. Backend 1126/1126, Vitest 675/675, `tsc -b` sauber, Playwright **119 passed** (ganze Suite, Server vom Lauf nach dem letzten Edit gestartet; der erste Lauf war 117/2 – siehe Sprint-Protokoll). Mutanten mit `.claude/scripts/mutant-probe.py`, gemessen nach dem letzten Test-Edit an `c910cf8 + Arbeitsbaum`, 2026-11-08: 34 von 34 rot am eigenen Fall, Grundlinie danach grün (Tabelle im Protokoll `docs/pm-sitzung-2026-11-08.md`). **Zähler 4 von 5** (Sprint 21, beide Reviewer je zwei 🟡). Commit: siehe `git log -- docs/backlog/B-413-loeschsperre-unit-verweist-auf-verwendung-ohne-unit-ziele.md` (Lauf AD, Sprint 21). Review: Doku `docs/endpunkt-beziehungen.md`, `docs/tutorial-supervisor.md` nannten noch `exercise_in_use` → berichtigt. **Rollengang** Vater = `creator-lehrwerk-weg.spec.ts` Schritt 6a (Reihe löschen zeigt den neuen Satz).
+- **2026-11-08** — Nachschau (Lauf AE, frischer `pugling-reviewer` auf `4c25504`): Code additiv, beide Controller liefern ihn, `exercise_in_use` nur noch aus `ExerciseControllerBase`, kein Verbraucher behandelt den alten Code, E2E-Regex trifft nur den neuen Satz, Fall 3 isoliert die Etappe wirklich. **Entgangen (🟡):** das Löschen einer **Reihe**, die nur eine Ziel-Etappe auf einer ihrer Units sperrt, prüft kein Test, obwohl Meldung, Summary und Tutorial es behaupten → [B-436](B-436-reihe-loeschen-mit-unit-etappe-ungetestet.md).

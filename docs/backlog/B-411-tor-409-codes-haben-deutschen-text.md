@@ -2,6 +2,7 @@
 tags: [typ/story, status/abgenommen, bereich/beides]
 aliases: [Tor 409-Codes deutscher Text]
 status: abgenommen
+nachgeschaut: "2026-11-08"
 prio: P2
 art: Aufräumen
 groesse: M
@@ -86,3 +87,4 @@ Lauf ist ohnehin ein Sprint. Reihenfolge im Sprint: B-413 (neuer Code) vor B-411
 - **2026-11-08** — ausformuliert mit Messung (33/9, davon 17 Erwachsene, 6 Kind, 1 Default), gegrillt (Aufräumen, im Lauf entschieden, beschriftet) und geschätzt; Sprint 21.
 - **2026-11-08** — gebaut. 18 deutsche Texte (17 + `concurrency_conflict` aus dem Review), das Tor `ProblemTextGuardTests` (beide Richtungen, gemeinsamer Selbstschutz ≥ 30 Codes / ≥ 9 Einträge) mit sechs begründeten Ausnahmen (5 Arcade + `conflict`). Belege: Fall 1 ← 18 Mutanten „B411-DE <code> fehlt“ (je ein Fall in `errorMessage.test.ts`), Fall 2 ← B411-G1/-G4, Fall 3 ← B411-G2, Fall 4 ← B411-G3.
 - **2026-11-08** — abgenommen. Backend 1126/1126, Vitest 675/675, `tsc -b` sauber, Playwright **119 passed** (ganze Suite, Server vom Lauf nach dem letzten Edit gestartet; der erste Lauf war 117/2 – siehe Sprint-Protokoll). Mutanten mit `.claude/scripts/mutant-probe.py`, gemessen nach dem letzten Test-Edit an `c910cf8 + Arbeitsbaum`, 2026-11-08: 34 von 34 rot am eigenen Fall, Grundlinie danach grün (Tabelle im Protokoll `docs/pm-sitzung-2026-11-08.md`). **Zähler 4 von 5** (Sprint 21, beide Reviewer je zwei 🟡). Commit: siehe `git log -- docs/backlog/B-411-tor-409-codes-haben-deutschen-text.md` (Lauf AD, Sprint 21). Review: `concurrency_conflict` erreicht auch den Vater (Shop) – die Messung „nur das Kind“ war falsch, Text statt Ausnahme; Wörter an die Oberfläche angeglichen („Key“, „Messlatte“, „Ziel-Metrik“, „Verwalten“); Schlüsselwörter der Tests je Satz eindeutig. `verlag-fehler-am-platz-der-seite.spec.ts` erwartete die englische Zeile → auf den deutschen Satz umgestellt. **Rollengang** Vater = dieselbe Spec (Verlags-Dublette zeigt den deutschen Satz). Neues Tor → **Limit 2**.
+- **2026-11-08** — Nachschau (Lauf AE, frischer `pugling-reviewer` auf `4c25504`): Zahlen nachgerechnet (vorher 33 Codes/9 Texte, nachher 34/28, sechs ohne Text = sechs Ausnahmen), jede Ausnahme gegen ihre Fundstelle (nur Student-Controller bzw. `ForStatus`), jeder der 18 neuen Texte gegen die Server-Bedingung, Regex des Tors gegen Kommentar- und CRLF-Zeilen. Kein 🔴/🟡; 🟢: von den zwei Bedingungen in `Every_Exception_Is_Still_Needed` ist nur eine durch eine Mutante belegt, und deren Definition ist nicht abgelegt – im Protokoll vermerkt, keine Story.
