@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/abgenommen, bereich/training, rolle/student, lerntechnik/vokabeln]
 aliases: [Artikel-Toleranz, Stadt statt die Stadt]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: S
@@ -110,3 +110,31 @@ expected, lang, articleRequired)`; (2) Aufrufer in Üben/Test/Vorschau mit `targ
   Ist-Stand belegt, Entscheidungen vom PM unter dem Auftrag „nachtlauffähig machen" (Vetorecht beim Nutzer),
   geschätzt. Tippfehler-Toleranz bewusst abgetrennt (B-422).
 - **2026-11-08** — **Freigabe des Nutzers (Autonomer Modus, Opt-in):** die sieben vorgelegten Entscheidungen der Fable-Sitzung hat der Nutzer im Dialog bestätigt („Ja, so fahren“, Antwort auf die Frage nach den Entscheidungen für die erste Nacht, [Protokoll](../pm-sitzung-2026-11-08-rollengang.md)). Ein Nachtlauf darf diese Story auf Grundlage der `## Entscheidungen` bauen; trifft er auf eine Produktfrage, die sie nicht hergeben, hält er an.
+- **2026-11-08** — Lauf AE, Sprint 23 ([Protokoll](../pm-sitzung-2026-11-08-nacht.md)), Commit `481c973`. Gebaut nach
+  Angriffsplan; die Toleranz reist als Eigenschaft des Inhalts-Atoms (`ContentItem.ArticleOptionalIn`), und alle fünf
+  Bewertungsstellen gehen über `AnswerGrader.Matches(given, item)`. **Auslegung:** „Zielsprache" in Entscheidung 1 =
+  Sprache der erwarteten Antwort (bei „hinten → vorne" die Ausgangssprache) – vom `pugling-reviewer` bestätigt.
+- **2026-11-08** — Rote Probe: Grader-Signatur mit Sprache zuerst ohne Toleranz, `AnswerGraderTests` **11 rot erwartet,
+  11 gemessen** (der Fall „Die Stadt" war schon vorher richtig, Kontrollfall).
+- **2026-11-08** — Fälle → Tests: AK 1 (`Stadt`/`Die Stadt` richtig, `der Stadt` falsch) und AK 2 (`house`, `école`) →
+  `AnswerGraderTests.Weggelassener_Artikel_Zaehlt` / `Anderer_Oder_Hinzugefuegter_Artikel_Bleibt_Falsch` und
+  `ArtikelToleranzTests.Ueben_Wertet_Stadt_Fuer_Die_Stadt_Als_Richtig`; AK 3 (Lösung ohne Artikel, Antwort mit) → derselbe
+  Theory-Fall; AK 4 (nur Artikel) → `Nur_Artikel_Gilt_Nur_Exakt`, **als Absichtserklärung beschriftet** (keine Änderung macht
+  ihn rot); AK 5 → `ArticleRequired_Verlangt_Den_Artikel_Wieder` und `Ohne_Sprache_Bleibt_Der_Vergleich_Exakt`; AK 6 →
+  `Test_Gesammelt_…`, `Test_Einzeln_…`, `Vorschau_Wertet_Wie_Der_Test`; Richtung → `Hinten_Nach_Vorne_…`,
+  `Beide_Richtungen_…`; Auswahl → `Auswahl_Bietet_Das_Wort_Ohne_Artikel_Nicht_Als_Falsche_Option_An`; AK 7 →
+  `exerciseConfig.test.ts` (Anlegen), `ArtikelPflichtBearbeiten.test.ts` (Dialog: Vorbelegung, Speichern) und E2E
+  `artikel-pflicht.spec.ts` (anhaken → anlegen → im Dialog angehakt → abhaken → speichern → neu laden → abgehakt).
+- **2026-11-08** — Mutanten (`mutant-probe.py`, alle rot am benannten Fall, Grundlinie grün): G1 keine Toleranz, G2 jedes
+  erste Wort fällt weg, G3 Regionssuffix, G4 Elision, G5 Alternativen ohne Toleranz, G6 `articleRequired` ignoriert, G7
+  Antwortsprache ohne Richtung, G8 Sprache nie am Atom; H1/H2 Dialog liest/schreibt nicht, H3 Anlegen schreibt nicht,
+  H4/H5 Haken ohne Wirkung (E2E), H6 ohne Erklärung (E2E), H7 Elision mit Leerzeichen, H8 Auswahl, H9 „beide" ohne Tausch.
+  Ein leerer Integrationsfall („hinten → vorne verzeiht keinen deutschen Artikel" – in jeder Variante grün) wurde vor der
+  Messung gestrichen.
+- **2026-11-08** — Review: `frontend-reviewer` 🔴 der Haken stand im Typ-Editor, den die App für Vokabeln nie zeigt; 🔴 die
+  Tests bewachten genau diesen Zweig; 🟡 Erklärung gehört nach `fieldHelp.ts` → alle behoben (Zähler 3). `pugling-reviewer`:
+  keine 🔴; 🟡 „a few" → „few" → [B-437](B-437-artikel-toleranz-nur-bei-nomen.md) (Frage, nicht entschieden); 🟢 Elision mit
+  Leerzeichen, zweite richtige Auswahl, Richtung „beide" → behoben.
+- **2026-11-08** — Verifikation: Backend 1169/1169, Vitest 686/686, `tsc -b` sauber, Playwright **121 passed**. Rollengang:
+  Sohn als E2E (`erstbegegnung.spec.ts` tippt „Stadt" für „die Stadt" und rückt weiter), Creator als E2E
+  (`artikel-pflicht.spec.ts`); Vater als Regressionszeuge (volle Suite grün, keine Vater-Fläche im Diff). → `abgenommen`.

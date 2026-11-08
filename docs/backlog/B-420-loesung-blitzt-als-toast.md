@@ -2,6 +2,7 @@
 tags: [typ/story, status/abgenommen, bereich/frontend, bereich/training, rolle/student]
 aliases: [Lösung als Toast, Falsche Antwort ohne Pause]
 status: abgenommen
+nachgeschaut: "2026-11-08"
 prio: P2
 art: Defekt
 groesse: S
@@ -111,3 +112,4 @@ Fall in `karten-umdrehen.spec.ts`.
   misst die Lesezeit der Lösung mit (Server) → [B-434](B-434-schnellbonus-misst-die-lesezeit-der-loesung-mit.md); 🟢
   gedrücktes Enter (Autorepeat) kann die Lösung überspringen → hingenommen (selten, kein Doppel-Weiterrücken).
   Rollengang Sohn als E2E (siehe B-419). → `abgenommen`.
+- **2026-11-08** — Nachschau (Lauf AE, frischer `frontend-reviewer`, nur gelesen, auf `652e5d3`): Halt nur bei getippter Antwort, Tempo-Leiste nur auf `front`, Bild im Halt gesperrt, Fokus hin und zurück, `next()` räumt `mistake`/`toast`. **Entgangen (🟡):** die sichtbare Lösung in der Karte prüft kein Test – Vitest und E2E treffen auch die `sr-only`-Region → [B-439](B-439-loesung-in-angehaltener-karte-ungetestet.md). 🟢: Fokus fällt nach der letzten Karte auf `body` (dort mitgeführt).

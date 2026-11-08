@@ -2,6 +2,7 @@
 tags: [typ/story, status/abgenommen, bereich/training, bereich/frontend, rolle/student, lerntechnik/vokabeln]
 aliases: [Erstbegegnung, Neue Karte erst zeigen, Kennenlernen je Karte]
 status: abgenommen
+nachgeschaut: "2026-11-08"
 prio: P1
 art: Wunsch
 groesse: M
@@ -206,3 +207,4 @@ Runde nicht blockieren: ein Anzeige-Review setzt `LastReviewedAt` **nicht** – 
 - **2026-11-08** — Rollengang: Sohn als E2E `erstbegegnung.spec.ts` mit **frischem** Plan (Kennenlernen → „3 neue Wörter
   kennengelernt" → Abfrage mit Antwortfeld) und `full-flow.spec.ts` (Vater legt per UI an, Sohn lernt kennen, fragt ab,
   Combo ×5, Test); Vater und Creator als Regressionszeugen (volle Suite grün, kein Weg ihrer Fläche im Diff). → `abgenommen`.
+- **2026-11-08** — Nachschau (Lauf AE, frischer `frontend-reviewer`, nur gelesen, auf `652e5d3`): `IsIntroduction` gegen Entscheidung 1 und AK 3/4 nachgerechnet, alle vier Kartenwege und die Bewertung auf der Stufe der Karte, Risiko 3 (`LastReviewedAt` bleibt leer, `ApplyReview` nur bei `leitnerScored`), `IntroductionsFirstAsync` (Include vorhanden, stabile Sortierung), Ziel/Malus unberührt (Vokabeln brauchen den Test), Metriken `NewWords`/`CorrectReviews`, Rundenneustart (Cleanups vor Setups, alte Sitzung genau einmal mit Rest-Sekunden). Kein 🟡; 🟢: der Name eines Tests verspricht die Combo, gemessen ist die Reihenfolge; `bilder.spec.ts` läuft nur zufällig durch; der Server entscheidet die Einführung beim Review neu (→ B-433). Die 🟢 stehen in [B-439](B-439-loesung-in-angehaltener-karte-ungetestet.md) bzw. B-433.

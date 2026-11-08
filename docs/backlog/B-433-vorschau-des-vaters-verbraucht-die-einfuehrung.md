@@ -25,6 +25,12 @@ Vom `pugling-reviewer` in Lauf AE als 🟢 gemeldet (gleiche Wurzel wie zuvor: V
 des Kindes), bewusst nicht im Sprint: das Sprint-Ziel betrifft den Weg des Kindes. Die Frage für den Dialog: soll eine
 Vater-Runde den Lernstand des Kindes überhaupt schreiben, oder ist der Nachtrag genau dafür da?
 
+**Zweite Folge (Nachschau Sprint 22):** der Server entscheidet „Einführung" beim Review aus der Datenbank, nicht aus der
+ausgelieferten Karte. Wird ein Wort zwischen `/cards` und dem Review woanders eingeführt (zweiter Tab, Vater-Runde),
+wertet der Server das „Weiter" der Kennenlernkarte (ohne Antwort) als getippte, **falsche** Antwort und setzt die Karte
+einen Kasten zurück – das Kind sieht davon nichts.
+
 ## Verlauf
 
 - **2026-11-08** — angelegt aus dem Review von B-419 (Lauf AE, Sprint 22).
+- **2026-11-08** — ergänzt um die zweite Folge aus der Nachschau zu Sprint 22 (Lauf AE).

@@ -115,3 +115,100 @@ Regression des Funds war „Uhr beim Klick zurücksetzen". Das Skript hat das si
 
 **Bewusst ungedeckt:** dass ein Kind die Kennenlernkarte wirklich *liest* (subjektiv; Gerätecheck nicht nötig, aber kein
 Tor kann es sagen).
+
+## Sprint 23 — Ziel & Umfang (NP-25)
+
+**Sprint-Ziel:** Der Sohn bekommt „Stadt" für „die Stadt" als richtig gewertet – im Üben und im Test –, es sei denn, die
+Übung trainiert den Artikel.
+**Umfang:** B-421. B-422 (Tippfehler) nur notiert, nicht entschieden.
+**Entwickler-Brief:** Quelle der Wahrheit bleibt der **eine** `AnswerGrader`; die Toleranz reist als Eigenschaft des
+Inhalts-Atoms (`ContentItem.ArticleOptionalIn` = Sprache der erwarteten Antwort oder `null`), damit alle fünf
+Bewertungsstellen (Üben, Test einzeln, Test gesammelt, Vorschau, Mengen-Abgleich) über **eine** Methode laufen und nicht
+auseinanderdriften können. Gesetzt nur für Vokabel-Atome im Resolver; Lückentexte, Birkenbihl und Übersetzung bleiben
+exakt. Opt-out `VocabularyConfig.ArticleRequired` (additiv, kein Schema). Testweg: `AnswerGraderTests` (Unit, zuerst rot),
+`ArtikelToleranzTests` (Integration), Vitest für den Editor-Haken, Rollengang Sohn in `erstbegegnung.spec.ts`.
+
+## Iteration 23 — umgesetzt
+
+**Rote Probe:** Grader-Signatur mit Sprache zuerst ohne Toleranz → `AnswerGraderTests` **11 rot erwartet, 11 gemessen**
+(der Fall „Die Stadt" war schon vorher richtig und bleibt Kontrollfall).
+
+**Backend:** Artikel-Tabelle je Sprache in `StageMechanics.WithoutLeadingArticle` (de/en/fr, französische Elision als
+Präfix, Regionssuffix `de-DE` abgeschnitten); `AnswerGrader.Matches(given, item)` als einziger Atom-Einstieg; die Sprache
+der Antwort folgt der Abfragerichtung (`ExerciseContentProvider.Swaps`) – bei „hinten → vorne" ist die Antwort
+französisch, und dann darf „la" fehlen. **Auslegung, keine neue Entscheidung:** „Zielsprache" in Entscheidung 1 lese ich
+als „Sprache der erwarteten Antwort" – die Story begründet die Toleranz damit, dass diese Sprache bekannt ist.
+
+**Frontend:** Haken „Artikel muss mitgetippt werden" unter der Abfragerichtung, Hin- und Rückweg in `exerciseConfig.tsx`.
+**Doku:** `wiki/05-punkte-und-bonus.md` sagt, was „richtig" heißt (inkl. Kennenlernkarte aus B-419).
+
+**Verifikation (nach dem letzten Edit):** Backend **1169/1169** (ein erster Volllauf fiel an einem Zeitmess-Test außerhalb
+des Diffs, der einzeln zweimal grün war → [B-438](backlog/B-438-pinhasher-zeittest-flackert-unter-last.md); der zweite
+Volllauf war grün), Vitest 686/686, `tsc -b` sauber. Mutanten: G1–G8 (Grader, Tabelle, Resolver) und H1–H9 (Haken an
+beiden Orten, Erklärung, Elision, Auswahl, Richtung „beide"), alle rot am benannten Fall (Tabellen in B-421).
+
+## Runde 2 — Review (Sprint 23)
+
+`frontend-reviewer`: **🔴 der Haken stand im Typ-Editor (`ConfigEditor`), den die App für Vokabeln nie zeigt** – Anlegen
+läuft über den Wortwähler, Bearbeiten über den Beschreibungs-Block des Dialogs (**Zähler 1**); **🔴 die Tests bewachten
+genau diesen toten Zweig** (**2**); 🟡 die Erklärung gehört nach `fieldHelp.ts` (**3**); 🟡 Vertragsdokument noch nicht
+erzeugt (keine Code-Änderung, ohne Zählung). Behoben: ein Baustein `ArticleRequiredCheck` mit ⓘ an beiden echten Orten,
+der tote Zweig wieder entfernt, Belege über die reinen Funktionen (`initialForm`, `vocabSettingsConfig`,
+`buildTypeConfig`) und eine E2E `artikel-pflicht.spec.ts`, die anhaken → anlegen → im Dialog lesen → abhaken → speichern
+→ neu laden fährt.
+
+`pugling-reviewer`: keine 🔴. Auslegung „Sprache der erwarteten Antwort" bestätigt (die andere Lesart täte nichts).
+🟡 Vertragsdateien mitcommitten (ohne Zählung). 🟡 „a few" nimmt „few" an – vom Wortlaut der Entscheidung gedeckt, eine
+Produktfrage → [B-437](backlog/B-437-artikel-toleranz-nur-bei-nomen.md), nicht entschieden. 🟢 Elision mit Leerzeichen,
+🟢 ein artikelloses Nachbarwort als zweite richtige Auswahl, 🟢 Richtung „beide" ungetestet → alle behoben (ohne Zählung,
+je mit Mutante). **Zähler Sprint 23: 3 von 5.**
+
+## Runde 3 — Abnahme (Sprint 23)
+
+- **Sohn:** E2E `erstbegegnung.spec.ts` – in der Abfrage-Runde tippt er „Stadt" für „die Stadt", die Karte rückt weiter
+  (sie hielte sonst nach B-420 an). Sprint-Ziel gehalten: im Üben (Integration + E2E) und im Test (beide Antwortwege,
+  Integration) gleich gewertet.
+- **Creator:** E2E `artikel-pflicht.spec.ts` – der Haken steht beim Anlegen und im Dialog, mit ⓘ, und hält beim Speichern.
+  Die Standing-Bedingung („ohne JSON-Handarbeit") hält: kein Config-Feld von Hand.
+- **Vater:** Regressionszeuge – volle Suite grün, keine Vater-Fläche im Diff.
+
+B-421 → `abgenommen` (`481c973`).
+
+## Retrospektive (Sprint 23)
+
+**Nachschau:** Sprint 22 (`652e5d3`: B-419, B-420), frischer `frontend-reviewer`, nur gelesen. **Ein 🟡 entgangen bei B-420:**
+die sichtbare Lösung in der angehaltenen Karte prüft kein Test – Vitest und E2E treffen auch die `sr-only`-Region →
+[B-439](backlog/B-439-loesung-in-angehaltener-karte-ungetestet.md) (`entgangen_bei: [B-420]`, mit drei 🟢: `bilder.spec.ts`
+läuft nur zufällig, ein Testname verspricht die Combo, Fokus nach der letzten Karte). Eine zweite Folge der Einführung
+(Server entscheidet sie beim Review neu) ergänzt [B-433](backlog/B-433-vorschau-des-vaters-verbraucht-die-einfuehrung.md).
+B-419 und B-420 tragen `nachgeschaut: 2026-11-08` mit ihren Prüfpunkten. **Das ist ein Defekt im Increment dieses Laufs →
+Limit 2: der Lauf endet hier** (er war mit NP-25 ohnehin am Ende der Pakete). Index: **Nachgeschaut 349 von 350** (offen nur B-421 dieses Sprints).
+
+**Was die eigenen Tore durchgelassen haben:** (1) Ich habe den Haken in den Typ-Editor gesetzt, weil die Vokabel-Zeile dort
+schon „Abfragerichtung" trug – ohne zu prüfen, ob die App diesen Zweig für Vokabeln überhaupt rendert. Die Tests waren
+grün, die Mutanten rot – an einem Ort, den niemand sieht. Erst der `frontend-reviewer` las, **wer** die Komponente mountet.
+(2) Dieselbe Klasse in der Nachschau: eine Zusicherung `getAllByText(…).length > 0` bzw. `.first()` trifft auch ein
+unsichtbares Duplikat (die `sr-only`-Region). Beide Male bewiesen Tests einen Zweig bzw. ein Element, das es gibt – aber
+nicht das, was der Nutzer sieht.
+
+**Vorschläge (nicht gelandet, Freigabe 3):**
+
+- **(CG)** Ein Tor, das einen Zweig `type === "Vocabulary"` in `ConfigEditor` meldet, solange `VaterExerciseCreate` und
+  `ExerciseEditModal` den `ConfigEditor` für Vokabeln nie rendern – allgemeiner: Code, den kein Mount-Pfad erreicht, ist
+  im Frontend nicht „ungenutzt", sondern ein Ort für Fehlbauten. Mechanisch schwer (statisch), darum zuerst als Regel in
+  `frontend/CLAUDE.md`: **„Neues Feld an einer Komponente? Erst greppen, wer sie für diesen Typ mountet."**
+- **(CH)** Zusicherungen auf sichtbaren Text, der zusätzlich in einer Live-Region steht, werden auf den Container begrenzt
+  (`within(...)`, `locator(".card")`), nie `getAllByText(...).length` oder `.first()`. Ort: `frontend/CLAUDE.md` neben der
+  RTL-Regel.
+- Die Vorschläge (CD)–(CF) aus Sprint 22 gelten weiter.
+
+**Bewusst ungedeckt:** ob „Stadt" für „die Stadt" für Lehrer und Kind *fair* wirkt – das ist der Kern der Entscheidung,
+kein Messwert; B-437 trägt die offene Grenze.
+
+## Offene Roadmap
+
+Die Liste ist [docs/backlog/](backlog/README.md). Dieser Lauf: B-419, B-420, B-421 `abgenommen`; B-430 zurück auf
+`ausformuliert` (`wartet_auf`, Offener Punkt 3). Neu: B-433, B-434, B-435, B-437 (Fragen für den Dialog), B-436, B-438,
+B-439 (Defekte, autonom grillbar). **Für den Dialog am Morgen:** B-430 Punkt 3 (wohin führt „Diese Wörter üben"), B-437
+(Toleranz nur bei Nomen?), B-433/B-434/B-435, dazu die Retro-Vorschläge (CD)–(CH). **Nächster Nachtlauf:** zuerst B-439
+(Defekt aus der Nachschau) und B-436, dann NP-26 nach Plan. Nichts gepusht.

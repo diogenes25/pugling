@@ -506,16 +506,13 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (57)
+### Offen (61)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [B-419](B-419-erstbegegnung-neue-karte-erst-zeigen.md) | Erstbegegnung: eine nie gesehene Karte wird in der Übungsrunde erst gezeigt, dann abgefragt | Wunsch | `geschaetzt` | P1 | M | beides | — |
-| [B-420](B-420-loesung-blitzt-als-toast.md) | Nach einer falschen Antwort blitzt die Lösung 1,6 s als Toast unter der nächsten Karte auf | Defekt | `geschaetzt` | P2 | S | frontend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `gegrillt` | P2 | — | backend | Vertrag? |
 | [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder | Wunsch | `geschaetzt` | P2 | L | beides | — |
-| [B-421](B-421-antwort-toleranz-artikel.md) | Antwort-Toleranz: „Stadt" für „die Stadt" zählt als richtig | Wunsch | `geschaetzt` | P2 | S | backend | — |
 | [B-423](B-423-assistent-klassenarbeit-termin-und-stufenleiter.md) | Der Assistent „Klassenarbeit vorbereiten" fragt den Termin, legt die Klassenarbeit an und baut die Stufenleiter | Wunsch | `geschaetzt` | P2 | M | frontend | — |
 | [B-424](B-424-uebungsauswahl-umfang-und-ausprobieren.md) | Die Übungsauswahl im Assistenten und im Planbau zeigt den Umfang nicht und bietet kein „Ausprobieren" | Wunsch | `geschaetzt` | P2 | M | beides | — |
 | [B-207](B-207-kind-auswahlliste-ist-unkuratiert.md) | Die Auswahlliste des Kindes zeigt jedes Schlagwort, das je irgendwer getippt hat | Wunsch | `gegrillt` | P2 | — | beides | Migration? |
@@ -535,6 +532,9 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-416](B-416-loeschen-summary-und-ziel-id-ungeprueft.md) | Das Swagger-Summary von „Übung löschen" nennt keine Ziel-Etappen; `GoalUsage.ObjectiveId` prüft kein Test | Defekt | `idee` | P3 | — | backend | — |
 | [B-417](B-417-concurrency-conflict-doch-erreichbar.md) | `backend/Pugling.Api/CLAUDE.md` nennt `concurrency_conflict` „für Clients bewusst unerreichbar" – der Shop liefert ihn aber | Defekt | `idee` | P3 | — | backend | — |
 | [B-418](B-418-position-entfernen-verspricht-verlust.md) | „Position entfernen" kündigt den Verlust des Fortschritts an – den es nie gibt, weil der Server dann ablehnt | Defekt | `idee` | P3 | — | frontend | — |
+| [B-436](B-436-reihe-loeschen-mit-unit-etappe-ungetestet.md) | Eine Reihe zu löschen, die nur eine Ziel-Etappe auf einer ihrer Units sperrt, prüft kein Test | Defekt | `idee` | P3 | — | backend | — |
+| [B-438](B-438-pinhasher-zeittest-flackert-unter-last.md) | `PinHasher_Verify_RechnetAuchOhneGespeichertenHash` fiel einmal unter Last | Defekt | `idee` | P3 | — | backend | — |
+| [B-439](B-439-loesung-in-angehaltener-karte-ungetestet.md) | Die sichtbare Lösung in der angehaltenen Karte prüft kein Test | Defekt | `idee` | P3 | — | frontend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `idee` | P3 | — | — | — |
 | [B-328](B-328-inline-typen-put-verschiebt-lernstand.md) | Sollen die Inhaltslisten gespielter Übungen anderer Typen (und der Wort-Tausch) gesperrt sein? | Frage | `idee` | P3 | — | backend | — |
@@ -543,12 +543,16 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-407](B-407-gespielte-uebung-sperrt-fachwechsel-dauerhaft.md) | Eine gespielte Übung mit einer Art des alten Fachs sperrt den Fachwechsel ihrer Reihe dauerhaft | Frage | `idee` | P3 | — | backend | — |
 | [B-422](B-422-beinahe-treffer-tippfehler.md) | Prüfauftrag: soll ein Tippfehler („Beinahe-Treffer") verziehen werden – und wie? | Frage | `idee` | P3 | — | backend | — |
 | [B-432](B-432-erster-tag-einer-position-ohne-malus.md) | Prüfauftrag: darf der erste Tag einer Position am Tagesziel vorbei ohne Malus enden? | Frage | `idee` | P3 | — | backend | — |
+| [B-433](B-433-vorschau-des-vaters-verbraucht-die-einfuehrung.md) | Spielt der Vater eine Übungsrunde des Kindes, sind dessen neue Wörter danach „schon gesehen" | Frage | `idee` | P3 | — | backend | — |
+| [B-434](B-434-schnellbonus-misst-die-lesezeit-der-loesung-mit.md) | Nach einem Fehler zählt die Lesezeit der Lösung als Antwortzeit der nächsten Karte | Frage | `idee` | P3 | — | backend | — |
+| [B-435](B-435-umfang-nur-neue-fragt-nach-der-einfuehrung-nie.md) | Eine Position mit Umfang „nur neue" zeigt ihre Wörter seit B-419 nur noch – abgefragt werden sie nie | Frage | `idee` | P3 | — | backend | — |
+| [B-437](B-437-artikel-toleranz-nur-bei-nomen.md) | Die Artikel-Toleranz greift auch dort, wo das erste Wort kein Artikel eines Nomens ist | Frage | `idee` | P3 | — | backend | — |
 | [B-428](B-428-unit-zeigt-uebungszahl-nicht.md) | Lehrwerke: eine Unit zeigt nicht, wie viele Übungen sie schon trägt | Wunsch | `geschaetzt` | P3 | S | beides | — |
-| [B-430](B-430-nach-test-diese-woerter-ueben.md) | Nach einem nicht bestandenen Test gibt es nur „Nochmal versuchen" – keinen Weg zum Üben | Wunsch | `geschaetzt` | P3 | XS | frontend | — |
 | [B-431](B-431-uebungen-verwalten-startet-leer.md) | „Übungen verwalten" startet leer: erst ein Fach wählen, obwohl die Werkstatt „3 eigene Übungen" zählt | Wunsch | `geschaetzt` | P3 | S | frontend | — |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `ausformuliert` | P3 | L | backend | Migration |
 | [B-16](B-16-positions-formular-umfang.md) | Prüfauftrag: deckt das Positions-Edit-Formular alle Felder ab? | Wunsch | `ausformuliert` | P3 | S | frontend | — |
 | [B-20](B-20-ki-supervisor-agent.md) | KI-Supervisor-Agent (Teil D) — erster Schritt: Übungen einem Plan zuweisen | Wunsch | `ausformuliert` | P3 | L | backend | — |
+| [B-430](B-430-nach-test-diese-woerter-ueben.md) | Nach einem nicht bestandenen Test gibt es nur „Nochmal versuchen" – keinen Weg zum Üben | Wunsch | `ausformuliert` | P3 | XS | frontend | — |
 | [B-122](B-122-top-level-listen-bekommen-paging.md) | Sieben Top-Level-Sammlungen bekommen `skip`/`take` | Wunsch | `idee` | P3 | — | — | — |
 | [B-140](B-140-freigabe-kennzeichen-in-der-uebungsauswahl.md) | Die Übungsauswahl verschweigt, dass eine Übung zurückgezogen ist | Wunsch | `idee` | P3 | — | — | — |
 | [B-219](B-219-verzeihende-abstufung-je-position.md) | Verzeihende Abstufung als Positions-Option | Wunsch | `idee` | P3 | — | — | — |
@@ -569,7 +573,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `geschaetzt` | P4 | M | backend | Migration |
 
 <details>
-<summary>Abgenommen (347)</summary>
+<summary>Abgenommen (350)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -870,7 +874,10 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 | [B-411](B-411-tor-409-codes-haben-deutschen-text.md) | Tor: jeder 409-Code einer Creator-/Supervisor-Action hat einen deutschen Text oder einen begründeten Ausnahmeeintrag | Aufräumen | `abgenommen` | P2 | M | beides | — |
 | [B-413](B-413-loeschsperre-unit-verweist-auf-verwendung-ohne-unit-ziele.md) | Unit/Reihe löschen meldet `exercise_in_use` mit Verweis auf „Verwendung" – Ziel-Etappen auf der Unit stehen dort nie | Defekt | `abgenommen` | P2 | S | beides | — |
 | [B-414](B-414-meldungstexte-nennen-auswege.md) | Bestehende Meldungstexte nennen noch Auswege – gegen die Meldungsregel vom 2026-11-07 | Aufräumen | `abgenommen` | P3 | S | frontend | — |
+| [B-419](B-419-erstbegegnung-neue-karte-erst-zeigen.md) | Erstbegegnung: eine nie gesehene Karte wird in der Übungsrunde erst gezeigt, dann abgefragt | Wunsch | `abgenommen` | P1 | M | beides | — |
 | [B-42](B-42-openapi-typen-generieren.md) | TypeScript-Typen aus dem OpenAPI-Dokument erzeugen statt von Hand pflegen | Aufräumen | `abgenommen` | P2 | M | beides | — |
+| [B-420](B-420-loesung-blitzt-als-toast.md) | Nach einer falschen Antwort blitzt die Lösung 1,6 s als Toast unter der nächsten Karte auf | Defekt | `abgenommen` | P2 | S | frontend | — |
+| [B-421](B-421-antwort-toleranz-artikel.md) | Antwort-Toleranz: „Stadt" für „die Stadt" zählt als richtig | Wunsch | `abgenommen` | P2 | S | backend | — |
 | [B-43](B-43-frontend-komponententests.md) | Die Doppelklick-Lücke in `useAction` – und die fehlende Ebene für unsichtbare Zusicherungen | Defekt | `abgenommen` | P3 | M | frontend | — |
 | [B-44](B-44-grundprinzip-rollennamen.md) | Grundprinzip auf Supervisor/Student umschreiben — „Vater" ist keine Ebene | Aufräumen | `abgenommen` | P2 | XS | doku | — |
 | [B-45](B-45-creator-punkte-empfehlung.md) | Die Punkte-Empfehlung des Creators soll der Supervisor übernehmen können | Wunsch | `abgenommen` | P2 | S | beides | — |
@@ -923,7 +930,7 @@ notiert wird, ist verloren. (Aus demselben Grund steht `RemarkCategory` beim Erf
 
 </details>
 
-### Wartet auf Zutun von außen (2)
+### Wartet auf Zutun von außen (3)
 
 Diese Stories kommen **im Repo nicht weiter** — es fehlt ein Schritt, den nur ein Mensch
 oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird gerade gebaut".
@@ -931,11 +938,12 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | Id | Story | Stufe | Wartet auf |
 | --- | --- | --- | --- |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
+| [B-430](B-430-nach-test-diese-woerter-ueben.md) | Nach einem nicht bestandenen Test gibt es nur „Nochmal versuchen" – keinen Weg zum Üben | `ausformuliert` | Entscheidung des Nutzers (Offener Punkt 3) |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
-### Nach der Abnahme entgangen (139)
+### Nach der Abnahme entgangen (141)
 
-**Nachgeschaut: 344 von 347 abgenommenen** — und in 120 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 3 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 349 von 350 abgenommenen** — und in 122 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 1 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -1078,18 +1086,18 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-409](B-409-verwendung-zeigt-keine-ziel-etappen.md) | „Verwendung" an der Übung zeigt keine Ziel-Etappen – der Verweis in der Fachwechsel-Meldung ist darum nur halb wahr | [B-406] | `abgenommen` |
 | [B-412](B-412-beste-zuerst-richtung-unbelegt.md) | „beste Bewertung zuerst" im Planbau ist nur gegen „nicht sortiert" belegt, nicht gegen „schlechteste zuerst" | [B-270] | `idee` |
 | [B-416](B-416-loeschen-summary-und-ziel-id-ungeprueft.md) | Das Swagger-Summary von „Übung löschen" nennt keine Ziel-Etappen; `GoalUsage.ObjectiveId` prüft kein Test | [B-409] | `idee` |
+| [B-436](B-436-reihe-loeschen-mit-unit-etappe-ungetestet.md) | Eine Reihe zu löschen, die nur eine Ziel-Etappe auf einer ihrer Units sperrt, prüft kein Test | [B-413] | `idee` |
+| [B-439](B-439-loesung-in-angehaltener-karte-ungetestet.md) | Die sichtbare Lösung in der angehaltenen Karte prüft kein Test | [B-420] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (3) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (1) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-411](B-411-tor-409-codes-haben-deutschen-text.md) | Tor: jeder 409-Code einer Creator-/Supervisor-Action hat einen deutschen Text oder einen begründeten Ausnahmeeintrag |
-| [B-413](B-413-loeschsperre-unit-verweist-auf-verwendung-ohne-unit-ziele.md) | Unit/Reihe löschen meldet `exercise_in_use` mit Verweis auf „Verwendung" – Ziel-Etappen auf der Unit stehen dort nie |
-| [B-414](B-414-meldungstexte-nennen-auswege.md) | Bestehende Meldungstexte nennen noch Auswege – gegen die Meldungsregel vom 2026-11-07 |
+| [B-421](B-421-antwort-toleranz-artikel.md) | Antwort-Toleranz: „Stadt" für „die Stadt" zählt als richtig |
 
 </details>
 
