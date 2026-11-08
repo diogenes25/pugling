@@ -354,7 +354,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         }
 
         var wasCorrect = setMode ? creditedIndex is not null
-            : typed ? item.AcceptedAnswers.Any(a => grader.Matches(dto.GivenAnswer, a))
+            : typed ? grader.Matches(dto.GivenAnswer, item)
             : dto.WasKnown ?? false;
 
         // Outside set mode the credited atom is always the card's own, so `prog` is never null there.

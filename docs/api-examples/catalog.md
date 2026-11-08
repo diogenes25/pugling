@@ -174,6 +174,7 @@ Response — `HTTP 201`:
     "direction": "front-to-back",
     "sourceLang": "en",
     "targetLang": "de",
+    "articleRequired": false,
     "refs": null,
     "items": []
   },

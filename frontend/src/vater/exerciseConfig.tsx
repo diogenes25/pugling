@@ -36,7 +36,8 @@ export type Row = Record<string, any>;
  * untyped, since there's nothing there to check against.
  */
 interface VocabularyRow { front: string; back: string; hint: string }
-interface VocabularyExtra { direction: string; sourceLang: string; targetLang: string }
+/** `articleRequired` (B-421): die Übung trainiert den Artikel – ohne den Haken zählt „Stadt" für „die Stadt". */
+interface VocabularyExtra { direction: string; sourceLang: string; targetLang: string; articleRequired: boolean }
 
 interface ArithmeticRow { prompt: string; answer: string; tolerance: string }
 interface ArithmeticDrillExtra {
@@ -168,7 +169,7 @@ export function emptyRow(type: ExerciseTypeKey): Row {
 /** Anfangs-Extrafelder je Typ (Richtung, Trägertext, Regeln …). */
 export function emptyExtra(type: ExerciseTypeKey): Row {
   switch (type) {
-    case "Vocabulary": return { direction: "front-to-back", sourceLang: "en", targetLang: "de" } satisfies VocabularyExtra;
+    case "Vocabulary": return { direction: "front-to-back", sourceLang: "en", targetLang: "de", articleRequired: false } satisfies VocabularyExtra;
     // Partial on purpose: `instruction` has no meaningful initial value, it arrives once the Vater types it.
     case "List": return { ordered: false } satisfies Partial<ListExtra>;
     case "Translation": return { sourceLang: "en", targetLang: "de" } satisfies TranslationExtra;
@@ -206,7 +207,7 @@ export function buildTypeConfig(
       // um später inline ergänzte Wörter im Store anzulegen (und es hält fremdsprachige Treffer heraus).
       const langs = { sourceLang: cfg.sourceLang || null, targetLang: cfg.targetLang || null };
       return opts.vocabRefs
-        ? { ...langs, direction, refs: opts.vocabRefs.map((r) => ({ vocabularyId: r.vocabularyId })) }
+        ? { ...langs, direction, articleRequired: cfg.articleRequired === true, refs: opts.vocabRefs.map((r) => ({ vocabularyId: r.vocabularyId })) }
         : { ...(opts.base ?? {}), direction, items: [], refs: null };
     }
     case "Arithmetic": {
@@ -343,6 +344,7 @@ export function configToEditorState(type: ExerciseTypeKey, config: unknown): { r
       return { rows: [], extra: {
         direction: str(c.direction) || "front-to-back",
         sourceLang: str(c.sourceLang), targetLang: str(c.targetLang),
+        articleRequired: false,
       } satisfies VocabularyExtra };
     case "Arithmetic":
       return fallback(
@@ -683,6 +685,22 @@ export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, re
         </button>
       )}
     </div>
+  );
+}
+
+/**
+ * B-421: der Haken „Artikel muss mitgetippt werden" einer Vokabelübung – EIN Baustein für beide Orte, an denen er
+ * steht (Anlegen im Wortwähler, Bearbeiten im Beschreibungs-Block des Dialogs), damit Wortlaut und Erklärung nicht
+ * auseinanderlaufen. Die Erklärung steht in `fieldHelp.ts`.
+ */
+export function ArticleRequiredCheck({ checked, onChange }: { checked: boolean; onChange: (value: boolean) => void }) {
+  return (
+    <span className="label-row">
+      <label className="checkline">
+        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} /> Artikel muss mitgetippt werden
+      </label>
+      <InfoHint topic="articleRequired" />
+    </span>
   );
 }
 

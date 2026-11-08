@@ -274,7 +274,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             {
                 var result = attempt.Results.FirstOrDefault(r => r.ItemIndex == index);
                 var correct = typed
-                    ? item.AcceptedAnswers.Any(a => grader.Matches(dto.GivenAnswer, a))
+                    ? grader.Matches(dto.GivenAnswer, item)
                     : dto.WasKnown ?? false;
                 if (result is not null)
                 {
@@ -372,7 +372,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
                     var item = items[index];
                     result.GivenAnswer = answer.GivenAnswer;
                     result.WasCorrect = typed
-                        ? item.AcceptedAnswers.Any(a => grader.Matches(answer.GivenAnswer, a))
+                        ? grader.Matches(answer.GivenAnswer, item)
                         : answer.WasKnown ?? false;
                 }
             }

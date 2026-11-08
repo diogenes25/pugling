@@ -159,3 +159,16 @@ describe("Leere Listen", () => {
     expect(emptyRow("Reading").choices).toEqual([]);
   });
 });
+
+/** B-421, AK 7, Anlegen: der Haken des Wortwählers fährt mit der Config zum Server. */
+describe("Vokabeln: articleRequired beim Anlegen", () => {
+  // Rot, wenn der Anlege-Weg das Feld nicht schreibt oder ein fehlendes Feld als gesetzt liest.
+  it("schreibt den Haken – und ohne Haken false", () => {
+    const an = buildTypeConfig("Vocabulary", [], { direction: "front-to-back", sourceLang: "fr", targetLang: "de", articleRequired: true },
+      { vocabRefs: [{ vocabularyId: 7 }] }) as { articleRequired: boolean };
+    const aus = buildTypeConfig("Vocabulary", [], { direction: "front-to-back", sourceLang: "fr", targetLang: "de" },
+      { vocabRefs: [{ vocabularyId: 7 }] }) as { articleRequired: boolean };
+    expect(an.articleRequired).toBe(true);
+    expect(aus.articleRequired).toBe(false);
+  });
+});

@@ -16,8 +16,8 @@ import { POS, POS_LABEL } from "../lib/vocab";
 // Die typ-spezifische Inhalts-Maschinerie ist mit dem Bearbeiten-Dialog geteilt: Schreiben (buildTypeConfig)
 // und Zurücklesen (configToEditorState) müssen zueinander passen, sonst verliert Bearbeiten Inhalte.
 import {
-  AUTHORABLE_TYPES, ConfigEditor, VOCAB_FORMS, buildTypeConfig, contentProblem, emptyExtra, emptyRow,
-  type Row,
+  AUTHORABLE_TYPES, ArticleRequiredCheck, ConfigEditor, VOCAB_FORMS, buildTypeConfig, contentProblem, emptyExtra,
+  emptyRow, type Row,
 } from "./exerciseConfig";
 import { useExerciseTypes } from "../lib/exerciseTypes";
 import { GrammarTopicPicker } from "../components/GrammarTopicChips";
@@ -440,6 +440,8 @@ function VocabRefPicker({ selected, setSelected, extra, setExtra }: {
           </select>
         </div>
       </div>
+      <ArticleRequiredCheck checked={extra.articleRequired === true}
+        onChange={(v) => setExtra((x) => ({ ...x, articleRequired: v }))} />
 
       {selected.length > 0 && (
         <div className="tokenlist">

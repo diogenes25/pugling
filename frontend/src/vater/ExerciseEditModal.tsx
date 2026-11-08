@@ -15,7 +15,7 @@ import type {
 } from "../lib/types";
 import { LANGUAGES } from "../lib/languages";
 import {
-  ConfigEditor, VOCAB_FORMS, buildTypeConfig, configToEditorState, contentProblem, emptyRow,
+  ArticleRequiredCheck, ConfigEditor, VOCAB_FORMS, buildTypeConfig, configToEditorState, contentProblem, emptyRow,
   isContentEditable, type Row,
 } from "./exerciseConfig";
 import { useExerciseTypes } from "../lib/exerciseTypes";
@@ -265,6 +265,8 @@ interface MetaForm {
   /** Nur Vokabeln: Sprachpaar der Übung (steckt in der Config, nicht in den Metadaten-Spalten). */
   sourceLang: string;
   targetLang: string;
+  /** Nur Vokabeln (B-421): die Übung trainiert den Artikel – steckt ebenfalls in der Config. */
+  articleRequired: boolean;
   /** Die Einkleidung: Ids der Interessen-Stichworte, in die diese Übung gekleidet ist (B-46/B-206). */
   interestTagIds: number[];
   /** Die Grammatik-Themen der Übung (B-155) – aus dem fachgebundenen Vokabular. */
@@ -291,6 +293,20 @@ export function initialForm(d: ExerciseDetail): MetaForm {
     interestTagIds: [...d.interestTagIds],
     grammarTopicIds: [...d.grammarTopicIds],
     ...langsOf(d),
+    articleRequired: (d.config as { articleRequired?: unknown } | null)?.articleRequired === true,
+  };
+}
+
+/**
+ * Die Config, die „Beschreibung speichern" für eine Vokabelübung schickt: der geladene Server-Stand, darüber nur die
+ * Einstellungen, die dieses Formular trägt (Sprachpaar, Artikel-Pflicht). Als eigene Funktion, damit der Weg ohne
+ * nachgebauten Dialog prüfbar ist.
+ */
+export function vocabSettingsConfig(config: unknown, form: Pick<MetaForm, "sourceLang" | "targetLang" | "articleRequired">) {
+  return {
+    ...(config as Record<string, unknown>),
+    sourceLang: form.sourceLang || null, targetLang: form.targetLang || null,
+    articleRequired: form.articleRequired,
   };
 }
 
@@ -335,10 +351,7 @@ function MetaEditor({ detail, form, setForm, type, speichern, onSaved, gesperrt 
      * die Antwort (`NormalizeConfig`, `ConfigForResponse`: vergebene Wort-Ids, `_self`-Links). „Was ich
      * geschickt habe" wäre damit eine dritte Wahrheit, die von der des Servers abweichen darf.
      */
-    const config = type === "Vocabulary"
-      ? { ...(detail.config as Record<string, unknown>),
-          sourceLang: form.sourceLang || null, targetLang: form.targetLang || null }
-      : detail.config;
+    const config = type === "Vocabulary" ? vocabSettingsConfig(detail.config, form) : detail.config;
     const ok = await action.run(() => speichern(payloadFrom(detail, form, config)), "Gespeichert.");
     if (ok) onSaved();
   }
@@ -425,6 +438,7 @@ function MetaEditor({ detail, form, setForm, type, speichern, onSaved, gesperrt 
               </select>
             </div>
           </div>
+          <ArticleRequiredCheck checked={form.articleRequired} onChange={(v) => up("articleRequired", v)} />
           {(!form.sourceLang || !form.targetLang) && (
             <p className="sub" style={{ margin: 0 }}>
               Ohne Sprachpaar kann ein neues Wort nur <strong>aus dem Store</strong> übernommen werden –

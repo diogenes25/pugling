@@ -10,7 +10,7 @@ namespace Pugling.Api.Services.Creator;
 /// assigning it via a study plan – without having to wait for the child's feedback.
 /// <para>
 /// Grading is deliberately identical to the real test (<see cref="IExerciseType.IsTypedStage(int)"/> +
-/// <see cref="AnswerGrader.Matches"/> against <see cref="ContentItem.AcceptedAnswers"/>) – one source of truth,
+/// <see cref="AnswerGrader.Matches(string?, ContentItem)"/> against <see cref="ContentItem.AcceptedAnswers"/>) – one source of truth,
 /// no duplicated grading logic. Only the persisting steps of the test controller are left out.
 /// </para>
 /// </summary>
@@ -84,7 +84,7 @@ public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrade
         {
             byIndex.TryGetValue(item.Index, out var answer);
             var correct = typed
-                ? item.AcceptedAnswers.Any(a => grader.Matches(answer?.GivenAnswer, a))
+                ? grader.Matches(answer?.GivenAnswer, item)
                 : answer?.WasKnown ?? false;
             return new PreviewItemOutcome(item.Index, item.Prompt, item.Answer, answer?.GivenAnswer, correct);
         }).ToList();

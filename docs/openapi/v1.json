@@ -45392,6 +45392,7 @@
       },
       "VocabularyConfig": {
         "required": [
+          "articleRequired",
           "direction",
           "items",
           "sourceLang",
@@ -45410,6 +45411,10 @@
           "targetLang": {
             "type": "string",
             "description": "Language code of the target language (e.g. \u0022de\u0022); needed to create inline List\u0026lt;VocabItem\u0026gt; VocabularyConfig.Items in the store."
+          },
+          "articleRequired": {
+            "type": "boolean",
+            "description": "The exercise trains the article (B-421): a typed answer must carry it. Default \u0060false\u0060 - then a leading\narticle of the answer\u0027s language may be left out (\u0022Stadt\u0022 for \u0022die Stadt\u0022), in practice and test alike."
           },
           "refs": {
             "type": [

@@ -114,6 +114,13 @@ export const FIELD_HELP = {
    * `newContentPoints` an der Position, und dieses Feld hat sie nie gehabt: kein Bewertungspfad las es.
    * Seit B-45 ist es die Empfehlung für die Zielbelohnung, und der Text sagt das.
    */
+  articleRequired: {
+    title: "Artikel muss mitgetippt werden",
+    text: "Ohne Haken zählt ein weggelassener Artikel nicht als Fehler: „Stadt“ für „die Stadt“, „école“ für "
+      + "„l’école“ – gemessen wird das Wort, nicht die Tipp-Disziplin. Ein anderer oder dazuerfundener Artikel "
+      + "bleibt falsch. Den Haken setzen, wenn die Übung genau den Artikel trainiert (Geschlecht der Wörter). "
+      + "Gilt im Üben und im Test gleich.",
+  },
   exercisePoints: {
     title: "Punkte der Übung",
     text: "Deine Empfehlung, wie viele 🪙 Münzen das Erreichen des Ziels wert ist. Wer die Übung auf der "

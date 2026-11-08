@@ -154,7 +154,7 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     {
         foreach (var index in candidates.Where(i => i >= 0 && i < items.Count).Order())
         {
-            if (items[index].AcceptedAnswers.Any(a => grader.Matches(given, a))) return index;
+            if (grader.Matches(given, items[index])) return index;
         }
         return null;
     }

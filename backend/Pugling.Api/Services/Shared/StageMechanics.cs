@@ -31,6 +31,36 @@ public static class StageMechanics
     public static string Normalize(string? s) =>
         string.Join(' ', (s ?? "").Trim().ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries));
 
+    // B-421: the articles a typed answer may leave out, per language of the expected answer. Product knowledge, kept
+    // small on purpose: only the three languages the catalog teaches with articles; Latin has none, an unknown
+    // language forgives nothing. French elision ("l'école") is a prefix, not a word of its own.
+    private static readonly Dictionary<string, (string[] Words, string[] Prefixes)> Articles = new(StringComparer.Ordinal)
+    {
+        ["de"] = (["der", "die", "das", "ein", "eine"], []),
+        ["en"] = (["the", "a", "an"], []),
+        ["fr"] = (["le", "la", "les", "un", "une", "des"], ["l'", "l’"]),
+    };
+
+    /// <summary>
+    /// The normalized answer without its leading article in <paramref name="language"/> (an ISO code, a region suffix
+    /// like <c>de-DE</c> is ignored), or <c>null</c> when it has none - or nothing would be left after it: an answer that
+    /// is only an article has nothing to leave the article off.
+    /// </summary>
+    public static string? WithoutLeadingArticle(string normalized, string language)
+    {
+        if (!Articles.TryGetValue(language.Split('-')[0].ToLowerInvariant(), out var table)) return null;
+        var space = normalized.IndexOf(' ');
+        if (space > 0 && table.Words.Contains(normalized[..space]))
+            return normalized[(space + 1)..];
+        foreach (var prefix in table.Prefixes)
+        {
+            // Trimmed: "l' école" with a space after the elision is the same answer as "l'école".
+            if (normalized.Length > prefix.Length && normalized.StartsWith(prefix, StringComparison.Ordinal))
+                return normalized[prefix.Length..].TrimStart();
+        }
+        return null;
+    }
+
     /// <summary>
     /// The letter-box mask of an answer (B-66): an underscore for every letter/digit to type, every other
     /// character (space, hyphen, apostrophe, comma, …) kept literally and not entered by the child - it is
@@ -107,8 +137,15 @@ public static class StageMechanics
         if (string.IsNullOrWhiteSpace(item.Answer)) return null;
 
         var seen = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var accepted in item.AcceptedAnswers) seen.Add(Normalize(accepted));
-        seen.Add(Normalize(item.Answer));
+        foreach (var accepted in item.AcceptedAnswers.Append(item.Answer))
+        {
+            var normalized = Normalize(accepted);
+            seen.Add(normalized);
+            // B-421: where the article may be left out, the bare word is a right answer too - a neighbour's "Stadt"
+            // next to "die Stadt" would be a second correct button, not a distractor.
+            if (item.ArticleOptionalIn is { } language && WithoutLeadingArticle(normalized, language) is { } bare)
+                seen.Add(bare);
+        }
 
         var distractors = new List<string>();
         foreach (var other in items)

@@ -3,10 +3,11 @@ import { sohnLogin } from "./helpers";
 
 /*
  * NP-24 „Erst lesen, dann prüfen" als Rollengang des Sohnes – mit einem FRISCHEN Plan, denn nur dort gibt es Wörter, die
- * er nie gesehen hat (Retro-Vorschlag CB vom 2026-11-08). Zwei Wege in einer Fläche, weil sie ein Erlebnis sind:
+ * er nie gesehen hat (Retro-Vorschlag CB vom 2026-11-08). Drei Wege in einer Fläche, weil sie ein Erlebnis sind:
  * - B-419: die erste Runde zeigt jedes neue Wort mit Lösung, das Ende sagt „3 neue Wörter kennengelernt" und bietet die
  *   Abfrage an; erst die zweite Runde fragt mit Antwortfeld.
  * - B-420: eine falsche Antwort hält die Karte an (eigene Antwort + Lösung), Enter trägt weiter.
+ * - B-421: „Stadt" für „die Stadt" zählt – der Artikel darf fehlen.
  *
  * Der Stoff entsteht über die API (Gegenstand ist das Spielen, nicht das Anlegen) – mit Stufe 4 (Freitext), genau der
  * Stufe, die der Assistent für das Ziel „Klassenarbeit" ab Tag 1 schreibt (`VaterWizard.tsx`). Serielle Reihenfolge,
@@ -68,7 +69,8 @@ test("Sohn lernt neue Wörter erst kennen, wird dann abgefragt und liest seine F
   await expect(page.getByText(WORDS[0][0], { exact: true })).toBeVisible();
   await expect(page.getByText(`→ ${WORDS[0][1]}`)).toHaveCount(0);
   const answer = page.getByRole("textbox", { name: "Deine Antwort" });
-  await answer.fill(WORDS[0][1]);
+  // B-421 (NP-25): ohne Artikel getippt – das Wort zählt, die Karte rückt weiter statt anzuhalten.
+  await answer.fill("Stadt");
   await answer.press("Enter");
 
   // ---------- B-420: ein Fehler hält die Karte an ----------

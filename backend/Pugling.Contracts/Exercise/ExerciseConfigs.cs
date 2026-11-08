@@ -28,6 +28,11 @@ public class VocabularyConfig
     public string SourceLang { get; set; } = "";
     /// <summary>Language code of the target language (e.g. "de"); needed to create inline <see cref="Items"/> in the store.</summary>
     public string TargetLang { get; set; } = "";
+    /// <summary>
+    /// The exercise trains the article (B-421): a typed answer must carry it. Default <c>false</c> - then a leading
+    /// article of the answer's language may be left out ("Stadt" for "die Stadt"), in practice and test alike.
+    /// </summary>
+    public bool ArticleRequired { get; set; }
     /// <summary>References to vocabulary store entries (by ID; the response adds the link).</summary>
     public List<VocabRef>? Refs { get; set; }
     /// <summary>Inline vocabulary items; without <see cref="VocabItem.VocabularyId"/> they are automatically created in the store on save.</summary>

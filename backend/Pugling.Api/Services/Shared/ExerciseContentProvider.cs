@@ -19,6 +19,9 @@ namespace Pugling.Api.Services.Shared;
 /// child-neutral paths (preview, evaluation) leave them empty.
 /// <paramref name="Decoding"/> is the word-for-word decoding of the atom (Birkenbihl): the method itself, not a
 /// solution, and therefore material like <paramref name="Passage"/>. <c>null</c> for every other type.
+/// <paramref name="ArticleOptionalIn"/> (B-421) is the language of the expected answer when a leading article of it may
+/// be left out (<see cref="AnswerGrader"/>); <c>null</c> means exact - every type but vocabulary, and a vocabulary
+/// exercise that trains the article.
 /// </summary>
 public record ContentItem(
     int Index,
@@ -33,7 +36,8 @@ public record ContentItem(
     int? VocabularyId = null,
     string? ImageUrl = null,
     string? ImageAlt = null,
-    IReadOnlyList<WordPair>? Decoding = null);
+    IReadOnlyList<WordPair>? Decoding = null,
+    string? ArticleOptionalIn = null);
 
 /// <summary>
 /// Thin facade over the <see cref="ExerciseTypeRegistry"/>: projects the contents of a catalog <see cref="Exercise"/>
@@ -55,11 +59,15 @@ public class ExerciseContentProvider(ExerciseTypeRegistry registry)
     /// <c>back-to-front</c> swaps prompt/answer, <c>both</c> swaps deterministically for an odd
     /// index (stable per item, without randomness). The index stays the same – the Leitner/test progress does not flip.
     /// </summary>
-    public static ContentItem WithDirection(ContentItem item, string? direction) => direction switch
+    public static ContentItem WithDirection(ContentItem item, string? direction) =>
+        Swaps(item.Index, direction) ? Swap(item) : item;
+
+    /// <summary>Does <paramref name="direction"/> ask the item at <paramref name="index"/> the other way round?</summary>
+    public static bool Swaps(int index, string? direction) => direction switch
     {
-        "back-to-front" => Swap(item),
-        "both" => item.Index % 2 == 0 ? item : Swap(item),
-        _ => item,
+        "back-to-front" => true,
+        "both" => index % 2 != 0,
+        _ => false,
     };
 
     // Swap prompt/answer; the alternatives of the reverse case fall away (they applied to the old answer), as

@@ -78,6 +78,13 @@ Review-Punkte = Base (Pflicht)  + Combo (falls Meilenstein)  + Speed (falls schn
 
 Falsche Antwort → **0 Punkte** (und Karte fällt in Box 1).
 
+**Was „richtig" heißt** (`AnswerGrader`, für Üben, Test und Vorschau gleich): Groß-/Kleinschreibung und doppelte
+Leerzeichen zählen nicht, und ein **führender Artikel** der Antwortsprache darf fehlen – „Stadt" für „die Stadt",
+„école" für „l'école" (Deutsch, Englisch, Französisch; B-421). Ein anderer oder hinzugefügter Artikel bleibt falsch.
+Trainiert eine Vokabelübung genau den Artikel, setzt der Creator den Haken „Artikel muss mitgetippt werden"
+(`articleRequired`). Lückentexte vergleichen weiter exakt. Eine nie gesehene Karte wird zuerst nur **gezeigt**
+(Kennenlernkarte, 0 Punkte) und erst in der nächsten Runde gewertet (B-419).
+
 ### Der Pflicht-Malus (der „Stick") — `PositionProgressService.SettleClosedPeriodsAsync`
 
 Bahn A/B sind reine Belohnung (Carrots). Der **Malus** ist die Gegenkraft und setzt das Kern-Versprechen

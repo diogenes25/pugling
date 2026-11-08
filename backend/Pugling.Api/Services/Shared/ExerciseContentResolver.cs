@@ -35,7 +35,7 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
                 var vocab = string.IsNullOrWhiteSpace(exercise.ConfigJson)
                     ? new VocabularyConfig()
                     : JsonSerializer.Deserialize<VocabularyConfig>(exercise.ConfigJson, JsonOptions) ?? new VocabularyConfig();
-                return await ResolveVocabularyItemsAsync(exercise, vocab.Direction, childId, ct);
+                return await ResolveVocabularyItemsAsync(exercise, vocab.Direction, vocab.ArticleRequired, childId, ct);
 
             case StoreResolution.VocabRefs:
                 var cloze = string.IsNullOrWhiteSpace(exercise.ConfigJson)
@@ -71,7 +71,7 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
     /// </para>
     /// </summary>
     private async Task<IReadOnlyList<ContentItem>> ResolveVocabularyItemsAsync(Exercise exercise, string? direction,
-        int? childId, CancellationToken ct)
+        bool articleRequired, int? childId, CancellationToken ct)
     {
         var rows = await db.ExerciseItems.AsNoTracking()
             .Where(i => i.ExerciseId == exercise.Id)
@@ -99,7 +99,13 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
             var item = new ContentItem(i, v.Word, v.Translation, Accepted(v.Translation, v.TranslationAlternatives),
                 r.Hint ?? v.Noun?.Article, AudioUrl: v.PronunciationAudioUrl, ItemId: r.Id, VocabularyId: r.VocabularyId,
                 ImageUrl: picked?.Url, ImageAlt: picked?.Alt);
-            return ExerciseContentProvider.WithDirection(item, direction);
+            // B-421: the answer's language decides which article may be left out - the target language, or the source
+            // language where the direction asks the other way round.
+            var answerLanguage = ExerciseContentProvider.Swaps(i, direction) ? v.SourceLanguage : v.TargetLanguage;
+            return ExerciseContentProvider.WithDirection(item, direction) with
+            {
+                ArticleOptionalIn = articleRequired || answerLanguage.Length == 0 ? null : answerLanguage,
+            };
         }).ToList();
     }
 
