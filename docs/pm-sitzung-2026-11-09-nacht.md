@@ -102,3 +102,21 @@ B-436 → `abgenommen`.
 **Nebenbefund:** Der volle Testlauf am Montag schrieb `docs/api-examples/me.md` um (Wochenmission „NewWords" `current` 2 → 0) –
 die Capture hängt am Wochentag → [B-442](backlog/B-442-capture-wochenmission-haengt-am-wochentag.md); Dateien zurückgesetzt,
 außerhalb des Sprint-Diffs, nicht gezählt.
+
+## Retrospektive (Sprint 25)
+
+**Nachschau:** Sprint 24 (`62bb35d`, B-439), frischer `frontend-reviewer`: kein 🔴, kein 🟡. Prüfpunkte: sechs Mutanten-Zeilen gegen
+Code und Testzeilen nachgerechnet, doppelte h1 gesucht, Eindeutigkeit der Test-Helfer. Fünf 🟢 →
+[B-443](backlog/B-443-fokus-wege-der-sohn-runde.md) (darunter ein älterer Fokusverlust nach „Jetzt abfragen" aus B-419).
+`nachgeschaut` in B-439 gesetzt. Increment dieses Laufs, aber ohne 🟡/🔴 – kein Limit 2; der Lauf geht mit NP-26 weiter.
+
+**Was die eigenen Tore durchgelassen haben:** Der Review von B-436 fand die Gegenrichtung (zu breites Sperren) – meine Fall-Tabelle
+hatte nur „sperrt, wo sie soll" und nicht „sperrt nicht, wo sie nicht soll". Die Klassen-DB seedet keine Ziel-Etappen; eine
+Verbreiterung wäre nur je nach Testreihenfolge aufgefallen. Und die Nachschau zu B-439 fand dasselbe Muster: Entscheidung 2 sagt
+„aus jeder Phase", getestet sind zwei von fünf Herkünften.
+
+**Vorschlag (nicht gelandet, Freigabe 3):**
+
+- **(CJ)** Ein AK der Form „X sperrt/greift, wenn Y" bekommt in der Fall-Tabelle automatisch die Gegenzeile „Y' (Nachbar, fremder
+  Elternteil) → greift nicht", und eine Aussage „aus jeder Phase/jedem Weg" zählt ihre Herkünfte als Zeilen auf. Ort: `pm-loop`
+  Step 5 neben „Fälle Weg × Wert". Prosa, weil es eine Regel beim Schreiben der Tabelle ist.

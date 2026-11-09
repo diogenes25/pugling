@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-08-nacht.md
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-09"
 entgangen_bei: [B-420]
 ---
 
@@ -102,3 +103,7 @@ dafür sorgen, dass das so bleibt.
   Abfrage, Tippfehler hält die Karte mit der Lösung **in der Karte** an) und `e2e/bilder.spec.ts` (Bildwechsel auf der
   Kennenlernkarte). Vater und Creator als Regressionszeugen: volle Suite grün, keine ihrer Flächen im Diff. Kein Browser-Rollengang
   von Hand (Chrome in diesem Lauf nicht genutzt). Commit: siehe `git log -- docs/backlog/B-439-loesung-in-angehaltener-karte-ungetestet.md` (Lauf AF, Sprint 24).
+- **2026-11-09** — Nachschau (Retro Sprint 25, Lauf AF, frischer `frontend-reviewer`, `git show 62bb35d`): kein 🔴, kein 🟡.
+  Prüfpunkte: alle sechs Mutanten-Zeilen gegen `SohnPractice.tsx:158/417/468` und `erstbegegnung.spec.ts:83` nachgerechnet (MF5 rot
+  nur am Treffer-Fall, AK 4 bleibt grün – stimmt); doppelte h1 gesucht (nur `SohnLogin.tsx:48`, anderer Bildschirm); `toastRegion()`/
+  `mistakeCard()` eindeutig. Fünf 🟢 → [B-443](B-443-fokus-wege-der-sohn-runde.md).
