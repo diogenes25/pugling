@@ -46,11 +46,13 @@ public record UpdateTextbookSeriesDto(string? Name, int? PublisherId, string? Su
 
 /// <summary>
 /// A unit of the series including volume. <c>Topics</c>, <c>Grammar</c> and <c>VocabularyNotes</c> are the
-/// material an AI creator must know so as not to invent the unit.
+/// material an AI creator must know so as not to invent the unit. <c>ExerciseCount</c> (B-428) is how many exercises hang on the
+/// unit - all of them, other creators' and withdrawn ones included: the unit is shared catalog, and the question is "is it
+/// stocked", not "do I have something here".
 /// </summary>
 public record SeriesUnitResponse(int Id, int SeriesId, int? Grade, int OrderIndex, string Label,
     BookType BookType, List<string> Topics, string? Grammar, string? VocabularyNotes, DateTime CreatedAt,
-    IReadOnlyList<int> GrammarTopicIds);
+    IReadOnlyList<int> GrammarTopicIds, int ExerciseCount);
 
 /// <summary>
 /// Input for creating a unit; without <c>OrderIndex</c> it is appended at the end. <c>GrammarTopicIds</c> (B-155)

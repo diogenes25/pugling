@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-08-rollengang.md#feedback-vater
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-09"
 ---
 
 # B-427 · Datumsformat: zwölf Stellen formatieren ohne Locale, daneben stehen ISO-Strings
@@ -114,3 +115,4 @@ mitnehmen, falls dort Daten stehen (prüfen: `grep -n "toLocaleDateString" front
   **Ungemessen:** „Fällig" im Positions-Report (`PlanPositions.tsx`) – der Fall braucht Lernfortschritt einer Position; keine Zusicherung
   hält ihn, nur die Umstellung selbst.
 - **2026-11-09** — abgenommen. Backend 1183/1183, Vitest 715/715, `tsc -b` sauber, Playwright **125 passed** (ganze Suite, Server vom Lauf nach dem letzten Edit gestartet). **Rollengang** Vater = `e2e/konto-waehrung-und-datum.spec.ts` Fälle 1–3 (Konto-Datum, Plan-Zeitraum, Tagesverlauf, Planliste, Klassenarbeits-Termin, Ziel-Frist, Browser-Locale en-US) und `e2e/assistent.spec.ts` (Überblick). Sohn und Creator als Regressionszeugen: Suite grün; die Arcade formatiert weiter mit ihrer Sprache. Commit: siehe `git log -- docs/backlog/B-427-datumsformat-uneinheitlich.md` (Lauf AG, Sprint 27).
+- **2026-11-09** — Nachschau (Retro Sprint 28, Lauf AG, frischer `frontend-reviewer`, `git show a14961d`). Prüfpunkte: Server-Behauptung „gelesene Zeitstempel ohne Offset“ gegen das Backend bestätigt (kein `DateTimeOffset`, kein Konverter, POST-Antworten mit `Z` lassen `OHNE_OFFSET` aus); alle `formatDate`-DateOnly-Felder sind im Vertrag `DateOnly`; das Tor findet Aufrufe auch in `.ts` und Template-Strings; ME2/ME5–ME9 Zeilen stimmen. **🟡 → [B-449](B-449-zeitzonen-tests-greifen-nur-in-new-york.md)** (Zeitzonen-Tests greifen weder lokal noch in CI; Nachkommastellen ungetestet). 🟢: Arcade liest Zeitstempel weiter als Ortszeit (zu B-447 vermerkt); `datum.ts:4` „zwölf `toLocaleDateString()`“ waren 7 + 5 `toLocaleString()`.

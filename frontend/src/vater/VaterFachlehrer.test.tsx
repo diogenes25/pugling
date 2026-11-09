@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { ProfileForm } from "./VaterFachlehrer";
-import type { CreatorProfileResponse, SubjectResponse, TextbookSeriesResponse } from "../lib/types";
+import type { CreatorProfileResponse, ExerciseTypeManifest, SubjectResponse, TextbookSeriesResponse } from "../lib/types";
 
 /*
  * Der Regressionstest zu B-67. `ProfileForm` löst keinen Netzaufruf aus, solange nicht abgesendet wird –
@@ -174,5 +174,39 @@ describe("ProfileForm – ein Freitext-Fach am Profil selbst", () => {
     render(<ProfileForm onMeldung={() => {}} profile={profil()} subjects={[ENGLISH]} series={[]} onDone={() => {}} />);
 
     expect(screen.getByLabelText("Erklärung zu „Fach\"", { exact: true })).toBeTruthy();
+  });
+});
+
+/** B-426: die Typ-Knöpfe zeigen die deutschen Namen aus dem Manifest und speichern dessen Schlüssel. */
+describe("ProfileForm – Übungstypen aus dem Manifest", () => {
+  const MANIFEST = [
+    { type: "Vocabulary", label: "Vokabelkarten" },
+    { type: "Cloze", label: "Lückentext" },
+    { type: "Birkenbihl", label: "Birkenbihl" },
+  ] as ExerciseTypeManifest[];
+
+  // AK 1. Rot, wenn der Knopf den Schlüssel statt des Namens zeigt oder nur eine feste Teilmenge erscheint.
+  it("zeigt jeden Typ des Manifests mit seinem deutschen Namen", () => {
+    render(<ProfileForm onMeldung={() => {}} subjects={[ENGLISH]} series={[]} exerciseTypes={MANIFEST} onDone={() => {}} />);
+    expect(screen.getByRole("button", { name: "Lückentext" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Birkenbihl" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Cloze" })).toBeNull();
+  });
+
+  // AK 2. Rot, wenn der gespeicherte Schlüssel nicht auf den Namen abgebildet wird (dann ist „Lückentext" nicht gedrückt).
+  it("zeigt einen gespeicherten Schlüssel als gedrückten Namen", () => {
+    const profil = { id: 1, name: "P", defaultTypes: ["Cloze"], schoolTypes: "None", active: true, isOwn: true } as unknown as CreatorProfileResponse;
+    render(<ProfileForm onMeldung={() => {}} profile={profil} subjects={[ENGLISH]} series={[]} exerciseTypes={MANIFEST} onDone={() => {}} />);
+    expect(screen.getByRole("button", { name: "Lückentext" }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByRole("button", { name: "Vokabelkarten" }).getAttribute("aria-pressed")).toBe("false");
+  });
+
+  // Rot, wenn ein gespeicherter Schlüssel, den das Manifest nicht kennt, verschwindet – er wäre dann nie mehr abwählbar.
+  it("lässt einen unbekannten gespeicherten Schlüssel abwählbar", () => {
+    const profil = { id: 1, name: "P", defaultTypes: ["Altlast"], schoolTypes: "None", active: true, isOwn: true } as unknown as CreatorProfileResponse;
+    render(<ProfileForm onMeldung={() => {}} profile={profil} subjects={[ENGLISH]} series={[]} exerciseTypes={MANIFEST} onDone={() => {}} />);
+    const knopf = screen.getByRole("button", { name: "Altlast" });
+    fireEvent.click(knopf);
+    expect(screen.queryByRole("button", { name: "Altlast" })).toBeNull();
   });
 });

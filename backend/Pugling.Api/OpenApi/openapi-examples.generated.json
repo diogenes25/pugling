@@ -216,7 +216,7 @@
     "role": "father",
     "requestBodyJson": "{\n  \u0022label\u0022: \u0022Unit 1\u0022,\n  \u0022grade\u0022: null,\n  \u0022orderIndex\u0022: 1,\n  \u0022topics\u0022: null,\n  \u0022grammar\u0022: null,\n  \u0022vocabularyNotes\u0022: null\n}",
     "expectedStatus": 201,
-    "responseBodyJson": "{\n  \u0022id\u0022: 7,\n  \u0022seriesId\u0022: 5,\n  \u0022grade\u0022: null,\n  \u0022orderIndex\u0022: 1,\n  \u0022label\u0022: \u0022Unit 1\u0022,\n  \u0022bookType\u0022: \u0022Textbook\u0022,\n  \u0022topics\u0022: [],\n  \u0022grammar\u0022: null,\n  \u0022vocabularyNotes\u0022: null,\n  \u0022createdAt\u0022: \u0022\u003Ctimestamp\u003E\u0022,\n  \u0022grammarTopicIds\u0022: []\n}",
+    "responseBodyJson": "{\n  \u0022id\u0022: 7,\n  \u0022seriesId\u0022: 5,\n  \u0022grade\u0022: null,\n  \u0022orderIndex\u0022: 1,\n  \u0022label\u0022: \u0022Unit 1\u0022,\n  \u0022bookType\u0022: \u0022Textbook\u0022,\n  \u0022topics\u0022: [],\n  \u0022grammar\u0022: null,\n  \u0022vocabularyNotes\u0022: null,\n  \u0022createdAt\u0022: \u0022\u003Ctimestamp\u003E\u0022,\n  \u0022grammarTopicIds\u0022: [],\n  \u0022exerciseCount\u0022: 0\n}",
     "isError": false,
     "expectedCode": null
   },

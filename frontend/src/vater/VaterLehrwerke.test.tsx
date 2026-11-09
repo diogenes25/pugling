@@ -58,7 +58,7 @@ describe("UnitForm – Themen-Eingabe", () => {
 describe("Grammatik-Themen der Unit (B-155)", () => {
   const unit = (over: Partial<SeriesUnitResponse> = {}): SeriesUnitResponse => ({
     id: 1, seriesId: 7, label: "Unit 1", orderIndex: 0, grade: 8, bookType: "Workbook",
-    topics: [], createdAt: "2026-08-12T00:00:00Z", grammarTopicIds: [], ...over,
+    topics: [], createdAt: "2026-08-12T00:00:00Z", grammarTopicIds: [], exerciseCount: 0, ...over,
   });
 
   it("zeigt die Themen einer bestehenden Unit als Chips – ohne Fach mit Id statt Name", () => {
@@ -73,7 +73,7 @@ describe("Grammatik-Themen der Unit (B-155)", () => {
 describe("Vorbelegung einer neuen Unit", () => {
   const unit = (over: Partial<SeriesUnitResponse> = {}): SeriesUnitResponse => ({
     id: 1, seriesId: 7, label: "Unit 1", orderIndex: 0, grade: 8, bookType: "Workbook",
-    topics: [], createdAt: "2026-08-12T00:00:00Z", grammarTopicIds: [], ...over,
+    topics: [], createdAt: "2026-08-12T00:00:00Z", grammarTopicIds: [], exerciseCount: 0, ...over,
   });
 
   it("übernimmt Band und Buchtyp der letzten Unit der Reihe", () => {

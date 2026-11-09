@@ -23,9 +23,13 @@ namespace Pugling.Api.Controllers.Creator;
 public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
 {
     // Expects the topic links loaded: every read path includes them, both write paths hold the tracked entity.
-    static SeriesUnitResponse Map(SeriesUnit u) =>
+    static SeriesUnitResponse Map(SeriesUnit u, int exerciseCount) =>
         new(u.Id, u.SeriesId, u.Grade, u.OrderIndex, u.Label, u.BookType, u.Topics, u.Grammar, u.VocabularyNotes, u.CreatedAt,
-            [.. u.GrammarTopicLinks.Select(l => l.GrammarTopicId).OrderBy(id => id)]);
+            [.. u.GrammarTopicLinks.Select(l => l.GrammarTopicId).OrderBy(id => id)], exerciseCount);
+
+    // B-428: counted in the database, never by loading the exercises - one grouped query for a list, one count for a unit.
+    private Task<int> ExerciseCountAsync(int unitId, CancellationToken ct) =>
+        db.Exercises.CountAsync(e => e.SeriesUnitId == unitId, ct);
 
     /// <summary>All units of the series, by volume and order.</summary>
     /// <param name="seriesId">The series.</param>
@@ -43,7 +47,12 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
 
         // Materialize first: the projection reads the loaded topic links, which a client-side Select would miss.
         var units = await query.OrderBy(u => u.Grade).ThenBy(u => u.OrderIndex).ThenBy(u => u.Id).ToListAsync(ct);
-        return units.Select(Map).ToList();
+        var counts = await db.Exercises.AsNoTracking()
+            .Where(e => e.SeriesUnit!.SeriesId == seriesId)
+            .GroupBy(e => e.SeriesUnitId)
+            .Select(g => new { UnitId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.UnitId, x => x.Count, ct);
+        return units.Select(u => Map(u, counts.GetValueOrDefault(u.Id))).ToList();
     }
 
     /// <summary>A unit of the series.</summary>
@@ -53,7 +62,7 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
     {
         var unit = await db.SeriesUnits.AsNoTracking().Include(u => u.GrammarTopicLinks)
             .FirstOrDefaultAsync(u => u.Id == unitId && u.SeriesId == seriesId, ct);
-        return unit is null ? NotFound() : Map(unit);
+        return unit is null ? NotFound() : Map(unit, await ExerciseCountAsync(unit.Id, ct));
     }
 
     /// <summary>Appends a unit to the series (owner only). Without <c>orderIndex</c> it lands at the end of the volume.</summary>
@@ -89,7 +98,8 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
         db.SeriesUnits.Add(unit);
         await db.SaveChangesAsync(ct);
 
-        return CreatedAtAction(nameof(Get), new { seriesId, unitId = unit.Id }, Map(unit));
+        // A unit that has just been created carries no exercise yet.
+        return CreatedAtAction(nameof(Get), new { seriesId, unitId = unit.Id }, Map(unit, 0));
     }
 
     /// <summary>Changes a unit (partial, owner of the series only).</summary>
@@ -129,7 +139,7 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
         if (dto.GrammarTopicIds is not null) SetGrammarLinks(unit, dto.GrammarTopicIds);
 
         await db.SaveChangesAsync(ct);
-        return Map(unit);
+        return Map(unit, await ExerciseCountAsync(unit.Id, ct));
     }
 
     /// <summary>

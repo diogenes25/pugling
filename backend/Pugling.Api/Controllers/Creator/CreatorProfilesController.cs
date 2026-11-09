@@ -21,7 +21,8 @@ namespace Pugling.Api.Controllers.Creator;
 [Tags("Creator – Profiles")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Creator)]
-public class CreatorProfilesController(PuglingDbContext db, CreatorProfileService profiles, AuthAccess access)
+public class CreatorProfilesController(PuglingDbContext db, CreatorProfileService profiles, AuthAccess access,
+    ExerciseTypeRegistry registry)
     : ControllerBase
 {
     /// <summary>All profiles (alphabetically), optionally filtered.</summary>
@@ -87,6 +88,7 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
     {
         if (string.IsNullOrWhiteSpace(dto.Name)) return this.ProblemWithCode(ApiErrors.ValidationError, "Name is required.");
         if (await ReferenceProblemAsync(dto.SubjectId, dto.SeriesId, ct) is { } problem) return problem;
+        if (UnknownTypesProblem(dto.DefaultTypes) is { } typesProblem) return typesProblem;
         if (dto.GradeMin > dto.GradeMax)
             return this.ProblemWithCode(ApiErrors.ValidationError, "GradeMin must not be greater than GradeMax.");
         if (await NameTakenAsync(dto.Name.Trim(), User.CreatorId(), ct))
@@ -132,6 +134,8 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
         if (!ClaimsPrincipalExtensions.IsOwnedBy(profile.OwnerAdultId, fid))
             return this.ProblemWithCode(ApiErrors.NotOwner, "Only the owner may change this creator profile.");
         if (await ReferenceProblemAsync(dto.SubjectId, dto.SeriesId, ct) is { } problem) return problem;
+        // Before SaveChanges, like every check here: a rejected PATCH must leave the profile exactly as it was.
+        if (UnknownTypesProblem(dto.DefaultTypes) is { } typesProblem) return typesProblem;
 
         if (dto.Name is not null)
         {
@@ -161,7 +165,7 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
         if (Trimmed(dto.TargetLang) is { } tgt) profile.TargetLang = tgt;
         if (dto.Persona is not null) profile.Persona = Trimmed(dto.Persona);
         if (dto.Didactics is not null) profile.Didactics = Trimmed(dto.Didactics);
-        // Assign a new list (no in-place mutation - the JSON column pitfall).
+        // Assign a new list (no in-place mutation - the JSON column pitfall). Unknown keys were rejected above.
         if (dto.DefaultTypes is not null) profile.DefaultTypes = Clean(dto.DefaultTypes);
         if (dto.Active.HasValue) profile.Active = dto.Active.Value;
 
@@ -217,6 +221,17 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
         db.CreatorProfiles.AsNoTracking().Include(p => p.Series).FirstAsync(p => p.Id == profileId, ct);
 
     private static string? Trimmed(string? value) => value?.Trim() is { Length: > 0 } v ? v : null;
+
+    /// <summary>
+    /// B-426: every preferred type must be a manifest key, compared exactly like the registry does. A key the server does not
+    /// know is a typo or a stale client, and the profile would carry a preference no exercise type answers to.
+    /// </summary>
+    private ActionResult? UnknownTypesProblem(List<string>? values)
+    {
+        var unknown = Clean(values).Where(v => registry.ByKey(v) is null).ToList();
+        return unknown.Count == 0 ? null
+            : this.ProblemWithCode(ApiErrors.ValidationError, $"Unknown exercise type key(s): {string.Join(", ", unknown)}.");
+    }
 
     /// <summary>Trims, discards empty entries, and deduplicates the preferred exercise types.</summary>
     private static List<string> Clean(List<string>? values) =>

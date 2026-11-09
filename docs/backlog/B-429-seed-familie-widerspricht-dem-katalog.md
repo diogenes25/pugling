@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-08-rollengang.md#feedback-vater
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-09"
 ---
 
 # B-429 · Seed: die Demo-Familie widerspricht dem eigenen Katalog
@@ -101,3 +102,4 @@ werden sich ändern – neu erzeugen und den Diff lesen (Memory: Capture byte-st
   dieselbe Umbuchung wie beim Seed-Kind, das gemessen ist). 🟢 positiver Nebeneffekt: `PositionPracticeFlowTests.cs:51`
   (`Sum(Kind == Base) > 0` für Kind 1) war bisher durch die Seed-Buchung immer erfüllt und hängt jetzt wirklich an der Übung.
 - **2026-11-09** — abgenommen. Backend 1183/1183, Vitest 715/715, `tsc -b` sauber, Playwright **125 passed** (ganze Suite, Server vom Lauf nach dem letzten Edit gestartet). **Rollengang** Vater ersetzt durch `SeedFamilyTests` gegen eine frische Seed-DB (Buch mit Reihe/Unit, Startguthaben als Papa-Buchung) und die Capture `docs/api-examples/me.md`; die E2E-Suite läuft auf derselben frisch geseedeten Wegwerf-DB und bleibt grün. Ein Klick durch den Kind-Hub von „Sohn“ von Hand ist nicht gelaufen. Commit: siehe `git log -- docs/backlog/B-429-seed-familie-widerspricht-dem-katalog.md` (Lauf AG, Sprint 27).
+- **2026-11-09** — Nachschau (Retro Sprint 28, Lauf AG, frischer `frontend-reviewer`, `git show a14961d`). Prüfpunkte: MB6 (`Seed.cs:256`, `currentUnitLabel` fällt nicht auf `CurrentChapter` zurück) und MB7 (`:1069`, eigene DB je Fixture) nachgerechnet; Reihenfolge `SeedCatalog` vor `SeedStudentProfile`, Idempotenz bestätigt. Kein Fund.

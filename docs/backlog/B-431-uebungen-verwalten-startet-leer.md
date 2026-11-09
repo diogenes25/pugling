@@ -1,7 +1,8 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, bereich/katalog, rolle/creator]
+tags: [typ/story, status/in-arbeit, bereich/frontend, bereich/katalog, rolle/creator]
 aliases: [Übungen verwalten startet leer, Meine Übungen zuerst]
-status: geschaetzt
+status: in-arbeit
+wartet_auf: Reparatur des Fund 6 aus Sprint 28 (Lauf AG an Freigabe 3 beendet)
 prio: P3
 art: Wunsch
 groesse: S
@@ -68,3 +69,23 @@ nicht vorhanden), Rollengang Creator als Fall in `creator-lehrwerk-weg.spec.ts`.
   Ist-Stand belegt, Entscheidungen vom PM unter dem Auftrag „nachtlauffähig machen" (Vetorecht beim Nutzer),
   geschätzt.
 - **2026-11-08** — **Freigabe des Nutzers (Autonomer Modus, Opt-in):** die sieben vorgelegten Entscheidungen der Fable-Sitzung hat der Nutzer im Dialog bestätigt („Ja, so fahren“, Antwort auf die Frage nach den Entscheidungen für die erste Nacht, [Protokoll](../pm-sitzung-2026-11-08-rollengang.md)). Ein Nachtlauf darf diese Story auf Grundlage der `## Entscheidungen` bauen; trifft er auf eine Produktfrage, die sie nicht hergeben, hält er an.
+- **2026-11-09** — gebaut (Lauf AG, Sprint 28); Freigabe-Zeile gelesen (`05700b6`). **Entscheidung 1 an ihrer eigenen Weiche:** der
+  Endpunkt kennt `mineOnly` – also serverseitig, gepagt, mit echter Gesamtzahl; „Meine Übungen (Seite)" entfällt. **Statt** des in AK 3
+  genannten `VaterExercises.test.tsx` (ein nachgebauter Bildschirm mit gefälschtem fetch, gegen `frontend/CLAUDE.md`): E2E für den Weg,
+  Vitest nur für die reine Funktion `fachDerZeile`.
+  **Belege je Fall** – `.claude/scripts/mutant-probe.py`, gemessen nach dem letzten Edit an `a14961d + Arbeitsbaum`, 2026-11-09 17:17:
+
+  | Fall | Test | Mutante | gemessen |
+  |---|---|---|---|
+  | AK 1 meine Übungen aller Fächer | `e2e/creator-katalog-ueberblick.spec.ts` Fall „Übungen verwalten …" | ME2 `mineOnly: false` (`VaterExercises.tsx:83`) | red, am Fall |
+  | AK 1 Überschrift | dieselbe | ME3 immer „Übungen" (`:158`) | red, am Fall |
+  | AK 1 Spalte „Fach" | dieselbe | ME4 ohne Fach je Zeile (`:351`) | red, am Fall |
+  | Review: Fächer laden noch | `VaterExercises.test.ts` „behauptet nichts, solange die Fächer fehlen" | MF3 (`:292`) | red, am Fall |
+  | Review: unbekannte Fach-Id | „nennt eine unbekannte Fach-Id als Nummer" | MF4 (`:293`) | red, am Fall |
+  | Review: Liste scheitert | Fall „Ausfälle sagen, was fehlt" | ME6 `ListenAusfall` weg (`:183`) | red, am Fall |
+
+  AK 2 (Fach wählen → wie heute, abwählen → wieder „meine") und die Werkstatt-Zahl hält derselbe E2E-Fall. Grundlinie grün.
+- **2026-11-09** — Review `frontend-reviewer`: 🟡 „ohne Fach", solange die Fächer laden oder scheitern → `fachDerZeile` (**zählt**); 🟡 ein
+  gescheitertes Laden der Liste sah aus wie ein leerer Bestand → `ListenAusfall`, Leertext nur ohne Fehler (**zählt**); 🟢 Hand-URL
+  `?seriesId=` ohne Fach → hingenommen (die Überschrift sagt dann „Meine Übungen"); 🟢 ungenutzter Export zurückgenommen.
+- **2026-11-09** — **nicht abgenommen: Lauf AG an Freigabe 3 beendet.** Volle Suite nach dem letzten Edit: Backend 1187/1187, Vitest 723/723, `tsc -b` sauber, Playwright **1 failed, 129 passed** – rot `e2e/typ-manifest-faellt-aus.spec.ts:40`: der Schalter „geteilte Übungen anderer Väter anzeigen" ändert beim Klick seinen Zustand nicht. Ursache (analysiert, nicht behoben): seit dem Review-Fix zu B-428 hängt der Schalter an der Adresse (`?shared=1`, `VaterExercises.tsx` `setFilter`); Fach-Wechsel und Klick gehen beide über `setSearchParams`, der zweite liest den Fach-Wert aus dem alten Render (veraltete Closure), und React Router rendert die Adress-Änderung verzögert – der kontrollierte Haken springt zurück. Reparaturweg: `setParams(prev => …)` (aktuelle Adresse statt Render-Werte). Das ist Fund 6 in Sprint 28 und überschreitet den Zähler (5); darum gestoppt, nicht repariert. Der Rest der Story ist gebaut und belegt (Tabelle oben); die Abnahme gehört dem Nutzer bzw. dem nächsten Lauf nach der Reparatur.

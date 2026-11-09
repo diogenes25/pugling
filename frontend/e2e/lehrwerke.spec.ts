@@ -85,7 +85,8 @@ test("Buchreihe, Fachlehrer und Kind treffen zusammen", async ({ page }) => {
   await page.locator("#fl-max-new").fill("8");
   await page.locator("#fl-series-new").selectOption({ label: `${SERIES.name} (${SERIES.publisher})` });
   await page.locator("#fl-persona-new").fill("Du bist Englischlehrer an einem Gymnasium.");
-  await page.getByRole("button", { name: "Vocabulary" }).click();
+  // B-426: der Knopf trägt den Anzeigenamen aus dem Manifest, gespeichert wird der Schlüssel "Vocabulary".
+  await page.getByRole("button", { name: "Vokabelkarten" }).click();
   await page.getByRole("button", { name: "Fachlehrer anlegen" }).click();
   await expect(page.getByText("Fachlehrer angelegt.")).toBeVisible();
   await expect(page.getByRole("row", { name: new RegExp(PROFILE) })).toBeVisible();

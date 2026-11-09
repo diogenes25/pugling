@@ -41625,6 +41625,7 @@
         "required": [
           "bookType",
           "createdAt",
+          "exerciseCount",
           "grammarTopicIds",
           "id",
           "label",
@@ -41705,9 +41706,17 @@
               ],
               "format": "int32"
             }
+          },
+          "exerciseCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "A unit of the series including volume. \u0060Topics\u0060, \u0060Grammar\u0060 and \u0060VocabularyNotes\u0060 are the\nmaterial an AI creator must know so as not to invent the unit."
+        "description": "A unit of the series including volume. \u0060Topics\u0060, \u0060Grammar\u0060 and \u0060VocabularyNotes\u0060 are the\nmaterial an AI creator must know so as not to invent the unit. \u0060ExerciseCount\u0060 (B-428) is how many exercises hang on the\nunit - all of them, other creators\u0027 and withdrawn ones included: the unit is shared catalog, and the question is \u0022is it\nstocked\u0022, not \u0022do I have something here\u0022."
       },
       "SessionResponse": {
         "required": [

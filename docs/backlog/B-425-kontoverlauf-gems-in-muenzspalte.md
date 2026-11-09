@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-08-rollengang.md#feedback-vater
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-09"
 entgangen_bei: []
 ---
 
@@ -102,3 +103,4 @@ Vater-Konto und in der Sohn-Arcade; `DocsCaptureTests` neu erzeugen. Das Seed-St
   | AK 1 Kind-Einzelbuchung, Gegenrichtung | `…Kindansicht_…` | MB4b fest „Gems" (`MeController.cs:73`) | red, am Fall |
   | Review: Minus | `labels.test.ts` „zeigt einen Abzug mit seinem Minus" | MF4 ASCII-Minus (`labels.ts:34`) | red, am Fall |
 - **2026-11-09** — abgenommen. Backend 1183/1183, Vitest 715/715, `tsc -b` sauber, Playwright **125 passed** (ganze Suite, Server vom Lauf nach dem letzten Edit gestartet). **Rollengang** Vater und Sohn = `e2e/konto-waehrung-und-datum.spec.ts` Fall 1 (frisches Kind, Gem- und Münzbuchung: Vater-Konto „Betrag“ mit „+9 💎“/„+7 🪙“, Sohn-Arcade „Mein Konto“ „+9 💎“). Creator als Regressionszeuge: Suite grün, keine Creator-Fläche im Diff. Commit: siehe `git log -- docs/backlog/B-425-kontoverlauf-gems-in-muenzspalte.md` (Lauf AG, Sprint 27).
+- **2026-11-09** — Nachschau (Retro Sprint 28, Lauf AG, frischer `frontend-reviewer`, `git show a14961d`). Prüfpunkte: MB1 (`ChildrenController.cs:233`), MB2/MB2b (`:255`), MB4/MB4b (`MeController.cs:73`) und MF4 (`labels.ts:34`) am Code nachgerechnet, rot am Fall; alle vier Projektionen tragen `currency`, keine Frontend-Abbildung Art → Währung. 🟢: Betrag 0 („0 🪙“) ungetestet, hingenommen; Zeilenangabe MF1 jetzt `labels.ts:35`.

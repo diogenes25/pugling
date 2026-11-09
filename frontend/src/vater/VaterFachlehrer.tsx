@@ -9,6 +9,7 @@ import type { ActionMessage } from "../lib/useAction";
 import { SCHOOL_TYPES } from "../lib/labels";
 import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
+import { useExerciseTypes } from "../lib/exerciseTypes";
 import {
   applySeriesChange, FIELD_FALLBACKS, isDerived as derived,
   type DerivableField, type DerivableValues,
@@ -16,12 +17,10 @@ import {
 import { profileFormValues, profilePatch } from "./profilePatch";
 import { FREETEXT_SUBJECT, subjectFormValue } from "./subjectField";
 import type {
-  CreateCreatorProfileDto, CreatorProfileResponse, SchoolType, SubjectResponse, TextbookSeriesResponse,
+  CreateCreatorProfileDto, CreatorProfileResponse, ExerciseTypeManifest, SchoolType, SubjectResponse, TextbookSeriesResponse,
 } from "../lib/types";
 import { ListenAusfall } from "../components/ListenAusfall";
 
-/** Die Übungstypen, die der KI-Creator selbst entwerfen kann (Manifest-Schlüssel des Servers). */
-const TYPES = ["Vocabulary", "Cloze", "Translation", "Grammar"] as const;
 
 /**
  * Die Fachlehrer: <b>Creator-Profile</b>. Ein Profil ist keine Einstellung, sondern eine Rolle – „Englisch,
@@ -41,6 +40,8 @@ export function VaterFachlehrer() {
     () => api.creatorProfiles({ includeInactive }), [includeInactive]);
   const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
   const series = useAsync<TextbookSeriesResponse[]>(() => api.textbookSeries(), []);
+  // B-426: die Typ-Knöpfe kommen aus dem Server-Manifest, nicht aus einer Liste hier (Hausregel in frontend/CLAUDE.md).
+  const exerciseTypes = useExerciseTypes();
   const [editing, setEditing] = useState<number | null>(null);
   /* Der Meldungsplatz der Seite – dieselbe Ursache wie im Lehrbuch-Formular (B-151). */
   const [meldung, setMeldung] = useState<ActionMessage | null>(null);
@@ -68,6 +69,8 @@ export function VaterFachlehrer() {
             Abrufe, fehlt dort die Auswahl. Neben der Liste, nicht an ihrer Stelle. */}
         <ListenAusfall was="Die Fächer" fehler={subjects.error} laedt={subjects.loading} onRetry={subjects.reload} />
         <ListenAusfall was="Die Reihen" fehler={series.error} laedt={series.loading} onRetry={series.reload} />
+        {/* Ohne Manifest steht unter „Bevorzugte Übungstypen" kein Knopf – der Grund gehört darüber (Review-Fund zu B-426). */}
+        <ListenAusfall was="Die Übungstypen" fehler={exerciseTypes.error} laedt={exerciseTypes.loading} onRetry={exerciseTypes.reload} />
         {list.loading && list.data === null ? <div className="loading">Lade…</div> : (
           <table className="table">
             <thead><tr><th>Profil</th><th>Fach</th><th>Klassen</th><th>Lehrwerk</th><th /></tr></thead>
@@ -99,7 +102,7 @@ export function VaterFachlehrer() {
                   {editing === p.id && (
                     <tr>
                       <td colSpan={5}>
-                        <ProfileForm
+                        <ProfileForm exerciseTypes={exerciseTypes.all}
                           profile={p} subjects={subjects.data ?? []} series={series.data ?? []}
                           onDone={(m) => { setEditing(null); list.reload(); if (m) setMeldung(m); }}
                           onMeldung={setMeldung}
@@ -124,7 +127,7 @@ export function VaterFachlehrer() {
       <section>
         <h3 className="h-section">Fachlehrer anlegen</h3>
         {/* Auch hier räumt das Anlege-Formular – es schließt nie (B-197). */}
-        <ProfileForm subjects={subjects.data ?? []} series={series.data ?? []}
+        <ProfileForm exerciseTypes={exerciseTypes.all} subjects={subjects.data ?? []} series={series.data ?? []}
           onDone={list.reload} onMeldung={setMeldung} />
       </section>
     </>
@@ -167,10 +170,15 @@ function DerivedHint({ active }: { active: boolean }) {
  * „unterrichtet jede Stufe" – und genau dann bekommt das Profil beim Matching *keine* Stufen-Punkte,
  * damit der Generalist den Fachlehrer nicht schlägt.
  */
-export function ProfileForm({ profile, subjects, series, onDone, onMeldung }: {
+export function ProfileForm({ profile, subjects, series, exerciseTypes = [], onDone, onMeldung }: {
   profile?: CreatorProfileResponse;
   subjects: SubjectResponse[];
   series: TextbookSeriesResponse[];
+  /**
+   * Die Übungstypen des Servers (B-426) – Anzeigename und Schlüssel aus dem Manifest. Als Prop, nicht per Hook: das Formular
+   * löst selbst keinen Netzaufruf aus (B-67), die Seite lädt das Manifest einmal.
+   */
+  exerciseTypes?: ExerciseTypeManifest[];
   /**
    * Schließt bzw. lädt neu. Das optionale Argument ist die Bestätigung, die MITREISEN muss: Der eigene
    * `StatusBanner` unten hängt am Formular, und das Formular ist nach diesem Aufruf weg (B-151).
@@ -428,12 +436,16 @@ export function ProfileForm({ profile, subjects, series, onDone, onMeldung }: {
       <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>
         <legend className="muted" style={{ fontSize: 14 }}>Bevorzugte Übungstypen</legend>
         <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
-          {TYPES.map((t) => (
+          {/* Alle Typen des Servers mit ihrem deutschen Namen; gespeichert wird der Schlüssel. Ein gespeicherter Schlüssel,
+              den das Manifest nicht (mehr) kennt, bleibt als Rohwert sichtbar – sonst wäre er nicht mehr abwählbar. */}
+          {[...exerciseTypes.map((m) => ({ key: m.type, label: m.label })),
+            ...types.filter((t) => !exerciseTypes.some((m) => m.type === t)).map((t) => ({ key: t, label: t }))].map(({ key, label }) => (
             <button
-              key={t} type="button" className={`pill toggle-pill ${types.includes(t) ? "lime" : ""}`}
-              aria-pressed={types.includes(t)}
-              onClick={() => setTypes(types.includes(t) ? types.filter((x) => x !== t) : [...types, t])}
-            >{t}</button>
+              key={key} type="button" className={`pill toggle-pill ${types.includes(key) ? "lime" : ""}`}
+              title={exerciseTypes.some((m) => m.type === key) ? undefined : "Der Server kennt diesen Typ nicht mehr."}
+              aria-pressed={types.includes(key)}
+              onClick={() => setTypes(types.includes(key) ? types.filter((x) => x !== key) : [...types, key])}
+            >{label}</button>
           ))}
         </div>
       </fieldset>

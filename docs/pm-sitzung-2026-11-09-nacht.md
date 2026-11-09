@@ -246,3 +246,71 @@ Grenzfall („leer“) nur im Frontend – dieselbe Klasse wie (CJ) aus Sprint 2
   über die alte Funktion: die Vertragsfelder des Typs (`format: date|date-time` bzw. das DTO-Feld) aus `docs/openapi/v1.json`, dann je Feld
   seine Anzeige. Ort: `pm-loop` Step 5 neben „Fälle Weg × Wert“ oder die Eintrittsbedingung `ausformuliert`. Ein Tor über rohe ISO-Strings
   in JSX wäre denkbar, fände aber nur das Muster, nicht das Feld.
+
+## Sprint 28 — Ziel & Umfang (Lauf AG, NP-27 Teil 2)
+
+**Sprint-Ziel:** Der Creator sieht in den Lehrwerken je Unit die Zahl ihrer Übungen, auf „Übungen verwalten" zuerst seine eigenen
+Übungen über alle Fächer und im Fachlehrer-Profil die deutschen Typnamen aller Typen.
+**Umfang:** B-426, B-428, B-431.
+**Entwickler-Brief:** B-428 – additives `ExerciseCount` auf `SeriesUnitResponse` (DB-Count, gruppiert für die Liste), Spalte mit
+Link auf die gefilterte Liste. B-426 – Typ-Knöpfe aus dem Manifest (als Prop, das Formular bleibt netzfrei), Server weist
+unbekannte Schlüssel mit `validation_error` ab, vor jeder Änderung. B-431 – ohne Fach lädt die Liste `mineOnly` über alle
+Fächer, jede Zeile nennt dann ihr Fach. Testweg: `SeriesUnitExerciseCountTests`, `CreatorProfileTypeKeyTests`, Vitest
+`VaterFachlehrer.test.tsx`, neue Spec `creator-katalog-ueberblick.spec.ts` (Rollengang Creator, drei Fälle je Fläche).
+**Abweichung von B-431 Entscheidung 1:** der Endpunkt kennt `mineOnly` – also serverseitig, gepagt, mit echter Gesamtzahl; die
+Überschrift „Meine Übungen (Seite)" aus der Rückfall-Variante entfällt.
+
+## Iteration 28 — umgesetzt
+
+Backend: `ExerciseCount` auf `SeriesUnitResponse` (gruppiert, Get/PATCH per Count), `UnknownTypesProblem` im Fachlehrer-Profil (Create und
+PATCH, vor dem Speichern). Frontend: Spalte „Übungen" mit Link, Typ-Knöpfe aus dem Manifest, „Meine Übungen" aller Fächer mit
+„Fach: …" je Zeile. **Rote Proben mit Zahl:** 1/1 (Zählung), 2/3 (Typ-Prüfung; der dritte Fall ist Gegenprobe). 19 Mutanten nach
+dem letzten Edit, alle rot (MB1/MB2 im Gesamtlauf zuerst „kompiliert nicht", einzeln nachgemessen: rot).
+
+## Runde 2 — Review (Sprint 28)
+
+`pugling-reviewer`: 🟡 Entscheidung 3 von B-428 (fremde Creator sehen dieselbe Zahl) ungetestet → zweites Konto im Test (**1**); 🟢 drei
+Kommentar- bzw. Doku-Punkte behoben. `frontend-reviewer`: **🔴 die Unit-Zahl zählt alle Übungen, ihr Link öffnete „nur meine"** – „3",
+dahinter „Übungen (0)" → Schalter „geteilte Übungen" in die Adresse, Link setzt `shared=1` (**2**); 🟡 „ohne Fach", solange die Fächer
+fehlen → `fachDerZeile` (**3**); 🟡 gescheiterte Liste sah aus wie leerer Bestand → `ListenAusfall` (**4**); 🟡 Manifest-Ausfall auf der
+Fachlehrer-Seite stumm → `ListenAusfall` (**5**). 🟢 ohne Zählung: Singular im Linknamen, `title` am Altlast-Knopf, Export zurückgenommen.
+**Zähler 5 von 5.**
+
+## Ende Lauf AG — an Freigabe 3
+
+Der volle E2E-Lauf nach dem letzten Edit: **1 failed, 129 passed** (Backend 1187/1187, Vitest 723/723, `tsc -b` sauber). Rot
+`typ-manifest-faellt-aus.spec.ts:40`: der Schalter „geteilte Übungen" springt nach dem Klick zurück – eine Folge des Fixes zu Fund 2
+(veraltete Closure in `setFilter`, verzögertes Rendern der Adresse; Analyse in [B-450](backlog/B-450-schalter-geteilte-uebungen-springt-zurueck.md)).
+Seine Behebung würde Code ändern → **Fund 6, der Zähler überschreitet 5 → der gesamte Lauf endet sofort** (Freigabe 3). Nicht repariert.
+B-426, B-428, B-431 bleiben **`in-arbeit`** mit `wartet_auf`; der Stand ist committet, aber nicht abgenommen (Präzedenz: NP-2 und
+Sprint 12). Ein Rollengang hat darum nicht als Abnahme stattgefunden; die Spec `creator-katalog-ueberblick.spec.ts` ist grün (5/5),
+die Abnahme scheitert an der Nachbar-Spec.
+
+**Korrektur im Lauf, ehrlich vermerkt:** beim Schreiben der Story-Dateien setzte ein Skript die drei Stories zunächst auf
+`abgenommen` (eine Ersetzung im Skript griff nicht); noch vor dem Commit auf `in-arbeit` zurückgesetzt.
+
+## Retrospektive (Sprint 28)
+
+**Nachschau:** Sprint 27 (`a14961d`, B-425/B-427/B-429), frischer `frontend-reviewer`: kein 🔴, **ein 🟡** →
+[B-449](backlog/B-449-zeitzonen-tests-greifen-nur-in-new-york.md) (`entgangen_bei: [B-427]`): die Zeitzonen-Tests greifen weder lokal
+(Berlin) noch in der CI (UTC), die Mutanten wurden nur einmal unter `TZ=America/New_York` bzw. Berlin gemessen; Nachkommastellen
+ungetestet. Increment **dieses** Laufs → für sich schon **Limit 2**. `nachgeschaut` in B-425/B-427/B-429 mit Prüfpunkten gesetzt.
+
+**Was die eigenen Tore durchgelassen haben:** (1) Ein Review-Fix (Fund 2) erzeugte Fund 6: ich habe den Schalter in die Adresse gelegt,
+die eigene Spec dafür grün gesehen und die Nachbar-Spec, die denselben Schalter direkt nach einem Fach-Wechsel klickt, erst im
+Volllauf. (2) Eine Mutante, die nur unter einer bestimmten Zeitzone rot wird, ist ein Beleg für genau diese Zone – die Tabelle in B-427
+sagte das nicht deutlich genug, und CI/lokal laufen in anderen.
+
+**Vorschläge (nicht gelandet, Freigabe 3):**
+
+- **(CM)** Nach einem Review-Fix, der einen **geteilten** Zustand umbaut (Adresse, Kontext, Cache), läuft vor der nächsten Zählung die
+  E2E-Teilmenge aller Specs, die diese Seite besuchen (`grep -l "<route>" e2e/`), nicht nur die eigene. Ort: `pm-loop` Step 5.
+- **(CN)** Eine Mutanten-Zeile, die nur unter gesetzter Umgebung (`TZ`, Locale) rot wird, nennt die Umgebung in der Spalte „gemessen",
+  und der zugehörige Test setzt sie selbst (oder ist zonenfrei formuliert) – sonst ist er im Alltag blind. Ort: Docstring von
+  `mutant-probe.py`.
+
+## Offene Roadmap
+
+Stand im Backlog ([docs/backlog/](backlog/README.md)). **Nächster Start:** B-450 (P2, blockiert die Abnahme von B-426/B-428/B-431),
+danach B-449 und B-448. **Für den Dialog:** B-423 Offener Punkt 5 (Stufenleiter vs. `requireTypedTest`), B-408 (Bewertung im
+Assistenten – keine Freigabe), B-445 (Seed-Kind mit Klasse), B-446 (Tipp-Inhalt). Retro-Vorschläge (CI)–(CN) unentschieden. Nichts gepusht.

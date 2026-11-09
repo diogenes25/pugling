@@ -41,12 +41,16 @@ export function VaterExercises() {
   const subjectId: number | "" = Number(params.get("subjectId")) || "";
   const seriesId: number | "" = Number(params.get("seriesId")) || "";
   const seriesUnitId: number | "" = Number(params.get("seriesUnitId")) || "";
+  // Der Schalter „geteilte Übungen" lebt ebenfalls in der Adresse (Review-Fund zu B-428): die Übungszahl einer Unit zählt
+  // ALLE Übungen, und ihr Link muss eine Liste öffnen können, die dieselben zeigt – nicht nur die eigenen.
+  const showShared = params.get("shared") === "1";
   /** Filter setzen = Adresse setzen. `replace`, damit Filtern keine Historie aus Zwischenständen baut. */
-  function setFilter(next: { subjectId: number | ""; seriesId: number | ""; seriesUnitId: number | "" }) {
+  function setFilter(next: { subjectId: number | ""; seriesId: number | ""; seriesUnitId: number | ""; shared?: boolean }) {
     const q = new URLSearchParams();
     if (next.subjectId !== "") q.set("subjectId", String(next.subjectId));
     if (next.seriesId !== "") q.set("seriesId", String(next.seriesId));
     if (next.seriesUnitId !== "") q.set("seriesUnitId", String(next.seriesUnitId));
+    if (next.shared ?? showShared) q.set("shared", "1");
     setParams(q, { replace: true });
   }
 
@@ -60,8 +64,7 @@ export function VaterExercises() {
   const types = useExerciseTypes();
   const typeLabel = types.label;
 
-  // Verwaltung zeigt standardmäßig nur eigene Übungen (mineOnly); optional auch die geteilte Bibliothek.
-  const [showShared, setShowShared] = useState(false);
+  // Verwaltung zeigt standardmäßig nur eigene Übungen (mineOnly); optional auch die geteilte Bibliothek (`?shared=1`, oben).
   // Bearbeiten-Dialog bzw. Testmodus: die aktuell offene Übung.
   const [editing, setEditing] = useState<ExerciseSummary | null>(null);
   const [preview, setPreview] = useState<{ id: number; title: string } | null>(null);
@@ -71,15 +74,17 @@ export function VaterExercises() {
   const [sort, setSort] = useState<ExerciseSortKey>("title");
   const [dir, setDir] = useState<SortDir>("asc");
   const [skip, setSkip] = useState(0);
+  // B-431: ohne Fach lädt die Seite trotzdem – die eigenen Übungen aller Fächer (mit dem Schalter: alle). Der Server
+  // braucht kein Fach; die Werkstatt zählt mit derselben Abfrage (`mineOnly`), darum stimmt ihre Zahl mit der Liste überein.
   const existing = useAsync<Paged<ExerciseSummary>>(
-    () => (subjectId
-      ? api.searchExercises({
-        subjectId: Number(subjectId),
-        seriesUnitId: seriesUnitId !== "" ? Number(seriesUnitId) : undefined,
-        mineOnly: !showShared, sort, dir, skip, take: PAGE_SIZE,
-      })
-      : Promise.resolve({ items: [], total: 0 })),
+    () => api.searchExercises({
+      subjectId: subjectId !== "" ? Number(subjectId) : undefined,
+      seriesUnitId: seriesUnitId !== "" ? Number(seriesUnitId) : undefined,
+      mineOnly: !showShared, sort, dir, skip, take: PAGE_SIZE,
+    }),
     [subjectId, seriesUnitId, showShared, sort, dir, skip]);
+  /** Ohne Fach-Filter stehen Übungen aus mehreren Fächern in einer Liste – dann nennt jede Zeile ihr Fach. */
+  const subjectNameOf = (id: number | null | undefined) => fachDerZeile(subjectId, id, subjects.data);
   // Filter-/Sortier-Wechsel springt auf Seite 1 zurück (sonst leere Seite jenseits des Bestands). Der Reset
   // geschieht in der Render-Phase (nicht per Effekt), damit die Liste nicht erst mit altem skip nachlädt.
   const filterKey = `${subjectId}|${seriesUnitId}|${showShared}|${sort}|${dir}`;
@@ -112,12 +117,13 @@ export function VaterExercises() {
 
     <section className="card">
       <h3 style={{ marginTop: 0 }}>Suchen</h3>
+      <ListenAusfall was="Die Fächer" fehler={subjects.error} laedt={subjects.loading} onRetry={subjects.reload} />
       <div className="form-grid">
         <div className="field">
           <label htmlFor="ex-subject">Fach</label>
           <select id="ex-subject" aria-label="Fach" value={subjectId}
             onChange={(e) => setFilter({ subjectId: e.target.value ? Number(e.target.value) : "", seriesId: "", seriesUnitId: "" })}>
-            <option value="">– wählen –</option>
+            <option value="">– alle Fächer –</option>
             {subjects.data?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </div>
@@ -140,15 +146,18 @@ export function VaterExercises() {
       </div>
       {/* Verwaltung = eigene Übungen; bei Bedarf die geteilte Bibliothek anderer Väter einblenden. */}
       <label className="row" style={{ gap: 6, alignItems: "center", fontSize: 13, marginTop: 10 }}>
-        <input type="checkbox" checked={showShared} onChange={(e) => setShowShared(e.target.checked)} />
+        <input type="checkbox" checked={showShared}
+          onChange={(e) => setFilter({ subjectId, seriesId, seriesUnitId, shared: e.target.checked })} />
         geteilte Übungen anderer Väter anzeigen
       </label>
     </section>
 
-    {subjectId === "" ? <div className="banner">Wähle ein Fach, um seine Übungen zu sehen.</div> : (
       <section className="card">
         <div className="row" style={{ alignItems: "center", gap: 8, marginBottom: 4 }}>
-          <h3 style={{ margin: 0 }}>Übungen <span className="muted">({existing.data?.total ?? 0})</span></h3>
+          <h3 style={{ margin: 0 }}>
+            {subjectId !== "" ? "Übungen" : showShared ? "Alle Übungen" : "Meine Übungen"}{" "}
+            <span className="muted">({existing.data?.total ?? 0})</span>
+          </h3>
         </div>
         <div className="row" style={{ marginBottom: 8 }}>
           <SortControl<ExerciseSortKey>
@@ -170,11 +179,13 @@ export function VaterExercises() {
         {/* Ohne Manifest keine Route, ohne Route sind Bearbeiten und Löschen je Zeile gesperrt – der Grund
             gehört über die Zeilen, nicht als `title` an die grauen Knöpfe (B-160, B-215). */}
         <ListenAusfall was="Die Übungstypen" fehler={types.error} laedt={types.loading} onRetry={types.reload} />
+        {/* Seit B-431 lädt die Liste beim ersten Aufruf: ein Ausfall darf nicht als „Noch keine Übungen." erscheinen. */}
+        <ListenAusfall was="Die Übungen" fehler={existing.error} laedt={existing.loading} onRetry={existing.reload} schluessel={filterKey} />
         {existing.loading && existing.data === null ? <div className="loading">Lade…</div>
-          : (existing.data?.items.length ?? 0) === 0 ? <div className="muted">Noch keine Übungen.</div> : (
+          : (existing.data?.items.length ?? 0) === 0 ? (existing.error ? null : <div className="muted">Noch keine Übungen.</div>) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {existing.data?.items.map((e) => (
-              <ExerciseManageRow key={e.id} exercise={e}
+              <ExerciseManageRow key={e.id} exercise={e} subjectName={subjectNameOf(e.subjectId)}
                 route={types.route(e.type)} label={typeLabel(e.type)} onChanged={existing.reload}
                 onPreview={() => setPreview({ id: e.id, title: e.title })} onEdit={() => setEditing(e)} />
             ))}
@@ -182,7 +193,6 @@ export function VaterExercises() {
         )}
         {existing.data && <Pager skip={skip} take={PAGE_SIZE} total={existing.data.total} onSkip={setSkip} busy={existing.loading} />}
       </section>
-    )}
 
     {preview && <ExercisePreviewModal exerciseId={preview.id} title={preview.title} onClose={() => setPreview(null)} />}
     {editing && (
@@ -271,8 +281,22 @@ export function UsagePanel({ usage, exercise, busy, onToggleSharing }: {
 }
 
 /** Eine Zeile der Übungsliste mit Verwendungs-Anzeige, Testmodus und Löschen (409-bewusst). */
-function ExerciseManageRow({ exercise, route, label, onChanged, onPreview, onEdit }: {
+/**
+ * B-431: das Fach einer Zeile, wenn die Liste mehrere Fächer mischt (kein Fach-Filter); sonst `null` – dann steht es im Filter.
+ * „ohne Fach" nur, wenn die Übung wirklich keins hat – nicht, solange die Fächer laden oder ihr Abruf scheiterte (Review-Fund):
+ * „lädt", „gescheitert" und „hat keins" sind drei Aussagen, nicht eine.
+ */
+export function fachDerZeile(filterSubjectId: number | "", id: number | null | undefined, subjects: SubjectResponse[] | null): string | null {
+  if (filterSubjectId !== "") return null;
+  if (id == null) return "ohne Fach";
+  if (subjects === null) return null;
+  return subjects.find((x) => x.id === id)?.name ?? `Fach #${id}`;
+}
+
+function ExerciseManageRow({ exercise, subjectName = null, route, label, onChanged, onPreview, onEdit }: {
   exercise: ExerciseSummary;
+  /** Das Fach der Übung – nur gesetzt, wenn die Liste mehrere Fächer mischt (B-431); sonst steht es schon im Filter. */
+  subjectName?: string | null;
   /** Routen-Segment des Typs aus dem Manifest; `null` = der Server kennt den Typ nicht. */
   route: string | null;
   label: string;
@@ -324,6 +348,7 @@ function ExerciseManageRow({ exercise, route, label, onChanged, onPreview, onEdi
       <div className="row" style={{ alignItems: "center", gap: 8 }}>
         <span>{exercise.title}</span>
         <span className="muted">· {label}</span>
+        {subjectName && <span className="muted">· Fach: {subjectName}</span>}
         {/* Attribution der geteilten Bibliothek: eigene vs. von anderen Vätern erstellt vs. System. */}
         <ExerciseAttribution e={exercise} />
         {/*

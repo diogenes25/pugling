@@ -134,7 +134,8 @@ Response — `HTTP 201`:
   "grammar": null,
   "vocabularyNotes": null,
   "createdAt": "<timestamp>",
-  "grammarTopicIds": []
+  "grammarTopicIds": [],
+  "exerciseCount": 0
 }
 ```
 

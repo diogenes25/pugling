@@ -177,6 +177,7 @@ POST /api/v1/creator/textbook-series/5/units
   "topics": ["Zellorganellen", "Mitose"],
   "grammar": null,
   "vocabularyNotes": "cell, membrane, nucleus",
+  "exerciseCount": 0,
   …
 }
 ```

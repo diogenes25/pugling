@@ -26,3 +26,4 @@ Fälligkeit: 2026-11-10") und `sohn/SohnProgress.tsx:68` (`title={d.day}`). Repa
 ## Verlauf
 
 - **2026-11-09** — angelegt aus dem Review zu B-427; außerhalb des Vater-Webs, darum nicht in diesem Sprint.
+- **2026-11-09** — ergänzt aus der Nachschau zu Sprint 27: `SohnShop.tsx:33` liest Zeitstempel ohne Offset als Ortszeit (`new Date(iso)`); die Lese-Hälfte aus `lib/datum.ts` (`augenblick`) gehört mit in die Reparatur.

@@ -1,7 +1,8 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/katalog, bereich/frontend, rolle/creator]
+tags: [typ/story, status/in-arbeit, bereich/katalog, bereich/frontend, rolle/creator]
 aliases: [Übungen je Unit, Unit ohne Zähler]
-status: geschaetzt
+status: in-arbeit
+wartet_auf: Reparatur des Fund 6 aus Sprint 28 (Lauf AG an Freigabe 3 beendet)
 prio: P3
 art: Wunsch
 groesse: S
@@ -79,3 +80,25 @@ Vertragsbruch.
   Ist-Stand belegt, Entscheidungen vom PM unter dem Auftrag „nachtlauffähig machen" (Vetorecht beim Nutzer),
   geschätzt.
 - **2026-11-08** — **Freigabe des Nutzers (Autonomer Modus, Opt-in):** die sieben vorgelegten Entscheidungen der Fable-Sitzung hat der Nutzer im Dialog bestätigt („Ja, so fahren“, Antwort auf die Frage nach den Entscheidungen für die erste Nacht, [Protokoll](../pm-sitzung-2026-11-08-rollengang.md)). Ein Nachtlauf darf diese Story auf Grundlage der `## Entscheidungen` bauen; trifft er auf eine Produktfrage, die sie nicht hergeben, hält er an.
+- **2026-11-09** — gebaut (Lauf AG, Sprint 28); vor dem Bau die Freigabe-Zeile gelesen (`05700b6`, Dialog). **Rote Probe mit Zahl:** der
+  neue Integrationstest gegen den Ausgangsstand → 1 von 1 rot an `KeyNotFoundException` (Aufbau samt Zurückziehen lief durch).
+  Backend: `ExerciseCount` (gruppierter Count in der Liste, `CountAsync` in Get/PATCH, 0 beim Anlegen); Frontend: Spalte „Übungen"
+  mit Link `exercisesOfUnitHref` (drei Filter + `shared=1`), Singular „1 Übung" im Linknamen. Capture `catalog.md` neu.
+  **Belege je Fall** – `.claude/scripts/mutant-probe.py`, gemessen nach dem letzten Edit an `a14961d + Arbeitsbaum`, 2026-11-09 17:17 (MB1/MB2 im Gesamtlauf zuerst „kompiliert nicht" – ein Build-Aussetzer; einzeln nachgemessen: red):
+
+  | Fall | Test | Mutante | gemessen |
+  |---|---|---|---|
+  | AK 1 Liste | `SeriesUnitExerciseCountTests.Units_NennenIhreUebungszahl` | MB1 Liste liest falschen Schlüssel (`SeriesUnitsController.cs:55`) | red, am Fall |
+  | AK 1 Einzel-Unit | dieselbe | MB2 Get liefert 0 (`:65`) | red, am Fall |
+  | PATCH-Antwort | dieselbe | MB3 (`:142`) | red, am Fall |
+  | AK 3 zurückgezogene | dieselbe | MB4 nur `ExecutePublic` (`:51`) | red, am Fall |
+  | Entscheidung 3 fremde Creator | dieselbe (zweites Konto liest) | MB7 Autorfilter (`:32`) | red, am Fall |
+  | AK 2 Link | `e2e/creator-katalog-ueberblick.spec.ts` Fall 1 | ME1 Zahl ohne Link (`VaterLehrwerke.tsx:673`) | red, am Fall |
+  | Review: fremde Übungen hinter dem Link | dieselbe, Fall „Fremde Übungen" | ME5 Link ohne `shared=1` (`:118`) | red, am Fall |
+
+  Grundlinie nach dem Zurückspielen grün.
+- **2026-11-09** — Review: `pugling-reviewer` 🟡 Entscheidung 3 (fremde Creator) ungetestet → zweites Konto im Test (**zählt**); 🟢
+  Tutorial → `docs/tutorial-creator.md` zeigt `exerciseCount`. `frontend-reviewer` **🔴 die Zahl zählt alle Übungen, der Link öffnete
+  „nur meine"** – „3", dahinter „Übungen (0)" → der Schalter „geteilte Übungen" lebt jetzt in der Adresse (`?shared=1`), der Link setzt
+  ihn (**zählt**); 🟢 Singular im Linknamen behoben.
+- **2026-11-09** — **nicht abgenommen: Lauf AG an Freigabe 3 beendet.** Volle Suite nach dem letzten Edit: Backend 1187/1187, Vitest 723/723, `tsc -b` sauber, Playwright **1 failed, 129 passed** – rot `e2e/typ-manifest-faellt-aus.spec.ts:40`: der Schalter „geteilte Übungen anderer Väter anzeigen" ändert beim Klick seinen Zustand nicht. Ursache (analysiert, nicht behoben): seit dem Review-Fix zu B-428 hängt der Schalter an der Adresse (`?shared=1`, `VaterExercises.tsx` `setFilter`); Fach-Wechsel und Klick gehen beide über `setSearchParams`, der zweite liest den Fach-Wert aus dem alten Render (veraltete Closure), und React Router rendert die Adress-Änderung verzögert – der kontrollierte Haken springt zurück. Reparaturweg: `setParams(prev => …)` (aktuelle Adresse statt Render-Werte). Das ist Fund 6 in Sprint 28 und überschreitet den Zähler (5); darum gestoppt, nicht repariert. Der Rest der Story ist gebaut und belegt (Tabelle oben); die Abnahme gehört dem Nutzer bzw. dem nächsten Lauf nach der Reparatur.

@@ -108,6 +108,19 @@ export function createExerciseHref(series: TextbookSeriesResponse, seriesUnitId:
 }
 
 /**
+ * B-428: der Link von der Übungszahl einer Unit zu ihren Übungen – dieselben drei Filter wie beim Anlegen, nur auf die
+ * Verwaltungsliste. Ohne Fach an der Reihe gibt es keinen Link: dort kann keine Übung hängen (`series_without_subject`).
+ */
+export function exercisesOfUnitHref(series: TextbookSeriesResponse, seriesUnitId: number): string | null {
+  if (series.subjectId == null) return null;
+  // `shared=1`: die Zahl zählt alle Übungen der Unit (auch fremde), also muss die Liste dahinter sie auch zeigen.
+  const q = new URLSearchParams({
+    subjectId: String(series.subjectId), seriesId: String(series.id), seriesUnitId: String(seriesUnitId), shared: "1",
+  });
+  return `/vater/exercises?${q}`;
+}
+
+/**
  * Die Lehrwerke: welcher Stoff im Unterricht überhaupt dran ist.
  *
  * Drei Dinge machen diese Seite mehr als eine Bücherliste:
@@ -625,7 +638,7 @@ function UnitPanel({ series, onChanged, onMeldung, onMeldungZeileWeg }: {
         <p className="muted">Noch keine Unit. Ohne Unit kennt der Creator nur den Reihennamen, nicht den Stoff.</p>
       ) : (
         <table className="table">
-          <thead><tr><th>Band</th><th>Unit</th><th>Stoff</th><th /></tr></thead>
+          <thead><tr><th>Band</th><th>Unit</th><th>Stoff</th><th className="num">Übungen</th><th /></tr></thead>
           <tbody>
             {units.data.map((u) => (
               // Der Key gehört auf das Fragment: die Zeile und ihr Editor sind zusammen EIN Eintrag.
@@ -651,6 +664,15 @@ function UnitPanel({ series, onChanged, onMeldung, onMeldungZeileWeg }: {
                         </div>
                       )}
                   </td>
+                  {/* B-428: wie viele Übungen die Unit schon trägt – 0 als Zahl, nicht als Pille: die Pille daneben meint
+                      die Stoffnotizen, nicht die Übungen. Der Link nimmt die drei Filter mit (Auswahl reist als Query). */}
+                  <td className="num">
+                    {(() => {
+                      const href = exercisesOfUnitHref(series, u.id);
+                      const name = `${u.exerciseCount} ${u.exerciseCount === 1 ? "Übung" : "Übungen"} in „${u.label}"`;
+                      return href ? <Link to={href} aria-label={name}>{u.exerciseCount}</Link> : u.exerciseCount;
+                    })()}
+                  </td>
                   <td className="row" style={{ gap: 6, justifyContent: "flex-end" }}>
                     {canHostExercises && (
                       // Sichtbarer Text zuerst im `aria-label`, Kontext hinten (WCAG 2.5.3 „Label in Name",
@@ -675,7 +697,7 @@ function UnitPanel({ series, onChanged, onMeldung, onMeldungZeileWeg }: {
                 </tr>
                 {editing === u.id && (
                   <tr>
-                    <td colSpan={4}>
+                    <td colSpan={5}>
                       <UnitForm onMeldung={onMeldungZeileWeg}
                         seriesId={series.id} subjectId={series.subjectId ?? null} unit={u}
                         onDone={() => { setEditing(null); units.reload(); onChanged(); }}
