@@ -369,6 +369,7 @@ th.sortable[aria-sort="ascending"] .th-sort, th.sortable[aria-sort="descending"]
 .banner.info { background: rgba(90, 200, 255, .12); color: #9bdcff; border: 1px solid rgba(90,200,255,.35); }
 /* Ein Fehlerkasten mit `tabIndex={-1}` nimmt beim Wiederholen den Fokus auf (B-216, `ListenAusfall.tsx`) –
    per Tastatur ausgelöst braucht er denselben sichtbaren Ring wie jedes andere fokussierbare Element. */
+.vtitle[tabindex]:focus-visible { outline: 2px solid var(--cyan); outline-offset: 4px; }
 .banner[tabindex]:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 /* Dasselbe für eine Liste, die den Fokus nimmt, wenn ihr „Mehr laden" ohne Fehlerkasten gesperrt wird (B-231). */
 .list[tabindex]:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; border-radius: 8px; }

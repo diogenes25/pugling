@@ -77,8 +77,11 @@ test("Sohn lernt neue Wörter erst kennen, wird dann abgefragt und liest seine F
   await expect(counter).toHaveText("Karte 2 / 3");
   await answer.fill("die Strasse");
   await answer.press("Enter");
-  await expect(page.getByText("Lösung: die Straße", { exact: true }).first()).toBeVisible();
-  await expect(page.locator("s", { hasText: "die Strasse" })).toBeVisible();
+  // B-439: in der angehaltenen Karte, neben der eigenen Antwort – nicht in der 1×1-px-Ansage-Region (sr-only),
+  // die Playwright ebenfalls als sichtbar zählt.
+  const held = page.locator(".card.mistake");
+  await expect(held.getByText("Lösung: die Straße", { exact: true })).toBeVisible();
+  await expect(held.locator("s", { hasText: "die Strasse" })).toBeVisible();
   // Die nächste Karte kommt NICHT von selbst – auch nach der Zeit, die der alte Toast stand (1,6 s).
   await page.waitForTimeout(2000);
   await expect(counter).toHaveText("Karte 2 / 3");

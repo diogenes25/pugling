@@ -196,11 +196,16 @@ test("Vater bebildert eine Vokabel, der Sohn sieht sein Bild und kann es wechsel
   await sohn.getByRole("link", { name: /ÜBEN/ }).click();
   await expect(sohn.locator(".pill.cyan", { hasText: /Karte \d+ \/ \d+/ })).toBeVisible();
 
-  // Die bebilderte Vokabel suchen: der Kartensatz ist eingefroren, „la ville" kann irgendwo stehen.
+  // Die bebilderte Vokabel suchen: der Kartensatz ist eingefroren, „la ville" kann irgendwo stehen. Die Position ist
+  // frisch, also ist jede Karte eine Kennenlernkarte (B-419) – weiter geht es mit „Weiter", nicht über die
+  // Selbsteinschätzung. Der Bildwechsel unten wird damit auf einer Kennenlernkarte geprüft (B-439).
   const image = sohn.locator(".fcard img");
+  const counter = sohn.locator(".pill.cyan", { hasText: /Karte \d+ \/ \d+/ });
   for (let i = 0; i < 12 && !(await image.count()); i++) {
-    await sohn.getByRole("button", { name: "Umdrehen 🔄" }).click();
-    await sohn.getByRole("button", { name: "Gewusst!" }).click();
+    const before = await counter.textContent();
+    await sohn.getByRole("button", { name: "Weiter →" }).click();
+    // Erst die nächste Karte abwarten – sonst zählt die Schleife noch die alte und überspringt die gesuchte.
+    await expect(counter).not.toHaveText(before ?? "");
   }
   await expect(image).toBeVisible();
 

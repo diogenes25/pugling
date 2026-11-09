@@ -167,9 +167,10 @@ public class ErstbegegnungTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     }
 
     // Review finding: in a round mixing new and known atoms the introductions come first - an introduction is never a
-    // hit, so one between two asked cards would break the combo. Serial order would otherwise ask item 0 first.
+    // hit, so one between two asked cards would break the combo. Serial order would otherwise ask item 0 first. This
+    // test holds the order that protects the combo, not the combo itself.
     [Fact]
-    public async Task GemischteRunde_ZeigtErstDieNeuen_DannFragtSie_OhneDieComboZuBrechen()
+    public async Task GemischteRunde_ZeigtErstDieNeuen_DannDasBekannte()
     {
         var father = await TestApi.AdultAsync(factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, "fr", "de", ThreeWords);

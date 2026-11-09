@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-08-rollengang.md#feedback-sohn
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-09"
 ---
 
 # B-421 · Antwort-Toleranz: „Stadt" für „die Stadt" zählt als richtig
@@ -32,7 +33,7 @@ verlangen können, wenn die Übung genau ihn trainiert.
 - `AnswerGrader.cs:14-15`: `Matches(given, expected)` ist Gleichheit nach `StageMechanics.Normalize`
   (`StageMechanics.cs:31-32`: Trim, `ToLowerInvariant`, Leerzeichen zusammenziehen). Kein Artikel, kein
   Tippfehler wird toleriert.
-- Der Review prüft gegen alle akzeptierten Antworten eines Items (`PositionPracticeController.cs:325`,
+- Der Review prüft gegen alle akzeptierten Antworten eines Items (`PositionPracticeController.cs:357` – Stand 2026-11-09, ursprünglich `:325` notiert,
   `item.AcceptedAnswers.Any(a => grader.Matches(…))`) – die „Auch richtig"-Varianten des Creators (B-71)
   sind der einzige Toleranzweg, und sie müssen je Wort gepflegt werden.
 - Die Übungs-Config kennt `sourceLang`/`targetLang` (`fr`/`de` im Rollengang, `GET …/vocabulary/8`), also ist
@@ -138,3 +139,11 @@ expected, lang, articleRequired)`; (2) Aufrufer in Üben/Test/Vorschau mit `targ
 - **2026-11-08** — Verifikation: Backend 1169/1169, Vitest 686/686, `tsc -b` sauber, Playwright **121 passed**. Rollengang:
   Sohn als E2E (`erstbegegnung.spec.ts` tippt „Stadt" für „die Stadt" und rückt weiter), Creator als E2E
   (`artikel-pflicht.spec.ts`); Vater als Regressionszeuge (volle Suite grün, keine Vater-Fläche im Diff). → `abgenommen`.
+- **2026-11-09** — Nachschau (Retro Sprint 24, Lauf AF, frischer `pugling-reviewer`, `git show 481c973`): kein 🔴, kein 🟡.
+  Prüfpunkte: die fünf Grader-Aufrufstellen gegen je einen Test (`PositionPracticeController.cs:357` ↔ `ArtikelToleranzTests.Ueben_…`,
+  `PositionTestsController.cs:277`/`:375` ↔ `Test_Einzeln_…`/`Test_Gesammelt_…`, `ExercisePreviewService.cs:87` ↔ `Vorschau_…`;
+  Mengen-Abgleich `PositionPlayService.cs:157` begründet ohne Test, weil List-Atome nie `ArticleOptionalIn` tragen); Mutanten G2, G3,
+  G4, G5, G7, H7, H8, H9 je gegen ihre Testzeile nachgerechnet; rote Probe „11/11" gegen die Testzahl vor dem Review nachgezählt;
+  „Derby"/„Lesezeichen"/„l'école primaire"/Antwort nur „die" am Code nachvollzogen. 🟢: typografischer Apostroph wird nicht gefaltet →
+  [B-440](B-440-typografischer-apostroph-wird-nicht-gefaltet.md); `configToEditorState` liest `articleRequired` nicht zurück →
+  [B-441](B-441-editor-liest-articlerequired-nicht-zurueck.md); veraltete Zeilenangabe `:325` → oben berichtigt.

@@ -149,9 +149,13 @@ export function SohnPractice() {
   // ersetzt der Knopf es, und ohne diesen Schritt fiele der Fokus auf `body` (Review-Fund).
   const answerRef = useRef<HTMLDivElement>(null);
   const prevPhase = useRef<Phase>(phase);
+  // B-439: endet die Runde, verschwindet die Karte samt fokussiertem Feld bzw. „Weiter" – der Fokus geht an die
+  // Überschrift des Rundenendes, sonst fiele er auf `body` und ein Screenreader verlöre die Stelle.
+  const doneRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (prevPhase.current === "wrong" && phase === "front")
       answerRef.current?.querySelector<HTMLElement>("input, button:not([disabled])")?.focus();
+    if (prevPhase.current !== "done" && phase === "done") doneRef.current?.focus();
     prevPhase.current = phase;
   }, [phase]);
 
@@ -286,7 +290,7 @@ export function SohnPractice() {
   if (phase === "done") return (
     <div className="sohn-body">
       <div className="victory">
-        <div className="vtitle win">{t("practice.roundDone")}</div>
+        <div className="vtitle win" role="heading" aria-level={1} ref={doneRef} tabIndex={-1}>{t("practice.roundDone")}</div>
         {introduced > 0 && <p className="sub" style={{ textAlign: "center" }}>{t("practice.introduced", { count: introduced })}</p>}
         {/* Eine Runde kann neue und schon bekannte Karten mischen (die Einführung gilt je Karte): was die
             abgefragten verdient haben, bleibt sichtbar. Nur eine reine Kennenlern-Runde hat nichts zu zeigen. */}

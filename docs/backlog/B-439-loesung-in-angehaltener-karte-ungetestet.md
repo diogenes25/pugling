@@ -1,15 +1,14 @@
 ---
-tags: [typ/story, status/idee, bereich/frontend, bereich/tests, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/tests, rolle/student]
 aliases: [Lösung in der angehaltenen Karte ungetestet]
-status: idee
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
+groesse: XS
 wo: frontend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-08-nacht.md
-unverifiziert: true
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-420]
@@ -40,6 +39,66 @@ Kleinere Funde derselben Nachschau, hier mitgeführt (🟢):
 3. Nach einer falschen Antwort auf der **letzten** Karte fällt der Fokus nach „Weiter" auf `body` (das Rundenende nimmt
    ihn nicht).
 
+## User Story
+
+Als Sohn möchte ich nach einem Tippfehler die Lösung **in der Karte neben meiner eigenen Antwort** sehen – und ein Test soll
+dafür sorgen, dass das so bleibt.
+
+## Ist-Stand am Code
+
+- Haltezustand: `frontend/src/sohn/SohnPractice.tsx:415-418` (`.card.mistake`, Zeile `.rev`), Live-Region `:468` wird im
+  Haltezustand `sr-only`.
+- Vitest AK 1/AK 3 (`SohnPractice.test.tsx`, vorher `getAllByText(…).length > 0`) und E2E `erstbegegnung.spec.ts:80`
+  (`.first()`) treffen auch die Live-Region. **Gegenprobe gemessen:** mit entfernter Lösungszeile (Mutante MF1) laufen die
+  Tests von `HEAD` **15/15 grün** – der Defekt besteht.
+- Rundenende: `phase === "done"` rendert die Überschrift, niemand nimmt den Fokus (`:155-160` vor dem Fix).
+
+## Entscheidungen
+
+1. Zusicherungen auf `.card.mistake` begrenzen, dazu `sr-only` der Region im Haltezustand prüfen (Vorschlag des Reviewers).
+   *Entscheidung im Lauf (Defekt), getroffen von Claude.*
+2. Die drei 🟢 werden mitgenommen: `bilder.spec.ts` sucht über „Weiter →" (Kennenlernkarten) und benennt das; der Testname
+   wird ehrlich (`GemischteRunde_ZeigtErstDieNeuen_DannDasBekannte`); beim **Übergang** ins Rundenende geht der Fokus an die
+   Überschrift (`tabIndex={-1}`, Muster `SohnInterests`) – aus jeder Phase, weil auch ein Treffer auf der letzten Karte das
+   Feld wegnimmt. Kosten: drei Zeilen Code, ein zusätzlicher Vitest.
+
+## Akzeptanzkriterien
+
+| Fall | Weg | Wert | erwartet |
+|---|---|---|---|
+| 1 | Vitest | falsch getippt, Lösung geliefert | Lösung **in** `.card.mistake`, Region `sr-only` |
+| 2 | Vitest | falsch getippt, Menge ohne Lösung | Absage **in** `.card.mistake`, Region `sr-only` |
+| 3 | E2E | „die Strasse" | `.card.mistake` zeigt „Lösung: die Straße" |
+| 4 | Vitest | Halt auf der letzten Karte → Weiter | Fokus auf der Rundenend-Überschrift |
+| 5 | Vitest | Treffer auf der letzten Karte | Fokus auf der Rundenend-Überschrift |
+
+## Schätzung
+
+**Größe: XS** — Testzeilen, ein Effekt-Zweig. Testweg: `SohnPractice.test.tsx`, `erstbegegnung.spec.ts`, `bilder.spec.ts`.
+
 ## Verlauf
 
 - **2026-11-08** — angelegt aus der Nachschau zu Sprint 22 (Lauf AE), 🟡. Löst Limit 2 aus: der Lauf endet nach Sprint 23.
+- **2026-11-09** — ausformuliert, im Lauf entschieden (Defekt, Freigabe 1) und geschätzt; gebaut in Lauf AF, Sprint 24.
+  **Belege je Fall** – `.claude/scripts/mutant-probe.py`, gemessen nach dem letzten Code-Edit an `0c0462f + Arbeitsbaum`, 2026-11-09 14:04:
+
+  | Fall | Test | Mutante | gemessen |
+  |---|---|---|---|
+  | 1 | `SohnPractice.test.tsx` „hält die Karte mit eigener Antwort und Lösung an …" | MF1 Lösung aus der Karte (`SohnPractice.tsx:417`) | red, am Fall |
+  | 1, 2 | dieselben + „hält in einer Menge ohne Lösung …" | MF3 Region im Halt nicht `sr-only` (`:468`) | red, an beiden |
+  | 2 | „hält in einer Menge ohne Lösung mit der Absage an" | MF2 Absage aus der Karte (`:417`) | red, am Fall |
+  | 3 | `e2e/erstbegegnung.spec.ts` | ME1 = MF1 | red, am Fall |
+  | 4, 5 | „führt nach der letzten Karte …", „fokussiert das Rundenende auch nach einem Treffer …" | MF4 Fokus-Zweig aus (`:158`) | red, an beiden |
+  | 5 | „fokussiert das Rundenende auch nach einem Treffer …" | MF5 nur nach dem Halt (`:158`) | red, am Fall |
+
+  Grundlinie nach dem Zurückspielen grün. **Rote Probe mit Zahl (Auflage 5):** MF1 gegen die Tests von `HEAD` → 15 von 15
+  grün (erwartet: grün, weil das der Defekt ist); gegen die neuen Tests → rot.
+- **2026-11-09** — Review `frontend-reviewer`: keine 🔴, keine 🟡; drei 🟢, alle behoben **ohne Zählung**: Wettlauf in der
+  `bilder.spec`-Suchschleife (wartet jetzt auf den Kartenwechsel), Rundenende als `role="heading" aria-level={1}`,
+  Fokusring `.vtitle[tabindex]:focus-visible` (`index.css`). Zähler Sprint 24: 0.
+- **2026-11-09** — Vitest-Mutanten MF1–MF5 nach den 🟢-Fixes neu gemessen (14:23): alle red, Grundlinie grün.
+- **2026-11-09** — abgenommen. Backend 1172/1172, Vitest 687/687, `tsc -b` sauber, Playwright **121 passed** (ganze Suite, Server
+  vom Lauf nach dem letzten Code-Edit gestartet). **Rollengang** Sohn = `e2e/erstbegegnung.spec.ts` (frische Position: Kennenlernen,
+  Abfrage, Tippfehler hält die Karte mit der Lösung **in der Karte** an) und `e2e/bilder.spec.ts` (Bildwechsel auf der
+  Kennenlernkarte). Vater und Creator als Regressionszeugen: volle Suite grün, keine ihrer Flächen im Diff. Kein Browser-Rollengang
+  von Hand (Chrome in diesem Lauf nicht genutzt). Commit: siehe `git log -- docs/backlog/B-439-loesung-in-angehaltener-karte-ungetestet.md` (Lauf AF, Sprint 24).

@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { de } from "../i18n/de";
@@ -198,6 +198,20 @@ function taskRegion(): HTMLElement {
   return region;
 }
 
+/** B-439: die angehaltene Karte (B-420) – Zusicherungen auf ihren Inhalt, nicht auf irgendeinen Text der Seite. */
+function mistakeCard(): HTMLElement {
+  const held = document.querySelector<HTMLElement>(".card.mistake");
+  if (!held) throw new Error("keine angehaltene Karte");
+  return held;
+}
+
+/** Die Toast-/Live-Region (das `div`), nicht die Ansage-Region der Aufgabe. */
+function toastRegion(): HTMLElement {
+  const region = screen.getAllByRole("status").find((el) => el.tagName === "DIV" && el.classList.contains("live-region"));
+  if (!region) throw new Error("keine Live-Region");
+  return region;
+}
+
 function renderPractice() {
   return render(
     <MemoryRouter initialEntries={["/sohn/practice/5"]}>
@@ -230,7 +244,11 @@ describe("SohnPractice, falsche Antwort", () => {
     expect(screen.getByText("eins")).toBeTruthy();
     expect(screen.queryByText("zwei")).toBeNull();
     expect(screen.getByText("die Strasse").tagName).toBe("S");
-    expect(screen.getAllByText("Lösung: die Straße").length).toBeGreaterThan(0);
+    // B-439: die Lösung steht IN der Karte neben der eigenen Antwort – nicht nur in der Ansage-Region, die hier sr-only ist.
+    const held = mistakeCard();
+    expect(within(held).getByText("Lösung: die Straße")).toBeTruthy();
+    expect(within(held).getByText("die Strasse").tagName).toBe("S");
+    expect(toastRegion().classList.contains("sr-only")).toBe(true);
     // Der Fokus steht auf „Weiter" – Enter trägt das Kind weiter, ohne erst zu zielen.
     const weiter = screen.getByRole("button", { name: de.sohn.practice.next });
     expect(document.activeElement).toBe(weiter);
@@ -259,7 +277,8 @@ describe("SohnPractice, falsche Antwort", () => {
     await answerTyped("Hamburg");
 
     expect(screen.getByText("eins")).toBeTruthy();
-    expect(screen.getAllByText(de.sohn.practice.wrong).length).toBeGreaterThan(0);
+    expect(within(mistakeCard()).getByText(de.sohn.practice.wrong)).toBeTruthy();
+    expect(toastRegion().classList.contains("sr-only")).toBe(true);
     expect(screen.getByRole("button", { name: de.sohn.practice.next })).toBeTruthy();
   });
 
@@ -272,7 +291,20 @@ describe("SohnPractice, falsche Antwort", () => {
     expect(screen.queryByText(de.sohn.practice.roundDone)).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: de.sohn.practice.next }));
-    expect(await screen.findByText(de.sohn.practice.roundDone)).toBeTruthy();
+    const heading = await screen.findByText(de.sohn.practice.roundDone);
+    // B-439: der Fokus geht an das Rundenende, nicht auf `body` – „Weiter" ist mit der Karte verschwunden.
+    expect(document.activeElement).toBe(heading);
+  });
+
+  // B-439. Rot, wenn nur der Halt das Rundenende fokussiert: auch ein Treffer auf der letzten Karte nimmt das Feld weg.
+  it("fokussiert das Rundenende auch nach einem Treffer auf der letzten Karte", async () => {
+    cards.mockImplementation(() => Promise.resolve([card(0, "eins")]));
+    review.mockResolvedValueOnce(outcome(true, "one"));
+    renderPractice();
+    await answerTyped("one");
+
+    const heading = await screen.findByText(de.sohn.practice.roundDone);
+    expect(document.activeElement).toBe(heading);
   });
 
   // Rot, wenn auch „Nochmal" der Selbsteinschätzung anhält – dort stand die Lösung schon auf der Rückseite.
