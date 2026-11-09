@@ -5,9 +5,10 @@ import { api } from "../lib/api";
 import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import { useChildSelection } from "../lib/useChildSelection";
-import { pointKindLabel } from "../lib/labels";
+import { pointKindLabel, signedAmount } from "../lib/labels";
 import { PAGE_SIZE, Pager } from "../components/ListControls";
 import type { ChildResponse, Currency, WalletEntry } from "../lib/types";
+import { formatDate } from "../lib/datum";
 
 export function VaterKonto() {
   const children = useAsync<ChildResponse[]>(() => api.children(), []);
@@ -64,15 +65,15 @@ function AccountView({ childId }: { childId: number }) {
         {account.loading && account.data === null ? <div className="loading">Lade…</div> : account.error ? <div className="banner err">{account.error}</div> : (
           <div style={{ overflowX: "auto" }}>
             <table className="table">
-              <thead><tr><th>Datum</th><th>Kategorie</th><th>Grund</th><th className="num">Münzen</th></tr></thead>
+              <thead><tr><th>Datum</th><th>Kategorie</th><th>Grund</th><th className="num">Betrag</th></tr></thead>
               <tbody>
                 {account.data?.items.map((e) => (
                   <tr key={e.id}>
-                    <td className="muted">{new Date(e.createdAt).toLocaleDateString()}</td>
+                    <td className="muted">{formatDate(e.createdAt)}</td>
                     <td>{pointKindLabel(e.kind)}</td>
                     <td className="muted">{e.reason}</td>
                     <td className="num" style={{ color: e.amount < 0 ? "var(--danger, #c23a1d)" : "inherit" }}>
-                      {e.amount > 0 ? `+${e.amount}` : e.amount}</td>
+                      {signedAmount(e.amount, e.currency)}</td>
                   </tr>
                 ))}
                 {account.data?.items.length === 0 && <tr><td colSpan={4} className="muted">Noch keine Buchungen.</td></tr>}

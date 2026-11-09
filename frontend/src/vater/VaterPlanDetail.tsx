@@ -9,6 +9,7 @@ import { useAsync } from "../lib/useAsync";
 import { PlanPositions } from "./PlanPositions";
 import type { ChildResponse, PlanResponse, ProgressResponse, UpdatePlanDto } from "../lib/types";
 import { ListenAusfall } from "../components/ListenAusfall";
+import { formatDate, formatDateRange } from "../lib/datum";
 
 export function VaterPlanDetail() {
   const { planId } = useParams();
@@ -60,7 +61,7 @@ export function VaterPlanDetail() {
         </button>
       </div>
       <p className="muted">
-        <Link to={`/vater/kind/${p.childId}`}>{child.data?.name ?? `Kind #${p.childId}`}</Link> · {p.startDate} – {p.endDate}
+        <Link to={`/vater/kind/${p.childId}`}>{child.data?.name ?? `Kind #${p.childId}`}</Link> · {formatDateRange(p.startDate, p.endDate)}
       </p>
       <p className="sub" style={{ marginTop: -4 }}>
         Nur der <strong>aktive</strong> Plan ist für dein Kind spielbar. Aktivierst du diesen, werden andere Pläne desselben Kindes automatisch deaktiviert – so kann es sich keine leichte Übung zum Punktesammeln aussuchen.
@@ -91,7 +92,7 @@ export function VaterPlanDetail() {
               <tbody>
                 {prog.data.days.map((d) => (
                   <tr key={d.day}>
-                    <td>{d.day}</td>
+                    <td>{formatDate(d.day)}</td>
                     <td className="num">{d.goalsMet} / {d.goalsTotal}</td>
                     <td className="num">{d.pointsAwarded}</td>
                     <td>{d.dutyDone ? <span className="pill lime">komplett</span> : <span className="pill">offen</span>}</td>

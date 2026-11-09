@@ -19,6 +19,7 @@ import { useRemarkSnapshot } from "../lib/remarkContext";
 import { useAction } from "../lib/useAction";
 import type { Remark, RemarkCategory, RemarkComment } from "../lib/types";
 import { StatusBanner } from "./StatusBanner";
+import { formatDateTime } from "../lib/datum";
 
 /** Ein Klick genügt – aber keiner ist auch in Ordnung. */
 const QUICK_CATEGORIES: { value: RemarkCategory; label: string }[] = [
@@ -314,7 +315,7 @@ function Thread({ remark, onStatusMaybeChanged }: { remark: Remark; onStatusMayb
           {comments?.map((c) => (
             <div key={c.id} style={{ fontSize: 12, whiteSpace: "pre-wrap" }}>
               <b>{c.authorLabel ?? (c.author === "Assistant" ? "claude" : "ich")}</b>{" "}
-              <span className="muted">{new Date(c.createdAt).toLocaleString()}</span>
+              <span className="muted">{formatDateTime(c.createdAt)}</span>
               <div>{c.body}</div>
             </div>
           ))}

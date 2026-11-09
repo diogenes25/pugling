@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
+import { signedAmount } from "../lib/labels";
 import type { Paged, WalletBalance, WalletEntry } from "../lib/types";
 
 export function SohnKonto() {
@@ -34,7 +35,7 @@ export function SohnKonto() {
                   der Helfer bleibt fürs Vater-Web deutsch (B-304). Eine unbekannte Art zeigt ihren Rohwert. */}
               <span className="sub">{t(`pointKind.${e.kind}`, { defaultValue: e.kind })}{e.reason ? ` · ${e.reason}` : ""}</span>
               <b className="tabnum" style={{ color: e.amount < 0 ? "var(--danger,#ff6b6b)" : "var(--lime,#8bd450)" }}>
-                {e.amount > 0 ? `+${e.amount}` : e.amount}</b>
+                {signedAmount(e.amount, e.currency)}</b>
             </div>
           ))}
           {history.data?.items.length === 0 && <p className="sub">{t("account.noEntries")}</p>}

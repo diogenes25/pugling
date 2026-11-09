@@ -35,8 +35,12 @@ public record SupervisorLinkResponse(int SupervisorId, string SupervisorName, Su
 /// <summary>Input for adding another supervisor (e.g. mother/grandmother).</summary>
 public record AddSupervisorDto(int SupervisorId, SupervisorRelation Relation = SupervisorRelation.Other);
 
-/// <summary>A points ledger entry of the child.</summary>
-public record PointsEntryResponse(int Id, int ChildId, int Amount, PointKind Kind, string Reason, DateTime CreatedAt);
+/// <summary>
+/// A points ledger entry of the child. <c>Currency</c> (B-425) is derived from <c>Kind</c> on the server - the ledger has no
+/// currency column by design - and travels along so a history never shows a gem amount as coins: a client copy of the
+/// kind-to-currency rule would drift with the next new kind.
+/// </summary>
+public record PointsEntryResponse(int Id, int ChildId, int Amount, PointKind Kind, string Reason, DateTime CreatedAt, Currency Currency);
 
 /// <summary>Balance of the child (both currencies) with a page of its ledger entries.</summary>
 public record ChildPointsResponse(int ChildId, int Coins, int Gems, IEnumerable<PointsEntryResponse> Entries);

@@ -4,8 +4,8 @@ namespace Pugling.Contracts.Student;
 // perspective. The "My…" names deliberately separate the child's view from the identically named
 // supervisor view - same thing, different cut (the child does not see the ChildId, for instance).
 
-/// <summary>A single points ledger entry (credit positive, deduction negative) with category.</summary>
-public record MyPointsEntryResponse(int Id, int Amount, PointKind Kind, string Reason, DateTime CreatedAt);
+/// <summary>A single points ledger entry (credit positive, deduction negative) with category and its currency (derived from the kind, B-425).</summary>
+public record MyPointsEntryResponse(int Id, int Amount, PointKind Kind, string Reason, DateTime CreatedAt, Currency Currency);
 
 /// <summary>Account balance (wallet) of the child per currency. The ledger entries are under <c>points/entries</c>.</summary>
 public record WalletResponse(int ChildId, int Coins, int Gems);

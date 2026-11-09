@@ -33,21 +33,24 @@ Response — `HTTP 200`:
     "amount": 15,
     "kind": "Base",
     "reason": "Doku-Buchung",
-    "createdAt": "<timestamp>"
+    "createdAt": "<timestamp>",
+    "currency": "Coins"
   },
   {
     "id": 2,
     "amount": 300,
-    "kind": "Achievement",
+    "kind": "ManualGems",
     "reason": "Willkommens-Gems",
-    "createdAt": "<timestamp>"
+    "createdAt": "<timestamp>",
+    "currency": "Gems"
   },
   {
     "id": 1,
     "amount": 50,
-    "kind": "Base",
+    "kind": "Manual",
     "reason": "Startguthaben (M\u00FCnzen)",
-    "createdAt": "<timestamp>"
+    "createdAt": "<timestamp>",
+    "currency": "Coins"
   }
 ]
 ```
@@ -66,7 +69,8 @@ Response — `HTTP 200`:
   "amount": 15,
   "kind": "Base",
   "reason": "Doku-Buchung",
-  "createdAt": "<timestamp>"
+  "createdAt": "<timestamp>",
+  "currency": "Coins"
 }
 ```
 

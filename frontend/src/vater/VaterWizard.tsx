@@ -17,6 +17,7 @@ import { auswahlNachFilterwechsel, unsichtbareAuswahl, wizardFilterKey, wizardSe
 import { newWizardProgress, runWizardFinish } from "./wizardFinish";
 import type { WizardProgress } from "./wizardFinish";
 import { radioGroupKeys } from "../lib/ui";
+import { formatDate } from "../lib/datum";
 import type {
   CategoryResponse, ChildResponse, ExerciseSummary, GrammarTopicResponse, Paged, SchoolType, SubjectResponse,
 } from "../lib/types";
@@ -641,7 +642,7 @@ export function VaterWizard() {
           <SummaryRow label="Fach" value={subject?.name ?? "–"} />
           <SummaryRow label="Ziel · Intensität" value={`${GOALS[goal].label} · ${INTENSITY[intensity].label}`} />
           <SummaryRow label="Titel" value={title || "Neuer Lehrplan"} />
-          <SummaryRow label="Zeitraum" value={`${startDate} · ${durationDays} Tage`} />
+          <SummaryRow label="Zeitraum" value={`${formatDate(startDate)} · ${durationDays} Tage`} />
           <SummaryRow label="Je Position" value={`Test-Stufe ${defaultStage} · bestehen ab ${passPercent}% · ${pointsGoalMet} Punkte/Ziel`} />
           <SummaryRow label="Versäumnis" value={penaltyCoins > 0 ? `−${penaltyCoins} 🪙 je gerissenem Tagesziel` : "kein Malus (reine Belohnung)"} />
           <SummaryRow label="Übungen" value={`${selected.length} als Tagesziel-Positionen`} />

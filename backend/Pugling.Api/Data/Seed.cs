@@ -244,9 +244,16 @@ public static class Seed
         if (db.Textbooks.Any(t => t.ChildId == child.Id)) return;
 
         var englisch = db.Subjects.FirstOrDefault(s => s.Name == "Englisch");
+        // B-429: hang the book on the catalog series seeded just before (SeedCatalog), so the child hub shows the series
+        // and its unit instead of "nicht katalogisiert" for a series that lies in the same seed.
+        var greenLine = db.TextbookSeries.FirstOrDefault(s => s.Slug == "green-line-1");
+        var firstUnit = greenLine is null ? null
+            : db.SeriesUnits.Where(u => u.SeriesId == greenLine.Id).OrderBy(u => u.OrderIndex).FirstOrDefault();
         db.Textbooks.Add(new Textbook
         {
             ChildId = child.Id,
+            SeriesId = greenLine?.Id,
+            CurrentUnitId = firstUnit?.Id,
             Title = "Green Line 1",
             SubjectName = "Englisch",
             SubjectId = englisch?.Id,
@@ -299,8 +306,8 @@ public static class Seed
                 // Starting balance, so that shop/skins can be tried out right away.
                 PointsEntries =
                 {
-                    new ChildPointsEntry { Amount = 200, Kind = PointKind.Base, Reason = "Startguthaben (Münzen)" },
-                    new ChildPointsEntry { Amount = 300, Kind = PointKind.Achievement, Reason = "Willkommens-Gems" },
+                    new ChildPointsEntry { Amount = 200, Kind = PointKind.Manual, Reason = "Startguthaben (Münzen)" },
+                    new ChildPointsEntry { Amount = 300, Kind = PointKind.ManualGems, Reason = "Willkommens-Gems" },
                 },
             };
             db.Children.Add(child);
@@ -1054,12 +1061,13 @@ public static class Seed
             Gender = Gender.Male,
             Interests = ["Brawl Stars", "Pokémon", "Fußball"],
             ProfileNotes = "Motiviert über Spiele-Themen; braucht klare kurze Aufgaben.",
-            // Start: a few coins (Base → coins) for listings and a few gems (Achievement → gems), so that a skin
-            // can be tried out right away.
+            // Start: a few coins for listings and a few gems so that a skin can be tried out right away - booked as the
+            // parent's gift (Manual/ManualGems), because the kind is what the history names: "Base" read as "Wiederholung"
+            // and "Achievement" as "Auszeichnung" (B-429).
             PointsEntries =
             {
-                new ChildPointsEntry { Amount = 50, Kind = PointKind.Base, Reason = "Startguthaben (Münzen)" },
-                new ChildPointsEntry { Amount = 300, Kind = PointKind.Achievement, Reason = "Willkommens-Gems" },
+                new ChildPointsEntry { Amount = 50, Kind = PointKind.Manual, Reason = "Startguthaben (Münzen)" },
+                new ChildPointsEntry { Amount = 300, Kind = PointKind.ManualGems, Reason = "Willkommens-Gems" },
             }
         };
         db.Adults.Add(father);

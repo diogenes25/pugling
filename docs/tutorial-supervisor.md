@@ -486,7 +486,7 @@ du die Währung (Default `Coins`):
 ```http
 POST /api/v1/supervisor/children/1/points
 { "amount": 30, "reason": "Extra fürs Dranbleiben" }                       # Münzen (Default)
-→ { "id": 3, "childId": 1, "amount": 30, "kind": "Manual", "reason": "Extra fürs Dranbleiben" }
+→ { "id": 3, "childId": 1, "amount": 30, "kind": "Manual", "reason": "Extra fürs Dranbleiben", "currency": "Coins" }
 
 POST /api/v1/supervisor/children/1/points
 { "amount": 20, "reason": "Belohnung fürs Zimmeraufräumen", "currency": "Gems" }   # Gems verschenken

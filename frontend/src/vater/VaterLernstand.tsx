@@ -10,6 +10,7 @@ import type {
   MasteryRollup, Paged, SubjectProgress, WordMastery,
 } from "../lib/types";
 import { ListenAusfall } from "../components/ListenAusfall";
+import { formatDate, formatDateTime } from "../lib/datum";
 
 /**
  * Der Lernstand eines Kindes **über alle Lehrpläne hinweg** – die Sicht, die der Positions-Report nicht
@@ -180,7 +181,7 @@ function WordDetail({ childId, vocabularyId }: { childId: number; vocabularyId: 
                 <td><MasteryPill it={{ introduced: i.introducedAt != null, box: i.box, masteryPercent: i.masteryPercent }} maxBox={i.maxBox} /></td>
                 <td className="num">{i.seenCount === 0 ? "—" : `${i.correctCount}/${i.seenCount}`}</td>
                 <td className="muted">
-                  {i.lastAnswerAt ? new Date(i.lastAnswerAt).toLocaleDateString() : "—"}
+                  {i.lastAnswerAt ? formatDate(i.lastAnswerAt) : "—"}
                   {i.lastCorrect === false && <span className="pill mag" style={{ marginLeft: 6 }}>falsch</span>}
                 </td>
                 <td style={{ textAlign: "right" }}>
@@ -221,7 +222,7 @@ function ItemHistory({ childId, itemId }: { childId: number; itemId: number }) {
     <ul className="muted" style={{ margin: "4px 0" }}>
       {rows.map((h, idx) => (
         <li key={`${h.at}-${idx}`}>
-          {new Date(h.at).toLocaleString()} · {h.source === "Test" ? "Test" : "Übung"} ·{" "}
+          {formatDateTime(h.at)} · {h.source === "Test" ? "Test" : "Übung"} ·{" "}
           {h.wasCorrect ? "✓ richtig" : "✗ falsch"}
           {h.givenAnswer ? ` · geantwortet „${h.givenAnswer}"` : ""}
         </li>
@@ -356,7 +357,7 @@ function ExerciseItems({ childId, subjectId, seriesUnitId, exerciseId }: {
               <td className="muted">{i.back}</td>
               <td><MasteryPill it={{ introduced: i.introducedAt != null, box: i.box, masteryPercent: i.masteryPercent }} maxBox={i.maxBox} /></td>
               <td className="num">{i.seenCount === 0 ? "—" : `${i.correctCount}/${i.seenCount}`}</td>
-              <td className="muted">{i.lastAnswerAt ? new Date(i.lastAnswerAt).toLocaleDateString() : "—"}</td>
+              <td className="muted">{i.lastAnswerAt ? formatDate(i.lastAnswerAt) : "—"}</td>
             </tr>
           ))}
           {items.data?.length === 0 && <tr><td colSpan={5} className="muted">Keine Wörter.</td></tr>}

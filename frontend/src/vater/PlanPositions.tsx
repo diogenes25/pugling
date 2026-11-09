@@ -17,6 +17,7 @@ import type {
 import { ExerciseFilterBar, type ExerciseFilter } from "./ExerciseFilterBar";
 import { ratingSummary } from "./ExerciseRatingPanel";
 import { ExercisePreviewModal } from "./ExercisePreviewModal";
+import { formatDate } from "../lib/datum";
 
 /*
  * Positions-UI des neuen Lehrplan-Modells: Ein Plan ist ein Container aus Katalog-Übungen. Jede
@@ -787,7 +788,7 @@ function PositionReportPanel({ planId, positionId }: { planId: number; positionI
                 <td className="muted">{it.answer}</td>
                 <td><MasteryPill it={it} maxBox={r.maxBox} /></td>
                 <td className="num">{it.testsSeen === 0 ? "—" : `${it.testsCorrect}/${it.testsSeen}`}</td>
-                <td className="muted">{it.dueOn ?? "—"}</td>
+                <td className="muted">{it.dueOn ? formatDate(it.dueOn) : "—"}</td>
               </tr>
             ))}
           </tbody>

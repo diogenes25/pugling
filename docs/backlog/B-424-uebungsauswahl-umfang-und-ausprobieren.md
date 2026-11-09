@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-08-rollengang.md#feedback-vater
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-09"
 ---
 
 # B-424 · Die Übungsauswahl im Assistenten und im Planbau zeigt den Umfang nicht und bietet kein „Ausprobieren"
@@ -156,3 +157,8 @@ Assistenten (nach B-408) und im Planbau; (6) `VaterWizard.test.tsx`, `PlanPositi
   Vokabeln: Assistent und Planbau zeigen „3 Karten", „Ausprobieren" öffnet den Testmodus genau dieser Übung, Schließen lässt die
   Wahl stehen). Creator und Sohn als Regressionszeugen: Suite grün; der Creator-Vertrag ist additiv (`exercise-types`,
   `exercises`), kein Spielweg berührt. Kein Browser-Rollengang von Hand. Commit: siehe `git log -- docs/backlog/B-424-uebungsauswahl-umfang-und-ausprobieren.md` (Lauf AF, Sprint 26).
+- **2026-11-09** — Nachschau (Retro Sprint 27, Lauf AG, frischer `pugling-reviewer`, `git show 453a740`): kein 🔴, drei 🟡 →
+  [B-448](B-448-umfang-nachschau-reste.md) (`entgangen_bei: [B-424]`). Prüfpunkte: alle Datei:Zeile-Angaben der Tabelle gegen
+  `453a740`, MB1/MB2/MB3/MB6 am Code nachgerechnet (rot am Fall); „Risiko 2 entfällt" (`DocsCaptureTests.cs:570` ohne `Capture`),
+  „Creator-Rolle für jedes Erwachsenen-Konto" (`AccountService.cs:49`, einzige `Profiles.Add`-Stellen 49/50/64) und „eine Abfrage je
+  Seite" (plus das `CountAsync` des Pagings) bestätigt; Zählung je Typ gegen `ExerciseContentResolver.ItemsOfAsync`.

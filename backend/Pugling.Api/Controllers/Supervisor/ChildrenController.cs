@@ -230,7 +230,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
             .AsNoTracking()
             .Where(p => p.ChildId == childId)
             .OrderByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id)
-            .Select(p => new PointsEntryResponse(p.Id, p.ChildId, p.Amount, p.Kind, p.Reason, p.CreatedAt))
+            .Select(p => new PointsEntryResponse(p.Id, p.ChildId, p.Amount, p.Kind, p.Reason, p.CreatedAt, PointKindCurrency.Of(p.Kind)))
             .ToPagedListAsync(Response, skip, take, ct);
 
         return new ChildPointsResponse(childId, coins, gems, entries);
@@ -252,7 +252,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         db.ChildPointsEntries.Add(entry);
         await db.SaveChangesAsync(ct);
 
-        var response = new PointsEntryResponse(entry.Id, childId, entry.Amount, entry.Kind, entry.Reason, entry.CreatedAt);
+        var response = new PointsEntryResponse(entry.Id, childId, entry.Amount, entry.Kind, entry.Reason, entry.CreatedAt, PointKindCurrency.Of(entry.Kind));
         return CreatedAtAction(nameof(GetPoints), new { childId }, response);
     }
 }

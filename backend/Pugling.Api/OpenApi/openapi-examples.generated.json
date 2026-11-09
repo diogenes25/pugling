@@ -567,7 +567,7 @@
     "role": "child",
     "requestBodyJson": null,
     "expectedStatus": 200,
-    "responseBodyJson": "[\n  {\n    \u0022id\u0022: 5,\n    \u0022amount\u0022: 15,\n    \u0022kind\u0022: \u0022Base\u0022,\n    \u0022reason\u0022: \u0022Doku-Buchung\u0022,\n    \u0022createdAt\u0022: \u0022\u003Ctimestamp\u003E\u0022\n  },\n  {\n    \u0022id\u0022: 2,\n    \u0022amount\u0022: 300,\n    \u0022kind\u0022: \u0022Achievement\u0022,\n    \u0022reason\u0022: \u0022Willkommens-Gems\u0022,\n    \u0022createdAt\u0022: \u0022\u003Ctimestamp\u003E\u0022\n  },\n  {\n    \u0022id\u0022: 1,\n    \u0022amount\u0022: 50,\n    \u0022kind\u0022: \u0022Base\u0022,\n    \u0022reason\u0022: \u0022Startguthaben (M\\u00FCnzen)\u0022,\n    \u0022createdAt\u0022: \u0022\u003Ctimestamp\u003E\u0022\n  }\n]",
+    "responseBodyJson": "[\n  {\n    \u0022id\u0022: 5,\n    \u0022amount\u0022: 15,\n    \u0022kind\u0022: \u0022Base\u0022,\n    \u0022reason\u0022: \u0022Doku-Buchung\u0022,\n    \u0022createdAt\u0022: \u0022\u003Ctimestamp\u003E\u0022,\n    \u0022currency\u0022: \u0022Coins\u0022\n  },\n  {\n    \u0022id\u0022: 2,\n    \u0022amount\u0022: 300,\n    \u0022kind\u0022: \u0022ManualGems\u0022,\n    \u0022reason\u0022: \u0022Willkommens-Gems\u0022,\n    \u0022createdAt\u0022: \u0022\u003Ctimestamp\u003E\u0022,\n    \u0022currency\u0022: \u0022Gems\u0022\n  },\n  {\n    \u0022id\u0022: 1,\n    \u0022amount\u0022: 50,\n    \u0022kind\u0022: \u0022Manual\u0022,\n    \u0022reason\u0022: \u0022Startguthaben (M\\u00FCnzen)\u0022,\n    \u0022createdAt\u0022: \u0022\u003Ctimestamp\u003E\u0022,\n    \u0022currency\u0022: \u0022Coins\u0022\n  }\n]",
     "isError": false,
     "expectedCode": null
   },
@@ -580,7 +580,7 @@
     "role": "child",
     "requestBodyJson": null,
     "expectedStatus": 200,
-    "responseBodyJson": "{\n  \u0022id\u0022: 5,\n  \u0022amount\u0022: 15,\n  \u0022kind\u0022: \u0022Base\u0022,\n  \u0022reason\u0022: \u0022Doku-Buchung\u0022,\n  \u0022createdAt\u0022: \u0022\u003Ctimestamp\u003E\u0022\n}",
+    "responseBodyJson": "{\n  \u0022id\u0022: 5,\n  \u0022amount\u0022: 15,\n  \u0022kind\u0022: \u0022Base\u0022,\n  \u0022reason\u0022: \u0022Doku-Buchung\u0022,\n  \u0022createdAt\u0022: \u0022\u003Ctimestamp\u003E\u0022,\n  \u0022currency\u0022: \u0022Coins\u0022\n}",
     "isError": false,
     "expectedCode": null
   },

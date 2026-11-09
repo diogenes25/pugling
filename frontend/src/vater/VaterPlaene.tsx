@@ -2,6 +2,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import type { ChildResponse, PlanResponse } from "../lib/types";
+import { formatDateRange } from "../lib/datum";
 
 /**
  * Startseite der Perspektive **Zuweisen**: welches Kind lernt welchen Stoff.
@@ -80,7 +81,7 @@ export function VaterPlaene() {
                 <td><Link to={`/vater/plan/${p.id}`}>{p.title}</Link></td>
                 <td>{childName(p.childId)}</td>
                 <td className="num">{p.positionCount}</td>
-                <td className="muted">{p.startDate} – {p.endDate}</td>
+                <td className="muted">{formatDateRange(p.startDate, p.endDate)}</td>
                 <td>
                   {p.active
                     ? <span className="pill lime">aktiv</span>

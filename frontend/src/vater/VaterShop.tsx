@@ -8,6 +8,7 @@ import { useAsync } from "../lib/useAsync";
 import { useChildSelection } from "../lib/useChildSelection";
 import { confirmAction } from "../lib/ui";
 import { ACTION_LABEL, ACTION_OPTIONS, REFILL_LABEL, UNIT_LABEL, UNIT_OPTIONS, priceLabel, unitAmount } from "../lib/shop";
+import { formatDate } from "../lib/datum";
 import type {
   ActionType, ActivationRequest, ChildResponse, CreateShopArticleDto, CreateShopListingDto,
   InventoryItem, Paged, ShopArticle, ShopListing, ShopPurchase, ShopRefillKind, UnitType, UpdateShopListingDto,
@@ -405,7 +406,7 @@ function ChildShopView({ childId }: { childId: number }) {
                 <tr key={r.id}>
                   <td>{r.articleTitle}</td>
                   <td className="muted">{unitAmount(r.requestedQuantity, r.unitType)}</td>
-                  <td className="muted">{new Date(r.requestedAt).toLocaleDateString()}</td>
+                  <td className="muted">{formatDate(r.requestedAt)}</td>
                   <td>{activationPill(r.status)}</td>
                   <td style={{ whiteSpace: "nowrap" }}>
                     {r.canApprove && <><button type="button" className="btn lime inline-btn" style={{ width: "auto" }}
@@ -451,7 +452,7 @@ function ChildShopView({ childId }: { childId: number }) {
                 <tr key={p.id}>
                   <td>{p.title}</td>
                   <td>{priceLabel(p.coinPrice, p.gemPrice)}</td>
-                  <td className="muted">{new Date(p.purchasedAt).toLocaleDateString()}</td>
+                  <td className="muted">{formatDate(p.purchasedAt)}</td>
                   <td>{p.status === "Owned" ? <span className="pill lime">aktiv</span> : <span className="pill">storniert</span>}</td>
                   <td style={{ whiteSpace: "nowrap" }}>
                     {/* Ein Geldpfad auf der Vater-Seite: das Stornieren erstattet Münzen bzw. Gems. */}

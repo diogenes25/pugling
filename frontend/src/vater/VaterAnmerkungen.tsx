@@ -4,6 +4,7 @@ import { PAGE_SIZE, Pager } from "../components/ListControls";
 import { ApiError, api } from "../lib/api";
 import { useAction, type ActionMessage } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
+import { formatDateTime } from "../lib/datum";
 import type {
   Paged, Remark, RemarkCategory, RemarkComment, RemarkStatus,
 } from "../lib/types";
@@ -199,7 +200,7 @@ function RemarkCard({ remark, showAccount, onChanged, onNotice }: {
           <span className="muted" style={{ fontSize: 12 }}>{remark.category}</span>
         )}
         <span className="muted" style={{ fontSize: 12 }}>
-          {new Date(remark.createdAt).toLocaleString()}
+          {formatDateTime(remark.createdAt)}
           {showAccount && ` · Konto ${remark.accountId}`}
         </span>
         <span style={{ marginLeft: "auto" }} />
@@ -221,7 +222,7 @@ function RemarkCard({ remark, showAccount, onChanged, onNotice }: {
         <div style={{ marginTop: 8, paddingLeft: 10, borderLeft: "3px solid var(--stroke)" }}>
           <div className="muted" style={{ fontSize: 12 }}>
             Auflösung{remark.answeredBy ? ` · ${remark.answeredBy}` : ""}
-            {remark.answeredAt ? ` · ${new Date(remark.answeredAt).toLocaleString()}` : ""}
+            {remark.answeredAt ? ` · ${formatDateTime(remark.answeredAt)}` : ""}
           </div>
           <div style={{ fontSize: 13, whiteSpace: "pre-wrap" }}>{remark.answer}</div>
         </div>
@@ -292,7 +293,7 @@ function Thread({ remarkId, status, onReopened }: {
             <div key={c.id} className="row" style={{ gap: 8, alignItems: "flex-start" }}>
               <div style={{ flex: 1 }}>
                 <div className="muted" style={{ fontSize: 12 }}>
-                  <b>{c.authorLabel ?? c.author}</b> · {new Date(c.createdAt).toLocaleString()}
+                  <b>{c.authorLabel ?? c.author}</b> · {formatDateTime(c.createdAt)}
                   {c.author === "Assistant" && " · 🤖"}
                 </div>
                 <div style={{ fontSize: 13, whiteSpace: "pre-wrap" }}>{c.body}</div>

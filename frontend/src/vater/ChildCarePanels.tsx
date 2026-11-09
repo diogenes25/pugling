@@ -7,6 +7,7 @@ import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import type { SubjectResponse, SupervisorLink, SupervisorRelation, TimetableEntry, Weekday } from "../lib/types";
 import { ListenAusfall } from "../components/ListenAusfall";
+import { formatDate } from "../lib/datum";
 
 /*
  * Zwei Seiten des Kind-Profils, die bisher nur über die API erreichbar waren.
@@ -65,7 +66,7 @@ export function SupervisorsSection({ childId, childName }: { childId: number; ch
               <tr key={l.supervisorId}>
                 <td>{l.supervisorName} <span className="muted">(#{l.supervisorId})</span></td>
                 <td>{supervisorRelationLabel(l.relation)}</td>
-                <td className="muted">{new Date(l.createdAt).toLocaleDateString()}</td>
+                <td className="muted">{formatDate(l.createdAt)}</td>
                 <td style={{ textAlign: "right" }}>
                   {/* Der letzte Betreuer bleibt: ohne ihn wäre das Kind für niemanden erreichbar (Server: 400). */}
                   {links.data!.length > 1 && (

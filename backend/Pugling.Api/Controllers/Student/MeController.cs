@@ -53,7 +53,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
             .AsNoTracking()
             .Where(p => p.ChildId == cid)
             .OrderByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id)
-            .Select(p => new MyPointsEntryResponse(p.Id, p.Amount, p.Kind, p.Reason, p.CreatedAt))
+            .Select(p => new MyPointsEntryResponse(p.Id, p.Amount, p.Kind, p.Reason, p.CreatedAt, PointKindCurrency.Of(p.Kind)))
             .ToPagedListAsync(Response, skip, take, ct);
     }
 
@@ -70,7 +70,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         var entry = await db.ChildPointsEntries
             .AsNoTracking()
             .Where(p => p.Id == entryId && p.ChildId == cid)
-            .Select(p => new MyPointsEntryResponse(p.Id, p.Amount, p.Kind, p.Reason, p.CreatedAt))
+            .Select(p => new MyPointsEntryResponse(p.Id, p.Amount, p.Kind, p.Reason, p.CreatedAt, PointKindCurrency.Of(p.Kind)))
             .FirstOrDefaultAsync(ct);
 
         return entry is null ? NotFound() : entry;

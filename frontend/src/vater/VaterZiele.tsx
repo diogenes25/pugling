@@ -6,6 +6,7 @@ import { api } from "../lib/api";
 import { useAction, type ActionState } from "../lib/useAction";
 import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
+import { formatDate } from "../lib/datum";
 import type {
   ChildResponse, CreateKeyResultRequest, ExerciseSummary, GoalStatus, KeyResult,
   KeyResultMetric, Objective, ObjectiveKind, Paged, SeriesUnitResponse, SubjectResponse,
@@ -277,7 +278,7 @@ function ObjectiveCard({ objective: o, childId, subjects, busy, onChanged, onTog
       </div>
       {o.motivation && <p className="muted" style={{ margin: "6px 0 0" }}>{o.motivation}</p>}
       <p className="muted" style={{ margin: "4px 0 0", fontSize: 13 }}>
-        {o.start ?? "—"} bis {o.dueDate ?? "offen"} · Belohnung {currency} {o.rewardOnComplete} beim Abschluss
+        {o.start ? formatDate(o.start) : "—"} bis {o.dueDate ? formatDate(o.dueDate) : "offen"} · Belohnung {currency} {o.rewardOnComplete} beim Abschluss
         {o.rewardPerKeyResult > 0 && ` · ${currency} ${o.rewardPerKeyResult} je Etappe`}
       </p>
 

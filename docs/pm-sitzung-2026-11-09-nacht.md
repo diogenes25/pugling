@@ -181,3 +181,68 @@ im Bau von B-424 fing ich zuerst nur `JsonException` – die Summary versprach m
 
 **Ende Lauf AF.** Kein Limit gegriffen (Zähler 0 / 1 / 3, keine Nachschau mit 🟡, kein Tor gelandet). Der Lauf endet mit dem Paket,
 das ihm der Rollengang-Plan zugedacht hat (Nacht 2 = NP-26); Lauf AG übernimmt NP-27 (Nacht 3).
+
+## Lauf AG — Eingang
+
+**Auftrag:** zweiter der zwei Läufe aus „Starte zwei Nachtläufe". Paket NP-27 aus dem Rollengang vom 2026-11-08 (Nacht 3). Die vier
+`Defekt`/`Aufräumen`-Stories B-425, B-426, B-427, B-429 stehen auf `ausformuliert` (Freigabe 1, autonom grillbar); B-428 und B-431
+sind `geschaetzt` mit Freigabe-Zeile aus `05700b6` (Freigabe 9). **Geteilt in zwei Sprints** statt des einen im Paket: sechs Stories
+auf zwei Rollen (Vater, Creator) wären ein Review, den niemand bezahlt – drei je Sprint, je eine Rolle.
+
+## Sprint 27 — Ziel & Umfang (Lauf AG, NP-27 Teil 1)
+
+**Sprint-Ziel:** Der Vater liest im Konto je Buchung die Währung und überall dieselbe deutsche Schreibweise eines Datums, und die
+Demo-Familie zeigt ihr Buch als Katalog-Reihe und ihr Startguthaben als Papa-Buchung.
+**Umfang:** B-425, B-427, B-429 (nach dem Teilen). **Draußen:** B-445 (Seed-Klasse, filtert den Katalog in mehreren Specs), B-446
+(Tipp – Produktfrage im Resolver).
+**Entwickler-Brief:** Währung kommt vom Server (`PointKindCurrency`) als additives Feld auf beiden Ledger-DTOs; Datum über ein
+Modul mit fester Locale, `DateOnly` als Text; Tor gegen `toLocale…()` ohne Locale. Seed: Buch an `green-line-1`, Startguthaben
+`Manual`/`ManualGems`. Testweg: `PointsCurrencyTests`, `SeedFamilyTests`, `labels.test.ts`, `datum.test.ts`, neue Spec
+`konto-waehrung-und-datum.spec.ts` (Rollengang Vater + Sohn, Locale en-US fest).
+
+## Iteration 27 — umgesetzt
+
+Backend: `Currency` auf `PointsEntryResponse`/`MyPointsEntryResponse` (drei Projektionen), Seed-Buch an Reihe und Unit,
+Startguthaben als Papa-Buchung, Capture neu. Frontend: `signedAmount` in Vater- und Sohn-Konto, Spalte „Betrag"; `lib/datum.ts`,
+zwölf Aufrufe und vier ISO-Anzeigen umgestellt, Tor `datum.test.ts`. **Rote Proben mit Zahl:** 3/3 (Währung), 2/2 (Seed), Tor 12 Funde
+→ 0. 15 Mutanten, alle rot am benannten Fall (Tabellen in den Stories), inklusive Zeitzonen-Probe unter `TZ=America/New_York`.
+
+## Runde 2 — Review (Sprint 27)
+
+`frontend-reviewer`: keine 🔴. Vier 🟡, alle behoben: drei rohe ISO-Daten übrig (Klassenarbeit, Ziel-Frist, „Fällig") (**1**); Server-
+Zeitstempel ohne Offset würden als Ortszeit gelesen – `formatDate`/`formatDateTime` ergänzen ein `Z` (hergeleitet aus EF/SQLite, nicht
+am Endpunkt gemessen) (**2**); Tagesverlauf, Planliste und Assistent-Überblick ungetestet → E2E-Zusicherungen (**3**); das Minus in
+`signedAmount` widersprach Doku und Assistent → U+2212 (**4**). 🟢 ohne Zählung: Tor um drei Formen erweitert, Arcade-Hinweis in der
+Meldung, Tag-Grenze als Entscheidung dokumentiert, Spec in drei Fälle geteilt; 🟢 → [B-447](backlog/B-447-arcade-zeigt-iso-daten.md).
+`pugling-reviewer`: keine 🔴/🟡; 🟢 Gegenrichtung „fest Gems" getestet, Tutorial ergänzt, Demo-Kind-Zeilen bewusst hingenommen.
+**Zähler Sprint 27: 4 von 5.** 24 Mutanten nach dem letzten Edit, alle rot (Tabellen in den Stories).
+
+## Runde 3 — Abnahme (Sprint 27)
+
+- **Vater:** Rollengang als E2E `konto-waehrung-und-datum.spec.ts` (drei Fälle je Fläche, Browser-Locale en-US fest): Konto mit „Betrag“
+  und Währung je Buchung, deutsche Daten in Konto, Plan, Tagesverlauf, Planliste, Klassenarbeit, Ziel; dazu `assistent.spec.ts` (Überblick).
+- **Sohn:** derselbe Fall 1 – „Mein Konto“ zeigt „+9 💎“.
+- **Creator:** Regressionszeuge – Suite grün, keine Creator-Fläche im Diff.
+- **Seed (B-429):** `SeedFamilyTests` gegen frische Seed-DB statt eines Klicks durch den Kind-Hub (ausdrücklich benannt in der Story).
+- Zahlen nach dem letzten Edit: Backend 1183/1183, Vitest 715/715, `tsc -b` sauber, Playwright **125 passed**.
+
+B-425, B-427, B-429 → `abgenommen`. Neu: B-445, B-446 (aus dem Teilen von B-429), B-447 (Arcade-Daten), B-448 (Nachschau).
+
+## Retrospektive (Sprint 27)
+
+**Nachschau:** Sprint 26 (`453a740`, B-424), frischer `pugling-reviewer`: kein 🔴, **drei 🟡** → [B-448](backlog/B-448-umfang-nachschau-reste.md)
+(`entgangen_bei: [B-424]`): „leer“ (0 statt `null`) am Server ungetestet – zwei Mutanten überleben alle 1178 Tests; der breite `catch`
+schluckt ohne Log; eine Summary hängt am falschen Helfer. Prüfpunkte in B-424 notiert. Increment des vorigen Laufs (AF) – nach der
+Präzedenz aus Lauf AD **kein Limit 2**; der Lauf geht mit Sprint 28 weiter.
+
+**Was die eigenen Tore durchgelassen haben:** (1) Der Ist-Stand von B-427 zählte die Fundstellen nach **Funktionsname**
+(`toLocaleDateString`) und übersah drei rohe ISO-Anzeigen; der Reviewer fand sie, indem er die Felder mit `format: date` aus dem
+OpenAPI-Dokument nahm und ihre Anzeige suchte. Mein Tor sieht dieselbe Lücke: es kennt nur `toLocale…()`. (2) B-424 trug einen
+Grenzfall („leer“) nur im Frontend – dieselbe Klasse wie (CJ) aus Sprint 25: die Fall-Tabelle hatte „zählt“, nicht „zählt null“.
+
+**Vorschlag (nicht gelandet, Freigabe 3):**
+
+- **(CL)** Eine Story, die eine **Darstellung** vereinheitlicht (Datum, Betrag, Typname), erhebt ihren Ist-Stand über die **Daten**, nicht
+  über die alte Funktion: die Vertragsfelder des Typs (`format: date|date-time` bzw. das DTO-Feld) aus `docs/openapi/v1.json`, dann je Feld
+  seine Anzeige. Ort: `pm-loop` Step 5 neben „Fälle Weg × Wert“ oder die Eintrittsbedingung `ausformuliert`. Ein Tor über rohe ISO-Strings
+  in JSX wäre denkbar, fände aber nur das Muster, nicht das Feld.

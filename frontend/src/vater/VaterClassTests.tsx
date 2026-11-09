@@ -10,6 +10,7 @@ import type {
   KlassenarbeitPractice, KlassenarbeitRepeat, KlassenarbeitResponse, KlassenarbeitStatus, Paged, SubjectResponse,
 } from "../lib/types";
 import { PAGE_SIZE, Pager, TruncationHint } from "../components/ListControls";
+import { formatDate } from "../lib/datum";
 
 const STATUS_LABEL: Record<KlassenarbeitStatus, string> = {
   Planned: "geplant", Written: "geschrieben", Cancelled: "entfällt",
@@ -122,7 +123,7 @@ function ClassTestManager({ childId }: { childId: number }) {
                   <tr key={k.id}>
                     <td>{k.title}{k.topic ? <span className="muted"> · {k.topic}</span> : ""}
                       {k.subjectName ? <span className="muted"> · {k.subjectName}</span> : ""}</td>
-                    <td className="muted">{k.scheduledDate}</td>
+                    <td className="muted">{formatDate(k.scheduledDate)}</td>
                     <td>{k.status === "Written"
                       ? <span className="pill lime">{STATUS_LABEL[k.status]}</span>
                       : <span className="pill">{STATUS_LABEL[k.status]}</span>}</td>

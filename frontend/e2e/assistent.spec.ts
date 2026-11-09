@@ -93,6 +93,8 @@ test("Der Assistent legt Kind, Plan und Position mit den eingetippten Feinschlif
 
   // ---------- Schritt 5: Überblick → abschicken, doppelt geklickt ----------
   await expect(page.getByRole("heading", { name: "Überblick" })).toBeVisible();
+  // B-427: der Zeitraum steht deutsch („09.11.2026 · 30 Tage"), nicht als ISO-Datum.
+  await expect(page.getByText(/^\d{2}\.\d{2}\.\d{4} · \d+ Tage$/)).toBeVisible();
   const childPosts: string[] = [];
   page.on("request", (r) => {
     if (r.method() === "POST" && r.url().endsWith("/api/v1/supervisor/children")) childPosts.push(r.url());

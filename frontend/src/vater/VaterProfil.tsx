@@ -6,6 +6,7 @@ import { pinProblem } from "../lib/pin";
 import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
 import type { AdultResponse, TeacherAccount, UpdateMyAccountDto } from "../lib/types";
+import { formatDate } from "../lib/datum";
 
 /**
  * Das eigene Konto – für **beide** Erwachsenen-Arten. Zwei Dinge stehen hier, die sonst nirgends
@@ -75,7 +76,7 @@ export function VaterProfil() {
                     <div className="card">
                       <div className="muted">Konto seit</div>
                       <div className="h-section" style={{ fontSize: 20 }}>
-                        {adult.data && new Date(adult.data.createdAt).toLocaleDateString()}
+                        {adult.data && formatDate(adult.data.createdAt)}
                       </div>
                     </div>
                   </>

@@ -1,5 +1,5 @@
 import type {
-  Gender, GrantPermission, InterestFacet, PointKind, SchoolType, SchoolTypeValue, SupervisorRelation,
+  Currency, Gender, GrantPermission, InterestFacet, PointKind, SchoolType, SchoolTypeValue, SupervisorRelation,
   Weekday,
 } from "./types";
 
@@ -23,6 +23,17 @@ const POINT_KIND_LABELS: Record<PointKind, string> = {
   DailyBoxGems: "Tägliche Belohnungsbox (Gems)",
 };
 export const pointKindLabel = (k: PointKind): string => POINT_KIND_LABELS[k] ?? k;
+
+/**
+ * Ein Buchungsbetrag mit Vorzeichen und Währungssymbol („+300 💎", „−5 🪙") – für Vater-Konto und Sohn-Arcade gleich (B-425).
+ * Die Währung kommt vom Server je Eintrag (`currency`, abgeleitet aus der Buchungsart); eine Abbildung Art → Währung gibt es
+ * hier bewusst nicht, sie wäre die zweite Fassung einer Server-Regel. Das Symbol ist sprachneutral, darum ohne `t()`.
+ */
+export function signedAmount(amount: number, currency: Currency): string {
+  // Typografisches Minus (U+2212) wie die Malus-Angaben im Assistenten – zwei Schreibweisen desselben Abzugs wären eine zu viel.
+  const zahl = amount > 0 ? `+${amount}` : amount < 0 ? `\u2212${-amount}` : "0";
+  return `${zahl} ${currency === "Gems" ? "💎" : "🪙"}`;
+}
 
 /** Symbol + Name der beiden Währungen. */
 export const COIN_LABEL = "🪙 Münzen";
