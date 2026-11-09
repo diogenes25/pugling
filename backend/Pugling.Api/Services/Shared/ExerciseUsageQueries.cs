@@ -128,7 +128,9 @@ public static class ExerciseUsageQueries
             || await db.KlassenarbeitExercises.AsNoTracking().AnyAsync(x => ids.Contains(x.ExerciseId), ct)
             // Goal milestones point at the exercise OR directly at the series unit - both FKs are Restrict, and a
             // unit goal hangs on no exercise. Checking only the exercise scope would let deleting a unit
-            // with a unit goal run into the FK violation.
+            // with a unit goal run into the FK violation. An exercise milestone always carries its own unit as well
+            // (ObjectiveService validates the pair), so via the API the exercise branch is covered by the unit branch;
+            // it guards the day exercises become movable between units.
             || await db.KeyResults.AsNoTracking().AnyAsync(k =>
                 (k.ExerciseId != null && ids.Contains(k.ExerciseId.Value))
                 || (k.SeriesUnitId != null && seriesUnitIds.Contains(k.SeriesUnitId.Value)), ct);

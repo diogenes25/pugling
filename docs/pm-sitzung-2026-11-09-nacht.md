@@ -69,3 +69,36 @@ nur „Grundlinie nicht grün". Danach brach das JSON an einem unmaskierten Back
 - **(CI)** `mutant-probe.py` gibt bei roter Grundlinie die letzten Zeilen der Ausgabe mit aus, und sein Docstring zeigt die
   Windows-Form (`node_modules\.bin\vitest.cmd`). Ort: das Skript selbst. Mechanik statt Prosa: die Ausgabe hätte den Grund sofort
   gezeigt.
+
+## Sprint 25 — Ziel & Umfang (Lauf AF)
+
+**Sprint-Ziel:** Der Creator bekommt beim Löschen einer Reihe genau dann `unit_content_in_use`, wenn ein Ziel auf eine ihrer Units
+zeigt – und nie wegen einer Etappe auf fremdem Inhalt; beides hält ein Test.
+**Umfang:** B-436.
+**Entwickler-Brief:** Nur Tests. Quelle der Wahrheit: `ExerciseUsageQueries.AnyBlockingAsync` mit dem Unit-Umfang aus
+`TextbookSeriesController.Delete` bzw. `SeriesUnitsController.Delete`. Testweg: `CatalogManagementTests`, Mutanten je Prädikat.
+
+## Iteration 25 — umgesetzt
+
+`Delete_Unit_MitZielEtappeAufDerUnit_Liefert409` → Theory über `wholeSeries`; aus dem Review die Gegenrichtung
+`Delete_UnitOderReihe_ZielEtappeAufEinerAnderenUnit_SperrtNicht` (Nachbar-Unit bzw. fremde Reihe → 204), gemeinsamer Helfer
+`AddUnitMilestoneAsync`. Kommentar in `ExerciseUsageQueries.cs`, warum der Übungs-Zweig über die API nicht trennbar ist.
+Drei Mutanten (Reihen-Umfang leer, Reihenfilter weg, Unit-Pfad auf die Reihe verbreitert), alle rot am benannten Fall.
+
+## Runde 2 — Review (Sprint 25)
+
+`pugling-reviewer`: keine 🔴; 🟡 zu breites Sperren in beiden Pfaden nur zufällig gedeckt (die Klassen-DB seedet keine Etappen) →
+behoben (**Zähler 1**); 🟢 Übungs-Zweig nicht trennbar → Kommentar statt Test; 🟢 Fortbestand nach 409 → bewusst nicht.
+
+## Runde 3 — Abnahme (Sprint 25)
+
+- **Creator:** Integrationstests gegen die echte API als Ersatz-Rollengang (die Fläche ist das Löschen; `e2e/lehrwerke.spec.ts` fährt
+  den UI-Weg der Reihen und bleibt grün).
+- **Vater, Sohn:** Regressionszeugen – Suite grün, kein Pfad berührt.
+- Zahlen: Backend 1172/1172, Playwright 121 passed (gemeinsamer Lauf mit Sprint 24, nach dem letzten Edit).
+
+B-436 → `abgenommen`.
+
+**Nebenbefund:** Der volle Testlauf am Montag schrieb `docs/api-examples/me.md` um (Wochenmission „NewWords" `current` 2 → 0) –
+die Capture hängt am Wochentag → [B-442](backlog/B-442-capture-wochenmission-haengt-am-wochentag.md); Dateien zurückgesetzt,
+außerhalb des Sprint-Diffs, nicht gezählt.

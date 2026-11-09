@@ -126,13 +126,59 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
     /// <summary>
     /// B-413, case 3: a milestone on the whole unit blocks deleting the unit although no exercise of it is used anywhere -
     /// exactly the lock "usage" of an exercise can never show. Red if the unit delete loses the milestone check or answers
-    /// with the exercise code.
+    /// with the exercise code. B-436: the series delete carries the same promise for milestones on any of its units; red
+    /// there if the series path drops its unit scope (the delete would then end at the restrict FK as a bare 500).
     /// </summary>
-    [Fact]
-    public async Task Delete_Unit_MitZielEtappeAufDerUnit_Liefert409()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Delete_UnitOderReihe_MitZielEtappeAufDerUnit_Liefert409(bool wholeSeries)
     {
         var father = await TestApi.AdultAsync(_factory);
         var (seriesId, seriesUnitId, exerciseId) = await CreateVocabExerciseAsync();
+        await AddUnitMilestoneAsync(father, seriesUnitId, exerciseId);
+
+        var res = await father.DeleteAsync(wholeSeries
+            ? $"/api/v1/creator/textbook-series/{seriesId}"
+            : $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}");
+
+        Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
+        Assert.Equal("unit_content_in_use", (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+    }
+
+    /// <summary>
+    /// B-436, review finding: the milestone lock is scoped to the unit (or the series' units) being deleted. A milestone on
+    /// a neighbouring unit of the same series, or on a unit of another series, must not block. Red if the unit path widens
+    /// to the whole series or the series path drops its series filter - the creator would get a 409 for content nobody
+    /// uses. The class database seeds no milestones, so without this case such a widening only shows by test order.
+    /// </summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Delete_UnitOderReihe_ZielEtappeAufEinerAnderenUnit_SperrtNicht(bool wholeSeries)
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var (seriesId, seriesUnitId, exerciseId) = await CreateVocabExerciseAsync();
+        await AddUnitMilestoneAsync(father, seriesUnitId, exerciseId);
+
+        string target;
+        if (wholeSeries)
+        {
+            var (otherSeriesId, _, _) = await CreateVocabExerciseAsync();
+            target = $"/api/v1/creator/textbook-series/{otherSeriesId}";
+        }
+        else
+        {
+            var neighbourUnitId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+                $"/api/v1/creator/textbook-series/{seriesId}/units", new { label = "Unit 2", orderIndex = 2 }));
+            target = $"/api/v1/creator/textbook-series/{seriesId}/units/{neighbourUnitId}";
+        }
+
+        Assert.Equal(HttpStatusCode.NoContent, (await father.DeleteAsync(target)).StatusCode);
+    }
+
+    private static async Task AddUnitMilestoneAsync(HttpClient father, int seriesUnitId, int exerciseId)
+    {
         var subjectId = (await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}"))
             .GetProperty("subjectId").GetInt32();
         (await father.PostAsJsonAsync("/api/v1/supervisor/children/1/objectives", new
@@ -149,11 +195,6 @@ public class CatalogManagementTests(PuglingWebAppFactory factory) : IClassFixtur
                 new { subjectId, seriesUnitId = (int?)seriesUnitId, exerciseId = (int?)null, metric = "AvgMastery", targetValue = 80, title = (string?)null },
             },
         })).EnsureSuccessStatusCode();
-
-        var res = await father.DeleteAsync($"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}");
-
-        Assert.Equal(HttpStatusCode.Conflict, res.StatusCode);
-        Assert.Equal("unit_content_in_use", (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
     }
 
     [Fact]
