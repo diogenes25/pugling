@@ -1,7 +1,8 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, bereich/klassenarbeit, bereich/training, rolle/supervisor]
+tags: [typ/story, status/ausformuliert, bereich/frontend, bereich/klassenarbeit, bereich/training, rolle/supervisor]
 aliases: [Assistent Klassenarbeit-Termin, Stufenleiter aus dem Assistenten]
-status: geschaetzt
+status: ausformuliert
+wartet_auf: Entscheidung des Nutzers (Offener Punkt 5)
 prio: P2
 art: Wunsch
 groesse: M
@@ -62,6 +63,16 @@ Alle drei Server-Fähigkeiten sind da; es fehlt der Zusammenhang im Frontend.
 2. ~~Leiter mit welchen Stufen?~~ → Entscheidung 2.
 3. ~~Klassenarbeit automatisch anlegen oder nur anbieten?~~ → Entscheidung 3.
 4. Zusatzpflicht/Countdown beim Kind → bleibt bei B-248 (dort vom Nutzer entschieden).
+5. **Offen (Lauf AF, 2026-11-09): Leiter und „Nur getippte Tests zählen" schließen sich aus.** Das Ziel
+   „Klassenarbeit" setzt `requireTypedTest: true` (`VaterWizard.tsx:45`, `typed: true`). Ein Test auf der
+   Selbsteinschätzungs-Stufe ist ungewertet (`PositionTestsController.cs:189`, `Graded = typed`), und das Tagesziel
+   zählt bei `RequireTypedTest` nur gewertete Versuche (`PositionProgressService.cs:116`,
+   `(!pos.RequireTypedTest || t.Graded)`). Mit Entscheidung 2 wäre das Tagesziel im ganzen ersten Drittel
+   **unerreichbar**, und der Malus (Intensität „Normal": −5 🪙 je Tag) liefe gegen das Kind – genau das, was B-419
+   abschaffen sollte. Zu entscheiden: (a) bei einer Leiter `requireTypedTest` aus (die Strenge kommt dann allein
+   aus der Leiter), (b) Leiter ohne Selbsteinschätzung (z. B. Multiple-Choice-Stufe statt 2, falls getippt-gewertet),
+   (c) im ersten Drittel kein Malus, oder (d) die Leiter fallen lassen. Entscheidungen 1, 3, 4 sind davon
+   unberührt; der Lauf hat sie trotzdem nicht allein gebaut, weil die Story als Ganzes die Leiter verspricht.
 
 ## Entscheidungen
 
@@ -126,3 +137,7 @@ Arbeit sichtbar).
   Ist-Stand belegt, Entscheidungen vom PM unter dem Auftrag „nachtlauffähig machen" (Vetorecht beim Nutzer),
   geschätzt. Abgegrenzt gegen B-248 (Kind-Seite, Zusatzpflicht) und B-16 (Positions-Formular).
 - **2026-11-08** — **Freigabe des Nutzers (Autonomer Modus, Opt-in):** die sieben vorgelegten Entscheidungen der Fable-Sitzung hat der Nutzer im Dialog bestätigt („Ja, so fahren“, Antwort auf die Frage nach den Entscheidungen für die erste Nacht, [Protokoll](../pm-sitzung-2026-11-08-rollengang.md)). Ein Nachtlauf darf diese Story auf Grundlage der `## Entscheidungen` bauen; trifft er auf eine Produktfrage, die sie nicht hergeben, hält er an.
+- **2026-11-09** — **angehalten** (Lauf AF, Freigabe 8): beim Bauen gefunden, dass Entscheidung 2 mit der Vorgabe
+  `typed: true` des Ziels kollidiert (Offener Punkt 5, mit Belegen). Kein Code geschrieben. Zurück auf `ausformuliert`,
+  `wartet_auf` die Entscheidung. Nebenbefund für den Bau: `CreateClassTestDto` nimmt `ExerciseIds` direkt mit
+  (`ClassTestDtos.cs:20-21`) – Entscheidung 3 braucht also einen Aufruf, nicht n+1.

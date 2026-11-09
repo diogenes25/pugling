@@ -41,6 +41,8 @@ export interface ExerciseTypeLookup {
   label: (type: string) => string;
   /** Routen-Segment der Autoren-CRUD; `null`, wenn der Server den Typ nicht kennt – oder das Manifest noch lädt bzw. sein Abruf scheiterte. */
   route: (type: string) => string | null;
+  /** Der Umfang einer Übung in Worten („12 Karten") – siehe {@link umfangText}. */
+  umfang: (type: string, itemCount: number | null | undefined) => string | null;
   /** Wahr, solange ein Abruf läuft – der erste wie jede Wiederholung. */
   loading: boolean;
   /** Der Fehlschlag des letzten Abrufs; `null`, solange geladen wird oder er gelang. */
@@ -75,8 +77,24 @@ export function useExerciseTypes(): ExerciseTypeLookup {
     byType,
     label: (type) => byType.get(type)?.label ?? type,
     route: (type) => byType.get(type)?.authoringRoute ?? null,
+    umfang: (type, itemCount) => umfangText(itemCount, byType.get(type)),
     loading,
     error,
     reload,
   };
+}
+
+/**
+ * Der Umfang einer Übung als kurzer Text für die Auswahlzeile (B-424): „12 Karten", „1 Lücke", „leer".
+ *
+ * Zahl **und** Wort kommen vom Server – die Zahl aus `ExerciseSummary.itemCount`, das Wort aus dem Manifest
+ * (`itemNoun`/`itemNounOne`) –, damit hier keine Tabelle je Typ entsteht, die mit dem Server auseinanderläuft.
+ * `null`, wo der Typ keine zählbaren Atome hat (Aufsatz, generierter Drill): dort gibt es nichts zu sagen, und
+ * „0" läse sich wie eine leere Übung. Solange das Manifest lädt, steht nur die Zahl da – lesbar statt kaputt.
+ */
+export function umfangText(itemCount: number | null | undefined, manifest: ExerciseTypeManifest | undefined): string | null {
+  if (itemCount == null) return null;
+  if (itemCount === 0) return "leer";
+  const wort = itemCount === 1 ? manifest?.itemNounOne : manifest?.itemNoun;
+  return wort ? `${itemCount} ${wort}` : String(itemCount);
 }

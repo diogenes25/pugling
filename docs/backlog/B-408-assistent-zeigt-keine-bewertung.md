@@ -25,3 +25,7 @@ behalten, wenn die gewählte Übung in der neuen Seite noch steht.
 
 - **2026-11-05** — angelegt aus dem Review zu B-270 (Lauf AB, Sprint 19; `frontend-reviewer`, 🟡/🟢). Bewusst nicht im Sprint: B-270 nennt nur
   den Planbau, und eine zweite Fläche ist Produktumfang (`Wunsch`), kein Herstellen.
+- **2026-11-09** — von Lauf AF übergangen (Paket NP-26): `idee` + `Wunsch` ohne eigene Freigabe-Zeile – Freigabe 9 gilt
+  nur für die Story, in der sie steht (die Zeile in B-424 deckt diese Nachbarin nicht). Gebraucht wird: (1) Bewertung und
+  „beste zuerst" im Assistenten wie im Planbau – ja/nein; (2) beim Umsortieren die Auswahl behalten – ja/nein, und für
+  beide Flächen oder nur den Assistenten. B-424 wurde ohne sie gebaut (die Reihenfolge war Komfort, keine Abhängigkeit).

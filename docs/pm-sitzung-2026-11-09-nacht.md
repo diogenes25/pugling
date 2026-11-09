@@ -120,3 +120,64 @@ Verbreiterung wäre nur je nach Testreihenfolge aufgefallen. Und die Nachschau z
 - **(CJ)** Ein AK der Form „X sperrt/greift, wenn Y" bekommt in der Fall-Tabelle automatisch die Gegenzeile „Y' (Nachbar, fremder
   Elternteil) → greift nicht", und eine Aussage „aus jeder Phase/jedem Weg" zählt ihre Herkünfte als Zeilen auf. Ort: `pm-loop`
   Step 5 neben „Fälle Weg × Wert". Prosa, weil es eine Regel beim Schreiben der Tabelle ist.
+
+## Sprint 26 — Ziel & Umfang (Lauf AF, NP-26)
+
+**Sprint-Ziel (aus NP-26, verkürzt):** Der Vater sieht in der Übungsauswahl – im Assistenten wie im Planbau – den Umfang jeder
+Übung und kann sie ausprobieren, bevor er sein Kind darauf verpflichtet.
+**Umfang:** B-424. **Draußen, mit Namen:** B-408 (gesperrt, keine Freigabe), B-423 (angehalten, siehe unten).
+**Entwickler-Brief:** Quelle der Wahrheit für den Umfang ist der Server (`ExerciseSummary.ItemCount`, Wort aus dem Manifest
+`ItemNoun`); Vokabel zählt Item-Zeilen, alle übrigen Typen ihre Atome aus der Config, Typen ohne zählbare Atome `null`. Keine
+Migration, Vertrag additiv. Frontend: zwei Zeilen mit Umfang und „Ausprobieren" (vorhandener Testmodus). Testweg:
+`ExerciseItemCountTests`, Vitest, neue Spec `uebungsauswahl-umfang.spec.ts` als Rollengang Vater.
+
+**B-423 angehalten (Freigabe 8):** Entscheidung 2 (erstes Drittel Selbsteinschätzung) kollidiert mit der Vorgabe des Ziels
+„Klassenarbeit" (`requireTypedTest: true`): ein ungewerteter Test zählt dann nicht fürs Tagesziel (`PositionProgressService.cs:116`),
+im ersten Drittel liefe der Malus gegen das Kind. Kein Code geschrieben, Story zurück auf `ausformuliert` mit Offenem Punkt 5 und
+vier Optionen. Entscheidungen 1, 3, 4 bleiben gültig; Nebenbefund: `CreateClassTestDto` nimmt die Übungen gleich mit.
+
+## Iteration 26 — umgesetzt
+
+Backend: Manifest-Wörter je Typ (Einzahl/Mehrzahl), `IExerciseType.ItemCount`, `ExerciseSummary.ItemCount` per korrelierter
+Unterabfrage; kaputte Configs kosten nur ihre eigene Zahl. Frontend: `umfangText`, Zeilen mit „· 3 Karten" und „🧪 Ausprobieren"
+neben dem Label, Testmodus im Planbau außerhalb des Formulars. Doku: `wiki/08-erweitern.md`, `/neuer-uebungstyp`.
+**Rote Probe mit Zahl:** 4 von 4 neuen Integrationstests rot an `KeyNotFoundException` vor dem Bau. 14 Mutanten, alle rot am
+benannten Fall (Tabelle in B-424), nach dem letzten Edit gemessen.
+
+## Runde 2 — Review (Sprint 26)
+
+`frontend-reviewer`: 🟡 Planbau-Hälfte der E2E prüfte nur den Ausgangszustand → behoben (**1**). `pugling-reviewer`: 🟡 `catch` nur
+`JsonException` (eine `null`-Element-Config hätte die Suche auf 500 gesetzt) (**2**), 🟡 Fehlerpfad ungetestet (**3**) → behoben.
+🟢 ohne Zählung behoben: Sperre auf veralteten Zeilen, Manifest-Anzahl, Summary. 🟢 → [B-444](backlog/B-444-testmodus-fehler-ohne-alert-und-alter-ausweg.md).
+**Zähler Sprint 26: 3 von 5.**
+
+## Runde 3 — Abnahme (Sprint 26)
+
+- **Vater:** Rollengang als E2E `uebungsauswahl-umfang.spec.ts`: Assistent und Planbau nennen „3 Karten", „Ausprobieren" öffnet den
+  Testmodus genau dieser Übung, Schließen lässt die Wahl stehen. Sprint-Ziel gehalten – für den Teil, den NP-26 noch trägt; „Plan,
+  Klassenarbeit und Stufenleiter aus einer Hand" (B-423) ist **nicht geliefert** und wartet auf Offenen Punkt 5.
+- **Creator, Sohn:** Regressionszeugen – Suite grün, Vertrag additiv, kein Spielweg im Diff.
+- Zahlen nach dem letzten Edit: Backend 1178/1178, Vitest 696/696, `tsc -b` sauber, Playwright **122 passed**.
+
+B-424 → `abgenommen`; B-423 → `ausformuliert` (`wartet_auf`); B-408 unverändert `idee`.
+
+## Retrospektive (Sprint 26)
+
+**Nachschau:** Sprint 25 (`b2da41d`, B-436), frischer `pugling-reviewer`: kein 🔴, kein 🟡. Prüfpunkte: drei Mutanten-Zeilen gegen Code
+und Fall, Determinismus gegen die geteilte Klassen-DB, die neue Kommentar-Behauptung gegen beide KeyResult-Schreibwege. Zwei 🟢
+(Zeilenangaben im Fundtext berichtigt, Parametername bewusst gelassen). `nachgeschaut` in B-436 gesetzt. Kein Limit 2.
+
+**Was die eigenen Tore durchgelassen haben:** B-423 kam mit `geschaetzt` und Freigabe in den Lauf und widersprach sich doch selbst –
+die Schätzung nannte die Anzeigestufe als Risiko („kein Tag auf ShowBoth"), folgte dem Wert aber nicht bis zur Regel, die ihn liest
+(`Graded` → Tagesziel → Malus). Gefunden habe ich es beim Lesen von `PositionTestsController` vor dem Bau, nicht über ein Tor. Und
+im Bau von B-424 fing ich zuerst nur `JsonException` – die Summary versprach mehr, als der Code hielt; der Reviewer fand es.
+
+**Vorschlag (nicht gelandet, Freigabe 3):**
+
+- **(CK)** Setzt eine Entscheidung einen Wert, den der Server später liest (Stufe, Pflicht-Schalter, Datum), nennt der Angriffsplan
+  in `geschaetzt` jede **lesende** Regel mit `Datei:Zeile` (per `grep` auf das Feld gefunden) und sagt je Regel, was der neue Wert dort
+  bewirkt. Ort: Eintrittsbedingung `geschaetzt` im Backlog-README. Verwandt mit (CD) aus Lauf AE (Schreib- und Lesestelle derselben
+  Spalte); zusammen landen oder zusammen verwerfen.
+
+**Ende Lauf AF.** Kein Limit gegriffen (Zähler 0 / 1 / 3, keine Nachschau mit 🟡, kein Tor gelandet). Der Lauf endet mit dem Paket,
+das ihm der Rollengang-Plan zugedacht hat (Nacht 2 = NP-26); Lauf AG übernimmt NP-27 (Nacht 3).

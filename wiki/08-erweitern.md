@@ -72,10 +72,11 @@ public sealed class TrueFalseExerciseType : ExerciseTypeBase
     public override string Key => ExerciseTypeKeys.TrueFalse;
 
     // The manifest is the type's self-description for frontend routing.
-    // Order: Type, Label, Renderer, SchemaVersion, AuthoringRoute, CheckMode, PlayRoute, Method, Capabilities.
+    // Order: Type, Label, Renderer, SchemaVersion, AuthoringRoute, CheckMode, PlayRoute, Method, Capabilities,
+    // then the noun of the atoms (B-424) - plural and singular, null for a type without countable atoms.
     public override ExerciseTypeManifest Manifest { get; } = new(
         ExerciseTypeKeys.TrueFalse, "Wahr/Falsch", "true-false", 1, "true-false",
-        ExerciseCheckMode.CatalogCheck, null, null, []);
+        ExerciseCheckMode.CatalogCheck, null, null, [], ItemNoun: "Aussagen", ItemNounOne: "Aussage");
 
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson)
     {
@@ -155,6 +156,8 @@ Nach `.cs`-Edits laufen `dotnet format` + `dotnet build` automatisch (Hook). Dan
 - [ ] Schlüssel in `ExerciseTypeKeys` + Typklasse (`IExerciseType`/`ExerciseTypeBase`) mit `Key`,
       `Manifest`, `ItemsOf` und den nötigen Überschreibungen.
 - [ ] **Eine Zeile** in `AddExerciseTypes`.
+- [ ] `ItemNoun`/`ItemNounOne` im Manifest gesetzt (oder bewusst `null`, wenn der Typ keine zählbaren Atome hat) und
+      eine Zeile in `ExerciseItemCountTests.Manifest_NenntDieEinheitJeTyp` – sonst ist das Tor rot (B-424).
 - [ ] Controller mit `Route` + `Tags` + `TypeKey` (erbt CRUD), bei Prüfbarkeit `/check` → `RunCheckAsync`.
 - [ ] **Keine** Migration nötig (JSON-Config), außer du hast echte neue Spalten/Entities hinzugefügt.
 - [ ] `dotnet build` grün, smoke-getestet, Integrationstest.

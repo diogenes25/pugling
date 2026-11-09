@@ -20,7 +20,7 @@ namespace Pugling.Api.Controllers.Creator;
 [Tags("Creator – Exercise Catalog")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Creator)]
-public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
+public class ExerciseCatalogController(PuglingDbContext db, ExerciseTypeRegistry registry) : ControllerBase
 {
     /// <summary>
     /// Searches exercises over the metadata. All parameters are optional and are AND-combined.
@@ -131,7 +131,10 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
                 // SQL bought exactly that ability at the price of writing the rule twice.
                 GoalPointsPolicy.Effective(e.RewardPoints),
                 // B-12: the other creators' verdict. AVG over no rows is NULL in SQL - exactly "not rated yet".
-                e.Ratings.Average(r => (double?)r.Stars), e.Ratings.Count))
+                e.Ratings.Average(r => (double?)r.Stars), e.Ratings.Count,
+                // B-424: the size of the exercise. Evaluated in memory like GoalPointsPolicy above - SQL delivers the raw
+                // config and the item-row count as a correlated subquery in the same statement, no query per row.
+                ItemCountOf(registry, e.Type, e.ConfigJson, db.ExerciseItems.Count(i => i.ExerciseId == e.Id))))
             .ToPagedListAsync(Response, skip, take, ct);
     }
 
@@ -140,6 +143,11 @@ public class ExerciseCatalogController(PuglingDbContext db) : ControllerBase
     /// so the paging window stays deterministic. Unknown/empty keys → business default
     /// (subject → series unit → order).
     /// </summary>
+    // Static on purpose: EF refuses an instance method in a client projection (it would capture the controller).
+    // An unknown type key has no atoms to count - null, like a type without a noun.
+    private static int? ItemCountOf(ExerciseTypeRegistry types, string typeKey, string configJson, int itemTableRows) =>
+        types.ByKey(typeKey)?.ItemCount(configJson, itemTableRows);
+
     private static IOrderedQueryable<Exercise> ApplySort(IQueryable<Exercise> q, (string? Key, bool Desc) sort) =>
         (sort.Key?.ToLowerInvariant(), sort.Desc) switch
         {

@@ -20,7 +20,7 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
         // and the seeded categories are exactly "Vokabeln"/"Grammatik". The label follows the renderer below.
         ExerciseTypeKeys.Vocabulary, "Vokabelkarten", "flashcards", 1, "vocabulary",
         ExerciseCheckMode.StudyPlanTest, "tests", LearningMethod.Vocabulary,
-        ["letterHints", "audio", "selfAssess", "multipleChoice"]);
+        ["letterHints", "audio", "selfAssess", "multipleChoice"], ItemNoun: "Karten", ItemNounOne: "Karte");
 
     /// <summary>
     /// <b>Always empty</b> - and that is the point: the contents of this type live in the
@@ -36,6 +36,9 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
     /// </para>
     /// </summary>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson) => [];
+
+    /// <summary>The atoms of this type are the item rows, for the same reason <see cref="ItemsOf"/> is empty (B-424).</summary>
+    public override int? ItemCount(string configJson, int itemTableRows) => itemTableRows;
 
     // For trying out, the typed free-text stage (the hardest, most telling test).
     /// <inheritdoc/>

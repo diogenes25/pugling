@@ -30,6 +30,8 @@ const BASIS = {
   fachName: "Englisch", selected: [] as number[], selectAllBusy: false,
   onToggle: () => {}, onSelectAll: () => {}, onRetry: () => {},
   typLabel: (t: string) => t,
+  umfang: (_t: string, n: number | null | undefined) => (n == null ? null : `${n} Karten`),
+  onTry: () => {},
 };
 
 const LEER_SATZ = /Keine passenden Übungen im Katalog/;
@@ -123,5 +125,38 @@ describe("WizardTrefferbereich – gescheiterte Suche ist nicht leerer Katalog",
     render(<WizardTrefferbereich {...BASIS} treffer={[uebung(), uebung({ id: 2 })]} fehler={null} />);
 
     expect(screen.getByText("2 passende Übungen")).toBeTruthy();
+  });
+});
+
+/** B-424: der Vater sieht je Zeile den Umfang und kann die Übung ausprobieren, ohne die Auswahl zu verändern. */
+describe("WizardTrefferbereich – Umfang und Ausprobieren", () => {
+  // AK 3. Rot, wenn die Zeile den Umfang nicht zeigt (dann fehlt „12 Karten").
+  it("zeigt den Umfang der Übung in der Zeile", () => {
+    render(<WizardTrefferbereich {...BASIS} treffer={[uebung({ itemCount: 12 })]} fehler={null} geladen={1} gesamt={1} />);
+    expect(screen.getByText(/· 12 Karten/)).toBeTruthy();
+  });
+
+  // Rot, wenn eine Übung ohne zählbare Atome einen Umfang behauptet (ein „· null"/„· 0" stünde dort).
+  it("sagt nichts zum Umfang, wo es nichts zu zählen gibt", () => {
+    render(<WizardTrefferbereich {...BASIS} treffer={[uebung({ type: "Essay", itemCount: null })]} fehler={null} geladen={1} gesamt={1} />);
+    expect(screen.getByText(/Unit 1 Wörter/).textContent).not.toMatch(/Karten|null/);
+  });
+
+  // AK 3. Rot, wenn der Knopf fehlt, die falsche Übung öffnet – oder im Label sitzt und die Auswahl mit umschaltet.
+  it("öffnet den Testmodus für genau diese Übung und lässt die Auswahl stehen", () => {
+    const onTry = vi.fn();
+    const onToggle = vi.fn();
+    const zwei = uebung({ id: 2, title: "Zweite" });
+    render(<WizardTrefferbereich {...BASIS} treffer={[uebung(), zwei]} fehler={null} geladen={2} gesamt={2}
+      onTry={onTry} onToggle={onToggle} />);
+    fireEvent.click(screen.getByRole("button", { name: "„Zweite\" ausprobieren" }));
+    expect(onTry).toHaveBeenCalledWith(zwei);
+    expect(onToggle).not.toHaveBeenCalled();
+  });
+
+  // Rot, wenn „Ausprobieren" auf Zeilen des vorigen Filters bedienbar bleibt (Review-Fund, wie das Kästchen B-169).
+  it("sperrt Ausprobieren auf veralteten Zeilen", () => {
+    render(<WizardTrefferbereich {...BASIS} treffer={[uebung()]} fehler={null} geladen={1} gesamt={1} zeilenVeraltet />);
+    expect((screen.getByRole("button", { name: "„Unit 1 Wörter\" ausprobieren" }) as HTMLButtonElement).disabled).toBe(true);
   });
 });

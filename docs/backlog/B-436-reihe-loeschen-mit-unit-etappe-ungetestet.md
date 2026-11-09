@@ -11,18 +11,19 @@ vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-08-nacht.md
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-09"
 entgangen_bei: [B-413]
 ---
 
 # B-436 · Eine Reihe zu löschen, die nur eine Ziel-Etappe auf einer ihrer Units sperrt, prüft kein Test
 
 Gefunden in der Nachschau zu Sprint 21 (Commit `4c25504`, Lauf AE). B-413 hat für das Löschen einer Unit **oder Reihe**
-den Code `unit_content_in_use` eingeführt; die Meldung (`TextbookSeriesController.cs:326-327`), die Swagger-Summary
-(`:281-282`), der deutsche Text in `frontend/src/lib/api.ts` und `docs/tutorial-supervisor.md:341` sagen alle, dass auch
+den Code `unit_content_in_use` eingeführt; die Meldung (`TextbookSeriesController.cs:299-301`, Stand 2026-11-09), die Swagger-Summary
+(`:279-283`), der deutsche Text in `frontend/src/lib/api.ts` und `docs/tutorial-supervisor.md:341` sagen alle, dass auch
 eine Ziel-Etappe auf einer Unit der Reihe sperrt. Getestet ist nur die Unit (`CatalogManagementTests.cs:132`,
 `Delete_Unit_MitZielEtappeAufDerUnit_Liefert409`); die Reihe nur über eine Lehrplan-Position.
 
-Folge: der Unit-Umfang im Reihen-Pfad (`TextbookSeriesController.cs:301`) ließe sich stilllegen, und das Löschen endete am
+Folge: der Unit-Umfang im Reihen-Pfad (`TextbookSeriesController.cs:298`) ließe sich stilllegen, und das Löschen endete am
 Restrict-FK `KeyResult→SeriesUnit` als nackter 500 – kein Test würde rot.
 
 Reparaturvorschlag des Reviewers: Fall 3 als `[Theory]` über `wholeSeries` wie der Nachbartest, dazu eine Mutante auf
@@ -83,3 +84,10 @@ eine ihrer Units zeigt – und nicht wegen einer Etappe auf fremdem Inhalt –, 
   die Integrationstests gegen die echte API (`DELETE` Reihe/Unit mit und ohne fremde Etappe) – die Fläche hat kein eigenes UI über
   das Löschen hinaus, das `e2e/lehrwerke.spec.ts` fährt; Vater und Sohn als Regressionszeugen (Suite grün, kein Pfad berührt).
   Commit: siehe `git log -- docs/backlog/B-436-reihe-loeschen-mit-unit-etappe-ungetestet.md` (Lauf AF, Sprint 25).
+- **2026-11-09** — Nachschau (Retro Sprint 26, Lauf AF, frischer `pugling-reviewer`, `git show b2da41d`): kein 🔴, kein 🟡.
+  Prüfpunkte: MB1–MB3 je gegen `TextbookSeriesController.cs:298` bzw. `SeriesUnitsController.cs:156` und ihren Fall nachgerechnet
+  (MB1 endet am Restrict-FK als 500); Determinismus des Negativfalls gegen die geteilte Klassen-DB geprüft (eigene Reihe/Unit je
+  Aufruf, Seed ohne KeyResults); die Kommentar-Behauptung „Übungs-Etappe trägt ihre Unit" gegen beide Schreibwege in
+  `ObjectiveService` (`CreateAsync`, `AddKeyResultAsync`) und das Fehlen eines Verschiebewegs für `Exercise.SeriesUnitId`.
+  🟢 Zeilenangaben im Fundtext berichtigt (`:301` → `:298` usw.); 🟢 `AddUnitMilestoneAsync` nutzt `exerciseId` nur für das Fach –
+  bewusst so gelassen.

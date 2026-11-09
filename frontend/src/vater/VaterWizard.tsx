@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
 import { pinProblem } from "../lib/pin";
 import { useAsync } from "../lib/useAsync";
+import { ExercisePreviewModal } from "./ExercisePreviewModal";
 import { useAuth } from "../lib/auth";
 import { SCHOOL_TYPES } from "../lib/labels";
 import { TruncationHint } from "../components/ListControls";
@@ -107,6 +108,8 @@ export function VaterWizard() {
 
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // B-424: die Übung, die der Vater gerade ausprobiert – genau eine, der Dialog liegt über dem ganzen Assistenten.
+  const [vorschau, setVorschau] = useState<{ id: number; title: string } | null>(null);
   /*
    * Was beim Abschluss schon geschrieben wurde, plus die Wiedereintritts-Sperre. Ein Ref, nicht State: es
    * wird mitten im Ablauf gelesen und geschrieben, und ein State-Update käme erst im nächsten Render an –
@@ -583,7 +586,7 @@ export function VaterWizard() {
             fehler={exercises.error} laedt={exercises.loading} zeilenVeraltet={zeilenVeraltet} schluessel={filterKey}
             fachName={subject?.name} selected={selected} selectAllBusy={selectAllBusy}
             onToggle={toggle} onSelectAll={selectAll} onRetry={exercises.reload}
-            typLabel={types.label} />
+            typLabel={types.label} umfang={types.umfang} onTry={(e) => setVorschau({ id: e.id, title: e.title })} />
         </section>
       )}
 
@@ -647,6 +650,7 @@ export function VaterWizard() {
       )}
 
       <div className={`live-region${error ? " banner err" : ""}`} role="status" aria-live="polite">{error}</div>
+      {vorschau && <ExercisePreviewModal exerciseId={vorschau.id} title={vorschau.title} onClose={() => setVorschau(null)} />}
 
       <div className="row" style={{ gap: 10 }}>
         {step > 0 && <button type="button" className="btn ghost" style={{ width: "auto" }} onClick={back}>← Zurück</button>}
@@ -673,7 +677,7 @@ export function VaterWizard() {
  */
 export function WizardTrefferbereich({
   treffer, geladen, gesamt, platzhalter, fehler, laedt, zeilenVeraltet, schluessel, fachName,
-  selected, selectAllBusy, onToggle, onSelectAll, onRetry, typLabel,
+  selected, selectAllBusy, onToggle, onSelectAll, onRetry, typLabel, umfang, onTry,
 }: {
   treffer: ExerciseSummary[];
   geladen: number;
@@ -700,6 +704,10 @@ export function WizardTrefferbereich({
   onSelectAll: () => void;
   onRetry: () => void;
   typLabel: (type: string) => string;
+  /** Der Umfang der Übung in Worten (B-424, `ExerciseTypeLookup.umfang`); `null` = nichts zu zählen. */
+  umfang: (type: string, itemCount: number | null | undefined) => string | null;
+  /** Öffnet den Testmodus für genau diese Übung (B-424); die Auswahl bleibt dabei, wie sie ist. */
+  onTry: (exercise: ExerciseSummary) => void;
 }) {
   // Der letzte Fehler überlebt den Start der Wiederholung (B-216): `useAsync.reload()` setzt `error` auf
   // `null` und `loading` auf `true` im selben Schritt – an `fehler` allein hinge das Banner samt Knopf im
@@ -760,8 +768,12 @@ export function WizardTrefferbereich({
         <div style={{ maxHeight: 340, overflowY: "auto", display: "grid", gap: 6 }}>
           {treffer.map((e) => {
             const by = authorText(e);
+            const groesse = umfang(e.type, e.itemCount);
             return (
-              <label key={e.id} className="checkline" style={{ padding: 8, border: "1px solid var(--stroke)", borderRadius: 8 }}>
+              // Der Knopf steht NEBEN dem Label, nicht darin: ein Klick auf „Ausprobieren" darf die Auswahl nicht
+              // umschalten, und ein Knopf im Label wäre für einen Screenreader Teil des Kästchen-Namens (B-424).
+              <div key={e.id} className="row" style={{ gap: 8, padding: 8, border: "1px solid var(--stroke)", borderRadius: 8, alignItems: "center" }}>
+              <label className="checkline" style={{ flex: 1 }}>
                 {/* Gesperrt, solange die Zeilen zum vorigen Filter gehören (B-169). */}
                 <input type="checkbox" disabled={zeilenVeraltet}
                   checked={selected.includes(e.id)} onChange={() => onToggle(e.id)} />
@@ -770,8 +782,12 @@ export function WizardTrefferbereich({
                     einem Bildschirm. Der Rückfall auf den Schlüssel greift, solange das Manifest lädt – und
                     wenn sein Abruf scheiterte: Im Assistenten bleibt der Ausfall bewusst stumm (B-215,
                     Entscheidung 2), die Zeile liest sich dann als Schlüssel. */}
-                <span>{e.title} <span className="muted">· {typLabel(e.type)}{by ? ` – ${by}` : ""}{e.source ? ` [${e.source}]` : ""}</span></span>
+                <span>{e.title} <span className="muted">· {typLabel(e.type)}{groesse ? ` · ${groesse}` : ""}{by ? ` – ${by}` : ""}{e.source ? ` [${e.source}]` : ""}</span></span>
               </label>
+              {/* Gesperrt wie das Kästchen (B-169): verschwände die Zeile bei offenem Dialog, fiele der Fokus beim Schließen ins Leere. */}
+              <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={zeilenVeraltet}
+                aria-label={`„${e.title}" ausprobieren`} onClick={() => onTry(e)}>🧪 Ausprobieren</button>
+              </div>
             );
           })}
         </div>

@@ -36922,9 +36922,18 @@
               "string"
             ],
             "format": "int32"
+          },
+          "itemCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Lean hit row of the exercise search (child-neutral catalog). \u0060AuthorAdultId\u0060/\u0060AuthorName\u0060 carry the\nattribution of the shared library (\u0060null\u0060 = seeded system exercise); \u0060IsOwn\u0060 = the requesting supervisor\nmay change/delete the exercise.\n\nThe four \u0060Default\u2026\u0060/\u0060RewardPoints\u0060 values are the creator\u0027s **recommendations**, not settings: the\nsupervisor\u0027s form pre-fills from them and stays free to override (B-45). They belong on the lean row rather than\nonly on ExerciseDetail because the form pre-fills straight from the search hit - fetching the\ndetail just to read one number would be a round trip per keystroke in the list.\n\nThe \u0060SuggestedGoalPoints\u0060 figure is what a position would actually inherit from \u0060RewardPoints\u0060 -\nthe raw value only when it is plausible, otherwise the model default (B-192). Both travel, and that is the\npoint: the form shows the effective one, while the raw one stays readable for anyone editing the exercise.\nDeriving the effective figure client-side would copy a server rule, and the copy is what drifts.\n\n\u0060AverageRating\u0060/\u0060RatingCount\u0060 are the other creators\u0027 verdict (B-12): \u0060null\u0060/\u00600\u0060 while\nnobody has rated. They sit on the lean row because the whole point is to tell proven material apart while\nbrowsing - the same reason \u0060sort=rating\u0060 exists."
+        "description": "Lean hit row of the exercise search (child-neutral catalog). \u0060AuthorAdultId\u0060/\u0060AuthorName\u0060 carry the\nattribution of the shared library (\u0060null\u0060 = seeded system exercise); \u0060IsOwn\u0060 = the requesting supervisor\nmay change/delete the exercise.\n\nThe four \u0060Default\u2026\u0060/\u0060RewardPoints\u0060 values are the creator\u0027s **recommendations**, not settings: the\nsupervisor\u0027s form pre-fills from them and stays free to override (B-45). They belong on the lean row rather than\nonly on ExerciseDetail because the form pre-fills straight from the search hit - fetching the\ndetail just to read one number would be a round trip per keystroke in the list.\n\nThe \u0060SuggestedGoalPoints\u0060 figure is what a position would actually inherit from \u0060RewardPoints\u0060 -\nthe raw value only when it is plausible, otherwise the model default (B-192). Both travel, and that is the\npoint: the form shows the effective one, while the raw one stays readable for anyone editing the exercise.\nDeriving the effective figure client-side would copy a server rule, and the copy is what drifts.\n\n\u0060AverageRating\u0060/\u0060RatingCount\u0060 are the other creators\u0027 verdict (B-12): \u0060null\u0060/\u00600\u0060 while\nnobody has rated. They sit on the lean row because the whole point is to tell proven material apart while\nbrowsing - the same reason \u0060sort=rating\u0060 exists.\n\n\u0060ItemCount\u0060 (B-424) is how many content atoms the exercise holds - vocabulary items, cloze gaps, list entries - so a\nsupervisor sees the size of what he assigns. It is the size of the exercise, not of a round: the per-round limit is\n\u0060DefaultItemCount\u0060 here and \u0060ItemCount\u0060 on a position, a different figure under a similar name. Its unit is the type\u0027s\n\u0060ExerciseTypeManifest.ItemNoun\u0060; \u0060null\u0060 where the type has no countable atoms (essay, generated drill), and\n\u00600\u0060 only for an exercise that really is empty."
       },
       "ExerciseTypeManifest": {
         "required": [
@@ -36991,6 +37000,20 @@
               "type": "string"
             },
             "description": "Type capabilities that a renderer can react to (e.g. \u0060wordBank\u0060, \u0060audio\u0060, \u0060letterHints\u0060)."
+          },
+          "itemNoun": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "German plural for the content atoms of this type (\u0022Karten\u0022, \u0022L\u00FCcken\u0022) - the unit of\n\u0060ExerciseSummary.ItemCount\u0060 (B-424). It lives here so the \u002212 Karten\u0022 a supervisor reads is the server\u0027s word, not a\nfrontend table. \u0060null\u0060 for a type without countable atoms (essay, generated drill); its rows then carry no count."
+          },
+          "itemNounOne": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "German singular of ItemNoun (\u0022Karte\u0022) for a count of exactly one."
           }
         },
         "description": "Self-description of an exercise type: the bridge between the authoring catalog (\u0060IExerciseType\u0060),\ntypical learning family (LearningMethod), play route, and frontend renderer. The frontend\nreads the manifest list once and wires up routing, checking, and display generically; the\nactual render component remains hand-built per string ExerciseTypeManifest.Renderer (the play view reveals\na different amount depending on the Leitner box \u2013 that cannot be generated generically from JSON)."

@@ -16,6 +16,7 @@ import type {
 } from "../lib/types";
 import { ExerciseFilterBar, type ExerciseFilter } from "./ExerciseFilterBar";
 import { ratingSummary } from "./ExerciseRatingPanel";
+import { ExercisePreviewModal } from "./ExercisePreviewModal";
 
 /*
  * Positions-UI des neuen Lehrplan-Modells: Ein Plan ist ein Container aus Katalog-Übungen. Jede
@@ -408,6 +409,9 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
   const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
   const types = useExerciseTypes();
   const typeLabel = types.label;
+  const umfang = types.umfang;
+  // B-424: die Übung, die der Vater gerade ausprobiert (Testmodus, nebenwirkungsfrei) – die Wahl bleibt davon unberührt.
+  const [vorschau, setVorschau] = useState<{ id: number; title: string } | null>(null);
   const [filter, setFilter] = useState<ExerciseFilter>({});
   // B-270: gute Übungen dort finden, wo man sie auswählt. Nur zwei Reihenfolgen – die Katalog-Ordnung (Server-Vorgabe)
   // und „beste zuerst"; unbewertete stehen dabei hinten (Server-Regel aus B-12). Eine Richtung zum Umdrehen braucht es
@@ -521,6 +525,7 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
   const fehlerKasten = useRef<HTMLDivElement>(null);
 
   return (
+    <>
     <form className="card" onSubmit={add} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {/* Umfangreiche Filterleiste statt flachem Pulldown: Fach/Reihe/Unit/Klasse/Schulart/Typ/Art/Freitext. */}
       <ExerciseFilterBar value={filter} onChange={setFilter} subjects={subjects.data ?? []} />
@@ -576,10 +581,12 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
             aria-describedby={zeilenVeraltet && !exercises.error ? `${uid}-veraltet` : undefined}
             style={{ maxHeight: 240, overflowY: "auto", border: "1px solid var(--stroke)", borderRadius: 8, display: "flex", flexDirection: "column" }}>
             {results.map((ex) => (
-              <label key={ex.id} className="row"
-                style={{ gap: 8, alignItems: "flex-start", padding: "6px 10px", cursor: "pointer",
+              // Der Knopf „Ausprobieren" steht neben dem Label, nicht darin (B-424): er darf die Wahl nicht ändern.
+              <div key={ex.id} className="row"
+                style={{ gap: 8, alignItems: "flex-start", padding: "6px 10px",
                   background: exerciseId === ex.id ? "rgba(140,220,120,.10)" : undefined,
                   borderBottom: "1px solid var(--stroke)" }}>
+              <label className="row" style={{ gap: 8, alignItems: "flex-start", cursor: "pointer", flex: 1 }}>
                 {/* Gesperrt, solange die Zeilen zum vorigen Filter gehören (B-167): ein Klick markiert
                     nicht nur, er schreibt die Lern-Standards dieser Übung ins Formular. */}
                 <input type="radio" name="add-position-exercise" disabled={zeilenVeraltet}
@@ -604,6 +611,7 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
                   style={{ marginTop: 3 }} />
                 <span style={{ display: "flex", flexDirection: "column" }}>
                   <span>{ex.title} <span className="muted">· {typeLabel(ex.type)}</span>
+                    {umfang(ex.type, ex.itemCount) && <span className="muted"> · {umfang(ex.type, ex.itemCount)}</span>}
                     {(ex.gradeMin != null || ex.gradeMax != null) &&
                       <span className="muted"> · Kl. {ex.gradeMin ?? "?"}–{ex.gradeMax ?? "?"}</span>}
                     {/* Nur die Art trägt ein Etikett, Typ/Klasse/Quelle nicht — und das ist Absicht (B-163):
@@ -617,6 +625,10 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
                   {ex.description && <span className="muted" style={{ fontSize: 12 }}>{ex.description}</span>}
                 </span>
               </label>
+              {/* Gesperrt wie das Radio (B-167): verschwände die Zeile bei offenem Dialog, fiele der Fokus beim Schließen ins Leere. */}
+              <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={zeilenVeraltet}
+                aria-label={`„${ex.title}" ausprobieren`} onClick={() => setVorschau({ id: ex.id, title: ex.title })}>🧪 Ausprobieren</button>
+              </div>
             ))}
             {/* Nur wenn die Liste auch zum eingestellten Filter gehört: sonst stünde „Keine Treffer" neben
                 „(Suche läuft…)" – zwei Aussagen über zwei verschiedene Abfragen in einem Blickfeld. */}
@@ -658,6 +670,9 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
         <b> Vorschlag der Übung</b>. Beim Auswählen einer Übung übernimmt das Formular deren Lern-Standards.
       </p>
     </form>
+    {/* Außerhalb des Formulars: ein Knopf im Dialog ohne `type` würde sonst die Position abschicken. */}
+    {vorschau && <ExercisePreviewModal exerciseId={vorschau.id} title={vorschau.title} onClose={() => setVorschau(null)} />}
+    </>
   );
 }
 

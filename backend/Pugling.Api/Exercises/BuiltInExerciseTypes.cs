@@ -20,7 +20,7 @@ public sealed class ReadingExerciseType : ExerciseTypeBase
     /// <inheritdoc/>
     public override ExerciseTypeManifest Manifest { get; } = new(
         ExerciseTypeKeys.Reading, "Leseverständnis", "reading", 1, "reading",
-        ExerciseCheckMode.None, null, null, []);
+        ExerciseCheckMode.None, null, null, [], ItemNoun: "Fragen", ItemNounOne: "Frage");
     /// <inheritdoc/>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson)
     {
@@ -41,7 +41,7 @@ public sealed class ListeningExerciseType : ExerciseTypeBase
     /// <inheritdoc/>
     public override ExerciseTypeManifest Manifest { get; } = new(
         ExerciseTypeKeys.Listening, "Hörverständnis", "listening", 1, "listening",
-        ExerciseCheckMode.None, null, null, ["audio", "transcript"]);
+        ExerciseCheckMode.None, null, null, ["audio", "transcript"], ItemNoun: "Fragen", ItemNounOne: "Frage");
     /// <inheritdoc/>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson)
     {
@@ -109,7 +109,7 @@ public sealed class GrammarExerciseType : ExerciseTypeBase
         // form (a prompt with an answer and an optional rule hint), not the subject matter, because the
         // category axis owns subject matter and "Grammatik" is a seeded category.
         ExerciseTypeKeys.Grammar, "Regelaufgaben", "prompts", 1, "grammar",
-        ExerciseCheckMode.None, null, null, ["ruleHints"]);
+        ExerciseCheckMode.None, null, null, ["ruleHints"], ItemNoun: "Aufgaben", ItemNounOne: "Aufgabe");
     /// <inheritdoc/>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson)
     {
@@ -128,7 +128,7 @@ public sealed class TranslationExerciseType : ExerciseTypeBase
     /// <inheritdoc/>
     public override ExerciseTypeManifest Manifest { get; } = new(
         ExerciseTypeKeys.Translation, "Übersetzung", "prompts", 1, "translation",
-        ExerciseCheckMode.None, null, null, ["alternatives"]);
+        ExerciseCheckMode.None, null, null, ["alternatives"], ItemNoun: "Sätze", ItemNounOne: "Satz");
     /// <inheritdoc/>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson)
     {
@@ -145,7 +145,7 @@ public sealed class BirkenbihlExerciseType : ExerciseTypeBase
     /// <inheritdoc/>
     public override ExerciseTypeManifest Manifest { get; } = new(
         ExerciseTypeKeys.Birkenbihl, "Birkenbihl", "birkenbihl", 1, "birkenbihl",
-        ExerciseCheckMode.None, null, null, ["wordByWord", "autoDecode", "vocabLinked"]);
+        ExerciseCheckMode.None, null, null, ["wordByWord", "autoDecode", "vocabLinked"], ItemNoun: "Sätze", ItemNounOne: "Satz");
     /// <inheritdoc/>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson)
     {
@@ -187,7 +187,7 @@ public sealed class ClozeExerciseType : ExerciseTypeBase
     public override ExerciseTypeManifest Manifest { get; } = new(
         ExerciseTypeKeys.Cloze, "Lückentext", "cloze", 1, "cloze",
         ExerciseCheckMode.StudyPlanTest, "tests", LearningMethod.Cloze,
-        ["wordBank", "translation", "letterHints", "vocabStore"]);
+        ["wordBank", "translation", "letterHints", "vocabStore"], ItemNoun: "Lücken", ItemNounOne: "Lücke");
 
     /// <inheritdoc/>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson)
@@ -243,7 +243,7 @@ public sealed class MatchingExerciseType : ExerciseTypeBase
     public override ExerciseTypeManifest Manifest { get; } = new(
         ExerciseTypeKeys.Matching, "Zuordnung", "matching", 1, "matching",
         ExerciseCheckMode.StudyPlanTest, "tests", LearningMethod.Matching,
-        ["distractors", "reverse"]);
+        ["distractors", "reverse"], ItemNoun: "Paare", ItemNounOne: "Paar");
 
     /// <inheritdoc/>
     public override int DefaultStage => (int)MatchStage.Direct;
@@ -292,7 +292,7 @@ public sealed class ArithmeticExerciseType : ExerciseTypeBase
     /// <inheritdoc/>
     public override ExerciseTypeManifest Manifest { get; } = new(
         ExerciseTypeKeys.Arithmetic, "Rechenaufgaben", "arithmetic", 1, "arithmetic",
-        ExerciseCheckMode.CatalogCheck, null, null, ["tolerance"]);
+        ExerciseCheckMode.CatalogCheck, null, null, ["tolerance"], ItemNoun: "Aufgaben", ItemNounOne: "Aufgabe");
 
     /// <inheritdoc/>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson)
@@ -371,7 +371,7 @@ public sealed class ListExerciseType : ExerciseTypeBase
     /// <inheritdoc/>
     public override ExerciseTypeManifest Manifest { get; } = new(
         ExerciseTypeKeys.List, "Liste", "list", 1, "list",
-        ExerciseCheckMode.CatalogCheck, null, null, ["orderedOptional", "alternatives"]);
+        ExerciseCheckMode.CatalogCheck, null, null, ["orderedOptional", "alternatives"], ItemNoun: "Einträge", ItemNounOne: "Eintrag");
 
     // Without `Ordered` the entries are a set: naming them in any sequence is right, so the play path must not
     // demand entry N on card N. The catalog check has always graded it that way (see Check below); this hook is

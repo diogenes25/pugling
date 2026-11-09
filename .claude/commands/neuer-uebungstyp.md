@@ -72,6 +72,7 @@ nur mehr Facetten. Ausführlich: [wiki/08-erweitern.md](wiki/08-erweitern.md).
 
 - [ ] Config-Klasse + Item-`record` mit englischen `/// <summary>`.
 - [ ] Schlüssel in `ExerciseTypeKeys` + Typklasse (`Key`/`Manifest`/`ItemsOf` + nötige Überschreibungen).
+- [ ] Manifest mit `ItemNoun`/`ItemNounOne` (oder bewusst ohne) und eine Zeile in `ExerciseItemCountTests.Manifest_NenntDieEinheitJeTyp` (B-424).
 - [ ] **Eine Zeile** in `AddExerciseTypes`.
 - [ ] Controller mit `Route`/`Tags`/`TypeKey` (erbt CRUD), bei Prüfbarkeit `/check` → `RunCheckAsync`.
 - [ ] Store-Auflösung ergänzt, falls `StoreResolution` gesetzt.

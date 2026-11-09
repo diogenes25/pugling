@@ -1,5 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { ExerciseTypeManifest } from "./types";
+import { umfangText } from "./exerciseTypes";
 
 /*
  * B-215. Der Hook schluckte den Fehlschlag des Manifest-Abrufs (`.catch(() => setAll([]))`) – danach war
@@ -68,4 +70,19 @@ describe("useExerciseTypes", () => {
     expect(result.current.label("Vocabulary")).toBe("Vokabelkarten");
     expect(exerciseTypes).toHaveBeenCalledTimes(2);
   });
+});
+
+/** B-424: Zahl und Wort kommen vom Server; hier wird nur zusammengesetzt. */
+describe("umfangText", () => {
+  const karten = { itemNoun: "Karten", itemNounOne: "Karte" } as ExerciseTypeManifest;
+  // Rot, wenn die Mehrzahl fehlt oder die Einzahl auch für mehrere gilt.
+  it("nennt Zahl und Wort in der Mehrzahl", () => { expect(umfangText(12, karten)).toBe("12 Karten"); });
+  // Rot, wenn „1 Karten" entsteht.
+  it("nimmt für genau eins die Einzahl", () => { expect(umfangText(1, karten)).toBe("1 Karte"); });
+  // AK 4. Rot, wenn eine leere Übung „0 Karten" sagt statt „leer".
+  it("sagt bei null Atomen „leer\"", () => { expect(umfangText(0, karten)).toBe("leer"); });
+  // Rot, wenn ein Typ ohne zählbare Atome eine Zahl bekommt.
+  it("schweigt ohne Zahl", () => { expect(umfangText(null, karten)).toBeNull(); expect(umfangText(undefined, karten)).toBeNull(); });
+  // Rot, wenn ein noch ladendes Manifest „12 undefined" erzeugt.
+  it("zeigt ohne Manifest nur die Zahl", () => { expect(umfangText(12, undefined)).toBe("12"); });
 });

@@ -23,12 +23,18 @@ namespace Pugling.Contracts.Creator;
 /// <c>AverageRating</c>/<c>RatingCount</c> are the other creators' verdict (B-12): <c>null</c>/<c>0</c> while
 /// nobody has rated. They sit on the lean row because the whole point is to tell proven material apart while
 /// browsing - the same reason <c>sort=rating</c> exists.
+///
+/// <c>ItemCount</c> (B-424) is how many content atoms the exercise holds - vocabulary items, cloze gaps, list entries - so a
+/// supervisor sees the size of what he assigns. It is the size of the exercise, not of a round: the per-round limit is
+/// <c>DefaultItemCount</c> here and <c>ItemCount</c> on a position, a different figure under a similar name. Its unit is the type's
+/// <c>ExerciseTypeManifest.ItemNoun</c>; <c>null</c> where the type has no countable atoms (essay, generated drill), and
+/// <c>0</c> only for an exercise that really is empty.
 /// </summary>
 public record ExerciseSummary(int Id, int SeriesId, int SeriesUnitId, int? SubjectId, string Type, string Title,
     int? GradeMin, int? GradeMax, SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName,
     int? AuthorAdultId, string? AuthorName, bool IsOwn, bool IsOwner, bool ExecutePublic, string? Description,
     bool DefaultUseLeitner, bool DefaultRequireTypedTest, int? DefaultItemCount, int RewardPoints,
-    int SuggestedGoalPoints, double? AverageRating, int RatingCount);
+    int SuggestedGoalPoints, double? AverageRating, int RatingCount, int? ItemCount);
 
 /// <summary>
 /// Complete, type-spanning view of an exercise including raw config and all metadata –

@@ -39,6 +39,10 @@ public enum ExerciseCheckMode
 /// <param name="PlayRoute">Only for <see cref="ExerciseCheckMode.StudyPlanTest"/>: segment under <c>study-plans/{planId}/positions/{positionId}/{PlayRoute}</c>; otherwise <c>null</c>.</param>
 /// <param name="Method">Only for <see cref="ExerciseCheckMode.StudyPlanTest"/>: learning family for renderer/compatibility; otherwise <c>null</c>.</param>
 /// <param name="Capabilities">Type capabilities that a renderer can react to (e.g. <c>wordBank</c>, <c>audio</c>, <c>letterHints</c>).</param>
+/// <param name="ItemNoun">German plural for the content atoms of this type ("Karten", "Lücken") - the unit of
+/// <c>ExerciseSummary.ItemCount</c> (B-424). It lives here so the "12 Karten" a supervisor reads is the server's word, not a
+/// frontend table. <c>null</c> for a type without countable atoms (essay, generated drill); its rows then carry no count.</param>
+/// <param name="ItemNounOne">German singular of <paramref name="ItemNoun"/> ("Karte") for a count of exactly one.</param>
 public record ExerciseTypeManifest(
     string Type,
     string Label,
@@ -48,4 +52,6 @@ public record ExerciseTypeManifest(
     ExerciseCheckMode CheckMode,
     string? PlayRoute,
     LearningMethod? Method,
-    IReadOnlyList<string> Capabilities);
+    IReadOnlyList<string> Capabilities,
+    string? ItemNoun = null,
+    string? ItemNounOne = null);
