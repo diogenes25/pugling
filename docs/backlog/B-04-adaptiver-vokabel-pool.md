@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, bereich/auswertung, lerntechnik/vokabeln, rolle/supervisor, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/training, bereich/auswertung, lerntechnik/vokabeln, rolle/supervisor, rolle/student]
 aliases: [Adaptiver Pool, Idee 3]
-status: in-arbeit
+status: abgenommen
 prio: P0
 art: Wunsch
 groesse: M
@@ -104,3 +104,4 @@ additiver Metrik-Wert, eine Fortschrittsanzeige. Die separate Design-Etappe ist 
 - **2026-11-10** — gebaut (Sprint 29). Backend: `PlanPosition.NewItemsPerDay`, Migration neu gefaltet (Snapshot-Diff: genau die eine Spalte), `PositionPlayService.WithinDailyDose`/`DailyTestPortion`/`IntroduceAsync`, `PositionStatus.IntroducedCount`. Frontend: Feld „Neue Inhalte je Tag“ in Positions-Formular und Assistent (Vorgabe 10), Zeile „x von y schon kennengelernt“ beim Kind.
 - **2026-11-10** — Belege je Regel, Mutanten mit `.claude/scripts/mutant-probe.py` nach dem letzten Edit gemessen (alle rot am genannten Test): Dosis greift → `VierWochenTests.VierWochen_…` (M1); heute Eingeführte zählen → ebd. (M2); Test prüft Portion statt Bestand → `Dosis_TestPrueftDieTagesportion…` (M3, exakt 10); erste Dosis kalt → `TagesportionTests.NichtsEingefuehrt…` (M4); Portion vor Rückfall → `Tagesportion_Ist…` (M5); Rückfall gedeckelt → `NichtsFaellig…` (M6); Grenzen 0..200 → `Dosis_AusserhalbDerGrenzen` (M7, M8); Test führt ein → `Dosis_WerNieUebt…` (N1); Vorschau führt nichts ein → `Dosis_VorschauDesVaters…` (N2); Review nur in der Runde → `Dosis_Review_…` (N3); keine Dosis auf Liste → `Dosis_AufUngeordneterListe…` (N4); offener Rest im Test → `OffenerRestDerDosis…` (N5); Dosis nur mit Kasten → `Dosis_OhneLeitner…` (N6).
 - **2026-11-10** — `pugling-reviewer` und `frontend-reviewer` gelaufen. Backend: ein fachlicher Blocker (Entscheidung 8), drei „sollte“ (N+1 in `ComputeDayAsync` → eine gruppierte Abfrage; Entscheidungen 9 und 10) – alle eingearbeitet. Frontend: Kopplung Dosis↔Kasten als `withDose`/`withLeitner` herausgezogen und getestet, Assistent sperrt das Feld ohne Kasten. Nicht eingearbeitet: `IntroducedCount` für vergangene Tage zeigt den heutigen Stand (wie `DueCount`), Scope „nur alte“ mit Dosis ist eine nicht abgewiesene Fehlkonfiguration.
+- **2026-11-10** — abgenommen. Backend 1211/1211, Vitest 741/741, E2E 134 passed; beide Reviewer gelaufen, Befunde eingearbeitet; Rollengang Sohn und Vater: `VierWochenTests` (28 Tage) und `e2e/ziel-vier-wochen.spec.ts` (Oberfläche, Server nach dem letzten Edit von Playwright gestartet). Commits `595b429`, `1079a96`.

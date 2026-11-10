@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/katalog, lerntechnik/vokabeln, rolle/creator, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/katalog, lerntechnik/vokabeln, rolle/creator, rolle/supervisor]
 aliases: [Vokabelliste einfügen, Sammeleingabe]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: S
@@ -68,3 +68,4 @@ Reine Oberfläche: kein Feld nimmt eine Liste an. Der Vertrag ändert sich nicht
 - **2026-11-10** — angelegt aus Rollengang 0 des Fertigstellungs-Laufs (Befund Z2).
 - **2026-11-10** — entschieden (PM unter Vollmacht des Nutzers) und gebaut: `lib/vocabList.ts`, `VocabRefPicker`, Feldhilfe `vocabListPaste`.
 - **2026-11-10** — `frontend-reviewer`: keine Blocker; eingearbeitet: Vorschau zeigt die ersten zwei Paare (eine am falschen Trenner gelesene Liste sah als Zahl richtig aus), der Knopf nennt das Sprachpaar, ein Scheibenfehler behält und wählt das bis dahin Angelegte, der Fokus kehrt zum Umschalter zurück, Fortschritt am Knopf. Belege: `vocabList.test.ts` (Trenner, Rangfolge, Komma, Bindestrich, Dubletten/Homonym), `e2e/vokabelliste-einfuegen.spec.ts`. Nicht belegt: AK 4 (vom Server abgelehntes Paar) – der Parser liefert nie ein leeres Wort, der Fall ist über die Oberfläche nicht erreichbar.
+- **2026-11-10** — abgenommen. Vitest 741/741, E2E 134 passed (`vokabelliste-einfuegen` und `ziel-vier-wochen` fahren den Weg – der Rollengang des Vaters); `frontend-reviewer` gelaufen. Commit `595b429`.

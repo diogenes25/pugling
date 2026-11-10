@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/training, rolle/student]
 aliases: [Typografischer Apostroph]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Defekt
 groesse: XS
@@ -26,3 +26,4 @@ Präfix-Zeile `["l'", "l’"]` (`:39`) entfällt dann.
 
 - **2026-11-09** — angelegt aus der Nachschau zu Sprint 23 (Retro Sprint 24, Lauf AF, frischer `pugling-reviewer`), 🟢.
 - **2026-11-10** — Fertigstellungs-Lauf: für Französisch auf dem Tablet tragend, darum P1 und autonom gegrillt (Defekt). Entscheidung: `Normalize` faltet die typografischen Apostrophe, den Modifikator-Apostroph sowie Akut und Gravis als Einzelzeichen zum geraden Apostroph; die zweite Präfix-Zeile entfällt. Kosten: eine Übung, deren Lösung genau diese Zeichen unterscheidet, kann es nicht mehr geben. Regressionstest `ApostrophTests` – ohne den Fix 6 von 8 Fällen rot (gemessen per `git stash` der einen Datei, danach neu gebaut). `pugling-reviewer`: alle Aufrufer von `Normalize` vergleichen beidseitig normalisiert, keine Nebenwirkung.
+- **2026-11-10** — abgenommen. Backend 1211/1211; `pugling-reviewer` gelaufen. Rollengang ausgefallen: kein Gerät mit typografischer Tastatur im Lauf – belegt ist der Grader (`ApostrophTests`), am echten Tablet bleibt das Wort einmal zu tippen. Commit `595b429`.

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, rolle/student, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/training, rolle/student, rolle/supervisor]
 aliases: [Nur Test ohne Leitner]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Defekt
 groesse: XS
@@ -53,3 +53,4 @@ B-419 („erst zeigen, dann fragen") galt nur für Positionen mit Leitner-Kasten
 - **2026-11-10** — gefunden und behoben in Sprint 29 des Fertigstellungs-Laufs (vor der Abnahme von B-04, aber in
   abgenommener Arbeit von B-419 – darum `entgangen_bei`).
 - **2026-11-10** — `frontend-reviewer`: der Rollengang deckte den Fall nicht (die Dosis schaltet den Kasten ein); eigene Spec `ueben-ohne-leitner.spec.ts` ergänzt, AK 2 berichtigt.
+- **2026-11-10** — abgenommen. E2E 134 passed, `ueben-ohne-leitner.spec.ts` ist der Rollengang des Kindes; `frontend-reviewer` gelaufen. Commit `595b429`.

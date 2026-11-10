@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, bereich/tests]
+tags: [typ/story, status/abgenommen, bereich/training, bereich/tests]
 aliases: [Vier-Wochen-Simulation, Uhr über TimeProvider]
-status: in-arbeit
+status: abgenommen
 prio: P0
 art: Aufräumen
 groesse: M
@@ -62,3 +62,4 @@ Simulation selbst ist der Test dafür. Testweg: volle Suite, dann `VierWochenTes
 - **2026-11-10** — angelegt und entschieden im Fertigstellungs-Lauf (Vollmacht des Nutzers, [Protokoll](../pm-sitzung-2026-11-10-fertigstellung.md)); `in-arbeit`.
 - **2026-11-10** — gebaut (Sprint 29): 45 Stellen in 14 Dateien auf den injizierten `TimeProvider` umgestellt (Subagent, danach `pugling-reviewer`: keine vergessene Stelle, kein Singleton mit neuer Abhängigkeit), Buchungs- und Sitzungsstempel ausdrücklich aus der Uhr, `TestClock.FreezeAt`. AK 1 gemessen mit `grep -rnE "DateTime\.UtcNow|DateTime\.Now|DateTimeOffset\.UtcNow" backend/Pugling.Api --include=*.cs | grep -vE "/(Models|Migrations|obj|bin)/|Data/Seed\.cs|Auth/TokenService\.cs|Pugling\.Api/Program\.cs"` → 0 Treffer. AK 2: Suite vor B-04 1187 grün. AK 3: `VierWochenTests.VierWochen_TaeglichEinePortion_…` spielt 28 Tage (120 Wörter, Dosis 8, ein ausgelassener Tag): je Tag ≤ 70 abgefragte Karten, Test 1–60 Wörter und bestanden, Pflicht erfüllt, genau ein Malus.
 - **2026-11-10** — offen geblieben und bewusst nicht gebaut: der Zeitfenster-Multiplikator liest `GetLocalNow()` (Zeitzone des Hosts), der Seed datiert aus der Wanduhr; beides stört die Simulation nicht, weil sie keine Punktzahlen zusichert und eigene Pläne anlegt.
+- **2026-11-10** — abgenommen. Backend 1211/1211, Vitest 741/741, E2E 134 passed; `pugling-reviewer` gelaufen; Rollengang: `VierWochenTests` ist der Gang des Kindes über 28 Tage. Commit `595b429`.

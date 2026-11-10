@@ -12,15 +12,10 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (66)
+### Offen (62)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `in-arbeit` | P0 | M | beides | Migration |
-| [B-451](B-451-uhr-und-vier-wochen-simulation.md) | Die fachliche Uhr läuft über `TimeProvider`, und ein Test spielt vier Wochen | Aufräumen | `in-arbeit` | P0 | M | backend | — |
-| [B-440](B-440-typografischer-apostroph-wird-nicht-gefaltet.md) | Ein typografischer Apostroph („l’école") macht die vollständige Antwort falsch, die verkürzte richtig | Defekt | `in-arbeit` | P1 | XS | backend | — |
-| [B-454](B-454-position-ohne-leitner-nur-test.md) | Eine Vokabel-Position ohne Leitner-Kasten bot dem Kind nur „TEST" – Abfrage ohne je gezeigte Wörter | Defekt | `in-arbeit` | P1 | XS | frontend | — |
-| [B-452](B-452-vokabelliste-einfuegen.md) | Eine Vokabelliste einfügen statt 150 Zeilen einzeln tippen | Wunsch | `in-arbeit` | P1 | S | frontend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `gegrillt` | P2 | — | backend | Vertrag? |
 | [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder | Wunsch | `geschaetzt` | P2 | L | beides | — |
@@ -48,7 +43,8 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-446](B-446-vokabel-tipp-zeigt-den-artikel-des-fragewortes.md) | Der Vokabel-Tipp zeigt den Artikel des Frageworts, nicht einen Hinweis auf die Lösung | Defekt | `idee` | P3 | — | backend | — |
 | [B-448](B-448-umfang-nachschau-reste.md) | Umfang der Übung: „leer" ist am Server ungetestet, ein Zählfehler bleibt stumm, eine Summary hängt am falschen Helfer | Defekt | `idee` | P3 | — | beides | — |
 | [B-449](B-449-zeitzonen-tests-greifen-nur-in-new-york.md) | Die Zeitzonen-Tests von `lib/datum.ts` greifen weder lokal noch in der CI | Defekt | `idee` | P3 | — | frontend | — |
-| [B-453](B-453-heute-karte-nach-kind-anlegen.md) | Nach „Kind anlegen" sagt die Karte „Heute" weiter „Noch keine Kinder" | Defekt | `idee` | P3 | — | frontend | — |
+| [B-455](B-455-fachlehrer-typen-pruefung-nach-dem-entdoppeln.md) | Ob ein unbekannter Übungstyp im Fachlehrer-Profil abgelehnt wird, hängt an der Reihenfolge | Defekt | `idee` | P3 | — | backend | — |
+| [B-456](B-456-nachschau-reste-sprint-28.md) | „Meine Übungen (0)" neben „Lade…", ein ungetesteter Zweig und ein falscher Tooltip im Manifest-Ausfall | Defekt | `idee` | P3 | — | frontend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `idee` | P3 | — | — | — |
 | [B-328](B-328-inline-typen-put-verschiebt-lernstand.md) | Sollen die Inhaltslisten gespielter Übungen anderer Typen (und der Wort-Tausch) gesperrt sein? | Frage | `idee` | P3 | — | backend | — |
@@ -84,12 +80,13 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-447](B-447-arcade-zeigt-iso-daten.md) | Die Sohn-Arcade zeigt Daten als ISO-Text | Aufräumen | `idee` | P3 | — | frontend | — |
 
 <details>
-<summary>Abgenommen (360)</summary>
+<summary>Abgenommen (366)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-01](B-01-bildwahl-einfrieren.md) | Abschlusstest friert Bildwahlen ein, die er nie zeigt | Defekt | `abgenommen` | P1 | S | backend | Vertrag |
 | [B-02](B-02-itemcount-hilfetext.md) | Der Hilfetext erklärt `ItemCount` falsch herum | Defekt | `abgenommen` | P2 | XS | frontend | — |
+| [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `abgenommen` | P0 | M | beides | Migration |
 | [B-05](B-05-buchstaben-tausch.md) | Buchstaben-Tausch-Eingabe (Anagramm) | Wunsch | `abgenommen` | P5 | M | beides | — |
 | [B-08](B-08-xml-docs-englisch.md) | XML-Doc-Kommentare im Backend auf Englisch übersetzen | Aufräumen | `abgenommen` | P3 | S | doku | — |
 | [B-10](B-10-zeitfenster-pro-kind.md) | Zeitfenster (Punkte-Faktor) je Pflicht statt global | Wunsch | `abgenommen` | P2 | M | beides | Migration |
@@ -400,8 +397,13 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-436](B-436-reihe-loeschen-mit-unit-etappe-ungetestet.md) | Eine Reihe zu löschen, die nur eine Ziel-Etappe auf einer ihrer Units sperrt, prüft kein Test | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-439](B-439-loesung-in-angehaltener-karte-ungetestet.md) | Die sichtbare Lösung in der angehaltenen Karte prüft kein Test | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-44](B-44-grundprinzip-rollennamen.md) | Grundprinzip auf Supervisor/Student umschreiben — „Vater" ist keine Ebene | Aufräumen | `abgenommen` | P2 | XS | doku | — |
+| [B-440](B-440-typografischer-apostroph-wird-nicht-gefaltet.md) | Ein typografischer Apostroph („l’école") macht die vollständige Antwort falsch, die verkürzte richtig | Defekt | `abgenommen` | P1 | XS | backend | — |
 | [B-45](B-45-creator-punkte-empfehlung.md) | Die Punkte-Empfehlung des Creators soll der Supervisor übernehmen können | Wunsch | `abgenommen` | P2 | S | beides | — |
 | [B-450](B-450-schalter-geteilte-uebungen-springt-zurueck.md) | „Geteilte Übungen anderer Väter anzeigen" springt nach dem Klick zurück | Defekt | `abgenommen` | P2 | XS | frontend | — |
+| [B-451](B-451-uhr-und-vier-wochen-simulation.md) | Die fachliche Uhr läuft über `TimeProvider`, und ein Test spielt vier Wochen | Aufräumen | `abgenommen` | P0 | M | backend | — |
+| [B-452](B-452-vokabelliste-einfuegen.md) | Eine Vokabelliste einfügen statt 150 Zeilen einzeln tippen | Wunsch | `abgenommen` | P1 | S | frontend | — |
+| [B-453](B-453-heute-karte-nach-kind-anlegen.md) | Nach „Kind anlegen" sagt die Karte „Heute" weiter „Noch keine Kinder" | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-454](B-454-position-ohne-leitner-nur-test.md) | Eine Vokabel-Position ohne Leitner-Kasten bot dem Kind nur „TEST" – Abfrage ohne je gezeigte Wörter | Defekt | `abgenommen` | P1 | XS | frontend | — |
 | [B-46](B-46-interessenbasierte-uebungen.md) | Übungen entstehen für ein Interessenprofil, nicht für ein bestimmtes Kind | Wunsch | `abgenommen` | P2 | L | beides | Migration |
 | [B-48](B-48-anonyme-registrierung-produktion.md) | Anonyme Registrierung ist auch in Produktion offen | Frage | `abgenommen` | P2 | S | backend | — |
 | [B-49](B-49-sohn-app-schreib-primitive.md) | Die Sohn-App benutzt die geteilten Schreib-Primitive nicht | Aufräumen | `abgenommen` | P3 | S | frontend | — |
@@ -463,9 +465,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-430](B-430-nach-test-diese-woerter-ueben.md) | Nach einem nicht bestandenen Test gibt es nur „Nochmal versuchen" – keinen Weg zum Üben | `ausformuliert` | Entscheidung des Nutzers (Offener Punkt 3) |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
-### Nach der Abnahme entgangen (145)
+### Nach der Abnahme entgangen (146)
 
-**Nachgeschaut: 356 von 360 abgenommenen** — und in 126 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 4 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 360 von 366 abgenommenen** — und in 127 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 6 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -613,20 +615,23 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-443](B-443-fokus-wege-der-sohn-runde.md) | Nach „Jetzt abfragen" fällt der Fokus auf `body`, und drei Wege ins Rundenende hält kein Test | [B-439] | `idee` |
 | [B-448](B-448-umfang-nachschau-reste.md) | Umfang der Übung: „leer" ist am Server ungetestet, ein Zählfehler bleibt stumm, eine Summary hängt am falschen Helfer | [B-424] | `idee` |
 | [B-449](B-449-zeitzonen-tests-greifen-nur-in-new-york.md) | Die Zeitzonen-Tests von `lib/datum.ts` greifen weder lokal noch in der CI | [B-427] | `idee` |
-| [B-454](B-454-position-ohne-leitner-nur-test.md) | Eine Vokabel-Position ohne Leitner-Kasten bot dem Kind nur „TEST" – Abfrage ohne je gezeigte Wörter | [B-419] | `in-arbeit` |
+| [B-454](B-454-position-ohne-leitner-nur-test.md) | Eine Vokabel-Position ohne Leitner-Kasten bot dem Kind nur „TEST" – Abfrage ohne je gezeigte Wörter | [B-419] | `abgenommen` |
+| [B-455](B-455-fachlehrer-typen-pruefung-nach-dem-entdoppeln.md) | Ob ein unbekannter Übungstyp im Fachlehrer-Profil abgelehnt wird, hängt an der Reihenfolge | [B-426] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (4) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (6) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
-| [B-426](B-426-fachlehrer-uebungstypen-aus-frontend-liste.md) | Fachlehrer-Profil: „Bevorzugte Übungstypen" zeigt vier rohe Schlüssel aus einer Frontend-Liste |
-| [B-428](B-428-unit-zeigt-uebungszahl-nicht.md) | Lehrwerke: eine Unit zeigt nicht, wie viele Übungen sie schon trägt |
-| [B-431](B-431-uebungen-verwalten-startet-leer.md) | „Übungen verwalten" startet leer: erst ein Fach wählen, obwohl die Werkstatt „3 eigene Übungen" zählt |
-| [B-450](B-450-schalter-geteilte-uebungen-springt-zurueck.md) | „Geteilte Übungen anderer Väter anzeigen" springt nach dem Klick zurück |
+| [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position |
+| [B-440](B-440-typografischer-apostroph-wird-nicht-gefaltet.md) | Ein typografischer Apostroph („l’école") macht die vollständige Antwort falsch, die verkürzte richtig |
+| [B-451](B-451-uhr-und-vier-wochen-simulation.md) | Die fachliche Uhr läuft über `TimeProvider`, und ein Test spielt vier Wochen |
+| [B-452](B-452-vokabelliste-einfuegen.md) | Eine Vokabelliste einfügen statt 150 Zeilen einzeln tippen |
+| [B-453](B-453-heute-karte-nach-kind-anlegen.md) | Nach „Kind anlegen" sagt die Karte „Heute" weiter „Noch keine Kinder" |
+| [B-454](B-454-position-ohne-leitner-nur-test.md) | Eine Vokabel-Position ohne Leitner-Kasten bot dem Kind nur „TEST" – Abfrage ohne je gezeigte Wörter |
 
 </details>
 
@@ -707,11 +712,12 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-405](B-405-fach-leeren-meldung-verspricht-wechsel.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 | [B-406](B-406-fachwechsel-meldung-loeschen-kann-gesperrt-sein.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 | [B-408](B-408-assistent-zeigt-keine-bewertung.md) | `idee` | `unverifiziert: true` |
-| [B-440](B-440-typografischer-apostroph-wird-nicht-gefaltet.md) | `in-arbeit` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
+| [B-440](B-440-typografischer-apostroph-wird-nicht-gefaltet.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-445](B-445-seed-kind-ohne-klasse-und-fachlehrer.md) | `idee` | `unverifiziert: true` |
 | [B-446](B-446-vokabel-tipp-zeigt-den-artikel-des-fragewortes.md) | `idee` | `unverifiziert: true` |
 | [B-450](B-450-schalter-geteilte-uebungen-springt-zurueck.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
-| [B-454](B-454-position-ohne-leitner-nur-test.md) | `in-arbeit` | Abschnitt „Schätzung" |
+| [B-453](B-453-heute-karte-nach-kind-anlegen.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
+| [B-454](B-454-position-ohne-leitner-nur-test.md) | `abgenommen` | Abschnitt „Schätzung" |
 
 <details>
 <summary>Verworfen (27)</summary>
