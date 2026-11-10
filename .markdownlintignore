@@ -4,3 +4,5 @@ frontend/
 .claude/
 # Skill-generierter Beispielkurs inkl. append-only, prüfbarem Ledger – nicht umformatieren.
 lehrplan/
+# Fotografierte Lehrwerkseiten und Arbeitsdateien dazu (B-375), nie im Repo.
+raw/

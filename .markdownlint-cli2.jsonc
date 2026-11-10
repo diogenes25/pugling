@@ -8,6 +8,8 @@
     ".claude/**",
     ".agents/**",
     "lehrplan/**",
+    // Fotografierte Lehrwerkseiten und die daraus erarbeiteten Arbeitsdateien (B-375): nie im Repo (.gitignore).
+    "raw/**",
     // Generierter Schnappschuss der Anmerkungen: der Inhalt ist freier Nutzertext aus dem Widget.
     // Eine Aufzählung oder ein Leerzeichen am Zeilenende macht CI sonst rot, ohne dass es jemand
     // beheben könnte – der Export überschreibt die Datei bei jedem Lauf.

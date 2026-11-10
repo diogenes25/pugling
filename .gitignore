@@ -8,6 +8,7 @@ coverage.cobertura.xml
 *.db
 *.db-shm
 *.db-wal
+*.db.bak-*
 logs/
 node_modules/
 dist/
@@ -46,3 +47,6 @@ backend/Pugling.Api/media-uploads/
 
 # Zuletzt gemessene Groessen des Startkontexts (.claude/scripts/context-budget.sh) – lokaler Zustand.
 .claude/.context-budget-state
+
+# Photographed textbook pages (B-375): copyrighted source material, never committed.
+raw/
