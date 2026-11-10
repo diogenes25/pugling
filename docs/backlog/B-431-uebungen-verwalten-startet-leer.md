@@ -1,8 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/frontend, bereich/katalog, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/katalog, rolle/creator]
 aliases: [Übungen verwalten startet leer, Meine Übungen zuerst]
-status: in-arbeit
-wartet_auf: Reparatur des Fund 6 aus Sprint 28 (Lauf AG an Freigabe 3 beendet)
+status: abgenommen
 prio: P3
 art: Wunsch
 groesse: S
@@ -89,3 +88,4 @@ nicht vorhanden), Rollengang Creator als Fall in `creator-lehrwerk-weg.spec.ts`.
   gescheitertes Laden der Liste sah aus wie ein leerer Bestand → `ListenAusfall`, Leertext nur ohne Fehler (**zählt**); 🟢 Hand-URL
   `?seriesId=` ohne Fach → hingenommen (die Überschrift sagt dann „Meine Übungen"); 🟢 ungenutzter Export zurückgenommen.
 - **2026-11-09** — **nicht abgenommen: Lauf AG an Freigabe 3 beendet.** Volle Suite nach dem letzten Edit: Backend 1187/1187, Vitest 723/723, `tsc -b` sauber, Playwright **1 failed, 129 passed** – rot `e2e/typ-manifest-faellt-aus.spec.ts:40`: der Schalter „geteilte Übungen anderer Väter anzeigen" ändert beim Klick seinen Zustand nicht. Ursache (analysiert, nicht behoben): seit dem Review-Fix zu B-428 hängt der Schalter an der Adresse (`?shared=1`, `VaterExercises.tsx` `setFilter`); Fach-Wechsel und Klick gehen beide über `setSearchParams`, der zweite liest den Fach-Wert aus dem alten Render (veraltete Closure), und React Router rendert die Adress-Änderung verzögert – der kontrollierte Haken springt zurück. Reparaturweg: `setParams(prev => …)` (aktuelle Adresse statt Render-Werte). Das ist Fund 6 in Sprint 28 und überschreitet den Zähler (5); darum gestoppt, nicht repariert. Der Rest der Story ist gebaut und belegt (Tabelle oben); die Abnahme gehört dem Nutzer bzw. dem nächsten Lauf nach der Reparatur.
+- **2026-11-10** — abgenommen nach der Reparatur von [B-450](B-450-schalter-geteilte-uebungen-springt-zurueck.md) (im Dialog). Backend 1187/1187, Vitest 723/723, `tsc -b` sauber, Playwright **131 passed** (ganze Suite, Server vom Lauf nach dem letzten Edit gestartet). **Rollengang** Creator = `e2e/creator-katalog-ueberblick.spec.ts` (sechs Fälle, grün); Vater/Sohn als Regressionszeugen. Commit: siehe `git log -- docs/backlog/B-431-uebungen-verwalten-startet-leer.md`.

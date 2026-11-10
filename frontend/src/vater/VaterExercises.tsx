@@ -43,14 +43,37 @@ export function VaterExercises() {
   const seriesUnitId: number | "" = Number(params.get("seriesUnitId")) || "";
   // Der Schalter „geteilte Übungen" lebt ebenfalls in der Adresse (Review-Fund zu B-428): die Übungszahl einer Unit zählt
   // ALLE Übungen, und ihr Link muss eine Liste öffnen können, die dieselben zeigt – nicht nur die eigenen.
-  const showShared = params.get("shared") === "1";
-  /** Filter setzen = Adresse setzen. `replace`, damit Filtern keine Historie aus Zwischenständen baut. */
-  function setFilter(next: { subjectId: number | ""; seriesId: number | ""; seriesUnitId: number | ""; shared?: boolean }) {
-    const q = new URLSearchParams();
-    if (next.subjectId !== "") q.set("subjectId", String(next.subjectId));
-    if (next.seriesId !== "") q.set("seriesId", String(next.seriesId));
-    if (next.seriesUnitId !== "") q.set("seriesUnitId", String(next.seriesUnitId));
-    if (next.shared ?? showShared) q.set("shared", "1");
+  //
+  // Zusätzlich ein eigener Zustand (B-450): der Router rendert eine Adress-Änderung in einer Transition
+  // (`v7_startTransition`, main.tsx), und bis dahin setzte React den kontrollierten Haken auf den alten Wert zurück – der
+  // Klick schien nichts zu tun. Der Zustand folgt dem Klick sofort und gleicht sich mit der Adresse ab (Link, Zurück-Taste) –
+  // im Render, wie `prevFilterKey` unten, damit kein Commit den alten Haken zeigt. Die Pulldowns flackern in derselben
+  // Transition kurz zurück, aber niemand liest ihren Wert direkt nach dem Ereignis; ein eigener Zustand je Pulldown lohnt nicht.
+  const sharedInUrl = params.get("shared") === "1";
+  const [showShared, setShowShared] = useState(sharedInUrl);
+  const [prevSharedInUrl, setPrevSharedInUrl] = useState(sharedInUrl);
+  if (prevSharedInUrl !== sharedInUrl) { setPrevSharedInUrl(sharedInUrl); setShowShared(sharedInUrl); }
+  /**
+   * Filter setzen = Adresse setzen. `replace`, damit Filtern keine Historie aus Zwischenständen baut.
+   *
+   * Nur die übergebenen Schlüssel ändern sich, der Rest kommt aus der **aktuellen** Adresse (`window.location.search`), nicht aus
+   * den Werten dieses Renders (B-450, Vorsorge): solange die Transition der ersten Änderung läuft, trügen die Render-Werte noch
+   * den alten Stand – eine zweite Änderung kurz danach schriebe ihn zurück. `navigate` schreibt die History sofort, gerendert
+   * wird später; `setParams(prev => …)` hilft nicht, react-router gibt `prev` aus dem Render. Reproduziert ist dieser Weg nicht
+   * (sechs Wiederholungen grün); der belegte Fehler war das Zurückspringen des Hakens oben.
+   */
+  function setFilter(patch: { subjectId?: number | ""; seriesId?: number | ""; seriesUnitId?: number | ""; shared?: boolean }) {
+    const q = new URLSearchParams(window.location.search);
+    for (const key of ["subjectId", "seriesId", "seriesUnitId"] as const) {
+      if (!(key in patch)) continue;
+      const value = patch[key];
+      if (value === "" || value === undefined) q.delete(key);
+      else q.set(key, String(value));
+    }
+    if (patch.shared !== undefined) {
+      if (patch.shared) q.set("shared", "1");
+      else q.delete("shared");
+    }
     setParams(q, { replace: true });
   }
 
@@ -130,7 +153,7 @@ export function VaterExercises() {
         <div className="field">
           <label htmlFor="ex-series">Reihe <span className="muted">(optional)</span></label>
           <select id="ex-series" aria-label="Reihe" value={seriesId} disabled={!subjectId}
-            onChange={(e) => setFilter({ subjectId, seriesId: e.target.value ? Number(e.target.value) : "", seriesUnitId: "" })}>
+            onChange={(e) => setFilter({ seriesId: e.target.value ? Number(e.target.value) : "", seriesUnitId: "" })}>
             <option value="">– alle –</option>
             {series.data?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
@@ -138,7 +161,7 @@ export function VaterExercises() {
         <div className="field">
           <label htmlFor="ex-unit">Unit <span className="muted">(optional)</span></label>
           <select id="ex-unit" aria-label="Unit" value={seriesUnitId} disabled={!seriesId}
-            onChange={(e) => setFilter({ subjectId, seriesId, seriesUnitId: e.target.value ? Number(e.target.value) : "" })}>
+            onChange={(e) => setFilter({ seriesUnitId: e.target.value ? Number(e.target.value) : "" })}>
             <option value="">– alle –</option>
             {units.data?.map((u) => <option key={u.id} value={u.id}>{u.label}</option>)}
           </select>
@@ -147,7 +170,7 @@ export function VaterExercises() {
       {/* Verwaltung = eigene Übungen; bei Bedarf die geteilte Bibliothek anderer Väter einblenden. */}
       <label className="row" style={{ gap: 6, alignItems: "center", fontSize: 13, marginTop: 10 }}>
         <input type="checkbox" checked={showShared}
-          onChange={(e) => setFilter({ subjectId, seriesId, seriesUnitId, shared: e.target.checked })} />
+          onChange={(e) => { setShowShared(e.target.checked); setFilter({ shared: e.target.checked }); }} />
         geteilte Übungen anderer Väter anzeigen
       </label>
     </section>

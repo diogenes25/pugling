@@ -314,3 +314,19 @@ sagte das nicht deutlich genug, und CI/lokal laufen in anderen.
 Stand im Backlog ([docs/backlog/](backlog/README.md)). **Nächster Start:** B-450 (P2, blockiert die Abnahme von B-426/B-428/B-431),
 danach B-449 und B-448. **Für den Dialog:** B-423 Offener Punkt 5 (Stufenleiter vs. `requireTypedTest`), B-408 (Bewertung im
 Assistenten – keine Freigabe), B-445 (Seed-Kind mit Klasse), B-446 (Tipp-Inhalt). Retro-Vorschläge (CI)–(CN) unentschieden. Nichts gepusht.
+
+## Nacharbeit 2026-11-10 — B-450 im Dialog, Abnahme von Sprint 28
+
+**Auftrag des Nutzers (wörtlich):** „Ja, B-450 reparieren"
+
+Die in B-450 notierte Reparatur (`setParams(prev => …)`) war falsch: react-router-dom 6.30 reicht `prev` aus dem Render weiter. Die
+belegte Ursache ist `v7_startTransition` – bis die Transition rendert, setzt React den kontrollierten Haken zurück. Reparatur: eigener
+Zustand für den Haken, im Render mit der Adresse abgeglichen; `setFilter` baut die Adresse zur Aufrufzeit (Vorsorge, nicht reproduziert).
+Der alte Stand fällt isoliert in 2 von 3 Läufen; gemessen wurde darum mit `--repeat-each=6` (Tabelle in B-450). Review
+`frontend-reviewer`: ein 🟡 (unbeschriftete Absichtserklärung im Test) behoben, **Zähler 1**.
+
+Zahlen nach dem letzten Edit: Backend 1187/1187, Vitest 723/723, `tsc -b` sauber, Playwright **131 passed** (ganze Suite, Server vom Lauf nach dem letzten Edit gestartet). **B-450, B-426, B-428, B-431 → `abgenommen`.** Sprint 28 ist damit geschlossen; seine Retro
+steht oben (Nachschau Sprint 27 → B-449).
+
+**Lehre für (CM):** ein Fehler, der nur unter Last oder Zeitdruck erscheint, braucht eine wiederholte Probe; die Mutante „Haken an der
+Adresse" war im Einzellauf grün (abweichend) und unter Wiederholung rot.

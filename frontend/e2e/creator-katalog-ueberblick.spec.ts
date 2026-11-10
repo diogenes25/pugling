@@ -120,3 +120,23 @@ test("Ausfälle sagen, was fehlt: Übungsliste und Typ-Manifest (Review-Funde zu
   await page.goto("/vater/fachlehrer");
   await expect(page.getByText(/Die Übungstypen konnten nicht geladen werden/)).toBeVisible();
 });
+
+test("Schalter „geteilte Übungen“: folgt dem Klick, lässt das Fach stehen und folgt der Adresse (B-450)", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await vaterLogin(page, { id: "1", pin: "0000" });
+  await page.goto("/vater/exercises");
+  const schalter = page.getByLabel("geteilte Übungen anderer Väter anzeigen");
+
+  // Fach wählen, dann den Schalter. `check()` prüft selbst, dass der Haken nach dem Klick steht – das ist der belegte Fehler
+  // (unter Wiederholung rot, wenn der Haken an der Adresse statt am eigenen Zustand hängt).
+  await page.getByLabel("Fach", { exact: true }).selectOption({ label: "Englisch" });
+  await schalter.check();
+  // Absichtserklärung, keine Probe: das Fach bleibt in der Adresse. Mit Render-Werten in `setFilter` gemessen blieb diese Zeile
+  // grün (sechs Wiederholungen) – zwischen zwei Playwright-Aktionen kommt die Transition fast immer an.
+  await expect(page).toHaveURL(/subjectId=\d+.*shared=1|shared=1.*subjectId=\d+/);
+
+  // Die Adresse ändert sich ohne Neuaufbau der Seite (Navigation auf dieselbe Route): der Haken folgt ihr.
+  await page.getByRole("link", { name: "📚 Übungen" }).click();
+  await expect(page).toHaveURL(/\/vater\/exercises$/);
+  await expect(schalter).not.toBeChecked();
+});
