@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-08-rollengang.md#feedback-creator
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-10
 entgangen_bei: []
 ---
 
@@ -93,3 +94,4 @@ unbekannter Schlüssel → `400 validation_error`, falls heute nicht so.
   `ListenAusfall` (**zählt, Sprint 28**); 🟢 Altlast-Knopf ohne Hinweis → `title`; 🟢 E2E-Kommentar zu „Birkenbihl" präzisiert.
 - **2026-11-09** — **nicht abgenommen: Lauf AG an Freigabe 3 beendet.** Volle Suite nach dem letzten Edit: Backend 1187/1187, Vitest 723/723, `tsc -b` sauber, Playwright **1 failed, 129 passed** – rot `e2e/typ-manifest-faellt-aus.spec.ts:40`: der Schalter „geteilte Übungen anderer Väter anzeigen" ändert beim Klick seinen Zustand nicht. Ursache (analysiert, nicht behoben): seit dem Review-Fix zu B-428 hängt der Schalter an der Adresse (`?shared=1`, `VaterExercises.tsx` `setFilter`); Fach-Wechsel und Klick gehen beide über `setSearchParams`, der zweite liest den Fach-Wert aus dem alten Render (veraltete Closure), und React Router rendert die Adress-Änderung verzögert – der kontrollierte Haken springt zurück. Reparaturweg: `setParams(prev => …)` (aktuelle Adresse statt Render-Werte). Das ist Fund 6 in Sprint 28 und überschreitet den Zähler (5); darum gestoppt, nicht repariert. Der Rest der Story ist gebaut und belegt (Tabelle oben); die Abnahme gehört dem Nutzer bzw. dem nächsten Lauf nach der Reparatur.
 - **2026-11-10** — abgenommen nach der Reparatur von [B-450](B-450-schalter-geteilte-uebungen-springt-zurueck.md) (im Dialog). Backend 1187/1187, Vitest 723/723, `tsc -b` sauber, Playwright **131 passed** (ganze Suite, Server vom Lauf nach dem letzten Edit gestartet). **Rollengang** Creator = `e2e/creator-katalog-ueberblick.spec.ts` (sechs Fälle, grün); Vater/Sohn als Regressionszeugen. Commit: siehe `git log -- docs/backlog/B-426-fachlehrer-uebungstypen-aus-frontend-liste.md`.
+- **2026-11-10** — Nachschau (Retro Sprint 29, Fertigstellungs-Lauf, frischer `frontend-reviewer` an den Commits `48173c0`/`7e98879`): ein kleiner Defekt → [B-455](B-455-fachlehrer-typen-pruefung-nach-dem-entdoppeln.md); Kosmetik in B-456.

@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-09-nacht.md
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-10
 entgangen_bei: []
 ---
 
@@ -55,3 +56,4 @@ Blockiert die Abnahme von B-426, B-428, B-431 (`wartet_auf`).
   Render-Muster der Datei; 🟢 Pulldowns flackern in derselben Transition → als bewusst hingenommen im Kommentar (ohne Zählung).
 - **2026-11-10** — abgenommen. Backend 1187/1187, Vitest 723/723, `tsc -b` sauber, Playwright **131 passed** (ganze Suite, Server vom Lauf nach dem letzten Edit gestartet). **Rollengang** Creator = `e2e/creator-katalog-ueberblick.spec.ts` (Fall B-450) und
   `typ-manifest-faellt-aus.spec.ts`; Vater/Sohn als Regressionszeugen (Suite grün). Commit: siehe `git log -- docs/backlog/B-450-schalter-geteilte-uebungen-springt-zurueck.md`.
+- **2026-11-10** — Nachschau (Retro Sprint 29, Fertigstellungs-Lauf, frischer `frontend-reviewer` an den Commits `48173c0`/`7e98879`): sauber (Doppelklick, Link mit `shared=1`, Nav-Link, `skip`-Rücksetzung durchgespielt).

@@ -24,6 +24,8 @@ test("Vater gibt eine Liste als tägliche Pflicht mit Tagesdosis auf, das Kind b
   const vater = await (await browser.newContext()).newPage();
   await vaterLogin(vater, { id: "1", pin: "0000" });
   const childId = await createChild(vater, CHILD.name, CHILD.pin);
+  // B-453: die Karte „Heute" kennt das neue Kind sofort, ohne Neuladen.
+  await expect(vater.locator("section", { has: vater.getByRole("heading", { name: "Heute" }) }).getByText(CHILD.name)).toBeVisible();
 
   // ---------- Stoff: Reihe, Unit, Übung aus einer eingefügten Liste ----------
   await vater.goto("/vater/lehrwerke");
@@ -80,4 +82,9 @@ test("Vater gibt eine Liste als tägliche Pflicht mit Tagesdosis auf, das Kind b
   await sohn.goto("/sohn");
   await expect(sohn.getByText(`${DOSE} von ${PAIRS.length} schon kennengelernt`)).toBeVisible();
   await expect(sohn.getByRole("link", { name: new RegExp(`ÜBEN \\(${DOSE} fällig\\)`) })).toBeVisible();
+
+  // ---------- Vater: der Fortschritt steht in der Oberfläche ----------
+  await vater.reload();
+  await vater.getByRole("row", { name: new RegExp(TITLE) }).getByRole("button", { name: "📊 Report" }).click();
+  await expect(vater.getByText(`${DOSE}/${PAIRS.length} eingeführt`, { exact: false })).toBeVisible();
 });

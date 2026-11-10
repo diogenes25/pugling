@@ -41,6 +41,8 @@ export function VaterDashboard() {
     if (!ok) return;
     setName(""); setGrade(""); setPin("");
     children.reload();
+    // The "Heute" card lists the same children (B-453) - without this it kept saying "Noch keine Kinder".
+    today.reload();
   }
 
 
