@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/katalog, rolle/creator, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/katalog, rolle/creator, rolle/student]
 aliases: [Ablenker als Lösung, Cloze-Alternativen]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Defekt
 groesse: S
@@ -10,6 +10,7 @@ migration: nein
 vertragsbruch: nein
 quelle: B-460
 entgangen_bei: []
+nachgeschaut: ""
 grund: ""
 ersetzt_durch: []
 ---
@@ -45,3 +46,7 @@ unmöglich machen.
 
 - **2026-11-10** — angelegt und in Arbeit genommen. Gefunden bei der Analyse der KI-Aufgabenerstellung,
   behoben im selben Umbau ([B-460](B-460-ki-aufgaben-programm-entscheidet.md)).
+- **2026-11-10** — abgenommen in `50e9b07` (mit [B-460](B-460-ki-aufgaben-programm-entscheidet.md)).
+  Belegt durch `Lueckentext_entsteht_und_besteht_den_Selbsttest` (Alternativen leer, Probe M16 rot) und
+  `Eine_verratene_Loesung_eine_Auswahlliste_und_zu_wenige_Ablenker_werden_abgelehnt` (Probe N4 rot). Live:
+  In Lehrplan 4 haben beide Lückentexte keine Alternativen aus Ablenkern.

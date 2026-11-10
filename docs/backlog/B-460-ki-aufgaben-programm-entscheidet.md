@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/katalog, bereich/training, rolle/creator, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/katalog, bereich/training, rolle/creator, rolle/supervisor]
 aliases: [KI-Aufgaben optimieren, Programm statt Modell, Lückentext-Klammern, Wortliste der Unit]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: M
@@ -9,6 +9,7 @@ wo: backend
 migration: nein
 vertragsbruch: nein
 quelle: Nutzerauftrag 2026-11-10 („Analysiere die Erstellung der Aufgaben und optimiere diese“)
+nachgeschaut: ""
 grund: ""
 ersetzt_durch: []
 ---
@@ -109,3 +110,6 @@ M: ein Projekt (Agent), ein neuer Entwurfstyp für Cloze, keine Migration, kein 
       „Unit 1 · Wörter (2)“ ohne Reparatur-Runde.
   - **Rohdaten:** In `laden.py` wurde die Stoffnotiz zum Wortschatz von einer Wortliste (1538 Zeichen) auf
     Wortfelder und Stolpersteine (872 Zeichen) umgestellt.
+- **2026-11-10** — abgenommen in `50e9b07`. Rollengang: drei Lehrplan-Läufe aus dem Creator-Sitz gegen die laufende App (Lehrpläne 2–4) und ein
+  Vokabel-Trockenlauf. Im Vater-Web hat diese Sitzung Lehrplan 4 **nicht** angesehen. Das Nachschauen dort
+  bleibt offen, ebenso der Prüfgang einer anderen Sitzung (B-462 bis B-470), der den Zwischenstand gesehen hat.

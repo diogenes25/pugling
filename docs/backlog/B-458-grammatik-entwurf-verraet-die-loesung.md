@@ -1,15 +1,16 @@
 ---
-tags: [typ/story, status/idee, bereich/katalog, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/katalog, rolle/creator]
 aliases: [Grammar-Entwurf verrät Lösung]
-status: idee
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: XS
+wo: backend
+migration: nein
+vertragsbruch: nein
 quelle: B-375
-unverifiziert: true
+entgangen_bei: []
+nachgeschaut: ""
 grund: ""
 ersetzt_durch: []
 ---
@@ -26,3 +27,8 @@ fragwürdige Zeitform als einzige Lösung) ist mechanisch nicht zu fangen. Den f
 ## Verlauf
 
 - **2026-11-10** — angelegt (Fund beim Live-Lauf in B-375).
+- **2026-11-10** — gebaut und abgenommen in `50e9b07`, als Teil von
+  [B-460](B-460-ki-aufgaben-programm-entscheidet.md). `DraftRules.AnswerNotInPrompt` prüft die Lösung als ganzes
+  Wort im Aufgabentext; runde Klammern (Grundform, Auswahl) zählen nicht. Test
+  `Eine_Grammatikaufgabe_mit_der_Loesung_im_Text_wird_abgelehnt`, Proben M6/M7 rot. Kein Live-Lauf mit dem Typ
+  Grammar: Der Lehrplan erzeugt per Vorgabe nur Vocabulary und Cloze.
