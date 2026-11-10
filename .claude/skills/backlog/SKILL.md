@@ -43,7 +43,7 @@ brauchbarer Ist-Stand; ein geratener nicht.
 
 ### `/backlog` — den Stand zeigen
 
-1. Index frisch machen: `bash .claude/scripts/backlog-index.sh`.
+1. Index (`docs/backlog/INDEX.md`) frisch machen: `bash .claude/scripts/backlog-index.sh`.
 2. Tabelle nach Stufe zeigen, und **eine** Empfehlung „als Nächstes": höchste `prio`, bei Gleichstand die
    reifere Stufe. Begründe sie in einem Halbsatz.
 3. **Überfällig-Meldung**: `idee`-Stories, deren letzter `## Verlauf`-Eintrag über 90 Tage zurückliegt

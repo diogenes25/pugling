@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Erzeugt die Index-Tabelle in docs/backlog/README.md aus dem Frontmatter der Story-Dateien.
+# Erzeugt die Index-Tabelle in docs/backlog/INDEX.md aus dem Frontmatter der Story-Dateien.
 #
 # Warum ein Skript und keine handgepflegte Tabelle: Ein Index, der von Hand nachgezogen wird, driftet
 # genau dann, wenn es darauf ankommt – beim Weiterschieben einer Story mitten in einer Sitzung. So wird
@@ -30,8 +30,8 @@ awk_script="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/backlog-index.awk"
 
 cd "$root" || exit 1
 
-readme="docs/backlog/README.md"
-[ -f "$readme" ] || { echo "$readme fehlt." >&2; exit 1; }
+index="docs/backlog/INDEX.md"
+[ -f "$index" ] || { echo "$index fehlt." >&2; exit 1; }
 
 # Rang der Stufe: reifere Stufe zuerst, damit bei gleicher Prio das Weiterfortgeschrittene oben steht.
 # Setzt $_rank statt es auszugeben: ein Aufruf über $(...) würde für jede offene Story eine Subshell
@@ -168,7 +168,7 @@ done
 # den Exit-Status, und eine leere Eingabe sieht für die Schleife aus wie ein leerer Backlog. Scheitert awk, oder
 # liest es trotz vorhandener Dateien keinen einzigen Datensatz, wird der Index NICHT geschrieben – ein
 # Fehlschlag darf sich nicht als gültiges Ergebnis ausgeben. Keine feste Untergrenze: Zahlen verrotten.
-records="$readme.records.tmp"
+records="$index.records.tmp"
 : > "$records"
 if [ "${#lesbar[@]}" -gt 0 ]; then
   if ! awk -f "$awk_script" "${lesbar[@]}" > "$records"; then
@@ -339,24 +339,26 @@ rm -f "$records"
   fi
 
   printf '\n%s\n' "<!-- backlog-index:end -->"
-} > "$readme.index.tmp"
+} > "$index.index.tmp"
 
 # Block zwischen den Markern ersetzen. awk statt sed, weil der Block mehrzeilig ist und sed dafür
 # Zeilenumbrüche escapen müsste – ein Titel mit Sonderzeichen kippte das.
-awk -v blockfile="$readme.index.tmp" '
+awk -v blockfile="$index.index.tmp" '
   /^<!-- backlog-index:start -->$/ { while ((getline line < blockfile) > 0) print line; skip = 1; next }
   /^<!-- backlog-index:end -->$/   { skip = 0; next }
   !skip { print }
-' "$readme" > "$readme.tmp"
+' "$index" > "$index.tmp"
 
 # Der Marker-Block trägt seinen End-Marker selbst; ohne diese Prüfung fräße ein fehlender
 # Start-Marker den halben Index weg, ohne dass es auffällt.
-if ! grep -q '^<!-- backlog-index:end -->$' "$readme.tmp"; then
-  rm -f "$readme.tmp" "$readme.index.tmp"
-  echo "Marker <!-- backlog-index:start/end --> fehlen in $readme – Index nicht geschrieben." >&2
+if ! grep -q '^<!-- backlog-index:end -->$' "$index.tmp"; then
+  rm -f "$index.tmp" "$index.index.tmp"
+  echo "Marker <!-- backlog-index:start/end --> fehlen in $index – Index nicht geschrieben." >&2
   exit 1
 fi
 
-mv "$readme.tmp" "$readme"
-rm -f "$readme.index.tmp"
+mv "$index.tmp" "$index"
+rm -f "$index.index.tmp"
 echo "Index geschrieben: $n_offen offen, $n_fertig abgenommen, $n_verworfen verworfen."
+# Die Nachschau-Zeile gleich mit ausgeben: die Retro braucht nur sie, nicht die ganze Indexdatei.
+grep -m1 '^\*\*Nachgeschaut' "$index" | cut -c1-200 || true
