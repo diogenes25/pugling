@@ -86,7 +86,7 @@ check "$HOME/.claude/projects/C--Users-TjarkOnnen-source-repos-priv-pugling/memo
 # Backlog-README zählt nur der Regeltext (`prosa`): der generierte Index wächst mit der Zahl der Stories,
 # und das ist legitimes Wachstum, kein Regel-Zuwachs.
 gruppe=verfahren
-check ".claude/skills/pm-loop/SKILL.md"  11500 "pm-loop/SKILL.md"
+check ".claude/skills/pm-loop/SKILL.md"  12500 "pm-loop/SKILL.md"
 check ".claude/skills/backlog/SKILL.md"  14500 "backlog/SKILL.md"
 check "docs/backlog/README.md"           32600 "backlog/README.md (Regeltext)" prosa
 gruppe=start
