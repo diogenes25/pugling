@@ -36,6 +36,14 @@ public sealed class AgentOptions
     [Range(0d, 2d)]
     public double Temperature { get; set; } = 0.4;
 
+    /// <summary>
+    /// Context window in tokens sent with every call (Ollama <c>num_ctx</c>). Left to the server, a 14B model ran
+    /// with 32768 tokens and its key-value cache pushed three quarters of the model onto the CPU; a briefing plus a
+    /// draft needs well under 8192. 0 = leave it to the Ollama server.
+    /// </summary>
+    [Range(0, 131072)]
+    public int ContextLength { get; set; } = 8192;
+
     /// <summary>Timeout of a single model call; local models take noticeably long on CPU.</summary>
     [Range(10, 3600)]
     public int TimeoutSeconds { get; set; } = 180;

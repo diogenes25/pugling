@@ -28,8 +28,14 @@ public sealed record CreatorBriefing(
     IReadOnlyList<string> RequiredWords,
     IReadOnlyList<int> InterestTagIds,
     IReadOnlyList<string> CatalogInterests,
-    IReadOnlyList<int> GrammarTopicIds)
+    IReadOnlyList<int> GrammarTopicIds,
+    IReadOnlyList<string> GrammarTopicLabels,
+    IReadOnlyList<VocabPair> WordPairs)
 {
+    // WordPairs is this exercise's slice of the unit's word list (UnitVocabulary): what a vocabulary exercise consists
+    // of word for word, and what a translation exercise should build on. It stands in the prompt with its
+    // translations, which the unit's free-text notes do not carry.
+
     /// <summary>Is this tailored to a child (instead of for the general catalog)?</summary>
     public bool Individual => Child is not null;
 
@@ -102,7 +108,10 @@ public sealed record CreatorBriefing(
         text.AppendLine($"- Fach: {SubjectName}");
         text.AppendLine($"- Unit: {SeriesUnitLabel}");
         if (!string.IsNullOrWhiteSpace(Topic)) text.AppendLine($"- Thema: {Topic}");
-        if (Profile?.ToPromptText() is { Length: > 0 } material) text.Append(material);
+        if (GrammarTopicLabels.Count > 0) text.AppendLine($"- Grammatik-Themen der Unit: {string.Join(", ", GrammarTopicLabels)}");
+        // With the word pairs at hand, the notes' long word list is only a second, translation-less copy of them -
+        // and local models lose track of the instructions with every line the context grows.
+        if (Profile?.ToPromptText(includeVocabularyNotes: WordPairs.Count == 0) is { Length: > 0 } material) text.Append(material);
         // Without a cataloged textbook, the child's free-text book carries the subject matter.
         else if (Child?.PrimaryTextbook(SubjectId, SubjectName) is { } book)
             text.AppendLine($"- Lehrbuch: {book.Title}"
@@ -138,6 +147,13 @@ public sealed record CreatorBriefing(
             text.AppendLine();
             text.AppendLine("## Pflicht-Wortschatz (unveränderlich, vollständig verwenden)");
             foreach (var word in RequiredWords) text.AppendLine($"- {word}");
+        }
+
+        if (WordPairs.Count > 0)
+        {
+            text.AppendLine();
+            text.AppendLine("## Wortschatz dieser Übung (aus der Wortliste der Unit, Übersetzungen stehen fest)");
+            foreach (var pair in WordPairs) text.AppendLine($"- {pair.Word} = {pair.Translation}");
         }
 
         if (WeakWords.Count > 0)

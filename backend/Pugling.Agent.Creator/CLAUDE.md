@@ -33,5 +33,15 @@ Kindes abschalten. Dafür trägt `CreatePlanDto` seit B-19 ein `Active`-Feld (Vo
 Stoffnotizen. **Das Foto wird Stoff, nicht Übung**: Kein Schritt nach dem Vision-Aufruf sieht das Bild, und es geht
 nie an die API (Copyright: Aufgaben und Texte des Buches gelangen nicht in den Katalog).
 
+**Was nur eine richtige Antwort hat, entscheidet C#, nicht das Modell** (B-460). Gemeint ist Nummerierung,
+Auswahl, Übersetzung aus der Wortliste und Kürzen auf die Anzahl. Der Entwurf ist so geschnitten, dass das
+Modell nur Sprache liefert:
+
+- Lückentexte schreibt es als `[Lösung]` im Text, Ablenker getrennt. Daraus baut `ClozeMarkup` Platzhalter,
+  Lücken und Wortbank.
+- Vokabeln kommen aus der Wortliste der Unit (`UnitVocabulary`, gelesen aus ihren Vokabelübungen). Das Modell
+  schreibt nur Titel und Hinweise.
+- `Normalize` räumt vor den Regeln auf, was eindeutig ist. Eine Reparatur-Runde kostet einen ganzen Modellaufruf.
+
 Neuer Typ = eine Klasse auf `ExerciseStrategy<TDraft,TConfig>`. Getestet ohne Ollama via `FakeChatClient`
 (`CreatorAgentTests`).

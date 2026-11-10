@@ -59,6 +59,34 @@ Das ist auf kleinen lokalen Modellen deutlich verlässlicher als Tool-Calling un
 Schritt ist einzeln prüfbar. Die Tests (`CreatorAgentTests`) fahren die komplette Pipeline gegen den
 echten In-Process-Server mit einem `FakeChatClient` statt Ollama.
 
+### Was das Programm entscheidet und was das Modell
+
+Faustregel: **Was nur eine richtige Antwort hat, entscheidet C#.** Das Modell schreibt nur, was Sprache
+und Einfall braucht. Gemessen am ersten Lehrplan-Lauf gegen das Access-Lehrwerk (2026-11-10, `qwen2.5:14b`):
+4 Teile in 14,5 Minuten. Zwei davon scheiterten an Regeln, zwei kamen durch und hatten trotzdem Mängel.
+Nach dem Umbau lief derselbe Befehl in 12,1 Minuten mit 4 von 4 Teilen, beide Lückentexte beim ersten Versuch.
+Beide verbliebenen Reparatur-Runden gingen auf einen vergebenen Titel zurück, den C# seitdem selbst nummeriert.
+
+| Lauf | Teile ok | Dauer | Reparatur-Runden | Mängel trotz „ok“ |
+|---|---|---|---|---|
+| vorher (Lehrplan 2) | 2 von 4 | 14,5 min | 3 | Ablenker als Lösungen; Titel nach Interessen |
+| Zwischenstand (Lehrplan 3) | 3 von 4 | 10,2 min | 2 | Auswahllisten hinter Lücken |
+| nachher (Lehrplan 4) | 4 von 4 | 12,1 min | 2 (beide: Titel vergeben) | Zeitform-Feinheiten, die nur der Testmodus des Vaters findet |
+
+| Fund im Lauf | Jetzt |
+|---|---|
+| Das Modell erfand die Übersetzungen selbst. „test = Test“ und „pub = Pub“ scheiterten an der Regel „Aufgabe gleich Lösung“, obwohl die Unit 124 Wortpaare aus dem Buch hatte | Hat die Unit Vokabelübungen, die nicht der Agent erzeugt hat (also aus der Buchliste), ist ihre **Wortliste** der Stoff. Ohne `--words` und ohne `--use-weak` legt C# Wörter und Übersetzungen fest (schwache Wörter zuerst, dann je Teil die nächste Scheibe, ab drei Wörtern). Das Modell schreibt nur Titel und Merkhinweise. Ein Hinweis, der die Übersetzung nennt (auch gebeugt: „Kathedralen“), fliegt raus. Dann gilt der Hinweis aus dem Buch |
+| Ein Lückentext scheiterte an der Kopplung von Platzhaltern und Lücken. Ein anderer kam durch, aber mit den **Ablenkern als akzeptierten Lösungen**: „came“ zählte für „went“ als richtig | Das Modell schreibt die Lösung in eckige Klammern: `We [went] (go) to the Tower.` Nummern, Lücken und Wortbank (sortiert) baut C#. Andere richtige Schreibweisen gibt es nur in der Klammer (`[didn't\|did not]`), Ablenker nur in `distractors` |
+| „verraten“ wurde als Teilwort geprüft („is“ in „This“) | Geprüft wird das ganze Wort außerhalb der Klammern. Die Grundform-Hilfe direkt hinter der Lücke zählt nicht |
+| Grammatik-Aufgaben durften die Lösung im Satz nennen (B-458) | Neue Regel: Steht die Lösung schon in der Aufgabe (ohne runde Klammern), wird der Entwurf abgelehnt |
+| Das Modell kopierte die Lösungen in `distractors` (8 von 10 im zweiten Lauf) | Solche Doppelungen streicht C# ohne Rückfrage, denn die Wortbank enthält die Lösungen ohnehin. Gezählt werden nur echte Ablenker, mindestens zwei |
+| Hinter Lücken standen Auswahllisten: „(Pokémon, friend, match)“ | In der runden Klammer hinter einer Lücke steht genau eine Grundform. Eine Liste ist eine Regelverletzung |
+| Zu viele Aufgaben kosteten eine Reparatur-Runde | Überzählige Einträge streicht C#, überzählige Klammern werden samt Grundform-Hilfe zu normalem Text |
+| Im dritten Lauf gingen beide Reparatur-Runden auf einen schon vergebenen Titel zurück | Ein vergebener Titel bekommt eine Nummer: „Unit 1 · Wörter (2)“ |
+| Der Lehrplan unterschied seine Teile nur durch „(Lehrplan, Cloze 1/2)“. Jeder Lückentext mischte alles aus der Unit | Die Cloze- und Grammar-Teile bekommen reihum einen **Grammatik-Schwerpunkt** der Unit, etwa „question tags“ oder „past progressive“ |
+| Der Titel lautete „Wortpaare von Brawl Stars, Pokémon und Fußball“ | Regel 8 im System-Prompt: Der Titel nennt den Stoff, nie die Interessen |
+| Ollama lief mit 32 768 Tokens Kontext, das Modell zu 73 % auf der CPU | `Agent:ContextLength` (Vorgabe 8192) wird bei jedem Aufruf als `num_ctx` mitgeschickt |
+
 ## Voraussetzungen
 
 1. **Die API läuft**: `cd backend/Pugling.Api && dotnet run` (<http://localhost:5200>).
@@ -84,9 +112,13 @@ echten In-Process-Server mit einem `FakeChatClient` statt Ollama.
 {
   "Pugling": { "BaseUrl": "http://localhost:5200", "AccountId": 1 },
   "Agent":   { "Endpoint": "http://localhost:11434", "Model": "qwen2.5:14b-instruct",
-               "Temperature": 0.4, "TimeoutSeconds": 180, "RepairAttempts": 1 }
+               "Temperature": 0.4, "ContextLength": 8192, "TimeoutSeconds": 180, "RepairAttempts": 1 }
 }
 ```
+
+`ContextLength` ist das Kontextfenster je Aufruf (Ollama `num_ctx`). Ohne die Angabe nimmt der Server seine
+eigene Vorgabe. Bei 32 768 Tokens passte `qwen2.5:14b` nicht mehr in den Grafikspeicher und rechnete zu drei
+Vierteln auf der CPU. Mit `0` entscheidet der Server.
 
 Die PIN gehört **nicht** dorthin:
 

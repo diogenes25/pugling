@@ -35,7 +35,12 @@ public abstract class ExerciseStrategy<TDraft, TConfig>(
     ILogger logger) : IExerciseStrategy
     where TDraft : class
 {
-    private static readonly JsonSerializerOptions PrintOptions = new(JsonSerializerDefaults.Web) { WriteIndented = true };
+    // Relaxed escaping: the draft is printed for a human, and "Große" for "Große" is unreadable (as in B-375's fill).
+    private static readonly JsonSerializerOptions PrintOptions = new(JsonSerializerDefaults.Web)
+    {
+        WriteIndented = true,
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+    };
 
     /// <summary>The catalog access - the derivations need it too (vocabulary lookup, items).</summary>
     protected CreatorApi Creator { get; } = creator;
@@ -45,6 +50,17 @@ public abstract class ExerciseStrategy<TDraft, TConfig>(
 
     /// <summary>The type-specific task description in the prompt.</summary>
     protected abstract string TaskInstruction(CreatorBriefing briefing, GenerationRequest request);
+
+    /// <summary>
+    /// Deterministic clean-up of a fresh draft before the rules see it - only for what has exactly one right
+    /// outcome, such as dropping the tasks a model delivered beyond the requested count. A repair round costs a
+    /// whole model call; trimming a list costs nothing and cannot make the exercise worse.
+    /// </summary>
+    protected virtual TDraft Normalize(TDraft draft, CreatorBriefing briefing, GenerationRequest request) => draft;
+
+    /// <summary>Keeps the first <paramref name="count"/> entries; <c>null</c> stays <c>null</c> for the rules to report.</summary>
+    protected static List<T>? Take<T>(List<T>? items, int count) =>
+        items is { } list && list.Count > count ? list.Take(count).ToList() : items;
 
     /// <summary>The deterministic rules of this type.</summary>
     protected abstract IReadOnlyList<string> Validate(TDraft draft, CreatorBriefing briefing, GenerationRequest request);
@@ -58,6 +74,27 @@ public abstract class ExerciseStrategy<TDraft, TConfig>(
 
     /// <summary>The draft's title (for output and the result).</summary>
     protected abstract string TitleOf(TDraft draft);
+
+    /// <summary>The same draft under another title - for <see cref="UniqueTitle"/>.</summary>
+    protected abstract TDraft WithTitle(TDraft draft, string title);
+
+    /// <summary>
+    /// A title the unit already has gets a number ("Unit 1 · Wörter (2)"). Both repair rounds of the third live run
+    /// were title collisions: a model that sees "Unit 1 · Wörter Part A" in the list keeps proposing the same
+    /// pattern, and each refusal cost a whole model call for a decision with one obvious answer.
+    /// </summary>
+    private TDraft UniqueTitle(TDraft draft, CreatorBriefing briefing)
+    {
+        var title = TitleOf(draft)?.Trim();
+        if (string.IsNullOrEmpty(title)) return draft;
+
+        var taken = briefing.ExistingExerciseTitles.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (!taken.Contains(title)) return draft;
+
+        var n = 2;
+        while (taken.Contains($"{title} ({n})")) n++;
+        return WithTitle(draft, $"{title} ({n})");
+    }
 
     /// <summary>
     /// Wraps a finished config into the API payload, setting the metadata from the briefing along the
@@ -80,7 +117,7 @@ public abstract class ExerciseStrategy<TDraft, TConfig>(
     /// <summary>Short provenance note on the exercise - makes generated content recognizable in the catalog.</summary>
     private static string DescriptionFor(CreatorBriefing briefing)
     {
-        var origin = briefing.Profile is { } profile ? $"Vom KI-Creator (Profil „{profile.Name}“)" : "Vom KI-Creator";
+        var origin = briefing.Profile is { } profile ? $"{DraftPrompts.GeneratedMarker} (Profil „{profile.Name}“)" : DraftPrompts.GeneratedMarker;
         return briefing.Individual
             ? briefing.Interests.Count > 0
                 ? $"{origin} für {briefing.Audience} erzeugt (eingekleidet in: {string.Join(", ", briefing.Interests)})."
@@ -101,7 +138,7 @@ public abstract class ExerciseStrategy<TDraft, TConfig>(
         int attempt = 0;
         while (true)
         {
-            draft = await DraftAsync(briefing, request, violations, ct);
+            draft = UniqueTitle(Normalize(await DraftAsync(briefing, request, violations, ct), briefing, request), briefing);
             violations = Validate(draft, briefing, request);
             if (violations.Count == 0 || attempt++ >= options.Value.RepairAttempts) break;
 

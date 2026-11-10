@@ -32,6 +32,12 @@ public static class DraftPrompts
         return text.ToString();
     }
 
+    /// <summary>
+    /// How every description of a generated exercise begins. The briefing reads it back: a generated vocabulary
+    /// exercise holds words and translations a model chose, so it must not count as the unit's word list.
+    /// </summary>
+    public const string GeneratedMarker = "Vom KI-Creator";
+
     /// <summary>Role and rule description; applies to all types.</summary>
     public const string System = """
         Du bist der Creator der Lern-App Pugling und entwirfst Schulübungen für ein einzelnes Kind.
@@ -46,6 +52,8 @@ public static class DraftPrompts
         4. Aufgabenstellungen, Titel und Hinweise auf Deutsch.
         5. Alle Inhalte sind kindgerecht, gewaltfrei, respektvoll und sachlich korrekt.
         6. Keine Dubletten, keine leeren Felder. Jede Aufgabe hat genau eine eindeutige Lösung.
+        7. Ist ein Schwerpunkt genannt, übt jede Aufgabe genau diesen – nicht alles aus der Unit zugleich.
+        8. Der Titel nennt den Lernstoff (Unit, Wortfeld oder Schwerpunkt), nie die Interessen des Kindes.
         """;
 
     /// <summary>Builds the request part: briefing plus type-specific instruction.</summary>

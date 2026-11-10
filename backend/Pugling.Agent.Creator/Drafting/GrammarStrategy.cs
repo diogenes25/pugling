@@ -21,14 +21,22 @@ public sealed class GrammarStrategy(IChatClient chat, CreatorApi creator,
     protected override string TitleOf(GrammarDraft draft) => draft.Title;
 
     /// <inheritdoc/>
+    protected override GrammarDraft WithTitle(GrammarDraft draft, string title) => draft with { Title = title };
+
+    /// <inheritdoc/>
     protected override string TaskInstruction(CreatorBriefing briefing, GenerationRequest request) =>
         $"""
         Entwirf eine Grammatikübung zu {briefing.SourceLang}. 'instruction' ist die deutsche
         Arbeitsanweisung für das ganze Blatt. Jede Aufgabe hat in 'prompt' den Ausgangssatz bzw. die
         Aufgabenstellung, in 'answer' die einzig richtige Lösung (nur das, was das Kind schreiben soll)
         und in 'ruleHint' einen kurzen deutschen Hinweis auf die zugrunde liegende Regel.
-        Die Lösung ist eindeutig – keine Aufgabe, bei der mehrere Formen richtig wären.
+        Die Lösung ist eindeutig – keine Aufgabe, bei der mehrere Formen richtig wären. Die Lösung steht nie schon
+        im Aufgabentext; Grundform oder Auswahl (some/any) gehören in runde Klammern: "There isn't ___ milk. (some/any)".
         """;
+
+    /// <inheritdoc/>
+    protected override GrammarDraft Normalize(GrammarDraft draft, CreatorBriefing briefing, GenerationRequest request) =>
+        draft with { Tasks = Take(draft.Tasks, request.ItemCount)! };
 
     /// <inheritdoc/>
     protected override IReadOnlyList<string> Validate(GrammarDraft draft, CreatorBriefing briefing,
@@ -49,6 +57,7 @@ public sealed class GrammarStrategy(IChatClient chat, CreatorApi creator,
             DraftRules.NotBlank(violations, task?.Prompt, $"Aufgabe {index + 1}: die Aufgabenstellung");
             DraftRules.NotBlank(violations, task?.Answer, $"Aufgabe {index + 1}: die Lösung");
             DraftRules.PromptDiffersFromAnswer(violations, task?.Prompt, task?.Answer, index);
+            DraftRules.AnswerNotInPrompt(violations, task?.Prompt, task?.Answer, index);
         }
 
         return violations.Messages;

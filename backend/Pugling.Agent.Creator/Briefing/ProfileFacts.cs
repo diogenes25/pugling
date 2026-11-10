@@ -47,8 +47,12 @@ public sealed record ProfileFacts(
         }
     }
 
-    /// <summary>The textbook-series part of the request. Empty if the profile is series-independent.</summary>
-    public string ToPromptText()
+    /// <summary>
+    /// The textbook-series part of the request. Empty if the profile is series-independent.
+    /// <paramref name="includeVocabularyNotes"/> leaves out the unit's vocabulary notes when the briefing carries the
+    /// unit's word pairs itself.
+    /// </summary>
+    public string ToPromptText(bool includeVocabularyNotes = true)
     {
         var text = new StringBuilder();
         if (SeriesLabel is { } series) text.AppendLine($"- Lehrwerk: {series}");
@@ -61,7 +65,7 @@ public sealed record ProfileFacts(
         // that never appears in the child's lessons.
         if (Unit.Topics.Count > 0) text.AppendLine($"- Themen der Unit: {string.Join(", ", Unit.Topics)}");
         if (!string.IsNullOrWhiteSpace(Unit.Grammar)) text.AppendLine($"- Grammatik der Unit: {Unit.Grammar}");
-        if (!string.IsNullOrWhiteSpace(Unit.VocabularyNotes))
+        if (includeVocabularyNotes && !string.IsNullOrWhiteSpace(Unit.VocabularyNotes))
             text.AppendLine($"- Wortschatz der Unit: {Unit.VocabularyNotes}");
 
         return text.ToString();

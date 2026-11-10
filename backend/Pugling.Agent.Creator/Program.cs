@@ -5,6 +5,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OllamaSharp;
+using OllamaSharp.Models;
 using Pugling.Agent.Creator.Briefing;
 using Pugling.Agent.Creator.Drafting;
 using Pugling.Client;
@@ -135,9 +136,19 @@ public static class Program
         return new OllamaApiClient(http, options.Model);
     }
 
-    /// <summary>The local language model as <see cref="IChatClient"/>, with logging.</summary>
-    private static IChatClient CreateChatClient(IServiceProvider services) =>
-        new ChatClientBuilder(services.GetRequiredService<OllamaApiClient>())
+    /// <summary>
+    /// The local language model as <see cref="IChatClient"/>, with logging and the context window set on every
+    /// call - in one place, so that drafts, unit notes and page reading cannot drift apart.
+    /// </summary>
+    private static IChatClient CreateChatClient(IServiceProvider services)
+    {
+        var contextLength = services.GetRequiredService<IOptions<AgentOptions>>().Value.ContextLength;
+        return new ChatClientBuilder(services.GetRequiredService<OllamaApiClient>())
+            .ConfigureOptions(options =>
+            {
+                if (contextLength > 0) options.AddOllamaOption(OllamaOption.NumCtx, contextLength);
+            })
             .UseLogging(services.GetRequiredService<ILoggerFactory>())
             .Build(services);
+    }
 }

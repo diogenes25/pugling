@@ -35,7 +35,7 @@ public sealed class Violations
 /// is a <i>rule violation</i>, not a crash.
 /// </para>
 /// </summary>
-public static class DraftRules
+public static partial class DraftRules
 {
     /// <summary>Lower/upper bound for the task count - guards against one-item and endless exercises.</summary>
     public const int MinItems = 3;
@@ -109,6 +109,23 @@ public static class DraftRules
     }
 
     /// <summary>
+    /// The answer must not already stand in the task (B-458): "While they ___ (play) football …" beside "They were
+    /// playing football" lets the child copy instead of form. Round brackets are left out of the comparison - there
+    /// stands the base form the task asks to change, and in "They ___ (play)" it may well equal the answer.
+    /// </summary>
+    public static void AnswerNotInPrompt(Violations violations, string? prompt, string? answer, int index)
+    {
+        if (string.IsNullOrWhiteSpace(prompt) || string.IsNullOrWhiteSpace(answer)) return;
+        // Identical is PromptDiffersFromAnswer's message; a second one for the same fault only adds noise.
+        if (string.Equals(prompt.Trim(), answer.Trim(), StringComparison.OrdinalIgnoreCase)) return;
+
+        var readable = RoundBrackets().Replace(prompt, " ");
+        if (ClozeMarkup.ContainsWord(readable, answer))
+            violations.Add($"Aufgabe {index + 1}: die Lösung '{answer.Trim()}' steht schon in der Aufgabenstellung – " +
+                           "das Kind könnte sie abschreiben.");
+    }
+
+    /// <summary>
     /// Task and answer must not be identical (otherwise there is nothing to learn). If either one is
     /// missing, <see cref="NotBlank"/> already reports it - this stays silent then, instead of reporting
     /// "empty equals empty" as a second violation.
@@ -120,4 +137,7 @@ public static class DraftRules
         if (string.Equals(prompt.Trim(), answer.Trim(), StringComparison.OrdinalIgnoreCase))
             violations.Add($"Aufgabe {index + 1}: Aufgabenstellung und Lösung sind identisch ('{answer}').");
     }
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"\([^()]*\)")]
+    private static partial System.Text.RegularExpressions.Regex RoundBrackets();
 }

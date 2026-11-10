@@ -22,6 +22,9 @@ public sealed class TranslationStrategy(IChatClient chat, CreatorApi creator,
     protected override string TitleOf(TranslationDraft draft) => draft.Title;
 
     /// <inheritdoc/>
+    protected override TranslationDraft WithTitle(TranslationDraft draft, string title) => draft with { Title = title };
+
+    /// <inheritdoc/>
     protected override string TaskInstruction(CreatorBriefing briefing, GenerationRequest request) =>
         $"""
         Entwirf eine Übersetzungsübung: kurze, vollständige Sätze in {briefing.SourceLang} ('source'),
@@ -29,6 +32,10 @@ public sealed class TranslationStrategy(IChatClient chat, CreatorApi creator,
         nicht auf und stehen für sich. Trage in 'alternatives' weitere korrekte Übersetzungen ein,
         wenn mehrere natürlich klingen – sonst lasse das Feld leer.
         """;
+
+    /// <inheritdoc/>
+    protected override TranslationDraft Normalize(TranslationDraft draft, CreatorBriefing briefing, GenerationRequest request) =>
+        draft with { Items = Take(draft.Items, request.ItemCount)! };
 
     /// <inheritdoc/>
     protected override IReadOnlyList<string> Validate(TranslationDraft draft, CreatorBriefing briefing,

@@ -141,9 +141,11 @@ public sealed class PlanPlanner(CreatorPipeline pipeline, SupervisorApi supervis
 
         // Briefed once before the parts, title given or not: a wrong series, unit, child, profile or interest is a
         // usage error of the whole request (exit 2), not a failed part (B-308).
-        var derived = await DeriveTitleAsync(request, ct);
+        var briefing = await pipeline.BriefAsync(request.Base, ct);
+        var derived = DeriveTitle(request, briefing);
         var title = request.Title?.Trim() is { Length: > 0 } given ? given : derived;
         var parts = new List<GeneratedPart>();
+        var grammarPart = 0;
 
         foreach (var typeKey in request.Types)
         {
@@ -152,9 +154,11 @@ public sealed class PlanPlanner(CreatorPipeline pipeline, SupervisorApi supervis
                 var part = request.Base with
                 {
                     TypeKey = typeKey,
-                    // The index goes into the topic so that several exercises of the same type on the same
-                    // material do not come back as the same exercise n times.
-                    Topic = $"{request.Base.Topic ?? title} (Lehrplan, {typeKey} {n}/{request.PerType})",
+                    Topic = PartTopic(request.Base.Topic ?? title, typeKey, n, request.PerType, briefing.GrammarTopicLabels,
+                        GrammarTypes.Contains(typeKey) ? grammarPart++ : -1),
+                    // Each exercise of a type takes the next slice of the unit's word list, so two vocabulary
+                    // exercises practice twenty words instead of the same ten twice.
+                    Part = n - 1,
                 };
 
                 try
@@ -239,14 +243,27 @@ public sealed class PlanPlanner(CreatorPipeline pipeline, SupervisorApi supervis
         return new PlanOutcome(title, parts, exerciseIds, plan.Id, positionIds, failedPositions);
     }
 
+    /// <summary>The types whose exercises practice a grammar point rather than words - each gets one of the unit's topics.</summary>
+    private static readonly HashSet<string> GrammarTypes = new(["Cloze", "Grammar"], StringComparer.OrdinalIgnoreCase);
+
     /// <summary>
-    /// The title from the material: the request's unit, otherwise the topic. Queried via the briefing
+    /// The topic of one part. A grammar-practicing part names one of the unit's grammar topics, in turn: with
+    /// "question tags" and "past progressive" in the unit, two cloze texts become one on each instead of two
+    /// texts that mix everything. The rest keeps the part number, so that several exercises of the same type do
+    /// not come back as the same exercise n times.
+    /// </summary>
+    public static string PartTopic(string subject, string typeKey, int n, int perType,
+        IReadOnlyList<string> grammarTopics, int grammarPart) =>
+        grammarPart >= 0 && grammarTopics.Count > 0
+            ? $"{subject} – Schwerpunkt: {grammarTopics[grammarPart % grammarTopics.Count]}"
+              // Fewer topics than parts: the second round on a topic must still read differently from the first.
+              + (grammarPart >= grammarTopics.Count ? $" (Teil {grammarPart / grammarTopics.Count + 1})" : "")
+            : $"{subject} (Lehrplan, {typeKey} {n}/{perType})";
+
+    /// <summary>
+    /// The title from the material: the request's unit, otherwise the topic. Taken from the briefing
     /// rather than guessed - the unit label should be the one the exercises name as their source.
     /// </summary>
-    private async Task<string> DeriveTitleAsync(PlanRequest request, CancellationToken ct)
-    {
-        var briefing = await pipeline.BriefAsync(request.Base, ct);
-        var subject = briefing.Profile?.Unit?.Label ?? request.Base.Topic ?? briefing.SeriesUnitLabel;
-        return $"Lehrplan: {subject}";
-    }
+    private static string DeriveTitle(PlanRequest request, Briefing.CreatorBriefing briefing) =>
+        $"Lehrplan: {briefing.Profile?.Unit?.Label ?? request.Base.Topic ?? briefing.SeriesUnitLabel}";
 }

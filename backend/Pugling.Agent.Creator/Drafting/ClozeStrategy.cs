@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -9,13 +8,18 @@ namespace Pugling.Agent.Creator.Drafting;
 
 /// <summary>
 /// Cloze text - the type where interests take effect most strongly: the same gap words, but sentences
-/// from the child's world. The riskiest spot is the coupling between the placeholders in the text and
-/// the gaps; that is exactly what the validator checks completely.
+/// from the child's world. The model marks each answer in square brackets; placeholders, gaps and word bank
+/// are derived in C# (<see cref="ClozeMarkup"/>). Accepted spellings come only from inside a bracket, the word
+/// bank's wrong words only from <see cref="ClozeDraft.Distractors"/> - in the old shape a model put its
+/// distractors into a gap's alternatives, and the server then graded the wrong word as correct.
 /// </summary>
-public sealed partial class ClozeStrategy(IChatClient chat, CreatorApi creator,
+public sealed class ClozeStrategy(IChatClient chat, CreatorApi creator,
     IOptions<AgentOptions> options, ILogger<ClozeStrategy> logger)
     : ExerciseStrategy<ClozeDraft, ClozeConfig>(chat, creator, options, logger)
 {
+    /// <summary>Fewest wrong words in the word bank - below that, the bank gives the answers away by elimination.</summary>
+    public const int MinDistractors = 2;
+
     /// <inheritdoc/>
     public override string TypeKey => "Cloze";
 
@@ -23,108 +27,100 @@ public sealed partial class ClozeStrategy(IChatClient chat, CreatorApi creator,
     protected override string TitleOf(ClozeDraft draft) => draft.Title;
 
     /// <inheritdoc/>
+    protected override ClozeDraft WithTitle(ClozeDraft draft, string title) => draft with { Title = title };
+
+    /// <inheritdoc/>
     protected override string TaskInstruction(CreatorBriefing briefing, GenerationRequest request) =>
-        // Three '$': that keeps the placeholders {{1}} literal and interpolates only {{{…}}}.
-        $$$"""
-        Entwirf einen Lückentext in {{{briefing.SourceLang}}}: einen zusammenhängenden, kurzen Text, in dem
-        an den Lernstellen Platzhalter stehen – {{1}}, {{2}}, {{3}} … in aufsteigender Reihenfolge.
-        Zu jedem Platzhalter gehört genau ein Eintrag in 'gaps' mit derselben Nummer in 'index' und der
-        richtigen Lösung in 'answer'. Die Lösung darf im Text sonst nirgends stehen.
-        Fülle 'wordBank' mit allen Lösungen plus zwei bis vier plausiblen Ablenkern (gleiche Wortart).
+        $"""
+        Entwirf einen Lückentext in {briefing.SourceLang}: einen kurzen, zusammenhängenden Text in 'text'.
+        Setze jede Lösung in eckige Klammern – genau das, was das Kind einsetzen soll, sonst nichts:
+          Yesterday we [went] (go) to the Tower and [took] (take) a lot of photos.
+        Fragst du eine Form ab (Zeitform, Frageanhängsel, Steigerung), schreibe die Grundform in runden Klammern
+        dahinter – so hat jede Lücke genau eine richtige Lösung. Ist eine zweite Schreibweise ebenso richtig
+        (Kurzform), trenne sie mit |: [didn't|did not]. In eine Klammer kommt NIE ein falsches Wort.
+        Eine Lösung darf außerhalb der Klammern nicht im Text stehen.
+        'distractors': zwei bis vier falsche, aber plausible Wörter derselben Art. Die Lösungen gehören NICHT hinein –
+        die Wortbank enthält sie von selbst. In die runde Klammer hinter einer Lücke kommt genau ein Wort (die
+        Grundform), nie eine Auswahlliste.
         """;
+
+    /// <inheritdoc/>
+    protected override ClozeDraft Normalize(ClozeDraft draft, CreatorBriefing briefing, GenerationRequest request)
+    {
+        var text = ClozeMarkup.Limit(draft.Text, request.ItemCount);
+        // A distractor that is also an answer is only a duplicate in the word bank, which lists the answers anyway -
+        // harmless, so it is dropped rather than sent back. Models read 'distractors' as "the word bank" and copy
+        // every answer in (eight of ten in the second live run). The danger the old shape had, a wrong word ACCEPTED
+        // as correct, cannot arise here: accepted spellings come only from inside a bracket.
+        var accepted = ClozeMarkup.Parse(text).Gaps.SelectMany(g => g.Alternatives.Prepend(g.Answer))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return draft with
+        {
+            Text = text,
+            Distractors = draft.Distractors?.Where(d => d is null || !accepted.Contains(d.Trim())).ToList(),
+        };
+    }
 
     /// <inheritdoc/>
     protected override IReadOnlyList<string> Validate(ClozeDraft draft, CreatorBriefing briefing,
         GenerationRequest request)
     {
         var violations = new Violations();
-        // If 'gaps' is missing from the model JSON this is null - as an empty list it becomes a rule violation.
-        var gaps = draft.Gaps ?? [];
-        // A null gap passes the count and is skipped by every check below; it must be a violation of its own, or
-        // the draft is accepted and the answer key crashes on it.
-        for (var i = 0; i < gaps.Count; i++)
-            if (gaps[i] is null) violations.Add($"Die Lücke an Position {i + 1} ist leer (null) – jede Lücke braucht index und answer.");
         DraftRules.Title(violations, draft.Title, briefing);
         DraftRules.NotBlank(violations, draft.Text, "Der Lückentext");
-        DraftRules.Count(violations, gaps.Count, request);
-        DraftRules.CoversRequiredWords(violations, briefing, gaps.Select(g => g?.Answer), exact: true);
 
-        // Placeholders in the text and gaps must correspond one to one - otherwise the exercise shows a gap
-        // without a solution (or a solution without a gap). We compare the COUNT per number, not the set
-        // difference: a text with {{3}} twice passed the Except check in both directions, yet the server
-        // renders one field more than there are solutions - a box the child can never answer correctly.
-        var inText = Placeholder().Matches(draft.Text ?? "")
-            .GroupBy(m => int.Parse(m.Groups[1].Value))
-            .ToDictionary(g => g.Key, g => g.Count());
-        var asGap = gaps.Where(g => g is not null)
-            .GroupBy(g => g.Index)
-            .ToDictionary(g => g.Key, g => g.Count());
+        var parsed = ClozeMarkup.Parse(draft.Text);
+        foreach (var error in parsed.Errors) violations.Add(error);
+        DraftRules.Count(violations, parsed.Gaps.Count, request);
+        DraftRules.CoversRequiredWords(violations, briefing, parsed.Gaps.Select(g => g.Answer), exact: true);
 
-        foreach (var index in inText.Keys.Union(asGap.Keys).Order())
-        {
-            var (texts, entries) = (inText.GetValueOrDefault(index), asGap.GetValueOrDefault(index));
-            // Exactly once in the text and exactly one gap - equal totals alone are not enough, otherwise
-            // "{{3}} twice plus two gaps with index 3" would pass as fine.
-            if (texts == 1 && entries == 1) continue;
+        // A form hint is one base form. A list in the brackets ("(Pokémon, friend, match)", second live run) puts the
+        // answer right beside its gap and turns the gap into multiple choice without a word bank's distractors.
+        foreach (var (gap, hint) in ClozeMarkup.FormHints(parsed.Text))
+            if (hint.IndexOfAny([',', '/', ';']) >= 0 || hint.Contains(" or ", StringComparison.OrdinalIgnoreCase))
+                violations.Add($"Lücke {gap}: in die runde Klammer hinter einer Lücke gehört genau eine Grundform, " +
+                               $"keine Auswahl ('({hint})').");
 
-            violations.Add(
-                entries == 0 ? $"Zum Platzhalter {{{{{index}}}}} im Text fehlt die passende Lücke."
-                : texts == 0 ? $"Die Lücke mit index {index} hat keinen Platzhalter {{{{{index}}}}} im Text."
-                : $"Der Platzhalter {{{{{index}}}}} steht {texts}× im Text, dazu gibt es {entries} Lücke(n) – "
-                  + "jeder Platzhalter darf nur einmal vorkommen und braucht genau eine Lücke.");
-        }
+        // Revealed means: standing as a word of its own outside the brackets. What remains of the text is what the
+        // child reads - minus the base-form hints (part of the task) and the placeholders (a "3" is no "{{3}}").
+        var readable = ClozeMarkup.ReadableText(parsed.Text);
+        foreach (var (gap, index) in parsed.Gaps.Select((gap, index) => (gap, index)))
+            if (ClozeMarkup.ContainsWord(readable, gap.Answer))
+                violations.Add($"Lücke {index + 1}: die Lösung '{gap.Answer}' steht außerhalb der Klammern im Text " +
+                               "und ist damit verraten.");
 
-        foreach (var gap in gaps.Where(g => g is not null))
-        {
-            DraftRules.NotBlank(violations, gap.Answer, $"Lücke {gap.Index}: die Lösung");
-            if (!string.IsNullOrWhiteSpace(gap.Answer)
-                && draft.Text?.Contains(gap.Answer.Trim(), StringComparison.OrdinalIgnoreCase) == true)
-                violations.Add($"Lücke {gap.Index}: die Lösung '{gap.Answer}' steht im Text und ist damit verraten.");
-        }
-
-        // The type's default question form is the word bank - without it the child would have no choice.
-        var bank = draft.WordBank ?? [];
-        violations.Require(bank.Count > 0, "Die Wortbank fehlt.");
-        // Trim early instead of inside the comparison: `answer` then stays the same value throughout (in the
-        // message too), and the compiler sees no dereference of a possibly empty value.
-        foreach (var answer in gaps.Select(g => g?.Answer?.Trim()).Where(a => !string.IsNullOrEmpty(a)))
-            if (!bank.Any(w => string.Equals(w?.Trim(), answer, StringComparison.OrdinalIgnoreCase)))
-                violations.Add($"Die Wortbank enthält die Lösung '{answer}' nicht.");
+        var distractors = Clean(draft.Distractors);
+        violations.Require(distractors.Count >= MinDistractors,
+            $"Es fehlen Ablenker: {distractors.Count} falsche Wörter in 'distractors', mindestens {MinDistractors}. " +
+            "Ablenker sind Wörter, die NICHT in eine Lücke gehören – die Lösungen trägt die Wortbank von selbst.");
 
         return violations.Messages;
     }
 
     /// <inheritdoc/>
     protected override IReadOnlyList<string> ExpectedAnswers(ClozeDraft draft) =>
-        // The task index is the gap's list position (not its number) - that is how the server reads it.
-        [.. draft.Gaps.Select(g => g.Answer.Trim())];
+        // The task index is the gap's position in the text - that is how the server reads it.
+        [.. ClozeMarkup.Parse(draft.Text).Gaps.Select(g => g.Answer)];
 
     /// <inheritdoc/>
     protected override Task<ExercisePayload<ClozeConfig>> ToPayloadAsync(ClozeDraft draft,
         CreatorBriefing briefing, GenerationRequest request, CancellationToken ct)
     {
+        var parsed = ClozeMarkup.Parse(draft.Text);
         var config = new ClozeConfig
         {
-            Text = draft.Text.Trim(),
-            Gaps = [.. draft.Gaps.Select(g => new Gap(g.Index, g.Answer.Trim(), Clean(g.Alternatives)))],
-            WordBank = Clean(draft.WordBank),
+            Text = parsed.Text.Trim(),
+            Gaps = [.. parsed.Gaps.Select((g, i) => new Gap(i + 1, g.Answer, g.Alternatives.Count > 0 ? [.. g.Alternatives] : null))],
+            // Sorted, not in text order: a bank listing the answers first, gap by gap, would be the answer key.
+            WordBank = [.. parsed.Gaps.Select(g => g.Answer).Concat(Clean(draft.Distractors))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Order(StringComparer.OrdinalIgnoreCase)],
         };
 
         return Task.FromResult(Payload(draft.Title, config, briefing, request));
     }
 
-    /// <summary>Strips empty entries and duplicates; completely empty lists become <c>null</c>.</summary>
-    private static List<string>? Clean(List<string>? values)
-    {
-        var cleaned = (values ?? [])
-            // A model in JSON mode is not held to the item type: a null entry is left out like an empty one.
-            .Select(v => v?.Trim() ?? "")
-            .Where(v => v.Length > 0)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
-        return cleaned.Count > 0 ? cleaned : null;
-    }
-
-    [GeneratedRegex(@"\{\{(\d+)\}\}")]
-    private static partial Regex Placeholder();
+    /// <summary>Strips empty entries and duplicates - a model in JSON mode is not held to the item type.</summary>
+    private static List<string> Clean(List<string>? values) =>
+        [.. (values ?? []).Select(v => v?.Trim() ?? "").Where(v => v.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase)];
 }

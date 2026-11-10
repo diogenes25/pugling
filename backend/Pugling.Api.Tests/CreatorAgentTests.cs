@@ -627,6 +627,24 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
             SourceLang: "en", TargetLang: "de", RewardPoints: 10, Interests: interests ?? [],
             DryRun: dryRun, Strict: strict);
 
+    /// <summary>
+    /// A vocabulary exercise as a person (or a loader script) creates it - straight through the API, without the agent.
+    /// Only such an exercise is the unit's word list: what the agent generated is left out of it.
+    /// </summary>
+    private static async Task<int> BookVocabularyAsync(CreatorApi creator, int seriesId, int seriesUnitId,
+        params (string Front, string Back, string? Hint)[] pairs)
+    {
+        var created = await creator.CreateExerciseAsync(seriesId, seriesUnitId, "vocabulary",
+            new ExercisePayload<VocabularyConfig>("Wörter aus dem Buch", 1, 10, new VocabularyConfig
+            {
+                Direction = "front-to-back",
+                SourceLang = "en",
+                TargetLang = "de",
+                Items = [.. pairs.Select(p => new VocabItem(p.Front, p.Back, p.Hint))],
+            }));
+        return created.Id;
+    }
+
     private const string VocabularyJson = """
         {"title":"Tiere auf dem Bauernhof","items":[
           {"front":"the horse","back":"das Pferd","hint":"Reiten"},
@@ -935,15 +953,37 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
             .Where(v => v.Word == "the horse")
             .Select(v => v.Id)];
 
+    /// <summary>
+    /// A number as answer must not count as revealed by another gap's placeholder: "3" stands in "{{3}}". Red if the
+    /// reveal check reads the placeholders (<c>ReadableText</c>).
+    /// </summary>
+    [Fact]
+    public async Task Eine_Zahl_als_Loesung_wird_nicht_vom_Platzhalter_verraten()
+    {
+        const string cloze = """
+            {"title":"Zahlen","text":"Tom has [two] horses and [3] sheep. He feeds [them] every day.",
+             "distractors":["four","us"]}
+            """;
+        var (pipeline, creator, _) = BuildAgent(cloze);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Cloze-Zahl");
+
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Cloze"));
+
+        Assert.True(outcome.Published, string.Join(" | ", outcome.Violations));
+    }
+
+    /// <summary>
+    /// The model marks answers in brackets; C# numbers the placeholders, builds the gaps and the word bank. Red if the
+    /// conversion numbers wrong (self-test below 100 %, text assertion), if the word bank keeps text order (it would be
+    /// the answer key), or if a distractor ends up as an accepted answer - the defect of the old shape, where a model
+    /// filled 'alternatives' with its wrong words and the server graded "came" correct for "went".
+    /// </summary>
     [Fact]
     public async Task Lueckentext_entsteht_und_besteht_den_Selbsttest()
     {
         const string cloze = """
-            {"title":"Auf dem Bauernhof","text":"Every morning Tom feeds the {{1}} and the {{2}}. Then he cleans the {{3}}.",
-             "gaps":[{"index":1,"answer":"horse","alternatives":null},
-                     {"index":2,"answer":"sheep","alternatives":null},
-                     {"index":3,"answer":"stable","alternatives":null}],
-             "wordBank":["horse","sheep","stable","tractor","fence"]}
+            {"title":"Auf dem Bauernhof","text":"Every morning Tom feeds the [sheep] and the [horse]. Then he cleans the [stable].",
+             "distractors":["tractor","fence"]}
             """;
         var (pipeline, creator, _) = BuildAgent(cloze);
         var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Cloze");
@@ -952,23 +992,23 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
         Assert.Empty(outcome.Violations);
         Assert.True(outcome.Published, $"Selbsttest: {outcome.SelfTestPercent} %");
+        var created = await creator.GetExerciseAsync<ClozeConfig>(seriesId, seriesUnitId, "cloze", outcome.ExerciseId!.Value);
+        Assert.Equal("Every morning Tom feeds the {{1}} and the {{2}}. Then he cleans the {{3}}.", created.Config.Text);
+        Assert.Equal(["fence", "horse", "sheep", "stable", "tractor"], created.Config.WordBank);
+        Assert.All(created.Config.Gaps, g => Assert.Null(g.Alternatives));
     }
 
     /// <summary>
-    /// B-306: a model in JSON mode is not held to the item type - a <c>null</c> in the word bank or among a gap's
-    /// alternatives is left out like an empty entry, and the exercise is still created. Red if <c>Clean</c> trims
-    /// before it filters (a <see cref="NullReferenceException"/> after the draft had passed every rule) - one null
-    /// is enough for that; the word-bank null also holds the null-safe read in the word-bank rule.
+    /// B-306: a model in JSON mode is not held to the item type - a <c>null</c> among the distractors is left out like
+    /// an empty entry, and the exercise is still created. Red if <c>Clean</c> trims before it filters (a
+    /// <see cref="NullReferenceException"/> after the draft had passed every rule).
     /// </summary>
     [Fact]
     public async Task Ein_Lueckentext_mit_Null_Eintraegen_entsteht_ohne_sie()
     {
         const string cloze = """
-            {"title":"Auf dem Bauernhof","text":"Every morning Tom feeds the {{1}} and the {{2}}. Then he cleans the {{3}}.",
-             "gaps":[{"index":1,"answer":"horse","alternatives":["pony",null]},
-                     {"index":2,"answer":"sheep","alternatives":null},
-                     {"index":3,"answer":"stable","alternatives":null}],
-             "wordBank":["horse","sheep",null,"stable","tractor"]}
+            {"title":"Auf dem Bauernhof","text":"Every morning Tom feeds the [horse|pony] and the [sheep]. Then he cleans the [stable].",
+             "distractors":["tractor",null,"fence"]}
             """;
         var (pipeline, creator, _) = BuildAgent(cloze);
         var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Cloze-null");
@@ -980,29 +1020,27 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
-    /// B-306: a <c>null</c> gap is a rule violation (the repair round can fix it), not a crash. With three
-    /// requested gaps, two real ones and a <c>null</c> pass the count and the placeholder check, which skip
-    /// <c>null</c> - so only an explicit rule catches it. Red if that rule is missing (the run ends in a
-    /// <see cref="NullReferenceException"/> at the first <c>gap.Answer</c>).
+    /// Markup the converter cannot read is a rule violation (the repair round can fix it), not a gap without an answer:
+    /// an empty bracket, a bracket without its partner, and a <c>{{n}}</c> the model wrote itself out of habit. Red if
+    /// any of the three checks in <c>ClozeMarkup.Parse</c> goes - the placeholder one would otherwise reach the server
+    /// as a field nobody can answer.
     /// </summary>
     [Fact]
-    public async Task Eine_Null_Luecke_ist_eine_Regelverletzung_statt_eines_Absturzes()
+    public async Task Unlesbare_Klammern_sind_eine_Regelverletzung()
     {
         const string cloze = """
-            {"title":"Auf dem Bauernhof","text":"Every morning Tom feeds the {{1}} and the {{2}}.",
-             "gaps":[{"index":1,"answer":"horse","alternatives":null},
-                     {"index":2,"answer":"sheep","alternatives":null},
-                     null],
-             "wordBank":["horse","sheep","tractor"]}
+            {"title":"Auf dem Bauernhof","text":"Tom feeds the [horse], the [] and the {{3}}. Then he [cleans the stable.",
+             "distractors":["tractor","fence"]}
             """;
         var (pipeline, creator, _) = BuildAgent(cloze);
-        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Cloze-null-Luecke");
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Cloze-Markup");
 
-        // With a required word, so `CoversRequiredWords` reads the null gap too (B-321).
-        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Cloze", words: ["horse"]));
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Cloze"));
 
         Assert.False(outcome.DraftAccepted);
-        Assert.Contains(outcome.Violations, v => v.Contains("Position 3") && v.Contains("(null)"));
+        Assert.Contains(outcome.Violations, v => v.Contains("ist leer"));
+        Assert.Contains(outcome.Violations, v => v.Contains("ohne Gegenstück"));
+        Assert.Contains(outcome.Violations, v => v.Contains("{{n}}"));
         Assert.Empty(await creator.SearchExercisesAsync(subjectId: subjectId));
     }
 
@@ -1062,16 +1100,21 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.True(outcome.Published, $"Selbsttest: {outcome.SelfTestPercent} %");
     }
 
+    /// <summary>
+    /// What the brackets do not make redundant: an answer standing as a word outside the brackets gives the gap away,
+    /// a choice list behind a gap ("(sheep, goat)") puts the answer right beside it, and too few real distractors let
+    /// the word bank give the answers away by elimination. A distractor that is also an answer does not count as one:
+    /// it is dropped, so "horse" leaves only "fence". Red if any of the three rules goes, or if the answer-distractor
+    /// is counted (no distractor violation). The text also holds two cases the reveal check must NOT report - "horses"
+    /// contains "horse" only as a substring, and the base-form hint "(clean)" after its own gap is part of the task -
+    /// so a substring check or one that reads the hints is red too, through the exact list of violations.
+    /// </summary>
     [Fact]
-    public async Task Ein_Lueckentext_ohne_passende_Platzhalter_wird_abgelehnt()
+    public async Task Eine_verratene_Loesung_eine_Auswahlliste_und_zu_wenige_Ablenker_werden_abgelehnt()
     {
-        // Gap 3 has no placeholder, placeholder {{4}} has no gap, and the solution stands in the text.
         const string cloze = """
-            {"title":"Kaputt","text":"Tom feeds the {{1}} and the horse. Then he cleans the {{4}}.",
-             "gaps":[{"index":1,"answer":"horse","alternatives":null},
-                     {"index":2,"answer":"sheep","alternatives":null},
-                     {"index":3,"answer":"stable","alternatives":null}],
-             "wordBank":["horse","sheep","stable"]}
+            {"title":"Kaputt","text":"Tom feeds the [horse] and the horses. The sheep is in the field. They [clean] (clean) the [sheep] (sheep, goat).",
+             "distractors":["horse","fence"]}
             """;
         var (pipeline, creator, _) = BuildAgent(cloze);
         var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Cloze-kaputt");
@@ -1079,9 +1122,10 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Cloze"));
 
         Assert.False(outcome.DraftAccepted);
-        Assert.Contains(outcome.Violations, v => v.Contains("{{4}}"));
-        Assert.Contains(outcome.Violations, v => v.Contains("keinen Platzhalter"));
-        Assert.Contains(outcome.Violations, v => v.Contains("verraten"));
+        Assert.Collection(outcome.Violations,
+            v => Assert.StartsWith("Lücke 3: in die runde Klammer", v),
+            v => Assert.StartsWith("Lücke 3: die Lösung 'sheep'", v),
+            v => Assert.StartsWith("Es fehlen Ablenker: 1", v));
         Assert.Empty(await creator.SearchExercisesAsync(subjectId: subjectId));
     }
 
@@ -1109,27 +1153,218 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
-    /// The same placeholder twice in the text. A set difference (<c>Except</c>) does not notice this
-    /// because it deduplicates – but the server then renders one more field than there are solutions,
-    /// and the child gets a box that can never be answered correctly.
+    /// A model that marks more answers than asked for keeps its text: the brackets beyond the count are dissolved into
+    /// plain words - with their base-form hint, or "cleans (clean)" would stand in the text - and no repair round is
+    /// spent on it. Red if <c>Normalize</c> stops limiting (four gaps against three requested is a count violation),
+    /// or if <c>Limit</c> leaves the hint behind. The distractor "goat" doubles a kept answer and is dropped without a
+    /// violation; red if that turns back into a rule.
     /// </summary>
     [Fact]
-    public async Task Ein_doppelter_Platzhalter_wird_abgelehnt()
+    public async Task Ueberzaehlige_Luecken_werden_zu_Text_statt_zu_einer_Reparatur_Runde()
     {
         const string cloze = """
-            {"title":"Doppelt","text":"Tom feeds the {{1}}, then the {{2}} and the {{2}}.",
-             "gaps":[{"index":1,"answer":"horse","alternatives":null},
-                     {"index":2,"answer":"sheep","alternatives":null},
-                     {"index":3,"answer":"stable","alternatives":null}],
-             "wordBank":["horse","sheep","stable"]}
+            {"title":"Zu viele","text":"Tom feeds the [horse], then the [sheep] and the [goat]. Then he [cleans] (clean) the stable.",
+             "distractors":["tractor","fence","goat"]}
             """;
         var (pipeline, creator, _) = BuildAgent(cloze);
-        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Cloze-doppelt");
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Cloze-zuviel");
 
         var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Cloze"));
 
+        Assert.True(outcome.Published, string.Join(" | ", outcome.Violations));
+        var created = await creator.GetExerciseAsync<ClozeConfig>(seriesId, seriesUnitId, "cloze", outcome.ExerciseId!.Value);
+        Assert.Equal("Tom feeds the {{1}}, then the {{2}} and the {{3}}. Then he cleans the stable.", created.Config.Text);
+    }
+
+    /// <summary>
+    /// With a word list in the unit, the program decides the words and their translations; the model contributes the
+    /// title and the hints. The draft below reorders the words, "corrects" two translations, swaps one word for another
+    /// and attaches a hint that gives the answer away. Red if <c>Normalize</c> takes the model's pairs again (backs,
+    /// order and the cow), if a revealing hint survives (<c>DropRevealingHint</c>, inflected too:
+    /// "Pferde" gives "das Pferd" away) or the book's hint does not stand
+    /// in for it ("Reiten"), if the pairs do not reach the prompt with their translations, or if a cloze part gets
+    /// them too (it practices a grammar focus). The store ids are asserted as a consequence, not as a claim of their
+    /// own: the lookup by word and translation finds the same entries.
+    /// </summary>
+    [Fact]
+    public async Task Mit_Wortliste_der_Unit_stehen_Woerter_und_Uebersetzungen_fest()
+    {
+        const string modelDraft = """
+            {"title":"Unit-Wörter","items":[
+              {"front":"the goat","back":"die Geiß","hint":"meckert auf der Weide"},
+              {"front":"the horse","back":"der Gaul","hint":"Viele Pferde stehen im Stall"},
+              {"front":"the cow","back":"die Kuh","hint":"Milch"}]}
+            """;
+        const string cloze = """
+            {"title":"Lückentext zur Unit","text":"Tom [feeds] the horse, Ann [cleans] the stable and they [play] (play) cards.",
+             "distractors":["sleeps","runs"]}
+            """;
+        var (pipeline, creator, chat) = BuildAgent(modelDraft, cloze);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Wortliste");
+        var book = await BookVocabularyAsync(creator, seriesId, seriesUnitId,
+            ("the horse", "das Pferd", "Reiten"), ("the sheep", "das Schaf", null), ("the goat", "die Ziege", null));
+        var bookItems = await creator.ListItemsAsync(seriesId, seriesUnitId, book);
+
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Vocabulary"));
+
+        Assert.True(outcome.Published, string.Join(" | ", outcome.Violations));
+        var items = await creator.ListItemsAsync(seriesId, seriesUnitId, outcome.ExerciseId!.Value);
+        Assert.Equal(["the horse", "the sheep", "the goat"], items.Select(i => i.Front));
+        Assert.Equal(["das Pferd", "das Schaf", "die Ziege"], items.Select(i => i.Back));
+        Assert.Equal(bookItems.Select(i => i.VocabularyId), items.Select(i => i.VocabularyId));
+        Assert.Equal(["Reiten", null, "meckert auf der Weide"], items.Select(i => i.Hint));
+        Assert.Contains("- the horse = das Pferd", chat.LastMessages[1].Text);
+
+        var (_, clozeOutcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Cloze"));
+        Assert.True(clozeOutcome.Published, string.Join(" | ", clozeOutcome.Violations));
+        Assert.DoesNotContain("Wortschatz dieser Übung", chat.LastMessages[1].Text);
+    }
+
+    /// <summary>
+    /// A title the unit already has gets a number instead of costing a repair round. Red if <c>UniqueTitle</c> goes:
+    /// the second draft then breaks the title rule in every round and is refused.
+    /// </summary>
+    [Fact]
+    public async Task Ein_vergebener_Titel_bekommt_eine_Nummer()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Titel-doppelt");
+        await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Vocabulary"));
+
+        var (_, second) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Vocabulary"));
+
+        Assert.True(second.Published, string.Join(" | ", second.Violations));
+        Assert.Equal("Tiere auf dem Bauernhof (2)", second.Title);
+    }
+
+    /// <summary>
+    /// The printed draft is for a human: umlauts stay umlauts. Red if the print options go back to the default
+    /// encoder ("für" instead of "für").
+    /// </summary>
+    [Fact]
+    public async Task Der_gedruckte_Entwurf_behaelt_Umlaute()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson.Replace("Tiere auf dem Bauernhof", "Tiere für Kinder"));
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Umlaute");
+
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Vocabulary", dryRun: true));
+
+        Assert.Contains("\"Tiere für Kinder\"", outcome.DraftJson);
+    }
+
+    /// <summary>
+    /// Which words an exercise gets: weak words of the unit first, then the next slice per part, wrapping at the end.
+    /// Red if <c>Slice</c> ignores the part (part 1 equals part 0), stops wrapping (part 2 comes back short), or
+    /// drops the weak words.
+    /// </summary>
+    [Fact]
+    public void Jeder_Teil_nimmt_die_naechste_Scheibe_der_Wortliste()
+    {
+        VocabPair[] pool = [new("a", "A", 1), new("b", "B", 2), new("c", "C", 3), new("d", "D", 4), new("e", "E", 5)];
+
+        Assert.Equal(["a", "b"], UnitVocabulary.Slice(pool, [], 2, 0).Select(p => p.Word));
+        Assert.Equal(["c", "d"], UnitVocabulary.Slice(pool, [], 2, 1).Select(p => p.Word));
+        Assert.Equal(["e", "a"], UnitVocabulary.Slice(pool, [], 2, 2).Select(p => p.Word));
+        Assert.Equal(["d", "a"], UnitVocabulary.Slice(pool, ["D", "unbekannt"], 2, 0).Select(p => p.Word));
+    }
+
+    /// <summary>
+    /// The study plan hands each exercise of a type its own part number, and so its own slice of the word list.
+    /// Red if <c>PlanPlanner</c> stops setting <c>Part</c>: the second vocabulary exercise then repeats the first
+    /// three words.
+    /// </summary>
+    [Fact]
+    public async Task Zwei_Vokabeluebungen_eines_Lehrplans_ueben_verschiedene_Woerter()
+    {
+        var (pipeline, creator, _) = BuildAgent("""{"title":"Teil A","items":[]}""", """{"title":"Teil B","items":[]}""");
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Lehrplan-Scheiben");
+        await BookVocabularyAsync(creator, seriesId, seriesUnitId,
+            ("the horse", "das Pferd", null), ("the sheep", "das Schaf", null), ("the goat", "die Ziege", null),
+            ("the cow", "die Kuh", null), ("the pig", "das Schwein", null), ("the duck", "die Ente", null));
+
+        var outcome = await new PlanPlanner(pipeline, new SupervisorApi(Authenticated())).RunAsync(new PlanRequest(
+            Request(subjectId, seriesId, seriesUnitId, "Vocabulary"),
+            Types: ["Vocabulary"], PerType: 2, Intensity: PlanIntensity.Normal,
+            StartDate: null, DurationDays: 14, Title: null));
+
+        Assert.True(outcome.Complete, string.Join(" | ", outcome.Parts.Select(p => p.Error ?? string.Join(" | ", p.Outcome!.Violations))));
+        var words = new List<string[]>();
+        foreach (var id in outcome.ExerciseIds)
+            words.Add([.. (await creator.ListItemsAsync(seriesId, seriesUnitId, id)).Select(i => i.Front)]);
+        Assert.Equal(["the horse", "the sheep", "the goat"], words[0]);
+        Assert.Equal(["the cow", "the pig", "the duck"], words[1]);
+    }
+
+    /// <summary>
+    /// What the agent generated itself is no word list: on a unit without book vocabulary, the second vocabulary part
+    /// of a plan must not take the first part's model-chosen words as "the unit's". And a book list too short for an
+    /// exercise (two words) leaves the choice to the model instead of failing every round. Red if the briefing reads
+    /// generated exercises into the pool (part B repeats part A's words), or if <c>FixedPairs</c> takes a list below
+    /// <c>DraftRules.MinItems</c> (part A fails with two cards).
+    /// </summary>
+    [Fact]
+    public async Task Eigene_KI_Uebungen_und_eine_zu_kurze_Liste_sind_keine_Wortliste()
+    {
+        const string partB = """
+            {"title":"Teil B","items":[
+              {"front":"the cow","back":"die Kuh","hint":null},{"front":"the pig","back":"das Schwein","hint":null},
+              {"front":"the duck","back":"die Ente","hint":null}]}
+            """;
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson, partB);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Keine-Wortliste");
+        await BookVocabularyAsync(creator, seriesId, seriesUnitId, ("the cat", "die Katze", null), ("the dog", "der Hund", null));
+
+        var outcome = await new PlanPlanner(pipeline, new SupervisorApi(Authenticated())).RunAsync(new PlanRequest(
+            Request(subjectId, seriesId, seriesUnitId, "Vocabulary"),
+            Types: ["Vocabulary"], PerType: 2, Intensity: PlanIntensity.Normal,
+            StartDate: null, DurationDays: 14, Title: null));
+
+        Assert.True(outcome.Complete, string.Join(" | ", outcome.Parts.Select(p => p.Error ?? string.Join(" | ", p.Outcome!.Violations))));
+        var words = new List<string[]>();
+        foreach (var id in outcome.ExerciseIds)
+            words.Add([.. (await creator.ListItemsAsync(seriesId, seriesUnitId, id)).Select(i => i.Front)]);
+        Assert.Equal(["the horse", "the sheep", "the goat"], words[0]);
+        Assert.Equal(["the cow", "the pig", "the duck"], words[1]);
+    }
+
+    /// <summary>
+    /// The grammar parts of a plan take the unit's grammar topics in turn; the other types keep their part number.
+    /// Red if the rotation always takes the first topic, or if a second round on a topic reads like the first (the
+    /// same topic text twice is the same exercise twice). Which types count as grammar is <c>RunAsync</c>'s business
+    /// and not claimed here.
+    /// </summary>
+    [Fact]
+    public void Grammatik_Teile_eines_Lehrplans_bekommen_je_ein_Thema_der_Unit()
+    {
+        string[] topics = ["Question tags", "Past progressive"];
+
+        Assert.EndsWith("Schwerpunkt: Question tags", PlanPlanner.PartTopic("Unit 1", "Cloze", 1, 2, topics, 0));
+        Assert.EndsWith("Schwerpunkt: Past progressive", PlanPlanner.PartTopic("Unit 1", "Cloze", 2, 2, topics, 1));
+        Assert.EndsWith("Schwerpunkt: Question tags (Teil 2)", PlanPlanner.PartTopic("Unit 1", "Grammar", 1, 1, topics, 2));
+        Assert.Equal("Unit 1 (Lehrplan, Vocabulary 1/2)", PlanPlanner.PartTopic("Unit 1", "Vocabulary", 1, 2, topics, -1));
+    }
+
+    /// <summary>
+    /// B-458: a grammar task whose prompt already contains its answer is rejected - the child could copy it. The base
+    /// form in round brackets does not count: "They ___ (play) football." with the answer "play" is a real task.
+    /// Red if <c>AnswerNotInPrompt</c> goes (no violation), or if it reads the brackets (two violations).
+    /// </summary>
+    [Fact]
+    public async Task Eine_Grammatikaufgabe_mit_der_Loesung_im_Text_wird_abgelehnt()
+    {
+        const string grammar = """
+            {"title":"Past progressive","instruction":"Setze die richtige Form ein.","tasks":[
+              {"prompt":"They were playing football. While they ___ (play), it started to rain.","answer":"were playing","ruleHint":null},
+              {"prompt":"They ___ (play) football every Sunday.","answer":"play","ruleHint":null},
+              {"prompt":"She ___ (read) when the phone rang.","answer":"was reading","ruleHint":null}]}
+            """;
+        var (pipeline, creator, _) = BuildAgent(grammar);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Grammar-verraten");
+
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Grammar"));
+
         Assert.False(outcome.DraftAccepted);
-        Assert.Contains(outcome.Violations, v => v.Contains("{{2}} steht 2×"));
+        Assert.StartsWith("Aufgabe 1: die Lösung 'were playing' steht schon", Assert.Single(outcome.Violations));
         Assert.Empty(await creator.SearchExercisesAsync(subjectId: subjectId));
     }
 
@@ -1377,11 +1612,8 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     public async Task Eine_Uebungsklausur_erzeugt_mehrere_Uebungen_und_eine_Klassenarbeit()
     {
         const string cloze = """
-            {"title":"Klausur-Lückentext","text":"Ben has {{1}} for his sister, never wants to {{2}} and has {{3}} up fast.",
-             "gaps":[{"index":1,"answer":"responsibility","alternatives":null},
-                     {"index":2,"answer":"argue","alternatives":null},
-                     {"index":3,"answer":"grown","alternatives":null}],
-             "wordBank":["responsibility","argue","grown","promise"]}
+            {"title":"Klausur-Lückentext","text":"Ben has [responsibility] for his sister, never wants to [argue] and has [grown] up fast.",
+             "distractors":["promise","answer"]}
             """;
         var (pipeline, creator, _) = BuildAgent(ProfileVocabularyJson, cloze);
         var supervisor = new SupervisorApi(Authenticated());
@@ -1476,11 +1708,8 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
     /// <summary>The cloze answer used by the study-plan cases; deliberately independent of any unit material.</summary>
     private const string PlanClozeJson = """
-        {"title":"Lehrplan-Lückentext","text":"The horse {{1}} in the field, the sheep {{2}} and the goat {{3}}.",
-         "gaps":[{"index":1,"answer":"runs","alternatives":null},
-                 {"index":2,"answer":"sleeps","alternatives":null},
-                 {"index":3,"answer":"eats","alternatives":null}],
-         "wordBank":["runs","sleeps","eats","jumps"]}
+        {"title":"Lehrplan-Lückentext","text":"The horse [runs] in the field, the sheep [sleeps] and the goat [eats].",
+         "distractors":["jumps","swims"]}
         """;
 
     /// <summary>

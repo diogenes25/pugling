@@ -16,18 +16,14 @@ public sealed record VocabularyDraft(string Title, List<VocabularyDraftItem> Ite
 /// <param name="Hint">Optional short memory aid (mnemonic, context).</param>
 public sealed record VocabularyDraftItem(string Front, string Back, string? Hint);
 
-/// <summary>Draft of a cloze text.</summary>
+/// <summary>
+/// Draft of a cloze text. The answers stand in square brackets inside the text; <see cref="ClozeMarkup"/> derives
+/// placeholders, gaps and word bank from it - the model no longer numbers anything.
+/// </summary>
 /// <param name="Title">Descriptive German title of the exercise.</param>
-/// <param name="Text">Running text with placeholders <c>{{1}}</c>, <c>{{2}}</c> … at the gap positions.</param>
-/// <param name="Gaps">Exactly one gap per placeholder, with the same number.</param>
-/// <param name="WordBank">Selection words (all answers plus a few plausible distractors).</param>
-public sealed record ClozeDraft(string Title, string Text, List<ClozeGapDraft> Gaps, List<string>? WordBank);
-
-/// <summary>A gap of the cloze text.</summary>
-/// <param name="Index">Number of the placeholder in the text (<c>{{1}}</c> → 1).</param>
-/// <param name="Answer">The one correct answer.</param>
-/// <param name="Alternatives">Additionally accepted spellings.</param>
-public sealed record ClozeGapDraft(int Index, string Answer, List<string>? Alternatives);
+/// <param name="Text">Running text with every answer in brackets: <c>We [went] (go) to the Tower.</c></param>
+/// <param name="Distractors">Wrong but plausible words for the word bank; never one of the answers.</param>
+public sealed record ClozeDraft(string Title, string Text, List<string>? Distractors);
 
 /// <summary>Draft of a translation exercise.</summary>
 /// <param name="Title">Descriptive German title of the exercise.</param>

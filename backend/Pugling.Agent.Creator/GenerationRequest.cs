@@ -49,6 +49,10 @@ namespace Pugling.Agent.Creator;
 /// </param>
 /// <param name="DryRun">Only plan and print - write nothing.</param>
 /// <param name="Strict">Delete the exercise again if the self-test does not reach 100 %.</param>
+/// <param name="Part">
+/// Which exercise of a series this is (0 = the first). A study plan with two vocabulary exercises on one unit asks
+/// for part 0 and part 1, and each gets its own slice of the unit's word pairs instead of the same ten twice.
+/// </param>
 public sealed record GenerationRequest(
     int? ChildId,
     int? ProfileId,
@@ -67,4 +71,5 @@ public sealed record GenerationRequest(
     int RewardPoints,
     IReadOnlyList<string> Interests,
     bool DryRun,
-    bool Strict);
+    bool Strict,
+    int Part = 0);

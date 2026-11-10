@@ -17,6 +17,9 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
     /// <summary>At most this many weak words go into the prompt - more would overload local models.</summary>
     private const int MaxWeakWords = 15;
 
+    /// <summary>The exercise types built from words; only they get a slice of the unit's word list.</summary>
+    private static readonly HashSet<string> WordTypes = new(["Vocabulary", "Translation"], StringComparer.OrdinalIgnoreCase);
+
     /// <summary>Builds the briefing for a request.</summary>
     public async Task<CreatorBriefing> BuildAsync(GenerationRequest request, CancellationToken ct = default)
     {
@@ -70,6 +73,20 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
             ? request.Words
             : [.. (child?.WeakWords ?? []).Select(w => w.Word)];
 
+        // The unit's word list and grammar topics are read, not generated: both are fixed by the book.
+        var pool = await LoadUnitVocabularyAsync(request, existing, ct);
+        // Only the word-practicing types get a slice: a cloze or grammar part has a grammar focus, and ten word
+        // pairs beside it would only pull the text towards vocabulary.
+        var wordPairs = WordTypes.Contains(request.TypeKey)
+            ? UnitVocabulary.Slice(pool, [.. (child?.WeakWords ?? []).Select(w => w.Word)], request.ItemCount, request.Part)
+            : [];
+        var grammarLabels = targetUnit.GrammarTopicIds.Count == 0
+            ? []
+            : (await creator.ListGrammarTopicsAsync(subjectId: subject.Id, ct: ct))
+                .Where(t => targetUnit.GrammarTopicIds.Contains(t.Id))
+                .Select(t => t.Label)
+                .ToList();
+
         // The same `--general` reading as the Child line below: what the briefing carries decides, not what
         // was typed - so a general exercise built from a child's material is dressed by --interests.
         var dressedChild = request.General ? null : child;
@@ -93,7 +110,32 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
             // With a child its interests reach the prompt through ChildFacts; without one these labels are the only
             // way they do - tagging alone left the catalog claiming a dressing the exercise did not have (B-264).
             CatalogInterests: dressedChild is null ? [.. dressing.Select(t => t.Label)] : [],
-            GrammarTopicIds: targetUnit.GrammarTopicIds);
+            GrammarTopicIds: targetUnit.GrammarTopicIds,
+            GrammarTopicLabels: grammarLabels,
+            WordPairs: wordPairs);
+    }
+
+    /// <summary>
+    /// The word pairs of the target unit, taken from its vocabulary exercises in catalog order. Each word once: the
+    /// first exercise that names it holds the book's translation, a later one at most a variant of it. Exercises the
+    /// agent generated are left out - their pairs are a model's choice, and taking them as the word list would make
+    /// the next run repeat them and pass a guessed translation off as the book's.
+    /// </summary>
+    private async Task<IReadOnlyList<VocabPair>> LoadUnitVocabularyAsync(GenerationRequest request,
+        IReadOnlyList<ExerciseSummary> existing, CancellationToken ct)
+    {
+        var pairs = new List<VocabPair>();
+        foreach (var exercise in existing.Where(e => string.Equals(e.Type, "Vocabulary", StringComparison.OrdinalIgnoreCase)
+                                                     && e.Description?.StartsWith(Drafting.DraftPrompts.GeneratedMarker,
+                                                         StringComparison.Ordinal) != true))
+        {
+            var items = await creator.ListItemsAsync(request.SeriesId, request.SeriesUnitId, exercise.Id, ct);
+            pairs.AddRange(items.OrderBy(i => i.OrderIndex).Select(i => new VocabPair(i.Front, i.Back, i.VocabularyId, i.Hint)));
+        }
+
+        // Folded like the server folds a word ("horse" = "the horse", B-336): two spellings of one word in a slice
+        // would be a duplicate the model cannot repair, because the program fixed the words.
+        return [.. pairs.DistinctBy(p => VocabKey.Part(p.Word), StringComparer.OrdinalIgnoreCase)];
     }
 
     /// <summary>
