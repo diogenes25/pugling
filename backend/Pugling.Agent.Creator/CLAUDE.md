@@ -28,5 +28,10 @@ wird **vor** dem ersten Modellaufruf geprüft, und der Plan entsteht **inaktiv**
 darf nicht über Nacht zur Pflicht werden, und ein aktiv angelegter Plan würde den laufenden Plan des
 Kindes abschalten. Dafür trägt `CreatePlanDto` seit B-19 ein `Active`-Feld (Vorgabe `true`).
 
+`fill --images` (B-375) liest Fotos von Buchseiten mit dem `PageReader`: eine Seite je Aufruf auf
+`Agent:VisionModel` (per `ChatOptions.ModelId`), Ergebnis ist ein Stoffauszug als Klartext. Daraus werden nur die
+Stoffnotizen. **Das Foto wird Stoff, nicht Übung**: Kein Schritt nach dem Vision-Aufruf sieht das Bild, und es geht
+nie an die API (Copyright: Aufgaben und Texte des Buches gelangen nicht in den Katalog).
+
 Neuer Typ = eine Klasse auf `ExerciseStrategy<TDraft,TConfig>`. Getestet ohne Ollama via `FakeChatClient`
 (`CreatorAgentTests`).

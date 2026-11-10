@@ -16,10 +16,14 @@ public sealed class FakeChatClient(params string[] responses) : IChatClient
     /// <summary>The most recently asked messages (to check prompt content).</summary>
     public IReadOnlyList<ChatMessage> LastMessages { get; private set; } = [];
 
+    /// <summary>Every call in order with its options - shows which call carried an image and on which model (B-375).</summary>
+    public List<(IReadOnlyList<ChatMessage> Messages, ChatOptions? Options)> History { get; } = [];
+
     public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages,
         ChatOptions? options = null, CancellationToken cancellationToken = default)
     {
         LastMessages = [.. messages];
+        History.Add((LastMessages, options));
         // Beyond the prepared answers the last one is repeated - so a test only has to supply as many answers
         // as its flow distinguishes.
         var text = responses[Math.Min(Calls++, responses.Length - 1)];
@@ -33,4 +37,11 @@ public sealed class FakeChatClient(params string[] responses) : IChatClient
     public object? GetService(Type serviceType, object? serviceKey = null) => null;
 
     public void Dispose() { }
+}
+
+/// <summary>A model inventory with a fixed set of installed models - stands in for <c>ollama list</c>.</summary>
+public sealed class FakeModelInventory(params string[] installed) : Pugling.Agent.Creator.IModelInventory
+{
+    public Task<bool> HasModelAsync(string model, CancellationToken ct) =>
+        Task.FromResult(installed.Contains(model, StringComparer.OrdinalIgnoreCase));
 }

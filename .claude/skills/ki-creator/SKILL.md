@@ -1,6 +1,6 @@
 ---
 name: ki-creator
-description: Den KI-Creator-Konsolenagenten (backend/Pugling.Agent.Creator) gegen die laufende Pugling-API fahren – Fachlehrer-Treffer prüfen (profiles), Briefing ohne LLM ansehen, Übungen erzeugen (create, auch --dry-run), Übungsklausuren planen (exam) und ganze Lehrpläne erzeugen (plan). Nutze dies, wenn Übungen, eine Klausur oder ein kompletter Lehrplan per LLM erzeugt werden sollen, wenn der Agent selbst eingerichtet oder debuggt wird (Ollama-Modell, Pugling:Pin), oder bei Fragen zu individuell (--child) vs. allgemein (--profile).
+description: Den KI-Creator-Konsolenagenten (backend/Pugling.Agent.Creator) gegen die laufende Pugling-API fahren – Fachlehrer-Treffer prüfen (profiles), Briefing ohne LLM ansehen, Übungen erzeugen (create, auch --dry-run), Übungsklausuren planen (exam) und ganze Lehrpläne erzeugen (plan), Stoffnotizen einer Unit aus Text oder aus Fotos von Buchseiten befüllen (fill, fill --images). Nutze dies, wenn Übungen, eine Klausur oder ein kompletter Lehrplan per LLM erzeugt werden sollen, wenn der Agent selbst eingerichtet oder debuggt wird (Ollama-Modell, Pugling:Pin), oder bei Fragen zu individuell (--child) vs. allgemein (--profile).
 ---
 
 # KI-Creator fahren
@@ -31,6 +31,13 @@ lieferst (`--source-file <Datei>` oder `-` für Stdin, nur mit Umleitung/Pipe) �
 Modell erfindet keinen Stoff. Nur leere Felder werden befüllt, `--force` überschreibt, `--dry-run` zeigt nur den
 Entwurf; zu lange Themen werden weggelassen und genannt, nie gekürzt. Die Reihe muss dir gehören (geseedete
 Reihen gehören niemandem).
+
+**Aus Fotos der Buchseiten** (B-375): `fill --series 3 --unit 12 --images <Datei|Ordner>[,…] --dry-run`. Jede Seite
+liest einzeln das lokale Vision-Modell (`Agent:VisionModel`, Vorgabe `llama3.2-vision`, fehlt es: Exit 2 mit
+`ollama pull`). Es liefert nur **Stoff** (Themen, Regeln in eigenen Worten, Wortpaare) und keine Aufgaben oder
+Texte des Buches. Die Übungen entstehen danach mit `create`/`plan` aus den Notizen. Das Foto verlässt den Rechner
+nicht. Die Regel stammt vom Nutzer: Copyright wahren und den aktuellen Unterrichtsstoff lernen, ohne die Übungen des
+Originals.
 
 Bei `plan` zählt `--per-type` **Übungen** je Typ (je eine Position), nicht Aufgaben – die kommen wie bei
 `create` aus `--count`. `--child` ist dort Pflicht, und der erzeugte Lehrplan ist **inaktiv**: der Vater

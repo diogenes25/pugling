@@ -64,6 +64,9 @@ public sealed class CommandLine
     /// <summary>Value of an option, or <c>null</c>.</summary>
     public string? Value(string name) => _options.TryGetValue(name, out var v) ? v : null;
 
+    /// <summary>Was the option named at all, whatever its value (even <c>false</c> or none)?</summary>
+    public bool Has(string name) => _options.ContainsKey(name);
+
     /// <summary>Is the switch set (with or without a value)?</summary>
     public bool Flag(string name) => _options.ContainsKey(name)
         && Value(name) is not ("false" or "0" or "no");

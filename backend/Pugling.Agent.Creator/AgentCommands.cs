@@ -41,19 +41,30 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
     private static readonly string[] DefaultPlanTypes = ["Vocabulary", "Cloze"];
 
     /// <summary>
-    /// Drafts a unit's notes from a human-supplied source (B-22): <c>--series</c>, <c>--unit</c> and
-    /// <c>--source-file</c> (or <c>-</c> for stdin) are required - without a source there is nothing to structure,
-    /// and the model must not invent the material. Prints what was written and what was kept.
+    /// Drafts a unit's notes from a human-supplied source (B-22): <c>--series</c> and <c>--unit</c> are required, and
+    /// at least one of <c>--images</c> (photographed pages, B-375) and <c>--source-file</c> (or <c>-</c> for stdin) -
+    /// without a source there is nothing to structure, and the model must not invent the material. Prints the
+    /// per-page extracts, what was written and what was kept.
     /// </summary>
     private async Task<int> FillAsync(CommandLine command, CancellationToken ct)
     {
         var seriesId = command.RequiredInt("series");
         var unitId = command.RequiredInt("unit");
-        var source = await ReadSourceAsync(command, ct);
+        var imagePaths = command.List("images");
+        var images = imagePaths.Count > 0 ? await PageImage.LoadAsync(imagePaths, ct) : null;
+        // Presence, not value: a bare --source-file next to --images is a mistake to report, not to ignore.
+        var source = images is null || command.Has("source-file") ? await ReadSourceAsync(command, ct) : null;
         var outcome = await unitNotes.RunAsync(new UnitFillRequest(seriesId, unitId, source,
-            Force: command.Flag("force"), DryRun: command.Flag("dry-run")), ct);
+            Force: command.Flag("force"), DryRun: command.Flag("dry-run"), Pages: images), ct);
 
         Console.WriteLine($"Unit:    {outcome.Before.Label} (Reihe {seriesId})");
+        // The extract per page comes first: it is what the human holds against the photo before trusting the draft.
+        foreach (var extract in outcome.Extracts)
+        {
+            Console.WriteLine($"Erkannter Stoff – {extract.FileName}:");
+            Console.WriteLine(extract.Text);
+            Console.WriteLine();
+        }
         Console.WriteLine("Entwurf:");
         Console.WriteLine(UnitNotesFiller.Print(outcome.Draft));
         // What the limits took out, before the write is reported - a human must see the loss, not discover it.
@@ -84,8 +95,9 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
     {
         var path = command.Value("source-file");
         if (string.IsNullOrWhiteSpace(path))
-            throw new AgentUsageException("--source-file fehlt: die Quelle (Inhaltsverzeichnis, Kapitelübersicht) ist Pflicht – "
-                                          + "das Modell darf den Stoff einer Unit nicht erfinden. '-' liest von Stdin (Umleitung oder Pipe).");
+            throw new AgentUsageException("--images oder --source-file fehlt: eine Quelle (Fotos der Buchseiten, Inhaltsverzeichnis, "
+                                          + "Kapitelübersicht) ist Pflicht – das Modell darf den Stoff einer Unit nicht erfinden. "
+                                          + "'-' liest von Stdin (Umleitung oder Pipe).");
         // Reading stdin to its end blocks on a bare terminal, and Ctrl+C is swallowed by the cancel handler - say so
         // instead of sitting silently (B-293).
         if (path == "-" && !Console.IsInputRedirected)
@@ -581,10 +593,14 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
                                    [--date JJJJ-MM-TT] [--title "..."] [Optionen]
           pugling-creator plan     --child <id> [--types a,b,c] [--per-type <n>] [--intensity <Stufe>]
                                    [--start JJJJ-MM-TT] [--days <n>] [--title "..."] [Optionen]
-          pugling-creator fill     --series <id> --unit <id> --source-file <Datei|-> [--force] [--dry-run]
+          pugling-creator fill     --series <id> --unit <id> (--images <Datei|Ordner>[,…] | --source-file <Datei|->)
+                                   [--force] [--dry-run]
                                    (Stoffnotizen einer Unit aus einer Quelle entwerfen; nur leere Felder,
                                    --force überschreibt; '-' liest die Quelle von Stdin – nur mit Umleitung
-                                   oder Pipe sinnvoll, interaktiv mit Ctrl+Z+Enter bzw. Ctrl+D beenden)
+                                   oder Pipe sinnvoll, interaktiv mit Ctrl+Z+Enter bzw. Ctrl+D beenden.
+                                   --images: Fotos der Buchseiten (.jpg/.png/.webp, ein Ordner = alle Bilder
+                                   darin nach Namen), gelesen vom lokalen Vision-Modell (Agent:VisionModel) –
+                                   übernommen wird nur der Stoff, keine Aufgaben oder Texte des Buches)
 
         Wer und in wessen Namen:
           --child <id>          Kind, auf das zugeschnitten wird (individuelle Übung)
@@ -625,7 +641,7 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
           --dry-run             nur planen und drucken, nichts speichern
           --strict              Übung löschen, wenn der Selbsttest nicht 100 % erreicht
 
-        Konfiguration: appsettings.json (Pugling:BaseUrl, Pugling:AccountId, Agent:Model),
+        Konfiguration: appsettings.json (Pugling:BaseUrl, Pugling:AccountId, Agent:Model, Agent:VisionModel),
         die PIN über User-Secrets oder Umgebung: setx Pugling__Pin 0000
         """);
 }

@@ -24,6 +24,14 @@ public sealed class AgentOptions
     [Required]
     public string Model { get; set; } = "qwen2.5:14b-instruct";
 
+    /// <summary>
+    /// Model that reads photographed textbook pages (<c>fill --images</c>, B-375). It must take images; the text
+    /// model above stays in charge of structuring the extract. Missing locally is a usage error naming
+    /// <c>ollama pull</c>.
+    /// </summary>
+    [Required]
+    public string VisionModel { get; set; } = "llama3.2-vision";
+
     /// <summary>Creativity. Keep it low - we want correct tasks, not surprises.</summary>
     [Range(0d, 2d)]
     public double Temperature { get; set; } = 0.4;

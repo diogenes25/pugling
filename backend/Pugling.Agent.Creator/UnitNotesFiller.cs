@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
@@ -11,10 +12,12 @@ namespace Pugling.Agent.Creator;
 /// <summary>What the <c>fill</c> verb was asked to do: which unit, from which human-supplied source, how.</summary>
 /// <param name="SeriesId">The series the unit belongs to.</param>
 /// <param name="UnitId">The unit whose notes are drafted.</param>
-/// <param name="SourceText">The source the model structures - a table of contents, a chapter overview. Mandatory.</param>
+/// <param name="SourceText">The source the model structures - a table of contents, a chapter overview. Mandatory unless pages are given.</param>
 /// <param name="Force">Overwrite fields that already carry a value; without it only empty fields are filled.</param>
 /// <param name="DryRun">Show the draft, write nothing.</param>
-public sealed record UnitFillRequest(int SeriesId, int UnitId, string SourceText, bool Force, bool DryRun);
+/// <param name="Pages">Photographed textbook pages (B-375); each is read by the vision model into a material extract first.</param>
+public sealed record UnitFillRequest(int SeriesId, int UnitId, string? SourceText, bool Force, bool DryRun,
+    IReadOnlyList<PageImage>? Pages = null);
 
 /// <summary>
 /// The model's structured draft of a unit's notes (B-22). Three fields, nothing else: the unit's <c>Topics</c>
@@ -36,9 +39,10 @@ public sealed record UnitNotesDraft(List<string>? Topics, string? Grammar, strin
 /// <param name="After">The unit after the PATCH; <c>null</c> on a dry run or when nothing was to write.</param>
 /// <param name="Dropped">Topics of the draft that were left out - over the API's 200 characters (never cut) or beyond the 50 the unit takes (B-292).</param>
 /// <param name="Shortened">Free-text fields cut at the column length (2000), at a word boundary - named so the human sees it.</param>
+/// <param name="Extracts">What the vision model recognised per page (B-375) - empty without pages; shown so the human can hold it against the photo.</param>
 public sealed record UnitFillOutcome(SeriesUnitResponse Before, UnitNotesDraft Draft,
     IReadOnlyList<string> Written, IReadOnlyList<string> Kept, SeriesUnitResponse? After,
-    IReadOnlyList<string> Dropped, IReadOnlyList<string> Shortened);
+    IReadOnlyList<string> Dropped, IReadOnlyList<string> Shortened, IReadOnlyList<PageExtract> Extracts);
 
 /// <summary>
 /// Drafts a unit's notes (<c>Topics</c>/<c>Grammar</c>/<c>VocabularyNotes</c>) from a source the human supplies and
@@ -48,7 +52,7 @@ public sealed record UnitFillOutcome(SeriesUnitResponse Before, UnitNotesDraft D
 /// and a field that already carries a value is never overwritten unless <c>--force</c> says so - hand-written notes
 /// are the basis of trust, and a silent overwrite would be data loss exactly there.
 /// </summary>
-public sealed class UnitNotesFiller(IChatClient chat, CreatorApi creator, IOptions<AgentOptions> options,
+public sealed class UnitNotesFiller(IChatClient chat, CreatorApi creator, PageReader pages, IOptions<AgentOptions> options,
     ILogger<UnitNotesFiller> logger)
 {
     /// <summary>
@@ -74,16 +78,20 @@ public sealed class UnitNotesFiller(IChatClient chat, CreatorApi creator, IOptio
            Wörter hinzu, die dort nicht stehen. Was die Quelle nicht nennt, bleibt leer (null bzw. leere Liste).
         3. "topics": die Themen der Unit als kurze Einträge (ein Thema je Eintrag, höchstens 50).
            "grammar": die Grammatik, die die Unit einführt oder übt, als knapper Text.
-           "vocabularyNotes": Wortfelder oder konkrete Wörter der Unit, kommagetrennt.
+           "vocabularyNotes": Wortfelder oder konkrete Wörter der Unit, kommagetrennt; nennt die Quelle eine
+           Übersetzung, bleibt sie dabei ("to grow up – aufwachsen").
         4. Deutsch für Themen und Grammatik-Beschreibung; Wörter in der Sprache der Quelle.
+        5. Übernimm keine Aufgabenstellungen, Texte, Dialoge oder Beispielsätze wörtlich – nur den Stoff:
+           Themen, Regeln in eigenen Worten, Wörter.
         """;
 
     /// <summary>Reads the unit, drafts its notes from the source, decides field by field, and writes (unless dry run).</summary>
     public async Task<UnitFillOutcome> RunAsync(UnitFillRequest request, CancellationToken ct = default)
     {
         // Defense in depth: the command already refuses a missing source; a direct caller gets the same answer.
-        if (string.IsNullOrWhiteSpace(request.SourceText))
-            throw new AgentUsageException("Ohne Quelltext (--source-file oder Stdin) gibt es nichts zu erfassen – "
+        var photographed = request.Pages ?? [];
+        if (string.IsNullOrWhiteSpace(request.SourceText) && photographed.Count == 0)
+            throw new AgentUsageException("Ohne Quelle (--images, --source-file oder Stdin) gibt es nichts zu erfassen – "
                                           + "das Modell darf den Stoff einer Unit nicht erfinden.");
 
         // Ownership before the model call: only the series owner may change its units, and a seeded series belongs
@@ -112,7 +120,12 @@ public sealed class UnitNotesFiller(IChatClient chat, CreatorApi creator, IOptio
             throw new AgentUsageException($"Unit {request.UnitId} gehört nicht zu Reihe {request.SeriesId}.");
         }
 
-        var (draft, dropped, shortened) = Clamp(await DraftAsync(unit, request.SourceText, ct));
+        // The photos stop here: they become a material extract, and only the extract reaches the structuring call
+        // and, through the notes, the exercise drafts later on (B-375) - the book's own tasks are never passed on.
+        IReadOnlyList<PageExtract> extracts = photographed.Count > 0 ? await pages.ReadAsync(photographed, ct) : [];
+        var source = extracts.Count > 0 ? PageReader.AsSource(extracts, request.SourceText) : request.SourceText!;
+
+        var (draft, dropped, shortened) = Clamp(await DraftAsync(unit, source, ct));
 
         // Field by field: a value already there wins over the draft unless --force says otherwise. Kept fields go
         // to the PATCH as null ("not specified"), so the write touches exactly the fields it names.
@@ -123,11 +136,11 @@ public sealed class UnitNotesFiller(IChatClient chat, CreatorApi creator, IOptio
         var vocabulary = Decide("vocabularyNotes", !string.IsNullOrWhiteSpace(unit.VocabularyNotes), !string.IsNullOrWhiteSpace(draft.VocabularyNotes), request.Force, written, kept) ? draft.VocabularyNotes : null;
 
         if (request.DryRun || written.Count == 0)
-            return new UnitFillOutcome(unit, draft, written, kept, null, dropped, shortened);
+            return new UnitFillOutcome(unit, draft, written, kept, null, dropped, shortened, extracts);
 
         var after = await creator.UpdateUnitAsync(request.SeriesId, request.UnitId,
             new UpdateSeriesUnitDto(null, null, null, null, topics, grammar, vocabulary), ct);
-        return new UnitFillOutcome(unit, draft, written, kept, after, dropped, shortened);
+        return new UnitFillOutcome(unit, draft, written, kept, after, dropped, shortened, extracts);
     }
 
     /// <summary>
@@ -220,6 +233,14 @@ public sealed class UnitNotesFiller(IChatClient chat, CreatorApi creator, IOptio
     }
 
     /// <summary>The draft as indented JSON for the console.</summary>
+    /// <remarks>
+    /// Relaxed escaping: the draft is read by a human next to the photo (B-375), and "für" for "für" hides exactly
+    /// the text to be checked. The output goes to a console, never into HTML.
+    /// </remarks>
     public static string Print(UnitNotesDraft draft) =>
-        JsonSerializer.Serialize(draft, new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true });
+        JsonSerializer.Serialize(draft, new JsonSerializerOptions(JsonSerializerDefaults.Web)
+        {
+            WriteIndented = true,
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        });
 }

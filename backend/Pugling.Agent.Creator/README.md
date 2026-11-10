@@ -219,6 +219,33 @@ Themen bewusst ab); Freitext über 2000 Zeichen wird am Wortende gekürzt und da
 mit Umleitung oder Pipe sinnvoll – am nackten Terminal wartet der Befehl auf das Eingabeende (Ctrl+Z+Enter bzw.
 Ctrl+D) und sagt das.
 
+#### Aus Fotos der Buchseiten (`fill --images`, B-375)
+
+```bash
+ollama pull llama3.2-vision                                             # einmalig; anderes Modell: Agent:VisionModel
+pugling-creator fill --series 3 --unit 12 --images fotos/unit-3 --dry-run    # Ordner: alle Bilder nach Namen
+pugling-creator fill --series 3 --unit 12 --images s42.jpg,s43.jpg --source-file inhaltsverzeichnis.txt
+```
+
+Jede Seite geht **einzeln** an das lokale Vision-Modell (`Agent:VisionModel`, Vorgabe `llama3.2-vision`) und
+kommt als **Stoffauszug** zurück: Themen, Grammatik in eigenen Worten, Wortpaare. Die Auszüge aller Seiten (dazu ein
+optionales `--source-file`) sind dann die Quelle des gewohnten `fill`-Laufs auf dem Textmodell. Alle Regeln von oben
+gelten unverändert. `--dry-run` druckt je Seite den erkannten Stoff, damit du ihn neben das Foto legen kannst.
+
+**Copyright: Das Foto wird Stoff, nicht Übung.** Beide Prompts verbieten, Aufgabenstellungen, Lese- und Hörtexte,
+Dialoge und Beispielsätze des Buches zu übernehmen. Gehalten wird der Schnitt aber im Code: Das Foto erreicht nur den
+Vision-Aufruf, und `create`/`plan`/`exam` sehen allein die drei Stoffnotizen der Unit. Die Übungen entstehen also
+neu aus dem Stoff und nicht aus den Aufgaben des Buches. Die Bilder gehen nur an das lokale Ollama, nie an die
+Pugling-API, und werden nirgends gespeichert. Ein Prompt ist trotzdem nur eine Bitte. Lies den Auszug im Trockenlauf,
+bevor du schreibst.
+
+Formate: `.jpg/.jpeg/.png/.webp`. HEIC vom iPhone vorher als JPEG exportieren. Fehlt das Vision-Modell lokal, bricht
+der Befehl vor dem ersten Modellaufruf ab (Exit 2) und nennt `ollama pull`. Auf CPU braucht eine Seite eher Minuten
+als Sekunden. Läuft die Zeit ab, setze `Agent:TimeoutSeconds` hoch (gilt je Aufruf).
+
+Danach entstehen die Übungen wie gewohnt aus der Unit, zum Beispiel
+`pugling-creator plan --child 1 --types Vocabulary,Cloze` (Unit des Kindes) oder `create --profile 3 --unit 12 …`.
+
 ## Was der Agent bewusst *nicht* tut
 
 - **Einen Lehrplan aktiv schalten.** Er legt ihn an (`plan`) – scharf stellt ihn ein Mensch. Ziele,

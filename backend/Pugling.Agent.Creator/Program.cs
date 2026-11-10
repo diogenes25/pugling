@@ -100,7 +100,11 @@ public static class Program
             .Bind(builder.Configuration.GetSection(AgentOptions.SectionName))
             .ValidateDataAnnotations();
 
+        builder.Services.AddSingleton(CreateOllamaClient);
+        builder.Services.AddSingleton<IOllamaApiClient>(services => services.GetRequiredService<OllamaApiClient>());
         builder.Services.AddSingleton<IChatClient>(CreateChatClient);
+        builder.Services.AddSingleton<IModelInventory, OllamaModelInventory>();
+        builder.Services.AddSingleton<PageReader>();
         builder.Services.AddSingleton<BriefingBuilder>();
         builder.Services.AddSingleton<IExerciseStrategy, VocabularyStrategy>();
         builder.Services.AddSingleton<IExerciseStrategy, ClozeStrategy>();
@@ -116,10 +120,11 @@ public static class Program
     }
 
     /// <summary>
-    /// The local language model via Ollama's own API. The HttpClient carries the timeout - local models
-    /// take noticeably long computing on CPU, and the default of 100 seconds cuts them off too early.
+    /// The local Ollama server, shared by the chat client and the model inventory. The HttpClient carries the
+    /// timeout - local models take noticeably long computing on CPU, and the default of 100 seconds cuts them off
+    /// too early. The text model is the default; the vision model is chosen per call (<c>ChatOptions.ModelId</c>).
     /// </summary>
-    private static IChatClient CreateChatClient(IServiceProvider services)
+    private static OllamaApiClient CreateOllamaClient(IServiceProvider services)
     {
         var options = services.GetRequiredService<IOptions<AgentOptions>>().Value;
         var http = new HttpClient
@@ -127,9 +132,12 @@ public static class Program
             BaseAddress = new Uri(options.Endpoint),
             Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds),
         };
+        return new OllamaApiClient(http, options.Model);
+    }
 
-        return new ChatClientBuilder(new OllamaApiClient(http, options.Model))
+    /// <summary>The local language model as <see cref="IChatClient"/>, with logging.</summary>
+    private static IChatClient CreateChatClient(IServiceProvider services) =>
+        new ChatClientBuilder(services.GetRequiredService<OllamaApiClient>())
             .UseLogging(services.GetRequiredService<ILoggerFactory>())
             .Build(services);
-    }
 }

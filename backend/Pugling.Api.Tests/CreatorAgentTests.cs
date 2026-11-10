@@ -49,8 +49,13 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         new(creator, pipeline, new ExamPlanner(pipeline, creator, new SupervisorApi(Authenticated())),
             new PlanPlanner(pipeline, new SupervisorApi(Authenticated())), Filler(creator, chat ?? new FakeChatClient("{}")));
 
-    private static UnitNotesFiller Filler(CreatorApi creator, FakeChatClient chat) =>
-        new(chat, creator, Options.Create(new AgentOptions()), NullLogger<UnitNotesFiller>.Instance);
+    private static UnitNotesFiller Filler(CreatorApi creator, FakeChatClient chat, IModelInventory? models = null)
+    {
+        var options = Options.Create(new AgentOptions());
+        var reader = new PageReader(chat, models ?? new FakeModelInventory(options.Value.VisionModel), options,
+            NullLogger<PageReader>.Instance);
+        return new(chat, creator, reader, options, NullLogger<UnitNotesFiller>.Instance);
+    }
 
     /// <summary>A draft the fake model returns for the `fill` verb (B-22).</summary>
     private const string UnitNotesJson = """
@@ -368,6 +373,238 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
             .RunAsync(CommandLine.Parse(["fill", "--series", seriesId.ToString(), "--unit", unitId.ToString()]), CancellationToken.None));
         Assert.Contains("--source-file", error.Message);
         Assert.Equal(0, chat.Calls);
+    }
+
+    /// <summary>Two prepared page extracts the fake vision model answers with, one per photo (B-375).</summary>
+    private const string PageOneExtract = "Themen: Growing up\nGrammatik: present perfect für Erfahrungen\nWörter: to grow up – aufwachsen";
+    private const string PageTwoExtract = "Themen: Family life\nGrammatik: –\nWörter: to argue – streiten";
+
+    /// <summary>A throwaway folder with the given files; the caller deletes it in <c>finally</c>.</summary>
+    private static string PhotoFolder(params (string Name, byte[] Bytes)[] files)
+    {
+        var folder = Path.Combine(Path.GetTempPath(), $"pugling-fotos-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(folder);
+        foreach (var (name, bytes) in files) File.WriteAllBytes(Path.Combine(folder, name), bytes);
+        return folder;
+    }
+
+    /// <summary>
+    /// B-375, AC 1-3: each photo goes to the vision model on its own, carrying exactly its image, on
+    /// <c>Agent:VisionModel</c>; the structuring call that drafts the notes carries no image and runs on the default
+    /// model, and its source is the extracts in page order. Both prompts forbid copying the book's tasks and texts.
+    /// Red if the photos skip the vision step, if the image reaches the structuring call (the copyright cut, decision 1),
+    /// if the vision call runs without <c>ModelId</c> (the text model would get the image), or if either prompt loses
+    /// its prohibition.
+    /// </summary>
+    [Fact]
+    public async Task Fill_Aus_Fotos_Liest_Jede_Seite_Mit_Dem_Vision_Modell_Und_Strukturiert_Ohne_Bild()
+    {
+        var (_, creator, _) = BuildAgent();
+        var (_, seriesId, unitId) = await FreshUnitAsync(creator, "Fill-Fotos");
+        var chat = new FakeChatClient(PageOneExtract, PageTwoExtract, UnitNotesJson);
+        IReadOnlyList<PageImage> photos =
+            [new("seite-1.jpg", [1, 2, 3], "image/jpeg"), new("seite-2.png", [4, 5], "image/png")];
+
+        var outcome = await Filler(creator, chat).RunAsync(new UnitFillRequest(seriesId, unitId, null,
+            Force: false, DryRun: false, Pages: photos));
+
+        Assert.Equal(3, chat.Calls);
+        for (var i = 0; i < 2; i++)
+        {
+            var (messages, options) = chat.History[i];
+            Assert.Equal("llama3.2-vision", options?.ModelId);
+            var image = Assert.Single(messages.SelectMany(m => m.Contents).OfType<DataContent>());
+            Assert.Equal(photos[i].MediaType, image.MediaType);
+            Assert.Equal(photos[i].Bytes, image.Data.ToArray());
+            Assert.Contains("Übernimm NICHTS davon wörtlich", messages[0].Text);
+            Assert.Contains("Aufgabenstellungen", messages[0].Text);
+        }
+        var (structuring, structuringOptions) = chat.History[2];
+        Assert.Null(structuringOptions?.ModelId);
+        Assert.Empty(structuring.SelectMany(m => m.Contents).OfType<DataContent>());
+        Assert.Contains("Übernimm keine Aufgabenstellungen", structuring[0].Text);
+        var source = structuring[1].Text;
+        Assert.True(source.IndexOf("### Seite seite-1.jpg", StringComparison.Ordinal)
+                    < source.IndexOf("### Seite seite-2.png", StringComparison.Ordinal));
+        Assert.Contains("to grow up – aufwachsen", source);
+        Assert.Contains("to argue – streiten", source);
+
+        Assert.Equal(["seite-1.jpg", "seite-2.png"], outcome.Extracts.Select(e => e.FileName));
+        Assert.Equal(["topics", "grammar", "vocabularyNotes"], outcome.Written);
+        Assert.Equal(["Growing up", "Family life"], (await creator.GetUnitAsync(seriesId, unitId)).Topics);
+    }
+
+    /// <summary>
+    /// B-375, AC 4: the dry run returns each page's extract for the human to hold against the photo, and writes nothing.
+    /// Red if the extracts are not handed out (the console would show only the draft) or if the PATCH is sent anyway.
+    /// </summary>
+    [Fact]
+    public async Task Fill_Aus_Fotos_Trockenlauf_Zeigt_Die_Auszuege_Und_Schreibt_Nichts()
+    {
+        var (_, creator, _) = BuildAgent();
+        var (_, seriesId, unitId) = await FreshUnitAsync(creator, "Fill-Fotos-Dry");
+
+        var outcome = await Filler(creator, new FakeChatClient(PageOneExtract, UnitNotesJson)).RunAsync(
+            new UnitFillRequest(seriesId, unitId, null, Force: false, DryRun: true,
+                Pages: [new("seite-1.jpg", [1], "image/jpeg")]));
+
+        var extract = Assert.Single(outcome.Extracts);
+        Assert.Equal(PageOneExtract, extract.Text);
+        Assert.Null(outcome.After);
+        Assert.Empty((await creator.GetUnitAsync(seriesId, unitId)).Topics);
+    }
+
+    /// <summary>
+    /// B-375, AC 4: the printed draft keeps umlauts and dashes readable - the human checks it against the photo. Found
+    /// on the live run ("für"). Red if the relaxed encoder is dropped. The second assertion keeps the word pair
+    /// rule in the structuring prompt (live run: translations were lost); red if the rule is removed.
+    /// </summary>
+    [Fact]
+    public void Fill_Entwurf_Druckt_Umlaute_Lesbar_Und_Behaelt_Uebersetzungen()
+    {
+        var printed = UnitNotesFiller.Print(new UnitNotesDraft(["Erwachsenwerden"], "für Erfahrungen", "to grow up – aufwachsen"));
+
+        Assert.Contains("für Erfahrungen", printed);
+        Assert.Contains("to grow up – aufwachsen", printed);
+        Assert.Contains("Übersetzung, bleibt sie dabei", UnitNotesFiller.System);
+    }
+
+    /// <summary>
+    /// B-375, AC 1: a human source given next to the photos is appended after the page extracts, not dropped. Red if
+    /// the photos replace the source text.
+    /// </summary>
+    [Fact]
+    public async Task Fill_Aus_Fotos_Haengt_Die_Ergaenzende_Quelle_An()
+    {
+        var (_, creator, _) = BuildAgent();
+        var (_, seriesId, unitId) = await FreshUnitAsync(creator, "Fill-Fotos-Quelle");
+        var chat = new FakeChatClient(PageOneExtract, UnitNotesJson);
+
+        await Filler(creator, chat).RunAsync(new UnitFillRequest(seriesId, unitId, "Inhaltsverzeichnis: Unit 3 Growing up",
+            Force: false, DryRun: true, Pages: [new("seite-1.jpg", [1], "image/jpeg")]));
+
+        var source = chat.History[1].Messages[1].Text;
+        Assert.Contains("to grow up – aufwachsen", source);
+        Assert.Contains("### Ergänzende Quelle", source);
+        Assert.Contains("Inhaltsverzeichnis: Unit 3 Growing up", source);
+    }
+
+    /// <summary>
+    /// B-375, AC 5: a vision model that is not installed is a usage error naming the pull command - before any model
+    /// call, and nothing is written. Red if the inventory check is removed (the fake would answer, and the unit would
+    /// be filled) or moved after the first page.
+    /// </summary>
+    [Fact]
+    public async Task Fill_Aus_Fotos_Ohne_Vision_Modell_Ist_Eine_Fehlbedienung_Vor_Dem_Ersten_Aufruf()
+    {
+        var (_, creator, _) = BuildAgent();
+        var (_, seriesId, unitId) = await FreshUnitAsync(creator, "Fill-Fotos-Modell");
+        var chat = new FakeChatClient(PageOneExtract, UnitNotesJson);
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Filler(creator, chat, new FakeModelInventory("qwen2.5:14b-instruct"))
+            .RunAsync(new UnitFillRequest(seriesId, unitId, null, Force: false, DryRun: false,
+                Pages: [new("seite-1.jpg", [1], "image/jpeg")])));
+
+        Assert.Contains("ollama pull llama3.2-vision", error.Message);
+        Assert.Equal(0, chat.Calls);
+        Assert.Empty((await creator.GetUnitAsync(seriesId, unitId)).Topics);
+    }
+
+    /// <summary>
+    /// B-375, AC 1: a folder contributes its images sorted by name (the page order of camera names) and skips other
+    /// files; each page carries the media type of its extension. Red if the sort is dropped (the files are written in
+    /// reverse, and the file system's order is not guaranteed) or if a non-image in the folder is sent along.
+    /// </summary>
+    [Fact]
+    public async Task Fotos_Laden_Nimmt_Die_Bilder_Eines_Ordners_Nach_Namen()
+    {
+        var folder = PhotoFolder(("IMG_0003.webp", [3]), ("notiz.txt", [9]), ("IMG_0002.PNG", [2]), ("IMG_0001.jpg", [1]));
+        try
+        {
+            var pages = await PageImage.LoadAsync([folder], CancellationToken.None);
+
+            Assert.Equal(["IMG_0001.jpg", "IMG_0002.PNG", "IMG_0003.webp"], pages.Select(p => p.FileName));
+            Assert.Equal(["image/jpeg", "image/png", "image/webp"], pages.Select(p => p.MediaType));
+            Assert.Equal([2], pages[1].Bytes);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>
+    /// B-375, AC 1: the page order does not depend on the file system (NTFS happens to list by name, so the folder
+    /// case above stays green without any sort - measured). Numbers count as numbers: a human names photos
+    /// "seite-2" and "seite-10". Red if the sort is dropped (the input is reversed) or becomes a plain string sort
+    /// ("seite-10" would come before "seite-2").
+    /// </summary>
+    [Fact]
+    public void Fotos_Reihenfolge_Sortiert_Nach_Namen_Mit_Zahlen_Als_Zahlen()
+    {
+        Assert.Equal(["seite-1.jpg", "Seite-2.jpg", "seite-10.jpg"],
+            PageImage.InPageOrder(["seite-10.jpg", "Seite-2.jpg", "seite-1.jpg"]));
+    }
+
+    /// <summary>
+    /// B-375, AC 6: an unsupported format, a folder without images and a missing file are usage errors naming the path.
+    /// Red if the extension check is removed (a HEIC would reach the model), if an empty folder yields zero pages
+    /// silently, or if the read error escapes as a raw exception.
+    /// </summary>
+    [Fact]
+    public async Task Fotos_Laden_Lehnt_Falsche_Eingaben_Als_Fehlbedienung_Ab()
+    {
+        var folder = PhotoFolder(("seite.heic", [1]), ("notiz.txt", [2]));
+        try
+        {
+            var heic = Path.Combine(folder, "seite.heic");
+            var missing = Path.Combine(folder, "fehlt.jpg");
+
+            Assert.Contains("seite.heic", (await Assert.ThrowsAsync<AgentUsageException>(
+                () => PageImage.LoadAsync([heic], CancellationToken.None))).Message);
+            Assert.Contains("kein Bild", (await Assert.ThrowsAsync<AgentUsageException>(
+                () => PageImage.LoadAsync([folder], CancellationToken.None))).Message);
+            Assert.Contains("fehlt.jpg", (await Assert.ThrowsAsync<AgentUsageException>(
+                () => PageImage.LoadAsync([missing], CancellationToken.None))).Message);
+            // A mistyped folder names the missing path, not the format (review finding).
+            Assert.Contains("gibt es nicht", (await Assert.ThrowsAsync<AgentUsageException>(
+                () => PageImage.LoadAsync([Path.Combine(folder, "unti-3")], CancellationToken.None))).Message);
+            // A file named next to its own folder is read once (review finding).
+            var jpg = Path.Combine(folder, "seite.jpg");
+            await File.WriteAllBytesAsync(jpg, [7]);
+            Assert.Single(await PageImage.LoadAsync([folder, jpg], CancellationToken.None));
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>
+    /// B-375, AC 1/6: on the command line <c>--images</c> alone is a complete source - <c>--source-file</c> is not
+    /// required next to it. Red if the command still insists on the source file.
+    /// </summary>
+    [Fact]
+    public async Task Fill_Mit_Images_Braucht_Keine_Quelldatei()
+    {
+        var (pipeline, creator, _) = BuildAgent();
+        var (_, seriesId, unitId) = await FreshUnitAsync(creator, "Fill-Fotos-Kommando");
+        var folder = PhotoFolder(("seite-1.jpg", [1]));
+        try
+        {
+            var chat = new FakeChatClient(PageOneExtract, UnitNotesJson);
+
+            var exit = await Commands(creator, pipeline, chat).RunAsync(CommandLine.Parse(
+                ["fill", "--series", seriesId.ToString(), "--unit", unitId.ToString(), "--images", folder, "--dry-run"]),
+                CancellationToken.None);
+
+            Assert.Equal(0, exit);
+            Assert.Equal(2, chat.Calls);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
     }
 
     /// <summary>Creates an empty subject with a catalogued series/unit so that every test stands on its own.</summary>
