@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  pointsFrom, settingsFrom, settingsToDto, settingsToUpdateDto, timeSlotProblem, type PositionSettings,
+  pointsFrom, settingsFrom, settingsToDto, settingsToUpdateDto, timeSlotProblem, withDose, withLeitner,
+  type PositionSettings,
 } from "./PlanPositions";
 import type { ExerciseSummary, PositionResponse, ScoringTimeSlot } from "../lib/types";
 
@@ -18,7 +19,7 @@ import type { ExerciseSummary, PositionResponse, ScoringTimeSlot } from "../lib/
  */
 
 const LEER: PositionSettings = {
-  cadence: "Daily", goalThreshold: "", itemCount: "", orderStrategy: "WeakestFirst",
+  cadence: "Daily", goalThreshold: "", itemCount: "", newItemsPerDay: "", orderStrategy: "WeakestFirst",
   pointsGoalMet: 20, penaltyCoins: 0,
   newContentPoints: "", comboThreshold: "", comboBonusPoints: "",
   useLeitner: true, requireTypedTest: false,
@@ -34,7 +35,7 @@ const gespeichert = (...timeSlots: ScoringTimeSlot[]) =>
   settingsFrom({
     timeSlots, cadence: "Daily", goalThreshold: null, itemCount: null, orderStrategy: "WeakestFirst",
     pointsGoalMet: 20, penaltyCoins: 0, newContentPoints: 10, comboThreshold: 5, comboBonusPoints: 5,
-    useLeitner: true, requireTypedTest: false,
+    useLeitner: true, requireTypedTest: false, newItemsPerDay: 0,
   } as unknown as PositionResponse);
 
 describe("Zeitfenster einer Position", () => {
@@ -205,5 +206,48 @@ describe("Punkte-Empfehlung der Übung", () => {
   it("lässt ihn stehen, solange keine Übung gewählt ist", () => {
     // Absichtserklärung, keine Messung: unter `strict` kompiliert die realistische Verletzung gar nicht.
     expect(pointsFrom(undefined, GETIPPT, false)).toBe(GETIPPT);
+  });
+});
+
+describe("Tagesdosis einer Position (B-04)", () => {
+  it("schickt ein leeres Feld als 0, nicht als null – sonst bliebe im PATCH die alte Dosis stehen", () => {
+    expect(settingsToDto(LEER).newItemsPerDay).toBe(0);
+  });
+
+  it("schickt die eingetragene Dosis als Zahl", () => {
+    expect(settingsToDto({ ...LEER, newItemsPerDay: "8" }).newItemsPerDay).toBe(8);
+  });
+
+  it("zeigt eine gespeicherte 0 als leeres Feld und eine Dosis als Zahl", () => {
+    const stand = (newItemsPerDay: number) => settingsFrom({
+      timeSlots: null, cadence: "Daily", goalThreshold: null, itemCount: null, orderStrategy: "WeakestFirst",
+      pointsGoalMet: 20, penaltyCoins: 0, newContentPoints: 10, comboThreshold: 5, comboBonusPoints: 5,
+      useLeitner: true, requireTypedTest: false, newItemsPerDay,
+    } as unknown as PositionResponse);
+    expect(stand(0).newItemsPerDay).toBe("");
+    expect(stand(8).newItemsPerDay).toBe("8");
+  });
+});
+
+describe("Dosis und Leitner-Kasten gehören zusammen (B-04)", () => {
+  const OHNE_KASTEN: PositionSettings = { ...LEER, useLeitner: false };
+
+  it("eine eingetragene Dosis setzt das Häkchen", () => {
+    expect(withDose(OHNE_KASTEN, "8")).toMatchObject({ newItemsPerDay: "8", useLeitner: true });
+  });
+
+  it("ein leeres oder Null-Feld setzt es nicht", () => {
+    expect(withDose(OHNE_KASTEN, "").useLeitner).toBe(false);
+    expect(withDose(OHNE_KASTEN, "0").useLeitner).toBe(false);
+  });
+
+  it("das Abwählen des Kastens leert die Dosis, das Anwählen lässt sie stehen", () => {
+    expect(withLeitner({ ...LEER, newItemsPerDay: "8" }, false)).toMatchObject({ newItemsPerDay: "", useLeitner: false });
+    expect(withLeitner({ ...OHNE_KASTEN, newItemsPerDay: "8" }, true).newItemsPerDay).toBe("8");
+  });
+
+  it("der PATCH trägt die Dosis mit – ein geleertes Feld als 0", () => {
+    expect(settingsToUpdateDto({ ...LEER, newItemsPerDay: "" }).newItemsPerDay).toBe(0);
+    expect(settingsToUpdateDto({ ...LEER, newItemsPerDay: "8" }).newItemsPerDay).toBe(8);
   });
 });

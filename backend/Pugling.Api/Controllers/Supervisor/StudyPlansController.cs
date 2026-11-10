@@ -21,7 +21,7 @@ namespace Pugling.Api.Controllers.Supervisor;
 [Produces("application/json")]
 [Authorize]
 [ServiceFilter(typeof(PlanOwnershipFilter))]
-public class StudyPlansController(PuglingDbContext db, AuthAccess access) : ControllerBase
+public class StudyPlansController(PuglingDbContext db, AuthAccess access, TimeProvider time) : ControllerBase
 {
     /// <summary>In-memory projection for freshly created containers (positions still empty).</summary>
     private static PlanResponse Map(StudyPlan p, DateOnly today) =>
@@ -43,7 +43,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
     [HttpGet]
     public async Task<IEnumerable<PlanResponse>> List([FromQuery] int? childId = null, CancellationToken ct = default)
     {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
         IQueryable<StudyPlan> scoped = db.StudyPlans.AsNoTracking();
         if (User.IsStudent())
         {
@@ -67,7 +67,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
     public async Task<ActionResult<PlanResponse>> Get(int planId, CancellationToken ct = default)
     {
         var plan = await db.StudyPlans.AsNoTracking().Where(p => p.Id == planId)
-            .Select(ToResponse(DateOnly.FromDateTime(DateTime.UtcNow))).FirstOrDefaultAsync(ct);
+            .Select(ToResponse(DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime))).FirstOrDefaultAsync(ct);
         return plan is null ? NotFound() : plan;
     }
 
@@ -85,7 +85,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
         if (!await access.SupervisorOwnsChildAsync(User, dto.ChildId, ct)) return this.ProblemWithCode(ApiErrors.NotFound, "Child not found.");
         if (dto.SubjectId is { } sid && !await db.Subjects.AnyAsync(s => s.Id == sid, ct)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Subject not found.");
 
-        var start = dto.StartDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        var start = dto.StartDate ?? DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
         var duration = dto.DurationDays > 0 ? dto.DurationDays : 10;
         var plan = new StudyPlan
         {
@@ -103,7 +103,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
         // playable one - the child's existing plans are deactivated. Creating one inactive is the opt-out
         // for a plan that must be reviewed first, and it deliberately leaves the running plan alone.
         if (plan.Active) await DeactivateSiblingPlansAsync(plan.ChildId, plan.Id, ct);
-        return CreatedAtAction(nameof(Get), new { planId = plan.Id }, Map(plan, DateOnly.FromDateTime(DateTime.UtcNow)));
+        return CreatedAtAction(nameof(Get), new { planId = plan.Id }, Map(plan, DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime)));
     }
 
     /// <summary>
@@ -147,7 +147,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access) : Cont
         // After activating or moving, restore the invariant "one active plan per child".
         if (plan.Active) await DeactivateSiblingPlansAsync(plan.ChildId, plan.Id, ct);
         var positionCount = await db.PlanPositions.CountAsync(pp => pp.StudyPlanId == planId, ct);
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
         return new PlanResponse(plan.Id, plan.ChildId, plan.Title, plan.SubjectId,
             plan.StartDate, plan.EndDate, plan.Active, positionCount, plan.Description)
         {

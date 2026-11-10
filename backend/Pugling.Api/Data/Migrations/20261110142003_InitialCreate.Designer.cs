@@ -11,7 +11,7 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Data.Migrations
 {
     [DbContext(typeof(PuglingDbContext))]
-    [Migration("20261027103630_InitialCreate")]
+    [Migration("20261110142003_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -1600,6 +1600,9 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("NewContentPoints")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("NewItemsPerDay")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("Order")

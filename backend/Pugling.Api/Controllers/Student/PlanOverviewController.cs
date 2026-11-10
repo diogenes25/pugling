@@ -19,7 +19,7 @@ namespace Pugling.Api.Controllers.Student;
 [Produces("application/json")]
 [Authorize]
 [ServiceFilter(typeof(PlanOwnershipFilter))]
-public class PlanOverviewController(PuglingDbContext db, PositionProgressService progress, DailyBoxService dailyBox) : ControllerBase
+public class PlanOverviewController(PuglingDbContext db, PositionProgressService progress, DailyBoxService dailyBox, TimeProvider time) : ControllerBase
 {
     // No default for `ct`: it would make the call site look correct while the client's cancellation fizzles out.
     private Task<StudyPlan?> GetPlan(int planId, CancellationToken ct) =>
@@ -33,7 +33,7 @@ public class PlanOverviewController(PuglingDbContext db, PositionProgressService
         var plan = await GetPlan(planId, ct);
         if (plan is null) return NotFound();
 
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
         var days = await progress.ProgressAsync(plan, today, ct);
         var todayOverview = await progress.ComputeDayAsync(plan, today, ct);
         var boxStatus = await dailyBox.StatusAsync(plan.ChildId, today, ct);
@@ -65,7 +65,7 @@ public class PlanOverviewController(PuglingDbContext db, PositionProgressService
         var plan = await GetPlan(planId, ct);
         if (plan is null) return NotFound();
 
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
         var view = await progress.ProgressViewAsync(plan, today, from, to, dutyDone, sort, ct);
         // Paging (an HTTP concern) on the already filtered/sorted day list; X-Total-Count = the filtered total.
         var page = view.Days.ToPagedList(Response, skip, take);

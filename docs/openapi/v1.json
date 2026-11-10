@@ -30928,6 +30928,16 @@
               "$ref": "#/components/schemas/ScoringTimeSlot"
             },
             "description": "Own points time slots of this obligation (see PositionResponse); \u0060null\u0060 = none, only the\nglobal slots apply. Each slot needs \u0060start \u0026lt; end\u0060 and a multiplier above 0."
+          },
+          "newItemsPerDay": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "Daily dose of new contents (see PositionResponse); \u0060null\u0060 = 0 (no cap). 0 to 200.",
+            "format": "int32"
           }
         },
         "description": "Creating a position. Empty override fields inherit the exercise\u0027s suggestion (hybrid principle):\nstage/item count then stay \u0060null\u0060 and are resolved from the exercise defaults only when played;\nthe points/bonus fields are prefilled from the exercise\u0027s bonus suggestion."
@@ -39757,6 +39767,7 @@
           "id",
           "maxBox",
           "newContentPoints",
+          "newItemsPerDay",
           "order",
           "orderStrategy",
           "penaltyCoins",
@@ -39970,6 +39981,15 @@
               "$ref": "#/components/schemas/ScoringTimeSlot"
             },
             "description": "Time slots with their own points multiplier for this obligation; \u0060null\u0060 = only the server\u0027s global\nslots apply. They are considered **together with** the global ones, the narrowest window winning \u2013 a\nposition slot neither replaces the global ones nor multiplies with them."
+          },
+          "newItemsPerDay": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Daily dose: how many never-shown contents a learn round brings per day; \u00600\u0060 = no cap. With a dose the\nfinal test checks the day\u0027s portion (introduced, reviewed or due today) instead of everything introduced.",
+            "format": "int32"
           }
         },
         "description": "A position in the study plan: the referenced exercise together with its own goal, points, stage, and Leitner settings."
@@ -39983,6 +40003,7 @@
           "exerciseTitle",
           "exerciseType",
           "goalMet",
+          "introducedCount",
           "order",
           "pointsGoalMet",
           "poolSize",
@@ -40064,9 +40085,17 @@
               "string"
             ],
             "format": "int32"
+          },
+          "introducedCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Status of a single position for one day \u2013 enough for the student client to render the right action.\n\n\u0060Testable\u0060 is about **this day**, not merely about the exercise type: it is false on a free display\nstage (B-96), because the exam refuses that stage. A client therefore offers practice whenever the position\nuses Leitner or is not testable today \u2013 the two together always leave exactly one playable way in."
+        "description": "Status of a single position for one day \u2013 enough for the student client to render the right action.\n\n\u0060Testable\u0060 is about **this day**, not merely about the exercise type: it is false on a free display\nstage (B-96), because the exam refuses that stage. A client therefore offers practice whenever the position\nuses Leitner or is not testable today \u2013 the two together always leave exactly one playable way in.\nIntroducedCount of PoolSize is how far the child has come through the position\u0027s contents - with a\ndaily dose (B-04) the one figure that says how much of the material is still ahead."
       },
       "PracticeCard": {
         "required": [
@@ -44472,6 +44501,16 @@
             "type": "boolean",
             "description": "Removes the position\u0027s own time slots, so only the global ones apply again. Needed because \u0060null\u0060\nmeans \u0022not specified\u0022: without the switch a form with an emptied window would report \u0022saved\u0022 while the old\nwindow kept doubling the points. Wins over \u0060timeSlots\u0060 if both arrive together.",
             "default": false
+          },
+          "newItemsPerDay": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "Daily dose of new contents (see PositionResponse); \u00600\u0060 removes the cap. 0 to 200.",
+            "format": "int32"
           }
         },
         "description": "Partial change to the overrides/goals/points. The referenced exercise is immutable\n(progress indices).\n\n**PATCH semantics:** a \u0060null\u0060 means \u0022not specified\u0022 for *every* field \u2013 the previous\nvalue stays. It does **not** mean \u0022reset to default\u0022; that needs an explicit \u0060Clear\u0060 switch, and\nexactly one field has one: bool UpdatePositionDto.ClearTimeSlots. All the other fields cannot be emptied at all \u2013\nthey are either mandatory or already carry \u0022inherit\u0022 as a value of their own."

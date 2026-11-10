@@ -9,11 +9,15 @@ namespace Pugling.Contracts.Shared;
 /// <c>Testable</c> is about <b>this day</b>, not merely about the exercise type: it is false on a free display
 /// stage (B-96), because the exam refuses that stage. A client therefore offers practice whenever the position
 /// uses Leitner or is not testable today – the two together always leave exactly one playable way in.
+/// <para>
+/// <c>IntroducedCount</c> of <c>PoolSize</c> is how far the child has come through the position's contents - with a
+/// daily dose (B-04) the one figure that says how much of the material is still ahead.
+/// </para>
 /// </summary>
 public record PositionStatus(
     int PositionId, int ExerciseId, string ExerciseTitle, string ExerciseType, string Renderer,
     int Order, GoalCadence Cadence, ExerciseCheckMode CheckMode, bool UseLeitner, bool Testable,
-    bool GoalMet, int DueCount, int PoolSize, int PointsGoalMet);
+    bool GoalMet, int DueCount, int PoolSize, int PointsGoalMet, int IntroducedCount);
 
 /// <summary>Daily rollup of a study plan across its positions.</summary>
 public record DayOverview(

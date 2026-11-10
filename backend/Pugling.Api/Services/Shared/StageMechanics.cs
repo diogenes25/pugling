@@ -27,9 +27,17 @@ public static class StageMechanics
     public static bool IsTyped(ClozeStage stage) =>
         stage is ClozeStage.TranslationWordBank or ClozeStage.TranslationFreeText or ClozeStage.FreeText;
 
-    /// <summary>Normalizes an answer for comparison (trim, lowercase, collapse repeated spaces).</summary>
+    /// <summary>
+    /// Normalizes an answer for comparison (trim, lowercase, collapse repeated spaces, one spelling of the
+    /// apostrophe). A tablet keyboard types the typographic apostrophe on its own ("l’école"), and which key the
+    /// device picked is not what the child is asked for (B-440).
+    /// </summary>
     public static string Normalize(string? s) =>
-        string.Join(' ', (s ?? "").Trim().ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries));
+        string.Join(' ', FoldApostrophes(s ?? "").Trim().ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries));
+
+    // Right and left single quotation mark, modifier apostrophe, acute and grave accent as stand-alone characters.
+    private static string FoldApostrophes(string s) =>
+        s.Replace('’', '\'').Replace('‘', '\'').Replace('ʼ', '\'').Replace('´', '\'').Replace('`', '\'');
 
     // B-421: the articles a typed answer may leave out, per language of the expected answer. Product knowledge, kept
     // small on purpose: only the three languages the catalog teaches with articles; Latin has none, an unknown
@@ -38,7 +46,7 @@ public static class StageMechanics
     {
         ["de"] = (["der", "die", "das", "ein", "eine"], []),
         ["en"] = (["the", "a", "an"], []),
-        ["fr"] = (["le", "la", "les", "un", "une", "des"], ["l'", "l’"]),
+        ["fr"] = (["le", "la", "les", "un", "une", "des"], ["l'"]),
     };
 
     /// <summary>

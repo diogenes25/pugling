@@ -40,7 +40,8 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         new(p.Id, p.StudyPlanId, p.ExerciseId, p.Exercise?.Title ?? "", p.Exercise?.Type.ToString() ?? "",
             p.Order, p.Stage, p.ItemCount, p.Scope, p.Cadence, p.OrderStrategy, p.GoalThreshold, p.RequireTypedTest,
             p.UseLeitner, p.MaxBox, p.BoxIntervalDays, p.StageSchedule, p.PointsGoalMet, p.PenaltyCoins, p.NewContentPoints,
-            p.ComboThreshold, p.ComboBonusPoints, p.SpeedThresholdSeconds, p.SpeedBonusPoints, p.TimeSlots);
+            p.ComboThreshold, p.ComboBonusPoints, p.SpeedThresholdSeconds, p.SpeedBonusPoints, p.TimeSlots,
+            p.NewItemsPerDay);
 
     /// <summary>All positions of the study plan in their order.</summary>
     [HttpGet]
@@ -91,6 +92,22 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
      * OVERLAP is deliberately not checked: it is explicitly allowed and the choice stays deterministic anyway
      * (the narrowest slot wins). Forbidding it would add a validation case to a place that has none on purpose.
      */
+    // The daily dose (B-04) is a count of contents; the upper bound only keeps a typo from reading as "no cap".
+    private static string? DoseProblem(int? newItemsPerDay) =>
+        newItemsPerDay is < 0 or > 200 ? "newItemsPerDay must be between 0 and 200 (0 = no cap)." : null;
+
+    // Without the Leitner box every known content is due every day, so a dose would only delay the day the round
+    // carries the whole pool - the two settings only work together.
+    private static string? DoseNeedsLeitnerProblem(int newItemsPerDay, bool useLeitner) =>
+        newItemsPerDay > 0 && !useLeitner ? "A daily dose (newItemsPerDay) needs the Leitner box (useLeitner)." : null;
+
+    // A set-graded exercise (an unordered list) accepts any entry not yet named - but only among the cards of the
+    // round. A dose would freeze a few of them, and a right answer outside that hidden choice would count as wrong.
+    private string? DoseOnSetProblem(Exercise exercise, int newItemsPerDay) =>
+        newItemsPerDay > 0 && types.ByKey(exercise.Type)?.GradesAsSet(PositionPlayService.ConfigOf(exercise)) == true
+            ? "A daily dose (newItemsPerDay) does not fit an exercise whose entries may be named in any order."
+            : null;
+
     private static string? TimeSlotProblem(List<ScoringTimeSlot>? slots)
     {
         if (slots is null) return null;
@@ -128,7 +145,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PositionResponse>> Create(int planId, CreatePositionDto dto, CancellationToken ct)
     {
-        if ((ThresholdProblem(dto.GoalThreshold) ?? TimeSlotProblem(dto.TimeSlots)) is { } problem)
+        if ((ThresholdProblem(dto.GoalThreshold) ?? TimeSlotProblem(dto.TimeSlots) ?? DoseProblem(dto.NewItemsPerDay)) is { } problem)
             return this.ProblemWithCode(ApiErrors.ValidationError, problem);
 
         var exercise = await db.Exercises.FirstOrDefaultAsync(e => e.Id == dto.ExerciseId, ct);
@@ -151,6 +168,10 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         var effectiveRequireTypedTest = dto.RequireTypedTest ?? exercise.DefaultRequireTypedTest;
         if (RequireTypedTestValidation.ProblemText(types.ByKey(exercise.Type), effectiveRequireTypedTest) is { } typedProblem)
             return this.ProblemWithCode(ApiErrors.ValidationError, typedProblem);
+
+        if ((DoseNeedsLeitnerProblem(dto.NewItemsPerDay ?? 0, dto.UseLeitner ?? exercise.DefaultUseLeitner)
+                ?? DoseOnSetProblem(exercise, dto.NewItemsPerDay ?? 0)) is { } doseProblem)
+            return this.ProblemWithCode(ApiErrors.ValidationError, doseProblem);
 
         var order = dto.Order ?? ((await db.PlanPositions.Where(p => p.StudyPlanId == planId)
             .MaxAsync(p => (int?)p.Order, ct)) ?? -1) + 1;
@@ -192,6 +213,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             // No exercise suggestion behind it: a time of day is a statement about the family's day, not about
             // the teaching material. An empty list is stored as null, so "no window" has one spelling only.
             TimeSlots = dto.TimeSlots is { Count: > 0 } ? dto.TimeSlots : null,
+            NewItemsPerDay = dto.NewItemsPerDay ?? 0,
         };
         db.PlanPositions.Add(pos);
         await db.SaveChangesAsync(ct);
@@ -206,7 +228,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PositionResponse>> Update(int planId, int positionId, UpdatePositionDto dto, CancellationToken ct = default)
     {
-        if ((ThresholdProblem(dto.GoalThreshold) ?? TimeSlotProblem(dto.TimeSlots)) is { } problem)
+        if ((ThresholdProblem(dto.GoalThreshold) ?? TimeSlotProblem(dto.TimeSlots) ?? DoseProblem(dto.NewItemsPerDay)) is { } problem)
             return this.ProblemWithCode(ApiErrors.ValidationError, problem);
 
         var pos = await FindAsync(planId, positionId, ct);
@@ -223,6 +245,10 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             return this.ProblemWithCode(ApiErrors.ValidationError, stageProblem);
         if (RequireTypedTestValidation.ProblemText(types.ByKey(exercise.Type), dto.RequireTypedTest) is { } typedProblem)
             return this.ProblemWithCode(ApiErrors.ValidationError, typedProblem);
+
+        if ((DoseNeedsLeitnerProblem(dto.NewItemsPerDay ?? pos.NewItemsPerDay, dto.UseLeitner ?? pos.UseLeitner)
+                ?? DoseOnSetProblem(exercise, dto.NewItemsPerDay ?? pos.NewItemsPerDay)) is { } doseProblem)
+            return this.ProblemWithCode(ApiErrors.ValidationError, doseProblem);
 
         if (dto.Order is not null) pos.Order = dto.Order.Value;
         if (dto.Stage is not null) pos.Stage = dto.Stage;
@@ -248,6 +274,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         // no-op, which is the very failure the switch exists against.
         if (dto.TimeSlots is not null) pos.TimeSlots = dto.TimeSlots.Count > 0 ? dto.TimeSlots : null;
         if (dto.ClearTimeSlots) pos.TimeSlots = null;
+        if (dto.NewItemsPerDay is not null) pos.NewItemsPerDay = dto.NewItemsPerDay.Value;
 
         await db.SaveChangesAsync(ct);
         return Map(pos);

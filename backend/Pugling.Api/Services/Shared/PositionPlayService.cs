@@ -117,7 +117,78 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
             .Select(i => (Index: i, Prog: progress.GetValueOrDefault(i)))
             .Where(x => ScopeMatch(pos.Scope, x.Prog) && (!dueOnly || !pos.UseLeitner || IsDue(x.Prog, day)));
 
+        // The dose only shapes a round that is played for the record; free practice (info) introduces nothing.
+        if (dueOnly && pos.NewItemsPerDay > 0)
+            due = WithinDailyDose(due, pos.NewItemsPerDay, progress.Values.Count(p => p.IntroducedAt == day));
+
         return OrderIndices(due, strategy);
+    }
+
+    /// <summary>
+    /// Applies the daily dose (B-04): of the never-shown contents only as many pass as the day still has room for,
+    /// lowest index first - the order of the book. What was introduced earlier today counts against the dose, so a
+    /// second round on the same day brings no further new ones. Known contents pass untouched.
+    /// </summary>
+    private static List<(int Index, PositionItemProgress? Prog)> WithinDailyDose(
+        IEnumerable<(int Index, PositionItemProgress? Prog)> due, int newItemsPerDay, int introducedToday)
+    {
+        var room = Math.Max(0, newItemsPerDay - introducedToday);
+        var result = new List<(int Index, PositionItemProgress? Prog)>();
+        foreach (var x in due.OrderBy(x => x.Index))
+        {
+            if (x.Prog?.IntroducedAt is not null) result.Add(x);
+            else if (room-- > 0) result.Add(x);
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// The contents a test checks on <paramref name="day"/> when the position carries a daily dose (B-04): what the
+    /// child met today - introduced, reviewed or due - plus the new contents the day's dose still has room for. A
+    /// test over everything introduced would grow with every day of the plan until the duty cannot be met in one
+    /// sitting.
+    /// <para>
+    /// The open rest of the dose is the anti-cheat half: a child that skips practice is asked the day's new contents
+    /// cold, and because the caller introduces them (<see cref="IntroduceAsync"/>), they stay due until they are
+    /// practised. Skipping practice makes the test longer every day, never shorter.
+    /// </para>
+    /// <para>
+    /// On a day with nothing met and nothing new left, the weakest known contents are checked, twice the dose at
+    /// most - the duty stays meetable after the pool is through.
+    /// </para>
+    /// </summary>
+    public static IReadOnlyList<int> DailyTestPortion(int newItemsPerDay, int poolSize,
+        IEnumerable<PositionItemProgress> progress, DateOnly day)
+    {
+        var introduced = progress.Where(p => p.IntroducedAt is not null && p.ItemIndex < poolSize).ToList();
+        var known = introduced.Select(p => p.ItemIndex).ToHashSet();
+        var room = Math.Max(0, newItemsPerDay - introduced.Count(p => p.IntroducedAt == day));
+
+        var portion = introduced
+            .Where(p => p.IntroducedAt == day || IsDue(p, day)
+                || (p.LastReviewedAt is { } at && DateOnly.FromDateTime(at) == day))
+            .Select(p => p.ItemIndex)
+            .Concat(Enumerable.Range(0, poolSize).Where(i => !known.Contains(i)).Take(room))
+            .ToList();
+        if (portion.Count > 0) return portion;
+
+        return [.. introduced.OrderBy(p => p.Box).ThenBy(p => p.LastReviewedAt).ThenBy(p => p.ItemIndex)
+            .Take(newItemsPerDay * 2).Select(p => p.ItemIndex)];
+    }
+
+    /// <summary>
+    /// Marks the given contents as introduced on <paramref name="day"/> and due at once - for a test that asks
+    /// never-shown contents under a daily dose (<see cref="DailyTestPortion"/>). The caller saves.
+    /// </summary>
+    public async Task IntroduceAsync(int positionId, IEnumerable<int> itemIndices, DateOnly day, CancellationToken ct)
+    {
+        foreach (var index in itemIndices)
+        {
+            var prog = await ProgressForAsync(positionId, index, ct);
+            if (prog.IntroducedAt is not null) continue;
+            prog.IntroducedAt = day;
+            prog.DueOn ??= day;
+        }
     }
 
     /// <summary>

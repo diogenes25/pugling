@@ -11,7 +11,8 @@ namespace Pugling.Api.Services.Shared;
 /// and rolls up the daily/weekly status of an entire study plan. The position-wide counterpart to the
 /// former plan-wide progress service – mandatory goal and points now hang off the exercise, not the plan.
 /// </summary>
-public class PositionProgressService(PuglingDbContext db, PositionPlayService play, ExerciseTypeRegistry registry)
+public class PositionProgressService(PuglingDbContext db, PositionPlayService play, ExerciseTypeRegistry registry,
+    TimeProvider time)
 {
     /// <summary>Default pass threshold of a plan-position test when the position doesn't set its own.</summary>
     private const int DefaultPassPercent = 80;
@@ -176,6 +177,13 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     {
         var positions = await LoadPositionsAsync(plan.Id, ct);
         var statuses = new List<PositionStatus>(positions.Count);
+        // One grouped query for the whole plan: this method runs once per day of a history, a lookup per position
+        // would multiply with both.
+        var introducedByPosition = await db.PositionItemProgress.AsNoTracking()
+            .Where(p => p.PlanPosition!.StudyPlanId == plan.Id && p.IntroducedAt != null)
+            .GroupBy(p => p.PlanPositionId)
+            .Select(g => new { PositionId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(g => g.PositionId, g => g.Count, ct);
 
         foreach (var pos in positions)
         {
@@ -192,7 +200,8 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             statuses.Add(new PositionStatus(
                 pos.Id, pos.ExerciseId, pos.Exercise?.Title ?? "", pos.Exercise?.Type.ToString() ?? "",
                 manifest?.Renderer ?? "", pos.Order, pos.Cadence, checkMode, pos.UseLeitner,
-                testable, goalMet, dueCount, poolSize, pos.PointsGoalMet));
+                testable, goalMet, dueCount, poolSize, pos.PointsGoalMet,
+                Math.Min(introducedByPosition.GetValueOrDefault(pos.Id), poolSize)));
         }
 
         // The day's obligation = every position with a goal (daily today / weekly this week) done.
@@ -219,6 +228,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     public async Task<DayOverview> EvaluateAndAwardAsync(StudyPlan plan, DateOnly day, CancellationToken ct = default)
     {
         var positions = await LoadPositionsAsync(plan.Id, ct);
+        var now = time.GetUtcNow().UtcDateTime;
         foreach (var pos in positions.Where(p => p.Cadence != GoalCadence.None && p.PointsGoalMet > 0))
         {
             if (!await IsGoalMetAsync(pos, plan, day, ct)) continue;
@@ -235,6 +245,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
                 PeriodStart = periodStart,
                 Day = day,
                 Points = pos.PointsGoalMet,
+                AwardedAt = now,
             });
             db.ChildPointsEntries.Add(new ChildPointsEntry
             {
@@ -242,6 +253,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
                 Kind = PointKind.Goal,
                 Amount = pos.PointsGoalMet,
                 Reason = $"[{plan.Title} · {pos.Exercise?.Title}] {(pos.Cadence == GoalCadence.Weekly ? "Wochenziel" : "Tagesziel")} erreicht",
+                CreatedAt = now,
             });
         }
 
@@ -316,6 +328,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         if (positions.Count == 0) return 0;
 
         var lookbackFloor = today.AddDays(-MaxSettleLookbackDays);
+        var now = time.GetUtcNow().UtcDateTime;
         var appliedCoins = 0;
         var changed = false;
 
@@ -344,6 +357,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
                     PeriodStart = from,
                     Day = to,
                     Points = pos.PenaltyCoins,
+                    AppliedAt = now,
                 });
                 db.ChildPointsEntries.Add(new ChildPointsEntry
                 {
@@ -351,6 +365,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
                     Kind = PointKind.GoalPenalty,
                     Amount = -pos.PenaltyCoins,
                     Reason = $"[{plan.Title} · {pos.Exercise?.Title}] {(pos.Cadence == GoalCadence.Weekly ? "Wochenziel" : "Tagesziel")} gerissen",
+                    CreatedAt = now,
                 });
                 appliedCoins += pos.PenaltyCoins;
                 changed = true;

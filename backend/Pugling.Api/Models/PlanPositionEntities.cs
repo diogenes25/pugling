@@ -32,6 +32,12 @@ public class PlanPosition
     public int? Stage { get; set; }
     /// <summary>How many of the exercise's contents are used; null = all of them.</summary>
     public int? ItemCount { get; set; }
+    /// <summary>
+    /// Daily dose (B-04): how many never-shown contents a learn round may bring per day; 0 = no cap, every unseen
+    /// content is due at once. With a dose one position carries a pool for weeks - the round is today's new ones
+    /// plus the known ones Leitner made due, and the test checks that portion instead of the whole pool.
+    /// </summary>
+    public int NewItemsPerDay { get; set; }
     /// <summary>Scope of the content selection (all/new/old).</summary>
     public ItemScope Scope { get; set; } = ItemScope.All;
     /// <summary>

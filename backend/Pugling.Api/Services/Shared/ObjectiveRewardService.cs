@@ -14,7 +14,7 @@ namespace Pugling.Api.Services.Shared;
 /// idempotent via the unique index (<see cref="ObjectiveReward"/>). Deliberately <b>no penalty</b> and
 /// <b>no clawback</b>: a key result once earned stays paid, even if the learning progress later regresses.
 /// </summary>
-public class ObjectiveRewardService(PuglingDbContext db, ObjectiveEvaluationService evaluation)
+public class ObjectiveRewardService(PuglingDbContext db, ObjectiveEvaluationService evaluation, TimeProvider time)
 {
     /// <summary>
     /// Recomputes all of a child's active objectives and books any outstanding key-result/completion
@@ -82,13 +82,15 @@ public class ObjectiveRewardService(PuglingDbContext db, ObjectiveEvaluationServ
     // paidKeyResultId: the milestone paid for, or null for the full completion (the discriminator, see the entity).
     private void Award(int childId, int objectiveId, int? paidKeyResultId, int points, PointKind kind, string reason)
     {
+        var now = time.GetUtcNow().UtcDateTime;
         db.ObjectiveRewards.Add(new ObjectiveReward
         {
             ObjectiveId = objectiveId,
             PaidKeyResultId = paidKeyResultId,
             Points = points,
+            AwardedAt = now,
         });
-        db.ChildPointsEntries.Add(new ChildPointsEntry { ChildId = childId, Kind = kind, Amount = points, Reason = reason });
+        db.ChildPointsEntries.Add(new ChildPointsEntry { ChildId = childId, Kind = kind, Amount = points, Reason = reason, CreatedAt = now });
     }
 
     private static string Label(KeyResult kr) =>

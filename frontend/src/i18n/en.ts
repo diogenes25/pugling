@@ -37,6 +37,7 @@ export const en = {
       practice: "▶ PRACTISE",
       practiceDue: "▶ PRACTISE ({{count}} due)",
       playThrough: "▶ PLAY THROUGH",
+      introduced: "{{count}} of {{total}} met so far",
       test: "TEST",
     },
     missions: {

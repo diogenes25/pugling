@@ -24,6 +24,7 @@ import { GrammarTopicPicker } from "../components/GrammarTopicChips";
 import { prefillGrammarTopics } from "./grammarTopicPrefill";
 import { ListenAusfall } from "../components/ListenAusfall";
 import { RepeatedTextFields, nonEmpty } from "../components/RepeatedTextFields";
+import { parseVocabList } from "../lib/vocabList";
 
 /**
  * Eine Übung anlegen – **nur** das.
@@ -354,6 +355,9 @@ export function VaterExerciseCreate() {
   );
 }
 
+// How many pairs of a pasted list go to the store per request (B-452).
+const LIST_SLICE = 50;
+
 /** Vokabel-Inhalt: wählt Store-Vokabeln (Komplextyp) per Id statt inline-Wörter; erlaubt „einfach anlegen". */
 function VocabRefPicker({ selected, setSelected, extra, setExtra }: {
   selected: { key: string; vocabularyId: number }[];
@@ -412,6 +416,70 @@ function VocabRefPicker({ selected, setSelected, extra, setExtra }: {
     setQWord(""); setQTrans(""); setQAlts([]); store.reload();
   }
 
+  /*
+   * B-452: a whole list at once. The store answers per pair with id and key, and `reuseExisting` makes a word that is
+   * already there come back instead of a `_2` copy (same rule as `quickAdd`) - so pasting a list twice selects the same
+   * entries. Sent in slices, so the button can say how far it is and a failing request costs one slice, not the list.
+   */
+  const [listOpen, setListOpen] = useState(false);
+  const [listText, setListText] = useState("");
+  const [listProgress, setListProgress] = useState<string | null>(null);
+  const listToggle = useRef<HTMLButtonElement>(null);
+  // The store list is one page; a pasted pair that is not on it would otherwise show as its raw key.
+  const [pastedLabels, setPastedLabels] = useState<Record<string, string>>({});
+  const parsed = parseVocabList(listText);
+  async function addList() {
+    const pairs = parsed.pairs;
+    if (pairs.length === 0) return;
+    const done = await action.runFor(async () => {
+      const all: { key: string; vocabularyId: number; label: string }[] = [];
+      const failed: string[] = [];
+      // What a thrown slice leaves behind: the earlier slices are in the store already and must end up selected.
+      let broke: string | null = null;
+      for (let from = 0; from < pairs.length && broke === null; from += LIST_SLICE) {
+        const slice = pairs.slice(from, from + LIST_SLICE);
+        setListProgress(`${from}/${pairs.length}`);
+        try {
+          const results = await api.createVocabularyBatch(slice.map((p) => ({
+            sourceLanguage: src, targetLanguage: tgt, word: p.word, translation: p.translation,
+            translationAlternatives: p.alternatives.length > 0 ? p.alternatives : null, reuseExisting: true,
+          })));
+          for (const r of results) {
+            const pair = slice[r.index];
+            if (r.id != null && r.key) all.push({ key: r.key, vocabularyId: r.id, label: `${pair.word}→${pair.translation}` });
+            else failed.push(pair.word);
+          }
+        } catch (e) {
+          broke = `ab „${slice[0].word}“ nicht angelegt (${errorMessage(e)}) – „anlegen & wählen“ noch einmal setzt fort`;
+        }
+      }
+      return { all, failed, broke };
+    });
+    setListProgress(null);
+    if (!done) return;
+    setPastedLabels((cur) => ({ ...cur, ...Object.fromEntries(done.all.map((a) => [a.key, a.label])) }));
+    const chosen = new Set(done.all.map((a) => a.key)).size;
+    setSelected((cur) => {
+      const have = new Set(cur.map((s) => s.key));
+      const fresh = done.all.filter((a) => !have.has(a.key) && (have.add(a.key), true));
+      return [...cur, ...fresh.map(({ key, vocabularyId }) => ({ key, vocabularyId }))];
+    });
+    store.reload();
+    if (done.failed.length === 0 && done.broke === null) {
+      action.succeed(`${chosen} Vokabeln aus der Liste gewählt.`);
+      setListText(""); setListOpen(false);
+      // The button that was clicked is gone with the panel; the toggle is where the user came from.
+      listToggle.current?.focus();
+      return;
+    }
+    const parts = [
+      `${chosen} gewählt`,
+      done.failed.length > 0 ? `${done.failed.length} vom Vokabelspeicher abgelehnt: ${done.failed.join("; ")}` : null,
+      done.broke,
+    ].filter(Boolean);
+    action.fail(parts.join(" · "));
+  }
+
   const byKey = new Map((store.data ?? []).map((v) => [v.key, v]));
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -447,7 +515,7 @@ function VocabRefPicker({ selected, setSelected, extra, setExtra }: {
         <div className="tokenlist">
           {selected.map((sel) => {
             const v = byKey.get(sel.key);
-            return <span className="token" key={sel.key}>{v ? `${v.word}→${v.translation}` : sel.key}<button type="button" aria-label="Entfernen" onClick={() => removeKey(sel.key)}>×</button></span>;
+            return <span className="token" key={sel.key}>{v ? `${v.word}→${v.translation}` : pastedLabels[sel.key] ?? sel.key}<button type="button" aria-label="Entfernen" onClick={() => removeKey(sel.key)}>×</button></span>;
           })}
         </div>
       )}
@@ -501,8 +569,32 @@ function VocabRefPicker({ selected, setSelected, extra, setExtra }: {
         </div>
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={action.busy} onClick={quickAdd}>+ anlegen &amp; wählen</button>
       </div>
+      <div>
+        <button ref={listToggle} type="button" className="btn ghost inline-btn" style={{ width: "auto" }} aria-expanded={listOpen}
+          onClick={() => setListOpen((o) => !o)}>📋 Liste einfügen</button>
+        {listOpen && (
+          <div className="field" style={{ marginTop: 8 }}>
+            <FieldLabel htmlFor="vp-list" topic="vocabListPaste">Vokabelliste</FieldLabel>
+            <textarea id="vp-list" rows={8} value={listText} onChange={(e) => setListText(e.target.value)}
+              placeholder="la ville ; die Stadt" />
+            <div className="row" style={{ gap: 8, alignItems: "center", marginTop: 6, flexWrap: "wrap" }}>
+              {/* No live region: the text changes with every keystroke. The pairs are shown, not just counted - a
+                  list read at the wrong separator looks right as a number and wrong as words. */}
+              <span className="muted">
+                {parsed.pairs.length} {parsed.pairs.length === 1 ? "Paar" : "Paare"} erkannt
+                {parsed.pairs.length > 0 && `, z. B. ${parsed.pairs.slice(0, 2).map((p) => `${p.word} → ${p.translation}`).join(" | ")}`}
+                {parsed.rejected.length > 0 && ` · ${parsed.rejected.length} ${parsed.rejected.length === 1 ? "Zeile" : "Zeilen"} ohne Trenner übersprungen: ${parsed.rejected.slice(0, 3).join(" | ")}${parsed.rejected.length > 3 ? " …" : ""}`}
+              </span>
+              <button type="button" className="btn inline-btn" style={{ width: "auto", marginLeft: "auto" }}
+                disabled={action.busy || parsed.pairs.length === 0} onClick={addList}>
+                {action.busy ? `Lege an… ${listProgress ?? ""}` : `${parsed.pairs.length} als ${src}→${tgt} anlegen & wählen`}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
       <StatusBanner message={action.message} />
-      <p className="muted" style={{ margin: 0 }}>Vokabeln kommen aus dem Store (Komplextyp) und bleiben über Übungen hinweg verknüpft.</p>
+      <p className="muted" style={{ margin: 0 }}>{selected.length > 0 ? `${selected.length} gewählt. ` : ""}Vokabeln kommen aus dem Store (Komplextyp) und bleiben über Übungen hinweg verknüpft.</p>
     </div>
   );
 }

@@ -26,7 +26,7 @@ namespace Pugling.Api.Controllers;
 [Produces("application/json")]
 [Authorize]
 public class RemarksController(
-    PuglingDbContext db, RemarkExportService export, AuthAccess access, RemarkOptions options) : ControllerBase
+    PuglingDbContext db, RemarkExportService export, AuthAccess access, RemarkOptions options, TimeProvider time) : ControllerBase
 {
     /// <summary>Sort key of the list (whitelist – no dynamic property access).</summary>
     private static IQueryable<Remark> ApplySort(IQueryable<Remark> q, string? key, bool desc) => key switch
@@ -309,7 +309,7 @@ public class RemarksController(
         if (dto.Answer is { } answer)
         {
             remark.Answer = answer;
-            remark.AnsweredAt = DateTime.UtcNow;
+            remark.AnsweredAt = time.GetUtcNow().UtcDateTime;
             // "null means not specified" holds here too: if the skill only corrects the wording of the answer,
             // the author must not disappear - the export would otherwise write "(unknown)".
             if (dto.AnsweredBy is { } by) remark.AnsweredBy = by;
@@ -473,7 +473,7 @@ public class RemarksController(
         var filterNote = status is { } s ? $"status={s}" : "alle";
         // For a cross-account export the author account must go into the text: in the repository snapshot it
         // would otherwise be impossible to tell whose observation a line is.
-        var markdown = export.Render(rows, filterNote, DateTime.UtcNow, showAccounts: all);
+        var markdown = export.Render(rows, filterNote, time.GetUtcNow().UtcDateTime, showAccounts: all);
         return Content(markdown, "text/markdown", Encoding.UTF8);
     }
 

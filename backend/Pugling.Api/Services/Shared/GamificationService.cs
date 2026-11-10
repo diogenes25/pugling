@@ -9,7 +9,8 @@ namespace Pugling.Api.Services.Shared;
 /// credits due rewards idempotently – exactly once per mission/period resp. per achievement (analogous
 /// to the former plan-wide progress service). Also returns the current status for the frontend.
 /// </summary>
-public class GamificationService(PuglingDbContext db, MetricsService metrics, ILogger<GamificationService> logger)
+public class GamificationService(PuglingDbContext db, MetricsService metrics, ILogger<GamificationService> logger,
+    TimeProvider time)
 {
     // MissionStatus/AchievementStatus live in the contract project (Pugling.Contracts.Student).
 
@@ -18,6 +19,7 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
     {
         var child = await db.Children.FirstOrDefaultAsync(c => c.Id == childId, ct);
         if (child is null) return;
+        var now = time.GetUtcNow().UtcDateTime;
 
         foreach (var m in await db.Missions.Where(m => m.ChildId == childId && m.Active).ToListAsync(ct))
         {
@@ -34,6 +36,7 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
                 Period = period,
                 PeriodStart = from,
                 Points = m.RewardPoints,
+                AwardedAt = now,
             });
             db.ChildPointsEntries.Add(new ChildPointsEntry
             {
@@ -41,6 +44,7 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
                 Kind = PointKind.Mission,
                 Amount = m.RewardPoints,
                 Reason = $"Mission erfüllt: {m.Title}",
+                CreatedAt = now,
             });
             if (await SaveIgnoringDuplicateAsync(() => AlreadyAwardedAsync(m.Id, period, from, ct), ct))
                 logger.LogInformation("Belohnung gebucht: Kind {ChildId} +{Points} (Mission) – \"{Title}\" ({Period} ab {PeriodStart})",
@@ -53,7 +57,7 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
             if (current < a.Threshold) continue;
             if (await db.AchievementAwards.AnyAsync(x => x.AchievementId == a.Id, ct)) continue;
 
-            db.AchievementAwards.Add(new AchievementAward { AchievementId = a.Id, Points = a.RewardPoints });
+            db.AchievementAwards.Add(new AchievementAward { AchievementId = a.Id, Points = a.RewardPoints, EarnedAt = now });
             if (a.RewardPoints > 0)
                 db.ChildPointsEntries.Add(new ChildPointsEntry
                 {
@@ -61,6 +65,7 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
                     Kind = PointKind.Achievement,
                     Amount = a.RewardPoints,
                     Reason = $"Auszeichnung erreicht: {a.Title}",
+                    CreatedAt = now,
                 });
             if (await SaveIgnoringDuplicateAsync(() => db.AchievementAwards.AnyAsync(x => x.AchievementId == a.Id, ct), ct))
                 logger.LogInformation("Belohnung gebucht: Kind {ChildId} +{Points} (Auszeichnung) – \"{Title}\"",

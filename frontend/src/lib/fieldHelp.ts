@@ -40,6 +40,15 @@ export const FIELD_HELP = {
       + "Wie viel an einem einzelnen Tag drankommt, entscheidet der Leitner-Kasten über die Fälligkeit "
       + "und nicht dieses Feld.",
   },
+  newItemsPerDay: {
+    title: "Neue Inhalte je Tag",
+    text: "Die Tagesdosis: so viele noch nie gezeigte Inhalte bringt die Übungsrunde höchstens pro Tag, in der "
+      + "Reihenfolge der Übung. Dazu kommen die schon bekannten, die der Leitner-Kasten heute fällig macht. So "
+      + "trägt eine einzige Pflicht eine große Übung über Wochen – 150 Vokabeln mit 8 je Tag sind in knapp vier "
+      + "Wochen durch. Der Abschlusstest prüft dann die Tagesportion (heute neu, heute geübt oder heute fällig) "
+      + "und nicht mehr alles bisher Gelernte. Leer = keine Dosis: alle Inhalte sind vom ersten Tag an dran, "
+      + "und das passt nur für kleine Übungen.",
+  },
   orderStrategy: {
     title: "Reihenfolge",
     text: "In welcher Reihenfolge der Server die Inhalte ausspielt: „Schwächste zuerst“ nimmt das vor, "
@@ -242,6 +251,14 @@ export const FIELD_HELP = {
   },
 
   // ---- Vokabel-Store ----
+  vocabListPaste: {
+    title: "Vokabelliste einfügen",
+    text: "Eine Zeile je Vokabel: erst das Wort, dann die Übersetzung, getrennt durch Tabulator, Semikolon, "
+      + "„ – “ oder „ = “ – so, wie eine Tabelle oder eine abgetippte Liste es liefert. Weitere Spalten "
+      + "zählen als „Auch richtig“. Ein Komma trennt nicht: „Abfall, Müll“ bleibt eine Übersetzung. Wörter, "
+      + "die es im Vokabelspeicher schon gibt, werden wiederverwendet statt doppelt angelegt. Zeilen ohne "
+      + "Trenner (eine Überschrift etwa) werden übersprungen und genannt.",
+  },
   translationAlternatives: {
     title: "Auch richtig",
     text: "Weitere Wörter, die für dieselbe Vokabel als richtig zählen – „huge“ etwa mit „riesig“ und "

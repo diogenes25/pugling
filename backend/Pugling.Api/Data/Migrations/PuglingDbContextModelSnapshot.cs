@@ -1599,6 +1599,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int>("NewContentPoints")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("NewItemsPerDay")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("Order")
                         .HasColumnType("INTEGER");
 

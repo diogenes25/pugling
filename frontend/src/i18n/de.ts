@@ -39,6 +39,7 @@ export const de = {
       practice: "▶ ÜBEN",
       practiceDue: "▶ ÜBEN ({{count}} fällig)",
       playThrough: "▶ DURCHSPIELEN",
+      introduced: "{{count}} von {{total}} schon kennengelernt",
       test: "TEST",
     },
     missions: {

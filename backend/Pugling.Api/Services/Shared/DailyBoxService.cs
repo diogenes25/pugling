@@ -17,7 +17,8 @@ namespace Pugling.Api.Services.Shared;
 /// instead of nagging or lapsing (B-105, decision 7 - the ethical guardrail against dark patterns).
 /// </para>
 /// </summary>
-public class DailyBoxService(PuglingDbContext db, PositionProgressService progress, IOptions<DailyBoxOptions> options)
+public class DailyBoxService(PuglingDbContext db, PositionProgressService progress, IOptions<DailyBoxOptions> options,
+    TimeProvider time)
 {
     private readonly DailyBoxOptions opts = options.Value;
 
@@ -44,6 +45,7 @@ public class DailyBoxService(PuglingDbContext db, PositionProgressService progre
         var coins = (int)Math.Round(Random.Shared.Next(opts.MinCoins, opts.MaxCoins + 1) * multiplier);
         var gems = (int)Math.Round(Random.Shared.Next(opts.MinGems, opts.MaxGems + 1) * multiplier);
 
+        var now = time.GetUtcNow().UtcDateTime;
         db.DailyBoxClaims.Add(new DailyBoxClaim
         {
             ChildId = plan.ChildId,
@@ -51,6 +53,7 @@ public class DailyBoxService(PuglingDbContext db, PositionProgressService progre
             CoinsAwarded = coins,
             GemsAwarded = gems,
             StreakAtClaim = streak,
+            AwardedAt = now,
         });
         if (coins > 0)
             db.ChildPointsEntries.Add(new ChildPointsEntry
@@ -59,6 +62,7 @@ public class DailyBoxService(PuglingDbContext db, PositionProgressService progre
                 Kind = PointKind.DailyBoxCoins,
                 Amount = coins,
                 Reason = $"Tägliche Belohnungsbox (Streak {streak})",
+                CreatedAt = now,
             });
         if (gems > 0)
             db.ChildPointsEntries.Add(new ChildPointsEntry
@@ -67,6 +71,7 @@ public class DailyBoxService(PuglingDbContext db, PositionProgressService progre
                 Kind = PointKind.DailyBoxGems,
                 Amount = gems,
                 Reason = $"Tägliche Belohnungsbox (Streak {streak})",
+                CreatedAt = now,
             });
 
         try

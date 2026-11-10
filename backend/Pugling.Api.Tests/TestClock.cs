@@ -24,6 +24,15 @@ public sealed class TestClock : TimeProvider
         lock (_gate) _frozen = System.GetUtcNow();
     }
 
+    /// <summary>
+    /// Freezes the clock at <paramref name="instant"/>, so a test can start on a chosen calendar day
+    /// instead of whatever day the suite happens to run on.
+    /// </summary>
+    public void FreezeAt(DateTimeOffset instant)
+    {
+        lock (_gate) _frozen = instant.ToUniversalTime();
+    }
+
     /// <summary>Advances the frozen clock – the jump <b>is</b> the response time measured by the server.</summary>
     public void Advance(TimeSpan by)
     {

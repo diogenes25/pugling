@@ -24,7 +24,7 @@ namespace Pugling.Api.Controllers.Student;
 [ServiceFilter(typeof(PlanOwnershipFilter))]
 public class PositionTestsController(PuglingDbContext db, PositionPlayService play,
     PositionProgressService progress, GamificationService gamification, AnswerGrader grader,
-    ItemProgressService itemProgress, DailyBoxService dailyBox) : ControllerBase
+    ItemProgressService itemProgress, DailyBoxService dailyBox, TimeProvider time) : ControllerBase
 {
     /// <summary>Default pass threshold when the position sets no threshold of its own.</summary>
     private const int DefaultPassPercent = 80;
@@ -131,7 +131,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         var poolSize = play.PoolSize(pos, items.Count);
         if (poolSize == 0) return this.ProblemWithCode(ApiErrors.NoCheckableContent, "The exercise contains no checkable content.");
 
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
         if (dto.Day is { } dd && dd != today && !User.IsSupervisor()) return Forbid();
         // Anti-cheat: the child may only test its active, running plan (see the practice start).
         if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, today))
@@ -176,7 +176,10 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             .Where(p => p.PlanPositionId == positionId && p.ItemIndex < poolSize)
             .ToDictionaryAsync(p => p.ItemIndex, ct);
         var introduced = progress.Values.Where(p => p.IntroducedAt != null).Select(p => p.ItemIndex).ToList();
-        var pool = introduced.Count > 0 ? introduced : Enumerable.Range(0, poolSize).ToList();
+        // With a daily dose (B-04) the test checks the day's portion; otherwise everything introduced.
+        var pool = pos.NewItemsPerDay > 0
+            ? PositionPlayService.DailyTestPortion(pos.NewItemsPerDay, poolSize, progress.Values, day)
+            : introduced.Count > 0 ? introduced : Enumerable.Range(0, poolSize).ToList();
         // FREEZE the examination order per the position's strategy (strictly server-driven, no going back).
         var order = PositionPlayService.OrderIndices(pool.Select(i => (i, progress.GetValueOrDefault(i))), pos.OrderStrategy);
 
@@ -186,6 +189,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             PlanPositionId = positionId,
             Day = day,
             StageValue = stage,
+            StartedAt = time.GetUtcNow().UtcDateTime,
             Graded = typed,
             // Stamp the actor: everything below the child's rules (resume, attempt cap) keys off it.
             BySupervisor = !User.IsStudent(),
@@ -196,6 +200,10 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             Results = order.Select(i => new TestItemResult { ItemIndex = i, StageValue = stage }).ToList(),
         };
         db.TestAttempts.Add(attempt);
+        // Under a dose the child's test introduces what it asks cold (see DailyTestPortion); the supervisor's
+        // preview must not move the child's learning state.
+        if (pos.NewItemsPerDay > 0 && User.IsStudent())
+            await play.IntroduceAsync(positionId, pool.Where(i => !introduced.Contains(i)), day, ct);
         await db.SaveChangesAsync(ct);
 
         return CreatedAtAction(nameof(Get), new { planId, positionId, attemptId = attempt.Id },
@@ -216,7 +224,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         if (attempt.CompletedAt is not null)
             return new TestNextResponse(null, true, attempt.Cursor, attempt.TotalItems);
         var plan = (await GetPlan(planId, ct))!;
-        if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
+        if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime)))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId, ct);
         if (pos?.Exercise is null) return NotFound();
@@ -249,7 +257,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         if (attempt is null) return NotFound();
         if (attempt.CompletedAt is not null) return this.ProblemWithCode(ApiErrors.TestAlreadySubmitted, "The test has already been submitted.");
         var plan = (await GetPlan(planId, ct))!;
-        if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
+        if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime)))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId, ct);
         if (pos?.Exercise is null) return NotFound();
@@ -326,7 +334,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         var plan = (await GetPlan(planId, ct))!;
         // Anti-cheat: the child must not complete and score a plan that has since been deactivated or expired
         // through an open test attempt either (the supervisor stays exempt).
-        if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(DateTime.UtcNow)))
+        if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime)))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId, ct);
         if (pos?.Exercise is null) return NotFound();
@@ -412,7 +420,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         attempt.ScorePercent = attempt.TotalItems == 0 ? 0
             : (int)Math.Round(100.0 * attempt.CorrectItems / attempt.TotalItems);
         attempt.Passed = attempt.ScorePercent >= passPercent;
-        attempt.CompletedAt = DateTime.UtcNow;
+        attempt.CompletedAt = time.GetUtcNow().UtcDateTime;
         await db.SaveChangesAsync(ct);
 
         // Book the position's goal points (idempotent) BEFORE the gamification, so that coin-based missions

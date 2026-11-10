@@ -80,7 +80,8 @@ Response — `HTTP 201`:
   "comboBonusPoints": 5,
   "speedThresholdSeconds": 0,
   "speedBonusPoints": 0,
-  "timeSlots": null
+  "timeSlots": null,
+  "newItemsPerDay": 0
 }
 ```
 
@@ -549,7 +550,8 @@ Response — `HTTP 200`:
         "goalMet": true,
         "dueCount": 2,
         "poolSize": 2,
-        "pointsGoalMet": 10
+        "pointsGoalMet": 10,
+        "introducedCount": 1
       }
     ]
   },

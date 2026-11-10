@@ -20,7 +20,7 @@ namespace Pugling.Api.Controllers.Creator;
 [Tags("Creator – Exercise Ratings")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Creator)]
-public class ExerciseRatingsController(PuglingDbContext db, ExercisePermissionService perms) : ControllerBase
+public class ExerciseRatingsController(PuglingDbContext db, ExercisePermissionService perms, TimeProvider time) : ControllerBase
 {
     /// <summary>Upper bound of a comment - the same length the free-text column carries.</summary>
     private const int MaxCommentLength = 2000;
@@ -98,7 +98,7 @@ public class ExerciseRatingsController(PuglingDbContext db, ExercisePermissionSe
     private async Task<ExerciseRating> UpsertAsync(int exerciseId, int creatorId, int stars, string? comment, CancellationToken ct)
     {
         var rating = await db.ExerciseRatings.FirstOrDefaultAsync(r => r.ExerciseId == exerciseId && r.CreatorId == creatorId, ct);
-        var now = DateTime.UtcNow;
+        var now = time.GetUtcNow().UtcDateTime;
         if (rating is null)
         {
             rating = new ExerciseRating { ExerciseId = exerciseId, CreatorId = creatorId, CreatedAt = now };

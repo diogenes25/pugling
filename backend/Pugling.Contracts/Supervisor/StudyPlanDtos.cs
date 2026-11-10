@@ -82,12 +82,16 @@ public record UpdatePlanDto(string? Title, int? SubjectId, DateOnly? StartDate, 
 /// slots apply. They are considered <b>together with</b> the global ones, the narrowest window winning – a
 /// position slot neither replaces the global ones nor multiplies with them.
 /// </param>
+/// <param name="NewItemsPerDay">
+/// Daily dose: how many never-shown contents a learn round brings per day; <c>0</c> = no cap. With a dose the
+/// final test checks the day's portion (introduced, reviewed or due today) instead of everything introduced.
+/// </param>
 public record PositionResponse(int Id, int StudyPlanId, int ExerciseId, string ExerciseTitle,
     string ExerciseType, int Order, int? Stage, int? ItemCount, ItemScope Scope, GoalCadence Cadence,
     PracticeOrder OrderStrategy, int? GoalThreshold, bool RequireTypedTest, bool UseLeitner, int MaxBox,
     List<int>? BoxIntervalDays, List<StageStep>? StageSchedule, int PointsGoalMet, int PenaltyCoins,
     int NewContentPoints, int ComboThreshold, int ComboBonusPoints, int SpeedThresholdSeconds, int SpeedBonusPoints,
-    List<ScoringTimeSlot>? TimeSlots);
+    List<ScoringTimeSlot>? TimeSlots, int NewItemsPerDay);
 
 /// <summary>
 /// Creating a position. Empty override fields inherit the exercise's suggestion (hybrid principle):
@@ -120,11 +124,13 @@ public record PositionResponse(int Id, int StudyPlanId, int ExerciseId, string E
 /// Own points time slots of this obligation (see <see cref="PositionResponse"/>); <c>null</c> = none, only the
 /// global slots apply. Each slot needs <c>start &lt; end</c> and a multiplier above 0.
 /// </param>
+/// <param name="NewItemsPerDay">Daily dose of new contents (see <see cref="PositionResponse"/>); <c>null</c> = 0 (no cap). 0 to 200.</param>
 public record CreatePositionDto(int ExerciseId, int? Order, int? Stage, int? ItemCount, ItemScope? Scope,
     GoalCadence? Cadence, PracticeOrder? OrderStrategy, int? GoalThreshold, bool? RequireTypedTest,
     bool? UseLeitner, int? MaxBox, List<int>? BoxIntervalDays, List<StageStep>? StageSchedule,
     int? PointsGoalMet, int? PenaltyCoins, int? NewContentPoints, int? ComboThreshold, int? ComboBonusPoints,
-    int? SpeedThresholdSeconds, int? SpeedBonusPoints, List<ScoringTimeSlot>? TimeSlots = null);
+    int? SpeedThresholdSeconds, int? SpeedBonusPoints, List<ScoringTimeSlot>? TimeSlots = null,
+    int? NewItemsPerDay = null);
 
 /// <summary>
 /// Partial change to the overrides/goals/points. The referenced exercise is immutable
@@ -166,9 +172,10 @@ public record CreatePositionDto(int ExerciseId, int? Order, int? Stage, int? Ite
 /// means "not specified": without the switch a form with an emptied window would report "saved" while the old
 /// window kept doubling the points. Wins over <c>timeSlots</c> if both arrive together.
 /// </param>
+/// <param name="NewItemsPerDay">Daily dose of new contents (see <see cref="PositionResponse"/>); <c>0</c> removes the cap. 0 to 200.</param>
 public record UpdatePositionDto(int? Order, int? Stage, int? ItemCount, ItemScope? Scope,
     GoalCadence? Cadence, PracticeOrder? OrderStrategy, int? GoalThreshold, bool? RequireTypedTest,
     bool? UseLeitner, int? MaxBox, List<int>? BoxIntervalDays, List<StageStep>? StageSchedule,
     int? PointsGoalMet, int? PenaltyCoins, int? NewContentPoints, int? ComboThreshold, int? ComboBonusPoints,
     int? SpeedThresholdSeconds, int? SpeedBonusPoints, List<ScoringTimeSlot>? TimeSlots = null,
-    bool ClearTimeSlots = false);
+    bool ClearTimeSlots = false, int? NewItemsPerDay = null);

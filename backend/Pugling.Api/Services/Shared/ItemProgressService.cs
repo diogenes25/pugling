@@ -11,7 +11,7 @@ namespace Pugling.Api.Services.Shared;
 /// last answer) and appends an <see cref="ItemReviewEvent"/> to the history. Deliberately without its
 /// own <c>SaveChanges</c>: the calling controllers save bundled together with their remaining writes.
 /// </summary>
-public class ItemProgressService(PuglingDbContext db)
+public class ItemProgressService(PuglingDbContext db, TimeProvider time)
 {
     /// <summary>Mastery in percent derived from the Leitner box (box 1 = 0% … MaxBox = 100%; as in the position report).</summary>
     private static int MasteryOf(int box) =>
@@ -31,7 +31,7 @@ public class ItemProgressService(PuglingDbContext db)
     {
         if (item.ItemId is not { } itemId || item.VocabularyId is not { } vocabId) return;
 
-        var now = DateTime.UtcNow;
+        var now = time.GetUtcNow().UtcDateTime;
 
         // The history records every answer - including ungraded repetitions (that is genuine history).
         db.ItemReviewEvents.Add(new ItemReviewEvent

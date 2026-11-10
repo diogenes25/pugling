@@ -1449,6 +1449,7 @@ namespace Pugling.Api.Data.Migrations
                     Order = table.Column<int>(type: "INTEGER", nullable: false),
                     Stage = table.Column<int>(type: "INTEGER", nullable: true),
                     ItemCount = table.Column<int>(type: "INTEGER", nullable: true),
+                    NewItemsPerDay = table.Column<int>(type: "INTEGER", nullable: false),
                     Scope = table.Column<string>(type: "TEXT", nullable: false),
                     OrderStrategy = table.Column<string>(type: "TEXT", nullable: false),
                     Cadence = table.Column<string>(type: "TEXT", nullable: false),

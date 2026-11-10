@@ -13,7 +13,7 @@ namespace Pugling.Api.Services.Supervisor;
 /// target values per metric. The reward itself is booked by the <see cref="ObjectiveRewardService"/> (only the
 /// <c>Rewarded</c> flag here).
 /// </summary>
-public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService evaluation, ExerciseTypeRegistry registry)
+public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService evaluation, ExerciseTypeRegistry registry, TimeProvider time)
 {
     // The contract records (KeyResultResponse/ObjectiveResponse/Create-/Update requests) live in the
     // contract project (Pugling.Contracts.Supervisor); the result pairs stay here (they carry ApiError).
@@ -23,7 +23,7 @@ public class ObjectiveService(PuglingDbContext db, ObjectiveEvaluationService ev
     /// <summary>Result with optional error code; both <c>null</c> = not found.</summary>
     public record KeyResultResult(KeyResultResponse? Value, ApiError? Error);
 
-    private static DateOnly Today => DateOnly.FromDateTime(DateTime.UtcNow);
+    private DateOnly Today => DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
 
     private static KeyResultScope KrScope(KeyResult k) =>
         k.ExerciseId is not null ? KeyResultScope.Exercise

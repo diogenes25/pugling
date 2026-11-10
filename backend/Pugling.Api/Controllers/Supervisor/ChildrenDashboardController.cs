@@ -14,13 +14,13 @@ namespace Pugling.Api.Controllers.Supervisor;
 [Tags("Supervisor – Children")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Supervisor)]
-public class ChildrenDashboardController(ChildrenDashboardService dashboard) : ControllerBase
+public class ChildrenDashboardController(ChildrenDashboardService dashboard, TimeProvider time) : ControllerBase
 {
     /// <summary>Daily status of all own children; <paramref name="date"/> optional (default: today, UTC).</summary>
     [HttpGet]
     public async Task<ActionResult<Dashboard>> Get([FromQuery] DateOnly? date, CancellationToken ct)
     {
-        var day = date ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        var day = date ?? DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
         return await dashboard.BuildAsync(User.AdultId()!.Value, day, ct);
     }
 }

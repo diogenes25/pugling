@@ -1,15 +1,14 @@
 ---
-tags: [typ/story, status/idee, bereich/training, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/training, rolle/student]
 aliases: [Typografischer Apostroph]
-status: idee
-prio: P3
+status: in-arbeit
+prio: P1
 art: Defekt
-groesse: ""
+groesse: XS
 wo: backend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-09-nacht.md
-unverifiziert: true
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
@@ -26,3 +25,4 @@ Präfix-Zeile `["l'", "l’"]` (`:39`) entfällt dann.
 ## Verlauf
 
 - **2026-11-09** — angelegt aus der Nachschau zu Sprint 23 (Retro Sprint 24, Lauf AF, frischer `pugling-reviewer`), 🟢.
+- **2026-11-10** — Fertigstellungs-Lauf: für Französisch auf dem Tablet tragend, darum P1 und autonom gegrillt (Defekt). Entscheidung: `Normalize` faltet die typografischen Apostrophe, den Modifikator-Apostroph sowie Akut und Gravis als Einzelzeichen zum geraden Apostroph; die zweite Präfix-Zeile entfällt. Kosten: eine Übung, deren Lösung genau diese Zeichen unterscheidet, kann es nicht mehr geben. Regressionstest `ApostrophTests` – ohne den Fix 6 von 8 Fällen rot (gemessen per `git stash` der einen Datei, danach neu gebaut). `pugling-reviewer`: alle Aufrufer von `Normalize` vergleichen beidseitig normalisiert, keine Nebenwirkung.

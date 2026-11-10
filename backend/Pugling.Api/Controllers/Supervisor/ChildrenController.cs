@@ -19,7 +19,7 @@ namespace Pugling.Api.Controllers.Supervisor;
 [Produces("application/json")]
 [Authorize(Roles = Roles.Supervisor)]
 [ServiceFilter(typeof(ChildOwnershipFilter))]
-public class ChildrenController(PuglingDbContext db, WalletService wallet, AccountService accounts) : ControllerBase
+public class ChildrenController(PuglingDbContext db, WalletService wallet, AccountService accounts, TimeProvider time) : ControllerBase
 {
     Task<ChildResponse?> ProjectOne(int childId, CancellationToken ct) =>
         db.Children
@@ -248,7 +248,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
     {
         // Currency → point kind: gems through the manual twin, otherwise the classic manual coin entry.
         var kind = dto.Currency == Currency.Gems ? PointKind.ManualGems : PointKind.Manual;
-        var entry = new ChildPointsEntry { ChildId = childId, Kind = kind, Amount = dto.Amount, Reason = dto.Reason ?? "" };
+        var entry = new ChildPointsEntry { ChildId = childId, Kind = kind, Amount = dto.Amount, Reason = dto.Reason ?? "", CreatedAt = time.GetUtcNow().UtcDateTime };
         db.ChildPointsEntries.Add(entry);
         await db.SaveChangesAsync(ct);
 

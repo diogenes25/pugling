@@ -18,7 +18,7 @@ namespace Pugling.Api.Controllers.Supervisor;
 [Tags("Supervisor – Shop")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Supervisor)]
-public class ShopController(PuglingDbContext db, ShopService shop) : ControllerBase
+public class ShopController(PuglingDbContext db, ShopService shop, TimeProvider time) : ControllerBase
 {
     // ─── DTOs ────────────────────────────────────────────────────────────────
 
@@ -184,7 +184,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
             .FirstOrDefaultAsync(a => a.Id == articleId && a.AdultId == supervisorId, ct);
         if (article is null) return NotFound();
 
-        var listings = await shop.ListingsForSupervisorAsync(supervisorId, activeOnly: false, DateTime.UtcNow, ct);
+        var listings = await shop.ListingsForSupervisorAsync(supervisorId, activeOnly: false, time.GetUtcNow().UtcDateTime, ct);
         return listings.Where(l => l.ShopArticleId == articleId).Select(MapListing).ToList();
     }
 
@@ -205,7 +205,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
                 && l.ShopArticle!.AdultId == supervisorId, ct);
         if (listing is null) return NotFound();
 
-        ShopService.ApplyDueRefill(listing, DateTime.UtcNow);
+        ShopService.ApplyDueRefill(listing, time.GetUtcNow().UtcDateTime);
         return MapListing(listing);
     }
 
@@ -369,7 +369,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     public async Task<ActionResult<ShopPurchaseDto>> CancelPurchase(
         int childId, int purchaseId, CancellationToken ct = default)
     {
-        var result = await shop.CancelPurchaseAsync(User.AdultId()!.Value, childId, purchaseId, DateTime.UtcNow, ct);
+        var result = await shop.CancelPurchaseAsync(User.AdultId()!.Value, childId, purchaseId, time.GetUtcNow().UtcDateTime, ct);
         return result.Error switch
         {
             ShopService.ShopError.None => MapPurchase(result.Value!),
@@ -413,7 +413,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     public async Task<ActionResult<ActivationRequestDto>> ApproveActivation(
         int childId, int requestId, CancellationToken ct = default)
     {
-        var result = await shop.ApproveActivationAsync(User.AdultId()!.Value, childId, requestId, DateTime.UtcNow, ct);
+        var result = await shop.ApproveActivationAsync(User.AdultId()!.Value, childId, requestId, time.GetUtcNow().UtcDateTime, ct);
         return ActivationResult(result);
     }
 
@@ -426,7 +426,7 @@ public class ShopController(PuglingDbContext db, ShopService shop) : ControllerB
     public async Task<ActionResult<ActivationRequestDto>> RejectActivation(
         int childId, int requestId, CancellationToken ct = default)
     {
-        var result = await shop.RejectActivationAsync(User.AdultId()!.Value, childId, requestId, DateTime.UtcNow, ct);
+        var result = await shop.RejectActivationAsync(User.AdultId()!.Value, childId, requestId, time.GetUtcNow().UtcDateTime, ct);
         return ActivationResult(result);
     }
 

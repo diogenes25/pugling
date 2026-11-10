@@ -155,10 +155,10 @@ builder.Services.AddSingleton<Microsoft.AspNetCore.Mvc.Infrastructure.ProblemDet
     CodeStampingProblemDetailsFactory>();
 builder.Services.AddDbContext<PuglingDbContext>(o =>
     o.UseSqlite(builder.Configuration.GetConnectionString("Default") ?? "Data Source=pugling.db"));
-// The clock as a dependency - deliberately used only where a rule works in the second range (the
-// anti-farming lower bound of the fast-answer bonus). Day logic stays on `DateTime.UtcNow`: it can be
-// tested with calendar days, the answer time cannot. Without this seam a test would have to push two
-// requests through within one second and would be a flake on a busy runner.
+// The clock as a dependency: every rule in controllers and services reads it, so a test can freeze it for the
+// second range (the anti-farming lower bound of the fast-answer bonus) and advance it by days (a child
+// practising for four weeks). Token lifetime stays on the wall clock on purpose - a simulated month must not
+// log the simulated child out.
 builder.Services.AddSingleton(TimeProvider.System);
 // The time windows of the points multiplier are configuration, not a table (E12) - which makes the service
 // a pure function that needs neither a DB nor a cancellation token.

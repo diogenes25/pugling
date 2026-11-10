@@ -118,13 +118,14 @@ function HomeForPlan({
 
 function PositionCard({ pos }: { pos: PositionStatus }) {
   const { t } = useTranslation();
-  // Genau ein Weg muss immer offen sein: Üben, wenn Leitner läuft ODER heute nichts zu prüfen ist. `testable`
-  // ist eine TAGES-Aussage des Servers (auch falsch auf einer Kennenlern-Stufe, B-96) – nicht `checkMode`
-  // abfragen, sonst hat eine Position mit Prüfmodus an einem nicht prüfbaren Tag überhaupt keinen Knopf.
-  const canPractice = pos.useLeitner || !pos.testable;
+  // Üben steht offen, sobald es etwas zu üben gibt: mit Leitner-Kasten, mit Inhalten auch ohne ihn (B-454 – sonst
+  // wäre der Test der einzige Weg und fragte Wörter, die das Kind nie gesehen hat), und immer, wenn heute nichts
+  // zu prüfen ist. `testable` ist eine TAGES-Aussage des Servers (auch falsch auf einer Kennenlern-Stufe, B-96) –
+  // nicht `checkMode` abfragen, sonst hat eine Position an einem nicht prüfbaren Tag überhaupt keinen Knopf.
+  const canPractice = pos.useLeitner || !pos.testable || pos.poolSize > 0;
   const practiceLabel = pos.useLeitner
     ? (pos.dueCount > 0 ? t("home.practiceDue", { count: pos.dueCount }) : t("home.practice"))
-    : t("home.playThrough");
+    : pos.testable ? t("home.practice") : t("home.playThrough");
 
   return (
     <div className="card" style={pos.goalMet ? { borderColor: "var(--lime)" } : undefined}>
@@ -136,6 +137,12 @@ function PositionCard({ pos }: { pos: PositionStatus }) {
           ? <span className="pill lime">✓</span>
           : pos.cadence !== "None" && <span className="pill mag">{t("home.open")}</span>}
       </div>
+      {/* B-04: how far through the material - only while there is still something ahead. */}
+      {pos.introducedCount > 0 && pos.introducedCount < pos.poolSize && (
+        <div className="muted" style={{ fontSize: 13, marginBottom: 8 }}>
+          {t("home.introduced", { count: pos.introducedCount, total: pos.poolSize })}
+        </div>
+      )}
       <div className="row" style={{ gap: 8 }}>
         {canPractice && (
           <Link to={`/sohn/practice/${pos.positionId}`} className="btn gold" style={{ flex: 1, textDecoration: "none" }}>

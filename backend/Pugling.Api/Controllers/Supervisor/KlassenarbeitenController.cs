@@ -19,7 +19,7 @@ namespace Pugling.Api.Controllers.Supervisor;
 [Tags("Supervisor – Class Tests")]
 [Produces("application/json")]
 [Authorize]
-public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, ExercisePermissionService perms) : ControllerBase
+public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, ExercisePermissionService perms, TimeProvider time) : ControllerBase
 {
     /// <summary>Threshold from which a grade counts as "bad" (German scale, higher = worse).</summary>
     private const decimal DefaultBadGrade = 4.0m;
@@ -265,7 +265,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
         if (k is null) return NotFound();
 
         var exercises = await LoadRelevantExercisesAsync(new[] { id }, ct);
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
         return new PracticeResponse(k.Id, k.Title, k.ScheduledDate, k.ScheduledDate.DayNumber - today.DayNumber, exercises);
     }
 

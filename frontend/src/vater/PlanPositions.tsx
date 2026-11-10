@@ -85,6 +85,8 @@ export interface PositionSettings {
   cadence: GoalCadence;
   goalThreshold: string;
   itemCount: string;
+  /** Tagesdosis neuer Inhalte (B-04); "" = keine Dosis – der Server kennt dafür die 0. */
+  newItemsPerDay: string;
   orderStrategy: PracticeOrder;
   pointsGoalMet: number;
   penaltyCoins: number;
@@ -207,7 +209,7 @@ export function pointsFrom(
  */
 function defaultSettings(): PositionSettings {
   return {
-    cadence: "Daily", goalThreshold: "", itemCount: "",
+    cadence: "Daily", goalThreshold: "", itemCount: "", newItemsPerDay: "",
     orderStrategy: "WeakestFirst", pointsGoalMet: 20, penaltyCoins: 0,
     // Leer = Vorschlag der Übung übernehmen (siehe PositionSettings).
     newContentPoints: "", comboThreshold: "", comboBonusPoints: "",
@@ -223,6 +225,7 @@ export function settingsFrom(pos: PositionResponse): PositionSettings {
     cadence: pos.cadence,
     goalThreshold: pos.goalThreshold?.toString() ?? "",
     itemCount: pos.itemCount?.toString() ?? "",
+    newItemsPerDay: pos.newItemsPerDay > 0 ? pos.newItemsPerDay.toString() : "",
     orderStrategy: pos.orderStrategy,
     pointsGoalMet: pos.pointsGoalMet,
     penaltyCoins: pos.penaltyCoins,
@@ -242,6 +245,16 @@ export function settingsFrom(pos: PositionResponse): PositionSettings {
   };
 }
 
+/*
+ * Dosis und Leitner-Kasten gehören zusammen (B-04): der Server lehnt eine Dosis ohne Kasten ab. Darum zieht eine
+ * eingetragene Dosis das Häkchen mit, und ein abgewähltes Häkchen leert die Dosis – statt einen Stand zu bauen,
+ * den erst das Speichern als Fehler meldet.
+ */
+export const withDose = (s: PositionSettings, dose: string): PositionSettings =>
+  ({ ...s, newItemsPerDay: dose, useLeitner: s.useLeitner || Number(dose) > 0 });
+export const withLeitner = (s: PositionSettings, useLeitner: boolean): PositionSettings =>
+  ({ ...s, useLeitner, newItemsPerDay: useLeitner ? s.newItemsPerDay : "" });
+
 /** Leeres Feld = `null` = „Standard bzw. Vorschlag der Übung übernehmen". */
 const numOrNull = (v: string): number | null => (v.trim() === "" ? null : Number(v));
 
@@ -257,6 +270,8 @@ export function settingsToDto(s: PositionSettings): Omit<CreatePositionDto, "exe
     cadence: s.cadence,
     goalThreshold: s.goalThreshold.trim() === "" ? null : Number(s.goalThreshold),
     itemCount: s.itemCount.trim() === "" ? null : Number(s.itemCount),
+    // Immer eine Zahl: im PATCH hieße `null` „nicht angegeben", und ein geleertes Feld ließe die alte Dosis stehen.
+    newItemsPerDay: s.newItemsPerDay.trim() === "" ? 0 : Number(s.newItemsPerDay),
     orderStrategy: s.orderStrategy,
     pointsGoalMet: s.pointsGoalMet,
     penaltyCoins: s.penaltyCoins,
@@ -310,6 +325,12 @@ function PositionFields({ value, onChange }: { value: PositionSettings; onChange
         <input id={`${uid}-count`} aria-label="Anzahl Inhalte" type="number" min={1} placeholder="alle"
           value={value.itemCount} onChange={(e) => up("itemCount", e.target.value)} />
       </div>
+      <div className="field" style={{ maxWidth: 150 }}>
+        <FieldLabel htmlFor={`${uid}-dose`} topic="newItemsPerDay">Neue Inhalte je Tag</FieldLabel>
+        <input id={`${uid}-dose`} type="number" min={0} max={200} placeholder="alle sofort"
+          value={value.newItemsPerDay}
+          onChange={(e) => onChange(withDose(value, e.target.value))} />
+      </div>
       <div className="field" style={{ maxWidth: 180 }}>
         <FieldLabel htmlFor={`${uid}-order`} topic="orderStrategy">Reihenfolge</FieldLabel>
         <select id={`${uid}-order`} aria-label="Reihenfolge" value={value.orderStrategy}
@@ -346,7 +367,8 @@ function PositionFields({ value, onChange }: { value: PositionSettings; onChange
       </div>
       <span className="label-row">
         <label className="checkline">
-          <input type="checkbox" checked={value.useLeitner} onChange={(e) => up("useLeitner", e.target.checked)} /> Leitner-Kasten
+          <input type="checkbox" checked={value.useLeitner}
+            onChange={(e) => onChange(withLeitner(value, e.target.checked))} /> Leitner-Kasten
         </label>
         <InfoHint topic="useLeitner" />
       </span>
@@ -603,7 +625,7 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
                     setExerciseId(ex.id);
                     setSettings((cur) => ({
                       ...cur,
-                      useLeitner: ex.defaultUseLeitner,
+                      useLeitner: ex.defaultUseLeitner || Number(cur.newItemsPerDay) > 0,
                       requireTypedTest: ex.defaultRequireTypedTest,
                       itemCount: ex.defaultItemCount?.toString() ?? "",
                       pointsGoalMet: pointsFrom(ex, cur.pointsGoalMet, punkteGetippt),
@@ -717,6 +739,7 @@ function PositionRow({ planId, pos, onChanged, action }: {
             {CADENCE_LABEL[pos.cadence]}
             {pos.goalThreshold != null && <span className="muted"> · bestehen ab {pos.goalThreshold}%</span>}
             {pos.itemCount != null && <span className="muted"> · {pos.itemCount} Inhalte</span>}
+            {pos.newItemsPerDay > 0 && <span className="muted"> · {pos.newItemsPerDay} neue je Tag</span>}
             <span className="muted"> · {ORDER_LABEL[pos.orderStrategy]}</span>
             {pos.requireTypedTest && <span className="muted"> · getippt</span>}
           </td>
