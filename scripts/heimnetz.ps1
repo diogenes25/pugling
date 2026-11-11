@@ -31,13 +31,20 @@
 .PARAMETER SkipBuild
     Frontend und API nicht neu bauen (schneller Neustart ohne Code-Änderung).
 
+.PARAMETER NoTailscale
+    Die HTTPS-Adresse über Tailscale nicht einrichten. Ohne den Schalter richtet das Skript sie ein, sobald
+    Tailscale installiert ist und der Port der Vorgabe entspricht (nur die echte Instanz bekommt die Adresse,
+    nie eine Test-Instanz auf einer Kopie). Warum HTTPS: Nur dann installiert Chrome auf Android Pugling als
+    eigene App, die Family Link auf „Immer erlaubt" stellen kann – docs/heimnetz.md.
+
 .EXAMPLE
     ./scripts/heimnetz.ps1
 #>
 param(
     [int]$Port = 5200,
     [string]$Database,
-    [switch]$SkipBuild
+    [switch]$SkipBuild,
+    [switch]$NoTailscale
 )
 
 $ErrorActionPreference = 'Stop'
@@ -118,6 +125,31 @@ Write-Host 'Pugling im Heimnetz:'
 foreach ($ip in $addresses) {
     Write-Host "  Sohn:  http://${ip}:$Port/sohn"
     Write-Host "  Vater: http://${ip}:$Port/vater"
+}
+
+# 5b. HTTPS über Tailscale: `tailscale serve` terminiert TLS mit einem echten Zertifikat für <rechner>.<tailnet>.ts.net
+#     und reicht an localhost:$Port weiter (die API wertet X-Forwarded-For/-Proto dieses Hops aus). Die Freigabe
+#     bleibt in Tailscale gespeichert; läuft der Server nicht, antwortet die Adresse mit einem Fehler statt mit Pugling.
+$tailscale = Get-Command tailscale -ErrorAction SilentlyContinue
+if (-not $tailscale -and (Test-Path "$env:ProgramFiles\Tailscale\tailscale.exe")) {
+    $tailscale = Get-Command "$env:ProgramFiles\Tailscale\tailscale.exe"
+}
+if ($NoTailscale) {
+    Write-Host 'Tailscale: per -NoTailscale ausgelassen.'
+} elseif (-not $tailscale) {
+    Write-Host 'Tailscale: nicht installiert – keine HTTPS-Adresse (Einrichtung: docs/heimnetz.md).'
+} elseif ($Port -ne 5200) {
+    Write-Host "Tailscale: ausgelassen, Port $Port ist nicht die echte Instanz."
+} else {
+    & $tailscale.Source serve --bg $Port | Out-Host
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning 'tailscale serve fehlgeschlagen – HTTPS-Zertifikate in der Tailscale-Konsole aktiviert? (docs/heimnetz.md)'
+    } else {
+        $dnsName = ((& $tailscale.Source status --json | ConvertFrom-Json).Self.DNSName).TrimEnd('.')
+        Write-Host 'Pugling über Tailscale (HTTPS, als App installierbar):'
+        Write-Host "  Sohn:  https://$dnsName/sohn"
+        Write-Host "  Vater: https://$dnsName/vater"
+    }
 }
 Write-Host 'Beenden mit Strg+C.'
 Write-Host ''

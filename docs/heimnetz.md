@@ -67,8 +67,40 @@ eine **PowerShell als Administrator**.
 
 Was ohne HTTPS fehlt (Entscheidung 3 in B-468): Browser registrieren den Service Worker nur auf HTTPS oder
 `localhost`. Es gibt also keinen Offline-Cache, und Android legt nur eine Verknüpfung an, die im Browser öffnet,
-keine installierte App im Vollbild. Wie sich das am echten Gerät anfühlt, prüft [B-31](backlog/B-31-geraete-vorbehalt-klang.md);
-ein Zertifikat wird bei Bedarf eine eigene Story.
+keine installierte App im Vollbild. Wie sich das am echten Gerät anfühlt, prüft [B-31](backlog/B-31-geraete-vorbehalt-klang.md).
+Mit HTTPS über Tailscale (nächster Abschnitt) entfällt das.
+
+## HTTPS über Tailscale: Pugling als App, in Family Link „Immer erlaubt“
+
+Family Link kann nur **installierte Apps** von der Bildschirmzeit ausnehmen, keine Webseiten. Chrome auf Android
+installiert Pugling als echte App (eine WebAPK, mit eigenem Eintrag in der App-Liste), aber nur über HTTPS mit
+gültigem Zertifikat. Das liefert Tailscale: `tailscale serve` stellt Pugling unter
+`https://<rechner>.<tailnet>.ts.net` bereit und reicht an Port 5200 weiter. Erreichbar ist die Adresse nur für
+Geräte im eigenen Tailnet – auch unterwegs, ohne Port im Router zu öffnen.
+
+Einmalig:
+
+1. **Tailscale auf dem Rechner** installieren (tailscale.com/download) und mit dem Vater-Konto anmelden.
+2. **In der Tailscale-Konsole** (login.tailscale.com → *DNS*) **MagicDNS** und **HTTPS Certificates** einschalten.
+   Ohne Zertifikate scheitert `tailscale serve`; das Skript meldet das als Warnung.
+3. **`./scripts/heimnetz.ps1`** neu starten. Es richtet `tailscale serve` selbst ein (abschaltbar mit
+   `-NoTailscale`, nur für den Vorgabe-Port 5200) und druckt die `https://…ts.net/sohn`-Adresse. Der erste Aufruf
+   holt das Zertifikat und kann einige Sekunden dauern.
+4. **Am Kinderhandy:** Tailscale aus dem Play Store installieren (in Family Link genehmigen) und **mit dem
+   Vater-Konto** anmelden – das Kind braucht kein eigenes. In den Android-Einstellungen unter *Netzwerk → VPN →
+   Tailscale* „Durchgehend aktives VPN“ einschalten, sonst ist Pugling weg, sobald die Verbindung abreißt.
+5. **Empfohlen: Kinderhandys einschränken.** Per Standard darf jedes Gerät im Tailnet jedes andere erreichen.
+   In der Konsole unter *Access controls* die Kinderhandys mit einem Tag (`tag:kind`) versehen und ihnen nur
+   den Rechner auf Port 443 erlauben.
+6. **Pugling installieren:** In Chrome `https://<rechner>.<tailnet>.ts.net/sohn` öffnen, Menü → **„App
+   installieren“** (nicht „Zum Startbildschirm hinzufügen“ – das ist wieder nur eine Verknüpfung). Danach steht
+   Pugling mit eigenem Symbol in der App-Liste.
+7. **Family Link:** Kind → *Apps* (bzw. *Steuerelemente → App-Limits*) → Pugling → **„Immer erlaubt“**.
+   Taucht Pugling dort nicht auf, ist es nur als Verknüpfung angelegt – Schritt 6 wiederholen.
+
+Grenzen: „Immer erlaubt“ zählt nicht zur Bildschirmzeit, ist in der **Ruhezeit** aber gesperrt, solange das am
+Gerät nicht eigens freigegeben ist. Die neue Adresse ist ein anderer Ursprung als `http://<ip>:5200` – das Kind
+meldet sich dort einmal neu an; der Lernstand liegt in der Datenbank und bleibt.
 
 Die Anmeldung gilt 12 Stunden – das Kind meldet sich also jeden Tag neu mit Helden-Nummer und PIN an.
 
