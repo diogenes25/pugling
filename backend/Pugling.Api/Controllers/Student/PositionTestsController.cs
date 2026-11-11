@@ -212,10 +212,11 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             }).ToList(),
         };
         db.TestAttempts.Add(attempt);
-        // The child's test introduces what it asks cold, with or without a dose (B-476 decision 7): first contact
-        // counts, so the word's week of ladder starts today and it is a choice now, never in writing at first sight.
+        // Under a dose the child's test introduces its cold portion at the start (see DailyTestPortion) - the room of
+        // the day is counted from it. Without a dose a cold word is introduced when the child answers it
+        // (IntroduceAnsweredAsync). Either way its week of ladder starts on the test day, as the stage above assumes.
         // The supervisor's preview must not move the child's learning state.
-        if (User.IsStudent())
+        if (pos.NewItemsPerDay > 0 && User.IsStudent())
             await play.IntroduceAsync(positionId, pool.Where(i => !introduced.Contains(i)), day, ct);
         await db.SaveChangesAsync(ct);
 
@@ -306,6 +307,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
                     result.WasCorrect = correct;
                 }
             }
+            await IntroduceAnsweredAsync(pos, attempt, [index], ct);
             // Deliberately NO cross-plan recording here: item progress and history are written ONCE on
             // completion (submit), so that aborted/repeated attempts do not distort the learning state
             // (otherwise every intermediate answer would count permanently, even without a submission).
@@ -316,6 +318,20 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         return new AnswerAck(attempt.Cursor >= attempt.Order.Count, attempt.Cursor, attempt.TotalItems);
     }
 
+
+    /// <summary>
+    /// Introduces the words a child answers in its test (B-476, decision 7): the first contact counts, in practice or
+    /// test, so a word the test asks cold starts its week of ladder that day. Only an answer counts, not the start - a
+    /// start alone would mark the whole pool as new words (paying <see cref="ProgressMetric.NewWords"/> missions) and
+    /// start the ladder of words the child never saw. Under a dose the start has introduced the portion already, so
+    /// this finds nothing left to do there. The supervisor's preview introduces nothing. The caller saves.
+    /// </summary>
+    private async Task IntroduceAnsweredAsync(PlanPosition pos, TestAttempt attempt, IEnumerable<int> indices,
+        CancellationToken ct)
+    {
+        if (attempt.BySupervisor || !User.IsStudent()) return;
+        await play.IntroduceAsync(pos.Id, indices, attempt.Day, ct);
+    }
 
     /// <summary>A test attempt together with individual results.</summary>
     [HttpGet("{attemptId:int}")]
@@ -393,6 +409,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
                     // `Ordered` flag can be flipped mid-attempt), and it belongs to no entry.
                     if (result.ItemIndex is not { } index || index < 0 || index >= items.Count) continue;
                     if (!answers.TryGetValue(index, out var answer)) continue;
+                    await IntroduceAnsweredAsync(pos, attempt, [index], ct);
                     var item = items[index];
                     result.GivenAnswer = answer.GivenAnswer;
                     result.WasCorrect = type.IsTypedStage(result.StageValue)

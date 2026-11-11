@@ -12,7 +12,7 @@ quelle: Rückmeldung von Theodor nach dem ersten echten Lerntag (2026-11-11), vo
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
-wartet_auf: "pugling-reviewer für die Einführung im Test ohne Dosis"
+wartet_auf: ""
 ---
 
 # B-476 · Die Stufe einer Vokabelkarte steigt mit ihrem Leitner-Fach: erst umdrehen, dann auswählen, dann schreiben
@@ -98,8 +98,10 @@ die drei Punkte nach der dortigen Empfehlung entschieden, Vetorecht beim Vater).
      dem ersten Üben kam dasselbe Wort wieder als Umdrehkarte – die Form sprang hoch und wieder runter.
 
    **Frist** = sieben Tage ab der tatsächlichen Einführung (`IntroducedAt`), die erste Begegnung zählt – beim Üben
-   oder im Test. Der Test des Kindes führt jedes noch nie gesehene Wort, das er fragt, selbst ein, mit und ohne Dosis
-   (`PositionPlayService.IntroduceAsync`); es kommt als Auswahl, seine Woche beginnt am Testtag. Die Vorschau des
+   oder im Test. Der Test des Kindes führt ein noch nie gesehenes Wort selbst ein (`PositionPlayService.IntroduceAsync`):
+   unter Dosis die Portion beim Start (daran hängt der Platz des Tages), ohne Dosis jedes Wort, sobald das Kind es
+   beantwortet – ein bloßer Start zählte sonst den ganzen Pool als „neue Wörter“ (Mission mit einem Klick) und
+   startete die Leiter ungesehener Wörter. Es kommt als Auswahl, seine Woche beginnt am Testtag. Die Vorschau des
    Vaters führt nichts ein. Ab Einführung + 7 Tage: Zielstufe, gleich in welchem Fach. Jedes Wort bekommt so
    höchstens eine Woche Leiter, und die Form steigt nur.
    **Bewusst offen** (vom Vater so entschieden): wer weder übt noch testet, bekommt neue Wörter beim ersten Kontakt
@@ -127,7 +129,8 @@ die drei Punkte nach der dortigen Empfehlung entschieden, Vetorecht beim Vater).
 10. Einführung sieben oder mehr Tage her → Test **und Üben** auf der Zielstufe, auch auf Fach 1; sechs Tage → noch
     Auswahl (Test) bzw. Umdrehkarte (Üben).
 11. Nie eingeführtes Wort im Test des Kindes, mit oder ohne Dosis: kommt als Auswahl und gilt danach als am Testtag
-    eingeführt (das Üben dreht es dann um, keine zweite Einführung) – auch wenn die Position schon länger im Plan steht
+    eingeführt (das Üben dreht es dann um, keine zweite Einführung); ohne Dosis erst, wenn es beantwortet ist – ein
+    Teststart allein führt nichts ein – auch wenn die Position schon länger im Plan steht
     oder das Kind weit hinter der Dosis liegt. Die Vorschau des Vaters führt nichts ein. Ein eingeführtes Wort zählt
     immer ab seiner Einführung.
 
@@ -287,4 +290,25 @@ die drei Punkte nach der dortigen Empfehlung entschieden, Vetorecht beim Vater).
   | R2 kaltes Wort zählt 30 Tage zurück | `PositionTestsController.Start` | rot |
   | R3 Vorschau des Vaters führt ein | `PositionTestsController.Start` | rot |
   | R4 Frist im Test einen Tag zu spät | `TestItemStage` | rot |
+- **2026-11-12** — Review `pugling-reviewer` zu `10226b4` (1313/1313): keine 🔴. **🟡1** ein Teststart ohne Dosis führte
+  den ganzen Pool ein – eine `NewWords`-Mission („25 neue Wörter“) zahlte für einen Klick, und die Leiter ungesehener
+  Wörter lief los → behoben im Sinn der Entscheidung („erste Begegnung zählt“): ohne Dosis führt erst die Antwort ein
+  (`PositionTestsController.IntroduceAnsweredAsync`, schrittweise und im Sammel-Submit), unter Dosis bleibt der Start.
+  **🟡2** `ItemScope.New` lief nach einem Teststart leer → mit 🟡1 erledigt (nur Beantwortetes wird „alt“). 🟢3 N+1 beim
+  Start ohne Dosis → mit 🟡1 gegenstandslos (eine Abfrage je Antwort). 🟢4 Doppelstart → nicht neu: ohne Dosis legt der
+  Start keine Zeilen mehr an, unter Dosis unverändert. 🟢5 Anzeigen (Übersicht, Bericht) ziehen jetzt mit den
+  beantworteten Wörtern nach – gewollt. 🟢6 überlange Kommentarzeile → umbrochen. Neu
+  `Teststart_Allein_Fuehrt_Nichts_Ein_Erst_Die_Antwort`; `Test_Fuehrt_Ungesehene_Woerter_Auch_Ohne_Dosis_Ein` lässt die
+  Vorschau des Vaters jetzt ganz beantworten. Backend **1314/1314**. Mutanten (`mutant-probe.py`), Grundlinie danach grün:
+
+  | Mutante | Stelle | gemessen |
+  |---|---|---|
+  | S1 Start führt auch ohne Dosis ein | `Start` | rot |
+  | S2 schrittweise Antwort führt nicht ein | `Answer` | rot |
+  | S3 Sammel-Submit führt nicht ein | `Submit` | rot |
+  | S4 Vorschau des Vaters führt ein | `IntroduceAnsweredAsync` | rot |
+  | S6 kaltes Wort zählt 30 Tage zurück | `Start` | rot |
+
+  S5 („Antwort führt auch unter Dosis ein“) blieb grün und ist äquivalent: unter Dosis hat der Start die Portion schon
+  eingeführt. Die Dosis-Bedingung im Helfer war damit überflüssig und ist entfernt.
 

@@ -392,18 +392,17 @@ public class KartenstufeTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         Assert.Equal([4, 6, 4, 4], RowStages(attemptId));
     }
 
-    // AK 11, without a dose: a child that never practised meets the words cold in the test. The test introduces them
-    // itself, so they are a choice now - not in writing because the position joined the plan eight days ago - and
-    // their week starts today: afterwards practice turns them over (box 1), with no second introduction. The father's
-    // preview of the same position introduces nothing. Red if only a dose let the test introduce (IntroducedAt stays
+    // AK 11, without a dose: a child that never practised meets the words cold in the test. The test introduces each
+    // as it is answered, so they are a choice now - not in writing because the position joined the plan eight days
+    // ago - and their week starts today: afterwards practice turns them over (box 1). The father's preview of the same
+    // position, answered in full, introduces nothing. Red if only a dose let the test introduce (IntroducedAt stays
     // empty), if a cold word counted from any day before today (in writing), or if the preview moved the child's state.
     [Fact]
     public async Task Test_Fuehrt_Ungesehene_Woerter_Auch_Ohne_Dosis_Ein()
     {
         var s = await SetupNeverPractisedAsync(8, 8, dose: 0);
         var father = await TestApi.AdultAsync(factory);
-        (await father.PostAsJsonAsync($"/api/v1/student/study-plans/{s.PlanId}/positions/{s.PositionId}/tests", new { }))
-            .EnsureSuccessStatusCode();
+        await TakeTestAsync(s, father);
         Assert.Empty(IntroducedOn(s.PositionId));
 
         var (attemptId, _) = await TakeTestAsync(s, s.Child);
@@ -411,6 +410,40 @@ public class KartenstufeTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         var today = DateOnly.FromDateTime(factory.Clock.GetUtcNow().UtcDateTime);
         Assert.Equal([today, today, today, today], IntroducedOn(s.PositionId));
         Assert.All(await CardsAsync(s, await StartAsync(s)), c => Assert.Equal((int)TestStage.SelfAssess, c.GetProperty("stage").GetInt32()));
+    }
+
+    // Without a dose only an answer introduces, not the start: a start alone would count the whole pool as new words
+    // (a NewWords mission paid for one click) and start the ladder of words the child never saw. One answer through the
+    // step-wise path and one through a bulk submission introduce exactly those two words. Red if the start introduced
+    // (four rows after the start), or if either answer path did not introduce its word.
+    [Fact]
+    public async Task Teststart_Allein_Fuehrt_Nichts_Ein_Erst_Die_Antwort()
+    {
+        var s = await SetupNeverPractisedAsync(8, 8, dose: 0);
+        var start = await s.Child.PostAsJsonAsync(TestBase(s), new { });
+        start.EnsureSuccessStatusCode();
+        var attemptId = (await start.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("attemptId").GetInt32();
+        Assert.Empty(IntroducedOn(s.PositionId));
+
+        var first = (await s.Child.GetFromJsonAsync<JsonElement>($"{TestBase(s)}/{attemptId}/next")).GetProperty("item")
+            .GetProperty("itemIndex").GetInt32();
+        (await s.Child.PostAsJsonAsync($"{TestBase(s)}/{attemptId}/answer", new { itemIndex = first, givenAnswer = "x" }))
+            .EnsureSuccessStatusCode();
+        Assert.Equal([first], IntroducedIndices(s.PositionId));
+
+        var other = Enumerable.Range(0, FourWords.Length).First(i => i != first);
+        (await s.Child.PostAsJsonAsync($"{TestBase(s)}/{attemptId}/submit",
+            new { answers = new[] { new { itemIndex = other, givenAnswer = "x", wasKnown = (bool?)null } } }))
+            .EnsureSuccessStatusCode();
+        Assert.Equal(new[] { first, other }.Order(), IntroducedIndices(s.PositionId));
+    }
+
+    private List<int> IntroducedIndices(int positionId)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        return [.. db.PositionItemProgress.Where(p => p.PlanPositionId == positionId && p.IntroducedAt != null)
+            .OrderBy(p => p.ItemIndex).Select(p => p.ItemIndex)];
     }
 
     private List<DateOnly> IntroducedOn(int positionId)

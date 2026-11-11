@@ -125,12 +125,13 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// The stage one item is examined at in the test (B-476): the ladder of practice, but never below a checked rung -
     /// a self-assessment is a claim, and the duty is "passed under check". A rung the child would only judge itself is
     /// raised box by box to the first checked one (for vocabulary: the choice). An item not introduced yet counts as
-    /// box 1 - the child's test introduces it on the spot (<see cref="IntroduceAsync"/>), so its day is today. When the target itself is unchecked there is nothing to raise to,
-    /// and without Leitner no box moves - both keep the target for every item.
+    /// box 1 introduced today - the child's test introduces it (<see cref="IntroduceAsync"/>). When the target itself is
+    /// unchecked there is nothing to raise to, and without Leitner no box moves - both keep the target for every item.
     /// <para>
     /// The box is the child's to move - not practising keeps a word in box 1, and so does answering wrong on purpose.
     /// So the ladder ends by the calendar too: <see cref="LadderDays"/> days after <paramref name="introducedOn"/> a
-    /// word is examined at the target whatever its box, and no behaviour of the child stretches the easier form beyond that.
+    /// word is examined at the target whatever its box, and no behaviour of the child stretches the easier form
+    /// beyond that.
     /// </para>
     /// </summary>
     public static int TestItemStage(IExerciseType type, PlanPosition pos, int target, int? box, DateOnly introducedOn,
@@ -232,8 +233,8 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
 
     /// <summary>
     /// Marks the given contents as introduced on <paramref name="day"/> and due at once - for a child's test that asks
-    /// never-shown contents (the daily portion under a dose, <see cref="DailyTestPortion"/>, otherwise the whole pool
-    /// before any practice). The caller saves.
+    /// never-shown contents (under a dose the portion at the start, <see cref="DailyTestPortion"/>; otherwise each word
+    /// as the child answers it). The caller saves.
     /// </summary>
     public async Task IntroduceAsync(int positionId, IEnumerable<int> itemIndices, DateOnly day, CancellationToken ct)
     {
