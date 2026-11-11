@@ -105,6 +105,8 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
             return ExerciseContentProvider.WithDirection(item, direction) with
             {
                 ArticleOptionalIn = articleRequired || answerLanguage.Length == 0 ? null : answerLanguage,
+                // B-462: a store entry is a word-list entry in either direction ("sobald, sowie", "(to) reply (to)").
+                MeaningsSeparable = true,
             };
         }).ToList();
     }

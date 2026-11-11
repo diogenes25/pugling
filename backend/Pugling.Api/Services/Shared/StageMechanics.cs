@@ -123,7 +123,7 @@ public static class StageMechanics
     /// by index so the solution is not always in front. No randomness on purpose – the same card must offer
     /// the same pool when it is fetched twice.
     /// <para>
-    /// Deduplication runs over the whole <see cref="ContentItem.AcceptedAnswers"/> set on both sides, not
+    /// Deduplication runs over the whole <see cref="ContentItem.GradedAnswers"/> set on both sides, not
     /// just over the primary answer: an answer declared equally valid must never show up as the <i>wrong</i>
     /// option of the same question. That holds even when only one of the two rows declares the equivalence –
     /// so a candidate is dropped as soon as <b>any</b> of its accepted answers has been seen.
@@ -145,7 +145,8 @@ public static class StageMechanics
         if (string.IsNullOrWhiteSpace(item.Answer)) return null;
 
         var seen = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var accepted in item.AcceptedAnswers.Append(item.Answer))
+        // B-462: with separable meanings a neighbour's "sobald" is a right answer to "sobald, sowie", not a distractor.
+        foreach (var accepted in item.GradedAnswers().Append(item.Answer))
         {
             var normalized = Normalize(accepted);
             seen.Add(normalized);
@@ -159,7 +160,7 @@ public static class StageMechanics
         foreach (var other in items)
         {
             if (other.Index == item.Index || string.IsNullOrWhiteSpace(other.Answer)) continue;
-            var candidate = other.AcceptedAnswers.Append(other.Answer).Select(Normalize).ToList();
+            var candidate = other.GradedAnswers().Append(other.Answer).Select(Normalize).ToList();
             if (candidate.Any(seen.Contains)) continue;
             foreach (var normalized in candidate) seen.Add(normalized);
             distractors.Add(other.Answer);

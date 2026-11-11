@@ -22,6 +22,8 @@ namespace Pugling.Api.Services.Shared;
 /// <paramref name="ArticleOptionalIn"/> (B-421) is the language of the expected answer when a leading article of it may
 /// be left out (<see cref="AnswerGrader"/>); <c>null</c> means exact - every type but vocabulary, and a vocabulary
 /// exercise that trains the article.
+/// <paramref name="MeaningsSeparable"/> (B-462) marks an answer that is a word-list entry: each single meaning of it
+/// counts (<see cref="AnswerVariants"/>). Only vocabulary sets it - in a sentence a comma is part of the answer.
 /// </summary>
 public record ContentItem(
     int Index,
@@ -37,7 +39,16 @@ public record ContentItem(
     string? ImageUrl = null,
     string? ImageAlt = null,
     IReadOnlyList<WordPair>? Decoding = null,
-    string? ArticleOptionalIn = null);
+    string? ArticleOptionalIn = null,
+    bool MeaningsSeparable = false)
+{
+    /// <summary>
+    /// Everything a typed answer is compared against: the accepted answers, plus their single meanings where the
+    /// atom is a word-list entry. The one list for grading and for keeping a right answer out of the distractors.
+    /// </summary>
+    public IEnumerable<string> GradedAnswers() =>
+        MeaningsSeparable ? AcceptedAnswers.SelectMany(AnswerVariants.Of).Distinct() : AcceptedAnswers;
+}
 
 /// <summary>
 /// Thin facade over the <see cref="ExerciseTypeRegistry"/>: projects the contents of a catalog <see cref="Exercise"/>

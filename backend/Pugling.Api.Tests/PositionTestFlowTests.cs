@@ -203,6 +203,76 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
     }
 
     /// <summary>
+    /// B-462: the store keeps a word-list entry as the book prints it ("sobald, sowie", "(to) reply (to)"). In the
+    /// child's test one typed meaning is the right answer - in both directions, because the entry is a list on
+    /// either side. Through the real test path on purpose: the rule only applies where the resolver marks the atom.
+    /// </summary>
+    [Theory]
+    [InlineData("as soon as", "sobald, sowie", "front-to-back", "sowie")]
+    [InlineData("(to) reply (to)", "antworten (auf); erwidern, entgegnen", "front-to-back", "antworten")]
+    [InlineData("(to) reply (to)", "antworten (auf); erwidern, entgegnen", "back-to-front", "reply")]
+    public async Task Test_EineBedeutungDesEintrags_WirdAlsRichtigGewertet(
+        string word, string translation, string direction, string given)
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var (_, key) = await TestApi.CreateStoreVocabAsync(father, word, translation);
+        var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
+        await SetDirectionAsync(father, _factory, exerciseId, direction);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+        var child = await TestApi.ChildAsync(_factory);
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
+
+        var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
+        var submit = await child.PostAsJsonAsync($"{baseUrl}/{attemptId}/submit", new
+        {
+            answers = new[] { new { itemIndex = 0, givenAnswer = given } },
+        });
+
+        var res = await submit.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(1, res.GetProperty("correctItems").GetInt32());
+        JsonAssert.True(res, "passed");
+    }
+
+    /// <summary>
+    /// B-462, the two ends of the rule at the supervisor's preview ("Ausprobieren" must grade like the child's
+    /// test): a single meaning counts for a vocabulary entry, and a part of a sentence does <b>not</b> count in a
+    /// translation exercise - there the comma is part of the one answer.
+    /// </summary>
+    [Fact]
+    public async Task Vorschau_EineBedeutungZaehlt_AberKeinSatzteilDerUebersetzung()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var (_, key) = await TestApi.CreateStoreVocabAsync(father, TestApi.UniqueName("as soon as"), "sobald, sowie");
+        var vocabId = await TestApi.CreateVocabRefExerciseAsync(father, key);
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = TestApi.UniqueName("Satz-Fach") }));
+        var (seriesId, unitId) = await TestApi.CreateSeriesAndUnitAsync(father, subjectId);
+        var translationId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{unitId}/translation", new
+            {
+                title = TestApi.UniqueName("Wegbeschreibung"),
+                orderIndex = 1,
+                rewardPoints = 10,
+                config = new
+                {
+                    sourceLang = "de",
+                    targetLang = "en",
+                    items = new[] { new { source = "Entschuldigung, wie komme ich zum Bahnhof", target = "Excuse me, how can I get to the station" } },
+                },
+            }));
+
+        async Task<int> CorrectAsync(int exerciseId, string given, int? stage) =>
+            (await (await father.PostAsJsonAsync($"/api/v1/creator/exercises/{exerciseId}/preview/check",
+                new { answers = new[] { new { itemIndex = 0, givenAnswer = given, wasKnown = (bool?)null } }, stage }))
+                .Content.ReadFromJsonAsync<JsonElement>()).GetProperty("correct").GetInt32();
+
+        Assert.Equal(1, await CorrectAsync(vocabId, "sowie", (int)TestStage.FreeText));
+        Assert.Equal(0, await CorrectAsync(translationId, "Excuse me", null));
+        // Self-protection against a vacuous red: the translation exercise does grade - the whole sentence counts.
+        Assert.Equal(1, await CorrectAsync(translationId, "Excuse me, how can I get to the station", null));
+    }
+
+    /// <summary>
     /// The alternatives belong to the <b>target</b> side only – hence the name
     /// <c>TranslationAlternatives</c>. After the direction swap the translation is the question, so they
     /// answer nothing and are dropped (<c>ExerciseContentProvider.Swap</c>). Pinned down because it is the

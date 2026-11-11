@@ -10,11 +10,12 @@ public class AnswerGrader
 {
     /// <summary>
     /// A typed answer against a content atom: its solution or any accepted alternative, each with the atom's article
-    /// tolerance (<see cref="ContentItem.ArticleOptionalIn"/>). The one entry point for every place that grades an atom
+    /// tolerance (<see cref="ContentItem.ArticleOptionalIn"/>) and, for a word-list entry, each single meaning of it
+    /// (<see cref="ContentItem.MeaningsSeparable"/>). The one entry point for every place that grades an atom
     /// (practice, test, preview, set matching), so the rule cannot differ between practice and test.
     /// </summary>
     public bool Matches(string? given, ContentItem item) =>
-        item.AcceptedAnswers.Any(a => Matches(given, a, item.ArticleOptionalIn));
+        item.GradedAnswers().Any(a => Matches(given, a, item.ArticleOptionalIn));
 
     /// <summary>
     /// Text answer against one expected solution. An empty input is never correct. With
