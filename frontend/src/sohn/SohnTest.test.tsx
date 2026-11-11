@@ -56,6 +56,21 @@ function renderTest() {
   );
 }
 
+describe("SohnTest, Stufe je Frage (B-476)", () => {
+  afterEach(async () => { await setLanguage("de"); });
+
+  // Der Test heißt „Tippen“, diese Frage kommt aber als Auswahl. Rot, wenn das Etikett die Stufe des Versuchs zeigt.
+  it("benennt die Stufe der Frage, nicht die des Versuchs", async () => {
+    await setLanguage("de");
+    startTest.mockResolvedValue({ attemptId: 9, stage: 4, totalItems: 2 });
+    nextTest.mockResolvedValue({ item: { ...item, stage: 6 }, done: false, cursor: 0, total: 2 });
+    renderTest();
+
+    expect(await screen.findByText("Auswahl")).toBeTruthy();
+    expect(screen.queryByText("Tippen")).toBeNull();
+  });
+});
+
 describe("SohnTest, Fehler beim Beantworten", () => {
   afterEach(async () => { await setLanguage("de"); });
 

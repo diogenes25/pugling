@@ -268,4 +268,104 @@ public class KartenstufeTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         Assert.Equal(0, next.GetProperty("card").GetProperty("itemIndex").GetInt32());
         Assert.Equal((int)TestStage.MultipleChoice, next.GetProperty("card").GetProperty("stage").GetInt32());
     }
+
+    private static string TestBase(Setup s) => $"/api/v1/student/study-plans/{s.PlanId}/positions/{s.PositionId}/tests";
+
+    // Walks a test from start to end and returns each question's (itemIndex, stage, choices), answering every one
+    // correctly in its form (the choice or the typed solution). `client` starts it - the child or the supervisor.
+    private async Task<(int AttemptId, List<(int Index, int Stage, bool HasChoices)> Questions)> TakeTestAsync(
+        Setup s, HttpClient client, int? stage = null)
+    {
+        var start = await client.PostAsJsonAsync(TestBase(s), new { stage });
+        start.EnsureSuccessStatusCode();
+        var attempt = await start.Content.ReadFromJsonAsync<JsonElement>();
+        var attemptId = attempt.GetProperty("attemptId").GetInt32();
+        var questions = new List<(int, int, bool)>();
+        for (var i = 0; i < attempt.GetProperty("totalItems").GetInt32(); i++)
+        {
+            var item = (await client.GetFromJsonAsync<JsonElement>($"{TestBase(s)}/{attemptId}/next")).GetProperty("item");
+            var index = item.GetProperty("itemIndex").GetInt32();
+            questions.Add((index, item.GetProperty("stage").GetInt32(), item.GetProperty("choices").ValueKind == JsonValueKind.Array));
+            (await client.PostAsJsonAsync($"{TestBase(s)}/{attemptId}/answer", new { itemIndex = index, givenAnswer = FourWords[index].Item2 }))
+                .EnsureSuccessStatusCode();
+        }
+        return (attemptId, questions);
+    }
+
+    private List<int> RowStages(int attemptId)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        return [.. db.TestAttempts.Where(t => t.Id == attemptId).SelectMany(t => t.Results).OrderBy(r => r.ItemIndex).Select(r => r.StageValue)];
+    }
+
+    // AK 8: the test follows the ladder but never asks a mere claim - box 1 and 2 are asked as a choice, box 3 and above
+    // at the target. Each row keeps its stage, and the attempt passes when every question is answered right in its
+    // form. Red if the test asked every word at the target (the risk the father decided against) or turned box 1 over.
+    [Fact]
+    public async Task Test_Fragt_Fach_1_Und_2_Als_Auswahl_Ab_Fach_3_Schriftlich()
+    {
+        var s = await SetupAsync(TestStage.FreeText, requireTypedTest: true);
+        SetBoxes(s.PositionId, 1, 2, 3, 5);
+
+        var (attemptId, questions) = await TakeTestAsync(s, s.Child);
+        var byIndex = questions.ToDictionary(q => q.Index);
+        Assert.Equal((int)TestStage.MultipleChoice, byIndex[0].Stage);
+        Assert.True(byIndex[0].HasChoices);
+        Assert.Equal((int)TestStage.MultipleChoice, byIndex[1].Stage);
+        Assert.Equal((int)TestStage.FreeText, byIndex[2].Stage);
+        Assert.False(byIndex[2].HasChoices);
+        Assert.Equal((int)TestStage.FreeText, byIndex[3].Stage);
+        Assert.Equal([6, 6, 4, 4], RowStages(attemptId));
+
+        var result = await (await s.Child.PostAsJsonAsync($"{TestBase(s)}/{attemptId}/submit", new { }))
+            .Content.ReadFromJsonAsync<JsonElement>();
+        JsonAssert.True(result, "passed");
+        // The attempt still names the target: that is what the father set and what the result screen heads with.
+        Assert.Equal((int)TestStage.FreeText, result.GetProperty("stage").GetInt32());
+
+        // The learning history records each answer in the form it was given - two choices, two typed.
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        var history = db.ItemReviewEvents.Where(e => e.ChildId == s.ChildId && e.Source == ItemReviewSource.Test)
+            .Select(e => e.StageValue).OrderBy(v => v).ToList();
+        Assert.Equal([4, 4, 6, 6], history);
+    }
+
+    // AK 8: a word never seen before (here: nothing introduced, the test falls back to the whole pool) is asked as a
+    // choice too. Red if a missing progress row were asked at the target.
+    [Fact]
+    public async Task Test_Fragt_Ein_Ungesehenes_Wort_Als_Auswahl()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, "fr", "de", FourWords);
+        var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = TestApi.UniqueName("Kalt-Kind"), pin = "4762" }));
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.FreeText, childId: childId,
+            introduced: false);
+        var s = new Setup(await TestApi.ChildAsync(factory, childId, "4762"), childId, planId, positionId);
+
+        var (_, questions) = await TakeTestAsync(s, s.Child);
+        Assert.Equal(4, questions.Count);
+        Assert.All(questions, q => Assert.Equal((int)TestStage.MultipleChoice, q.Stage));
+    }
+
+    // AK 9: without Leitner no box moves, an unchecked target has no checked rung to raise to, and a stage the supervisor
+    // picks for a preview holds for every question. The first and third rows go red if their guard is dropped. The
+    // self-assessment row guards the ceiling instead: its own guard is an equivalent mutant (the ladder never climbs
+    // above an unchecked target, so the loop returns the target anyway) - it goes red only if the ladder lost its cap.
+    [Theory]
+    [InlineData(TestStage.FreeText, false, null, TestStage.FreeText)]
+    [InlineData(TestStage.SelfAssess, true, null, TestStage.SelfAssess)]
+    [InlineData(TestStage.FreeText, true, TestStage.LetterBoxes, TestStage.LetterBoxes)]
+    public async Task Test_Mit_Einer_Stufe_Fuer_Alle_Fragen(TestStage target, bool useLeitner, TestStage? picked, TestStage expected)
+    {
+        var s = await SetupAsync(target, useLeitner: useLeitner);
+        SetBoxes(s.PositionId, 1, 2, 1, 2);
+        var client = picked is null ? s.Child : await TestApi.AdultAsync(factory);
+        var start = await client.PostAsJsonAsync(TestBase(s), new { stage = (int?)picked });
+        start.EnsureSuccessStatusCode();
+        var attemptId = (await start.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("attemptId").GetInt32();
+        Assert.All(RowStages(attemptId), stage => Assert.Equal((int)expected, stage));
+    }
 }

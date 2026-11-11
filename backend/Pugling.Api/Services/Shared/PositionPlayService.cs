@@ -107,6 +107,24 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
         return type.CardStage(dayStage, box);
     }
 
+    /// <summary>
+    /// The stage one item is examined at in the test (B-476): the ladder of practice, but never below a checked rung -
+    /// a self-assessment is a claim, and the duty is "passed under check". A rung the child would only judge itself is
+    /// raised box by box to the first checked one (for vocabulary: the choice). An item not introduced yet (a cold
+    /// item of the daily portion) counts as box 1. When the target itself is unchecked there is nothing to raise to,
+    /// and without Leitner no box moves - both keep the target for every item.
+    /// </summary>
+    public static int TestItemStage(IExerciseType type, PlanPosition pos, int target, int? box)
+    {
+        if (!pos.UseLeitner || !type.IsTypedStage(target)) return target;
+        for (var b = Math.Max(1, box ?? 1); b < pos.MaxBox; b++)
+        {
+            var stage = type.CardStage(target, b);
+            if (type.IsTypedStage(stage)) return stage;
+        }
+        return target;
+    }
+
     /// <summary>Number of content items used by the position (override, exercise default, otherwise all available).</summary>
     public int PoolSize(PlanPosition pos, int available) =>
         (pos.ItemCount ?? pos.Exercise?.DefaultItemCount) is > 0 and var count ? Math.Min(count, available) : available;

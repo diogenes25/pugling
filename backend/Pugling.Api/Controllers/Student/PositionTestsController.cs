@@ -73,6 +73,10 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             f.GapIndex, f.Passage, f.AnyOrder, type.Key, f.RevealAlternatives, f.AnswerPattern, f.Decoding, f.LetterTiles);
     }
 
+    // The stage a question was frozen at on start (B-476); the attempt's stage for a row that carries none of its own.
+    private static int StageAt(TestAttempt attempt, int index) =>
+        attempt.Results.FirstOrDefault(r => r.ItemIndex == index)?.StageValue ?? attempt.StageValue;
+
     /// <summary>
     /// The entries already credited within this attempt – the rows that carry an atom and were answered
     /// correctly. This is the set-mode counterpart to the practice path's "named today": inside one exam the
@@ -163,7 +167,8 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         // Stage: only the supervisor may choose it freely; for the child the day's schedule/position stage applies.
         if (play.TypeOf(pos.Exercise) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
-        var stage = User.IsSupervisor() && dto.Stage is not null ? dto.Stage.Value : PositionPlayService.StageForDay(pos, plan, day, type);
+        var explicitStage = User.IsSupervisor() && dto.Stage is not null;
+        var stage = explicitStage ? dto.Stage!.Value : PositionPlayService.StageForDay(pos, plan, day, type);
         // A free display stage (B-96) has no question to grade - a test without a question is not a test,
         // regardless of who requests it (student schedule or supervisor preview).
         if (type.IsDisplayOnlyStage(stage))
@@ -197,7 +202,12 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             Order = [.. order],
             // The exercise sits on the attempt (through the position), not on every result row: ContentId was
             // an FK-less copy of PlanPosition.ExerciseId that nobody read.
-            Results = order.Select(i => new TestItemResult { ItemIndex = i, StageValue = stage }).ToList(),
+            // Each question frozen at its own rung (B-476); a stage the supervisor picks for a preview holds for all.
+            Results = order.Select(i => new TestItemResult
+            {
+                ItemIndex = i,
+                StageValue = explicitStage ? stage : PositionPlayService.TestItemStage(type, pos, stage, progress.GetValueOrDefault(i)?.Box),
+            }).ToList(),
         };
         db.TestAttempts.Add(attempt);
         // Under a dose the child's test introduces what it asks cold (see DailyTestPortion); the supervisor's
@@ -232,12 +242,13 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         var items = await play.ItemsOfAsync(pos, ct: ct);
         if (play.TypeOf(pos.Exercise) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
-        var typed = type.IsTypedStage(attempt.StageValue);
         var cursor = PositionPlayService.SkipRemoved(attempt.Order, attempt.Cursor, items.Count);
         if (cursor != attempt.Cursor) { attempt.Cursor = cursor; await db.SaveChangesAsync(ct); }
         if (cursor >= attempt.Order.Count) return new TestNextResponse(null, true, cursor, attempt.TotalItems);
 
-        var item = ToItem(pos.Exercise, items, items[attempt.Order[cursor]], type, attempt.StageValue, typed, attempt.Id);
+        var index = attempt.Order[cursor];
+        var stage = StageAt(attempt, index);
+        var item = ToItem(pos.Exercise, items, items[index], type, stage, type.IsTypedStage(stage), attempt.Id);
         return new TestNextResponse(item, false, cursor, attempt.TotalItems);
     }
 
@@ -271,6 +282,8 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         {
             var index = attempt.Order[cursor];
             var item = items[index];
+            // Graded in the form the question was asked in (B-476), not the attempt's target.
+            var itemTyped = type.IsTypedStage(StageAt(attempt, index));
             // Set-graded exercise (an unordered list): the answer decides which entry it credits, not the card
             // it arrived on - any entry not yet credited in this attempt counts. A repeat therefore matches
             // nothing and is a wrong mention, exactly as the catalog check consumes a mention (B-77/E1, E2, E4).
@@ -281,7 +294,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             else
             {
                 var result = attempt.Results.FirstOrDefault(r => r.ItemIndex == index);
-                var correct = typed
+                var correct = itemTyped
                     ? grader.Matches(dto.GivenAnswer, item)
                     : dto.WasKnown ?? false;
                 if (result is not null)
@@ -379,7 +392,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
                     if (!answers.TryGetValue(index, out var answer)) continue;
                     var item = items[index];
                     result.GivenAnswer = answer.GivenAnswer;
-                    result.WasCorrect = typed
+                    result.WasCorrect = type.IsTypedStage(result.StageValue)
                         ? grader.Matches(answer.GivenAnswer, item)
                         : answer.WasKnown ?? false;
                 }
@@ -408,8 +421,8 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             var index = r.ItemIndex!.Value;
             var item = items[index];
             outcomes.Add(new ItemOutcome(index, item.Prompt, item.Answer, r.GivenAnswer, r.WasCorrect, item.GapIndex));
-            await itemProgress.RecordAsync(plan.ChildId, pos.ExerciseId, item, r.WasCorrect, attempt.StageValue,
-                typed ? r.GivenAnswer : null, ItemReviewSource.Test, positionId, attempt.Day, countsForMastery: true, ct: ct);
+            await itemProgress.RecordAsync(plan.ChildId, pos.ExerciseId, item, r.WasCorrect, r.StageValue,
+                type.IsTypedStage(r.StageValue) ? r.GivenAnswer : null, ItemReviewSource.Test, positionId, attempt.Day, countsForMastery: true, ct: ct);
         }
 
         var passPercent = pos.GoalThreshold is > 0 ? pos.GoalThreshold.Value : DefaultPassPercent;

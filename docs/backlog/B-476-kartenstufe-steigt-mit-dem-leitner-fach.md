@@ -12,7 +12,7 @@ quelle: Rückmeldung von Theodor nach dem ersten echten Lerntag (2026-11-11), vo
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
-wartet_auf: "E2E erstbegegnung.spec.ts (Port 5200 belegt vom Heimnetz-Server) und Ausrollen auf die echte DB (Server-Neustart)"
+wartet_auf: "Entscheidung des Vaters zum MC-Hebel im Test (Verlauf 2026-11-11, Delta-Review); E2E erstbegegnung.spec.ts (Port 5200 belegt); Ausrollen"
 ---
 
 # B-476 · Die Stufe einer Vokabelkarte steigt mit ihrem Leitner-Fach: erst umdrehen, dann auswählen, dann schreiben
@@ -72,8 +72,15 @@ die drei Punkte nach der dortigen Empfehlung entschieden, Vetorecht beim Vater).
 5. **Nur der Lern-Modus, nur Leitner-Positionen, nur Vokabelkarten.** Ohne Leitner bewegt sich kein Fach (die Karte
    bliebe auf Sprosse 1); der Info-Modus bucht nichts. Die Leiter ist ein Haken am Übungstyp
    (`IExerciseType.CardStage`), Standard „Zielstufe"; andere Typen bleiben unverändert.
-6. **Der Abschlusstest bleibt unverändert auf der Zielstufe.** Ob der tägliche Pflicht-Test ebenfalls der Leiter
-   folgen soll, ist eine **eigene Frage** an den Vater (zurückgestellt) – diese Story ändert an Ziel und Malus nichts.
+6. ~~Der Abschlusstest bleibt unverändert auf der Zielstufe.~~ → **revidiert vom Vater am 2026-11-11** („Ja, Test
+   anpassen“, nach dem Review-Fund: der tägliche Freitext-Test prüfte Wörter, die Theodor am Einführungstag nur
+   umgedreht hatte – Malus-Risiko ab dem Ausrollen). **Der Test folgt der Leiter, aber nie unter „geprüft“:** jedes Wort
+   wird mindestens als Auswahl abgefragt (Fach 1 und 2, auch ein im Test kalt eingeführtes), ab Fach 3 bzw. im obersten
+   Fach der Position auf der Zielstufe. Die Stufe steht je Ergebniszeile (`TestItemResult.StageValue`, gibt es schon),
+   `TestAttempt.StageValue` bleibt die Zielstufe. Gilt nur mit Leitner (sonst bewegt sich kein Fach) und nicht, wenn der
+   Vater in der Vorschau eine Stufe ausdrücklich wählt. Begründung: eine Selbstauskunft ist keine Prüfung – die
+   Pflicht bleibt „geprüft bestanden“, `RequireTypedTest` hält (Auswahl zählt als geprüft, `StageMechanics.IsTyped`).
+   Kosten: Stufe je Zeile statt je Versuch an drei Stellen des Testcontrollers; Ziel und Malus bleiben unberührt.
 
 ## Akzeptanzkriterien
 
@@ -84,6 +91,10 @@ die drei Punkte nach der dortigen Empfehlung entschieden, Vetorecht beim Vater).
 5. Falsche Auswahl auf Fach 2 → Fach 1, nächste Runde wieder Selbsteinschätzung.
 6. Review wird gegen die Kartenstufe gewertet, nicht gegen die Tagesstufe (Auswahl auf Fach 2 wird als Auswahl geprüft).
 7. Position ohne Leitner und Info-Modus: unverändert die Tagesstufe.
+8. Test (Zielstufe Freitext, Leitner): Wort auf Fach 1 oder 2 bzw. noch nicht eingeführt → Auswahl; ab Fach 3 → Freitext;
+   gewertet wird je Frage in ihrer Form; Ergebniszeilen tragen ihre Stufe.
+9. Test ohne Leitner, Zielstufe Selbsteinschätzung oder vom Vater gewählte Vorschau-Stufe → eine Stufe für alle Fragen
+   wie bisher.
 
 ## Verlauf
 
@@ -134,3 +145,31 @@ die drei Punkte nach der dortigen Empfehlung entschieden, Vetorecht beim Vater).
   Rollengang dieser Story; Fall 2: ohne Leitner, die getippten Fälle von B-420/B-421), **nicht gelaufen**: Port 5200 trägt den
   Heimnetz-Server mit der echten DB, die Playwright-Konfiguration startet ihren Server auf demselben Port. Darum bleibt die Story
   auf `in-arbeit`.
+- **2026-11-11** — Entscheidung 6 revidiert („Ja, Test anpassen“) und gebaut: `PositionPlayService.TestItemStage`, Stufe je
+  Ergebniszeile im `PositionTestsController` (`Start` friert ein, `Next`/`Answer`/`Submit` und die Lernhistorie lesen die
+  Zeile), Frontend `SohnTest.tsx` benennt die Stufe der Frage statt der des Versuchs. Tests: `Test_Fragt_Fach_1_Und_2_Als_Auswahl_Ab_Fach_3_Schriftlich`
+  (AK 8, inkl. Historie), `Test_Fragt_Ein_Ungesehenes_Wort_Als_Auswahl`, `Test_Mit_Einer_Stufe_Fuer_Alle_Fragen` (AK 9),
+  Vitest „benennt die Stufe der Frage, nicht die des Versuchs“ (rot mit dem alten Etikett gemessen). Backend **1306/1306**,
+  Vitest **742/742**, `tsc -b` sauber. Mutanten, alle rot am benannten Test, Grundlinie danach grün:
+
+  | Mutante | Stelle | gemessen |
+  |---|---|---|
+  | T1 Test immer Zielstufe | `TestItemStage` | rot |
+  | T2 ohne `UseLeitner`-Bedingung | `TestItemStage` | rot |
+  | T3 Umdrehstufe nicht angehoben | `TestItemStage` | rot |
+  | T4 ungesehenes Wort = oberstes Fach | `TestItemStage` | rot |
+  | T5 Vorschau-Stufe des Vaters ignoriert | `Start` | rot |
+  | T6 `Next` mit Stufe des Versuchs | `Next` | rot |
+  | T7 Historie mit Stufe des Versuchs | `Submit` | rot |
+
+  Äquivalent und darum nicht gemessen: die Bedingung „Zielstufe ungeprüft“ in `TestItemStage` (die Schleife liefert dann
+  ohnehin die Zielstufe) und das je Zeile gelesene „getippt“ in `Answer`/`Submit` (Auswahl und Freitext werden beide vom
+  Grader geprüft) – vom Delta-Review bestätigt.
+- **2026-11-11** — Delta-Review `pugling-reviewer`: keine 🔴. **🟡 Produktfund, offen beim Vater: das Kind steuert das Fach
+  und damit die Testform.** Wer nicht übt (unter einer Dosis führt der Test die Wörter kalt auf Fach 1 ein) oder beim Üben
+  absichtlich falsch antwortet (falsch → Fach 1), bekommt im Pflicht-Test dauerhaft Auswahlfragen und erfüllt die Pflicht
+  ohne je zu tippen. 🟡 Testkommentar AK 9 behauptete drei rote Fälle, einer ist äquivalent → umformuliert. 🟢 Berichte des
+  Vaters unterscheiden Auswahl- und Tipptreffer nicht (`PositionReportService`, `ItemResultDto` ohne Stufe); 🟢 `MaxBox` 2
+  im Test ungetestet (Fach 1 geht dort direkt auf die Zielstufe, regelkonform); 🟢 plan-übergreifende Beherrschung steigt
+  auch aus Auswahltreffern.
+

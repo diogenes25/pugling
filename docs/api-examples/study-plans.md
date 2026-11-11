@@ -404,11 +404,14 @@ Response — `HTTP 200`:
   "item": {
     "itemIndex": 0,
     "prompt": "hello",
-    "stage": 4,
+    "stage": 6,
     "reveal": null,
     "answerLength": null,
     "hint": null,
-    "choices": null,
+    "choices": [
+      "hallo",
+      "tsch\u00FCss"
+    ],
     "audioUrl": null,
     "gapIndex": null,
     "passage": null,

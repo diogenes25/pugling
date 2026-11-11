@@ -43,7 +43,6 @@ export function SohnTest() {
   const stageLabel = useStageLabel();
 
   const [attemptId, setAttemptId] = useState<number | null>(null);
-  const [stage, setStage] = useState(0);
   const [total, setTotal] = useState(0);
   const [cursor, setCursor] = useState(0);
   const [item, setItem] = useState<TestItem | null>(null);
@@ -83,7 +82,7 @@ export function SohnTest() {
     setAttemptId(null); setPlanStopped(false);
     try {
       const a = await api.startTest(planId, positionId);
-      setAttemptId(a.attemptId); setStage(a.stage); setTotal(a.totalItems);
+      setAttemptId(a.attemptId); setTotal(a.totalItems);
       const first = await api.nextTest(planId, positionId, a.attemptId);
       if (first.done) await finish(a.attemptId);
       // `?? null`: ein nullable Feld darf im Vertrag auch fehlen, der Zustand kennt nur „keine Aufgabe".
@@ -189,7 +188,8 @@ export function SohnTest() {
         <span className="screen-title" style={{ margin: 0 }}>{t("test.title")}</span>
         <span className="row" style={{ marginLeft: "auto", gap: 8 }}>
           <span className="pill cyan">{t("test.questionOf", { n: Math.min(cursor + 1, total), total })}</span>
-          <span className="pill mag">{stageLabel(stage)}</span>
+          {/* Die Stufe DIESER Frage (B-476): ein Wort auf Fach 1/2 kommt als Auswahl, auch wenn der Test „Tippen“ heißt. */}
+          <span className="pill mag">{stageLabel(item.stage)}</span>
           {/*
             „Später weiter" statt „Abbrechen": der Versuch bleibt am Cursor stehen und wird beim nächsten
             Start fortgesetzt (der Server gibt den laufenden Versuch zurück, statt einen neuen anzulegen).
