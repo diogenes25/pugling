@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/training, rolle/student]
 aliases: [Richtung both ist abwechselnd]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: M
@@ -9,7 +9,7 @@ wo: "beides"
 migration: nein
 vertragsbruch: nein
 quelle: B-463
-wartet_auf: "Nutzer: Ausrollen auf die echte pugling.db (Server anhalten, Skript, Neustart)"
+wartet_auf: ""
 grund: ""
 ersetzt_durch: []
 ---
@@ -183,3 +183,10 @@ und `frontend-reviewer`, Messung des Skripts an einer DB-Kopie mit dem Stand von
   fälligen Karten von heute Morgen. Vater-Web nicht in der Oberfläche geprüft (die Vater-PIN ist geändert); die neuen
   Texte stehen im ausgelieferten Bundle. Dabei gefunden und behoben: `heimnetz.ps1` veröffentlichte jeden Port in
   denselben Ordner und scheiterte an den gesperrten Dateien des laufenden Servers – jetzt ein Ordner je Port.
+- **2026-11-11** — ausgerollt auf die echte `pugling.db`, auf Wunsch des Nutzers: Heimnetz-Server angehalten (seit
+  12:47 UTC keine Antwort, keine offene Runde), Probelauf, dann Umschreiben (Sicherung
+  `pugling.db.bak-vor-b472-20261111-145320`, Marke `pugling.db.b472-done`): 4 Positionen, 7 Karteikasten-Zeilen,
+  10 Testergebnisse, 4 Runden, 3 Tests – deckungsgleich mit den Kopien. Neustart über `scripts/heimnetz.ps1`
+  (neuer Build): Sohn meldet sich an, Plan 5 aktiv, das erfüllte Tagesziel von Liste A bleibt erhalten.
+- **2026-11-11** — abgenommen: Commit `d095476`; Belege oben (Suite 1283/1283, beide Reviewer, Rollengang als Sohn an
+  der umgeschriebenen Kopie, Ausrollen auf die echte Datenbank).
