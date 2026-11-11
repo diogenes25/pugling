@@ -502,7 +502,8 @@ public class KartenstufeTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     }
 
     // A never-introduced word without a dose counts from the day its position joined the plan, and the day logic runs on
-    // the server's clock - so the position is stamped from that clock, not the wall's. Red if CreatedAt fell back to the entity's DateTime.UtcNow.
+    // the server's clock - so the position is stamped from that clock, not the wall's. Red if CreatedAt fell back to the
+    // entity's DateTime.UtcNow.
     [Fact]
     public async Task Position_Traegt_Das_Datum_Der_Serveruhr()
     {

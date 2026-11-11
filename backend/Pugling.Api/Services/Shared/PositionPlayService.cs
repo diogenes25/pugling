@@ -111,11 +111,11 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     }
 
     /// <summary>
-    /// Days after its <see cref="LadderStart"/> from which a word is asked at the target in practice and test alike,
-    /// whatever its box (B-476, decision 7). The father's choice, and the honest path's length: with the default
-    /// intervals a word practised every day is first asked in writing on day 7 (shown and turned over on day 1, chosen
-    /// on day 3, typed on day 7), so the deadline only meets a word the child keeps low - by not practising or by
-    /// failing on purpose.
+    /// Days after its introduction (<see cref="LadderStart"/> for a word not introduced yet) from which a word is asked
+    /// at the target in practice and test alike, whatever its box (B-476, decision 7). The father's choice, and the
+    /// honest path's length: with the default intervals a word practised every day is first asked in writing on day 7
+    /// (shown and turned over on day 1, chosen on day 3, typed on day 7), so the deadline only meets a word the child
+    /// keeps low - by not practising or by failing on purpose.
     /// </summary>
     public const int LadderDays = 7;
 
