@@ -22,7 +22,8 @@ namespace Pugling.Api.Controllers.Supervisor;
 [Produces("application/json")]
 [Authorize(Roles = Roles.Supervisor)]
 [ServiceFilter(typeof(PlanOwnershipFilter))]
-public class PlanPositionsController(PuglingDbContext db, ExercisePermissionService perms, ExerciseTypeRegistry types) : ControllerBase
+public class PlanPositionsController(PuglingDbContext db, ExercisePermissionService perms, ExerciseTypeRegistry types,
+    TimeProvider time) : ControllerBase
 {
     /// <summary>
     /// Is the exercise <b>not yet filled</b>? Applies only to types that carry their content as an item table
@@ -179,6 +180,9 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
 
         var pos = new PlanPosition
         {
+            // The same clock as the day logic that reads it (B-476: a word's ladder counts from the day its position
+            // joined the plan); the entity's wall-clock default would put the two on different calendars under test.
+            CreatedAt = time.GetUtcNow().UtcDateTime,
             StudyPlanId = planId,
             ExerciseId = dto.ExerciseId,
             Order = order,

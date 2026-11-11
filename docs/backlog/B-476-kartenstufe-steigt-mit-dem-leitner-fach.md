@@ -81,16 +81,28 @@ die drei Punkte nach der dortigen Empfehlung entschieden, Vetorecht beim Vater).
    Vater in der Vorschau eine Stufe ausdrücklich wählt. Begründung: eine Selbstauskunft ist keine Prüfung – die
    Pflicht bleibt „geprüft bestanden“, `RequireTypedTest` hält (Auswahl zählt als geprüft, `StageMechanics.IsTyped`).
    Kosten: Stufe je Zeile statt je Versuch an drei Stellen des Testcontrollers; Ziel und Malus bleiben unberührt.
-7. **Spätestens sieben Tage nach der Einführung fragt der Test schriftlich** – vom Vater am 2026-11-11 entschieden
-   („Nach 7 Tagen schriftlich“) nach dem Delta-Review-Fund, dass das Kind das Fach und damit die Testform selbst steuert
-   (nicht üben → Fach 1; beim Üben absichtlich falsch → Fach 1). Ein Wort mit `IntroducedAt` ≤ Testtag − 7 wird auf der
-   Zielstufe geprüft, gleich in welchem Fach. Ein nie eingeführtes Wort zählt ab der Aufnahme der Position in den Plan
-   (ohne Dosis führt nur das Üben ein – wer nie übt, hielte es sonst für immer „neu“); unter einer Dosis führt der Test es
-   selbst heute ein, die Frist beginnt heute. Begründung: ein großzügiger Puffer – ein täglich geübtes Wort ist mit den
-   Standardintervallen nach etwa drei Tagen beim Schreiben (Review-Korrektur; zuerst stand hier fälschlich „sieben Tage
-   sind der Weg“); die Frist trifft nur ein Wort, das das Kind niedrig hält, und kein Verhalten verlängert sie.
-   Nur der Test, nicht das Üben – die Pflicht hängt am Test. Kosten: ein Vergleich in `TestItemStage`, keine Migration
-   (`IntroducedAt` gibt es schon).
+7. **Spätestens sieben Tage nach dem Start seiner Leiter wird ein Wort geschrieben – im Test und beim Üben.** Vom Vater
+   am 2026-11-11 entschieden („Nach 7 Tagen schriftlich“) nach dem Delta-Review-Fund, dass das Kind das Fach und damit die
+   Form selbst steuert (nicht üben → Fach 1; beim Üben absichtlich falsch → Fach 1). Danach zweimal ergänzt, beide Male
+   vom Vater in der Review-Sitzung „nachtlauf“ entschieden und von dort übermittelt:
+   - ~~Nur der Test, nicht das Üben.~~ → **„Üben zieht mit“:** nach Ablauf der Frist fragt auch das Üben auf der Zielstufe.
+     Sonst würde ein Wort, das ehrlich immer wieder auf Fach 1 fällt, ab Tag 7 schriftlich geprüft, ohne je schriftlich
+     geübt worden zu sein – Malus ohne Trick.
+   - ~~Unter einer Dosis beginnt die Frist eines kalt eingeführten Worts am Testtag.~~ → **„Ab dem Soll-Tag“:** sonst bekäme
+     jede neue Portion wieder eine Woche Auswahl, wer Üben und Test meidet.
+
+   **Leiterstart** (`PositionPlayService.LadderStart`) = der Tag, an dem das Wort dran war: Aufnahme der Position in den
+   Plan (nie vor dem Planstart), unter einer Dosis `ItemIndex ÷ Dosis` Tage später (die Dosis führt in Buchreihenfolge
+   ein). Eine **frühere** tatsächliche Einführung zählt stattdessen, eine **spätere nicht** – Einführen kann das Kind
+   verzögern (ohne Dosis führt nur das Üben ein, unter Dosis erst, wenn es spielt). Diese Min-Regel ist eine Ergänzung
+   der Entwicklung über die übermittelte Entscheidung hinaus (Vetorecht beim Vater). Ab Leiterstart + 7 Tage: Zielstufe,
+   gleich in welchem Fach.
+   Begründung der sieben Tage: genau der ehrliche Weg – mit den Standardintervallen wird ein täglich geübtes Wort an Tag 7
+   zum ersten Mal geschrieben (Tag 1 zeigen und umdrehen, Tag 3 auswählen, Tag 7 schreiben; siehe Entscheidung 4). Die
+   Frist trifft also nur ein Wort, das das Kind niedrig hält. (Eine Zwischenfassung behauptete „nach etwa drei Tagen“ –
+   falsch gerechnet, vom zweiten Review gefunden.) Kosten: `LadderStart` und ein Vergleich in `CardStage` und
+   `TestItemStage`; keine Migration (`IntroducedAt`, `CreatedAt` gibt es schon). `PlanPosition.CreatedAt` stempelt jetzt
+   mit dem `TimeProvider`, derselben Uhr wie die Tageslogik.
 
 ## Akzeptanzkriterien
 
@@ -105,7 +117,10 @@ die drei Punkte nach der dortigen Empfehlung entschieden, Vetorecht beim Vater).
    gewertet wird je Frage in ihrer Form; Ergebniszeilen tragen ihre Stufe.
 9. Test ohne Leitner, Zielstufe Selbsteinschätzung oder vom Vater gewählte Vorschau-Stufe → eine Stufe für alle Fragen
    wie bisher.
-10. Wort seit sieben oder mehr Tagen eingeführt → Test auf der Zielstufe, auch auf Fach 1; sechs Tage → noch Auswahl.
+10. Leiterstart sieben oder mehr Tage her → Test **und Üben** auf der Zielstufe, auch auf Fach 1; sechs Tage → noch
+    Auswahl (Test) bzw. Umdrehkarte (Üben).
+11. Nie eingeführtes Wort: Leiterstart = Aufnahme der Position (bzw. Planstart, wenn später); unter Dosis zusätzlich
+    `ItemIndex ÷ Dosis` Tage; eine spätere tatsächliche Einführung verschiebt ihn nicht.
 
 ## Verlauf
 
@@ -196,4 +211,28 @@ die drei Punkte nach der dortigen Empfehlung entschieden, Vetorecht beim Vater).
   lassen, verworfen: das Wort verlöre beim nächsten Üben seine Kennenlernkarte aus B-419). 🟡 Begründung der sieben Tage
   rechnete falsch → in Kommentar und Entscheidung 7 korrigiert. 🟢 Leerzeile am Dateiende → entfernt. Die Behebung ist
   nicht noch einmal reviewt (Selbst-Check: Mutanten N1–N3).
+- **2026-11-11** — Review der Sitzung „nachtlauf“ (Stand `54f67fd`, acht Funde, nicht nachgemessen übermittelt): alle am
+  Code nachvollzogen. Behoben: (1) Frist nur im Test → `CardStage` prüft sie auch (Entscheidung „Üben zieht mit“);
+  (2) Dosis-Zweig ab Testtag → Soll-Tag (`LadderStart`); (3) `CreatedAt` mit der Wanduhr → `PlanPositionsController` und die
+  Test-Helfer `SeedLeitnerPositionCore`/`MarkIntroduced` stempeln über den `TimeProvider`; (4) Position älter als der Plan
+  ungetestet → Fall ergänzt; (5) Dosis-Zweig ungetestet → `Kaltes_Dosiswort_Zaehlt_Ab_Seinem_Soll_Tag` mit Rang; (6) zwei
+  widersprüchliche Begründungen der sieben Tage → die Rechnung „Tag 7“ stimmt, die Korrektur „etwa drei Tage“ war falsch,
+  zurückgenommen; (7) toter Null-Pfad → `TestItemStage` nimmt einen nicht-nullbaren `ladderStart`, Konstante heißt
+  `LadderDays`; (8) Bedingungskette → in `LadderStart` als benannte Schritte. Neu: Min-Regel (spätere Einführung zählt
+  nicht) mit `Spaet_Eingefuehrtes_Wort_Verlaengert_Die_Frist_Nicht`, `Ueben_Zieht_Mit_Nach_Sieben_Tagen_Geschrieben`,
+  `Position_Traegt_Das_Datum_Der_Serveruhr`. Mutanten, alle rot am benannten Test, Grundlinie danach grün:
+
+  | Mutante | Stelle | gemessen |
+  |---|---|---|
+  | P1 Frist nicht im Üben | `CardStage` | rot |
+  | P2 Dosis ohne Rang | `LadderStart` | rot |
+  | P3 Dosis-Wort ab „heute“ (fern) | `LadderStart` | rot |
+  | P4 Planstart ignoriert | `LadderStart` | rot |
+  | P5 Aufnahme der Position ignoriert | `LadderStart` | rot |
+  | P6 frühere Einführung ignoriert | `LadderStart` | rot |
+  | P7 spätere Einführung zählt | `LadderStart` | rot |
+  | P8 `CreatedAt` mit der Wanduhr | `PlanPositionsController` | rot |
+
+  Ersetzt: der Fall „kaltes Dosis-Wort einer 30 Tage alten Position → Auswahl“ aus `54f67fd` widerspricht der Soll-Tag-
+  Entscheidung und ist durch den Dosis-Fall mit Rang ersetzt.
 

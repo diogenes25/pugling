@@ -188,14 +188,6 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         // FREEZE the examination order per the position's strategy (strictly server-driven, no going back).
         var order = PositionPlayService.OrderIndices(pool.Select(i => (i, progress.GetValueOrDefault(i))), pos.OrderStrategy);
 
-        // The date the test's deadline (B-476) counts from for a word never introduced. Only practice introduces a word on a
-        // position without a dose, so a child who never practises would keep it "new" - and on the choice rung - for good;
-        // it has stood in the plan since the position was added, a date the child cannot move. Under a dose the test itself
-        // introduces it today (below), and its deadline starts today.
-        var notIntroducedSince = pos.NewItemsPerDay > 0
-            ? day
-            : DateOnly.FromDateTime(pos.CreatedAt) is var added && added > plan.StartDate ? added : plan.StartDate;
-
         var attempt = new TestAttempt
         {
             StudyPlanId = planId,
@@ -215,7 +207,8 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             {
                 ItemIndex = i,
                 StageValue = explicitStage ? stage : PositionPlayService.TestItemStage(type, pos, stage,
-                    progress.GetValueOrDefault(i)?.Box, progress.GetValueOrDefault(i)?.IntroducedAt ?? notIntroducedSince, day),
+                    progress.GetValueOrDefault(i)?.Box,
+                    PositionPlayService.LadderStart(pos, plan, i, progress.GetValueOrDefault(i)?.IntroducedAt), day),
             }).ToList(),
         };
         db.TestAttempts.Add(attempt);

@@ -83,14 +83,14 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
             && IntroductionStage(type) is not null;
 
     /// <summary>
-    /// The Leitner box of every introduced item of the position, by item index - the one lookup the card projection
-    /// needs: presence tells an introduction from a regular card (<see cref="IsIntroduction"/>), the box picks the
-    /// card's rung (<see cref="CardStage"/>).
+    /// Box and introduction date of every introduced item of the position, by item index - the one lookup the card
+    /// projection needs: presence tells an introduction from a regular card (<see cref="IsIntroduction"/>), box and date
+    /// pick the card's rung (<see cref="CardStage"/>).
     /// </summary>
-    public async Task<Dictionary<int, int>> IntroducedBoxesAsync(int positionId, CancellationToken ct) =>
+    public async Task<Dictionary<int, CardProgress>> IntroducedCardsAsync(int positionId, CancellationToken ct) =>
         await db.PositionItemProgress.AsNoTracking()
             .Where(p => p.PlanPositionId == positionId && p.IntroducedAt != null)
-            .ToDictionaryAsync(p => p.ItemIndex, p => p.Box, ct);
+            .ToDictionaryAsync(p => p.ItemIndex, p => new CardProgress(p.Box, p.IntroducedAt!.Value), ct);
 
     /// <summary>
     /// The stage one card is played at. A never-seen card is shown (B-419); an introduced one climbs the type's ladder
@@ -98,21 +98,41 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// on a Leitner position - without Leitner the card would stay on the lowest rung for good, and the info mode
     /// records nothing. A card in the position's top box is asked at the target whatever the ladder says: with a
     /// <see cref="PlanPosition.MaxBox"/> below the ladder's top rung it could never climb further, and would be
-    /// stuck on a rung below the target for good.
+    /// stuck on a rung below the target for good. The ladder also ends by the calendar (<see cref="LadderDays"/>), in
+    /// practice as in the test: a word the test asks in writing must have been asked in writing here as well.
     /// </summary>
-    public static int CardStage(IExerciseType type, PlanPosition pos, int dayStage, PlayMode mode, int? introducedBox)
+    public static int CardStage(IExerciseType type, PlanPosition pos, StudyPlan plan, int dayStage, PlayMode mode,
+        int index, CardProgress? card, DateOnly day)
     {
-        if (IsIntroduction(type, dayStage, mode, introducedBox is not null)) return IntroductionStage(type)!.Value;
-        if (mode != PlayMode.Lern || !pos.UseLeitner || introducedBox is not { } box || box >= pos.MaxBox) return dayStage;
-        return type.CardStage(dayStage, box);
+        if (IsIntroduction(type, dayStage, mode, card is not null)) return IntroductionStage(type)!.Value;
+        if (mode != PlayMode.Lern || !pos.UseLeitner || card is not { } c || c.Box >= pos.MaxBox) return dayStage;
+        if (LadderStart(pos, plan, index, c.IntroducedAt).AddDays(LadderDays) <= day) return dayStage;
+        return type.CardStage(dayStage, c.Box);
     }
 
     /// <summary>
-    /// Days after its introduction from which the test asks a word at the target (B-476, decision 7). The father's
-    /// choice, and deliberately generous: a word practised every day reaches the typed rung after about three days with
-    /// the default intervals, so only a word the child keeps low - by not practising or by failing on purpose - meets it.
+    /// Days after its <see cref="LadderStart"/> from which a word is asked at the target in practice and test alike,
+    /// whatever its box (B-476, decision 7). The father's choice, and the honest path's length: with the default
+    /// intervals a word practised every day is first asked in writing on day 7 (shown and turned over on day 1, chosen
+    /// on day 3, typed on day 7), so the deadline only meets a word the child keeps low - by not practising or by
+    /// failing on purpose.
     /// </summary>
-    public const int TestLadderDays = 7;
+    public const int LadderDays = 7;
+
+    /// <summary>
+    /// The day the ladder of one word started, a date the child cannot push back: the day the word was due to be
+    /// introduced. That is the day the position joined the plan (never before the plan's start), and under a daily dose
+    /// <c>index / dose</c> days later - the dose introduces in book order. An earlier actual introduction counts
+    /// instead; a later one does not, because introducing is the child's to delay (under a dose a word is introduced
+    /// when the child plays, and without a dose only practice introduces at all).
+    /// </summary>
+    public static DateOnly LadderStart(PlanPosition pos, StudyPlan plan, int index, DateOnly? introducedAt)
+    {
+        var added = DateOnly.FromDateTime(pos.CreatedAt);
+        var onPlan = added > plan.StartDate ? added : plan.StartDate;
+        var due = pos.NewItemsPerDay > 0 ? onPlan.AddDays(index / pos.NewItemsPerDay) : onPlan;
+        return introducedAt is { } introduced && introduced < due ? introduced : due;
+    }
 
     /// <summary>
     /// The stage one item is examined at in the test (B-476): the ladder of practice, but never below a checked rung -
@@ -122,15 +142,15 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// and without Leitner no box moves - both keep the target for every item.
     /// <para>
     /// The box is the child's to move - not practising keeps a word in box 1, and so does answering wrong on purpose.
-    /// So the ladder ends by the calendar too: <see cref="TestLadderDays"/> days after its introduction a word is examined
-    /// at the target whatever its box, and no behaviour of the child stretches the easier form beyond that.
+    /// So the ladder ends by the calendar too: <see cref="LadderDays"/> days after its <paramref name="ladderStart"/> a
+    /// word is examined at the target whatever its box, and no behaviour of the child stretches the easier form beyond that.
     /// </para>
     /// </summary>
-    public static int TestItemStage(IExerciseType type, PlanPosition pos, int target, int? box, DateOnly? introducedAt,
+    public static int TestItemStage(IExerciseType type, PlanPosition pos, int target, int? box, DateOnly ladderStart,
         DateOnly day)
     {
         if (!pos.UseLeitner || !type.IsTypedStage(target)) return target;
-        if (introducedAt is { } introduced && introduced.AddDays(TestLadderDays) <= day) return target;
+        if (ladderStart.AddDays(LadderDays) <= day) return target;
         for (var b = Math.Max(1, box ?? 1); b < pos.MaxBox; b++)
         {
             var stage = type.CardStage(target, b);
@@ -436,3 +456,6 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
         }
     }
 }
+
+/// <summary>The learning state one introduced card's stage depends on (B-476): its Leitner box and when it was introduced.</summary>
+public readonly record struct CardProgress(int Box, DateOnly IntroducedAt);

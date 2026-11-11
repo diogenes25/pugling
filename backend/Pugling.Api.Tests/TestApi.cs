@@ -272,7 +272,7 @@ internal static class TestApi
         // Only a type that introduces its cards has a first contact to skip; the others keep no progress here.
         if (play.TypeOf(pos.Exercise!) is not { } type || PositionPlayService.IntroductionStage(type) is null) return;
         var count = play.ItemsOfAsync(pos, pos.StudyPlan!.ChildId, CancellationToken.None).GetAwaiter().GetResult().Count;
-        var yesterday = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-1);
+        var yesterday = DateOnly.FromDateTime(scope.ServiceProvider.GetRequiredService<TimeProvider>().GetUtcNow().UtcDateTime).AddDays(-1);
         var existing = db.PositionItemProgress.Where(p => p.PlanPositionId == positionId).ToDictionary(p => p.ItemIndex);
         for (var i = 0; i < count; i++)
         {
@@ -294,10 +294,14 @@ internal static class TestApi
     {
         using var scope = f.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        // The server's clock, not the wall's: plan dates and the position's CreatedAt feed day logic (B-476 ladder
+        // deadline) that runs on the TimeProvider, and a test that froze or advanced it must see one calendar.
+        var now = scope.ServiceProvider.GetRequiredService<TimeProvider>().GetUtcNow().UtcDateTime;
+        var today = DateOnly.FromDateTime(now);
         var plan = new StudyPlan { ChildId = childId, Title = "Positions-Plan", StartDate = today, EndDate = today.AddDays(5) };
         var pos = new PlanPosition
         {
+            CreatedAt = now,
             ExerciseId = exerciseId,
             Order = 0,
             Stage = stage,
