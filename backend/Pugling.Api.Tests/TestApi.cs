@@ -258,10 +258,12 @@ internal static class TestApi
 
     /// <summary>
     /// Marks every atom of the position as introduced the day before (B-419), as if the child had seen it in an
-    /// earlier round. Box, review count and due date stay untouched, so the first graded review still counts as
-    /// new content - the test plays a known word at its stage instead of an introduction card.
+    /// earlier round, and - unless <paramref name="climbed"/> is off - as past the vocabulary ladder (B-476): box
+    /// <see cref="ClimbedBox"/>, the first box asked at the position's own stage. Review count and due date stay
+    /// untouched, so the first graded review still counts as new content - the test plays a known word at its stage
+    /// instead of an introduction card or a lower rung.
     /// </summary>
-    public static void MarkIntroduced(WebApplicationFactory<Program> f, int positionId)
+    public static void MarkIntroduced(WebApplicationFactory<Program> f, int positionId, bool climbed = true)
     {
         using var scope = f.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
@@ -274,11 +276,16 @@ internal static class TestApi
         var existing = db.PositionItemProgress.Where(p => p.PlanPositionId == positionId).ToDictionary(p => p.ItemIndex);
         for (var i = 0; i < count; i++)
         {
-            if (existing.TryGetValue(i, out var prog)) prog.IntroducedAt ??= yesterday;
-            else db.PositionItemProgress.Add(new PositionItemProgress { PlanPositionId = positionId, ItemIndex = i, IntroducedAt = yesterday });
+            if (!existing.TryGetValue(i, out var prog))
+                db.PositionItemProgress.Add(prog = new PositionItemProgress { PlanPositionId = positionId, ItemIndex = i });
+            prog.IntroducedAt ??= yesterday;
+            if (climbed) prog.Box = Math.Max(prog.Box, ClimbedBox);
         }
         db.SaveChanges();
     }
+
+    /// <summary>The first Leitner box at which a vocabulary card is asked at its position's own stage (B-476).</summary>
+    public const int ClimbedBox = 3;
 
     private static (int planId, int positionId) SeedLeitnerPositionCore(WebApplicationFactory<Program> f, int exerciseId,
         int stage, int childId, GoalCadence cadence, int? goalThreshold, bool useLeitner, bool requireTypedTest,

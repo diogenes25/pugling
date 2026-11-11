@@ -10554,7 +10554,7 @@
         "tags": [
           "Student \u2013 Position Practice"
         ],
-        "summary": "Accepts the answer to a practice card, grades it server-side against the item solution\nand logs the review. For Leitner positions the atom moves the box up/down,\ncorrect answers earn points (\u002B combo/speed bonus). Anti-farming: only one\ndue card is scored and at most once per day; non-typed self-assessment does not count with\nbool PlanPosition.RequireTypedTest. The server cursor then advances one card\nand returns the next one right away. In PlayMode.Info no feedback flows (204).",
+        "summary": "Accepts the answer to a practice card, grades it server-side against the item solution\nand logs the review. For Leitner positions the atom moves the box up/down,\ncorrect answers earn points (\u002B combo/speed bonus). Anti-farming: only one\ndue card is scored and at most once per day; non-typed self-assessment does not count with\nbool PlanPosition.RequireTypedTest. A card the vocabulary ladder lowered to self-assessment\n(B-476) never pays, but \u0022known\u0022 moves its box once a day - also under RequireTypedTest - so it can reach\nthe checked rungs. The server cursor then advances one card\nand returns the next one right away. In PlayMode.Info no feedback flows (204).",
         "parameters": [
           {
             "name": "planId",

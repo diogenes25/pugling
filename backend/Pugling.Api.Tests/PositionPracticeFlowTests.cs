@@ -41,12 +41,12 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
         var outcome = await review.Content.ReadFromJsonAsync<JsonElement>();
         JsonAssert.True(outcome, "wasCorrect");
         Assert.True(outcome.GetProperty("awarded").GetInt32() > 0);
-        Assert.Equal(2, outcome.GetProperty("box").GetInt32()); // box 1 → 2
+        Assert.Equal(TestApi.ClimbedBox + 1, outcome.GetProperty("box").GetInt32()); // one box up
 
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
         var prog = db.PositionItemProgress.Single(p => p.PlanPositionId == positionId && p.ItemIndex == 0);
-        Assert.Equal(2, prog.Box);
+        Assert.Equal(TestApi.ClimbedBox + 1, prog.Box);
         Assert.NotNull(prog.IntroducedAt);
         Assert.True(db.ChildPointsEntries.Where(e => e.ChildId == 1 && e.Kind == PointKind.Base).Sum(e => e.Amount) > 0);
     }
@@ -145,12 +145,12 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
             new { itemIndex = 0, wasKnown = true });
         var outcome = await review.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(0, outcome.GetProperty("awarded").GetInt32());
-        Assert.Equal(1, outcome.GetProperty("box").GetInt32()); // unmoved (default box 1, never applied)
+        Assert.Equal(TestApi.ClimbedBox, outcome.GetProperty("box").GetInt32()); // unmoved (never applied)
 
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
         var prog = db.PositionItemProgress.Single(p => p.PlanPositionId == positionId && p.ItemIndex == 0);
-        Assert.Equal(1, prog.Box);
+        Assert.Equal(TestApi.ClimbedBox, prog.Box);
         Assert.Equal(0, prog.ReviewCount); // ApplyReview never ran - "practiced" is not "reviewed"
         // But it IS counted as practiced: the introduction is stamped, same as any other first contact.
         Assert.NotNull(prog.IntroducedAt);

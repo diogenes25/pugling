@@ -1,13 +1,16 @@
-import { test, expect, type APIRequestContext } from "@playwright/test";
+import { test, expect, type APIRequestContext, type Page } from "@playwright/test";
 import { sohnLogin } from "./helpers";
 
 /*
  * NP-24 „Erst lesen, dann prüfen" als Rollengang des Sohnes – mit einem FRISCHEN Plan, denn nur dort gibt es Wörter, die
  * er nie gesehen hat (Retro-Vorschlag CB vom 2026-11-08). Drei Wege in einer Fläche, weil sie ein Erlebnis sind:
  * - B-419: die erste Runde zeigt jedes neue Wort mit Lösung, das Ende sagt „3 neue Wörter kennengelernt" und bietet die
- *   Abfrage an; erst die zweite Runde fragt mit Antwortfeld.
+ *   Abfrage an.
+ * - B-476: mit Leitner fragt die zweite Runde als Karteikarte – umdrehen, „Gewusst!"/„Nochmal" –, nicht mit Antwortfeld;
+ *   getippt wird erst ab dem dritten Fach.
  * - B-420: eine falsche Antwort hält die Karte an (eigene Antwort + Lösung), Enter trägt weiter.
  * - B-421: „Stadt" für „die Stadt" zählt – der Artikel darf fehlen.
+ *   Beide brauchen eine getippte Karte gleich nach dem Kennenlernen; die gibt es nur ohne Leitner (keine Leiter, B-476).
  *
  * Der Stoff entsteht über die API (Gegenstand ist das Spielen, nicht das Anlegen) – mit Stufe 4 (Freitext), genau der
  * Stufe, die der Assistent für das Ziel „Klassenarbeit" ab Tag 1 schreibt (`VaterWizard.tsx`). Serielle Reihenfolge,
@@ -27,27 +30,27 @@ async function postId(request: APIRequestContext, url: string, headers: Record<s
   return (await res.json()).id as number;
 }
 
-test("Sohn lernt neue Wörter erst kennen, wird dann abgefragt und liest seine Fehler", async ({ page, request }) => {
+async function setUp(request: APIRequestContext, page: Page, tag: string, useLeitner: boolean) {
   const login = await request.post("/api/v1/auth/adult", { data: { adultId: 1, pin: "0000" } });
   expect(login.ok(), await login.text()).toBeTruthy();
   const headers = { Authorization: `Bearer ${(await login.json()).token}` };
 
   const childPin = "8642";
-  const childId = await postId(request, "/api/v1/supervisor/children", headers, { name: `Neuling ${RUN}`, pin: childPin });
-  const subjectId = await postId(request, "/api/v1/creator/subjects", headers, { name: `Erstbegegnung-Fach ${RUN}` });
+  const childId = await postId(request, "/api/v1/supervisor/children", headers, { name: `Neuling ${tag} ${RUN}`, pin: childPin });
+  const subjectId = await postId(request, "/api/v1/creator/subjects", headers, { name: `Erstbegegnung-Fach ${tag} ${RUN}` });
   const seriesId = await postId(request, "/api/v1/creator/textbook-series", headers, {
-    name: `Erstbegegnung-Reihe ${RUN}`, publisherId: null, subjectName: null, subjectId, schoolTypes: null,
+    name: `Erstbegegnung-Reihe ${tag} ${RUN}`, publisherId: null, subjectName: null, subjectId, schoolTypes: null,
     sourceLanguage: null, targetLanguage: null, notes: null,
   });
   const unitId = await postId(request, `/api/v1/creator/textbook-series/${seriesId}/units`, headers, { label: "Unité 2", orderIndex: 1 });
   const exerciseId = await postId(request, `/api/v1/creator/textbook-series/${seriesId}/units/${unitId}/vocabulary`, headers, {
-    title: `En ville ${RUN}`, orderIndex: 1, rewardPoints: 10,
+    title: `En ville ${tag} ${RUN}`, orderIndex: 1, rewardPoints: 10,
     config: { direction: "front-to-back", sourceLang: "fr", targetLang: "de", items: WORDS.map(([front, back]) => ({ front, back })) },
   });
   const planId = await postId(request, "/api/v1/supervisor/study-plans", headers,
-    { childId, title: `Klassenarbeit ${RUN}`, durationDays: 7, active: true });
+    { childId, title: `Klassenarbeit ${tag} ${RUN}`, durationDays: 7, active: true });
   await postId(request, `/api/v1/supervisor/study-plans/${planId}/positions`, headers,
-    { exerciseId, stage: 4, cadence: "Daily", useLeitner: true, orderStrategy: "Serial" });
+    { exerciseId, stage: 4, cadence: "Daily", useLeitner, orderStrategy: "Serial" });
 
   await sohnLogin(page, { id: String(childId), pin: childPin });
   await page.getByRole("link", { name: /ÜBEN/ }).click();
@@ -63,9 +66,32 @@ test("Sohn lernt neue Wörter erst kennen, wird dann abgefragt und liest seine F
   }
   await expect(page.getByText("3 neue Wörter kennengelernt")).toBeVisible();
   await page.getByRole("button", { name: /Jetzt abfragen/ }).click();
+  await expect(counter).toHaveText("Karte 1 / 3");
+  return counter;
+}
+
+test("Sohn lernt neue Wörter erst kennen und dreht sie dann als Karteikarte um", async ({ page, request }) => {
+  const counter = await setUp(request, page, "L", true);
+
+  // ---------- B-476: Runde 2 ist die Karteikarte ----------
+  for (const [i, [front, back]] of WORDS.entries()) {
+    await expect(counter).toHaveText(`Karte ${i + 1} / 3`);
+    await expect(page.getByText(front, { exact: true })).toBeVisible();
+    // Kein Antwortfeld und keine Lösung, bevor das Kind umdreht.
+    await expect(page.getByRole("textbox")).toHaveCount(0);
+    await expect(page.getByText(`→ ${back}`)).toHaveCount(0);
+    await page.getByRole("button", { name: /Umdrehen/ }).click();
+    await expect(page.getByText(`→ ${back}`)).toBeVisible();
+    // Das zweite Wort weiß er nicht – „Nochmal" ist eine Antwort wie „Gewusst!".
+    await page.getByRole("button", { name: i === 1 ? "Nochmal" : "Gewusst!" }).click();
+  }
+  await expect(page.getByText("RUNDE FERTIG!")).toBeVisible();
+});
+
+test("Ohne Leitner tippt der Sohn gleich nach dem Kennenlernen und liest seine Fehler", async ({ page, request }) => {
+  const counter = await setUp(request, page, "T", false);
 
   // ---------- Runde 2 fragt ab ----------
-  await expect(counter).toHaveText("Karte 1 / 3");
   await expect(page.getByText(WORDS[0][0], { exact: true })).toBeVisible();
   await expect(page.getByText(`→ ${WORDS[0][1]}`)).toHaveCount(0);
   const answer = page.getByRole("textbox", { name: "Deine Antwort" });

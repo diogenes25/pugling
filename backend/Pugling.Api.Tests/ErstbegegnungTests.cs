@@ -81,10 +81,11 @@ public class ErstbegegnungTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         Assert.Null(prog.LastReviewedAt); // risk 3: the introduction must not block today's graded review
     }
 
-    // AK 2: the second round on the same day asks the introduced words at the day's stage, and the first graded
-    // hit pays the new-content points.
+    // AK 2, since B-476: the second round on the same day asks the introduced words - on the lowest rung of the
+    // ladder, turned over and judged, not typed. The claim moves the box but pays nothing; the new-content points wait
+    // for the first checked hit (KartenstufeTests).
     [Fact]
-    public async Task ZweiteRunde_FragtDieEingefuehrtenWoerter_Ab_UndZahltNeuePunkte()
+    public async Task ZweiteRunde_FragtDieEingefuehrtenWoerter_Ab_AlsUmdrehkarte()
     {
         var (child, planId, positionId) = await SetupAsync(TestStage.FreeText, introduced: false);
         var first = await StartAsync(child, planId, positionId);
@@ -98,14 +99,14 @@ public class ErstbegegnungTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         {
             JsonAssert.False(c, "introduction");
             JsonAssert.False(c, "displayOnly");
-            Assert.Equal((int)TestStage.FreeText, c.GetProperty("stage").GetInt32());
-            Assert.Equal(JsonValueKind.Null, c.GetProperty("reveal").ValueKind);
+            Assert.Equal((int)TestStage.SelfAssess, c.GetProperty("stage").GetInt32());
         });
 
-        var outcome = await (await TestApi.PositionReviewAsync(child, planId, positionId, second, 0, givenAnswer: "die Stadt"))
+        var outcome = await (await TestApi.PositionReviewAsync(child, planId, positionId, second, 0, wasKnown: true))
             .Content.ReadFromJsonAsync<JsonElement>();
-        JsonAssert.True(outcome, "wasCorrect");
-        Assert.Equal(10, outcome.GetProperty("awarded").GetInt32()); // NewContentPoints of the seeded position
+        Assert.Equal(0, outcome.GetProperty("awarded").GetInt32());
+        Assert.Equal(2, outcome.GetProperty("box").GetInt32());
+        Assert.Equal(0, PointsOf(positionId));
     }
 
     // AK 3: an introduced atom is never shown as an introduction on a typed stage - existing plans play as before.

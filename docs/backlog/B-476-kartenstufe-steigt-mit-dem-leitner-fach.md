@@ -1,0 +1,136 @@
+---
+tags: [typ/story, status/in-arbeit, bereich/training, rolle/student, lerntechnik/vokabeln]
+aliases: [Stufenleiter je Karte, Karteikarte vor Auswahl vor Schreiben, Kartenstufe aus dem Fach]
+status: in-arbeit
+prio: P1
+art: Wunsch
+groesse: M
+wo: backend
+migration: nein
+vertragsbruch: nein
+quelle: Rückmeldung von Theodor nach dem ersten echten Lerntag (2026-11-11), vom Vater im Dialog weitergegeben
+unverifiziert: false
+grund: ""
+ersetzt_durch: []
+wartet_auf: "E2E erstbegegnung.spec.ts (Port 5200 belegt vom Heimnetz-Server) und Ausrollen auf die echte DB (Server-Neustart)"
+---
+
+# B-476 · Die Stufe einer Vokabelkarte steigt mit ihrem Leitner-Fach: erst umdrehen, dann auswählen, dann schreiben
+
+Theodor (12) nach dem ersten Tag auf der echten Datenbank: die Vokabelübungen sind zu schwer, es wird „quasi gleich
+mit dem Schreiben der Übersetzung begonnen". Der Vater schlägt die klassische Folge vor: neue Wörter erst als
+Karteikarte (umdrehen, ja/nein), dann mit Auswahl möglicher Antworten, erst am Ende frei geschrieben.
+
+## User Story
+
+Als *Sohn* möchte ich ein neues Wort erst wiedererkennen, dann aus einer Auswahl treffen und erst danach frei
+schreiben müssen, damit ich beim Üben lerne, statt an der schwersten Form zu scheitern – und als *Vater* möchte ich,
+dass die Stufe, die ich an der Position einstelle, das **Ziel** bleibt, auf das jedes Wort hinarbeitet.
+
+## Ist-Stand am Code
+
+- **Die Stufe gilt für den ganzen Tag, nicht für die Karte.** `PositionPlayService.StageForDay`
+  (`Services/Shared/PositionPlayService.cs:56-64`): `StageSchedule` → `Position.Stage` → `Exercise.DefaultStage` →
+  Typ-Default. Einzige Ausnahme je Karte ist die Erstbegegnung aus B-419 (`IsIntroduction`, `:81-83`;
+  `CardStage`, `Controllers/Student/PositionPracticeController.cs:148-149`).
+- **Theodors Positionen** (Plan 5, Positionen 26–29, gelesen auf einer Kopie der echten DB): `Stage = 4` (Freitext),
+  kein `StageSchedule`, `UseLeitner`, `RequireTypedTest`, Ziel täglich 80 %. Nach der Kennenlernkarte kommt jedes
+  Wort sofort zum Tippen.
+- **Alle nötigen Stufen gibt es** (`Models/StudyPlanEntities.cs:37-56`): `SelfAssess` (umdrehen, ja/nein),
+  `MultipleChoice`, `LetterBoxes`, `FreeText`. Der Vertrag trägt die Stufe je Karte (`PracticeCard.Stage`,
+  `Pugling.Contracts/Student/PracticeDtos.cs:74`), das Frontend rendert je Karte (`SohnPractice.tsx:311`, `:420`).
+- **Das Fach je Karte gibt es** (`PositionItemProgress.Box`, `Models/PlanPositionEntities.cs:208`): richtig → ein
+  Fach höher und Intervall `[0,1,2,4,7,14]` (`PositionPlayService.cs:27`, `ApplyReview` `:374-390`), falsch → Fach 1,
+  heute wieder fällig.
+- **Selbsteinschätzung bewegt mit `RequireTypedTest` heute kein Fach** (`PositionPracticeController.cs:386`:
+  `scored = … (typed || !pos.RequireTypedTest) …`) – eine Karte auf Fach 1 käme dort nie weiter.
+
+## Die echte Lücke
+
+Eine Regel „Stufe der Karte = f(Fach, Zielstufe)". Alles darunter ist da.
+
+## Entscheidungen
+
+Vom Vater im Dialog vom 2026-11-11 freigegeben („Ja, Story und bauen" auf den Vorschlag mit drei offenen Punkten;
+die drei Punkte nach der dortigen Empfehlung entschieden, Vetorecht beim Vater).
+
+1. **Die Kartenstufe folgt dem Fach, die eingestellte Stufe ist die Obergrenze.** Fach 1 → Selbsteinschätzung,
+   Fach 2 → Auswahl, ab Fach 3 → Zielstufe des Tages; im obersten Fach der Position (`MaxBox`) immer die Zielstufe,
+   sonst bliebe eine Karte bei `MaxBox` 1 oder 2 für immer unter dem Ziel (Review-Fund). Ist die Zielstufe leichter als die Sprosse, gilt die Zielstufe
+   (Ziel „Selbsteinschätzung" bleibt Selbsteinschätzung). Die Erstbegegnung (B-419) bleibt davor. Begründung: wirkt
+   ohne Zutun in jedem schon angelegten Plan, auch in Theodors. Kosten: eine Bedingung in der Kartenprojektion.
+2. **Die Sprosse „umdrehen" verschiebt das Fach, zahlt aber keine Münzen** und zählt nicht für die Beherrschung –
+   auch nicht mit `RequireTypedTest`. Begründung: ein „ja" ist eine Selbstauskunft; geprüft wird ab der Auswahl, und
+   wer dort falsch liegt, fällt auf Fach 1 zurück. Ohne Fachbewegung bliebe die Karte unter `RequireTypedTest` für
+   immer auf Fach 1. Kosten: ein Zweig im Review.
+3. **Keine Buchstabenkästchen-Zwischenstufe.** Der Vater hat drei Schritte beschrieben; jede weitere Sprosse
+   verschiebt das erste Schreiben um ein Intervall.
+4. **Aufstieg je Lerntag über die Leitner-Intervalle, keine Migration.** Mit den Standardintervallen: Tag 1 kennenlernen
+   und umdrehen, Tag 3 auswählen, ab Tag 7 schreiben. Begründung: der Abstand ist das Lernprinzip; ein Aufstieg
+   innerhalb einer Sitzung bräuchte eine neue Spalte. Kosten: frei geschrieben wird ein Wort frühestens nach etwa
+   einer Woche.
+5. **Nur der Lern-Modus, nur Leitner-Positionen, nur Vokabelkarten.** Ohne Leitner bewegt sich kein Fach (die Karte
+   bliebe auf Sprosse 1); der Info-Modus bucht nichts. Die Leiter ist ein Haken am Übungstyp
+   (`IExerciseType.CardStage`), Standard „Zielstufe"; andere Typen bleiben unverändert.
+6. **Der Abschlusstest bleibt unverändert auf der Zielstufe.** Ob der tägliche Pflicht-Test ebenfalls der Leiter
+   folgen soll, ist eine **eigene Frage** an den Vater (zurückgestellt) – diese Story ändert an Ziel und Malus nichts.
+
+## Akzeptanzkriterien
+
+1. Eingeführte Karte auf Fach 1, Zielstufe Freitext → Karte kommt als `SelfAssess` (Lösung als `reveal`).
+2. Fach 2 → `MultipleChoice` mit `choices`; ab Fach 3 → Freitext wie bisher.
+3. Zielstufe leichter als die Sprosse (Ziel `SelfAssess`, Fach 2) → `SelfAssess`.
+4. „Gewusst" auf der Sprosse Selbsteinschätzung → Fach 2, **0** Münzen – auch mit `RequireTypedTest`.
+5. Falsche Auswahl auf Fach 2 → Fach 1, nächste Runde wieder Selbsteinschätzung.
+6. Review wird gegen die Kartenstufe gewertet, nicht gegen die Tagesstufe (Auswahl auf Fach 2 wird als Auswahl geprüft).
+7. Position ohne Leitner und Info-Modus: unverändert die Tagesstufe.
+
+## Verlauf
+
+- **2026-11-11** — angelegt aus Theodors Rückmeldung; Ist-Stand an Code und (Kopie der) echten DB belegt; Entscheidungen
+  wie oben; Bau begonnen.
+- **2026-11-11** — gebaut (Backend; das Frontend rendert die Stufe schon je Karte, keine Änderung):
+  `IExerciseType.CardStage` (Standard: Zielstufe), Leiter in `VocabularyExerciseType.CardStage`,
+  `PositionPlayService.CardStage`/`IntroducedBoxesAsync`, im `PositionPracticeController` dieselbe Kartenstufe für
+  `/cards`, `/next`, Review, Folgekarte und Bildwechsel; Umdrehkarten stehen wie Einführungen vorn (Combo).
+  Test-Grundlage: `TestApi.MarkIntroduced` setzt eingeführte Wörter jetzt auf Fach 3 („Leiter hinter sich“), damit die
+  Bestandstests ihre Bedeutung behalten; vier Zusicherungen auf feste Fachnummern relativ nachgezogen; die
+  Vier-Wochen-Simulation antwortet je Kartenform (sonst blieb jedes Wort auf Fach 1); B-419 AK 2 umgeschrieben
+  (`ZweiteRunde_FragtDieEingefuehrtenWoerter_Ab_AlsUmdrehkarte`), die Neu-Punkte liegen jetzt in `KartenstufeTests`.
+- **2026-11-11** — Verifikation: Backend **1301/1301** (`dotnet test Pugling.sln -c Release`), `dotnet format` ohne Fund.
+  Fälle → Tests (`KartenstufeTests`): AK 1+2 `Fach_Bestimmt_Die_Kartenform_Bis_Zur_Zielstufe`, AK 3
+  `Zielstufe_Ist_Die_Obergrenze` (6 Fälle), AK 4 `Umdrehkarte_Gewusst_Steigt_Ein_Fach_Ohne_Muenzen_Auch_Mit_RequireTypedTest`
+  und `Erster_Gepruefter_Treffer_Nach_Der_Umdrehkarte_Zahlt_Die_Neu_Punkte`, AK 5 `Falsche_Auswahl_Faellt_Zurueck_Auf_Die_Umdrehkarte`,
+  AK 6 `Review_Wertet_Die_Form_Der_Karte_Nicht_Die_Des_Tages`, AK 7 `Ohne_Leitner_Und_Im_Infomodus_Gilt_Die_Tagesstufe`;
+  dazu `Folgekarte_Im_Review_Folgt_Der_Leiter`, `Next_Liefert_Die_Karte_Auf_Ihrer_Sprosse`,
+  `Umdrehkarten_Stehen_In_Der_Runde_Vorn`, `Oberstes_Fach_Der_Position_Fragt_Die_Zielstufe`.
+- **2026-11-11** — Mutanten mit `.claude/scripts/mutant-probe.py`, alle rot am benannten Test, Grundlinie danach grün.
+  M5–M8 liefen im ersten Durchgang „ungemessen (kompiliert nicht)“ – der Stop-Hook baute parallel; mit kompilierbaren
+  Varianten neu gemessen:
+
+  | Mutante | Stelle | gemessen |
+  |---|---|---|
+  | M1 keine Leiter | `VocabularyExerciseType.CardStage` | rot |
+  | M2 Fach 3 statt 2 → Auswahl | `VocabularyExerciseType.CardStage` | rot |
+  | M3 Obergrenze ignoriert | `VocabularyExerciseType.CardStage` | rot |
+  | M4 ohne `UseLeitner`-Bedingung | `PositionPlayService.CardStage` | rot |
+  | M5 Info-Modus nicht ausgenommen | `PositionPlayService.CardStage` | rot |
+  | M6 Umdrehkarte zahlt | `Review` (`scored`) | rot |
+  | M7 Umdrehkarte steigt nicht | `Review` (`climbs`) | rot |
+  | M8 Umdrehkarte zählt als Review | `Review` (`ReviewCount`) | rot |
+  | M9 Umdrehkarten nicht vorn | `IntroductionsFirstAsync` | rot |
+  | M10 Review wertet Tagesstufe | `Review` | rot |
+  | M11 Folgekarte ohne Leiter | `Review` (`next`) | rot |
+  | M12 `MaxBox` ignoriert | `PositionPlayService.CardStage` | rot |
+  | M13 `/next` ohne Leiter | `Next` | rot |
+
+- **2026-11-11** — Review `pugling-reviewer`: keine 🔴. 🟡 `MaxBox` < 3 hält die Karte unter dem Ziel → behoben (Entscheidung 1
+  ergänzt, M12). 🟡 Swagger-Text des Review veraltet → nachgezogen. 🟡 **Der tägliche Pflicht-Test bleibt Freitext**, prüft also
+  Wörter, die Theodor am Einführungstag nicht getippt hat – formal ändert die Story an Ziel und Malus nichts, praktisch steigt
+  das Malus-Risiko ab dem Ausrollen; **vor dem Ausrollen beim Vater zu entscheiden** (Entscheidung 6, zurückgestellt). 🟢
+  `PositionReportService` liest die Beherrschung aus `Box`, die die Umdrehkarte bewegt – akzeptiert (die plan-übergreifende
+  Sicht `ItemProgress` bleibt unberührt, `countsForMastery: false`). 🟢 veralteter Testkommentar in `VierWochenTests` → nachgezogen.
+- **2026-11-11** — E2E `frontend/e2e/erstbegegnung.spec.ts` umgebaut (Fall 1: Leitner, Runde 2 = Karteikarte – der
+  Rollengang dieser Story; Fall 2: ohne Leitner, die getippten Fälle von B-420/B-421), **nicht gelaufen**: Port 5200 trägt den
+  Heimnetz-Server mit der echten DB, die Playwright-Konfiguration startet ihren Server auf demselben Port. Darum bleibt die Story
+  auf `in-arbeit`.

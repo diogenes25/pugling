@@ -57,6 +57,9 @@ public abstract class ExerciseTypeBase : IExerciseType
     public virtual bool IsDisplayOnlyStage(int stage) => false;
 
     /// <inheritdoc/>
+    public virtual int CardStage(int targetStage, int box) => targetStage;
+
+    /// <inheritdoc/>
     public virtual IReadOnlyList<string>? Choices(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, int stage) => null;
 
     /// <inheritdoc/>

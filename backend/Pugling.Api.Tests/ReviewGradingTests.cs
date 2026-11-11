@@ -45,7 +45,7 @@ public class ReviewGradingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         JsonAssert.True(outcome, "wasCorrect");
         Assert.Equal("hallo", outcome.GetProperty("expected").GetString());
         Assert.True(outcome.GetProperty("awarded").GetInt32() > 0);
-        Assert.Equal(2, outcome.GetProperty("box").GetInt32()); // box 1 → 2 after a correct answer
+        Assert.Equal(TestApi.ClimbedBox + 1, outcome.GetProperty("box").GetInt32()); // one box up after a correct answer
     }
 
     [Fact]
@@ -77,7 +77,7 @@ public class ReviewGradingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         Assert.Equal(0, outcome.GetProperty("awarded").GetInt32()); // … no points …
         Assert.Equal(0, outcome.GetProperty("comboBonus").GetInt32());
 
-        Assert.Equal(1, BoxOf(positionId, 0)); // … and no box movement (stays box 1)
+        Assert.Equal(TestApi.ClimbedBox, BoxOf(positionId, 0)); // … and no box movement
     }
 
     [Fact]

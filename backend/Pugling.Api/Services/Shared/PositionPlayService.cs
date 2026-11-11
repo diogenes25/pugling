@@ -83,14 +83,29 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
             && IntroductionStage(type) is not null;
 
     /// <summary>
-    /// Item indices of the position that have been introduced already - the one lookup the card projection needs
-    /// to tell an introduction from a regular card (<see cref="IsIntroduction"/>).
+    /// The Leitner box of every introduced item of the position, by item index - the one lookup the card projection
+    /// needs: presence tells an introduction from a regular card (<see cref="IsIntroduction"/>), the box picks the
+    /// card's rung (<see cref="CardStage"/>).
     /// </summary>
-    public async Task<HashSet<int>> IntroducedIndicesAsync(int positionId, CancellationToken ct) =>
-        [.. await db.PositionItemProgress.AsNoTracking()
+    public async Task<Dictionary<int, int>> IntroducedBoxesAsync(int positionId, CancellationToken ct) =>
+        await db.PositionItemProgress.AsNoTracking()
             .Where(p => p.PlanPositionId == positionId && p.IntroducedAt != null)
-            .Select(p => p.ItemIndex)
-            .ToListAsync(ct)];
+            .ToDictionaryAsync(p => p.ItemIndex, p => p.Box, ct);
+
+    /// <summary>
+    /// The stage one card is played at. A never-seen card is shown (B-419); an introduced one climbs the type's ladder
+    /// with its box up to the day's stage (B-476). The ladder needs a box that moves, so it holds only in a learn round
+    /// on a Leitner position - without Leitner the card would stay on the lowest rung for good, and the info mode
+    /// records nothing. A card in the position's top box is asked at the target whatever the ladder says: with a
+    /// <see cref="PlanPosition.MaxBox"/> below the ladder's top rung it could never climb further, and would be
+    /// stuck on a rung below the target for good.
+    /// </summary>
+    public static int CardStage(IExerciseType type, PlanPosition pos, int dayStage, PlayMode mode, int? introducedBox)
+    {
+        if (IsIntroduction(type, dayStage, mode, introducedBox is not null)) return IntroductionStage(type)!.Value;
+        if (mode != PlayMode.Lern || !pos.UseLeitner || introducedBox is not { } box || box >= pos.MaxBox) return dayStage;
+        return type.CardStage(dayStage, box);
+    }
 
     /// <summary>Number of content items used by the position (override, exercise default, otherwise all available).</summary>
     public int PoolSize(PlanPosition pos, int available) =>

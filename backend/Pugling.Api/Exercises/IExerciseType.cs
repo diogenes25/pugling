@@ -77,6 +77,14 @@ public interface IExerciseType
     bool IsDisplayOnlyStage(int stage);
 
     /// <summary>
+    /// The stage one introduced card is asked at, given its Leitner <paramref name="box"/> and the
+    /// <paramref name="targetStage"/> the position sets for the day (B-476). The target is a ceiling, not the entry
+    /// point: a type with a ladder of easier forms (recognise, then choose, then produce) lets a card earn its way up
+    /// box by box, and never above the target. Default: the target itself - a type without a ladder plays as before.
+    /// </summary>
+    int CardStage(int targetStage, int box);
+
+    /// <summary>
     /// The options offered for the task, or <c>null</c> if the type/stage has none. Takes
     /// <paramref name="configJson"/> like <see cref="Check"/> does, because a pool need not be derivable from
     /// the atoms: vocabulary builds distractors out of the sibling items, the cloze reads the word bank the

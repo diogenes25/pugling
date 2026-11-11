@@ -49,7 +49,10 @@ public class VierWochenTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
 
     private static string TestBase(Setup s) => $"/api/v1/student/study-plans/{s.PlanId}/positions/{s.PositionId}/tests";
 
-    /// <summary>One learn round: introductions are looked at, asked cards are typed. Returns (introduced, asked).</summary>
+    /// <summary>
+    /// One learn round: introductions are looked at, asked cards are answered in the form they come in (B-476) - turned
+    /// over and judged, picked from the choices, or typed. Returns (introduced, asked).
+    /// </summary>
     private static async Task<(int Introduced, int Asked)> PlayRoundAsync(HttpClient child, Setup s, HashSet<int> typedOnce)
     {
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(
@@ -69,10 +72,13 @@ public class VierWochenTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
             }
             asked++;
             // Every sixth word is a hard one: wrong the first time it is asked, right from then on.
-            var answer = index % 6 == 0 && !typedOnce.Contains(index) ? "faux" : $"Wort {index}";
+            var right = !(index % 6 == 0 && !typedOnce.Contains(index));
             typedOnce.Add(index);
-            (await TestApi.PositionReviewAsync(child, s.PlanId, s.PositionId, sessionId, index, givenAnswer: answer))
-                .EnsureSuccessStatusCode();
+            var review = card.GetProperty("reveal").ValueKind == JsonValueKind.String
+                ? TestApi.PositionReviewAsync(child, s.PlanId, s.PositionId, sessionId, index, wasKnown: right)
+                : TestApi.PositionReviewAsync(child, s.PlanId, s.PositionId, sessionId, index,
+                    givenAnswer: right ? $"Wort {index}" : "faux");
+            (await review).EnsureSuccessStatusCode();
         }
         return (introduced, asked);
     }
@@ -185,8 +191,8 @@ public class VierWochenTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
             await PlayRoundAsync(child, s, typedOnce);
         }
         var (items, _) = await TakeTestAsync(child, s);
-        // 15 introduced by day 3. Met today: the five new ones and the five of day 1 (typed right on day 1, due again
-        // after two days). The five of day 2 are not due before day 4.
+        // 15 introduced by day 3. Met today: the five new ones and the five of day 1 (known on day 1 - turned over, B-476 -,
+        // due again after two days). The five of day 2 are not due before day 4.
         Assert.Equal(10, items);
     }
 

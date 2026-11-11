@@ -73,6 +73,29 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
     public override bool IsDisplayOnlyStage(int stage) => (TestStage)stage == TestStage.ShowBoth;
 
     /// <summary>
+    /// The vocabulary ladder (B-476): box 1 turns the card over and asks "did you know it?", box 2 offers a choice,
+    /// from box 3 on the card is asked at the target. Recognition before recall - typing a word the child has only
+    /// seen once is the hardest form there is. The target stays the ceiling: a position set to self-assessment never
+    /// climbs into multiple choice. No letter-box rung on purpose: every rung costs one Leitner interval before the
+    /// first typed answer.
+    /// </summary>
+    public override int CardStage(int targetStage, int box)
+    {
+        var rung = box <= 1 ? TestStage.SelfAssess : box == 2 ? TestStage.MultipleChoice : (TestStage)targetStage;
+        return Difficulty(rung) < Difficulty((TestStage)targetStage) ? (int)rung : targetStage;
+    }
+
+    // The enum values are not ordered by difficulty (multiple choice came last), so the ladder ranks them itself.
+    // Everything the child produces from memory shares the top rank: none of it is a rung below another target.
+    private static int Difficulty(TestStage stage) => stage switch
+    {
+        TestStage.ShowBoth => 0,
+        TestStage.SelfAssess => 1,
+        TestStage.MultipleChoice => 2,
+        _ => 3,
+    };
+
+    /// <summary>
     /// Multiple-choice options on the stage named after them: correct answer plus up to three distractors from
     /// the remaining items. The pool itself is <see cref="StageMechanics.DistractorPool"/> – shared with the
     /// matching distractor stage, which asks the same question of the same data.
