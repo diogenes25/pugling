@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, bereich/katalog, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/training, bereich/katalog, rolle/student]
 aliases: [Mehrere Bedeutungen, Komma-Übersetzung]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Defekt
 groesse: S
@@ -119,3 +119,6 @@ Integrationstest durch den Positions-Test, Messung im Testmodus an der Kopie der
   Auswahlstufe in beiden Richtungen getestet, leere Zusicherungen entfernt bzw. als Absichtserklärung
   beschriftet, die Wand zur Satz-Übersetzung als Integrationstest über `preview/check`. Suite 1273/1273 grün
   (Release); Messung an der laufenden API mit dem endgültigen Stand wiederholt (neun von neun richtig).
+- **2026-11-11** — abgenommen, Commit `14a7de0`. Rollengang als Sohn in der Oberfläche fiel aus: Die Regel
+  hat keine Oberfläche, gefahren wurde sie durch den echten Positions-Test (Integrationstest) und an der
+  laufenden API im Testmodus des Vaters.

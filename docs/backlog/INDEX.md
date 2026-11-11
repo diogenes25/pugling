@@ -12,13 +12,19 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (64)
+### Offen (70)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| [B-463](B-463-ki-lehrplan-deckt-ein-sechstel-der-wortliste.md) | Der KI-Lehrplan übt 20 von 124 Wörtern der Unit, ohne Karteikasten und nur Englisch → Deutsch | Defekt | `idee` | P1 | — | backend | — |
+| [B-468](B-468-sohn-erreicht-die-app-nur-am-pc.md) | Der Sohn erreicht die App nur am Rechner des Vaters – „jederzeit am Handy“ braucht einen Ort für den Server | Wunsch | `idee` | P1 | — | beides | — |
+| [B-470](B-470-foto-zu-wortliste-als-werkzeug.md) | Aus Fotos der Vokabelseiten wird eine Wortliste – als wiederholbares Werkzeug statt als Handarbeit unter raw/ | Wunsch | `idee` | P1 | — | beides | — |
 | [B-457](B-457-uebersetzung-scheitert-am-schlusspunkt.md) | Eine richtige Übersetzung ohne Schlusspunkt wird als falsch gewertet | Defekt | `idee` | P2 | — | — | — |
+| [B-465](B-465-ki-lueckentext-mehrdeutig-und-verraten.md) | Ein KI-Lückentext nach dem Umbau: Titel passt nicht, Auswahl steht im Satz, Zeitformen ohne Alternative | Defekt | `idee` | P2 | — | backend | — |
+| [B-466](B-466-lueckentext-am-handy-umbrueche-kopfzeile-zoom.md) | Lückentext am Handy: Zeilenumbrüche verschwinden, „Später weiter“ ist abgeschnitten, das Eingabefeld zoomt | Defekt | `idee` | P2 | — | frontend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `gegrillt` | P2 | — | backend | Vertrag? |
+| [B-469](B-469-lernkontrolle-selbsteinschaetzung-und-typen-ohne-test.md) | Prüfauftrag: Der Vokabeltest ist per Vorgabe eine Selbsteinschätzung, Grammatik und Übersetzung haben keinen Test | Frage | `idee` | P2 | — | beides | — |
 | [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder | Wunsch | `geschaetzt` | P2 | L | beides | — |
 | [B-207](B-207-kind-auswahlliste-ist-unkuratiert.md) | Die Auswahlliste des Kindes zeigt jedes Schlagwort, das je irgendwer getippt hat | Wunsch | `gegrillt` | P2 | — | beides | Migration? |
 | [B-423](B-423-assistent-klassenarbeit-termin-und-stufenleiter.md) | Der Assistent „Klassenarbeit vorbereiten" fragt den Termin, legt die Klassenarbeit an und baut die Stufenleiter | Wunsch | `ausformuliert` | P2 | M | frontend | — |
@@ -45,7 +51,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-449](B-449-zeitzonen-tests-greifen-nur-in-new-york.md) | Die Zeitzonen-Tests von `lib/datum.ts` greifen weder lokal noch in der CI | Defekt | `idee` | P3 | — | frontend | — |
 | [B-455](B-455-fachlehrer-typen-pruefung-nach-dem-entdoppeln.md) | Ob ein unbekannter Übungstyp im Fachlehrer-Profil abgelehnt wird, hängt an der Reihenfolge | Defekt | `idee` | P3 | — | backend | — |
 | [B-456](B-456-nachschau-reste-sprint-28.md) | „Meine Übungen (0)" neben „Lade…", ein ungetesteter Zweig und ein falscher Tooltip im Manifest-Ausfall | Defekt | `idee` | P3 | — | frontend | — |
-| [B-458](B-458-grammatik-entwurf-verraet-die-loesung.md) | Ein KI-Entwurf vom Typ Grammar darf die Lösung schon in der Aufgabe nennen | Defekt | `idee` | P3 | — | — | — |
+| [B-467](B-467-leerzustaende-melden-erfolg.md) | Ohne eine einzige Antwort meldet der Lernstand „es sitzt alles 👍“, und freie Übungen tragen ein Häkchen | Defekt | `idee` | P3 | — | frontend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `idee` | P3 | — | — | — |
 | [B-328](B-328-inline-typen-put-verschiebt-lernstand.md) | Sollen die Inhaltslisten gespielter Übungen anderer Typen (und der Wort-Tausch) gesperrt sein? | Frage | `idee` | P3 | — | backend | — |
@@ -82,7 +88,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-447](B-447-arcade-zeigt-iso-daten.md) | Die Sohn-Arcade zeigt Daten als ISO-Text | Aufräumen | `idee` | P3 | — | frontend | — |
 
 <details>
-<summary>Abgenommen (367)</summary>
+<summary>Abgenommen (372)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -407,7 +413,12 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-452](B-452-vokabelliste-einfuegen.md) | Eine Vokabelliste einfügen statt 150 Zeilen einzeln tippen | Wunsch | `abgenommen` | P1 | S | frontend | — |
 | [B-453](B-453-heute-karte-nach-kind-anlegen.md) | Nach „Kind anlegen" sagt die Karte „Heute" weiter „Noch keine Kinder" | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-454](B-454-position-ohne-leitner-nur-test.md) | Eine Vokabel-Position ohne Leitner-Kasten bot dem Kind nur „TEST" – Abfrage ohne je gezeigte Wörter | Defekt | `abgenommen` | P1 | XS | frontend | — |
+| [B-458](B-458-grammatik-entwurf-verraet-die-loesung.md) | Ein KI-Entwurf vom Typ Grammar darf die Lösung schon in der Aufgabe nennen | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-46](B-46-interessenbasierte-uebungen.md) | Übungen entstehen für ein Interessenprofil, nicht für ein bestimmtes Kind | Wunsch | `abgenommen` | P2 | L | beides | Migration |
+| [B-460](B-460-ki-aufgaben-programm-entscheidet.md) | Was nur eine richtige Antwort hat, entscheidet beim KI-Creator das Programm, nicht das Modell | Wunsch | `abgenommen` | P1 | M | backend | — |
+| [B-461](B-461-lueckentext-ablenker-zaehlen-als-loesung.md) | Ein KI-Lückentext wertet die Ablenker der Wortbank als richtige Lösung | Defekt | `abgenommen` | P1 | S | backend | — |
+| [B-462](B-462-mehrdeutige-uebersetzung-verlangt-alle-bedeutungen.md) | Eine Übersetzung mit mehreren Bedeutungen („sobald, sowie“) gilt getippt nur als Ganzes | Defekt | `abgenommen` | P1 | S | backend | — |
+| [B-464](B-464-access-datenstand-aufraeumen.md) | Der Access-Datenstand trägt Trümmer des ersten Laufs, und das Kind zeigt auf das falsche Buch | Aufräumen | `abgenommen` | P2 | XS | daten | — |
 | [B-48](B-48-anonyme-registrierung-produktion.md) | Anonyme Registrierung ist auch in Produktion offen | Frage | `abgenommen` | P2 | S | backend | — |
 | [B-49](B-49-sohn-app-schreib-primitive.md) | Die Sohn-App benutzt die geteilten Schreib-Primitive nicht | Aufräumen | `abgenommen` | P3 | S | frontend | — |
 | [B-50](B-50-kind-beschreibt-sich-selbst.md) | Das Kind beschreibt sich selbst: Interessen in einem geführten Prozess | Wunsch | `abgenommen` | P2 | L | beides | — |
@@ -470,7 +481,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (146)
 
-**Nachgeschaut: 360 von 367 abgenommenen** — und in 127 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 7 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 360 von 372 abgenommenen** — und in 127 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 12 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -622,7 +633,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-455](B-455-fachlehrer-typen-pruefung-nach-dem-entdoppeln.md) | Ob ein unbekannter Übungstyp im Fachlehrer-Profil abgelehnt wird, hängt an der Reihenfolge | [B-426] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (7) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (12) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -636,6 +647,11 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-452](B-452-vokabelliste-einfuegen.md) | Eine Vokabelliste einfügen statt 150 Zeilen einzeln tippen |
 | [B-453](B-453-heute-karte-nach-kind-anlegen.md) | Nach „Kind anlegen" sagt die Karte „Heute" weiter „Noch keine Kinder" |
 | [B-454](B-454-position-ohne-leitner-nur-test.md) | Eine Vokabel-Position ohne Leitner-Kasten bot dem Kind nur „TEST" – Abfrage ohne je gezeigte Wörter |
+| [B-458](B-458-grammatik-entwurf-verraet-die-loesung.md) | Ein KI-Entwurf vom Typ Grammar darf die Lösung schon in der Aufgabe nennen |
+| [B-460](B-460-ki-aufgaben-programm-entscheidet.md) | Was nur eine richtige Antwort hat, entscheidet beim KI-Creator das Programm, nicht das Modell |
+| [B-461](B-461-lueckentext-ablenker-zaehlen-als-loesung.md) | Ein KI-Lückentext wertet die Ablenker der Wortbank als richtige Lösung |
+| [B-462](B-462-mehrdeutige-uebersetzung-verlangt-alle-bedeutungen.md) | Eine Übersetzung mit mehreren Bedeutungen („sobald, sowie“) gilt getippt nur als Ganzes |
+| [B-464](B-464-access-datenstand-aufraeumen.md) | Der Access-Datenstand trägt Trümmer des ersten Laufs, und das Kind zeigt auf das falsche Buch |
 
 </details>
 
@@ -722,6 +738,8 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-450](B-450-schalter-geteilte-uebungen-springt-zurueck.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-453](B-453-heute-karte-nach-kind-anlegen.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-454](B-454-position-ohne-leitner-nur-test.md) | `abgenommen` | Abschnitt „Schätzung" |
+| [B-458](B-458-grammatik-entwurf-verraet-die-loesung.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
+| [B-461](B-461-lueckentext-ablenker-zaehlen-als-loesung.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 
 <details>
 <summary>Verworfen (27)</summary>
