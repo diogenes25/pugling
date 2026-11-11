@@ -12,11 +12,10 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (71)
+### Offen (70)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [B-468](B-468-sohn-erreicht-die-app-nur-am-pc.md) | Der Sohn erreicht die App nur am Rechner des Vaters – „jederzeit am Handy“ braucht einen Ort für den Server | Wunsch | `in-arbeit` | P1 | S | beides | — |
 | [B-470](B-470-foto-zu-wortliste-als-werkzeug.md) | Aus Fotos der Vokabelseiten wird eine Wortliste – als wiederholbares Werkzeug statt als Handarbeit unter raw/ | Wunsch | `idee` | P1 | — | beides | — |
 | [B-472](B-472-jedes-wort-in-beide-richtungen.md) | Jedes Wort einer Wortliste in beide Richtungen üben | Wunsch | `idee` | P1 | — | backend | — |
 | [B-457](B-457-uebersetzung-scheitert-am-schlusspunkt.md) | Eine richtige Übersetzung ohne Schlusspunkt wird als falsch gewertet | Defekt | `idee` | P2 | — | — | — |
@@ -89,7 +88,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-447](B-447-arcade-zeigt-iso-daten.md) | Die Sohn-Arcade zeigt Daten als ISO-Text | Aufräumen | `idee` | P3 | — | frontend | — |
 
 <details>
-<summary>Abgenommen (373)</summary>
+<summary>Abgenommen (374)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -421,6 +420,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-462](B-462-mehrdeutige-uebersetzung-verlangt-alle-bedeutungen.md) | Eine Übersetzung mit mehreren Bedeutungen („sobald, sowie“) gilt getippt nur als Ganzes | Defekt | `abgenommen` | P1 | S | backend | — |
 | [B-463](B-463-ki-lehrplan-deckt-ein-sechstel-der-wortliste.md) | Der KI-Lehrplan übt 20 von 124 Wörtern der Unit, ohne Karteikasten und nur Englisch → Deutsch | Defekt | `abgenommen` | P1 | S | backend | — |
 | [B-464](B-464-access-datenstand-aufraeumen.md) | Der Access-Datenstand trägt Trümmer des ersten Laufs, und das Kind zeigt auf das falsche Buch | Aufräumen | `abgenommen` | P2 | XS | daten | — |
+| [B-468](B-468-sohn-erreicht-die-app-nur-am-pc.md) | Der Sohn erreicht die App nur am Rechner des Vaters – „jederzeit am Handy“ braucht einen Ort für den Server | Wunsch | `abgenommen` | P1 | S | beides | — |
 | [B-48](B-48-anonyme-registrierung-produktion.md) | Anonyme Registrierung ist auch in Produktion offen | Frage | `abgenommen` | P2 | S | backend | — |
 | [B-49](B-49-sohn-app-schreib-primitive.md) | Die Sohn-App benutzt die geteilten Schreib-Primitive nicht | Aufräumen | `abgenommen` | P3 | S | frontend | — |
 | [B-50](B-50-kind-beschreibt-sich-selbst.md) | Das Kind beschreibt sich selbst: Interessen in einem geführten Prozess | Wunsch | `abgenommen` | P2 | L | beides | — |
@@ -469,7 +469,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 
 </details>
 
-### Wartet auf Zutun von außen (5)
+### Wartet auf Zutun von außen (4)
 
 Diese Stories kommen **im Repo nicht weiter** — es fehlt ein Schritt, den nur ein Mensch
 oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird gerade gebaut".
@@ -479,12 +479,11 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-423](B-423-assistent-klassenarbeit-termin-und-stufenleiter.md) | Der Assistent „Klassenarbeit vorbereiten" fragt den Termin, legt die Klassenarbeit an und baut die Stufenleiter | `ausformuliert` | Entscheidung des Nutzers (Offener Punkt 5) |
 | [B-430](B-430-nach-test-diese-woerter-ueben.md) | Nach einem nicht bestandenen Test gibt es nur „Nochmal versuchen" – keinen Weg zum Üben | `ausformuliert` | Entscheidung des Nutzers (Offener Punkt 3) |
-| [B-468](B-468-sohn-erreicht-die-app-nur-am-pc.md) | Der Sohn erreicht die App nur am Rechner des Vaters – „jederzeit am Handy“ braucht einen Ort für den Server | `in-arbeit` | Nutzer: Firewall-, Router-, Energiespar-Schritte aus docs/heimnetz.md und Test am Handy |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
 ### Nach der Abnahme entgangen (146)
 
-**Nachgeschaut: 360 von 373 abgenommenen** — und in 127 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 13 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 360 von 374 abgenommenen** — und in 127 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 14 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -636,7 +635,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-455](B-455-fachlehrer-typen-pruefung-nach-dem-entdoppeln.md) | Ob ein unbekannter Übungstyp im Fachlehrer-Profil abgelehnt wird, hängt an der Reihenfolge | [B-426] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (13) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (14) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -656,6 +655,7 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-462](B-462-mehrdeutige-uebersetzung-verlangt-alle-bedeutungen.md) | Eine Übersetzung mit mehreren Bedeutungen („sobald, sowie“) gilt getippt nur als Ganzes |
 | [B-463](B-463-ki-lehrplan-deckt-ein-sechstel-der-wortliste.md) | Der KI-Lehrplan übt 20 von 124 Wörtern der Unit, ohne Karteikasten und nur Englisch → Deutsch |
 | [B-464](B-464-access-datenstand-aufraeumen.md) | Der Access-Datenstand trägt Trümmer des ersten Laufs, und das Kind zeigt auf das falsche Buch |
+| [B-468](B-468-sohn-erreicht-die-app-nur-am-pc.md) | Der Sohn erreicht die App nur am Rechner des Vaters – „jederzeit am Handy“ braucht einen Ort für den Server |
 
 </details>
 

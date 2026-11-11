@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/qualitaet, rolle/student, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/qualitaet, rolle/student, rolle/supervisor]
 aliases: [Handy-Zugang, Hosting, Heimnetz]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: S
@@ -9,7 +9,7 @@ wo: "beides"
 migration: nein
 vertragsbruch: nein
 quelle: Rollengang am Access-Lehrwerk 2026-11-10 (Kopie der pugling.db, Sohn im Handy-Format 375×812, Vater-Web)
-wartet_auf: "Nutzer: Firewall-, Router-, Energiespar-Schritte aus docs/heimnetz.md und Test am Handy"
+wartet_auf: ""
 grund: ""
 ersetzt_durch: []
 ---
@@ -191,3 +191,9 @@ danach das Handy des Nutzers.
   Karteikasten, getippter Test, Laufzeit 2026-11-11 bis 2026-11-24. Beide Lückentexte hat der Agent nach der
   Reparatur-Runde verworfen (siehe B-465), der Katalog ist unverändert. Der Plan ist inaktiv; Einschalten und
   Anmeldung am Handy liegen beim Nutzer.
+- **2026-11-11** — abgenommen. Rollengang am echten Handy: Der Nutzer hat Plan 5 eingeschaltet, der Sohn hat sich am
+  Handy angemeldet und von 13:43 bis 13:47 Uhr vier Übungsrunden auf den Wortlisten 13 und 14 gespielt und drei
+  Tests abgelegt (`PracticeSessions` 1–4, `TestAttempts` 3; im Karteikasten 3 bzw. 4 Einträge – genau die
+  Tagesdosis). AK 1–5 erfüllt. Commits `67a6af4` (Skript, Doku), `0c2067c` und `a71dfa9` (Befunde am Gerät). Kein
+  Reviewer und keine Testzahl: keine Zeile C# oder TypeScript geändert. Offen und nicht Teil dieser Story: HTTPS
+  für eine installierbare PWA (Entscheidung 3, bei Bedarf eigene Story) und der Autostart (Entscheidung 5).
