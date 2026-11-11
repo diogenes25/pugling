@@ -1269,30 +1269,51 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
-    /// The study plan hands each exercise of a type its own part number, and so its own slice of the word list.
-    /// Red if <c>PlanPlanner</c> stops setting <c>Part</c>: the second vocabulary exercise then repeats the first
-    /// three words.
+    /// B-463: with a book word list in the unit, the study plan assigns the book's vocabulary exercises - the whole
+    /// list - instead of generating ten-word slices, and gives each the settings a long list needs: Leitner box, a
+    /// daily dose that finishes the list by the end of the run, a typed test on the free-text stage.
+    /// <para>
+    /// Red probes, one per claim: generate again for Vocabulary and the call count falls (and nothing is assigned);
+    /// plan every book exercise instead of those adding a word and list C shows up as a third position; drop a
+    /// setting from <c>BookListPosition</c> and its assertion falls; round the dose down (5 / 3 = 1) or count only a list's new
+    /// words (3 / 3 = 1) and the dose assertion falls. Naming Vocabulary twice must not plan the lists twice.
+    /// </para>
     /// </summary>
     [Fact]
-    public async Task Zwei_Vokabeluebungen_eines_Lehrplans_ueben_verschiedene_Woerter()
+    public async Task Ein_Lehrplan_plant_die_ganze_Buch_Wortliste_mit_Karteikasten_und_Tagesdosis_ein()
     {
-        var (pipeline, creator, _) = BuildAgent("""{"title":"Teil A","items":[]}""", """{"title":"Teil B","items":[]}""");
-        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Lehrplan-Scheiben");
-        await BookVocabularyAsync(creator, seriesId, seriesUnitId,
+        var (pipeline, creator, chat) = BuildAgent(VocabularyJson);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Lehrplan-Buchliste");
+        var listA = await BookVocabularyAsync(creator, seriesId, seriesUnitId,
             ("the horse", "das Pferd", null), ("the sheep", "das Schaf", null), ("the goat", "die Ziege", null),
-            ("the cow", "die Kuh", null), ("the pig", "das Schwein", null), ("the duck", "die Ente", null));
+            ("the cow", "die Kuh", null), ("the pig", "das Schwein", null));
+        var listB = await BookVocabularyAsync(creator, seriesId, seriesUnitId,
+            ("the duck", "die Ente", null), ("the hen", "das Huhn", null), ("the cat", "die Katze", null),
+            ("the horse", "das Pferd", null));
+        // A list that adds no word of its own is a duplicate of the others, not a part of the word list.
+        await BookVocabularyAsync(creator, seriesId, seriesUnitId,
+            ("the horse", "das Pferd", null), ("the sheep", "das Schaf", null), ("the goat", "die Ziege", null));
+        var supervisor = new SupervisorApi(Authenticated());
 
-        var outcome = await new PlanPlanner(pipeline, new SupervisorApi(Authenticated())).RunAsync(new PlanRequest(
+        var outcome = await new PlanPlanner(pipeline, supervisor).RunAsync(new PlanRequest(
             Request(subjectId, seriesId, seriesUnitId, "Vocabulary"),
-            Types: ["Vocabulary"], PerType: 2, Intensity: PlanIntensity.Normal,
-            StartDate: null, DurationDays: 14, Title: null));
+            Types: ["Vocabulary", "Vocabulary"], PerType: 2, Intensity: PlanIntensity.Normal,
+            StartDate: null, DurationDays: 3, Title: null));
 
-        Assert.True(outcome.Complete, string.Join(" | ", outcome.Parts.Select(p => p.Error ?? string.Join(" | ", p.Outcome!.Violations))));
-        var words = new List<string[]>();
-        foreach (var id in outcome.ExerciseIds)
-            words.Add([.. (await creator.ListItemsAsync(seriesId, seriesUnitId, id)).Select(i => i.Front)]);
-        Assert.Equal(["the horse", "the sheep", "the goat"], words[0]);
-        Assert.Equal(["the cow", "the pig", "the duck"], words[1]);
+        Assert.Equal(0, chat.Calls);
+        Assert.Empty(outcome.ExerciseIds);
+        Assert.True(outcome.Complete);
+        var positions = await supervisor.ListPositionsAsync(outcome.PlanId!.Value);
+        Assert.Equal([listA, listB], positions.Select(p => p.ExerciseId));
+        Assert.All(positions, p =>
+        {
+            Assert.True(p.UseLeitner);
+            Assert.True(p.RequireTypedTest);
+            Assert.Equal(4, p.Stage);
+        });
+        // ⌈5 / 3⌉ and ⌈4 / 3⌉: the dose counts every entry the position plays, the overlap word included - counting
+        // only list B's three new words would give 1.
+        Assert.Equal([2, 2], positions.Select(p => p.NewItemsPerDay));
     }
 
     /// <summary>
@@ -1833,7 +1854,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     public void Ein_Lehrplan_mit_unsauberem_Selbsttest_gilt_nicht_als_vollstaendig()
     {
         static PlanOutcome Mit(GenerationOutcome outcome) => new(
-            "Lehrplan: Test", [new GeneratedPart("Vocabulary", outcome, null)], [], null, [], []);
+            "Lehrplan: Test", [new GeneratedPart("Vocabulary", outcome, null)], [], null, [], [], []);
 
         static GenerationOutcome Lauf(int? exerciseId, int? selfTestPercent) =>
             new("Vocabulary", "Titel", "{}", [], exerciseId, selfTestPercent, RolledBack: false);
@@ -1846,7 +1867,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.True(Mit(Lauf(exerciseId: null, selfTestPercent: null)).Complete);
         // Eine nicht angelegte Position macht den Plan unvollständig, auch wenn jede Übung sauber ist.
         Assert.False(new PlanOutcome("Lehrplan: Test", [new GeneratedPart("Vocabulary", Lauf(42, 100), null)],
-            [42], PlanId: 7, PositionIds: [], FailedPositions: [new FailedPosition(42, "exercise_empty")]).Complete);
+            [42], PlanId: 7, PositionIds: [], FailedPositions: [new FailedPosition(42, "exercise_empty")], WordLists: []).Complete);
     }
 
     /// <summary>

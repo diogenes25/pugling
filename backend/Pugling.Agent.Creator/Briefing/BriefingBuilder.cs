@@ -74,7 +74,7 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
             : [.. (child?.WeakWords ?? []).Select(w => w.Word)];
 
         // The unit's word list and grammar topics are read, not generated: both are fixed by the book.
-        var pool = await LoadUnitVocabularyAsync(request, existing, ct);
+        var (pool, wordLists) = await LoadUnitVocabularyAsync(request, existing, ct);
         // Only the word-practicing types get a slice: a cloze or grammar part has a grammar focus, and ten word
         // pairs beside it would only pull the text towards vocabulary.
         var wordPairs = WordTypes.Contains(request.TypeKey)
@@ -112,7 +112,10 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
             CatalogInterests: dressedChild is null ? [.. dressing.Select(t => t.Label)] : [],
             GrammarTopicIds: targetUnit.GrammarTopicIds,
             GrammarTopicLabels: grammarLabels,
-            WordPairs: wordPairs);
+            WordPairs: wordPairs,
+            // The same threshold the vocabulary strategy applies to a slice: a list too short for one exercise is no
+            // word list, and the plan generates instead.
+            UnitWordLists: pool.Count >= Drafting.DraftRules.MinItems ? wordLists : []);
     }
 
     /// <summary>
@@ -120,22 +123,34 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
     /// first exercise that names it holds the book's translation, a later one at most a variant of it. Exercises the
     /// agent generated are left out - their pairs are a model's choice, and taking them as the word list would make
     /// the next run repeat them and pass a guessed translation off as the book's.
+    /// <para>
+    /// Also returns the exercises that make up the list: those adding at least one word. An exercise whose words all
+    /// stand in an earlier one is a duplicate, and assigning it would make the child practice those words twice.
+    /// </para>
     /// </summary>
-    private async Task<IReadOnlyList<VocabPair>> LoadUnitVocabularyAsync(GenerationRequest request,
-        IReadOnlyList<ExerciseSummary> existing, CancellationToken ct)
+    private async Task<(IReadOnlyList<VocabPair> Pool, IReadOnlyList<UnitWordList> Lists)> LoadUnitVocabularyAsync(
+        GenerationRequest request, IReadOnlyList<ExerciseSummary> existing, CancellationToken ct)
     {
         var pairs = new List<VocabPair>();
+        var lists = new List<UnitWordList>();
+        // Folded like the server folds a word ("horse" = "the horse", B-336): two spellings of one word in a slice
+        // would be a duplicate the model cannot repair, because the program fixed the words.
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var exercise in existing.Where(e => string.Equals(e.Type, "Vocabulary", StringComparison.OrdinalIgnoreCase)
                                                      && e.Description?.StartsWith(Drafting.DraftPrompts.GeneratedMarker,
                                                          StringComparison.Ordinal) != true))
         {
             var items = await creator.ListItemsAsync(request.SeriesId, request.SeriesUnitId, exercise.Id, ct);
-            pairs.AddRange(items.OrderBy(i => i.OrderIndex).Select(i => new VocabPair(i.Front, i.Back, i.VocabularyId, i.Hint)));
+            var fresh = items.OrderBy(i => i.OrderIndex)
+                .Where(i => seen.Add(VocabKey.Part(i.Front)))
+                .Select(i => new VocabPair(i.Front, i.Back, i.VocabularyId, i.Hint))
+                .ToList();
+            if (fresh.Count == 0) continue;
+            pairs.AddRange(fresh);
+            lists.Add(new UnitWordList(exercise.Id, exercise.Title, items.Count));
         }
 
-        // Folded like the server folds a word ("horse" = "the horse", B-336): two spellings of one word in a slice
-        // would be a duplicate the model cannot repair, because the program fixed the words.
-        return [.. pairs.DistinctBy(p => VocabKey.Part(p.Word), StringComparer.OrdinalIgnoreCase)];
+        return (pairs, lists);
     }
 
     /// <summary>

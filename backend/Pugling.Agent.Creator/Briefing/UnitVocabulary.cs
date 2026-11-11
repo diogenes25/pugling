@@ -8,6 +8,15 @@ namespace Pugling.Agent.Creator.Briefing;
 public sealed record VocabPair(string Word, string Translation, int VocabularyId, string? Hint = null);
 
 /// <summary>
+/// A vocabulary exercise that is part of the unit's word list: created by a person or a loader script, not by the
+/// agent, and adding at least one word the lists before it do not hold.
+/// </summary>
+/// <param name="ExerciseId">The exercise a study plan assigns as it is.</param>
+/// <param name="Title">Its title, for the report.</param>
+/// <param name="ItemCount">How many entries a position on it plays - the base of the daily dose.</param>
+public sealed record UnitWordList(int ExerciseId, string Title, int ItemCount);
+
+/// <summary>
 /// The unit's word list, read from the vocabulary exercises already in it, and the slice a single exercise uses.
 /// <para>
 /// This is the part of the material a program can decide better than a model: in the first study-plan run the model

@@ -1,3 +1,4 @@
+using Pugling.Agent.Creator.Briefing;
 using Pugling.Client;
 
 namespace Pugling.Agent.Creator;
@@ -49,16 +50,20 @@ public sealed record FailedPosition(int ExerciseId, string Error);
 /// <param name="Title">The title used.</param>
 /// <param name="Parts">All parts in request order.</param>
 /// <param name="ExerciseIds">The exercises actually created.</param>
-/// <param name="PlanId">The created study plan (only without a dry run and with at least one exercise).</param>
+/// <param name="PlanId">The created study plan (only without a dry run and with at least one position).</param>
 /// <param name="PositionIds">The positions created in that plan, in plan order.</param>
 /// <param name="FailedPositions">Created exercises the plan refused; empty in the normal case.</param>
+/// <param name="WordLists">
+/// The unit's book word lists assigned instead of generated vocabulary exercises (B-463); empty without a book list.
+/// </param>
 public sealed record PlanOutcome(
     string Title,
     IReadOnlyList<GeneratedPart> Parts,
     IReadOnlyList<int> ExerciseIds,
     int? PlanId,
     IReadOnlyList<int> PositionIds,
-    IReadOnlyList<FailedPosition> FailedPositions)
+    IReadOnlyList<FailedPosition> FailedPositions,
+    IReadOnlyList<UnitWordList> WordLists)
 {
     /// <summary>
     /// Did every part come out clean <b>and</b> reach the plan?
@@ -146,9 +151,26 @@ public sealed class PlanPlanner(CreatorPipeline pipeline, SupervisorApi supervis
         var title = request.Title?.Trim() is { Length: > 0 } given ? given : derived;
         var parts = new List<GeneratedPart>();
         var grammarPart = 0;
+        // The plan's positions in type order: a book word list where the unit has one, otherwise what was generated.
+        var assigned = new List<(int ExerciseId, UnitWordList? WordList)>();
+        var wordLists = new List<UnitWordList>();
 
         foreach (var typeKey in request.Types)
         {
+            // The book's lists already hold every pair the agent would copy into a slice - whole, and in the book's
+            // direction. Assigning them covers the unit's vocabulary instead of a sixth of it, and leaves no ten-word
+            // duplicates in the catalog (B-463). --per-type therefore does not apply here.
+            if (IsVocabulary(typeKey) && briefing.UnitWordLists.Count > 0)
+            {
+                // Named twice, the type still means the one word list - a second round would duplicate every position.
+                if (wordLists.Count == 0)
+                {
+                    wordLists.AddRange(briefing.UnitWordLists);
+                    assigned.AddRange(briefing.UnitWordLists.Select(l => (l.ExerciseId, (UnitWordList?)l)));
+                }
+                continue;
+            }
+
             for (var n = 1; n <= request.PerType; n++)
             {
                 var part = request.Base with
@@ -165,6 +187,7 @@ public sealed class PlanPlanner(CreatorPipeline pipeline, SupervisorApi supervis
                 {
                     var (_, outcome) = await pipeline.CreateAsync(part, ct);
                     parts.Add(new GeneratedPart(typeKey, outcome, null));
+                    if (outcome is { RolledBack: false, ExerciseId: int created }) assigned.Add((created, null));
                 }
                 catch (Exception ex) when (ex is AgentException or AgentUsageException or PuglingApiException)
                 {
@@ -182,8 +205,8 @@ public sealed class PlanPlanner(CreatorPipeline pipeline, SupervisorApi supervis
             .ToList();
 
         // A plan without a single position would be an empty container the father has to clean up.
-        if (request.Base.DryRun || exerciseIds.Count == 0)
-            return new PlanOutcome(title, parts, exerciseIds, null, [], []);
+        if (request.Base.DryRun || assigned.Count == 0)
+            return new PlanOutcome(title, parts, exerciseIds, null, [], [], wordLists);
 
         var plan = await supervisor.CreatePlanAsync(new CreatePlanDto(
             ChildId: request.Base.ChildId.Value,
@@ -200,35 +223,37 @@ public sealed class PlanPlanner(CreatorPipeline pipeline, SupervisorApi supervis
         var settings = Intensities[request.Intensity];
         var positionIds = new List<int>();
         var failedPositions = new List<FailedPosition>();
-        foreach (var exerciseId in exerciseIds)
+        foreach (var (exerciseId, wordList) in assigned)
         {
             try
             {
-                var position = await supervisor.AddPositionAsync(plan.Id, new CreatePositionDto(
-                    ExerciseId: exerciseId,
-                    Order: null,
-                    // No stage: the number is the vocabulary scale, and every other type reads it differently.
-                    // Left out, the server resolves the exercise's own default instead of a misread figure.
-                    Stage: null,
-                    ItemCount: null,
-                    Scope: null,
-                    Cadence: GoalCadence.Daily,
-                    OrderStrategy: null,
-                    GoalThreshold: settings.Pass,
-                    RequireTypedTest: null,
-                    UseLeitner: null,
-                    MaxBox: null,
-                    BoxIntervalDays: null,
-                    StageSchedule: null,
-                    PointsGoalMet: settings.Points,
-                    PenaltyCoins: settings.Penalty,
-                    // Everything below stays empty on purpose: those fields inherit the exercise's own bonus
-                    // suggestion (the hybrid principle), and the agent knows nothing better about them.
-                    NewContentPoints: null,
-                    ComboThreshold: null,
-                    ComboBonusPoints: null,
-                    SpeedThresholdSeconds: null,
-                    SpeedBonusPoints: null), ct);
+                var position = await supervisor.AddPositionAsync(plan.Id, wordList is not null
+                    ? BookListPosition(wordList, request.DurationDays, settings)
+                    : new CreatePositionDto(
+                        ExerciseId: exerciseId,
+                        Order: null,
+                        // No stage: the number is the vocabulary scale, and every other type reads it differently.
+                        // Left out, the server resolves the exercise's own default instead of a misread figure.
+                        Stage: null,
+                        ItemCount: null,
+                        Scope: null,
+                        Cadence: GoalCadence.Daily,
+                        OrderStrategy: null,
+                        GoalThreshold: settings.Pass,
+                        RequireTypedTest: null,
+                        UseLeitner: null,
+                        MaxBox: null,
+                        BoxIntervalDays: null,
+                        StageSchedule: null,
+                        PointsGoalMet: settings.Points,
+                        PenaltyCoins: settings.Penalty,
+                        // Everything below stays empty on purpose: those fields inherit the exercise's own bonus
+                        // suggestion (the hybrid principle), and the agent knows nothing better about them.
+                        NewContentPoints: null,
+                        ComboThreshold: null,
+                        ComboBonusPoints: null,
+                        SpeedThresholdSeconds: null,
+                        SpeedBonusPoints: null), ct);
                 positionIds.Add(position.Id);
             }
             catch (PuglingApiException ex)
@@ -240,8 +265,47 @@ public sealed class PlanPlanner(CreatorPipeline pipeline, SupervisorApi supervis
             }
         }
 
-        return new PlanOutcome(title, parts, exerciseIds, plan.Id, positionIds, failedPositions);
+        return new PlanOutcome(title, parts, exerciseIds, plan.Id, positionIds, failedPositions, wordLists);
     }
+
+    /// <summary>The free-text stage of the vocabulary scale (<c>TestStage.FreeText</c> on the server).</summary>
+    private const int FreeTextStage = 4;
+
+    /// <summary>
+    /// The position of a book word list: everything a long list needs to be learnable within the run (B-463).
+    /// <para>
+    /// The Leitner box with a daily dose is how a single obligation carries a big list over weeks (B-04); the dose is
+    /// sized so that the last new word comes on the last day, the only deadline the run knows. The test is typed on
+    /// the free-text stage, because the class test it prepares is written - new words are shown for acquaintance
+    /// first anyway (B-419). Points and penalty follow the intensity like every other position.
+    /// </para>
+    /// </summary>
+    public static CreatePositionDto BookListPosition(UnitWordList list, int durationDays, PlanSettings settings) =>
+        new(ExerciseId: list.ExerciseId,
+            Order: null,
+            Stage: FreeTextStage,
+            ItemCount: null,
+            Scope: null,
+            Cadence: GoalCadence.Daily,
+            OrderStrategy: null,
+            GoalThreshold: settings.Pass,
+            RequireTypedTest: true,
+            UseLeitner: true,
+            MaxBox: null,
+            BoxIntervalDays: null,
+            StageSchedule: null,
+            PointsGoalMet: settings.Points,
+            PenaltyCoins: settings.Penalty,
+            NewContentPoints: null,
+            ComboThreshold: null,
+            ComboBonusPoints: null,
+            SpeedThresholdSeconds: null,
+            SpeedBonusPoints: null,
+            TimeSlots: null,
+            NewItemsPerDay: Math.Max(1, (list.ItemCount + durationDays - 1) / durationDays));
+
+    private static bool IsVocabulary(string typeKey) =>
+        string.Equals(typeKey, "Vocabulary", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>The types whose exercises practice a grammar point rather than words - each gets one of the unit's topics.</summary>
     private static readonly HashSet<string> GrammarTypes = new(["Cloze", "Grammar"], StringComparer.OrdinalIgnoreCase);

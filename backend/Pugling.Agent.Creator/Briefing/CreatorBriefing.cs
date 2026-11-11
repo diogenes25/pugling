@@ -30,8 +30,12 @@ public sealed record CreatorBriefing(
     IReadOnlyList<string> CatalogInterests,
     IReadOnlyList<int> GrammarTopicIds,
     IReadOnlyList<string> GrammarTopicLabels,
-    IReadOnlyList<VocabPair> WordPairs)
+    IReadOnlyList<VocabPair> WordPairs,
+    IReadOnlyList<UnitWordList> UnitWordLists)
 {
+    // UnitWordLists are the exercises the whole word list comes from; empty when the unit has none or the list is too
+    // short to count as one (DraftRules.MinItems). A study plan assigns them instead of generating slices (B-463).
+
     // WordPairs is this exercise's slice of the unit's word list (UnitVocabulary): what a vocabulary exercise consists
     // of word for word, and what a translation exercise should build on. It stands in the prompt with its
     // translations, which the unit's free-text notes do not carry.

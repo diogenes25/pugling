@@ -216,6 +216,13 @@ hier **Übungen** (nicht Aufgaben – die kommen aus `--count`), und `--child` i
 Lehrplan gehört immer einem Kind. Die Ablehnung kommt, bevor das Modell läuft, damit ein Vertipper
 nicht erst Minuten Erzeugung kostet.
 
+**Hat die Unit eine Wortliste aus dem Buch, wird für `Vocabulary` nichts erzeugt** (B-463). Der Plan nimmt
+dann die Vokabelübungen der Unit selbst auf – jede, die der Liste ein eigenes Wort beiträgt, und keine, die der
+Agent erzeugt hat. So übt er die ganze Liste statt `--per-type` × `--count` Wörtern. Diese Positionen bekommen
+Karteikasten, eine Tagesdosis von ⌈Einträge / `--days`⌉ (die Liste ist am letzten Tag durch), getippten Test auf
+der Stufe „frei tippen“. Die Richtung ist die der Buch-Übung. Wer früher fertig sein will, setzt `--days` auf den
+Testtermin.
+
 Ziel, Punkte und Münz-Malus je Position kommen aus `--intensity` – **denselben drei Zeilen, die auch
 der Lehrplan-Assistent im Vater-Web anbietet** (`frontend/src/vater/VaterWizard.tsx`, `INTENSITY`):
 

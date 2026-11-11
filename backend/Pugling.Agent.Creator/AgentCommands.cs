@@ -295,6 +295,13 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
         Console.WriteLine($"Titel:   {outcome.Title}");
         Console.WriteLine();
         foreach (var part in outcome.Parts) Console.WriteLine(Describe(part));
+        // A book word list is assigned, not generated: no self-test to report, but the dose the child will get.
+        foreach (var list in outcome.WordLists)
+        {
+            var dose = PlanPlanner.BookListPosition(list, plan.DurationDays, PlanPlanner.Intensities[plan.Intensity]).NewItemsPerDay;
+            Console.WriteLine($"  ✓ {"Vocabulary",-12} Wortliste {list.ExerciseId} „{list.Title}“ ({list.ItemCount} Einträge, "
+                              + $"{dose} neu je Tag, Karteikasten, getippter Test)");
+        }
         Console.WriteLine();
 
         if (outcome.PlanId is int planId)
@@ -624,7 +631,10 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
                                                             plan: Vocabulary,Cloze)
           --per-type <n>        exam: AUFGABEN je Typ (Standard 6) –
                                 plan: ÜBUNGEN je Typ, je eine Position (Standard 2);
-                                die Aufgaben je Übung kommen dort aus --count
+                                die Aufgaben je Übung kommen dort aus --count;
+                                hat die Unit eine Wortliste aus dem Buch, plant plan
+                                für Vocabulary deren Übungen ganz ein (Karteikasten,
+                                Tagesdosis bis Planende, getippter Test)
           --date JJJJ-MM-TT     Termin der Klassenarbeit                        (Standard: in 7 Tagen)
           --title "..."         Titel der Klausur bzw. des Lehrplans (Standard: aus Unit bzw. Thema)
           --intensity <Stufe>   Locker | Normal | Intensiv – Bestehensgrenze, Punkte und Münz-Malus

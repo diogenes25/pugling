@@ -23,7 +23,9 @@ Fehlbedienung des ganzen Aufrufs – vor dem ersten Modellaufruf, Exit 2 (B-313;
 
 Der `PlanPlanner` ist sein Zwilling für **Lehrpläne**: gleicher Ablauf, anderer Behälter – ein
 `StudyPlan` mit je einer `PlanPosition` pro erzeugter Übung, Ziel/Punkte/Malus aus `--intensity`
-(dieselben drei Zeilen wie `VaterWizard.INTENSITY`). Zwei Regeln tragen ihn: `--child` ist Pflicht und
+(dieselben drei Zeilen wie `VaterWizard.INTENSITY`). Hat die Unit eine Buch-Wortliste, plant er für
+`Vocabulary` deren Übungen ganz ein statt Scheiben zu erzeugen, mit Karteikasten, Tagesdosis und getipptem
+Test (B-463). Zwei Regeln tragen ihn: `--child` ist Pflicht und
 wird **vor** dem ersten Modellaufruf geprüft, und der Plan entsteht **inaktiv** – ungeprüfter KI-Inhalt
 darf nicht über Nacht zur Pflicht werden, und ein aktiv angelegter Plan würde den laufenden Plan des
 Kindes abschalten. Dafür trägt `CreatePlanDto` seit B-19 ein `Active`-Feld (Vorgabe `true`).

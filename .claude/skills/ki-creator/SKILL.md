@@ -44,7 +44,9 @@ Bei `plan` zählt `--per-type` **Übungen** je Typ (je eine Position), nicht Auf
 sichtet ihn unter `/vater/plaene` und schaltet ihn selbst scharf, damit ungeprüfter KI-Inhalt nicht über
 Nacht zur Pflicht wird. Ziel/Punkte/Malus je Position kommen aus `--intensity`
 (`Locker` 70 %/10/0 · `Normal` 80 %/20/−5 · `Intensiv` 90 %/30/−10) – dieselben Zeilen wie im
-Lehrplan-Assistenten des Vater-Webs.
+Lehrplan-Assistenten des Vater-Webs. Hat die Unit eine Wortliste aus dem Buch, erzeugt `plan` für
+`Vocabulary` nichts, sondern nimmt deren Vokabelübungen ganz auf – mit Karteikasten, Tagesdosis bis
+Planende (⌈Einträge / `--days`⌉) und getipptem Test (B-463).
 
 ## Betriebsarten
 
