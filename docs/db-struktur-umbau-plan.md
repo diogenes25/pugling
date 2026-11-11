@@ -35,7 +35,7 @@ diese Freiheit trägt den Umbau – siehe „Arbeitsregeln".
 |---|---|
 | Umfang | **Nur Struktur, kein API-Vertragsbruch** – mit *einer* bewussten Ausnahme: `LearnGoal` wird gelöscht (E13). |
 | Ziel-Systeme | **`LearnGoal` löschen**, `Objective`/`KeyResult` ist der Superset. Bedingung: `POST objectives` nimmt KeyResults inline an. |
-| Migrationskette | **Dauerhaft bei 1** – vor jedem Etappenabschluss neu falten. Tor G1b nagelt es fest. |
+| Migrationskette | ~~Dauerhaft bei 1~~ – seit 2026-11-11 **nur verlängert** (echte Nutzerdaten); Tor G1b hält die Basis `20261110142003_InitialCreate` fest. |
 | `TimeSlotRule` | **In Konfiguration auflösen** – Tabelle weg, `Scoring:TimeSlots` in appsettings (E12). |
 
 **Bewusst ausgeklammert** (jeweils mit Begründung, nicht aus Vergessen): die zwei Leitner-Boxen

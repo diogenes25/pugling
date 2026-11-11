@@ -74,7 +74,7 @@ Stufenspezifisch:
   (Regel und Kosten: README → „Der Backlog-Lauf").
 - **→ `geschaetzt`**: Größe an den Ankern im README ausrichten, nicht frei schätzen. `migration` und
   `vertragsbruch` sind ja/nein und **nachzusehen**, nicht zu vermuten: Schemaänderung ⇒ `migration: ja`
-  (die Kette wird neu gefaltet, `SchemaGuardTests` hält Länge 1); Änderung an `Pugling.Contracts` ⇒
+  (neue Migration an die Kette, die die Bestandsdaten der echten DB mitnimmt); Änderung an `Pugling.Contracts` ⇒
   `vertragsbruch: ja` (Client, Frontend und die `unknown_field`-Guards ziehen nach). Den Testweg **benennen**
   (welche Testklasse, welcher E2E, `/smoke-test`) — „wird getestet" ist kein Testweg.
 - **→ `in-arbeit` / `abgenommen`**: bauen nach den Konventionen der [CLAUDE.md](../../../CLAUDE.md).

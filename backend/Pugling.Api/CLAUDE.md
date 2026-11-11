@@ -9,18 +9,23 @@ Zusammenhänge über die Kette **Übung → Lehrplan → Kind → Auswertung** s
 
 ## Schema & Migrationen
 
-Die Regel „**die Kette ist genau EINE Migration**" und ihre Begründung stehen im Root; hier das Handwerk
-dahinter. `SchemaGuardTests` hält beides mechanisch: kein Modell-Drift (`HasPendingModelChanges`) und
-Kettenlänge 1.
+Die Regel „**die Kette wird nur verlängert**" und ihre Begründung stehen im Root; hier das Handwerk
+dahinter. `SchemaGuardTests` hält beides mechanisch: kein Modell-Drift (`HasPendingModelChanges`) und die
+Live-Basis `20261110142003_InitialCreate` als erstes Glied (G1b – neu falten ändert ihren Zeitstempel).
 
-- Nach dem Falten muss der `git diff` am `PuglingDbContextModelSnapshot.cs` **genau die beabsichtigte
-  Änderung** zeigen – das ist die Abnahme.
+- Nach `migrations add` muss der `git diff` am `PuglingDbContextModelSnapshot.cs` **genau die beabsichtigte
+  Änderung** zeigen, und die neue Migration wird **gelesen**: Umbenennungen erzeugt EF gern als
+  Drop+Add (Datenverlust), SQLite-Typwechsel als Tabellen-Neubau. Neue Pflichtspalten brauchen einen Wert für
+  Bestandszeilen (`migrationBuilder.Sql("UPDATE …")` in der Migration, kein DB-Default – siehe G9).
+- Vor dem ersten Start mit einer neuen Migration gegen die echte DB: Probe gegen eine **Kopie**
+  (`scripts/heimnetz.ps1 -Database <kopie> -Port <anderer>`); das Startskript legt zusätzlich bei jedem Start
+  eine Sicherung `pugling.db.bak-<Zeitstempel>` an.
 - Die EF-Tools laufen über die Design-Time-Factory
   ([Data/PuglingDbContextFactory.cs](Data/PuglingDbContextFactory.cs)), nicht über den Web-Host.
   `database update` braucht **kein** `--no-build`, sonst läuft es gegen die Assembly von *vor* dem
   `migrations add`.
-- `*.db` ist gitignored; eine DB aus einer *alten* Kette weist der Start mit einer handlungsfähigen Meldung
-  ab – ein Upgrade-Pfad existiert bewusst nicht.
+- `*.db` ist gitignored; eine DB aus der Kette *vor* dem 2026-11-10 weist der Start mit einer
+  handlungsfähigen Meldung ab – für sie gibt es keinen Upgrade-Pfad, für alles ab der Basis schon.
 
 **Schema-Konventionen** (ebenfalls von `SchemaGuardTests` gehalten):
 

@@ -25,7 +25,8 @@
 
 .PARAMETER Database
     Datenbankdatei. Vorgabe ist die echte backend/Pugling.Api/pugling.db. Fehlt die Datei, bricht das Skript ab,
-    statt eine leere anzulegen.
+    statt eine leere anzulegen. Vor jedem Start entsteht daneben eine Sicherung <datei>.bak-auto-<Zeitstempel>;
+    die letzten 20 bleiben.
 
 .PARAMETER SkipBuild
     Frontend und API nicht neu bauen (schneller Neustart ohne Code-Änderung).
@@ -61,6 +62,19 @@ if (Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyCon
 if (-not (Test-Path $Database)) {
     throw "Datenbank '$Database' nicht gefunden."
 }
+
+# 2b. Sicherung vor jedem Start: Ab hier kann eine neue Migration die Datenbank umbauen, und sie trägt den
+#     Lernstand der Kinder. Der Server läuft nicht (Port frei), die Dateien sind also ruhig. Ein -wal aus einem
+#     unsauberen Ende wird mitkopiert, sonst fehlten der Sicherung die letzten Antworten.
+$stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+$backup = "$Database.bak-auto-$stamp"
+Copy-Item $Database $backup
+if (Test-Path "$Database-wal") { Copy-Item "$Database-wal" "$backup-wal" }
+Write-Host "Sicherung: $backup"
+# Nur die automatischen Sicherungen ausdünnen (die letzten 20 bleiben); von Hand angelegte bleiben unberührt.
+Get-ChildItem -Path (Split-Path $Database) -Filter "$(Split-Path $Database -Leaf).bak-auto-*" |
+    Where-Object { $_.Name -notlike '*-wal' } | Sort-Object Name -Descending | Select-Object -Skip 20 |
+    ForEach-Object { Remove-Item $_.FullName, "$($_.FullName)-wal" -ErrorAction SilentlyContinue }
 
 # 3. Eigener Signierschlüssel: Production verweigert den Entwicklungs-Schlüssel.
 New-Item -ItemType Directory -Force $stateDir | Out-Null

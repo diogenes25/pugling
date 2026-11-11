@@ -23,9 +23,8 @@ Format und Build übernimmt nach `.cs`-Edits ohnehin der Hook. Nicht erratbar is
 
 ```bash
 dotnet tool restore                          # einmalig nach dem Clone (installiert dotnet-ef aus dem Manifest)
-# Bei Schemaänderung: die Kette wird NEU GEFALTET, nicht verlängert (siehe Fallstricke → EF-Migrationen).
-rm -rf backend/Pugling.Api/Data/Migrations
-dotnet dotnet-ef migrations add InitialCreate --project backend/Pugling.Api --output-dir Data/Migrations
+# Bei Schemaänderung: die Kette wird VERLÄNGERT, nie neu gefaltet (siehe Fallstricke → EF-Migrationen).
+dotnet dotnet-ef migrations add <Name> --project backend/Pugling.Api --output-dir Data/Migrations
 ```
 
 Dazu die Kommandos `/smoke-test` (lässt die echte `pugling.db` unangetastet) und `/neuer-uebungstyp`.
@@ -126,9 +125,12 @@ Lernstand – positionsgebunden *und* plan-übergreifend je Vokabel-Item.
 
 ## Fallstricke
 
-- **EF-Migrationen: die Kette ist genau EINE Migration**, bei jeder Schemaänderung **neu gefaltet**
-  statt verlängert (siehe Befehle). **Nicht** auf `EnsureCreated` zurückfallen; `SchemaGuardTests`
-  erzwingt kein Modell-Drift und Kettenlänge 1. Handwerk und Begründung:
+- **EF-Migrationen: die Kette wird nur verlängert** (seit 2026-11-11: die Söhne lernen gegen die echte
+  `pugling.db`, ihr Fortschritt muss jede Schemaänderung überleben). Jede Änderung bringt eine eigene
+  Migration, die vorhandene Zeilen mitnimmt; neu falten hieße, die echte DB startet nicht mehr. Vertrag und
+  Code dürfen in der Testphase trotzdem ohne Abwärtskompatibilität brechen – die **Daten** nicht.
+  **Nicht** auf `EnsureCreated` zurückfallen; `SchemaGuardTests` erzwingt kein Modell-Drift und die
+  Basis `20261110142003_InitialCreate` als erstes Glied. Handwerk und Begründung:
   [backend/Pugling.Api/CLAUDE.md](backend/Pugling.Api/CLAUDE.md) → „Schema & Migrationen"
   (lädt dort automatisch), Stand/Etappen: [docs/db-struktur-umbau-plan.md](docs/db-struktur-umbau-plan.md).
 - **PINs liegen gehasht und nur am Konto** (`Account.PinHash`, B-230): Gesetzt wird über `AccountService`

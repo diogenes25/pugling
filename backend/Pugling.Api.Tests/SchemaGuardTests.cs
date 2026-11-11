@@ -47,29 +47,28 @@ public class SchemaGuardTests
     }
 
     /// <summary>
-    /// <b>G1b – the chain stays at exactly one migration.</b> As long as the app is unpublished and
-    /// legacy data is dispensable, it gets refolded before every stage is completed
-    /// (delete <c>Data/Migrations</c> + <c>migrations add InitialCreate</c>). This makes
-    /// column renames and type changes free – no generated SQLite table rebuild that
-    /// someone has to sign off on.
-    /// <para>
-    /// This assertion is <b>deliberately finite</b>: the first release will need a
-    /// real upgrade path, and then it gets removed. That this is a visible decision rather than
-    /// a silent erosion is its actual purpose.
-    /// </para>
+    /// The migration every live database carries as its first entry. Real children have used the app since
+    /// 2026-11-11, so their learning progress lives in a database created from exactly this migration.
+    /// </summary>
+    private const string LiveBaseline = "20261110142003_InitialCreate";
+
+    /// <summary>
+    /// <b>G1b – the chain is append-only.</b> A live database only upgrades if its applied migrations are a
+    /// prefix of the chain. Refolding (deleting <c>Data/Migrations</c> and generating a new <c>InitialCreate</c>)
+    /// gives the baseline a new timestamp, and the app then refuses to start on that database - the
+    /// children's progress would be stranded. A schema change therefore adds a migration after the baseline.
     /// </summary>
     [Fact]
-    public void Migrationskette_Besteht_Aus_Genau_Einer_Migration()
+    public void Migrationskette_Wird_Nur_Verlaengert()
     {
         using var db = Context();
         var migrations = db.Database.GetMigrations().ToList();
 
-        Assert.True(migrations.Count == 1,
-            $"Expected exactly one migration, found {migrations.Count}: {string.Join(", ", migrations)}. "
-            + "Fold the chain anew (delete Data/Migrations, `dotnet dotnet-ef migrations add InitialCreate "
-            + "--project backend/Pugling.Api --output-dir Data/Migrations`) - or remove this rule "
-            + "once the app is published and needs a real upgrade path.");
-        Assert.EndsWith("InitialCreate", migrations[0], StringComparison.Ordinal);
+        Assert.True(migrations.Count >= 1 && migrations[0] == LiveBaseline,
+            $"The migration chain must start with '{LiveBaseline}', found: {string.Join(", ", migrations)}. "
+            + "The live database was created from that migration - do not refold the chain. Restore "
+            + "Data/Migrations and add a new migration instead (`dotnet dotnet-ef migrations add <Name> "
+            + "--project backend/Pugling.Api --output-dir Data/Migrations`).");
     }
 
     /// <summary>

@@ -723,7 +723,7 @@ Falsch-Grün-Probe.
 | Tor | Regel | Mechanik |
 |---|---|---|
 | **G1** | Kein Modell-Drift | `HasPendingModelChanges() == false` |
-| **G1b** | Migrationskette == **1** | `GetMigrations().Count() == 1`; **bewusst endlich** – endet mit der ersten Veröffentlichung, und dann wird das Tor *ausdrücklich* entfernt statt zu erodieren |
+| **G1b** | Kette wird nur verlängert | erstes Glied == `20261110142003_InitialCreate`. Bis 2026-11-11 hieß das Tor „Kette == 1"; mit dem Test durch die echten Kinder wurde es *ausdrücklich* umgestellt – neu falten würde ihre `pugling.db` stranden lassen |
 | **G2** | Jede FK hat ein abgenommenes `OnDelete` | literal gepinnte Tabelle über alle FKs, als sortierte Zeilen verglichen; zusätzlich **`ClientSetNull` verboten** (der Konventions-Default räumt nur im geladenen ChangeTracker auf) |
 | **G3** | Jede String-Spalte hat eine Länge – eine unique-indizierte **muss** eine haben | `GetMaxLength()`, Ausnahmen aus `PuglingDbContext.UnlimitedByDesign` |
 | **G4** | Jedes persistierte Enum liegt als String | ValueConverter auf `string`; Ausnahmen `IntEnumsByDesign` + `[Flags]` |

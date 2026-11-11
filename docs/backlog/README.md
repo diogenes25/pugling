@@ -207,8 +207,8 @@ Claude-Sitzung ist — darum sind die Stufen an **echten Vorgängen dieses Repos
 
 Die Größe allein verschweigt aber, was in *diesem* Repo wirklich kostet. Darum zwei ja/nein-Flags:
 
-- **`migration`** — die Migrationskette wird **neu gefaltet**, nicht verlängert (`SchemaGuardTests` hält
-  Länge 1). Jede Schemaänderung zieht das nach sich.
+- **`migration`** — eine neue Migration wird **an die Kette gehängt** (seit 2026-11-11, `SchemaGuardTests` G1b)
+  und muss die Bestandsdaten der echten `pugling.db` mitnehmen. Jede Schemaänderung zieht das nach sich.
 - **`vertragsbruch`** — `Pugling.Contracts` ändert sich **brechend**, also ziehen `Pugling.Client`, das
   Frontend und die `unknown_field`-Guards nach. Ein *additives* Feld ist kein Bruch. In einem „M" ist das
   sonst unsichtbar.
