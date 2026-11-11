@@ -61,7 +61,7 @@ Fachliche Kernregel: **Interessen kleiden den Stoff ein, sie ersetzen ihn nie.**
 **Gute Übungen brauchen eine Wortliste in der Unit** (B-460). Hat die Unit Vokabelübungen, nimmt eine erzeugte
 Vokabelübung Wörter und Übersetzungen von dort, und das Modell schreibt nur Titel und Merkhinweise. Ohne
 Wortliste erfindet das Modell die Übersetzungen selbst. Eine Unit ohne Wortliste also zuerst mit
-Vokabelübungen aus der Buchliste füllen (beim Lehrwerk aus Fotos: `laden.py`). Ein Lehrplan gibt jedem
+Vokabelübungen aus der Buchliste füllen (beim Lehrwerk aus Fotos: Skill `lehrwerk-aufbereiten`). Ein Lehrplan gibt jedem
 Cloze-/Grammar-Teil reihum ein Grammatik-Thema der Unit. Das setzt voraus, dass die Unit Grammatik-Themen trägt.
 
 Details (Pipeline, Strategien, Tests ohne Ollama):

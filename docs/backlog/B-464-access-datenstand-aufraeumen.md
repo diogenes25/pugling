@@ -5,7 +5,7 @@ status: abgenommen
 prio: P2
 art: Aufräumen
 groesse: XS
-wo: "daten"
+wo: "doku"
 migration: nein
 vertragsbruch: nein
 quelle: Rollengang am Access-Lehrwerk 2026-11-10 (Kopie der pugling.db, Sohn im Handy-Format 375×812, Vater-Web)
@@ -78,3 +78,8 @@ XS: Daten und `raw/english/access-pugling/laden.py` (gitignoriert, Copyright), k
 - **2026-11-11** — abgenommen. Ein Code-Commit fehlt: Es änderten sich nur Daten und das gitignorierte
   Ladeskript. Committet ist nur diese Datei. Einen Rollengang im Vater-Web gab es **nicht**. Geprüft wurde nur
   über die API.
+- **2026-11-11** — Korrektur: Ein Agentenlauf mit `--child 1`, aber ohne `--profile`/`--series-unit`, liest auch
+  mit dem umgestellten Buch nicht Access; die Ablage nimmt dann die erste Reihe überhaupt
+  ([B-473](B-473-ki-creator-ablage-ignoriert-buch-des-kindes.md)). Mit `--profile 1` stimmt der Stoff. Das
+  Ladeskript ist inzwischen buchunabhängig im Skill `lehrwerk-aufbereiten`
+  ([B-470](B-470-foto-zu-wortliste-als-werkzeug.md)); Kind und Klassenarbeit setzt dort `--child`.
