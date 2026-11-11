@@ -12,11 +12,10 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (72)
+### Offen (71)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [B-463](B-463-ki-lehrplan-deckt-ein-sechstel-der-wortliste.md) | Der KI-Lehrplan übt 20 von 124 Wörtern der Unit, ohne Karteikasten und nur Englisch → Deutsch | Defekt | `in-arbeit` | P1 | S | backend | — |
 | [B-468](B-468-sohn-erreicht-die-app-nur-am-pc.md) | Der Sohn erreicht die App nur am Rechner des Vaters – „jederzeit am Handy“ braucht einen Ort für den Server | Wunsch | `ausformuliert` | P1 | — | beides | — |
 | [B-470](B-470-foto-zu-wortliste-als-werkzeug.md) | Aus Fotos der Vokabelseiten wird eine Wortliste – als wiederholbares Werkzeug statt als Handarbeit unter raw/ | Wunsch | `idee` | P1 | — | beides | — |
 | [B-472](B-472-jedes-wort-in-beide-richtungen.md) | Jedes Wort einer Wortliste in beide Richtungen üben | Wunsch | `idee` | P1 | — | backend | — |
@@ -90,7 +89,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-447](B-447-arcade-zeigt-iso-daten.md) | Die Sohn-Arcade zeigt Daten als ISO-Text | Aufräumen | `idee` | P3 | — | frontend | — |
 
 <details>
-<summary>Abgenommen (372)</summary>
+<summary>Abgenommen (373)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -420,6 +419,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-460](B-460-ki-aufgaben-programm-entscheidet.md) | Was nur eine richtige Antwort hat, entscheidet beim KI-Creator das Programm, nicht das Modell | Wunsch | `abgenommen` | P1 | M | backend | — |
 | [B-461](B-461-lueckentext-ablenker-zaehlen-als-loesung.md) | Ein KI-Lückentext wertet die Ablenker der Wortbank als richtige Lösung | Defekt | `abgenommen` | P1 | S | backend | — |
 | [B-462](B-462-mehrdeutige-uebersetzung-verlangt-alle-bedeutungen.md) | Eine Übersetzung mit mehreren Bedeutungen („sobald, sowie“) gilt getippt nur als Ganzes | Defekt | `abgenommen` | P1 | S | backend | — |
+| [B-463](B-463-ki-lehrplan-deckt-ein-sechstel-der-wortliste.md) | Der KI-Lehrplan übt 20 von 124 Wörtern der Unit, ohne Karteikasten und nur Englisch → Deutsch | Defekt | `abgenommen` | P1 | S | backend | — |
 | [B-464](B-464-access-datenstand-aufraeumen.md) | Der Access-Datenstand trägt Trümmer des ersten Laufs, und das Kind zeigt auf das falsche Buch | Aufräumen | `abgenommen` | P2 | XS | daten | — |
 | [B-48](B-48-anonyme-registrierung-produktion.md) | Anonyme Registrierung ist auch in Produktion offen | Frage | `abgenommen` | P2 | S | backend | — |
 | [B-49](B-49-sohn-app-schreib-primitive.md) | Die Sohn-App benutzt die geteilten Schreib-Primitive nicht | Aufräumen | `abgenommen` | P3 | S | frontend | — |
@@ -483,7 +483,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (146)
 
-**Nachgeschaut: 360 von 372 abgenommenen** — und in 127 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 12 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 360 von 373 abgenommenen** — und in 127 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 13 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -635,7 +635,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-455](B-455-fachlehrer-typen-pruefung-nach-dem-entdoppeln.md) | Ob ein unbekannter Übungstyp im Fachlehrer-Profil abgelehnt wird, hängt an der Reihenfolge | [B-426] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (12) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (13) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -653,6 +653,7 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-460](B-460-ki-aufgaben-programm-entscheidet.md) | Was nur eine richtige Antwort hat, entscheidet beim KI-Creator das Programm, nicht das Modell |
 | [B-461](B-461-lueckentext-ablenker-zaehlen-als-loesung.md) | Ein KI-Lückentext wertet die Ablenker der Wortbank als richtige Lösung |
 | [B-462](B-462-mehrdeutige-uebersetzung-verlangt-alle-bedeutungen.md) | Eine Übersetzung mit mehreren Bedeutungen („sobald, sowie“) gilt getippt nur als Ganzes |
+| [B-463](B-463-ki-lehrplan-deckt-ein-sechstel-der-wortliste.md) | Der KI-Lehrplan übt 20 von 124 Wörtern der Unit, ohne Karteikasten und nur Englisch → Deutsch |
 | [B-464](B-464-access-datenstand-aufraeumen.md) | Der Access-Datenstand trägt Trümmer des ersten Laufs, und das Kind zeigt auf das falsche Buch |
 
 </details>

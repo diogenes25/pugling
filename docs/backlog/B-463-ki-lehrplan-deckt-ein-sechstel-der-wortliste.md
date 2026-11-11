@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, rolle/creator, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/training, rolle/creator, rolle/supervisor]
 aliases: [KI-Lehrplan zu dünn, Positions-Vorgaben des Agenten]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Defekt
 groesse: S
@@ -195,3 +195,5 @@ Einschalten.
   zweite in Gegenrichtung. Rollengang damit über die API auf dem Sitz des Sohnes, nicht in der Oberfläche – die
   Story ändert nichts am Frontend. Lückentexte wurden im Lauf nicht erzeugt (das konfigurierte Ollama-Modell
   fehlt auf diesem Rechner); dieser Zweig ist unverändert.
+- **2026-11-11** — abgenommen: Commit `029b768`. Offen bleibt fürs Gesamtziel: B-472 (jedes Wort in beide
+  Richtungen), B-471 (question tags) und das Einschalten des Plans durch den Vater (Entscheidung 5).
