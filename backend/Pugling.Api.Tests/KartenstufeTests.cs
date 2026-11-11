@@ -410,20 +410,22 @@ public class KartenstufeTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         Assert.All(RowStages(attemptId), stage => Assert.Equal((int)expected, stage));
     }
 
-    // AK 10, under a daily dose (2 a day): a cold word counts from the day the dose would have introduced it - word 2 and 3
-    // one day after the position joined the plan - not from today, or a child avoiding practice and test would get every
-    // new portion as a choice for another week. Eight days ago → due seven days ago → in writing; seven days ago → due six
-    // days ago → still a choice. Red if a cold dose word counted from the test day (row 1) or ignored its rank (row 2).
-    [Theory]
-    [InlineData(8, TestStage.FreeText)]
-    [InlineData(7, TestStage.MultipleChoice)]
-    public async Task Kaltes_Dosiswort_Zaehlt_Ab_Seinem_Soll_Tag(int daysAgo, TestStage expected)
+    // AK 11, under a daily dose (2 a day) and honestly behind it: the position joined the plan thirty days ago, but the
+    // child has played only once, so words 2 and 3 meet the test cold. The test introduces them itself, so their week
+    // starts today and they are a choice - not in writing at first sight because the dose would have introduced them
+    // weeks ago (the dose never catches up a missed day, B-476 decision 7, "from the actual introduction"). Words 0 and 1,
+    // introduced thirty days ago, are in writing. Red if a cold dose word counted from the day the dose would have
+    // introduced it or from the position's day (words 2/3 in writing), or if the introduction were ignored (0/1 a choice).
+    [Fact]
+    public async Task Kaltes_Dosiswort_Zaehlt_Ab_Dem_Testtag_Auch_Hinter_Der_Dosis()
     {
-        var s = await SetupNeverPractisedAsync(daysAgo, daysAgo, dose: 2);
-        var (attemptId, questions) = await TakeTestAsync(s, s.Child);
+        var s = await SetupNeverPractisedAsync(30, 30, dose: 2);
+        var (_, questions) = await TakeTestAsync(s, s.Child);
         var stages = questions.ToDictionary(q => q.Index, q => q.Stage);
-        Assert.Equal((int)expected, stages[2]);
-        Assert.Equal((int)expected, stages[3]);
+        Assert.Equal((int)TestStage.FreeText, stages[0]);
+        Assert.Equal((int)TestStage.FreeText, stages[1]);
+        Assert.Equal((int)TestStage.MultipleChoice, stages[2]);
+        Assert.Equal((int)TestStage.MultipleChoice, stages[3]);
     }
 
     // Practice follows the deadline too (decision 7, revised): a word the test asks in writing must have been asked in
@@ -449,7 +451,7 @@ public class KartenstufeTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     }
 
     // A child that never practised: nothing introduced, the plan started and the position was added the given days ago.
-    // Under a dose, words 0 and 1 count as introduced on the position's day, so only the cold ones carry the rank.
+    // Under a dose, words 0 and 1 count as introduced on the position's day (one played day), words 2 and 3 stay cold.
     private async Task<Setup> SetupNeverPractisedAsync(int planDaysAgo, int positionDaysAgo, int dose)
     {
         var father = await TestApi.AdultAsync(factory);
@@ -477,11 +479,12 @@ public class KartenstufeTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         return new Setup(await TestApi.ChildAsync(factory, childId, "4763"), childId, planId, positionId);
     }
 
-    // Introducing is the child's to delay (without a dose only practice introduces), so a late introduction must not
-    // restart the deadline: a position eight days on the plan, its words first practised yesterday, is asked in writing in
-    // test and practice alike. Red if the later actual introduction counted instead of the day the word was due.
+    // AK 10: the week counts from the actual introduction, not from the day the position joined the plan - a word met
+    // late gets its own week of ladder like any other (B-476 decision 7). A position eight days on the plan, its words
+    // first practised yesterday: practice turns the box-1 cards over and the test asks them as a choice. Red if the
+    // deadline counted from the position's day for an introduced word (both in writing).
     [Fact]
-    public async Task Spaet_Eingefuehrtes_Wort_Verlaengert_Die_Frist_Nicht()
+    public async Task Spaet_Eingefuehrtes_Wort_Bekommt_Seine_Woche()
     {
         var s = await SetupNeverPractisedAsync(8, 8, dose: 0);
         var yesterday = DateOnly.FromDateTime(factory.Clock.GetUtcNow().UtcDateTime).AddDays(-1);
@@ -493,13 +496,13 @@ public class KartenstufeTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             db.SaveChanges();
         }
 
-        Assert.All(await CardsAsync(s, await StartAsync(s)), c => Assert.Equal((int)TestStage.FreeText, c.GetProperty("stage").GetInt32()));
+        Assert.All(await CardsAsync(s, await StartAsync(s)), c => Assert.Equal((int)TestStage.SelfAssess, c.GetProperty("stage").GetInt32()));
         var (attemptId, _) = await TakeTestAsync(s, s.Child);
-        Assert.All(RowStages(attemptId), stage => Assert.Equal((int)TestStage.FreeText, stage));
+        Assert.All(RowStages(attemptId), stage => Assert.Equal((int)TestStage.MultipleChoice, stage));
     }
 
-    // The ladder counts from the day a position joined the plan, and the day logic runs on the server's clock - so the
-    // position is stamped from that clock, not the wall's. Red if CreatedAt fell back to the entity's DateTime.UtcNow.
+    // A never-introduced word without a dose counts from the day its position joined the plan, and the day logic runs on
+    // the server's clock - so the position is stamped from that clock, not the wall's. Red if CreatedAt fell back to the entity's DateTime.UtcNow.
     [Fact]
     public async Task Position_Traegt_Das_Datum_Der_Serveruhr()
     {

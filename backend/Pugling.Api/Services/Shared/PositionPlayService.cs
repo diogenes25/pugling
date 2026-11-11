@@ -101,12 +101,12 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// stuck on a rung below the target for good. The ladder also ends by the calendar (<see cref="LadderDays"/>), in
     /// practice as in the test: a word the test asks in writing must have been asked in writing here as well.
     /// </summary>
-    public static int CardStage(IExerciseType type, PlanPosition pos, StudyPlan plan, int dayStage, PlayMode mode,
-        int index, CardProgress? card, DateOnly day)
+    public static int CardStage(IExerciseType type, PlanPosition pos, int dayStage, PlayMode mode, CardProgress? card,
+        DateOnly day)
     {
         if (IsIntroduction(type, dayStage, mode, card is not null)) return IntroductionStage(type)!.Value;
         if (mode != PlayMode.Lern || !pos.UseLeitner || card is not { } c || c.Box >= pos.MaxBox) return dayStage;
-        if (LadderStart(pos, plan, index, c.IntroducedAt).AddDays(LadderDays) <= day) return dayStage;
+        if (c.IntroducedAt.AddDays(LadderDays) <= day) return dayStage;
         return type.CardStage(dayStage, c.Box);
     }
 
@@ -120,18 +120,20 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     public const int LadderDays = 7;
 
     /// <summary>
-    /// The day the ladder of one word started, a date the child cannot push back: the day the word was due to be
-    /// introduced. That is the day the position joined the plan (never before the plan's start), and under a daily dose
-    /// <c>index / dose</c> days later - the dose introduces in book order. An earlier actual introduction counts
-    /// instead; a later one does not, because introducing is the child's to delay (under a dose a word is introduced
-    /// when the child plays, and without a dose only practice introduces at all).
+    /// The day the ladder of one word started: the day the child first met it (B-476, decision 7, "from the actual
+    /// introduction"). A due date would not do: the daily dose never catches up a day not played, so after a week of
+    /// missed days every later word would meet the deadline cold and be asked in writing at first sight. A word not
+    /// introduced yet starts today under a dose - the test introduces it itself - and without a dose on the day its
+    /// position joined the plan (never before the plan's start), since only practice introduces there and the child
+    /// must not escape the deadline by not practising. Each word so gets at most one week of ladder; missed days are
+    /// the malus' to punish, not the deadline's.
     /// </summary>
-    public static DateOnly LadderStart(PlanPosition pos, StudyPlan plan, int index, DateOnly? introducedAt)
+    public static DateOnly LadderStart(PlanPosition pos, StudyPlan plan, DateOnly? introducedAt, DateOnly day)
     {
+        if (introducedAt is { } introduced) return introduced;
+        if (pos.NewItemsPerDay > 0) return day;
         var added = DateOnly.FromDateTime(pos.CreatedAt);
-        var onPlan = added > plan.StartDate ? added : plan.StartDate;
-        var due = pos.NewItemsPerDay > 0 ? onPlan.AddDays(index / pos.NewItemsPerDay) : onPlan;
-        return introducedAt is { } introduced && introduced < due ? introduced : due;
+        return added > plan.StartDate ? added : plan.StartDate;
     }
 
     /// <summary>

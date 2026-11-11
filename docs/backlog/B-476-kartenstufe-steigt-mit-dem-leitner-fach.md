@@ -81,22 +81,26 @@ die drei Punkte nach der dortigen Empfehlung entschieden, Vetorecht beim Vater).
    Vater in der Vorschau eine Stufe ausdrücklich wählt. Begründung: eine Selbstauskunft ist keine Prüfung – die
    Pflicht bleibt „geprüft bestanden“, `RequireTypedTest` hält (Auswahl zählt als geprüft, `StageMechanics.IsTyped`).
    Kosten: Stufe je Zeile statt je Versuch an drei Stellen des Testcontrollers; Ziel und Malus bleiben unberührt.
-7. **Spätestens sieben Tage nach dem Start seiner Leiter wird ein Wort geschrieben – im Test und beim Üben.** Vom Vater
+7. **Spätestens sieben Tage nach seiner Einführung wird ein Wort geschrieben – im Test und beim Üben.** Vom Vater
    am 2026-11-11 entschieden („Nach 7 Tagen schriftlich“) nach dem Delta-Review-Fund, dass das Kind das Fach und damit die
-   Form selbst steuert (nicht üben → Fach 1; beim Üben absichtlich falsch → Fach 1). Danach zweimal ergänzt, beide Male
-   vom Vater in der Review-Sitzung „nachtlauf“ entschieden und von dort übermittelt:
-   - ~~Nur der Test, nicht das Üben.~~ → **„Üben zieht mit“:** nach Ablauf der Frist fragt auch das Üben auf der Zielstufe.
-     Sonst würde ein Wort, das ehrlich immer wieder auf Fach 1 fällt, ab Tag 7 schriftlich geprüft, ohne je schriftlich
-     geübt worden zu sein – Malus ohne Trick.
-   - ~~Unter einer Dosis beginnt die Frist eines kalt eingeführten Worts am Testtag.~~ → **„Ab dem Soll-Tag“:** sonst bekäme
-     jede neue Portion wieder eine Woche Auswahl, wer Üben und Test meidet.
+   Form selbst steuert (nicht üben → Fach 1; beim Üben absichtlich falsch → Fach 1). Danach dreimal nachgeschärft:
+   - ~~Nur der Test, nicht das Üben.~~ → **„Üben zieht mit“** (Vater, in der Review-Sitzung „nachtlauf“ entschieden und
+     von dort übermittelt): nach Ablauf der Frist fragt auch das Üben auf der Zielstufe. Sonst würde ein Wort, das
+     ehrlich immer wieder auf Fach 1 fällt, ab Tag 7 schriftlich geprüft, ohne je schriftlich geübt worden zu sein.
+   - ~~„Ab dem Soll-Tag“~~ (Vater, ebenso übermittelt; dazu eine Min-Regel der Entwicklung: spätere Einführung zählt
+     nicht) → **„Ab echter Einführung“** (Vater, hier direkt, nach dem Review-Fund „Dosis-Rückstand“): die Tagesdosis
+     holt einen nicht gespielten Tag nie nach, also schiebt jeder verpasste Tag alle späteren Wörter dauerhaft hinter
+     ihren Soll-Tag. Nach sieben verpassten Tagen (fünf Tage die Woche geübt: nach vier Wochen; zwei Wochen Ferien: auf
+     einen Schlag) käme jedes neue Wort für den Rest des Plans kalt und sofort schriftlich – Malus ohne Trick, genau
+     das, was die Leiter verhindern soll.
 
-   **Leiterstart** (`PositionPlayService.LadderStart`) = der Tag, an dem das Wort dran war: Aufnahme der Position in den
-   Plan (nie vor dem Planstart), unter einer Dosis `ItemIndex ÷ Dosis` Tage später (die Dosis führt in Buchreihenfolge
-   ein). Eine **frühere** tatsächliche Einführung zählt stattdessen, eine **spätere nicht** – Einführen kann das Kind
-   verzögern (ohne Dosis führt nur das Üben ein, unter Dosis erst, wenn es spielt). Diese Min-Regel ist eine Ergänzung
-   der Entwicklung über die übermittelte Entscheidung hinaus (Vetorecht beim Vater). Ab Leiterstart + 7 Tage: Zielstufe,
-   gleich in welchem Fach.
+   **Leiterstart** (`PositionPlayService.LadderStart`) = der Tag der tatsächlichen Einführung (`IntroducedAt`). Ein nie
+   eingeführtes Wort (nur im Test möglich – beim Üben ist es eine Einführungskarte): unter einer Dosis **heute**, weil
+   der Test es selbst einführt; ohne Dosis die Aufnahme der Position in den Plan (nie vor dem Planstart), weil dort nur
+   das Üben einführt und das Kind der Frist sonst durch Nicht-Üben entkäme. Ab Leiterstart + 7 Tage: Zielstufe, gleich
+   in welchem Fach. Jedes Wort bekommt so höchstens eine Woche Leiter – begrenzt, egal was das Kind tut.
+   **Bewusst offen** (vom Vater so entschieden): wer unter Dosis weder übt noch testet, bekommt jede neue Portion wieder
+   als Auswahl. Dagegen steht der Münz-Malus für die gerissene Pflicht, nicht die Frist.
    Begründung der sieben Tage: genau der ehrliche Weg – mit den Standardintervallen wird ein täglich geübtes Wort an Tag 7
    zum ersten Mal geschrieben (Tag 1 zeigen und umdrehen, Tag 3 auswählen, Tag 7 schreiben; siehe Entscheidung 4). Die
    Frist trifft also nur ein Wort, das das Kind niedrig hält. (Eine Zwischenfassung behauptete „nach etwa drei Tagen“ –
@@ -117,10 +121,11 @@ die drei Punkte nach der dortigen Empfehlung entschieden, Vetorecht beim Vater).
    gewertet wird je Frage in ihrer Form; Ergebniszeilen tragen ihre Stufe.
 9. Test ohne Leitner, Zielstufe Selbsteinschätzung oder vom Vater gewählte Vorschau-Stufe → eine Stufe für alle Fragen
    wie bisher.
-10. Leiterstart sieben oder mehr Tage her → Test **und Üben** auf der Zielstufe, auch auf Fach 1; sechs Tage → noch
+10. Einführung sieben oder mehr Tage her → Test **und Üben** auf der Zielstufe, auch auf Fach 1; sechs Tage → noch
     Auswahl (Test) bzw. Umdrehkarte (Üben).
-11. Nie eingeführtes Wort: Leiterstart = Aufnahme der Position (bzw. Planstart, wenn später); unter Dosis zusätzlich
-    `ItemIndex ÷ Dosis` Tage; eine spätere tatsächliche Einführung verschiebt ihn nicht.
+11. Nie eingeführtes Wort im Test: ohne Dosis Leiterstart = Aufnahme der Position (bzw. Planstart, wenn später); unter
+    Dosis = Testtag, auch wenn das Kind weit hinter der Dosis liegt (kalt → Auswahl). Ein eingeführtes Wort zählt immer
+    ab seiner Einführung, auch wenn die Position schon länger im Plan steht.
 
 ## Verlauf
 
@@ -235,4 +240,23 @@ die drei Punkte nach der dortigen Empfehlung entschieden, Vetorecht beim Vater).
 
   Ersetzt: der Fall „kaltes Dosis-Wort einer 30 Tage alten Position → Auswahl“ aus `54f67fd` widerspricht der Soll-Tag-
   Entscheidung und ist durch den Dosis-Fall mit Rang ersetzt.
+- **2026-11-11** — Review-Fund „Dosis-Rückstand“ (Sitzung „nachtlauf“, an `PositionPlayService` nachvollzogen:
+  `WithinDailyDose`/`DailyTestPortion` holen nicht nach, `LadderStart` rechnete nach Kalender) → Entscheidung 7 auf
+  „Ab echter Einführung“ umgestellt; Unterfall „nie eingeführt unter Dosis“ vom Vater direkt entschieden (Testtag).
+  `LadderStart(pos, plan, introducedAt, day)` ohne Rang und Min-Regel; `CardStage` braucht Plan und Index nicht mehr
+  (beim Üben ist ein Wort immer eingeführt) und vergleicht `IntroducedAt` direkt. Tests: `Kaltes_Dosiswort_Zaehlt_Ab_Dem_Testtag_Auch_Hinter_Der_Dosis`
+  (ersetzt den Soll-Tag-Fall; 30 Tage alte Position, einmal gespielt), `Spaet_Eingefuehrtes_Wort_Bekommt_Seine_Woche`
+  (ersetzt den Min-Regel-Fall). Mutanten mit `.claude/scripts/mutant-probe.py` an `d240926 + Arbeitsbaum`, alle rot am
+  benannten Test, Grundlinie danach grün:
+
+  | Mutante | Stelle | gemessen |
+  |---|---|---|
+  | Q1 kaltes Dosis-Wort ab Aufnahme der Position | `LadderStart` | rot |
+  | Q2 tatsächliche Einführung ignoriert | `LadderStart` | rot |
+  | Q3 Frist nicht im Üben | `CardStage` | rot |
+  | Q4 Frist im Üben einen Tag zu spät | `CardStage` | rot |
+  | Q5 ohne Dosis: Aufnahme der Position ignoriert | `LadderStart` | rot |
+  | Q6 ohne Dosis: Planstart ignoriert | `LadderStart` | rot |
+
+  Die Mutanten P2, P3, P6, P7 der Vorrunde prüfen Regeln, die es nicht mehr gibt.
 

@@ -208,7 +208,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
                 ItemIndex = i,
                 StageValue = explicitStage ? stage : PositionPlayService.TestItemStage(type, pos, stage,
                     progress.GetValueOrDefault(i)?.Box,
-                    PositionPlayService.LadderStart(pos, plan, i, progress.GetValueOrDefault(i)?.IntroducedAt), day),
+                    PositionPlayService.LadderStart(pos, plan, progress.GetValueOrDefault(i)?.IntroducedAt, day), day),
             }).ToList(),
         };
         db.TestAttempts.Add(attempt);

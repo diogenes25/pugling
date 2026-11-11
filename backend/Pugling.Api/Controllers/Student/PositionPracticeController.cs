@@ -108,7 +108,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         {
             var card = CardOf(introduced, i);
             if (PositionPlayService.IsIntroduction(type, dayStage, mode, card is not null)) return 0;
-            var stage = PositionPlayService.CardStage(type, pos, pos.StudyPlan, dayStage, mode, i, card, day);
+            var stage = PositionPlayService.CardStage(type, pos, dayStage, mode, card, day);
             return IsSelfClaimRung(type, dayStage, stage) ? 1 : 2;
         })];
     }
@@ -150,7 +150,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var item = items[index];
         var card = CardOf(introduced, index);
         var introduction = PositionPlayService.IsIntroduction(type, dayStage, session.Mode, card is not null);
-        var stage = PositionPlayService.CardStage(type, pos, pos.StudyPlan!, dayStage, session.Mode, index, card, session.Day);
+        var stage = PositionPlayService.CardStage(type, pos, dayStage, session.Mode, card, session.Day);
         var f = PositionPlayService.CardFacets(PositionPlayService.ConfigOf(exercise), items, item, type, stage,
             type.IsTypedStage(stage), session.Id);
         return new PracticeCard(index, stage, type.Key, f.Prompt,
@@ -273,8 +273,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // An introduction (B-419) is shown at the display stage and therefore does show its image.
         var dayStage = PositionPlayService.StageForDay(pos, pos.StudyPlan, session.Day, type);
         var introduced = await play.IntroducedCardsAsync(positionId, ct);
-        var stage = PositionPlayService.CardStage(type, pos, pos.StudyPlan, dayStage, session.Mode, itemIndex,
-            CardOf(introduced, itemIndex), session.Day);
+        var stage = PositionPlayService.CardStage(type, pos, dayStage, session.Mode, CardOf(introduced, itemIndex),
+            session.Day);
         if (PositionPlayService.CardFacets(PositionPlayService.ConfigOf(pos.Exercise), items, item, type, stage, type.IsTypedStage(stage), seed: 0).ImageUrl is null)
             return this.ProblemWithCode(ApiErrors.MediaNotOnCard, "This card does not show an image.");
 
@@ -360,8 +360,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // The card's own stage, not the day's (B-419, B-476): a card is graded as what it was shown as - an
         // introduction earns nothing, a choice rung is checked as a choice - so the client cannot pick its form.
         var introduced = await play.IntroducedCardsAsync(positionId, ct);
-        var stage = PositionPlayService.CardStage(type, pos, plan, dayStage, session.Mode, dto.ItemIndex,
-            CardOf(introduced, dto.ItemIndex), session.Day);
+        var stage = PositionPlayService.CardStage(type, pos, dayStage, session.Mode, CardOf(introduced, dto.ItemIndex),
+            session.Day);
         var typed = type.IsTypedStage(stage);
         var displayOnly = type.IsDisplayOnlyStage(stage);
         var selfClaimRung = IsSelfClaimRung(type, dayStage, stage);
