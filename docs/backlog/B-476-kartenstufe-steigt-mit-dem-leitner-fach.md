@@ -12,7 +12,7 @@ quelle: Rückmeldung von Theodor nach dem ersten echten Lerntag (2026-11-11), vo
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
-wartet_auf: ""
+wartet_auf: "Ausrollen 47d0acb (Heimnetz-Start durch den Vater, für mich gesperrt)"
 ---
 
 # B-476 · Die Stufe einer Vokabelkarte steigt mit ihrem Leitner-Fach: erst umdrehen, dann auswählen, dann schreiben
@@ -311,4 +311,7 @@ die drei Punkte nach der dortigen Empfehlung entschieden, Vetorecht beim Vater).
 
   S5 („Antwort führt auch unter Dosis ein“) blieb grün und ist äquivalent: unter Dosis hat der Start die Portion schon
   eingeführt. Die Dosis-Bedingung im Helfer war damit überflüssig und ist entfernt.
+- **2026-11-12** — E2E, volle Suite an `47d0acb`: **135 passed** (darin `erstbegegnung.spec.ts`, der Rollengang dieser
+  Story). Ausrollen offen: der Heimnetz-Server wurde für `10226b4` angehalten, den Neustart aus meiner Sitzung hat die
+  Rechteprüfung gesperrt; er läuft nicht. Der Vater startet ihn über `scripts/heimnetz.ps1` – dann `abgenommen`.
 
