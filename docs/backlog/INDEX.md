@@ -16,8 +16,8 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| [B-472](B-472-jedes-wort-in-beide-richtungen.md) | Jedes Wort einer Wortliste in beide Richtungen üben | Wunsch | `geschaetzt` | P1 | M | beides | — |
 | [B-470](B-470-foto-zu-wortliste-als-werkzeug.md) | Aus Fotos der Vokabelseiten wird eine Wortliste – als wiederholbares Werkzeug statt als Handarbeit unter raw/ | Wunsch | `idee` | P1 | — | beides | — |
-| [B-472](B-472-jedes-wort-in-beide-richtungen.md) | Jedes Wort einer Wortliste in beide Richtungen üben | Wunsch | `idee` | P1 | — | backend | — |
 | [B-457](B-457-uebersetzung-scheitert-am-schlusspunkt.md) | Eine richtige Übersetzung ohne Schlusspunkt wird als falsch gewertet | Defekt | `idee` | P2 | — | — | — |
 | [B-465](B-465-ki-lueckentext-mehrdeutig-und-verraten.md) | Ein KI-Lückentext nach dem Umbau: Titel passt nicht, Auswahl steht im Satz, Zeitformen ohne Alternative | Defekt | `idee` | P2 | — | backend | — |
 | [B-466](B-466-lueckentext-am-handy-umbrueche-kopfzeile-zoom.md) | Lückentext am Handy: Zeilenumbrüche verschwinden, „Später weiter“ ist abgeschnitten, das Eingabefeld zoomt | Defekt | `idee` | P2 | — | frontend | — |
