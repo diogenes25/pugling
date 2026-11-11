@@ -459,7 +459,7 @@ export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, re
           <select aria-label="Abfragerichtung" value={extra.direction ?? "front-to-back"} onChange={(e) => ex({ direction: e.target.value })}>
             <option value="front-to-back">vorne → hinten</option>
             <option value="back-to-front">hinten → vorne</option>
-            <option value="both">beide</option>
+            <option value="both">beide (hin und zurück)</option>
           </select>
         </div>
       )}

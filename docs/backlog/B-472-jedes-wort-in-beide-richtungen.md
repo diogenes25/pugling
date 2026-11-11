@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/training, rolle/student]
 aliases: [Richtung both ist abwechselnd]
-status: geschaetzt
+status: in-arbeit
 prio: P1
 art: Wunsch
 groesse: M
@@ -9,6 +9,7 @@ wo: "beides"
 migration: nein
 vertragsbruch: nein
 quelle: B-463
+wartet_auf: "Nutzer: Ausrollen auf die echte pugling.db (Server anhalten, Skript, Neustart)"
 grund: ""
 ersetzt_durch: []
 ---
@@ -99,6 +100,23 @@ Alle fünf am 2026-11-11 vom Nutzer entschieden, jeweils die Empfehlung → Ents
    angehaltenem Server, zusammen mit dem Ausrollen des neuen Codes (Abweichung von der Formulierung „beim Start“ in
    der Frage an den Nutzer).
 
+6. **Beim Bau ergänzt (Review): eine verplante Übung wechselt nicht in oder aus „beide“.** Der Wechsel änderte die
+   Kartenzahl je Wort, und jeder gespeicherte Index zeigte auf eine andere Karte. Er wird darum wie das Umsortieren
+   der Wörter mit `exercise_items_locked` abgelehnt; vorwärts ↔ rückwärts bleibt erlaubt. *Kosten:* Wer eine laufende
+   Liste umstellen will, legt eine neue Übung an. Bewusst kein eigener Fehlercode: der Client behandelt dieselbe
+   Bedingung (an einen Plan gebundene Karten) gleich, nur der Text unterscheidet sich.
+7. **Beim Bau ergänzt (Review): Multiple Choice verrät die Richtung nicht.** Die Rotation der Knöpfe war `Index % 4`;
+   mit „beide“ lag die richtige Antwort vorwärts nur auf Knopf 0/2, rückwärts nur auf 1/3 – Raten nach Richtung
+   halbierte die Auswahl. Neu `(Index + Index / 2) % Anzahl`. *Kosten:* Die Knopf-Reihenfolge ändert sich einmal
+   für alle Listen; gespeichert ist sie nirgends.
+8. **Beim Bau ergänzt: das Umschreib-Skript verdoppelt Dosis und Begrenzungen** bestehender Positionen und den
+   `DefaultItemCount` der Übung. *Begründung:* Sie zählen Karten; verdoppelt meinen sie dieselbe Zahl Wörter wie
+   vorher, und Plan 5 ist weiter bis Planende durch. *Kosten:* Plan 5 bekommt 6/8/4/4 statt der 6/7/3/3, die der
+   KI-Lehrplan neu rechnen würde – etwas mehr als nötig.
+
+Eine Folge von Entscheidung 4, kein Fehler: Ein Wort bekommt je Tag zwei bewertete Antworten in denselben
+plan-übergreifenden Stand, seine Box steigt also bis zu doppelt so schnell.
+
 ## Akzeptanzkriterien
 
 1. Eine Vokabelübung mit `both` und *n* Einträgen spielt 2*n* Karten: Karte 2*i* fragt Wort *i* vorwärts, Karte
@@ -139,3 +157,29 @@ und `frontend-reviewer`, Messung des Skripts an einer DB-Kopie mit dem Stand von
   an den Nutzer.
 - **2026-11-11** — gegrillt im Dialog: Nutzer nimmt alle fünf Empfehlungen; geschätzt M, ohne Migration und ohne
   Vertragsbruch, mit einmaligem Umschreib-Skript für den Bestand.
+- **2026-11-11** — in Arbeit, gebaut. Server: `ExerciseContentProvider.WithDirection` verdoppelt „beide“ zu Karte 2*i*
+  / 2*i*+1 (`ContentItem.Reversed`), `ExerciseContentResolver` wählt die Artikel-Regel je Karte,
+  `VocabularyExerciseType.ItemCount` zählt Karten, `StageMechanics.DistractorPool` nimmt Ablenker nur aus Karten
+  derselben Antwortsprache (vorher mischte „beide“ die Sprachen – mitgefunden) und rotiert nach Entscheidung 7,
+  `ItemProgressService` sieht im selben Lauf angelegte Zeilen (sonst 500 bei der Testabgabe mit beiden Karten eines
+  neuen Wortes – Blocker aus dem Review), Sperre nach Entscheidung 6. Agent: Dosis aus der Kartenzahl des Katalogs.
+  Frontend: „beide (hin und zurück)“, Feld-Erklärungen zu Dosis und Begrenzung. Skript
+  `scripts/b472-beide-richtungen.py` (Sicherung inkl. `-wal`, Marke gegen zweiten Lauf, Abbruch bei belegtem Port).
+- **2026-11-11** — verifiziert. Neue Tests `BeideRichtungenTests` (8 Fälle) und
+  `StageMechanicsTests.Die_Richtige_Antwort_Verraet_Die_Richtung_Nicht`, je vorher rot (Kartenfolge, Katalog,
+  Ablenker, Abgabe 500, Knopfpositionen [0, 2]); `CreatorAgentTests` Dosis 8/3 rot bei Zeilenzählung; rote Proben
+  gemessen: „erst vorwärts, dann rückwärts“ (drei Tests fallen), Tracker-Blick weg, Sperre weg. Angepasst:
+  `ArtikelToleranzTests` (Karte 1/3 statt 1) und `PositionPlayChoicesTests` (prüft die Entdopplung jetzt als Menge
+  statt in der Reihenfolge der alten Rotation). Volle Suite 1283/1283 grün, Vitest 741/741, `tsc` sauber.
+  `pugling-reviewer`: ein Blocker (Abgabe 500) und drei Sollte-Funde, alle behoben; `frontend-reviewer`: kein
+  Blocker, Label gekürzt und Begrenzungs-Hilfe ergänzt. Skript an zwei Kopien der echten DB gemessen: 7
+  Karteikasten-Zeilen, 10 Testergebnisse, 4 Runden, 3 Tests umgerechnet (alt 1 → 3, 2 → 4, 3 → 7, Box 2 wandert
+  mit), Dosis 3/4/2/2 → 6/8/4/4, zweiter Lauf und belegter Port verweigert, `DefaultItemCount` und ein Ergebnis ohne
+  Kartennummer künstlich ergänzt und richtig behandelt.
+- **2026-11-11** — Rollengang an der laufenden App (neuer Build über `scripts/heimnetz.ps1 -Port 5283` gegen die
+  umgeschriebene Kopie, Sohn im Handy-Format in der Oberfläche): Liste A zeigt „3 von 82 schon kennengelernt“, das
+  heutige Tagesziel bleibt erfüllt; die Übungsrunde bringt zuerst „das Beste an …“ → „the best thing about …“ (die
+  Gegenrichtung eines bekannten Wortes) zum Kennenlernen, dazu Wort 2 vorwärts, Wort 3 rückwärts und die zwei
+  fälligen Karten von heute Morgen. Vater-Web nicht in der Oberfläche geprüft (die Vater-PIN ist geändert); die neuen
+  Texte stehen im ausgelieferten Bundle. Dabei gefunden und behoben: `heimnetz.ps1` veröffentlichte jeden Port in
+  denselben Ordner und scheiterte an den gesperrten Dateien des laufenden Servers – jetzt ein Ordner je Port.

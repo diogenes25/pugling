@@ -147,7 +147,8 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
                 .ToList();
             if (fresh.Count == 0) continue;
             pairs.AddRange(fresh);
-            lists.Add(new UnitWordList(exercise.Id, exercise.Title, items.Count));
+            // The catalog's count is the cards the position plays - two per word for a list asked both ways (B-472).
+            lists.Add(new UnitWordList(exercise.Id, exercise.Title, exercise.ItemCount ?? items.Count));
         }
 
         return (pairs, lists);

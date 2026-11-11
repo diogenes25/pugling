@@ -89,20 +89,28 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
 
         // The pronunciation audio belongs to the word and is carried along direction-independently (the
         // listening stage reads it); WithDirection swaps word ↔ translation and preserves ItemId/VocabularyId.
-        return rows.Select((r, i) =>
+        var languages = new Dictionary<int, (string Source, string Target)>();
+        var canonical = rows.Select((r, i) =>
         {
             if (!byId.TryGetValue(r.VocabularyId, out var v))
                 return new ContentItem(i, $"(Vokabel #{r.VocabularyId} fehlt)", "", [""], ItemId: r.Id, VocabularyId: r.VocabularyId);
+            languages[r.Id] = (v.SourceLanguage, v.TargetLanguage);
             var picked = images.GetValueOrDefault(r.Id);
             // Every declared equivalent translation counts as correct - a child who knows "sehr groß" for
             // "huge" must not lose the goal (and its coins) to the row that happens to store "riesig".
-            var item = new ContentItem(i, v.Word, v.Translation, Accepted(v.Translation, v.TranslationAlternatives),
+            return new ContentItem(i, v.Word, v.Translation, Accepted(v.Translation, v.TranslationAlternatives),
                 r.Hint ?? v.Noun?.Article, AudioUrl: v.PronunciationAudioUrl, ItemId: r.Id, VocabularyId: r.VocabularyId,
                 ImageUrl: picked?.Url, ImageAlt: picked?.Alt);
+        }).ToList();
+
+        return ExerciseContentProvider.WithDirection(canonical, direction).Select(card =>
+        {
+            // A card whose store entry is missing keeps its placeholder; with "both" it still takes its two indices.
+            if (card.ItemId is not { } itemId || !languages.TryGetValue(itemId, out var language)) return card;
             // B-421: the answer's language decides which article may be left out - the target language, or the source
-            // language where the direction asks the other way round.
-            var answerLanguage = ExerciseContentProvider.Swaps(i, direction) ? v.SourceLanguage : v.TargetLanguage;
-            return ExerciseContentProvider.WithDirection(item, direction) with
+            // language where the card asks the other way round.
+            var answerLanguage = card.Reversed ? language.Source : language.Target;
+            return card with
             {
                 ArticleOptionalIn = articleRequired || answerLanguage.Length == 0 ? null : answerLanguage,
                 // B-462: a store entry is a word-list entry in either direction ("sobald, sowie", "(to) reply (to)").

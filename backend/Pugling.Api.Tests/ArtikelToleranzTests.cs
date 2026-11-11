@@ -65,14 +65,16 @@ public class ArtikelToleranzTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.True(await PracticeAsync(exerciseId, "ville"));
     }
 
-    // Review finding: with "both" every odd item is asked the other way round - its answer is French, the even one German.
+    // Review finding: with "both" every odd card is asked the other way round - its answer is French, the even one German.
+    // Since B-472 card 2i+1 is word i backwards, so card 1 asks "la ville" and card 3 "la rue".
     [Fact]
     public async Task Beide_Richtungen_Verzeihen_Je_Den_Artikel_Der_Antwortsprache()
     {
         var father = await TestApi.AdultAsync(factory);
         var exerciseId = await ExerciseAsync(father, direction: "both", words: [("la ville", "die Stadt"), ("la rue", "die Straße")]);
         Assert.True(await PracticeAsync(exerciseId, "Stadt", itemIndex: 0));
-        Assert.True(await PracticeAsync(exerciseId, "rue", itemIndex: 1));
+        Assert.True(await PracticeAsync(exerciseId, "ville", itemIndex: 1));
+        Assert.True(await PracticeAsync(exerciseId, "rue", itemIndex: 3));
     }
 
     // AK 6: the test grades the same - the bulk submission ...

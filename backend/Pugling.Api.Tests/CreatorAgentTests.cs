@@ -631,13 +631,17 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     /// A vocabulary exercise as a person (or a loader script) creates it - straight through the API, without the agent.
     /// Only such an exercise is the unit's word list: what the agent generated is left out of it.
     /// </summary>
+    private static Task<int> BookVocabularyAsync(CreatorApi creator, int seriesId, int seriesUnitId,
+        params (string Front, string Back, string? Hint)[] pairs) =>
+        BookVocabularyAsync(creator, seriesId, seriesUnitId, "front-to-back", pairs);
+
     private static async Task<int> BookVocabularyAsync(CreatorApi creator, int seriesId, int seriesUnitId,
-        params (string Front, string Back, string? Hint)[] pairs)
+        string direction, params (string Front, string Back, string? Hint)[] pairs)
     {
         var created = await creator.CreateExerciseAsync(seriesId, seriesUnitId, "vocabulary",
             new ExercisePayload<VocabularyConfig>("Wörter aus dem Buch", 1, 10, new VocabularyConfig
             {
-                Direction = "front-to-back",
+                Direction = direction,
                 SourceLang = "en",
                 TargetLang = "de",
                 Items = [.. pairs.Select(p => new VocabItem(p.Front, p.Back, p.Hint))],
@@ -1314,6 +1318,30 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         // ⌈5 / 3⌉ and ⌈4 / 3⌉: the dose counts every entry the position plays, the overlap word included - counting
         // only list B's three new words would give 1.
         Assert.Equal([2, 2], positions.Select(p => p.NewItemsPerDay));
+    }
+
+    /// <summary>
+    /// B-472: a book list asked both ways plays two cards per word, and the dose counts cards - so the plan doubles it to
+    /// finish the list by the last day. Red if <c>UnitWordList.ItemCount</c> counts rows again (⌈4 / 3⌉ = 2).
+    /// </summary>
+    [Fact]
+    public async Task Eine_Buchliste_in_beiden_Richtungen_bekommt_die_Dosis_ihrer_Karten()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Lehrplan-beide");
+        await BookVocabularyAsync(creator, seriesId, seriesUnitId, "both",
+            ("the horse", "das Pferd", null), ("the sheep", "das Schaf", null), ("the goat", "die Ziege", null),
+            ("the cow", "die Kuh", null));
+        var supervisor = new SupervisorApi(Authenticated());
+
+        var outcome = await new PlanPlanner(pipeline, supervisor).RunAsync(new PlanRequest(
+            Request(subjectId, seriesId, seriesUnitId, "Vocabulary"),
+            Types: ["Vocabulary"], PerType: 1, Intensity: PlanIntensity.Normal,
+            StartDate: null, DurationDays: 3, Title: null));
+
+        Assert.Equal(8, Assert.Single(outcome.WordLists).ItemCount);
+        // ⌈8 / 3⌉: eight cards over three days.
+        Assert.Equal(3, Assert.Single(await supervisor.ListPositionsAsync(outcome.PlanId!.Value)).NewItemsPerDay);
     }
 
     /// <summary>

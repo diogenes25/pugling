@@ -504,7 +504,7 @@ function VocabRefPicker({ selected, setSelected, extra, setExtra }: {
           <select aria-label="Abfragerichtung" value={extra.direction ?? "front-to-back"} onChange={(e) => setExtra((x) => ({ ...x, direction: e.target.value }))}>
             <option value="front-to-back">vorne → hinten</option>
             <option value="back-to-front">hinten → vorne</option>
-            <option value="both">beide</option>
+            <option value="both">beide (hin und zurück)</option>
           </select>
         </div>
       </div>

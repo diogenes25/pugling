@@ -24,6 +24,8 @@ namespace Pugling.Api.Services.Shared;
 /// exercise that trains the article.
 /// <paramref name="MeaningsSeparable"/> (B-462) marks an answer that is a word-list entry: each single meaning of it
 /// counts (<see cref="AnswerVariants"/>). Only vocabulary sets it - in a sentence a comma is part of the answer.
+/// <paramref name="Reversed"/> marks a vocabulary card asked against the exercise's canonical direction (translation →
+/// word): its answer is in the source language. Distractors are only drawn from cards answered in the same language.
 /// </summary>
 public record ContentItem(
     int Index,
@@ -40,7 +42,8 @@ public record ContentItem(
     string? ImageAlt = null,
     IReadOnlyList<WordPair>? Decoding = null,
     string? ArticleOptionalIn = null,
-    bool MeaningsSeparable = false)
+    bool MeaningsSeparable = false,
+    bool Reversed = false)
 {
     /// <summary>
     /// Everything a typed answer is compared against: the accepted answers, plus their single meanings where the
@@ -54,7 +57,7 @@ public record ContentItem(
 /// Thin facade over the <see cref="ExerciseTypeRegistry"/>: projects the contents of a catalog <see cref="Exercise"/>
 /// type-agnostically into <see cref="ContentItem"/>s by delegating to the matching <see cref="IExerciseType"/>
 /// (store-free projection; the DB-backed resolution is done by the <see cref="ExerciseContentResolver"/>). Replaces the
-/// former type <c>switch</c>; the direction flip (<see cref="WithDirection"/>) remains a shared helper.
+/// former type <c>switch</c>; the query direction (<see cref="WithDirection"/>) remains a shared helper.
 /// </summary>
 public class ExerciseContentProvider(ExerciseTypeRegistry registry)
 {
@@ -66,20 +69,27 @@ public class ExerciseContentProvider(ExerciseTypeRegistry registry)
         registry.ByKey(typeKey)?.ItemsOf(configJson) ?? [];
 
     /// <summary>
-    /// Applies the vocabulary query direction to an item built canonically (word → translation):
-    /// <c>back-to-front</c> swaps prompt/answer, <c>both</c> swaps deterministically for an odd
-    /// index (stable per item, without randomness). The index stays the same – the Leitner/test progress does not flip.
+    /// Applies the vocabulary query direction to items built canonically (word → translation, index = list position):
+    /// <c>front-to-back</c> keeps them, <c>back-to-front</c> swaps each, and <c>both</c> asks every word twice - card
+    /// 2i in the canonical direction, card 2i+1 swapped (B-472). The two cards of a word lie side by side so that a new
+    /// word is met both ways on the same day. The resulting index is what Leitner and test progress are stored under.
     /// </summary>
-    public static ContentItem WithDirection(ContentItem item, string? direction) =>
-        Swaps(item.Index, direction) ? Swap(item) : item;
+    public static IReadOnlyList<ContentItem> WithDirection(IReadOnlyList<ContentItem> canonical, string? direction) =>
+        direction switch
+        {
+            Both => [.. canonical.SelectMany(it => new[] { it with { Index = 2 * it.Index }, Swap(it) with { Index = 2 * it.Index + 1 } })],
+            BackToFront => [.. canonical.Select(Swap)],
+            _ => canonical,
+        };
 
-    /// <summary>Does <paramref name="direction"/> ask the item at <paramref name="index"/> the other way round?</summary>
-    public static bool Swaps(int index, string? direction) => direction switch
-    {
-        "back-to-front" => true,
-        "both" => index % 2 != 0,
-        _ => false,
-    };
+    /// <summary>
+    /// How many cards a vocabulary exercise with <paramref name="words"/> entries plays in <paramref name="direction"/>.
+    /// The catalog states this number, and a daily dose counts these cards.
+    /// </summary>
+    public static int CardCount(int words, string? direction) => direction == Both ? 2 * words : words;
+
+    private const string Both = "both";
+    private const string BackToFront = "back-to-front";
 
     // Swap prompt/answer; the alternatives of the reverse case fall away (they applied to the old answer), as
     // does the article hint (it belonged to the word now being asked). The pronunciation audio falls away too:
@@ -88,5 +98,5 @@ public class ExerciseContentProvider(ExerciseTypeRegistry registry)
     // The image stays: it shows the *meaning* and is thus direction-independent; whether it may be shown at
     // all is decided by the stage (StageFacets) anyway, not by the direction.
     private static ContentItem Swap(ContentItem it) =>
-        it with { Prompt = it.Answer, Answer = it.Prompt, AcceptedAnswers = [it.Prompt], Hint = null, AudioUrl = null };
+        it with { Prompt = it.Answer, Answer = it.Prompt, AcceptedAnswers = [it.Prompt], Hint = null, AudioUrl = null, Reversed = true };
 }

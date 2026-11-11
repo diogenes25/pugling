@@ -5,8 +5,8 @@ namespace Pugling.Api.Exercises;
 /// <summary>
 /// Vocabulary training: word ↔ translation across several stages (self-assessment, multiple choice, letter boxes,
 /// free text, listening). Carries the lion's share of the type-specific rules – store-backed items, distractors, stages,
-/// and cross-plan item learning progress. Canonical projection front → back; the query direction flips
-/// the item (<see cref="ExerciseContentProvider.WithDirection"/>).
+/// and cross-plan item learning progress. Canonical projection front → back; the query direction turns it into the
+/// cards (<see cref="ExerciseContentProvider.WithDirection"/>).
 /// </summary>
 public sealed class VocabularyExerciseType : ExerciseTypeBase
 {
@@ -37,8 +37,26 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
     /// </summary>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson) => [];
 
-    /// <summary>The atoms of this type are the item rows, for the same reason <see cref="ItemsOf"/> is empty (B-424).</summary>
-    public override int? ItemCount(string configJson, int itemTableRows) => itemTableRows;
+    /// <summary>
+    /// The atoms of this type are the cards built from the item rows, for the same reason <see cref="ItemsOf"/> is
+    /// empty (B-424): one per row, two with the direction "both" (B-472). An unreadable config counts its rows.
+    /// </summary>
+    public override int? ItemCount(string configJson, int itemTableRows)
+    {
+        try
+        {
+            var direction = string.IsNullOrWhiteSpace(configJson)
+                ? null
+                : System.Text.Json.JsonSerializer.Deserialize<VocabularyConfig>(configJson, ConfigJson)?.Direction;
+            return ExerciseContentProvider.CardCount(itemTableRows, direction);
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return itemTableRows;
+        }
+    }
+
+    private static readonly System.Text.Json.JsonSerializerOptions ConfigJson = new(System.Text.Json.JsonSerializerDefaults.Web);
 
     // For trying out, the typed free-text stage (the hardest, most telling test).
     /// <inheritdoc/>

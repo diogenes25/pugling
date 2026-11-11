@@ -160,6 +160,9 @@ public static class StageMechanics
         foreach (var other in items)
         {
             if (other.Index == item.Index || string.IsNullOrWhiteSpace(other.Answer)) continue;
+            // A card asked the other way round answers in the other language - and with "both" the word's own second
+            // card answers with the very word being asked (B-472).
+            if (other.Reversed != item.Reversed) continue;
             var candidate = other.GradedAnswers().Append(other.Answer).Select(Normalize).ToList();
             if (candidate.Any(seen.Contains)) continue;
             foreach (var normalized in candidate) seen.Add(normalized);
@@ -171,7 +174,10 @@ public static class StageMechanics
 
         var choices = new List<string>(distractors.Count + 1) { item.Answer };
         choices.AddRange(distractors);
-        var shift = item.Index % choices.Count;
+        // Not Index alone: with "both" forward cards have even indices and backward cards odd ones, so Index % 4 would put
+        // the right answer only on buttons 0/2 resp. 1/3 and give the direction away (B-472). Index + Index / 2 spreads
+        // either parity over every button, and consecutive indices still cover all of them.
+        var shift = (item.Index + item.Index / 2) % choices.Count;
         return [.. choices.Skip(shift), .. choices.Take(shift)];
     }
 }

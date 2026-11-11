@@ -103,10 +103,19 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
         }
     }
 
-    /// <summary>A PUT that carries items rewrites the item list - the same lock as on the single item routes applies.</summary>
+    /// <summary>
+    /// A PUT that carries items rewrites the item list - the same lock as on the single item routes applies. A switch
+    /// into or out of "both" is locked the same way: it changes how many cards a word has (B-472), so every saved card
+    /// index would point at another card.
+    /// </summary>
     protected override async Task<ObjectResult?> UpdateConflictAsync(Exercise exercise, VocabularyConfig config, CancellationToken ct)
     {
-        if (!HasPayloadItems(config) || !await ExerciseInPlanAsync(exercise.Id, ct)) return null;
+        var cardsChange = ExerciseContentProvider.CardCount(1, ConfigOf(exercise).Direction)
+                          != ExerciseContentProvider.CardCount(1, config.Direction);
+        if ((!HasPayloadItems(config) && !cardsChange) || !await ExerciseInPlanAsync(exercise.Id, ct)) return null;
+        if (cardsChange)
+            return this.ProblemWithCode(ApiErrors.ExerciseItemsLocked,
+                "The exercise is used in a study plan; switching to or from asking both directions would change its cards and shift saved progress.");
         return await items.WouldShiftAsync(exercise.Id, await items.PeekDesiredIdsAsync(config, ct), ct) ? ShiftBlockedProblem() : null;
     }
 

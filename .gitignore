@@ -9,6 +9,7 @@ coverage.cobertura.xml
 *.db-shm
 *.db-wal
 *.db.bak-*
+*.db.b472-done
 logs/
 node_modules/
 dist/

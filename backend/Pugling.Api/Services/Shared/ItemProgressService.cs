@@ -50,7 +50,11 @@ public class ItemProgressService(PuglingDbContext db, TimeProvider time)
 
         if (!countsForMastery) return;
 
-        var prog = await db.ItemProgress.FirstOrDefaultAsync(p => p.ChildId == childId && p.ItemId == itemId, ct);
+        // The tracker first: a test submission records all its answers before saving, and with "both" two cards share
+        // one item (B-472). The query alone does not see a row added earlier in the same run - a second row for the
+        // same item would then break the unique index.
+        var prog = db.ItemProgress.Local.FirstOrDefault(p => p.ChildId == childId && p.ItemId == itemId)
+            ?? await db.ItemProgress.FirstOrDefaultAsync(p => p.ChildId == childId && p.ItemId == itemId, ct);
         if (prog is null)
         {
             prog = new ItemProgress { ChildId = childId, ItemId = itemId, IntroducedAt = today };

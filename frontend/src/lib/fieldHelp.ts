@@ -38,7 +38,7 @@ export const FIELD_HELP = {
     text: "Begrenzt die Übung dauerhaft auf ihre ersten N Inhalte – die übrigen werden nie abgefragt, "
       + "auch nicht an einem anderen Tag. Leer = alle Inhalte der Übung, und das ist meist richtig. "
       + "Wie viel an einem einzelnen Tag drankommt, entscheidet der Leitner-Kasten über die Fälligkeit "
-      + "und nicht dieses Feld.",
+      + "und nicht dieses Feld. Bei „beide“ Richtungen zählt jede Richtung als eigene Karte.",
   },
   newItemsPerDay: {
     title: "Neue Inhalte je Tag",
@@ -47,7 +47,8 @@ export const FIELD_HELP = {
       + "trägt eine einzige Pflicht eine große Übung über Wochen – 150 Vokabeln mit 8 je Tag sind in knapp vier "
       + "Wochen durch. Der Abschlusstest prüft dann die Tagesportion (heute neu, heute geübt oder heute fällig) "
       + "und nicht mehr alles bisher Gelernte. Leer = keine Dosis: alle Inhalte sind vom ersten Tag an dran, "
-      + "und das passt nur für kleine Übungen.",
+      + "und das passt nur für kleine Übungen. Fragt eine Vokabelübung „beide“ Richtungen ab, ist jede Richtung "
+      + "eine eigene Karte: 8 je Tag heißt dann 4 neue Wörter, jedes hin und zurück.",
   },
   orderStrategy: {
     title: "Reihenfolge",

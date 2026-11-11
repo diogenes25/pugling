@@ -45,7 +45,9 @@ $apiProject = Join-Path $repo 'backend\Pugling.Api'
 $frontend = Join-Path $repo 'frontend'
 $webRoot = Join-Path $frontend 'dist'
 $stateDir = Join-Path $env:LOCALAPPDATA 'Pugling'
-$appDir = Join-Path $stateDir 'heimnetz-app'
+# One folder per port: a second instance (a test on a copy of the database) must not publish over the files of the
+# running server - Windows locks them, and the publish fails halfway.
+$appDir = Join-Path $stateDir "heimnetz-app-$Port"
 $keyFile = Join-Path $stateDir 'jwt.key'
 if (-not $Database) { $Database = Join-Path $apiProject 'pugling.db' }
 $Database = [System.IO.Path]::GetFullPath($Database)

@@ -32,4 +32,26 @@ public class StageMechanicsTests
     {
         Assert.Equal("_____", StageMechanics.LetterBoxPattern("hallo"));
     }
+
+    /// <summary>
+    /// B-472: the right answer's button must not give the card's direction away. With "both" a word's forward card has
+    /// an even index and its backward card an odd one; a shift of <c>Index % 4</c> put the right answer of every forward
+    /// card on button 0 or 2 and of every backward card on 1 or 3 - a child guessing by direction halves the choice.
+    /// Red as long as the shift follows the index parity.
+    /// </summary>
+    [Fact]
+    public void Die_Richtige_Antwort_Verraet_Die_Richtung_Nicht()
+    {
+        var cards = Enumerable.Range(0, 8).SelectMany(w => new[]
+        {
+            new ContentItem(2 * w, $"word {w}", $"Wort {w}", [$"Wort {w}"]),
+            new ContentItem(2 * w + 1, $"Wort {w}", $"word {w}", [$"word {w}"], Reversed: true),
+        }).ToList();
+
+        int[] Positions(bool reversed) => [.. cards.Where(c => c.Reversed == reversed)
+            .Select(c => StageMechanics.DistractorPool(cards, c, 3)!.ToList().IndexOf(c.Answer)).Distinct().Order()];
+
+        Assert.Equal([0, 1, 2, 3], Positions(reversed: false));
+        Assert.Equal([0, 1, 2, 3], Positions(reversed: true));
+    }
 }

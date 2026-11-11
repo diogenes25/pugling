@@ -13,7 +13,7 @@ public sealed record VocabPair(string Word, string Translation, int VocabularyId
 /// </summary>
 /// <param name="ExerciseId">The exercise a study plan assigns as it is.</param>
 /// <param name="Title">Its title, for the report.</param>
-/// <param name="ItemCount">How many entries a position on it plays - the base of the daily dose.</param>
+/// <param name="ItemCount">How many cards a position on it plays (two per word when asked both ways) - the base of the daily dose.</param>
 public sealed record UnitWordList(int ExerciseId, string Title, int ItemCount);
 
 /// <summary>

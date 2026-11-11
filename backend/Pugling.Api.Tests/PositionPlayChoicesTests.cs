@@ -37,8 +37,8 @@ public class PositionPlayChoicesTests
     [Fact]
     public void MultipleChoice_RotiertDeterministisch_LoesungNichtImmerVorne()
     {
-        // Rotation = index % count: item 0 → shift 0 (the solution up front), item 1 → shift 1 (the solution
-        // moves away from position 0). No randomness → reproducible.
+        // Rotation = (index + index / 2) % count (B-472): item 0 → shift 0 (the solution up front), item 1 → shift 1
+        // (the solution moves away from position 0). No randomness → reproducible.
         Assert.Equal("Haus", Choices(Vocab, 0, TestStage.MultipleChoice)![0]);
         var forItem1 = Choices(Vocab, 1, TestStage.MultipleChoice)!;
         Assert.NotEqual("gehen", forItem1[0]);
@@ -51,8 +51,9 @@ public class PositionPlayChoicesTests
         IReadOnlyList<ContentItem> items = [Item(0, "Haus"), Item(1, "Haus"), Item(2, "gehen")];
 
         // For "gehen" the only distinct distractor is "Haus" - the second "Haus" card is deduplicated.
+        // Compared as a set: which button the solution lands on is the rotation's business, not this test's.
         var choices = Choices(items, 2, TestStage.MultipleChoice)!;
-        Assert.Equal(new[] { "gehen", "Haus" }, choices);
+        Assert.Equal(new[] { "Haus", "gehen" }.Order(), choices.Order());
     }
 
     /// <summary>
