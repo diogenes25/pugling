@@ -36,3 +36,8 @@ und was bleibt Prüfung durch den Vater im Testmodus? Gehört in die Abnahme von
 ## Verlauf
 
 - **2026-11-10** — angelegt (Prüfgang am Access-Lehrwerk: Übungen, Vater-Sicht, Handy).
+- **2026-11-11** — neuer Befund beim `plan`-Lauf auf der echten Datenbank (`qwen2.5:14b-instruct`): beide Lückentexte
+  zu past/present progressive scheiterten nach der Reparatur-Runde an der Regel „Lösung steht außerhalb der
+  Klammern im Text“ – für `were`, `was`, `went`, `had`. Diese Formen kommen in einem Text über das past progressive
+  zwangsläufig mehrfach vor; die Regel verwirft damit fast jeden Text zu diesem Grammatikthema. Ein Entwurf hatte
+  zusätzlich keine Ablenker. Folge: Der Plan bekam keine Grammatik-Position.

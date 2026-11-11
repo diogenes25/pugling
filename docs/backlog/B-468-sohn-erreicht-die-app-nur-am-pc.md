@@ -185,3 +185,9 @@ danach das Handy des Nutzers.
   (Server-Log 13:23: `GET /index.html` → 200). Damit sind Firewall, Adresse und Auslieferung am echten Gerät
   belegt. Offen für AK 2: Anmeldung und Übungsrunde am Handy – auf der echten Datenbank hat der Sohn noch keinen
   aktiven Plan.
+- **2026-11-11** — Auf Wunsch des Nutzers über den laufenden Heimnetz-Server an der echten Datenbank: die nie
+  gespielten, inaktiven KI-Pläne 3 und 4 gelöscht (keine Tests, keine Übungsrunden daran) und mit `plan --child 1
+  --series-unit 7 --types Vocabulary,Cloze --days 14` Plan 5 angelegt: die Wortlisten 13–16 mit Dosis 3/4/2/2,
+  Karteikasten, getippter Test, Laufzeit 2026-11-11 bis 2026-11-24. Beide Lückentexte hat der Agent nach der
+  Reparatur-Runde verworfen (siehe B-465), der Katalog ist unverändert. Der Plan ist inaktiv; Einschalten und
+  Anmeldung am Handy liegen beim Nutzer.
