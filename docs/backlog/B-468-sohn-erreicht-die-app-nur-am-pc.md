@@ -180,3 +180,8 @@ danach das Handy des Nutzers.
   Standard-Gateway. Nicht messbar von hier: die Firewall (eine Verbindung auf die eigene Adresse geht nicht durch
   die eingehende Filterung) und das echte Handy – das wartet auf den Nutzer. Kein Reviewer: keine Zeile C# oder
   TypeScript geändert.
+- **2026-11-11** — Nutzer hat die Schritte aus [heimnetz.md](../heimnetz.md) ausgeführt und `scripts/heimnetz.ps1`
+  gegen die echte `pugling.db` gestartet: Das Handy zeigt unter `http://192.168.178.55:5200/sohn` den Loginschirm
+  (Server-Log 13:23: `GET /index.html` → 200). Damit sind Firewall, Adresse und Auslieferung am echten Gerät
+  belegt. Offen für AK 2: Anmeldung und Übungsrunde am Handy – auf der echten Datenbank hat der Sohn noch keinen
+  aktiven Plan.
