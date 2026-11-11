@@ -108,15 +108,29 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     }
 
     /// <summary>
+    /// Days after its introduction from which the test asks a word at the target (B-476, decision 7). The father's
+    /// choice, and deliberately generous: a word practised every day reaches the typed rung after about three days with
+    /// the default intervals, so only a word the child keeps low - by not practising or by failing on purpose - meets it.
+    /// </summary>
+    public const int TestLadderDays = 7;
+
+    /// <summary>
     /// The stage one item is examined at in the test (B-476): the ladder of practice, but never below a checked rung -
     /// a self-assessment is a claim, and the duty is "passed under check". A rung the child would only judge itself is
     /// raised box by box to the first checked one (for vocabulary: the choice). An item not introduced yet (a cold
     /// item of the daily portion) counts as box 1. When the target itself is unchecked there is nothing to raise to,
     /// and without Leitner no box moves - both keep the target for every item.
+    /// <para>
+    /// The box is the child's to move - not practising keeps a word in box 1, and so does answering wrong on purpose.
+    /// So the ladder ends by the calendar too: <see cref="TestLadderDays"/> days after its introduction a word is examined
+    /// at the target whatever its box, and no behaviour of the child stretches the easier form beyond that.
+    /// </para>
     /// </summary>
-    public static int TestItemStage(IExerciseType type, PlanPosition pos, int target, int? box)
+    public static int TestItemStage(IExerciseType type, PlanPosition pos, int target, int? box, DateOnly? introducedAt,
+        DateOnly day)
     {
         if (!pos.UseLeitner || !type.IsTypedStage(target)) return target;
+        if (introducedAt is { } introduced && introduced.AddDays(TestLadderDays) <= day) return target;
         for (var b = Math.Max(1, box ?? 1); b < pos.MaxBox; b++)
         {
             var stage = type.CardStage(target, b);

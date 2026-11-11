@@ -368,4 +368,63 @@ public class KartenstufeTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         var attemptId = (await start.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("attemptId").GetInt32();
         Assert.All(RowStages(attemptId), stage => Assert.Equal((int)expected, stage));
     }
+
+    // AK 10: the child moves the box (no practice, or wrong on purpose, keeps a word in box 1), so the calendar ends the
+    // ladder: seven days after its introduction a word is examined at the target whatever its box; six days is still a
+    // choice. Red if the deadline is dropped (item 0 would be a choice) or off by one in either direction.
+    [Fact]
+    public async Task Test_Fragt_Nach_Sieben_Tagen_Schriftlich_Auch_Auf_Fach_1()
+    {
+        var s = await SetupAsync(TestStage.FreeText, requireTypedTest: true);
+        SetBoxes(s.PositionId, 1, 1, 2, 3);
+        var today = DateOnly.FromDateTime(factory.Clock.GetUtcNow().UtcDateTime);
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            var rows = db.PositionItemProgress.Where(p => p.PlanPositionId == s.PositionId).ToList();
+            rows.Single(p => p.ItemIndex == 0).IntroducedAt = today.AddDays(-7);
+            rows.Single(p => p.ItemIndex == 1).IntroducedAt = today.AddDays(-6);
+            rows.Single(p => p.ItemIndex == 2).IntroducedAt = today.AddDays(-30);
+            db.SaveChanges();
+        }
+
+        var (attemptId, _) = await TakeTestAsync(s, s.Child);
+        Assert.Equal([4, 6, 4, 4], RowStages(attemptId));
+    }
+
+    // AK 10, without a dose: only practice introduces a word there, so a child who never practises would keep every word
+    // "new" - and on the choice rung - for good. The deadline then counts from the day the position joined the plan.
+    // Red if a never-introduced word ignored the deadline (row 1) or counted from the plan's start instead of the
+    // position's (row 2: an old plan, a position added two days ago). Under a daily dose the test introduces its cold
+    // words itself, today, so their deadline starts today however old the position is - red (row 3) if a cold word of a
+    // dose counted from the position's date.
+    [Theory]
+    [InlineData(8, 8, 0, TestStage.FreeText)]
+    [InlineData(8, 2, 0, TestStage.MultipleChoice)]
+    [InlineData(30, 30, 4, TestStage.MultipleChoice)]
+    public async Task Nie_Geuebtes_Wort_Zaehlt_Ab_Aufnahme_Der_Position(int planDaysAgo, int positionDaysAgo, int dose,
+        TestStage expected)
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, "fr", "de", FourWords);
+        var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = TestApi.UniqueName("Nie-Kind"), pin = "4763" }));
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.FreeText, childId: childId,
+            introduced: false);
+        var today = DateOnly.FromDateTime(factory.Clock.GetUtcNow().UtcDateTime);
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            db.StudyPlans.Single(p => p.Id == planId).StartDate = today.AddDays(-planDaysAgo);
+            var position = db.PlanPositions.Single(p => p.Id == positionId);
+            position.CreatedAt = today.AddDays(-positionDaysAgo).ToDateTime(new TimeOnly(12, 0), DateTimeKind.Utc);
+            position.NewItemsPerDay = dose;
+            db.SaveChanges();
+        }
+        var s = new Setup(await TestApi.ChildAsync(factory, childId, "4763"), childId, planId, positionId);
+
+        var (attemptId, _) = await TakeTestAsync(s, s.Child);
+        Assert.All(RowStages(attemptId), stage => Assert.Equal((int)expected, stage));
+    }
 }
+

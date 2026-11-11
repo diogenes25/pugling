@@ -12,7 +12,7 @@ quelle: Rückmeldung von Theodor nach dem ersten echten Lerntag (2026-11-11), vo
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
-wartet_auf: "Entscheidung des Vaters zum MC-Hebel im Test (Verlauf 2026-11-11, Delta-Review); E2E erstbegegnung.spec.ts (Port 5200 belegt); Ausrollen"
+wartet_auf: "E2E erstbegegnung.spec.ts (Port 5200 belegt); Ausrollen"
 ---
 
 # B-476 · Die Stufe einer Vokabelkarte steigt mit ihrem Leitner-Fach: erst umdrehen, dann auswählen, dann schreiben
@@ -81,6 +81,16 @@ die drei Punkte nach der dortigen Empfehlung entschieden, Vetorecht beim Vater).
    Vater in der Vorschau eine Stufe ausdrücklich wählt. Begründung: eine Selbstauskunft ist keine Prüfung – die
    Pflicht bleibt „geprüft bestanden“, `RequireTypedTest` hält (Auswahl zählt als geprüft, `StageMechanics.IsTyped`).
    Kosten: Stufe je Zeile statt je Versuch an drei Stellen des Testcontrollers; Ziel und Malus bleiben unberührt.
+7. **Spätestens sieben Tage nach der Einführung fragt der Test schriftlich** – vom Vater am 2026-11-11 entschieden
+   („Nach 7 Tagen schriftlich“) nach dem Delta-Review-Fund, dass das Kind das Fach und damit die Testform selbst steuert
+   (nicht üben → Fach 1; beim Üben absichtlich falsch → Fach 1). Ein Wort mit `IntroducedAt` ≤ Testtag − 7 wird auf der
+   Zielstufe geprüft, gleich in welchem Fach. Ein nie eingeführtes Wort zählt ab der Aufnahme der Position in den Plan
+   (ohne Dosis führt nur das Üben ein – wer nie übt, hielte es sonst für immer „neu“); unter einer Dosis führt der Test es
+   selbst heute ein, die Frist beginnt heute. Begründung: ein großzügiger Puffer – ein täglich geübtes Wort ist mit den
+   Standardintervallen nach etwa drei Tagen beim Schreiben (Review-Korrektur; zuerst stand hier fälschlich „sieben Tage
+   sind der Weg“); die Frist trifft nur ein Wort, das das Kind niedrig hält, und kein Verhalten verlängert sie.
+   Nur der Test, nicht das Üben – die Pflicht hängt am Test. Kosten: ein Vergleich in `TestItemStage`, keine Migration
+   (`IntroducedAt` gibt es schon).
 
 ## Akzeptanzkriterien
 
@@ -95,6 +105,7 @@ die drei Punkte nach der dortigen Empfehlung entschieden, Vetorecht beim Vater).
    gewertet wird je Frage in ihrer Form; Ergebniszeilen tragen ihre Stufe.
 9. Test ohne Leitner, Zielstufe Selbsteinschätzung oder vom Vater gewählte Vorschau-Stufe → eine Stufe für alle Fragen
    wie bisher.
+10. Wort seit sieben oder mehr Tagen eingeführt → Test auf der Zielstufe, auch auf Fach 1; sechs Tage → noch Auswahl.
 
 ## Verlauf
 
@@ -172,4 +183,17 @@ die drei Punkte nach der dortigen Empfehlung entschieden, Vetorecht beim Vater).
   Vaters unterscheiden Auswahl- und Tipptreffer nicht (`PositionReportService`, `ItemResultDto` ohne Stufe); 🟢 `MaxBox` 2
   im Test ungetestet (Fach 1 geht dort direkt auf die Zielstufe, regelkonform); 🟢 plan-übergreifende Beherrschung steigt
   auch aus Auswahltreffern.
+- **2026-11-11** — Entscheidung 7 („Nach 7 Tagen schriftlich“) gebaut: `PositionPlayService.TestLadderDays` und die Frist in
+  `TestItemStage`; `PositionTestsController.Start` reicht `IntroducedAt` bzw. für ein nie eingeführtes Wort die Aufnahme der
+  Position (ohne Dosis) oder den Testtag (mit Dosis) durch. Tests: `Test_Fragt_Nach_Sieben_Tagen_Schriftlich_Auch_Auf_Fach_1`
+  (7 Tage → schriftlich, 6 → Auswahl), `Nie_Geuebtes_Wort_Zaehlt_Ab_Aufnahme_Der_Position` (3 Fälle). Backend **1310/1310**.
+  Mutanten, alle rot am benannten Test, Grundlinie danach grün: D1 Frist entfernt, D2 `<` statt `<=`, D3 sechs Tage, N1 nie
+  eingeführtes Wort ohne Ersatzdatum, N2 Planstart statt Aufnahme der Position, N3 Dosis-Wort mit altem Datum (zuerst grün –
+  der Dosis-Fall fehlte; dritten Fall ergänzt, dann rot). Zwei Läufe waren „kompiliert nicht“ durch einen parallelen Testlauf
+  bzw. eine untypisierte Mutante und sind neu gemessen.
+- **2026-11-11** — Delta-Review `pugling-reviewer`: keine 🔴. 🟡 ohne Dosis setzt nur das Üben `IntroducedAt` – wer nie übt,
+  entkam der Frist → behoben über das Aufnahmedatum der Position (Reviewer-Variante b; Variante a, den Test einführen zu
+  lassen, verworfen: das Wort verlöre beim nächsten Üben seine Kennenlernkarte aus B-419). 🟡 Begründung der sieben Tage
+  rechnete falsch → in Kommentar und Entscheidung 7 korrigiert. 🟢 Leerzeile am Dateiende → entfernt. Die Behebung ist
+  nicht noch einmal reviewt (Selbst-Check: Mutanten N1–N3).
 
