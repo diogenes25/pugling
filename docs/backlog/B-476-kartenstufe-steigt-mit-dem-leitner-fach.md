@@ -12,7 +12,7 @@ quelle: Rückmeldung von Theodor nach dem ersten echten Lerntag (2026-11-11), vo
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
-wartet_auf: "E2E erstbegegnung.spec.ts (Port 5200 belegt); Ausrollen"
+wartet_auf: "pugling-reviewer für 1bcef11"
 ---
 
 # B-476 · Die Stufe einer Vokabelkarte steigt mit ihrem Leitner-Fach: erst umdrehen, dann auswählen, dann schreiben
@@ -259,4 +259,11 @@ die drei Punkte nach der dortigen Empfehlung entschieden, Vetorecht beim Vater).
   | Q6 ohne Dosis: Planstart ignoriert | `LadderStart` | rot |
 
   Die Mutanten P2, P3, P6, P7 der Vorrunde prüfen Regeln, die es nicht mehr gibt.
+- **2026-11-11** — Heimnetz-Server mit Freigabe des Vaters angehalten. E2E an `1bcef11`: `erstbegegnung.spec.ts`
+  **2 passed** (das ist der Rollengang dieser Story: Kennenlernen, dann Umdrehkarte; ohne Leitner gleich getippt).
+  Volle Suite **134 passed, 1 failed**: `buchstaben-ordnen.spec.ts` spielte mit Leitner und erwartete in Runde 2
+  Buchstabenkästchen – seit der Leiter kommt dort die Umdrehkarte. Die Spec prüft die Bedienung der Stufe, nicht die
+  Leiter, und läuft jetzt ohne Leitner (Grund am Aufruf); danach `buchstaben-ordnen` + `erstbegegnung` **3 passed**.
+  **Ausgerollt:** `scripts/heimnetz.ps1` neu gestartet (Sicherung `pugling.db.bak-auto-20261111-230240`, API-Build
+  23:03, `/sohn` antwortet 200).
 

@@ -53,8 +53,10 @@ test("Sohn ordnet Buchstaben per Tastatur und per Klick, der Fokus folgt jeder K
   });
   const planId = await postId(request, "/api/v1/supervisor/study-plans", headers,
     { childId, title: `Ordnen-Plan ${RUN}`, durationDays: 7, active: true });
+  // Ohne Leitner (B-476): mit Leitner käme die Abfrage-Runde frisch eingeführter Wörter als Umdrehkarte (Fach 1), nicht
+  // als Buchstaben ordnen. Diese Spec prüft die Bedienung der Stufe; die Leiter selbst prüft `erstbegegnung.spec.ts`.
   await postId(request, `/api/v1/supervisor/study-plans/${planId}/positions`, headers,
-    { exerciseId, stage: 7, cadence: "Daily", useLeitner: true, orderStrategy: "Serial" });
+    { exerciseId, stage: 7, cadence: "Daily", useLeitner: false, orderStrategy: "Serial" });
 
   await sohnLogin(page, { id: String(childId), pin: childPin });
   await page.getByRole("link", { name: /ÜBEN/ }).click();
