@@ -39,3 +39,5 @@ Sitzung des Kindes den Tag übersteht (Token-Laufzeit 12 Stunden).
 ## Verlauf
 
 - **2026-11-10** — angelegt (Prüfgang am Access-Lehrwerk: Übungen, Vater-Sicht, Handy).
+- **2026-11-11** — Entscheidung des Nutzers vorab: Der Server läuft zunächst auf dem lokalen Rechner des Vaters und ist
+  über das Heimnetz erreichbar. Hosting und Tunnel sind damit vorerst zurückgestellt.
