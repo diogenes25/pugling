@@ -126,6 +126,7 @@ Der Graph-Hub: Bereich → maßgebliche Seite(n). Von hier aus ist jede Domäne 
 | **Tests, CI & Codequalität** (Befund + Tore) | [docs/codequalitaet-gates-plan.md](codequalitaet-gates-plan.md) · [docs/code-review.md](code-review.md) · [docs/testabdeckung-plan.md](testabdeckung-plan.md) (Paket aus sieben Stories: Etappen + geteilte Nähte) |
 | **Datenmodell / EF-Struktur** (Umbau: Stand, Entscheidungen, offene Etappen) | [docs/db-struktur-umbau-plan.md](db-struktur-umbau-plan.md) |
 | **Deployment** (Single-Host, Fallstricke, derzeit stillgelegt) | [docs/deployment-azure.md](deployment-azure.md) |
+| **Heimnetz-Betrieb** (Startskript, Firewall, Handy im WLAN) | [docs/heimnetz.md](heimnetz.md) |
 | **Offene Ideen & User-Stories** (der Bereich mit Stufen-Kette, `/backlog`) | [docs/backlog/](backlog/README.md) |
 | **Khan-Academy-Vergleich** (Gemeinsamkeiten, Lücken, Übernahmeplan B-217…B-223) | [docs/khan-academy-vergleich-plan.md](khan-academy-vergleich-plan.md) |
 | **Knowunity-Vergleich** (Klausur-Countdown, Notenprognose, Übernahmeplan B-247…B-253) | [docs/knowunity-vergleich-plan.md](knowunity-vergleich-plan.md) |

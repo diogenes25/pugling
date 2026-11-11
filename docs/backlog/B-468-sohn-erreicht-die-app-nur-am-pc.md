@@ -1,14 +1,15 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/qualitaet, rolle/student, rolle/supervisor]
+tags: [typ/story, status/in-arbeit, bereich/qualitaet, rolle/student, rolle/supervisor]
 aliases: [Handy-Zugang, Hosting, Heimnetz]
-status: ausformuliert
+status: in-arbeit
 prio: P1
 art: Wunsch
-groesse: ""
+groesse: S
 wo: "beides"
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: Rollengang am Access-Lehrwerk 2026-11-10 (Kopie der pugling.db, Sohn im Handy-Format 375×812, Vater-Web)
+wartet_auf: "Nutzer: Firewall-, Router-, Energiespar-Schritte aus docs/heimnetz.md und Test am Handy"
 grund: ""
 ersetzt_durch: []
 ---
@@ -83,36 +84,82 @@ ob die PWA ohne HTTPS reicht.
 
 ## Offene Punkte
 
-1. **Betriebsart:** Ein-Host-Bau (eine Adresse `http://<rechner>:5200`, Frontend gebaut in `wwwroot`) oder
+1. ~~**Betriebsart:**~~ Ein-Host-Bau (eine Adresse `http://<rechner>:5200`, Frontend gebaut in `wwwroot`) oder
    Entwicklungsbetrieb (Vite mit `--host` auf `:5173`, Backend dahinter)? *Empfehlung:* Ein-Host-Bau. Eine Adresse,
    ein offener Port, kein Vite-Server, der bei jedem Speichern neu lädt. Kosten: Nach Frontend-Änderungen muss neu
    gebaut werden.
-2. **Umgebung:** `Production` mit eigenem `Jwt:Key` (Umgebungsvariable im Startskript) oder `Development`?
+2. ~~**Umgebung:**~~ `Production` mit eigenem `Jwt:Key` (Umgebungsvariable im Startskript) oder `Development`?
    *Empfehlung:* `Production`. Kein Seed gegen die echte Datenbank, keine Entwickler-Lesesicht auf Anmerkungen im
    WLAN. Kosten: Der Schlüssel muss einmal erzeugt und gesichert werden; geht er verloren, sind nur die laufenden
    Anmeldungen ungültig.
-3. **HTTPS / PWA:** Reicht zunächst eine Verknüpfung auf dem Startbildschirm ohne Offline-Cache, oder soll die App
+3. ~~**HTTPS / PWA:**~~ Reicht zunächst eine Verknüpfung auf dem Startbildschirm ohne Offline-Cache, oder soll die App
    echt installierbar sein? Dann braucht es ein Zertifikat, dem das Handy vertraut (z. B. `mkcert` und die
    Stammzertifizierungsstelle auf dem Handy installieren). *Empfehlung:* erst ohne HTTPS, am echten Handy prüfen
    (B-31), Zertifikat als eigene Story, falls das Vollbild fehlt.
-4. **Adresse:** Feste IP per Reservierung im Router oder der Rechnername (z. B. `rechner.fritz.box`)?
+4. ~~**Adresse:**~~ Feste IP per Reservierung im Router oder der Rechnername (z. B. `rechner.fritz.box`)?
    *Empfehlung:* Reservierung im Router, die IP steht dann als Lesezeichen im Handy.
-5. **Start:** Von Hand per Skript oder automatisch beim Anmelden an Windows (Aufgabenplanung)? *Empfehlung:*
+5. ~~**Start:**~~ Von Hand per Skript oder automatisch beim Anmelden an Windows (Aufgabenplanung)? *Empfehlung:*
    erst ein Skript (`scripts/heimnetz.ps1`), Autostart später.
-6. **Datenbank:** Läuft der Heimnetz-Server auf der echten `backend/Pugling.Api/pugling.db`, also derselben, die
+6. ~~**Datenbank:**~~ Läuft der Heimnetz-Server auf der echten `backend/Pugling.Api/pugling.db`, also derselben, die
    die Entwicklung nutzt? *Empfehlung:* ja, dann sieht der Vater im Vater-Web dieselben Daten. Kosten: Ein
    parallel laufender Entwicklungsserver darf nicht gleichzeitig auf dieselbe Datei schreiben – das Skript prüft,
    ob Port 5200 schon belegt ist.
-7. **Rechner wach:** Der Rechner darf nicht in den Energiesparmodus, solange das Kind lernen will. Das ist eine
+7. ~~**Rechner wach:**~~ Der Rechner darf nicht in den Energiesparmodus, solange das Kind lernen will. Das ist eine
    Einstellung bei dir, keine Code-Frage – nur zur Kenntnis.
 
-## Akzeptanzkriterien (Entwurf)
+Alle sieben am 2026-11-11 vom Nutzer entschieden: „Übernehme sämtliche Empfehlungen“ → Entscheidungen 1–7.
 
-1. Ein Befehl auf dem Rechner baut das Frontend, legt es nach `wwwroot` und startet die API erreichbar im WLAN.
-2. Ein Handy im selben WLAN öffnet `http://<adresse>:5200/sohn`, das Kind meldet sich an und spielt eine Position.
-3. Der Vater erreicht `/vater` über dieselbe Adresse.
-4. Gegen die echte Datenbank läuft kein Seed.
-5. Die Firewall-Schritte stehen in der Doku und wurden von dir ausgeführt.
+## Entscheidungen
+
+1. **Ein-Host-Betrieb.** Das gebaute Frontend wird von der API mit ausgeliefert, eine Adresse `http://<ip>:5200`,
+   ein offener Port. *Begründung:* kein Vite-Server im Netz, kein Proxy, same-origin – CORS greift nicht.
+   *Kosten:* Nach einer Frontend-Änderung muss neu gebaut werden (das Startskript tut das bei jedem Start).
+   Ausgeliefert wird direkt aus `frontend/dist` (`--webroot`), nicht über eine Kopie nach `wwwroot` – sonst läge
+   im Entwicklungsbetrieb ein veraltetes Frontend unter `:5200`.
+2. **Umgebung `Production`** mit eigenem `Jwt:Key`. *Begründung:* Kein Seed gegen die echte Datenbank, keine
+   Entwickler-Lesesicht auf alle Anmerkungen im WLAN. *Kosten:* Der Schlüssel wird beim ersten Start erzeugt und
+   außerhalb des Repos unter `%LOCALAPPDATA%\Pugling\jwt.key` abgelegt; geht er verloren, muss sich nur jeder neu
+   anmelden.
+3. **Ohne HTTPS starten.** *Begründung:* Erst am echten Handy prüfen, was ohne Service Worker fehlt (B-31).
+   *Kosten:* kein Offline-Cache, auf Android nur eine Verknüpfung statt einer installierten App. Ein Zertifikat
+   wird bei Bedarf eine eigene Story.
+4. **Feste IP per Reservierung im Router.** *Kosten:* ein Handgriff des Nutzers im Router; das Skript zeigt die
+   Adresse beim Start an.
+5. **Start von Hand per Skript** `scripts/heimnetz.ps1`, Autostart später. *Kosten:* Der Vater muss den Server
+   starten, bevor der Sohn lernt.
+6. **Echte Datenbank** `backend/Pugling.Api/pugling.db`. *Begründung:* Vater-Web und Sohn sehen dieselben Daten.
+   *Kosten:* Zwei Server dürfen nicht gleichzeitig darauf schreiben – das Skript bricht ab, wenn der Port belegt
+   ist. Läuft der Entwicklungsserver auf einem anderen Port, schützt das nicht; das steht in der Doku.
+   Der Heimnetz-Server läuft aus einem eigenen Veröffentlichungs-Ordner, damit er die Build-Ausgabe von Entwicklung
+   und Test-Tor nicht sperrt; Inhaltswurzel bleibt `backend/Pugling.Api`, damit Konfiguration und hochgeladene
+   Bilder dieselben sind.
+7. **Rechner wach halten** ist Einstellung des Nutzers, keine Code-Frage; die Schritte stehen in der Doku.
+
+## Akzeptanzkriterien
+
+1. `scripts/heimnetz.ps1` baut Frontend und API und startet die API in `Production`, gebunden an alle
+   Netzwerkadressen, mit Webroot `frontend/dist` und der echten Datenbank.
+2. Über die Netzwerkadresse des Rechners liefert `/sohn` die App, ein Kind meldet sich an und bekommt eine
+   Übungsrunde; `/vater` ist unter derselben Adresse erreichbar.
+3. Gegen die Datenbank läuft kein Seed; eine fehlende Datenbankdatei bricht ab, statt eine leere anzulegen.
+4. Ist der Port belegt, bricht das Skript mit einer Meldung ab.
+5. `docs/heimnetz.md` nennt Firewall-, Router- und Energiespar-Schritte; der Nutzer hat sie ausgeführt und die App
+   am Handy geöffnet (Nutzer-Schritt, `wartet_auf`).
+
+## Schätzung
+
+**Größe: S** — ein Startskript und eine Doku-Seite, kein Code an API oder Frontend (Anker B-01).
+`migration: nein`, `vertragsbruch: nein`.
+
+**Risiken:** `--webroot` und `--contentRoot` müssen von `WebApplication.CreateBuilder(args)` übernommen werden
+(nachmessen). Der Abbruch bei belegtem Port schützt nur denselben Port. Eine Firewall-Regel kann ich nicht testen –
+eine Verbindung vom Rechner auf seine eigene Netzwerkadresse geht nicht durch die eingehende Filterung.
+
+**Angriffsplan:** Skript schreiben → gegen eine Kopie der Datenbank auf einem anderen Port starten → über die
+Netzwerkadresse `/sohn`, `/vater`, Login und Übungsrunde messen, Seed-Freiheit an Zeilenzahlen prüfen → Doku.
+
+**Testweg:** kein Integrationstest (keine Zeile C#); Messung mit `curl` gegen den gestarteten Server auf der Kopie,
+danach das Handy des Nutzers.
 
 ## Verlauf
 
@@ -121,3 +168,15 @@ ob die PWA ohne HTTPS reicht.
   über das Heimnetz erreichbar. Hosting und Tunnel sind damit vorerst zurückgestellt.
 - **2026-11-11** — ausformuliert: CORS und API-Adresse sind schon richtig (relativ, Ein-Host-Betrieb existiert); offen
   sind Startweg, Umgebung, HTTPS/PWA, Adresse und Firewall – sieben Fragen an den Nutzer.
+- **2026-11-11** — gegrillt im Dialog: Nutzer übernimmt alle sieben Empfehlungen; geschätzt S, nur Skript und Doku.
+- **2026-11-11** — in Arbeit, gebaut: `scripts/heimnetz.ps1` und [heimnetz.md](../heimnetz.md). Gemessen gegen eine
+  Kopie der `pugling.db` auf Port 5282 über die Netzwerkadresse `192.168.178.55` (dieser Rechner, nicht das Handy):
+  `Production`, Inhaltswurzel `backend/Pugling.Api`, Webroot `frontend/dist`; `/sohn`, `/vater`, `/`,
+  `manifest.webmanifest` und `sw.js` liefern 200; Login als Sohn und Vater mit dem neuen Schlüssel; nach `plan`
+  (B-463) und Einschalten meldet sich der Sohn **in der Oberfläche** im Handy-Format an und sieht die vier
+  Wortlisten mit 3/4/2/2 fälligen Karten; eine Übungsrunde liefert 3 Karten. Kein Seed (Zeilenzahlen von
+  Übungen, Kindern, Erwachsenen, Shop-Artikeln unverändert). Abbruch bei belegtem Port und bei fehlender
+  Datenbank gemessen. Nachgebessert: Die Adressliste zeigte auch VirtualBox- und VPN-Adressen, jetzt nur Netze mit
+  Standard-Gateway. Nicht messbar von hier: die Firewall (eine Verbindung auf die eigene Adresse geht nicht durch
+  die eingehende Filterung) und das echte Handy – das wartet auf den Nutzer. Kein Reviewer: keine Zeile C# oder
+  TypeScript geändert.
