@@ -111,48 +111,33 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     }
 
     /// <summary>
-    /// Days after its introduction (<see cref="LadderStart"/> for a word not introduced yet) from which a word is asked
-    /// at the target in practice and test alike, whatever its box (B-476, decision 7). The father's choice, and the
-    /// honest path's length: with the default intervals a word practised every day is first asked in writing on day 7
-    /// (shown and turned over on day 1, chosen on day 3, typed on day 7), so the deadline only meets a word the child
-    /// keeps low - by not practising or by failing on purpose.
+    /// Days after its introduction from which a word is asked at the target in practice and test alike, whatever its
+    /// box (B-476, decision 7). The father's choice, and the honest path's length: with the default intervals a word
+    /// practised every day is first asked in writing on day 7 (shown and turned over on day 1, chosen on day 3, typed
+    /// on day 7), so the deadline only meets a word the child keeps low - by not practising or by failing on purpose.
+    /// It counts from the actual introduction, not from a day the word was due: the daily dose never catches up a day
+    /// not played, so a due date would let a week of missed days end the ladder of every later word before the child
+    /// ever met it. Each word so gets at most one week of ladder; missed days are the malus' to punish.
     /// </summary>
     public const int LadderDays = 7;
 
     /// <summary>
-    /// The day the ladder of one word started: the day the child first met it (B-476, decision 7, "from the actual
-    /// introduction"). A due date would not do: the daily dose never catches up a day not played, so after a week of
-    /// missed days every later word would meet the deadline cold and be asked in writing at first sight. A word not
-    /// introduced yet starts today under a dose - the test introduces it itself - and without a dose on the day its
-    /// position joined the plan (never before the plan's start), since only practice introduces there and the child
-    /// must not escape the deadline by not practising. Each word so gets at most one week of ladder; missed days are
-    /// the malus' to punish, not the deadline's.
-    /// </summary>
-    public static DateOnly LadderStart(PlanPosition pos, StudyPlan plan, DateOnly? introducedAt, DateOnly day)
-    {
-        if (introducedAt is { } introduced) return introduced;
-        if (pos.NewItemsPerDay > 0) return day;
-        var added = DateOnly.FromDateTime(pos.CreatedAt);
-        return added > plan.StartDate ? added : plan.StartDate;
-    }
-
-    /// <summary>
     /// The stage one item is examined at in the test (B-476): the ladder of practice, but never below a checked rung -
     /// a self-assessment is a claim, and the duty is "passed under check". A rung the child would only judge itself is
-    /// raised box by box to the first checked one (for vocabulary: the choice). An item not introduced yet (a cold
-    /// item of the daily portion) counts as box 1. When the target itself is unchecked there is nothing to raise to,
+    /// raised box by box to the first checked one (for vocabulary: the choice). An item not introduced yet counts as
+    /// box 1 - the child's test introduces it on the spot (<see cref="IntroduceAsync"/>), so its day is today. When the target itself is unchecked there is nothing to raise to,
     /// and without Leitner no box moves - both keep the target for every item.
     /// <para>
     /// The box is the child's to move - not practising keeps a word in box 1, and so does answering wrong on purpose.
-    /// So the ladder ends by the calendar too: <see cref="LadderDays"/> days after its <paramref name="ladderStart"/> a
+    /// So the ladder ends by the calendar too: <see cref="LadderDays"/> days after <paramref name="introducedOn"/> a
     /// word is examined at the target whatever its box, and no behaviour of the child stretches the easier form beyond that.
     /// </para>
     /// </summary>
-    public static int TestItemStage(IExerciseType type, PlanPosition pos, int target, int? box, DateOnly ladderStart,
+    public static int TestItemStage(IExerciseType type, PlanPosition pos, int target, int? box, DateOnly introducedOn,
         DateOnly day)
     {
         if (!pos.UseLeitner || !type.IsTypedStage(target)) return target;
-        if (ladderStart.AddDays(LadderDays) <= day) return target;
+        if (introducedOn.AddDays(LadderDays) <= day) return target;
         for (var b = Math.Max(1, box ?? 1); b < pos.MaxBox; b++)
         {
             var stage = type.CardStage(target, b);
@@ -246,8 +231,9 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     }
 
     /// <summary>
-    /// Marks the given contents as introduced on <paramref name="day"/> and due at once - for a test that asks
-    /// never-shown contents under a daily dose (<see cref="DailyTestPortion"/>). The caller saves.
+    /// Marks the given contents as introduced on <paramref name="day"/> and due at once - for a child's test that asks
+    /// never-shown contents (the daily portion under a dose, <see cref="DailyTestPortion"/>, otherwise the whole pool
+    /// before any practice). The caller saves.
     /// </summary>
     public async Task IntroduceAsync(int positionId, IEnumerable<int> itemIndices, DateOnly day, CancellationToken ct)
     {

@@ -208,13 +208,14 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
                 ItemIndex = i,
                 StageValue = explicitStage ? stage : PositionPlayService.TestItemStage(type, pos, stage,
                     progress.GetValueOrDefault(i)?.Box,
-                    PositionPlayService.LadderStart(pos, plan, progress.GetValueOrDefault(i)?.IntroducedAt, day), day),
+                    progress.GetValueOrDefault(i)?.IntroducedAt ?? day, day),
             }).ToList(),
         };
         db.TestAttempts.Add(attempt);
-        // Under a dose the child's test introduces what it asks cold (see DailyTestPortion); the supervisor's
-        // preview must not move the child's learning state.
-        if (pos.NewItemsPerDay > 0 && User.IsStudent())
+        // The child's test introduces what it asks cold, with or without a dose (B-476 decision 7): first contact
+        // counts, so the word's week of ladder starts today and it is a choice now, never in writing at first sight.
+        // The supervisor's preview must not move the child's learning state.
+        if (User.IsStudent())
             await play.IntroduceAsync(positionId, pool.Where(i => !introduced.Contains(i)), day, ct);
         await db.SaveChangesAsync(ct);
 

@@ -392,22 +392,33 @@ public class KartenstufeTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         Assert.Equal([4, 6, 4, 4], RowStages(attemptId));
     }
 
-    // AK 10, without a dose: only practice introduces a word there, so a child who never practises would keep every word
-    // "new" - and on the choice rung - for good. The deadline then counts from the day the position joined the plan.
-    // Red if a never-introduced word ignored the deadline (row 1) or counted from the plan's start instead of the
-    // position's (row 2: an old plan, a position added two days ago), or from the position's date when the plan started
-    // later (row 3: a position prepared eight days before a plan that started two days ago - red if the later of the
-    // two dates were not taken).
-    [Theory]
-    [InlineData(8, 8, TestStage.FreeText)]
-    [InlineData(8, 2, TestStage.MultipleChoice)]
-    [InlineData(2, 8, TestStage.MultipleChoice)]
-    public async Task Nie_Geuebtes_Wort_Zaehlt_Ab_Aufnahme_Der_Position(int planDaysAgo, int positionDaysAgo,
-        TestStage expected)
+    // AK 11, without a dose: a child that never practised meets the words cold in the test. The test introduces them
+    // itself, so they are a choice now - not in writing because the position joined the plan eight days ago - and
+    // their week starts today: afterwards practice turns them over (box 1), with no second introduction. The father's
+    // preview of the same position introduces nothing. Red if only a dose let the test introduce (IntroducedAt stays
+    // empty), if a cold word counted from any day before today (in writing), or if the preview moved the child's state.
+    [Fact]
+    public async Task Test_Fuehrt_Ungesehene_Woerter_Auch_Ohne_Dosis_Ein()
     {
-        var s = await SetupNeverPractisedAsync(planDaysAgo, positionDaysAgo, dose: 0);
+        var s = await SetupNeverPractisedAsync(8, 8, dose: 0);
+        var father = await TestApi.AdultAsync(factory);
+        (await father.PostAsJsonAsync($"/api/v1/student/study-plans/{s.PlanId}/positions/{s.PositionId}/tests", new { }))
+            .EnsureSuccessStatusCode();
+        Assert.Empty(IntroducedOn(s.PositionId));
+
         var (attemptId, _) = await TakeTestAsync(s, s.Child);
-        Assert.All(RowStages(attemptId), stage => Assert.Equal((int)expected, stage));
+        Assert.All(RowStages(attemptId), stage => Assert.Equal((int)TestStage.MultipleChoice, stage));
+        var today = DateOnly.FromDateTime(factory.Clock.GetUtcNow().UtcDateTime);
+        Assert.Equal([today, today, today, today], IntroducedOn(s.PositionId));
+        Assert.All(await CardsAsync(s, await StartAsync(s)), c => Assert.Equal((int)TestStage.SelfAssess, c.GetProperty("stage").GetInt32()));
+    }
+
+    private List<DateOnly> IntroducedOn(int positionId)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        return [.. db.PositionItemProgress.Where(p => p.PlanPositionId == positionId && p.IntroducedAt != null)
+            .OrderBy(p => p.ItemIndex).Select(p => p.IntroducedAt!.Value)];
     }
 
     // AK 11, under a daily dose (2 a day) and honestly behind it: the position joined the plan thirty days ago, but the
@@ -501,9 +512,9 @@ public class KartenstufeTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         Assert.All(RowStages(attemptId), stage => Assert.Equal((int)TestStage.MultipleChoice, stage));
     }
 
-    // A never-introduced word without a dose counts from the day its position joined the plan, and the day logic runs on
-    // the server's clock - so the position is stamped from that clock, not the wall's. Red if CreatedAt fell back to the
-    // entity's DateTime.UtcNow.
+    // The day logic runs on the server's clock, so a position is stamped from that clock, not the wall's - otherwise its
+    // date would sit on another day in tests and near midnight. Red if CreatedAt fell back to the entity's
+    // DateTime.UtcNow.
     [Fact]
     public async Task Position_Traegt_Das_Datum_Der_Serveruhr()
     {

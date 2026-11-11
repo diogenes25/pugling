@@ -12,7 +12,7 @@ quelle: Rückmeldung von Theodor nach dem ersten echten Lerntag (2026-11-11), vo
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
-wartet_auf: "pugling-reviewer für 1bcef11"
+wartet_auf: "pugling-reviewer für die Einführung im Test ohne Dosis"
 ---
 
 # B-476 · Die Stufe einer Vokabelkarte steigt mit ihrem Leitner-Fach: erst umdrehen, dann auswählen, dann schreiben
@@ -83,7 +83,7 @@ die drei Punkte nach der dortigen Empfehlung entschieden, Vetorecht beim Vater).
    Kosten: Stufe je Zeile statt je Versuch an drei Stellen des Testcontrollers; Ziel und Malus bleiben unberührt.
 7. **Spätestens sieben Tage nach seiner Einführung wird ein Wort geschrieben – im Test und beim Üben.** Vom Vater
    am 2026-11-11 entschieden („Nach 7 Tagen schriftlich“) nach dem Delta-Review-Fund, dass das Kind das Fach und damit die
-   Form selbst steuert (nicht üben → Fach 1; beim Üben absichtlich falsch → Fach 1). Danach dreimal nachgeschärft:
+   Form selbst steuert (nicht üben → Fach 1; beim Üben absichtlich falsch → Fach 1). Danach viermal nachgeschärft:
    - ~~Nur der Test, nicht das Üben.~~ → **„Üben zieht mit“** (Vater, in der Review-Sitzung „nachtlauf“ entschieden und
      von dort übermittelt): nach Ablauf der Frist fragt auch das Üben auf der Zielstufe. Sonst würde ein Wort, das
      ehrlich immer wieder auf Fach 1 fällt, ab Tag 7 schriftlich geprüft, ohne je schriftlich geübt worden zu sein.
@@ -93,20 +93,23 @@ die drei Punkte nach der dortigen Empfehlung entschieden, Vetorecht beim Vater).
      ihren Soll-Tag. Nach sieben verpassten Tagen (fünf Tage die Woche geübt: nach vier Wochen; zwei Wochen Ferien: auf
      einen Schlag) käme jedes neue Wort für den Rest des Plans kalt und sofort schriftlich – Malus ohne Trick, genau
      das, was die Leiter verhindern soll.
+   - ~~Ohne Dosis zählt ein nie eingeführtes Wort ab der Aufnahme der Position.~~ → **„Test führt ein“** (Vater, hier
+     direkt, nach dem Review-Fund zu `1bcef11`): sonst schrieb ein Kind, das acht Tage nicht übte, im Test kalt, und nach
+     dem ersten Üben kam dasselbe Wort wieder als Umdrehkarte – die Form sprang hoch und wieder runter.
 
-   **Leiterstart** (`PositionPlayService.LadderStart`) = der Tag der tatsächlichen Einführung (`IntroducedAt`). Ein nie
-   eingeführtes Wort (nur im Test möglich – beim Üben ist es eine Einführungskarte): unter einer Dosis **heute**, weil
-   der Test es selbst einführt; ohne Dosis die Aufnahme der Position in den Plan (nie vor dem Planstart), weil dort nur
-   das Üben einführt und das Kind der Frist sonst durch Nicht-Üben entkäme. Ab Leiterstart + 7 Tage: Zielstufe, gleich
-   in welchem Fach. Jedes Wort bekommt so höchstens eine Woche Leiter – begrenzt, egal was das Kind tut.
-   **Bewusst offen** (vom Vater so entschieden): wer unter Dosis weder übt noch testet, bekommt jede neue Portion wieder
-   als Auswahl. Dagegen steht der Münz-Malus für die gerissene Pflicht, nicht die Frist.
+   **Frist** = sieben Tage ab der tatsächlichen Einführung (`IntroducedAt`), die erste Begegnung zählt – beim Üben
+   oder im Test. Der Test des Kindes führt jedes noch nie gesehene Wort, das er fragt, selbst ein, mit und ohne Dosis
+   (`PositionPlayService.IntroduceAsync`); es kommt als Auswahl, seine Woche beginnt am Testtag. Die Vorschau des
+   Vaters führt nichts ein. Ab Einführung + 7 Tage: Zielstufe, gleich in welchem Fach. Jedes Wort bekommt so
+   höchstens eine Woche Leiter, und die Form steigt nur.
+   **Bewusst offen** (vom Vater so entschieden): wer weder übt noch testet, bekommt neue Wörter beim ersten Kontakt
+   wieder als Auswahl. Dagegen steht der Münz-Malus für die gerissene Pflicht, nicht die Frist.
    Begründung der sieben Tage: genau der ehrliche Weg – mit den Standardintervallen wird ein täglich geübtes Wort an Tag 7
    zum ersten Mal geschrieben (Tag 1 zeigen und umdrehen, Tag 3 auswählen, Tag 7 schreiben; siehe Entscheidung 4). Die
    Frist trifft also nur ein Wort, das das Kind niedrig hält. (Eine Zwischenfassung behauptete „nach etwa drei Tagen“ –
-   falsch gerechnet, vom zweiten Review gefunden.) Kosten: `LadderStart` und ein Vergleich in `CardStage` und
-   `TestItemStage`; keine Migration (`IntroducedAt`, `CreatedAt` gibt es schon). `PlanPosition.CreatedAt` stempelt jetzt
-   mit dem `TimeProvider`, derselben Uhr wie die Tageslogik.
+   falsch gerechnet, vom zweiten Review gefunden.) Kosten: je ein Vergleich in `CardStage` und `TestItemStage`, die
+   Einführung im Test auch ohne Dosis; keine Migration. `PlanPosition.CreatedAt` stempelt seit einer Zwischenfassung mit
+   dem `TimeProvider`, derselben Uhr wie die Tageslogik – das bleibt, auch wenn die Frist es nicht mehr liest.
 
 ## Akzeptanzkriterien
 
@@ -123,9 +126,10 @@ die drei Punkte nach der dortigen Empfehlung entschieden, Vetorecht beim Vater).
    wie bisher.
 10. Einführung sieben oder mehr Tage her → Test **und Üben** auf der Zielstufe, auch auf Fach 1; sechs Tage → noch
     Auswahl (Test) bzw. Umdrehkarte (Üben).
-11. Nie eingeführtes Wort im Test: ohne Dosis Leiterstart = Aufnahme der Position (bzw. Planstart, wenn später); unter
-    Dosis = Testtag, auch wenn das Kind weit hinter der Dosis liegt (kalt → Auswahl). Ein eingeführtes Wort zählt immer
-    ab seiner Einführung, auch wenn die Position schon länger im Plan steht.
+11. Nie eingeführtes Wort im Test des Kindes, mit oder ohne Dosis: kommt als Auswahl und gilt danach als am Testtag
+    eingeführt (das Üben dreht es dann um, keine zweite Einführung) – auch wenn die Position schon länger im Plan steht
+    oder das Kind weit hinter der Dosis liegt. Die Vorschau des Vaters führt nichts ein. Ein eingeführtes Wort zählt
+    immer ab seiner Einführung.
 
 ## Verlauf
 
@@ -266,4 +270,21 @@ die drei Punkte nach der dortigen Empfehlung entschieden, Vetorecht beim Vater).
   Leiter, und läuft jetzt ohne Leitner (Grund am Aufruf); danach `buchstaben-ordnen` + `erstbegegnung` **3 passed**.
   **Ausgerollt:** `scripts/heimnetz.ps1` neu gestartet (Sicherung `pugling.db.bak-auto-20261111-230240`, API-Build
   23:03, `/sohn` antwortet 200).
+- **2026-11-11** — Review `pugling-reviewer` zu `1bcef11`: keine 🔴, Code und Tests korrekt (1315/1315). 🟡 ohne Dosis
+  springt die Form: acht Tage nicht geübt → im Test kalt schriftlich (Frist ab Aufnahme der Position), nach dem ersten
+  Üben wieder Umdrehkarte. Vom Vater direkt entschieden: **„Test führt ein“**. Gebaut: `PositionTestsController.Start`
+  führt die kalt gefragten Wörter für das Kind immer ein (vorher nur unter Dosis); `LadderStart` entfällt, die Frist
+  im Test zählt ab `IntroducedAt ?? Testtag`; `TestItemStage` nimmt `introducedOn`. 🟢 zwei Kommentare präzisiert
+  (`2ac8291`). Test `Test_Fuehrt_Ungesehene_Woerter_Auch_Ohne_Dosis_Ein` ersetzt `Nie_Geuebtes_Wort_Zaehlt_Ab_Aufnahme_Der_Position`
+  (Vorschau des Vaters führt nichts ein; Test → Auswahl, `IntroducedAt` = heute; danach Üben = Umdrehkarte). Backend
+  **1313/1313**. Mutanten mit `.claude/scripts/mutant-probe.py`, alle rot am benannten Test, Grundlinie danach grün
+  (ein erster Lauf traf für R1 das erste `if (User.IsStudent())` der Datei und meldete drei Builds als gescheitert –
+  von Hand kompilierte der Mutant; neu gemessen mit fester Zeile):
+
+  | Mutante | Stelle | gemessen |
+  |---|---|---|
+  | R1 Einführung im Test nur unter Dosis | `PositionTestsController.Start` | rot |
+  | R2 kaltes Wort zählt 30 Tage zurück | `PositionTestsController.Start` | rot |
+  | R3 Vorschau des Vaters führt ein | `PositionTestsController.Start` | rot |
+  | R4 Frist im Test einen Tag zu spät | `TestItemStage` | rot |
 
