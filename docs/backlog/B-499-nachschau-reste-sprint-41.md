@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-12-nachtlauf.md (Nachschau Sprint 41 in der Retro von Sprint 42)
 unverifiziert: false
 entgangen_bei: [B-467, B-418]
+nachgeschaut: 2026-11-12
 grund: ""
 ersetzt_durch: []
 ---
@@ -83,3 +84,9 @@ gegen den Server nachgerechnet, nicht im Browser).
   nach der letzten Änderung (`full-flow`, `vater-von-null`, `loeschen-meldet-sich`, `bestaetigung-ueberlebt`,
   `creator-lehrwerk-weg`; die Lösch-Specs nehmen den Dialog nur an, den Wortlaut prüft keine).
   **Rollengang (Vater) als Maschinengang**; nicht im Browser angesehen: die drei Lösch-Fragen und der Inventar-Satz.
+- **2026-11-12** — Nachschau (Retro Sprint 45): frischer `frontend-reviewer` an `a719ed7` (gelesen per `git show`).
+  Geprüft: wer die vier Codes bekommt (`MeController.cs:186/291/292/351`, `ShopController.cs:441`; „deine Gems/Münzen"
+  erreicht nur das Kind), i18n-Gleichstand (Deutsch typgeprüft über `i18next.d.ts`), die drei Lösch-Fragen gegen
+  `ExerciseControllerBase.cs:505-507`, `SeriesUnitsController.cs:164-169`, `TextbookSeriesController.cs:296-301` und die
+  Cascades, `stale`/`reload` der Zählabfrage, je Test die Änderung, die ihn rot macht. Kein 🔴/🟡; drei 🟢 →
+  [B-504](B-504-nachschau-reste-sprint-44.md).

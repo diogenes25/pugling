@@ -250,13 +250,14 @@ function ClassTestDetail({ id, subjectId, onChanged }:
 }
 
 /** Übungen aus schwach benoteten Arbeiten zum Wiederholen. */
-function RepeatPanel({ repeat }: { repeat: ReturnType<typeof useAsync<KlassenarbeitRepeat>> }) {
+export function RepeatPanel({ repeat }: { repeat: ReturnType<typeof useAsync<KlassenarbeitRepeat>> }) {
   return (
     <section>
       <h3 className="h-section">Wiederholen: schwach benotete Arbeiten</h3>
       {repeat.loading && repeat.data === null ? <div className="loading">Lade…</div> : repeat.error ? <div className="banner err">{repeat.error}</div> : repeat.data && (
         repeat.data.sources.length === 0
-          ? <p className="muted">Keine Arbeiten mit Note ≥ {repeat.data.minBadGrade.toFixed(1)} – nichts nachzuholen. 👍</p>
+          // Kein Erfolg: dasselbe gilt für ein Kind ganz ohne bewertete Arbeit (B-496).
+          ? <p className="muted">Keine Arbeit mit Note ≥ {repeat.data.minBadGrade.toFixed(1)} – aus Klassenarbeiten ist nichts zu wiederholen.</p>
           : (
             <>
               <p className="muted">{repeat.data.sources.length} Arbeit(en) ≥ {repeat.data.minBadGrade.toFixed(1)}:

@@ -38,13 +38,14 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
       .then(setData)
       // Manche Übungen haben keine einzeln prüfbaren Aufgaben (ein Lesetext ohne Fragen). Der Server sagt
       // das mit `no_checkable_content`; die technische englische Meldung würde hier wie ein Defekt aussehen.
-      // Der Satz ist *hier* länger als die zentrale Fassung, weil er die Folge nennt (zuweisen ja,
-      // durchspielen nein). Ein Aufsatz kommt nicht mehr hierher: er liefert eine Ansicht (B-15, unten).
+      // Der Satz ist *hier* länger als die zentrale Fassung, weil er die Folge nennt (durchspielen nein) – und
+      // keinen Ausweg: Zuweisen hat eigene Sperren (B-496). Ein Aufsatz kommt nicht mehr hierher: er liefert eine
+      // Ansicht (B-15, unten).
       //
       // Der verwandte Fall „Übung noch nicht gefüllt" (`exercise_empty`) braucht keinen Zweig: er ist
       // nicht vorschau-spezifisch und kommt deutsch aus `errorMessage` (GERMAN_PROBLEM_TEXT in lib/api).
       .catch((e) => setError(e instanceof ApiError && e.code === "no_checkable_content"
-        ? "Diese Übung hat keine einzeln prüfbaren Aufgaben. Du kannst sie zuweisen, aber nicht durchspielen."
+        ? "Diese Übung hat keine einzeln prüfbaren Aufgaben – durchspielen lässt sie sich darum nicht."
         : errorMessage(e)));
   }, [exerciseId, stage]);
 

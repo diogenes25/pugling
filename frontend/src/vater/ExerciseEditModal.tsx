@@ -24,6 +24,16 @@ import { ExerciseItemMediaPanel } from "./VocabMediaPanel";
 import { ListenAusfall } from "../components/ListenAusfall";
 
 /**
+ * Die Frage vor dem Entfernen einer Vokabel aus der Übung. Der Server nimmt sie nur aus einer Übung, die in keinem
+ * Lehrplan steckt (sonst `exercise_items_locked`); gespielt sein kann sie trotzdem – nach dem Löschen ihres Plans. Mit
+ * dem Eintrag geht dann der Lernstand der Kinder an ihm (Cascade `ExerciseItem` → `ItemProgress`, B-502); die Vokabel
+ * selbst bleibt im Store (Restrict).
+ */
+export const removeItemQuestion = (front: string, back: string) =>
+  `„${front} → ${back}" aus dieser Übung entfernen? Die Vokabel bleibt im Store; was Kinder an diesem Eintrag gelernt `
+  + "haben, geht im Lernstand mit verloren.";
+
+/**
  * Eine bestehende Übung ändern. Ohne diesen Dialog wäre ein Tippfehler nur durch Löschen und Neuanlegen
  * zu beheben – und Löschen ist gesperrt, sobald die Übung in einem Lehrplan steckt.
  *
@@ -567,7 +577,7 @@ function ItemEditor({ detail }: { detail: ExerciseDetail }) {
                     return res;
                   }}
                   onRemove={() => {
-                    if (!confirmAction(`„${it.front} → ${it.back}" aus dieser Übung entfernen? Die Vokabel bleibt im Store.`)) return;
+                    if (!confirmAction(removeItemQuestion(it.front, it.back))) return;
                     act(() => api.deleteExerciseItem(detail.seriesId, detail.seriesUnitId, detail.id, it.id), "Wort entfernt.");
                   }} />
               ))}

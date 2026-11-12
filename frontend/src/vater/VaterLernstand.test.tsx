@@ -87,3 +87,21 @@ describe("Lernstand – die zweite Abfrage", () => {
     expect(screen.queryByText(/sitzt alles/)).toBeNull();
   });
 });
+
+// B-502: ohne „nur schwache" steht der Leerfall allein auf der Liste. Rot, wenn er nach einem Kinderwechsel aus der
+// (leeren) Liste des vorigen Kindes kommt, solange die des neuen noch lädt.
+describe("Lernstand – Wortliste nach einem Kinderwechsel", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it("sagt für das neue Kind nichts aus dem Stand des vorigen", async () => {
+    vi.spyOn(api, "childWordMastery").mockImplementation((id) =>
+      id === 1 ? Promise.resolve(page(0)) : new Promise<Paged<WordMastery>>(() => {}));
+    const { rerender } = render(<AuthProvider><WeakWords childId={1} /></AuthProvider>);
+    fireEvent.click(screen.getByLabelText(/nur schwache/));
+    expect(await screen.findByText(/Noch kein Lernstand/)).toBeTruthy();
+
+    rerender(<AuthProvider><WeakWords childId={2} /></AuthProvider>);
+
+    expect(screen.queryByText(/Noch kein Lernstand/)).toBeNull();
+  });
+});

@@ -1,4 +1,5 @@
 using System.Globalization;
+using Pugling.Agent.Creator.Briefing;
 using Pugling.Agent.Creator.Drafting;
 using Pugling.Agent.Creator.Images;
 using Pugling.Client;
@@ -590,7 +591,8 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
                 $"Kind {childId} ist für dieses Konto nicht sichtbar – es existiert nicht, oder das Konto betreut es nicht.");
         }
         var series = books
-            .Where(b => b.SeriesId is not null && (profile.SubjectId is null || b.SubjectId == profile.SubjectId))
+            // The briefing's subject comparison, so a free-text subject counts here too (B-498).
+            .Where(b => b.SeriesId is not null && ProfileFit.Teaches(profile, b.SubjectId, b.SubjectName))
             .Select(b => b.SeriesId!.Value)
             .Distinct()
             .ToList();
@@ -633,12 +635,22 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
 
         // Two books with a profile each (English and Latin) are a choice of subject, which the score cannot make: it
         // weighs grade and school type, so one point ahead would pick the subject unannounced (B-481).
-        var books = onChildsBooks.DistinctBy(m => m.Profile.SeriesId).ToList();
-        if (books.Count > 1)
+        var bySeries = onChildsBooks.GroupBy(m => m.Profile.SeriesId!.Value).ToList();
+        if (bySeries.Count > 1)
             throw new AgentUsageException(
                 $"Für Kind {childId} gibt es mehrere Lehrbücher mit Profil – wähle mit --profile <id>: "
-                + string.Join(", ", books.Select(m => $"[{m.Profile.Id}] {m.Profile.Name}")));
-        return books[0].Profile;
+                + string.Join(", ", bySeries.Select(g => g.First()).Select(m => $"[{m.Profile.Id}] {m.Profile.Name}")));
+        // On that one book, a profile that teaches the series' subject before a higher score that does not: the user named
+        // no profile, so the briefing must not reject one in their name (B-500). None fits - the best one, and the
+        // briefing says why.
+        // Only where the series has a subject: without one, the briefing takes the profile's, so every profile fits there
+        // and the score decides as before (review of B-498).
+        var series = await GetSeriesOrUsageErrorAsync(bySeries[0].Key, ct);
+        var candidates = bySeries[0].ToList();
+        return (series.SubjectId is null
+                ? candidates[0]
+                : candidates.FirstOrDefault(m => ProfileFit.Teaches(m.Profile, series.SubjectId, series.SubjectName))
+                  ?? candidates[0]).Profile;
     }
 
     /// <summary>

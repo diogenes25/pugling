@@ -323,3 +323,47 @@ die Supervisor-Controller zu greppen – genau (CR) in anderer Gestalt.
 ein Supervisor-Controller liefert, darf kein „du/dein" enthalten – die Abbildung Code → Controller ist im Quelltext lesbar
 (Suche nach `ApiErrors.<Name>` unter `Controllers/Supervisor` und den Services, die sie rufen – wie das Tor schon `api.ts`
 liest), anders als Knopf → Route. Neues Tor → erst nach deiner Entscheidung.
+
+## Sprint 45 — Ziel & Umfang (auf Zuruf „Yes, next sprint")
+
+**Sprint-Ziel:** *Jede Meldung und jede Frage, die Creator und Vater lesen, nennt einen Ausweg, den dieser Leser gehen
+kann, und eine Folge, die wirklich eintritt – und die Konsole wählt nie ein Profil, das das Briefing danach ablehnt.*
+**Umfang:** [B-500](backlog/B-500-profil-meldung-fremdes-profil-korrigieren.md),
+[B-498](backlog/B-498-reste-review-sprint-42.md), [B-496](backlog/B-496-reste-review-sprint-41.md),
+[B-502](backlog/B-502-reste-review-sprint-44.md) – alle `art: Defekt`. Produktfrage aus B-502 →
+[B-503](backlog/B-503-lernstand-ueberlebt-loeschen.md) (`Frage`, nicht entschieden).
+
+## Iteration 45 — umgesetzt
+
+- Backend: `ProfileFit` verzweigt nach `IsOwn`; `ProfileFit.Teaches` teilen Briefing und Konsole (Buchwahl eines
+  Freitext-Profils, Profilwahl auf dem Buch des Kindes – nur bei einer Reihe mit Fach). Frontend: Testmodus ohne Ausweg,
+  Klassenarbeiten-Leerfall ohne Erfolg, Wortliste nicht aus dem Stand des vorigen Kindes, Entfernen einer Vokabel nennt
+  den Lernstand.
+- Rote Proben: Backend 4 erwartet/gemessen (davon 1 Gegenfall grün), Review-Test 1/1; Frontend 4/4. Mutanten 9/9.
+- Review-Zähler: **2** (🟡 Bevorzugung bei Reihe ohne Fach; 🟡 Doku am falschen Symbol). Commit siehe unten.
+
+## Runde 16 — Rollengang / Abnahme (Sprint 45)
+
+Backend **1410/1410**, Vitest **789/789**, `tsc -b` sauber, Playwright 2/2.
+
+- **Creator – abgenommen als Maschinengang.** Fremdes Profil: kein Korrigier-Rat; nur `--child`: das passende Profil des
+  Buchs spricht (Persona im Prompt), in einer Reihe ohne Fach der Fachlehrer. *„Er sagt mir nicht mehr, ich soll das
+  Profil meines Kollegen ändern."* **Nicht gefahren:** Ollama.
+- **Vater – abgenommen als Komponententest.** Vier Sätze sagen, was passiert; nicht im Browser angesehen.
+- **Sohn – Regressionszeuge.** Kein Pfad im Diff.
+
+## Retrospektive (Sprint 45)
+
+**Nachschau:** Sprint 44 (B-499) von einem frischen `frontend-reviewer` an `a719ed7` (gelesen). Geprüft: wer die vier Codes
+bekommt, i18n-Gleichstand, die drei Lösch-Fragen gegen Controller und Cascades, `stale`/`reload`, je Test die rote
+Änderung. **Kein 🔴/🟡** – drei 🟢 → [B-504](backlog/B-504-nachschau-reste-sprint-44.md) (`entgangen_bei: B-499`).
+`nachgeschaut` an B-499. Zweite Nachschau ohne 🟡 in Folge (nach Sprint 43).
+
+**Was die eigenen Tore durchgelassen haben:** das 🟡 im Backend war eine Regel, die ich in die Konsole *geholt* habe, ohne
+die Fallunterscheidung des Briefings mitzunehmen (Reihe ohne Fach → Fach des Profils). „Die Konsole leiht sich die Senke"
+heißt: sie muss dieselbe Eingabe bekommen wie die Senke, nicht nur dieselbe Funktion. Und ein Test, den ich „verstärkt"
+hatte, nannte das Profil selbst und bewies nichts – erst das Review sah es.
+
+**Vorschlag (nicht gelandet):** **(DB)** Wer eine Funktion der Senke an einer zweiten Stelle ruft, ruft sie mit den
+Eingaben, die die Senke selbst bildet (hier: Fach = Reihe ?? Profil) – am besten über eine Methode der Senke, die diese
+Eingaben bildet, statt sie am Aufrufer nachzubauen.

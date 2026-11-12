@@ -33,4 +33,15 @@ describe("Testmodus – ein Fehler beim Laden", () => {
 
     expect(text).not.toMatch(/Füge|Wörter/);
   });
+
+  // B-496: eine Übung ohne einzeln prüfbare Aufgaben nennt nur, was sperrt. Rot, wenn der Satz wieder „zuweisen" als
+  // Ausweg anbietet – Zuweisen hat eigene Sperren (Meldungsregel 2026-11-07).
+  it("nennt bei einer Übung ohne prüfbare Aufgaben keinen Ausweg", async () => {
+    vi.spyOn(api, "previewExercise").mockRejectedValue(new ApiError(409, "x", "t-3", "no_checkable_content"));
+    render(<ExercisePreviewModal exerciseId={1} title="Unit 1" onClose={() => {}} />);
+
+    const text = (await screen.findByText(/prüfbaren Aufgaben/)).textContent ?? "";
+
+    expect(text).not.toMatch(/zuweisen/);
+  });
 });

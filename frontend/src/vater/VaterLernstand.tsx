@@ -103,7 +103,8 @@ export function WeakWords({ childId }: { childId: number }) {
                   open={openWord === w.vocabularyId}
                   onToggle={() => setOpenWord(openWord === w.vocabularyId ? null : w.vocabularyId)} />
               ))}
-              {words.data?.items.length === 0 && (
+              {/* Nur für dieses Kind: nach einem Wechsel stünde sonst der Leerfall des vorigen da (B-502). */}
+              {words.data?.items.length === 0 && !words.stale && (
                 <tr><td colSpan={6} className="muted">
                   {!onlyWeak || wordsMeasured === 0
                     ? "Noch kein Lernstand: noch keine Antwort des Kindes wurde gewertet."

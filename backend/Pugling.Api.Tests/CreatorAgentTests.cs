@@ -1888,6 +1888,140 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.Contains("unterrichtet", error.Message);
     }
 
+    // ---- B-500 / B-498: who may fix a profile, and which profile speaks for a child's book ----
+
+    private CreatorApi Teacher() => new(factory.CreateDefaultClient(AuthHandler.Standalone(new PuglingClientOptions
+    {
+        BaseUrl = "http://localhost",
+        AccountId = 2,
+        Pin = "9999",
+    })));
+
+    /// <summary>
+    /// B-500: a profile bound to the series with a foreign subject, but owned by another creator, cannot be corrected by
+    /// this account (<c>not_owner</c>). The message offers only what this account can do. Red if it advises correcting
+    /// the profile ("korrigiere") although the reader does not own it.
+    /// </summary>
+    [Fact]
+    public async Task Fremdes_gebundenes_Profil_mit_fremdem_Fach_raet_nicht_zum_Korrigieren()
+    {
+        var (pipeline, creator, _, subjectA, seriesB, unitB, _) = await ForeignSubjectAsync("Fremd gebunden");
+        var foreign = await Teacher().CreateProfileAsync(new CreateCreatorProfileDto(
+            $"Profil des Kollegen {Guid.NewGuid():N}", null, subjectA, null, null, null, seriesB,
+            SourceLang: "en", TargetLang: "de", Persona: null, Didactics: null, DefaultTypes: null, Active: true));
+        var subjectB = (await creator.GetSeriesAsync(seriesB)).SubjectId!.Value;
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => pipeline.BriefAsync(
+            Request(subjectB, seriesB, unitB, "Vocabulary", childId: null, profileId: foreign.Id)));
+
+        Assert.Contains("nicht diesem Konto", error.Message);
+        Assert.DoesNotContain("korrigiere", error.Message);
+    }
+
+    /// <summary>
+    /// B-500 (rest): a free-text subject that names the exercise's subject fits - in any case (the server already trims
+    /// the stored name, so spaces are not tested here). Green before
+    /// B-500 as well; it carries the comparison: red if it turns ordinal ("ENGLISCH" ≠ "Englisch") or if a profile
+    /// without a subject id never fits.
+    /// </summary>
+    [Fact]
+    public async Task Profil_mit_freiem_Fachnamen_desselben_Fachs_passt()
+    {
+        var (pipeline, creator, _, _, seriesB, unitB, _) = await ForeignSubjectAsync("Freitext gleich");
+        var series = await creator.GetSeriesAsync(seriesB);
+        var freeText = await creator.CreateProfileAsync(new CreateCreatorProfileDto(
+            $"Profil Freitext gleich {Guid.NewGuid():N}", series.SubjectName!.ToUpperInvariant(), null, null, null,
+            null, null, SourceLang: "en", TargetLang: "de", Persona: "Freitext-Lehrer.", Didactics: null, DefaultTypes: null,
+            Active: true));
+
+        var briefing = await pipeline.BriefAsync(
+            Request(series.SubjectId!.Value, seriesB, unitB, "Vocabulary", childId: null, profileId: freeText.Id));
+
+        Assert.Equal(freeText.Id, briefing.Profile?.ProfileId);
+    }
+
+    /// <summary>
+    /// B-500 (rest): with only <c>--child</c>, two profiles on the child's book. The higher-scoring one teaches another
+    /// subject (grade bounds put it ahead); the other names no subject and so fits every one. The one that fits speaks -
+    /// the user never named the misfit. Red if the console takes the best score unchecked (the briefing then rejects a
+    /// profile the user did not choose, exit 2).
+    /// </summary>
+    [Fact]
+    public async Task Nur_mit_Kind_spricht_das_passende_Profil_des_Buchs()
+    {
+        var (creator, pipeline, chat, child, series, _, _, _, _) = await TwoTeachersAsync("Passend zuerst", profileOnSeries: false);
+        var otherSubject = await creator.CreateSubjectAsync(new CreateSubjectDto($"Agent-Test Fremdfach {Guid.NewGuid():N}"));
+        var misfit = await creator.CreateProfileAsync(new CreateCreatorProfileDto($"Fremdfach-Lehrer {Guid.NewGuid():N}",
+            null, otherSubject.Id, SchoolTypes.Gymnasium, GradeMin: 7, GradeMax: 9, SeriesId: series.Id,
+            SourceLang: "en", TargetLang: "de", Persona: "Du bist der Lehrer des FREMDEN Fachs.", Didactics: null,
+            DefaultTypes: ["Vocabulary"], Active: true));
+        var fitting = await creator.CreateProfileAsync(new CreateCreatorProfileDto($"Buchlehrer ohne Fach {Guid.NewGuid():N}",
+            null, null, SchoolTypes.Gymnasium, GradeMin: null, GradeMax: null, SeriesId: series.Id,
+            SourceLang: "en", TargetLang: "de", Persona: "Du bist der Lehrer DIESES Buchs.", Didactics: null,
+            DefaultTypes: ["Vocabulary"], Active: true));
+        var scores = (await creator.MatchProfilesAsync(child.Id, null, default)).ToDictionary(m => m.Profile.Id, m => m.Score);
+        Assert.True(scores[misfit.Id] > scores[fitting.Id], "Setup: the misfit must score higher.");
+
+        Assert.Equal(0, await Commands(creator, pipeline).RunAsync(CommandLine.Parse(
+            ["create", "--child", child.Id.ToString(), "--type", "Vocabulary", "--count", "3"]), default));
+
+        // Which one spoke: the fitting profile's persona leads the system prompt (a pick of any other profile is red).
+        var system = Assert.Single(chat.LastMessages, m => m.Role == ChatRole.System).Text;
+        Assert.StartsWith("Du bist der Lehrer DIESES Buchs.", system);
+    }
+
+    /// <summary>
+    /// B-498/B-500 (review): in a series without a subject the briefing takes the subject from the profile, so a subject
+    /// teacher fits there. Only <c>--child</c>, a teacher with a subject (ahead on grade bounds) and one without: the
+    /// teacher speaks, the run works. Red if the console prefers by the series' (missing) subject - it then picks the
+    /// subjectless profile and the run ends at "hat kein Fach".
+    /// </summary>
+    [Fact]
+    public async Task Nur_mit_Kind_in_einer_Reihe_ohne_Fach_spricht_der_Fachlehrer()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var supervisor = new SupervisorApi(Authenticated());
+        var subject = await creator.CreateSubjectAsync(new CreateSubjectDto($"Agent-Test Ohne-Fach-Reihe {Guid.NewGuid():N}"));
+        var bare = await creator.CreateSeriesAsync(new CreateTextbookSeriesDto(
+            $"Reihe ohne Fach {Guid.NewGuid():N}", null, null, null, SchoolTypes.Gymnasium, "en", "de", null));
+        var unit = await creator.CreateUnitAsync(bare.Id, new CreateSeriesUnitDto("Unit 1", 8, 1, null, null, null, null));
+        var child = await supervisor.CreateChildAsync(new CreateChildDto($"OhneFach {Guid.NewGuid():N}"[..20], null, 8,
+            SchoolTypes.Gymnasium, null));
+        await supervisor.CreateTextbookAsync(child.Id, new CreateTextbookDto("Buch ohne Fach", subject.Name, subject.Id, 8,
+            null, null, null, SeriesId: bare.Id, CurrentUnitId: unit.Id));
+        var teacher = await creator.CreateProfileAsync(new CreateCreatorProfileDto($"Fachlehrer {Guid.NewGuid():N}",
+            null, subject.Id, SchoolTypes.Gymnasium, GradeMin: 7, GradeMax: 9, SeriesId: bare.Id, SourceLang: "en",
+            TargetLang: "de", Persona: "Du bist der Fachlehrer.", Didactics: null, DefaultTypes: ["Vocabulary"], Active: true));
+        await creator.CreateProfileAsync(new CreateCreatorProfileDto($"Ohne Fach {Guid.NewGuid():N}",
+            null, null, SchoolTypes.Gymnasium, GradeMin: null, GradeMax: null, SeriesId: bare.Id, SourceLang: "en",
+            TargetLang: "de", Persona: "Du bist fachlos.", Didactics: null, DefaultTypes: ["Vocabulary"], Active: true));
+        var scores = (await creator.MatchProfilesAsync(child.Id, null, default)).ToDictionary(m => m.Profile.Id, m => m.Score);
+        Assert.True(scores[teacher.Id] == scores.Values.Max(), "Setup: the subject teacher must score highest.");
+
+        Assert.Equal(0, await Commands(creator, pipeline)
+            .RunAsync(CommandLine.Parse(["briefing", "--child", child.Id.ToString()]), default));
+    }
+
+    /// <summary>
+    /// B-498: a profile without a series and with a free-text subject takes the child's book in that subject - here the
+    /// child has none, so it is the usage error that says so. Red if the free-text profile counts every book of the child
+    /// (then an English series is picked and the briefing rejects the profile instead).
+    /// </summary>
+    [Fact]
+    public async Task Freitext_Profil_ohne_Reihe_nimmt_kein_Buch_eines_anderen_Fachs()
+    {
+        var (creator, pipeline, _, child, _, _, _, _, _) = await TwoTeachersAsync("Freitext Buch", profileOnSeries: false);
+        var latin = await creator.CreateProfileAsync(new CreateCreatorProfileDto($"Latein frei {Guid.NewGuid():N}",
+            $"Latein {Guid.NewGuid():N}", null, null, null, null, null, SourceLang: "la", TargetLang: "de", Persona: null,
+            Didactics: null, DefaultTypes: null, Active: true));
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline).RunAsync(
+            CommandLine.Parse(["create", "--profile", latin.Id.ToString(), "--child", child.Id.ToString(),
+                "--type", "Vocabulary", "--count", "3"]), default));
+
+        Assert.Contains("kein Lehrbuch", error.Message);
+    }
+
     /// <summary>
     /// B-488 (rest of the look-back): a profile of one work next to a bare <c>--series-unit</c> of another names the
     /// conflict. The unit used to be searched only in the profile's series and was reported as non-existent. Red if the
@@ -2775,7 +2909,8 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     /// usage error came once per part and the run ended with "plan incomplete" instead of a usage error. The briefing is
     /// now checked once before the first part. Driven through the planners directly: since B-488 the console reads the
     /// series itself and stops earlier, which would leave this check untested. Red if the check is removed (the error is
-    /// swallowed per part, no exception reaches the caller).
+    /// swallowed per part, no exception reaches the caller) - measured for the exam half only (B-488, mutant M8); the plan
+    /// half alone does not tell the removal apart (B-498).
     /// </summary>
     [Fact]
     public async Task Plan_und_Klausur_mit_unbekannter_Reihe_brechen_einmal_ab()
