@@ -225,6 +225,7 @@ Werkzeug unter `.claude/skills`.
 - **Nächster Kandidat B-491** (P2, Durchrutscher aus B-487) – wartet, siehe „Halt nach diesem Sprint" (Sprint 39);
   daneben B-490 (P2, Auswahlfrage ohne Antwort).
 - **Vorschlag (CS)** aus Sprint 38: die Regel an die Senke legen, nicht an die Quellen.
+- **Vorschläge entschieden** (nach Sprint 39): (CR)+(CS) im Skill gelandet; (CQ) → B-492, (CO) → B-493, (CP) → B-494.
 
 ## Sprint 34 — Ziel & Umfang
 
@@ -516,6 +517,20 @@ Eingangs von den Nachbarn derselben Art übernehmen (hier `ChoicesOf`), nicht ne
 
 **Halt nach diesem Sprint**, wie nach Sprint 35–38: der nächste Kandidat (B-491) ist wieder ein Durchrutscher aus
 meinem eigenen vorigen Sprint.
+
+## Entscheidung über die Retro-Vorschläge (Nutzer, nach Sprint 39)
+
+Auf „Erst Vorschläge klären" hat der Nutzer entschieden:
+
+- **(CR)+(CS) – ja, in den pm-loop-Skill.** Gelandet als Absatz „Put a rule at the sink, not at the sources" in
+  Schritt 4 und als Satz im Review-Auftrag von Schritt 5
+  ([.claude/skills/pm-loop/SKILL.md](../.claude/skills/pm-loop/SKILL.md)).
+- **(CQ) – ja, in CI** → [B-492](backlog/B-492-lader-test-in-ci.md).
+- **(CO) – ja, mit drei Lesern** (Server, Frontend, Lader) → [B-493](backlog/B-493-fallliste-antwortvergleich.md);
+  baut auf B-492.
+- **(CP) – später** → [B-494](backlog/B-494-mutantenprobe-je-zusicherung.md) (P3).
+
+B-492 und B-493 sind neue Tore: je ein eigener Sprint, danach Halt, damit der Nutzer sie sieht.
 
 ## Produktentscheidungen dieses Laufs (zum Umstoßen)
 

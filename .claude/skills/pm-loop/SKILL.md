@@ -85,6 +85,10 @@ Write **one Entwickler-Brief per sprint** (goal, server-side source of truth, gu
 the stories); each story already has its `Angriffsplan`. Build backend first, then the frontend through
 the central client/types, following the `CLAUDE.md` of each area.
 
+**Put a rule at the sink, not at the sources:** the one place every result passes to reach the user (a word
+bank: the card's choices; the KI-Creator: the briefing). No such place? Make one first. Rules per path escaped six
+times in a row. At the sink, reuse the neighbours' input cleanup (blank, duplicates).
+
 Sequential is the default. Fan out to subagents only when stories touch disjoint files, and then at
 every fan-in: merge, run the full suite plus guard tests, confirm the sprint goal still holds. Two
 traps: hooks measure `$CLAUDE_PROJECT_DIR`, so a worktree's build/test hits the main worktree; and
@@ -106,7 +110,8 @@ merged, only rebuilt.
   command in the line.
 - Error messages name the lock and no way out beyond it; a surface they point at must exist and show
   the lock. After rewording, `.claude/scripts/old-phrases.py` finds tests expecting the old text.
-- Run `pugling-reviewer` and/or `frontend-reviewer` (by the story's `wo`). Fold in correctness
+- Run `pugling-reviewer` and/or `frontend-reviewer` (by the story's `wo`). Its brief names the sink; the reviewer
+  greps for paths around it. Fold in correctness
   findings; note cleanup-only findings as non-blocking.
 - If you may not start agents, stop at `in-arbeit`, write one `## Verlauf` line naming the unmet
   condition, and ask the user. Your own reading of the diff is not "the review".
