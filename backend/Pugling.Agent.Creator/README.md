@@ -306,8 +306,9 @@ bleiben ohne Bild. Den Prompt baut C#: Szene, `ImagePrompt` des Interesses, fest
 Interesse ohne `ImagePrompt` wird übersprungen und genannt, damit keine Marke („Minecraft") über ihren Namen beim
 Bild-Dienst landet.
 
-Konfiguration im Abschnitt `Images` (`Model`, `Quality`, `Size`, `Style`, `CostPerImage`); der Schlüssel nur als
-Secret:
+Konfiguration im Abschnitt `Images` (`Model`, `Quality`, `Size`, `Style`, `CostPerImage`, optional `Endpoint` für
+einen OpenAI-kompatiblen Dienst – oder einen lokalen Ersatz, mit dem sich der ganze Weg ohne Kosten fahren lässt);
+der Schlüssel nur als Secret:
 
 ```bash
 cd backend/Pugling.Agent.Creator

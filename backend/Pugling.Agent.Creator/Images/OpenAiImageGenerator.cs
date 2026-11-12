@@ -1,4 +1,6 @@
+using System.ClientModel;
 using Microsoft.Extensions.AI;
+using OpenAI;
 using OpenAI.Images;
 using MeaiImageOptions = Microsoft.Extensions.AI.ImageGenerationOptions;
 using OpenAiImageOptions = OpenAI.Images.ImageGenerationOptions;
@@ -22,7 +24,11 @@ public static class OpenAiImageGenerator
                 "Images:ApiKey fehlt – setze den OpenAI-Schlüssel als Secret (im Ordner backend/Pugling.Agent.Creator):\n"
                 + "  dotnet user-secrets set \"Images:ApiKey\" \"sk-…\"\n"
                 + "Ein Trockenlauf (--dry-run) braucht keinen Schlüssel.");
-        return new QualityGenerator(new ImageClient(options.Model, options.ApiKey).AsIImageGenerator(), options.Quality);
+        var client = string.IsNullOrWhiteSpace(options.Endpoint)
+            ? new ImageClient(options.Model, options.ApiKey)
+            : new ImageClient(options.Model, new ApiKeyCredential(options.ApiKey),
+                new OpenAIClientOptions { Endpoint = new Uri(options.Endpoint) });
+        return new QualityGenerator(client.AsIImageGenerator(), options.Quality);
     }
 
     /// <summary>

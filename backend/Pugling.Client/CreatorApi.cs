@@ -428,10 +428,14 @@ public sealed class CreatorApi(HttpClient http)
     /// <param name="rating">Suitability; the strictest level if not specified.</param>
     /// <param name="origin">Origin; for generated images <see cref="MediaOrigin.Generated"/>.</param>
     /// <param name="source">Where the image came from; for generated images model and prompt (at most 200 characters).</param>
+    /// <param name="key">
+    /// Stable reference key; without it the server derives one from the description. A caller that finds its images
+    /// again by key (the image generator, B-485) must set it – a derived key is not predictable.
+    /// </param>
     /// <param name="ct">Cancellation token.</param>
     public async Task<MediaAssetResponse> UploadMediaAsync(ReadOnlyMemory<byte> content, string fileName,
         string description, IEnumerable<string>? tags = null, ContentRating? rating = null,
-        MediaOrigin? origin = null, string? source = null, CancellationToken ct = default)
+        MediaOrigin? origin = null, string? source = null, string? key = null, CancellationToken ct = default)
     {
         using var form = new MultipartFormDataContent();
         var file = new ReadOnlyMemoryContent(content);
@@ -443,6 +447,7 @@ public sealed class CreatorApi(HttpClient http)
         if (rating is { } r) form.Add(new StringContent(r.ToString()), "rating");
         if (origin is { } o) form.Add(new StringContent(o.ToString()), "origin");
         if (source is not null) form.Add(new StringContent(source), "source");
+        if (key is not null) form.Add(new StringContent(key), "key");
 
         return await Http.PostContentAsync<MediaAssetResponse>($"{Root}/media/upload", form, ct);
     }

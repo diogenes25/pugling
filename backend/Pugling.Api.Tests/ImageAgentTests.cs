@@ -93,6 +93,10 @@ public class ImageAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
 
         var asset = await GetAsync(father, $"/api/v1/creator/media/{soccerAsset}");
         Assert.Equal("Generated", asset.GetProperty("origin").GetString());
+        // The run must store its own key: a rerun finds an unlinked image only by it. Found in the role walk – the key
+        // was derived from the alt text, so the reuse test below passed on a state the agent never produced.
+        var soccerJob = first.Jobs.First(j => j.AssetId == soccerAsset);
+        Assert.Equal(ImagePromptBuilder.Key(soccerJob.VocabularyId, s.Soccer), asset.GetProperty("key").GetString());
         Assert.Equal($"gpt-image-1-mini: a happy dog jumping; {s.Soccer}", asset.GetProperty("source").GetString());
         Assert.Equal([s.Soccer], asset.GetProperty("tags").EnumerateArray().Select(t => t.GetString()!));
         Assert.Contains(asset.GetProperty("variants").EnumerateArray(), v => v.GetProperty("purpose").GetString() == "Card");

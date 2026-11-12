@@ -32,7 +32,10 @@ export default defineConfig({
   server: {
     proxy: {
       // Überschreibbar, damit E2E neben dem Heimnetz-Server (:5200, echte DB der Söhne) laufen kann (B-485).
-      "/api": process.env.PUGLING_API_URL ?? "http://localhost:5200"
+      "/api": process.env.PUGLING_API_URL ?? "http://localhost:5200",
+      // Hochgeladene Bilder liefert die API unter Media:PublicPath aus. Ohne diese Zeile antwortet Vite mit der
+      // App-Seite, und auf der Karte steht im Entwicklungsbetrieb nur ein kaputtes Bild (gefunden im Rollengang B-485).
+      "/media": process.env.PUGLING_API_URL ?? "http://localhost:5200"
     }
   }
 });

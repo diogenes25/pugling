@@ -14,7 +14,8 @@ import { ListenAusfall } from "../components/ListenAusfall";
  * Das Leitbild ist **ein Motiv, viele Bilder** – zu „laufen" liegen nebeneinander das Einhorn im
  * Comic-Stil, Flash und ein Foto. Welches ein Kind sieht, entscheidet sein Profil; hier wird nur der
  * Vorrat gepflegt. Deshalb sind die Schlagworte kein Beiwerk: sie sind dasselbe Vokabular, aus dem die
- * Interessen der Kinder schöpfen, und ein Bild ohne Tags ist für die Auswahl praktisch unsichtbar.
+ * Interessen der Kinder schöpfen. Ein Bild ohne Tags ist seit B-485 das neutrale Grundbild: es passt zu
+ * keinem Interesse, bekommt aber jedes Kind, für das kein passenderes da ist.
  *
  * Ein Bild kommt entweder als Datei-Upload herein (der Server erzeugt die Auflösungen selbst) oder als
  * fertige URL – beides landet im selben Store.
@@ -267,7 +268,7 @@ function NewAsset({ onCreated }: { onCreated: () => void }) {
       </form>
       <p className="sub" style={{ marginTop: 8 }}>
         Die Beschreibung ist zugleich der Alt-Text für Screenreader – also beschreiben, nicht benennen.
-        Ohne Schlagworte findet die Auswahl das Bild nie.
+        Ohne Schlagworte gilt das Bild als neutral: jedes Kind ohne passenderes Bild bekommt es.
         {mode === "upload" && " Aus der hochgeladenen Datei erzeugt der Server alle Größen selbst."}
       </p>
       <div className={`live-region${msg ? " banner ok" : ""}`} style={{ marginTop: 10 }} role="status" aria-live="polite">{msg}</div>

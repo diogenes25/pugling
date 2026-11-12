@@ -112,7 +112,7 @@ public sealed class ImageRun(CreatorApi creator, MotifPlanner motifs, Lazy<IImag
                 var bytes = await GenerateAsync(prompt, ct);
                 asset = await creator.UploadMediaAsync(bytes, $"{key}.png", ImagePromptBuilder.AltText(tag?.Label),
                     tags: tag is null ? null : [tag.Slug], rating: ContentRating.Everyone, origin: MediaOrigin.Generated,
-                    source: ImagePromptBuilder.Source(settings.Model, motif, tag?.Slug), ct: ct);
+                    source: ImagePromptBuilder.Source(settings.Model, motif, tag?.Slug), key: key, ct: ct);
             }
             await LinkAsync(entry.VocabularyId, asset.Id, tag is null ? 0 : InterestLinkWeight, ct);
             return new ImageJobResult(entry.VocabularyId, entry.Word, tag?.Slug, prompt, asset.Id, null);

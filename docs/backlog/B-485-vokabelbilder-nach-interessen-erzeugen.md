@@ -9,7 +9,7 @@ wo: beides
 migration: ja
 vertragsbruch: nein
 quelle: Auftrag des Nutzers 2026-11-12 („kleine Bilder je Vokabel, nach den Interessen des Kindes")
-wartet_auf: "erster echter Lauf mit OpenAI-Schlüssel (images --child 1 --max 1) und Rollengang an der Sohn-Karte"
+wartet_auf: "erster echter Lauf mit OpenAI-Schlüssel (images --child 1 --max 1)"
 grund: ""
 ersetzt_durch: []
 ---
@@ -289,3 +289,26 @@ Reviewer vor der Abnahme: `pugling-reviewer` und `frontend-reviewer`.
   Zeile in `__EFMigrationsHistory`), `integrity_check` ok. Alle 10 vorhandenen Schlagworte haben noch keinen
   Bild-Prompt – bis einer gepflegt ist, zeichnet `images` nur neutrale Bilder. Kopie danach gelöscht.
   **Beim echten Neustart beachten:** `heimnetz.ps1` baut das Frontend neu; API und Frontend gehen also gemeinsam live.
+- 2026-11-12 · **Rollengang** auf einer Wegwerf-DB (API :5202, Vater-/Sohn-Web :5174), gezeichnet von einem lokalen
+  Ersatz-Server im OpenAI-Format über die neue Einstellung `Images:Endpoint`:
+  - Vater-Web: Bild-Prompt für „Fußball" in der Schlagwort-Verwaltung gesetzt, am Kind „Sohn" Fußball auf
+    Lieblingsthema gestellt – beides gespeichert.
+  - Echter Agent: `images --child 1` legte 8 Bilder an (je Wort neutral + Fußball), meldete Brawl Stars ohne Prompt;
+    für den Bruder ohne Interessen fehlte danach nichts mehr.
+  - Anfrage an „OpenAI", mitgeschnitten: `model`, `n: 1`, `quality: "low"`, `size: "1024x1024"`, Prompt – kein
+    `response_format`. Befund 8 des Reviewers (Format-Parameter) damit für die Anfrageform ausgeräumt; eine Antwort
+    des echten Dienstes bleibt ungeprüft.
+  - Sohn im Handy-Format 375×812: Karte „dog" zeigt das Fußball-Bild, Alt-Text „Bild zur Vokabel (Fußball)" ohne das
+    Wort, „anderes Bild" da. Bruder über seine eigene Anmeldung: Karte „dog" mit dem neutralen Bild.
+  - **Drei Funde, behoben:**
+    1. Der Agent gab seinen Schlüssel beim Upload nicht mit (der Client kannte keinen `key`), der Server leitete ihn
+       aus dem Alt-Text ab – die Wiederaufnahme per Schlüssel griff in Wirklichkeit nie, ein zweiter Lauf hätte neu
+       bezahlt. Der Idempotenz-Test war grün, weil er die Vorläufer selbst mit dem richtigen Schlüssel anlegte: ein
+       Zustand, den der Agent nie herstellt. Jetzt `key` im Client, Zusicherung des Schlüssels am selbst
+       hochgeladenen Bild; Probe ohne `key` → rot (`bild-zur-vokabel-img2-fussball` statt `gen-v25-img2-fussball`).
+    2. Im Entwicklungsbetrieb lud kein hochgeladenes Bild: Vite leitete nur `/api` weiter, `/media/…` bekam die
+       App-Seite. Älter als B-485, im Heimnetz-Betrieb (API liefert beides) nicht sichtbar. `/media` im Proxy ergänzt.
+    3. Der Hinweis „Ohne Schlagworte findet die Auswahl das Bild nie" in der Bild-Bibliothek stimmte nicht mehr
+       (ohne Schlagwort = neutrales Grundbild für jedes Kind); Text und Kopfkommentar korrigiert.
+  - Belege danach: `dotnet test` 1380/1380, Exit 0, Abdeckung 276/276; Vitest 752/752; `tsc -b` sauber;
+    `bild-prompt.spec.ts` 2/2. Wegwerf-DB und Ersatz-Server danach beendet.

@@ -17,6 +17,12 @@ public sealed class ImageOptions
     /// </summary>
     public string? ApiKey { get; set; }
 
+    /// <summary>
+    /// Base URL of an OpenAI-compatible image service; empty means OpenAI itself. Lets a run point at another provider
+    /// with the same API – or at a local stand-in that answers in OpenAI's format, to walk the whole path without cost.
+    /// </summary>
+    public string? Endpoint { get; set; }
+
     /// <summary>Image model (decision 7 of B-485: small and cheap is enough for card-sized pictures).</summary>
     [Required]
     public string Model { get; set; } = "gpt-image-1-mini";
