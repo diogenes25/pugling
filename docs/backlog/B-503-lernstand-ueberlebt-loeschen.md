@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/idee, bereich/lernen, rolle/supervisor]
+tags: [typ/story, status/verworfen, bereich/lernen, rolle/supervisor]
 aliases: [ItemProgress SetNull, Lernstand geht beim Löschen verloren]
-status: idee
+status: verworfen
 prio: P2
 art: Frage
 groesse: ""
@@ -11,7 +11,7 @@ vertragsbruch: ""
 quelle: docs/pm-sitzung-2026-11-12-nachtlauf.md (Sprint 45, aus B-502)
 unverifiziert: false
 entgangen_bei: []
-grund: ""
+grund: "Nutzer-Entscheidung 2026-11-12: Löschen bleibt hart. Nur ein Lehrplan-freier Inhalt ist löschbar, die Lösch-Fragen nennen den Verlust (B-499/B-502), und die Antwort-Historie je Wort (ItemReviewEvent, SetNull) überlebt – ein späterer Lernstand je Wort ließe sich aus ihr nachrechnen."
 ersetzt_durch: []
 ---
 
@@ -32,3 +32,10 @@ Kosten von 1: eine Migration (Kette verlängern), Folgen für `by-word` und die 
 ## Verlauf
 
 - **2026-11-12** — angelegt (Sprint 45, aus dem Review von Sprint 44 / B-502 Punkt 2).
+- **2026-11-12** — am Code beantwortet, **verworfen** (Entscheidung des Nutzers: „A: so lassen“). Befund:
+  `PlanPosition` → `Exercise` ist Restrict, verloren geht also nur der Stand von Inhalten, deren Plan schon gelöscht
+  ist; dabei nur das Aggregat `ItemProgress`, nicht die Historie `ItemReviewEvent` (`SetNull`, Wort denormalisiert).
+  Verworfen wurde auch der Mittelweg „`ItemProgress.ItemId` SetNull“: Migration plus Waisen-Filter in drei Sichten,
+  ohne dass das Kind beim Üben etwas davon hat (ein neuer Eintrag desselben Worts beginnt trotzdem bei Fach 1). Der
+  echte Nutzen wäre ein Lernstand je Wort statt je Eintrag – eine eigene Produktentscheidung, nicht angelegt; die
+  Historie hält den Weg offen.
