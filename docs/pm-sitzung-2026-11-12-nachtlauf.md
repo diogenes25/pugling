@@ -340,7 +340,7 @@ kann, und eine Folge, die wirklich eintritt – und die Konsole wählt nie ein P
   Klassenarbeiten-Leerfall ohne Erfolg, Wortliste nicht aus dem Stand des vorigen Kindes, Entfernen einer Vokabel nennt
   den Lernstand.
 - Rote Proben: Backend 4 erwartet/gemessen (davon 1 Gegenfall grün), Review-Test 1/1; Frontend 4/4. Mutanten 9/9.
-- Review-Zähler: **2** (🟡 Bevorzugung bei Reihe ohne Fach; 🟡 Doku am falschen Symbol). Commit siehe unten.
+- Review-Zähler: **2** (🟡 Bevorzugung bei Reihe ohne Fach; 🟡 Doku am falschen Symbol). Commit `1965741`.
 
 ## Runde 16 — Rollengang / Abnahme (Sprint 45)
 
