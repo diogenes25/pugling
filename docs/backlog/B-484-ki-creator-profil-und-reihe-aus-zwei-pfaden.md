@@ -124,3 +124,4 @@ zweiter Stelle mit eigener Regel bestimmt. Dieselbe Klasse wie B-473 und B-481: 
 - **2026-11-12** — **abgenommen.** Volle Suite nach der letzten Änderung: 1354/1354, Build ohne Warnung. Review-Zähler
   Sprint 37: 4 von 5. **Rollengang (Creator) ohne Live-Lauf**: `CreatorAgentTests` fährt die Konsole mit
   `FakeChatClient` gegen die In-Process-API; Ollama und die echte DB nicht.
+- **2026-11-12** — Commit der Abnahme: `1c90c8d`.
