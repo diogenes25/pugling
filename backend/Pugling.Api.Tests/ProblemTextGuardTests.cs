@@ -22,17 +22,11 @@ public class ProblemTextGuardTests
 {
     /// <summary>
     /// 409 codes that deliberately have no entry in <c>GERMAN_PROBLEM_TEXT</c>, each with the reason. Codes only the arcade
-    /// shows are translated (or not yet) through <c>problem.*</c> in i18n, a different path - see B-415.
+    /// shows have an entry too (B-415): the arcade's German <c>problem.*</c> sentence must equal it word for word.
     /// </summary>
     private static readonly Dictionary<string, string> Exceptions = new()
     {
         ["conflict"] = "Generic default; no action returns it with this code.",
-        ["skin_already_unlocked"] = "Child-only (skin unlock); its text belongs to the arcade (problem.* in i18n), B-415.",
-        ["shop_insufficient_stock"] = "Child-only (purchase in the family shop); its text belongs to the arcade (problem.* in i18n), B-415.",
-        // A supervisor may call these student routes too (preview), but the supervisor web never does - only the arcade.
-        ["media_no_alternative"] = "Never called by the supervisor web (\"another picture\" in the arcade); its text belongs to the arcade, B-415.",
-        ["media_not_on_card"] = "Never called by the supervisor web (\"another picture\" in the arcade); its text belongs to the arcade, B-415.",
-        ["interest_wish_limit_reached"] = "Child-only (interest wishes); its text belongs to the arcade (problem.* in i18n), B-415.",
     };
 
     [Fact]

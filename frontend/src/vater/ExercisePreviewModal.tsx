@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { ApiError, api, errorMessage } from "../lib/api";
+import { StatusBanner } from "../components/StatusBanner";
 import { LetterBoxes } from "../components/LetterBoxes";
 import { LetterTiles } from "../components/LetterTiles";
 import { AudioButton } from "../components/AudioButton";
@@ -135,7 +136,8 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
           </label>
         )}
 
-        {error && <div className="banner err">{error}</div>}
+        {/* Live-Region, die schon beim Öffnen steht: der Fokus sitzt dann auf „×", ein nachgeladener Fehler wird sonst nicht angesagt (B-444). */}
+        <StatusBanner message={error ? { ok: false, text: error } : null} />
 
         {!data && !error && <div className="loading">Lade…</div>}
 

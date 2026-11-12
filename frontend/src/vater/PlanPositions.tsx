@@ -32,6 +32,12 @@ const CADENCES: GoalCadence[] = ["Daily", "Weekly", "None"];
 const ORDER_LABEL: Record<PracticeOrder, string> = {
   WeakestFirst: "Schwächste zuerst", Serial: "Reihenfolge", Random: "Zufällig", NewestWeighted: "Neue bevorzugt",
 };
+/**
+ * Die Frage vor „Entfernen". Der Server nimmt nur eine Position ohne Übungs- und Testdaten heraus (sonst
+ * `position_has_data`, dessen Text das sagt) – Übungs- oder Testdaten gehen also nie verloren.
+ */
+export const REMOVE_POSITION_QUESTION = "Diese Position wirklich aus dem Plan nehmen? Die Übung bleibt im Katalog.";
+
 const ORDERS: PracticeOrder[] = ["WeakestFirst", "Serial", "Random", "NewestWeighted"];
 
 // Anzeigename der Typen aus dem Server-Manifest – eine dritte Kopie der Tabelle lief zwangsläufig
@@ -723,7 +729,7 @@ function PositionRow({ planId, pos, onChanged, action }: {
   }
 
   async function remove() {
-    if (!confirmAction("Diese Position wirklich entfernen? Fortschritt und Auswertung dieser Position gehen verloren.")) return;
+    if (!confirmAction(REMOVE_POSITION_QUESTION)) return;
     if (await action.run(() => api.deletePosition(planId, pos.id), "Position entfernt.")) onChanged();
   }
 

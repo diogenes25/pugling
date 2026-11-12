@@ -327,9 +327,8 @@ export function SohnPractice() {
         setCards((prev) => prev.map((c, i) =>
           i === at ? { ...c, imageUrl: picked.imageUrl, imageAlt: picked.imageAlt } : c));
       } catch (e) {
-        setToast(e instanceof ApiError && e.code === "media_no_alternative"
-          ? t("practice.noMoreImages")
-          : errorMessage(e));
+        // `media_no_alternative` hat seinen Satz unter `problem.*` (B-415) – `errorMessage` ist die Arcade-Fassung.
+        setToast(errorMessage(e));
       }
     });
   }

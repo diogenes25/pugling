@@ -164,6 +164,21 @@ describe("Fehlermeldungen der Arcade", () => {
     expect(result.current(inactive)).toBe("This study plan isn't active right now. Ask your parents which plan to do now.");
   });
 
+  // B-415: die Sperren, die nur das Kind auslöst (Skin, Shop, Bild, Wunsch-Interessen, Überschneidung beim Speichern).
+  // Rot, wenn ein Code weder in `GERMAN_PROBLEM_TEXT` noch unter `problem.*` steht: dann stünde auf Deutsch die
+  // englische Server-Zeile samt Ref da, auf Englisch die technische Server-Zeile.
+  it.each(["skin_already_unlocked", "shop_insufficient_stock", "media_no_alternative", "media_not_on_card",
+    "interest_wish_limit_reached", "concurrency_conflict"])(
+    "sagen dem Kind %s in beiden Sprachen mit einem eigenen Satz", async (code) => {
+      const blocked = new ApiError(409, "Technical server line.", "trace-5", code);
+      const { result } = renderHook(() => useErrorMessage());
+      expect(result.current(blocked)).not.toContain("Technical server line");
+      expect(result.current(blocked)).not.toContain("trace-5");
+      await setLanguage("en");
+      expect(result.current(blocked)).not.toContain("Technical server line");
+      expect(result.current(blocked)).not.toContain("trace-5");
+    });
+
   it("folgen der Sprache zum Zeitpunkt des Fehlers, nicht der beim Render", async () => {
     // Rot, wenn die Funktion die Sprache beim Render festhält (ein früh gebundener Fang spräche dann weiter Deutsch) –
     // für den Schlüssel (`exhausted`) wie für die Weiche davor (`known`, B-319).

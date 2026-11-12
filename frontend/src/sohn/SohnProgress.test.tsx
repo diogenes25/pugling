@@ -86,3 +86,27 @@ describe("SohnProgress mit einer gemerkten Plan-Id, die nicht mehr gilt", () => 
     expect(setPlanId).not.toHaveBeenCalled();
   });
 });
+
+// B-467: eine freie Position hat keine Pflicht – der Server meldet sie darum als erfüllt (`goalMet: true`), auch wenn sie
+// nie gespielt wurde. Rot, wenn „Meine Übungen" ihr trotzdem ein Häkchen gibt; die Pflicht-Position daneben behält ihres
+// (rot, wenn das Häkchen ganz wegfällt).
+describe("Meine Übungen – eine freie Position", () => {
+  it("trägt kein Häkchen, eine erfüllte Pflicht schon", async () => {
+    plans.mockResolvedValue([plan(5, true)]);
+    overview.mockImplementation((id: number) => Promise.resolve({
+      title: `Plan ${id}`, currentStreak: 0,
+      today: {
+        goalsMet: 1, goalsTotal: 1, positions: [
+          { positionId: 1, exerciseTitle: "Frei geübt", cadence: "None", goalMet: true },
+          { positionId: 2, exerciseTitle: "Pflicht erledigt", cadence: "Daily", goalMet: true },
+        ],
+      },
+    }));
+    renderProgress();
+
+    const free = (await screen.findByText("Frei geübt")).closest(".row")!;
+    const duty = screen.getByText("Pflicht erledigt").closest(".row")!;
+    expect(free.textContent).not.toContain("✅");
+    expect(duty.textContent).toContain("✅");
+  });
+});

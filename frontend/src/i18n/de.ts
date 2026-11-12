@@ -267,7 +267,6 @@ export const de = {
       box: "Box {{box}}",
       solution: "Lösung: {{expected}}",
       wrong: "Leider nicht.",
-      noMoreImages: "Mehr Bilder gibt es dafür nicht 🙂",
       cardOf: "Karte {{n}} / {{total}}",
       tempo: "⚡ Tempo",
       endRound: "Runde beenden",
@@ -321,9 +320,15 @@ export const de = {
     // `errorMessage` – das hält `arcadeSpielweg.test.tsx`.
     problem: {
       test_attempts_exhausted: "Für heute sind deine Versuche aufgebraucht. Morgen kannst du es noch mal probieren.",
-      exercise_empty: "Diese Übung hat noch keine Inhalte. Füge erst Wörter hinzu – danach lässt sie sich durchspielen und zuweisen.",
+      exercise_empty: "Diese Übung hat noch keine Inhalte.",
       no_checkable_content: "Diese Übung hat keine einzeln prüfbaren Aufgaben.",
       plan_inactive: "Dieser Lernplan ist gerade nicht dran. Frag deine Eltern, welcher Plan jetzt gilt.",
+      skin_already_unlocked: "Diesen Skin hast du schon freigeschaltet.",
+      shop_insufficient_stock: "Davon ist gerade nichts mehr da.",
+      media_no_alternative: "Mehr Bilder gibt es dafür nicht 🙂",
+      media_not_on_card: "Zu dieser Karte gibt es kein Bild.",
+      interest_wish_limit_reached: "Deine Liste mit eigenen Interessen ist voll.",
+      concurrency_conflict: "Das hat sich gerade mit einer anderen Änderung überschnitten und wurde nicht gespeichert. Versuch es noch einmal.",
     },
   },
 } as const;

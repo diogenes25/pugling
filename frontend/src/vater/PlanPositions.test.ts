@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  pointsFrom, settingsFrom, settingsToDto, settingsToUpdateDto, timeSlotProblem, withDose, withLeitner,
+  REMOVE_POSITION_QUESTION, pointsFrom, settingsFrom, settingsToDto, settingsToUpdateDto, timeSlotProblem, withDose, withLeitner,
   type PositionSettings,
 } from "./PlanPositions";
 import type { ExerciseSummary, PositionResponse, ScoringTimeSlot } from "../lib/types";
@@ -249,5 +249,17 @@ describe("Dosis und Leitner-Kasten gehören zusammen (B-04)", () => {
   it("der PATCH trägt die Dosis mit – ein geleertes Feld als 0", () => {
     expect(settingsToUpdateDto({ ...LEER, newItemsPerDay: "" }).newItemsPerDay).toBe(0);
     expect(settingsToUpdateDto({ ...LEER, newItemsPerDay: "8" }).newItemsPerDay).toBe(8);
+  });
+});
+
+/*
+ * B-418: Entfernen geht nur bei einer Position ohne Übungs- und Testdaten (sonst `409 position_has_data`). Die Frage darf
+ * darum keinen Verlust ankündigen – den gibt es in keinem der beiden Fälle. Rot, wenn die alte Ankündigung („gehen
+ * verloren") zurückkehrt oder die Frage nicht mehr sagt, dass die Übung im Katalog bleibt.
+ */
+describe("Position entfernen", () => {
+  it("kündigt keinen Verlust an und nennt, was bleibt", () => {
+    expect(REMOVE_POSITION_QUESTION).not.toMatch(/verloren/);
+    expect(REMOVE_POSITION_QUESTION).toMatch(/Übung bleibt im Katalog/);
   });
 });

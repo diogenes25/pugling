@@ -84,7 +84,7 @@ export class ApiError extends Error {
  */
 const GERMAN_PROBLEM_TEXT: Record<string, string> = {
   exercise_empty:
-    "Diese Übung hat noch keine Inhalte. Füge erst Wörter hinzu – danach lässt sie sich durchspielen und zuweisen.",
+    "Diese Übung hat noch keine Inhalte.",
   no_checkable_content: "Diese Übung hat keine einzeln prüfbaren Aufgaben.",
   no_tag_matches: "Zu diesen Tags gibt es keine Vokabeln. Die Übung wurde nicht verändert.",
   // Seit B-123 ist das der wahrscheinlichste Fehlschlag im Reihen-Formular: vorher war der 409 über die
@@ -173,6 +173,13 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
   // Trifft den Vater beim Stornieren, Genehmigen oder Ablehnen im Familien-Shop, wenn zwei Speichervorgänge sich kreuzen
   // (ShopService). Dieselbe Handlung noch einmal ist kein Weg über eine zweite Sperre.
   concurrency_conflict: "Das hat sich gerade mit einer anderen Änderung überschnitten und wurde nicht gespeichert. Versuch es noch einmal.",
+  // B-415: Sperren, die nur das Kind in der Arcade auslöst. Sie stehen trotzdem hier, weil die deutsche Arcade für jeden
+  // eigenen Satz (`problem.*`) wortgleich mit dieser Tabelle sein muss – eine Sperre heißt überall gleich.
+  skin_already_unlocked: "Diesen Skin hast du schon freigeschaltet.",
+  shop_insufficient_stock: "Davon ist gerade nichts mehr da.",
+  media_no_alternative: "Mehr Bilder gibt es dafür nicht 🙂",
+  media_not_on_card: "Zu dieser Karte gibt es kein Bild.",
+  interest_wish_limit_reached: "Deine Liste mit eigenen Interessen ist voll.",
 };
 
 export function errorMessage(e: unknown): string {

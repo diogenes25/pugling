@@ -427,7 +427,8 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
   // ---------- 8b. Lernstand: beide Sichten laden (noch ohne Fortschritt) ----------
   // Sichert die Routen und die Lesezugriffe auf die student/-Endpunkte ab, die der Vater mitlesen darf.
   await vater.goto(`/vater/kind/${childId}/lernstand`);
-  await expect(vater.getByText("Kein Wort unter 50 %", { exact: false })).toBeVisible();
+  // Ohne eine einzige Antwort ist das kein Erfolg (B-467): nicht „Kein Wort unter 50 % – es sitzt alles".
+  await expect(vater.getByText("Noch kein Lernstand", { exact: false })).toBeVisible();
   await vater.getByRole("radio", { name: /Nach Katalog/ }).click();
   await expect(vater.getByRole("heading", { name: "Fächer" })).toBeVisible();
 

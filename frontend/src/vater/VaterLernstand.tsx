@@ -55,12 +55,16 @@ export function VaterLernstand() {
 
 // ─── „Was sitzt nicht?" – Rollup je Wort ─────────────────────────────────────
 
-function WeakWords({ childId }: { childId: number }) {
+export function WeakWords({ childId }: { childId: number }) {
   const [onlyWeak, setOnlyWeak] = useState(true);
   const [skip, setSkip] = useState(0);
   const words = useAsync<Paged<WordMastery>>(
     () => api.childWordMastery(childId, { onlyWeak, skip, take: PAGE_SIZE }), [childId, onlyWeak, skip]);
   const [openWord, setOpenWord] = useState<number | null>(null);
+  // Ob es überhaupt ein Wort gibt (B-467): eine leere Liste unter „nur schwache" ist nur dann ein Erfolg. Ohne diese Zahl
+  // läse ein Kind, das noch nie geantwortet hat, „es sitzt alles". Gezählt werden Antworten (`ItemProgress`): eingeführte,
+  // aber nie beantwortete Wörter fehlen hier – darum sagt der Leerfall „keine Frage beantwortet", nicht „nichts geübt".
+  const anyWord = useAsync<Paged<WordMastery>>(() => api.childWordMastery(childId, { take: 1 }), [childId]);
 
   // Filterwechsel auf Seite 1 zurücksetzen – sonst zeigt der Pager ein Fenster jenseits des Bestands.
   const [prevOnlyWeak, setPrevOnlyWeak] = useState(onlyWeak);
@@ -98,9 +102,11 @@ function WeakWords({ childId }: { childId: number }) {
               ))}
               {words.data?.items.length === 0 && (
                 <tr><td colSpan={6} className="muted">
-                  {onlyWeak
-                    ? "Kein Wort unter 50 % – es sitzt alles. 👍"
-                    : "Noch kein Lernstand: das Kind hat noch nichts geübt."}
+                  {!onlyWeak || anyWord.data?.total === 0
+                    ? "Noch kein Lernstand: das Kind hat noch keine Frage beantwortet."
+                    : anyWord.data
+                      ? "Kein Wort unter 50 % – es sitzt alles. 👍"
+                      : "Kein Wort unter 50 %."}
                 </td></tr>
               )}
             </tbody>

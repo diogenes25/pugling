@@ -48,7 +48,8 @@ function ProgressForPlan({ planId }: { planId: number }) {
         </div>
         {o.today.positions.map((pos) => (
           <div className="row" key={pos.positionId} style={{ padding: "4px 0" }}>
-            <span>{pos.goalMet ? "✅" : pos.cadence === "None" ? "•" : "⬜"}</span>
+            {/* Eine freie Position hat keine Pflicht und darum kein Häkchen – der Server meldet sie als erfüllt (B-467). */}
+            <span>{pos.cadence === "None" ? "•" : pos.goalMet ? "✅" : "⬜"}</span>
             <b>{pos.exerciseTitle}</b>
             <span className="sub" style={{ marginLeft: "auto" }}>
               {pos.cadence === "Daily" ? t("home.cadenceDaily") : pos.cadence === "Weekly" ? t("home.cadenceWeekly") : t("home.cadenceNone")}

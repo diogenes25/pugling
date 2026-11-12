@@ -116,26 +116,28 @@ function HomeForPlan({
   );
 }
 
-function PositionCard({ pos }: { pos: PositionStatus }) {
+export function PositionCard({ pos }: { pos: PositionStatus }) {
   const { t } = useTranslation();
   // Üben steht offen, sobald es etwas zu üben gibt: mit Leitner-Kasten, mit Inhalten auch ohne ihn (B-454 – sonst
   // wäre der Test der einzige Weg und fragte Wörter, die das Kind nie gesehen hat), und immer, wenn heute nichts
   // zu prüfen ist. `testable` ist eine TAGES-Aussage des Servers (auch falsch auf einer Kennenlern-Stufe, B-96) –
   // nicht `checkMode` abfragen, sonst hat eine Position an einem nicht prüfbaren Tag überhaupt keinen Knopf.
+  // Eine freie Position hat keine Pflicht und darum kein Häkchen – der Server meldet sie als erfüllt, auch ungespielt (B-467).
+  const dutyMet = pos.goalMet && pos.cadence !== "None";
   const canPractice = pos.useLeitner || !pos.testable || pos.poolSize > 0;
   const practiceLabel = pos.useLeitner
     ? (pos.dueCount > 0 ? t("home.practiceDue", { count: pos.dueCount }) : t("home.practice"))
     : pos.testable ? t("home.practice") : t("home.playThrough");
 
   return (
-    <div className="card" style={pos.goalMet ? { borderColor: "var(--lime)" } : undefined}>
+    <div className="card" style={dutyMet ? { borderColor: "var(--lime)" } : undefined}>
       <div className="row" style={{ marginBottom: 8 }}>
         <span style={{ fontSize: 20 }}>{typeIcon(pos.exerciseType)}</span>
         <b style={{ fontSize: 15 }}>{pos.exerciseTitle}</b>
         <span className="pill" style={{ marginLeft: "auto" }}>{t(cadenceKey(pos.cadence))}</span>
-        {pos.goalMet
+        {pos.cadence !== "None" && (dutyMet
           ? <span className="pill lime">✓</span>
-          : pos.cadence !== "None" && <span className="pill mag">{t("home.open")}</span>}
+          : <span className="pill mag">{t("home.open")}</span>)}
       </div>
       {/* B-04: how far through the material - only while there is still something ahead. */}
       {pos.introducedCount > 0 && pos.introducedCount < pos.poolSize && (
