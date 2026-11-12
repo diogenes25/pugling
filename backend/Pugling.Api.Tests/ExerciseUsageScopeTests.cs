@@ -190,10 +190,19 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
         var father = await TestApi.AdultAsync(_factory);
         var exercise = await VocabExerciseAsync(father, "lighthouse", "Leuchtturm");
         var title = TestApi.UniqueName("Ziel");
-        await GoalOnExerciseAsync(father, 1, exercise, title);
+        // B-416: objective id and milestone id must differ, or a projection of the milestone's id would pass for the
+        // objective's. Both tables count on their own; a throwaway goal elsewhere with two milestones moves them apart.
+        var probe = await GoalAsync(father, 1, await VocabExerciseAsync(father, "buoy", "Boje"), TestApi.UniqueName("Abstand"), null);
+        if (probe.GetProperty("id").GetInt32() == probe.GetProperty("keyResults")[0].GetProperty("id").GetInt32())
+            await GoalAsync(father, 1, await VocabExerciseAsync(father, "pier", "Mole"), TestApi.UniqueName("Abstand"), null,
+                milestones: 2);
+        var objective = await GoalOnExerciseAsync(father, 1, exercise, title);
+        var objectiveId = objective.GetProperty("id").GetInt32();
+        Assert.NotEqual(objectiveId, objective.GetProperty("keyResults")[0].GetProperty("id").GetInt32());
 
         var usage = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exercise.Id}/usage");
         var goal = Assert.Single(usage.GetProperty("goals").EnumerateArray());
+        Assert.Equal(objectiveId, goal.GetProperty("objectiveId").GetInt32());
         Assert.Equal(title, goal.GetProperty("objectiveTitle").GetString());
         Assert.Equal("Etappe Leuchtturm", goal.GetProperty("keyResultTitle").GetString());
         Assert.Equal(1, goal.GetProperty("childId").GetInt32());
@@ -307,14 +316,15 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
     }
 
     /// <summary>An objective for <paramref name="childId"/> with one mastery milestone on <paramref name="exercise"/>.</summary>
-    private static Task GoalOnExerciseAsync(HttpClient supervisor, int childId, ExerciseRef exercise, string title) =>
+    private static Task<JsonElement> GoalOnExerciseAsync(HttpClient supervisor, int childId, ExerciseRef exercise, string title) =>
         GoalAsync(supervisor, childId, exercise, title, exercise.Id);
 
     /// <summary>
     /// An objective with one mastery milestone in the exercise's unit; <paramref name="exerciseId"/> <c>null</c> makes it
-    /// a milestone on the whole unit.
+    /// a milestone on the whole unit. <paramref name="milestones"/> above one only serves to move the id counters apart.
     /// </summary>
-    private static async Task GoalAsync(HttpClient supervisor, int childId, ExerciseRef exercise, string title, int? exerciseId)
+    private static async Task<JsonElement> GoalAsync(HttpClient supervisor, int childId, ExerciseRef exercise, string title, int? exerciseId,
+        int milestones = 1)
     {
         var res = await supervisor.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/objectives", new
         {
@@ -325,19 +335,19 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
             dueDate = (string?)null,
             rewardOnComplete = 0,
             rewardPerKeyResult = 0,
-            keyResults = new[]
-            {
+            // A second milestone takes the exercise as its scope: the server refuses two with the same scope and metric.
+            keyResults = Enumerable.Range(0, milestones).Select(i =>
                 new
                 {
                     subjectId = exercise.SubjectId,
                     seriesUnitId = (int?)exercise.SeriesUnitId,
-                    exerciseId,
+                    exerciseId = i == 0 ? exerciseId : exercise.Id,
                     metric = "AvgMastery",
                     targetValue = 80,
                     title = (string?)"Etappe Leuchtturm",
-                },
-            },
+                }).ToArray(),
         });
         res.EnsureSuccessStatusCode();
+        return await res.Content.ReadFromJsonAsync<JsonElement>();
     }
 }

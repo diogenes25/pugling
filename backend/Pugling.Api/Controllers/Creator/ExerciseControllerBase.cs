@@ -486,7 +486,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         return Map(exercise, User.AdultId());
     }
 
-    /// <summary>Deletes an exercise. Not possible while it is embedded in a study plan or a class test.</summary>
+    /// <summary>Deletes an exercise. Not possible while it is embedded in a study plan, a class test or an objective milestone.</summary>
     [HttpDelete("{exerciseId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

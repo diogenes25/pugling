@@ -13991,7 +13991,7 @@
         "tags": [
           "Creator \u2013 Vocabulary"
         ],
-        "summary": "Deletes an exercise. Not possible while it is embedded in a study plan or a class test.",
+        "summary": "Deletes an exercise. Not possible while it is embedded in a study plan, a class test or an objective milestone.",
         "parameters": [
           {
             "name": "seriesId",
@@ -14508,7 +14508,7 @@
         "tags": [
           "Creator \u2013 Reading"
         ],
-        "summary": "Deletes an exercise. Not possible while it is embedded in a study plan or a class test.",
+        "summary": "Deletes an exercise. Not possible while it is embedded in a study plan, a class test or an objective milestone.",
         "parameters": [
           {
             "name": "seriesId",
@@ -15025,7 +15025,7 @@
         "tags": [
           "Creator \u2013 Cloze"
         ],
-        "summary": "Deletes an exercise. Not possible while it is embedded in a study plan or a class test.",
+        "summary": "Deletes an exercise. Not possible while it is embedded in a study plan, a class test or an objective milestone.",
         "parameters": [
           {
             "name": "seriesId",
@@ -15542,7 +15542,7 @@
         "tags": [
           "Creator \u2013 Essays"
         ],
-        "summary": "Deletes an exercise. Not possible while it is embedded in a study plan or a class test.",
+        "summary": "Deletes an exercise. Not possible while it is embedded in a study plan, a class test or an objective milestone.",
         "parameters": [
           {
             "name": "seriesId",
@@ -16059,7 +16059,7 @@
         "tags": [
           "Creator \u2013 Listening"
         ],
-        "summary": "Deletes an exercise. Not possible while it is embedded in a study plan or a class test.",
+        "summary": "Deletes an exercise. Not possible while it is embedded in a study plan, a class test or an objective milestone.",
         "parameters": [
           {
             "name": "seriesId",
@@ -16576,7 +16576,7 @@
         "tags": [
           "Creator \u2013 Grammar"
         ],
-        "summary": "Deletes an exercise. Not possible while it is embedded in a study plan or a class test.",
+        "summary": "Deletes an exercise. Not possible while it is embedded in a study plan, a class test or an objective milestone.",
         "parameters": [
           {
             "name": "seriesId",
@@ -17195,7 +17195,7 @@
         "tags": [
           "Creator \u2013 Matching"
         ],
-        "summary": "Deletes an exercise. Not possible while it is embedded in a study plan or a class test.",
+        "summary": "Deletes an exercise. Not possible while it is embedded in a study plan, a class test or an objective milestone.",
         "parameters": [
           {
             "name": "seriesId",
@@ -17712,7 +17712,7 @@
         "tags": [
           "Creator \u2013 Translation"
         ],
-        "summary": "Deletes an exercise. Not possible while it is embedded in a study plan or a class test.",
+        "summary": "Deletes an exercise. Not possible while it is embedded in a study plan, a class test or an objective milestone.",
         "parameters": [
           {
             "name": "seriesId",
@@ -18716,7 +18716,7 @@
         "tags": [
           "Creator \u2013 Birkenbihl"
         ],
-        "summary": "Deletes an exercise. Not possible while it is embedded in a study plan or a class test.",
+        "summary": "Deletes an exercise. Not possible while it is embedded in a study plan, a class test or an objective milestone.",
         "parameters": [
           {
             "name": "seriesId",
@@ -19335,7 +19335,7 @@
         "tags": [
           "Creator \u2013 Arithmetic"
         ],
-        "summary": "Deletes an exercise. Not possible while it is embedded in a study plan or a class test.",
+        "summary": "Deletes an exercise. Not possible while it is embedded in a study plan, a class test or an objective milestone.",
         "parameters": [
           {
             "name": "seriesId",
@@ -20068,7 +20068,7 @@
         "tags": [
           "Creator \u2013 Arithmetic Drill"
         ],
-        "summary": "Deletes an exercise. Not possible while it is embedded in a study plan or a class test.",
+        "summary": "Deletes an exercise. Not possible while it is embedded in a study plan, a class test or an objective milestone.",
         "parameters": [
           {
             "name": "seriesId",
@@ -20687,7 +20687,7 @@
         "tags": [
           "Creator \u2013 List"
         ],
-        "summary": "Deletes an exercise. Not possible while it is embedded in a study plan or a class test.",
+        "summary": "Deletes an exercise. Not possible while it is embedded in a study plan, a class test or an objective milestone.",
         "parameters": [
           {
             "name": "seriesId",

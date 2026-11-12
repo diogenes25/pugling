@@ -1,10 +1,10 @@
 ---
-tags: [typ/story, status/idee, bereich/backend]
+tags: [typ/story, status/abgenommen, bereich/backend]
 aliases: [concurrency_conflict doch erreichbar]
-status: idee
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
+groesse: "XS"
 wo: backend
 migration: ""
 vertragsbruch: ""
@@ -25,6 +25,22 @@ Speicher-Kollision mit `409 concurrency_conflict`. Am Code geprüft am 2026-11-0
 Zu entscheiden beim Ausformulieren: Satz auf „kein ETag" einschränken (Doku), oder der Code soll bei einer Kollision tatsächlich etwas anderes
 liefern (Verhalten). Die Datei ist resident und über Budget – eine Berichtigung muss sich bezahlen.
 
+## Entscheidungen
+
+Autonom gegrillt (`art: Defekt`, Tageslauf):
+
+1. **Doku, nicht Verhalten:** der Code tut das Richtige (eine verlorene Kollision am Stamp ist „bitte nochmal"); falsch war
+   der Satz. Er sagt jetzt: kein `ETag`/`If-Match`; `concurrency_conflict` nur bei verlorener Kollision am Stamp des Kindes
+   (Shop, Skins, Interessen-Wunsch), nie als Versionsprüfung. Gleiche Länge, die Datei bleibt im Budget.
+
+## Akzeptanzkriterien
+
+1. Der Satz nennt die drei Stellen, die den Code liefern (`ShopService`, `MeController`, `MyInterestsController`).
+
 ## Verlauf
 
 - **2026-11-08** — angelegt aus dem Backend-Review zu Sprint 21 (Lauf AD).
+- **2026-11-13** — ausformuliert, autonom gegrillt (Defekt), geschätzt XS (Tageslauf, Sprint 51).
+- **2026-11-13** — gebaut (Sprint 51), nur Doku. AK 1 am Code nachgezählt: `ConcurrencyConflict` steht in `MeController`
+  (Kauf, Skin), `MyInterestsController`, `ShopService` – sonst nirgends (Review bestätigt). Kein Test, keine Mutante: ein
+  Satz in einer Anweisungsdatei. Abgenommen.

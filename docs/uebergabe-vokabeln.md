@@ -52,7 +52,7 @@ typischerweise `"items": []` und `"refs": null`.
   Ändern und Löschen einzelner Vokabelpaare. Das ist der bevorzugte Weg für nachträgliche Änderungen.
 - **Übungs-Verwaltung** ([ExerciseCatalogController.cs](../backend/Pugling.Api/Controllers/Creator/ExerciseCatalogController.cs)):
   `GET creator/exercises/{id}` (Detail inkl. Config + Metadaten), `GET creator/exercises/{id}/usage`
-  (Lehrpläne via `PlanPosition` + Klassenarbeiten, auf eigene Kinder gefiltert), Lösch-Schutz 409
+  (Lehrpläne via `PlanPosition`, Klassenarbeiten und Ziel-Etappen, auf eigene Kinder gefiltert), Lösch-Schutz 409
   ([ExerciseControllerBase.Delete](../backend/Pugling.Api/Controllers/Creator/ExerciseControllerBase.cs)).
 - **Web-UI:** [VaterVocab.tsx](../frontend/src/vater/VaterVocab.tsx) (Einfach/Komplex-Umschalter, Suche,
   Inline-Bearbeiten/Löschen); [VaterExerciseCreate.tsx](../frontend/src/vater/VaterExerciseCreate.tsx)

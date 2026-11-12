@@ -31,32 +31,31 @@ public class SecurityHardeningTests(PuglingWebAppFactory factory) : IClassFixtur
 
     /// <summary>
     /// B-282, point 4: unknown id, missing account and disabled login (<c>null</c>/empty stored PIN) cost the same
-    /// PBKDF2 work as a wrong PIN, so the response time does not reveal which case it was. Measured as the fastest of
-    /// five runs per path; without the decoy the early paths take microseconds against tens of milliseconds, so the
-    /// generous factor of 0.3 does not flicker. Red if the decoy derivation in <c>PinHasher.Verify</c> is removed.
+    /// PBKDF2 work as a wrong PIN, so the response time does not reveal which case it was. Without the decoy the early
+    /// paths take microseconds against tens of milliseconds, so the generous factor of 0.3 does not flicker. The paths are
+    /// measured interleaved, nine rounds, fastest per path (B-438): measured one after another, a load spike over the
+    /// wrong-PIN block alone once made the decoy look three times faster. Red if the decoy derivation in
+    /// <c>PinHasher.Verify</c> is removed.
     /// </summary>
     [Fact]
     public void PinHasher_Verify_RechnetAuchOhneGespeichertenHash()
     {
         var hash = PinHasher.Hash("1234");
-        static long Fastest(Action check)
-        {
-            check(); // warm-up
-            var best = long.MaxValue;
-            for (var i = 0; i < 5; i++)
+        (string Name, string? Stored)[] paths =
+            [("wrong PIN", hash), ("unknown account", null), ("disabled login", ""), ("legacy plaintext", "1111")];
+        var fastest = paths.ToDictionary(p => p.Name, _ => long.MaxValue);
+        foreach (var (_, stored) in paths) Assert.False(PinHasher.Verify("0000", stored)); // warm-up
+        for (var round = 0; round < 9; round++)
+            foreach (var (name, stored) in paths)
             {
                 var watch = System.Diagnostics.Stopwatch.StartNew();
-                check();
-                best = Math.Min(best, watch.ElapsedTicks);
+                Assert.False(PinHasher.Verify("0000", stored));
+                fastest[name] = Math.Min(fastest[name], watch.ElapsedTicks);
             }
-            return best;
-        }
 
-        var wrongPin = Fastest(() => Assert.False(PinHasher.Verify("0000", hash)));
-        Assert.True(Fastest(() => Assert.False(PinHasher.Verify("0000", null))) > wrongPin * 0.3, "unknown account");
-        Assert.True(Fastest(() => Assert.False(PinHasher.Verify("0000", ""))) > wrongPin * 0.3, "disabled login");
-        // Legacy plaintext is the third path without a real hash (review finding, Sprint 2 of 2026-11-05).
-        Assert.True(Fastest(() => Assert.False(PinHasher.Verify("0000", "1111"))) > wrongPin * 0.3, "legacy plaintext");
+        var wrongPin = fastest["wrong PIN"];
+        foreach (var (name, _) in paths.Skip(1))
+            Assert.True(fastest[name] > wrongPin * 0.3, name);
     }
 
     /// <summary>

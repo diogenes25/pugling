@@ -169,8 +169,9 @@ Gems → `PointKind.ManualGems`) – Belohnung außerhalb der App und Druckventi
 > `child.ConcurrencyStamp` bumpen. Der Stamp ist der geteilte Serialisierungspunkt des Saldos; ohne Bump
 > führen parallele Käufe zu Doppelspend bzw. negativem Saldo.
 >
-> **Der Stamp ist *nur* das – kein ETag.** `ApiErrors.ConcurrencyConflict` ist für Clients **bewusst
-> unerreichbar** (kein `ETag`/`If-Match`; „wer zuletzt schreibt, gewinnt" ist am Küchentisch richtig). Den Stamp
+> **Der Stamp ist *nur* das – kein ETag.** Es gibt kein `ETag`/`If-Match` („wer zuletzt schreibt, gewinnt" ist am
+> Küchentisch richtig); `concurrency_conflict` kommt nur, wenn ein Schreiben am Stamp des Kindes die Kollision verliert (Shop,
+> Skins, Interessen-Wunsch – „bitte nochmal"), nie als Versionsprüfung eines Clients. Den Stamp
 > als Ressourcen-Version auszugeben wäre ein Fehler: er ändert sich, sobald das Kind lernt. Entschieden in
 > [B-103](../../docs/backlog/B-103-idempotenzschluessel-und-etag.md) – dokumentierte Reserve, kein toter Code.
 
