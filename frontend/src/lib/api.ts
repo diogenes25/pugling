@@ -181,11 +181,12 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
   media_not_on_card: "Zu dieser Karte gibt es kein Bild.",
   interest_wish_limit_reached: "Deine Liste mit eigenen Interessen ist voll.",
   // B-499: 400er aus Kauf und Einlösen – das 409-Tor aus B-411 sieht sie nicht, die Wortgleichheit der Arcade schon. Drei
-  // erreicht nur das Kind; `insufficient_inventory` auch der Vater beim Genehmigen (ShopController), darum ohne „du“.
+  // erreicht nur das Kind; `insufficient_inventory` auch der Vater beim Genehmigen (ShopController), darum ohne „du“ – das
+  // Vater-Web setzt dort einen eigenen Satz mit Artikel und Folge (VaterShop `decide`, B-504).
   insufficient_gems: "Dafür reichen deine Gems noch nicht.",
   insufficient_coins: "Dafür reichen deine Münzen noch nicht.",
   shop_listing_inactive: "Dieses Angebot gibt es gerade nicht.",
-  insufficient_inventory: "Davon ist nicht mehr genug im Inventar.",
+  insufficient_inventory: "Von diesem Artikel ist nicht mehr genug im Inventar.",
 };
 
 export function errorMessage(e: unknown): string {

@@ -332,7 +332,7 @@ export const de = {
       insufficient_gems: "Dafür reichen deine Gems noch nicht.",
       insufficient_coins: "Dafür reichen deine Münzen noch nicht.",
       shop_listing_inactive: "Dieses Angebot gibt es gerade nicht.",
-      insufficient_inventory: "Davon ist nicht mehr genug im Inventar.",
+      insufficient_inventory: "Von diesem Artikel ist nicht mehr genug im Inventar.",
     },
   },
 } as const;

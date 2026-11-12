@@ -69,9 +69,12 @@ export function WeakWords({ childId }: { childId: number }) {
   // Gilt nur, wenn sie zu diesem Kind gehört: nach einem Kinderwechsel stünde sonst kurz die Zahl des vorigen da (B-499).
   const wordsMeasured = anyWord.stale ? undefined : anyWord.data?.total;
 
-  // Filterwechsel auf Seite 1 zurücksetzen – sonst zeigt der Pager ein Fenster jenseits des Bestands.
+  // Filter- und Kinderwechsel auf Seite 1 zurücksetzen – sonst zeigt der Pager ein Fenster jenseits des Bestands. Der
+  // Filter selbst überlebt den Kinderwechsel (darum kein `key={childId}`, B-502/B-504).
   const [prevOnlyWeak, setPrevOnlyWeak] = useState(onlyWeak);
   if (prevOnlyWeak !== onlyWeak) { setPrevOnlyWeak(onlyWeak); setSkip(0); }
+  const [prevChildId, setPrevChildId] = useState(childId);
+  if (prevChildId !== childId) { setPrevChildId(childId); setSkip(0); }
 
   return (
     <section>
@@ -90,6 +93,12 @@ export function WeakWords({ childId }: { childId: number }) {
       </p>
 
       <ListenAusfall was="Die Vokabeln" fehler={words.error} laedt={words.loading} onRetry={() => { words.reload(); anyWord.reload(); }} schluessel={JSON.stringify([childId, onlyWeak, skip])} />
+      {/* Scheitert nur die Zählung, wäre der Leerfall still neutral und nichts holte sie je nach (B-504). Ein Kasten genügt:
+          scheitert die Liste, lädt ihr „Erneut laden" beide. */}
+      {!words.error && (
+        <ListenAusfall was="Die Angaben zum Lernstand" fehler={anyWord.error} laedt={anyWord.loading}
+          onRetry={anyWord.reload} schluessel={childId} />
+      )}
       {words.loading && words.data === null ? <div className="loading">Lade…</div> : (
         <div style={{ overflowX: "auto" }}>
           <table className="table">
@@ -103,8 +112,9 @@ export function WeakWords({ childId }: { childId: number }) {
                   open={openWord === w.vocabularyId}
                   onToggle={() => setOpenWord(openWord === w.vocabularyId ? null : w.vocabularyId)} />
               ))}
-              {/* Nur für dieses Kind: nach einem Wechsel stünde sonst der Leerfall des vorigen da (B-502). */}
-              {words.data?.items.length === 0 && !words.stale && (
+              {/* Nur für dieses Kind: nach einem Wechsel stünde sonst der Leerfall des vorigen da (B-502). Und nur bei leerem
+                  Bestand, nicht bei einer leeren Seite jenseits davon – sonst „sitzt alles" bei drei schwachen Wörtern (B-504). */}
+              {words.data?.total === 0 && !words.stale && (
                 <tr><td colSpan={6} className="muted">
                   {!onlyWeak || wordsMeasured === 0
                     ? "Noch kein Lernstand: noch keine Antwort des Kindes wurde gewertet."

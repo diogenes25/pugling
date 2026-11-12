@@ -105,3 +105,70 @@ describe("Lernstand – Wortliste nach einem Kinderwechsel", () => {
     expect(screen.queryByText(/Noch kein Lernstand/)).toBeNull();
   });
 });
+
+/*
+ * B-504: was nach einem Kinderwechsel und bei einer gescheiterten Zählung im Leerfall stehen darf.
+ */
+describe("Lernstand – Seite und Zählung (B-504)", () => {
+  afterEach(() => vi.restoreAllMocks());
+  const word = (id: number): WordMastery => ({
+    vocabularyId: id, word: `w${id}`, translation: `t${id}`, avgMasteryPercent: 10, minBox: 1, itemCount: 1,
+  } as WordMastery);
+
+  // AK 1. Rot, wenn `skip` den Kinderwechsel überlebt (Kind 2 würde dann ab Wort 26 abgefragt) – und, Entscheidung 1,
+  // wenn der Wechsel den Filter zurücksetzt (`key={childId}` oder ein `setOnlyWeak(true)`): hier ist er vorher abgewählt.
+  it("beginnt nach einem Kinderwechsel auf Seite 1 und behält den Filter", async () => {
+    const spy = vi.spyOn(api, "childWordMastery").mockImplementation(async (id) =>
+      id === 1 ? { items: [word(1)], total: 30 } : { items: [word(2)], total: 3 });
+    const { rerender } = render(<AuthProvider><WeakWords childId={1} /></AuthProvider>);
+    fireEvent.click(screen.getByLabelText(/nur schwache/));
+    fireEvent.click(await screen.findByRole("button", { name: "Weiter ›" }));
+    await screen.findByText("26–30 von 30");
+
+    rerender(<AuthProvider><WeakWords childId={2} /></AuthProvider>);
+
+    expect(await screen.findByText("w2")).toBeTruthy();
+    // Die Listenabfrage (nicht die Zählung mit `take: 1`) für Kind 2: Seite 1, ohne Filter.
+    const child2List = spy.mock.calls.filter(([id, p]) => id === 2 && p?.take !== 1).map(([, p]) => [p?.onlyWeak, p?.skip]);
+    expect(child2List).toEqual([[false, 0]]);
+    expect((screen.getByLabelText(/nur schwache/) as HTMLInputElement).checked).toBe(false);
+  });
+
+  // AK 2. Rot, wenn der Leerfall an der Länge der Seite hängt: eine leere Seite jenseits von drei schwachen Wörtern
+  // sagte dann „es sitzt alles".
+  it("meldet keinen Erfolg für eine leere Seite jenseits des Bestands", async () => {
+    vi.spyOn(api, "childWordMastery").mockResolvedValue({ items: [], total: 3 });
+    show();
+
+    expect(await screen.findByText("Wörter (3)")).toBeTruthy();
+    expect(screen.queryByText(/sitzt alles/)).toBeNull();
+    expect(screen.queryByText(/Kein Wort unter 50/)).toBeNull();
+  });
+
+  // AK 3. Rot, wenn eine gescheiterte Zählung still bleibt: dann stünde dauerhaft der neutrale Satz ohne Weg zurück.
+  it("zeigt eine gescheiterte Zählung mit „Erneut laden“, das sie neu holt", async () => {
+    let fail = true;
+    vi.spyOn(api, "childWordMastery").mockImplementation(async (_id, p = {}) => {
+      if (p.onlyWeak) return page(0);
+      if (fail) throw new Error("Verbindung weg");
+      return page(3);
+    });
+    show();
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toMatch(/Die Angaben zum Lernstand konnten nicht geladen werden/);
+
+    fail = false;
+    fireEvent.click(screen.getByRole("button", { name: "Erneut laden" }));
+
+    expect(await screen.findByText(/sitzt alles/)).toBeTruthy();
+  });
+
+  // AK 3, zweiter Fall. Rot, wenn der Kasten der Zählung auch neben dem der Liste steht.
+  it("zeigt bei einer gescheiterten Liste nur einen Kasten", async () => {
+    vi.spyOn(api, "childWordMastery").mockRejectedValue(new Error("Verbindung weg"));
+    show();
+    await screen.findByText(/Die Vokabeln konnten nicht geladen werden/);
+
+    expect(screen.getAllByRole("alert")).toHaveLength(1);
+  });
+});

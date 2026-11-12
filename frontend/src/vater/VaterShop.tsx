@@ -2,7 +2,7 @@ import { useId, useState } from "react";
 import { StatusBanner } from "../components/StatusBanner";
 import { FieldLabel } from "../components/InfoHint";
 import { PAGE_SIZE, Pager } from "../components/ListControls";
-import { api } from "../lib/api";
+import { api, ApiError } from "../lib/api";
 import { useAction, type ActionState } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import { useChildSelection } from "../lib/useChildSelection";
@@ -368,7 +368,7 @@ function ChildShopManager() {
   );
 }
 
-function ChildShopView({ childId }: { childId: number }) {
+export function ChildShopView({ childId }: { childId: number }) {
   const activations = useAsync<ActivationRequest[]>(() => api.childActivations(childId), [childId]);
   const [purchaseSkip, setPurchaseSkip] = useState(0);
   const purchases = useAsync<Paged<ShopPurchase>>(
@@ -378,10 +378,22 @@ function ChildShopView({ childId }: { childId: number }) {
 
   async function decide(r: ActivationRequest, approve: boolean) {
     if (approve && !confirmAction(`${unitAmount(r.requestedQuantity, r.unitType)} „${r.articleTitle}" freigeben? Die Einheiten werden aus dem Inventar entnommen.`)) return;
-    const ok = await action.run(() => (approve
-      ? api.approveActivation(childId, r.id)
-      : api.rejectActivation(childId, r.id)));
-    if (!ok) return;
+    const ok = await action.run(async () => {
+      try {
+        await (approve ? api.approveActivation(childId, r.id) : api.rejectActivation(childId, r.id));
+      } catch (e) {
+        // Nur hier sind Artikel und Menge bekannt, und nur hier bleibt eine Anfrage offen (beim Kind entsteht keine) –
+        // darum ein eigener Satz statt des geteilten aus `GERMAN_PROBLEM_TEXT` (B-504).
+        if (approve && e instanceof ApiError && e.code === "insufficient_inventory")
+          // „weniger als N" ist genau die Bedingung des Servers (keine Zeile oder `Quantity < RequestedQuantity`).
+          throw new Error(`„${r.articleTitle}" lässt sich nicht freigeben: im Inventar sind weniger als `
+            + `${unitAmount(r.requestedQuantity, r.unitType)} übrig. Die Anfrage bleibt offen – du kannst sie ablehnen.`);
+        throw e;
+      }
+    });
+    // Auch bei Misserfolg neu laden: der Satz zeigt aufs Inventar, und das muss darunter den wahren Bestand zeigen; und
+    // hat ein anderer Erwachsener schon entschieden, darf die Zeile nicht weiter „Freigeben" anbieten.
+    if (!ok) { activations.reload(); inventory.reload(); return; }
     activations.reload();
     inventory.reload();
   }

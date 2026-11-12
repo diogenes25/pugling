@@ -367,3 +367,32 @@ hatte, nannte das Profil selbst und bewies nichts – erst das Review sah es.
 **Vorschlag (nicht gelandet):** **(DB)** Wer eine Funktion der Senke an einer zweiten Stelle ruft, ruft sie mit den
 Eingaben, die die Senke selbst bildet (hier: Fach = Reihe ?? Profil) – am besten über eine Methode der Senke, die diese
 Eingaben bildet, statt sie am Aufrufer nachzubauen.
+
+## Sprint 46 — Ziel & Umfang (auf Zuruf „Nächster Sprint mit B-504")
+
+**Sprint-Ziel:** *Was der Vater im Lernstand und nach einer gescheiterten Freigabe liest, gilt für dieses Kind und diese
+Anfrage – kein „es sitzt alles" aus einer leeren Seite, keine stille Zählung, kein „Davon" ohne Gegenstand.*
+**Umfang:** [B-504](backlog/B-504-nachschau-reste-sprint-44.md) (S, `art: Defekt`, autonom gegrillt).
+**Entwickler-Brief:** reine Frontend-Arbeit. Senke des Lernstands ist die eine Leerzeile von `WeakWords` – sie liest
+`total`, nicht die Seite. Der Vater-Satz zu `insufficient_inventory` entsteht an der Freigabe (nur dort sind Artikel und
+Menge bekannt und bleibt eine Anfrage offen); der geteilte Satz bekommt ein Bezugswort, Wortgleichheit der Arcade bleibt.
+
+## Iteration 46 — umgesetzt
+
+- `VaterLernstand.tsx`: `skip` beim Kinderwechsel auf 0 (Filter bleibt), Leerfall an `total === 0`, eigener Kasten für
+  die Zählabfrage. `VaterShop.tsx`: Freigabe-Fehler mit Artikel, Menge, offener Anfrage und „ablehnen"; Inventar und
+  Anfragen auch bei Misserfolg neu. Geteilter Satz „Von diesem Artikel ist nicht mehr genug im Inventar." (de/api/en).
+- Review-Zähler: **3** (drei 🟡, alle Tests: eine Filter-Zusicherung auf dem Ausgangszustand, eine Fixture mit ungültiger
+  Einheit, AK 5 nur als Kommentar). Rest → [B-505](backlog/B-505-leerfall-an-der-seite-statt-am-bestand.md).
+- Mutanten 12/12 rot nach der letzten Änderung – eine (S3) erst nach Umbau der Gegenprobe.
+
+## Runde 17 — Rollengang / Abnahme (Sprint 46)
+
+Vitest **796/796**, `tsc -b` sauber, Playwright **6/6** (Ausweichports, Server vom Lauf gestartet).
+
+- **Vater – abgenommen als Komponententest.** Seite 1 nach dem Kinderwechsel mit behaltenem Filter; kein Leerfall aus
+  einer Seite; gescheiterte Zählung mit „Erneut laden"; Freigabe-Fehler nennt „Bildschirmzeit", „weniger als 30 Min",
+  offene Anfrage und Ablehnen. *„Jetzt weiß ich, warum die Freigabe nicht ging und was ich stattdessen tun kann."*
+  **Nicht angesehen:** Browser; keine Spec fährt die gescheiterte Freigabe.
+- **Sohn – Regressionszeuge.** Geteilter Satz geändert, Wortgleichheit und i18n-Parität grün; Arcade-Specs im Lauf grün.
+- **Creator – Regressionszeuge.** Kein Pfad im Diff.

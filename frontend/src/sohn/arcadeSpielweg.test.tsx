@@ -188,6 +188,8 @@ describe("Fehlermeldungen der Arcade", () => {
     const text = errorMessage(new ApiError(400, "Not enough units.", "trace-6", "insufficient_inventory"));
     expect(text).not.toMatch(/\b(du|dein|deine|dir)\b/i);
     expect(text).not.toMatch(/nichts/);
+    // B-504: der Satz steht über einer Liste – ohne Bezugswort („Davon …") zeigte er auf nichts. Rot bei „Davon".
+    expect(text).toMatch(/Artikel/);
   });
 
   it("folgen der Sprache zum Zeitpunkt des Fehlers, nicht der beim Render", async () => {
