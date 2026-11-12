@@ -222,3 +222,64 @@ anderen Datei, und ich habe nicht nach allen `confirmAction` gesucht. Sprint 42 
   (`countsForMastery`), nicht umschreiben.
 
 **Weiterlaufen:** Review-Zähler 0, kein neues Tor – Sprint 43 war schon gebaut (siehe dort).
+
+## Runde 14 — Rollengang / Abnahme (Sprint 43)
+
+Volle Suite **1405/1405** (Debug), `tsc -b` sauber, Vitest **774/774**, Lader-Proben 6/6 und 7/7, beide echten Lehrwerke
+bestehen `--pruefen`. Review-Zähler **0** (🟢 ohne Zählung behoben). Mutanten 3/3 nach der letzten Änderung. Commit
+`0ffa5e0`.
+
+- **Sohn – abgenommen als Maschinengang.** Wortbank- und Auswahlkarten über die Karten-Route: die ergänzte Lösung steht
+  alphabetisch, nicht vorn; ein NBSP macht keinen zweiten Knopf. *„Ich seh nicht mehr, welches Wort der Computer
+  dazugemogelt hat."* **Nicht gefahren:** Browser.
+- **Creator – abgenommen offline.** Der Lader meldet eine eigene Kachel, die eine Alternative ist, und legt NBSP-Kacheln
+  zusammen. Kein bleibender Test (B-492).
+- **Vater – Regressionszeuge.** Eine Hilfe-Zeile (`questionChoices`) gelesen; Suite grün.
+
+## Retrospektive (Sprint 43)
+
+**Nachschau:** Sprint 42 (B-495, B-455) von einem frischen `pugling-reviewer` an `b401e92`, per `git archive` exportiert
+(1401/1401 – der reine Commit, ohne Sprint 43). Geprüft: alle Aufrufer der Senke, beide Auswege der ungebundenen Meldung,
+B-455 vor dem Speichern auf POST und PATCH, `DefaultTypes`-Leser, Doku. **Ein 🟡:** der Ausweg „korrigiere das Fach
+dieses Profils" endet bei einem *fremden* Profil an `not_owner` →
+[B-500](backlog/B-500-profil-meldung-fremdes-profil-korrigieren.md) (P3, `entgangen_bei: B-495`), drei 🟢 dort.
+`nachgeschaut` an B-495 und B-455. Index: **Nachgeschaut 386 von 400**, in 143 ein Durchrutscher.
+
+**Was die eigenen Tore durchgelassen haben:** wieder (CV) – ein Ausweg, geprüft gegen die Sperren der Senke, aber nicht
+gegen die Rechte des Lesers. Mein Review hat „die Fläche existiert" bestätigt, und sie existiert – für eigene Profile.
+Sprint 43 selbst: Review-Zähler 0, keine Nachschau mehr in dieser Nacht (sie gehört in den nächsten Lauf).
+
+**Vorschlag (nicht gelandet, Freigabe 3):** **(CZ)** (CV) erweitert: ein Ausweg wird gegen alle Sperren der Senke *und*
+gegen das Recht des Lesers geprüft, ihn zu gehen (Eigentum, Rolle). Ort: Meldungsregel in pm-loop Step 5.
+
+## Abschluss des Nachtlaufs
+
+**Vier Sprints, neun Stories abgenommen:**
+
+| Sprint | Stories | Commit | Review-Zähler | Nachschau des Vorsprints |
+| --- | --- | --- | --- | --- |
+| 40 | B-491, B-490 | `b521cd9` | 1 | Sprint 39 → B-495 (🟡) |
+| 41 | B-415, B-418, B-444, B-467 | `1c7b567` | 2 | Sprint 40 → B-497 (nur 🟢) |
+| 42 | B-495, B-455 | `b401e92` | 0 | Sprint 41 → B-499 (2 🟡) |
+| 43 | B-497 | `0ffa5e0` | 0 | Sprint 42 → B-500 (🟡) |
+
+**Qualitätsschwelle:** Backend 1405/1405 (Debug; ein Release-Lauf des Reviewers 1404/1405 an einer Dateisperre auf
+`docs/openapi/v1.json`, wiederholt grün), Vitest 774/774, `tsc -b` sauber, Playwright 4/4 (Ausweichports), Lader-Proben
+offline, Mutanten 8 + 10 + 4 + 3, alle rot nach der letzten Änderung.
+
+**Neue Stories:** B-495, B-496, B-497 (gebaut), B-498, B-499 (P2), B-500. **Nicht gebaut**, weil `Wunsch`/`Frage` ohne
+Freigabe oder als neues Tor: B-492/B-493 (Tore, vom Nutzer freigegeben – bewusst nicht nachts, damit der Nutzer ein neues
+Tor zuerst sieht), B-465 (braucht kurzen Dialog).
+
+**Für die Söhne:** alle Änderungen wirken erst nach einem Neustart des Heimnetz-Servers. Keine Migration. Die Kopie der
+echten DB hatte keinen betroffenen Datensatz (Wortbanken, Verstehensfragen, Profile).
+
+## Offene Roadmap (priorisiert)
+
+Die Liste ist [docs/backlog/](backlog/INDEX.md). Reihenfolge-Vorschlag für den nächsten Lauf: **B-499** (P2, zwei 🟡 aus
+Sprint 41, eine davon zum zweiten Mal dieselbe Stelle), dann **B-500**, **B-496**, **B-498** (alles Meldungen und
+Leerzustände – ein Sprint „Texte, die stimmen", mit (CY) als Arbeitsweise), danach B-492/B-493 als Tor-Sprints mit Halt.
+
+**Retro-Vorschläge zur Entscheidung:** (CT) UI-Sätze bei Regeländerung greppen · (CU) `mutant-probe.py` per Vorgabe
+`Debug` · (CV)/(CZ) Auswege gegen alle Sperren und das Recht des Lesers · (CW) Leerfall nennt die Größe, wie der Server
+sie zählt · (CX) die rote Probe liest die Meldung · (CY) alle Sätze derselben Art greppen.

@@ -10,6 +10,7 @@ migration: nein
 vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-10-fertigstellung.md
 unverifiziert: true
+nachgeschaut: 2026-11-12
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-426]
@@ -61,3 +62,9 @@ entdoppeln. Für das Ziel des Fertigstellungs-Laufs nicht tragend, darum `idee`.
 - **2026-11-12** — **abgenommen.** Volle Suite 1405/1405 (Debug, mit Sprint 43 im Arbeitsbaum), `CreatorAgentTests` +
   `CreatorProfile*` 148/148 nach der letzten Änderung. **Rollengang (Creator) als Maschinengang:** die Tests fahren
   Konsole und Pipeline gegen die In-Process-API mit `FakeChatClient`; Ollama nicht gefahren.
+- **2026-11-12** — Nachschau (Retro Sprint 43, Nachtlauf): frischer `pugling-reviewer` an `b401e92` (per `git archive`,
+  1401/1401). Geprüft: alle Aufrufer von `ProfileFit`/`ResolveProfileAsync` (`BriefingBuilder.cs:63/252/260`; Signatur
+  geändert, eine übersehene Stelle kompilierte nicht), Fach-Senke `BriefingBuilder.cs:57-60` und `AgentCommands.cs:528-530`,
+  beide Auswege der ungebundenen Meldung, B-455 vor dem Speichern bei POST und PATCH, `DefaultTypes`-Leser, Doku
+  (`CLAUDE.md:21`, `ki-creator`-Skill). **Gefunden:** der Ausweg „korrigiere das Fach dieses Profils" endet bei einem
+  fremden Profil an `not_owner` → [B-500](B-500-profil-meldung-fremdes-profil-korrigieren.md) (P3), drei 🟢 dort.
