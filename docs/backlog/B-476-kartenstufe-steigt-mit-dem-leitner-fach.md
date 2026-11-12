@@ -290,6 +290,7 @@ die drei Punkte nach der dortigen Empfehlung entschieden, Vetorecht beim Vater).
   | R2 kaltes Wort zählt 30 Tage zurück | `PositionTestsController.Start` | rot |
   | R3 Vorschau des Vaters führt ein | `PositionTestsController.Start` | rot |
   | R4 Frist im Test einen Tag zu spät | `TestItemStage` | rot |
+
 - **2026-11-12** — Review `pugling-reviewer` zu `10226b4` (1313/1313): keine 🔴. **🟡1** ein Teststart ohne Dosis führte
   den ganzen Pool ein – eine `NewWords`-Mission („25 neue Wörter“) zahlte für einen Klick, und die Leiter ungesehener
   Wörter lief los → behoben im Sinn der Entscheidung („erste Begegnung zählt“): ohne Dosis führt erst die Antwort ein
@@ -314,4 +315,3 @@ die drei Punkte nach der dortigen Empfehlung entschieden, Vetorecht beim Vater).
 - **2026-11-12** — E2E, volle Suite an `47d0acb`: **135 passed** (darin `erstbegegnung.spec.ts`, der Rollengang dieser
   Story). Ausrollen offen: der Heimnetz-Server wurde für `10226b4` angehalten, den Neustart aus meiner Sitzung hat die
   Rechteprüfung gesperrt; er läuft nicht. Der Vater startet ihn über `scripts/heimnetz.ps1` – dann `abgenommen`.
-

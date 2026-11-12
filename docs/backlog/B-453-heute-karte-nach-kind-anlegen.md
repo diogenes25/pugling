@@ -2,6 +2,7 @@
 tags: [typ/story, status/abgenommen, bereich/vater-web, rolle/supervisor]
 aliases: [Heute-Karte veraltet]
 status: abgenommen
+nachgeschaut: 2026-11-12
 prio: P3
 art: Defekt
 groesse: XS
@@ -26,3 +27,4 @@ Seite neu geladen wird. Vermutung: `addChild` lädt nur die Kinderliste neu, nic
 - **2026-11-10** — angelegt aus Rollengang 0 des Fertigstellungs-Laufs (Befund Z6).
 - **2026-11-10** — Sprint 30: belegt am Code (`VaterDashboard.tsx`, `addChild` lud nur `children` neu, die Karte hängt an `today`), behoben mit `today.reload()`; Regressionszeile in `e2e/ziel-vier-wochen.spec.ts` (Karte „Heute" nennt das Kind direkt nach dem Anlegen).
 - **2026-11-10** — abgenommen. `tsc -b` sauber, `ziel-vier-wochen.spec.ts` grün (rote Probe ohne `today.reload()`: fällt in Zeile 28) – die Spec ist der Rollengang des Vaters. Kein Reviewer-Lauf für die eine Zeile; der Selbst-Check ist als solcher benannt. Commit `1079a96`.
+- **2026-11-12** — Nachschau 2026-11-12 (Sprint 31): `addChild` → `today.reload()` ist der einzige Anlege-Weg der Seite; E2E-Zeile auf den Abschnitt „Heute“ begrenzt, rote Probe der Story gemessen – ohne Befund.

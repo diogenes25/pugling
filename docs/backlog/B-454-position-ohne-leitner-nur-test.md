@@ -2,6 +2,7 @@
 tags: [typ/story, status/abgenommen, bereich/training, rolle/student, rolle/supervisor]
 aliases: [Nur Test ohne Leitner]
 status: abgenommen
+nachgeschaut: 2026-11-12
 prio: P1
 art: Defekt
 groesse: XS
@@ -54,3 +55,4 @@ B-419 („erst zeigen, dann fragen") galt nur für Positionen mit Leitner-Kasten
   abgenommener Arbeit von B-419 – darum `entgangen_bei`).
 - **2026-11-10** — `frontend-reviewer`: der Rollengang deckte den Fall nicht (die Dosis schaltet den Kasten ein); eigene Spec `ueben-ohne-leitner.spec.ts` ergänzt, AK 2 berichtigt.
 - **2026-11-10** — abgenommen. E2E 134 passed, `ueben-ohne-leitner.spec.ts` ist der Rollengang des Kindes; `frontend-reviewer` gelaufen. Commit `595b429`.
+- **2026-11-12** — Nachschau 2026-11-12 (Sprint 31): `canPractice` mit `poolSize > 0`; ohne Leitner zahlt der Server keine Punkte (`leitnerScored`), Spec legt `useLeitner: false` an – ohne Befund.
