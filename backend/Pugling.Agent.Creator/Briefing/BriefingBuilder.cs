@@ -60,7 +60,7 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
                 + $"{targetSeries.SubjectName}) – die Übung gehört zum Fach des Werks, in dem sie liegt; setze dieses Fach.");
 
         var child = request.ChildId is int childId ? await LoadChildAsync(childId, ct) : null;
-        var profile = await ResolveProfileAsync(request, targetSeries, ct);
+        var profile = await ResolveProfileAsync(request, targetSeries, subject, ct);
         // Explicitly set languages beat the profile; without either, the usual defaults apply.
         var sourceLang = request.SourceLang ?? profile?.SourceLang ?? "en";
         var targetLang = request.TargetLang ?? profile?.TargetLang ?? "de";
@@ -229,13 +229,14 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
     }
 
     /// <summary>
-    /// The request's profile: explicitly named, otherwise the best fit for the child <b>among the profiles on the target
-    /// series</b>, else among those without a series (B-484) - one that wins on grade and school type but teaches another
-    /// work would bring that work's persona to this one. Without either, it stays empty - the agent then works as a generalist, instead of aborting
-    /// (a catalog without profiles must remain usable).
+    /// The request's profile: the named one if it fits (<see cref="ProfileFit"/>, else a usage error), otherwise the
+    /// best fit for the child among the profiles that fit the series and subject - the series' own first, then one
+    /// without a series (B-484, B-488). One that wins on grade and school type but teaches another work would bring that
+    /// work's persona to this one. Without either, it stays empty - the agent then works as a generalist, instead of
+    /// aborting (a catalog without profiles must remain usable).
     /// </summary>
     public async Task<CreatorProfileResponse?> ResolveProfileAsync(GenerationRequest request, TextbookSeriesResponse series,
-        CancellationToken ct = default)
+        SubjectResponse subject, CancellationToken ct = default)
     {
         if (request.ProfileId is int profileId)
         {
@@ -248,7 +249,7 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
             {
                 throw new AgentUsageException($"Creator-Profil {profileId} gibt es nicht – 'pugling-creator profiles' zeigt die vorhandenen.");
             }
-            return ProfileFit.Problem(named, series) is { } misfit ? throw new AgentUsageException(misfit) : named;
+            return ProfileFit.Problem(named, series, subject) is { } misfit ? throw new AgentUsageException(misfit) : named;
         }
 
         if (request.ChildId is not int childId) return null;
@@ -256,7 +257,7 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
         // The same rule as for a named profile: only one that fits the work speaks; a teacher for every book of the
         // subject is the next best after the teacher of this one.
         var fitting = (await creator.MatchProfilesAsync(childId, request.SubjectId, ct))
-            .Where(m => ProfileFit.Problem(m.Profile, series) is null).ToList();
+            .Where(m => ProfileFit.Problem(m.Profile, series, subject) is null).ToList();
         return (fitting.FirstOrDefault(m => m.Profile.SeriesId == series.Id) ?? fitting.FirstOrDefault())?.Profile;
     }
 

@@ -59,4 +59,20 @@ public class CreatorProfileTypeKeyTests(PuglingWebAppFactory factory) : IClassFi
 
         Assert.Equal(HttpStatusCode.Created, res.StatusCode);
     }
+
+    // B-455: an unknown spelling is rejected wherever it stands in the list. Red if the check runs after the
+    // case-insensitive dedupe - then "cloze" behind "Cloze" is dropped as a duplicate and the request passes (201).
+    // Only the first case carries that; the second was 400 before as well and states the intent (order symmetry).
+    [Theory]
+    [InlineData("Cloze", "cloze")]
+    [InlineData("cloze", "Cloze")]
+    public async Task Anlegen_MitUnbekannterSchreibweise_Liefert400_GleichAnWelcherStelle(string first, string second)
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var res = await creator.PostAsJsonAsync(ProfileRoot, Profile(first, second));
+
+        Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
+        var problem = await res.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Contains("cloze", problem.GetProperty("detail").GetString());
+    }
 }

@@ -225,10 +225,13 @@ public class CreatorProfilesController(PuglingDbContext db, CreatorProfileServic
     /// <summary>
     /// B-426: every preferred type must be a manifest key, compared exactly like the registry does. A key the server does not
     /// know is a typo or a stale client, and the profile would carry a preference no exercise type answers to.
+    /// Checked on the trimmed raw values, before <see cref="Clean"/>: its case-insensitive dedupe would otherwise drop an
+    /// unknown spelling that follows a known one ("Cloze", "cloze"), so the verdict hung on the order (B-455).
     /// </summary>
     private ActionResult? UnknownTypesProblem(List<string>? values)
     {
-        var unknown = Clean(values).Where(v => registry.ByKey(v) is null).ToList();
+        var unknown = (values ?? []).Select(v => v.Trim()).Where(v => v.Length > 0 && registry.ByKey(v) is null)
+            .Distinct(StringComparer.Ordinal).ToList();
         return unknown.Count == 0 ? null
             : this.ProblemWithCode(ApiErrors.ValidationError, $"Unknown exercise type key(s): {string.Join(", ", unknown)}.");
     }

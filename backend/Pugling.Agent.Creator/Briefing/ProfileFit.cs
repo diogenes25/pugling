@@ -8,17 +8,38 @@ namespace Pugling.Agent.Creator.Briefing;
 /// </summary>
 public static class ProfileFit
 {
-    /// <summary>Why <paramref name="profile"/> does not fit <paramref name="series"/>, or <c>null</c> when it does.</summary>
-    public static string? Problem(CreatorProfileResponse profile, TextbookSeriesResponse series)
+    /// <summary>
+    /// Why <paramref name="profile"/> does not fit <paramref name="series"/> and the exercise's
+    /// <paramref name="subject"/>, or <c>null</c> when it does. The subject is the request's, which the briefing has
+    /// already held to the series' own where the series has one - so a series without a subject is checked too (B-495).
+    /// </summary>
+    public static string? Problem(CreatorProfileResponse profile, TextbookSeriesResponse series, SubjectResponse subject)
     {
         if (profile.SeriesId is int own && own != series.Id)
             return $"Creator-Profil {profile.Id} ({profile.Name}) gehört zur Reihe {own}, die Übung entstünde in Reihe "
                    + $"{series.Id} ({series.Name}) – lass --series/--series-unit weg oder wähle ein Profil dieser Reihe.";
-        // A series without a subject decides nothing here; the subject then comes from the profile.
-        if (profile.SubjectId is int subject && series.SubjectId is int seriesSubject && subject != seriesSubject)
-            return $"Creator-Profil {profile.Id} ({profile.Name}) unterrichtet {profile.SubjectName}, Reihe {series.Id} "
-                   + $"({series.Name}) gehört zu {series.SubjectName} – wähle ein Profil für {series.SubjectName} oder "
-                   + $"eine Reihe in {profile.SubjectName}.";
-        return null;
+        if (TeachesAnother(profile, subject) is not { } taught) return null;
+        // Bound to this very series, the profile contradicts itself: another series fails the check above, another
+        // profile is the only way out besides fixing this one - never "a series in its subject" (the circle of B-495).
+        return profile.SeriesId == series.Id
+            ? $"Creator-Profil {profile.Id} ({profile.Name}) ist an Reihe {series.Id} ({series.Name}) gebunden, "
+              + $"unterrichtet aber {taught} statt {subject.Name} – wähle ein anderes Profil oder korrigiere das Fach "
+              + "dieses Profils (Vater-Web, Fachlehrer), oder seine Reihe, wenn es zu einem anderen Werk gehört."
+            : $"Creator-Profil {profile.Id} ({profile.Name}) unterrichtet {taught}, die Übung gehört zu {subject.Name} "
+              + $"(Reihe {series.Id}, {series.Name}) – wähle ein Profil für {subject.Name} oder eine Reihe in {taught}.";
+    }
+
+    /// <summary>
+    /// The profile's subject when it is another than <paramref name="subject"/>, else <c>null</c>. A profile without a
+    /// subject id may still name one as free text (B-142) - that name counts, case-insensitively; one without either
+    /// teaches every subject.
+    /// </summary>
+    private static string? TeachesAnother(CreatorProfileResponse profile, SubjectResponse subject)
+    {
+        if (profile.SubjectId is int id) return id == subject.Id ? null : profile.SubjectName ?? $"Fach {id}";
+        var name = profile.SubjectName?.Trim();
+        return string.IsNullOrEmpty(name) || string.Equals(name, subject.Name.Trim(), StringComparison.OrdinalIgnoreCase)
+            ? null
+            : name;
     }
 }

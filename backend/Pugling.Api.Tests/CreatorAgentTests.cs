@@ -1828,6 +1828,67 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
+    /// B-495: a profile bound to series B but teaching subject A cannot be fixed by choosing another series - the series
+    /// check then rejects it ("gehört zur Reihe"). The message names the profile as the cause. Red if it offers "eine
+    /// Reihe in …" to a profile that is bound to a series (the circle of B-495).
+    /// </summary>
+    [Fact]
+    public async Task Profil_auf_einer_Reihe_mit_fremdem_Fach_nennt_das_Profil_als_Ursache()
+    {
+        var (pipeline, creator, _, subjectA, seriesB, unitB, _) = await ForeignSubjectAsync("Gebunden fremd");
+        var bound = await creator.CreateProfileAsync(new CreateCreatorProfileDto(
+            $"Profil auf Reihe B {Guid.NewGuid():N}", null, subjectA, null, null, null, seriesB,
+            SourceLang: "en", TargetLang: "de", Persona: null, Didactics: null, DefaultTypes: null, Active: true));
+        var subjectB = (await creator.GetSeriesAsync(seriesB)).SubjectId!.Value;
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => pipeline.BriefAsync(
+            Request(subjectB, seriesB, unitB, "Vocabulary", childId: null, profileId: bound.Id)));
+
+        Assert.Contains("gebunden", error.Message);
+        Assert.DoesNotContain("eine Reihe in", error.Message);
+    }
+
+    /// <summary>
+    /// B-495 (rest): a profile with a free-text subject (no <c>SubjectId</c>, B-142) of another subject is a misfit too -
+    /// otherwise the prompt says "Fach: Latein" next to the English unit. Red if a profile without a subject id always
+    /// passes.
+    /// </summary>
+    [Fact]
+    public async Task Profil_mit_freiem_Fachnamen_eines_anderen_Fachs_ist_eine_Fehlbedienung()
+    {
+        var (pipeline, creator, _, _, seriesB, unitB, _) = await ForeignSubjectAsync("Freitext fremd");
+        var freeText = await creator.CreateProfileAsync(new CreateCreatorProfileDto(
+            $"Profil Freitext {Guid.NewGuid():N}", $"Latein {Guid.NewGuid():N}", null, null, null, null, null,
+            SourceLang: "la", TargetLang: "de", Persona: null, Didactics: null, DefaultTypes: null, Active: true));
+        var subjectB = (await creator.GetSeriesAsync(seriesB)).SubjectId!.Value;
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => pipeline.BriefAsync(
+            Request(subjectB, seriesB, unitB, "Vocabulary", childId: null, profileId: freeText.Id)));
+
+        Assert.Contains("unterrichtet", error.Message);
+    }
+
+    /// <summary>
+    /// B-495 (rest): in a series without a subject the exercise takes the request's subject - a profile of another
+    /// subject is a misfit there as well. Red if the subject is only compared with the series' (which has none).
+    /// </summary>
+    [Fact]
+    public async Task Profil_eines_anderen_Fachs_in_einer_Reihe_ohne_Fach_ist_eine_Fehlbedienung()
+    {
+        var (pipeline, creator, _, subjectA, seriesB, _, profileA) = await ForeignSubjectAsync("Ohne Fach");
+        var subjectB = (await creator.GetSeriesAsync(seriesB)).SubjectId!.Value;
+        Assert.NotEqual(subjectA, subjectB); // precondition: the profile teaches another subject than the request
+        var bare = await creator.CreateSeriesAsync(new CreateTextbookSeriesDto(
+            $"Reihe ohne Fach {Guid.NewGuid():N}", null, null, null, null, null, null, null));
+        var unit = await creator.CreateUnitAsync(bare.Id, new CreateSeriesUnitDto("Unit 1", null, 1, null, null, null, null));
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => pipeline.BriefAsync(
+            Request(subjectB, bare.Id, unit.Id, "Vocabulary", childId: null, profileId: profileA.Id)));
+
+        Assert.Contains("unterrichtet", error.Message);
+    }
+
+    /// <summary>
     /// B-488 (rest of the look-back): a profile of one work next to a bare <c>--series-unit</c> of another names the
     /// conflict. The unit used to be searched only in the profile's series and was reported as non-existent. Red if the
     /// named place is looked up in the profile's series again ("gibt es nicht").
