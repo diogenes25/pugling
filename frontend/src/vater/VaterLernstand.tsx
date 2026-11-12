@@ -62,9 +62,12 @@ export function WeakWords({ childId }: { childId: number }) {
     () => api.childWordMastery(childId, { onlyWeak, skip, take: PAGE_SIZE }), [childId, onlyWeak, skip]);
   const [openWord, setOpenWord] = useState<number | null>(null);
   // Ob es überhaupt ein Wort gibt (B-467): eine leere Liste unter „nur schwache" ist nur dann ein Erfolg. Ohne diese Zahl
-  // läse ein Kind, das noch nie geantwortet hat, „es sitzt alles". Gezählt werden Antworten (`ItemProgress`): eingeführte,
-  // aber nie beantwortete Wörter fehlen hier – darum sagt der Leerfall „keine Frage beantwortet", nicht „nichts geübt".
+  // läse ein Kind, das noch nie geantwortet hat, „es sitzt alles". Gezählt werden nur *gewertete* Antworten: eine Zeile
+  // entsteht erst bei `countsForMastery` (ItemProgressService), und eine Antwort auf einer Selbsteinschätzungs- oder
+  // Anzeige-Stufe zählt nicht (PositionPracticeController, `scored`) – darum nennt der Leerfall genau das (B-499).
   const anyWord = useAsync<Paged<WordMastery>>(() => api.childWordMastery(childId, { take: 1 }), [childId]);
+  // Gilt nur, wenn sie zu diesem Kind gehört: nach einem Kinderwechsel stünde sonst kurz die Zahl des vorigen da (B-499).
+  const wordsMeasured = anyWord.stale ? undefined : anyWord.data?.total;
 
   // Filterwechsel auf Seite 1 zurücksetzen – sonst zeigt der Pager ein Fenster jenseits des Bestands.
   const [prevOnlyWeak, setPrevOnlyWeak] = useState(onlyWeak);
@@ -86,7 +89,7 @@ export function WeakWords({ childId }: { childId: number }) {
         Kandidaten für eine gezielte Wiederholungs-Übung.
       </p>
 
-      <ListenAusfall was="Die Vokabeln" fehler={words.error} laedt={words.loading} onRetry={words.reload} schluessel={JSON.stringify([childId, onlyWeak, skip])} />
+      <ListenAusfall was="Die Vokabeln" fehler={words.error} laedt={words.loading} onRetry={() => { words.reload(); anyWord.reload(); }} schluessel={JSON.stringify([childId, onlyWeak, skip])} />
       {words.loading && words.data === null ? <div className="loading">Lade…</div> : (
         <div style={{ overflowX: "auto" }}>
           <table className="table">
@@ -102,9 +105,9 @@ export function WeakWords({ childId }: { childId: number }) {
               ))}
               {words.data?.items.length === 0 && (
                 <tr><td colSpan={6} className="muted">
-                  {!onlyWeak || anyWord.data?.total === 0
-                    ? "Noch kein Lernstand: das Kind hat noch keine Frage beantwortet."
-                    : anyWord.data
+                  {!onlyWeak || wordsMeasured === 0
+                    ? "Noch kein Lernstand: noch keine Antwort des Kindes wurde gewertet."
+                    : wordsMeasured !== undefined
                       ? "Kein Wort unter 50 % – es sitzt alles. 👍"
                       : "Kein Wort unter 50 %."}
                 </td></tr>

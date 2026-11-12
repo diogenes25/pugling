@@ -283,3 +283,43 @@ Leerzustände – ein Sprint „Texte, die stimmen", mit (CY) als Arbeitsweise),
 **Retro-Vorschläge zur Entscheidung:** (CT) UI-Sätze bei Regeländerung greppen · (CU) `mutant-probe.py` per Vorgabe
 `Debug` · (CV)/(CZ) Auswege gegen alle Sperren und das Recht des Lesers · (CW) Leerfall nennt die Größe, wie der Server
 sie zählt · (CX) die rote Probe liest die Meldung · (CY) alle Sätze derselben Art greppen.
+
+## Sprint 44 — Ziel & Umfang (auf Zuruf „Ja, B-499")
+
+**Sprint-Ziel:** *Was der Vater vor dem Löschen und im leeren Lernstand liest, und was das Kind bei einer Kauf-Sperre
+liest, stimmt – gemessen an dem, was der Server tut.*
+**Umfang:** [B-499](backlog/B-499-nachschau-reste-sprint-41.md) (S, Durchrutscher aus B-467/B-418) – `art: Defekt`.
+**Entwickler-Brief:** reine Frontend-Arbeit; der Leerfall zitiert die Größe des Servers (`countsForMastery`), die zweite
+Abfrage gilt nur ohne `stale`; Lösch-Fragen nennen, was wirklich mitgeht; vier 400er bekommen Sätze in beiden Tabellen.
+
+## Iteration 44 — umgesetzt
+
+- Rote Proben 8/8 (eine zuerst am falschen Ort: ASCII-`"` im Testnamen). Mutanten 9/9 nach der letzten Änderung.
+- Review-Zähler: **3** (🔴 Inventar-Satz trifft auch den Vater und sagte „nichts"; 🟡 Löschen verschwieg den Lernstand;
+  🟡 dieselbe Form bei Reihe und Unit) – alle behoben, Reste → [B-502](backlog/B-502-reste-review-sprint-44.md).
+
+## Runde 15 — Rollengang / Abnahme (Sprint 44)
+
+Vitest **785/785**, `tsc -b` sauber, Backend-Tore 13/13, Playwright **8/8** nach der letzten Änderung (Ausweichports).
+
+- **Vater – abgenommen als Maschinengang.** Leerfall nennt gewertete Antworten, kein Erfolg aus fremder oder fehlender
+  Zahl; Lösch-Fragen nennen Übungen und Lernstand, der mitgeht. *„Wenn ich eine Unit lösche, will ich wissen, dass das
+  Gelernte meines Sohns mitgeht."* **Nicht angesehen:** die Dialoge im Browser.
+- **Sohn – abgenommen als Komponententest.** Vier Kauf-Sperren sprechen eigene Sätze in beiden Sprachen.
+- **Creator – Regressionszeuge.** Lösch-Fragen der Lehrwerke geändert, Specs `creator-lehrwerk-weg` grün.
+
+## Retrospektive (Sprint 44)
+
+**Nachschau:** Sprint 43 (B-497) von einem frischen `pugling-reviewer` an `0ffa5e0` (per `git archive`, 1405/1405).
+**Kein 🔴/🟡** – sieben 🟢, alle Stellen, die noch anders vergleichen als `Normalize` (`AnswerVariants`, U+FEFF, KI-Creator,
+`ContainsWord`) → [B-501](backlog/B-501-nachschau-reste-sprint-43.md) (`entgangen_bei: B-497`). `nachgeschaut` an B-497.
+
+**Was die eigenen Tore durchgelassen haben:** das Review fand drei Funde, alle eine Form: *ein Satz für eine Rolle, den
+eine andere auch liest* (Inventar-Satz an den Vater) und *eine Folge, die über einen Cascade läuft, den die
+Oberfläche nicht kennt* (Lernstand beim Löschen). Mein Grill hatte „nur das Kind erreicht diese Codes" behauptet, ohne
+die Supervisor-Controller zu greppen – genau (CR) in anderer Gestalt.
+
+**Vorschlag (nicht gelandet):** **(DA)** ein Tor in `ProblemTextGuardTests`: jeder Code in `GERMAN_PROBLEM_TEXT`, den
+ein Supervisor-Controller liefert, darf kein „du/dein" enthalten – die Abbildung Code → Controller ist im Quelltext lesbar
+(Suche nach `ApiErrors.<Name>` unter `Controllers/Supervisor` und den Services, die sie rufen – wie das Tor schon `api.ts`
+liest), anders als Knopf → Route. Neues Tor → erst nach deiner Entscheidung.

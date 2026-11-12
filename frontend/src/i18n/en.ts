@@ -316,6 +316,10 @@ export const en = {
       media_not_on_card: "This card has no picture.",
       interest_wish_limit_reached: "You can't add any more interests of your own.",
       concurrency_conflict: "That clashed with another change and wasn't saved. Try again.",
+      insufficient_gems: "You don't have enough gems for this yet.",
+      insufficient_coins: "You don't have enough coins for this yet.",
+      shop_listing_inactive: "This offer isn't available right now.",
+      insufficient_inventory: "There isn't enough of this left in the inventory.",
     },
   },
 } as const;

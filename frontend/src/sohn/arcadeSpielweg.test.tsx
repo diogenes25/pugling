@@ -168,7 +168,10 @@ describe("Fehlermeldungen der Arcade", () => {
   // Rot, wenn ein Code weder in `GERMAN_PROBLEM_TEXT` noch unter `problem.*` steht: dann stünde auf Deutsch die
   // englische Server-Zeile samt Ref da, auf Englisch die technische Server-Zeile.
   it.each(["skin_already_unlocked", "shop_insufficient_stock", "media_no_alternative", "media_not_on_card",
-    "interest_wish_limit_reached", "concurrency_conflict"])(
+    "interest_wish_limit_reached", "concurrency_conflict",
+    // B-499: vier 400er aus Kauf und Einlösen (zu wenig Gems/Münzen, ein abgelaufenes Angebot, zu wenig Bestand) – das
+    // 409-Tor aus B-411 sieht sie nicht.
+    "insufficient_gems", "insufficient_coins", "shop_listing_inactive", "insufficient_inventory"])(
     "sagen dem Kind %s in beiden Sprachen mit einem eigenen Satz", async (code) => {
       const blocked = new ApiError(409, "Technical server line.", "trace-5", code);
       const { result } = renderHook(() => useErrorMessage());
@@ -178,6 +181,14 @@ describe("Fehlermeldungen der Arcade", () => {
       expect(result.current(blocked)).not.toContain("Technical server line");
       expect(result.current(blocked)).not.toContain("trace-5");
     });
+
+  // B-499 (Review): `insufficient_inventory` trifft auch den Vater (er genehmigt zwei Anfragen, die zusammen den Bestand
+  // übersteigen) und heißt „nicht genug", nicht „nichts". Rot, wenn der Satz das Kind anspricht oder „nichts mehr" sagt.
+  it("sagen „zu wenig im Inventar“ so, dass es auch für den Vater stimmt", () => {
+    const text = errorMessage(new ApiError(400, "Not enough units.", "trace-6", "insufficient_inventory"));
+    expect(text).not.toMatch(/\b(du|dein|deine|dir)\b/i);
+    expect(text).not.toMatch(/nichts/);
+  });
 
   it("folgen der Sprache zum Zeitpunkt des Fehlers, nicht der beim Render", async () => {
     // Rot, wenn die Funktion die Sprache beim Render festhält (ein früh gebundener Fang spräche dann weiter Deutsch) –

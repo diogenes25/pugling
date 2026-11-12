@@ -3,6 +3,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import {
   createExerciseHref, istGefiltert, newUnitDefaults, SeriesEigentumsHinweis, seriesFilterQuery, UnitForm,
   type SeriesFilterValues,
+  deleteSeriesQuestion, deleteUnitQuestion,
 } from "./VaterLehrwerke";
 import type { SeriesUnitResponse, TextbookSeriesResponse } from "../lib/types";
 
@@ -260,5 +261,18 @@ describe("UnitForm – Pflichtfeld Bezeichnung (B-233)", () => {
 
     expect(meldungen).toEqual([]);
     expect(screen.queryByText("Die Bezeichnung fehlt.")).toBeNull();
+  });
+});
+
+/*
+ * B-499 (Review): Reihe und Unit nehmen ihre unbenutzten Übungen mit, und mit ihnen den Lernstand der Kinder an deren
+ * Vokabeln (Cascade). Rot, wenn eine der Fragen das wieder verschweigt („verlieren nur die Angabe" als einzige Folge).
+ */
+describe("Löschen einer Reihe oder Unit", () => {
+  it("nennt die Übungen und den Lernstand, die mitgehen", () => {
+    for (const question of [deleteSeriesQuestion("Access", 5), deleteUnitQuestion("Unit 1")]) {
+      expect(question).toMatch(/Übungen/);
+      expect(question).toMatch(/Lernstand/);
+    }
   });
 });

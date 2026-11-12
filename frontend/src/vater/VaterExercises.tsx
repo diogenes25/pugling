@@ -29,6 +29,14 @@ import { ListenAusfall } from "../components/ListenAusfall";
  * die Auswahl zum Anlegen gehörte, nicht zum Suchen.) Seit B-106 hängt jede Übung an einer Lehrwerk-Unit
  * statt an einem Kapitel; die Reihe ist hier nur die Zwischenstufe der Auswahl (Reihe → Unit).
  */
+/**
+ * Die Frage vor „Löschen". Der Server löscht nur eine unbenutzte Übung (sonst `exercise_in_use`, dessen Text das sagt) –
+ * Lehrpläne, Klassenarbeiten und Ziele berührt das Löschen also nie (B-499, wie B-418). Den Lernstand der Kinder an
+ * ihren Vokabeln aber schon: `ExerciseItem` → `ItemProgress` ist Cascade – das sagt die Frage.
+ */
+export const DELETE_EXERCISE_QUESTION = "Diese Übung wirklich löschen? Sie verschwindet samt Inhalten aus dem Katalog – "
+  + "was Kinder darin gelernt haben, geht im Lernstand mit verloren.";
+
 export function VaterExercises() {
   /*
    * Der Filter lebt in der **URL**, nicht in `useState`. Ein Startwert aus der Query hätte gereicht, um von
@@ -340,7 +348,7 @@ function ExerciseManageRow({ exercise, subjectName = null, route, label, onChang
     catch (e) { setErr(errorMessage(e)); } finally { setBusy(false); }
   }
   async function remove() {
-    if (!confirmAction("Diese Übung wirklich löschen? Zuordnungen in Lehrplänen können betroffen sein.")) return;
+    if (!confirmAction(DELETE_EXERCISE_QUESTION)) return;
     setBusy(true); setErr(null);
     try { await api.deleteExercise(exercise.seriesId, exercise.seriesUnitId, route!, exercise.id); onChanged(); }
     catch (e) { setErr(errorMessage(e)); setBusy(false); }

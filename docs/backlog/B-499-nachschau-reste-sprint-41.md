@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/idee, bereich/frontend, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/supervisor]
 aliases: [Lernstand Leerfall zählt gewertete Antworten, Übung löschen kündigt Wirkung an]
-status: idee
+status: abgenommen
 prio: P2
 art: Defekt
-groesse: ""
+groesse: S
 wo: "frontend"
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-12-nachtlauf.md (Nachschau Sprint 41 in der Retro von Sprint 42)
 unverifiziert: false
 entgangen_bei: [B-467, B-418]
@@ -36,6 +36,50 @@ gegen den Server nachgerechnet, nicht im Browser).
 4. **🟢** Arcade-Fehler aus `useAsync` gehen über `errorMessage` statt `useErrorMessage` (`SohnHome.tsx:30/64`,
    `SohnProgress.tsx:16/30`, `SohnKonto.tsx:30`) – älter, praktisch folgenlos.
 
+## Akzeptanzkriterien
+
+1. **Der Leerfall des Lernstands nennt, was der Server zählt** (gewertete Antworten), und meldet nie Erfolg aus einer
+   Zahl, die nicht zu diesem Kind gehört oder nicht geladen ist; „Erneut laden" holt beide Abfragen.
+2. **„Übung löschen" kündigt keine Wirkung an, die der Server ablehnt**, und nennt, was wirklich passiert.
+3. **Vier Sperren aus Kauf und Einlösen** (`insufficient_gems`, `insufficient_coins`, `shop_listing_inactive`,
+   `insufficient_inventory`) sprechen in der Arcade einen eigenen Satz, auf Deutsch und Englisch.
+
+## Entscheidungen (autonom gegrillt, `art: Defekt`, Sprint 44 auf Zuruf „Ja, B-499")
+
+1. **„noch keine Antwort des Kindes wurde gewertet"** – das Wort des Servers (`scored`, `countsForMastery`), ohne die
+   Stufen aufzuzählen; der Kommentar am Code nennt die Quelle.
+2. **`stale` zählt als „unbekannt"** → neutraler Satz, nie der Erfolg des vorigen Kindes.
+3. **Skins nicht vorab sperren:** anders als der Shop (`affordable` vom Server) gibt es für Skins keine Server-Aussage;
+   ein Sperren nach dem HUD-Stand hinge an einer Zahl, die veraltet sein kann. Der Satz zur Sperre genügt.
+4. **Teil 4 (Arcade-Fehler aus `useAsync` über `errorMessage`) bewusst nicht:** älter, und `plans`/`overview`/Verlauf
+   liefern keinen der `problem.*`-Codes – der Umbau von `useAsync` auf einen Formatierer wäre größer als der Nutzen.
+
 ## Verlauf
 
 - **2026-11-12** — angelegt (Nachschau Sprint 41, Retro Sprint 42 im Nachtlauf).
+- **2026-11-12** — Sprint 44 (auf Zuruf „Ja, B-499"): autonom gegrillt (`art: Defekt`), geschätzt S, umgesetzt.
+- **2026-11-12** — Rote Probe vor dem Fix: erwartet 8 rot, gemessen 8 rot – `VaterLernstand.test.tsx` 3 (Satz ohne
+  „gewertet"; „Erneut laden" holt die zweite Abfrage nicht; nach Kinderwechsel „sitzt alles" statt des neutralen Satzes),
+  `VaterExercises.test.ts` 1 (nach Herausziehen der alten Frage als Konstante), `arcadeSpielweg.test.tsx` 4 (Server-Zeile
+  mit Ref). Ein erster Lauf fiel am falschen Ort: ein ASCII-`"` im Testnamen beendete den String (Parse-Fehler, „no
+  tests"), korrigiert.
+- **2026-11-12** — Mutanten (`mutant-probe.py`, Vitest): L1 Satz „beantwortet", L2 „Erneut laden" nur Liste, L3 `stale`
+  ignoriert, L4 neutraler Zweig fehlt (die Mutante, die die Nachschau überleben sah), E1 alte Lösch-Frage, P1
+  Arcade-Schlüssel fehlen, P2 deutscher Satz fehlt – 7/7 rot, Grundlinie grün.
+- **2026-11-12** — Belege: Vitest 782/782, `tsc -b` sauber, `ProblemTextGuard`/`ErrorCodeTests` 13/13, Playwright auf
+  Ausweichports 4/4 (`full-flow`, `vater-von-null`, `loeschen-meldet-sich`) und 4/4 (`bestaetigung-ueberlebt`,
+  `creator-lehrwerk-weg` – beide nehmen einen Lösch-Dialog an).
+- **2026-11-12** — `frontend-reviewer`: **ein 🔴, zwei 🟡 – Review-Zähler Sprint 44: 3.** 🔴 `insufficient_inventory`
+  erreicht auch den Vater (zwei Aktivierungen genehmigen, `ShopController.cs:441`), und „Davon hast du gerade nichts
+  mehr" sprach das Kind an und sagte „nichts" statt „nicht genug" → „Davon ist nicht mehr genug im Inventar.", Test
+  über den Vater-Weg (`errorMessage`). 🟡 „Übung löschen" verschwieg den Lernstand der Kinder (Cascade `ExerciseItem` →
+  `ItemProgress`) → die Frage nennt ihn. 🟡 dieselbe Form bei Reihe und Unit (`VaterLehrwerke.tsx`, „verlieren nur die
+  Angabe") → `deleteSeriesQuestion`/`deleteUnitQuestion` nennen Übungen und Lernstand. Rote Proben dazu: 3/3 (eine zuerst
+  mit einem Backspace-Zeichen statt `` in der Regex – fiel an der zweiten Zusicherung, korrigiert). Bestätigt:
+  „gewertet" stimmt für Üben und Test; die drei Lernstand-Tests tragen je einen Fall. Reste → [B-502](B-502-reste-review-sprint-44.md).
+- **2026-11-12** — Mutanten nach der letzten Änderung (Vitest): L1–L4, P1, P2, E1 (Lösch-Frage ohne Lernstand), E2 (Unit
+  verschweigt Übungen), I1 (Inventar spricht das Kind an) – 9/9 rot, Grundlinie grün.
+- **2026-11-12** — **abgenommen.** Vitest 785/785, `tsc -b` sauber, Backend-Tore 13/13, Playwright auf Ausweichports 8/8
+  nach der letzten Änderung (`full-flow`, `vater-von-null`, `loeschen-meldet-sich`, `bestaetigung-ueberlebt`,
+  `creator-lehrwerk-weg`; die Lösch-Specs nehmen den Dialog nur an, den Wortlaut prüft keine).
+  **Rollengang (Vater) als Maschinengang**; nicht im Browser angesehen: die drei Lösch-Fragen und der Inventar-Satz.

@@ -134,6 +134,20 @@ export function exercisesOfUnitHref(series: TextbookSeriesResponse, seriesUnitId
  *    KI-Creator liest. Bleiben sie leer, erfindet er den Inhalt – fachlich plausibel, aber am
  *    Unterricht vorbei.
  */
+/**
+ * Die Fragen vor dem Löschen einer Reihe bzw. Unit. Der Server löscht ihre (unbenutzten) Übungen mit, und mit jeder Übung
+ * ihre Vokabel-Einträge samt dem Lernstand der Kinder daran (Cascade `ExerciseItem` → `ItemProgress`, B-499).
+ */
+export const deleteSeriesQuestion = (name: string, unitCount: number) =>
+  `Reihe „${name}" wirklich löschen? Die ${unitCount} Unit(s) gehen mit, samt ihren Übungen – was Kinder darin `
+  + "gelernt haben, geht im Lernstand mit verloren. Lehrbücher der Kinder und Profile verlieren nur die Zuordnung und "
+  + "bleiben nutzbar.";
+
+/** Siehe {@link deleteSeriesQuestion}. */
+export const deleteUnitQuestion = (label: string) =>
+  `Unit „${label}" löschen? Ihre Übungen gehen mit – was Kinder darin gelernt haben, geht im Lernstand mit verloren. `
+  + "Lehrbücher, die darauf zeigen, verlieren nur die Angabe.";
+
 export function VaterLehrwerke() {
   const [search, setSearch] = useState("");
   const [applied, setApplied] = useState("");
@@ -297,9 +311,7 @@ function SeriesRow({ series, subjects, publishers, open, onToggle, onChanged, on
   }
 
   async function remove() {
-    if (!confirmAction(
-      `Reihe „${series.name}" wirklich löschen? Die ${series.unitCount} Unit(s) gehen mit. `
-      + "Lehrbücher der Kinder und Profile verlieren nur die Zuordnung und bleiben nutzbar.")) return;
+    if (!confirmAction(deleteSeriesQuestion(series.name, series.unitCount))) return;
     // Räumen VOR dem Löschen: Sonst bliebe die Bestätigung der vorigen Handlung über der gerade
     // verschwundenen Zeile stehen und läse sich als Löschbestätigung (B-196).
     onMeldungZeileWeg(null);
@@ -810,7 +822,7 @@ export function UnitForm({ seriesId, subjectId, unit, defaults, onDone, onMeldun
 
   async function remove() {
     if (!unit) return;
-    if (!confirmAction(`Unit „${unit.label}" löschen? Lehrbücher, die darauf zeigen, verlieren nur die Angabe.`)) return;
+    if (!confirmAction(deleteUnitQuestion(unit.label))) return;
     // Nach dem Dialog, nicht davor: Ein Abbruch darf den Platz nicht anrühren (dieselbe Reihenfolge
     // wie beim Löschen einer Reihe).
     onMeldung(null);

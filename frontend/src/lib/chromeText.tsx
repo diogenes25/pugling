@@ -44,6 +44,8 @@ const PROBLEM_KEYS = [
   // B-415: Sperren, die nur das Kind auslöst.
   "skin_already_unlocked", "shop_insufficient_stock", "media_no_alternative", "media_not_on_card",
   "interest_wish_limit_reached", "concurrency_conflict",
+  // B-499: 400er aus Kauf und Einlösen (`insufficient_inventory` erreicht auch den Vater, darum ohne Anrede).
+  "insufficient_gems", "insufficient_coins", "shop_listing_inactive", "insufficient_inventory",
 ] as const;
 type ProblemKey = (typeof PROBLEM_KEYS)[number];
 const isProblemKey = (code: string): code is ProblemKey => (PROBLEM_KEYS as readonly string[]).includes(code);

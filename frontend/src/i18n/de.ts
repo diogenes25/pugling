@@ -329,6 +329,10 @@ export const de = {
       media_not_on_card: "Zu dieser Karte gibt es kein Bild.",
       interest_wish_limit_reached: "Deine Liste mit eigenen Interessen ist voll.",
       concurrency_conflict: "Das hat sich gerade mit einer anderen Änderung überschnitten und wurde nicht gespeichert. Versuch es noch einmal.",
+      insufficient_gems: "Dafür reichen deine Gems noch nicht.",
+      insufficient_coins: "Dafür reichen deine Münzen noch nicht.",
+      shop_listing_inactive: "Dieses Angebot gibt es gerade nicht.",
+      insufficient_inventory: "Davon ist nicht mehr genug im Inventar.",
     },
   },
 } as const;

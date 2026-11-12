@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-12-nachtlauf.md (Nachschau Sprint 40 in der Retro von Sprint 41)
 unverifiziert: false
 entgangen_bei: [B-491, B-490]
+nachgeschaut: 2026-11-12
 grund: ""
 ersetzt_durch: []
 ---
@@ -83,3 +84,8 @@ vier 🟢, die ersten zwei mit Fall:
 - **2026-11-12** — **abgenommen.** Volle Suite 1405/1405 (Debug), `tsc -b` sauber, Vitest 774/774, Lader-Proben 6/6 und
   7/7, beide echten Lehrwerke bestehen `--pruefen`. **Rollengang (Sohn) als Maschinengang:** die Tests spielen
   Wortbank- und Auswahlkarten über die Karten-Route des Kindes; kein Browser. Creator: Lader offline geprüft.
+- **2026-11-12** — Nachschau (Retro Sprint 44): frischer `pugling-reviewer` an `0ffa5e0` (per `git archive`, 1405/1405).
+  Geprüft: alle Aufrufer von `Normalize`, `WithoutLeadingArticle` (arbeitet auf normalisiertem Text), Frontend-
+  `normalizeAnswer`, Spiel-Frontend (vergleicht nichts selbst), Birkenbihl-Tokenizer, `LetterBoxPattern`, die einzige
+  Sortierung von Antworttexten, Python-Spiegel, Lader-Regel gegen den `markup`-Weg, die vier Tests vor dem Fix
+  nachgerechnet. Kein 🔴/🟡; sieben 🟢 → [B-501](B-501-nachschau-reste-sprint-43.md).
