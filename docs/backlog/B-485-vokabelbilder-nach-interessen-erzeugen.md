@@ -282,3 +282,10 @@ Reviewer vor der Abnahme: `pugling-reviewer` und `frontend-reviewer`.
     identisch. Das Modell ist streng: Abstrakta wie „renewable energy" bleiben ohne Bild.
   - **Nicht verifiziert:** ein echtes Bild von OpenAI (kein Schlüssel in dieser Sitzung; der Fake deckt den Adapter
     nicht ab) und der Rollengang an der Sohn-Karte. Darum `in-arbeit` mit `wartet_auf`, nicht `abgenommen`.
+- 2026-11-12 · Migration an einer Kopie der echten `pugling.db` geprüft (Schnappschuss per SQLite-Backup-API, nur
+  lesend; neuer Release-Stand in `Production` ohne Seed auf :5203, nicht über `heimnetz.ps1` – dessen Frontend-Build
+  hätte `frontend/dist` des laufenden Servers ersetzt). Ergebnis: `20261112093114_InterestTagImagePrompt` angewendet,
+  Spalte `InterestTags.ImagePrompt` da, 67 Tabellen vorher wie nachher, 1603 → 1604 Zeilen (einzige Abweichung die
+  Zeile in `__EFMigrationsHistory`), `integrity_check` ok. Alle 10 vorhandenen Schlagworte haben noch keinen
+  Bild-Prompt – bis einer gepflegt ist, zeichnet `images` nur neutrale Bilder. Kopie danach gelöscht.
+  **Beim echten Neustart beachten:** `heimnetz.ps1` baut das Frontend neu; API und Frontend gehen also gemeinsam live.
