@@ -13,7 +13,8 @@ Config-Schema und Beispiel-Requests. Die autoritative Liste der Typen samt Route
 `GET /api/v1/creator/exercise-types` (das Manifest).
 
 > **Rolle:** Katalog-CRUD verlangt die Rolle **Creator** (`[Authorize(Roles = Roles.Creator)]`); ein Vater
-> trägt sie neben Supervisor. Lesen darf jeder Creator, ändern nur ein Owner der Übung (RWX-Grants).
+> trägt sie neben Supervisor. Lesen darf jeder Creator, ändern ein Owner oder ein Creator mit Write-Grant
+> (RWX-Grants; löschen und Rechte vergeben nur der Owner).
 > Alle Beispiele setzen einen Creator-Bearer-Token voraus.
 >
 > **Abgrenzung:** Katalog-Übungen sind **nicht** dasselbe wie das Study-Plan-Training. Sie sind eine
@@ -99,7 +100,7 @@ Legende: **/check** = hat einen Auswertungs-Endpunkt · **gen** = erzeugt Aufgab
 
 | Typ | Pfad | Config | Extra |
 | --- | --- | --- | --- |
-| Vocabulary | `/vocabulary` | `VocabularyConfig` | Item-CRUD unter `/{exerciseId}/items` |
+| Vocabulary | `/vocabulary` | `VocabularyConfig` | Item-CRUD unter `/{exerciseId}/items`, **/refs-from-tags** |
 | Reading | `/reading` | `ReadingConfig` | — |
 | Cloze | `/cloze` | `ClozeConfig` | — |
 | Essay | `/essays` | `EssayConfig` | — |
@@ -110,7 +111,7 @@ Legende: **/check** = hat einen Auswertungs-Endpunkt · **gen** = erzeugt Aufgab
 | Arithmetic | `/arithmetic` | `ArithmeticConfig` | **/check** |
 | ArithmeticDrill | `/arithmetic-drill` | `ArithmeticDrillConfig` | **/generate** (gen), **/check** |
 | List | `/list` | `ListConfig` | **/check** |
-| Birkenbihl | `/birkenbihl` | `BirkenbihlConfig` | — (reine Inhaltsübung, kein Abfragen) |
+| Birkenbihl | `/birkenbihl` | `BirkenbihlConfig` | **/sentences** (POST, DELETE `/{sentenceId}`), **/words/{wordId}** (PUT), **/words/{wordId}/candidates**; dazu `POST creator/birkenbihl/decode` (Vorschau) — kein /check |
 
 ### 3.1 Vocabulary — Vokabelübung
 
@@ -124,6 +125,8 @@ der Config, weil der Inhalt nun in der Item-Tabelle liegt.
   "direction": "front-to-back",     // front-to-back | back-to-front | both
   "sourceLang": "en",               // nötig, wenn inline items ohne vocabularyId angelegt werden
   "targetLang": "de",
+  "articleRequired": false,         // true = getippte Antwort muss den Artikel tragen („die Stadt")
+  "refs": [ { "vocabularyId": 26 } ], // Verweise auf den Vokabel-Store (Antwort ergänzt key/_self)
   "items": [
     { "front": "hello", "back": "hallo" },
     { "front": "please", "back": "bitte", "hint": "Höflichkeit" }
@@ -313,18 +316,33 @@ Durcharbeiten.
 
 ```jsonc
 "config": {
-  "learningLang": "Englisch", "nativeLang": "Deutsch",
+  "learningLang": "en", "nativeLang": "de",     // Sprachcodes, müssen zum Vokabel-Store passen
+  "nextSentenceId": 2, "nextWordId": 5,          // vom Server vergeben (monoton, übungsweit)
   "sentences": [
     {
-      "text": "What is your name?",
+      "sentenceId": 1,
+      "learningSentence": "What is your name?",
+      "naturalTranslation": "Wie heißt du?",
       "decoding": [
-        { "word": "What", "literal": "Was" }, { "word": "is", "literal": "ist" },
-        { "word": "your", "literal": "dein" }, { "word": "name", "literal": "Name" }
-      ],
-      "naturalTranslation": "Wie heißt du?"
+        { "wordId": 1, "learningWord": "What", "gloss": "Was",  "vocabularyId": 12 },
+        { "wordId": 2, "learningWord": "is",   "gloss": "ist",  "vocabularyId": 7 },
+        { "wordId": 3, "learningWord": "your", "gloss": "dein", "vocabularyId": 31 },
+        { "wordId": 4, "learningWord": "name", "gloss": "Name", "vocabularyId": 40 }
+      ]
     }
   ]
 }
+```
+
+Sätze legt man bevorzugt einzeln an — der Server dekodiert sie gegen den Vokabel-Store und vergibt die Ids
+(`gloss`/`vocabularyId` bleiben `null` für unbekannte Wörter):
+
+```http
+POST   …/birkenbihl/{exerciseId}/sentences              { "learningSentence": "…", "naturalTranslation": "…" }
+PUT    …/birkenbihl/{exerciseId}/words/{wordId}         { "vocabularyId": 12 }   // oder { "gloss": "…" } (Homonym-Korrektur)
+GET    …/birkenbihl/{exerciseId}/words/{wordId}/candidates   // passende Vokabelkarten zur Auswahl
+DELETE …/birkenbihl/{exerciseId}/sentences/{sentenceId}
+POST   /api/v1/creator/birkenbihl/decode                { "learningLang": "en", "nativeLang": "de", "learningSentence": "…" }  // Vorschau, speichert nichts
 ```
 
 ---

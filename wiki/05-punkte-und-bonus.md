@@ -17,28 +17,27 @@ Jede Buchung ist eine **`ChildPointsEntry`** (positiv = gutgeschrieben, negativ 
 Kategorie **`PointKind`** — dadurch ist auswertbar, *woher* Punkte kamen. Es gibt **zwei Währungen**:
 🪙 **Münzen** (für reale Vater-Belohnungen aus dem Familien-Shop) und 💎 **Gems** (für Skins/Avatar). Die Währung ist eine
 **reine Funktion des `PointKind`** (kein eigenes Feld, kein Ledger-Umbau) — festgelegt in
-[`PointKindCurrency`](../backend/Pugling.Api/Services/PointKindCurrency.cs), der Saldo je Währung kommt
-zentral aus [`WalletService`](../backend/Pugling.Api/Services/WalletService.cs).
+[`PointKindCurrency`](../backend/Pugling.Api/Services/Shared/PointKindCurrency.cs), der Saldo je Währung kommt
+zentral aus [`WalletService`](../backend/Pugling.Api/Services/Shared/WalletService.cs).
 
 | `PointKind` | Währung | Quelle |
 | --- | --- | --- |
 | `Base` | 🪙 Münzen | Basispunkte einer richtigen Leitner-Wiederholung (inkl. Zeitfenster-Faktor) |
 | `Goal` | 🪙 Münzen | Ziel einer Lehrplan-Position erreicht (Tag/Woche) |
-| `Minutes` | 🪙 Münzen | historisch/reserviert: Tagesziel Übungszeit erreicht |
-| `Test` | 🪙 Münzen | historisch/reserviert: Abschlusstest bestanden |
-| `DayComplete` | 🪙 Münzen | historisch/reserviert: Tag vollständig |
 | `Manual` | 🪙 Münzen | manuelle Vater-Buchung |
-| `Reward` | 🪙 Münzen | **Tombstone** – nur noch historische Buchungen des entfernten Angebots-Systems (keine neuen) |
 | `ShopCoins` | 🪙 Münzen | **Familien-Shop-Kauf** – Coin-Anteil (negativ) |
 | `GoalPenalty` | 🪙 Münzen | **Pflicht-Malus** – gerissenes Positionsziel (negativ, siehe §2) |
+| `ObjectiveCoins` | 🪙 Münzen | Pflicht-Lernziel (Objective) oder eines seiner Key Results erreicht |
+| `DailyBoxCoins` | 🪙 Münzen | Münz-Anteil der Tagesbox (Pflicht des Tages voll erfüllt) |
 | `Combo` | 💎 Gems | Combo-Bonus (Treffer in Folge) |
 | `Speed` | 💎 Gems | Bonus für schnelle Antwort |
-| `Duration` | 💎 Gems | Bonus für durchgehende Lernzeit *(reserviert, aktuell über Missionen abgebildet)* |
 | `Mission` | 💎 Gems | erfüllte Mission |
 | `Achievement` | 💎 Gems | erreichte Auszeichnung |
 | `SkinPurchase` | 💎 Gems | **Skin freigeschaltet** (negativ) |
 | `ShopGems` | 💎 Gems | **Familien-Shop-Kauf** – Gem-Anteil (negativ) |
 | `ManualGems` | 💎 Gems | manuelle Vater-Buchung in Gems (**Gem-Geschenk**, siehe §7) |
+| `ObjectiveGems` | 💎 Gems | Stretch-Lernziel oder eines seiner Key Results erreicht |
+| `DailyBoxGems` | 💎 Gems | Gem-Anteil der Tagesbox |
 
 Kurz: **Fleiß fürs Lernen → Münzen** (→ echte Werte beim Vater), **Motivations-Boni → Gems** (→ Kosmetik).
 Lesen: `GET /api/v1/supervisor/children/{childId}/points` (Vater, kombiniert mit Buchungen) bzw. `GET /api/v1/student/me/points`
@@ -50,7 +49,12 @@ genau einer Währung zugeordnet ist (kein stiller Verlust bei neuem Kind).
 
 ## 2. Zwei Punkte-„Bahnen"
 
-Punkte entstehen an genau zwei Stellen:
+Lern-Punkte entstehen an zwei Stellen (Bahn A/B). Daneben buchen drei weitere Quellen gutgeschriebene
+Punkte: Missionen/Auszeichnungen (`GamificationService`, §5), erreichte **Lernziele** samt Key Results
+([`ObjectiveRewardService`](../backend/Pugling.Api/Services/Shared/ObjectiveRewardService.cs) — einmalig,
+Pflichtziel → `ObjectiveCoins`, Stretch-Ziel → `ObjectiveGems`) und die **Tagesbox**
+([`DailyBoxService`](../backend/Pugling.Api/Services/Shared/DailyBoxService.cs) — einmal je voll erfülltem
+Pflicht-Tag, zufälliger Münz-/Gem-Zug, mit der Streak skaliert → `DailyBoxCoins`/`DailyBoxGems`).
 
 ### Bahn A — Positionsziele (`PositionProgressService`)
 
@@ -186,7 +190,8 @@ Speed = 3                      (PointKind.Speed, 4s liegt in [1,8])
 Summe = 26 Punkte in 3 Buchungen
 ```
 
-Die `ReviewOutcome`-Antwort meldet `{ wasCorrect, expected, awarded (=Base), box, dueOn, combo, comboBonus, speedBonus }`.
+Die `ReviewOutcome`-Antwort meldet `{ wasCorrect, expected, awarded (=Base), box, dueOn, combo, comboBonus, speedBonus, next, done }`
+— `next` ist die nächste Karte der Sitzung (oder `null`), `done` meldet das Sitzungsende.
 
 ---
 
@@ -269,7 +274,7 @@ Die Kehrseite des Verdienens — zwei getrennte Kreisläufe (💎 Gems → Skins
 
 > **Hinweis:** Das früher hier beschriebene separate **Angebots**-System (`Reward`/`RewardRedemption`,
 > Direktkauf mit Vater-Erfüllung) wurde **entfernt** — der **Familien-Shop** deckt es vollständig ab und ist
-> der **einzige Münz-Ausgabeweg**. `PointKind.Reward` existiert nur noch als Tombstone für Alt-Buchungen.
+> der **einzige Münz-Ausgabeweg**. Einen `PointKind.Reward` gibt es nicht mehr.
 
 ### Skins (💎 Gems, sofortiger Kauf)
 
@@ -292,7 +297,7 @@ und Kategorie (`ActionType`: TV, Zocken, Süßigkeit, Ausflug, …). Je Artikel 
 definiert werden. Bestand kann sich automatisch auffüllen (`ShopRefillKind`: None / Once / Daily /
 TwiceDaily / Weekly).
 
-Ablauf (Logik in [`ShopService`](../backend/Pugling.Api/Services/ShopService.cs)):
+Ablauf (Logik in [`ShopService`](../backend/Pugling.Api/Services/Shared/ShopService.cs)):
 
 1. **Sohn kauft ein Angebot** — Münzen (`PointKind.ShopCoins`) und Gems (`PointKind.ShopGems`) sofort
    abgebucht, Bestand des Listings reduziert, **aggregiertes Inventar** (`ChildInventory`) für den
@@ -358,10 +363,10 @@ zu hohe Schulden töten die Motivation, also kann der Vater sie gezielt ausgleic
 ## 8. Bewusst offen
 
 - **Mehrere Zeitfenster je Position** — die Ablage ist eine Liste, das Formular stellt eines ein (§3).
-- **Dauer-Bonus** (`PointKind.Duration`) als eskalierender Sitzungs-Bonus — reserviert, heute über
+- **Dauer-Bonus** als eskalierender Sitzungs-Bonus — kein eigener `PointKind`, heute über
   `MinutesPracticed`-Missionen abgebildet.
 
-Codeanker: [`ScoringService`](../backend/Pugling.Api/Services/ScoringService.cs),
-[`PositionProgressService`](../backend/Pugling.Api/Services/PositionProgressService.cs),
-[`GamificationService`](../backend/Pugling.Api/Services/GamificationService.cs),
-[`ShopService`](../backend/Pugling.Api/Services/ShopService.cs).
+Codeanker: [`ScoringService`](../backend/Pugling.Api/Services/Shared/ScoringService.cs),
+[`PositionProgressService`](../backend/Pugling.Api/Services/Shared/PositionProgressService.cs),
+[`GamificationService`](../backend/Pugling.Api/Services/Shared/GamificationService.cs),
+[`ShopService`](../backend/Pugling.Api/Services/Shared/ShopService.cs).

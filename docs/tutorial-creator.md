@@ -499,9 +499,14 @@ Die Vorschau gibt **keine Lösungen** heraus: Antworten erscheinen weder als Fel
 `reveal` (das ist stufenabhängig und bleibt in der Vorschau leer). Nachprüfbar mit einer
 Cloze-/Matching-Übung — die Musterlösungen tauchen im Response-Body nicht auf.
 
-> **Ausnahme Essay:** Der Typ hat keine prüfbaren Einzelaufgaben (nur einen Schreibauftrag),
-> deshalb antwortet die Vorschau mit `400 no_checkable_content`. Der Auftrag selbst lässt sich
-> über das normale `GET …/essays/{id}` lesen.
+> **Ausnahme Essay:** Der Typ hat keine prüfbaren Einzelaufgaben, nur einen Schreibauftrag. Die
+> Vorschau antwortet trotzdem mit `200`, aber `gradable: false`, `typed: false`, `stages: []` und mit
+> dem Schreibauftrag (inkl. Wortgrenzen) als einzigem Eintrag in `items` — eine Ansicht, keine Aufgabe;
+> `POST …/preview/check` hat nichts zu werten (`400 no_checkable_content`).
+>
+> `400` beim `GET …/preview` gibt es nur, wenn nichts zu zeigen ist: `exercise_empty` für eine
+> Vokabelübung ohne Items (Inhalt erst anlegen), `no_checkable_content` für einen Typ ohne Items und
+> ohne eigene Ansicht.
 
 ---
 

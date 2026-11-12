@@ -2,7 +2,7 @@
 name: creator
 description: >-
   Drive the Pugling REST API from the CREATOR seat (api/v1/creator/*) to build catalog content —
-  subjects, chapters, typed exercises, the vocabulary store, items and tags — AND, in the same pass,
+  subjects, textbook series and units, typed exercises, the vocabulary store, items and tags — AND, in the same pass,
   smoke-test that the Creator surface actually works and (re)write the verified Creator tutorial.
   Use this whenever the user wants to exercise/validate the Creator API, author catalog content against
   the running app, or refresh docs/tutorial-creator.md, e.g. "run the creator skill", "test the creator
@@ -12,8 +12,8 @@ description: >-
 
 # creator — der Inhalts-Ersteller (technische Rolle „Creator")
 
-Du bist der **Creator**: du baust den **gemeinsamen, kindneutralen Lern-Katalog** (Fächer → Kapitel →
-typisierte Übungen), pflegst den **Vokabel-Store** als „single source of truth" und taggst Übungen.
+Du bist der **Creator**: du baust den **gemeinsamen, kindneutralen Lern-Katalog** (Lehrwerk-Reihe → Unit →
+typisierte Übungen; ein Fach hängt optional an der Reihe), pflegst den **Vokabel-Store** als „single source of truth" und taggst Übungen.
 Im Produkt hält der **Vater** diese Rolle (zusammen mit Supervisor); der reine Creator-Archetyp ist der
 **Lehrer** (Seed: *Herr Schmidt*, `adultId=2`, PIN `9999`), der Inhalte kuratiert, ohne ein Kind zu betreuen.
 
@@ -40,12 +40,16 @@ die Seed-IDs sind stabil. Der gemeinsame Helfer `.claude/scripts/tutorial-api.sh
    - `bash .claude/scripts/tutorial-api.sh wait`
    - Läuft eine Dev-Instanz und blockiert der Build den Datei-Lock: den `Pugling.Api`-Prozess stoppen.
 2. **Einloggen** als Creator: `source .claude/scripts/tutorial-api.sh; TOK=$(login_adult 2 9999)`.
-   Kontrolle: `api_get /api/v1/auth/me` → `roles:["Creator","Supervisor"]`, `adultId:2`.
+   Kontrolle: `api_get /api/v1/auth/me` → `roles:["Creator"]`, `adultId:2` (reines Lehrer-Konto; ein
+   Vater-Konto trüge `["Creator","Supervisor"]`).
 3. **Katalog-Flow durchspielen und jede Antwort prüfen** (Status + Schlüsselfelder). Reihenfolge:
-   - `POST /api/v1/creator/subjects` `{"name":"…"}` → merke `id`.
-   - `POST …/subjects/{id}/chapters` `{"name":"…","orderIndex":1}` → merke `id`.
+   - `POST /api/v1/creator/subjects` `{"name":"…"}` → merke `id` (nur Klassifikation, trägt keine Übungen).
+   - `POST /api/v1/creator/textbook-series` `{"name":"…","subjectId":…}` → merke `seriesId`
+     (slug-idempotent; optional `publisherId` aus `POST /api/v1/creator/publishers`).
+   - `POST …/textbook-series/{seriesId}/units` `{"label":"…","orderIndex":1}` → merke `unitId`.
+     Kapitel gibt es seit B-106 nicht mehr – jede Übung hängt an einer Unit.
    - `GET /api/v1/creator/vocabulary?take=2` → Store-Einträge; Refs sind **ID-basiert** (`vocabularyId`).
-   - `POST …/chapters/{id}/vocabulary` mit `config.refs=[{"vocabularyId":…}]`. **Fallstrick:** Sollen später
+   - `POST …/textbook-series/{seriesId}/units/{unitId}/vocabulary` mit `config.refs=[{"vocabularyId":…}]`. **Fallstrick:** Sollen später
      inline `{"front","back"}`-Items angelegt werden, muss die Config `sourceLang`+`targetLang` tragen —
      sonst liefert der Item-POST `400 validation_error` („Provide an existing vocabularyId, or front and
      back plus the exercise's sourceLang/targetLang"). Zeige **beide** Wege: Item per `{"vocabularyId":…}`

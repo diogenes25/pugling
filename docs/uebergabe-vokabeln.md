@@ -38,19 +38,20 @@ typischerweise `"items": []` und `"refs": null`.
   `Create` nimmt `Key` **optional** (fehlt er → Auto-Slug via [VocabKey.Generate](../backend/Pugling.Contracts/Common/VocabKey.cs),
   Kollision → `_2`, `_3`…) und `PartOfSpeech` optional (Default `Other`). „Einfach" = nur Word/Translation
   (+Sprachen); „komplex" = volle Felder; **später nachliefern = bestehendes `PATCH`** (Merge, `null` = unverändert).
-- **Übung → Store-Referenz:** `ExerciseItemService` ([Services/ExerciseItemService.cs](../backend/Pugling.Api/Services/ExerciseItemService.cs))
+- **Übung → Store-Referenz:** `ExerciseItemService` ([Services/Creator/ExerciseItemService.cs](../backend/Pugling.Api/Services/Creator/ExerciseItemService.cs))
   übersetzt `VocabularyConfig.Items` bzw. `VocabularyConfig.Refs` in stabile `ExerciseItem`-Zeilen. Inline-
   Items ohne `vocabularyId` werden über den Store angelegt oder wiedergefunden. Überlebende Wörter behalten
   beim Abgleich ihre `ItemId`; nur entfernte Wörter verlieren ihren Item-Datensatz.
-- **Inhaltsauflösung:** `ExerciseContentResolver` ([Services/ExerciseContentResolver.cs](../backend/Pugling.Api/Services/ExerciseContentResolver.cs))
+- **Inhaltsauflösung:** `ExerciseContentResolver` ([Services/Shared/ExerciseContentResolver.cs](../backend/Pugling.Api/Services/Shared/ExerciseContentResolver.cs))
   liest Vokabelübungen aus `ExerciseItems`, sortiert nach `OrderIndex`/`Id` und baut daraus `ContentItem`s
-  mit `ItemId` und `VocabularyId`. Ohne Item-Zeilen fällt er auf die alte Config-Projektion zurück, damit
-  Alt-/Seed-Daten weiterhin spielbar bleiben.
+  mit `ItemId` und `VocabularyId`. Ohne Item-Zeilen ist die Übung **leer** – der frühere Rückfall auf die
+  Config-Projektion ist entfernt (die Item-Tabelle ist die einzige Inhaltsquelle; die Vorschau meldet
+  `exercise_empty`).
 - **Item-CRUD:** [ExerciseControllers.cs](../backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs)
   bietet unter `.../vocabulary/{exerciseId}/items` eine eigene Subressource zum Auflisten, Anlegen,
   Ändern und Löschen einzelner Vokabelpaare. Das ist der bevorzugte Weg für nachträgliche Änderungen.
 - **Übungs-Verwaltung** ([ExerciseCatalogController.cs](../backend/Pugling.Api/Controllers/Creator/ExerciseCatalogController.cs)):
-  `GET learn/exercises/{id}` (Detail inkl. Config + Metadaten), `GET learn/exercises/{id}/usage`
+  `GET creator/exercises/{id}` (Detail inkl. Config + Metadaten), `GET creator/exercises/{id}/usage`
   (Lehrpläne via `PlanPosition` + Klassenarbeiten, auf eigene Kinder gefiltert), Lösch-Schutz 409
   ([ExerciseControllerBase.Delete](../backend/Pugling.Api/Controllers/Creator/ExerciseControllerBase.cs)).
 - **Web-UI:** [VaterVocab.tsx](../frontend/src/vater/VaterVocab.tsx) (Einfach/Komplex-Umschalter, Suche,
@@ -97,8 +98,8 @@ beim Bauen von Übungen/Übungstexten gezielt Teilmengen ziehen (z. B. „nur Ka
 Umgesetzt in [VocabularyStoreController.cs](../backend/Pugling.Api/Controllers/Creator/VocabularyStoreController.cs)
 
 + [VocabularyTagsController.cs](../backend/Pugling.Api/Controllers/Creator/VocabularyTagsController.cs);
-Modell in [VocabEntities.cs](../backend/Pugling.Api/Models/VocabEntities.cs); Migration
-`VocabTagsAndBaseFormRelation`. Tests: `VocabAgentApiTests` (157 grün gesamt).
+Modell in [VocabEntities.cs](../backend/Pugling.Api/Models/VocabEntities.cs); die damalige Migration
+`VocabTagsAndBaseFormRelation` ist heute in `20261110142003_InitialCreate` gefaltet. Tests: `VocabAgentApiTests` (157 grün gesamt).
 
 ## Store-verknüpftes Übungs-Authoring + Positions-CRUD
 
@@ -108,8 +109,9 @@ Kind-Plan zuweisen (die Kette „globale Übung → individueller Lehrplan").
 - **Lehrplan-Positionen** (`PlanPositionsController`, Vater-only): `GET/POST/PATCH/DELETE
   study-plans/{planId}/positions`. `POST { exerciseId, stage?, itemCount?, scope?, cadence?, goalThreshold?,
   useLeitner?, … }` weist eine globale Katalog-Übung zu; leere Overrides erben Übungs-Defaults
-  (`SuggestedBonus`/`DefaultStage`). Leeren Plan-Container über `POST study-plans` **ohne** `contentKeys`
-  anlegen. `DELETE` → 409, wenn schon Test-/Übungsverlauf existiert. (Lücke: **kein** DELETE für den Plan selbst.)
+  (`SuggestedBonus`/`DefaultStage`). Plan-Container über `POST study-plans` anlegen (er ist immer leer, ein
+  `contentKeys`-Feld gibt es nicht mehr). `DELETE` → 409, wenn schon Test-/Übungsverlauf existiert. Den Plan
+  selbst löscht `DELETE supervisor/study-plans/{planId}` samt Verlauf.
 - **Lückentext ↔ Vokabel-Store (P1):** `Gap.VocabKey` (optional) → die Lösung der Lücke kommt aus dem
   Store-Wort (`ResolveClozeRefsAsync`), zentral pflegbar; inline `answer` bleibt Fallback. Bewertung läuft
   unverändert über `AcceptedAnswers`. Beispiel: `config.gaps = [{ index:1, answer:"", vocabKey:"en_opportunity_de_gelegenheit" }]`.
@@ -141,15 +143,15 @@ Beherrschung unter 50 %.
 Umgesetzt in [PlanPositionsController.cs](../backend/Pugling.Api/Controllers/Supervisor/PlanPositionsController.cs),
 [ExerciseControllers.cs](../backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs) (Vocabulary/Cloze),
 [ExerciseControllerBase.cs](../backend/Pugling.Api/Controllers/Creator/ExerciseControllerBase.cs) (Hook),
-[ExerciseContentResolver.cs](../backend/Pugling.Api/Services/ExerciseContentResolver.cs) (Cloze-Auflösung).
+[ExerciseContentResolver.cs](../backend/Pugling.Api/Services/Shared/ExerciseContentResolver.cs) (Cloze-Auflösung).
 Tests: `PlanPositionCrudTests`, `VocabExerciseAuthoringTests` (165 grün). Kein DB-Migration nötig.
 
 ## Offene Punkte (Kandidaten für die neue Session)
 
-1. **Grundform-Verknüpfung (`BaseForm`/`BaseFormRelation`)** ist im Store-Modell + API vorhanden, aber die
-   zweistufige UI bietet dafür noch kein Feld (flektierte Formen → Grundform verknüpfen).
-2. **Vokabel-Tags im Web-UI** ([VaterVocab.tsx](../frontend/src/vater/VaterVocab.tsx)): Filter nach Tag +
-   Tags setzen fehlt noch (API steht).
+1. ~~**Grundform-Verknüpfung (`BaseForm`/`BaseFormRelation`)**~~ – *Stand 2026-11-12:* die Komplex-Bearbeitung
+   in [VaterVocab.tsx](../frontend/src/vater/VaterVocab.tsx) pflegt `baseFormKey`/`baseFormRelation`.
+2. ~~**Vokabel-Tags im Web-UI**~~ – *Stand 2026-11-12 erledigt:* [VaterVocab.tsx](../frontend/src/vater/VaterVocab.tsx)
+   filtert nach globalen Tags und pflegt globale wie kind-skopierte Tags je Vokabel.
 3. **Text→Vokabel-Extraktion als Wort-für-Wort-Bindung *in* Übungstexten** (Cloze-Gaps/Birkenbihl-WordPairs
    an Store-Keys binden) ist bewusst **nicht** gebaut — der Agent nutzt heute `lookup`+`batch`+`tags`. Falls
    gewünscht, eigene größere Etappe (ContentItem/Config/Resolver umbauen).
@@ -200,7 +202,8 @@ Vokabelübungen und Leitner-Positionen) sowie `ExerciseItemsAndProgressTests` un
 
 - **Datei-Lock:** Läuft das Backend (`dotnet run`), scheitert `dotnet build` am gesperrten `.exe`
   (nur Copy-Fehler, kein Code-Fehler). Vor Builds/Migrations das Backend stoppen.
-- **EF-Migrationen** bei Schemaänderung: `dotnet ef migrations add <Name> --project backend/Pugling.Api
-  --output-dir Data/Migrations`; `Program.cs` migriert beim Start. Dev-DB `pugling.db` ist gitignored und
-  darf gelöscht/neu geseedet werden.
+- **EF-Migrationen** bei Schemaänderung: `dotnet dotnet-ef migrations add <Name> --project backend/Pugling.Api
+  --output-dir Data/Migrations`; `Program.cs` migriert beim Start. Die Kette wird **nur verlängert**, nie neu
+  gefaltet (siehe Root-`CLAUDE.md`). **Achtung:** `pugling.db` ist seit 2026-11-11 die **echte DB der Kinder**
+  (gitignored) – nie löschen, nie neu seeden; Messungen nur auf einer Kopie.
 - Nach `.cs`-Edits laufen Hooks (`dotnet format` + `dotnet build`) automatisch.

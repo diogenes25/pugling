@@ -66,7 +66,8 @@ mit „Für heute stehen keine Inhalte an." ab → der Sohn konnte nach dem Übe
 
 **Erkenntnis:** Der Tagestest ist eine *Standortbestimmung*, kein Spaced-Repetition-Trigger. Er darf
 nicht am Fälligkeits-Pool hängen.
-**Fix (Backend, [TestsController.cs](../backend/Pugling.Api/Controllers/Learn/TestsController.cs)):**
+**Fix (Backend, damals `Controllers/Learn/TestsController.cs`; *Stand 2026-11-12:* heute
+[PositionTestsController.cs](../backend/Pugling.Api/Controllers/Student/PositionTestsController.cs)):**
 Ist der fällige Pool leer, fällt der Test auf den bereits eingeführten Stoff zurück (sonst alle
 Plan-Inhalte). Die Übung bleibt streng Leitner-getrieben. Damit funktioniert jede Reihenfolge
 (erst üben, dann testen – oder umgekehrt).
@@ -84,6 +85,8 @@ Fix: Pfad aus `import.meta.url` ableiten.
   Minuten-/„Tag komplett"-Test entweder die Anforderung klein setzen oder Heartbeats gezielt treiben.
 - **Goldene Stunde (2×):** Bewusst noch nicht in der Sohn-App verdrahtet — es fehlt ein
   sohn-lesbarer Endpunkt für die `TimeSlotRule`-Fenster. Kleiner Backend-Zusatz (Read-only) offen.
+  *Stand 2026-11-12:* `TimeSlotRule` gibt es nicht mehr – die Zeitfenster sind Konfiguration
+  (`Scoring:TimeSlots` in `appsettings.json`).
 - **Skins persistent:** Freischaltung/Auswahl liegen aktuell im `localStorage` (pro Kind). Für
   geräteübergreifende Speicherung ein Feld am `Child` (`SelectedSkin`, `UnlockedSkins`) ergänzen.
 - **Nächste Vertikalen:** Cloze- und Matching-Tests, Klassenarbeiten-Boss, Tags — analog anschließen.

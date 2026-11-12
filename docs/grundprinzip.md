@@ -46,9 +46,10 @@ erlauben bzw. das Zuweisen für alle abschalten (`executePublic`).
 > **Umsetzung:** Die drei Ebenen sind **Rollen** (`ProfileRole` Creator/Supervisor/Student), entkoppelt
 > vom Login. Ein `Account` trägt eine oder mehrere Rollen über `AccountProfile`-Zeilen; ein Vater ist
 > zugleich Creator **und** Supervisor (ein Token, beide Ebenen). Die REST-API ist nach den Ebenen
-> geschnitten: `api/v1/creator/…`, `api/v1/supervisor/…`, `api/v1/student/…`. Die dedizierte, vom
-> Vater getrennte Creator-/Lehrer-Rolle (eigenes Konto, Beitrittscode) ist damit vorbereitet; heute
-> pflegt der Vater den Katalog. Fachlich gilt: **Inhalt ≠ Lehrplan.**
+> geschnitten: `api/v1/creator/…`, `api/v1/supervisor/…`, `api/v1/student/…`. Daneben gibt es das
+> vom Vater getrennte **Lehrer-Konto**: ein reines Creator-Konto ohne Betreuungsauftrag, anonym angelegt
+> über `POST creator/teacher-accounts` (einen Beitrittscode oder Klassen gibt es noch nicht). Im
+> Familienalltag pflegt meist der Vater den Katalog. Fachlich gilt: **Inhalt ≠ Lehrplan.**
 
 [^1]: Gilt für die Katalog-**Entität** (`Exercise` trägt keine `ChildId`) — nicht mehr uneingeschränkt
     für den Creator-**Arbeitsplatz**: `GET creator/profiles/match?childId=` liest bewusst kindbezogen und
@@ -137,7 +138,7 @@ dahinter (das Kind darf 10 Minuten fernsehen) passiert **außerhalb** der App.
 - **Lernen ist gekapselt und geschützt.** Der Student sieht nur seine eigenen Pläne, und der Server
   bestimmt autoritativ, ob ein Ziel erreicht ist und wie viele Punkte fließen – das verhindert
   Selbstbetrug.
-- **Die Belohnungs-Ökonomie hat zwei Enden.** Münzen fürs Lernen (Supervisor-Angebote, Shop-Artikel) und
+- **Die Belohnungs-Ökonomie hat zwei Enden.** Münzen fürs Lernen (einziger Ausgabeweg: der Familien-Shop) und
   Gems aus Boni (Skins) trennen „Pflicht wird belohnt" von „Extra-Motivation". Reale Belohnungen bleiben
   eine bewusste **manuelle** Handlung des Supervisors – die App erzwingt nur die Buchführung.
 

@@ -42,18 +42,32 @@ In Swagger den „Authorize"-Button nutzen.
 ### Selbstauskunft
 
 ```http
-GET /api/v1/auth/me        → { role, adultId, childId, name }
+GET   /api/v1/auth/me      → { accountId, role, roles[], adultId, childId, name }
+PATCH /api/v1/auth/me      { "name"?, "email"?, "clearEmail"?, "pin"? }   (nur Erwachsene)
 ```
+
+`PATCH auth/me` ist die Selbstverwaltung jedes Erwachsenen-Kontos (auch eines Lehrer-Kontos ohne
+Supervisor-Rolle); `null` heißt „unverändert", die E-Mail leert nur `clearEmail`. Ein Kind ändert Name
+und PIN nicht selbst — das macht sein Supervisor.
 
 ---
 
 ## 2. Registrierung / Bootstrapping
 
-Ein neuer **Vater** kann sich **anonym** anlegen (einziger nicht authentifizierter Schreibpfad):
+Ein neuer **Vater** kann sich **anonym** anlegen (neben der Lehrer-Registrierung unten der einzige nicht
+authentifizierte Schreibpfad; beide ratenbegrenzt wie der Login):
 
 ```http
 POST /api/v1/supervisor/adults
 { "name": "Klaus", "email": "klaus@example.com", "pin": "1234" }
+```
+
+Ebenso anonym entsteht ein **Lehrer-Konto** — ein reines Creator-Konto ohne Betreuungsauftrag
+(Antwort `{ creatorId, accountId, name, email, roles }`):
+
+```http
+POST /api/v1/creator/teacher-accounts
+{ "name": "Herr Schmidt", "email": "schmidt@example.com", "pin": "1234" }
 ```
 
 Danach als dieser Vater einloggen und **Kinder** anlegen:

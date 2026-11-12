@@ -34,6 +34,14 @@ Dokumentation des End-to-End-Durchlaufs „Vokabeltest in 10 Tagen" – reine AP
 
 ## 3. Architektur (Ergebnis)
 
+> **Stand 2026-11-12 – dieser Abschnitt beschreibt den damaligen Bau, nicht den heutigen.** `StudyPlanItem`,
+> `StudyProgressService`, der `MatchingTestsController` und die Entität `Father` existieren nicht mehr. Ein
+> `StudyPlan` ist heute ein reiner Container aus `PlanPosition`s (die erwachsene Zeile heißt `Adult`); gespielt
+> wird **pro Position**: `student/study-plans/{planId}/positions/{positionId}/practice-sessions` (Üben/Leitner)
+> und `…/positions/{positionId}/tests` (Abschlusstest), ausgewertet unter
+> `supervisor/study-plans/{planId}/positions/{positionId}/report`. Zusammenhänge:
+> [endpunkt-beziehungen.md](endpunkt-beziehungen.md).
+
 Aufbauend auf den bestehenden Bausteinen: Vokabel-Store (`Vocabulary`, Single Source of Truth), Personen (`Father`/`Child`), Punkte-Ledger (`ChildPointsEntry`).
 
 ### Datenmodell (`Models/StudyPlanEntities.cs`)

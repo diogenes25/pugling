@@ -22,7 +22,7 @@ Lernstand wieder aus. Alle Routen unter `api/v1/…`. Konzept-Hintergrund:
 - [Übung ↔ Auswertung](#3-übung--auswertung-des-kindes) – positionsgebundener und kindweiter Lernstand.
 - [Große Ziele](#4-große-ziele-ergebnis-ziele-auf-der-auswertung) – Vater-Ziele mit Etappen auf Live-Auswertung.
 - [Punkte & Gamification](#5-was-der-fortschritt-auslöst-punkte--gamification) – Punkte, Missionen, Auszeichnungen.
-- [Weitere Vater→Sohn-Zusammenhänge](#6-weitere-vatersohn-zusammenhänge) – große Ziele, Missionen, Rewards, Shop, nächste Planung.
+- [Weitere Vater→Sohn-Zusammenhänge](#6-weitere-vatersohn-zusammenhänge) – große Ziele, Missionen, Familien-Shop, nächste Planung.
 
 Obsidian-Hinweis: Die Produkt-Doku nutzt bewusst relative Markdown-Links statt `[[Wikilinks]]`
 (siehe [Obsidian-Konvention](obsidian.md#leitplanken-verbindlich)). Obsidian indiziert diese Links trotzdem
@@ -34,7 +34,7 @@ für Backlinks und Graph; auf GitHub bleiben sie gleichzeitig korrekt klickbar.
 
 ```mermaid
 flowchart TD
-    Father["Father (Vater)"]
+    Adult["Adult (Vater / Supervisor)"]
     Child["Child (Kind)"]
     Plan["StudyPlan (Lehrplan-Container)"]
     Pos["PlanPosition (Position)"]
@@ -44,9 +44,9 @@ flowchart TD
     IP[("ItemProgress + ItemReviewEvent<br/>plan-übergreifend je Kind & Item")]
     PIP[("PositionItemProgress<br/>Leitner je Position")]
 
-    Father -->|"POST/GET /children"| Child
-    Child -->|"GET /study-plans?childId=<br/>POST /study-plans"| Plan
-    Plan -->|"POST /study-plans/{planId}/positions"| Pos
+    Adult -->|"POST/GET /supervisor/children"| Child
+    Child -->|"GET /supervisor/study-plans?childId=<br/>POST /supervisor/study-plans"| Plan
+    Plan -->|"POST /supervisor/study-plans/{planId}/positions"| Pos
     Pos -->|"referenziert per ExerciseId"| Ex
     Ex -->|"GET/POST …/vocabulary/{exerciseId}/items"| Item
     Item -->|"referenziert per VocabularyId"| Vocab
@@ -54,9 +54,9 @@ flowchart TD
     Child -. "Üben/Testen schreibt (ItemProgressService)" .-> IP
     Pos -. "Üben/Testen schreibt (PositionPlayService)" .-> PIP
 
-    IP -->|"GET /children/{childId}/vocabulary-progress (flach)"| EvalFlat["Auswertung: flache Wort-/Item-Sicht"]
+    IP -->|"GET /student/children/{childId}/vocabulary-progress (flach)"| EvalFlat["Auswertung: flache Wort-/Item-Sicht"]
     IP -->|"GET /student/children/{childId}/learn/… (hierarchisch)"| EvalHier["Auswertung: Fach→Unit→Übung→Item"]
-    PIP -->|"GET /study-plans/{planId}/positions/{positionId}/report"| EvalPos["Auswertung: pro Position (Mastery/Test)"]
+    PIP -->|"GET /supervisor/study-plans/{planId}/positions/{positionId}/report"| EvalPos["Auswertung: pro Position (Mastery/Test)"]
 ```
 
 **Kurzfassung:** Der Vater pflegt **einmal** globale Katalog-Übungen. Ein **Lehrplan** gehört einem
@@ -79,7 +79,7 @@ Der Katalog ist **global und kindneutral**; der Lehrplan verweist nur darauf.
 
 **Verknüpfung:** `PlanPosition.ExerciseId → Exercise.Id`. Der Inhalt bleibt in der Übungs-Config; die
 Position trägt nur Ziel, Punkte, Stufe, Leitner (leere Overrides erben die Übungs-Defaults).
-→ [wiki/04 · Lernplan bauen](../wiki/04-lernplan-bauen.md).
+→ [Supervisor-Tutorial](tutorial-supervisor.md).
 
 > ⚠️ Eine Übung wird **nicht kopiert**. Ändert man die Items einer **Vokabelübung**, während sie in einem Plan liegt, sind
 > index-verschiebende Mutationen gesperrt (`409 exercise_items_locked`, seit B-205; vorher `exercise_in_use`) – über die
@@ -136,7 +136,7 @@ Die IDs in den Responses sind die verbindenden Klammern: `childId`, `planId`, `p
 
 ```http
 POST /api/v1/supervisor/study-plans
-Authorization: Bearer <father-token>
+Authorization: Bearer <adult-token>
 Content-Type: application/json
 
 {
@@ -167,7 +167,7 @@ heute laufende Pläne sehen.
 
 ```http
 POST /api/v1/supervisor/study-plans/2/positions
-Authorization: Bearer <father-token>
+Authorization: Bearer <adult-token>
 Content-Type: application/json
 
 {
@@ -347,14 +347,14 @@ Reviews/Tests geändert. `pointsAwarded: 20` kommt aus dem Positionsziel, nicht 
 
 ```http
 GET /api/v1/supervisor/study-plans/2/positions/7/report
-Authorization: Bearer <father-token>
+Authorization: Bearer <adult-token>
 ```
 
 Antwort auf: „Wie steht diese eine Plan-Position da?" Liest den positionsgebundenen Leitner-/Teststand.
 
 ```http
 GET /api/v1/student/children/1/vocabulary-progress?onlyWeak=true
-Authorization: Bearer <father-token>
+Authorization: Bearer <adult-token>
 ```
 
 Antwort auf: „Welche Wörter sind bei Sohn 1 schwach, egal in welchem Plan sie vorkamen?" Liest den
@@ -362,7 +362,7 @@ kindweiten Item-Lernstand.
 
 ```http
 GET /api/v1/student/children/1/learn/subjects
-Authorization: Bearer <father-token>
+Authorization: Bearer <adult-token>
 ```
 
 Antwort auf: „Wie sieht Sohn 1 nach Fach/Unit/Übung aggregiert aus?" Das ist die hierarchische Sicht,
@@ -375,8 +375,8 @@ Antworten:
 
 | Spur | Womit geschrieben | Schlüssel | Zweck |
 | --- | --- | --- | --- |
-| **`PositionItemProgress`** | [PositionPlayService](../backend/Pugling.Api/Services/PositionPlayService.cs) | `(PlanPositionId, ItemIndex)` | Leitner-Terminierung **innerhalb einer Plan-Position** |
-| **`ItemProgress` + `ItemReviewEvent`** | [ItemProgressService](../backend/Pugling.Api/Services/ItemProgressService.cs) | `(ChildId, ItemId)`, denorm. `ExerciseId`/`VocabularyId` | **plan-übergreifender** Stand je Item + Wort + Historie |
+| **`PositionItemProgress`** | [PositionPlayService](../backend/Pugling.Api/Services/Shared/PositionPlayService.cs) | `(PlanPositionId, ItemIndex)` | Leitner-Terminierung **innerhalb einer Plan-Position** |
+| **`ItemProgress` + `ItemReviewEvent`** | [ItemProgressService](../backend/Pugling.Api/Services/Shared/ItemProgressService.cs) | `(ChildId, ItemId)`, denorm. `ExerciseId`/`VocabularyId` | **plan-übergreifender** Stand je Item + Wort + Historie |
 
 Geschrieben werden sie an denselben Bewertungspunkten:
 `POST …/positions/{positionId}/practice-sessions/{sid}/review`
@@ -390,8 +390,8 @@ Daraus ergeben sich **drei Auswertungs-Blickwinkel**:
 
 | Endpunkt | Wohin |
 | --- | --- |
-| `GET /study-plans/{planId}/overview` · `…/overview/progress` | [PlanOverviewController](../backend/Pugling.Api/Controllers/Student/PlanOverviewController.cs) → [PositionProgressService](../backend/Pugling.Api/Services/PositionProgressService.cs) |
-| `GET /study-plans/{planId}/positions/{positionId}/report` (Vater-only) | [PositionReportController](../backend/Pugling.Api/Controllers/Supervisor/PositionReportController.cs) → [PositionReportService](../backend/Pugling.Api/Services/Supervisor/PositionReportService.cs) |
+| `GET /student/study-plans/{planId}/overview` · `…/overview/progress` | [PlanOverviewController](../backend/Pugling.Api/Controllers/Student/PlanOverviewController.cs) → [PositionProgressService](../backend/Pugling.Api/Services/Shared/PositionProgressService.cs) |
+| `GET /supervisor/study-plans/{planId}/positions/{positionId}/report` (Vater-only) | [PositionReportController](../backend/Pugling.Api/Controllers/Supervisor/PositionReportController.cs) → [PositionReportService](../backend/Pugling.Api/Services/Supervisor/PositionReportService.cs) |
 
 Antwort auf „welche Vokabel dieser **Position** sitzt?" plus Tagesmission/Streak. Liest `PositionItemProgress`.
 
@@ -459,8 +459,8 @@ die Etappe am Scope (nicht an einer Position) und überlebt das Abhängen einer 
 
 | Beziehung | Endpunkt(e) | Wohin |
 | --- | --- | --- |
-| Punkte-Ledger des Kindes | `GET/POST /children/{childId}/points` · `GET /me/points[/entries]` | [ScoringService](../backend/Pugling.Api/Services/ScoringService.cs), → [wiki/05 · Punkte](../wiki/05-punkte-und-bonus.md) |
-| Missionen/Auszeichnungen (Vater def., Sohn sieht) | `…/children/{childId}/missions\|achievements` · `/me/missions\|achievements` | [GamificationService](../backend/Pugling.Api/Services/GamificationService.cs) |
+| Punkte-Ledger des Kindes | `GET/POST /children/{childId}/points` · `GET /me/points[/entries]` | [ScoringService](../backend/Pugling.Api/Services/Shared/ScoringService.cs), → [wiki/05 · Punkte](../wiki/05-punkte-und-bonus.md) |
+| Missionen/Auszeichnungen (Vater def., Sohn sieht) | `…/children/{childId}/missions\|achievements` · `/me/missions\|achievements` | [GamificationService](../backend/Pugling.Api/Services/Shared/GamificationService.cs) |
 
 Jede bewertete Antwort bucht Punkte (Basis × Zeitfenster + Boni) und wertet Missionen/Auszeichnungen
 idempotent aus – gespeist aus denselben Fortschrittsdaten.
@@ -468,14 +468,14 @@ idempotent aus – gespeist aus denselben Fortschrittsdaten.
 ## 6. Weitere Vater→Sohn-Zusammenhänge
 
 Die gleiche Denkfigur taucht an mehreren Stellen wieder auf: **Vater schreibt eine kindbezogene Regel
-oder ein Angebot**, **Sohn liest sie über `/me` oder planbezogene Endpunkte**, **eine Sohn-Aktion erzeugt
+oder ein Shop-Angebot**, **Sohn liest sie über `/me` oder planbezogene Endpunkte**, **eine Sohn-Aktion erzeugt
 Folgezustand**, den der Vater wieder verwaltet oder auswertet.
 
 ### a) Vater setzt ein großes Ziel → Sohn/Familie sieht den Status aus Live-Fortschritt
 
 ```http
 POST /api/v1/supervisor/children/1/objectives
-Authorization: Bearer <father-token>
+Authorization: Bearer <adult-token>
 Content-Type: application/json
 
 {
@@ -492,7 +492,7 @@ Content-Type: application/json
 
 ```http
 GET /api/v1/supervisor/children/1/objectives?status=open
-Authorization: Bearer <father-token>
+Authorization: Bearer <adult-token>
 ```
 
 **Zusammenhang:** Das Ziel speichert nicht jeden Fortschritt selbst. Seine Etappen verweisen auf einen
@@ -503,7 +503,7 @@ später dieselbe Übung in einem anderen Plan wiederholt, rückt dieses Ziel tro
 
 ```http
 POST /api/v1/supervisor/children/1/missions
-Authorization: Bearer <father-token>
+Authorization: Bearer <adult-token>
 Content-Type: application/json
 
 {
@@ -543,7 +543,7 @@ Review-/Testdaten wie Plan-Overview und Auswertung.
 
 ```http
 POST /api/v1/supervisor/shop/articles
-Authorization: Bearer <father-token>
+Authorization: Bearer <adult-token>
 Content-Type: application/json
 
 {
@@ -556,7 +556,7 @@ Content-Type: application/json
 
 ```http
 POST /api/v1/supervisor/shop/articles/1/listings
-Authorization: Bearer <father-token>
+Authorization: Bearer <adult-token>
 Content-Type: application/json
 
 {
@@ -604,12 +604,12 @@ Content-Type: application/json
 
 ```http
 GET /api/v1/supervisor/children/1/shop/purchases
-Authorization: Bearer <father-token>
+Authorization: Bearer <adult-token>
 ```
 
 ```http
 POST /api/v1/supervisor/children/1/shop/purchases/1/cancel
-Authorization: Bearer <father-token>
+Authorization: Bearer <adult-token>
 Content-Type: application/json
 
 {}
@@ -624,7 +624,7 @@ gekaufte Bestand später eingelöst, läuft das über die **Aktivierung** in Flo
 
 ```http
 POST /api/v1/supervisor/shop/articles
-Authorization: Bearer <father-token>
+Authorization: Bearer <adult-token>
 Content-Type: application/json
 
 {
@@ -637,7 +637,7 @@ Content-Type: application/json
 
 ```http
 POST /api/v1/supervisor/shop/articles/1/listings
-Authorization: Bearer <father-token>
+Authorization: Bearer <adult-token>
 Content-Type: application/json
 
 {
@@ -664,12 +664,12 @@ unter `children/{childId}/shop/activations/{requestId}/approve|reject` entscheid
 
 ```http
 GET /api/v1/student/children/1/vocabulary-progress?onlyWeak=true
-Authorization: Bearer <father-token>
+Authorization: Bearer <adult-token>
 ```
 
 ```http
 GET /api/v1/student/children/1/learn/subjects/3/series-units/8/vocabulary/13/items
-Authorization: Bearer <father-token>
+Authorization: Bearer <adult-token>
 ```
 
 **Zusammenhang:** Diese Views sind keine Spiel-Endpunkte. Sie beantworten, **wo der nächste Plan ansetzen
@@ -686,8 +686,8 @@ sucht/erstellt passende Katalog-Übungen und hängt sie wieder als neue `PlanPos
 4. **Auswertung:** pro Position `…/positions/{positionId}/report`; kind-zentrisch
    `children/{childId}/vocabulary-progress` (flach) bzw. `children/{childId}/learn/…` (hierarchisch, für Ziele).
 
-Vollständige Beispiel-Requests: [wiki/04 · Lernplan bauen](../wiki/04-lernplan-bauen.md) (Vater),
-[wiki/06 · Sohn-App](../wiki/06-sohn-app.md) (Sohn); verifizierte Responses unter
+Vollständige Beispiel-Requests: [Supervisor-Tutorial](tutorial-supervisor.md) (Vater),
+[Student-Tutorial](tutorial-student.md) (Sohn), [Creator-Tutorial](tutorial-creator.md); verifizierte Responses unter
 [docs/api-examples/](api-examples/index.md).
 
 ---

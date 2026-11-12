@@ -92,8 +92,9 @@ times in a row. At the sink, reuse the neighbours' input cleanup (blank, duplica
 Sequential is the default. Fan out to subagents only when stories touch disjoint files, and then at
 every fan-in: merge, run the full suite plus guard tests, confirm the sprint goal still holds. Two
 traps: hooks measure `$CLAUDE_PROJECT_DIR`, so a worktree's build/test hits the main worktree; and
-`SchemaGuardTests` keeps the migration chain at length 1, so two branches that each fold it cannot be
-merged, only rebuilt.
+the migration chain is only ever extended (`SchemaGuardTests` pins `InitialCreate` as its first link),
+so two branches that each add a migration collide on `PuglingDbContextModelSnapshot.cs`: merge, then
+re-create the later branch's migration on top of the earlier one so the chain stays linear — never refold.
 
 ## Step 5 — Verify, then review
 

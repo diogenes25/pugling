@@ -156,56 +156,64 @@ ein (`cursor`/`total`).
 ```http
 GET /api/v1/student/study-plans/1/positions/1/practice-sessions/1/cards
 → [
-  { "itemIndex": 0, "stage": 2, "type": "Vocabulary", "prompt": "hello",   "reveal": "hallo" },
-  { "itemIndex": 1, "prompt": "goodbye", "reveal": "auf Wiedersehen" },
-  { "itemIndex": 2, "prompt": "please",  "reveal": "bitte" }
+  { "itemIndex": 0, "stage": 1, "type": "Vocabulary", "prompt": "hello", "reveal": "hallo",
+    "displayOnly": true, "introduction": true },
+  { "itemIndex": 1, "stage": 1, "prompt": "goodbye", "reveal": "auf Wiedersehen", "introduction": true, … },
+  { "itemIndex": 2, "stage": 1, "prompt": "please",  "reveal": "bitte", "introduction": true, … }
 ]
 ```
 
 Jede Karte hat einen stabilen **`itemIndex`** (Listenposition des Inhalts-Atoms), die **`stage`**
-(Leitner-/Abfragestufe) und die Aufgabe **`prompt`**. Weil hier eine **Anzeige-/Selbsteinschätzungs-
-Stufe** (Stufe 2) läuft, liefert der Server die Lösung **`reveal`** gleich mit — im **Lern-Modus wird
-die Antwort aufgedeckt**, damit man lernen kann. (Getippte Stufen liefern kein `reveal`; je nach Typ
-gibt es zusätzlich `hint`, `answerLength`, `choices`, `audioUrl`.)
+(Abfragestufe **dieser Karte**) und die Aufgabe **`prompt`**. Auf einem frischen Plan sind alle Karten
+noch nie gesehen: Sie kommen als **Kennenlern-Karten** (`introduction: true`, B-419) auf der freien
+Anzeigestufe 1 (`displayOnly: true`) — egal, was der Fahrplan für den Tag sagt. Erst danach steigt die
+Karte auf die Tagesstufe (bei Leitner-Positionen über die Box-Leiter, siehe 4.1). Auf Anzeige- und
+Selbsteinschätzungs-Stufen liefert der Server die Lösung **`reveal`** gleich mit. (Getippte Stufen
+liefern kein `reveal`; je nach Typ gibt es zusätzlich `hint`, `answerLength`, `choices`, `audioUrl`.)
 
 ### 3.3 Eine Antwort abgeben (`review`)
 
 ```http
 POST /api/v1/student/study-plans/1/positions/1/practice-sessions/1/review
-{ "itemIndex": 0, "givenAnswer": "hallo" }
+{ "itemIndex": 0, "wasKnown": true }
 ```
 
-Der Server prüft und antwortet mit dem vollständigen Ergebnis der Leitner-Wiederholung:
+Nicht getippte Stufen (Anzeige, Selbsteinschätzung) wertet der Server **nur über `wasKnown`** — ein
+`givenAnswer` auf so einer Karte ergibt `wasCorrect: false`. Für die Kennenlern-Karte antwortet er:
 
 ```jsonc
 {
   "wasCorrect": true,
   "expected": "hallo",
-  "awarded": 10,
-  "box": 2,
-  "dueOn": "2026-07-11",
-  "combo": 1,
+  "awarded": 0,
+  "box": 1,
+  "dueOn": "2026-07-09",
+  "combo": 0,
   "comboBonus": 0,
   "speedBonus": 0,
-  "next": { "itemIndex": 1, "prompt": "goodbye", "reveal": "auf Wiedersehen" },
+  "next": { "itemIndex": 1, "stage": 1, "prompt": "goodbye", "reveal": "auf Wiedersehen", "introduction": true, … },
   "done": false
 }
 ```
 
 - `wasCorrect` — Server-Urteil. `expected` — die erwartete Lösung.
-- `awarded` — gutgeschriebene Münzen für diese Antwort (Basis × Zeitfenster).
-- `box` / `dueOn` — neuer Leitner-Kasten der Karte und nächste Fälligkeit.
+- `awarded` — gutgeschriebene Münzen für diese Antwort (Basis × Zeitfenster). Kennenlernen zahlt nie
+  (sonst wäre es der billigste Weg zu Münzen), ebenso wenig eine Karte, die die Box-Leiter auf
+  Selbsteinschätzung abgesenkt hat.
+- `box` / `dueOn` — Leitner-Kasten der Karte und nächste Fälligkeit (die Kennenlern-Karte bleibt in Box 1,
+  eingeführt am Sitzungstag).
 - `combo` / `comboBonus` / `speedBonus` — laufende Serie und mögliche Boni (fließen als Gems).
 - `next` — die nächste Karte (oder `done: true`, wenn die Runde durch ist).
 
-> **Die Antwort ist die Zielseite.** Der `prompt` ist `"hello"`, gefragt ist die **Übersetzung**
-> `"hallo"`. Wer stattdessen den Prompt zurückgibt (`givenAnswer: "hello"`), bekommt
-> `"wasCorrect": false` mit `"expected": "hallo"`. Also immer die **Ziel-/Rückseite** eintippen.
+> **Getippt wird die Zielseite.** Auf einer **getippten Stufe** (z. B. 4) schickst du `givenAnswer`
+> statt `wasKnown`. Der `prompt` ist `"hello"`, gefragt ist die **Übersetzung** `"hallo"`. Wer stattdessen
+> den Prompt zurückgibt (`givenAnswer: "hello"`), bekommt `"wasCorrect": false` mit `"expected": "hallo"`.
 
 **Nicht jede Antwort bewegt Punkte.** Bei Nicht-Leitner-Positionen, nicht fälligen Karten, heute schon
-gewerteten Karten oder nicht gewerteten Selbsteinschätzungen unter `requireTypedTest` protokolliert
-`review` nur (`204 No Content` bzw. `awarded: 0`) — keine Box, keine Münzen. Das Frontend darf hier
-**keinen Punktgewinn vortäuschen**.
+gewerteten Karten, Kennenlern-/Anzeige-Karten, von der Leiter abgesenkten Selbsteinschätzungen oder
+Selbsteinschätzungen unter `requireTypedTest` protokolliert `review` nur und antwortet mit `awarded: 0`.
+`204 No Content` kommt ausschließlich im **Info-Modus** (freies Üben ohne Rückmeldung). Das Frontend darf
+hier **keinen Punktgewinn vortäuschen**.
 
 ### 3.4 Zeit zählen (Heartbeat) und beenden
 
@@ -223,7 +231,7 @@ Nur **aktive** Sekunden zählen, und der Server **clampt** sie (Anti-Cheat: pro 
 ```http
 POST /api/v1/student/study-plans/1/positions/1/practice-sessions/1/end
 {}
-→ { …, "ended": true }
+→ { …, "endedAt": "2026-07-09T16:05:12Z", "activeSeconds": 45, … }
 ```
 
 Beim Beenden wertet der Server Positionsziele und Missionen erneut aus.
@@ -244,6 +252,7 @@ POST /api/v1/student/study-plans/1/positions/1/tests
   "attemptId": 1,
   "planId": 1,
   "positionId": 1,
+  "day": "2026-07-09",
   "stage": 2,
   "totalItems": 1
 }
@@ -251,12 +260,15 @@ POST /api/v1/student/study-plans/1/positions/1/tests
 
 > **Zwei wichtige Fallstricke:**
 >
-> 1. **Der Student wählt die Stufe nicht.** Nur der Vater darf beim Start eine `stage` vorgeben. Ohne
->    `stageSchedule` der Position fällt der Server auf **Stufe 2 = Selbsteinschätzung** zurück — und
->    zwar **auch dann, wenn die Position `requireTypedTest: true` hat**. Die getippte Prüfung erzwingt
->    also der Fahrplan des Vaters, nicht der Testaufruf.
-> 2. **`totalItems` zählt nur die *eingeführten* Items** — also das, was du beim Üben schon gesehen
->    hast, nicht zwingend alle Inhalte der Übung. Wer wenig geübt hat, schreibt einen kurzen Test.
+> 1. **Der Student wählt die Stufe nicht.** Nur der Vater darf beim Start eine `stage` vorgeben. Sonst
+>    gilt der Reihe nach: `stageSchedule` der Position → `stage` der Position → `defaultStage` der Übung
+>    → Standard des Typs (Vokabeln: **Stufe 2 = Selbsteinschätzung**). `requireTypedTest: true` hebt die
+>    Teststufe **nicht** an — es zählt nur einen getippten (gewerteten) Versuch fürs Ziel. Auf einer
+>    Leitner-Position mit getippter Zielstufe fragt der Test jedes Item außerdem auf **seiner** Sprosse
+>    der Box-Leiter (B-476): bis 7 Tage nach der Einführung ggf. noch als Auswahl, danach getippt.
+> 2. **`totalItems` zählt nicht zwingend alle Inhalte.** Mit Tagesdosis (`newItemsPerDay`) ist es die
+>    Portion des Tages; sonst die schon *eingeführten* Items — und wenn noch keins eingeführt ist, der
+>    ganze Pool der Position. Wer wenig geübt hat, schreibt also einen kurzen Test.
 
 ### 4.2 Frage für Frage holen
 
@@ -395,8 +407,8 @@ GET /api/v1/student/me/shop
   "coins": 80,
   "gems": 300,
   "available": [
-    { "listingId": 1, "title": "Fernsehzeit", "coinPrice": 50, "gemPrice": 0,
-      "unitsPerPurchase": 10, "stock": …, "affordable": true },
+    { "id": 1, "shopArticleId": 1, "title": "Fernsehzeit", "coinPrice": 50, "gemPrice": 0,
+      "unitsPerPurchase": 10, "currentStock": …, "affordable": true, … },
     …
   ],
   "inventory": [],
@@ -418,7 +430,7 @@ Der Server bucht Münzen ab (hier **80 → 30**) und erhöht das aggregierte Inv
 
 ```jsonc
 { "coins": 30, "gems": 300,
-  "inventory": [ { "articleId": 1, "title": "Fernsehzeit", "quantity": 10 } ] }
+  "inventory": [ { "shopArticleId": 1, "title": "Fernsehzeit", "quantity": 10, … } ], … }
 ```
 
 Der Kauf ist **ausstellergebunden**: Wer den Artikel genehmigen darf, wird als `SupervisorId`

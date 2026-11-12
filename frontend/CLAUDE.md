@@ -16,7 +16,7 @@ npm run test:e2e       # Playwright: startet Backend (Temp-DB) + Vite, fährt de
 `src/lib/contract.ts` aus `docs/openapi/v1.json` (bei `postinstall`/`predev`/`prebuild`, gitignored);
 [src/lib/types.ts](src/lib/types.ts) ist nur noch ein Barrel aus `S["…"]`-Aliasen. Ein neues DTO
 wird **nicht hier getippt**: Backend bauen, Testlauf schreibt das Dokument, generieren, eine Alias-Zeile.
-Von Hand bleiben elf Typen in [src/lib/uiTypes.ts](src/lib/uiTypes.ts) – **je mit Grund**, sonst gehört es
+Von Hand bleiben zehn Typen in [src/lib/uiTypes.ts](src/lib/uiTypes.ts) – **je mit Grund**, sonst gehört es
 in den Barrel. Grenze: `http(…, body?: unknown)` prüft **keinen** Objekt-Literal-Rumpf (34 von 86,
 [B-24](../docs/backlog/B-24-frontend-unknown-field.md)).
 

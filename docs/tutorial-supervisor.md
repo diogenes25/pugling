@@ -45,8 +45,9 @@ Verschenken** und **Klassenarbeiten**. Der einzige **„Stick"** (Konsequenz fü
 
 ## 0. Konto anlegen und anmelden
 
-Existiert noch kein Vater, legt ihn die **Registrierung** an – der einzige anonyme Schreibpfad der API
-(`[AllowAnonymous]`). Der Server erzeugt dabei gleich das Login-Konto mit den Rollen Creator **und**
+Existiert noch kein Vater, legt ihn die **Registrierung** an – neben der Lehrer-Registrierung
+(`POST /api/v1/creator/teacher-accounts`) der einzige anonyme Schreibpfad der API (`[AllowAnonymous]`,
+beide wie der Login gedrosselt). Der Server erzeugt dabei gleich das Login-Konto mit den Rollen Creator **und**
 Supervisor; die vergebene `id` ist der Login-Name für jede weitere Anmeldung.
 
 ```http
@@ -61,7 +62,7 @@ ist, trägt das Token beide Rollen; die `adultId` steckt als `fid`-Claim drin.
 ```http
 POST /api/v1/auth/adult
 { "adultId": 1, "pin": "0000" }
-→ { "token": "…", "role": "Supervisor", "adultId": 1, … }
+→ { "token": "…", "role": "Supervisor", "id": 1, "name": "…", "expiresAt": "…" }
 ```
 
 Alle folgenden `POST/PATCH/DELETE`-Aufrufe brauchen `Authorization: Bearer <token>`.
@@ -221,7 +222,7 @@ POST /api/v1/supervisor/study-plans/1/positions
 | `goalThreshold` | Bei Tests die Prozent-Bestehensgrenze, bei Check-Aufgaben die Stück-/Schwellenzahl. |
 | `useLeitner` | Karteikasten-Fälligkeit je Inhalts-Atom (`PositionItemProgress`). |
 | `requireTypedTest` | Nur getippte/gewertete Stufen zählen als echte Leistung. Siehe **Fallstrick** unten. |
-| `stage` / `stageSchedule` | Feste Spiel-/Teststufe bzw. Tag→Stufe-Fahrplan (übersteuert `stage`). |
+| `stage` / `stageSchedule` | Feste Spiel-/Teststufe bzw. Tag→Stufe-Fahrplan (übersteuert `stage`); beide leer → `defaultStage` der Übung, sonst Standard des Typs. |
 | `scope` | `All` / `New` / `Old` — welche Inhalts-Teilmenge gespielt wird. |
 | `orderStrategy` | Ausspielreihenfolge: `WeakestFirst` (Default), `Serial`, `Random`, `NewestWeighted`. |
 | `pointsGoalMet` | 🪙 Münzen für ein **erfülltes Positionsziel** je Periode (idempotent). |
@@ -255,14 +256,25 @@ Statt einer festen `stage` kann die Schwierigkeit über die Laufzeit steigen —
   "stageSchedule": [ { "dayNumber": 1, "stage": 2 }, { "dayNumber": 5, "stage": 4 } ] }
 ```
 
-Ab Tag 1 spielt der Sohn Stufe 2, ab Tag 5 Stufe 4. Der Server erzwingt die Stufe aus dem Fahrplan; nur der
-**Vater** darf beim Teststart eine Stufe frei übersteuern.
+Ab Tag 1 gilt Stufe 2 als Tagesstufe, ab Tag 5 Stufe 4. Der Server erzwingt die Stufe; nur der **Vater**
+darf beim Teststart eine Stufe frei übersteuern. Die Tagesstufe löst er so auf: `stageSchedule` →
+`stage` der Position → `defaultStage` der Übung → Standard des Typs (Vokabeln: Stufe 2).
 
-> ⚠️ **Fallstrick — `requireTypedTest: true` ohne `stageSchedule`.** In dieser Kombination fällt die
-> **Prüfung des Kindes auf Stufe 2 (Selbsteinschätzung) zurück** — sie wird **nicht** automatisch zum
-> getippten Test. Wer eine **getippte** Klausur erzwingen will, muss einen `stageSchedule` mit **Stufe 4**
-> setzen (z. B. `[{ "dayNumber": 1, "stage": 4 }]`). `requireTypedTest` allein steuert nur, dass reine
-> Anzeige-/Selbsteinschätzungs-Reviews **nicht für Punkte/Leitner-Box** zählen — es hebt die Teststufe nicht an.
+Die Tagesstufe ist das **Ziel**, nicht zwingend die Stufe jeder Karte:
+
+- Eine **nie gesehene** Karte kommt im Lern-Modus zuerst als Kennenlern-Karte (Anzeigestufe 1, B-419).
+- Mit `useLeitner` klettert jede Karte nach ihrer Einführung eine **Box-Leiter** zur Tagesstufe hoch
+  (Vokabeln: Box 1 Selbsteinschätzung, Box 2 Auswahl, danach das Ziel; B-476). Spätestens **7 Tage nach der
+  Einführung** gilt für die Karte das Ziel, egal in welcher Box. Im Test gilt dieselbe Leiter je Item, aber
+  nie unter der ersten geprüften Sprosse (Vokabeln: Auswahl). „Ab Tag 5 Stufe 4" heißt also: Wörter, die
+  noch in ihrer Leiter-Woche stecken, fragt der Server ggf. noch als Auswahl ab.
+
+> ⚠️ **Fallstrick — `requireTypedTest: true` hebt die Teststufe nicht an.** Ohne getippte Stufe in
+> `stageSchedule`, `stage` der Position oder `defaultStage` der Übung **prüft der Server das Kind auf Stufe 2
+> (Selbsteinschätzung)** — der Test wird **nicht** automatisch getippt. Wer eine **getippte** Klausur will,
+> setzt z. B. `"stage": 4` oder `[{ "dayNumber": 1, "stage": 4 }]`. `requireTypedTest` allein steuert, dass
+> nicht getippte Reviews **keine Punkte** bringen und fürs Ziel nur ein **gewerteter** (getippter)
+> Testversuch zählt — mit Teststufe 2 kann das Kind die Pflicht also selbst nicht erfüllen.
 
 ### Positionen ändern / löschen
 
@@ -511,7 +523,7 @@ internen Typnamen heißen weiterhin `Klassenarbeit`).
 
 ```http
 POST /api/v1/supervisor/class-tests
-{ "childId": 1, "title": "Englisch-Vokabeltest", "date": "2026-07-18", … }
+{ "childId": 1, "title": "Englisch-Vokabeltest", "scheduledDate": "2026-07-18", … }
 ```
 
 Tagging-Konzept, gezieltes Üben/Wiederholen und Benoten: [docs/klassenarbeiten-tagging.md](klassenarbeiten-tagging.md).
@@ -535,7 +547,7 @@ POST /api/v1/supervisor/study-plans
 { "childId": 1, "title": "Vokabel-Sprint", "durationDays": 10 }
 → { "id": 1, "positionCount": 0, "isPlayable": true, … }
 
-# 3) Position (getippte Klausur → stageSchedule mit Stufe 4!; penaltyCoins = Münz-Malus bei gerissener Pflicht)
+# 3) Position (getippte Klausur → Stufe 4 per stage/stageSchedule!; penaltyCoins = Münz-Malus bei gerissener Pflicht)
 POST /api/v1/supervisor/study-plans/1/positions
 { "exerciseId": 1, "cadence": "Daily", "useLeitner": true, "requireTypedTest": true,
   "goalThreshold": 80, "pointsGoalMet": 20, "penaltyCoins": 50,

@@ -19,7 +19,7 @@ Live-Basis `20261110142003_InitialCreate` als erstes Glied (G1b – neu falten �
   Bestandszeilen (`migrationBuilder.Sql("UPDATE …")` in der Migration, kein DB-Default – siehe G9).
 - Vor dem ersten Start mit einer neuen Migration gegen die echte DB: Probe gegen eine **Kopie**
   (`scripts/heimnetz.ps1 -Database <kopie> -Port <anderer>`); das Startskript legt zusätzlich bei jedem Start
-  eine Sicherung `pugling.db.bak-<Zeitstempel>` an.
+  eine Sicherung `pugling.db.bak-auto-<Zeitstempel>` an (die letzten 20 bleiben).
 - Die EF-Tools laufen über die Design-Time-Factory
   ([Data/PuglingDbContextFactory.cs](Data/PuglingDbContextFactory.cs)), nicht über den Web-Host.
   `database update` braucht **kein** `--no-build`, sonst läuft es gegen die Assembly von *vor* dem
@@ -31,8 +31,9 @@ Live-Basis `20261110142003_InitialCreate` als erstes Glied (G1b – neu falten �
 
 - Jedes persistierte **Enum liegt als String** in der DB. Ausnahmen nur `[Flags]` und die ordnend
   verglichenen aus `PuglingDbContext.IntEnumsByDesign`, jeweils mit Grund im Code.
-- **DB-Defaults** gibt es genau einen (`Exercises.ExecutePublic`, ein Fail-Safe); ein
-  `AddColumn(defaultValue:…)` darf keine weiteren nachwachsen lassen.
+- **DB-Defaults** gibt es genau zwei, beide Fail-Safes und als `HasDefaultValue` im Modell erklärt
+  (`Exercises.ExecutePublic` = true, `InterestTags.VisibleToChildren` = false); jeder weitere braucht einen
+  Eintrag in G9 – ein `AddColumn(defaultValue:…)` darf keine nebenbei nachwachsen lassen.
 - Neue **Eindeutigkeit** braucht immer eine Vorprüfung im Controller **plus** einen `ApiErrors`-Code – ohne
   sie wird aus dem 409 ein 500 mit halb gespeichertem Zustand.
 - Ein Index auf einer Spalte, die die Query in einen Ausdruck wickelt (`LOWER(Word)`), wird **nie** benutzt:

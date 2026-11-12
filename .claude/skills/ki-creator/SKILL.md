@@ -1,6 +1,6 @@
 ---
 name: ki-creator
-description: Den KI-Creator-Konsolenagenten (backend/Pugling.Agent.Creator) gegen die laufende Pugling-API fahren – Fachlehrer-Treffer prüfen (profiles), Briefing ohne LLM ansehen, Übungen erzeugen (create, auch --dry-run), Übungsklausuren planen (exam) und ganze Lehrpläne erzeugen (plan), Stoffnotizen einer Unit aus Text oder aus Fotos von Buchseiten befüllen (fill, fill --images). Nutze dies, wenn Übungen, eine Klausur oder ein kompletter Lehrplan per LLM erzeugt werden sollen, wenn der Agent selbst eingerichtet oder debuggt wird (Ollama-Modell, Pugling:Pin), oder bei Fragen zu individuell (--child) vs. allgemein (--profile).
+description: Den KI-Creator-Konsolenagenten (backend/Pugling.Agent.Creator) gegen die laufende Pugling-API fahren – Fachlehrer-Treffer prüfen (profiles), Briefing ohne LLM ansehen, Übungen erzeugen (create, auch --dry-run), Übungsklausuren planen (exam) und ganze Lehrpläne erzeugen (plan), Stoffnotizen einer Unit aus Text oder aus Fotos von Buchseiten befüllen (fill, fill --images), Bilder zu Vokabeln zeichnen lassen (images) und das Typ-Manifest des Servers zeigen (types). Nutze dies, wenn Übungen, eine Klausur oder ein kompletter Lehrplan per LLM erzeugt werden sollen, wenn der Agent selbst eingerichtet oder debuggt wird (Ollama-Modell, Pugling:Pin), oder bei Fragen zu individuell (--child) vs. allgemein (--profile).
 ---
 
 # KI-Creator fahren
@@ -67,7 +67,8 @@ betreut (Seed: Konto 1) – daraus entsteht eine auf das Kind zugeschnittene Üb
 **Allgemein** (`--profile`, ohne Kind) genügt die Creator-Rolle und erzeugt Katalogware; Klassenstufe,
 Schulart und Quelle kommen dann aus dem Profil. Ohne `--profile` nimmt der Agent das Profil auf der Reihe des
 Kinder-Buchs (`profiles/match`); hat das Kind mehrere Bücher mit Profil, ist `--profile` Pflicht. Ist ein Ort genannt
-(`--series`), spricht nur ein Profil auf dieser Reihe, sonst keines. Ein werkunabhängiges `--profile` legt mit Kind im
+(`--series`), wählt das Briefing nur unter Profilen, die passen (`ProfileFit`: Reihe und Fach) – bevorzugt das der
+Reihe, sonst ein werkunabhängiges des Fachs der Reihe (B-488). Ein werkunabhängiges `--profile` legt mit Kind im
 Buch des Kindes in seinem Fach ab, ohne Kind braucht es `--series`. Den Stoff liest der Agent immer aus der Unit, in
 der die Übung entsteht (B-484).
 

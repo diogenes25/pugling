@@ -38,7 +38,7 @@ Im Repo heißen **drei verschiedene Dinge** „Lehrplan/Plan". Das ist die häuf
 
 | # | Name | Was es ist | Doku |
 | --- | --- | --- | --- |
-| 1 | **Study-Plan** (API) | Das **produktive** Trainingsobjekt: Container für ein Kind mit `PlanPosition`s auf Katalog-Übungen, Leitner, Stufen, Punkten, Combo und Missionen. | **Dieses Wiki** → [Lernplan bauen](wiki/04-lernplan-bauen.md) |
+| 1 | **Study-Plan** (API) | Das **produktive** Trainingsobjekt: Container für ein Kind mit `PlanPosition`s auf Katalog-Übungen, Leitner, Stufen, Punkten, Combo und Missionen. | [Supervisor-Tutorial](docs/tutorial-supervisor.md) |
 | 2 | **Katalog-Übung** | Globale **Übungs-Bibliothek** `TextbookSeries → SeriesUnit → Exercise` (12 typisierte Übungsarten mit Metadaten; ein `Subject` hängt optional an der Reihe). Fundament für den künftigen Auto-Generator. | [Übungstypen](wiki/03-uebungstypen.md) |
 | 3 | **Markdown-Lehrplan** | Von den Skills `lehrplan-autor`/`lehrplan-lerner` erzeugter/abgearbeiteter Kurs **ohne** laufende App (reine Dateien). | [docs/lehrplan-erstellen.md](docs/lehrplan-erstellen.md) |
 

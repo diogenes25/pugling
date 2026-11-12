@@ -86,8 +86,9 @@ python -I -X utf8 .claude/skills/lehrwerk-aufbereiten/laden.py raw/<fach>/<werk-
 ```
 
 Erwartet: jede Übung 100 % im Selbsttest; ein zweiter Lauf meldet nur „schon da“. Danach das Briefing ohne
-Sprachmodell ansehen – **immer mit Profil und Unit**, denn ohne `--profile`/`--series-unit` legt der Agent die
-Übung in der ersten Reihe überhaupt ab und nimmt deren Fach (B-473):
+Sprachmodell ansehen – **mit Profil und Unit**, damit es sicher dieses Buch und diese Unit zeigt. Ohne Ort nimmt
+der Agent mit `--child` das Profil auf der Reihe des Kinder-Buchs und bricht ab, wenn mehrere Bücher des Kindes eines
+haben; das Fach kommt immer aus der Reihe (B-488):
 
 ```bash
 Pugling__BaseUrl=http://localhost:5280 Pugling__Pin=0000 dotnet run --project backend/Pugling.Agent.Creator -- briefing --child 1 --profile <P> --series-unit <U> --unit <U> --type Vocabulary
@@ -101,7 +102,8 @@ Aufräumen: Server auf 5280 beenden, `backend/Pugling.Api/pugling_lehrwerk.db*` 
 Dem Nutzer vorlegen: Units, Zahl der Wörter je Unit, alle Zeilen, die einmal `unsicher` waren, und wie sie geklärt
 wurden, die Start-Übungen mit Titel. Erst nach seinem Ja, mit seiner PIN und seiner Adresse (`--base`, Vorgabe
 `http://localhost:5200`). `--child` nur, wenn das Kind auf dieses Buch umgestellt werden soll; das biegt sein
-vorhandenes Buch im Fach um (der Agent liest das erste Buch des Fachs). Eine korrigierte Wortliste kommt mit
+vorhandenes Buch im Fach um, statt ein zweites danebenzulegen (der Agent wählt das Buch über die Reihe; passen
+mehrere Bücher, bricht er ab). Eine korrigierte Wortliste kommt mit
 `--ersetzen` nach; das überschreibt die Übungen gleichen Titels.
 
 ### 7. Abschluss

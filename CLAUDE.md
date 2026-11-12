@@ -64,7 +64,7 @@ Skill `ki-creator`, Pipeline und Regeln in
   `AccountProfile` **mehrere Rollen** (`ProfileRole` Creator/Supervisor/Student → `Adult`/`Child`-Profil);
   ein Vater ist zugleich Creator+Supervisor. PIN-Login (`auth/{adult|child}` oder konto-zentrisch `auth/login`)
   → JWT mit `aid` + je Rolle einem Ebenen-Claim (`Creator`/`Supervisor`/`Student`) + `fid`/`cid`. Gegated wird
-  direkt auf die Ebenen-Rollen (kein Vater/Sohn-Alias); `LoginResponse.role` ist `Supervisor` bzw. `Student`
+  direkt auf die Ebenen-Rollen (kein Vater/Sohn-Alias); `LoginResponse.role` ist `Supervisor`, `Creator` (Lehrer-Konto) bzw. `Student`
   fürs UI-Routing. `AuthAccess` prüft Eigentum **OR-verknüpft je Rolle** (`IsSupervisor`/`IsStudent`);
   Konten entstehen beim Anlegen/Login und – für die geseedete Familie – im Seed-Nachlauf (idempotent).
 - **Multi-Supervisor** ([AdminEntities.cs](backend/Pugling.Api/Models/AdminEntities.cs)): `SupervisorLink`
@@ -159,7 +159,7 @@ Lernstand – positionsgebunden *und* plan-übergreifend je Vokabel-Item.
   nicht im Hook).
 - **Test-Tor am Ende der Antwort** (Stop-Hook [.claude/hooks/test-gate.sh](.claude/hooks/test-gate.sh)):
   Weichen `.cs`-Dateien von `HEAD` ab, läuft `dotnet test Pugling.sln -c Release` (~63 s) – rot blockt und
-  meldet die gefallenen Tests zurück. Zweimal derselbe Stand wird nicht zweimal getestet (Fingerprint), und
+  meldet die gefallenen Tests zurück. Ein grün getesteter Stand wird nicht noch einmal getestet (Fingerprint nur bei Grün; rot läuft erneut), und
   `PUGLING_SKIP_TEST_GATE=1` schaltet ab, wenn rot der beabsichtigte Zwischenstand eines Umbaus ist.
   `Release` ist Absicht: ein parallel laufender Dev-Server sperrt sonst die Debug-Ausgabe.
   Dasselbe Tor steht in CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) vor jedem Push und

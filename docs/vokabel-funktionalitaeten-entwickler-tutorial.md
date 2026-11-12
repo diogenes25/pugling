@@ -158,12 +158,12 @@ GET /api/v1/student/children/{childId}/vocabulary-progress/by-word?onlyWeak=true
 
 ## 8. Implementierungsstellen
 
-- [Models/ExerciseConfigs.cs](../backend/Pugling.Api/Models/ExerciseConfigs.cs): `VocabularyConfig`, `VocabItem`, `VocabRef`.
+- [Pugling.Contracts/Exercise/ExerciseConfigs.cs](../backend/Pugling.Contracts/Exercise/ExerciseConfigs.cs): `VocabularyConfig`, `VocabItem`, `VocabRef`.
 - [Models/ExerciseItemEntities.cs](../backend/Pugling.Api/Models/ExerciseItemEntities.cs): stabile Item-Zeilen der Vokabelübung.
 - [Controllers/Creator/ExerciseControllers.cs](../backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs): Vokabel-CRUD, `refs-from-tags`, Item-CRUD.
-- [Services/ExerciseItemService.cs](../backend/Pugling.Api/Services/ExerciseItemService.cs): Materialisierung und ID-erhaltender Abgleich.
-- [Services/ExerciseContentResolver.cs](../backend/Pugling.Api/Services/ExerciseContentResolver.cs): Auflösung von `ExerciseItems` zu spielbaren `ContentItem`s.
-- [Services/ItemProgressService.cs](../backend/Pugling.Api/Services/ItemProgressService.cs): planübergreifender Lernstand und Antwort-Historie.
+- [Services/Creator/ExerciseItemService.cs](../backend/Pugling.Api/Services/Creator/ExerciseItemService.cs): Materialisierung und ID-erhaltender Abgleich.
+- [Services/Shared/ExerciseContentResolver.cs](../backend/Pugling.Api/Services/Shared/ExerciseContentResolver.cs): Auflösung von `ExerciseItems` zu spielbaren `ContentItem`s.
+- [Services/Shared/ItemProgressService.cs](../backend/Pugling.Api/Services/Shared/ItemProgressService.cs): planübergreifender Lernstand und Antwort-Historie.
 - [Controllers/Student/ChildVocabularyProgressController.cs](../backend/Pugling.Api/Controllers/Student/ChildVocabularyProgressController.cs): kindzentrierte Progress-API.
 
 ## 9. Tests und Checks

@@ -34,11 +34,12 @@ public List<string> Interests { get; set; } = [];   // Freitext, JSON-Spalte
 public string? ProfileNotes { get; set; }           // Freitext
 ```
 
-Verbraucher ist heute **allein der KI-Creator**, der daraus Prompt-Text baut
-([ChildBriefing.ToPromptText](../backend/Pugling.Agent.Creator/Briefing/ChildBriefing.cs),
+Verbraucher des Freitexts ist der KI-Creator, der daraus Prompt-Text baut
+([ChildFacts.ToPromptText](../backend/Pugling.Agent.Creator/Briefing/ChildFacts.cs),
 [DraftPrompts](../backend/Pugling.Agent.Creator/Drafting/DraftPrompts.cs)) – ein LLM verträgt
-Freitext, es liest „Brawl Stars" und kleidet den Stoff passend ein. Im **Frontend ist das Profil
-nicht pflegbar** (kein Treffer für `interests` unter `frontend/src`), nur über API/Agent.
+Freitext, es liest „Brawl Stars" und kleidet den Stoff passend ein. Im Frontend pflegt der Vater
+Freitext-Interessen, Profilnotizen und die gewichteten Interessen auf der Kind-Seite
+([VaterKind.tsx](../frontend/src/vater/VaterKind.tsx)).
 
 Für eine **deterministische Auswahl** – „welches von 8 Bildern zu *run* zeige ich diesem Kind?" –
 ist Freitext untauglich:
@@ -175,7 +176,7 @@ public class ChildMediaPick
 }
 ```
 
-`POST …/media-picks/{…}/reshuffle` („anderes Bild") verwirft die Wahl und zieht neu, der Ausschluss
+`POST student/children/{childId}/media-picks/reshuffle` („anderes Bild") verwirft die Wahl und zieht neu, der Ausschluss
 bleibt. Das ist zugleich die Datenquelle, mit der sich das Interessenprofil später nachschärfen lässt.
 
 ---
@@ -195,6 +196,10 @@ public class InterestTag
     public InterestFacet Facet { get; set; }
     /// <summary>Synonyme für den Freitext-Backfill und die Creator-Suche ("Poke", "Pikachu").</summary>
     public List<string> Synonyms { get; set; } = [];
+    /// <summary>Szenen-Vorlage für KI-Bilder (B-485, Migration InterestTagImagePrompt).</summary>
+    public string? ImagePrompt { get; set; }
+    /// <summary>Für die Kind-Auswahlliste freigegeben (B-207, Migration InterestTagVisibleToChildren).</summary>
+    public bool VisibleToChildren { get; set; }
 }
 
 public class ChildInterest
@@ -295,8 +300,9 @@ Entscheidung in `StageFacets`, nicht in den Resolver:
 
 **Dateien.** Assets liegen nicht in der DB. Erste Stufe: nur URLs (Creator pflegt Fremd-URLs oder
 Dateien, die er selbst nach `wwwroot/media/` legt – die App liefert `wwwroot` bereits aus, siehe
-`Program.cs`). Upload + serverseitiges Resize sind eine spätere Etappe (braucht ImageSharp und eine
-Speicher-Abstraktion, damit später Blob-Storage möglich ist).
+`Program.cs`). *Stand 2026-11-12:* Upload (`POST creator/media/upload`) und serverseitiges Resize sind
+gebaut – mit **SkiaSharp** ([MediaImageProcessor](../backend/Pugling.Api/Services/Shared/MediaImageProcessor.cs)),
+nicht ImageSharp (Begründung unten).
 
 ---
 
@@ -308,11 +314,11 @@ Speicher-Abstraktion, damit später Blob-Storage möglich ist).
 | Creator | `api/v1/creator/media/{id}/variants` | CRUD Auflösungen |
 | Creator | `api/v1/creator/media/{id}/tags` | Tags am Asset |
 | Creator | `api/v1/creator/vocabulary/{id}/media` | Zuordnung zum Motiv (+ `weight`) |
-| Creator | `api/v1/creator/…/vocabulary/{exId}/items/{itemId}/media` | übungslokale Übersteuerung |
+| Creator | `api/v1/creator/exercises/{exerciseId}/items/{itemId}/media` | übungslokale Übersteuerung |
 | Creator | `api/v1/creator/interest-tags` | Taxonomie pflegen (global) |
 | Supervisor | `api/v1/supervisor/children/{id}/interests` | gewichtete Interessen + Abneigungen |
 | Supervisor | `api/v1/supervisor/children/{id}` (PATCH) | `allowedContentRating` |
-| Student | `api/v1/student/children/{id}/media-picks/{…}/reshuffle` | „anderes Bild" |
+| Student | `api/v1/student/children/{id}/media-picks/reshuffle` | „anderes Bild" |
 
 Neue Fehler-Codes additiv in [`ApiErrors`](../backend/Pugling.Api/Errors/ApiErrors.cs):
 `media_not_found`, `media_rating_not_allowed`, `media_variant_missing`.
@@ -324,7 +330,7 @@ Neue Fehler-Codes additiv in [`ApiErrors`](../backend/Pugling.Api/Errors/ApiErro
 | # | Etappe | Inhalt | Status |
 | --- | --- | --- | --- |
 | 1 | **Medien-Store** | `MediaAsset` + `MediaVariant`, Creator-CRUD, URL-basiert (kein Upload). Migration. | ✅ |
-| 2 | **Taxonomie** | `InterestTag` + `ChildInterest` + `AllowedContentRating`, Backfill der Freitext-Interessen, Supervisor-CRUD; `ChildBriefing` zieht nach. | ✅ |
+| 2 | **Taxonomie** | `InterestTag` + `ChildInterest` + `AllowedContentRating`, Backfill der Freitext-Interessen, Supervisor-CRUD; das Agent-Briefing (`ChildFacts`) zieht nach. | ✅ |
 | 3 | **Zuordnung** | `MediaLink` + CRUD an Vokabel/Item/Übung. | ✅ |
 | 4 | **Auswahl** | `MediaSelector` + `ChildMediaPick` + Reshuffle; `ContentItem`/`PracticeCard`/`StageFacets`; Anti-Cheat-Regel + Tests. | ✅ |
 | 5 | **Upload** | Multipart + serverseitige Varianten-Erzeugung, Speicher-Abstraktion. | ✅ |
@@ -402,9 +408,10 @@ daneben – Stock-Bilder liegen oft schon irgendwo.
   Das Findet-sonst-legt-an liegt an *einer* Stelle
   ([InterestTagService](../backend/Pugling.Api/Services/Shared/InterestTagService.cs)) – sonst zerfiele
   das Vokabular in Dubletten und das Matching liefe leer.
-- **Backfill:** [InterestTagBackfill](../backend/Pugling.Api/Data/InterestTagBackfill.cs) überführt die
-  Freitext-Interessen beim Start (Gewicht 2), idempotent. Der Freitext bleibt – der KI-Creator lebt davon.
-- **Der Agent kennt jetzt Abneigungen:** `ChildBriefing` rendert die gewichteten Interessen und eine
+- **Backfill:** `SeedChildInterestsAsync` in [Seed.cs](../backend/Pugling.Api/Data/Seed.cs) überführt die
+  Freitext-Interessen (Gewicht 2), idempotent – aber nur, wenn der Seed läuft (`Seed:Enabled`, Standard nur
+  in Development). Der Freitext bleibt – der KI-Creator lebt davon.
+- **Der Agent kennt jetzt Abneigungen:** [ChildFacts](../backend/Pugling.Agent.Creator/Briefing/ChildFacts.cs) rendert die gewichteten Interessen und eine
   eigene Zeile „Vermeide unbedingt". Eine Aufgabe über Spinnen ist fachlich korrekt und trotzdem
   unbrauchbar, wenn das Kind Spinnen nicht erträgt.
 - **Zuordnung (Etappe 3):** [MediaLink](../backend/Pugling.Api/Models/MediaEntities.cs) +

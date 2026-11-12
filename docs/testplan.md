@@ -640,7 +640,8 @@ durch Client-Abbruch, sämtlich **vor** `179cc06` („Client-Abbruch ist kein Se
 - Jede Tabellenzeile nennt Datei **und** Zeile, ist also nachfahrbar; jeder der drei Übersprünge nennt seinen
   Grund.
 - Gefundene Defekte wurden **gemeldet, nicht nebenbei gefixt** – die vier Punkte oben sind Tests, kein
-  Produktivcode. Der Flake in `SpeedBonusTests` bleibt bewusst offen.
+  Produktivcode. Der Flake in `SpeedBonusTests` bleibt bewusst offen. *(Stand 2026-11-12: inzwischen
+  behoben – injizierter `TimeProvider`, siehe „Behoben 2026-07-30" oben.)*
 
 ## Nachmessung 2026-07-31: die drei unbeobachteten Flächen
 
@@ -671,6 +672,9 @@ Die drei Flächen, die dieser Befund nicht abdeckte:
    ([PuglingClientTests](../backend/Pugling.Api.Tests/PuglingClientTests.cs)). Kein Wächter hält die
    Routen-Strings gegen das OpenAPI-Dokument; ein Tippfehler in einer der nicht gefahrenen Methoden fällt erst
    dem Agenten zur Laufzeit auf. (`pugling-creator`: Zeilen 67,0 %, Zweige 51,5 %.)
+   *Stand 2026-11-12:* den Wächter gibt es seither –
+   [ClientRouteGuardTests](../backend/Pugling.Api.Tests/ClientRouteGuardTests.cs) (B-40) hält die
+   Routen-Strings des Clients gegen das OpenAPI-Dokument.
 2. ~~**Der Produktionspfad ist zu 0 % ausgeführt.**~~ — **geschlossen am 2026-08-01** durch
    [B-41](backlog/B-41-produktions-startup-smoke.md) (Etappe E1). Damals setzte die einzige
    `UseEnvironment`-Stelle im Repo `"Development"`; nie ausgeführt waren der Fail-fast auf fehlenden
@@ -686,6 +690,8 @@ Die drei Flächen, die dieser Befund nicht abdeckte:
    [types.ts](../frontend/src/lib/types.ts) trägt **1950 handgeschriebene Zeilen** Vertrag ohne Generator. Ein
    Feldumbau im Backend fällt `tsc` nur auf, wenn jemand die TS-Zeile mitzieht; sonst fängt es erst
    Playwright – und der läuft an PR und nachts, ist also kein Freigabe-Tor.
+   *Stand 2026-11-12:* mit B-42 wird `src/lib/contract.ts` aus `docs/openapi/v1.json` generiert
+   (`gen:contract`, nicht eingecheckt); `types.ts` ist auf rund 720 Zeilen geschrumpft.
 
 **Zur Frage „brauchen wir System-Tests?": als Ebene nein, die gibt es zweimal** – 25 Playwright-Tests durch
 zwei echte Server und einen echten Browser, dazu `/smoke-test` out-of-process von Hand. Was fehlt, sind

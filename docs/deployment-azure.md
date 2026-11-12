@@ -63,9 +63,9 @@ derselben Umgebung** ausführt.
   als die, in der gebaut und deployt wird, bewacht nichts. `setup-node` zieht bei `"20"` das neueste
   20.x und erfüllt damit die `engines` von `vite@8` (`^20.19.0 || >=22.12.0`) – wer hier auf ein
   älteres 20.x pinnt, bricht den Build.
-- Der Peer-Konflikt selbst ist **vorbestehend und offen**, nicht gelöst (siehe
-  [frontend/CLAUDE.md](../frontend/CLAUDE.md) und [codequalitaet-gates-plan.md](codequalitaet-gates-plan.md),
-  D1). Fällt er weg, kann das Flag weg – vorher nicht.
+- Der Peer-Konflikt ist mit [B-25](backlog/B-25-vite-pwa-peer-konflikt.md) gelöst; `deploy-azure.yml`,
+  `ci.yml` und `e2e.yml` laufen mit schlichtem `npm ci`. Kommt `--legacy-peer-deps` je zurück, verdeckt es
+  einen neuen Konflikt – erst die Ursache suchen.
 
 ## Fallstrick 2 · `workflow_run` checkt den falschen Commit aus
 
@@ -106,12 +106,11 @@ Punkte oben.
 
 ## Wieder scharf stellen
 
-**Vor allem anderen: die Datenbank umstellen.** Die Azure-DB stammt aus der alten Migrationskette und wird
-vom Historien-Guard abgewiesen – ohne diesen Schritt startet die App nach dem Deploy gar nicht, und die
-vier Punkte unten sind dann umsonst. Er steht als eigene Story in
-[B-07](backlog/B-07-db-umbau-restetappen.md); die Einzelheiten (zwei App Settings, warum beide in denselben
-Vorgang gehören, wie der Rollback aussieht) im Plandokument
-[db-struktur-umbau-plan.md](db-struktur-umbau-plan.md), Abschnitt „Betriebsschritt".
+**Datenbank: keine Umstellung nötig.** Der früher geplante Betriebsschritt (Alt-DB auf die neu gefaltete
+Kette umstellen, [B-07](backlog/B-07-db-umbau-restetappen.md)) ist **verworfen**: Entscheidung vom
+2026-10-23 – das Azure-Deployment wird später frisch neu gebaut, es gibt keine Alt-Datenbank. Eine
+vorhandene Azure-DB aus der alten Kette würde vom Historien-Guard abgewiesen; neu aufsetzen statt
+umstellen. Hintergrund: [db-struktur-umbau-plan.md](db-struktur-umbau-plan.md).
 
 1. **Secret setzen:** `AZURE_WEBAPP_PUBLISH_PROFILE` (Portal → App Service → „Bereitstellungscenter"
    bzw. „Veröffentlichungsprofil abrufen"). Prüfen mit `gh secret list` – die Liste war zuletzt **leer**,

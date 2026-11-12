@@ -19,7 +19,8 @@ weggezogen.
 Daraus folgte der wichtigste Scope-Schnitt jenes Durchgangs: **`backend/Pugling.Api/Models/` und
 `backend/Pugling.Api/Data/` blieben unübersetzt** (398 der 1266 `<summary>` in `Pugling.Api`), damit
 in den Dateien, die die parallele Sitzung umbaute, keine Merge-Konflikte entstanden. Beide Ordner sind von
-`CS1591` ohnehin freigestellt (`.editorconfig`) – sie fließen nicht in Swagger.
+`CS1591` ohnehin freigestellt (`.editorconfig`) – als EF-Entities sind sie nicht Teil des Vertrags und
+fließen darum nicht in das OpenAPI-Dokument.
 
 **Nachgeholt am 2026-08-01** (Etappe 7), nachdem der DB-Umbau abgeschlossen war: 24 Dateien, 398 `<summary>`,
 `Data/Migrations/` bleibt als Generat unangetastet (dort steht ohnehin kein `///`). Damit ist **kein
@@ -54,7 +55,11 @@ Plan.
 - `CS1591` prüft nur *Vorhandensein*, nicht Sprache.
 - `DocsCaptureTests` generiert `docs/api-examples/*.md` aus eigenen deutschen Titel-Strings **im Testcode**,
   nicht aus `/// <summary>`-Text.
-- Keine `IncludeXmlComments`-Anbindung an Swagger gefunden.
+- *Stand 2026-11-12, korrigiert:* Die XML-Doku **erreicht** das OpenAPI-Dokument – nicht über
+  `IncludeXmlComments`, sondern über den Source-Generator von `Microsoft.AspNetCore.OpenApi` zusammen mit
+  `GenerateDocumentationFile` (Api und Contracts). Eine Textänderung an `///` ändert darum
+  `docs/openapi/v1.json` (CI-Schritt „Vertragsdokument prüfen (OpenAPI)"); dass Vertrags-Doku dort
+  ankommt, hält `ConventionGuardTests.Vertrags_Dokumentation_Erreicht_Das_Dokument`.
 
 ## Glossar
 

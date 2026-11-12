@@ -50,7 +50,7 @@ Daraus folgen drei feste Regeln, die beim Erstellen jedes Plans gelten:
 Der schnellste Weg: Claude die `lehrplan-autor`-Skill nutzen lassen.
 
 ```text
-/vater erstelle mir einen Lehrplan "Bruchrechnen Grundlagen" für meinen Sohn,
+/lehrplan-autor erstelle mir einen Lehrplan "Bruchrechnen Grundlagen" für meinen Sohn,
 Level Anfänger, 2 Module, ca. 20 Punkte
 ```
 
@@ -61,7 +61,7 @@ jedes Detail dafür.
 Wenn der Sohn (oder Claude) loslegen soll:
 
 ```text
-/sohn arbeite den Lehrplan unter ./lehrplan/bruchrechnen-grundlagen durch
+/lehrplan-lerner arbeite den Lehrplan unter ./lehrplan/bruchrechnen-grundlagen durch
 ```
 
 ---
@@ -502,7 +502,7 @@ Setze in jeder `manifest.json` den passenden `slug` (`bruchrechnen-grundlagen-ma
 die Ordner eindeutig bleiben. Starten:
 
 ```text
-/sohn arbeite den Lehrplan unter ./lehrplan/bruchrechnen-grundlagen-max durch
+/lehrplan-lerner arbeite den Lehrplan unter ./lehrplan/bruchrechnen-grundlagen-max durch
 ```
 
 **Option B — verschiedene Fächer pro Sohn.** Wenn jeder Sohn ein anderes Fach lernt, ist ohnehin jeder
@@ -537,7 +537,7 @@ lehrplan/
 
 ## 9. Was danach passiert (damit du die Kontrolle verstehst)
 
-Der Sohn (bzw. Claude über `/sohn`) arbeitet so — und genau das erzwingt der Plan:
+Der Sohn (bzw. Claude über die Skill `lehrplan-lerner`) arbeitet so — und genau das erzwingt der Plan:
 
 1. Liest `manifest.json` als Gesetz und legt (falls neu) `progress.json` an.
 2. Bearbeitet jede Übung, **schreibt seine Antwort ins `ledger.md`, bevor** er den Schlüssel öffnet.

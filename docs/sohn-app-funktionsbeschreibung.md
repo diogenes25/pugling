@@ -4,7 +4,7 @@ tags: [typ/spezifikation, bereich/frontend, rolle/student]
 
 # Funktionsbeschreibung: Sohn-App (Kind, Handy)
 
-← [Zurück zum Wiki-Index](../README.md) · Verwandt: [06 · Anleitung Sohn-App](../wiki/06-sohn-app.md) (API), [05 · Punkte & Bonus](../wiki/05-punkte-und-bonus.md)
+← [Zurück zum Wiki-Index](../README.md) · Verwandt: [Student-Tutorial](tutorial-student.md) (API), [05 · Punkte & Bonus](../wiki/05-punkte-und-bonus.md)
 
 **Zweck dieses Dokuments:** Vollständige, **design- und technikunabhängige** Beschreibung aller
 Funktionen der Sohn-App. Es beschreibt *was* die App kann (Screens, angezeigte Daten, Aktionen,
@@ -26,7 +26,7 @@ oder *ab welcher Schwelle* — das macht der Vater in einer getrennten App. Der 
 2. **übt** und macht **Tests**,
 3. verdient dabei zwei Währungen (**Münzen** und **Gems**),
 4. gibt sie im **Familien-Shop** (echte Belohnungen) und für **Charaktere/Skins** aus,
-5. verfolgt seinen **Fortschritt**, seine **Missionen** und **Auszeichnungen**,
+5. verfolgt seinen **Fortschritt**, seine **großen Ziele** (vom Vater gesetzt), **Missionen** und **Auszeichnungen**,
 6. **beschreibt sich selbst** — was er mag und was gar nicht (siehe 4.10).
 
 **Die eine Ausnahme von „steuert nichts"** ist Punkt 6, und sie ist genau deshalb gefahrlos: Interessen
@@ -90,36 +90,36 @@ Jede Übung kann auf zwei Wegen gespielt werden:
 
 ### 2.7 Übungstypen (Katalog) und ihr Reifegrad — WICHTIG fürs Scoping
 
-Der Katalog kennt **zwölf** Übungstypen. Sie sind aber **nicht gleichwertig ausgebaut**: Im
-Lern-Loop der Sohn-App (Üben + Test über eine Position) ist heute nur ein Teil überhaupt spielbar,
-und **richtig entwickelt ist allein die Vokabelübung**. Das ist die zentrale Scoping-Aussage für den
-UI-Entwurf: **Version 1 der Sohn-App wird um die Vokabelübung herum gebaut.** Die übrigen Typen sind
-Roadmap und sollten im Design höchstens als „kommt bald"-Platzhalter auftauchen, nicht als
-funktionsfähige Screens.
+Der Katalog kennt **zwölf** Übungstypen. Gespielt wird jeder Typ über **denselben generischen
+Positions-Loop** (Üben + ggf. Test): Der Server liefert die Karten samt Antwortform, die App zeigt nur an,
+was die Karte mitbringt (Satz mit Lücke, Dekodierung, Passage, Audio, Auswahl …). Ob es zur Position einen
+**Test** gibt, sagt der Server je Tag (`testable`) — `false` für reine Inhaltsübungen ohne Prüfmodus und
+für freie Anzeige-Stufen. **Am weitesten entwickelt ist die Vokabelübung** (Store, Audio,
+Abfragerichtung, alle Antwortmodi, Leitner) — sie bleibt der Design-Schwerpunkt.
 
 Die App muss die Typen nicht fest verdrahten: Der Server liefert ein **Typ-Manifest**
-(`GET …/learn/exercise-types`) mit Anzeigename, Renderer-Id, Prüfmodus und Fähigkeiten je Typ. Heute
-existiert real aber nur der Vokabel-Renderer (`flashcards`).
+(`GET api/v1/creator/exercise-types`, für jeden angemeldeten Nutzer lesbar) mit Anzeigename,
+Renderer-Id, Prüfmodus und Fähigkeiten je Typ. Renderer-Ids heute: `flashcards`, `cloze`, `matching`,
+`arithmetic`, `list`, `birkenbihl`, `prompts`, `reading`, `listening`, `essay`.
 
-| Typ (Label) | Was das Kind tut | Prüfmodus | Reifegrad in der Sohn-App |
+| Typ (Label) | Was das Kind tut | Prüfmodus | Stand in der Sohn-App |
 |---|---|---|---|
-| **Vokabeln** | Karteikasten: Wort ↔ Übersetzung über mehrere Stufen (zeigen → selbst einschätzen → Buchstaben → tippen → hören → Auswahl) | im Positions-Loop (Üben/Test) | ✅ **Voll entwickelt** — Store-verknüpft, Audio, Abfragerichtung, alle Antwortmodi, Leitner. **Design-Schwerpunkt.** |
-| **Lückentext** | fehlendes Wort in einen Satz einsetzen (tippen oder Wortbank), optional store-verknüpft | im Positions-Loop (Üben/Test) | 🟡 Play-Loop verdrahtet, aber **flach** (kein ausgereifter Renderer) — Roadmap |
-| **Zuordnung** | Paare einander zuordnen (links ↔ rechts), optional mit Ablenkern | im Positions-Loop (Üben/Test) | 🟡 Play-Loop verdrahtet, aber **flach** — Roadmap |
-| **Rechenaufgaben** | Rechenaufgaben lösen | nur Katalog-Direktcheck | ⛔ **nicht** im Sohn-Positions-Loop — Roadmap |
-| **Rechen-Drill** | fortlaufend generierte Rechenaufgaben | nur Katalog (erzeugen + prüfen) | ⛔ **nicht** im Sohn-Positions-Loop — Roadmap |
-| **Liste** | Elemente einer Liste nennen | nur Katalog-Check | ⛔ **nicht** im Sohn-Positions-Loop — Roadmap |
-| **Leseverständnis** | Text lesen, Fragen beantworten | keine Auto-Prüfung | ⛔ reine Inhaltsübung — Roadmap |
-| **Hörverständnis** | Audio hören, Fragen beantworten | keine Auto-Prüfung | ⛔ reine Inhaltsübung — Roadmap |
-| **Grammatik** | Grammatik-Aufgaben mit Regelhinweisen | keine Auto-Prüfung | ⛔ Roadmap |
-| **Übersetzung** | ganze Sätze übersetzen | keine Auto-Prüfung | ⛔ Roadmap |
-| **Aufsatz** | freien Text schreiben | keine Auto-Prüfung (manuell) | ⛔ Roadmap |
-| **Birkenbihl** | Wort-für-Wort-Dekodierung lesen | keine Prüfung (Anzeige) | ⛔ reine Inhaltsübung — Roadmap |
+| **Vokabelkarten** | Karteikasten: Wort ↔ Übersetzung über mehrere Stufen (zeigen → selbst einschätzen → Buchstaben → tippen → hören → Auswahl) | Positions-Test | ✅ **Voll entwickelt** — Store-verknüpft, Audio, Abfragerichtung, alle Antwortmodi, Leitner. **Design-Schwerpunkt.** |
+| **Lückentext** | fehlendes Wort in einen Satz einsetzen (tippen oder Wortbank), optional store-verknüpft | Positions-Test | ✅ spielbar (Üben + Test), Satz mit markierter Lücke |
+| **Zuordnung** | Paare einander zuordnen (links ↔ rechts), optional mit Ablenkern | Positions-Test | ✅ spielbar (Üben + Test) |
+| **Rechenaufgaben** | Rechenaufgaben lösen | Katalog-Check (`CatalogCheck`) | ✅ spielbar und **testbar** im Positions-Loop |
+| **Liste** | Elemente einer Liste nennen | Katalog-Check (`CatalogCheck`) | ✅ spielbar und **testbar** im Positions-Loop |
+| **Rechen-Drill** | fortlaufend generierte Rechenaufgaben | Katalog (erzeugen + prüfen) | ⛔ liefert keine Karten in den Positions-Loop — nur Katalog-Direktcheck |
+| **Leseverständnis** | Text lesen, Fragen beantworten | keiner | 🟡 Durchspielen im generischen Loop (Passage + Fragen), kein Test |
+| **Hörverständnis** | Audio hören, Fragen beantworten | keiner | 🟡 Durchspielen im generischen Loop (Audio + Fragen), kein Test |
+| **Regelaufgaben** | Grammatik-Aufgaben mit Regelhinweisen | keiner | 🟡 Durchspielen im generischen Loop, kein Test |
+| **Übersetzung** | ganze Sätze übersetzen | keiner | 🟡 Durchspielen im generischen Loop, kein Test |
+| **Aufsatz** | freien Text schreiben | keiner (manuell) | 🟡 nur Anzeige der Aufgabe, keine Auswertung |
+| **Birkenbihl** | Wort-für-Wort-Dekodierung lesen | keiner | 🟡 Durchspielen: Satz mit Dekodierung auf der Kartenvorderseite, kein Test |
 
-**Folge fürs UI:** Die Positions-Kacheln auf der Basis dürfen zwar unterschiedliche Typ-Icons zeigen,
-aber ein spielbares **Üben/Test-Erlebnis** muss nur die **Vokabelübung** vollständig liefern. Für
-nicht-spielbare oder unreife Typen zeigt die App einen freundlichen Hinweis („Diese Übung kannst du
-bald spielen") statt einer kaputten Spielansicht.
+**Folge fürs UI:** Ein Kartenbildschirm bedient alle Typen; er rendert die Felder, die eine Karte trägt,
+statt nach Typ zu verzweigen. Den **Test-Knopf** zeigt die App nur, wenn der Server `testable` meldet —
+sonst heißt die Aktion „Durchspielen".
 
 ### 2.8 Antwort-/Stufen-Modi einer Karte (datengetrieben, ein UI bedient alle)
 
@@ -329,6 +329,9 @@ Jeder Screen ist beschrieben durch: **Zweck**, **angezeigte Daten**, **Aktionen*
 - **Meine Übungen:** je Position ein Status (✅ erfüllt / ⬜ offen / • frei) mit Rhythmus-Label.
 - **Letzte Tage:** eine kleine Kalender-Heatmap der letzten ~7 Tage (teilweise geschafft vs. Tag
   komplett) mit Legende.
+- **Meine großen Ziele:** die aktiven Lernziele (Objectives), die der Vater gesetzt hat, je mit
+  Etappen-Fortschritt (Key Results) und Währung (🪙 verbindlich / 💎 Dehnungsziel); nur lesend, neu
+  erreichte Etappen werden einmal gefeiert (`GET api/v1/student/me/objectives`).
 - **Auszeichnungen-Galerie** (siehe 4.9).
 
 **Aktionen:**
@@ -345,8 +348,8 @@ Jeder Screen ist beschrieben durch: **Zweck**, **angezeigte Daten**, **Aktionen*
 **Angezeigte Daten:**
 
 - „Mein Konto" + 🪙- und 💎-Stand + Erklärtext (Münzen → Shop, Gems → Skins).
-- **Verlauf:** Punkt-Buchungen mit Art-Label (Basis, Test, Combo, Tempo, Mission, Auszeichnung,
-  Skin-Kauf, Shop-Kauf …), Grund und +/- Betrag.
+- **Verlauf:** Punkt-Buchungen mit Art-Label (Wiederholung, Ziel erreicht, Combo, Schnell-Bonus, Mission,
+  Auszeichnung, Ziel-Etappe, Belohnungsbox, Pflicht-Malus, Skin-Kauf, Shop-Kauf …), Grund und +/- Betrag.
 
 **Aktionen:** keine (reine Lese-Übersicht) — zum Ausgeben in den Shop bzw. zu den Skins wechseln.
 
@@ -517,10 +520,10 @@ durchgehen (Combos, kleine Feiern) → „Runde fertig!" → „Weiter zum Test"
 - [ ] Persistentes HUD: Avatar, Münzen, Gems, Streak, Ton-Schalter
 - [ ] Untere Navigation: Basis · Weg · Konto · Shop · Skins
 - [ ] Tagesmission: Ziel-Status, Positionskacheln, Plan-Umschalter, Missionen-Panel
-- [ ] **Scoping v1: Üben/Test nur für Vokabeln voll bauen**; andere Typen als „kommt bald"-Hinweis statt kaputter Spielansicht
+- [ ] Ein Kartenbildschirm für alle Typen (Felder der Karte rendern); Test-Knopf nur bei `testable`, sonst „Durchspielen"
 - [ ] Üben: Kartenanzeige aller Antwortmodi (umdrehen/tippen/Buchstaben/Auswahl/hören), Tipp, Tempo-Modus, Antwort-Feedback, Combos, Runden-Abschluss
 - [ ] Test: Einzelfragen ohne Zurück, Ergebnis-Ring, Item-Auswertung, Wiederholen bei Nichtbestehen
-- [ ] Weg/Trophäenweg: Gesamtpunkte, Tage-Fortschritt, Übungsstatus, 7-Tage-Heatmap, Badges
+- [ ] Weg/Trophäenweg: Gesamtpunkte, Tage-Fortschritt, Übungsstatus, 7-Tage-Heatmap, große Ziele, Badges
 - [ ] Konto: Münz-/Gem-Stand + Punkt-Verlauf (reine Übersicht, kein Kauf)
 - [ ] Familien-Shop: Katalog kaufen (Münz-/Gem-Preise, Bestand), Inventar, Einlösung beantragen, Anfrage-Status
 - [ ] Skins: Katalog, ausrüsten, kaufen (mit Bestätigung), Gem-Sperre

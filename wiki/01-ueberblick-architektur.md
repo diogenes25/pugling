@@ -50,7 +50,8 @@ Subject (Fach) ──┴─< ExerciseCategory (fachabhängige „Art": Grammatik
 - **Seit B-106 (2026-08-05) hängt jede Übung an einer `SeriesUnit`**, nicht mehr an einem `Chapter` – die
   Entität ist entfernt. Das Fach ergibt sich transitiv über die Reihe (`SeriesUnit.Series.SubjectId`).
 - **Global, kindneutral, Creator-gepflegt.** Wird **einmal** aufgebaut, nicht pro Kind. Lesen darf jeder
-  Creator, ändern nur ein Owner (RWX-Grants je Übung, `OwnerAdultId` an Reihe und Fach).
+  Creator, ändern ein Owner oder ein Creator mit Write-Grant (RWX-Grants je Übung; löschen und Rechte
+  vergeben nur der Owner; `OwnerAdultId` an Reihe und Fach).
 - Jede `Exercise` hat einen **Typ** (String-`Key`, aufgelöst über die `ExerciseTypeRegistry`) und eine **typisierte Config** (als JSON gespeichert,
   im API pro Typ ein eigenes Schema). Dazu **Metadaten**: `GradeMin/GradeMax` (Klassenstufe),
   `SchoolTypes` (Schulart, `[Flags]`), `Source` (Quelle), `CategoryId` (Art) — Basis für die spätere
@@ -169,7 +170,7 @@ gegen die hinterlegte Lösung und bucht die Punkte. Das verhindert Selbstbetrug.
 4. **Vater** kontrolliert über `progress`/`report`/`points`, dreht bei Bedarf an den Bonus-Knöpfen
    (z. B. Grammatik-Bonus für ein lustloses Kind).
 
-Konkrete Requests: [04 · Lernplan bauen](04-lernplan-bauen.md) (Vater) und [06 · Sohn-App](06-sohn-app.md) (Sohn).
+Konkrete Requests: [Supervisor-Tutorial](../docs/tutorial-supervisor.md) (Vater) und [Student-Tutorial](../docs/tutorial-student.md) (Sohn).
 Wie die Endpunkte dieses Loops **aufeinander aufbauen** (Übung → Lehrplan → Kind → Auswertung), mit
 Datenfluss-Diagramm: [docs/endpunkt-beziehungen.md](../docs/endpunkt-beziehungen.md).
 
@@ -183,8 +184,9 @@ Datenfluss-Diagramm: [docs/endpunkt-beziehungen.md](../docs/endpunkt-beziehungen
 - **Fehler** einheitlich als `ProblemDetails` mit maschinenlesbarem `code`
    (`return this.ProblemWithCode(ApiErrors.X, "…")`).
 - **Zeit/UTC:** Tageslogik nutzt `DateTime.UtcNow`/`DateOnly` — nahe Mitternacht lokal ggf. anderer Kalendertag.
-- **EF-Migrationen:** die Kette ist genau **eine** Migration und wird bei jeder Schemaänderung neu gefaltet
-   (kein `EnsureCreated`). `db.Database.Migrate()` läuft beim Start.
+- **EF-Migrationen:** die Kette wird nur **verlängert**, nie neu gefaltet – die echte `pugling.db` der Söhne
+   muss jede Schemaänderung überleben; erstes Glied ist `20261110142003_InitialCreate` (erzwingt
+   `SchemaGuardTests`), kein `EnsureCreated`. `db.Database.Migrate()` läuft beim Start.
 - **JSON-Spalten** tragen einen `ValueComparer` (Tor G7); eine neue JSON-Spalte braucht ihn ebenfalls.
 
 Voll ausformuliert in [CLAUDE.md](../CLAUDE.md).

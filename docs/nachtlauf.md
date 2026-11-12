@@ -217,7 +217,7 @@ Stand 2026-08-05, 63 offene Stories:
 | | Anzahl | Folge für den Lauf |
 | --- | --- | --- |
 | `Wunsch` + `Frage` | **33** | **gesperrt** — der Lauf hält an und notiert die Frage |
-| `Aufräumen`, `geschaetzt` | 15 | baubar (B-07 fällt aus: wartet auf Azure) |
+| `Aufräumen`, `geschaetzt` | 15 | baubar (B-07 fällt aus: wartet auf Azure – *seit 2026-10-23 verworfen*) |
 | `Defekt`, `in-arbeit` | 4 | fertig, warten auf Reviewer |
 | `Defekt`/`Aufräumen`, noch nicht geschätzt | 9 | erst grillen/schätzen, dann baubar |
 
@@ -304,6 +304,8 @@ Beides geht; die Wahl ist eine Abwägung, keine technische Frage.
 Nachträge, [Protokoll](pm-sitzung-2026-08-05.md)) war abends angestoßen, mit genau einem Sprint und ohne
 Browser. „Zeitgesteuert" und „mehrere Sprints pro Nacht" sind mit dieser Fassung beide neu und noch
 ungetestet — der erste Lauf mit ihnen gehört entsprechend beobachtet, nicht verschlafen.
+*Stand 2026-11-12:* „mehrere Sprints pro Lauf" ist inzwischen mehrfach gefahren, zuletzt Sprint 31–39 im
+[Backlog-Lauf vom 2026-11-12](pm-sitzung-2026-11-12-backlog-lauf.md); „zeitgesteuert" ist weiter unbelegt.
 
 ## Design-Skill im Rollengang
 

@@ -56,8 +56,9 @@ wartet_auf: frontend-reviewer      # kurz und konkret; leer, sobald der Schritt 
 
 Das Feld ist **stufenunabhängig** — es sammelt alles, was ohne Zutun von außen nicht weitergeht, und
 genau das macht es nützlich: der Index führt es als eigenen Abschnitt, und dort steht seit dem ersten
-Lauf, warum das einzige **P1** des Bereichs nie wandert (B-07 wartet auf einen Handgriff an der
-Azure-Instanz) und dass B-31 ohne ein echtes Handy nicht zu beantworten ist. Beides war vorher nur
+Lauf, warum das damals einzige **P1** des Bereichs nie wanderte (B-07 wartete auf einen Handgriff an der
+Azure-Instanz – inzwischen verworfen, es gibt keine Alt-DB mehr) und dass B-31 ohne ein echtes Handy nicht
+zu beantworten ist. Beides war vorher nur
 Prosa in den Stories.
 
 Es ist **keine** Eintrittsbedingung und ändert keine Stufe. Es beantwortet die eine Frage, die eine

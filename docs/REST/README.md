@@ -52,10 +52,11 @@ Die Dateien sind **self-verifying** über die Verkettung – kein separates Asse
 ## Reihenfolge über Rollen hinweg
 
 `Student.http` setzt einen **aktiven Plan mit mindestens einer Position** voraus. Entweder vorher
-`Supervisor.http` laufen lassen (erzeugt Plan + Position) oder den Seed-Plan verwenden; die Plan-ID
-setzt du oben in `Student.http` als `@planId` (die `positionId` wird aus der Overview-Antwort
-abgeleitet). Der Shop-Kauf am Ende von `Student.http` kann `409` liefern, wenn das erste Angebot
-zu teuer ist (`affordable:false`) – dann `@listingId` auf eine bezahlbare Angebots-ID setzen.
+`Supervisor.http` laufen lassen (erzeugt Plan + Position) oder den Seed-Plan verwenden. Die Plan-ID
+holt sich `Student.http` selbst über `GET student/study-plans` (der eine spielbare Plan), die
+`positionId` wird aus der Overview-Antwort abgeleitet. Der Shop-Kauf am Ende von `Student.http` kann
+`400 insufficient_coins` liefern, wenn das erste Angebot zu teuer ist (`affordable:false`), bzw.
+`409 shop_insufficient_stock` bei leerem Bestand – dann `@listingId` auf ein passendes Angebot setzen.
 
 ## Automatisierte API-Verifikation
 

@@ -32,7 +32,7 @@ Teil, **Schema-Versionierung** für den Evolutions-Teil.
   ([ExerciseControllers.cs](../backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs)).
 - Die typ-spezifische Config ist als JSON gespeichert, im API aber voll typisiert
   (`ExercisePayload<TConfig>` / `ExerciseResponse<TConfig>`); jeder Typ bekommt so ein eigenes
-  Swagger-Schema ([ExerciseConfigs.cs](../backend/Pugling.Api/Models/ExerciseConfigs.cs)).
+  Swagger-Schema ([ExerciseConfigs.cs](../backend/Pugling.Contracts/Exercise/ExerciseConfigs.cs)).
 - Auswertung ist **server-autoritativ** über `/check`-Endpunkte (`CheckResult`); nicht jeder Typ
   hat eine Prüfung (Birkenbihl bewusst ohne), und `ArithmeticDrill` erzeugt Aufgaben erst per
   `/generate` und prüft über denselben `Seed` beim `/check`.
@@ -142,10 +142,11 @@ Ein einziger, kleiner Schritt: Registry-Record + Endpunkt + Konsistenz-Test. Rü
 
 Stand 2026-07-04, rein additiv (kein bestehendes Verhalten geändert):
 
-- **Modell** ([Models/ExerciseTypeManifest.cs](../backend/Pugling.Api/Models/ExerciseTypeManifest.cs)):
+- **Modell** ([Pugling.Contracts/Common/ExerciseTypeManifest.cs](../backend/Pugling.Contracts/Common/ExerciseTypeManifest.cs)):
   `ExerciseCheckMode` (`None | StudyPlanTest | CatalogCheck | CatalogGenerateCheck`) und der Record
   `ExerciseTypeManifest`. Felder: `type`, `label`, `renderer`, `schemaVersion` (überall 1), `authoringRoute`,
-  `checkMode`, `playRoute`, `method`, `capabilities`. `schemaVersion` lebt **nur** hier.
+  `checkMode`, `playRoute`, `method`, `capabilities`, dazu (B-424) `itemNoun`/`itemNounOne` – das
+  Zählwort der Inhaltsatome („Karten"/„Karte"). `schemaVersion` lebt **nur** hier.
   > **Seit dem Registry-Umbau:** Das Manifest wird **nicht** mehr zentral hartkodiert (früher
   > `ExerciseManifests.All` je `ExerciseType`-Enum-Wert), sondern liegt an jeder Typklasse
   > (`IExerciseType.Manifest`); die `ExerciseTypeRegistry` aggregiert sie (`registry.Manifests`).

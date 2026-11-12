@@ -806,7 +806,7 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
           --child <id>          Kind, auf das zugeschnitten wird (individuelle Übung)
           --profile <id>        Creator-Profil („Fachlehrer"); ohne Angabe das Profil auf dem Buch
                                 des Kindes (hat es mehrere Bücher mit Profil: Pflicht), mit --series
-                                nur ein Profil auf dieser Reihe
+                                das Profil dieser Reihe, sonst eines ohne Reihe im Fach der Reihe
           --general             mit --child: Stoff des Kindes nutzen, aber NICHT individualisieren
           --unit <id>           Unit der Buchreihe, aus der der Stoff kommt; die Übung entsteht dort
                                 (Standard: aktuelle Unit des Kindes; ein anderes --series-unit: Fehler)

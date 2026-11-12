@@ -17,7 +17,7 @@ nur mehr Facetten. Ausführlich: [wiki/08-erweitern.md](wiki/08-erweitern.md).
 
 ## Prozess
 
-1. **Config-Record** in [Models/ExerciseConfigs.cs](backend/Pugling.Api/Models/ExerciseConfigs.cs) anlegen
+1. **Config-Record** in [Exercise/ExerciseConfigs.cs](backend/Pugling.Contracts/Exercise/ExerciseConfigs.cs) (Vertrags-Projekt) anlegen
    (`class`/`record` mit sinnvollen Defaults, englische `<summary>`). Wird als JSON in `Exercise.ConfigJson`
    gespeichert — kein DB-Schema, keine Migration.
 
@@ -54,7 +54,12 @@ nur mehr Facetten. Ausführlich: [wiki/08-erweitern.md](wiki/08-erweitern.md).
 6. **Zielregel prüfen** (nur `StudyPlanTest`-Typen): liest [PositionProgressService.cs](backend/Pugling.Api/Services/Shared/PositionProgressService.cs)
    den `CheckMode` aus dem Manifest — passt die „erledigt"-Regel für den neuen Modus?
 
-7. **Seed** (optional): ein Beispiel in [Data/Seed.cs](backend/Pugling.Api/Data/Seed.cs).
+7. **Frontend** (API-First, danach Pflicht): Formular je Typ in
+   [frontend/src/vater/exerciseConfig.tsx](frontend/src/vater/exerciseConfig.tsx) – Hinweg (`/vater/exercises/neu`)
+   **und** Rückweg im Bearbeiten-Dialog (read-back der geladenen Config). Name und Route kommen aus dem Manifest;
+   ohne Formular fällt `frontend/e2e/uebungstypen.spec.ts` (Details: [frontend/CLAUDE.md](frontend/CLAUDE.md)).
+
+8. **Seed** (optional): ein Beispiel in [Data/Seed.cs](backend/Pugling.Api/Data/Seed.cs).
 
 ## Qualitätsschritte (nicht überspringen)
 
@@ -76,5 +81,7 @@ nur mehr Facetten. Ausführlich: [wiki/08-erweitern.md](wiki/08-erweitern.md).
 - [ ] **Eine Zeile** in `AddExerciseTypes`.
 - [ ] Controller mit `Route`/`Tags`/`TypeKey` (erbt CRUD), bei Prüfbarkeit `/check` → `RunCheckAsync`.
 - [ ] Store-Auflösung ergänzt, falls `StoreResolution` gesetzt.
+- [ ] Formular in `frontend/src/vater/exerciseConfig.tsx` mit Hin- und Rückweg (Bearbeiten-Dialog);
+      `e2e/uebungstypen.spec.ts` grün.
 - [ ] Keine Migration nötig (JSON-Config), außer echte neue Spalten/Entities.
 - [ ] `dotnet build` grün, Integrationstest, smoke-getestet.

@@ -30,7 +30,7 @@ Der natürliche End-to-End-Loop läuft in dieser Reihenfolge: **Creator baut →
   brauchen den JWT im Header `Authorization: Bearer <token>`.
 - **Seed-Zugänge:** Vater `adultId=1` PIN `0000` (Creator+Supervisor) · Lehrer `adultId=2` PIN `9999`
   (reiner Creator) · Sohn `childId=1` PIN `1111` (Student). Login-Antwort trägt `role` = `Supervisor`
-  bzw. `Student`.
+  (Vater), `Creator` (reines Lehrer-Konto, z. B. `adultId=2`) bzw. `Student`.
 - Volle, verifizierte Response-Bodies liegen unter [api-examples/](api-examples/index.md) (aus echten
   Aufrufen erzeugt von `DocsCaptureTests`).
 

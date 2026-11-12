@@ -97,7 +97,7 @@ Markdown-Lint). Offen bleiben, unabhängig voneinander:
 - **Nacharbeit aus B**: CS1591 ist erledigt (2026-07-29, 123 statt der geschätzten 117 Lücken) und die
   **188 `CancellationToken`-Altlasten sind es seit 2026-07-30** – der Wächter ist damit hart, siehe
   „Nacharbeit aus B" unten. Offen bleibt nur, das Frontend gegen `unknown_field` durchzuspielen.
-- **Der Peer-Konflikt** `vite-plugin-pwa` ↔ `vite@8`, den D1 nur benannt, nicht behoben hat.
+- ~~**Der Peer-Konflikt** `vite-plugin-pwa` ↔ `vite@8`~~ – *gelöst mit [B-25](backlog/B-25-vite-pwa-peer-konflikt.md)* (`vite-plugin-pwa@^1.3.0`); alle Workflows laufen mit schlichtem `npm ci`.
 - **E2E hat immer noch keinen echten CI-Lauf** (Stand 2026-07-29) – der erste kommt über einen PR oder die
   nächste Nightly (03:00 UTC); erst dann ist D2 nicht nur lokal, sondern auch in CI belegt.
 - **Azure-Secret** (`AZURE_WEBAPP_PUBLISH_PROFILE`) fehlt weiterhin – laut Rückmeldung bewusst, noch nicht
@@ -114,6 +114,30 @@ Markdown-Lint). Offen bleiben, unabhängig voneinander:
   `workflow_run.head_sha`-Checkout) – eine Neufassung soll dort anfangen, nicht bei null. Sie stehen samt
   Zielbild und Reaktivierungs-Checkliste in **[deployment-azure.md](deployment-azure.md)**; wieder scharf =
   Secret setzen + einen Block einkommentieren.
+
+### Wächter-Inventar (Stand 2026-11-12)
+
+Seit Etappe B sind zu den vier B4-Wächtern weitere reflexive Tore hinzugekommen. Je eine Zeile, was es hält:
+
+- **[ConventionGuardTests](../backend/Pugling.Api.Tests/ConventionGuardTests.cs)** – 18 Testmethoden: die vier
+  aus B4 (`Actions_Melden_Fehler_Nur_Ueber_ProblemWithCode`, `Actions_Geben_Nur_Vertragstypen_Zurueck`,
+  `Vertragstypen_Sind_Global_Namens_Eindeutig`, `Async_Actions_Nehmen_Einen_CancellationToken`), dazu:
+  - `Controller_Nennt_Keinen_Generischen_Conflict_Code` – kein Controller greift zu `ApiErrors.Conflict`; jede 409 hat einen fachlichen Code (B-101).
+  - `Sammlungs_Segment_Traegt_Hoechstens_Einen_Platzhalternamen` – ein Routen-Segment trägt nur einen Platzhalternamen; Altlasten stehen gepinnt mit Grund (B-101/B-121).
+  - `Unpaginierte_Array_GETs_Sind_Gepinnt` – exakter Pin der Array-`GET`s ohne `take` (B-121); Zu- wie Abgang verlangt eine bewusste Änderung.
+  - `Actions_Unter_ChildId_Oder_PlanId_Tragen_Den_Ownership_Filter` – Routen unter `{childId}`/`{planId}` tragen den geteilten Ownership-Filter (IDOR-Schutz).
+  - `Anonyme_Actions_Tragen_EnableRateLimiting` – jede `[AllowAnonymous]`-Action ist ratenbegrenzt (B-120).
+  - `Actions_Mit_Loesungsfeld_Sind_Vor_Dem_Studenten_Gegated` – `Answer`/`Solution`/`CorrectAnswer`/`Translation` nie an `Student` (Lösungsfeld-Regel, Root-`CLAUDE.md`).
+  - `Freitextsuchen_Falten_Die_Schreibweise` – Freitextsuche nur über `SearchPattern` + `EF.Functions.Like`, nie `string.Contains` (B-128/B-135).
+  - `Vertrags_Dokumentation_Erreicht_Das_Dokument` – jedes `<para>` in `Pugling.Contracts` sitzt in einem Element, das das OpenAPI-Dokument erreicht; keine doppelten `<summary>` (B-142).
+  - `Doku_Stellt_Zwei_Elemente_Nie_Nur_Durch_Leerraum_Getrennt` – keine Inline-Elemente nur durch Leerraum getrennt, der Source-Generator klebt sie zusammen (B-259).
+  - `Listenpunkte_Tragen_Keine_Inline_Elemente` – keine Inline-Elemente in `<item>`, der Generator wirft das Markup weg (B-361).
+  - Vier Selbsttests der beiden Doku-Scanner (`Leerraum_Zwischen_Elementen_…`, `Inline_Element_Im_Listenpunkt_…`) – sie belegen, dass die Scanner beißen.
+- **[ClientRouteGuardTests](../backend/Pugling.Api.Tests/ClientRouteGuardTests.cs)** – jede Route in `Pugling.Client` steht im OpenAPI-Dokument, jedes Typ-Segment des Manifests ergibt einen gültigen Pfad (B-40).
+- **[ProblemTextGuardTests](../backend/Pugling.Api.Tests/ProblemTextGuardTests.cs)** – jeder 409-Code in `ApiErrors` hat einen deutschen Text in `GERMAN_PROBLEM_TEXT` (`frontend/src/lib/api.ts`) oder eine begründete Ausnahme; jede Ausnahme wird noch gebraucht (B-411).
+- **[SlugRenameGuardTests](../backend/Pugling.Api.Tests/SlugRenameGuardTests.cs)** – Umbenennen von Verlag, Lehrwerksreihe und Interessen-Tag auf einen belegten Namen wird abgewiesen (B-124).
+- **[TagConventionTests](../backend/Pugling.Api.Tests/TagConventionTests.cs)** – `[Tags]` in den Ebenen-Ordnern tragen das passende Ebenen-Präfix.
+- **[ContractDocumentTests](../backend/Pugling.Api.Tests/ContractDocumentTests.cs)** + CI-Schritt „Vertragsdokument prüfen (OpenAPI)" in [ci.yml](../.github/workflows/ci.yml) – schreibt `docs/openapi/v1.json` byte-stabil; ein uncommitteter Unterschied macht CI rot (B-42).
 
 **Wo die Wächter ihre Befunde ablegen** – das muss man wissen, bevor man ein rotes Tor deutet:
 `ConventionGuardTests` und `PatchSemanticsTests` melden wie gewohnt als Test. Der Endpunkt-Abdeckungs-Wächter
@@ -419,7 +443,7 @@ steht im Code neben der Einstellung:
 - **CS1591 in `Pugling.Api` scharf gestellt (2026-07-29).** Neu gemessen statt der alten ~117-Schätzung
   zu vertrauen: **123** echte Lücken (nicht 117) in `Controllers/`, `Auth/`, `Errors/`, `Services/`,
   `Exercises/` und den Nicht-EF-Helfern unter `Data/` (`Seed.cs`, die drei `*Backfill.cs`,
-  `PuglingDbContextFactory.cs`). Die Doku-Arbeit lief parallel über drei Subagenten in Worktree-Isolation
+  `PuglingDbContextFactory.cs`; *Stand 2026-11-12: die `*Backfill.cs` gibt es nicht mehr*). Die Doku-Arbeit lief parallel über drei Subagenten in Worktree-Isolation
   (Exercises-Modul 67 Member, Services/Controllers 33, Auth/Errors/Data-Helfer 23); die Ergebnisse wurden
   anschließend in einem Build/Test-Durchlauf zusammengeführt und verifiziert. Ausgenommen bleiben `Models/`
   (718 Stellen) und `PuglingDbContext.cs` (128 `DbSet<T>`-Properties) – beide sind nur wegen EF `public`,
@@ -566,7 +590,8 @@ Vier echte Defekte, alle in Code, den **kein Test je aufgerufen hatte** – gena
   Fläche sehen.
 
 Dazu ein Fund am Wächter selbst: **C2 hätte einen blinden Fleck gehabt.** Der Vertrag nennt die Ziel-Ebene
-`UpdateObjectiveRequest`/`UpdateKeyResultRequest`/`UpdateLearnGoalRequest`, alles andere `Update…Dto`. Eine
+`UpdateObjectiveRequest`/`UpdateKeyResultRequest`/`UpdateLearnGoalRequest` (*Stand 2026-11-12: `LearnGoal` ist
+entfallen*), alles andere `Update…Dto`. Eine
 Prüfung nur auf `…Dto` hätte diese drei stillschweigend ausgelassen und dabei Deckung behauptet – schlimmer
 als kein Wächter. Er prüft jetzt beide Namensformen.
 
@@ -617,8 +642,8 @@ Gegenprobe: einen Test auf `[Fact(Skip = …)]` gesetzt → Exit 1, und der Beri
 
 | # | Aufgabe | Worauf zu achten ist |
 |---|---|---|
-| D1 | **umgesetzt** – Job `frontend` in `ci.yml`: `npm ci --legacy-peer-deps` → `npm run build` (`tsc -b && vite build`) → `npm test` (Vitest) | Eigener Job mit `actions/setup-node` + `cache: npm` (`cache-dependency-path: frontend/package-lock.json`, das Lockfile liegt nicht im Root), **parallel** zum .NET-Job, kein `needs:`. `NODE_VERSION` deckt sich mit `deploy-azure.yml` – ein Tor, das eine andere Umgebung prüft als die, in der deployt wird, bewacht nichts. Gemessen aus frischem Checkout: Install, Build und 21 Vitest-Tests grün. |
-| D2 | **umgesetzt** – [.github/workflows/e2e.yml](../.github/workflows/e2e.yml) auf `pull_request` + nightly (03:00 UTC) + Handbetrieb: nur Chromium (`install --with-deps chromium`), Backend **vorgebaut**, die 25 Tests in 10 Specs, Trace/Screenshot als Artefakt bei Rot | Lokal belegt mit `CI=1 npx playwright test`: **25/25 grün in 1,5 min**. **In echtem CI bisher null Läufe** (gemessen 2026-07-29 über `gh api .../workflows/e2e.yml/runs`) – der Workflow triggert nur auf `pull_request`/nightly/Handbetrieb, bisher ging alles per direktem Push auf `main`. Zwei Dinge sind Entscheidung, nicht Zufall: **kein `push: main`** (das Deploy hängt an `CI`, nicht hier – rote E2E sind Diagnose, kein Freigabe-Tor) und **kein Retry** (die Specs teilen eine DB je Lauf; ein Retry liefe auf der beschriebenen DB und könnte grün werden, ohne dass der Fehler weg ist). |
+| D1 | **umgesetzt** – Job `frontend` in `ci.yml`: `npm ci --legacy-peer-deps` → `npm run build` (`tsc -b && vite build`) → `npm test` (Vitest) | Eigener Job mit `actions/setup-node` + `cache: npm` (`cache-dependency-path: frontend/package-lock.json`, das Lockfile liegt nicht im Root), **parallel** zum .NET-Job, kein `needs:`. `NODE_VERSION` deckt sich mit `deploy-azure.yml` – ein Tor, das eine andere Umgebung prüft als die, in der deployt wird, bewacht nichts. Gemessen aus frischem Checkout: Install, Build und 21 Vitest-Tests grün. *Stand 2026-11-12: seit B-25 ohne `--legacy-peer-deps`.* |
+| D2 | **umgesetzt** – [.github/workflows/e2e.yml](../.github/workflows/e2e.yml) auf `pull_request` + nightly (03:00 UTC) + Handbetrieb: nur Chromium (`install --with-deps chromium`), Backend **vorgebaut**, die 25 Tests in 10 Specs, Trace/Screenshot als Artefakt bei Rot (*Stand 2026-11-12: 78 Specs, rund 140 Tests*) | Lokal belegt mit `CI=1 npx playwright test`: **25/25 grün in 1,5 min**. **In echtem CI bisher null Läufe** (gemessen 2026-07-29 über `gh api .../workflows/e2e.yml/runs`) – der Workflow triggert nur auf `pull_request`/nightly/Handbetrieb, bisher ging alles per direktem Push auf `main`. Zwei Dinge sind Entscheidung, nicht Zufall: **kein `push: main`** (das Deploy hängt an `CI`, nicht hier – rote E2E sind Diagnose, kein Freigabe-Tor) und **kein Retry** (die Specs teilen eine DB je Lauf; ein Retry liefe auf der beschriebenen DB und könnte grün werden, ohne dass der Fehler weg ist). |
 | D3 | **umgesetzt** – `markdownlint-cli2` als eigener Job `markdownlint` in `ci.yml` | Ausgangsbefund 2026-07-29: 536 Treffer in 27 Dateien (Details unten unter „Was D3 vorfindet"). Alle drei Entscheidungen mit Empfehlung vorgelegt und vom Nutzer bestätigt: Glob fest in `.markdownlint-cli2.jsonc` (`globs: ["**/*.md"]`), Generator (`DocsCaptureTests.WriteMarkdown`/`RenderGroup`) lint-konform gemacht statt Ausnahme, MD033+MD004 projektweit abgeschaltet. Endstand: **0 Treffer**, `dotnet test Pugling.sln` weiterhin 587/587, `dotnet format --verify-no-changes` sauber. |
 | D4 | **umgesetzt** – `git diff --exit-code -- docs/api-examples` direkt nach `Test` in `ci.yml` | War zuerst nur eine Annahme ohne CI-Beleg (`ci.yml` diffte nie tatsächlich). Als echtes Tor eingezogen, **erster Lauf sofort rot** – kein Umgebungsunterschied, sondern ein echter Bug: `Truncate()` (1500-Zeichen-Grenze) schneidet am rohen `JsonSerializer(WriteIndented: true)`-String, dessen Zeilenumbruch ohne explizite Angabe an `Environment.NewLine` hing (`\r\n` Windows, `\n` Linux) – der Schnitt landete je Plattform an unterschiedlicher Stelle mitten im JSON (nur `shop.md`/`remarks.md` betroffen, die einzigen Antworten über der Grenze). Gefixt: `NewLine = "\n"` explizit in den `Indented`-Optionen (`DocsCaptureTests.cs`). Zweiter Lauf **komplett grün**, alle drei Jobs. |
 
@@ -705,11 +730,13 @@ Damit war nicht nur der neue Job rot, sondern **`deploy-azure.yml` an derselben 
 seit dem Vite-8-Sprung (`2c4eb69`, 2026-07-05) konnte kein Deploy mehr den Frontend-Build erreichen. Nichts
 hat es gemeldet, weil niemand das Ergebnis gelesen hat – genau die Lücke, die dieser Plan schließt, hier
 einmal in Reinform: **ein Schritt, den kein Tor prüft, ist ein Schritt, dessen Zustand niemand kennt.**
-Beide Workflows installieren jetzt mit `--legacy-peer-deps`.
+Beide Workflows installierten damals mit `--legacy-peer-deps`.
 
 Der Peer-Konflikt selbst bleibt bestehen und ist damit **nicht** behoben, nur benannt: `vite-plugin-pwa` auf
 eine Vite-8-fähige Fassung zu heben (oder Vite zu pinnen) ist eine Dependency-Entscheidung mit Wirkung auf
 das PWA-Artefakt und gehört nicht in ein CI-Tor. Offener Punkt, kein Nebenbei-Fix.
+*Stand 2026-11-12: behoben mit [B-25](backlog/B-25-vite-pwa-peer-konflikt.md) (`vite-plugin-pwa@^1.3.0`); das
+Flag ist aus `ci.yml`, `e2e.yml` und `deploy-azure.yml` entfernt.*
 
 ### Etappe E · Schema-Tore (G1–G9) – **umgesetzt 2026-07-31**
 

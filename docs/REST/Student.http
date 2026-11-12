@@ -68,6 +68,8 @@ Content-Type: application/json
 GET {{baseUrl}}/student/study-plans/{{planId}}/positions/{{positionId}}/practice-sessions/{{sessionId}}/cards
 Authorization: Bearer {{authToken}}
 ### Erste Karte beantworten
+# Auf einem frischen Plan sind die ersten Karten Kennenlern-Karten (B-419): Stufe 1,
+# "introduction": true, nur Anzeige — "wasKnown" quittiert sie, Punkte gibt es dafür keine.
 # Selbsteinschätzungs-Stufe (2) → "wasKnown"; getippte Stufe (z.B. 4) → stattdessen
 # "givenAnswer": "<Lösung>". Die Antwort liefert wasCorrect/expected/awarded/next.
 # @name review
@@ -146,7 +148,8 @@ Authorization: Bearer {{authToken}}
 @listingId = {{shop.response.body.$.available[0].id}}
 
 ### Angebot kaufen (bucht Münzen ab, erhöht das Inventar)
-# Hinweis: 409, falls das erste Angebot zu teuer ist (affordable:false) — dann oben
+# Hinweis: 400 insufficient_coins, falls das erste Angebot zu teuer ist (affordable:false),
+# 409 shop_insufficient_stock bei leerem Bestand — dann oben
 # @listingId auf eine bezahlbare Angebots-ID setzen. Kein Assert, da datenabhängig.
 # @name purchase
 POST {{baseUrl}}/student/me/shop/listings/{{listingId}}/purchase

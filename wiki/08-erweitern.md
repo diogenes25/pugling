@@ -37,7 +37,7 @@ spielen den neuen Typ automatisch — sie fragen nur die Facetten der Typklasse 
 
 ### Schritt 1 — Config-Schema
 
-In [Models/ExerciseConfigs.cs](../backend/Pugling.Api/Models/ExerciseConfigs.cs) eine Config +
+In [Pugling.Contracts/Exercise/ExerciseConfigs.cs](../backend/Pugling.Contracts/Exercise/ExerciseConfigs.cs) eine Config +
 Items ergänzen (mit englischen `/// <summary>` – die Code-Doku ist ausnahmslos Englisch, siehe CLAUDE.md). Wird als JSON in `Exercise.ConfigJson` gespeichert:
 
 ```csharp
@@ -173,9 +173,9 @@ Nach `.cs`-Edits laufen `dotnet format` + `dotnet build` automatisch (Hook). Dan
       Typ-Pulldown gegen das Manifest und schlägt sonst fehl (genau dafür ist sie da).
 
 > **DB-Bestand:** `Exercise.Type` ist ein String-Schlüssel. Neue Typen brauchen **keine** Migration.
-> Ein *umbenannter* Schlüssel bräuchte eine (String-Remap wie
-> [`ExerciseTypeToStringKey`](../backend/Pugling.Api/Data/Migrations)) — Schlüssel gelten aber als
-> stabiler Vertrag, also nicht umbenennen.
+> Ein *umbenannter* Schlüssel bräuchte eine eigene, angehängte Migration mit String-Remap der
+> vorhandenen Zeilen (die Kette in [Data/Migrations](../backend/Pugling.Api/Data/Migrations) wird nur
+> verlängert) — Schlüssel gelten aber als stabiler Vertrag, also nicht umbenennen.
 
 ---
 
@@ -188,7 +188,7 @@ es ist dieselbe Typklasse, nur mit mehr überschriebenen Facetten. Der verfahren
 Am Muster von `VocabularyExerciseType`/`ClozeExerciseType`:
 
 1. **Manifest:** `CheckMode = StudyPlanTest`, dazu `PlayRoute` (z. B. `"tests"`) und `Method`
-   (Lernfamilie aus `LearningMethod`, [Models/StudyPlanEntities.cs](../backend/Pugling.Api/Models/StudyPlanEntities.cs)).
+   (Lernfamilie aus `LearningMethod`, [Pugling.Contracts/Common/StudyPlanBaseTypes.cs](../backend/Pugling.Contracts/Common/StudyPlanBaseTypes.cs)).
 2. **Stufen:** eine Stufen-Enum (analog `TestStage`/`ClozeStage`/`MatchStage`), dann `DefaultStage`,
    `PreviewStage`, `IsTypedStage` (welche Stufen sind objektiv/getippt — via `StageMechanics.IsTyped`)
    und `StageOptions` (die im Testmodus umschaltbaren Abfrageformen) überschreiben.
@@ -229,16 +229,16 @@ Vieles ist reine **Datenpflege über die API** — kein Code nötig. Ideal für 
 | Übungstyp-Contract & Registry | `Exercises/IExerciseType.cs`, `Exercises/ExerciseTypeBase.cs`, `Exercises/ExerciseTypeRegistry.cs` |
 | Eingebaute Typklassen | `Exercises/BuiltInExerciseTypes.cs`, `Exercises/VocabularyExerciseType.cs` |
 | Prüf-Primitive + Ergebnis-DTOs | `AnswerChecking` (in `BuiltInExerciseTypes.cs`), `Services/Shared/CheckResult.cs` |
-| Übungs-Configs | `Models/ExerciseConfigs.cs` |
-| Manifest-Record | `Models/ExerciseTypeManifest.cs` |
+| Übungs-Configs | `Pugling.Contracts/Exercise/ExerciseConfigs.cs` |
+| Manifest-Record | `Pugling.Contracts/Common/ExerciseTypeManifest.cs` |
 | Übungs-Controller (alle Typen) | `Controllers/Creator/ExerciseControllers.cs` + `ExerciseControllerBase.cs` |
 | Content-Projektion / Store-Auflösung | `Services/Shared/ExerciseContentProvider.cs`, `ExerciseContentResolver.cs` |
 | Study-Plan-Container & Stufen | `Models/StudyPlanEntities.cs` |
 | Positionsmodell | `Models/PlanPositionEntities.cs` |
-| Punkte/Bonus | `Services/ScoringService.cs`, `Models/AdminEntities.cs` (`PointKind`) |
-| Tages-/Ziel-Auswertung | `Services/PositionProgressService.cs` |
-| Auswahl/Leitner/Stufe | `Services/PositionPlayService.cs`, `Services/Shared/StageMechanics.cs` |
-| Gamification | `Services/GamificationService.cs`, `Models/GamificationEntities.cs` |
+| Punkte/Bonus | `Services/Shared/ScoringService.cs`, `Pugling.Contracts/Common/AdminBaseTypes.cs` (`PointKind`) |
+| Tages-/Ziel-Auswertung | `Services/Shared/PositionProgressService.cs` |
+| Auswahl/Leitner/Stufe | `Services/Shared/PositionPlayService.cs`, `Services/Shared/StageMechanics.cs` |
+| Gamification | `Services/Shared/GamificationService.cs`, `Models/GamificationEntities.cs` |
 | Auth/Ownership | `Auth/` (`TokenService`, `AuthAccess`, `*OwnershipFilter`) |
 | Seed-Beispiele | `Data/Seed.cs` |
-| Migrationen | `Data/Migrations/` (`dotnet ef migrations add <Name> --project backend/Pugling.Api --output-dir Data/Migrations`) |
+| Migrationen | `Data/Migrations/` (`dotnet dotnet-ef migrations add <Name> --project backend/Pugling.Api --output-dir Data/Migrations`; nur anhängen) |

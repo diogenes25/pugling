@@ -4,8 +4,9 @@ tags: [typ/konzept, bereich/training, rolle/supervisor]
 
 # Tagging & Klassenarbeiten
 
-Zwei zusammenhängende Backend-Features (reine API-Phase, noch kein Frontend – wie beim übrigen
-Lern-Katalog):
+Zwei zusammenhängende Backend-Features; im Vater-Web bedient über die Klassenarbeiten-Seite
+(`VaterClassTests.tsx`, erreichbar aus `VaterApp`/`VaterKind`) und die Schlagwort-Pflege an Übungen und
+Vokabeln:
 
 1. **Tagging** – Vater *und* Sohn markieren Katalog-Übungen mit frei benannten Schlagwörtern
    (z. B. „Unit 5", „unregelmäßige Verben"), etwa um sie als relevant für eine bestimmte
@@ -27,7 +28,8 @@ Child ─┬─< Tag ─────< ExerciseTag >───── Exercise (Kat
 ```
 
 - **`Tag`** – pro Kind, Name je Kind eindeutig; `CreatedBy` (Vater/Sohn), optionale `Color`.
-- **`ExerciseTag`** – markiert eine Übung mit einem Tag; `TaggedByRole` hält fest, wer markiert hat.
+- **`ExerciseTag`** – markiert eine Übung mit einem Tag (ohne eigene Rollenangabe; wer den Tag angelegt hat, steht in `Tag.CreatedBy`).
+- **`VocabularyTag`** – markiert analog einen Vokabelspeicher-Eintrag.
 - **`Klassenarbeit`** – `ChildId`, optional `SubjectId`, `Title`, `Topic`, `ScheduledDate`,
   `Status` (`Planned`/`Written`/`Cancelled`), `Grade` (1,0–6,0) + `GradeComment`.
 - **`KlassenarbeitExercise`** – direkte Zuordnung einer Übung.
@@ -62,6 +64,10 @@ Alle Endpunkte unter `[Authorize]`; JWT wie üblich per PIN-Login (`POST /api/v1
 | `DELETE /api/v1/creator/tags/{id}/exercises/{exerciseId}` | beide | Markierung entfernen |
 | `GET /api/v1/creator/tags/{id}/exercises` | beide | Übungen dieses Tags |
 | `GET /api/v1/creator/tags/for-exercise/{exerciseId}?childId=` | beide | Tags einer Übung im Kontext des Kindes |
+| `POST /api/v1/creator/tags/{id}/vocabulary` | beide | Vokabeln markieren `{ vocabularyIds: [] }` |
+| `DELETE /api/v1/creator/tags/{id}/vocabulary/{vocabularyId}` | beide | Vokabel-Markierung entfernen |
+| `GET /api/v1/creator/tags/{id}/vocabulary` | beide | Vokabeln dieses Tags |
+| `GET /api/v1/creator/tags/for-vocabulary/{vocabularyId}?childId=` | beide | Tags einer Vokabel im Kontext des Kindes |
 
 ### Klassenarbeiten – `api/v1/supervisor/class-tests`
 
@@ -89,5 +95,6 @@ automatisch auf `Written`.
 ## Hinweis zur Datenbank
 
 Das Schema wird über EF-Migrationen verwaltet; beim Start ruft die API `db.Database.Migrate()` auf.
-Nach Schemaänderungen muss eine neue Migration erzeugt werden. Der Seed legt Beispiel-Tags und zwei
-Beispiel-Klassenarbeiten (eine geplant, eine mit schlechter Note) an.
+Nach Schemaänderungen wird die Kette um eine neue Migration verlängert. Der Seed legt – nur mit
+`Seed:Enabled` (Standard nur in Development) – Beispiel-Tags und zwei Beispiel-Klassenarbeiten (eine
+geplant, eine mit schlechter Note) an.

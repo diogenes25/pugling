@@ -49,9 +49,9 @@ Gegen die **Wegwerf-Instanz** (Port 5280, Temp-DB) über `.claude/scripts/tutori
    - `POST …/children/{childId}/objectives` — **plan-übergreifendes** großes Ziel; die Etappen (`keyResults`)
      gehen im selben Aufruf mit, ein Ein-Satz-Ziel bleibt also **ein** Request:
      `{"title":"Unit 3 sicher","kind":"Committed","rewardOnComplete":50,"rewardPerKeyResult":10,`
-     `"keyResults":[{"subjectId":1,"chapterId":null,"exerciseId":null,"metric":"MasteredPercent","targetValue":80}]}`.
+     `"keyResults":[{"subjectId":1,"seriesUnitId":null,"exerciseId":null,"metric":"MasteredPercent","targetValue":80}]}`.
      Metrik-Enum: `AvgMastery | MasteredPercent | MaxWeakItems | ClassTestGrade` (Feld heißt `targetValue`,
-     **nicht** `target`; Scope ist `subjectId`/`chapterId`/`exerciseId`, **nicht** scopeType/scopeId).
+     **nicht** `target`; Scope ist `subjectId`/`seriesUnitId`/`exerciseId`, **nicht** scopeType/scopeId).
      Die frühere zweite Ebene `learn-goals` gibt es nicht mehr – sie war ein KeyResult ohne Klammer.
    - Familien-Shop: `POST /api/v1/supervisor/shop/articles` `{articleNumber,title,unitType,actionType}` →
      dann `POST …/shop/articles/{id}/listings` `{title,coinPrice,gemPrice,unitsPerPurchase,currentStock,maxStock}`.
