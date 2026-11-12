@@ -30,7 +30,8 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
     /// </summary>
     private static IQueryable<InterestTagResponse> Project(IQueryable<InterestTag> q) =>
         q.Select(t => new InterestTagResponse(t.Id, t.Slug, t.Label, t.Facet, t.Synonyms, t.Color,
-            t.MediaLinks.Count, t.ChildInterests.Count, t.CreatedAt, t.ExerciseLinks.Count, t.ImagePrompt));
+            t.MediaLinks.Count, t.ChildInterests.Count, t.CreatedAt, t.ExerciseLinks.Count, t.ImagePrompt,
+            t.VisibleToChildren));
 
     /// <summary>Upper bound of <see cref="InterestTag.ImagePrompt"/> – the column length from the schema convention.</summary>
     private const int ImagePromptMaxLength = 200;
@@ -97,8 +98,9 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
 
     /// <summary>
     /// Creates a tag. If the slug is missing, it is derived from the label. If the slug already
-    /// exists, the existing entry comes back (idempotent) – so an agent can safely repeat the same
-    /// catalog build, as long as it sends the slug (or the label it was created with). A label that another
+    /// exists, the existing entry comes back unchanged (idempotent) – so an agent can safely repeat the same
+    /// catalog build, as long as it sends the slug (or the label it was created with). On that path the body is
+    /// ignored, <c>VisibleToChildren</c> included; an existing tag is released through PATCH. A label that another
     /// tag already carries (exact comparison) or lists as a synonym is rejected with 409 - deliberately unlike
     /// <c>InterestTagService.EnsureAsync</c>, which resolves the same text to that tag: here the caller names a
     /// new tag, and quietly handing back a differently named one would hide that it already exists (B-141). The same
@@ -142,6 +144,7 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
             Synonyms = synonyms,
             Color = dto.Color?.Trim() is { Length: > 0 } c ? c : null,
             ImagePrompt = imagePrompt,
+            VisibleToChildren = dto.VisibleToChildren,
         };
         db.InterestTags.Add(tag);
         await db.SaveChangesAsync(ct);
@@ -151,11 +154,12 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
         // we just wrote.
         return CreatedAtAction(nameof(Get), new { id = tag.Id },
             new InterestTagResponse(tag.Id, tag.Slug, tag.Label, tag.Facet, tag.Synonyms, tag.Color, 0, 0,
-                tag.CreatedAt, 0, tag.ImagePrompt));
+                tag.CreatedAt, 0, tag.ImagePrompt, tag.VisibleToChildren));
     }
 
     /// <summary>
-    /// Changes label, facet, synonyms, or color. The <c>Slug</c> is deliberately <b>immutable</b> –
+    /// Changes label, facet, synonyms, color, image prompt, or the release for children (<c>VisibleToChildren</c>,
+    /// B-207; <c>null</c> leaves it unchanged). The <c>Slug</c> is deliberately <b>immutable</b> –
     /// it is the stable reference that images and child profiles hang off. A new label is rejected when another
     /// tag already carries it (exact comparison, B-141), the slug it derives to (B-124) or lists it as a synonym -
     /// otherwise two tags share a label in every picker. An unchanged label is not checked again (B-341). Likewise a
@@ -202,6 +206,7 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
             tag.ImagePrompt = imagePrompt;
         }
         if (dto.ClearImagePrompt) tag.ImagePrompt = null;
+        if (dto.VisibleToChildren is { } visible) tag.VisibleToChildren = visible;
 
         await db.SaveChangesAsync(ct);
         return await Project(db.InterestTags.AsNoTracking().Where(t => t.Id == id)).FirstAsync(ct);

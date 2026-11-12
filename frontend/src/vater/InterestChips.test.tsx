@@ -15,9 +15,9 @@ import type { InterestTagResponse } from "../lib/types";
 
 const KNOWN: InterestTagResponse[] = [
   { id: 3, slug: "einhorn", label: "Einhorn", facet: "Animal", synonyms: [], color: null,
-    mediaCount: 0, childCount: 0, exerciseCount: 1, createdAt: "2026-01-01T00:00:00Z" },
+    mediaCount: 0, childCount: 0, exerciseCount: 1, createdAt: "2026-01-01T00:00:00Z", visibleToChildren: true },
   { id: 7, slug: "comic", label: "Comic", facet: "Style", synonyms: [], color: null,
-    mediaCount: 0, childCount: 0, exerciseCount: 0, createdAt: "2026-01-01T00:00:00Z" },
+    mediaCount: 0, childCount: 0, exerciseCount: 0, createdAt: "2026-01-01T00:00:00Z", visibleToChildren: true },
 ];
 
 describe("Einkleidung im Bearbeiten-Dialog", () => {

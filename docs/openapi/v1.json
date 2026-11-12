@@ -8388,7 +8388,7 @@
         "tags": [
           "Student \u2013 Interests"
         ],
-        "summary": "The selectable keywords, alphabetically by slug. Total count (before paging) in the\n\u0060X-Total-Count\u0060 header.",
+        "summary": "The selectable keywords, alphabetically by slug: only those a creator released for children (B-207). The\ntaxonomy also grows from any supervisor\u0027s free text and from image tagging; without the release another\nfamily\u0027s typed text would become a tile here, and so would keywords that never change anything. Total count\n(before paging) in the \u0060X-Total-Count\u0060 header.",
         "parameters": [
           {
             "name": "facet",
@@ -22495,7 +22495,7 @@
         "tags": [
           "Creator \u2013 Interest Tags"
         ],
-        "summary": "Creates a tag. If the slug is missing, it is derived from the label. If the slug already\nexists, the existing entry comes back (idempotent) \u2013 so an agent can safely repeat the same\ncatalog build, as long as it sends the slug (or the label it was created with). A label that another\ntag already carries (exact comparison) or lists as a synonym is rejected with 409 - deliberately unlike\n\u0060InterestTagService.EnsureAsync\u0060, which resolves the same text to that tag: here the caller names a\nnew tag, and quietly handing back a differently named one would hide that it already exists (B-141). The same\n409 meets a synonym whose slug is another tag\u0027s slug, folded label or synonym, and an explicit slug that another\ntag lists as a synonym (B-351).",
+        "summary": "Creates a tag. If the slug is missing, it is derived from the label. If the slug already\nexists, the existing entry comes back unchanged (idempotent) \u2013 so an agent can safely repeat the same\ncatalog build, as long as it sends the slug (or the label it was created with). On that path the body is\nignored, \u0060VisibleToChildren\u0060 included; an existing tag is released through PATCH. A label that another\ntag already carries (exact comparison) or lists as a synonym is rejected with 409 - deliberately unlike\n\u0060InterestTagService.EnsureAsync\u0060, which resolves the same text to that tag: here the caller names a\nnew tag, and quietly handing back a differently named one would hide that it already exists (B-141). The same\n409 meets a synonym whose slug is another tag\u0027s slug, folded label or synonym, and an explicit slug that another\ntag lists as a synonym (B-351).",
         "requestBody": {
           "content": {
             "application/json": {
@@ -22645,7 +22645,7 @@
         "tags": [
           "Creator \u2013 Interest Tags"
         ],
-        "summary": "Changes label, facet, synonyms, or color. The \u0060Slug\u0060 is deliberately immutable \u2013\nit is the stable reference that images and child profiles hang off. A new label is rejected when another\ntag already carries it (exact comparison, B-141), the slug it derives to (B-124) or lists it as a synonym -\notherwise two tags share a label in every picker. An unchanged label is not checked again (B-341). Likewise a\nsynonym the tag does not carry yet (compared by slug) is rejected when its slug is another tag\u0027s slug, folded label\nor synonym (B-351).",
+        "summary": "Changes label, facet, synonyms, color, image prompt, or the release for children (\u0060VisibleToChildren\u0060,\nB-207; \u0060null\u0060 leaves it unchanged). The \u0060Slug\u0060 is deliberately immutable \u2013\nit is the stable reference that images and child profiles hang off. A new label is rejected when another\ntag already carries it (exact comparison, B-141), the slug it derives to (B-124) or lists it as a synonym -\notherwise two tags share a label in every picker. An unchanged label is not checked again (B-341). Likewise a\nsynonym the tag does not carry yet (compared by slug) is rejected when its slug is another tag\u0027s slug, folded label\nor synonym (B-351).",
         "parameters": [
           {
             "name": "id",
@@ -30504,6 +30504,10 @@
               "null",
               "string"
             ]
+          },
+          "visibleToChildren": {
+            "type": "boolean",
+            "default": false
           }
         },
         "description": "Creating a tag. The \u0060Slug\u0060 may be omitted \u2013 it is then derived from the \u0060Label\u0060.\nIf the slug already exists, the endpoint returns the existing entry (idempotent)."
@@ -37670,7 +37674,8 @@
           "label",
           "mediaCount",
           "slug",
-          "synonyms"
+          "synonyms",
+          "visibleToChildren"
         ],
         "type": "object",
         "properties": {
@@ -37736,9 +37741,12 @@
               "null",
               "string"
             ]
+          },
+          "visibleToChildren": {
+            "type": "boolean"
           }
         },
-        "description": "A tag of the taxonomy including usage counts on **all three** sides: \u0060MediaCount\u0060 counts the\nassets carrying it, \u0060ChildCount\u0060 the children who list it as a like/dislike, and\n\u0060ExerciseCount\u0060 the exercises dressed in it (B-46). \u0060Slug\u0060\nis the stable reference name (lowercase, no diacritics), \u0060Facet\u0060 distinguishes theme from\npresentation style, \u0060Synonyms\u0060 holds alternative spellings against duplicates from free text.\n\nThe third count is not decoration: the counts are what says whether a tag is dead, and a tag that\ndresses exercises but no image and no child would have looked dead without it.\n\n\u0060ImagePrompt\u0060 is the brand-neutral English scene fragment the image generator uses for this tag;\n\u0060null\u0060 means images are never generated for it (B-485)."
+        "description": "A tag of the taxonomy including usage counts on **all three** sides: \u0060MediaCount\u0060 counts the\nassets carrying it, \u0060ChildCount\u0060 the children who list it as a like/dislike, and\n\u0060ExerciseCount\u0060 the exercises dressed in it (B-46). \u0060Slug\u0060\nis the stable reference name (lowercase, no diacritics), \u0060Facet\u0060 distinguishes theme from\npresentation style, \u0060Synonyms\u0060 holds alternative spellings against duplicates from free text.\n\nThe third count is not decoration: the counts are what says whether a tag is dead, and a tag that\ndresses exercises but no image and no child would have looked dead without it.\n\n\u0060ImagePrompt\u0060 is the brand-neutral English scene fragment the image generator uses for this tag;\n\u0060null\u0060 means images are never generated for it (B-485). \u0060VisibleToChildren\u0060 says whether a child may\npick it in its own interest picker \u2013 a creator\u0027s release (B-207); new keywords start hidden."
       },
       "InventoryItemDto": {
         "required": [
@@ -44136,9 +44144,15 @@
           "clearImagePrompt": {
             "type": "boolean",
             "default": false
+          },
+          "visibleToChildren": {
+            "type": [
+              "null",
+              "boolean"
+            ]
           }
         },
-        "description": "Only fields that are set are changed; \u0060Synonyms\u0060 replaces the list entirely. \u0060ClearImagePrompt\u0060\nremoves the image prompt and wins over a value sent with it; an \u0060ImagePrompt\u0060 of \u0060null\u0060 means \u0022unchanged\u0022."
+        "description": "Only fields that are set are changed; \u0060Synonyms\u0060 replaces the list entirely. \u0060ClearImagePrompt\u0060\nremoves the image prompt and wins over a value sent with it; an \u0060ImagePrompt\u0060 of \u0060null\u0060 means \u0022unchanged\u0022.\n\u0060VisibleToChildren\u0060 releases or withdraws the tag for children\u0027s pickers (B-207); \u0060null\u0060 leaves it as is."
       },
       "UpdateKeyResultRequest": {
         "type": "object",

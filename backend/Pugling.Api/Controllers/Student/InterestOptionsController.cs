@@ -23,8 +23,10 @@ namespace Pugling.Api.Controllers.Student;
 public class InterestOptionsController(PuglingDbContext db) : ControllerBase
 {
     /// <summary>
-    /// The selectable keywords, alphabetically by slug. Total count (before paging) in the
-    /// <c>X-Total-Count</c> header.
+    /// The selectable keywords, alphabetically by slug: only those a creator released for children (B-207). The
+    /// taxonomy also grows from any supervisor's free text and from image tagging; without the release another
+    /// family's typed text would become a tile here, and so would keywords that never change anything. Total count
+    /// (before paging) in the <c>X-Total-Count</c> header.
     /// </summary>
     /// <param name="facet">Only keywords of this facet – the guided process shows topics and styles apart.</param>
     /// <param name="skip">Number of entries to skip (paging).</param>
@@ -39,7 +41,7 @@ public class InterestOptionsController(PuglingDbContext db) : ControllerBase
         [FromQuery] int take = PagingExtensions.DefaultTake,
         CancellationToken ct = default)
     {
-        var query = db.InterestTags.AsNoTracking().AsQueryable();
+        var query = db.InterestTags.AsNoTracking().Where(t => t.VisibleToChildren);
         if (facet is not null) query = query.Where(t => t.Facet == facet);
 
         // By slug, not by label - the same order the creator's view uses. The label column carries no

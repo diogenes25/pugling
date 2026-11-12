@@ -44,7 +44,9 @@ export function InterestTagAdmin() {
         Zähler zeigen, woran ein Wort hängt; eingekleidete Übungen sperren zusätzlich das Löschen.
         Der <strong>Bild-Prompt</strong> ist die englische Szene, die der KI-Creator für dieses Interesse in
         Vokabelbilder malt – ohne Markennamen („in a blocky voxel world" statt „Minecraft"). Ohne Prompt
-        bekommt das Interesse keine eigenen Bilder.
+        bekommt das Interesse keine eigenen Bilder. <strong>Für Kinder</strong> gibt ein Schlagwort für die
+        Interessen-Auswahl der Kinder frei – neue Schlagworte (etwa aus dem Freitext eines anderen Elternteils)
+        sieht dort niemand, bis du sie freigibst.
       </p>
 
       <form className="row" style={{ gap: 8, marginTop: 8 }}
@@ -65,7 +67,7 @@ export function InterestTagAdmin() {
           <table className="table">
             <thead>
               <tr>
-                <th>Schlagwort</th><th>Facette</th><th>Synonyme</th><th>Bild-Prompt</th>
+                <th>Schlagwort</th><th>Facette</th><th>Synonyme</th><th>Bild-Prompt</th><th>Für Kinder</th>
                 <th className="num">Bilder</th><th className="num">Kinder</th><th className="num">Übungen</th><th />
               </tr>
             </thead>
@@ -93,7 +95,7 @@ export function InterestTagAdmin() {
                   }} />
               ))}
               {tags.data?.length === 0 && (
-                <tr><td colSpan={8} className="muted">
+                <tr><td colSpan={9} className="muted">
                   Keine Schlagworte{applied ? " für diese Suche" : " – sie entstehen beim Taggen von Bildern und Interessen"}.
                 </td></tr>
               )}
@@ -116,13 +118,15 @@ function TagRow({ tag, busy, onSave, onDelete }: {
   const [facet, setFacet] = useState<InterestFacet>(tag.facet);
   const [synonyms, setSynonyms] = useState(tag.synonyms.join(", "));
   const [imagePrompt, setImagePrompt] = useState(tag.imagePrompt ?? "");
+  const [visible, setVisible] = useState(tag.visibleToChildren);
 
   const parsedSynonyms = synonyms.split(",").map((s) => s.trim()).filter(Boolean);
   const promptChanged = imagePrompt.trim() !== (tag.imagePrompt ?? "");
   const dirty = label.trim() !== tag.label
     || facet !== tag.facet
     || parsedSynonyms.join("|") !== tag.synonyms.join("|")
-    || promptChanged;
+    || promptChanged
+    || visible !== tag.visibleToChildren;
 
   return (
     <tr>
@@ -148,6 +152,10 @@ function TagRow({ tag, busy, onSave, onDelete }: {
           onChange={(e) => setImagePrompt(e.target.value)} placeholder="z. B. on a soccer pitch"
           style={{ maxWidth: 220 }} />
       </td>
+      <td style={{ textAlign: "center" }}>
+        <input type="checkbox" aria-label={`${tag.label} für Kinder freigeben`} checked={visible}
+          onChange={(e) => setVisible(e.target.checked)} />
+      </td>
       <td className="num">{tag.mediaCount}</td>
       <td className="num">{tag.childCount}</td>
       {/* Die dritte Zahl, seit B-46 im Vertrag und bis B-206 nirgends gezeigt. Sie ist die einzige, die
@@ -159,6 +167,9 @@ function TagRow({ tag, busy, onSave, onDelete }: {
             aria-label={`${interestFacetLabel(facet)} „${tag.label}" speichern`}
             onClick={() => onSave({
               label: label.trim(), facet, synonyms: parsedSynonyms,
+              // Die Freigabe ist wie der Prompt eine globale Entscheidung: nur bei Änderung mitschicken, sonst setzte
+              // eine Label-Korrektur aus einem älteren Stand die Entscheidung eines anderen Creators zurück.
+              ...(visible !== tag.visibleToChildren ? { visibleToChildren: visible } : {}),
               // Nur bei Änderung mitschicken: das Vokabular ist global, und eine Label-Korrektur aus einem älteren
               // Stand soll den Prompt eines anderen Creators nicht überschreiben. Geleert heißt „entfernen" – null
               // allein hieße „unverändert" (PATCH-Semantik), darum der Schalter.

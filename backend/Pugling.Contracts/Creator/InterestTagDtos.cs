@@ -15,11 +15,12 @@ namespace Pugling.Contracts.Creator;
 /// dresses exercises but no image and no child would have looked dead without it.
 ///
 /// <c>ImagePrompt</c> is the brand-neutral English scene fragment the image generator uses for this tag;
-/// <c>null</c> means images are never generated for it (B-485).
+/// <c>null</c> means images are never generated for it (B-485). <c>VisibleToChildren</c> says whether a child may
+/// pick it in its own interest picker – a creator's release (B-207); new keywords start hidden.
 /// </summary>
 public record InterestTagResponse(int Id, string Slug, string Label, InterestFacet Facet,
     IReadOnlyList<string> Synonyms, string? Color, int MediaCount, int ChildCount, DateTime CreatedAt,
-    int ExerciseCount, string? ImagePrompt);
+    int ExerciseCount, string? ImagePrompt, bool VisibleToChildren);
 
 /// <summary>
 /// Creating a tag. The <c>Slug</c> may be omitted – it is then derived from the <c>Label</c>.
@@ -27,11 +28,13 @@ public record InterestTagResponse(int Id, string Slug, string Label, InterestFac
 /// </summary>
 public record CreateInterestTagDto(string Label, string? Slug = null,
     InterestFacet Facet = InterestFacet.Other, List<string>? Synonyms = null, string? Color = null,
-    string? ImagePrompt = null);
+    string? ImagePrompt = null, bool VisibleToChildren = false);
 
 /// <summary>
 /// Only fields that are set are changed; <c>Synonyms</c> replaces the list entirely. <c>ClearImagePrompt</c>
 /// removes the image prompt and wins over a value sent with it; an <c>ImagePrompt</c> of <c>null</c> means "unchanged".
+/// <c>VisibleToChildren</c> releases or withdraws the tag for children's pickers (B-207); <c>null</c> leaves it as is.
 /// </summary>
 public record UpdateInterestTagDto(string? Label = null, InterestFacet? Facet = null,
-    List<string>? Synonyms = null, string? Color = null, string? ImagePrompt = null, bool ClearImagePrompt = false);
+    List<string>? Synonyms = null, string? Color = null, string? ImagePrompt = null, bool ClearImagePrompt = false,
+    bool? VisibleToChildren = null);

@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (73)
+### Offen (75)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -25,7 +25,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-469](B-469-lernkontrolle-selbsteinschaetzung-und-typen-ohne-test.md) | Prüfauftrag: Der Vokabeltest ist per Vorgabe eine Selbsteinschätzung, Grammatik und Übersetzung haben keinen Test | Frage | `idee` | P2 | — | beides | — |
 | [B-485](B-485-vokabelbilder-nach-interessen-erzeugen.md) | Kleine Bilder zu jeder Vokabel – erzeugt nach den Interessen des Kindes | Wunsch | `in-arbeit` | P2 | L | beides | Migration |
 | [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder | Wunsch | `geschaetzt` | P2 | L | beides | — |
-| [B-207](B-207-kind-auswahlliste-ist-unkuratiert.md) | Die Auswahlliste des Kindes zeigt jedes Schlagwort, das je irgendwer getippt hat | Wunsch | `gegrillt` | P2 | — | beides | Migration? |
 | [B-423](B-423-assistent-klassenarbeit-termin-und-stufenleiter.md) | Der Assistent „Klassenarbeit vorbereiten" fragt den Termin, legt die Klassenarbeit an und baut die Stufenleiter | Wunsch | `ausformuliert` | P2 | M | frontend | — |
 | [B-217](B-217-khan-academy-vergleich-sammel-story.md) | Khan-Academy-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | Wunsch | `idee` | P2 | — | — | — |
 | [B-218](B-218-mischwiederholung-ueber-alle-positionen.md) | Eine Mischwiederholung über alle Positionen des Kindes | Wunsch | `idee` | P2 | — | — | — |
@@ -36,6 +35,8 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-374](B-374-baobab-vergleich-sammel-story.md) | Baobab-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | Wunsch | `idee` | P2 | — | — | — |
 | [B-474](B-474-kacheln-ohne-drehung-und-uebersicht.md) | `kacheln.ps1` kann nicht drehen, und für die Sichtung von 56 Fotos fehlt ein Übersichtsbogen | Wunsch | `idee` | P2 | — | .claude/skills/lehrwerk-aufbereiten | — |
 | [B-410](B-410-tor-null-element-ueber-alle-body-listen.md) | Reflexiver Wächter: jede Liste in jedem `[FromBody]`-Graphen meldet ein `null`-Element als 400 | Aufräumen | `idee` | P2 | — | backend | — |
+| [B-492](B-492-lader-test-in-ci.md) | Der Lehrwerk-Lader bekommt einen automatischen Test in CI | Aufräumen | `idee` | P2 | — | .claude/skills/lehrwerk-aufbereiten, .github/workflows | — |
+| [B-493](B-493-fallliste-antwortvergleich.md) | Eine Fallliste für den Antwortvergleich, gelesen von Server, Frontend und Lader | Aufräumen | `idee` | P2 | — | backend, frontend, .claude/skills/lehrwerk-aufbereiten | — |
 | [B-412](B-412-beste-zuerst-richtung-unbelegt.md) | „beste Bewertung zuerst" im Planbau ist nur gegen „nicht sortiert" belegt, nicht gegen „schlechteste zuerst" | Defekt | `idee` | P3 | — | frontend | — |
 | [B-415](B-415-arcade-sperrcodes-ohne-text.md) | Sechs 409-Codes, die nur das Kind erreicht, haben in der Arcade keinen Text | Defekt | `idee` | P3 | — | frontend | — |
 | [B-416](B-416-loeschen-summary-und-ziel-id-ungeprueft.md) | Das Swagger-Summary von „Übung löschen" nennt keine Ziel-Etappen; `GoalUsage.ObjectiveId` prüft kein Test | Defekt | `idee` | P3 | — | backend | — |
@@ -89,9 +90,10 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-380](B-380-pflichtfeld-sperre-in-den-uebrigen-formularen.md) | Die Hausregel „Pflichtfeld leer → Speichern gesperrt" gilt erst auf der Lehrwerke-Seite | Aufräumen | `idee` | P3 | — | frontend | — |
 | [B-445](B-445-seed-kind-ohne-klasse-und-fachlehrer.md) | Seed: „Sohn" hat weder Klasse noch Schulart, und Herr Schmidt trägt kein Fachlehrer-Profil | Aufräumen | `idee` | P3 | — | beides | — |
 | [B-447](B-447-arcade-zeigt-iso-daten.md) | Die Sohn-Arcade zeigt Daten als ISO-Text | Aufräumen | `idee` | P3 | — | frontend | — |
+| [B-494](B-494-mutantenprobe-je-zusicherung.md) | `mutant-probe.py` misst je Zusicherung, nicht nur je Test | Aufräumen | `idee` | P3 | — | .claude/scripts | — |
 
 <details>
-<summary>Abgenommen (390)</summary>
+<summary>Abgenommen (391)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -209,6 +211,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-204](B-204-vierter-weg-in-den-doppelten-meldungsplatz.md) | Der vierte Weg in denselben Widerspruch: die Reihen-Zeile hat zwei Meldungsplätze | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-205](B-205-exercise-in-use-ohne-deutsche-fassung.md) | `exercise_in_use` fehlt in `GERMAN_PROBLEM_TEXT` — die zwei Geschwister stehen drin | Defekt | `abgenommen` | P3 | S | beides | Vertrag |
 | [B-206](B-206-einkleidung-ist-unsichtbar-und-nicht-korrigierbar.md) | Die Einkleidung einer Übung ist im Vater-Web unsichtbar — und ein gelöschtes Stichwort macht das Speichern unmöglich | Defekt | `abgenommen` | P2 | M | beides | — |
+| [B-207](B-207-kind-auswahlliste-ist-unkuratiert.md) | Die Auswahlliste des Kindes zeigt jedes Schlagwort, das je irgendwer getippt hat | Wunsch | `abgenommen` | P2 | M | beides | Migration |
 | [B-209](B-209-savednotice-raeumt-nie.md) | „Gespeichert" bleibt über jedem folgenden Bildschirm der Arcade stehen | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-21](B-21-ki-creator-foerdermodus.md) | KI-Creator: Fördermodus (`--use-weak`) sprachrein und mit Tests absichern | Wunsch | `abgenommen` | P3 | S | backend | — |
 | [B-210](B-210-dialog-haelt-zwei-wahrheiten-fuer-die-config.md) | „Beschreibung speichern" dreht den gerade gespeicherten Inhalt lautlos zurück | Defekt | `abgenommen` | P1 | M | frontend | — |
@@ -504,7 +507,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (155)
 
-**Nachgeschaut: 377 von 390 abgenommenen** — und in 137 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 13 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 377 von 391 abgenommenen** — und in 137 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 14 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -665,13 +668,14 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-491](B-491-wortbank-aus-leeren-kacheln.md) | Eine Wortbank aus leeren Einträgen wird zum Pool aus reinen Lösungen | [B-487] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (13) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (14) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
 
 | Id | Story |
 | --- | --- |
+| [B-207](B-207-kind-auswahlliste-ist-unkuratiert.md) | Die Auswahlliste des Kindes zeigt jedes Schlagwort, das je irgendwer getippt hat |
 | [B-375](B-375-heftseite-wird-uebungsentwurf.md) | Fotografierte Buchseiten werden zu Stoffnotizen einer Unit, aus denen eigene Übungen entstehen |
 | [B-458](B-458-grammatik-entwurf-verraet-die-loesung.md) | Ein KI-Entwurf vom Typ Grammar darf die Lösung schon in der Aufgabe nennen |
 | [B-460](B-460-ki-aufgaben-programm-entscheidet.md) | Was nur eine richtige Antwort hat, entscheidet beim KI-Creator das Programm, nicht das Modell |
@@ -784,6 +788,9 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-489](B-489-sohn-wortbank-am-handy.md) | `abgenommen` | Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-490](B-490-auswahl-ohne-richtige-antwort.md) | `idee` | `unverifiziert: true` |
 | [B-491](B-491-wortbank-aus-leeren-kacheln.md) | `idee` | `unverifiziert: true` |
+| [B-492](B-492-lader-test-in-ci.md) | `idee` | `unverifiziert: true` |
+| [B-493](B-493-fallliste-antwortvergleich.md) | `idee` | `unverifiziert: true` |
+| [B-494](B-494-mutantenprobe-je-zusicherung.md) | `idee` | `unverifiziert: true` |
 
 <details>
 <summary>Verworfen (27)</summary>

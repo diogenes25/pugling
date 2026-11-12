@@ -566,6 +566,11 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
          */
         modelBuilder.Entity<Exercise>().Property(e => e.ExecutePublic).HasDefaultValue(true);
 
+        // B-207: a keyword inserted without the column (outside EF, or by an older writer) must stay hidden from
+        // children - the fail-safe is "not shown", the opposite of ExecutePublic's. Declared here, not left as a
+        // byproduct of the migration's AddColumn, so G9 sees it as a decision.
+        modelBuilder.Entity<InterestTag>().Property(t => t.VisibleToChildren).HasDefaultValue(false);
+
         // There used to be no index on the author; the new grant joins and the `mineOnly` filter benefit from it.
         modelBuilder.Entity<Exercise>().HasIndex(e => e.AuthorAdultId);
         // The exercise type is the most frequent catalog filter (type lists, ExerciseControllerBase).

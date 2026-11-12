@@ -357,9 +357,18 @@ public class KindInteressenTests(PuglingWebAppFactory factory) : IClassFixture<P
         return (childId, await TestApi.ChildAsync(factory, childId, ChildPin));
     }
 
-    /// <summary>Creates (or finds) a taxonomy keyword – the creator owns the vocabulary, the child only picks.</summary>
-    private static async Task<int> TagAsync(HttpClient father, string label, string facet) =>
-        await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/interest-tags", new { label, facet }));
+    /// <summary>
+    /// Creates (or finds) a taxonomy keyword and releases it for children – the creator owns the vocabulary, the child
+    /// only picks from what is released (B-207). Released by PATCH, not only on create: creating is idempotent, and a
+    /// keyword another test already made hidden would come back unchanged.
+    /// </summary>
+    private static async Task<int> TagAsync(HttpClient father, string label, string facet)
+    {
+        var id = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/interest-tags", new { label, facet }));
+        (await father.PatchAsJsonAsync($"/api/v1/creator/interest-tags/{id}", new { visibleToChildren = true }))
+            .EnsureSuccessStatusCode();
+        return id;
+    }
 
     /// <summary>The child's frozen image picks – the rows AC4 requires to stay untouched.</summary>
     private List<ChildMediaPick> PicksOf(int childId)

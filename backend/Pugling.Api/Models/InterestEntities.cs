@@ -43,6 +43,13 @@ public class InterestTag
     /// </summary>
     public string? ImagePrompt { get; set; }
 
+    /// <summary>
+    /// Whether a child may pick this keyword in its own interest picker (B-207). A creator's decision, not derived:
+    /// keywords also arise from any supervisor's free text and from image tagging, and neither should reach another
+    /// family's child, nor should a keyword that nothing ever uses. New keywords start hidden.
+    /// </summary>
+    public bool VisibleToChildren { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>Images carrying this keyword (counterpart to <see cref="ChildInterests"/>).</summary>

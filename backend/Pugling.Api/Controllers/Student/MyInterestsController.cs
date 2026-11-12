@@ -74,12 +74,18 @@ public class MyInterestsController(PuglingDbContext db) : ControllerBase
                     $"Weight must be between {ChildInterest.MinWeight} and {ChildInterest.MaxWeight}.");
 
         // Check all references first: a single unknown tag must leave the existing set untouched.
+        // A child may newly pick only keywords released for children (B-207) - otherwise the filtered picker would be
+        // cosmetic. Keywords it already has stay allowed: a supervisor may have set one that is not released, and the
+        // picker sends the whole set back, so rejecting it would make every save fail or silently drop it.
         var wanted = inputs.Select(i => i.TagId).Distinct().ToList();
-        var known = await db.InterestTags.AsNoTracking().Where(t => wanted.Contains(t.Id))
+        var held = await db.ChildInterests.AsNoTracking().Where(i => i.ChildId == cid)
+            .Select(i => i.InterestTagId).ToListAsync(ct);
+        var known = await db.InterestTags.AsNoTracking()
+            .Where(t => wanted.Contains(t.Id) && (t.VisibleToChildren || held.Contains(t.Id)))
             .Select(t => t.Id).ToListAsync(ct);
         if (known.Count != wanted.Count)
             return this.ProblemWithCode(ApiErrors.InvalidReference,
-                "Every interest must reference an existing interest tag by tagId.");
+                "Every interest must reference an existing interest tag by tagId that is released for children or already among the child's interests.");
 
         // A token can outlive its child (deleted meanwhile). Without this the insert below hits the foreign
         // key and answers 500, where AddWish two methods down correctly answers 403.

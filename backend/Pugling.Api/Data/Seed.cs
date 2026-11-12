@@ -49,7 +49,41 @@ public static class Seed
         await SeedExerciseGrantsAsync(db, ct);
         await SeedExerciseItemsAsync(db, items, ct);
         await SeedAccountsAsync(db, accounts, ct);
+        // Released keywords before the children's backfill, so the seeded children's interests land on released tags.
+        await SeedReleasedInterestTagsAsync(db, tags, ct);
         await SeedChildInterestsAsync(db, tags, ct);
+    }
+
+    /// <summary>
+    /// The small base set of keywords released for children (B-207, decision 2): without it a fresh installation
+    /// would show an empty interest picker, because children only see released keywords and nothing releases
+    /// anything by itself.
+    /// </summary>
+    private static readonly (string Label, InterestFacet Facet)[] ReleasedInterestTags =
+    [
+        ("Fußball", InterestFacet.Sport), ("Basketball", InterestFacet.Sport), ("Minecraft", InterestFacet.Franchise),
+        ("Pokémon", InterestFacet.Franchise), ("Brawl Stars", InterestFacet.Franchise), ("Tiere", InterestFacet.Animal),
+        ("Dinosaurier", InterestFacet.Animal), ("Weltall", InterestFacet.Nature), ("Musik", InterestFacet.Music),
+        ("Comic", InterestFacet.Style),
+    ];
+
+    /// <summary>
+    /// Creates the released base set. Idempotent through "only what does not exist yet": an existing keyword keeps
+    /// whatever a creator decided about it, otherwise every restart would release again what was withdrawn.
+    /// </summary>
+    private static async Task SeedReleasedInterestTagsAsync(PuglingDbContext db, InterestTagService tags,
+        CancellationToken ct)
+    {
+        foreach (var (label, facet) in ReleasedInterestTags)
+        {
+            var slug = InterestSlug.From(label);
+            if (await db.InterestTags.AnyAsync(t => t.Slug == slug, ct)) continue;
+            var tag = await tags.EnsureAsync(label, label, facet, ct);
+            // Only a tag created just now: EnsureAsync also matches by label and synonym and then returns an existing
+            // tag, whose hidden state a creator chose - releasing it here would undo that on every restart.
+            if (tag is { Id: 0 }) tag.VisibleToChildren = true;
+            await db.SaveChangesAsync(ct);
+        }
     }
 
     /// <summary>

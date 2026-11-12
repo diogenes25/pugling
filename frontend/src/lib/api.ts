@@ -928,10 +928,19 @@ export const api = {
     http<ChildInterestResponse[]>(`${V1}/supervisor/children/${childId}/interests`, "PUT", { interests }),
 
   /**
-   * Die Auswahlliste, aus der das Kind sich bedient. Bewusst die Kind-Route und nicht `creator/interest-tags`:
-   * die trägt Nutzungszähler und ist für einen Kind-Token gesperrt.
+   * Die Auswahlliste, aus der das Kind sich bedient: alle für Kinder freigegebenen Schlagworte (B-207). Bewusst die
+   * Kind-Route und nicht `creator/interest-tags`: die trägt Nutzungszähler und ist für einen Kind-Token gesperrt.
+   * Seitenweise bis `X-Total-Count` statt eines geratenen `take=500`: ab der 501. Kachel fielen sonst lautlos welche
+   * heraus, und welche, entschiede die Sortierung.
    */
-  interestOptions: () => http<InterestTagOption[]>(`${V1}/student/interest-tags?take=500`),
+  interestOptions: async () => {
+    const all: InterestTagOption[] = [];
+    for (;;) {
+      const page = await httpPaged<InterestTagOption>(`${V1}/student/interest-tags?skip=${all.length}&take=500`);
+      all.push(...page.items);
+      if (page.items.length === 0 || all.length >= page.total) return all;
+    }
+  },
   /** Das eigene Interessen-Profil des angemeldeten Kindes (Schlagworte + Freitext-Wünsche). */
   myInterests: () => http<MyInterestProfile>(`${V1}/student/me/interests`),
   /** Ersetzt die eigenen Interessen vollständig – nur bestehende `tagId`s, das Kind legt nie eine an. */

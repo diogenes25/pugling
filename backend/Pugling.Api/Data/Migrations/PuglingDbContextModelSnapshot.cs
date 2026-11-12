@@ -980,6 +980,11 @@ namespace Pugling.Api.Data.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("VisibleToChildren")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
                     b.HasKey("Id");
 
                     b.HasIndex("Slug")

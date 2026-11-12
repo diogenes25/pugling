@@ -95,6 +95,9 @@ public class SchemaGuardTests
             ["Exercises.ExecutePublic"] =
                 "Fail-safe: an exercise without an explicit value stays executable for every creator "
                 + "(the previous behavior). A missing value must not turn into 'blocked' here.",
+            ["InterestTags.VisibleToChildren"] =
+                "Fail-safe (B-207): a keyword written without the column stays hidden from children - an unreviewed "
+                + "keyword must not appear in a child's picker by omission.",
         };
 
         using var db = Context();

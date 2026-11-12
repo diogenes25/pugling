@@ -220,6 +220,12 @@ public ContentRating AllowedContentRating { get; set; } = ContentRating.Everyone
 Freitext fängt alles, was (noch) kein Tag ist. Beim Backfill wird jeder bestehende Freitext-Eintrag
 per Slug/Synonym auf einen `InterestTag` abgebildet und sonst als neuer Tag angelegt: verlustfrei.
 
+**Freigabe für Kinder** ([B-207](backlog/B-207-kind-auswahlliste-ist-unkuratiert.md)): Die Auswahlliste des
+Kindes (`student/interest-tags`) zeigt nur Tags mit `VisibleToChildren`. Neue Tags entstehen versteckt – aus dem
+Freitext jedes Supervisors, aus dem Bild-Tagging –, freigegeben wird in der Schlagwort-Verwaltung („Für Kinder").
+Das Kind wählt neu nur Freigegebenes, behält aber, was es schon hat (auch einen vom Vater gesetzten, versteckten Tag).
+Die Bildauswahl ist davon unberührt: sie rechnet mit allen Interessen des Kindes.
+
 ---
 
 ## 4. Auswahl: `MediaSelector`
