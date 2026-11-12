@@ -213,7 +213,7 @@ export function VaterExercises() {
         {/* Seit B-431 lädt die Liste beim ersten Aufruf: ein Ausfall darf nicht als „Noch keine Übungen." erscheinen. */}
         <ListenAusfall was="Die Übungen" fehler={existing.error} laedt={existing.loading} onRetry={existing.reload} schluessel={filterKey} />
         {existing.loading && existing.data === null ? <div className="loading">Lade…</div>
-          : (existing.data?.items.length ?? 0) === 0 ? (existing.error ? null : <div className="muted">Noch keine Übungen.</div>) : (
+          : (existing.data?.total ?? 0) === 0 ? (existing.error ? null : <div className="muted">Noch keine Übungen.</div>) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {existing.data?.items.map((e) => (
               <ExerciseManageRow key={e.id} exercise={e} subjectName={subjectNameOf(e.subjectId)}

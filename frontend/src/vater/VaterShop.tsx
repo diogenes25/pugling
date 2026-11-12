@@ -473,7 +473,7 @@ export function ChildShopView({ childId }: { childId: number }) {
                   </td>
                 </tr>
               ))}
-              {purchases.data?.items.length === 0 && <tr><td colSpan={5} className="muted">Noch keine Käufe.</td></tr>}
+              {purchases.data?.total === 0 && <tr><td colSpan={5} className="muted">Noch keine Käufe.</td></tr>}
             </tbody>
           </table>
         </div>

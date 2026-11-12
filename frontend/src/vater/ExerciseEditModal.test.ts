@@ -146,7 +146,8 @@ describe("payloadFrom – der Vollersatz-PUT darf nichts verlieren, was das Form
 describe("Vokabel aus der Übung entfernen", () => {
   it("nennt den Lernstand, der mitgeht, und was bleibt", () => {
     const question = removeItemQuestion("dog", "Hund");
-    expect(question).toMatch(/Lernstand/);
+    // Rot auch bei „der Lernstand bleibt erhalten": zugesichert wird die Folge, nicht das Wort (B-507).
+    expect(question).toMatch(/geht im Lernstand mit verloren/);
     expect(question).toMatch(/bleibt im Store/);
   });
 });

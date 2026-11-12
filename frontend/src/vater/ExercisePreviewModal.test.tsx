@@ -45,3 +45,20 @@ describe("Testmodus – ein Fehler beim Laden", () => {
     expect(text).not.toMatch(/zuweisen/);
   });
 });
+
+// B-507: die „nur ansehen"-Sicht (ein Aufsatz) nennt nur die Folge. Rot, wenn sie wieder „zuweisen" als Ausweg anbietet –
+// derselbe Satz, den B-496 oben entfernt hat.
+describe("Testmodus – nur ansehen", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it("bietet Zuweisen nicht als Ausweg an", async () => {
+    vi.spyOn(api, "previewExercise").mockResolvedValue(
+      { gradable: false, stages: [], items: [{ itemIndex: 0, prompt: "Schreibe über deinen Tag.", hint: null }] } as never);
+    render(<ExercisePreviewModal exerciseId={1} title="Aufsatz" onClose={() => {}} />);
+
+    const text = (await screen.findByText(/nicht automatisch bewerten/)).textContent ?? "";
+
+    expect(text).toMatch(/durchspielen lässt sie sich darum nicht/);
+    expect(text).not.toMatch(/zuweisen/);
+  });
+});

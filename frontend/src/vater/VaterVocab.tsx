@@ -321,7 +321,7 @@ export function VaterVocab() {
                     globalTags={globalTags.data ?? []} reloadGlobalTags={globalTags.reload}
                     childTagOptions={childTagOpts.data ?? []} reloadChildTags={childTagOpts.reload} />
                 ))}
-                {list.data?.items.length === 0 && <tr><td colSpan={6} className="muted">Keine Vokabeln in dieser Sprach-Kombination.</td></tr>}
+                {list.data?.total === 0 && <tr><td colSpan={6} className="muted">Keine Vokabeln in dieser Sprach-Kombination.</td></tr>}
               </tbody>
             </table>
           </div>

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api, ApiError } from "../lib/api";
 import { AuthProvider } from "../lib/auth";
 import type { ActivationRequest } from "../lib/types";
@@ -13,6 +13,11 @@ const request = {
   id: 7, articleTitle: "Bildschirmzeit", requestedQuantity: 30, unitType: "Minute", status: "Pending",
   requestedAt: "2026-11-12T10:00:00Z", canApprove: true, canReject: true,
 } as unknown as ActivationRequest;
+
+// „Freigeben" fragt per `window.confirm` nach. happy-dom liefert dort heute `true` – ausdrücklich gesetzt, damit ein
+// Update, das es ändert, nicht als irreführender Fehler im Satz unten erscheint (B-509).
+beforeEach(() => { vi.stubGlobal("confirm", () => true); });
+afterEach(() => { vi.unstubAllGlobals(); });
 
 describe("Vater-Shop – Freigabe scheitert am Inventar", () => {
   afterEach(() => vi.restoreAllMocks());

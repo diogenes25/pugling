@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Pager, SortableTh, TruncationHint } from "./ListControls";
 import type { SortDir } from "../lib/types";
 
@@ -49,6 +49,42 @@ describe("Pager", () => {
     rerender(<Pager skip={25} take={25} total={60} onSkip={() => {}} busy={false} />);
     expect(screen.getByRole("button", { name: "‹ Zurück" }).hasAttribute("disabled")).toBe(false);
     expect(screen.getByText("26–50 von 60")).toBeDefined();
+  });
+});
+
+/*
+ * B-505: eine Seite hinter dem Bestand korrigiert der Pager selbst – die eine Stelle für alle geblätterten Listen.
+ */
+describe("Pager – Seite hinter dem Bestand (B-505)", () => {
+  // AK 1, ein Bestand von genau einer Seite. Rot ohne den Sprung: der Pager verschwände und ließe die leere Seite stehen.
+  it("springt bei einer Seite Bestand auf Seite 1", () => {
+    const onSkip = vi.fn();
+    render(<Pager skip={25} take={25} total={25} onSkip={onSkip} />);
+    expect(onSkip).toHaveBeenCalledWith(0);
+  });
+
+  // AK 1, mehrere Seiten. Rot, wenn der Sprung auf die erste statt auf die letzte gültige Seite geht.
+  it("springt auf die letzte gültige Seite, nicht auf die erste", () => {
+    const onSkip = vi.fn();
+    render(<Pager skip={75} take={25} total={60} onSkip={onSkip} />);
+    expect(onSkip).toHaveBeenCalledWith(50);
+  });
+
+  // AK 1, Grenze. Rot, wenn `skip === total` nicht als „dahinter" zählt (`>` statt `>=`).
+  it("zählt eine Seite, die genau am Bestand beginnt, als dahinter", () => {
+    const onSkip = vi.fn();
+    render(<Pager skip={50} take={25} total={50} onSkip={onSkip} />);
+    expect(onSkip).toHaveBeenCalledWith(25);
+  });
+
+  // AK 2. Rot, wenn der Pager springt, solange die Antwort zur neuen Seite noch unterwegs ist (dann zählt der alte
+  // Bestand), oder bei leerem Bestand (dort ist die leere Seite die Wahrheit).
+  it("springt nicht, solange etwas lädt, und nicht bei leerem Bestand", () => {
+    const onSkip = vi.fn();
+    render(<Pager skip={75} take={25} total={60} onSkip={onSkip} busy />);
+    render(<Pager skip={0} take={25} total={0} onSkip={onSkip} />);
+    render(<Pager skip={25} take={25} total={60} onSkip={onSkip} />);
+    expect(onSkip).not.toHaveBeenCalled();
   });
 });
 

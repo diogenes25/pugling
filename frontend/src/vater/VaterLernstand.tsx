@@ -36,7 +36,9 @@ export function VaterLernstand() {
   return (
     <>
       <div className="row" style={{ marginBottom: 8 }}>
-        <h2 className="h-section">Lernstand{child.data ? ` · ${child.data.name}` : ""}</h2>
+        {/* Der Name nur, wenn er zu diesem Kind gehört: im Ladefenster nach einem Wechsel stünde sonst der des vorigen über
+            der Liste des neuen (B-509). */}
+        <h2 className="h-section">Lernstand{child.data && !child.stale ? ` · ${child.data.name}` : ""}</h2>
         <Link to={`/vater/kind/${childId}`} className="btn ghost small"
           style={{ marginLeft: "auto", textDecoration: "none" }}>← Kind</Link>
       </div>
@@ -48,7 +50,9 @@ export function VaterLernstand() {
         ))}
       </div>
 
-      {tab === "weak" ? <WeakWords childId={childId} /> : <CatalogDrilldown childId={childId} />}
+      <ListenAusfall was="Die Angaben zum Kind" fehler={child.error} laedt={child.loading} onRetry={child.reload} schluessel={childId} />
+      {/* Ein anderes Kind ist ein anderer Katalog: kein Filter überlebt hier den Wechsel, das offene Fach nicht (B-509). */}
+      {tab === "weak" ? <WeakWords childId={childId} /> : <CatalogDrilldown key={childId} childId={childId} />}
     </>
   );
 }
@@ -56,7 +60,16 @@ export function VaterLernstand() {
 // ─── „Was sitzt nicht?" – Rollup je Wort ─────────────────────────────────────
 
 export function WeakWords({ childId }: { childId: number }) {
+  // Der Filter überlebt den Kinderwechsel (B-502/B-504), alles andere nicht: ein anderes Kind ist eine andere Liste.
+  // Darum hängt die Liste an `key={childId}` – Zeilen, Kopfzahl, Pager, Seite und das aufgeklappte Wort des vorigen
+  // Kindes werden nicht gerendert, statt nur gesperrt neben dem Namen des neuen zu stehen (B-509).
   const [onlyWeak, setOnlyWeak] = useState(true);
+  return <WordList key={childId} childId={childId} onlyWeak={onlyWeak} setOnlyWeak={setOnlyWeak} />;
+}
+
+function WordList({ childId, onlyWeak, setOnlyWeak }: {
+  childId: number; onlyWeak: boolean; setOnlyWeak: (v: boolean) => void;
+}) {
   const [skip, setSkip] = useState(0);
   const words = useAsync<Paged<WordMastery>>(
     () => api.childWordMastery(childId, { onlyWeak, skip, take: PAGE_SIZE }), [childId, onlyWeak, skip]);
@@ -69,18 +82,20 @@ export function WeakWords({ childId }: { childId: number }) {
   // Gilt nur, wenn sie zu diesem Kind gehört: nach einem Kinderwechsel stünde sonst kurz die Zahl des vorigen da (B-499).
   const wordsMeasured = anyWord.stale ? undefined : anyWord.data?.total;
 
-  // Filter- und Kinderwechsel auf Seite 1 zurücksetzen – sonst zeigt der Pager ein Fenster jenseits des Bestands. Der
-  // Filter selbst überlebt den Kinderwechsel (darum kein `key={childId}`, B-502/B-504).
+  // Filterwechsel auf Seite 1 zurücksetzen – sonst zeigt der Pager ein Fenster jenseits des Bestands. Den Kinderwechsel
+  // setzt der Schlüssel zurück (oben).
   const [prevOnlyWeak, setPrevOnlyWeak] = useState(onlyWeak);
   if (prevOnlyWeak !== onlyWeak) { setPrevOnlyWeak(onlyWeak); setSkip(0); }
-  const [prevChildId, setPrevChildId] = useState(childId);
-  if (prevChildId !== childId) { setPrevChildId(childId); setSkip(0); }
+  // Innerhalb eines Kindes gilt „sperren, nicht ausblenden" (B-169): die Zeilen eines anderen Filters oder einer anderen
+  // Seite bleiben stehen, aber die Kopfzahl nennt nur eine Zahl, die zum eingestellten Filter gehört, und der Pager
+  // blättert nicht von einem Fenster aus, das nicht mehr stimmt (B-509).
+  const shownTotal = words.stale ? undefined : words.data?.total;
 
   return (
     <section>
       <div className="row" style={{ alignItems: "center", gap: 10 }}>
         <h3 className="h-section" style={{ margin: 0 }}>
-          Wörter {words.data ? `(${words.data.total})` : ""}
+          Wörter {shownTotal !== undefined ? `(${shownTotal})` : ""}
         </h3>
         <label className="checkline" style={{ marginLeft: "auto" }}>
           <input type="checkbox" checked={onlyWeak} onChange={(e) => setOnlyWeak(e.target.checked)} />
@@ -94,8 +109,9 @@ export function WeakWords({ childId }: { childId: number }) {
 
       <ListenAusfall was="Die Vokabeln" fehler={words.error} laedt={words.loading} onRetry={() => { words.reload(); anyWord.reload(); }} schluessel={JSON.stringify([childId, onlyWeak, skip])} />
       {/* Scheitert nur die Zählung, wäre der Leerfall still neutral und nichts holte sie je nach (B-504). Ein Kasten genügt:
-          scheitert die Liste, lädt ihr „Erneut laden" beide. */}
-      {!words.error && (
+          scheitert die Liste, lädt ihr „Erneut laden" beide. Nur unter „nur schwache": ohne den Filter braucht der Leerfall
+          die Zählung nicht, und der Kasten stünde widersprüchlich neben „Noch kein Lernstand" (B-509). */}
+      {!words.error && onlyWeak && (
         <ListenAusfall was="Die Angaben zum Lernstand" fehler={anyWord.error} laedt={anyWord.loading}
           onRetry={anyWord.reload} schluessel={childId} />
       )}
@@ -127,7 +143,7 @@ export function WeakWords({ childId }: { childId: number }) {
           </table>
         </div>
       )}
-      {words.data && <Pager skip={skip} take={PAGE_SIZE} total={words.data.total} onSkip={setSkip} busy={words.loading} />}
+      {words.data && <Pager skip={skip} take={PAGE_SIZE} total={words.data.total} onSkip={setSkip} busy={words.loading || words.stale} />}
     </section>
   );
 }

@@ -152,7 +152,7 @@ export function VaterAnmerkungen() {
                 <RemarkCard key={r.id} remark={r} showAccount={allAccounts}
                   onChanged={list.reload} onNotice={(text) => setNotice({ ok: true, text })} />
               ))}
-              {list.data?.items.length === 0 && (
+              {list.data?.total === 0 && (
                 <p className="muted">Keine Anmerkungen für diesen Filter.</p>
               )}
             </div>

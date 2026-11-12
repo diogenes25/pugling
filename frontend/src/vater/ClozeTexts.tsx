@@ -108,7 +108,7 @@ export function ClozeTexts() {
                   </td>
                 </tr>
               ))}
-              {list.data?.items.length === 0 && (
+              {list.data?.total === 0 && (
                 <tr><td colSpan={5} className="muted">Noch keine Trägertexte – unten den ersten anlegen.</td></tr>
               )}
             </tbody>

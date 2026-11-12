@@ -76,7 +76,7 @@ function AccountView({ childId }: { childId: number }) {
                       {signedAmount(e.amount, e.currency)}</td>
                   </tr>
                 ))}
-                {account.data?.items.length === 0 && <tr><td colSpan={4} className="muted">Noch keine Buchungen.</td></tr>}
+                {account.data?.total === 0 && <tr><td colSpan={4} className="muted">Noch keine Buchungen.</td></tr>}
               </tbody>
             </table>
           </div>

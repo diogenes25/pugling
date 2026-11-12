@@ -153,7 +153,7 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
               </div>
             ))}
             <p className="muted" style={{ margin: 0 }}>
-              Diese Übung lässt sich nicht automatisch bewerten – du kannst sie zuweisen, aber nicht durchspielen.
+              Diese Übung lässt sich nicht automatisch bewerten – durchspielen lässt sie sich darum nicht.
             </p>
             <button type="button" className="btn" style={{ width: "auto", alignSelf: "flex-start" }} onClick={onClose}>Fertig</button>
           </div>

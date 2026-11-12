@@ -1,4 +1,4 @@
-import { useId, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import type { SortDir } from "../lib/types";
 
 /**
@@ -13,6 +13,7 @@ export const PAGE_SIZE = 25;
 
 /**
  * „‹ Zurück · 26–50 von 312 · Weiter ›". Rendert nichts, wenn alles auf eine Seite passt.
+ * Eine Seite hinter dem Bestand korrigiert er selbst auf die letzte gültige (B-505).
  *
  * `busy` (B-116): während die nächste Seite lädt, sperrt der Pager beide Knöpfe und hält die
  * zuletzt bekannte Spanne fest, statt sie aus dem neuen `skip` zu berechnen – sonst behauptet die
@@ -33,6 +34,13 @@ export function Pager({ skip, take, total, onSkip, busy }: {
   const shown = useRef({ skip, take, total });
   if (!busy) shown.current = { skip, take, total };
   const { skip: shownSkip, take: shownTake, total: shownTotal } = shown.current;
+
+  // Steht die Seite hinter dem Bestand (letzte Zeile der letzten Seite gelöscht, ein Filter hat ihn geschrumpft), springt
+  // der Pager auf die letzte gültige Seite. Sonst stünde der Vater vor einer leeren Seite, und bei einem Bestand von
+  // höchstens einer Seite verschwände der Pager sogar – ohne Weg zurück (B-505). Die eine Stelle für alle Listen.
+  useEffect(() => {
+    if (!busy && total > 0 && skip >= total) onSkip(Math.floor((total - 1) / take) * take);
+  }, [busy, total, skip, take, onSkip]);
 
   if (shownTotal <= shownTake) return null;
   const from = shownTotal === 0 ? 0 : shownSkip + 1;

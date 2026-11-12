@@ -136,7 +136,7 @@ function ClassTestManager({ childId }: { childId: number }) {
                     </td>
                   </tr>
                 ))}
-                {list.data?.items.length === 0 && <tr><td colSpan={6} className="muted">Noch keine Klassenarbeiten.</td></tr>}
+                {list.data?.total === 0 && <tr><td colSpan={6} className="muted">Noch keine Klassenarbeiten.</td></tr>}
               </tbody>
             </table>
           </div>
@@ -217,7 +217,7 @@ function ClassTestDetail({ id, subjectId, onChanged }:
             <button type="submit" className="btn ghost inline-btn" style={{ width: "auto" }}>Suchen</button>
           </form>
           {found.loading && found.data === null ? <div className="loading">Lade…</div> : found.data && (
-            found.data.items.length === 0 ? <p className="muted">Keine passenden Übungen im Katalog.</p> : (
+            found.data.total === 0 ? <p className="muted">Keine passenden Übungen im Katalog.</p> : (
               <ul>
                 {found.data.items.map((e) => (
                   <li key={e.id}>{e.title} <span className="muted">({e.type})</span>{" "}

@@ -13,7 +13,7 @@ const state = (data: KlassenarbeitRepeat) =>
 describe("Wiederholen aus Klassenarbeiten – leer", () => {
   it("meldet keinen Erfolg", () => {
     render(<RepeatPanel repeat={state({ minBadGrade: 4, sources: [] } as unknown as KlassenarbeitRepeat)} />);
-    const text = screen.getByText(/Note ≥ 4,0|Note ≥ 4.0/).textContent ?? "";
-    expect(text).not.toMatch(/👍|nichts nachzuholen/);
+    // Der genaue neutrale Satz (B-507): ein Ausschluss zweier Erfolgswörter ließe jedes dritte durch.
+    expect(screen.getByText("Keine Arbeit mit Note ≥ 4.0 – aus Klassenarbeiten ist nichts zu wiederholen.")).toBeTruthy();
   });
 });
