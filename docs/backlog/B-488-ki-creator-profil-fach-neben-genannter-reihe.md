@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-12-backlog-lauf.md (Nachschau Sprint 37)
 unverifiziert: false
 entgangen_bei: [B-484]
-nachgeschaut: ""
+nachgeschaut: 2026-11-12
 grund: ""
 ersetzt_durch: []
 ---
@@ -104,3 +104,10 @@ neue Fehlermeldung schickt genau auf diesen ungeprüften Pfad („gib --series <
   **Rollengang (Creator) ohne Live-Lauf**: `CreatorAgentTests` fährt die Konsole gegen die In-Process-API mit
   `FakeChatClient`; Ollama und die echte DB nicht.
 - **2026-11-12** — Commit der Abnahme: `ed43705`.
+- **2026-11-12** — Nachschau (Retro Sprint 40, Nachtlauf): frischer `pugling-reviewer` an `ed43705` (per `git archive`
+  exportiert, gebaut, 1385/1385). Geprüft: kein Weg am Briefing vorbei (`create`/`briefing`/`exam`/`plan` →
+  `BriefingBuilder.BuildAsync`, `ExamPlanner.cs:124`, `PlanPlanner.cs:149` vor dem ersten Schreiben); benanntes und
+  unbenanntes Profil unter derselben Regel (`:251`, `:258-260`); AK 1 Konsole (`AgentCommands.cs:531`); AK 4
+  (`TwoTeachersAsync` legt `elsewhere` wirklich auf eine andere Reihe, M7 macht den Test rot). **Gefunden:** ein an eine
+  Reihe gebundenes Profil mit fremdem Fach schickt die Meldung im Kreis →
+  [B-495](B-495-profil-an-reihe-gebunden-fach-falsch-zirkulaere-meldung.md) (P2), dazu vier 🟢 dort.
