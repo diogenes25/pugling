@@ -85,15 +85,14 @@ Write **one Entwickler-Brief per sprint** (goal, server-side source of truth, gu
 the stories); each story already has its `Angriffsplan`. Build backend first, then the frontend through
 the central client/types, following the `CLAUDE.md` of each area.
 
-**Put a rule at the sink, not at the sources:** the one place every result passes to reach the user (a word
-bank: the card's choices; the KI-Creator: the briefing). No such place? Make one first. Rules per path escaped six
-times in a row. At the sink, reuse the neighbours' input cleanup (blank, duplicates).
+**Put a rule at the sink, not at the sources:** the one place every result passes to reach the user (word bank,
+briefing); none? make one first – rules per path escaped six times. Reuse the neighbours' input cleanup. **A sink
+function called elsewhere gets the inputs the sink builds** (a sink method builds them; escaped twice, Sprint 45).
 
 Sequential is the default. Fan out to subagents only when stories touch disjoint files, and then at
 every fan-in: merge, run the full suite plus guard tests, confirm the sprint goal still holds. Two
 traps: hooks measure `$CLAUDE_PROJECT_DIR`, so a worktree's build/test hits the main worktree; and
-the migration chain is only ever extended (`SchemaGuardTests` pins `InitialCreate` as its first link),
-so two branches that each add a migration collide on `PuglingDbContextModelSnapshot.cs`: merge, then
+the migration chain is only ever extended, so two branches that each add a migration collide on `PuglingDbContextModelSnapshot.cs`: merge, then
 re-create the later branch's migration on top of the earlier one so the chain stays linear — never refold.
 
 ## Step 5 — Verify, then review

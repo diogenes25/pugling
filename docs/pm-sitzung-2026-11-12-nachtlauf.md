@@ -396,3 +396,35 @@ Vitest **796/796**, `tsc -b` sauber, Playwright **6/6** (Ausweichports, Server v
   **Nicht angesehen:** Browser; keine Spec fährt die gescheiterte Freigabe.
 - **Sohn – Regressionszeuge.** Geteilter Satz geändert, Wortgleichheit und i18n-Parität grün; Arcade-Specs im Lauf grün.
 - **Creator – Regressionszeuge.** Kein Pfad im Diff.
+
+Commit `3618e63`.
+
+## Retrospektive (Sprint 46)
+
+**Nachschau:** Sprint 45 (`1965741`) von zwei frischen Reviewern, gelesen (Backend: Build grün, Tests nicht gefahren;
+Frontend: 11/11 der unveränderten Dateien). **Drei 🟡**, fünf 🟢 → [B-506](backlog/B-506-konsole-buchwahl-mit-dem-fach-der-senke.md)
+(P2, Backend: die Konsole wählt das Buch mit dem Fach des Buchs, nicht dem der Reihe; „mehrere Lehrbücher" nennt ein
+unpassendes Profil) und [B-507](backlog/B-507-nachschau-reste-sprint-45-frontend.md) (P3, Frontend: die Aufsatz-Vorschau
+rät weiter zum Zuweisen). Beide 🟡-Kernpunkte am Code bestätigt. `nachgeschaut` an B-500, B-498, B-496, B-502.
+Index: **392 von 406**. Die Kette von zwei Nachschauen ohne 🟡 ist damit gebrochen.
+
+**Was die eigenen Tore durchgelassen haben:** im eigenen Sprint drei 🟡, alle in Tests – eine Zusicherung auf dem
+Ausgangszustand (Filter), eine Fixture mit ungültigem Wert hinter `as unknown as`, ein AK nur als Kommentar. Genau die
+Klasse aus der Root-`CLAUDE.md` („Eine Zusicherung, die den Ausgangszustand prüft …"), zum fünften Mal von einem Reviewer
+gefunden. Und die Mutanten-Probe fand eine vierte Lücke selbst (S3: eine Gegenprobe, die über `instanceof` statt über den
+Code fiel) – das Werkzeug trug. Von außen: die Nachschau fand mit B-506 (DB) ein zweites Mal – dieselbe Funktion der Senke,
+an zweiter Stelle mit anderen Eingaben gerufen, diesmal das Fach des Buchs statt des der Reihe.
+
+**Gelandet:** (DB) als Entscheidung in `pm-loop` Step 4 (der treibende Skill, nicht der Startkontext): *eine Funktion der
+Senke, die anderswo gerufen wird, bekommt die Eingaben, die die Senke bildet – am besten über eine Methode der Senke.*
+Kein neues Tor, darum kein Halt. Der Skill ist dabei kleiner geworden (12 680 → 12 654 B; der Verweis auf `SchemaGuardTests`
+steht schon in der Root-`CLAUDE.md`).
+
+**Bewusst ungedeckt:** „Zusicherung auf dem Ausgangszustand" hat weiter kein Tor – die Fixture mit ungültigem Enum-Wert
+hätte ein Typ gefangen, wenn der Test nicht `as unknown as` gecastet hätte; ein Tor gegen solche Casts in Tests wäre
+messbar (grep), ist aber ein neues Tor → Vorschlag **(DC)**, erst nach deiner Entscheidung.
+
+## Offene Roadmap nach Sprint 46
+
+Durable Liste: [docs/backlog/](backlog/INDEX.md). Reihenfolge-Vorschlag: **B-506** (P2, Konsole und Senke, landet die
+neue Regel gleich am Code), dann B-507/B-505/B-501 (P3-Reste). B-503 bleibt im Dialog.

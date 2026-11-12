@@ -140,4 +140,4 @@ Grundlinie nach dem Zurückspielen grün.
 - **2026-11-12** — **abgenommen.** Vitest **796/796**, `tsc -b` sauber, Playwright **6/6** (`full-flow`, `freigabe`,
   `shop-verlauf`, `shop-verlauf-wiederholen`, `vater-von-null`; Ausweichports 5201/5174, Server vom Lauf gestartet).
   **Review-Zähler Sprint 46: 3.** Rollengang als Maschinengang: Vater über Komponententests (keine Spec fährt eine
-  Freigabe, die am Inventar scheitert, oder den Kinderwechsel im Lernstand); **nicht im Browser angesehen.**
+  Freigabe, die am Inventar scheitert, oder den Kinderwechsel im Lernstand); **nicht im Browser angesehen.** Commit `3618e63`.

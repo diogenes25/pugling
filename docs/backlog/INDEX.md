@@ -12,12 +12,13 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (70)
+### Offen (72)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-470](B-470-foto-zu-wortliste-als-werkzeug.md) | Aus Fotos der Vokabelseiten wird eine Wortliste – als wiederholbares Werkzeug statt als Handarbeit unter raw/ | Wunsch | `in-arbeit` | P1 | S | doku | — |
 | [B-465](B-465-ki-lueckentext-mehrdeutig-und-verraten.md) | Ein KI-Lückentext nach dem Umbau: Titel passt nicht, Auswahl steht im Satz, Zeitformen ohne Alternative | Defekt | `idee` | P2 | — | backend | — |
+| [B-506](B-506-konsole-buchwahl-mit-dem-fach-der-senke.md) | Nachschau-Reste Sprint 45: die Konsole wählt Buch und Profil noch nicht mit den Eingaben der Senke | Defekt | `idee` | P2 | — | backend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `gegrillt` | P2 | — | backend | Vertrag? |
 | [B-469](B-469-lernkontrolle-selbsteinschaetzung-und-typen-ohne-test.md) | Prüfauftrag: Der Vokabeltest ist per Vorgabe eine Selbsteinschätzung, Grammatik und Übersetzung haben keinen Test | Frage | `idee` | P2 | — | beides | — |
@@ -51,6 +52,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-482](B-482-nachschau-reste-sprint-33.md) | Nachschau-Reste Sprint 33: Kleinigkeiten an Ablage und NEU-Marker | Defekt | `idee` | P3 | — | backend | — |
 | [B-501](B-501-nachschau-reste-sprint-43.md) | Nachschau-Reste Sprint 43: Stellen, die noch anders vergleichen als `Normalize` | Defekt | `idee` | P3 | — | backend, frontend, .claude/skills/lehrwerk-aufbereiten | — |
 | [B-505](B-505-leerfall-an-der-seite-statt-am-bestand.md) | Paged-Listen sagen „noch keine …" für eine leere Seite, nicht für einen leeren Bestand | Defekt | `idee` | P3 | — | frontend | — |
+| [B-507](B-507-nachschau-reste-sprint-45-frontend.md) | Nachschau-Reste Sprint 45 (Frontend): ein Ausweg, der stehen blieb, und zwei Tests, die weniger tragen | Defekt | `idee` | P3 | — | frontend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `idee` | P3 | — | — | — |
 | [B-328](B-328-inline-typen-put-verschiebt-lernstand.md) | Sollen die Inhaltslisten gespielter Übungen anderer Typen (und der Wort-Tausch) gesperrt sein? | Frage | `idee` | P3 | — | backend | — |
@@ -515,9 +517,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-470](B-470-foto-zu-wortliste-als-werkzeug.md) | Aus Fotos der Vokabelseiten wird eine Wortliste – als wiederholbares Werkzeug statt als Handarbeit unter raw/ | `in-arbeit` | erster Lauf an einem neuen Buch in frischer Sitzung (Découvertes Série bleue 2) |
 | [B-485](B-485-vokabelbilder-nach-interessen-erzeugen.md) | Kleine Bilder zu jeder Vokabel – erzeugt nach den Interessen des Kindes | `in-arbeit` | erster echter Lauf mit OpenAI-Schlüssel (images --child 1 --max 1) |
 
-### Nach der Abnahme entgangen (161)
+### Nach der Abnahme entgangen (163)
 
-**Nachgeschaut: 388 von 406 abgenommenen** — und in 145 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 18 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 392 von 406 abgenommenen** — und in 149 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 14 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -682,9 +684,11 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-500](B-500-profil-meldung-fremdes-profil-korrigieren.md) | Die Profil-Meldung rät, ein fremdes Profil zu korrigieren – das darf nur sein Eigentümer | [B-495] | `abgenommen` |
 | [B-501](B-501-nachschau-reste-sprint-43.md) | Nachschau-Reste Sprint 43: Stellen, die noch anders vergleichen als `Normalize` | [B-497] | `idee` |
 | [B-504](B-504-nachschau-reste-sprint-44.md) | Nachschau-Reste Sprint 44: Seitenzähler nach Kinderwechsel, stumme Zählabfrage, Inventar-Satz ohne Bezug | [B-499] | `abgenommen` |
+| [B-506](B-506-konsole-buchwahl-mit-dem-fach-der-senke.md) | Nachschau-Reste Sprint 45: die Konsole wählt Buch und Profil noch nicht mit den Eingaben der Senke | [B-498, B-500] | `idee` |
+| [B-507](B-507-nachschau-reste-sprint-45-frontend.md) | Nachschau-Reste Sprint 45 (Frontend): ein Ausweg, der stehen blieb, und zwei Tests, die weniger tragen | [B-496, B-502] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (18) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (14) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -704,10 +708,6 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-476](B-476-kartenstufe-steigt-mit-dem-leitner-fach.md) | Die Stufe einer Vokabelkarte steigt mit ihrem Leitner-Fach: erst umdrehen, dann auswählen, dann schreiben |
 | [B-486](B-486-testmodus-lueckentext-eine-luecke-nach-der-anderen.md) | Testmodus: Lückentext eine Lücke nach der anderen |
 | [B-489](B-489-sohn-wortbank-am-handy.md) | Sohn-App: Lückentext mit Wortbank am Handy kaum bedienbar |
-| [B-496](B-496-reste-review-sprint-41.md) | Zwei Nachbarn derselben Fehlerform außerhalb von Sprint 41 |
-| [B-498](B-498-reste-review-sprint-42.md) | Die Konsole entscheidet „Profil passt zum Fach" für Freitext-Profile noch anders als das Briefing |
-| [B-500](B-500-profil-meldung-fremdes-profil-korrigieren.md) | Die Profil-Meldung rät, ein fremdes Profil zu korrigieren – das darf nur sein Eigentümer |
-| [B-502](B-502-reste-review-sprint-44.md) | Reste aus dem Review von Sprint 44: die Wortliste nach einem Kinderwechsel und das Entfernen einer Vokabel |
 | [B-504](B-504-nachschau-reste-sprint-44.md) | Nachschau-Reste Sprint 44: Seitenzähler nach Kinderwechsel, stumme Zählabfrage, Inventar-Satz ohne Bezug |
 
 </details>
@@ -826,6 +826,8 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-502](B-502-reste-review-sprint-44.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 | [B-504](B-504-nachschau-reste-sprint-44.md) | `abgenommen` | Abschnitt „Schätzung" |
 | [B-505](B-505-leerfall-an-der-seite-statt-am-bestand.md) | `idee` | `unverifiziert: true` |
+| [B-506](B-506-konsole-buchwahl-mit-dem-fach-der-senke.md) | `idee` | `unverifiziert: true` |
+| [B-507](B-507-nachschau-reste-sprint-45-frontend.md) | `idee` | `unverifiziert: true` |
 
 <details>
 <summary>Verworfen (28)</summary>

@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-12-nachtlauf.md (Nachschau Sprint 42 in der Retro von Sprint 43)
 unverifiziert: false
 entgangen_bei: [B-495]
+nachgeschaut: 2026-11-12
 grund: ""
 ersetzt_durch: []
 ---

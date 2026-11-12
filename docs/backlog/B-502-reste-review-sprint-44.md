@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-12-nachtlauf.md (Review Sprint 44)
 unverifiziert: false
 entgangen_bei: []
+nachgeschaut: 2026-11-12
 grund: ""
 ersetzt_durch: []
 ---
