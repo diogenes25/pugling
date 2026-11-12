@@ -1846,6 +1846,8 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
         Assert.Contains("gebunden", error.Message);
         Assert.DoesNotContain("eine Reihe in", error.Message);
+        // B-506, AK 4: the profile is this account's own, so correcting it stays a way out (B-500).
+        Assert.Contains("korrigiere", error.Message);
     }
 
     /// <summary>
@@ -2002,6 +2004,194 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
             .RunAsync(CommandLine.Parse(["briefing", "--child", child.Id.ToString()]), default));
     }
 
+    // ---- B-506: the console picks a book and a profile on the inputs the briefing builds ----
+
+    /// <summary>
+    /// A child whose only book names subject A but sits on a series in subject B (or, with <paramref name="seriesSubject"/>
+    /// false, on a series without a subject). Nothing on the server binds the book's subject to the series'.
+    /// </summary>
+    private async Task<(CreatorPipeline Pipeline, CreatorApi Creator, ChildResponse Child, int SubjectA, int SeriesId,
+        int UnitId)> BookOnForeignSeriesAsync(string name, bool seriesSubject)
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var supervisor = new SupervisorApi(Authenticated());
+        var (subjectA, _, _) = await FreshUnitAsync(creator, $"{name} Buchfach");
+        int seriesId, unitId;
+        if (seriesSubject)
+        {
+            (_, seriesId, unitId) = await FreshUnitAsync(creator, $"{name} Reihenfach");
+        }
+        else
+        {
+            var bare = await creator.CreateSeriesAsync(new CreateTextbookSeriesDto(
+                $"{name} ohne Fach {Guid.NewGuid():N}", null, null, null, null, null, null, null));
+            seriesId = bare.Id;
+            unitId = (await creator.CreateUnitAsync(seriesId, new CreateSeriesUnitDto("Unit 1", null, 1, null, null, null, null))).Id;
+        }
+        var child = await supervisor.CreateChildAsync(new CreateChildDto($"{name} {Guid.NewGuid():N}"[..20], null, 8,
+            SchoolTypes.Gymnasium, null));
+        var book = await supervisor.CreateTextbookAsync(child.Id, new CreateTextbookDto("Buch", null, subjectA, 8, null, null,
+            null, SeriesId: seriesId, CurrentUnitId: unitId));
+        // Precondition: the book's subject differs from its series'.
+        Assert.Equal(subjectA, book.SubjectId);
+        Assert.NotEqual(subjectA, (await creator.GetSeriesAsync(seriesId)).SubjectId);
+        return (pipeline, creator, child, subjectA, seriesId, unitId);
+    }
+
+    private static CommandLine CreateFor(CreatorProfileResponse profile, ChildResponse child) =>
+        CommandLine.Parse(["create", "--profile", profile.Id.ToString(), "--child", child.Id.ToString(),
+            "--type", "Vocabulary", "--count", "3"]);
+
+    private static Task<CreatorProfileResponse> SubjectProfileAsync(CreatorApi creator, int? subjectId, string? subjectName) =>
+        creator.CreateProfileAsync(new CreateCreatorProfileDto($"Ohne Reihe {Guid.NewGuid():N}", subjectName, subjectId,
+            null, null, null, null, SourceLang: "en", TargetLang: "de", Persona: null, Didactics: null, DefaultTypes: null,
+            Active: true));
+
+    /// <summary>
+    /// B-506, AK 1a: a teacher of the book's subject A on a series in B is no book for that teacher - the briefing would
+    /// file the exercise in B and reject the profile. Red if the console compares with the book's subject (the series is
+    /// picked and the briefing says "unterrichtet").
+    /// </summary>
+    [Fact]
+    public async Task Buchfach_ohne_Reihenfach_ist_kein_Buch_des_Profils()
+    {
+        var (pipeline, creator, child, subjectA, _, _) = await BookOnForeignSeriesAsync("Buchfach", seriesSubject: true);
+        var teacher = await SubjectProfileAsync(creator, subjectA, null);
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() =>
+            Commands(creator, pipeline).RunAsync(CreateFor(teacher, child), default));
+
+        Assert.Contains("kein Lehrbuch", error.Message);
+    }
+
+    /// <summary>
+    /// B-506, AK 1b: a teacher of the series' subject B takes that book, whatever the book itself names. Red if the console
+    /// compares with the book's subject ("kein Lehrbuch").
+    /// </summary>
+    [Fact]
+    public async Task Reihenfach_entscheidet_die_Buchwahl()
+    {
+        var (pipeline, creator, child, _, seriesId, unitId) = await BookOnForeignSeriesAsync("Reihenfach", seriesSubject: true);
+        var teacher = await SubjectProfileAsync(creator, (await creator.GetSeriesAsync(seriesId)).SubjectId, null);
+
+        Assert.Equal(0, await Commands(creator, pipeline).RunAsync(CreateFor(teacher, child), default));
+
+        Assert.Single(await creator.SearchExercisesAsync(seriesUnitId: unitId));
+    }
+
+    /// <summary>
+    /// B-506, AK 1c: on a series without a subject the briefing takes the profile's, so a teacher with a subject id fits
+    /// there, whatever the book names. Checked on <c>briefing</c>: the server refuses exercises in a series without a
+    /// subject (<c>series_without_subject</c>, B-508). Red if a series without a subject never fits ("kein Lehrbuch").
+    /// </summary>
+    [Fact]
+    public async Task Reihe_ohne_Fach_nimmt_den_Fachlehrer()
+    {
+        var (pipeline, creator, child, _, _, _) = await BookOnForeignSeriesAsync("Ohne Fach Id", seriesSubject: false);
+        var (otherSubject, _, _) = await FreshUnitAsync(creator, "Fach des Lehrers");
+        var teacher = await SubjectProfileAsync(creator, otherSubject, null);
+
+        Assert.Equal(0, await Commands(creator, pipeline).RunAsync(CommandLine.Parse(
+            ["briefing", "--profile", teacher.Id.ToString(), "--child", child.Id.ToString()]), default));
+    }
+
+    /// <summary>
+    /// B-506, AK 1d: a profile with only a free-text subject cannot give a series without a subject one ("hat kein Fach"),
+    /// so it has no book there. Red if a series without a subject fits every profile (the run ends at "hat kein Fach").
+    /// </summary>
+    [Fact]
+    public async Task Reihe_ohne_Fach_nimmt_kein_Freitext_Profil()
+    {
+        var (pipeline, creator, child, _, _, _) = await BookOnForeignSeriesAsync("Ohne Fach Frei", seriesSubject: false);
+        var freeText = await SubjectProfileAsync(creator, null, $"Latein {Guid.NewGuid():N}");
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline).RunAsync(
+            CommandLine.Parse(["briefing", "--profile", freeText.Id.ToString(), "--child", child.Id.ToString()]), default));
+
+        Assert.Contains("kein Lehrbuch", error.Message);
+    }
+
+    /// <summary>
+    /// B-506, AK 2: two books with a profile each, and on the child's book a teacher of another subject outscores the
+    /// book's teacher. The choice offered for that book is the one the briefing accepts. Red if each book offers its best
+    /// score (the user types the misfit's id and runs into the briefing's rejection).
+    /// </summary>
+    [Fact]
+    public async Task Mehrere_Buecher_nennen_je_Buch_das_passende_Profil()
+    {
+        var (creator, pipeline, _, child, series, _, _, onSeries, elsewhere) = await TwoTeachersAsync("Mehrere passend");
+        var otherSubject = await creator.CreateSubjectAsync(new CreateSubjectDto($"Agent-Test Fremdfach {Guid.NewGuid():N}"));
+        var misfit = await creator.CreateProfileAsync(new CreateCreatorProfileDto($"Fremdfach-Lehrer {Guid.NewGuid():N}",
+            null, otherSubject.Id, SchoolTypes.Gymnasium, GradeMin: 7, GradeMax: 9, SeriesId: series.Id,
+            SourceLang: "en", TargetLang: "de", Persona: null, Didactics: null, DefaultTypes: ["Vocabulary"], Active: true));
+        var scores = (await creator.MatchProfilesAsync(child.Id, null, default)).ToDictionary(m => m.Profile.Id, m => m.Score);
+        Assert.True(scores[misfit.Id] > scores[onSeries.Id], "Setup: the misfit must outscore the book's teacher.");
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline).RunAsync(
+            CommandLine.Parse(["create", "--child", child.Id.ToString(), "--type", "Vocabulary", "--count", "3"]), default));
+
+        Assert.Contains("mehrere Lehrbücher", error.Message);
+        Assert.Contains($"[{onSeries.Id}]", error.Message);
+        Assert.Contains($"[{elsewhere.Id}]", error.Message);
+        Assert.DoesNotContain($"[{misfit.Id}]", error.Message);
+        Assert.DoesNotContain("passt nicht", error.Message);
+    }
+
+    /// <summary>
+    /// B-506 (review): a third book whose only profile teaches another subject than the book's series. It stays on the
+    /// list - dropping it would let the score pick the subject (B-481) - but is marked, so the user does not type an id
+    /// bound to fail. Red if the entry is offered unmarked.
+    /// </summary>
+    [Fact]
+    public async Task Mehrere_Buecher_markieren_ein_Buch_ohne_passendes_Profil()
+    {
+        var (creator, pipeline, _, child, _, _, _, onSeries, _) = await TwoTeachersAsync("Mehrere unpassend");
+        var (_, thirdSeries, thirdUnit) = await FreshUnitAsync(creator, "Drittbuch");
+        await new SupervisorApi(Authenticated()).CreateTextbookAsync(child.Id, new CreateTextbookDto("Drittbuch", null, null,
+            8, null, null, null, SeriesId: thirdSeries, CurrentUnitId: thirdUnit));
+        var otherSubject = await creator.CreateSubjectAsync(new CreateSubjectDto($"Agent-Test Fremdfach {Guid.NewGuid():N}"));
+        var misfit = await creator.CreateProfileAsync(new CreateCreatorProfileDto($"Einziger Fremdfach-Lehrer {Guid.NewGuid():N}",
+            null, otherSubject.Id, SchoolTypes.Gymnasium, GradeMin: null, GradeMax: null, SeriesId: thirdSeries,
+            SourceLang: "en", TargetLang: "de", Persona: null, Didactics: null, DefaultTypes: ["Vocabulary"], Active: true));
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline).RunAsync(
+            CommandLine.Parse(["create", "--child", child.Id.ToString(), "--type", "Vocabulary", "--count", "3"]), default));
+
+        Assert.Contains($"[{misfit.Id}] {misfit.Name} (passt nicht zum Fach seiner Reihe)", error.Message);
+        Assert.Contains($"[{onSeries.Id}] {onSeries.Name},", error.Message);
+    }
+
+    /// <summary>
+    /// B-506, AK 3: the reverse order of <see cref="Nur_mit_Kind_in_einer_Reihe_ohne_Fach_spricht_der_Fachlehrer"/> - in a
+    /// series without a subject, a profile without one outscores the subject teacher. The teacher speaks. Red if the score
+    /// decides there unchecked (the run ends at "hat kein Fach").
+    /// </summary>
+    [Fact]
+    public async Task Nur_mit_Kind_in_einer_Reihe_ohne_Fach_spricht_der_Fachlehrer_auch_schwaecher_bewertet()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var supervisor = new SupervisorApi(Authenticated());
+        var subject = await creator.CreateSubjectAsync(new CreateSubjectDto($"Agent-Test Ohne-Fach schwach {Guid.NewGuid():N}"));
+        var bare = await creator.CreateSeriesAsync(new CreateTextbookSeriesDto(
+            $"Reihe ohne Fach {Guid.NewGuid():N}", null, null, null, SchoolTypes.Gymnasium, "en", "de", null));
+        var unit = await creator.CreateUnitAsync(bare.Id, new CreateSeriesUnitDto("Unit 1", 8, 1, null, null, null, null));
+        var child = await supervisor.CreateChildAsync(new CreateChildDto($"OhneFach {Guid.NewGuid():N}"[..20], null, 8,
+            SchoolTypes.Gymnasium, null));
+        await supervisor.CreateTextbookAsync(child.Id, new CreateTextbookDto("Buch ohne Fach", subject.Name, subject.Id, 8,
+            null, null, null, SeriesId: bare.Id, CurrentUnitId: unit.Id));
+        var teacher = await creator.CreateProfileAsync(new CreateCreatorProfileDto($"Fachlehrer {Guid.NewGuid():N}",
+            null, subject.Id, SchoolTypes.Gymnasium, GradeMin: null, GradeMax: null, SeriesId: bare.Id, SourceLang: "en",
+            TargetLang: "de", Persona: "Du bist der Fachlehrer.", Didactics: null, DefaultTypes: ["Vocabulary"], Active: true));
+        var subjectless = await creator.CreateProfileAsync(new CreateCreatorProfileDto($"Ohne Fach {Guid.NewGuid():N}",
+            null, null, SchoolTypes.Gymnasium, GradeMin: 7, GradeMax: 9, SeriesId: bare.Id, SourceLang: "en",
+            TargetLang: "de", Persona: "Du bist fachlos.", Didactics: null, DefaultTypes: ["Vocabulary"], Active: true));
+        var scores = (await creator.MatchProfilesAsync(child.Id, null, default)).ToDictionary(m => m.Profile.Id, m => m.Score);
+        Assert.True(scores[subjectless.Id] > scores[teacher.Id], "Setup: the subjectless profile must score higher.");
+
+        Assert.Equal(0, await Commands(creator, pipeline)
+            .RunAsync(CommandLine.Parse(["briefing", "--child", child.Id.ToString()]), default));
+    }
+
     /// <summary>
     /// B-498: a profile without a series and with a free-text subject takes the child's book in that subject - here the
     /// child has none, so it is the usage error that says so. Red if the free-text profile counts every book of the child
@@ -2068,7 +2258,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     /// </summary>
     [Theory]
     [InlineData("ohne Kind", "hängt an keinem Lehrwerk")]
-    [InlineData("ohne Buch", "kein Lehrbuch aus dem Katalog")]
+    [InlineData("ohne Buch", "kein Lehrbuch auf einer Reihe")]
     [InlineData("zwei Buecher", "mehrere Lehrbücher")]
     public async Task Werkunabhaengiges_Profil_ohne_eindeutiges_Buch_ist_eine_Fehlbedienung(string fall, string expected)
     {
@@ -2088,7 +2278,12 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         }
         else
         {
-            var (_, secondSeries, secondUnit) = await FreshUnitAsync(creator, "Zweites Buch");
+            // A second series in the profile's subject: the series decides, not the book's own subject (B-506).
+            var second = await creator.CreateSeriesAsync(new CreateTextbookSeriesDto(
+                $"Zweites Buch {Guid.NewGuid():N}", null, null, generalist.SubjectId, null, null, null, null));
+            var secondSeries = second.Id;
+            var secondUnit = (await creator.CreateUnitAsync(secondSeries,
+                new CreateSeriesUnitDto("Unit 1", null, 1, null, null, null, null))).Id;
             await supervisor.CreateTextbookAsync(child.Id, new CreateTextbookDto("Zweitbuch", null, generalist.SubjectId, 8,
                 null, null, null, SeriesId: secondSeries, CurrentUnitId: secondUnit));
         }

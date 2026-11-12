@@ -5,7 +5,7 @@ namespace Pugling.Agent.Creator.Briefing;
 /// subject, would describe a book the material is not from, and the briefing would search word lists and grammar
 /// topics in the wrong subject (B-484, B-488). The briefing's rule, for a named profile and a matched one alike: create,
 /// plan and exam all pass the briefing before anything is written, so no command checks it a second time. The console
-/// only uses <see cref="Teaches"/> to pick a book or a profile it would otherwise guess (B-498, B-500).
+/// only uses <see cref="FitsSubjectOf"/> to pick a book or a profile it would otherwise guess (B-498, B-500, B-506).
 /// </summary>
 public static class ProfileFit
 {
@@ -34,11 +34,15 @@ public static class ProfileFit
     }
 
     /// <summary>
-    /// Whether <paramref name="profile"/> teaches the subject given by id and name - the comparison of
-    /// <see cref="Problem"/>, shared with the console so both decide it alike (B-498).
+    /// Whether <paramref name="profile"/> teaches the subject an exercise in <paramref name="series"/> would get - the
+    /// subject comparison of <see cref="Problem"/> on the inputs the briefing builds: the series' subject, or for a series
+    /// without one the profile's own, which needs an id (B-488). A book's own subject is not bound to its series' and
+    /// would decide differently (B-506).
     /// </summary>
-    public static bool Teaches(CreatorProfileResponse profile, int? subjectId, string? subjectName) =>
-        TeachesAnother(profile, subjectId, subjectName) is null;
+    public static bool FitsSubjectOf(CreatorProfileResponse profile, TextbookSeriesResponse series) =>
+        series.SubjectId is int subjectId
+            ? TeachesAnother(profile, subjectId, series.SubjectName) is null
+            : profile.SubjectId is not null;
 
     /// <summary>
     /// The profile's subject when it is another than the given one, else <c>null</c>. A profile without a subject id may

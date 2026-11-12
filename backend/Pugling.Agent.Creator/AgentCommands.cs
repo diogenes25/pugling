@@ -574,8 +574,9 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
     }
 
     /// <summary>
-    /// The series of the child's book in the subject of a profile that has no series of its own. None or several are a
-    /// usage error - choosing would be guessing. A child this account cannot see is reported as such.
+    /// For a profile without a series of its own: the series of the child's book that the profile fits by the series'
+    /// subject (<see cref="ProfileFit.FitsSubjectOf"/>), not by the book's. None or several are a usage error - choosing
+    /// would be guessing. A child this account cannot see is reported as such.
     /// </summary>
     private async Task<int> SeriesOfChildsBookAsync(int childId, CreatorProfileResponse profile, CancellationToken ct)
     {
@@ -590,19 +591,19 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
             throw new AgentUsageException(
                 $"Kind {childId} ist für dieses Konto nicht sichtbar – es existiert nicht, oder das Konto betreut es nicht.");
         }
-        var series = books
-            // The briefing's subject comparison, so a free-text subject counts here too (B-498).
-            .Where(b => b.SeriesId is not null && ProfileFit.Teaches(profile, b.SubjectId, b.SubjectName))
-            .Select(b => b.SeriesId!.Value)
-            .Distinct()
-            .ToList();
+        // Judged by the book's series, not the book's own subject: the briefing files the exercise in the series' subject
+        // and accepts the profile by that (B-506).
+        var series = new List<int>();
+        foreach (var seriesId in books.Where(b => b.SeriesId is not null).Select(b => b.SeriesId!.Value).Distinct())
+            if (ProfileFit.FitsSubjectOf(profile, await GetSeriesOrUsageErrorAsync(seriesId, ct)))
+                series.Add(seriesId);
         return series.Count switch
         {
             1 => series[0],
             0 => throw new AgentUsageException(
-                $"Creator-Profil {profile.Id} hängt an keinem Lehrwerk, und Kind {childId} hat "
-                + (profile.SubjectName is { } subject ? $"in {subject} " : "")
-                + "kein Lehrbuch aus dem Katalog – gib --series <id> an."),
+                $"Creator-Profil {profile.Id} hängt an keinem Lehrwerk, und Kind {childId} hat kein Lehrbuch auf einer Reihe "
+                + (profile.SubjectName is { } subject ? $"in {subject} " : "des Katalogs ")
+                + "– gib --series <id> an."),
             _ => throw new AgentUsageException(
                 $"Kind {childId} hat mehrere Lehrbücher, die zu Creator-Profil {profile.Id} passen – wähle mit "
                 + $"--series <id>: {string.Join(", ", series)}."),
@@ -637,20 +638,35 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
         // weighs grade and school type, so one point ahead would pick the subject unannounced (B-481).
         var bySeries = onChildsBooks.GroupBy(m => m.Profile.SeriesId!.Value).ToList();
         if (bySeries.Count > 1)
+        {
+            // The id offered per book is the one the briefing accepts there; the best score could be a misfit (B-506). A
+            // book where none fits stays in the list - dropping it would let the score pick the subject (B-481) - but says
+            // so, or the user types an id that is bound to fail.
+            var offered = new List<string>();
+            foreach (var book in bySeries)
+            {
+                var (best, fits) = await FittingOnSeriesAsync(book.Key, [.. book], ct);
+                offered.Add($"[{best.Id}] {best.Name}" + (fits ? "" : " (passt nicht zum Fach seiner Reihe)"));
+            }
             throw new AgentUsageException(
                 $"Für Kind {childId} gibt es mehrere Lehrbücher mit Profil – wähle mit --profile <id>: "
-                + string.Join(", ", bySeries.Select(g => g.First()).Select(m => $"[{m.Profile.Id}] {m.Profile.Name}")));
-        // On that one book, a profile that teaches the series' subject before a higher score that does not: the user named
-        // no profile, so the briefing must not reject one in their name (B-500). None fits - the best one, and the
-        // briefing says why.
-        // Only where the series has a subject: without one, the briefing takes the profile's, so every profile fits there
-        // and the score decides as before (review of B-498).
-        var series = await GetSeriesOrUsageErrorAsync(bySeries[0].Key, ct);
-        var candidates = bySeries[0].ToList();
-        return (series.SubjectId is null
-                ? candidates[0]
-                : candidates.FirstOrDefault(m => ProfileFit.Teaches(m.Profile, series.SubjectId, series.SubjectName))
-                  ?? candidates[0]).Profile;
+                + string.Join(", ", offered));
+        }
+        return (await FittingOnSeriesAsync(bySeries[0].Key, [.. bySeries[0]], ct)).Profile;
+    }
+
+    /// <summary>
+    /// Among the matched profiles on one series (best score first), the first the briefing accepts for that series - the
+    /// user named none, so the briefing must not reject one in their name (B-500). None fits: the best one, with
+    /// <c>Fits</c> false, and the briefing says why.
+    /// </summary>
+    private async Task<(CreatorProfileResponse Profile, bool Fits)> FittingOnSeriesAsync(int seriesId,
+        IReadOnlyList<CreatorProfileMatch> candidates, CancellationToken ct)
+    {
+        var series = await GetSeriesOrUsageErrorAsync(seriesId, ct);
+        return candidates.FirstOrDefault(m => ProfileFit.FitsSubjectOf(m.Profile, series)) is { } fitting
+            ? (fitting.Profile, true)
+            : (candidates[0].Profile, false);
     }
 
     /// <summary>
