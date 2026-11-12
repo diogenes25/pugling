@@ -1,0 +1,130 @@
+import { test, expect, type APIRequestContext } from "@playwright/test";
+import { sohnLogin } from "./helpers";
+
+/*
+ * B-466 – ein Lückentext im Tagestest, am Handy (375 × 812, das kleinste Format aus dem Prüfgang). Der Stoff entsteht
+ * über die API: drei nummerierte Sätze, je in einer eigenen Zeile, wie im Access-Lehrwerk („Question tags“). Die Sätze
+ * sind absichtlich kurz: ohne Umbruch passen alle drei sicher in eine Zeile, auch mit einer anderen Schrift (CI).
+ *
+ * Was jeder Fall prüft – und welche Änderung ihn rot macht:
+ * 1. Satz 2 beginnt unter Satz 1 → rot, sobald `.cloze-prompt` die Zeilenumbrüche wieder als Leerzeichen setzt.
+ * 2. „Später weiter“ liegt ganz im Fenster → zweiter Test (längstes Etikett); rot, sobald die Kopfzeile nicht umbricht.
+ *    Mit dem Etikett eines Lückentexts („Tippen“) passte sie schon vor B-466 – darum steht die Prüfung nicht im ersten.
+ * 3. Das Lösungsfeld hat mindestens 16 px Schrift → rot bei 15 px (iOS-Safari zoomt darunter beim Antippen).
+ *
+ * Eigenes Kind: je Kind ist genau ein aktiver Plan spielbar.
+ */
+
+const RUN = Date.now().toString(36).slice(-5);
+
+async function postId(request: APIRequestContext, url: string, headers: Record<string, string>, data: unknown) {
+  const res = await request.post(url, { headers, data });
+  expect(res.ok(), await res.text()).toBeTruthy();
+  return (await res.json()).id as number;
+}
+
+test.use({ viewport: { width: 375, height: 812 } });
+
+test("Lückentext im Tagestest am Handy: eine Zeile je Satz, kein Zoom-Feld", async ({ page, request }) => {
+  const login = await request.post("/api/v1/auth/adult", { data: { adultId: 1, pin: "0000" } });
+  expect(login.ok(), await login.text()).toBeTruthy();
+  const headers = { Authorization: `Bearer ${(await login.json()).token}` };
+
+  const childPin = "8642";
+  const childId = await postId(request, "/api/v1/supervisor/children", headers, { name: `Handy ${RUN}`, pin: childPin });
+  const subjectId = await postId(request, "/api/v1/creator/subjects", headers, { name: `Handy-Fach ${RUN}` });
+  const seriesId = await postId(request, "/api/v1/creator/textbook-series", headers, {
+    name: `Handy-Reihe ${RUN}`, publisherId: null, subjectName: null, subjectId, schoolTypes: null,
+    sourceLanguage: null, targetLanguage: null, notes: null,
+  });
+  const unitId = await postId(request, `/api/v1/creator/textbook-series/${seriesId}/units`, headers, { label: "Unit 1", orderIndex: 1 });
+  const exerciseId = await postId(request, `/api/v1/creator/textbook-series/${seriesId}/units/${unitId}/cloze`, headers, {
+    title: `Question tags ${RUN}`, orderIndex: 1, rewardPoints: 10,
+    config: {
+      text: "1. Go, {{1}}\n2. Be, {{2}}\n3. Do, {{3}}",
+      gaps: [
+        { index: 1, answer: "won't you?" },
+        { index: 2, answer: "will you?" },
+        { index: 3, answer: "won't you?" },
+      ],
+    },
+  });
+  const planId = await postId(request, "/api/v1/supervisor/study-plans", headers,
+    { childId, title: `Handy-Plan ${RUN}`, durationDays: 7, active: true });
+  const positionId = await postId(request, `/api/v1/supervisor/study-plans/${planId}/positions`, headers,
+    { exerciseId, stage: 4, cadence: "Daily", useLeitner: false, orderStrategy: "Serial" });
+
+  await sohnLogin(page, { id: String(childId), pin: childPin });
+  // Über den Link der Tagesmission, nicht per `goto`: ein Neuladen verliert die Anmeldung.
+  await page.locator(`a[href="/sohn/test/${positionId}"]`).click();
+
+  const prompt = page.locator(".cloze-prompt");
+  await expect(prompt).toContainText("2. Be,");
+
+  // 1. Je Satz eine Zeile: die Oberkante von „2.“ liegt unter der Unterkante von „1.“.
+  const lines = await prompt.evaluate((el) => {
+    const rectOf = (needle: string) => {
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+        const at = n.textContent?.indexOf(needle) ?? -1;
+        if (at < 0) continue;
+        const range = document.createRange();
+        range.setStart(n, at);
+        range.setEnd(n, at + needle.length);
+        return range.getBoundingClientRect();
+      }
+      return null;
+    };
+    const first = rectOf("1. Go");
+    const second = rectOf("2. Be");
+    return first && second ? { firstBottom: first.bottom, secondTop: second.top } : null;
+  });
+  expect(lines, "beide Satzanfänge stehen im Text").not.toBeNull();
+  expect(lines!.secondTop, "Satz 2 beginnt in einer neuen Zeile").toBeGreaterThanOrEqual(lines!.firstBottom - 1);
+
+  // 3. Das Lösungsfeld zoomt nicht: mindestens 16 px Schrift.
+  const field = page.getByRole("textbox", { name: "Lösung" });
+  await expect(field).toBeVisible();
+  const fontSize = await field.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+  expect(fontSize, "Schriftgröße des Lösungsfelds").toBeGreaterThanOrEqual(16);
+});
+
+/*
+ * Fall 2 im schlechtesten Fall: das längste Stufen-Etikett („Selbstcheck“, Vokabel-Stufe 2) neben „Frage 1 / 10“.
+ * Rot, sobald die Kopfzeile nicht umbricht und „Später weiter“ rechts aus dem Bild schiebt.
+ */
+test("Kopfzeile des Tagestests am Handy: auch mit „Selbstcheck“ und zehn Fragen bleibt „Später weiter“ im Bild", async ({ page, request }) => {
+  const login = await request.post("/api/v1/auth/adult", { data: { adultId: 1, pin: "0000" } });
+  expect(login.ok(), await login.text()).toBeTruthy();
+  const headers = { Authorization: `Bearer ${(await login.json()).token}` };
+
+  const childPin = "8643";
+  const childId = await postId(request, "/api/v1/supervisor/children", headers, { name: `Kopf ${RUN}`, pin: childPin });
+  const subjectId = await postId(request, "/api/v1/creator/subjects", headers, { name: `Kopf-Fach ${RUN}` });
+  const seriesId = await postId(request, "/api/v1/creator/textbook-series", headers, {
+    name: `Kopf-Reihe ${RUN}`, publisherId: null, subjectName: null, subjectId, schoolTypes: null,
+    sourceLanguage: null, targetLanguage: null, notes: null,
+  });
+  const unitId = await postId(request, `/api/v1/creator/textbook-series/${seriesId}/units`, headers, { label: "Unit 1", orderIndex: 1 });
+  const words = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+  const exerciseId = await postId(request, `/api/v1/creator/textbook-series/${seriesId}/units/${unitId}/vocabulary`, headers, {
+    title: `Zahlen ${RUN}`, orderIndex: 1, rewardPoints: 10,
+    config: { direction: "front-to-back", sourceLang: "en", targetLang: "de",
+      items: words.map((w, i) => ({ front: `${w} ${RUN}`, back: `Zahl ${i + 1}` })) },
+  });
+  const planId = await postId(request, "/api/v1/supervisor/study-plans", headers,
+    { childId, title: `Kopf-Plan ${RUN}`, durationDays: 7, active: true });
+  const positionId = await postId(request, `/api/v1/supervisor/study-plans/${planId}/positions`, headers,
+    { exerciseId, stage: 2, cadence: "Daily", useLeitner: false, orderStrategy: "Serial" });
+
+  await sohnLogin(page, { id: String(childId), pin: childPin });
+  await page.locator(`a[href="/sohn/test/${positionId}"]`).click();
+
+  await expect(page.locator(".pill.mag", { hasText: "Selbstcheck" })).toBeVisible();
+  await expect(page.locator(".pill.cyan", { hasText: /10/ })).toBeVisible();
+  const later = page.getByRole("button", { name: "Später weiter" });
+  const box = await later.boundingBox();
+  expect(box, "„Später weiter“ hat eine Fläche").not.toBeNull();
+  expect(box!.x + box!.width, "rechter Rand im Fenster").toBeLessThanOrEqual(375);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth), "die Seite scrollt nicht seitlich").toBeLessThanOrEqual(375);
+});

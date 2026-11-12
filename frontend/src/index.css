@@ -80,6 +80,12 @@ a { color: var(--cyan); }
 /* ---------- Karten / Pills / Bars ---------- */
 .card { background: linear-gradient(180deg, var(--card-hi), var(--card)); border: 1.5px solid var(--stroke); border-radius: 18px; padding: 13px; box-shadow: 0 10px 22px -14px var(--shadow); }
 .row { display: flex; align-items: center; gap: 10px; }
+/* Kopfzeile einer Runde (Titel, Zähler, Stufe, Ausweg): Am Handy passt „Frage 10 / 10 · Selbstcheck · Später weiter“
+   nicht neben den Titel, und ohne Umbruch schöbe die Zeile den Ausweg rechts aus dem Bild (B-466). Die Pillen brechen
+   als Ganzes um, nicht in sich. */
+.play-head, .play-head > .row { flex-wrap: wrap; row-gap: 8px; }
+.play-head > .row { justify-content: flex-end; }
+.play-head .pill { white-space: nowrap; }
 .pill { font: 800 10px/1 var(--font-body); letter-spacing: .12em; text-transform: uppercase; padding: 5px 8px; border-radius: 999px; }
 .pill.gold { background: rgba(255, 199, 56, .16); color: var(--gold); }
 .pill.cyan { background: rgba(38, 217, 255, .16); color: var(--cyan); }
@@ -178,6 +184,9 @@ a { color: var(--cyan); }
 .fcard .cloze-prompt { font-size: 22px; line-height: 1.5; }
 .cloze-gap { display: inline-block; min-width: 2.2em; padding: 0 .25em; border-bottom: 2px solid var(--stroke); color: var(--muted); }
 .cloze-gap.asked { border-bottom-color: var(--gold); color: var(--gold); font-weight: 800; }
+/* Ein Lückentext mit nummerierten Sätzen trägt je Satz eine Zeile (`\n`); als ein Absatz gesetzt, findet das Kind die
+   gefragte Lücke unter zehn kaum (B-466). `pre-line` hält die Umbrüche und fasst Leerzeichen trotzdem zusammen. */
+.cloze-prompt { white-space: pre-line; }
 /* Die gleichwertigen Antworten unter der aufgedeckten Lösung (B-70): dicht an der Lösung, zu der sie gehören –
    die UA-Vorgabe eines <p> (je ~1em) hätte ein Loch zwischen „→ riesig" und „auch richtig: …" gerissen. */
 .reveal-alternatives { margin: 2px 0 8px; }
@@ -255,7 +264,8 @@ a { color: var(--cyan); }
    `<label>` (sie beschriftet kein einzelnes Eingabefeld) und trägt darum `.group-label` – sonst rendert sie
    als Fließtext neben ihren Nachbarn. */
 .field label, .field .group-label { font: 700 12px/1 var(--font-body); color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
-.field input, .field select, .field textarea { background: #0c0e2c; border: 1.5px solid var(--stroke); border-radius: 12px; color: var(--ink); padding: 12px; font-size: 15px; font-family: inherit; }
+/* 16 px, nicht 15: iOS-Safari zoomt beim Antippen in jedes Feld mit kleinerer Schrift (B-466). */
+.field input, .field select, .field textarea { background: #0c0e2c; border: 1.5px solid var(--stroke); border-radius: 12px; color: var(--ink); padding: 12px; font-size: 16px; font-family: inherit; }
 .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--cyan); border-color: var(--cyan); }
 
 /* Beschriftung + „ⓘ" nebeneinander. Das .field bleibt eine Spalte – die Zeile ist nur der Kopf darin. */

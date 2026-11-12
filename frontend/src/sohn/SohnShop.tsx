@@ -298,7 +298,7 @@ function InventoryRow({ item, busy, onActivate }: {
           value={qty}
           aria-label={t("shop.redeemAmount", { max: item.quantity })}
           onChange={(e) => setQty(Number(e.target.value))}
-          style={{ width: 90, background: "#0c0e2c", border: "1.5px solid var(--stroke)", borderRadius: 12, color: "var(--ink)", padding: 10, fontSize: 15 }}
+          style={{ width: 90, background: "#0c0e2c", border: "1.5px solid var(--stroke)", borderRadius: 12, color: "var(--ink)", padding: 10, fontSize: 16 }}
         />
         <button type="button" className="btn small lime" style={{ width: "auto", flex: 1 }}
           disabled={busy || weg} onClick={() => onActivate(item, clamped)}>

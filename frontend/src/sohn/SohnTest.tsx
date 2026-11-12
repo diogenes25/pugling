@@ -184,7 +184,7 @@ export function SohnTest() {
 
   return (
     <div className="sohn-body">
-      <div className="row">
+      <div className="row play-head">
         <span className="screen-title" style={{ margin: 0 }}>{t("test.title")}</span>
         <span className="row" style={{ marginLeft: "auto", gap: 8 }}>
           <span className="pill cyan">{t("test.questionOf", { n: Math.min(cursor + 1, total), total })}</span>
@@ -249,7 +249,7 @@ export function SohnTest() {
                   autoCapitalize="off"
                   autoCorrect="off"
                   spellCheck={false}
-                  style={{ marginTop: 10, width: "100%", background: "#0c0e2c", border: "1.5px solid var(--stroke)", borderRadius: 12, color: "var(--ink)", padding: 12, fontSize: 15 }}
+                  style={{ marginTop: 10, width: "100%", background: "#0c0e2c", border: "1.5px solid var(--stroke)", borderRadius: 12, color: "var(--ink)", padding: 12, fontSize: 16 }}
                   placeholder={t("test.solutionPlaceholder")}
                   value={typedAnswer}
                   onChange={(e) => setTypedAnswer(e.target.value)}
