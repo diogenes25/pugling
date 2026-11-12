@@ -93,12 +93,72 @@ stehen lasse, deckt kein Werkzeug – `mutant-probe.py` misst je Test, nicht je 
 
 **Lauf-Grenzen:** Review-Zähler 3 von 5, kein Tor gelandet → der Lauf geht weiter.
 
+## Sprint 32 — Ziel & Umfang
+
+**Sprint-Ziel:** *Der Vater kann im Assistenten jede Übung wählen, ohne dass das Anlegen mittendrin abbricht, und die
+Tagesdosis tut auch nach einer Änderung an Übung oder Pool, was sie verspricht.*
+**Umfang:** B-477 (XS, frontend, P2) und B-478 (S, backend, P3, Punkt 3 zurückgestellt) – beide aus der Nachschau von
+Sprint 29, `art: Defekt`, autonom gegrillt.
+**Entwickler-Brief:** Quelle der Wahrheit für die wirksame Dosis ist eine Stelle (`PositionPlayService.DailyDose`),
+die alle vier Leser fragen; das Ablehnen beim Zuweisen (B-04, Entscheidung 9) bleibt. Keine Migration, kein Vertrag.
+Testweg: `DosisResteTests`, `wizardFinish.test.ts`, `assistent.spec.ts`, volle Suiten.
+
+## Iteration 32 — umgesetzt
+
+- **B-477:** Der Assistent schickt Listen die Dosis 0 und sagt es am Feld („nicht für Listen") und im Überblick.
+- **B-478:** „eingeführt" zählt nur im Pool; die Dosis wirkt nicht, solange eine Liste als Menge wertet (auch wenn der
+  Creator sie nach dem Zuweisen umstellt), und die Position bleibt dann bearbeitbar; zwei Kommentare berichtigt.
+- Review-Zähler des Sprints: **3** (B-477 🟡 stille Ausnahme in der Oberfläche; B-478 🟡 Position nach dem Umstellen
+  nicht speicherbar; 🟡 Grenzfehler `<=` von der Probe nicht gefangen) – alle behoben, unter dem Limit 5.
+- Mutanten: elf Zeilen, zehn rot wie erwartet, eine (Review-Sperre) erwartet grün, weil am ersten Tag alles fällig ist
+  (Tabellen in B-477 und B-478).
+
+## Runde 3 — Rollengang / Abnahme (Sprint 32)
+
+Am Stand nach der letzten Änderung: Backend **1330/1330**, Vitest **749/749**, E2E **137 passed** – im zweiten Lauf.
+Der erste Lauf hatte **136 passed, 1 failed** (`creator-lehrwerk-weg.spec.ts`); die Spec berührt weder Dosis noch
+Assistent, einzeln und dreifach parallel grün. Die Ursache ist nicht gemessen – kein Freispruch, nur kein Befund.
+
+- **Vater – abgenommen.** `assistent.spec.ts` fährt den Assistenten bis zum Plan; das Feld sagt „(nicht für Listen)",
+  der Überblick „(außer Listen)". *„Ich will einfach alles anhaken können, und er soll es anlegen."* Die Liste im
+  Abschluss ist im Vitest belegt, nicht im Browser gefahren.
+- **Sohn – abgenommen (über die API).** `DosisResteTests` spielt als Kind: „eingeführt" stimmt nach dem Verkleinern,
+  eine umgestellte Liste fragt alle Einträge. *„Wenn da 2 von 5 steht, will ich, dass es 2 sind."*
+- **Creator – Regressionszeuge.** Er darf eine zugewiesene Liste weiter umstellen (keine Sperre); seine Specs grün.
+
+Commits: `6d885f5` (B-477), `d98e697` (B-478).
+
+## Retrospektive (Sprint 32)
+
+**Nachschau:** Sprint 31 (B-457, B-466) von einem frischen `frontend-reviewer` an `97daf9f`/`bc2c18a`, je Story mit
+benanntem Prüfpunkt. **Ein Durchrutscher:** die Zusicherung „Seite scrollt nicht seitlich" im Kopfzeilen-Test kann nicht
+fallen – `.sohn-body` scrollt selbst ([B-479](backlog/B-479-nachschau-reste-sprint-31.md), `entgangen_bei: [B-466,
+B-457]`, mit fünf 🟢-Grenzfällen). `nachgeschaut: 2026-11-12` an beiden.
+
+**Was die eigenen Tore durchgelassen haben:** dreimal dieselbe Klasse über zwei Sprints – eine **Zusicherung, die nie
+fällt**. In Sprint 31 hat der Reviewer eine aus dem ersten Test geholt; dieselbe Form stand im zweiten Test und kam durch
+die Abnahme, weil `mutant-probe.py` je *Test* misst: Die Mutante „Kopf ohne Umbruch" fiel am Knopf-Rand, und die
+`scrollWidth`-Zeile daneben ritt unbemerkt mit. In Sprint 32 fand der Reviewer erneut eine Probe ohne Grenzfall (`<=`).
+Der Sprint selbst: zwei 🟡 über Verhalten (stille Ausnahme in der Oberfläche, gesperrte Bearbeitung) – beides gefunden
+von den Reviewern, beide Male die Folge einer Regeländerung, deren *anderen* Weg ich nicht gegangen war.
+
+**Mechanismus – nur vorgeschlagen (Freigabe 3), nicht gelandet:**
+**(CP)** `mutant-probe.py` nimmt statt Testnamen auch **Meldungstexte von Zusicherungen** in `fails` (`expect(…, "die
+Seite scrollt nicht seitlich")`): rot zählt dann nur, wenn genau diese Zusicherung fällt. Wer jede Zusicherung mit
+eigener Meldung schreibt (in den Playwright-Specs üblich), kann so je Zeile messen, ob sie trägt. Kosten: eine
+Erweiterung des Skripts; xUnit-Zusicherungen ohne Meldung bleiben grob.
+
+**Lauf-Grenzen:** Review-Zähler 3 von 5, kein Tor gelandet → der Lauf darf weiter.
+
 ## Produktentscheidungen dieses Laufs (zum Umstoßen)
 
 1. **Schlusszeichen zählen beim Vergleich nicht** – auch ein *anderes* (`?` statt `.`), auch bei Ordnungszahlen
    (`3` für `3.`). B-457, Entscheidungen 1–4.
 2. **16 px für jedes Eingabefeld, auch im Vater-Web** (B-466, 2).
 3. **Rundenköpfe brechen am Handy in bis zu drei Zeilen um**, statt Etiketten zu kürzen (B-466, 1).
+4. **Der Assistent gibt keiner Liste eine Tagesdosis** – auch keiner geordneten (B-477, 1).
+5. **Eine Liste, die der Creator nachträglich auf „beliebige Reihenfolge" stellt, behält ihre Dosis gespeichert, aber
+   sie wirkt nicht**; der Creator wird dafür nicht gesperrt (B-478, 2).
 
 ## Offene Roadmap
 

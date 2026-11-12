@@ -10,7 +10,7 @@ migration: nein
 vertragsbruch: nein
 quelle: Rollengang am Access-Lehrwerk 2026-11-10 (Kopie der pugling.db, Sohn im Handy-Format 375×812, Vater-Web)
 entgangen_bei: []
-nachgeschaut: ""
+nachgeschaut: 2026-11-12
 grund: ""
 ersetzt_durch: []
 ---
@@ -116,3 +116,5 @@ Lückentext oder gegen das längste Stufen-Etikett.
   Grundlinie nach dem Zurückspielen grün. **Gerätevorbehalt:** ob iOS-Safari bei 16 px wirklich nicht mehr zoomt,
   misst nur ein iPhone (Chromium misst nur die Schriftgröße).
 - **2026-11-12** — **abgenommen.** Commit `bc2c18a`. Rollengang (Sprint 31) als E2E am frisch gestarteten Server: `lueckentext-am-handy.spec.ts` (2 Tests, 375 × 812) in der vollen Suite, 137 passed. Gerätevorbehalt Zoom bleibt (iPhone), steht in der Liste für den Menschen.
+- **2026-11-12** — Nachschau (Sprint 32, frischer `frontend-reviewer`): CSS von `play-head`, alle Verwender von `ClozePrompt`, `
+` unter `pre-line`, englische Etiketten bei 375 px, Kopf der Übungsrunde, alle 16-px-Stellen. **Entgangen:** die Zusicherung „Seite scrollt nicht seitlich" kann nicht fallen (`.sohn-body` scrollt selbst) → [B-479](B-479-nachschau-reste-sprint-31.md).

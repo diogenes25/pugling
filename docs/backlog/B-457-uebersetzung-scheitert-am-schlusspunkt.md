@@ -12,7 +12,7 @@ quelle: B-375
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-nachgeschaut: ""
+nachgeschaut: 2026-11-12
 ---
 
 # B-457 · Eine richtige Übersetzung ohne Schlusspunkt wird als falsch gewertet
@@ -118,3 +118,4 @@ falsch – für jeden Typ, nicht nur Übersetzung.
 
   Grundlinie nach dem Zurückspielen grün. Volle Suite vorher: 1326/1326.
 - **2026-11-12** — **abgenommen.** Commit `97daf9f`. Volle Suiten nach der letzten Änderung: Backend 1328/1328, Vitest 748/748, E2E 137 passed. Rollengang (Sprint 31): Sohn über die API-Probe `Vorschau_Wertet_Uebersetzung_Ohne_Punkt_Als_Richtig` und die Liste über den Katalog-`/check`; eine Browser-Runde mit Übersetzung ohne Punkt fuhr keine E2E – der Grader ist serverseitig, die Oberfläche zeigt nur dessen Urteil. Review-Zähler des Sprints 3 von 5.
+- **2026-11-12** — Nachschau (Sprint 32, frischer `frontend-reviewer`): Reihenfolge in `WithoutClosingMarks` und Rückfall für reine Zeichen, `Normalize` als einziger Textvergleich (Grep), doppelte Normalisierung der ungeordneten Liste, Client gegen Server, Grenzfälle (nur Leerzeichen, `" ? ! "`, `3.`, `?!`/`!?`, schmales NBSP, leere Buchstabenkästchen, `l'école.`) – kein Defekt. Grenzfälle `...`/`…`, Zeichen vor Anführung, `¿` in [B-479](B-479-nachschau-reste-sprint-31.md).

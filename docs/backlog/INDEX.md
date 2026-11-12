@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (73)
+### Offen (72)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -22,7 +22,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-471](B-471-ki-lehrplan-grammatik-nach-neuem-stoff.md) | Die Grammatik-Teile des KI-Lehrplans nehmen die Themen alphabetisch statt den neuen Stoff zuerst | Defekt | `idee` | P2 | — | backend | — |
 | [B-473](B-473-ki-creator-ablage-ignoriert-buch-des-kindes.md) | Ohne `--profile` und `--series` legt der KI-Creator die Übung in der ersten Reihe überhaupt ab, nicht im Buch des Kindes | Defekt | `idee` | P2 | — | backend | — |
 | [B-475](B-475-laden-abbruch-laesst-uebungen-ungetestet.md) | Bricht `laden.py` mitten im Anlegen ab, bleiben die schon angelegten Übungen für immer ungetestet | Defekt | `idee` | P2 | — | .claude/skills/lehrwerk-aufbereiten | — |
-| [B-477](B-477-assistent-dosis-auf-ungeordneter-liste.md) | Der Assistent schickt die Tagesdosis auch an ungeordnete Listen – das Anlegen bricht mittendrin ab | Defekt | `idee` | P2 | — | frontend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `gegrillt` | P2 | — | backend | Vertrag? |
 | [B-469](B-469-lernkontrolle-selbsteinschaetzung-und-typen-ohne-test.md) | Prüfauftrag: Der Vokabeltest ist per Vorgabe eine Selbsteinschätzung, Grammatik und Übersetzung haben keinen Test | Frage | `idee` | P2 | — | beides | — |
@@ -54,7 +53,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-455](B-455-fachlehrer-typen-pruefung-nach-dem-entdoppeln.md) | Ob ein unbekannter Übungstyp im Fachlehrer-Profil abgelehnt wird, hängt an der Reihenfolge | Defekt | `idee` | P3 | — | backend | — |
 | [B-456](B-456-nachschau-reste-sprint-28.md) | „Meine Übungen (0)" neben „Lade…", ein ungetesteter Zweig und ein falscher Tooltip im Manifest-Ausfall | Defekt | `idee` | P3 | — | frontend | — |
 | [B-467](B-467-leerzustaende-melden-erfolg.md) | Ohne eine einzige Antwort meldet der Lernstand „es sitzt alles 👍“, und freie Übungen tragen ein Häkchen | Defekt | `idee` | P3 | — | frontend | — |
-| [B-478](B-478-nachschau-reste-sprint-29.md) | Nachschau-Reste Sprint 29: „eingeführt" nach dem Verkleinern, Dosis-Sperre über die Übung umgehbar, zwei Kommentare | Defekt | `idee` | P3 | — | beides | — |
+| [B-479](B-479-nachschau-reste-sprint-31.md) | Nachschau-Reste Sprint 31: eine Zusicherung, die nicht fallen kann, und Grenzfälle der Schlusszeichen | Defekt | `idee` | P3 | — | beides | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `idee` | P3 | — | — | — |
 | [B-328](B-328-inline-typen-put-verschiebt-lernstand.md) | Sollen die Inhaltslisten gespielter Übungen anderer Typen (und der Wort-Tausch) gesperrt sein? | Frage | `idee` | P3 | — | backend | — |
@@ -91,7 +90,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-447](B-447-arcade-zeigt-iso-daten.md) | Die Sohn-Arcade zeigt Daten als ISO-Text | Aufräumen | `idee` | P3 | — | frontend | — |
 
 <details>
-<summary>Abgenommen (377)</summary>
+<summary>Abgenommen (379)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -427,6 +426,8 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-466](B-466-lueckentext-am-handy-umbrueche-kopfzeile-zoom.md) | Lückentext am Handy: Zeilenumbrüche verschwinden, „Später weiter“ ist abgeschnitten, das Eingabefeld zoomt | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-468](B-468-sohn-erreicht-die-app-nur-am-pc.md) | Der Sohn erreicht die App nur am Rechner des Vaters – „jederzeit am Handy“ braucht einen Ort für den Server | Wunsch | `abgenommen` | P1 | S | beides | — |
 | [B-472](B-472-jedes-wort-in-beide-richtungen.md) | Jedes Wort einer Wortliste in beide Richtungen üben | Wunsch | `abgenommen` | P1 | M | beides | — |
+| [B-477](B-477-assistent-dosis-auf-ungeordneter-liste.md) | Der Assistent schickt die Tagesdosis auch an ungeordnete Listen – das Anlegen bricht mittendrin ab | Defekt | `abgenommen` | P2 | XS | frontend | — |
+| [B-478](B-478-nachschau-reste-sprint-29.md) | Nachschau-Reste Sprint 29: „eingeführt" nach dem Verkleinern, Dosis-Sperre über die Übung umgehbar, zwei Kommentare | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-48](B-48-anonyme-registrierung-produktion.md) | Anonyme Registrierung ist auch in Produktion offen | Frage | `abgenommen` | P2 | S | backend | — |
 | [B-49](B-49-sohn-app-schreib-primitive.md) | Die Sohn-App benutzt die geteilten Schreib-Primitive nicht | Aufräumen | `abgenommen` | P3 | S | frontend | — |
 | [B-50](B-50-kind-beschreibt-sich-selbst.md) | Das Kind beschreibt sich selbst: Interessen in einem geführten Prozess | Wunsch | `abgenommen` | P2 | L | beides | — |
@@ -489,9 +490,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-470](B-470-foto-zu-wortliste-als-werkzeug.md) | Aus Fotos der Vokabelseiten wird eine Wortliste – als wiederholbares Werkzeug statt als Handarbeit unter raw/ | `in-arbeit` | erster Lauf an einem neuen Buch in frischer Sitzung (Découvertes Série bleue 2) |
 | [B-476](B-476-kartenstufe-steigt-mit-dem-leitner-fach.md) | Die Stufe einer Vokabelkarte steigt mit ihrem Leitner-Fach: erst umdrehen, dann auswählen, dann schreiben | `in-arbeit` | Ausrollen 47d0acb (Heimnetz-Start durch den Vater, für mich gesperrt) |
 
-### Nach der Abnahme entgangen (148)
+### Nach der Abnahme entgangen (149)
 
-**Nachgeschaut: 366 von 377 abgenommenen** — und in 129 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 11 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 368 von 379 abgenommenen** — und in 131 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 11 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -641,8 +642,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-449](B-449-zeitzonen-tests-greifen-nur-in-new-york.md) | Die Zeitzonen-Tests von `lib/datum.ts` greifen weder lokal noch in der CI | [B-427] | `idee` |
 | [B-454](B-454-position-ohne-leitner-nur-test.md) | Eine Vokabel-Position ohne Leitner-Kasten bot dem Kind nur „TEST" – Abfrage ohne je gezeigte Wörter | [B-419] | `abgenommen` |
 | [B-455](B-455-fachlehrer-typen-pruefung-nach-dem-entdoppeln.md) | Ob ein unbekannter Übungstyp im Fachlehrer-Profil abgelehnt wird, hängt an der Reihenfolge | [B-426] | `idee` |
-| [B-477](B-477-assistent-dosis-auf-ungeordneter-liste.md) | Der Assistent schickt die Tagesdosis auch an ungeordnete Listen – das Anlegen bricht mittendrin ab | [B-04] | `idee` |
-| [B-478](B-478-nachschau-reste-sprint-29.md) | Nachschau-Reste Sprint 29: „eingeführt" nach dem Verkleinern, Dosis-Sperre über die Übung umgehbar, zwei Kommentare | [B-04, B-451] | `idee` |
+| [B-477](B-477-assistent-dosis-auf-ungeordneter-liste.md) | Der Assistent schickt die Tagesdosis auch an ungeordnete Listen – das Anlegen bricht mittendrin ab | [B-04] | `abgenommen` |
+| [B-478](B-478-nachschau-reste-sprint-29.md) | Nachschau-Reste Sprint 29: „eingeführt" nach dem Verkleinern, Dosis-Sperre über die Übung umgehbar, zwei Kommentare | [B-04, B-451] | `abgenommen` |
+| [B-479](B-479-nachschau-reste-sprint-31.md) | Nachschau-Reste Sprint 31: eine Zusicherung, die nicht fallen kann, und Grenzfälle der Schlusszeichen | [B-466, B-457] | `idee` |
 
 <details>
 <summary>Nie nachgeschaut (11) — Arbeitsvorrat der Nachschau</summary>
@@ -653,16 +655,16 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | Id | Story |
 | --- | --- |
 | [B-375](B-375-heftseite-wird-uebungsentwurf.md) | Fotografierte Buchseiten werden zu Stoffnotizen einer Unit, aus denen eigene Übungen entstehen |
-| [B-457](B-457-uebersetzung-scheitert-am-schlusspunkt.md) | Eine richtige Übersetzung ohne Schlusspunkt wird als falsch gewertet |
 | [B-458](B-458-grammatik-entwurf-verraet-die-loesung.md) | Ein KI-Entwurf vom Typ Grammar darf die Lösung schon in der Aufgabe nennen |
 | [B-460](B-460-ki-aufgaben-programm-entscheidet.md) | Was nur eine richtige Antwort hat, entscheidet beim KI-Creator das Programm, nicht das Modell |
 | [B-461](B-461-lueckentext-ablenker-zaehlen-als-loesung.md) | Ein KI-Lückentext wertet die Ablenker der Wortbank als richtige Lösung |
 | [B-462](B-462-mehrdeutige-uebersetzung-verlangt-alle-bedeutungen.md) | Eine Übersetzung mit mehreren Bedeutungen („sobald, sowie“) gilt getippt nur als Ganzes |
 | [B-463](B-463-ki-lehrplan-deckt-ein-sechstel-der-wortliste.md) | Der KI-Lehrplan übt 20 von 124 Wörtern der Unit, ohne Karteikasten und nur Englisch → Deutsch |
 | [B-464](B-464-access-datenstand-aufraeumen.md) | Der Access-Datenstand trägt Trümmer des ersten Laufs, und das Kind zeigt auf das falsche Buch |
-| [B-466](B-466-lueckentext-am-handy-umbrueche-kopfzeile-zoom.md) | Lückentext am Handy: Zeilenumbrüche verschwinden, „Später weiter“ ist abgeschnitten, das Eingabefeld zoomt |
 | [B-468](B-468-sohn-erreicht-die-app-nur-am-pc.md) | Der Sohn erreicht die App nur am Rechner des Vaters – „jederzeit am Handy“ braucht einen Ort für den Server |
 | [B-472](B-472-jedes-wort-in-beide-richtungen.md) | Jedes Wort einer Wortliste in beide Richtungen üben |
+| [B-477](B-477-assistent-dosis-auf-ungeordneter-liste.md) | Der Assistent schickt die Tagesdosis auch an ungeordnete Listen – das Anlegen bricht mittendrin ab |
+| [B-478](B-478-nachschau-reste-sprint-29.md) | Nachschau-Reste Sprint 29: „eingeführt" nach dem Verkleinern, Dosis-Sperre über die Übung umgehbar, zwei Kommentare |
 
 </details>
 
