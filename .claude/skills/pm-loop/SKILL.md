@@ -107,9 +107,11 @@ re-create the later branch's migration on top of the earlier one so the chain st
 - Measure with `.claude/scripts/mutant-probe.py` **after the last edit** and paste its table: per case
   and per condition of a new query, one mutant that turns only it red. `ungemessen`, `abweichend` and a
   line that is green without the fix are no evidence. Size or contract claims: measured at the file,
-  command in the line.
-- Error messages name the lock and no way out beyond it; a surface they point at must exist and show
-  the lock. After rewording, `.claude/scripts/old-phrases.py` finds tests expecting the old text.
+  command in the line. Mutants build in `Debug` (the test gate holds `Release`), never while a reviewer builds.
+- Error messages name the lock and no way out beyond it **that this reader may take** (owner, base stock,
+  foreign); a surface they point at must exist and show the lock. A story about one sentence (lock, empty
+  state, confirmation) greps every sentence of that kind, UI included. After rewording,
+  `.claude/scripts/old-phrases.py` finds tests expecting the old text.
 - Run `pugling-reviewer` and/or `frontend-reviewer` (by the story's `wo`). Its brief names the sink; the reviewer
   greps for paths around it. Fold in correctness
   findings; note cleanup-only findings as non-blocking.

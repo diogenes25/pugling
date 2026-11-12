@@ -13,6 +13,7 @@ unverifiziert: false
 entgangen_bei: [B-498, B-500]
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-13
 ---
 
 # B-506 · Nachschau-Reste Sprint 45: die Konsole wählt Buch und Profil noch nicht mit den Eingaben der Senke
@@ -118,3 +119,9 @@ Aufruf scheitert.
   Rollengang: Creator – die Konsole lief in jedem Fall gegen den echten In-Process-Server (`CreatorAgentTests`, Modell
   gefälscht); ein Lauf mit Ollama gegen `:5200` entfiel (echte DB). Vater/Sohn Regressionszeugen: Suite grün, kein Pfad im Diff.
   Commit `6411497`.
+- **2026-11-13** — nachgeschaut (Retro Sprint 48, frischer `pugling-reviewer` an `6411497` + `5a5cdd5`, gelesen). Geprüft:
+  Profil-Id der automatischen Wahl erreicht das Briefing über den Zweig des benannten Profils (`BuildRequestAsync:501`,
+  `BriefingBuilder.cs:252`); `FitsSubjectOf` gegen `Problem` über alle zehn Kombinationen von `ProfileFitTests` von Hand
+  nachgerechnet – gleich; AK 1a/1b/1c/2/3/4 je gegen die alte Regel durchgedacht – rot. Funde → [B-510](B-510-buchwahl-bietet-reihe-ohne-fach-zum-schreiben.md):
+  🟡 Buchwahl zählt eine Reihe ohne Fach, an der seit B-508 jedes schreibende Verb endet; 🟢 AK 1d trägt M1 nicht;
+  🟢 Kommentar „keine zweite Prüfung".
