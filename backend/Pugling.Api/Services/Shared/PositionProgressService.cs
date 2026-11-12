@@ -177,13 +177,14 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     {
         var positions = await LoadPositionsAsync(plan.Id, ct);
         var statuses = new List<PositionStatus>(positions.Count);
-        // One grouped query for the whole plan: this method runs once per day of a history, a lookup per position
-        // would multiply with both.
-        var introducedByPosition = await db.PositionItemProgress.AsNoTracking()
-            .Where(p => p.PlanPosition!.StudyPlanId == plan.Id && p.IntroducedAt != null)
-            .GroupBy(p => p.PlanPositionId)
-            .Select(g => new { PositionId = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(g => g.PositionId, g => g.Count, ct);
+        // One query for the whole plan: this method runs once per day of a history, a lookup per position would
+        // multiply with both. The indices come along because the pool is only known per position below - a shrunk
+        // pool must not count words beyond it (B-478).
+        var introducedByPosition = (await db.PositionItemProgress.AsNoTracking()
+                .Where(p => p.PlanPosition!.StudyPlanId == plan.Id && p.IntroducedAt != null)
+                .Select(p => new { p.PlanPositionId, p.ItemIndex })
+                .ToListAsync(ct))
+            .ToLookup(p => p.PlanPositionId, p => p.ItemIndex);
 
         foreach (var pos in positions)
         {
@@ -201,7 +202,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
                 pos.Id, pos.ExerciseId, pos.Exercise?.Title ?? "", pos.Exercise?.Type.ToString() ?? "",
                 manifest?.Renderer ?? "", pos.Order, pos.Cadence, checkMode, pos.UseLeitner,
                 testable, goalMet, dueCount, poolSize, pos.PointsGoalMet,
-                Math.Min(introducedByPosition.GetValueOrDefault(pos.Id), poolSize)));
+                introducedByPosition[pos.Id].Count(index => index < poolSize)));
         }
 
         // The day's obligation = every position with a goal (daily today / weekly this week) done.

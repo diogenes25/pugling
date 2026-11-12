@@ -349,7 +349,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             return this.ProblemWithCode(ApiErrors.NotFound, "The content does not belong to this position.");
         // Under a daily dose (B-04) only the cards of this round can be reviewed: any other index would introduce a
         // content the day has no room for, and the dose would be a suggestion.
-        if (pos.NewItemsPerDay > 0 && !session.Order.Contains(dto.ItemIndex))
+        if (play.DailyDose(pos) > 0 && !session.Order.Contains(dto.ItemIndex))
             return this.ProblemWithCode(ApiErrors.NotFound, "The content is not part of this practice round.");
         var item = items[dto.ItemIndex];
 

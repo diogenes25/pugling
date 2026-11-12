@@ -23,6 +23,17 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// </summary>
     public IExerciseType? TypeOf(Exercise exercise) => registry.ByKey(exercise.Type);
 
+    /// <summary>
+    /// The daily dose in force: the position's <see cref="PlanPosition.NewItemsPerDay"/>, but 0 while its exercise grades
+    /// as a set (an unordered list). Such an exercise accepts any entry not yet named, and a dose would hide most of them -
+    /// a right answer outside the day's portion would count as wrong. Assigning rejects the combination; this covers the
+    /// list a creator switches to any order after it was assigned (B-478).
+    /// </summary>
+    public int DailyDose(PlanPosition pos) =>
+        pos.NewItemsPerDay > 0 && pos.Exercise is { } exercise && TypeOf(exercise)?.GradesAsSet(ConfigOf(exercise)) == true
+            ? 0
+            : pos.NewItemsPerDay;
+
     /// <summary>Default Leitner intervals in days (index = box; index 0 unused).</summary>
     private static readonly int[] DefaultBoxIntervalDays = [0, 1, 2, 4, 7, 14];
 
@@ -173,8 +184,8 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
             .Where(x => ScopeMatch(pos.Scope, x.Prog) && (!dueOnly || !pos.UseLeitner || IsDue(x.Prog, day)));
 
         // The dose only shapes a round that is played for the record; free practice (info) introduces nothing.
-        if (dueOnly && pos.NewItemsPerDay > 0)
-            due = WithinDailyDose(due, pos.NewItemsPerDay, progress.Values.Count(p => p.IntroducedAt == day));
+        if (dueOnly && DailyDose(pos) is > 0 and var dose)
+            due = WithinDailyDose(due, dose, progress.Values.Count(p => p.IntroducedAt == day));
 
         return OrderIndices(due, strategy);
     }

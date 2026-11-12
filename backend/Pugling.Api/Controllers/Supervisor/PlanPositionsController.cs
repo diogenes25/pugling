@@ -79,20 +79,6 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
     // the form with what will actually apply, and a rule that two callers derive separately is the kind
     // of duplicate this repo has paid for. Bound, fallback and their reasoning live there now.
 
-    /// <summary>
-    /// Upper bound on the number of windows per position: a day has 24 hours, and the column is deliberately
-    /// unbounded (JSON) - without a limit a client could store an arbitrarily long list there.
-    /// </summary>
-    private const int MaxTimeSlots = 24;
-
-    /*
-     * Both checks catch the same failure mode as the percentage threshold above - the setting that looks valid
-     * and does NOTHING: a slot with start >= end never applies, and a factor of 0 takes the points away from
-     * every correct answer inside it.
-     *
-     * OVERLAP is deliberately not checked: it is explicitly allowed and the choice stays deterministic anyway
-     * (the narrowest slot wins). Forbidding it would add a validation case to a place that has none on purpose.
-     */
     // The daily dose (B-04) is a count of contents; the upper bound only keeps a typo from reading as "no cap".
     private static string? DoseProblem(int? newItemsPerDay) =>
         newItemsPerDay is < 0 or > 200 ? "newItemsPerDay must be between 0 and 200 (0 = no cap)." : null;
@@ -109,6 +95,20 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             ? "A daily dose (newItemsPerDay) does not fit an exercise whose entries may be named in any order."
             : null;
 
+    /// <summary>
+    /// Upper bound on the number of windows per position: a day has 24 hours, and the column is deliberately
+    /// unbounded (JSON) - without a limit a client could store an arbitrarily long list there.
+    /// </summary>
+    private const int MaxTimeSlots = 24;
+
+    /*
+     * Both checks catch the same failure mode as the percentage threshold above - the setting that looks valid
+     * and does NOTHING: a slot with start >= end never applies, and a factor of 0 takes the points away from
+     * every correct answer inside it.
+     *
+     * OVERLAP is deliberately not checked: it is explicitly allowed and the choice stays deterministic anyway
+     * (the narrowest slot wins). Forbidding it would add a validation case to a place that has none on purpose.
+     */
     private static string? TimeSlotProblem(List<ScoringTimeSlot>? slots)
     {
         if (slots is null) return null;
@@ -250,8 +250,12 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         if (RequireTypedTestValidation.ProblemText(types.ByKey(exercise.Type), dto.RequireTypedTest) is { } typedProblem)
             return this.ProblemWithCode(ApiErrors.ValidationError, typedProblem);
 
+        // The set check only judges a dose being set now: a list the creator switched to any order after it was assigned
+        // keeps its stored dose, which play ignores (PositionPlayService.DailyDose) - blocking every other edit of the
+        // position over it would lock the father out of a setting he did not touch (B-478).
         if ((DoseNeedsLeitnerProblem(dto.NewItemsPerDay ?? pos.NewItemsPerDay, dto.UseLeitner ?? pos.UseLeitner)
-                ?? DoseOnSetProblem(exercise, dto.NewItemsPerDay ?? pos.NewItemsPerDay)) is { } doseProblem)
+                ?? (dto.NewItemsPerDay is { } dose && dose != pos.NewItemsPerDay ? DoseOnSetProblem(exercise, dose) : null))
+            is { } doseProblem)
             return this.ProblemWithCode(ApiErrors.ValidationError, doseProblem);
 
         if (dto.Order is not null) pos.Order = dto.Order.Value;

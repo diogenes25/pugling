@@ -178,7 +178,7 @@ public class VierWochenTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
         var cold = await child.PostAsJsonAsync(TestBase(s), new { });
         Assert.Equal(5, (await cold.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("totalItems").GetInt32());
 
-        // Day 1 and day 2 fully played: ten words introduced, all answered right, none due on day 3 but the new ones.
+        // Days 1 to 3 fully played: five new words a day, every answer right.
         for (var day = 1; day <= 3; day++)
         {
             if (day > 1)

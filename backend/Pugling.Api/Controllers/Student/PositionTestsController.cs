@@ -182,8 +182,9 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             .ToDictionaryAsync(p => p.ItemIndex, ct);
         var introduced = progress.Values.Where(p => p.IntroducedAt != null).Select(p => p.ItemIndex).ToList();
         // With a daily dose (B-04) the test checks the day's portion; otherwise everything introduced.
-        var pool = pos.NewItemsPerDay > 0
-            ? PositionPlayService.DailyTestPortion(pos.NewItemsPerDay, poolSize, progress.Values, day)
+        var dose = play.DailyDose(pos);
+        var pool = dose > 0
+            ? PositionPlayService.DailyTestPortion(dose, poolSize, progress.Values, day)
             : introduced.Count > 0 ? introduced : Enumerable.Range(0, poolSize).ToList();
         // FREEZE the examination order per the position's strategy (strictly server-driven, no going back).
         var order = PositionPlayService.OrderIndices(pool.Select(i => (i, progress.GetValueOrDefault(i))), pos.OrderStrategy);
@@ -216,7 +217,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         // the day is counted from it. Without a dose a cold word is introduced when the child answers it
         // (IntroduceAnsweredAsync). Either way its week of ladder starts on the test day, as the stage above assumes.
         // The supervisor's preview must not move the child's learning state.
-        if (pos.NewItemsPerDay > 0 && User.IsStudent())
+        if (dose > 0 && User.IsStudent())
             await play.IntroduceAsync(positionId, pool.Where(i => !introduced.Contains(i)), day, ct);
         await db.SaveChangesAsync(ct);
 
