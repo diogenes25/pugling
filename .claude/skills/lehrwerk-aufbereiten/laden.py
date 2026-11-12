@@ -250,6 +250,13 @@ def check(book, words, exercises):
             err.append(f'{name}: distractors ist eine Liste nicht-leerer Texte, z. B. ["went", "gone"]; '
                        f'ohne Wortbank das Feld weglassen')
             distractors = None
+        # The same for a hand-written bank (B-491): the server drops blank entries silently - a bank of nothing else
+        # turns the word-bank stage into free typing, a blank among real ones is a slip worth naming.
+        bank = e["config"].get("wordBank") if e["typ"] == "cloze" else None
+        if e["typ"] == "cloze" and "wordBank" in e["config"] and not (
+                isinstance(bank, list) and bank and all(isinstance(w, str) and w.strip() for w in bank)):
+            err.append(f'{name}: wordBank ist eine Liste nicht-leerer Texte, z. B. ["went", "gone"]; '
+                       f'ohne Wortbank das Feld weglassen')
         if e["typ"] == "cloze" and "markup" in e["config"]:
             _, gaps, problems = parse_cloze(e["config"]["markup"])
             err.extend(f"{name}: {p}" for p in problems)

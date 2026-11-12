@@ -317,4 +317,69 @@ public class ClozePlayTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
 
         Assert.Equal(new[] { renamed, "tower" }.Order(StringComparer.OrdinalIgnoreCase), pool);
     }
+
+    // ---- B-491: the bank's own entries are cleaned before it counts as a bank ----
+
+    /// <summary>
+    /// B-491: a bank of blank entries is no bank. The stage then stays free text, like a bank that was left out. Red if
+    /// blank entries count as a bank: the completion fills it with the solutions alone ("saw", "went") next to an
+    /// unlabelled button.
+    /// </summary>
+    [Fact]
+    public async Task Wortbank_aus_leeren_Eintraegen_ist_keine_Wortbank()
+    {
+        var exerciseId = await CreateClozeAsync(await TestApi.AdultAsync(_factory), new
+        {
+            text = "I {{1}} home and {{2}} a film.",
+            gaps = new[] { new { index = 1, answer = "went" }, new { index = 2, answer = "saw" } },
+            wordBank = new[] { "", "   " },
+        });
+        var (planId, positionId) =
+            TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)ClozeStage.TranslationWordBank);
+
+        var cards = await CardsAsync(await TestApi.ChildAsync(_factory), planId, positionId);
+
+        Assert.Equal(2, cards.GetArrayLength());
+        Assert.All(cards.EnumerateArray(), card => JsonAssert.Null(card, "choices"));
+    }
+
+    /// <summary>
+    /// B-491: a blank entry next to real ones drops out and does not reach the child as an unlabelled tile, and a kept
+    /// entry arrives without the spaces around it. Red if the bank's entries are passed through as written (the pool
+    /// then starts with ""), or if kept entries are not trimmed (" go " instead of "go").
+    /// </summary>
+    [Fact]
+    public async Task Wortbank_laesst_leere_Eintraege_weg()
+    {
+        var exerciseId = await CreateClozeAsync(await TestApi.AdultAsync(_factory), new
+        {
+            text = "I {{1}} home.",
+            gaps = new[] { new { index = 1, answer = "went" } },
+            wordBank = new[] { " go ", "", "gone" },
+        });
+
+        var pool = Assert.Single(await BankChoicesAsync(exerciseId));
+
+        Assert.Equal(["go", "gone", "went"], pool);
+    }
+
+    /// <summary>
+    /// B-491: entries the grader cannot tell apart are one tile, the first one written. "went" and "Went." would be two
+    /// right tiles, "qu’il" and "qu'il" too (the KI-Creator compared its distractors only by case). Red if duplicates are
+    /// kept, or if they are compared by exact spelling or case alone ("Went." and "qu’il" stay).
+    /// </summary>
+    [Fact]
+    public async Task Wortbank_legt_ununterscheidbare_Eintraege_zusammen()
+    {
+        var exerciseId = await CreateClozeAsync(await TestApi.AdultAsync(_factory), new
+        {
+            text = "I {{1}} home, {{2}} vient.",
+            gaps = new[] { new { index = 1, answer = "went" }, new { index = 2, answer = "qu'il" } },
+            wordBank = new[] { "went", "Went.", "go", "go", "qu’il", "qu'il" },
+        });
+
+        var pools = await BankChoicesAsync(exerciseId);
+
+        Assert.All(pools, pool => Assert.Equal(["go", "qu’il", "went"], pool));
+    }
 }

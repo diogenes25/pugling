@@ -141,10 +141,10 @@ export const normalizeAnswer = (s: string) => {
 };
 
 /**
- * Auswahl gefüllt, aber die Lösung steht nicht darin. Seit B-73 spielt der Server die Möglichkeiten aus:
- * Das Kind bekommt dann **nur** diese Knöpfe und kein Eingabefeld – jede Antwort ist falsch, der
- * Leitner-Kasten kommt nie vorwärts und der Malus greift. Nur ein Hinweis, keine Sperre: eine halbfertige
- * Übung darf man speichern (die Auswahl selbst ist optional).
+ * Auswahl gefüllt, aber die Lösung steht nicht darin. Seit B-490 hängt der Server die Antwort dann als letzten Knopf
+ * an – lösbar bleibt die Frage, aber die Stelle ist immer dieselbe und die Schreibweise die der Antwort, nicht die einer
+ * ähnlichen Möglichkeit („York" neben der Antwort „in York" wird falsch gewertet). Darum bleibt der Hinweis; eine Sperre
+ * ist er nicht: eine halbfertige Übung darf man speichern (die Auswahl selbst ist optional).
  */
 export const choicesMissAnswer = (r: Row): boolean => {
   const choices = strList(r.choices).map(normalizeAnswer).filter((c) => c !== "");
@@ -658,7 +658,7 @@ export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, re
               onChange={(v) => patchRow(i, { choices: v })} />
             <span className={`live-region${choicesMissAnswer(r) ? " error-box" : ""}`} role="status">
               {choicesMissAnswer(r)
-                && "Die Antwort steht nicht in der Auswahl – das Kind bekommt nur diese Knöpfe und kann nicht richtig antworten."}
+                && "Die Antwort steht nicht in der Auswahl – das Kind bekommt sie als letzten Knopf dazu, hinter den hier eingetragenen."}
             </span>
           </>}
           {type === "Essay" && <>

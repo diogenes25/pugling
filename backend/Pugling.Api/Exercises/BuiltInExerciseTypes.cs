@@ -224,13 +224,16 @@ public sealed class ClozeExerciseType : ExerciseTypeBase
     /// the child. Added for every gap of the exercise, not only the asked one: a pool that differs per card names
     /// the asked gap's solution.
     /// </para>
+    /// <para>
+    /// Cleaned first (B-491, <see cref="AnswerChecking.Tiles"/>): a bank of blank entries is no bank and the stage
+    /// stays free text - counted as a bank, the completion would turn it into a pool of nothing but solutions.
+    /// </para>
     /// </summary>
     public override IReadOnlyList<string>? Choices(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, int stage)
     {
         if ((ClozeStage)stage != ClozeStage.TranslationWordBank) return null;
-        var bank = Deserialize<ClozeConfig>(configJson).WordBank;
-        if (bank is not { Count: > 0 }) return null;
-        var pool = bank.ToList();
+        var pool = AnswerChecking.Tiles(Deserialize<ClozeConfig>(configJson).WordBank ?? []);
+        if (pool.Count == 0) return null;
         foreach (var gap in items)
         {
             // Checked against the pool as it grows: two gaps sharing a missing solution get one tile.
@@ -455,14 +458,26 @@ internal static class AnswerChecking
     public static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
 
     /// <summary>
-    /// The answer choices the creator typed for the question this atom stands for – unchanged and in their
-    /// order; <c>null</c> when the list is empty. Curated content, not a generated pool: it is deliberately
-    /// not reordered, because the author's order can carry meaning (a timeline, a "none of these" at the end)
-    /// and there is no cross-item correlation to break – every question owns its own list.
+    /// The author's tiles as the child may see them: blank entries drop out (an empty one would arrive as an unlabelled
+    /// button), kept ones lose the spaces around them, and of entries the grader cannot tell apart (<see cref="StageMechanics.Normalize"/>) only the first
+    /// written stays - "went" and "Went." would be two right tiles. The one input cleanup for every curated list of
+    /// options (B-491), so the word bank and the comprehension choices cannot differ in it.
+    /// </summary>
+    public static List<string> Tiles(IEnumerable<string?> entries) =>
+        [.. entries.Where(e => !string.IsNullOrWhiteSpace(e)).Select(e => e!.Trim()).DistinctBy(StageMechanics.Normalize)];
+
+    /// <summary>
+    /// The answer choices the creator typed for the question this atom stands for, in their order and cleaned by
+    /// <see cref="Tiles"/>; <c>null</c> when nothing usable is left. Curated content, not a generated pool: it is
+    /// deliberately not reordered, because the author's order can carry meaning (a timeline, a "none of these" at the
+    /// end) and there is no cross-item correlation to break – every question owns its own list.
     /// <para>
     /// Decided per item, not per exercise: one run may mix questions with options and questions without.
-    /// Blank entries drop out (same stance as <see cref="Blank"/>) – an empty option would arrive as an
-    /// unlabelled button.
+    /// </para>
+    /// <para>
+    /// Always solvable (B-490): if no option is one the grader accepts, the answer is added behind the author's
+    /// options. Checked here, where every list reaches the child, because the lists are written on several paths
+    /// (editor, loader, API) and only the editor warns.
     /// </para>
     /// <para>
     /// The stage plays no part here, unlike in every sibling type: the comprehension types have no stage
@@ -474,9 +489,16 @@ internal static class AnswerChecking
         if (item.Index < 0 || item.Index >= questions.Count) return null;
         var choices = questions[item.Index].Choices;
         if (choices is null) return null;
-        var usable = choices.Where(c => !string.IsNullOrWhiteSpace(c)).ToList();
-        return usable.Count > 0 ? usable : null;
+        var usable = Tiles(choices);
+        if (usable.Count == 0) return null;
+        if (!usable.Any(choice => Grader.Matches(choice, item))
+            && item.GradedAnswers().FirstOrDefault(a => !string.IsNullOrWhiteSpace(a)) is { } answer)
+            usable.Add(answer);
+        return usable;
     }
+
+    // Stateless; the same comparison that grades the child's pick decides whether an option answers the question.
+    private static readonly AnswerGrader Grader = new();
 
     public static Dictionary<int, string?> ByIndex(IReadOnlyList<GivenAnswer> answers)
     {

@@ -153,6 +153,60 @@ public class ExerciseChoicesTests(PuglingWebAppFactory factory) : IClassFixture<
         JsonAssert.Null(card, "reveal");
     }
 
+    // ---- B-490: the options always contain an answer the grader accepts ----
+
+    /// <summary>
+    /// B-490: options without the answer get it, behind the author's own (their order is kept). Red if the list is passed
+    /// through as written - the child could then pick nothing right.
+    /// </summary>
+    [Theory]
+    [InlineData("reading")]
+    [InlineData("listening")]
+    public async Task Moeglichkeiten_ohne_Loesung_bekommen_sie(string route)
+    {
+        var questions = new[] { new { prompt = "Where does B live?", choices = new[] { "Leeds", "Hull" }, answer = "York" } };
+        object config = route == "reading"
+            ? new { text = "B lives in York.", questions }
+            : new { audioUrl = "https://example.invalid/dialogue.mp3", questions };
+
+        var cards = await PlayAsync(route, config, (int)TestStage.FreeText);
+
+        Assert.Equal(["Leeds", "Hull", "York"], ChoicesOf(cards.EnumerateArray().Single()));
+    }
+
+    /// <summary>
+    /// B-490: an option the grader accepts already answers the question - in another case or with a closing mark - and
+    /// nothing is added. Green before the fix too (the list was passed through); it turns red if the completion compares
+    /// by exact spelling ("York" would join "york.").
+    /// </summary>
+    [Fact]
+    public async Task Moeglichkeit_in_anderer_Schreibweise_genuegt()
+    {
+        var cards = await PlayAsync("reading", new
+        {
+            text = "B lives in York.",
+            questions = new[] { new { prompt = "Where does B live?", choices = new[] { "york.", "Hull" }, answer = "York" } },
+        }, (int)TestStage.FreeText);
+
+        Assert.Equal(["york.", "Hull"], ChoicesOf(cards.EnumerateArray().Single()));
+    }
+
+    /// <summary>
+    /// B-490/B-491: options the grader cannot tell apart are one button, the first one written - the same cleanup as the
+    /// word bank. Red if duplicates are kept ("york" would be a second right button).
+    /// </summary>
+    [Fact]
+    public async Task Ununterscheidbare_Moeglichkeiten_kommen_einmal()
+    {
+        var cards = await PlayAsync("reading", new
+        {
+            text = "B lives in York.",
+            questions = new[] { new { prompt = "Where does B live?", choices = new[] { "York", "Hull", "york" }, answer = "York" } },
+        }, (int)TestStage.FreeText);
+
+        Assert.Equal(["York", "Hull"], ChoicesOf(cards.EnumerateArray().Single()));
+    }
+
     // ---- The exam and the supervisor's preview run the same projection ----
 
     [Fact]
