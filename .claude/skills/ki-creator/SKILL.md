@@ -54,7 +54,10 @@ Planende (⌈Einträge / `--days`⌉) und getipptem Test (B-463).
 betreut (Seed: Konto 1) – daraus entsteht eine auf das Kind zugeschnittene Übung.
 **Allgemein** (`--profile`, ohne Kind) genügt die Creator-Rolle und erzeugt Katalogware; Klassenstufe,
 Schulart und Quelle kommen dann aus dem Profil. Ohne `--profile` nimmt der Agent das Profil auf der Reihe des
-Kinder-Buchs (`profiles/match`); hat das Kind mehrere Bücher mit Profil, ist `--profile` Pflicht.
+Kinder-Buchs (`profiles/match`); hat das Kind mehrere Bücher mit Profil, ist `--profile` Pflicht. Ist ein Ort genannt
+(`--series`), spricht nur ein Profil auf dieser Reihe, sonst keines. Ein werkunabhängiges `--profile` legt mit Kind im
+Buch des Kindes in seinem Fach ab, ohne Kind braucht es `--series`. Den Stoff liest der Agent immer aus der Unit, in
+der die Übung entsteht (B-484).
 
 Fachliche Kernregel: **Interessen kleiden den Stoff ein, sie ersetzen ihn nie.**
 

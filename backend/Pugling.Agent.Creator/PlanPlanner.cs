@@ -329,5 +329,5 @@ public sealed class PlanPlanner(CreatorPipeline pipeline, SupervisorApi supervis
     /// rather than guessed - the unit label should be the one the exercises name as their source.
     /// </summary>
     private static string DeriveTitle(PlanRequest request, Briefing.CreatorBriefing briefing) =>
-        $"Lehrplan: {briefing.Profile?.Unit?.Label ?? request.Base.Topic ?? briefing.SeriesUnitLabel}";
+        $"Lehrplan: {briefing.Material.Unit.Label}";
 }

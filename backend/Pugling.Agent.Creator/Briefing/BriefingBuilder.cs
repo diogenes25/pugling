@@ -62,7 +62,12 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
                 WeakWords = await student.ListWordMasteryAsync(child.ChildId, onlyWeak: true, take: MaxWeakWords,
                     sourceLang: sourceLang, targetLang: targetLang, ct: ct),
             };
-        var (series, unit) = await ResolveMaterialAsync(request, profile, child, subject.Id, subject.Name, ct);
+        // The material is where the exercise goes - the series and unit decided once in the request (B-484). Reading it
+        // from the profile's or the child's book again was a second decision that could name another work.
+        if (request.UnitId is int named && named != targetUnit.Id)
+            throw new AgentUsageException(
+                $"Unit {named} ist nicht die Unit {targetUnit.Id}, in der die Übung entsteht – der Stoff kommt aus "
+                + "der Unit, in der sie liegt; gib nur eine an.");
 
         // Existing titles go into the prompt as "do not repeat" - that prevents near-duplicates.
         var existing = await creator.SearchExercisesAsync(subjectId: request.SubjectId,
@@ -94,7 +99,8 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
         var dressing = await ResolveInterestTagsAsync(request, dressedChild, ct);
 
         return new CreatorBriefing(
-            Profile: profile is null ? null : Facts(profile, series, unit),
+            Profile: profile is null ? null : Facts(profile),
+            Material: new MaterialFacts(targetSeries.Name, targetSeries.PublisherName, targetSeries.Notes, targetUnit),
             // `--general` keeps the child's series and unit but drops the person: the subject matter is
             // right, the exercise stays usable for the shared catalog.
             Child: dressedChild,
@@ -217,9 +223,10 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
     }
 
     /// <summary>
-    /// The request's profile: explicitly named, otherwise the <b>best fit</b> for the child. Without
-    /// either, it stays empty - the agent then works as a generalist as before, instead of aborting with
-    /// an error message (a catalog without profiles must remain usable).
+    /// The request's profile: explicitly named, otherwise the best fit for the child <b>among the profiles on the target
+    /// series</b>, else among those without a series (B-484) - one that wins on grade and school type but teaches another
+    /// work would bring that work's persona to this one. Without either, it stays empty - the agent then works as a generalist, instead of aborting
+    /// (a catalog without profiles must remain usable).
     /// </summary>
     public async Task<CreatorProfileResponse?> ResolveProfileAsync(GenerationRequest request, CancellationToken ct = default)
     {
@@ -238,53 +245,15 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
         if (request.ChildId is not int childId) return null;
 
         var matches = await creator.MatchProfilesAsync(childId, request.SubjectId, ct);
-        return matches.Count > 0 ? matches[0].Profile : null;
+        // A teacher for every book of the subject is the next best; one on another series never is.
+        return (matches.FirstOrDefault(m => m.Profile.SeriesId == request.SeriesId)
+                ?? matches.FirstOrDefault(m => m.Profile.SeriesId is null))?.Profile;
     }
 
-    /// <summary>
-    /// The request's material: the series (from the profile, otherwise from the child's textbook) and
-    /// the unit - explicitly named, otherwise the child's current unit. The unit is <b>checked against
-    /// the series</b>: a unit from an unrelated work would be worse than none, because the model would
-    /// then treat its material as confirmed.
-    /// </summary>
-    private async Task<(TextbookSeriesResponse? Series, SeriesUnitResponse? Unit)> ResolveMaterialAsync(
-        GenerationRequest request, CreatorProfileResponse? profile, ChildFacts? child,
-        int subjectId, string subjectName, CancellationToken ct)
-    {
-        var childBook = child?.PrimaryTextbook(subjectId, subjectName);
-        if ((profile?.SeriesId ?? childBook?.SeriesId) is not int seriesId)
-        {
-            if (request.UnitId is not null)
-                throw new AgentUsageException(
-                    "--unit setzt eine Lehrwerk-Reihe voraus: hinterlege sie am Creator-Profil oder am Lehrbuch des Kindes.");
-            return (null, null);
-        }
-
-        var series = await creator.GetSeriesAsync(seriesId, ct);
-        var units = await creator.ListUnitsAsync(seriesId, ct: ct);
-
-        if (request.UnitId is int wanted)
-            return (series, units.FirstOrDefault(u => u.Id == wanted)
-                            ?? throw new AgentUsageException(
-                                $"Unit {wanted} gehört nicht zur Reihe '{series.Name}' – " +
-                                "'pugling-creator profiles' zeigt die Reihe des Profils."));
-
-        // The child's unit only counts if it comes from the same series (profile and child may point at
-        // different works).
-        var current = childBook is { SeriesId: { } bookSeries, CurrentUnitId: int currentId } && bookSeries == seriesId
-            ? units.FirstOrDefault(u => u.Id == currentId)
-            : null;
-        return (series, current);
-    }
-
-    /// <summary>Condenses profile, series and unit into the prompt facts.</summary>
-    private static ProfileFacts Facts(CreatorProfileResponse profile, TextbookSeriesResponse? series,
-        SeriesUnitResponse? unit) =>
+    /// <summary>Condenses the profile into the prompt facts - the teacher, not the material.</summary>
+    private static ProfileFacts Facts(CreatorProfileResponse profile) =>
         new(profile.Id, profile.Name, profile.SubjectName, profile.SchoolTypes, profile.GradeMin, profile.GradeMax,
-            profile.SourceLang, profile.TargetLang, profile.Persona, profile.Didactics,
-            // The series sits on the profile; if unset there it comes from the child's book and is reported
-            // anyway - the subject matter counts, not where the value came from.
-            series?.Id ?? profile.SeriesId, series?.Name ?? profile.SeriesName, series?.PublisherName, series?.Notes, unit);
+            profile.SourceLang, profile.TargetLang, profile.Persona, profile.Didactics);
 
     /// <summary>
     /// The child with everything that drives the tailoring. A pure creator account sees no children; the

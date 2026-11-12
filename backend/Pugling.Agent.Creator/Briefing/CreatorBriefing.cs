@@ -16,6 +16,7 @@ namespace Pugling.Agent.Creator.Briefing;
 /// </summary>
 public sealed record CreatorBriefing(
     ProfileFacts? Profile,
+    MaterialFacts Material,
     ChildFacts? Child,
     int SubjectId,
     string SubjectName,
@@ -80,14 +81,10 @@ public sealed record CreatorBriefing(
         : Profile?.SchoolTypes ?? SchoolTypes.None;
 
     /// <summary>
-    /// Source attribution of the exercise: the profile's textbook series, otherwise the child's textbook,
-    /// otherwise the topic. The profile comes first because it is the catalogued - i.e. rediscoverable - form.
+    /// Source attribution of the exercise: the series and unit it is created in (B-484) - the catalogued, i.e.
+    /// rediscoverable, form, and the same one whether or not a profile speaks.
     /// </summary>
-    public string? Source =>
-        Profile?.Source
-        ?? (Child?.PrimaryTextbook(SubjectId, SubjectName) is { } book
-            ? string.Join(", ", new[] { book.Title, book.CurrentChapter }.Where(s => !string.IsNullOrWhiteSpace(s)))
-            : Topic);
+    public string Source => Material.Source;
 
     /// <summary>
     /// The briefing as compact German running text for the prompt. Deliberately brief: local models
@@ -115,11 +112,7 @@ public sealed record CreatorBriefing(
         if (GrammarTopicLabels.Count > 0) text.AppendLine($"- Grammatik-Themen der Unit: {string.Join(", ", GrammarTopicLabels)}");
         // With the word pairs at hand, the notes' long word list is only a second, translation-less copy of them -
         // and local models lose track of the instructions with every line the context grows.
-        if (Profile?.ToPromptText(includeVocabularyNotes: WordPairs.Count == 0) is { Length: > 0 } material) text.Append(material);
-        // Without a cataloged textbook, the child's free-text book carries the subject matter.
-        else if (Child?.PrimaryTextbook(SubjectId, SubjectName) is { } book)
-            text.AppendLine($"- Lehrbuch: {book.Title}"
-                            + (book.CurrentChapter is { Length: > 0 } c ? $" (aktuell: {c})" : ""));
+        text.Append(Material.ToPromptText(includeVocabularyNotes: WordPairs.Count == 0));
 
         text.AppendLine();
         if (Child is { } child)

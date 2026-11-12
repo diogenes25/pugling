@@ -9,11 +9,14 @@ Reparatur-Runde → Anlegen → nebenwirkungsfreier Selbsttest über `preview`/`
 liefert nur strukturierten Inhalt – kein Tool-Calling. Fachliche Kernregel: **Interessen kleiden den Stoff
 ein, sie ersetzen ihn nie** (bei vorgegebenem Wortschatz deterministisch erzwungen).
 
-Das `CreatorBriefing` hat **zwei Quellen**: `ProfileFacts` (der Fachlehrer samt Reihe/Unit-Stoff) und
-**optional** `ChildFacts` – daran hängt die Betriebsart: mit Kind entsteht eine *individuelle* Übung, ohne
+Das `CreatorBriefing` hat **zwei Quellen**: `ProfileFacts` (der Fachlehrer; Werk und Unit-Stoff stehen als
+`MaterialFacts` immer daneben, B-484) und **optional** `ChildFacts` – daran hängt die Betriebsart: mit Kind entsteht eine *individuelle* Übung, ohne
 eine *allgemeine* für den geteilten Katalog (dann kommen Klassenstufen-Bereich/Schulart/Quelle aus dem
 Profil, und der Agent braucht kein Betreuungsrecht). Ohne `--profile` nimmt der Agent mit Kind das
 Profil auf der Reihe seines Buchs (`profiles/match`, `series_match`); mehrere solche Bücher sind eine Fehlbedienung.
+**Ort und Stoff entscheidet eine Stelle** (`BuildRequestAsync`, B-484): Reihe und Unit stehen danach fest, das
+Briefing liest den Stoff aus genau dieser Unit und wählt ein ungenanntes Profil nur unter denen auf dieser Reihe.
+Ein werkunabhängiges Profil nimmt die Reihe aus dem Buch des Kindes in seinem Fach – nie die erste des Katalogs.
 
 Der `ExamPlanner` baut **Übungsklausuren**: ein Pipeline-Lauf je Typ (jeder mit eigenem Selbsttest),
 danach – nur mit Kind – ein kind-skopierter Tag und eine `Klassenarbeit` (Status *geplant*) mit genau

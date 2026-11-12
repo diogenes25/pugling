@@ -22,12 +22,6 @@ public sealed record ChildFacts(
     IReadOnlyList<TextbookResponse> Textbooks,
     IReadOnlyList<WordMasteryResponse> WeakWords)
 {
-    /// <summary>The textbook the material is aligned to (the first one matching the subject, otherwise the first one at all).</summary>
-    public TextbookResponse? PrimaryTextbook(int subjectId, string subjectName) =>
-        Textbooks.FirstOrDefault(b => b.SubjectId == subjectId
-                                      || string.Equals(b.SubjectName, subjectName, StringComparison.OrdinalIgnoreCase))
-        ?? Textbooks.FirstOrDefault();
-
     /// <summary>The child section of the request.</summary>
     public string ToPromptText()
     {

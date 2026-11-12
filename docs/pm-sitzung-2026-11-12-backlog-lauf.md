@@ -219,7 +219,8 @@ Werkzeug unter `.claude/skills`.
 - **Vorschlag (CQ)** aus Sprint 34: automatischer Test für das Verhalten von `laden.py`.
 - **Vorschlag (CR)** aus Sprint 35: bei einem Review-Fund erst alle Leser derselben Größe suchen.
 - **Nächster Kandidat B-483** (P2, Durchrutscher aus B-475) – in Sprint 36 abgenommen.
-- **Nächster Kandidat B-484** (P2, Durchrutscher aus B-481) – wartet, siehe „Halt nach diesem Sprint" (Sprint 36).
+- **Nächster Kandidat B-484** (P2, Durchrutscher aus B-481) – in Sprint 37 abgenommen.
+- **Nächster Kandidat B-487** (P2, Durchrutscher aus B-483) – wartet, siehe „Halt nach diesem Sprint" (Sprint 37).
 
 ## Sprint 34 — Ziel & Umfang
 
@@ -363,6 +364,55 @@ suchen, nicht nur ihre Leser. Bewusst ungedeckt: der Selbsttest spielt Lückente
 **Halt nach diesem Sprint**, aus demselben Grund wie nach Sprint 35: der nächste Kandidat (B-484) ist wieder ein
 Durchrutscher aus meinem eigenen vorigen Sprint.
 
+## Sprint 37 — Ziel & Umfang
+
+Fortsetzung auf Zuruf des Nutzers („Ja, B-484").
+
+**Sprint-Ziel:** *Wer dem KI-Creator ein Kind und einen Ort nennt, bekommt den Lehrer und den Stoff genau dieses
+Werks – nie den eines anderen, nur weil der mehr Punkte hat.*
+**Umfang:** B-484 (M) – `art: Defekt`, Durchrutscher aus B-481, autonom gegrillt.
+**Entwickler-Brief:** erst jede *Entscheidung* über Reihe, Unit und Profil suchen (geschärftes CR), dann die zweite
+Stelle wegnehmen: das Briefing liest den Stoff aus dem Auftrag. Keine Migration, kein Vertrag.
+
+## Iteration 37 — umgesetzt
+
+- **B-484:** `ResolveMaterialAsync` entfällt, Werk und Unit sind `MaterialFacts` in jedem Briefing; ein ungenanntes
+  Profil nur auf der Zielreihe oder ohne Reihe; ein werkunabhängiges `--profile` nimmt das Buch des Kindes im Fach;
+  `--profile` fremder Reihe neben `--series` und zwei verschiedene Units sind Fehlbedienungen.
+- Review-Zähler des Sprints: **4** – behoben. Mutanten: 15 von 15 rot (ein erster Lauf wegen einer parallelen
+  Sitzung verworfen).
+- **Parallele Sitzung:** auf demselben Branch committete eine zweite Sitzung (B-485, B-486). Ihr Test-Tor lief in meine
+  Mutanten-Probe; ich habe danach jede Probe im selben Zug abgewartet und nur meine Dateien committet.
+
+## Runde 8 — Rollengang / Abnahme (Sprint 37)
+
+Volle Suite **1354/1354** nach der letzten Änderung.
+
+- **Creator – abgenommen, ohne Live-Lauf.** `CreatorAgentTests` fährt die Konsole gegen die In-Process-API: mit Ort
+  spricht der Lehrer dieses Buchs, ohne ihn ein werkunabhängiger, nie der fremde; Stoff und Quelle sind immer das
+  Werk der Ablage. *„Ich nenne das Buch – dann will ich auch dessen Lehrer und dessen Stoff."* **Nicht gefahren:**
+  Ollama und die echte DB.
+- **Vater, Sohn – Regressionszeugen.** Kein Pfad im Diff; Suite grün.
+
+## Retrospektive (Sprint 37)
+
+**Nachschau:** Sprint 36 (B-483) von einem frischen `pugling-reviewer` an `4a2e170`. **Ein Durchrutscher, zum vierten
+Mal in Folge:** B-483 verbot die Wortbank neben `markup`, weil ihr eine Lösung fehlen kann – der zweite Weg zu einer
+Wortbank (`text`/`gaps`/`wordBank` von Hand), den `FORMAT.md` selbst empfiehlt, bleibt offen
+→ [B-487](backlog/B-487-laden-wortbank-ohne-loesung.md) (P2, `entgangen_bei: B-483`). `nachgeschaut` an B-483.
+
+**Was die eigenen Tore durchgelassen haben:** Die Suche nach jeder Entscheidung über dieselbe Größe (CR, geschärft)
+hat in diesem Sprint vorab fünf Stellen gefunden – und eine davon falsch eingeschätzt (`PrimaryTextbook` „legt nichts
+ab"; tatsächlich speist es die Quelle der Übung). Das Review fand sie. Und B-487 zeigt dieselbe Form wie zuvor: eine
+Regel an *einem* Weg zum Ergebnis, nicht an *allen*. Die Lücke ist also nicht das Suchen, sondern das Einordnen
+dessen, was die Suche findet – geprüft wird dort nur von Hand.
+
+**Mechanismus:** keiner gelandet. Bewusst ungedeckt: der Live-Lauf des Agenten; die Wortbank im Selbsttest des Laders.
+
+**Halt nach diesem Sprint**, wie nach Sprint 35 und 36: der nächste Kandidat (B-487) ist wieder ein Durchrutscher aus
+meinem eigenen vorigen Sprint. Vier Nachschauen in Folge mit einem Fund heißen: das Verfahren findet sie zuverlässig,
+aber erst eine Runde zu spät; wer weitermachen lässt, bekommt je Sprint einen kleineren Rest.
+
 ## Produktentscheidungen dieses Laufs (zum Umstoßen)
 
 1. **Schlusszeichen zählen beim Vergleich nicht** – auch ein *anderes* (`?` statt `.`), auch bei Ordnungszahlen
@@ -380,6 +430,8 @@ Durchrutscher aus meinem eigenen vorigen Sprint.
    die Übung dort ab, wo ihr Stoff herkommt (B-481, 1–2).
 10. **Der Lader schreibt keine Lösungsvarianten mehr dazu**, und neben `markup` gibt es keine eigene Wortbank (B-483,
     1 und 4).
+11. **Ein ungenanntes Profil spricht nur auf der Zielreihe oder ohne Reihe**; Stoff und Quelle sind immer das Werk
+    der Ablage, das freie Kinderbuch nie (B-484, 2 und 5).
 
 ## Offene Roadmap
 

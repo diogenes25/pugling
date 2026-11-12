@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-12-backlog-lauf.md (Nachschau Sprint 34)
 unverifiziert: false
 entgangen_bei: [B-475]
-nachgeschaut: ""
+nachgeschaut: 2026-11-12
 grund: ""
 ersetzt_durch: []
 ---
@@ -131,3 +131,5 @@ aufgerufen, kein Serverlauf). B-475 hat die Groß/Klein-Lücke der Abkürzung `m
 - **2026-11-12** — **abgenommen.** Review-Zähler Sprint 36: 3 von 5. **Rollengang (Creator):** echter Lader-Lauf gegen
   den Wegwerf-Server nach der letzten Änderung; beide echten Ordner bestehen `--pruefen`. Backend unverändert.
 - **2026-11-12** — Commit der Abnahme: `4a2e170`.
+- **2026-11-12** — Nachschau (Sprint 37): eine handgeschriebene `wordBank` ohne die Lösung geht durch Prüfung
+  und Selbsttest → [B-487](B-487-laden-wortbank-ohne-loesung.md).

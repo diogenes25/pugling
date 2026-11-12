@@ -1612,6 +1612,246 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
+    /// A child with a book in a fresh subject (units 1 and 2, current 2), and two profiles of that subject: one on the
+    /// book's series without grade bounds, one on another series that scores higher (grades 7-9; with a profile on the
+    /// book the child also has a book of the other work, so both earn the series bonus). The setup asserts the
+    /// scores differ, so "the profile on the target series" and "the best score" name different profiles.
+    /// </summary>
+    private async Task<(CreatorApi Creator, CreatorPipeline Pipeline, FakeChatClient Chat, ChildResponse Child,
+        TextbookSeriesResponse Series, SeriesUnitResponse First, SeriesUnitResponse Current, CreatorProfileResponse OnSeries,
+        CreatorProfileResponse Elsewhere)> TwoTeachersAsync(string name, bool profileOnSeries = true,
+        bool bookTeacherActive = true, params string[] responses)
+    {
+        var (pipeline, creator, chat) = BuildAgent(responses.Length > 0 ? responses : [VocabularyJson]);
+        var supervisor = new SupervisorApi(Authenticated());
+        var subject = await creator.CreateSubjectAsync(new CreateSubjectDto($"Agent-Test {name} {Guid.NewGuid():N}"));
+        var series = await creator.CreateSeriesAsync(new CreateTextbookSeriesDto(
+            $"{name} Buch {Guid.NewGuid():N}", null, subject.Name, subject.Id, SchoolTypes.Gymnasium, "en", "de", null));
+        var first = await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto("Unit 1", 8, 1, null, null, null, null));
+        var current = await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto("Unit 2 – Buchstoff", 8, 2, null,
+            ["Buchthema Tower Bridge"], null, null));
+        var other = await creator.CreateSeriesAsync(new CreateTextbookSeriesDto(
+            $"{name} Fremdwerk {Guid.NewGuid():N}", null, subject.Name, subject.Id, SchoolTypes.Gymnasium, "en", "de", null));
+        await creator.CreateUnitAsync(other.Id, new CreateSeriesUnitDto("Unit 9 – Fremdstoff", 8, 9, null, null, null, null));
+        var child = await supervisor.CreateChildAsync(new CreateChildDto($"{name} {Guid.NewGuid():N}"[..20], null, 8,
+            SchoolTypes.Gymnasium, null));
+        await supervisor.CreateTextbookAsync(child.Id, new CreateTextbookDto("Access", subject.Name, subject.Id, 8, null, null, null,
+            SeriesId: series.Id, CurrentUnitId: current.Id));
+        // With a profile on the book, the child also has a book of the other work in the same subject: only then does the
+        // other teacher earn the series bonus too, and the grade bounds put that teacher ahead.
+        if (profileOnSeries)
+            await supervisor.CreateTextbookAsync(child.Id, new CreateTextbookDto("Fremdwerk", subject.Name, subject.Id, 8, null,
+                null, null, SeriesId: other.Id, CurrentUnitId: null));
+        var onSeries = await creator.CreateProfileAsync(new CreateCreatorProfileDto($"{name} Buchlehrer {Guid.NewGuid():N}",
+            subject.Name, subject.Id, SchoolTypes.Gymnasium, GradeMin: null, GradeMax: null,
+            SeriesId: profileOnSeries ? series.Id : null, SourceLang: "en", TargetLang: "de",
+            Persona: "Du bist der Lehrer DIESES Buchs.", Didactics: null, DefaultTypes: ["Vocabulary"],
+            Active: bookTeacherActive));
+        var elsewhere = await creator.CreateProfileAsync(new CreateCreatorProfileDto($"{name} Fremdlehrer {Guid.NewGuid():N}",
+            subject.Name, subject.Id, SchoolTypes.Gymnasium, GradeMin: 7, GradeMax: 9, SeriesId: other.Id,
+            SourceLang: "en", TargetLang: "de", Persona: "Du bist der Lehrer des FREMDEN Werks.", Didactics: null,
+            DefaultTypes: ["Vocabulary"], Active: true));
+        var scores = (await creator.MatchProfilesAsync(child.Id, subject.Id, default))
+            .Where(m => m.Profile.Id == onSeries.Id || m.Profile.Id == elsewhere.Id)
+            .ToDictionary(m => m.Profile.Id, m => m.Score);
+        Assert.True(bookTeacherActive ? scores.Count == 2 && scores[elsewhere.Id] > scores[onSeries.Id]
+                : scores.Keys.SequenceEqual([elsewhere.Id]),
+            "Setup: the profile on the other series must score higher (or be the only match).");
+        return (creator, pipeline, chat, child, series, first, current, onSeries, elsewhere);
+    }
+
+    /// <summary>
+    /// B-484, AK 1: with <c>--child</c> and a place named, the profile is the one on the target series - not the best
+    /// score, which here belongs to a teacher of another work. Red if the briefing takes the first match again (the
+    /// foreign persona is in the system prompt), or if the material is read from the profile's series instead of the
+    /// place (the foreign unit is in the prompt).
+    /// </summary>
+    [Theory]
+    [InlineData("--series")]
+    [InlineData("--series-unit")]
+    public async Task Mit_genanntem_Ort_spricht_der_Lehrer_dieses_Buchs(string option)
+    {
+        var (creator, pipeline, chat, child, series, _, current, _, _) = await TwoTeachersAsync("Ort genannt");
+
+        string[] place = option == "--series"
+            ? ["--series", series.Id.ToString()]
+            : ["--series", series.Id.ToString(), "--series-unit", current.Id.ToString()];
+        var command = CommandLine.Parse(["create", "--child", child.Id.ToString(), .. place, "--type", "Vocabulary", "--count", "3"]);
+        Assert.Equal(0, await Commands(creator, pipeline).RunAsync(command, default));
+
+        var system = Assert.Single(chat.LastMessages, m => m.Role == ChatRole.System).Text;
+        Assert.StartsWith("Du bist der Lehrer DIESES Buchs.", system);
+        var prompt = string.Join("\n", chat.LastMessages.Select(m => m.Text));
+        Assert.Contains("Buchthema Tower Bridge", prompt);
+        Assert.DoesNotContain("Fremdstoff", prompt);
+        Assert.DoesNotContain("FREMDEN", prompt);
+        Assert.Single(await creator.SearchExercisesAsync(seriesUnitId: current.Id));
+    }
+
+    /// <summary>
+    /// B-484, AK 1, no profile on the target series: a teacher without a series speaks, never the teacher of another
+    /// work, and the unit's material is in the prompt either way. Red if the higher-scoring foreign profile is taken, or
+    /// if profiles without a series are filtered out too (no persona).
+    /// </summary>
+    [Fact]
+    public async Task Ohne_Lehrer_dieses_Buchs_spricht_ein_werkunabhaengiger_statt_eines_fremden()
+    {
+        var (creator, pipeline, chat, child, series, _, current, _, _) =
+            await TwoTeachersAsync("Ohne Buchlehrer", profileOnSeries: false);
+
+        var command = CommandLine.Parse(["create", "--child", child.Id.ToString(), "--series", series.Id.ToString(),
+            "--type", "Vocabulary", "--count", "3"]);
+        Assert.Equal(0, await Commands(creator, pipeline).RunAsync(command, default));
+
+        var system = Assert.Single(chat.LastMessages, m => m.Role == ChatRole.System).Text;
+        Assert.StartsWith("Du bist der Lehrer DIESES Buchs.", system);
+        var prompt = string.Join("\n", chat.LastMessages.Select(m => m.Text));
+        Assert.DoesNotContain("FREMDEN", prompt);
+        Assert.Contains("Buchthema Tower Bridge", prompt);
+        Assert.Single(await creator.SearchExercisesAsync(seriesUnitId: current.Id));
+    }
+
+    /// <summary>
+    /// B-484, review: with no profile on the book, the material still comes from the place - series and unit in the
+    /// prompt, and the exercise's source names them, not the child's free-text book title. The command line may still
+    /// find a subject-neutral profile of the shared database, so "no profile at all" is pinned through the pipeline
+    /// without child and profile. Red if the material hangs off the profile again (the unit's topic is missing) or the
+    /// source falls back to the child's book ("Access").
+    /// </summary>
+    [Fact]
+    public async Task Ohne_jeden_Lehrer_bleibt_der_Stoff_der_Unit_und_die_Quelle_des_Werks()
+    {
+        var (creator, pipeline, chat, child, series, _, current, _, _) =
+            await TwoTeachersAsync("Ohne Lehrer", profileOnSeries: false, bookTeacherActive: false);
+
+        var command = CommandLine.Parse(["create", "--child", child.Id.ToString(), "--series", series.Id.ToString(),
+            "--type", "Vocabulary", "--count", "3"]);
+        Assert.Equal(0, await Commands(creator, pipeline).RunAsync(command, default));
+
+        var prompt = string.Join("\n", chat.LastMessages.Select(m => m.Text));
+        Assert.DoesNotContain("Du bist der Lehrer", prompt);
+        Assert.Contains($"Lehrwerk: {series.Name}", prompt);
+        Assert.Contains("Buchthema Tower Bridge", prompt);
+        var exercise = Assert.Single(await creator.SearchExercisesAsync(seriesUnitId: current.Id));
+        var detail = await creator.GetExerciseDetailAsync(exercise.Id);
+        Assert.Equal($"{series.Name}, Klasse 8, Unit 2 – Buchstoff", detail.Source);
+
+        var bare = await pipeline.BriefAsync(Request(series.SubjectId!.Value, series.Id, current.Id, "Vocabulary", childId: null));
+        Assert.Null(bare.Profile);
+        Assert.Contains("Buchthema Tower Bridge", bare.ToPromptText());
+    }
+
+    /// <summary>
+    /// B-484, review: a named profile of one work next to a named place in another is a usage error - its persona would
+    /// speak about a book the material is not from. Red if the combination passes (exit 0).
+    /// </summary>
+    [Fact]
+    public async Task Profil_einer_anderen_Reihe_neben_genanntem_Ort_ist_eine_Fehlbedienung()
+    {
+        var (creator, pipeline, _, child, series, _, _, _, elsewhere) = await TwoTeachersAsync("Profil fremd");
+
+        var command = CommandLine.Parse(["create", "--child", child.Id.ToString(), "--profile", elsewhere.Id.ToString(),
+            "--series", series.Id.ToString(), "--type", "Vocabulary", "--count", "3"]);
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline).RunAsync(command, default));
+
+        Assert.Contains("gehört zur Reihe", error.Message);
+    }
+
+    /// <summary>
+    /// B-484, AK 2: a named profile without a series takes the series of the child's book in its subject, at the child's
+    /// unit - not the first series of the catalog. Red if the location falls back to the catalog (the exercise lands
+    /// elsewhere), ignores the child's unit (it lands in unit 1), or counts a book of another subject (two to choose).
+    /// </summary>
+    [Fact]
+    public async Task Werkunabhaengiges_Profil_legt_im_Buch_des_Kindes_ab()
+    {
+        var (creator, pipeline, _, child, _, first, current, generalist, _) =
+            await TwoTeachersAsync("Werkunabhaengig", profileOnSeries: false);
+        // A catalogued book in another subject: only the profile's subject counts, or there would be two to choose from.
+        var (otherSubject, otherSeries, otherUnit) = await FreshUnitAsync(creator, "Anderes Fach");
+        await new SupervisorApi(Authenticated()).CreateTextbookAsync(child.Id, new CreateTextbookDto("Latein", null,
+            otherSubject, 8, null, null, null, SeriesId: otherSeries, CurrentUnitId: otherUnit));
+
+        var command = CommandLine.Parse(["create", "--child", child.Id.ToString(), "--profile", generalist.Id.ToString(),
+            "--type", "Vocabulary", "--count", "3"]);
+        Assert.Equal(0, await Commands(creator, pipeline).RunAsync(command, default));
+
+        Assert.Single(await creator.SearchExercisesAsync(seriesUnitId: current.Id));
+        Assert.Empty(await creator.SearchExercisesAsync(seriesUnitId: first.Id));
+    }
+
+    /// <summary>
+    /// B-484, AK 2, where the child's book cannot decide: no child, no book in the subject, or two books in it. Each is a
+    /// usage error naming the way out. Red if any of them falls back to a series of the catalog.
+    /// </summary>
+    [Theory]
+    [InlineData("ohne Kind", "hängt an keinem Lehrwerk")]
+    [InlineData("ohne Buch", "kein Lehrbuch aus dem Katalog")]
+    [InlineData("zwei Buecher", "mehrere Lehrbücher")]
+    public async Task Werkunabhaengiges_Profil_ohne_eindeutiges_Buch_ist_eine_Fehlbedienung(string fall, string expected)
+    {
+        var (creator, pipeline, _, child, _, _, _, generalist, _) =
+            await TwoTeachersAsync($"Unklar {fall}", profileOnSeries: false);
+        var supervisor = new SupervisorApi(Authenticated());
+        string[] who = ["--child", child.Id.ToString()];
+        if (fall == "ohne Kind")
+        {
+            who = [];
+        }
+        else if (fall == "ohne Buch")
+        {
+            var bookless = await supervisor.CreateChildAsync(new CreateChildDto($"Buchlos {Guid.NewGuid():N}"[..20], null, 8,
+                SchoolTypes.Gymnasium, null));
+            who = ["--child", bookless.Id.ToString()];
+        }
+        else
+        {
+            var (_, secondSeries, secondUnit) = await FreshUnitAsync(creator, "Zweites Buch");
+            await supervisor.CreateTextbookAsync(child.Id, new CreateTextbookDto("Zweitbuch", null, generalist.SubjectId, 8,
+                null, null, null, SeriesId: secondSeries, CurrentUnitId: secondUnit));
+        }
+
+        var command = CommandLine.Parse(["create", .. who, "--profile", generalist.Id.ToString(), "--type", "Vocabulary", "--count", "3"]);
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline).RunAsync(command, default));
+
+        Assert.Contains(expected, error.Message);
+    }
+
+    /// <summary>
+    /// B-484: <c>--unit</c> and <c>--series-unit</c> naming two units would read the material from one and file the
+    /// exercise in the other. Red if the named <c>--series-unit</c> silently wins (exit 0).
+    /// </summary>
+    [Fact]
+    public async Task Zwei_verschiedene_Units_sind_eine_Fehlbedienung()
+    {
+        var (creator, pipeline, _, child, series, first, current, _, _) = await TwoTeachersAsync("Zwei Units");
+
+        var command = CommandLine.Parse(["create", "--child", child.Id.ToString(), "--series", series.Id.ToString(),
+            "--series-unit", current.Id.ToString(), "--unit", first.Id.ToString(), "--type", "Vocabulary", "--count", "3"]);
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline).RunAsync(command, default));
+
+        Assert.Contains("--unit und --series-unit", error.Message);
+    }
+
+    /// <summary>
+    /// B-484, Nachschau of B-481: <c>plan</c> builds its request through the same rule as <c>create</c> - a plan with
+    /// <c>--child</c> and <c>--series</c> fills the child's current unit, not the series' first. Red if the plan path
+    /// bypasses the child's unit.
+    /// </summary>
+    [Fact]
+    public async Task Ein_Plan_mit_Reihe_fuellt_die_Unit_des_Kindes()
+    {
+        var (creator, pipeline, _, child, series, first, current, _, _) = await TwoTeachersAsync("Plan Reihe");
+
+        var command = CommandLine.Parse(["plan", "--child", child.Id.ToString(), "--series", series.Id.ToString(),
+            "--types", "Vocabulary", "--per-type", "1", "--count", "3", "--title", TestApi.UniqueName("Plan Reihe")]);
+        Assert.Equal(0, await Commands(creator, pipeline).RunAsync(command, default));
+
+        Assert.NotEmpty(await creator.SearchExercisesAsync(seriesUnitId: current.Id));
+        Assert.Empty(await creator.SearchExercisesAsync(seriesUnitId: first.Id));
+    }
+
+    /// <summary>
     /// <c>--series-unit</c> without <c>--series</c> used to be silently dropped: the exercise ended up in
     /// the first unit of the first series. A silent reach into the wrong shelf is worse than an
     /// error message.
@@ -1671,8 +1911,13 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.True(grammarOutcome.Published, $"Grammatik – Selbsttest: {grammarOutcome.SelfTestPercent} %");
     }
 
+    /// <summary>
+    /// Interests reach the prompt, and the material is the work the exercise is filed in - not the child's free-text
+    /// book, which here even belongs to another subject (B-484: one place decides the material). Red if the free-text
+    /// book becomes material or source again.
+    /// </summary>
     [Fact]
-    public async Task Das_Briefing_traegt_Profil_Interessen_und_Lehrbuch_in_den_Prompt()
+    public async Task Das_Briefing_traegt_Interessen_und_das_Werk_der_Ablage_in_den_Prompt()
     {
         var (pipeline, creator, _) = BuildAgent(VocabularyJson);
         var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Briefing");
@@ -1690,9 +1935,10 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
         Assert.Contains("Fußball", prompt);
         Assert.Contains("Minecraft", prompt);
-        Assert.Contains("Green Line 1", prompt);
         Assert.Contains("Unit 1: Animals", prompt);
-        Assert.Contains("Green Line 1", briefing.Source);
+        Assert.Contains($"Lehrwerk: {(await creator.GetSeriesAsync(seriesId)).Name}", prompt);
+        Assert.DoesNotContain("Green Line 1", prompt);
+        Assert.DoesNotContain("Green Line 1", briefing.Source);
 
         // The strongest preference comes before the free text …
         Assert.Matches(@"Interessen \(wichtigste zuerst\): Weltraum", prompt);
@@ -1748,10 +1994,10 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     public async Task Eine_allgemeine_Uebung_entsteht_ohne_Kind_mit_den_Metadaten_des_Profils()
     {
         var (pipeline, creator, chat) = BuildAgent(ProfileVocabularyJson);
-        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Allgemein");
+        var (subjectId, _, _) = await FreshUnitAsync(creator, "Allgemein");
         var (series, unit, profile) = await FreshProfileAsync(creator, subjectId, "Allgemein");
 
-        var request = Request(subjectId, seriesId, seriesUnitId, "Vocabulary", childId: null, profileId: profile.Id, unitId: unit.Id);
+        var request = Request(subjectId, series.Id, unit.Id, "Vocabulary", childId: null, profileId: profile.Id, unitId: unit.Id);
         var (briefing, outcome) = await pipeline.CreateAsync(request);
 
         Assert.True(outcome.Published, $"Selbsttest: {outcome.SelfTestPercent} %");
@@ -1787,11 +2033,11 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     public async Task Der_Stoff_der_Unit_steht_im_Prompt()
     {
         var (pipeline, creator, _) = BuildAgent(VocabularyJson);
-        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Unit-Stoff");
+        var (subjectId, _, _) = await FreshUnitAsync(creator, "Unit-Stoff");
         var (series, unit, profile) = await FreshProfileAsync(creator, subjectId, "Unit-Stoff");
 
         var briefing = await pipeline.BriefAsync(
-            Request(subjectId, seriesId, seriesUnitId, "Vocabulary", childId: null, profileId: profile.Id, unitId: unit.Id));
+            Request(subjectId, series.Id, unit.Id, "Vocabulary", childId: null, profileId: profile.Id, unitId: unit.Id));
         var prompt = briefing.ToPromptText();
 
         Assert.Contains($"Lehrwerk: {series.Name} (Cornelsen)", prompt);
@@ -1903,12 +2149,12 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
             """;
         var (pipeline, creator, _) = BuildAgent(ProfileVocabularyJson, cloze);
         var supervisor = new SupervisorApi(Authenticated());
-        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Klausur");
-        var (_, unit, profile) = await FreshProfileAsync(creator, subjectId, "Klausur");
+        var (subjectId, _, _) = await FreshUnitAsync(creator, "Klausur");
+        var (series, unit, profile) = await FreshProfileAsync(creator, subjectId, "Klausur");
 
         var planner = new ExamPlanner(pipeline, creator, supervisor);
         var outcome = await planner.RunAsync(new ExamRequest(
-            Request(subjectId, seriesId, seriesUnitId, "Vocabulary", profileId: profile.Id, unitId: unit.Id),
+            Request(subjectId, series.Id, unit.Id, "Vocabulary", profileId: profile.Id, unitId: unit.Id),
             Types: ["Vocabulary", "Cloze"], PerType: 3,
             ScheduledDate: new DateOnly(2026, 9, 15), Title: null));
 
@@ -1936,12 +2182,12 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         // The one prepared answer only fits the vocabulary part; the cloze part fails the rules.
         var (pipeline, creator, _) = BuildAgent(ProfileVocabularyJson);
         var supervisor = new SupervisorApi(Authenticated());
-        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Klausur-kaputt");
-        var (_, unit, profile) = await FreshProfileAsync(creator, subjectId, "Klausur-kaputt");
+        var (subjectId, _, _) = await FreshUnitAsync(creator, "Klausur-kaputt");
+        var (series, unit, profile) = await FreshProfileAsync(creator, subjectId, "Klausur-kaputt");
 
         var planner = new ExamPlanner(pipeline, creator, supervisor);
         var outcome = await planner.RunAsync(new ExamRequest(
-            Request(subjectId, seriesId, seriesUnitId, "Vocabulary", profileId: profile.Id, unitId: unit.Id),
+            Request(subjectId, series.Id, unit.Id, "Vocabulary", profileId: profile.Id, unitId: unit.Id),
             Types: ["Vocabulary", "Cloze"], PerType: 3, ScheduledDate: null, Title: "Übungsklausur Test"));
 
         Assert.False(outcome.Complete);
