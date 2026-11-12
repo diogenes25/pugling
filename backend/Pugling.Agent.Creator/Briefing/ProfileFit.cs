@@ -34,15 +34,21 @@ public static class ProfileFit
     }
 
     /// <summary>
+    /// The subject an exercise in <paramref name="series"/> gets: the series' own, the profile's only where the series has
+    /// none (B-488). <c>null</c> when neither has one - the console stops there before the briefing. The one place this
+    /// is decided, so the console's pick and the briefing's check cannot drift apart (B-506).
+    /// </summary>
+    public static int? SubjectIdOf(TextbookSeriesResponse series, CreatorProfileResponse? profile) =>
+        series.SubjectId ?? profile?.SubjectId;
+
+    /// <summary>
     /// Whether <paramref name="profile"/> teaches the subject an exercise in <paramref name="series"/> would get - the
-    /// subject comparison of <see cref="Problem"/> on the inputs the briefing builds: the series' subject, or for a series
-    /// without one the profile's own, which needs an id (B-488). A book's own subject is not bound to its series' and
-    /// would decide differently (B-506).
+    /// subject comparison of <see cref="Problem"/> on the subject of <see cref="SubjectIdOf"/>. A book's own subject is not
+    /// bound to its series' and would decide differently (B-506).
     /// </summary>
     public static bool FitsSubjectOf(CreatorProfileResponse profile, TextbookSeriesResponse series) =>
-        series.SubjectId is int subjectId
-            ? TeachesAnother(profile, subjectId, series.SubjectName) is null
-            : profile.SubjectId is not null;
+        SubjectIdOf(series, profile) is int subjectId
+        && TeachesAnother(profile, subjectId, subjectId == series.SubjectId ? series.SubjectName : profile.SubjectName) is null;
 
     /// <summary>
     /// The profile's subject when it is another than the given one, else <c>null</c>. A profile without a subject id may

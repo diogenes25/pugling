@@ -428,3 +428,62 @@ messbar (grep), ist aber ein neues Tor → Vorschlag **(DC)**, erst nach deiner 
 
 Durable Liste: [docs/backlog/](backlog/INDEX.md). Reihenfolge-Vorschlag: **B-506** (P2, Konsole und Senke, landet die
 neue Regel gleich am Code), dann B-507/B-505/B-501 (P3-Reste). B-503 bleibt im Dialog.
+
+## Sprint 47 — Ziel & Umfang (auf Zuruf „Ja, B-506")
+
+**Sprint-Ziel:** Der Creator bekommt von der Konsole nie ein Buch oder eine Profil-Id vorgesetzt, an der das Briefing
+danach scheitert.
+**Umfang:** [B-506](backlog/B-506-konsole-buchwahl-mit-dem-fach-der-senke.md) (Refinement idee → geschaetzt in dieser
+Sitzung, autonom gegrillt, `art: Defekt`).
+**Entwickler-Brief:** Senke = `BriefingBuilder.ResolveProfileAsync` → `ProfileFit.Problem` auf dem Fach, das
+`BuildRequestAsync` bildet (Reihe, ohne eines das Profil). Ein Prädikat `ProfileFit.FitsSubjectOf(profile, series)` auf
+genau diesen Eingaben; Buchwahl, Mehrfachliste und Einzelbuch rufen es. Keine Migration, kein Vertragsbruch.
+
+## Iteration 47 — umgesetzt
+
+- `ProfileFit.FitsSubjectOf` ersetzt `Teaches`; `SeriesOfChildsBookAsync` urteilt je Buch über dessen Reihe (ein GET je
+  Reihe), `BestProfileForChildAsync` nennt in der Mehrfachliste je Buch das passende Profil und markiert ein Buch ohne
+  passendes („passt nicht zum Fach seiner Reihe"); „kein Lehrbuch" sagt jetzt „auf einer Reihe in …".
+- Sieben neue Tests, ein Bestandstest um „korrigiere" ergänzt; ein Bestandstest („zwei Buecher") trug die alte Regel und
+  wurde umgebaut.
+- Verifikation: `dotnet test Pugling.sln -c Release` 1417/1417; Mutanten M1–M7 rot an den genannten Tests, Grundlinie grün.
+  Review: kein 🔴, ein 🟡 (Mehrfachliste bot bei keinem passenden Profil eine scheiternde Id) → behoben.
+- Fund beim Testen: der Server lehnt Übungen in einer Reihe ohne Fach ab; `create`/`plan`/`exam` enden dort am rohen 400 →
+  [B-508](backlog/B-508-konsole-reihe-ohne-fach-endet-am-400.md) (P2), bewusst nicht in diesem Sprint.
+
+## Runde 18 — Rollengang / Abnahme (Sprint 47)
+
+- **Creator — abgenommen:** jeder AK-Fall als Konsolen-Aufruf gegen den echten In-Process-Server (`CreatorAgentTests`,
+  Modell gefälscht). Ein Lauf mit Ollama gegen `:5200` entfiel – dort lebt die echte DB.
+- **Vater, Sohn — Regressionszeugen:** Suite grün, kein Pfad ihrer Ebenen im Diff.
+- Commit `6411497`.
+
+## Retrospektive (Sprint 47)
+
+**Nachschau:** Sprint 46 (`3618e63`, B-504) von einem frischen `frontend-reviewer`, gelesen, Vitest 13/13 der beiden
+Dateien. **Ein 🟡**, drei 🟢 → [B-509](backlog/B-509-lernstand-kopfzahl-und-zeilen-des-vorigen-kindes.md) (P3: Kopfzahl,
+Zeilen und Pager des Lernstands lesen nach einem Kinderwechsel noch das vorige Kind; B-504 band nur den Leerfall an
+`stale`). Am Code bestätigt (`VaterLernstand.tsx:83`, `:110`, `:130`). `nachgeschaut` an B-504. Index: **393 von 407**.
+
+**Was die eigenen Tore durchgelassen haben:** das Review-🟡 lag im Rückfallzweig einer Auswahl (`?? candidates[0]`) – ein
+Pfad, den „Fälle sind Pfad × Wert" schon verlangt; ich hatte ihn für das Einzelbuch gedacht, nicht für die Liste. Ein
+Bestandstest hielt die alte Regel fest und wäre ohne den Umbau als „Fehlbedienung" grün geblieben. Und ein erster
+Mutanten-Lauf war ungültig, weil der Reviewer parallel dieselben Projekte baute – das Skript meldete „UNGÜLTIG" selbst,
+das Test-Tor des Stop-Hooks fiel im selben Fenster auf eine Mutante. Beides kostete einen Lauf, keinen falschen Beleg.
+
+**Gelandet (ein Mechanismus, ein neues Tor → der Lauf hält hier):** `ProfileFitTests.Konsole_und_Briefing_entscheiden_das_Fach_gleich`
+hält `FitsSubjectOf` und `Problem` über alle Arten von Reihe (mit/ohne Fach) und Profil (Fach-Id gleich/fremd, Freitext
+gleich/fremd, nichts) auf einer Antwort. Die Fachwahl der Senke ist dafür eine Methode geworden (`ProfileFit.SubjectIdOf`),
+die `BuildRequestAsync`, `FitsSubjectOf` und der Test teilen – die (DB)-Regel aus Sprint 46 als Struktur statt als Prosa.
+Rote Probe: T1 (fachlose Reihe passt jedem) und T2 (nur die Id, wie vor B-498) → rot; Grundlinie grün.
+
+**Bewusst ungedeckt:** die `stale`-Klasse im Frontend (B-499/B-502/B-504/B-509, viermal) hat kein Tor – jede Aussage aus
+`x.data` müsste `x.stale` prüfen, das ist per grep nicht scharf zu trennen. Vorschlag **(DD)**: Reviewer und
+Mutanten-Probe nie gleichzeitig (Prosa in pm-loop Step 5) – nicht gelandet, nur ein Mechanismus je Retro. **(DC)** wartet
+weiter auf deine Entscheidung.
+
+## Offene Roadmap nach Sprint 47
+
+Durable Liste: [docs/backlog/](backlog/INDEX.md). Reihenfolge-Vorschlag: **B-508** (P2, Konsole: Reihe ohne Fach endet am
+rohen 400 – gleicher Bereich, Kontext frisch), dann B-509/B-507/B-505 (P3, Frontend-Reste, B-509 und B-505 gemeinsam
+schneidbar). B-503 bleibt im Dialog.

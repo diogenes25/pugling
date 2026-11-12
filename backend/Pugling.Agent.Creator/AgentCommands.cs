@@ -529,7 +529,7 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
         }
         // The exercise's subject is the subject of the work it is filed in; the profile's counts only where the work has
         // none (B-488).
-        var subjectId = series.SubjectId ?? profile?.SubjectId
+        var subjectId = ProfileFit.SubjectIdOf(series, profile)
             ?? throw new AgentUsageException(
                 $"Reihe {seriesId} ({series.Name}) hat kein Fach zugeordnet – setze eines im Vater-Web, bevor du Übungen anlegst.");
 

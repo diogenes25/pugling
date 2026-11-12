@@ -117,3 +117,4 @@ Aufruf scheitert.
   `FitsSubjectOf` gegen `Problem` hält (Gleichheit hängt an Konvention) → nicht gebaut, Retro Sprint 47.
   Rollengang: Creator – die Konsole lief in jedem Fall gegen den echten In-Process-Server (`CreatorAgentTests`, Modell
   gefälscht); ein Lauf mit Ollama gegen `:5200` entfiel (echte DB). Vater/Sohn Regressionszeugen: Suite grün, kein Pfad im Diff.
+  Commit `6411497`.

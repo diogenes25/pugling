@@ -13,6 +13,7 @@ unverifiziert: false
 entgangen_bei: [B-499]
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-12
 ---
 
 # B-504 · Nachschau-Reste Sprint 44: Seitenzähler nach Kinderwechsel, stumme Zählabfrage, Inventar-Satz ohne Bezug
@@ -141,3 +142,4 @@ Grundlinie nach dem Zurückspielen grün.
   `shop-verlauf`, `shop-verlauf-wiederholen`, `vater-von-null`; Ausweichports 5201/5174, Server vom Lauf gestartet).
   **Review-Zähler Sprint 46: 3.** Rollengang als Maschinengang: Vater über Komponententests (keine Spec fährt eine
   Freigabe, die am Inventar scheitert, oder den Kinderwechsel im Lernstand); **nicht im Browser angesehen.** Commit `3618e63`.
+- **2026-11-12** — Nachschau (Retro Sprint 47): ein 🟡, drei 🟢 → [B-509](B-509-lernstand-kopfzahl-und-zeilen-des-vorigen-kindes.md).
