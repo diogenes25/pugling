@@ -3195,6 +3195,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     [Theory]
     [InlineData("create", "--type", "Vocabulary")]
     [InlineData("plan")]
+    [InlineData("plan", "--dry-run")]
     [InlineData("exam")]
     public async Task Foerdermodus_ohne_Kind_bricht_mit_Meldung_ab(string verb, params string[] extra)
     {
@@ -3331,5 +3332,97 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
             childId: null, interests: [einhorn.Slug]));
 
         Assert.Contains(einhorn.Label, briefing.ToPromptText());
+    }
+
+    // ---- B-508: a series without a subject ends a writing verb before the model ----
+
+    /// <summary>A subject teacher without a series and a series of <paramref name="owner"/> without a subject.</summary>
+    private async Task<(CreatorPipeline Pipeline, CreatorApi Creator, FakeChatClient Chat, CreatorProfileResponse Teacher,
+        int SeriesId, int UnitId)> SubjectlessSeriesAsync(string name, CreatorApi? owner = null)
+    {
+        var (pipeline, creator, chat) = BuildAgent(VocabularyJson);
+        var (subjectId, _, _) = await FreshUnitAsync(creator, $"{name} Lehrerfach");
+        var teacher = await SubjectProfileAsync(creator, subjectId, null);
+        var shelf = owner ?? creator;
+        var bare = await shelf.CreateSeriesAsync(new CreateTextbookSeriesDto(
+            $"{name} ohne Fach {Guid.NewGuid():N}", null, null, null, null, null, null, null));
+        var unit = await shelf.CreateUnitAsync(bare.Id, new CreateSeriesUnitDto("Unit 1", null, 1, null, null, null, null));
+        return (pipeline, creator, chat, teacher, bare.Id, unit.Id);
+    }
+
+    private static CommandLine OnSeries(string verb, CreatorProfileResponse teacher, int seriesId, int unitId, params string[] more) =>
+        CommandLine.Parse([verb, "--profile", teacher.Id.ToString(), "--series", seriesId.ToString(),
+            "--series-unit", unitId.ToString(), "--type", "Vocabulary", "--count", "3", .. more]);
+
+    /// <summary>
+    /// B-508, AK 1 and 2: every writing verb - a dry run too, which predicts the real run - ends at a series without a
+    /// subject with a usage error before the model is called. Red if the profile's subject is taken there (the model runs
+    /// and the server answers 400 <c>series_without_subject</c>, or the dry run passes).
+    /// </summary>
+    [Theory]
+    [InlineData("create")]
+    [InlineData("create", "--dry-run")]
+    [InlineData("plan")]
+    [InlineData("plan", "--dry-run")]
+    [InlineData("exam")]
+    [InlineData("exam", "--dry-run")]
+    public async Task Schreibendes_Verb_endet_an_einer_Reihe_ohne_Fach_vor_dem_Modell(string verb, params string[] more)
+    {
+        var (pipeline, creator, chat, teacher, seriesId, unitId) = await SubjectlessSeriesAsync($"Schreibt {verb}");
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline)
+            .RunAsync(OnSeries(verb, teacher, seriesId, unitId, more), default));
+
+        Assert.Contains("hat kein Fach", error.Message);
+        Assert.Contains("Vater-Web (Lehrwerke", error.Message);
+        Assert.Equal(0, chat.Calls);
+    }
+
+    /// <summary>
+    /// B-508, AK 3: the briefing writes nothing and keeps working on the same series, with the profile's subject (B-488).
+    /// Red if the early stop also hits the briefing.
+    /// </summary>
+    [Fact]
+    public async Task Briefing_laeuft_auf_einer_Reihe_ohne_Fach_weiter()
+    {
+        var (pipeline, creator, _, teacher, seriesId, unitId) = await SubjectlessSeriesAsync("Briefing zeigt");
+
+        Assert.Equal(0, await Commands(creator, pipeline).RunAsync(OnSeries("briefing", teacher, seriesId, unitId), default));
+    }
+
+    /// <summary>
+    /// B-508, AK 4: a series of another account cannot get a subject from this one (<c>not_owner</c>), so the message
+    /// names only --series and the owner. Red if it advises the Vater-Web regardless of who owns the series.
+    /// </summary>
+    [Fact]
+    public async Task Fremde_Reihe_ohne_Fach_raet_nicht_zum_Vater_Web()
+    {
+        var (pipeline, creator, chat, teacher, seriesId, unitId) = await SubjectlessSeriesAsync("Fremd ohne Fach", Teacher());
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline)
+            .RunAsync(OnSeries("create", teacher, seriesId, unitId), default));
+
+        Assert.Contains("nicht diesem Konto", error.Message);
+        Assert.Contains("--series", error.Message);
+        Assert.DoesNotContain("Vater-Web", error.Message);
+        Assert.Equal(0, chat.Calls);
+    }
+
+    /// <summary>
+    /// B-508 (review): a series of the base stock has no owner, so nobody can give it a subject - the message sends the
+    /// reader to no owner. Red if the base stock gets the "ask the owner" branch (or the Vater-Web one).
+    /// </summary>
+    [Fact]
+    public void Grundbestands_Reihe_ohne_Fach_nennt_nur_eine_andere_Reihe()
+    {
+        var stock = new TextbookSeriesResponse(5, "Grundbestand", "grundbestand", null, null, null, null, SchoolTypes.None,
+            null, null, null, OwnerAdultId: null, IsOwn: false, UnitCount: 1, GradeMin: null, GradeMax: null, DateTime.UtcNow);
+
+        var message = ProfileFit.NoSubject(stock);
+
+        Assert.Contains("Grundbestand, niemand kann sie ändern", message);
+        Assert.Contains("--series", message);
+        Assert.DoesNotContain("Eigentümer", message);
+        Assert.DoesNotContain("Vater-Web", message);
     }
 }

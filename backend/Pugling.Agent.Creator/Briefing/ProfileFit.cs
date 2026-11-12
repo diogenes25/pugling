@@ -34,6 +34,20 @@ public static class ProfileFit
     }
 
     /// <summary>
+    /// Why no exercise can be filed in <paramref name="series"/>: it has no subject, and the server files none there
+    /// (<c>series_without_subject</c>). The way out depends on who may set one: the owner can, nobody can change a series of
+    /// the base stock (no owner), and anyone else can only ask the owner (B-508).
+    /// </summary>
+    public static string NoSubject(TextbookSeriesResponse series) =>
+        $"Reihe {series.Id} ({series.Name}) hat kein Fach zugeordnet, und ohne Fach legt der Server keine Übung an – "
+        + (series.IsOwn
+            ? "setze eines im Vater-Web (Lehrwerke → Reihe bearbeiten) oder wähle mit --series eine Reihe mit Fach."
+            : series.OwnerAdultId is null
+                ? "sie gehört zum Grundbestand, niemand kann sie ändern; wähle mit --series eine Reihe mit Fach."
+                : "sie gehört nicht diesem Konto; bitte ihren Eigentümer, ein Fach zu setzen, oder wähle mit --series eine "
+                  + "Reihe mit Fach.");
+
+    /// <summary>
     /// The subject an exercise in <paramref name="series"/> gets: the series' own, the profile's only where the series has
     /// none (B-488). <c>null</c> when neither has one - the console stops there before the briefing. The one place this
     /// is decided, so the console's pick and the briefing's check cannot drift apart (B-506).

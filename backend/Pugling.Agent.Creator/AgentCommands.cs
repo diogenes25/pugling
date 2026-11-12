@@ -281,7 +281,7 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
     /// <summary>Shows what the agent would tailor the exercise to - without a language model.</summary>
     private async Task ShowBriefingAsync(CommandLine command, CancellationToken ct)
     {
-        var request = await BuildRequestAsync(command, typeRequired: false, ct);
+        var request = await BuildRequestAsync(command, typeRequired: false, writes: false, ct);
         var briefing = await pipeline.BriefAsync(request, ct);
         Console.WriteLine(briefing.ToPromptText());
     }
@@ -289,7 +289,7 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
     /// <summary>Generates an exercise (or plans it as a dry run) and reports the result.</summary>
     private async Task<int> CreateAsync(CommandLine command, CancellationToken ct)
     {
-        var request = await BuildRequestAsync(command, typeRequired: true, ct);
+        var request = await BuildRequestAsync(command, typeRequired: true, writes: true, ct);
         var (briefing, outcome) = await pipeline.CreateAsync(request, ct);
 
         Console.WriteLine($"Profil:  {briefing.Profile?.Name ?? "(keines – Generalist)"}");
@@ -313,7 +313,7 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
     /// </summary>
     private async Task<int> ExamAsync(CommandLine command, CancellationToken ct)
     {
-        var request = await BuildRequestAsync(command, typeRequired: false, ct);
+        var request = await BuildRequestAsync(command, typeRequired: false, writes: true, ct);
         var types = command.List("types") is { Count: > 0 } wanted ? wanted : DefaultExamTypes;
         var exam = new ExamRequest(request, types, command.Int("per-type", DefaultExamPerType),
             ParseDate(command, "date"), command.Value("title"));
@@ -346,7 +346,7 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
     /// </summary>
     private async Task<int> PlanAsync(CommandLine command, CancellationToken ct)
     {
-        var request = await BuildRequestAsync(command, typeRequired: false, ct);
+        var request = await BuildRequestAsync(command, typeRequired: false, writes: true, ct);
         var types = command.List("types") is { Count: > 0 } wanted ? wanted : DefaultPlanTypes;
         var plan = new PlanRequest(request, types, command.Int("per-type", DefaultPlanPerType),
             ParseIntensity(command), ParseDate(command, "start"),
@@ -476,8 +476,11 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
     /// the profile's subject (B-484). A unit not named with <c>--series-unit</c> is the one named with <c>--unit</c>,
     /// else the child's current unit in that series, else the series' first (B-481). The profile itself, when none is
     /// named, is chosen by the briefing on the series decided here - not here, so there is one rule for it.
+    /// With <paramref name="writes"/> (create, plan, exam - a dry run too, since it predicts the real run) a series without
+    /// a subject is a usage error before any model call: the server files no exercise there (<c>series_without_subject</c>,
+    /// B-508). The briefing alone may still show the profile's subject.
     /// </summary>
-    private async Task<GenerationRequest> BuildRequestAsync(CommandLine command, bool typeRequired, CancellationToken ct)
+    private async Task<GenerationRequest> BuildRequestAsync(CommandLine command, bool typeRequired, bool writes, CancellationToken ct)
     {
         var childId = command.Value("child") is not null ? command.RequiredInt("child") : (int?)null;
         var profileId = command.Value("profile") is not null ? command.RequiredInt("profile") : (int?)null;
@@ -529,9 +532,8 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
         }
         // The exercise's subject is the subject of the work it is filed in; the profile's counts only where the work has
         // none (B-488).
-        var subjectId = ProfileFit.SubjectIdOf(series, profile)
-            ?? throw new AgentUsageException(
-                $"Reihe {seriesId} ({series.Name}) hat kein Fach zugeordnet – setze eines im Vater-Web, bevor du Übungen anlegst.");
+        if (writes && series.SubjectId is null) throw new AgentUsageException(ProfileFit.NoSubject(series));
+        var subjectId = ProfileFit.SubjectIdOf(series, profile) ?? throw new AgentUsageException(ProfileFit.NoSubject(series));
 
         return new GenerationRequest(
             ChildId: childId,
