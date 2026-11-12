@@ -90,6 +90,6 @@ nicht nur ein Gleichstand an der Spitze.
 
   Grundlinie nach dem Zurückspielen grün (`--unit`-Mutante in einem zweiten Lauf, die erste Form `if (false)`
   kompilierte nicht).
-- **2026-11-12** — **abgenommen.** Volle Suite nach der letzten Änderung: Backend 1343/1343, Build ohne Warnung.
+- **2026-11-12** — **abgenommen.** Commit `d941ca1`. Volle Suite nach der letzten Änderung: Backend 1343/1343, Build ohne Warnung.
   Review-Zähler Sprint 35: 2 von 5. **Rollengang (Creator) ohne Live-Lauf**, wie in Sprint 33: `CreatorAgentTests`
   fährt die Konsole mit `FakeChatClient` gegen die In-Process-API; gegen Ollama und die echte DB nicht.
