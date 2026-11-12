@@ -64,8 +64,8 @@ POST /api/v1/supervisor/children      (Bearer: Vater)
 ```
 
 > **PINs sind gehasht** (`Auth/PinHasher`, seit 2026-07-05) und der Login ist ratenbegrenzt (Policy
-> `login`). Der Hash liegt auf dem Profil (`Adult.Pin`/`Child.Pin`) **und** gespiegelt auf dem Konto
-> (`Account.PinHash`, siehe `AccountService.MirrorAsync`); die Doppelhaltung ist als B-216 im Backlog.
+> `login`). Der Hash liegt **nur am Konto** (`Account.PinHash`, seit B-230); die Profilzeilen
+> (`Adult`/`Child`) tragen keine Kopie. Gesetzt wird er beim Anlegen bzw. über `AccountService.SetPin`.
 > Neben `auth/adult`/`auth/child` gibt es den konto-zentrischen `POST /api/v1/auth/login`
 > (`accountId` + `pin`), der ein Token mit **allen** Rollen des Kontos ausstellt.
 
