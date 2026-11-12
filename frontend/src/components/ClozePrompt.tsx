@@ -19,11 +19,17 @@ import { useChromeT } from "../lib/chromeText";
  *
  * `className` bleibt beim Aufrufer: Übungsrunde und Klausur setzen den Aufgabentext unterschiedlich groß,
  * und das ist ihre Entscheidung, nicht die dieses Bauteils.
+ *
+ * `filled` und `onGap` braucht nur der Testmodus des Vaters, der alle Lücken eines Texts in einer Sitzung
+ * spielt (B-486): die schon gewählte Antwort steht dann **in** ihrer Lücke statt „…", und ein Tipp auf eine
+ * Lücke springt zu ihr. Ohne die beiden bleibt alles wie beim Kind, das je Karte nur eine Lücke sieht.
  */
-export function ClozePrompt({ text, gapIndex, className = "word" }: {
+export function ClozePrompt({ text, gapIndex, className = "word", filled, onGap }: {
   text?: string | null;
   gapIndex?: number | null;
   className?: string;
+  filled?: Readonly<Record<number, string | null | undefined>>;
+  onGap?: (gap: number) => void;
 }) {
   const t = useChromeT();
   if (!text) return null;
@@ -36,24 +42,31 @@ export function ClozePrompt({ text, gapIndex, className = "word" }: {
 
   return (
     <div className={`${className} cloze-prompt`}>
-      {parts.map((part, i) =>
-        "text" in part ? (
-          <span key={i}>{part.text}</span>
-        ) : (
+      {parts.map((part, i) => {
+        if ("text" in part) return <span key={i}>{part.text}</span>;
+        const asked = part.gap === gapIndex;
+        const label = asked ? t("play.gapAsked") : t("play.gap", { n: part.gap });
+        const answer = filled?.[part.gap] || null;
+        const cls = `cloze-gap${asked ? " asked" : ""}${answer ? " filled" : ""}`;
+        // Antippbar nur, wo ein Ziel existiert: ein <button> ohne Wirkung wäre ein Fokus-Halt ins Leere.
+        if (onGap) {
+          return (
+            <button key={i} type="button" className={cls} aria-current={asked ? "true" : undefined}
+              aria-label={answer ? `${label}: ${answer}` : label} onClick={() => onGap(part.gap)}>
+              {answer ?? (asked ? "?" : "…")}
+            </button>
+          );
+        }
+        return (
           // `role="img"` statt eines nackten <span>: Auf `role="generic"` ist ein `aria-label` laut ARIA
           // unzulässig und wird von Screenreadern verworfen – das Zeichen selbst ("?" bzw. "…") lesen die
           // meisten bei Standard-Ausführlichkeit gar nicht vor. Die Rolle macht den Namen zum Inhalt.
           // Sichtbar unterscheidet die Form, nicht nur die Farbe.
-          <span
-            key={i}
-            role="img"
-            className={part.gap === gapIndex ? "cloze-gap asked" : "cloze-gap"}
-            aria-label={part.gap === gapIndex ? t("play.gapAsked") : t("play.gap", { n: part.gap })}
-          >
-            {part.gap === gapIndex ? "?" : "…"}
+          <span key={i} role="img" className={cls} aria-label={answer ? `${label}: ${answer}` : label}>
+            {answer ?? (asked ? "?" : "…")}
           </span>
-        ),
-      )}
+        );
+      })}
     </div>
   );
 }

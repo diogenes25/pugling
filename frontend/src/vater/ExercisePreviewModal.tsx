@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, api, errorMessage } from "../lib/api";
 import { LetterBoxes } from "../components/LetterBoxes";
 import { LetterTiles } from "../components/LetterTiles";
@@ -28,9 +28,11 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
   const [busy, setBusy] = useState(false);
   // Vom Vater gewählte Abfrageform (undefined = Übungs-Standard); steuert Neuladen der Vorschau.
   const [stage, setStage] = useState<number | undefined>(undefined);
+  // Lückentext: welche Aufgabe (Index in `data.items`) gerade dran ist – eine Lücke nach der anderen (B-486).
+  const [cursor, setCursor] = useState(0);
 
   const load = useCallback(() => {
-    setData(null); setAnswers({}); setRevealed(new Set()); setResult(null); setError(null);
+    setData(null); setAnswers({}); setRevealed(new Set()); setResult(null); setError(null); setCursor(0);
     api.previewExercise(exerciseId, stage)
       .then(setData)
       // Manche Übungen haben keine einzeln prüfbaren Aufgaben (ein Lesetext ohne Fragen). Der Server sagt
@@ -71,8 +73,33 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
     }
   }
 
-  // Lückentext: alle Items teilen denselben Trägertext – einmal oben zeigen, dann pro Lücke ein Feld.
+  /*
+   * Lückentext: alle Items teilen denselben Trägertext. Er steht einmal oben, darunter aber nur die EINE
+   * gefragte Lücke – wie beim Kind, das je Karte eine Lücke mit „?" sieht (B-486). Vorher stand je Lücke eine
+   * Karte mit der ganzen Wortbank untereinander: auf dem Handy hieß das Scrollen zwischen Text und Auswahl und
+   * Abzählen, welche der „…" die „Lücke 7" ist.
+   */
   const isCloze = !!data && data.items.some((it) => it.gapIndex != null);
+  const at = data ? Math.min(cursor, data.items.length - 1) : 0;
+  const current = data?.items[at];
+  const shownItems = !data ? [] : isCloze && current ? [current] : data.items;
+  // Die Antworten liegen je Aufgabe; der Text adressiert die Lücke. Hier die Brücke dazwischen.
+  const filledGaps: Record<number, string | null | undefined> = {};
+  for (const it of data?.items ?? []) if (it.gapIndex != null) filledGaps[it.gapIndex] = answers[it.itemIndex]?.givenAnswer;
+  // Der Text ist auf dem Handy höhenbegrenzt; die gefragte Lücke soll darin sichtbar sein, ohne zu suchen.
+  const textRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    textRef.current?.querySelector(".cloze-gap.asked")?.scrollIntoView?.({ block: "nearest" });
+  }, [at, data]);
+  function goToGap(gap: number) {
+    const i = data?.items.findIndex((it) => it.gapIndex === gap) ?? -1;
+    if (i >= 0) setCursor(i);
+  }
+  // Nach einer Wahl in der Wortbank weiter zur nächsten Lücke – ein Fehlgriff ist ein Tipp auf die Lücke im Text.
+  function chooseCloze(i: number, val: string) {
+    setText(i, val);
+    if (data && at < data.items.length - 1) setCursor(at + 1);
+  }
   // Mengen-Bewertung: alle Aufgaben teilen ihre Anweisung, und die Reihenfolge der Eingaben bedeutet nichts.
   const isSet = !!data && data.items.some((it) => it.anyOrder);
   // Die GEORDNETE Liste teilt ihre Anweisung genauso – nur zählt dort der Platz. Zwei Fälle, zwei Gründe, wie
@@ -141,11 +168,12 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
                 beim Kind. */}
             <Passage text={data.items[0]?.passage} />
             {/* Der Trägertext einmal oben – ohne die rohe Vorlagensyntax, der Vater soll sehen, was das
-                Kind sieht. Ohne `gapIndex` bleiben alle Lücken neutral; welche gefragt ist, sagt die Zeile
-                darunter je Aufgabe. */}
-            {isCloze && (
-              <div className="card" style={{ background: "var(--surface-2, transparent)" }}>
-                <ClozePrompt text={data.items[0]?.prompt} className="test-prompt" />
+                Kind sieht: die gefragte Lücke mit „?". Gewählte Antworten stehen in ihrer Lücke, ein Tipp
+                darauf springt zurück. */}
+            {isCloze && current && (
+              <div ref={textRef} className="card cloze-preview-text" style={{ background: "var(--surface-2, transparent)" }}>
+                <ClozePrompt text={data.items[0]?.prompt} gapIndex={current.gapIndex} className="test-prompt"
+                  filled={filledGaps} onGap={goToGap} />
               </div>
             )}
             {/* Die Aufnahme gehört der Übung, nicht der einzelnen Frage: einmal oben, nicht je Zeile –
@@ -173,7 +201,7 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
               {data.typed ? "Tippe deine Antwort – bewertet wird wie beim Kind." : "Überlege, dann aufdecken und ehrlich bewerten."}
             </p>
 
-            {data.items.map((it) => {
+            {shownItems.map((it) => {
               const a = answers[it.itemIndex];
               return (
                 <div className="card" key={it.itemIndex}>
@@ -205,7 +233,7 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
                         <button type="button" key={`${i}-${c}`}
                           className={`btn ${a?.givenAnswer === c ? "" : "ghost"} small`} style={{ width: "auto" }}
                           aria-pressed={a?.givenAnswer === c}
-                          onClick={() => setText(it.itemIndex, c)}>{a?.givenAnswer === c ? "✓ " : ""}{c}</button>
+                          onClick={() => (isCloze ? chooseCloze(it.itemIndex, c) : setText(it.itemIndex, c))}>{a?.givenAnswer === c ? "✓ " : ""}{c}</button>
                       ))}
                     </div>
                   ) : data.typed && it.letterTiles ? (
@@ -255,6 +283,16 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
                 </div>
               );
             })}
+
+            {isCloze && data.items.length > 1 && (
+              <div className="row" style={{ alignItems: "center", gap: 8 }}>
+                <button type="button" className="btn ghost small" style={{ width: "auto" }}
+                  disabled={at === 0} onClick={() => setCursor(at - 1)}>← Zurück</button>
+                <span className="muted" aria-live="polite">Lücke {at + 1} von {data.items.length}</span>
+                <button type="button" className="btn ghost small" style={{ width: "auto", marginLeft: "auto" }}
+                  disabled={at === data.items.length - 1} onClick={() => setCursor(at + 1)}>Weiter →</button>
+              </div>
+            )}
 
             <button type="button" className="btn" style={{ width: "auto", alignSelf: "flex-start" }} onClick={submit} disabled={busy}>
               {busy ? "…" : "Auswerten"}

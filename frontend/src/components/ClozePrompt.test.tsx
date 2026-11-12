@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { ClozePrompt, TaskAnnouncer } from "./ClozePrompt";
 import { clozeParts } from "../lib/cloze";
@@ -76,6 +76,32 @@ describe("ClozePrompt", () => {
     const { container } = render(<ClozePrompt text={null} />);
 
     expect(container.firstChild).toBeNull();
+  });
+
+  // B-486, Testmodus des Vaters: rot, wenn die gewählte Antwort nicht in ihrer Lücke erscheint (wieder „…").
+  it("zeigt eine gewählte Antwort in ihrer Lücke", () => {
+    render(<ClozePrompt text={text} gapIndex={2} filled={{ 1: "Hello" }} />);
+
+    expect(screen.getByLabelText("Lücke 1: Hello").textContent).toBe("Hello");
+    expect(screen.getByLabelText("gesuchte Lücke").textContent).toBe("?");
+  });
+
+  // B-486: rot, wenn ein Tipp auf die Lücke nicht zu ihr springt (Handler fehlt oder meldet die falsche Nummer).
+  it("meldet beim Antippen einer Lücke deren Nummer", () => {
+    const hits: number[] = [];
+    render(<ClozePrompt text={text} gapIndex={2} onGap={(g) => hits.push(g)} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Lücke 1" }));
+    expect(hits).toEqual([1]);
+    // Die gefragte trägt `aria-current`, sonst sagt der Knopf nur „gesuchte Lücke" ohne Zustand.
+    expect(screen.getByRole("button", { name: "gesuchte Lücke" }).getAttribute("aria-current")).toBe("true");
+  });
+
+  // Rot, wenn die Kind-Ansicht (ohne `onGap`) plötzlich Knöpfe bekäme – dort gibt es kein Ziel zum Hinspringen.
+  it("bleibt ohne onGap bei Bildern statt Knöpfen", () => {
+    render(<ClozePrompt text={text} gapIndex={2} filled={{ 1: "Hello" }} />);
+
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
   });
 
   it("zerlegt den Text in Stücke und Lücken", () => {

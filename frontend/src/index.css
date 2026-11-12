@@ -184,6 +184,13 @@ a { color: var(--cyan); }
 .fcard .cloze-prompt { font-size: 22px; line-height: 1.5; }
 .cloze-gap { display: inline-block; min-width: 2.2em; padding: 0 .25em; border-bottom: 2px solid var(--stroke); color: var(--muted); }
 .cloze-gap.asked { border-bottom-color: var(--gold); color: var(--gold); font-weight: 800; }
+/* Testmodus (B-486): die gewählte Antwort steht in ihrer Lücke, und die Lücke ist ein Knopf zum Hinspringen. */
+.cloze-gap.filled { color: inherit; }
+.cloze-gap.asked.filled { color: var(--gold); }
+button.cloze-gap { background: none; border: 0; border-bottom: 2px solid var(--stroke); font: inherit; cursor: pointer; margin: 0; }
+button.cloze-gap.asked { border-bottom-color: var(--gold); }
+/* Der Trägertext im Testmodus bleibt auf dem Handy über der Wortbank sichtbar, statt sie unter den Rand zu schieben. */
+.cloze-preview-text { max-height: 40vh; overflow-y: auto; }
 /* Ein Lückentext mit nummerierten Sätzen trägt je Satz eine Zeile (`\n`); als ein Absatz gesetzt, findet das Kind die
    gefragte Lücke unter zehn kaum (B-466). `pre-line` hält die Umbrüche und fasst Leerzeichen trotzdem zusammen. */
 .cloze-prompt { white-space: pre-line; }
