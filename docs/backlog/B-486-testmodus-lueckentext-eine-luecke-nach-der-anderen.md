@@ -43,7 +43,7 @@ wie mein Kind ihn erlebt.
 
 ## Verlauf
 
-- 2026-11-12 – gebaut: `ClozePrompt` um `filled`/`onGap` erweitert, Testmodus auf Schrittfolge umgestellt.
+- 2026-11-12 – gebaut (Commit 56eff7d): `ClozePrompt` um `filled`/`onGap` erweitert, Testmodus auf Schrittfolge umgestellt.
   Vitest 752/752 grün, drei neue Fälle in `ClozePrompt.test.tsx`; rote Probe (Antwort nicht eingetragen, Klick ohne
   Wirkung) lässt genau die beiden tragenden Fälle fallen, der dritte ist Absichtserklärung (rot erst, wenn die
   Kind-Ansicht Knöpfe bekäme). `tsc -b` sauber.
