@@ -13,6 +13,7 @@ unverifiziert: false
 entgangen_bei: []
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-13
 ---
 
 # B-508 · Konsole: eine Reihe ohne Fach endet bei `create`/`plan`/`exam` erst am rohen 400 des Servers
@@ -90,3 +91,9 @@ gegen den In-Process-Server, Modell gefälscht; Mutanten-Probe je AK.
     🟢 Testname versprach mehr als geprüft → umbenannt; 🟢 `plan --dry-run` fehlte → ergänzt.
   - Rollengang Creator: jeder AK als Konsolenaufruf gegen den echten In-Process-Server (Modell gefälscht). Vater, Sohn:
     Regressionszeugen, Suite grün, kein Pfad ihrer Ebenen im Diff. Abgenommen.
+- **2026-11-13** — nachgeschaut (Retro Sprint 49, frischer `pugling-reviewer` an `7c17e07`, gelesen). Geprüft: Serverregel
+  `ExerciseControllerBase.cs:347-349` gegen `AgentCommands.cs:535` – dasselbe Feld; einzige Ablage `ExerciseStrategy.cs:159`,
+  `GenerationRequest` nur an einer Stelle gebaut; „niemand kann sie ändern" gegen `AuthAccess.cs:90-91` und die
+  Owner-Prüfungen in `TextbookSeriesController`/`SeriesUnitsController` nachgerechnet – wahr; „Reihe bearbeiten" existiert
+  (`VaterLehrwerke.tsx:353-367`). Funde → [B-511](B-511-gebundenes-profil-reihe-ohne-fach-ausweg-im-kreis.md): 🟡 ein an
+  die fachlose Reihe gebundenes Profil macht „--series" zum Kreis; 🟢 Hilfetext nennt die Fachregel verkehrt.

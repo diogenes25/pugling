@@ -69,3 +69,51 @@ eine neue Sperre der Senke, deren Eingaben die Konsole an anderer Stelle wählt.
 `pm-loop` Step 5 – vor allem (CZ) „Ausweg, den *dieser* Leser nehmen darf". Kein neues Tor → der Lauf geht weiter.
 
 **Bewusst ungedeckt:** dass eine neue Sperre der Senke ihre Wähler mitnimmt, hält kein Tor; B-510 baut es für diesen Fall.
+
+## Sprint 49 — Ziel & Umfang
+
+**Sprint-Ziel:** Was der Vater im Vater-Web liest, gehört zum Kind und zum Bestand, die er gerade sieht – kein Name, keine
+Zeile, keine Zahl und kein „noch keine …" aus einem anderen Kind oder einer Seite hinter dem Bestand.
+**Umfang:** [B-509](backlog/B-509-lernstand-kopfzahl-und-zeilen-des-vorigen-kindes.md),
+[B-505](backlog/B-505-leerfall-an-der-seite-statt-am-bestand.md), [B-507](backlog/B-507-nachschau-reste-sprint-45-frontend.md)
+(alle Refinement idee → geschaetzt, autonom gegrillt, `art: Defekt`).
+**Entwickler-Brief:** Zwei Senken. (1) Der `Pager` korrigiert eine Seite hinter dem Bestand selbst; jeder geblätterte
+Leerfall liest `total`. (2) Im Lernstand ist ein anderes Kind eine andere Liste (`key={childId}`), innerhalb eines Kindes
+gilt „sperren, nicht ausblenden". Kein Backend.
+
+## Iteration 49 — umgesetzt
+
+- `Pager` springt auf die letzte gültige Seite; neun Leerfälle auf `total` (sechs aus der Story, `VaterExercises` und die
+  Suchliste `VaterClassTests` fand erst der neue Wächter `src/leerfall.test.ts`).
+- Lernstand: `WordList key={childId}`, Kopfzahl und Pager an `stale`; nach dem Review auch Kopfzeile (Name nur ohne
+  `stale`, gescheiterter Abruf mit `ListenAusfall`) und Katalog (`key={childId}`).
+- Vorschau „nur ansehen" ohne Ausweg; zwei Tests geschärft; `confirm` im Shop-Test gestubbt.
+- Verifikation: Vitest 810/810, `tsc -b` sauber, Mutanten F1–F13 + H1–H4 17/17 rot (nach der letzten Änderung, Vitest),
+  Playwright 140/140 auf 5201/5174 (vor H1–H4). Ein Probe-Lauf brach beim Zurückschreiben ab (`OSError 22`, Datei kurz
+  gesperrt) und ließ die Mutante H3 stehen – bemerkt am `grep`, zurückgesetzt, Probe wiederholt.
+- Review: zwei 🟡 außerhalb des Diffs (dieselbe Klasse, dieselbe Seite) im Sprint behoben, ohne Zählung; 🟢 Wächter-Muster
+  verbreitert. Zähler 0 von 5.
+
+## Runde 2 — Rollengang / Abnahme (Sprint 49)
+
+- **Vater — abgenommen:** E2E-Suite gegen echten Server und echtes UI (140/140), Lernstand/Pager/Leerfälle als
+  Komponententests mit gefälschtem Abruf. Was ein Mensch noch klicken müsste: Kinderwechsel per URL im Lernstand bei
+  langsamem Netz.
+- **Creator, Sohn — Regressionszeugen:** Suiten grün; der Sohn liest keine der geänderten Listen.
+- Commit `8a5f20a`.
+
+## Retrospektive (Sprint 49)
+
+**Nachschau:** Sprint 48 (`7c17e07`, B-508) von einem frischen `pugling-reviewer`, gelesen. **Ein 🟡**, ein 🟢 →
+[B-511](backlog/B-511-gebundenes-profil-reihe-ohne-fach-ausweg-im-kreis.md) (P2: ein an die fachlose Reihe gebundenes
+Profil macht „--series" zum Kreis). `nachgeschaut` an B-508.
+
+**Was die eigenen Tore durchgelassen haben:** die Story B-505 zählte acht Stellen, es waren zehn – eine andere
+Schreibweise derselben Frage. Gefunden hat sie erst ein Tor über den Quelltext, nicht das Lesen. Das Muster ist dasselbe
+wie bei (CY): die Klasse greppen, nicht die Fundstellen der Story abarbeiten.
+
+**Gelandet (ein Mechanismus, ein neues Tor):** `src/leerfall.test.ts` – jede Quelle mit `<Pager` fragt den Bestand, nicht
+die Seite, in fünf Schreibweisen (Selbsttest). Ein neues Tor hält den Lauf nach `README` an; **stellvertretend
+entschieden: weiter**, weil das Tor nur festhält, was der Sprint gebaut hat, und keine weitere Arbeit prägt.
+
+**Bewusst ungedeckt:** die `stale`-Klasse außerhalb der Listen (Kopfzeilen, Detailflächen) hat weiter kein Tor.
