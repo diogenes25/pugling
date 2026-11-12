@@ -493,11 +493,16 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
                 "--use-weak braucht --child <id>: die schwach beherrschten Wörter gehören zu einem Kind.");
 
         var profile = profileId is int id ? await LoadProfileAsync(id, ct) : null;
+        // A named profile bound to a series without a subject can write nowhere: on its own series the server refuses, on
+        // any other the briefing refuses the profile. Said once, before --series sends the user through the second lock.
+        if (writes && profileId is not null && profile?.SeriesId is int boundTo
+            && await GetSeriesOrUsageErrorAsync(boundTo, ct) is { SubjectId: null } boundSeries)
+            throw new AgentUsageException(ProfileFit.NoSubject(boundSeries, boundByNamedProfile: true));
         // A child and no place named: the exercise belongs in the child's book, not in the first series of the catalog
         // (B-473). The best profile for the child (no subject filter - the place is what is unknown) gives the series.
         if (profile is null && childId is int forChild && command.Value("series") is null && command.Value("series-unit") is null)
         {
-            profile = await BestProfileForChildAsync(forChild, ct);
+            profile = await BestProfileForChildAsync(forChild, writes, ct);
             profileId = profile.Id;
         }
         var placeNamed = command.Value("series") is not null || command.Value("series-unit") is not null;
@@ -505,7 +510,7 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
         // would be the guessed shelf of B-473 through another door (B-484).
         var profileSeries = profile is { SeriesId: null } && !placeNamed
             ? childId is int ofProfileChild
-                ? await SeriesOfChildsBookAsync(ofProfileChild, profile, ct)
+                ? await SeriesOfChildsBookAsync(ofProfileChild, profile, writes, ct)
                 : throw new AgentUsageException(
                     $"Creator-Profil {profile.Id} ({profile.Name}) hängt an keinem Lehrwerk – gib --series <id> an.")
             : profile?.SeriesId;
@@ -532,6 +537,7 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
         }
         // The exercise's subject is the subject of the work it is filed in; the profile's counts only where the work has
         // none (B-488).
+        // A named profile bound to this series has already stopped above (B-511), so --series is a way out here.
         if (writes && series.SubjectId is null) throw new AgentUsageException(ProfileFit.NoSubject(series));
         var subjectId = ProfileFit.SubjectIdOf(series, profile) ?? throw new AgentUsageException(ProfileFit.NoSubject(series));
 
@@ -578,9 +584,11 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
     /// <summary>
     /// For a profile without a series of its own: the series of the child's book that the profile fits by the series'
     /// subject (<see cref="ProfileFit.FitsSubjectOf"/>), not by the book's. None or several are a usage error - choosing
-    /// would be guessing. A child this account cannot see is reported as such.
+    /// would be guessing. A child this account cannot see is reported as such. With <paramref name="writes"/> a series
+    /// without a subject is no book of the profile: it only borrows the profile's subject and files no exercise (B-510).
     /// </summary>
-    private async Task<int> SeriesOfChildsBookAsync(int childId, CreatorProfileResponse profile, CancellationToken ct)
+    private async Task<int> SeriesOfChildsBookAsync(int childId, CreatorProfileResponse profile, bool writes,
+        CancellationToken ct)
     {
         IReadOnlyList<TextbookResponse> books;
         try
@@ -596,9 +604,17 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
         // Judged by the book's series, not the book's own subject: the briefing files the exercise in the series' subject
         // and accepts the profile by that (B-506).
         var series = new List<int>();
+        TextbookSeriesResponse? withoutSubject = null;
         foreach (var seriesId in books.Where(b => b.SeriesId is not null).Select(b => b.SeriesId!.Value).Distinct())
-            if (ProfileFit.FitsSubjectOf(profile, await GetSeriesOrUsageErrorAsync(seriesId, ct)))
-                series.Add(seriesId);
+        {
+            var candidate = await GetSeriesOrUsageErrorAsync(seriesId, ct);
+            if (!ProfileFit.FitsSubjectOf(profile, candidate)) continue;
+            if (writes && candidate.SubjectId is null) withoutSubject ??= candidate;
+            else series.Add(seriesId);
+        }
+        // Only a series without a subject would have fitted: its own lock says more than "no book" (B-510).
+        if (series.Count == 0 && withoutSubject is not null)
+            throw new AgentUsageException(ProfileFit.NoSubject(withoutSubject));
         return series.Count switch
         {
             1 => series[0],
@@ -616,7 +632,7 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
     /// The profile that knows the child's material best. None, or one without a series, is a usage error: the place
     /// would otherwise be guessed, and a guessed shelf is the silent grab B-473 is about.
     /// </summary>
-    private async Task<CreatorProfileResponse> BestProfileForChildAsync(int childId, CancellationToken ct)
+    private async Task<CreatorProfileResponse> BestProfileForChildAsync(int childId, bool writes, CancellationToken ct)
     {
         IReadOnlyList<CreatorProfileMatch> matches;
         try
@@ -644,11 +660,15 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
             // The id offered per book is the one the briefing accepts there; the best score could be a misfit (B-506). A
             // book where none fits stays in the list - dropping it would let the score pick the subject (B-481) - but says
             // so, or the user types an id that is bound to fail.
+            // A book on a series without a subject stays too, for the same reason, but a writing verb ends there (B-510).
             var offered = new List<string>();
             foreach (var book in bySeries)
             {
                 var (best, fits) = await FittingOnSeriesAsync(book.Key, [.. book], ct);
-                offered.Add($"[{best.Id}] {best.Name}" + (fits ? "" : " (passt nicht zum Fach seiner Reihe)"));
+                var bookSeries = await GetSeriesOrUsageErrorAsync(book.Key, ct);
+                offered.Add($"[{best.Id}] {best.Name}"
+                            + (writes && bookSeries.SubjectId is null ? " (Reihe ohne Fach – nimmt keine Übung auf)"
+                                : fits ? "" : " (passt nicht zum Fach seiner Reihe)"));
             }
             throw new AgentUsageException(
                 $"Für Kind {childId} gibt es mehrere Lehrbücher mit Profil – wähle mit --profile <id>: "
@@ -847,7 +867,8 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
                                 Profils – hat es keine, mit --child die Reihe des Kinder-Buchs im
                                 Fach des Profils; nur mit --child die Reihe des Profils auf seinem Buch,
                                 ohne ein solches oder bei mehreren ein Fehler; das Fach kommt
-                                aus dem Profil, sonst aus der Reihe)
+                                aus der Reihe – create/plan/exam brauchen eine Reihe mit Fach,
+                                briefing zeigt sonst das des Profils)
           --series-unit <id>    Unit, in der die Übung entsteht (Standard: --unit, sonst mit --child
                                 die aktuelle Unit des Kindes in dieser Reihe, sonst die erste;
                                 allein angegeben bestimmt sie auch die Reihe – mit --profile muss

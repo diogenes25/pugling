@@ -19,7 +19,8 @@ stehen danach fest, das Briefing liest den Stoff aus genau dieser Unit und wähl
 denen, die passen – das der Reihe, sonst eines ohne Reihe.
 Ein werkunabhängiges Profil nimmt die Reihe aus dem Buch des Kindes in seinem Fach – nie die erste des Katalogs.
 **Ob ein Profil zum Ort passt** (Reihe und Fach), entscheidet nur `ProfileFit` im Briefing – der Senke, die `create`,
-`plan` und `exam` vor dem ersten Schreiben durchlaufen (B-488); keine zweite Prüfung in der Konsole.
+`plan` und `exam` vor dem ersten Schreiben durchlaufen (B-488); die Konsole wählt Buch und Profil mit derselben Regel
+(`FitsSubjectOf`), nie mit einer eigenen – und beim Schreiben mit der Sperre der Senke (Reihe ohne Fach, B-510).
 
 Der `ExamPlanner` baut **Übungsklausuren**: ein Pipeline-Lauf je Typ (jeder mit eigenem Selbsttest),
 danach – nur mit Kind – ein kind-skopierter Tag und eine `Klassenarbeit` (Status *geplant*) mit genau

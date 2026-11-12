@@ -4,8 +4,8 @@ namespace Pugling.Agent.Creator.Briefing;
 /// Whether a teacher profile may speak for an exercise filed in a series. A profile of another work, or of another
 /// subject, would describe a book the material is not from, and the briefing would search word lists and grammar
 /// topics in the wrong subject (B-484, B-488). The briefing's rule, for a named profile and a matched one alike: create,
-/// plan and exam all pass the briefing before anything is written, so no command checks it a second time. The console
-/// only uses <see cref="FitsSubjectOf"/> to pick a book or a profile it would otherwise guess (B-498, B-500, B-506).
+/// plan and exam all pass the briefing before anything is written. The console applies the same rule, never another one:
+/// <see cref="FitsSubjectOf"/> picks a book or a profile it would otherwise guess (B-498, B-500, B-506, B-510).
 /// </summary>
 public static class ProfileFit
 {
@@ -36,16 +36,22 @@ public static class ProfileFit
     /// <summary>
     /// Why no exercise can be filed in <paramref name="series"/>: it has no subject, and the server files none there
     /// (<c>series_without_subject</c>). The way out depends on who may set one: the owner can, nobody can change a series of
-    /// the base stock (no owner), and anyone else can only ask the owner (B-508).
+    /// the base stock (no owner), and anyone else can only ask the owner (B-508). Another series is a way out only when the
+    /// named profile does not hold the user to this one (<paramref name="boundByNamedProfile"/>, B-511) - then it is
+    /// another profile.
     /// </summary>
-    public static string NoSubject(TextbookSeriesResponse series) =>
-        $"Reihe {series.Id} ({series.Name}) hat kein Fach zugeordnet, und ohne Fach legt der Server keine Übung an – "
-        + (series.IsOwn
-            ? "setze eines im Vater-Web (Lehrwerke → Reihe bearbeiten) oder wähle mit --series eine Reihe mit Fach."
-            : series.OwnerAdultId is null
-                ? "sie gehört zum Grundbestand, niemand kann sie ändern; wähle mit --series eine Reihe mit Fach."
-                : "sie gehört nicht diesem Konto; bitte ihren Eigentümer, ein Fach zu setzen, oder wähle mit --series eine "
-                  + "Reihe mit Fach.");
+    public static string NoSubject(TextbookSeriesResponse series, bool boundByNamedProfile = false)
+    {
+        var elsewhere = boundByNamedProfile
+            ? "wähle ein Profil einer anderen Reihe (--profile <id>), das gewählte ist an diese gebunden"
+            : "wähle mit --series eine Reihe mit Fach";
+        return $"Reihe {series.Id} ({series.Name}) hat kein Fach zugeordnet, und ohne Fach legt der Server keine Übung an – "
+               + (series.IsOwn
+                   ? $"setze eines im Vater-Web (Lehrwerke → Reihe bearbeiten) oder {elsewhere}."
+                   : series.OwnerAdultId is null
+                       ? $"sie gehört zum Grundbestand, niemand kann sie ändern; {elsewhere}."
+                       : $"sie gehört nicht diesem Konto; bitte ihren Eigentümer, ein Fach zu setzen, oder {elsewhere}.");
+    }
 
     /// <summary>
     /// The subject an exercise in <paramref name="series"/> gets: the series' own, the profile's only where the series has

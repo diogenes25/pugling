@@ -2097,13 +2097,16 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
     /// <summary>
     /// B-506, AK 1d: a profile with only a free-text subject cannot give a series without a subject one ("hat kein Fach"),
-    /// so it has no book there. Red if a series without a subject fits every profile (the run ends at "hat kein Fach").
+    /// so it has no book there - even when the free text names the book's own subject. Red if a series without a subject
+    /// fits every profile (the run ends at "hat kein Fach") or if the book's subject decides (the series is picked).
     /// </summary>
     [Fact]
     public async Task Reihe_ohne_Fach_nimmt_kein_Freitext_Profil()
     {
         var (pipeline, creator, child, _, _, _) = await BookOnForeignSeriesAsync("Ohne Fach Frei", seriesSubject: false);
-        var freeText = await SubjectProfileAsync(creator, null, $"Latein {Guid.NewGuid():N}");
+        // The book's own subject name (B-510): under the old rule (compare with the book) this profile would pick the series.
+        var bookSubject = (await new SupervisorApi(Authenticated()).ListTextbooksAsync(child.Id, default)).Single().SubjectName!;
+        var freeText = await SubjectProfileAsync(creator, null, bookSubject);
 
         var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline).RunAsync(
             CommandLine.Parse(["briefing", "--profile", freeText.Id.ToString(), "--child", child.Id.ToString()]), default));
@@ -3424,5 +3427,139 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.Contains("--series", message);
         Assert.DoesNotContain("Eigentümer", message);
         Assert.DoesNotContain("Vater-Web", message);
+    }
+
+    // ---- B-510: the book choice takes the sink's lock on a series without a subject ----
+
+    /// <summary>A child with a book on a series in subject E (unless <paramref name="withSubjectBook"/> is false) and a book
+    /// on a series without a subject, and a teacher of E without a series of its own.</summary>
+    private async Task<(CreatorPipeline Pipeline, CreatorApi Creator, ChildResponse Child, CreatorProfileResponse Teacher,
+        int SubjectSeries, int BareSeries)> BookWithAndWithoutSubjectAsync(string name, bool withSubjectBook = true)
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var supervisor = new SupervisorApi(Authenticated());
+        var (subjectE, seriesE, unitE) = await FreshUnitAsync(creator, $"{name} E");
+        var bare = await creator.CreateSeriesAsync(new CreateTextbookSeriesDto(
+            $"{name} ohne Fach {Guid.NewGuid():N}", null, null, null, null, null, null, null));
+        var bareUnit = await creator.CreateUnitAsync(bare.Id, new CreateSeriesUnitDto("Unit 1", null, 1, null, null, null, null));
+        var child = await supervisor.CreateChildAsync(new CreateChildDto($"{name} {Guid.NewGuid():N}"[..20], null, 8,
+            SchoolTypes.Gymnasium, null));
+        if (withSubjectBook)
+            await supervisor.CreateTextbookAsync(child.Id, new CreateTextbookDto("Buch E", null, subjectE, 8, null, null, null,
+                SeriesId: seriesE, CurrentUnitId: unitE));
+        await supervisor.CreateTextbookAsync(child.Id, new CreateTextbookDto("Buch ohne Fach", null, null, 8, null, null, null,
+            SeriesId: bare.Id, CurrentUnitId: bareUnit.Id));
+        var teacher = await SubjectProfileAsync(creator, subjectE, null);
+        return (pipeline, creator, child, teacher, seriesE, bare.Id);
+    }
+
+    /// <summary>
+    /// B-510, AK 1: a writing verb does not count the book on a series without a subject - the teacher's book is the one in
+    /// its subject, as before B-506. Red if the series without a subject counts (two books, "mehrere Lehrbücher").
+    /// </summary>
+    [Fact]
+    public async Task Schreiben_zaehlt_ein_Buch_auf_einer_Reihe_ohne_Fach_nicht()
+    {
+        var (pipeline, creator, child, teacher, _, _) = await BookWithAndWithoutSubjectAsync("Schreiben zaehlt");
+
+        Assert.Equal(0, await Commands(creator, pipeline).RunAsync(CreateFor(teacher, child), default));
+    }
+
+    /// <summary>
+    /// B-510, AK 2: only the book on a series without a subject would have fitted - its own lock is the message, with its
+    /// way out, not "kein Lehrbuch". Red if the dropped series leaves the bare "no book" message.
+    /// </summary>
+    [Fact]
+    public async Task Schreiben_nur_mit_Buch_ohne_Fach_nennt_die_Sperre_der_Reihe()
+    {
+        var (pipeline, creator, child, teacher, _, _) = await BookWithAndWithoutSubjectAsync("Nur ohne Fach", withSubjectBook: false);
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline)
+            .RunAsync(CreateFor(teacher, child), default));
+
+        Assert.Contains("hat kein Fach", error.Message);
+        Assert.DoesNotContain("kein Lehrbuch", error.Message);
+    }
+
+    /// <summary>
+    /// B-510, AK 3: the briefing writes nothing and still takes the book on a series without a subject (B-506, AK 1c). Red
+    /// if the lock of the writing verbs reaches the briefing's book choice.
+    /// </summary>
+    [Fact]
+    public async Task Briefing_nimmt_das_Buch_ohne_Fach_weiter()
+    {
+        var (pipeline, creator, child, teacher, _, _) = await BookWithAndWithoutSubjectAsync("Briefing ohne Fach", withSubjectBook: false);
+
+        Assert.Equal(0, await Commands(creator, pipeline).RunAsync(CommandLine.Parse(
+            ["briefing", "--profile", teacher.Id.ToString(), "--child", child.Id.ToString()]), default));
+    }
+
+    /// <summary>
+    /// B-510, AK 4: two books with a profile each, one on a series without a subject. Both stay on the list (B-481), the
+    /// one a writing verb cannot use is marked. Red if it is offered unmarked (the user types an id bound to fail).
+    /// </summary>
+    [Fact]
+    public async Task Mehrere_Buecher_markieren_eine_Reihe_ohne_Fach()
+    {
+        var (pipeline, creator, child, teacher, seriesE, bare) = await BookWithAndWithoutSubjectAsync("Mehrere ohne Fach");
+        var onE = await creator.CreateProfileAsync(new CreateCreatorProfileDto($"Lehrer E {Guid.NewGuid():N}", null,
+            teacher.SubjectId, null, null, null, seriesE, SourceLang: "en", TargetLang: "de", Persona: null, Didactics: null,
+            DefaultTypes: null, Active: true));
+        var onBare = await creator.CreateProfileAsync(new CreateCreatorProfileDto($"Lehrer ohne Fach {Guid.NewGuid():N}", null,
+            teacher.SubjectId, null, null, null, bare, SourceLang: "en", TargetLang: "de", Persona: null, Didactics: null,
+            DefaultTypes: null, Active: true));
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline).RunAsync(
+            CommandLine.Parse(["create", "--child", child.Id.ToString(), "--type", "Vocabulary", "--count", "3"]), default));
+
+        Assert.Contains($"[{onBare.Id}] {onBare.Name} (Reihe ohne Fach – nimmt keine Übung auf)", error.Message);
+        Assert.Contains($"[{onE.Id}] {onE.Name}", error.Message);
+        Assert.DoesNotContain($"[{onE.Id}] {onE.Name} (", error.Message);
+    }
+
+    /// <summary>
+    /// B-511: a named profile bound to an own series without a subject, no --series. "--series" would be a circle - the
+    /// briefing rejects the profile on any other series - so the message names another profile. Red if it offers
+    /// --series there.
+    /// </summary>
+    [Fact]
+    public async Task Gebundenes_Profil_an_Reihe_ohne_Fach_nennt_ein_anderes_Profil()
+    {
+        var (pipeline, creator, chat, teacher, seriesId, unitId) = await SubjectlessSeriesAsync("Gebunden ohne Fach");
+        var bound = await creator.CreateProfileAsync(new CreateCreatorProfileDto($"Gebunden {Guid.NewGuid():N}", null,
+            teacher.SubjectId, null, null, null, seriesId, SourceLang: "en", TargetLang: "de", Persona: null, Didactics: null,
+            DefaultTypes: null, Active: true));
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline).RunAsync(CommandLine.Parse(
+            ["create", "--profile", bound.Id.ToString(), "--type", "Vocabulary"]), default));
+
+        Assert.Contains("hat kein Fach", error.Message);
+        Assert.Contains("--profile <id>", error.Message);
+        Assert.DoesNotContain("--series", error.Message);
+        Assert.Equal(0, chat.Calls);
+    }
+
+    /// <summary>
+    /// B-511 (review): the same bound profile with --series on a series that has a subject. The briefing would refuse the
+    /// profile there ("lass --series weg") and lead back to the lock above - so the lock comes first. Red if the run reaches
+    /// the briefing's "gehört zur Reihe".
+    /// </summary>
+    [Fact]
+    public async Task Gebundenes_Profil_an_Reihe_ohne_Fach_endet_auch_mit_series_an_der_Sperre()
+    {
+        var (pipeline, creator, chat, teacher, seriesId, _) = await SubjectlessSeriesAsync("Gebunden mit series");
+        var (_, otherSeries, otherUnit) = await FreshUnitAsync(creator, "Reihe mit Fach");
+        var bound = await creator.CreateProfileAsync(new CreateCreatorProfileDto($"Gebunden {Guid.NewGuid():N}", null,
+            teacher.SubjectId, null, null, null, seriesId, SourceLang: "en", TargetLang: "de", Persona: null, Didactics: null,
+            DefaultTypes: null, Active: true));
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline).RunAsync(CommandLine.Parse(
+            ["create", "--profile", bound.Id.ToString(), "--series", otherSeries.ToString(), "--series-unit", otherUnit.ToString(),
+             "--type", "Vocabulary"]), default));
+
+        Assert.Contains($"Reihe {seriesId}", error.Message);
+        Assert.Contains("hat kein Fach", error.Message);
+        Assert.DoesNotContain("gehört zur Reihe", error.Message);
+        Assert.Equal(0, chat.Calls);
     }
 }
