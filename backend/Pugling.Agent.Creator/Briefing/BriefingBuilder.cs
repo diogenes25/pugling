@@ -47,8 +47,20 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
             ?? throw new AgentUsageException(
                 $"Unit {request.SeriesUnitId} gehört nicht zu Reihe {request.SeriesId} ({targetSeries.Name}).");
 
+        // The material is where the exercise goes - the series and unit decided once in the request (B-484). Reading it
+        // from the profile's or the child's book again was a second decision that could name another work.
+        if (request.UnitId is int named && named != targetUnit.Id)
+            throw new AgentUsageException(
+                $"Unit {named} ist nicht die Unit {targetUnit.Id}, in der die Übung entsteht – der Stoff kommt aus "
+                + "der Unit, in der sie liegt; gib nur eine an.");
+        // The subject is the work's: word lists, the exercise search and grammar topics are all read by it (B-488).
+        if (targetSeries.SubjectId is int seriesSubject && seriesSubject != request.SubjectId)
+            throw new AgentUsageException(
+                $"Fach {request.SubjectId} ist nicht das Fach der Reihe {targetSeries.Id} ({targetSeries.Name}, "
+                + $"{targetSeries.SubjectName}) – die Übung gehört zum Fach des Werks, in dem sie liegt; setze dieses Fach.");
+
         var child = request.ChildId is int childId ? await LoadChildAsync(childId, ct) : null;
-        var profile = await ResolveProfileAsync(request, ct);
+        var profile = await ResolveProfileAsync(request, targetSeries, ct);
         // Explicitly set languages beat the profile; without either, the usual defaults apply.
         var sourceLang = request.SourceLang ?? profile?.SourceLang ?? "en";
         var targetLang = request.TargetLang ?? profile?.TargetLang ?? "de";
@@ -62,12 +74,6 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
                 WeakWords = await student.ListWordMasteryAsync(child.ChildId, onlyWeak: true, take: MaxWeakWords,
                     sourceLang: sourceLang, targetLang: targetLang, ct: ct),
             };
-        // The material is where the exercise goes - the series and unit decided once in the request (B-484). Reading it
-        // from the profile's or the child's book again was a second decision that could name another work.
-        if (request.UnitId is int named && named != targetUnit.Id)
-            throw new AgentUsageException(
-                $"Unit {named} ist nicht die Unit {targetUnit.Id}, in der die Übung entsteht – der Stoff kommt aus "
-                + "der Unit, in der sie liegt; gib nur eine an.");
 
         // Existing titles go into the prompt as "do not repeat" - that prevents near-duplicates.
         var existing = await creator.SearchExercisesAsync(subjectId: request.SubjectId,
@@ -228,26 +234,30 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
     /// work would bring that work's persona to this one. Without either, it stays empty - the agent then works as a generalist, instead of aborting
     /// (a catalog without profiles must remain usable).
     /// </summary>
-    public async Task<CreatorProfileResponse?> ResolveProfileAsync(GenerationRequest request, CancellationToken ct = default)
+    public async Task<CreatorProfileResponse?> ResolveProfileAsync(GenerationRequest request, TextbookSeriesResponse series,
+        CancellationToken ct = default)
     {
         if (request.ProfileId is int profileId)
         {
+            CreatorProfileResponse named;
             try
             {
-                return await creator.GetProfileAsync(profileId, ct);
+                named = await creator.GetProfileAsync(profileId, ct);
             }
             catch (PuglingApiException ex) when (ex.StatusCode is System.Net.HttpStatusCode.NotFound)
             {
                 throw new AgentUsageException($"Creator-Profil {profileId} gibt es nicht – 'pugling-creator profiles' zeigt die vorhandenen.");
             }
+            return ProfileFit.Problem(named, series) is { } misfit ? throw new AgentUsageException(misfit) : named;
         }
 
         if (request.ChildId is not int childId) return null;
 
-        var matches = await creator.MatchProfilesAsync(childId, request.SubjectId, ct);
-        // A teacher for every book of the subject is the next best; one on another series never is.
-        return (matches.FirstOrDefault(m => m.Profile.SeriesId == request.SeriesId)
-                ?? matches.FirstOrDefault(m => m.Profile.SeriesId is null))?.Profile;
+        // The same rule as for a named profile: only one that fits the work speaks; a teacher for every book of the
+        // subject is the next best after the teacher of this one.
+        var fitting = (await creator.MatchProfilesAsync(childId, request.SubjectId, ct))
+            .Where(m => ProfileFit.Problem(m.Profile, series) is null).ToList();
+        return (fitting.FirstOrDefault(m => m.Profile.SeriesId == series.Id) ?? fitting.FirstOrDefault())?.Profile;
     }
 
     /// <summary>Condenses the profile into the prompt facts - the teacher, not the material.</summary>

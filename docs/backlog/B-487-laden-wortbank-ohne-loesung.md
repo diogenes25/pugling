@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-12-backlog-lauf.md (Nachschau Sprint 36)
 unverifiziert: false
 entgangen_bei: [B-483]
-nachgeschaut: ""
+nachgeschaut: 2026-11-12
 grund: ""
 ersetzt_durch: []
 ---
@@ -114,3 +114,6 @@ den `FORMAT.md` und die Fehlermeldung ausdrücklich empfehlen (`text`/`gaps`/`wo
   0. **Rollengang (Sohn) als Maschinengang**: `ClozePlayTests` spielt die Wortbank-Stufe über die Karten-Route des
   Kindes gegen die In-Process-API; kein Browser, keine echte DB (deren Kopie hat keine Übung mit Wortbank).
 - **2026-11-12** — Commit der Abnahme: `9d648bb`.
+- **2026-11-12** — Nachschau (Sprint 39): leere Einträge der Bank bleiben als Kachel stehen; eine Bank nur aus
+  ihnen wird zum Pool aus reinen Lösungen → [B-491](B-491-wortbank-aus-leeren-kacheln.md); Nachbarklasse
+  [B-490](B-490-auswahl-ohne-richtige-antwort.md).

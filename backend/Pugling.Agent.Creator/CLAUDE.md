@@ -14,9 +14,12 @@ Das `CreatorBriefing` hat **zwei Quellen**: `ProfileFacts` (der Fachlehrer; Werk
 eine *allgemeine* für den geteilten Katalog (dann kommen Klassenstufen-Bereich/Schulart/Quelle aus dem
 Profil, und der Agent braucht kein Betreuungsrecht). Ohne `--profile` nimmt der Agent mit Kind das
 Profil auf der Reihe seines Buchs (`profiles/match`, `series_match`); mehrere solche Bücher sind eine Fehlbedienung.
-**Ort und Stoff entscheidet eine Stelle** (`BuildRequestAsync`, B-484): Reihe und Unit stehen danach fest, das
-Briefing liest den Stoff aus genau dieser Unit und wählt ein ungenanntes Profil nur unter denen auf dieser Reihe.
+**Ort und Stoff entscheidet eine Stelle** (`BuildRequestAsync`, B-484): Reihe, Unit und Fach (das der Reihe, B-488)
+stehen danach fest, das Briefing liest den Stoff aus genau dieser Unit und wählt ein ungenanntes Profil nur unter
+denen, die passen – das der Reihe, sonst eines ohne Reihe.
 Ein werkunabhängiges Profil nimmt die Reihe aus dem Buch des Kindes in seinem Fach – nie die erste des Katalogs.
+**Ob ein Profil zum Ort passt** (Reihe und Fach), entscheidet nur `ProfileFit` im Briefing – der Senke, die `create`,
+`plan` und `exam` vor dem ersten Schreiben durchlaufen (B-488); keine zweite Prüfung in der Konsole.
 
 Der `ExamPlanner` baut **Übungsklausuren**: ein Pipeline-Lauf je Typ (jeder mit eigenem Selbsttest),
 danach – nur mit Kind – ein kind-skopierter Tag und eine `Klassenarbeit` (Status *geplant*) mit genau

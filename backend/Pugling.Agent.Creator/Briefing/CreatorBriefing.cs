@@ -4,7 +4,7 @@ namespace Pugling.Agent.Creator.Briefing;
 
 /// <summary>
 /// The complete briefing of a request - from <b>two</b> sources: the profile (the teacher: subject,
-/// school branch, textbook, didactics) and, optionally, the child (interests, learning progress). Exactly
+/// school branch, didactics; the work is <see cref="Material"/>) and, optionally, the child (interests, learning progress). Exactly
 /// this separation makes both modes of operation possible: with <see cref="Child"/> an <i>individual</i>
 /// exercise results, without it a <i>general</i> one for the shared catalog - and for that the agent then
 /// needs no account with supervision rights.

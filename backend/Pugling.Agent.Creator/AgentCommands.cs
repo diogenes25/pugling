@@ -505,12 +505,12 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
                 : throw new AgentUsageException(
                     $"Creator-Profil {profile.Id} ({profile.Name}) hängt an keinem Lehrwerk – gib --series <id> an.")
             : profile?.SeriesId;
-        var (seriesId, seriesUnitId) = await ResolveLocationAsync(command, profileSeries, ct);
-        // The teacher of one work next to the shelf of another would speak about a book the material is not from.
-        if (profile is { SeriesId: int ownSeries } && ownSeries != seriesId)
-            throw new AgentUsageException(
-                $"Creator-Profil {profile.Id} ({profile.Name}) gehört zur Reihe {ownSeries}, die Übung entstünde in Reihe "
-                + $"{seriesId} – lass --series/--series-unit weg oder wähle ein Profil dieser Reihe.");
+        // A named place is found on its own: searched only in the profile's series, a unit of another work would read as
+        // a typo instead of the conflict it is.
+        var (seriesId, seriesUnitId) = await ResolveLocationAsync(command, placeNamed ? null : profileSeries, ct);
+        // Whether the profile fits this work is the briefing's call (ProfileFit), which create, plan and exam all pass
+        // before anything is written.
+        var series = await GetSeriesOrUsageErrorAsync(seriesId, ct);
         // Two units named for one exercise: the briefing reads its material from one and it would land in the other.
         if (command.Value("series-unit") is not null && command.Value("unit") is not null
             && command.RequiredInt("unit") != seriesUnitId)
@@ -526,7 +526,11 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
             else if (childId is int ofChild && await CurrentUnitOfChildAsync(ofChild, seriesId, ct) is int current)
                 seriesUnitId = current;
         }
-        var subjectId = profile?.SubjectId ?? await ResolveSubjectIdAsync(seriesId, ct);
+        // The exercise's subject is the subject of the work it is filed in; the profile's counts only where the work has
+        // none (B-488).
+        var subjectId = series.SubjectId ?? profile?.SubjectId
+            ?? throw new AgentUsageException(
+                $"Reihe {seriesId} ({series.Name}) hat kein Fach zugeordnet – setze eines im Vater-Web, bevor du Übungen anlegst.");
 
         return new GenerationRequest(
             ChildId: childId,
@@ -637,7 +641,10 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
         return books[0].Profile;
     }
 
-    /// <summary>Loads the named profile - only to know its subject as a default for the catalog location.</summary>
+    /// <summary>
+    /// Loads the named profile: its series is the default location, and its subject picks the child's book for a profile
+    /// without one and stands in for a series without a subject. Whether it fits the place is the briefing's call.
+    /// </summary>
     private async Task<CreatorProfileResponse?> LoadProfileAsync(int profileId, CancellationToken ct)
     {
         try
@@ -734,15 +741,6 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
         {
             throw new AgentUsageException($"Fach {subjectId} gibt es nicht – prüfe die Id im Vater-Web.");
         }
-    }
-
-    /// <summary>The subject a series carries (for profile matching); throws if the series has none set.</summary>
-    private async Task<int> ResolveSubjectIdAsync(int seriesId, CancellationToken ct)
-    {
-        var series = await GetSeriesOrUsageErrorAsync(seriesId, ct);
-        return series.SubjectId
-            ?? throw new AgentUsageException(
-                $"Reihe {seriesId} ({series.Name}) hat kein Fach zugeordnet – setze eines im Vater-Web, bevor du Übungen anlegst.");
     }
 
     /// <summary>Date option in ISO format; a typo should produce an error message, not today's date.</summary>

@@ -1758,6 +1758,92 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.Contains("gehört zur Reihe", error.Message);
     }
 
+    /// <summary>B-488: a series in subject B and a teacher for every book of subject A.</summary>
+    private async Task<(CreatorPipeline Pipeline, CreatorApi Creator, FakeChatClient Chat, int SubjectA, int SeriesB,
+        int UnitB, CreatorProfileResponse ProfileA)> ForeignSubjectAsync(string name)
+    {
+        var (pipeline, creator, chat) = BuildAgent(VocabularyJson);
+        var (subjectA, _, _) = await FreshUnitAsync(creator, $"{name} Fach A");
+        var (_, seriesB, unitB) = await FreshUnitAsync(creator, $"{name} Fach B");
+        var profileA = await creator.CreateProfileAsync(new CreateCreatorProfileDto(
+            $"Profil Fach A {Guid.NewGuid():N}", null, subjectA, null, null, null, null,
+            SourceLang: "en", TargetLang: "de", Persona: "Du bist der Lehrer des FREMDEN Fachs.", Didactics: null,
+            DefaultTypes: null, Active: true));
+        return (pipeline, creator, chat, subjectA, seriesB, unitB, profileA);
+    }
+
+    /// <summary>
+    /// B-488: a teacher for every book of one subject next to a named series of another is a usage error on every verb -
+    /// the word list, the exercise search and the grammar topics would all be read in the profile's subject and find
+    /// nothing. Red if the profile's subject is not checked against the series' (exit 0 for create, a run without the
+    /// unit's material for plan and exam).
+    /// </summary>
+    [Theory]
+    [InlineData("create", "--type", "Vocabulary", "--count", "3")]
+    [InlineData("exam", "--types", "Vocabulary", "--per-type", "3")]
+    [InlineData("plan", "--child", "1", "--types", "Vocabulary", "--per-type", "3")]
+    public async Task Werkunabhaengiges_Profil_eines_anderen_Fachs_neben_genannter_Reihe_ist_eine_Fehlbedienung(
+        string verb, params string[] extra)
+    {
+        var (pipeline, creator, chat, _, seriesB, _, profileA) = await ForeignSubjectAsync($"Fach {verb}");
+
+        var command = CommandLine.Parse([verb, "--profile", profileA.Id.ToString(), "--series", seriesB.ToString(),
+            "--title", TestApi.UniqueName("Fach fremd"), .. extra]);
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline).RunAsync(command, default));
+
+        Assert.Contains("unterrichtet", error.Message);
+        Assert.Equal(0, chat.Calls);
+    }
+
+    /// <summary>
+    /// B-488, at the sink: a caller of the pipeline that names the profile itself gets the same rule. Red if only the
+    /// console checked the fit.
+    /// </summary>
+    [Fact]
+    public async Task Pipeline_mit_Profil_eines_anderen_Fachs_ist_eine_Fehlbedienung()
+    {
+        var (pipeline, creator, _, _, seriesB, unitB, profileA) = await ForeignSubjectAsync("Pipeline Fach");
+
+        var subjectB = (await creator.GetSeriesAsync(seriesB)).SubjectId!.Value;
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => pipeline.BriefAsync(
+            Request(subjectB, seriesB, unitB, "Vocabulary", childId: null, profileId: profileA.Id)));
+
+        Assert.Contains("unterrichtet", error.Message);
+    }
+
+    /// <summary>
+    /// B-488, at the sink: the exercise's subject is the subject of the work it is filed in. A request naming another one
+    /// would search the unit's word list in the wrong subject. Red if the briefing takes the request's subject as given.
+    /// </summary>
+    [Fact]
+    public async Task Pipeline_mit_einem_anderen_Fach_als_dem_der_Reihe_ist_eine_Fehlbedienung()
+    {
+        var (pipeline, _, _, subjectA, seriesB, unitB, _) = await ForeignSubjectAsync("Pipeline Reihe");
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => pipeline.BriefAsync(
+            Request(subjectA, seriesB, unitB, "Vocabulary", childId: null)));
+
+        Assert.Contains("nicht das Fach der Reihe", error.Message);
+    }
+
+    /// <summary>
+    /// B-488 (rest of the look-back): a profile of one work next to a bare <c>--series-unit</c> of another names the
+    /// conflict. The unit used to be searched only in the profile's series and was reported as non-existent. Red if the
+    /// named place is looked up in the profile's series again ("gibt es nicht").
+    /// </summary>
+    [Fact]
+    public async Task Profil_einer_anderen_Reihe_neben_einer_Unit_nennt_den_Konflikt()
+    {
+        var (creator, pipeline, _, child, _, _, current, _, elsewhere) = await TwoTeachersAsync("Unit fremd");
+
+        var command = CommandLine.Parse(["create", "--child", child.Id.ToString(), "--profile", elsewhere.Id.ToString(),
+            "--series-unit", current.Id.ToString(), "--type", "Vocabulary", "--count", "3"]);
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline).RunAsync(command, default));
+
+        Assert.Contains("gehört zur Reihe", error.Message);
+    }
+
     /// <summary>
     /// B-484, AK 2: a named profile without a series takes the series of the child's book in its subject, at the child's
     /// unit - not the first series of the catalog. Red if the location falls back to the catalog (the exercise lands
@@ -2624,32 +2710,29 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
-    /// B-308: <c>plan</c>/<c>exam</c> with a profile, a given title and an unknown series. Nothing before the parts
-    /// read the series, so the briefing's usage error came once per part and the run ended with exit 1 ("plan
-    /// incomplete") instead of exit 2. The briefing is now checked once before the first part. Red if that check is
-    /// removed (the error is swallowed per part, no exception reaches the caller). No model-call count here: the
-    /// briefing failed before any model call with or without the fix, so such an assertion could never fail.
+    /// B-308: <c>plan</c>/<c>exam</c> with an unknown series. Nothing before the parts read the series, so the briefing's
+    /// usage error came once per part and the run ended with "plan incomplete" instead of a usage error. The briefing is
+    /// now checked once before the first part. Driven through the planners directly: since B-488 the console reads the
+    /// series itself and stops earlier, which would leave this check untested. Red if the check is removed (the error is
+    /// swallowed per part, no exception reaches the caller).
     /// </summary>
-    [Theory]
-    [InlineData("plan", "--child", "1")]
-    [InlineData("exam")]
-    public async Task Plan_und_Klausur_mit_unbekannter_Reihe_brechen_einmal_ab(string verb, params string[] extra)
+    [Fact]
+    public async Task Plan_und_Klausur_mit_unbekannter_Reihe_brechen_einmal_ab()
     {
         var (pipeline, creator, _) = BuildAgent(VocabularyJson);
-        var (subjectId, _, _) = await FreshUnitAsync(creator, $"Reihe-weg-{verb}");
-        // The profile must carry the subject: without it `ResolveSubjectIdAsync` would reject series 987654 before
-        // the planner runs, and the test would stay green without the B-308 fix.
-        var profile = await creator.CreateProfileAsync(new CreateCreatorProfileDto(
-            $"Profil Reihe weg {Guid.NewGuid():N}", null, subjectId, null, null, null, null,
-            SourceLang: "en", TargetLang: "de", Persona: null, Didactics: null, DefaultTypes: null, Active: true));
+        var (subjectId, _, _) = await FreshUnitAsync(creator, "Reihe-weg");
+        var supervisor = new SupervisorApi(Authenticated());
+        var request = Request(subjectId, 987654, 1, "Vocabulary");
 
-        var command = CommandLine.Parse([
-            verb, "--profile", profile.Id.ToString(), "--types", "Vocabulary,Cloze", "--per-type", "3",
-            "--title", TestApi.UniqueName("Reihe weg"), "--series", "987654", "--series-unit", "1", .. extra,
-        ]);
-        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline).RunAsync(command, default));
+        var exam = await Assert.ThrowsAsync<AgentUsageException>(() => new ExamPlanner(pipeline, creator, supervisor)
+            .RunAsync(new ExamRequest(request, Types: ["Vocabulary", "Cloze"], PerType: 3, ScheduledDate: null,
+                Title: TestApi.UniqueName("Reihe weg"))));
+        var plan = await Assert.ThrowsAsync<AgentUsageException>(() => new PlanPlanner(pipeline, supervisor)
+            .RunAsync(new PlanRequest(request, Types: ["Vocabulary", "Cloze"], PerType: 3, Intensity: PlanIntensity.Normal,
+                StartDate: null, DurationDays: 3, Title: TestApi.UniqueName("Reihe weg"))));
 
-        Assert.Contains("Reihe 987654", error.Message);
+        Assert.Contains("Reihe 987654", exam.Message);
+        Assert.Contains("Reihe 987654", plan.Message);
     }
 
     /// <summary>

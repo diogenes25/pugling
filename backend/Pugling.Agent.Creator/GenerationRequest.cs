@@ -22,7 +22,8 @@ namespace Pugling.Agent.Creator;
 /// and unit determine the material, but its interests are left out. For exercises meant for the shared
 /// catalog but aligned to a specific child's standing.
 /// </param>
-/// <param name="SubjectId">Subject in the catalog (profile matching); reached transitively from the series otherwise.</param>
+/// <param name="SubjectId">Subject of the exercise: the subject of <paramref name="SeriesId"/> - the briefing rejects any other
+/// (B-488); a profile's subject only for a series without one.</param>
 /// <param name="SeriesId">Target textbook series in the catalog.</param>
 /// <param name="SeriesUnitId">Target series unit the exercise is created under.</param>
 /// <param name="TypeKey">Exercise-type key from the manifest (e.g. <c>Vocabulary</c>, <c>Cloze</c>).</param>

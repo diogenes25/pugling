@@ -221,7 +221,9 @@ Werkzeug unter `.claude/skills`.
 - **Nächster Kandidat B-483** (P2, Durchrutscher aus B-475) – in Sprint 36 abgenommen.
 - **Nächster Kandidat B-484** (P2, Durchrutscher aus B-481) – in Sprint 37 abgenommen.
 - **Nächster Kandidat B-487** (P2, Durchrutscher aus B-483) – in Sprint 38 abgenommen.
-- **Nächster Kandidat B-488** (P2, Durchrutscher aus B-484) – wartet, siehe „Halt nach diesem Sprint" (Sprint 38).
+- **Nächster Kandidat B-488** (P2, Durchrutscher aus B-484) – in Sprint 39 abgenommen.
+- **Nächster Kandidat B-491** (P2, Durchrutscher aus B-487) – wartet, siehe „Halt nach diesem Sprint" (Sprint 39);
+  daneben B-490 (P2, Auswahlfrage ohne Antwort).
 - **Vorschlag (CS)** aus Sprint 38: die Regel an die Senke legen, nicht an die Quellen.
 
 ## Sprint 34 — Ziel & Umfang
@@ -464,6 +466,57 @@ Stelle, durch die jedes Ergebnis geht – und die Regel dort ablegen statt an de
 **Halt nach diesem Sprint**, wie nach Sprint 35–37: der nächste Kandidat (B-488) ist wieder ein Durchrutscher aus
 meinem eigenen vorigen Sprint.
 
+## Sprint 39 — Ziel & Umfang
+
+Fortsetzung auf Zuruf des Nutzers („Ja, B-488").
+
+**Sprint-Ziel:** *Wer dem KI-Creator ein Profil und einen Ort nennt, die nicht zusammenpassen, bekommt vor dem ersten
+Modellaufruf eine Fehlbedienung – auf jedem Befehl und jedem direkten Aufruf.*
+**Umfang:** B-488 (S) – `art: Defekt`, Durchrutscher aus B-484, autonom gegrillt.
+**Entwickler-Brief:** (CS) anwenden: die Senke ist das Briefing (`create`, `plan`, `exam` und direkte Aufrufe passieren
+es vor dem ersten Schreiben). Dort *eine* Funktion für „Profil passt zu Reihe und Fach", benannt wie ungenannt; die
+zweite Prüfung in der Konsole entfällt. Keine Migration, kein Vertrag.
+
+## Iteration 39 — umgesetzt
+
+- **B-488:** `ProfileFit` im Briefing; das Fach der Übung ist das der Reihe; ein genannter Ort wird nicht mehr in der
+  Profilreihe gesucht (Rest der Nachschau). Der B-308-Test fährt die Planer jetzt direkt, weil die Konsole früher
+  abbricht.
+- Review-Zähler: **2** (Meldung mit einem Ausweg, den es nicht gibt; veraltete Summary) – behoben.
+- Mutanten 8/8 rot; ein Lauf verworfen (drei Zeilen ohne Compilerfehler „kompiliert nicht", eine falsche Erwartung).
+- **Nummernkollision:** die parallele Sitzung vergab B-489 in derselben Zeit; meine Story aus der Nachschau heißt
+  darum B-491.
+
+## Runde 10 — Rollengang / Abnahme (Sprint 39)
+
+Volle Suite **1385/1385** nach der letzten Änderung.
+
+- **Creator – abgenommen, ohne Live-Lauf.** `CreatorAgentTests`: Latein-Profil neben Englisch-Reihe ist auf `create`,
+  `exam` und `plan` eine Fehlbedienung ohne Modellaufruf; die Meldung nennt beide Fächer und einen Ausweg, den es gibt.
+  *„Ich hab das falsche Profil erwischt – und er sagt mir, welches Fach die Reihe hat."* **Nicht gefahren:** Ollama,
+  echte DB.
+- **Vater, Sohn – Regressionszeugen.** Kein Pfad im Diff; Suite grün.
+
+## Retrospektive (Sprint 39)
+
+**Nachschau:** Sprint 38 (B-487) von einem frischen `pugling-reviewer` an `9d648bb`. **Ein Durchrutscher, zum sechsten
+Mal in Folge** – aber ein anderer als zuvor: die Senke war richtig gewählt (der Reviewer bestätigt: jede Bank geht durch
+`Choices`), *innerhalb* der Senke fehlte eine Eingangsbereinigung. Leere Einträge zählen als Bank und bleiben als
+Kachel; eine Bank nur aus ihnen verrät die Lösung → [B-491](backlog/B-491-wortbank-aus-leeren-kacheln.md)
+(P2, `entgangen_bei: B-487`). Nachbarklasse ohne Bezug zu B-487: [B-490](backlog/B-490-auswahl-ohne-richtige-antwort.md)
+(Auswahlfragen ohne die Antwort). `nachgeschaut` an B-487.
+
+**Was die eigenen Tore durchgelassen haben:** (CS) hat in diesem Sprint getragen – das Review fand keinen Weg an der
+Senke vorbei, nur Meldungs- und Doku-🟡. Was durchrutscht, ist jetzt eine Stufe kleiner: nicht mehr „ein Weg ohne
+Regel", sondern „ein Randwert des Eingangs an der richtigen Stelle". Den hätte ein Fall „leer/Leerzeichen" je neuer
+Eingabeliste gefunden; das Vater-Web und `ChoicesOf` filtern ihn, ich habe nicht nachgesehen, wie es die Nachbarn tun.
+
+**Mechanismus:** keiner gelandet. (CS) bestätigt sich als Vorschlag; ergänzt um: an der Senke die Bereinigung des
+Eingangs von den Nachbarn derselben Art übernehmen (hier `ChoicesOf`), nicht neu erfinden.
+
+**Halt nach diesem Sprint**, wie nach Sprint 35–38: der nächste Kandidat (B-491) ist wieder ein Durchrutscher aus
+meinem eigenen vorigen Sprint.
+
 ## Produktentscheidungen dieses Laufs (zum Umstoßen)
 
 1. **Schlusszeichen zählen beim Vergleich nicht** – auch ein *anderes* (`?` statt `.`), auch bei Ordnungszahlen
@@ -484,6 +537,7 @@ meinem eigenen vorigen Sprint.
 11. **Ein ungenanntes Profil spricht nur auf der Zielreihe oder ohne Reihe**; Stoff und Quelle sind immer das Werk
     der Ablage, das freie Kinderbuch nie (B-484, 2 und 5).
 12. **Eine Wortbank ohne Lösung wird beim Ausspielen ergänzt, nicht beim Schreiben abgelehnt** (B-487, 1 und 2).
+13. **Das Fach einer KI-Übung ist das ihrer Reihe; ob ein Profil passt, entscheidet nur das Briefing** (B-488, 1–3).
 
 ## Offene Roadmap
 
