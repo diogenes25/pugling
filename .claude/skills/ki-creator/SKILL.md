@@ -53,8 +53,8 @@ Planende (⌈Einträge / `--days`⌉) und getipptem Test (B-463).
 **Individuell** (`--child`) verlangt ein Konto mit Creator **und** Supervisor-Rolle, das das Kind
 betreut (Seed: Konto 1) – daraus entsteht eine auf das Kind zugeschnittene Übung.
 **Allgemein** (`--profile`, ohne Kind) genügt die Creator-Rolle und erzeugt Katalogware; Klassenstufe,
-Schulart und Quelle kommen dann aus dem Profil. Ohne `--profile` sucht der Agent das bestpassende
-selbst (`profiles/match`).
+Schulart und Quelle kommen dann aus dem Profil. Ohne `--profile` nimmt der Agent das Profil auf der Reihe des
+Kinder-Buchs (`profiles/match`); hat das Kind mehrere Bücher mit Profil, ist `--profile` Pflicht.
 
 Fachliche Kernregel: **Interessen kleiden den Stoff ein, sie ersetzen ihn nie.**
 

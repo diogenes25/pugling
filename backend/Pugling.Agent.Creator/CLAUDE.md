@@ -12,8 +12,8 @@ ein, sie ersetzen ihn nie** (bei vorgegebenem Wortschatz deterministisch erzwung
 Das `CreatorBriefing` hat **zwei Quellen**: `ProfileFacts` (der Fachlehrer samt Reihe/Unit-Stoff) und
 **optional** `ChildFacts` – daran hängt die Betriebsart: mit Kind entsteht eine *individuelle* Übung, ohne
 eine *allgemeine* für den geteilten Katalog (dann kommen Klassenstufen-Bereich/Schulart/Quelle aus dem
-Profil, und der Agent braucht kein Betreuungsrecht). Ohne `--profile` sucht der Agent selbst das
-bestpassende (`profiles/match`).
+Profil, und der Agent braucht kein Betreuungsrecht). Ohne `--profile` nimmt der Agent mit Kind das
+Profil auf der Reihe seines Buchs (`profiles/match`, `series_match`); mehrere solche Bücher sind eine Fehlbedienung.
 
 Der `ExamPlanner` baut **Übungsklausuren**: ein Pipeline-Lauf je Typ (jeder mit eigenem Selbsttest),
 danach – nur mit Kind – ein kind-skopierter Tag und eine `Klassenarbeit` (Status *geplant*) mit genau

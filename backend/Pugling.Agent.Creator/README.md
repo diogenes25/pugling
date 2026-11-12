@@ -164,7 +164,7 @@ dotnet run --project backend/Pugling.Agent.Creator -- plan --child 1 \
 | Option | Bedeutung | Standard |
 |---|---|---|
 | `--child <id>` | Kind, auf das zugeschnitten wird (individuelle Übung) | – |
-| `--profile <id>` | Creator-Profil („Fachlehrer") | bestpassendes zum Kind |
+| `--profile <id>` | Creator-Profil („Fachlehrer") | das Profil auf dem Buch des Kindes; hat es mehrere Bücher mit Profil, ist die Angabe Pflicht (B-481) |
 | `--general` | mit `--child`: Stoff des Kindes nutzen, aber **nicht** individualisieren | aus |
 | `--unit <id>` | Unit der Buchreihe | aktuelle Unit des Kindes |
 
@@ -175,7 +175,7 @@ Eines von `--child`/`--profile` ist Pflicht – sonst fehlt sowohl die Zielgrupp
 | Option | Bedeutung | Standard |
 |---|---|---|
 | `--type <Typ>` | `Vocabulary`, `Cloze`, `Translation`, `Grammar` | Pflicht bei `create` |
-| `--series`/`--series-unit` | Reihe und Unit, in der die Übung entsteht (`--series-unit` allein bestimmt die Reihe; mit `--profile` muss sie in dessen Reihe liegen; das Fach kommt aus dem mit `--profile` genannten Profil, sonst aus der Reihe) | Reihe des mit `--profile` genannten Profils; nur mit `--child` die Reihe des bestpassenden Profils und die aktuelle Unit des Kindes darin (B-473), ohne Profil mit Reihe eine Fehlbedienung; sonst erste Unit der Reihe |
+| `--series`/`--series-unit` | Reihe und Unit, in der die Übung entsteht (`--series-unit` allein bestimmt die Reihe; mit `--profile` muss sie in dessen Reihe liegen; das Fach kommt aus dem mit `--profile` genannten Profil, sonst aus der Reihe) | Reihe des mit `--profile` genannten Profils; nur mit `--child` die Reihe des Profils auf seinem Buch (B-473), ohne ein solches oder bei mehreren eine Fehlbedienung; Unit: die mit `--unit` genannte, sonst mit `--child` die aktuelle des Kindes in der Reihe, woher die Reihe auch kommt (B-481), sonst die erste der Reihe |
 | `--subject` | nur `profiles`: Fach, auf das die Treffer gefiltert werden | – |
 | `--topic "…"` | Thema bzw. Lehrbuch-Unit | – |
 | `--count <n>` | Anzahl Aufgaben (3–30) | 10 |

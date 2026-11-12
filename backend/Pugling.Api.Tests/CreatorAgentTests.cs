@@ -1469,7 +1469,119 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var command = CommandLine.Parse(["create", "--child", child.Id.ToString(), "--type", "Vocabulary", "--count", "3"]);
         var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline).RunAsync(command, default));
 
-        Assert.Contains("--profile", error.Message);
+        // Its own message, not just "--profile": the list of several books names that option too (B-481).
+        Assert.Contains("kennt kein Creator-Profil", error.Message);
+    }
+
+    /// <summary>
+    /// B-481, AK 1: the child's current unit applies wherever the series comes from - named with <c>--series</c> or
+    /// with <c>--profile</c>. Red if only the "no place named" branch looks at the child's book (both land in unit 1).
+    /// </summary>
+    [Theory]
+    [InlineData("--series")]
+    [InlineData("--profile")]
+    public async Task Mit_genannter_Reihe_landet_die_Uebung_bei_der_Unit_des_Kindes(string option)
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var supervisor = new SupervisorApi(Authenticated());
+        var subject = await creator.CreateSubjectAsync(new CreateSubjectDto($"Agent-Test Reihe genannt {Guid.NewGuid():N}"));
+        var series = await creator.CreateSeriesAsync(new CreateTextbookSeriesDto(
+            $"Reihe genannt {Guid.NewGuid():N}", null, subject.Name, subject.Id, SchoolTypes.Gymnasium, "en", "de", null));
+        await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto("Unit 1", 8, 1, null, null, null, null));
+        var current = await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto("Unit 2", 8, 2, null, null, null, null));
+        var child = await supervisor.CreateChildAsync(new CreateChildDto($"Reihenkind {Guid.NewGuid():N}"[..20], null, 8,
+            SchoolTypes.Gymnasium, null));
+        // A book in another series comes first: the unit must be taken from the book of the named series, not any book.
+        var (otherSubject, otherSeries, otherUnit) = await FreshUnitAsync(creator, "Anderes Buch");
+        await supervisor.CreateTextbookAsync(child.Id, new CreateTextbookDto("Latein", null, otherSubject, 8, null, null, null,
+            SeriesId: otherSeries, CurrentUnitId: otherUnit));
+        await supervisor.CreateTextbookAsync(child.Id, new CreateTextbookDto("Access", subject.Name, subject.Id, 8, null, null, null,
+            SeriesId: series.Id, CurrentUnitId: current.Id));
+        var profile = await creator.CreateProfileAsync(new CreateCreatorProfileDto(
+            $"Lehrer Reihe genannt {Guid.NewGuid():N}", subject.Name, subject.Id, SchoolTypes.Gymnasium, GradeMin: 7, GradeMax: 9,
+            SeriesId: series.Id, SourceLang: "en", TargetLang: "de", Persona: null, Didactics: null,
+            DefaultTypes: ["Vocabulary"], Active: true));
+
+        var value = option == "--series" ? series.Id : profile.Id;
+        var command = CommandLine.Parse(["create", "--child", child.Id.ToString(), option, value.ToString(),
+            "--type", "Vocabulary", "--count", "3"]);
+        Assert.Equal(0, await Commands(creator, pipeline).RunAsync(command, default));
+
+        Assert.Single(await creator.SearchExercisesAsync(seriesUnitId: current.Id));
+    }
+
+    /// <summary>
+    /// B-481, review: the unit named for the material (<c>--unit</c>) is also where the exercise goes - the child's
+    /// current unit must not overrule it. Red if the child's unit wins (it lands in unit 2, the briefing used unit 3).
+    /// </summary>
+    [Fact]
+    public async Task Genannte_Unit_geht_vor_der_Unit_des_Kindes()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var supervisor = new SupervisorApi(Authenticated());
+        var subject = await creator.CreateSubjectAsync(new CreateSubjectDto($"Agent-Test Unit genannt {Guid.NewGuid():N}"));
+        var series = await creator.CreateSeriesAsync(new CreateTextbookSeriesDto(
+            $"Unit genannt {Guid.NewGuid():N}", null, subject.Name, subject.Id, SchoolTypes.Gymnasium, "en", "de", null));
+        var current = await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto("Unit 2", 8, 2, null, null, null, null));
+        var named = await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto("Unit 3", 8, 3, null, null, null, null));
+        var child = await supervisor.CreateChildAsync(new CreateChildDto($"Unitkind {Guid.NewGuid():N}"[..20], null, 8,
+            SchoolTypes.Gymnasium, null));
+        await supervisor.CreateTextbookAsync(child.Id, new CreateTextbookDto("Access", subject.Name, subject.Id, 8, null, null, null,
+            SeriesId: series.Id, CurrentUnitId: current.Id));
+
+        var command = CommandLine.Parse(["create", "--child", child.Id.ToString(), "--series", series.Id.ToString(),
+            "--unit", named.Id.ToString(), "--type", "Vocabulary", "--count", "3"]);
+        Assert.Equal(0, await Commands(creator, pipeline).RunAsync(command, default));
+
+        Assert.Single(await creator.SearchExercisesAsync(seriesUnitId: named.Id));
+    }
+
+    /// <summary>
+    /// B-481, review: a child this account cannot see, with a series named, still gets the usage message of the briefing
+    /// ("nicht sichtbar", exit 2) - not the bare 404 of the textbook lookup that now runs first. Red if that lookup's
+    /// API error escapes.
+    /// </summary>
+    [Fact]
+    public async Task Unsichtbares_Kind_mit_Reihe_meldet_eine_Fehlbedienung()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var (_, seriesId, _) = await FreshUnitAsync(creator, "Fremdes Kind");
+
+        var command = CommandLine.Parse(["create", "--child", "999999", "--series", seriesId.ToString(),
+            "--type", "Vocabulary", "--count", "3"]);
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline).RunAsync(command, default));
+
+        Assert.Contains("nicht sichtbar", error.Message);
+    }
+
+    /// <summary>
+    /// B-481, AK 2: two books with a profile each are a choice of subject even when the scores differ - here the English
+    /// profile earns a point for its grade bounds, the Latin one has none. Red if the higher score picks the subject.
+    /// </summary>
+    [Fact]
+    public async Task Zwei_Buecher_mit_verschiedenen_Punkten_verlangen_trotzdem_die_Wahl()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var supervisor = new SupervisorApi(Authenticated());
+        var child = await supervisor.CreateChildAsync(new CreateChildDto($"Ungleich {Guid.NewGuid():N}"[..20], null, 8,
+            SchoolTypes.Gymnasium, null));
+        foreach (var (name, gradeMin, gradeMax) in new[] { ("Englisch-Buch", (int?)7, (int?)9), ("Latein-Buch", null, null) })
+        {
+            var (subjectId, seriesId, unitId) = await FreshUnitAsync(creator, name);
+            await supervisor.CreateTextbookAsync(child.Id, new CreateTextbookDto(name, null, subjectId, 8, null, null, null,
+                SeriesId: seriesId, CurrentUnitId: unitId));
+            await creator.CreateProfileAsync(new CreateCreatorProfileDto($"{name} {Guid.NewGuid():N}", null, subjectId,
+                SchoolTypes.Gymnasium, GradeMin: gradeMin, GradeMax: gradeMax, SeriesId: seriesId, SourceLang: "en",
+                TargetLang: "de", Persona: null, Didactics: null, DefaultTypes: ["Vocabulary"], Active: true));
+        }
+        var matches = await creator.MatchProfilesAsync(child.Id, null, default);
+        var onBooks = matches.Where(m => m.Reasons.Contains("series_match")).Select(m => m.Score).Distinct().ToList();
+        Assert.True(onBooks.Count == 2, "Setup: the two book profiles must score differently.");
+
+        var command = CommandLine.Parse(["create", "--child", child.Id.ToString(), "--type", "Vocabulary", "--count", "3"]);
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline).RunAsync(command, default));
+
+        Assert.Contains("mehrere Lehrbücher", error.Message);
     }
 
     /// <summary>

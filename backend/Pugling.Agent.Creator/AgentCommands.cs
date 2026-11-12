@@ -408,7 +408,8 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
     /// Builds the request from the command line. Either <c>--child</c> (individual) or <c>--profile</c>
     /// (general) must be present - without either, both the target audience and the subject knowledge
     /// would be missing. Series and series unit may be omitted: then the profile's series applies - with
-    /// <c>--child</c> alone the best-matching profile and the child's current unit in that series (B-473).
+    /// <c>--child</c> alone the profile on the child's book (B-473). A unit not named with <c>--series-unit</c> is the
+    /// one named with <c>--unit</c>, else the child's current unit in that series, else the series' first (B-481).
     /// </summary>
     private async Task<GenerationRequest> BuildRequestAsync(CommandLine command, bool typeRequired, CancellationToken ct)
     {
@@ -423,20 +424,23 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
                 "--use-weak braucht --child <id>: die schwach beherrschten Wörter gehören zu einem Kind.");
 
         var profile = profileId is int id ? await LoadProfileAsync(id, ct) : null;
-        int? childUnitId = null;
         // A child and no place named: the exercise belongs in the child's book, not in the first series of the catalog
-        // (B-473). The best profile for the child (no subject filter - the place is what is unknown) gives series and
-        // subject, the child's textbook in that series the unit.
+        // (B-473). The best profile for the child (no subject filter - the place is what is unknown) gives the series.
         if (profile is null && childId is int forChild && command.Value("series") is null && command.Value("series-unit") is null)
         {
             profile = await BestProfileForChildAsync(forChild, ct);
             profileId = profile.Id;
-            childUnitId = (await supervisor.ListTextbooksAsync(forChild, ct))
-                .FirstOrDefault(b => b.SeriesId is int s && s == profile.SeriesId && b.CurrentUnitId is not null)?.CurrentUnitId;
         }
-        var (seriesId, seriesUnitId) = childUnitId is int unitOfChild && profile?.SeriesId is int bookSeries
-            ? (bookSeries, unitOfChild)
-            : await ResolveLocationAsync(command, profile?.SeriesId, ct);
+        var (seriesId, seriesUnitId) = await ResolveLocationAsync(command, profile?.SeriesId, ct);
+        // Wherever the series came from, the exercise goes where its material comes from: the unit named for the
+        // briefing (--unit, which the briefing checks against the series), else the child's current one (B-481).
+        if (command.Value("series-unit") is null)
+        {
+            if (command.Value("unit") is not null)
+                seriesUnitId = command.RequiredInt("unit");
+            else if (childId is int ofChild && await CurrentUnitOfChildAsync(ofChild, seriesId, ct) is int current)
+                seriesUnitId = current;
+        }
         var subjectId = profile?.SubjectId ?? await ResolveSubjectIdAsync(seriesId, ct);
 
         return new GenerationRequest(
@@ -459,6 +463,24 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
             Interests: command.List("interests"),
             DryRun: command.Flag("dry-run"),
             Strict: command.Flag("strict"));
+    }
+
+    /// <summary>
+    /// The child's current unit in the series, if a book of the child is in it. A child this account cannot see has
+    /// none here; the briefing then reports it with its usage message instead of a bare 403/404.
+    /// </summary>
+    private async Task<int?> CurrentUnitOfChildAsync(int childId, int seriesId, CancellationToken ct)
+    {
+        try
+        {
+            return (await supervisor.ListTextbooksAsync(childId, ct))
+                .FirstOrDefault(b => b.SeriesId == seriesId && b.CurrentUnitId is not null)?.CurrentUnitId;
+        }
+        catch (PuglingApiException ex) when (ex.StatusCode is System.Net.HttpStatusCode.Forbidden
+                                                 or System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
     }
 
     /// <summary>
@@ -485,13 +507,14 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
                 $"Für Kind {childId} kennt kein Creator-Profil die Reihe eines seiner Lehrbücher – gib --profile <id> oder "
                 + "--series <id> --series-unit <id> an ('pugling-creator profiles --child' zeigt die Treffer).");
 
-        // Two books with a profile each (English and Latin) score alike; the lower id would pick the subject unannounced.
-        var best = onChildsBooks.Where(m => m.Score == onChildsBooks[0].Score).DistinctBy(m => m.Profile.SeriesId).ToList();
-        if (best.Count > 1)
+        // Two books with a profile each (English and Latin) are a choice of subject, which the score cannot make: it
+        // weighs grade and school type, so one point ahead would pick the subject unannounced (B-481).
+        var books = onChildsBooks.DistinctBy(m => m.Profile.SeriesId).ToList();
+        if (books.Count > 1)
             throw new AgentUsageException(
-                $"Für Kind {childId} passen mehrere Lehrbücher gleich gut – wähle mit --profile <id>: "
-                + string.Join(", ", best.Select(m => $"[{m.Profile.Id}] {m.Profile.Name}")));
-        return best[0].Profile;
+                $"Für Kind {childId} gibt es mehrere Lehrbücher mit Profil – wähle mit --profile <id>: "
+                + string.Join(", ", books.Select(m => $"[{m.Profile.Id}] {m.Profile.Name}")));
+        return books[0].Profile;
     }
 
     /// <summary>Loads the named profile - only to know its subject as a default for the catalog location.</summary>
@@ -657,18 +680,20 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
 
         Wer und in wessen Namen:
           --child <id>          Kind, auf das zugeschnitten wird (individuelle Übung)
-          --profile <id>        Creator-Profil („Fachlehrer"); ohne Angabe das bestpassende zum Kind
+          --profile <id>        Creator-Profil („Fachlehrer"); ohne Angabe das Profil auf dem Buch
+                                des Kindes (hat es mehrere Bücher mit Profil: Pflicht)
           --general             mit --child: Stoff des Kindes nutzen, aber NICHT individualisieren
-          --unit <id>           Unit der Buchreihe (Standard: aktuelle Unit des Kindes)
+          --unit <id>           Unit der Buchreihe, aus der der Stoff kommt; ohne --series-unit
+                                entsteht die Übung auch dort (Standard: aktuelle Unit des Kindes)
 
         Weitere Optionen:
           --type <Typ>          Vocabulary | Cloze | Translation | Grammar      (Pflicht bei create)
           --series <id>         Lehrwerk-Reihe der Übung  (Standard: Reihe des mit --profile genannten
-                                Profils; nur mit --child die Reihe des bestpassenden Profils, ohne
-                                Profil mit Reihe ein Fehler; das Fach kommt aus dem Profil, sonst aus
-                                der Reihe)
-          --series-unit <id>    Unit, in der die Übung entsteht (Standard: nur mit --child die aktuelle
-                                Unit des Kindes in dieser Reihe, sonst die erste Unit der Reihe;
+                                Profils; nur mit --child die Reihe des Profils auf seinem Buch,
+                                ohne ein solches oder bei mehreren ein Fehler; das Fach kommt
+                                aus dem Profil, sonst aus der Reihe)
+          --series-unit <id>    Unit, in der die Übung entsteht (Standard: --unit, sonst mit --child
+                                die aktuelle Unit des Kindes in dieser Reihe, sonst die erste;
                                 allein angegeben bestimmt sie auch die Reihe – mit --profile muss
                                 sie in dessen Reihe liegen)
           --subject <id>        nur profiles: Fach, auf das die Treffer gefiltert werden

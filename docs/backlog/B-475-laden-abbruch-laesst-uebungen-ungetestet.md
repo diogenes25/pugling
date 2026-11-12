@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: Lauf des Skills lehrwerk-aufbereiten an Découvertes Série bleue 2 (2026-11-11)
 unverifiziert: false
 entgangen_bei: []
-nachgeschaut: ""
+nachgeschaut: 2026-11-12
 grund: ""
 ersetzt_durch: []
 ---
@@ -95,4 +95,5 @@ Naheliegende Abhilfe: (1) der Selbsttest läuft über **alle** Übungen des Ordn
 
   Grundlinie nach dem Zurückspielen grün. Nicht als Mutante gemessen: ein Controller, der einen anderen Typ bindet
   (kompiliert nicht ohne Umbau) – die Reflection liest den Basistyp, gelesen statt gemessen.
-- **2026-11-12** — **abgenommen.** Volle Suite nach der letzten Änderung: Backend 1338/1338. Review-Zähler Sprint 34: 3 von 5. **Rollengang (Creator) als echter Lauf:** `laden.py` zweimal gegen einen Wegwerf-Server auf Port 5280 mit frischer DB (nicht die echte, nicht 5200) – zweiter Lauf prüft die stehen gebliebenen Übungen mit; ein Ordner mit `alternatives` an einer Regelaufgabe stoppt vor dem ersten Aufruf. Commit folgt in derselben Zeile des Protokolls.
+- **2026-11-12** — **abgenommen.** Volle Suite nach der letzten Änderung: Backend 1338/1338. Review-Zähler Sprint 34: 3 von 5. **Rollengang (Creator) als echter Lauf:** `laden.py` zweimal gegen einen Wegwerf-Server auf Port 5280 mit frischer DB (nicht die echte, nicht 5200) – zweiter Lauf prüft die stehen gebliebenen Übungen mit; ein Ordner mit `alternatives` an einer Regelaufgabe stoppt vor dem ersten Aufruf. Commit `c53291c`.
+- **2026-11-12** — Nachschau (Sprint 35, frischer `pugling-reviewer` an `c53291c`): AK 1–3 halten im Kern. **Durchrutscher:** `check()` und `build_config` lesen dieselben Felder mit verschiedenen Regeln (`Alternatives`, `distractors` ohne `markup`), und Birkenbihl fällt im Selbsttest immer durch → [B-483](B-483-laden-prueft-was-build-config-liest-nicht.md).

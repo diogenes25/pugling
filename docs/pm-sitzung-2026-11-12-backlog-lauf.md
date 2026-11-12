@@ -217,6 +217,8 @@ Werkzeug unter `.claude/skills`.
   Zusicherungsmeldung.
 - Ein roter E2E-Lauf von `creator-lehrwerk-weg.spec.ts` (Sprint 32) ist unerklärt; einzeln und 3× parallel grün.
 - **Vorschlag (CQ)** aus Sprint 34: automatischer Test für das Verhalten von `laden.py`.
+- **Vorschlag (CR)** aus Sprint 35: bei einem Review-Fund erst alle Leser derselben Größe suchen.
+- **Nächster Kandidat B-483** (P2, Durchrutscher aus B-475) – wartet, siehe „Halt nach diesem Sprint".
 
 ## Sprint 34 — Ziel & Umfang
 
@@ -266,6 +268,54 @@ korrigiert (`refs`); das Review fand die Stellen, an denen zwei Leser derselben 
 seine Feldliste; sein Verhalten (Selbsttest über alle, Feldprüfung) ist in diesem Sprint von Hand gegengeprüft. Ein
 kleiner Python-Testlauf in CI würde das tragen – ein neues Tor, darum nur vorgeschlagen.
 
+## Sprint 35 — Ziel & Umfang
+
+**Sprint-Ziel:** *Wer dem KI-Creator ein Kind nennt, bekommt die Übung in der Unit, aus der ihr Stoff kommt, und
+eine Rückfrage statt eines geratenen Fachs, sobald das Kind mehrere Bücher mit Profil hat.*
+**Umfang:** B-481 (S) – `art: Defekt`, Durchrutscher aus B-473, autonom gegrillt.
+**Entwickler-Brief:** eine Stelle nach dem Auflösen der Reihe statt drei Zweige; „mehrere Bücher" zählt verschiedene
+Reihen unter den `series_match`-Treffern. Keine Migration, kein Vertrag. Testweg: `CreatorAgentTests`.
+
+## Iteration 35 — umgesetzt
+
+- **B-481:** Unit ohne `--series-unit` = `--unit`, sonst die aktuelle des Kindes in der Reihe, sonst die erste;
+  zwei Bücher mit Profil sind eine Fehlbedienung, auch mit verschiedenen Punkten; ein fremdes Kind bekommt weiter die
+  Fehlbedienung des Briefings.
+- Review-Zähler des Sprints: **2** (🟡 roher 403/404; 🟡 `--unit` überstimmt) – behoben. Mutanten: sechs von sechs rot.
+
+## Runde 6 — Rollengang / Abnahme (Sprint 35)
+
+Backend **1343/1343** am Stand nach der letzten Änderung; Frontend unverändert.
+
+- **Creator – abgenommen, ohne Live-Lauf.** `CreatorAgentTests` fährt die Konsole gegen die In-Process-API:
+  `--series` und `--profile` landen bei der Unit des Kindes, `--unit` geht vor, zwei Bücher verlangen die Wahl.
+  *„Theodor hat Englisch und Latein – dann will ich gefragt werden, nicht überrascht."* **Nicht gefahren:** Ollama
+  und die echte DB.
+- **Vater, Sohn – Regressionszeugen.** Kein Pfad im Diff; Suite grün.
+
+## Retrospektive (Sprint 35)
+
+**Nachschau:** Sprint 34 (B-475) von einem frischen `pugling-reviewer` an `c53291c`. **Ein Durchrutscher:** `check()`
+und `build_config` lesen dieselben Felder mit verschiedenen Regeln (`Alternatives` groß geschrieben geht verloren,
+`distractors` ohne `markup` besteht die Prüfung), und Birkenbihl fällt im Selbsttest seit B-475 bei jedem Lauf durch
+→ [B-483](backlog/B-483-laden-prueft-was-build-config-liest-nicht.md) (P2, `entgangen_bei: B-475`), samt sechs 🟢.
+`nachgeschaut: 2026-11-12` an B-475.
+
+**Was die eigenen Tore durchgelassen haben:** Zum zweiten Mal in Folge findet die Nachschau einen Durchrutscher
+derselben Form: der Review-Fund wurde als *Fall* behoben, nicht als *Klasse* (B-473: „ohne Ortsangabe" geschlossen,
+die Nachbarn mit `--series`/`--unit` offen; B-475: `Markup` exakt, `Alternatives` nicht). Auch das Review dieses
+Sprints fand wieder einen Nachbarn (`--unit`). Die Regel dafür steht im README („ein geänderter geteilter Zustand
+bekommt eine Zeile je *Aktion*, gefunden per `grep`") – ich habe nach den *Optionen* gegriffen, die die Story nennt,
+statt nach allen Lesern des geänderten Werts.
+
+**Mechanismus:** keiner gelandet. Vorschlag **(CR)**: bei einem Review-Fund vor der Reparatur `grep` nach allen
+Lesern derselben Größe und das Ergebnis als Zeile in den `## Verlauf` – Prosa-Disziplin; ein Tor dafür sähe ich nur
+als Feld im Review-Auftrag. Bewusst ungedeckt: der Live-Lauf des Agenten.
+
+**Halt nach diesem Sprint:** Der Lauf erzeugt seine Arbeit inzwischen selbst – jede Nachschau findet in meinem
+eigenen vorigen Sprint einen Durchrutscher, und der nächste Kandidat (B-483) ist wieder einer. Weiterlaufen hieße,
+die Qualitätsschwelle am eigenen Nachlauf zu messen; ich höre hier auf und lege das vor.
+
 ## Produktentscheidungen dieses Laufs (zum Umstoßen)
 
 1. **Schlusszeichen zählen beim Vergleich nicht** – auch ein *anderes* (`?` statt `.`), auch bei Ordnungszahlen
@@ -279,6 +329,8 @@ kleiner Python-Testlauf in CI würde das tragen – ein neues Tor, darum nur vor
 7. **`--child` ohne Ortsangabe: Profil auf einem Kinder-Buch oder Fehlbedienung**, nie die erste Reihe (B-473, 1–2).
 8. **Der Lader prüft Felder offline gegen einen Spiegel des Vertrags**, nicht zur Laufzeit gegen Swagger; der
    Selbsttest läuft über alle Übungen des Ordners statt über eine Buchführung der Abbrüche (B-475, 1–2).
+9. **Zwei Bücher des Kindes mit Profil verlangen `--profile`**, auch wenn die Punkte verschieden sind; `--unit` legt
+   die Übung dort ab, wo ihr Stoff herkommt (B-481, 1–2).
 
 ## Offene Roadmap
 
