@@ -62,6 +62,7 @@ raw/france/decouvertes-2-pugling/
 | `reihe.source` / `target` | Lernsprache / Muttersprache als Kürzel (`fr`/`de`) |
 | `grammatik` | Themen, die es im Fach noch **nicht** gibt; sie werden angelegt. Vorhandene nicht wiederholen |
 | `units[].grammatik` | Verweise auf Themen per Label **oder** Slug (`le-passe-compose`); ein unbekanntes stoppt das Laden mit der Liste der vorhandenen |
+| `units[].grammar` | Stoffnotiz der Grammatik. Neuer Stoff der Unit steht als **`NEU <Label des Themas>`** (z. B. `NEU question tags: …`), Wiederholtes ohne den Marker – der KI-Lehrplan übt die markierten Themen zuerst (B-471). Ein Marker je Thema, und hinter `NEU` steht das **Label** wörtlich (`NEU passive`, nicht `NEU the passive`) – sonst greift er nicht |
 | `units[].kurz` | Präfix der Übungstitel (`Unité 1 · Wörter …`); Vorgabe `Unit <nr>` |
 | `units[].abschnitte` | lesbare Namen der Abschnitte aus der TSV (sonst steht der rohe Name im Titel) |
 | `kind` | nur mit `--child`: aktuelle Unit des Kindes und, falls im Fach eine Klassenarbeit *geplant* ist, deren Titel/Thema; sie bekommt die Wortlisten der Unit |

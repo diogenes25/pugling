@@ -80,12 +80,13 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
         var wordPairs = WordTypes.Contains(request.TypeKey)
             ? UnitVocabulary.Slice(pool, [.. (child?.WeakWords ?? []).Select(w => w.Word)], request.ItemCount, request.Part)
             : [];
+        // The unit's new grammar first: a plan rotates its grammar parts over this list from the top (B-471).
         var grammarLabels = targetUnit.GrammarTopicIds.Count == 0
             ? []
-            : (await creator.ListGrammarTopicsAsync(subjectId: subject.Id, ct: ct))
+            : GrammarOrder.NewMaterialFirst((await creator.ListGrammarTopicsAsync(subjectId: subject.Id, ct: ct))
                 .Where(t => targetUnit.GrammarTopicIds.Contains(t.Id))
                 .Select(t => t.Label)
-                .ToList();
+                .ToList(), targetUnit.Grammar);
 
         // The same `--general` reading as the Child line below: what the briefing carries decides, not what
         // was typed - so a general exercise built from a child's material is dressed by --interests.

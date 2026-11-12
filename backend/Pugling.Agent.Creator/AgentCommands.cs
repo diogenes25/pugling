@@ -9,8 +9,8 @@ namespace Pugling.Agent.Creator;
 /// result in an understandable way - the domain logic lives in <see cref="CreatorPipeline"/>,
 /// <see cref="ExamPlanner"/>, <see cref="PlanPlanner"/>, <see cref="UnitNotesFiller"/> and the strategies.
 /// </summary>
-public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, ExamPlanner exams, PlanPlanner plans,
-    UnitNotesFiller unitNotes)
+public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, CreatorPipeline pipeline, ExamPlanner exams,
+    PlanPlanner plans, UnitNotesFiller unitNotes)
 {
     // Default values for the request when the command line is silent.
     private const int DefaultItemCount = 10;
@@ -407,8 +407,8 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
     /// <summary>
     /// Builds the request from the command line. Either <c>--child</c> (individual) or <c>--profile</c>
     /// (general) must be present - without either, both the target audience and the subject knowledge
-    /// would be missing. Series and series unit may be omitted: then the profile's series applies,
-    /// otherwise the first series with a unit.
+    /// would be missing. Series and series unit may be omitted: then the profile's series applies - with
+    /// <c>--child</c> alone the best-matching profile and the child's current unit in that series (B-473).
     /// </summary>
     private async Task<GenerationRequest> BuildRequestAsync(CommandLine command, bool typeRequired, CancellationToken ct)
     {
@@ -423,7 +423,20 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
                 "--use-weak braucht --child <id>: die schwach beherrschten Wörter gehören zu einem Kind.");
 
         var profile = profileId is int id ? await LoadProfileAsync(id, ct) : null;
-        var (seriesId, seriesUnitId) = await ResolveLocationAsync(command, profile?.SeriesId, ct);
+        int? childUnitId = null;
+        // A child and no place named: the exercise belongs in the child's book, not in the first series of the catalog
+        // (B-473). The best profile for the child (no subject filter - the place is what is unknown) gives series and
+        // subject, the child's textbook in that series the unit.
+        if (profile is null && childId is int forChild && command.Value("series") is null && command.Value("series-unit") is null)
+        {
+            profile = await BestProfileForChildAsync(forChild, ct);
+            profileId = profile.Id;
+            childUnitId = (await supervisor.ListTextbooksAsync(forChild, ct))
+                .FirstOrDefault(b => b.SeriesId is int s && s == profile.SeriesId && b.CurrentUnitId is not null)?.CurrentUnitId;
+        }
+        var (seriesId, seriesUnitId) = childUnitId is int unitOfChild && profile?.SeriesId is int bookSeries
+            ? (bookSeries, unitOfChild)
+            : await ResolveLocationAsync(command, profile?.SeriesId, ct);
         var subjectId = profile?.SubjectId ?? await ResolveSubjectIdAsync(seriesId, ct);
 
         return new GenerationRequest(
@@ -446,6 +459,39 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
             Interests: command.List("interests"),
             DryRun: command.Flag("dry-run"),
             Strict: command.Flag("strict"));
+    }
+
+    /// <summary>
+    /// The profile that knows the child's material best. None, or one without a series, is a usage error: the place
+    /// would otherwise be guessed, and a guessed shelf is the silent grab B-473 is about.
+    /// </summary>
+    private async Task<CreatorProfileResponse> BestProfileForChildAsync(int childId, CancellationToken ct)
+    {
+        IReadOnlyList<CreatorProfileMatch> matches;
+        try
+        {
+            matches = await creator.MatchProfilesAsync(childId, null, ct);
+        }
+        catch (PuglingApiException ex) when (ex.StatusCode is System.Net.HttpStatusCode.NotFound)
+        {
+            throw new AgentUsageException(
+                $"Kind {childId} ist für dieses Konto nicht sichtbar – es existiert nicht, oder das Konto betreut es nicht.");
+        }
+        // Only a profile on the series of one of the child's books says where the exercise belongs; the match also lists
+        // profiles that merely fit grade and school type, and taking one of those is the guessed shelf again.
+        var onChildsBooks = matches.Where(m => m.Profile.SeriesId is not null && m.Reasons.Contains("series_match")).ToList();
+        if (onChildsBooks.Count == 0)
+            throw new AgentUsageException(
+                $"Für Kind {childId} kennt kein Creator-Profil die Reihe eines seiner Lehrbücher – gib --profile <id> oder "
+                + "--series <id> --series-unit <id> an ('pugling-creator profiles --child' zeigt die Treffer).");
+
+        // Two books with a profile each (English and Latin) score alike; the lower id would pick the subject unannounced.
+        var best = onChildsBooks.Where(m => m.Score == onChildsBooks[0].Score).DistinctBy(m => m.Profile.SeriesId).ToList();
+        if (best.Count > 1)
+            throw new AgentUsageException(
+                $"Für Kind {childId} passen mehrere Lehrbücher gleich gut – wähle mit --profile <id>: "
+                + string.Join(", ", best.Select(m => $"[{m.Profile.Id}] {m.Profile.Name}")));
+        return best[0].Profile;
     }
 
     /// <summary>Loads the named profile - only to know its subject as a default for the catalog location.</summary>
@@ -618,10 +664,11 @@ public sealed class AgentCommands(CreatorApi creator, CreatorPipeline pipeline, 
         Weitere Optionen:
           --type <Typ>          Vocabulary | Cloze | Translation | Grammar      (Pflicht bei create)
           --series <id>         Lehrwerk-Reihe der Übung  (Standard: Reihe des mit --profile genannten
-                                Profils, sonst die erste Reihe mit Unit – das zum Kind gewählte Profil
-                                verschiebt sie nicht; das Fach kommt aus dem genannten Profil, sonst aus
+                                Profils; nur mit --child die Reihe des bestpassenden Profils, ohne
+                                Profil mit Reihe ein Fehler; das Fach kommt aus dem Profil, sonst aus
                                 der Reihe)
-          --series-unit <id>    Unit, in der die Übung entsteht (Standard: erste Unit der Reihe;
+          --series-unit <id>    Unit, in der die Übung entsteht (Standard: nur mit --child die aktuelle
+                                Unit des Kindes in dieser Reihe, sonst die erste Unit der Reihe;
                                 allein angegeben bestimmt sie auch die Reihe – mit --profile muss
                                 sie in dessen Reihe liegen)
           --subject <id>        nur profiles: Fach, auf das die Treffer gefiltert werden

@@ -175,7 +175,7 @@ Eines von `--child`/`--profile` ist Pflicht – sonst fehlt sowohl die Zielgrupp
 | Option | Bedeutung | Standard |
 |---|---|---|
 | `--type <Typ>` | `Vocabulary`, `Cloze`, `Translation`, `Grammar` | Pflicht bei `create` |
-| `--series`/`--series-unit` | Reihe und Unit, in der die Übung entsteht (`--series-unit` allein bestimmt die Reihe; mit `--profile` muss sie in dessen Reihe liegen; das Fach kommt aus dem mit `--profile` genannten Profil, sonst aus der Reihe) | Reihe des mit `--profile` genannten Profils (das zum Kind gewählte verschiebt sie nicht), sonst erste Reihe mit Unit; erste Unit der Reihe |
+| `--series`/`--series-unit` | Reihe und Unit, in der die Übung entsteht (`--series-unit` allein bestimmt die Reihe; mit `--profile` muss sie in dessen Reihe liegen; das Fach kommt aus dem mit `--profile` genannten Profil, sonst aus der Reihe) | Reihe des mit `--profile` genannten Profils; nur mit `--child` die Reihe des bestpassenden Profils und die aktuelle Unit des Kindes darin (B-473), ohne Profil mit Reihe eine Fehlbedienung; sonst erste Unit der Reihe |
 | `--subject` | nur `profiles`: Fach, auf das die Treffer gefiltert werden | – |
 | `--topic "…"` | Thema bzw. Lehrbuch-Unit | – |
 | `--count <n>` | Anzahl Aufgaben (3–30) | 10 |

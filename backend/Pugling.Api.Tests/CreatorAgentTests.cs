@@ -46,7 +46,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
     /// <summary>The console verbs with the same underpinning as the real agent (incl. both planners).</summary>
     private AgentCommands Commands(CreatorApi creator, CreatorPipeline pipeline, FakeChatClient? chat = null) =>
-        new(creator, pipeline, new ExamPlanner(pipeline, creator, new SupervisorApi(Authenticated())),
+        new(creator, new SupervisorApi(Authenticated()), pipeline, new ExamPlanner(pipeline, creator, new SupervisorApi(Authenticated())),
             new PlanPlanner(pipeline, new SupervisorApi(Authenticated())), Filler(creator, chat ?? new FakeChatClient("{}")));
 
     private static UnitNotesFiller Filler(CreatorApi creator, FakeChatClient chat, IModelInventory? models = null)
@@ -1418,6 +1418,88 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
+    /// B-473: with <c>--child</c> and no place named, the exercise belongs in the child's book - the series of the
+    /// best-matching profile, at the child's current unit there - not in the first series of the catalog. Red if the
+    /// location falls back to "first series with a unit" (the exercise lands elsewhere) or to the series' first unit
+    /// (it lands in unit 1, not the current unit 2).
+    /// </summary>
+    [Fact]
+    public async Task Ohne_Ortsangabe_landet_die_Uebung_im_Buch_des_Kindes_bei_seiner_Unit()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var supervisor = new SupervisorApi(Authenticated());
+        var subject = await creator.CreateSubjectAsync(new CreateSubjectDto($"Agent-Test Buch des Kindes {Guid.NewGuid():N}"));
+        var series = await creator.CreateSeriesAsync(new CreateTextbookSeriesDto(
+            $"Buch des Kindes {Guid.NewGuid():N}", null, subject.Name, subject.Id, SchoolTypes.Gymnasium, "en", "de", null));
+        var first = await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto("Unit 1", 8, 1, null, null, null, null));
+        var current = await creator.CreateUnitAsync(series.Id, new CreateSeriesUnitDto("Unit 2", 8, 2, null, null, null, null));
+        var child = await supervisor.CreateChildAsync(new CreateChildDto($"Buchkind {Guid.NewGuid():N}"[..20], null, 8,
+            SchoolTypes.Gymnasium, null));
+        await supervisor.CreateTextbookAsync(child.Id, new CreateTextbookDto("Access", subject.Name, subject.Id, 8, null, null, null,
+            SeriesId: series.Id, CurrentUnitId: current.Id));
+        await creator.CreateProfileAsync(new CreateCreatorProfileDto(
+            $"Lehrer für das Buch {Guid.NewGuid():N}", subject.Name, subject.Id, SchoolTypes.Gymnasium, GradeMin: 7, GradeMax: 9,
+            SeriesId: series.Id, SourceLang: "en", TargetLang: "de", Persona: null, Didactics: null,
+            DefaultTypes: ["Vocabulary"], Active: true));
+        var commands = Commands(creator, pipeline);
+
+        var command = CommandLine.Parse(["create", "--child", child.Id.ToString(), "--type", "Vocabulary", "--count", "3"]);
+        Assert.Equal(0, await commands.RunAsync(command, default));
+
+        Assert.Single(await creator.SearchExercisesAsync(seriesUnitId: current.Id));
+        Assert.Empty(await creator.SearchExercisesAsync(seriesUnitId: first.Id));
+    }
+
+    /// <summary>
+    /// B-473, decision 2: a child whose books no profile knows gets a usage error - other profiles fit grade and school
+    /// type and would otherwise be picked, which is the guessed shelf again. Red if any matching profile with a series
+    /// is taken (the exercise is created somewhere instead).
+    /// </summary>
+    [Fact]
+    public async Task Ohne_Profil_zum_Buch_des_Kindes_meldet_der_Agent_eine_Fehlbedienung()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var supervisor = new SupervisorApi(Authenticated());
+        // A profile with a series that fits the child by grade and school type alone - not by its books.
+        var (subjectId, _, _) = await FreshUnitAsync(creator, "Fremdes Regal");
+        await FreshProfileAsync(creator, subjectId, "Fremdes Regal");
+        var child = await supervisor.CreateChildAsync(new CreateChildDto($"Ohne Buch {Guid.NewGuid():N}"[..20], null, 8,
+            SchoolTypes.Gymnasium, null));
+
+        var command = CommandLine.Parse(["create", "--child", child.Id.ToString(), "--type", "Vocabulary", "--count", "3"]);
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline).RunAsync(command, default));
+
+        Assert.Contains("--profile", error.Message);
+    }
+
+    /// <summary>
+    /// B-473: two books, each with its profile, score alike - the agent asks instead of letting the lower id decide the
+    /// subject. Red if the first of the tied matches is taken.
+    /// </summary>
+    [Fact]
+    public async Task Zwei_gleich_gute_Buecher_verlangen_die_Wahl_des_Profils()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var supervisor = new SupervisorApi(Authenticated());
+        var child = await supervisor.CreateChildAsync(new CreateChildDto($"Zwei Buecher {Guid.NewGuid():N}"[..20], null, 8,
+            SchoolTypes.Gymnasium, null));
+        foreach (var name in new[] { "Englisch-Buch", "Latein-Buch" })
+        {
+            var (subjectId, seriesId, unitId) = await FreshUnitAsync(creator, name);
+            await supervisor.CreateTextbookAsync(child.Id, new CreateTextbookDto(name, null, subjectId, 8, null, null, null,
+                SeriesId: seriesId, CurrentUnitId: unitId));
+            await creator.CreateProfileAsync(new CreateCreatorProfileDto($"{name} {Guid.NewGuid():N}", null, subjectId,
+                SchoolTypes.Gymnasium, GradeMin: 7, GradeMax: 9, SeriesId: seriesId, SourceLang: "en", TargetLang: "de",
+                Persona: null, Didactics: null, DefaultTypes: ["Vocabulary"], Active: true));
+        }
+
+        var command = CommandLine.Parse(["create", "--child", child.Id.ToString(), "--type", "Vocabulary", "--count", "3"]);
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline).RunAsync(command, default));
+
+        Assert.Contains("mehrere Lehrbücher", error.Message);
+    }
+
+    /// <summary>
     /// <c>--series-unit</c> without <c>--series</c> used to be silently dropped: the exercise ended up in
     /// the first unit of the first series. A silent reach into the wrong shelf is worse than an
     /// error message.
@@ -1606,6 +1688,49 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.Contains("to grow up, responsibility, to argue", prompt);
         // The profile's languages apply when the command line names none.
         Assert.Equal("en", briefing.SourceLang);
+    }
+
+    /// <summary>
+    /// B-471: the unit's new grammar comes first. The topics arrive sorted by label, so with two cloze parts a plan
+    /// practised "past progressive" and "present progressive" and never the new "question tags". The unit's notes mark
+    /// new material with "NEU" (lehrwerk-aufbereiten, FORMAT.md); those topics lead, in the order the notes name them.
+    /// Red if the order stays alphabetical, if the marker is not matched case-insensitively against the label, or if a
+    /// topic only mentioned (without the marker) is moved forward too.
+    /// </summary>
+    [Fact]
+    public void Neuer_Grammatik_Stoff_der_Unit_kommt_zuerst()
+    {
+        string[] labels = ["Past progressive", "Present progressive", "Question tags", "Simple past"];
+        const string notes = "Wiederholung simple past und present progressive. NEU question tags: positiver Satz → "
+                             + "verneinter Tag. NEU past progressive: was/were + -ing.";
+
+        Assert.Equal(["Question tags", "Past progressive", "Present progressive", "Simple past"],
+            GrammarOrder.NewMaterialFirst(labels, notes));
+        Assert.Equal(labels, GrammarOrder.NewMaterialFirst(labels, null));
+        Assert.Equal(labels, GrammarOrder.NewMaterialFirst(labels, "Wiederholung question tags."));
+
+        // A label that is a prefix of another (Access unit 3): the new topic is the longer one, not the revised one.
+        string[] perfect = ["Adverbs", "Present perfect", "Present perfect progressive"];
+        Assert.Equal(["Present perfect progressive", "Adverbs", "Present perfect"],
+            GrammarOrder.NewMaterialFirst(perfect, "Wiederholung present perfect. NEU present perfect progressive: have been + -ing."));
+        // … and the shorter label only counts on a word boundary: "NEU present perfectly" names no topic.
+        Assert.Equal(perfect, GrammarOrder.NewMaterialFirst(perfect, "NEU present perfectly normal"));
+    }
+
+    /// <summary>B-471 through the briefing: the labels a plan rotates over come in that order.</summary>
+    [Fact]
+    public async Task Das_Briefing_nennt_den_neuen_Grammatik_Stoff_zuerst()
+    {
+        var (pipeline, creator, _) = BuildAgent(VocabularyJson);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Neuer Stoff");
+        var old = await creator.CreateGrammarTopicAsync(new CreateGrammarTopicDto("Afrikanisch alt", subjectId));
+        var fresh = await creator.CreateGrammarTopicAsync(new CreateGrammarTopicDto("Zebra neu", subjectId));
+        await creator.UpdateUnitAsync(seriesId, seriesUnitId, new UpdateSeriesUnitDto(null, null, null, null, null,
+            "Wiederholung Afrikanisch alt. NEU Zebra neu.", null, [old.Id, fresh.Id]));
+
+        var briefing = await pipeline.BriefAsync(Request(subjectId, seriesId, seriesUnitId, "Vocabulary"));
+
+        Assert.Equal(["Zebra neu", "Afrikanisch alt"], briefing.GrammarTopicLabels);
     }
 
     /// <summary>
