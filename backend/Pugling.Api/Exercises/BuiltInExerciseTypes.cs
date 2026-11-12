@@ -239,8 +239,9 @@ public sealed class ClozeExerciseType : ExerciseTypeBase
             // Checked against the pool as it grows: two gaps sharing a missing solution get one tile.
             if (pool.Any(tile => Grader.Matches(tile, gap))) continue;
             // A missing store entry leaves an empty placeholder; a blank tile would solve nothing.
+            // Trimmed like the author's tiles (B-497): a leading space would sort the added solution first and name it.
             if (gap.GradedAnswers().FirstOrDefault(a => !string.IsNullOrWhiteSpace(a)) is { } solution)
-                pool.Add(solution);
+                pool.Add(solution.Trim());
         }
         return [.. pool.OrderBy(w => w, StringComparer.OrdinalIgnoreCase)];
     }
@@ -493,7 +494,7 @@ internal static class AnswerChecking
         if (usable.Count == 0) return null;
         if (!usable.Any(choice => Grader.Matches(choice, item))
             && item.GradedAnswers().FirstOrDefault(a => !string.IsNullOrWhiteSpace(a)) is { } answer)
-            usable.Add(answer);
+            usable.Add(answer.Trim());
         return usable;
     }
 

@@ -127,7 +127,9 @@ Aufgaben, Texte, Dialoge oder Beispielsätze des Buchs.
     weder `text`, `gaps` noch eine eigene `wordBank` – die Wortbank kommt dann nur aus `distractors`.
   - **Eine eigene `wordBank`** (ohne `markup`) darf eine Lösung vergessen: auf der Wortbank-Stufe ergänzt der
     Server jede Lücke, für die keine Kachel passt, um ihre Lösung (B-487). Gemeint ist das als Netz, nicht als
-    Abkürzung – die Lösungen gehören in die Bank.
+    Abkürzung – die Lösungen gehören in die Bank. Wie `distractors`: eine nicht leere Liste nicht leerer Wörter (B-491),
+    keine Kachel eine andere Schreibweise einer Lösung (B-497); Kacheln, die der Antwortvergleich nicht unterscheidet,
+    legt der Server zusammen.
   - Alles andere geht unverändert an den Server. Schlusszeichen muss keine Lösung doppelt tragen: der
     Antwortvergleich verzeiht `. ? ! …` am Ende (B-457).
 - **Felder je Typ:** `config` darf nur die Felder des Vertrags tragen; `--pruefen` lehnt jedes andere ab, mit

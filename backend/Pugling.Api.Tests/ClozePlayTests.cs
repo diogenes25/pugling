@@ -382,4 +382,44 @@ public class ClozePlayTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
 
         Assert.All(pools, pool => Assert.Equal(["go", "qu’il", "went"], pool));
     }
+
+    // ---- B-497: what the completion adds is cleaned like the author's tiles ----
+
+    /// <summary>
+    /// B-497: an added solution arrives trimmed. A leading space in a stored answer sorted it before every other tile and
+    /// named it. Red if the completion adds the answer as stored (" went" first).
+    /// </summary>
+    [Fact]
+    public async Task Ergaenzte_Loesung_kommt_getrimmt_und_einsortiert()
+    {
+        var exerciseId = await CreateClozeAsync(await TestApi.AdultAsync(_factory), new
+        {
+            text = "I {{1}} home.",
+            gaps = new[] { new { index = 1, answer = " went" } },
+            wordBank = new[] { "go", "gone" },
+        });
+
+        var pool = Assert.Single(await BankChoicesAsync(exerciseId));
+
+        Assert.Equal(["go", "gone", "went"], pool);
+    }
+
+    /// <summary>
+    /// B-497: a no-break space (copied from a PDF) is a space to the comparison. Two tiles that differ only in it are one
+    /// tile. Red if <c>Normalize</c> splits on the plain space only ("in\u00A0York" and "in York" stay two tiles).
+    /// </summary>
+    [Fact]
+    public async Task Wortbank_legt_Eintraege_mit_geschuetztem_Leerzeichen_zusammen()
+    {
+        var exerciseId = await CreateClozeAsync(await TestApi.AdultAsync(_factory), new
+        {
+            text = "She lives {{1}}.",
+            gaps = new[] { new { index = 1, answer = "in York" } },
+            wordBank = new[] { "in\u00A0York", "in York", "at home" },
+        });
+
+        var pool = Assert.Single(await BankChoicesAsync(exerciseId));
+
+        Assert.Equal(["at home", "in\u00A0York"], pool);
+    }
 }

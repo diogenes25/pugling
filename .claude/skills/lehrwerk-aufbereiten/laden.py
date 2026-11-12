@@ -111,8 +111,8 @@ def graded(word):
     stripped = s.rstrip()
     while stripped and stripped[-1] in ".?!…":
         stripped = stripped[:-1].rstrip()
-    # Split on the space only, like the server: a tab or a no-break space stays part of the word there.
-    return " ".join(p for p in (stripped or s).lower().split(" ") if p)
+    # Split on any whitespace, like the server since B-497: a no-break space copied from a PDF is a space.
+    return " ".join((stripped or s).lower().split())
 
 
 def contains_word(text, word):
@@ -257,6 +257,16 @@ def check(book, words, exercises):
                 isinstance(bank, list) and bank and all(isinstance(w, str) and w.strip() for w in bank)):
             err.append(f'{name}: wordBank ist eine Liste nicht-leerer Texte, z. B. ["went", "gone"]; '
                        f'ohne Wortbank das Feld weglassen')
+        elif e["typ"] == "cloze" and bank and isinstance(e["config"].get("gaps"), list):
+            # The same question as for distractors on the markup path (B-497): a tile the grader accepts as another
+            # spelling of a solution is a second right tile.
+            gap_list = [g for g in e["config"]["gaps"] if isinstance(g, dict)]
+            answers = {graded(str(g.get("answer") or "")) for g in gap_list}
+            spellings = {graded(str(a)) for g in gap_list if isinstance(g.get("alternatives"), list)
+                         for a in g["alternatives"]} - answers
+            for w in bank:
+                if graded(w) in spellings:
+                    err.append(f"{name}: die Kachel '{w}' ist eine andere Schreibweise einer Lösung")
         if e["typ"] == "cloze" and "markup" in e["config"]:
             _, gaps, problems = parse_cloze(e["config"]["markup"])
             err.extend(f"{name}: {p}" for p in problems)

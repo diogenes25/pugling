@@ -207,6 +207,40 @@ public class ExerciseChoicesTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.Equal(["York", "Hull"], ChoicesOf(cards.EnumerateArray().Single()));
     }
 
+    // ---- B-497: what the sink compares and adds ----
+
+    /// <summary>
+    /// B-497: an option with a no-break space where the answer has a plain one answers the question - nothing is added.
+    /// Red if the comparison splits on the plain space only: the child would see two buttons that look alike, one of
+    /// them right.
+    /// </summary>
+    [Fact]
+    public async Task Moeglichkeit_mit_geschuetztem_Leerzeichen_genuegt()
+    {
+        var cards = await PlayAsync("reading", new
+        {
+            text = "B lives in York.",
+            questions = new[] { new { prompt = "Where does B live?", choices = new[] { "in\u00A0York", "in Hull" }, answer = "in York" } },
+        }, (int)TestStage.FreeText);
+
+        Assert.Equal(["in\u00A0York", "in Hull"], ChoicesOf(cards.EnumerateArray().Single()));
+    }
+
+    /// <summary>
+    /// B-497: the added answer arrives trimmed, like the author's options. Red if it is added as stored (" York").
+    /// </summary>
+    [Fact]
+    public async Task Ergaenzte_Antwort_kommt_getrimmt()
+    {
+        var cards = await PlayAsync("reading", new
+        {
+            text = "B lives in York.",
+            questions = new[] { new { prompt = "Where does B live?", choices = new[] { "Leeds", "Hull" }, answer = " York " } },
+        }, (int)TestStage.FreeText);
+
+        Assert.Equal(["Leeds", "Hull", "York"], ChoicesOf(cards.EnumerateArray().Single()));
+    }
+
     // ---- The exam and the supervisor's preview run the same projection ----
 
     [Fact]

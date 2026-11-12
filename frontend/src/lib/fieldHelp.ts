@@ -248,7 +248,9 @@ export const FIELD_HELP = {
     title: "Auswahl",
     text: "Antwortmöglichkeiten zur Frage, die richtige eingeschlossen — anders als bei „Auch richtig“ "
       + "stehen hier also auch die falschen. Das Kind bekommt sie in dieser Reihenfolge zur Auswahl "
-      + "(Multiple-Choice). Bleibt das Feld leer, wird die Frage frei beantwortet.",
+      + "(Multiple-Choice); Einträge, die sich nur in Groß/Klein oder Satzzeichen am Ende unterscheiden, "
+      + "werden ein Knopf, und fehlt die Antwort, kommt sie als letzter Knopf dazu. Bleibt das Feld leer, "
+      + "wird die Frage frei beantwortet.",
   },
 
   // ---- Vokabel-Store ----

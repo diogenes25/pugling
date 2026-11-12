@@ -28,14 +28,15 @@ public static class StageMechanics
         stage is ClozeStage.TranslationWordBank or ClozeStage.TranslationFreeText or ClozeStage.FreeText;
 
     /// <summary>
-    /// Normalizes an answer for comparison (trim, lowercase, collapse repeated spaces, one spelling of the
-    /// apostrophe). A tablet keyboard types the typographic apostrophe on its own ("l’école"), and which key the
-    /// device picked is not what the child is asked for (B-440). A closing <c>. ? ! …</c> is dropped as well: a right
-    /// translation without its full stop is a right translation (B-457).
+    /// Normalizes an answer for comparison (trim, lowercase, collapse repeated whitespace into one space, one spelling
+    /// of the apostrophe). Any whitespace separates words - a no-break space copied from a PDF is a space, or an option
+    /// and the answer would look alike and compare apart (B-497). A tablet keyboard types the typographic apostrophe on
+    /// its own ("l’école"), and which key the device picked is not what the child is asked for (B-440). A closing
+    /// <c>. ? ! …</c> is dropped as well: a right translation without its full stop is a right translation (B-457).
     /// </summary>
     public static string Normalize(string? s) =>
         string.Join(' ', WithoutClosingMarks(FoldApostrophes(s ?? "").Trim()).ToLowerInvariant()
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries));
+            .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
 
     private static readonly char[] ClosingMarks = ['.', '?', '!', '…'];
 
