@@ -17,9 +17,8 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-470](B-470-foto-zu-wortliste-als-werkzeug.md) | Aus Fotos der Vokabelseiten wird eine Wortliste – als wiederholbares Werkzeug statt als Handarbeit unter raw/ | Wunsch | `in-arbeit` | P1 | S | doku | — |
-| [B-476](B-476-kartenstufe-steigt-mit-dem-leitner-fach.md) | Die Stufe einer Vokabelkarte steigt mit ihrem Leitner-Fach: erst umdrehen, dann auswählen, dann schreiben | Wunsch | `in-arbeit` | P1 | M | backend | — |
 | [B-465](B-465-ki-lueckentext-mehrdeutig-und-verraten.md) | Ein KI-Lückentext nach dem Umbau: Titel passt nicht, Auswahl steht im Satz, Zeitformen ohne Alternative | Defekt | `idee` | P2 | — | backend | — |
-| [B-475](B-475-laden-abbruch-laesst-uebungen-ungetestet.md) | Bricht `laden.py` mitten im Anlegen ab, bleiben die schon angelegten Übungen für immer ungetestet | Defekt | `idee` | P2 | — | .claude/skills/lehrwerk-aufbereiten | — |
+| [B-481](B-481-ki-creator-raet-unit-und-fach-beim-kind.md) | Der KI-Creator rät beim Kind weiter die Unit und das Fach | Defekt | `idee` | P2 | — | backend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `gegrillt` | P2 | — | backend | Vertrag? |
 | [B-469](B-469-lernkontrolle-selbsteinschaetzung-und-typen-ohne-test.md) | Prüfauftrag: Der Vokabeltest ist per Vorgabe eine Selbsteinschätzung, Grammatik und Übersetzung haben keinen Test | Frage | `idee` | P2 | — | beides | — |
@@ -53,6 +52,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-467](B-467-leerzustaende-melden-erfolg.md) | Ohne eine einzige Antwort meldet der Lernstand „es sitzt alles 👍“, und freie Übungen tragen ein Häkchen | Defekt | `idee` | P3 | — | frontend | — |
 | [B-479](B-479-nachschau-reste-sprint-31.md) | Nachschau-Reste Sprint 31: eine Zusicherung, die nicht fallen kann, und Grenzfälle der Schlusszeichen | Defekt | `idee` | P3 | — | beides | — |
 | [B-480](B-480-nachschau-reste-sprint-32.md) | Nachschau-Reste Sprint 32: eine Dosis, die nicht wirkt, steht weiter da | Defekt | `idee` | P3 | — | beides | — |
+| [B-482](B-482-nachschau-reste-sprint-33.md) | Nachschau-Reste Sprint 33: Kleinigkeiten an Ablage und NEU-Marker | Defekt | `idee` | P3 | — | backend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `idee` | P3 | — | — | — |
 | [B-328](B-328-inline-typen-put-verschiebt-lernstand.md) | Sollen die Inhaltslisten gespielter Übungen anderer Typen (und der Wort-Tausch) gesperrt sein? | Frage | `idee` | P3 | — | backend | — |
@@ -89,7 +89,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-447](B-447-arcade-zeigt-iso-daten.md) | Die Sohn-Arcade zeigt Daten als ISO-Text | Aufräumen | `idee` | P3 | — | frontend | — |
 
 <details>
-<summary>Abgenommen (381)</summary>
+<summary>Abgenommen (383)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -427,6 +427,8 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-471](B-471-ki-lehrplan-grammatik-nach-neuem-stoff.md) | Die Grammatik-Teile des KI-Lehrplans nehmen die Themen alphabetisch statt den neuen Stoff zuerst | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-472](B-472-jedes-wort-in-beide-richtungen.md) | Jedes Wort einer Wortliste in beide Richtungen üben | Wunsch | `abgenommen` | P1 | M | beides | — |
 | [B-473](B-473-ki-creator-ablage-ignoriert-buch-des-kindes.md) | Ohne `--profile` und `--series` legt der KI-Creator die Übung in der ersten Reihe überhaupt ab, nicht im Buch des Kindes | Defekt | `abgenommen` | P2 | S | backend | — |
+| [B-475](B-475-laden-abbruch-laesst-uebungen-ungetestet.md) | Bricht `laden.py` mitten im Anlegen ab, bleiben die schon angelegten Übungen für immer ungetestet | Defekt | `abgenommen` | P2 | S | .claude/skills/lehrwerk-aufbereiten | — |
+| [B-476](B-476-kartenstufe-steigt-mit-dem-leitner-fach.md) | Die Stufe einer Vokabelkarte steigt mit ihrem Leitner-Fach: erst umdrehen, dann auswählen, dann schreiben | Wunsch | `abgenommen` | P1 | M | backend | — |
 | [B-477](B-477-assistent-dosis-auf-ungeordneter-liste.md) | Der Assistent schickt die Tagesdosis auch an ungeordnete Listen – das Anlegen bricht mittendrin ab | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-478](B-478-nachschau-reste-sprint-29.md) | Nachschau-Reste Sprint 29: „eingeführt" nach dem Verkleinern, Dosis-Sperre über die Übung umgehbar, zwei Kommentare | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-48](B-48-anonyme-registrierung-produktion.md) | Anonyme Registrierung ist auch in Produktion offen | Frage | `abgenommen` | P2 | S | backend | — |
@@ -477,7 +479,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 
 </details>
 
-### Wartet auf Zutun von außen (6)
+### Wartet auf Zutun von außen (5)
 
 Diese Stories kommen **im Repo nicht weiter** — es fehlt ein Schritt, den nur ein Mensch
 oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird gerade gebaut".
@@ -489,11 +491,10 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-430](B-430-nach-test-diese-woerter-ueben.md) | Nach einem nicht bestandenen Test gibt es nur „Nochmal versuchen" – keinen Weg zum Üben | `ausformuliert` | Entscheidung des Nutzers (Offener Punkt 3) |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 | [B-470](B-470-foto-zu-wortliste-als-werkzeug.md) | Aus Fotos der Vokabelseiten wird eine Wortliste – als wiederholbares Werkzeug statt als Handarbeit unter raw/ | `in-arbeit` | erster Lauf an einem neuen Buch in frischer Sitzung (Découvertes Série bleue 2) |
-| [B-476](B-476-kartenstufe-steigt-mit-dem-leitner-fach.md) | Die Stufe einer Vokabelkarte steigt mit ihrem Leitner-Fach: erst umdrehen, dann auswählen, dann schreiben | `in-arbeit` | Ausrollen 47d0acb (Heimnetz-Start durch den Vater, für mich gesperrt) |
 
-### Nach der Abnahme entgangen (149)
+### Nach der Abnahme entgangen (150)
 
-**Nachgeschaut: 370 von 381 abgenommenen** — und in 131 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 11 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 372 von 383 abgenommenen** — und in 132 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 11 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -646,6 +647,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-477](B-477-assistent-dosis-auf-ungeordneter-liste.md) | Der Assistent schickt die Tagesdosis auch an ungeordnete Listen – das Anlegen bricht mittendrin ab | [B-04] | `abgenommen` |
 | [B-478](B-478-nachschau-reste-sprint-29.md) | Nachschau-Reste Sprint 29: „eingeführt" nach dem Verkleinern, Dosis-Sperre über die Übung umgehbar, zwei Kommentare | [B-04, B-451] | `abgenommen` |
 | [B-479](B-479-nachschau-reste-sprint-31.md) | Nachschau-Reste Sprint 31: eine Zusicherung, die nicht fallen kann, und Grenzfälle der Schlusszeichen | [B-466, B-457] | `idee` |
+| [B-481](B-481-ki-creator-raet-unit-und-fach-beim-kind.md) | Der KI-Creator rät beim Kind weiter die Unit und das Fach | [B-473] | `idee` |
 
 <details>
 <summary>Nie nachgeschaut (11) — Arbeitsvorrat der Nachschau</summary>
@@ -663,9 +665,9 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-463](B-463-ki-lehrplan-deckt-ein-sechstel-der-wortliste.md) | Der KI-Lehrplan übt 20 von 124 Wörtern der Unit, ohne Karteikasten und nur Englisch → Deutsch |
 | [B-464](B-464-access-datenstand-aufraeumen.md) | Der Access-Datenstand trägt Trümmer des ersten Laufs, und das Kind zeigt auf das falsche Buch |
 | [B-468](B-468-sohn-erreicht-die-app-nur-am-pc.md) | Der Sohn erreicht die App nur am Rechner des Vaters – „jederzeit am Handy“ braucht einen Ort für den Server |
-| [B-471](B-471-ki-lehrplan-grammatik-nach-neuem-stoff.md) | Die Grammatik-Teile des KI-Lehrplans nehmen die Themen alphabetisch statt den neuen Stoff zuerst |
 | [B-472](B-472-jedes-wort-in-beide-richtungen.md) | Jedes Wort einer Wortliste in beide Richtungen üben |
-| [B-473](B-473-ki-creator-ablage-ignoriert-buch-des-kindes.md) | Ohne `--profile` und `--series` legt der KI-Creator die Übung in der ersten Reihe überhaupt ab, nicht im Buch des Kindes |
+| [B-475](B-475-laden-abbruch-laesst-uebungen-ungetestet.md) | Bricht `laden.py` mitten im Anlegen ab, bleiben die schon angelegten Übungen für immer ungetestet |
+| [B-476](B-476-kartenstufe-steigt-mit-dem-leitner-fach.md) | Die Stufe einer Vokabelkarte steigt mit ihrem Leitner-Fach: erst umdrehen, dann auswählen, dann schreiben |
 
 </details>
 
@@ -754,7 +756,8 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-454](B-454-position-ohne-leitner-nur-test.md) | `abgenommen` | Abschnitt „Schätzung" |
 | [B-458](B-458-grammatik-entwurf-verraet-die-loesung.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-461](B-461-lueckentext-ablenker-zaehlen-als-loesung.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
-| [B-476](B-476-kartenstufe-steigt-mit-dem-leitner-fach.md) | `in-arbeit` | Abschnitt „Schätzung" |
+| [B-475](B-475-laden-abbruch-laesst-uebungen-ungetestet.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
+| [B-476](B-476-kartenstufe-steigt-mit-dem-leitner-fach.md) | `abgenommen` | Abschnitt „Schätzung" |
 
 <details>
 <summary>Verworfen (27)</summary>

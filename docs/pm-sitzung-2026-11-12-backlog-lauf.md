@@ -216,6 +216,55 @@ Werkzeug unter `.claude/skills`.
 - **Vorschläge (CO), (CP)** aus den Retros: gemeinsame Fallliste für den Antwortvergleich; `mutant-probe.py` je
   Zusicherungsmeldung.
 - Ein roter E2E-Lauf von `creator-lehrwerk-weg.spec.ts` (Sprint 32) ist unerklärt; einzeln und 3× parallel grün.
+- **Vorschlag (CQ)** aus Sprint 34: automatischer Test für das Verhalten von `laden.py`.
+
+## Sprint 34 — Ziel & Umfang
+
+Fortsetzung nach der Rückmeldung des Nutzers („Ja, weiter").
+
+**Sprint-Ziel:** *Wer ein Lehrwerk mit `laden.py` lädt, erfährt vor dem ersten Aufruf von jedem Feld, das der Server
+ablehnen würde, und nach jedem Lauf, ob alle Übungen des Ordners ihre eigenen Lösungen bestehen – auch nach einem
+Abbruch.*
+**Umfang:** B-475 (S) – `art: Defekt`, Werkzeug, autonom gegrillt.
+**Entwickler-Brief:** Quelle der Wahrheit sind die Config-Typen in `Pugling.Contracts` und die Route jedes
+Controllers; der Lader spiegelt sie, ein xUnit-Test hält den Spiegel. Keine Migration, kein Vertrag. Testweg:
+`LadenFieldListTests` plus echter Lauf gegen einen Wegwerf-Server.
+
+## Iteration 34 — umgesetzt
+
+- **B-475:** `--pruefen` lehnt unbekannte Felder je Typ ab (jede Tiefe, Groß/Klein wie der Server, Abkürzungen nur
+  exakt); der Selbsttest läuft über alle Übungen des Ordners; `FORMAT.md` nennt die Felder je Typ. Die offene
+  Apostroph-Frage ist gemessen: `qu’il` = `qu'il` auch bei Regelaufgaben.
+- Review-Zähler des Sprints: **3** (🟡 `Markup` groß geschrieben; 🟡 `decoding[]` ungeprüft; 🟡 Route → Typ von Hand
+  gepflegt) – behoben. Mutanten: sechs von sechs rot; das Python-Verhalten nur von Hand gegengeprüft.
+
+## Runde 5 — Rollengang / Abnahme (Sprint 34)
+
+Backend **1338/1338** am Stand nach der letzten Änderung; Frontend unverändert.
+
+- **Creator – abgenommen, echter Lauf.** `laden.py` gegen einen Wegwerf-Server (Port 5280, frische DB): Lauf 1 legt
+  Wortliste und Regelaufgabe an, Lauf 2 mit einer weiteren Übung prüft alle drei; ein Ordner mit `alternatives` an
+  einer Regelaufgabe stoppt mit Pfad und Feldliste. *„Ein grüner Lauf heißt jetzt: alles im Ordner besteht – nicht
+  nur das, was diesmal neu war."*
+- **Vater, Sohn – Regressionszeugen.** Kein Pfad im Diff; Suite grün.
+
+## Retrospektive (Sprint 34)
+
+**Nachschau:** Sprint 33 (B-471, B-473) von einem frischen `pugling-reviewer` an `e94aa1e`. **Ein Durchrutscher bei
+B-473:** `--child` mit `--series` rät weiter die Unit, und zwei Fächer des Kindes ohne exakten Gleichstand wählen
+still; dazu ein Test, dessen rote Messung an der DB-Belegung hing → [B-481](backlog/B-481-ki-creator-raet-unit-und-fach-beim-kind.md)
+(P2, `entgangen_bei: B-473`). Drei 🟢 → [B-482](backlog/B-482-nachschau-reste-sprint-33.md). `nachgeschaut:
+2026-11-12` an beiden.
+
+**Was die eigenen Tore durchgelassen haben:** Der B-473-Durchrutscher ist dieselbe Fehlerklasse wie der Fund im
+Review von Sprint 33 – ich habe den Fall der Story („ganz ohne Ortsangabe") geschlossen und nicht die Nachbarfälle
+desselben Begriffs („geratenes Regal"). In Sprint 34 hat das eigene Tor (der Drift-Test) meine erste Feldliste sofort
+korrigiert (`refs`); das Review fand die Stellen, an denen zwei Leser derselben Felder verschiedene Regeln hatten
+(`unknown_fields` ohne Groß/Klein, `build_config` exakt).
+
+**Mechanismus:** keiner gelandet. Vorschlag **(CQ)**: `laden.py` hat keinen automatischen Test, nur das Tor über
+seine Feldliste; sein Verhalten (Selbsttest über alle, Feldprüfung) ist in diesem Sprint von Hand gegengeprüft. Ein
+kleiner Python-Testlauf in CI würde das tragen – ein neues Tor, darum nur vorgeschlagen.
 
 ## Produktentscheidungen dieses Laufs (zum Umstoßen)
 
@@ -228,6 +277,8 @@ Werkzeug unter `.claude/skills`.
    sie wirkt nicht**; der Creator wird dafür nicht gesperrt (B-478, 2).
 6. **Neuer Grammatikstoff ist, was die Stoffnotiz mit „NEU <Label>" markiert** – kein Feld am Thema (B-471, 1).
 7. **`--child` ohne Ortsangabe: Profil auf einem Kinder-Buch oder Fehlbedienung**, nie die erste Reihe (B-473, 1–2).
+8. **Der Lader prüft Felder offline gegen einen Spiegel des Vertrags**, nicht zur Laufzeit gegen Swagger; der
+   Selbsttest läuft über alle Übungen des Ordners statt über eine Buchführung der Abbrüche (B-475, 1–2).
 
 ## Offene Roadmap
 

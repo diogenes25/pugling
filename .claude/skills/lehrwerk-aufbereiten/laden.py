@@ -10,8 +10,8 @@ Das Format beschreibt FORMAT.md neben diesem Skript.
     python -I -X utf8 laden.py <ordner> --base http://localhost:5200 --account 1 --pin <PIN> [--child 1]
 
 Idempotent: Reihe, Units, Profil und Grammatik-Themen werden gefunden und aktualisiert; eine Übung mit gleichem
-Titel in der Unit bleibt stehen (mit --ersetzen wird sie überschrieben). Jede neue oder ersetzte Übung läuft
-danach durch den Testmodus mit ihren eigenen Lösungen.
+Titel in der Unit bleibt stehen (mit --ersetzen wird sie überschrieben). Jede Übung des Ordners – neu, ersetzt
+oder stehen geblieben – läuft danach durch den Testmodus mit ihren eigenen Lösungen.
 """
 import argparse
 import csv
@@ -28,6 +28,29 @@ TSV_COLUMNS = ["abschnitt", "wort", "uebersetzung", "hinweis", "notiz", "unsiche
 ROUTES = {"vocabulary", "cloze", "grammar", "matching", "translation", "reading", "list", "birkenbihl"}
 # Field limits of the Creator API (SeriesUnit/CreatorProfile); checked offline so a run never stops halfway.
 MAX_TOPIC, MAX_TEXT = 200, 2000
+# Config fields per route, mirrored from the config types in Pugling.Contracts: the server rejects an unknown one with
+# 400 unknown_field, which would stop a run halfway. Key "" is the top level; any other key is a list of objects, and
+# a dotted key ("sentences.decoding") is a list inside the entries of another. LadenFieldListTests reads the JSON
+# between the markers and compares it with the config type each route binds, so it cannot drift.
+# FIELDS-BEGIN
+FIELDS = {
+    "vocabulary": {"": ["direction", "sourceLang", "targetLang", "articleRequired", "refs", "items"],
+                   "items": ["front", "back", "hint", "vocabularyId"], "refs": ["vocabularyId", "key"]},
+    "cloze": {"": ["text", "gaps", "wordBank"], "gaps": ["index", "answer", "alternatives", "vocabKey"]},
+    "grammar": {"": ["instruction", "tasks"], "tasks": ["prompt", "answer", "ruleHint"]},
+    "matching": {"": ["instruction", "pairs"], "pairs": ["left", "right"]},
+    "translation": {"": ["sourceLang", "targetLang", "items"],
+                    "items": ["source", "target", "alternatives", "vocabularyId"]},
+    "reading": {"": ["text", "questions"], "questions": ["prompt", "choices", "answer"]},
+    "list": {"": ["instruction", "ordered", "items"], "items": ["value", "alternatives"]},
+    "birkenbihl": {"": ["learningLang", "nativeLang", "nextSentenceId", "nextWordId", "sentences"],
+                   "sentences": ["sentenceId", "learningSentence", "naturalTranslation", "decoding"],
+                   "sentences.decoding": ["wordId", "learningWord", "gloss", "vocabularyId"]}
+}
+# FIELDS-END
+# Authoring shortcuts build_config turns into contract fields. Only this exact spelling is read there, so only this
+# spelling is allowed; "Markup" would pass through unchanged and be rejected by the server.
+SHORTCUTS = {"cloze": {"markup", "distractors"}}
 
 
 # --- Reading and offline check ----------------------------------------------------------------------------------
@@ -75,6 +98,32 @@ def parse_cloze(markup):
 
 def contains_word(text, word):
     return re.search(r"(?<!\w)" + re.escape(word) + r"(?!\w)", text, re.IGNORECASE) is not None
+
+
+def unknown_fields(typ, config):
+    """Paths of config fields the route does not know. Contract fields match case-insensitively like the server's
+    JSON binding; the server's response-only "_self" links count as unknown, since an author never writes them."""
+    known = FIELDS.get(typ)
+    if known is None:
+        return []
+    shortcuts = SHORTCUTS.get(typ, set())
+    out = []
+
+    def walk(obj, key, where):
+        fields = known[key]
+        allowed = {f.lower() for f in fields}
+        names = fields + (sorted(shortcuts) if key == "" else [])
+        out.extend(f"{where}.{k} – {typ} kennt {'dort ' if key else ''}{', '.join(names)}"
+                   for k in obj if k.lower() not in allowed and not (key == "" and k in shortcuts))
+        for child in (c for c in known if c and c.rpartition(".")[0] == key):
+            name = child.rpartition(".")[2]
+            entries = next((v for k, v in obj.items() if k.lower() == name.lower()), None)
+            for i, entry in enumerate(entries if isinstance(entries, list) else []):
+                if isinstance(entry, dict):
+                    walk(entry, child, f"{where}.{name}[{i}]")
+
+    walk(config, "", "config")
+    return out
 
 
 def check(book, words, exercises):
@@ -154,6 +203,7 @@ def check(book, words, exercises):
         if (e["unit"], e["titel"]) in titles:
             err.append(f"{name}: Titel doppelt in der Unit")
         titles.add((e["unit"], e["titel"]))
+        err.extend(f"{name}: {p}" for p in unknown_fields(e.get("typ"), e["config"]))
         if e["typ"] == "cloze" and "markup" in e["config"]:
             _, gaps, problems = parse_cloze(e["config"]["markup"])
             err.extend(f"{name}: {p}" for p in problems)
@@ -322,6 +372,8 @@ def load(folder, book, words, exercises, args):
     for nr, uid in unit_ids.items():
         have[nr] = {e["title"]: e["id"] for e in
                     api.call("GET", f"/creator/exercises?seriesUnitId={uid}&mineOnly=true&take=500")}
+    # Every exercise of the folder goes through the self-test, the ones left standing too: after a run that stopped
+    # halfway, the next one would otherwise find them "already there" and never test them.
     touched = []
     print("Übungen:")
     for e in plan:
@@ -334,6 +386,7 @@ def load(folder, book, words, exercises, args):
         old = have[e["unit"]].get(e["titel"])
         if old and not args.ersetzen:
             print(f"  = {e['titel']} (schon da)")
+            touched.append((old, e["titel"]))
             continue
         res = api.call("PUT", f"{route}/{old}", body) if old else api.call("POST", route, body)
         touched.append((res["id"], e["titel"]))
@@ -342,7 +395,7 @@ def load(folder, book, words, exercises, args):
     if args.child:
         child_setup(api, book, subject, sid, unit_ids, args.child)
 
-    print("Selbsttest (Testmodus, nebenwirkungsfrei):")
+    print(f"Selbsttest (Testmodus, nebenwirkungsfrei) über alle {len(touched)} Übungen des Ordners:")
     failed = 0
     for eid, title in touched:
         first = api.call("POST", f"/creator/exercises/{eid}/preview/check", {"answers": []})
@@ -352,7 +405,7 @@ def load(folder, book, words, exercises, args):
         failed += res["scorePercent"] != 100
         print(f"  {res['scorePercent']:3d} %  {res['correct']}/{res['total']}  {title}")
     if not touched:
-        print("  (keine neue Übung – nichts zu prüfen)")
+        print("  (keine Übung im Ordner – nichts zu prüfen)")
     return failed
 
 

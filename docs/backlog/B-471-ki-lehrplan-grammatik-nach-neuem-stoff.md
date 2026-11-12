@@ -10,7 +10,7 @@ migration: nein
 vertragsbruch: nein
 quelle: B-463
 entgangen_bei: []
-nachgeschaut: ""
+nachgeschaut: 2026-11-12
 grund: ""
 ersetzt_durch: []
 ---
@@ -100,3 +100,4 @@ Die Reihenfolge der Themen trägt keine Bedeutung, wird aber als Priorität gele
 
   Grundlinie nach dem Zurückspielen grün.
 - **2026-11-12** — **abgenommen.** Commit `e94aa1e` (gemeinsam mit B-473). Volle Suite nach der letzten Änderung: Backend 1335/1335 (Agent-Tests 109/109); Frontend unverändert seit dem E2E-Lauf von Sprint 32 (137 passed). Review-Zähler Sprint 33: 2 von 5. **Rollengang (Creator) ohne Live-Lauf:** gegen Ollama und die echte API lief der Agent nicht – die echte DB gehört den Kindern, und ein zweiter Server auf 5200 ist verboten; gefahren hat ihn `CreatorAgentTests` mit `FakeChatClient` gegen die In-Process-API. Ein Mensch prüft: `pugling-creator briefing --child 1 --type Cloze` gegen eine Kopie der DB.
+- **2026-11-12** — Nachschau (Sprint 34, frischer `pugling-reviewer` an `e94aa1e`): Marker am Anfang, Sonderzeichen, Umlaute, Label mit `)` richtig; einziger Leser der Reihenfolge ist `GrammarTopicLabels` – kein Defekt. 🟢 doppeltes Label, andere Trenner nach `NEU` → [B-482](B-482-nachschau-reste-sprint-33.md).

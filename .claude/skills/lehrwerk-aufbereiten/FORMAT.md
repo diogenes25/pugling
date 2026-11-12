@@ -124,5 +124,10 @@ Aufgaben, Texte, Dialoge oder Beispielsätze des Buchs.
     Ablenker). Ohne `distractors` tippt das Kind frei.
   - **Übersetzung**: Varianten ohne Schlusszeichen kommen automatisch dazu, denn der Server vergleicht die
     Satzzeichen streng.
+- **Felder je Typ:** `config` darf nur die Felder des Vertrags tragen; `--pruefen` lehnt jedes andere ab, mit
+  Pfad und der Liste der erlaubten (Liste `FIELDS` in `laden.py`). Vor allem: Regelaufgaben (`grammar`) haben je
+  Aufgabe nur `prompt`, `answer`, `ruleHint` – **keine `alternatives`**, anders als Lückentext, Übersetzung und
+  Liste. Groß/Klein, Schlusszeichen und den typografischen Apostroph (`qu’il` = `qu'il`) gleicht der
+  Antwortvergleich ohnehin aus; eine echte zweite Lösung braucht einen anderen Typ.
 - `reihenfolge` legt die Position in der Unit fest; die Wortlisten belegen 1, 2, 3 …, eigene Übungen ab 10.
 - Felder, die der Vertrag nicht kennt, lehnt der Server mit `400 unknown_field` ab, statt sie zu verschlucken.
