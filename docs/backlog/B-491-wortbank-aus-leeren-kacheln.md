@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-12-backlog-lauf.md (Nachschau Sprint 38)
 unverifiziert: false
 entgangen_bei: [B-487]
+nachgeschaut: 2026-11-12
 grund: ""
 ersetzt_durch: []
 ---
@@ -102,3 +103,9 @@ zählen dort aber als Bank und bleiben als Kachel stehen.
   `exerciseConfig.test.ts` 22/22. **Rollengang (Sohn) als Maschinengang:** die Tests spielen Wortbank- und Auswahlkarten
   über die Karten-Route des Kindes gegen die In-Process-API; kein Browser. Vater: die geänderte Warnzeile ist nur
   gelesen, nicht im Browser angesehen.
+- **2026-11-12** — Nachschau (Retro Sprint 41, Nachtlauf): frischer `pugling-reviewer` an `b521cd9` (per `git archive`,
+  1396/1396). Geprüft: Dubletten-Regel gegen jede Bewertungsstelle (Üben `PositionPracticeController.cs:383`, Klausur
+  `PositionTestsController.cs:303/:417`, Testmodus `ExercisePreviewService.cs:87` – alle `grader.Matches`), Artikel-/
+  Bedeutungs-Nachsicht nur bei Vokabeln (`ExerciseContentResolver.cs:115-117`), Lader-`graded()` gegen `Normalize`,
+  Editor-Warnung gegen Serververhalten, Doku nach altem Verhalten (nur Historie in B-73/B-76/B-487). Kein 🔴/🟡; vier 🟢 →
+  [B-497](B-497-nachschau-reste-sprint-40.md) (die angehängte Lösung ist ungetrimmt und verrät sich beim Sortieren).

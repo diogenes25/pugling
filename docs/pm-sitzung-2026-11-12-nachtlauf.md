@@ -85,3 +85,68 @@ Meldung, deren Ausweg nur gegen *eine* der zwei Sperren geprüft war.
 
 **Weiterlaufen:** kein neues Tor gelandet, Review-Zähler 1 ≤ 5 – der Nachtlauf geht weiter. Anders als im Backlog-Lauf
 vom Tag halte ich nicht aus Ermessen: der Auftrag ist ausdrücklich vier Läufe, und der Durchrutscher hat eine Story.
+
+## Sprint 41 — Ziel & Umfang
+
+**Sprint-Ziel:** *Was Vater und Sohn auf dem Bildschirm lesen, stimmt: keine Sperre als englische Server-Zeile mit Ref,
+kein angekündigter Verlust, der nie eintritt, kein Erfolg ohne Messung, kein Häkchen ohne Pflicht.*
+**Umfang:** [B-415](backlog/B-415-arcade-sperrcodes-ohne-text.md) (S), [B-418](backlog/B-418-position-entfernen-verspricht-verlust.md)
+(XS), [B-444](backlog/B-444-testmodus-fehler-ohne-alert-und-alter-ausweg.md) (XS),
+[B-467](backlog/B-467-leerzustaende-melden-erfolg.md) (S) – alle `art: Defekt`, P3, autonom gegrillt.
+**Entwickler-Brief:** reine Frontend-Arbeit über bestehende Primitive: Sperrtexte über `problem.*` + `GERMAN_PROBLEM_TEXT`
+(Wortgleichheit ist schon ein Test, das Tor `ProblemTextGuardTests` verliert seine Ausnahmen), `StatusBanner` statt eines
+eigenen Fehlerkastens, eine zweite kleine Abfrage statt einer neuen API-Größe. Server unverändert (`goalMet: true` für
+freie Positionen trägt Tageswertung und Serie).
+
+## Iteration 41 — umgesetzt
+
+- **B-415:** sechs Codes in `PROBLEM_KEYS`, `problem.*` de/en und `GERMAN_PROBLEM_TEXT`; fünf Ausnahmen im Tor entfallen;
+  der Sonderfall `media_no_alternative` in `SohnPractice` samt `practice.noMoreImages` fällt weg (Review-🟢).
+- **B-418:** `REMOVE_POSITION_QUESTION` – „aus dem Plan nehmen? Die Übung bleibt im Katalog."
+- **B-444:** `StatusBanner` im Testmodus; `exercise_empty` = „Diese Übung hat noch keine Inhalte."
+- **B-467:** `WeakWords` fragt zusätzlich „gibt es ein Wort?"; freie Positionen ohne Häkchen/Rahmen in Start und Weg.
+- Rote Proben: 6/6, 1/1 (nach einer am falschen Ort), 2/2, 1/1 + 1/1 + 1/1 (eine am falschen Ort: fehlender
+  `AuthProvider`). Mutanten 10/10 nach der letzten Änderung; F9 war zuerst grün (doppelter Schutz der Pill) – Test ergänzt.
+- Review-Zähler: **2** (🟡 „nichts geübt" stimmt nicht bei eingeführten, nie beantworteten Wörtern; roter E2E-Fall, der den
+  alten Erfolgs-Satz festschrieb). Reste außerhalb des Diffs → [B-496](backlog/B-496-reste-review-sprint-41.md).
+- Commit `1c7b567`.
+
+## Runde 12 — Rollengang / Abnahme (Sprint 41)
+
+`tsc -b` sauber, Vitest **774/774**, Backend **1396/1396**, Playwright **4/4** auf Ausweichports gegen echten Server und
+Wegwerf-DB (`PUGLING_E2E_API_PORT=5201`, daneben läuft der Heimnetz-Server).
+
+- **Vater – abgenommen als Maschinengang.** `vater-von-null.spec.ts` öffnet den Lernstand eines Kindes ohne Antwort und
+  liest „Noch kein Lernstand"; `full-flow.spec.ts` fährt Vater→Sohn. *„Wenn da steht, es sitzt alles, will ich, dass es
+  stimmt."* **Nicht angesehen:** die Entfernen-Frage und der Testmodus-Fehler im Browser (nur Komponententest).
+- **Sohn – abgenommen als Maschinengang, mit Gerätevorbehalt.** Komponententests für Start und Weg (kein Häkchen an
+  freier Position) und für alle sechs Sperrsätze in beiden Sprachen. **Nicht angesehen:** englische Arcade und der
+  Rahmen am Handy.
+- **Creator – Regressionszeuge.** Kein Pfad im Diff außer der Kürzung von `exercise_empty`; Suite grün.
+
+## Retrospektive (Sprint 41)
+
+**Nachschau:** Sprint 40 (B-491, B-490) von einem frischen `pugling-reviewer` an `b521cd9`, per `git archive` exportiert
+(1396/1396). Geprüft: die Dubletten-Regel gegen jede Bewertungsstelle (Üben, Klausur, Testmodus – alle über
+`grader.Matches`), die Nachsicht für Artikel und Bedeutungen (nur Vokabeln), `graded()` im Lader gegen `Normalize`, die
+Editor-Warnung gegen das Serververhalten, Doku nach dem alten Verhalten. **Kein 🔴, kein 🟡 – die erste Nachschau ohne
+Durchrutscher dieser Stärke nach sieben in Folge.** Vier 🟢 → [B-497](backlog/B-497-nachschau-reste-sprint-40.md)
+(`entgangen_bei: B-491, B-490`): die ergänzte Lösung wird nicht getrimmt und verrät sich beim Sortieren; NBSP macht zwei
+gleich aussehende Knöpfe; zwei Doku-Stellen. `nachgeschaut` an B-490 und B-491.
+
+**Was die eigenen Tore in Sprint 41 durchgelassen haben:** zweimal dieselbe Form wie in Sprint 40 – eine Aussage über
+die geänderte Sache an einer anderen Stelle: der E2E-Fall schrieb den alten Erfolgs-Satz fest (das Tor hat gehalten,
+rot), und der neue Satz „nichts geübt" behauptete mehr als gemessen (Review). Dazu zweimal eine rote Probe am falschen
+Ort (fehlender `AuthProvider`, fehlende Konstante) und eine Zusicherung, die nur am Namen der Testdaten hing
+(„gebunden" im Profilnamen, Sprint 42) – alle drei vor dem Fix bemerkt, weil die Probe die *Meldung* gelesen hat, nicht
+nur „rot".
+
+**Vorschläge (nicht gelandet, Freigabe 3):**
+
+- **(CW)** Ein Satz, der einen Leerzustand deutet („nichts geübt", „sitzt alles"), nennt die gemessene Größe
+  (Antworten, eingeführte Wörter), nicht eine abgeleitete. Ort: `frontend/CLAUDE.md` neben der Platzhalter-Regel.
+- **(CX)** `mutant-probe.py` warnt, wenn eine Zusicherung auf einem Text besteht, der auch in den Testdaten vorkommt –
+  zu schwer mechanisch; stattdessen in pm-loop Step 5: *die rote Probe liest die Fehlermeldung, nicht nur die Zahl*.
+  (CU) aus Sprint 40 bleibt offen.
+
+**Weiterlaufen:** Review-Zähler 2 ≤ 5, kein neues Tor.
