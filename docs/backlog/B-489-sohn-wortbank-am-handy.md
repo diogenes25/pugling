@@ -40,7 +40,7 @@ Text und Knöpfen hin- und herzuscrollen.
 
 ## Verlauf
 
-- 2026-11-12 – gebaut: `lib/choices.ts` (`isWordBank`/`choicesClass`), `ClozePrompt` mit `fitAsked`, Vater-Testmodus
+- 2026-11-12 – gebaut (Commit 093112d): `lib/choices.ts` (`isWordBank`/`choicesClass`), `ClozePrompt` mit `fitAsked`, Vater-Testmodus
   (B-486) auf denselben Mechanismus umgestellt. Vitest 758/758, `tsc -b` sauber; rote Probe (Grenze 4, `fitAsked`
   ohne Wirkung) lässt genau die tragenden Fälle fallen.
 - 2026-11-12 – Rollengang bei 375×812 gegen eine Wegwerf-DB (Backend :5201, Heimnetz-Server unberührt):
