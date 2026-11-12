@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/abgenommen, bereich/training, rolle/student, lerntechnik/vokabeln]
 aliases: [Stufenleiter je Karte, Karteikarte vor Auswahl vor Schreiben, Kartenstufe aus dem Fach]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: M
@@ -12,7 +12,7 @@ quelle: Rückmeldung von Theodor nach dem ersten echten Lerntag (2026-11-11), vo
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
-wartet_auf: "Ausrollen 47d0acb (Heimnetz-Start durch den Vater, für mich gesperrt)"
+wartet_auf: ""
 ---
 
 # B-476 · Die Stufe einer Vokabelkarte steigt mit ihrem Leitner-Fach: erst umdrehen, dann auswählen, dann schreiben
@@ -315,3 +315,6 @@ die drei Punkte nach der dortigen Empfehlung entschieden, Vetorecht beim Vater).
 - **2026-11-12** — E2E, volle Suite an `47d0acb`: **135 passed** (darin `erstbegegnung.spec.ts`, der Rollengang dieser
   Story). Ausrollen offen: der Heimnetz-Server wurde für `10226b4` angehalten, den Neustart aus meiner Sitzung hat die
   Rechteprüfung gesperrt; er läuft nicht. Der Vater startet ihn über `scripts/heimnetz.ps1` – dann `abgenommen`.
+- **2026-11-12** — Ausgerollt: der Vater hat den Heimnetz-Server mit `scripts/heimnetz.ps1` neu gestartet (Sicherung
+  `pugling.db.bak-auto-20261112-063516`); veröffentlicht 06:36:51, also nach `47d0acb`, Port 5200 antwortet.
+  **Abgenommen** mit `1bcef11`, `94a2f45`, `2ac8291`, `10226b4`, `47d0acb`.
