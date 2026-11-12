@@ -30,10 +30,23 @@ public static class StageMechanics
     /// <summary>
     /// Normalizes an answer for comparison (trim, lowercase, collapse repeated spaces, one spelling of the
     /// apostrophe). A tablet keyboard types the typographic apostrophe on its own ("l’école"), and which key the
-    /// device picked is not what the child is asked for (B-440).
+    /// device picked is not what the child is asked for (B-440). A closing <c>. ? ! …</c> is dropped as well: a right
+    /// translation without its full stop is a right translation (B-457).
     /// </summary>
     public static string Normalize(string? s) =>
-        string.Join(' ', FoldApostrophes(s ?? "").Trim().ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries));
+        string.Join(' ', WithoutClosingMarks(FoldApostrophes(s ?? "").Trim()).ToLowerInvariant()
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries));
+
+    private static readonly char[] ClosingMarks = ['.', '?', '!', '…'];
+
+    // An answer that is nothing but marks keeps them: stripped it would be empty, and empty is never correct.
+    private static string WithoutClosingMarks(string s)
+    {
+        var stripped = s.TrimEnd();
+        while (stripped.Length > 0 && Array.IndexOf(ClosingMarks, stripped[^1]) >= 0)
+            stripped = stripped[..^1].TrimEnd();
+        return stripped.Length > 0 ? stripped : s;
+    }
 
     // Right and left single quotation mark, modifier apostrophe, acute and grave accent as stand-alone characters.
     private static string FoldApostrophes(string s) =>

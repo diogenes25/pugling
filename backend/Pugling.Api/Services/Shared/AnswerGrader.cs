@@ -4,7 +4,7 @@ namespace Pugling.Api.Services.Shared;
 /// Grades the answers submitted by the child against the stored solution – the one shared
 /// comparison rule for the final tests (vocabulary/matching/cloze) and the Leitner practice loop
 /// (<c>/review</c>). Stateless and without DB access; text comparisons go through
-/// <see cref="StageMechanics.Normalize"/> (case and repeated whitespace do not matter).
+/// <see cref="StageMechanics.Normalize"/> (what it forgives is listed there).
 /// </summary>
 public class AnswerGrader
 {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildTypeConfig, configToEditorState, emptyRow } from "./exerciseConfig";
+import { buildTypeConfig, choicesMissAnswer, configToEditorState, emptyRow, normalizeAnswer } from "./exerciseConfig";
 import type { ExerciseTypeKey } from "../lib/types";
 
 /*
@@ -170,5 +170,25 @@ describe("Vokabeln: articleRequired beim Anlegen", () => {
       { vocabRefs: [{ vocabularyId: 7 }] }) as { articleRequired: boolean };
     expect(an.articleRequired).toBe(true);
     expect(aus.articleRequired).toBe(false);
+  });
+});
+
+/*
+ * B-457: Die Warnung „Lösung fehlt in der Auswahl" vergleicht wie der Server (`StageMechanics.Normalize`,
+ * `SchlusszeichenTests.cs`). Jeder Fall wird rot, wenn die zugehörige Regel im Client fehlt: Schlusszeichen,
+ * Leerzeichen zwischen ihnen, der Schutz für reine Satzzeichen, der Apostroph – und ein Komma im Satz bleibt.
+ */
+describe("normalizeAnswer folgt dem Server", () => {
+  it.each([
+    ["The station ?!", "the station"],
+    ["the station ? !", "the station"],
+    [" ? ! ", "? !"],
+    ["l’école.", "l'école"],
+    ["Yes, I am.", "yes, i am"],
+  ])("%s → %s", (given, expected) => expect(normalizeAnswer(given)).toBe(expected));
+
+  it("warnt nicht, wenn sich Lösung und Auswahl nur im Schlusszeichen unterscheiden", () => {
+    expect(choicesMissAnswer({ answer: "Hello!", choices: ["Hello", "Goodbye"] })).toBe(false);
+    expect(choicesMissAnswer({ answer: "Hello!", choices: ["Goodbye"] })).toBe(true);
   });
 });

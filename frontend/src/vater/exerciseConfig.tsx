@@ -130,8 +130,15 @@ export const ARITHMETIC_OPERATIONS: { value: ArithmeticOperation; label: string 
  */
 const strList = (l: unknown): string[] => (Array.isArray(l) ? l.map((x) => String(x ?? "")) : []);
 
-/** Wie der Server vergleicht (`StageMechanics.Normalize`): trimmen, klein, Mehrfach-Leerzeichen zusammen. */
-const normalizeAnswer = (s: string) => s.trim().toLowerCase().split(/\s+/).filter(Boolean).join(" ");
+/**
+ * Wie der Server vergleicht (`StageMechanics.Normalize`): ein Apostroph (B-440), Schlusszeichen `.?!…` weg, außer die
+ * Antwort besteht nur daraus (B-457), dann trimmen, klein, Mehrfach-Leerzeichen zusammen.
+ */
+export const normalizeAnswer = (s: string) => {
+  const folded = s.replace(/[’‘ʼ´`]/g, "'").trim();
+  const stripped = folded.replace(/[\s.?!…]+$/, "");
+  return (stripped || folded).toLowerCase().split(/\s+/).filter(Boolean).join(" ");
+};
 
 /**
  * Auswahl gefüllt, aber die Lösung steht nicht darin. Seit B-73 spielt der Server die Möglichkeiten aus:
@@ -139,7 +146,7 @@ const normalizeAnswer = (s: string) => s.trim().toLowerCase().split(/\s+/).filte
  * Leitner-Kasten kommt nie vorwärts und der Malus greift. Nur ein Hinweis, keine Sperre: eine halbfertige
  * Übung darf man speichern (die Auswahl selbst ist optional).
  */
-const choicesMissAnswer = (r: Row): boolean => {
+export const choicesMissAnswer = (r: Row): boolean => {
   const choices = strList(r.choices).map(normalizeAnswer).filter((c) => c !== "");
   const answer = normalizeAnswer(String(r.answer ?? ""));
   return choices.length > 0 && answer !== "" && !choices.includes(answer);
