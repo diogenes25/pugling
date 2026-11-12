@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { clozeParts, showsGaps } from "../lib/cloze";
 import { useChromeT } from "../lib/chromeText";
 
@@ -23,15 +24,25 @@ import { useChromeT } from "../lib/chromeText";
  * `filled` und `onGap` braucht nur der Testmodus des Vaters, der alle Lücken eines Texts in einer Sitzung
  * spielt (B-486): die schon gewählte Antwort steht dann **in** ihrer Lücke statt „…", und ein Tipp auf eine
  * Lücke springt zu ihr. Ohne die beiden bleibt alles wie beim Kind, das je Karte nur eine Lücke sieht.
+ *
+ * `fitAsked` setzt einen langen Text in einen höhenbegrenzten Kasten und rollt die gefragte Lücke darin ins
+ * Bild (B-489): am Handy schob ein Absatz von zehn Zeilen sonst die Antwortknöpfe unter den Rand, und beim
+ * Wählen war das „?" nicht mehr zu sehen. Nur für die eine aktive Aufgabe – in einer Ergebnisliste würde
+ * jede Zeile die Seite zu sich ziehen.
  */
-export function ClozePrompt({ text, gapIndex, className = "word", filled, onGap }: {
+export function ClozePrompt({ text, gapIndex, className = "word", filled, onGap, fitAsked = false }: {
   text?: string | null;
   gapIndex?: number | null;
   className?: string;
   filled?: Readonly<Record<number, string | null | undefined>>;
   onGap?: (gap: number) => void;
+  fitAsked?: boolean;
 }) {
   const t = useChromeT();
+  const boxRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (fitAsked) boxRef.current?.querySelector(".cloze-gap.asked")?.scrollIntoView?.({ block: "nearest" });
+  }, [fitAsked, text, gapIndex]);
   if (!text) return null;
   const parts = clozeParts(text);
 
@@ -41,7 +52,7 @@ export function ClozePrompt({ text, gapIndex, className = "word", filled, onGap 
   if (!showsGaps(parts, gapIndex)) return <div className={className}>{text}</div>;
 
   return (
-    <div className={`${className} cloze-prompt`}>
+    <div ref={boxRef} className={`${className} cloze-prompt${fitAsked ? " cloze-fit" : ""}`}>
       {parts.map((part, i) => {
         if ("text" in part) return <span key={i}>{part.text}</span>;
         const asked = part.gap === gapIndex;

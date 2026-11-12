@@ -104,6 +104,35 @@ describe("ClozePrompt", () => {
     expect(screen.queryAllByRole("button")).toHaveLength(0);
   });
 
+  // B-489: rot, wenn die aktive Karte den höhenbegrenzten Kasten verliert (Text schiebt die Wortbank unter den Rand)
+  // oder wenn die Gefragte nicht ins Bild gerollt wird.
+  it("begrenzt mit fitAsked die Höhe und rollt die gefragte Lücke ins Bild", () => {
+    const seen: Element[] = [];
+    const orig = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = function (this: Element) { seen.push(this); };
+    try {
+      const { container } = render(<ClozePrompt text={text} gapIndex={2} fitAsked />);
+      expect(container.querySelector(".cloze-prompt.cloze-fit")).not.toBeNull();
+      expect(seen.map((e) => e.getAttribute("aria-label"))).toEqual(["gesuchte Lücke"]);
+    } finally {
+      Element.prototype.scrollIntoView = orig;
+    }
+  });
+
+  // Rot, wenn die Ergebnisliste (ohne fitAsked) begrenzt würde oder rollte – jede Zeile zöge die Seite zu sich.
+  it("rollt und begrenzt ohne fitAsked nichts", () => {
+    const seen: Element[] = [];
+    const orig = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = function (this: Element) { seen.push(this); };
+    try {
+      const { container } = render(<ClozePrompt text={text} gapIndex={2} />);
+      expect(container.querySelector(".cloze-fit")).toBeNull();
+      expect(seen).toHaveLength(0);
+    } finally {
+      Element.prototype.scrollIntoView = orig;
+    }
+  });
+
   it("zerlegt den Text in Stücke und Lücken", () => {
     expect(clozeParts("a {{1}} b")).toEqual([{ text: "a " }, { gap: 1 }, { text: " b" }]);
     // Eine Lücke ganz am Anfang erzeugt kein leeres Textstück davor.

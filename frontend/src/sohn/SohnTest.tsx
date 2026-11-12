@@ -10,6 +10,7 @@ import { LetterBoxes } from "../components/LetterBoxes";
 import { LetterTiles } from "../components/LetterTiles";
 import { AudioButton } from "../components/AudioButton";
 import { ClozePrompt, TaskAnnouncer } from "../components/ClozePrompt";
+import { choicesClass } from "../lib/choices";
 import { ListRule } from "../components/ListRule";
 import { Passage } from "../components/Passage";
 import { RevealAlternatives } from "../components/RevealAlternatives";
@@ -213,7 +214,7 @@ export function SohnTest() {
         {item.audioUrl && (
           <AudioButton url={item.audioUrl} autoPlay={!item.prompt} withControls={!!item.prompt} />
         )}
-        <ClozePrompt text={item.prompt} gapIndex={item.gapIndex} className="test-prompt" />
+        <ClozePrompt text={item.prompt} gapIndex={item.gapIndex} className="test-prompt" fitAsked />
         {/* Auf der VORDERSEITE, direkt unter dem Satz, wie beim Üben (B-93): die Klausur darf nicht weniger
             Stoff zeigen als die Übung, sonst wäre sie die härtere Aufgabe bei weniger Material. */}
         <BirkenbihlDecoding decoding={item.decoding} />
@@ -222,7 +223,7 @@ export function SohnTest() {
 
         {typed ? (
           item.choices ? (
-            <div className="row" style={{ marginTop: 10, gap: 8, flexWrap: "wrap" }}
+            <div className={choicesClass(item.choices)} style={{ marginTop: 10, gap: 8, flexWrap: "wrap" }}
               role="group" aria-label={t("practice.choices")}>
               {item.choices.map((c, i) => (
                 <button type="button" key={`${i}-${c}`} className="btn ghost small" disabled={action.busy}

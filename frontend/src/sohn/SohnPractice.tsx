@@ -10,6 +10,7 @@ import { LetterBoxes } from "../components/LetterBoxes";
 import { LetterTiles } from "../components/LetterTiles";
 import { AudioButton } from "../components/AudioButton";
 import { ClozePrompt, TaskAnnouncer } from "../components/ClozePrompt";
+import { choicesClass } from "../lib/choices";
 import { ListRule } from "../components/ListRule";
 import { Passage } from "../components/Passage";
 import { RevealAlternatives } from "../components/RevealAlternatives";
@@ -392,7 +393,7 @@ export function SohnPractice() {
           {card.audioUrl && (
             <AudioButton url={card.audioUrl} autoPlay={!card.prompt} withControls={!!card.prompt} />
           )}
-          <ClozePrompt text={card.prompt} gapIndex={card.gapIndex} />
+          <ClozePrompt text={card.prompt} gapIndex={card.gapIndex} fitAsked />
           {/* Die Dekodierung steht auf der VORDERSEITE, direkt unter dem Satz: sie ist die Methode, nicht die
               Lösung – man liest den Satz und seine Entschlüsselung zusammen (B-78). */}
           <BirkenbihlDecoding decoding={card.decoding} />
@@ -418,7 +419,7 @@ export function SohnPractice() {
             <button type="button" ref={continueRef} className="btn lime" style={{ marginTop: 10 }} onClick={next}>{t("practice.next")}</button>
           </div>
         ) : typed && card.choices ? (
-          <div ref={answerRef} className="row" style={{ gap: 8, flexWrap: "wrap" }} role="group" aria-label={t("practice.choices")}>
+          <div ref={answerRef} className={choicesClass(card.choices)} style={{ gap: 8, flexWrap: "wrap" }} role="group" aria-label={t("practice.choices")}>
             {card.choices.map((c, i) => (
               <button type="button" key={`${i}-${c}`} className="btn ghost" disabled={action.busy}
                 onClick={() => judge(card, { givenAnswer: c })}>{c}</button>

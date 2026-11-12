@@ -189,8 +189,11 @@ a { color: var(--cyan); }
 .cloze-gap.asked.filled { color: var(--gold); }
 button.cloze-gap { background: none; border: 0; border-bottom: 2px solid var(--stroke); font: inherit; cursor: pointer; margin: 0; }
 button.cloze-gap.asked { border-bottom-color: var(--gold); }
-/* Der Trägertext im Testmodus bleibt auf dem Handy über der Wortbank sichtbar, statt sie unter den Rand zu schieben. */
-.cloze-preview-text { max-height: 40vh; overflow-y: auto; }
+/* Ein langer Trägertext bleibt am Handy über den Antwortknöpfen, statt sie unter den Rand zu schieben (B-489). */
+.cloze-fit { max-height: 40vh; overflow-y: auto; }
+/* Eine Wortbank (B-489): viele kurze Wörter als Chips nebeneinander. Vollbreit stand jedes in einer eigenen Zeile –
+   22 Wörter waren drei Bildschirme. Multiple-Choice mit wenigen, oft langen Optionen bleibt vollbreit. */
+.choices-bank .btn { width: auto; flex: 0 0 auto; font-size: 15px; padding: 11px 14px; border-radius: 14px; }
 /* Ein Lückentext mit nummerierten Sätzen trägt je Satz eine Zeile (`\n`); als ein Absatz gesetzt, findet das Kind die
    gefragte Lücke unter zehn kaum (B-466). `pre-line` hält die Umbrüche und fasst Leerzeichen trotzdem zusammen. */
 .cloze-prompt { white-space: pre-line; }

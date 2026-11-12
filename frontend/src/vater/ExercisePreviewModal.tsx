@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ApiError, api, errorMessage } from "../lib/api";
 import { LetterBoxes } from "../components/LetterBoxes";
 import { LetterTiles } from "../components/LetterTiles";
@@ -86,11 +86,6 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
   // Die Antworten liegen je Aufgabe; der Text adressiert die Lücke. Hier die Brücke dazwischen.
   const filledGaps: Record<number, string | null | undefined> = {};
   for (const it of data?.items ?? []) if (it.gapIndex != null) filledGaps[it.gapIndex] = answers[it.itemIndex]?.givenAnswer;
-  // Der Text ist auf dem Handy höhenbegrenzt; die gefragte Lücke soll darin sichtbar sein, ohne zu suchen.
-  const textRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    textRef.current?.querySelector(".cloze-gap.asked")?.scrollIntoView?.({ block: "nearest" });
-  }, [at, data]);
   function goToGap(gap: number) {
     const i = data?.items.findIndex((it) => it.gapIndex === gap) ?? -1;
     if (i >= 0) setCursor(i);
@@ -171,9 +166,9 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
                 Kind sieht: die gefragte Lücke mit „?". Gewählte Antworten stehen in ihrer Lücke, ein Tipp
                 darauf springt zurück. */}
             {isCloze && current && (
-              <div ref={textRef} className="card cloze-preview-text" style={{ background: "var(--surface-2, transparent)" }}>
+              <div className="card" style={{ background: "var(--surface-2, transparent)" }}>
                 <ClozePrompt text={data.items[0]?.prompt} gapIndex={current.gapIndex} className="test-prompt"
-                  filled={filledGaps} onGap={goToGap} />
+                  filled={filledGaps} onGap={goToGap} fitAsked />
               </div>
             )}
             {/* Die Aufnahme gehört der Übung, nicht der einzelnen Frage: einmal oben, nicht je Zeile –
