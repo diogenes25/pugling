@@ -103,3 +103,4 @@ neue Fehlermeldung schickt genau auf diesen ungeprüften Pfad („gib --series <
 - **2026-11-12** — **abgenommen.** Volle Suite nach der letzten Änderung: 1385/1385, Build ohne Warnung. Review-Zähler 2.
   **Rollengang (Creator) ohne Live-Lauf**: `CreatorAgentTests` fährt die Konsole gegen die In-Process-API mit
   `FakeChatClient`; Ollama und die echte DB nicht.
+- **2026-11-12** — Commit der Abnahme: `ed43705`.
