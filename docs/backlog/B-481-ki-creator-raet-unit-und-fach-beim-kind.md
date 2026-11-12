@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-12-backlog-lauf.md (Nachschau Sprint 33)
 unverifiziert: false
 entgangen_bei: [B-473]
-nachgeschaut: ""
+nachgeschaut: 2026-11-12
 grund: ""
 ersetzt_durch: []
 ---
@@ -93,3 +93,5 @@ nicht nur ein Gleichstand an der Spitze.
 - **2026-11-12** — **abgenommen.** Commit `d941ca1`. Volle Suite nach der letzten Änderung: Backend 1343/1343, Build ohne Warnung.
   Review-Zähler Sprint 35: 2 von 5. **Rollengang (Creator) ohne Live-Lauf**, wie in Sprint 33: `CreatorAgentTests`
   fährt die Konsole mit `FakeChatClient` gegen die In-Process-API; gegen Ollama und die echte DB nicht.
+- **2026-11-12** — Nachschau (Sprint 36): Profilwahl und Reihe ohne Profilreihe laufen weiter an zweiter Stelle
+  → [B-484](B-484-ki-creator-profil-und-reihe-aus-zwei-pfaden.md).

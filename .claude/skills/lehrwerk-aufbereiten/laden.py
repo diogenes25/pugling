@@ -49,8 +49,13 @@ FIELDS = {
 }
 # FIELDS-END
 # Authoring shortcuts build_config turns into contract fields. Only this exact spelling is read there, so only this
-# spelling is allowed; "Markup" would pass through unchanged and be rejected by the server.
+# spelling is allowed; "Markup" would pass through unchanged and be rejected by the server. build_config reads
+# nothing else: every other field goes to the server as written, so check() and the server are its only readers.
 SHORTCUTS = {"cloze": {"markup", "distractors"}}
+# What a shortcut decides; written by hand as well, one of the two would silently win. markup decides the bank too:
+# none (free typing) or answers plus distractors - a hand-written bank next to generated gaps may miss an answer.
+# distractors needs markup (checked on its own), so markup's entry covers it.
+SHORTCUT_WRITES = {"markup": {"text", "gaps", "wordbank"}}
 
 
 # --- Reading and offline check ----------------------------------------------------------------------------------
@@ -115,6 +120,12 @@ def unknown_fields(typ, config):
         names = fields + (sorted(shortcuts) if key == "" else [])
         out.extend(f"{where}.{k} – {typ} kennt {'dort ' if key else ''}{', '.join(names)}"
                    for k in obj if k.lower() not in allowed and not (key == "" and k in shortcuts))
+        # The server binds case-insensitively and keeps one of two spellings; the other one is lost without a word.
+        spellings = {}
+        for k in obj:
+            spellings.setdefault(k.lower(), []).append(k)
+        out.extend(f"{where}: {' und '.join(ks)} sind dasselbe Feld – nur eine Schreibweise"
+                   for ks in spellings.values() if len(ks) > 1)
         for child in (c for c in known if c and c.rpartition(".")[0] == key):
             name = child.rpartition(".")[2]
             entries = next((v for k, v in obj.items() if k.lower() == name.lower()), None)
@@ -200,10 +211,26 @@ def check(book, words, exercises):
         if not e.get("titel") or not isinstance(e.get("config"), dict):
             err.append(f"{name}: titel und config sind Pflicht")
             continue
+        if e.get("typ") not in ROUTES:
+            continue
         if (e["unit"], e["titel"]) in titles:
             err.append(f"{name}: Titel doppelt in der Unit")
         titles.add((e["unit"], e["titel"]))
         err.extend(f"{name}: {p}" for p in unknown_fields(e.get("typ"), e["config"]))
+        for shortcut in set(SHORTCUT_WRITES) & SHORTCUTS.get(e["typ"], set()) & set(e["config"]):
+            clash = sorted(k for k in e["config"] if k.lower() in SHORTCUT_WRITES[shortcut])
+            if clash:
+                err.append(f"{name}: {shortcut} erzeugt {', '.join(clash)} selbst – nur eines von beiden schreiben")
+        if e["typ"] == "cloze" and "distractors" in e["config"] and "markup" not in e["config"]:
+            err.append(f"{name}: distractors gibt es nur zusammen mit markup; ohne markup die wordBank selbst schreiben")
+        # build_config is the only other reader of the two shortcuts, so their shape is checked here, not mid-run.
+        if e["typ"] == "cloze" and "markup" in e["config"] and not isinstance(e["config"]["markup"], str):
+            err.append(f"{name}: markup ist ein Text")
+            continue
+        distractors = e["config"].get("distractors") if e["typ"] == "cloze" else None
+        if distractors is not None and not (isinstance(distractors, list)
+                                            and all(isinstance(d, str) and d.strip() for d in distractors)):
+            err.append(f'{name}: distractors ist eine Liste nicht-leerer Texte, z. B. ["went", "gone"]')
         if e["typ"] == "cloze" and "markup" in e["config"]:
             _, gaps, problems = parse_cloze(e["config"]["markup"])
             err.extend(f"{name}: {p}" for p in problems)
@@ -270,21 +297,18 @@ def vocab_notes(unit, rows):
 
 
 def build_config(e):
-    """Turns the authoring shortcuts into the API config: cloze markup, punctuation-free translation variants."""
+    """Turns the cloze shortcuts into contract fields; everything else goes to the server as the author wrote it."""
     config = dict(e["config"])
     if e["typ"] == "cloze" and "markup" in config:
         text, gaps, _ = parse_cloze(config.pop("markup"))
         distractors = config.pop("distractors", None)
         config.update({"text": text, "gaps": gaps})
         if distractors is not None:
-            answers = {g["answer"] for g in gaps}
-            config["wordBank"] = sorted(answers | {d for d in distractors if d not in answers}, key=str.lower)
-    if e["typ"] == "translation":
-        # The server compares punctuation strictly; a child who leaves out the final full stop is still right.
-        for item in config.get("items", []):
-            variants = [item["target"], *item.get("alternatives", [])]
-            extra = [v.rstrip(".?!") for v in variants]
-            item["alternatives"] = list(dict.fromkeys(a for a in variants[1:] + extra if a != item["target"])) or None
+            # One tile per spelling the grader tells apart: it ignores case, so "went" next to "Went" would show twice.
+            bank = {}
+            for word in [g["answer"] for g in gaps] + list(distractors):
+                bank.setdefault(word.lower(), word)
+            config["wordBank"] = sorted(bank.values(), key=str.lower)
     return config
 
 
@@ -398,15 +422,33 @@ def load(folder, book, words, exercises, args):
     print(f"Selbsttest (Testmodus, nebenwirkungsfrei) über alle {len(touched)} Übungen des Ordners:")
     failed = 0
     for eid, title in touched:
-        first = api.call("POST", f"/creator/exercises/{eid}/preview/check", {"answers": []})
-        answers = [{"itemIndex": o["itemIndex"], "givenAnswer": o["expected"], "wasKnown": None}
+        stage = typed_stage(api, eid)
+        typed = stage is not None
+        # A type without any typed stage (Birkenbihl) grades the self-assessment, not a text; claiming "known" there
+        # tests only that the items exist, and the line says so instead of failing every run.
+        first = api.call("POST", f"/creator/exercises/{eid}/preview/check", {"answers": [], "stage": stage})
+        answers = [{"itemIndex": o["itemIndex"], "givenAnswer": o["expected"], "wasKnown": None if typed else True}
                    for o in first["items"]]
-        res = api.call("POST", f"/creator/exercises/{eid}/preview/check", {"answers": answers})
-        failed += res["scorePercent"] != 100
-        print(f"  {res['scorePercent']:3d} %  {res['correct']}/{res['total']}  {title}")
+        res = api.call("POST", f"/creator/exercises/{eid}/preview/check", {"answers": answers, "stage": stage})
+        # correct/total, not the rounded percentage: 199 of 200 rounds to 100.
+        failed += res["correct"] != res["total"]
+        note = "" if typed else "  (ohne getippte Stufe – nur Inhalt geprüft)"
+        print(f"  {res['scorePercent']:3d} %  {res['correct']}/{res['total']}  {title}{note}")
     if not touched:
         print("  (keine Übung im Ordner – nichts zu prüfen)")
     return failed
+
+
+def typed_stage(api, eid):
+    """The exercise's own preview stage when it is typed, else the first typed stage of its type, else None.
+
+    An exercise the father switched to a self-assessment stage in the Vater-Web still has typed stages; checking it on
+    its default stage would only prove that its items exist."""
+    data = api.call("GET", f"/creator/exercises/{eid}/preview")
+    if data["typed"]:
+        return data["stage"]
+    return next((o["value"] for o in data["stages"]
+                 if api.call("GET", f"/creator/exercises/{eid}/preview?stage={o['value']}")["typed"]), None)
 
 
 def child_setup(api, book, subject, sid, unit_ids, cid):

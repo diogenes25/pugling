@@ -121,13 +121,19 @@ Aufgaben, Texte, Dialoge oder Beispielsätze des Buchs.
   `list`, `birkenbihl`); `config` geht unverändert an sie, bis auf zwei Abkürzungen:
   - **Lückentext als `markup`**: `[Lösung|andere Schreibweise]` im Text, die Grundform in runden Klammern dahinter.
     Daraus werden Platzhalter und Lücken; mit `distractors` entsteht eine alphabetische Wortbank (Lösungen +
-    Ablenker). Ohne `distractors` tippt das Kind frei.
-  - **Übersetzung**: Varianten ohne Schlusszeichen kommen automatisch dazu, denn der Server vergleicht die
-    Satzzeichen streng.
+    Ablenker, je Wort eine Kachel ohne Rücksicht auf Groß/Klein). Ohne `distractors` tippt das Kind frei. Beide
+    Abkürzungen nur genau so klein geschrieben; `distractors` als Liste von Wörtern und nur zusammen mit `markup`;
+    neben `markup` weder `text`, `gaps` noch eine eigene `wordBank` – die Wortbank kommt dann nur aus `distractors`.
+  - Alles andere geht unverändert an den Server. Schlusszeichen muss keine Lösung doppelt tragen: der
+    Antwortvergleich verzeiht `. ? ! …` am Ende (B-457).
 - **Felder je Typ:** `config` darf nur die Felder des Vertrags tragen; `--pruefen` lehnt jedes andere ab, mit
   Pfad und der Liste der erlaubten (Liste `FIELDS` in `laden.py`). Vor allem: Regelaufgaben (`grammar`) haben je
   Aufgabe nur `prompt`, `answer`, `ruleHint` – **keine `alternatives`**, anders als Lückentext, Übersetzung und
   Liste. Groß/Klein, Schlusszeichen und den typografischen Apostroph (`qu’il` = `qu'il`) gleicht der
-  Antwortvergleich ohnehin aus; eine echte zweite Lösung braucht einen anderen Typ.
+  Antwortvergleich ohnehin aus; eine echte zweite Lösung braucht einen anderen Typ. Ein Feld zweimal in
+  verschiedener Schreibweise (`alternatives` und `Alternatives`) ist ein Fehler – der Server behielte nur eines.
+- **Selbsttest:** Nach dem Laden spielt der Lader jede Übung des Ordners im Testmodus mit ihren eigenen Lösungen.
+  Geprüft wird auf einer getippten Stufe, auch wenn die Übung auf Selbsteinschätzung steht. Typen ganz ohne
+  getippte Stufe (`birkenbihl`) lassen sich so nicht prüfen; ihre Zeile sagt „nur Inhalt geprüft".
 - `reihenfolge` legt die Position in der Unit fest; die Wortlisten belegen 1, 2, 3 …, eigene Übungen ab 10.
 - Felder, die der Vertrag nicht kennt, lehnt der Server mit `400 unknown_field` ab, statt sie zu verschlucken.

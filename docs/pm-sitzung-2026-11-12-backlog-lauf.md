@@ -218,7 +218,8 @@ Werkzeug unter `.claude/skills`.
 - Ein roter E2E-Lauf von `creator-lehrwerk-weg.spec.ts` (Sprint 32) ist unerklärt; einzeln und 3× parallel grün.
 - **Vorschlag (CQ)** aus Sprint 34: automatischer Test für das Verhalten von `laden.py`.
 - **Vorschlag (CR)** aus Sprint 35: bei einem Review-Fund erst alle Leser derselben Größe suchen.
-- **Nächster Kandidat B-483** (P2, Durchrutscher aus B-475) – wartet, siehe „Halt nach diesem Sprint".
+- **Nächster Kandidat B-483** (P2, Durchrutscher aus B-475) – in Sprint 36 abgenommen.
+- **Nächster Kandidat B-484** (P2, Durchrutscher aus B-481) – wartet, siehe „Halt nach diesem Sprint" (Sprint 36).
 
 ## Sprint 34 — Ziel & Umfang
 
@@ -316,6 +317,52 @@ als Feld im Review-Auftrag. Bewusst ungedeckt: der Live-Lauf des Agenten.
 eigenen vorigen Sprint einen Durchrutscher, und der nächste Kandidat (B-483) ist wieder einer. Weiterlaufen hieße,
 die Qualitätsschwelle am eigenen Nachlauf zu messen; ich höre hier auf und lege das vor.
 
+## Sprint 36 — Ziel & Umfang
+
+Fortsetzung auf Zuruf des Nutzers („Ja, B-483") nach dem Halt von Sprint 35.
+
+**Sprint-Ziel:** *Wer einen Lehrwerk-Ordner lädt, bekommt am Server genau, was `--pruefen` bestanden hat, und ein
+Selbsttest, der nur dort grün ist, wo er wirklich etwas geprüft hat.*
+**Umfang:** B-483 (S) – `art: Defekt`, Durchrutscher aus B-475, autonom gegrillt.
+**Entwickler-Brief:** erst `grep` nach jedem Leser eines Config-Felds (Vorschlag CR an sich selbst angewandt), dann
+den zweiten Leser wegnehmen statt ihm eine dritte Regel beizubringen. Kein Backend, keine Migration.
+
+## Iteration 36 — umgesetzt
+
+- **B-483:** `build_config` liest nur noch `markup`/`distractors` (die Schlusszeichen-Varianten sind seit B-457
+  überflüssig); `check()` lehnt doppelte Schreibweisen, `distractors` ohne `markup`, falsche Formen der Abkürzungen
+  und eine Abkürzung neben einem Feld ab, das sie selbst bestimmt; der Selbsttest prüft auf einer getippten Stufe
+  des Typs und vermerkt, wo es keine gibt.
+- Review-Zähler des Sprints: **3** – behoben. Mutanten: elf von elf rot, eine Zeile als tragend-los entfernt.
+
+## Runde 7 — Rollengang / Abnahme (Sprint 36)
+
+- **Creator – abgenommen.** Lader gegen einen Wegwerf-Server nach der letzten Änderung: Birkenbihl, Übersetzung mit
+  `Alternatives`, Lückentext und eine auf Selbsteinschätzung gestellte Vokabelübung, alle grün, nur Birkenbihl mit
+  Vermerk; der alte Lader verlor am selben Ordner `Where's the station?` und meldete Birkenbihl mit 0 %. Beide
+  echten Ordner bestehen `--pruefen`. *„Was durch die Prüfung geht, kommt so an – und grün heißt geprüft."*
+- **Vater, Sohn – Regressionszeugen.** Kein Backend im Diff; `LadenFieldListTests` 6/6.
+
+## Retrospektive (Sprint 36)
+
+**Nachschau:** Sprint 35 (B-481) von einem frischen `pugling-reviewer` an `d941ca1`. **Ein Durchrutscher, zum
+dritten Mal in Folge derselben Form:** die Unit wählt jetzt eine Stelle, Profil und Reihe ohne Profilreihe aber
+weiter zwei (`BriefingBuilder.ResolveProfileAsync` nach Punkten; werkunabhängiges Profil → erstes Regal)
+→ [B-484](backlog/B-484-ki-creator-profil-und-reihe-aus-zwei-pfaden.md) (P2, `entgangen_bei: B-481`).
+`nachgeschaut: 2026-11-12` an B-481.
+
+**Was die eigenen Tore durchgelassen haben:** In diesem Sprint habe ich (CR) vorab angewandt – `grep` nach allen
+Lesern eines Config-Felds – und es hat die Hälfte getragen: der zweite Leser fiel weg. Das Review fand trotzdem drei
+🟡, alle in Lesern, die keine *Felder*, sondern *Formen und Zustände* lesen (Typ eines Werts, Stufe der Übung).
+Die Klasse ist also nicht „wer liest das Feld", sondern „wer entscheidet über dieselbe Größe" – bei B-481 genauso
+(Unit an einer Stelle, Profil an zwei).
+
+**Mechanismus:** keiner gelandet; Vorschlag (CR) geschärft: vor der Reparatur *jede Entscheidung über dieselbe Größe*
+suchen, nicht nur ihre Leser. Bewusst ungedeckt: der Selbsttest spielt Lückentexte nicht auf der Wortbank.
+
+**Halt nach diesem Sprint**, aus demselben Grund wie nach Sprint 35: der nächste Kandidat (B-484) ist wieder ein
+Durchrutscher aus meinem eigenen vorigen Sprint.
+
 ## Produktentscheidungen dieses Laufs (zum Umstoßen)
 
 1. **Schlusszeichen zählen beim Vergleich nicht** – auch ein *anderes* (`?` statt `.`), auch bei Ordnungszahlen
@@ -331,6 +378,8 @@ die Qualitätsschwelle am eigenen Nachlauf zu messen; ich höre hier auf und leg
    Selbsttest läuft über alle Übungen des Ordners statt über eine Buchführung der Abbrüche (B-475, 1–2).
 9. **Zwei Bücher des Kindes mit Profil verlangen `--profile`**, auch wenn die Punkte verschieden sind; `--unit` legt
    die Übung dort ab, wo ihr Stoff herkommt (B-481, 1–2).
+10. **Der Lader schreibt keine Lösungsvarianten mehr dazu**, und neben `markup` gibt es keine eigene Wortbank (B-483,
+    1 und 4).
 
 ## Offene Roadmap
 
