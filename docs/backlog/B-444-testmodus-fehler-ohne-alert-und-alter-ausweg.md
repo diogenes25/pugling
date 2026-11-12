@@ -10,6 +10,7 @@ migration: nein
 vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-09-nacht.md
 unverifiziert: true
+nachgeschaut: 2026-11-12
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
@@ -73,3 +74,10 @@ der Zuweisen-Perspektive; zwei ältere Mängel werden damit sichtbarer:
   Maschinengang:** Playwright gegen echten Server und Wegwerf-DB auf Ausweichports (5201/5174, neben dem Heimnetz-Server):
   `full-flow.spec.ts` (Vater→Sohn), `vater-von-null.spec.ts` (Lernstand eines Kindes ohne Antwort), `responsive-vater.spec.ts`
   – 4/4. Nicht angesehen: die Sätze in der englischen Arcade und der Rahmen am Handy.
+- **2026-11-12** — Nachschau (Retro Sprint 42, Nachtlauf): frischer `frontend-reviewer` an `1c7b567` (Vitest des Commits
+  55/55). Geprüft: alle Leser von `goalMet`/`cadence` (Summen zählen freie Positionen serverseitig nicht,
+  `PositionProgressService.cs:209-211`), alle 31 `confirmAction`-Texte gegen das Serververhalten, Erfolgssätze auf leeren
+  Daten, de/en-Schlüsselgleichheit (0 Abweichungen, `practice.noMoreImages` nirgends mehr, `bilder.spec.ts:225` trifft den
+  Satz über `problem.media_no_alternative`), Doku nach alten Sätzen. **Gefunden:** der B-467-Leerfall misst „gewertete
+  Antwort", nicht „beantwortet"; „Übung löschen" kündigt wie B-418 eine Wirkung an, die der Server ablehnt →
+  [B-499](B-499-nachschau-reste-sprint-41.md) (P2).

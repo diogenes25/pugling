@@ -150,3 +150,75 @@ nur „rot".
   (CU) aus Sprint 40 bleibt offen.
 
 **Weiterlaufen:** Review-Zähler 2 ≤ 5, kein neues Tor.
+
+## Sprint 42 — Ziel & Umfang
+
+**Sprint-Ziel:** *Wer dem KI-Creator ein Fachlehrer-Profil gibt, das nicht zum Ort passt, bekommt eine Meldung, deren
+Ausweg funktioniert – und ein Profil ohne Fach-Id, eine Reihe ohne Fach oder eine zweite Schreibweise eines Typs rutschen
+nicht mehr durch.*
+**Umfang:** [B-495](backlog/B-495-profil-an-reihe-gebunden-fach-falsch-zirkulaere-meldung.md) (S, Durchrutscher aus
+B-488), [B-455](backlog/B-455-fachlehrer-typen-pruefung-nach-dem-entdoppeln.md) (XS) – beide `art: Defekt`.
+**Entwickler-Brief:** Senke bleibt `ProfileFit` im Briefing; sie vergleicht jetzt mit dem Fach der Anfrage (das Briefing
+hält es gleich dem der Reihe, wo diese eins hat) und unterscheidet in der Meldung, ob das Profil an die Reihe gebunden
+ist. B-455 im Controller: Typprüfung vor dem Entdoppeln. Kein Vertrag, keine Migration.
+
+## Iteration 42 — umgesetzt
+
+- **B-495:** `ProfileFit.Problem(profile, series, subject)` mit `TeachesAnother` (Fach-Id oder Freitext-Name); zwei
+  Meldungen nach Bindung; `ResolveProfileAsync` reicht das Fach durch, Summary neu.
+- **B-455:** `UnknownTypesProblem` prüft die getrimmten Rohwerte.
+- Rote Proben: 3/3 (B-495; eine Zusicherung hing am Profilnamen der Testdaten – umbenannt), 1/1 (B-455).
+- Mutanten 4/4 rot (Debug).
+- Review-Zähler: **0**. 🟢 ohne Zählung behoben (Meldung rät zuerst zum Fach, zwei Test-Beschriftungen); Reste →
+  [B-498](backlog/B-498-reste-review-sprint-42.md).
+- Kopie der echten DB: zwei Profile mit passender Fach-Id, kein Freitext-Profil.
+
+## Runde 13 — Rollengang / Abnahme (Sprint 42)
+
+Volle Suite **1405/1405** (Debug), `CreatorAgentTests` + `CreatorProfile*` **148/148** nach der letzten Änderung.
+
+- **Creator – abgenommen als Maschinengang.** Ein an die Reihe gebundenes Profil mit fremdem Fach nennt sich selbst als
+  Ursache; ein Freitext-Profil und eine Reihe ohne Fach werden geprüft; `["Cloze","cloze"]` ist ein 400.
+  *„Endlich sagt er mir, dass mein Profil falsch ist – und nicht, ich soll eine Latein-Reihe nehmen, die er dann auch
+  ablehnt."* **Nicht gefahren:** Ollama, echte DB (Kopie: kein betroffenes Profil).
+- **Vater, Sohn – Regressionszeugen.** Kein Pfad im Diff; Suite grün.
+
+## Sprint 43 — Ziel & Umfang
+
+**Sprint-Ziel:** *Auch was die Senke selbst ergänzt oder vergleicht, verrät nichts und sieht nie doppelt aus: die
+ergänzte Lösung sortiert sich ein, und ein geschütztes Leerzeichen macht keinen zweiten Knopf.*
+**Umfang:** [B-497](backlog/B-497-nachschau-reste-sprint-40.md) (S, Nachschau-Reste aus Sprint 40) – `art: Defekt`.
+**Entwickler-Brief:** die Senke des Vergleichs ist `StageMechanics.Normalize` (Bewertung, Zusammenlegen und Ergänzen
+gehen alle darüber): Leerraum statt Leerzeichen. Getrimmt wird beim Ergänzen, nicht beim Speichern (Altbestand heilt
+beim Lesen). Lader zieht `graded()` nach und prüft die eigene `wordBank` gegen Alternativen wie den `markup`-Weg.
+
+## Iteration 43 — umgesetzt
+
+- Rote Proben: 4/4 (Server), 4 von 6 Lader-Fällen. Mutanten 3/3 rot. Volle Suite 1405/1405 (Debug, vor dem Review).
+- Gebaut, während der Review von Sprint 42 lief (getrennte Dateien, getrennte Commits); der Reviewer von Sprint 42 sah die
+  vier roten Proben im Arbeitsbaum und hat sie richtig als fremd eingeordnet.
+
+## Retrospektive (Sprint 42)
+
+**Nachschau:** Sprint 41 (B-415, B-418, B-444, B-467) von einem frischen `frontend-reviewer` an `1c7b567` (Vitest des
+Commits 55/55). Geprüft: alle Leser von `goalMet`/`cadence`, alle 31 `confirmAction`-Texte gegen das Serververhalten,
+Erfolgssätze auf leeren Daten, de/en-Schlüssel, Doku. **Zwei 🟡 durchgerutscht** →
+[B-499](backlog/B-499-nachschau-reste-sprint-41.md) (P2, `entgangen_bei: B-467, B-418`): der korrigierte Leerfall-Satz
+misst „gewertete Antwort" (Selbsteinschätzungs-Stufen erzeugen keinen Lernstand), und „Übung löschen" kündigt wie B-418
+eine Wirkung an, die der Server ablehnt. `nachgeschaut` an allen vier.
+
+**Was die eigenen Tore durchgelassen haben:** beide Funde haben die Form, die die Retro von Sprint 40 schon benannt hat
+(CT): eine Aussage über eine Regel an einer Stelle, die die Regel nicht kennt. Bei B-467 hat das Review den ersten Satz
+korrigiert und der Ersatz hat dieselbe Lücke eine Ebene tiefer – „beantwortet" statt „gewertet"; die Bedingung für
+„gewertet" steht in einem Controller, den keiner der Frontend-Leser öffnet. Bei B-418 lag die Schwester-Stelle in einer
+anderen Datei, und ich habe nicht nach allen `confirmAction` gesucht. Sprint 42 selbst: Review-Zähler 0.
+
+**Vorschläge (nicht gelandet, Freigabe 3):**
+
+- **(CY)** pm-loop Step 5: *Für eine Story über einen Satz (Bestätigung, Leerfall, Sperre) alle Sätze derselben Art
+  greppen* (`confirmAction(`, `colSpan`-Leerzeilen, `problem.*`) – (CR) für Texte. Ein Tor könnte `confirmAction` gegen
+  die 409-Codes der gerufenen Route halten, aber die Abbildung Knopf → Route ist nicht mechanisch lesbar.
+- (CW) aus Sprint 41 präzisiert: der Leerfall nennt die Größe *so, wie der Server sie zählt* – Quelle zitieren
+  (`countsForMastery`), nicht umschreiben.
+
+**Weiterlaufen:** Review-Zähler 0, kein neues Tor – Sprint 43 war schon gebaut (siehe dort).
