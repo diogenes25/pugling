@@ -12,15 +12,13 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (72)
+### Offen (71)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-470](B-470-foto-zu-wortliste-als-werkzeug.md) | Aus Fotos der Vokabelseiten wird eine Wortliste – als wiederholbares Werkzeug statt als Handarbeit unter raw/ | Wunsch | `in-arbeit` | P1 | S | doku | — |
 | [B-476](B-476-kartenstufe-steigt-mit-dem-leitner-fach.md) | Die Stufe einer Vokabelkarte steigt mit ihrem Leitner-Fach: erst umdrehen, dann auswählen, dann schreiben | Wunsch | `in-arbeit` | P1 | M | backend | — |
 | [B-465](B-465-ki-lueckentext-mehrdeutig-und-verraten.md) | Ein KI-Lückentext nach dem Umbau: Titel passt nicht, Auswahl steht im Satz, Zeitformen ohne Alternative | Defekt | `idee` | P2 | — | backend | — |
-| [B-471](B-471-ki-lehrplan-grammatik-nach-neuem-stoff.md) | Die Grammatik-Teile des KI-Lehrplans nehmen die Themen alphabetisch statt den neuen Stoff zuerst | Defekt | `idee` | P2 | — | backend | — |
-| [B-473](B-473-ki-creator-ablage-ignoriert-buch-des-kindes.md) | Ohne `--profile` und `--series` legt der KI-Creator die Übung in der ersten Reihe überhaupt ab, nicht im Buch des Kindes | Defekt | `idee` | P2 | — | backend | — |
 | [B-475](B-475-laden-abbruch-laesst-uebungen-ungetestet.md) | Bricht `laden.py` mitten im Anlegen ab, bleiben die schon angelegten Übungen für immer ungetestet | Defekt | `idee` | P2 | — | .claude/skills/lehrwerk-aufbereiten | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `gegrillt` | P2 | — | backend | Vertrag? |
@@ -54,6 +52,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-456](B-456-nachschau-reste-sprint-28.md) | „Meine Übungen (0)" neben „Lade…", ein ungetesteter Zweig und ein falscher Tooltip im Manifest-Ausfall | Defekt | `idee` | P3 | — | frontend | — |
 | [B-467](B-467-leerzustaende-melden-erfolg.md) | Ohne eine einzige Antwort meldet der Lernstand „es sitzt alles 👍“, und freie Übungen tragen ein Häkchen | Defekt | `idee` | P3 | — | frontend | — |
 | [B-479](B-479-nachschau-reste-sprint-31.md) | Nachschau-Reste Sprint 31: eine Zusicherung, die nicht fallen kann, und Grenzfälle der Schlusszeichen | Defekt | `idee` | P3 | — | beides | — |
+| [B-480](B-480-nachschau-reste-sprint-32.md) | Nachschau-Reste Sprint 32: eine Dosis, die nicht wirkt, steht weiter da | Defekt | `idee` | P3 | — | beides | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `idee` | P3 | — | — | — |
 | [B-328](B-328-inline-typen-put-verschiebt-lernstand.md) | Sollen die Inhaltslisten gespielter Übungen anderer Typen (und der Wort-Tausch) gesperrt sein? | Frage | `idee` | P3 | — | backend | — |
@@ -90,7 +89,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-447](B-447-arcade-zeigt-iso-daten.md) | Die Sohn-Arcade zeigt Daten als ISO-Text | Aufräumen | `idee` | P3 | — | frontend | — |
 
 <details>
-<summary>Abgenommen (379)</summary>
+<summary>Abgenommen (381)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -425,7 +424,9 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-464](B-464-access-datenstand-aufraeumen.md) | Der Access-Datenstand trägt Trümmer des ersten Laufs, und das Kind zeigt auf das falsche Buch | Aufräumen | `abgenommen` | P2 | XS | doku | — |
 | [B-466](B-466-lueckentext-am-handy-umbrueche-kopfzeile-zoom.md) | Lückentext am Handy: Zeilenumbrüche verschwinden, „Später weiter“ ist abgeschnitten, das Eingabefeld zoomt | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-468](B-468-sohn-erreicht-die-app-nur-am-pc.md) | Der Sohn erreicht die App nur am Rechner des Vaters – „jederzeit am Handy“ braucht einen Ort für den Server | Wunsch | `abgenommen` | P1 | S | beides | — |
+| [B-471](B-471-ki-lehrplan-grammatik-nach-neuem-stoff.md) | Die Grammatik-Teile des KI-Lehrplans nehmen die Themen alphabetisch statt den neuen Stoff zuerst | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-472](B-472-jedes-wort-in-beide-richtungen.md) | Jedes Wort einer Wortliste in beide Richtungen üben | Wunsch | `abgenommen` | P1 | M | beides | — |
+| [B-473](B-473-ki-creator-ablage-ignoriert-buch-des-kindes.md) | Ohne `--profile` und `--series` legt der KI-Creator die Übung in der ersten Reihe überhaupt ab, nicht im Buch des Kindes | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-477](B-477-assistent-dosis-auf-ungeordneter-liste.md) | Der Assistent schickt die Tagesdosis auch an ungeordnete Listen – das Anlegen bricht mittendrin ab | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-478](B-478-nachschau-reste-sprint-29.md) | Nachschau-Reste Sprint 29: „eingeführt" nach dem Verkleinern, Dosis-Sperre über die Übung umgehbar, zwei Kommentare | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-48](B-48-anonyme-registrierung-produktion.md) | Anonyme Registrierung ist auch in Produktion offen | Frage | `abgenommen` | P2 | S | backend | — |
@@ -492,7 +493,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (149)
 
-**Nachgeschaut: 368 von 379 abgenommenen** — und in 131 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 11 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 370 von 381 abgenommenen** — und in 131 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 11 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -662,9 +663,9 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-463](B-463-ki-lehrplan-deckt-ein-sechstel-der-wortliste.md) | Der KI-Lehrplan übt 20 von 124 Wörtern der Unit, ohne Karteikasten und nur Englisch → Deutsch |
 | [B-464](B-464-access-datenstand-aufraeumen.md) | Der Access-Datenstand trägt Trümmer des ersten Laufs, und das Kind zeigt auf das falsche Buch |
 | [B-468](B-468-sohn-erreicht-die-app-nur-am-pc.md) | Der Sohn erreicht die App nur am Rechner des Vaters – „jederzeit am Handy“ braucht einen Ort für den Server |
+| [B-471](B-471-ki-lehrplan-grammatik-nach-neuem-stoff.md) | Die Grammatik-Teile des KI-Lehrplans nehmen die Themen alphabetisch statt den neuen Stoff zuerst |
 | [B-472](B-472-jedes-wort-in-beide-richtungen.md) | Jedes Wort einer Wortliste in beide Richtungen üben |
-| [B-477](B-477-assistent-dosis-auf-ungeordneter-liste.md) | Der Assistent schickt die Tagesdosis auch an ungeordnete Listen – das Anlegen bricht mittendrin ab |
-| [B-478](B-478-nachschau-reste-sprint-29.md) | Nachschau-Reste Sprint 29: „eingeführt" nach dem Verkleinern, Dosis-Sperre über die Übung umgehbar, zwei Kommentare |
+| [B-473](B-473-ki-creator-ablage-ignoriert-buch-des-kindes.md) | Ohne `--profile` und `--series` legt der KI-Creator die Übung in der ersten Reihe überhaupt ab, nicht im Buch des Kindes |
 
 </details>
 

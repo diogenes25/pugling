@@ -150,6 +150,73 @@ Erweiterung des Skripts; xUnit-Zusicherungen ohne Meldung bleiben grob.
 
 **Lauf-Grenzen:** Review-Zähler 3 von 5, kein Tor gelandet → der Lauf darf weiter.
 
+## Sprint 33 — Ziel & Umfang
+
+**Sprint-Ziel:** *Der Creator, der für ein Kind einen Lehrplan erzeugen lässt, bekommt ihn im Buch des Kindes und mit
+dem neuen Grammatikstoff der Unit zuerst – nicht in irgendeiner Reihe und nicht alphabetisch.*
+**Umfang:** B-471 (S), B-473 (S) – beide `art: Defekt`, KI-Creator, autonom gegrillt.
+**Entwickler-Brief:** Ablage und Briefing müssen dasselbe Profil meinen; „bestpassend" heißt auf der Reihe eines
+Kinder-Buchs (`series_match`), alles andere ist eine Fehlbedienung. Die Markierung „NEU <Label>" der Stoffnotiz ist die
+Quelle für „neu"; die Konvention gehört in `FORMAT.md`. Keine Migration, kein Vertrag. Testweg: `CreatorAgentTests`.
+
+## Iteration 33 — umgesetzt
+
+- **B-473:** `create/briefing/plan/exam --child` ohne Ortsangabe legen in der aktuellen Unit des Kinder-Buchs ab; ohne
+  Profil zum Buch oder bei zwei gleich guten Büchern meldet der Agent eine Fehlbedienung mit Liste.
+- **B-471:** Das Briefing nennt die Grammatik-Themen „neu zuerst"; ein Lehrplan mit zwei Lückentexten übt damit
+  question tags und past progressive statt zweier Wiederholungsthemen.
+- Review-Zähler des Sprints: **2** (🟡 das geratene Regal über Profile ohne Buch-Bezug; 🟡 Präfix-Label) – behoben.
+- Mutanten: neun von neun rot (Tabellen in B-471 und B-473). Commit `e94aa1e` (gemeinsam, geteilte Testdatei).
+
+## Runde 4 — Rollengang / Abnahme (Sprint 33)
+
+Backend **1335/1335** am Stand nach der letzten Änderung; das Frontend ist seit dem E2E-Lauf von Sprint 32
+unverändert (137 passed).
+
+- **Creator – abgenommen, ohne Live-Lauf.** `CreatorAgentTests` fährt die Konsole mit einem Schein-Modell gegen die
+  In-Process-API: die Übung landet in Unit 2 des Buchs, ein Kind ohne Buch-Profil und eines mit zwei Büchern bekommen
+  eine Fehlbedienung, das Briefing nennt den neuen Stoff zuerst. *„Wenn ich nur --child sage, will ich sein Buch –
+  und lieber eine Rückfrage als eine falsche Reihe."* **Nicht gefahren:** ein echter Lauf gegen Ollama und die API –
+  die echte DB gehört den Kindern, und ein zweiter Server auf 5200 ist verboten.
+- **Vater – Regressionszeuge.** Lehrpläne aus dem Agenten entstehen weiter inaktiv; kein Pfad im Vater-Web berührt.
+- **Sohn – Regressionszeuge.** Kein Spielpfad im Diff.
+
+## Retrospektive (Sprint 33)
+
+**Nachschau:** Sprint 32 (B-477, B-478) von einem frischen `pugling-reviewer` an `6d885f5`/`d98e697`, je Story mit
+benanntem Prüfpunkt. **Kein Durchrutscher**; drei 🟢 (unwirksame Dosis wird angezeigt, Überblick bei nur Listen,
+`useLeitner:false` per API) in [B-480](backlog/B-480-nachschau-reste-sprint-32.md). `nachgeschaut: 2026-11-12` an beiden.
+
+**Was die eigenen Tore durchgelassen haben:** Mein erster Fix für B-473 nahm „bestpassendes Profil" wörtlich und hat
+nicht gelesen, was `profiles/match` liefert – nämlich jedes Profil, das nach Klassenstufe und Schulart passt, auch mit
+0 Punkten. Damit wäre das geratene Regal nur verschoben worden. Die Regel dafür gibt es schon (README, „Ausformulieren
+heißt gegen den Code belegen": eine Entscheidung, die sich auf eine andere Größe beruft, belegt sie an deren
+Schreiber); ich habe sie beim Ausformulieren nicht angewandt, der Reviewer hat es gefunden.
+
+**Mechanismus:** keiner neu. Die Regel steht da, und ihr Netz (der Reviewer) hat gehalten; ein Tor „jede Entscheidung
+nennt `Datei:Zeile` ihrer Fremdgröße" wäre Prosa-Prüfung ohne Maschine. Bewusst ungedeckt: der Live-Lauf des Agenten.
+
+## Abschluss des Laufs
+
+Drei Sprints, sechs Stories abgenommen (B-457, B-466, B-477, B-478, B-471, B-473), Review-Zähler 3 / 3 / 2. Kein Tor
+gelandet; zwei Vorschläge (CO), (CP) liegen zur Entscheidung. Der Lauf endet hier aus eigenem Ermessen, nicht an einem
+Limit: die übrigen P2 sind `Frage`/`Wunsch` ohne Freigabe-Zeile (B-469, B-207, B-208, B-39, B-423 …) oder brauchen eine
+Nachbesprechung (B-465: welche KI-Lückentext-Mängel sind Regel, welche Prüfung durch den Vater), B-475 betrifft das
+Werkzeug unter `.claude/skills`.
+
+### Liste für den Menschen
+
+- **iPhone:** zoomt der Lückentext-Test mit 16-px-Feldern beim Antippen noch? (B-466)
+- **Access-Notizen:** zwei NEU-Marker greifen nicht, weil sie das Label anders nennen („NEU conditional 2" gegen
+  „Conditional sentences (if-clauses)", „NEU the passive" gegen „Passive"); Daten unter `raw/` und in der echten DB –
+  nicht angefasst. (B-471)
+- **KI-Creator live:** `pugling-creator briefing --child 1 --type Cloze` gegen eine Kopie der DB – die Ablage muss im
+  Access-Buch stehen. (B-473)
+- **Ausrollen:** die Änderungen wirken bei den Kindern erst nach einem Neustart des Heimnetz-Servers.
+- **Vorschläge (CO), (CP)** aus den Retros: gemeinsame Fallliste für den Antwortvergleich; `mutant-probe.py` je
+  Zusicherungsmeldung.
+- Ein roter E2E-Lauf von `creator-lehrwerk-weg.spec.ts` (Sprint 32) ist unerklärt; einzeln und 3× parallel grün.
+
 ## Produktentscheidungen dieses Laufs (zum Umstoßen)
 
 1. **Schlusszeichen zählen beim Vergleich nicht** – auch ein *anderes* (`?` statt `.`), auch bei Ordnungszahlen
@@ -159,7 +226,9 @@ Erweiterung des Skripts; xUnit-Zusicherungen ohne Meldung bleiben grob.
 4. **Der Assistent gibt keiner Liste eine Tagesdosis** – auch keiner geordneten (B-477, 1).
 5. **Eine Liste, die der Creator nachträglich auf „beliebige Reihenfolge" stellt, behält ihre Dosis gespeichert, aber
    sie wirkt nicht**; der Creator wird dafür nicht gesperrt (B-478, 2).
+6. **Neuer Grammatikstoff ist, was die Stoffnotiz mit „NEU <Label>" markiert** – kein Feld am Thema (B-471, 1).
+7. **`--child` ohne Ortsangabe: Profil auf einem Kinder-Buch oder Fehlbedienung**, nie die erste Reihe (B-473, 1–2).
 
 ## Offene Roadmap
 
-[docs/backlog/](backlog/README.md).
+[docs/backlog/](backlog/README.md). Aus diesem Lauf neu: B-479, B-480 (P3-Reste der Nachschau). Vorschlag für den nächsten Lauf: B-475 (P2, Werkzeug) und B-465 nach einem kurzen Dialog über die Regeln; danach die P3-Defekte.

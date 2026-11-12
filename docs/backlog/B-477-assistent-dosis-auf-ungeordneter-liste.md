@@ -10,7 +10,7 @@ migration: nein
 vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-12-backlog-lauf.md (Nachschau Sprint 29/30)
 entgangen_bei: [B-04]
-nachgeschaut: ""
+nachgeschaut: 2026-11-12
 grund: ""
 ersetzt_durch: []
 ---
@@ -81,3 +81,6 @@ Eine Einstellung „für alle" trifft eine Übung, für die der Server sie verbi
   nicht gibt → rot (`wizardFinish.test.ts`); Etikett ohne Hinweis → rot, Überblick ohne Hinweis → rot
   (`assistent.spec.ts`, Feinschliff-Test). Grundlinie nach dem Zurückspielen grün.
 - **2026-11-12** — **abgenommen.** Commit `6d885f5`. Volle Suiten nach der letzten Änderung: Backend 1330/1330, Vitest 749/749, E2E 137 passed im zweiten Lauf (der erste: 136 passed, 1 failed in `creator-lehrwerk-weg.spec.ts` – berührt weder Dosis noch Assistent, einzeln und 3× parallel grün, Ursache nicht gemessen). Review-Zähler Sprint 32: 3 von 5. Rollengang (Vater) als E2E: `assistent.spec.ts` fährt den Assistenten bis zum angelegten Plan und liest Etikett und Überblick; der Abschluss mit einer Liste ist im Vitest belegt, nicht im Browser.
+- **2026-11-12** — Nachschau (Sprint 33, frischer `pugling-reviewer`): Filter in `wizardFinish.ts` gegen AK 1/2, Herkunft
+  des Typs (`gesehen`-Map auch für „Alle wählen"), Typname gegen `ExerciseTypeKeys.List`, Vitest- und E2E-Zusicherungen
+  einzeln auf Fallen geprüft – kein Defekt; 🟢 Überblick bei nur Listen → [B-480](B-480-nachschau-reste-sprint-32.md).

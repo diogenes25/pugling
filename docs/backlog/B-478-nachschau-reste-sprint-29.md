@@ -10,7 +10,7 @@ migration: nein
 vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-12-backlog-lauf.md (Nachschau Sprint 29/30)
 entgangen_bei: [B-04, B-451]
-nachgeschaut: ""
+nachgeschaut: 2026-11-12
 grund: ""
 ersetzt_durch: []
 ---
@@ -116,3 +116,7 @@ Die Dosis wird an vier Stellen gelesen: Runde (`PositionPlayService.DueItemIndic
   unterscheidbar (an späteren Tagen wiese sie ein eingeführtes, nicht fälliges Wort ab, wie jede Position ohne Dosis
   es annimmt). Grundlinie nach dem Zurückspielen grün.
 - **2026-11-12** — **abgenommen.** Commit `d98e697`. Volle Suiten nach der letzten Änderung: Backend 1330/1330, Vitest 749/749, E2E 137 passed im zweiten Lauf (der erste: 136 passed, 1 failed in `creator-lehrwerk-weg.spec.ts` – berührt weder Dosis noch Assistent, einzeln und 3× parallel grün, Ursache nicht gemessen). Review-Zähler Sprint 32: 3 von 5. Rollengang: Sohn und Vater über die API (`DosisResteTests`, als Kind gespielt, als Vater bearbeitet); `ziel-vier-wochen.spec.ts` (Dosis-Weg im Browser) grün in der vollen Suite.
+- **2026-11-12** — Nachschau (Sprint 33, frischer `pugling-reviewer`): Grep nach rohen `NewItemsPerDay`-Lesern (keiner),
+  `pos.Exercise` an allen vier `DailyDose`-Stellen geladen, Grenze Index 5, PATCH mit unveränderter/neuer Dosis und mit
+  Leitner aus, wöchentliche Taktung, Liste zurück auf geordnet, B-476-Leiter – kein Defekt; 🟢 Plan-Seite zeigt die
+  unwirksame Dosis, PATCH `useLeitner:false` per API → [B-480](B-480-nachschau-reste-sprint-32.md).
