@@ -113,3 +113,4 @@ den `FORMAT.md` und die Fehlermeldung ausdrücklich empfehlen (`text`/`gaps`/`wo
 - **2026-11-12** — **abgenommen.** Volle Suite nach der letzten Änderung: 1380/1380, Build ohne Warnung. Review-Zähler
   0. **Rollengang (Sohn) als Maschinengang**: `ClozePlayTests` spielt die Wortbank-Stufe über die Karten-Route des
   Kindes gegen die In-Process-API; kein Browser, keine echte DB (deren Kopie hat keine Übung mit Wortbank).
+- **2026-11-12** — Commit der Abnahme: `9d648bb`.
