@@ -609,7 +609,9 @@ export function VaterWizard() {
             <div className="field"><FieldLabel htmlFor="wiz-penalty" topic="penaltyCoins">Münz-Malus bei Versäumnis</FieldLabel><input id="wiz-penalty" title="Münz-Malus bei gerissener Pflicht" type="number" min={0} value={penaltyCoins} onChange={(e) => setPenaltyCoins(Number(e.target.value))} /></div>
             <div className="field"><FieldLabel htmlFor="wiz-combo-threshold" topic="comboThreshold">Combo alle … Treffer</FieldLabel><input id="wiz-combo-threshold" title="Combo-Schwelle" type="number" min={0} value={comboThreshold} onChange={(e) => setComboThreshold(Number(e.target.value))} /></div>
             <div className="field"><FieldLabel htmlFor="wiz-combo-bonus" topic="comboBonusPoints">Combo-Bonuspunkte</FieldLabel><input id="wiz-combo-bonus" title="Combo-Bonuspunkte" type="number" min={0} value={comboBonusPoints} onChange={(e) => setComboBonusPoints(Number(e.target.value))} /></div>
-            <div className="field"><FieldLabel htmlFor="wiz-dose" topic="newItemsPerDay">Neue Inhalte je Tag</FieldLabel><input id="wiz-dose" title="Neue Inhalte je Tag" type="number" min={0} max={200} disabled={!useLeitner} value={newItemsPerDay} onChange={(e) => setNewItemsPerDay(Number(e.target.value))} /></div>
+            {/* Listen bekommen keine Dosis (B-477, `wizardFinish`): eine ungeordnete lehnt der Server ab. Das Etikett sagt es, statt
+                still zu wirken – `aria-label` hält den Feldnamen dabei stabil. */}
+            <div className="field"><FieldLabel htmlFor="wiz-dose" topic="newItemsPerDay">Neue Inhalte je Tag <span className="muted">(nicht für Listen)</span></FieldLabel><input id="wiz-dose" aria-label="Neue Inhalte je Tag" title="Neue Inhalte je Tag" type="number" min={0} max={200} disabled={!useLeitner} value={newItemsPerDay} onChange={(e) => setNewItemsPerDay(Number(e.target.value))} /></div>
             {/* Nur Vokabelübungen kennen diese Skala; für alle anderen Typen wird die Stufe weggelassen
                 (siehe `wizardFinish.typeOf`) – darum sagt es hier auch dran, statt still zu wirken. */}
             <div className="field"><FieldLabel topic="defaultStage">Test-Stufe <span className="muted">(nur Vokabelübungen)</span></FieldLabel>
@@ -649,7 +651,7 @@ export function VaterWizard() {
           <SummaryRow label="Titel" value={title || "Neuer Lehrplan"} />
           <SummaryRow label="Zeitraum" value={`${formatDate(startDate)} · ${durationDays} Tage`} />
           <SummaryRow label="Je Position" value={`Test-Stufe ${defaultStage} · bestehen ab ${passPercent}% · ${pointsGoalMet} Punkte/Ziel`} />
-          <SummaryRow label="Tagesdosis" value={useLeitner && newItemsPerDay > 0 ? `höchstens ${newItemsPerDay} neue Inhalte je Tag und Übung` : "keine – alle Inhalte ab dem ersten Tag"} />
+          <SummaryRow label="Tagesdosis" value={useLeitner && newItemsPerDay > 0 ? `höchstens ${newItemsPerDay} neue Inhalte je Tag und Übung (außer Listen)` : "keine – alle Inhalte ab dem ersten Tag"} />
           <SummaryRow label="Versäumnis" value={penaltyCoins > 0 ? `−${penaltyCoins} 🪙 je gerissenem Tagesziel` : "kein Malus (reine Belohnung)"} />
           <SummaryRow label="Übungen" value={`${selected.length} als Tagesziel-Positionen`} />
           <p className="sub">Danach erscheint der Plan unter „Zuweisen"; der Sohn sieht ihn sofort in seiner App.</p>

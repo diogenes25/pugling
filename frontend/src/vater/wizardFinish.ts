@@ -106,10 +106,17 @@ export async function runWizardFinish(
          * `VaterExerciseCreate`/`ExerciseEditModal` (`type === "Vocabulary"`). Weggelassen entscheidet der
          * Server (Übungs-Vorgabe, sonst Typ-Vorgabe), statt eine fremde Skala falsch zu deuten.
          */
+        const type = input.typeOf(exerciseId);
         const { stage, ...withoutStage } = input.position;
-        const dto = input.typeOf(exerciseId) === "Vocabulary"
+        const dto: CreatePositionDto = type === "Vocabulary"
           ? { ...input.position, exerciseId }
           : { ...withoutStage, exerciseId };
+        /*
+         * Eine Liste kann als Menge werten (ungeordnet), und dort lehnt der Server jede Tagesdosis ab (B-04,
+         * Entscheidung 9): die Dosis friert einen Teil der Einträge ein, eine richtige Nennung außerhalb davon
+         * zählte falsch. Ob sie geordnet ist, steht nicht in der Übersicht – darum gilt es für jede Liste (B-477).
+         */
+        if (type === "List") dto.newItemsPerDay = 0;
         await writer.addPosition(planId, dto);
       } catch (err) {
         /*

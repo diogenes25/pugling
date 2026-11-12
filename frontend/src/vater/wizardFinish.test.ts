@@ -177,4 +177,24 @@ describe("runWizardFinish – der Auftrag", () => {
     expect(s.positionen[1].dto.goalThreshold).toBe(80);
     expect(s.positionen[1].dto.pointsGoalMet).toBe(20);
   });
+
+  /*
+   * B-477: Die Tagesdosis des Feinschliffs gilt für alle Übungen – eine Liste kann aber als Menge werten (ungeordnet),
+   * und dort lehnt der Server jede Dosis ab (B-04, Entscheidung 9). Ungefiltert brach das Anlegen mitten im Plan ab.
+   * Rot, sobald die Liste die Dosis wieder bekommt; die Vokabelübung daneben behält sie.
+   */
+  it("schickt keine Tagesdosis an Listen", async () => {
+    const s = schreiber();
+
+    await runWizardFinish(newWizardProgress(), auftrag({
+      exerciseIds: [11, 12],
+      position: { ...POSITION, newItemsPerDay: 10 },
+      typeOf: (id) => (id === 11 ? "Vocabulary" : "List"),
+    }), s.writer);
+
+    expect(s.positionen[0].dto.newItemsPerDay).toBe(10);
+    expect(s.positionen[1].dto.newItemsPerDay).toBe(0);
+    // Gefiltert wird nur die Dosis: der Kasten bleibt, wie der Feinschliff ihn setzt.
+    expect(s.positionen[1].dto.useLeitner).toBe(true);
+  });
 });

@@ -89,12 +89,16 @@ test("Der Assistent legt Kind, Plan und Position mit den eingetippten Feinschlif
   await expect(page.getByRole("heading", { name: /Feinschliff/ })).toBeVisible();
   await page.locator("#wiz-pass").fill("95");
   await page.locator("#wiz-penalty").fill("7");
+  // B-477: Listen bekommen keine Tagesdosis – das Feld sagt es, und es bleibt unter seinem Namen erreichbar.
+  await expect(page.locator('label[for="wiz-dose"]')).toContainText("(nicht für Listen)");
+  await expect(page.getByLabel("Neue Inhalte je Tag", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Weiter" }).click();
 
   // ---------- Schritt 5: Überblick → abschicken, doppelt geklickt ----------
   await expect(page.getByRole("heading", { name: "Überblick" })).toBeVisible();
   // B-427: der Zeitraum steht deutsch („09.11.2026 · 30 Tage"), nicht als ISO-Datum.
   await expect(page.getByText(/^\d{2}\.\d{2}\.\d{4} · \d+ Tage$/)).toBeVisible();
+  await expect(page.getByText(/neue Inhalte je Tag und Übung \(außer Listen\)$/)).toBeVisible();
   const childPosts: string[] = [];
   page.on("request", (r) => {
     if (r.method() === "POST" && r.url().endsWith("/api/v1/supervisor/children")) childPosts.push(r.url());
