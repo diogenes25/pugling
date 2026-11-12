@@ -184,4 +184,4 @@ Migration an einer Kopie der echten DB; Reviewer `pugling-reviewer` und `fronten
     `__EFMigrationsHistory` +2, Spalte `INTEGER NOT NULL DEFAULT 0`, `integrity_check` ok. Kopie gelöscht.
   - **Rollengang:** `kind-auswahlliste.spec.ts` fährt den Weg Vater → Kind (verstecktes Schlagwort fehlt beim Kind,
     Vater gibt im Web frei, Kind sieht die Kachel nach dem Neuladen).
-- 2026-11-12 · `abgenommen`.
+- 2026-11-12 · `abgenommen` mit Commit `f57ec1c`.
