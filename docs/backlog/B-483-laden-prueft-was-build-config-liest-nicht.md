@@ -130,3 +130,4 @@ aufgerufen, kein Serverlauf). B-475 hat die Groß/Klein-Lücke der Abkürzung `m
   grün – `distractors` gibt es nur mit `markup`, dessen Eintrag die `wordBank` schon abdeckt. Die Zeile ist entfernt.
 - **2026-11-12** — **abgenommen.** Review-Zähler Sprint 36: 3 von 5. **Rollengang (Creator):** echter Lader-Lauf gegen
   den Wegwerf-Server nach der letzten Änderung; beide echten Ordner bestehen `--pruefen`. Backend unverändert.
+- **2026-11-12** — Commit der Abnahme: `4a2e170`.
