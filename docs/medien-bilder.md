@@ -19,7 +19,7 @@ Deko-Feature. Ein Bild, das den Lerner anspricht, bindet die Vokabel besser – 
 
 > **Status:** **Etappen 1–6 sind umgesetzt** – die Kette steht durchgängig: Datei hochladen → Server
 > skaliert → Zuordnen → Auswahl je Kind → Bild auf der Übungskarte des Sohns samt „anderes Bild".
-> Offen ist nur noch **7** (Stufe „Bild → Wort", KI-generierte Assets). Details am Ende der Etappen-Tabelle.
+> Alle Etappen sind gebaut; KI-generierte Bilder kamen mit [B-485](backlog/B-485-vokabelbilder-nach-interessen-erzeugen.md). Die Stufe „Bild → Wort" bleibt bewusst draußen.
 
 ---
 
@@ -323,9 +323,25 @@ Neue Fehler-Codes additiv in [`ApiErrors`](../backend/Pugling.Api/Errors/ApiErro
 | 4 | **Auswahl** | `MediaSelector` + `ChildMediaPick` + Reshuffle; `ContentItem`/`PracticeCard`/`StageFacets`; Anti-Cheat-Regel + Tests. | ✅ |
 | 5 | **Upload** | Multipart + serverseitige Varianten-Erzeugung, Speicher-Abstraktion. | ✅ |
 | 6 | **Frontend** | Interessen-Editor (Vater), Bild-Bibliothek + Zuordnung an der Vokabel, Bild auf der Sohn-Karte, „anderes Bild"-Button. | ✅ |
-| 7 | **Optional** | Stufe „Bild → Wort"; KI-generierte Assets über den Creator-Agenten (`Origin = Generated`, Prompt in `Source`). | offen |
+| 7 | **KI-Bilder** | KI-generierte Assets über den Creator-Agenten (`images`, `Origin = Generated`, Modell + Szene in `Source`), Bedarf über `creator/media/demand`, `InterestTag.ImagePrompt` ([B-485](backlog/B-485-vokabelbilder-nach-interessen-erzeugen.md)). Die Stufe „Bild → Wort" bleibt bewusst draußen (B-485, Entscheidung 8). | ✅ |
 
 Etappe 1–4 ist der tragfähige Kern; **2 ist die Voraussetzung dafür, dass 4 überhaupt sinnvoll ist**.
+
+### Was Etappe 7 gebracht hat (KI-Bilder, B-485)
+
+Der KI-Creator zeichnet mit `images` je **Vokabel × Interesse** ein Bild, nie je Kind. Die Arbeitsliste liefert
+`GET creator/media/demand` (Kind: Wörter der spielbaren Pläne, gewünscht ein neutrales Bild und die zwei stärksten
+Themen-Interessen mit Gewicht ≥ 2; oder eine ganze Unit für ein genanntes Interesse). Die Auswahl je Kind bleibt beim
+`MediaSelector`, dafür zwei Festlegungen:
+
+- **Neutral heißt „ohne Schlagwort".** Ein solches Bild bekommt jedes Kind, das kein passenderes hat.
+- **Interessen-Bilder hängen mit Rang −1**, alles andere mit 0. Bei Punktgleichstand (Kind ohne passendes Interesse)
+  gewinnt so das neutrale Bild vor dem Fußball-Bild eines anderen Kindes – auch ein älteres, von Hand zugeordnetes.
+
+Bewusste Grenzen: Der Bedarf zählt nur Zuordnungen an der Vokabel (eine Übung mit eigenen Item-Bildern zeigt nur
+diese) und prüft vorhandene Bilder nicht gegen Eignung und Abneigungen des Kindes. **Wird ein Schlagwort gelöscht**,
+verlieren seine KI-Bilder ihr einziges Schlagwort und zählen danach als neutral; ihr Rang −1 hält sie hinter einem
+echten neutralen Bild, sie bleiben aber im Vorrat – in der Bild-Bibliothek („nur KI-erzeugte") aufräumen.
 
 ### Was Etappe 5 gebracht hat (Upload)
 

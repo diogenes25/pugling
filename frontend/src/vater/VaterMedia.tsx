@@ -22,7 +22,12 @@ import { ListenAusfall } from "../components/ListenAusfall";
 export function VaterMedia() {
   const [search, setSearch] = useState("");
   const [applied, setApplied] = useState("");
-  const list = useAsync<MediaAssetResponse[]>(() => api.media({ search: applied || undefined }), [applied]);
+  // Der Filter auf KI-erzeugte Bilder ist der Nachsorge-Weg aus B-485: generierte Bilder gehen ohne
+  // Freigabe auf die Karte, hier sichtet und löscht der Vater sie gesammelt.
+  const [onlyGenerated, setOnlyGenerated] = useState(false);
+  const list = useAsync<MediaAssetResponse[]>(
+    () => api.media({ search: applied || undefined, origin: onlyGenerated ? "Generated" : undefined }),
+    [applied, onlyGenerated]);
 
   return (
     <>
@@ -48,11 +53,18 @@ export function VaterMedia() {
             placeholder="Suche in Beschreibung oder Key" style={{ maxWidth: 320 }}
           />
           <button type="submit" className="btn ghost small" style={{ width: "auto" }}>Suchen</button>
+          <label className="checkline" style={{ marginLeft: 8 }}>
+            <input type="checkbox" checked={onlyGenerated} onChange={(e) => setOnlyGenerated(e.target.checked)} />
+            nur KI-erzeugte
+          </label>
         </form>
 
-        <ListenAusfall was="Die Bilder" fehler={list.error} laedt={list.loading} onRetry={list.reload} schluessel={applied} />
+        <ListenAusfall was="Die Bilder" fehler={list.error} laedt={list.loading} onRetry={list.reload}
+          schluessel={`${applied}|${onlyGenerated}`} />
         {list.loading && list.data === null ? <div className="loading">Lade…</div> : (
-          <table className="table">
+          // Beim Umschalten des Filters bleiben die alten Zeilen stehen, bis die neuen da sind – gedimmt und
+          // aria-busy, damit der Wechsel nicht wie „nichts passiert" aussieht (B-116).
+          <table className="table" aria-busy={list.loading} style={{ opacity: list.loading ? 0.5 : 1 }}>
             <thead><tr><th>Vorschau</th><th>Beschreibung</th><th>Schlagworte</th><th>Eignung</th><th /></tr></thead>
             <tbody>
               {list.data?.map((a) => <AssetRow key={a.id} asset={a} onChanged={list.reload} />)}
@@ -108,11 +120,21 @@ function AssetRow({ asset, onChanged }: { asset: MediaAssetResponse; onChanged: 
         </td>
         <td>
           {asset.description}
+          {asset.origin === "Generated" && (
+            <span className="pill" style={{ marginLeft: 6 }} title="KI-erzeugtes Bild">KI</span>
+          )}
           <div className="muted" style={{ fontFamily: "monospace", fontSize: 12 }}>{asset.key}</div>
+          {asset.origin === "Generated" && asset.source && (
+            <div className="muted" style={{ fontSize: 12 }}>{asset.source}</div>
+          )}
         </td>
         <td>
+          {/* Ein Bild ohne Schlagwort ist seit B-485 das neutrale Grundbild, das jedes Kind ohne passenderes
+              bekommt – für ein KI-Bild Absicht, für ein hochgeladenes meist ein Versäumnis. */}
           {asset.tags.length === 0
-            ? <span className="pill mag">ohne Schlagwort</span>
+            ? asset.origin === "Generated"
+              ? <span className="pill">neutral</span>
+              : <span className="pill mag">ohne Schlagwort</span>
             : asset.tags.map((t) => <span key={t} className="pill" style={{ marginRight: 4 }}>{t}</span>)}
         </td>
         <td>{asset.rating === "Everyone" ? <span className="pill lime">für alle</span> : <span className="pill mag">{asset.rating}</span>}</td>

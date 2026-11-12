@@ -12,6 +12,9 @@
     <!-- CS1591 bleibt scharf – siehe Pugling.Contracts.csproj. -->
     <!-- Die PIN gehört nicht in appsettings.json: dotnet user-secrets set "Pugling:Pin" "0000" -->
     <UserSecretsId>pugling-agent-creator</UserSecretsId>
+    <!-- MEAI001: IImageGenerator is marked experimental in Microsoft.Extensions.AI 10.8; the images verb (B-485)
+         needs it. Suppressed here only, not repo-wide, so no other project picks up an experimental API unnoticed. -->
+    <NoWarn>$(NoWarn);MEAI001</NoWarn>
   </PropertyGroup>
 
   <!-- Die Vertrags-Namespaces projektweit sichtbar (wie in Pugling.Api/Pugling.Client). -->
@@ -25,6 +28,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.AI" Version="10.8.1" />
+    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.8.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.10" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.10" />
     <PackageReference Include="OllamaSharp" Version="5.4.30" />

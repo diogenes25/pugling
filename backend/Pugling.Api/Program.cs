@@ -184,6 +184,7 @@ builder.Services.AddScoped<VocabularyStoreService>();
 // Finds the knowledgeable creator for a child (series > subject > grade > school type). Deterministic, so
 // that the same data yields the same teacher - where an exercise came from stays traceable.
 builder.Services.AddScoped<CreatorProfileService>();
+builder.Services.AddScoped<MediaDemandService>();
 // Find-or-create for the shared interest taxonomy - the one place where text becomes a tag (the creator
 // tags images, the supervisor maintains interests, the backfill takes over free text). Separate paths would
 // create duplicates and make the "image ↔ child" matching run dry exactly there.

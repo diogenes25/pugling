@@ -30,7 +30,20 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
     /// </summary>
     private static IQueryable<InterestTagResponse> Project(IQueryable<InterestTag> q) =>
         q.Select(t => new InterestTagResponse(t.Id, t.Slug, t.Label, t.Facet, t.Synonyms, t.Color,
-            t.MediaLinks.Count, t.ChildInterests.Count, t.CreatedAt, t.ExerciseLinks.Count));
+            t.MediaLinks.Count, t.ChildInterests.Count, t.CreatedAt, t.ExerciseLinks.Count, t.ImagePrompt));
+
+    /// <summary>Upper bound of <see cref="InterestTag.ImagePrompt"/> – the column length from the schema convention.</summary>
+    private const int ImagePromptMaxLength = 200;
+
+    /// <summary>Trims an image prompt; blank counts as "none". Too long → a validation problem instead of a truncated prompt.</summary>
+    private (string? Value, ObjectResult? Problem) CleanImagePrompt(string? prompt)
+    {
+        var value = prompt?.Trim() is { Length: > 0 } p ? p : null;
+        return value is { Length: > ImagePromptMaxLength }
+            ? (null, this.ProblemWithCode(ApiErrors.ValidationError,
+                $"ImagePrompt must not exceed {ImagePromptMaxLength} characters."))
+            : (value, null);
+    }
 
     /// <summary>
     /// All tags (alphabetically by slug), optionally filtered. The total count (before paging) is
@@ -118,6 +131,8 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
         var synonyms = Clean(dto.Synonyms);
         if (await SynonymClashAsync(synonyms, exceptId: null, ct) is { } clash)
             return this.ProblemWithCode(ApiErrors.DuplicateInterestTag, $"The synonym '{clash}' is another interest tag's label or slug.");
+        var (imagePrompt, promptProblem) = CleanImagePrompt(dto.ImagePrompt);
+        if (promptProblem is not null) return promptProblem;
 
         var tag = new InterestTag
         {
@@ -126,6 +141,7 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
             Facet = dto.Facet,
             Synonyms = synonyms,
             Color = dto.Color?.Trim() is { Length: > 0 } c ? c : null,
+            ImagePrompt = imagePrompt,
         };
         db.InterestTags.Add(tag);
         await db.SaveChangesAsync(ct);
@@ -135,7 +151,7 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
         // we just wrote.
         return CreatedAtAction(nameof(Get), new { id = tag.Id },
             new InterestTagResponse(tag.Id, tag.Slug, tag.Label, tag.Facet, tag.Synonyms, tag.Color, 0, 0,
-                tag.CreatedAt, 0));
+                tag.CreatedAt, 0, tag.ImagePrompt));
     }
 
     /// <summary>
@@ -178,6 +194,14 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
             tag.Synonyms = synonyms;
         }
         if (dto.Color is not null) tag.Color = dto.Color.Trim() is { Length: > 0 } c ? c : null;
+        // Value first, then the switch: a form that sends both means "clear" (PATCH semantics).
+        if (dto.ImagePrompt is not null)
+        {
+            var (imagePrompt, promptProblem) = CleanImagePrompt(dto.ImagePrompt);
+            if (promptProblem is not null) return promptProblem;
+            tag.ImagePrompt = imagePrompt;
+        }
+        if (dto.ClearImagePrompt) tag.ImagePrompt = null;
 
         await db.SaveChangesAsync(ct);
         return await Project(db.InterestTags.AsNoTracking().Where(t => t.Id == id)).FirstAsync(ct);

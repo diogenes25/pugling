@@ -47,7 +47,8 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     /// <summary>The console verbs with the same underpinning as the real agent (incl. both planners).</summary>
     private AgentCommands Commands(CreatorApi creator, CreatorPipeline pipeline, FakeChatClient? chat = null) =>
         new(creator, new SupervisorApi(Authenticated()), pipeline, new ExamPlanner(pipeline, creator, new SupervisorApi(Authenticated())),
-            new PlanPlanner(pipeline, new SupervisorApi(Authenticated())), Filler(creator, chat ?? new FakeChatClient("{}")));
+            new PlanPlanner(pipeline, new SupervisorApi(Authenticated())), Filler(creator, chat ?? new FakeChatClient("{}")),
+            ImageAgentTests.Run(creator, chat ?? new FakeChatClient("{}"), new FakeImageGenerator()));
 
     private static UnitNotesFiller Filler(CreatorApi creator, FakeChatClient chat, IModelInventory? models = null)
     {

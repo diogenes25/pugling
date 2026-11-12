@@ -101,6 +101,24 @@ public class MediaUploadTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         Assert.Equal("validation_error", await CodeOf(res));
     }
 
+    /// <summary>
+    /// B-485: SQLite would store an over-long source unchecked, so the column limit only holds through the endpoint.
+    /// Red if the check is removed (201) or if a valid source is not stored.
+    /// </summary>
+    [Fact]
+    public async Task Quelle_WirdGespeichert_UndIstBegrenzt()
+    {
+        var father = await TestApi.AdultAsync(factory);
+
+        var ok = await UploadAsync(father, Png(100, 100, SKColors.Teal), "Mit Quelle", source: " gpt-image-1-mini: a dog ");
+        Assert.Equal(HttpStatusCode.Created, ok.StatusCode);
+        Assert.Equal("gpt-image-1-mini: a dog", (await ok.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("source").GetString());
+
+        var tooLong = await UploadAsync(father, Png(100, 100, SKColors.Teal), "Zu lange Quelle", source: new string('x', 201));
+        Assert.Equal(HttpStatusCode.BadRequest, tooLong.StatusCode);
+        Assert.Equal("validation_error", await CodeOf(tooLong));
+    }
+
     [Fact]
     public async Task LoeschenRaeumtDieDateienMitWeg()
     {
@@ -140,7 +158,7 @@ public class MediaUploadTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     }
 
     private static async Task<HttpResponseMessage> UploadAsync(HttpClient client, byte[] bytes,
-        string description, string? tags = null, string fileName = "motiv.png")
+        string description, string? tags = null, string fileName = "motiv.png", string? source = null)
     {
         using var form = new MultipartFormDataContent();
         var file = new ByteArrayContent(bytes);
@@ -148,6 +166,7 @@ public class MediaUploadTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         form.Add(file, "file", fileName);
         form.Add(new StringContent(description), "description");
         if (tags is not null) form.Add(new StringContent(tags), "tags");
+        if (source is not null) form.Add(new StringContent(source), "source");
         return await client.PostAsync("/api/v1/creator/media/upload", form);
     }
 

@@ -5,7 +5,7 @@ import { INTEREST_FACETS, interestFacetLabel } from "../lib/labels";
 import { confirmAction } from "../lib/ui";
 import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
-import type { InterestFacet, InterestTagResponse } from "../lib/types";
+import type { InterestFacet, InterestTagResponse, UpdateInterestTagDto } from "../lib/types";
 import { ListenAusfall } from "../components/ListenAusfall";
 
 /*
@@ -42,6 +42,9 @@ export function InterestTagAdmin() {
         Dieselben Schlagworte beschreiben <strong>Bilder</strong>, <strong>Interessen der Kinder</strong> und
         die <strong>Einkleidung von Übungen</strong> – nur deshalb ist die Bildauswahl berechenbar. Die
         Zähler zeigen, woran ein Wort hängt; eingekleidete Übungen sperren zusätzlich das Löschen.
+        Der <strong>Bild-Prompt</strong> ist die englische Szene, die der KI-Creator für dieses Interesse in
+        Vokabelbilder malt – ohne Markennamen („in a blocky voxel world" statt „Minecraft"). Ohne Prompt
+        bekommt das Interesse keine eigenen Bilder.
       </p>
 
       <form className="row" style={{ gap: 8, marginTop: 8 }}
@@ -62,7 +65,7 @@ export function InterestTagAdmin() {
           <table className="table">
             <thead>
               <tr>
-                <th>Schlagwort</th><th>Facette</th><th>Synonyme</th>
+                <th>Schlagwort</th><th>Facette</th><th>Synonyme</th><th>Bild-Prompt</th>
                 <th className="num">Bilder</th><th className="num">Kinder</th><th className="num">Übungen</th><th />
               </tr>
             </thead>
@@ -90,7 +93,7 @@ export function InterestTagAdmin() {
                   }} />
               ))}
               {tags.data?.length === 0 && (
-                <tr><td colSpan={7} className="muted">
+                <tr><td colSpan={8} className="muted">
                   Keine Schlagworte{applied ? " für diese Suche" : " – sie entstehen beim Taggen von Bildern und Interessen"}.
                 </td></tr>
               )}
@@ -106,17 +109,20 @@ export function InterestTagAdmin() {
 function TagRow({ tag, busy, onSave, onDelete }: {
   tag: InterestTagResponse;
   busy: boolean;
-  onSave: (dto: { label: string; facet: InterestFacet; synonyms: string[] }) => void;
+  onSave: (dto: UpdateInterestTagDto) => void;
   onDelete: () => void;
 }) {
   const [label, setLabel] = useState(tag.label);
   const [facet, setFacet] = useState<InterestFacet>(tag.facet);
   const [synonyms, setSynonyms] = useState(tag.synonyms.join(", "));
+  const [imagePrompt, setImagePrompt] = useState(tag.imagePrompt ?? "");
 
   const parsedSynonyms = synonyms.split(",").map((s) => s.trim()).filter(Boolean);
+  const promptChanged = imagePrompt.trim() !== (tag.imagePrompt ?? "");
   const dirty = label.trim() !== tag.label
     || facet !== tag.facet
-    || parsedSynonyms.join("|") !== tag.synonyms.join("|");
+    || parsedSynonyms.join("|") !== tag.synonyms.join("|")
+    || promptChanged;
 
   return (
     <tr>
@@ -137,6 +143,11 @@ function TagRow({ tag, busy, onSave, onDelete }: {
           onChange={(e) => setSynonyms(e.target.value)} placeholder="z. B. Fußball, Soccer"
           style={{ maxWidth: 200 }} />
       </td>
+      <td>
+        <input aria-label={`Bild-Prompt von ${tag.label}`} value={imagePrompt} maxLength={200}
+          onChange={(e) => setImagePrompt(e.target.value)} placeholder="z. B. on a soccer pitch"
+          style={{ maxWidth: 220 }} />
+      </td>
       <td className="num">{tag.mediaCount}</td>
       <td className="num">{tag.childCount}</td>
       {/* Die dritte Zahl, seit B-46 im Vertrag und bis B-206 nirgends gezeigt. Sie ist die einzige, die
@@ -146,7 +157,13 @@ function TagRow({ tag, busy, onSave, onDelete }: {
         {dirty && (
           <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={busy || !label.trim()}
             aria-label={`${interestFacetLabel(facet)} „${tag.label}" speichern`}
-            onClick={() => onSave({ label: label.trim(), facet, synonyms: parsedSynonyms })}>OK</button>
+            onClick={() => onSave({
+              label: label.trim(), facet, synonyms: parsedSynonyms,
+              // Nur bei Änderung mitschicken: das Vokabular ist global, und eine Label-Korrektur aus einem älteren
+              // Stand soll den Prompt eines anderen Creators nicht überschreiben. Geleert heißt „entfernen" – null
+              // allein hieße „unverändert" (PATCH-Semantik), darum der Schalter.
+              ...(!promptChanged ? {} : imagePrompt.trim() ? { imagePrompt: imagePrompt.trim() } : { clearImagePrompt: true }),
+            })}>OK</button>
         )}
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy}
           aria-label={`Löschen: ${tag.label}`} onClick={onDelete}>Löschen</button>

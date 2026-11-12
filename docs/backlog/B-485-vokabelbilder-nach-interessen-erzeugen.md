@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/medien, bereich/katalog, lerntechnik/vokabeln, rolle/creator, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/medien, bereich/katalog, lerntechnik/vokabeln, rolle/creator, rolle/student]
 aliases: [Vokabelbilder erzeugen, KI-Bilder nach Interessen, Medien Etappe 7b]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: L
@@ -9,7 +9,7 @@ wo: beides
 migration: ja
 vertragsbruch: nein
 quelle: Auftrag des Nutzers 2026-11-12 („kleine Bilder je Vokabel, nach den Interessen des Kindes")
-wartet_auf: "B-484 abgeschlossen (baut gerade an denselben Agent-Dateien)"
+wartet_auf: "erster echter Lauf mit OpenAI-Schlüssel (images --child 1 --max 1) und Rollengang an der Sohn-Karte"
 grund: ""
 ersetzt_durch: []
 ---
@@ -257,3 +257,28 @@ Reviewer vor der Abnahme: `pugling-reviewer` und `frontend-reviewer`.
   Wahl bleibt, fester Stil, neutraler Prompt Pflicht, Bild → Wort draußen).
 - 2026-11-12 · `geschaetzt`: L, beides, Migration ja, kein Vertragsbruch. Beim Nachsehen gefunden: Upload kennt
   kein `source`, Bild-Bibliothek keinen Herkunftsfilter. Wartet auf B-484 (gleiche Agent-Dateien).
+- 2026-11-12 · `in-arbeit`, gebaut (B-484 war abgenommen, Baum sauber):
+  - Backend: `InterestTag.ImagePrompt` + `ClearImagePrompt` + Migration `20261112093114_InterestTagImagePrompt` (reine
+    Spalte, Bestand `null`); `source` am Upload (≤ 200, sonst `validation_error`); `GET creator/media/demand`
+    (`MediaDemandService`, Kind-Umfang unter Betreuungs-Prüfung, Unit-Umfang mit `tag`); Client-Methoden.
+  - Agent: Befehl `images` (`ImageRun`, `MotifPlanner`, `ImagePromptBuilder`, `OpenAiImageGenerator`), Paket
+    `Microsoft.Extensions.AI.OpenAI` 10.8.1; `MEAI001` nur im Agent- und Testprojekt unterdrückt (Risiko 1 trat ein).
+  - Frontend: Spalte „Bild-Prompt" in der Schlagwort-Verwaltung, Filter „nur KI-erzeugte" in der Bild-Bibliothek;
+    E2E-Ports per `PUGLING_E2E_API_PORT`/`PUGLING_E2E_WEB_PORT` überschreibbar (der Heimnetz-Server belegt :5200),
+    fremde Vite-Server nur auf dem Standardpaar wiederverwendet.
+  - Abweichung von der Skizze: kein `allowedRating` in der Bedarfs-Antwort (alle KI-Bilder sind `Everyone`); Rang statt
+    Weglassen: Interessen-Bilder hängen mit Gewicht −1 an der Vokabel, damit jedes Bild ohne Schlagwort (auch ein
+    älteres von Hand) bei Gleichstand vor fremden Interessen-Bildern liegt – Fund des `pugling-reviewer`, mein erster
+    Ansatz (neutral mit +1) hielt nur gegen Bilder desselben Laufs.
+  - Bewusste Grenzen, in `docs/medien-bilder.md` festgehalten: Bedarf zählt nur Vokabel-Zuordnungen (keine Item-Bilder)
+    und prüft vorhandene Bilder nicht gegen Eignung/Abneigung; ein gelöschtes Schlagwort macht seine KI-Bilder neutral.
+  - Belege: `dotnet test Pugling.sln -c Release` **1376/1376**, Exit 0, Abdeckungs-Wächter 276/276 (Messwert 275 → 276
+    nachgezogen); Vitest 752/752; `tsc -b` sauber; E2E `bild-prompt.spec.ts` 2/2, volle E2E-Suite auf den Nebenports **139 passed**, Exit 0. Rote Proben: 3 statt 2 Tags je
+    Kind → `MediaDemandTests` rot; Interessen-Rang 0 → zwei `ImageAgentTests` rot (über die Link-Gewichte, nicht über
+    den Hash); ohne „schon verknüpft"-Behandlung → Idempotenz-Test rot; ohne `clearImagePrompt` → E2E rot in Zeile 50.
+  - Trockenlauf echt gegen eine Wegwerf-API (:5202) mit `qwen2.5:14b-instruct`: Bedarf korrekt (Gewicht-1-Interesse
+    fehlt, Interesse ohne Prompt gemeldet), Prompt „factory smoke darkening sky, on a soccer pitch, …, no text". Bei
+    Temperatur 0,4 kippte „pollution" zwischen zwei Läufen → Motiv-Entscheidung auf Temperatur 0, danach zwei Läufe
+    identisch. Das Modell ist streng: Abstrakta wie „renewable energy" bleiben ohne Bild.
+  - **Nicht verifiziert:** ein echtes Bild von OpenAI (kein Schlüssel in dieser Sitzung; der Fake deckt den Adapter
+    nicht ab) und der Rollengang an der Sohn-Karte. Darum `in-arbeit` mit `wartet_auf`, nicht `abgenommen`.

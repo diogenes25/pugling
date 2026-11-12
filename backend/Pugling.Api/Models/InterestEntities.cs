@@ -36,6 +36,13 @@ public class InterestTag
     /// <summary>Optional display color (hex) for the UI – as with <see cref="VocabTag"/>.</summary>
     public string? Color { get; set; }
 
+    /// <summary>
+    /// Brand-neutral English scene fragment the image generator adds for this tag ("on a soccer pitch, with a
+    /// soccer ball"). <c>null</c> means the tag is never illustrated (B-485): a tag named after a brand or
+    /// character must not reach the generator by its label.
+    /// </summary>
+    public string? ImagePrompt { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>Images carrying this keyword (counterpart to <see cref="ChildInterests"/>).</summary>

@@ -24,7 +24,19 @@ dotnet run --project backend/Pugling.Agent.Creator -- create --profile 3 --type 
 dotnet run --project backend/Pugling.Agent.Creator -- exam --child 1 --types Vocabulary,Cloze --date 2026-09-15
 dotnet run --project backend/Pugling.Agent.Creator -- plan --child 1 --types Vocabulary,Cloze --per-type 2 --intensity Normal
 dotnet run --project backend/Pugling.Agent.Creator -- fill --series 3 --unit 12 --source-file inhalt.txt --dry-run  # Stoffnotizen
+dotnet run --project backend/Pugling.Agent.Creator -- images --child 1 --dry-run   # Vokabelbilder: Prompts + Kosten, ohne Schlüssel
+dotnet run --project backend/Pugling.Agent.Creator -- images --unit 12 --tag fussball --max 50
 ```
+
+`images` (B-485) zeichnet Vokabelbilder nach den Interessen eines Kindes: je Wort ein **neutrales** Bild und je eins
+für die **zwei stärksten Themen-Interessen** (Gewicht ≥ 2). Die Arbeitsliste kommt aus `GET creator/media/demand`;
+das lokale Textmodell entscheidet nur, ob ein Wort zeichenbar ist und welche englische Szene es zeigt, den Prompt baut
+C# (Szene, dann `ImagePrompt` des Interesses, fester Stil, „no text"). Gezeichnet wird über OpenAI
+(`Images:Model`, Vorgabe `gpt-image-1-mini`, Qualität `low`); der Schlüssel gehört in die Secrets:
+`dotnet user-secrets set "Images:ApiKey" "sk-…"` im Ordner `backend/Pugling.Agent.Creator`. Bilder gehen **ohne
+Freigabe** direkt an die Vokabel (das Kind verwirft mit „anderes Bild", der Vater filtert in der Bild-Bibliothek
+auf „nur KI-erzeugte"). Ein Interesse ohne `ImagePrompt` bekommt keine Bilder und wird im Bericht genannt – den
+Prompt pflegt man markenneutral in der Schlagwort-Verwaltung. Zweiter Lauf zeichnet nichts doppelt.
 
 `fill` entwirft die Stoffnotizen einer Unit (`Topics`/`Grammar`/`VocabularyNotes`) aus einer Quelle, die du
 lieferst (`--source-file <Datei>` oder `-` für Stdin, nur mit Umleitung/Pipe) – ohne Quelle Fehlbedienung, das

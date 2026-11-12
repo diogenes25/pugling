@@ -435,9 +435,12 @@ public class PuglingClientTests : IClassFixture<PuglingWebAppFactory>
         var asset = await creator.UploadMediaAsync(TinyPng(600, 300), "generiert.png",
             // A keyword of its own: the tests of this class share a DB, and a neighboring test counts the
             // assets on "weltraum".
-            "Ein generiertes Motiv", tags: ["Raumfahrt"], origin: MediaOrigin.Generated);
+            "Ein generiertes Motiv", tags: ["Raumfahrt"], origin: MediaOrigin.Generated,
+            source: "gpt-image-1-mini: a rocket; raumfahrt");
 
         Assert.Equal(MediaOrigin.Generated, asset.Origin);
+        // B-485: the generator's trace survives the upload - without it nobody can tell which prompt drew the image.
+        Assert.Equal("gpt-image-1-mini: a rocket; raumfahrt", asset.Source);
         Assert.Contains("raumfahrt", asset.Tags);
         // Thumb/card from one file; full stays at the source width (no upscaling).
         Assert.Equal(3, asset.Variants.Count);

@@ -1,5 +1,6 @@
 using System.Globalization;
 using Pugling.Agent.Creator.Drafting;
+using Pugling.Agent.Creator.Images;
 using Pugling.Client;
 
 namespace Pugling.Agent.Creator;
@@ -7,10 +8,11 @@ namespace Pugling.Agent.Creator;
 /// <summary>
 /// The verbs of the console app. Deliberately thin: resolve arguments, call the pipeline, print the
 /// result in an understandable way - the domain logic lives in <see cref="CreatorPipeline"/>,
-/// <see cref="ExamPlanner"/>, <see cref="PlanPlanner"/>, <see cref="UnitNotesFiller"/> and the strategies.
+/// <see cref="ExamPlanner"/>, <see cref="PlanPlanner"/>, <see cref="UnitNotesFiller"/>, <see cref="ImageRun"/> and the
+/// strategies.
 /// </summary>
 public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, CreatorPipeline pipeline, ExamPlanner exams,
-    PlanPlanner plans, UnitNotesFiller unitNotes)
+    PlanPlanner plans, UnitNotesFiller unitNotes, ImageRun images)
 {
     // Default values for the request when the command line is silent.
     private const int DefaultItemCount = 10;
@@ -90,6 +92,65 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
         return 0;
     }
 
+    /// <summary>Vocabulary entries a single <c>images</c> run takes when <c>--max</c> is not given – a reviewable batch.</summary>
+    private const int DefaultImageBatch = 20;
+
+    /// <summary>
+    /// Generates the missing vocabulary images (B-485): <c>--child</c> or <c>--unit</c> (with optional <c>--tag</c>),
+    /// never both. Prints every image, the words left without one and the interests that still lack an image prompt;
+    /// a failed image makes the run exit 1 without stopping the others.
+    /// </summary>
+    private async Task<int> ImagesAsync(CommandLine command, CancellationToken ct)
+    {
+        var childId = command.Has("child") ? command.RequiredInt("child") : (int?)null;
+        var unitId = command.Has("unit") ? command.RequiredInt("unit") : (int?)null;
+        if ((childId is null) == (unitId is null))
+            throw new AgentUsageException("images braucht genau eins von --child und --unit.");
+        var tag = command.Value("tag");
+        if (tag is not null && childId is not null)
+            throw new AgentUsageException("--tag gilt nur mit --unit – mit --child kommen die Interessen aus dem Kind.");
+        var take = command.Int("max", DefaultImageBatch);
+        if (take is < 1 or > 500)
+            throw new AgentUsageException("--max muss zwischen 1 und 500 liegen.");
+        var dryRun = command.Flag("dry-run");
+
+        var outcome = await images.RunAsync(new ImageRunRequest(childId, unitId, tag, take, dryRun), ct);
+
+        foreach (var job in outcome.Jobs)
+        {
+            var label = $"{job.Word} [{job.TagSlug ?? ImagePromptBuilder.Neutral}]";
+            Console.WriteLine(job switch
+            {
+                { Error: { } error } => $"  ✗ {label}: {error}",
+                { AssetId: { } id } => $"  ✓ {label} → Bild {id}",
+                _ => $"  · {label}: {job.Prompt}",
+            });
+        }
+        if (outcome.NotImageable.Count > 0)
+            Console.WriteLine($"Ohne Bild (nicht eindeutig zeichenbar): {string.Join(", ", outcome.NotImageable)}");
+        if (outcome.MissingPrompt.Count > 0)
+            Console.WriteLine("Interessen ohne Bild-Prompt (im Vater-Web unter Interessen pflegen, dann erneut laufen lassen): "
+                              + string.Join(", ", outcome.MissingPrompt));
+        if (outcome.Jobs.Count == 0)
+        {
+            // Only claim "nothing missing" when it is true: words left out or tags without prompt still lack images.
+            Console.WriteLine(outcome.NotImageable.Count > 0 || outcome.MissingPrompt.Count > 0
+                ? "Nichts gezeichnet – die übrigen Lücken stehen oben."
+                : "Nichts zu zeichnen – für diesen Umfang fehlt kein Bild.");
+            return 0;
+        }
+        if (dryRun)
+        {
+            var cost = outcome.Jobs.Count * images.CostPerImage;
+            Console.WriteLine($"Trockenlauf – nichts gezeichnet, nichts gespeichert. {outcome.Jobs.Count} Bild(er), "
+                              + $"geschätzt {cost.ToString("0.00", CultureInfo.GetCultureInfo("de-DE"))} €.");
+            return 0;
+        }
+        var failed = outcome.Jobs.Count(j => j.Error is not null);
+        Console.WriteLine($"Fertig: {outcome.Jobs.Count - failed} Bild(er) angelegt, {failed} fehlgeschlagen.");
+        return failed == 0 ? 0 : 1;
+    }
+
     /// <summary>The source text: a file, or stdin when <c>--source-file -</c>. Missing or empty is a usage error.</summary>
     private static async Task<string> ReadSourceAsync(CommandLine command, CancellationToken ct)
     {
@@ -139,6 +200,8 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
                 return await PlanAsync(command, ct);
             case "fill":
                 return await FillAsync(command, ct);
+            case "images":
+                return await ImagesAsync(command, ct);
             case "help":
                 PrintUsage();
                 return 0;
@@ -734,6 +797,12 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
                                    --images: Fotos der Buchseiten (.jpg/.png/.webp, ein Ordner = alle Bilder
                                    darin nach Namen), gelesen vom lokalen Vision-Modell (Agent:VisionModel) –
                                    übernommen wird nur der Stoff, keine Aufgaben oder Texte des Buches)
+          pugling-creator images   (--child <id> | --unit <id> [--tag <slug>]) [--max <n>] [--dry-run]
+                                   (Bilder zu Vokabeln: je Wort ein neutrales Bild und je eins für die zwei
+                                   stärksten Interessen des Kindes; mit --unit für die ganze Unit, optional
+                                   für ein Interesse. Gezeichnet vom Bild-Dienst (Images:Model, Schlüssel in
+                                   Images:ApiKey); --dry-run zeigt die Prompts und die Kosten ohne Schlüssel.
+                                   --max: höchstens so viele Wörter je Lauf (Standard 20))
 
         Wer und in wessen Namen:
           --child <id>          Kind, auf das zugeschnitten wird (individuelle Übung)

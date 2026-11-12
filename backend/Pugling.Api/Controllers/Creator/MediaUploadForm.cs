@@ -15,6 +15,10 @@ namespace Pugling.Api.Controllers.Creator;
 /// <param name="Origin">Origin; without a value <see cref="MediaOrigin.Upload"/>.</param>
 /// <param name="License">Short license designation, if the source requires it.</param>
 /// <param name="Attribution">Attribution, if the license requires it.</param>
+/// <param name="Source">
+/// Where the image came from; for <see cref="MediaOrigin.Generated"/> the model and the prompt (B-485), at most
+/// 200 characters.
+/// </param>
 public record MediaUploadForm(
     IFormFile? File,
     string? Description,
@@ -23,4 +27,5 @@ public record MediaUploadForm(
     ContentRating? Rating = null,
     MediaOrigin? Origin = null,
     string? License = null,
-    string? Attribution = null);
+    string? Attribution = null,
+    string? Source = null);

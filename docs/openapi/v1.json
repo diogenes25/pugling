@@ -23326,7 +23326,7 @@
         ],
         "summary": "Creates an asset from an uploaded file: the server decodes it and generates the\nresolutions itself (thumb/card/full, aspect-ratio-preserving, WebP) plus a placeholder color.\nThis is the convenient path compared to the URL endpoint \u2013 the creator needs neither an image source on\nthe web nor a graphics program to scale it.\n\nNo MediaPurpose.Hero: the wide header format requires cropping, and where a\nmotif may be cropped, only a human can decide.",
         "requestBody": {
-          "description": "Attribution, if the license requires it.",
+          "description": "Where the image came from; for MediaOrigin.Generated the model and the prompt (B-485), at most\n200 characters.",
           "content": {
             "application/x-www-form-urlencoded": {
               "schema": {
@@ -23354,6 +23354,9 @@
                     "type": "string"
                   },
                   "Attribution": {
+                    "type": "string"
+                  },
+                  "Source": {
                     "type": "string"
                   }
                 }
@@ -23614,6 +23617,127 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/creator/media/demand": {
+      "get": {
+        "tags": [
+          "Creator \u2013 Media"
+        ],
+        "summary": "Vocabulary entries that still need images, alphabetically by word. Give exactly one of two scopes.\nWith childId the list covers the vocabulary of the child\u0027s playable plans, and wanted are a neutral image\nand the child\u0027s two strongest theme interests (weight \u2265 2). The endpoint reads child data and is therefore bound\nto supervision: a creator who does not supervise the child gets 404 like for an unknown child\n(B-310). The answer itself carries no child data.\n\nWith seriesUnitId the list covers the vocabulary of a unit, independent of any child, and wanted are a\nneutral image and, when tag (a slug) is given, an image for that tag.\n\nA tag in the answer without an \u0060imagePrompt\u0060 must not be illustrated yet; the generator reports it.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "query",
+            "description": "Scope: the child whose plans are illustrated.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "seriesUnitId",
+            "in": "query",
+            "description": "Scope: the unit whose vocabulary is illustrated.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "description": "Only with \u0060seriesUnitId\u0060: the slug of the interest tag to draw for.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "description": "Maximum number of entries (1..500, default 50).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-Total-Count": {
+                "description": "Total row count before paging (skip/take).",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MediaDemandEntry"
+                  }
                 }
               }
             }
@@ -30370,6 +30494,12 @@
             }
           },
           "color": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "imagePrompt": {
             "type": [
               "null",
               "string"
@@ -37600,9 +37730,15 @@
               "string"
             ],
             "format": "int32"
+          },
+          "imagePrompt": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         },
-        "description": "A tag of the taxonomy including usage counts on **all three** sides: \u0060MediaCount\u0060 counts the\nassets carrying it, \u0060ChildCount\u0060 the children who list it as a like/dislike, and\n\u0060ExerciseCount\u0060 the exercises dressed in it (B-46). \u0060Slug\u0060\nis the stable reference name (lowercase, no diacritics), \u0060Facet\u0060 distinguishes theme from\npresentation style, \u0060Synonyms\u0060 holds alternative spellings against duplicates from free text.\n\nThe third count is not decoration: the counts are what says whether a tag is dead, and a tag that\ndresses exercises but no image and no child would have looked dead without it."
+        "description": "A tag of the taxonomy including usage counts on **all three** sides: \u0060MediaCount\u0060 counts the\nassets carrying it, \u0060ChildCount\u0060 the children who list it as a like/dislike, and\n\u0060ExerciseCount\u0060 the exercises dressed in it (B-46). \u0060Slug\u0060\nis the stable reference name (lowercase, no diacritics), \u0060Facet\u0060 distinguishes theme from\npresentation style, \u0060Synonyms\u0060 holds alternative spellings against duplicates from free text.\n\nThe third count is not decoration: the counts are what says whether a tag is dead, and a tag that\ndresses exercises but no image and no child would have looked dead without it.\n\n\u0060ImagePrompt\u0060 is the brand-neutral English scene fragment the image generator uses for this tag;\n\u0060null\u0060 means images are never generated for it (B-485)."
       },
       "InventoryItemDto": {
         "required": [
@@ -38625,6 +38761,76 @@
           }
         },
         "description": "An asset of the media store including its resolutions and tags. \u0060Description\u0060 is at the same time\nthe alt text for accessibility, \u0060Rating\u0060 the suitability (selection never returns an asset\nabove the child\u0027s clearance), \u0060Placeholder\u0060 color/blur hash for smooth lazy-loading, and\n\u0060Tags\u0060 the slugs of the linked interest/style tags."
+      },
+      "MediaDemandEntry": {
+        "required": [
+          "needsNeutral",
+          "partOfSpeech",
+          "sourceLanguage",
+          "targetLanguage",
+          "translation",
+          "vocabularyId",
+          "wantedTags",
+          "word"
+        ],
+        "type": "object",
+        "properties": {
+          "vocabularyId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "word": {
+            "type": "string"
+          },
+          "translation": {
+            "type": "string"
+          },
+          "sourceLanguage": {
+            "type": "string"
+          },
+          "targetLanguage": {
+            "type": "string"
+          },
+          "partOfSpeech": {
+            "$ref": "#/components/schemas/PartOfSpeech"
+          },
+          "needsNeutral": {
+            "type": "boolean"
+          },
+          "wantedTags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MediaDemandTag"
+            }
+          }
+        },
+        "description": "One vocabulary entry that still lacks an image (B-485): \u0060NeedsNeutral\u0060 when no untagged image\nhangs at it (the base image every child can get), \u0060WantedTags\u0060 the interest tags it has no image for yet.\nCarries no child data \u2013 the generator draws for a vocabulary entry and an interest, never for a child."
+      },
+      "MediaDemandTag": {
+        "required": [
+          "label",
+          "slug"
+        ],
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "imagePrompt": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "An interest tag an image is wanted for. \u0060ImagePrompt\u0060 is the brand-neutral scene fragment for the generator;\n\u0060null\u0060 means the tag must not be illustrated until a creator has written one."
       },
       "MediaKind": {
         "enum": [
@@ -43920,9 +44126,19 @@
               "null",
               "string"
             ]
+          },
+          "imagePrompt": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "clearImagePrompt": {
+            "type": "boolean",
+            "default": false
           }
         },
-        "description": "Only fields that are set are changed; \u0060Synonyms\u0060 replaces the list entirely."
+        "description": "Only fields that are set are changed; \u0060Synonyms\u0060 replaces the list entirely. \u0060ClearImagePrompt\u0060\nremoves the image prompt and wins over a value sent with it; an \u0060ImagePrompt\u0060 of \u0060null\u0060 means \u0022unchanged\u0022."
       },
       "UpdateKeyResultRequest": {
         "type": "object",
@@ -45920,6 +46136,9 @@
     },
     {
       "name": "Creator \u2013 Matching"
+    },
+    {
+      "name": "Creator \u2013 Media"
     },
     {
       "name": "Creator \u2013 Media Store"

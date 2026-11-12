@@ -31,7 +31,8 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      "/api": "http://localhost:5200"
+      // Überschreibbar, damit E2E neben dem Heimnetz-Server (:5200, echte DB der Söhne) laufen kann (B-485).
+      "/api": process.env.PUGLING_API_URL ?? "http://localhost:5200"
     }
   }
 });

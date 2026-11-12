@@ -286,6 +286,34 @@ als Sekunden. Läuft die Zeit ab, setze `Agent:TimeoutSeconds` hoch (gilt je Auf
 Danach entstehen die Übungen wie gewohnt aus der Unit, zum Beispiel
 `pugling-creator plan --child 1 --types Vocabulary,Cloze` (Unit des Kindes) oder `create --profile 3 --unit 12 …`.
 
+### Vokabelbilder nach Interessen (`images`, B-485)
+
+```bash
+pugling-creator images --child 1 --dry-run          # Prompts und Kostenschätzung, kein Schlüssel nötig
+pugling-creator images --child 1 --max 20           # zeichnet höchstens 20 Wörter
+pugling-creator images --unit 12 --tag fussball     # eine ganze Unit für ein Interesse vorproduzieren
+```
+
+Bilder entstehen je **Vokabel × Interesse**, nie je Kind: ein zweites Kind mit denselben Interessen bekommt dieselben
+Bilder, und der Bild-Dienst sieht keine Daten eines Kindes. Je Wort zeichnet der Lauf ein neutrales Bild (für jedes
+Kind ohne passenderes) und je eins für die zwei stärksten Themen-Interessen des Kindes. Welches Bild ein Kind dann
+sieht, entscheidet wie immer der `MediaSelector`; die Interessen-Bilder hängen mit Rang −1 an der Vokabel, jedes
+Bild ohne Schlagwort mit 0. So bekommt ein Kind ohne passendes Interesse das neutrale (auch ein älteres, von Hand
+zugeordnetes) und nicht per Zufall das Fußball-Bild eines anderen Kindes.
+
+Das lokale Textmodell beantwortet nur „zeichenbar?" und liefert die englische Szene. Funktionswörter und Abstrakta
+bleiben ohne Bild. Den Prompt baut C#: Szene, `ImagePrompt` des Interesses, fester Stil, „no text, no letters". Ein
+Interesse ohne `ImagePrompt` wird übersprungen und genannt, damit keine Marke („Minecraft") über ihren Namen beim
+Bild-Dienst landet.
+
+Konfiguration im Abschnitt `Images` (`Model`, `Quality`, `Size`, `Style`, `CostPerImage`); der Schlüssel nur als
+Secret:
+
+```bash
+cd backend/Pugling.Agent.Creator
+dotnet user-secrets set "Images:ApiKey" "sk-…"
+```
+
 ## Was der Agent bewusst *nicht* tut
 
 - **Einen Lehrplan aktiv schalten.** Er legt ihn an (`plan`) – scharf stellt ihn ein Mensch. Ziele,

@@ -14,6 +14,15 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 // Testlauf Dateien an.
 const backendDir = path.resolve(here, "../backend/Pugling.Api");
 
+// Die Ports sind überschreibbar (B-485): auf :5200 läuft im Heimnetz der Server mit der echten DB der Söhne, und den
+// hält ein E2E-Lauf nicht an. `PUGLING_E2E_API_PORT=5201 PUGLING_E2E_WEB_PORT=5174 npx playwright test` fährt daneben.
+const apiPort = process.env.PUGLING_E2E_API_PORT ?? "5200";
+const webPort = process.env.PUGLING_E2E_WEB_PORT ?? "5173";
+const webOrigin = `http://localhost:${webPort}`;
+// Einen schon laufenden Vite-Server nur auf dem Standardpaar übernehmen: ein fremd gestarteter Server auf dem
+// Ausweichport hätte PUGLING_API_URL nie bekommen und leitete auf :5200 – in die echte DB.
+const sidePorts = apiPort !== "5200" || webPort !== "5173";
+
 export default defineConfig({
   testDir: "./e2e",
   globalSetup: "./e2e/global-setup.ts",
@@ -25,7 +34,7 @@ export default defineConfig({
   retries: 0,
   reporter: [["list"]],
   use: {
-    baseURL: "http://localhost:5173",
+    baseURL: webOrigin,
     headless: true,
     viewport: { width: 393, height: 830 }, // Handy-Größe (Redmi-7-nah)
     trace: "retain-on-failure",
@@ -37,7 +46,7 @@ export default defineConfig({
     storageState: {
       cookies: [],
       origins: [{
-        origin: "http://localhost:5173",
+        origin: webOrigin,
         localStorage: [
           { name: "pugling.remarks.off", value: "1" },
           // Deutsch bleibt der E2E-Standard (B-85, Entscheidung 6): ein späterer Sprachwechsel bricht keine Spec
@@ -50,8 +59,8 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: [
     {
-      command: `dotnet run --project "${backendDir}" --urls http://localhost:5200`,
-      url: "http://localhost:5200/openapi/v1.json",
+      command: `dotnet run --project "${backendDir}" --urls http://localhost:${apiPort}`,
+      url: `http://localhost:${apiPort}/openapi/v1.json`,
       timeout: 120_000,
       reuseExistingServer: false,
       // Server-Ausgabe durchreichen (B-139). Playwright verwirft sie sonst, sobald der Start geglückt
@@ -73,10 +82,11 @@ export default defineConfig({
       },
     },
     {
-      command: "npm run dev -- --port 5173",
-      url: "http://localhost:5173",
+      command: `npm run dev -- --port ${webPort} --strictPort`,
+      url: webOrigin,
+      env: { PUGLING_API_URL: `http://localhost:${apiPort}` },
       timeout: 60_000,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: !process.env.CI && !sidePorts,
     },
   ],
 });

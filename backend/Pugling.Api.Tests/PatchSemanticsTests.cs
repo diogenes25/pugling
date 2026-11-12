@@ -109,9 +109,9 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
         {
             var c = await TestApi.AdultAsync(f);
             var id = await TestApi.IdAsync(await c.PostAsJsonAsync("/api/v1/creator/interest-tags",
-                new { label = Eindeutig("Fußball") }));
+                new { label = Eindeutig("Fußball"), imagePrompt = "on a soccer pitch, with a soccer ball" }));
             return new Ziel(c, $"/api/v1/creator/interest-tags/{id}");
-        }, []),
+        }, [new("clearImagePrompt", "imagePrompt")]),
 
         new(typeof(UpdateGrammarTopicDto), "label", "Thema neu", async f =>
         {

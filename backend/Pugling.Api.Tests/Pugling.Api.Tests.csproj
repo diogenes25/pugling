@@ -12,7 +12,7 @@
       sind die Beschreibung, sie fließen in kein Swagger und brauchen kein `/// <summary>`.
     -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NoWarn>$(NoWarn);xUnit1051;CS1591</NoWarn>
+    <NoWarn>$(NoWarn);xUnit1051;CS1591;MEAI001</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

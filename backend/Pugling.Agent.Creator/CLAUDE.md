@@ -38,6 +38,12 @@ Kindes abschalten. Dafür trägt `CreatePlanDto` seit B-19 ein `Active`-Feld (Vo
 Stoffnotizen. **Das Foto wird Stoff, nicht Übung**: Kein Schritt nach dem Vision-Aufruf sieht das Bild, und es geht
 nie an die API (Copyright: Aufgaben und Texte des Buches gelangen nicht in den Katalog).
 
+`images` (B-485) ist der einzige Befehl mit einem **Cloud-Dienst**: `ImageRun` liest `creator/media/demand`, der
+`MotifPlanner` fragt das lokale Modell nur „zeichenbar? welche Szene?", `ImagePromptBuilder` baut Prompt, Schlüssel,
+Spur und Alt-Text deterministisch, gezeichnet wird über `IImageGenerator` (OpenAI, `Lazy` – ohne Schlüssel laufen
+Trockenlauf und alle anderen Befehle). `IImageGenerator` ist experimentell (`MEAI001`, nur hier und in den Tests
+unterdrückt). Getestet mit `FakeImageGenerator` (`ImageAgentTests`).
+
 **Was nur eine richtige Antwort hat, entscheidet C#, nicht das Modell** (B-460). Gemeint ist Nummerierung,
 Auswahl, Übersetzung aus der Wortliste und Kürzen auf die Anzahl. Der Entwurf ist so geschnitten, dass das
 Modell nur Sprache liefert:

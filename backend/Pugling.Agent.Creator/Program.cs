@@ -8,6 +8,7 @@ using OllamaSharp;
 using OllamaSharp.Models;
 using Pugling.Agent.Creator.Briefing;
 using Pugling.Agent.Creator.Drafting;
+using Pugling.Agent.Creator.Images;
 using Pugling.Client;
 
 namespace Pugling.Agent.Creator;
@@ -115,6 +116,14 @@ public static class Program
         builder.Services.AddSingleton<ExamPlanner>();
         builder.Services.AddSingleton<PlanPlanner>();
         builder.Services.AddSingleton<UnitNotesFiller>();
+        builder.Services.AddOptions<ImageOptions>()
+            .Bind(builder.Configuration.GetSection(ImageOptions.SectionName))
+            .ValidateDataAnnotations();
+        builder.Services.AddSingleton<MotifPlanner>();
+        // Lazy: only a run that really draws needs the key; a dry run and every other verb work without it.
+        builder.Services.AddSingleton(services => new Lazy<IImageGenerator>(() =>
+            OpenAiImageGenerator.Create(services.GetRequiredService<IOptions<ImageOptions>>().Value)));
+        builder.Services.AddSingleton<ImageRun>();
         builder.Services.AddSingleton<AgentCommands>();
 
         return builder.Build();

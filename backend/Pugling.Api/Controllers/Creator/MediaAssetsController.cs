@@ -224,6 +224,9 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
         if (form.File.Length > mediaOptions.MaxUploadBytes)
             return this.ProblemWithCode(ApiErrors.MediaUploadTooLarge,
                 $"The file exceeds the limit of {mediaOptions.MaxUploadBytes / (1024 * 1024)} MB.");
+        // SQLite does not enforce the column length; without this check the convention's limit would only hold on paper.
+        if (Trimmed(form.Source) is { Length: > SourceMaxLength })
+            return this.ProblemWithCode(ApiErrors.ValidationError, $"Source must not exceed {SourceMaxLength} characters.");
 
         string key;
         if (string.IsNullOrWhiteSpace(form.Key))
@@ -259,6 +262,7 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
             License = Trimmed(form.License),
             Attribution = Trimmed(form.Attribution),
             Origin = form.Origin ?? MediaOrigin.Upload,
+            Source = Trimmed(form.Source),
             Placeholder = processed.Placeholder,
         };
         db.MediaAssets.Add(asset);
@@ -450,6 +454,9 @@ public class MediaAssetsController(PuglingDbContext db, InterestTagService tags,
     };
 
     private static string? Trimmed(string? value) => value?.Trim() is { Length: > 0 } v ? v : null;
+
+    /// <summary>Upper bound of <see cref="MediaAsset.Source"/> on upload – the column length from the schema convention.</summary>
+    private const int SourceMaxLength = 200;
 
     /// <summary>Multipart has no lists like JSON – tags arrive there as a single comma-separated line.</summary>
     private static List<string> SplitTags(string? tags) =>

@@ -427,10 +427,11 @@ public sealed class CreatorApi(HttpClient http)
     /// <param name="tags">Tags from the shared taxonomy.</param>
     /// <param name="rating">Suitability; the strictest level if not specified.</param>
     /// <param name="origin">Origin; for generated images <see cref="MediaOrigin.Generated"/>.</param>
+    /// <param name="source">Where the image came from; for generated images model and prompt (at most 200 characters).</param>
     /// <param name="ct">Cancellation token.</param>
     public async Task<MediaAssetResponse> UploadMediaAsync(ReadOnlyMemory<byte> content, string fileName,
         string description, IEnumerable<string>? tags = null, ContentRating? rating = null,
-        MediaOrigin? origin = null, CancellationToken ct = default)
+        MediaOrigin? origin = null, string? source = null, CancellationToken ct = default)
     {
         using var form = new MultipartFormDataContent();
         var file = new ReadOnlyMemoryContent(content);
@@ -441,6 +442,7 @@ public sealed class CreatorApi(HttpClient http)
         if (tags is not null) form.Add(new StringContent(string.Join(",", tags)), "tags");
         if (rating is { } r) form.Add(new StringContent(r.ToString()), "rating");
         if (origin is { } o) form.Add(new StringContent(o.ToString()), "origin");
+        if (source is not null) form.Add(new StringContent(source), "source");
 
         return await Http.PostContentAsync<MediaAssetResponse>($"{Root}/media/upload", form, ct);
     }
@@ -490,6 +492,19 @@ public sealed class CreatorApi(HttpClient http)
     /// </summary>
     public Task<IReadOnlyList<MediaLinkResponse>> ListVocabularyMediaAsync(int vocabularyId, CancellationToken ct = default) =>
         Http.GetAsync<IReadOnlyList<MediaLinkResponse>>($"{Root}/vocabulary/{vocabularyId}/media", ct);
+
+    /// <summary>
+    /// Vocabulary of the child's playable plans still lacking a neutral image or one for the child's strongest
+    /// interests (B-485). The answer carries no child data.
+    /// </summary>
+    public Task<IReadOnlyList<MediaDemandEntry>> GetMediaDemandForChildAsync(int childId, int take, CancellationToken ct = default) =>
+        Http.GetAsync<IReadOnlyList<MediaDemandEntry>>($"{Root}/media/demand" + PuglingHttp.Query(("childId", childId), ("take", take)), ct);
+
+    /// <summary>Vocabulary of a unit still lacking images, independent of any child (B-485); <paramref name="tag"/> is a slug.</summary>
+    public Task<IReadOnlyList<MediaDemandEntry>> GetMediaDemandForUnitAsync(int seriesUnitId, string? tag, int take,
+        CancellationToken ct = default) =>
+        Http.GetAsync<IReadOnlyList<MediaDemandEntry>>($"{Root}/media/demand"
+            + PuglingHttp.Query(("seriesUnitId", seriesUnitId), ("tag", tag), ("take", take)), ct);
 
     /// <summary>Links an image to the vocabulary entry (by id or key).</summary>
     public Task<MediaLinkResponse> LinkVocabularyMediaAsync(int vocabularyId, AddMediaLinkDto dto, CancellationToken ct = default) =>

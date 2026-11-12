@@ -21,7 +21,7 @@ import type {
   ShopArticle, CreateShopArticleDto, UpdateShopArticleDto, ShopListing, CreateShopListingDto, UpdateShopListingDto,
   InventoryItem, MyInventoryItem, ShopPurchase, MyShopPurchase, ActivationRequest, ShopPurchaseStatus, ActivationRequestStatus,
   ShopView, MyActivation,
-  ContentRating, InterestTagResponse, CreateInterestTagDto, UpdateInterestTagDto,
+  ContentRating, MediaOrigin, InterestTagResponse, CreateInterestTagDto, UpdateInterestTagDto,
   GrammarTopicResponse, CreateGrammarTopicDto, UpdateGrammarTopicDto,
   ChildInterestResponse, ChildInterestInput,
   InterestTagOption, MyInterestProfile, MyInterestInput,
@@ -941,9 +941,10 @@ export const api = {
   addMyInterestWish: (text: string) =>
     http<MyInterestProfile>(`${V1}/student/me/interests/wishes`, "POST", { text }),
 
-  media: (p: { search?: string; tag?: string[]; maxRating?: ContentRating; take?: number } = {}) => {
+  media: (p: { search?: string; tag?: string[]; maxRating?: ContentRating; origin?: MediaOrigin; take?: number } = {}) => {
     const q = new URLSearchParams();
     if (p.search) q.set("search", p.search);
+    if (p.origin) q.set("origin", p.origin);
     if (p.maxRating) q.set("maxRating", p.maxRating);
     for (const t of p.tag ?? []) q.append("tag", t);
     q.set("take", String(p.take ?? 100));

@@ -68,3 +68,17 @@ public record UpdateMediaLinkDto(int Weight);
 /// <c>vocabulary</c> | <c>item</c> | <c>exercise</c>, <c>Label</c> a readable designation of the carrier.
 /// </summary>
 public record MediaUsage(string Carrier, int CarrierId, string Label, int Weight);
+
+/// <summary>
+/// One vocabulary entry that still lacks an image (B-485): <c>NeedsNeutral</c> when no untagged image
+/// hangs at it (the base image every child can get), <c>WantedTags</c> the interest tags it has no image for yet.
+/// Carries no child data – the generator draws for a vocabulary entry and an interest, never for a child.
+/// </summary>
+public record MediaDemandEntry(int VocabularyId, string Word, string Translation, string SourceLanguage,
+    string TargetLanguage, PartOfSpeech PartOfSpeech, bool NeedsNeutral, IReadOnlyList<MediaDemandTag> WantedTags);
+
+/// <summary>
+/// An interest tag an image is wanted for. <c>ImagePrompt</c> is the brand-neutral scene fragment for the generator;
+/// <c>null</c> means the tag must not be illustrated until a creator has written one.
+/// </summary>
+public record MediaDemandTag(string Slug, string Label, string? ImagePrompt);

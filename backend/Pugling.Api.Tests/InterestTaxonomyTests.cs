@@ -413,4 +413,32 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
         res.EnsureSuccessStatusCode();
         return await res.Content.ReadFromJsonAsync<JsonElement>();
     }
+
+    /// <summary>
+    /// The image prompt (B-485) is what the generator sends instead of the label, so a brand-named tag never reaches
+    /// it by name. Turns red if the field is not stored, not trimmed, if a blank value is kept as an empty prompt
+    /// (the agent would then illustrate the tag with nothing), or if an over-long prompt is silently accepted.
+    /// </summary>
+    [Fact]
+    public async Task ImagePrompt_WirdGespeichertGetrimmtUndBegrenzt()
+    {
+        var father = await TestApi.AdultAsync(factory);
+
+        var created = await father.PostAsJsonAsync("/api/v1/creator/interest-tags",
+            new { label = "Bildprompt-Tag", imagePrompt = "  on a soccer pitch  " });
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var body = await created.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("on a soccer pitch", body.GetProperty("imagePrompt").GetString());
+        var id = body.GetProperty("id").GetInt32();
+
+        var blank = await father.PatchAsJsonAsync($"/api/v1/creator/interest-tags/{id}", new { imagePrompt = "   " });
+        Assert.Equal(HttpStatusCode.OK, blank.StatusCode);
+        Assert.Equal(JsonValueKind.Null,
+            (await blank.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("imagePrompt").ValueKind);
+
+        var tooLong = await father.PatchAsJsonAsync($"/api/v1/creator/interest-tags/{id}",
+            new { imagePrompt = new string('x', 201) });
+        Assert.Equal(HttpStatusCode.BadRequest, tooLong.StatusCode);
+        Assert.Equal("validation_error", (await tooLong.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+    }
 }
