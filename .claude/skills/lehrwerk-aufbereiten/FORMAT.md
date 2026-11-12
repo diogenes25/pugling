@@ -121,9 +121,13 @@ Aufgaben, Texte, Dialoge oder Beispielsätze des Buchs.
   `list`, `birkenbihl`); `config` geht unverändert an sie, bis auf zwei Abkürzungen:
   - **Lückentext als `markup`**: `[Lösung|andere Schreibweise]` im Text, die Grundform in runden Klammern dahinter.
     Daraus werden Platzhalter und Lücken; mit `distractors` entsteht eine alphabetische Wortbank (Lösungen +
-    Ablenker, je Wort eine Kachel ohne Rücksicht auf Groß/Klein). Ohne `distractors` tippt das Kind frei. Beide
-    Abkürzungen nur genau so klein geschrieben; `distractors` als Liste von Wörtern und nur zusammen mit `markup`;
-    neben `markup` weder `text`, `gaps` noch eine eigene `wordBank` – die Wortbank kommt dann nur aus `distractors`.
+    Ablenker, je Wort eine Kachel – Wörter, die der Antwortvergleich nicht unterscheidet, sind eine). Ohne
+    `distractors` tippt das Kind frei. Beide Abkürzungen nur genau so klein geschrieben; `distractors` als nicht
+    leere Liste von Wörtern, die keine andere Schreibweise einer Lösung sind, und nur zusammen mit `markup`; neben `markup`
+    weder `text`, `gaps` noch eine eigene `wordBank` – die Wortbank kommt dann nur aus `distractors`.
+  - **Eine eigene `wordBank`** (ohne `markup`) darf eine Lösung vergessen: auf der Wortbank-Stufe ergänzt der
+    Server jede Lücke, für die keine Kachel passt, um ihre Lösung (B-487). Gemeint ist das als Netz, nicht als
+    Abkürzung – die Lösungen gehören in die Bank.
   - Alles andere geht unverändert an den Server. Schlusszeichen muss keine Lösung doppelt tragen: der
     Antwortvergleich verzeiht `. ? ! …` am Ende (B-457).
 - **Felder je Typ:** `config` darf nur die Felder des Vertrags tragen; `--pruefen` lehnt jedes andere ab, mit

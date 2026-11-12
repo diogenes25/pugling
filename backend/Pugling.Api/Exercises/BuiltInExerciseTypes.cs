@@ -217,13 +217,33 @@ public sealed class ClozeExerciseType : ExerciseTypeBase
     /// exercise (a pool that reshuffles per card is unreadable), and unlike a rotation it also breaks the
     /// correlation for the very first gap.
     /// </para>
+    /// <para>
+    /// Complete, too (B-487): a gap none of whose tiles the grader accepts gets its solution added. The bank is
+    /// written by hand on several paths (editor, loader, API) and a store-backed gap takes its solution from the
+    /// store, which can change after the bank was written - so the guarantee sits here, where every bank reaches
+    /// the child. Added for every gap of the exercise, not only the asked one: a pool that differs per card names
+    /// the asked gap's solution.
+    /// </para>
     /// </summary>
     public override IReadOnlyList<string>? Choices(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, int stage)
     {
         if ((ClozeStage)stage != ClozeStage.TranslationWordBank) return null;
         var bank = Deserialize<ClozeConfig>(configJson).WordBank;
-        return bank is { Count: > 0 } ? [.. bank.OrderBy(w => w, StringComparer.OrdinalIgnoreCase)] : null;
+        if (bank is not { Count: > 0 }) return null;
+        var pool = bank.ToList();
+        foreach (var gap in items)
+        {
+            // Checked against the pool as it grows: two gaps sharing a missing solution get one tile.
+            if (pool.Any(tile => Grader.Matches(tile, gap))) continue;
+            // A missing store entry leaves an empty placeholder; a blank tile would solve nothing.
+            if (gap.GradedAnswers().FirstOrDefault(a => !string.IsNullOrWhiteSpace(a)) is { } solution)
+                pool.Add(solution);
+        }
+        return [.. pool.OrderBy(w => w, StringComparer.OrdinalIgnoreCase)];
     }
+
+    // Stateless; the same comparison that grades the child's pick decides whether a tile solves a gap.
+    private static readonly AnswerGrader Grader = new();
 
     /// <inheritdoc/>
     public override IReadOnlyList<StageOption> StageOptions { get; } =

@@ -18,7 +18,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-470](B-470-foto-zu-wortliste-als-werkzeug.md) | Aus Fotos der Vokabelseiten wird eine Wortliste – als wiederholbares Werkzeug statt als Handarbeit unter raw/ | Wunsch | `in-arbeit` | P1 | S | doku | — |
 | [B-465](B-465-ki-lueckentext-mehrdeutig-und-verraten.md) | Ein KI-Lückentext nach dem Umbau: Titel passt nicht, Auswahl steht im Satz, Zeitformen ohne Alternative | Defekt | `idee` | P2 | — | backend | — |
-| [B-487](B-487-laden-wortbank-ohne-loesung.md) | Eine handgeschriebene Wortbank ohne die Lösung geht durch Prüfung und Selbsttest | Defekt | `idee` | P2 | — | .claude/skills/lehrwerk-aufbereiten | — |
+| [B-488](B-488-ki-creator-profil-fach-neben-genannter-reihe.md) | Ein werkunabhängiges Profil neben `--series` prüft das Fach nicht | Defekt | `idee` | P2 | — | backend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `gegrillt` | P2 | — | backend | Vertrag? |
 | [B-469](B-469-lernkontrolle-selbsteinschaetzung-und-typen-ohne-test.md) | Prüfauftrag: Der Vokabeltest ist per Vorgabe eine Selbsteinschätzung, Grammatik und Übersetzung haben keinen Test | Frage | `idee` | P2 | — | beides | — |
@@ -90,7 +90,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-447](B-447-arcade-zeigt-iso-daten.md) | Die Sohn-Arcade zeigt Daten als ISO-Text | Aufräumen | `idee` | P3 | — | frontend | — |
 
 <details>
-<summary>Abgenommen (387)</summary>
+<summary>Abgenommen (388)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -437,6 +437,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-483](B-483-laden-prueft-was-build-config-liest-nicht.md) | `laden.py` prüft Felder, die `build_config` anders liest | Defekt | `abgenommen` | P2 | S | .claude/skills/lehrwerk-aufbereiten | — |
 | [B-484](B-484-ki-creator-profil-und-reihe-aus-zwei-pfaden.md) | Der KI-Creator wählt Profil und Reihe an zwei Stellen | Defekt | `abgenommen` | P2 | M | backend | — |
 | [B-486](B-486-testmodus-lueckentext-eine-luecke-nach-der-anderen.md) | Testmodus: Lückentext eine Lücke nach der anderen | Defekt | `abgenommen` | P2 | S | frontend | — |
+| [B-487](B-487-laden-wortbank-ohne-loesung.md) | Eine handgeschriebene Wortbank ohne die Lösung geht durch Prüfung und Selbsttest | Defekt | `abgenommen` | P2 | S | backend, .claude/skills/lehrwerk-aufbereiten | — |
 | [B-49](B-49-sohn-app-schreib-primitive.md) | Die Sohn-App benutzt die geteilten Schreib-Primitive nicht | Aufräumen | `abgenommen` | P3 | S | frontend | — |
 | [B-50](B-50-kind-beschreibt-sich-selbst.md) | Das Kind beschreibt sich selbst: Interessen in einem geführten Prozess | Wunsch | `abgenommen` | P2 | L | beides | — |
 | [B-51](B-51-admin-rolle-dokumentieren.md) | Die Admin-Rolle kommt in keinem Rollen-Dokument vor | Aufräumen | `abgenommen` | P3 | XS | doku | — |
@@ -498,9 +499,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-470](B-470-foto-zu-wortliste-als-werkzeug.md) | Aus Fotos der Vokabelseiten wird eine Wortliste – als wiederholbares Werkzeug statt als Handarbeit unter raw/ | `in-arbeit` | erster Lauf an einem neuen Buch in frischer Sitzung (Découvertes Série bleue 2) |
 | [B-485](B-485-vokabelbilder-nach-interessen-erzeugen.md) | Kleine Bilder zu jeder Vokabel – erzeugt nach den Interessen des Kindes | `in-arbeit` | erster echter Lauf mit OpenAI-Schlüssel (images --child 1 --max 1) und Rollengang an der Sohn-Karte |
 
-### Nach der Abnahme entgangen (153)
+### Nach der Abnahme entgangen (154)
 
-**Nachgeschaut: 375 von 387 abgenommenen** — und in 135 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 12 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 376 von 388 abgenommenen** — und in 136 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 12 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -656,7 +657,8 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-481](B-481-ki-creator-raet-unit-und-fach-beim-kind.md) | Der KI-Creator rät beim Kind weiter die Unit und das Fach | [B-473] | `abgenommen` |
 | [B-483](B-483-laden-prueft-was-build-config-liest-nicht.md) | `laden.py` prüft Felder, die `build_config` anders liest | [B-475] | `abgenommen` |
 | [B-484](B-484-ki-creator-profil-und-reihe-aus-zwei-pfaden.md) | Der KI-Creator wählt Profil und Reihe an zwei Stellen | [B-481] | `abgenommen` |
-| [B-487](B-487-laden-wortbank-ohne-loesung.md) | Eine handgeschriebene Wortbank ohne die Lösung geht durch Prüfung und Selbsttest | [B-483] | `idee` |
+| [B-487](B-487-laden-wortbank-ohne-loesung.md) | Eine handgeschriebene Wortbank ohne die Lösung geht durch Prüfung und Selbsttest | [B-483] | `abgenommen` |
+| [B-488](B-488-ki-creator-profil-fach-neben-genannter-reihe.md) | Ein werkunabhängiges Profil neben `--series` prüft das Fach nicht | [B-484] | `idee` |
 
 <details>
 <summary>Nie nachgeschaut (12) — Arbeitsvorrat der Nachschau</summary>
@@ -676,8 +678,8 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-468](B-468-sohn-erreicht-die-app-nur-am-pc.md) | Der Sohn erreicht die App nur am Rechner des Vaters – „jederzeit am Handy“ braucht einen Ort für den Server |
 | [B-472](B-472-jedes-wort-in-beide-richtungen.md) | Jedes Wort einer Wortliste in beide Richtungen üben |
 | [B-476](B-476-kartenstufe-steigt-mit-dem-leitner-fach.md) | Die Stufe einer Vokabelkarte steigt mit ihrem Leitner-Fach: erst umdrehen, dann auswählen, dann schreiben |
-| [B-484](B-484-ki-creator-profil-und-reihe-aus-zwei-pfaden.md) | Der KI-Creator wählt Profil und Reihe an zwei Stellen |
 | [B-486](B-486-testmodus-lueckentext-eine-luecke-nach-der-anderen.md) | Testmodus: Lückentext eine Lücke nach der anderen |
+| [B-487](B-487-laden-wortbank-ohne-loesung.md) | Eine handgeschriebene Wortbank ohne die Lösung geht durch Prüfung und Selbsttest |
 
 </details>
 
@@ -772,7 +774,8 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-483](B-483-laden-prueft-was-build-config-liest-nicht.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 | [B-484](B-484-ki-creator-profil-und-reihe-aus-zwei-pfaden.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 | [B-486](B-486-testmodus-lueckentext-eine-luecke-nach-der-anderen.md) | `abgenommen` | Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
-| [B-487](B-487-laden-wortbank-ohne-loesung.md) | `idee` | `unverifiziert: true` |
+| [B-487](B-487-laden-wortbank-ohne-loesung.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
+| [B-488](B-488-ki-creator-profil-fach-neben-genannter-reihe.md) | `idee` | `unverifiziert: true` |
 
 <details>
 <summary>Verworfen (27)</summary>

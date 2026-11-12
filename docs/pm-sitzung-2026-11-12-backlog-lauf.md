@@ -220,7 +220,9 @@ Werkzeug unter `.claude/skills`.
 - **Vorschlag (CR)** aus Sprint 35: bei einem Review-Fund erst alle Leser derselben Größe suchen.
 - **Nächster Kandidat B-483** (P2, Durchrutscher aus B-475) – in Sprint 36 abgenommen.
 - **Nächster Kandidat B-484** (P2, Durchrutscher aus B-481) – in Sprint 37 abgenommen.
-- **Nächster Kandidat B-487** (P2, Durchrutscher aus B-483) – wartet, siehe „Halt nach diesem Sprint" (Sprint 37).
+- **Nächster Kandidat B-487** (P2, Durchrutscher aus B-483) – in Sprint 38 abgenommen.
+- **Nächster Kandidat B-488** (P2, Durchrutscher aus B-484) – wartet, siehe „Halt nach diesem Sprint" (Sprint 38).
+- **Vorschlag (CS)** aus Sprint 38: die Regel an die Senke legen, nicht an die Quellen.
 
 ## Sprint 34 — Ziel & Umfang
 
@@ -413,6 +415,55 @@ dessen, was die Suche findet – geprüft wird dort nur von Hand.
 meinem eigenen vorigen Sprint. Vier Nachschauen in Folge mit einem Fund heißen: das Verfahren findet sie zuverlässig,
 aber erst eine Runde zu spät; wer weitermachen lässt, bekommt je Sprint einen kleineren Rest.
 
+## Sprint 38 — Ziel & Umfang
+
+Fortsetzung auf Zuruf des Nutzers („Ja, B-487").
+
+**Sprint-Ziel:** *Der Sohn kann jede Lücke auf der Wortbank-Stufe lösen – gleich, wer die Bank wie geschrieben hat.*
+**Umfang:** B-487 (S) – `art: Defekt`, Durchrutscher aus B-483, autonom gegrillt.
+**Entwickler-Brief:** diesmal nicht die Schreibwege zählen, sondern die Stelle suchen, durch die *jede* Bank zum Kind
+geht (`Choices` über `CardFacets`), und die Regel dorthin legen; „passend" entscheidet der `AnswerGrader`. Lader-Reste
+mitnehmen. Keine Migration, kein Vertrag.
+
+## Iteration 38 — umgesetzt
+
+- **B-487:** der Pool der Wortbank-Stufe enthält für jede Lücke eine Kachel, die die Bewertung annimmt – fehlt sie, wird
+  die Lösung ergänzt, für alle Lücken (gleicher Pool je Karte). Lader: `distractors` nur als nicht-leere Liste, kein
+  Ablenker gleich einer anderen Schreibweise, Kacheln nach der Bewertungsregel zusammengelegt.
+- Kopie der echten DB: keine Lückentext-Übung mit Wortbank – nichts zu reparieren.
+- Review-Zähler: **0**. Mutanten 7/7 (C#) und 8/8 (Lader) rot; zwei Läufe wegen des Test-Tors der parallelen Sitzung
+  verworfen.
+
+## Runde 9 — Rollengang / Abnahme (Sprint 38)
+
+Volle Suite **1380/1380** nach der letzten Änderung.
+
+- **Sohn – abgenommen als Maschinengang.** `ClozePlayTests` holt die Karten der Wortbank-Stufe über die Route des Kindes:
+  eine Bank ohne die Lösung bietet sie trotzdem an, auf jeder Karte dieselben Kacheln. *„Wenn das Wort nicht dabei
+  ist, kann ich's nicht wählen – jetzt ist es immer dabei."* **Nicht gefahren:** Browser, echte DB.
+- **Creator – abgenommen (Lader offline).** `check()` lehnt leere und `null`-Ablenker und einen Ablenker ab, der eine
+  zweite richtige Kachel wäre.
+- **Vater – Regressionszeuge.** Kein Pfad im Diff; Suite grün.
+
+## Retrospektive (Sprint 38)
+
+**Nachschau:** Sprint 37 (B-484) von einem frischen `pugling-reviewer` an `1c90c8d`. **Ein Durchrutscher, zum fünften
+Mal in Folge:** das Fach eines werkunabhängigen Profils prüft nur der abgeleitete Pfad, nicht der genannte Ort – und
+die neue Fehlermeldung schickt genau dorthin → [B-488](backlog/B-488-ki-creator-profil-fach-neben-genannter-reihe.md)
+(P2, `entgangen_bei: B-484`). `nachgeschaut` an B-484.
+
+**Was die eigenen Tore durchgelassen haben:** B-484 hat (CR) angewandt und die Stellen *gefunden* – aber eine Regel an
+den Pfaden verteilt, die es gab. B-488 ist wieder eine Regel an einem von zwei Pfaden. In diesem Sprint ging es anders:
+statt die Schreibwege der Wortbank zu zählen (vier, plus der Speicher als fünfter), sitzt die Regel an der einen
+Stelle, durch die jede Bank zum Kind geht. Das Review fand dort kein 🟡.
+
+**Mechanismus:** keiner gelandet. Vorschlag **(CS)** zum Dialog: vor einer Regel die *Senke* suchen – die eine
+Stelle, durch die jedes Ergebnis geht – und die Regel dort ablegen statt an den Quellen; wo es keine Senke gibt
+(B-488: zwei Pfade zum Request), erst eine schaffen. Kein Tor, weil „Senke" sich nicht greppen lässt.
+
+**Halt nach diesem Sprint**, wie nach Sprint 35–37: der nächste Kandidat (B-488) ist wieder ein Durchrutscher aus
+meinem eigenen vorigen Sprint.
+
 ## Produktentscheidungen dieses Laufs (zum Umstoßen)
 
 1. **Schlusszeichen zählen beim Vergleich nicht** – auch ein *anderes* (`?` statt `.`), auch bei Ordnungszahlen
@@ -432,6 +483,7 @@ aber erst eine Runde zu spät; wer weitermachen lässt, bekommt je Sprint einen 
     1 und 4).
 11. **Ein ungenanntes Profil spricht nur auf der Zielreihe oder ohne Reihe**; Stoff und Quelle sind immer das Werk
     der Ablage, das freie Kinderbuch nie (B-484, 2 und 5).
+12. **Eine Wortbank ohne Lösung wird beim Ausspielen ergänzt, nicht beim Schreiben abgelehnt** (B-487, 1 und 2).
 
 ## Offene Roadmap
 

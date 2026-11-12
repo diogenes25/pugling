@@ -101,6 +101,20 @@ def parse_cloze(markup):
     return text, gaps, errors
 
 
+def graded(word):
+    """What the server's answer comparison sees of a word (StageMechanics.Normalize): case, a closing . ? ! …, the
+    apostrophe spelling and repeated spaces do not count. Two tiles alike here are one tile to the child."""
+    s = word
+    for c in "’‘ʼ´`":
+        s = s.replace(c, "'")
+    s = s.strip()
+    stripped = s.rstrip()
+    while stripped and stripped[-1] in ".?!…":
+        stripped = stripped[:-1].rstrip()
+    # Split on the space only, like the server: a tab or a no-break space stays part of the word there.
+    return " ".join(p for p in (stripped or s).lower().split(" ") if p)
+
+
 def contains_word(text, word):
     return re.search(r"(?<!\w)" + re.escape(word) + r"(?!\w)", text, re.IGNORECASE) is not None
 
@@ -227,13 +241,25 @@ def check(book, words, exercises):
         if e["typ"] == "cloze" and "markup" in e["config"] and not isinstance(e["config"]["markup"], str):
             err.append(f"{name}: markup ist ein Text")
             continue
-        distractors = e["config"].get("distractors") if e["typ"] == "cloze" else None
-        if distractors is not None and not (isinstance(distractors, list)
-                                            and all(isinstance(d, str) and d.strip() for d in distractors)):
-            err.append(f'{name}: distractors ist eine Liste nicht-leerer Texte, z. B. ["went", "gone"]')
+        # Present but null or empty is not "no bank": null would let the child type freely, [] would show the
+        # solutions alone. Leaving the field out is the way to free typing.
+        has_distractors = e["typ"] == "cloze" and "distractors" in e["config"]
+        distractors = e["config"]["distractors"] if has_distractors else None
+        if has_distractors and not (isinstance(distractors, list) and distractors
+                                    and all(isinstance(d, str) and d.strip() for d in distractors)):
+            err.append(f'{name}: distractors ist eine Liste nicht-leerer Texte, z. B. ["went", "gone"]; '
+                       f'ohne Wortbank das Feld weglassen')
+            distractors = None
         if e["typ"] == "cloze" and "markup" in e["config"]:
             _, gaps, problems = parse_cloze(e["config"]["markup"])
             err.extend(f"{name}: {p}" for p in problems)
+            # A distractor the grader accepts for a gap would be a second right tile next to the answer's. One equal
+            # to an answer merges with that answer's tile in build_config and is harmless.
+            answers = {graded(g["answer"]) for g in gaps}
+            alternatives = {graded(a) for g in gaps for a in g["alternatives"] or []} - answers
+            for d in distractors or []:
+                if graded(d) in alternatives:
+                    err.append(f"{name}: der Ablenker '{d}' ist eine andere Schreibweise einer Lösung")
             readable = re.sub(r"\[[^\[\]]*\]", " ", e["config"]["markup"])
             for g in gaps:
                 if contains_word(re.sub(r"\([^()]*\)", " ", readable), g["answer"]):
@@ -304,10 +330,10 @@ def build_config(e):
         distractors = config.pop("distractors", None)
         config.update({"text": text, "gaps": gaps})
         if distractors is not None:
-            # One tile per spelling the grader tells apart: it ignores case, so "went" next to "Went" would show twice.
+            # One tile per spelling the grader tells apart: "went" next to "Went." would show twice.
             bank = {}
             for word in [g["answer"] for g in gaps] + list(distractors):
-                bank.setdefault(word.lower(), word)
+                bank.setdefault(graded(word), word)
             config["wordBank"] = sorted(bank.values(), key=str.lower)
     return config
 

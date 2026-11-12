@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-12-backlog-lauf.md (Nachschau Sprint 35)
 unverifiziert: false
 entgangen_bei: [B-481]
-nachgeschaut: ""
+nachgeschaut: 2026-11-12
 grund: ""
 ersetzt_durch: []
 ---
@@ -125,3 +125,5 @@ zweiter Stelle mit eigener Regel bestimmt. Dieselbe Klasse wie B-473 und B-481: 
   Sprint 37: 4 von 5. **Rollengang (Creator) ohne Live-Lauf**: `CreatorAgentTests` fährt die Konsole mit
   `FakeChatClient` gegen die In-Process-API; Ollama und die echte DB nicht.
 - **2026-11-12** — Commit der Abnahme: `1c90c8d`.
+- **2026-11-12** — Nachschau (Sprint 38): ein werkunabhängiges `--profile` neben `--series` prüft das Fach
+  nicht – die Regel gilt nur auf dem abgeleiteten Pfad → [B-488](B-488-ki-creator-profil-fach-neben-genannter-reihe.md).

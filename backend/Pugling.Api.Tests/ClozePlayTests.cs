@@ -18,7 +18,7 @@ public class ClozePlayTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     private readonly PuglingWebAppFactory _factory = factory;
 
     /// <summary>A two-gap cloze with a word bank – the smallest shape in which the defect is visible.</summary>
-    private static async Task<int> CreateClozeAsync(HttpClient father)
+    private static async Task<int> CreateClozeAsync(HttpClient father, object? config = null)
     {
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
             new { name = TestApi.UniqueName("Englisch-Cloze") }));
@@ -34,7 +34,7 @@ public class ClozePlayTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
                 title = TestApi.UniqueName("Lückentext (Fixture)"),
                 orderIndex = 1,
                 rewardPoints = 15,
-                config = new
+                config = config ?? new
                 {
                     text = "A: {{1}}, how are you? B: I'm {{2}}, thank you.",
                     gaps = new[]
@@ -207,5 +207,114 @@ public class ClozePlayTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         Assert.All(cards.EnumerateArray(), c =>
             Assert.Equal(["fine", "good", "Hello", "Hi", "well"],
                 c.GetProperty("choices").EnumerateArray().Select(x => x.GetString())));
+    }
+
+    // ---- B-487: a bank without a gap's solution ---- ----
+
+    private async Task<List<List<string?>>> BankChoicesAsync(int exerciseId)
+    {
+        var (planId, positionId) =
+            TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)ClozeStage.TranslationWordBank);
+        var cards = await CardsAsync(await TestApi.ChildAsync(_factory), planId, positionId);
+        return [.. cards.EnumerateArray().Select(c => c.GetProperty("choices").EnumerateArray().Select(x => x.GetString()).ToList())];
+    }
+
+    /// <summary>
+    /// B-487: a hand-written bank that lacks a gap's solution still offers it, on every card the same pool. Red if
+    /// the bank is passed through as written (no "went", no "saw"), or if only the asked gap's solution is added
+    /// (the two cards then differ and each names its own solution).
+    /// </summary>
+    [Fact]
+    public async Task Wortbank_ohne_Loesung_bekommt_sie_auf_jeder_Karte()
+    {
+        var exerciseId = await CreateClozeAsync(await TestApi.AdultAsync(_factory), new
+        {
+            text = "I {{1}} home and {{2}} a film.",
+            gaps = new[] { new { index = 1, answer = "went" }, new { index = 2, answer = "saw" } },
+            wordBank = new[] { "go", "gone" },
+        });
+
+        var pools = await BankChoicesAsync(exerciseId);
+
+        Assert.Equal(2, pools.Count);
+        Assert.All(pools, pool => Assert.Equal(["go", "gone", "saw", "went"], pool));
+    }
+
+    /// <summary>
+    /// B-487: a tile the grader accepts already solves the gap - in another case, with a closing mark or as an
+    /// alternative - and nothing is added. Red if the bank is compared by exact spelling ("Went." would get "went"
+    /// next to it) or only against the main solution ("did go" would get "went" next to it).
+    /// </summary>
+    [Fact]
+    public async Task Wortbank_mit_einer_gueltigen_Schreibweise_bleibt_wie_geschrieben()
+    {
+        var exerciseId = await CreateClozeAsync(await TestApi.AdultAsync(_factory), new
+        {
+            text = "I {{1}} home and {{2}} a film.",
+            gaps = new object[]
+            {
+                new { index = 1, answer = "went", alternatives = new[] { "did go" } },
+                new { index = 2, answer = "saw", alternatives = Array.Empty<string>() },
+            },
+            wordBank = new[] { "did go", "go", "Saw." },
+        });
+
+        var pools = await BankChoicesAsync(exerciseId);
+
+        Assert.All(pools, pool => Assert.Equal(["did go", "go", "Saw."], pool));
+    }
+
+    /// <summary>
+    /// B-487, review: the added tile is a solution the grader accepts, never a blank one, and two gaps sharing a missing
+    /// solution get one tile. Red if the inline answer is added as written (a blank "  " tile instead of "went"), or if
+    /// the pool is not rechecked after each addition ("went" twice).
+    /// </summary>
+    [Fact]
+    public async Task Wortbank_ergaenzt_eine_angenommene_Loesung_und_jede_nur_einmal()
+    {
+        var exerciseId = await CreateClozeAsync(await TestApi.AdultAsync(_factory), new
+        {
+            text = "I {{1}} home and she {{2}} too.",
+            gaps = new[]
+            {
+                new { index = 1, answer = "  ", alternatives = new[] { "went" } },
+                new { index = 2, answer = "went", alternatives = Array.Empty<string>() },
+            },
+            wordBank = new[] { "go" },
+        });
+
+        var pools = await BankChoicesAsync(exerciseId);
+
+        Assert.All(pools, pool => Assert.Equal(["go", "went"], pool));
+    }
+
+    /// <summary>
+    /// B-487: a store-backed gap takes its solution from the store, which can change after the bank was written. The
+    /// pool follows the store. Red if the completion reads the config's inline answer (empty for a store gap) instead
+    /// of the resolved solution.
+    /// </summary>
+    [Fact]
+    public async Task Wortbank_folgt_einem_umbenannten_Wort_aus_dem_Speicher()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var (vocabId, key) = await TestApi.CreateStoreVocabAsync(father, TestApi.UniqueName("castle"), "die Burg");
+        var exerciseId = await CreateClozeAsync(father, new
+        {
+            text = "The {{1}} is old.",
+            gaps = new[] { new { index = 1, answer = "", vocabKey = key } },
+            wordBank = new[] { "tower" },
+        });
+        string renamed;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            var vocab = await db.Vocabularies.SingleAsync(v => v.Id == vocabId);
+            renamed = vocab.Word = TestApi.UniqueName("fortress");
+            await db.SaveChangesAsync();
+        }
+
+        var pool = Assert.Single(await BankChoicesAsync(exerciseId));
+
+        Assert.Equal(new[] { renamed, "tower" }.Order(StringComparer.OrdinalIgnoreCase), pool);
     }
 }
