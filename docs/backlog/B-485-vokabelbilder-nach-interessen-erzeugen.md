@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/medien, bereich/katalog, lerntechnik/vokabeln, rolle/creator, rolle/student]
+tags: [typ/story, status/geschaetzt, bereich/medien, bereich/katalog, lerntechnik/vokabeln, rolle/creator, rolle/student]
 aliases: [Vokabelbilder erzeugen, KI-Bilder nach Interessen, Medien Etappe 7b]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Wunsch
 groesse: L
@@ -9,7 +9,7 @@ wo: beides
 migration: ja
 vertragsbruch: nein
 quelle: Auftrag des Nutzers 2026-11-12 („kleine Bilder je Vokabel, nach den Interessen des Kindes")
-wartet_auf: ""
+wartet_auf: "B-484 abgeschlossen (baut gerade an denselben Agent-Dateien)"
 grund: ""
 ersetzt_durch: []
 ---
@@ -165,6 +165,82 @@ zeigen keins. Erst gegen eine Kopie der `pugling.db`, dann auf der echten (Migra
    Kindnamen noch das Zielwort im Alt-Text.
 9. Agent-Pipeline mit einem Fake-`IImageGenerator` getestet (kein Netz im Test).
 
+## Schätzung
+
+**Größe L.** Über dem Anker M (ein Batch-Pfad im `MediaSelector`), weil hier drei Schichten zugleich wachsen:
+ein Schemafeld samt Migration und PATCH-Schalter, ein neuer Lese-Endpunkt mit Plan→Position→Vokabel→Bild-
+Abgleich und ein neuer Agent-Befehl mit eigener externer Anbindung. Kein XL: der `MediaSelector`, die
+Ausspielung und die Sohn-Karte bleiben unangetastet (Entscheidungen 2 und 4).
+
+- **`wo: beides`** – Backend und Agent tragen die Last; das Frontend bekommt zwei kleine Stellen (unten).
+- **`migration: ja`** – `InterestTag.ImagePrompt` (nullable, Freitext). Bestandszeilen bleiben `null`, also kein
+  `UPDATE` nötig; die Länge kommt aus der Konventionsschleife (`SchemaGuardTests`).
+- **`vertragsbruch: nein`** – alles additiv: `ImagePrompt` in `InterestTagResponse`/`CreateInterestTagDto`/
+  `UpdateInterestTagDto` (+ `ClearImagePrompt`) in `backend/Pugling.Contracts/Creator/InterestTagDtos.cs:17-30`,
+  neues `MediaDemandResponse`, optionales `source` am Upload.
+
+### Nachgesehen beim Schätzen
+
+- **Der Upload nimmt kein `source` an** (`backend/Pugling.Api/Controllers/Creator/MediaUploadForm.cs:18-26`,
+  Client `backend/Pugling.Client/CreatorApi.cs:431-446`). Nur Anlegen per URL und PATCH kennen es
+  (`MediaAssetsController.cs:192`, `:312`). Ohne Ergänzung ginge Entscheidung 1s Nachweis (Modell + Prompt)
+  verloren oder bräuchte einen zweiten Aufruf je Bild → `Source` additiv in Form und Client.
+- **Zuordnung an der Vokabel kann der Client schon** (`CreatorApi.cs:495`, `LinkVocabularyMediaAsync`).
+- **Filter `origin` hat die API** (`MediaAssetsController.cs`, `[FromQuery] MediaOrigin? origin`), die Bild-
+  Bibliothek im Vater-Web (`frontend/src/vater/VaterMedia.tsx`) bietet ihn aber nicht an → kleiner
+  Frontend-Teil für Etappe 3.
+- **Interessen-Pflege im Vater-Web** sitzt in `frontend/src/vater/InterestTagAdmin.tsx:109-116` (Label, Facette,
+  Synonyme) → dort das Feld `ImagePrompt` ergänzen.
+- **Fake-Muster für den Agenten existiert** (`backend/Pugling.Api.Tests/CreatorAgentTests.cs:28`,
+  `FakeChatClient` gegen den In-Process-Server) → ein `FakeImageGenerator` daneben.
+
+### Risiken
+
+1. **`IImageGenerator` ist in `Microsoft.Extensions.AI` vermutlich als experimentell markiert** (die Diagnose
+   `MEAI001` steht in der Abstractions-DLL 10.8.1; die Zuordnung zu genau diesem Typ zeigt erst der Build); mit
+   `TreatWarningsAsErrors` bräche der Build dann. Unterdrückung gezielt im Agent-Projekt mit Begründung, nicht
+   repo-weit.
+2. **Gleiche Dateien wie B-484:** `AgentCommands.cs` und `CreatorAgentTests.cs` sind gerade fremd geändert und
+   lassen das Test-Tor rot. Erst bauen, wenn B-484 durch ist (`wartet_auf`).
+3. **Echte DB:** Migration erst gegen eine Kopie (`scripts/heimnetz.ps1 -Database <kopie> -Port <anderer>`), dann
+   echt; das Startskript sichert.
+4. **Schlüssel:** Den OpenAI-Schlüssel setzt der Nutzer selbst (`dotnet user-secrets` im Agent-Projekt, über
+   `run_in_terminal`); aus der Sandbox gesetzt landet er nicht auf seiner Platte.
+5. **„No text" hält nicht immer:** Auch gute Modelle malen gelegentlich Buchstaben. Abfangen nur über „anderes
+   Bild" (Entscheidung 2). Nach dem ersten echten Lauf stichprobenartig ansehen und die Quote im Verlauf
+   notieren.
+6. **Demand-Abfrage auf SQLite:** Gruppieren über Plan→Position→Item→Vokabel→Link→Tag nicht als
+   `GroupBy`-Aggregat in SQL erzwingen (bekannter SQLite-Fallstrick der Lernstand-Sicht); Kandidaten
+   laden, im Speicher abgleichen – die Mengen sind je Kind klein.
+
+### Angriffsplan (Backend zuerst)
+
+1. `InterestTag.ImagePrompt` + Migration + DTO-Felder + `ClearImagePrompt` im Creator-Controller
+   (erst Wert, dann Schalter); `PatchSemanticsTests`-Tabelle um den Schalter ergänzen.
+2. `source` in `MediaUploadForm` und `CreatorApi.UploadMediaAsync`.
+3. `GET creator/media/demand` (Service in `Services/Creator`, Betreuungs-Prüfung über `AuthAccess`) +
+   `MediaDemandResponse` in `Pugling.Contracts` + `CreatorApi.GetMediaDemandAsync`.
+4. Agent: `ImagePromptBuilder` (rein, deterministisch), Bebilderbarkeits-Prüfung über den vorhandenen
+   `IChatClient`, `IImageGenerator`-Registrierung (OpenAI, Paket `Microsoft.Extensions.AI.OpenAI`), Befehl
+   `images` mit `--dry-run`, Lauf-Bericht.
+5. Frontend: `ImagePrompt` in `InterestTagAdmin.tsx`, Filter „KI-erzeugt" in `VaterMedia.tsx`.
+6. `docs/medien-bilder.md` Etappe 7 nachziehen, Skill `ki-creator` um den Befehl `images` ergänzen.
+
+### Testweg
+
+| Kriterium | Test |
+| --- | --- |
+| 1, 2, 6 | neue `MediaDemandTests` in `Pugling.Api.Tests` (Gewicht 1 und drittes Interesse dürfen nie erscheinen; fremdes Kind → 404; nach Upload + Link leer) |
+| 3 | `InterestTaxonomyTests` (CRUD `imagePrompt`), `PatchSemanticsTests` (reflexiv, Schalter-Fall) |
+| 4, 7, 9 | neue `ImageAgentTests` nach Muster `CreatorAgentTests` mit `FakeImageGenerator` + `FakeChatClient` |
+| 4 (source) | `MediaUploadTests` um `source` |
+| 5 | `MediaSelectionTests`: zwei Kinder mit disjunkten Interessen, eins ohne, eins mit Abneigung, generierte Assets über die Karten-Ausspielung |
+| 8 | Unit-Tests `ImagePromptBuilder` (Motiv, `ImagePrompt`, Stil, „no text"; kein Kindname, Alt-Text ohne Zielwort) |
+| Frontend | Vitest für das neue Feld in `InterestTagAdmin`; `frontend-reviewer` |
+| gesamt | `/smoke-test`, dann Rollengang (Etappe 4) mit echtem Schlüssel auf einer DB-Kopie, Sohn-Karte im Handy-Format 375×812 |
+
+Reviewer vor der Abnahme: `pugling-reviewer` und `frontend-reviewer`.
+
 ## Offene Punkte (fürs Grillen)
 
 1. ~~Woher kommen die Bilder?~~ → Entscheidung 1 und 7.
@@ -179,3 +255,5 @@ zeigen keins. Erst gegen eine Kopie der `pugling.db`, dann auf der echten (Migra
 - 2026-11-12 · `ausformuliert` angelegt, Ist-Stand gegen den Code belegt.
 - 2026-11-12 · `gegrillt`: acht Entscheidungen mit dem Nutzer (Cloud/OpenAI, direkt verknüpfen, Top 2 + neutral,
   Wahl bleibt, fester Stil, neutraler Prompt Pflicht, Bild → Wort draußen).
+- 2026-11-12 · `geschaetzt`: L, beides, Migration ja, kein Vertragsbruch. Beim Nachsehen gefunden: Upload kennt
+  kein `source`, Bild-Bibliothek keinen Herkunftsfilter. Wartet auf B-484 (gleiche Agent-Dateien).
