@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/gamification, bereich/frontend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/gamification, bereich/frontend, rolle/student]
 aliases: [Bonus-Training, Extra-Übungen, Extra-Münzen]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: L
@@ -97,3 +97,6 @@ E2E `e2e/bonus.spec.ts`.
   im Frontend Fehlerbild nach gelungener Abgabe, Verlassen während der Abgabe, `role="alert"`, Fortsetzen bei der
   richtigen Karte. Drei neue Integrationstests (9 gesamt), E2E um das Fortsetzen ergänzt (rote Probe fällt in der
   richtigen Zeile). Volle Suite 1535/1535 grün, Vitest 923/923. Migration gegen eine Kopie der echten DB geprobt.
+- 2026-11-13: **abgenommen** mit Commit `ce9b9a8d`. Rollengang: die E2E `bonus.spec.ts` fährt den Weg des Sohns
+  an der laufenden App (Sperre vor der Pflicht, Öffnen danach, Einmal-Übung mit Münzen, Vokabel-Runde mit
+  Fortsetzen). Nicht auf der echten DB gespielt: der Heimnetz-Server übernimmt die Migration erst beim nächsten Start.
