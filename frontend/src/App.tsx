@@ -7,6 +7,8 @@ import { RemarkContextProvider } from "./lib/remarkContext";
 // Lazy: eine Sitzung braucht nie beide Bündel gleichzeitig (entweder Vater- oder Sohn-Seite).
 const SohnApp = lazy(() => import("./sohn/SohnApp").then((m) => ({ default: m.SohnApp })));
 const VaterApp = lazy(() => import("./vater/VaterApp").then((m) => ({ default: m.VaterApp })));
+// PROTOTYP (Wegwerf, nur DEV): Lernpfad nach Duolingo/Snipwise, siehe src/prototyp/PfadPrototyp.tsx.
+const PfadPrototyp = lazy(() => import("./prototyp/PfadPrototyp").then((m) => ({ default: m.PfadPrototyp })));
 
 /** Rollen-Weiche: / (Produktseite), /sohn (mobile PWA) und /vater (Web-Admin). */
 export default function App() {
@@ -21,6 +23,7 @@ export default function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/sohn/*" element={<SohnApp />} />
           <Route path="/vater/*" element={<VaterApp />} />
+          {import.meta.env.DEV && <Route path="/prototyp/pfad" element={<PfadPrototyp />} />}
           <Route
             path="*"
             element={<Navigate to={session ? (session.role === "Supervisor" ? "/vater" : "/sohn") : "/"} replace />}
