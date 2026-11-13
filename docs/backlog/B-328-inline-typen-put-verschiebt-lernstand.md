@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/backend, rolle/creator, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/backend, rolle/creator, rolle/student]
 aliases: [Inline-Typen ohne Sperre, Wort-Tausch per PATCH]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Frage
 groesse: S
@@ -85,7 +85,9 @@ Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Proto
 3. **Erkannt wird nur „weniger Einträge"** (`ItemsOf(neu).Count < ItemsOf(alt).Count`). Ein Umsortieren gleich langer Listen ist von
    einer Text-Korrektur an mehreren Stellen ohne stabile Ids nicht zu unterscheiden; es bleibt eine **bekannte Grenze**, im
    `<summary>` benannt. Begründung: eine Sperre, die Korrekturen mitträfe, nähme Entscheidung 1 die erlaubte Hälfte. *Kosten:*
-   wer gleich lange Listen umsortiert, verschiebt den Lernstand weiter still.
+   wer gleich lange Listen umsortiert, verschiebt den Lernstand weiter still. **Genauer (Review 2026-11-13):** die Prüfung vergleicht
+   nur die Anzahl – auch ein Einfügen mitten in der Liste und ein Löschen plus Anhängen gehen durch und verschieben den Lernstand
+   still; erkannt wird allein die kürzere Liste.
 4. **Jeder `PATCH`, der das Item auf einen anderen Store-Eintrag zeigen lässt, ist ein Tausch** – gleich ob per `vocabularyId` oder
    `front`/`back`. Gleicher Eintrag (z. B. nur `hint` oder Übersetzungs-Alternativen) bleibt frei. Begründung: das Kind merkt keinen
    Unterschied zwischen den beiden Wegen. *Kosten:* auch ein per `front`/`back` „berichtigtes" Wort wird gesperrt; berichtigt wird im
@@ -140,3 +142,25 @@ Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Proto
 - **2026-11-13** — **gegrillt**: Entscheidungen 3–4 (Reihenfolge als bekannte Grenze; `front`/`back` zählt als Tausch).
   Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Protokoll](../pm-sitzung-2026-11-13-backlog-lauf.md)).
 - **2026-11-13** — **geschaetzt**: S, backend, keine Migration, kein Vertragsbruch.
+- **2026-11-13** — `in-arbeit`: Das Basis-`UpdateConflictAsync` zählt `ItemsOf` alt/neu und sperrt eine **kürzere** Liste einer gespielten Inline-Übung mit `409 exercise_items_locked` (eigene Meldung: Korrektur an Ort und Stelle und Anhängen erlaubt); `ExerciseInPlanAsync`/`ShiftBlockedProblem` in die Basis gezogen. `PatchItem` vergleicht den **aufgelösten** Store-Eintrag mit `item.VocabularyId` und sperrt den Tausch (auch per `front`/`back`); Ausweg ist der Store. Bekannte Grenze (Entscheidung 3) im `<summary>`. Tests `ExerciseItemsAndProgressTests.InlineTyp_InPlan_Sperrt_Kuerzere_Liste_Erlaubt_Korrektur` (AK 1–3) und `ItemPatch_InPlan_Sperrt_Wort_Tausch_Erlaubt_Hinweis` (AK 4–5). AK 2, 3 und 5 sind im Ausgangszustand grün (Absichtserklärungen, rot unter B328-AK2/AK3/AK5). Rote Probe 6/6 rot.
+  Rote Probe (Gemessen an `afadf18d + Arbeitsbaum geändert`, 2026-11-13 22:15, `mutant-probe.py`, Grundlinie nach dem Zurückspielen grün):
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | B328-AK1 | backend/Pugling.Api/Controllers/Creator/ExerciseControllerBase.cs:118 | red | red |  |
+  | B328-AK2 | backend/Pugling.Api/Controllers/Creator/ExerciseControllerBase.cs:118 | red | red |  |
+  | B328-AK3 | backend/Pugling.Api/Controllers/Creator/ExerciseControllerBase.cs:118 | red | red |  |
+  | B328-AK4 | backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs:269 | red | red |  |
+  | B328-AK4-frontback | backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs:269 | red | red |  |
+  | B328-AK5 | backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs:279 | red | red |  |
+- **2026-11-13** — Review-Fund (`pugling-reviewer`) behoben: der reine Anzahl-Vergleich lässt auch ein Einfügen in der Mitte und Löschen plus Anhängen durch, die Meldung versprach aber „adding to the end is allowed“. Regel unverändert (Entscheidung 3); `<summary>`, Kommentar und Meldung („its list of entries cannot get shorter“) versprechen nichts mehr darüber hinaus, die bekannte Grenze in Entscheidung 3 ist entsprechend präzisiert. Rote Probe 6/6 rot.
+  Rote Probe nach den Review-Fixes (Gemessen an `afadf18d + Arbeitsbaum geändert`, 2026-11-13 22:33, `mutant-probe.py`, Grundlinie nach dem Zurückspielen grün):
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | B328-AK1 | backend/Pugling.Api/Controllers/Creator/ExerciseControllerBase.cs:121 | red | red |  |
+  | B328-AK2 | backend/Pugling.Api/Controllers/Creator/ExerciseControllerBase.cs:121 | red | red |  |
+  | B328-AK3 | backend/Pugling.Api/Controllers/Creator/ExerciseControllerBase.cs:121 | red | red |  |
+  | B328-AK4 | backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs:269 | red | red |  |
+  | B328-AK4-frontback | backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs:269 | red | red |  |
+  | B328-AK5 | backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs:279 | red | red |  |

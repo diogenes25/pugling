@@ -171,6 +171,38 @@ public class ExerciseMetadataTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Empty(ohneBody.GetProperty("interestTagIds").EnumerateArray());
     }
 
+    /// <summary>
+    /// <b>B-208 AK 2.</b> A PUT that leaves <c>interestTagIds</c> out entirely clears the dressing: the PUT is a
+    /// full replacement (B-208 decision 1). The body deliberately omits the key rather than sending
+    /// <c>null</c> - only omission is the case of the story. Pins existing behaviour (green on the original
+    /// code, an intent statement); red if <c>SetInterestLinks</c> returns early on <c>null</c> ("keep").
+    /// </summary>
+    [Fact]
+    public async Task Put_Ohne_InterestTagIds_Leert_Die_Einkleidung()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var (_, seriesId, seriesUnitId, categoryId) = await SetupAsync(father, $"Einkleidung-Put-{Guid.NewGuid():N}");
+        var basePath = $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic";
+        var einhorn = await InterestTagIdAsync(father, "Einhorn");
+
+        var id = await TestApi.IdAsync(await father.PostAsJsonAsync(basePath,
+            ArithmeticBody("Eingekleidet", categoryId, 5, 7, "Gymnasium", [einhorn])));
+        int[] nurEinhorn = [einhorn];
+        Assert.Equal(nurEinhorn, await DressingAsync(father, basePath, id));
+
+        var put = await father.PutAsJsonAsync($"{basePath}/{id}", new
+        {
+            title = "Eingekleidet",
+            orderIndex = 1,
+            rewardPoints = 10,
+            config = new { problems = new[] { new { prompt = "1 + 1", answer = 2, tolerance = 0 } } },
+            categoryId,
+        });
+
+        Assert.Equal(HttpStatusCode.OK, put.StatusCode);
+        Assert.Empty(await DressingAsync(father, basePath, id));
+    }
+
     [Fact]
     public async Task Uebung_TraegtMetadaten_UndFilterFindetSie()
     {

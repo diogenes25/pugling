@@ -82,6 +82,29 @@ public class SeedContractTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
+    /// B-445 AK 1 and 4: on a fresh database the seeded son matches the teacher's subject-teacher profile, and he still
+    /// carries neither grade nor school type. AK 1 is red when the seed does not create the profile; AK 4 is green on the
+    /// original code (intent statement) and turns red when a grade is set on the son - assistent.spec.ts filters the
+    /// catalog by it and would lose a row.
+    /// </summary>
+    [Fact]
+    public async Task SeedKind_Findet_Den_Fachlehrer_Und_Bleibt_Ohne_Klasse()
+    {
+        var father = await TestApi.AdultAsync(factory);
+
+        var matches = await father.GetFromJsonAsync<JsonElement>("/api/v1/creator/profiles/match?childId=1");
+        Assert.Contains(matches.EnumerateArray(), m =>
+            m.GetProperty("profile").GetProperty("name").GetString() == "Herr Schmidt – Englisch"
+            && m.GetProperty("profile").GetProperty("ownerAdultId").GetInt32() == 2);
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        var sohn = await db.Children.AsNoTracking().SingleAsync(c => c.Id == 1);
+        Assert.Null(sohn.Grade);
+        Assert.Equal(Pugling.Contracts.SchoolTypes.None, sohn.SchoolType);
+    }
+
+    /// <summary>
     /// <b>The seed must be able to run a second time without duplicating anything</b> - startup calls it on
     /// <i>every</i> boot. Nothing checked exactly that so far: the idempotency of every sub-routine was
     /// promised but never measured. A forgotten "does it exist already?" guard in a new routine would only

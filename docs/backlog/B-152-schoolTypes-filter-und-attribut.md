@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/backend, bereich/katalog, rolle/supervisor]
+tags: [typ/story, status/in-arbeit, bereich/backend, bereich/katalog, rolle/supervisor]
 aliases: [Ein Enum zwei Rollen, SchoolTypes Filter oder Attribut, unbekannte Schulart]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Frage
 groesse: XS
@@ -145,3 +145,13 @@ Frontend nie schickt).
 - **2026-11-13** — **gegrillt**: Entscheidung 1 ist die des Nutzers vom 2026-10-23; Entscheidungen 2 und 3 (zurückgestellt) sind
   Stakeholder-Entscheidungen im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Protokoll](../pm-sitzung-2026-11-13-backlog-lauf.md)).
 - **2026-11-13** — **geschaetzt**: XS, backend, keine Migration, kein Vertragsbruch.
+- **2026-11-13** — `in-arbeit`: `ChildrenController.SchoolTypeAcceptable` (`None` oder genau ein definiertes Bit) vor jedem Schreiben in `Create` und `Update`, `400 validation_error`; geprüft wird nur der **gesendete** Wert (Entscheidung 2). Der `<summary>` an `CreateChildDto`/`UpdateChildDto` nennt die Regel. Tests `ChildLifecycleTests.Schulart_Des_Kindes_Ist_Ein_Wert_Oder_Keine_Angabe` (AK 1–3) und `Patch_Ohne_Schulart_Laesst_Eine_Alte_Kombination_Stehen` (AK 4; Absichtserklärung, im Ausgangszustand grün, rot unter B152-AK4). Rote Probe 5/5 rot.
+  Rote Probe (Gemessen an `afadf18d + Arbeitsbaum geändert`, 2026-11-13 22:15, `mutant-probe.py`, Grundlinie nach dem Zurückspielen grün):
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | B152-AK1-Create | backend/Pugling.Api/Controllers/Supervisor/ChildrenController.cs:89 | red | red |  |
+  | B152-AK2-Update | backend/Pugling.Api/Controllers/Supervisor/ChildrenController.cs:130 | red | red |  |
+  | B152-AK2-IsDefined | backend/Pugling.Api/Controllers/Supervisor/ChildrenController.cs:41 | red | red |  |
+  | B152-AK3 | backend/Pugling.Api/Controllers/Supervisor/ChildrenController.cs:41 | red | red |  |
+  | B152-AK4 | backend/Pugling.Api/Controllers/Supervisor/ChildrenController.cs:130 | red | red |  |

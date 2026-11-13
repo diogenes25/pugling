@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, bereich/reward, rolle/student, rolle/supervisor]
+tags: [typ/story, status/in-arbeit, bereich/training, bereich/reward, rolle/student, rolle/supervisor]
 aliases: [Kennenlern-Tag ohne Malus, Erster Tag einer Position]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Frage
 groesse: S
@@ -100,6 +100,9 @@ Alle vier: Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11
    Ziel als offen. *Rot macht ihn:* die Ausnahme in `IsGoalMetAsync` statt in der Malus-Abrechnung.
 6. Wöchentliche Positionen bleiben unverändert (erste Woche ohne Test → Malus). *Rot macht ihn:* eine Ausnahme ohne
    Taktungs-Prüfung.
+7. Eine Position, die am Mittwoch in einem seit Montag laufenden Plan angelegt wird, zahlt für Montag und Dienstag keinen Malus:
+   die Abrechnung beginnt am ersten fälligen Tag der Position (`max(CreatedAt, plan.StartDate)`), schon gebuchte Zeilen bleiben.
+   *Rot macht ihn:* das Abrechnungsfenster beginnt wieder bei `plan.StartDate`. (Im Review gefunden, im Sprint behoben.)
 
 ## Schätzung
 
@@ -127,3 +130,28 @@ Schemaänderung, kein Vertragsfeld.
   Rückwirkung). Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13,
   [Protokoll](../pm-sitzung-2026-11-13-backlog-lauf.md)).
 - **2026-11-13** — geschaetzt: S, backend, keine Migration, kein Vertragsbruch.
+- **2026-11-13** — `in-arbeit`: `PositionProgressService.IsIntroductionDaySparedAsync` – nur tägliche Taktung, Einführungstag = `max(CreatedAt als UTC-Datum, plan.StartDate)`, malusfrei, wenn an genau diesem Tag `min(Dosis, Pool)` bzw. der ganze Pool eingeführt wurde; Pool 0 → alte Regel. Aufruf in `SettleClosedPeriodsAsync` **nach** `IsGoalMetAsync` – nur malusfrei, nicht erfüllt (keine Belohnung, das Ziel bleibt offen). Gebuchte Malus-Zeilen bleiben (keine Rückwirkung). Tests `PflichtMalusTests.Einfuehrungstag_MitAllenEingefuehrten_KostetKeinenMalus_DerZweiteTagSchon` (AK 1, 3), `Einfuehrungstag_OhneVolleEinfuehrung_KostetDenMalus` (AK 2), `Einfuehrungstag_MitTagesdosis_GenuegtDiePortion` (AK 4), `WoechentlichePosition_ErsteWocheOhneTest_KostetWeiterDenMalus` (AK 6), `ErstbegegnungTests.Einfuehrungstag_NachDemEinfuehren_BleibtDasZielOffen` (AK 5). AK 2, 3, 5 und 6 sind im Ausgangszustand grün (Absichtserklärungen, rot unter den jeweiligen Mutanten). `/smoke-test` und Rollengang nicht gelaufen. Rote Probe 7/7 rot.
+  Rote Probe (Gemessen an `afadf18d + Arbeitsbaum geändert`, 2026-11-13 22:15, `mutant-probe.py`, Grundlinie nach dem Zurückspielen grün):
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | B432-AK1 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:388 | red | red |  |
+  | B432-AK1-wrongday | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:334 | red | red |  |
+  | B432-AK2 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:341 | red | red |  |
+  | B432-AK3 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:334 | red | red |  |
+  | B432-AK4 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:338 | red | red |  |
+  | B432-AK5 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:111 | red | red |  |
+  | B432-AK6 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:331 | red | red |  |
+- **2026-11-13** — Review-Fund (`pugling-reviewer`) behoben, gehört zur eigenen Regel dieser Story: `SettleClosedPeriodsAsync` begann das Fenster bei `plan.StartDate` und rechnete damit Tage **vor** dem Anlegen der Position ab – im Widerspruch zum `<summary>` („erster fälliger Tag = max(CreatedAt, StartDate)“). Jetzt beginnt es bei `FirstDueDay(pos, plan)` (gemeinsam mit der Einführungstag-Regel); schon gebuchte Zeilen bleiben. Neues AK 7, Test `PflichtMalusTests.Position_SpaeterAngelegt_ZahltKeinenMalusFuerTageDavor`. Der Helfer `SeedPenaltyPlan` legt die Position jetzt standardmäßig zum Plan-Start an (sonst schuldeten die bestehenden Fälle keine vergangenen Tage mehr). Rote Probe 8/8 rot.
+  Rote Probe nach den Review-Fixes (Gemessen an `afadf18d + Arbeitsbaum geändert`, 2026-11-13 22:33, `mutant-probe.py`, Grundlinie nach dem Zurückspielen grün):
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | B432-AK1 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:400 | red | red |  |
+  | B432-AK1-wrongday | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:343 | red | red |  |
+  | B432-AK2 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:350 | red | red |  |
+  | B432-AK3 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:343 | red | red |  |
+  | B432-AK4 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:347 | red | red |  |
+  | B432-AK5 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:111 | red | red |  |
+  | B432-AK6 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:341 | red | red |  |
+  | B432-AK7 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:385 | red | red |  |

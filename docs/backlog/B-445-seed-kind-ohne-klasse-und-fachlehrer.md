@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/seed, rolle/supervisor]
+tags: [typ/story, status/in-arbeit, bereich/seed, rolle/supervisor]
 aliases: [Seed-Kind ohne Klasse und Fachlehrer]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Aufräumen
 groesse: XS
@@ -115,3 +115,12 @@ Alle drei: Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11
 - **2026-11-13** — gegrillt: Kind bleibt klassenlos, Profil nur auf frischer DB, Werte festgelegt. Stakeholder-Entscheidung
   im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Protokoll](../pm-sitzung-2026-11-13-backlog-lauf.md)).
 - **2026-11-13** — geschaetzt: XS, backend, keine Migration, kein Vertragsbruch.
+- **2026-11-13** — `in-arbeit`: `SeedTeacherLibrary` legt das Profil „Herr Schmidt – Englisch“ (Herr Schmidt, Englisch, Gymnasium, Klasse 5–10, ohne Reihe, deutsche Persona, aktiv) im Inhaltszweig **nach** der Demo-Unit-Sperre an; die echte DB bekommt es nie. Tests `SeedContractTests.SeedKind_Findet_Den_Fachlehrer_Und_Bleibt_Ohne_Klasse` (AK 1 und AK 4; die AK-4-Hälfte ist Absichtserklärung, im Ausgangszustand grün) und `SeedFamilyTests.FachlehrerProfil_Entsteht_Nur_Auf_Frischer_Datenbank` (AK 2, 3: zweiter Seed-Lauf, dann Profil gelöscht und erneut geseedet). Keine bestehende Profil-Zusicherung wurde rot (CreatorProfile-, Fit-, Fachname-Tests grün). `/smoke-test` nicht gelaufen. Rote Probe 3/3 rot.
+  Rote Probe (Gemessen an `afadf18d + Arbeitsbaum geändert`, 2026-11-13 22:15, `mutant-probe.py`, Grundlinie nach dem Zurückspielen grün):
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | B445-AK1 | backend/Pugling.Api/Data/Seed.cs:642 | red | red |  |
+  | B445-AK2-3 | backend/Pugling.Api/Data/Seed.cs:530 | red | red |  |
+  | B445-AK4 | backend/Pugling.Api/Data/Seed.cs:1111 | red | red |  |
+- **2026-11-13** — Review-Fund (`pugling-reviewer`) behoben: der Testkommentar „der Zustand der echten pugling.db“ war irreführend – die echte DB schützt nicht die Unit-Sperre, sondern dass sie gar nicht geseedet wird (Production ohne Seed, `Program.cs:665`; `scripts/heimnetz.ps1:162` setzt `Seed__Enabled=false`). Kommentare in `SeedFamilyTests.cs` und `Seed.cs` berichtigt, Leerzeile vor `SeedAsync` ergänzt; die Verlauf-Zeile davor („die echte DB bekommt es nie“) gilt aus diesem Grund, nicht wegen der Sperre.

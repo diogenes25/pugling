@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/backend, bereich/katalog, rolle/creator]
+tags: [typ/story, status/in-arbeit, bereich/backend, bereich/katalog, rolle/creator]
 aliases: [PUT löscht die Einkleidung, ausgelassenes Feld heißt leer, Vollersatz vs. Autoren-Information]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Frage
 groesse: XS
@@ -151,3 +151,9 @@ Getroffen vom Nutzer im Dialog am 2026-10-23 (Backlog-Sichtung, G-3).
   das weggelassene Feld pinnt weiter nur der `POST` (`ExerciseMetadataTests.cs:143-172`). AKs final.
 - **2026-11-13** — **geschaetzt** (Backlog-Lauf, [Protokoll](../pm-sitzung-2026-11-13-backlog-lauf.md)): XS, backend, keine Migration;
   `vertragsbruch` von `offen` auf `nein`, weil Entscheidung 1 des Nutzers das heutige Verhalten behält.
+- **2026-11-13** — `in-arbeit`: Test `ExerciseMetadataTests.Put_Ohne_InterestTagIds_Leert_Die_Einkleidung` (AK 2; Payload ohne den Schlüssel). **Absichtserklärung**: im Ausgangszustand grün, er pinnt Entscheidung 1; rot wird er durch „behalten“ (`if (tagIds is null) return;` in `SetInterestLinks`). Der `<summary>` am Stichwort-`DELETE` nennt jetzt „omitted means cleared, decided in B-208“ (AK 3). Kein Produktionsverhalten geändert. Rote Probe 1/1 rot.
+  Rote Probe (Gemessen an `afadf18d + Arbeitsbaum geändert`, 2026-11-13 22:15, `mutant-probe.py`, Grundlinie nach dem Zurückspielen grün):
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | B208-AK2 | backend/Pugling.Api/Controllers/Creator/ExerciseControllerBase.cs:193 | red | red |  |

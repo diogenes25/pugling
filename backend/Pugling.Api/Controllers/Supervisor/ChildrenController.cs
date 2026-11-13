@@ -27,6 +27,19 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
 
     private static bool BonusCapAcceptable(int? cap) => cap is null or (>= 0 and <= MaxBonusDailyCoinCap);
 
+    private const string SchoolTypeMessage = "A child attends exactly one school type; send a single value or None.";
+
+    /// <summary>
+    /// B-152: <see cref="SchoolTypes"/> is a flags enum because exercises, series and profiles use it as a filter,
+    /// where a combination makes sense. A child attends ONE school, so a combination is a modelling accident that
+    /// makes profile matches ambiguous. Only a SENT value is checked - stored combinations stay until someone
+    /// touches the field. <c>Enum.IsDefined</c> catches undefined bits that the string-enum converter lets through
+    /// as plain numbers.
+    /// </summary>
+    private static bool SchoolTypeAcceptable(SchoolTypes? value) =>
+        value is null or SchoolTypes.None
+        || (System.Numerics.BitOperations.IsPow2((int)value.Value) && Enum.IsDefined(value.Value));
+
     Task<ChildResponse?> ProjectOne(int childId, CancellationToken ct) =>
         db.Children
             .Where(c => c.Id == childId)
@@ -73,6 +86,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         if (string.IsNullOrWhiteSpace(dto.Name)) return this.ProblemWithCode(ApiErrors.ValidationError, "Name is required.");
         if (dto.Pin is not null && !PinHasher.IsAcceptable(dto.Pin)) return this.ProblemWithCode(ApiErrors.ValidationError, PinHasher.TooShortMessage);
         if (!BonusCapAcceptable(dto.BonusDailyCoinCap)) return this.ProblemWithCode(ApiErrors.ValidationError, BonusCapMessage);
+        if (!SchoolTypeAcceptable(dto.SchoolType)) return this.ProblemWithCode(ApiErrors.ValidationError, SchoolTypeMessage);
 
         var child = new Child
         {
@@ -113,6 +127,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         if (child is null) return NotFound();
         if (dto.Pin is not null && !PinHasher.IsAcceptable(dto.Pin)) return this.ProblemWithCode(ApiErrors.ValidationError, PinHasher.TooShortMessage);
         if (!BonusCapAcceptable(dto.BonusDailyCoinCap)) return this.ProblemWithCode(ApiErrors.ValidationError, BonusCapMessage);
+        if (!SchoolTypeAcceptable(dto.SchoolType)) return this.ProblemWithCode(ApiErrors.ValidationError, SchoolTypeMessage);
 
         if (dto.Name is not null) child.Name = dto.Name.Trim();
         // Value first, clear switch second - "clear" wins if a client sends both.

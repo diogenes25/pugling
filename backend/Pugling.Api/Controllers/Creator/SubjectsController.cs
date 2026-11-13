@@ -124,6 +124,13 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
     /// promise for the next child-owned entity, and one added with a <c>SetNull</c> subject would quietly
     /// fall on the other side of the line.
     ///
+    /// One catalog rule blocks as well (B-404): a series of this subject that hosts exercises. The series'
+    /// <c>SetNull</c> would otherwise produce a series without a subject that carries exercises - the state
+    /// that creating an exercise (B-106 T-01) and clearing a series' subject (B-401) both refuse. A series
+    /// without exercises keeps losing only its assignment and shows the old name as free text (B-142).
+    /// Known limit: units with grammar topics of this subject and exercises of other series that carry one
+    /// of its categories do not block; those links still go with the cascade.
+    ///
     /// The pre-check is not redundant next to <c>DeleteBehavior.Restrict</c>, and vice versa. Without the
     /// check the database would raise the conflict as a bare 500 with a half-saved state instead of a
     /// readable 409. Without <c>Restrict</c> this check would be the only thing between a child's
@@ -151,6 +158,14 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
             || await db.TimetableEntries.AnyAsync(t => t.SubjectId == subjectId, ct))
             return this.ProblemWithCode(ApiErrors.SubjectInUse,
                 "This subject is used in a child's objectives or timetable. Remove those entries first.");
+
+        // B-404: the same rule as clearing a series' subject (B-401) and creating an exercise (B-106 T-01) -
+        // a series without a subject may not host exercises. Without this third door the delete would leave
+        // exactly that state behind and take the exercises' categories with it by cascade.
+        if (await db.Exercises.AnyAsync(e => e.SeriesUnit!.Series!.SubjectId == subjectId, ct))
+            // B-414: only the lock is named - moving the series or removing its exercises can be locked in turn
+            // (series_subject_in_use, owner-only, exercise_in_use), so neither is offered as a way out (as in B-401).
+            return this.ProblemWithCode(ApiErrors.SubjectInUse, "This subject carries a textbook series with exercises.");
 
         db.Subjects.Remove(subject);
         await db.SaveChangesAsync(ct);

@@ -14,7 +14,10 @@ public record ChildResponse(int Id, string Name, int? BirthYear, int? Grade,
     SchoolTypes SchoolType, Gender Gender, IReadOnlyList<string> Interests, string? ProfileNotes,
     ContentRating AllowedContentRating, DateTime CreatedAt, int Coins, int Gems, int? BonusDailyCoinCap);
 
-/// <summary>Input for creating a child.</summary>
+/// <summary>
+/// Input for creating a child. <c>SchoolType</c> is a single value or <c>None</c> ("not specified"): a child attends one
+/// school, so a combination of flags or an undefined bit is rejected with <c>validation_error</c> (B-152).
+/// </summary>
 public record CreateChildDto(string Name, int? BirthYear, int? Grade, SchoolTypes? SchoolType, string? Pin,
     Gender? Gender = null, List<string>? Interests = null, string? ProfileNotes = null,
     ContentRating? AllowedContentRating = null, int? BonusDailyCoinCap = null);
@@ -24,7 +27,8 @@ public record CreateChildDto(string Name, int? BirthYear, int? Grade, SchoolType
 /// and therefore cannot <b>clear</b> anything – that is what the <c>Clear…</c> switches are for (cf.
 /// <c>ClearGrade</c> on the class test): <c>ClearBirthYear</c> removes the birth year,
 /// <c>ClearGrade</c> the grade level (the child then drops out of grade filters), <c>ClearBonusDailyCoinCap</c> returns
-/// the bonus cap to the server default.
+/// the bonus cap to the server default. A sent <c>SchoolType</c> must be a single value or <c>None</c> (B-152); a stored
+/// combination from before that rule survives a PATCH that does not send the field.
 /// </summary>
 public record UpdateChildDto(string? Name, int? BirthYear, int? Grade, SchoolTypes? SchoolType, string? Pin,
     Gender? Gender = null, List<string>? Interests = null, string? ProfileNotes = null,

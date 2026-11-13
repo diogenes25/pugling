@@ -313,6 +313,44 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     }
 
     /// <summary>
+    /// The day the position becomes due for the first time: <c>max(CreatedAt as UTC date, plan.StartDate)</c> (B-432).
+    /// CreatedAt is stored in UTC, so its date is the UTC calendar day like every other day in this service.
+    /// </summary>
+    private static DateOnly FirstDueDay(PlanPosition pos, StudyPlan plan)
+    {
+        var created = DateOnly.FromDateTime(pos.CreatedAt);
+        return created > plan.StartDate ? created : plan.StartDate;
+    }
+
+    /// <summary>
+    /// Is the missed <paramref name="day"/> the position's introduction day, and did the child introduce that day's
+    /// portion (B-432)? On that day every item is new: the child meets them in round 1 and would have to pass a test about
+    /// words seen minutes ago. Doing what the day sensibly asks - introducing - must not cost coins.
+    /// <para>
+    /// The rule only spares the penalty; it does NOT count as goal met (no reward, no daily box, the overview keeps the
+    /// goal open), which is why it lives here and not in <see cref="IsGoalMetAsync"/>: introducing deliberately earns
+    /// nothing. The introduction day is the position's first due day, <c>max(CreatedAt as UTC date, plan.StartDate)</c>,
+    /// bound to creation so that skipping cannot push the exception to tomorrow. Daily cadence only - a weekly goal leaves
+    /// days to practise. The portion is the whole pool, or <c>min(dose, pool)</c> under a daily dose (whose positions
+    /// introduce every day, hence the fixed day). A position without an introducible pool keeps the old rule. Already
+    /// booked penalties stay: this check only runs for periods not yet settled.
+    /// </para>
+    /// </summary>
+    private async Task<bool> IsIntroductionDaySparedAsync(PlanPosition pos, StudyPlan plan, DateOnly day, CancellationToken ct)
+    {
+        if (pos.Cadence != GoalCadence.Daily) return false;
+        var introductionDay = FirstDueDay(pos, plan);
+        if (day != introductionDay) return false;
+
+        var pool = play.PoolSize(pos, (await play.ItemsOfAsync(pos, ct: ct)).Count);
+        if (pool == 0) return false;
+        var portion = play.DailyDose(pos) is > 0 and var dose ? Math.Min(dose, pool) : pool;
+        var introduced = await db.PositionItemProgress.CountAsync(
+            p => p.PlanPositionId == pos.Id && p.IntroducedAt == introductionDay, ct);
+        return introduced >= portion;
+    }
+
+    /// <summary>
     /// Recalculates all <b>closed</b> mandatory periods for a child and books the coin penalty
     /// (<see cref="PlanPosition.PenaltyCoins"/>) once for every period <b>missed</b> (goal not reached),
     /// as a negative <see cref="PointKind.GoalPenalty"/> ledger entry. The "penalty" against not learning.
@@ -341,7 +379,10 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         foreach (var pos in positions)
         {
             var plan = pos.StudyPlan!;
-            var windowStart = plan.StartDate > lookbackFloor ? plan.StartDate : lookbackFloor;
+            // B-432: a position owes nothing for days before it existed - settlement starts at its first due day.
+            // Penalties already booked for such days stay (no retroactive rewrite of the ledger).
+            var firstDue = FirstDueDay(pos, plan);
+            var windowStart = firstDue > lookbackFloor ? firstDue : lookbackFloor;
 
             var cadence = pos.Cadence;
             foreach (var (from, to) in ClosedPeriods(cadence, windowStart, today))
@@ -355,6 +396,8 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
                 // Safeguard against a race with the reward path (PointsGoalMet == 0 books no reward, yet the
                 // goal can still be met): punish only when the period was actually missed.
                 if (await IsGoalMetAsync(pos, plan, to, ct)) continue;
+                // Spared, not met: no penalty, but no reward either - the reward path never sees this rule (B-432).
+                if (await IsIntroductionDaySparedAsync(pos, plan, from, ct)) continue;
 
                 db.PositionGoalPenalties.Add(new PositionGoalPenalty
                 {

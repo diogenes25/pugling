@@ -44,6 +44,36 @@ public class ErstbegegnungTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         return db.ChildPointsEntries.Where(e => e.Reason.StartsWith(title)).Sum(e => e.Amount);
     }
 
+    /// <summary>
+    /// B-432 AK 5: the introduction day is only spared the penalty, it does not count as met. After introducing every word
+    /// without a test the day overview still shows the goal open and no goal reward is booked. Green on the original code
+    /// (intent statement); red when the exception moves into <c>IsGoalMetAsync</c> instead of the penalty settlement.
+    /// </summary>
+    [Fact]
+    public async Task Einfuehrungstag_NachDemEinfuehren_BleibtDasZielOffen()
+    {
+        var (child, planId, positionId) = await SetupAsync(TestStage.FreeText, introduced: false);
+        var sessionId = await StartAsync(child, planId, positionId);
+        for (var i = 0; i < ThreeWords.Length; i++)
+            Assert.True((await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, i, wasKnown: true)).IsSuccessStatusCode);
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            Assert.Equal(ThreeWords.Length, db.PositionItemProgress.Count(p => p.PlanPositionId == positionId && p.IntroducedAt == today));
+        }
+
+        var overview = await child.GetFromJsonAsync<JsonElement>($"/api/v1/student/study-plans/{planId}/overview");
+        var position = overview.GetProperty("today").GetProperty("positions").EnumerateArray()
+            .Single(p => p.GetProperty("positionId").GetInt32() == positionId);
+        JsonAssert.False(position, "goalMet");
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            Assert.False(db.PositionGoalRewards.Any(r => r.PlanPositionId == positionId));
+        }
+    }
+
     // AK 1: a never-seen atom comes as a display card on a typed stage - with the solution - and earns nothing,
     // while its review introduces it for today.
     [Fact]

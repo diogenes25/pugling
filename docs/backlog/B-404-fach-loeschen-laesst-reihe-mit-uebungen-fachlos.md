@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/backend, rolle/creator]
+tags: [typ/story, status/in-arbeit, bereich/backend, rolle/creator]
 aliases: [Fach löschen macht Reihe fachlos]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Frage
 groesse: XS
@@ -116,3 +116,20 @@ Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Proto
 - **2026-11-13** — **gegrillt**: Entscheidungen 1–3. Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13,
   [Protokoll](../pm-sitzung-2026-11-13-backlog-lauf.md)).
 - **2026-11-13** — **geschaetzt**: XS, backend, keine Migration, kein Vertragsbruch.
+- **2026-11-13** — `in-arbeit`: `SubjectsController.Delete` verweigert mit `409 subject_in_use`, solange eine Reihe des Fachs Übungen trägt (Kriterium `Exercise.SeriesUnit.Series.SubjectId`, nach der Eigentumsprüfung, vor `Remove`); die Meldung nennt die Reihe mit Übungen und die zwei Auswege (Reihe umhängen, Übungen entfernen); `<summary>` um den Katalog-Fall samt bekannter Grenze (Entscheidung 3) ergänzt. Test `FachLoeschenSperreTests.Fach_MitReiheDieUebungenTraegt_LaesstSichNichtLoeschen` (AK 1, 3; prüft danach Fach, Fach der Reihe und Art der Übung). AK 2 hält der bestehende Fall `Fach_MitNurEinerReihe_BleibtLoeschbar` (Absichtserklärung, im Ausgangszustand grün; rot unter B404-AK2). Rote Probe 3/3 rot.
+  Rote Probe (Gemessen an `afadf18d + Arbeitsbaum geändert`, 2026-11-13 22:15, `mutant-probe.py`, Grundlinie nach dem Zurückspielen grün):
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | B404-AK1 | backend/Pugling.Api/Controllers/Creator/SubjectsController.cs:165 | red | red |  |
+  | B404-AK2 | backend/Pugling.Api/Controllers/Creator/SubjectsController.cs:165 | red | red |  |
+  | B404-AK3 | backend/Pugling.Api/Controllers/Creator/SubjectsController.cs:167 | red | red |  |
+- **2026-11-13** — Review-Fund (`pugling-reviewer`) behoben: die 409-Meldung nannte zwei Auswege, die selbst gesperrt sein können (Reihe umhängen → `series_subject_in_use`/nur Besitzer; Übungen entfernen → `exercise_in_use`/`position_has_data`). Sie nennt jetzt nur die Sperre („This subject carries a textbook series with exercises.“, wie B-401); der Test prüft zusätzlich, dass kein Ausweg mit „first“ genannt wird. `old-phrases.py`: keine Fundstelle erwartet den alten Text. Rote Probe 4/4 rot.
+  Rote Probe nach den Review-Fixes (Gemessen an `afadf18d + Arbeitsbaum geändert`, 2026-11-13 22:33, `mutant-probe.py`, Grundlinie nach dem Zurückspielen grün):
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | B404-AK1 | backend/Pugling.Api/Controllers/Creator/SubjectsController.cs:165 | red | red |  |
+  | B404-AK2 | backend/Pugling.Api/Controllers/Creator/SubjectsController.cs:165 | red | red |  |
+  | B404-AK3 | backend/Pugling.Api/Controllers/Creator/SubjectsController.cs:168 | red | red |  |
+  | B404-AK3-way-out | backend/Pugling.Api/Controllers/Creator/SubjectsController.cs:168 | red | red |  |

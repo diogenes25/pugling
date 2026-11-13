@@ -37,8 +37,9 @@ test("Buchreihe, Fachlehrer und Kind treffen zusammen", async ({ page }) => {
   await page.getByRole("button", { name: "Speichern" }).first().click();
   await expect(page.getByText("Gespeichert.", { exact: true }).first()).toBeVisible();
 
-  // Noch ohne Buch und ohne Profil: die Suche muss ehrlich leer bleiben.
-  await expect(page.getByText(/Kein Profil passt zu/)).toBeVisible();
+  // Noch ohne Buch und ohne eigenes Profil: passen darf nur der geseedete Fachlehrer (B-445), und das ehrlich nur
+  // „allgemein“ – ohne Reihe am Kind gibt es keinen Grund, ihn vorzuziehen.
+  await expect(page.getByRole("row", { name: /Herr Schmidt – Englisch.*passt nur allgemein/ })).toBeVisible();
 
   // ---- Die Buchreihe (geteilter Katalog) ----
   await page.goto("/vater/lehrwerke");

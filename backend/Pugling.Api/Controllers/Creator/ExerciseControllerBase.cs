@@ -101,12 +101,42 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     protected virtual Task AfterSaveAsync(Exercise exercise, TConfig config, bool isCreate, CancellationToken ct = default) => Task.CompletedTask;
 
     /// <summary>
-    /// A conflict that forbids this replacement (default: none). Checked on PUT after validation and before
-    /// anything is written, so a rejected PUT leaves the whole exercise untouched - e.g. vocabulary exercises
-    /// whose new item list would move words a study plan already plays.
+    /// A conflict that forbids this replacement. Checked on PUT after validation and before anything is written, so a
+    /// rejected PUT leaves the whole exercise untouched. Vocabulary exercises override it (their items live in a table).
+    ///
+    /// The default guards the inline types (B-328): <see cref="PositionItemProgress.ItemIndex"/> follows the position in
+    /// the type's <c>ItemsOf</c> list, so a SHORTER list in an exercise a plan plays would move saved progress onto other
+    /// entries. Changing an entry in place (a typo in a sentence) stays possible - the inline types have no store, the
+    /// correction happens in the entry itself.
+    /// Known limit: the check compares counts only. Without stable ids a list of the same or greater length is let
+    /// through whatever happened inside it - a reorder, an insert in the middle, or a delete plus an append all still
+    /// shift saved progress unnoticed. It catches the shrinking list, nothing more.
     /// </summary>
-    protected virtual Task<ObjectResult?> UpdateConflictAsync(Exercise exercise, TConfig config, CancellationToken ct) =>
-        Task.FromResult<ObjectResult?>(null);
+    protected virtual async Task<ObjectResult?> UpdateConflictAsync(Exercise exercise, TConfig config, CancellationToken ct)
+    {
+        if (registry.ByKey(TypeKey) is not { } type) return null;
+        var before = type.ItemsOf(exercise.ConfigJson).Count;
+        var after = type.ItemsOf(JsonSerializer.Serialize(config, JsonOptions)).Count;
+        // Count-only by decision (B-328, decision 3): a non-shrinking list passes even if it was reordered or spliced.
+        if (after >= before || !await ExerciseInPlanAsync(exercise.Id, ct)) return null;
+        return this.ProblemWithCode(ApiErrors.ExerciseItemsLocked,
+            // B-414: names the lock only - promising "appending is allowed" would cover inserts that shift progress too.
+            "The exercise is used in a study plan; its list of entries cannot get shorter (it would shift saved progress).");
+    }
+
+    /// <summary>
+    /// Is the exercise played in a study plan? Then <see cref="PositionItemProgress"/> anchors the Leitner progress per
+    /// position on the (positional) item order - index-shifting mutations would bend stored progress onto the wrong entry.
+    /// </summary>
+    protected Task<bool> ExerciseInPlanAsync(int exerciseId, CancellationToken ct) =>
+        db.PlanPositions.AnyAsync(p => p.ExerciseId == exerciseId, ct);
+
+    /// <summary>The 409 for an item mutation that would shift a played vocabulary exercise's item order.</summary>
+    protected ObjectResult ShiftBlockedProblem() =>
+        this.ProblemWithCode(ApiErrors.ExerciseItemsLocked,
+            // B-414: "adding to the end" is part of this lock's own rule; taking the exercise out of its plans is not offered,
+            // because a played position cannot be removed (position_has_data).
+            "The exercise is used in a study plan; items cannot be removed or reordered (it would shift saved progress). Adding to the end is allowed.");
 
     /// <summary>DbContext for derived controllers with additional endpoints beyond pure CRUD.</summary>
     protected PuglingDbContext Db => db;
