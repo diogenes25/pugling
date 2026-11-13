@@ -9,7 +9,7 @@ wo: beides
 migration: ja
 vertragsbruch: nein
 quelle: Auftrag des Nutzers 2026-11-12 („kleine Bilder je Vokabel, nach den Interessen des Kindes")
-wartet_auf: "LocalAI mit dreamshaper beim Nutzer installiert, dann erster echter Lauf (images --child 1 --max 1)"
+wartet_auf: "Entscheidung zum Prompt-Bau für Stable Diffusion (Interesse im Motiv, Negativ-Prompt), siehe Verlauf 2026-11-13"
 grund: ""
 ersetzt_durch: []
 ---
@@ -327,4 +327,22 @@ Reviewer vor der Abnahme: `pugling-reviewer` und `frontend-reviewer`.
   `Das_Antwortformat_geht_nur_eingestellt_an_den_Dienst` (null und `Data`). Rote Proben: ohne das Durchreichen fällt
   der Fall `Data`, mit `Data` als Vorgabe fällt der Fall `null`. Danach ist der Code zurückgespielt und grün.
   Volle Suite 1485/1485. LocalAI ist noch nicht installiert, darum der neue `wartet_auf`.
+- 2026-11-13 · **Erster echter Lauf** gegen LocalAI `v4.12.1` mit `dreamshaper` (RTX 4050) auf einer Wegwerf-API (:5280,
+  frischer Seed). Dafür Plan „B-485 Bilder“ für Kind 1 mit „Vokabeln: En ville“ angelegt, Fußball-Prompt „on a soccer
+  pitch, with a soccer ball“ gesetzt und Fußball auf Gewicht 3 gestellt. Konfiguration nur über die Umgebung:
+  `Images__Endpoint=http://localhost:8080/v1`, `Model=dreamshaper`, `Size=512`, `ResponseFormat=Data`, ein
+  Platzhalter als Schlüssel. Ollama lief mit `OLLAMA_KEEP_ALIVE=0`, damit es die GPU nach jeder Antwort freigibt.
+  - **Technisch geht der Weg durch:** `images --child 1 --max 2` hat in 1:51 min zwei Assets angelegt (Bild 1
+    `gen-v5-neutral`, Bild 2 `gen-v5-fussball`), beide mit `origin Generated`, Spur `dreamshaper: …`, dem Tag
+    `fussball` am zweiten Bild und den Varianten Thumb 128 und Card 512. Gemeldet wurden „acheter“ als nicht zeichenbar
+    und Pokémon ohne Prompt. Die GPU war danach mit 3,4 GB belegt. Lesbare Schrift war auf keinem der Bilder.
+  - **Befund (Qualität):** Das Fußball-Bild zeigt keinen Fußball, sondern eine zweite Straße, und der Sticker-Stil hält
+    nur beim ersten Bild. Ursache ist der Prompt-Bau für dieses Modell. Stable Diffusion 1.5 übergeht die angehängte
+    Kulisse („…, on a soccer pitch, …“), und Verneinungen („no text, no letters“) versteht es nicht. Dafür hat LocalAI
+    einen Negativ-Prompt, getrennt mit `|`. Gegenprobe direkt an LocalAI: „a soccer player kicking a ball on a city
+    street, simple flat sticker illustration, …|text, letters, words, numbers, watermark“ ergab genau die gewollte
+    Karte, also Fußballer auf der Straße im Sticker-Stil. Mit „soccer ball“ vorne kam zwar der Ball, aber ein Foto
+    statt Sticker.
+  - Darum nicht `abgenommen`. Zu entscheiden ist der Prompt-Bau für dieses Modell (siehe `wartet_auf`). Der
+    Rollengang an der Sohn-Karte folgt danach. Wegwerf-DB und Ollama sind beendet, LocalAI läuft beim Nutzer weiter.
 
