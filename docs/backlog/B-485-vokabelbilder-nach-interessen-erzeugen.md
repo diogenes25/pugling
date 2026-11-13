@@ -429,3 +429,16 @@ Reviewer vor der Abnahme: `pugling-reviewer` und `frontend-reviewer`.
   - Nebenbefund: Ein nur abgehängtes Bild nimmt der nächste Lauf über seinen Schlüssel wieder auf und hängt es erneut
     an. Bilder 9 und 12 der echten DB müssen also gelöscht sein, bevor der Brawl-Stars-Prompt dort wieder gesetzt
     wird. README und `docs/medien-bilder.md` sagen das jetzt.
+- 2026-11-13 · **Voller Lauf auf der echten DB** mit Kinderschutz. Vorher gesichert:
+  `pugling.db.bak-vor-b485-bilder-20261113-112241` (enthält die 12 Bilder vom Vormittag). Bilder 9 und 12 gelöscht
+  (Kontrolle 404), Brawl-Stars-Prompt wieder gesetzt. `images --max 200` je Kind: **263 Bilder, 0 Fehler**, 87 min
+  (Friedrich 131, Theodor 132, Bilder 13–275). Bilder haben jetzt etwa 45 der 127 Wörter von Friedrich und etwa 44
+  der 124 Wörter von Theodor (dazu je 2 vom Vormittag). Der Rest gilt als nicht zeichenbar (Abstrakta,
+  Redewendungen, Funktionswörter).
+  - **Durchgesehen**, alle 263 auf 8 Kontaktbögen: **0 ungeeignet.** Zwei Kampfsport-Posen ohne Gegner, beide zu
+    „la colère“ mit Brawl Stars: ein Junge mit Handschuhen im Tritt und einer mit Boxhandschuhen auf einer Bühne.
+    Schrift auf etwa 3 Bildern, unleserlich oder ohne Bezug zur Lösung (Bild 266: „OHS CHEKISES TO“ auf einem Schild).
+    Die Interessen sind deutlich zu sehen: Schach fast immer, Klötzchenwelt bei Roblox, Drachen und Fantasiewesen
+    bei Pokémon. Bei abstrakten Verben passt das Bild weiter nur lose zum Wort.
+  - In der echten DB stehen außerdem die 10 Bilder vom Vormittag (ohne Kinderschutz entstanden, durchgesehen,
+    unauffällig).
