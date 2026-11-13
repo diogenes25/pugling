@@ -30,3 +30,4 @@ Normalisierung bekommen.
 
 - **2026-11-08** — angelegt aus dem Rollengang Sohn ([Protokoll](../pm-sitzung-2026-11-08-rollengang.md)),
   abgetrennt von B-421 als eigene Wertentscheidung.
+- **2026-11-13** — Backlog-Abgleich gegen den Code: [B-524](B-524-vokabeltest-wie-in-der-schule.md) hat das **Erkennen** schon gebaut (`AnswerGrader.IsMisspelled`, `AnswerGrader.cs:47`, Kennzeichen `misspelled` – nur Anzeige, Wertung bleibt binär) und für den Schultest die Strenge ohne Tippfehler-Abstand ausdrücklich entschieden. Offen ist damit nur noch das **Verzeihen beim Üben**; der Verweis `AnswerGrader.cs:14-15` oben zeigt heute auf `:28-32`.

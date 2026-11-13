@@ -32,6 +32,16 @@ ich sehe, wer sie erledigt hat — ohne für eines dieser Kinder einen Betreuung
 
 ## Ist-Stand am Code
 
+> **Korrekturen, Stand 2026-11-13** (die Punkte unten stammen vom 2026-08-04; was sich als falsch erwiesen hat, ist
+> durchgestrichen statt gelöscht):
+> - **Es gibt einen Server-Guard „höchstens ein aktiver Plan je Kind“** (seit `7c8d72b`): ein neuer aktiver Plan
+>   deaktiviert alle anderen (`StudyPlansController.cs:102-105`, `DeactivateSiblingPlansAsync`). Ein eigener
+>   Hausaufgaben-Plan je Kind schaltet damit den Vaterplan ab – das ist die Kernfrage des neuen Grillens.
+> - **Kapitel gibt es seit B-106 nicht mehr**; der Katalog filtert nach `subjectId`/`seriesUnitId`.
+> - **B-46 und B-18 sind abgenommen** (`ExerciseInterestLink`, `MyInterestsController`), nicht nur `geschaetzt`.
+> - `SupervisorOwnsChildAsync` steht heute in `AuthAccess.cs:112`.
+> - Weiter **nicht** vorhanden: Klasse, Beitrittscode, Frist an der Position (kein `JoinCode`/`SchoolClass` in Models/Contracts).
+
 - **Die Identität ist gebaut, anders als der alte Entwurf sagte — und weiter als der letzte Stand dieser
   Story**: Lehrer = Erwachsener ohne Betreuungsauftrag (nur Creator-Profil), über
   [AccountService.cs:34](../../backend/Pugling.Api/Auth/AccountService.cs#L34) (`EnsureForTeacherAsync`)
@@ -69,11 +79,11 @@ ich sehe, wer sie erledigt hat — ohne für eines dieser Kinder einen Betreuung
   ([PlanPositionEntities.cs:45](../../backend/Pugling.Api/Models/PlanPositionEntities.cs#L45),
   [:78](../../backend/Pugling.Api/Models/PlanPositionEntities.cs#L78),
   [:85](../../backend/Pugling.Api/Models/PlanPositionEntities.cs#L85)).
-- **Mehrere spielbare Pläne sind erlaubt.** Es gibt **keinen** Server-Guard „ein aktiver Plan je Kind";
+- ~~**Mehrere spielbare Pläne sind erlaubt.** Es gibt **keinen** Server-Guard „ein aktiver Plan je Kind";
   [StudentPlansController.cs:38](../../backend/Pugling.Api/Controllers/Student/StudentPlansController.cs#L38)
   listet alle laufenden, gewarnt wird nur im Vater-Web
   ([VaterPlaene.tsx:91](../../frontend/src/vater/VaterPlaene.tsx#L91)). Ein eigener
-  Hausaufgaben-Container kollidiert also nicht mit der Spiel-Engine.
+  Hausaufgaben-Container kollidiert also nicht mit der Spiel-Engine.~~ (falsch, siehe Korrekturen oben)
 - **Die kindindividuelle Auswahl fehlt beidseitig**: Interessen sind heute supervisor-gepflegt
   ([ChildInterestsController.cs:26](../../backend/Pugling.Api/Controllers/Supervisor/ChildInterestsController.cs#L26)),
   und eine Übung trägt kein Zielgruppen-Merkmal (→ [B-46](B-46-interessenbasierte-uebungen.md)). Die
@@ -332,3 +342,4 @@ gezielter `/smoke-test`-Durchlauf der neuen Endpunkte per REST-Client.
 - **2026-10-23** — **Zurück auf `ausformuliert`** in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)) – die Entscheidungen tragen nicht mehr: (1) Der Ist-Stand „es gibt **keinen** Server-Guard ‚ein aktiver Plan je Kind‘“ (Zeile 72) ist falsch, und zwar seit `7c8d72b` (2026-07-05): `StudyPlansController.cs:102-116` deaktiviert beim Anlegen eines aktiven Plans alle anderen (Anti-Cheat). Ein eigener Hausaufgaben-Plan je Kind (Angriffsplan 4) schaltet damit den Vaterplan ab oder bricht die Invariante. (2) „Fach/Kapitel“ in User Story, AK 3 und Entscheidung 11 – Kapitel gibt es seit B-106 nicht mehr (Filter heute `subjectId`/`seriesUnitId`, `ExerciseCatalogController.cs:49`). (3) B-46 und B-18 sind abgenommen (`ExerciseInterestLink`, `MyInterestsController`) – Entscheidung 11 (Mischen statt Interessen) fehlt damit die Begründung. (4) `Objective.DueDate` mit Status `Overdue` existiert (`ObjectiveEntities.cs:31`) und ist ein Kandidat für Frist/erledigt, den die Story nicht betrachtet. Faktisch XL. Neu zu grillen: wie verträgt sich die Hausaufgabe mit „ein aktiver Plan“, Interessen-Passung jetzt oder später, was heißt „erledigt“. Teilungsvorschlag: (a) Klasse, Beitrittscode, Mitgliedschaft, Auth-Wand (AK 1, 2, 6, 7); (b) Auftrag mit Frist und Erledigungssicht (AK 3–5); (c) Sichtbarkeit beim Kind.
 - **2026-10-23** — **Entscheidung des Nutzers** in der Grill-Runde G-7 der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): Eine Hausaufgabe landet **als Positionen (mit Frist) im aktiven Plan des Kindes** – die Anti-Cheat-Invariante „ein aktiver Plan je Kind“ bleibt unangetastet, und der Vater sieht die Hausaufgabe dort, wo er ohnehin steuert. Damit fällt Angriffsplan 4 (eigener Hausaufgaben-Plan). Noch offen vor `gegrillt`: Interessen-Passung jetzt oder später, was „erledigt“ heißt (Kandidat `Objective.DueDate`/`Overdue`), wie ein Lehrer ohne Betreuungsauftrag in den Plan schreiben darf (Auth-Wand), was passiert, wenn das Kind keinen aktiven Plan hat, und der Teilungsschnitt.
 - **2026-11-05** — **Entscheidung im Auftrag des Nutzers** (getroffen von Claude; Delegation im Dialog am 2026-11-05: „Wenn es etwas zu entscheiden gibt, übernimm meine Position und entscheide nach bestem Wissen und Gewissen“; [Protokoll](../pm-sitzung-2026-11-05-delegation.md)): (1) Interessen-Passung sofort, deterministischer Rückfall über `ChildId`; (2) „erledigt“ = jede materialisierte Position hat vor der Frist ihren Abschlusstest bestanden, `Objective.DueDate` wird nicht benutzt; (3) der Lehrer schreibt nie in einen Plan, nach dem Beitritt materialisiert der Server; (4) ohne aktiven Plan bleibt der Auftrag „ausstehend“, kein automatischer Plan; (5) Teilung in (a) Klasse/Beitritt/Auth-Wand, (b) Auftrag/Frist/Erledigungssicht, (c) Sichtbarkeit beim Kind – erst teilen, dann bauen. **Freigabe des Nutzers (Autonomer Modus, Opt-in, erteilt im Dialog am 2026-11-05 mit derselben Delegation):** ein Lauf darf diese Story auf Grundlage der Entscheidungen selbst ausformulieren, schätzen und bauen; trifft er auf eine Produktfrage, die sie nicht hergeben, hält er an.
+- **2026-11-13** — Backlog-Abgleich gegen den Code: Ist-Stand-Abschnitt nachgezogen (Korrektur-Block oben, falscher Punkt „kein Guard“ durchgestrichen). Die Lücke besteht unverändert.

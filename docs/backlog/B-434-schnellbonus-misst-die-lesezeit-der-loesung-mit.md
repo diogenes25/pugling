@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/idee, bereich/training, bereich/reward, rolle/student]
+tags: [typ/story, status/verworfen, bereich/training, bereich/reward, rolle/student]
 aliases: [Schnellbonus nach Fehler, Lesezeit zählt als Antwortzeit]
-status: idee
+status: verworfen
 prio: P3
 art: Frage
 groesse: ""
@@ -9,9 +9,9 @@ wo: backend
 migration: ""
 vertragsbruch: ""
 quelle: docs/pm-sitzung-2026-11-08-nacht.md
-unverifiziert: true
-grund: ""
-ersetzt_durch: []
+unverifiziert: false
+grund: "zusammengelegt mit B-530 – dieselbe Messstelle (elapsedSeconds ab der vorigen Review, PositionPracticeController.cs:418-420); B-530 ist die allgemeinere Fassung (seit B-526 jede Antwort mit Blatt, nicht nur Fehler)"
+ersetzt_durch: [B-530]
 ---
 
 # B-434 · Nach einem Fehler zählt die Lesezeit der Lösung als Antwortzeit der nächsten Karte
@@ -28,3 +28,4 @@ Effekt bewusst hinnehmen (der Bonus belohnt Tempo über die ganze Runde)?
 ## Verlauf
 
 - **2026-11-08** — angelegt aus dem Review von B-420 (Lauf AE, Sprint 22).
+- **2026-11-13** — `verworfen` zugunsten von [B-530](B-530-antwortzeit-ab-sichtbarer-karte.md): Backlog-Abgleich gegen den Code. Die Frage hier (Zeit ab dem Ausspielen messen oder hinnehmen) wird dort beantwortet.

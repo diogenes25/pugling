@@ -29,6 +29,12 @@ erzeugten Übungen nicht mehr von Hand als Position angelegt werden müssen.
 
 ## Ist-Stand am Code
 
+> **Stand 2026-11-13:** Seit der Entscheidung vom 2026-10-23 gibt es **kein** eigenes Projekt
+> `Pugling.Agent.Supervisor` – die Story ist ein **`assign`-Verb im Creator-Agenten**. Das gibt es noch nicht:
+> `AgentCommands.cs:195-211` kennt `profiles`, `briefing`, `create`, `exam`, `plan`, `fill`, `images`, `help`. Für
+> `--tag` fehlt der Client-Wrapper zu `GET creator/tags/{id}/exercises` (`CreatorApi.cs:171` hat nur den POST).
+> Die Punkte unten zum eigenen Projekt sind damit nur noch als Bauplan-Hinweis gültig; AK 1 ist hinfällig.
+
 - **Der Supervisor-Agent existiert nicht.** `Pugling.sln` listet nur ein Konsolenprojekt:
   `Project(...) = "Pugling.Agent.Creator", "backend\Pugling.Agent.Creator\Pugling.Agent.Creator.csproj"` —
   kein `Pugling.Agent.Supervisor`. Der Ordner ist nicht angelegt.
@@ -200,3 +206,4 @@ hält die Story bereits auf L, ohne dass etwas Wesentliches fehlt, um sie in ein
 - **2026-10-23** — **Zurück auf `ausformuliert`** in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): B-19 (abgenommen, `adfa05e`) hat das Verb `plan` in den **Creator**-Agenten gebaut (`PlanPlanner.cs:180,199`) und in seiner Entscheidung 2 ein zweites Konsolenprojekt als „doppelte Infrastruktur“ verworfen – AK 1 dieser Story verlangt genau dieses Projekt. Das zitierte README („später vom Supervisor-Agenten“) gibt es nicht mehr. Für neue Pläne ist die Motivation erledigt; offen bleibt nur das Hinzufügen zu einem bestehenden, aktiven Plan. Neu zu entscheiden: eigenes Projekt oder `assign`-Verb im bestehenden Agenten – und lohnt die Story nach B-19 noch? Als Verb eher M als L. Für `--tag` fehlt der Client-Wrapper zu `GET creator/tags/{tagId}/exercises` (`TagsController.cs:205`).
 - **2026-10-23** — **Entscheidung des Nutzers** in der Grill-Runde der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): **kein zweites Konsolenprojekt** – die Story wird als **`assign`-Verb im bestehenden Creator-Agenten** neu geschnitten (Linie von B-19, Entscheidung 2 dort bleibt). Ziel: erzeugte bzw. per Id oder Tag gewählte Übungen einem bestehenden, aktiven Plan als Positionen hinzufügen. Vor `gegrillt` noch offen: Verhalten bei einer schon vorhandenen Position derselben Übung, ob `--tag` im ersten Schritt dabei ist (Client-Wrapper fehlt), und welche Positions-Vorgaben (Ziel, Punkte) das Verb setzt. AK 1 (eigenes Projekt) ist damit hinfällig.
 - **2026-11-05** — **Entscheidung im Auftrag des Nutzers** (getroffen von Claude; Delegation im Dialog am 2026-11-05: „Wenn es etwas zu entscheiden gibt, übernimm meine Position und entscheide nach bestem Wissen und Gewissen“; [Protokoll](../pm-sitzung-2026-11-05-delegation.md)): (1) eine schon vorhandene Position derselben Übung wird übersprungen und gemeldet (Exit 2, wenn nichts neu ist); (2) `--tag` ist im ersten Schritt dabei, der Client-Wrapper wird mitgebaut; (3) Positions-Vorgaben bleiben Server-Defaults. **Freigabe des Nutzers (Autonomer Modus, Opt-in, erteilt im Dialog am 2026-11-05 mit derselben Delegation):** ein Lauf darf diese Story auf Grundlage der Entscheidungen selbst ausformulieren, schätzen und bauen; trifft er auf eine Produktfrage, die sie nicht hergeben, hält er an.
+- **2026-11-13** — Backlog-Abgleich gegen den Code: Ist-Stand-Abschnitt nachgezogen (kein eigenes Projekt, `assign`-Verb fehlt, `--tag`-Wrapper fehlt). Lücke besteht.

@@ -30,6 +30,14 @@ Tempo-Bonus einstellen können, damit ich nicht auf den Server-Standard angewies
 
 ## Ist-Stand am Code
 
+> **Stand 2026-11-13:** Die Lücke besteht. `settingsToDto` (`frontend/src/vater/PlanPositions.tsx:282-299`, Datei
+> inzwischen 855 Zeilen) sendet weiter **kein** `stage`, `scope`, `maxBox`, `boxIntervalDays`, `stageSchedule`,
+> `speedThresholdSeconds`, `speedBonusPoints`. Der Vertrag (`UpdatePositionDto`, `StudyPlanDtos.cs:180-185`) hat
+> inzwischen **22** Felder: dazu kamen `timeSlots`/`clearTimeSlots` und `newItemsPerDay` – alle drei stehen schon im
+> Formular (`settingsToUpdateDto` setzt `clearTimeSlots`). Seit B-79 prüft der Server `Stage`, ein rohes Zahlenfeld
+> liefe in `validation_error` (Entscheidung G-4: Auswahl aus dem Manifest). `PlanPositions.test.ts` existiert bereits.
+> Die Zeilenangaben unten gelten für den Stand vom 2026-08-03.
+
 - **Vertrag** — `UpdatePositionDto` trägt 19 Felder (`backend/Pugling.Contracts/Supervisor/StudyPlanDtos.cs:136-140`):
   `Order, Stage, ItemCount, Scope, Cadence, OrderStrategy, GoalThreshold, RequireTypedTest, UseLeitner,
   MaxBox, BoxIntervalDays, StageSchedule, PointsGoalMet, PenaltyCoins, NewContentPoints, ComboThreshold,
@@ -132,3 +140,4 @@ Route und ohne Änderung am Happy-Path, den `e2e/vater-von-null.spec.ts` schon a
   neuer Vitest-Test für `PlanPositions` (autonom getroffen, Nutzerauftrag 2026-08-04).
 - **2026-10-23** — **Zurück auf `ausformuliert`** in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): Die Lücke besteht (`stage`, `scope`, `speedThresholdSeconds`, `speedBonusPoints` fehlen in `PositionSettings`/`settingsToDto`, `PlanPositions.tsx`), aber **Entscheidung 4 ist überholt**: seit B-79 prüft der Server `Stage` (`PlanPositionsController.cs:112-114,147,222`), ein rohes Zahlenfeld liefe in `validation_error`. Neu zu entscheiden: Stufe als Auswahl (Optionen aus dem Manifest statt der fest kodierten `VOCAB_FORMS`?) und wie „zurück auf Standard“ geht, wenn PATCH `null` als „bleibt“ liest (`StudyPlanDtos.cs:133-135`). Die Datei hat 773 statt ~382 Zeilen, `PlanPositions.test.ts` existiert bereits; neu ist das Zeitfenster (`timeSlots`, `clearTimeSlots`).
 - **2026-10-23** — **Entscheidung des Nutzers** in der Grill-Runde G-4 der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)) zur überholten Entscheidung 4: die Stufen kommen **als Auswahl je Übungstyp aus dem Server-Manifest** (nicht aus der fest kodierten `VOCAB_FORMS`), und „zurück auf Standard“ geht über einen **ausdrücklichen Leeren-Schalter** nach dem PATCH-Muster `Clear…`. Additiv im Vertrag. **Freigabe des Nutzers (Autonomer Modus, Opt-in, erteilt am 2026-10-23 für alle an diesem Tag im Dialog entschiedenen Stories):** ein Nachtlauf darf diese Story auf Grundlage der Entscheidung selbst ausformulieren, schätzen und bauen (Paket NP-17); trifft er auf eine Produktfrage, die die Entscheidung nicht hergibt, hält er an.
+- **2026-11-13** — Backlog-Abgleich gegen den Code: Ist-Stand-Abschnitt nachgezogen (Feldzahl 22, `settingsToDto` bei :282, Testdatei vorhanden). Lücke besteht.
