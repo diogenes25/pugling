@@ -29,20 +29,9 @@ public abstract class ExerciseTypeBase : IExerciseType
     public virtual bool GradesAsSet(string configJson) => false;
 
     /// <inheritdoc/>
-    public virtual int? ItemCount(string configJson, int itemTableRows)
-    {
-        if (Manifest.ItemNoun is null) return null;
-        try
-        {
-            return ItemsOf(configJson).Count;
-        }
-        // Not only JsonException: a config that parses but holds a null element ("questions":[null]) throws from the
-        // projection, and legacy rows were never validated. One such row must cost its own count, not the whole search.
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            return null;
-        }
-    }
+    /// <remarks>Throws on a config it cannot read; the catalog search catches and logs it per row (B-448).</remarks>
+    public virtual int? ItemCount(string configJson, int itemTableRows) =>
+        Manifest.ItemNoun is null ? null : ItemsOf(configJson).Count;
 
     /// <inheritdoc/>
     public virtual int DefaultStage => (int)TestStage.SelfAssess;

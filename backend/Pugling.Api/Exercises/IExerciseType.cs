@@ -55,8 +55,9 @@ public interface IExerciseType
     /// <summary>
     /// How many content atoms the exercise holds, for the catalog row (B-424). <paramref name="itemTableRows"/> is the
     /// number of <see cref="ExerciseItem"/> rows - only the vocabulary type keeps its atoms there. <c>null</c> for a type
-    /// without countable atoms (no <see cref="ExerciseTypeManifest.ItemNoun"/>) and for a config that cannot be projected
-    /// (does not parse, or parses with null elements): a broken row must not take the whole catalog search down with it.
+    /// without countable atoms (no <see cref="ExerciseTypeManifest.ItemNoun"/>). A config that cannot be projected may
+    /// throw: the catalog search catches it per row and logs it, so a broken row costs only its own count (B-448). A type
+    /// whose atoms live outside the config (like the vocabulary item rows) overrides this.
     /// </summary>
     int? ItemCount(string configJson, int itemTableRows);
 

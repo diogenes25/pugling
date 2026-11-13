@@ -97,7 +97,8 @@ public class ExerciseItemCountTests(PuglingWebAppFactory factory) : IClassFixtur
 
     // Review finding: a config that parses but cannot be projected (a null element, as legacy rows or direct DB writes
     // can hold) costs that row its count - it must not turn the whole search into a 500. Red if the guard in
-    // ExerciseTypeBase.ItemCount narrows back to JsonException (the null element throws a NullReferenceException) or goes.
+    // ExerciseCatalogController.ItemCountOf narrows back to JsonException (the null element throws a NullReferenceException)
+    // or goes (B-448 moved it there from ExerciseTypeBase.ItemCount, to log).
     [Theory]
     [InlineData("{\"text\":\"T\",\"questions\":[null]}")]
     [InlineData("{")]
@@ -116,6 +117,27 @@ public class ExerciseItemCountTests(PuglingWebAppFactory factory) : IClassFixtur
 
         var row = await RowAsync(father, unitId, id);
         Assert.Equal(JsonValueKind.Null, row.GetProperty("itemCount").ValueKind);
+    }
+
+    // B-448: "empty" is a size, not "no size" - a vocabulary exercise without item rows and an inline exercise without
+    // atoms say 0. Red if either count turns an empty exercise into null ("is 0 ? null"), which the UI shows as an essay.
+    [Theory]
+    [InlineData("Vocabulary", "{\"direction\":\"front-to-back\",\"sourceLang\":\"fr\",\"targetLang\":\"de\"}")]
+    [InlineData("Reading", "{\"text\":\"T\",\"questions\":[]}")]
+    public async Task LeereUebung_ZaehltNull(string type, string config)
+    {
+        var (father, _, unitId) = await UnitAsync();
+        int id;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            var exercise = new Exercise { SeriesUnitId = unitId, Type = type, Title = "Leer", OrderIndex = 1, RewardPoints = 1, ConfigJson = config };
+            db.Exercises.Add(exercise);
+            db.SaveChanges();
+            id = exercise.Id;
+        }
+
+        Assert.Equal(0, (await RowAsync(father, unitId, id)).GetProperty("itemCount").GetInt32());
     }
 
     // AK 2: the noun per type, pinned like the stage options - a new type has to decide its noun here, and a type

@@ -20,7 +20,8 @@ namespace Pugling.Api.Controllers.Creator;
 [Tags("Creator – Exercise Catalog")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Creator)]
-public class ExerciseCatalogController(PuglingDbContext db, ExerciseTypeRegistry registry) : ControllerBase
+public class ExerciseCatalogController(PuglingDbContext db, ExerciseTypeRegistry registry,
+    ILogger<ExerciseCatalogController> logger) : ControllerBase
 {
     /// <summary>
     /// Searches exercises over the metadata. All parameters are optional and are AND-combined.
@@ -134,8 +135,27 @@ public class ExerciseCatalogController(PuglingDbContext db, ExerciseTypeRegistry
                 e.Ratings.Average(r => (double?)r.Stars), e.Ratings.Count,
                 // B-424: the size of the exercise. Evaluated in memory like GoalPointsPolicy above - SQL delivers the raw
                 // config and the item-row count as a correlated subquery in the same statement, no query per row.
-                ItemCountOf(registry, e.Type, e.ConfigJson, db.ExerciseItems.Count(i => i.ExerciseId == e.Id))))
+                ItemCountOf(registry, logger, e.Id, e.Type, e.ConfigJson, db.ExerciseItems.Count(i => i.ExerciseId == e.Id))))
             .ToPagedListAsync(Response, skip, take, ct);
+    }
+
+    // Static on purpose: EF refuses an instance method in a client projection (it would capture the controller).
+    // An unknown type key has no atoms to count - null, like a type without a noun. Not only JsonException: a config that
+    // parses but holds a null element ("questions":[null]) throws from the projection, and legacy rows were never
+    // validated. One such row costs its own count, not the whole search - and is logged, or a type whose ItemsOf always
+    // throws would look like an essay on every row and nobody would learn of it (B-448).
+    private static int? ItemCountOf(ExerciseTypeRegistry types, ILogger logger, int exerciseId, string typeKey,
+        string configJson, int itemTableRows)
+    {
+        try
+        {
+            return types.ByKey(typeKey)?.ItemCount(configJson, itemTableRows);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Umfang der Übung {ExerciseId} ({Type}) nicht lesbar – die Zeile zeigt keinen.", exerciseId, typeKey);
+            return null;
+        }
     }
 
     /// <summary>
@@ -143,11 +163,6 @@ public class ExerciseCatalogController(PuglingDbContext db, ExerciseTypeRegistry
     /// so the paging window stays deterministic. Unknown/empty keys → business default
     /// (subject → series unit → order).
     /// </summary>
-    // Static on purpose: EF refuses an instance method in a client projection (it would capture the controller).
-    // An unknown type key has no atoms to count - null, like a type without a noun.
-    private static int? ItemCountOf(ExerciseTypeRegistry types, string typeKey, string configJson, int itemTableRows) =>
-        types.ByKey(typeKey)?.ItemCount(configJson, itemTableRows);
-
     private static IOrderedQueryable<Exercise> ApplySort(IQueryable<Exercise> q, (string? Key, bool Desc) sort) =>
         (sort.Key?.ToLowerInvariant(), sort.Desc) switch
         {

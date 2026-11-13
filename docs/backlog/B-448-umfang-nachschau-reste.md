@@ -1,10 +1,10 @@
 ---
-tags: [typ/story, status/idee, bereich/katalog, bereich/tests, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/katalog, bereich/tests, rolle/supervisor]
 aliases: [Umfang Nachschau-Reste]
-status: idee
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
+groesse: "S"
 wo: beides
 migration: ""
 vertragsbruch: ""
@@ -32,7 +32,35 @@ Kleiner (🟢): „20 von 100 Karten" wäre ehrlicher, wo `DefaultItemCount` die
 Umfang" verspricht ein „· 0", das seine Regex nicht fängt; `wiki/08-erweitern.md` sollte sagen, dass ein Typ mit Atomen außerhalb der
 Config `ItemCount` überschreiben muss.
 
+## Entscheidungen
+
+Autonom gegrillt (`art: Defekt`, Tageslauf):
+
+1. **Punkt 1:** „leer" bekommt einen Grenzfall-Test am Server – je eine Vokabelübung ohne Item-Zeilen und eine Lese-Übung ohne
+   Fragen (direkt in die DB, wie der Test für kaputte Configs) zählen `0`, nicht `null`.
+2. **Punkt 2:** der Fang zieht aus `ExerciseTypeBase.ItemCount` in den Controller-Helfer `ItemCountOf` und **loggt** mit
+   Übungs-Id und Typ (Warnung, deutsche Laufzeit-Diagnose); der `when (not OperationCanceled)`-Filter entfällt, `ItemsOf`
+   ist synchron. Die Typ-Methode darf jetzt werfen – ihr einziger Aufrufer fängt (per `grep` geprüft). Doku an
+   `IExerciseType.ItemCount` nachgezogen, inklusive „ein Typ mit Atomen außerhalb der Config überschreibt dies" (🟢).
+3. **Punkt 3:** die `/// <summary>` steht wieder über `ApplySort`.
+4. 🟢 „20 von 100 Karten" und der Vitest-Kommentar bleiben offen.
+
+## Akzeptanzkriterien
+
+1. Leere Vokabel- und Lese-Übung zeigen `itemCount: 0`.
+2. Eine Config mit `null`-Element kostet nur ihre Zeile (Bestandstest, jetzt am neuen Ort).
+
 ## Verlauf
 
 - **2026-11-09** — angelegt aus der Nachschau zu Sprint 26 (Retro Sprint 27, Lauf AG). Increment des vorigen Laufs (AF) – kein Limit 2
   (Präzedenz Lauf AD).
+- **2026-11-13** — ausformuliert, autonom gegrillt (Defekt), geschätzt S (Tageslauf, Sprint 53).
+- **2026-11-13** — gebaut (Sprint 53).
+  - AK 1 → `ExerciseItemCountTests.LeereUebung_ZaehltNull` (Vocabulary, Reading); U1 (`ItemsOf(..).Count is 0 ? null`) → rot,
+    U2 (Vokabel `itemTableRows is 0 ? null`) → rot.
+  - AK 2 → `KaputteConfig_KostetNurDenUmfangDieserZeile` (Bestand, jetzt am Controller-Fang); U3 (Fang nur `JsonException`)
+    → rot. Das Loggen selbst trägt kein Test (🟢 des Reviews, bewusst – Warnung, kein Verhalten).
+  - Mutanten-Probe nach der letzten Änderung (Release, gefiltert) 3/3 rot; volle Suite 1436/1436.
+  - Review (`pugling-reviewer`): Logger in der Projektion wie `registry` (Feld, kein Instanzaufruf); einziger Aufrufer ist
+    der Controller, einzige Überschreibung fängt `JsonException` selbst. Drei 🟢, eines behoben (Leerzeile vor `ApplySort`).
+  - Rollengang Creator: Katalogsuche gegen den echten In-Process-Server; Vater/Sohn Regressionszeugen. Abgenommen.
