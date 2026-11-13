@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/student]
 aliases: [Lektionsraster, Rückmeldung als Blatt, Abschlussbild]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: L
@@ -319,3 +319,35 @@ zwei Etappen schneiden lässt, die je für sich grün und auslieferbar sind; nac
   Test: `SelfAssessAnswer`) – offen für Etappe 2. (c) Der Knopf des Übens heißt schon jetzt „Aufdecken“
   (Entscheidung 4 vorgezogen). (d) Nicht gemessen: das Layout bei 360 px im Browser; Enter auf einer markierten Option
   nimmt die Markierung zurück, statt zu werten.
+- 2026-11-13 · Etappe 1 committet (`364def3`): Vitest 913/913, Playwright 143 passed im ganzen Lauf.
+- 2026-11-13 · **Etappe 2 angefangen, nicht committet** (Arbeitsbaum, unterbrochen für einen Neustart des Rechners).
+  Gebaut: `RueckmeldungsBlatt` in `Lektion.tsx` ersetzt Toast und angehaltene Karte (Phase `blatt` in
+  `SohnPractice`), die Selbsteinschätzung des Übens läuft über `SelfAssessAnswer` (damit ist AK 11 erfüllt), das
+  Rundenende zeigt Münzen und Genauigkeit aus servergeprüften Antworten. Stand der Belege: `tsc -b` grün, Vitest
+  grün (226 Fälle unter `src/sohn`, rote Probe für den Fokus im Test). **Playwright abgebrochen** bei 108 grünen und
+  2 roten Specs – beide erwartet: `buchstaben-ordnen.spec.ts:36` und `erstbegegnung.spec.ts:91` setzen das
+  automatische Weiterspringen nach einer richtigen Antwort bzw. `.card.mistake` voraus. Die Specs danach sind nicht
+  gelaufen.
+  **Noch zu tun:** (1) die Specs auf „Weiter“ nach jeder geprüften Antwort und auf `.lektion-blatt.falsch` umstellen,
+  ganzen Lauf fahren (`PUGLING_E2E_CONFIGURATION=Release PUGLING_E2E_API_PORT=5201 PUGLING_E2E_WEB_PORT=5174`);
+  (2) den ungenutzten Schlüssel `practice.box` aus `de.ts`/`en.ts` nehmen; (3) `frontend-reviewer`; (4) Klick-Rollengang
+  im Handyformat (Blatt grün und rot, Rundenende); (5) committen und abnehmen.
+- 2026-11-13 · Etappe 2 fertig gebaut und committet (`ef8701d`). Review (`frontend-reviewer`, kein Blocker), übernommen:
+  der Tipp-Knopf verschwindet, solange das Blatt steht; ein Doppeltipp auf „Weiter“ trifft die nächste Karte nicht mehr
+  („Aufdecken“ und das Weiter einer Kennenlern-Karte nehmen 350 ms nichts an – Test mit roter Probe); die
+  Genauigkeits-Kachel ist für Screenreader ein Bild mit Namen; Abschnitt 2.9 der Funktionsbeschreibung nachgezogen.
+- 2026-11-13 · `abgenommen` (`364def3` Etappe 1, `ef8701d` Etappe 2). Verifikation: Vitest **922/922**, `tsc -b` grün,
+  Playwright **143 passed** im ganzen Lauf (Release-Build auf :5201/:5174), kein Backend geändert. Rollengang per Klick
+  im Handyformat (375×812, Wegwerf-DB): Kennenlern-Runde, dann getippte Abfrage – grünes Blatt mit Fokus auf
+  „Weiter“, Enter trägt weiter und der Fokus steht wieder im Feld; rotes Blatt mit durchgestrichener eigener Antwort
+  und Lösung; Rundenende mit „Genauigkeit 67 %“ (zwei von drei); dazu ein Test mit Auswahl in zwei Schritten. Keine
+  Konsolenfehler.
+- 2026-11-13 · Offen geblieben, bewusst und benannt: (a) **kein echtes Handy** – unter dem Blatt verschwindet das
+  Eingabefeld, die Bildschirmtastatur klappt also nach jeder getippten Antwort zu; ob iOS sie beim Zurückspringen des
+  Fokus wieder öffnet, ist nicht geprüft. (b) Das Layout bei 360 px ist gerechnet, nicht gemessen. (c) Die im Testweg
+  versprochene eigene Spec für Blatt und Rundenende gibt es nicht; `erstbegegnung.spec.ts` trägt beides,
+  `lektion.spec.ts` die Zwei-Schritt-Auswahl im Test. (d) Lobwort, „Fast.“ und „Bewegung reduzieren“ sind nicht
+  zugesichert. (e) Nicht neu, vom Reviewer gesehen: der Fokus fällt nach „Aufdecken“ und nach einer
+  Selbsteinschätzung auf `body`, und ein Netzfehler beim Bewerten lässt eine getippte Karte still weiterrücken –
+  beides bestand vorher und gehört in eigene Stories. (f) Ob sich die langsameren Runden für die Kinder richtig
+  anfühlen, kann keine Spec sagen.
