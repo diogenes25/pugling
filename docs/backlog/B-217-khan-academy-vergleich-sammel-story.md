@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/idee, bereich/gamification, bereich/training, rolle/student, rolle/supervisor]
+tags: [typ/story, status/verworfen, bereich/gamification, bereich/training, rolle/student, rolle/supervisor]
 aliases: [Khan-Academy-Übernahme, Khan-Sammel-Story]
-status: idee
+status: verworfen
 prio: P2
 art: Wunsch
 groesse: ""
@@ -10,8 +10,8 @@ migration: ""
 vertragsbruch: ""
 quelle: docs/khan-academy-vergleich-plan.md
 unverifiziert: true
-grund: ""
-ersetzt_durch: []
+grund: "geteilt – Sammel-Story ohne eigene Arbeit; die offenen Teil-Stories führt der Index einzeln, der Plan liegt in docs/khan-academy-vergleich-plan.md"
+ersetzt_durch: [B-218, B-219, B-220, B-221, B-223, B-39]
 ---
 
 # B-217 · Khan-Academy-Vergleich: die Verbesserungen übernehmen (Sammel-Story)
@@ -30,3 +30,4 @@ hält den Plan im Index und wird erst `abgenommen`, wenn jede Teil-Story abgenom
 ## Verlauf
 
 - **2026-10-17** — angelegt (Quelle: Khan-Academy-Vergleich im Gespräch mit dem Nutzer, Plan unter `docs/khan-academy-vergleich-plan.md`).
+- **2026-11-13** — `verworfen` im Backlog-Lauf 2026-11-13 (Stakeholder-Entscheidung im Auftrag des Nutzers, [Protokoll](../pm-sitzung-2026-11-13-backlog-lauf.md)): Eine Sammel-Story trägt keine eigene Arbeit; sie hielt nur den Vergleichsplan im Index. Der Index führt jede Teil-Story selbst, und der Plan liegt unter `docs/`. Als offene Story verzerrte sie den Bestand und wäre erst mit der letzten Teil-Story fertig geworden. Die offenen Teil-Stories stehen in `ersetzt_durch`.

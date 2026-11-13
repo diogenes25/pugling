@@ -12,39 +12,37 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (52)
+### Offen (49)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [B-465](B-465-ki-lueckentext-mehrdeutig-und-verraten.md) | Ein KI-Lückentext nach dem Umbau: Titel passt nicht, Auswahl steht im Satz, Zeitformen ohne Alternative | Defekt | `ausformuliert` | P2 | — | backend | — |
-| [B-532](B-532-netzfehler-beim-bewerten-rueckt-still-weiter.md) | Ein Netzfehler beim Bewerten lässt eine getippte Karte still weiterrücken | Defekt | `idee` | P2 | — | frontend | — |
+| [B-465](B-465-ki-lueckentext-mehrdeutig-und-verraten.md) | Ein KI-Lückentext nach dem Umbau: Titel passt nicht, Auswahl steht im Satz, Zeitformen ohne Alternative | Defekt | `geschaetzt` | P2 | S | backend | — |
+| [B-532](B-532-netzfehler-beim-bewerten-rueckt-still-weiter.md) | Ein Netzfehler beim Bewerten lässt eine getippte Karte still weiterrücken | Defekt | `geschaetzt` | P2 | S | frontend | — |
+| [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `geschaetzt` | P2 | XS | backend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
-| [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `gegrillt` | P2 | — | backend | Vertrag? |
 | [B-469](B-469-lernkontrolle-selbsteinschaetzung-und-typen-ohne-test.md) | Prüfauftrag: Der Vokabeltest ist per Vorgabe eine Selbsteinschätzung, Grammatik und Übersetzung haben keinen Test | Frage | `idee` | P2 | — | beides | — |
 | [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder | Wunsch | `geschaetzt` | P2 | L | beides | — |
+| [B-474](B-474-kacheln-ohne-drehung-und-uebersicht.md) | `kacheln.ps1` kann nicht drehen, und für die Sichtung von 56 Fotos fehlt ein Übersichtsbogen | Wunsch | `geschaetzt` | P2 | S | .claude/skills/lehrwerk-aufbereiten | — |
 | [B-423](B-423-assistent-klassenarbeit-termin-und-stufenleiter.md) | Der Assistent „Klassenarbeit vorbereiten" fragt den Termin, legt die Klassenarbeit an und baut die Stufenleiter | Wunsch | `ausformuliert` | P2 | M | frontend | — |
-| [B-474](B-474-kacheln-ohne-drehung-und-uebersicht.md) | `kacheln.ps1` kann nicht drehen, und für die Sichtung von 56 Fotos fehlt ein Übersichtsbogen | Wunsch | `ausformuliert` | P2 | — | .claude/skills/lehrwerk-aufbereiten | — |
-| [B-217](B-217-khan-academy-vergleich-sammel-story.md) | Khan-Academy-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | Wunsch | `idee` | P2 | — | — | — |
 | [B-218](B-218-mischwiederholung-ueber-alle-positionen.md) | Eine Mischwiederholung über alle Positionen des Kindes | Wunsch | `idee` | P2 | — | — | — |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `idee` | P2 | — | — | — |
-| [B-247](B-247-knowunity-vergleich-sammel-story.md) | Knowunity-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | Wunsch | `idee` | P2 | — | — | — |
 | [B-248](B-248-klassenarbeit-countdown-treibt-den-plan.md) | Die Klassenarbeit wird beim Kind sichtbar und verdichtet den Plan vor dem Termin | Wunsch | `idee` | P2 | — | — | — |
 | [B-249](B-249-probeklausur-mit-notenprognose.md) | Eine Probeklausur über das Bündel einer Klassenarbeit, mit Notenprognose | Wunsch | `idee` | P2 | — | — | — |
-| [B-374](B-374-baobab-vergleich-sammel-story.md) | Baobab-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | Wunsch | `idee` | P2 | — | — | — |
 | [B-529](B-529-erklaerung-nach-der-antwort.md) | Erklärung nach der Antwort | Wunsch | `idee` | P2 | — | beides | — |
-| [B-410](B-410-tor-null-element-ueber-alle-body-listen.md) | Reflexiver Wächter: jede Liste in jedem `[FromBody]`-Graphen meldet ein `null`-Element als 400 | Aufräumen | `ausformuliert` | P2 | — | backend | — |
-| [B-531](B-531-fokus-faellt-nach-aufdecken-auf-body.md) | Im Üben fällt der Fokus nach „Aufdecken“ und nach einer Selbsteinschätzung auf `body` | Defekt | `idee` | P3 | — | frontend | — |
+| [B-410](B-410-tor-null-element-ueber-alle-body-listen.md) | Reflexiver Wächter: jede Liste in jedem `[FromBody]`-Graphen meldet ein `null`-Element als 400 | Aufräumen | `geschaetzt` | P2 | M | backend | — |
+| [B-433](B-433-vorschau-des-vaters-verbraucht-die-einfuehrung.md) | Spielt der Vater eine Übungsrunde des Kindes, sind dessen neue Wörter danach „schon gesehen" | Defekt | `geschaetzt` | P3 | S | backend | — |
+| [B-435](B-435-umfang-nur-neue-fragt-nach-der-einfuehrung-nie.md) | Eine Position mit Umfang „nur neue" zeigt ihre Wörter seit B-419 nur noch – abgefragt werden sie nie | Defekt | `geschaetzt` | P3 | XS | backend | — |
+| [B-531](B-531-fokus-faellt-nach-aufdecken-auf-body.md) | Im Üben fällt der Fokus nach „Aufdecken“ und nach einer Selbsteinschätzung auf `body` | Defekt | `geschaetzt` | P3 | XS | frontend | — |
+| [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `geschaetzt` | P3 | XS | backend | — |
+| [B-328](B-328-inline-typen-put-verschiebt-lernstand.md) | Sollen die Inhaltslisten gespielter Übungen anderer Typen (und der Wort-Tausch) gesperrt sein? | Frage | `geschaetzt` | P3 | S | backend | — |
+| [B-384](B-384-reihe-anlegen-bestaetigung-auf-dem-handy.md) | Prüfauftrag: sieht man „steht im Katalog" auf dem Handy, wenn man unten auf „Reihe anlegen" drückt? | Frage | `geschaetzt` | P3 | XS | frontend | — |
+| [B-404](B-404-fach-loeschen-laesst-reihe-mit-uebungen-fachlos.md) | Ein gelöschtes Fach lässt Reihen mit Übungen fachlos zurück | Frage | `geschaetzt` | P3 | XS | backend | — |
+| [B-407](B-407-gespielte-uebung-sperrt-fachwechsel-dauerhaft.md) | Eine gespielte Übung mit einer Art des alten Fachs sperrt den Fachwechsel ihrer Reihe dauerhaft | Frage | `geschaetzt` | P3 | S | beides | — |
+| [B-432](B-432-erster-tag-einer-position-ohne-malus.md) | Prüfauftrag: darf der erste Tag einer Position am Tagesziel vorbei ohne Malus enden? | Frage | `geschaetzt` | P3 | S | backend | — |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `ausformuliert` | P3 | — | — | — |
-| [B-328](B-328-inline-typen-put-verschiebt-lernstand.md) | Sollen die Inhaltslisten gespielter Übungen anderer Typen (und der Wort-Tausch) gesperrt sein? | Frage | `ausformuliert` | P3 | — | backend | — |
-| [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
-| [B-384](B-384-reihe-anlegen-bestaetigung-auf-dem-handy.md) | Prüfauftrag: sieht man „steht im Katalog" auf dem Handy, wenn man unten auf „Reihe anlegen" drückt? | Frage | `idee` | P3 | — | frontend | — |
-| [B-404](B-404-fach-loeschen-laesst-reihe-mit-uebungen-fachlos.md) | Ein gelöschtes Fach lässt Reihen mit Übungen fachlos zurück | Frage | `idee` | P3 | — | backend | — |
-| [B-407](B-407-gespielte-uebung-sperrt-fachwechsel-dauerhaft.md) | Eine gespielte Übung mit einer Art des alten Fachs sperrt den Fachwechsel ihrer Reihe dauerhaft | Frage | `idee` | P3 | — | backend | — |
-| [B-422](B-422-beinahe-treffer-tippfehler.md) | Prüfauftrag: soll ein Tippfehler („Beinahe-Treffer") verziehen werden – und wie? | Frage | `idee` | P3 | — | backend | — |
-| [B-432](B-432-erster-tag-einer-position-ohne-malus.md) | Prüfauftrag: darf der erste Tag einer Position am Tagesziel vorbei ohne Malus enden? | Frage | `idee` | P3 | — | backend | — |
-| [B-433](B-433-vorschau-des-vaters-verbraucht-die-einfuehrung.md) | Spielt der Vater eine Übungsrunde des Kindes, sind dessen neue Wörter danach „schon gesehen" | Frage | `idee` | P3 | — | backend | — |
-| [B-435](B-435-umfang-nur-neue-fragt-nach-der-einfuehrung-nie.md) | Eine Position mit Umfang „nur neue" zeigt ihre Wörter seit B-419 nur noch – abgefragt werden sie nie | Frage | `idee` | P3 | — | backend | — |
-| [B-437](B-437-artikel-toleranz-nur-bei-nomen.md) | Die Artikel-Toleranz greift auch dort, wo das erste Wort kein Artikel eines Nomens ist | Frage | `idee` | P3 | — | backend | — |
+| [B-408](B-408-assistent-zeigt-keine-bewertung.md) | Der Plan-Assistent zeigt in seiner Übungsauswahl keine Bewertung – sein Zwilling im Planbau schon | Wunsch | `geschaetzt` | P3 | S | frontend | — |
+| [B-422](B-422-beinahe-treffer-tippfehler.md) | Prüfauftrag: soll ein Tippfehler („Beinahe-Treffer") verziehen werden – und wie? | Wunsch | `geschaetzt` | P3 | S | beides | — |
+| [B-437](B-437-artikel-toleranz-nur-bei-nomen.md) | Die Artikel-Toleranz greift auch dort, wo das erste Wort kein Artikel eines Nomens ist | Wunsch | `geschaetzt` | P3 | XS | backend | — |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `ausformuliert` | P3 | L | backend | Migration |
 | [B-16](B-16-positions-formular-umfang.md) | Prüfauftrag: deckt das Positions-Edit-Formular alle Felder ab? | Wunsch | `ausformuliert` | P3 | S | frontend | — |
 | [B-20](B-20-ki-supervisor-agent.md) | KI-Supervisor-Agent (Teil D) — erster Schritt: Übungen einem Plan zuweisen | Wunsch | `ausformuliert` | P3 | L | backend | — |
@@ -60,14 +58,13 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-369](B-369-lesefehler-in-ternaer-form.md) | Lesefehler in Ternär-Form und unter nacktem Namen bieten noch keinen erneuten Versuch | Wunsch | `idee` | P3 | — | frontend | — |
 | [B-376](B-376-sammelalbum-fuer-gems.md) | Ein Sammelalbum mit Karten-Sets für Gems statt einzelner Skins | Wunsch | `idee` | P3 | — | — | — |
 | [B-377](B-377-lob-kanal-des-vaters.md) | Ein Lob-Kanal: der Vater schickt Lob, und Erfolge des Kindes erreichen den Vater | Wunsch | `idee` | P3 | — | — | — |
-| [B-408](B-408-assistent-zeigt-keine-bewertung.md) | Der Plan-Assistent zeigt in seiner Übungsauswahl keine Bewertung – sein Zwilling im Planbau schon | Wunsch | `idee` | P3 | — | frontend | — |
 | [B-459](B-459-vision-modell-fuer-buchseiten.md) | Fotos echter Buchseiten brauchen ein stärkeres Vision-Modell als gemma4:e2b | Wunsch | `idee` | P3 | — | — | — |
 | [B-527](B-527-belohnungsbox-als-truhe-zum-oeffnen.md) | Belohnungsbox als Truhe auf dem Pfad, die das Kind selbst öffnet | Wunsch | `idee` | P3 | — | beides | — |
 | [B-528](B-528-missionen-als-eigener-tab.md) | Missionen als eigener Tab mit Restzeit | Wunsch | `idee` | P3 | — | frontend | — |
 | [B-530](B-530-antwortzeit-ab-sichtbarer-karte.md) | Antwortzeit ab der sichtbaren Karte messen | Wunsch | `idee` | P3 | — | beides | — |
+| [B-445](B-445-seed-kind-ohne-klasse-und-fachlehrer.md) | Seed: „Sohn" hat weder Klasse noch Schulart, und Herr Schmidt trägt kein Fachlehrer-Profil | Aufräumen | `geschaetzt` | P3 | XS | backend | — |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `geschaetzt` | P3 | S | backend | — |
 | [B-380](B-380-pflichtfeld-sperre-in-den-uebrigen-formularen.md) | Die Hausregel „Pflichtfeld leer → Speichern gesperrt" gilt erst auf der Lehrwerke-Seite | Aufräumen | `ausformuliert` | P3 | — | frontend | — |
-| [B-445](B-445-seed-kind-ohne-klasse-und-fachlehrer.md) | Seed: „Sohn" hat weder Klasse noch Schulart, und Herr Schmidt trägt kein Fachlehrer-Profil | Aufräumen | `idee` | P3 | — | beides | — |
 
 <details>
 <summary>Abgenommen (450)</summary>
@@ -812,7 +809,6 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-313](B-313-agent-unbekannter-typ-je-teil-statt-fehlbedienung.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 | [B-315](B-315-arcade-buchungsart-und-facette-ohne-abgleich.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-316](B-316-plural-schluessel-aus-b-304-ohne-fall.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
-| [B-328](B-328-inline-typen-put-verschiebt-lernstand.md) | `ausformuliert` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien" |
 | [B-337](B-337-reuse-folgt-veraltetem-schluessel.md) | `abgenommen` | Abschnitt „User Story" |
 | [B-338](B-338-doppeltes-wort-schreibweise-ungetestet.md) | `abgenommen` | Abschnitt „User Story" |
 | [B-358](B-358-beispielkatalog-proben-restkanten.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
@@ -835,8 +831,6 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-403](B-403-reihe-fachwechsel-meldung-ohne-deutschen-text.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 | [B-405](B-405-fach-leeren-meldung-verspricht-wechsel.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 | [B-406](B-406-fachwechsel-meldung-loeschen-kann-gesperrt-sein.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
-| [B-408](B-408-assistent-zeigt-keine-bewertung.md) | `idee` | `unverifiziert: true` |
-| [B-410](B-410-tor-null-element-ueber-alle-body-listen.md) | `ausformuliert` | Abschnitt „User Story", Abschnitt „Akzeptanzkriterien" |
 | [B-412](B-412-beste-zuerst-richtung-unbelegt.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung", Feld `migration`, Feld `vertragsbruch` |
 | [B-415](B-415-arcade-sperrcodes-ohne-text.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 | [B-416](B-416-loeschen-summary-und-ziel-id-ungeprueft.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung", Feld `migration`, Feld `vertragsbruch` |
@@ -848,7 +842,6 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-442](B-442-capture-wochenmission-haengt-am-wochentag.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung", Feld `migration`, Feld `vertragsbruch` |
 | [B-443](B-443-fokus-wege-der-sohn-runde.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung", Feld `migration`, Feld `vertragsbruch` |
 | [B-444](B-444-testmodus-fehler-ohne-alert-und-alter-ausweg.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
-| [B-445](B-445-seed-kind-ohne-klasse-und-fachlehrer.md) | `idee` | `unverifiziert: true` |
 | [B-446](B-446-vokabel-tipp-zeigt-den-artikel-des-fragewortes.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung", Feld `groesse`, Feld `migration`, Feld `vertragsbruch` |
 | [B-447](B-447-arcade-zeigt-iso-daten.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung", Feld `migration`, Feld `vertragsbruch` |
 | [B-448](B-448-umfang-nachschau-reste.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung", Feld `migration`, Feld `vertragsbruch` |
@@ -860,9 +853,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-456](B-456-nachschau-reste-sprint-28.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung", Feld `migration`, Feld `vertragsbruch` |
 | [B-458](B-458-grammatik-entwurf-verraet-die-loesung.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-461](B-461-lueckentext-ablenker-zaehlen-als-loesung.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
-| [B-465](B-465-ki-lueckentext-mehrdeutig-und-verraten.md) | `ausformuliert` | Abschnitt „User Story", Abschnitt „Akzeptanzkriterien" |
 | [B-467](B-467-leerzustaende-melden-erfolg.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
-| [B-474](B-474-kacheln-ohne-drehung-und-uebersicht.md) | `ausformuliert` | Abschnitt „User Story", Abschnitt „Akzeptanzkriterien" |
 | [B-475](B-475-laden-abbruch-laesst-uebungen-ungetestet.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 | [B-476](B-476-kartenstufe-steigt-mit-dem-leitner-fach.md) | `abgenommen` | Abschnitt „Schätzung" |
 | [B-479](B-479-nachschau-reste-sprint-31.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung", Feld `migration`, Feld `vertragsbruch` |
@@ -912,7 +903,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-533](B-533-bonus-training-extra-muenzen.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 
 <details>
-<summary>Verworfen (30)</summary>
+<summary>Verworfen (33)</summary>
 
 | Id | Story | Grund |
 | --- | --- | --- |
@@ -924,10 +915,12 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-14](B-14-learngoal-belohnung.md) | Idempotente Belohnung, wenn ein Lernziel erreicht ist — **gegenstandslos** | erfüllt durch KeyResult/ObjectiveRewardService (DB-Umbau E13) |
 | [B-186](B-186-assistent-und-planseite-setzen-zielpunkte-verschieden.md) | Assistent und Plan-Seite setzen die Zielpunkte nach verschiedenen Regeln | bleibt wie es ist – Entscheidung des Nutzers am 2026-10-23 (G-1): im Assistenten gewinnt die gewählte Intensität, weil sie eine ausdrückliche, angezeigte und in der Zusammenfassung bestätigte Aussage des Vaters ist; die Creator-Empfehlung gilt nur auf der Plan-Seite |
 | [B-213](B-213-bilder-spec-flackert-im-vollen-lauf.md) | `bilder.spec.ts` fällt im vollen Lauf gelegentlich, allein nie | Dublette zu B-153, das denselben Fall seit 2026-08-11 fuehrt und die Ursache belegt hat → [B-153] |
+| [B-217](B-217-khan-academy-vergleich-sammel-story.md) | Khan-Academy-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | geteilt – Sammel-Story ohne eigene Arbeit; die offenen Teil-Stories führt der Index einzeln, der Plan liegt in docs/khan-academy-vergleich-plan.md → [B-218, B-219, B-220, B-221, B-223, B-39] |
 | [B-222](B-222-wochen-streak-als-default.md) | Prüfauftrag: ist der Tages-Streak der richtige Default? | bleibt wie es ist – Entscheidung des Nutzers am 2026-10-23 (G-6): der Tages-Streak bleibt. Bei Pugling kommt der Druck aus der Pflicht (PenaltyCoins), der Streak ist reines Zuckerbrot (DailyBoxOptions.cs:25, PositionProgressService.cs:405). Khans Argument gegen Tagesdruck trifft darum nicht |
 | [B-226](B-226-zwei-muenzstaende-im-shop-bildschirm.md) | Der Shop-Bildschirm zeigt zwei verschiedene Münzstände | gegenstandslos – beide Chips lesen dieselbe Context-Variable `coins` aus `api.wallet()` (SohnApp.tsx:52,64,96; SohnShop.tsx:29,152); zwei verschiedene Werte im selben Render sind unmöglich, abgelesen wurde vermutlich ein anderes Element |
 | [B-23](B-23-uebungstyp-plugins-dll.md) | Übungstyp-Plugins als externe DLLs (Stufe 2) | Entscheidung des Nutzers am 2026-10-23: eine Familien-App hat keine externen Plugin-Autoren; Stufe 1 (IExerciseType + Registry) genügt. Die Entscheidungen 2 und 3 schlossen sich zudem aus. Kommt der Bedarf, ist das eine neue Story |
 | [B-24](B-24-frontend-unknown-field.md) | Frontend gegen `unknown_field` durchspielen | "Alle 34 untypisierten Schreib-Rümpfe in api.ts sind Feld für Feld gegen die Contracts-DTOs |
+| [B-247](B-247-knowunity-vergleich-sammel-story.md) | Knowunity-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | geteilt – Sammel-Story ohne eigene Arbeit; die offenen Teil-Stories führt der Index einzeln, der Plan liegt in docs/knowunity-vergleich-plan.md → [B-248, B-249, B-250, B-251, B-252, B-253] |
 | [B-271](B-271-gewaehltes-profil-setzt-reihe.md) | Das zum Kind gewählte Profil setzt Reihe und Fach des KI-Creators | gegenstandslos durch B-473 (e94aa1e1): ohne --profile/--series nimmt der Agent das zum Kind beste Profil und dessen Reihe (AgentCommands.cs:507-513) |
 | [B-29](B-29-altmigration-transaktional.md) | Prüfauftrag: nicht-transaktionale Altmigration | gegenstandslos seit der Neufaltung auf InitialCreate — die Migrationskette besteht (SchemaGuardTests, Tor G1b) aus genau einer Migration (Data/Migrations/20260803223259_InitialCreate.cs), keine Altmigration ist mehr vorhanden, die nicht-transaktional laufen könnte. Program.cs (Zeilen 471–484) behandelt eine DB der alten Kette ohnehin nicht als Migrationsfall, sondern wirft eine handlungsfähige Fehlermeldung — ein Upgrade-Pfad existiert bewusst nicht. |
 | [B-295](B-295-arcade-korpus-auf-englisch.md) | Der restliche Chrome-Korpus der Sohn-Arcade auf Englisch | geteilt (Lauf F): Rahmen-Bildschirme → B-304, Spielweg → B-305 → [B-304, B-305] |
@@ -935,6 +928,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-314](B-314-fehlermeldungen-der-arcade-bleiben-deutsch.md) | Fehlermeldungen in der englischen Arcade bleiben deutsch | zusammengelegt: B-305 nennt GERMAN_PROBLEM_TEXT, soweit die Arcade ihn zeigt, schon in seinem Umfang → [B-305] |
 | [B-33](B-33-azure-publish-profile.md) | Azure-Secret `AZURE_WEBAPP_PUBLISH_PROFILE` fehlt | bewusste Nicht-Aufgabe für eine Code-Sitzung (Nutzer-Entscheidung) |
 | [B-34](B-34-sitzungsbonus-dauer.md) | „Dauer durchgehend gelernt" als eskalierender Sitzungs-Bonus | durch MinutesPracticed-Missionen abgelöst |
+| [B-374](B-374-baobab-vergleich-sammel-story.md) | Baobab-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | geteilt – Sammel-Story ohne eigene Arbeit; B-375 abgenommen, B-378 verworfen, die offenen Teil-Stories führt der Index einzeln, der Plan liegt in docs/baobab-vergleich-plan.md → [B-376, B-377] |
 | [B-378](B-378-muendliche-abfrage-als-selbsteinschaetzung.md) | Prüfauftrag: eine mündliche Abfrage als Selbsteinschätzung ohne KI-Bewertung? | gegenstandslos: die Selbsteinschätzungs-Stufe gibt es schon (B-70), Vorlesen kommt mit B-252; eine Selbsteinschätzung, die auf den Leitner-Stand zählt, wäre ein Selbstbetrugs-Weg (Entscheidung im Auftrag des Nutzers, 2026-11-05) |
 | [B-38](B-38-mehrsprachige-oberflaeche.md) | Mehrsprachige Oberfläche (Deutsch, Englisch, Französisch) | "geteilt — ein Programm, keine Story (Entscheidung 8); siehe die recherchierte Grundlage unten und → [B-85, B-86, B-87] |
 | [B-391](B-391-birkenbihl-decoding-null-ist-500.md) | Ein Birkenbihl-Satz mit `"decoding": null` endet in einer 500 statt einer 400 | Für null-MEMBER widerlegt (implizites [Required] antwortet 400 validation_error mit dem Pfad in errors); für null-ELEMENTE einer Liste bestätigt – weiter in B-397. |

@@ -1,15 +1,14 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/backend, bereich/katalog, rolle/creator]
+tags: [typ/story, status/geschaetzt, bereich/backend, bereich/katalog, rolle/creator]
 aliases: [PUT löscht die Einkleidung, ausgelassenes Feld heißt leer, Vollersatz vs. Autoren-Information]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Frage
-groesse:
+groesse: XS
 wo: backend
 migration: nein
-vertragsbruch: offen
+vertragsbruch: nein
 quelle: Review-Fund zum Bau von B-206 (pugling-reviewer, 2026-09-03)
-unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
@@ -43,14 +42,18 @@ ein Erfolg: dann steht ausdrücklich da, dass PUT ein PUT ist und Aufrufer das F
 ## Ist-Stand am Code
 
 - **Das Feld ist optional und wird zu leer**:
-  [ExerciseAuthoringDtos.cs:30](../../backend/Pugling.Contracts/Creator/ExerciseAuthoringDtos.cs#L30)
+  [ExerciseAuthoringDtos.cs:32](../../backend/Pugling.Contracts/Creator/ExerciseAuthoringDtos.cs#L32)
   (`IReadOnlyList<int>? InterestTagIds = null`) →
-  [ExerciseControllerBase.cs:140](../../backend/Pugling.Api/Controllers/Creator/ExerciseControllerBase.cs#L140)
+  [ExerciseControllerBase.cs:166](../../backend/Pugling.Api/Controllers/Creator/ExerciseControllerBase.cs#L166)
   (`var wanted = (tagIds ?? []).Distinct()…`). „Nicht angegeben" und „leere Liste" sind ununterscheidbar.
 - **Bewusst so entschieden** (B-46, „Replacement, not merge" im `<summary>` derselben Methode) — die Frage
   ist also nicht, ob es ein Versehen war, sondern ob die Entscheidung die Zusage von B-206 trägt.
-- **Nichts pinnt das Verhalten.** Es gibt keinen Test in eine der beiden Richtungen; die Regel könnte
-  kippen, ohne dass ein Tor es merkt.
+- **Halb gepinnt** (berichtigt 2026-10-23, nachgeprüft 2026-11-13): `ExerciseMetadataTests.cs:78-134`
+  (`Uebung_TraegtIhreEinkleidung_UndPutErsetztSie`) hält Ersetzen und leere Liste beim `PUT`;
+  `:143-172` hält das **weggelassene** Feld nur beim `POST`. Das weggelassene Feld beim `PUT` prüft keiner.
+- **Die Grenze steht schon im Code:** der `<summary>` am Stichwort-`DELETE`
+  ([InterestTagsController.cs:228-232](../../backend/Pugling.Api/Controllers/Creator/InterestTagsController.cs#L228))
+  nennt den Vollersatz, lässt aber offen, ob „behalten" gemeint sein sollte („a contract question of its own").
 - **B-206 hat nur den einen Frontend-Aufrufer geflickt**
   ([ExerciseEditModal.tsx](../../frontend/src/vater/ExerciseEditModal.tsx), `payloadFrom`). Der
   `Pugling.Client` nimmt weiter ein beliebiges Payload
@@ -76,15 +79,15 @@ Entscheidung. Genau eine der beiden Fassungen muss gelten:
 
 ## Offene Punkte
 
-1. **Welche der beiden Fassungen gilt?** *Empfehlung:* die Semantik — ein PUT, der je nach Feld mal
+1. ~~**Welche der beiden Fassungen gilt?** *Empfehlung:* die Semantik — ein PUT, der je nach Feld mal
    ersetzt und mal behält, ist die schlechtere Überraschung, und die zwei Vorgänger (`suggestedBonus`,
    `executePublic`) sind so gelöst. Kosten: Die Einkleidung bleibt über die API löschbar, ohne dass es
-   jemand merkt.
-2. **Egal wie entschieden wird: pinnt ein Test das Verhalten?** *Empfehlung:* ja, in beide Richtungen —
+   jemand merkt.~~ → Entscheidung 1
+2. ~~**Egal wie entschieden wird: pinnt ein Test das Verhalten?** *Empfehlung:* ja, in beide Richtungen —
    ein PUT **mit** und einer **ohne** `interestTagIds`, je mit der Zusicherung, was danach dransteht. Heute
-   ist die Regel unbewacht, und das ist unabhängig von der Antwort falsch.
-3. **Braucht der `Pugling.Client` einen Schutz?** Er nimmt ein beliebiges Payload und ist der Weg der
-   KI-Agenten. *Empfehlung:* zurückstellen — erst Punkt 1 entscheiden.
+   ist die Regel unbewacht, und das ist unabhängig von der Antwort falsch.~~ → Entscheidung 2
+3. ~~**Braucht der `Pugling.Client` einen Schutz?** Er nimmt ein beliebiges Payload und ist der Weg der
+   KI-Agenten. *Empfehlung:* zurückstellen — erst Punkt 1 entscheiden.~~ → Entscheidung 3
 
 ## Entscheidungen
 
@@ -99,12 +102,40 @@ Getroffen vom Nutzer im Dialog am 2026-10-23 (Backlog-Sichtung, G-3).
 3. **`Pugling.Client` bekommt keinen Schutz** (Punkt 3, nach Entscheidung 1 gegenstandslos). Die
    Verantwortung trägt der Aufrufer.
 
-## Akzeptanzkriterien (Entwurf)
+## Akzeptanzkriterien
 
-1. Es steht als nummerierte Entscheidung fest, ob ein ausgelassenes `interestTagIds` „behalten" oder
-   „leeren" heißt — mit Begründung und Kosten.
-2. Ein Test hält das entschiedene Verhalten in **beide** Richtungen fest.
-3. Der `<summary>` am Stichwort-`DELETE` und die Zusage in B-206 sagen danach dasselbe wie der Code.
+1. Es steht als nummerierte Entscheidung fest, dass ein ausgelassenes `interestTagIds` „leeren" heißt — mit
+   Begründung und Kosten (Entscheidung 1, erfüllt).
+2. Ein `PUT` auf eine eingekleidete Übung **ohne** das Feld `interestTagIds` antwortet `200`, und danach ist die
+   Einkleidung leer. Zusammen mit dem bestehenden Fall (mit Feld → ersetzt, leere Liste → leer) ist das Verhalten
+   in beide Richtungen gehalten.
+3. Der `<summary>` am Stichwort-`DELETE` (`InterestTagsController.cs:228-232`) nennt die Entscheidung („omitted
+   means cleared, decided in B-208") statt sie als offene Vertragsfrage zu führen; die Zusage in B-206 verweist
+   schon auf B-208 und bleibt.
+
+## Schätzung
+
+**Größe: XS** – ein Testfall und ein Satz im `<summary>`. `migration: nein`, `vertragsbruch: nein`
+(Entscheidung 1 behält das heutige Verhalten; der Wert `offen` ist damit aufgelöst).
+
+**Risiken**
+
+- Der neue Fall ist im Ausgangszustand grün (er pinnt Bestehendes). Nach CLAUDE.md muss er benennen, welche Änderung
+  ihn rot macht, sonst ist er eine leere Zusicherung: hier `if (tagIds is null) return;` am Anfang von
+  `SetInterestLinks` („behalten"). Die Mutante wird beim Bau einmal gelaufen.
+- Der Payload im Test darf `interestTagIds` wirklich **nicht** enthalten (anonymes Objekt wie in `:161-168`), nicht
+  `null` – beides landet zwar gleich, aber nur das Weglassen ist der Fall dieser Story.
+
+**Angriffsplan (Backend zuerst)**
+
+1. Testfall in `ExerciseMetadataTests.cs`, Mutante gegen `SetInterestLinks` laufen lassen (muss rot werden).
+2. `<summary>` am `DELETE` in `InterestTagsController.cs` nachziehen (englisch).
+3. Frontend: keine Änderung (`payloadFrom` schickt das Feld seit B-206 immer).
+
+**Testweg**
+
+- `backend/Pugling.Api.Tests/ExerciseMetadataTests.cs`, neuer Fall `Put_Ohne_InterestTagIds_Leert_Die_Einkleidung` (AK 2).
+  Rot, wenn `SetInterestLinks` bei `null` nichts tut oder `ExercisePayload.InterestTagIds` „behalten" bedeutet.
 
 ## Verlauf
 
@@ -116,3 +147,7 @@ Getroffen vom Nutzer im Dialog am 2026-10-23 (Backlog-Sichtung, G-3).
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht; „nichts pinnt das Verhalten“ stimmt nur halb – `ExerciseMetadataTests.cs:79-134` pinnt Ersetzen und leere Liste, ungetestet ist nur das **weggelassene** Feld. Die Empfehlung „PUT bleibt PUT“ deckt sich mit der PATCH/PUT-Regel in `backend/CLAUDE.md`; nach der Entscheidung bleiben ein Test und ein Doku-Abgleich (XS).
 - **2026-10-23** — **`gegrillt`** in der Grill-Runde G-3 der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): PUT bleibt PUT (Entscheidung 1). Übrig bleiben ein Test und der Doku-Abgleich. **Freigabe des Nutzers (Autonomer Modus, Opt-in je Vorhaben):** ein Nachtlauf darf diese Story auf Grundlage der Entscheidungen selbst schätzen und bauen (Paket NP-16); trifft er auf eine Produktfrage, die die Entscheidungen nicht hergeben, hält er an.
 - **2026-10-23** — **Richtigstellung:** Der Freigabe-Vermerk im Eintrag davor wurde geschrieben, **bevor** der Nutzer ihn erteilt hatte (er galt zu dem Zeitpunkt nur für die G-2-Stories). Der Nutzer hat ihn anschließend ausdrücklich bestätigt, und zwar für alle an diesem Tag im Dialog entschiedenen Stories. Der Vermerk gilt damit.
+- **2026-11-13** — Ist-Stand nachgeprüft (Backlog-Lauf): Zeilen gewandert (`ExerciseAuthoringDtos.cs:32`, `ExerciseControllerBase.cs:166`);
+  das weggelassene Feld pinnt weiter nur der `POST` (`ExerciseMetadataTests.cs:143-172`). AKs final.
+- **2026-11-13** — **geschaetzt** (Backlog-Lauf, [Protokoll](../pm-sitzung-2026-11-13-backlog-lauf.md)): XS, backend, keine Migration;
+  `vertragsbruch` von `offen` auf `nein`, weil Entscheidung 1 des Nutzers das heutige Verhalten behält.
