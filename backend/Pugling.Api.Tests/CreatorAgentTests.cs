@@ -1293,6 +1293,31 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
+    /// B-524, part D (review): a required word is met by its base form in the round bracket, not by the sentence form,
+    /// and a required word outside the unit's list (a weak word of an earlier unit) is not demanded - it has no store
+    /// entry in the slice, so asking for it would contradict the school rules in every repair round. Red if the school
+    /// test checks the required words against the sentence forms ("goats" never equals "the goat") or against the
+    /// whole required list ("the cow" would be missing forever).
+    /// </summary>
+    [Fact]
+    public async Task Schultest_misst_Pflichtwoerter_an_der_Grundform_und_nur_aus_der_Liste()
+    {
+        const string draft = """
+            {"title":"Vokabeltest Bauernhof","text":"1. Ann rides her [horse] (the horse) every day.\n2. Two [sheep] (the sheep) stand in the field.\n3. The [goats] (the goat) eat everything.",
+             "distractors":["Pferdestall","Schäfer"]}
+            """;
+        var (pipeline, creator, _) = BuildAgent(draft);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Schultest-Pflicht");
+        await BookVocabularyAsync(creator, seriesId, seriesUnitId,
+            ("the horse", "das Pferd", null), ("the sheep", "das Schaf", null), ("the goat", "die Ziege", null));
+
+        var (_, outcome) = await pipeline.CreateAsync(
+            Request(subjectId, seriesId, seriesUnitId, "Cloze", words: ["the goat", "the cow"]) with { SchoolTest = true });
+
+        Assert.True(outcome.Published, string.Join(" | ", outcome.Violations));
+    }
+
+    /// <summary>
     /// A title the unit already has gets a number instead of costing a repair round. Red if <c>UniqueTitle</c> goes:
     /// the second draft then breaks the title rule in every round and is refused.
     /// </summary>

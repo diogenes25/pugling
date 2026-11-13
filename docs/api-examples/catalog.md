@@ -482,13 +482,15 @@ Response — `HTTP 201`:
         "index": 1,
         "answer": "goes",
         "alternatives": null,
-        "vocabKey": null
+        "vocabKey": null,
+        "form": null
       },
       {
         "index": 2,
         "answer": "meets",
         "alternatives": null,
-        "vocabKey": null
+        "vocabKey": null,
+        "form": null
       }
     ],
     "wordBank": [
@@ -496,7 +498,8 @@ Response — `HTTP 201`:
       "meets",
       "go",
       "meet"
-    ]
+    ],
+    "cueDistractors": null
   },
   "suggestedBonus": null,
   "gradeMin": null,

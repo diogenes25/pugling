@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildTypeConfig, choicesMissAnswer, configToEditorState, emptyRow, normalizeAnswer } from "./exerciseConfig";
+import { buildTypeConfig, choicesMissAnswer, configToEditorState, contentProblem, emptyRow, normalizeAnswer } from "./exerciseConfig";
 import type { ExerciseTypeKey } from "../lib/types";
 
 /*
@@ -54,6 +54,13 @@ describe("Rundlauf über die umgestellten Listenfelder", () => {
 
     expect((config as { cueDistractors?: string[] }).cueDistractors).toEqual(["rassistisch", MIT_KOMMA]);
     expect(extra.cueDistractors).toEqual(["rassistisch", MIT_KOMMA]);
+  });
+
+  // B-524 (Review): Eine Speicherlücke hat keine Inline-Lösung und ist trotzdem vollständig. Rot, wenn die Prüfung
+  // wieder `answer` verlangt – dann ließe sich keine Lücke aus dem Vokabel-Store speichern.
+  it("Lückentext: eine Speicherlücke ohne Inline-Lösung ist gültig, eine leere Inline-Lücke nicht", () => {
+    expect(contentProblem("Cloze", [{ index: 1, answer: "", vocabKey: "en_x", form: "" }], { text: "{{1}}" }, 0)).toBeNull();
+    expect(contentProblem("Cloze", [{ index: 1, answer: "", vocabKey: null, form: "" }], { text: "{{1}}" }, 0)).not.toBeNull();
   });
 
   it("Liste: Alternativen bleiben Listen", () => {

@@ -90,9 +90,9 @@ public class ClozeConfig
 /// <paramref name="Answer"/> is required even with a store reference - send <c>""</c> there; <c>null</c> is a validation error.
 /// <para>
 /// <paramref name="Form"/> is the word as the sentence needs it ("patients", "debates") when it differs from the
-/// store entry's base form. If set and not blank it is the solution - on every path, with or without a store
-/// reference - and the base form alone is wrong (B-524); the store entry still supplies the meaning and the link
-/// to the learning progress.
+/// store entry's base form. If set and not blank it is the solution - with or without a store reference - and the
+/// base form alone is wrong (B-524); the store entry still supplies the meaning and the link to the learning
+/// progress. A gap whose store entry is missing stays unsolvable either way: without the entry it has no meaning.
 /// </para>
 /// </summary>
 public record Gap(int Index, string Answer, List<string>? Alternatives = null, string? VocabKey = null,

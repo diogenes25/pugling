@@ -87,7 +87,20 @@ public sealed class ClozeStrategy(IChatClient chat, CreatorApi creator,
         var parsed = ClozeMarkup.Parse(draft.Text);
         foreach (var error in parsed.Errors) violations.Add(error);
         DraftRules.Count(violations, parsed.Gaps.Count, request);
-        DraftRules.CoversRequiredWords(violations, briefing, parsed.Gaps.Select(g => g.Answer), exact: true);
+        if (request.SchoolTest)
+        {
+            // B-524: a school-test gap names its word of the list in the round bracket, in the base form a required
+            // word is given in - the sentence form ("patients") would never equal it. And only words of the list can
+            // be asked: a required word outside it (a weak word of an earlier unit) has no store entry in the slice,
+            // so demanding it would contradict SchoolTestRules in every repair round.
+            var listed = briefing.RequiredWords.Where(w => PairOf(briefing, w) is not null).ToList();
+            DraftRules.CoversRequiredWords(violations, briefing with { RequiredWords = listed },
+                ClozeMarkup.FormHints(parsed.Text).Select(h => h.Hint), exact: true);
+        }
+        else
+        {
+            DraftRules.CoversRequiredWords(violations, briefing, parsed.Gaps.Select(g => g.Answer), exact: true);
+        }
 
         // A form hint is one base form. A list in the brackets ("(Pokémon, friend, match)", second live run) puts the
         // answer right beside its gap and turns the gap into multiple choice without a word bank's distractors.

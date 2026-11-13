@@ -24,10 +24,18 @@ const STAGE_KEY = {
 } as const;
 const isKnownStage = (s: number): s is keyof typeof STAGE_KEY => s in STAGE_KEY;
 
-/** Name der Leitner-Stufe in der Arcade-Sprache; eine unbekannte Stufe zeigt ihre Nummer. */
+/**
+ * Name der Leitner-Stufe in der Arcade-Sprache; eine unbekannte Stufe zeigt ihre Nummer. Die Tabelle gilt nur für
+ * Vokabeln: Bei anderen Typen bedeutet dieselbe Zahl etwas anderes (B-524: Lückentext-Stufe 5 ist der Wortkasten,
+ * nicht „Hören“). Mit Wortkasten heißt die Stufe darum nach ihm, sonst trägt sie nur ihre Nummer.
+ */
 function useStageLabel() {
   const { t } = useTranslation();
-  return (s: number) => (isKnownStage(s) ? t(STAGE_KEY[s]) : t("test.stageN", { n: s }));
+  return (s: number, type?: string | null, hasCueBox?: boolean) => {
+    if (hasCueBox) return t("test.cueBox");
+    if (type && type !== "Vocabulary") return t("test.stageN", { n: s });
+    return isKnownStage(s) ? t(STAGE_KEY[s]) : t("test.stageN", { n: s });
+  };
 }
 
 /**
@@ -48,6 +56,8 @@ export function SohnTest() {
   const [total, setTotal] = useState(0);
   const [cursor, setCursor] = useState(0);
   const [item, setItem] = useState<TestItem | null>(null);
+  // Der Name der Stufe, wie die letzte Karte ihn trug: das Ergebnis selbst kennt weder Typ noch Wortkasten (B-524).
+  const [stageName, setStageName] = useState<string | null>(null);
   const [typedAnswer, setTypedAnswer] = useState("");
   const [revealed, setRevealed] = useState(false);
   const [result, setResult] = useState<TestSubmitResponse | null>(null);
@@ -62,6 +72,10 @@ export function SohnTest() {
   // einhängt.
   const gone = useRef(false);
   useEffect(() => { gone.current = false; return () => { gone.current = true; }; }, []);
+  // Den Namen der Stufe mitschreiben, solange eine Karte da ist – das Ergebnis danach kennt nur die Nummer.
+  useEffect(() => {
+    if (item) setStageName(stageLabel(item.stage, item.type, !!item.cueBox));
+  }, [item]); // nur die Karte: stageLabel ist je Render eine neue Funktion, aber immer dieselbe Regel
 
   async function finish(id: number) {
     if (!planId) return;
@@ -173,7 +187,7 @@ export function SohnTest() {
     <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>{t("progress.toHome")}</button></div>;
 
   if (result) return (
-    <TestResult result={result} skin={skin} onHome={() => nav("/sohn")} onRetry={start}
+    <TestResult result={result} stageName={stageName} skin={skin} onHome={() => nav("/sohn")} onRetry={start}
       onPractice={() => nav(`/sohn/practice/${positionId}`)} />
   );
 
@@ -192,7 +206,7 @@ export function SohnTest() {
         <span className="row" style={{ marginLeft: "auto", gap: 8 }}>
           <span className="pill cyan">{t("test.questionOf", { n: Math.min(cursor + 1, total), total })}</span>
           {/* Die Stufe DIESER Frage (B-476): ein Wort auf Fach 1/2 kommt als Auswahl, auch wenn der Test „Tippen“ heißt. */}
-          <span className="pill mag">{stageLabel(item.stage)}</span>
+          <span className="pill mag">{stageLabel(item.stage, item.type, !!item.cueBox)}</span>
           {/*
             „Später weiter" statt „Abbrechen": der Versuch bleibt am Cursor stehen und wird beim nächsten
             Start fortgesetzt (der Server gibt den laufenden Versuch zurück, statt einen neuen anzulegen).
@@ -322,8 +336,8 @@ export function SelfAssessAnswer({ reveal, alternatives, revealed, busy, onRevea
  * Props-Komponente (kein Laden, kein `fetch`), und genau die Regeln, die hier hängen – teilen alle Zeilen
  * ihren Aufgabentext? gibt es Fehlnennungen? – sind die, die man sonst nur von Hand ansehen könnte.
  */
-export function TestResult({ result, skin, onHome, onRetry, onPractice }: {
-  result: TestSubmitResponse; skin: import("../lib/skins").Skin; onHome: () => void; onRetry: () => void; onPractice: () => void;
+export function TestResult({ result, stageName, skin, onHome, onRetry, onPractice }: {
+  result: TestSubmitResponse; stageName?: string | null; skin: import("../lib/skins").Skin; onHome: () => void; onRetry: () => void; onPractice: () => void;
 }) {
   const { t } = useTranslation();
   const stageLabel = useStageLabel();
@@ -341,7 +355,7 @@ export function TestResult({ result, skin, onHome, onRetry, onPractice }: {
     <div className="sohn-body">
       <div className="victory">
         <div style={{ fontFamily: "var(--font-display)", letterSpacing: ".2em", color: "var(--muted)", fontSize: 12 }}>
-          {t("test.header", { stage: stageLabel(result.stage).toUpperCase() })}
+          {t("test.header", { stage: (stageName ?? stageLabel(result.stage)).toUpperCase() })}
         </div>
         <div className={`vtitle ${result.passed ? "win" : "lose"}`}>{result.passed ? t("test.victory") : t("test.almost")}</div>
         <div className="ring" style={ring}><b>{pct}%<small>{result.correctItems} / {result.totalItems}</small></b></div>
@@ -357,7 +371,7 @@ export function TestResult({ result, skin, onHome, onRetry, onPractice }: {
                   bei einer Menge die Lehre der Übung (B-77/E2). */}
               {/* B-524: „falsch geschrieben" ist eine eigene Lehre – das Wort war da, die Schreibweise nicht.
                   Gewertet bleibt es falsch; nur das Zeichen und die Zeile darunter sagen, was zu üben ist. */}
-              <span aria-hidden="true">{o.wasCorrect ? "✅" : o.misspelled ? "✏️" : "❌"}</span>
+              <span aria-hidden="true">{o.wasCorrect ? "✅" : o.misspelled && !sharedPrompt ? "✏️" : "❌"}</span>
               {!sharedPrompt && <span className="sr-only">
                 {o.wasCorrect ? t("test.correct") : o.misspelled ? t("test.misspelled") : t("test.incorrect")}</span>}
               {sharedPrompt

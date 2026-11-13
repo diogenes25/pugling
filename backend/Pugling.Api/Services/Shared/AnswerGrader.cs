@@ -48,17 +48,28 @@ public class AnswerGrader
     {
         var g = StageMechanics.Normalize(given);
         if (g.Length == 0 || Matches(given, item)) return false;
-        var own = item.GradedAnswers().Select(StageMechanics.Normalize).Where(a => a.Length > 0).ToHashSet();
+        var own = Spellings(item, item).ToHashSet();
         if (own.Count == 0) return false;
         var nearest = own.Min(a => Distance(g, a));
         if (!own.Any(a => Distance(g, a) == nearest && nearest <= (a.Length <= 5 ? 1 : 2))) return false;
         // Another atom's solution that is just as close makes the answer a different word, not a spelling slip.
         // Solutions shared with the asked atom are its own and do not compete.
         return !siblings.Where(s => s.Index != item.Index)
-            .SelectMany(s => s.GradedAnswers())
-            .Select(StageMechanics.Normalize)
-            .Where(a => a.Length > 0 && !own.Contains(a))
+            .SelectMany(s => Spellings(s, item))
+            .Where(a => !own.Contains(a))
             .Any(a => Distance(g, a) <= nearest);
+    }
+
+    // The normalized solutions of an atom, each also without its leading article where the asked atom forgives one -
+    // the same tolerance Matches grants: "chein" for "le chien" is measured against "chien", not against the article.
+    private static IEnumerable<string> Spellings(ContentItem atom, ContentItem asked)
+    {
+        foreach (var a in atom.GradedAnswers().Select(StageMechanics.Normalize).Where(a => a.Length > 0))
+        {
+            yield return a;
+            if (asked.ArticleOptionalIn is { } language && StageMechanics.WithoutLeadingArticle(a, language) is { } bare)
+                yield return bare;
+        }
     }
 
     // Optimal string alignment distance: insertions, deletions, substitutions and swaps of two adjacent letters each

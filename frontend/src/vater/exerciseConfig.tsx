@@ -485,7 +485,8 @@ export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, re
               onChange={(v) => ex({ wordBank: v })} /></div>
           {/* B-524: Ablenker im deutschen Wortkasten (Stufe „Wortkasten + Freitext“). Die Bedeutungen der Lücken
               kommen aus dem Vokabel-Store; hier stehen nur die zusätzlichen, die keine Lücke lösen. */}
-          <div className="field"><span className="label-row group-label">Ablenker im Wortkasten <span className="muted">(optional)</span></span>
+          <div className="field"><span className="label-row group-label">Ablenker im Wortkasten <span className="muted">(optional)</span>
+            <InfoHint topic="cueDistractors" /></span>
             <RepeatedTextFields label="Ablenker" placeholder="rassistisch"
               values={Array.isArray(extra.cueDistractors) ? extra.cueDistractors : []}
               onChange={(v) => ex({ cueDistractors: v })} /></div>
@@ -649,13 +650,15 @@ export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, re
             {/* Mit Speicherverweis kommt die Lösung aus dem Vokabel-Store; dann zählt nur die Satzform, falls der
                 Satz eine gebeugte Form verlangt (B-524). Ohne Verweis ist die Lösung selbst schon die Satzform. */}
             {r.vocabKey
-              ? <>
-                  <div className="field" style={{ flex: "none", minWidth: 120 }}>
-                    <span className="label-row">Aus dem Speicher</span><code>{r.vocabKey}</code>
-                  </div>
-                  <RowField label="Satzform" value={r.form} onChange={(v) => patchRow(i, { form: v })} placeholder="patients" optional />
-                </>
+              ? <div className="field" style={{ flex: "none", minWidth: 120 }}>
+                  <span className="label-row">Aus dem Speicher</span><code>{r.vocabKey}</code>
+                </div>
               : <RowField label="Lösung" value={r.answer} onChange={(v) => patchRow(i, { answer: v })} />}
+            {/* Die Satzform schlägt jede andere Lösung – darum sichtbar, sobald es einen Speicherverweis gibt ODER
+                sie schon gesetzt ist; sonst änderte der Vater die „Lösung“, und die Satzform gewönne still. */}
+            {(r.vocabKey || r.form) &&
+              <RowField label="Satzform" value={r.form} onChange={(v) => patchRow(i, { form: v })} placeholder="patients"
+                optional topic="sentenceForm" />}
             <RowRepeatedField label="Auch richtig" values={r.alternatives} scope={`Zeile ${i + 1}`}
               placeholder="zählt auch als richtig" optional topic={i === 0 ? "alsoCorrect" : undefined}
               onChange={(v) => patchRow(i, { alternatives: v })} />
@@ -731,14 +734,17 @@ export function ArticleRequiredCheck({ checked, onChange }: { checked: boolean; 
   );
 }
 
-export function RowField({ label, value, onChange, type = "text", placeholder, optional, width }: {
+export function RowField({ label, value, onChange, type = "text", placeholder, optional, width, topic }: {
   label: string; value: unknown; onChange: (v: string) => void;
-  type?: string; placeholder?: string; optional?: boolean; width?: number;
+  type?: string; placeholder?: string; optional?: boolean; width?: number; topic?: HelpTopic;
 }) {
   const uid = useId();
   return (
     <div className="field" style={{ flex: width ? "none" : 1, minWidth: width ?? 120, width }}>
-      <label htmlFor={uid}>{label}{optional && <span className="muted"> (optional)</span>}</label>
+      <span className="label-row">
+        <label htmlFor={uid}>{label}{optional && <span className="muted"> (optional)</span>}</label>
+        {topic && <InfoHint topic={topic} />}
+      </span>
       <input id={uid} type={type} value={String(value ?? "")} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
     </div>
   );

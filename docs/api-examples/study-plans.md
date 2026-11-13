@@ -195,7 +195,8 @@ Response — `HTTP 200`:
     "displayOnly": true,
     "answerPattern": null,
     "letterTiles": null,
-    "introduction": true
+    "introduction": true,
+    "cueBox": null
   },
   "done": false,
   "cursor": 0,
@@ -250,7 +251,8 @@ Response — `HTTP 200`:
     "displayOnly": true,
     "answerPattern": null,
     "letterTiles": null,
-    "introduction": true
+    "introduction": true,
+    "cueBox": null
   },
   "done": false
 }
@@ -319,7 +321,8 @@ Response — `HTTP 200`:
     "displayOnly": false,
     "answerPattern": null,
     "letterTiles": null,
-    "introduction": false
+    "introduction": false,
+    "cueBox": null
   },
   {
     "itemIndex": 1,
@@ -341,7 +344,8 @@ Response — `HTTP 200`:
     "displayOnly": false,
     "answerPattern": null,
     "letterTiles": null,
-    "introduction": false
+    "introduction": false,
+    "cueBox": null
   }
 ]
 ```
@@ -421,7 +425,8 @@ Response — `HTTP 200`:
     "revealAlternatives": null,
     "answerPattern": null,
     "decoding": null,
-    "letterTiles": null
+    "letterTiles": null,
+    "cueBox": null
   },
   "done": false,
   "cursor": 0,

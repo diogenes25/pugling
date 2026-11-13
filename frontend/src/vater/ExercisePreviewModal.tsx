@@ -315,7 +315,7 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
               {result.items.map((o) => (
                 <div className="row" key={o.itemIndex} style={{ alignItems: "center", gap: 8, padding: "3px 0" }}>
                   {/* B-524: dieselbe Kategorie wie im Testergebnis des Kindes – das Wort war da, die Schreibweise nicht. */}
-                  <span aria-hidden="true">{o.wasCorrect ? "✅" : o.misspelled ? "✏️" : "❌"}</span>
+                  <span aria-hidden="true">{o.wasCorrect ? "✅" : o.misspelled && !isSet ? "✏️" : "❌"}</span>
                   {/* Bei der Menge trägt das Zeichen eine andere Bedeutung als sonst: nicht „falsch geantwortet",
                       sondern „nicht genannt" – und das ist die Lehre der Übung (B-77/E2). */}
                   <span className="sr-only">
@@ -323,7 +323,7 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
                   </span>
                   {!isSet && <span>{isOrderedList ? `Eintrag ${o.itemIndex + 1}` : o.prompt}</span>}
                   <span className="muted" style={{ marginLeft: "auto" }}>
-                    {o.givenAnswer ? `„${o.givenAnswer}" → ` : ""}<b>{o.expected}</b>
+                    {o.misspelled && !isSet && "falsch geschrieben · "}{o.givenAnswer ? `„${o.givenAnswer}" → ` : ""}<b>{o.expected}</b>
                   </span>
                 </div>
               ))}

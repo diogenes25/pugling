@@ -70,6 +70,19 @@ public class SchulVokabeltestTests(PuglingWebAppFactory factory) : IClassFixture
     public void Zu_Weit_Weg_Ist_Falsch(string given, string solution) =>
         Assert.False(Misspelled(given, solution));
 
+    // Friedrich's French: the article may be left out (B-421), so the slip is measured against the bare word - "chein"
+    // for "le chien" is one swap, not four edits. Red if IsMisspelled measures only the full solution.
+    [Fact]
+    public void Weggelassener_Artikel_Zaehlt_Nicht_Gegen_Den_Schreibfehler()
+    {
+        var chien = new ContentItem(0, "Hund", "le chien", ["le chien"], ArticleOptionalIn: "fr");
+        var chat = new ContentItem(1, "Katze", "le chat", ["le chat"], ArticleOptionalIn: "fr");
+        Assert.True(_grader.IsMisspelled("chein", chien, [chien, chat]));
+        Assert.True(_grader.IsMisspelled("le chein", chien, [chien, chat]));
+        // The sibling's bare word competes too: "chat" asked as "chien" is the other word, not a slip.
+        Assert.False(_grader.IsMisspelled("chat", chien, [chien, chat]));
+    }
+
     // A right answer is never misspelled - case and a closing mark are forgiven by the grader already. Red if
     // IsMisspelled stops checking Matches first: "Clinic." is distance 0 after Normalize and would pass the threshold.
     [Fact]

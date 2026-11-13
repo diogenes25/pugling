@@ -308,3 +308,17 @@ Sitzung fertig wird (README → „Teilen und Zusammenlegen“; die Entscheidung
   `PreviewItemOutcome`, Anzeige in Sohn-Testergebnis und Vater-Testmodus. `SchulVokabeltestTests` 15/15 grün; rote
   Proben: ohne Nachbarvergleich fallen `Nachbarwort_Ist_Kein_Schreibfehler` und der API-Weg, ohne Vertauschung nur
   `Vertauschte_Buchstaben_Zaehlen_Als_Ein_Fehler`.
+- **2026-11-13** — Teil B gebaut (`d44dd57`): `Gap.Form` ist die Lösung, wenn gesetzt, auf jedem Pfad
+  (`ClozeGaps.SolutionOf` für Provider, Resolver und Grader); Editor zeigt bei Speicherlücken Verweis und Satzform.
+  Nebenfund behoben: Die Editor-Prüfung verlangte eine Inline-Lösung und blockierte damit jede Speicherlücke. Rote
+  Proben: Resolver ohne Form → `Satzform_Schlaegt_Grundform_Aus_Dem_Speicher`, Provider ohne Form →
+  `Satzform_Gilt_Auch_Ohne_Speicherverweis`.
+- **2026-11-13** — Teil A gebaut (`8eb9a04`): Stufe `CueBoxFreeText` (5), `ClozeConfig.CueDistractors`,
+  `IExerciseType.CueBox`, Facette `CueBox` an `PracticeCard`/`TestItem`/`PreviewItem`, der Hinweis an der Lücke
+  entfällt auf dieser Stufe. Frontend: Baustein `CueBox` in Arcade (Üben, Test) und Vater-Testmodus, Ablenker im
+  Editor. Rote Proben: Hinweis bleibt → Kasten- und Testkarten-Fall, unsortiert → Kasten-Fall, Testweg ohne Kasten →
+  Testkarten-Fall.
+- **2026-11-13** — Teil D gebaut (`c7380e9`): `--schultest` am KI-Creator. Einschränkung gegenüber Entscheidung 7:
+  „schwache Wörter früherer Units“ fließen noch nicht ein – die Scheibe (`UnitVocabulary.Slice`) nimmt nur schwache
+  Wörter **der Unit**. Rote Proben: ohne Regeln → Zurückweisungs-Fall, ohne Satzform und ohne Wortliste im
+  Briefing → Erfolgsfall.
