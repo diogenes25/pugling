@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/idee, bereich/backend]
+tags: [typ/story, status/ausformuliert, bereich/backend]
 aliases: [Tor null-Element je Body-Liste]
-status: idee
+status: ausformuliert
 prio: P2
 art: Aufräumen
 groesse: ""
@@ -30,6 +30,22 @@ dort ein `null`-Element einsetzen und `400` mit dem Pfad in `errors` erwarten. D
 Listen der Wächter heute findet und ob eine davon rot wäre. Erst danach entscheiden, ob er scharf gestellt wird oder eine
 Ausnahmeliste mit Grund bekommt. Ein neues Tor beendet den Lauf (`docs/backlog/README.md`, Limit 2).
 
+## Ist-Stand am Code (grob gezählt 2026-11-13, keine Messung im Sinne von „erst messen")
+
+- `NullElementGuardFilter.cs:19` dokumentiert die eine Ausnahme: `List<List<T>>` wird nicht durchsucht („no contract has one").
+- `UnknownReferenceCodeTests.cs` trägt 12 Fälle (`[Fact]`/`[Theory]`) – die Formen, die beim Bauen und im Review auffielen.
+- Nur **5** Actions tragen ein ausdrückliches `[FromBody]` (`grep` über `Controllers/`). Das ist **nicht** die Zahl der
+  Body-Actions: `[ApiController]` leitet komplexe Parameter ohne Attribut als Body ab. Der Wächter muss darum über den
+  `ApiExplorer` (`BindingSource.Body`) aufzählen, nicht über das Attribut – sonst sähe er einen Bruchteil.
+- Grob ~61 Listen-Eigenschaften in `*Dtos.cs`/`*Configs.cs` des Vertrags (Regex über Typnamen, zählt auch Response-DTOs mit).
+
+## Offene Punkte
+
+1. Messen (Ausformulieren → Grillen): ein Wegwerf-Test zählt über `IApiDescriptionGroupCollectionProvider` alle
+   Body-Parameter, läuft ihren Typgraphen ab und schickt je Liste ein `null`-Element – wie viele sind heute rot?
+2. Erst danach: scharf stellen oder Ausnahmeliste mit Grund. Ein neues Tor beendet einen autonomen Lauf (Limit 2).
+
 ## Verlauf
 
 - **2026-11-07** — angelegt aus Retro-Vorschlag (BR); Entscheidung des Nutzers: „Ja, wie empfohlen" (Tore als Stories, nicht direkt landen).
+- **2026-11-13** — ausformuliert (Tageslauf, Restzeit): Ist-Stand grob belegt; Falle „`[FromBody]` zählt nur 5" festgehalten; Messung als erster Schritt des Grillens.
