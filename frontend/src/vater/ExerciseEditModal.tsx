@@ -62,18 +62,19 @@ export function ExerciseEditModal({ exercise, onClose, onSaved }: {
   const [detail, setDetail] = useState<ExerciseDetail | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   /*
-   * Das Metadaten-Formular liegt **hier**, nicht im `MetaEditor` — weil der Dialog zwei Speicher-Knöpfe
-   * hat und beide denselben Vollersatz-PUT schicken. Solange der Inhalts-Knopf sich seine Nutzlast aus
-   * `detail` zusammenbaute, drehte er jede Änderung der Metadaten still zurück: sichtbar wurde das erst
-   * mit der Einkleidung (B-206), die man seither ändern *kann* — der Chip war weg, ein „Inhalt speichern"
-   * schickte ihn wieder hin. Ein State, zwei Leser.
+   * Metadaten **und** Inhalt liegen hier, weil der Dialog **einen** Speichern-Knopf hat (B-534) und der eine
+   * Vollersatz-PUT beides trägt. Vorher hatte jeder Teil seinen eigenen Knopf, und jeder musste den Stand des
+   * anderen mitschicken – genau daran hingen B-206 und B-210 (ein Knopf drehte die Änderung des anderen zurück).
+   * Ein Knopf, eine Nutzlast: diese Fehlerklasse gibt es so nicht mehr.
    */
   const [form, setForm] = useState<MetaForm | null>(null);
+  const [content, setContent] = useState<ContentState | null>(null);
+  const action = useAction();
   /*
-   * „Der geladene Stand ist nicht mehr der des Servers." Gesetzt, sobald ein Teil-Speichern durch ist, und
-   * erst zurückgenommen, wenn das Nachladen gelandet ist. Solange er steht, sperrt er **beide**
-   * Speicher-Knöpfe: jeder von ihnen schickt einen Vollersatz-PUT, und ein Vollersatz aus einem veralteten
-   * Stand ist genau der stille Datenverlust, um den es hier geht (B-210).
+   * „Der geladene Stand ist nicht mehr der des Servers." Gesetzt, sobald ein Speichern durch ist, und erst
+   * zurückgenommen, wenn das Nachladen gelandet ist. Solange er steht, sperrt er den Speichern-Knopf: die
+   * Vokabel-Config kommt aus `detail` (die Wortpaare ändern sie über eigene Endpunkte), und ein Vollersatz aus
+   * einem veralteten Stand ist genau der stille Datenverlust aus B-210.
    */
   const [veraltet, setVeraltet] = useState(false);
   const [nachladeFehler, setNachladeFehler] = useState<string | null>(null);
@@ -85,20 +86,12 @@ export function ExerciseEditModal({ exercise, onClose, onSaved }: {
    */
   const [fehlversuche, setFehlversuche] = useState(0);
   const erneutLadenRef = useRef<HTMLButtonElement>(null);
-  /*
-   * „Ein Vollersatz-PUT ist unterwegs." Der Dialog hält das selbst, weil die beiden Editoren **zwei**
-   * `useAction`-Instanzen haben und deren Sperre je Instanz gilt (`frontend/CLAUDE.md`). Ohne diesen Riegel
-   * bliebe der eine Knopf klickbar, während der andere speichert – und der zweite PUT ginge mit dem Stand
-   * von **vor** dem ersten raus. Ohne ETag am Server gewinnt der letzte Schreiber, also wäre das derselbe
-   * lautlose Verlust wie in B-210, nur durch zwei ungeduldige Klicks statt durch zwei Schritte.
-   */
-  const [schreibt, setSchreibt] = useState(false);
 
   useEffect(() => {
     api.getExercise(exercise.id)
-      .then((d) => { setDetail(d); setForm(initialForm(d)); })
+      .then((d) => { setDetail(d); setForm(initialForm(d)); setContent(configToEditorState(type, d.config)); })
       .catch((e) => setLoadError(errorMessage(e)));
-  }, [exercise.id]);
+  }, [exercise.id, type]);
 
   /**
    * Zieht den geladenen Stand nach. **Ohne `setDetail(null)`**: das hängte die Editoren aus, und der
@@ -132,27 +125,32 @@ export function ExerciseEditModal({ exercise, onClose, onSaved }: {
   }, [nachladeFehler, fehlversuche]);
 
   /**
-   * Der einzige Weg, den Vollersatz-PUT abzuschicken – beide Editoren gehen hier durch. Zusammengelegt,
-   * damit `schreibt` **einen** Ort hat: zwei Knöpfe, die dieselbe Übung vollständig ersetzen, sind
-   * fachlich eine Liste und teilen sich darum die Sperre.
+   * Der eine Vollersatz-PUT: Metadaten aus dem Formular, die Config je nach Typ aus dem Inhalts-Editor
+   * (Config-Typen), aus dem Server-Stand plus Sprachpaar (Vokabeln) oder unverändert (nicht editierbare Typen).
    *
-   * `detail`/`route` sind hier gesetzt: Der Aufruf kommt nur aus den Editoren, und die rendert der Dialog
-   * erst, wenn beides steht.
+   * Dass `detail.config` hier **der Server-Stand von jetzt** ist und nicht der vom Öffnen, hängt am Nachladen
+   * (B-210): der Server normalisiert die Config beim Speichern (`NormalizeConfig`, `ConfigForResponse`), und
+   * „was ich geschickt habe" wäre eine dritte Wahrheit, die von der des Servers abweichen darf.
    */
-  async function speichern(payload: CreateExercisePayload) {
-    setSchreibt(true);
-    try {
-      await api.updateExercise(detail!.seriesId, detail!.seriesUnitId, route!, detail!.id, payload);
-    } finally {
-      setSchreibt(false);
-    }
-  }
-
-  /** Nach einem erfolgreichen Teil-Speichern: erst den eigenen Stand, dann die Liste dahinter. */
-  async function gespeichert() {
+  async function save(e?: React.FormEvent) {
+    e?.preventDefault();
+    if (!detail || !form || !route) return;
+    const editable = type !== "Vocabulary" && isContentEditable(type) && content !== null;
+    // Erst die fachliche Prüfung – sie erspart einen Rundlauf mit sicherem 400.
+    const problem = metaProblem(form) ?? (editable ? contentProblem(type, content.rows, content.extra, 0) : null);
+    if (problem) { action.fail(problem); return; }
+    const config = type === "Vocabulary" ? vocabSettingsConfig(detail.config, form)
+      : editable ? buildTypeConfig(type, content.rows, content.extra)
+      : detail.config;
+    const ok = await action.run(
+      () => api.updateExercise(detail.seriesId, detail.seriesUnitId, route, detail.id, payloadFrom(detail, form, config)),
+      "Gespeichert.");
+    if (!ok) return;
     await nachladen();
     onSaved();
   }
+
+  const gesperrt = action.busy || veraltet;
 
   return (
     // Titel aus dem GELADENEN Stand, nicht aus der Listenzeile: Nach einem Umbenennen stünde oben sonst
@@ -189,9 +187,8 @@ export function ExerciseEditModal({ exercise, onClose, onSaved }: {
       {detail && form && (
         <>
           {type === "Vocabulary" && <ItemEditor detail={detail} />}
-          {type !== "Vocabulary" && isContentEditable(type) && (
-            <ContentEditor detail={detail} form={form} type={type} speichern={speichern}
-              onSaved={gespeichert} gesperrt={veraltet || schreibt} />
+          {type !== "Vocabulary" && isContentEditable(type) && content && (
+            <ContentEditor type={type} content={content} setContent={setContent} />
           )}
           {type !== "Vocabulary" && !isContentEditable(type) && (
             <div className="banner">
@@ -200,8 +197,20 @@ export function ExerciseEditModal({ exercise, onClose, onSaved }: {
               Beschreibung und Einordnung lassen sich unten ändern.
             </div>
           )}
-          <MetaEditor detail={detail} form={form} setForm={setForm} type={type} speichern={speichern}
-            onSaved={gespeichert} gesperrt={veraltet || schreibt} />
+          <MetaEditor detail={detail} form={form} setForm={setForm} type={type} onSubmit={save} busy={action.busy} />
+          {/* Der einzige Speichern-Knopf des Dialogs (B-534): er sichert Inhalt und Beschreibung zusammen.
+              Titelbild und Rechte darunter wirken sofort und brauchen ihn nicht. */}
+          <div className="row" style={{ gap: 10, alignItems: "center" }}>
+            <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={gesperrt} onClick={() => save()}>
+              {action.busy ? "Speichere…" : "Übung speichern"}
+            </button>
+            <span className="sub" style={{ margin: 0 }}>
+              {type === "Vocabulary" ? "Sichert Beschreibung und Einstellungen – die Wortpaare oben speichern sich einzeln."
+                : isContentEditable(type) ? "Sichert Inhalt und Beschreibung zusammen."
+                : "Sichert Beschreibung und Einordnung."}
+            </span>
+          </div>
+          <StatusBanner message={action.message} style={{ marginTop: 0 }} />
           {/* Titelbild und Rechte gehören zur Übung, nicht zu ihrem Inhalt – darum unter den Metadaten. */}
           <ExerciseCoverSection exerciseId={detail.id} canWrite={detail.isOwn} />
           <GrantsSection exerciseId={detail.id} isOwner={detail.isOwner} />
@@ -251,10 +260,8 @@ export function payloadFrom(detail: ExerciseDetail, form: MetaForm, config: unkn
 }
 
 /**
- * Was den Vollersatz-PUT sicher scheitern ließe, geprüft **vor** dem Absenden. Beide Knöpfe schicken
- * dieselbe Nutzlast aus demselben Formular – seit das Formular über beiden liegt (B-206), muss darum auch
- * beiden dasselbe fehlen dürfen. „Inhalt speichern" prüfte den Titel nicht und holte sich für einen
- * leergeräumten Titel einen Server-`400`, den der Vater nicht seinem Titelfeld zuordnen konnte.
+ * Was den Vollersatz-PUT sicher scheitern ließe, geprüft **vor** dem Absenden – sonst holte sich ein
+ * leergeräumter Titel einen Server-`400`, den der Vater nicht seinem Titelfeld zuordnen kann.
  */
 function metaProblem(form: MetaForm): string | null {
   return form.title.trim() ? null : "Bitte einen Titel angeben.";
@@ -308,7 +315,7 @@ export function initialForm(d: ExerciseDetail): MetaForm {
 }
 
 /**
- * Die Config, die „Beschreibung speichern" für eine Vokabelübung schickt: der geladene Server-Stand, darüber nur die
+ * Die Config, die „Übung speichern" für eine Vokabelübung schickt: der geladene Server-Stand, darüber nur die
  * Einstellungen, die dieses Formular trägt (Sprachpaar, Artikel-Pflicht). Als eigene Funktion, damit der Weg ohne
  * nachgebauten Dialog prüfbar ist.
  */
@@ -330,16 +337,13 @@ function langsOf(d: ExerciseDetail): { sourceLang: string; targetLang: string } 
   return { sourceLang: c.sourceLang ?? "", targetLang: c.targetLang ?? "" };
 }
 
-function MetaEditor({ detail, form, setForm, type, speichern, onSaved, gesperrt }: {
+function MetaEditor({ detail, form, setForm, type, onSubmit, busy }: {
   detail: ExerciseDetail; form: MetaForm; setForm: (f: (prev: MetaForm | null) => MetaForm) => void;
-  type: ExerciseTypeKey; speichern: (payload: CreateExercisePayload) => Promise<void>; onSaved: () => void;
-  /**
-   * Der Dialog erlaubt gerade kein Schreiben: der geladene Stand wird nachgezogen, das ist gescheitert,
-   * oder der **andere** Knopf speichert bereits.
-   */
-  gesperrt: boolean;
+  type: ExerciseTypeKey;
+  /** Enter in einem Feld speichert die ganze Übung – derselbe Weg wie der Knopf des Dialogs. */
+  onSubmit: (e: React.FormEvent) => void;
+  busy: boolean;
 }) {
-  const action = useAction();
   // Namen der Kästchen-Gruppen (B-236): die Überschrift benennt die Gruppe per `aria-labelledby`.
   const groupId = useId();
 
@@ -347,27 +351,8 @@ function MetaEditor({ detail, form, setForm, type, speichern, onSaved, gesperrt 
     setForm((f) => ({ ...(f ?? form), [k]: v }));
   }
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    const problem = metaProblem(form);
-    if (problem) { action.fail(problem); return; }
-    /*
-     * Die Config bleibt inhaltlich, wie sie ist – nur das Sprachpaar der Vokabelübung kommt aus dem
-     * Formular (ohne es kann der Server kein inline ergänztes Wort im Store anlegen).
-     *
-     * Dass `detail.config` hier **der Server-Stand von jetzt** ist und nicht der vom Öffnen, hängt am
-     * Nachladen im Dialog (B-210). Die Alternative wäre gewesen, sich zu merken, was der Inhalts-Knopf
-     * zuletzt geschickt hat – aber der Server normalisiert die Config beim Speichern und formt sie für
-     * die Antwort (`NormalizeConfig`, `ConfigForResponse`: vergebene Wort-Ids, `_self`-Links). „Was ich
-     * geschickt habe" wäre damit eine dritte Wahrheit, die von der des Servers abweichen darf.
-     */
-    const config = type === "Vocabulary" ? vocabSettingsConfig(detail.config, form) : detail.config;
-    const ok = await action.run(() => speichern(payloadFrom(detail, form, config)), "Gespeichert.");
-    if (ok) onSaved();
-  }
-
   return (
-    <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+    <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <h4 className="h-section" style={{ fontSize: 16, margin: 0 }}>Beschreibung & Einordnung</h4>
       <div className="form-grid">
         <div className="field"><label htmlFor="ed-title">Titel</label>
@@ -405,13 +390,13 @@ function MetaEditor({ detail, form, setForm, type, speichern, onSaved, gesperrt 
       <InterestDressing
         tagIds={form.interestTagIds}
         onChange={(ids) => up("interestTagIds", ids)}
-        disabled={action.busy}
+        disabled={busy}
       />
       <GrammarTopicPicker
         subjectId={detail.subjectId ?? null}
         topicIds={form.grammarTopicIds}
         onChange={(ids) => up("grammarTopicIds", ids)}
-        disabled={action.busy}
+        disabled={busy}
         id="ed-grammar-topics"
       />
       <div className="field" role="group" aria-labelledby={`${groupId}-standards`}>
@@ -452,64 +437,42 @@ function MetaEditor({ detail, form, setForm, type, speichern, onSaved, gesperrt 
           {(!form.sourceLang || !form.targetLang) && (
             <p className="sub" style={{ margin: 0 }}>
               Ohne Sprachpaar kann ein neues Wort nur <strong>aus dem Store</strong> übernommen werden –
-              „anlegen &amp; hinzufügen" braucht die Sprachcodes. Setze sie hier und speichere.
+              „anlegen &amp; hinzufügen" braucht die Sprachcodes. Setze sie hier und speichere die Übung.
             </p>
           )}
         </>
       )}
-      <button type="submit" className="btn inline-btn" style={{ width: "auto" }}
-        disabled={action.busy || gesperrt}>
-        {action.busy ? "Speichere…" : "Beschreibung speichern"}
-      </button>
-      <StatusBanner message={action.message} style={{ marginTop: 0 }} />
     </form>
   );
 }
 
 // ─── Inhalt der Nicht-Vokabel-Typen (Config als Ganzes) ───────────────────────
 
+/** Der Zustand des Inhalts-Editors: die Zeilen plus das Zusatzfeld des Typs. */
+type ContentState = { rows: Row[]; extra: Row };
+
 /**
  * Diese Typen tragen ihren Inhalt in der Config, also wird sie als Ganzes ersetzt. Der Zeilen-Editor ist
  * derselbe wie beim Anlegen; vorbelegt wird über `configToEditorState` – die Gegenrichtung zu
- * `buildTypeConfig`.
+ * `buildTypeConfig`. Der Zustand liegt im Dialog, gespeichert wird mit dessen einem Knopf.
  */
-function ContentEditor({ detail, form, type, speichern, onSaved, gesperrt }: {
-  detail: ExerciseDetail; form: MetaForm; type: ExerciseTypeKey;
-  speichern: (payload: CreateExercisePayload) => Promise<void>; onSaved: () => void;
-  /** Siehe `MetaEditor`: derselbe Riegel, weil derselbe Vollersatz-PUT dahinter steht. */
-  gesperrt: boolean;
+function ContentEditor({ type, content, setContent }: {
+  type: ExerciseTypeKey;
+  content: ContentState;
+  setContent: (f: (prev: ContentState | null) => ContentState) => void;
 }) {
-  const initial = configToEditorState(type, detail.config);
-  const [rows, setRows] = useState<Row[]>(initial.rows);
-  const [extra, setExtra] = useState<Row>(initial.extra);
-  const action = useAction();
-
+  function setRows(f: (rs: Row[]) => Row[]) { setContent((c) => ({ ...(c ?? content), rows: f((c ?? content).rows) })); }
   function patchRow(i: number, patch: Row) { setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, ...patch } : r))); }
   function addRow() { setRows((rs) => [...rs, emptyRow(type)]); }
   function removeRow(i: number) { setRows((rs) => (rs.length > 1 ? rs.filter((_, idx) => idx !== i) : rs)); }
-
-  async function save() {
-    // Erst die fachliche Prüfung des Editors – sie erspart einen Rundlauf mit sicherem 400. Der Titel
-    // gehört dazu: dieser Knopf schickt ihn mit, also kann er ihn auch leer mitschicken.
-    const problem = metaProblem(form) ?? contentProblem(type, rows, extra, 0);
-    if (problem) { action.fail(problem); return; }
-    const ok = await action.run(() => speichern(
-      // Das geteilte Formular, nicht `initialForm(detail)`: sonst schickt dieser Knopf den Stand von vor
-      // dem Öffnen zurück und macht eine gerade gespeicherte Metadaten-Änderung wieder rückgängig.
-      payloadFrom(detail, form, buildTypeConfig(type, rows, extra))), "Inhalt gespeichert.");
-    if (ok) onSaved();
-  }
+  // Ein Updater, kein Wert: `ConfigEditor` reicht `(e) => ({ ...e, ...patch })` herein (`EditorProps.setExtra`).
+  function setExtra(f: (e: Row) => Row) { setContent((c) => ({ ...(c ?? content), extra: f((c ?? content).extra) })); }
 
   return (
     <section>
       <h4 className="h-section" style={{ fontSize: 16 }}>Inhalt</h4>
-      <ConfigEditor type={type} rows={rows} extra={extra} setExtra={setExtra}
+      <ConfigEditor type={type} rows={content.rows} extra={content.extra} setExtra={setExtra}
         patchRow={patchRow} addRow={addRow} removeRow={removeRow} />
-      <button type="button" className="btn inline-btn" style={{ width: "auto", marginTop: 10 }}
-        disabled={action.busy || gesperrt} onClick={save}>
-        {action.busy ? "Speichere…" : "Inhalt speichern"}
-      </button>
-      <StatusBanner message={action.message} />
     </section>
   );
 }

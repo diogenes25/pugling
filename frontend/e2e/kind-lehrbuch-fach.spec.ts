@@ -37,7 +37,7 @@ test("Ein gelöschtes Fach am Lehrbuch überlebt das Speichern anderer Felder", 
 
   // ---- Das Buch am Kind, mit diesem Fach ----
   const buch = `Freitext-Buch ${STAMP}`;
-  await page.goto(`/vater/kind/${childId}`);
+  await page.goto(`/vater/kind/${childId}?bereich=schule`);
   await page.locator("#tbnew-title").fill(buch);
   await page.locator("#tbnew-subject").selectOption({ label: fach });
   await page.locator("#tbnew-chapter").fill("Unit 1");
@@ -57,7 +57,7 @@ test("Ein gelöschtes Fach am Lehrbuch überlebt das Speichern anderer Felder", 
   await expect(page.getByText("Fach gelöscht.")).toBeVisible();
 
   // ---- Die Zeile zeigt den Namen weiter (gewollte Rückfallebene), und das Formular sagt jetzt dasselbe ----
-  await page.goto(`/vater/kind/${childId}`);
+  await page.goto(`/vater/kind/${childId}?bereich=schule`);
   // Die DATEN-Zeile, nicht die Formular-Zeile darunter: beide tragen den Buchtitel, und nur die erste
   // hat den Bearbeiten-Knopf. Ohne diese Unterscheidung schlägt jede Zusicherung als „strict mode
   // violation" fehl, sobald das Formular offen ist.

@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
+import { AddPanel } from "../components/AddPanel";
 import { StatusBanner } from "../components/StatusBanner";
 import { api } from "../lib/api";
 import { useAction, type ActionState } from "../lib/useAction";
@@ -57,8 +58,6 @@ export function PlanPositions({ planId }: { planId: number }) {
       </p>
       <StatusBanner message={action.message} />
 
-      <AddPosition planId={planId} action={action} onAdded={positions.reload} />
-
       {positions.loading && positions.data === null ? <div className="loading">Lade Positionen…</div> : positions.error ? (
         <div className="banner err">{positions.error}</div>
       ) : (
@@ -70,11 +69,20 @@ export function PlanPositions({ planId }: { planId: number }) {
                 <PositionRow key={p.id} planId={planId} pos={p} onChanged={positions.reload} action={action} />
               ))}
               {positions.data?.length === 0 && (
-                <tr><td colSpan={6} className="muted">Noch keine Übungen im Plan – füge oben eine aus dem Katalog hinzu.</td></tr>
+                <tr><td colSpan={6} className="muted">Noch keine Übungen im Plan – füge unten eine aus dem Katalog hinzu.</td></tr>
               )}
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Unter dem Bestand und zugeklappt (B-534): das Anlege-Formular ist so groß wie die Tabelle und stand
+          vorher davor. Ein leerer Plan öffnet es gleich – dort ist es der einzige nächste Schritt. Erst mit
+          geladenem Bestand rendern, `defaultOpen` gilt nur beim Einhängen. */}
+      {positions.data && (
+        <AddPanel label="Übung aus dem Katalog" defaultOpen={positions.data.length === 0}>
+          <AddPosition planId={planId} action={action} onAdded={positions.reload} />
+        </AddPanel>
       )}
     </section>
   );

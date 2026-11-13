@@ -160,7 +160,7 @@ test("Vater bebildert eine Vokabel, der Sohn sieht sein Bild und kann es wechsel
     .toBeDisabled();
 
   // ---------- Profil des Kindes: das Interesse steuert, welche Darstellung gewinnt ----------
-  await vater.goto(`/vater/kind/${childId}`);
+  await vater.goto(`/vater/kind/${childId}?bereich=interessen`);
   await expect(vater.getByRole("heading", { name: "Interessen" })).toBeVisible();
   await vater.locator("#int-label").fill("Comic");
   await vater.locator("#int-facet").selectOption("Style");

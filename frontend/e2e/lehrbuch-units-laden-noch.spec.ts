@@ -27,7 +27,7 @@ test("Solange die Units laden, sagt das Unit-Feld „lädt…“ und ist gesperr
 
   // ---- Ein Buch mit Reihe und Unit aus dem Seed („Green Line 1", „Unit 1 – Greetings") ----
   const buch = `Unit-Buch ${STAMP}`;
-  await page.goto(`/vater/kind/${childId}`);
+  await page.goto(`/vater/kind/${childId}?bereich=schule`);
   await page.locator("#tbnew-title").fill(buch);
   const reihe = page.locator("#tbnew-series option", { hasText: "Green Line 1" });
   await page.locator("#tbnew-series").selectOption((await reihe.getAttribute("value"))!);

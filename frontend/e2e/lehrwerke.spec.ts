@@ -37,7 +37,8 @@ test("Buchreihe, Fachlehrer und Kind treffen zusammen", async ({ page }) => {
   await page.getByRole("button", { name: "Speichern" }).first().click();
   await expect(page.getByText("Gespeichert.", { exact: true }).first()).toBeVisible();
 
-  // Noch ohne Buch und ohne Profil: die Suche muss ehrlich leer bleiben.
+  // Noch ohne Buch und ohne Profil: die Suche muss ehrlich leer bleiben. Sie steht im Reiter „Schule" (B-534).
+  await page.goto(`/vater/kind/${childId}?bereich=schule`);
   await expect(page.getByText(/Kein Profil passt zu/)).toBeVisible();
 
   // ---- Die Buchreihe (geteilter Katalog) ----
@@ -92,7 +93,7 @@ test("Buchreihe, Fachlehrer und Kind treffen zusammen", async ({ page }) => {
   await expect(page.getByRole("row", { name: new RegExp(PROFILE) })).toBeVisible();
 
   // ---- Die Reihe am Buch des Kindes: erst sie schließt die Kette ----
-  await page.goto(`/vater/kind/${childId}`);
+  await page.goto(`/vater/kind/${childId}?bereich=schule`);
   await page.locator("#tbnew-title").fill("Access 8");
   await page.locator("#tbnew-subject").selectOption({ label: "Englisch" });
   await page.locator("#tbnew-series").selectOption({ label: `${SERIES.name} (${SERIES.publisher})` });

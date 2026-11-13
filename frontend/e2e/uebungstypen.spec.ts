@@ -153,8 +153,8 @@ test("Jeder Übungstyp des Manifests lässt sich im UI anlegen", async ({ page }
   await dialog.getByRole("button", { name: "+ Aufgabe" }).click();
   await dialog.getByLabel("Aufgabe").nth(1).fill("She ___ (have) a dog.");
   await dialog.getByLabel("Lösung").nth(1).fill("has");
-  await dialog.getByRole("button", { name: "Inhalt speichern" }).click();
-  await expect(dialog.getByText("Inhalt gespeichert.")).toBeVisible();
+  await dialog.getByRole("button", { name: "Übung speichern" }).click();
+  await expect(dialog.getByText("Gespeichert.", { exact: true })).toBeVisible();
 
   // Neu öffnen: beide Aufgaben müssen da sein (Schreiben und Zurücklesen passen zueinander).
   await dialog.getByRole("button", { name: "Schließen" }).click();

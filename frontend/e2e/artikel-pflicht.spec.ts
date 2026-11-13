@@ -72,7 +72,7 @@ test("Der Creator setzt die Artikel-Pflicht beim Anlegen und nimmt sie im Dialog
 
   // ---- abhaken, speichern, neu laden: der Server hält „aus" ----
   await haken(page).uncheck();
-  await page.getByRole("button", { name: "Beschreibung speichern" }).click();
+  await page.getByRole("button", { name: "Übung speichern" }).click();
   await expect(page.getByText("Gespeichert.", { exact: true })).toBeVisible();
   await page.reload();
   await dialogOeffnen(page, name);

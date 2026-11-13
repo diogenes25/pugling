@@ -15,7 +15,7 @@ const STAMP = Date.now().toString(36).slice(-5);
 test("Der Vater setzt den Bonus-Tagesdeckel je Kind und stellt ihn auf die Vorgabe zurück", async ({ page }) => {
   await vaterLogin(page, FATHER);
   const childId = await createChild(page, `Deckel ${STAMP}`, "8654");
-  await page.goto(`/vater/kind/${childId}`);
+  await page.goto(`/vater/kind/${childId}?bereich=einstellungen`);
 
   const bereich = page.locator("section", { has: page.getByRole("heading", { name: "Bonus-Training" }) });
   // Ohne eigenen Wert gilt die Vorgabe des Servers (appsettings: 30).

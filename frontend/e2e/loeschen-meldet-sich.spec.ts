@@ -21,7 +21,9 @@ const RUN = Date.now().toString(36).slice(-5);
 
 test("Das Entfernen eines Buchs am Kind meldet sich — und nennt das Buch", async ({ page }) => {
   await vaterLogin(page, FATHER);
-  await page.goto("/vater/kind/1");
+  await page.goto("/vater/kind/1?bereich=schule");
+  // Kind 1 trägt schon ein Buch aus dem Seed – das Anlege-Formular ist darum zugeklappt (B-534).
+  await page.getByRole("button", { name: "Weiteres Buch" }).click();
 
   const TITEL = `Wegbuch ${RUN}`;
   await page.getByLabel("Titel", { exact: true }).fill(TITEL);
