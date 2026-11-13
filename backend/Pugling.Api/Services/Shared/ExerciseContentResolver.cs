@@ -99,7 +99,7 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
             // Every declared equivalent translation counts as correct - a child who knows "sehr groß" for
             // "huge" must not lose the goal (and its coins) to the row that happens to store "riesig".
             return new ContentItem(i, v.Word, v.Translation, Accepted(v.Translation, v.TranslationAlternatives),
-                r.Hint ?? v.Noun?.Article, AudioUrl: v.PronunciationAudioUrl, ItemId: r.Id, VocabularyId: r.VocabularyId,
+                r.Hint ?? ArticleHint(v), AudioUrl: v.PronunciationAudioUrl, ItemId: r.Id, VocabularyId: r.VocabularyId,
                 ImageUrl: picked?.Url, ImageAlt: picked?.Alt);
         }).ToList();
 
@@ -117,6 +117,23 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
                 MeaningsSeparable = true,
             };
         }).ToList();
+    }
+
+    /// <summary>
+    /// The derived hint of a store entry: its article, which the contract defines as the target language's article
+    /// (<see cref="NounInfo.Article"/>), i.e. a clue to the answer. B-446: entries whose article is the one the asked
+    /// word already starts with ("la" for "la ville") describe the question side - showing it would repeat the prompt,
+    /// so no hint is derived from them.
+    /// </summary>
+    internal static string? ArticleHint(Vocabulary v)
+    {
+        var article = v.Noun?.Article?.Trim();
+        if (string.IsNullOrEmpty(article)) return null;
+        var word = v.Word.TrimStart();
+        var repeatsPrompt = word.StartsWith(article, StringComparison.OrdinalIgnoreCase)
+            && (article.EndsWith('\'') || article.EndsWith('\u2019') || word.Length == article.Length
+                || char.IsWhiteSpace(word[article.Length]));
+        return repeatsPrompt ? null : article;
     }
 
     /// <summary>

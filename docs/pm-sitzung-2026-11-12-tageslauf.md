@@ -427,3 +427,13 @@ E2E 3/3 nach der letzten Änderung. Review: kein 🔴; 🟡 Leitner-Leerrunde al
 [B-522](backlog/B-522-ueben-nach-test-landet-in-nichts-faellig.md); drei 🟢 behoben.
 **Retro:** Das Probe-Skript misst eine Testzeile mit `VAR=… cmd` nicht (Grundlinie „nicht grün") – U4 von Hand gemessen.
 Kein neues Tor; Lehre in `nachtlauf-werkzeug-lehren`.
+
+## Sprint 65 — B-446 stellvertretend
+
+**Sprint-Ziel (Sohn):** Der Tipp einer Vokabelkarte wiederholt nie die Frage.
+**Entscheidung (stellvertretend):** Der Vertrag gilt (`NounInfo.Article` = Artikel der Zielsprache); die frühere
+PM-Empfehlung widersprach ihm. Wache an der Senke `ExerciseContentResolver.ArticleHint` statt Datenmigration auf der
+echten DB; französischer Seed mit ausdrücklichem deutschen Artikel. Mutanten V1–V5, W1, W2 rot; Suite 1474/1474; Kopie der
+echten DB: alle sechs betroffenen Zeilen von der Wache gedeckt. Review: 🟡 (Seed-Ableitung) und drei 🟢 behoben.
+**Retro:** Escape-Fallstrick erneut (`\u2019` im Python-Heredoc wurde zum Zeichen) – im C#-Test unschädlich, im Probe-
+Generator per `chr()` umgangen; die Lehre steht schon in `nachtlauf-werkzeug-lehren`. Kein neuer Mechanismus.

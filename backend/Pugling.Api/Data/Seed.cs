@@ -697,14 +697,16 @@ public static class Seed
         string Json<T>(T config) => JsonSerializer.Serialize(config, options);
 
         // (fr -> de) Core vocabulary "En ville / Le quotidien" - grade 8/9, Découvertes 1, Unité 2.
+        // Article: the German one - NounInfo.Article is the target language's article (B-446), not the French one the
+        // word already carries.
         (string Word, string De, PartOfSpeech Pos, string? Article)[] woerter =
         [
-            ("la ville", "die Stadt", PartOfSpeech.Noun, "la"),
-            ("la rue", "die Straße", PartOfSpeech.Noun, "la"),
-            ("la maison", "das Haus", PartOfSpeech.Noun, "la"),
-            ("l'école", "die Schule", PartOfSpeech.Noun, "l'"),
-            ("le magasin", "das Geschäft", PartOfSpeech.Noun, "le"),
-            ("l'ami", "der Freund", PartOfSpeech.Noun, "l'"),
+            ("la ville", "die Stadt", PartOfSpeech.Noun, "die"),
+            ("la rue", "die Straße", PartOfSpeech.Noun, "die"),
+            ("la maison", "das Haus", PartOfSpeech.Noun, "das"),
+            ("l'école", "die Schule", PartOfSpeech.Noun, "die"),
+            ("le magasin", "das Geschäft", PartOfSpeech.Noun, "das"),
+            ("l'ami", "der Freund", PartOfSpeech.Noun, "der"),
             ("acheter", "kaufen", PartOfSpeech.Verb, null),
             ("manger", "essen", PartOfSpeech.Verb, null),
             ("parler", "sprechen", PartOfSpeech.Verb, null),
