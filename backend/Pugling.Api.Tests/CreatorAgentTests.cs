@@ -2553,6 +2553,16 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
             GrammarOrder.NewMaterialFirst(perfect, "Wiederholung present perfect. NEU present perfect progressive: have been + -ing."));
         // … and the shorter label only counts on a word boundary: "NEU present perfectly" names no topic.
         Assert.Equal(perfect, GrammarOrder.NewMaterialFirst(perfect, "NEU present perfectly normal"));
+
+        // B-482: a dash or an opening quote after the marker - red if only ":" and spaces count.
+        Assert.Equal(["Question tags", "Past progressive", "Present progressive", "Simple past"],
+            GrammarOrder.NewMaterialFirst(labels, "NEU – question tags. NEU „past progressive“: was/were + -ing."));
+        // B-482: two topics with the same label both stay - red if the rest is filtered by value.
+        string[] twins = ["Adverbs", "Question tags", "Question tags"];
+        Assert.Equal(["Question tags", "Adverbs", "Question tags"], GrammarOrder.NewMaterialFirst(twins, "NEU question tags"));
+        // B-482 (review): a label that starts with a separator itself - red if the marker swallows its first character.
+        string[] forms = ["Adverbs", "-ing form"];
+        Assert.Equal(["-ing form", "Adverbs"], GrammarOrder.NewMaterialFirst(forms, "NEU -ing form: swimming, reading"));
     }
 
     /// <summary>B-471 through the briefing: the labels a plan rotates over come in that order.</summary>
@@ -3378,8 +3388,6 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
         Assert.Contains("hat kein Fach", error.Message);
         Assert.Contains("Vater-Web (Lehrwerke", error.Message);
-        // B-514: the named teacher has no series - another series passes the briefing only in the teacher's subject.
-        Assert.Contains($"wähle mit --series eine Reihe in {teacher.SubjectName}", error.Message);
         Assert.Equal(0, chat.Calls);
     }
 
@@ -3397,7 +3405,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
     /// <summary>
     /// B-508, AK 4: a series of another account cannot get a subject from this one (<c>not_owner</c>), so the message
-    /// names only --series and the owner. Red if it advises the Vater-Web regardless of who owns the series.
+    /// names the owner (B-516: and nothing else). Red if it advises the Vater-Web regardless of who owns the series.
     /// </summary>
     [Fact]
     public async Task Fremde_Reihe_ohne_Fach_raet_nicht_zum_Vater_Web()
@@ -3407,8 +3415,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline)
             .RunAsync(OnSeries("create", teacher, seriesId, unitId), default));
 
-        Assert.Contains("nicht diesem Konto", error.Message);
-        Assert.Contains("--series", error.Message);
+        Assert.Contains("nicht diesem Konto; ein Fach setzt nur ihr Eigentümer", error.Message);
         Assert.DoesNotContain("Vater-Web", error.Message);
         Assert.Equal(0, chat.Calls);
     }
@@ -3425,8 +3432,7 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
         var message = ProfileFit.NoSubject(stock);
 
-        Assert.Contains("Grundbestand, niemand kann sie ändern", message);
-        Assert.Contains("--series", message);
+        Assert.Contains("Grundbestand, niemand kann ihr ein Fach geben", message);
         Assert.DoesNotContain("Eigentümer", message);
         Assert.DoesNotContain("Vater-Web", message);
     }
@@ -3537,8 +3543,9 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
             ["create", "--profile", bound.Id.ToString(), "--type", "Vocabulary"]), default));
 
         Assert.Contains("hat kein Fach", error.Message);
-        Assert.Contains("ein Profil, das an eine Reihe mit Fach gebunden ist", error.Message);
-        Assert.DoesNotContain("wähle mit --series", error.Message);
+        // B-516: the lock and the step that lifts it, no other advice.
+        Assert.DoesNotContain("--series", error.Message);
+        Assert.DoesNotContain("--profile", error.Message);
         Assert.Equal(0, chat.Calls);
 
         // The way out, taken (pm-loop Step 5): a profile bound to a series with a subject, no --series - it writes.
@@ -3592,9 +3599,9 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
             .RunAsync(OnSeries("create", bound, bareSeries, bareUnit), default));
 
         Assert.Contains("hat kein Fach", error.Message);
-        Assert.Contains($"lass --series/--series-unit weg, das gewählte Profil gehört zu Reihe {ownSeries}", error.Message);
-        Assert.DoesNotContain("wähle mit --series", error.Message);
-        Assert.DoesNotContain("anderes Profil", error.Message);
+        // B-516: no advice that a profile bound elsewhere could run into.
+        Assert.DoesNotContain("--series", error.Message);
+        Assert.DoesNotContain("--profile", error.Message);
         Assert.Equal(0, chat.Calls);
 
         // The way out, taken (pm-loop Step 5): without --series/--series-unit the profile's own series files the exercise.
@@ -3616,5 +3623,57 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
         Assert.Equal(0, await Commands(creator, pipeline).RunAsync(CommandLine.Parse(
             ["briefing", "--profile", bound.Id.ToString()]), default));
+    }
+
+    /// <summary>
+    /// B-482: two books of the child on the same series at different units - which unit is a choice, not the order of the
+    /// book list. Red if the first book silently decides (the exercise lands in its unit).
+    /// </summary>
+    [Fact]
+    public async Task Zwei_Buecher_derselben_Reihe_bei_verschiedenen_Units_sind_eine_Fehlbedienung()
+    {
+        var (pipeline, creator, chat) = BuildAgent(VocabularyJson);
+        var supervisor = new SupervisorApi(Authenticated());
+        var (subjectId, seriesId, unit1) = await FreshUnitAsync(creator, "Zwei Buecher");
+        var unit2 = (await creator.CreateUnitAsync(seriesId, new CreateSeriesUnitDto("Unit 2", null, 2, null, null, null, null))).Id;
+        var child = await supervisor.CreateChildAsync(new CreateChildDto($"Zwei {Guid.NewGuid():N}"[..20], null, 8,
+            SchoolTypes.Gymnasium, null));
+        await supervisor.CreateTextbookAsync(child.Id, new CreateTextbookDto("Band A", null, subjectId, 8, null, null, null,
+            SeriesId: seriesId, CurrentUnitId: unit1));
+        await supervisor.CreateTextbookAsync(child.Id, new CreateTextbookDto("Band B", null, subjectId, 8, null, null, null,
+            SeriesId: seriesId, CurrentUnitId: unit2));
+        var teacher = await SubjectProfileAsync(creator, subjectId, null);
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline).RunAsync(CommandLine.Parse(
+            ["create", "--profile", teacher.Id.ToString(), "--series", seriesId.ToString(), "--child", child.Id.ToString(),
+             "--type", "Vocabulary", "--count", "3"]), default));
+
+        Assert.Contains("verschiedenen Units", error.Message);
+        Assert.Contains("--series-unit", error.Message);
+        Assert.Equal(0, chat.Calls);
+
+        // The way out, taken: with --series-unit the exercise lands in that unit.
+        Assert.Equal(0, await Commands(creator, pipeline).RunAsync(CommandLine.Parse(
+            ["create", "--profile", teacher.Id.ToString(), "--series-unit", unit2.ToString(), "--child", child.Id.ToString(),
+             "--type", "Vocabulary", "--count", "3"]), default));
+        Assert.Single(await creator.SearchExercisesAsync(seriesUnitId: unit2));
+    }
+
+    /// <summary>
+    /// B-516: the one way out the message names - set the subject in the Vater-Web - taken: with the teacher's subject set
+    /// on the own series, the same call writes. Red if the lift of the lock is not enough (another check would stop it).
+    /// </summary>
+    [Fact]
+    public async Task Eigene_Reihe_ohne_Fach_Fach_setzen_genuegt()
+    {
+        var (pipeline, creator, chat, teacher, seriesId, unitId) = await SubjectlessSeriesAsync("Fach setzen");
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline)
+            .RunAsync(OnSeries("create", teacher, seriesId, unitId), default));
+        Assert.Contains("hat kein Fach", error.Message);
+
+        await creator.UpdateSeriesAsync(seriesId, new UpdateTextbookSeriesDto(null, null, null, teacher.SubjectId, null, null,
+            null, null));
+
+        Assert.Equal(0, await Commands(creator, pipeline).RunAsync(OnSeries("create", teacher, seriesId, unitId), default));
     }
 }

@@ -497,7 +497,7 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
         // any other the briefing refuses the profile. Said once, before --series sends the user through the second lock.
         if (writes && profileId is not null && profile?.SeriesId is int boundTo
             && await GetSeriesOrUsageErrorAsync(boundTo, ct) is { SubjectId: null } boundSeries)
-            throw new AgentUsageException(ProfileFit.NoSubject(boundSeries, profile));
+            throw new AgentUsageException(ProfileFit.NoSubject(boundSeries));
         // A child and no place named: the exercise belongs in the child's book, not in the first series of the catalog
         // (B-473). The best profile for the child (no subject filter - the place is what is unknown) gives the series.
         if (profile is null && childId is int forChild && command.Value("series") is null && command.Value("series-unit") is null)
@@ -537,13 +537,8 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
         }
         // The exercise's subject is the subject of the work it is filed in; the profile's counts only where the work has
         // none (B-488).
-        // The way out depends on the series a profile the user named is bound to: --series is one only without such a
-        // series - on any other the briefing refuses that profile (B-514). An automatically chosen profile binds nothing.
-        var namedProfile = command.Value("profile") is not null ? profile : null;
-        if (writes && series.SubjectId is null)
-            throw new AgentUsageException(ProfileFit.NoSubject(series, namedProfile));
-        var subjectId = ProfileFit.SubjectIdOf(series, profile)
-            ?? throw new AgentUsageException(ProfileFit.NoSubject(series, namedProfile));
+        if (writes && series.SubjectId is null) throw new AgentUsageException(ProfileFit.NoSubject(series));
+        var subjectId = ProfileFit.SubjectIdOf(series, profile) ?? throw new AgentUsageException(ProfileFit.NoSubject(series));
 
         return new GenerationRequest(
             ChildId: childId,
@@ -575,8 +570,18 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
     {
         try
         {
-            return (await supervisor.ListTextbooksAsync(childId, ct))
-                .FirstOrDefault(b => b.SeriesId == seriesId && b.CurrentUnitId is not null)?.CurrentUnitId;
+            // Two books on the same series at different units are a choice, not a list order (B-482).
+            var units = (await supervisor.ListTextbooksAsync(childId, ct))
+                .Where(b => b.SeriesId == seriesId && b.CurrentUnitId is not null)
+                .Select(b => b.CurrentUnitId!.Value).Distinct().ToList();
+            return units.Count switch
+            {
+                0 => null,
+                1 => units[0],
+                _ => throw new AgentUsageException(
+                    $"Kind {childId} hat mehrere Lehrbücher auf Reihe {seriesId} bei verschiedenen Units "
+                    + $"({string.Join(", ", units)}) – gib --series-unit <id> an."),
+            };
         }
         catch (PuglingApiException ex) when (ex.StatusCode is System.Net.HttpStatusCode.Forbidden
                                                  or System.Net.HttpStatusCode.NotFound)
@@ -618,7 +623,7 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
         }
         // Only a series without a subject would have fitted: its own lock says more than "no book" (B-510).
         if (series.Count == 0 && withoutSubject is not null)
-            throw new AgentUsageException(ProfileFit.NoSubject(withoutSubject, profile));
+            throw new AgentUsageException(ProfileFit.NoSubject(withoutSubject));
         return series.Count switch
         {
             1 => series[0],

@@ -13,6 +13,7 @@ unverifiziert: false
 entgangen_bei: [B-511]
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-13
 ---
 
 # B-514 · „--series" als Ausweg für ein Profil, das an eine andere Reihe gebunden ist
@@ -56,3 +57,4 @@ Autonom gegrillt (`art: Defekt`, Tageslauf):
     V5 → rot.
   - Verifikation: Suite 1438/1438, Mutanten 4/4 nach der letzten Änderung (Release, gefiltert).
   - Rollengang Creator: Konsolenaufrufe gegen den echten In-Process-Server; Vater, Sohn Regressionszeugen. Abgenommen.
+- **2026-11-13** — nachgeschaut (Retro Sprint 56/57, frischer Reviewer, gelesen; Ratschläge bzw. Datumswerte je Zweig/Zone nachgerechnet). Befund: 🟡 drei, alle in `NoSubject`-Ratschlägen → [B-516](B-516-nosubject-nur-sperre-und-ihre-aufhebung.md).

@@ -109,8 +109,9 @@ re-create the later branch's migration on top of the earlier one so the chain st
   line that is green without the fix are no evidence. Size or contract claims: measured at the file,
   command in the line. Mutants build in `Debug` (the test gate holds `Release`), never while a reviewer builds.
 - Error messages name the lock and no way out beyond it **that this reader may take** (owner, base stock,
-  foreign); a surface they point at must exist and show the lock. A way out is proven by a test that **takes it**
-  (runs the advised call) and passes every lock — reading the sentence escaped four times (B-508…B-514). A story about one sentence (lock, empty
+  foreign); a surface they point at must exist and show the lock. Prefer naming only the step that **lifts this
+  lock**; any other way out is proven by a test that **takes it** (runs the advised call) past every lock — advice
+  through combinations escaped five times (B-508…B-516). A story about one sentence (lock, empty
   state, confirmation) greps every sentence of that kind, UI included. After rewording,
   `.claude/scripts/old-phrases.py` finds tests expecting the old text.
 - Run `pugling-reviewer` and/or `frontend-reviewer` (by the story's `wo`). Its brief names the sink; the reviewer
