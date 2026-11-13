@@ -407,4 +407,13 @@ Zone nicht wieder her), mehrere 🟢 → [B-521](backlog/B-521-nachschau-reste-s
 **B-442** am Code bis zur Ursache verfolgt (`MarkIntroduced` datiert „gestern", montags die Vorwoche) und behoben –
 nicht an einem Montag gemessen, im Story-Verlauf so benannt. **B-446** am Datenstand geprüft: `NounInfo` beschreibt je
 nach Eintrag Frage- oder Lösungswort – Modellfrage, im Dialog.
-Suite 1467/1467, Vitest grün, Python 4/4. Damit sind alle Sprints dieses Laufs nachgeschaut außer Sprint 63 selbst.
+Suite 1467/1467, Vitest grün, Python 4/4, Playwright 140/140 (14,0 min, Ausweichports). Damit sind alle Sprints dieses Laufs nachgeschaut außer Sprint 63 selbst.
+
+## Abschluss des Laufs (04:15)
+
+Kein baubarer Kandidat mehr ohne Dialog: [B-47](backlog/B-47-deploy-artefakt-smoke.md) wartet laut eigener
+Entscheidung 1 auf den scharfen `workflow_run` des Azure-Deploys; [B-465](backlog/B-465-ki-lueckentext-mehrdeutig-und-verraten.md)
+braucht einen Live-Lauf am Modell und eine Entscheidung, welche Mängel Regel und welche Testmodus-Prüfung sind.
+Index: 52 offen, 440 abgenommen, nachgeschaut 425. **Beim Nutzer:** B-430 (Empfehlung (c)), B-446 (welche Seite
+`NounInfo` beschreibt), B-480 Punkt 3, B-501 Punkte 2/4; Heimnetz-Server neu starten, damit die Söhne die
+Änderungen bekommen; nichts gepusht (Branch `auto/fertigstellung`).

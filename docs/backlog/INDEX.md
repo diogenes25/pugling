@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (53)
+### Offen (52)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -33,7 +33,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-374](B-374-baobab-vergleich-sammel-story.md) | Baobab-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | Wunsch | `idee` | P2 | — | — | — |
 | [B-474](B-474-kacheln-ohne-drehung-und-uebersicht.md) | `kacheln.ps1` kann nicht drehen, und für die Sichtung von 56 Fotos fehlt ein Übersichtsbogen | Wunsch | `idee` | P2 | — | .claude/skills/lehrwerk-aufbereiten | — |
 | [B-410](B-410-tor-null-element-ueber-alle-body-listen.md) | Reflexiver Wächter: jede Liste in jedem `[FromBody]`-Graphen meldet ein `null`-Element als 400 | Aufräumen | `idee` | P2 | — | backend | — |
-| [B-442](B-442-capture-wochenmission-haengt-am-wochentag.md) | Die Doku-Capture der Wochenmission hängt am Wochentag | Defekt | `idee` | P3 | — | backend | — |
 | [B-446](B-446-vokabel-tipp-zeigt-den-artikel-des-fragewortes.md) | Der Vokabel-Tipp zeigt den Artikel des Frageworts, nicht einen Hinweis auf die Lösung | Defekt | `idee` | P3 | — | backend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `idee` | P3 | — | — | — |
@@ -71,7 +70,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-494](B-494-mutantenprobe-je-zusicherung.md) | `mutant-probe.py` misst je Zusicherung, nicht nur je Test | Aufräumen | `idee` | P3 | — | .claude/scripts | — |
 
 <details>
-<summary>Abgenommen (438)</summary>
+<summary>Abgenommen (440)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -398,6 +397,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-44](B-44-grundprinzip-rollennamen.md) | Grundprinzip auf Supervisor/Student umschreiben — „Vater" ist keine Ebene | Aufräumen | `abgenommen` | P2 | XS | doku | — |
 | [B-440](B-440-typografischer-apostroph-wird-nicht-gefaltet.md) | Ein typografischer Apostroph („l’école") macht die vollständige Antwort falsch, die verkürzte richtig | Defekt | `abgenommen` | P1 | XS | backend | — |
 | [B-441](B-441-editor-liest-articlerequired-nicht-zurueck.md) | Der Vokabel-Editor liest „Artikel verlangt" nicht aus der gespeicherten Config zurück | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-442](B-442-capture-wochenmission-haengt-am-wochentag.md) | Die Doku-Capture der Wochenmission hängt am Wochentag | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-443](B-443-fokus-wege-der-sohn-runde.md) | Nach „Jetzt abfragen" fällt der Fokus auf `body`, und drei Wege ins Rundenende hält kein Test | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-444](B-444-testmodus-fehler-ohne-alert-und-alter-ausweg.md) | Der Testmodus meldet einen Fehler stumm, und der Text zu `exercise_empty` nennt einen Ausweg | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-447](B-447-arcade-zeigt-iso-daten.md) | Die Sohn-Arcade zeigt Daten als ISO-Text | Aufräumen | `abgenommen` | P3 | S | frontend | — |
@@ -473,6 +473,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-519](B-519-nachschau-reste-sprint-58.md) | Nachschau-Reste Sprint 58: die Meldung nennt eine Reihe, aber nicht, woher sie kommt | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-52](B-52-testabdeckung-paket.md) | Sammel-Story: das Testabdeckungs-Paket | Aufräumen | `abgenommen` | P2 | L | beides | — |
 | [B-520](B-520-nachschau-reste-sprint-59.md) | Nachschau-Reste Sprint 59: eine Zone, die als „undefined" zurückkommt, und eine Zusicherung ohne Wirkung | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-521](B-521-nachschau-reste-sprint-60-62.md) | Nachschau-Reste Sprint 60–62: eine Zone, die nicht zurückkommt, und Lücken der Fallliste | Defekt | `abgenommen` | P3 | S | beides | — |
 | [B-53](B-53-wizard-doppelklick.md) | Zwei Klicks im Lehrplan-Assistenten legen zwei Kinder und zwei Pläne an | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-54](B-54-objectivecard-schreib-primitive.md) | Fünf Knöpfe im Vater-Web gehen an den Schreib-Primitiven vorbei | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-55](B-55-wegwerf-dateien-aufraeumen.md) | Die Tests räumen ihre Wegwerf-Dateien nicht weg | Aufräumen | `abgenommen` | P3 | S | beides | — |
@@ -530,9 +531,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-470](B-470-foto-zu-wortliste-als-werkzeug.md) | Aus Fotos der Vokabelseiten wird eine Wortliste – als wiederholbares Werkzeug statt als Handarbeit unter raw/ | `in-arbeit` | erster Lauf an einem neuen Buch in frischer Sitzung (Découvertes Série bleue 2) |
 | [B-485](B-485-vokabelbilder-nach-interessen-erzeugen.md) | Kleine Bilder zu jeder Vokabel – erzeugt nach den Interessen des Kindes | `in-arbeit` | erster echter Lauf mit OpenAI-Schlüssel (images --child 1 --max 1) |
 
-### Nach der Abnahme entgangen (174)
+### Nach der Abnahme entgangen (175)
 
-**Nachgeschaut: 417 von 438 abgenommenen** — und in 164 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 21 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 425 von 440 abgenommenen** — und in 168 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 15 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -710,9 +711,10 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-518](B-518-nachschau-reste-sprint-57.md) | Nachschau-Reste Sprint 57: „ganze Reihe" im Ziel-Wähler, zwei Verdrahtungen ohne Test | [B-513, B-515] | `abgenommen` |
 | [B-519](B-519-nachschau-reste-sprint-58.md) | Nachschau-Reste Sprint 58: die Meldung nennt eine Reihe, aber nicht, woher sie kommt | [B-516, B-482] | `abgenommen` |
 | [B-520](B-520-nachschau-reste-sprint-59.md) | Nachschau-Reste Sprint 59: eine Zone, die als „undefined" zurückkommt, und eine Zusicherung ohne Wirkung | [B-517] | `abgenommen` |
+| [B-521](B-521-nachschau-reste-sprint-60-62.md) | Nachschau-Reste Sprint 60–62: eine Zone, die nicht zurückkommt, und Lücken der Fallliste | [B-520, B-493, B-501, B-492] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (21) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (15) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -721,6 +723,7 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | --- | --- |
 | [B-207](B-207-kind-auswahlliste-ist-unkuratiert.md) | Die Auswahlliste des Kindes zeigt jedes Schlagwort, das je irgendwer getippt hat |
 | [B-375](B-375-heftseite-wird-uebungsentwurf.md) | Fotografierte Buchseiten werden zu Stoffnotizen einer Unit, aus denen eigene Übungen entstehen |
+| [B-442](B-442-capture-wochenmission-haengt-am-wochentag.md) | Die Doku-Capture der Wochenmission hängt am Wochentag |
 | [B-458](B-458-grammatik-entwurf-verraet-die-loesung.md) | Ein KI-Entwurf vom Typ Grammar darf die Lösung schon in der Aufgabe nennen |
 | [B-460](B-460-ki-aufgaben-programm-entscheidet.md) | Was nur eine richtige Antwort hat, entscheidet beim KI-Creator das Programm, nicht das Modell |
 | [B-461](B-461-lueckentext-ablenker-zaehlen-als-loesung.md) | Ein KI-Lückentext wertet die Ablenker der Wortbank als richtige Lösung |
@@ -730,16 +733,9 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-468](B-468-sohn-erreicht-die-app-nur-am-pc.md) | Der Sohn erreicht die App nur am Rechner des Vaters – „jederzeit am Handy“ braucht einen Ort für den Server |
 | [B-472](B-472-jedes-wort-in-beide-richtungen.md) | Jedes Wort einer Wortliste in beide Richtungen üben |
 | [B-476](B-476-kartenstufe-steigt-mit-dem-leitner-fach.md) | Die Stufe einer Vokabelkarte steigt mit ihrem Leitner-Fach: erst umdrehen, dann auswählen, dann schreiben |
-| [B-479](B-479-nachschau-reste-sprint-31.md) | Nachschau-Reste Sprint 31: eine Zusicherung, die nicht fallen kann, und Grenzfälle der Schlusszeichen |
-| [B-480](B-480-nachschau-reste-sprint-32.md) | Nachschau-Reste Sprint 32: eine Dosis, die nicht wirkt, steht weiter da |
 | [B-486](B-486-testmodus-lueckentext-eine-luecke-nach-der-anderen.md) | Testmodus: Lückentext eine Lücke nach der anderen |
 | [B-489](B-489-sohn-wortbank-am-handy.md) | Sohn-App: Lückentext mit Wortbank am Handy kaum bedienbar |
-| [B-492](B-492-lader-test-in-ci.md) | Der Lehrwerk-Lader bekommt einen automatischen Test in CI |
-| [B-493](B-493-fallliste-antwortvergleich.md) | Eine Fallliste für den Antwortvergleich, gelesen von Server, Frontend und Lader |
-| [B-501](B-501-nachschau-reste-sprint-43.md) | Nachschau-Reste Sprint 43: Stellen, die noch anders vergleichen als `Normalize` |
-| [B-518](B-518-nachschau-reste-sprint-57.md) | Nachschau-Reste Sprint 57: „ganze Reihe" im Ziel-Wähler, zwei Verdrahtungen ohne Test |
-| [B-519](B-519-nachschau-reste-sprint-58.md) | Nachschau-Reste Sprint 58: die Meldung nennt eine Reihe, aber nicht, woher sie kommt |
-| [B-520](B-520-nachschau-reste-sprint-59.md) | Nachschau-Reste Sprint 59: eine Zone, die als „undefined" zurückkommt, und eine Zusicherung ohne Wirkung |
+| [B-521](B-521-nachschau-reste-sprint-60-62.md) | Nachschau-Reste Sprint 60–62: eine Zone, die nicht zurückkommt, und Lücken der Fallliste |
 
 </details>
 
@@ -828,6 +824,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-438](B-438-pinhasher-zeittest-flackert-unter-last.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung", Feld `migration`, Feld `vertragsbruch` |
 | [B-440](B-440-typografischer-apostroph-wird-nicht-gefaltet.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-441](B-441-editor-liest-articlerequired-nicht-zurueck.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung", Feld `migration`, Feld `vertragsbruch` |
+| [B-442](B-442-capture-wochenmission-haengt-am-wochentag.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung", Feld `migration`, Feld `vertragsbruch` |
 | [B-443](B-443-fokus-wege-der-sohn-runde.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung", Feld `migration`, Feld `vertragsbruch` |
 | [B-444](B-444-testmodus-fehler-ohne-alert-und-alter-ausweg.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 | [B-445](B-445-seed-kind-ohne-klasse-und-fachlehrer.md) | `idee` | `unverifiziert: true` |
@@ -885,6 +882,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-518](B-518-nachschau-reste-sprint-57.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung", Feld `migration`, Feld `vertragsbruch` |
 | [B-519](B-519-nachschau-reste-sprint-58.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung", Feld `migration`, Feld `vertragsbruch` |
 | [B-520](B-520-nachschau-reste-sprint-59.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung", Feld `migration`, Feld `vertragsbruch` |
+| [B-521](B-521-nachschau-reste-sprint-60-62.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung", Feld `migration`, Feld `vertragsbruch` |
 
 <details>
 <summary>Verworfen (28)</summary>
