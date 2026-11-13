@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (50)
+### Offen (49)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -21,7 +21,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `gegrillt` | P2 | — | backend | Vertrag? |
 | [B-469](B-469-lernkontrolle-selbsteinschaetzung-und-typen-ohne-test.md) | Prüfauftrag: Der Vokabeltest ist per Vorgabe eine Selbsteinschätzung, Grammatik und Übersetzung haben keinen Test | Frage | `idee` | P2 | — | beides | — |
-| [B-485](B-485-vokabelbilder-nach-interessen-erzeugen.md) | Kleine Bilder zu jeder Vokabel – erzeugt nach den Interessen des Kindes | Wunsch | `in-arbeit` | P2 | L | beides | Migration |
 | [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder | Wunsch | `geschaetzt` | P2 | L | beides | — |
 | [B-423](B-423-assistent-klassenarbeit-termin-und-stufenleiter.md) | Der Assistent „Klassenarbeit vorbereiten" fragt den Termin, legt die Klassenarbeit an und baut die Stufenleiter | Wunsch | `ausformuliert` | P2 | M | frontend | — |
 | [B-474](B-474-kacheln-ohne-drehung-und-uebersicht.md) | `kacheln.ps1` kann nicht drehen, und für die Sichtung von 56 Fotos fehlt ein Übersichtsbogen | Wunsch | `ausformuliert` | P2 | — | .claude/skills/lehrwerk-aufbereiten | — |
@@ -68,7 +67,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-445](B-445-seed-kind-ohne-klasse-und-fachlehrer.md) | Seed: „Sohn" hat weder Klasse noch Schulart, und Herr Schmidt trägt kein Fachlehrer-Profil | Aufräumen | `idee` | P3 | — | beides | — |
 
 <details>
-<summary>Abgenommen (445)</summary>
+<summary>Abgenommen (446)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -437,6 +436,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-482](B-482-nachschau-reste-sprint-33.md) | Nachschau-Reste Sprint 33: Kleinigkeiten an Ablage und NEU-Marker | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-483](B-483-laden-prueft-was-build-config-liest-nicht.md) | `laden.py` prüft Felder, die `build_config` anders liest | Defekt | `abgenommen` | P2 | S | .claude/skills/lehrwerk-aufbereiten | — |
 | [B-484](B-484-ki-creator-profil-und-reihe-aus-zwei-pfaden.md) | Der KI-Creator wählt Profil und Reihe an zwei Stellen | Defekt | `abgenommen` | P2 | M | backend | — |
+| [B-485](B-485-vokabelbilder-nach-interessen-erzeugen.md) | Kleine Bilder zu jeder Vokabel – erzeugt nach den Interessen des Kindes | Wunsch | `abgenommen` | P2 | L | beides | Migration |
 | [B-486](B-486-testmodus-lueckentext-eine-luecke-nach-der-anderen.md) | Testmodus: Lückentext eine Lücke nach der anderen | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-487](B-487-laden-wortbank-ohne-loesung.md) | Eine handgeschriebene Wortbank ohne die Lösung geht durch Prüfung und Selbsttest | Defekt | `abgenommen` | P2 | S | backend, .claude/skills/lehrwerk-aufbereiten | — |
 | [B-488](B-488-ki-creator-profil-fach-neben-genannter-reihe.md) | Ein werkunabhängiges Profil neben `--series` prüft das Fach nicht | Defekt | `abgenommen` | P2 | S | backend | — |
@@ -520,7 +520,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 
 </details>
 
-### Wartet auf Zutun von außen (4)
+### Wartet auf Zutun von außen (3)
 
 Diese Stories kommen **im Repo nicht weiter** — es fehlt ein Schritt, den nur ein Mensch
 oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird gerade gebaut".
@@ -530,11 +530,10 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-423](B-423-assistent-klassenarbeit-termin-und-stufenleiter.md) | Der Assistent „Klassenarbeit vorbereiten" fragt den Termin, legt die Klassenarbeit an und baut die Stufenleiter | `ausformuliert` | Entscheidung des Nutzers (Offener Punkt 5) |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
-| [B-485](B-485-vokabelbilder-nach-interessen-erzeugen.md) | Kleine Bilder zu jeder Vokabel – erzeugt nach den Interessen des Kindes | `in-arbeit` | Entscheidung zum Prompt-Bau für Stable Diffusion (Interesse im Motiv, Negativ-Prompt), siehe Verlauf 2026-11-13 |
 
 ### Nach der Abnahme entgangen (175)
 
-**Nachgeschaut: 425 von 445 abgenommenen** — und in 168 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 20 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 425 von 446 abgenommenen** — und in 168 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 21 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -715,7 +714,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-521](B-521-nachschau-reste-sprint-60-62.md) | Nachschau-Reste Sprint 60–62: eine Zone, die nicht zurückkommt, und Lücken der Fallliste | [B-520, B-493, B-501, B-492] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (20) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (21) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -737,6 +736,7 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-470](B-470-foto-zu-wortliste-als-werkzeug.md) | Aus Fotos der Vokabelseiten wird eine Wortliste – als wiederholbares Werkzeug statt als Handarbeit unter raw/ |
 | [B-472](B-472-jedes-wort-in-beide-richtungen.md) | Jedes Wort einer Wortliste in beide Richtungen üben |
 | [B-476](B-476-kartenstufe-steigt-mit-dem-leitner-fach.md) | Die Stufe einer Vokabelkarte steigt mit ihrem Leitner-Fach: erst umdrehen, dann auswählen, dann schreiben |
+| [B-485](B-485-vokabelbilder-nach-interessen-erzeugen.md) | Kleine Bilder zu jeder Vokabel – erzeugt nach den Interessen des Kindes |
 | [B-486](B-486-testmodus-lueckentext-eine-luecke-nach-der-anderen.md) | Testmodus: Lückentext eine Lücke nach der anderen |
 | [B-489](B-489-sohn-wortbank-am-handy.md) | Sohn-App: Lückentext mit Wortbank am Handy kaum bedienbar |
 | [B-494](B-494-mutantenprobe-je-zusicherung.md) | `mutant-probe.py` misst je Zusicherung, nicht nur je Test |

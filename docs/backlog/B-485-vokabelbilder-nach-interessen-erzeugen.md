@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/medien, bereich/katalog, lerntechnik/vokabeln, rolle/creator, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/medien, bereich/katalog, lerntechnik/vokabeln, rolle/creator, rolle/student]
 aliases: [Vokabelbilder erzeugen, KI-Bilder nach Interessen, Medien Etappe 7b]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: L
@@ -9,7 +9,8 @@ wo: beides
 migration: ja
 vertragsbruch: nein
 quelle: Auftrag des Nutzers 2026-11-12 („kleine Bilder je Vokabel, nach den Interessen des Kindes")
-wartet_auf: "Entscheidung zum Prompt-Bau für Stable Diffusion (Interesse im Motiv, Negativ-Prompt), siehe Verlauf 2026-11-13"
+wartet_auf: ""
+nachgeschaut: ""
 grund: ""
 ersetzt_durch: []
 ---
@@ -153,6 +154,19 @@ zeigen keins. Erst gegen eine Kopie der `pugling.db`, dann auf der echten (Migra
    Das Risiko aus Entscheidung 1 gilt weiter: SD 1.5 malt öfter Schrift und gibt das Motiv weniger treu wieder.
    Außerdem teilen sich LocalAI und Ollama die 6 GB, also laufen beide nicht gleichzeitig. Die Quote wird nach
    dem ersten Lauf im Verlauf notiert.
+10. **Revision des Prompt-Baus (2026-11-13, Nutzer, nach dem ersten echten Lauf): Das Interesse kommt ins Motiv.**
+    Das lokale Textmodell bekommt zum geprüften Motiv den markenneutralen `ImagePrompt` des Interesses und liefert je
+    Wort und Interesse eine Szene, die beides verbindet („a soccer player kicking a ball on a city street“). Das Label
+    und die Daten des Kindes bekommt es nie. C# prüft die Szene wie das Motiv (nicht leer, kurz, eine Zeile). Fällt sie
+    durch, entsteht **kein** Interessen-Bild und der Bericht nennt das Paar. Ein Rückfall auf die angehängte Kulisse
+    würde unter dem Schlagwort ein Bild ohne das Interesse ablegen. Die Verbote („no text“) wandern in einen
+    Negativ-Prompt, sobald `Images:NegativeSeparator` gesetzt ist (`|` bei LocalAI). Ohne den Wert bleibt der Text am
+    Ende des Prompts, denn OpenAI kennt keinen Negativ-Prompt.
+    Begründung: Die Gegenprobe zeigte, dass Stable Diffusion eine angehängte Kulisse übergeht und Verneinungen nicht
+    versteht. Die verwobene Szene mit Negativ-Prompt ergab die gewollte Karte.
+    Kosten: ein lokaler Modellaufruf mehr je Wort und Interesse (etwa 4–20 s). Die Regel „das Interesse ist nur Kulisse,
+    der Prompt entsteht rein in C#“ aus der Lösungsskizze gilt nicht mehr. Das Risiko, dass das Interesse das Wort
+    überdeckt, trägt die Anweisung an das Modell, das Wort bleibt Hauptsache, und es gibt „anderes Bild“.
 
 ## Akzeptanzkriterien
 
@@ -345,4 +359,40 @@ Reviewer vor der Abnahme: `pugling-reviewer` und `frontend-reviewer`.
     statt Sticker.
   - Darum nicht `abgenommen`. Zu entscheiden ist der Prompt-Bau für dieses Modell (siehe `wartet_auf`). Der
     Rollengang an der Sohn-Karte folgt danach. Wegwerf-DB und Ollama sind beendet, LocalAI läuft beim Nutzer weiter.
+- 2026-11-13 · Entscheidung 10 (das Interesse kommt ins Motiv) gebaut: `MotifPlanner.PlanSceneAsync` je Wort und
+  Interesse. Keine Szene heißt kein Interessen-Bild, das Paar steht in `NoScene` und in der Konsole. Dazu
+  `Images:NegativeSeparator` und die Spur mit der gezeichneten Szene. Rote Proben: Szene = Motiv macht 5 Tests rot,
+  Rückfall auf die Kulisse macht `Ohne_brauchbare_Szene…` rot, Label statt Bild-Prompt macht `Das_Interesse_steht…`
+  rot.
+  - **Zweiter echter Lauf** (LocalAI/`dreamshaper`, Wegwerf-API :5280): 4 Bilder in 1:28 min. „la rue“ mit Fußball
+    zeigt den Ball, „la ville“ mit Fußball nicht, denn die Szene hatte zwei Satzteile und SD verwarf den zweiten.
+    Danach die Anweisung geschärft (ein zusammenhängender Satzteil, ein Beispiel). Neu gezeichnet zeigen **3 von 3**
+    Fußball-Bildern den Fußball („la rue“: Fußballer auf der Straße, „la ville“: Fußballer vor der Skyline, „acheter“:
+    Junge mit Ball). Quote der Schwächen: Bei „acheter“ fehlt dem Interessen-Bild das Kaufen, auf dem Trikot ist ein
+    markenähnliches Logo, und das neutrale Bild trägt Schrift („MARKET“ auf einem Geldschein). Das ist 1 von 6
+    Bildern mit Schrift. „acheter“ galt in diesem Lauf als zeichenbar, in zwei Läufen davor nicht, trotz Temperatur 0.
+    Korrektiv bleibt „anderes Bild“ (Entscheidung 2).
+  - **Rollengang (Sohn, 375 × 812):** Kind 1 (Fußball, Gewicht 3) hat sich in der Sohn-App angemeldet und „Vokabeln: En
+    ville“ geübt. Karte 1 „la ville“ zeigt Bild 8 (Fußballer vor der Skyline), Alt-Text „Bild zur Vokabel (Fußball)“
+    ohne das Wort, „anderes Bild“ ist da. Danach wurden Wegwerf-DB, Frontend-Vorschau und API beendet.
+  - **Reviewer:** `frontend-reviewer` an 04f2bbe/88dd669 ohne Blocker, ein 🟡 (falsche Leer-Meldung bei aktivem Filter,
+    behoben), zwei 🟢 (Feld-Hilfe bleibt im Einleitungstext, wie in der ganzen Tabelle; der Fall „fremder Prompt bleibt
+    stehen“ ist jetzt im E2E). `pugling-reviewer` an den Agent-Änderungen ohne Blocker, zwei 🟡, beide behoben:
+    (1) Ein vorhandenes Bild wird vor jeder Modellfrage aufgenommen (`ReuseAsync`). Sonst strandete bei einem
+    Modellfehler im zweiten Lauf ein bereits gezeichnetes Bild. (2) Der Negativ-Trenner war im Lauf ungetestet.
+    🟢 übernommen: ein Trenner in der Szene und ein leerer Trenner spalten den Prompt nicht, ein HTTP-Timeout gilt als
+    fehlende Antwort (`when (!ct.IsCancellationRequested)`), die Summaries sind aktualisiert. Bewusst nicht übernommen:
+    `NoScene` setzt keinen Exit 1, so wie nicht zeichenbare Wörter. Es ist eine Lücke zum erneuten Laufenlassen, kein
+    Fehler.
+  - Rote Proben nach dem Review: Modell vor dem Wiederaufnehmen gefragt macht 3 Tests rot (darunter
+    `Ein_frueherer_Lauf…` über `chat.Calls == 0`), Trenner im Lauf verworfen macht `Der_Lauf_reicht_den_Negativ_Trenner…`
+    rot, ein Formular, das den Prompt immer schickt, macht `bild-prompt.spec.ts:55` rot. Danach zurückgespielt.
+  - **Belege:** `dotnet test Pugling.sln -c Release` 1495/1495, `ImageAgentTests` 23/23, Vitest 862/862, `tsc -b`
+    sauber, E2E `bild-prompt.spec.ts` **2 passed**. Der E2E lief auf den Ausweichports 5211/5176 mit
+    `Configuration=Release`, weil ein Server auf :5200 `bin/Debug` sperrt. Markdown-Lint für die geänderten Dateien
+    ohne Fund. Doku nachgezogen: README des Agenten (Abschnitt „Lokal mit LocalAI“), `CLAUDE.md` des Agenten, Skill
+    `ki-creator`, `docs/medien-bilder.md`.
+  - **abgenommen.** Commits: 04f2bbe, 4835626, 88dd669, 973ced1, 17790fb, **cc0e114**. Nicht geprüft: ein Lauf gegen
+    die echte `pugling.db`. Die Migration ist an einer Kopie geprüft (2026-11-12), und in der echten DB hat noch kein
+    Schlagwort einen Bild-Prompt.
 
