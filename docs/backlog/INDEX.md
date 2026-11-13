@@ -12,10 +12,11 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (49)
+### Offen (50)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| [B-524](B-524-vokabeltest-wie-in-der-schule.md) | Vokabeltest im Format der Schule: englische Lückensätze, deutscher Wortkasten, frei geschrieben | Wunsch | `idee` | P1 | — | — | — |
 | [B-465](B-465-ki-lueckentext-mehrdeutig-und-verraten.md) | Ein KI-Lückentext nach dem Umbau: Titel passt nicht, Auswahl steht im Satz, Zeitformen ohne Alternative | Defekt | `ausformuliert` | P2 | — | backend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `gegrillt` | P2 | — | backend | Vertrag? |
@@ -67,7 +68,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-445](B-445-seed-kind-ohne-klasse-und-fachlehrer.md) | Seed: „Sohn" hat weder Klasse noch Schulart, und Herr Schmidt trägt kein Fachlehrer-Profil | Aufräumen | `idee` | P3 | — | beides | — |
 
 <details>
-<summary>Abgenommen (445)</summary>
+<summary>Abgenommen (417)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -488,34 +489,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-62](B-62-reste-aus-dem-b37-review.md) | Drei Reste aus dem B-37-Review (Sohn-Arcade) | Defekt | `abgenommen` | P3 | S | beides | — |
 | [B-63](B-63-lehrwerk-hierarchie.md) | Das Lehrwerk ist eine Ebene aus Freitext, gebraucht wird eine Hierarchie mit Listen | Wunsch | `abgenommen` | P2 | L | beides | Migration + Vertrag |
 | [B-64](B-64-textbook-vs-series.md) | Das Lehrwerk gibt es zweimal: einmal als Freitext am Kind, einmal katalogisiert | Wunsch | `abgenommen` | P3 | M | beides | — |
-| [B-65](B-65-vokabel-mehrere-uebersetzungen.md) | Eine Vokabel mit zwei richtigen Übersetzungen wertet eine davon falsch | Defekt | `abgenommen` | P1 | M | beides | Migration |
-| [B-66](B-66-buchstabenkaestchen-trennzeichen.md) | Das Buchstabenkästchen lässt Leer- und Satzzeichen tippen, die schon feststehen | Defekt | `abgenommen` | P2 | M | beides | — |
-| [B-67](B-67-fachlehrer-aus-lehrwerk.md) | Der Fachlehrer fragt nach Fach und Sprachen, die im gewählten Lehrwerk längst stehen | Wunsch | `abgenommen` | P2 | S | frontend | — |
-| [B-68](B-68-vater-web-responsive.md) | Das Vater-Web hat keinen einzigen eigenen Breakpoint | Wunsch | `abgenommen` | P3 | M | frontend | — |
-| [B-69](B-69-wiederhol-felder-alternativen.md) | Kommagetrennte Sammelfelder: einer davon nimmt gar keine zweite Alternative an | Defekt | `abgenommen` | P2 | M | frontend | — |
-| [B-70](B-70-selbsteinschaetzung-nur-primaerloesung.md) | Die Selbsteinschätzung zeigt nur die primäre Übersetzung | Defekt | `abgenommen` | P2 | S | beides | — |
-| [B-71](B-71-inline-vokabelliste-ohne-varianten.md) | Die Inline-Vokabelliste im Übungs-Editor kann keine gleichwertigen Übersetzungen anlegen | Wunsch | `abgenommen` | P3 | M | beides | — |
-| [B-72](B-72-birkenbihl-dekodierung-paarfelder.md) | Die Birkenbihl-Dekodierung trägt zwei Trennzeichen in einem Feld | Defekt | `abgenommen` | P3 | S | frontend | — |
-| [B-73](B-73-auswahl-feld-ohne-wirkung.md) | Das Auswahl-Feld verspricht Multiple-Choice, das Kind bekommt Freitext | Defekt | `abgenommen` | P2 | S | beides | — |
-| [B-74](B-74-editor-zeilen-typisieren.md) | Die Zeilen des Übungs-Editors sind `Record<string, any>` | Aufräumen | `abgenommen` | P3 | M | frontend | — |
-| [B-75](B-75-lese-hoerverstehen-ohne-inhalt.md) | Lese- und Hörverstehen kommen ohne ihren Inhalt beim Kind an | Defekt | `abgenommen` | P1 | M | beides | Vertrag |
-| [B-76](B-76-lueckentext-karte-ohne-luecke.md) | Der Lückentext sagt dem Kind nicht, welche Lücke gemeint ist | Defekt | `abgenommen` | P1 | M | beides | — |
-| [B-77](B-77-liste-menge-als-folge.md) | Beim Spielen wird eine ungeordnete Liste als Folge bewertet | Defekt | `abgenommen` | P1 | M | beides | Vertrag |
-| [B-78](B-78-birkenbihl-dekodierung-erreicht-kind-nicht.md) | Die Birkenbihl-Dekodierung erreicht das Kind nicht | Defekt | `abgenommen` | P2 | M | beides | — |
-| [B-79](B-79-position-stufe-unvalidiert.md) | Die Stufe einer Position wird gegen nichts geprüft | Defekt | `abgenommen` | P2 | S | backend | — |
-| [B-80](B-80-tags-geben-fremde-konfiguration-preis.md) | Das Kind kann die Lösungen jeder Übung lesen | Defekt | `abgenommen` | P1 | S | backend | Vertrag |
-| [B-81](B-81-vokabel-tags-geben-uebersetzungen-preis.md) | Über die Vokabel-Tags kann ein Kind jede Übersetzung des Stores lesen | Defekt | `abgenommen` | P1 | S | backend | — |
-| [B-82](B-82-positions-report-gibt-loesungen-preis.md) | Über den Positions-Report kann ein Kind die Lösung jeder Karte lesen | Defekt | `abgenommen` | P1 | M | beides | Vertrag |
-| [B-83](B-83-loesungsfeld-regel-residenter-kontext.md) | Die Lösungsfeld-Regel steht nur als Kommentar am Wächter | Aufräumen | `abgenommen` | P3 | XS | doku | — |
-| [B-84](B-84-api-beispiele-behaupten-unerreichbarkeit.md) | Die API-Beispiele behaupten Unerreichbarkeit, wo nur nichts mitgeschnitten wurde | Defekt | `abgenommen` | P3 | S | doku | — |
-| [B-88](B-88-scoring-uhrzeit-am-timeprovider.md) | Die Punkte-Uhrzeit kommt von der Wanduhr, nicht vom `TimeProvider` | Aufräumen | `abgenommen` | P3 | XS | backend | — |
-| [B-89](B-89-positionsliste-haengt-report-aus.md) | Die Positionsliste hängt bei jeder Änderung den aufgeklappten Report aus | Defekt | `abgenommen` | P3 | L | frontend | — |
-| [B-93](B-93-birkenbihl-einstellungen-ohne-wirkung.md) | Zwei Birkenbihl-Einstellungen, die lautlos nichts tun | Defekt | `abgenommen` | P3 | S | beides | — |
-| [B-95](B-95-stufenwaechter-haengt-am-include.md) | Die Stufenprüfung beim PATCH einer Position hängt an einem `Include`, das niemand einfordert | Aufräumen | `abgenommen` | P3 | XS | backend | — |
-| [B-96](B-96-showboth-stufe-ohne-mechanik.md) | „Beide zeigen (Kennenlernen)" ist eine Beschriftung ohne eigene Stufe | Defekt | `abgenommen` | P2 | M | beides | — |
-| [B-97](B-97-unique-index-ohne-vorpruefung.md) | Zwei Schreibpfade laufen ungeprüft in einen Unique-Index und antworten mit 500 | Defekt | `abgenommen` | P2 | XS | backend | — |
-| [B-98](B-98-idempotenter-link-post-luegt.md) | Drei idempotente Schreibpfade antworten mit erfundenen Werten, zwei davon mit `201 Created` | Defekt | `abgenommen` | P2 | S | backend | Vertrag |
-| [B-99](B-99-kaufhistorie-endet-lautlos.md) | Die Kaufhistorie des Kindes endet lautlos bei 50 Zeilen | Defekt | `abgenommen` | P2 | S | beides | — |
 
 </details>
 
@@ -529,11 +502,11 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-423](B-423-assistent-klassenarbeit-termin-und-stufenleiter.md) | Der Assistent „Klassenarbeit vorbereiten" fragt den Termin, legt die Klassenarbeit an und baut die Stufenleiter | `ausformuliert` | Entscheidung des Nutzers (Offener Punkt 5) |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
-| [B-485](B-485-vokabelbilder-nach-interessen-erzeugen.md) | Kleine Bilder zu jeder Vokabel – erzeugt nach den Interessen des Kindes | `in-arbeit` | erster echter Lauf mit OpenAI-Schlüssel (images --child 1 --max 1) |
+| [B-485](B-485-vokabelbilder-nach-interessen-erzeugen.md) | Kleine Bilder zu jeder Vokabel – erzeugt nach den Interessen des Kindes | `in-arbeit` | LocalAI mit dreamshaper beim Nutzer installiert, dann erster echter Lauf (images --child 1 --max 1) |
 
 ### Nach der Abnahme entgangen (175)
 
-**Nachgeschaut: 425 von 445 abgenommenen** — und in 168 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 20 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 397 von 417 abgenommenen** — und in 161 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 20 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -898,7 +871,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-523](B-523-mutantenprobe-env-und-unittest.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 
 <details>
-<summary>Verworfen (28)</summary>
+<summary>Verworfen (22)</summary>
 
 | Id | Story | Grund |
 | --- | --- | --- |
@@ -924,12 +897,6 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-38](B-38-mehrsprachige-oberflaeche.md) | Mehrsprachige Oberfläche (Deutsch, Englisch, Französisch) | "geteilt — ein Programm, keine Story (Entscheidung 8); siehe die recherchierte Grundlage unten und → [B-85, B-86, B-87] |
 | [B-391](B-391-birkenbihl-decoding-null-ist-500.md) | Ein Birkenbihl-Satz mit `"decoding": null` endet in einer 500 statt einer 400 | Für null-MEMBER widerlegt (implizites [Required] antwortet 400 validation_error mit dem Pfad in errors); für null-ELEMENTE einer Liste bestätigt – weiter in B-397. |
 | [B-503](B-503-lernstand-ueberlebt-loeschen.md) | Prüfauftrag: soll der Lernstand der Kinder das Löschen einer Übung oder Vokabel überleben? | Nutzer-Entscheidung 2026-11-12: Löschen bleibt hart. Nur ein Lehrplan-freier Inhalt ist löschbar, die Lösch-Fragen nennen den Verlust (B-499/B-502), und die Antwort-Historie je Wort (ItemReviewEvent, SetNull) überlebt – ein späterer Lernstand je Wort ließe sich aus ihr nachrechnen. |
-| [B-85](B-85-i18n-infrastruktur-sohn-arcade-englisch.md) | i18n-Infrastruktur + Sohn-Arcade auf Englisch (erste Teilstufe der Mehrsprachigkeit) | geteilt (NP-11 Schritt 0, Lauf E Teil 8): Infrastruktur + Startbildschirm → B-294, Rest des Korpus → B-295 → [B-294, B-295] |
-| [B-86](B-86-uebungstyp-manifest-anzeigenamen-schluessel.md) | Das Übungstyp-Manifest liefert Anzeigenamen als Daten, nicht als Schlüssel | gegenstandslos im Backend – das Manifest trägt mit `type` (= IExerciseType.Key, ExerciseTypeManifest.cs:33,43) bereits einen stabilen, sprachneutralen Schlüssel; `Label` ist der deutsche Anzeigename daneben. Der Rest – eine Frontend-Übersetzungstabelle mit `type` als Schlüssel – gehört in B-85 |
-| [B-87](B-87-vater-web-franzoesisch-server-sprachfeld.md) | Rest des Mehrsprachigkeits-Programms: Vater-Web, Französisch, Server-Sprachfeld | "geteilt — selbst noch ein Programm (Entscheidung 1); siehe die recherchierte Grundlage oben und die → [B-91, B-92, B-90] |
-| [B-90](B-90-server-sprachfeld.md) | Server-Sprachfeld an `Adult`/`Child` | Entscheidung des Nutzers am 2026-10-23 (G-9): Mehrsprachigkeit ist über die Sohn-Arcade auf Englisch (B-85) hinaus kein Ziel; ein Server-Sprachfeld hat keinen Konsumenten |
-| [B-91](B-91-vater-web-extraktion-englisch.md) | Vater-Web-Textkorpus auf Übersetzungsschlüssel umstellen (Englisch) | Entscheidung des Nutzers am 2026-10-23 (G-9): Mehrsprachigkeit ist über die Sohn-Arcade auf Englisch (B-85) hinaus kein Ziel; das Vater-Web bleibt deutsch |
-| [B-92](B-92-franzoesisch-zweite-zielsprache.md) | Französisch als zweite Zielsprache (Sohn-Arcade + Vater-Web) | Entscheidung des Nutzers am 2026-10-23 (G-9): Mehrsprachigkeit ist über die Sohn-Arcade auf Englisch (B-85) hinaus kein Ziel; keine zweite Zielsprache |
 
 </details>
 
