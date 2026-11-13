@@ -27,6 +27,16 @@ Dazu laufen viele Integrationstests auf Kind 1. Das ist kein Seed-Aufräumen meh
 der eigene Entscheidungen braucht (Klasse 5 am Seed-Kind und die Specs auf ein eigenes Kind umziehen? Oder ein zweites
 Seed-Kind mit Klasse für den Fachlehrer-Treffer?).
 
+## Befund am Code (2026-11-13): was die echte DB davon träfe
+
+`Seed.RunAsync` läuft bei **jedem** Start, auch gegen die echte `pugling.db` der Söhne (`Seed.cs:28-31`).
+`SeedAdmin` kehrt bei vorhandenen Erwachsenen sofort zurück (`Seed.cs:1088`) – Klasse/Schulart am Seed-Kind erreichten die
+echte DB also **nie**, nur frische DBs (Tests, E2E). `SeedTeacherLibrary` (`Seed.cs:516`) hat dagegen keine solche Sperre
+am Anfang, sondern prüft je Schritt – ein dort ergänztes `CreatorProfile` für Herrn Schmidt landete beim nächsten Start
+**auch in der echten DB**. Für die Entscheidung heißt das: Teil „Seed-Kind" ist ein reiner Test-/Demo-Umbau, Teil
+„Fachlehrer-Profil" ändert die Daten der Familie und braucht dieselbe Idempotenz-Prüfung wie die übrigen Schritte dort.
+
 ## Verlauf
 
 - **2026-11-09** — abgeteilt aus [B-429](B-429-seed-familie-widerspricht-dem-katalog.md) beim Grillen in Lauf AG (Sprint 27). Abgeteilt, weil die Klasse am Seed-Kind den Katalog in mehreren Specs filtert (Begründung oben).
+- **2026-11-13** — Befund (Tageslauf, Restzeit): welcher der zwei Teile die echte DB erreicht – nur das Fachlehrer-Profil.
