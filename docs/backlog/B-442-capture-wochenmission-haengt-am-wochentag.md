@@ -1,10 +1,10 @@
 ---
-tags: [typ/story, status/idee, bereich/tests, bereich/doku]
+tags: [typ/story, status/abgenommen, bereich/tests, bereich/doku]
 aliases: [Capture Wochenmission Wochentag]
-status: idee
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
+groesse: "XS"
 wo: backend
 migration: ""
 vertragsbruch: ""
@@ -31,4 +31,8 @@ neutralisieren). Lauf AF hat die beiden Dateien zurückgesetzt, nicht neu commit
   Wochenzeitraum (`MetricsService.cs:25`); die Einführungen entstehen also in den Capture-Schritten selbst. Nächster
   Schritt: nachsehen, welcher Schritt vor `me/missions` Wörter mit einem Tag **vor** dem Wochenbeginn einführt (Uhr
   vorgestellt? Tag einer Sitzung?), dann die Uhr der Factory für die Capture auf einen Mittwoch festsetzen.
-
+- **2026-11-13** — Ursache gefunden und behoben (Sprint 63, autonom gegrillt, `art: Defekt`): `TestApi.MarkIntroduced`
+  (über `SeedLeitnerPosition`, `DocsCaptureTests.cs:332`) datiert Einführungen auf „gestern"; montags liegt gestern in der
+  Vorwoche, und `ProgressMetric.NewWords` (`MetricsService.cs:25`) zählt im Wochenzeitraum 0 statt 2. `CaptureAll` stellt
+  die Test-Uhr montags auf Dienstag; an allen anderen Tagen bleibt sie unverändert. **Nicht an einem Montag gemessen**
+  (heute ist Freitag) – die Wirkung ist hergeleitet: `DocsCaptureTests` grün, keine Doku-Änderung an einem Freitag.

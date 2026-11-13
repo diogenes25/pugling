@@ -186,6 +186,11 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     [Fact]
     public async Task CaptureAll()
     {
+        // B-442: TestApi.MarkIntroduced dates introductions "yesterday". On a Monday that is last week, and the weekly
+        // mission in the capture read 0 instead of 2 - the checked-in docs moved with the weekday. On a Monday the capture
+        // runs as if on Tuesday, so "yesterday" is in the same week; every other day is untouched.
+        var now = factory.Clock.GetUtcNow();
+        if (now.UtcDateTime.DayOfWeek == DayOfWeek.Monday) factory.Clock.FreezeAt(now.AddDays(1));
         var completed = false;
         try
         {

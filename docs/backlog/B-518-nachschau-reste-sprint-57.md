@@ -13,6 +13,7 @@ unverifiziert: false
 entgangen_bei: [B-513, B-515]
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-13
 ---
 
 # B-518 · Nachschau-Reste Sprint 57: „ganze Reihe" im Ziel-Wähler, zwei Verdrahtungen ohne Test
@@ -52,3 +53,4 @@ Autonom gegrillt (`art: Defekt`, Tageslauf):
     Mutanten nach der letzten Änderung rot (Tabellen im Protokoll, Sprints 60–62).
   - Rollengang: Vater (Plan-Seite, Assistent, Ziel-Wähler) per E2E und Komponententests; Creator (Konsole) gegen den
     In-Process-Server; Sohn Regressionszeuge. Abgenommen.
+- **2026-11-13** — nachgeschaut (Sprint 63, frische `pugling-reviewer`/`frontend-reviewer` an `e37f65e`, gelesen, Vitest 102/102). Geprüft: CI-Schritt läuft (python3, Arbeitsverzeichnis, Pfade), xUnit-Leser findet die Liste, alle drei Leser stimmen Schritt für Schritt überein, `Map`-Aufrufer laden die Übung. Kein 🔴; Reste → [B-521](B-521-nachschau-reste-sprint-60-62.md).

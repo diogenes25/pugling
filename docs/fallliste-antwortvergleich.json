@@ -102,6 +102,30 @@
       "b": "Stadt",
       "gleich": false,
       "warum": "Artikel z\u00e4hlt hier (Artikel-Toleranz ist eine eigene Regel)"
+    },
+    {
+      "a": "don\u2018t",
+      "b": "don't",
+      "gleich": true,
+      "warum": "linkes einfaches Anfuehrungszeichen als Apostroph"
+    },
+    {
+      "a": "don\u02bct",
+      "b": "don't",
+      "gleich": true,
+      "warum": "Modifikator-Apostroph (Tablet)"
+    },
+    {
+      "a": "don`t",
+      "b": "don't",
+      "gleich": true,
+      "warum": "Gravis als Apostroph"
+    },
+    {
+      "a": "\u00c9cole",
+      "b": "\u00e9cole",
+      "gleich": true,
+      "warum": "Gross/Klein ausserhalb von ASCII"
     }
   ]
 }

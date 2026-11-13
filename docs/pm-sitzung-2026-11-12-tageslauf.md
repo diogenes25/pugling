@@ -398,3 +398,13 @@ Commits des Laufs auf `auto/fertigstellung` (nichts gepusht): `7c17e07`, `60750a
 `82fdc4c`, `f982ae0`, `59fc0a8`, `14be0fa`, `edaceab`, `f8ed922`, `637d868`, `9553854`, `022dfcf`, `8485eab`, `acb7898` und
 der Abschluss-Commit der Sprints 60–62. **Die Änderungen wirken bei den Kindern erst nach einem Neustart des
 Heimnetz-Servers** (`scripts/heimnetz.ps1`); keine neue Migration in diesem Lauf.
+
+## Sprint 63 — Nachschau 60–62 und B-442 (nach dem geplanten Abschluss, Zeit war noch da)
+
+**Nachschau:** Sprints 60–62 (`e37f65e`) von zwei frischen Reviewern: kein 🔴, ein 🟡 (`inZone` stellt unter Windows die
+Zone nicht wieder her), mehrere 🟢 → [B-521](backlog/B-521-nachschau-reste-sprint-60-62.md), im selben Sprint gebaut
+(Fallliste 21 Fälle, Phrasen-Erkennung an jedem Leerraum, Python-Schritt in CI hinter `dotnet test`). Mutanten S1, S2 rot.
+**B-442** am Code bis zur Ursache verfolgt (`MarkIntroduced` datiert „gestern", montags die Vorwoche) und behoben –
+nicht an einem Montag gemessen, im Story-Verlauf so benannt. **B-446** am Datenstand geprüft: `NounInfo` beschreibt je
+nach Eintrag Frage- oder Lösungswort – Modellfrage, im Dialog.
+Suite 1467/1467, Vitest grün, Python 4/4. Damit sind alle Sprints dieses Laufs nachgeschaut außer Sprint 63 selbst.

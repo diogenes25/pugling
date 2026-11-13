@@ -13,6 +13,7 @@ unverifiziert: false
 entgangen_bei: [B-517]
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-13
 ---
 
 # B-520 · Nachschau-Reste Sprint 59: eine Zone, die als „undefined" zurückkommt, und eine Zusicherung ohne Wirkung
@@ -37,3 +38,4 @@ und Kiritimati per `spawnSync` – Git Bash reicht `TZ=America/…` nicht an Nod
 
 - **2026-11-13** — angelegt (Nachschau Sprint 59, Retro Sprint 61/62) und gebaut im Sprint 62: `datum.test.ts` 22/22.
   Kein Mutant: alle drei Punkte sind Testaufbau; Punkt 2 ist eine entfernte Zeile. Abgenommen mit dem Commit des Sprints.
+- **2026-11-13** — nachgeschaut (Sprint 63, frische `pugling-reviewer`/`frontend-reviewer` an `e37f65e`, gelesen, Vitest 102/102). Geprüft: CI-Schritt läuft (python3, Arbeitsverzeichnis, Pfade), xUnit-Leser findet die Liste, alle drei Leser stimmen Schritt für Schritt überein, `Map`-Aufrufer laden die Übung. Kein 🔴; Reste → [B-521](B-521-nachschau-reste-sprint-60-62.md).

@@ -159,17 +159,29 @@ describe("Die Arcade formatiert Daten nur über arcadeDatum (B-447)", () => {
 });
 
 /**
- * Führt `fn` in einer Zone aus und stellt die vorige wieder her (B-520): war `TZ` vorher nicht gesetzt, wird es gelöscht –
+ * Führt `fn` in einer Zone aus und stellt die vorige wieder her (B-520, B-521): war `TZ` vorher nicht gesetzt, wird es gelöscht –
  * eine Zuweisung von `undefined` schriebe den Text „undefined", und Node rechnete den Rest der Datei in `Etc/Unknown`.
  */
 function inZone(zone: string, fn: () => void): void {
   const vorher = process.env.TZ;
+  // Die wirksame Zone vorher merken: ein bloßes `delete` setzt Node unter Windows nicht zurück, es rechnet in der zuletzt
+  // gesetzten weiter (B-521, gemessen). Erst die alte Zone setzen – das leert den Zwischenspeicher –, dann löschen.
+  const wirksam = Intl.DateTimeFormat().resolvedOptions().timeZone;
   process.env.TZ = zone;
   try {
     fn();
   } finally {
+    process.env.TZ = vorher ?? wirksam;
     if (vorher === undefined) delete process.env.TZ;
-    else process.env.TZ = vorher;
   }
 }
+
+// B-521: nach `inZone` rechnet die Datei wieder in der Zone von vorher. Rot, wenn die Wiederherstellung die Zone stehen lässt.
+describe("inZone stellt die Zone wieder her", () => {
+  it("rechnet danach in derselben Zone wie davor", () => {
+    const davor = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    inZone(davor === "Pacific/Kiritimati" ? "America/New_York" : "Pacific/Kiritimati", () => {});
+    expect(Intl.DateTimeFormat().resolvedOptions().timeZone).toBe(davor);
+  });
+});
 

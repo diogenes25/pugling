@@ -60,7 +60,8 @@ public static partial class AnswerVariants
         var closing = segment.TrimEnd();
         if (closing.EndsWith('!') || closing.EndsWith('?')) return true;
         if (!closing.EndsWith('.')) return false;
-        var lastWord = closing[..^1].Split(' ', ',', '(', ')').LastOrDefault() ?? "";
+        // Any whitespace, like the separator below (B-521): "Gebäude" + NBSP + "usw." ends on the abbreviation too.
+        var lastWord = Regex.Split(closing[..^1], @"[\s,()]").LastOrDefault() ?? "";
         return !Abbreviations.TryGetValue(lastWord, out _);
     }
 

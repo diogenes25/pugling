@@ -71,11 +71,6 @@ jobs:
       - name: Build
         run: dotnet build Pugling.sln -c Release --no-restore
 
-      # B-492: der Lehrwerk-Lader (laden.py) hatte keinen automatischen Test – seine Proben verschwanden mit der Sitzung.
-      # Standardbibliothek, kein Server; liest die gemeinsame Fallliste des Antwortvergleichs (B-493).
-      - name: Lehrwerk-Lader (Python)
-        run: python3 -m unittest discover -s .claude/skills/lehrwerk-aufbereiten -p "test_*.py" -v
-
       # `--no-build`: die Solution ist im Schritt davor schon in Release gebaut. Warm liegt die ganze
       # Suite bei ~63 s – es gibt damit kein Laufzeit-Argument gegen dieses Tor.
       #
@@ -89,6 +84,13 @@ jobs:
           --logger "trx;LogFileName=test-results.trx"
           --collect:"XPlat Code Coverage"
           --results-directory TestResults
+
+      # B-492: der Lehrwerk-Lader (laden.py) hatte keinen automatischen Test – seine Proben verschwanden mit der Sitzung.
+      # Standardbibliothek, kein Server; liest die gemeinsame Fallliste des Antwortvergleichs (B-493). Hinter den .NET-Tests
+      # und auch nach ihrem Scheitern (B-521): ein roter Lader verdeckt sonst das Ergebnis der Suite.
+      - name: Lehrwerk-Lader (Python)
+        if: ${{ !cancelled() }}
+        run: python3 -m unittest discover -s .claude/skills/lehrwerk-aufbereiten -p "test_*.py" -v
 
       # D4: `DocsCaptureTests` überschreibt `docs/api-examples/` bei *jedem* Lauf (Wanduhr in der
       # WebAppFactory neutralisiert, `TZ: UTC` oben) – die Behauptung "byte-stabil" war bis hierhin

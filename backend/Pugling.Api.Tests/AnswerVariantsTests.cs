@@ -129,4 +129,11 @@ public class AnswerVariantsTests
     [Fact]
     public void Unsichtbares_FEFF_Ist_Kein_Unterschied() =>
         Assert.Equal(StageMechanics.Normalize("Hund"), StageMechanics.Normalize("\uFEFFHund"));
+
+    // B-521: an abbreviation at the end is found across any whitespace - "Gebäude" + NBSP + "usw." is a list, not a
+    // sentence, so its comma separates meanings. Red if only the plain space splits the last word.
+    [Fact]
+    public void Abkuerzung_Nach_Geschuetztem_Leerzeichen_Trennt_Die_Bedeutungen() =>
+        Assert.True(_grader.Matches("Haus", Entry("Haus, Gebäude\u00A0usw.")));
 }
+
