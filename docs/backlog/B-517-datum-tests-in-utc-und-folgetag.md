@@ -50,7 +50,7 @@ Autonom gegrillt (`art: Defekt`, Tageslauf):
 - **2026-11-13** — angelegt (Nachschau Sprint 54, Retro Sprint 56/57), autonom gegrillt, geschätzt S; in Sprint 59 gebaut.
 - **2026-11-13** — gebaut (Sprint 59). `alsUtcText` (Text-Regel als Text geprüft), DateOnly überall in UTC formatiert,
   Wächter `ROH` gegen rohes ISO in der Arcade, Komponententest `MyObjectives` mit echtem Datum. Beim Bau gefunden: der
-  committete Arcade-Wächter `SELBST` aus Sprint 54 trug zwei Backspace-Zeichen (U+0008) statt `` – zwei seiner vier
+  committete Arcade-Wächter `SELBST` aus Sprint 54 trug zwei Backspace-Zeichen (U+0008) statt `\b` – zwei seiner vier
   Formen griffen nie; behoben, mit Selbsttest. Review: vier 🟡 (Zähler 1, eine Fix-Runde): `augenblick`-Test läuft nun
   in New York (Zone zur Laufzeit gesetzt), Arcade-DateOnly auf einem Gerät in Kiritimati geprüft, Kommentar berichtigt,
   Entscheidung 3 an den Bau angeglichen; 🟢 Steuerzeichen-Tor auf `e2e/` und Konfiguration erweitert.

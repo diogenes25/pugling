@@ -76,7 +76,7 @@ gegen den Server nachgerechnet, nicht im Browser).
   über den Vater-Weg (`errorMessage`). 🟡 „Übung löschen" verschwieg den Lernstand der Kinder (Cascade `ExerciseItem` →
   `ItemProgress`) → die Frage nennt ihn. 🟡 dieselbe Form bei Reihe und Unit (`VaterLehrwerke.tsx`, „verlieren nur die
   Angabe") → `deleteSeriesQuestion`/`deleteUnitQuestion` nennen Übungen und Lernstand. Rote Proben dazu: 3/3 (eine zuerst
-  mit einem Backspace-Zeichen statt `` in der Regex – fiel an der zweiten Zusicherung, korrigiert). Bestätigt:
+  mit einem Backspace-Zeichen statt `\b` in der Regex – fiel an der zweiten Zusicherung, korrigiert). Bestätigt:
   „gewertet" stimmt für Üben und Test; die drei Lernstand-Tests tragen je einen Fall. Reste → [B-502](B-502-reste-review-sprint-44.md).
 - **2026-11-12** — Mutanten nach der letzten Änderung (Vitest): L1–L4, P1, P2, E1 (Lösch-Frage ohne Lernstand), E2 (Unit
   verschweigt Übungen), I1 (Inventar spricht das Kind an) – 9/9 rot, Grundlinie grün.
