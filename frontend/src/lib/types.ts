@@ -663,6 +663,14 @@ export type AnswerDto = S["AnswerDto"];
 export type ItemOutcome = S["ItemOutcome"];
 
 export type TestSubmitResponse = S["SubmitResponse"];
+// Bonus-Training: Extra-Übungen zum aktuellen Thema nach erfüllter Tagespflicht.
+export type ExtraTrainingOverview = S["ExtraTrainingOverview"];
+export type ExtraExercise = S["ExtraExercise"];
+export type ExtraForm = S["ExtraForm"];
+export type ExtraRunResponse = S["ExtraRunResponse"];
+export type ExtraCard = S["ExtraCard"];
+export type ExtraAnswer = S["ExtraAnswer"];
+export type ExtraRunResult = S["ExtraRunResult"];
 
 // ---- Sohn-Wallet ----
 

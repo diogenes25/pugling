@@ -95,6 +95,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
 
     /// <summary>Daily reward box: one claim per (child, day) - the positive counterpart to <see cref="PositionGoalPenalty"/>.</summary>
     public DbSet<DailyBoxClaim> DailyBoxClaims => Set<DailyBoxClaim>();
+    public DbSet<ExtraTrainingRun> ExtraTrainingRuns => Set<ExtraTrainingRun>();
 
     // Family shop: the supervisor's catalog (articles + listings), the child's aggregated inventory,
     // purchase history and activation requests
@@ -850,6 +851,18 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         {
             e.HasIndex(c => new { c.ChildId, c.Day }).IsUnique();
             e.HasOne(c => c.Child).WithMany().HasForeignKey(c => c.ChildId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Bonus training runs: at most one OPEN run per (child, exercise) - a started run is resumed, never replaced,
+        // so restarting cannot reshuffle a one-shot exercise. Filtered, because finished runs of a repeatable
+        // exercise pile up by design. The (child, day) index serves the daily coin cap. Cascade with child and
+        // exercise: the coins stay in the ledger, the run is only the play log.
+        modelBuilder.Entity<ExtraTrainingRun>(e =>
+        {
+            e.HasIndex(r => new { r.ChildId, r.ExerciseId }).IsUnique().HasFilter("[CompletedAt] IS NULL");
+            e.HasIndex(r => new { r.ChildId, r.Day });
+            e.HasOne(r => r.Child).WithMany().HasForeignKey(r => r.ChildId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(r => r.Exercise).WithMany().HasForeignKey(r => r.ExerciseId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // Shop article: a family-internal article number, unique; belongs to the adult (cascade).

@@ -12,7 +12,8 @@ import type {
   ChildrenDashboard, CreatePositionDto, PositionResponse, PositionReport, UpdatePositionDto, OverviewResponse, PositionSession, PracticeCard,
   ProgressResponse, ReviewInput, ReviewOutcome,
   SkinState, SubjectResponse,
-  TestAttemptResponse, TestNextResponse, TestAnswerAck, TestSubmitResponse, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
+  TestAttemptResponse, TestNextResponse, TestAnswerAck, TestSubmitResponse,
+  ExtraTrainingOverview, ExtraRunResponse, ExtraAnswer, ExtraRunResult, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
   VocabBatchResult, VocabularyResponse, VocabTagResponse, ChildTagResponse, Wallet, WalletBalance, WalletEntry, ChildPointsEntry, Currency,
   Paged, VocabularySearchParams, VocabItemInput, VocabItemResponse, VocabLookupResponse,
   SeriesUnitProgress, ExerciseProgress, ItemHistoryEntry, ItemProgressResponse, SubjectProgress, WordMastery,
@@ -86,6 +87,10 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
   exercise_empty:
     "Diese Übung hat noch keine Inhalte.",
   no_checkable_content: "Diese Übung hat keine einzeln prüfbaren Aufgaben.",
+  // Bonus-Training: die Sperre nennt, was zuerst kommt – sonst wäre sie ein Schloss ohne Weg hinaus.
+  extra_training_locked: "Das Bonus-Training öffnet, sobald deine Tagespflicht erledigt ist.",
+  extra_exercise_done: "Diese Bonus-Übung hast du schon gespielt.",
+  extra_run_completed: "Diese Bonus-Runde ist schon abgegeben.",
   no_tag_matches: "Zu diesen Tags gibt es keine Vokabeln. Die Übung wurde nicht verändert.",
   // Seit B-123 ist das der wahrscheinlichste Fehlschlag im Reihen-Formular: vorher war der 409 über die
   // Oberfläche gar nicht erreichbar, weil Anlegen idempotent ist. Und die Feld-Erklärung bewirbt die
@@ -675,6 +680,15 @@ export const api = {
     http<TestAnswerAck>(`${V1}/student/study-plans/${planId}/positions/${positionId}/tests/${attemptId}/answer`, "POST", dto),
   submitTest: (planId: number, positionId: number, attemptId: number, answers: AnswerDto[] = []) =>
     http<TestSubmitResponse>(`${V1}/student/study-plans/${planId}/positions/${positionId}/tests/${attemptId}/submit`, "POST", { answers }),
+
+  // ---- Sohn: Bonus-Training (Extra-Übungen nach der Tagespflicht) ----
+  // Eine Runde wird am Stück abgegeben; der Server wählt die Form, wertet und bucht die Münzen.
+  extraTraining: (childId: number) =>
+    http<ExtraTrainingOverview>(`${V1}/student/children/${childId}/extra-training`),
+  startExtraRun: (childId: number, exerciseId: number) =>
+    http<ExtraRunResponse>(`${V1}/student/children/${childId}/extra-training/${exerciseId}/runs`, "POST"),
+  submitExtraRun: (childId: number, runId: number, answers: ExtraAnswer[]) =>
+    http<ExtraRunResult>(`${V1}/student/children/${childId}/extra-training/runs/${runId}/submit`, "POST", { answers }),
 
   // ---- Sohn: Wallet ----
   // Kontostand (Salden) und Buchungsverlauf sind getrennt: Salden als Einzelwerte, Buchungen server-paginiert.

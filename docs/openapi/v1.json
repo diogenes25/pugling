@@ -8383,6 +8383,242 @@
         }
       }
     },
+    "/api/v1/student/children/{childId}/extra-training": {
+      "get": {
+        "tags": [
+          "Student \u2013 Bonus Training"
+        ],
+        "summary": "Today\u0027s bonus training: whether it is open, the bonus coins so far against the cap, and the exercise pool.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtraTrainingOverview"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/children/{childId}/extra-training/{exerciseId}/runs": {
+      "post": {
+        "tags": [
+          "Student \u2013 Bonus Training"
+        ],
+        "summary": "Starts a bonus run of the exercise - or resumes its open run, which keeps its form and cards. \u0060409\nextra_training_locked\u0060 before today\u0027s duty is done, \u0060409 extra_exercise_done\u0060 for a one-shot exercise\nalready played.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "exerciseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtraRunResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/children/{childId}/extra-training/runs/{runId}/submit": {
+      "post": {
+        "tags": [
+          "Student \u2013 Bonus Training"
+        ],
+        "summary": "Grades a bonus run and books its coins (checked hits only, within the daily cap). A run is graded once:\n\u0060409 extra_run_completed\u0060 on a second submit.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitExtraRunDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitExtraRunDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitExtraRunDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtraRunResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/student/interest-tags": {
       "get": {
         "tags": [
@@ -37184,6 +37420,472 @@
         },
         "description": "Self-description of an exercise type: the bridge between the authoring catalog (\u0060IExerciseType\u0060),\ntypical learning family (LearningMethod), play route, and frontend renderer. The frontend\nreads the manifest list once and wires up routing, checking, and display generically; the\nactual render component remains hand-built per string ExerciseTypeManifest.Renderer (the play view reveals\na different amount depending on the Leitner box \u2013 that cannot be generated generically from JSON)."
       },
+      "ExtraAnswer": {
+        "required": [
+          "itemIndex"
+        ],
+        "type": "object",
+        "properties": {
+          "itemIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "givenAnswer": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "wasKnown": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          }
+        },
+        "description": "One answer of a bonus run: typed or chosen (GivenAnswer) or self-assessed (WasKnown)."
+      },
+      "ExtraCard": {
+        "required": [
+          "anyOrder",
+          "itemIndex"
+        ],
+        "type": "object",
+        "properties": {
+          "itemIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "prompt": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "gapIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "hint": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "answerLength": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "reveal": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "revealAlternatives": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "choices": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "audioUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "passage": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "anyOrder": {
+            "type": "boolean"
+          },
+          "decoding": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/WordPair"
+            }
+          },
+          "answerPattern": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "letterTiles": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "cueBox": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "One card of a bonus run - the same facets a practice card carries, without an image."
+      },
+      "ExtraExercise": {
+        "required": [
+          "coinsPerHit",
+          "completedRuns",
+          "done",
+          "exerciseId",
+          "itemCount",
+          "nextForm",
+          "repeatable",
+          "title",
+          "type",
+          "unitLabel"
+        ],
+        "type": "object",
+        "properties": {
+          "exerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "unitLabel": {
+            "type": "string"
+          },
+          "itemCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "repeatable": {
+            "type": "boolean"
+          },
+          "completedRuns": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "done": {
+            "type": "boolean"
+          },
+          "nextForm": {
+            "$ref": "#/components/schemas/ExtraForm"
+          },
+          "coinsPerHit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "openRunId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "One exercise of the bonus pool. Repeatable exercises (vocabulary) climb a form per completed\nrun; the others are Done after their one run. NextForm is the form the next\nrun asks in, CoinsPerHit what one correct card of it pays. OpenRunId names a\nstarted run that still waits for its answers - it is resumed, never replaced."
+      },
+      "ExtraForm": {
+        "enum": [
+          "SelfAssess",
+          "Choice",
+          "Typed"
+        ],
+        "type": "string",
+        "description": "How a bonus run asks its cards. Ordered by difficulty: a vocabulary exercise climbs from ExtraForm.SelfAssess\nover ExtraForm.Choice to ExtraForm.Typed with every completed run; every other exercise is played once,\ntyped.\n\nAllowed values: SelfAssess, Choice, Typed."
+      },
+      "ExtraItemOutcome": {
+        "required": [
+          "expected",
+          "itemIndex",
+          "wasCorrect"
+        ],
+        "type": "object",
+        "properties": {
+          "itemIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "prompt": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "expected": {
+            "type": "string"
+          },
+          "givenAnswer": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "wasCorrect": {
+            "type": "boolean"
+          }
+        },
+        "description": "One graded card, revealed after the run (Expected is the solution shown in hindsight)."
+      },
+      "ExtraRunResponse": {
+        "required": [
+          "cards",
+          "coinsPerHit",
+          "exerciseId",
+          "form",
+          "runId",
+          "stage",
+          "title",
+          "type",
+          "typed"
+        ],
+        "type": "object",
+        "properties": {
+          "runId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "exerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "form": {
+            "$ref": "#/components/schemas/ExtraForm"
+          },
+          "stage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "typed": {
+            "type": "boolean"
+          },
+          "coinsPerHit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "cards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExtraCard"
+            }
+          }
+        },
+        "description": "A started bonus run with its cards. The cards follow the stage rules of the practice cards: the meaning\n(string? ExtraCard.Reveal) is shown only on the self-assessed form."
+      },
+      "ExtraRunResult": {
+        "required": [
+          "capReached",
+          "coinsAwarded",
+          "coinsToday",
+          "correct",
+          "form",
+          "items",
+          "runId",
+          "total"
+        ],
+        "type": "object",
+        "properties": {
+          "runId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "form": {
+            "$ref": "#/components/schemas/ExtraForm"
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "correct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "coinsAwarded": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "capReached": {
+            "type": "boolean"
+          },
+          "coinsToday": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "dailyCoinCap": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExtraItemOutcome"
+            }
+          }
+        },
+        "description": "The graded bonus run. CoinsAwarded is what was booked; CapReached says the\ndaily cap cut it short. CoinsToday is the day\u0027s bonus total after this run."
+      },
+      "ExtraTrainingOverview": {
+        "required": [
+          "coinsToday",
+          "exercises",
+          "outstanding",
+          "unlocked"
+        ],
+        "type": "object",
+        "properties": {
+          "unlocked": {
+            "type": "boolean"
+          },
+          "lockReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "outstanding": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "coinsToday": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "dailyCoinCap": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "exercises": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExtraExercise"
+            }
+          }
+        },
+        "description": "The bonus training of a child for today. Unlocked is false until the day\u0027s duty is met\n(LockReason: \u0060no_plan\u0060 or \u0060duty_open\u0060, with the open duties in\nOutstanding). DailyCoinCap is \u0060null\u0060 when there is no cap."
+      },
       "Gap": {
         "required": [
           "answer",
@@ -39919,10 +40621,11 @@
           "ObjectiveCoins",
           "ObjectiveGems",
           "DailyBoxCoins",
-          "DailyBoxGems"
+          "DailyBoxGems",
+          "ExtraTrainingCoins"
         ],
         "type": "string",
-        "description": "Category of a points ledger entry \u2013 makes bonuses evaluable/cappable (e.g. \u0022how many points\ncame from combo vs. time of day?\u0022). PointKind.Base is the default for legacy entries.\n\nAllowed values: Base, Manual, Combo, Speed, Mission, Achievement, SkinPurchase, Goal, ShopCoins, ShopGems, ManualGems, GoalPenalty, ObjectiveCoins, ObjectiveGems, DailyBoxCoins, DailyBoxGems."
+        "description": "Category of a points ledger entry \u2013 makes bonuses evaluable/cappable (e.g. \u0022how many points\ncame from combo vs. time of day?\u0022). PointKind.Base is the default for legacy entries.\n\nAllowed values: Base, Manual, Combo, Speed, Mission, Achievement, SkinPurchase, Goal, ShopCoins, ShopGems, ManualGems, GoalPenalty, ObjectiveCoins, ObjectiveGems, DailyBoxCoins, DailyBoxGems, ExtraTrainingCoins."
       },
       "PointsEntryDto": {
         "required": [
@@ -40937,6 +41640,9 @@
               "exercise_items_locked",
               "exercise_not_assigned",
               "exercise_not_executable",
+              "extra_exercise_done",
+              "extra_run_completed",
+              "extra_training_locked",
               "forbidden",
               "grammar_topic_in_use",
               "http_error",
@@ -42849,6 +43555,21 @@
           }
         },
         "description": "Bulk submission of the test (alternative to individual submission via the \u0060answer\u0060 endpoint)."
+      },
+      "SubmitExtraRunDto": {
+        "required": [
+          "answers"
+        ],
+        "type": "object",
+        "properties": {
+          "answers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExtraAnswer"
+            }
+          }
+        },
+        "description": "Body of the bonus-run submit: all answers at once. A card without an answer counts as wrong."
       },
       "SubmitResponse": {
         "required": [
@@ -46321,6 +47042,9 @@
     },
     {
       "name": "Student \u2013 Achievements"
+    },
+    {
+      "name": "Student \u2013 Bonus Training"
     },
     {
       "name": "Student \u2013 Child Progress"

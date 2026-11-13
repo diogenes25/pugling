@@ -15,6 +15,7 @@ import { SohnSkins } from "./SohnSkins";
 import { SohnShop } from "./SohnShop";
 import { SohnKonto } from "./SohnKonto";
 import { SohnInterests } from "./SohnInterests";
+import { SohnBonus, SohnBonusRun } from "./SohnBonus";
 import { Mascot } from "../components/Mascot";
 import { CelebrationLayer, useCelebration } from "../components/Celebration";
 import { RemarkWidget } from "../components/RemarkWidget";
@@ -155,6 +156,8 @@ function SohnShell({ childId }: { childId: number }) {
           <Route path="skins" element={<SohnSkins />} />
           <Route path="konto" element={<SohnKonto />} />
           <Route path="ich" element={<SohnInterests />} />
+          <Route path="bonus" element={<SohnBonus />} />
+          <Route path="bonus/:exerciseId" element={<SohnBonusRun />} />
           <Route path="*" element={<Navigate to="/sohn" replace />} />
         </Routes>
 

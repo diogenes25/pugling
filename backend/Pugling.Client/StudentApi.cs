@@ -107,4 +107,18 @@ public sealed class StudentApi(HttpClient http)
     /// <summary>Adds a free-text wish outside the taxonomy; it lands in the supervisor-visible interest list.</summary>
     public Task<MyInterestProfileResponse> AddMyInterestWishAsync(AddInterestWishDto dto, CancellationToken ct = default) =>
         Http.PostAsync<MyInterestProfileResponse>($"{Root}/me/interests/wishes", dto, ct);
+
+    // ---------------------------------------------------------------- Bonus training
+
+    /// <summary>Today's bonus training of the child: open or locked, bonus coins against the cap, the exercise pool.</summary>
+    public Task<ExtraTrainingOverview> GetExtraTrainingAsync(int childId, CancellationToken ct = default) =>
+        Http.GetAsync<ExtraTrainingOverview>($"{Root}/children/{childId}/extra-training", ct);
+
+    /// <summary>Starts (or resumes) a bonus run of an exercise - the child's own seat only.</summary>
+    public Task<ExtraRunResponse> StartExtraRunAsync(int childId, int exerciseId, CancellationToken ct = default) =>
+        Http.PostAsync<ExtraRunResponse>($"{Root}/children/{childId}/extra-training/{exerciseId}/runs", null, ct);
+
+    /// <summary>Submits the answers of a bonus run and returns the graded result with the coins booked.</summary>
+    public Task<ExtraRunResult> SubmitExtraRunAsync(int childId, int runId, SubmitExtraRunDto dto, CancellationToken ct = default) =>
+        Http.PostAsync<ExtraRunResult>($"{Root}/children/{childId}/extra-training/runs/{runId}/submit", dto, ct);
 }

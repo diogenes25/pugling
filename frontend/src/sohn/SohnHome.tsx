@@ -11,6 +11,7 @@ import { useSkinText } from "../lib/skinText";
 import { jetztGerade } from "../lib/datum";
 import { useDialogFocus } from "../lib/useDialogFocus";
 import { InterestIntroCard } from "./SohnInterests";
+import { BonusEinstieg } from "./SohnBonus";
 import {
   abschnitte, frist, hauptweg, kennenlernAnteil, naechstePositionId, nebenweg, pflichtErfuellt, spielPfad,
   type Frist, type Spielweg,
@@ -118,6 +119,10 @@ function HomeForPlan({
       )}
 
       <Pfad positions={today.positions} />
+
+      {/* Nach dem Pfad, nicht davor: erst die Pflicht, dann die Kür. Offen wie beim Server – erledigte Pflicht oder
+          ein Plan ohne Pflicht; die Sperre selbst hält der Server. */}
+      <BonusEinstieg offen={today.dutyDone || today.goalsTotal === 0} />
     </div>
   );
 }

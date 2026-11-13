@@ -230,6 +230,8 @@ public class SchemaGuardTests
             // B-12: a rating is an opinion of one creator about one exercise - without either it says nothing.
             ["ExerciseRating.CreatorId"] = DeleteBehavior.Cascade, // -> Adult
             ["ExerciseRating.ExerciseId"] = DeleteBehavior.Cascade, // -> Exercise
+            ["ExtraTrainingRun.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            ["ExtraTrainingRun.ExerciseId"] = DeleteBehavior.Cascade, // -> Exercise (the coins stay in the ledger)
             ["ExerciseItem.ExerciseId"] = DeleteBehavior.Cascade, // -> Exercise
             // Restrict: a store entry used by an exercise is not deleted along with it (409 instead of loss).
             ["ExerciseItem.VocabularyId"] = DeleteBehavior.Restrict, // -> Vocabulary

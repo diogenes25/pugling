@@ -107,6 +107,37 @@ public class DailyBoxClaim
     public DateTime AwardedAt { get; set; } = DateTime.UtcNow;
 }
 
+/// <summary>
+/// One run of the bonus training: a child plays one catalog exercise of its current topic beyond the day's duty
+/// for extra coins. The run is created on start and is the "already played" marker - an exercise that is not
+/// repeatable is done once it has a run, finished or not, so the child cannot open it, look at the questions, leave
+/// and come back prepared. A repeatable (vocabulary) exercise counts its completed runs as <see cref="Pass"/>: each
+/// one asks in a harder <see cref="Form"/>. At most one open run per (child, exercise), held by a filtered unique
+/// index. Independent of the plan: it moves no Leitner box and no plan goal.
+/// </summary>
+public class ExtraTrainingRun
+{
+    public int Id { get; set; }
+    public int ChildId { get; set; }
+    public Child? Child { get; set; }
+    public int ExerciseId { get; set; }
+    public Exercise? Exercise { get; set; }
+    /// <summary>Calendar day (UTC) the run was started on, moved to the submit day on submit - the day its coins count against the cap.</summary>
+    public DateOnly Day { get; set; }
+    /// <summary>Number of completed runs of the same exercise before this one (0 = first run).</summary>
+    public int Pass { get; set; }
+    /// <summary>The form the run asks in, frozen at start so a resumed run does not change its questions.</summary>
+    public ExtraForm Form { get; set; }
+    /// <summary>The exercise-type stage the form maps to, frozen at start like <see cref="Form"/>.</summary>
+    public int Stage { get; set; }
+    public DateTime StartedAt { get; set; }
+    /// <summary>Set on submit; <c>null</c> while the run waits for its answers.</summary>
+    public DateTime? CompletedAt { get; set; }
+    public int ItemCount { get; set; }
+    public int CorrectCount { get; set; }
+    public int CoinsAwarded { get; set; }
+}
+
 // Note: the former "offer" system (Reward/RewardRedemption/OfferPeriod) was removed - the family shop
 // (ShopArticle/ShopListing/ShopPurchase/ActivationRequest) is the only way coins are spent.
 // The ledger kind PointKind.Reward remains only as a tombstone for historical entries.

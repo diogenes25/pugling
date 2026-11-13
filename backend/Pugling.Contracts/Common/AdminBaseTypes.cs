@@ -69,4 +69,8 @@ public enum PointKind
     DailyBoxCoins = 14,
     /// <summary>Gems from the daily reward box (same occasion as <see cref="DailyBoxCoins"/>).</summary>
     DailyBoxGems = 15,
+    /// <summary>
+    /// Coins from the bonus training (extra exercises beyond the day's duty): paid per checked hit only, capped per day.
+    /// </summary>
+    ExtraTrainingCoins = 16,
 }

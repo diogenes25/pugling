@@ -902,6 +902,59 @@ namespace Pugling.Api.Data.Migrations
                     b.ToTable("ExerciseTags");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.ExtraTrainingRun", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ChildId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CoinsAwarded")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CorrectCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ExerciseId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Form")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ItemCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Pass")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Stage")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExerciseId");
+
+                    b.HasIndex("ChildId", "Day");
+
+                    b.HasIndex("ChildId", "ExerciseId")
+                        .IsUnique()
+                        .HasFilter("[CompletedAt] IS NULL");
+
+                    b.ToTable("ExtraTrainingRuns");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.GrammarTopic", b =>
                 {
                     b.Property<int>("Id")
@@ -3085,6 +3138,25 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("Exercise");
 
                     b.Navigation("Tag");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.ExtraTrainingRun", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Child", "Child")
+                        .WithMany()
+                        .HasForeignKey("ChildId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pugling.Api.Models.Exercise", "Exercise")
+                        .WithMany()
+                        .HasForeignKey("ExerciseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Child");
+
+                    b.Navigation("Exercise");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.GrammarTopic", b =>

@@ -207,6 +207,12 @@ public static class ApiErrors
     public static readonly ApiError PlanInactive = new("plan_inactive", 403, "Study plan is not active.");
     /// <summary>Test has already been submitted (400).</summary>
     public static readonly ApiError TestAlreadySubmitted = new("test_already_submitted", 400, "Test already submitted.");
+    /// <summary>The bonus training is locked until today's duty is done (409).</summary>
+    public static readonly ApiError ExtraTrainingLocked = new("extra_training_locked", 409, "Bonus training is locked.");
+    /// <summary>The one-shot bonus exercise has already been played (409).</summary>
+    public static readonly ApiError ExtraExerciseDone = new("extra_exercise_done", 409, "Bonus exercise already played.");
+    /// <summary>The bonus run has already been submitted (409).</summary>
+    public static readonly ApiError ExtraRunCompleted = new("extra_run_completed", 409, "Bonus run already submitted.");
     /// <summary>All test attempts of the period are used up (409).</summary>
     public static readonly ApiError TestAttemptsExhausted = new("test_attempts_exhausted", 409, "No test attempts left.");
     /// <summary>Exercise contains no checkable content (400).</summary>
