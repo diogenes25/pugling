@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/gamification, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/gamification, rolle/student]
 aliases: [Bonus-Deckel verbrennt Einmal-Übung]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: S
@@ -191,3 +191,68 @@ E2E `frontend/e2e/bonus.spec.ts` und `frontend/e2e/bonus-deckel.spec.ts` als Reg
 - **2026-11-13** — `gegrillt`: Entscheidungen 1–6 (Randfall zurückgestellt); Stakeholder-Entscheidung im Auftrag des
   Nutzers (Backlog-Lauf 2026-11-13), B-533 E3/E4/E8 unangetastet.
 - **2026-11-13** — `geschaetzt`: S, beides, ohne Migration und Vertragsbruch.
+- **2026-11-13** — `in-arbeit` (Sprint 71, beides): `ApiErrors.ExtraCapReached` (`extra_cap_reached`, 409).
+  `ExtraTrainingService.StartAsync` prüft nach `extra_exercise_done` und **vor** Anlegen wie Fortsetzen: Einmal-Übung
+  und kein Rest des Tagesdeckels (`CoinsLeftTodayAsync`, Kind-Deckel vor Vorgabe) → 409. `SubmitAsync` zieht den
+  Deckel-Rest vor das Werten und antwortet für eine Einmal-Runde bei `left == 0` 409 – nichts gebucht, Runde offen,
+  keine Lösungen; der Teil-Deckel bleibt (E3). Controller-Doku nennt den Code. Frontend: `extra_cap_reached` in
+  `GERMAN_PROBLEM_TEXT`, `de`/`en` `sohn.problem.*` und `PROBLEM_KEYS` (`chromeText.tsx` – ohne ihn sprach die
+  englische Arcade die technische Server-Zeile); `BonusZeile` bekommt `capReached` und zeigt bei vollem Deckel für eine
+  nicht wiederholbare, nicht erledigte Zeile „Zahlt nur einmal – morgen wieder" statt des Links; `bonus.capReached` neu
+  formuliert, `bonus.oneShotTomorrow` neu. Tests: fünf neue Fälle in `ExtraTrainingTests.cs` (AK 1–5, Tageswechsel über
+  `factory.Clock`), AK 6 = bestehender `Der_Tagesdeckel_Kappt_Die_Bonus_Muenzen`; `arcadeSpielweg.test.tsx` (AK 7, Code
+  in der B-415-Liste) und neu `SohnBonus.test.tsx` (AK 8, zwei Fälle). Grenze AK 5: „erst nach dem Werten prüfen" ist
+  von außen nur über die 200-Antwort sichtbar – ein Mutant, der nach dem Werten prüft und trotzdem 409 ohne Lösungen
+  antwortet, ist verhaltensgleich; die Reihenfolge hält der Kommentar in `SubmitAsync`.
+  Randfall (Entscheidung 6) als eigene Story an den PM übergeben, nicht hier angelegt.
+
+  Rote Probe (Backend, `ExtraTrainingTests`):
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | M1 AK1 Start ohne Deckel-Pruefung | backend/Pugling.Api/Services/Student/ExtraTrainingService.cs:81 | red | red |  |
+  | M2 AK2 nur Server-Vorgabe | backend/Pugling.Api/Services/Student/ExtraTrainingService.cs:223 | red | red |  |
+  | M3 AK2 > statt >= | backend/Pugling.Api/Services/Student/ExtraTrainingService.cs:223 | red | red |  |
+  | M4 AK3 nur vor neuer Runde | backend/Pugling.Api/Services/Student/ExtraTrainingService.cs:81 | red | red |  |
+  | M5 AK4 ohne repeatable | backend/Pugling.Api/Services/Student/ExtraTrainingService.cs:81 | red | red |  |
+  | M6 AK5 Abgabe kappt und verbraucht | backend/Pugling.Api/Services/Student/ExtraTrainingService.cs:148 | red | red |  |
+  | M7 AK6 Sperre schon bei Teil-Deckel | backend/Pugling.Api/Services/Student/ExtraTrainingService.cs:148 | red | red |  |
+
+  Gemessen an `b60abc9e + Arbeitsbaum geändert`, 2026-11-13 22:54; Grundlinie nach dem Zurückspielen grün.
+
+  Rote Probe (Vitest, `SohnBonus.test.tsx` + `arcadeSpielweg.test.tsx`):
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | F1 AK7 deutscher Satz fehlt | frontend/src/lib/api.ts:94 | red | red |  |
+  | F2 AK7 Arcade-Schluessel fehlt | frontend/src/lib/chromeText.tsx:50 | red | red |  |
+  | F3 AK8 Link ohne Blick auf capReached/repeatable | frontend/src/sohn/SohnBonus.tsx:119 | red | red |  |
+  | F4 AK8 nur nach repeatable | frontend/src/sohn/SohnBonus.tsx:119 | red | red |  |
+  | F5 AK8 alter Kartentext | frontend/src/i18n/de.ts:160 | red | red |  |
+
+  Gemessen an `b60abc9e + Arbeitsbaum geändert`, 2026-11-13 22:51; Grundlinie nach dem Zurückspielen grün. F1 fällt in
+  der Wortgleichheits-Schleife („sind auf Deutsch genau `errorMessage`"), nicht im B-415-Fall – dort deckt der
+  Arcade-Schlüssel den fehlenden deutschen Satz.
+- **2026-11-13** — Review-Nacharbeit (Sprint 71): Bei Deckel `0` bleibt eine Einmal-Übung dauerhaft gesperrt, darum
+  verspricht kein Text mehr „morgen“. Die Meldung nennt nur das Schloss („Today's bonus coin cap is reached; this
+  exercise pays only once.“, deutsch „Dein Bonus-Deckel ist voll, und diese Übung zahlt nur einmal – darum geht sie
+  gerade nicht.“); bei Deckel 0 zeigen Zeile und Karte eigene Texte (`bonus.oneShotNoCoins`, `bonus.capZero`). „Zahlt nur
+  einmal“ ist eine Definition (`IsOneShot` in `ExtraTrainingService`, von Start, Abgabe und Pool benutzt). Neue
+  Vitest-Fälle: Deckel 0 in `SohnBonus.test.tsx` und `SohnBonusRun` – eine Abgabe mit `extra_cap_reached` lässt die
+  gespeicherten Antworten liegen und zeigt den Satz (Entscheidung 2).
+- **2026-11-13** — Nebenfund aus B-533, im selben Sprint behoben: `extra_training_locked`, `extra_exercise_done` und
+  `extra_run_completed` fehlten in `PROBLEM_KEYS` (`chromeText.tsx`), die englische Arcade zeigte dafür die technische
+  Server-Zeile. Nachgetragen; die drei Codes stehen jetzt in der B-415-Liste von `arcadeSpielweg.test.tsx`.
+
+  Rote Probe der Nacharbeit:
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | V1 Zeile verspricht bei Deckel 0 morgen | frontend/src/sohn/SohnBonus.tsx:132 | red | red |  |
+  | V2 Karte verspricht bei Deckel 0 morgen | frontend/src/sohn/SohnBonus.tsx:105 | red | red |  |
+  | V3 Antworten bei Fehlschlag geloescht | frontend/src/sohn/SohnBonus.tsx:195 | red | red |  |
+  | V4 Nebenfund: Bonus-Sperren ohne Arcade-Schluessel | frontend/src/lib/chromeText.tsx:50 | red | red |  |
+  | N1 IsOneShot immer falsch | backend/Pugling.Api/Services/Student/ExtraTrainingService.cs:219 | red | red |  |
+
+  Gemessen an `b60abc9e + Arbeitsbaum geändert`, 2026-11-13 23:07/23:08; Grundlinie nach dem Zurückspielen jeweils grün.
+- **2026-11-13** — **abgenommen** mit Commit `45365c66` (Sprint 71, Backlog-Lauf 2026-11-13). Verifikation: Backend 1577/1577 grün (dotnet test Pugling.sln -c Release), Vitest 960/960, tsc -b sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: `pugling-reviewer` und `frontend-reviewer` ohne Blocker; behoben im selben Sprint: Meldungen versprachen bei Deckel 0 ein â€žmorgenâ€œ, das es nicht gibt (jetzt nur das Schloss, eigene Texte fÃ¼r Deckel 0), eine Definition `IsOneShot` fÃ¼r Start, Abgabe und Pool, Test fÃ¼r die Antworten, die eine abgewiesene Abgabe Ã¼berleben mÃ¼ssen; dazu der Nebenfund aus B-533 (drei Bonus-Codes fehlten in `PROBLEM_KEYS`). Randfall E6 steht als [B-545](B-545-bonus-runde-wertet-gegen-aktuelle-items.md). Rollengang: Playwright gegen frisch gestartete Server auf Ausweichports (API 5214, Web 5187) nach dem letzten Edit – bonus, bonus-deckel, full-flow, test-durchgefallen-ueben, karten-umdrehen, assistent, assistent-bewertung, lektion, erstbegegnung: **13 passed**. Den vollen Deckel in der Oberfläche fährt keine Spec; er ist über Vitest (SohnBonus.test.tsx) und Integrationstests belegt – ein Handblick am Gerät (30/30 Münzen, Einmal-Übung zeigt den Satz statt „Spielen“) bleibt für den Menschen.

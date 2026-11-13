@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/katalog, rolle/creator, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/katalog, rolle/creator, rolle/student]
 aliases: [KI-Cloze Qualität, Übung 28]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: S
@@ -132,3 +132,22 @@ Alle drei: Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11
   und 4 bleiben Testmodus des Vaters. Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13,
   [Protokoll](../pm-sitzung-2026-11-13-backlog-lauf.md)).
 - **2026-11-13** — geschaetzt: S, backend (Agent), keine Migration, kein Vertragsbruch.
+- **2026-11-13** — `in-arbeit` (Sprint 71, Agent): `ClozeStrategy.Validate` bildet aus `ClozeMarkup.FormHints` die
+  Lücken mit genau einer gültigen Grundform (`formTasks`) und überspringt sie in der Verrats-Schleife, außer bei
+  `request.SchoolTest`. Die Auswahl-Bedingung steht einmal als Helfer `IsChoiceList` und trägt Auswahl-Regel und Ausnahme
+  zugleich. Tests in `CreatorAgentTests.cs`: drei neue Fälle (AK 1 Formaufgabe angenommen, AK 2 Vokabellücke ohne Klammer
+  weiter abgelehnt neben einer Formlücke, AK 4 Schultest weiter abgelehnt); AK 3 hält der bestehende Fall
+  `Eine_verratene_Loesung_eine_Auswahlliste_und_zu_wenige_Ablenker_werden_abgelehnt` (Doku ergänzt).
+  **AK 5 nicht maschinell, Mensch/Modell-Lauf offen** (`ki-creator plan` gegen eine DB-Kopie mit Ollama).
+
+  Rote Probe (`CreatorAgentTests`):
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | K1 AK1 Verrat fuer jede Luecke | backend/Pugling.Agent.Creator/Drafting/ClozeStrategy.cs:122 | red | red |  |
+  | K2 AK2 Verrats-Pruefung aus | backend/Pugling.Agent.Creator/Drafting/ClozeStrategy.cs:122 | red | red |  |
+  | K3 AK3 jede Klammer zaehlt | backend/Pugling.Agent.Creator/Drafting/ClozeStrategy.cs:116 | red | red |  |
+  | K4 AK4 ohne SchoolTest | backend/Pugling.Agent.Creator/Drafting/ClozeStrategy.cs:114 | red | red |  |
+
+  Gemessen an `b60abc9e + Arbeitsbaum geändert`, 2026-11-13 22:58; Grundlinie nach dem Zurückspielen grün.
+- **2026-11-13** — **abgenommen** mit Commit `45365c66` (Sprint 71, Backlog-Lauf 2026-11-13). Verifikation: Backend 1577/1577 grün (dotnet test Pugling.sln -c Release), Vitest 960/960, tsc -b sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: `pugling-reviewer` ohne Befund (Verrats-PrÃ¼fung nur an dieser Stelle, Schultest-Modus Ã¼berall Ã¼ber `request.SchoolTest`). **AK 5 (Live-Lauf mit dem lokalen Modell gegen eine DB-Kopie) ist laut Story â€žkein Torâ€œ und in diesem Lauf nicht gefahren** â€“ Handschritt fÃ¼r den Menschen: `ki-creator plan` fÃ¼r eine Unit mit past progressive gegen eine Kopie der `pugling.db`. Rollengang: Playwright gegen frisch gestartete Server auf Ausweichports (API 5214, Web 5187) nach dem letzten Edit – bonus, bonus-deckel, full-flow, test-durchgefallen-ueben, karten-umdrehen, assistent, assistent-bewertung, lektion, erstbegegnung: **13 passed**. Den vollen Deckel in der Oberfläche fährt keine Spec; er ist über Vitest (SohnBonus.test.tsx) und Integrationstests belegt – ein Handblick am Gerät (30/30 Münzen, Einmal-Übung zeigt den Satz statt „Spielen“) bleibt für den Menschen.

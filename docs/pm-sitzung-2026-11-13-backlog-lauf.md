@@ -152,6 +152,45 @@ nicht Versprechen. **Der eine Mechanismus:** keiner neu; die bestehende Regel �
 Step 5) hat B-404 gefangen, aber erst im Review. Bewusst ungedeckt: `<summary>`- und Kommentar-Wahrheit hat kein Tor;
 ein Tor dafür ist nicht denkbar ohne Sprachverständnis – das bleibt Reviewer-Arbeit.
 
+## Sprint 71 — Ziel & Umfang
+
+**Sprint-Ziel:** An den Rändern geht nichts verloren – der Sohn behält im Abschlusstest den Fokus, eine Einmal-Übung
+verbrennt nicht am vollen Deckel, der Vater wählt im Assistenten nach Bewertung, und der KI-Creator verwirft keinen
+gültigen Lückentext.
+**Umfang:** B-541, B-543, B-408 (nur Assistent), B-465, B-474; B-384 nach Messung verworfen.
+**Entwickler-Brief:** Frontend zuerst parallel zum Backend-Bau von Sprint 70 (keine geteilten Dateien, kein `dotnet`);
+B-543 serverseitig an **beiden** Enden des Weges (Start und Abgabe), die Arcade zeigt nur an.
+
+## Iteration 71 — umgesetzt
+
+Commit `45365c66`. Backend **1577/1577**, Vitest **960/960**, `tsc -b` sauber; Mutanten 23/23 (Frontend), 11/11 + 5/5
+(B-543), 4/4 (B-465), 7/7 (B-474) rot. **B-384** nach Messung verworfen (Meldungsplatz bei 393 × 830 im Bild,
+507,75 px). Reviews ohne Blocker; behoben im Sprint: B-543-Meldungen versprachen bei Deckel 0 ein „morgen“, das es
+nicht gibt; `IsOneShot` als eine Definition; `raw/`-Pflicht in `kacheln.ps1` erzwungen; ein Nebenfund aus B-533
+(drei Bonus-Codes fehlten in `PROBLEM_KEYS`). Neu: **B-545** (Randfall aus B-543).
+
+## Runde 3 — Rollengang / Abnahme (Sprint 71)
+
+Playwright auf Ausweichports (API 5214, Web 5187), Server nach dem letzten Edit: **13 passed**.
+
+- **Sohn — abgenommen, mit einem Handblick offen:** „Im Test springe ich nach dem Aufdecken gleich zu den Knöpfen; und
+  wenn ich meine 30 Münzen schon habe, steht bei der Mathe-Übung ‚morgen wieder‘ statt dass sie einfach weg ist.“ Den
+  vollen Deckel fährt keine Spec – Handblick am Gerät bleibt.
+- **Vater — abgenommen:** „Im Assistenten sehe ich die Sterne und kann die besten nach oben holen, ohne meine Auswahl
+  zu verlieren.“
+- **Creator — abgenommen, mit Live-Lauf offen:** B-465 per Tests belegt; der Lauf mit dem echten Modell (AK 5, „kein
+  Tor“) ist Handschritt.
+
+## Retrospektive (Sprint 71)
+
+**Was durchkam:** Wieder **Text, der mehr verspricht als der Code** (B-543: „morgen“ bei Deckel 0) – das dritte Mal in
+diesem Lauf, und wieder hat es erst der Review gefunden. Dazu ein Defekt aus B-533, der seit der Abnahme bestand: tote
+englische `problem.*`-Schlüssel, weil `PROBLEM_KEYS` von Hand gepflegt wird.
+**Der eine Mechanismus:** Der Reviewer schlug ein Tor vor („jeder Schlüssel aus `en.sohn.problem` steht in
+`PROBLEM_KEYS`“). Es ist **gemessen** sinnvoll (drei tote Schlüssel gefunden), aber ein neues Tor hält den Lauf an –
+darum hier **nicht** gebaut, sondern als Vorschlag an den Menschen: `PROBLEM_KEYS` exportieren und in
+`arcadeSpielweg.test.tsx` gegen `Object.keys(en.sohn.problem)` prüfen (~10 Zeilen). Bewusst ungedeckt bis dahin.
+
 ## Stakeholder-Entscheidungen ohne Sprint
 
 - **B-217, B-247, B-374 verworfen (geteilt):** Eine Sammel-Story trägt keine eigene Arbeit; der Index führt jede

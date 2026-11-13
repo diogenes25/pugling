@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/werkzeug, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/werkzeug, rolle/creator]
 aliases: [kacheln.ps1 Drehung, Fotos auf dem Kopf, Übersichtsbogen]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: S
@@ -179,3 +179,4 @@ Alle drei: Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11
   | RAW | .claude/skills/lehrwerk-aufbereiten/kacheln.ps1:69 | red | red | Ziel außerhalb `raw/` erlaubt |
 
   Gemessen an `afadf18d + Arbeitsbaum geändert`, 2026-11-13 22:27; Grundlinie danach grün (7/7).
+- **2026-11-13** — **abgenommen** mit Commit `45365c66` (Sprint 71, Backlog-Lauf 2026-11-13). Verifikation: Backend 1577/1577 grün (dotnet test Pugling.sln -c Release), Vitest 960/960, tsc -b sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: `frontend-reviewer` â€“ zwei Punkte im selben Sprint behoben (Ziel muss unter `raw/` liegen, jetzt erzwungen; invariantes Parsen). Nachweis Ã¼ber das reproduzierbare `pwsh`-PrÃ¼fskript (7/7), kein CI-Tor fÃ¼r das Werkzeug. Rollengang: Playwright gegen frisch gestartete Server auf Ausweichports (API 5214, Web 5187) nach dem letzten Edit – bonus, bonus-deckel, full-flow, test-durchgefallen-ueben, karten-umdrehen, assistent, assistent-bewertung, lektion, erstbegegnung: **13 passed**. Den vollen Deckel in der Oberfläche fährt keine Spec; er ist über Vitest (SohnBonus.test.tsx) und Integrationstests belegt – ein Handblick am Gerät (30/30 Münzen, Einmal-Übung zeigt den Satz statt „Spielen“) bleibt für den Menschen.

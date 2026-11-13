@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/student]
 aliases: [Fokus im Abschlusstest nach Aufdecken]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: S
@@ -207,3 +207,4 @@ Runde mit dem Satz der Arcade“). E2E-Zeugen des Sohns: `frontend/e2e/full-flow
   | B541-AK8b | frontend/src/sohn/SohnTest.tsx:86 | red | red | Ergebnis ohne Absicht fokussiert |
 
   Gemessen an `afadf18d + Arbeitsbaum geändert`, 2026-11-13 22:27; Grundlinie danach grün.
+- **2026-11-13** — **abgenommen** mit Commit `45365c66` (Sprint 71, Backlog-Lauf 2026-11-13). Verifikation: Backend 1577/1577 grün (dotnet test Pugling.sln -c Release), Vitest 960/960, tsc -b sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: `frontend-reviewer` ohne Blocker; drei kleine Punkte (fehlendes `role="alert"` an der Fehlerbox, fehlender Fall â€žAufbau trifft fertigen Versuchâ€œ) im selben Sprint behoben. Rollengang: Playwright gegen frisch gestartete Server auf Ausweichports (API 5214, Web 5187) nach dem letzten Edit – bonus, bonus-deckel, full-flow, test-durchgefallen-ueben, karten-umdrehen, assistent, assistent-bewertung, lektion, erstbegegnung: **13 passed**. Den vollen Deckel in der Oberfläche fährt keine Spec; er ist über Vitest (SohnBonus.test.tsx) und Integrationstests belegt – ein Handblick am Gerät (30/30 Münzen, Einmal-Übung zeigt den Satz statt „Spielen“) bleibt für den Menschen.
