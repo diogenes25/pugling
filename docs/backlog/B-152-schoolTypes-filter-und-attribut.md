@@ -55,6 +55,15 @@ Wert tun, den sie nicht kennt: zeigen und sperren, verwerfen, oder durchreichen?
 
 **Kein `entgangen_bei`:** Der Zustand ist älter als B-148/B-149; die beiden haben ihn nur sichtbar gemacht.
 
+## Nachgeprüft am Code (2026-11-13)
+
+Die Tabelle oben ist teilweise überholt:
+- `ExerciseEditModal.tsx:295-296` verwirft einen unbekannten Wert weiter **still** beim Laden (unverändert).
+- `VaterKind.tsx:157` lässt einen unbekannten Wert **nicht mehr überleben**: er fällt beim Laden auf `None` zurück
+  („nicht angegeben") – damit ist `None` erreichbar, aber der unbekannte Wert geht beim nächsten Speichern ebenso still
+  verloren wie im Übungsdialog. Aus drei Antworten sind zwei geworden: „gesperrte Option" (Lehrwerke/Fachlehrer, die
+  Zeilennummern sind gewandert, `VaterLehrwerke.tsx:570`) und „still verworfen" (Übungsdialog, Kind).
+
 ## Verlauf
 
 - **2026-08-11** — angelegt aus der Grill-Runde zu B-149 (Entscheidung 4). Bewusst nicht dort
@@ -62,3 +71,4 @@ Wert tun, den sie nicht kennt: zeigen und sperren, verwerfen, oder durchreichen?
   keine Aufräumarbeit.
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht, alle drei Verhaltensweisen sind da (`VaterLehrwerke.tsx:522`, `VaterFachlehrer.tsx:362`, `ExerciseEditModal.tsx:276-277`, `VaterKind.tsx:153-155,186-191`; Modell jetzt `AdminEntities.cs:75`).
 - **2026-10-23** — **Entscheidung des Nutzers** in der Grill-Runde G-4 der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): ein Kind trägt **keine Kombination** von Schularten. Der **Server validiert** (genau ein Wert oder `None`, sonst 400), und das Kind-Formular wird eine Einfachauswahl mit erreichbarem „keine Angabe“. Der Typ bleibt ein Flags-Enum (kein eigener Typ, keine Migration). Für die Filter-Rolle bleibt die Kombination erlaubt. **Freigabe des Nutzers (Autonomer Modus, Opt-in, erteilt am 2026-10-23 für alle an diesem Tag im Dialog entschiedenen Stories):** ein Nachtlauf darf diese Story auf Grundlage der Entscheidung selbst ausformulieren, schätzen und bauen (Paket NP-17); trifft er auf eine Produktfrage, die die Entscheidung nicht hergibt, hält er an.
+- **2026-11-13** — nachgeprüft (Tageslauf, Restzeit): das Kind verwirft jetzt ebenfalls still; zwei statt drei Antworten.
