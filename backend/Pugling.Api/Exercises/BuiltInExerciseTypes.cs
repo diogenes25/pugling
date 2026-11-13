@@ -232,8 +232,14 @@ public sealed class ClozeExerciseType : ExerciseTypeBase
     public override IReadOnlyList<string>? Choices(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, int stage)
     {
         if ((ClozeStage)stage != ClozeStage.TranslationWordBank) return null;
-        var pool = AnswerChecking.Tiles(Deserialize<ClozeConfig>(configJson).WordBank ?? []);
+        var config = Deserialize<ClozeConfig>(configJson);
+        var pool = AnswerChecking.Tiles(config.WordBank ?? []);
         if (pool.Count == 0) return null;
+        // B-501: an added solution takes the authors' form - "Went." beside "go", "gone" would be the only tile with a
+        // capital and a full stop and so name itself. Grading folds case and closing marks, so the tile still solves.
+        // Lowered only where the capital comes from the gap opening a sentence; "London" or a German noun keep theirs.
+        var lowerBank = pool.Where(tile => char.IsLetter(tile[0])).All(tile => char.IsLower(tile[0]));
+        var bareBank = pool.All(tile => StageMechanics.WithoutClosingMarks(tile) == tile);
         foreach (var gap in items)
         {
             // Checked against the pool as it grows: two gaps sharing a missing solution get one tile.
@@ -241,9 +247,28 @@ public sealed class ClozeExerciseType : ExerciseTypeBase
             // A missing store entry leaves an empty placeholder; a blank tile would solve nothing.
             // Trimmed like the author's tiles (B-497): a leading space would sort the added solution first and name it.
             if (gap.GradedAnswers().FirstOrDefault(a => !string.IsNullOrWhiteSpace(a)) is { } solution)
-                pool.Add(solution.Trim());
+                pool.Add(InBankForm(solution.Trim(), lowerBank && OpensSentence(config.Text, gap.GapIndex), bareBank));
         }
         return [.. pool.OrderBy(w => w, StringComparer.OrdinalIgnoreCase)];
+    }
+
+    private static string InBankForm(string solution, bool lower, bool bareBank)
+    {
+        // A byte-order mark after the stop would hide it from WithoutClosingMarks; grading drops it anyway.
+        solution = solution.Replace(((char)0xFEFF).ToString(), "");
+        var form = bareBank ? StageMechanics.WithoutClosingMarks(solution) : solution;
+        return lower && form.Length > 0 && char.IsUpper(form[0]) ? char.ToLowerInvariant(form[0]) + form[1..] : form;
+    }
+
+    // The gap's capital is positional when nothing but blanks stand between it and the text start, a line break or a
+    // closing mark ("1. {{1}}" in a numbered list counts too).
+    private static bool OpensSentence(string text, int? gapIndex)
+    {
+        if (gapIndex is not { } index) return false;
+        var at = text.IndexOf("{{" + index + "}}", StringComparison.Ordinal);
+        if (at < 0) return false;
+        var before = text[..at].TrimEnd(' ', '\t');
+        return before.Length == 0 || before[^1] is '.' or '?' or '!' or '…' or '\n';
     }
 
     // Stateless; the same comparison that grades the child's pick decides whether a tile solves a gap.

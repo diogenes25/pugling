@@ -442,3 +442,11 @@ Generator per `chr()` umgangen; die Lehre steht schon in `nachtlauf-werkzeug-leh
 
 Die zwei Hand-Messungen des Laufs (R2, U4) laufen jetzt durch `mutant-probe.py`: Schlüssel `env` für build/test, Muster für
 Pythons `unittest`. Belegt durch genau diese beiden Probes → rot, Grundlinie danach grün.
+
+## Sprint 67 — B-501 Punkt 2 stellvertretend: die ergänzte Kachel verrät sich nicht mehr über ihre Form
+
+**Sprint-Ziel (Sohn):** In der Wortbank sieht keine Kachel anders aus, nur weil der Server sie ergänzt hat.
+Entscheidung stellvertretend; erste Fassung (Groß/Klein aus der Bank allein) vom Review widerlegt (falsche Schreibweise
+„haus", „london") → Satzanfang-Regel. Mutanten X1–X5, Y1–Y6 rot; Suite 1482/1482.
+**Retro:** Das Review fand eine Bedingung ohne eigenen Fall (zwei Schalter, beide Tests setzen beide gleich) – genau die
+Lücke aus CLAUDE.md („rote Probe je Datei fängt das nicht"), hier vor dem Commit gefangen. Kein neuer Mechanismus.

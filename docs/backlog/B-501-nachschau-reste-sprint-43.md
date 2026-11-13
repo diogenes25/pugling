@@ -66,3 +66,18 @@ Autonom gegrillt (`art: Defekt`, Tageslauf):
   - Rollengang: Vater (Plan-Seite, Assistent, Ziel-Wähler) per E2E und Komponententests; Creator (Konsole) gegen den
     In-Process-Server; Sohn Regressionszeuge. Abgenommen.
 - **2026-11-13** — nachgeschaut (Sprint 63, frische `pugling-reviewer`/`frontend-reviewer` an `e37f65e`, gelesen, Vitest 102/102). Geprüft: CI-Schritt läuft (python3, Arbeitsverzeichnis, Pfade), xUnit-Leser findet die Liste, alle drei Leser stimmen Schritt für Schritt überein, `Map`-Aufrufer laden die Übung. Kein 🔴; Reste → [B-521](B-521-nachschau-reste-sprint-60-62.md).
+- **2026-11-13** — Tageslauf (Sprint 67), **Punkt 2 stellvertretend entschieden und gebaut**: die ergänzte Lösungs-Kachel
+  nimmt die Form der Wortbank an (`ClozeExerciseType.Choices` → `InBankForm`, die einzige Senke – Vorschau spielt keine
+  Bank, Frontend legt nur aus). Schlusszeichen fallen, wenn keine Autoren-Kachel eines trägt; kleingeschrieben wird nur,
+  wenn die Lücke einen Satz oder eine Zeile eröffnet (`OpensSentence`) **und** alle Buchstaben-Kacheln klein beginnen –
+  „London" mitten im Satz und deutsche Nomen bleiben groß. Gewertet wird ohnehin ohne Groß/Klein und Schlusszeichen.
+  - „Went." neben „go", „gone" → „went" → `ClozePlayTests.Ergaenzte_Loesung_traegt_die_Form_der_Wortbank`, X1/Y6 → rot.
+  - Bank groß und mit Zeichen → bleibt „Haus." → `…bleibt_wenn_die_Wortbank_gross_und_mit_Zeichen_schreibt`, X2/X3 → rot.
+  - je Schalter einzeln (Punkt-Bank, Großbank, Zahl-Kachel) → `…folgt_jedem_Schalter_einzeln`, Y2 (bareBank = lowerBank),
+    Y3 (Nicht-Buchstaben zählen) → rot.
+  - mitten im Satz → „London" bleibt groß → `…mitten_im_Satz_behaelt_ihren_Grossbuchstaben`, Y1 → rot.
+  - Zeilenanfang → `…am_Zeilenanfang_wird_kleingeschrieben`, Y5 → rot; BOM nach dem Punkt → `…vor_einem_BOM`, Y4 → rot.
+  - `pugling-reviewer` (frisch, nur gelesen): kein 🔴; 🟡 Schalter nicht einzeln getestet und 🟡 Großschreibung aus der
+    Bank allein falsch („haus", „london") → beide behoben (Satzanfang-Regel, eigene Fälle); 🟢 Nicht-Buchstaben-Kacheln
+    und BOM → behoben. Bekannte Grenze: eine legitim große Kachel („I") in der Bank schaltet das Kleinschreiben ab.
+  - Suite 1482/1482. Punkt 4 (Ablenker des KI-Creators) bleibt bewusst offen (braucht `Normalize` im Vertrags-Projekt).

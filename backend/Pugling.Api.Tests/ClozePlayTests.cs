@@ -422,4 +422,112 @@ public class ClozePlayTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
 
         Assert.Equal(["at home", "in\u00A0York"], pool);
     }
+
+    // ---- B-501 point 2: the added solution takes the bank's form ----
+
+    /// <summary>
+    /// B-501: "Went." beside "go", "gone" was the only tile with a capital and a full stop. Red if the completion keeps
+    /// the stored form, or strips only one of the two.
+    /// </summary>
+    [Fact]
+    public async Task Ergaenzte_Loesung_traegt_die_Form_der_Wortbank()
+    {
+        var exerciseId = await CreateClozeAsync(await TestApi.AdultAsync(_factory), new
+        {
+            text = "{{1}} home, I slept.",
+            gaps = new[] { new { index = 1, answer = "Went." } },
+            wordBank = new[] { "go", "gone" },
+        });
+
+        Assert.Equal(["go", "gone", "went"], Assert.Single(await BankChoicesAsync(exerciseId)));
+    }
+
+    /// <summary>
+    /// B-501: a bank whose authors capitalise (German nouns) or end tiles with a mark keeps the solution as stored -
+    /// lowering "Haus" would teach wrong spelling. Red if the form is changed regardless of the bank.
+    /// </summary>
+    [Fact]
+    public async Task Ergaenzte_Loesung_bleibt_wenn_die_Wortbank_gross_und_mit_Zeichen_schreibt()
+    {
+        var exerciseId = await CreateClozeAsync(await TestApi.AdultAsync(_factory), new
+        {
+            text = "Das ist ein {{1}}",
+            gaps = new[] { new { index = 1, answer = "Haus." } },
+            wordBank = new[] { "Baum.", "garten" },
+        });
+
+        Assert.Equal(["Baum.", "garten", "Haus."], Assert.Single(await BankChoicesAsync(exerciseId)));
+    }
+
+    /// <summary>
+    /// B-501, each switch on its own: a bank that ends tiles with a stop keeps the stop but still lowers a positional
+    /// capital (red if bareBank follows lowerBank); a bank with a capitalised tile keeps the capital but drops the stop
+    /// (red if lowerBank follows bareBank, or if tiles starting with a non-letter count as capitalised).
+    /// </summary>
+    [Theory]
+    [InlineData(new[] { "go.", "gone." }, "went.")]
+    [InlineData(new[] { "Go", "gone" }, "Went")]
+    [InlineData(new[] { "1990", "go", "gone" }, "went")]
+    public async Task Ergaenzte_Loesung_folgt_jedem_Schalter_einzeln(string[] wordBank, string expected)
+    {
+        var exerciseId = await CreateClozeAsync(await TestApi.AdultAsync(_factory), new
+        {
+            text = "{{1}} home, I slept.",
+            gaps = new[] { new { index = 1, answer = "Went." } },
+            wordBank,
+        });
+
+        Assert.Contains(expected, Assert.Single(await BankChoicesAsync(exerciseId)));
+    }
+
+    /// <summary>
+    /// B-501: mid-sentence a capital belongs to the word - lowering "London" would teach wrong spelling. Red if the
+    /// completion lowers regardless of where the gap stands.
+    /// </summary>
+    [Fact]
+    public async Task Ergaenzte_Loesung_mitten_im_Satz_behaelt_ihren_Grossbuchstaben()
+    {
+        var exerciseId = await CreateClozeAsync(await TestApi.AdultAsync(_factory), new
+        {
+            text = "She lives in {{1}}",
+            gaps = new[] { new { index = 1, answer = "London." } },
+            wordBank = new[] { "paris", "rome" },
+        });
+
+        Assert.Equal(["London", "paris", "rome"], Assert.Single(await BankChoicesAsync(exerciseId)));
+    }
+
+    /// <summary>
+    /// B-501: a byte-order mark after the stop (store or loader data) must not keep the stop. Red if the mark is not
+    /// removed before the closing marks are.
+    /// </summary>
+    [Fact]
+    public async Task Ergaenzte_Loesung_verliert_den_Punkt_auch_vor_einem_BOM()
+    {
+        var exerciseId = await CreateClozeAsync(await TestApi.AdultAsync(_factory), new
+        {
+            text = "{{1}} home, I slept.",
+            gaps = new[] { new { index = 1, answer = "Went.\uFEFF" } },
+            wordBank = new[] { "go", "gone" },
+        });
+
+        Assert.Equal(["go", "gone", "went"], Assert.Single(await BankChoicesAsync(exerciseId)));
+    }
+
+    /// <summary>
+    /// B-501: a gap at the start of a line opens it even without a mark on the line before (a dialogue line). Red if the
+    /// line break does not count as a sentence boundary.
+    /// </summary>
+    [Fact]
+    public async Task Ergaenzte_Loesung_am_Zeilenanfang_wird_kleingeschrieben()
+    {
+        var exerciseId = await CreateClozeAsync(await TestApi.AdultAsync(_factory), new
+        {
+            text = "A: Hello\n{{1}} home",
+            gaps = new[] { new { index = 1, answer = "Went" } },
+            wordBank = new[] { "go", "gone" },
+        });
+
+        Assert.Equal(["go", "gone", "went"], Assert.Single(await BankChoicesAsync(exerciseId)));
+    }
 }

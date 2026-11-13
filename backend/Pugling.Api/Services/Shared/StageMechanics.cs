@@ -43,7 +43,7 @@ public static class StageMechanics
     private static readonly char[] ClosingMarks = ['.', '?', '!', '…'];
 
     // An answer that is nothing but marks keeps them: stripped it would be empty, and empty is never correct.
-    private static string WithoutClosingMarks(string s)
+    internal static string WithoutClosingMarks(string s)
     {
         var stripped = s.TrimEnd();
         while (stripped.Length > 0 && Array.IndexOf(ClosingMarks, stripped[^1]) >= 0)
