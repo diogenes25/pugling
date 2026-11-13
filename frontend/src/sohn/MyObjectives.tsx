@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { arcadeDatum } from "../lib/datum";
 import { useTranslation } from "react-i18next";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
@@ -25,7 +26,7 @@ const achievedIds = (xs: { id: number; status: string }[]) => xs.filter((x) => x
  * wie Missionen und Abzeichen.
  */
 export function MyObjectives() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { childId, celebrate } = useSohn();
   // `v2`: ein Stand aus der Zeit vor B-257 kennt nur die ersten fünf Ziele und ist darum unbrauchbar. Der neue Schlüssel
   // lässt jedes Gerät einmal still neu seeden – eine seither neu erreichte Etappe bleibt dabei einmal ungefeiert, lieber
@@ -85,7 +86,7 @@ export function MyObjectives() {
           <div className="sub" style={{ fontSize: 11 }}>
             {t("objectives.stages", { done: o.achievedCount, total: o.totalCount })}
             {o.status === "Achieved" ? ` · ${t("objectives.achieved")}` : o.status === "Overdue" ? ` · ${t("objectives.overdue")}` : ""}
-            {o.dueDate ? ` · ${t("objectives.due", { date: o.dueDate })}` : ""}
+            {o.dueDate ? ` · ${t("objectives.due", { date: arcadeDatum(o.dueDate, i18n.language) })}` : ""}
           </div>
 
           {/* Nur die noch offenen Etappen: erledigte abzuhaken ist schön, aber sie verstopfen die Liste. */}

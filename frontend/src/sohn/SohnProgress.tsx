@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { arcadeDatum } from "../lib/datum";
 import { useTranslation } from "react-i18next";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
@@ -22,7 +23,7 @@ export function SohnProgress() {
 }
 
 function ProgressForPlan({ planId }: { planId: number }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const overview = useAsync<OverviewResponse>(() => api.overview(planId), [planId]);
   const prog = useAsync<ProgressResponse>(() => api.overviewProgress(planId), [planId]);
 
@@ -66,7 +67,7 @@ function ProgressForPlan({ planId }: { planId: number }) {
         </div>
         <div className="calendar">
           {last7.map((d) => (
-            <i key={d.day} className={d.dutyDone ? "t" : d.goalsMet > 0 ? "d" : ""} title={d.day} />
+            <i key={d.day} className={d.dutyDone ? "t" : d.goalsMet > 0 ? "d" : ""} title={arcadeDatum(d.day, i18n.language)} />
           ))}
         </div>
         <div className="sub" style={{ marginTop: 8, fontSize: 11 }}>

@@ -7,7 +7,10 @@ import { vaterLogin } from "./helpers";
  * Fach, eine davon von einem ZWEITEN Konto bewertet (die eigene darf man nicht bewerten). Im Planbau zeigt jede Zeile ihre
  * Bewertung, und „beste Bewertung zuerst" stellt die bewertete vor die unbewertete – im Katalog steht sie dahinter.
  *
- * Rot, wenn die Zeile die Bewertung nicht zeigt oder die Reihenfolge-Wahl die Abfrage nicht umstellt.
+ * B-412: eine dritte Übung mit 2 ★ steht im Katalog ganz vorn. Erst damit unterscheidet die Spec „beste zuerst" (5 → 2 →
+ * unbewertet) von „schlechteste zuerst" (2 → 5 → unbewertet): der Server stellt unbewertete in BEIDEN Richtungen ans Ende.
+ *
+ * Rot, wenn die Zeile die Bewertung nicht zeigt, die Reihenfolge-Wahl die Abfrage nicht umstellt oder aufsteigend sortiert.
  */
 
 const FATHER = { id: "1", pin: "0000" };
@@ -30,6 +33,7 @@ test("Die Übungsauswahl im Planbau zeigt die Bewertung und sortiert nach ihr", 
   const fach = `Bewertungsfach ${RUN}`;
   const erste = `Aaa unbewertet ${RUN}`;
   const zweite = `Zzz gut bewertet ${RUN}`;
+  const mittel = `Aa0 mittel bewertet ${RUN}`;
 
   const subjectId = (await api(page, "POST", "/api/v1/creator/subjects", { name: fach })).id;
   const seriesId = (await api(page, "POST", "/api/v1/creator/textbook-series", { name: `Bewertungsreihe ${RUN}`, subjectId })).id;
@@ -39,7 +43,9 @@ test("Die Übungsauswahl im Planbau zeigt die Bewertung und sortiert nach ihr", 
       title, orderIndex, rewardPoints: 10,
       config: { direction: "front-to-back", sourceLang: "en", targetLang: "de", items: [{ front: `hello ${title}`, back: "hallo" }] },
     });
-  // Im Katalog steht die unbewertete VORN (orderIndex 1): nur so beweist „beste zuerst" eine Umstellung.
+  // Im Katalog steht die unbewertete VORN (orderIndex 1): nur so beweist „beste zuerst" eine Umstellung. Davor die mittel
+  // bewertete (orderIndex 0) – sie muss hinter die gute rücken.
+  const mittelId = (await uebung(mittel, 0)).id;
   await uebung(erste, 1);
   const gut = (await uebung(zweite, 2)).id;
 
@@ -49,7 +55,9 @@ test("Die Übungsauswahl im Planbau zeigt die Bewertung und sortiert nach ihr", 
   const fremdId = (await fremd.json()).id;
   const login = await page.request.post("/api/v1/auth/adult", { data: { adultId: fremdId, pin: "4321" } });
   expect(login.ok()).toBeTruthy();
-  await api(page, "PUT", `/api/v1/creator/exercises/${gut}/rating`, { stars: 5, comment: null }, (await login.json()).token);
+  const fremdToken = (await login.json()).token;
+  await api(page, "PUT", `/api/v1/creator/exercises/${gut}/rating`, { stars: 5, comment: null }, fremdToken);
+  await api(page, "PUT", `/api/v1/creator/exercises/${mittelId}/rating`, { stars: 2, comment: null }, fremdToken);
 
   await page.goto("/vater/plan/new");
   await page.locator("#plan-title").fill(`Bewertungsplan ${RUN}`);
@@ -59,14 +67,19 @@ test("Die Übungsauswahl im Planbau zeigt die Bewertung und sortiert nach ihr", 
   await page.locator('select[aria-label="Fach-Filter"]').selectOption({ label: fach });
 
   const radios = page.getByRole("radiogroup", { name: "Übung wählen" }).getByRole("radio");
-  await expect(radios).toHaveCount(2);
+  await expect(radios).toHaveCount(3);
   await expect(page.getByRole("radio", { name: new RegExp(zweite) })).toBeEnabled();
   // Die Zeile trägt ihre Bewertung – die unbewertete sagt es auch.
   await expect(page.getByRole("radio", { name: new RegExp(`${zweite}.*★ 5,0 \\(1 Bewertung\\)`) })).toBeVisible();
   await expect(page.getByRole("radio", { name: new RegExp(`${erste}.*noch unbewertet`) })).toBeVisible();
-  // Katalog-Reihenfolge: die unbewertete vorn – der Ausgangszustand, gegen den die Umstellung misst.
-  await expect(radios.first()).toHaveAccessibleName(new RegExp(erste));
+  // Die mittlere trägt ihre 2 ★ – sonst fiele die Reihenfolge unten aus einem anderen Grund.
+  await expect(page.getByRole("radio", { name: new RegExp(`${mittel}.*★ 2,0`) })).toBeVisible();
+  // Katalog-Reihenfolge: die mittel bewertete vorn, dann die unbewertete – der Ausgangszustand, gegen den die Umstellung misst.
+  await expect(radios.nth(0)).toHaveAccessibleName(new RegExp(mittel));
+  await expect(radios.nth(1)).toHaveAccessibleName(new RegExp(erste));
 
   await page.getByLabel("Trefferliste sortieren", { exact: true }).selectOption("rating");
-  await expect(radios.first()).toHaveAccessibleName(new RegExp(zweite));
+  await expect(radios.nth(0)).toHaveAccessibleName(new RegExp(zweite));
+  await expect(radios.nth(1)).toHaveAccessibleName(new RegExp(mittel));
+  await expect(radios.nth(2)).toHaveAccessibleName(new RegExp(erste));
 });

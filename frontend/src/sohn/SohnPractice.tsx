@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { arcadeDatum } from "../lib/datum";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ApiError, api } from "../lib/api";
@@ -53,7 +54,7 @@ export function SohnPractice() {
   const positionId = Number(positionIdRaw);
   const nav = useNavigate();
 
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const errorMessage = useErrorMessage();
   const [phase, setPhase] = useState<Phase>("loading");
   const [error, setError] = useState<string | null>(null);
@@ -479,7 +480,7 @@ export function SohnPractice() {
       {/* Auf der angehaltenen Karte (B-420) steht die Lösung schon sichtbar in der Karte – die Region sagt sie nur an. */}
       <div className={`live-region${toast ? (phase === "wrong" ? " sr-only" : " toast") : ""}`} role="status" aria-live="polite">{toast}</div>
       {lastOutcome?.dueOn && phase === "front" && (
-        <p className="sub" style={{ textAlign: "center" }}>{t("practice.nextDue", { date: lastOutcome.dueOn })}</p>
+        <p className="sub" style={{ textAlign: "center" }}>{t("practice.nextDue", { date: arcadeDatum(lastOutcome.dueOn, i18n.language) })}</p>
       )}
     </div>
   );

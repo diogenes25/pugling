@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { arcadeDatum } from "../lib/datum";
 import { Trans, useTranslation } from "react-i18next";
 import { api } from "../lib/api";
 import { useErrorMessage } from "../lib/chromeText";
@@ -30,7 +31,8 @@ export function useShopText() {
   const { t, i18n } = useTranslation();
   return {
     t,
-    date: (iso: string): string => new Date(iso).toLocaleDateString(i18n.language),
+    // Lese-Hälfte aus lib/datum: ein Zeitstempel ohne Offset ist UTC, nicht Ortszeit (B-447).
+    date: (iso: string): string => arcadeDatum(iso, i18n.language),
     amount: (quantity: number, unit: UnitType): string => t(`shop.unit.${unit}`, { count: quantity }),
     price: (coinPrice: number, gemPrice: number): string =>
       coinPrice > 0 || gemPrice > 0 ? priceLabel(coinPrice, gemPrice) : t("shop.free"),
