@@ -14,10 +14,14 @@ public static class ImagePromptBuilder
     public const string NoText = "no text, no letters, no words, no numbers";
 
     /// <summary>
-    /// The same rule as a negative prompt. Diffusion models do not understand "no X" in the prompt – naming X there draws
-    /// it – but they do avoid what the negative prompt lists.
+    /// The same rule as a negative prompt, plus the child-safety terms. Diffusion models do not understand "no X" in the
+    /// prompt – naming X there draws it – but they do avoid what the negative prompt lists. The safety half is there
+    /// because the first run on real data drew a near-naked figure and a low-cut warrior for a 15-year-old (B-485):
+    /// community models such as <c>dreamshaper</c> lean that way, and the images reach the child without review.
     /// </summary>
-    public const string NegativeTerms = "text, letters, words, numbers, watermark";
+    public const string NegativeTerms = "text, letters, words, numbers, watermark, logo, brand, "
+        + "nsfw, nude, naked, topless, shirtless, underwear, lingerie, bikini, swimsuit, cleavage, revealing clothes, "
+        + "sexy, seductive, violence, blood, weapon, gun, knife, sword, scary, horror";
 
     /// <summary>Column length of <c>MediaAsset.Source</c>; the server rejects anything longer.</summary>
     public const int MaxSourceLength = 200;

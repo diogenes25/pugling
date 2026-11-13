@@ -337,6 +337,13 @@ dotnet user-secrets set "Images:CostPerImage" "0"
 dotnet user-secrets set "Images:ApiKey" "local"
 ```
 
+**Kinderschutz** (nach dem ersten Lauf auf echten Daten, B-485): Die Bilder kommen ohne Freigabe beim Kind an, und
+Community-Modelle wie `dreamshaper` neigen zu knapp bekleideten Figuren. Drei Schichten halten dagegen. Der Negativ-Prompt
+verbietet außer Schrift auch Nacktheit, Unterwäsche, Ausschnitt, Gewalt, Waffen und Logos (`NegativeTerms`). Der feste
+Stil sagt „for children, friendly, fully clothed“. Das lokale Modell beschreibt Personen als Kinder in Alltagskleidung
+und einen Wettkampf als Spiel, nicht als Kampf. Ein ungeeignetes Bild nimmt man in der Bild-Bibliothek von der Vokabel
+und löscht es. Nur abhängen reicht nicht: Ein späterer Lauf findet es unter seinem Schlüssel und hängt es wieder an.
+
 `ResponseFormat=Data`: Ohne den Wert liefert LocalAI eine URL statt der Bilddaten. Bei OpenAI bleibt er leer, weil die
 GPT-Bildmodelle den Parameter ablehnen. `NegativeSeparator=|`: Das Schriftverbot geht in den Negativ-Prompt, denn
 „no text" im Prompt zeichnet ein Diffusionsmodell eher hinein. Ollama und LocalAI teilen sich die GPU. Lässt man

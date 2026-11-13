@@ -40,6 +40,8 @@ public sealed class MotifPlanner(IChatClient chat, ILogger<MotifPlanner> logger)
         Beispiel: Wort "la rue", Interesse "on a soccer pitch" → "a soccer player kicking a ball down a city street".
         Die Szene ist ENGLISCH, höchstens 15 Wörter, enthält keine Schrift, keine Marken- und keine Figurennamen,
         keinen Stil und keine Verneinung.
+        Das Bild ist für Kinder: Personen sind Kinder (a boy, a girl, a kid), freundlich und in Alltagskleidung –
+        keine Kämpfer, keine Waffen, keine Gewalt; ein Wettkampf ist ein Spiel, kein Kampf.
         Antworte nur mit JSON: {"scene": "..."}.
         """;
 
@@ -51,6 +53,8 @@ public sealed class MotifPlanner(IChatClient chat, ILogger<MotifPlanner> logger)
         Redewendungen und alles, was ein Bild nur mehrdeutig zeigen könnte.
         Die Szene ist ENGLISCH, höchstens zwölf Wörter, zeigt genau die Bedeutung des Worts und enthält keine Schrift.
         Nenne keinen Stil und kein Thema – beides wird später ergänzt.
+        Das Bild ist für Kinder: Personen sind Kinder (a boy, a girl, a kid), freundlich und in Alltagskleidung –
+        keine Waffen, keine Gewalt.
         Antworte nur mit JSON: {"imageable": true|false, "motif": "..."}; bei false ist motif leer.
         """;
 

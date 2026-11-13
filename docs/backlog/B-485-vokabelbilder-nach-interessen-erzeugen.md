@@ -409,4 +409,24 @@ Reviewer vor der Abnahme: `pugling-reviewer` und `frontend-reviewer`.
     verbietet nur Schrift. Dazu treibt „arena brawler“ zu Kampfszenen. Weitere Funde: markenähnliche Logos auf
     Trikots (Bilder 4 und 6 aus dem Wegwerf-Lauf), und zwei Interessen-Bilder ohne das Interesse (5 Pokémon, 8 Roblox).
   - Gut: beide Schach-Bilder (3, 6), Pokémon „bend down“ (2, Fee mit Münzen), alle vier neutralen Bilder.
+- 2026-11-13 · **Kinderschutz** nach dem Befund am echten Lauf. Er hat drei Schichten:
+  - `NegativeTerms` verbietet außer Schrift auch Logos, Marken, Nacktheit, Unterwäsche, Bademode, Ausschnitt,
+    „sexy“, Gewalt, Blut, Waffen und Gruseliges.
+  - Der feste Stil lautet jetzt „for children, friendly, fully clothed“, in `appsettings.json` und als Vorgabe.
+  - Beide Anweisungen an das lokale Modell verlangen Personen als Kinder in Alltagskleidung, keine Kämpfer und
+    keine Waffen („ein Wettkampf ist ein Spiel, kein Kampf“).
+
+  Tests: `Der_Negativ_Prompt_schuetzt_das_Kind` (nude, underwear, cleavage, weapon, logo), dazu eine Zusicherung der
+  Kinder-Regel in beiden Systemanweisungen. Rote Proben: Ohne die Schutzbegriffe fallen die 5 Fälle, ohne die
+  Kinder-Regel fällt die Szenen-Anweisung `Das_Interesse_steht…`. Volle Suite 1500/1500.
+  - **Probe an einer Kopie der echten DB** (Schnappschuss, Server :5281 in `Production` mit Wegwerf-JWT-Schlüssel und
+    eigenem Medienordner). Den schlimmsten bekannten Fall habe ich nachgestellt: Bilder 9 und 12 auf der Kopie
+    gelöscht, Brawl-Stars-Prompt wieder gesetzt. `images --max 40` je Kind ergab **71 Bilder, 0 Fehler**, 24 min.
+    Durchgesehen als Kontaktbögen: **0 von 71 ungeeignet.** Grenzwertig ist eines, „la colère“ mit Brawl Stars (ein
+    wütender Junge mit Handschuhen im Hochtritt, gegen niemanden). Auch die beiden Problemwörter zeigen jetzt ein
+    Kind am Wasser bzw. ein Mädchenporträt. Die Bedeutung trifft das Bild bei abstrakten Verben weiter oft nur lose.
+    Kopie und Probe-Medien danach gelöscht.
+  - Nebenbefund: Ein nur abgehängtes Bild nimmt der nächste Lauf über seinen Schlüssel wieder auf und hängt es erneut
+    an. Bilder 9 und 12 der echten DB müssen also gelöscht sein, bevor der Brawl-Stars-Prompt dort wieder gesetzt
+    wird. README und `docs/medien-bilder.md` sagen das jetzt.
 

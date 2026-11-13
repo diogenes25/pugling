@@ -51,10 +51,12 @@ public sealed class ImageOptions
 
     /// <summary>
     /// The one fixed style of every generated image (decision 5). Calm and uniform, so cards look alike and the
-    /// motif – not the drawing – carries the word.
+    /// motif – not the drawing – carries the word. "For children" and "fully clothed" belong to the positive side: the
+    /// negative prompt only steers away, this steers towards what a child's card should show.
     /// </summary>
     [Required]
-    public string Style { get; set; } = "simple flat sticker illustration, soft colors, plain white background";
+    public string Style { get; set; } =
+        "simple flat sticker illustration for children, friendly, fully clothed, soft colors, plain white background";
 
     /// <summary>Approximate price of one image in euros – only for the cost estimate of a dry run.</summary>
     [Range(0d, 1d)]

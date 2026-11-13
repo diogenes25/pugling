@@ -272,6 +272,9 @@ public class ImageAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
         Assert.Contains("Szene der Bedeutung: a happy dog jumping", sceneQuestion);
         Assert.DoesNotContain("img8 Fussball", sceneQuestion);
         Assert.DoesNotContain("Kind", sceneQuestion);
+        // Both questions carry the child rule – people as children, no fighters, no weapons. Red if either drops it.
+        Assert.All(chat.History, call => Assert.Contains("Personen sind Kinder",
+            call.Messages.Single(m => m.Role == ChatRole.System).Text));
     }
 
     /// <summary>
@@ -308,6 +311,22 @@ public class ImageAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
         Assert.Equal("a cat, plain style|" + ImagePromptBuilder.NegativeTerms,
             ImagePromptBuilder.Prompt("a cat", "plain style", "|"));
         Assert.DoesNotContain("no text", ImagePromptBuilder.Prompt("a cat", "plain style", "|"));
+    }
+
+    /// <summary>
+    /// The negative prompt carries the child-safety terms, not only the no-text rule. Red if they are dropped: the first
+    /// run on real data drew a near-naked figure and a low-cut warrior for a child's cards with only "text" forbidden.
+    /// </summary>
+    [Theory]
+    [InlineData("nude")]
+    [InlineData("underwear")]
+    [InlineData("cleavage")]
+    [InlineData("weapon")]
+    [InlineData("logo")]
+    public void Der_Negativ_Prompt_schuetzt_das_Kind(string term)
+    {
+        var negative = ImagePromptBuilder.Prompt("a cat", "plain style", "|").Split('|')[1];
+        Assert.Contains(term, negative.Split(", "));
     }
 
     /// <summary>

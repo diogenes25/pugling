@@ -359,6 +359,12 @@ Bild-Dienst ist LocalAI auf der eigenen GPU (Entscheidung 9), über die OpenAI-k
 per Konfiguration erreichbar. Gemessene Schwäche: Bei abstrakten Verben („acheter") verliert das Interessen-Bild die
 Bedeutung, und ein neutrales Bild trug Schrift („MARKET" auf einem Geldschein). Das Korrektiv dafür ist „anderes Bild".
 
+**Kinderschutz statt Freigabe:** Weil es keine Freigabe vor dem Kind gibt (Entscheidung 2), trägt der Prompt den Schutz:
+Negativ-Prompt gegen Nacktheit, Unterwäsche, Ausschnitt, Gewalt, Waffen und Logos, Stil „for children, fully clothed“,
+Personen als Kinder. Anlass war der erste Lauf auf echten Daten, der für Friedrich eine fast nackte Figur und eine
+Kriegerin mit Ausschnitt zeichnete. Ein ungeeignetes Bild wird gelöscht, nicht nur abgehängt: Der nächste Lauf nähme
+es sonst über seinen Schlüssel wieder auf.
+
 Bewusste Grenzen: Der Bedarf zählt nur Zuordnungen an der Vokabel (eine Übung mit eigenen Item-Bildern zeigt nur
 diese) und prüft vorhandene Bilder nicht gegen Eignung und Abneigungen des Kindes. **Wird ein Schlagwort gelöscht**,
 verlieren seine KI-Bilder ihr einziges Schlagwort und zählen danach als neutral; ihr Rang −1 hält sie hinter einem
