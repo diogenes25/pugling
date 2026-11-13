@@ -273,6 +273,7 @@ export const en = {
       otherImage: "🔄 different picture",
     },
     test: {
+      cueBox: "Word box",
       victory: "VICTORY!",
       almost: "ALMOST!",
       stage1: "Show",

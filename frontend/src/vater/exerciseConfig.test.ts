@@ -45,6 +45,17 @@ describe("Rundlauf über die umgestellten Listenfelder", () => {
     expect(rows[1].form).toBe("");
   });
 
+  // B-524: Die Ablenker des Wortkastens reisen hin und zurück; leer heißt „keine“ (fehlt in der Config). Rot, wenn
+  // einer der beiden Wege `cueDistractors` vergisst.
+  it("Lückentext: Ablenker im Wortkasten überleben den Rundlauf", () => {
+    const { config, extra } = rundlauf("Cloze",
+      [{ index: 1, answer: "racism", alternatives: [], vocabKey: null, form: "" }],
+      { text: "{{1}}", wordBank: [], cueDistractors: ["rassistisch", " ", MIT_KOMMA] });
+
+    expect((config as { cueDistractors?: string[] }).cueDistractors).toEqual(["rassistisch", MIT_KOMMA]);
+    expect(extra.cueDistractors).toEqual(["rassistisch", MIT_KOMMA]);
+  });
+
   it("Liste: Alternativen bleiben Listen", () => {
     const { rows } = rundlauf("List", [{ value: "Paris", alternatives: ["Paris (FR)", MIT_KOMMA] }]);
     expect(rows[0].alternatives).toEqual(["Paris (FR)", MIT_KOMMA]);

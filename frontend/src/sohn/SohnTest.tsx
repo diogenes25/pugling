@@ -15,6 +15,7 @@ import { ListRule } from "../components/ListRule";
 import { Passage } from "../components/Passage";
 import { RevealAlternatives } from "../components/RevealAlternatives";
 import { BirkenbihlDecoding } from "../components/BirkenbihlDecoding";
+import { CueBox } from "../components/CueBox";
 import type { AnswerDto, TestItem, TestSubmitResponse } from "../lib/types";
 
 // Vokabel-Teststufen (numerisch, serverseitig erzwungen): 1 Zeigen … 7 Ordnen.
@@ -221,6 +222,8 @@ export function SohnTest() {
         <BirkenbihlDecoding decoding={item.decoding} />
         <ListRule type={item.type} anyOrder={item.anyOrder} itemIndex={item.itemIndex} />
         {item.hint && typed && <div className="sub" style={{ marginTop: 6 }}>💡 {item.hint}</div>}
+        {/* B-524: Auf der Wortkasten-Stufe steht statt des Hinweises der Kasten aller Bedeutungen. */}
+        <CueBox words={item.cueBox} label={t("test.cueBox")} />
 
         {typed ? (
           item.choices ? (

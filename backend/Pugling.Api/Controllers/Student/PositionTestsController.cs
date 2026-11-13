@@ -70,7 +70,8 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         // freeze the child's motif choice as a side effect of taking a test (see MediaSelector).
         var f = PositionPlayService.CardFacets(PositionPlayService.ConfigOf(exercise), items, item, type, stage, typed, attemptId);
         return new TestItem(item.Index, f.Prompt, stage, f.Reveal, f.AnswerLength, f.Hint, f.Choices, f.AudioUrl,
-            f.GapIndex, f.Passage, f.AnyOrder, type.Key, f.RevealAlternatives, f.AnswerPattern, f.Decoding, f.LetterTiles);
+            f.GapIndex, f.Passage, f.AnyOrder, type.Key, f.RevealAlternatives, f.AnswerPattern, f.Decoding, f.LetterTiles,
+            f.CueBox);
     }
 
     // The stage a question was frozen at on start (B-476); the attempt's stage for a row that carries none of its own.

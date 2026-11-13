@@ -9,6 +9,7 @@ import { Passage } from "../components/Passage";
 import { RevealAlternatives } from "../components/RevealAlternatives";
 import { BirkenbihlDecoding } from "../components/BirkenbihlDecoding";
 import { Modal } from "../components/Modal";
+import { CueBox } from "../components/CueBox";
 import type { ExercisePreviewAnswer, ExercisePreviewData, ExercisePreviewResult } from "../lib/types";
 
 /**
@@ -198,6 +199,9 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
             <p className="muted" style={{ margin: 0 }}>
               {data.typed ? "Tippe deine Antwort – bewertet wird wie beim Kind." : "Überlege, dann aufdecken und ehrlich bewerten."}
             </p>
+
+            {/* B-524: Der Wortkasten ist auf jeder Karte derselbe – hier einmal über allen Lücken statt je Zeile. */}
+            <CueBox words={shownItems[0]?.cueBox} label="Wortkasten" />
 
             {shownItems.map((it) => {
               const a = answers[it.itemIndex];

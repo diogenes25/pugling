@@ -46,7 +46,7 @@ interface ArithmeticDrillExtra {
 }
 
 interface ClozeRow { index: number; answer: string; alternatives: string[]; vocabKey: string | null; form: string }
-interface ClozeExtra { text: string; wordBank: string[] }
+interface ClozeExtra { text: string; wordBank: string[]; cueDistractors: string[] }
 
 interface MatchingRow { left: string; right: string }
 interface MatchingExtra { instruction: string }
@@ -240,6 +240,7 @@ export function buildTypeConfig(
       const items = rows as ClozeRow[];
       const cfg = extra as ClozeExtra;
       return { text: cfg.text ?? "", wordBank: nonEmpty(strList(cfg.wordBank)),
+        cueDistractors: nonEmpty(strList(cfg.cueDistractors)),
         // `vocabKey` unverändert durchreichen: ist er gesetzt, kommt die Lösung aus dem Vokabel-Store und
         // folgt dessen Pflege. Ein Weglassen machte aus der Store-Lücke stillschweigend eine Inline-Lücke.
         gaps: items.map((r) => ({ index: Number(r.index), answer: r.answer,
@@ -376,7 +377,7 @@ export function configToEditorState(type: ExerciseTypeKey, config: unknown): { r
         // `vocabKey` wird nicht bearbeitet, aber mitgeführt (siehe buildTypeConfig).
         list(c.gaps).map((g): ClozeRow => ({ index: g.index ?? 1, answer: g.answer ?? "",
           alternatives: strList(g.alternatives), vocabKey: g.vocabKey ?? null, form: g.form ?? "" })),
-        { text: str(c.text), wordBank: strList(c.wordBank) } satisfies ClozeExtra);
+        { text: str(c.text), wordBank: strList(c.wordBank), cueDistractors: strList(c.cueDistractors) } satisfies ClozeExtra);
     case "Matching":
       return fallback(
         list(c.pairs).map((p): MatchingRow => ({ left: p.left ?? "", right: p.right ?? "" })),
@@ -482,6 +483,12 @@ export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, re
             <RepeatedTextFields label="Wort" placeholder="achète"
               values={Array.isArray(extra.wordBank) ? extra.wordBank : []}
               onChange={(v) => ex({ wordBank: v })} /></div>
+          {/* B-524: Ablenker im deutschen Wortkasten (Stufe „Wortkasten + Freitext“). Die Bedeutungen der Lücken
+              kommen aus dem Vokabel-Store; hier stehen nur die zusätzlichen, die keine Lücke lösen. */}
+          <div className="field"><span className="label-row group-label">Ablenker im Wortkasten <span className="muted">(optional)</span></span>
+            <RepeatedTextFields label="Ablenker" placeholder="rassistisch"
+              values={Array.isArray(extra.cueDistractors) ? extra.cueDistractors : []}
+              onChange={(v) => ex({ cueDistractors: v })} /></div>
         </>
       )}
       {(type === "Matching" || type === "List" || type === "Grammar") && (

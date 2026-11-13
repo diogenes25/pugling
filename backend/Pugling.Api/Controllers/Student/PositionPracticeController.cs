@@ -156,7 +156,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         return new PracticeCard(index, stage, type.Key, f.Prompt,
             f.Hint, f.AnswerLength, f.Reveal, f.Choices, f.AudioUrl, f.ImageUrl, f.ImageAlt, f.GapIndex, f.Passage,
             f.AnyOrder, f.RevealAlternatives, f.Decoding, type.IsDisplayOnlyStage(stage), f.AnswerPattern, f.LetterTiles,
-            introduction);
+            introduction, f.CueBox);
     }
 
     /// <summary>

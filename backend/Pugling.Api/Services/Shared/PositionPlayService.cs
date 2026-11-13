@@ -314,7 +314,7 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     public static (string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices,
         string? AudioUrl, string? ImageUrl, string? ImageAlt, int? GapIndex, string? Prompt, string? Passage,
         bool AnyOrder, IReadOnlyList<string>? RevealAlternatives, IReadOnlyList<WordPair>? Decoding,
-        string? AnswerPattern, IReadOnlyList<string>? LetterTiles)
+        string? AnswerPattern, IReadOnlyList<string>? LetterTiles, IReadOnlyList<string>? CueBox)
         CardFacets(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, IExerciseType type,
             int stage, bool typed, int seed)
     {
@@ -322,8 +322,10 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
         // seed - frozen per session, new per session - and the item index, so two cards of one round differ.
         var tileSource = typed ? type.LetterTileSource(item, stage) : null;
         var (letterBoxLength, audioUrl, imageUrl, answerPattern) = type.StageFacets(item, stage);
+        // The cue box replaces the per-atom hint (B-524): next to the box it would name the meaning to find.
+        var cueBox = typed ? type.CueBox(configJson, items, stage) : null;
         return (
-            typed ? item.Hint : null,
+            typed && cueBox is null ? item.Hint : null,
             letterBoxLength,
             typed ? null : item.Answer,
             // Options only where the solution is withheld. Today every type that offers a pool does so on a
@@ -363,7 +365,8 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
             item.Decoding,
             // The letter-box mask (B-66) - null outside that stage, same condition as `letterBoxLength`.
             answerPattern,
-            tileSource is null ? null : StageMechanics.ScrambleLetters(tileSource, unchecked((seed * 397) ^ item.Index)));
+            tileSource is null ? null : StageMechanics.ScrambleLetters(tileSource, unchecked((seed * 397) ^ item.Index)),
+            cueBox);
     }
 
     /// <summary>

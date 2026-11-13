@@ -76,7 +76,7 @@ public record PracticeCard(int ItemIndex, int Stage, string Type, string? Prompt
     string? ImageUrl = null, string? ImageAlt = null, int? GapIndex = null, string? Passage = null,
     bool AnyOrder = false, IReadOnlyList<string>? RevealAlternatives = null,
     IReadOnlyList<WordPair>? Decoding = null, bool DisplayOnly = false, string? AnswerPattern = null,
-    IReadOnlyList<string>? LetterTiles = null, bool Introduction = false);
+    IReadOnlyList<string>? LetterTiles = null, bool Introduction = false, IReadOnlyList<string>? CueBox = null);
 
 /// <summary>The next card in learn mode (or <c>Done</c>), server-driven via the session cursor.</summary>
 public record NextResponse(PracticeCard? Card, bool Done, int Cursor, int Total);

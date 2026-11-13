@@ -34,7 +34,8 @@ namespace Pugling.Contracts.Student;
 public record TestItem(int ItemIndex, string? Prompt, int Stage, string? Reveal, int? AnswerLength, string? Hint,
     IReadOnlyList<string>? Choices, string? AudioUrl, int? GapIndex = null, string? Passage = null,
     bool AnyOrder = false, string? Type = null, IReadOnlyList<string>? RevealAlternatives = null,
-    string? AnswerPattern = null, IReadOnlyList<WordPair>? Decoding = null, IReadOnlyList<string>? LetterTiles = null);
+    string? AnswerPattern = null, IReadOnlyList<WordPair>? Decoding = null, IReadOnlyList<string>? LetterTiles = null,
+    IReadOnlyList<string>? CueBox = null);
 
 /// <summary>
 /// Response of the test start. Class-test mode is strictly server-driven: <b>no</b> questions are sent

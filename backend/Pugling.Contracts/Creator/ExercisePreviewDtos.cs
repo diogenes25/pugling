@@ -22,7 +22,7 @@ namespace Pugling.Contracts.Creator;
 public record PreviewItem(int ItemIndex, string? Prompt, int? GapIndex, string? Hint, int? AnswerLength, string? Reveal,
     IReadOnlyList<string>? Choices, string? AudioUrl, string? Passage = null, bool AnyOrder = false,
     IReadOnlyList<string>? RevealAlternatives = null, IReadOnlyList<WordPair>? Decoding = null,
-    string? AnswerPattern = null, IReadOnlyList<string>? LetterTiles = null);
+    string? AnswerPattern = null, IReadOnlyList<string>? LetterTiles = null, IReadOnlyList<string>? CueBox = null);
 
 /// <summary>
 /// The playable state of an exercise in test mode: type, chosen stage, whether typed, the problems and

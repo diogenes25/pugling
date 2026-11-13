@@ -16,6 +16,11 @@ public enum ClozeStage
     TranslationFreeText = 3,
     /// <summary>Free-text entry only.</summary>
     FreeText = 4,
+    /// <summary>
+    /// The school's vocabulary test (B-524): the card shows the meanings of all gaps plus the author's distractors as
+    /// one unordered box, the asked gap carries no hint of its own, and the word is typed freely.
+    /// </summary>
+    CueBoxFreeText = 5,
 }
 
 /// <summary>A cloze text as learning material (reference base for study plans/exercises).</summary>

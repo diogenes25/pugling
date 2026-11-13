@@ -169,6 +169,95 @@ public class SchulVokabeltestTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal(new[] { false, true }, graded);
     }
 
+    // ---- Part A: the cue box (decisions 4 and 5) ----
+
+    // Two store-backed gaps and two distractors: every card carries the same sorted box of all four meanings, and no
+    // card names its own. Red if the box is built per card, unsorted, without distractors, or if the hint leaks.
+    [Fact]
+    public async Task Wortkasten_Zeigt_Alle_Bedeutungen_Gleich_Und_Keinen_Hinweis()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var (exerciseId, rassismus, gemeinschaft) = await CreateCueBoxClozeAsync(father);
+
+        var data = await father.GetFromJsonAsync<JsonElement>(
+            $"/api/v1/creator/exercises/{exerciseId}/preview?stage={(int)ClozeStage.CueBoxFreeText}");
+        var items = data.GetProperty("items").EnumerateArray().ToList();
+        Assert.Equal(2, items.Count);
+
+        var expected = new[] { gemeinschaft, "Gesundheit", rassismus, "rassistisch" }
+            .OrderBy(m => m, StringComparer.OrdinalIgnoreCase).ToArray();
+        foreach (var item in items)
+        {
+            Assert.Equal(expected, item.GetProperty("cueBox").EnumerateArray().Select(m => m.GetString()).ToArray());
+            Assert.Equal(JsonValueKind.Null, item.GetProperty("hint").ValueKind);
+            Assert.Equal(JsonValueKind.Null, item.GetProperty("choices").ValueKind);
+        }
+    }
+
+    // The same exercise on the old stage "translation + free text": no box, the hint stays at the gap. Red if the box
+    // leaked onto every stage (it would replace the hint where the author chose the per-gap help).
+    [Fact]
+    public async Task Andere_Stufe_Behaelt_Den_Hinweis_An_Der_Luecke()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var (exerciseId, rassismus, _) = await CreateCueBoxClozeAsync(father);
+
+        var data = await father.GetFromJsonAsync<JsonElement>(
+            $"/api/v1/creator/exercises/{exerciseId}/preview?stage={(int)ClozeStage.TranslationFreeText}");
+        var first = data.GetProperty("items").EnumerateArray().First();
+        Assert.Equal(JsonValueKind.Null, first.GetProperty("cueBox").ValueKind);
+        Assert.Equal(rassismus, first.GetProperty("hint").GetString());
+    }
+
+    // The child's exam card: the box rides along, the answer is graded like any free-text gap. Red if the test path
+    // drops the facet (the child would see a bare gap and nothing to choose a meaning from).
+    [Fact]
+    public async Task Abschlusstest_Karte_Traegt_Den_Wortkasten()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var (exerciseId, _, _) = await CreateCueBoxClozeAsync(father);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)ClozeStage.CueBoxFreeText);
+        var child = await TestApi.ChildAsync(factory);
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
+
+        var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
+        var next = await child.GetFromJsonAsync<JsonElement>($"{baseUrl}/{attemptId}/next");
+        var item = next.GetProperty("item");
+        Assert.Equal(4, item.GetProperty("cueBox").GetArrayLength());
+        Assert.Equal(JsonValueKind.Null, item.GetProperty("hint").ValueKind);
+    }
+
+    // Gap 1 "racism" and gap 2 "community" from the store, plus the distractors "rassistisch" and "Gesundheit".
+    // The store translations carry a unique suffix (other tests share the store), so they are returned.
+    private static async Task<(int exerciseId, string rassismus, string gemeinschaft)> CreateCueBoxClozeAsync(HttpClient father)
+    {
+        var rassismus = TestApi.UniqueName("Rassismus");
+        var gemeinschaft = TestApi.UniqueName("Gemeinschaft");
+        var (_, racism) = await TestApi.CreateStoreVocabAsync(father, "racism", rassismus);
+        var (_, community) = await TestApi.CreateStoreVocabAsync(father, "community", gemeinschaft);
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = TestApi.UniqueName("Englisch-Wortkasten") }));
+        var (seriesId, unitId) = await TestApi.CreateSeriesAndUnitAsync(father, subjectId);
+        var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{unitId}/cloze", new
+            {
+                title = TestApi.UniqueName("Wortkasten"),
+                orderIndex = 1,
+                rewardPoints = 10,
+                config = new
+                {
+                    text = "{{1}} has no place in our {{2}}.",
+                    gaps = new[]
+                    {
+                        new { index = 1, answer = "", vocabKey = racism },
+                        new { index = 2, answer = "", vocabKey = community },
+                    },
+                    cueDistractors = new[] { "rassistisch", " Gesundheit ", "rassistisch" },
+                },
+            }));
+        return (exerciseId, rassismus, gemeinschaft);
+    }
+
     // One preview check per answer against gap 0; returns whether each was graded right.
     private static async Task<bool[]> CheckAsync(HttpClient father, int exerciseId, params string[] answers)
     {

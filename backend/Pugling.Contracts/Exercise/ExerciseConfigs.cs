@@ -76,6 +76,12 @@ public class ClozeConfig
     public List<Gap> Gaps { get; set; } = new();
     /// <summary>Optional word pool to choose from.</summary>
     public List<string>? WordBank { get; set; }
+    /// <summary>
+    /// Extra meanings in the cue box (B-524): words in the hint language that solve no gap, so the box offers more
+    /// meanings than there are gaps. Curated on purpose - word families ("racism"/"racist") test the word class,
+    /// which a generated pool would hit only by chance. Shown only on the stage <c>CueBoxFreeText</c>.
+    /// </summary>
+    public List<string>? CueDistractors { get; set; }
 }
 /// <summary>
 /// A gap. If <paramref name="VocabKey"/> is set, the solution comes from the vocabulary store

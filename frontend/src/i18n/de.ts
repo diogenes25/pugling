@@ -284,6 +284,7 @@ export const de = {
       otherImage: "🔄 anderes Bild",
     },
     test: {
+      cueBox: "Wortkasten",
       victory: "SIEG!",
       almost: "FAST!",
       stage1: "Zeigen",

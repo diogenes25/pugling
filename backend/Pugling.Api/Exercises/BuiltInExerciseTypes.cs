@@ -187,7 +187,7 @@ public sealed class ClozeExerciseType : ExerciseTypeBase
     public override ExerciseTypeManifest Manifest { get; } = new(
         ExerciseTypeKeys.Cloze, "Lückentext", "cloze", 1, "cloze",
         ExerciseCheckMode.StudyPlanTest, "tests", LearningMethod.Cloze,
-        ["wordBank", "translation", "letterHints", "vocabStore"], ItemNoun: "Lücken", ItemNounOne: "Lücke");
+        ["wordBank", "translation", "letterHints", "vocabStore", "cueBox"], ItemNoun: "Lücken", ItemNounOne: "Lücke");
 
     /// <inheritdoc/>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson)
@@ -278,12 +278,32 @@ public sealed class ClozeExerciseType : ExerciseTypeBase
     // Stateless; the same comparison that grades the child's pick decides whether a tile solves a gap.
     private static readonly AnswerGrader Grader = new();
 
+    /// <summary>
+    /// The cue box (B-524): the meaning of every gap (the store translation) plus the author's distractors, trimmed,
+    /// one entry per spelling and sorted - the same on every card of the exercise, like the word bank above, so neither
+    /// the position nor a per-card difference gives the mapping away. A gap without a store meaning adds nothing (a
+    /// missing store key only leaves a placeholder hint, which is no meaning). An empty box is still a box: the stage
+    /// withholds the per-gap hint either way.
+    /// </summary>
+    public override IReadOnlyList<string>? CueBox(string configJson, IReadOnlyList<ContentItem> items, int stage)
+    {
+        if ((ClozeStage)stage != ClozeStage.CueBoxFreeText) return null;
+        var config = Deserialize<ClozeConfig>(configJson);
+        var meanings = items.Where(i => !string.IsNullOrWhiteSpace(i.Answer)).Select(i => i.Hint);
+        return [.. meanings.Concat(config.CueDistractors ?? [])
+            .Where(m => !string.IsNullOrWhiteSpace(m))
+            .Select(m => m!.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(m => m, StringComparer.OrdinalIgnoreCase)];
+    }
+
     /// <inheritdoc/>
     public override IReadOnlyList<StageOption> StageOptions { get; } =
     [
         new((int)ClozeStage.TranslationWordBank, "Wortbank"),
         new((int)ClozeStage.TranslationFreeText, "Übersetzung + Freitext"),
         new((int)ClozeStage.FreeText, "Freitext"),
+        new((int)ClozeStage.CueBoxFreeText, "Wortkasten + Freitext"),
     ];
 }
 
