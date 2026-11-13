@@ -12,13 +12,13 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (49)
+### Offen (47)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-465](B-465-ki-lueckentext-mehrdeutig-und-verraten.md) | Ein KI-Lückentext nach dem Umbau: Titel passt nicht, Auswahl steht im Satz, Zeitformen ohne Alternative | Defekt | `geschaetzt` | P2 | S | backend | — |
-| [B-532](B-532-netzfehler-beim-bewerten-rueckt-still-weiter.md) | Ein Netzfehler beim Bewerten lässt eine getippte Karte still weiterrücken | Defekt | `geschaetzt` | P2 | S | frontend | — |
-| [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `geschaetzt` | P2 | XS | backend | — |
+| [B-543](B-543-bonus-deckel-verbrennt-einmal-uebung.md) | Nach erreichtem Bonus-Deckel verbrennt eine Einmal-Übung für 0 Münzen | Defekt | `idee` | P2 | S | beides | — |
+| [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `in-arbeit` | P2 | XS | backend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-469](B-469-lernkontrolle-selbsteinschaetzung-und-typen-ohne-test.md) | Prüfauftrag: Der Vokabeltest ist per Vorgabe eine Selbsteinschätzung, Grammatik und Übersetzung haben keinen Test | Frage | `idee` | P2 | — | beides | — |
 | [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder | Wunsch | `geschaetzt` | P2 | L | beides | — |
@@ -30,19 +30,17 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-249](B-249-probeklausur-mit-notenprognose.md) | Eine Probeklausur über das Bündel einer Klassenarbeit, mit Notenprognose | Wunsch | `idee` | P2 | — | — | — |
 | [B-529](B-529-erklaerung-nach-der-antwort.md) | Erklärung nach der Antwort | Wunsch | `idee` | P2 | — | beides | — |
 | [B-410](B-410-tor-null-element-ueber-alle-body-listen.md) | Reflexiver Wächter: jede Liste in jedem `[FromBody]`-Graphen meldet ein `null`-Element als 400 | Aufräumen | `geschaetzt` | P2 | M | backend | — |
-| [B-433](B-433-vorschau-des-vaters-verbraucht-die-einfuehrung.md) | Spielt der Vater eine Übungsrunde des Kindes, sind dessen neue Wörter danach „schon gesehen" | Defekt | `geschaetzt` | P3 | S | backend | — |
-| [B-435](B-435-umfang-nur-neue-fragt-nach-der-einfuehrung-nie.md) | Eine Position mit Umfang „nur neue" zeigt ihre Wörter seit B-419 nur noch – abgefragt werden sie nie | Defekt | `geschaetzt` | P3 | XS | backend | — |
-| [B-531](B-531-fokus-faellt-nach-aufdecken-auf-body.md) | Im Üben fällt der Fokus nach „Aufdecken“ und nach einer Selbsteinschätzung auf `body` | Defekt | `geschaetzt` | P3 | XS | frontend | — |
-| [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `geschaetzt` | P3 | XS | backend | — |
+| [B-540](B-540-planbau-sortierwechsel-verwirft-auswahl.md) | Im Planbau verwirft ein Sortierwechsel die gewählte Übung | Defekt | `idee` | P3 | XS | frontend | — |
+| [B-541](B-541-test-fokus-faellt-nach-aufdecken-auf-body.md) | Im Abschlusstest fällt der Fokus nach dem Aufdecken auf `body` | Defekt | `idee` | P3 | XS | frontend | — |
+| [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `in-arbeit` | P3 | XS | backend | — |
+| [B-404](B-404-fach-loeschen-laesst-reihe-mit-uebungen-fachlos.md) | Ein gelöschtes Fach lässt Reihen mit Übungen fachlos zurück | Frage | `in-arbeit` | P3 | XS | backend | — |
 | [B-328](B-328-inline-typen-put-verschiebt-lernstand.md) | Sollen die Inhaltslisten gespielter Übungen anderer Typen (und der Wort-Tausch) gesperrt sein? | Frage | `geschaetzt` | P3 | S | backend | — |
 | [B-384](B-384-reihe-anlegen-bestaetigung-auf-dem-handy.md) | Prüfauftrag: sieht man „steht im Katalog" auf dem Handy, wenn man unten auf „Reihe anlegen" drückt? | Frage | `geschaetzt` | P3 | XS | frontend | — |
-| [B-404](B-404-fach-loeschen-laesst-reihe-mit-uebungen-fachlos.md) | Ein gelöschtes Fach lässt Reihen mit Übungen fachlos zurück | Frage | `geschaetzt` | P3 | XS | backend | — |
 | [B-407](B-407-gespielte-uebung-sperrt-fachwechsel-dauerhaft.md) | Eine gespielte Übung mit einer Art des alten Fachs sperrt den Fachwechsel ihrer Reihe dauerhaft | Frage | `geschaetzt` | P3 | S | beides | — |
 | [B-432](B-432-erster-tag-einer-position-ohne-malus.md) | Prüfauftrag: darf der erste Tag einer Position am Tagesziel vorbei ohne Malus enden? | Frage | `geschaetzt` | P3 | S | backend | — |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `ausformuliert` | P3 | — | — | — |
+| [B-542](B-542-vater-runde-schreibt-lernstand-des-kindes.md) | Soll eine Übungsrunde des Vaters überhaupt in Verlauf und Lernstand des Kindes schreiben? | Frage | `idee` | P3 | — | backend | — |
 | [B-408](B-408-assistent-zeigt-keine-bewertung.md) | Der Plan-Assistent zeigt in seiner Übungsauswahl keine Bewertung – sein Zwilling im Planbau schon | Wunsch | `geschaetzt` | P3 | S | frontend | — |
-| [B-422](B-422-beinahe-treffer-tippfehler.md) | Prüfauftrag: soll ein Tippfehler („Beinahe-Treffer") verziehen werden – und wie? | Wunsch | `geschaetzt` | P3 | S | beides | — |
-| [B-437](B-437-artikel-toleranz-nur-bei-nomen.md) | Die Artikel-Toleranz greift auch dort, wo das erste Wort kein Artikel eines Nomens ist | Wunsch | `geschaetzt` | P3 | XS | backend | — |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `ausformuliert` | P3 | L | backend | Migration |
 | [B-16](B-16-positions-formular-umfang.md) | Prüfauftrag: deckt das Positions-Edit-Formular alle Felder ab? | Wunsch | `ausformuliert` | P3 | S | frontend | — |
 | [B-20](B-20-ki-supervisor-agent.md) | KI-Supervisor-Agent (Teil D) — erster Schritt: Übungen einem Plan zuweisen | Wunsch | `ausformuliert` | P3 | L | backend | — |
@@ -62,12 +60,12 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-527](B-527-belohnungsbox-als-truhe-zum-oeffnen.md) | Belohnungsbox als Truhe auf dem Pfad, die das Kind selbst öffnet | Wunsch | `idee` | P3 | — | beides | — |
 | [B-528](B-528-missionen-als-eigener-tab.md) | Missionen als eigener Tab mit Restzeit | Wunsch | `idee` | P3 | — | frontend | — |
 | [B-530](B-530-antwortzeit-ab-sichtbarer-karte.md) | Antwortzeit ab der sichtbaren Karte messen | Wunsch | `idee` | P3 | — | beides | — |
-| [B-445](B-445-seed-kind-ohne-klasse-und-fachlehrer.md) | Seed: „Sohn" hat weder Klasse noch Schulart, und Herr Schmidt trägt kein Fachlehrer-Profil | Aufräumen | `geschaetzt` | P3 | XS | backend | — |
+| [B-445](B-445-seed-kind-ohne-klasse-und-fachlehrer.md) | Seed: „Sohn" hat weder Klasse noch Schulart, und Herr Schmidt trägt kein Fachlehrer-Profil | Aufräumen | `in-arbeit` | P3 | XS | backend | — |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `geschaetzt` | P3 | S | backend | — |
 | [B-380](B-380-pflichtfeld-sperre-in-den-uebrigen-formularen.md) | Die Hausregel „Pflichtfeld leer → Speichern gesperrt" gilt erst auf der Lehrwerke-Seite | Aufräumen | `ausformuliert` | P3 | — | frontend | — |
 
 <details>
-<summary>Abgenommen (450)</summary>
+<summary>Abgenommen (456)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -380,6 +378,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-42](B-42-openapi-typen-generieren.md) | TypeScript-Typen aus dem OpenAPI-Dokument erzeugen statt von Hand pflegen | Aufräumen | `abgenommen` | P2 | M | beides | — |
 | [B-420](B-420-loesung-blitzt-als-toast.md) | Nach einer falschen Antwort blitzt die Lösung 1,6 s als Toast unter der nächsten Karte auf | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-421](B-421-antwort-toleranz-artikel.md) | Antwort-Toleranz: „Stadt" für „die Stadt" zählt als richtig | Wunsch | `abgenommen` | P2 | S | backend | — |
+| [B-422](B-422-beinahe-treffer-tippfehler.md) | Prüfauftrag: soll ein Tippfehler („Beinahe-Treffer") verziehen werden – und wie? | Wunsch | `abgenommen` | P3 | S | beides | — |
 | [B-424](B-424-uebungsauswahl-umfang-und-ausprobieren.md) | Die Übungsauswahl im Assistenten und im Planbau zeigt den Umfang nicht und bietet kein „Ausprobieren" | Wunsch | `abgenommen` | P2 | M | beides | — |
 | [B-425](B-425-kontoverlauf-gems-in-muenzspalte.md) | Der Buchungsverlauf zeigt Gem-Buchungen in der Spalte „Münzen" | Defekt | `abgenommen` | P3 | S | beides | — |
 | [B-426](B-426-fachlehrer-uebungstypen-aus-frontend-liste.md) | Fachlehrer-Profil: „Bevorzugte Übungstypen" zeigt vier rohe Schlüssel aus einer Frontend-Liste | Defekt | `abgenommen` | P3 | S | frontend | — |
@@ -389,7 +388,10 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-43](B-43-frontend-komponententests.md) | Die Doppelklick-Lücke in `useAction` – und die fehlende Ebene für unsichtbare Zusicherungen | Defekt | `abgenommen` | P3 | M | frontend | — |
 | [B-430](B-430-nach-test-diese-woerter-ueben.md) | Nach einem nicht bestandenen Test gibt es nur „Nochmal versuchen" – keinen Weg zum Üben | Wunsch | `abgenommen` | P3 | XS | frontend | — |
 | [B-431](B-431-uebungen-verwalten-startet-leer.md) | „Übungen verwalten" startet leer: erst ein Fach wählen, obwohl die Werkstatt „3 eigene Übungen" zählt | Wunsch | `abgenommen` | P3 | S | frontend | — |
+| [B-433](B-433-vorschau-des-vaters-verbraucht-die-einfuehrung.md) | Spielt der Vater eine Übungsrunde des Kindes, sind dessen neue Wörter danach „schon gesehen" | Defekt | `abgenommen` | P3 | S | backend | — |
+| [B-435](B-435-umfang-nur-neue-fragt-nach-der-einfuehrung-nie.md) | Eine Position mit Umfang „nur neue" zeigt ihre Wörter seit B-419 nur noch – abgefragt werden sie nie | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-436](B-436-reihe-loeschen-mit-unit-etappe-ungetestet.md) | Eine Reihe zu löschen, die nur eine Ziel-Etappe auf einer ihrer Units sperrt, prüft kein Test | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-437](B-437-artikel-toleranz-nur-bei-nomen.md) | Die Artikel-Toleranz greift auch dort, wo das erste Wort kein Artikel eines Nomens ist | Wunsch | `abgenommen` | P3 | XS | backend | — |
 | [B-438](B-438-pinhasher-zeittest-flackert-unter-last.md) | `PinHasher_Verify_RechnetAuchOhneGespeichertenHash` fiel einmal unter Last | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-439](B-439-loesung-in-angehaltener-karte-ungetestet.md) | Die sichtbare Lösung in der angehaltenen Karte prüft kein Test | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-44](B-44-grundprinzip-rollennamen.md) | Grundprinzip auf Supervisor/Student umschreiben — „Vater" ist keine Ebene | Aufräumen | `abgenommen` | P2 | XS | doku | — |
@@ -481,6 +483,8 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-525](B-525-sohn-startseite-als-schlangenpfad.md) | Sohn-Startseite als Schlangenpfad | Wunsch | `abgenommen` | P1 | L | beides | — |
 | [B-526](B-526-lektionsbildschirm-festes-raster.md) | Lektionsbildschirm nach festem Raster | Wunsch | `abgenommen` | P1 | L | frontend | — |
 | [B-53](B-53-wizard-doppelklick.md) | Zwei Klicks im Lehrplan-Assistenten legen zwei Kinder und zwei Pläne an | Defekt | `abgenommen` | P2 | S | frontend | — |
+| [B-531](B-531-fokus-faellt-nach-aufdecken-auf-body.md) | Im Üben fällt der Fokus nach „Aufdecken“ und nach einer Selbsteinschätzung auf `body` | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-532](B-532-netzfehler-beim-bewerten-rueckt-still-weiter.md) | Ein Netzfehler beim Bewerten lässt eine getippte Karte still weiterrücken | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-533](B-533-bonus-training-extra-muenzen.md) | Bonus-Training: Extra-Übungen zum aktuellen Thema für Extra-Münzen | Wunsch | `abgenommen` | P1 | L | beides | Migration |
 | [B-54](B-54-objectivecard-schreib-primitive.md) | Fünf Knöpfe im Vater-Web gehen an den Schreib-Primitiven vorbei | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-55](B-55-wegwerf-dateien-aufraeumen.md) | Die Tests räumen ihre Wegwerf-Dateien nicht weg | Aufräumen | `abgenommen` | P3 | S | beides | — |
@@ -524,7 +528,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 
 </details>
 
-### Wartet auf Zutun von außen (3)
+### Wartet auf Zutun von außen (4)
 
 Diese Stories kommen **im Repo nicht weiter** — es fehlt ein Schritt, den nur ein Mensch
 oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird gerade gebaut".
@@ -534,10 +538,11 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-423](B-423-assistent-klassenarbeit-termin-und-stufenleiter.md) | Der Assistent „Klassenarbeit vorbereiten" fragt den Termin, legt die Klassenarbeit an und baut die Stufenleiter | `ausformuliert` | Entscheidung des Nutzers (Offener Punkt 5) |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
+| [B-540](B-540-planbau-sortierwechsel-verwirft-auswahl.md) | Im Planbau verwirft ein Sortierwechsel die gewählte Übung | `idee` | B-534 (die parallele Sitzung baut PlanPositions.tsx um; nicht committet) |
 
-### Nach der Abnahme entgangen (175)
+### Nach der Abnahme entgangen (176)
 
-**Nachgeschaut: 425 von 450 abgenommenen** — und in 168 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 25 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 429 von 456 abgenommenen** — und in 169 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 27 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -716,9 +721,10 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-519](B-519-nachschau-reste-sprint-58.md) | Nachschau-Reste Sprint 58: die Meldung nennt eine Reihe, aber nicht, woher sie kommt | [B-516, B-482] | `abgenommen` |
 | [B-520](B-520-nachschau-reste-sprint-59.md) | Nachschau-Reste Sprint 59: eine Zone, die als „undefined" zurückkommt, und eine Zusicherung ohne Wirkung | [B-517] | `abgenommen` |
 | [B-521](B-521-nachschau-reste-sprint-60-62.md) | Nachschau-Reste Sprint 60–62: eine Zone, die nicht zurückkommt, und Lücken der Fallliste | [B-520, B-493, B-501, B-492] | `abgenommen` |
+| [B-543](B-543-bonus-deckel-verbrennt-einmal-uebung.md) | Nach erreichtem Bonus-Deckel verbrennt eine Einmal-Übung für 0 Münzen | [B-533] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (25) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (27) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -727,7 +733,11 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | --- | --- |
 | [B-207](B-207-kind-auswahlliste-ist-unkuratiert.md) | Die Auswahlliste des Kindes zeigt jedes Schlagwort, das je irgendwer getippt hat |
 | [B-375](B-375-heftseite-wird-uebungsentwurf.md) | Fotografierte Buchseiten werden zu Stoffnotizen einer Unit, aus denen eigene Übungen entstehen |
+| [B-422](B-422-beinahe-treffer-tippfehler.md) | Prüfauftrag: soll ein Tippfehler („Beinahe-Treffer") verziehen werden – und wie? |
 | [B-430](B-430-nach-test-diese-woerter-ueben.md) | Nach einem nicht bestandenen Test gibt es nur „Nochmal versuchen" – keinen Weg zum Üben |
+| [B-433](B-433-vorschau-des-vaters-verbraucht-die-einfuehrung.md) | Spielt der Vater eine Übungsrunde des Kindes, sind dessen neue Wörter danach „schon gesehen" |
+| [B-435](B-435-umfang-nur-neue-fragt-nach-der-einfuehrung-nie.md) | Eine Position mit Umfang „nur neue" zeigt ihre Wörter seit B-419 nur noch – abgefragt werden sie nie |
+| [B-437](B-437-artikel-toleranz-nur-bei-nomen.md) | Die Artikel-Toleranz greift auch dort, wo das erste Wort kein Artikel eines Nomens ist |
 | [B-442](B-442-capture-wochenmission-haengt-am-wochentag.md) | Die Doku-Capture der Wochenmission hängt am Wochentag |
 | [B-446](B-446-vokabel-tipp-zeigt-den-artikel-des-fragewortes.md) | Der Vokabel-Tipp zeigt den Artikel des Frageworts, nicht einen Hinweis auf die Lösung |
 | [B-458](B-458-grammatik-entwurf-verraet-die-loesung.md) | Ein KI-Entwurf vom Typ Grammar darf die Lösung schon in der Aufgabe nennen |
@@ -746,10 +756,8 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-494](B-494-mutantenprobe-je-zusicherung.md) | `mutant-probe.py` misst je Zusicherung, nicht nur je Test |
 | [B-521](B-521-nachschau-reste-sprint-60-62.md) | Nachschau-Reste Sprint 60–62: eine Zone, die nicht zurückkommt, und Lücken der Fallliste |
 | [B-523](B-523-mutantenprobe-env-und-unittest.md) | `mutant-probe.py` misst weder E2E auf Ausweichports noch Pythons unittest |
-| [B-524](B-524-vokabeltest-wie-in-der-schule.md) | Vokabeltest im Format der Schule: englische Lückensätze, deutscher Wortkasten, frei geschrieben |
-| [B-525](B-525-sohn-startseite-als-schlangenpfad.md) | Sohn-Startseite als Schlangenpfad |
-| [B-526](B-526-lektionsbildschirm-festes-raster.md) | Lektionsbildschirm nach festem Raster |
-| [B-533](B-533-bonus-training-extra-muenzen.md) | Bonus-Training: Extra-Übungen zum aktuellen Thema für Extra-Münzen |
+| [B-531](B-531-fokus-faellt-nach-aufdecken-auf-body.md) | Im Üben fällt der Fokus nach „Aufdecken“ und nach einer Selbsteinschätzung auf `body` |
+| [B-532](B-532-netzfehler-beim-bewerten-rueckt-still-weiter.md) | Ein Netzfehler beim Bewerten lässt eine getippte Karte still weiterrücken |
 
 </details>
 
@@ -901,6 +909,9 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-523](B-523-mutantenprobe-env-und-unittest.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-530](B-530-antwortzeit-ab-sichtbarer-karte.md) | `idee` | `unverifiziert: true` |
 | [B-533](B-533-bonus-training-extra-muenzen.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
+| [B-540](B-540-planbau-sortierwechsel-verwirft-auswahl.md) | `idee` | `unverifiziert: true` |
+| [B-542](B-542-vater-runde-schreibt-lernstand-des-kindes.md) | `idee` | `unverifiziert: true` |
+| [B-543](B-543-bonus-deckel-verbrennt-einmal-uebung.md) | `idee` | `unverifiziert: true` |
 
 <details>
 <summary>Verworfen (33)</summary>

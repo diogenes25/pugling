@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/student]
 aliases: [Stilles Weiterrücken bei Netzfehler]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: S
@@ -156,3 +156,4 @@ Runde stellt die E2E-Umgebung nicht zuverlässig her; der Rollengang prüft die 
 
   Die 13 Mutanten der ersten Tabelle am umgebauten Stand neu gemessen (AK 2/3/5 jetzt :504/:505): alle 13 rot,
   Grundlinie danach grün. Gemessen an `cf07416f + Arbeitsbaum geändert`, 2026-11-13. Vitest 934/934, `tsc -b` 0.
+- **2026-11-13** — **abgenommen** mit Commit `699b02a7` (Sprint 69, Backlog-Lauf 2026-11-13). Verifikation: Backend 1555/1555 grün (dotnet test Pugling.sln -c Release), Vitest 937/937, tsc -b sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: `frontend-reviewer` â€“ zwei Sollte-Funde (Neuaufbau der AntwortflÃ¤che, Feld nicht wirklich gesperrt) im selben Sprint behoben und mit Tests belegt. Rollengang: Playwright gegen frisch gestartete Server auf Ausweichports (API 5211, Web 5184) nach dem letzten Edit – lektion, erstbegegnung, karten-umdrehen, full-flow, test-durchgefallen-ueben, uebung-abbruch, pfad, bonus, artikel-pflicht: **10 passed**. Vater und Creator sind Regressionszeugen (Suite grün, kein Pfad ihrer Ebene im Diff außer der Vater-Wand von B-433).

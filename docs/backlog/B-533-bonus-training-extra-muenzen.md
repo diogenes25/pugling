@@ -12,6 +12,7 @@ quelle: "Nutzer im Chat 2026-11-13: neben dem Lernpfad Extra-Übungen für Extra
 grund: ""
 ersetzt_durch: []
 wartet_auf: ""
+nachgeschaut: 2026-11-13
 ---
 
 # B-533 · Bonus-Training: Extra-Übungen zum aktuellen Thema für Extra-Münzen

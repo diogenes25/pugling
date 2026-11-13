@@ -73,6 +73,46 @@ ab, die Artikel-Toleranz gilt nur für Nomen, und ein Tippfehler ist als solcher
 `User.IsStudent()` wie im Test-Controller; kein Vertragsbruch, nur das additive Feld `misspelled`. Keine Migration.
 Testweg: Integrationstests je Story, Vitest/RTL für `SohnPractice`, Mutanten-Probe je AK-Fall, volle Suite.
 
+## Iteration 69 — umgesetzt
+
+Commit `699b02a7`. Backend zuerst (B-435 `ScopeMatch` mit Tag, B-437 `MayDropArticle`, B-433 Rollen-Wand und
+`noVerdict`, B-422 `ReviewOutcome.Misspelled`), dann die Arcade (B-531 Fokus-Effekt an `[phase, idx]`, B-532
+Halt mit „Noch einmal senden“/„Überspringen“, B-422 Etikett im Blatt). Verifikation: Backend **1555/1555**,
+Vitest **937/937**, `tsc -b` sauber; Mutanten: 16/16 Backend, 22/22 Frontend rot am benannten Test.
+
+Review: `frontend-reviewer` ohne Blocker, zwei Sollte-Funde zu B-532 (Neuaufbau der Antwortfläche verliert die
+Markierung; Feld nicht wirklich gesperrt) **im selben Sprint behoben**. `pugling-reviewer` ohne Blocker; der
+Kommentar zur Einführungs-Wand behauptete mehr, als sie hält – eingegrenzt, die Frage dahinter ist **B-542**. Aus dem
+Bau: **B-541** (Fokus im Abschlusstest, dazu der `plan_inactive`-Fall aus dem Review).
+
+## Runde 1 — Rollengang / Abnahme (Sprint 69)
+
+Playwright gegen frisch gestartete Server auf Ausweichports (API 5211, Web 5184), nach dem letzten Edit:
+`lektion`, `erstbegegnung`, `karten-umdrehen`, `full-flow`, `test-durchgefallen-ueben`, `uebung-abbruch`, `pfad`,
+`bonus`, `artikel-pflicht` – **10 passed**.
+
+- **Sohn — abgenommen:** „Nach dem Aufdecken bin ich gleich bei den Knöpfen, und wenn das WLAN hängt, ist meine
+  Antwort nicht einfach weg.“ Gefühl (Ton der Meldung) ist nicht maschinell beurteilt.
+- **Vater — Regressionszeuge:** Suite grün; seine Ebene ist nur über die Wand von B-433 berührt (seine Vorschau
+  verbraucht nichts mehr).
+- **Creator — Regressionszeuge:** Suite grün, kein Creator-Pfad im Diff.
+
+## Retrospektive (Sprint 69)
+
+**Nachschau:** B-524, B-525, B-526, B-533 (die zuletzt abgenommenen vor diesem Lauf) mit `pugling-reviewer` gegen ihre
+Commits nachgesehen, `nachgeschaut: 2026-11-13` gesetzt. Gefunden: **ein** Defekt in B-533 – nach erreichtem
+Tagesdeckel verbrennt eine Einmal-Übung für 0 Münzen, weil der Deckel nur bei der Abgabe greift → **B-543**
+(`entgangen_bei: [B-533]`), dazu ein Randfall an derselben Stelle. B-524/B-525/B-526 sauber.
+
+**Was die eigenen Tore durchgelassen haben:** Zwei Funde dieses Laufs haben dieselbe Form wie der aus der Nachschau –
+eine Grenze, die nur an einem Ende des Weges wirkt: der B-533-Deckel (nur bei der Abgabe) und die B-532-Sperre
+(sperrte die Knöpfe, nicht das Feld). Mutanten konnten das nicht finden: sie mutieren, was gebaut ist, nicht das
+fehlende Gegenstück. Gefunden hat es jeweils ein Reviewer, der am anderen Ende gesucht hat.
+
+**Der eine Mechanismus:** eine Prüfregel im Brief des `pugling-reviewer` (`.claude/agents/pugling-reviewer.md`,
+„Eine Grenze gilt an beiden Enden des Weges“) – kein neues Tor, darum kein Halt. Bewusst ungedeckt: das Frontend
+(die gleiche Regel im `frontend-reviewer` wäre die zweite Zeile; erst messen, ob sie dort trägt).
+
 ## Stakeholder-Entscheidungen ohne Sprint
 
 - **B-217, B-247, B-374 verworfen (geteilt):** Eine Sammel-Story trägt keine eigene Arbeit; der Index führt jede

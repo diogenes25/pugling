@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, rolle/student, rolle/creator, lerntechnik/vokabeln]
+tags: [typ/story, status/abgenommen, bereich/training, rolle/student, rolle/creator, lerntechnik/vokabeln]
 aliases: [Artikel-Toleranz bei Nicht-Nomen, a few ist nicht few]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Wunsch
 groesse: XS
@@ -120,3 +120,4 @@ bleibt Regressionszeuge.
   | B437-AK1+4 | backend/Pugling.Api/Services/Shared/ExerciseContentResolver.cs:115 | red | red |
   | B437-AK2 | backend/Pugling.Api/Services/Shared/ExerciseContentResolver.cs:130 | red | red |
   | B437-AK3 | backend/Pugling.Api/Services/Shared/ExerciseContentResolver.cs:130 | red | red |
+- **2026-11-13** — **abgenommen** mit Commit `699b02a7` (Sprint 69, Backlog-Lauf 2026-11-13). Verifikation: Backend 1555/1555 grün (dotnet test Pugling.sln -c Release), Vitest 937/937, tsc -b sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: `pugling-reviewer` ohne Befund (Toleranz an der Quelle, alle Leser sehen dieselbe Regel). Rollengang: Playwright gegen frisch gestartete Server auf Ausweichports (API 5211, Web 5184) nach dem letzten Edit – lektion, erstbegegnung, karten-umdrehen, full-flow, test-durchgefallen-ueben, uebung-abbruch, pfad, bonus, artikel-pflicht: **10 passed**. Vater und Creator sind Regressionszeugen (Suite grün, kein Pfad ihrer Ebene im Diff außer der Vater-Wand von B-433).

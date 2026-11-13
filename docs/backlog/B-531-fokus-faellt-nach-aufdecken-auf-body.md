@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/student]
 aliases: [Fokus nach Aufdecken]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: XS
@@ -130,3 +130,4 @@ Rollengang-Zeuge des Sohns.
   `SohnTest.tsx` hat **keinen** Fokus-Effekt, `onReveal` setzt nur `revealed` (`:241`) – dieselbe Lücke im Test ist
   wahrscheinlich und gehört als eigene Story angelegt. E2E-Zeugen: `lektion.spec.ts`, `erstbegegnung.spec.ts`,
   `karten-umdrehen.spec.ts`.
+- **2026-11-13** — **abgenommen** mit Commit `699b02a7` (Sprint 69, Backlog-Lauf 2026-11-13). Verifikation: Backend 1555/1555 grün (dotnet test Pugling.sln -c Release), Vitest 937/937, tsc -b sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: `frontend-reviewer` ohne blockierenden Befund; zwei Sollte-Funde zu B-532 im selben Sprint behoben. Rollengang: Playwright gegen frisch gestartete Server auf Ausweichports (API 5211, Web 5184) nach dem letzten Edit – lektion, erstbegegnung, karten-umdrehen, full-flow, test-durchgefallen-ueben, uebung-abbruch, pfad, bonus, artikel-pflicht: **10 passed**. Vater und Creator sind Regressionszeugen (Suite grün, kein Pfad ihrer Ebene im Diff außer der Vater-Wand von B-433).

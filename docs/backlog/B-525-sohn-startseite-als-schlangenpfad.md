@@ -12,6 +12,7 @@ quelle: "docs/duolingo-snipwise-vergleich-plan.md#entscheidung-am-prototyp (Vari
 grund: ""
 ersetzt_durch: []
 wartet_auf: ""
+nachgeschaut: 2026-11-13
 ---
 
 # B-525 · Sohn-Startseite als Schlangenpfad

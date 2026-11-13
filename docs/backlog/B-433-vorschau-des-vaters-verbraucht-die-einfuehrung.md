@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, rolle/supervisor, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/training, rolle/supervisor, rolle/student]
 aliases: [Vater-Übung verbraucht Einführung, Supervisor-Runde führt ein]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: S
@@ -147,3 +147,4 @@ Rollengang des Sohns; `/smoke-test` nicht nötig (kein neuer Endpunkt).
   | B433-AK2 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:404 | red | red |
   | B433-AK3 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:399 | red | red |
   | B433-AK4 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:399 | red | red |
+- **2026-11-13** — **abgenommen** mit Commit `699b02a7` (Sprint 69, Backlog-Lauf 2026-11-13). Verifikation: Backend 1555/1555 grün (dotnet test Pugling.sln -c Release), Vitest 937/937, tsc -b sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: `pugling-reviewer` ohne Blocker; der Kommentar zur Wand ist auf `PositionItemProgress` eingegrenzt, die grÃ¶ÃŸere Frage steht als [B-542](B-542-vater-runde-schreibt-lernstand-des-kindes.md). Rollengang: Playwright gegen frisch gestartete Server auf Ausweichports (API 5211, Web 5184) nach dem letzten Edit – lektion, erstbegegnung, karten-umdrehen, full-flow, test-durchgefallen-ueben, uebung-abbruch, pfad, bonus, artikel-pflicht: **10 passed**. Vater und Creator sind Regressionszeugen (Suite grün, kein Pfad ihrer Ebene im Diff außer der Vater-Wand von B-433).

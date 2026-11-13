@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, rolle/supervisor, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/training, rolle/supervisor, rolle/student]
 aliases: [Umfang Nur neue nach B-419, Scope New fragt nie]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: XS
@@ -120,3 +120,4 @@ Rollengang per `curl` (Position über die API auf `New` stellen, als Sohn zwei R
   | B435-AK2 | backend/Pugling.Api/Services/Shared/PositionPlayService.cs:428 | red | red |
   | B435-AK3 | backend/Pugling.Api/Services/Shared/PositionPlayService.cs:428 | red | red |
   | B435-AK4 | backend/Pugling.Api/Services/Shared/PositionPlayService.cs:429 | red | red |
+- **2026-11-13** — **abgenommen** mit Commit `699b02a7` (Sprint 69, Backlog-Lauf 2026-11-13). Verifikation: Backend 1555/1555 grün (dotnet test Pugling.sln -c Release), Vitest 937/937, tsc -b sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: `pugling-reviewer` ohne Befund (ein Aufrufer `DueItemIndicesAsync`, Runde und `DueCount` zÃ¤hlen gleich). Rollengang: Playwright gegen frisch gestartete Server auf Ausweichports (API 5211, Web 5184) nach dem letzten Edit – lektion, erstbegegnung, karten-umdrehen, full-flow, test-durchgefallen-ueben, uebung-abbruch, pfad, bonus, artikel-pflicht: **10 passed**. Vater und Creator sind Regressionszeugen (Suite grün, kein Pfad ihrer Ebene im Diff außer der Vater-Wand von B-433).

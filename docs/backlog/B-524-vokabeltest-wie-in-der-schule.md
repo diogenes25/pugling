@@ -12,6 +12,7 @@ quelle: "Echter Vokabeltest von Friedrich (Englisch, 11.11.2026), abgeschrieben 
 grund: ""
 ersetzt_durch: []
 wartet_auf: ""
+nachgeschaut: 2026-11-13
 ---
 
 # B-524 · Vokabeltest im Format der Schule: englische Lückensätze, deutscher Wortkasten, frei geschrieben
