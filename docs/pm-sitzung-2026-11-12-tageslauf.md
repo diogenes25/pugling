@@ -458,3 +458,9 @@ beiden Pfaden. Mutanten Z1–Z3 rot. **Retro:** Das Review fing einen 🔴, den 
 bestehenden Test angehängter Fall veränderte dessen Ausgangslage, die folgenden Zusicherungen wurden leer. Die rote Probe
 hätte das nicht gezeigt (meine Mutanten zielten auf den neuen Fall). Regel steht schon in CLAUDE.md; kein neuer Mechanismus.
 Lehre: einen neuen Fall nie mitten in einen bestehenden Test hängen, der danach noch zusichert.
+
+## Abschluss nach dem Stop-Hook (05:28)
+
+Playwright gegen den Endstand `6c7a5ce`: **141/141** (9,8 min, Ausweichports). Suite 1483/1483. Stellvertretend entschieden
+und gebaut: B-430 (c), B-446, B-501 Punkt 2, B-480 Punkt 3; dazu B-523 (Werkzeug). Neu offen: B-522 (Leitner-Leerrunde nach
+„▶ Üben", `Wunsch`). Veto zu jeder stellvertretenden Entscheidung beim Nutzer; nichts gepusht.
