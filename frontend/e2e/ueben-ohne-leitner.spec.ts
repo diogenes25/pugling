@@ -35,9 +35,11 @@ test("Ohne Leitner-Kasten kann das Kind trotzdem erst üben, dann testen", async
     { exerciseId, stage: 4, cadence: "Daily", useLeitner: false });
 
   await sohnLogin(page, { id: String(childId), pin });
-  await expect(page.getByRole("link", { name: /TEST/ })).toBeVisible();
-  // Der Kern: neben dem Test steht ein Weg zum Üben – und er zeigt das Wort mit Lösung, bevor gefragt wird.
-  await page.getByRole("link", { name: "▶ ÜBEN", exact: true }).click();
+  await page.locator(".pfad-knoten").click();
+  const blatt = page.getByRole("dialog");
+  await expect(blatt.getByRole("link", { name: "🎯 Test", exact: true })).toBeVisible();
+  // Der Kern: „Los" führt zuerst ins Üben, nicht in den Test – und zeigt das Wort mit Lösung, bevor gefragt wird.
+  await blatt.getByRole("link", { name: "▶ LOS", exact: true }).click();
   await expect(page.getByText(`le pont ${RUN}`, { exact: true })).toBeVisible();
   await expect(page.getByText("→ die Brücke")).toBeVisible();
 });

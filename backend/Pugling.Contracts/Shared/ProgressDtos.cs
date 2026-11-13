@@ -13,11 +13,20 @@ namespace Pugling.Contracts.Shared;
 /// <c>IntroducedCount</c> of <c>PoolSize</c> is how far the child has come through the position's contents - with a
 /// daily dose (B-04) the one figure that says how much of the material is still ahead.
 /// </para>
+/// <para>
+/// <c>PenaltyCoins</c> is the position's coin penalty for a missed goal (0 = none), shown to the child on purpose
+/// (B-525): a price that only appears as a booking the next morning cannot steer anything. It is the configured
+/// amount, not a forecast - it is only booked for a closed daily/weekly period of a plan that was due, and it is
+/// always 0 for a free position (<c>Cadence = None</c>), which is never charged.
+/// <c>SeriesUnitId</c>/<c>SeriesUnitLabel</c> name the textbook unit of the exercise, so a client can group
+/// consecutive positions into the sections the child knows from the book.
+/// </para>
 /// </summary>
 public record PositionStatus(
     int PositionId, int ExerciseId, string ExerciseTitle, string ExerciseType, string Renderer,
     int Order, GoalCadence Cadence, ExerciseCheckMode CheckMode, bool UseLeitner, bool Testable,
-    bool GoalMet, int DueCount, int PoolSize, int PointsGoalMet, int IntroducedCount);
+    bool GoalMet, int DueCount, int PoolSize, int PointsGoalMet, int IntroducedCount,
+    int PenaltyCoins, int SeriesUnitId, string SeriesUnitLabel);
 
 /// <summary>Daily rollup of a study plan across its positions.</summary>
 public record DayOverview(

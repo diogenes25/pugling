@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { vaterLogin, sohnLogin } from "./helpers";
+import { vaterLogin, sohnLogin, pfadStart } from "./helpers";
 
 /*
  * B-62 (Punkt 3): "Runde beenden" war bisher nur auf Sichtbarkeit geprüft (`full-flow.spec.ts`), nie
@@ -59,7 +59,7 @@ test("Runde beenden schließt die Sitzung serverseitig (EndedAt gesetzt)", async
     }
   });
 
-  await sohn.locator(".card", { hasText: EXERCISE }).getByRole("link", { name: /ÜBEN/ }).click();
+  await pfadStart(sohn, "practice", EXERCISE);
   await expect(sohn.locator(".pill.cyan", { hasText: /Karte \d+ \/ \d+/ })).toBeVisible();
   await expect.poll(() => sessionId).not.toBeNull();
 

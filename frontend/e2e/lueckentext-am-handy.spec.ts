@@ -1,5 +1,5 @@
 import { test, expect, type APIRequestContext } from "@playwright/test";
-import { sohnLogin } from "./helpers";
+import { sohnLogin, pfadStart } from "./helpers";
 
 /*
  * B-466 – ein Lückentext im Tagestest, am Handy (375 × 812, das kleinste Format aus dem Prüfgang). Der Stoff entsteht
@@ -56,7 +56,8 @@ test("Lückentext im Tagestest am Handy: eine Zeile je Satz, kein Zoom-Feld", as
 
   await sohnLogin(page, { id: String(childId), pin: childPin });
   // Über den Link der Tagesmission, nicht per `goto`: ein Neuladen verliert die Anmeldung.
-  await page.locator(`a[href="/sohn/test/${positionId}"]`).click();
+  await pfadStart(page, "test");
+  await expect(page).toHaveURL(new RegExp(`/sohn/test/${positionId}$`));
 
   const prompt = page.locator(".cloze-prompt");
   await expect(prompt).toContainText("2. Be,");
@@ -118,7 +119,8 @@ test("Kopfzeile des Tagestests am Handy: auch mit „Selbstcheck“ und zehn Fra
     { exerciseId, stage: 2, cadence: "Daily", useLeitner: false, orderStrategy: "Serial" });
 
   await sohnLogin(page, { id: String(childId), pin: childPin });
-  await page.locator(`a[href="/sohn/test/${positionId}"]`).click();
+  await pfadStart(page, "test");
+  await expect(page).toHaveURL(new RegExp(`/sohn/test/${positionId}$`));
 
   await expect(page.locator(".pill.mag", { hasText: "Selbstcheck" })).toBeVisible();
   await expect(page.locator(".pill.cyan", { hasText: /10/ })).toBeVisible();

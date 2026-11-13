@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useChosenPlan } from "./useChosenPlan";
-import { BadgesGallery } from "./GamificationPanels";
+import { BadgesGallery, MissionsPanel } from "./GamificationPanels";
 import { MyObjectives } from "./MyObjectives";
 import type { OverviewResponse, ProgressResponse } from "../lib/types";
 
@@ -42,23 +42,9 @@ function ProgressForPlan({ planId }: { planId: number }) {
       </div>
       <p className="sub">{t("progress.summary", { title: o.title, done: pr.daysComplete, total: pr.totalDays, streak: pr.currentStreak })}</p>
 
-      <div className="card">
-        <div className="row" style={{ marginBottom: 8 }}>
-          <b style={{ fontSize: 13 }}>{t("progress.myExercises")}</b>
-          <span className="sub" style={{ marginLeft: "auto" }}>{t("progress.today", { met: o.today.goalsMet, total: o.today.goalsTotal })}</span>
-        </div>
-        {o.today.positions.map((pos) => (
-          <div className="row" key={pos.positionId} style={{ padding: "4px 0" }}>
-            {/* Eine freie Position hat keine Pflicht und darum kein Häkchen – der Server meldet sie als erfüllt (B-467). */}
-            <span>{pos.cadence === "None" ? "•" : pos.goalMet ? "✅" : "⬜"}</span>
-            <b>{pos.exerciseTitle}</b>
-            <span className="sub" style={{ marginLeft: "auto" }}>
-              {pos.cadence === "Daily" ? t("home.cadenceDaily") : pos.cadence === "Weekly" ? t("home.cadenceWeekly") : t("home.cadenceNone")}
-            </span>
-          </div>
-        ))}
-        {o.today.positions.length === 0 && <p className="sub">{t("progress.noExercises")}</p>}
-      </div>
+      {/* Die Positionen stehen nicht mehr hier: sie sind der Pfad auf der Startseite (B-525). Die Missionen sind
+          von dort hierher gezogen – der Pfad soll ohne Scrollen bis zum nächsten Knoten reichen. */}
+      <MissionsPanel />
 
       <div className="card">
         <div className="row" style={{ marginBottom: 8 }}>

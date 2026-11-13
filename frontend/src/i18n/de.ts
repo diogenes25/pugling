@@ -5,7 +5,7 @@
  */
 export const de = {
   sohn: {
-    nav: { home: "Basis", path: "Weg", account: "Konto", shop: "Shop", skins: "Skins" },
+    nav: { home: "Pfad", trophies: "Erfolge", account: "Konto", shop: "Shop", skins: "Skins" },
     hud: {
       // `_one`/`_other`: i18next wählt die Form nach `count` (B-298) – die Chips werden vorgelesen.
       coins_one: "{{count}} Münze",
@@ -35,12 +35,25 @@ export const de = {
       cadenceDaily: "Tagesziel",
       cadenceWeekly: "Wochenziel",
       cadenceNone: "frei",
-      open: "offen",
-      practice: "▶ ÜBEN",
-      practiceDue: "▶ ÜBEN ({{count}} fällig)",
-      playThrough: "▶ DURCHSPIELEN",
       introduced: "{{count}} von {{total}} schon kennengelernt",
-      test: "TEST",
+    },
+    // Der Lernpfad auf der Startseite (B-525).
+    pfad: {
+      section: "Abschnitt {{number}}",
+      start: "START",
+      next: "als Nächstes dran",
+      go: "▶ LOS",
+      practice: "▶ Üben",
+      test: "🎯 Test",
+      close: "Schließen",
+      goalMet: "Ziel erfüllt",
+      hoursLeft_one: "noch {{count}} Std.",
+      hoursLeft_other: "noch {{count}} Std.",
+      untilSunday: "bis Sonntag",
+      penalty_one: "sonst −{{count}} Münze",
+      penalty_other: "sonst −{{count}} Münzen",
+      due_one: "{{count}} fällig",
+      due_other: "{{count}} fällig",
     },
     missions: {
       title: "🎯 Missionen",
@@ -133,20 +146,17 @@ export const de = {
       DailyBoxGems: "Tägliche Belohnungsbox (Gems)",
     },
     progress: {
-      noPlan: "Wähle zuerst eine Mission auf der Basis.",
-      toHome: "Zur Basis",
+      noPlan: "Wähle zuerst eine Mission auf dem Pfad.",
+      toHome: "Zum Pfad",
       loading: "Lade Fortschritt…",
-      title: "Trophäenweg",
+      title: "Erfolge",
       summary: "{{title}} · {{done}}/{{total}} Tage geschafft · Streak {{streak}} 🔥",
-      myExercises: "🎯 Meine Übungen",
-      today: "{{met}}/{{total}} heute",
-      noExercises: "Noch keine Übungen im Plan.",
       lastDays: "🔥 Letzte Tage",
       days_one: "{{count}} Tag",
       days_other: "{{count}} Tage",
       partly: "teils geschafft",
       complete: "Tag komplett",
-      toMission: "▶ Zur Tagesmission",
+      toMission: "▶ Zum Pfad",
     },
     objectives: {
       loading: "Lade Ziele…",

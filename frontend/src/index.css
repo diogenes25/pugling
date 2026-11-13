@@ -133,6 +133,59 @@ a { color: var(--cyan); }
 .sohn-nav a.active { color: var(--cyan); background: rgba(38, 217, 255, .1); }
 .sohn-nav .ic { font-size: 20px; }
 
+/* ---------- Lernpfad auf der Sohn-Startseite (B-525) ---------- */
+.pfad-abschnitt { display: flex; flex-direction: column; gap: 6px; }
+.pfad-banner {
+  display: flex; flex-direction: column; gap: 3px; padding: 12px 16px; border-radius: 18px;
+  background: linear-gradient(180deg, #2f6bff, #2148c9); box-shadow: 0 5px 0 0 #142f8c;
+}
+.pfad-banner span { font: 800 11px/1 var(--font-body); letter-spacing: .12em; text-transform: uppercase; opacity: .85; }
+.pfad-banner b { font-family: var(--font-display); font-size: 17px; }
+.pfad-schlange { display: flex; flex-direction: column; align-items: center; gap: 22px; padding: 34px 0 18px; }
+.pfad-zeile { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; width: 150px; }
+.pfad-knoten { position: relative; width: 96px; height: 96px; display: grid; place-items: center; border: 0; padding: 0; background: none; cursor: pointer; border-radius: 50%; }
+.pfad-ring { position: absolute; inset: 0; }
+.pfad-kern {
+  width: 70px; height: 70px; display: grid; place-items: center; border-radius: 50%; font-size: 30px;
+  background: linear-gradient(180deg, var(--cyan), var(--cyan-2)); box-shadow: 0 7px 0 0 #1550b8;
+  transition: transform .06s ease, box-shadow .06s ease;
+}
+.pfad-knoten:active .pfad-kern { transform: translateY(5px); box-shadow: 0 2px 0 0 #1550b8; }
+/* Erfüllt ist golden, frei ist ruhig – aber nie grau-gesperrt: jeder Knoten bleibt spielbar. */
+.pfad-knoten.erfuellt .pfad-kern { background: linear-gradient(180deg, var(--gold), var(--gold-2)); box-shadow: 0 7px 0 0 #b56a12; }
+.pfad-knoten.frei .pfad-kern { background: linear-gradient(180deg, #4a52a6, #343a86); box-shadow: 0 7px 0 0 #1f2460; }
+.pfad-knoten.naechste .pfad-kern { box-shadow: 0 7px 0 0 #1550b8, 0 0 0 6px rgba(38, 217, 255, .22); }
+.pfad-knoten:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.pfad-haken {
+  position: absolute; right: 4px; bottom: 6px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--lime); color: #04220f; font-weight: 900; border: 3px solid var(--bg-2);
+}
+.pfad-titel { font: 700 12.5px/1.25 var(--font-body); text-align: center; overflow-wrap: anywhere; }
+.pfad-frist { font: 800 11px/1.2 var(--font-body); color: #ff96aa; background: rgba(255, 77, 109, .18); padding: 4px 8px; border-radius: 12px; text-align: center; }
+/* Platz für die START-Blase: sie ragte sonst in Titel oder Frist des Knotens darüber. */
+.pfad-zeile.mit-start { margin-top: 16px; }
+.pfad-start {
+  position: absolute; top: -28px; z-index: 2; padding: 6px 12px; border-radius: 12px; background: var(--ink); color: var(--cyan-2);
+  font: 900 13px/1 var(--font-display); letter-spacing: .08em; animation: pfad-huepf 1.4s ease-in-out infinite;
+}
+.pfad-start::after { content: ""; position: absolute; left: 50%; bottom: -5px; width: 12px; height: 12px; background: var(--ink); transform: translateX(-50%) rotate(45deg); }
+@keyframes pfad-huepf { 50% { transform: translateY(-5px); } }
+.pfad-begleiter { position: absolute; top: 16px; }
+.pfad-schleier { position: fixed; inset: 0; z-index: 30; background: rgba(4, 6, 26, .6); display: flex; align-items: flex-end; justify-content: center; }
+.pfad-blatt {
+  width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 12px; border-radius: 22px 22px 0 0;
+  padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); background: var(--card-hi); border-top: 2px solid var(--stroke);
+  animation: pfad-hoch .18s ease-out;
+}
+@keyframes pfad-hoch { from { transform: translateY(40px); opacity: 0; } }
+.pfad-blatt-titel { flex: 1; font-family: var(--font-display); font-size: 18px; }
+.pfad-zu { flex: 0 0 auto; width: 40px; height: 40px; border: 0; border-radius: 50%; background: #171a44; color: var(--ink); font-size: 16px; cursor: pointer; }
+.pfad-zu:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .pfad-start, .pfad-blatt { animation: none; }
+  .pfad-kern { transition: none; }
+}
+
 /* Login */
 .center-col { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 16px; padding: 20px 22px calc(20px + env(safe-area-inset-bottom)); max-width: 480px; margin: 0 auto; width: 100%; }
 .heroes { display: flex; gap: 10px; justify-content: center; }

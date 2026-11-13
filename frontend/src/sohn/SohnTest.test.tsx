@@ -314,7 +314,7 @@ describe("SohnTest im Wartebild", () => {
     );
     expect(screen.getByText("Test wird vorbereitet…")).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "Zur Basis" }));
+    fireEvent.click(screen.getByRole("button", { name: "Zum Pfad" }));
 
     expect(await screen.findByText("BASIS")).toBeTruthy();
   });
@@ -344,7 +344,7 @@ describe("SohnTest im Wartebild", () => {
         </Routes>
       </MemoryRouter>,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Zur Basis" }));
+    fireEvent.click(screen.getByRole("button", { name: "Zum Pfad" }));
     fireEvent.click(await screen.findByRole("link", { name: "Laden" }));
 
     await act(async () => { antwort(start); await start.promise.catch(() => {}); await Promise.resolve(); });

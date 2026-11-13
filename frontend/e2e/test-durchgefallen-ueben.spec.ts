@@ -1,5 +1,5 @@
 import { test, expect, type APIRequestContext } from "@playwright/test";
-import { sohnLogin } from "./helpers";
+import { sohnLogin, pfadStart } from "./helpers";
 
 /*
  * B-430 (c) – nach einem nicht bestandenen Tagestest führt „▶ Üben“ in die Übungsrunde DERSELBEN Position. Die Regel,
@@ -42,8 +42,9 @@ test("nicht bestandener Test: „▶ Üben“ öffnet die Übungsrunde dieser Po
     { exerciseId, stage: 2, cadence: "Daily", useLeitner: false, orderStrategy: "Serial" });
 
   await sohnLogin(page, { id: String(childId), pin: childPin });
-  // Über den Link der Tagesmission, nicht per `goto`: ein Neuladen verliert die Anmeldung.
-  await page.locator(`a[href="/sohn/test/${positionId}"]`).click();
+  // Über den Knoten des Pfads, nicht per `goto`: ein Neuladen verliert die Anmeldung.
+  await pfadStart(page, "test");
+  await expect(page).toHaveURL(new RegExp(`/sohn/test/${positionId}$`));
 
   await page.getByRole("button", { name: "Aufdecken 🔄" }).click();
   await page.getByRole("button", { name: "Nicht gewusst" }).click();

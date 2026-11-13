@@ -40262,10 +40262,13 @@
           "goalMet",
           "introducedCount",
           "order",
+          "penaltyCoins",
           "pointsGoalMet",
           "poolSize",
           "positionId",
           "renderer",
+          "seriesUnitId",
+          "seriesUnitLabel",
           "testable",
           "useLeitner"
         ],
@@ -40350,9 +40353,28 @@
               "string"
             ],
             "format": "int32"
+          },
+          "penaltyCoins": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "seriesUnitId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "seriesUnitLabel": {
+            "type": "string"
           }
         },
-        "description": "Status of a single position for one day \u2013 enough for the student client to render the right action.\n\n\u0060Testable\u0060 is about **this day**, not merely about the exercise type: it is false on a free display\nstage (B-96), because the exam refuses that stage. A client therefore offers practice whenever the position\nuses Leitner or is not testable today \u2013 the two together always leave exactly one playable way in.\nIntroducedCount of PoolSize is how far the child has come through the position\u0027s contents - with a\ndaily dose (B-04) the one figure that says how much of the material is still ahead."
+        "description": "Status of a single position for one day \u2013 enough for the student client to render the right action.\n\n\u0060Testable\u0060 is about **this day**, not merely about the exercise type: it is false on a free display\nstage (B-96), because the exam refuses that stage. A client therefore offers practice whenever the position\nuses Leitner or is not testable today \u2013 the two together always leave exactly one playable way in.\nIntroducedCount of PoolSize is how far the child has come through the position\u0027s contents - with a\ndaily dose (B-04) the one figure that says how much of the material is still ahead.PenaltyCoins is the position\u0027s coin penalty for a missed goal (0 = none), shown to the child on purpose\n(B-525): a price that only appears as a booking the next morning cannot steer anything. It is the configured\namount, not a forecast - it is only booked for a closed daily/weekly period of a plan that was due, and it is\nalways 0 for a free position (Cadence = None), which is never charged.\nSeriesUnitId/SeriesUnitLabel name the textbook unit of the exercise, so a client can group\nconsecutive positions into the sections the child knows from the book."
       },
       "PracticeCard": {
         "required": [

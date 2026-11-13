@@ -74,6 +74,49 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
     }
 
     /// <summary>
+    /// The daily mission tells the child what a missed goal costs and which textbook unit a position belongs to
+    /// (B-525). The penalty is a value no id of this database reaches and the unit gets a label of its own, so
+    /// neither a field that is present but unmapped nor two swapped neighbours pass. The free position carries the
+    /// same configured penalty and must report 0: it is never charged.
+    /// </summary>
+    [Fact]
+    public async Task Tagesuebersicht_NenntMalusUndUnit_DerPosition()
+    {
+        const int penalty = 100_137;
+        var father = await TestApi.AdultAsync(_factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+        var unitLabel = TestApi.UniqueName("Unit");
+        int unitId, freePositionId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            db.PlanPositions.Single(p => p.Id == positionId).PenaltyCoins = penalty;
+            unitId = db.Exercises.Single(e => e.Id == exerciseId).SeriesUnitId;
+            db.SeriesUnits.Single(u => u.Id == unitId).Label = unitLabel;
+            var free = new PlanPosition
+            {
+                StudyPlanId = planId, ExerciseId = exerciseId, Order = 99, Cadence = GoalCadence.None, PenaltyCoins = penalty,
+            };
+            db.PlanPositions.Add(free);
+            db.SaveChanges();
+            freePositionId = free.Id;
+        }
+        var child = await TestApi.ChildAsync(_factory);
+
+        var overview = await (await child.GetAsync($"/api/v1/student/study-plans/{planId}/overview"))
+            .Content.ReadFromJsonAsync<JsonElement>();
+        var positions = overview.GetProperty("today").GetProperty("positions").EnumerateArray().ToList();
+        var position = positions.Single(p => p.GetProperty("positionId").GetInt32() == positionId);
+        var freePosition = positions.Single(p => p.GetProperty("positionId").GetInt32() == freePositionId);
+
+        Assert.Equal(penalty, position.GetProperty("penaltyCoins").GetInt32());
+        Assert.Equal(unitId, position.GetProperty("seriesUnitId").GetInt32());
+        Assert.Equal(unitLabel, position.GetProperty("seriesUnitLabel").GetString());
+        Assert.Equal(0, freePosition.GetProperty("penaltyCoins").GetInt32());
+    }
+
+    /// <summary>
     /// A position may carry a mandatory goal <b>without</b> a reward (<c>PointsGoalMet == 0</c>): the
     /// mandatory goal applies, there is just nothing for it. Then nothing may be booked either - neither a
     /// reward row nor a ledger entry of 0. The balance would stay the same, but history and

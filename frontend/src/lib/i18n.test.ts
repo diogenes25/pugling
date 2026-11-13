@@ -46,9 +46,9 @@ describe("Sprachwahl", () => {
   it("wechselt die Sprache und merkt sie sich", async () => {
     await setLanguage("en");
     expect(localStorage.getItem(LANG_KEY)).toBe("en");
-    expect(i18n.t("sohn:nav.home")).toBe("Home");
+    expect(i18n.t("sohn:nav.home")).toBe("Path");
     await setLanguage("de");
-    expect(i18n.t("sohn:nav.home")).toBe("Basis");
+    expect(i18n.t("sohn:nav.home")).toBe("Pfad");
   });
 
   // B-298: die HUD-Chips sind `aria-live` – „1 coins“ würde vorgelesen. Je Sprache 1 gegen 2: fehlt `_one`, zeigt

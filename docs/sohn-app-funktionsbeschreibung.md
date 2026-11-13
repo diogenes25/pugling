@@ -167,14 +167,14 @@ Zeigt dauerhaft:
 
 ### 3.2 Untere Navigation (5 feste Bereiche)
 
-- **🏠 Basis** — Tagesmission (Startseite)
-- **🗺️ Weg** — Fortschritt / Trophäenweg
+- **🗺️ Pfad** — Tagesmission als Lernpfad (Startseite)
+- **🏆 Erfolge** — 7-Tage-Übersicht, Missionen, große Ziele, Auszeichnungen
 - **💰 Konto** — Münz-/Gem-Stand und Buchungsverlauf (reine Übersicht, kein Kauf)
 - **🛒 Shop** — Familien-Shop (Artikel kaufen, Inventar, Aktivierung) — der einzige Münz-Ausgabeweg
 - **🎭 Skins** — Charaktere
 
-Die Screens **Üben** und **Test** haben **keinen** eigenen Navigationseintrag — sie werden aus der
-Basis über eine Übungskachel betreten und über „Zur Basis" wieder verlassen.
+Die Screens **Üben** und **Test** haben **keinen** eigenen Navigationseintrag — sie werden vom
+Pfad über einen Knoten betreten und über „Zum Pfad" wieder verlassen.
 
 > Hinweis fürs Design: Münzen werden **ausschließlich im Shop** ausgegeben (Familien-Warenkorb mit
 > Bestand, Inventar und einem Genehmigungs-Schritt beim Einlösen). Das **Konto** ist nur noch die
@@ -212,36 +212,50 @@ Jeder Screen ist beschrieben durch: **Zweck**, **angezeigte Daten**, **Aktionen*
 
 **Zustände & Übergänge:**
 
-- Erfolg → **Basis / Tagesmission**.
+- Erfolg → **Pfad / Tagesmission**.
 - Fehler → freundliche Meldung („Nummer oder PIN falsch"), PIN wird geleert, kein Wechsel.
 - Warten → kurzer Ladezustand am Anmelde-Knopf.
 
-### 4.2 Basis / Tagesmission (Startseite)
+### 4.2 Pfad / Tagesmission (Startseite)
 
-**Zweck:** Zeigt, **was heute zu tun ist**, und ist Absprung zu Üben/Test. Wichtigster Screen.
+**Zweck:** Zeigt, **was heute zu tun ist**, als Weg mit einem markierten nächsten Schritt, und ist Absprung
+zu Üben/Test. Wichtigster Screen. Entschieden in
+[B-525](backlog/B-525-sohn-startseite-als-schlangenpfad.md).
 
 **Angezeigte Daten:**
 
-- **Missionskopf:** Stimmungs-Maskottchen, „Tagesmission", Titel des aktiven Plans.
+- **Missionskopf:** Stimmungs-Maskottchen, „Tagesmission", Titel des aktiven Plans (einmal, ganz oben).
 - **Ziel-Status:** entweder „✓ Heute geschafft!" oder ein Fortschritt „🎯 Ziele heute: x / y".
 - **Plan-Auswahl:** wenn mehrere Pläne existieren, ein Umschalter (der spielbare ist vorgewählt).
-- **Positions-Kacheln** (eine je Übung des Plans), je mit:
-  - Typ-Icon der Übung (Vokabeln, Lückentext, Zuordnen, Rechnen, Hören, Lesen …),
-  - Übungstitel,
-  - Rhythmus-Kennzeichnung (Tagesziel / Wochenziel / frei),
-  - Status (✓ erledigt / offen), bei Leitner ggf. „(n fällig)".
-- **Missionen-Panel** (siehe 4.9) unten eingebettet.
+- **Der Pfad:** die Positionen des Plans als **Knoten in Schlangenlinie**, in der Reihenfolge des Plans.
+  - **Abschnitts-Banner** mit dem Titel der Lehrwerk-Unit. Aufeinanderfolgende Positionen derselben Unit
+    bilden einen Abschnitt; wechselt die Unit, beginnt ein neues Banner.
+  - Je Knoten: Typ-Icon, darunter der Übungstitel.
+  - **Ring** um den Knoten: Anteil der schon kennengelernten Inhalte. Eine Übung ohne Inhalte (Aufsatz) hat
+    keinen Ring. Ein voller Ring heißt „alles gesehen", nicht „fertig".
+  - **Häkchen**, wenn das Ziel der laufenden Periode (Tag oder Woche) erfüllt ist. Eine freie Position
+    trägt nie eines.
+  - **Frist und Malus** an jedem Pflicht-Knoten mit offenem Ziel: bei einem Tagesziel die Stunden bis zum
+    Tagesende des Servers („noch 6 Std."), bei einem Wochenziel „bis Sonntag" und am Sonntag die Stunden;
+    dahinter, falls gesetzt, der Münz-Malus („sonst −5 Münzen").
+  - **Genau ein Knoten ist der nächste** („START", Maskottchen daneben): das erste offene Tagesziel, sonst
+    das erste offene Wochenziel. Sind alle Pflichtziele erfüllt, ist keiner hervorgehoben.
+- **Kein Knoten ist gesperrt.** Der Pfad zeigt, was dran ist; er erzwingt keine Reihenfolge.
 
-**Aktionen (je Kachel):**
+**Aktionen:**
 
-- **Üben** (bzw. „Durchspielen" bei freien Positionen) → Screen *Üben*.
-- **Test** (falls die Position testbar ist) → Screen *Test*.
+- **Knoten antippen** → ein **Blatt** von unten mit Titel, Rhythmus, Stand (kennengelernt, fällig), Frist
+  und Malus.
+- **„Los"** (der eine Hauptknopf im Blatt) → Screen *Üben*; an dessen Ende wird der Test angeboten. Ist
+  nichts zu üben und heute ein Test möglich, führt „Los" direkt in den *Test*.
+- **Der andere Weg** als kleiner zweiter Knopf: „Test", wenn die Position heute testbar ist, bzw. „Üben".
+- **Blatt schließen:** ✕, Tipp daneben oder Escape.
 
 **Zustände:**
 
 - **Kein Plan:** schlafendes Maskottchen + Hinweis „Noch keine Mission – dein Vater hat noch keinen
   Lehrplan erstellt" + Abmelden.
-- **Alles erledigt:** klar sichtbarer Erledigt-Zustand, Feier möglich.
+- **Alles erledigt:** „✓ Heute geschafft!", kein hervorgehobener Knoten; alle Knoten bleiben spielbar.
 - **Laden / Fehler:** neutraler Warte- bzw. Fehlerhinweis mit Wiederholmöglichkeit.
 
 ### 4.3 Üben (Leitner-Runde)
@@ -270,7 +284,7 @@ Jeder Screen ist beschrieben durch: **Zweck**, **angezeigte Daten**, **Aktionen*
 - **Antwort eingeben/auswählen** und **Prüfen** — bei getippten/Auswahl-Karten.
 - **Tipp aufdecken**.
 - **Tempo-Modus an/aus** (wird gemerkt).
-- **Runde beenden / Zur Basis**.
+- **Runde beenden / Zum Pfad**.
 
 **Feedback nach jeder Antwort:**
 
@@ -283,7 +297,7 @@ Jeder Screen ist beschrieben durch: **Zweck**, **angezeigte Daten**, **Aktionen*
 **Zustände & Übergänge:**
 
 - **Fertig:** „Runde fertig!" mit verdienten Münzen + Kartenzahl; Knöpfe „Weiter zum Test" und
-  „Zur Basis".
+  „Zum Pfad".
 - **Nichts fällig:** „Nichts fällig 🎉" mit denselben Weiter-Knöpfen.
 - **Laden / Fehler**.
 
@@ -315,18 +329,19 @@ Jeder Screen ist beschrieben durch: **Zweck**, **angezeigte Daten**, **Aktionen*
 - **Prozent-Ring**: erreichter Score, richtige / gesamt.
 - Bestehensgrenze (Standard 80 %, ggf. abweichend).
 - **Item-für-Item-Auswertung**: je Frage ✅/❌, Aufgabe, erwartete Lösung.
-- Knöpfe: „Nochmal versuchen" (nur wenn nicht bestanden), „Zur Basis".
+- Knöpfe: „Nochmal versuchen" (nur wenn nicht bestanden), „Zum Pfad".
 - Bestehen → große Feier; Streak und Salden werden aktualisiert.
 
-### 4.5 Weg / Trophäenweg (Fortschritt)
+### 4.5 Erfolge (Fortschritt)
 
-**Zweck:** Motivierender Überblick über den Fortschritt im aktiven Plan.
+**Zweck:** Alles, was über Tage und Wochen läuft. Die Positionen selbst stehen nicht mehr hier – sie sind
+der Pfad (4.2).
 
 **Angezeigte Daten:**
 
-- „Trophäenweg" + 🏆 **Gesamtpunkte**.
+- „Erfolge" + 🏆 **Gesamtpunkte**.
 - Plantitel · „x / y Tage geschafft" · Streak 🔥.
-- **Meine Übungen:** je Position ein Status (✅ erfüllt / ⬜ offen / • frei) mit Rhythmus-Label.
+- **Missionen-Panel** (siehe 4.9).
 - **Letzte Tage:** eine kleine Kalender-Heatmap der letzten ~7 Tage (teilweise geschafft vs. Tag
   komplett) mit Legende.
 - **Meine großen Ziele:** die aktiven Lernziele (Objectives), die der Vater gesetzt hat, je mit
@@ -336,9 +351,9 @@ Jeder Screen ist beschrieben durch: **Zweck**, **angezeigte Daten**, **Aktionen*
 
 **Aktionen:**
 
-- „Zur Tagesmission" → Basis.
+- „Zum Pfad" → Startseite.
 
-**Zustände:** Fällt auf einen Basis-Hinweis zurück, wenn noch keine Mission gewählt ist.
+**Zustände:** Fällt auf einen Hinweis zum Pfad zurück, wenn noch keine Mission gewählt ist.
 
 ### 4.6 Konto (Übersicht)
 
@@ -426,13 +441,13 @@ durch den Vater.
 
 ### 4.9 Missionen & Auszeichnungen (eingebettete Panels)
 
-**Missionen-Panel** (auf der Basis):
+**Missionen-Panel** (unter „Erfolge"):
 
 - Liste der Tages-/Wochen-/Zusatzmissionen, je mit Titel, **Fortschritt (current / target)**,
   Periode (Heute / Diese Woche / Ziel), **Belohnungspunkten**, Fortschrittsbalken, „x / y geschafft".
-- Neu erfüllte Missionen werden **genau einmal** gefeiert.
+- Neu erfüllte Missionen werden **genau einmal** gefeiert – beim nächsten Besuch von „Erfolge".
 
-**Auszeichnungen-Galerie** (auf dem Weg):
+**Auszeichnungen-Galerie** (unter „Erfolge"):
 
 - Raster der Badges: erreichte hervorgehoben, offene gedimmt mit Fortschritt zur Schwelle.
 - Neu erreichte Badges → große Feier (einmalig).
@@ -464,9 +479,9 @@ Ein **geführter Prozess in vier Schritten**, ohne Tippen — bis auf den letzte
   stehen, bis das Kind bewusst „anderes Bild" drückt — Bildkonstanz *ist* der Merkeffekt.
 - **Kein Deckel aufs Ändern.** Es gibt nichts zu gewinnen, also nichts zu missbrauchen.
 
-**Zustände:** Erstbesuch (die Basis bietet den Prozess von selbst an, solange noch nichts gewählt wurde;
+**Zustände:** Erstbesuch (der Pfad bietet den Prozess von selbst an, solange noch nichts gewählt wurde;
 danach nur noch über den Menüpunkt im Konto), leere Schlagwort-Liste („dein Vater legt sie an"),
-Lade-/Fehlerzustand. Nach dem Speichern eine Feier und zurück zur Basis.
+Lade-/Fehlerzustand. Nach dem Speichern eine Feier und zurück zum Pfad.
 
 ---
 
@@ -474,24 +489,25 @@ Lade-/Fehlerzustand. Nach dem Speichern eine Feier und zurück zur Basis.
 
 ```text
 Login  (nicht angemeldet)
-  └─(Login erfolgreich)→ Basis / Tagesmission
-        │  [untere Navigation immer sichtbar: Basis · Weg · Konto · Shop · Skins]
+  └─(Login erfolgreich)→ Pfad / Tagesmission
+        │  [untere Navigation immer sichtbar: Pfad · Erfolge · Konto · Shop · Skins]
         │
-        ├─ Übungskachel „Üben/Durchspielen" → Üben
-        │      ├─ Runde fertig → „Weiter zum Test" → Test   |  „Zur Basis" → Basis
-        │      └─ nichts fällig → „Zum Test" → Test          |  „Zur Basis" → Basis
-        │
-        └─ Übungskachel „Test" → Test
-               └─ Ergebnis → „Nochmal versuchen" (nur bei Nichtbestehen) | „Zur Basis" → Basis
+        └─ Knoten antippen → Blatt
+               ├─ „Los" → Üben
+               │      ├─ Runde fertig → „Weiter zum Test" → Test   |  „Zum Pfad" → Pfad
+               │      └─ nichts fällig → „Zum Test" → Test          |  „Zum Pfad" → Pfad
+               │  („Los" führt direkt in den Test, wenn nichts zu üben ist)
+               └─ „Test" (zweiter Knopf, wenn heute testbar) → Test
+                      └─ Ergebnis → „Nochmal versuchen" (nur bei Nichtbestehen) | „Zum Pfad" → Pfad
 
-  Weg    → „Zur Tagesmission" → Basis
+  Erfolge → „Zum Pfad" → Pfad
   Konto  → Stände + Buchungsverlauf ansehen (kein Kauf)
-         └─ „Das bin ich" → Selbstbeschreibung → (Fertig) → Basis
+         └─ „Das bin ich" → Selbstbeschreibung → (Fertig) → Pfad
   Shop   → Artikel kaufen → Inventar → Einlösen beantragen → Anfrage-Status
   Skins  → kaufen / ausrüsten; Abmelden
 ```
 
-**Typischer Tagesablauf:** Anmelden → Basis zeigt Tagesmission → „Üben" → alle fälligen Karten
+**Typischer Tagesablauf:** Anmelden → der Pfad zeigt den nächsten Knoten → antippen, „Los" → alle fälligen Karten
 durchgehen (Combos, kleine Feiern) → „Runde fertig!" → „Weiter zum Test" → Test Frage für Frage →
 „Sieg!" → Münzen/Gems im HUD gutgeschrieben, Streak steigt → optional in Konto/Shop/Skins ausgeben.
 
@@ -518,16 +534,16 @@ durchgehen (Combos, kleine Feiern) → „Runde fertig!" → „Weiter zum Test"
 
 - [ ] Anmelden mit Nummer + PIN-Ziffernpad, Held-Vorschau, Fehlermeldung
 - [ ] Persistentes HUD: Avatar, Münzen, Gems, Streak, Ton-Schalter
-- [ ] Untere Navigation: Basis · Weg · Konto · Shop · Skins
-- [ ] Tagesmission: Ziel-Status, Positionskacheln, Plan-Umschalter, Missionen-Panel
+- [ ] Untere Navigation: Pfad · Erfolge · Konto · Shop · Skins
+- [ ] Pfad: Ziel-Status, Plan-Umschalter, Knoten je Position (Ring, Häkchen, Frist, Malus), Abschnitte je Unit, Blatt mit „Los"
 - [ ] Ein Kartenbildschirm für alle Typen (Felder der Karte rendern); Test-Knopf nur bei `testable`, sonst „Durchspielen"
 - [ ] Üben: Kartenanzeige aller Antwortmodi (umdrehen/tippen/Buchstaben/Auswahl/hören), Tipp, Tempo-Modus, Antwort-Feedback, Combos, Runden-Abschluss
 - [ ] Test: Einzelfragen ohne Zurück, Ergebnis-Ring, Item-Auswertung, Wiederholen bei Nichtbestehen
-- [ ] Weg/Trophäenweg: Gesamtpunkte, Tage-Fortschritt, Übungsstatus, 7-Tage-Heatmap, große Ziele, Badges
+- [ ] Erfolge: Gesamtpunkte, Tage-Fortschritt, Missionen, 7-Tage-Heatmap, große Ziele, Badges
 - [ ] Konto: Münz-/Gem-Stand + Punkt-Verlauf (reine Übersicht, kein Kauf)
 - [ ] Familien-Shop: Katalog kaufen (Münz-/Gem-Preise, Bestand), Inventar, Einlösung beantragen, Anfrage-Status
 - [ ] Skins: Katalog, ausrüsten, kaufen (mit Bestätigung), Gem-Sperre
-- [ ] Das bin ich: vierschrittige Selbstbeschreibung per Kacheln (mag / Lieblingsthema / geht gar nicht) plus optionaler Freitext-Wunsch; Erstbesuch-Angebot auf der Basis, dauerhafter Einstieg im Konto
+- [ ] Das bin ich: vierschrittige Selbstbeschreibung per Kacheln (mag / Lieblingsthema / geht gar nicht) plus optionaler Freitext-Wunsch; Erstbesuch-Angebot auf dem Pfad, dauerhafter Einstieg im Konto
 - [ ] Missionen-Panel + Auszeichnungen-Galerie mit einmaligen Feiern
 - [ ] Feiern in 3 Stufen mit Ton + Haptik; Toasts; Stimmungs-Maskottchen
 - [ ] Lade-, Fehler- und Leerzustände auf jedem Screen

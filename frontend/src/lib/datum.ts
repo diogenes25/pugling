@@ -95,3 +95,19 @@ export function formatDateTime(value: string): string {
 export function formatDateRange(from: string, to: string): string {
   return `${formatDate(from)} – ${formatDate(to)}`;
 }
+
+/**
+ * Die Server-Uhr für Fristen (B-525): Tag und Woche enden für den Server in **UTC**, also zeigt die Arcade ihre
+ * Fristen danach – eine Anzeige nach Ortszeit widerspräche der Buchung. Der Augenblick wird hier geholt und nicht in
+ * der Arcade gebaut (B-447).
+ */
+export const jetztGerade = (): Date => new Date();
+
+/** Angefangene Stunden bis zum Tagesende des Servers (Mitternacht UTC), mindestens 1. */
+export function stundenBisServerTagesende(jetzt: Date): number {
+  const tagesende = Date.UTC(jetzt.getUTCFullYear(), jetzt.getUTCMonth(), jetzt.getUTCDate() + 1);
+  return Math.max(1, Math.ceil((tagesende - jetzt.getTime()) / 3_600_000));
+}
+
+/** Der letzte Tag der Server-Woche (Montag bis Sonntag, UTC). */
+export const istServerSonntag = (jetzt: Date): boolean => jetzt.getUTCDay() === 0;

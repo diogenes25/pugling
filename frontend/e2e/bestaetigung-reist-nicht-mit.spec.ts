@@ -47,8 +47,8 @@ test("Die Bestätigung des Kindes bleibt auf ihrem Bildschirm", async ({ browser
   const sohnCtx = await browser.newContext({ reducedMotion: "reduce" });
   const sohn = await sohnCtx.newPage();
   await sohnLogin(sohn, childId);
-  // Die Navigationsleiste der Arcade, nicht „irgendein Link mit diesem Wort": Der Weg-Bildschirm trägt
-  // einen eigenen Knopf „Zur Basis", und ein Teilstring-Bezug träfe beide.
+  // Die Navigationsleiste der Arcade, nicht „irgendein Link mit diesem Wort": Der Erfolge-Bildschirm trägt
+  // einen eigenen Knopf „Zum Pfad", und ein Teilstring-Bezug träfe beide.
   const leiste = (name: string) => sohn.locator("nav.sohn-nav").getByRole("link", { name, exact: true });
   await sohn.goto("/sohn/ich");
 
@@ -77,13 +77,13 @@ test("Die Bestätigung des Kindes bleibt auf ihrem Bildschirm", async ({ browser
   await expect(sohn.getByText(MELDUNG)).toHaveCount(0);
 
   // Zwei Bildschirme weiter immer noch weg – der erste Wechsel könnte sie auch nur verdeckt haben.
-  await leiste("Weg").click();
+  await leiste("Erfolge").click();
   await expect(sohn).toHaveURL(/\/sohn\/progress$/);
   await expect(sohn.getByText(MELDUNG)).toHaveCount(0);
 
   // Gegenprobe: Auch die Rückkehr an den Ort holt sie nicht zurück. Der Verlaufseintrag wurde beim
   // ersten Zeigen geleert; käme sie hier wieder, hinge sie an der Sitzung statt am Ereignis.
-  await leiste("Basis").click();
+  await leiste("Pfad").click();
   await expect(sohn).toHaveURL(/\/sohn$/);
   await expect(sohn.getByText(MELDUNG)).toHaveCount(0);
 

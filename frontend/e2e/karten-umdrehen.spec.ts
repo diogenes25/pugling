@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { createChild, introduceAndQuiz, sohnLogin, vaterLogin } from "./helpers";
+import { createChild, introduceAndQuiz, sohnLogin, vaterLogin, pfadStart } from "./helpers";
 
 // B-35: beim Aufdecken dreht sich die Karte um – in der Übung („Umdrehen") und in der Klausur („Aufdecken").
 // Eine eigene Spec statt eines Blocks im Durchstich (frontend/CLAUDE.md, „Eine Fläche je E2E-Spec"): eine
@@ -38,7 +38,7 @@ test("Die Karte dreht sich beim Aufdecken um – beim Üben und in der Klausur",
   // ---------- SOHN: Üben ----------
   const sohn = await (await browser.newContext()).newPage();
   await sohnLogin(sohn, { id: childId, pin: CHILD.pin });
-  await sohn.getByRole("link", { name: /ÜBEN/ }).click();
+  await pfadStart(sohn, "practice");
   const counter = sohn.locator(".pill.cyan", { hasText: /Karte \d+ \/ \d+/ });
   await expect(counter).toBeVisible();
   const total = Number((await counter.textContent())!.match(/\/ (\d+)/)![1]);

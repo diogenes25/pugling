@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { createChild, sohnLogin, vaterLogin } from "./helpers";
+import { createChild, sohnLogin, vaterLogin, pfadStart } from "./helpers";
 
 /*
  * Das Produktziel als Rollengang (Fertigstellungs-Lauf 2026-11-10): der Vater fügt eine Französisch-Liste ein, macht
@@ -67,7 +67,7 @@ test("Vater gibt eine Liste als tägliche Pflicht mit Tagesdosis auf, das Kind b
   // ---------- Kind, Tag 1: die Portion, nicht die Liste ----------
   const sohn = await (await browser.newContext()).newPage();
   await sohnLogin(sohn, { id: childId, pin: CHILD.pin });
-  await sohn.getByRole("link", { name: /ÜBEN/ }).click();
+  await pfadStart(sohn, "practice");
   const counter = sohn.locator(".pill.cyan", { hasText: /Karte \d+ \/ \d+/ });
   for (let i = 0; i < DOSE; i++) {
     // Buchreihenfolge: die ersten vier Wörter der Liste, je mit Lösung.
@@ -80,8 +80,8 @@ test("Vater gibt eine Liste als tägliche Pflicht mit Tagesdosis auf, das Kind b
 
   // Die Startseite sagt, wie weit der Stoff ist – und die zweite Runde bringt keine weiteren neuen Wörter.
   await sohn.goto("/sohn");
-  await expect(sohn.getByText(`${DOSE} von ${PAIRS.length} schon kennengelernt`)).toBeVisible();
-  await expect(sohn.getByRole("link", { name: new RegExp(`ÜBEN \\(${DOSE} fällig\\)`) })).toBeVisible();
+  await sohn.locator(".pfad-knoten").click();
+  await expect(sohn.getByRole("dialog")).toContainText(`${DOSE} von ${PAIRS.length} schon kennengelernt · ${DOSE} fällig`);
 
   // ---------- Vater: der Fortschritt steht in der Oberfläche ----------
   await vater.reload();

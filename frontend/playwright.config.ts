@@ -22,6 +22,9 @@ const webOrigin = `http://localhost:${webPort}`;
 // Einen schon laufenden Vite-Server nur auf dem Standardpaar übernehmen: ein fremd gestarteter Server auf dem
 // Ausweichport hätte PUGLING_API_URL nie bekommen und leitete auf :5200 – in die echte DB.
 const sidePorts = apiPort !== "5200" || webPort !== "5173";
+// Auch die Build-Konfiguration ist überschreibbar (B-525): ein laufender `dotnet run` hält die Debug-Ausgabe gesperrt,
+// und der Start hier scheiterte am Kopieren der DLLs. `PUGLING_E2E_CONFIGURATION=Release` baut daneben.
+const configuration = process.env.PUGLING_E2E_CONFIGURATION ? ` -c ${process.env.PUGLING_E2E_CONFIGURATION}` : "";
 
 export default defineConfig({
   testDir: "./e2e",
@@ -59,7 +62,7 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: [
     {
-      command: `dotnet run --project "${backendDir}" --urls http://localhost:${apiPort}`,
+      command: `dotnet run${configuration} --project "${backendDir}" --urls http://localhost:${apiPort}`,
       url: `http://localhost:${apiPort}/openapi/v1.json`,
       timeout: 120_000,
       reuseExistingServer: false,

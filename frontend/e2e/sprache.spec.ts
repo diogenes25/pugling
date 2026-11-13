@@ -16,12 +16,12 @@ const FATHER = { id: "1", pin: "0000" };
 test("Der Sohn stellt die Arcade auf Englisch, sie bleibt es nach dem Neuladen, und <html lang> folgt", async ({ page }) => {
   await sohnLogin(page, CHILD);
   const nav = page.locator(".sohn-nav");
-  await expect(nav.getByRole("link", { name: "Basis" })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "Pfad" })).toBeVisible();
   await expect(page.locator("html")).toHaveAttribute("lang", "de");
 
   await page.getByRole("button", { name: "EN – auf Englisch umschalten (Sprache ist Deutsch)" }).click();
-  await expect(nav.getByRole("link", { name: "Home" })).toBeVisible();
-  await expect(nav.getByRole("link", { name: "Basis" })).toHaveCount(0);
+  await expect(nav.getByRole("link", { name: "Path" })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "Pfad" })).toHaveCount(0);
   // Je nach Seed-Stand hat der Sohn heute eine Mission oder noch keine – beide Überschriften sind Chrome und
   // müssen englisch sein; die deutsche darf nicht mehr da sein.
   await expect(page.locator(".screen-title", { hasText: /Daily mission|No mission yet/ })).toBeVisible();
@@ -32,7 +32,7 @@ test("Der Sohn stellt die Arcade auf Englisch, sie bleibt es nach dem Neuladen, 
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
 
   await page.reload();
-  await expect(nav.getByRole("link", { name: "Home" })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "Path" })).toBeVisible();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
 
   // B-304: auch der Shop spricht Englisch – Reiter, Einführung; der Titel „🛒 Shop“ heißt in beiden Sprachen so.
@@ -69,11 +69,11 @@ test("Der Sohn stellt die Arcade auf Englisch, sie bleibt es nach dem Neuladen, 
 
   // Die Wahl überlebt das Abmelden: wer sich wieder anmeldet, ist wieder in der englischen Arcade.
   await sohnLogin(page, CHILD);
-  await expect(nav.getByRole("link", { name: "Home" })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "Path" })).toBeVisible();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
 
   await page.getByRole("button", { name: "DE – switch to German (language is English)" }).click();
-  await expect(nav.getByRole("link", { name: "Basis" })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "Pfad" })).toBeVisible();
   await expect(page.locator("html")).toHaveAttribute("lang", "de");
 });
 
@@ -111,7 +111,8 @@ test("Der Sohn spielt eine Übungsrunde in der englischen Arcade", async ({ brow
 
   // Der Knopf ist Chrome. (AK 2 – Nutzerdaten bleiben – belegt `arcadeSpielweg.test.tsx` mit Schlüsseln als Daten;
   // hier wäre es nicht messbar, `t` gäbe „Vokabeln: En ville“ fast unverändert zurück.)
-  await page.locator(".card", { hasText: EXERCISE }).getByRole("link", { name: /PRACTISE/ }).click();
+  await page.locator(".pfad-zeile", { hasText: EXERCISE }).locator(".pfad-knoten").click();
+  await page.getByRole("dialog").getByRole("link", { name: "▶ GO", exact: true }).click();
   await expect(page.locator(".pill.cyan", { hasText: /^Card \d+ \/ \d+$/ })).toBeVisible();
   await expect(page.locator(".fcard .lang")).toHaveText("Task");
   await expect(page.getByText(/^(Karte \d|Aufgabe|Runde beenden|Weiter)/)).toHaveCount(0);
@@ -122,6 +123,6 @@ test("Der Sohn spielt eine Übungsrunde in der englischen Arcade", async ({ brow
   // nie und sah nur wie ein Beleg für das Rundenende aus (B-319).
   await expect(page.locator(".pill.cyan", { hasText: /^Card 2 \// })).toBeVisible();
   await page.goto("/sohn");
-  await expect(page.locator(".sohn-nav").getByRole("link", { name: "Home" })).toBeVisible();
+  await expect(page.locator(".sohn-nav").getByRole("link", { name: "Path" })).toBeVisible();
   await sohnCtx.close();
 });

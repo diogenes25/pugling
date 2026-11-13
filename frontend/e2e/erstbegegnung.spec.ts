@@ -1,5 +1,5 @@
 import { test, expect, type APIRequestContext, type Page } from "@playwright/test";
-import { sohnLogin } from "./helpers";
+import { sohnLogin, pfadStart } from "./helpers";
 
 /*
  * NP-24 „Erst lesen, dann prüfen" als Rollengang des Sohnes – mit einem FRISCHEN Plan, denn nur dort gibt es Wörter, die
@@ -53,7 +53,7 @@ async function setUp(request: APIRequestContext, page: Page, tag: string, useLei
     { exerciseId, stage: 4, cadence: "Daily", useLeitner, orderStrategy: "Serial" });
 
   await sohnLogin(page, { id: String(childId), pin: childPin });
-  await page.getByRole("link", { name: /ÜBEN/ }).click();
+  await pfadStart(page, "practice");
   const counter = page.locator(".pill.cyan", { hasText: /Karte \d+ \/ \d+/ });
 
   // ---------- B-419: Runde 1 zeigt, statt zu fragen ----------

@@ -71,3 +71,19 @@ export async function introduceAndQuiz(page: Page, total: number) {
   await page.getByRole("button", { name: /Jetzt abfragen/ }).click();
   await expect(counter).toHaveText(`Karte 1 / ${total}`);
 }
+
+/**
+ * Starts play from the learning path on the child's home screen (B-525): taps the node of a position and follows the
+ * sheet's link into practice or the test. The link is picked by its target, not by its label - which of the two is
+ * the big "Los" button depends on what the server reports as due, and a spec that only wants to get into a round
+ * should not break when that changes.
+ *
+ * Without `title` the plan must carry exactly one position; Playwright's strict mode fails otherwise.
+ */
+export async function pfadStart(page: Page, weg: "practice" | "test", title?: string) {
+  const knoten = title
+    ? page.locator(".pfad-zeile", { hasText: title }).locator(".pfad-knoten")
+    : page.locator(".pfad-knoten");
+  await knoten.click();
+  await page.getByRole("dialog").locator(`a[href^="/sohn/${weg}/"]`).click();
+}

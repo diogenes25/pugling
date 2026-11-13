@@ -561,7 +561,10 @@ Response — `HTTP 200`:
         "dueCount": 2,
         "poolSize": 2,
         "pointsGoalMet": 10,
-        "introducedCount": 1
+        "introducedCount": 1,
+        "penaltyCoins": 0,
+        "seriesUnitId": 7,
+        "seriesUnitLabel": "Unit 1"
       }
     ]
   },

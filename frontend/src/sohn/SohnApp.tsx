@@ -159,8 +159,8 @@ function SohnShell({ childId }: { childId: number }) {
         </Routes>
 
         <nav className="sohn-nav">
-          <NavLink to="/sohn" end><span className="ic" aria-hidden="true">🏠</span>{t("nav.home")}</NavLink>
-          <NavLink to="/sohn/progress"><span className="ic" aria-hidden="true">🗺️</span>{t("nav.path")}</NavLink>
+          <NavLink to="/sohn" end><span className="ic" aria-hidden="true">🗺️</span>{t("nav.home")}</NavLink>
+          <NavLink to="/sohn/progress"><span className="ic" aria-hidden="true">🏆</span>{t("nav.trophies")}</NavLink>
           <NavLink to="/sohn/konto"><span className="ic" aria-hidden="true">💰</span>{t("nav.account")}</NavLink>
           <NavLink to="/sohn/shop"><span className="ic" aria-hidden="true">🛒</span>{t("nav.shop")}</NavLink>
           <NavLink to="/sohn/skins"><span className="ic" aria-hidden="true">🎭</span>{t("nav.skins")}</NavLink>

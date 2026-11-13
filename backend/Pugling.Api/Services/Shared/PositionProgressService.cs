@@ -153,8 +153,10 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
 
     // ---- Rollup + points ---- ----
 
+    // The unit rides along in the same query: the day rollup reads its label and runs once per day of a
+    // history, so a lookup per position would multiply with both.
     private Task<List<PlanPosition>> LoadPositionsAsync(int planId, CancellationToken ct) =>
-        db.PlanPositions.Include(p => p.Exercise)
+        db.PlanPositions.Include(p => p.Exercise).ThenInclude(e => e!.SeriesUnit)
             .Where(p => p.StudyPlanId == planId)
             .OrderBy(p => p.Order).ThenBy(p => p.Id)
             .ToListAsync(ct);
@@ -202,7 +204,10 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
                 pos.Id, pos.ExerciseId, pos.Exercise?.Title ?? "", pos.Exercise?.Type.ToString() ?? "",
                 manifest?.Renderer ?? "", pos.Order, pos.Cadence, checkMode, pos.UseLeitner,
                 testable, goalMet, dueCount, poolSize, pos.PointsGoalMet,
-                introducedByPosition[pos.Id].Count(index => index < poolSize)));
+                introducedByPosition[pos.Id].Count(index => index < poolSize),
+                // A free position is never charged, so it must not advertise a price either.
+                pos.Cadence == GoalCadence.None ? 0 : pos.PenaltyCoins,
+                pos.Exercise?.SeriesUnitId ?? 0, pos.Exercise?.SeriesUnit?.Label ?? ""));
         }
 
         // The day's obligation = every position with a goal (daily today / weekly this week) done.

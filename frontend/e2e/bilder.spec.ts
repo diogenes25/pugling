@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { createChild } from "./helpers";
+import { createChild, pfadStart } from "./helpers";
 
 // End-to-End der individualisierten Bebilderung:
 //   Vater legt zwei Darstellungen desselben Motivs an  →  ordnet beide der Vokabel „la ville" zu
@@ -193,7 +193,7 @@ test("Vater bebildert eine Vokabel, der Sohn sieht sein Bild und kann es wechsel
   const sohnCtx = await browser.newContext();
   const sohn = await sohnCtx.newPage();
   await sohnLogin(sohn, childId);
-  await sohn.getByRole("link", { name: /ÜBEN/ }).click();
+  await pfadStart(sohn, "practice");
   await expect(sohn.locator(".pill.cyan", { hasText: /Karte \d+ \/ \d+/ })).toBeVisible();
 
   // Die bebilderte Vokabel suchen: der Kartensatz ist eingefroren, „la ville" kann irgendwo stehen. Die Position ist

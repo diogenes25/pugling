@@ -17,7 +17,7 @@ const STALE = 99;
 vi.mock("./SohnApp", () => ({ useSohn: () => ({ planId: STALE, setPlanId, childId: 7, celebrate: () => {} }) }));
 vi.mock("../lib/auth", () => ({ useAuth: () => ({ signOut: () => {} }) }));
 vi.mock("./MyObjectives", () => ({ MyObjectives: () => null }));
-vi.mock("./GamificationPanels", () => ({ BadgesGallery: () => null }));
+vi.mock("./GamificationPanels", () => ({ BadgesGallery: () => null, MissionsPanel: () => <div>Missionen-Panel</div> }));
 vi.mock("../lib/api", async (importOriginal) => {
   const original = await importOriginal<typeof import("../lib/api")>();
   return {
@@ -51,11 +51,11 @@ const renderProgress = () => render(<MemoryRouter><SohnProgress /></MemoryRouter
 
 describe("SohnProgress mit einer gemerkten Plan-Id, die nicht mehr gilt", () => {
   // Rot, wenn der Weg wieder die gemerkte Id lädt: dann steht die englische Server-Zeile da.
-  it("zeigt ohne Plan den Hinweis zur Basis statt eines Serverfehlers", async () => {
+  it("zeigt ohne Plan den Hinweis zum Pfad statt eines Serverfehlers", async () => {
     plans.mockResolvedValue([]);
     renderProgress();
 
-    expect(await screen.findByText("Wähle zuerst eine Mission auf der Basis.")).toBeTruthy();
+    expect(await screen.findByText("Wähle zuerst eine Mission auf dem Pfad.")).toBeTruthy();
     expect(overview).not.toHaveBeenCalled();
   });
 
@@ -87,26 +87,18 @@ describe("SohnProgress mit einer gemerkten Plan-Id, die nicht mehr gilt", () => 
   });
 });
 
-// B-467: eine freie Position hat keine Pflicht – der Server meldet sie darum als erfüllt (`goalMet: true`), auch wenn sie
-// nie gespielt wurde. Rot, wenn „Meine Übungen" ihr trotzdem ein Häkchen gibt; die Pflicht-Position daneben behält ihres
-// (rot, wenn das Häkchen ganz wegfällt).
-describe("Meine Übungen – eine freie Position", () => {
-  it("trägt kein Häkchen, eine erfüllte Pflicht schon", async () => {
+// B-525: die Positionen sind der Pfad auf der Startseite; hier stünden sie doppelt. Rot, wenn die Liste zurückkehrt
+// (der Titel der Position erschiene wieder) oder wenn die Missionen nicht mit umgezogen sind.
+describe("Erfolge", () => {
+  it("zeigen die Missionen, aber keine Positionsliste mehr", async () => {
     plans.mockResolvedValue([plan(5, true)]);
     overview.mockImplementation((id: number) => Promise.resolve({
       title: `Plan ${id}`, currentStreak: 0,
-      today: {
-        goalsMet: 1, goalsTotal: 1, positions: [
-          { positionId: 1, exerciseTitle: "Frei geübt", cadence: "None", goalMet: true },
-          { positionId: 2, exerciseTitle: "Pflicht erledigt", cadence: "Daily", goalMet: true },
-        ],
-      },
+      today: { goalsMet: 1, goalsTotal: 1, positions: [{ positionId: 2, exerciseTitle: "Pflicht erledigt", cadence: "Daily", goalMet: true }] },
     }));
     renderProgress();
 
-    const free = (await screen.findByText("Frei geübt")).closest(".row")!;
-    const duty = screen.getByText("Pflicht erledigt").closest(".row")!;
-    expect(free.textContent).not.toContain("✅");
-    expect(duty.textContent).toContain("✅");
+    expect(await screen.findByText("Missionen-Panel")).toBeTruthy();
+    expect(screen.queryByText("Pflicht erledigt")).toBeNull();
   });
 });

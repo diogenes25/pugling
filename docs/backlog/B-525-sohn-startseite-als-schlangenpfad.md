@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, bereich/gamification, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/frontend, bereich/gamification, rolle/student]
 aliases: [Schlangenpfad, Lernpfad-Startseite, Pfad statt Kachelliste]
-status: geschaetzt
+status: in-arbeit
 prio: P1
 art: Wunsch
 groesse: L
@@ -263,3 +263,18 @@ M-Anker (ein Batch-Pfad in einem Dienst) und bleibt unter XL, weil keine Regel u
   Missionen-Tab als B-527 und B-528 abgespalten, Reihenfolge-Sperre zurückgestellt.
 - 2026-11-13 · `geschaetzt` – L, keine Migration, kein Vertragsbruch (beides nachgesehen); sieben betroffene E2E-Specs statt fünf; Bau erst nach dem Commit von B-524.
 - 2026-11-13 · Risiko 2 der Schätzung berichtigt: B-524 ist seit `8872b06` gemergt und mit `d116065` abgenommen.
+- 2026-11-13 · `in-arbeit` – gebaut nach dem Angriffsplan. Abweichungen von der Schätzung: **dreizehn** Specs griffen
+  nach der alten Startseite oder den Tab-Namen (geschätzt: sieben); der Prototyp liegt auf dem Branch
+  `prototyp/lernpfad-b525` (`fc01700`) und ist aus dem Arbeitsbaum entfernt; die E2E laufen wegen eines fremden
+  `dotnet run` auf :5200, der die Debug-Ausgabe sperrt, über den neuen Schalter `PUGLING_E2E_CONFIGURATION=Release`.
+- 2026-11-13 · Reviews: `pugling-reviewer` (kein Blocker; übernommen: Feld heißt `SeriesUnitLabel` wie im übrigen
+  Vertrag statt `…Title`, eine freie Position meldet immer Malus 0, der Test nimmt einen Malus, den keine Id
+  erreicht, und eine eigene Unit-Beschriftung) und `frontend-reviewer` (kein Blocker; übernommen: **Regelfehler**
+  bei der Tagesdosis – „Los“ führte nach der ersten Runde in eine leere Übungsrunde, weil `dueCount` Neues schon
+  mitzählt; Fokus-Falle des Blatts über den gemeinsamen `useDialogFocus`, den jetzt auch `Modal` nutzt; „als Nächstes
+  dran“ im Vorlesenamen samt `aria-current`; Frist am Knoten nicht doppelt angesagt; fehlende Zusicherungen für AK 5,
+  6, 8 und 10). Nicht übernommen, bewusst: „noch 24 Std.“ nach Mitternacht UTC ohne Neuladen (Risiko 5), die
+  Anzeige „Ziele heute 0 / 0“ bei einem Plan nur aus freien Positionen (bestand vorher).
+- 2026-11-13 · Präzisierung zu Entscheidung 5, am Code entschieden: Eine prüfbare Position **ohne** Karteikasten
+  führt mit „Los“ immer zuerst ins Üben, auch wenn alles kennengelernt ist – ohne Kasten gibt es kein „nichts
+  fällig“, und B-454 verlangt den Weg zum Üben vor dem Test.

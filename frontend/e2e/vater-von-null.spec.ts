@@ -444,8 +444,8 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
   await expect(sohn.getByText("Tagesmission")).toBeVisible();
   await expect(sohn.getByText(new RegExp(EXERCISE))).toBeVisible();
 
-  // Und auf dem Trophäenweg steht das große Ziel des Vaters – vorher war es nur über die API sichtbar.
-  await sohn.getByRole("link", { name: /Weg/ }).click();
+  // Und unter „Erfolge" steht das große Ziel des Vaters – vorher war es nur über die API sichtbar.
+  await sohn.locator("nav.sohn-nav").getByRole("link", { name: "Erfolge", exact: true }).click();
   await expect(sohn.getByText("🎯 Meine großen Ziele")).toBeVisible();
   await expect(sohn.getByText(`Englisch aufholen ${RUN}`)).toBeVisible();
 

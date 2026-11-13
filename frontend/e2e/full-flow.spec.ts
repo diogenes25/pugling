@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { vaterLogin, sohnLogin } from "./helpers";
+import { vaterLogin, sohnLogin, pfadStart } from "./helpers";
 
 // End-to-End des vertikalen Durchstichs im Positions-Modell:
 //   Vater legt (Web) einen Lehrplan-Container an und hängt eine Katalog-Übung als Position hinein
@@ -37,7 +37,7 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   await expect(vater.getByRole("heading", { name: /Übungen im Plan/ })).toBeVisible();
   const planUrl = vater.url();
 
-  // Katalog-Übung als Position hinzufügen: Tagesziel + Leitner-Kasten (so erscheint "ÜBEN" beim Sohn).
+  // Katalog-Übung als Position hinzufügen: Tagesziel + Leitner-Kasten (so führt „Los“ beim Sohn ins Üben).
   // Die Übung wird im Radiogroup-Katalog per Radio ausgewählt (ohne Filter listet er alle Übungen).
   const exRadio = vater.getByRole("radio", { name: new RegExp(EXERCISE) });
   await expect(exRadio).toBeVisible();
@@ -59,8 +59,8 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   // Basis: Tagesmission sichtbar
   await expect(sohn.getByText("Tagesmission")).toBeVisible();
 
-  // Übung starten und alle fälligen Karten "gewusst" (die Übungs-Kachel navigiert per Link).
-  await sohn.getByRole("link", { name: /ÜBEN/ }).click();
+  // Übung starten und alle fälligen Karten "gewusst": Knoten auf dem Pfad antippen, im Blatt „Los".
+  await pfadStart(sohn, "practice");
   const counter = sohn.locator(".pill.cyan", { hasText: /Karte \d+ \/ \d+/ });
   await expect(counter).toBeVisible();
   // Aus einer laufenden Runde muss ein Ausweg auf dem Schirm stehen (nicht nur Browser-Zurück).
@@ -133,15 +133,19 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   await expect(testCounter).toHaveText(`Frage 2 / ${testTotal}`);
   await sohn.getByRole("button", { name: "Später weiter" }).click();
   await expect(sohn.getByText("Tagesmission")).toBeVisible();
-  // Auf die Positions-Karte der Übung gescoped, nicht global: jede testbare Karte trägt genau einen
-  // TEST-Link, aber sobald ein Plan eine zweite testbare Position bekommt, träfe ein ungescopter Locator
-  // zwei Treffer und Playwrights Strict-Mode bräche ab (B-62) - heute geht das nur gut, weil dieser Plan
-  // nur eine Position trägt.
-  await sohn.locator(".card", { hasText: EXERCISE }).getByRole("link", { name: /TEST/ }).click();
+  // Auf den Knoten der Übung gescoped, nicht global: sobald ein Plan eine zweite Position bekommt, träfe ein
+  // ungescopter Locator zwei Knoten und Playwrights Strict-Mode bräche ab (B-62).
+  await pfadStart(sohn, "test", EXERCISE);
   await expect(testCounter).toHaveText(`Frage 2 / ${testTotal}`);
 
   for (let frage = 2; frage <= testTotal; frage++) await answerOne(frage);
   await expect(sohn.locator(".vtitle", { hasText: "SIEG!" })).toBeVisible();
+
+  // Zurück auf dem Pfad trägt der Knoten das Häkchen, und die Pflicht des Tages ist erfüllt (B-525).
+  await sohn.locator("nav.sohn-nav").getByRole("link", { name: "Pfad", exact: true }).click();
+  await expect(sohn.locator(".pfad-zeile", { hasText: EXERCISE }).locator(".pfad-knoten")).toHaveAccessibleName(/Ziel erfüllt/);
+  await expect(sohn.getByText("✓ Heute geschafft!")).toBeVisible();
+  await expect(sohn.locator(".pfad-start")).toHaveCount(0);
 
   // Wallet: Münzen wurden gutgeschrieben (Test bestanden + ggf. Leitner-Übung)
   await sohn.goto("/sohn/skins");
