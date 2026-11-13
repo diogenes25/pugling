@@ -29,3 +29,10 @@ Und gilt das nur für den abgeleiteten Tipp oder auch für einen vom Creator ges
 ## Verlauf
 
 - **2026-11-09** — abgeteilt aus [B-429](B-429-seed-familie-widerspricht-dem-katalog.md) beim Grillen in Lauf AG (Sprint 27). Abgeteilt, weil die Ursache im Resolver liegt, nicht im Seed, und die Reparatur eine Produktentscheidung braucht.
+- **2026-11-13** — Datenstand geprüft (Tageslauf, Kopie der echten DB, sieben Einträge mit Artikel): uneinheitlich. Beim Seed
+  „house → Haus" trägt `Noun.Article` „das", den Artikel der **Lösung** – dort ist der Tipp nützlich. Bei den
+  französischen Einträgen („la ville → die Stadt", „l'école", „le magasin") trägt er den Artikel des **Fragewortes**, das
+  ihn schon enthält – dort wiederholt der Tipp die Frage. Vor jeder Code-Änderung zu entscheiden: welche Seite beschreibt
+  `NounInfo`? Empfehlung des PM: die Seite des Wortes (`Word`) – so lesen es Editor und Lader; dann gehört der abgeleitete
+  Tipp in Richtung `front-to-back` weg, und der Seed „house/das" wird berichtigt. Bleibt im Dialog.
+
