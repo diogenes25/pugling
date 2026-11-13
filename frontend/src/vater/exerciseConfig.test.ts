@@ -30,6 +30,21 @@ describe("Rundlauf über die umgestellten Listenfelder", () => {
     expect(extra.wordBank).toEqual(["riesig", MIT_KOMMA]);
   });
 
+  // B-524: Die Satzform reist mit dem Speicherverweis hin und zurück; leer heißt „keine“ (null), nicht "". Rot,
+  // wenn einer der beiden Wege `form` vergisst – dann verlöre Bearbeiten die Satzform still.
+  it("Lückentext: Speicherverweis und Satzform überleben den Rundlauf", () => {
+    const { config, rows } = rundlauf("Cloze",
+      [{ index: 1, answer: "", alternatives: [], vocabKey: "en_patient_patient_in", form: " patients " },
+       { index: 2, answer: "debate", alternatives: [], vocabKey: null, form: "" }],
+      { text: "{{1}} and {{2}}" });
+
+    const gaps = (config as { gaps: { vocabKey: string | null; form: string | null }[] }).gaps;
+    expect(gaps.map((g) => g.form)).toEqual(["patients", null]);
+    expect(rows[0].vocabKey).toBe("en_patient_patient_in");
+    expect(rows[0].form).toBe("patients");
+    expect(rows[1].form).toBe("");
+  });
+
   it("Liste: Alternativen bleiben Listen", () => {
     const { rows } = rundlauf("List", [{ value: "Paris", alternatives: ["Paris (FR)", MIT_KOMMA] }]);
     expect(rows[0].alternatives).toEqual(["Paris (FR)", MIT_KOMMA]);

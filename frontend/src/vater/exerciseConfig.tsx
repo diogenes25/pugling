@@ -45,7 +45,7 @@ interface ArithmeticDrillExtra {
   allowNegativeResults: boolean; divisionMustBeWhole: boolean; seed: string;
 }
 
-interface ClozeRow { index: number; answer: string; alternatives: string[]; vocabKey: string | null }
+interface ClozeRow { index: number; answer: string; alternatives: string[]; vocabKey: string | null; form: string }
 interface ClozeExtra { text: string; wordBank: string[] }
 
 interface MatchingRow { left: string; right: string }
@@ -162,7 +162,7 @@ export function emptyRow(type: ExerciseTypeKey): Row {
     case "Vocabulary": return { front: "", back: "", hint: "" } satisfies VocabularyRow;
     case "Arithmetic": return { prompt: "", answer: "", tolerance: "0" } satisfies ArithmeticRow;
     case "ArithmeticDrill": return {};
-    case "Cloze": return { index: 1, answer: "", alternatives: [], vocabKey: null } satisfies ClozeRow;
+    case "Cloze": return { index: 1, answer: "", alternatives: [], vocabKey: null, form: "" } satisfies ClozeRow;
     case "Matching": return { left: "", right: "" } satisfies MatchingRow;
     case "List": return { value: "", alternatives: [] } satisfies ListRow;
     case "Birkenbihl": return { text: "", decoding: [], naturalTranslation: "" } satisfies BirkenbihlRow;
@@ -243,7 +243,9 @@ export function buildTypeConfig(
         // `vocabKey` unverändert durchreichen: ist er gesetzt, kommt die Lösung aus dem Vokabel-Store und
         // folgt dessen Pflege. Ein Weglassen machte aus der Store-Lücke stillschweigend eine Inline-Lücke.
         gaps: items.map((r) => ({ index: Number(r.index), answer: r.answer,
-          alternatives: nonEmpty(strList(r.alternatives)), vocabKey: r.vocabKey ?? null })) };
+          alternatives: nonEmpty(strList(r.alternatives)), vocabKey: r.vocabKey ?? null,
+          // B-524: die Satzform („patients“) schlägt die Grundform des Speichers; leer heißt „keine“.
+          form: r.form?.trim() ? r.form.trim() : null })) };
     }
     case "Matching": {
       const items = rows as MatchingRow[];
@@ -373,7 +375,7 @@ export function configToEditorState(type: ExerciseTypeKey, config: unknown): { r
       return fallback(
         // `vocabKey` wird nicht bearbeitet, aber mitgeführt (siehe buildTypeConfig).
         list(c.gaps).map((g): ClozeRow => ({ index: g.index ?? 1, answer: g.answer ?? "",
-          alternatives: strList(g.alternatives), vocabKey: g.vocabKey ?? null })),
+          alternatives: strList(g.alternatives), vocabKey: g.vocabKey ?? null, form: g.form ?? "" })),
         { text: str(c.text), wordBank: strList(c.wordBank) } satisfies ClozeExtra);
     case "Matching":
       return fallback(
@@ -637,7 +639,16 @@ export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, re
           </>}
           {type === "Cloze" && <>
             <RowField label="Lücke-Nr." value={r.index} onChange={(v) => patchRow(i, { index: v })} type="number" width={80} />
-            <RowField label="Lösung" value={r.answer} onChange={(v) => patchRow(i, { answer: v })} />
+            {/* Mit Speicherverweis kommt die Lösung aus dem Vokabel-Store; dann zählt nur die Satzform, falls der
+                Satz eine gebeugte Form verlangt (B-524). Ohne Verweis ist die Lösung selbst schon die Satzform. */}
+            {r.vocabKey
+              ? <>
+                  <div className="field" style={{ flex: "none", minWidth: 120 }}>
+                    <span className="label-row">Aus dem Speicher</span><code>{r.vocabKey}</code>
+                  </div>
+                  <RowField label="Satzform" value={r.form} onChange={(v) => patchRow(i, { form: v })} placeholder="patients" optional />
+                </>
+              : <RowField label="Lösung" value={r.answer} onChange={(v) => patchRow(i, { answer: v })} />}
             <RowRepeatedField label="Auch richtig" values={r.alternatives} scope={`Zeile ${i + 1}`}
               placeholder="zählt auch als richtig" optional topic={i === 0 ? "alsoCorrect" : undefined}
               onChange={(v) => patchRow(i, { alternatives: v })} />
@@ -796,7 +807,7 @@ export function contentProblem(type: ExerciseTypeKey, rows: Row[], extra: Row, v
       if (Number(extra.minOperand) > Number(extra.maxOperand)) return "Die untere Zahlengrenze darf nicht über der oberen liegen.";
       return Number(extra.problemCount) < 1 ? "Es muss mindestens eine Aufgabe je Durchlauf geben." : null;
     }
-    case "Cloze": return !extra.text ? "Bitte den Trägertext angeben." : !r.answer ? "Bitte mindestens eine Lücke mit Lösung angeben." : null;
+    case "Cloze": return !extra.text ? "Bitte den Trägertext angeben." : !r.answer && !r.vocabKey ? "Bitte mindestens eine Lücke mit Lösung angeben." : null;
     case "Matching": return !r.left || !r.right ? "Bitte mindestens ein Paar angeben." : null;
     // Die Anweisung zuerst: sie ist der einzige Text auf der Karte, weil alle Einträge sich einen Prompt teilen
     // (B-77/E7). Der Server weist sie auf POST und PUT ab – hier steht sie deutsch und vor dem Abschicken.

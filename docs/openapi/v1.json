@@ -37206,9 +37206,15 @@
               "null",
               "string"
             ]
+          },
+          "form": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         },
-        "description": "A gap. If VocabKey is set, the solution comes from the vocabulary store\n(the entry\u0027s word), centrally maintainable; the inline Answer remains a fallback for\ngaps without a store reference. This allows building a cloze from the maintained vocabulary.\nAnswer is required even with a store reference - send \u0060\u0022\u0022\u0060 there; \u0060null\u0060 is a validation error."
+        "description": "A gap. If VocabKey is set, the solution comes from the vocabulary store\n(the entry\u0027s word), centrally maintainable; the inline Answer remains a fallback for\ngaps without a store reference. This allows building a cloze from the maintained vocabulary.\nAnswer is required even with a store reference - send \u0060\u0022\u0022\u0060 there; \u0060null\u0060 is a validation error.\nForm is the word as the sentence needs it (\u0022patients\u0022, \u0022debates\u0022) when it differs from the\nstore entry\u0027s base form. If set and not blank it is the solution - on every path, with or without a store\nreference - and the base form alone is wrong (B-524); the store entry still supplies the meaning and the link\nto the learning progress."
       },
       "Gender": {
         "enum": [

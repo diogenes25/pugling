@@ -85,7 +85,7 @@ public class AnswerGrader
     public bool MatchesGap(Gap gap, string? given)
     {
         var g = StageMechanics.Normalize(given);
-        return g.Length > 0 && (g == StageMechanics.Normalize(gap.Answer)
+        return g.Length > 0 && (g == StageMechanics.Normalize(ClozeGaps.SolutionOf(gap, gap.Answer))
             || (gap.Alternatives?.Any(a => StageMechanics.Normalize(a) == g) ?? false));
     }
 }

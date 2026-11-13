@@ -126,6 +126,80 @@ public class SchulVokabeltestTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.True(outcome.GetProperty("misspelled").GetBoolean());
     }
 
+    // ---- Part B: the sentence form (decision 6) ----
+
+    // A store-backed gap with a sentence form: the form is the solution, the base form alone is wrong. Red if the
+    // resolver stops reading Form (then "patient" passes and "patients" fails).
+    [Fact]
+    public async Task Satzform_Schlaegt_Grundform_Aus_Dem_Speicher()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var (_, key) = await TestApi.CreateStoreVocabAsync(father, "patient", TestApi.UniqueName("Patient/in"));
+        var exerciseId = await CreateClozeAsync(father, "The doctor sees forty {{1}} a day.",
+            new { index = 1, answer = "", vocabKey = key, form = "patients" });
+
+        var graded = await CheckAsync(father, exerciseId, "patient", "patients");
+        Assert.Equal(new[] { false, true }, graded);
+    }
+
+    // Control for the case above: without a form the store word stays the solution. Red if Form were applied when
+    // empty (the solution would turn blank and nothing would pass).
+    [Fact]
+    public async Task Ohne_Satzform_Bleibt_Das_Speicherwort_Die_Loesung()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var (_, key) = await TestApi.CreateStoreVocabAsync(father, "patient", TestApi.UniqueName("Patient/in"));
+        var exerciseId = await CreateClozeAsync(father, "The {{1}} is asleep.",
+            new { index = 1, answer = "", vocabKey = key, form = "  " });
+
+        var graded = await CheckAsync(father, exerciseId, "patient");
+        Assert.Equal(new[] { true }, graded);
+    }
+
+    // Without a store reference the form beats the inline answer too - "on every path", as the contract says. Red if
+    // the provider for inline gaps ignores Form.
+    [Fact]
+    public async Task Satzform_Gilt_Auch_Ohne_Speicherverweis()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var exerciseId = await CreateClozeAsync(father, "Parliament {{1}} the future of the club.",
+            new { index = 1, answer = "debate", form = "debates" });
+
+        var graded = await CheckAsync(father, exerciseId, "debate", "debates");
+        Assert.Equal(new[] { false, true }, graded);
+    }
+
+    // One preview check per answer against gap 0; returns whether each was graded right.
+    private static async Task<bool[]> CheckAsync(HttpClient father, int exerciseId, params string[] answers)
+    {
+        var results = new List<bool>();
+        foreach (var given in answers)
+        {
+            var res = await (await father.PostAsJsonAsync($"/api/v1/creator/exercises/{exerciseId}/preview/check", new
+            {
+                answers = new[] { new { itemIndex = 0, givenAnswer = given, wasKnown = (bool?)null } },
+                stage = (int)ClozeStage.FreeText,
+            })).Content.ReadFromJsonAsync<JsonElement>();
+            results.Add(res.GetProperty("correct").GetInt32() == 1);
+        }
+        return [.. results];
+    }
+
+    private static async Task<int> CreateClozeAsync(HttpClient father, string text, params object[] gaps)
+    {
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = TestApi.UniqueName("Englisch-Satzform") }));
+        var (seriesId, unitId) = await TestApi.CreateSeriesAndUnitAsync(father, subjectId);
+        var res = await father.PostAsJsonAsync($"/api/v1/creator/textbook-series/{seriesId}/units/{unitId}/cloze", new
+        {
+            title = TestApi.UniqueName("Satzform"),
+            orderIndex = 1,
+            rewardPoints = 10,
+            config = new { text, gaps },
+        });
+        return await TestApi.IdAsync(res);
+    }
+
     private static async Task<int> CreateClozeAsync(HttpClient father)
     {
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",

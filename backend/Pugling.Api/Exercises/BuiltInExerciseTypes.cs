@@ -193,7 +193,11 @@ public sealed class ClozeExerciseType : ExerciseTypeBase
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson)
     {
         var c = Deserialize<ClozeConfig>(configJson);
-        return [.. c.Gaps.Select((g, i) => new ContentItem(i, c.Text, g.Answer, Accepted(g.Answer, g.Alternatives), Hint: null, GapIndex: g.Index))];
+        return [.. c.Gaps.Select((g, i) =>
+        {
+            var solution = ClozeGaps.SolutionOf(g, g.Answer);
+            return new ContentItem(i, c.Text, solution, Accepted(solution, g.Alternatives), Hint: null, GapIndex: g.Index);
+        })];
     }
 
     /// <inheritdoc/>
@@ -462,6 +466,18 @@ public sealed class ListExerciseType : ExerciseTypeBase
         });
         return AnswerChecking.Aggregate(results);
     }
+}
+
+/// <summary>
+/// The one rule for what a gap's solution is (B-524): the sentence form when the author set one, otherwise the store
+/// word or the inline answer. One place, because the provider, the store resolver and the grader all read gaps, and
+/// a path that skipped the form would grade the base form right again.
+/// </summary>
+internal static class ClozeGaps
+{
+    /// <summary>The gap's solution: <see cref="Gap.Form"/> if set, else <paramref name="fallback"/> (store word or inline answer).</summary>
+    public static string SolutionOf(Gap gap, string fallback) =>
+        string.IsNullOrWhiteSpace(gap.Form) ? fallback : gap.Form.Trim();
 }
 
 /// <summary>
