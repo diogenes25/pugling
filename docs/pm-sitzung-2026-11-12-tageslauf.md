@@ -470,3 +470,9 @@ und gebaut: B-430 (c), B-446, B-501 Punkt 2, B-480 Punkt 3; dazu B-523 (Werkzeug
 Fünf Stories von `idee` nach `ausformuliert`, je mit Ist-Stand am Code: B-522, B-410 (Falle: nur 5 explizite
 `[FromBody]`, der Wächter muss über den `ApiExplorer` zählen), B-380 (Bestand nachgezählt), B-494 (`fails` nimmt schon
 Teilstrings – vermutlich nur Doku), B-465 (der wirksame Defekt ist die zu strenge Verrats-Regel). Nichts gebaut.
+
+## Letzte Minuten bis 05:40
+
+B-494 abgenommen (nur Doku im Docstring), B-469 und B-152 am Code nachgeprüft (beide teilweise überholt, im Verlauf
+vermerkt), B-328 und B-253 ausformuliert (B-328 mit zwei stellvertretenden Entscheidungen), B-445 Befund zur echten DB.
+Index: 50 offen, 444 abgenommen. Ende des Laufs.
