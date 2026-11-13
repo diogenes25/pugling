@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, rolle/student, rolle/supervisor]
+tags: [typ/story, status/abgenommen, rolle/student, rolle/supervisor]
 aliases: [Schul-Vokabeltest, Lückensätze mit deutschem Wortkasten]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: L
@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: "Echter Vokabeltest von Friedrich (Englisch, 11.11.2026), abgeschrieben in raw/english/real_tests/2026-11-11-friedrich-vokabeltest.md (gitignored); Nutzer im Chat 2026-11-13: „Solche Tests soll Friedrich entsprechend öfter erhalten. Die Art des Tests ist mir wichtig.“"
 grund: ""
 ersetzt_durch: []
-wartet_auf: "Rollengang in der Arcade (Klick)"
+wartet_auf: ""
 ---
 
 # B-524 · Vokabeltest im Format der Schule: englische Lückensätze, deutscher Wortkasten, frei geschrieben
@@ -344,3 +344,13 @@ Sitzung fertig wird (README → „Teilen und Zusammenlegen“; die Entscheidung
   `INDEX.md`, neu erzeugt. Auf dem gemergten Stand `dotnet test Pugling.sln -c Release` **1525/1525**, Vitest
   **868/868**, `tsc -b` grün. Worktree und Branch entfernt. Offen bleibt nur der Klick-Rollengang (`b524-api` und
   `b524-web` in `.claude/launch.json`, Ports 5390/5191, Wegwerf-DB `pugling_b524.db`).
+- **2026-11-13** — `abgenommen`. Klick-Rollengang in der Arcade nachgeholt (Browser-Pane im Handyformat 375×812,
+  `b524-api` :5390 auf frischer Wegwerf-DB, `b524-web` :5191): Vater legt per API einen Lückentext mit vier
+  store-verknüpften Lücken, Satzform „patients“ und zwei Ablenkern an und weist ihn als Wochenziel auf Stufe
+  „Wortkasten + Freitext“ zu. Der Sohn meldet sich am Ziffernpad an, startet den Test über die Kachel und sieht je
+  Frage den englischen Satz mit markierter Lücke, den deutschen Wortkasten mit sechs Einträgen (vier Bedeutungen,
+  zwei Ablenker, alphabetisch, ohne Hinweis an der Lücke) und ein Freitextfeld. Getippt: „clinik“, „patients“,
+  „racist“, „community“ → Ergebnis 2 / 4 = 50 %, „Fast!“, Bestehensgrenze 80 %; je Lücke „Richtig“ bzw. „Falsch
+  geschrieben · du: …“ mit Lösung. Keine Konsolenfehler. Commits: `c7380e9`, `b4cfe19`, `4b9e1c4`, Merge `8872b06`.
+  Beobachtung, kein Fehler: „racist“ für „racism“ erscheint hier als „falsch geschrieben“, weil „racist“ in dieser
+  Übung keine eigene Lücke ist – Entscheidung 3 trennt Wortfamilien nur, wenn das andere Wort selbst Lösung ist.
