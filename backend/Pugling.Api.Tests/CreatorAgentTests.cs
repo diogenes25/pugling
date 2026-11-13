@@ -3378,6 +3378,8 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
         Assert.Contains("hat kein Fach", error.Message);
         Assert.Contains("Vater-Web (Lehrwerke", error.Message);
+        // B-514: the named teacher has no series - another series passes the briefing only in the teacher's subject.
+        Assert.Contains($"wähle mit --series eine Reihe in {teacher.SubjectName}", error.Message);
         Assert.Equal(0, chat.Calls);
     }
 
@@ -3467,7 +3469,8 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
     /// <summary>
     /// B-510, AK 2: only the book on a series without a subject would have fitted - its own lock is the message, with its
-    /// way out, not "kein Lehrbuch". Red if the dropped series leaves the bare "no book" message.
+    /// way out, not "kein Lehrbuch". Already true before B-510 (the series was picked and stopped later); it guards the new
+    /// filter: red if the dropped series leaves the bare "no book" message.
     /// </summary>
     [Fact]
     public async Task Schreiben_nur_mit_Buch_ohne_Fach_nennt_die_Sperre_der_Reihe()
@@ -3534,9 +3537,17 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
             ["create", "--profile", bound.Id.ToString(), "--type", "Vocabulary"]), default));
 
         Assert.Contains("hat kein Fach", error.Message);
-        Assert.Contains("--profile <id>", error.Message);
-        Assert.DoesNotContain("--series", error.Message);
+        Assert.Contains("ein Profil, das an eine Reihe mit Fach gebunden ist", error.Message);
+        Assert.DoesNotContain("wähle mit --series", error.Message);
         Assert.Equal(0, chat.Calls);
+
+        // The way out, taken (pm-loop Step 5): a profile bound to a series with a subject, no --series - it writes.
+        var (otherSubject, otherSeries, _) = await FreshUnitAsync(creator, "Reihe des anderen Profils");
+        var other = await creator.CreateProfileAsync(new CreateCreatorProfileDto($"Anderes {Guid.NewGuid():N}", null,
+            otherSubject, null, null, null, otherSeries, SourceLang: "en", TargetLang: "de", Persona: null, Didactics: null,
+            DefaultTypes: null, Active: true));
+        Assert.Equal(0, await Commands(creator, pipeline).RunAsync(CommandLine.Parse(
+            ["create", "--profile", other.Id.ToString(), "--type", "Vocabulary", "--count", "3"]), default));
     }
 
     /// <summary>
@@ -3561,5 +3572,49 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.Contains("hat kein Fach", error.Message);
         Assert.DoesNotContain("gehört zur Reihe", error.Message);
         Assert.Equal(0, chat.Calls);
+    }
+
+    /// <summary>
+    /// B-514: a named profile bound to another series Y (with a subject), and --series on a series X without one. "--series
+    /// with a subject" would lead into the briefing's refusal of the profile anywhere but Y - the way out is to drop
+    /// --series (Y) or another profile. Red if the message advises another series.
+    /// </summary>
+    [Fact]
+    public async Task Fremd_gebundenes_Profil_auf_Reihe_ohne_Fach_raet_nicht_zu_einer_anderen_Reihe()
+    {
+        var (pipeline, creator, chat, teacher, bareSeries, bareUnit) = await SubjectlessSeriesAsync("Fremd gebunden ohne Fach");
+        var (ownSubject, ownSeries, _) = await FreshUnitAsync(creator, "Reihe des Profils");
+        var bound = await creator.CreateProfileAsync(new CreateCreatorProfileDto($"Gebunden an Y {Guid.NewGuid():N}", null,
+            ownSubject, null, null, null, ownSeries, SourceLang: "en", TargetLang: "de", Persona: null, Didactics: null,
+            DefaultTypes: null, Active: true));
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline)
+            .RunAsync(OnSeries("create", bound, bareSeries, bareUnit), default));
+
+        Assert.Contains("hat kein Fach", error.Message);
+        Assert.Contains($"lass --series/--series-unit weg, das gewählte Profil gehört zu Reihe {ownSeries}", error.Message);
+        Assert.DoesNotContain("wähle mit --series", error.Message);
+        Assert.DoesNotContain("anderes Profil", error.Message);
+        Assert.Equal(0, chat.Calls);
+
+        // The way out, taken (pm-loop Step 5): without --series/--series-unit the profile's own series files the exercise.
+        Assert.Equal(0, await Commands(creator, pipeline).RunAsync(CommandLine.Parse(
+            ["create", "--profile", bound.Id.ToString(), "--type", "Vocabulary", "--count", "3"]), default));
+    }
+
+    /// <summary>
+    /// B-514: the early stop for a named profile bound to a series without a subject is only for writing verbs - the briefing
+    /// writes nothing and shows that profile's subject. Red if the stop also hits the briefing (the <c>writes</c> condition dropped).
+    /// </summary>
+    [Fact]
+    public async Task Briefing_mit_gebundenem_Profil_auf_Reihe_ohne_Fach_laeuft()
+    {
+        var (pipeline, creator, _, teacher, seriesId, _) = await SubjectlessSeriesAsync("Briefing gebunden");
+        var bound = await creator.CreateProfileAsync(new CreateCreatorProfileDto($"Gebunden {Guid.NewGuid():N}", null,
+            teacher.SubjectId, null, null, null, seriesId, SourceLang: "en", TargetLang: "de", Persona: null, Didactics: null,
+            DefaultTypes: null, Active: true));
+
+        Assert.Equal(0, await Commands(creator, pipeline).RunAsync(CommandLine.Parse(
+            ["briefing", "--profile", bound.Id.ToString()]), default));
     }
 }

@@ -36,15 +36,24 @@ public static class ProfileFit
     /// <summary>
     /// Why no exercise can be filed in <paramref name="series"/>: it has no subject, and the server files none there
     /// (<c>series_without_subject</c>). The way out depends on who may set one: the owner can, nobody can change a series of
-    /// the base stock (no owner), and anyone else can only ask the owner (B-508). Another series is a way out only when the
-    /// named profile does not hold the user to this one (<paramref name="boundByNamedProfile"/>, B-511) - then it is
-    /// another profile.
+    /// the base stock (no owner), and anyone else can only ask the owner (B-508). The other way out depends on the profile
+    /// the user named (<paramref name="namedProfile"/>; an automatically chosen one binds nothing): each branch names one
+    /// step that passes both this lock and the briefing's <see cref="Problem"/> on its own (B-511, B-514).
     /// </summary>
-    public static string NoSubject(TextbookSeriesResponse series, bool boundByNamedProfile = false)
+    public static string NoSubject(TextbookSeriesResponse series, CreatorProfileResponse? namedProfile = null)
     {
-        var elsewhere = boundByNamedProfile
-            ? "wähle ein Profil einer anderen Reihe (--profile <id>), das gewählte ist an diese gebunden"
-            : "wähle mit --series eine Reihe mit Fach";
+        var elsewhere = namedProfile switch
+        {
+            null => "wähle mit --series eine Reihe mit Fach",
+            // Unbound: any series in the profile's own subject passes the briefing too.
+            { SeriesId: null, SubjectName: { } subject } => $"wähle mit --series eine Reihe in {subject}",
+            { SeriesId: null } => "wähle mit --series eine Reihe mit Fach",
+            // Bound to this series: another series would fail the briefing, so another profile - with its own series.
+            { SeriesId: int own } when own == series.Id =>
+                "wähle ohne --series/--series-unit ein Profil, das an eine Reihe mit Fach gebunden ist",
+            // Bound elsewhere: that series is where the profile writes.
+            { SeriesId: int own } => $"lass --series/--series-unit weg, das gewählte Profil gehört zu Reihe {own}",
+        };
         return $"Reihe {series.Id} ({series.Name}) hat kein Fach zugeordnet, und ohne Fach legt der Server keine Übung an – "
                + (series.IsOwn
                    ? $"setze eines im Vater-Web (Lehrwerke → Reihe bearbeiten) oder {elsewhere}."
