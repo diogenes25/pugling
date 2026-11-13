@@ -31,7 +31,7 @@ public sealed class ClozeStrategy(IChatClient chat, CreatorApi creator,
 
     /// <inheritdoc/>
     protected override string TaskInstruction(CreatorBriefing briefing, GenerationRequest request) =>
-        $"""
+        request.SchoolTest ? SchoolTestInstruction(briefing, request) : $"""
         Entwirf einen Lückentext in {briefing.SourceLang}: einen kurzen, zusammenhängenden Text in 'text'.
         Setze jede Lösung in eckige Klammern – genau das, was das Kind einsetzen soll, sonst nichts:
           Yesterday we [went] (go) to the Tower and [took] (take) a lot of photos.
@@ -42,6 +42,21 @@ public sealed class ClozeStrategy(IChatClient chat, CreatorApi creator,
         'distractors': zwei bis vier falsche, aber plausible Wörter derselben Art. Die Lösungen gehören NICHT hinein –
         die Wortbank enthält sie von selbst. In die runde Klammer hinter einer Lücke kommt genau ein Wort (die
         Grundform), nie eine Auswahlliste.
+        """;
+
+    // B-524: the school's format - single sentences, a word of the unit's list per gap, German distractors.
+    private static string SchoolTestInstruction(CreatorBriefing briefing, GenerationRequest request) =>
+        $"""
+        Entwirf einen Vokabeltest wie in der Schule: {request.ItemCount} einzelne, voneinander unabhängige Sätze in
+        {briefing.SourceLang} in 'text', jeder in einer eigenen Zeile, nummeriert ("1. ", "2. " …), jeder mit genau
+        einer Lücke. Jede Lücke ist ein anderes Wort aus der Wortliste oben – nimm KEINE anderen Wörter.
+        Setze das Wort in eckige Klammern, und zwar in der Form, die der Satz verlangt, und schreibe dahinter in
+        runden Klammern das Wort genau so, wie es in der Wortliste steht:
+          The doctor sees forty [patients] (patient) a day.
+          It is important for your [health] (health) to sleep well.
+        Die runde Klammer sieht das Kind nicht; sie ordnet die Lücke der Vokabel zu.
+        'distractors': zwei bis vier DEUTSCHE Wörter für den Wortkasten, die zu keiner Lücke gehören – am besten aus
+        derselben Wortfamilie wie eine Lösung (zu "Rassismus" etwa "rassistisch"). Keine Übersetzung einer Lösung.
         """;
 
     /// <inheritdoc/>
@@ -89,6 +104,8 @@ public sealed class ClozeStrategy(IChatClient chat, CreatorApi creator,
                 violations.Add($"Lücke {index + 1}: die Lösung '{gap.Answer}' steht außerhalb der Klammern im Text " +
                                "und ist damit verraten.");
 
+        if (request.SchoolTest) SchoolTestRules(violations, parsed, briefing, draft);
+
         var distractors = Clean(draft.Distractors);
         violations.Require(distractors.Count >= MinDistractors,
             $"Es fehlen Ablenker: {distractors.Count} falsche Wörter in 'distractors', mindestens {MinDistractors}. " +
@@ -97,16 +114,41 @@ public sealed class ClozeStrategy(IChatClient chat, CreatorApi creator,
         return violations.Messages;
     }
 
+    // B-524: every gap names its word of the list (the round bracket) - that is the link to the store entry the cue
+    // box reads its meaning from. A word outside the list would leave the box without a meaning for that gap. And a
+    // distractor that is the meaning of a gap would be a second right entry in the box.
+    private static void SchoolTestRules(Violations violations, ClozeMarkupResult parsed, CreatorBriefing briefing,
+        ClozeDraft draft)
+    {
+        var hints = ClozeMarkup.FormHints(parsed.Text).ToDictionary(h => h.Gap, h => h.Hint);
+        for (var gap = 1; gap <= parsed.Gaps.Count; gap++)
+        {
+            if (!hints.TryGetValue(gap, out var word))
+                violations.Add($"Lücke {gap}: es fehlt das Wort aus der Wortliste in runden Klammern hinter der Lücke.");
+            else if (PairOf(briefing, word) is null)
+                violations.Add($"Lücke {gap}: '{word}' steht nicht in der Wortliste – nimm nur Wörter von dort.");
+        }
+
+        var meanings = briefing.WordPairs.Select(p => p.Translation.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var distractor in Clean(draft.Distractors).Where(meanings.Contains))
+            violations.Add($"Der Ablenker '{distractor}' ist die Bedeutung eines Wortes der Liste – nimm ein Wort, das zu keiner Lücke gehört.");
+    }
+
+    private static VocabPair? PairOf(CreatorBriefing briefing, string word) =>
+        briefing.WordPairs.FirstOrDefault(p => string.Equals(p.Word.Trim(), word.Trim(), StringComparison.OrdinalIgnoreCase));
+
     /// <inheritdoc/>
     protected override IReadOnlyList<string> ExpectedAnswers(ClozeDraft draft) =>
         // The task index is the gap's position in the text - that is how the server reads it.
         [.. ClozeMarkup.Parse(draft.Text).Gaps.Select(g => g.Answer)];
 
     /// <inheritdoc/>
-    protected override Task<ExercisePayload<ClozeConfig>> ToPayloadAsync(ClozeDraft draft,
+    protected override async Task<ExercisePayload<ClozeConfig>> ToPayloadAsync(ClozeDraft draft,
         CreatorBriefing briefing, GenerationRequest request, CancellationToken ct)
     {
         var parsed = ClozeMarkup.Parse(draft.Text);
+        if (request.SchoolTest) return Payload(draft.Title, await SchoolTestConfigAsync(parsed, draft, briefing, ct), briefing, request);
+
         var config = new ClozeConfig
         {
             Text = parsed.Text.Trim(),
@@ -117,7 +159,34 @@ public sealed class ClozeStrategy(IChatClient chat, CreatorApi creator,
                 .Order(StringComparer.OrdinalIgnoreCase)],
         };
 
-        return Task.FromResult(Payload(draft.Title, config, briefing, request));
+        return Payload(draft.Title, config, briefing, request);
+    }
+
+    /// <summary>
+    /// The school test's config (B-524): each gap links its store entry (meaning for the cue box, learning progress)
+    /// and carries the sentence form only where it differs from the stored word; the round brackets leave the text,
+    /// the child never sees them. No English word bank - the cue box shows the meanings plus the German distractors.
+    /// Validation has made sure every gap names a word of the list.
+    /// </summary>
+    private async Task<ClozeConfig> SchoolTestConfigAsync(ClozeMarkupResult parsed, ClozeDraft draft,
+        CreatorBriefing briefing, CancellationToken ct)
+    {
+        var hints = ClozeMarkup.FormHints(parsed.Text).ToDictionary(h => h.Gap, h => h.Hint);
+        var gaps = new List<Gap>(parsed.Gaps.Count);
+        foreach (var (g, i) in parsed.Gaps.Select((g, i) => (g, i)))
+        {
+            var pair = PairOf(briefing, hints[i + 1])!;
+            // The server addresses a store entry by key; the briefing carries its id.
+            var key = (await Creator.GetVocabularyAsync(pair.VocabularyId, ct)).Key;
+            var form = string.Equals(g.Answer.Trim(), pair.Word.Trim(), StringComparison.OrdinalIgnoreCase) ? null : g.Answer.Trim();
+            gaps.Add(new Gap(i + 1, "", g.Alternatives.Count > 0 ? [.. g.Alternatives] : null, key, form));
+        }
+        return new ClozeConfig
+        {
+            Text = ClozeMarkup.WithoutFormHints(parsed.Text).Trim(),
+            Gaps = gaps,
+            CueDistractors = Clean(draft.Distractors),
+        };
     }
 
     /// <summary>Strips empty entries and duplicates - a model in JSON mode is not held to the item type.</summary>

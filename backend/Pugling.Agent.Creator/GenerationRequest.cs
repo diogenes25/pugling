@@ -54,6 +54,11 @@ namespace Pugling.Agent.Creator;
 /// Which exercise of a series this is (0 = the first). A study plan with two vocabulary exercises on one unit asks
 /// for part 0 and part 1, and each gets its own slice of the unit's word pairs instead of the same ten twice.
 /// </param>
+/// <param name="SchoolTest">
+/// A cloze in the school's vocabulary-test format (B-524): single sentences with one gap each, every gap a word of
+/// the unit's list linked to its store entry (so the cue box can show its meaning), the sentence form where it
+/// differs from the stored word, and German distractors for the cue box instead of an English word bank.
+/// </param>
 public sealed record GenerationRequest(
     int? ChildId,
     int? ProfileId,
@@ -73,4 +78,5 @@ public sealed record GenerationRequest(
     IReadOnlyList<string> Interests,
     bool DryRun,
     bool Strict,
-    int Part = 0);
+    int Part = 0,
+    bool SchoolTest = false);

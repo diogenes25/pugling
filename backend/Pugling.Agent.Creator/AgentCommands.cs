@@ -561,7 +561,8 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
             RewardPoints: command.Int("points", DefaultRewardPoints),
             Interests: command.List("interests"),
             DryRun: command.Flag("dry-run"),
-            Strict: command.Flag("strict"));
+            Strict: command.Flag("strict"),
+            SchoolTest: command.Flag("schultest"));
     }
 
     /// <summary>

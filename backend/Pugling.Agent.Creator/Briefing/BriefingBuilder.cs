@@ -88,7 +88,8 @@ public sealed class BriefingBuilder(CreatorApi creator, SupervisorApi supervisor
         var (pool, wordLists) = await LoadUnitVocabularyAsync(request, existing, ct);
         // Only the word-practicing types get a slice: a cloze or grammar part has a grammar focus, and ten word
         // pairs beside it would only pull the text towards vocabulary.
-        var wordPairs = WordTypes.Contains(request.TypeKey)
+        // The school test (B-524) is a word test in cloze form: its gaps are the unit's words, so it takes a slice too.
+        var wordPairs = WordTypes.Contains(request.TypeKey) || request.SchoolTest
             ? UnitVocabulary.Slice(pool, [.. (child?.WeakWords ?? []).Select(w => w.Word)], request.ItemCount, request.Part)
             : [];
         // The unit's new grammar first: a plan rotates its grammar parts over this list from the top (B-471).
