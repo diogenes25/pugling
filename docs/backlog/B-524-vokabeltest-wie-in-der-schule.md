@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, rolle/student, rolle/supervisor]
+tags: [typ/story, status/geschaetzt, rolle/student, rolle/supervisor]
 aliases: [Schul-Vokabeltest, Lückensätze mit deutschem Wortkasten]
-status: gegrillt
+status: geschaetzt
 prio: P1
 art: Wunsch
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: L
+wo: beides
+migration: nein
+vertragsbruch: nein
 quelle: "Echter Vokabeltest von Friedrich (Englisch, 11.11.2026), abgeschrieben in raw/english/real_tests/2026-11-11-friedrich-vokabeltest.md (gitignored); Nutzer im Chat 2026-11-13: „Solche Tests soll Friedrich entsprechend öfter erhalten. Die Art des Tests ist mir wichtig.“"
 grund: ""
 ersetzt_durch: []
@@ -209,6 +209,82 @@ Grill-Runde mit dem Nutzer am 2026-11-13.
 6. Der echte Test vom 11.11.2026 lässt sich als Lückentext nachbauen und als Position mit Takt wöchentlich auf
    der neuen Stufe abspielen (Rollengang als Friedrich).
 
+## Schätzung
+
+**Größe: L.** Die Story ist ein Bündel aus vier Teilen, die je für sich lieferbar sind. Einzeln geschätzt:
+
+| Teil | Entscheidung | Größe | wo |
+| --- | --- | --- | --- |
+| A · Stufe „Wortkasten + Freitext“ mit Ablenkern | 4, 5 | M (wie B-03: neuer Pfad durch Typ, Karte, Editor) | beides |
+| B · Satzform an der Lücke | 6 | S | beides |
+| C · „Falsch geschrieben“ im Testergebnis | 2, 3 | S | beides |
+| D · Format-Schalter am KI-Creator | 7 | M | backend (Agent) |
+
+Zusammen ist das mehr als eine DB-Etappe wie E6 an Breite, aber ohne deren Datenrisiko. Darum L und nicht
+„geteilt“. Teilen nach den vier Zeilen ist möglich und wäre der saubere Weg, falls die Story nicht in einer
+Sitzung fertig wird (README → „Teilen und Zusammenlegen“; die Entscheidung liegt beim Menschen).
+
+**`migration: nein`**, nachgesehen:
+
+- Die neue Stufe ist ein weiterer `ClozeStage`-Wert (`backend/Pugling.Api/Models/ClozeEntities.cs:7-19`). Er
+  landet in den vorhandenen `StageValue`-Spalten; das Schema ändert sich nicht.
+- Ablenker (`ClozeConfig`) und Satzform (`Gap`) liegen im JSON der Übung
+  (`backend/Pugling.Contracts/Exercise/ExerciseConfigs.cs:71-86`), nicht in eigenen Spalten.
+- „Falsch geschrieben“ wird beim Lesen des Ergebnisses aus `GivenAnswer` und Lösung berechnet
+  (`backend/Pugling.Api/Models/StudyPlanEntities.cs:191-192`), nicht gespeichert. Damit gilt es auch rückwirkend
+  für alte Versuche.
+
+**`vertragsbruch: nein`**: Alle Vertragsänderungen sind additiv und optional, also nach README kein Bruch.
+
+- `ClozeConfig` bekommt eine Ablenker-Liste, `Gap` ein optionales Feld `Form`.
+- `TestItem` (`backend/Pugling.Contracts/Student/TestDtos.cs:34`) und `PracticeCard`
+  (`backend/Pugling.Contracts/Student/PracticeDtos.cs:74`) bekommen den Wortkasten als Liste.
+- `ItemOutcome` (`TestDtos.cs:73`) bekommt ein Kennzeichen „falsch geschrieben“.
+- Alte Payloads bleiben gültig. Neue Felder müssen aber im Frontend-Editor und in `Pugling.Client` ankommen,
+  sonst greift beim Schreiben `unknown_field` nicht, sondern das Feld fehlt still.
+
+**Risiken**
+
+- **Anti-Cheat am Wortkasten:** Der Kasten darf die Zuordnung Lücke → Bedeutung nicht verraten. Nicht in
+  Lückenreihenfolge, nicht je Karte verschieden, und keine Bedeutung wegen eines Großbuchstabens auffällig. Das
+  ist dieselbe Fehlerklasse wie bei der englischen Wortbank (B-487, B-497, B-501 in `BuiltInExerciseTypes.cs:207-256`).
+- **Lösungsfeld-Regel:** Der Wortkasten enthält Übersetzungen, keine Lösungen, aber die neue Satzform ist eine. Sie
+  darf nur über Creator-/Supervisor-gegatete Actions herausgehen (`ConventionGuardTests`). Der Feldname darf nicht
+  `Translation` heißen, sonst schlägt das Tor zu Recht an.
+- **Schwelle für „falsch geschrieben“:** Die Grenze ≤ 1 / ≤ 2 ist am echten Test gerechnet, nicht an vielen
+  Antworten. Ein Fehlurteil kostet keine Punkte, aber eine falsche Diagnose für den Vater.
+- **Lücken ohne `VocabKey`** haben keine Bedeutung für den Kasten. Die Stufe muss sie erkennbar behandeln (Warnung
+  im Editor oder Inline-Übersetzung), statt still eine Lücke ohne Eintrag zu zeigen.
+- **KI-Creator:** Die Qualität der Ablenker und Satzformen hängt am lokalen Modell. Seit B-460 entscheidet C#, was
+  eine Antwort ist; das muss für die Satzform genauso gelten.
+
+**Angriffsplan (Backend zuerst)**
+
+1. **C** zuerst: klein, sofort nützlich für die heutigen Freitext-Tests und unabhängig von den anderen Teilen.
+   Abstandsfunktion und Nachbarvergleich am `AnswerGrader` (`backend/Pugling.Api/Services/Shared/AnswerGrader.cs`),
+   Kennzeichen an `ItemOutcome`, Anzeige im Testergebnis der Sohn-App (`frontend/src/sohn/SohnTest.tsx`) und in der
+   Vater-Sicht (`frontend/src/vater/VaterLernstand.tsx`).
+2. **B:** `Gap.Form` im Vertrag, Auflösung in `ExerciseContentResolver.cs:153-159` (Form schlägt Speicherwort, der
+   Hinweis bleibt aus dem Speicher), Editor `frontend/src/vater/ClozeTexts.tsx`.
+3. **A:** neuer `ClozeStage`-Wert, `StageOptions`, Wortkasten-Facette in `PositionPlayService.CardFacets`
+   (`PositionPlayService.cs:314`), Hinweis an der Lücke auf dieser Stufe unterdrücken, Karte in
+   `frontend/src/components/ClozePrompt.tsx` und `frontend/src/sohn/SohnTest.tsx:223`, Ablenker im Editor.
+4. **D:** Format-Schalter in `backend/Pugling.Agent.Creator/Drafting/ClozeStrategy.cs` (Ablenker aus Wortfamilien
+   der Unit, Satzform aus `ClozeMarkup`), danach `ki-creator`-Skill und Agent-`CLAUDE.md` nachziehen.
+
+**Testweg**
+
+- Integrationstest in `Pugling.Api.Tests` mit dem nachgebauten Test vom 11.11. (AK 3, AK 4): Friedrichs Antworten
+  einreichen, die drei Kategorien je Lücke prüfen, Prozent unverändert binär (AK 2). Rote Probe je Fall benennen
+  (CLAUDE.md): Was macht „clinik“ rot, was „racist“?
+- Integrationstest: Die Karte auf der neuen Stufe trägt denselben sortierten Kasten auf jeder Lücke und keinen
+  Hinweis (AK 1).
+- Vitest für `ClozePrompt` und `SohnTest` (`TestResult.test.tsx`); der `frontend-reviewer` vor der Abnahme, für A–C zusätzlich der
+  `pugling-reviewer`.
+- `/smoke-test` für den Ablauf Anlegen → Zuweisen → Test → Ergebnis; Agent-Lauf `exam` gegen eine Wegwerf-DB für
+  D (AK 5).
+- Rollengang als Friedrich an der laufenden App (AK 6), nicht an der echten `pugling.db`, sondern an einer Kopie.
+
 ## Verlauf
 
 - **2026-11-13** — angelegt (Quelle: echter Test vom 11.11.2026; Nutzer verlangt dieses Format ausdrücklich, darum P1).
@@ -218,3 +294,5 @@ Grill-Runde mit dem Nutzer am 2026-11-13.
 - **2026-11-13** — gegrillt: acht Entscheidungen mit dem Nutzer. Wertung bleibt binär (−½ war
   LRS-Nachteilsausgleich), neue Stufe „Wortkasten + Freitext“ mit Ablenkern, Satzform an der Lücke, wöchentlich
   neue Übung vom KI-Creator.
+- **2026-11-13** — geschaetzt: L als Bündel aus vier lieferbaren Teilen (A Stufe M, B Satzform S, C Schreibfehler
+  S, D KI-Creator M); keine Migration, kein Vertragsbruch (alles additiv). Reihenfolge C → B → A → D.
