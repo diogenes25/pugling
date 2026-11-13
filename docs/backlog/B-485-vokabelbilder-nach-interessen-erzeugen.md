@@ -429,4 +429,3 @@ Reviewer vor der Abnahme: `pugling-reviewer` und `frontend-reviewer`.
   - Nebenbefund: Ein nur abgehängtes Bild nimmt der nächste Lauf über seinen Schlüssel wieder auf und hängt es erneut
     an. Bilder 9 und 12 der echten DB müssen also gelöscht sein, bevor der Brawl-Stars-Prompt dort wieder gesetzt
     wird. README und `docs/medien-bilder.md` sagen das jetzt.
-
