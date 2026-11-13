@@ -13,6 +13,7 @@ unverifiziert: true
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-270]
+nachgeschaut: 2026-11-13
 ---
 
 # B-412 · „beste Bewertung zuerst" im Planbau ist nur gegen „nicht sortiert" belegt, nicht gegen „schlechteste zuerst"
@@ -50,3 +51,4 @@ Autonom gegrillt (`art: Defekt`, Tageslauf):
     *und* in der Arcade in UTC formatiert; fällt eine Hälfte weg, trägt die andere für alle Zonen bis UTC+11 (D4 wirkt nur
     jenseits davon, ohne Zonenparameter für DateOnly nicht messbar). Playwright 140/140 auf 5201/5174.
   - Rollengang Sohn/Vater: E2E-Suite gegen echten Server und UI; Creator Regressionszeuge. Abgenommen.
+- **2026-11-13** — nachgeschaut (Retro Sprint 56/57, frischer Reviewer, gelesen; Ratschläge bzw. Datumswerte je Zweig/Zone nachgerechnet). Befund: sauber (Reihenfolgen gegeneinander, Auswahl über eindeutiges Fach).

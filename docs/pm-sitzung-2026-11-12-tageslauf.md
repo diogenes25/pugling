@@ -258,3 +258,58 @@ Mutanten-Probe lief auf einem Berliner Rechner.
 **Gelandet:** kein neuer Mechanismus. Argument: die Lehre „eine zonenabhängige Probe misst die Zone des Rechners" steht als
 Gedächtnis-Lehre bereits fest (`lokal-windows-ci-linux`), und die strukturelle Reparatur (Zone als Parameter, eine
 Lese-Hälfte) macht weitere Fälle dieser Art an dieser Stelle unmöglich.
+
+## Sprint 56 — B-430 (Wunsch), gebaut und zurückgenommen
+
+**Sprint-Ziel:** Nach einem verpatzten Test übt der Sohn mit einem Knopf genau die eben falschen Wörter.
+**Umfang:** [B-430](backlog/B-430-nach-test-diese-woerter-ueben.md) – Offener Punkt 3 stellvertretend als (b) entschieden
+(falsche Test-Antwort → Kasten 1, fällig heute).
+**Ergebnis:** gebaut, Tests und Mutanten 5/5 rot, dann vom Review widerlegt: 🔴 ein absichtlich verpatzter erster Versuch
+macht Wörter fällig, deren Üben Münzen bringt (nach der Leiter-Woche täglich über den ganzen Pool); 🟡 der zweite Versuch
+des Tages fragt die herabgestuften Wörter leichter ab. **Zurückgenommen, nichts committet** – die Kinder lernen auf der
+echten DB, und betrugssichere Punkte sind eine Bedingung des Vaters. (b) bräuchte eine Markierung „vom Test
+herabgestuft, unbezahlt bis zum ersten Aufstieg" (Migration) und eine Regel gegen den leichteren zweiten Versuch.
+Empfehlung an den Nutzer: (c) – Knopf „▶ Üben" ohne Leitner-Eingriff. Bleibt im Dialog.
+
+## Sprint 57 — Ziel & Umfang
+
+**Sprint-Ziel:** Ein Filter, den der Vater wählt, filtert – und was die Liste dazu sagt (Zahl, Fokus), gehört zum Gezeigten.
+**Umfang:** [B-513](backlog/B-513-reihe-filter-der-uebungsliste-filtert-nicht.md), [B-515](backlog/B-515-nachschau-reste-sprint-52.md).
+**Ergebnis:** `seriesId` am Katalog (API-First), Übungsliste, Planbau-Filter (Review-🟡, Zähler 1), Ziel-Auswahl; Zahl je Filter,
+Fokus bei leerer Runde. Suite 1439/1439, Vitest 825/825, Playwright 140/140, Mutanten 8/8. Commit `9553854`.
+
+## Sprint 58 — Ziel & Umfang
+
+**Sprint-Ziel:** Was die Konsole dem Creator sagt, stimmt und führt nie in eine zweite Sperre; die Grammatik-Reihenfolge
+überhört keinen Marker.
+**Umfang:** [B-482](backlog/B-482-nachschau-reste-sprint-33.md), [B-516](backlog/B-516-nosubject-nur-sperre-und-ihre-aufhebung.md).
+**Ergebnis:** `NoSubject` nur noch Sperre + Aufhebung; GrammarOrder (Trenner, Zwillinge, Label mit Trenner am Anfang –
+Review-🟡, Zähler 1); zwei Bücher derselben Reihe sind eine Fehlbedienung. Suite 1441/1441, Mutanten 6/6. Commit `022dfcf`.
+
+## Runde 6 — Rollengang / Abnahme (Sprint 57/58)
+
+- **Vater — abgenommen (57):** E2E 140/140 (Planbau, Übungsliste) gegen echten Server und UI.
+- **Sohn — abgenommen (57, B-515):** Komponententests; E2E grün.
+- **Creator — abgenommen (58):** Konsolenaufrufe gegen den In-Process-Server, jeder genannte Ausweg ausgeführt.
+
+## Retrospektive (Sprint 56–58)
+
+**Nachschau:** Sprint 54 (`edaceab`, frischer `frontend-reviewer`): **🔴** + zwei 🟡 → [B-517](backlog/B-517-datum-tests-in-utc-und-folgetag.md)
+(Zeitstempel-Tests in der UTC-CI blind, Folgetag östlich von UTC+11, Arcade-Stellen ohne Test). Sprint 55 (`637d868`,
+frischer `pugling-reviewer`): drei 🟡 → [B-516](backlog/B-516-nosubject-nur-sperre-und-ihre-aufhebung.md). `nachgeschaut`
+an B-449, B-447, B-412, B-514.
+
+**Was die eigenen Tore durchgelassen haben:**
+- Die Ratschläge von `NoSubject` zum fünften Mal. Antwort diesmal nicht ein weiterer Zweig, sondern weniger Rat (B-516) –
+  und die Regel in pm-loop Step 5 („nur die Aufhebung dieser Sperre nennen, sonst den Rat ausführen").
+- Ein **Steuerzeichen** (U+0008) im Muster des Arcade-Wächters aus Sprint 54: aus `\b` in einem Python-Heredoc wurde ein
+  Backspace. Der Wächter sah im Editor richtig aus und griff in zwei von vier Formen nie; weder Selbsttest noch Review noch
+  Nachschau sahen es – gefunden erst beim Bau von B-517, weil dieselbe Falle ein zweites Mal zuschlug.
+- Mutanten-Proben auf einem Berliner Rechner messen keine UTC-CI (B-517, zum zweiten Mal nach B-449).
+
+**Gelandet (ein Mechanismus, ein neues Tor):** `frontend/src/steuerzeichen.test.ts` – keine Frontend-Quelle trägt ein
+Zeichen unter U+0020 außer Tab/LF/CR (Selbsttest, rote Probe C1). Ein neues Tor hält den Lauf nach `README` an;
+**stellvertretend entschieden: weiter**, weil es nur Quellen liest und keine weitere Arbeit prägt.
+
+**Bewusst ungedeckt:** Backend-Quellen und `e2e/*.ts` prüft das Tor nicht; die Falle (Python-Heredoc) bleibt eine
+Werkzeug-Lehre im Gedächtnis.

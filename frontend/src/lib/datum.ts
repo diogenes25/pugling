@@ -29,7 +29,16 @@ const OHNE_OFFSET = /T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/;
  * der Test ihn zonenunabhängig über `toISOString()` prüfen kann (B-449).
  */
 export function augenblick(value: string): Date {
-  return new Date(OHNE_OFFSET.test(value) ? `${value}Z` : value);
+  return new Date(alsUtcText(value));
+}
+
+/**
+ * Die Text-Regel hinter `augenblick`: ein Zeitstempel ohne Offset bekommt ein `Z`. Eigene Funktion, weil nur ein Vergleich
+ * von **Text** zonenunabhängig ist – in einer UTC-Umgebung (der CI) ist „ohne `Z` als Ortszeit gelesen" derselbe Augenblick
+ * wie „mit `Z`", ein Test über `Date` sähe den Fehler dort nicht (B-517).
+ */
+export function alsUtcText(value: string): string {
+  return OHNE_OFFSET.test(value) ? `${value}Z` : value;
 }
 const TAG = new Intl.DateTimeFormat("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
 const ZEITPUNKT = new Intl.DateTimeFormat("de-DE", {
@@ -49,7 +58,10 @@ export function formatDateIn(value: string, timeZone?: string): string {
   const d = lies(value);
   // Unlesbares lieber roh zeigen als „Invalid Date" – der Wert ist dann wenigstens erkennbar.
   if (Number.isNaN(d.getTime())) return value;
-  return timeZone ? new Intl.DateTimeFormat("de-DE", { timeZone, day: "2-digit", month: "2-digit", year: "numeric" }).format(d)
+  // Ein `DateOnly` ist ein Kalendertag, kein Augenblick: in UTC formatiert (wie in der Arcade), sonst stünde östlich von
+  // UTC+11 der Folgetag da (B-517).
+  const zone = NUR_TAG.test(value) ? "UTC" : timeZone;
+  return zone ? new Intl.DateTimeFormat("de-DE", { timeZone: zone, day: "2-digit", month: "2-digit", year: "numeric" }).format(d)
     : TAG.format(d);
 }
 

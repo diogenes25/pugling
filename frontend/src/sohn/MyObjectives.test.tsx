@@ -212,3 +212,18 @@ describe("MyObjectives, Etappe ohne Titel", () => {
     expect(celebrate).toHaveBeenCalledWith("medium", "🎯", "Etappe in einer Unit", "Etappe geschafft");
   });
 });
+
+// B-517: das Datum eines großen Ziels steht in der Sprache der Arcade, nicht als ISO-Text. Rot, wenn `dueDate` roh in den
+// Satz geht (vor B-447 stand dort „bis 2026-11-20").
+describe("MyObjectives – Termin", () => {
+  it("zeigt den Termin als Datum der Arcade, nicht als ISO", async () => {
+    myObjectives.mockResolvedValueOnce({ items: [{ ...obj(9, [kr(1, false, "Etappe")]), dueDate: "2026-11-20" }], total: 1 });
+    const view = render(<MyObjectives />);
+    await waitFor(() => expect(view.container.textContent).toContain("Ziel 9"));
+
+    expect(view.container.textContent).toContain("20.11.2026");
+    expect(view.container.textContent).not.toContain("2026-11-20");
+    view.unmount();
+  });
+});
+

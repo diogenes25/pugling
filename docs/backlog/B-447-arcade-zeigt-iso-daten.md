@@ -13,6 +13,7 @@ unverifiziert: true
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+nachgeschaut: 2026-11-13
 ---
 
 # B-447 · Die Sohn-Arcade zeigt Daten als ISO-Text
@@ -36,3 +37,4 @@ Fälligkeit: 2026-11-10") und `sohn/SohnProgress.tsx:68` (`title={d.day}`). Repa
     *und* in der Arcade in UTC formatiert; fällt eine Hälfte weg, trägt die andere für alle Zonen bis UTC+11 (D4 wirkt nur
     jenseits davon, ohne Zonenparameter für DateOnly nicht messbar). Playwright 140/140 auf 5201/5174.
   - Rollengang Sohn/Vater: E2E-Suite gegen echten Server und UI; Creator Regressionszeuge. Abgenommen.
+- **2026-11-13** — nachgeschaut (Retro Sprint 56/57, frischer Reviewer, gelesen; Ratschläge bzw. Datumswerte je Zweig/Zone nachgerechnet). Befund: 🟡 drei Arcade-Stellen ohne Test → [B-517](B-517-datum-tests-in-utc-und-folgetag.md).

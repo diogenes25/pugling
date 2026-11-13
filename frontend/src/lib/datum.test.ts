@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { arcadeDatum, augenblick, formatDate, formatDateIn, formatDateRange, formatDateTime } from "./datum";
+import { alsUtcText, arcadeDatum, augenblick, formatDate, formatDateIn, formatDateRange, formatDateTime } from "./datum";
 
 /**
  * B-427. Ein Datum hat im Vater-Web eine deutsche Schreibweise, egal welche Sprache der Browser meldet.
@@ -11,6 +11,8 @@ describe("formatDate", () => {
     expect(formatDate("2026-11-08")).toBe("08.11.2026");
     expect(formatDateIn("2026-11-08", "America/New_York")).toBe("08.11.2026");
     expect(formatDateIn("2026-01-01", "America/New_York")).toBe("01.01.2026");
+    // B-517: auch östlich von UTC+11 derselbe Tag – rot, wenn ein DateOnly in der Gerätezone formatiert wird.
+    expect(formatDateIn("2026-11-08", "Pacific/Kiritimati")).toBe("08.11.2026");
   });
 
   // Rot, wenn ein Zeitstempel roh oder im Browser-Format erscheint.
@@ -21,15 +23,32 @@ describe("formatDate", () => {
   // Rot, wenn ein unlesbarer Wert „Invalid Date" wird.
   it("lässt Unlesbares stehen", () => { expect(formatDate("kein Datum")).toBe("kein Datum"); });
 
-  // Review-Fund (Sprint 27), zonenunabhängig gemacht (B-449): der Server liefert gelesene Zeitstempel ohne Offset, oft mit
-  // sieben Nachkommastellen. Rot, wenn sie als Ortszeit gelesen werden (kein `Z` angehängt) – über `toISOString()` auf jeder
-  // Maschine, auch in der UTC-CI – oder wenn das Muster den Bruchteil nicht als „ohne Offset" erkennt.
+  // Review-Fund (Sprint 27): der Server liefert gelesene Zeitstempel ohne Offset, oft mit sieben Nachkommastellen. Rot,
+  // wenn sie als Ortszeit gelesen werden. In einer UTC-Umgebung (der CI) ist „als Ortszeit" derselbe Augenblick – darum
+  // läuft dieser Fall in New York (B-517, Review): die Zone wird für ihn gesetzt, Node liest `TZ` zur Laufzeit.
   it("liest einen Zeitstempel ohne Offset als UTC", () => {
+    const vorher = process.env.TZ;
+    process.env.TZ = "America/New_York";
+    try {
+      expect(augenblick("2026-11-08T23:30:00").toISOString()).toBe("2026-11-08T23:30:00.000Z");
+    } finally {
+      process.env.TZ = vorher;
+    }
     expect(augenblick("2026-11-08T23:30:00").toISOString()).toBe("2026-11-08T23:30:00.000Z");
     expect(augenblick("2026-11-08T23:30:00.1234567").toISOString()).toBe("2026-11-08T23:30:00.123Z");
     expect(augenblick("2026-11-08T23:30").toISOString()).toBe("2026-11-08T23:30:00.000Z");
     expect(augenblick("2026-11-08T23:30:00+01:00").toISOString()).toBe("2026-11-08T22:30:00.000Z");
     expect(formatDateIn("2026-11-08T23:30:00", "Europe/Berlin")).toBe("09.11.2026");
+  });
+
+  // B-517: die Text-Regel, als Text geprüft – auf jeder Maschine, auch in der UTC-CI. Rot, wenn kein `Z` angehängt wird,
+  // wenn der Bruchteil (bis zu sieben Stellen vom Server) nicht als „ohne Offset" zählt, oder wenn ein Offset doppelt wird.
+  it("hängt einem Zeitstempel ohne Offset ein Z an, nur dort", () => {
+    expect(alsUtcText("2026-11-08T23:30:00")).toBe("2026-11-08T23:30:00Z");
+    expect(alsUtcText("2026-11-08T23:30:00.1234567")).toBe("2026-11-08T23:30:00.1234567Z");
+    expect(alsUtcText("2026-11-08T23:30")).toBe("2026-11-08T23:30Z");
+    expect(alsUtcText("2026-11-08T23:30:00Z")).toBe("2026-11-08T23:30:00Z");
+    expect(alsUtcText("2026-11-08T23:30:00+01:00")).toBe("2026-11-08T23:30:00+01:00");
   });
 
   it("zeigt einen Zeitpunkt mit Uhrzeit", () => {
@@ -89,7 +108,17 @@ describe("arcadeDatum", () => {
   it("zeigt einen DateOnly als genau diesen Tag in der Sprache der Arcade", () => {
     expect(arcadeDatum("2026-11-08", "de")).toBe("8.11.2026");
     expect(arcadeDatum("2026-11-08", "en-US")).toBe("11/8/2026");
-    expect(arcadeDatum("2026-11-08", "de", "America/New_York")).toBe("8.11.2026");
+    // B-517 (Review): auch östlich von UTC+11 derselbe Tag – rot, wenn ein DateOnly in der übergebenen Zone formatiert wird.
+    expect(arcadeDatum("2026-11-08", "de", "Pacific/Kiritimati")).toBe("8.11.2026");
+    // … und auf einem Gerät dort (Zone zur Laufzeit gesetzt): rot, wenn ein DateOnly in der Gerätezone formatiert wird.
+    const vorher = process.env.TZ;
+    process.env.TZ = "Pacific/Kiritimati";
+    try {
+      expect(arcadeDatum("2026-11-08", "de")).toBe("8.11.2026");
+      expect(formatDate("2026-11-08")).toBe("08.11.2026");
+    } finally {
+      process.env.TZ = vorher;
+    }
   });
 
   // Die Lese-Hälfte teilt sich die Arcade mit dem Vater-Web (`lies` → `augenblick`): ob ein Zeitstempel ohne Offset als
@@ -111,9 +140,26 @@ describe("Die Arcade formatiert Daten nur über arcadeDatum (B-447)", () => {
   const ARCADE = Object.entries(QUELLEN).filter(([datei]) => datei.startsWith("../sohn/"));
   // `new Date(` auch ohne Argument und `toLocaleString` auch für Zahlen sind bewusst Funde: in der Arcade gibt es heute
   // keins, und wer eins braucht, schreibt es in lib/ – dort, wo die Lese-Regel steht.
-  const SELBST = /new Date\(|Date\.parse\(|Intl\.DateTimeFormat\(|\.toLocale(?:Date|Time)?String\(/g;
+  const SELBST = /new Date\(|\bDate\.parse\(|\bIntl\.DateTimeFormat\(|\.toLocale(?:Date|Time)?String\(/g;
+
+  // B-517: auch kein rohes Datum – ein Wert, der als `date` in einen Satz oder als Titel ins Bild geht, läuft durch
+  // `arcadeDatum`. Rot, wenn `{ date: o.dueDate }` oder `title={d.day}` zurückkehrt (die drei Stellen von B-447).
+  it("keine Arcade-Quelle gibt ein Datum roh in Satz oder Titel", () => {
+    const ROH = /\bdate:\s*(?!arcadeDatum\(|\()[A-Za-z_$][\w$.?]*|title=\{\s*[A-Za-z_$][\w$.?]*\.(?:day|dueDate|dueOn|date)\s*\}/g;
+    const funde = ARCADE.flatMap(([datei, text]) => [...text.matchAll(ROH)]
+      .map((m) => `${datei}:${text.slice(0, m.index).split("\n").length}: ${m[0]} – arcadeDatum aus lib/datum.ts nehmen`));
+    expect(funde).toEqual([]);
+    // Selbsttest: die alten Formen sind Funde, die neuen nicht.
+    expect("{ date: o.dueDate }".match(ROH)).not.toBeNull();
+    expect("title={d.day}".match(ROH)).not.toBeNull();
+    expect("{ date: arcadeDatum(o.dueDate, l) }".match(ROH)).toBeNull();
+    expect("date: (iso: string) =>".match(ROH)).toBeNull();
+  });
 
   it("keine Arcade-Quelle baut oder formatiert ein Datum selbst", () => {
+    // Selbsttest (B-517): jede genannte Form ist ein Fund – ein Steuerzeichen im Muster ließ zwei davon nie greifen.
+    for (const form of ["new Date(x)", "Date.parse(x)", "new Intl.DateTimeFormat(l)", "d.toLocaleDateString(l)"])
+      expect(form.match(SELBST), form).not.toBeNull();
     expect(ARCADE.length).toBeGreaterThan(5);
     const funde = ARCADE.flatMap(([datei, text]) => [...text.matchAll(SELBST)]
       .map((m) => `${datei}:${text.slice(0, m.index).split("\n").length}: ${m[0]} – arcadeDatum aus lib/datum.ts nehmen`));
