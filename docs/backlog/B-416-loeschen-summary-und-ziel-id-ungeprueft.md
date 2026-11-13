@@ -13,6 +13,7 @@ unverifiziert: true
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-409]
+nachgeschaut: 2026-11-13
 ---
 
 # B-416 · Das Swagger-Summary von „Übung löschen" nennt keine Ziel-Etappen; `GoalUsage.ObjectiveId` prüft kein Test
@@ -53,3 +54,7 @@ Autonom gegrillt (`art: Defekt`, Tageslauf):
     gefiltert) 8/8 rot je am genannten Test, Grundlinie grün (Tabelle im Protokoll, Sprint 50/51).
   - Rollengang Creator: Integrationstest gegen den echten In-Process-Server; `docs/openapi/v1.json` trägt das neue
     Summary. Vater, Sohn: Regressionszeugen. Abgenommen.
+- **2026-11-13** — nachgeschaut (Retro Sprint 52/53, frischer `pugling-reviewer` an `2917449` + `82fdc4c`, gelesen).
+  Geprüft: Probe-Ziel-Logik gegen parallele Testklassen (eigene SQLite-Datei je Klasse, Tests einer Klasse seriell);
+  `concurrency_conflict`-Quellen nachgezählt; Zeittest ohne Lockvogel rot an allen drei Pfaden; AK-Tests je gegen die
+  benannte Änderung. Befund: sauber.

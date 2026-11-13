@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-08.md#runde-2--review
 unverifiziert: true
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-13
 ---
 
 # B-417 · `backend/Pugling.Api/CLAUDE.md` nennt `concurrency_conflict` „für Clients bewusst unerreichbar" – der Shop liefert ihn aber
@@ -44,3 +45,7 @@ Autonom gegrillt (`art: Defekt`, Tageslauf):
 - **2026-11-13** — gebaut (Sprint 51), nur Doku. AK 1 am Code nachgezählt: `ConcurrencyConflict` steht in `MeController`
   (Kauf, Skin), `MyInterestsController`, `ShopService` – sonst nirgends (Review bestätigt). Kein Test, keine Mutante: ein
   Satz in einer Anweisungsdatei. Abgenommen.
+- **2026-11-13** — nachgeschaut (Retro Sprint 52/53, frischer `pugling-reviewer` an `2917449` + `82fdc4c`, gelesen).
+  Geprüft: Probe-Ziel-Logik gegen parallele Testklassen (eigene SQLite-Datei je Klasse, Tests einer Klasse seriell);
+  `concurrency_conflict`-Quellen nachgezählt; Zeittest ohne Lockvogel rot an allen drei Pfaden; AK-Tests je gegen die
+  benannte Änderung. Befund: sauber.

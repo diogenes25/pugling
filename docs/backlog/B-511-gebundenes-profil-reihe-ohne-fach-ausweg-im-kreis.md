@@ -13,6 +13,7 @@ unverifiziert: false
 entgangen_bei: [B-508]
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-13
 ---
 
 # B-511 · Ein an eine Reihe ohne Fach gebundenes Profil schickt mit „--series" im Kreis
@@ -60,3 +61,7 @@ Autonom gegrillt (`art: Defekt`, Tageslauf, Nutzerrolle übertragen):
     gefiltert) 8/8 rot je am genannten Test, Grundlinie grün (Tabelle im Protokoll, Sprint 50/51).
   - Rollengang Creator: jeder AK als Konsolenaufruf gegen den echten In-Process-Server (Modell gefälscht). Vater, Sohn:
     Regressionszeugen (Suite grün, kein Pfad ihrer Ebenen im Diff). Abgenommen.
+- **2026-11-13** — nachgeschaut (Retro Sprint 52/53, frischer `pugling-reviewer` an `2917449` + `82fdc4c`, gelesen).
+  Geprüft: Probe-Ziel-Logik gegen parallele Testklassen (eigene SQLite-Datei je Klasse, Tests einer Klasse seriell);
+  `concurrency_conflict`-Quellen nachgezählt; Zeittest ohne Lockvogel rot an allen drei Pfaden; AK-Tests je gegen die
+  benannte Änderung. Befund: 🟡 an eine *andere* Reihe gebundenes Profil bekam weiter „--series"; 🟡 `writes &&` der Vorprüfung ohne Test → [B-514](B-514-ausweg-series-fuer-anders-gebundenes-profil.md).

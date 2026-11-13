@@ -117,3 +117,101 @@ die Seite, in fünf Schreibweisen (Selbsttest). Ein neues Tor hält den Lauf nac
 entschieden: weiter**, weil das Tor nur festhält, was der Sprint gebaut hat, und keine weitere Arbeit prägt.
 
 **Bewusst ungedeckt:** die `stale`-Klasse außerhalb der Listen (Kopfzeilen, Detailflächen) hat weiter kein Tor.
+
+## Sprint 50 — Ziel & Umfang
+
+**Sprint-Ziel:** Kein Ausweg, den die Konsole einem Creator nennt, endet an einer zweiten Sperre derselben Senke (Server:
+Reihe ohne Fach; Briefing: Profil passt nicht).
+**Umfang:** [B-510](backlog/B-510-buchwahl-bietet-reihe-ohne-fach-zum-schreiben.md),
+[B-511](backlog/B-511-gebundenes-profil-reihe-ohne-fach-ausweg-im-kreis.md) (beide Durchrutscher aus Nachschauen, autonom
+gegrillt).
+**Entwickler-Brief:** die Wähler (`SeriesOfChildsBookAsync`, Mehrfachliste) bekommen `writes`, die Eingabe der neuen
+Sperre ((DB)); ein genanntes, an eine fachlose Reihe gebundenes Profil endet vor der Ortswahl.
+
+## Sprint 51 — Ziel & Umfang
+
+**Sprint-Ziel:** Was Doku und Tests über den Server sagen, stimmt – Swagger, Anweisungsdatei und ein Test, der unter Last
+nicht flackert.
+**Umfang:** [B-416](backlog/B-416-loeschen-summary-und-ziel-id-ungeprueft.md),
+[B-417](backlog/B-417-concurrency-conflict-doch-erreichbar.md), [B-438](backlog/B-438-pinhasher-zeittest-flackert-unter-last.md).
+[B-442](backlog/B-442-capture-wochenmission-haengt-am-wochentag.md) wurde angefangen und **zurückgestellt**: die Ursache sitzt
+im Seed, der mit `DateTime.UtcNow` statt der Test-Uhr datiert – größer als ein Maskieren in der Capture.
+[B-446](backlog/B-446-vokabel-tipp-zeigt-den-artikel-des-fragewortes.md) bewusst nicht angefasst: ob der Tipp die Frage
+wiederholt, hängt daran, ob `Word` den Artikel enthält – am Datenstand zu klären.
+
+## Iteration 50/51 — umgesetzt
+
+- B-510/B-511 wie im Brief; Hilfetext unter `--series` berichtigt. B-416: Summary + Doku, Test mit Objective-Id (erster Lauf
+  fiel an der eigenen Vorbedingung – gleiche Ids in der geteilten Test-DB – daher ein Wegwerf-Ziel mit zwei Etappen);
+  B-417: ein Satz; B-438: verschränkt gemessen.
+- Verifikation: `dotnet test Pugling.sln -c Release` 1434/1434 (ein Lauf unter Last, 3 min); Mutanten P1–P4, Q1, Q2, R1, S1
+  8/8 rot nach der letzten Änderung.
+- Review: 🟡 genanntes gebundenes Profil + `--series` lief in „lass --series weg" → Vorprüfung vor der Ortswahl (Zähler 1
+  von 5); drei 🟢 offen gelassen (in B-510 benannt).
+
+## Runde 3 — Rollengang / Abnahme (Sprint 50/51)
+
+- **Creator — abgenommen:** Konsolenaufrufe gegen den echten In-Process-Server; Swagger trägt das neue Summary.
+- **Vater, Sohn — Regressionszeugen:** Suite grün.
+- Commits `2917449` (Sprint 50), `82fdc4c` (Sprint 51).
+
+## Retrospektive (Sprint 50/51)
+
+**Nachschau:** Sprint 49 (`8a5f20a`) von einem frischen `frontend-reviewer`, gelesen, Vitest 45/45. **Ein 🟡**, zwei 🟢 →
+[B-512](backlog/B-512-leerfall-waechter-uebersieht-formen.md) (das neue Tor `leerfall.test.ts` kannte nur fünf Formen; die
+Ternäre schlüpfte durch). `nachgeschaut` an B-505, B-507, B-509.
+
+**Was die eigenen Tore durchgelassen haben:** ein Tor, das bekannte *Formen* sucht, ist so breit wie die Fantasie seines
+Autors; sein Selbsttest prüfte nur, was das Muster schon kannte. Der Review des Sprints hatte die Lücke angedeutet
+(„`!items.length`"), ich habe drei Formen nachgezogen statt das Muster umzudrehen.
+
+**Gelandet:** kein weiterer Mechanismus – B-512 dreht das Tor selbst um (jede Seitenlänge ist ein Fund, außer an der einen
+erlaubten Stelle) und gehört in Sprint 52. Argument: die Lehre „Tore nach Positivliste statt nach Fehlerformen" ist eine
+Bauweise des einen Tors, keine Regel, die eine beliebige Änderung prägt; ein zweites Tor dieser Art gibt es nicht.
+
+**Bewusst ungedeckt:** Zwischenvariablen (`const rows = x.data?.items`) sieht auch das umgedrehte Tor nicht.
+
+## Sprint 52 — Ziel & Umfang
+
+**Sprint-Ziel:** Was Editor, Arcade und Vater-Listen zeigen, stimmt mit dem gespeicherten Stand – kein verlorener Haken, kein
+Fokus auf `body`, keine erfundene Zahl, kein Leerfall-Wächter mit Lücken.
+**Umfang:** [B-441](backlog/B-441-editor-liest-articlerequired-nicht-zurueck.md), [B-443](backlog/B-443-fokus-wege-der-sohn-runde.md),
+[B-456](backlog/B-456-nachschau-reste-sprint-28.md), [B-512](backlog/B-512-leerfall-waechter-uebersieht-formen.md).
+Abgeteilt: [B-513](backlog/B-513-reihe-filter-der-uebungsliste-filtert-nicht.md) (Reihe-Filter braucht einen Suchparameter).
+
+## Sprint 53 — Ziel & Umfang
+
+**Sprint-Ziel:** Der Umfang einer Übung in der Katalogzeile sagt die Wahrheit – „leer" ist 0, ein unlesbarer Umfang fällt auf.
+**Umfang:** [B-448](backlog/B-448-umfang-nachschau-reste.md).
+
+## Iteration 52/53 — umgesetzt
+
+- Sprint 52: Rücklesen `articleRequired`; Fokus nach „Jetzt abfragen" (nach Review auch auf Karten ohne Eingabefeld);
+  `gemesseneZahl`; Tooltip im Manifest-Ausfall; `leerfall.test.ts` umgedreht. Vitest 816/816, Mutanten T1–T7 7/7,
+  Playwright 140/140 (vor T7). Review: 🟡 Fokus nur bei getippten Karten → behoben (Zähler 1).
+- Sprint 53: Fang mit Log in `ItemCountOf`, Leer-Test. Suite 1436/1436, Mutanten U1–U3 3/3. Review: nur 🟢.
+
+## Runde 4 — Rollengang / Abnahme (Sprint 52/53)
+
+- **Vater, Sohn — abgenommen:** E2E 140/140 gegen echten Server und UI, Fokus/Listen als Komponententests.
+  Mensch-Check offen: ob die Tastatur nach „Jetzt abfragen" am Handy wirklich aufspringt (iOS öffnet sie nach `await`
+  oft nicht) – Geräte-Vorbehalt, kein Defekt.
+- **Creator — abgenommen (53):** Katalogsuche gegen den In-Process-Server.
+- Commits `59fc0a8` (52), `14be0fa` (53).
+
+## Retrospektive (Sprint 52/53)
+
+**Nachschau:** Sprint 50/51 (`2917449`, `82fdc4c`) von einem frischen `pugling-reviewer`, gelesen. **Zwei 🟡**, ein 🟢 →
+[B-514](backlog/B-514-ausweg-series-fuer-anders-gebundenes-profil.md) (P2: an eine andere Reihe gebundenes Profil bekommt
+„--series"; `writes &&` der B-511-Vorprüfung ohne Test). `nachgeschaut` an B-510, B-511, B-416, B-417, B-438. Index:
+**403 von 421**.
+
+**Was die eigenen Tore durchgelassen haben:** dieselbe Meldung (`NoSubject`) zum vierten Mal in Folge: B-508 → B-511 → B-514,
+jedes Mal ein Fall der Kombination „welches Profil × welche Reihe", den ich beim Lesen des Satzes nicht durchgespielt hatte.
+Meine Tests prüften, was der Satz *sagt*, nicht, ob der Rat *funktioniert*.
+
+**Gelandet (ein Mechanismus, Prosa im treibenden Skill):** `pm-loop` Step 5 – „A way out is proven by a test that takes it
+(runs the advised call) and passes every lock". Kein neues Tor → weiter. Zusätzlich lässt der Review von B-514 die
+Kombinationen einmal vollständig aufzählen.
+
+**Bewusst ungedeckt:** ein Tor, das jede Meldung mit Ausweg ausführt, gibt es nicht – die Auswege sind Text.

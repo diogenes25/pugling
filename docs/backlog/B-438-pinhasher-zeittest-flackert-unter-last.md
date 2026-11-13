@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-08-nacht.md
 unverifiziert: true
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-13
 ---
 
 # B-438 · `PinHasher_Verify_RechnetAuchOhneGespeichertenHash` fiel einmal unter Last
@@ -46,3 +47,7 @@ Autonom gegrillt (`art: Defekt`, Tageslauf):
   - Verifikation: `dotnet test Pugling.sln -c Release` 1434/1434; Mutanten-Probe nach der letzten Änderung (Debug,
     gefiltert) 8/8 rot je am genannten Test, Grundlinie grün (Tabelle im Protokoll, Sprint 50/51).
   - Rollengang: reiner Test-Umbau, Suite grün. Abgenommen.
+- **2026-11-13** — nachgeschaut (Retro Sprint 52/53, frischer `pugling-reviewer` an `2917449` + `82fdc4c`, gelesen).
+  Geprüft: Probe-Ziel-Logik gegen parallele Testklassen (eigene SQLite-Datei je Klasse, Tests einer Klasse seriell);
+  `concurrency_conflict`-Quellen nachgezählt; Zeittest ohne Lockvogel rot an allen drei Pfaden; AK-Tests je gegen die
+  benannte Änderung. Befund: sauber.
