@@ -98,6 +98,7 @@ public class DosisResteTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
         (await father.PatchAsJsonAsync(positionUrl, new { penaltyCoins = 3, newItemsPerDay = 2 })).EnsureSuccessStatusCode();
         Assert.Equal(System.Net.HttpStatusCode.BadRequest, (await father.PatchAsJsonAsync(positionUrl, new { newItemsPerDay = 3 })).StatusCode);
 
+
         var child = await TestApi.ChildAsync(factory, childId, ChildPin);
 
         // The practice round: every entry, not the two of a dose.
@@ -113,5 +114,45 @@ public class DosisResteTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
         Assert.Equal(0, db.PositionItemProgress.Count(p => p.PlanPositionId == positionId && p.IntroducedAt != null));
+    }
+
+    // B-480 point 3: switching the box off keeps PATCH semantics (the stored dose is not cleared silently), so the
+    // refusal names the step that lifts it - and that step works, on create and on patch. Red if the message loses the
+    // way out, if the patch reads the dose from the wrong side, or if the named request is refused too.
+    [Fact]
+    public async Task Dosis_Ohne_Karteikasten_Nennt_Den_Ausweg_Und_Er_Geht()
+    {
+        var (father, _, planId) = await PlanAsync();
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = TestApi.UniqueName("Dosis-Ausweg") }));
+        var (seriesId, unitId) = await TestApi.CreateSeriesAndUnitAsync(father, subjectId);
+        var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{unitId}/list", new
+            {
+                title = "Vier Flüsse",
+                orderIndex = 1,
+                rewardPoints = 10,
+                config = new { instruction = "Nenne vier Flüsse.", ordered = true,
+                    items = new[] { "Rhein", "Elbe", "Main", "Weser" }.Select(v => new { value = v }).ToArray() },
+            }));
+        var positionsUrl = $"/api/v1/supervisor/study-plans/{planId}/positions";
+
+        // Create: refused with the way out, and the way out is accepted.
+        var refused = await father.PostAsJsonAsync(positionsUrl,
+            new { exerciseId, cadence = "Daily", useLeitner = false, newItemsPerDay = 2, stage = (int)TestStage.FreeText });
+        Assert.Equal(System.Net.HttpStatusCode.BadRequest, refused.StatusCode);
+        Assert.Contains("newItemsPerDay: 0", (await refused.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("detail").GetString());
+        (await father.PostAsJsonAsync(positionsUrl,
+            new { exerciseId, cadence = "Daily", useLeitner = false, newItemsPerDay = 0, stage = (int)TestStage.FreeText })).EnsureSuccessStatusCode();
+
+        // Patch: a position with box and dose; switching the box off alone is refused, the named request passes.
+        var positionId = await TestApi.IdAsync(await father.PostAsJsonAsync(positionsUrl,
+            new { exerciseId, cadence = "Daily", useLeitner = true, newItemsPerDay = 2, stage = (int)TestStage.FreeText }));
+        var positionUrl = $"{positionsUrl}/{positionId}";
+        var off = await father.PatchAsJsonAsync(positionUrl, new { useLeitner = false });
+        Assert.Equal(System.Net.HttpStatusCode.BadRequest, off.StatusCode);
+        Assert.Contains("newItemsPerDay: 0", (await off.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("detail").GetString());
+        (await father.PatchAsJsonAsync(positionUrl, new { useLeitner = false, newItemsPerDay = 0 })).EnsureSuccessStatusCode();
+        Assert.False((await father.GetFromJsonAsync<JsonElement>(positionUrl)).GetProperty("useLeitner").GetBoolean());
     }
 }

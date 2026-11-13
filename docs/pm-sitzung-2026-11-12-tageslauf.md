@@ -450,3 +450,11 @@ Entscheidung stellvertretend; erste Fassung (Groß/Klein aus der Bank allein) vo
 „haus", „london") → Satzanfang-Regel. Mutanten X1–X5, Y1–Y6 rot; Suite 1482/1482.
 **Retro:** Das Review fand eine Bedingung ohne eigenen Fall (zwei Schalter, beide Tests setzen beide gleich) – genau die
 Lücke aus CLAUDE.md („rote Probe je Datei fängt das nicht"), hier vor dem Commit gefangen. Kein neuer Mechanismus.
+
+## Sprint 68 — B-480 Punkt 3 stellvertretend: die Dosis-Sperre nennt ihren Ausweg
+
+PATCH-Semantik bleibt; die Meldung nennt `newItemsPerDay: 0` bzw. `useLeitner: true`, ein eigener Test nimmt den Ausweg auf
+beiden Pfaden. Mutanten Z1–Z3 rot. **Retro:** Das Review fing einen 🔴, den ich selbst gebaut hatte – ein an einen
+bestehenden Test angehängter Fall veränderte dessen Ausgangslage, die folgenden Zusicherungen wurden leer. Die rote Probe
+hätte das nicht gezeigt (meine Mutanten zielten auf den neuen Fall). Regel steht schon in CLAUDE.md; kein neuer Mechanismus.
+Lehre: einen neuen Fall nie mitten in einen bestehenden Test hängen, der danach noch zusichert.

@@ -86,7 +86,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
     // Without the Leitner box every known content is due every day, so a dose would only delay the day the round
     // carries the whole pool - the two settings only work together.
     private static string? DoseNeedsLeitnerProblem(int newItemsPerDay, bool useLeitner) =>
-        newItemsPerDay > 0 && !useLeitner ? "A daily dose (newItemsPerDay) needs the Leitner box (useLeitner)." : null;
+        newItemsPerDay > 0 && !useLeitner ? "A daily dose (newItemsPerDay) needs the Leitner box (useLeitner: true); without the box, send newItemsPerDay: 0 in the same request." : null;
 
     // A set-graded exercise (an unordered list) accepts any entry not yet named - but only among the cards of the
     // round. A dose would freeze a few of them, and a right answer outside that hidden choice would count as wrong.

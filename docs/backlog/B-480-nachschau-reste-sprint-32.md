@@ -62,3 +62,11 @@ Autonom gegrillt (`art: Defekt`, Tageslauf):
   - Rollengang: Vater (Plan-Seite, Assistent, Ziel-Wähler) per E2E und Komponententests; Creator (Konsole) gegen den
     In-Process-Server; Sohn Regressionszeuge. Abgenommen.
 - **2026-11-13** — nachgeschaut (Sprint 63, frische `pugling-reviewer`/`frontend-reviewer` an `e37f65e`, gelesen, Vitest 102/102). Geprüft: CI-Schritt läuft (python3, Arbeitsverzeichnis, Pfade), xUnit-Leser findet die Liste, alle drei Leser stimmen Schritt für Schritt überein, `Map`-Aufrufer laden die Übung. Kein 🔴; Reste → [B-521](B-521-nachschau-reste-sprint-60-62.md).
+- **2026-11-13** — Tageslauf (Sprint 68), **Punkt 3 stellvertretend entschieden**: die PATCH-Semantik bleibt (keine stille
+  Leerung der Dosis), die Meldung nennt den Schritt, der die Sperre aufhebt: „…needs the Leitner box (useLeitner: true);
+  without the box, send newItemsPerDay: 0 in the same request." Belegt in
+  `DosisResteTests.Dosis_Ohne_Karteikasten_Nennt_Den_Ausweg_Und_Er_Geht` (Anlegen und PATCH: Meldung nennt den Ausweg, der
+  Ausweg geht durch). Mutanten: Z1 (Meldung ohne Ausweg), Z2 (PATCH liest Dosis 0 statt gespeicherter), Z3 (PATCH ignoriert
+  die mitgeschickte Dosis) → rot. `pugling-reviewer` (frisch): 🔴 erste Fassung hängte den Fall an den bestehenden Test
+  und nahm dessen Dosis weg – seine Zusicherungen prüften danach den Ausgangszustand → eigener Test, alter unverändert;
+  🟡 Anlege-Pfad ungetestet → ergänzt; 🟢 „useLeitner: true" in der Meldung → übernommen. Suite grün.
