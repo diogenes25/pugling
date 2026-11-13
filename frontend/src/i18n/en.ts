@@ -273,6 +273,7 @@ export const en = {
       otherImage: "🔄 different picture",
     },
     test: {
+      cueBox: "Word box",
       victory: "VICTORY!",
       almost: "ALMOST!",
       stage1: "Show",
@@ -302,6 +303,8 @@ export const en = {
       incorrect: "Wrong",
       named: "named",
       notNamed: "not named",
+      misspelled: "Misspelled",
+      youWrote: "you: “{{given}}”",
       didNotCount: "This didn't count:",
       tryAgain: "Try again",
       practice: "▶ Practise",

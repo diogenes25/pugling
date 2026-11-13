@@ -94,6 +94,13 @@ public interface IExerciseType
     IReadOnlyList<string>? Choices(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, int stage);
 
     /// <summary>
+    /// The cue box of the stage (B-524): the meanings of all atoms plus curated distractors as one unordered list,
+    /// or <c>null</c> where the stage has none. Non-null also means the asked atom shows no hint of its own - the box
+    /// replaces it, and a hint next to it would name the meaning the box is meant to make the child find.
+    /// </summary>
+    IReadOnlyList<string>? CueBox(string configJson, IReadOnlyList<ContentItem> items, int stage);
+
+    /// <summary>
     /// Type-specific card facets per stage: letter-box length, audio source, and/or image
     /// (otherwise <c>null</c>). Here – and only here – the type also decides whether an image would
     /// give away the solution: it is <b>stricter</b> for images than for audio, because a motif shows

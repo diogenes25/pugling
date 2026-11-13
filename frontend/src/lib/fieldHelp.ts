@@ -237,6 +237,18 @@ export const FIELD_HELP = {
    * begegnen sich auf keinem Bildschirm — der eine gehört dem Vokabel-Store, der andere dem Übungs- und
    * Lückentext-Editor. Käme das je zusammen, wäre `getByRole` dort mehrdeutig.
    */
+  sentenceForm: {
+    title: "Satzform",
+    text: "Die Form, die der Satz verlangt, wenn sie vom Wort im Vokabel-Speicher abweicht – etwa „patients“ statt "
+      + "„patient“. Ist sie gesetzt, ist sie die Lösung, und die Grundform allein zählt als falsch. Die Bedeutung im "
+      + "Wortkasten kommt weiter aus dem Speicher.",
+  },
+  cueDistractors: {
+    title: "Ablenker im Wortkasten",
+    text: "Zusätzliche deutsche Wörter für den Wortkasten, die zu keiner Lücke gehören – am besten aus derselben "
+      + "Wortfamilie wie eine Lösung (zu „Rassismus“ etwa „rassistisch“). Sie wirken nur auf der Stufe "
+      + "„Wortkasten + Freitext“; die Bedeutungen der Lücken kommen von selbst aus dem Vokabel-Speicher.",
+  },
   alsoCorrect: {
     title: "Auch richtig",
     text: "Weitere Lösungen, die genauso als richtig zählen wie die eigentliche. Ohne sie wird eine "

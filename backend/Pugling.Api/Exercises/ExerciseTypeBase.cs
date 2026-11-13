@@ -50,6 +50,8 @@ public abstract class ExerciseTypeBase : IExerciseType
 
     /// <inheritdoc/>
     public virtual IReadOnlyList<string>? Choices(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, int stage) => null;
+    /// <inheritdoc/>
+    public virtual IReadOnlyList<string>? CueBox(string configJson, IReadOnlyList<ContentItem> items, int stage) => null;
 
     /// <inheritdoc/>
     public virtual (int? LetterBoxLength, string? AudioUrl, string? ImageUrl, string? AnswerPattern) StageFacets(ContentItem item, int stage) => (null, null, null, null);

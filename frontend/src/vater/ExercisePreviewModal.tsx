@@ -9,6 +9,7 @@ import { Passage } from "../components/Passage";
 import { RevealAlternatives } from "../components/RevealAlternatives";
 import { BirkenbihlDecoding } from "../components/BirkenbihlDecoding";
 import { Modal } from "../components/Modal";
+import { CueBox } from "../components/CueBox";
 import type { ExercisePreviewAnswer, ExercisePreviewData, ExercisePreviewResult } from "../lib/types";
 
 /**
@@ -199,6 +200,9 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
               {data.typed ? "Tippe deine Antwort – bewertet wird wie beim Kind." : "Überlege, dann aufdecken und ehrlich bewerten."}
             </p>
 
+            {/* B-524: Der Wortkasten ist auf jeder Karte derselbe – hier einmal über allen Lücken statt je Zeile. */}
+            <CueBox words={shownItems[0]?.cueBox} label="Wortkasten" />
+
             {shownItems.map((it) => {
               const a = answers[it.itemIndex];
               return (
@@ -310,15 +314,16 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
               {listShared && <p className="muted" style={{ margin: "0 0 2px" }}>{data.items[0]?.prompt}</p>}
               {result.items.map((o) => (
                 <div className="row" key={o.itemIndex} style={{ alignItems: "center", gap: 8, padding: "3px 0" }}>
-                  <span aria-hidden="true">{o.wasCorrect ? "✅" : "❌"}</span>
+                  {/* B-524: dieselbe Kategorie wie im Testergebnis des Kindes – das Wort war da, die Schreibweise nicht. */}
+                  <span aria-hidden="true">{o.wasCorrect ? "✅" : o.misspelled && !isSet ? "✏️" : "❌"}</span>
                   {/* Bei der Menge trägt das Zeichen eine andere Bedeutung als sonst: nicht „falsch geantwortet",
                       sondern „nicht genannt" – und das ist die Lehre der Übung (B-77/E2). */}
                   <span className="sr-only">
-                    {isSet ? (o.wasCorrect ? "Genannt" : "Nicht genannt") : (o.wasCorrect ? "Richtig" : "Falsch")}
+                    {isSet ? (o.wasCorrect ? "Genannt" : "Nicht genannt") : (o.wasCorrect ? "Richtig" : o.misspelled ? "Falsch geschrieben" : "Falsch")}
                   </span>
                   {!isSet && <span>{isOrderedList ? `Eintrag ${o.itemIndex + 1}` : o.prompt}</span>}
                   <span className="muted" style={{ marginLeft: "auto" }}>
-                    {o.givenAnswer ? `„${o.givenAnswer}" → ` : ""}<b>{o.expected}</b>
+                    {o.misspelled && !isSet && "falsch geschrieben · "}{o.givenAnswer ? `„${o.givenAnswer}" → ` : ""}<b>{o.expected}</b>
                   </span>
                 </div>
               ))}

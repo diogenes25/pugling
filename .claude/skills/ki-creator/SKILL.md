@@ -22,6 +22,7 @@ dotnet run --project backend/Pugling.Agent.Creator -- briefing --child 1        
 dotnet run --project backend/Pugling.Agent.Creator -- create --child 1 --type Cloze --count 8 --dry-run
 dotnet run --project backend/Pugling.Agent.Creator -- create --profile 3 --type Cloze --unit 12   # allgemein
 dotnet run --project backend/Pugling.Agent.Creator -- exam --child 1 --types Vocabulary,Cloze --date 2026-09-15
+dotnet run --project backend/Pugling.Agent.Creator -- create --child 3 --type Cloze --count 12 --schultest   # Schul-Vokabeltest (B-524)
 dotnet run --project backend/Pugling.Agent.Creator -- plan --child 1 --types Vocabulary,Cloze --per-type 2 --intensity Normal
 dotnet run --project backend/Pugling.Agent.Creator -- fill --series 3 --unit 12 --source-file inhalt.txt --dry-run  # Stoffnotizen
 dotnet run --project backend/Pugling.Agent.Creator -- images --child 1 --dry-run   # Vokabelbilder: Prompts + Kosten, ohne Schlüssel

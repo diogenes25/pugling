@@ -45,8 +45,8 @@ interface ArithmeticDrillExtra {
   allowNegativeResults: boolean; divisionMustBeWhole: boolean; seed: string;
 }
 
-interface ClozeRow { index: number; answer: string; alternatives: string[]; vocabKey: string | null }
-interface ClozeExtra { text: string; wordBank: string[] }
+interface ClozeRow { index: number; answer: string; alternatives: string[]; vocabKey: string | null; form: string }
+interface ClozeExtra { text: string; wordBank: string[]; cueDistractors: string[] }
 
 interface MatchingRow { left: string; right: string }
 interface MatchingExtra { instruction: string }
@@ -162,7 +162,7 @@ export function emptyRow(type: ExerciseTypeKey): Row {
     case "Vocabulary": return { front: "", back: "", hint: "" } satisfies VocabularyRow;
     case "Arithmetic": return { prompt: "", answer: "", tolerance: "0" } satisfies ArithmeticRow;
     case "ArithmeticDrill": return {};
-    case "Cloze": return { index: 1, answer: "", alternatives: [], vocabKey: null } satisfies ClozeRow;
+    case "Cloze": return { index: 1, answer: "", alternatives: [], vocabKey: null, form: "" } satisfies ClozeRow;
     case "Matching": return { left: "", right: "" } satisfies MatchingRow;
     case "List": return { value: "", alternatives: [] } satisfies ListRow;
     case "Birkenbihl": return { text: "", decoding: [], naturalTranslation: "" } satisfies BirkenbihlRow;
@@ -240,10 +240,13 @@ export function buildTypeConfig(
       const items = rows as ClozeRow[];
       const cfg = extra as ClozeExtra;
       return { text: cfg.text ?? "", wordBank: nonEmpty(strList(cfg.wordBank)),
+        cueDistractors: nonEmpty(strList(cfg.cueDistractors)),
         // `vocabKey` unverändert durchreichen: ist er gesetzt, kommt die Lösung aus dem Vokabel-Store und
         // folgt dessen Pflege. Ein Weglassen machte aus der Store-Lücke stillschweigend eine Inline-Lücke.
         gaps: items.map((r) => ({ index: Number(r.index), answer: r.answer,
-          alternatives: nonEmpty(strList(r.alternatives)), vocabKey: r.vocabKey ?? null })) };
+          alternatives: nonEmpty(strList(r.alternatives)), vocabKey: r.vocabKey ?? null,
+          // B-524: die Satzform („patients“) schlägt die Grundform des Speichers; leer heißt „keine“.
+          form: r.form?.trim() ? r.form.trim() : null })) };
     }
     case "Matching": {
       const items = rows as MatchingRow[];
@@ -373,8 +376,8 @@ export function configToEditorState(type: ExerciseTypeKey, config: unknown): { r
       return fallback(
         // `vocabKey` wird nicht bearbeitet, aber mitgeführt (siehe buildTypeConfig).
         list(c.gaps).map((g): ClozeRow => ({ index: g.index ?? 1, answer: g.answer ?? "",
-          alternatives: strList(g.alternatives), vocabKey: g.vocabKey ?? null })),
-        { text: str(c.text), wordBank: strList(c.wordBank) } satisfies ClozeExtra);
+          alternatives: strList(g.alternatives), vocabKey: g.vocabKey ?? null, form: g.form ?? "" })),
+        { text: str(c.text), wordBank: strList(c.wordBank), cueDistractors: strList(c.cueDistractors) } satisfies ClozeExtra);
     case "Matching":
       return fallback(
         list(c.pairs).map((p): MatchingRow => ({ left: p.left ?? "", right: p.right ?? "" })),
@@ -480,6 +483,13 @@ export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, re
             <RepeatedTextFields label="Wort" placeholder="achète"
               values={Array.isArray(extra.wordBank) ? extra.wordBank : []}
               onChange={(v) => ex({ wordBank: v })} /></div>
+          {/* B-524: Ablenker im deutschen Wortkasten (Stufe „Wortkasten + Freitext“). Die Bedeutungen der Lücken
+              kommen aus dem Vokabel-Store; hier stehen nur die zusätzlichen, die keine Lücke lösen. */}
+          <div className="field"><span className="label-row group-label">Ablenker im Wortkasten <span className="muted">(optional)</span>
+            <InfoHint topic="cueDistractors" /></span>
+            <RepeatedTextFields label="Ablenker" placeholder="rassistisch"
+              values={Array.isArray(extra.cueDistractors) ? extra.cueDistractors : []}
+              onChange={(v) => ex({ cueDistractors: v })} /></div>
         </>
       )}
       {(type === "Matching" || type === "List" || type === "Grammar") && (
@@ -637,7 +647,18 @@ export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, re
           </>}
           {type === "Cloze" && <>
             <RowField label="Lücke-Nr." value={r.index} onChange={(v) => patchRow(i, { index: v })} type="number" width={80} />
-            <RowField label="Lösung" value={r.answer} onChange={(v) => patchRow(i, { answer: v })} />
+            {/* Mit Speicherverweis kommt die Lösung aus dem Vokabel-Store; dann zählt nur die Satzform, falls der
+                Satz eine gebeugte Form verlangt (B-524). Ohne Verweis ist die Lösung selbst schon die Satzform. */}
+            {r.vocabKey
+              ? <div className="field" style={{ flex: "none", minWidth: 120 }}>
+                  <span className="label-row">Aus dem Speicher</span><code>{r.vocabKey}</code>
+                </div>
+              : <RowField label="Lösung" value={r.answer} onChange={(v) => patchRow(i, { answer: v })} />}
+            {/* Die Satzform schlägt jede andere Lösung – darum sichtbar, sobald es einen Speicherverweis gibt ODER
+                sie schon gesetzt ist; sonst änderte der Vater die „Lösung“, und die Satzform gewönne still. */}
+            {(r.vocabKey || r.form) &&
+              <RowField label="Satzform" value={r.form} onChange={(v) => patchRow(i, { form: v })} placeholder="patients"
+                optional topic="sentenceForm" />}
             <RowRepeatedField label="Auch richtig" values={r.alternatives} scope={`Zeile ${i + 1}`}
               placeholder="zählt auch als richtig" optional topic={i === 0 ? "alsoCorrect" : undefined}
               onChange={(v) => patchRow(i, { alternatives: v })} />
@@ -713,14 +734,17 @@ export function ArticleRequiredCheck({ checked, onChange }: { checked: boolean; 
   );
 }
 
-export function RowField({ label, value, onChange, type = "text", placeholder, optional, width }: {
+export function RowField({ label, value, onChange, type = "text", placeholder, optional, width, topic }: {
   label: string; value: unknown; onChange: (v: string) => void;
-  type?: string; placeholder?: string; optional?: boolean; width?: number;
+  type?: string; placeholder?: string; optional?: boolean; width?: number; topic?: HelpTopic;
 }) {
   const uid = useId();
   return (
     <div className="field" style={{ flex: width ? "none" : 1, minWidth: width ?? 120, width }}>
-      <label htmlFor={uid}>{label}{optional && <span className="muted"> (optional)</span>}</label>
+      <span className="label-row">
+        <label htmlFor={uid}>{label}{optional && <span className="muted"> (optional)</span>}</label>
+        {topic && <InfoHint topic={topic} />}
+      </span>
       <input id={uid} type={type} value={String(value ?? "")} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
     </div>
   );
@@ -796,7 +820,7 @@ export function contentProblem(type: ExerciseTypeKey, rows: Row[], extra: Row, v
       if (Number(extra.minOperand) > Number(extra.maxOperand)) return "Die untere Zahlengrenze darf nicht über der oberen liegen.";
       return Number(extra.problemCount) < 1 ? "Es muss mindestens eine Aufgabe je Durchlauf geben." : null;
     }
-    case "Cloze": return !extra.text ? "Bitte den Trägertext angeben." : !r.answer ? "Bitte mindestens eine Lücke mit Lösung angeben." : null;
+    case "Cloze": return !extra.text ? "Bitte den Trägertext angeben." : !r.answer && !r.vocabKey ? "Bitte mindestens eine Lücke mit Lösung angeben." : null;
     case "Matching": return !r.left || !r.right ? "Bitte mindestens ein Paar angeben." : null;
     // Die Anweisung zuerst: sie ist der einzige Text auf der Karte, weil alle Einträge sich einen Prompt teilen
     // (B-77/E7). Der Server weist sie auf POST und PUT ab – hier steht sie deutsch und vor dem Abschicken.

@@ -1,3 +1,5 @@
+using System.Net.Http.Json;
+using System.Text.Json;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -1223,6 +1225,96 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var (_, clozeOutcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Cloze"));
         Assert.True(clozeOutcome.Published, string.Join(" | ", clozeOutcome.Violations));
         Assert.DoesNotContain("Wortschatz dieser Übung", chat.LastMessages[1].Text);
+    }
+
+    /// <summary>
+    /// B-524, part D: with <c>--schultest</c> a cloze becomes the school's vocabulary test. Each gap links the store
+    /// entry of its word from the unit's list, carries the sentence form where it differs, the round brackets leave
+    /// the text, and the German distractors go into the cue box instead of an English word bank. On the new stage
+    /// the box then shows the book's meanings plus the distractors. Red if the gaps lose their store link (no
+    /// meanings in the box), if the form is dropped ("goats" would no longer be the solution), if the hints stay in
+    /// the text, or if the distractors land in the word bank again.
+    /// </summary>
+    [Fact]
+    public async Task Schultest_verknuepft_Luecken_mit_der_Wortliste_und_fuellt_den_Wortkasten()
+    {
+        const string draft = """
+            {"title":"Vokabeltest Bauernhof","text":"1. Ann rides her [horse] (the horse) every day.\n2. Two [sheep] (the sheep) stand in the field.\n3. The [goats] (the goat) eat everything.",
+             "distractors":["Pferdestall","Schäfer"]}
+            """;
+        var (pipeline, creator, chat) = BuildAgent(draft);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Schultest");
+        await BookVocabularyAsync(creator, seriesId, seriesUnitId,
+            ("the horse", "das Pferd", null), ("the sheep", "das Schaf", null), ("the goat", "die Ziege", null));
+
+        var (_, outcome) = await pipeline.CreateAsync(
+            Request(subjectId, seriesId, seriesUnitId, "Cloze") with { SchoolTest = true });
+
+        Assert.True(outcome.Published, string.Join(" | ", outcome.Violations));
+        Assert.Contains("- the horse = das Pferd", chat.LastMessages[1].Text);
+        var created = await creator.GetExerciseAsync<ClozeConfig>(seriesId, seriesUnitId, "cloze", outcome.ExerciseId!.Value);
+        Assert.Equal("1. Ann rides her {{1}} every day.\n2. Two {{2}} stand in the field.\n3. The {{3}} eat everything.",
+            created.Config.Text);
+        Assert.All(created.Config.Gaps, g => Assert.False(string.IsNullOrWhiteSpace(g.VocabKey)));
+        Assert.Equal(["horse", "sheep", "goats"], created.Config.Gaps.Select(g => g.Form));
+        Assert.Null(created.Config.WordBank);
+        Assert.Equal(["Pferdestall", "Schäfer"], created.Config.CueDistractors);
+
+        var preview = await Authenticated().GetFromJsonAsync<JsonElement>(
+            $"/api/v1/creator/exercises/{outcome.ExerciseId}/preview?stage={(int)Pugling.Api.Models.ClozeStage.CueBoxFreeText}");
+        var box = preview.GetProperty("items")[0].GetProperty("cueBox").EnumerateArray().Select(m => m.GetString());
+        Assert.Equal(["das Pferd", "das Schaf", "die Ziege", "Pferdestall", "Schäfer"],
+            box.OrderBy(m => m, StringComparer.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// B-524, part D: a gap word outside the unit's list, or a distractor that is a meaning of the list, is refused -
+    /// the first leaves the cue box without a meaning, the second puts a second right entry into it. Red if the school
+    /// rules are not run (the draft would be published with an unlinked gap).
+    /// </summary>
+    [Fact]
+    public async Task Schultest_weist_fremde_Woerter_und_Bedeutungen_als_Ablenker_zurueck()
+    {
+        const string draft = """
+            {"title":"Vokabeltest Bauernhof","text":"1. Ann rides her [horse] (the horse) every day.\n2. The [cow] (the cow) gives milk.",
+             "distractors":["das Pferd","Schäfer"]}
+            """;
+        var (pipeline, creator, _) = BuildAgent(draft, draft);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Schultest-fremd");
+        await BookVocabularyAsync(creator, seriesId, seriesUnitId,
+            ("the horse", "das Pferd", null), ("the sheep", "das Schaf", null), ("the goat", "die Ziege", null));
+
+        var (_, outcome) = await pipeline.CreateAsync(
+            Request(subjectId, seriesId, seriesUnitId, "Cloze", count: 2) with { SchoolTest = true });
+
+        Assert.False(outcome.Published);
+        Assert.Contains(outcome.Violations, v => v.Contains("'the cow' steht nicht in der Wortliste"));
+        Assert.Contains(outcome.Violations, v => v.Contains("Ablenker 'das Pferd'"));
+    }
+
+    /// <summary>
+    /// B-524, part D (review): a required word is met by its base form in the round bracket, not by the sentence form,
+    /// and a required word outside the unit's list (a weak word of an earlier unit) is not demanded - it has no store
+    /// entry in the slice, so asking for it would contradict the school rules in every repair round. Red if the school
+    /// test checks the required words against the sentence forms ("goats" never equals "the goat") or against the
+    /// whole required list ("the cow" would be missing forever).
+    /// </summary>
+    [Fact]
+    public async Task Schultest_misst_Pflichtwoerter_an_der_Grundform_und_nur_aus_der_Liste()
+    {
+        const string draft = """
+            {"title":"Vokabeltest Bauernhof","text":"1. Ann rides her [horse] (the horse) every day.\n2. Two [sheep] (the sheep) stand in the field.\n3. The [goats] (the goat) eat everything.",
+             "distractors":["Pferdestall","Schäfer"]}
+            """;
+        var (pipeline, creator, _) = BuildAgent(draft);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Schultest-Pflicht");
+        await BookVocabularyAsync(creator, seriesId, seriesUnitId,
+            ("the horse", "das Pferd", null), ("the sheep", "das Schaf", null), ("the goat", "die Ziege", null));
+
+        var (_, outcome) = await pipeline.CreateAsync(
+            Request(subjectId, seriesId, seriesUnitId, "Cloze", words: ["the goat", "the cow"]) with { SchoolTest = true });
+
+        Assert.True(outcome.Published, string.Join(" | ", outcome.Violations));
     }
 
     /// <summary>

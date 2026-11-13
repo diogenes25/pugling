@@ -70,7 +70,8 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         // freeze the child's motif choice as a side effect of taking a test (see MediaSelector).
         var f = PositionPlayService.CardFacets(PositionPlayService.ConfigOf(exercise), items, item, type, stage, typed, attemptId);
         return new TestItem(item.Index, f.Prompt, stage, f.Reveal, f.AnswerLength, f.Hint, f.Choices, f.AudioUrl,
-            f.GapIndex, f.Passage, f.AnyOrder, type.Key, f.RevealAlternatives, f.AnswerPattern, f.Decoding, f.LetterTiles);
+            f.GapIndex, f.Passage, f.AnyOrder, type.Key, f.RevealAlternatives, f.AnswerPattern, f.Decoding, f.LetterTiles,
+            f.CueBox);
     }
 
     // The stage a question was frozen at on start (B-476); the attempt's stage for a row that carries none of its own.
@@ -441,7 +442,8 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             // mention as an answer to entry 0.
             var index = r.ItemIndex!.Value;
             var item = items[index];
-            outcomes.Add(new ItemOutcome(index, item.Prompt, item.Answer, r.GivenAnswer, r.WasCorrect, item.GapIndex));
+            var misspelled = !r.WasCorrect && type.IsTypedStage(r.StageValue) && grader.IsMisspelled(r.GivenAnswer, item, items);
+            outcomes.Add(new ItemOutcome(index, item.Prompt, item.Answer, r.GivenAnswer, r.WasCorrect, item.GapIndex, misspelled));
             await itemProgress.RecordAsync(plan.ChildId, pos.ExerciseId, item, r.WasCorrect, r.StageValue,
                 type.IsTypedStage(r.StageValue) ? r.GivenAnswer : null, ItemReviewSource.Test, positionId, attempt.Day, countsForMastery: true, ct: ct);
         }

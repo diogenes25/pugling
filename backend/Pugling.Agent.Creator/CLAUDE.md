@@ -28,6 +28,12 @@ diesen Übungen; ein gescheiterter Teil bricht die Klausur nicht ab, macht sie a
 (Exit 1). Ein Typ in `--types`, den der Agent nicht erzeugt, ist dagegen kein gescheiterter Teil, sondern eine
 Fehlbedienung des ganzen Aufrufs – vor dem ersten Modellaufruf, Exit 2 (B-313; gilt ebenso für `plan`).
 
+`--schultest` (B-524) macht aus einem Lückentext den **Vokabeltest der Schule**: Einzelsätze mit je einer Lücke aus
+der Wortliste der Unit (das Briefing bekommt dafür wie `Vocabulary` die Scheibe), jede Lücke mit `VocabKey` und – wo
+sie abweicht – `Form`, deutsche Ablenker als `CueDistractors` statt englischer Wortbank. Gespielt wird er auf der
+Cloze-Stufe „Wortkasten + Freitext“. Ein Wort außerhalb der Liste oder ein Ablenker, der Bedeutung einer Lücke ist,
+geht als Verstoß zurück ans Modell.
+
 Der `PlanPlanner` ist sein Zwilling für **Lehrpläne**: gleicher Ablauf, anderer Behälter – ein
 `StudyPlan` mit je einer `PlanPosition` pro erzeugter Übung, Ziel/Punkte/Malus aus `--intensity`
 (dieselben drei Zeilen wie `VaterWizard.INTENSITY`). Hat die Unit eine Buch-Wortliste, plant er für

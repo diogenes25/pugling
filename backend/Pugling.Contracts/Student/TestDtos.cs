@@ -34,7 +34,8 @@ namespace Pugling.Contracts.Student;
 public record TestItem(int ItemIndex, string? Prompt, int Stage, string? Reveal, int? AnswerLength, string? Hint,
     IReadOnlyList<string>? Choices, string? AudioUrl, int? GapIndex = null, string? Passage = null,
     bool AnyOrder = false, string? Type = null, IReadOnlyList<string>? RevealAlternatives = null,
-    string? AnswerPattern = null, IReadOnlyList<WordPair>? Decoding = null, IReadOnlyList<string>? LetterTiles = null);
+    string? AnswerPattern = null, IReadOnlyList<WordPair>? Decoding = null, IReadOnlyList<string>? LetterTiles = null,
+    IReadOnlyList<string>? CueBox = null);
 
 /// <summary>
 /// Response of the test start. Class-test mode is strictly server-driven: <b>no</b> questions are sent
@@ -69,9 +70,13 @@ public record SubmitDto(List<AnswerDto>? Answers);
 /// Evaluation of a single exam question – here the solution is disclosed. Carries <c>GapIndex</c> for the
 /// same reason the question does: without it the review screen lists one identical line per gap, which is
 /// the very confusion the exam just resolved.
+/// <para>
+/// <c>Misspelled</c> marks a wrong typed answer that is the right word with a small spelling slip (B-524). It is
+/// display only - the item stays wrong and counts as wrong in the score.
+/// </para>
 /// </summary>
 public record ItemOutcome(int ItemIndex, string Prompt, string Expected, string? GivenAnswer, bool WasCorrect,
-    int? GapIndex = null);
+    int? GapIndex = null, bool Misspelled = false);
 
 /// <summary>
 /// Overall result of the class test incl. pass threshold.

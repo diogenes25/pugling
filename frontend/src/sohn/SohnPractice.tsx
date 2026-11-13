@@ -16,6 +16,7 @@ import { ListRule } from "../components/ListRule";
 import { Passage } from "../components/Passage";
 import { RevealAlternatives } from "../components/RevealAlternatives";
 import { BirkenbihlDecoding } from "../components/BirkenbihlDecoding";
+import { CueBox } from "../components/CueBox";
 import type { PracticeCard, PositionSession, ReviewOutcome } from "../lib/types";
 
 // Kleine Anerkennung bei jedem Treffer – Variation sorgt für Abwechslung (Daumen, Stern, Feuer, Muskel).
@@ -419,6 +420,8 @@ export function SohnPractice() {
               ? <div className="sub">💡 {card.hint}</div>
               : <button type="button" className="btn ghost small" style={{ marginTop: 6 }} onClick={() => setHintShown(true)}>{t("practice.hint")}</button>
           )}
+          {/* B-524: Der Wortkasten ist die Aufgabe, keine Hilfe – darum offen, nicht hinter einem Tipp-Knopf. */}
+          <CueBox words={card.cueBox} label={t("test.cueBox")} />
           {/* ShowBoth (B-96): a free display stage shows both sides at once, no flip needed - the server
               flags this via `displayOnly`, distinct from self-assessment which reveals only after "Umdrehen". */}
           {(phase === "back" || card.displayOnly) && card.reveal && <div className="rev">→ {card.reveal}</div>}

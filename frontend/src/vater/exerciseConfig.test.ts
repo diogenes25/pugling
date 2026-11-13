@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildTypeConfig, choicesMissAnswer, configToEditorState, emptyRow, normalizeAnswer } from "./exerciseConfig";
+import { buildTypeConfig, choicesMissAnswer, configToEditorState, contentProblem, emptyRow, normalizeAnswer } from "./exerciseConfig";
 import type { ExerciseTypeKey } from "../lib/types";
 
 /*
@@ -28,6 +28,39 @@ describe("Rundlauf über die umgestellten Listenfelder", () => {
 
     expect(rows[0].alternatives).toEqual(["sehr groß", MIT_KOMMA]);
     expect(extra.wordBank).toEqual(["riesig", MIT_KOMMA]);
+  });
+
+  // B-524: Die Satzform reist mit dem Speicherverweis hin und zurück; leer heißt „keine“ (null), nicht "". Rot,
+  // wenn einer der beiden Wege `form` vergisst – dann verlöre Bearbeiten die Satzform still.
+  it("Lückentext: Speicherverweis und Satzform überleben den Rundlauf", () => {
+    const { config, rows } = rundlauf("Cloze",
+      [{ index: 1, answer: "", alternatives: [], vocabKey: "en_patient_patient_in", form: " patients " },
+       { index: 2, answer: "debate", alternatives: [], vocabKey: null, form: "" }],
+      { text: "{{1}} and {{2}}" });
+
+    const gaps = (config as { gaps: { vocabKey: string | null; form: string | null }[] }).gaps;
+    expect(gaps.map((g) => g.form)).toEqual(["patients", null]);
+    expect(rows[0].vocabKey).toBe("en_patient_patient_in");
+    expect(rows[0].form).toBe("patients");
+    expect(rows[1].form).toBe("");
+  });
+
+  // B-524: Die Ablenker des Wortkastens reisen hin und zurück; leer heißt „keine“ (fehlt in der Config). Rot, wenn
+  // einer der beiden Wege `cueDistractors` vergisst.
+  it("Lückentext: Ablenker im Wortkasten überleben den Rundlauf", () => {
+    const { config, extra } = rundlauf("Cloze",
+      [{ index: 1, answer: "racism", alternatives: [], vocabKey: null, form: "" }],
+      { text: "{{1}}", wordBank: [], cueDistractors: ["rassistisch", " ", MIT_KOMMA] });
+
+    expect((config as { cueDistractors?: string[] }).cueDistractors).toEqual(["rassistisch", MIT_KOMMA]);
+    expect(extra.cueDistractors).toEqual(["rassistisch", MIT_KOMMA]);
+  });
+
+  // B-524 (Review): Eine Speicherlücke hat keine Inline-Lösung und ist trotzdem vollständig. Rot, wenn die Prüfung
+  // wieder `answer` verlangt – dann ließe sich keine Lücke aus dem Vokabel-Store speichern.
+  it("Lückentext: eine Speicherlücke ohne Inline-Lösung ist gültig, eine leere Inline-Lücke nicht", () => {
+    expect(contentProblem("Cloze", [{ index: 1, answer: "", vocabKey: "en_x", form: "" }], { text: "{{1}}" }, 0)).toBeNull();
+    expect(contentProblem("Cloze", [{ index: 1, answer: "", vocabKey: null, form: "" }], { text: "{{1}}" }, 0)).not.toBeNull();
   });
 
   it("Liste: Alternativen bleiben Listen", () => {

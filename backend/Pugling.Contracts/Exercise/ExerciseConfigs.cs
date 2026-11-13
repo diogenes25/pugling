@@ -76,14 +76,27 @@ public class ClozeConfig
     public List<Gap> Gaps { get; set; } = new();
     /// <summary>Optional word pool to choose from.</summary>
     public List<string>? WordBank { get; set; }
+    /// <summary>
+    /// Extra meanings in the cue box (B-524): words in the hint language that solve no gap, so the box offers more
+    /// meanings than there are gaps. Curated on purpose - word families ("racism"/"racist") test the word class,
+    /// which a generated pool would hit only by chance. Shown only on the stage <c>CueBoxFreeText</c>.
+    /// </summary>
+    public List<string>? CueDistractors { get; set; }
 }
 /// <summary>
 /// A gap. If <paramref name="VocabKey"/> is set, the solution comes from the vocabulary store
 /// (the entry's word), centrally maintainable; the inline <paramref name="Answer"/> remains a fallback for
 /// gaps without a store reference. This allows building a cloze from the maintained vocabulary.
 /// <paramref name="Answer"/> is required even with a store reference - send <c>""</c> there; <c>null</c> is a validation error.
+/// <para>
+/// <paramref name="Form"/> is the word as the sentence needs it ("patients", "debates") when it differs from the
+/// store entry's base form. If set and not blank it is the solution - with or without a store reference - and the
+/// base form alone is wrong (B-524); the store entry still supplies the meaning and the link to the learning
+/// progress. A gap whose store entry is missing stays unsolvable either way: without the entry it has no meaning.
+/// </para>
 /// </summary>
-public record Gap(int Index, string Answer, List<string>? Alternatives = null, string? VocabKey = null);
+public record Gap(int Index, string Answer, List<string>? Alternatives = null, string? VocabKey = null,
+    string? Form = null);
 
 /// <summary>Essay: writing prompt + constraints.</summary>
 public class EssayConfig

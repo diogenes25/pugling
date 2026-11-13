@@ -25,7 +25,8 @@ public static class StageMechanics
     /// as <c>Reveal</c> and turn the pool into decoration next to it.
     /// </summary>
     public static bool IsTyped(ClozeStage stage) =>
-        stage is ClozeStage.TranslationWordBank or ClozeStage.TranslationFreeText or ClozeStage.FreeText;
+        stage is ClozeStage.TranslationWordBank or ClozeStage.TranslationFreeText or ClozeStage.FreeText
+            or ClozeStage.CueBoxFreeText;
 
     /// <summary>
     /// Normalizes an answer for comparison (trim, lowercase, collapse repeated whitespace into one space, one spelling

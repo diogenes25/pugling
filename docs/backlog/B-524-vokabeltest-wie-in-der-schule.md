@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, rolle/student, rolle/supervisor]
+tags: [typ/story, status/in-arbeit, rolle/student, rolle/supervisor]
 aliases: [Schul-Vokabeltest, Lückensätze mit deutschem Wortkasten]
-status: geschaetzt
+status: in-arbeit
 prio: P1
 art: Wunsch
 groesse: L
@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: "Echter Vokabeltest von Friedrich (Englisch, 11.11.2026), abgeschrieben in raw/english/real_tests/2026-11-11-friedrich-vokabeltest.md (gitignored); Nutzer im Chat 2026-11-13: „Solche Tests soll Friedrich entsprechend öfter erhalten. Die Art des Tests ist mir wichtig.“"
 grund: ""
 ersetzt_durch: []
+wartet_auf: "Merge von refs/heads/b-524-schul-vokabeltest und Rollengang in der Arcade (Klick)"
 ---
 
 # B-524 · Vokabeltest im Format der Schule: englische Lückensätze, deutscher Wortkasten, frei geschrieben
@@ -296,3 +297,46 @@ Sitzung fertig wird (README → „Teilen und Zusammenlegen“; die Entscheidung
   neue Übung vom KI-Creator.
 - **2026-11-13** — geschaetzt: L als Bündel aus vier lieferbaren Teilen (A Stufe M, B Satzform S, C Schreibfehler
   S, D KI-Creator M); keine Migration, kein Vertragsbruch (alles additiv). Reihenfolge C → B → A → D.
+- **2026-11-13** — in Arbeit, im Worktree `.claude/worktrees/b-524` auf Branch `b-524-schul-vokabeltest` (der
+  Haupt-Checkout war durch die parallele B-485-Sitzung gesperrt: DLL-Sperren, `Pugling.Agent.Creator` kompilierte
+  nicht). Als eine Story gebaut, nicht geteilt (Nutzer).
+- **2026-11-13** — Fund beim Bauen: **keine** Lücke im Bestand trägt einen `VocabKey`. Der KI-Creator legt Lücken
+  inline an (`backend/Pugling.Agent.Creator/Drafting/ClozeStrategy.cs:113`), der Loader ebenso, und der
+  Übungs-Editor reicht `vocabKey` nur durch (`frontend/src/vater/exerciseConfig.tsx:243-246`). Ohne Verweis hat der
+  deutsche Wortkasten (Entscheidung 4) nichts anzuzeigen. Folge für Teil D: Der Format-Schalter muss `VocabKey` aus
+  der Wortliste der Unit setzen, nicht nur Ablenker und Satzform.
+- **2026-11-13** — Teil C gebaut: `AnswerGrader.IsMisspelled`, Kennzeichen `misspelled` an `ItemOutcome` und
+  `PreviewItemOutcome`, Anzeige in Sohn-Testergebnis und Vater-Testmodus. `SchulVokabeltestTests` 15/15 grün; rote
+  Proben: ohne Nachbarvergleich fallen `Nachbarwort_Ist_Kein_Schreibfehler` und der API-Weg, ohne Vertauschung nur
+  `Vertauschte_Buchstaben_Zaehlen_Als_Ein_Fehler`.
+- **2026-11-13** — Teil B gebaut (`d44dd57`): `Gap.Form` ist die Lösung, wenn gesetzt, auf jedem Pfad
+  (`ClozeGaps.SolutionOf` für Provider, Resolver und Grader); Editor zeigt bei Speicherlücken Verweis und Satzform.
+  Nebenfund behoben: Die Editor-Prüfung verlangte eine Inline-Lösung und blockierte damit jede Speicherlücke. Rote
+  Proben: Resolver ohne Form → `Satzform_Schlaegt_Grundform_Aus_Dem_Speicher`, Provider ohne Form →
+  `Satzform_Gilt_Auch_Ohne_Speicherverweis`.
+- **2026-11-13** — Teil A gebaut (`8eb9a04`): Stufe `CueBoxFreeText` (5), `ClozeConfig.CueDistractors`,
+  `IExerciseType.CueBox`, Facette `CueBox` an `PracticeCard`/`TestItem`/`PreviewItem`, der Hinweis an der Lücke
+  entfällt auf dieser Stufe. Frontend: Baustein `CueBox` in Arcade (Üben, Test) und Vater-Testmodus, Ablenker im
+  Editor. Rote Proben: Hinweis bleibt → Kasten- und Testkarten-Fall, unsortiert → Kasten-Fall, Testweg ohne Kasten →
+  Testkarten-Fall.
+- **2026-11-13** — Teil D gebaut (`c7380e9`): `--schultest` am KI-Creator. Einschränkung gegenüber Entscheidung 7:
+  „schwache Wörter früherer Units“ fließen noch nicht ein – die Scheibe (`UnitVocabulary.Slice`) nimmt nur schwache
+  Wörter **der Unit**. Rote Proben: ohne Regeln → Zurückweisungs-Fall, ohne Satzform und ohne Wortliste im
+  Briefing → Erfolgsfall.
+- **2026-11-13** — Reviews: `pugling-reviewer` (ein Blocker: `LadenFieldListTests`, Loader kannte `cueDistractors`/`form`
+  nicht – behoben in `b4cfe19`; dazu Pflichtwörter im Schultest, Artikel-Toleranz in `IsMisspelled`) und
+  `frontend-reviewer` (keine Blocker; Stufe hieß in der Arcade „Hören“, Satzform bei Inline-Lücken unsichtbar,
+  Testmodus nur mit Emoji). Alles eingearbeitet in `4b9e1c4`, je mit Test und roter Probe. Offen gelassen (nur
+  Anzeige, keine Punkte): Schwelle bei sehr kurzen Alternativen und je Phrase statt je Wort; doppelte Listenwörter
+  über mehrere Lücken prüft der Agent nur im Prompt; Listeneinträge mit „/“ oder Klammern sind im Schultest nicht
+  erzeugbar.
+- **2026-11-13** — Verifikation: `dotnet test Pugling.sln -c Release` **1510/1510** grün, Vitest **868/868**, `tsc -b`
+  grün. Rollengang an der laufenden App **über die API** (eigener Server :5390, Wegwerf-DB): Vater legt den Test an,
+  sieht im Testmodus vier Stufen inkl. „Wortkasten + Freitext“ und den Kasten mit sieben Einträgen, weist ihn als
+  Position mit Wochenziel zu; der Sohn bekommt fünf Karten mit demselben Kasten und ohne Hinweis, Antworten wie
+  Friedrich (clinik, heiht → falsch geschrieben; racist für racism → falsch), 2/5 = 40 %, binär. **Der Klick-Rollengang
+  in der Arcade fiel aus**: Die Sitzung war in keinem Fenster offen, Eingaben im versteckten Browser-Pane kamen nicht
+  an. Beobachtung: „patient“ statt „patients“ zählt nach Entscheidung 3 als „falsch geschrieben“ (fehlendes s),
+  fachlich eher ein Formfehler.
+- **2026-11-13** — Nicht `abgenommen`: Die Commits liegen auf `b-524-schul-vokabeltest`, noch nicht auf
+  `auto/fertigstellung`, und der Rollengang per Klick fehlt (`wartet_auf`).
