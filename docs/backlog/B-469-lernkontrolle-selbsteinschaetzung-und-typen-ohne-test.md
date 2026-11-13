@@ -34,6 +34,18 @@ Vater sagen, dass diese Positionen nur Anwesenheit messen? Abhängig von
 [B-462](B-462-mehrdeutige-uebersetzung-verlangt-alle-bedeutungen.md): Getippt ist erst fair, wenn eine
 Bedeutung genügt.
 
+## Nachgeprüft am Code (2026-11-13)
+
+- Vorgabe-Stufe jedes Typs ist `SelfAssess` (`ExerciseTypeBase.cs:37`) – ohne `RequireTypedTest` bleibt der Test
+  eine Selbsteinschätzung, wie beschrieben.
+- **Der Assistent** setzt `requireTypedTest` per Vorgabe auf `true` (`VaterWizard.tsx:101`, `:367`).
+- **Der KI-Lehrplan** setzt seit B-463 für Vokabelübungen aus der Buch-Wortliste `RequireTypedTest: true` mit Stufe
+  Freitext (`PlanPlanner.cs:286-292`); nur die übrigen, vom Modell erzeugten Positionen bekommen `null`
+  (`PlanPlanner.cs:243`), also die Vorgabe. Die Behauptung „auch im KI-Lehrplan" gilt damit nur noch für diese.
+- Offen bleibt der Kern: wer eine Position **von Hand** anlegt (Plan-Seite, API), bekommt die Selbsteinschätzung, und
+  Grammatik/Übersetzung haben weiter keinen Test.
+
 ## Verlauf
 
 - **2026-11-10** — angelegt (Prüfgang am Access-Lehrwerk: Übungen, Vater-Sicht, Handy).
+- **2026-11-13** — nachgeprüft (Tageslauf, Restzeit): Assistent und KI-Wortlisten-Plan verlangen schon getippt; offen bleiben Handanlage und Typen ohne Test.
