@@ -14,8 +14,10 @@
       Entwicklung und Test-Tor brauchen.
     - Inhaltswurzel bleibt backend/Pugling.Api: dieselbe appsettings.json und dieselben hochgeladenen Bilder wie
       im Entwicklungsbetrieb.
-    - Webroot ist frontend/dist, keine Kopie nach wwwroot: sonst läge im Entwicklungsbetrieb ein veraltetes
-      Frontend unter :5200.
+    - Webroot ist eine Kopie von frontend/dist im Veröffentlichungs-Ordner, nicht frontend/dist selbst: ein späterer
+      `npm run build` im Repo schöbe sonst dem laufenden, älteren Server ein neueres Frontend unter (B-533: die
+      Bonus-Seite rief einen Endpunkt, den der Server noch nicht kannte). Und nicht backend/Pugling.Api/wwwroot:
+      dort läge im Entwicklungsbetrieb ein veraltetes Frontend unter :5200.
 
     Firewall, feste Adresse und Energiesparen: docs/heimnetz.md.
 
@@ -51,11 +53,15 @@ $ErrorActionPreference = 'Stop'
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $apiProject = Join-Path $repo 'backend\Pugling.Api'
 $frontend = Join-Path $repo 'frontend'
-$webRoot = Join-Path $frontend 'dist'
+$frontendDist = Join-Path $frontend 'dist'
 $stateDir = Join-Path $env:LOCALAPPDATA 'Pugling'
 # One folder per port: a second instance (a test on a copy of the database) must not publish over the files of the
 # running server - Windows locks them, and the publish fails halfway.
 $appDir = Join-Path $stateDir "heimnetz-app-$Port"
+# The frontend is served from a copy next to the published API, never from frontend/dist: any later `npm run build`
+# in the repo would otherwise swap a newer frontend under the running, older API (B-533: the bonus page called an
+# endpoint the server did not have yet).
+$webRoot = Join-Path $appDir 'wwwroot'
 $keyFile = Join-Path $stateDir 'jwt.key'
 if (-not $Database) { $Database = Join-Path $apiProject 'pugling.db' }
 $Database = [System.IO.Path]::GetFullPath($Database)
@@ -105,6 +111,9 @@ if (-not $SkipBuild) {
     Write-Host 'Veröffentliche die API …'
     dotnet publish $apiProject -c Release -o $appDir --nologo -v quiet
     if ($LASTEXITCODE -ne 0) { throw 'dotnet publish fehlgeschlagen.' }
+
+    if (Test-Path $webRoot) { Remove-Item -Recurse -Force $webRoot }
+    Copy-Item -Recurse $frontendDist $webRoot
 }
 if (-not (Test-Path (Join-Path $webRoot 'index.html'))) { throw "Kein gebautes Frontend in '$webRoot' – ohne -SkipBuild starten." }
 if (-not (Test-Path (Join-Path $appDir 'Pugling.Api.dll'))) { throw "Keine veröffentlichte API in '$appDir' – ohne -SkipBuild starten." }
