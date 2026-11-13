@@ -64,7 +64,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-408](B-408-assistent-zeigt-keine-bewertung.md) | Der Plan-Assistent zeigt in seiner Übungsauswahl keine Bewertung – sein Zwilling im Planbau schon | Wunsch | `idee` | P3 | — | frontend | — |
 | [B-459](B-459-vision-modell-fuer-buchseiten.md) | Fotos echter Buchseiten brauchen ein stärkeres Vision-Modell als gemma4:e2b | Wunsch | `idee` | P3 | — | — | — |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `geschaetzt` | P3 | S | backend | — |
-| [B-380](B-380-pflichtfeld-sperre-in-den-uebrigen-formularen.md) | Die Hausregel „Pflichtfeld leer → Speichern gesperrt" gilt erst auf der Lehrwerke-Seite | Aufräumen | `idee` | P3 | — | frontend | — |
+| [B-380](B-380-pflichtfeld-sperre-in-den-uebrigen-formularen.md) | Die Hausregel „Pflichtfeld leer → Speichern gesperrt" gilt erst auf der Lehrwerke-Seite | Aufräumen | `ausformuliert` | P3 | — | frontend | — |
 | [B-445](B-445-seed-kind-ohne-klasse-und-fachlehrer.md) | Seed: „Sohn" hat weder Klasse noch Schulart, und Herr Schmidt trägt kein Fachlehrer-Profil | Aufräumen | `idee` | P3 | — | beides | — |
 | [B-494](B-494-mutantenprobe-je-zusicherung.md) | `mutant-probe.py` misst je Zusicherung, nicht nur je Test | Aufräumen | `idee` | P3 | — | .claude/scripts | — |
 
@@ -803,6 +803,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-358](B-358-beispielkatalog-proben-restkanten.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 | [B-370](B-370-zwei-behauptungen-aus-lauf-r-teil-2.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 | [B-373](B-373-inventar-und-begruendung-aus-lauf-s.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
+| [B-380](B-380-pflichtfeld-sperre-in-den-uebrigen-formularen.md) | `ausformuliert` | Abschnitt „Akzeptanzkriterien" |
 | [B-389](B-389-leerzeichen-grundform-meldet-invalid-reference.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 | [B-390](B-390-unit-loeschen-bestaetigung-ausser-sicht.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 | [B-392](B-392-uebersetzung-put-legt-paare-nicht-an.md) | `abgenommen` | Abschnitt „Ist-Stand…" |

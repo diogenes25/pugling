@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/idee, bereich/frontend, rolle/supervisor, rolle/creator]
+tags: [typ/story, status/ausformuliert, bereich/frontend, rolle/supervisor, rolle/creator]
 aliases: [Pflichtfeld-Sweep]
-status: idee
+status: ausformuliert
 prio: P3
 art: Aufräumen
 groesse: ""
@@ -28,6 +28,28 @@ Bewusst nicht in B-233 genommen: das Sprint-Ziel (eine Seite, ein Sperrmuster) w
 mehrere davon werden per exaktem Label in E2E und Vitest angesprochen (`"Name der neuen Reihe"` allein zehnmal) – das
 Nachziehen ist eigenes Handwerk.
 
+## User Story
+
+Als *Vater* möchte ich an einem leeren Pflichtfeld schon am gesperrten Speichern-Knopf und am „(Pflicht)" im Label sehen,
+was fehlt – überall gleich wie auf der Lehrwerke-Seite –, statt erst nach dem Klick eine lokale Meldung „… fehlt." zu lesen.
+
+## Ist-Stand am Code (nachgezählt 2026-11-13)
+
+- „(Pflicht)" im Label trägt heute nur `VaterLehrwerke.tsx` (`grep -l "(Pflicht)"`).
+- Die Form `fail("… fehlt")` steht noch an fünf Stellen: `ChildMaterialSection.tsx:254`, `:292`, `ClozeTexts.tsx:165`,
+  `:166`, `VaterFachlehrer.tsx:267` (vorher `:259` – die Zeile ist gewandert).
+- Die übrigen zehn Dateien der Liste oben rufen weiter `.fail(` auf (VaterKind 4, VaterProfil 3, PlanPositions 3,
+  VaterDashboard 2, VaterClassTests 2, ChildCarePanels 2, je 1 in VaterAnmerkungen, ExerciseSharingPanels, RemarkWidget,
+  VaterZiele) – mit anderem Wortlaut. **Welche davon Pflichtfeld-Fälle sind, ist je Zeile zu lesen**, nicht zu zählen.
+
+## Offene Punkte
+
+1. Je Zeile entscheiden: Pflichtfeld (→ Sperre + „(Pflicht)") oder andere Prüfung (bleibt).
+2. Schnitt: ein Sprint je Seite (E2E und Vitest sprechen Labels exakt an, `"Name der neuen Reihe"` allein zehnmal) oder
+   ein gemeinsamer Baustein, der Label-Zusatz und Sperre aus einer Quelle setzt? Empfehlung PM: Baustein zuerst, dann je
+   Seite nachziehen – sonst entstehen fünfzehn Fassungen derselben Regel.
+
 ## Verlauf
 
 - **2026-11-05** — angelegt beim Bau von B-233 (Sprint 1 der Sitzung 2026-11-05).
+- **2026-11-13** — ausformuliert (Tageslauf, Restzeit): Bestand nachgezählt (5 Stellen „fehlt", zehn Dateien mit anderem Wortlaut je Zeile zu prüfen), User Story, zwei offene Punkte.
