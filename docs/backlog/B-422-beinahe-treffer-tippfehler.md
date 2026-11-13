@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/in-arbeit, bereich/training, rolle/student, lerntechnik/vokabeln]
 aliases: [Beinahe-Treffer, Tippfehler-Toleranz]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Wunsch
 groesse: S
@@ -136,3 +136,31 @@ absichtlichen Tippfehler.
   B-524/2 (Nutzer) widerspräche; `art` von `Frage` auf `Wunsch`. Stakeholder-Entscheidung im Auftrag des Nutzers
   (Backlog-Lauf 2026-11-13).
 - **2026-11-13** — `geschaetzt`: S, beides, ohne Migration und Vertragsbruch.
+- **2026-11-13** — `in-arbeit`: Backend gebaut. `ReviewOutcome` trägt additiv `Misspelled` (Standard `false`), gesetzt in `PositionPracticeController.Review` über `AnswerGrader.IsMisspelled(given, item, items)` nur bei falscher getippter Antwort außerhalb des Mengen-Modus; die Wertung bleibt falsch. `docs/openapi/v1.json` und `docs/api-examples/study-plans.md` neu erzeugt (Feld `misspelled`). Test `backend/Pugling.Api.Tests/UebenFalschGeschriebenTests.cs` (AK 1–3). **Offen:** AK 4 (Frontend: Blatt zeigt „Falsch geschrieben“ + Lösung, Text `test.misspelled`) – `contract.ts` entsteht beim Build aus `v1.json`.
+  Rote Probe, gemessen an `cf07416f + Arbeitsbaum geändert`, 2026-11-13 21:38 (`mutant-probe.py`, Grundlinie nach dem Zurückspielen grün):
+
+  | Mutante | Stelle | erwartet | gemessen |
+  |---|---|---|---|
+  | B422-AK1a | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:388 | red | red |
+  | B422-AK1b | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:383 | red | red |
+  | B422-AK2 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:388 | red | red |
+  | B422-AK3a | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:388 | red | red |
+  | B422-AK3b | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:388 | red | red |
+- **2026-11-13** — `in-arbeit`: AK 4 (Frontend) gebaut. `contract.ts` per `npm run gen:contract` neu erzeugt;
+  `reviewFeedback` (`frontend/src/sohn/SohnPractice.tsx`) reicht `misspelled` im `wrong`-Fall durch, `Rueckmeldung` trägt
+  `falschGeschrieben?`, und `RueckmeldungsBlatt` (`Lektion.tsx`) titelt dann „Falsch geschrieben“ (`test.misspelled`, wie
+  in `SohnTest`) statt „Fast.“ – die Lösung bleibt darunter, das Blatt bleibt rot, die Wertung falsch. Die Ansage der
+  Live-Region nennt das Etikett mit („Falsch geschrieben. Lösung: …“). Tests: `reviewFeedback.test.ts` (Durchreichen;
+  zwei bestehende Fälle um `misspelled: false` ergänzt), `SohnPractice.test.tsx` (Blatt mit und ohne Kennzeichen).
+  Rote Probe (`mutant-probe.py`, Build `echo ok`, Test Vitest beider Dateien):
+
+  | Mutante | Stelle | erwartet | gemessen |
+  |---|---|---|---|
+  | Blatt ignoriert das Kennzeichen | frontend/src/sohn/Lektion.tsx:230 | red | red |
+  | Etikett auch ohne Kennzeichen | frontend/src/sohn/Lektion.tsx:230 | red | red |
+  | `reviewFeedback` reicht nicht durch | frontend/src/sohn/SohnPractice.tsx:51 | red | red |
+  | Blatt bekommt das Feld nicht | frontend/src/sohn/SohnPractice.tsx:265 | red | red |
+  | Ansage ohne Etikett | frontend/src/sohn/SohnPractice.tsx:268 | red | red |
+
+  Gemessen an `cf07416f + Arbeitsbaum geändert`, 2026-11-13 21:44; Grundlinie danach grün. Vitest 937/937, `tsc -b` 0.
+  E2E-Zeuge `frontend/e2e/lektion.spec.ts` noch nicht gelaufen.

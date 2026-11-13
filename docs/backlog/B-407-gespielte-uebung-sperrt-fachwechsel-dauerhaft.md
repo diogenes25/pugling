@@ -111,3 +111,4 @@ Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Proto
 - **2026-11-13** — **gegrillt**: Entscheidungen 1–3 (der Vorschlag der Story übernommen). Stakeholder-Entscheidung im Auftrag des Nutzers
   (Backlog-Lauf 2026-11-13, [Protokoll](../pm-sitzung-2026-11-13-backlog-lauf.md)).
 - **2026-11-13** — **geschaetzt**: S, beides, keine Migration, kein Vertragsbruch.
+- **2026-11-13** — Im Backlog-Lauf 2026-11-13 bewusst **nicht** in einen Sprint genommen: der Dialog-Teil ändert `ExerciseEditModal.tsx`, das die parallele B-534-Arbeit unkommittiert umbaut. Nach B-534 baubar wie geschätzt.

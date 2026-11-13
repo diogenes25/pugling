@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/student]
 aliases: [Fokus nach Aufdecken]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Defekt
 groesse: XS
@@ -111,3 +111,22 @@ Rollengang-Zeuge des Sohns.
 - 2026-11-13 · `ausformuliert` – am Code belegt; dritter Weg (Kennenlern-„Weiter“, `front → front`) gefunden.
 - 2026-11-13 · `gegrillt` – Entscheidungen 1–3; Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13).
 - 2026-11-13 · `geschaetzt` – XS, frontend, ohne Migration und Vertragsbruch.
+- 2026-11-13 · `in-arbeit` – Bau im Backlog-Lauf (Frontend), Worktree `backlog-lauf`.
+- 2026-11-13 · `in-arbeit` – gebaut: der Fokus-Effekt in `SohnPractice.tsx` hängt an `[phase, idx]` (`prevIdx` neben
+  `prevPhase`) und fokussiert das erste Bedienbare der Antwortzone bei jedem Wechsel von einer Karte aus (`front → back`,
+  `back → front`, `blatt → front`, `front → front` mit neuem `idx`); der erste Aufbau ohne `focusAfterLoad` bleibt
+  ausgenommen. Vier Fälle in `SohnPractice.test.tsx` („Fokus beim Kartenwechsel“), AK 1–3 gegen den Ist-Code rot gesehen,
+  AK 4 dort grün (Absicherung des neuen Zweigs). Rote Probe (`mutant-probe.py`, Build `echo ok`, Test Vitest der Datei):
+
+  | Mutante | Stelle | erwartet | gemessen |
+  |---|---|---|---|
+  | AK1: `toCard` nur bei `front` (front → back ignoriert) | SohnPractice.tsx:172 | red | red |
+  | AK2: `back` fehlt in `fromCard` | SohnPractice.tsx:170 | red | red |
+  | AK3: Effekt nur an `[phase]` | SohnPractice.tsx:187 | red | red |
+  | AK3: `changed` ohne `idx` | SohnPractice.tsx:171 | red | red |
+  | AK4: `fromCard = true` (erster Aufbau fokussiert) | SohnPractice.tsx:170 | red | red |
+
+  Gemessen an `cf07416f + Arbeitsbaum geändert`, 2026-11-13; Grundlinie danach grün. Entscheidung 3 geprüft:
+  `SohnTest.tsx` hat **keinen** Fokus-Effekt, `onReveal` setzt nur `revealed` (`:241`) – dieselbe Lücke im Test ist
+  wahrscheinlich und gehört als eigene Story angelegt. E2E-Zeugen: `lektion.spec.ts`, `erstbegegnung.spec.ts`,
+  `karten-umdrehen.spec.ts`.

@@ -89,12 +89,12 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
 
         // The pronunciation audio belongs to the word and is carried along direction-independently (the
         // listening stage reads it); WithDirection swaps word ↔ translation and preserves ItemId/VocabularyId.
-        var languages = new Dictionary<int, (string Source, string Target)>();
+        var languages = new Dictionary<int, (string Source, string Target, PartOfSpeech PartOfSpeech)>();
         var canonical = rows.Select((r, i) =>
         {
             if (!byId.TryGetValue(r.VocabularyId, out var v))
                 return new ContentItem(i, $"(Vokabel #{r.VocabularyId} fehlt)", "", [""], ItemId: r.Id, VocabularyId: r.VocabularyId);
-            languages[r.Id] = (v.SourceLanguage, v.TargetLanguage);
+            languages[r.Id] = (v.SourceLanguage, v.TargetLanguage, v.PartOfSpeech);
             var picked = images.GetValueOrDefault(r.Id);
             // Every declared equivalent translation counts as correct - a child who knows "sehr groß" for
             // "huge" must not lose the goal (and its coins) to the row that happens to store "riesig".
@@ -112,12 +112,22 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
             var answerLanguage = card.Reversed ? language.Source : language.Target;
             return card with
             {
-                ArticleOptionalIn = articleRequired || answerLanguage.Length == 0 ? null : answerLanguage,
+                ArticleOptionalIn = articleRequired || answerLanguage.Length == 0 || !MayDropArticle(language.PartOfSpeech)
+                    ? null : answerLanguage,
                 // B-462: a store entry is a word-list entry in either direction ("sobald, sowie", "(to) reply (to)").
                 MeaningsSeparable = true,
             };
         }).ToList();
     }
+
+    /// <summary>
+    /// B-437: whether a leading article may be left out for an entry of this part of speech. Only in front of a noun is
+    /// the first word an article whose absence is a slip; in "a few" or "un peu" it belongs to the word, and "few" means
+    /// the opposite. <see cref="PartOfSpeech.Other"/> stays tolerant because it is the default on creation - many nouns
+    /// in the stock carry no part of speech, and B-421 must not be withdrawn from them silently.
+    /// </summary>
+    internal static bool MayDropArticle(PartOfSpeech partOfSpeech) =>
+        partOfSpeech is PartOfSpeech.Noun or PartOfSpeech.Other;
 
     /// <summary>
     /// The derived hint of a store entry: its article, which the contract defines as the target language's article

@@ -187,7 +187,7 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
 
         var due = Enumerable.Range(0, poolSize)
             .Select(i => (Index: i, Prog: progress.GetValueOrDefault(i)))
-            .Where(x => ScopeMatch(pos.Scope, x.Prog) && (!dueOnly || !pos.UseLeitner || IsDue(x.Prog, day)));
+            .Where(x => ScopeMatch(pos.Scope, x.Prog, day) && (!dueOnly || !pos.UseLeitner || IsDue(x.Prog, day)));
 
         // The dose only shapes a round that is played for the record; free practice (info) introduces nothing.
         if (dueOnly && DailyDose(pos) is > 0 and var dose)
@@ -418,9 +418,14 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
         return result;
     }
 
-    private static bool ScopeMatch(ItemScope scope, PositionItemProgress? prog) => scope switch
+    // "New" includes the introduction day (B-435): since the first contact is an ungraded introduction card (B-419),
+    // a scope of "never introduced" would only ever show a word and never ask it. The word is asked in the follow-up
+    // round of its introduction day and becomes review material from the next day on - with or without Leitner,
+    // which is why the day decides and not the review count (without Leitner no review is ever counted).
+    // "Old" stays "introduced at all", so on the introduction day a word lies in both scopes.
+    private static bool ScopeMatch(ItemScope scope, PositionItemProgress? prog, DateOnly day) => scope switch
     {
-        ItemScope.New => prog?.IntroducedAt is null,
+        ItemScope.New => prog?.IntroducedAt is null || prog.IntroducedAt == day,
         ItemScope.Old => prog?.IntroducedAt is not null,
         _ => true,
     };

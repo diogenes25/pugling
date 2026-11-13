@@ -47,6 +47,32 @@ dann Restposten.
 Nicht in diesem Lauf: große Wünsche (B-09, B-20, B-39, B-218, B-220, B-248, B-249), Gerätechecks (B-31), Stories,
 die Dateien der parallelen B-534-Arbeit berühren (B-16, B-140, B-369, B-380).
 
+## Refinement
+
+Drei Agenten haben die 18 Kandidaten parallel bis `geschaetzt` gebracht (`cf07416f`); jede Entscheidung trägt den
+Stakeholder-Vermerk. Zwei Abweichungen von der jeweiligen PM-Empfehlung, beide begründet in der Story:
+
+- **B-422:** Im Üben wird ein Tippfehler **nicht** verziehen, nur gekennzeichnet („Falsch geschrieben“). Die
+  Empfehlung (Abstand 1 als Treffer) widerspräche der Nutzer-Entscheidung 2 aus B-524 („falsch geschrieben ist
+  falsch“) – frühere Nutzer-Entscheidungen stößt dieser Lauf nicht um.
+- **B-432:** Der Einführungstag einer täglichen Pflicht ist nur **malusfrei**, nicht erfüllt (keine Ziel-Punkte).
+  Berührt den „Stick“ – zur Kenntnis des Nutzers.
+
+Bewusst außerhalb der Sprints: **B-407** (Dialog in `ExerciseEditModal.tsx`, das B-534 unkommittiert umbaut), der
+Planbau-Teil von **B-408** → neue Story **B-540** (`wartet_auf` B-534). **B-410** (M, neues Tor) kommt als letzte
+Story des Laufs, weil ein neues Tor laut README den Lauf anhält.
+
+## Sprint 69 — Ziel & Umfang
+
+**Sprint-Ziel:** Der Sohn erlebt das Üben fair und verlässlich – der Fokus bleibt auf der Karte, ein Netzfehler
+schluckt keine Bewertung, die Vorschau des Vaters stiehlt keine Einführung, „nur neue“ fragt die eingeführten Wörter
+ab, die Artikel-Toleranz gilt nur für Nomen, und ein Tippfehler ist als solcher erkennbar.
+**Umfang:** B-531, B-532 (Arcade) · B-435, B-437, B-433, B-422 (Backend, B-422 mit Anzeige im Blatt).
+**Entwickler-Brief:** Quelle der Wahrheit bleibt der Server (`PositionPracticeController.Review`,
+`PositionPlayService`, `ExerciseContentResolver`, `AnswerGrader`); die Arcade zeigt nur an. Guards: Rollen-Prüfung
+`User.IsStudent()` wie im Test-Controller; kein Vertragsbruch, nur das additive Feld `misspelled`. Keine Migration.
+Testweg: Integrationstests je Story, Vitest/RTL für `SohnPractice`, Mutanten-Probe je AK-Fall, volle Suite.
+
 ## Stakeholder-Entscheidungen ohne Sprint
 
 - **B-217, B-247, B-374 verworfen (geteilt):** Eine Sammel-Story trägt keine eigene Arbeit; der Index führt jede

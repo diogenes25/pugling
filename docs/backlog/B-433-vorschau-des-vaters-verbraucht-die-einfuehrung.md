@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, rolle/supervisor, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/training, rolle/supervisor, rolle/student]
 aliases: [Vater-Übung verbraucht Einführung, Supervisor-Runde führt ein]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Defekt
 groesse: S
@@ -138,3 +138,12 @@ Rollengang des Sohns; `/smoke-test` nicht nötig (kein neuer Endpunkt).
 - **2026-11-13** — `gegrillt`: Entscheidungen 1–4, `art` von `Frage` auf `Defekt`; Stakeholder-Entscheidung im Auftrag
   des Nutzers (Backlog-Lauf 2026-11-13).
 - **2026-11-13** — `geschaetzt`: S, backend, ohne Migration und Vertragsbruch.
+- **2026-11-13** — `in-arbeit`: gebaut. `PositionPracticeController.Review`: Erstkontakt setzt `IntroducedAt` nur bei `User.IsStudent()`; eine antwortlose Bewertung (`GivenAnswer` leer, `WasKnown` null) auf ein heute eingeführtes, ungeprüftes Atom eines Typs mit Kennenlernstufe ist kein Urteil (keine Punkte, kein Kasten, kein Klettern, kein Verlaufseintrag), der Cursor rückt weiter. Tests in `backend/Pugling.Api.Tests/ErstbegegnungTests.cs` (AK 1, 3 als Theory MaxBox 5/1, 4 als Theory früherer Tag/schon geprüft; AK 2 = bestehender Fall). **Abweichung vom Ist-Stand der Story:** auf der Standard-Position (Leitner, Tippziel) ist die Karte nach der Einführung wegen der Leiter (B-476) keine getippte, sondern eine Umdrehkarte – der Schaden ohne Entscheidung 2 ist dort der Tagesstempel `LastReviewedAt` (sperrt das Klettern des Tages) und ein „falsch“ im Verlauf, nicht `ReviewCount == 1`; den getippten Fall (`ReviewCount` 1) trifft der Testfall mit `MaxBox = 1`. Beide Fälle sind rot ohne die Bedingung.
+  Rote Probe, gemessen an `cf07416f + Arbeitsbaum geändert`, 2026-11-13 21:38 (`mutant-probe.py`, Grundlinie nach dem Zurückspielen grün):
+
+  | Mutante | Stelle | erwartet | gemessen |
+  |---|---|---|---|
+  | B433-AK1 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:404 | red | red |
+  | B433-AK2 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:404 | red | red |
+  | B433-AK3 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:399 | red | red |
+  | B433-AK4 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:399 | red | red |

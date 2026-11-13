@@ -39,7 +39,7 @@ type Phase = "loading" | "front" | "back" | "blatt" | "done" | "empty" | "error"
 export function reviewFeedback(outcome: ReviewOutcome | null | undefined, displayOnly: boolean):
   | { kind: "none" }
   | { kind: "correct"; awarded: number; combo: number; comboBonus: number; speedBonus: number; box: number }
-  | { kind: "wrong"; expected: string | null } {
+  | { kind: "wrong"; expected: string | null; misspelled: boolean } {
   if (!outcome || displayOnly) return { kind: "none" };
   if (outcome.wasCorrect) {
     return {
@@ -47,7 +47,8 @@ export function reviewFeedback(outcome: ReviewOutcome | null | undefined, displa
       comboBonus: outcome.comboBonus, speedBonus: outcome.speedBonus, box: outcome.box,
     };
   }
-  return { kind: "wrong", expected: outcome.expected ?? null };
+  // B-422: nur ein Etikett – die Antwort bleibt falsch, der Kasten fällt wie sonst.
+  return { kind: "wrong", expected: outcome.expected ?? null, misspelled: outcome.misspelled ?? false };
 }
 
 export function SohnPractice() {
@@ -162,9 +163,15 @@ export function SohnPractice() {
   // Nur nach dieser Taste, nicht beim ersten Laden der Seite: dort soll keine Tastatur ungefragt aufspringen.
   const focusAfterLoad = useRef(false);
   const landingRef = useRef<HTMLDivElement>(null);
+  const prevIdx = useRef(idx);
   useEffect(() => {
-    const toCard = phase === "front"
-      && (prevPhase.current === "blatt" || (prevPhase.current === "loading" && focusAfterLoad.current));
+    // B-531: jeder Wechsel, den das Kind auf einer Karte auslöst – Aufdecken (`front → back`), Urteil (`back → front`),
+    // „Weiter" nach dem Blatt und das „Weiter" einer Kennenlernkarte (`front → front`, nur `idx` wechselt) –, nimmt den
+    // fokussierten Knopf mit. Der erste Aufbau nach dem Laden zählt nicht dazu (B-443), außer nach „Jetzt abfragen".
+    const fromCard = prevPhase.current === "front" || prevPhase.current === "back" || prevPhase.current === "blatt";
+    const changed = phase !== prevPhase.current || idx !== prevIdx.current;
+    const toCard = (phase === "front" || phase === "back")
+      && ((fromCard && changed) || (prevPhase.current === "loading" && focusAfterLoad.current));
     if (toCard)
       // Das erste Bedienbare der Antwortzone – Feld, erste Option oder, bei einer Karte ohne Eingabe, „Aufdecken" bzw.
       // „Weiter": welche Stufe kommt, entscheidet der Server.
@@ -174,10 +181,21 @@ export function SohnPractice() {
     if (prevPhase.current === "loading" && focusAfterLoad.current && (phase === "empty" || phase === "error"))
       landingRef.current?.focus();
     if (prevPhase.current === "loading" && phase !== "loading") focusAfterLoad.current = false;
-    // Der Effekt läuft nur bei einem Phasenwechsel, „done" → „done" gibt es hier nicht.
+    // „done" → „done" gibt es hier nicht: im Rundenende wechselt weder Phase noch Karte.
     if (phase === "done") doneRef.current?.focus();
     prevPhase.current = phase;
-  }, [phase]);
+    prevIdx.current = idx;
+  }, [phase, idx]);
+
+  /*
+   * B-532: scheitert die Bewertung (außer `plan_inactive`), hält die Karte an, statt still weiterzurücken – das Kind soll
+   * merken, dass nichts gezählt hat. `payload` ist genau das, was nicht angekommen ist: „Noch einmal senden" schickt es
+   * unverändert, auch wenn das Feld inzwischen anders aussähe.
+   */
+  const [failed, setFailed] = useState<{ payload: { wasKnown?: boolean; givenAnswer?: string }; text: string } | null>(null);
+  const resendRef = useRef<HTMLButtonElement>(null);
+  // Der Knopf, der die Bewertung schickte, ist gesperrt oder verschwunden – der Fokus geht an „Noch einmal senden" (B-531).
+  useEffect(() => { if (failed) resendRef.current?.focus(); }, [failed]);
 
   /** B-419: eine neue Runde derselben Position – nach dem Kennenlernen die Abfrage. */
   function startNextRound() {
@@ -200,11 +218,10 @@ export function SohnPractice() {
    */
   async function judge(card: PracticeCard, payload: { wasKnown?: boolean; givenAnswer?: string }) {
     if (!planId || !session.current) return;
-    // `next()` läuft bewusst außerhalb von `action.run` und auch nach einem Fehlschlag: die Bewertung ist
-    // idempotent genug, das innere `try/catch` schluckt den Fehler schon selbst, und `action.run` bekommt
-    // darum nie eine Ablehnung zu sehen. `false` heißt hier also nur noch „von der Sperre verworfen" - dann
-    // gehört das Weiterschalten dem laufenden Aufruf, sonst überspränge ein doppeltes Enter eine Karte (B-284).
-    // Ausnahme `plan_inactive` (B-330): dann zählt keine Karte mehr, und die Runde endet mit dem Satz der Arcade.
+    // `next()` läuft bewusst außerhalb von `action.run`: das innere `try/catch` fängt jeden Fehler selbst, und
+    // `action.run` bekommt darum nie eine Ablehnung zu sehen. `false` heißt hier also nur „von der Sperre verworfen" –
+    // dann gehört das Weiterschalten dem laufenden Aufruf, sonst überspränge ein doppeltes Enter eine Karte (B-284).
+    // Ein Fehlschlag hält an (B-532); `plan_inactive` (B-330) beendet die Runde mit dem Satz der Arcade.
     let planStopped = false;
     // B-420/B-526: eine vom Server GEPRÜFTE Antwort hält an und zeigt das Blatt. Die Selbsteinschätzung nicht – dort stand
     // die Lösung schon auf der Rückseite, bevor das Kind urteilte, und das Blatt wiederholte nur seinen eigenen Tipp.
@@ -212,6 +229,7 @@ export function SohnPractice() {
     const ran = await action.run(async () => {
       try {
         const outcome = await api.review(planId, positionId, session.current!.id, { itemIndex: card.itemIndex, ...payload });
+        setFailed(null);
         setCombo(outcome?.combo ?? 0);
         const feedback = reviewFeedback(outcome, card.displayOnly ?? false);
         const getippt = payload.givenAnswer !== undefined;
@@ -244,17 +262,22 @@ export function SohnPractice() {
           setGeprueft((g) => ({ ...g, gesamt: g.gesamt + 1 }));
           setBlatt({
             richtig: false, gegeben: payload.givenAnswer!, loesung: feedback.expected, muenzen: 0, comboBonus: 0,
-            tempoBonus: 0, lob: 0, faelligAm: null,
+            tempoBonus: 0, lob: 0, faelligAm: null, falschGeschrieben: feedback.misspelled,
           });
-          setToast(feedback.expected ? t("practice.solution", { expected: feedback.expected }) : t("practice.wrong"));
+          const absage = feedback.expected ? t("practice.solution", { expected: feedback.expected }) : t("practice.wrong");
+          setToast(feedback.misspelled ? `${t("test.misspelled")}. ${absage}` : absage);
           setPhase("blatt");
         }
         // feedback.kind === "none": kein Outcome ODER eine Anzeigenurstufe (ShowBoth) - kein Urteil, kein Blatt.
       } catch (e) {
-        // Sonst ist die Bewertung idempotent genug, und die Runde läuft weiter.
         if (e instanceof ApiError && e.code === "plan_inactive") {
           planStopped = true;
           setError(errorMessage(e)); setPhase("error");
+        } else {
+          // B-532: die Runde endet nicht (B-330/5), aber sie rückt auch nicht still weiter – das Kind entscheidet.
+          // Ein zweites Senden zahlt nicht doppelt: der Server wertet je Karte und Tag höchstens einmal.
+          halted = true;
+          setFailed({ payload, text: errorMessage(e) });
         }
       }
     });
@@ -276,6 +299,7 @@ export function SohnPractice() {
     setHintShown(false);
     setBlatt(null);
     setToast(null);
+    setFailed(null);
     if (idx + 1 >= cards.length) {
       if (planId) api.overview(planId).then((o) => setStreak(o.currentStreak)).catch(() => {});
       setPhase("done");
@@ -358,7 +382,8 @@ export function SohnPractice() {
   // (Selbsteinschätzung) oder ShowBoth (sofort offen, kein Urteil).
   const form = aufgabenform(card);
   const typed = form.antwort !== "selbst" && form.antwort !== "kennenlernen";
-  const submitTyped = () => { if (typedAnswer.trim()) judge(card, { givenAnswer: typedAnswer }); };
+  // Steht die Meldung (B-532), schickt Enter im Feld nichts: was noch einmal geht, entscheiden die beiden Knöpfe darunter.
+  const submitTyped = () => { if (typedAnswer.trim() && !failed) judge(card, { givenAnswer: typedAnswer }); };
 
   /**
    * „Anderes Bild": das abgelehnte kommt nie wieder. Die neue Wahl wird lokal in die Karte gespiegelt,
@@ -445,28 +470,45 @@ export function SohnPractice() {
         {phase === "blatt" && blatt ? (
           // B-420/B-526: die Karte bleibt stehen – Frage oben, darunter das Blatt mit der Rückmeldung, bis „Weiter".
           <RueckmeldungsBlatt r={blatt} skin={skin} weiterRef={continueRef} onWeiter={next} />
-        ) : typed ? (
-          // Die Kennung trägt Runde und Karte: die Markierung einer Auswahl darf nicht auf die nächste Karte wandern.
-          <Antwortflaeche
-            kartenId={`${round}-${idx}`} karte={card} wert={typedAnswer} onWert={setTypedAnswer} gesperrt={action.busy}
-            knopf={t("practice.check")} feldName={t("practice.yourAnswer")} platzhalter={t("practice.answerPlaceholder")}
-            onAbschicken={submitTyped}
-          />
         ) : (
-          <div className="lektion-fuss">
-            {card.displayOnly ? (
-              // Kennenlernen: kein Urteil zu fällen, also kein „Gewusst?" – nur weiter.
-              <button type="button" className="btn lime" disabled={action.busy} onClick={() => { if (!zuFrueh()) judge(card, {}); }}>{t("practice.next")}</button>
-            ) : (
-              // Dieselbe Selbsteinschätzung wie im Test: erst aufdecken, dann urteilen. Die Lösung steht in der Karte
-              // darüber. B-49: die Urteils-Knöpfe sind während einer Bewertung gesperrt.
-              <SelfAssessAnswer
-                reveal={card.reveal} alternatives={card.revealAlternatives} revealed={phase === "back"} loesungInDerKarte
-                busy={action.busy} texte={{ aufdecken: t("practice.flip"), nein: t("practice.again"), ja: t("practice.knewIt") }}
-                onReveal={() => { if (!zuFrueh()) setPhase("back"); }} onJudge={(wasKnown) => judge(card, { wasKnown })}
+          <>
+            {typed ? (
+              // Die Kennung trägt Runde und Karte: die Markierung einer Auswahl darf nicht auf die nächste Karte wandern.
+              // Dieselbe Stelle im Baum mit und ohne Meldung (B-532): sonst baute React die Fläche neu auf, und eine
+              // gewählte Option verlöre ihre Markierung. Steht die Meldung, ist das Feld nur noch lesbar – „Noch einmal
+              // senden" schickt, was nicht ankam, nicht, was danach im Feld stünde.
+              <Antwortflaeche
+                kartenId={`${round}-${idx}`} karte={card} wert={typedAnswer} onWert={setTypedAnswer} gesperrt={action.busy || !!failed}
+                knopf={t("practice.check")} feldName={t("practice.yourAnswer")} platzhalter={t("practice.answerPlaceholder")}
+                onAbschicken={submitTyped}
               />
+            ) : !failed && (
+              <div className="lektion-fuss">
+                {card.displayOnly ? (
+                  // Kennenlernen: kein Urteil zu fällen, also kein „Gewusst?" – nur weiter.
+                  <button type="button" className="btn lime" disabled={action.busy} onClick={() => { if (!zuFrueh()) judge(card, {}); }}>{t("practice.next")}</button>
+                ) : (
+                  // Dieselbe Selbsteinschätzung wie im Test: erst aufdecken, dann urteilen. Die Lösung steht in der Karte
+                  // darüber. B-49: die Urteils-Knöpfe sind während einer Bewertung gesperrt.
+                  <SelfAssessAnswer
+                    reveal={card.reveal} alternatives={card.revealAlternatives} revealed={phase === "back"} loesungInDerKarte
+                    busy={action.busy} texte={{ aufdecken: t("practice.flip"), nein: t("practice.again"), ja: t("practice.knewIt") }}
+                    onReveal={() => { if (!zuFrueh()) setPhase("back"); }} onJudge={(wasKnown) => judge(card, { wasKnown })}
+                  />
+                )}
+              </div>
             )}
-          </div>
+            {failed && (
+              // B-532: nicht angekommen – das Kind entscheidet, ob es noch einmal sendet oder weitergeht.
+              <>
+                <div className="error-box" role="alert">{failed.text}</div>
+                <div className="lektion-fuss">
+                  <button type="button" className="btn lime" ref={resendRef} disabled={action.busy} onClick={() => judge(card, failed.payload)}>{t("practice.resend")}</button>
+                  <button type="button" className="btn ghost" disabled={action.busy} onClick={next}>{t("practice.skip")}</button>
+                </div>
+              </>
+            )}
+          </>
         )}
       </div>
 

@@ -333,6 +333,8 @@ export const en = {
       knewIt: "Knew it!",
       nextDue: "Next due: {{date}}",
       otherImage: "🔄 different picture",
+      resend: "Send again",
+      skip: "Skip",
     },
     test: {
       cueBox: "Word box",

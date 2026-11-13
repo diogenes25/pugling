@@ -382,12 +382,29 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var wasCorrect = setMode ? creditedIndex is not null
             : typed ? grader.Matches(dto.GivenAnswer, item)
             : dto.WasKnown ?? false;
+        // B-422: a wrong typed answer that is the right word misspelled is named, not forgiven - the review stays wrong,
+        // as in the test (B-524). Set mode has no asked atom to measure against; the siblings keep a neighbouring word
+        // from passing as a slip. Only on a miss: the distance runs over every atom of the exercise.
+        var misspelled = typed && !setMode && !wasCorrect && grader.IsMisspelled(dto.GivenAnswer, item, items);
 
         // Outside set mode the credited atom is always the card's own, so `prog` is never null there.
         var prog = creditedIndex is { } credited ? await play.ProgressForAsync(positionId, credited, ct) : null;
+        // B-433: a review with no answer at all on an atom introduced today and never checked is no verdict. The card
+        // the child was served was an introduction that asked for nothing; the atom was introduced elsewhere since
+        // (a second tab), so the server now sees an asked card. Judging the empty "next" as wrong would be unfair and
+        // invisible to the child. Narrow on purpose: a word introduced today sits in box 1 anyway, so nothing is lost by
+        // not demoting it. Read before the first-contact stamp below, which would make every new atom look like this.
+        var noVerdict = !setMode && !displayOnly && dto.WasKnown is null && string.IsNullOrEmpty(dto.GivenAnswer)
+            && PositionPlayService.IntroductionStage(type) is not null
+            && prog is { ReviewCount: 0 } && prog.IntroducedAt == session.Day;
         // First contact counts as the introduction - otherwise IntroducedAt/DueOn would stand still for purely
-        // practice-based learning (due dates, the "new/old" scope).
-        if (prog is not null && prog.IntroducedAt is null)
+        // practice-based learning (due dates, the "new/old" scope). Only the child's own encounter introduces the
+        // position's atom (B-433): what the supervisor sees in a preview or catch-up round the child has not seen -
+        // the same wall as in the test (PositionTestsController, daily dose and IntroduceAnsweredAsync). The wall
+        // covers PositionItemProgress only: a graded supervisor review still writes the child's plan-wide
+        // ItemProgress/history (B-542), and a Leitner review without an introduction stage moves box and DueOn while
+        // IntroducedAt stays null, so the daily dose keeps counting the atom as new.
+        if (User.IsStudent() && prog is not null && prog.IntroducedAt is null)
         {
             prog.IntroducedAt = session.Day;
             prog.DueOn ??= session.Day;
@@ -400,8 +417,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // A self-assessed rung of the ladder (B-476) is a claim, not a check: it pays nothing either. It still moves
         // the box (below), or the card would never reach the rungs where it is checked.
         var scored = prog is not null && (typed || !pos.RequireTypedTest) && due && !alreadyScoredToday && !displayOnly
-            && !selfClaimRung;
-        var climbs = selfClaimRung && pos.UseLeitner && prog is not null && due && !alreadyScoredToday;
+            && !selfClaimRung && !noVerdict;
+        var climbs = selfClaimRung && pos.UseLeitner && prog is not null && due && !alreadyScoredToday && !noVerdict;
 
         // Combo/answer time BEFORE adding the new review (EF fixup would otherwise count it in).
         var prevStreak = 0;
@@ -444,7 +461,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // A display-only stage (B-96) never carries a verdict at all - `wasCorrect` here would just be the
         // ungated `dto.WasKnown` claim, and the history must not show a "correctly answered" Kennenlernen card
         // when there was no judgment to make.
-        if (creditedIndex is { } recorded)
+        // A review without a verdict (B-433) leaves no history entry: the introduction it answers was recorded already.
+        if (creditedIndex is { } recorded && !noVerdict)
         {
             await itemProgress.RecordAsync(plan.ChildId, pos.ExerciseId, items[recorded], wasCorrect && !displayOnly,
                 stage, typed ? dto.GivenAnswer : null, ItemReviewSource.Practice, positionId, session.Day, countsForMastery: scored, ct: ct);
@@ -511,7 +529,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // the feedback stays empty instead of pointing at the card's own entry, which would both be arbitrary
         // and give away an entry that is still to be asked for.
         return new ReviewOutcome(wasCorrect, creditedIndex is { } shown ? items[shown].Answer : null,
-            awarded, prog?.Box ?? 0, prog?.DueOn, combo, comboBonus, speedBonus, next, done);
+            awarded, prog?.Box ?? 0, prog?.DueOn, combo, comboBonus, speedBonus, next, done, misspelled);
     }
 
     /// <summary>

@@ -347,6 +347,8 @@ export const de = {
       knewIt: "Gewusst!",
       nextDue: "Nächste Fälligkeit: {{date}}",
       otherImage: "🔄 anderes Bild",
+      resend: "Noch einmal senden",
+      skip: "Überspringen",
     },
     test: {
       cueBox: "Wortkasten",

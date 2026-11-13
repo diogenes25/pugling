@@ -98,6 +98,11 @@ public record ReviewDto(int ItemIndex, string? GivenAnswer, bool? WasKnown);
 /// atom at all, and naming one particular entry as "the" solution would be arbitrary while a dozen are still
 /// open – it would also give away an entry the child is about to be asked for. <see cref="Box"/> is 0 and
 /// <see cref="DueOn"/> null in that case for the same reason: nothing was reviewed, so nothing moved.
+/// <para>
+/// <see cref="Misspelled"/> marks a wrong typed answer that is the right word with a small spelling slip (B-422, the
+/// measure of B-524). Display only, as in the test: the review stays wrong - box, points and combo as for any miss -
+/// so practice prepares for the strict test; the mark only tells the child it knew the word.
+/// </para>
 /// </summary>
 public record ReviewOutcome(bool WasCorrect, string? Expected, int Awarded, int Box,
-    DateOnly? DueOn, int Combo, int ComboBonus, int SpeedBonus, PracticeCard? Next, bool Done);
+    DateOnly? DueOn, int Combo, int ComboBonus, int SpeedBonus, PracticeCard? Next, bool Done, bool Misspelled = false);

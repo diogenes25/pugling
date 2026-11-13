@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, rolle/student, rolle/creator, lerntechnik/vokabeln]
+tags: [typ/story, status/in-arbeit, bereich/training, rolle/student, rolle/creator, lerntechnik/vokabeln]
 aliases: [Artikel-Toleranz bei Nicht-Nomen, a few ist nicht few]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Wunsch
 groesse: XS
@@ -112,3 +112,11 @@ bleibt Regressionszeuge.
 - **2026-11-13** — `gegrillt`: Entscheidungen 1–3, `art` von `Frage` auf `Wunsch` (kein Code-Defekt, eine
   Verhaltensänderung); Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13).
 - **2026-11-13** — `geschaetzt`: XS, backend, ohne Migration und Vertragsbruch.
+- **2026-11-13** — `in-arbeit`: gebaut. `ExerciseContentResolver` führt die Wortart neben dem Sprachpaar mit; `MayDropArticle` lässt die Artikel-Toleranz nur für `Noun` und `Other`. Fälle AK 1–4 in `backend/Pugling.Api.Tests/ArtikelToleranzTests.cs` (Store-Vokabeln mit gesetzter Wortart). Risiko geprüft: `lehrwerk-aufbereiten/laden.py` legt Vokabeln als Inline-`items` (front/back) ohne Wortart an, also `Other` – für die Söhne ändert sich zunächst nichts (Entscheidung 2); Abhilfe am Inhalt. AK 4 trägt Mutante B437-AK1+4: die Toleranz an der Quelle zurückgenommen färbt den gesammelten Test rot.
+  Rote Probe, gemessen an `cf07416f + Arbeitsbaum geändert`, 2026-11-13 21:38 (`mutant-probe.py`, Grundlinie nach dem Zurückspielen grün):
+
+  | Mutante | Stelle | erwartet | gemessen |
+  |---|---|---|---|
+  | B437-AK1+4 | backend/Pugling.Api/Services/Shared/ExerciseContentResolver.cs:115 | red | red |
+  | B437-AK2 | backend/Pugling.Api/Services/Shared/ExerciseContentResolver.cs:130 | red | red |
+  | B437-AK3 | backend/Pugling.Api/Services/Shared/ExerciseContentResolver.cs:130 | red | red |

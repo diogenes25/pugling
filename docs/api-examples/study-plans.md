@@ -254,7 +254,8 @@ Response — `HTTP 200`:
     "introduction": true,
     "cueBox": null
   },
-  "done": false
+  "done": false,
+  "misspelled": false
 }
 ```
 

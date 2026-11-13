@@ -28,11 +28,13 @@ import { useChromeT } from "../lib/chromeText";
  * den Fokus im Browser an `body` ab – danach erreichten die getippten Buchstaben den Block nicht mehr (gemessen in
  * `e2e/buchstaben-ordnen.spec.ts`: von „kaufen“ kam „kauf“ an). jsdom kennt diese Regel nicht.
  */
-export function LetterTiles({ tiles, value, onChange, onSubmit }: {
+export function LetterTiles({ tiles, value, onChange, onSubmit, gesperrt = false }: {
   tiles: readonly string[];
   value: string;
   onChange: (v: string) => void;
   onSubmit?: () => void;
+  /** Nichts legen und nichts zurücknehmen (B-532) – als `aria-disabled`, aus demselben Fokus-Grund wie oben. */
+  gesperrt?: boolean;
 }) {
   const t = useChromeT();
   const [picked, setPicked] = useState<number[]>([]);
@@ -47,6 +49,7 @@ export function LetterTiles({ tiles, value, onChange, onSubmit }: {
   }
 
   function update(next: number[]) {
+    if (gesperrt) return;
     setPicked(next);
     onChange(next.map((i) => tiles[i]).join(""));
   }
@@ -92,13 +95,13 @@ export function LetterTiles({ tiles, value, onChange, onSubmit }: {
       <p className="sr-only" role="status" aria-live="polite">{word ? t("play.placed", { letters: word.split("").join(" ") }) : ""}</p>
       <div ref={pool} className="lettertiles-pool" role="group" aria-label={t("play.tilesPool")}>
         {tiles.map((tile, i) => (
-          <button type="button" key={i} className="btn ghost lettertiles-tile" aria-disabled={picked.includes(i)}
+          <button type="button" key={i} className="btn ghost lettertiles-tile" aria-disabled={gesperrt || picked.includes(i)}
             aria-label={t("play.tile", { letter: tile })} onClick={() => pick(i)}>{tile}</button>
         ))}
       </div>
       <div className="row" style={{ gap: 8, justifyContent: "center" }}>
-        <button type="button" className="btn ghost small" disabled={picked.length === 0} onClick={undo}>{t("play.undo")}</button>
-        <button type="button" className="btn ghost small" disabled={picked.length === 0} onClick={() => update([])}>{t("play.restart")}</button>
+        <button type="button" className="btn ghost small" disabled={gesperrt || picked.length === 0} onClick={undo}>{t("play.undo")}</button>
+        <button type="button" className="btn ghost small" disabled={gesperrt || picked.length === 0} onClick={() => update([])}>{t("play.restart")}</button>
       </div>
     </div>
   );

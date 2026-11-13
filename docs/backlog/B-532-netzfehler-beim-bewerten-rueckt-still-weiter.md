@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/student]
 aliases: [Stilles Weiterrücken bei Netzfehler]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Defekt
 groesse: S
@@ -118,3 +118,41 @@ Runde stellt die E2E-Umgebung nicht zuverlässig her; der Rollengang prüft die 
 - 2026-11-13 · `ausformuliert` – am Code belegt; das Weiterrücken ist durch B-330/5 und B-333 gewollt und getestet.
 - 2026-11-13 · `gegrillt` – Entscheidungen 1–4; Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13).
 - 2026-11-13 · `geschaetzt` – S, frontend, ohne Migration und Vertragsbruch.
+- 2026-11-13 · `in-arbeit` – Bau im Backlog-Lauf (Frontend), Worktree `backlog-lauf`.
+- 2026-11-13 · `in-arbeit` – gebaut: Zustand `failed: { payload, text } | null` in `SohnPractice.tsx`; der `catch` von
+  `judge()` setzt ihn (außer `plan_inactive`) und hält an, statt `next()` zu rufen. Die Antwortzone zeigt dann die Meldung
+  (`role="alert"`, Text über `errorMessage`) mit „Noch einmal senden“ (dieselbe Nutzlast, Fokus dorthin) und
+  „Überspringen“ (`next()`); eine getippte Antwort bleibt im gesperrten Feld, Enter im Feld schickt währenddessen nichts.
+  Neue Schlüssel `practice.resend`/`practice.skip` in `de.ts`/`en.ts`. Die zwei Fälle aus B-330/B-333 sind umgeschrieben
+  (Halt statt stillem Weiterrücken), dazu AK 2, 3, 5 und ein Fall für die Kennenlernkarte (Entscheidung 2). Rote Probe
+  (`mutant-probe.py`, Build `echo ok`, Test Vitest der Datei):
+
+  | Mutante | Stelle | erwartet | gemessen |
+  |---|---|---|---|
+  | AK1: `halted = false` im Fang (next() nach Fehlschlag) | SohnPractice.tsx:277 | red | red |
+  | AK1: kein Fokus auf „Noch einmal senden“ | SohnPractice.tsx:197 | red | red |
+  | AK2: erneutes Senden mit `{}` | SohnPractice.tsx:483 | red | red |
+  | AK3: „Überspringen“ ohne Wirkung | SohnPractice.tsx:484 | red | red |
+  | AK4: Fang auf `instanceof ApiError` verkürzt | SohnPractice.tsx:271 | red | red |
+  | AK4: Fang auf `status === 403` verkürzt | SohnPractice.tsx:271 | red | red |
+  | AK5: erneutes Senden an der Sperre vorbei | SohnPractice.tsx:483 | red | red |
+  | E2: Halt nur für getippte Antworten | SohnPractice.tsx:274 | red | red |
+
+  Gemessen an `cf07416f + Arbeitsbaum geändert`, 2026-11-13; Grundlinie danach grün. Kein E2E (Testweg); der Rollengang
+  prüft die Meldung von Hand (DevTools offline).
+- 2026-11-13 · `in-arbeit` – Review-Funde (frontend-reviewer) behoben: (1) `Antwortflaeche` steht mit und ohne Meldung an
+  derselben Stelle im Baum (`gesperrt={action.busy || !!failed}`, Meldung und Knöpfe darunter) – vorher baute React sie
+  neu auf, und eine gewählte Option verlor `aria-pressed`. (2) `gesperrt` macht das Feld jetzt `readOnly` (nicht
+  `disabled`, der Fokus bleibt), `LetterBoxes`/`LetterTiles` bekommen ein `gesperrt` (readOnly bzw. `aria-disabled`,
+  kein Legen/Zurücknehmen); trifft auch `SohnTest`/`SohnBonus` während `busy` – dort nimmt das Feld ohnehin nichts an.
+  Neue Fälle: Selbsteinschätzung hält an (Entscheidung 2), Option bleibt markiert, Feld nur lesbar. Rote Probe:
+
+  | Mutante | Stelle | erwartet | gemessen |
+  |---|---|---|---|
+  | Fläche baut neu auf (`key` je Meldung) | SohnPractice.tsx:479 | red | red |
+  | Feld ohne `readOnly` | Lektion.tsx:170 | red | red |
+  | `gesperrt` ohne `failed` | SohnPractice.tsx:479 | red | red |
+  | Urteils-Knöpfe neben der Meldung | SohnPractice.tsx:483 | red | red |
+
+  Die 13 Mutanten der ersten Tabelle am umgebauten Stand neu gemessen (AK 2/3/5 jetzt :504/:505): alle 13 rot,
+  Grundlinie danach grün. Gemessen an `cf07416f + Arbeitsbaum geändert`, 2026-11-13. Vitest 934/934, `tsc -b` 0.

@@ -116,3 +116,4 @@ Backend. Grenzwertig zu M nur, falls der Planbau-Umbau der Abfrage-Abhängigkeit
   nur, wenn sichtbar. Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13,
   [Protokoll](../pm-sitzung-2026-11-13-backlog-lauf.md)).
 - **2026-11-13** — geschaetzt: S, frontend, keine Migration, kein Vertragsbruch.
+- **2026-11-13** — Schnitt im Backlog-Lauf: Angriffsplan-Schritt 3 (`PlanPositions.tsx`) und das zugehörige Planbau-Kriterium gehen an [B-540](B-540-planbau-sortierwechsel-verwirft-auswahl.md), weil die parallele B-534-Arbeit diese Datei unkommittiert umbaut. Diese Story baut nur den Assistenten (`VaterWizard.tsx`, `wizardSearch.ts`) samt `auswahlNachUmsortieren`.

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, rolle/supervisor, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/training, rolle/supervisor, rolle/student]
 aliases: [Umfang Nur neue nach B-419, Scope New fragt nie]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Defekt
 groesse: XS
@@ -111,3 +111,12 @@ Rollengang per `curl` (Position über die API auf `New` stellen, als Sohn zwei R
 - **2026-11-13** — `gegrillt`: Entscheidungen 1–3, `art` von `Frage` auf `Defekt`; Stakeholder-Entscheidung im Auftrag
   des Nutzers (Backlog-Lauf 2026-11-13).
 - **2026-11-13** — `geschaetzt`: XS, backend, ohne Migration und Vertragsbruch.
+- **2026-11-13** — `in-arbeit`: gebaut. `PositionPlayService.ScopeMatch` nimmt den Tag; `New` = nicht eingeführt oder heute eingeführt, `Old` unverändert. Test `backend/Pugling.Api.Tests/UmfangNeuTests.cs` (AK 1–4, AK 2/3 mit gesteuerter Uhr). Keine Migration, kein Vertragsbruch.
+  Rote Probe, gemessen an `cf07416f + Arbeitsbaum geändert`, 2026-11-13 21:38 (`mutant-probe.py`, Grundlinie nach dem Zurückspielen grün):
+
+  | Mutante | Stelle | erwartet | gemessen |
+  |---|---|---|---|
+  | B435-AK1 | backend/Pugling.Api/Services/Shared/PositionPlayService.cs:428 | red | red |
+  | B435-AK2 | backend/Pugling.Api/Services/Shared/PositionPlayService.cs:428 | red | red |
+  | B435-AK3 | backend/Pugling.Api/Services/Shared/PositionPlayService.cs:428 | red | red |
+  | B435-AK4 | backend/Pugling.Api/Services/Shared/PositionPlayService.cs:429 | red | red |

@@ -215,4 +215,122 @@ public class ErstbegegnungTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         Assert.Equal(1, next.GetProperty("itemIndex").GetInt32());
         JsonAssert.False(next, "introduction");
     }
+
+    // B-433: the history entries of one atom of the position, oldest first.
+    private List<ItemReviewEvent> HistoryOf(int positionId, int itemIndex)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        var itemId = db.ExerciseItems
+            .Where(i => i.ExerciseId == db.PlanPositions.Where(p => p.Id == positionId).Select(p => p.ExerciseId).Single())
+            .OrderBy(i => i.OrderIndex).ThenBy(i => i.Id).Skip(itemIndex).Select(i => i.Id).First();
+        return [.. db.ItemReviewEvents.Where(e => e.PlanPositionId == positionId && e.ItemId == itemId).OrderBy(e => e.Id)];
+    }
+
+    private void SetProgress(int positionId, int itemIndex, Action<PositionItemProgress> change)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        var prog = db.PositionItemProgress.SingleOrDefault(p => p.PlanPositionId == positionId && p.ItemIndex == itemIndex);
+        if (prog is null) db.PositionItemProgress.Add(prog = new PositionItemProgress { PlanPositionId = positionId, ItemIndex = itemIndex });
+        change(prog);
+        db.SaveChanges();
+    }
+
+    private void SetMaxBox(int positionId, int maxBox)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        db.PlanPositions.Single(p => p.Id == positionId).MaxBox = maxBox;
+        db.SaveChanges();
+    }
+
+    // B-433 AK 1: the supervisor clicking through an introduction card of the child's round introduces nothing - the child
+    // still gets the card as an introduction afterwards. Red if the role check at the first-contact stamp is missing.
+    [Fact]
+    public async Task VaterRunde_FuehrtKeinWortEin_DasKindBekommtDieKennenlernkarteWeiterhin()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, "fr", "de", ThreeWords);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.FreeText,
+            orderStrategy: PracticeOrder.Serial, introduced: false);
+
+        var fatherSession = await StartAsync(father, planId, positionId);
+        JsonAssert.True((await CardsAsync(father, planId, positionId, fatherSession))[0], "introduction");
+        (await TestApi.PositionReviewAsync(father, planId, positionId, fatherSession, 0)).EnsureSuccessStatusCode();
+        Assert.Null(Progress(positionId, 0).IntroducedAt);
+
+        var child = await TestApi.ChildAsync(factory);
+        var cards = await CardsAsync(child, planId, positionId, await StartAsync(child, planId, positionId));
+        JsonAssert.True(cards.Single(c => c.GetProperty("itemIndex").GetInt32() == 0), "introduction");
+    }
+
+    // B-433 AK 3: the child holds an introduction card, the atom is introduced in a second session meanwhile, and the
+    // card's answerless "next" arrives: no verdict - box, review count, due date and the day's review stamp stay, no
+    // history entry, the cursor moves on. Red if decision 2 is missing: on the ladder the empty claim stamps the day's
+    // review and books "wrong" into the history; with a top box of 1 the card is asked typed and the review counts.
+    [Theory]
+    [InlineData(5)]
+    [InlineData(1)]
+    public async Task AntwortloseBewertung_EinerHeuteAnderswoEingefuehrtenKarte_IstKeinUrteil(int maxBox)
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, "fr", "de", ThreeWords);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.FreeText,
+            orderStrategy: PracticeOrder.Serial, introduced: false);
+        SetMaxBox(positionId, maxBox);
+        var child = await TestApi.ChildAsync(factory);
+
+        var held = await StartAsync(child, planId, positionId);
+        JsonAssert.True((await CardsAsync(child, planId, positionId, held))[0], "introduction");
+        var other = await StartAsync(child, planId, positionId);
+        (await TestApi.PositionReviewAsync(child, planId, positionId, other, 0)).EnsureSuccessStatusCode();
+        var before = Progress(positionId, 0);
+        var historyBefore = HistoryOf(positionId, 0).Count;
+
+        var outcome = await (await TestApi.PositionReviewAsync(child, planId, positionId, held, 0))
+            .Content.ReadFromJsonAsync<JsonElement>();
+
+        JsonAssert.False(outcome, "wasCorrect");
+        Assert.Equal(0, outcome.GetProperty("awarded").GetInt32());
+        Assert.Equal(1, outcome.GetProperty("next").GetProperty("itemIndex").GetInt32());
+        var after = Progress(positionId, 0);
+        Assert.Equal(before.Box, after.Box);
+        Assert.Equal(0, after.ReviewCount);
+        Assert.Equal(before.DueOn, after.DueOn);
+        Assert.Null(after.LastReviewedAt);
+        Assert.Equal(historyBefore, HistoryOf(positionId, 0).Count);
+    }
+
+    // B-433 AK 4: an answerless review stays a wrong answer when the atom was introduced on an earlier day or was
+    // already checked today - the exemption is the introduction day's unchecked atom only. Red if decision 2 is widened
+    // to every empty answer (then no "wrong" lands in the history).
+    [Theory]
+    [InlineData(-1, 0)]
+    [InlineData(0, 1)]
+    public async Task AntwortloseBewertung_AufFrueherEingefuehrtesOderGeprueftesWort_BleibtFalsch(int introducedDaysAgo,
+        int reviewCount)
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, "fr", "de", ThreeWords);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.FreeText,
+            orderStrategy: PracticeOrder.Serial, introduced: false);
+        var today = DateOnly.FromDateTime(factory.Clock.GetUtcNow().UtcDateTime);
+        SetProgress(positionId, 0, p =>
+        {
+            p.IntroducedAt = today.AddDays(introducedDaysAgo);
+            p.ReviewCount = reviewCount;
+            p.DueOn = today;
+        });
+        var child = await TestApi.ChildAsync(factory);
+        var sessionId = await StartAsync(child, planId, positionId);
+
+        var outcome = await (await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 0))
+            .Content.ReadFromJsonAsync<JsonElement>();
+
+        JsonAssert.False(outcome, "wasCorrect");
+        var history = HistoryOf(positionId, 0);
+        Assert.False(Assert.Single(history).WasCorrect);
+        Assert.NotNull(Progress(positionId, 0).LastReviewedAt);
+    }
 }

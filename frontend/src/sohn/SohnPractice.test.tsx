@@ -79,38 +79,150 @@ describe("SohnPractice, doppeltes Absenden", () => {
     expect(review).toHaveBeenCalledTimes(1);
   });
 
-  // Rot, wenn das Weiterschalten in den Erfolgsweg rückt (`next()` im `try`) oder der innere Fang fehlt (`run` liefert
-  // dann `false`): eine gescheiterte Bewertung ließe das Kind auf der Karte stehen.
-  it("rückt auch nach einer gescheiterten Bewertung weiter", async () => {
+  // B-532, AK 1 (kehrt B-330/5 „rückt still weiter" um): eine gescheiterte Bewertung hält die Karte mit einer Meldung an.
+  // Rot, wenn `next()` wieder nach jedem Fehlschlag läuft (dann steht „zwei" da), wenn die Meldung oder einer der beiden
+  // Knöpfe fehlt, wenn das Feld die Antwort verliert, oder wenn der Fokus nicht auf „Noch einmal senden" geht (B-531).
+  it("hält nach einer gescheiterten Bewertung mit Meldung an", async () => {
+    await setLanguage("de");
     review.mockRejectedValueOnce(new Error("offline"));
-    render(
-      <MemoryRouter initialEntries={["/sohn/practice/5"]}>
-        <Routes><Route path="/sohn/practice/:positionId" element={<SohnPractice />} /></Routes>
-      </MemoryRouter>,
-    );
+    renderPractice();
+    await answerTyped("one");
 
-    const input = await screen.findByRole("textbox");
-    fireEvent.change(input, { target: { value: "one" } });
-    fireEvent.submit(input.closest("form")!);
-
-    expect(await screen.findByText("zwei")).toBeTruthy();
+    expect(screen.getByRole("alert")).toBeTruthy();
+    const nochmal = screen.getByRole("button", { name: de.sohn.practice.resend });
+    expect(screen.getByRole("button", { name: de.sohn.practice.skip })).toBeTruthy();
+    expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("one");
+    expect(screen.getByText("eins")).toBeTruthy();
+    expect(screen.queryByText("zwei")).toBeNull();
+    expect(document.activeElement).toBe(nochmal);
   });
 
-  // B-333 (Nachschau zu B-330): nur `plan_inactive` beendet die Runde, jeder andere Server-Fehler nicht. Ein 403 mit anderem
-  // Code, damit beide naheliegenden Verkürzungen fallen: `e instanceof ApiError` und `e.status === 403` statt des Codes.
-  it("rückt nach einem anderen Server-Fehler weiter, auch bei 403", async () => {
+  // B-532, AK 4 (B-333, Nachschau zu B-330): nur `plan_inactive` beendet die Runde, jeder andere Server-Fehler hält an wie
+  // ein Netzfehler. Ein 403 mit anderem Code, damit beide naheliegenden Verkürzungen fallen: `e instanceof ApiError` und
+  // `e.status === 403` statt des Codes – beide beendeten hier die Runde, dann fehlten Meldung und Knöpfe.
+  it("hält nach einem anderen Server-Fehler an, auch bei 403", async () => {
+    await setLanguage("de");
     review.mockRejectedValueOnce(new ApiError(403, "Forbidden.", "trace-6", "forbidden"));
-    render(
-      <MemoryRouter initialEntries={["/sohn/practice/5"]}>
-        <Routes><Route path="/sohn/practice/:positionId" element={<SohnPractice />} /></Routes>
-      </MemoryRouter>,
-    );
+    renderPractice();
+    await answerTyped("one");
 
-    const input = await screen.findByRole("textbox");
-    fireEvent.change(input, { target: { value: "one" } });
-    fireEvent.submit(input.closest("form")!);
+    expect(screen.getByRole("button", { name: de.sohn.practice.resend })).toBeTruthy();
+    expect(screen.queryByText(de.sohn.problem.plan_inactive)).toBeNull();
+    expect(screen.queryByText("zwei")).toBeNull();
+  });
+
+  // B-532, AK 2. Rot, wenn „Noch einmal senden" eine leere oder andere Nutzlast schickt, oder wenn nach dem Gelingen kein
+  // Blatt folgt (dann bliebe die Meldung stehen oder die Karte rückte still weiter).
+  it("schickt mit Noch einmal senden dieselbe Antwort und zeigt dann das Blatt", async () => {
+    await setLanguage("de");
+    review.mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce(outcome(true, null));
+    renderPractice();
+    await answerTyped("one");
+
+    fireEvent.click(screen.getByRole("button", { name: de.sohn.practice.resend }));
+    await act(async () => {});
+
+    expect(review).toHaveBeenCalledTimes(2);
+    expect(review.mock.calls[1][3]).toEqual({ itemIndex: 0, givenAnswer: "one" });
+    expect(praiseSheet().textContent).toContain("+10 🪙");
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  // B-532, AK 3. Rot, wenn „Überspringen" fehlt oder nicht weiterschaltet; und – B-531 – wenn der Fokus danach nicht im
+  // Feld der nächsten Karte steht (der Knopf verschwindet mit der Meldung).
+  it("schaltet mit Überspringen zur nächsten Karte", async () => {
+    await setLanguage("de");
+    review.mockRejectedValueOnce(new Error("offline"));
+    renderPractice();
+    await answerTyped("one");
+
+    fireEvent.click(screen.getByRole("button", { name: de.sohn.practice.skip }));
 
     expect(await screen.findByText("zwei")).toBeTruthy();
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("");
+    expect(document.activeElement).toBe(screen.getByRole("textbox"));
+  });
+
+  // B-532, AK 5 (B-284). Rot, wenn „Noch einmal senden" an der Sperre von `useAction` vorbei sendet: dann gingen bei zwei
+  // Klicks im selben Tick zwei Bewertungen raus. Beide Klicks in EINEM `act`, sonst fängt `disabled` den zweiten (B-325).
+  it("schickt bei zweimal Noch einmal senden nur eine Bewertung", async () => {
+    await setLanguage("de");
+    let answer!: (o: ReviewOutcome | null) => void;
+    review.mockRejectedValueOnce(new Error("offline")).mockReturnValueOnce(new Promise((r) => { answer = r; }));
+    renderPractice();
+    await answerTyped("one");
+
+    const nochmal = screen.getByRole("button", { name: de.sohn.practice.resend });
+    await act(async () => { fireEvent.click(nochmal); fireEvent.click(nochmal); });
+    expect(review).toHaveBeenCalledTimes(2);
+    await act(async () => { answer(outcome(true, null)); });
+
+    expect(review).toHaveBeenCalledTimes(2);
+    expect(praiseSheet()).toBeTruthy();
+  });
+
+  // B-532, Entscheidung 2: auch ein „Gewusst!" bewegt den Kasten. Rot, wenn der Halt nur für getippte Antworten gilt oder
+  // die Urteils-Knöpfe neben der Meldung stehen bleiben (dann urteilte das Kind ein zweites Mal statt neu zu senden).
+  it("hält auch eine Selbsteinschätzung an, deren Bewertung scheitert", async () => {
+    await setLanguage("de");
+    cards.mockImplementation(() => Promise.resolve([
+      { itemIndex: 0, prompt: "eins", reveal: "one" } as PracticeCard, card(1, "zwei"),
+    ]));
+    review.mockRejectedValueOnce(new Error("offline"));
+    renderPractice();
+    fireEvent.click(await screen.findByRole("button", { name: de.sohn.practice.flip }));
+    fireEvent.click(screen.getByRole("button", { name: de.sohn.practice.knewIt }));
+    await act(async () => {});
+
+    expect(screen.getByRole("button", { name: de.sohn.practice.resend })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: de.sohn.practice.knewIt })).toBeNull();
+    expect(screen.queryByText("zwei")).toBeNull();
+  });
+
+  // Review B-532. Rot, wenn die Meldung die Antwortfläche an eine andere Stelle im Baum setzt: React baute sie neu auf,
+  // und die gewählte Option verlöre ihre Markierung – das Kind sähe nicht mehr, was es geschickt hat.
+  it("behält die gewählte Option markiert, während die Meldung steht", async () => {
+    await setLanguage("de");
+    cards.mockImplementation(() => Promise.resolve([
+      { itemIndex: 0, prompt: "la gare", reveal: null, choices: ["der Bahnhof", "die Brücke"] },
+      { itemIndex: 1, prompt: "le pont", reveal: null, choices: ["der Bahnhof", "die Brücke"] },
+    ] as PracticeCard[]));
+    review.mockRejectedValueOnce(new Error("offline"));
+    renderPractice();
+    fireEvent.click(await screen.findByRole("button", { name: "der Bahnhof" }));
+    fireEvent.click(screen.getByRole("button", { name: de.sohn.practice.check }));
+    await act(async () => {});
+
+    expect(screen.getByRole("alert")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "der Bahnhof" }).getAttribute("aria-pressed")).toBe("true");
+  });
+
+  // Review B-532. Rot, wenn das Feld neben der Meldung beschreibbar bleibt: „Noch einmal senden" schickt die alte Antwort,
+  // das Feld zeigte dann eine andere als die, die gesendet wird.
+  it("macht das Feld nur lesbar, während die Meldung steht", async () => {
+    await setLanguage("de");
+    review.mockRejectedValueOnce(new Error("offline"));
+    renderPractice();
+    await answerTyped("one");
+
+    expect((screen.getByRole("textbox") as HTMLInputElement).readOnly).toBe(true);
+  });
+
+  // B-532, Entscheidung 2: jede Bewertung, auch die einer Kennenlernkarte. Rot, wenn der Halt nur für getippte Antworten
+  // gilt (dann rückt die Kennenlernkarte still weiter und „zwei" steht da).
+  it("hält auch eine Kennenlernkarte an, deren Bewertung scheitert", async () => {
+    await setLanguage("de");
+    cards.mockImplementation(() => Promise.resolve([
+      { itemIndex: 0, prompt: "la ville", reveal: "die Stadt", displayOnly: true } as PracticeCard, card(1, "zwei"),
+    ]));
+    review.mockRejectedValueOnce(new Error("offline"));
+    renderPractice();
+    fireEvent.click(await screen.findByRole("button", { name: de.sohn.practice.next }));
+    await act(async () => {});
+
+    expect(screen.getByRole("button", { name: de.sohn.practice.resend })).toBeTruthy();
+    expect(screen.queryByText("zwei")).toBeNull();
   });
 
   // B-330: anders als ein Netzfehler endet ein Plan, der mitten in der Runde nicht mehr dran ist, die Runde – sonst blättert
@@ -378,6 +490,32 @@ describe("SohnPractice, falsche Antwort", () => {
     expect(toastRegion().textContent).toBe("Richtig.");
   });
 
+  // B-422, AK 4. Rot, wenn das Blatt das Kennzeichen `misspelled` ignoriert (dann stünde „Fast!" da) oder die Lösung
+  // dabei verliert; die Wertung bleibt falsch (rotes Blatt).
+  it("zeigt auf dem Blatt Falsch geschrieben samt Lösung, wenn der Server es meldet", async () => {
+    review.mockResolvedValueOnce({ ...outcome(false, "clinic"), misspelled: true });
+    renderPractice();
+    await answerTyped("clinik");
+
+    const held = mistakeCard();
+    expect(within(held).getByText(de.sohn.test.misspelled)).toBeTruthy();
+    expect(within(held).getByText("Lösung: clinic")).toBeTruthy();
+    expect(within(held).queryByText(de.sohn.lektion.almost)).toBeNull();
+    expect(toastRegion().textContent).toBe("Falsch geschrieben. Lösung: clinic");
+  });
+
+  // B-422, AK 4, zweiter Teil. Rot, wenn das Etikett auch ohne Kennzeichen erscheint.
+  it("bleibt ohne Kennzeichen bei der gewohnten Absage", async () => {
+    review.mockResolvedValueOnce({ ...outcome(false, "clinic"), misspelled: false });
+    renderPractice();
+    await answerTyped("hospital");
+
+    const held = mistakeCard();
+    expect(within(held).getByText(de.sohn.lektion.almost)).toBeTruthy();
+    expect(within(held).queryByText(de.sohn.test.misspelled)).toBeNull();
+    expect(within(held).getByText("Lösung: clinic")).toBeTruthy();
+  });
+
   // AK 3. Rot, wenn der Halt an einer gelieferten Lösung hängt statt an der falschen Antwort.
   it("hält in einer Menge ohne Lösung mit der Absage an", async () => {
     review.mockResolvedValueOnce(outcome(false, null));
@@ -429,6 +567,64 @@ describe("SohnPractice, falsche Antwort", () => {
     fireEvent.click(screen.getByRole("button", { name: de.sohn.practice.again }));
 
     expect(await screen.findByText("zwei")).toBeTruthy();
+  });
+});
+
+/**
+ * B-531: verschwindet das fokussierte Element durch eine Handlung des Kindes, geht der Fokus an das erste Bedienbare der
+ * Antwortzone – sonst fällt er auf `body`, und wer an der Tastatur oder mit Screenreader übt, verliert die Stelle.
+ */
+describe("SohnPractice, Fokus beim Kartenwechsel", () => {
+  beforeEach(async () => { await setLanguage("de"); });
+
+  function selbst(itemIndex: number, prompt: string): PracticeCard {
+    return { itemIndex, prompt, reveal: "x" } as PracticeCard;
+  }
+
+  // AK 1. Rot, wenn der Effekt den Wechsel `front → back` ignoriert (Aufdecken ersetzt den fokussierten Knopf), oder wenn
+  // er auf „Gewusst!" statt auf den ersten Knopf zielt (Entscheidung 1: Enter darf nicht der bequeme Weg zum Lob sein).
+  it("setzt den Fokus nach Aufdecken auf Nochmal", async () => {
+    cards.mockImplementation(() => Promise.resolve([selbst(0, "eins"), selbst(1, "zwei")]));
+    renderPractice();
+    fireEvent.click(await screen.findByRole("button", { name: de.sohn.practice.flip }));
+    await act(async () => {});
+
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: de.sohn.practice.again }));
+  });
+
+  // AK 2. Rot, wenn der Zweig `back → front` fehlt: das Urteil nimmt seinen Knopf mit, die nächste Karte bekäme keinen Fokus.
+  it("setzt den Fokus nach Gewusst in die nächste Karte", async () => {
+    cards.mockImplementation(() => Promise.resolve([selbst(0, "eins"), card(1, "zwei")]));
+    review.mockResolvedValueOnce(outcome(true, null));
+    renderPractice();
+    fireEvent.click(await screen.findByRole("button", { name: de.sohn.practice.flip }));
+    fireEvent.click(screen.getByRole("button", { name: de.sohn.practice.knewIt }));
+
+    expect(await screen.findByText("zwei")).toBeTruthy();
+    expect(document.activeElement).toBe(screen.getByRole("textbox"));
+  });
+
+  // AK 3. Rot, wenn der Effekt wieder nur an `phase` hängt: „Weiter" der Kennenlernkarte bleibt bei `front`, nur `idx` wechselt.
+  it("setzt den Fokus nach Weiter auf einer Kennenlernkarte in das Feld der nächsten", async () => {
+    cards.mockImplementation(() => Promise.resolve([
+      { itemIndex: 0, prompt: "la ville", reveal: "die Stadt", displayOnly: true } as PracticeCard, card(1, "zwei"),
+    ]));
+    review.mockResolvedValueOnce(outcome(false, null));
+    renderPractice();
+    fireEvent.click(await screen.findByRole("button", { name: de.sohn.practice.next }));
+
+    expect(await screen.findByText("zwei")).toBeTruthy();
+    expect(document.activeElement).toBe(screen.getByRole("textbox"));
+  });
+
+  // AK 4 (B-443). Rot, wenn der Kartenwechsel-Zweig auch den ersten Aufbau trifft: dann spränge beim Öffnen der Seite
+  // ungefragt die Tastatur auf.
+  it("setzt beim ersten Laden keinen Fokus in die Karte", async () => {
+    renderPractice();
+    await screen.findByRole("textbox");
+    await act(async () => {});
+
+    expect(document.activeElement).toBe(document.body);
   });
 });
 
