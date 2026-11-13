@@ -31,6 +31,12 @@ public sealed class ImageOptions
     /// </summary>
     public ImageGenerationResponseFormat? ResponseFormat { get; set; }
 
+    /// <summary>
+    /// Separator between prompt and negative prompt, for services that read one from the prompt (<c>|</c> for LocalAI);
+    /// empty means the service has none and the no-text rule stays as text in the prompt (OpenAI).
+    /// </summary>
+    public string? NegativeSeparator { get; set; }
+
     /// <summary>Image model (decision 7 of B-485: small and cheap is enough for card-sized pictures).</summary>
     [Required]
     public string Model { get; set; } = "gpt-image-1-mini";

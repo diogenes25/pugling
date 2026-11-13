@@ -350,6 +350,15 @@ Themen-Interessen mit Gewicht ≥ 2; oder eine ganze Unit für ein genanntes Int
 - **Interessen-Bilder hängen mit Rang −1**, alles andere mit 0. Bei Punktgleichstand (Kind ohne passendes Interesse)
   gewinnt so das neutrale Bild vor dem Fußball-Bild eines anderen Kindes – auch ein älteres, von Hand zugeordnetes.
 
+- **Das Interesse steht in der Szene, nicht dahinter** (Entscheidung 10, gemessen an LocalAI/`dreamshaper`): Das
+  lokale Textmodell verwebt die Szene des Worts mit dem `ImagePrompt` des Interesses. Ein angehängtes „…, on a soccer
+  pitch" hat Stable Diffusion übergangen. Mit verwobener Szene zeigten drei von drei Fußball-Bildern den Fußball.
+  Ohne brauchbare Szene entsteht kein Interessen-Bild.
+
+Bild-Dienst ist LocalAI auf der eigenen GPU (Entscheidung 9), über die OpenAI-kompatible Schnittstelle. OpenAI bleibt
+per Konfiguration erreichbar. Gemessene Schwäche: Bei abstrakten Verben („acheter") verliert das Interessen-Bild die
+Bedeutung, und ein neutrales Bild trug Schrift („MARKET" auf einem Geldschein). Das Korrektiv dafür ist „anderes Bild".
+
 Bewusste Grenzen: Der Bedarf zählt nur Zuordnungen an der Vokabel (eine Übung mit eigenen Item-Bildern zeigt nur
 diese) und prüft vorhandene Bilder nicht gegen Eignung und Abneigungen des Kindes. **Wird ein Schlagwort gelöscht**,
 verlieren seine KI-Bilder ihr einziges Schlagwort und zählen danach als neutral; ihr Rang −1 hält sie hinter einem

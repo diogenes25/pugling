@@ -28,13 +28,18 @@ public sealed record ImageJobResult(int VocabularyId, string Word, string? TagSl
 /// <param name="Jobs">Every image planned or attempted.</param>
 /// <param name="NotImageable">Words the model or the checks judged not drawable – they stay without image.</param>
 /// <param name="MissingPrompt">Interest tags that were wanted but have no image prompt yet (decision 6).</param>
+/// <param name="NoScene">
+/// Word and interest pairs (<c>word [tag]</c>) whose woven scene did not pass the check – no interest image for them
+/// (decision 10); the neutral image of the word is unaffected.
+/// </param>
 public sealed record ImageRunOutcome(IReadOnlyList<ImageJobResult> Jobs, IReadOnlyList<string> NotImageable,
-    IReadOnlyList<string> MissingPrompt);
+    IReadOnlyList<string> MissingPrompt, IReadOnlyList<string> NoScene);
 
 /// <summary>
-/// Generates the missing vocabulary images (B-485): reads the work list from <c>creator/media/demand</c>, asks the
-/// <see cref="MotifPlanner"/> once per word, draws the neutral image and the interest images of that word in the same
-/// run (decision 4), uploads each with its trace and links it straight to the vocabulary entry (decision 2).
+/// Generates the missing vocabulary images (B-485): reads the work list from <c>creator/media/demand</c>, first takes up
+/// images a previous run already stored, then asks the <see cref="MotifPlanner"/> once per word for the motif and once
+/// per interest for the woven scene (decision 10), draws the neutral image and the interest images of that word in the
+/// same run (decision 4), uploads each with its trace and links it straight to the vocabulary entry (decision 2).
 /// <para>
 /// The generator is resolved lazily: a dry run and every other verb must work without an API key.
 /// </para>
@@ -63,6 +68,7 @@ public sealed class ImageRun(CreatorApi creator, MotifPlanner motifs, Lazy<IImag
 
         var jobs = new List<ImageJobResult>();
         var notImageable = new List<string>();
+        var noScene = new List<string>();
         var missingPrompt = new SortedSet<string>(StringComparer.Ordinal);
         var settings = options.Value;
 
@@ -75,7 +81,17 @@ public sealed class ImageRun(CreatorApi creator, MotifPlanner motifs, Lazy<IImag
             var wanted = new List<MediaDemandTag?>();
             if (entry.NeedsNeutral) wanted.Add(null);
             wanted.AddRange(entry.WantedTags.Where(t => !string.IsNullOrWhiteSpace(t.ImagePrompt)));
-            if (wanted.Count == 0) continue;
+
+            // An image a previous run uploaded is taken up before the model is asked anything: a model failure on the
+            // rerun must not strand an image that is already paid for, and the question would be wasted anyway.
+            var toDraw = new List<MediaDemandTag?>();
+            foreach (var tag in wanted)
+            {
+                var reused = request.DryRun ? null : await ReuseAsync(entry, tag, ct);
+                if (reused is null) toDraw.Add(tag);
+                else jobs.Add(reused);
+            }
+            if (toDraw.Count == 0) continue;
 
             var motif = await motifs.PlanAsync(entry, ct);
             if (motif is null)
@@ -84,36 +100,61 @@ public sealed class ImageRun(CreatorApi creator, MotifPlanner motifs, Lazy<IImag
                 continue;
             }
 
-            foreach (var tag in wanted)
+            foreach (var tag in toDraw)
             {
-                var prompt = ImagePromptBuilder.Prompt(motif, tag?.ImagePrompt, settings.Style);
+                // The interest belongs inside the scene, not after it (decision 10); the neutral image draws the motif.
+                var scene = tag is null ? motif : await motifs.PlanSceneAsync(entry, motif, tag.ImagePrompt!, ct);
+                if (scene is null)
+                {
+                    noScene.Add($"{entry.Word} [{tag!.Slug}]");
+                    continue;
+                }
+                var prompt = ImagePromptBuilder.Prompt(scene, settings.Style, settings.NegativeSeparator);
                 if (request.DryRun)
                 {
                     jobs.Add(new ImageJobResult(entry.VocabularyId, entry.Word, tag?.Slug, prompt, null, null));
                     continue;
                 }
-                jobs.Add(await DrawAsync(entry, tag, motif, prompt, ct));
+                jobs.Add(await DrawAsync(entry, tag, scene, prompt, ct));
             }
         }
-        return new ImageRunOutcome(jobs, notImageable, [.. missingPrompt]);
+        return new ImageRunOutcome(jobs, notImageable, [.. missingPrompt], noScene);
+    }
+
+    /// <summary>
+    /// Links the image a previous run stored under this pair's key, or returns <c>null</c> when there is none and the
+    /// image still has to be drawn. A failure is reported for this image only.
+    /// </summary>
+    private async Task<ImageJobResult?> ReuseAsync(MediaDemandEntry entry, MediaDemandTag? tag, CancellationToken ct)
+    {
+        var key = ImagePromptBuilder.Key(entry.VocabularyId, tag?.Slug);
+        try
+        {
+            var asset = await ExistingAsync(key, ct);
+            if (asset is null) return null;
+            await LinkAsync(entry.VocabularyId, asset.Id, tag is null ? 0 : InterestLinkWeight, ct);
+            return new ImageJobResult(entry.VocabularyId, entry.Word, tag?.Slug, asset.Source ?? key, asset.Id, null);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException and not AgentUsageException)
+        {
+            logger.LogWarning(ex, "Vorhandenes Bild für '{Word}' ({Tag}) nicht aufnehmbar.", entry.Word,
+                tag?.Slug ?? ImagePromptBuilder.Neutral);
+            return new ImageJobResult(entry.VocabularyId, entry.Word, tag?.Slug, key, null, ex.Message);
+        }
     }
 
     /// <summary>Draws, uploads and links one image. Any failure is reported for this image only.</summary>
-    private async Task<ImageJobResult> DrawAsync(MediaDemandEntry entry, MediaDemandTag? tag, string motif, string prompt,
+    private async Task<ImageJobResult> DrawAsync(MediaDemandEntry entry, MediaDemandTag? tag, string scene, string prompt,
         CancellationToken ct)
     {
         var settings = options.Value;
         try
         {
             var key = ImagePromptBuilder.Key(entry.VocabularyId, tag?.Slug);
-            var asset = await ExistingAsync(key, ct);
-            if (asset is null)
-            {
-                var bytes = await GenerateAsync(prompt, ct);
-                asset = await creator.UploadMediaAsync(bytes, $"{key}.png", ImagePromptBuilder.AltText(tag?.Label),
-                    tags: tag is null ? null : [tag.Slug], rating: ContentRating.Everyone, origin: MediaOrigin.Generated,
-                    source: ImagePromptBuilder.Source(settings.Model, motif, tag?.Slug), key: key, ct: ct);
-            }
+            var bytes = await GenerateAsync(prompt, ct);
+            var asset = await creator.UploadMediaAsync(bytes, $"{key}.png", ImagePromptBuilder.AltText(tag?.Label),
+                tags: tag is null ? null : [tag.Slug], rating: ContentRating.Everyone, origin: MediaOrigin.Generated,
+                source: ImagePromptBuilder.Source(settings.Model, scene, tag?.Slug), key: key, ct: ct);
             await LinkAsync(entry.VocabularyId, asset.Id, tag is null ? 0 : InterestLinkWeight, ct);
             return new ImageJobResult(entry.VocabularyId, entry.Word, tag?.Slug, prompt, asset.Id, null);
         }

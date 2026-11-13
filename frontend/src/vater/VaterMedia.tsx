@@ -70,7 +70,9 @@ export function VaterMedia() {
             <tbody>
               {list.data?.map((a) => <AssetRow key={a.id} asset={a} onChanged={list.reload} />)}
               {list.data?.length === 0 && (
-                <tr><td colSpan={5} className="muted">Noch keine Bilder. Lege unten eines an.</td></tr>
+                <tr><td colSpan={5} className="muted">
+                  {applied || onlyGenerated ? "Keine Bilder für diesen Filter." : "Noch keine Bilder. Lege unten eines an."}
+                </td></tr>
               )}
             </tbody>
           </table>

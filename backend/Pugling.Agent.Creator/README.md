@@ -301,19 +301,47 @@ sieht, entscheidet wie immer der `MediaSelector`; die Interessen-Bilder hängen 
 Bild ohne Schlagwort mit 0. So bekommt ein Kind ohne passendes Interesse das neutrale (auch ein älteres, von Hand
 zugeordnetes) und nicht per Zufall das Fußball-Bild eines anderen Kindes.
 
-Das lokale Textmodell beantwortet nur „zeichenbar?" und liefert die englische Szene. Funktionswörter und Abstrakta
-bleiben ohne Bild. Den Prompt baut C#: Szene, `ImagePrompt` des Interesses, fester Stil, „no text, no letters". Ein
-Interesse ohne `ImagePrompt` wird übersprungen und genannt, damit keine Marke („Minecraft") über ihren Namen beim
-Bild-Dienst landet.
+Das lokale Textmodell beantwortet „zeichenbar?" und liefert die englische Szene des Worts. Für jedes Interesse
+verbindet es diese Szene danach mit dem markenneutralen `ImagePrompt` zu **einer** Szene („a soccer player kicking a
+ball down a city street"). Ein angehängtes „…, on a soccer pitch" übergehen Diffusionsmodelle (gemessen, B-485
+Entscheidung 10). Label und Kinddaten sieht das Modell nie. Fällt eine Szene durch die Prüfung, entsteht kein
+Interessen-Bild, und der Bericht nennt das Paar. Den Rest baut C#: Szene, fester Stil, Schriftverbot. Funktionswörter
+und Abstrakta bleiben ohne Bild. Ein Interesse ohne `ImagePrompt` wird übersprungen und genannt, damit keine Marke
+(„Minecraft") über ihren Namen beim Bild-Dienst landet.
 
-Konfiguration im Abschnitt `Images` (`Model`, `Quality`, `Size`, `Style`, `CostPerImage`, optional `Endpoint` für
-einen OpenAI-kompatiblen Dienst – oder einen lokalen Ersatz, mit dem sich der ganze Weg ohne Kosten fahren lässt);
-der Schlüssel nur als Secret:
+Konfiguration im Abschnitt `Images`: `Model`, `Quality`, `Size`, `Style`, `CostPerImage`, optional `Endpoint` für
+einen OpenAI-kompatiblen Dienst, `ResponseFormat` und `NegativeSeparator`. Für OpenAI nur den Schlüssel als Secret:
 
 ```bash
 cd backend/Pugling.Agent.Creator
 dotnet user-secrets set "Images:ApiKey" "sk-…"
 ```
+
+**Lokal mit LocalAI** (der eingesetzte Weg, B-485 Entscheidung 9): LocalAI `v4.12.1` mit dem Modell `dreamshaper`
+(Stable Diffusion 1.5, passt in 6 GB) läuft im Docker auf Port 8080:
+
+```bash
+docker run -d --name localai --gpus all -p 8080:8080 -v localai-models:/models localai/localai:v4.12.1-gpu-nvidia-cuda-12
+curl http://localhost:8080/models/apply -H "Content-Type: application/json" -d "{\"id\": \"localai@dreamshaper\"}"
+```
+
+Dazu diese Werte, zum Beispiel als Secrets. Der Schlüssel ist bei LocalAI ein beliebiger Platzhalter:
+
+```bash
+dotnet user-secrets set "Images:Endpoint" "http://localhost:8080/v1"
+dotnet user-secrets set "Images:Model" "dreamshaper"
+dotnet user-secrets set "Images:Size" "512"
+dotnet user-secrets set "Images:ResponseFormat" "Data"
+dotnet user-secrets set "Images:NegativeSeparator" "|"
+dotnet user-secrets set "Images:CostPerImage" "0"
+dotnet user-secrets set "Images:ApiKey" "local"
+```
+
+`ResponseFormat=Data`: Ohne den Wert liefert LocalAI eine URL statt der Bilddaten. Bei OpenAI bleibt er leer, weil die
+GPT-Bildmodelle den Parameter ablehnen. `NegativeSeparator=|`: Das Schriftverbot geht in den Negativ-Prompt, denn
+„no text" im Prompt zeichnet ein Diffusionsmodell eher hinein. Ollama und LocalAI teilen sich die GPU. Lässt man
+Ollama mit `OLLAMA_KEEP_ALIVE=0` laufen, gibt es den Speicher nach jeder Antwort frei. Ein Bild in 512 × 512 dauert
+auf der RTX 4050 etwa 20–45 s.
 
 ## Was der Agent bewusst *nicht* tut
 

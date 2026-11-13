@@ -30,10 +30,13 @@ dotnet run --project backend/Pugling.Agent.Creator -- images --unit 12 --tag fus
 
 `images` (B-485) zeichnet Vokabelbilder nach den Interessen eines Kindes: je Wort ein **neutrales** Bild und je eins
 für die **zwei stärksten Themen-Interessen** (Gewicht ≥ 2). Die Arbeitsliste kommt aus `GET creator/media/demand`;
-das lokale Textmodell entscheidet nur, ob ein Wort zeichenbar ist und welche englische Szene es zeigt, den Prompt baut
-C# (Szene, dann `ImagePrompt` des Interesses, fester Stil, „no text"). Gezeichnet wird über OpenAI
-(`Images:Model`, Vorgabe `gpt-image-1-mini`, Qualität `low`); der Schlüssel gehört in die Secrets:
-`dotnet user-secrets set "Images:ApiKey" "sk-…"` im Ordner `backend/Pugling.Agent.Creator`. Bilder gehen **ohne
+das lokale Textmodell entscheidet, ob ein Wort zeichenbar ist und welche englische Szene es zeigt, und verwebt
+diese Szene je Interesse mit dessen `ImagePrompt` (B-485 Entscheidung 10; keine Szene, kein Interessen-Bild). Den Rest
+baut C# (fester Stil, Schriftverbot, als Negativ-Prompt bei gesetztem `Images:NegativeSeparator`). Gezeichnet wird
+über einen OpenAI-kompatiblen Dienst. Eingesetzt ist **LocalAI mit `dreamshaper`** auf Port 8080 (Entscheidung 9).
+Einrichtung und die sieben `Images:`-Secrets stehen im README des Agenten unter „Lokal mit LocalAI". Ohne
+`Endpoint` geht es an OpenAI (`gpt-image-1-mini`, Schlüssel als `Images:ApiKey`). Vor einem Lauf prüfen, ob
+LocalAI antwortet (`curl http://localhost:8080/v1/models`) und Ollama läuft. Bilder gehen **ohne
 Freigabe** direkt an die Vokabel (das Kind verwirft mit „anderes Bild", der Vater filtert in der Bild-Bibliothek
 auf „nur KI-erzeugte"). Ein Interesse ohne `ImagePrompt` bekommt keine Bilder und wird im Bericht genannt – den
 Prompt pflegt man markenneutral in der Schlagwort-Verwaltung. Zweiter Lauf zeichnet nichts doppelt.

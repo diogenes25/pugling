@@ -15,7 +15,10 @@ namespace Pugling.Api.Tests;
 /// </summary>
 public class ImageAgentTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
-    private const string Motif = """{"imageable": true, "motif": "a happy dog jumping"}""";
+    // One answer serves both questions: the motif call reads imageable/motif, the scene call reads scene.
+    private const string Motif =
+        """{"imageable": true, "motif": "a happy dog jumping", "scene": "a happy dog jumping over a soccer ball"}""";
+    private const string WovenScene = "a happy dog jumping over a soccer ball";
     private const int ShowBoth = 1;
 
     /// <summary>The run as the host wires it, with the fakes in place of Ollama and the image service.</summary>
@@ -52,9 +55,11 @@ public class ImageAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
         Assert.Equal(4, outcome.Jobs.Count);
         Assert.All(outcome.Jobs, j => Assert.Null(j.AssetId));
         var soccer = Assert.Single(outcome.Jobs, j => j.VocabularyId == s.VocabularyIds[0] && j.TagSlug == s.Soccer);
-        Assert.StartsWith("a happy dog jumping, on a soccer pitch, ", soccer.Prompt);
+        Assert.StartsWith(WovenScene + ", ", soccer.Prompt);
         Assert.Contains(new ImageOptions().Style, soccer.Prompt);
         Assert.EndsWith(ImagePromptBuilder.NoText, soccer.Prompt);
+        var neutral = Assert.Single(outcome.Jobs, j => j.VocabularyId == s.VocabularyIds[0] && j.TagSlug is null);
+        Assert.StartsWith("a happy dog jumping, ", neutral.Prompt);
         Assert.Empty((await GetAsync(father, $"/api/v1/creator/vocabulary/{s.VocabularyIds[0]}/media")).EnumerateArray());
     }
 
@@ -99,7 +104,8 @@ public class ImageAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
         // was derived from the alt text, so the reuse test below passed on a state the agent never produced.
         var soccerJob = first.Jobs.First(j => j.AssetId == soccerAsset);
         Assert.Equal(ImagePromptBuilder.Key(soccerJob.VocabularyId, s.Soccer), asset.GetProperty("key").GetString());
-        Assert.Equal($"gpt-image-1-mini: a happy dog jumping; {s.Soccer}", asset.GetProperty("source").GetString());
+        // The trace carries the scene that was drawn – for an interest image the woven one (decision 10).
+        Assert.Equal($"gpt-image-1-mini: {WovenScene}; {s.Soccer}", asset.GetProperty("source").GetString());
         Assert.Equal([s.Soccer], asset.GetProperty("tags").EnumerateArray().Select(t => t.GetString()!));
         Assert.Contains(asset.GetProperty("variants").EnumerateArray(), v => v.GetProperty("purpose").GetString() == "Card");
         Assert.DoesNotContain("dog-img2", asset.GetProperty("description").GetString());
@@ -177,11 +183,14 @@ public class ImageAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
         (await father.PostAsJsonAsync($"/api/v1/creator/vocabulary/{s.VocabularyIds[1]}/media",
             new { mediaAssetId = jump })).EnsureSuccessStatusCode();
         var generator = new FakeImageGenerator();
+        var chat = new FakeChatClient(Motif);
 
-        var outcome = await Run(creator, new FakeChatClient(Motif), generator)
+        var outcome = await Run(creator, chat, generator)
             .RunAsync(new ImageRunRequest(s.ChildIds[0], null, null, 50, DryRun: false), default);
 
         Assert.Empty(generator.Prompts);
+        // Taken up before the model is asked: a model failure on this rerun could otherwise strand the stored images.
+        Assert.Equal(0, chat.Calls);
         Assert.Equal(2, outcome.Jobs.Count);
         Assert.All(outcome.Jobs, j => Assert.Null(j.Error));
         var dogLinks = await GetAsync(father, $"/api/v1/creator/vocabulary/{s.VocabularyIds[0]}/media");
@@ -198,7 +207,7 @@ public class ImageAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
         var father = await TestApi.AdultAsync(factory);
         var s = await ScenarioAsync(father, "img3");
         await SetInterestsAsync(father, s.ChildIds[0], (s.Soccer, 3), (s.NoPrompt, 2));
-        var generator = new FakeImageGenerator { FailWhenPromptContains = "on a soccer pitch" };
+        var generator = new FakeImageGenerator { FailWhenPromptContains = WovenScene };
         // First word: not drawable; second word: drawable.
         var chat = new FakeChatClient("""{"imageable": false, "motif": ""}""", Motif);
 
@@ -237,6 +246,121 @@ public class ImageAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
         Assert.All(generator.ResponseFormats, f => Assert.Equal(format, f));
     }
 
+    /// <summary>
+    /// Decision 10: the interest is woven into the scene by the model, which sees the tag's image prompt but never its
+    /// label or anything about a child. Red if the interest image still uses the appended setting, if the scene question
+    /// carries the label (a brand name in the real data) or the child's name, or if the neutral image asks for a scene.
+    /// </summary>
+    [Fact]
+    public async Task Das_Interesse_steht_in_der_Szene_und_das_Modell_sieht_nur_den_Bild_Prompt()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var s = await ScenarioAsync(father, "img8");
+        await SetInterestsAsync(father, s.ChildIds[0], (s.Soccer, 3));
+        var chat = new FakeChatClient(Motif);
+
+        var outcome = await Run(new CreatorApi(Authenticated()), chat, new FakeImageGenerator())
+            .RunAsync(new ImageRunRequest(s.ChildIds[0], null, null, 1, DryRun: true), default);
+
+        var soccer = Assert.Single(outcome.Jobs, j => j.TagSlug == s.Soccer);
+        Assert.DoesNotContain("on a soccer pitch", soccer.Prompt);
+        // One motif question and one scene question for the one word – none for the neutral image.
+        Assert.Equal(2, chat.History.Count);
+        // The user turn only: it is the part built from data; the system turn is fixed text.
+        var sceneQuestion = chat.History[1].Messages.Single(m => m.Role == ChatRole.User).Text;
+        Assert.Contains("Interesse: on a soccer pitch", sceneQuestion);
+        Assert.Contains("Szene der Bedeutung: a happy dog jumping", sceneQuestion);
+        Assert.DoesNotContain("img8 Fussball", sceneQuestion);
+        Assert.DoesNotContain("Kind", sceneQuestion);
+    }
+
+    /// <summary>
+    /// Decision 10: no usable scene means no interest image – not the old appended setting, which would file a picture
+    /// without the interest under its tag. Red if the run falls back, or if the neutral image is lost along with it.
+    /// </summary>
+    [Fact]
+    public async Task Ohne_brauchbare_Szene_entfaellt_nur_das_Interessen_Bild()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var s = await ScenarioAsync(father, "img9");
+        await SetInterestsAsync(father, s.ChildIds[0], (s.Soccer, 3));
+        var generator = new FakeImageGenerator();
+        // The motif passes, the scene answer has no scene.
+        var chat = new FakeChatClient("""{"imageable": true, "motif": "a happy dog jumping"}""");
+
+        var outcome = await Run(new CreatorApi(Authenticated()), chat, generator)
+            .RunAsync(new ImageRunRequest(s.ChildIds[0], null, null, 1, DryRun: false), default);
+
+        Assert.Equal([$"dog-img9 [{s.Soccer}]"], outcome.NoScene);
+        var neutral = Assert.Single(outcome.Jobs);
+        Assert.Null(neutral.TagSlug);
+        Assert.NotNull(neutral.AssetId);
+        Assert.Single(generator.Prompts);
+    }
+
+    /// <summary>
+    /// A service with a negative prompt gets the no-text rule there: diffusion models draw what the prompt names, "no
+    /// letters" included. Red if the rule stays in the positive part or the separator is ignored.
+    /// </summary>
+    [Fact]
+    public void Mit_Negativ_Trenner_wandert_das_Schriftverbot_in_den_Negativ_Prompt()
+    {
+        Assert.Equal("a cat, plain style|" + ImagePromptBuilder.NegativeTerms,
+            ImagePromptBuilder.Prompt("a cat", "plain style", "|"));
+        Assert.DoesNotContain("no text", ImagePromptBuilder.Prompt("a cat", "plain style", "|"));
+    }
+
+    /// <summary>
+    /// Red if the separator in the model's scene splits the prompt (part of the motif would land in the negative prompt
+    /// and be avoided), or if a blank separator counts as set (the no-text terms would end up in the positive prompt).
+    /// </summary>
+    [Fact]
+    public void Ein_Trenner_in_der_Szene_und_ein_leerer_Trenner_spalten_den_Prompt_nicht()
+    {
+        Assert.Equal("a dog   soccer ball, plain style|" + ImagePromptBuilder.NegativeTerms,
+            ImagePromptBuilder.Prompt("a dog | soccer ball", "plain style", "|"));
+        Assert.Equal("a cat, plain style, " + ImagePromptBuilder.NoText, ImagePromptBuilder.Prompt("a cat", "plain style", " "));
+    }
+
+    /// <summary>
+    /// The configured separator reaches the prompt of the run, not only the builder. Red if the run drops it – LocalAI
+    /// would then get "no text, no letters" in the positive prompt, which a diffusion model tends to draw.
+    /// </summary>
+    [Fact]
+    public async Task Der_Lauf_reicht_den_Negativ_Trenner_an_jeden_Prompt_weiter()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var s = await ScenarioAsync(father, "img10");
+        await SetInterestsAsync(father, s.ChildIds[0], (s.Soccer, 3));
+
+        var outcome = await Run(new CreatorApi(Authenticated()), new FakeChatClient(Motif), new FakeImageGenerator(),
+                new ImageOptions { NegativeSeparator = "|" })
+            .RunAsync(new ImageRunRequest(s.ChildIds[0], null, null, 1, DryRun: true), default);
+
+        Assert.Equal(2, outcome.Jobs.Count);
+        Assert.All(outcome.Jobs, j =>
+        {
+            Assert.EndsWith("|" + ImagePromptBuilder.NegativeTerms, j.Prompt);
+            Assert.DoesNotContain(ImagePromptBuilder.NoText, j.Prompt);
+        });
+    }
+
+    /// <summary>Red if the scene check lets through what the motif check stops, or rejects a scene of allowed length.</summary>
+    [Theory]
+    [InlineData("a dog over a soccer ball", "a dog over a soccer ball")]
+    [InlineData("", null)]
+    [InlineData(null, null)]
+    [InlineData("line one\nline two", null)]
+    public void Die_Szenenpruefung_laesst_nur_kurze_Szenen_durch(string? scene, string? expected) =>
+        Assert.Equal(expected, MotifPlanner.CheckScene(new SceneDraft(scene)));
+
+    [Fact]
+    public void Eine_Szene_bis_zur_Grenze_besteht_und_darueber_nicht()
+    {
+        Assert.NotNull(MotifPlanner.CheckScene(new SceneDraft(new string('a', MotifPlanner.MaxSceneLength))));
+        Assert.Null(MotifPlanner.CheckScene(new SceneDraft(new string('a', MotifPlanner.MaxSceneLength + 1))));
+    }
+
     /// <summary>Red if the motif check lets through what the prompt must not carry: nothing, a paragraph, a line break.</summary>
     [Theory]
     [InlineData(true, "a dog", "a dog")]
@@ -263,7 +387,7 @@ public class ImageAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
         Assert.Equal("gen-v7-neutral", ImagePromptBuilder.Key(7, null));
         Assert.Equal("gen-v7-fussball", ImagePromptBuilder.Key(7, "fussball"));
         Assert.Equal("Bild zur Vokabel (Fußball)", ImagePromptBuilder.AltText("Fußball"));
-        Assert.Equal("a cat, plain style, " + ImagePromptBuilder.NoText, ImagePromptBuilder.Prompt(" a cat ", null, "plain style"));
+        Assert.Equal("a cat, plain style, " + ImagePromptBuilder.NoText, ImagePromptBuilder.Prompt(" a cat ", "plain style", null));
     }
 
     // ---- Setup ----------------------------------------------------------------------------------------

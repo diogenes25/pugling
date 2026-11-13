@@ -22,11 +22,10 @@ async function openTag(page: import("@playwright/test").Page) {
 test("Der Bild-Prompt eines Interesses lässt sich setzen und wieder leeren", async ({ page, request }) => {
   const login = await request.post("/api/v1/auth/adult", { data: { adultId: 1, pin: "0000" } });
   expect(login.ok(), await login.text()).toBeTruthy();
-  const res = await request.post("/api/v1/creator/interest-tags", {
-    headers: { Authorization: `Bearer ${(await login.json()).token}` },
-    data: { label: LABEL, facet: "Franchise" },
-  });
+  const headers = { Authorization: `Bearer ${(await login.json()).token}` };
+  const res = await request.post("/api/v1/creator/interest-tags", { headers, data: { label: LABEL, facet: "Franchise" } });
   expect(res.ok(), await res.text()).toBeTruthy();
+  const tagId = (await res.json()).id as number;
 
   await vaterLogin(page, { id: "1", pin: "0000" });
   await page.goto("/vater/media");
@@ -40,6 +39,20 @@ test("Der Bild-Prompt eines Interesses lässt sich setzen und wieder leeren", as
   await page.reload();
   field = await openTag(page);
   await expect(field).toHaveValue(PROMPT);
+
+  // Ein anderer Creator ändert den Prompt, während diese Seite noch den alten Stand zeigt. Eine reine Synonym-Änderung
+  // von hier darf ihn nicht zurücksetzen: Der Prompt geht nur mit, wenn er hier geändert wurde. Ein Formular, das immer
+  // alles schickt, schriebe PROMPT zurück – der Stand nach dem Neuladen wäre dann nicht OTHER.
+  const OTHER = "in a quiet forest";
+  const patch = await request.patch(`/api/v1/creator/interest-tags/${tagId}`, { headers, data: { imagePrompt: OTHER } });
+  expect(patch.ok(), await patch.text()).toBeTruthy();
+  await page.getByLabel(`Synonyme von ${LABEL}`, { exact: true }).fill(`syn${RUN}`);
+  await page.getByRole("button", { name: `Marke/Serie „${LABEL}" speichern` }).click();
+  await expect(page.getByText("Gespeichert.")).toBeVisible();
+
+  await page.reload();
+  field = await openTag(page);
+  await expect(field).toHaveValue(OTHER);
 
   await field.fill("");
   await page.getByRole("button", { name: `Marke/Serie „${LABEL}" speichern` }).click();

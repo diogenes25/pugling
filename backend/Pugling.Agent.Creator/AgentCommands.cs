@@ -98,8 +98,9 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
 
     /// <summary>
     /// Generates the missing vocabulary images (B-485): <c>--child</c> or <c>--unit</c> (with optional <c>--tag</c>),
-    /// never both. Prints every image, the words left without one and the interests that still lack an image prompt;
-    /// a failed image makes the run exit 1 without stopping the others.
+    /// never both. Prints every image, the words left without one, the interests that still lack an image prompt and
+    /// the word/interest pairs without a usable scene; a failed image makes the run exit 1 without stopping the others.
+    /// A missing scene does not – like an undrawable word it is a gap to rerun, not an error.
     /// </summary>
     private async Task<int> ImagesAsync(CommandLine command, CancellationToken ct)
     {
@@ -132,10 +133,13 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
         if (outcome.MissingPrompt.Count > 0)
             Console.WriteLine("Interessen ohne Bild-Prompt (im Vater-Web unter Interessen pflegen, dann erneut laufen lassen): "
                               + string.Join(", ", outcome.MissingPrompt));
+        if (outcome.NoScene.Count > 0)
+            Console.WriteLine("Ohne Interessen-Bild (keine brauchbare Szene, erneut laufen lassen oder Bild-Prompt schärfen): "
+                              + string.Join(", ", outcome.NoScene));
         if (outcome.Jobs.Count == 0)
         {
             // Only claim "nothing missing" when it is true: words left out or tags without prompt still lack images.
-            Console.WriteLine(outcome.NotImageable.Count > 0 || outcome.MissingPrompt.Count > 0
+            Console.WriteLine(outcome.NotImageable.Count > 0 || outcome.MissingPrompt.Count > 0 || outcome.NoScene.Count > 0
                 ? "Nichts gezeichnet – die übrigen Lücken stehen oben."
                 : "Nichts zu zeichnen – für diesen Umfang fehlt kein Bild.");
             return 0;
